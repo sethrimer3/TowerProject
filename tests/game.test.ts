@@ -37,8 +37,9 @@ test("combat uses first strike, defenses, and strict survival", () => {
   );
 });
 test("doors consume matching keys; pickups and walls obey movement", () => {
-  const g = new Game(defaults()),
-    p = g.run.player;
+  const g = new Game(defaults());
+  g.switchMode("delve");
+  const p = g.run.player;
   g.world.changes["15,1"] = { kind: "door", color: "blue" };
   assert.equal(g.move(0, 1), false);
   p.keys.blue = 1;
@@ -53,6 +54,7 @@ test("doors consume matching keys; pickups and walls obey movement", () => {
 });
 test("automation avoids lethal fights; manual death resets immediately and awards once", () => {
   const g = new Game(defaults());
+  g.switchMode("delve");
   g.world.changes["15,1"] = {
     kind: "enemy",
     enemy: { name: "doom", hp: 999, attack: 999, defense: 999, tier: 3 },
@@ -61,12 +63,12 @@ test("automation avoids lethal fights; manual death resets immediately and award
   assert.equal(g.summary, null);
   g.move(0, 1, true);
   assert.ok(g.summary);
-  assert.equal(g.save.run?.player.y, 0);
+  assert.equal(g.save.delve.run?.player.y, 0);
   assert.equal(g.undo(), false);
-  const earned = g.save.essence;
+  const earned = g.save.delve.essence;
   g.finish("again");
-  assert.equal(g.save.essence, earned);
-  g.save.essence = 100;
+  assert.equal(g.save.delve.essence, earned);
+  g.save.delve.essence = 100;
   assert.ok(g.buy("hp"));
   g.summary = null;
   g.newRun();
@@ -74,6 +76,7 @@ test("automation avoids lethal fights; manual death resets immediately and award
 });
 test("automation climbs purposefully, never takes lethal fights, bounds chunk memory", () => {
   const g = new Game(defaults());
+  g.switchMode("delve");
   for (let i = 0; i < 1500; i++) {
     const s = chooseStep(g);
     if (!s) break;
@@ -86,27 +89,29 @@ test("automation climbs purposefully, never takes lethal fights, bounds chunk me
 });
 test("save roundtrip, malformed values and old versions are safe", () => {
   const g = new Game(defaults());
+  g.switchMode("delve");
   g.move(0, 1);
   const restored = decode(JSON.stringify(g.save));
-  assert.equal(restored.run?.player.y, 1);
+  assert.equal(restored.delve.run?.player.y, 1);
   for (const raw of [
     "oops",
     "null",
     '{"version":0}',
     '{"version":1,"run":{"player":null}}',
   ])
-    assert.equal(decode(raw).run, null);
+    assert.equal(decode(raw).delve.run, null);
   const bad = JSON.parse(JSON.stringify(g.save));
-  bad.run.player.keys = null;
-  assert.equal(decode(JSON.stringify(bad)).run, null);
+  bad.delve.run.player.keys = null;
+  assert.equal(decode(JSON.stringify(bad)).delve.run, null);
 });
 test("density does not alter world or run; chunk boundaries stay traversable", () => {
   const g = new Game(defaults());
-  const tiles = Array.from(g.world.chunks.entries());
+  g.switchMode("delve");
+  const tiles = Array.from((g.world as World).chunks.entries());
   for (const density of [16, 24, 30, 20]) {
     g.save.settings.density = density;
     assert.equal(g.run.player.x, 15);
-    assert.deepEqual(Array.from(g.world.chunks.entries()), tiles);
+    assert.deepEqual(Array.from((g.world as World).chunks.entries()), tiles);
   }
   const w = new World(42, {});
   for (let y = 0; y < 400; y += 20) {
@@ -176,19 +181,21 @@ test("each door is a separating choke point, and keys solve every room without s
 test("old runs safely migrate topology while retaining earned stats and permanent progress", () => {
   const save = defaults(),
     g = new Game(save);
+  g.switchMode("delve");
   g.run.layoutVersion = undefined;
   g.run.player.y = 27;
   g.run.height = 29;
   g.run.player.attack = 40;
   g.run.changes["15,25"] = { kind: "floor" };
-  save.essence = 19;
+  save.delve.essence = 19;
   save.upgrades.hp = 2;
   const migrated = new Game(decode(JSON.stringify(save)));
+  migrated.switchMode("delve");
   assert.equal(migrated.run.layoutVersion, LAYOUT_VERSION);
   assert.equal(migrated.run.player.y, 20);
   assert.equal(migrated.run.player.attack, 40);
   assert.equal(migrated.run.height, 29);
-  assert.equal(migrated.save.essence, 19);
+  assert.equal(migrated.save.delve.essence, 19);
   assert.equal(migrated.save.upgrades.hp, 2);
   assert.deepEqual(migrated.run.changes, {});
   assert.equal(migrated.world.tile(15, 20).kind, "stairs");
@@ -196,6 +203,7 @@ test("old runs safely migrate topology while retaining earned stats and permanen
 test("automation can backtrack through chamber layouts across fixed seeds", () => {
   for (let seed = 0; seed < 12; seed++) {
     const g = new Game(defaults());
+    g.switchMode("delve");
     g.run.seed = seed;
     g.world = new World(seed, g.run.changes);
     for (let i = 0; i < 1400 && g.run.height < 40; i++) {
@@ -221,6 +229,7 @@ test("validator rejects missing prerequisite keys and doors with bypass routes",
 test("manual player reaches successive exits with zero starting keys and guarded progression", () => {
   for (let seed = 0; seed < 50; seed++) {
     const g = new Game(defaults());
+    g.switchMode("delve");
     g.run.seed = seed;
     g.world = new World(seed, g.run.changes);
     // Exercise the real movement / pickup / lock code, not a flood fill that

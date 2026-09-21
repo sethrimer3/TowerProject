@@ -17,6 +17,7 @@ const results = await page.evaluate(async () => {
   const data = {};
   for (const mode of ["smooth", "fast", "instant"]) {
     const g = new Game(defaults());
+    g.switchMode("delve");
     g.save.settings.transition = mode;
     g.run.player.y = 6;
     const original = g.world.tile.bind(g.world);

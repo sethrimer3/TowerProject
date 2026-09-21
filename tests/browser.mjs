@@ -32,16 +32,17 @@ if (await page.locator(".dpad").isVisible())
   throw Error("Arrows should be hidden by default");
 await page.locator('[data-tab="settings"]').click();
 await page.locator("#arrows").check();
-await page.locator('[data-tab="tower"]').click();
+await page.locator('[data-tab="delve"]').click();
 await page.getByRole("button", { name: "Move up", exact: true }).click();
 if ((await page.locator("#height").textContent()) !== "1")
   throw Error("Movement failed");
 await page.reload();
+await page.locator('[data-tab="delve"]').click();
 if ((await page.locator("#height").textContent()) !== "1")
   throw Error("Save failed");
 await page.locator('[data-tab="settings"]').click();
 await page.locator("#density").selectOption("30");
-await page.locator('[data-tab="tower"]').click();
+await page.locator('[data-tab="delve"]').click();
 if ((await page.locator("#density-label").textContent()) !== "30 × 30")
   throw Error("Density failed");
 await page.locator('[data-tab="settings"]').click();
@@ -75,6 +76,11 @@ console.log(
   }),
 );
 for (let i = 0; i < 2; i++) {
+  await page.locator('[data-tab="delve"]').click();
+  // Each retire only pays out on a new depth record, so climb a little
+  // further than the prior best before retiring again.
+  for (let step = 0; step < i + 2; step++)
+    await page.getByRole("button", { name: "Move up", exact: true }).click();
   await page.locator('[data-tab="settings"]').click();
   await page.locator("#retire").click();
   await page.locator("#confirm").click();
@@ -82,7 +88,7 @@ for (let i = 0; i < 2; i++) {
 }
 await page.locator('[data-tab="upgrades"]').click();
 await page.locator('[data-buy="auto"]').click();
-await page.locator('[data-tab="tower"]').click();
+await page.locator('[data-tab="delve"]').click();
 await page.locator("#auto").click();
 await page.waitForTimeout(2000);
 if (Number(await page.locator("#height").textContent()) < 1)
@@ -104,12 +110,12 @@ console.log(
 );
 await page.locator('[data-tab="settings"]').click();
 await page.locator("#density").selectOption("30");
-await page.locator('[data-tab="tower"]').click();
+await page.locator('[data-tab="delve"]').click();
 await page.screenshot({ path: "test-results/rooms-wide.png", fullPage: true });
 await page.setViewportSize({ width: 320, height: 640 });
 await page.locator('[data-tab="settings"]').click();
 await page.locator("#density").selectOption("20");
-await page.locator('[data-tab="tower"]').click();
+await page.locator('[data-tab="delve"]').click();
 await page.screenshot({
   path: "test-results/small-mobile.png",
   fullPage: true,
@@ -139,7 +145,7 @@ routePage.on("pageerror", (e) => errors.push(e.message));
 await routePage.goto("http://127.0.0.1:5173/");
 await routePage.locator('[data-tab="settings"]').click();
 await routePage.locator("#arrows").check();
-await routePage.locator('[data-tab="tower"]').click();
+await routePage.locator('[data-tab="delve"]').click();
 for (let step = 0; step < 20; step++)
   await routePage.getByRole("button", { name: "Move up", exact: true }).click();
 if ((await routePage.locator("#height").textContent()) !== "20")
