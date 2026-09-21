@@ -36,6 +36,7 @@ export type Player = {
   gear: Gear[];
 };
 export type Run = {
+  layoutVersion?: number;
   seed: number;
   player: Player;
   height: number;

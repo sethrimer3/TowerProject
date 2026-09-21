@@ -1,4 +1,4 @@
-import { COLORS, WIDTH } from "./config.ts";
+import { CHUNK, COLORS, WIDTH } from "./config.ts";
 import type { Game } from "./state.ts";
 import type { Tile } from "./entities.ts";
 export class Renderer {
@@ -62,7 +62,7 @@ export class Renderer {
     this.hero();
     c.restore();
     if (g.effect.until > now) {
-      c.font = `600 ${Math.max(11, s * 0.6)}px system-ui`;
+      c.font = `600 ${Math.max(11, s * 0.6)}px Cinzel`;
       c.textAlign = "center";
       c.fillStyle = "#f3d69a";
       c.shadowColor = "#000";
@@ -104,9 +104,24 @@ export class Renderer {
     c.fillRect(4, 17, 6, 1);
     if (t.kind === "floor") return;
     if (t.kind === "stairs") {
-      for (let i = 0; i < 5; i++) {
-        c.fillStyle = i % 2 ? "#65707b" : "#404e5a";
-        c.fillRect(4, 4 + i * 3, 16, 2);
+      const exit = y % CHUNK === CHUNK - 1;
+      c.fillStyle = exit ? "#dec58c20" : "#8eacc520";
+      c.fillRect(2, 1, 20, 22);
+      for (let i = 0; i < 4; i++) {
+        c.fillStyle = exit ? "#bda67a" : "#65707b";
+        c.fillRect(4, 11 + i * 3, 16, 2);
+      }
+      if (exit) {
+        c.fillStyle = "#f1d396";
+        c.beginPath();
+        c.moveTo(12, 1);
+        c.lineTo(6, 7);
+        c.lineTo(10, 7);
+        c.lineTo(10, 11);
+        c.lineTo(14, 11);
+        c.lineTo(14, 7);
+        c.lineTo(18, 7);
+        c.fill();
       }
       return;
     }

@@ -1,13 +1,20 @@
-import { START_X, reward, cost, UPGRADES, type UpgradeId } from "./config.ts";
+import {
+  CHUNK,
+  START_X,
+  reward,
+  cost,
+  UPGRADES,
+  type UpgradeId,
+} from "./config.ts";
 import { gear, type Save, type Run, type Tile } from "./entities.ts";
-import { World } from "./generation.ts";
+import { World, LAYOUT_VERSION } from "./generation.ts";
 import { predict } from "./combat.ts";
 export class Game {
   world!: World;
   run!: Run;
   auto = false;
   paused = false;
-  message = "The tower remembers. Take your first step.";
+  message = "Collect the key ahead, unlock the northern door, and climb.";
   effect = { text: "", x: 0, y: 0, until: 0 };
   summary: null | {
     height: number;
@@ -18,6 +25,17 @@ export class Game {
   constructor(public save: Save) {
     if (save.run) {
       this.run = save.run;
+      if (this.run.layoutVersion !== LAYOUT_VERSION) {
+        // Old consumed-tile coordinates cannot be applied to the new topology.
+        // Preserve earned progression and inventory, relocating to this section's entrance.
+        this.run.layoutVersion = LAYOUT_VERSION;
+        this.run.changes = {};
+        this.run.player.x = START_X;
+        this.run.player.y = Math.floor(this.run.player.y / CHUNK) * CHUNK;
+        this.run.floor = Math.min(this.run.floor, this.run.player.y);
+        this.message =
+          "The tower has reshaped. Progress kept; returned to this section’s entrance.";
+      }
       this.world = new World(this.run.seed, this.run.changes, this.run.floor);
     } else this.newRun();
   }
@@ -25,6 +43,7 @@ export class Game {
     const u = this.save.upgrades,
       g = gear(u.quality);
     this.run = {
+      layoutVersion: LAYOUT_VERSION,
       seed: crypto.getRandomValues(new Uint32Array(1))[0],
       height: 0,
       kills: 0,

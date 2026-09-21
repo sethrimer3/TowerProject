@@ -22,7 +22,7 @@ Retire from Settings to claim Essence, or deliberately challenge a lethal enemy.
 
 - `src/config.ts`: balancing, upgrade definitions, currency rewards.
 - `src/entities.ts`: tiles, player, equipment, and versioned save types.
-- `src/generation.ts`: seeded PRNG, validated 30-wide / 20-high chunks, guaranteed central route, encounters and side rooms, bounded chunk retention.
+- `src/generation.ts`: seeded PRNG, validated 30-wide / 20-high chunks, nine varied chambers with a central ascent and randomized tree branches, separating locks, parent-room keys, themed rewards, bounded chunk retention.
 - `src/state.ts`: movement, pickups, doors, run lifecycle, purchases.
 - `src/combat.ts`: pure combat forecasting.
 - `src/automation.ts`: bounded breadth-first search and separate destination scoring. Stops search at interactions and replans each step to avoid assuming future keys or health.
@@ -32,6 +32,8 @@ Retire from Settings to claim Essence, or deliberately challenge a lethal enemy.
 - `src/main.ts`, `src/style.css`: UI, navigation, settings, confirmations, frame scheduling, responsive styling.
 - `tests/game.test.ts`: deterministic generation, combat, movement, progression, automation, save handling, density independence.
 - `tests/browser.mjs`: end-to-end mobile/desktop smoke checks and screenshots using Playwright.
+
+Generation validates all walkable space, verifies that removing each door disconnects an area, and simulates collecting and consuming keys from an empty inventory. Every lock gates a chamber or branch; there are no bypass corridors. The three central chambers form an explicit northbound ascent, with its amber and azure keys placed directly before their locks. Enemies cannot occupy this route, and validation treats enemies as blocked when checking key progression and room exits. Optional reward branches remain randomized. Golden stairs mark the upward section exit. Rooms have variable widths, clipped corners, different passage positions, and supply / armory / treasure roles. Automatic climbing scores progress against the run record so it can backtrack without oscillating between cleared rooms.
 
 The default viewport shows exactly 20 × 20 square tiles. The entrance is bottom-center. Density options 16/20/24/30 change only the camera. Four recent chunks remain available; terrain below the retention boundary becomes inaccessible. Consumed pickups in retained chunks are saved. Current equipment is preserved across refreshes and reset to permanent starting quality between runs.
 
@@ -45,6 +47,6 @@ The included `.github/workflows/static.yml` installs dependencies, runs tests an
 
 ## Prototype boundaries
 
-Art is intentionally small and code-drawn; room variety and balancing are introductory. Doors offer optional detours and are often bypassable. Combat resolves instantly. Automation prioritizes nearby upgrades and safe ascent, rather than globally optimal inventory planning. Very old tower sections cannot be revisited. Save migration currently resets unsupported versions safely. Google Fonts are optional with local serif / system fallbacks. There is no sound, offline progression, cloud save, or installable PWA.
+Art is intentionally small and code-drawn; room variety and balancing are introductory. Locked passages gate both ascent routes and reward branches; enemies inside chambers are often avoidable. Combat resolves instantly. Automation prioritizes nearby upgrades and safe ascent, rather than globally optimal inventory planning. Very old tower sections cannot be revisited. Unsupported save-format versions reset safely. Layout-version migration retains progression, stats, and inventory, clears old map edits, and relocates the player to their current section entrance. All text uses the bundled variable Cinzel font from `assets/fonts/Cinzel/`; no remote font service is used. There is no sound, offline progression, cloud save, or installable PWA.
 
 The most valuable next step is adding varied room templates and testing the economy over many automated runs, especially the transition from manual exploration to permanent upgrades.

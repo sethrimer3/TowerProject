@@ -3,16 +3,14 @@ import { point, type Tile } from "./entities.ts";
 import type { Game } from "./state.ts";
 export function score(t: Tile, y: number, current: number, distance: number) {
   let benefit = 0;
-  if (t.kind === "key") benefit = 9;
-  if (t.kind === "potion") benefit = 10;
+  if (t.kind === "key") benefit = 38;
+  if (t.kind === "potion") benefit = 30;
   if (t.kind === "attack" || t.kind === "defense" || t.kind === "treasure")
-    benefit = 20;
-  return (
-    benefit +
-    (y - current) * 1.8 -
-    distance * 0.7 -
-    (t.kind === "door" ? 12 : 0)
-  );
+    benefit = 45;
+  if (t.kind === "door") benefit = t.color === "yellow" ? 24 : 20;
+  if (t.kind === "enemy") benefit = 20;
+  // Score against the run high-water mark: backtracking must not create fake progress.
+  return benefit + Math.max(0, y - current) * 1.8 - distance * 0.18;
 }
 export function chooseStep(game: Game) {
   const p = game.run.player;
@@ -22,7 +20,7 @@ export function chooseStep(game: Game) {
     bestScore = 0.1;
   for (let i = 0; i < q.length && i < 2200; i++) {
     const n = q[i];
-    if (n.d >= 26) continue;
+    if (n.d >= 140) continue;
     for (const [dx, dy] of [
       [0, 1],
       [-1, 0],
@@ -34,8 +32,8 @@ export function chooseStep(game: Game) {
         k = point(x, y);
       if (
         seen.has(k) ||
-        y < Math.max(game.world.floor, p.y - 10) ||
-        y > p.y + 26
+        y < Math.max(game.world.floor, p.y - 40) ||
+        y > p.y + 40
       )
         continue;
       seen.add(k);
@@ -47,7 +45,7 @@ export function chooseStep(game: Game) {
       )
         continue;
       const next = { x, y, first: n.d ? n.first : [dx, dy], d: n.d + 1 };
-      let value = score(t, y, p.y, next.d);
+      let value = score(t, y, game.run.height, next.d);
       if (t.kind === "potion" && p.hp === p.maxHp) value -= 10;
       if (t.kind === "enemy") value -= predict(p, t.enemy!).damage * 0.5;
       if (value > bestScore) {

@@ -1,6 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { generate, validate, World } from "../src/generation.ts";
+import {
+  generate,
+  validate,
+  reachable,
+  World,
+  LAYOUT_VERSION,
+} from "../src/generation.ts";
 import { defaults, decode } from "../src/save.ts";
 import { Game } from "../src/state.ts";
 import { predict } from "../src/combat.ts";
@@ -100,5 +106,147 @@ test("density does not alter world or run; chunk boundaries stay traversable", (
     assert.deepEqual(Array.from(g.world.chunks.entries()), tiles);
   }
   const w = new World(42, {});
-  for (let y = 0; y < 400; y++) assert.notEqual(w.tile(15, y).kind, "wall");
+  for (let y = 0; y < 400; y += 20) {
+    assert.equal(w.tile(15, y).kind, "stairs");
+    assert.equal(w.tile(15, y + 19).kind, "stairs");
+  }
+});
+
+test("each door is a separating choke point, and keys solve every room without starting inventory", () => {
+  for (let seed = 0; seed < 60; seed++) {
+    const cells = generate(seed, seed % 7),
+      base = (seed % 7) * 20,
+      start = point(15, base);
+    const doors = [...cells].filter(([, t]) => t.kind === "door");
+    assert.ok(doors.length >= 1);
+    const all = reachable(cells, start);
+    for (const [k] of doors) {
+      const [x, y] = k.split(",").map(Number);
+      const neighbors = [
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1],
+      ].filter(([dx, dy]) => {
+        const t = cells.get(point(x + dx, y + dy));
+        return t && t.kind !== "wall";
+      });
+      assert.equal(neighbors.length, 2, "Door must fit a one-tile passage");
+      assert.ok(
+        reachable(cells, start, new Set([k])).size < all.size - 1,
+        "Door has a bypass",
+      );
+    }
+    // Open available doors in reverse order, independent of generator validation order.
+    const closed = new Set(doors.map(([k]) => k)),
+      collected = new Set<string>(),
+      keys = { yellow: 0, blue: 0, red: 0 };
+    while (closed.size) {
+      const area = reachable(cells, start, closed);
+      for (const k of area) {
+        const t = cells.get(k)!;
+        if (t.kind === "key" && !collected.has(k)) {
+          keys[t.color!]++;
+          collected.add(k);
+        }
+      }
+      const next = [...doors].reverse().find(([k, t]) => {
+        const [x, y] = k.split(",").map(Number);
+        return (
+          closed.has(k) &&
+          keys[t.color!] > 0 &&
+          [
+            [1, 0],
+            [-1, 0],
+            [0, 1],
+            [0, -1],
+          ].some(([dx, dy]) => area.has(point(x + dx, y + dy)))
+        );
+      });
+      assert.ok(next, "Keys cannot be trapped behind their own doors");
+      keys[next[1].color!]--;
+      closed.delete(next[0]);
+    }
+    assert.equal(reachable(cells, start, closed).size, all.size);
+  }
+});
+test("old runs safely migrate topology while retaining earned stats and permanent progress", () => {
+  const save = defaults(),
+    g = new Game(save);
+  g.run.layoutVersion = undefined;
+  g.run.player.y = 27;
+  g.run.height = 29;
+  g.run.player.attack = 40;
+  g.run.changes["15,25"] = { kind: "floor" };
+  save.essence = 19;
+  save.upgrades.hp = 2;
+  const migrated = new Game(decode(JSON.stringify(save)));
+  assert.equal(migrated.run.layoutVersion, LAYOUT_VERSION);
+  assert.equal(migrated.run.player.y, 20);
+  assert.equal(migrated.run.player.attack, 40);
+  assert.equal(migrated.run.height, 29);
+  assert.equal(migrated.save.essence, 19);
+  assert.equal(migrated.save.upgrades.hp, 2);
+  assert.deepEqual(migrated.run.changes, {});
+  assert.equal(migrated.world.tile(15, 20).kind, "stairs");
+});
+test("automation can backtrack through chamber layouts across fixed seeds", () => {
+  for (let seed = 0; seed < 12; seed++) {
+    const g = new Game(defaults());
+    g.run.seed = seed;
+    g.world = new World(seed, g.run.changes);
+    for (let i = 0; i < 1400 && g.run.height < 40; i++) {
+      const step = chooseStep(g);
+      if (!step) break;
+      assert.ok(g.move(step.dx, step.dy));
+    }
+    assert.ok(g.run.height >= 40, `Seed ${seed} stalled at ${g.run.height}`);
+  }
+});
+
+test("validator rejects missing prerequisite keys and doors with bypass routes", () => {
+  const cells = new Map<string, import("../src/entities.ts").Tile>();
+  for (let y = 0; y < 20; y++) cells.set(point(15, y), { kind: "floor" });
+  cells.set("15,5", { kind: "door", color: "yellow" });
+  assert.equal(validate(cells, 0), false);
+  cells.set("15,2", { kind: "key", color: "yellow" });
+  assert.equal(validate(cells, 0), true);
+  for (let y = 4; y <= 6; y++) cells.set(point(14, y), { kind: "floor" });
+  assert.equal(validate(cells, 0), false);
+});
+
+test("manual player reaches successive exits with zero starting keys and no combat", () => {
+  for (let seed = 0; seed < 50; seed++) {
+    const g = new Game(defaults());
+    g.run.seed = seed;
+    g.world = new World(seed, g.run.changes);
+    // Exercise the real movement / pickup / lock code, not a flood fill that
+    // assumes doors or enemies are passable. Four complete sections per seed.
+    for (let y = 1; y <= 80; y++)
+      assert.ok(
+        g.move(0, 1),
+        `Seed ${seed} blocks the ascent before height ${y}`,
+      );
+    assert.equal(g.run.height, 80);
+    assert.equal(g.run.player.hp, 120);
+    assert.equal(g.run.kills, 0);
+    assert.equal(g.run.player.keys.yellow, 0);
+    assert.equal(g.run.player.keys.blue, 0);
+  }
+});
+test("validator rejects enemies blocking a required key or the exit", () => {
+  const cells = new Map<string, import("../src/entities.ts").Tile>();
+  for (let y = 0; y < 20; y++) cells.set(point(15, y), { kind: "floor" });
+  cells.set("15,5", { kind: "door", color: "yellow" });
+  cells.set("15,2", { kind: "key", color: "yellow" });
+  assert.ok(validate(cells, 0));
+  const foe = {
+    kind: "enemy" as const,
+    enemy: { name: "Blocker", hp: 999, attack: 999, defense: 999, tier: 3 },
+  };
+  cells.set("15,1", foe);
+  assert.equal(validate(cells, 0), false);
+  cells.set("15,1", { kind: "floor" });
+  cells.set("15,18", foe);
+  assert.equal(validate(cells, 0), false);
 });
