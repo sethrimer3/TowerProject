@@ -120,6 +120,7 @@ function update() {
   if (game.summary) showSummary();
 }
 function renderBoard() {
+  el("board").classList.toggle("mode-tower", game.mode === "tower");
   text("board-title", game.mode === "tower" ? "THE ASCENT TRIALS" : "THE HOLLOW SPIRE");
   text(
     "board-subtitle",
