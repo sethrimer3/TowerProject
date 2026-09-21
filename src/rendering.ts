@@ -89,21 +89,22 @@ export class Renderer {
     c.scale(s / 24, s / 24);
     this.hero();
     c.restore();
-    // Border segments stop at open spaces instead of closing wrap passages.
+    // A border renders whenever stepping past that edge is actually blocked
+    // (no destination, or the destination is a wall) — the same rule the
+    // game itself uses to allow or refuse the move. It only stays open when
+    // that step is a genuine two-sided wrap, which draws the passage mark
+    // instead; a merely-open tile with no valid step is still a wall.
     for (let row = 0; row < n; row++) {
       const y = Math.floor(this.bottom) + row,
         sy = (n - 1 - (y - this.bottom)) * s;
       for (const side of [0, 1]) {
-        const x = Math.floor(this.left + (side ? n - 0.000001 : 0)),
-          tile = g.world.tile(x, y);
-        if (tile.kind === "wall") {
+        const dx = side ? 1 : -1,
+          x = Math.floor(this.left + (side ? n - 0.000001 : 0)),
+          dest = g.world.step(x, y, dx, 0);
+        if (!dest || g.world.tile(dest.x, dest.y).kind === "wall") {
           c.fillStyle = "#606b79";
           c.fillRect(side ? box.width - 2 : 0, sy, 2, s);
-        } else if (
-          (x === 0 || x === g.world.width - 1) &&
-          g.world.tile(0, y).kind !== "wall" &&
-          g.world.tile(g.world.width - 1, y).kind !== "wall"
-        ) {
+        } else if (dest.x !== x + dx) {
           const edge = side ? box.width - 3 : 3;
           c.strokeStyle = "#d5bb7a";
           c.lineWidth = 1.5;
@@ -112,6 +113,21 @@ export class Renderer {
           c.lineTo(edge, sy + s * 0.5);
           c.lineTo(edge + (side ? -4 : 4), sy + s * 0.7);
           c.stroke();
+        }
+      }
+    }
+    // Top and bottom use the same rule; the game has no vertical wrap, so a
+    // blocked step always draws as a plain wall segment.
+    for (let col = 0; col < n; col++) {
+      const x = Math.floor(this.left) + col,
+        sx = (x - this.left) * s;
+      for (const side of [0, 1]) {
+        const dy = side ? 1 : -1,
+          y = Math.floor(this.bottom) + (side ? n - 1 : 0),
+          dest = g.world.step(x, y, 0, dy);
+        if (!dest || g.world.tile(dest.x, dest.y).kind === "wall") {
+          c.fillStyle = "#606b79";
+          c.fillRect(sx, side ? 0 : box.width - 2, s, 2);
         }
       }
     }
