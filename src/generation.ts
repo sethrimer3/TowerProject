@@ -438,8 +438,10 @@ export function generateTowerRoom(
       },
     };
   }
-  set(TOWER_START_X, 1, towerEnemy());
   sculptRoom(cells, bounds, 0, rng, reserved);
+  // Placed after sculpting so the guardian's cell still reads as floor for
+  // sculptRoom's own connectivity check (it doesn't treat enemies as passable).
+  set(TOWER_START_X, 1, towerEnemy());
   function place(tile: Tile) {
     const candidates: [number, number][] = [];
     for (let y = bounds.y1; y <= bounds.y2; y++)
