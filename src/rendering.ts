@@ -1,0 +1,29 @@
+import { COLORS,WIDTH } from './config.ts';
+import type { Game } from './state.ts';
+import type { Tile } from './entities.ts';
+export class Renderer {
+ ctx:CanvasRenderingContext2D;bottom=0;left=5;size=0;playerX=15;playerY=0;last=0;
+ constructor(public canvas:HTMLCanvasElement,public game:Game){this.ctx=canvas.getContext('2d')!;this.playerX=game.run.player.x;this.playerY=game.run.player.y;}
+ draw(now:number){const g=this.game,p=g.run.player,n=g.save.settings.density;const box=this.canvas.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,2);if(this.canvas.width!==Math.round(box.width*dpr)){this.canvas.width=Math.round(box.width*dpr);this.canvas.height=this.canvas.width;}this.ctx.setTransform(dpr,0,0,dpr,0,0);this.size=box.width/n;const dt=Math.min(.1,(now-this.last)/1000||.016);this.last=now;const blend=g.save.settings.reduceMotion?1:1-Math.exp(-dt*14);this.bottom+=(Math.max(0,p.y-Math.floor(n*.3))-this.bottom)*blend;this.left=Math.max(0,Math.min(WIDTH-n,p.x-Math.floor(n/2)));this.playerX+=(p.x-this.playerX)*blend;this.playerY+=(p.y-this.playerY)*blend;
+ const c=this.ctx,s=this.size;c.fillStyle='#0b1017';c.fillRect(0,0,box.width,box.width);
+ for(let row=-1;row<=n;row++)for(let col=0;col<n;col++){const x=col+this.left,y=Math.floor(this.bottom)+row;if(y<0)continue;const sy=(n-1-(y-this.bottom))*s;c.save();c.translate(col*s,sy);c.scale(s/24,s/24);this.tile(g.world.tile(x,y),x,y,now);c.restore();}
+ c.save();c.translate((this.playerX-this.left)*s,(n-1-(this.playerY-this.bottom))*s);c.scale(s/24,s/24);this.hero();c.restore();
+ if(g.effect.until>now){c.font=`600 ${Math.max(11,s*.6)}px system-ui`;c.textAlign='center';c.fillStyle='#f3d69a';c.shadowColor='#000';c.shadowBlur=5;const offset=g.save.settings.reduceMotion?0:(1300-(g.effect.until-now))/65;c.fillText(g.effect.text,box.width/2,box.width*.2-offset);c.shadowBlur=0;}
+ }
+ tile(t:Tile,x:number,y:number,time:number){const c=this.ctx;const hash=Math.abs((x*73+y*137)%19);c.fillStyle=t.kind==='wall'?'#222c38':`rgb(${18+hash%4},${24+hash%4},${32+hash%5})`;c.fillRect(0,0,24,24);c.strokeStyle='#303b453f';c.lineWidth=.7;c.strokeRect(.4,.4,23.2,23.2);
+ if(t.kind==='wall'){c.fillStyle=hash%3?'#3c4651':'#47505a';c.fillRect(1,1,10,9);c.fillRect(13,1,10,9);c.fillRect(1,12,6,10);c.fillRect(9,12,14,10);c.fillStyle='#68707a55';c.fillRect(1,1,10,1);c.fillRect(13,1,10,1);c.fillStyle='#0a1018';c.fillRect(0,22,24,2);if(x%6===0&&y%7===3)this.torch(time);return;}
+ c.fillStyle='#74839310';c.fillRect(hash,3,4,2);c.fillRect(4,17,6,1);
+ if(t.kind==='floor')return;
+ if(t.kind==='stairs'){for(let i=0;i<5;i++){c.fillStyle=i%2?'#65707b':'#404e5a';c.fillRect(4,4+i*3,16,2);}return;}
+ if(t.kind==='key'){c.strokeStyle=COLORS[t.color!];c.lineWidth=2.5;c.beginPath();c.arc(15,7,4,0,Math.PI*2);c.moveTo(12,10);c.lineTo(5,18);c.lineTo(3,16);c.moveTo(8,15);c.lineTo(6,13);c.stroke();return;}
+ if(t.kind==='door'){c.fillStyle='#090d14';c.fillRect(4,2,16,22);c.fillStyle=COLORS[t.color!];c.fillRect(5,4,14,19);c.fillStyle='#101b28bb';c.fillRect(7,5,10,17);c.fillStyle=COLORS[t.color!];c.fillRect(11,10,3,7);c.fillRect(10,9,5,4);return;}
+ if(t.kind==='potion'){c.fillStyle='#bbc4ca';c.fillRect(9,4,6,5);c.fillRect(6,10,12,11);c.fillStyle='#b83b55';c.fillRect(8,12,8,7);c.fillStyle='#ffd9d9';c.fillRect(8,12,2,4);c.fillStyle='#bd9661';c.fillRect(9,3,6,3);return;}
+ if(t.kind==='attack'){c.save();c.translate(12,12);c.rotate(.65);c.fillStyle='#dbe3e7';c.fillRect(-2,-10,4,15);c.fillStyle='#8194a2';c.fillRect(0,-8,2,12);c.fillStyle='#d6ad60';c.fillRect(-6,4,12,3);c.fillStyle='#8f6545';c.fillRect(-2,7,4,4);c.restore();return;}
+ if(t.kind==='defense'){c.fillStyle='#9cb0c2';c.beginPath();c.moveTo(4,4);c.lineTo(12,2);c.lineTo(20,4);c.lineTo(18,16);c.lineTo(12,22);c.lineTo(6,16);c.fill();c.fillStyle='#416391';c.fillRect(7,6,10,9);c.fillRect(10,13,5,5);c.fillStyle='#b9d3e8';c.fillRect(10,5,2,12);return;}
+ if(t.kind==='treasure'){c.fillStyle='#d0a34d';c.fillRect(3,7,18,14);c.fillStyle='#714829';c.fillRect(5,9,14,10);c.fillStyle='#ebbd58';c.fillRect(3,12,18,2);c.fillRect(10,11,4,6);return;}
+ const tier=t.enemy!.tier;c.fillStyle='#0006';c.fillRect(4,20,17,3);if(tier===0){c.fillStyle='#568c45';c.fillRect(4,12,17,8);c.fillRect(7,7,11,7);c.fillStyle='#8abc58';c.fillRect(8,7,7,3);}else if(tier===1){c.fillStyle='#c6c3b0';c.fillRect(7,3,10,9);c.fillRect(10,12,4,7);c.fillRect(6,13,12,2);c.fillRect(7,18,3,5);c.fillRect(15,18,3,5);c.fillStyle='#686d77';c.fillRect(3,12,3,8);}else if(tier===2){c.fillStyle='#934354';c.fillRect(9,9,8,12);c.fillRect(2,6,6,9);c.fillRect(18,6,5,9);c.fillRect(6,10,14,5);}else{c.fillStyle='#554985';c.fillRect(6,8,13,14);c.fillRect(9,3,8,10);c.fillStyle='#222033';c.fillRect(8,9,10,7);}c.fillStyle=tier===1?'#17202a':'#f5ca7d';c.fillRect(9,11,2,2);c.fillRect(15,11,2,2);
+ }
+ torch(time:number){const c=this.ctx;c.fillStyle='#59412c';c.fillRect(10,10,4,10);const a=this.game.save.settings.reduceMotion?0:Math.sin(time/140)*1.4;const gr=c.createRadialGradient(12,8,1,12,8,22);gr.addColorStop(0,'#ffb64e66');gr.addColorStop(1,'#ff8c2000');c.fillStyle=gr;c.fillRect(-10,-14,44,44);c.fillStyle='#df7b32';c.fillRect(9,4+a,6,9);c.fillStyle='#ffe3a0';c.fillRect(11,3+a,3,7);}
+ hero(){const c=this.ctx;c.fillStyle='#7bacdf30';c.beginPath();c.arc(12,14,13,0,Math.PI*2);c.fill();c.fillStyle='#070c16';c.fillRect(5,20,16,3);c.fillStyle='#337bbb';c.fillRect(5,10,13,12);c.fillStyle='#74b5e9';c.fillRect(7,10,3,11);c.fillStyle='#c3ccd1';c.fillRect(9,10,9,7);c.fillStyle='#c99771';c.fillRect(9,4,8,7);c.fillStyle='#624531';c.fillRect(8,2,10,5);c.fillRect(7,4,3,5);c.fillStyle='#dce4e5';c.fillRect(20,5,2,13);c.fillStyle='#e0ba72';c.fillRect(18,17,6,2);c.fillStyle='#8d7564';c.fillRect(8,21,4,3);c.fillRect(15,21,4,3);}
+ position(clientX:number,clientY:number){const r=this.canvas.getBoundingClientRect();return {x:Math.floor((clientX-r.left)/this.size)+this.left,y:Math.floor(this.bottom+this.game.save.settings.density-(clientY-r.top)/this.size)};}
+}
