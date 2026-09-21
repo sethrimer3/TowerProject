@@ -14,7 +14,7 @@ export class Game {
   run!: Run;
   auto = false;
   paused = false;
-  message = "Collect the key ahead, unlock the northern door, and climb.";
+  message = "Defeat the entrance guardian, claim the keys, and climb.";
   effect = { text: "", x: 0, y: 0, until: 0 };
   summary: null | {
     height: number;

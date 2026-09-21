@@ -2,6 +2,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   generate,
+  random,
+  rollUnguardedLoot,
   validate,
   reachable,
   World,
@@ -215,7 +217,7 @@ test("validator rejects missing prerequisite keys and doors with bypass routes",
   assert.equal(validate(cells, 0), false);
 });
 
-test("manual player reaches successive exits with zero starting keys and no combat", () => {
+test("manual player reaches successive exits with zero starting keys and guarded progression", () => {
   for (let seed = 0; seed < 50; seed++) {
     const g = new Game(defaults());
     g.run.seed = seed;
@@ -228,13 +230,11 @@ test("manual player reaches successive exits with zero starting keys and no comb
         `Seed ${seed} blocks the ascent before height ${y}`,
       );
     assert.equal(g.run.height, 80);
-    assert.equal(g.run.player.hp, 120);
-    assert.equal(g.run.kills, 0);
-    assert.equal(g.run.player.keys.yellow, 0);
-    assert.equal(g.run.player.keys.blue, 0);
+    assert.ok(g.run.player.hp > 0);
+    assert.equal(g.run.kills, 4);
   }
 });
-test("validator rejects enemies blocking a required key or the exit", () => {
+test("validator permits encounter gates but rejects physically isolated floor space", () => {
   const cells = new Map<string, import("../src/entities.ts").Tile>();
   for (let y = 0; y < 20; y++) cells.set(point(15, y), { kind: "floor" });
   cells.set("15,5", { kind: "door", color: "yellow" });
@@ -245,8 +245,70 @@ test("validator rejects enemies blocking a required key or the exit", () => {
     enemy: { name: "Blocker", hp: 999, attack: 999, defense: 999, tier: 3 },
   };
   cells.set("15,1", foe);
-  assert.equal(validate(cells, 0), false);
+  assert.equal(validate(cells, 0), true);
   cells.set("15,1", { kind: "floor" });
   cells.set("15,18", foe);
+  assert.equal(validate(cells, 0), true);
+  cells.set("3,3", { kind: "floor" });
   assert.equal(validate(cells, 0), false);
+});
+
+test("unguarded loot uses one exact 1/1000 roll per space", () => {
+  assert.equal(
+    rollUnguardedLoot(() => 0.001),
+    null,
+  );
+  assert.equal(
+    rollUnguardedLoot(() => 0.99999),
+    null,
+  );
+  let calls = 0;
+  const loot = rollUnguardedLoot(() => (++calls === 1 ? 0.000999 : 0.99));
+  assert.equal(loot?.kind, "treasure");
+  assert.equal(calls, 2);
+  const rng = random(2026),
+    counts = new Map<string, number>();
+  let drops = 0;
+  for (let i = 0; i < 100000; i++) {
+    const item = rollUnguardedLoot(rng);
+    if (item) {
+      drops++;
+      const k = item.color ?? item.kind;
+      counts.set(k, (counts.get(k) ?? 0) + 1);
+    }
+  }
+  assert.ok(
+    drops >= 60 && drops <= 140,
+    `Observed ${drops} rare drops in 100000 rolls`,
+  );
+  assert.equal(counts.size, 6);
+});
+test("unguarded spaces never contain routine keys or equipment; room floors remain connected", () => {
+  let eligible = 0,
+    drops = 0;
+  for (let seed = 0; seed < 300; seed++) {
+    const cells = generate(seed, 0),
+      blocked = new Set(
+        [...cells]
+          .filter(([, t]) => t.kind === "door" || t.kind === "enemy")
+          .map(([k]) => k),
+      );
+    const area = reachable(cells, "15,0", blocked);
+    assert.ok(!area.has("15,3"), "Essential key must be guarded");
+    assert.ok(!area.has("15,19"), "Exit must remain gated");
+    for (const k of area) {
+      const t = cells.get(k)!;
+      if (t.kind === "stairs") continue;
+      eligible++;
+      if (["key", "attack", "defense", "treasure"].includes(t.kind)) drops++;
+      else assert.equal(t.kind, "floor");
+    }
+    const all = reachable(cells, "15,0");
+    assert.equal(
+      all.size,
+      [...cells.values()].filter((t) => t.kind !== "wall").length,
+    );
+  }
+  assert.ok(eligible > 1000);
+  assert.ok(drops < 10, `${drops} free drops among ${eligible} spaces`);
 });

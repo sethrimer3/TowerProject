@@ -1,6 +1,13 @@
-import { CHUNK, WIDTH, START_X, type KeyColor } from "./config.ts";
+import { sculptRoom } from "./room-shapes.ts";
+import {
+  CHUNK,
+  WIDTH,
+  START_X,
+  UNGUARDED_LOOT_CHANCE,
+  type KeyColor,
+} from "./config.ts";
 import { point, type Tile } from "./entities.ts";
-export const LAYOUT_VERSION = 3;
+export const LAYOUT_VERSION = 4;
 const directions = [
   [1, 0],
   [-1, 0],
@@ -37,7 +44,7 @@ export function reachable(
   return seen;
 }
 /** Validate all floor space, actual separating locks, and a consuming-key traversal.
- * No starting keys or combat wins are assumed. Each child chamber gets its key in its parent. */
+ * No starting keys are assumed; enemies may gate otherwise connected spaces. Each child chamber gets its key in its parent. */
 export function validate(cells: Map<string, Tile>, base: number) {
   const entrance = point(START_X, base);
   const all = reachable(cells, entrance);
@@ -53,10 +60,7 @@ export function validate(cells: Map<string, Tile>, base: number) {
     collected = new Set<string>();
   const keys: Record<KeyColor, number> = { yellow: 0, blue: 0, red: 0 };
   for (let step = 0; step <= locks.length; step++) {
-    const enemies = [...cells]
-      .filter(([, t]) => t.kind === "enemy")
-      .map(([k]) => k);
-    const area = reachable(cells, entrance, new Set([...closed, ...enemies]));
+    const area = reachable(cells, entrance, closed);
     for (const k of area) {
       const t = cells.get(k)!;
       if (t.kind === "key" && !collected.has(k)) {
@@ -64,7 +68,7 @@ export function validate(cells: Map<string, Tile>, base: number) {
         collected.add(k);
       }
     }
-    if (!closed.size) return area.size === all.size - enemies.length;
+    if (!closed.size) return area.size === all.size;
     const next = locks.find(([k, t]) => {
       if (!closed.has(k) || !keys[t.color!]) return false;
       const [x, y] = k.split(",").map(Number);
@@ -154,7 +158,8 @@ export function generate(seed: number, index: number): Map<string, Tile> {
     if (parent.row === child.row) {
       const left = parent.col < child.col ? parent : child;
       const right = left === parent ? child : parent;
-      const y = int(left.y1 + 1, left.y2 - 1);
+      const y =
+        parent.id === 1 || child.id === 1 ? 4 : int(left.y1 + 1, left.y2 - 1);
       for (let x = left.x2; x <= right.x1; x++) {
         floor(x, y);
         reserve(x, y);
@@ -202,6 +207,36 @@ export function generate(seed: number, index: number): Map<string, Tile> {
     link(parent, child);
     visited.add(child.id);
   }
+  for (const room of rooms) {
+    if (room.id !== 1) sculptRoom(cells, room, base, rng, reserved);
+  }
+  // A small entrance vestibule leads through exactly one guardian into the
+  // first chamber. No essential key is a free pickup or depends on a rare roll.
+  const entranceRoom = rooms[1];
+  for (let x = entranceRoom.x1; x <= entranceRoom.x2; x++) {
+    floor(x, 1);
+    set(x, 2, { kind: "wall" });
+    floor(x, 3);
+    reserve(x, 1);
+    reserve(x, 2);
+  }
+  floor(START_X, 2);
+  function enemy(height: number): Tile {
+    const tier = Math.min(3, Math.floor(height / 35));
+    return {
+      kind: "enemy",
+      enemy: {
+        name: ["Cinder slime", "Bone sentinel", "Dusk wing", "Ash warden"][
+          tier
+        ],
+        hp: 10 + tier * 12 + Math.floor(height * 0.25),
+        attack: 5 + tier * 3 + Math.floor(height / 16),
+        defense: tier,
+        tier,
+      },
+    };
+  }
+  set(START_X, 2, enemy(base));
   function place(room: Room, tile: Tile) {
     const candidates: [number, number][] = [];
     for (let y = room.y1; y <= room.y2; y++)
@@ -220,10 +255,10 @@ export function generate(seed: number, index: number): Map<string, Tile> {
     if (edge.locked) {
       set(...edge.door, { kind: "door", color: edge.color });
       if (edge.parent.col === 1 && edge.child.col === 1) {
-        // Visible on the safe ascent BEFORE its lock; never hidden in a side vault.
+        // Placed after the parent guardian, before its lock; never behind itself.
         set(START_X, edge.parent.y1 + 2, { kind: "key", color: edge.color });
       } else place(edge.parent, { kind: "key", color: edge.color });
-    }
+    } else set(...edge.door, enemy(base + edge.parent.y1));
   for (const room of rooms) {
     const height = base + room.y1,
       tier = Math.min(3, Math.floor(height / 35));
@@ -257,9 +292,30 @@ export function generate(seed: number, index: number): Map<string, Tile> {
   }
   set(START_X, 0, { kind: "stairs" });
   set(START_X, CHUNK - 1, { kind: "stairs" });
+  // One deterministic 1/1000 roll per genuinely unguarded floor tile.
+  // "Equipment" includes stat gear pickups and treasure, which improves the loadout.
+  const blockers = new Set(
+    [...cells]
+      .filter(([, t]) => t.kind === "door" || t.kind === "enemy")
+      .map(([k]) => k),
+  );
+  const free = reachable(cells, point(START_X, base), blockers);
+  for (const k of free)
+    if (cells.get(k)?.kind === "floor") {
+      const loot = rollUnguardedLoot(rng);
+      if (loot) cells.set(k, loot);
+    }
   if (!validate(cells, base))
     throw new Error("Invalid tower room topology or key progression");
   return cells;
+}
+/** A successful space roll selects one key or equipment pickup, not one roll per item type. */
+export function rollUnguardedLoot(rng: () => number): Tile | null {
+  if (rng() >= UNGUARDED_LOOT_CHANCE) return null;
+  const choice = Math.floor(rng() * 6);
+  if (choice < 3)
+    return { kind: "key", color: (["yellow", "blue", "red"] as const)[choice] };
+  return { kind: (["attack", "defense", "treasure"] as const)[choice - 3] };
 }
 export class World {
   chunks = new Map<number, Map<string, Tile>>();

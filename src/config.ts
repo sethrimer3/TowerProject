@@ -1,3 +1,4 @@
+export const UNGUARDED_LOOT_CHANCE = 1 / 1000;
 export const WIDTH = 30;
 export const CHUNK = 20;
 export const START_X = 15;
