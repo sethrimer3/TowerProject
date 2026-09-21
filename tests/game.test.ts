@@ -1,15 +1,104 @@
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
-import { generate,validate,World } from '../src/generation.ts';
-import { defaults,decode } from '../src/save.ts';
-import { Game } from '../src/state.ts';
-import { predict } from '../src/combat.ts';
-import { chooseStep } from '../src/automation.ts';
-import { point } from '../src/entities.ts';
-test('500 deterministic chunks connect from entrance to exit',()=>{for(let seed=0;seed<10;seed++)for(let i=0;i<50;i++){const a=generate(seed,i);assert.ok(validate(a,i*20));assert.deepEqual(a,generate(seed,i));assert.notEqual(a.get(point(15,i*20))?.kind,'wall');}});
-test('combat uses first strike, defenses, and strict survival',()=>{const p=new Game(defaults()).run.player;assert.deepEqual(predict(p,{name:'test',hp:25,attack:10,defense:0,tier:0}),{hit:12,turns:3,damage:10,survivable:true});p.hp=10;assert.equal(predict(p,{name:'test',hp:25,attack:10,defense:0,tier:0}).survivable,false);});
-test('doors consume matching keys; pickups and walls obey movement',()=>{const g=new Game(defaults()),p=g.run.player;g.world.changes['15,1']={kind:'door',color:'blue'};assert.equal(g.move(0,1),false);p.keys.blue=1;assert.equal(g.move(0,1),true);assert.equal(p.keys.blue,0);g.world.changes['15,2']={kind:'attack'};g.move(0,1);assert.equal(p.attack,14);g.world.changes['15,3']={kind:'wall'};assert.equal(g.move(0,1),false);assert.equal(g.run.height,2);});
-test('lethal combat blocked unless deliberate, death awards once and upgrades persist',()=>{const g=new Game(defaults());g.world.changes['15,1']={kind:'enemy',enemy:{name:'doom',hp:999,attack:999,defense:999,tier:3}};assert.equal(g.move(0,1),false);assert.equal(g.summary,null);g.move(0,1,true);assert.ok(g.summary);assert.equal(g.save.run,null);const earned=g.save.essence;g.finish('again');assert.equal(g.save.essence,earned);g.save.essence=100;assert.ok(g.buy('hp'));g.summary=null;g.newRun();assert.equal(g.run.player.maxHp,140);});
-test('automation climbs purposefully, never takes lethal fights, bounds chunk memory',()=>{const g=new Game(defaults());for(let i=0;i<1500;i++){const s=chooseStep(g);if(!s)break;assert.ok(g.move(s.dx,s.dy));assert.ok(g.run.player.hp>0);}assert.ok(g.run.height>30,`reached ${g.run.height}`);g.world.maintain(10000);assert.ok(g.world.chunks.size<8);});
-test('save roundtrip, malformed values and old versions are safe',()=>{const g=new Game(defaults());g.move(0,1);const restored=decode(JSON.stringify(g.save));assert.equal(restored.run?.player.y,1);for(const raw of ['oops','null','{"version":0}','{"version":1,"run":{"player":null}}'])assert.equal(decode(raw).run,null);const bad=JSON.parse(JSON.stringify(g.save));bad.run.player.keys=null;assert.equal(decode(JSON.stringify(bad)).run,null);});
-test('density does not alter world or run; chunk boundaries stay traversable',()=>{const g=new Game(defaults());const tiles=Array.from(g.world.chunks.entries());for(const density of [16,24,30,20]){g.save.settings.density=density;assert.equal(g.run.player.x,15);assert.deepEqual(Array.from(g.world.chunks.entries()),tiles);}const w=new World(42,{});for(let y=0;y<400;y++)assert.notEqual(w.tile(15,y).kind,'wall');});
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { generate, validate, World } from "../src/generation.ts";
+import { defaults, decode } from "../src/save.ts";
+import { Game } from "../src/state.ts";
+import { predict } from "../src/combat.ts";
+import { chooseStep } from "../src/automation.ts";
+import { point } from "../src/entities.ts";
+test("500 deterministic chunks connect from entrance to exit", () => {
+  for (let seed = 0; seed < 10; seed++)
+    for (let i = 0; i < 50; i++) {
+      const a = generate(seed, i);
+      assert.ok(validate(a, i * 20));
+      assert.deepEqual(a, generate(seed, i));
+      assert.notEqual(a.get(point(15, i * 20))?.kind, "wall");
+    }
+});
+test("combat uses first strike, defenses, and strict survival", () => {
+  const p = new Game(defaults()).run.player;
+  assert.deepEqual(
+    predict(p, { name: "test", hp: 25, attack: 10, defense: 0, tier: 0 }),
+    { hit: 12, turns: 3, damage: 10, survivable: true },
+  );
+  p.hp = 10;
+  assert.equal(
+    predict(p, { name: "test", hp: 25, attack: 10, defense: 0, tier: 0 })
+      .survivable,
+    false,
+  );
+});
+test("doors consume matching keys; pickups and walls obey movement", () => {
+  const g = new Game(defaults()),
+    p = g.run.player;
+  g.world.changes["15,1"] = { kind: "door", color: "blue" };
+  assert.equal(g.move(0, 1), false);
+  p.keys.blue = 1;
+  assert.equal(g.move(0, 1), true);
+  assert.equal(p.keys.blue, 0);
+  g.world.changes["15,2"] = { kind: "attack" };
+  g.move(0, 1);
+  assert.equal(p.attack, 14);
+  g.world.changes["15,3"] = { kind: "wall" };
+  assert.equal(g.move(0, 1), false);
+  assert.equal(g.run.height, 2);
+});
+test("lethal combat blocked unless deliberate, death awards once and upgrades persist", () => {
+  const g = new Game(defaults());
+  g.world.changes["15,1"] = {
+    kind: "enemy",
+    enemy: { name: "doom", hp: 999, attack: 999, defense: 999, tier: 3 },
+  };
+  assert.equal(g.move(0, 1), false);
+  assert.equal(g.summary, null);
+  g.move(0, 1, true);
+  assert.ok(g.summary);
+  assert.equal(g.save.run, null);
+  const earned = g.save.essence;
+  g.finish("again");
+  assert.equal(g.save.essence, earned);
+  g.save.essence = 100;
+  assert.ok(g.buy("hp"));
+  g.summary = null;
+  g.newRun();
+  assert.equal(g.run.player.maxHp, 140);
+});
+test("automation climbs purposefully, never takes lethal fights, bounds chunk memory", () => {
+  const g = new Game(defaults());
+  for (let i = 0; i < 1500; i++) {
+    const s = chooseStep(g);
+    if (!s) break;
+    assert.ok(g.move(s.dx, s.dy));
+    assert.ok(g.run.player.hp > 0);
+  }
+  assert.ok(g.run.height > 30, `reached ${g.run.height}`);
+  g.world.maintain(10000);
+  assert.ok(g.world.chunks.size < 8);
+});
+test("save roundtrip, malformed values and old versions are safe", () => {
+  const g = new Game(defaults());
+  g.move(0, 1);
+  const restored = decode(JSON.stringify(g.save));
+  assert.equal(restored.run?.player.y, 1);
+  for (const raw of [
+    "oops",
+    "null",
+    '{"version":0}',
+    '{"version":1,"run":{"player":null}}',
+  ])
+    assert.equal(decode(raw).run, null);
+  const bad = JSON.parse(JSON.stringify(g.save));
+  bad.run.player.keys = null;
+  assert.equal(decode(JSON.stringify(bad)).run, null);
+});
+test("density does not alter world or run; chunk boundaries stay traversable", () => {
+  const g = new Game(defaults());
+  const tiles = Array.from(g.world.chunks.entries());
+  for (const density of [16, 24, 30, 20]) {
+    g.save.settings.density = density;
+    assert.equal(g.run.player.x, 15);
+    assert.deepEqual(Array.from(g.world.chunks.entries()), tiles);
+  }
+  const w = new World(42, {});
+  for (let y = 0; y < 400; y++) assert.notEqual(w.tile(15, y).kind, "wall");
+});
