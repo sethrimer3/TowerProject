@@ -22,8 +22,14 @@ export class Renderer {
     const g = this.game,
       p = g.run.player,
       n = g.save.settings.density;
-    if(this.seed!==g.run.seed){this.seed=g.run.seed;this.playerX=p.x;this.playerY=p.y;this.bottom=Math.max(0,p.y-Math.floor(n*.3));}
-    if(Math.abs(p.x-this.playerX)>WIDTH/2)this.playerX=p.x;
+    if (this.seed !== g.run.seed) {
+      this.seed = g.run.seed;
+      this.playerX = p.x;
+      this.playerY = p.y;
+      this.bottom = Math.max(0, p.y - Math.floor(n * 0.3));
+      this.left = Math.max(0, Math.min(WIDTH - n, p.x - Math.floor(n / 2)));
+    }
+    if (Math.abs(p.x - this.playerX) > WIDTH / 2) this.playerX = p.x;
     const box = this.canvas.getBoundingClientRect(),
       dpr = Math.min(devicePixelRatio || 1, 2);
     if (this.canvas.width !== Math.round(box.width * dpr)) {
@@ -34,10 +40,15 @@ export class Renderer {
     this.size = box.width / n;
     const dt = Math.min(0.1, (now - this.last) / 1000 || 0.016);
     this.last = now;
-    const blend = g.save.settings.reduceMotion ? 1 : 1 - Math.exp(-dt * 14);
+    const blend =
+      g.save.settings.reduceMotion || g.save.settings.transition === "instant"
+        ? 1
+        : 1 - Math.exp(-dt * (g.save.settings.transition === "fast" ? 32 : 14));
     this.bottom +=
       (Math.max(0, p.y - Math.floor(n * 0.3)) - this.bottom) * blend;
-    this.left = Math.max(0, Math.min(WIDTH - n, p.x - Math.floor(n / 2)));
+    this.left +=
+      (Math.max(0, Math.min(WIDTH - n, p.x - Math.floor(n / 2))) - this.left) *
+      blend;
     this.playerX += (p.x - this.playerX) * blend;
     this.playerY += (p.y - this.playerY) * blend;
     const c = this.ctx,
@@ -45,13 +56,13 @@ export class Renderer {
     c.fillStyle = "#0b1017";
     c.fillRect(0, 0, box.width, box.width);
     for (let row = -1; row <= n; row++)
-      for (let col = 0; col < n; col++) {
-        const x = col + this.left,
+      for (let col = -1; col <= n; col++) {
+        const x = col + Math.floor(this.left),
           y = Math.floor(this.bottom) + row;
         if (y < 0) continue;
         const sy = (n - 1 - (y - this.bottom)) * s;
         c.save();
-        c.translate(col * s, sy);
+        c.translate((x - this.left) * s, sy);
         c.scale(s / 24, s / 24);
         this.tile(g.world.tile(x, y), x, y, now);
         c.restore();
@@ -65,19 +76,46 @@ export class Renderer {
     this.hero();
     c.restore();
     // Border segments stop at open spaces instead of closing wrap passages.
-    for(let row=0;row<n;row++){
-      const y=Math.floor(this.bottom)+row,sy=(n-1-(y-this.bottom))*s;
-      for(const side of [0,1]){
-        const x=this.left+(side?n-1:0),tile=g.world.tile(x,y);
-        if(tile.kind==='wall'){c.fillStyle='#606b79';c.fillRect(side?box.width-2:0,sy,2,s);}
-        else if((x===0||x===WIDTH-1)&&g.world.tile(0,y).kind!=='wall'&&g.world.tile(WIDTH-1,y).kind!=='wall'){
-          const edge=side?box.width-3:3;c.strokeStyle='#d5bb7a';c.lineWidth=1.5;c.beginPath();c.moveTo(edge+(side?-4:4),sy+s*.3);c.lineTo(edge,sy+s*.5);c.lineTo(edge+(side?-4:4),sy+s*.7);c.stroke();
+    for (let row = 0; row < n; row++) {
+      const y = Math.floor(this.bottom) + row,
+        sy = (n - 1 - (y - this.bottom)) * s;
+      for (const side of [0, 1]) {
+        const x = Math.floor(this.left + (side ? n - 0.000001 : 0)),
+          tile = g.world.tile(x, y);
+        if (tile.kind === "wall") {
+          c.fillStyle = "#606b79";
+          c.fillRect(side ? box.width - 2 : 0, sy, 2, s);
+        } else if (
+          (x === 0 || x === WIDTH - 1) &&
+          g.world.tile(0, y).kind !== "wall" &&
+          g.world.tile(WIDTH - 1, y).kind !== "wall"
+        ) {
+          const edge = side ? box.width - 3 : 3;
+          c.strokeStyle = "#d5bb7a";
+          c.lineWidth = 1.5;
+          c.beginPath();
+          c.moveTo(edge + (side ? -4 : 4), sy + s * 0.3);
+          c.lineTo(edge, sy + s * 0.5);
+          c.lineTo(edge + (side ? -4 : 4), sy + s * 0.7);
+          c.stroke();
         }
       }
     }
-    if(g.blocked.until>now){
-      const x=(g.blocked.x-this.left+.5)*s,y=(n-.5-(g.blocked.y-this.bottom))*s,r=s*.28;
-      c.save();c.globalAlpha=Math.min(1,(g.blocked.until-now)/700);c.strokeStyle='#ff5869';c.lineWidth=Math.max(2,s*.13);c.beginPath();c.moveTo(x-r,y-r);c.lineTo(x+r,y+r);c.moveTo(x+r,y-r);c.lineTo(x-r,y+r);c.stroke();c.restore();
+    if (g.blocked.until > now) {
+      const x = (g.blocked.x - this.left + 0.5) * s,
+        y = (n - 0.5 - (g.blocked.y - this.bottom)) * s,
+        r = s * 0.28;
+      c.save();
+      c.globalAlpha = Math.min(1, (g.blocked.until - now) / 700);
+      c.strokeStyle = "#ff5869";
+      c.lineWidth = Math.max(2, s * 0.13);
+      c.beginPath();
+      c.moveTo(x - r, y - r);
+      c.lineTo(x + r, y + r);
+      c.moveTo(x + r, y - r);
+      c.lineTo(x - r, y + r);
+      c.stroke();
+      c.restore();
     }
     if (g.effect.until > now) {
       c.font = `600 ${Math.max(11, s * 0.6)}px Cinzel`;
@@ -304,7 +342,7 @@ export class Renderer {
   position(clientX: number, clientY: number) {
     const r = this.canvas.getBoundingClientRect();
     return {
-      x: Math.floor((clientX - r.left) / this.size) + this.left,
+      x: Math.floor((clientX - r.left) / this.size + this.left),
       y: Math.floor(
         this.bottom +
           this.game.save.settings.density -

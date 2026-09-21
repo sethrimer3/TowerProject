@@ -14,9 +14,18 @@ npm run build
 npm run preview
 ```
 
-Open the local URL printed by Vite. Arrow keys / WASD, the directional buttons, and adjacent tile taps move cardinally. Tap any creature for its exact combat forecast. Lethal fights are blocked; an inspected adjacent lethal creature can be challenged through explicit confirmation. The player attacks first, so enemy retaliation is `max(0, enemyAttack - defense) * (ceil(enemyHP / max(1, attack - enemyDefense)) - 1)`.
+Open the local URL printed by Vite. Tap an open tile to walk to it, fighting monsters and collecting items along the route. Swipes move one tile in any cardinal direction. Keyboard arrows / WASD also work; on-screen arrows are off by default and can be enabled in Settings. Monsters on manual routes are fought even when lethal. Missing keys stop movement at the necessary door, with a fading red X; unreachable wall targets get the same feedback at the tapped spot. Routing prefers an available detour over a door for which no key is held.
 
-Retire from Settings to claim Essence, or deliberately challenge a lethal enemy. Buy permanent upgrades in Upgrades. Starting-stat and equipment upgrades apply on the next ascent; Wayfinder unlocks automation immediately. Automation can be paused, and its speed changed. It pauses on other pages, in dialogs, and in hidden browser tabs. No offline progress is calculated.
+Movement transitions can be set to **Smooth** (default), **Fast**, or **Off (instant)** in Settings. This controls camera and player interpolation on both axes; Reduce motion overrides it with instant movement.
+
+Matching open left/right world edges wrap to each other. Locked doors and enemies at the destination still apply. Openings have no solid frame across them and show continuation chevrons. Viewport cropping is not a wrap boundary; the world is 30 tiles wide. Vertical movement remains continuous upward.
+
+**Undo** restores one tile move, including combat, pickups, gear, keys, doors, and height. It cancels any queued route. One history slot is available initially; four levels of **Echoes of time** expand capacity to 2, 3, 4, then 5 moves. History persists across refreshes.
+
+Death immediately starts a fresh run at the entrance (floor 1 / height 0) and clears normal undo history. The **Revive** upgrade changes the button to Revive until the first successful move in the new run. It restores the state immediately before the fatal move. A blocked move does not expire it; undoing the first new move cannot bring it back. While Revive is available, death Essence is held pending and paid only when continuing, so reviving cannot duplicate rewards. Revive eligibility also persists across refreshes.
+
+Retire from Settings to claim Essence. Starting-stat and equipment upgrades apply on the next ascent; Wayfinder, Revive, and undo-capacity upgrades unlock immediately. Automation still avoids lethal fights and pauses outside the Tower tab, in dialogs, and when hidden. No offline progress is calculated.
+
 
 ## Architecture / files
 
@@ -28,7 +37,8 @@ Retire from Settings to claim Essence, or deliberately challenge a lethal enemy.
 - `src/combat.ts`: pure combat forecasting.
 - `src/automation.ts`: bounded breadth-first search and separate destination scoring. Stops search at interactions and replans each step to avoid assuming future keys or health.
 - `src/rendering.ts`: original code-drawn sprites, stone tiles, torchlight, smooth camera and player interpolation, transient pickup/combat text. Rendering density is independent of world dimensions.
-- `src/input.ts`: keyboard, pointer, and touch direction controls.
+- `src/input.ts`: tap routes, pointer-captured swipes, keyboard, and optional directional buttons.
+- `src/pathfinding.ts`: shared wrap-aware route search that approaches necessary locked doors.
 - `src/save.ts`: defensive versioned localStorage load and save.
 - `src/main.ts`, `src/style.css`: UI, navigation, settings, confirmations, frame scheduling, responsive styling.
 - `tests/game.test.ts`: deterministic generation, combat, movement, progression, automation, save handling, density independence.
@@ -40,7 +50,7 @@ The default viewport shows exactly 20 × 20 square tiles. The entrance is bottom
 
 ## Browser verification
 
-Start `npm run dev` in another terminal, then run `npm run test:browser`. The test uses installed Microsoft Edge by default. To use another installed Playwright channel, set `PLAYWRIGHT_CHANNEL` (e.g. `chrome`). Screenshots are written to `test-results/`. Core tests use Node's experimental TypeScript transformation and may print its experimental warning.
+Start `npm run dev` in another terminal, then run `npm run test:browser` (includes the gesture / undo / Revive suite). The test uses installed Microsoft Edge by default. To use another installed Playwright channel, set `PLAYWRIGHT_CHANNEL` (e.g. `chrome`). Screenshots are written to `test-results/`. Core tests use Node's experimental TypeScript transformation and may print its experimental warning.
 
 ## GitHub Pages
 

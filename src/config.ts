@@ -6,8 +6,20 @@ export const SAVE_KEY = "towerincramental.v1";
 export const COLORS = { yellow: "#eac16b", blue: "#6dbdf1", red: "#df797e" };
 export type KeyColor = keyof typeof COLORS;
 export const UPGRADES = [
-  {id:'revive',name:'Revive',description:'Undo a fatal move before moving in the new run',base:12,max:1},
-  {id:'undos',name:'Echoes of time',description:'Store one additional undo (up to 5)',base:5,max:4},
+  {
+    id: "revive",
+    name: "Revive",
+    description: "Undo a fatal move before moving in the new run",
+    base: 12,
+    max: 1,
+  },
+  {
+    id: "undos",
+    name: "Echoes of time",
+    description: "Store one additional undo (up to 5)",
+    base: 5,
+    max: 4,
+  },
   {
     id: "hp",
     name: "Vital ember",

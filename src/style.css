@@ -785,7 +785,17 @@ nav {
     display: none;
   }
 }
-[hidden] { display: none !important; }
-.board { border: 0; box-shadow: none; }
-#undo { font-size: 10px; white-space: nowrap; }
-.controls { flex-wrap: wrap; }
+[hidden] {
+  display: none !important;
+}
+.board {
+  border: 0;
+  box-shadow: none;
+}
+#undo {
+  font-size: 10px;
+  white-space: nowrap;
+}
+.controls {
+  flex-wrap: wrap;
+}

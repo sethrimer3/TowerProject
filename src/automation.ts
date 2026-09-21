@@ -27,9 +27,10 @@ export function chooseStep(game: Game) {
       [1, 0],
       [0, -1],
     ]) {
-      const dest=game.world.step(n.x,n.y,dx,dy);
-      if(!dest)continue;
-      const {x,y}=dest,k=point(x,y);
+      const dest = game.world.step(n.x, n.y, dx, dy);
+      if (!dest) continue;
+      const { x, y } = dest,
+        k = point(x, y);
       if (
         seen.has(k) ||
         y < Math.max(game.world.floor, p.y - 40) ||

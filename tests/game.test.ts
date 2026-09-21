@@ -51,17 +51,18 @@ test("doors consume matching keys; pickups and walls obey movement", () => {
   assert.equal(g.move(0, 1), false);
   assert.equal(g.run.height, 2);
 });
-test("lethal combat blocked unless deliberate, death awards once and upgrades persist", () => {
+test("automation avoids lethal fights; manual death resets immediately and awards once", () => {
   const g = new Game(defaults());
   g.world.changes["15,1"] = {
     kind: "enemy",
     enemy: { name: "doom", hp: 999, attack: 999, defense: 999, tier: 3 },
   };
-  assert.equal(g.move(0, 1), false);
+  assert.equal(g.move(0, 1, false), false);
   assert.equal(g.summary, null);
   g.move(0, 1, true);
   assert.ok(g.summary);
-  assert.equal(g.save.run, null);
+  assert.equal(g.save.run?.player.y, 0);
+  assert.equal(g.undo(), false);
   const earned = g.save.essence;
   g.finish("again");
   assert.equal(g.save.essence, earned);
@@ -130,7 +131,7 @@ test("each door is a separating choke point, and keys solve every room without s
         [0, 1],
         [0, -1],
       ].filter(([dx, dy]) => {
-        const t = cells.get(point(x + dx, y + dy));
+        const t = cells.get(point((x + dx + 30) % 30, y + dy));
         return t && t.kind !== "wall";
       });
       assert.equal(neighbors.length, 2, "Door must fit a one-tile passage");
@@ -162,7 +163,7 @@ test("each door is a separating choke point, and keys solve every room without s
             [-1, 0],
             [0, 1],
             [0, -1],
-          ].some(([dx, dy]) => area.has(point(x + dx, y + dy)))
+          ].some(([dx, dy]) => area.has(point((x + dx + 30) % 30, y + dy)))
         );
       });
       assert.ok(next, "Keys cannot be trapped behind their own doors");

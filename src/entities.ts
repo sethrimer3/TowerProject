@@ -45,10 +45,11 @@ export type Run = {
   changes: Record<string, Tile>;
   floor: number;
 };
-export type MoveSnapshot = {run:Run;best:number};
-export type Revival = {snapshot:MoveSnapshot;earned:number};
+export type MoveSnapshot = { run: Run; best: number };
+export type Revival = { snapshot: MoveSnapshot; earned: number };
 export type Settings = {
-  showArrows:boolean;
+  transition: "smooth" | "fast" | "instant";
+  showArrows: boolean;
   density: number;
   speed: number;
   reduceMotion: boolean;
@@ -56,7 +57,7 @@ export type Settings = {
 export type Save = {
   version: 1;
   history: MoveSnapshot[];
-  revival: Revival|null;
+  revival: Revival | null;
   best: number;
   essence: number;
   upgrades: Record<UpgradeId, number>;

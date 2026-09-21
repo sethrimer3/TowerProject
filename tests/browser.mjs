@@ -28,6 +28,11 @@ if (!fontCheck.loaded || fontCheck.wrong.length || fontCheck.remote)
   throw Error(
     "Local Cinzel font verification failed: " + JSON.stringify(fontCheck),
   );
+if (await page.locator(".dpad").isVisible())
+  throw Error("Arrows should be hidden by default");
+await page.locator('[data-tab="settings"]').click();
+await page.locator("#arrows").check();
+await page.locator('[data-tab="tower"]').click();
 await page.getByRole("button", { name: "Move up", exact: true }).click();
 if ((await page.locator("#height").textContent()) !== "1")
   throw Error("Movement failed");
@@ -132,6 +137,9 @@ const routePage = await browser.newPage({
 });
 routePage.on("pageerror", (e) => errors.push(e.message));
 await routePage.goto("http://127.0.0.1:5173/");
+await routePage.locator('[data-tab="settings"]').click();
+await routePage.locator("#arrows").check();
+await routePage.locator('[data-tab="tower"]').click();
 for (let step = 0; step < 20; step++)
   await routePage.getByRole("button", { name: "Move up", exact: true }).click();
 if ((await routePage.locator("#height").textContent()) !== "20")

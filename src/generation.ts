@@ -40,8 +40,8 @@ export function reachable(
     seen.add(k);
     const [x, y] = k.split(",").map(Number);
     for (const [dx, dy] of directions) {
-      const xx=x+dx;
-      queue.push(point(xx<0?WIDTH-1:xx>=WIDTH?0:xx,y+dy));
+      const xx = x + dx;
+      queue.push(point(xx < 0 ? WIDTH - 1 : xx >= WIDTH ? 0 : xx, y + dy));
     }
   }
   return seen;
@@ -75,7 +75,9 @@ export function validate(cells: Map<string, Tile>, base: number) {
     const next = locks.find(([k, t]) => {
       if (!closed.has(k) || !keys[t.color!]) return false;
       const [x, y] = k.split(",").map(Number);
-      return directions.some(([dx, dy]) => area.has(point((x + dx + WIDTH) % WIDTH, y + dy)));
+      return directions.some(([dx, dy]) =>
+        area.has(point((x + dx + WIDTH) % WIDTH, y + dy)),
+      );
     });
     if (!next) return false;
     keys[next[1].color!]--;
@@ -158,12 +160,19 @@ export function generate(seed: number, index: number): Map<string, Tile> {
   for (let y = 0; y < CHUNK; y++) reserve(START_X, y);
   function link(parent: Room, child: Room, main = false) {
     let door: [number, number];
-    if(parent.row===child.row && Math.abs(parent.col-child.col)===2) {
-      const left=parent.col===0?parent:child,right=parent.col===2?parent:child;
-      const y=int(left.y1+1,left.y2-1);
-      for(let x=0;x<=left.x1;x++){floor(x,y);reserve(x,y);}
-      for(let x=right.x2;x<WIDTH;x++){floor(x,y);reserve(x,y);}
-      door=[0,y];
+    if (parent.row === child.row && Math.abs(parent.col - child.col) === 2) {
+      const left = parent.col === 0 ? parent : child,
+        right = parent.col === 2 ? parent : child;
+      const y = int(left.y1 + 1, left.y2 - 1);
+      for (let x = 0; x <= left.x1; x++) {
+        floor(x, y);
+        reserve(x, y);
+      }
+      for (let x = right.x2; x < WIDTH; x++) {
+        floor(x, y);
+        reserve(x, y);
+      }
+      door = [0, y];
     } else if (parent.row === child.row) {
       const left = parent.col < child.col ? parent : child;
       const right = left === parent ? child : parent;
@@ -208,7 +217,9 @@ export function generate(seed: number, index: number): Map<string, Tile> {
           .filter(
             (r) =>
               !visited.has(r.id) &&
-              (Math.abs(r.col - parent.col) + Math.abs(r.row - parent.row) === 1 || (r.row===parent.row && Math.abs(r.col-parent.col)===2)),
+              (Math.abs(r.col - parent.col) + Math.abs(r.row - parent.row) ===
+                1 ||
+                (r.row === parent.row && Math.abs(r.col - parent.col) === 2)),
           )
           .map((child) => ({ parent, child })),
       );
@@ -343,13 +354,18 @@ export class World {
       this.chunks.get(index)!.get(point(x, y)) ?? { kind: "wall" }
     );
   }
-  step(x:number,y:number,dx:number,dy:number) {
-    let nx=x+dx; const ny=y+dy;
-    if(nx<0||nx>=WIDTH) {
-      if(this.tile(0,y).kind==='wall'||this.tile(WIDTH-1,y).kind==='wall')return null;
-      nx=(nx+WIDTH)%WIDTH;
+  step(x: number, y: number, dx: number, dy: number) {
+    let nx = x + dx;
+    const ny = y + dy;
+    if (nx < 0 || nx >= WIDTH) {
+      if (
+        this.tile(0, y).kind === "wall" ||
+        this.tile(WIDTH - 1, y).kind === "wall"
+      )
+        return null;
+      nx = (nx + WIDTH) % WIDTH;
     }
-    return {x:nx,y:ny};
+    return { x: nx, y: ny };
   }
   clear(x: number, y: number) {
     this.changes[point(x, y)] = { kind: "floor" };
