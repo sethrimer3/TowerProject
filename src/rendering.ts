@@ -9,6 +9,7 @@ export class Renderer {
   playerX = 15;
   playerY = 0;
   last = 0;
+  seed = -1;
   constructor(
     public canvas: HTMLCanvasElement,
     public game: Game,
@@ -21,6 +22,8 @@ export class Renderer {
     const g = this.game,
       p = g.run.player,
       n = g.save.settings.density;
+    if(this.seed!==g.run.seed){this.seed=g.run.seed;this.playerX=p.x;this.playerY=p.y;this.bottom=Math.max(0,p.y-Math.floor(n*.3));}
+    if(Math.abs(p.x-this.playerX)>WIDTH/2)this.playerX=p.x;
     const box = this.canvas.getBoundingClientRect(),
       dpr = Math.min(devicePixelRatio || 1, 2);
     if (this.canvas.width !== Math.round(box.width * dpr)) {
@@ -61,6 +64,21 @@ export class Renderer {
     c.scale(s / 24, s / 24);
     this.hero();
     c.restore();
+    // Border segments stop at open spaces instead of closing wrap passages.
+    for(let row=0;row<n;row++){
+      const y=Math.floor(this.bottom)+row,sy=(n-1-(y-this.bottom))*s;
+      for(const side of [0,1]){
+        const x=this.left+(side?n-1:0),tile=g.world.tile(x,y);
+        if(tile.kind==='wall'){c.fillStyle='#606b79';c.fillRect(side?box.width-2:0,sy,2,s);}
+        else if((x===0||x===WIDTH-1)&&g.world.tile(0,y).kind!=='wall'&&g.world.tile(WIDTH-1,y).kind!=='wall'){
+          const edge=side?box.width-3:3;c.strokeStyle='#d5bb7a';c.lineWidth=1.5;c.beginPath();c.moveTo(edge+(side?-4:4),sy+s*.3);c.lineTo(edge,sy+s*.5);c.lineTo(edge+(side?-4:4),sy+s*.7);c.stroke();
+        }
+      }
+    }
+    if(g.blocked.until>now){
+      const x=(g.blocked.x-this.left+.5)*s,y=(n-.5-(g.blocked.y-this.bottom))*s,r=s*.28;
+      c.save();c.globalAlpha=Math.min(1,(g.blocked.until-now)/700);c.strokeStyle='#ff5869';c.lineWidth=Math.max(2,s*.13);c.beginPath();c.moveTo(x-r,y-r);c.lineTo(x+r,y+r);c.moveTo(x+r,y-r);c.lineTo(x-r,y+r);c.stroke();c.restore();
+    }
     if (g.effect.until > now) {
       c.font = `600 ${Math.max(11, s * 0.6)}px Cinzel`;
       c.textAlign = "center";

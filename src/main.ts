@@ -8,7 +8,7 @@ import { predict } from "./combat.ts";
 import { UPGRADES, cost, type UpgradeId } from "./config.ts";
 const icons = { tower: "♜", gear: "♞", upgrades: "✦", settings: "⚙" };
 const app = document.querySelector<HTMLDivElement>("#app")!;
-app.innerHTML = `<main class="shell"><header class="brand"><div><span class="eyebrow">AN ENDLESS ASCENT</span><h1>Tower<span>Incramental</span></h1></div><div class="essence">✦ <b id="essence">0</b><small>ESSENCE</small></div></header><section class="stats" aria-label="Player statistics"><div class="portrait"><span>♞</span><small>WAYFARER</small></div><div class="vitals"><div><span class="heart">♥</span> HP <b id="hp"></b></div><div class="health-track"><i id="health"></i></div><div class="combat-stats"><span>⚔ <b id="attack"></b></span><span>⛨ <b id="defense"></b></span></div></div><div class="keys"><span class="yellow">⚿ <b id="yellow"></b></span><span class="blue">⚿ <b id="blue"></b></span><span class="red">⚿ <b id="red"></b></span></div><div class="height"><small>HEIGHT</small><strong id="height">0</strong><span>BEST <b id="best">0</b></span></div></section><section id="tower" class="page active"><div class="tower-heading"><span class="rule"></span><span>THE HOLLOW SPIRE</span><span class="rule"></span></div><div class="ascent"><span>↑</span><small>HIGHER DANGERS · GREATER REWARDS</small></div><div class="board"><canvas id="world" aria-label="Tower grid: use arrow keys, WASD, or the directional buttons to move"></canvas><span class="board-caption" id="density-label">20 × 20</span></div><div class="status"><span class="live-dot"></span><span id="message" aria-live="polite"></span></div><div class="controls"><button id="auto" class="auto">✦ AUTO-CLIMB <span>LOCKED</span></button><button id="pause" aria-label="Pause game">Ⅱ</button><div class="dpad"><button data-move="-1,0" aria-label="Move left">←</button><div><button data-move="0,1" aria-label="Move up">↑</button><button data-move="0,-1" aria-label="Move down">↓</button></div><button data-move="1,0" aria-label="Move right">→</button></div></div><div id="inspect" class="inspection">Tap a creature to inspect it. Use arrows, WASD, or the controls to climb.</div></section><section id="gear" class="page"></section><section id="upgrades" class="page"></section><section id="settings" class="page"></section><nav aria-label="Main navigation">${Object.entries(
+app.innerHTML = `<main class="shell"><header class="brand"><div><span class="eyebrow">AN ENDLESS ASCENT</span><h1>Tower<span>Incramental</span></h1></div><div class="essence">✦ <b id="essence">0</b><small>ESSENCE</small></div></header><section class="stats" aria-label="Player statistics"><div class="portrait"><span>♞</span><small>WAYFARER</small></div><div class="vitals"><div><span class="heart">♥</span> HP <b id="hp"></b></div><div class="health-track"><i id="health"></i></div><div class="combat-stats"><span>⚔ <b id="attack"></b></span><span>⛨ <b id="defense"></b></span></div></div><div class="keys"><span class="yellow">⚿ <b id="yellow"></b></span><span class="blue">⚿ <b id="blue"></b></span><span class="red">⚿ <b id="red"></b></span></div><div class="height"><small>HEIGHT</small><strong id="height">0</strong><span>BEST <b id="best">0</b></span></div></section><section id="tower" class="page active"><div class="tower-heading"><span class="rule"></span><span>THE HOLLOW SPIRE</span><span class="rule"></span></div><div class="ascent"><span>↑</span><small>HIGHER DANGERS · GREATER REWARDS</small></div><div class="board"><canvas id="world" aria-label="Tower grid: tap a destination or swipe to move. Keyboard arrows and WASD also work."></canvas><span class="board-caption" id="density-label">20 × 20</span></div><div class="status"><span class="live-dot"></span><span id="message" aria-live="polite"></span></div><div class="controls"><button id="auto" class="auto">✦ AUTO-CLIMB <span>LOCKED</span></button><button id="pause" aria-label="Pause game">Ⅱ</button><button id="undo">Undo</button><div class="dpad" hidden><button data-move="-1,0" aria-label="Move left">←</button><div><button data-move="0,1" aria-label="Move up">↑</button><button data-move="0,-1" aria-label="Move down">↓</button></div><button data-move="1,0" aria-label="Move right">→</button></div></div><div id="inspect" class="inspection">Tap a destination to walk and fight. Swipe to step. Undo reverses one step.</div></section><section id="gear" class="page"></section><section id="upgrades" class="page"></section><section id="settings" class="page"></section><nav aria-label="Main navigation">${Object.entries(
   icons,
 )
   .map(
@@ -22,6 +22,7 @@ const game = new Game(load());
 const renderer = new Renderer(document.querySelector("#world")!, game);
 let tab = "tower",
   lastAuto = 0,
+  lastRoute = 0,
   lastSave = 0;
 let selected: { x: number; y: number } | null = null;
 const el = (id: string) => document.getElementById(id)!;
@@ -39,20 +40,7 @@ function inspect(x: number, y: number) {
   if (t.kind === "enemy") {
     const e = t.enemy!,
       r = predict(p, e);
-    el("inspect").innerHTML =
-      `<b>${e.name}</b><span>HP ${e.hp} · ATK ${e.attack} · DEF ${e.defense}</span><strong class="${r.survivable ? "safe" : "danger"}">${r.damage} damage · ${r.survivable ? "Survivable" : "LETHAL"}</strong>${!r.survivable && Math.abs(x - p.x) + Math.abs(y - p.y) === 1 ? '<button id="risk">Challenge anyway</button>' : ""}`;
-    const risk = document.querySelector<HTMLButtonElement>("#risk");
-    if (risk)
-      risk.onclick = () =>
-        confirmAction(
-          "Challenge a lethal foe?",
-          "This fight will end your run. Your legacy will be preserved.",
-          "Enter battle",
-          () => {
-            game.move(x - p.x, y - p.y, true);
-            update();
-          },
-        );
+    el("inspect").innerHTML = `<b>${e.name}</b><span>HP ${e.hp} · ATK ${e.attack} · DEF ${e.defense}</span><strong class="${r.survivable?'safe':'danger'}">${r.damage} damage · ${r.survivable?'Survivable':'LETHAL'}</strong>`;
   } else {
     el("inspect").textContent =
       t.kind === "wall"
@@ -85,11 +73,16 @@ function update() {
     "density-label",
     `${game.save.settings.density} × ${game.save.settings.density}`,
   );
+  const undo=el('undo') as HTMLButtonElement;
+  undo.textContent=game.save.revival?'Revive':`Undo (${game.save.history.length}/${game.undoCapacity})`;
+  undo.disabled=!game.save.revival&&!game.save.history.length;
+  (document.querySelector('.dpad') as HTMLElement).hidden=!game.save.settings.showArrows;
   save();
   if (game.summary) showSummary();
 }
 function navigate(id: string) {
   tab = id;
+  if(id!=="tower")game.route=[];
   document
     .querySelectorAll(".page")
     .forEach((p) => p.classList.toggle("active", p.id === id));
@@ -106,7 +99,7 @@ function renderPage() {
   }
   if (tab === "upgrades") {
     el("upgrades").innerHTML =
-      `<div class="page-title"><small>WHAT REMAINS WHEN YOU FALL</small><h2>A lasting legacy</h2><p>Spend Essence to strengthen future ascents. Wayfinder unlocks immediately.</p></div>${UPGRADES.map(
+      `<div class="page-title"><small>WHAT REMAINS WHEN YOU FALL</small><h2>A lasting legacy</h2><p>Spend Essence to strengthen future ascents. Wayfinder, Revive, and extra undos unlock immediately.</p></div>${UPGRADES.map(
         (u) => {
           const n = game.save.upgrades[u.id],
             c = cost(u.id, n);
@@ -126,7 +119,7 @@ function renderPage() {
   }
   if (tab === "settings") {
     el("settings").innerHTML =
-      `<div class="page-title"><small>MAKE THE ASCENT YOUR OWN</small><h2>Settings</h2></div><label class="setting">Viewport density<select id="density">${[16, 20, 24, 30].map((n) => `<option ${game.save.settings.density === n ? "selected" : ""} value="${n}">${n} × ${n}</option>`).join("")}</select></label><label class="setting">Auto-climb speed<select id="speed">${[1, 3, 6, 10].map((n) => `<option ${game.save.settings.speed === n ? "selected" : ""} value="${n}">${n} steps / sec</option>`).join("")}</select></label><label class="setting">Reduce motion<input type="checkbox" id="motion" ${game.save.settings.reduceMotion ? "checked" : ""}></label><p class="hint">Automation pauses outside the Tower tab and while the browser is hidden. Progress saves after each action.</p><button class="wide" id="retire">Retire this ascent</button><p class="hint">Claim your Essence and enter a freshly generated tower.</p><button class="wide danger" id="erase">Erase all progress</button><p class="seed">RUN SEED · ${game.run.seed}</p>`;
+      `<div class="page-title"><small>MAKE THE ASCENT YOUR OWN</small><h2>Settings</h2></div><label class="setting">Viewport density<select id="density">${[16, 20, 24, 30].map((n) => `<option ${game.save.settings.density === n ? "selected" : ""} value="${n}">${n} × ${n}</option>`).join("")}</select></label><label class="setting">Auto-climb speed<select id="speed">${[1, 3, 6, 10].map((n) => `<option ${game.save.settings.speed === n ? "selected" : ""} value="${n}">${n} steps / sec</option>`).join("")}</select></label><label class="setting">Show directional buttons<input type="checkbox" id="arrows" ${game.save.settings.showArrows ? "checked" : ""}></label><label class="setting">Reduce motion<input type="checkbox" id="motion" ${game.save.settings.reduceMotion ? "checked" : ""}></label><p class="hint">Automation pauses outside the Tower tab and while the browser is hidden. Progress saves after each action.</p><button class="wide" id="retire">Retire this ascent</button><p class="hint">Claim your Essence and enter a freshly generated tower.</p><button class="wide danger" id="erase">Erase all progress</button><p class="seed">RUN SEED · ${game.run.seed}</p>`;
     (el("density") as HTMLSelectElement).onchange = (e) => {
       game.save.settings.density = Number(
         (e.target as HTMLSelectElement).value,
@@ -137,6 +130,7 @@ function renderPage() {
       game.save.settings.speed = Number((e.target as HTMLSelectElement).value);
       save();
     };
+    (el('arrows') as HTMLInputElement).onchange=e=>{game.save.settings.showArrows=(e.target as HTMLInputElement).checked;update();};
     (el("motion") as HTMLInputElement).onchange = (e) => {
       game.save.settings.reduceMotion = (e.target as HTMLInputElement).checked;
       save();
@@ -185,12 +179,14 @@ function confirmAction(
 function showSummary() {
   const s = game.summary!;
   if (modal.open) return;
-  modal.innerHTML = `<span class="summary-icon">✦</span><small>${s.reason.toUpperCase()}</small><h2>The tower remembers.</h2><p>Every ending is the beginning of a stronger ascent.</p><div class="summary-stats"><div><strong>${s.height}</strong>HEIGHT</div><div><strong>${s.kills}</strong>VICTORIES</div><div><strong>+${s.earned}</strong>ESSENCE</div></div><button class="wide" id="again">Begin another ascent →</button>`;
+  modal.innerHTML = `<span class="summary-icon">✦</span><small>${s.reason.toUpperCase()}</small><h2>The tower remembers.</h2><p>Every ending is the beginning of a stronger ascent.</p><div class="summary-stats"><div><strong>${s.height}</strong>HEIGHT</div><div><strong>${s.kills}</strong>VICTORIES</div><div><strong>+${s.earned}</strong>ESSENCE</div></div>${game.save.revival?'<p>Revive is available until your next move. Essence is awarded if you continue.</p><button class="wide" id="revive-now">Revive</button>':''}<button class="wide" id="again">${s.dead?'Continue from floor 1':'Begin another ascent →'}</button>`;
   modal.showModal();
+  const revive=document.querySelector<HTMLButtonElement>('#revive-now');
+  if(revive)revive.onclick=()=>{modal.close();game.undo();navigate('tower');update();};
   el("again").onclick = () => {
     modal.close();
     game.summary = null;
-    game.newRun();
+    if(!s.dead)game.newRun();
     renderer.bottom = 0;
     renderer.playerX = game.run.player.x;
     renderer.playerY = 0;
@@ -207,12 +203,14 @@ el("auto").onclick = () => {
     navigate("upgrades");
     return;
   }
+  game.route=[];
   game.auto = !game.auto;
   game.message = game.auto
     ? "Wayfinder is searching for a route."
     : "Manual climbing";
   update();
 };
+el("undo").onclick=()=>{game.undo();update();};
 el("pause").onclick = () => {
   game.paused = !game.paused;
   update();
@@ -234,6 +232,7 @@ bindInput(
 function frame(time: number) {
   if (!document.hidden && tab === "tower") {
     renderer.draw(time);
+    if(game.route.length&&!game.paused&&!game.summary&&!modal.open&&time-lastRoute>130){lastRoute=time;game.routeStep();update();}
     if (
       game.auto &&
       !game.paused &&
@@ -244,7 +243,7 @@ function frame(time: number) {
       lastAuto = time;
       const step = chooseStep(game);
       if (step) {
-        game.move(step.dx, step.dy);
+        game.move(step.dx, step.dy,false);
         game.message = step.label;
       } else
         game.message =

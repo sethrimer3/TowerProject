@@ -3,12 +3,14 @@ import type { Save } from "./entities.ts";
 export function defaults(): Save {
   return {
     version: 1,
+    history: [],
+    revival: null,
     best: 0,
     essence: 0,
     upgrades: Object.fromEntries(
       UPGRADES.map((u) => [u.id, 0]),
     ) as Save["upgrades"],
-    settings: { density: 20, speed: 3, reduceMotion: false },
+    settings: { showArrows:false, density: 20, speed: 3, reduceMotion: false },
     run: null,
   };
 }
@@ -28,6 +30,7 @@ export function decode(raw: string | null): Save {
       d.settings.density = s.settings.density;
     if ([1, 3, 6, 10].includes(s.settings?.speed))
       d.settings.speed = s.settings.speed;
+    d.settings.showArrows = s.settings?.showArrows === true;
     d.settings.reduceMotion = s.settings?.reduceMotion === true;
     const r = s.run,
       p = r?.player;
@@ -71,6 +74,19 @@ export function decode(raw: string | null): Save {
       )
     )
       d.run = r;
+    const snapshot=(value:any)=>{
+      if(!value||!finite(value.best))return null;
+      const loaded=decode(JSON.stringify({version:1,run:value.run})).run;
+      return loaded?{run:loaded,best:value.best}:null;
+    };
+    if(d.run && Array.isArray(s.history)) for(const value of s.history.slice(-(1+d.upgrades.undos))) {
+      const item=snapshot(value);
+      if(item && item.run.seed===d.run.seed && item.run.layoutVersion===d.run.layoutVersion)d.history.push(item);
+    }
+    if(d.run && d.upgrades.revive && finite(s.revival?.earned)) {
+      const item=snapshot(s.revival.snapshot);
+      if(item && item.run.layoutVersion===d.run.layoutVersion)d.revival={snapshot:item,earned:s.revival.earned};
+    }
   } catch {}
   return d;
 }
