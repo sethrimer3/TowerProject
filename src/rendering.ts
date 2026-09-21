@@ -1,4 +1,4 @@
-import { CHUNK, COLORS, WIDTH } from "./config.ts";
+import { CHUNK, COLORS } from "./config.ts";
 import type { Game } from "./state.ts";
 import type { Tile } from "./entities.ts";
 export class Renderer {
@@ -27,9 +27,12 @@ export class Renderer {
       this.playerX = p.x;
       this.playerY = p.y;
       this.bottom = Math.max(0, p.y - Math.floor(n * 0.3));
-      this.left = Math.max(0, Math.min(WIDTH - n, p.x - Math.floor(n / 2)));
+      this.left = Math.max(
+        0,
+        Math.min(g.world.width - n, p.x - Math.floor(n / 2)),
+      );
     }
-    if (Math.abs(p.x - this.playerX) > WIDTH / 2) this.playerX = p.x;
+    if (Math.abs(p.x - this.playerX) > g.world.width / 2) this.playerX = p.x;
     const box = this.canvas.getBoundingClientRect(),
       dpr = Math.min(devicePixelRatio || 1, 2);
     if (this.canvas.width !== Math.round(box.width * dpr)) {
@@ -47,7 +50,8 @@ export class Renderer {
     this.bottom +=
       (Math.max(0, p.y - Math.floor(n * 0.3)) - this.bottom) * blend;
     this.left +=
-      (Math.max(0, Math.min(WIDTH - n, p.x - Math.floor(n / 2))) - this.left) *
+      (Math.max(0, Math.min(g.world.width - n, p.x - Math.floor(n / 2))) -
+        this.left) *
       blend;
     this.playerX += (p.x - this.playerX) * blend;
     this.playerY += (p.y - this.playerY) * blend;
@@ -86,9 +90,9 @@ export class Renderer {
           c.fillStyle = "#606b79";
           c.fillRect(side ? box.width - 2 : 0, sy, 2, s);
         } else if (
-          (x === 0 || x === WIDTH - 1) &&
+          (x === 0 || x === g.world.width - 1) &&
           g.world.tile(0, y).kind !== "wall" &&
-          g.world.tile(WIDTH - 1, y).kind !== "wall"
+          g.world.tile(g.world.width - 1, y).kind !== "wall"
         ) {
           const edge = side ? box.width - 3 : 3;
           c.strokeStyle = "#d5bb7a";

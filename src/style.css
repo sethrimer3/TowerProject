@@ -98,6 +98,10 @@ h1 {
 h1 span {
   color: var(--gold);
 }
+.currencies {
+  display: flex;
+  gap: 16px;
+}
 .essence {
   color: var(--gold);
   text-align: center;
@@ -136,6 +140,10 @@ h1 span {
   font-size: 6px;
   letter-spacing: 1px;
   color: #a3adba;
+}
+.portrait #level {
+  color: var(--gold);
+  margin-top: 2px;
 }
 .vitals {
   padding: 13px 14px;
@@ -361,7 +369,7 @@ canvas {
 }
 nav {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 5px;
   margin-top: 10px;
   background: #111722;
@@ -423,7 +431,7 @@ dialog > small {
   line-height: 1.7;
   color: #8e9aab;
 }
-.page:not(#tower) {
+.page:not(#board) {
   min-height: 560px;
 }
 .card {
@@ -630,7 +638,7 @@ dialog p {
     font-size: 10px;
     min-height: 64px;
   }
-  .page:not(#tower) {
+  .page:not(#board) {
     min-height: 500px;
   }
   .status {
@@ -640,7 +648,10 @@ dialog p {
     font-size: 9px;
   }
   .essence {
-    font-size: 17px;
+    font-size: 15px;
+  }
+  .currencies {
+    gap: 10px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -745,9 +756,9 @@ nav,
 footer {
   flex-shrink: 0;
 }
-#tower.active {
+#board.active {
   display: grid;
-  grid-template-rows: auto auto minmax(80px, 1fr) auto auto auto;
+  grid-template-rows: auto auto minmax(80px, 1fr) auto auto auto auto;
   flex: 1;
   min-height: 0;
 }
@@ -778,8 +789,8 @@ nav {
   }
 }
 @media (max-height: 760px) {
-  #tower.active {
-    grid-template-rows: auto minmax(80px, 1fr) auto auto auto;
+  #board.active {
+    grid-template-rows: auto minmax(80px, 1fr) auto auto auto auto;
   }
   .ascent {
     display: none;
@@ -798,4 +809,26 @@ nav {
 }
 .controls {
   flex-wrap: wrap;
+}
+.shop {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.shop button {
+  flex: 1;
+  min-width: 100px;
+  font-size: 10px;
+}
+.shop button span {
+  display: block;
+  color: var(--gold);
+  font-size: 9px;
+  margin-top: 2px;
+}
+.section-title {
+  margin: 22px 0 6px;
+  color: #b29769;
+  font-size: 11px;
+  letter-spacing: 1px;
 }

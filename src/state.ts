@@ -2,28 +2,45 @@ import { routeTo, type Step } from "./pathfinding.ts";
 import {
   CHUNK,
   START_X,
-  reward,
+  TOWER_START_X,
+  essenceReward,
+  shardReward,
+  goldReward,
+  xpForKill,
+  levelForXp,
+  levelBonus,
   cost,
   UPGRADES,
+  GOLD_SHOP,
   type UpgradeId,
+  type GoldItemId,
 } from "./config.ts";
 import {
   gear,
   type Save,
   type Run,
   type Tile,
+  type Enemy,
+  type Mode,
   type MoveSnapshot,
 } from "./entities.ts";
-import { World, LAYOUT_VERSION } from "./generation.ts";
+import {
+  World,
+  RoomWorld,
+  LAYOUT_VERSION,
+  TOWER_LAYOUT_VERSION,
+  type Board,
+} from "./generation.ts";
 import { predict } from "./combat.ts";
 export class Game {
-  world!: World;
+  mode: Mode = "tower";
+  world!: Board;
   run!: Run;
   route: Step[] = [];
   blocked = { x: 0, y: 0, until: 0 };
   auto = false;
   paused = false;
-  message = "Defeat the entrance guardian, claim the keys, and climb.";
+  message = "";
   effect = { text: "", x: 0, y: 0, until: 0 };
   summary: null | {
     height: number;
@@ -31,16 +48,33 @@ export class Game {
     earned: number;
     reason: string;
     dead?: boolean;
+    record: boolean;
   } = null;
   constructor(public save: Save) {
-    if (save.run) {
-      this.run = save.run;
+    this.loadMode();
+  }
+  get undoCapacity() {
+    const u = this.save.upgrades;
+    return 1 + u.undos + u.shardUndos;
+  }
+  switchMode(next: Mode) {
+    if (next === this.mode) return;
+    this.mode = next;
+    this.loadMode();
+  }
+  loadMode() {
+    const slice = this.save[this.mode];
+    if (!slice.run) {
+      this.newRun();
+    } else if (this.mode === "delve") {
+      this.run = slice.run;
       if (this.run.layoutVersion !== LAYOUT_VERSION) {
         // Old consumed-tile coordinates cannot be applied to the new topology.
         // Preserve earned progression and inventory, relocating to this section's entrance.
-        this.save.history = [];
-        if (this.save.revival) this.save.essence += this.save.revival.earned;
-        this.save.revival = null;
+        this.save.delve.history = [];
+        if (this.save.delve.revival)
+          this.save.delve.essence += this.save.delve.revival.earned;
+        this.save.delve.revival = null;
         this.run.layoutVersion = LAYOUT_VERSION;
         this.run.changes = {};
         this.run.player.x = START_X;
@@ -50,25 +84,63 @@ export class Game {
           "The tower has reshaped. Progress kept; returned to this section’s entrance.";
       }
       this.world = new World(this.run.seed, this.run.changes, this.run.floor);
-    } else this.newRun();
-  }
-  get undoCapacity() {
-    return 1 + this.save.upgrades.undos;
+    } else {
+      this.run = slice.run;
+      if (this.run.layoutVersion !== TOWER_LAYOUT_VERSION) {
+        this.run.layoutVersion = TOWER_LAYOUT_VERSION;
+        this.run.changes = {};
+      }
+      this.world = new RoomWorld(
+        this.run.seed,
+        this.run.height,
+        this.run.changes,
+      );
+    }
+    this.route = [];
+    this.auto = false;
+    this.summary = null;
+    this.blocked = { x: 0, y: 0, until: 0 };
+    if (!this.message)
+      this.message =
+        this.mode === "tower"
+          ? "Defeat the entrance guardian and find the stairs."
+          : "Defeat the entrance guardian, claim the keys, and climb.";
   }
   settleRevival() {
-    if (this.save.revival) {
-      this.save.essence += this.save.revival.earned;
-      this.save.revival = null;
+    const slice = this.save[this.mode];
+    if (slice.revival) {
+      this.creditCurrency(slice.revival.earned);
+      slice.revival = null;
     }
   }
+  creditCurrency(earned: number) {
+    if (this.mode === "delve") this.save.delve.essence += earned;
+    else this.save.tower.shards += earned;
+  }
+  payout(): { earned: number; record: boolean } {
+    const slice = this.save[this.mode],
+      record = this.run.height > slice.best;
+    slice.best = Math.max(slice.best, this.run.height);
+    const earned = record
+      ? this.mode === "delve"
+        ? essenceReward(this.run.height, this.run.kills, this.run.treasures)
+        : shardReward(this.run.height, this.run.kills, this.run.treasures)
+      : 0;
+    if (this.mode === "delve")
+      this.save.gold += goldReward(this.run.kills, this.run.treasures);
+    return { earned, record };
+  }
   snapshot(): MoveSnapshot {
-    return { run: structuredClone(this.run), best: this.save.best };
+    return { run: structuredClone(this.run), best: this.save[this.mode].best };
   }
   restore(snapshot: MoveSnapshot) {
     this.run = structuredClone(snapshot.run);
-    this.save.run = this.run;
-    this.save.best = snapshot.best;
-    this.world = new World(this.run.seed, this.run.changes, this.run.floor);
+    this.save[this.mode].run = this.run;
+    this.save[this.mode].best = snapshot.best;
+    this.world =
+      this.mode === "delve"
+        ? new World(this.run.seed, this.run.changes, this.run.floor)
+        : new RoomWorld(this.run.seed, this.run.height, this.run.changes);
     this.route = [];
     this.auto = false;
     this.summary = null;
@@ -76,16 +148,17 @@ export class Game {
     this.blocked.until = 0;
   }
   undo() {
-    if (this.save.revival) {
-      const snapshot = this.save.revival.snapshot;
-      this.save.revival = null;
-      this.save.history = [];
+    const slice = this.save[this.mode];
+    if (slice.revival) {
+      const snapshot = slice.revival.snapshot;
+      slice.revival = null;
+      slice.history = [];
       this.restore(snapshot);
       this.feedback("Revived - fatal move undone");
       return true;
     }
     if (this.summary) return false;
-    const snapshot = this.save.history.pop();
+    const snapshot = slice.history.pop();
     if (!snapshot) return false;
     this.restore(snapshot);
     this.feedback("Move undone");
@@ -116,32 +189,50 @@ export class Game {
   }
   newRun() {
     this.settleRevival();
-    this.save.history = [];
+    this.save[this.mode].history = [];
     this.route = [];
     this.summary = null;
     const u = this.save.upgrades,
-      g = gear(u.quality);
-    this.run = {
-      layoutVersion: LAYOUT_VERSION,
-      seed: crypto.getRandomValues(new Uint32Array(1))[0],
-      height: 0,
-      kills: 0,
-      treasures: 0,
-      changes: {},
-      floor: 0,
-      player: {
-        x: START_X,
-        y: 0,
-        hp: 120 + u.hp * 20,
-        maxHp: 120 + u.hp * 20,
-        attack: 10 + u.attack * 2 + g[0].attack,
-        defense: 4 + u.defense + g[1].defense,
-        keys: { yellow: u.yellow, blue: u.blue, red: u.red },
-        gear: g,
-      },
+      lvl = levelForXp(this.save.xp),
+      bonus = levelBonus(lvl),
+      g = gear(u.quality),
+      seed = crypto.getRandomValues(new Uint32Array(1))[0];
+    const player = {
+      x: this.mode === "tower" ? TOWER_START_X : START_X,
+      y: 0,
+      hp: 120 + u.hp * 20 + u.shardHp * 15 + bonus.hp,
+      maxHp: 120 + u.hp * 20 + u.shardHp * 15 + bonus.hp,
+      attack: 10 + u.attack * 2 + u.shardAttack + bonus.attack + g[0].attack,
+      defense: 4 + u.defense + u.shardDefense + bonus.defense + g[1].defense,
+      keys: { yellow: u.yellow, blue: u.blue, red: u.red },
+      gear: g,
     };
-    this.world = new World(this.run.seed, this.run.changes);
-    this.save.run = this.run;
+    if (this.mode === "delve") {
+      this.run = {
+        layoutVersion: LAYOUT_VERSION,
+        seed,
+        height: 0,
+        kills: 0,
+        treasures: 0,
+        changes: {},
+        floor: 0,
+        player,
+      };
+      this.world = new World(this.run.seed, this.run.changes);
+    } else {
+      this.run = {
+        layoutVersion: TOWER_LAYOUT_VERSION,
+        seed,
+        height: 0,
+        kills: 0,
+        treasures: 0,
+        changes: {},
+        floor: 0,
+        player,
+      };
+      this.world = new RoomWorld(this.run.seed, 0, this.run.changes);
+    }
+    this.save[this.mode].run = this.run;
     this.auto = false;
     this.paused = false;
   }
@@ -153,6 +244,9 @@ export class Game {
       y: this.run.player.y,
       until: performance.now() + 1300,
     };
+  }
+  gainXp(enemy: Enemy) {
+    this.save.xp += xpForKill(enemy.tier, enemy.attack);
   }
   move(dx: number, dy: number, force = true) {
     if (this.paused || this.summary || Math.abs(dx) + Math.abs(dy) !== 1)
@@ -176,9 +270,10 @@ export class Game {
     if (t.kind === "enemy" && !force && !predict(p, t.enemy!).survivable)
       return false;
     this.settleRevival();
-    const before = this.snapshot();
-    this.save.history.push(before);
-    this.save.history = this.save.history.slice(-this.undoCapacity);
+    const before = this.snapshot(),
+      slice = this.save[this.mode];
+    slice.history.push(before);
+    slice.history = slice.history.slice(-this.undoCapacity);
     if (t.kind === "door") {
       if (!p.keys[t.color!]) {
         this.feedback(`Requires an ${t.color} key.`);
@@ -188,7 +283,8 @@ export class Game {
       this.feedback(`${t.color} seal opened`);
     }
     if (t.kind === "enemy") {
-      const result = predict(p, t.enemy!);
+      const enemy = t.enemy!,
+        result = predict(p, enemy);
       if (!result.survivable && !force) {
         this.feedback("Lethal encounter. Inspect the enemy before proceeding.");
         return false;
@@ -196,30 +292,29 @@ export class Game {
       p.hp -= result.damage;
       if (p.hp <= 0) {
         p.hp = 0;
-        const earned = reward(
-          this.run.height,
-          this.run.kills,
-          this.run.treasures,
-        );
+        const { earned, record } = this.payout();
         const summary = {
           height: this.run.height,
           kills: this.run.kills,
           earned,
           reason: "Fallen in battle",
           dead: true,
+          record,
         };
         this.newRun();
         if (this.save.upgrades.revive)
-          this.save.revival = { snapshot: before, earned };
-        else this.save.essence += earned;
+          this.save[this.mode].revival = { snapshot: before, earned };
+        else this.creditCurrency(earned);
         this.summary = summary;
-        this.message = "Returned to floor 1.";
+        this.message =
+          this.mode === "tower" ? "Returned to room 1." : "Returned to floor 1.";
         return false;
       }
       this.run.kills++;
+      this.gainXp(enemy);
       this.feedback(
         result.damage
-          ? `−${result.damage} HP · ${t.enemy!.name} defeated`
+          ? `−${result.damage} HP · ${enemy.name} defeated`
           : "Unscathed victory",
       );
     }
@@ -227,11 +322,23 @@ export class Game {
     p.y = y;
     this.collect(t);
     if (t.kind !== "floor" && t.kind !== "stairs") this.world.clear(x, y);
-    this.run.height = Math.max(this.run.height, y);
-    this.save.best = Math.max(this.save.best, this.run.height);
-    this.world.maintain(y);
-    this.run.floor = this.world.floor;
+    if (this.mode === "delve") {
+      this.run.height = Math.max(this.run.height, y);
+      this.save.delve.best = Math.max(this.save.delve.best, this.run.height);
+      (this.world as World).maintain(y);
+      this.run.floor = (this.world as World).floor;
+    } else if (t.kind === "stairs") {
+      this.advanceTowerRoom();
+    }
     return true;
+  }
+  advanceTowerRoom() {
+    this.run.height++;
+    this.run.changes = {};
+    this.world = new RoomWorld(this.run.seed, this.run.height, this.run.changes);
+    this.run.player.x = TOWER_START_X;
+    this.run.player.y = 0;
+    this.feedback("A new chamber opens.");
   }
   collect(t: Tile) {
     const p = this.run.player;
@@ -264,27 +371,42 @@ export class Game {
   finish(reason: string) {
     if (this.summary) return;
     this.settleRevival();
-    this.save.history = [];
+    this.save[this.mode].history = [];
     this.route = [];
-    const earned = reward(this.run.height, this.run.kills, this.run.treasures);
-    this.save.essence += earned;
-    this.save.best = Math.max(this.save.best, this.run.height);
+    const { earned, record } = this.payout();
+    this.creditCurrency(earned);
     this.summary = {
       height: this.run.height,
       kills: this.run.kills,
       earned,
       reason,
+      record,
     };
-    this.save.run = null;
+    this.save[this.mode].run = null;
     this.auto = false;
   }
   buy(id: UpgradeId) {
     const u = UPGRADES.find((u) => u.id === id)!;
     const n = this.save.upgrades[id],
-      price = cost(id, n);
-    if (n >= u.max || price > this.save.essence) return false;
-    this.save.essence -= price;
+      price = cost(id, n),
+      balance =
+        u.currency === "essence" ? this.save.delve.essence : this.save.tower.shards;
+    if (n >= u.max || price > balance) return false;
+    if (u.currency === "essence") this.save.delve.essence -= price;
+    else this.save.tower.shards -= price;
     this.save.upgrades[id]++;
+    return true;
+  }
+  buyGold(id: GoldItemId) {
+    const item = GOLD_SHOP.find((g) => g.id === id)!;
+    if (this.mode !== "delve" || this.summary || this.save.gold < item.cost)
+      return false;
+    this.save.gold -= item.cost;
+    const p = this.run.player;
+    if (id === "heal") p.hp = p.maxHp;
+    if (id === "edge") p.attack += 3;
+    if (id === "guard") p.defense += 3;
+    this.feedback(`${item.name} used`);
     return true;
   }
 }

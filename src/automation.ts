@@ -14,6 +14,7 @@ export function score(t: Tile, y: number, current: number, distance: number) {
 }
 export function chooseStep(game: Game) {
   const p = game.run.player;
+  const progress = game.mode === "tower" ? p.y : game.run.height;
   const q = [{ x: p.x, y: p.y, first: [0, 0], d: 0 }];
   const seen = new Set([point(p.x, p.y)]);
   let best: (typeof q)[number] | null = null,
@@ -46,7 +47,7 @@ export function chooseStep(game: Game) {
       )
         continue;
       const next = { x, y, first: n.d ? n.first : [dx, dy], d: n.d + 1 };
-      let value = score(t, y, game.run.height, next.d);
+      let value = score(t, y, progress, next.d);
       if (t.kind === "potion" && p.hp === p.maxHp) value -= 10;
       if (t.kind === "enemy") value -= predict(p, t.enemy!).damage * 0.5;
       if (value > bestScore) {

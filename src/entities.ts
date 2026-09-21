@@ -54,15 +54,21 @@ export type Settings = {
   speed: number;
   reduceMotion: boolean;
 };
-export type Save = {
-  version: 1;
+export type Mode = "tower" | "delve";
+export type ModeSave = {
   history: MoveSnapshot[];
   revival: Revival | null;
   best: number;
-  essence: number;
+  run: Run | null;
+};
+export type Save = {
+  version: 2;
+  tower: ModeSave & { shards: number };
+  delve: ModeSave & { essence: number };
+  gold: number;
+  xp: number;
   upgrades: Record<UpgradeId, number>;
   settings: Settings;
-  run: Run | null;
 };
 export const point = (x: number, y: number) => `${x},${y}`;
 export const gear = (quality: number): Gear[] => [

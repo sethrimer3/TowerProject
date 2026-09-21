@@ -3,11 +3,26 @@ import {
   CHUNK,
   WIDTH,
   START_X,
+  TOWER_WIDTH,
+  TOWER_START_X,
   UNGUARDED_LOOT_CHANCE,
   type KeyColor,
 } from "./config.ts";
 import { point, type Tile } from "./entities.ts";
+export type Board = {
+  width: number;
+  floor: number;
+  tile(x: number, y: number): Tile;
+  step(
+    x: number,
+    y: number,
+    dx: number,
+    dy: number,
+  ): { x: number; y: number } | null;
+  clear(x: number, y: number): void;
+};
 export const LAYOUT_VERSION = 5;
+export const TOWER_LAYOUT_VERSION = 1;
 const directions = [
   [1, 0],
   [-1, 0],
@@ -337,7 +352,8 @@ export function rollUnguardedLoot(rng: () => number): Tile | null {
     return { kind: "key", color: (["yellow", "blue", "red"] as const)[choice] };
   return { kind: (["attack", "defense", "treasure"] as const)[choice - 3] };
 }
-export class World {
+export class World implements Board {
+  width = WIDTH;
   chunks = new Map<number, Map<string, Tile>>();
   constructor(
     public seed: number,
@@ -345,7 +361,7 @@ export class World {
     public floor = 0,
   ) {}
   tile(x: number, y: number): Tile {
-    if (x < 0 || x >= WIDTH || y < this.floor) return { kind: "wall" };
+    if (x < 0 || x >= this.width || y < this.floor) return { kind: "wall" };
     const index = Math.floor(y / CHUNK);
     if (!this.chunks.has(index))
       this.chunks.set(index, generate(this.seed, index));
@@ -357,13 +373,13 @@ export class World {
   step(x: number, y: number, dx: number, dy: number) {
     let nx = x + dx;
     const ny = y + dy;
-    if (nx < 0 || nx >= WIDTH) {
+    if (nx < 0 || nx >= this.width) {
       if (
         this.tile(0, y).kind === "wall" ||
-        this.tile(WIDTH - 1, y).kind === "wall"
+        this.tile(this.width - 1, y).kind === "wall"
       )
         return null;
-      nx = (nx + WIDTH) % WIDTH;
+      nx = (nx + this.width) % this.width;
     }
     return { x: nx, y: ny };
   }
@@ -378,5 +394,114 @@ export class World {
       if (i * CHUNK < this.floor) this.chunks.delete(i);
     for (const k of Object.keys(this.changes))
       if (Number(k.split(",")[1]) < this.floor) delete this.changes[k];
+  }
+}
+/** A single self-contained 20x20 challenge room: no locks or keys, one
+ * guardian at the entrance, scattered enemies/loot scaled by room number,
+ * and one exit stairway. Coordinates are local (no chunk offset). */
+export function generateTowerRoom(
+  seed: number,
+  room: number,
+): Map<string, Tile> {
+  const rng = random(seed ^ Math.imul(room + 1, 2654435761));
+  const int = (lo: number, hi: number) =>
+    lo + Math.floor(rng() * (hi - lo + 1));
+  const cells = new Map<string, Tile>();
+  const set = (x: number, y: number, t: Tile) => cells.set(point(x, y), t);
+  const floor = (x: number, y: number) => set(x, y, { kind: "floor" });
+  for (let y = 0; y < CHUNK; y++)
+    for (let x = 0; x < TOWER_WIDTH; x++) set(x, y, { kind: "wall" });
+  const bounds = { x1: 1, x2: TOWER_WIDTH - 2, y1: 1, y2: CHUNK - 2 };
+  for (let y = bounds.y1; y <= bounds.y2; y++)
+    for (let x = bounds.x1; x <= bounds.x2; x++) floor(x, y);
+  const entrance: [number, number] = [TOWER_START_X, 0];
+  floor(...entrance);
+  const reserved = new Set([point(...entrance), point(TOWER_START_X, 1)]);
+  function tier(): number {
+    return Math.min(3, Math.floor(room / 5));
+  }
+  function towerEnemy(tough = false): Tile {
+    const t = tier();
+    const names = ["Cinder slime", "Bone sentinel", "Dusk wing", "Ash warden"];
+    return {
+      kind: "enemy",
+      enemy: {
+        name: names[t],
+        hp: tough
+          ? 12 + t * 16 + Math.floor(room * 1.6)
+          : 8 + t * 10 + Math.floor(room * 1.1),
+        attack: tough
+          ? 6 + t * 4 + Math.floor(room / 3)
+          : 4 + t * 3 + Math.floor(room / 4),
+        defense: tough ? 1 + t * 2 : t,
+        tier: t,
+      },
+    };
+  }
+  set(TOWER_START_X, 1, towerEnemy());
+  sculptRoom(cells, bounds, 0, rng, reserved);
+  function place(tile: Tile) {
+    const candidates: [number, number][] = [];
+    for (let y = bounds.y1; y <= bounds.y2; y++)
+      for (let x = bounds.x1; x <= bounds.x2; x++)
+        if (!reserved.has(point(x, y)) && cells.get(point(x, y))?.kind === "floor")
+          candidates.push([x, y]);
+    if (!candidates.length) throw new Error("Tower room has no free positions");
+    const [x, y] = candidates[int(0, candidates.length - 1)];
+    set(x, y, tile);
+    reserved.add(point(x, y));
+    return [x, y] as [number, number];
+  }
+  const enemyCount = Math.min(6, 2 + Math.floor(room / 4));
+  for (let i = 0; i < enemyCount; i++) place(towerEnemy(true));
+  place({ kind: "potion" });
+  place({ kind: "potion" });
+  place({ kind: "attack" });
+  place({ kind: "defense" });
+  if (room % 3 === 0) place({ kind: "treasure" });
+  const exit = place({ kind: "stairs" });
+  const blockers = new Set(
+    [...cells]
+      .filter(([, t]) => t.kind === "enemy")
+      .map(([k]) => k),
+  );
+  const free = reachable(cells, point(...entrance), blockers);
+  for (const k of free)
+    if (cells.get(k)?.kind === "floor") {
+      const loot = rollUnguardedLoot(rng);
+      if (loot) cells.set(k, loot);
+    }
+  if (!reachable(cells, point(...entrance)).has(point(...exit)))
+    throw new Error("Invalid tower room topology");
+  return cells;
+}
+export class RoomWorld implements Board {
+  width = TOWER_WIDTH;
+  floor = 0;
+  cells: Map<string, Tile>;
+  constructor(
+    public seed: number,
+    public room: number,
+    public changes: Record<string, Tile>,
+  ) {
+    this.cells = generateTowerRoom(seed, room);
+  }
+  tile(x: number, y: number): Tile {
+    if (x < 0 || x >= this.width || y < 0 || y >= CHUNK)
+      return { kind: "wall" };
+    return (
+      this.changes[point(x, y)] ?? this.cells.get(point(x, y)) ?? {
+        kind: "wall",
+      }
+    );
+  }
+  step(x: number, y: number, dx: number, dy: number) {
+    const nx = x + dx,
+      ny = y + dy;
+    if (nx < 0 || nx >= this.width || ny < 0 || ny >= CHUNK) return null;
+    return { x: nx, y: ny };
+  }
+  clear(x: number, y: number) {
+    this.changes[point(x, y)] = { kind: "floor" };
   }
 }
