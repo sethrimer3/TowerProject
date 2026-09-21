@@ -18,6 +18,21 @@ export class Renderer {
     this.playerX = game.run.player.x;
     this.playerY = game.run.player.y;
   }
+  target(n: number) {
+    const g = this.game,
+      p = g.run.player;
+    // A Tower room is one fixed, fully-enclosed challenge: the camera holds
+    // still and shows the room rather than following the player around it.
+    if (g.mode === "tower")
+      return {
+        bottom: Math.max(0, Math.floor((CHUNK - n) / 2)),
+        left: Math.max(0, Math.floor((g.world.width - n) / 2)),
+      };
+    return {
+      bottom: Math.max(0, p.y - Math.floor(n * 0.3)),
+      left: Math.max(0, Math.min(g.world.width - n, p.x - Math.floor(n / 2))),
+    };
+  }
   draw(now: number) {
     const g = this.game,
       p = g.run.player,
@@ -26,11 +41,9 @@ export class Renderer {
       this.seed = g.run.seed;
       this.playerX = p.x;
       this.playerY = p.y;
-      this.bottom = Math.max(0, p.y - Math.floor(n * 0.3));
-      this.left = Math.max(
-        0,
-        Math.min(g.world.width - n, p.x - Math.floor(n / 2)),
-      );
+      const t = this.target(n);
+      this.bottom = t.bottom;
+      this.left = t.left;
     }
     if (Math.abs(p.x - this.playerX) > g.world.width / 2) this.playerX = p.x;
     const box = this.canvas.getBoundingClientRect(),
@@ -47,12 +60,9 @@ export class Renderer {
       g.save.settings.reduceMotion || g.save.settings.transition === "instant"
         ? 1
         : 1 - Math.exp(-dt * (g.save.settings.transition === "fast" ? 32 : 14));
-    this.bottom +=
-      (Math.max(0, p.y - Math.floor(n * 0.3)) - this.bottom) * blend;
-    this.left +=
-      (Math.max(0, Math.min(g.world.width - n, p.x - Math.floor(n / 2))) -
-        this.left) *
-      blend;
+    const target = this.target(n);
+    this.bottom += (target.bottom - this.bottom) * blend;
+    this.left += (target.left - this.left) * blend;
     this.playerX += (p.x - this.playerX) * blend;
     this.playerY += (p.y - this.playerY) * blend;
     const c = this.ctx,
