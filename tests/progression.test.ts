@@ -58,7 +58,8 @@ test('uncollected rewards survive reload, undo, departure, death and retirement 
     if (action === 'retire') g.finish('test');
     if (action === 'mode') { g.save.upgrades.delve=1; g.switchMode('delve'); }
     if (action === 'death') {
-      (g.world as RoomWorld).cells.set('1,0', {kind:'enemy',enemy:{name:'doom',hp:999,attack:999,defense:999,tier:3}});
+      // Lethal but damageable (low defense so it's not impervious).
+      (g.world as RoomWorld).cells.set('1,0', {kind:'enemy',enemy:{name:'doom',hp:99999,attack:999,defense:0,tier:3}});
       g.move(1,0);
     }
     assert.equal(g.save.tower.shards, action === 'stairs' ? 4 : 3, action);

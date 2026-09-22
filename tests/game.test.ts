@@ -57,9 +57,11 @@ test("automation avoids lethal fights; manual death resets immediately and award
   const g = new Game(defaults());
   g.save.upgrades.delve = 1;
   g.switchMode("delve");
+  // Lethal but damageable (low defense so it's not impervious): the player
+  // can strike it, but the fight is unwinnable.
   g.world.changes["15,1"] = {
     kind: "enemy",
-    enemy: { name: "doom", hp: 999, attack: 999, defense: 999, tier: 3 },
+    enemy: { name: "doom", hp: 99999, attack: 999, defense: 0, tier: 3 },
   };
   assert.equal(g.move(0, 1, false), false);
   assert.equal(g.summary, null);

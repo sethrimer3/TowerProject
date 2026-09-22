@@ -17,9 +17,11 @@ const enemy: Tile = {
   kind: "enemy",
   enemy: { name: "Test foe", hp: 25, attack: 8, defense: 0, tier: 0 },
 };
+// Lethal but damageable: defense stays low so the player can hit it (not
+// impervious); hp/attack are large enough that the fight is always fatal.
 const doom: Tile = {
   kind: "enemy",
-  enemy: { name: "Doom", hp: 999, attack: 999, defense: 999, tier: 3 },
+  enemy: { name: "Doom", hp: 99999, attack: 999, defense: 0, tier: 3 },
 };
 test("tap route collects items, fights enemies, consumes keys and reaches destination", () => {
   const g = corridor();
@@ -162,16 +164,23 @@ test("paired horizontal openings wrap, use destination locks, and undo correctly
 test("generated wraps have paired openings and do not disconnect floor space", () => {
   let wraps = 0;
   for (let seed = 0; seed < 30; seed++) {
-    const c = generate(seed, 0);
+    // The delve map is one continuous corridor network; a corridor between
+    // two rooms can briefly cross a 20-row chunk boundary, so connectivity
+    // is only meaningful across several merged chunks (matching how `World`
+    // actually serves tiles during play), not within one chunk slice alone.
+    const merged = new Map<string, Tile>();
+    for (let i = 0; i < 4; i++)
+      for (const [k, v] of generate(seed, i)) merged.set(k, v);
     for (let y = 0; y < 20; y++) {
+      const c = generate(seed, 0);
       const left = c.get(point(0, y))!.kind !== "wall",
         right = c.get(point(29, y))!.kind !== "wall";
       assert.equal(left, right);
       if (left) wraps++;
     }
     assert.equal(
-      reachable(c, "15,0").size,
-      [...c.values()].filter((t) => t.kind !== "wall").length,
+      reachable(merged, "15,0").size,
+      [...merged.values()].filter((t) => t.kind !== "wall").length,
     );
   }
   assert.ok(wraps > 0);

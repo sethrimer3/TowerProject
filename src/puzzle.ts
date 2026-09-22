@@ -1,6 +1,7 @@
 import { random } from "./generation.ts";
 import { getTowerEnemy } from "./scaling.ts";
-import type { Enemy, KeyColor } from "./entities.ts";
+import type { Enemy } from "./entities.ts";
+import type { KeyColor } from "./config.ts";
 
 export type PuzzleNode = {
   id: number;

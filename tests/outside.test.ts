@@ -14,8 +14,9 @@ for (const mode of ["tower", "delve"] as const) {
     g.save.upgrades.revive = 1;
     const before = g.snapshot();
     const originalTile = g.world.tile.bind(g.world);
+    // Lethal but damageable (low defense so it's not impervious).
     g.world.tile = (x, y) => y === 1 && x === g.run.player.x
-      ? { kind: "enemy", enemy: { name: "Fatal guardian", hp: 9999, attack: 9999, defense: 9999, tier: 3 } }
+      ? { kind: "enemy", enemy: { name: "Fatal guardian", hp: 999999, attack: 9999, defense: 0, tier: 3 } }
       : originalTile(x, y);
     g.move(0, 1);
     assert.ok(g.summary?.dead);

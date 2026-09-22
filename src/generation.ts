@@ -258,12 +258,17 @@ export function generateDelveMap(seed: number): Map<string, Tile> {
     for (let x = maxX; x < WIDTH; x++) floor(x, y);
   }
 
-  // Oneway passages every ~40 tiles
+  // Oneway passages every ~40 tiles. The chosen column must already be
+  // reachable from the entrance (given everything carved and choked so
+  // far): picking an arbitrary floor tile at this row instead risked
+  // walling off the row's real connecting corridor while choking a
+  // disconnected one, splitting the map in two.
   for (let y = 40; y < DELVE_MAX_DEPTH; y += 40) {
-    // Find a floor tile at this y
+    const reach = reachable(cells, point(START_X, 0));
     let floorX = -1;
     for (let x = 1; x < WIDTH - 1; x++) {
-      if (cells.get(point(x, y))?.kind === 'floor') {
+      const p = point(x, y);
+      if (cells.get(p)?.kind === 'floor' && reach.has(p)) {
         floorX = x;
         break;
       }
@@ -446,7 +451,13 @@ function tryGenerateTowerRoom(derivedSeed: number, room: number): Map<string, Ti
   // Map the abstract puzzle graph's mandatory route onto the BSP rooms in
   // generation order: one main-path edge per inter-room corridor.
   const graph = generatePuzzleGraph(derivedSeed, room);
-  const gatePositions: [number, number][] = [];
+  // Only door gates need a strict structural choke-point check below: a
+  // locked door consumes a finite key, so a bypass would trivialize it.
+  // Enemy gates stay topologically soft by design (reachable()'s flood fill
+  // already treats enemies as passable — combat difficulty, not physical
+  // blocking, is what makes them a gate), so an alternate route around one
+  // is not a validation failure.
+  const doorGatePositions: [number, number][] = [];
   const edgeCount = Math.min(graph.mainPath.length, rooms.length - 1);
   for (let i = 0; i < rooms.length - 1; i++) {
     const path = carvePath(cells, point, ...centerOf(rooms[i]), ...centerOf(rooms[i + 1]), rng);
@@ -455,10 +466,9 @@ function tryGenerateTowerRoom(derivedSeed: number, room: number): Map<string, Ti
     const [gx, gy] = path[Math.floor(path.length / 2)];
     if (edge.gate === "enemy" && edge.enemy) {
       set(gx, gy, { kind: "enemy", enemy: edge.enemy });
-      gatePositions.push([gx, gy]);
     } else if (edge.gate === "door" && edge.doorColor) {
       set(gx, gy, { kind: "door", color: edge.doorColor });
-      gatePositions.push([gx, gy]);
+      doorGatePositions.push([gx, gy]);
       // The key always lives in an earlier room on the mandatory path (or
       // the entrance room itself), so it is reachable before this door.
       const keyRoom = rooms[i];
@@ -531,10 +541,10 @@ function tryGenerateTowerRoom(derivedSeed: number, room: number): Map<string, Ti
 
   const fullReach = reachable(cells, point(...entrance));
   if (!fullReach.has(point(...exit))) return null;
-  // Every placed gate must be a real structural cut point: blocking it must
+  // Every door must be a real structural cut point: blocking it must
   // disconnect floor space beyond it, or the BSP carving accidentally left
-  // a bypass around the logical gate.
-  for (const [gx, gy] of gatePositions)
+  // a bypass that would let a player reach the far side without its key.
+  for (const [gx, gy] of doorGatePositions)
     if (reachable(cells, point(...entrance), new Set([point(gx, gy)])).size >= fullReach.size - 1)
       return null;
   if (!validatePhysicalLayout(cells, entrance[0], entrance[1], exit[0], exit[1], nominalTowerPlayer(room)))
@@ -550,7 +560,7 @@ export function generateTowerRoom(
   seed: number,
   room: number,
 ): Map<string, Tile> {
-  const MAX_ATTEMPTS = 12;
+  const MAX_ATTEMPTS = 40;
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     const derivedSeed =
       seed ^ Math.imul(room + 1, 2654435761) ^ Math.imul(attempt + 1, 40503);
