@@ -274,11 +274,24 @@ export class Renderer {
       return;
     }
     if (t.kind === "potion") {
+      const isPercent = t.color === "red";
       c.fillStyle = "#bbc4ca";
       c.fillRect(9, 4, 6, 5);
       c.fillRect(6, 10, 12, 11);
-      c.fillStyle = "#b83b55";
+      c.fillStyle = COLORS[t.color ?? "blue"];
       c.fillRect(8, 12, 8, 7);
+      if (isPercent) {
+        // Diagonal stripes distinguish the percent potion by shape, not just color.
+        c.fillStyle = "#ffffffaa";
+        c.fillRect(9, 12, 1, 7);
+        c.fillRect(12, 12, 1, 7);
+        c.fillRect(15, 12, 1, 7);
+      } else {
+        // Solid highlight plus a "+" mark identifies the flat-heal potion.
+        c.fillStyle = "#ffffffcc";
+        c.fillRect(11, 13, 2, 5);
+        c.fillRect(9, 15, 6, 1);
+      }
       c.fillStyle = "#ffd9d9";
       c.fillRect(8, 12, 2, 4);
       c.fillStyle = "#bd9661";

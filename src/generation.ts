@@ -229,7 +229,7 @@ export function generateDelveMap(seed: number): Map<string, Tile> {
         }
       });
     } else if (rng() < 0.2) {
-      set(cx, cy, { kind: "potion" });
+      set(cx, cy, { kind: "potion", color: rng() < 0.5 ? "red" : "blue" });
     } else if (rng() < 0.1) {
       set(cx, cy, { kind: "treasure" });
     }
@@ -385,8 +385,8 @@ export function generateTowerRoom(
   }
   const enemyCount = Math.min(6, 2 + Math.floor(room / 4));
   for (let i = 0; i < enemyCount; i++) place(towerEnemy(true));
-  place({ kind: "potion" });
-  place({ kind: "potion" });
+  place({ kind: "potion", color: "blue" });
+  place({ kind: "potion", color: "red" });
   place({ kind: "attack" });
   place({ kind: "defense" });
   if (room % 3 === 0) place({ kind: "treasure" });
