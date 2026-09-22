@@ -95,6 +95,7 @@ for (let i = 0; i < 2; i++) {
   await page.locator("#again").click();
 }
 await page.locator('[data-tab="upgrades"]').click();
+await page.locator('[data-tree="courage"]').click();
 await page.locator('[data-buy="auto"]').click();
 await page.locator('[data-tab="delve"]').click();
 await page.locator("#auto").click();
@@ -111,7 +112,8 @@ await page.locator("#erase").click();
 await page.locator("#cancel").click();
 await page.reload();
 await page.locator('[data-tab="upgrades"]').click();
-if ((await page.locator('[data-buy="auto"]').textContent()) !== "MAX")
+await page.locator('[data-tree="courage"]').click();
+if ((await page.locator('[data-buy="auto"]').textContent()) !== "MASTERED")
   throw Error("Upgrade persistence failed");
 console.log(
   "Upgrade purchase, auto unlock, climbing, pause, erase cancellation, and upgrade persistence passed",
@@ -151,6 +153,9 @@ const routePage = await browser.newPage({
 });
 routePage.on("pageerror", (e) => errors.push(e.message));
 await routePage.goto("http://127.0.0.1:5173/");
+const routeFixture = await routePage.evaluate(() => { const s = JSON.parse(localStorage.getItem("towerincramental.v1")); s.upgrades.delve = 1; return s; });
+await routePage.addInitScript(s => localStorage.setItem("towerincramental.v1", JSON.stringify(s)), routeFixture);
+await routePage.reload();
 await routePage.locator('[data-tab="settings"]').click();
 await routePage.locator("#arrows").check();
 await routePage.locator('[data-tab="delve"]').click();
