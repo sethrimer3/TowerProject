@@ -1,4 +1,5 @@
 import { CHUNK, COLORS } from "./config.ts";
+import { drawTerrain, themeAt } from "./themes.ts";
 import type { Game } from "./state.ts";
 import type { Tile } from "./entities.ts";
 export class Renderer {
@@ -162,32 +163,12 @@ export class Renderer {
   }
   tile(t: Tile, x: number, y: number, time: number) {
     const c = this.ctx;
-    const hash = Math.abs((x * 73 + y * 137) % 19);
-    c.fillStyle =
-      t.kind === "wall"
-        ? "#222c38"
-        : `rgb(${18 + (hash % 4)},${24 + (hash % 4)},${32 + (hash % 5)})`;
-    c.fillRect(0, 0, 24, 24);
-    c.strokeStyle = "#303b453f";
-    c.lineWidth = 0.7;
-    c.strokeRect(0.4, 0.4, 23.2, 23.2);
+    const g = this.game;
+    drawTerrain(c, t.kind === "wall", g.mode, g.run.height, x, y, g.run.seed, t.kind === "floor");
     if (t.kind === "wall") {
-      c.fillStyle = hash % 3 ? "#3c4651" : "#47505a";
-      c.fillRect(1, 1, 10, 9);
-      c.fillRect(13, 1, 10, 9);
-      c.fillRect(1, 12, 6, 10);
-      c.fillRect(9, 12, 14, 10);
-      c.fillStyle = "#68707a55";
-      c.fillRect(1, 1, 10, 1);
-      c.fillRect(13, 1, 10, 1);
-      c.fillStyle = "#0a1018";
-      c.fillRect(0, 22, 24, 2);
-      if (x % 6 === 0 && y % 7 === 3) this.torch(time);
+      if (themeAt(g.mode, g.run.height, x, y, g.run.seed).decor === 0 && x % 6 === 0 && y % 7 === 3) this.torch(time);
       return;
     }
-    c.fillStyle = "#74839310";
-    c.fillRect(hash, 3, 4, 2);
-    c.fillRect(4, 17, 6, 1);
     if (t.kind === "floor") return;
     if (t.kind === "stairs") {
       const exit = y % CHUNK === CHUNK - 1;
@@ -343,7 +324,9 @@ export class Renderer {
     c.fillRect(11, 3 + a, 3, 7);
   }
   hero() {
-    const c = this.ctx;
+    Renderer.drawHero(this.ctx);
+  }
+  static drawHero(c: CanvasRenderingContext2D) {
     c.fillStyle = "#7bacdf30";
     c.beginPath();
     c.arc(12, 14, 13, 0, Math.PI * 2);

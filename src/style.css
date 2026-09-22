@@ -130,6 +130,8 @@ h1 span {
 .currencies {
   display: flex;
   gap: 16px;
+  justify-content: center;
+  margin: 0 0 16px;
 }
 .essence {
   color: var(--gold);
@@ -151,6 +153,10 @@ h1 span {
   box-shadow: 0 5px 20px #0006;
   min-height: 90px;
   border-radius: 5px;
+  margin-bottom: 16px;
+}
+.stats[hidden] {
+  display: none;
 }
 .portrait {
   display: flex;
@@ -160,10 +166,10 @@ h1 span {
   background: radial-gradient(ellipse, #46607c55, #121924);
   border-right: 1px solid var(--line);
 }
-.portrait span {
-  font-size: 43px;
-  color: #b5c9e1;
-  text-shadow: 2px 3px #000;
+.portrait canvas {
+  width: 43px;
+  height: 43px;
+  image-rendering: pixelated;
 }
 .portrait small {
   font-size: 6px;

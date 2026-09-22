@@ -16,7 +16,7 @@ import {
 } from "./config.ts";
 const icons = { tower: "♜", delve: "▼", gear: "♞", upgrades: "✦", settings: "⚙" };
 const app = document.querySelector<HTMLDivElement>("#app")!;
-app.innerHTML = `<main class="shell"><header class="brand"><div><span class="eyebrow">AN ENDLESS ASCENT</span><h1>Tower<span>Incramental</span></h1></div><div class="currencies"><div class="essence">✦ <b id="essence">0</b><small>COURAGE</small></div><div class="essence">◆ <b id="shards">0</b><small>INSPIRATION</small></div></div></header><section class="stats" aria-label="Player statistics"><div class="portrait"><span>♞</span><small>WAYFARER</small><small id="level">LV 0</small></div><div class="vitals"><div><span class="heart">♥</span> HP <b id="hp"></b></div><div class="health-track"><i id="health"></i></div><div class="combat-stats"><span>⚔ <b id="attack"></b></span><span>⛨ <b id="defense"></b></span></div></div><div class="keys"><span class="yellow">⚿ <b id="yellow"></b></span><span class="blue">⚿ <b id="blue"></b></span><span class="red">⚿ <b id="red"></b></span></div><div class="height"><small id="height-label">HEIGHT</small><strong id="height">0</strong><span>BEST <b id="best">0</b></span></div><div class="actions"><button id="auto" class="mini-action" aria-label="Automove" title="Automove"><span class="mini-icon">✦</span><small id="auto-state">LOCKED</small></button><button id="undo" class="mini-action" aria-label="Undo" title="Undo"><span class="mini-icon">↺</span><small id="undo-state">0/1</small></button></div></section><section id="board" class="page active"><div class="tower-heading"><span class="rule"></span><span id="board-title">THE HOLLOW SPIRE</span><span class="rule"></span></div><div class="ascent"><span>↑</span><small id="board-subtitle">HIGHER DANGERS · GREATER REWARDS</small></div><div class="board"><canvas id="world" aria-label="Tower grid: tap a destination or swipe to move. Keyboard arrows and WASD also work."></canvas><span class="board-caption" id="density-label">20 × 20</span></div><div class="status"><span class="live-dot"></span><span id="message" aria-live="polite"></span></div><div class="controls"><button id="pause" aria-label="Pause game">Ⅱ</button><div class="dpad" hidden><button data-move="-1,0" aria-label="Move left">←</button><div><button data-move="0,1" aria-label="Move up">↑</button><button data-move="0,-1" aria-label="Move down">↓</button></div><button data-move="1,0" aria-label="Move right">→</button></div></div><div id="shop" class="shop" hidden></div><div id="inspect" class="inspection">Tap a destination to walk and fight. Swipe to step. Undo reverses one step.</div></section><section id="gear" class="page"></section><section id="upgrades" class="page"></section><section id="settings" class="page"></section><nav aria-label="Main navigation">${Object.entries(
+app.innerHTML = `<main class="shell"><div id="currencies" class="currencies" hidden><div class="essence">✦ <b id="essence">0</b><small>COURAGE</small></div><div class="essence">◆ <b id="shards">0</b><small>INSPIRATION</small></div></div><section id="stats" class="stats" aria-label="Player statistics"><div class="portrait"><canvas id="portrait-sprite" width="24" height="24"></canvas><small>WAYFARER</small><small id="level">LV 0</small></div><div class="vitals"><div><span class="heart">♥</span> HP <b id="hp"></b></div><div class="health-track"><i id="health"></i></div><div class="combat-stats"><span>⚔ <b id="attack"></b></span><span>⛨ <b id="defense"></b></span></div></div><div class="keys"><span class="yellow">⚿ <b id="yellow"></b></span><span class="blue">⚿ <b id="blue"></b></span><span class="red">⚿ <b id="red"></b></span></div><div class="height"><small id="height-label">HEIGHT</small><strong id="height">0</strong><span>BEST <b id="best">0</b></span></div><div class="actions"><button id="auto" class="mini-action" aria-label="Automove" title="Automove"><span class="mini-icon">✦</span><small id="auto-state">LOCKED</small></button><button id="undo" class="mini-action" aria-label="Undo" title="Undo"><span class="mini-icon">↺</span><small id="undo-state">0/1</small></button></div></section><section id="board" class="page active"><div class="tower-heading"><span class="rule"></span><span id="board-title">THE HOLLOW SPIRE</span><span class="rule"></span></div><div class="ascent"><span>↑</span><small id="board-subtitle">HIGHER DANGERS · GREATER REWARDS</small></div><div class="board"><canvas id="world" aria-label="Tower grid: tap a destination or swipe to move. Keyboard arrows and WASD also work."></canvas><span class="board-caption" id="density-label">20 × 20</span></div><div class="status"><span class="live-dot"></span><span id="message" aria-live="polite"></span></div><div class="controls"><button id="pause" aria-label="Pause game">Ⅱ</button><div class="dpad" hidden><button data-move="-1,0" aria-label="Move left">←</button><div><button data-move="0,1" aria-label="Move up">↑</button><button data-move="0,-1" aria-label="Move down">↓</button></div><button data-move="1,0" aria-label="Move right">→</button></div></div><div id="shop" class="shop" hidden></div><div id="inspect" class="inspection">Tap a destination to walk and fight. Swipe to step. Undo reverses one step.</div></section><section id="gear" class="page"></section><section id="upgrades" class="page"></section><section id="settings" class="page"></section><nav aria-label="Main navigation">${Object.entries(
   icons,
 )
   .map(
@@ -25,9 +25,12 @@ app.innerHTML = `<main class="shell"><header class="brand"><div><span class="eye
   )
   .join(
     "",
-  )}</nav><footer>EVERY ASCENT LEAVES AN ECHO</footer></main><dialog id="modal"></dialog>`;
+  )}</nav></main><dialog id="modal"></dialog>`;
 const game = new Game(load());
 const renderer = new Renderer(document.querySelector("#world")!, game);
+Renderer.drawHero(
+  (document.querySelector("#portrait-sprite") as HTMLCanvasElement).getContext("2d")!,
+);
 let tab = "tower",
   lastAuto = 0,
   lastRoute = 0,
@@ -159,6 +162,8 @@ function navigate(id: string) {
     game.switchMode(id as "tower" | "delve");
     renderBoard();
   } else game.route = [];
+  el("stats").toggleAttribute("hidden", !isBoard(id));
+  el("currencies").toggleAttribute("hidden", id !== "upgrades");
   document
     .querySelectorAll(".page")
     .forEach((p) => p.classList.toggle("active", p.id === (isBoard(id) ? "board" : id)));
@@ -374,6 +379,8 @@ document.addEventListener("visibilitychange", () => {
   save();
 });
 window.addEventListener("pagehide", save);
+el("stats").toggleAttribute("hidden", !isBoard(tab));
+el("currencies").toggleAttribute("hidden", tab !== "upgrades");
 renderBoard();
 update();
 requestAnimationFrame(frame);
