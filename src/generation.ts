@@ -416,7 +416,7 @@ function nominalTowerPlayer(room: number): Player {
   const attack = Math.ceil(TOWER_SCALING.defense(room) * 1.4) + 6;
   const defense = Math.ceil(TOWER_SCALING.attack(room) * 0.5);
   const hp = Math.ceil(TOWER_SCALING.hp(room) * 5) + 300;
-  return { x: 0, y: 0, hp, maxHp: hp, attack, defense, keys: { yellow: 0, blue: 0, red: 0 }, gear: [] };
+  return { x: 0, y: 0, hp, maxHp: hp, attack, defense, keys: { yellow: 0, blue: 0, red: 0 } };
 }
 /** One attempt at a self-contained 20x20 challenge room. BSP-carved rooms
  * are assigned, in order, to the abstract puzzle graph's main-path nodes
