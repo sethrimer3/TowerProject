@@ -41,10 +41,16 @@ export function chooseStep(game: Game) {
         continue;
       seen.add(k);
       const t = game.world.tile(x, y);
+      // Cache the one prediction per enemy tile instead of re-running combat
+      // math for every check below.
+      const combat = t.kind === "enemy" ? predict(p, t.enemy!) : null;
       if (
         t.kind === "wall" || (t.kind === "oneway" && dy !== 1) ||
         (t.kind === "door" && !p.keys[t.color!]) ||
-        (t.kind === "enemy" && !predict(p, t.enemy!).survivable && !predict(p, t.enemy!).impervious)
+        // Automove avoids known-lethal enemies outright; an impervious enemy
+        // is still a candidate step (see below) so execution can bump it
+        // harmlessly and replan, rather than treating it as a hard wall here.
+        (t.kind === "enemy" && !combat!.survivable && !combat!.impervious)
       )
         continue;
       if (t.kind === "stairs" && game.mode === "tower" && game.run.rewards?.length) continue;
@@ -56,7 +62,10 @@ export function chooseStep(game: Game) {
         ? (t.kind === "stairs" ? 100 : 0) - next.d * 0.18
         : score(t, y, progress, next.d);
       if (t.kind === "potion" && p.hp === p.maxHp) value -= 10;
-      if (t.kind === "enemy") value -= predict(p, t.enemy!).damage * 0.5;
+      // Impervious enemies cost nothing in expected damage (they are never
+      // actually fought — game.move() rejects the bump); a real fight's
+      // predicted damage still discourages picking a costly-but-survivable one.
+      if (t.kind === "enemy" && !combat!.impervious) value -= combat!.damage * 0.5;
       if (value > bestScore) {
         best = next;
         bestScore = value;

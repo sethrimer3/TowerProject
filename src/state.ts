@@ -294,6 +294,51 @@ export class Game {
   gainXp(enemy: Enemy) {
     this.save.xp += xpForKill(enemy.tier, enemy.attack);
   }
+  /** The single path that ends the current run, whether by death, by a
+   * detected deadlock, or by the player choosing to retire. Captures the
+   * dying run's stats into the summary before any new run is created, pays
+   * out exactly once, and only opens a Revive opportunity for an actual
+   * fatal player choice (never for a deadlock or a manual retire). */
+  finalizeRun(
+    reason: string,
+    options: { dead?: boolean; allowRevive?: boolean; preFatalSnapshot?: MoveSnapshot } = {},
+  ) {
+    if (this.summary) return;
+    const { dead = false, allowRevive = false, preFatalSnapshot } = options;
+    this.settleRevival();
+    // Capture the dying run's own stats — height/kills/record — and pay out
+    // rewards while `this.run` still refers to this run, before newRun()
+    // (below) replaces it.
+    const { earned, record } = this.payout();
+    this.save[this.mode].history = [];
+    this.route = [];
+    const summary = {
+      height: this.run.height,
+      kills: this.run.kills,
+      earned,
+      reason,
+      dead,
+      record,
+    };
+    if (dead) this.newRun(true);
+    else this.save[this.mode].run = null;
+    if (allowRevive && dead && preFatalSnapshot && this.save.upgrades.revive)
+      this.save[this.mode].revival = { snapshot: preFatalSnapshot, earned };
+    else if (dead) this.creditCurrency(earned);
+    this.summary = summary;
+    this.auto = false;
+    if (dead)
+      this.message = "Returned to the forest. Follow the path to begin again.";
+  }
+  /** Runs only after a meaningful Tower state change (never every frame):
+   * a defeated enemy, a collected pickup, a consumed door, or a floor
+   * transition. Lethal (but non-impervious) enemies never count as viable
+   * progress here, matching automation's own avoidance of them. */
+  checkDeadlock() {
+    if (this.mode !== "tower" || this.run.outside || this.summary) return;
+    if (isDeadlocked(this.run))
+      this.finalizeRun("No viable moves remain", { dead: false });
+  }
   move(dx: number, dy: number, force = true, track = true) {
     if (this.paused || this.summary || Math.abs(dx) + Math.abs(dy) !== 1)
       return false;
@@ -313,8 +358,22 @@ export class Game {
       this.reject(x, y, `Requires a ${t.color} key.`);
       return false;
     }
-    if (t.kind === "enemy" && !force && !predict(p, t.enemy!).survivable)
-      return false;
+    // Combat is predicted once, before any snapshot/undo bookkeeping, so an
+    // impervious or (automation's) lethal rejection never touches history,
+    // damages the player, alters the enemy, or ends the run.
+    let combat: ReturnType<typeof predict> | null = null;
+    if (t.kind === "enemy") {
+      combat = predict(p, t.enemy!);
+      if (combat.impervious) {
+        this.reject(x, y, `Impervious — requires ${combat.requiredAttack} more ATK`);
+        this.checkDeadlock();
+        return false;
+      }
+      if (!combat.survivable && !force) {
+        this.feedback("Lethal encounter. Inspect the enemy before proceeding.");
+        return false;
+      }
+    }
     this.settleRevival();
     const before = this.snapshot(),
       slice = this.save[this.mode];
@@ -323,41 +382,22 @@ export class Game {
       slice.history = slice.history.slice(-this.undoCapacity);
     }
     if (t.kind === "door") {
-      if (!p.keys[t.color!]) {
-        this.feedback(`Requires an ${t.color} key.`);
-        return false;
-      }
       p.keys[t.color!]--;
       this.run.keysSpent = true;
       this.feedback(`${t.color} seal opened`);
     }
     if (t.kind === "enemy") {
       const enemy = t.enemy!,
-        result = predict(p, enemy);
-      if (!result.survivable && !force) {
-        this.feedback("Lethal encounter. Inspect the enemy before proceeding.");
-        return false;
-      }
+        result = combat!;
       p.hp -= result.damage;
       if (result.damage > 0) this.run.damaged = true;
       if (p.hp <= 0) {
         p.hp = 0;
-        const { earned, record } = this.payout();
-        const summary = {
-          height: this.run.height,
-          kills: this.run.kills,
-          earned,
-          reason: "Fallen in battle",
+        this.finalizeRun("Fallen in battle", {
           dead: true,
-          record,
-        };
-        this.newRun(true);
-        if (this.save.upgrades.revive)
-          this.save[this.mode].revival = { snapshot: before, earned };
-        else this.creditCurrency(earned);
-        this.summary = summary;
-        this.message =
-          "Returned to the forest. Follow the path to begin again.";
+          allowRevive: true,
+          preFatalSnapshot: before,
+        });
         return false;
       }
       this.run.kills++;
@@ -370,6 +410,10 @@ export class Game {
     }
     p.x = x;
     p.y = y;
+    // Walking into a torch destroys it immediately: light, collision and
+    // sprite all disappear the same frame since rendering only ever draws
+    // active torches from this same list.
+    this.world.breakTorchAt?.(x, y);
     if (this.run.outside) {
       if (t.kind === "stairs") {
         this.run.outside = false;
@@ -403,9 +447,10 @@ export class Game {
     } else if (t.kind === "stairsDown") {
       this.descendTowerRoom();
     }
+    if (t.kind !== "floor" && t.kind !== "oneway") this.checkDeadlock();
     return true;
   }
-  advanceTowerRoom() { this.saveCurrentFloor();
+  advanceTowerRoom() {
     this.claimRewards();
     this.run.height++;
     this.enterTowerFloor();
@@ -416,7 +461,7 @@ export class Game {
   /** Step back onto the stairs at the foot of the current room, returning
    * to the previous room exactly as it was left: cleared tiles stay clear,
    * surviving enemies and unclaimed loot are still there to finish off. */
-  descendTowerRoom() { if (this.run.height <= 0) return; this.saveCurrentFloor();
+  descendTowerRoom() {
     if (this.run.height <= 0) return;
     this.claimRewards();
     this.run.height--;
@@ -434,31 +479,12 @@ export class Game {
     }
     this.feedback("You descend to the room below.");
   }
-  /** Common setup for entering a tower room by height, reusing its saved
-   * changes when it was already visited. Keys reset per visit; damage taken
+  /** Enter a Tower room by height, reusing its persistent mutations when it
+   * was already visited (run.floors[height] IS run.changes for that floor —
+   * a live reference, not a copy — so every clear() written through
+   * RoomWorld.changes during that visit is already saved; nothing further
+   * needs to happen when leaving). Keys reset per visit; damage taken
    * anywhere in the run keeps counting toward the whole-ascent Gold clear. */
-  
-  saveCurrentFloor() {
-    if (this.mode !== "tower") return;
-    if (!this.run.floors) this.run.floors = {};
-    const obj: any = {};
-    for (const [k, v] of this.world.cells.entries()) {
-      obj[k] = v;
-    }
-    this.run.floors[this.run.height] = obj;
-  }
-
-  loadOrGenerateFloor() {
-    if (this.mode !== "tower") return;
-    if (this.run.floors && this.run.floors[this.run.height]) {
-      const entries = Object.entries(this.run.floors[this.run.height]) as any;
-      this.world.cells = new Map(entries);
-    } else {
-      (this.world as any).cells = (this.world as any).generate(this.run.seed, this.run.height);
-      this.saveCurrentFloor();
-    }
-  }
-
   enterTowerFloor() {
     this.run.keysSpent = false;
     this.run.rewards = [];
@@ -577,21 +603,7 @@ export class Game {
     }
   }
   finish(reason: string) {
-    if (this.summary) return;
-    this.settleRevival();
-    this.save[this.mode].history = [];
-    this.route = [];
-    const { earned, record } = this.payout();
-    this.creditCurrency(earned);
-    this.summary = {
-      height: this.run.height,
-      kills: this.run.kills,
-      earned,
-      reason,
-      record,
-    };
-    this.save[this.mode].run = null;
-    this.auto = false;
+    this.finalizeRun(reason, { dead: false });
   }
   buy(id: UpgradeId) {
     if (!skillAvailable(id, this.save.upgrades)) return false;

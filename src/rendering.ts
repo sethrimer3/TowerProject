@@ -1,7 +1,7 @@
 import { CHUNK, COLORS } from "./config.ts";
-import { drawTerrain, themeAt } from "./themes.ts";
+import { drawTerrain } from "./themes.ts";
 import type { Game } from "./state.ts";
-import type { Tile } from "./entities.ts";
+import type { Tile, Torch } from "./entities.ts";
 import { drawForestTile, drawEntrance, OUTSIDE_SIZE } from "./outside.ts";
 import { OutdoorWeather } from "./weather.ts";
 export class Renderer {
@@ -101,6 +101,14 @@ export class Renderer {
       c.scale(s / 24, s / 24);
       drawEntrance(c, g.mode, Math.floor(g.world.width / 2));
       c.restore();
+    } else {
+      // World -> ambient darkness -> per-torch warm light, clipped to each
+      // torch's cached visibility polygon so walls cast real shadows.
+      const torches = this.visibleTorches();
+      for (const t of torches) this.drawTorchSprite(t);
+      c.fillStyle = "rgba(3,5,9,0.6)";
+      c.fillRect(0, 0, box.width, box.width);
+      for (const t of torches) this.drawTorchLight(t, now);
     }
     c.save();
     c.translate(
@@ -194,10 +202,7 @@ export class Renderer {
       return;
     }
     drawTerrain(c, t.kind === "wall", g.mode, g.run.height, x, y, g.run.seed, t.kind === "floor");
-    if (t.kind === "wall") {
-      if (themeAt(g.mode, g.run.height, x, y, g.run.seed).decor === 0 && x % 6 === 0 && y % 7 === 3) this.torch(time);
-      return;
-    }
+    if (t.kind === "wall") return;
     if (t.kind === "floor") return;
     
     if (t.kind === "oneway") {
@@ -398,22 +403,86 @@ export class Renderer {
     c.fillRect(9, 11, 2, 2);
     c.fillRect(15, 11, 2, 2);
   }
-  torch(time: number) {
-    const c = this.ctx;
+  /** Active torches roughly within the camera viewport, padded so a torch
+   * whose center is just offscreen can still light visible ground. Cheap
+   * per-frame culling; the expensive part (the visibility polygon) is
+   * cached on the torch itself and computed only once. */
+  visibleTorches(): Torch[] {
+    const list = this.game.world.torches;
+    if (!list) return [];
+    const n = this.density,
+      pad = 8;
+    return list.filter(
+      (t) =>
+        t.active &&
+        t.x > this.left - pad &&
+        t.x < this.left + n + pad &&
+        t.y > this.bottom - pad &&
+        t.y < this.bottom + n + pad,
+    );
+  }
+  toScreenX(wx: number) {
+    return (wx - this.left) * this.size;
+  }
+  toScreenY(wy: number) {
+    return (this.density - (wy - this.bottom)) * this.size;
+  }
+  /** Stationary torch + flame sprite. No vertical bob — the sprite never
+   * moves; only the light (see drawTorchLight) flickers. */
+  drawTorchSprite(t: Torch) {
+    const c = this.ctx,
+      s = this.size,
+      sx = (t.x - this.left) * s,
+      sy = (this.density - 1 - (t.y - this.bottom)) * s;
+    c.save();
+    c.translate(sx, sy);
+    c.scale(s / 24, s / 24);
     c.fillStyle = "#59412c";
     c.fillRect(10, 10, 4, 10);
-    const a = this.game.save.settings.reduceMotion
-      ? 0
-      : Math.sin(time / 140) * 1.4;
-    const gr = c.createRadialGradient(12, 8, 1, 12, 8, 22);
-    gr.addColorStop(0, "#ffb64e66");
-    gr.addColorStop(1, "#ff8c2000");
-    c.fillStyle = gr;
-    c.fillRect(-10, -14, 44, 44);
     c.fillStyle = "#df7b32";
-    c.fillRect(9, 4 + a, 6, 9);
+    c.fillRect(9, 4, 6, 9);
     c.fillStyle = "#ffe3a0";
-    c.fillRect(11, 3 + a, 3, 7);
+    c.fillRect(11, 3, 3, 7);
+    c.restore();
+  }
+  /** Warm radial light clipped to the torch's cached visibility polygon, so
+   * walls occlude it exactly (shadows point away from the torch). Falloff
+   * is quadratic (gradient stops chosen to trace out (1 - t)^2), and a
+   * small canvas blur softens the shadow edge. Brightness/radius flicker
+   * gently (+/-~5%); torches combine via additive ("lighter") blending. */
+  drawTorchLight(t: Torch, now: number) {
+    if (!t.visibilityPolygon || t.visibilityPolygon.length < 3) return;
+    const c = this.ctx,
+      reduceMotion = this.game.save.settings.reduceMotion;
+    const phase = (t.x * 928.13 + t.y * 17.71) % (Math.PI * 2);
+    const flicker = reduceMotion
+      ? 1
+      : 1 + Math.sin(now / 420 + phase) * 0.045 + Math.sin(now / 190 + phase * 1.7) * 0.018;
+    const cx = this.toScreenX(t.x + 0.5),
+      cy = this.toScreenY(t.y + 0.5),
+      radius = t.lightRadius * this.size * flicker,
+      intensity = t.baseIntensity * flicker;
+    c.save();
+    c.beginPath();
+    t.visibilityPolygon.forEach((p, i) => {
+      const px = this.toScreenX(p.x),
+        py = this.toScreenY(p.y);
+      if (i === 0) c.moveTo(px, py);
+      else c.lineTo(px, py);
+    });
+    c.closePath();
+    c.clip();
+    if (!reduceMotion) c.filter = "blur(2px)";
+    c.globalCompositeOperation = "lighter";
+    const gr = c.createRadialGradient(cx, cy, 0, cx, cy, radius);
+    gr.addColorStop(0, `rgba(255,208,138,${0.95 * intensity})`);
+    gr.addColorStop(0.12, `rgba(255,196,120,${0.8 * intensity})`);
+    gr.addColorStop(0.35, `rgba(255,150,70,${0.45 * intensity})`);
+    gr.addColorStop(0.65, `rgba(255,110,40,${0.18 * intensity})`);
+    gr.addColorStop(1, `rgba(255,80,20,0)`);
+    c.fillStyle = gr;
+    c.fillRect(cx - radius, cy - radius, radius * 2, radius * 2);
+    c.restore();
   }
   hero() {
     Renderer.drawHero(this.ctx);

@@ -1,5 +1,4 @@
 import { validatePhysicalLayout } from "./validation.ts";
-import { sculptRoom } from "./room-shapes.ts";
 import {
   CHUNK,
   WIDTH,
@@ -7,10 +6,14 @@ import {
   TOWER_WIDTH,
   TOWER_START_X,
   UNGUARDED_LOOT_CHANCE,
+  TOWER_SCALING,
   type KeyColor,
   DELVE_MAX_DEPTH,
 } from "./config.ts";
-import { point, type Tile } from "./entities.ts";
+import { point, type Tile, type Torch, type Player } from "./entities.ts";
+import { computeVisibilityPolygon } from "./lighting.ts";
+import { getTowerEnemy } from "./scaling.ts";
+import { generatePuzzleGraph } from "./puzzle.ts";
 export type Board = {
   width: number;
   floor: number;
@@ -22,7 +25,50 @@ export type Board = {
     dy: number,
   ): { x: number; y: number } | null;
   clear(x: number, y: number): void;
+  /** Present on boards that carry torches (dungeon boards; the forest
+   * exterior has none). */
+  torches?: Torch[];
+  /** Deactivates the torch standing on (x, y), if any, and reports whether
+   * one was destroyed. Used for player-torch collision. */
+  breakTorchAt?(x: number, y: number): boolean;
 };
+/** Places torches on walkable floor tiles that sit next to a wall (never on
+ * a wall tile itself), at roughly the same density/spacing the old purely
+ * decorative wall pattern used, then caches each torch's visibility
+ * polygon up front so rendering never recomputes it per frame. */
+function placeTorches(
+  cells: Map<string, Tile>,
+  xMin: number,
+  xMax: number,
+  yMin: number,
+  yMax: number,
+): Torch[] {
+  const isWall = (x: number, y: number) =>
+    (cells.get(point(x, y))?.kind ?? "wall") === "wall";
+  const torches: Torch[] = [];
+  const taken = new Set<string>();
+  for (let y = yMin; y <= yMax; y++)
+    for (let x = xMin; x <= xMax; x++) {
+      if (x % 6 !== 0 || y % 7 !== 3) continue;
+      const candidates: [number, number][] = [
+        [x, y], [x + 1, y], [x, y + 1], [x - 1, y], [x, y - 1],
+      ];
+      for (const [cx, cy] of candidates) {
+        const key = point(cx, cy);
+        if (taken.has(key) || cx < xMin || cx > xMax || cy < yMin || cy > yMax) continue;
+        if (cells.get(key)?.kind !== "floor") continue;
+        const adjWall =
+          isWall(cx + 1, cy) || isWall(cx - 1, cy) || isWall(cx, cy + 1) || isWall(cx, cy - 1);
+        if (!adjWall) continue;
+        taken.add(key);
+        torches.push({ x: cx, y: cy, lightRadius: 6, baseIntensity: 1, active: true });
+        break;
+      }
+    }
+  for (const torch of torches)
+    torch.visibilityPolygon = computeVisibilityPolygon(torch, isWall);
+  return torches;
+}
 export const LAYOUT_VERSION = 5;
 export const TOWER_LAYOUT_VERSION = 1;
 const directions = [
@@ -98,15 +144,22 @@ export function bspRooms(x: number, y: number, w: number, h: number, rng: () => 
   return rooms;
 }
 
-export function carvePath(cells: Map<string, Tile>, pointFn: (x: number, y: number) => string, x1: number, y1: number, x2: number, y2: number, rng: () => number) {
+/** Carves a meandering 1-wide corridor and returns every cell it touched
+ * (in walk order) so callers can place a choke-point gate exactly on the
+ * corridor rather than guessing at coordinates. */
+export function carvePath(cells: Map<string, Tile>, pointFn: (x: number, y: number) => string, x1: number, y1: number, x2: number, y2: number, rng: () => number): [number, number][] {
+  const path: [number, number][] = [];
   let cx = x1, cy = y1;
   while(cx !== x2 || cy !== y2) {
     cells.set(pointFn(cx, cy), { kind: 'floor' });
+    path.push([cx, cy]);
     if (cx === x2) { cy += Math.sign(y2 - cy); continue; }
     if (cy === y2) { cx += Math.sign(x2 - cx); continue; }
     if (rng() < 0.5) cx += Math.sign(x2 - cx); else cy += Math.sign(y2 - cy);
   }
   cells.set(pointFn(x2, y2), { kind: 'floor' });
+  path.push([x2, y2]);
+  return path;
 }
 
 export function validate(cells: Map<string, Tile>, base: number) {
@@ -157,6 +210,7 @@ type Room = {
 };
 
 const delveCaches = new Map<number, Map<string, Tile>>();
+const delveTorchCaches = new Map<number, Torch[]>();
 
 export function generateDelveMap(seed: number): Map<string, Tile> {
   const rng = random(seed);
@@ -169,8 +223,7 @@ export function generateDelveMap(seed: number): Map<string, Tile> {
   floor(START_X, 0);
 
   const rooms = bspRooms(1, 1, WIDTH - 2, DELVE_MAX_DEPTH - 2, rng, 4);
-  const edges: {x: number, y: number}[] = [];
-  
+
   for (let r of rooms) {
     for (let yy = r.y; yy < r.y + r.h; yy++) {
       for (let xx = r.x; xx < r.x + r.w; xx++) {
@@ -182,10 +235,27 @@ export function generateDelveMap(seed: number): Map<string, Tile> {
   // We connect rooms by finding neighbors and carving
   // Simple heuristic: connect each room to one below it
   rooms.sort((a, b) => a.y - b.y);
+  if (rooms.length)
+    carvePath(cells, point, START_X, 0, Math.floor(rooms[0].x + rooms[0].w / 2), Math.floor(rooms[0].y + rooms[0].h / 2), rng);
   for (let i = 0; i < rooms.length - 1; i++) {
     const r1 = rooms[i];
     const r2 = rooms[i + 1];
     carvePath(cells, point, Math.floor(r1.x + r1.w / 2), Math.floor(r1.y + r1.h / 2), Math.floor(r2.x + r2.w / 2), Math.floor(r2.y + r2.h / 2), rng);
+  }
+
+  // Occasional wraparound openings link the west and east edges directly,
+  // carved outward from existing floor so they never disconnect anything.
+  for (let y = 3; y < DELVE_MAX_DEPTH - 3; y += 17) {
+    if (rng() >= 0.6) continue;
+    let minX = -1, maxX = -1;
+    for (let x = 1; x < WIDTH - 1; x++)
+      if (cells.get(point(x, y))?.kind === "floor") {
+        if (minX === -1) minX = x;
+        maxX = x;
+      }
+    if (minX === -1) continue;
+    for (let x = 0; x <= minX; x++) floor(x, y);
+    for (let x = maxX; x < WIDTH; x++) floor(x, y);
   }
 
   // Oneway passages every ~40 tiles
@@ -244,6 +314,7 @@ export function generate(seed: number, index: number): Map<string, Tile> {
   if (!fullMap) {
     fullMap = generateDelveMap(seed);
     delveCaches.set(seed, fullMap);
+    delveTorchCaches.set(seed, placeTorches(fullMap, 1, WIDTH - 2, 0, DELVE_MAX_DEPTH - 2));
   }
   const chunk = new Map<string, Tile>();
   for (let y = index * CHUNK; y < (index + 1) * CHUNK; y++) {
@@ -253,6 +324,12 @@ export function generate(seed: number, index: number): Map<string, Tile> {
     }
   }
   return chunk;
+}
+/** Torches for a delve seed, computed once (on first generation of that
+ * seed) and cached for the process lifetime. */
+export function torchesForSeed(seed: number): Torch[] {
+  if (!delveTorchCaches.has(seed)) generate(seed, 0);
+  return delveTorchCaches.get(seed) ?? [];
 }
 
 export function rollUnguardedLoot(rng: () => number): Tile | null {
@@ -296,6 +373,15 @@ export class World implements Board {
   clear(x: number, y: number) {
     this.changes[point(x, y)] = { kind: "floor" };
   }
+  get torches(): Torch[] {
+    return torchesForSeed(this.seed);
+  }
+  breakTorchAt(x: number, y: number): boolean {
+    const torch = this.torches.find((t) => t.active && t.x === x && t.y === y);
+    if (!torch) return false;
+    torch.active = false;
+    return true;
+  }
   maintain(y: number) {
     const index = Math.floor(y / CHUNK);
     this.tile(START_X, (index + 2) * CHUNK);
@@ -306,14 +392,29 @@ export class World implements Board {
       if (Number(k.split(",")[1]) < this.floor) delete this.changes[k];
   }
 }
-/** A single self-contained 20x20 challenge room: no locks or keys, one
- * guardian at the entrance, scattered enemies/loot scaled by room number,
- * and one exit stairway. Coordinates are local (no chunk offset). */
-export function generateTowerRoom(
-  seed: number,
-  room: number,
-): Map<string, Tile> {
-  const rng = random(seed ^ Math.imul(room + 1, 2654435761));
+/** A conservative "kept pace with the climb" player used only to prove a
+ * generated room is solvable: attack/defense comfortably clear this room's
+ * own polynomial enemy scaling (including the toughest archetype
+ * multipliers), so the check verifies topology, key ordering and pickup
+ * accounting rather than fine combat balance — that's a separate, live
+ * tuning concern the player's real upgrades and gear handle at runtime. */
+function nominalTowerPlayer(room: number): Player {
+  const attack = Math.ceil(TOWER_SCALING.defense(room) * 1.4) + 6;
+  const defense = Math.ceil(TOWER_SCALING.attack(room) * 0.5);
+  const hp = Math.ceil(TOWER_SCALING.hp(room) * 5) + 300;
+  return { x: 0, y: 0, hp, maxHp: hp, attack, defense, keys: { yellow: 0, blue: 0, red: 0 }, gear: [] };
+}
+/** One attempt at a self-contained 20x20 challenge room. BSP-carved rooms
+ * are assigned, in order, to the abstract puzzle graph's main-path nodes
+ * (see puzzle.ts): each inter-room corridor becomes one gate (an enemy or a
+ * locked door) placed at the corridor's own midpoint, a genuine choke point
+ * since these rooms are otherwise only reachable through that one carved
+ * path. A door's key is always placed in an earlier room on that same path.
+ * Returns null (never throws) when either the structural choke-point check
+ * or the full state-space solvability check fails, so the caller can retry
+ * with a new derived seed. */
+function tryGenerateTowerRoom(derivedSeed: number, room: number): Map<string, Tile> | null {
+  const rng = random(derivedSeed);
   const int = (lo: number, hi: number) =>
     lo + Math.floor(rng() * (hi - lo + 1));
   const cells = new Map<string, Tile>();
@@ -328,96 +429,169 @@ export function generateTowerRoom(
   // Room 0 opens onto the forest; every later room keeps a way back down.
   set(...entrance, room > 0 ? { kind: "stairsDown" } : { kind: "floor" });
   const reserved = new Set([point(...entrance), point(TOWER_START_X, 1)]);
-  function tier(): number {
-    return Math.min(3, Math.floor(room / 5));
-  }
-  function towerEnemy(tough = false): Tile {
-    const t = tier();
-    const names = ["Cinder slime", "Bone sentinel", "Dusk wing", "Ash warden"];
-    return {
-      kind: "enemy",
-      enemy: {
-        name: names[t],
-        hp: tough
-          ? 12 + t * 16 + Math.floor(room * 1.6)
-          : 8 + t * 10 + Math.floor(room * 1.1),
-        attack: tough
-          ? 6 + t * 4 + Math.floor(room / 3)
-          : 4 + t * 3 + Math.floor(room / 4),
-        defense: tough ? 1 + t * 2 : t,
-        tier: t,
-      },
-    };
-  }
-  
+
   const rooms = bspRooms(bounds.x1, bounds.y1, bounds.x2 - bounds.x1 + 1, bounds.y2 - bounds.y1 + 1, rng, 4);
-  for (let r of rooms) {
-    for (let yy = r.y; yy < r.y + r.h; yy++) {
-      for (let xx = r.x; xx < r.x + r.w; xx++) {
-        floor(xx, yy);
+  if (rooms.length < 2) return null;
+  for (const r of rooms)
+    for (let yy = r.y; yy < r.y + r.h; yy++)
+      for (let xx = r.x; xx < r.x + r.w; xx++) floor(xx, yy);
+  const centerOf = (r: { x: number; y: number; w: number; h: number }): [number, number] =>
+    [Math.floor(r.x + r.w / 2), Math.floor(r.y + r.h / 2)];
+
+  // Entrance guardian: an immediate, unavoidable first fight before the
+  // graph-mapped rooms begin.
+  set(TOWER_START_X, 1, { kind: "enemy", enemy: getTowerEnemy(room, rng, "balanced") });
+  carvePath(cells, point, TOWER_START_X, 1, ...centerOf(rooms[0]), rng);
+
+  // Map the abstract puzzle graph's mandatory route onto the BSP rooms in
+  // generation order: one main-path edge per inter-room corridor.
+  const graph = generatePuzzleGraph(derivedSeed, room);
+  const gatePositions: [number, number][] = [];
+  const edgeCount = Math.min(graph.mainPath.length, rooms.length - 1);
+  for (let i = 0; i < rooms.length - 1; i++) {
+    const path = carvePath(cells, point, ...centerOf(rooms[i]), ...centerOf(rooms[i + 1]), rng);
+    if (i >= edgeCount || path.length < 3) continue;
+    const edge = graph.mainPath[i];
+    const [gx, gy] = path[Math.floor(path.length / 2)];
+    if (edge.gate === "enemy" && edge.enemy) {
+      set(gx, gy, { kind: "enemy", enemy: edge.enemy });
+      gatePositions.push([gx, gy]);
+    } else if (edge.gate === "door" && edge.doorColor) {
+      set(gx, gy, { kind: "door", color: edge.doorColor });
+      gatePositions.push([gx, gy]);
+      // The key always lives in an earlier room on the mandatory path (or
+      // the entrance room itself), so it is reachable before this door.
+      const keyRoom = rooms[i];
+      const kx = int(keyRoom.x, keyRoom.x + keyRoom.w - 1),
+        ky = int(keyRoom.y, keyRoom.y + keyRoom.h - 1),
+        kp = point(kx, ky);
+      if (!reserved.has(kp) && cells.get(kp)?.kind === "floor") {
+        set(kx, ky, { kind: "key", color: edge.doorColor });
+        reserved.add(kp);
       }
     }
   }
-  for (let i = 0; i < rooms.length - 1; i++) {
-    const r1 = rooms[i];
-    const r2 = rooms[i + 1];
-    const cx1 = Math.floor(r1.x + r1.w / 2);
-    const cy1 = Math.floor(r1.y + r1.h / 2);
-    const cx2 = Math.floor(r2.x + r2.w / 2);
-    const cy2 = Math.floor(r2.y + r2.h / 2);
-    carvePath(cells, point, cx1, cy1, cx2, cy2, rng);
+  // The exit always sits in the final room on the mapped path, so it is
+  // provably behind every gate placed above rather than reachable by
+  // whatever BSP room happened to be picked at random.
+  const exitRoom = rooms[rooms.length - 1];
+  function placeIn(room_: { x: number; y: number; w: number; h: number }, tile: Tile) {
+    const candidates: [number, number][] = [];
+    for (let y = room_.y; y < room_.y + room_.h; y++)
+      for (let x = room_.x; x < room_.x + room_.w; x++)
+        if (!reserved.has(point(x, y)) && cells.get(point(x, y))?.kind === "floor")
+          candidates.push([x, y]);
+    if (!candidates.length) return null;
+    const [x, y] = candidates[int(0, candidates.length - 1)];
+    set(x, y, tile);
+    reserved.add(point(x, y));
+    return [x, y] as [number, number];
   }
-  carvePath(cells, point, TOWER_START_X, 1, Math.floor(rooms[0].x + rooms[0].w / 2), Math.floor(rooms[0].y + rooms[0].h / 2), rng);
+  const exit = placeIn(exitRoom, { kind: "stairs" });
+  if (!exit) return null;
 
-  // Placed after sculpting so the guardian's cell still reads as floor for
-  // sculptRoom's own connectivity check (it doesn't treat enemies as passable).
-  set(TOWER_START_X, 1, towerEnemy());
   function place(tile: Tile) {
     const candidates: [number, number][] = [];
     for (let y = bounds.y1; y <= bounds.y2; y++)
       for (let x = bounds.x1; x <= bounds.x2; x++)
         if (!reserved.has(point(x, y)) && cells.get(point(x, y))?.kind === "floor")
           candidates.push([x, y]);
-    if (!candidates.length) throw new Error("Tower room has no free positions");
+    if (!candidates.length) return null;
     const [x, y] = candidates[int(0, candidates.length - 1)];
     set(x, y, tile);
     reserved.add(point(x, y));
     return [x, y] as [number, number];
   }
   const enemyCount = Math.min(6, 2 + Math.floor(room / 4));
-  for (let i = 0; i < enemyCount; i++) place(towerEnemy(true));
+  for (let i = 0; i < enemyCount; i++)
+    place({ kind: "enemy", enemy: getTowerEnemy(room, rng, "brute") });
+  // Optional reward branches from the graph become extra guarded pickups —
+  // genuine resource competition (an extra fight for an extra stat point)
+  // even though they share the room's open floor rather than a separately
+  // carved dead-end alcove.
+  for (const n of graph.nodes)
+    if (n.type === "reward" && n.reward !== "key") {
+      const guard = graph.nodes.flatMap(p => p.edges).find(e => e.target === n.id)?.enemy;
+      if (guard) place({ kind: "enemy", enemy: guard });
+      place({ kind: n.reward === "attack" ? "attack" : "defense" });
+    }
   place({ kind: "potion", color: "blue" });
   place({ kind: "potion", color: "red" });
   place({ kind: "attack" });
   place({ kind: "defense" });
   if (room % 3 === 0) place({ kind: "treasure" });
-  const exit = place({ kind: "stairs" });
-  const blockers = new Set(
-    [...cells]
-      .filter(([, t]) => t.kind === "enemy")
-      .map(([k]) => k),
-  );
+
+  const blockers = new Set([...cells].filter(([, t]) => t.kind === "enemy").map(([k]) => k));
   const free = reachable(cells, point(...entrance), blockers);
   for (const k of free)
     if (cells.get(k)?.kind === "floor") {
       const loot = rollUnguardedLoot(rng);
       if (loot) cells.set(k, loot);
     }
-  if (!reachable(cells, point(...entrance)).has(point(...exit)))
-    throw new Error("Invalid tower room topology");
+
+  const fullReach = reachable(cells, point(...entrance));
+  if (!fullReach.has(point(...exit))) return null;
+  // Every placed gate must be a real structural cut point: blocking it must
+  // disconnect floor space beyond it, or the BSP carving accidentally left
+  // a bypass around the logical gate.
+  for (const [gx, gy] of gatePositions)
+    if (reachable(cells, point(...entrance), new Set([point(gx, gy)])).size >= fullReach.size - 1)
+      return null;
+  if (!validatePhysicalLayout(cells, entrance[0], entrance[1], exit[0], exit[1], nominalTowerPlayer(room)))
+    return null;
   return cells;
+}
+/** A self-contained 20x20 challenge room whose logical progression (the
+ * puzzle graph) is guaranteed solvable and whose physical layout is
+ * validated before it is ever handed to the player. Retries with
+ * deterministic derived seeds — never Math.random() — on any invalid
+ * attempt, and fails loudly rather than silently serving a broken room. */
+export function generateTowerRoom(
+  seed: number,
+  room: number,
+): Map<string, Tile> {
+  const MAX_ATTEMPTS = 12;
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    const derivedSeed =
+      seed ^ Math.imul(room + 1, 2654435761) ^ Math.imul(attempt + 1, 40503);
+    const result = tryGenerateTowerRoom(derivedSeed, room);
+    if (result) return result;
+  }
+  throw new Error(
+    `Tower room ${room} failed to generate a valid layout after ${MAX_ATTEMPTS} attempts`,
+  );
+}
+const towerTorchCaches = new Map<string, Torch[]>();
+/** Torches for one tower room, computed once when that room is first
+ * entered this session and cached by seed+room number. */
+function torchesForRoom(seed: number, room: number, cells: Map<string, Tile>): Torch[] {
+  const key = `${seed}:${room}`;
+  let t = towerTorchCaches.get(key);
+  if (!t) {
+    t = placeTorches(cells, 1, TOWER_WIDTH - 2, 1, CHUNK - 2);
+    towerTorchCaches.set(key, t);
+  }
+  return t;
 }
 export class RoomWorld implements Board {
   rewards: import("./entities.ts").RewardChest[] = [];
   width = TOWER_WIDTH;
   floor = 0;
   cells: Map<string, Tile>;
+  torches: Torch[];
   constructor(
     public seed: number,
     public room: number,
     public changes: Record<string, Tile>,
   ) {
     this.cells = generateTowerRoom(seed, room);
+    this.torches = torchesForRoom(seed, room, this.cells);
+  }
+  breakTorchAt(x: number, y: number): boolean {
+    const torch = this.torches.find((t) => t.active && t.x === x && t.y === y);
+    if (!torch) return false;
+    torch.active = false;
+    return true;
   }
   tile(x: number, y: number): Tile {
     if (x < 0 || x >= this.width || y < 0 || y >= CHUNK)

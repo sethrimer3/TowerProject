@@ -24,6 +24,18 @@ export type ClearTier = "silver" | "gold" | "platinum";
 export type RewardChest = { x: number; y: number; tier: ClearTier };
 export type FloorRecord = { earned: ClearTier[]; claimed: ClearTier[] };
 export type Tile = { kind: Kind; color?: KeyColor; enemy?: Enemy; tier?: ClearTier };
+export type Point = { x: number; y: number };
+/** A stationary wall-mounted light source, anchored to a walkable floor
+ * tile adjacent to a wall. Its visibility polygon is computed once (on
+ * creation) and cached; rendering only clips a radial gradient to it. */
+export type Torch = {
+  x: number;
+  y: number;
+  lightRadius: number;
+  baseIntensity: number;
+  active: boolean;
+  visibilityPolygon?: Point[];
+};
 export type Gear = {
   slot: "weapon" | "armor";
   name: string;
