@@ -1,13 +1,10 @@
 import { GOLD_SHOP, SAVE_KEY, UPGRADES } from "./config.ts";
 import type { ModeSave, Run, Save } from "./entities.ts";
-import { emptyMaterials, MATERIAL_IDS, type MaterialId } from "./materials.ts";
-import { EQUIPMENT_SLOTS, type CraftedEquipment, type EquipmentSlot } from "./equipment.ts";
-import { CONSUMABLES, type ConsumableId } from "./crafting.ts";
 export function defaults(): Save {
   return {
-    version: 3,
-    tower: { run: null, history: [], revival: null, best: 0, reached: 0, shards: 0, log: {}, lootedTiles: {} },
-    delve: { run: null, history: [], revival: null, best: 0, reached: 0, essence: 0, lootedTiles: {} },
+    version: 2,
+    tower: { run: null, history: [], revival: null, best: 0, reached: 0, shards: 0, log: {} },
+    delve: { run: null, history: [], revival: null, best: 0, reached: 0, essence: 0 },
     gold: 0,
     provisions: Object.fromEntries(
       GOLD_SHOP.map((g) => [g.id, 0]),
@@ -24,10 +21,6 @@ export function defaults(): Save {
       speed: 3,
       reduceMotion: false,
     },
-    materials: emptyMaterials(),
-    equipmentInventory: [],
-    equipped: {},
-    consumables: Object.fromEntries(CONSUMABLES.map((c) => [c.id, 0])) as Save["consumables"],
   };
 }
 const finite = (n: unknown, max = 1e9) =>

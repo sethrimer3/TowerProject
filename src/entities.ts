@@ -1,4 +1,7 @@
 import type { GoldItemId, KeyColor, UpgradeId } from "./config.ts";
+import type { MaterialId } from "./materials.ts";
+import type { CraftedEquipment, EquipmentSlot } from "./equipment.ts";
+import type { ConsumableId } from "./crafting.ts";
 export type Kind =
   | "wall"
   | "floor"
@@ -36,13 +39,6 @@ export type Torch = {
   active: boolean;
   visibilityPolygon?: Point[];
 };
-export type Gear = {
-  slot: "weapon" | "armor";
-  name: string;
-  quality: number;
-  attack: number;
-  defense: number;
-};
 export type Player = {
   x: number;
   y: number;
@@ -51,7 +47,6 @@ export type Player = {
   attack: number;
   defense: number;
   keys: Record<KeyColor, number>;
-  gear: Gear[];
 };
 export type Run = {
   damaged?: boolean;
@@ -87,9 +82,14 @@ export type ModeSave = {
   best: number;
   reached: number;
   run: Run | null;
+  /** Keys of `${seed}:${x},${y}` (delve) or `${seed}:${height}:${x},${y}`
+   * (tower) for every enemy kill / treasure chest that has already paid out
+   * persistent rewards, kept outside `run` so it survives movement undo and
+   * blocks the same physical kill/chest from paying out twice. */
+  lootedTiles: Record<string, true>;
 };
 export type Save = {
-  version: 2;
+  version: 3;
   tower: ModeSave & { shards: number; log: Record<string, FloorRecord> };
   delve: ModeSave & { essence: number };
   gold: number;
@@ -97,21 +97,11 @@ export type Save = {
   xp: number;
   upgrades: Record<UpgradeId, number>;
   settings: Settings;
+  /** Persistent crafting-material inventory. Never part of `Run` — must
+   * survive movement undo, death, and new runs. */
+  materials: Record<MaterialId, number>;
+  equipmentInventory: CraftedEquipment[];
+  equipped: Partial<Record<EquipmentSlot, string>>;
+  consumables: Record<ConsumableId, number>;
 };
 export const point = (x: number, y: number) => `${x},${y}`;
-export const gear = (quality: number): Gear[] => [
-  {
-    slot: "weapon",
-    name: quality ? "Embersteel blade" : "Traveler’s blade",
-    quality,
-    attack: 2 + quality * 2,
-    defense: 0,
-  },
-  {
-    slot: "armor",
-    name: quality ? "Runewoven mail" : "Weathered mail",
-    quality,
-    attack: 0,
-    defense: 1 + quality,
-  },
-];
