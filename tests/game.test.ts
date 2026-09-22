@@ -95,6 +95,7 @@ test("save roundtrip, malformed values and old versions are safe", () => {
   const g = new Game(defaults());
   g.save.upgrades.delve = 1;
   g.switchMode("delve");
+  g.run.changes["15,1"] = { kind: "floor" }; // Isolate persistence from procedural encounters.
   g.move(0, 1);
   const restored = decode(JSON.stringify(g.save));
   assert.equal(restored.delve.run?.player.y, 1);

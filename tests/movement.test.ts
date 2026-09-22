@@ -115,6 +115,7 @@ test("undo and Revive persist safely across refresh", () => {
   g.save.upgrades.delve = 1;
   g.switchMode("delve");
   g.save.upgrades.revive = 1;
+  g.run.changes["15,1"] = { kind: "floor" }; // Isolate persistence from procedural encounters.
   g.move(0, 1);
   let loaded = new Game(decode(JSON.stringify(g.save)));
   loaded.switchMode("delve");

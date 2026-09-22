@@ -8,7 +8,7 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1",
     "test": "node --experimental-transform-types --test tests/*.test.ts",
-    "test:browser": "node tests/browser.mjs && node tests/interactions.mjs && node tests/camera.mjs && node tests/skill-trees.mjs && node tests/outside.mjs"
+    "test:browser": "node tests/browser.mjs && node tests/interactions.mjs && node tests/camera.mjs && node tests/skill-trees.mjs && node tests/outside.mjs && node tests/progression.mjs"
   },
   "devDependencies": {
     "typescript": "~5.9.3",
