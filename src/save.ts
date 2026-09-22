@@ -23,6 +23,7 @@ export function defaults(): Save {
       density: 20,
       speed: 3,
       reduceMotion: false,
+      autoOffOnDeath: true,
     },
     materials: emptyMaterials(),
     equipmentInventory: [],
@@ -181,6 +182,7 @@ export function decode(raw: string | null): Save {
     d.settings.showArrows = s?.settings?.showArrows === true;
     d.settings.reduceMotion = s?.settings?.reduceMotion === true;
     d.settings.weatherSound = s?.settings?.weatherSound !== false;
+    d.settings.autoOffOnDeath = s?.settings?.autoOffOnDeath !== false;
     if (s?.version === 2 || s?.version === 3) {
       if (finite(s.gold)) d.gold = Math.floor(s.gold);
       for (const g of GOLD_SHOP)

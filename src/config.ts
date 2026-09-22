@@ -94,6 +94,14 @@ export const UPGRADES = [
     currency: "essence",
   },
   {
+    id: "autoPersist",
+    name: "Steadfast wayfinder",
+    description: "Choose whether Automove turns off when you fall in battle",
+    base: 6,
+    max: 1,
+    currency: "essence",
+  },
+  {
     id: "shardHp",
     name: "Battle-tested",
     description: "+15 starting maximum HP",

@@ -33,7 +33,7 @@ const SLOT_ICONS: Record<EquipmentSlot, string> = {
   weapon: "⚔", shield: "⛨", helmet: "▲", chestplate: "■", leggings: "▼", boots: "▽", gloves: "✤", necklace: "◇", ring: "○",
 };
 const app = document.querySelector<HTMLDivElement>("#app")!;
-app.innerHTML = `<main class="shell"><div id="currencies" class="currencies" hidden><div class="essence">✦ <b id="essence">0</b><small>COURAGE</small></div><div class="essence">◆ <b id="shards">0</b><small>INSPIRATION</small></div></div><section id="stats" class="stats" aria-label="Player statistics"><div class="portrait"><canvas id="portrait-sprite" width="24" height="24"></canvas><small>WAYFARER</small><small id="level">LV 0</small><button id="log" aria-label="Adventure log">Log</button></div><div class="vitals"><div><span class="heart">♥</span> HP <b id="hp"></b></div><div class="health-track"><i id="health"></i></div><div class="combat-stats"><span>⚔ <b id="attack"></b></span><span>⛨ <b id="defense"></b></span></div></div><div class="keys"><span class="yellow">⚿ <b id="yellow"></b></span><span class="blue">⚿ <b id="blue"></b></span><span class="red">⚿ <b id="red"></b></span></div><div class="height"><small id="height-label">HEIGHT</small><strong id="height">0</strong><span>BEST <b id="best">0</b></span></div><div class="actions"><button id="auto" class="mini-action" aria-label="Automove" title="Automove"><span class="mini-icon">✦</span><small id="auto-state">LOCKED</small></button><button id="undo" class="mini-action" aria-label="Undo" title="Undo"><span class="mini-icon">↺</span><small id="undo-state">0/1</small></button></div></section><section id="board" class="page active"><div class="tower-heading"><span class="rule"></span><span id="board-title">THE HOLLOW SPIRE</span><span class="rule"></span></div><div class="ascent"><span>↑</span><small id="board-subtitle">HIGHER DANGERS · GREATER REWARDS</small></div><div class="board"><canvas id="world" aria-label="Tower grid: tap a destination or swipe to move. Keyboard arrows and WASD also work."></canvas><span class="board-caption" id="density-label">20 × 20</span></div><div class="status"><span class="live-dot"></span><span id="message" aria-live="polite"></span></div><div class="controls"><div class="dpad" hidden><button data-move="-1,0" aria-label="Move left">←</button><div><button data-move="0,1" aria-label="Move up">↑</button><button data-move="0,-1" aria-label="Move down">↓</button></div><button data-move="1,0" aria-label="Move right">→</button></div></div><div id="inspect" class="inspection">Tap a destination to walk and fight. Swipe to step. Undo reverses one step.</div></section><section id="gear" class="page"></section><section id="upgrades" class="page"></section><section id="settings" class="page"></section><nav aria-label="Main navigation">${Object.entries(
+app.innerHTML = `<main class="shell"><div id="currencies" class="currencies" hidden><div class="essence">✦ <b id="essence">0</b><small>COURAGE</small></div><div class="essence">◆ <b id="shards">0</b><small>INSPIRATION</small></div></div><section id="stats" class="stats" aria-label="Player statistics"><div class="portrait"><canvas id="portrait-sprite" width="24" height="24"></canvas><small>WAYFARER</small><small id="level">LV 0</small><button id="log" aria-label="Adventure log">Log</button></div><div class="vitals"><div><span class="heart">♥</span> HP <b id="hp"></b></div><div class="health-track"><i id="health"></i></div><div class="combat-stats"><span>⚔ <b id="attack"></b></span><span>⛨ <b id="defense"></b></span></div></div><div class="keys"><span class="yellow">⚿ <b id="yellow"></b></span><span class="blue">⚿ <b id="blue"></b></span><span class="red">⚿ <b id="red"></b></span></div><div class="height"><small id="height-label">HEIGHT</small><strong id="height">0</strong><span>BEST <b id="best">0</b></span></div><div class="actions"><button id="auto-settings" class="mini-action" aria-label="Automove settings" title="Automove settings"><span class="mini-icon">⚙</span><small>SETTINGS</small></button><button id="auto" class="mini-action" aria-label="Automove" title="Automove"><span class="mini-icon">✦</span><small id="auto-state">LOCKED</small></button><button id="undo" class="mini-action" aria-label="Undo" title="Undo"><span class="mini-icon">↺</span><small id="undo-state">0/1</small></button></div></section><section id="board" class="page active"><div class="tower-heading"><span class="rule"></span><span id="board-title">THE HOLLOW SPIRE</span><span class="rule"></span></div><div class="ascent"><span>↑</span><small id="board-subtitle">HIGHER DANGERS · GREATER REWARDS</small></div><div class="board"><canvas id="world" aria-label="Tower grid: tap a destination or swipe to move. Keyboard arrows and WASD also work."></canvas><span class="board-caption" id="density-label">20 × 20</span></div><div class="status"><span class="live-dot"></span><span id="message" aria-live="polite"></span></div><div class="controls"><div class="dpad" hidden><button data-move="-1,0" aria-label="Move left">←</button><div><button data-move="0,1" aria-label="Move up">↑</button><button data-move="0,-1" aria-label="Move down">↓</button></div><button data-move="1,0" aria-label="Move right">→</button></div></div><div id="inspect" class="inspection">Tap a destination to walk and fight. Swipe to step. Undo reverses one step.</div></section><section id="gear" class="page"></section><section id="upgrades" class="page"></section><section id="settings" class="page"></section><nav aria-label="Main navigation">${Object.entries(
   icons,
 )
   .map(
@@ -51,7 +51,17 @@ Renderer.drawHero(
 let tab = "tower",
   lastAuto = 0,
   lastRoute = 0,
-  lastSave = 0;
+  lastSave = 0,
+  deathFaded = false;
+const fadeOverlay = document.createElement("div");
+fadeOverlay.className = "fade-overlay";
+document.body.appendChild(fadeOverlay);
+function fadeInFromBlack() {
+  fadeOverlay.classList.add("active");
+  requestAnimationFrame(() =>
+    requestAnimationFrame(() => fadeOverlay.classList.remove("active")),
+  );
+}
 let selectedTree: TreeId = "inspiration";
 let selectedSkill: UpgradeId = "shardHp";
 let gearTab: "equipped" | "inventory" | "crafting" | "provisions" = "equipped";
@@ -130,7 +140,24 @@ function update() {
   delveTab.title = game.save.upgrades.delve ? "Delve" : "Unlock Into the depths in the Inspiration tree";
   delveTab.setAttribute("aria-label", game.save.upgrades.delve ? "Delve" : "Delve (locked)");
   save();
-  if (game.summary) showSummary();
+  if (game.summary) {
+    if (game.summary.dead && !deathFaded) {
+      deathFaded = true;
+      fadeInFromBlack();
+    }
+    if (game.summary.dead && game.summary.autoDeath) returnToForest();
+    else showSummary();
+  } else {
+    deathFaded = false;
+  }
+}
+function returnToForest() {
+  game.summary = null;
+  renderer.bottom = 0;
+  renderer.playerX = game.run.player.x;
+  renderer.playerY = 0;
+  game.message = "Follow the forest path to the entrance.";
+  navigate(game.mode);
 }
 function renderBoard() {
   el("board").dataset.outside = String(!!game.run.outside);
@@ -471,18 +498,34 @@ function showSummary() {
     };
   el("again").onclick = () => {
     modal.close();
-    game.summary = null;
-    if (!s.dead) game.newRun(true);
-    renderer.bottom = 0;
-    renderer.playerX = game.run.player.x;
-    renderer.playerY = 0;
-    game.message = "Follow the forest path to the entrance.";
-    navigate(game.mode);
+    if (!s.dead) {
+      game.summary = null;
+      game.newRun(true);
+      renderer.bottom = 0;
+      renderer.playerX = game.run.player.x;
+      renderer.playerY = 0;
+      game.message = "Follow the forest path to the entrance.";
+      navigate(game.mode);
+    } else returnToForest();
   };
+}
+function showAutoSettings() {
+  if (modal.open) return;
+  const owned = !!game.save.upgrades.autoPersist;
+  modal.innerHTML = `<span class="summary-icon">⚙</span><small>WAYFINDER</small><h2>Automove settings</h2><label class="setting">Turn off upon death<input type="checkbox" id="auto-off-death" ${game.save.settings.autoOffOnDeath !== false ? "checked" : ""} ${owned ? "" : "disabled"}></label><p class="hint">${owned ? "Disable to keep the wayfinder moving after you fall in battle." : "Research Steadfast wayfinder in the Courage tree to configure this."}</p><div class="dialog-actions"><button id="auto-settings-close">Close</button></div>`;
+  modal.showModal();
+  el("auto-settings-close").onclick = () => modal.close();
+  const cb = document.querySelector<HTMLInputElement>("#auto-off-death");
+  if (cb)
+    cb.onchange = () => {
+      game.save.settings.autoOffOnDeath = cb.checked;
+      save();
+    };
 }
 modal.addEventListener("cancel", (e) => {
   if (game.summary) e.preventDefault();
 });
+el("auto-settings").onclick = () => showAutoSettings();
 el("auto").onclick = () => {
   if (!game.save.upgrades.auto) {
     selectedTree = game.save.upgrades.delve ? "courage" : "inspiration";

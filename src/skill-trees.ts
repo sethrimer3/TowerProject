@@ -11,6 +11,7 @@ export const TREES: { id: TreeId; name: string; currency: Currency; gate?: Upgra
   ] },
   { id: "courage", name: "Courage", currency: "essence", gate: "delve", description: "Earn Courage by beating your best Delve depth.", nodes: [
     { id: "auto", icon: "✦", x: 50, y: 10, requires: ["delve"] },
+    { id: "autoPersist", icon: "⚙", x: 82, y: 10, requires: ["auto"] },
     { id: "hp", icon: "♥", x: 18, y: 34, requires: ["auto"] },
     { id: "attack", icon: "⚔", x: 50, y: 34, requires: ["auto"] },
     { id: "defense", icon: "⛨", x: 82, y: 34, requires: ["auto"] },

@@ -619,6 +619,19 @@ dialog p {
   flex: 1;
   font-size: 12px;
 }
+.fade-overlay {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 999;
+  transition: opacity 1.1s ease;
+}
+.fade-overlay.active {
+  opacity: 1;
+  transition: none;
+}
 .summary-icon {
   display: block;
   color: #e2bf77;

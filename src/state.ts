@@ -63,6 +63,9 @@ export class Game {
     earned: number;
     reason: string;
     dead?: boolean;
+    /** True when the fatal move happened while Automove was on — the
+     * summary page is skipped and the player is dropped outside directly. */
+    autoDeath?: boolean;
     record: boolean;
   } = null;
   constructor(public save: Save) {
@@ -327,6 +330,7 @@ export class Game {
   ) {
     if (this.summary) return;
     const { dead = false, allowRevive = false, preFatalSnapshot } = options;
+    const wasAuto = this.auto;
     this.settleRevival();
     // Capture the dying run's own stats — height/kills/record — and pay out
     // rewards while `this.run` still refers to this run, before newRun()
@@ -334,12 +338,21 @@ export class Game {
     const { earned, record } = this.payout();
     this.save[this.mode].history = [];
     this.route = [];
+    // Automove keeps running through death only when the player has
+    // researched Steadfast wayfinder and switched off the default
+    // turn-off-on-death behavior.
+    const keepAuto =
+      dead &&
+      wasAuto &&
+      !!this.save.upgrades.autoPersist &&
+      this.save.settings.autoOffOnDeath === false;
     const summary = {
       height: this.run.height,
       kills: this.run.kills,
       earned,
       reason,
       dead,
+      autoDeath: dead && wasAuto,
       record,
     };
     if (dead) this.newRun(true);
@@ -348,7 +361,7 @@ export class Game {
       this.save[this.mode].revival = { snapshot: preFatalSnapshot, earned };
     else if (dead) this.creditCurrency(earned);
     this.summary = summary;
-    this.auto = false;
+    this.auto = keepAuto;
     if (dead)
       this.message = "Returned to the forest. Follow the path to begin again.";
   }

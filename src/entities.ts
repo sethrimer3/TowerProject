@@ -74,6 +74,9 @@ export type Settings = {
   density: number;
   speed: number;
   reduceMotion: boolean;
+  /** Requires the autoPersist upgrade to configure; otherwise Automove
+   * always turns off on death. */
+  autoOffOnDeath?: boolean;
 };
 export type Mode = "tower" | "delve";
 export type ModeSave = {
