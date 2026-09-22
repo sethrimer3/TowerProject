@@ -57,6 +57,7 @@ export type Run = {
   seed: number;
   player: Player;
   height: number;
+  maxHeight?: number;
   kills: number;
   treasures: number;
   changes: Record<string, Tile>;
@@ -77,6 +78,12 @@ export type Settings = {
   /** Requires the autoPersist upgrade to configure; otherwise Automove
    * always turns off on death. */
   autoOffOnDeath?: boolean;
+  /** Delve: tapping a tile walks there immediately instead of requiring a
+   * second tap to confirm. The info box still appears either way. */
+  oneTapMove?: boolean;
+  /** Delve: whether tapping a tile shows the info box at all. When off,
+   * a single tap always walks there directly. */
+  showInfoBoxes?: boolean;
 };
 export type Mode = "tower" | "delve";
 export type ModeSave = {

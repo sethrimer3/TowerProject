@@ -12,9 +12,11 @@ import {
   cost,
   levelForXp,
   GOLD_SHOP,
+  COLORS,
   type UpgradeId,
   type GoldItemId,
 } from "./config.ts";
+import type { Kind } from "./entities.ts";
 import { materialDef, METALS, GEMS, RARE_ENHANCEMENTS, type MaterialId, type MaterialStack, type MetalId } from "./materials.ts";
 import {
   EQUIPMENT_SLOTS,
@@ -33,7 +35,7 @@ const SLOT_ICONS: Record<EquipmentSlot, string> = {
   weapon: "⚔", shield: "⛨", helmet: "▲", chestplate: "■", leggings: "▼", boots: "▽", gloves: "✤", necklace: "◇", ring: "○",
 };
 const app = document.querySelector<HTMLDivElement>("#app")!;
-app.innerHTML = `<main class="shell"><div id="currencies" class="currencies" hidden><div class="essence">✦ <b id="essence">0</b><small>COURAGE</small></div><div class="essence">◆ <b id="shards">0</b><small>INSPIRATION</small></div></div><section id="stats" class="stats" aria-label="Player statistics"><div class="portrait"><canvas id="portrait-sprite" width="24" height="24"></canvas><small>WAYFARER</small><small id="level">LV 0</small><button id="log" aria-label="Adventure log">Log</button></div><div class="vitals"><div><span class="heart">♥</span> HP <b id="hp"></b></div><div class="health-track"><i id="health"></i></div><div class="combat-stats"><span>⚔ <b id="attack"></b></span><span>⛨ <b id="defense"></b></span></div></div><div class="keys"><span class="yellow">⚿ <b id="yellow"></b></span><span class="blue">⚿ <b id="blue"></b></span><span class="red">⚿ <b id="red"></b></span></div><div class="height"><small id="height-label">HEIGHT</small><strong id="height">0</strong><span>BEST <b id="best">0</b></span></div><div class="actions"><button id="auto-settings" class="mini-action" aria-label="Automove settings" title="Automove settings"><span class="mini-icon">⚙</span><small>SETTINGS</small></button><button id="auto" class="mini-action" aria-label="Automove" title="Automove"><span class="mini-icon">✦</span><small id="auto-state">LOCKED</small></button><button id="undo" class="mini-action" aria-label="Undo" title="Undo"><span class="mini-icon">↺</span><small id="undo-state">0/1</small></button></div></section><section id="board" class="page active"><div class="tower-heading"><span class="rule"></span><span id="board-title">THE HOLLOW SPIRE</span><span class="rule"></span></div><div class="ascent"><span>↑</span><small id="board-subtitle">HIGHER DANGERS · GREATER REWARDS</small></div><div class="board"><canvas id="world" aria-label="Tower grid: tap a destination or swipe to move. Keyboard arrows and WASD also work."></canvas><span class="board-caption" id="density-label">20 × 20</span></div><div class="status"><span class="live-dot"></span><span id="message" aria-live="polite"></span></div><div class="controls"><div class="dpad" hidden><button data-move="-1,0" aria-label="Move left">←</button><div><button data-move="0,1" aria-label="Move up">↑</button><button data-move="0,-1" aria-label="Move down">↓</button></div><button data-move="1,0" aria-label="Move right">→</button></div></div><div id="inspect" class="inspection">Tap a destination to walk and fight. Swipe to step. Undo reverses one step.</div></section><section id="gear" class="page"></section><section id="upgrades" class="page"></section><section id="settings" class="page"></section><nav aria-label="Main navigation">${Object.entries(
+app.innerHTML = `<main class="shell"><div id="currencies" class="currencies" hidden><div class="essence">✦ <b id="essence">0</b><small>COURAGE</small></div><div class="essence">◆ <b id="shards">0</b><small>INSPIRATION</small></div></div><section id="stats" class="stats" aria-label="Player statistics"><div class="portrait"><canvas id="portrait-sprite" width="24" height="24"></canvas><small>WAYFARER</small><small id="level">LV 0</small><button id="log" aria-label="Adventure log">Log</button></div><div class="vitals"><div><span class="heart">♥</span> HP <b id="hp"></b></div><div class="health-track"><i id="health"></i></div><div class="combat-stats"><span>⚔ <b id="attack"></b></span><span>⛨ <b id="defense"></b></span></div></div><div class="keys"><span class="yellow">⚿ <b id="yellow"></b></span><span class="blue">⚿ <b id="blue"></b></span><span class="red">⚿ <b id="red"></b></span></div><div class="height"><small id="height-label">HEIGHT</small><strong id="height">0</strong><div class="height-bests"><span>RUN <b id="best-run">0</b></span><span>ALL <b id="best-all">0</b></span><span id="best-reward" class="height-reward" hidden>+<b id="best-reward-val">0</b> <i id="best-reward-type">COURAGE</i></span></div></div><div class="actions"><button id="auto-settings" class="mini-action" aria-label="Automove settings" title="Automove settings"><span class="mini-icon">⚙</span><small>SETTINGS</small></button><button id="auto" class="mini-action" aria-label="Automove" title="Automove"><span class="mini-icon">✦</span><small id="auto-state">LOCKED</small></button><button id="undo" class="mini-action" aria-label="Undo" title="Undo"><span class="mini-icon">↺</span><small id="undo-state">0/1</small></button></div></section><section id="board" class="page active"><div class="tower-heading"><span class="rule"></span><span id="board-title">THE HOLLOW SPIRE</span><span class="rule"></span></div><div class="ascent"><span>↑</span><small id="board-subtitle">HIGHER DANGERS · GREATER REWARDS</small></div><div class="board" id="board-frame"><canvas id="world" aria-label="Tower grid: tap a destination or swipe to move. Keyboard arrows and WASD also work."></canvas><span class="board-caption" id="density-label">20 × 20</span><div id="inspect-box" class="inspect-box" hidden></div></div><div class="status"><span class="live-dot"></span><span id="message" aria-live="polite"></span></div><div class="controls"><div class="dpad" hidden><button data-move="-1,0" aria-label="Move left">←</button><div><button data-move="0,1" aria-label="Move up">↑</button><button data-move="0,-1" aria-label="Move down">↓</button></div><button data-move="1,0" aria-label="Move right">→</button></div></div><div id="inspect" class="inspection"></div></section><section id="gear" class="page"></section><section id="upgrades" class="page"></section><section id="settings" class="page"></section><nav aria-label="Main navigation">${Object.entries(
   icons,
 )
   .map(
@@ -94,8 +96,96 @@ function inspect(x: number, y: number) {
         ? "Ancient stone. Find a passage around it."
         : t.kind === "door"
           ? `${t.color} door · requires one matching key`
-          : `${t.kind[0].toUpperCase() + t.kind.slice(1)} · ${game.mode === "tower" ? "row" : "height"} ${y}`;
+          : game.mode === "delve"
+            ? (t.kind[0].toUpperCase() + t.kind.slice(1))
+            : `${t.kind[0].toUpperCase() + t.kind.slice(1)} · row ${y}`;
   }
+}
+const KIND_COLORS: Partial<Record<Kind, string>> = {
+  wall: "#8d97a8",
+  floor: "#8d97a8",
+  enemy: "#df797e",
+  key: "#eac16b",
+  potion: "#e08fd0",
+  attack: "#e2a15c",
+  defense: "#6dbdf1",
+  reward: "#f0cf7a",
+  treasure: "#f0cf7a",
+  stairs: "#c7cedb",
+  stairsDown: "#c7cedb",
+  oneway: "#c7cedb",
+};
+function inspectDetails(x: number, y: number): { color: string; title: string; body: string } {
+  const t = game.world.tile(x, y),
+    p = game.run.player;
+  if (t.kind === "enemy") {
+    const e = t.enemy!,
+      r = predict(p, e);
+    return {
+      color: KIND_COLORS.enemy!,
+      title: e.name,
+      body: `<span>HP ${e.hp} · ATK ${e.attack} · DEF ${e.defense}</span><strong class="${r.survivable ? "safe" : "danger"}">${r.damage} damage · ${r.survivable ? "Survivable" : "LETHAL"}</strong>`,
+    };
+  }
+  if (t.kind === "wall")
+    return { color: KIND_COLORS.wall!, title: "Wall", body: "Ancient stone. Find a passage around it." };
+  if (t.kind === "door")
+    return {
+      color: COLORS[t.color!],
+      title: `${t.color![0].toUpperCase()}${t.color!.slice(1)} Door`,
+      body: "Requires one matching key.",
+    };
+  return {
+    color: KIND_COLORS[t.kind] ?? "#c7cedb",
+    title: t.kind[0].toUpperCase() + t.kind.slice(1),
+    body: game.mode === "tower" ? `Row ${y}` : (t.kind === "floor" ? "Ancient cavern floor" : (t.kind[0].toUpperCase() + t.kind.slice(1))),
+  };
+}
+let inspectBoxVisible = false;
+function positionInspectBox(x: number, y: number) {
+  const frame = el("board-frame"),
+    box = el("inspect-box"),
+    frameRect = frame.getBoundingClientRect(),
+    canvasRect = renderer.canvas.getBoundingClientRect(),
+    s = renderer.size,
+    n = renderer.density,
+    tileLeft = canvasRect.left - frameRect.left + (x - renderer.left) * s,
+    tileTop = canvasRect.top - frameRect.top + (n - 1 - (y - renderer.bottom)) * s,
+    boxRect = box.getBoundingClientRect();
+  let left = tileLeft + s / 2 - boxRect.width / 2;
+  left = Math.max(4, Math.min(frameRect.width - boxRect.width - 4, left));
+  let top = tileTop - boxRect.height - 8;
+  if (top < 4) top = Math.min(frameRect.height - boxRect.height - 4, tileTop + s + 8);
+  box.style.left = `${left}px`;
+  box.style.top = `${top}px`;
+}
+function showInspectBox(x: number, y: number) {
+  selected = { x, y };
+  const d = inspectDetails(x, y),
+    box = el("inspect-box");
+  box.innerHTML = `<b style="color:${d.color}">${d.title}</b><div>${d.body}</div>`;
+  box.hidden = false;
+  inspectBoxVisible = true;
+  positionInspectBox(x, y);
+}
+function hideInspectBox() {
+  el("inspect-box").hidden = true;
+  inspectBoxVisible = false;
+}
+function onTap(x: number, y: number) {
+  if (game.mode !== "delve") {
+    inspect(x, y);
+    game.walkTo(x, y);
+    return;
+  }
+  if (game.save.settings.showInfoBoxes === false) {
+    hideInspectBox();
+    game.walkTo(x, y);
+    return;
+  }
+  const already = inspectBoxVisible && selected && selected.x === x && selected.y === y;
+  showInspectBox(x, y);
+  if (game.save.settings.oneTapMove || already) game.walkTo(x, y);
 }
 function update() {
   if (el("board").dataset.outside !== String(!!game.run.outside)) renderBoard();
@@ -106,8 +196,22 @@ function update() {
   text("defense", p.defense);
   for (const k of ["yellow", "blue", "red"] as const) text(k, p.keys[k]);
   text("height-label", game.mode === "tower" ? "HEIGHT" : "DEPTH");
-  text("height", game.run.height);
-  text("best", slice.best);
+  const currentVal = game.run.outside ? 0 : (game.mode === "delve" ? p.y : game.run.height);
+  const runBest = game.run.maxHeight ?? game.run.height;
+  const allBest = slice.best;
+  text("height", currentVal);
+  text("best-run", runBest);
+  text("best-all", allBest);
+  const divisor = game.mode === "delve" ? 10 : 1;
+  const rewardEl = el("best-reward");
+  if (runBest > allBest) {
+    const potentialReward = Math.floor(runBest / divisor) - Math.floor(allBest / divisor);
+    text("best-reward-val", potentialReward);
+    text("best-reward-type", game.mode === "delve" ? "COURAGE" : "INSPIRATION");
+    rewardEl.hidden = false;
+  } else {
+    rewardEl.hidden = true;
+  }
   text("essence", game.save.delve.essence);
   text("shards", game.save.tower.shards);
   text("level", `LV ${levelForXp(game.save.xp)}`);
@@ -167,6 +271,7 @@ function renderBoard() {
     const labels = { cloudy: "CLOUDY", sunny: "SUNNY", rain: "RAINING", storm: "THUNDERSTORM" };
     text("board-subtitle", `FOREST CLEARING · ${labels[outsideWeather(game.run.seed)]}`);
     el("inspect").textContent = "Follow the forest path and step onto the entrance at the top to begin again.";
+    hideInspectBox();
     return;
   }
   text("board-title", game.mode === "tower" ? "THE ASCENT TRIALS" : "THE HOLLOW SPIRE");
@@ -176,10 +281,8 @@ function renderBoard() {
       ? "ONE CHAMBER AT A TIME"
       : "HIGHER DANGERS · GREATER REWARDS",
   );
-  el("inspect").textContent =
-    game.mode === "delve"
-      ? "Tap a destination to walk and fight. Swipe to step. Undo reverses one step."
-      : "";
+  el("inspect").textContent = "";
+  hideInspectBox();
 }
 function navigate(id: string) {
   if (id === "delve" && !game.save.upgrades.delve) {
@@ -235,7 +338,7 @@ function renderPage() {
 
   if (tab === "settings") {
     el("settings").innerHTML =
-      `<div class="page-title"><small>MAKE THE ASCENT YOUR OWN</small><h2>Settings</h2></div><label class="setting">Viewport density<select id="density">${[16, 20, 24, 30].map((n) => `<option ${game.save.settings.density === n ? "selected" : ""} value="${n}">${n} × ${n}</option>`).join("")}</select></label><label class="setting">Automove speed<select id="speed">${[1, 3, 6, 10].map((n) => `<option ${game.save.settings.speed === n ? "selected" : ""} value="${n}">${n} steps / sec</option>`).join("")}</select></label><label class="setting">Movement transition<select id="transition">${(["smooth", "fast", "instant"] as const).map((mode) => `<option value="${mode}" ${game.save.settings.transition === mode ? "selected" : ""}>${mode === "instant" ? "Off (instant)" : mode === "fast" ? "Fast" : "Smooth"}</option>`).join("")}</select></label><label class="setting">Show directional buttons<input type="checkbox" id="arrows" ${game.save.settings.showArrows ? "checked" : ""}></label><label class="setting">Reduce motion<input type="checkbox" id="motion" ${game.save.settings.reduceMotion ? "checked" : ""}></label><label class="setting">Weather sounds<input type="checkbox" id="weather-sound" ${game.save.settings.weatherSound !== false ? "checked" : ""}></label><p class="hint">Automation pauses outside the board tabs and while the browser is hidden. Progress saves after each action.</p><button class="wide" id="retire">Retire this ${game.mode === "tower" ? "ascent" : "delve"}</button><p class="hint">Keep your milestone rewards and enter a freshly generated ${game.mode === "tower" ? "tower" : "descent"}.</p><button class="wide danger" id="erase">Erase all progress</button><p class="seed">RUN SEED · ${game.run.seed}</p>`;
+      `<div class="page-title"><small>MAKE THE ASCENT YOUR OWN</small><h2>Settings</h2></div><label class="setting">Viewport density<select id="density">${[16, 20, 24, 30].map((n) => `<option ${game.save.settings.density === n ? "selected" : ""} value="${n}">${n} × ${n}</option>`).join("")}</select></label><label class="setting">Automove speed<select id="speed">${[1, 3, 6, 10].map((n) => `<option ${game.save.settings.speed === n ? "selected" : ""} value="${n}">${n} steps / sec</option>`).join("")}</select></label><label class="setting">Movement transition<select id="transition">${(["smooth", "fast", "instant"] as const).map((mode) => `<option value="${mode}" ${game.save.settings.transition === mode ? "selected" : ""}>${mode === "instant" ? "Off (instant)" : mode === "fast" ? "Fast" : "Smooth"}</option>`).join("")}</select></label><label class="setting">Show directional buttons<input type="checkbox" id="arrows" ${game.save.settings.showArrows ? "checked" : ""}></label><label class="setting">Reduce motion<input type="checkbox" id="motion" ${game.save.settings.reduceMotion ? "checked" : ""}></label><label class="setting">Weather sounds<input type="checkbox" id="weather-sound" ${game.save.settings.weatherSound !== false ? "checked" : ""}></label><label class="setting">Delve: show info boxes<input type="checkbox" id="info-boxes" ${game.save.settings.showInfoBoxes !== false ? "checked" : ""}></label><label class="setting">Delve: move with one tap<input type="checkbox" id="one-tap" ${game.save.settings.oneTapMove ? "checked" : ""}></label><p class="hint">Automation pauses outside the board tabs and while the browser is hidden. Progress saves after each action.</p><button class="wide" id="retire">Retire this ${game.mode === "tower" ? "ascent" : "delve"}</button><p class="hint">Keep your milestone rewards and enter a freshly generated ${game.mode === "tower" ? "tower" : "descent"}.</p><button class="wide danger" id="erase">Erase all progress</button><p class="seed">RUN SEED · ${game.run.seed}</p>`;
     (el("density") as HTMLSelectElement).onchange = (e) => {
       game.save.settings.density = Number(
         (e.target as HTMLSelectElement).value,
@@ -262,6 +365,15 @@ function renderPage() {
     };
     (el("motion") as HTMLInputElement).onchange = (e) => {
       game.save.settings.reduceMotion = (e.target as HTMLInputElement).checked;
+      save();
+    };
+    (el("info-boxes") as HTMLInputElement).onchange = (e) => {
+      game.save.settings.showInfoBoxes = (e.target as HTMLInputElement).checked;
+      if (!game.save.settings.showInfoBoxes) hideInspectBox();
+      save();
+    };
+    (el("one-tap") as HTMLInputElement).onchange = (e) => {
+      game.save.settings.oneTapMove = (e.target as HTMLInputElement).checked;
       save();
     };
     el("retire").onclick = () =>
@@ -541,6 +653,7 @@ el("auto").onclick = () => {
   update();
 };
 el("undo").onclick = () => {
+  hideInspectBox();
   game.undo();
   update();
 };
@@ -550,10 +663,15 @@ document
 bindInput(
   game,
   renderer,
-  inspect,
+  onTap,
   () => {
-    if (selected && game.world.tile(selected.x, selected.y).kind === "enemy")
-      inspect(selected.x, selected.y);
+    if (selected) {
+      const stillEnemy = game.world.tile(selected.x, selected.y).kind === "enemy";
+      if (inspectBoxVisible) {
+        if (stillEnemy) showInspectBox(selected.x, selected.y);
+        else hideInspectBox();
+      } else if (stillEnemy) inspect(selected.x, selected.y);
+    }
     update();
   },
   () => isBoard(tab),

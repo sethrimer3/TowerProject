@@ -238,7 +238,11 @@ h1 span {
 .height {
   border-left: 1px solid var(--line);
   text-align: center;
-  padding: 10px;
+  padding: 6px 4px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 .height small {
   font-size: 8px;
@@ -248,15 +252,34 @@ h1 span {
 .height strong {
   display: block;
   font:
-    32px Cinzel,
+    26px Cinzel,
     Georgia;
   color: #f1dec1;
-  line-height: 1.2;
+  line-height: 1.15;
 }
-.height > span {
-  font-size: 8px;
-  letter-spacing: 1px;
+.height-bests {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  width: 100%;
+}
+.height-bests > span {
+  font-size: 7px;
+  letter-spacing: 0.5px;
   color: #7c8799;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.height-bests b {
+  color: #d1d9e6;
+  font-weight: 600;
+}
+.height-reward {
+  color: var(--gold) !important;
+  font-weight: 600;
+}
+.height-reward i {
+  font-style: normal;
 }
 .page {
   display: none;
@@ -396,6 +419,31 @@ canvas {
 .dpad button {
   min-height: 28px;
   padding: 3px 12px;
+}
+.inspect-box {
+  position: absolute;
+  z-index: 5;
+  max-width: 80%;
+  background: #10151fe0;
+  border: 1px solid #454e5f;
+  border-radius: 4px;
+  padding: 6px 9px;
+  font-size: 10px;
+  line-height: 1.5;
+  color: #c7cedb;
+  pointer-events: none;
+  box-shadow: 0 4px 16px #000a;
+}
+.inspect-box b {
+  display: block;
+  font-size: 11px;
+  margin-bottom: 2px;
+}
+.inspect-box .safe {
+  color: #8fab79;
+}
+.inspect-box .danger {
+  color: #e29898 !important;
 }
 .inspection {
   margin: 12px 0 14px;

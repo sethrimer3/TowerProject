@@ -3,7 +3,7 @@ import type { Renderer } from "./rendering.ts";
 export function bindInput(
   game: Game,
   renderer: Renderer,
-  inspect: (x: number, y: number) => void,
+  onTap: (x: number, y: number) => void,
   changed: () => void,
   isTower: () => boolean,
 ) {
@@ -68,8 +68,7 @@ export function bindInput(
     )
       return;
     const tile = renderer.position(e.clientX, e.clientY);
-    inspect(tile.x, tile.y);
-    game.walkTo(tile.x, tile.y);
+    onTap(tile.x, tile.y);
     changed();
   });
   canvas.addEventListener("pointercancel", () => (gesture = null));

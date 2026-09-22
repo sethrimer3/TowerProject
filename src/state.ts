@@ -273,6 +273,7 @@ export class Game {
         layoutVersion: LAYOUT_VERSION,
         seed,
         height: 0,
+        maxHeight: 0,
         kills: 0,
         treasures: 0,
         changes: {},
@@ -288,6 +289,7 @@ export class Game {
         layoutVersion: TOWER_LAYOUT_VERSION,
         seed,
         height: 0,
+        maxHeight: 0,
         kills: 0,
         treasures: 0,
         changes: {},
@@ -498,6 +500,7 @@ export class Game {
     this.checkClear();
     if (this.mode === "delve") {
       this.run.height = Math.max(this.run.height, y);
+      this.run.maxHeight = Math.max(this.run.maxHeight ?? 0, y);
       (this.world as World).maintain(y);
       this.run.floor = (this.world as World).floor;
       this.recordProgress();
@@ -512,6 +515,7 @@ export class Game {
   advanceTowerRoom() {
     this.claimRewards();
     this.run.height++;
+    this.run.maxHeight = Math.max(this.run.maxHeight ?? 0, this.run.height);
     this.enterTowerFloor();
     this.run.player.x = TOWER_START_X;
     this.run.player.y = 0;

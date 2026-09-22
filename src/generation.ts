@@ -4,6 +4,7 @@ import {
   WIDTH,
   START_X,
   TOWER_WIDTH,
+  TOWER_HEIGHT,
   TOWER_START_X,
   UNGUARDED_LOOT_CHANCE,
   TOWER_SCALING,
@@ -14,6 +15,7 @@ import { point, type Tile, type Torch, type Player } from "./entities.ts";
 import { computeVisibilityPolygon, LIGHTING_CONFIG } from "./lighting.ts";
 import { getTowerEnemy } from "./scaling.ts";
 import { generatePuzzleGraph } from "./puzzle.ts";
+import { sculptRoom } from "./room-shapes.ts";
 export type Board = {
   width: number;
   floor: number;
@@ -76,7 +78,7 @@ function placeTorches(
   return torches;
 }
 export const LAYOUT_VERSION = 5;
-export const TOWER_LAYOUT_VERSION = 1;
+export const TOWER_LAYOUT_VERSION = 2;
 const directions = [
   [1, 0],
   [-1, 0],
@@ -440,11 +442,9 @@ function tryGenerateTowerRoom(derivedSeed: number, room: number): Map<string, Ti
   const cells = new Map<string, Tile>();
   const set = (x: number, y: number, t: Tile) => cells.set(point(x, y), t);
   const floor = (x: number, y: number) => set(x, y, { kind: "floor" });
-  for (let y = 0; y < CHUNK; y++)
+  for (let y = 0; y < TOWER_HEIGHT; y++)
     for (let x = 0; x < TOWER_WIDTH; x++) set(x, y, { kind: "wall" });
-  const bounds = { x1: 1, x2: TOWER_WIDTH - 2, y1: 1, y2: CHUNK - 2 };
-  for (let y = bounds.y1; y <= bounds.y2; y++)
-    for (let x = bounds.x1; x <= bounds.x2; x++) floor(x, y);
+  const bounds = { x1: 1, x2: TOWER_WIDTH - 2, y1: 1, y2: TOWER_HEIGHT - 2 };
   const entrance: [number, number] = [TOWER_START_X, 0];
   // Room 0 opens onto the forest; every later room keeps a way back down.
   set(...entrance, room > 0 ? { kind: "stairsDown" } : { kind: "floor" });
@@ -452,11 +452,16 @@ function tryGenerateTowerRoom(derivedSeed: number, room: number): Map<string, Ti
 
   const rooms = bspRooms(bounds.x1, bounds.y1, bounds.x2 - bounds.x1 + 1, bounds.y2 - bounds.y1 + 1, rng, 4);
   if (rooms.length < 2) return null;
+  const centerOf = (r: { x: number; y: number; w: number; h: number }): [number, number] =>
+    [Math.floor(r.x + r.w / 2), Math.floor(r.y + r.h / 2)];
+  rooms.sort((a, b) => {
+    const da = Math.hypot(centerOf(a)[0] - TOWER_START_X, centerOf(a)[1] - 0);
+    const db = Math.hypot(centerOf(b)[0] - TOWER_START_X, centerOf(b)[1] - 0);
+    return da - db;
+  });
   for (const r of rooms)
     for (let yy = r.y; yy < r.y + r.h; yy++)
       for (let xx = r.x; xx < r.x + r.w; xx++) floor(xx, yy);
-  const centerOf = (r: { x: number; y: number; w: number; h: number }): [number, number] =>
-    [Math.floor(r.x + r.w / 2), Math.floor(r.y + r.h / 2)];
 
   // Entrance guardian: an immediate, unavoidable first fight before the
   // graph-mapped rooms begin.
@@ -476,6 +481,7 @@ function tryGenerateTowerRoom(derivedSeed: number, room: number): Map<string, Ti
   const edgeCount = Math.min(graph.mainPath.length, rooms.length - 1);
   for (let i = 0; i < rooms.length - 1; i++) {
     const path = carvePath(cells, point, ...centerOf(rooms[i]), ...centerOf(rooms[i + 1]), rng);
+    for (const [px, py] of path) reserved.add(point(px, py));
     if (i >= edgeCount || path.length < 3) continue;
     const edge = graph.mainPath[i];
     const [gx, gy] = path[Math.floor(path.length / 2)];
@@ -496,23 +502,50 @@ function tryGenerateTowerRoom(derivedSeed: number, room: number): Map<string, Ti
       }
     }
   }
-  // The exit always sits in the final room on the mapped path, so it is
-  // provably behind every gate placed above rather than reachable by
-  // whatever BSP room happened to be picked at random.
+
+  // Erode chambers into stepped alcoves and pillars without cutting off connectivity
+  for (const r of rooms) {
+    if (r.w >= 4 && r.h >= 4) {
+      sculptRoom(cells, { x1: r.x, x2: r.x + r.w - 1, y1: r.y, y2: r.y + r.h - 1 }, 0, rng, reserved);
+    }
+  }
+
+  // The exit always sits on the outer-most edge of the final room on the mapped path,
+  // adjacent to the outer boundary wall (y = bounds.y2 or room perimeter).
   const exitRoom = rooms[rooms.length - 1];
-  function placeIn(room_: { x: number; y: number; w: number; h: number }, tile: Tile) {
-    const candidates: [number, number][] = [];
+  function placeExitIn(room_: { x: number; y: number; w: number; h: number }) {
+    const edgeCandidates: [number, number][] = [];
+    const fallbackCandidates: [number, number][] = [];
     for (let y = room_.y; y < room_.y + room_.h; y++)
-      for (let x = room_.x; x < room_.x + room_.w; x++)
-        if (!reserved.has(point(x, y)) && cells.get(point(x, y))?.kind === "floor")
-          candidates.push([x, y]);
-    if (!candidates.length) return null;
-    const [x, y] = candidates[int(0, candidates.length - 1)];
-    set(x, y, tile);
+      for (let x = room_.x; x < room_.x + room_.w; x++) {
+        const p = point(x, y);
+        if (!reserved.has(p) && cells.get(p)?.kind === "floor") {
+          fallbackCandidates.push([x, y]);
+          const isEdge =
+            x === room_.x ||
+            x === room_.x + room_.w - 1 ||
+            y === room_.y ||
+            y === room_.y + room_.h - 1 ||
+            x === bounds.x1 ||
+            x === bounds.x2 ||
+            y === bounds.y1 ||
+            y === bounds.y2 ||
+            directions.some(([dx, dy]) => cells.get(point(x + dx, y + dy))?.kind === "wall");
+          if (isEdge) edgeCandidates.push([x, y]);
+        }
+      }
+    const pool = edgeCandidates.length ? edgeCandidates : fallbackCandidates;
+    if (!pool.length) return null;
+    // Prefer edge candidates that are furthest from the entrance (maximizing distance/y)
+    pool.sort((a, b) => (b[1] + Math.abs(b[0] - TOWER_START_X)) - (a[1] + Math.abs(a[0] - TOWER_START_X)));
+    // Pick among the top furthest edge candidates for some variety
+    const topCount = Math.min(3, pool.length);
+    const [x, y] = pool[int(0, topCount - 1)];
+    set(x, y, { kind: "stairs" });
     reserved.add(point(x, y));
     return [x, y] as [number, number];
   }
-  const exit = placeIn(exitRoom, { kind: "stairs" });
+  const exit = placeExitIn(exitRoom);
   if (!exit) return null;
 
   function place(tile: Tile) {
@@ -554,7 +587,13 @@ function tryGenerateTowerRoom(derivedSeed: number, room: number): Map<string, Ti
       if (loot) cells.set(k, loot);
     }
 
+  // Prune any floor space left structurally unreachable from the entrance
   const fullReach = reachable(cells, point(...entrance));
+  for (const [k, t] of cells)
+    if (t.kind !== "wall" && !fullReach.has(k)) {
+      const [wx, wy] = k.split(",").map(Number);
+      set(wx, wy, { kind: "wall" });
+    }
   if (!fullReach.has(point(...exit))) return null;
   // Every door must be a real structural cut point: blocking it must
   // disconnect floor space beyond it, or the BSP carving accidentally left
@@ -562,6 +601,28 @@ function tryGenerateTowerRoom(derivedSeed: number, room: number): Map<string, Ti
   for (const [gx, gy] of doorGatePositions)
     if (reachable(cells, point(...entrance), new Set([point(gx, gy)])).size >= fullReach.size - 1)
       return null;
+  // A rational player (no starting keys) must be able to reach each key before its door
+  const doors = [...cells].filter(([, t]) => t.kind === "door");
+  const closed = new Set(doors.map(([k]) => k));
+  const collected = new Set<string>();
+  const keys: Record<KeyColor, number> = { yellow: 0, blue: 0, red: 0 };
+  let guard = closed.size + 1;
+  while (closed.size && guard-- > 0) {
+    const area = reachable(cells, point(...entrance), closed);
+    for (const k of area) {
+      const t = cells.get(k)!;
+      if (t.kind === "key" && !collected.has(k)) {
+        keys[t.color!]++;
+        collected.add(k);
+      }
+    }
+    const next = doors.find(([k, t]) => closed.has(k) && keys[t.color!] > 0);
+    if (!next) break;
+    keys[next[1].color!]--;
+    closed.delete(next[0]);
+  }
+  if (closed.size > 0) return null;
+
   if (!validatePhysicalLayout(cells, entrance[0], entrance[1], exit[0], exit[1], nominalTowerPlayer(room)))
     return null;
   return cells;
@@ -593,7 +654,7 @@ function torchesForRoom(seed: number, room: number, cells: Map<string, Tile>): T
   const key = `${seed}:${room}`;
   let t = towerTorchCaches.get(key);
   if (!t) {
-    t = placeTorches(cells, 1, TOWER_WIDTH - 2, 1, CHUNK - 2);
+    t = placeTorches(cells, 1, TOWER_WIDTH - 2, 1, TOWER_HEIGHT - 2);
     towerTorchCaches.set(key, t);
   }
   return t;
@@ -601,6 +662,7 @@ function torchesForRoom(seed: number, room: number, cells: Map<string, Tile>): T
 export class RoomWorld implements Board {
   rewards: import("./entities.ts").RewardChest[] = [];
   width = TOWER_WIDTH;
+  height = TOWER_HEIGHT;
   floor = 0;
   cells: Map<string, Tile>;
   torches: Torch[];
@@ -619,7 +681,7 @@ export class RoomWorld implements Board {
     return true;
   }
   tile(x: number, y: number): Tile {
-    if (x < 0 || x >= this.width || y < 0 || y >= CHUNK)
+    if (x < 0 || x >= this.width || y < 0 || y >= TOWER_HEIGHT)
       return { kind: "wall" };
     const chest = this.rewards.find(c => c.x === x && c.y === y);
     if (chest) return { kind: "reward", tier: chest.tier };
@@ -632,7 +694,7 @@ export class RoomWorld implements Board {
   step(x: number, y: number, dx: number, dy: number) {
     const nx = x + dx,
       ny = y + dy;
-    if (nx < 0 || nx >= this.width || ny < 0 || ny >= CHUNK) return null;
+    if (nx < 0 || nx >= this.width || ny < 0 || ny >= TOWER_HEIGHT) return null;
     return { x: nx, y: ny };
   }
   clear(x: number, y: number) {

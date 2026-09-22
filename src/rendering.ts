@@ -1,4 +1,4 @@
-import { CHUNK, COLORS } from "./config.ts";
+import { CHUNK, COLORS, TOWER_HEIGHT, VIEWPORT_TILES } from "./config.ts";
 import { drawTerrain } from "./themes.ts";
 import type { Game } from "./state.ts";
 import type { Tile, Torch } from "./entities.ts";
@@ -48,7 +48,11 @@ export class Renderer {
   atmosphere: AtmosphereConfig = { ...ATMOSPHERE_CONFIG };
   lightmapCanvas: HTMLCanvasElement | null = null;
   lightmapCtx: CanvasRenderingContext2D | null = null;
-  get density() { return this.game.run.outside ? OUTSIDE_SIZE : this.game.save.settings.density; }
+  get density() {
+    if (this.game.run.outside) return OUTSIDE_SIZE;
+    if (this.game.mode === "tower") return VIEWPORT_TILES;
+    return this.game.save.settings.density;
+  }
   constructor(
     public canvas: HTMLCanvasElement,
     public game: Game,
@@ -72,7 +76,12 @@ export class Renderer {
       p = g.run.player;
     // A Tower room is one fixed, fully-enclosed challenge: the camera holds
     // still and shows the room rather than following the player around it.
-    if (g.mode === "tower" || g.run.outside)
+    if (g.mode === "tower")
+      return {
+        bottom: Math.max(0, Math.floor((TOWER_HEIGHT - n) / 2)),
+        left: Math.max(0, Math.floor((g.world.width - n) / 2)),
+      };
+    if (g.run.outside)
       return {
         bottom: Math.max(0, Math.floor((CHUNK - n) / 2)),
         left: Math.max(0, Math.floor((g.world.width - n) / 2)),
@@ -157,47 +166,18 @@ export class Renderer {
       this.weather.draw(c, box.width, g.run.seed, dt, g.save.settings.reduceMotion,
         !g.paused && !g.summary && !document.hidden, g.save.settings.weatherSound !== false);
     } else {
-    // A border renders whenever stepping past that edge is actually blocked
-    // (no destination, or the destination is a wall) — the same rule the
-    // game itself uses to allow or refuse the move. It only stays open when
-    // that step is a genuine two-sided wrap, which draws the passage mark
-    // instead; a merely-open tile with no valid step is still a wall.
+    c.fillStyle = "#606b79";
     for (let row = 0; row < n; row++) {
       const y = Math.floor(this.bottom) + row,
         sy = (n - 1 - (y - this.bottom)) * s;
-      for (const side of [0, 1]) {
-        const dx = side ? 1 : -1,
-          x = Math.floor(this.left + (side ? n - 0.000001 : 0)),
-          dest = g.world.step(x, y, dx, 0);
-        if (!dest || g.world.tile(dest.x, dest.y).kind === "wall") {
-          c.fillStyle = "#606b79";
-          c.fillRect(side ? box.width - 2 : 0, sy, 2, s);
-        } else if (dest.x !== x + dx) {
-          const edge = side ? box.width - 3 : 3;
-          c.strokeStyle = "#d5bb7a";
-          c.lineWidth = 1.5;
-          c.beginPath();
-          c.moveTo(edge + (side ? -4 : 4), sy + s * 0.3);
-          c.lineTo(edge, sy + s * 0.5);
-          c.lineTo(edge + (side ? -4 : 4), sy + s * 0.7);
-          c.stroke();
-        }
-      }
+      c.fillRect(0, sy, 2, s);
+      c.fillRect(box.width - 2, sy, 2, s);
     }
-    // Top and bottom use the same rule; the game has no vertical wrap, so a
-    // blocked step always draws as a plain wall segment.
     for (let col = 0; col < n; col++) {
       const x = Math.floor(this.left) + col,
         sx = (x - this.left) * s;
-      for (const side of [0, 1]) {
-        const dy = side ? 1 : -1,
-          y = Math.floor(this.bottom) + (side ? n - 1 : 0),
-          dest = g.world.step(x, y, 0, dy);
-        if (!dest || g.world.tile(dest.x, dest.y).kind === "wall") {
-          c.fillStyle = "#606b79";
-          c.fillRect(sx, side ? 0 : box.width - 2, s, 2);
-        }
-      }
+      c.fillRect(sx, 0, s, 2);
+      c.fillRect(sx, box.width - 2, s, 2);
     }
     this.drawVignette(box.width);
     }

@@ -4,7 +4,7 @@ import { generateTowerRoom, reachable, RoomWorld } from "../src/generation.ts";
 import { point } from "../src/entities.ts";
 import { Game } from "../src/state.ts";
 import { defaults } from "../src/save.ts";
-import { TOWER_WIDTH, CHUNK, TOWER_START_X } from "../src/config.ts";
+import { TOWER_WIDTH, TOWER_HEIGHT, TOWER_START_X } from "../src/config.ts";
 test("tower rooms are fully generated and reachable from entrance to exit", () => {
   for (let seed = 0; seed < 40; seed++)
     for (const room of [0, 3, 7, 15, 30]) {
@@ -18,7 +18,7 @@ test("tower rooms are fully generated and reachable from entrance to exit", () =
       assert.ok(reached.has(exits[0][0]));
       for (const [k, t] of cells) {
         const [x, y] = k.split(",").map(Number);
-        assert.ok(x >= 0 && x < TOWER_WIDTH && y >= 0 && y < CHUNK);
+        assert.ok(x >= 0 && x < TOWER_WIDTH && y >= 0 && y < TOWER_HEIGHT);
         if (t.kind !== "wall") assert.ok(reached.has(k));
       }
     }
