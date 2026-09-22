@@ -115,7 +115,7 @@ h1 span {
 }
 .stats {
   display: grid;
-  grid-template-columns: 70px 1fr 55px 90px;
+  grid-template-columns: 70px 1fr 55px 90px 60px;
   border: 1px solid #4a4d52;
   border-top: 2px solid #6d6b60;
   background: linear-gradient(140deg, #1c2430, #10151e);
@@ -308,20 +308,37 @@ canvas {
 .controls {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
 }
-.auto {
-  flex: 1;
-  text-align: left;
-  font-size: 9px;
-  letter-spacing: 1px;
+.actions {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px;
+  border-left: 1px solid var(--line);
 }
-.auto span {
-  float: right;
-  font-size: 8px;
-  color: #78889b;
+.mini-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  min-height: 0;
+  height: 36px;
+  padding: 2px;
+  line-height: 1;
+  color: #97a9bf;
 }
-.auto.enabled {
+.mini-action .mini-icon {
+  font-size: 13px;
+}
+.mini-action small {
+  font-size: 7px;
+  letter-spacing: 0.5px;
+}
+.mini-action.enabled {
   border-color: #b59861;
   color: #ecd19d;
 }
@@ -594,7 +611,7 @@ dialog p {
     font-size: 7px;
   }
   .stats {
-    grid-template-columns: 53px 1fr 41px 66px;
+    grid-template-columns: 53px 1fr 41px 60px 46px;
     min-height: 82px;
   }
   .vitals {
@@ -631,9 +648,17 @@ dialog p {
   .controls {
     gap: 5px;
   }
-  .auto {
-    padding: 10px 8px;
-    font-size: 8px;
+  .actions {
+    padding: 4px;
+  }
+  .mini-action {
+    height: 32px;
+  }
+  .mini-action .mini-icon {
+    font-size: 11px;
+  }
+  .mini-action small {
+    font-size: 6px;
   }
   .dpad button {
     padding-inline: 10px;
@@ -821,10 +846,6 @@ nav {
 .board {
   border: 0;
   box-shadow: none;
-}
-#undo {
-  font-size: 10px;
-  white-space: nowrap;
 }
 .controls {
   flex-wrap: wrap;
