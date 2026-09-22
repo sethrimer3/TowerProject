@@ -11,6 +11,7 @@ export function defaults(): Save {
       UPGRADES.map((u) => [u.id, 0]),
     ) as Save["upgrades"],
     settings: {
+      weatherSound: true,
       transition: "smooth",
       showArrows: false,
       density: 20,
@@ -27,6 +28,8 @@ function validRun(r: any): Run | null {
   const p = r?.player;
   if (
     r &&
+    (r.outside === undefined || typeof r.outside === "boolean") &&
+    (!r.outside || (r.height === 0 && p?.y < 12 && r.floor === 0)) &&
     Number.isInteger(r.seed) &&
     finite(r.height) &&
     finite(r.floor) &&
@@ -112,6 +115,7 @@ export function decode(raw: string | null): Save {
       d.settings.transition = s.settings.transition;
     d.settings.showArrows = s?.settings?.showArrows === true;
     d.settings.reduceMotion = s?.settings?.reduceMotion === true;
+    d.settings.weatherSound = s?.settings?.weatherSound !== false;
     if (s?.version === 2) {
       if (finite(s.gold)) d.gold = Math.floor(s.gold);
       if (finite(s.xp)) d.xp = Math.floor(s.xp);

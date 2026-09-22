@@ -9,7 +9,8 @@ export type Kind =
   | "attack"
   | "defense"
   | "treasure"
-  | "stairs";
+  | "stairs"
+  | "oneway";
 export type Enemy = {
   name: string;
   hp: number;
@@ -36,6 +37,7 @@ export type Player = {
   gear: Gear[];
 };
 export type Run = {
+  outside?: boolean;
   layoutVersion?: number;
   seed: number;
   player: Player;
@@ -48,6 +50,7 @@ export type Run = {
 export type MoveSnapshot = { run: Run; best: number };
 export type Revival = { snapshot: MoveSnapshot; earned: number };
 export type Settings = {
+  weatherSound?: boolean;
   transition: "smooth" | "fast" | "instant";
   showArrows: boolean;
   density: number;

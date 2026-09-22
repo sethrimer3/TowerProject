@@ -85,6 +85,11 @@ console.log(
 );
 for (let i = 0; i < 2; i++) {
   await page.locator('[data-tab="delve"]').click();
+  // Restart now begins outside; reaching the cave must not earn depth.
+  for (let step = 0; step < 12; step++)
+    await page.getByRole("button", { name: "Move up", exact: true }).click();
+  if ((await page.locator("#height").textContent()) !== "0")
+    throw Error("Forest walking awarded depth");
   // Each retire only pays out on a new depth record, so climb a little
   // further than the prior best before retiring again.
   for (let step = 0; step < i + 2; step++)
@@ -98,6 +103,8 @@ await page.locator('[data-tab="upgrades"]').click();
 await page.locator('[data-tree="courage"]').click();
 await page.locator('[data-buy="auto"]').click();
 await page.locator('[data-tab="delve"]').click();
+for (let step = 0; step < 12; step++)
+  await page.getByRole("button", { name: "Move up", exact: true }).click();
 await page.locator("#auto").click();
 await page.waitForTimeout(2000);
 if (Number(await page.locator("#height").textContent()) < 1)

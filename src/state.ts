@@ -33,6 +33,7 @@ import {
   type Board,
 } from "./generation.ts";
 import { predict } from "./combat.ts";
+import { OutsideWorld } from "./outside.ts";
 export class Game {
   mode: Mode = "tower";
   world!: Board;
@@ -68,6 +69,9 @@ export class Game {
     const slice = this.save[this.mode];
     if (!slice.run) {
       this.newRun();
+    } else if (slice.run.outside) {
+      this.run = slice.run;
+      this.world = new OutsideWorld(this.run.seed, this.mode);
     } else if (this.mode === "delve") {
       this.run = slice.run;
       if (this.run.layoutVersion !== LAYOUT_VERSION) {
@@ -140,7 +144,7 @@ export class Game {
     this.save[this.mode].run = this.run;
     this.save[this.mode].best = snapshot.best;
     this.world =
-      this.mode === "delve"
+      this.run.outside ? new OutsideWorld(this.run.seed, this.mode) : this.mode === "delve"
         ? new World(this.run.seed, this.run.changes, this.run.floor)
         : new RoomWorld(this.run.seed, this.run.height, this.run.changes);
     this.route = [];
@@ -189,7 +193,7 @@ export class Game {
     if (!result) this.route = [];
     return result;
   }
-  newRun() {
+  newRun(outside = false) {
     this.settleRevival();
     this.save[this.mode].history = [];
     this.route = [];
@@ -233,6 +237,11 @@ export class Game {
         player,
       };
       this.world = new RoomWorld(this.run.seed, 0, this.run.changes);
+    }
+    if (outside) {
+      this.run.outside = true;
+      this.world = new OutsideWorld(seed, this.mode);
+      this.message = "Follow the forest path to the entrance.";
     }
     this.save[this.mode].run = this.run;
     this.auto = false;
@@ -303,13 +312,13 @@ export class Game {
           dead: true,
           record,
         };
-        this.newRun();
+        this.newRun(true);
         if (this.save.upgrades.revive)
           this.save[this.mode].revival = { snapshot: before, earned };
         else this.creditCurrency(earned);
         this.summary = summary;
         this.message =
-          this.mode === "tower" ? "Returned to room 1." : "Returned to floor 1.";
+          "Returned to the forest. Follow the path to begin again.";
         return false;
       }
       this.run.kills++;
@@ -322,6 +331,19 @@ export class Game {
     }
     p.x = x;
     p.y = y;
+    if (this.run.outside) {
+      if (t.kind === "stairs") {
+        this.run.outside = false;
+        p.x = this.mode === "tower" ? TOWER_START_X : START_X;
+        p.y = 0;
+        this.world = this.mode === "tower"
+          ? new RoomWorld(this.run.seed, 0, this.run.changes)
+          : new World(this.run.seed, this.run.changes);
+        this.route = [];
+        this.feedback(this.mode === "tower" ? "You enter the tower." : "You enter the mountain cave.");
+      }
+      return true;
+    }
     this.collect(t);
     if (t.kind !== "floor" && t.kind !== "stairs") this.world.clear(x, y);
     if (this.mode === "delve") {

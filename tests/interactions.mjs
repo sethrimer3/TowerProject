@@ -33,14 +33,14 @@ async function tap(x, y) {
     n = save.settings.density,
     left = Math.max(0, Math.min(30 - n, p.x - Math.floor(n / 2))),
     bottom = Math.max(0, p.y - Math.floor(n * 0.3));
-  const box = await page.locator("canvas").boundingBox();
+  const box = await page.locator("#world").boundingBox();
   await page.mouse.click(
     box.x + ((x - left + 0.5) * box.width) / n,
     box.y + ((n - 0.5 - y + bottom) * box.width) / n,
   );
 }
 async function swipe(dx, dy) {
-  const b = await page.locator("canvas").boundingBox(),
+  const b = await page.locator("#world").boundingBox(),
     x = b.x + b.width / 2,
     y = b.y + b.height / 2;
   await page.mouse.move(x, y);
@@ -129,6 +129,7 @@ await page.evaluate(async () => {
     );
     if (y === undefined) continue;
     s.delve.run.seed = seed;
+    s.delve.run.outside = false;
     s.delve.run.player.x = 29;
     s.delve.run.player.y = y;
     s.delve.run.player.hp = 120;

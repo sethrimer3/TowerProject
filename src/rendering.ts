@@ -2,6 +2,8 @@ import { CHUNK, COLORS } from "./config.ts";
 import { drawTerrain, themeAt } from "./themes.ts";
 import type { Game } from "./state.ts";
 import type { Tile } from "./entities.ts";
+import { drawForestTile, drawEntrance, OUTSIDE_SIZE } from "./outside.ts";
+import { OutdoorWeather } from "./weather.ts";
 export class Renderer {
   ctx: CanvasRenderingContext2D;
   bottom = 0;
@@ -11,6 +13,9 @@ export class Renderer {
   playerY = 0;
   last = 0;
   seed = -1;
+  outside = false;
+  weather = new OutdoorWeather();
+  get density() { return this.game.run.outside ? OUTSIDE_SIZE : this.game.save.settings.density; }
   constructor(
     public canvas: HTMLCanvasElement,
     public game: Game,
@@ -18,13 +23,19 @@ export class Renderer {
     this.ctx = canvas.getContext("2d")!;
     this.playerX = game.run.player.x;
     this.playerY = game.run.player.y;
+    const unlock = () => {
+      if (game.run.outside && game.save.settings.weatherSound !== false) this.weather.unlock();
+    };
+    window.addEventListener("pointerdown", unlock);
+    window.addEventListener("keydown", unlock);
+    document.addEventListener("visibilitychange", () => { if (document.hidden) this.weather.silence(); });
   }
   target(n: number) {
     const g = this.game,
       p = g.run.player;
     // A Tower room is one fixed, fully-enclosed challenge: the camera holds
     // still and shows the room rather than following the player around it.
-    if (g.mode === "tower")
+    if (g.mode === "tower" || g.run.outside)
       return {
         bottom: Math.max(0, Math.floor((CHUNK - n) / 2)),
         left: Math.max(0, Math.floor((g.world.width - n) / 2)),
@@ -37,8 +48,10 @@ export class Renderer {
   draw(now: number) {
     const g = this.game,
       p = g.run.player,
-      n = g.save.settings.density;
-    if (this.seed !== g.run.seed) {
+      n = this.density;
+    if (this.seed !== g.run.seed || this.outside !== !!g.run.outside) {
+      this.outside = !!g.run.outside;
+      this.weather.silence();
       this.seed = g.run.seed;
       this.playerX = p.x;
       this.playerY = p.y;
@@ -82,6 +95,13 @@ export class Renderer {
         this.tile(g.world.tile(x, y), x, y, now);
         c.restore();
       }
+    if (g.run.outside) {
+      c.save();
+      c.translate(-this.left * s, (n - OUTSIDE_SIZE + this.bottom) * s);
+      c.scale(s / 24, s / 24);
+      drawEntrance(c, g.mode, Math.floor(g.world.width / 2));
+      c.restore();
+    }
     c.save();
     c.translate(
       (this.playerX - this.left) * s,
@@ -90,6 +110,10 @@ export class Renderer {
     c.scale(s / 24, s / 24);
     this.hero();
     c.restore();
+    if (g.run.outside) {
+      this.weather.draw(c, box.width, g.run.seed, dt, g.save.settings.reduceMotion,
+        !g.paused && !g.summary && !document.hidden, g.save.settings.weatherSound !== false);
+    } else {
     // A border renders whenever stepping past that edge is actually blocked
     // (no destination, or the destination is a wall) — the same rule the
     // game itself uses to allow or refuse the move. It only stays open when
@@ -132,6 +156,7 @@ export class Renderer {
         }
       }
     }
+    }
     if (g.blocked.until > now) {
       const x = (g.blocked.x - this.left + 0.5) * s,
         y = (n - 0.5 - (g.blocked.y - this.bottom)) * s,
@@ -164,6 +189,10 @@ export class Renderer {
   tile(t: Tile, x: number, y: number, time: number) {
     const c = this.ctx;
     const g = this.game;
+    if (g.run.outside) {
+      drawForestTile(c, t, x, y, g.run.seed, Math.floor(g.world.width / 2));
+      return;
+    }
     drawTerrain(c, t.kind === "wall", g.mode, g.run.height, x, y, g.run.seed, t.kind === "floor");
     if (t.kind === "wall") {
       if (themeAt(g.mode, g.run.height, x, y, g.run.seed).decor === 0 && x % 6 === 0 && y % 7 === 3) this.torch(time);
@@ -358,7 +387,7 @@ export class Renderer {
       x: Math.floor((clientX - r.left) / this.size + this.left),
       y: Math.floor(
         this.bottom +
-          this.game.save.settings.density -
+          this.density -
           (clientY - r.top) / this.size,
       ),
     };

@@ -47,7 +47,9 @@ export function chooseStep(game: Game) {
       )
         continue;
       const next = { x, y, first: n.d ? n.first : [dx, dy], d: n.d + 1 };
-      let value = score(t, y, progress, next.d);
+      let value = game.run.outside
+        ? (t.kind === "stairs" ? 100 : 0) - next.d * 0.18
+        : score(t, y, progress, next.d);
       if (t.kind === "potion" && p.hp === p.maxHp) value -= 10;
       if (t.kind === "enemy") value -= predict(p, t.enemy!).damage * 0.5;
       if (value > bestScore) {

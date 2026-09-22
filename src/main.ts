@@ -3,6 +3,7 @@ import "./style.css";
 import { load, persist, defaults } from "./save.ts";
 import { Game } from "./state.ts";
 import { Renderer } from "./rendering.ts";
+import { outsideWeather } from "./outside.ts";
 import { bindInput } from "./input.ts";
 import { chooseStep } from "./automation.ts";
 import { predict } from "./combat.ts";
@@ -88,6 +89,7 @@ function renderShop() {
   });
 }
 function update() {
+  if (el("board").dataset.outside !== String(!!game.run.outside)) renderBoard();
   const p = game.run.player,
     slice = game.save[game.mode];
   text("hp", `${p.hp} / ${p.maxHp}`);
@@ -114,7 +116,7 @@ function update() {
   );
   text(
     "density-label",
-    `${game.save.settings.density} × ${game.save.settings.density}`,
+    `${renderer.density} × ${renderer.density}`,
   );
   const undo = el("undo") as HTMLButtonElement;
   text(
@@ -138,7 +140,15 @@ function update() {
   if (game.summary) showSummary();
 }
 function renderBoard() {
+  el("board").dataset.outside = String(!!game.run.outside);
   el("board").classList.toggle("mode-tower", game.mode === "tower");
+  if (game.run.outside) {
+    text("board-title", game.mode === "tower" ? "THE TOWER APPROACH" : "THE MOUNTAIN HOLLOW");
+    const labels = { cloudy: "CLOUDY", sunny: "SUNNY", rain: "RAINING", storm: "THUNDERSTORM" };
+    text("board-subtitle", `FOREST CLEARING · ${labels[outsideWeather(game.run.seed)]}`);
+    el("inspect").textContent = "Follow the forest path and step onto the entrance at the top to begin again.";
+    return;
+  }
   text("board-title", game.mode === "tower" ? "THE ASCENT TRIALS" : "THE HOLLOW SPIRE");
   text(
     "board-subtitle",
@@ -158,6 +168,7 @@ function navigate(id: string) {
     id = "upgrades";
   }
   tab = id;
+  renderer.weather.silence();
   if (isBoard(id)) {
     game.switchMode(id as "tower" | "delve");
     renderBoard();
@@ -207,7 +218,7 @@ function renderPage() {
 
   if (tab === "settings") {
     el("settings").innerHTML =
-      `<div class="page-title"><small>MAKE THE ASCENT YOUR OWN</small><h2>Settings</h2></div><label class="setting">Viewport density<select id="density">${[16, 20, 24, 30].map((n) => `<option ${game.save.settings.density === n ? "selected" : ""} value="${n}">${n} × ${n}</option>`).join("")}</select></label><label class="setting">Automove speed<select id="speed">${[1, 3, 6, 10].map((n) => `<option ${game.save.settings.speed === n ? "selected" : ""} value="${n}">${n} steps / sec</option>`).join("")}</select></label><label class="setting">Movement transition<select id="transition">${(["smooth", "fast", "instant"] as const).map((mode) => `<option value="${mode}" ${game.save.settings.transition === mode ? "selected" : ""}>${mode === "instant" ? "Off (instant)" : mode === "fast" ? "Fast" : "Smooth"}</option>`).join("")}</select></label><label class="setting">Show directional buttons<input type="checkbox" id="arrows" ${game.save.settings.showArrows ? "checked" : ""}></label><label class="setting">Reduce motion<input type="checkbox" id="motion" ${game.save.settings.reduceMotion ? "checked" : ""}></label><p class="hint">Automation pauses outside the board tabs and while the browser is hidden. Progress saves after each action.</p><button class="wide" id="retire">Retire this ${game.mode === "tower" ? "ascent" : "delve"}</button><p class="hint">Claim your ${game.mode === "tower" ? "Inspiration" : "Courage"} and enter a freshly generated ${game.mode === "tower" ? "tower" : "descent"}.</p><button class="wide danger" id="erase">Erase all progress</button><p class="seed">RUN SEED · ${game.run.seed}</p>`;
+      `<div class="page-title"><small>MAKE THE ASCENT YOUR OWN</small><h2>Settings</h2></div><label class="setting">Viewport density<select id="density">${[16, 20, 24, 30].map((n) => `<option ${game.save.settings.density === n ? "selected" : ""} value="${n}">${n} × ${n}</option>`).join("")}</select></label><label class="setting">Automove speed<select id="speed">${[1, 3, 6, 10].map((n) => `<option ${game.save.settings.speed === n ? "selected" : ""} value="${n}">${n} steps / sec</option>`).join("")}</select></label><label class="setting">Movement transition<select id="transition">${(["smooth", "fast", "instant"] as const).map((mode) => `<option value="${mode}" ${game.save.settings.transition === mode ? "selected" : ""}>${mode === "instant" ? "Off (instant)" : mode === "fast" ? "Fast" : "Smooth"}</option>`).join("")}</select></label><label class="setting">Show directional buttons<input type="checkbox" id="arrows" ${game.save.settings.showArrows ? "checked" : ""}></label><label class="setting">Reduce motion<input type="checkbox" id="motion" ${game.save.settings.reduceMotion ? "checked" : ""}></label><label class="setting">Weather sounds<input type="checkbox" id="weather-sound" ${game.save.settings.weatherSound !== false ? "checked" : ""}></label><p class="hint">Automation pauses outside the board tabs and while the browser is hidden. Progress saves after each action.</p><button class="wide" id="retire">Retire this ${game.mode === "tower" ? "ascent" : "delve"}</button><p class="hint">Claim your ${game.mode === "tower" ? "Inspiration" : "Courage"} and enter a freshly generated ${game.mode === "tower" ? "tower" : "descent"}.</p><button class="wide danger" id="erase">Erase all progress</button><p class="seed">RUN SEED · ${game.run.seed}</p>`;
     (el("density") as HTMLSelectElement).onchange = (e) => {
       game.save.settings.density = Number(
         (e.target as HTMLSelectElement).value,
@@ -220,6 +231,11 @@ function renderPage() {
     };
     (el("arrows") as HTMLInputElement).onchange = (e) => {
       game.save.settings.showArrows = (e.target as HTMLInputElement).checked;
+      update();
+    };
+    (el("weather-sound") as HTMLInputElement).onchange = (e) => {
+      game.save.settings.weatherSound = (e.target as HTMLInputElement).checked;
+      if (!game.save.settings.weatherSound) renderer.weather.silence();
       update();
     };
     (el("transition") as HTMLSelectElement).onchange = (e) => {
@@ -277,7 +293,7 @@ function showSummary() {
     currencyName = game.mode === "delve" ? "COURAGE" : "INSPIRATION",
     heightName = game.mode === "tower" ? "ROOMS" : "HEIGHT";
   if (modal.open) return;
-  modal.innerHTML = `<span class="summary-icon">✦</span><small>${s.reason.toUpperCase()}</small><h2>The tower remembers.</h2><p>Every ending is the beginning of a stronger ascent.</p><div class="summary-stats"><div><strong>${s.height}</strong>${heightName}</div><div><strong>${s.kills}</strong>VICTORIES</div><div><strong>+${s.earned}</strong>${currencyName}</div></div>${s.record ? "" : `<p class="hint">Beat your prior best to earn ${currencyName.toLowerCase()}.</p>`}${game.save[game.mode].revival ? `<p>Revive is available until your next move. ${currencyName[0]}${currencyName.slice(1).toLowerCase()} is awarded if you continue.</p><button class="wide" id="revive-now">Revive</button>` : ""}<button class="wide" id="again">${s.dead ? `Continue from ${game.mode === "tower" ? "room" : "floor"} 1` : "Begin another ascent →"}</button>`;
+  modal.innerHTML = `<span class="summary-icon">✦</span><small>${s.reason.toUpperCase()}</small><h2>The tower remembers.</h2><p>Every ending is the beginning of a stronger ascent.</p><div class="summary-stats"><div><strong>${s.height}</strong>${heightName}</div><div><strong>${s.kills}</strong>VICTORIES</div><div><strong>+${s.earned}</strong>${currencyName}</div></div>${s.record ? "" : `<p class="hint">Beat your prior best to earn ${currencyName.toLowerCase()}.</p>`}${game.save[game.mode].revival ? `<p>Revive is available until your next move. ${currencyName[0]}${currencyName.slice(1).toLowerCase()} is awarded if you continue.</p><button class="wide" id="revive-now">Revive</button>` : ""}<button class="wide" id="again">${s.dead ? `Return to the forest` : "Begin another ascent →"}</button>`;
   modal.showModal();
   const revive = document.querySelector<HTMLButtonElement>("#revive-now");
   if (revive)
@@ -289,11 +305,11 @@ function showSummary() {
   el("again").onclick = () => {
     modal.close();
     game.summary = null;
-    if (!s.dead) game.newRun();
+    if (!s.dead) game.newRun(true);
     renderer.bottom = 0;
     renderer.playerX = game.run.player.x;
     renderer.playerY = 0;
-    game.message = "A new ascent. A stronger legacy.";
+    game.message = "Follow the forest path to the entrance.";
     navigate(game.mode);
   };
 }
