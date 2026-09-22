@@ -1,4 +1,4 @@
-import { SAVE_KEY, UPGRADES } from "./config.ts";
+import { GOLD_SHOP, SAVE_KEY, UPGRADES } from "./config.ts";
 import type { ModeSave, Run, Save } from "./entities.ts";
 export function defaults(): Save {
   return {
@@ -6,6 +6,9 @@ export function defaults(): Save {
     tower: { run: null, history: [], revival: null, best: 0, shards: 0 },
     delve: { run: null, history: [], revival: null, best: 0, essence: 0 },
     gold: 0,
+    provisions: Object.fromEntries(
+      GOLD_SHOP.map((g) => [g.id, 0]),
+    ) as Save["provisions"],
     xp: 0,
     upgrades: Object.fromEntries(
       UPGRADES.map((u) => [u.id, 0]),
@@ -118,6 +121,9 @@ export function decode(raw: string | null): Save {
     d.settings.weatherSound = s?.settings?.weatherSound !== false;
     if (s?.version === 2) {
       if (finite(s.gold)) d.gold = Math.floor(s.gold);
+      for (const g of GOLD_SHOP)
+        if (finite(s.provisions?.[g.id], 999))
+          d.provisions[g.id] = Math.floor(s.provisions[g.id]);
       if (finite(s.xp)) d.xp = Math.floor(s.xp);
       if (finite(s.tower?.shards)) d.tower.shards = Math.floor(s.tower.shards);
       if (finite(s.tower?.best)) d.tower.best = Math.floor(s.tower.best);

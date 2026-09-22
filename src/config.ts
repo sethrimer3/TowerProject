@@ -158,19 +158,19 @@ export const GOLD_SHOP = [
   {
     id: "heal",
     name: "Traveler's elixir",
-    description: "Restore your HP to full",
+    description: "+20 max HP next run",
     cost: 6,
   },
   {
     id: "edge",
     name: "Whetstone",
-    description: "+3 attack for this ascent",
+    description: "+3 attack next run",
     cost: 10,
   },
   {
     id: "guard",
     name: "Aegis charm",
-    description: "+3 defense for this ascent",
+    description: "+3 defense next run",
     cost: 10,
   },
 ] as const;

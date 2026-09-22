@@ -199,20 +199,25 @@ export class Game {
     this.route = [];
     this.summary = null;
     const u = this.save.upgrades,
+      prov = this.save.provisions,
       lvl = levelForXp(this.save.xp),
       bonus = levelBonus(lvl),
       g = gear(u.quality),
-      seed = crypto.getRandomValues(new Uint32Array(1))[0];
+      seed = crypto.getRandomValues(new Uint32Array(1))[0],
+      maxHp = 120 + u.hp * 20 + u.shardHp * 15 + bonus.hp + prov.heal * 20;
     const player = {
       x: this.mode === "tower" ? TOWER_START_X : START_X,
       y: 0,
-      hp: 120 + u.hp * 20 + u.shardHp * 15 + bonus.hp,
-      maxHp: 120 + u.hp * 20 + u.shardHp * 15 + bonus.hp,
-      attack: 10 + u.attack * 2 + u.shardAttack + bonus.attack + g[0].attack,
-      defense: 4 + u.defense + u.shardDefense + bonus.defense + g[1].defense,
+      hp: maxHp,
+      maxHp,
+      attack:
+        10 + u.attack * 2 + u.shardAttack + bonus.attack + g[0].attack + prov.edge * 3,
+      defense:
+        4 + u.defense + u.shardDefense + bonus.defense + g[1].defense + prov.guard * 3,
       keys: { yellow: u.yellow, blue: u.blue, red: u.red },
       gear: g,
     };
+    for (const item of GOLD_SHOP) prov[item.id] = 0;
     if (this.mode === "delve") {
       this.run = {
         layoutVersion: LAYOUT_VERSION,
@@ -423,14 +428,9 @@ export class Game {
   }
   buyGold(id: GoldItemId) {
     const item = GOLD_SHOP.find((g) => g.id === id)!;
-    if (this.mode !== "delve" || this.summary || this.save.gold < item.cost)
-      return false;
+    if (this.save.gold < item.cost) return false;
     this.save.gold -= item.cost;
-    const p = this.run.player;
-    if (id === "heal") p.hp = p.maxHp;
-    if (id === "edge") p.attack += 3;
-    if (id === "guard") p.defense += 3;
-    this.feedback(`${item.name} used`);
+    this.save.provisions[id]++;
     return true;
   }
 }

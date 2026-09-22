@@ -1,4 +1,4 @@
-import type { KeyColor, UpgradeId } from "./config.ts";
+import type { GoldItemId, KeyColor, UpgradeId } from "./config.ts";
 export type Kind =
   | "wall"
   | "floor"
@@ -69,6 +69,7 @@ export type Save = {
   tower: ModeSave & { shards: number };
   delve: ModeSave & { essence: number };
   gold: number;
+  provisions: Record<GoldItemId, number>;
   xp: number;
   upgrades: Record<UpgradeId, number>;
   settings: Settings;

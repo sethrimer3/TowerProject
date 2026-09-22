@@ -17,7 +17,7 @@ import {
 } from "./config.ts";
 const icons = { tower: "♜", delve: "▼", gear: "♞", upgrades: "✦", settings: "⚙" };
 const app = document.querySelector<HTMLDivElement>("#app")!;
-app.innerHTML = `<main class="shell"><div id="currencies" class="currencies" hidden><div class="essence">✦ <b id="essence">0</b><small>COURAGE</small></div><div class="essence">◆ <b id="shards">0</b><small>INSPIRATION</small></div></div><section id="stats" class="stats" aria-label="Player statistics"><div class="portrait"><canvas id="portrait-sprite" width="24" height="24"></canvas><small>WAYFARER</small><small id="level">LV 0</small></div><div class="vitals"><div><span class="heart">♥</span> HP <b id="hp"></b></div><div class="health-track"><i id="health"></i></div><div class="combat-stats"><span>⚔ <b id="attack"></b></span><span>⛨ <b id="defense"></b></span></div></div><div class="keys"><span class="yellow">⚿ <b id="yellow"></b></span><span class="blue">⚿ <b id="blue"></b></span><span class="red">⚿ <b id="red"></b></span></div><div class="height"><small id="height-label">HEIGHT</small><strong id="height">0</strong><span>BEST <b id="best">0</b></span></div><div class="actions"><button id="auto" class="mini-action" aria-label="Automove" title="Automove"><span class="mini-icon">✦</span><small id="auto-state">LOCKED</small></button><button id="undo" class="mini-action" aria-label="Undo" title="Undo"><span class="mini-icon">↺</span><small id="undo-state">0/1</small></button></div></section><section id="board" class="page active"><div class="tower-heading"><span class="rule"></span><span id="board-title">THE HOLLOW SPIRE</span><span class="rule"></span></div><div class="ascent"><span>↑</span><small id="board-subtitle">HIGHER DANGERS · GREATER REWARDS</small></div><div class="board"><canvas id="world" aria-label="Tower grid: tap a destination or swipe to move. Keyboard arrows and WASD also work."></canvas><span class="board-caption" id="density-label">20 × 20</span></div><div class="status"><span class="live-dot"></span><span id="message" aria-live="polite"></span></div><div class="controls"><div class="dpad" hidden><button data-move="-1,0" aria-label="Move left">←</button><div><button data-move="0,1" aria-label="Move up">↑</button><button data-move="0,-1" aria-label="Move down">↓</button></div><button data-move="1,0" aria-label="Move right">→</button></div></div><div id="shop" class="shop" hidden></div><div id="inspect" class="inspection">Tap a destination to walk and fight. Swipe to step. Undo reverses one step.</div></section><section id="gear" class="page"></section><section id="upgrades" class="page"></section><section id="settings" class="page"></section><nav aria-label="Main navigation">${Object.entries(
+app.innerHTML = `<main class="shell"><div id="currencies" class="currencies" hidden><div class="essence">✦ <b id="essence">0</b><small>COURAGE</small></div><div class="essence">◆ <b id="shards">0</b><small>INSPIRATION</small></div></div><section id="stats" class="stats" aria-label="Player statistics"><div class="portrait"><canvas id="portrait-sprite" width="24" height="24"></canvas><small>WAYFARER</small><small id="level">LV 0</small></div><div class="vitals"><div><span class="heart">♥</span> HP <b id="hp"></b></div><div class="health-track"><i id="health"></i></div><div class="combat-stats"><span>⚔ <b id="attack"></b></span><span>⛨ <b id="defense"></b></span></div></div><div class="keys"><span class="yellow">⚿ <b id="yellow"></b></span><span class="blue">⚿ <b id="blue"></b></span><span class="red">⚿ <b id="red"></b></span></div><div class="height"><small id="height-label">HEIGHT</small><strong id="height">0</strong><span>BEST <b id="best">0</b></span></div><div class="actions"><button id="auto" class="mini-action" aria-label="Automove" title="Automove"><span class="mini-icon">✦</span><small id="auto-state">LOCKED</small></button><button id="undo" class="mini-action" aria-label="Undo" title="Undo"><span class="mini-icon">↺</span><small id="undo-state">0/1</small></button></div></section><section id="board" class="page active"><div class="tower-heading"><span class="rule"></span><span id="board-title">THE HOLLOW SPIRE</span><span class="rule"></span></div><div class="ascent"><span>↑</span><small id="board-subtitle">HIGHER DANGERS · GREATER REWARDS</small></div><div class="board"><canvas id="world" aria-label="Tower grid: tap a destination or swipe to move. Keyboard arrows and WASD also work."></canvas><span class="board-caption" id="density-label">20 × 20</span></div><div class="status"><span class="live-dot"></span><span id="message" aria-live="polite"></span></div><div class="controls"><div class="dpad" hidden><button data-move="-1,0" aria-label="Move left">←</button><div><button data-move="0,1" aria-label="Move up">↑</button><button data-move="0,-1" aria-label="Move down">↓</button></div><button data-move="1,0" aria-label="Move right">→</button></div></div><div id="inspect" class="inspection">Tap a destination to walk and fight. Swipe to step. Undo reverses one step.</div></section><section id="gear" class="page"></section><section id="upgrades" class="page"></section><section id="settings" class="page"></section><nav aria-label="Main navigation">${Object.entries(
   icons,
 )
   .map(
@@ -38,6 +38,7 @@ let tab = "tower",
   lastSave = 0;
 let selectedTree: TreeId = "inspiration";
 let selectedSkill: UpgradeId = "shardHp";
+let gearTab: "equipment" | "provisions" = "equipment";
 let selected: { x: number; y: number } | null = null;
 const el = (id: string) => document.getElementById(id)!;
 const text = (id: string, value: unknown) =>
@@ -65,28 +66,6 @@ function inspect(x: number, y: number) {
           ? `${t.color} door · requires one matching key`
           : `${t.kind[0].toUpperCase() + t.kind.slice(1)} · ${game.mode === "tower" ? "row" : "height"} ${y}`;
   }
-}
-function renderShop() {
-  const shop = el("shop");
-  if (game.mode !== "delve" || game.summary) {
-    shop.setAttribute("hidden", "");
-    shop.innerHTML = "";
-    return;
-  }
-  if (!shop.childElementCount)
-    shop.innerHTML = GOLD_SHOP.map(
-      (item) =>
-        `<button data-gold="${item.id}" title="${item.description}">${item.name} <span>◇ ${item.cost}</span></button>`,
-    ).join("");
-  shop.removeAttribute("hidden");
-  document.querySelectorAll<HTMLButtonElement>("[data-gold]").forEach((b) => {
-    const item = GOLD_SHOP.find((i) => i.id === b.dataset.gold)!;
-    b.disabled = game.save.gold < item.cost;
-    b.onclick = () => {
-      game.buyGold(item.id as GoldItemId);
-      update();
-    };
-  });
 }
 function update() {
   if (el("board").dataset.outside !== String(!!game.run.outside)) renderBoard();
@@ -130,7 +109,6 @@ function update() {
   delveTab.classList.toggle("mode-locked", !game.save.upgrades.delve);
   delveTab.title = game.save.upgrades.delve ? "Delve" : "Unlock Into the depths in the Inspiration tree";
   delveTab.setAttribute("aria-label", game.save.upgrades.delve ? "Delve" : "Delve (locked)");
-  renderShop();
   save();
   if (game.summary) showSummary();
 }
@@ -182,8 +160,21 @@ function navigate(id: string) {
 }
 function renderPage() {
   if (tab === "gear") {
+    const equipmentHtml = `${game.run.player.gear.map((g) => `<article class="card"><div class="item-icon">${g.slot === "weapon" ? "⚔" : "⛨"}</div><div><small>${g.slot.toUpperCase()} · QUALITY ${g.quality}</small><h3>${g.name}</h3><p>+${g.attack || g.defense} ${g.attack ? "attack" : "defense"}</p></div></article>`).join("")}<p class="hint">Heirloom steel upgrades improve your starting equipment on every new run.</p>`;
+    const provisionsHtml = `<p class="hint">Spend Gold earned in the tower on provisions that apply next run. ◇ ${game.save.gold} Gold.</p>${GOLD_SHOP.map((item) => `<article class="card"><div class="item-icon">◇</div><div><small>${game.save.provisions[item.id] ? `OWNED × ${game.save.provisions[item.id]}` : "APPLIES NEXT RUN"}</small><h3>${item.name}</h3><p>${item.description}</p></div><button data-gold="${item.id}" ${game.save.gold < item.cost ? "disabled" : ""}>Buy · ◇ ${item.cost}</button></article>`).join("")}`;
     el("gear").innerHTML =
-      `<div class="page-title"><small>YOUR COMPANIONS IN THE DARK</small><h2>Traveler’s gear</h2><p>Treasure improves both equipped pieces for this ascent.</p></div>${game.run.player.gear.map((g) => `<article class="card"><div class="item-icon">${g.slot === "weapon" ? "⚔" : "⛨"}</div><div><small>${g.slot.toUpperCase()} · QUALITY ${g.quality}</small><h3>${g.name}</h3><p>+${g.attack || g.defense} ${g.attack ? "attack" : "defense"}</p></div></article>`).join("")}<p class="hint">Heirloom steel upgrades improve your starting equipment on every new run.</p>`;
+      `<div class="page-title"><small>YOUR COMPANIONS IN THE DARK</small><h2>Traveler’s gear</h2><p>Treasure improves both equipped pieces for this ascent.</p></div>
+      <div class="tree-tabs" role="group" aria-label="Gear tabs"><button data-geartab="equipment" aria-pressed="${gearTab === "equipment"}">Equipment</button><button data-geartab="provisions" aria-pressed="${gearTab === "provisions"}">Provisions</button></div>
+      ${gearTab === "equipment" ? equipmentHtml : provisionsHtml}`;
+    document.querySelectorAll<HTMLButtonElement>("[data-geartab]").forEach(b => b.onclick = () => {
+      gearTab = b.dataset.geartab as typeof gearTab;
+      renderPage();
+    });
+    document.querySelectorAll<HTMLButtonElement>("[data-gold]").forEach(b => b.onclick = () => {
+      game.buyGold(b.dataset.gold as GoldItemId);
+      save();
+      renderPage();
+    });
   }
   if (tab === "upgrades") {
     const tree = TREES.find(t => t.id === selectedTree)!;
