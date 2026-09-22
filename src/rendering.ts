@@ -635,10 +635,6 @@ export class Renderer {
     const c = this.ctx,
       s = this.size,
       n = this.density;
-    // Current player interpolated position in screen coords
-    const playerScreenX = (this.playerX - this.left + 0.5) * s;
-    const playerScreenY = (n - 0.5 - (this.playerY - this.bottom)) * s;
-
     // Convert world coordinate to screen coordinate
     const toTileScreen = (wx: number, wy: number) => ({
       x: (wx - this.left + 0.5) * s,
@@ -653,28 +649,25 @@ export class Renderer {
     const pulse = 0.85 + 0.15 * Math.sin(now / 200);
 
     const segments: Array<Array<{ x: number; y: number }>> = [];
-    let currentSegment: Array<{ x: number; y: number }> = [
-      { x: playerScreenX, y: playerScreenY },
-    ];
-
-    let prevTileX = this.game.run.player.x;
-    let prevTileY = this.game.run.player.y;
+    let currentSegment: Array<{ x: number; y: number }> = [];
 
     for (let i = 0; i < route.length; i++) {
       const step = route[i];
-      // Check if step is a wrap or jump (distance > 1)
-      const isWrap = Math.abs(step.x - prevTileX) > 1 || Math.abs(step.y - prevTileY) > 1;
       const pt = toTileScreen(step.x, step.y);
-      if (isWrap) {
-        if (currentSegment.length > 0) {
-          segments.push(currentSegment);
-        }
-        currentSegment = [pt];
-      } else {
+      if (i === 0) {
         currentSegment.push(pt);
+      } else {
+        const prevStep = route[i - 1];
+        const isWrap = Math.abs(step.x - prevStep.x) > 1 || Math.abs(step.y - prevStep.y) > 1;
+        if (isWrap) {
+          if (currentSegment.length > 0) {
+            segments.push(currentSegment);
+          }
+          currentSegment = [pt];
+        } else {
+          currentSegment.push(pt);
+        }
       }
-      prevTileX = step.x;
-      prevTileY = step.y;
     }
     if (currentSegment.length > 0) {
       segments.push(currentSegment);
