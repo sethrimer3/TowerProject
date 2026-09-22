@@ -48,6 +48,9 @@ export function chooseStep(game: Game) {
       )
         continue;
       if (t.kind === "stairs" && game.mode === "tower" && game.run.rewards?.length) continue;
+      // Backtracking down floors is a future automove upgrade; for now automove
+      // only climbs, never steps onto the stairs back down on its own.
+      if (t.kind === "stairsDown") continue;
       const next = { x, y, first: n.d ? n.first : [dx, dy], d: n.d + 1 };
       let value = game.run.outside
         ? (t.kind === "stairs" ? 100 : 0) - next.d * 0.18

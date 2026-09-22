@@ -324,7 +324,8 @@ export function generateTowerRoom(
   for (let y = bounds.y1; y <= bounds.y2; y++)
     for (let x = bounds.x1; x <= bounds.x2; x++) floor(x, y);
   const entrance: [number, number] = [TOWER_START_X, 0];
-  floor(...entrance);
+  // Room 0 opens onto the forest; every later room keeps a way back down.
+  set(...entrance, room > 0 ? { kind: "stairsDown" } : { kind: "floor" });
   const reserved = new Set([point(...entrance), point(TOWER_START_X, 1)]);
   function tier(): number {
     return Math.min(3, Math.floor(room / 5));

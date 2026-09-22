@@ -11,6 +11,7 @@ export type Kind =
   | "reward"
   | "treasure"
   | "stairs"
+  | "stairsDown"
   | "oneway";
 export type Enemy = {
   name: string;
@@ -53,6 +54,9 @@ export type Run = {
   treasures: number;
   changes: Record<string, Tile>;
   floor: number;
+  /** Tower only: each visited room's own changes, keyed by height, so
+   * descending and re-climbing preserves what was already done there. */
+  floors?: Record<number, Record<string, Tile>>;
 };
 export type MoveSnapshot = { run: Run; best: number };
 export type Revival = { snapshot: MoveSnapshot; earned: number };

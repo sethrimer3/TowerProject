@@ -57,6 +57,13 @@ export class Game {
     const u = this.save.upgrades;
     return 1 + u.undos + u.shardUndos;
   }
+  /** Keep run.floors[height] pointed at the live run.changes object so
+   * existing code that mutates run.changes still edits the right room,
+   * while other visited rooms keep their own state to return to. */
+  linkTowerFloor() {
+    this.run.floors ??= {};
+    this.run.floors[this.run.height] = this.run.changes;
+  }
   switchMode(next: Mode) {
     if (next === this.mode) return;
     if (next === "delve" && !this.save.upgrades.delve) return;
@@ -94,7 +101,9 @@ export class Game {
       if (this.run.layoutVersion !== TOWER_LAYOUT_VERSION) {
         this.run.layoutVersion = TOWER_LAYOUT_VERSION;
         this.run.changes = {};
+        this.run.floors = {};
       }
+      this.linkTowerFloor();
       this.world = new RoomWorld(
         this.run.seed,
         this.run.height,
@@ -144,6 +153,7 @@ export class Game {
     if (keysSpent) this.run.keysSpent = true;
     this.save[this.mode].run = this.run;
     // Lifetime achievements are never rolled back by movement undo.
+    if (!this.run.outside && this.mode === "tower") this.linkTowerFloor();
     this.world =
       this.run.outside ? new OutsideWorld(this.run.seed, this.mode) : this.mode === "delve"
         ? new World(this.run.seed, this.run.changes, this.run.floor)
@@ -248,9 +258,11 @@ export class Game {
         kills: 0,
         treasures: 0,
         changes: {},
+        floors: {},
         floor: 0,
         player,
       };
+      this.linkTowerFloor();
       this.world = new RoomWorld(this.run.seed, 0, this.run.changes);
     }
     if (outside) {
@@ -353,9 +365,12 @@ export class Game {
         this.run.outside = false;
         p.x = this.mode === "tower" ? TOWER_START_X : START_X;
         p.y = 0;
-        this.world = this.mode === "tower"
-          ? new RoomWorld(this.run.seed, 0, this.run.changes)
-          : new World(this.run.seed, this.run.changes);
+        if (this.mode === "tower") {
+          this.linkTowerFloor();
+          this.world = new RoomWorld(this.run.seed, 0, this.run.changes);
+        } else {
+          this.world = new World(this.run.seed, this.run.changes);
+        }
         this.route = [];
         this.feedback(this.mode === "tower" ? "You enter the tower." : "You enter the mountain cave.");
       }
@@ -366,7 +381,7 @@ export class Game {
       return true;
     }
     this.collect(t);
-    if (t.kind !== "floor" && t.kind !== "stairs" && t.kind !== "oneway") this.world.clear(x, y);
+    if (t.kind !== "floor" && t.kind !== "stairs" && t.kind !== "stairsDown" && t.kind !== "oneway") this.world.clear(x, y);
     this.checkClear();
     if (this.mode === "delve") {
       this.run.height = Math.max(this.run.height, y);
@@ -375,20 +390,51 @@ export class Game {
       this.recordProgress();
     } else if (t.kind === "stairs") {
       this.advanceTowerRoom();
+    } else if (t.kind === "stairsDown") {
+      this.descendTowerRoom();
     }
     return true;
   }
   advanceTowerRoom() {
     this.claimRewards();
     this.run.height++;
-    this.run.keysSpent = false;
-    this.run.rewards = [];
-    this.recordProgress();
-    this.run.changes = {};
-    this.world = new RoomWorld(this.run.seed, this.run.height, this.run.changes);
+    this.enterTowerFloor();
     this.run.player.x = TOWER_START_X;
     this.run.player.y = 0;
     this.feedback("A new chamber opens.");
+  }
+  /** Step back onto the stairs at the foot of the current room, returning
+   * to the previous room exactly as it was left: cleared tiles stay clear,
+   * surviving enemies and unclaimed loot are still there to finish off. */
+  descendTowerRoom() {
+    if (this.run.height <= 0) return;
+    this.claimRewards();
+    this.run.height--;
+    this.enterTowerFloor();
+    const stairs = [...(this.world as RoomWorld).cells].find(
+      ([, t]) => t.kind === "stairs",
+    );
+    if (stairs) {
+      const [sx, sy] = stairs[0].split(",").map(Number);
+      this.run.player.x = sx;
+      this.run.player.y = sy;
+    } else {
+      this.run.player.x = TOWER_START_X;
+      this.run.player.y = 0;
+    }
+    this.feedback("You descend to the room below.");
+  }
+  /** Common setup for entering a tower room by height, reusing its saved
+   * changes when it was already visited. Keys reset per visit; damage taken
+   * anywhere in the run keeps counting toward the whole-ascent Gold clear. */
+  enterTowerFloor() {
+    this.run.keysSpent = false;
+    this.run.rewards = [];
+    this.recordProgress();
+    this.run.floors ??= {};
+    this.run.changes = this.run.floors[this.run.height] ??= {};
+    this.world = new RoomWorld(this.run.seed, this.run.height, this.run.changes);
+    this.syncRewards();
   }
   recordProgress() {
     if (this.run.outside) return 0;
