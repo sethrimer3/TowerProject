@@ -946,3 +946,15 @@ nav .mode-locked { opacity: .55; }
   .brand { flex-wrap: wrap; gap: 8px; }
   .currencies { margin-left: auto; }
 }
+
+#log { font: inherit; font-size: 10px; padding: 3px 7px; margin-top: 3px; min-height: 24px; }
+.clear-legend { text-align: left; font-size: 12px; }
+.clear-legend p { margin: 6px 0; }
+.silver { color: #c5d0df; }
+.gold { color: #f5cd62; }
+.platinum { color: #bcfff3; }
+.diamond { color: #99d9ff; }
+.floor-log { max-height: 30vh; overflow-y: auto; text-align: left; }
+.floor-record { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid #ffffff18; font-size: 12px; }
+.floor-record > span { text-align: right; }
+#modal { max-height: 90dvh; overflow-y: auto; }

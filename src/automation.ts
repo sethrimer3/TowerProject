@@ -3,6 +3,7 @@ import { point, type Tile } from "./entities.ts";
 import type { Game } from "./state.ts";
 export function score(t: Tile, y: number, current: number, distance: number) {
   let benefit = 0;
+  if (t.kind === "reward") benefit = 10000;
   if (t.kind === "key") benefit = 38;
   if (t.kind === "potion") benefit = 30;
   if (t.kind === "attack" || t.kind === "defense" || t.kind === "treasure")
@@ -46,6 +47,7 @@ export function chooseStep(game: Game) {
         (t.kind === "enemy" && !predict(p, t.enemy!).survivable)
       )
         continue;
+      if (t.kind === "stairs" && game.mode === "tower" && game.run.rewards?.length) continue;
       const next = { x, y, first: n.d ? n.first : [dx, dy], d: n.d + 1 };
       let value = game.run.outside
         ? (t.kind === "stairs" ? 100 : 0) - next.d * 0.18

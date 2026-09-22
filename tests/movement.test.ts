@@ -67,8 +67,8 @@ test("undo restores combat, health, drops, equipment, door keys and score; histo
   for (let i = 0; i < 5; i++) assert.ok(g.move(0, 1));
   assert.equal(g.save.delve.history.length, 5);
   for (let i = 0; i < 5; i++) assert.ok(g.undo());
-  assert.deepEqual(g.run, initial);
-  assert.equal(g.save.delve.best, 0);
+  assert.deepEqual(g.run, { ...initial, damaged: g.run.damaged, keysSpent: g.run.keysSpent });
+  assert.equal(g.save.delve.best, 5);
   assert.equal(g.undo(), false);
   for (let i = 0; i < 6; i++) g.move(0, 1);
   assert.equal(g.save.delve.history.length, 5);
@@ -83,7 +83,7 @@ test("fatal path resets to entrance, stops route, and cannot undo without Revive
   assert.equal(g.run.player.y, 0);
   assert.equal(g.save.delve.history.length, 0);
   assert.equal(g.undo(), false);
-  assert.equal(g.save.delve.essence, 1);
+  assert.equal(g.save.delve.essence, 0);
 });
 test("Revive restores pre-fatal state and rolls back pending rewards; next move forfeits it irreversibly", () => {
   const g = corridor();
@@ -104,11 +104,11 @@ test("Revive restores pre-fatal state and rolls back pending rewards; next move 
   assert.ok(g.save.delve.revival, "Blocked move must not forfeit revival");
   g.move(0, 1);
   assert.equal(g.save.delve.revival, null);
-  assert.equal(g.save.delve.essence, 1);
+  assert.equal(g.save.delve.essence, 0);
   g.undo();
   assert.equal(g.run.player.y, 0);
   assert.equal(g.save.delve.revival, null);
-  assert.equal(g.save.delve.essence, 1);
+  assert.equal(g.save.delve.essence, 0);
 });
 test("undo and Revive persist safely across refresh", () => {
   const g = new Game(defaults());

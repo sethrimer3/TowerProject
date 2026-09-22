@@ -51,7 +51,7 @@ test("Tower and Delve keep fully independent, persistent runs", () => {
   assert.equal(g.run.seed, delveSeed);
   assert.equal(g.run.height, delveHeight);
 });
-test("reaching the stairs advances the Tower room and increments height without paying out mid-run", () => {
+test("reaching the stairs advances the Tower room and awards each new height immediately", () => {
   const g = new Game(defaults());
   assert.equal(g.mode, "tower");
   const before = g.run.height;
@@ -62,7 +62,7 @@ test("reaching the stairs advances the Tower room and increments height without 
   assert.equal(g.run.player.x, TOWER_START_X);
   assert.equal(g.run.player.y, 0);
   assert.deepEqual(g.run.changes, {});
-  assert.equal(g.save.tower.shards, 0);
+  assert.equal(g.save.tower.shards, 1);
 });
 test("Shards and Essence only pay out on a new best, Gold and XP accrue regardless", () => {
   const g = new Game(defaults());

@@ -3,8 +3,8 @@ import type { ModeSave, Run, Save } from "./entities.ts";
 export function defaults(): Save {
   return {
     version: 2,
-    tower: { run: null, history: [], revival: null, best: 0, shards: 0 },
-    delve: { run: null, history: [], revival: null, best: 0, essence: 0 },
+    tower: { run: null, history: [], revival: null, best: 0, reached: 0, shards: 0, log: {} },
+    delve: { run: null, history: [], revival: null, best: 0, reached: 0, essence: 0 },
     gold: 0,
     provisions: Object.fromEntries(
       GOLD_SHOP.map((g) => [g.id, 0]),
@@ -70,7 +70,13 @@ function validRun(r: any): Run | null {
       ([k, v]: [string, any]) => /^\d+,\d+$/.test(k) && v?.kind === "floor",
     )
   )
-    return r;
+    {
+      // Older runs have no damage/key history; do not assume a perfect attempt.
+      r.damaged = r.damaged !== false;
+      r.keysSpent = r.keysSpent !== false;
+      r.rewards = Array.isArray(r.rewards) ? r.rewards.filter((c: any) => Number.isInteger(c.x) && c.x >= 0 && c.x < 30 && Number.isInteger(c.y) && c.y >= 0 && c.y < 20 && ["silver", "gold", "platinum"].includes(c.tier)) : [];
+      return r;
+    }
   return null;
 }
 function decodeMode(
@@ -149,6 +155,19 @@ export function decode(raw: string | null): Save {
       d.delve.run = delve.run;
       d.delve.history = delve.history as ModeSave["history"];
       d.delve.revival = delve.revival;
+    }
+    for (const mode of ["tower", "delve"] as const) {
+      // Existing records are already rewarded; preserve old balances without double-paying.
+      d[mode].reached = finite(s?.[mode]?.reached) ? Math.floor(s[mode].reached) : d[mode].best;
+      d[mode].best = Math.max(d[mode].best, d[mode].reached);
+    }
+    if (s?.tower?.log && typeof s.tower.log === "object") {
+      for (const [floor, record] of Object.entries(s.tower.log) as [string, any][]) {
+        if (!/^\d+$/.test(floor) || !finite(Number(floor)) || !Array.isArray(record?.earned)) continue;
+        const earned = (["silver", "gold", "platinum"] as const).filter(t => record.earned.includes(t));
+        const claimed = earned.filter(t => Array.isArray(record.claimed) && record.claimed.includes(t));
+        d.tower.log[floor] = { earned, claimed };
+      }
     }
     // Preserve access and purchases in saves made before skill trees existed.
     if (s?.upgrades && !("delve" in s.upgrades)) {

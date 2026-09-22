@@ -8,6 +8,7 @@ export type Kind =
   | "potion"
   | "attack"
   | "defense"
+  | "reward"
   | "treasure"
   | "stairs"
   | "oneway";
@@ -18,7 +19,10 @@ export type Enemy = {
   defense: number;
   tier: number;
 };
-export type Tile = { kind: Kind; color?: KeyColor; enemy?: Enemy };
+export type ClearTier = "silver" | "gold" | "platinum";
+export type RewardChest = { x: number; y: number; tier: ClearTier };
+export type FloorRecord = { earned: ClearTier[]; claimed: ClearTier[] };
+export type Tile = { kind: Kind; color?: KeyColor; enemy?: Enemy; tier?: ClearTier };
 export type Gear = {
   slot: "weapon" | "armor";
   name: string;
@@ -37,6 +41,9 @@ export type Player = {
   gear: Gear[];
 };
 export type Run = {
+  damaged?: boolean;
+  keysSpent?: boolean;
+  rewards?: RewardChest[];
   outside?: boolean;
   layoutVersion?: number;
   seed: number;
@@ -62,11 +69,12 @@ export type ModeSave = {
   history: MoveSnapshot[];
   revival: Revival | null;
   best: number;
+  reached: number;
   run: Run | null;
 };
 export type Save = {
   version: 2;
-  tower: ModeSave & { shards: number };
+  tower: ModeSave & { shards: number; log: Record<string, FloorRecord> };
   delve: ModeSave & { essence: number };
   gold: number;
   provisions: Record<GoldItemId, number>;

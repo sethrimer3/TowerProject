@@ -201,16 +201,13 @@ export class Renderer {
     if (t.kind === "floor") return;
     
     if (t.kind === "oneway") {
-      ctx.fillStyle = "#8a7e93";
-      ctx.fillRect(px, py + TILE * 0.4, TILE, TILE * 0.2);
-      ctx.fillStyle = "#a89fb3";
-      ctx.beginPath();
-      ctx.moveTo(px + TILE * 0.2, py + TILE * 0.4);
-      ctx.lineTo(px + TILE * 0.5, py + TILE * 0.8);
-      ctx.lineTo(px + TILE * 0.8, py + TILE * 0.4);
-      ctx.fill();
+      c.fillStyle = "#8a7e93";
+      c.fillRect(0, 10, 24, 5);
+      c.fillStyle = "#a89fb3";
+      c.beginPath(); c.moveTo(5, 10); c.lineTo(12, 19); c.lineTo(19, 10); c.fill();
+      return;
     }
-if (t.kind === "stairs") {
+    if (t.kind === "stairs") {
       const exit = y % CHUNK === CHUNK - 1;
       c.fillStyle = exit ? "#dec58c20" : "#8eacc520";
       c.fillRect(2, 1, 20, 22);
@@ -299,6 +296,29 @@ if (t.kind === "stairs") {
       c.fillRect(10, 13, 5, 5);
       c.fillStyle = "#b9d3e8";
       c.fillRect(10, 5, 2, 12);
+      return;
+    }
+    if (t.kind === "reward") {
+      const metal = { silver: "#c5d0df", gold: "#f5cd62", platinum: "#bcfff3" }[t.tier!];
+      c.fillStyle = metal;
+      c.shadowColor = metal;
+      c.shadowBlur = 5;
+      c.fillRect(3, 7, 18, 14);
+      c.shadowBlur = 0;
+      c.fillStyle = "#283040";
+      c.fillRect(5, 9, 14, 10);
+      c.fillStyle = metal;
+      c.fillRect(3, 12, 18, 2);
+      c.fillRect(10, 11, 4, 6);
+      if (t.tier === "platinum") { c.fillStyle = "#ffffff"; c.fillRect(11, 3, 2, 3); }
+      for (let i = 0; i < 3; i++) {
+        const phase = g.save.settings.reduceMotion ? 0.6 : (Math.sin(time / 240 + i * 2 + x + y) + 1) / 2;
+        c.globalAlpha = 0.25 + phase * 0.75;
+        c.fillStyle = "#ffffff";
+        const sx = 3 + i * 9, sy = i === 1 ? 2 : 6;
+        c.fillRect(sx - 2, sy, 5, 1); c.fillRect(sx, sy - 2, 1, 5);
+      }
+      c.globalAlpha = 1;
       return;
     }
     if (t.kind === "treasure") {
