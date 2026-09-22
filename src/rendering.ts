@@ -87,7 +87,7 @@ export class Renderer {
         left: Math.max(0, Math.floor((g.world.width - n) / 2)),
       };
     return {
-      bottom: Math.max(0, p.y - Math.floor(n * 0.3)),
+      bottom: Math.max(0, p.y - Math.floor(n / 2)),
       left: Math.max(0, Math.min(g.world.width - n, p.x - Math.floor(n / 2))),
     };
   }
@@ -167,18 +167,10 @@ export class Renderer {
         !g.paused && !g.summary && !document.hidden, g.save.settings.weatherSound !== false);
     } else {
     c.fillStyle = "#606b79";
-    for (let row = 0; row < n; row++) {
-      const y = Math.floor(this.bottom) + row,
-        sy = (n - 1 - (y - this.bottom)) * s;
-      c.fillRect(0, sy, 2, s);
-      c.fillRect(box.width - 2, sy, 2, s);
-    }
-    for (let col = 0; col < n; col++) {
-      const x = Math.floor(this.left) + col,
-        sx = (x - this.left) * s;
-      c.fillRect(sx, 0, s, 2);
-      c.fillRect(sx, box.width - 2, s, 2);
-    }
+    c.fillRect(0, 0, box.width, 2);
+    c.fillRect(0, box.width - 2, box.width, 2);
+    c.fillRect(0, 0, 2, box.width);
+    c.fillRect(box.width - 2, 0, 2, box.width);
     this.drawVignette(box.width);
     }
     if (g.blocked.until > now) {
