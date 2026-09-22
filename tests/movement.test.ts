@@ -6,6 +6,7 @@ import { point, type Tile } from "../src/entities.ts";
 import { generate, reachable } from "../src/generation.ts";
 function corridor() {
   const g = new Game(defaults());
+  g.save.upgrades.delve = 1;
   g.switchMode("delve");
   for (let y = 0; y < 20; y++)
     for (let x = 0; x < 30; x++) g.run.changes[point(x, y)] = { kind: "wall" };
@@ -111,6 +112,7 @@ test("Revive restores pre-fatal state and rolls back pending rewards; next move 
 });
 test("undo and Revive persist safely across refresh", () => {
   const g = new Game(defaults());
+  g.save.upgrades.delve = 1;
   g.switchMode("delve");
   g.save.upgrades.revive = 1;
   g.move(0, 1);

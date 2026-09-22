@@ -37,6 +37,7 @@ test("Tower and Delve keep fully independent, persistent runs", () => {
   const towerSeed = g.run.seed;
   g.move(0, 1, true);
   const towerY = g.run.player.y;
+  g.save.upgrades.delve = 1;
   g.switchMode("delve");
   assert.notEqual(g.run.seed, towerSeed);
   g.move(0, 1, true);
@@ -45,6 +46,7 @@ test("Tower and Delve keep fully independent, persistent runs", () => {
   g.switchMode("tower");
   assert.equal(g.run.seed, towerSeed);
   assert.equal(g.run.player.y, towerY);
+  g.save.upgrades.delve = 1;
   g.switchMode("delve");
   assert.equal(g.run.seed, delveSeed);
   assert.equal(g.run.height, delveHeight);

@@ -19,6 +19,35 @@
 * {
   box-sizing: border-box;
 }
+/* A thin rune-like handle — a dot flanked by two elongated diamond spikes,
+   one pointing up and one down — replaces the default scrollbar everywhere. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #7e899b99 transparent;
+}
+::-webkit-scrollbar {
+  width: 14px;
+  height: 14px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  min-height: 44px;
+  background-color: #333c4780;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 6 40' width='6' height='40'%3E%3Cpath d='M3 2 L4.3 11 L3 15 L1.7 11 Z' fill='%237e899b'/%3E%3Ccircle cx='3' cy='20' r='1.6' fill='%237e899b'/%3E%3Cpath d='M3 38 L4.3 29 L3 25 L1.7 29 Z' fill='%237e899b'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-clip: padding-box;
+  border: 4px solid transparent;
+  border-radius: 7px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: #3f4a5780;
+}
 body {
   margin: 0;
   min-width: 320px;
@@ -315,8 +344,10 @@ canvas {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: stretch;
   gap: 4px;
   padding: 6px;
+  min-width: 0;
   border-left: 1px solid var(--line);
 }
 .mini-action {
@@ -326,6 +357,8 @@ canvas {
   justify-content: center;
   gap: 1px;
   min-height: 0;
+  min-width: 0;
+  width: 100%;
   height: 36px;
   padding: 2px;
   line-height: 1;
@@ -337,6 +370,8 @@ canvas {
 .mini-action small {
   font-size: 7px;
   letter-spacing: 0.5px;
+  white-space: normal;
+  text-align: center;
 }
 .mini-action.enabled {
   border-color: #b59861;
@@ -611,7 +646,7 @@ dialog p {
     font-size: 7px;
   }
   .stats {
-    grid-template-columns: 53px 1fr 41px 60px 46px;
+    grid-template-columns: 50px 1fr 38px 54px 38px;
     min-height: 82px;
   }
   .vitals {
@@ -649,16 +684,18 @@ dialog p {
     gap: 5px;
   }
   .actions {
-    padding: 4px;
+    padding: 3px 2px;
   }
   .mini-action {
     height: 32px;
+    padding: 1px;
   }
   .mini-action .mini-icon {
     font-size: 11px;
   }
   .mini-action small {
-    font-size: 6px;
+    font-size: 5.5px;
+    letter-spacing: 0;
   }
   .dpad button {
     padding-inline: 10px;
@@ -682,9 +719,10 @@ dialog p {
   }
   .essence small {
     font-size: 6px;
+    letter-spacing: 1px;
   }
   .currencies {
-    gap: 8px;
+    gap: 6px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -871,4 +909,45 @@ nav {
   color: #b29769;
   font-size: 11px;
   letter-spacing: 1px;
+}
+/* Branching progression maps */
+.tree-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+.tree-tabs button { padding: 12px 4px; font-size: 12px; }
+.tree-tabs span, .tree-tabs small { display: block; }
+.tree-tabs span { font-size: 25px; margin-bottom: 5px; }
+.tree-tabs small { font-size: 8px; letter-spacing: 1px; margin-top: 6px; color: #9ba8b7; }
+.tree-tabs [aria-pressed="true"] { border-color: #d8b572; background: #343021; color: #ffe1a1; }
+.skill-tree { --tree-color: #e5bf75; border: 1px solid #63543a; background: radial-gradient(ellipse at 50% 36%, #74552326, transparent 65%), #0a1016; padding: 22px 14px 16px; border-radius: 9px; }
+.skill-tree.courage { --tree-color: #82c9b3; border-color: #355e55; background: radial-gradient(ellipse at 50% 36%, #2b92782a, transparent 65%), #090f15; }
+.skill-tree.legacy { --tree-color: #b3a0e8; border-color: #53456c; background: radial-gradient(ellipse at 50% 36%, #76599e30, transparent 65%), #0d0d17; }
+.tree-heading { text-align: center; }
+.tree-heading small { color: var(--tree-color); letter-spacing: 2px; font-size: 11px; }
+.tree-heading h3 { font-size: 21px; margin: 10px 0; }
+.tree-heading p, .tree-lock { font-size: 11px; color: #a3afbc; text-align: center; line-height: 1.7; }
+.tree-lock { border: 1px solid #38414b; padding: 9px; }
+.tree-map { position: relative; height: 470px; margin: 6px 0 18px; }
+.tree-map svg { position: absolute; width: 100%; height: 100%; overflow: visible; }
+.tree-map line { stroke: #46505b; stroke-width: 1; vector-effect: non-scaling-stroke; }
+.tree-map line.lit { stroke: var(--tree-color); stroke-width: 2; }
+.skill-node { position: absolute; transform: translate(-50%, -50%); display: flex; align-items: center; flex-direction: column; width: 96px; border: 0; background: none; padding: 0; gap: 5px; }
+.skill-node:hover { background: none; color: var(--tree-color); }
+.node-icon { display: grid; place-items: center; width: 44px; height: 44px; font-size: 23px; background: #121c25; border: 1px solid #6a7480; box-shadow: 0 0 0 4px #0a1016; }
+.courage .node-icon { border-radius: 50%; }
+.legacy .node-icon { border-radius: 12px 0; }
+.node-name { font-size: 10px; line-height: 1.35; background: #0a1016e8; padding: 0 2px; }
+.skill-node small { font-size: 9px; color: #9aa7b5; background: #0a1016; }
+.skill-node.locked .node-icon { color: #75808b; border-style: dashed; }
+.skill-node.owned .node-icon { background: #263831; border-color: var(--tree-color); color: var(--tree-color); }
+.skill-node.available .node-icon { border-color: var(--tree-color); }
+.skill-node.chosen .node-icon { outline: 2px solid var(--tree-color); outline-offset: 4px; color: var(--tree-color); }
+.skill-detail { border-top: 1px solid #39434c; padding-top: 16px; min-height: 195px; }
+.skill-detail h3 { color: var(--tree-color); margin: 6px 0; }
+.skill-detail small { font-size: 10px; color: #a2adba; }
+.skill-detail p { font-size: 12px; line-height: 1.7; }
+.skill-detail button { width: 100%; border-color: var(--tree-color); font-size: 12px; }
+nav .mode-locked { opacity: .55; }
+@media (min-width: 700px) { .tree-map { height: 520px; } .node-icon { width: 50px; height: 50px; } .node-name { font-size: 12px; } .skill-node { width: 130px; } }
+@media (max-width: 360px) {
+  .brand { flex-wrap: wrap; gap: 8px; }
+  .currencies { margin-left: auto; }
 }

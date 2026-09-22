@@ -9,6 +9,8 @@ export const COLORS = { yellow: "#eac16b", blue: "#6dbdf1", red: "#df797e" };
 export type KeyColor = keyof typeof COLORS;
 export type Currency = "essence" | "shards";
 export const UPGRADES = [
+  { id: "delve", name: "Into the depths", description: "Unlock Delve and the Courage skill tree", base: 3, max: 1, currency: "shards" },
+  { id: "legacy", name: "An enduring legacy", description: "Unlock the Legacy skill tree", base: 8, max: 1, currency: "essence" },
   {
     id: "revive",
     name: "Revive",
@@ -83,8 +85,8 @@ export const UPGRADES = [
   },
   {
     id: "auto",
-    name: "Wayfinder",
-    description: "Unlock purposeful automatic climbing",
+    name: "Automove",
+    description: "Unlock automatic movement in both Tower and Delve",
     base: 3,
     max: 1,
     currency: "essence",

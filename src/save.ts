@@ -140,6 +140,11 @@ export function decode(raw: string | null): Save {
       d.delve.history = delve.history as ModeSave["history"];
       d.delve.revival = delve.revival;
     }
+    // Preserve access and purchases in saves made before skill trees existed.
+    if (s?.upgrades && !("delve" in s.upgrades)) {
+      if (d.delve.run || d.delve.best || d.delve.essence || UPGRADES.some(u => u.currency === "essence" && d.upgrades[u.id])) d.upgrades.delve = 1;
+      if (["quality", "yellow", "blue", "red"].some(id => s.upgrades[id] > 0)) d.upgrades.legacy = 1;
+    }
   } catch {}
   return d;
 }

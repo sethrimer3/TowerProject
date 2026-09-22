@@ -38,6 +38,7 @@ test("combat uses first strike, defenses, and strict survival", () => {
 });
 test("doors consume matching keys; pickups and walls obey movement", () => {
   const g = new Game(defaults());
+  g.save.upgrades.delve = 1;
   g.switchMode("delve");
   const p = g.run.player;
   g.world.changes["15,1"] = { kind: "door", color: "blue" };
@@ -54,6 +55,7 @@ test("doors consume matching keys; pickups and walls obey movement", () => {
 });
 test("automation avoids lethal fights; manual death resets immediately and awards once", () => {
   const g = new Game(defaults());
+  g.save.upgrades.delve = 1;
   g.switchMode("delve");
   g.world.changes["15,1"] = {
     kind: "enemy",
@@ -69,6 +71,7 @@ test("automation avoids lethal fights; manual death resets immediately and award
   g.finish("again");
   assert.equal(g.save.delve.essence, earned);
   g.save.delve.essence = 100;
+  g.save.upgrades.auto = 1;
   assert.ok(g.buy("hp"));
   g.summary = null;
   g.newRun();
@@ -76,6 +79,7 @@ test("automation avoids lethal fights; manual death resets immediately and award
 });
 test("automation climbs purposefully, never takes lethal fights, bounds chunk memory", () => {
   const g = new Game(defaults());
+  g.save.upgrades.delve = 1;
   g.switchMode("delve");
   for (let i = 0; i < 1500; i++) {
     const s = chooseStep(g);
@@ -89,6 +93,7 @@ test("automation climbs purposefully, never takes lethal fights, bounds chunk me
 });
 test("save roundtrip, malformed values and old versions are safe", () => {
   const g = new Game(defaults());
+  g.save.upgrades.delve = 1;
   g.switchMode("delve");
   g.move(0, 1);
   const restored = decode(JSON.stringify(g.save));
@@ -106,6 +111,7 @@ test("save roundtrip, malformed values and old versions are safe", () => {
 });
 test("density does not alter world or run; chunk boundaries stay traversable", () => {
   const g = new Game(defaults());
+  g.save.upgrades.delve = 1;
   g.switchMode("delve");
   const tiles = Array.from((g.world as World).chunks.entries());
   for (const density of [16, 24, 30, 20]) {
@@ -181,6 +187,7 @@ test("each door is a separating choke point, and keys solve every room without s
 test("old runs safely migrate topology while retaining earned stats and permanent progress", () => {
   const save = defaults(),
     g = new Game(save);
+  g.save.upgrades.delve = 1;
   g.switchMode("delve");
   g.run.layoutVersion = undefined;
   g.run.player.y = 27;
@@ -203,7 +210,8 @@ test("old runs safely migrate topology while retaining earned stats and permanen
 test("automation can backtrack through chamber layouts across fixed seeds", () => {
   for (let seed = 0; seed < 12; seed++) {
     const g = new Game(defaults());
-    g.switchMode("delve");
+    g.save.upgrades.delve = 1;
+  g.switchMode("delve");
     g.run.seed = seed;
     g.world = new World(seed, g.run.changes);
     for (let i = 0; i < 1400 && g.run.height < 40; i++) {
@@ -229,7 +237,8 @@ test("validator rejects missing prerequisite keys and doors with bypass routes",
 test("manual player reaches successive exits with zero starting keys and guarded progression", () => {
   for (let seed = 0; seed < 50; seed++) {
     const g = new Game(defaults());
-    g.switchMode("delve");
+    g.save.upgrades.delve = 1;
+  g.switchMode("delve");
     g.run.seed = seed;
     g.world = new World(seed, g.run.changes);
     // Exercise the real movement / pickup / lock code, not a flood fill that

@@ -9,7 +9,15 @@ const page = await browser.newPage({
 });
 const errors = [];
 page.on("pageerror", (e) => errors.push(e.message));
+await page.addInitScript(() => { const fixture = sessionStorage.getItem("__treeFixture"); if (fixture) { localStorage.setItem("towerincramental.v1", fixture); sessionStorage.removeItem("__treeFixture"); } });
 await page.goto("http://127.0.0.1:5173/");
+// Movement fixtures begin after the Delve unlock; fresh progression has its own suite.
+await page.evaluate(() => {
+  const save = JSON.parse(localStorage.getItem("towerincramental.v1"));
+  save.upgrades.delve = 1;
+  sessionStorage.setItem("__treeFixture", JSON.stringify(save));
+});
+await page.reload();
 await page.evaluate(() => document.fonts.ready);
 const fontCheck = await page.evaluate(() => ({
   loaded: document.fonts.check("16px Cinzel"),

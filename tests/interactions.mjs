@@ -13,7 +13,15 @@ await page.addInitScript(() => {
     sessionStorage.removeItem("__fixture");
   }
 });
+await page.addInitScript(() => { const fixture = sessionStorage.getItem("__treeFixture"); if (fixture) { localStorage.setItem("towerincramental.v1", fixture); sessionStorage.removeItem("__treeFixture"); } });
 await page.goto("http://127.0.0.1:5173/");
+// Movement fixtures begin after the Delve unlock; fresh progression has its own suite.
+await page.evaluate(() => {
+  const save = JSON.parse(localStorage.getItem("towerincramental.v1"));
+  save.upgrades.delve = 1;
+  sessionStorage.setItem("__treeFixture", JSON.stringify(save));
+});
+await page.reload();
 await expect(page.locator(".dpad")).toBeHidden();
 await page.locator('[data-tab="delve"]').click();
 const saved = () =>
@@ -90,17 +98,17 @@ await tap(15, 3);
 await expect(page.locator("#revive-now")).toBeVisible();
 await expect.poll(async () => (await saved()).delve.run.player.y).toBe(0);
 await page.locator("#again").click();
-await expect(page.locator("#undo")).toHaveText("Revive");
+await expect(page.locator("#undo")).toHaveAttribute("aria-label", "Revive");
 await page.reload();
 await page.locator('[data-tab="delve"]').click();
-await expect(page.locator("#undo")).toHaveText("Revive");
+await expect(page.locator("#undo")).toHaveAttribute("aria-label", "Revive");
 await page.locator("#undo").click();
 await expect.poll(async () => (await saved()).delve.run.player.y).toBe(1);
 await expect.poll(async () => (await saved()).delve.run.player.hp).toBe(1);
 await tap(15, 3);
 await page.locator("#again").click();
 await swipe(0, -1);
-await expect(page.locator("#undo")).toContainText("Undo");
+await expect(page.locator("#undo")).toHaveAttribute("aria-label", /^Undo/);
 await expect.poll(async () => (await saved()).delve.revival).toBe(null);
 await page.locator("#undo").click();
 await expect.poll(async () => (await saved()).delve.run.player.y).toBe(0);

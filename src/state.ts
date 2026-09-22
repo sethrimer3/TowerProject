@@ -1,3 +1,4 @@
+import { skillAvailable } from "./skill-trees.ts";
 import { routeTo, type Step } from "./pathfinding.ts";
 import {
   CHUNK,
@@ -59,6 +60,7 @@ export class Game {
   }
   switchMode(next: Mode) {
     if (next === this.mode) return;
+    if (next === "delve" && !this.save.upgrades.delve) return;
     this.mode = next;
     this.loadMode();
   }
@@ -385,6 +387,7 @@ export class Game {
     this.auto = false;
   }
   buy(id: UpgradeId) {
+    if (!skillAvailable(id, this.save.upgrades)) return false;
     const u = UPGRADES.find((u) => u.id === id)!;
     const n = this.save.upgrades[id],
       price = cost(id, n),
