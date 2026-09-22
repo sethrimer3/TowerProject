@@ -63,3 +63,36 @@ test("Renderer exposes modular atmosphere config instance that can be tuned", ()
   assert.equal(renderer.atmosphere.torchHazeStrength, 0.1);
   assert.equal(renderer.atmosphere.vignetteStrength, 0.15);
 });
+
+test("LIGHTING_CONFIG defines softened ambient darkness, warm candle stops, and penumbra blur", async () => {
+  const { LIGHTING_CONFIG, getTorchFlicker } = await import("../src/lighting.ts");
+  assert.ok(LIGHTING_CONFIG);
+
+  // Ambient level should keep dungeon clearly readable (low opacity overlay)
+  assert.ok(LIGHTING_CONFIG.ambient.opacity >= 0.20 && LIGHTING_CONFIG.ambient.opacity <= 0.45,
+    "Ambient opacity should be raised substantially to preserve dungeon visibility");
+  assert.equal(typeof LIGHTING_CONFIG.ambient.color, "string");
+
+  // Torch settings
+  assert.ok(LIGHTING_CONFIG.torch.defaultRadius > 0);
+  assert.ok(LIGHTING_CONFIG.torch.defaultIntensity <= 0.7,
+    "Peak torch intensity should be softened rather than dominating");
+
+  // Stops: gentle falloff feathering to 0
+  assert.ok(LIGHTING_CONFIG.stops.length >= 4);
+  assert.equal(LIGHTING_CONFIG.stops[0].offset, 0);
+  assert.equal(LIGHTING_CONFIG.stops[LIGHTING_CONFIG.stops.length - 1].offset, 1);
+
+  // Coherent multi-harmonic flicker
+  const torch = { x: 5, y: 10 };
+  const f1 = getTorchFlicker(torch, 1000, false);
+  const f2 = getTorchFlicker(torch, 1000, false);
+  assert.equal(f1, f2, "Flicker should be deterministic for the same timestamp and coordinates");
+  assert.equal(getTorchFlicker(torch, 1000, true), 1, "reduceMotion must disable flicker");
+  assert.ok(Math.abs(f1 - 1) <= 0.05, "Flicker amplitude should stay within subtle ±5%");
+
+  // Distinct spatial phases for different torches
+  const torch2 = { x: 12, y: 3 };
+  const f3 = getTorchFlicker(torch2, 1000, false);
+  assert.notEqual(f1, f3, "Different torches should have independent spatial phase");
+});
