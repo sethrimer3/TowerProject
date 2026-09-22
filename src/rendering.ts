@@ -110,6 +110,7 @@ export class Renderer {
       c.fillRect(0, 0, box.width, box.width);
       for (const t of torches) this.drawTorchLight(t, now);
     }
+    this.drawRoutePath(now);
     c.save();
     c.translate(
       (this.playerX - this.left) * s,
@@ -482,6 +483,93 @@ export class Renderer {
     gr.addColorStop(1, `rgba(255,80,20,0)`);
     c.fillStyle = gr;
     c.fillRect(cx - radius, cy - radius, radius * 2, radius * 2);
+    c.restore();
+  }
+  drawRoutePath(now: number) {
+    const route = this.game.route;
+    if (!route || route.length === 0) return;
+    const c = this.ctx,
+      s = this.size,
+      n = this.density;
+    // Current player interpolated position in screen coords
+    const playerScreenX = (this.playerX - this.left + 0.5) * s;
+    const playerScreenY = (n - 0.5 - (this.playerY - this.bottom)) * s;
+
+    // Convert world coordinate to screen coordinate
+    const toTileScreen = (wx: number, wy: number) => ({
+      x: (wx - this.left + 0.5) * s,
+      y: (n - 0.5 - (wy - this.bottom)) * s,
+    });
+
+    c.save();
+    c.lineCap = "round";
+    c.lineJoin = "round";
+
+    // Subtle pulsing gold glow
+    const pulse = 0.85 + 0.15 * Math.sin(now / 200);
+
+    const segments: Array<Array<{ x: number; y: number }>> = [];
+    let currentSegment: Array<{ x: number; y: number }> = [
+      { x: playerScreenX, y: playerScreenY },
+    ];
+
+    let prevTileX = this.game.run.player.x;
+    let prevTileY = this.game.run.player.y;
+
+    for (let i = 0; i < route.length; i++) {
+      const step = route[i];
+      // Check if step is a wrap or jump (distance > 1)
+      const isWrap = Math.abs(step.x - prevTileX) > 1 || Math.abs(step.y - prevTileY) > 1;
+      const pt = toTileScreen(step.x, step.y);
+      if (isWrap) {
+        if (currentSegment.length > 0) {
+          segments.push(currentSegment);
+        }
+        currentSegment = [pt];
+      } else {
+        currentSegment.push(pt);
+      }
+      prevTileX = step.x;
+      prevTileY = step.y;
+    }
+    if (currentSegment.length > 0) {
+      segments.push(currentSegment);
+    }
+
+    const drawSegments = () => {
+      c.beginPath();
+      for (const seg of segments) {
+        if (seg.length === 0) continue;
+        c.moveTo(seg[0].x, seg[0].y);
+        for (let i = 1; i < seg.length; i++) {
+          c.lineTo(seg[i].x, seg[i].y);
+        }
+      }
+    };
+
+    // Outer glow pass
+    drawSegments();
+    c.strokeStyle = `rgba(255, 215, 0, ${0.4 * pulse})`;
+    c.lineWidth = Math.max(3, s * 0.22);
+    c.shadowColor = "#ffd700";
+    c.shadowBlur = 8;
+    c.stroke();
+
+    // Inner bright core line pass
+    drawSegments();
+    c.strokeStyle = `rgba(255, 240, 160, ${0.9 * pulse})`;
+    c.lineWidth = Math.max(1.5, s * 0.1);
+    c.shadowBlur = 0;
+    c.stroke();
+
+    // Draw a small golden dot at the final destination
+    const lastStep = route[route.length - 1];
+    const destPt = toTileScreen(lastStep.x, lastStep.y);
+    c.fillStyle = `rgba(255, 225, 100, ${0.95 * pulse})`;
+    c.beginPath();
+    c.arc(destPt.x, destPt.y, Math.max(2, s * 0.12), 0, Math.PI * 2);
+    c.fill();
+
     c.restore();
   }
   hero() {
