@@ -957,4 +957,24 @@ nav .mode-locked { opacity: .55; }
 .floor-log { max-height: 30vh; overflow-y: auto; text-align: left; }
 .floor-record { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid #ffffff18; font-size: 12px; }
 .floor-record > span { text-align: right; }
+/* Crafting/equipment page */
+.gear-tabs { grid-template-columns: repeat(2, 1fr); }
+.slot-filter { grid-template-columns: repeat(5, 1fr); margin: 12px 0; }
+.slot-filter button { padding: 8px 2px; font-size: 16px; }
+.slot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.slot-card { display: flex; gap: 12px; align-items: center; padding: 14px 10px; border: 1px solid #36414f; background: #1a2431; border-radius: 5px; text-align: left; }
+.slot-card.filled { border-color: #6b5a35; }
+.slot-card.empty { opacity: .65; border-style: dashed; }
+.slot-card small { font-size: 8px; color: #9aaabd; letter-spacing: 1px; }
+.slot-card h3 { margin: 4px 0; font-size: 13px; color: #dbcaad; }
+.slot-card p { font-size: 10px; color: #9bb59e; }
+.card-actions { display: flex; flex-direction: column; gap: 6px; margin-left: auto; }
+.card-actions button { min-width: 78px; font-size: 10px; padding: 6px 8px; min-height: 30px; }
+.stepper { display: flex; justify-content: space-between; align-items: center; gap: 10px; border-bottom: 1px solid #2c3746; padding: 10px 0; font-size: 11px; }
+.stepper small { display: block; color: #8b98aa; font-size: 9px; margin-top: 3px; }
+.stepper-controls { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.stepper-controls button { min-width: 32px; min-height: 32px; padding: 0; font-size: 16px; }
+.stepper-controls b { min-width: 16px; text-align: center; }
+#gear h3 { font-size: 12px; color: var(--gold); letter-spacing: 1px; margin: 20px 0 8px; }
+#gear h3:first-of-type { margin-top: 4px; }
 #modal { max-height: 90dvh; overflow-y: auto; }
