@@ -7,6 +7,7 @@ import {
   TOWER_START_X,
   UNGUARDED_LOOT_CHANCE,
   type KeyColor,
+  DELVE_MAX_DEPTH,
 } from "./config.ts";
 import { point, type Tile } from "./entities.ts";
 export type Board = {
@@ -63,6 +64,50 @@ export function reachable(
 }
 /** Validate all floor space, actual separating locks, and a consuming-key traversal.
  * No starting keys are assumed; enemies may gate otherwise connected spaces. Each child chamber gets its key in its parent. */
+
+export function bspRooms(x: number, y: number, w: number, h: number, rng: () => number, minSize = 4) {
+  const regions = [{ x, y, w, h }];
+  const rooms: any[] = [];
+  while (regions.length > 0) {
+    const r = regions.pop()!;
+    const canSplitH = r.h > minSize * 2;
+    const canSplitV = r.w > minSize * 2;
+    if (canSplitH && canSplitV) {
+      if (rng() < 0.5) splitH(r); else splitV(r);
+    } else if (canSplitH) {
+      splitH(r);
+    } else if (canSplitV) {
+      splitV(r);
+    } else {
+      rooms.push(r);
+    }
+    function splitH(r: any) {
+      const wallThick = rng() < 0.25 ? 2 : 1; 
+      const split = Math.floor(rng() * (r.h - minSize * 2 - wallThick + 1)) + minSize;
+      regions.push({ x: r.x, y: r.y, w: r.w, h: split });
+      regions.push({ x: r.x, y: r.y + split + wallThick, w: r.w, h: r.h - split - wallThick });
+    }
+    function splitV(r: any) {
+      const wallThick = rng() < 0.25 ? 2 : 1; 
+      const split = Math.floor(rng() * (r.w - minSize * 2 - wallThick + 1)) + minSize;
+      regions.push({ x: r.x, y: r.y, w: split, h: r.h });
+      regions.push({ x: r.x + split + wallThick, y: r.y, w: r.w - split - wallThick, h: r.h });
+    }
+  }
+  return rooms;
+}
+
+export function carvePath(cells: Map<string, Tile>, pointFn: (x: number, y: number) => string, x1: number, y1: number, x2: number, y2: number, rng: () => number) {
+  let cx = x1, cy = y1;
+  while(cx !== x2 || cy !== y2) {
+    cells.set(pointFn(cx, cy), { kind: 'floor' });
+    if (cx === x2) { cy += Math.sign(y2 - cy); continue; }
+    if (cy === y2) { cx += Math.sign(x2 - cx); continue; }
+    if (rng() < 0.5) cx += Math.sign(x2 - cx); else cy += Math.sign(y2 - cy);
+  }
+  cells.set(pointFn(x2, y2), { kind: 'floor' });
+}
+
 export function validate(cells: Map<string, Tile>, base: number) {
   const entrance = point(START_X, base);
   const all = reachable(cells, entrance);
@@ -109,199 +154,71 @@ type Room = {
   y1: number;
   y2: number;
 };
-export function generate(seed: number, index: number): Map<string, Tile> {
-  const rng = random(seed ^ Math.imul(index + 1, 2654435761));
-  const int = (lo: number, hi: number) =>
-    lo + Math.floor(rng() * (hi - lo + 1));
-  const base = index * CHUNK,
-    cells = new Map<string, Tile>();
-  const set = (x: number, y: number, t: Tile) =>
-    cells.set(point(x, y + base), t);
+
+const delveCaches = new Map<number, Map<string, Tile>>();
+
+export function generateDelveMap(seed: number): Map<string, Tile> {
+  const rng = random(seed);
+  const cells = new Map<string, Tile>();
+  const set = (x: number, y: number, t: Tile) => cells.set(point(x, y), t);
   const floor = (x: number, y: number) => set(x, y, { kind: "floor" });
-  for (let y = 0; y < CHUNK; y++)
+  for (let y = 0; y < DELVE_MAX_DEPTH; y++)
     for (let x = 0; x < WIDTH; x++) set(x, y, { kind: "wall" });
-  const rooms: Room[] = [];
-  const bands = [
-    [1, 5],
-    [8, 12],
-    [15, 18],
-  ];
-  const columns = [
-    [1, 9],
-    [12, 19],
-    [22, 28],
-  ];
-  for (let row = 0; row < 3; row++)
-    for (let col = 0; col < 3; col++) {
-      const [a, b] = columns[col],
-        [c, d] = bands[row];
-      const room = {
-        id: row * 3 + col,
-        col,
-        row,
-        x1: a + int(0, 1),
-        x2: b - int(0, 1),
-        y1: c,
-        y2: d,
-      };
-      rooms.push(room);
-      for (let y = room.y1; y <= room.y2; y++)
-        for (let x = room.x1; x <= room.x2; x++) floor(x, y);
-      // Clipped corners make alcoves without interfering with centered doorways.
-      if (rng() < 0.55) {
-        set(room.x1, room.y1, { kind: "wall" });
-        set(room.x2, room.y2, { kind: "wall" });
-      }
-    }
+
   floor(START_X, 0);
-  floor(START_X, CHUNK - 1);
-  const reserved = new Set([
-    point(START_X, 0),
-    point(START_X, 1),
-    point(START_X, CHUNK - 2),
-    point(START_X, CHUNK - 1),
-  ]);
-  const reserve = (x: number, y: number) => reserved.add(point(x, y));
-  const edges: {
-    parent: Room;
-    child: Room;
-    door: [number, number];
-    locked: boolean;
-    color: KeyColor;
-  }[] = [];
-  // Build the ascent first. Optional branches may never reconnect to it,
-  // so their locked entrances remain genuine cut points.
-  const visited = new Set<number>([1, 4, 7]);
-  for (let y = 0; y < CHUNK; y++) reserve(START_X, y);
-  function link(parent: Room, child: Room, main = false) {
-    let door: [number, number];
-    if (parent.row === child.row && Math.abs(parent.col - child.col) === 2) {
-      const left = parent.col === 0 ? parent : child,
-        right = parent.col === 2 ? parent : child;
-      const y = int(left.y1 + 1, left.y2 - 1);
-      for (let x = 0; x <= left.x1; x++) {
-        floor(x, y);
-        reserve(x, y);
+
+  const rooms = bspRooms(1, 1, WIDTH - 2, DELVE_MAX_DEPTH - 2, rng, 4);
+  const edges: {x: number, y: number}[] = [];
+  
+  for (let r of rooms) {
+    for (let yy = r.y; yy < r.y + r.h; yy++) {
+      for (let xx = r.x; xx < r.x + r.w; xx++) {
+        floor(xx, yy);
       }
-      for (let x = right.x2; x < WIDTH; x++) {
-        floor(x, y);
-        reserve(x, y);
-      }
-      door = [0, y];
-    } else if (parent.row === child.row) {
-      const left = parent.col < child.col ? parent : child;
-      const right = left === parent ? child : parent;
-      const y =
-        parent.id === 1 || child.id === 1 ? 4 : int(left.y1 + 1, left.y2 - 1);
-      for (let x = left.x2; x <= right.x1; x++) {
-        floor(x, y);
-        reserve(x, y);
-      }
-      door = [left.x2 + 1, y];
-    } else {
-      const lower = parent.row < child.row ? parent : child;
-      const upper = lower === parent ? child : parent;
-      const x = main
-        ? START_X
-        : int(
-            Math.max(lower.x1, upper.x1) + 1,
-            Math.min(lower.x2, upper.x2) - 1,
-          );
-      for (let y = lower.y2; y <= upper.y1; y++) {
-        floor(x, y);
-        reserve(x, y);
-      }
-      door = [x, lower.y2 + 1];
     }
-    const color: KeyColor = main
-      ? parent.row === 0
-        ? "yellow"
-        : "blue"
-      : (["yellow", "blue", "red"] as const)[int(0, 2)];
-    edges.push({ parent, child, door, locked: main || rng() < 0.8, color });
   }
-  link(rooms[1], rooms[4], true);
-  link(rooms[4], rooms[7], true);
-  // Grow branches from a randomized frontier, leaving varied side chains
-  // while guaranteeing that all three central chambers connect upward.
-  while (visited.size < rooms.length) {
-    const frontier = rooms
-      .filter((r) => visited.has(r.id))
-      .flatMap((parent) =>
-        rooms
-          .filter(
-            (r) =>
-              !visited.has(r.id) &&
-              (Math.abs(r.col - parent.col) + Math.abs(r.row - parent.row) ===
-                1 ||
-                (r.row === parent.row && Math.abs(r.col - parent.col) === 2)),
-          )
-          .map((child) => ({ parent, child })),
-      );
-    const { parent, child } = frontier[int(0, frontier.length - 1)];
-    link(parent, child);
-    visited.add(child.id);
+
+  // We connect rooms by finding neighbors and carving
+  // Simple heuristic: connect each room to one below it
+  rooms.sort((a, b) => a.y - b.y);
+  for (let i = 0; i < rooms.length - 1; i++) {
+    const r1 = rooms[i];
+    const r2 = rooms[i + 1];
+    carvePath(cells, point, Math.floor(r1.x + r1.w / 2), Math.floor(r1.y + r1.h / 2), Math.floor(r2.x + r2.w / 2), Math.floor(r2.y + r2.h / 2), rng);
   }
-  for (const room of rooms) {
-    if (room.id !== 1) sculptRoom(cells, room, base, rng, reserved);
+
+  // Oneway passages every ~40 tiles
+  for (let y = 40; y < DELVE_MAX_DEPTH; y += 40) {
+    // Find a floor tile at this y
+    let floorX = -1;
+    for (let x = 1; x < WIDTH - 1; x++) {
+      if (cells.get(point(x, y))?.kind === 'floor') {
+        floorX = x;
+        break;
+      }
+    }
+    if (floorX !== -1) {
+      set(floorX, y, { kind: "oneway" });
+      // block other paths at this y
+      for (let x = 1; x < WIDTH - 1; x++) {
+        if (x !== floorX) set(x, y, { kind: "wall" });
+      }
+      // ensure path above and below
+      floor(floorX, y - 1);
+      floor(floorX, y + 1);
+    }
   }
-  // A small entrance vestibule leads through exactly one guardian into the
-  // first chamber. No essential key is a free pickup or depends on a rare roll.
-  const entranceRoom = rooms[1];
-  for (let x = entranceRoom.x1; x <= entranceRoom.x2; x++) {
-    floor(x, 1);
-    set(x, 2, { kind: "wall" });
-    floor(x, 3);
-    reserve(x, 1);
-    reserve(x, 2);
-  }
-  floor(START_X, 2);
-  function enemy(height: number): Tile {
+
+  // Place enemies and loot in rooms
+  for (let room of rooms) {
+    const height = room.y;
+    if (height < 2) continue; // skip entrance
     const tier = Math.min(3, Math.floor(height / 35));
-    return {
-      kind: "enemy",
-      enemy: {
-        name: ["Cinder slime", "Bone sentinel", "Dusk wing", "Ash warden"][
-          tier
-        ],
-        hp: 10 + tier * 12 + Math.floor(height * 0.25),
-        attack: 5 + tier * 3 + Math.floor(height / 16),
-        defense: tier,
-        tier,
-      },
-    };
-  }
-  set(START_X, 2, enemy(base));
-  function place(room: Room, tile: Tile) {
-    const candidates: [number, number][] = [];
-    for (let y = room.y1; y <= room.y2; y++)
-      for (let x = room.x1; x <= room.x2; x++)
-        if (
-          !reserved.has(point(x, y)) &&
-          cells.get(point(x, y + base))?.kind === "floor"
-        )
-          candidates.push([x, y]);
-    if (!candidates.length) throw new Error("Room has no free item positions");
-    const [x, y] = candidates[int(0, candidates.length - 1)];
-    set(x, y, tile);
-    reserve(x, y);
-  }
-  for (const edge of edges)
-    if (edge.locked) {
-      set(...edge.door, { kind: "door", color: edge.color });
-      if (edge.parent.col === 1 && edge.child.col === 1) {
-        // Placed after the parent guardian, before its lock; never behind itself.
-        set(START_X, edge.parent.y1 + 2, { kind: "key", color: edge.color });
-      } else place(edge.parent, { kind: "key", color: edge.color });
-    } else set(...edge.door, enemy(base + edge.parent.y1));
-  for (const room of rooms) {
-    const height = base + room.y1,
-      tier = Math.min(3, Math.floor(height / 35));
     const names = ["Cinder slime", "Bone sentinel", "Dusk wing", "Ash warden"];
-    // Room roles make rewards intentional rather than sprinkling every item everywhere.
-    const role = (room.id + int(0, 3)) % 4;
-    if (room.id !== 1 || index > 0)
-      place(room, {
+    const cx = Math.floor(room.x + room.w / 2);
+    const cy = Math.floor(room.y + room.h / 2);
+    if (rng() < 0.3) {
+      set(cx, cy, {
         kind: "enemy",
         enemy: {
           name: names[tier],
@@ -309,42 +226,34 @@ export function generate(seed: number, index: number): Map<string, Tile> {
           attack: 6 + tier * 4 + Math.floor(height / 12),
           defense: 1 + tier * 2,
           tier,
-        },
+        }
       });
-    if (role === 0) {
-      place(room, { kind: "potion" });
-      place(room, { kind: "potion" });
-    }
-    if (role === 1) {
-      place(room, { kind: "attack" });
-      place(room, { kind: "defense" });
-    }
-    if (role === 2) place(room, { kind: "treasure" });
-    if (role === 3) {
-      place(room, { kind: "potion" });
-      place(room, { kind: rng() < 0.5 ? "attack" : "defense" });
+    } else if (rng() < 0.2) {
+      set(cx, cy, { kind: "potion" });
+    } else if (rng() < 0.1) {
+      set(cx, cy, { kind: "treasure" });
     }
   }
-  set(START_X, 0, { kind: "stairs" });
-  set(START_X, CHUNK - 1, { kind: "stairs" });
-  // One deterministic 1/1000 roll per genuinely unguarded floor tile.
-  // "Equipment" includes stat gear pickups and treasure, which improves the loadout.
-  const blockers = new Set(
-    [...cells]
-      .filter(([, t]) => t.kind === "door" || t.kind === "enemy")
-      .map(([k]) => k),
-  );
-  const free = reachable(cells, point(START_X, base), blockers);
-  for (const k of free)
-    if (cells.get(k)?.kind === "floor") {
-      const loot = rollUnguardedLoot(rng);
-      if (loot) cells.set(k, loot);
-    }
-  if (!validate(cells, base))
-    throw new Error("Invalid tower room topology or key progression");
+
   return cells;
 }
-/** A successful space roll selects one key or equipment pickup, not one roll per item type. */
+
+export function generate(seed: number, index: number): Map<string, Tile> {
+  let fullMap = delveCaches.get(seed);
+  if (!fullMap) {
+    fullMap = generateDelveMap(seed);
+    delveCaches.set(seed, fullMap);
+  }
+  const chunk = new Map<string, Tile>();
+  for (let y = index * CHUNK; y < (index + 1) * CHUNK; y++) {
+    for (let x = 0; x < WIDTH; x++) {
+      const t = fullMap.get(point(x, y));
+      if (t) chunk.set(point(x, y), t);
+    }
+  }
+  return chunk;
+}
+
 export function rollUnguardedLoot(rng: () => number): Tile | null {
   if (rng() >= UNGUARDED_LOOT_CHANCE) return null;
   const choice = Math.floor(rng() * 6);
@@ -438,7 +347,26 @@ export function generateTowerRoom(
       },
     };
   }
-  sculptRoom(cells, bounds, 0, rng, reserved);
+  
+  const rooms = bspRooms(bounds.x1, bounds.y1, bounds.x2 - bounds.x1 + 1, bounds.y2 - bounds.y1 + 1, rng, 4);
+  for (let r of rooms) {
+    for (let yy = r.y; yy < r.y + r.h; yy++) {
+      for (let xx = r.x; xx < r.x + r.w; xx++) {
+        floor(xx, yy);
+      }
+    }
+  }
+  for (let i = 0; i < rooms.length - 1; i++) {
+    const r1 = rooms[i];
+    const r2 = rooms[i + 1];
+    const cx1 = Math.floor(r1.x + r1.w / 2);
+    const cy1 = Math.floor(r1.y + r1.h / 2);
+    const cx2 = Math.floor(r2.x + r2.w / 2);
+    const cy2 = Math.floor(r2.y + r2.h / 2);
+    carvePath(cells, point, cx1, cy1, cx2, cy2, rng);
+  }
+  carvePath(cells, point, TOWER_START_X, 1, Math.floor(rooms[0].x + rooms[0].w / 2), Math.floor(rooms[0].y + rooms[0].h / 2), rng);
+
   // Placed after sculpting so the guardian's cell still reads as floor for
   // sculptRoom's own connectivity check (it doesn't treat enemies as passable).
   set(TOWER_START_X, 1, towerEnemy());

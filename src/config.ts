@@ -1,6 +1,8 @@
 export const UNGUARDED_LOOT_CHANCE = 1 / 1000;
 export const WIDTH = 30;
 export const CHUNK = 20;
+export const TOWER_CHUNK = 20;
+export const DELVE_MAX_DEPTH = 5000;
 export const START_X = 15;
 export const TOWER_WIDTH = 20;
 export const TOWER_START_X = 10;

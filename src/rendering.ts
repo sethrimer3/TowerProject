@@ -199,7 +199,18 @@ export class Renderer {
       return;
     }
     if (t.kind === "floor") return;
-    if (t.kind === "stairs") {
+    
+    if (t.kind === "oneway") {
+      ctx.fillStyle = "#8a7e93";
+      ctx.fillRect(px, py + TILE * 0.4, TILE, TILE * 0.2);
+      ctx.fillStyle = "#a89fb3";
+      ctx.beginPath();
+      ctx.moveTo(px + TILE * 0.2, py + TILE * 0.4);
+      ctx.lineTo(px + TILE * 0.5, py + TILE * 0.8);
+      ctx.lineTo(px + TILE * 0.8, py + TILE * 0.4);
+      ctx.fill();
+    }
+if (t.kind === "stairs") {
       const exit = y % CHUNK === CHUNK - 1;
       c.fillStyle = exit ? "#dec58c20" : "#8eacc520";
       c.fillRect(2, 1, 20, 22);

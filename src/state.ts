@@ -345,7 +345,7 @@ export class Game {
       return true;
     }
     this.collect(t);
-    if (t.kind !== "floor" && t.kind !== "stairs") this.world.clear(x, y);
+    if (t.kind !== "floor" && t.kind !== "stairs" && t.kind !== "oneway") this.world.clear(x, y);
     if (this.mode === "delve") {
       this.run.height = Math.max(this.run.height, y);
       (this.world as World).maintain(y);
