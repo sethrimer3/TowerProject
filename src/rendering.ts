@@ -4,6 +4,7 @@ import type { Game } from "./state.ts";
 import type { Tile, Torch } from "./entities.ts";
 import { drawForestTile, drawEntrance, OUTSIDE_SIZE } from "./outside.ts";
 import { OutdoorWeather } from "./weather.ts";
+import { LIGHTING_CONFIG, getTorchFlicker } from "./lighting.ts";
 
 export interface AtmosphereConfig {
   /** Screen tint color for cool dungeon atmosphere (e.g. subtle purple-blue) */
@@ -24,13 +25,13 @@ export interface AtmosphereConfig {
 
 export const ATMOSPHERE_CONFIG: AtmosphereConfig = {
   // Gentle cool purple-blue tone that provides moody contrast against amber torches
-  ambientColor: "rgba(38, 28, 64, 1)",
-  ambientStrength: 0.12,
-  vignetteStrength: 0.22,
-  vignetteSoftness: 0.55,
-  torchHazeStrength: 0.14,
-  torchHazeRadius: 1.35,
-  torchHazeBlur: 4,
+  ambientColor: "rgba(36, 26, 60, 1)",
+  ambientStrength: 0.10,
+  vignetteStrength: 0.18,
+  vignetteSoftness: 0.58,
+  torchHazeStrength: 0.10,
+  torchHazeRadius: 1.25,
+  torchHazeBlur: 3,
 };
 
 export class Renderer {
@@ -45,6 +46,8 @@ export class Renderer {
   outside = false;
   weather = new OutdoorWeather();
   atmosphere: AtmosphereConfig = { ...ATMOSPHERE_CONFIG };
+  lightmapCanvas: HTMLCanvasElement | null = null;
+  lightmapCtx: CanvasRenderingContext2D | null = null;
   get density() { return this.game.run.outside ? OUTSIDE_SIZE : this.game.save.settings.density; }
   constructor(
     public canvas: HTMLCanvasElement,
@@ -56,9 +59,13 @@ export class Renderer {
     const unlock = () => {
       if (game.run.outside && game.save.settings.weatherSound !== false) this.weather.unlock();
     };
-    window.addEventListener("pointerdown", unlock);
-    window.addEventListener("keydown", unlock);
-    document.addEventListener("visibilitychange", () => { if (document.hidden) this.weather.silence(); });
+    if (typeof window !== "undefined") {
+      window.addEventListener("pointerdown", unlock);
+      window.addEventListener("keydown", unlock);
+    }
+    if (typeof document !== "undefined") {
+      document.addEventListener("visibilitychange", () => { if (document.hidden) this.weather.silence(); });
+    }
   }
   target(n: number) {
     const g = this.game,
@@ -132,31 +139,10 @@ export class Renderer {
       drawEntrance(c, g.mode, Math.floor(g.world.width / 2));
       c.restore();
     } else {
-      // World -> ambient darkness & cool atmospheric tint -> torch atmospheric haze -> direct torch light
       const torches = this.visibleTorches();
       for (const t of torches) this.drawTorchSprite(t);
-
-      // Base ambient darkness
-      c.fillStyle = "rgba(3,5,9,0.6)";
-      c.fillRect(0, 0, box.width, box.width);
-
-      // Subtle cool-toned ambient screen tint (gentle purple/blue mood)
-      const atm = this.atmosphere;
-      if (atm.ambientStrength > 0) {
-        c.save();
-        c.globalAlpha = atm.ambientStrength;
-        c.fillStyle = atm.ambientColor;
-        c.fillRect(0, 0, box.width, box.width);
-        c.restore();
-      }
-
-      // Soft warm haze diffusion around visible torches
-      if (atm.torchHazeStrength > 0) {
-        for (const t of torches) this.drawTorchHaze(t, now);
-      }
-
-      // Direct warm light clipped to visibility polygons
-      for (const t of torches) this.drawTorchLight(t, now);
+      // Render lighting overlay via offscreen lightmap
+      this.drawDungeonLightmap(box.width, torches, now);
     }
     this.drawRoutePath(now);
     c.save();
@@ -504,23 +490,88 @@ export class Renderer {
     c.fillRect(11, 3, 3, 7);
     c.restore();
   }
+  /** Creates or resizes an offscreen canvas for rendering the composite lightmap. */
+  ensureLightmap(viewportSize: number) {
+    if (!this.lightmapCanvas) {
+      this.lightmapCanvas = typeof document !== "undefined" ? document.createElement("canvas") : null;
+      if (this.lightmapCanvas) {
+        this.lightmapCtx = this.lightmapCanvas.getContext("2d");
+      }
+    }
+    if (this.lightmapCanvas && (this.lightmapCanvas.width !== viewportSize || this.lightmapCanvas.height !== viewportSize)) {
+      this.lightmapCanvas.width = viewportSize;
+      this.lightmapCanvas.height = viewportSize;
+    }
+    return this.lightmapCtx;
+  }
+
+  /** Renders ambient darkness and soft occluded torch lights to an offscreen lightmap buffer,
+   * then composites the result over the dungeon tiles. */
+  drawDungeonLightmap(viewportSize: number, torches: Torch[], now: number) {
+    const lm = this.ensureLightmap(viewportSize);
+    const mainCtx = this.ctx;
+    const atm = this.atmosphere;
+    const reduceMotion = this.game.save.settings.reduceMotion;
+
+    if (lm) {
+      // 1. Clear offscreen lightmap
+      lm.clearRect(0, 0, viewportSize, viewportSize);
+
+      // 2. Base ambient darkness overlay (subtle dark purple)
+      lm.fillStyle = LIGHTING_CONFIG.ambient.color;
+      lm.globalAlpha = LIGHTING_CONFIG.ambient.opacity;
+      lm.fillRect(0, 0, viewportSize, viewportSize);
+
+      // 3. Optional cool atmospheric tint
+      if (atm.ambientStrength > 0) {
+        lm.save();
+        lm.globalAlpha = atm.ambientStrength;
+        lm.fillStyle = atm.ambientColor;
+        lm.fillRect(0, 0, viewportSize, viewportSize);
+        lm.restore();
+      }
+
+      // 4. Render soft torch haze (diffuse glow into surrounding air)
+      if (atm.torchHazeStrength > 0) {
+        for (const t of torches) {
+          this.drawTorchHaze(lm, t, now, reduceMotion);
+        }
+      }
+
+      // 5. Render direct occluded torch light with soft penumbras
+      for (const t of torches) {
+        this.drawTorchLight(lm, t, now, reduceMotion);
+      }
+
+      // 6. Composite the lightmap onto the main canvas
+      mainCtx.save();
+      mainCtx.globalCompositeOperation = "source-over";
+      mainCtx.drawImage(this.lightmapCanvas!, 0, 0);
+      mainCtx.restore();
+    } else {
+      // Fallback if offscreen canvas cannot be instantiated (e.g. headless tests without canvas DOM)
+      mainCtx.save();
+      mainCtx.fillStyle = LIGHTING_CONFIG.ambient.color;
+      mainCtx.globalAlpha = LIGHTING_CONFIG.ambient.opacity;
+      mainCtx.fillRect(0, 0, viewportSize, viewportSize);
+      for (const t of torches) {
+        this.drawTorchLight(mainCtx, t, now, reduceMotion);
+      }
+      mainCtx.restore();
+    }
+  }
+
   /** Warm radial light clipped to the torch's cached visibility polygon, so
-   * walls occlude it exactly (shadows point away from the torch). Falloff
-   * is quadratic (gradient stops chosen to trace out (1 - t)^2), and a
-   * small canvas blur softens the shadow edge. Brightness/radius flicker
-   * gently (+/-~5%); torches combine via additive ("lighter") blending. */
-  drawTorchLight(t: Torch, now: number) {
+   * walls occlude it gently. Falloff is soft and feathered with penumbra blur.
+   * Brightness/radius flicker gently (+/-~3%) using coherent multi-harmonic waves. */
+  drawTorchLight(c: CanvasRenderingContext2D, t: Torch, now: number, reduceMotion: boolean) {
     if (!t.visibilityPolygon || t.visibilityPolygon.length < 3) return;
-    const c = this.ctx,
-      reduceMotion = this.game.save.settings.reduceMotion;
-    const phase = (t.x * 928.13 + t.y * 17.71) % (Math.PI * 2);
-    const flicker = reduceMotion
-      ? 1
-      : 1 + Math.sin(now / 420 + phase) * 0.045 + Math.sin(now / 190 + phase * 1.7) * 0.018;
+    const flicker = getTorchFlicker(t, now, reduceMotion);
     const cx = this.toScreenX(t.x + 0.5),
       cy = this.toScreenY(t.y + 0.5),
       radius = t.lightRadius * this.size * flicker,
       intensity = t.baseIntensity * flicker;
+
     c.save();
     c.beginPath();
     t.visibilityPolygon.forEach((p, i) => {
@@ -531,29 +582,35 @@ export class Renderer {
     });
     c.closePath();
     c.clip();
-    if (!reduceMotion) c.filter = "blur(2px)";
+
+    if (!reduceMotion && LIGHTING_CONFIG.shadow.blurPx > 0) {
+      c.filter = `blur(${LIGHTING_CONFIG.shadow.blurPx}px)`;
+    }
     c.globalCompositeOperation = "lighter";
+
     const gr = c.createRadialGradient(cx, cy, 0, cx, cy, radius);
-    gr.addColorStop(0, `rgba(255,208,138,${0.95 * intensity})`);
-    gr.addColorStop(0.12, `rgba(255,196,120,${0.8 * intensity})`);
-    gr.addColorStop(0.35, `rgba(255,150,70,${0.45 * intensity})`);
-    gr.addColorStop(0.65, `rgba(255,110,40,${0.18 * intensity})`);
-    gr.addColorStop(1, `rgba(255,80,20,0)`);
+    for (const stop of LIGHTING_CONFIG.stops) {
+      // Extract RGBA stop and scale by intensity
+      const match = stop.color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+      if (match) {
+        const r = match[1], g = match[2], b = match[3];
+        const baseA = match[4] !== undefined ? parseFloat(match[4]) : 1;
+        gr.addColorStop(stop.offset, `rgba(${r},${g},${b},${(baseA * intensity).toFixed(3)})`);
+      } else {
+        gr.addColorStop(stop.offset, stop.color);
+      }
+    }
+
     c.fillStyle = gr;
     c.fillRect(cx - radius, cy - radius, radius * 2, radius * 2);
     c.restore();
   }
+
   /** Soft warm atmospheric haze that diffuses into ambient air around torches.
-   * Uses gentle additive blending with wide radial feathering and blur so
-   * torchlight feels atmospheric rather than a hard cutoff circle. */
-  drawTorchHaze(t: Torch, now: number) {
-    const c = this.ctx,
-      atm = this.atmosphere,
-      reduceMotion = this.game.save.settings.reduceMotion;
-    const phase = (t.x * 928.13 + t.y * 17.71) % (Math.PI * 2);
-    const flicker = reduceMotion
-      ? 1
-      : 1 + Math.sin(now / 420 + phase) * 0.045 + Math.sin(now / 190 + phase * 1.7) * 0.018;
+   * Uses gentle additive blending with wide radial feathering and blur. */
+  drawTorchHaze(c: CanvasRenderingContext2D, t: Torch, now: number, reduceMotion: boolean) {
+    const atm = this.atmosphere;
+    const flicker = getTorchFlicker(t, now, reduceMotion);
     const cx = this.toScreenX(t.x + 0.5),
       cy = this.toScreenY(t.y + 0.5),
       hazeRadius = t.lightRadius * this.size * atm.torchHazeRadius * flicker,
@@ -566,10 +623,10 @@ export class Renderer {
       c.filter = `blur(${atm.torchHazeBlur}px)`;
     }
     const gr = c.createRadialGradient(cx, cy, 0, cx, cy, hazeRadius);
-    gr.addColorStop(0, `rgba(255, 185, 95, ${0.4 * alpha})`);
-    gr.addColorStop(0.25, `rgba(255, 150, 65, ${0.22 * alpha})`);
-    gr.addColorStop(0.6, `rgba(240, 110, 45, ${0.08 * alpha})`);
-    gr.addColorStop(1, "rgba(220, 80, 30, 0)");
+    gr.addColorStop(0, `rgba(255, 200, 140, ${0.30 * alpha})`);
+    gr.addColorStop(0.35, `rgba(240, 170, 100, ${0.14 * alpha})`);
+    gr.addColorStop(0.70, `rgba(220, 140, 70, ${0.04 * alpha})`);
+    gr.addColorStop(1, "rgba(200, 120, 50, 0)");
     c.fillStyle = gr;
     c.fillRect(cx - hazeRadius, cy - hazeRadius, hazeRadius * 2, hazeRadius * 2);
     c.restore();
