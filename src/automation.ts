@@ -42,9 +42,9 @@ export function chooseStep(game: Game) {
       seen.add(k);
       const t = game.world.tile(x, y);
       if (
-        t.kind === "wall" ||
+        t.kind === "wall" || (t.kind === "oneway" && dy !== 1) ||
         (t.kind === "door" && !p.keys[t.color!]) ||
-        (t.kind === "enemy" && !predict(p, t.enemy!).survivable)
+        (t.kind === "enemy" && !predict(p, t.enemy!).survivable && !predict(p, t.enemy!).impervious)
       )
         continue;
       if (t.kind === "stairs" && game.mode === "tower" && game.run.rewards?.length) continue;

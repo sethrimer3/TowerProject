@@ -1,3 +1,4 @@
+import { isDeadlocked } from "./analysis.ts";
 import { skillAvailable } from "./skill-trees.ts";
 import { routeTo, type Step } from "./pathfinding.ts";
 import {
@@ -166,89 +167,132 @@ export class Game {
     this.paused = false;
     this.blocked.until = 0;
   }
-  move(dx: number, dy: number, force = true, track = true) {
-    if (this.paused || this.summary || Math.abs(dx) + Math.abs(dy) !== 1)
-      return false;
-    const p = this.run.player,
-      dest = this.world.step(p.x, p.y, dx, dy);
-    if (!dest) {
-      this.reject(p.x, p.y, "That edge is closed.");
-      return false;
+  undo() {
+    const slice = this.save[this.mode];
+    if (slice.revival) {
+      const snapshot = slice.revival.snapshot;
+      slice.revival = null;
+      slice.history = [];
+      this.restore(snapshot);
+      this.feedback("Revived - fatal move undone");
+      return true;
     }
-    const { x, y } = dest,
-      t = this.world.tile(x, y);
-    
-    if (t.kind === "oneway" && dy !== 1) {
-      this.reject(x, y, "A magical barrier prevents retreat");
-      return false;
+    if (this.summary) return false;
+    const snapshot = slice.history.pop();
+    if (!snapshot) return false;
+    this.restore(snapshot);
+    this.feedback("Move undone");
+    return true;
+  }
+  reject(x: number, y: number, message: string) {
+    this.route = [];
+    this.blocked = { x, y, until: performance.now() + 1000 };
+    this.message = message;
+  }
+  walkTo(x: number, y: number) {
+    if (this.paused || this.summary) return;
+    this.auto = false;
+    const route = routeTo(this, x, y);
+    if (!route) {
+      this.reject(x, y, "No route to that space.");
+      return;
     }
-
-    if (t.kind === "wall") {
-      this.reject(x, y, "A wall blocks the way.");
-      return false;
-    }
-
-    if (t.kind === "enemy") {
-      const pred = predict(p, t.enemy!);
-      if (pred.impervious) {
-        this.reject(x, y, `Impervious — requires ${pred.requiredAttack} more ATK`);
-        return false;
-      }
-    }
-
-    if (t.kind === "door" && !p.keys[t.color!]) {
-      this.reject(x, y, `Requires a ${t.color} key.`);
-      return false;
-    }
-
-    this.settleRevival();
-    const before = this.snapshot(),
-      slice = this.save[this.mode];
-    if (track) {
-      slice.history.push(before);
+    // The whole tap-to-walk route counts as a single undo step, not one per tile.
+    if (route.length) {
+      this.settleRevival();
+      const slice = this.save[this.mode];
+      slice.history.push(this.snapshot());
       slice.history = slice.history.slice(-this.undoCapacity);
     }
-
-    if (t.kind === "door") {
-      p.keys[t.color!]--;
-      this.run.keysSpent = true;
-      this.feedback(`${t.color} seal opened`);
-    }
-
-    if (t.kind === "enemy") {
-      const enemy = t.enemy!,
-        result = predict(p, enemy);
-      p.hp -= result.damage;
-      if (result.damage > 0) this.run.damaged = true;
-      if (p.hp <= 0) {
-        this.finalizeRun("Fallen in battle", true, before);
-        return false;
-      }
-      this.run.kills++;
-      this.save.xp++;
-    } else {
-      this.run.player.x = x;
-      this.run.player.y = y;
-    }
-
-    this.collect(t);
-    if (t.kind !== "floor" && t.kind !== "stairs" && t.kind !== "oneway") this.world.clear(x, y);
-
+    this.route = route;
+    this.message = route.length ? "Walking to destination." : "Already here.";
+  }
+  routeStep() {
+    const step = this.route.shift();
+    if (!step) return false;
+    const result = this.move(step.dx, step.dy, true, false);
+    if (!result) this.route = [];
+    return result;
+  }
+  newRun(outside = false) {
+    if (this.run) this.claimRewards();
+    this.settleRevival();
+    this.save[this.mode].history = [];
+    this.route = [];
+    this.summary = null;
+    const u = this.save.upgrades,
+      prov = this.save.provisions,
+      lvl = levelForXp(this.save.xp),
+      bonus = levelBonus(lvl),
+      g = gear(u.quality),
+      seed = crypto.getRandomValues(new Uint32Array(1))[0],
+      maxHp = 120 + u.hp * 20 + u.shardHp * 15 + bonus.hp + prov.heal * 20;
+    const player = {
+      x: this.mode === "tower" ? TOWER_START_X : START_X,
+      y: 0,
+      hp: maxHp,
+      maxHp,
+      attack:
+        10 + u.attack * 2 + u.shardAttack + bonus.attack + g[0].attack + prov.edge * 3,
+      defense:
+        4 + u.defense + u.shardDefense + bonus.defense + g[1].defense + prov.guard * 3,
+      keys: { yellow: u.yellow, blue: u.blue, red: u.red },
+      gear: g,
+    };
+    for (const item of GOLD_SHOP) prov[item.id] = 0;
     if (this.mode === "delve") {
-      this.run.height = Math.max(this.run.height, y);
-      (this.world as any).maintain(y);
-      this.run.floor = (this.world as any).floor;
-    } else if (t.kind === "stairs") {
-      this.advanceTowerRoom();
-    } else if (t.kind === "stairsDown") {
-      this.descendTowerRoom();
+      this.run = {
+        damaged: false,
+        keysSpent: false,
+        rewards: [],
+        layoutVersion: LAYOUT_VERSION,
+        seed,
+        height: 0,
+        kills: 0,
+        treasures: 0,
+        changes: {},
+        floor: 0,
+        player,
+      };
+      this.world = new World(this.run.seed, this.run.changes);
+    } else {
+      this.run = {
+        damaged: false,
+        keysSpent: false,
+        rewards: [],
+        layoutVersion: TOWER_LAYOUT_VERSION,
+        seed,
+        height: 0,
+        kills: 0,
+        treasures: 0,
+        changes: {},
+        floors: {},
+        floor: 0,
+        player,
+      };
+      this.linkTowerFloor();
+      this.world = new RoomWorld(this.run.seed, 0, this.run.changes);
     }
-
-    // Deadlock detection here? Or let caller do it?
-    // The prompt says "implement as a clear reusable state-analysis function".
-    // I'll call it later.
-    
-    return true;
+    if (outside) {
+      this.run.outside = true;
+      this.world = new OutsideWorld(seed, this.mode);
+      this.message = "Follow the forest path to the entrance.";
+    }
+    this.save[this.mode].run = this.run;
+    this.auto = false;
+    this.paused = false;
+  }
+  feedback(text: string) {
+    this.message = text;
+    this.effect = {
+      text,
+      x: this.run.player.x,
+      y: this.run.player.y,
+      until: performance.now() + 1300,
+    };
+  }
+  gainXp(enemy: Enemy) {
+    this.save.xp += xpForKill(enemy.tier, enemy.attack);
   }
   move(dx: number, dy: number, force = true, track = true) {
     if (this.paused || this.summary || Math.abs(dx) + Math.abs(dy) !== 1)
@@ -361,7 +405,7 @@ export class Game {
     }
     return true;
   }
-  advanceTowerRoom() {
+  advanceTowerRoom() { this.saveCurrentFloor();
     this.claimRewards();
     this.run.height++;
     this.enterTowerFloor();
@@ -372,7 +416,7 @@ export class Game {
   /** Step back onto the stairs at the foot of the current room, returning
    * to the previous room exactly as it was left: cleared tiles stay clear,
    * surviving enemies and unclaimed loot are still there to finish off. */
-  descendTowerRoom() {
+  descendTowerRoom() { if (this.run.height <= 0) return; this.saveCurrentFloor();
     if (this.run.height <= 0) return;
     this.claimRewards();
     this.run.height--;
@@ -393,6 +437,28 @@ export class Game {
   /** Common setup for entering a tower room by height, reusing its saved
    * changes when it was already visited. Keys reset per visit; damage taken
    * anywhere in the run keeps counting toward the whole-ascent Gold clear. */
+  
+  saveCurrentFloor() {
+    if (this.mode !== "tower") return;
+    if (!this.run.floors) this.run.floors = {};
+    const obj: any = {};
+    for (const [k, v] of this.world.cells.entries()) {
+      obj[k] = v;
+    }
+    this.run.floors[this.run.height] = obj;
+  }
+
+  loadOrGenerateFloor() {
+    if (this.mode !== "tower") return;
+    if (this.run.floors && this.run.floors[this.run.height]) {
+      const entries = Object.entries(this.run.floors[this.run.height]) as any;
+      this.world.cells = new Map(entries);
+    } else {
+      (this.world as any).cells = (this.world as any).generate(this.run.seed, this.run.height);
+      this.saveCurrentFloor();
+    }
+  }
+
   enterTowerFloor() {
     this.run.keysSpent = false;
     this.run.rewards = [];
@@ -489,15 +555,9 @@ export class Game {
       this.feedback(`+1 ${t.color} key`);
     }
     if (t.kind === "potion") {
-      if (t.color === "red") {
-        const n = Math.min(Math.floor(p.maxHp * 0.1), p.maxHp - p.hp);
-        p.hp += n;
-        this.feedback(`+${n} HP (10%)`);
-      } else {
-        const n = Math.min(10, p.maxHp - p.hp);
-        p.hp += n;
-        this.feedback(`+${n} HP`);
-      }
+      const n = Math.min(p.maxHp - p.hp, 35);
+      p.hp += n;
+      this.feedback(`+${n} HP`);
     }
     if (t.kind === "attack") {
       p.attack += 2;
@@ -516,28 +576,6 @@ export class Game {
       this.feedback("Heirloom found · +2 ATK / +1 DEF");
     }
   }
-  
-  finalizeRun(reason: string, dead: boolean, preFightSnapshot?: any) {
-    this.run.player.hp = Math.max(0, this.run.player.hp);
-    const { earned, record } = this.payout();
-    const summary = {
-      height: this.run.height,
-      kills: this.run.kills,
-      earned,
-      reason,
-      dead,
-      record,
-    };
-    this.newRun(dead);
-    if (dead && preFightSnapshot && this.save.upgrades.revive) {
-      this.save[this.mode].revival = { snapshot: preFightSnapshot, earned };
-    } else {
-      this.creditCurrency(earned);
-    }
-    this.summary = summary;
-    this.message = "Returned to the forest. Follow the path to begin again.";
-  }
-
   finish(reason: string) {
     if (this.summary) return;
     this.settleRevival();

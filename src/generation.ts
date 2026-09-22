@@ -1,3 +1,4 @@
+import { validatePhysicalLayout } from "./validation.ts";
 import { sculptRoom } from "./room-shapes.ts";
 import {
   CHUNK,
