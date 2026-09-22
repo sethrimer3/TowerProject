@@ -15,7 +15,23 @@ import {
   type UpgradeId,
   type GoldItemId,
 } from "./config.ts";
+import { materialDef, METALS, GEMS, RARE_ENHANCEMENTS, type MaterialId, type MaterialStack, type MetalId } from "./materials.ts";
+import {
+  EQUIPMENT_SLOTS,
+  RECIPES,
+  SLOT_NAMES,
+  calculateEquipmentStats,
+  enhancementTotals,
+  ENHANCEMENT_CAPS,
+  equipmentName,
+  type CraftedEquipment,
+  type EquipmentSlot,
+} from "./equipment.ts";
+import { canCraft, getSalvageReturns, isEquipped, CONSUMABLES, canCraftConsumable, type ConsumableId } from "./crafting.ts";
 const icons = { tower: "♜", delve: "▼", gear: "♞", upgrades: "✦", settings: "⚙" };
+const SLOT_ICONS: Record<EquipmentSlot, string> = {
+  weapon: "⚔", shield: "⛨", helmet: "▲", chestplate: "■", leggings: "▼", boots: "▽", gloves: "✤", necklace: "◇", ring: "○",
+};
 const app = document.querySelector<HTMLDivElement>("#app")!;
 app.innerHTML = `<main class="shell"><div id="currencies" class="currencies" hidden><div class="essence">✦ <b id="essence">0</b><small>COURAGE</small></div><div class="essence">◆ <b id="shards">0</b><small>INSPIRATION</small></div></div><section id="stats" class="stats" aria-label="Player statistics"><div class="portrait"><canvas id="portrait-sprite" width="24" height="24"></canvas><small>WAYFARER</small><small id="level">LV 0</small><button id="log" aria-label="Adventure log">Log</button></div><div class="vitals"><div><span class="heart">♥</span> HP <b id="hp"></b></div><div class="health-track"><i id="health"></i></div><div class="combat-stats"><span>⚔ <b id="attack"></b></span><span>⛨ <b id="defense"></b></span></div></div><div class="keys"><span class="yellow">⚿ <b id="yellow"></b></span><span class="blue">⚿ <b id="blue"></b></span><span class="red">⚿ <b id="red"></b></span></div><div class="height"><small id="height-label">HEIGHT</small><strong id="height">0</strong><span>BEST <b id="best">0</b></span></div><div class="actions"><button id="auto" class="mini-action" aria-label="Automove" title="Automove"><span class="mini-icon">✦</span><small id="auto-state">LOCKED</small></button><button id="undo" class="mini-action" aria-label="Undo" title="Undo"><span class="mini-icon">↺</span><small id="undo-state">0/1</small></button></div></section><section id="board" class="page active"><div class="tower-heading"><span class="rule"></span><span id="board-title">THE HOLLOW SPIRE</span><span class="rule"></span></div><div class="ascent"><span>↑</span><small id="board-subtitle">HIGHER DANGERS · GREATER REWARDS</small></div><div class="board"><canvas id="world" aria-label="Tower grid: tap a destination or swipe to move. Keyboard arrows and WASD also work."></canvas><span class="board-caption" id="density-label">20 × 20</span></div><div class="status"><span class="live-dot"></span><span id="message" aria-live="polite"></span></div><div class="controls"><div class="dpad" hidden><button data-move="-1,0" aria-label="Move left">←</button><div><button data-move="0,1" aria-label="Move up">↑</button><button data-move="0,-1" aria-label="Move down">↓</button></div><button data-move="1,0" aria-label="Move right">→</button></div></div><div id="inspect" class="inspection">Tap a destination to walk and fight. Swipe to step. Undo reverses one step.</div></section><section id="gear" class="page"></section><section id="upgrades" class="page"></section><section id="settings" class="page"></section><nav aria-label="Main navigation">${Object.entries(
   icons,
@@ -38,7 +54,11 @@ let tab = "tower",
   lastSave = 0;
 let selectedTree: TreeId = "inspiration";
 let selectedSkill: UpgradeId = "shardHp";
-let gearTab: "equipment" | "provisions" = "equipment";
+let gearTab: "equipped" | "inventory" | "crafting" | "provisions" = "equipped";
+let inventoryFilter: EquipmentSlot | "all" = "all";
+let craftSlot: EquipmentSlot = "weapon";
+let craftMetal: MetalId = "iron";
+let craftEnhancements: MaterialStack[] = [];
 let selected: { x: number; y: number } | null = null;
 const el = (id: string) => document.getElementById(id)!;
 const text = (id: string, value: unknown) =>
@@ -159,23 +179,7 @@ function navigate(id: string) {
   update();
 }
 function renderPage() {
-  if (tab === "gear") {
-    const equipmentHtml = `${game.run.player.gear.map((g) => `<article class="card"><div class="item-icon">${g.slot === "weapon" ? "⚔" : "⛨"}</div><div><small>${g.slot.toUpperCase()} · QUALITY ${g.quality}</small><h3>${g.name}</h3><p>+${g.attack || g.defense} ${g.attack ? "attack" : "defense"}</p></div></article>`).join("")}<p class="hint">Heirloom steel upgrades improve your starting equipment on every new run.</p>`;
-    const provisionsHtml = `<p class="hint">Spend Gold earned in the tower on provisions that apply next run. ◇ ${game.save.gold} Gold.</p>${GOLD_SHOP.map((item) => `<article class="card"><div class="item-icon">◇</div><div><small>${game.save.provisions[item.id] ? `OWNED × ${game.save.provisions[item.id]}` : "APPLIES NEXT RUN"}</small><h3>${item.name}</h3><p>${item.description}</p></div><button data-gold="${item.id}" ${game.save.gold < item.cost ? "disabled" : ""}>Buy · ◇ ${item.cost}</button></article>`).join("")}`;
-    el("gear").innerHTML =
-      `<div class="page-title"><small>YOUR COMPANIONS IN THE DARK</small><h2>Traveler’s gear</h2><p>Treasure improves both equipped pieces for this ascent.</p></div>
-      <div class="tree-tabs" role="group" aria-label="Gear tabs"><button data-geartab="equipment" aria-pressed="${gearTab === "equipment"}">Equipment</button><button data-geartab="provisions" aria-pressed="${gearTab === "provisions"}">Provisions</button></div>
-      ${gearTab === "equipment" ? equipmentHtml : provisionsHtml}`;
-    document.querySelectorAll<HTMLButtonElement>("[data-geartab]").forEach(b => b.onclick = () => {
-      gearTab = b.dataset.geartab as typeof gearTab;
-      renderPage();
-    });
-    document.querySelectorAll<HTMLButtonElement>("[data-gold]").forEach(b => b.onclick = () => {
-      game.buyGold(b.dataset.gold as GoldItemId);
-      save();
-      renderPage();
-    });
-  }
+  if (tab === "gear") renderGearPage();
   if (tab === "upgrades") {
     const tree = TREES.find(t => t.id === selectedTree)!;
     const locked = !!tree.gate && !game.save.upgrades[tree.gate];
@@ -258,6 +262,160 @@ function renderPage() {
         },
       );
   }
+}
+function statBadges(s: { flatAttack: number; flatDefense: number; flatMaxHp: number; percentAttack: number; percentDefense: number; percentMaxHp: number }): string {
+  const parts: string[] = [];
+  if (s.flatAttack) parts.push(`⚔ +${s.flatAttack}`);
+  if (s.flatDefense) parts.push(`⛨ +${s.flatDefense}`);
+  if (s.flatMaxHp) parts.push(`♥ +${s.flatMaxHp}`);
+  if (s.percentAttack) parts.push(`⚔ +${(s.percentAttack * 100).toFixed(1)}%`);
+  if (s.percentDefense) parts.push(`⛨ +${(s.percentDefense * 100).toFixed(1)}%`);
+  if (s.percentMaxHp) parts.push(`♥ +${(s.percentMaxHp * 100).toFixed(1)}%`);
+  return parts.length ? parts.join(" · ") : "No bonuses";
+}
+function showItemActions(item: CraftedEquipment, equipped: boolean) {
+  modal.innerHTML = `<small>${SLOT_NAMES[item.slot].toUpperCase()} · ${METALS.find(m => m.id === item.metal)!.name.toUpperCase()}</small><h2>${item.name}</h2><p>${statBadges(item)}</p><p class="hint">${item.enhancements.length ? "Enhanced with " + item.enhancements.map(e => `${e.quantity} ${materialDef(e.id).name}`).join(", ") + "." : "No enhancements."}</p><div class="dialog-actions">${equipped ? `<button id="item-unequip">Unequip</button>` : `<button id="item-equip">Equip</button><button id="item-salvage" class="danger">Salvage</button>`}<button id="item-close">Close</button></div>`;
+  modal.showModal();
+  el("item-close").onclick = () => modal.close();
+  const equipBtn = document.querySelector<HTMLButtonElement>("#item-equip");
+  if (equipBtn) equipBtn.onclick = () => { game.equipItem(item.id); modal.close(); save(); renderPage(); update(); };
+  const unequipBtn = document.querySelector<HTMLButtonElement>("#item-unequip");
+  if (unequipBtn) unequipBtn.onclick = () => { game.unequipSlot(item.slot); modal.close(); save(); renderPage(); update(); };
+  const salvageBtn = document.querySelector<HTMLButtonElement>("#item-salvage");
+  if (salvageBtn) salvageBtn.onclick = () => {
+    const returns = getSalvageReturns(item);
+    confirmAction(
+      "Salvage this item?",
+      returns.length ? `Returns ${returns.map(r => `${r.quantity} ${materialDef(r.id).name}`).join(", ")}. This cannot be undone.` : "Returns nothing. This cannot be undone.",
+      "Salvage",
+      () => { game.salvageEquipment(item.id); save(); renderPage(); update(); },
+    );
+  };
+}
+function equippedHtml(): string {
+  return `<div class="slot-grid">${EQUIPMENT_SLOTS.map(slot => {
+    const id = game.save.equipped[slot];
+    const item = id ? game.save.equipmentInventory.find(e => e.id === id) : undefined;
+    return `<button class="slot-card ${item ? "filled" : "empty"}" data-slot="${slot}"><div class="item-icon">${SLOT_ICONS[slot]}</div><div><small>${SLOT_NAMES[slot].toUpperCase()}</small><h3>${item ? item.name : "Empty"}</h3><p>${item ? statBadges(item) : "Tap to equip"}</p></div></button>`;
+  }).join("")}</div>`;
+}
+function inventoryHtml(): string {
+  const filters = `<div class="tree-tabs slot-filter"><button data-filter="all" aria-pressed="${inventoryFilter === "all"}">All</button>${EQUIPMENT_SLOTS.map(s => `<button data-filter="${s}" aria-pressed="${inventoryFilter === s}">${SLOT_ICONS[s]}</button>`).join("")}</div>`;
+  const items = game.save.equipmentInventory.filter(e => inventoryFilter === "all" || e.slot === inventoryFilter);
+  const cards = items.length
+    ? items.map(item => {
+      const equipped = isEquipped(game.save, item.id);
+      return `<article class="card"><div class="item-icon">${SLOT_ICONS[item.slot]}</div><div><small>${SLOT_NAMES[item.slot].toUpperCase()} · ${METALS.find(m => m.id === item.metal)!.name.toUpperCase()}${equipped ? " · EQUIPPED" : ""}</small><h3>${item.name}</h3><p>${statBadges(item)}</p></div><div class="card-actions"><button data-inspect="${item.id}">Inspect</button>${equipped ? `<button data-unequip="${item.slot}">Unequip</button>` : `<button data-equip="${item.id}">Equip</button><button data-salvage="${item.id}" class="danger">Salvage</button>`}</div></article>`;
+    }).join("")
+    : `<p class="hint">No crafted equipment yet. Visit Crafting to build your first piece.</p>`;
+  return filters + cards;
+}
+function craftingHtml(): string {
+  const recipe = RECIPES[craftSlot];
+  const metalDef = METALS.find(m => m.id === craftMetal)!;
+  const owned = (id: MaterialId) => game.save.materials[id] ?? 0;
+  const totals = enhancementTotals(craftEnhancements);
+  const stats = calculateEquipmentStats(craftSlot, craftMetal, craftEnhancements);
+  const ok = canCraft(game.save, craftSlot, craftMetal, craftEnhancements);
+  const slotButtons = `<div class="tree-tabs slot-filter">${EQUIPMENT_SLOTS.map(s => `<button data-craft-slot="${s}" aria-pressed="${craftSlot === s}">${SLOT_ICONS[s]} ${SLOT_NAMES[s]}</button>`).join("")}</div>`;
+  const metalButtons = `<div class="tree-tabs slot-filter">${METALS.map(m => `<button data-craft-metal="${m.id}" aria-pressed="${craftMetal === m.id}">${m.name}</button>`).join("")}</div>`;
+  const barsOwned = owned(metalDef.materialId), commonOwned = owned(recipe.commonMaterial);
+  const recipeLine = `<p class="hint">Recipe: <b class="${barsOwned >= recipe.bars ? "safe" : "danger"}">${recipe.bars} ${materialDef(metalDef.materialId).name}</b> (${barsOwned} owned) + <b class="${commonOwned >= recipe.commonAmount ? "safe" : "danger"}">${recipe.commonAmount} ${materialDef(recipe.commonMaterial).name}</b> (${commonOwned} owned)</p>`;
+  const stepper = (id: MaterialId, label: string, cap: number, usedInCategory: number) => {
+    const qty = craftEnhancements.find(s => s.id === id)?.quantity ?? 0;
+    const atCap = usedInCategory >= cap && qty === 0;
+    const atOwned = qty >= owned(id);
+    return `<div class="stepper"><span>${materialDef(id).name} <small>${label} · ${owned(id)} owned</small></span><div class="stepper-controls"><button data-enh-minus="${id}" ${qty <= 0 ? "disabled" : ""}>−</button><b>${qty}</b><button data-enh-plus="${id}" ${atCap || atOwned ? "disabled" : ""}>+</button></div></div>`;
+  };
+  const gemRows = GEMS.map(g => stepper(g.id, `+${(g.enhancement.percent * 100).toFixed(1)}% ${g.enhancement.stat}/ea`, ENHANCEMENT_CAPS.gems, totals.gems)).join("");
+  const rareRows = (Object.keys(RARE_ENHANCEMENTS) as MaterialId[]).map(id => {
+    const def = RARE_ENHANCEMENTS[id]!;
+    const label = [def.flatAttack ? `+${def.flatAttack} ATK` : "", def.flatDefense ? `+${def.flatDefense} DEF` : "", def.flatMaxHp ? `+${def.flatMaxHp} HP` : ""].filter(Boolean).join(" ");
+    return stepper(id, `${label}/ea`, ENHANCEMENT_CAPS.rareParts, totals.rareParts);
+  }).join("");
+  const preview = `<p class="hint">Preview — ${equipmentName(craftSlot, craftMetal)}: ${statBadges(stats)}</p>`;
+  const craftBtn = `<button class="wide" id="craft-btn" ${ok ? "" : "disabled"}>Craft ${equipmentName(craftSlot, craftMetal)}</button>`;
+  const consumableRows = CONSUMABLES.map(c => {
+    const ownedC = game.save.consumables[c.id] ?? 0;
+    const craftableC = canCraftConsumable(game.save, c.id);
+    return `<article class="card"><div class="item-icon">○</div><div><small>${ownedC ? `OWNED × ${ownedC}` : "CONSUMABLE"} · ${c.recipe.map(r => `${r.quantity} ${materialDef(r.id).name}`).join(" + ")}</small><h3>${c.name}</h3><p>${c.description}</p></div><div class="card-actions"><button data-craft-consumable="${c.id}" ${craftableC ? "" : "disabled"}>Craft</button>${ownedC ? `<button data-use-consumable="${c.id}" ${game.run.outside || game.summary ? "disabled" : ""}>Use</button>` : ""}</div></article>`;
+  }).join("");
+  return `<h3>1. Choose a slot</h3>${slotButtons}<h3>2. Choose a metal</h3>${metalButtons}${recipeLine}<h3>3. Optional enhancements</h3><p class="hint">Up to ${ENHANCEMENT_CAPS.gems} gems and ${ENHANCEMENT_CAPS.rareParts} rare monster parts (${totals.gems}/${ENHANCEMENT_CAPS.gems} gems, ${totals.rareParts}/${ENHANCEMENT_CAPS.rareParts} rare parts selected).</p>${gemRows}${rareRows}${preview}${craftBtn}<h3>Consumables</h3>${consumableRows}`;
+}
+function provisionsHtml(): string {
+  return `<p class="hint">Spend Gold earned in the tower on provisions that apply next run. ◇ ${game.save.gold} Gold.</p>${GOLD_SHOP.map((item) => `<article class="card"><div class="item-icon">◇</div><div><small>${game.save.provisions[item.id] ? `OWNED × ${game.save.provisions[item.id]}` : "APPLIES NEXT RUN"}</small><h3>${item.name}</h3><p>${item.description}</p></div><button data-gold="${item.id}" ${game.save.gold < item.cost ? "disabled" : ""}>Buy · ◇ ${item.cost}</button></article>`).join("")}`;
+}
+function renderGearPage() {
+  const body =
+    gearTab === "equipped" ? equippedHtml()
+    : gearTab === "inventory" ? inventoryHtml()
+    : gearTab === "crafting" ? craftingHtml()
+    : provisionsHtml();
+  el("gear").innerHTML = `<div class="page-title"><small>YOUR COMPANIONS IN THE DARK</small><h2>Traveler’s gear</h2><p>Craft equipment from persistent materials collected in Tower and Delve, then equip up to nine pieces at once.</p></div>
+    <div class="tree-tabs gear-tabs" role="group" aria-label="Gear tabs">
+      <button data-geartab="equipped" aria-pressed="${gearTab === "equipped"}">Equipped</button>
+      <button data-geartab="inventory" aria-pressed="${gearTab === "inventory"}">Inventory</button>
+      <button data-geartab="crafting" aria-pressed="${gearTab === "crafting"}">Crafting</button>
+      <button data-geartab="provisions" aria-pressed="${gearTab === "provisions"}">Provisions</button>
+    </div>
+    ${body}`;
+  document.querySelectorAll<HTMLButtonElement>("[data-geartab]").forEach(b => b.onclick = () => { gearTab = b.dataset.geartab as typeof gearTab; renderPage(); });
+  document.querySelectorAll<HTMLButtonElement>("[data-gold]").forEach(b => b.onclick = () => { game.buyGold(b.dataset.gold as GoldItemId); save(); renderPage(); });
+  document.querySelectorAll<HTMLButtonElement>("[data-slot]").forEach(b => b.onclick = () => {
+    const slot = b.dataset.slot as EquipmentSlot;
+    const id = game.save.equipped[slot];
+    if (id) {
+      const item = game.save.equipmentInventory.find(e => e.id === id);
+      if (item) showItemActions(item, true);
+    } else {
+      inventoryFilter = slot;
+      gearTab = "inventory";
+      renderPage();
+    }
+  });
+  document.querySelectorAll<HTMLButtonElement>("[data-filter]").forEach(b => b.onclick = () => {
+    inventoryFilter = b.dataset.filter as EquipmentSlot | "all";
+    renderPage();
+  });
+  document.querySelectorAll<HTMLButtonElement>("[data-inspect]").forEach(b => b.onclick = () => {
+    const item = game.save.equipmentInventory.find(e => e.id === b.dataset.inspect);
+    if (item) showItemActions(item, isEquipped(game.save, item.id));
+  });
+  document.querySelectorAll<HTMLButtonElement>("[data-equip]").forEach(b => b.onclick = () => { game.equipItem(b.dataset.equip!); save(); renderPage(); update(); });
+  document.querySelectorAll<HTMLButtonElement>("[data-unequip]").forEach(b => b.onclick = () => { game.unequipSlot(b.dataset.unequip as EquipmentSlot); save(); renderPage(); update(); });
+  document.querySelectorAll<HTMLButtonElement>("[data-salvage]").forEach(b => b.onclick = () => {
+    const item = game.save.equipmentInventory.find(e => e.id === b.dataset.salvage);
+    if (!item) return;
+    const returns = getSalvageReturns(item);
+    confirmAction(
+      "Salvage this item?",
+      returns.length ? `Returns ${returns.map(r => `${r.quantity} ${materialDef(r.id).name}`).join(", ")}. This cannot be undone.` : "Returns nothing. This cannot be undone.",
+      "Salvage",
+      () => { game.salvageEquipment(item.id); save(); renderPage(); update(); },
+    );
+  });
+  document.querySelectorAll<HTMLButtonElement>("[data-craft-slot]").forEach(b => b.onclick = () => { craftSlot = b.dataset.craftSlot as EquipmentSlot; craftEnhancements = []; renderPage(); });
+  document.querySelectorAll<HTMLButtonElement>("[data-craft-metal]").forEach(b => b.onclick = () => { craftMetal = b.dataset.craftMetal as MetalId; renderPage(); });
+  document.querySelectorAll<HTMLButtonElement>("[data-enh-plus]").forEach(b => b.onclick = () => {
+    const id = b.dataset.enhPlus as MaterialId;
+    const existing = craftEnhancements.find(s => s.id === id);
+    if (existing) existing.quantity++; else craftEnhancements.push({ id, quantity: 1 });
+    renderPage();
+  });
+  document.querySelectorAll<HTMLButtonElement>("[data-enh-minus]").forEach(b => b.onclick = () => {
+    const id = b.dataset.enhMinus as MaterialId;
+    const existing = craftEnhancements.find(s => s.id === id);
+    if (existing) { existing.quantity--; if (existing.quantity <= 0) craftEnhancements = craftEnhancements.filter(s => s.id !== id); }
+    renderPage();
+  });
+  const craftBtn = document.querySelector<HTMLButtonElement>("#craft-btn");
+  if (craftBtn) craftBtn.onclick = () => {
+    if (game.craftEquipment(craftSlot, craftMetal, craftEnhancements)) craftEnhancements = [];
+    save();
+    renderPage();
+  };
+  document.querySelectorAll<HTMLButtonElement>("[data-craft-consumable]").forEach(b => b.onclick = () => { game.craftConsumable(b.dataset.craftConsumable as ConsumableId); save(); renderPage(); });
+  document.querySelectorAll<HTMLButtonElement>("[data-use-consumable]").forEach(b => b.onclick = () => { game.useConsumable(b.dataset.useConsumable as ConsumableId); save(); renderPage(); update(); });
 }
 const modal = el("modal") as HTMLDialogElement;
 el("log").onclick = () => {
