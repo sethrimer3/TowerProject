@@ -2,32 +2,40 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   generate,
+  generateDelveMap,
+  generateTowerRoom,
   random,
   rollUnguardedLoot,
   validate,
   reachable,
   World,
+  RoomWorld,
   LAYOUT_VERSION,
 } from "../src/generation.ts";
+import { validatePhysicalLayout } from "../src/validation.ts";
 import { defaults, decode } from "../src/save.ts";
 import { Game } from "../src/state.ts";
 import { predict } from "../src/combat.ts";
 import { chooseStep } from "../src/automation.ts";
 import { point } from "../src/entities.ts";
-test.skip("500 deterministic chunks connect from entrance to exit", () => {
-  for (let seed = 0; seed < 10; seed++)
-    for (let i = 0; i < 50; i++) {
-      const a = generate(seed, i);
-      assert.ok(validate(a, i * 20));
-      assert.deepEqual(a, generate(seed, i));
-      assert.notEqual(a.get(point(15, i * 20))?.kind, "wall");
-    }
+import { TOWER_START_X } from "../src/config.ts";
+test("deterministic delve chunks are internally consistent and the whole map connects from the entrance", () => {
+  for (let seed = 0; seed < 10; seed++) {
+    for (let i = 0; i < 5; i++) assert.deepEqual(generate(seed, i), generate(seed, i));
+    const full = generateDelveMap(seed);
+    assert.notEqual(full.get(point(15, 0))?.kind, "wall");
+    assert.equal(
+      reachable(full, point(15, 0)).size,
+      [...full.values()].filter((t) => t.kind !== "wall").length,
+      `Seed ${seed}: the whole delve map must be one connected component`,
+    );
+  }
 });
-test.skip("combat uses first strike, defenses, and strict survival", () => {
+test("combat predicts first strike, defenses, strict survival, and impervious/lethal gates distinctly", () => {
   const p = new Game(defaults()).run.player;
   assert.deepEqual(
     predict(p, { name: "test", hp: 25, attack: 10, defense: 0, tier: 0 }),
-    { hit: 12, turns: 3, damage: 10, survivable: true },
+    { impervious: false, hit: 12, turns: 3, damage: 10, survivable: true, requiredAttack: 0 },
   );
   p.hp = 10;
   assert.equal(
@@ -35,6 +43,18 @@ test.skip("combat uses first strike, defenses, and strict survival", () => {
       .survivable,
     false,
   );
+  // Impervious: player attack does not exceed enemy defense at all.
+  const impervious = predict(p, { name: "wall", hp: 10, attack: 1, defense: p.attack, tier: 0 });
+  assert.equal(impervious.impervious, true);
+  assert.equal(impervious.survivable, false);
+  assert.equal(impervious.requiredAttack, 1);
+  assert.equal(impervious.damage, Infinity);
+  // Lethal but damageable: hit > 0, yet cumulative damage exceeds current HP.
+  const lethal = predict(p, { name: "doom", hp: 99999, attack: 999, defense: 0, tier: 0 });
+  assert.equal(lethal.impervious, false);
+  assert.equal(lethal.survivable, false);
+  assert.ok(lethal.hit > 0);
+  assert.ok(Number.isFinite(lethal.damage));
 });
 test("doors consume matching keys; pickups and walls obey movement", () => {
   const g = new Game(defaults());

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { defaults, decode } from "../src/save.ts";
 import { point, type Tile } from "../src/entities.ts";
-import { generate, reachable } from "../src/generation.ts";
+import { generate, generateDelveMap, reachable } from "../src/generation.ts";
 function corridor() {
   const g = new Game(defaults());
   g.save.upgrades.delve = 1;
@@ -164,13 +164,12 @@ test("paired horizontal openings wrap, use destination locks, and undo correctly
 test("generated wraps have paired openings and do not disconnect floor space", () => {
   let wraps = 0;
   for (let seed = 0; seed < 30; seed++) {
-    // The delve map is one continuous corridor network; a corridor between
-    // two rooms can briefly cross a 20-row chunk boundary, so connectivity
-    // is only meaningful across several merged chunks (matching how `World`
-    // actually serves tiles during play), not within one chunk slice alone.
-    const merged = new Map<string, Tile>();
-    for (let i = 0; i < 4; i++)
-      for (const [k, v] of generate(seed, i)) merged.set(k, v);
+    // The delve map is one continuous corridor network generated whole and
+    // then sliced into chunks; a room can straddle a chunk boundary, so
+    // connectivity is only meaningful across the whole map (matching how
+    // `World` actually serves tiles during play — chunk boundaries are a
+    // caching detail, never a real wall), not within one sliced chunk.
+    const full = generateDelveMap(seed);
     for (let y = 0; y < 20; y++) {
       const c = generate(seed, 0);
       const left = c.get(point(0, y))!.kind !== "wall",
@@ -179,8 +178,8 @@ test("generated wraps have paired openings and do not disconnect floor space", (
       if (left) wraps++;
     }
     assert.equal(
-      reachable(merged, "15,0").size,
-      [...merged.values()].filter((t) => t.kind !== "wall").length,
+      reachable(full, "15,0").size,
+      [...full.values()].filter((t) => t.kind !== "wall").length,
     );
   }
   assert.ok(wraps > 0);

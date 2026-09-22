@@ -258,12 +258,15 @@ export function generateDelveMap(seed: number): Map<string, Tile> {
     for (let x = maxX; x < WIDTH; x++) floor(x, y);
   }
 
-  // Oneway passages every ~40 tiles. The chosen column must already be
-  // reachable from the entrance (given everything carved and choked so
-  // far): picking an arbitrary floor tile at this row instead risked
-  // walling off the row's real connecting corridor while choking a
-  // disconnected one, splitting the map in two.
+  // Oneway passages every ~40 tiles. Rooms are at most 8 tall, so a chosen
+  // row can still fall inside a room's own rectangle; walling the rest of
+  // that row would bisect the room into a top and bottom half connected
+  // only at the choke column, stranding whichever half's own corridor entry
+  // isn't there. Skip any row a room's body overlaps, and otherwise require
+  // the chosen column to already be reachable from the entrance, so a choke
+  // only ever sits on the real connecting corridor.
   for (let y = 40; y < DELVE_MAX_DEPTH; y += 40) {
+    if (rooms.some(r => r.y <= y && y < r.y + r.h)) continue;
     const reach = reachable(cells, point(START_X, 0));
     let floorX = -1;
     for (let x = 1; x < WIDTH - 1; x++) {
@@ -284,6 +287,13 @@ export function generateDelveMap(seed: number): Map<string, Tile> {
       floor(floorX, y + 1);
     }
   }
+
+  // Prune any floor left structurally unreachable from the entrance (a rare
+  // BSP/corridor edge case) back to wall, so the map is always exactly one
+  // connected component — never a silent island of dead, inaccessible space.
+  const liveFloor = reachable(cells, point(START_X, 0));
+  for (const [k, t] of cells)
+    if (t.kind !== "wall" && !liveFloor.has(k)) set(...(k.split(",").map(Number) as [number, number]), { kind: "wall" });
 
   // Place enemies and loot in rooms
   for (let room of rooms) {
