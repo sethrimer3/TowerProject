@@ -262,16 +262,15 @@ export function generateDelveMap(seed: number): Map<string, Tile> {
   // row can still fall inside a room's own rectangle; walling the rest of
   // that row would bisect the room into a top and bottom half connected
   // only at the choke column, stranding whichever half's own corridor entry
-  // isn't there. Skip any row a room's body overlaps, and otherwise require
-  // the chosen column to already be reachable from the entrance, so a choke
-  // only ever sits on the real connecting corridor.
+  // isn't there. Skip any row a room's body overlaps (a corridor-only row's
+  // one floor tile is always the real connecting spine); the single
+  // whole-map reachability pass below prunes anything this still manages
+  // to strand, rather than re-flooding the whole map at every checkpoint.
   for (let y = 40; y < DELVE_MAX_DEPTH; y += 40) {
     if (rooms.some(r => r.y <= y && y < r.y + r.h)) continue;
-    const reach = reachable(cells, point(START_X, 0));
     let floorX = -1;
     for (let x = 1; x < WIDTH - 1; x++) {
-      const p = point(x, y);
-      if (cells.get(p)?.kind === 'floor' && reach.has(p)) {
+      if (cells.get(point(x, y))?.kind === 'floor') {
         floorX = x;
         break;
       }
