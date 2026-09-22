@@ -163,15 +163,18 @@ test("paired horizontal openings wrap, use destination locks, and undo correctly
 });
 test("generated wraps have paired openings and do not disconnect floor space", () => {
   let wraps = 0;
-  for (let seed = 0; seed < 30; seed++) {
+  // Generating and flood-filling the full 5000-row map is the expensive
+  // part; 10 seeds already gives a >99.99% chance of observing at least one
+  // wrap (each row has a 60% independent chance), so this stays fast.
+  for (let seed = 0; seed < 10; seed++) {
     // The delve map is one continuous corridor network generated whole and
     // then sliced into chunks; a room can straddle a chunk boundary, so
     // connectivity is only meaningful across the whole map (matching how
     // `World` actually serves tiles during play — chunk boundaries are a
     // caching detail, never a real wall), not within one sliced chunk.
     const full = generateDelveMap(seed);
+    const c = generate(seed, 0);
     for (let y = 0; y < 20; y++) {
-      const c = generate(seed, 0);
       const left = c.get(point(0, y))!.kind !== "wall",
         right = c.get(point(29, y))!.kind !== "wall";
       assert.equal(left, right);

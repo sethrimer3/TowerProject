@@ -2,12 +2,12 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { defaults, decode } from "../src/save.ts";
-import { RoomWorld } from "../src/generation.ts";
+import { RoomWorld, generateTowerRoom } from "../src/generation.ts";
 import { predict } from "../src/combat.ts";
 import { isDeadlocked } from "../src/analysis.ts";
 import { getTowerEnemy } from "../src/scaling.ts";
 import { ENEMY_ARCHETYPES, TOWER_SCALING, TOWER_START_X } from "../src/config.ts";
-import { point } from "../src/entities.ts";
+import { point, type Tile } from "../src/entities.ts";
 
 /** A tiny, fully controlled 5x5 room so each test can hand-place exactly
  * the tiles it needs without depending on procedural generation. */
@@ -25,20 +25,53 @@ const IMPERVIOUS = { name: "Colossus", hp: 50, attack: 5, defense: 999, tier: 3 
 const LETHAL = { name: "doom", hp: 99999, attack: 999, defense: 0, tier: 3 };
 const SURVIVABLE = { name: "rat", hp: 5, attack: 1, defense: 0, tier: 0 };
 
+// isDeadlocked() overlays run.floors[h] (mutations only) on top of the same
+// deterministic generateTowerRoom(seed, h) the real game regenerates, so a
+// test gets full control over the *effective* tile map by first painting
+// every one of that room's real tiles to "wall" in the overlay, then
+// carving open exactly the tiles it cares about.
+function wallOverlay(seed: number, height: number): Record<string, Tile> {
+  const overlay: Record<string, Tile> = {};
+  for (const k of generateTowerRoom(seed, height).keys()) overlay[k] = { kind: "wall" };
+  return overlay;
+}
+function deadlockGame(): Game {
+  const g = new Game(defaults());
+  // run.changes is the SAME object RoomWorld.changes already holds a
+  // reference to; mutate it in place rather than replacing it, or the live
+  // world would keep reading the old (now-orphaned) object.
+  const overlay = wallOverlay(g.run.seed, 0);
+  for (const k of Object.keys(g.run.changes)) delete g.run.changes[k];
+  Object.assign(g.run.changes, overlay);
+  g.run.floors = { 0: g.run.changes };
+  g.run.player.x = TOWER_START_X;
+  g.run.player.y = 0;
+  g.run.changes[point(TOWER_START_X, 0)] = { kind: "floor" };
+  return g;
+}
+
 // ---------- Combat: impervious vs lethal ----------
 
 test("impervious enemy blocks manual movement harmlessly: no combat, no damage, no undo consumed, run continues", () => {
-  const g = arena();
-  g.world.tile(1, 0); // touch tile lookup path once, no-op
-  (g.world as RoomWorld).cells.set(point(1, 0), { kind: "enemy", enemy: IMPERVIOUS });
-  const hpBefore = g.run.player.hp,
+  const g = deadlockGame();
+  // A second, genuinely reachable pickup proves the run legitimately
+  // continues afterward (isn't merely un-terminated by coincidence) —
+  // plain floor alone isn't a "viable action" for deadlock purposes.
+  g.run.changes[point(TOWER_START_X - 1, 0)] = { kind: "defense" };
+  g.run.changes[point(TOWER_START_X + 1, 0)] = { kind: "enemy", enemy: IMPERVIOUS };
+  const startX = g.run.player.x,
+    hpBefore = g.run.player.hp,
     historyBefore = g.save.tower.history.length;
   assert.equal(g.move(1, 0, true), false); // manual (force) attempt
   assert.equal(g.run.player.hp, hpBefore);
-  assert.equal(g.run.player.x, 0);
+  assert.equal(g.run.player.x, startX);
   assert.equal(g.save.tower.history.length, historyBefore);
   assert.equal(g.summary, null);
-  assert.deepEqual((g.world as RoomWorld).cells.get(point(1, 0))!.enemy, IMPERVIOUS);
+  assert.deepEqual(
+    (g.world as RoomWorld).tile(TOWER_START_X + 1, 0).enemy,
+    IMPERVIOUS,
+    "the enemy itself must be untouched",
+  );
   assert.match(g.message, /Impervious/);
 });
 
@@ -135,56 +168,47 @@ test("multi-floor Tower state survives a save encode/decode round trip", () => {
 
 // ---------- Deadlock detection ----------
 
-test("no viable actions on any visited or reachable-next floor ends the run without granting Revive", () => {
-  const g = arena();
+test("no viable actions on any visited floor, with no unexplored stair reachable, ends the run without granting Revive", () => {
+  const g = deadlockGame();
   g.save.upgrades.revive = 1;
-  g.linkTowerFloor();
-  // Nothing but bare floor and the entrance/stairs already visited: no
-  // items, no enemies, no doors, no unexplored stairs anywhere.
-  g.run.floors = { 0: { ...g.run.changes } };
   assert.ok(isDeadlocked(g.run));
   const shardsBefore = g.save.tower.shards;
   g.checkDeadlock();
   assert.ok(g.summary);
   assert.equal(g.summary!.reason, "No viable moves remain");
   assert.equal(g.summary!.dead, false);
+  assert.ok(g.save.tower.shards >= shardsBefore, "legitimate run rewards are still awarded");
   assert.equal(g.save.tower.revival, null, "a deadlock must never create a Revive opportunity");
 });
 
-test("a reachable survivable enemy, item, unlocked door, or unexplored stair each mean the run is not deadlocked", () => {
-  const base = () => {
-    const g = arena();
-    g.linkTowerFloor();
-    return g;
-  };
-  const withTile = (tile: import("../src/entities.ts").Tile) => {
-    const g = base();
-    g.run.floors![0][point(1, 0)] = tile;
+test("a reachable survivable enemy, item, or unlocked door each mean the run is not deadlocked", () => {
+  const withTile = (tile: Tile) => {
+    const g = deadlockGame();
+    g.run.floors![0][point(TOWER_START_X + 1, 0)] = tile;
     return g;
   };
   assert.equal(isDeadlocked(withTile({ kind: "enemy", enemy: SURVIVABLE }).run), false);
   assert.equal(isDeadlocked(withTile({ kind: "attack" }).run), false);
-  const doorGame = base();
-  doorGame.run.floors![0][point(1, 0)] = { kind: "door", color: "yellow" };
+  const doorGame = withTile({ kind: "door", color: "yellow" });
   doorGame.run.player.keys.yellow = 1;
   assert.equal(isDeadlocked(doorGame.run), false);
-  // An unexplored upward stair (no floors[height+1] entry yet) is always
-  // "not deadlocked" — the player can always climb to generate a new room.
-  const stairGame = base();
-  stairGame.run.floors![0][point(1, 0)] = { kind: "stairs" };
-  assert.equal(isDeadlocked(stairGame.run), false);
   // A locked door with no key, by contrast, is a genuine dead end.
-  const lockedGame = base();
-  lockedGame.run.floors![0][point(1, 0)] = { kind: "door", color: "yellow" };
-  assert.ok(isDeadlocked(lockedGame.run));
+  const locked = withTile({ kind: "door", color: "yellow" });
+  assert.ok(isDeadlocked(locked.run));
+});
+
+test("a reachable unexplored upward stair always means the run is not deadlocked", () => {
+  const g = deadlockGame();
+  g.run.floors![0][point(TOWER_START_X + 1, 0)] = { kind: "stairs" };
+  // floors[1] deliberately absent: this floor has never been generated by
+  // play, so climbing there is still an open, unexplored option.
+  assert.equal(g.run.floors![1], undefined);
+  assert.equal(isDeadlocked(g.run), false);
 });
 
 test("a deadlock caused by an impervious bump also terminates the run harmlessly, without Revive", () => {
-  const g = arena();
-  g.linkTowerFloor();
-  g.run.floors = { 0: { ...g.run.changes } };
-  (g.world as RoomWorld).cells.set(point(1, 0), { kind: "enemy", enemy: IMPERVIOUS });
-  g.run.floors[0] = { ...g.run.floors[0] };
+  const g = deadlockGame();
+  g.run.floors![0][point(TOWER_START_X + 1, 0)] = { kind: "enemy", enemy: IMPERVIOUS };
   g.save.upgrades.revive = 1;
   g.move(1, 0, true); // bump the impervious enemy: rejected, then deadlock-checked
   assert.ok(g.summary);
