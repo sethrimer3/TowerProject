@@ -32,6 +32,7 @@ for (const mode of ["tower", "delve"] as const) {
     assert.ok(loaded.world instanceof OutsideWorld);
     assert.equal(loaded.run.player.y, 1);
     assert.equal(outsideWeather(loaded.run.seed), outsideWeather(g.run.seed));
+    const beforeWalk = loaded.run.player.y;
     loaded.walkTo(loaded.run.player.x, ENTRANCE_Y);
     assert.ok(loaded.route.length);
     for (let i = 0; i < 20 && loaded.route.length; i++) loaded.routeStep();
@@ -39,10 +40,12 @@ for (const mode of ["tower", "delve"] as const) {
     assert.equal(loaded.run.height, 0);
     assert.equal(loaded.run.player.y, 0);
     assert.equal(loaded.run.kills, 0);
+    // A tap-to-walk route is one undo step, however many tiles it crossed.
     assert.ok(loaded.undo());
     assert.ok(loaded.world instanceof OutsideWorld);
-    assert.equal(loaded.run.player.y, ENTRANCE_Y - 1);
-    assert.ok(loaded.move(0, 1));
+    assert.equal(loaded.run.player.y, beforeWalk);
+    loaded.walkTo(loaded.run.player.x, ENTRANCE_Y);
+    for (let i = 0; i < 20 && loaded.route.length; i++) loaded.routeStep();
     assert.equal(loaded.run.outside, false);
   });
   test(`${mode}: automation finds the forest entrance without farming height`, () => {

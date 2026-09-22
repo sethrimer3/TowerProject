@@ -196,13 +196,20 @@ export class Game {
       this.reject(x, y, "No route to that space.");
       return;
     }
+    // The whole tap-to-walk route counts as a single undo step, not one per tile.
+    if (route.length) {
+      this.settleRevival();
+      const slice = this.save[this.mode];
+      slice.history.push(this.snapshot());
+      slice.history = slice.history.slice(-this.undoCapacity);
+    }
     this.route = route;
     this.message = route.length ? "Walking to destination." : "Already here.";
   }
   routeStep() {
     const step = this.route.shift();
     if (!step) return false;
-    const result = this.move(step.dx, step.dy, true);
+    const result = this.move(step.dx, step.dy, true, false);
     if (!result) this.route = [];
     return result;
   }
@@ -286,7 +293,7 @@ export class Game {
   gainXp(enemy: Enemy) {
     this.save.xp += xpForKill(enemy.tier, enemy.attack);
   }
-  move(dx: number, dy: number, force = true) {
+  move(dx: number, dy: number, force = true, track = true) {
     if (this.paused || this.summary || Math.abs(dx) + Math.abs(dy) !== 1)
       return false;
     const p = this.run.player,
@@ -310,8 +317,10 @@ export class Game {
     this.settleRevival();
     const before = this.snapshot(),
       slice = this.save[this.mode];
-    slice.history.push(before);
-    slice.history = slice.history.slice(-this.undoCapacity);
+    if (track) {
+      slice.history.push(before);
+      slice.history = slice.history.slice(-this.undoCapacity);
+    }
     if (t.kind === "door") {
       if (!p.keys[t.color!]) {
         this.feedback(`Requires an ${t.color} key.`);

@@ -27,6 +27,13 @@ const finite = (n: unknown, max = 1e9) =>
   typeof n === "number" && Number.isFinite(n) && n >= 0 && n <= max;
 /** Validate an untrusted run payload; returns null if it does not match the
  * shape this session's Run/Player/gear invariants require. */
+const validChanges = (m: any) =>
+  m &&
+  typeof m === "object" &&
+  !Array.isArray(m) &&
+  Object.entries(m).every(
+    ([k, v]: [string, any]) => /^\d+,\d+$/.test(k) && v?.kind === "floor",
+  );
 function validRun(r: any): Run | null {
   const p = r?.player;
   if (
@@ -63,12 +70,13 @@ function validRun(r: any): Run | null {
         finite(g.attack) &&
         finite(g.defense),
     ) &&
-    r.changes &&
-    typeof r.changes === "object" &&
-    !Array.isArray(r.changes) &&
-    Object.entries(r.changes).every(
-      ([k, v]: [string, any]) => /^\d+,\d+$/.test(k) && v?.kind === "floor",
-    )
+    validChanges(r.changes) &&
+    (r.floors === undefined ||
+      (typeof r.floors === "object" &&
+        !Array.isArray(r.floors) &&
+        Object.entries(r.floors).every(
+          ([k, v]: [string, any]) => /^\d+$/.test(k) && validChanges(v),
+        )))
   )
     {
       // Older runs have no damage/key history; do not assume a perfect attempt.

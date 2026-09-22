@@ -229,6 +229,25 @@ export class Renderer {
       }
       return;
     }
+    if (t.kind === "stairsDown") {
+      c.fillStyle = "#7a9a9420";
+      c.fillRect(2, 1, 20, 22);
+      for (let i = 0; i < 4; i++) {
+        c.fillStyle = "#6f8a86";
+        c.fillRect(4, 6 + i * 3, 16, 2);
+      }
+      c.fillStyle = "#bcd9d2";
+      c.beginPath();
+      c.moveTo(12, 22);
+      c.lineTo(6, 16);
+      c.lineTo(10, 16);
+      c.lineTo(10, 12);
+      c.lineTo(14, 12);
+      c.lineTo(14, 16);
+      c.lineTo(18, 16);
+      c.fill();
+      return;
+    }
     if (t.kind === "key") {
       c.strokeStyle = COLORS[t.color!];
       c.lineWidth = 2.5;
