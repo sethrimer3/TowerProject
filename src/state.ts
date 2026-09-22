@@ -16,7 +16,6 @@ import {
   type GoldItemId,
 } from "./config.ts";
 import {
-  gear,
   type Save,
   type Run,
   type Tile,
@@ -33,6 +32,21 @@ import {
 } from "./generation.ts";
 import { predict } from "./combat.ts";
 import { OutsideWorld } from "./outside.ts";
+import { getEquivalentFloor, materialDef } from "./materials.ts";
+import { rollEnemyDrops, rollTreasureLoot } from "./loot.ts";
+import {
+  creditMaterials,
+  getEquippedBonuses,
+  craftEquipment as craftEquipmentItem,
+  salvageEquipment as salvageEquipmentItem,
+  equipItem as equipItemAction,
+  unequipSlot as unequipSlotAction,
+  craftConsumable as craftConsumableItem,
+  CONSUMABLES,
+  type ConsumableId,
+} from "./crafting.ts";
+import type { EquipmentSlot } from "./equipment.ts";
+import type { MaterialStack, MetalId } from "./materials.ts";
 export class Game {
   mode: Mode = "tower";
   world!: Board;
@@ -224,20 +238,28 @@ export class Game {
       prov = this.save.provisions,
       lvl = levelForXp(this.save.xp),
       bonus = levelBonus(lvl),
-      g = gear(u.quality),
-      seed = crypto.getRandomValues(new Uint32Array(1))[0],
-      maxHp = 120 + u.hp * 20 + u.shardHp * 15 + bonus.hp + prov.heal * 20;
+      seed = crypto.getRandomValues(new Uint32Array(1))[0];
+    // Non-equipment base stats: baseline + permanent upgrades + level bonus.
+    // "quality" (Heirloom steel) predates crafted equipment; its ranks are
+    // folded in here as the equivalent starter-gear bonus it used to grant
+    // via the old gear() helper, so existing investment stays meaningful.
+    const baseAttack = 10 + u.attack * 2 + u.shardAttack + bonus.attack + (2 + u.quality * 2);
+    const baseDefense = 4 + u.defense + u.shardDefense + bonus.defense + (1 + u.quality);
+    const baseMaxHp = 120 + u.hp * 20 + u.shardHp * 15 + bonus.hp;
+    // Equipped crafted gear: flat bonuses first, then percentage bonuses
+    // applied to the resulting total; temporary run provisions apply last.
+    const equip = getEquippedBonuses(this.save);
+    const attack = Math.round((baseAttack + equip.flatAttack) * (1 + equip.percentAttack)) + prov.edge * 3;
+    const defense = Math.round((baseDefense + equip.flatDefense) * (1 + equip.percentDefense)) + prov.guard * 3;
+    const maxHp = Math.round((baseMaxHp + equip.flatMaxHp) * (1 + equip.percentMaxHp)) + prov.heal * 20;
     const player = {
       x: this.mode === "tower" ? TOWER_START_X : START_X,
       y: 0,
       hp: maxHp,
       maxHp,
-      attack:
-        10 + u.attack * 2 + u.shardAttack + bonus.attack + g[0].attack + prov.edge * 3,
-      defense:
-        4 + u.defense + u.shardDefense + bonus.defense + g[1].defense + prov.guard * 3,
+      attack,
+      defense,
       keys: { yellow: u.yellow, blue: u.blue, red: u.red },
-      gear: g,
     };
     for (const item of GOLD_SHOP) prov[item.id] = 0;
     if (this.mode === "delve") {
@@ -339,6 +361,15 @@ export class Game {
     if (isDeadlocked(this.run))
       this.finalizeRun("No viable moves remain", { dead: false });
   }
+  /** Keys every physical enemy kill / treasure chest by seed (+height for
+   * Tower, whose x/y space is reused per room) so persistent loot can be
+   * gated outside `run` — undoing a kill/chest reverts the tile, but never
+   * re-grants the reward for the same physical kill/chest. */
+  lootKey(x: number, y: number): string {
+    return this.mode === "tower"
+      ? `${this.run.seed}:${this.run.height}:${x},${y}`
+      : `${this.run.seed}:${x},${y}`;
+  }
   move(dx: number, dy: number, force = true, track = true) {
     if (this.paused || this.summary || Math.abs(dx) + Math.abs(dy) !== 1)
       return false;
@@ -402,10 +433,25 @@ export class Game {
       }
       this.run.kills++;
       this.gainXp(enemy);
+      // Persistent species drops (delve only — tower enemies are generic
+      // archetypes, not the four named species with drop tables). Gated by
+      // lootedTiles (outside `run`, so undo can't re-trigger this kill).
+      let dropText = "";
+      if (this.mode === "delve") {
+        const key = this.lootKey(x, y);
+        if (!slice.lootedTiles[key]) {
+          slice.lootedTiles[key] = true;
+          const drops = rollEnemyDrops(enemy.name, Math.random);
+          if (drops.length) {
+            creditMaterials(this.save, drops);
+            dropText = " · +" + drops.map(d => `${d.quantity} ${materialDef(d.id).name}${d.quantity > 1 ? "s" : ""}`).join(", +");
+          }
+        }
+      }
       this.feedback(
-        result.damage
+        (result.damage
           ? `−${result.damage} HP · ${enemy.name} defeated`
-          : "Unscathed victory",
+          : "Unscathed victory") + dropText,
       );
     }
     p.x = x;
@@ -434,7 +480,7 @@ export class Game {
       this.claimRewards(t.tier);
       return true;
     }
-    this.collect(t);
+    this.collect(t, x, y);
     if (t.kind !== "floor" && t.kind !== "stairs" && t.kind !== "stairsDown" && t.kind !== "oneway") this.world.clear(x, y);
     this.checkClear();
     if (this.mode === "delve") {
@@ -574,7 +620,7 @@ export class Game {
     }
     world.rewards = this.run.rewards;
   }
-  collect(t: Tile) {
+  collect(t: Tile, x: number, y: number) {
     const p = this.run.player;
     if (t.kind === "key") {
       p.keys[t.color!]++;
@@ -595,11 +641,20 @@ export class Game {
     }
     if (t.kind === "treasure") {
       this.run.treasures++;
-      const q = p.gear[0].quality + 1;
-      p.gear = gear(q);
-      p.attack += 2;
-      p.defense++;
-      this.feedback("Heirloom found · +2 ATK / +1 DEF");
+      // Generated treasure never upgrades gear directly — it always grants
+      // Gold, plus independent chances at metal, an Empty Vial, and gems.
+      // Gated by lootedTiles so undo/reopen can't duplicate the payout.
+      const key = this.lootKey(x, y);
+      const slice = this.save[this.mode];
+      if (!slice.lootedTiles[key]) {
+        slice.lootedTiles[key] = true;
+        const E = getEquivalentFloor(this.mode, this.mode === "tower" ? this.run.height : y);
+        const loot = rollTreasureLoot(E, Math.random);
+        this.save.gold += loot.gold;
+        creditMaterials(this.save, loot.materials);
+        const extra = loot.materials.map(m => `+${m.quantity} ${materialDef(m.id).name}${m.quantity > 1 ? "s" : ""}`);
+        this.feedback([`+${loot.gold} Gold`, ...extra].join(" · "));
+      }
     }
   }
   finish(reason: string) {
@@ -623,6 +678,58 @@ export class Game {
     if (this.save.gold < item.cost) return false;
     this.save.gold -= item.cost;
     this.save.provisions[id]++;
+    return true;
+  }
+  /** Recomputes equip-derived combat stats for both Tower and Delve runs
+   * from scratch (base upgrades/level + equipped gear), without touching
+   * run history. Called after any equip/unequip so gear changes apply
+   * immediately in an active run, in both modes at once. */
+  recomputeCombatStats() {
+    const u = this.save.upgrades,
+      prov = this.save.provisions,
+      bonus = levelBonus(levelForXp(this.save.xp));
+    const baseAttack = 10 + u.attack * 2 + u.shardAttack + bonus.attack + (2 + u.quality * 2);
+    const baseDefense = 4 + u.defense + u.shardDefense + bonus.defense + (1 + u.quality);
+    const baseMaxHp = 120 + u.hp * 20 + u.shardHp * 15 + bonus.hp;
+    const equip = getEquippedBonuses(this.save);
+    const attack = Math.round((baseAttack + equip.flatAttack) * (1 + equip.percentAttack)) + prov.edge * 3;
+    const defense = Math.round((baseDefense + equip.flatDefense) * (1 + equip.percentDefense)) + prov.guard * 3;
+    const maxHp = Math.round((baseMaxHp + equip.flatMaxHp) * (1 + equip.percentMaxHp)) + prov.heal * 20;
+    for (const mode of ["tower", "delve"] as const) {
+      const run = this.save[mode].run;
+      if (!run || run.outside) continue;
+      run.player.attack = attack;
+      run.player.defense = defense;
+      run.player.maxHp = maxHp;
+      run.player.hp = Math.max(1, Math.min(run.player.hp, maxHp));
+    }
+  }
+  craftEquipment(slot: EquipmentSlot, metal: MetalId, enhancements: MaterialStack[]) {
+    return craftEquipmentItem(this.save, slot, metal, enhancements);
+  }
+  salvageEquipment(itemId: string) {
+    return salvageEquipmentItem(this.save, itemId);
+  }
+  equipItem(itemId: string) {
+    const ok = equipItemAction(this.save, itemId);
+    if (ok) this.recomputeCombatStats();
+    return ok;
+  }
+  unequipSlot(slot: EquipmentSlot) {
+    unequipSlotAction(this.save, slot);
+    this.recomputeCombatStats();
+  }
+  craftConsumable(id: ConsumableId) {
+    return craftConsumableItem(this.save, id);
+  }
+  useConsumable(id: ConsumableId) {
+    if (this.run.outside || this.summary || (this.save.consumables[id] ?? 0) <= 0) return false;
+    const def = CONSUMABLES.find(c => c.id === id)!;
+    const p = this.run.player;
+    const n = Math.min(p.maxHp - p.hp, def.healAmount);
+    p.hp += n;
+    this.save.consumables[id]--;
+    this.feedback(`${def.name} · +${n} HP`);
     return true;
   }
 }
