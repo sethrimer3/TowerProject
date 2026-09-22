@@ -4,6 +4,35 @@ import type { Game } from "./state.ts";
 import type { Tile, Torch } from "./entities.ts";
 import { drawForestTile, drawEntrance, OUTSIDE_SIZE } from "./outside.ts";
 import { OutdoorWeather } from "./weather.ts";
+
+export interface AtmosphereConfig {
+  /** Screen tint color for cool dungeon atmosphere (e.g. subtle purple-blue) */
+  ambientColor: string;
+  /** Opacity / strength of the cool screen tint (0 to 1) */
+  ambientStrength: number;
+  /** Vignette edge opacity / strength (0 to 1) */
+  vignetteStrength: number;
+  /** Vignette softness / inner radius factor (0 to 1, higher = softer inner spread) */
+  vignetteSoftness: number;
+  /** Torch atmospheric haze opacity / strength (0 to 1) */
+  torchHazeStrength: number;
+  /** Torch haze radius multiplier relative to torch light radius (e.g. 1.2 - 1.5) */
+  torchHazeRadius: number;
+  /** Blur filter pixel amount applied to torch haze feathering (in px) */
+  torchHazeBlur: number;
+}
+
+export const ATMOSPHERE_CONFIG: AtmosphereConfig = {
+  // Gentle cool purple-blue tone that provides moody contrast against amber torches
+  ambientColor: "rgba(38, 28, 64, 1)",
+  ambientStrength: 0.12,
+  vignetteStrength: 0.22,
+  vignetteSoftness: 0.55,
+  torchHazeStrength: 0.14,
+  torchHazeRadius: 1.35,
+  torchHazeBlur: 4,
+};
+
 export class Renderer {
   ctx: CanvasRenderingContext2D;
   bottom = 0;
@@ -15,6 +44,7 @@ export class Renderer {
   seed = -1;
   outside = false;
   weather = new OutdoorWeather();
+  atmosphere: AtmosphereConfig = { ...ATMOSPHERE_CONFIG };
   get density() { return this.game.run.outside ? OUTSIDE_SIZE : this.game.save.settings.density; }
   constructor(
     public canvas: HTMLCanvasElement,
@@ -102,12 +132,30 @@ export class Renderer {
       drawEntrance(c, g.mode, Math.floor(g.world.width / 2));
       c.restore();
     } else {
-      // World -> ambient darkness -> per-torch warm light, clipped to each
-      // torch's cached visibility polygon so walls cast real shadows.
+      // World -> ambient darkness & cool atmospheric tint -> torch atmospheric haze -> direct torch light
       const torches = this.visibleTorches();
       for (const t of torches) this.drawTorchSprite(t);
+
+      // Base ambient darkness
       c.fillStyle = "rgba(3,5,9,0.6)";
       c.fillRect(0, 0, box.width, box.width);
+
+      // Subtle cool-toned ambient screen tint (gentle purple/blue mood)
+      const atm = this.atmosphere;
+      if (atm.ambientStrength > 0) {
+        c.save();
+        c.globalAlpha = atm.ambientStrength;
+        c.fillStyle = atm.ambientColor;
+        c.fillRect(0, 0, box.width, box.width);
+        c.restore();
+      }
+
+      // Soft warm haze diffusion around visible torches
+      if (atm.torchHazeStrength > 0) {
+        for (const t of torches) this.drawTorchHaze(t, now);
+      }
+
+      // Direct warm light clipped to visibility polygons
       for (const t of torches) this.drawTorchLight(t, now);
     }
     this.drawRoutePath(now);
@@ -165,6 +213,7 @@ export class Renderer {
         }
       }
     }
+    this.drawVignette(box.width);
     }
     if (g.blocked.until > now) {
       const x = (g.blocked.x - this.left + 0.5) * s,
@@ -202,7 +251,16 @@ export class Renderer {
       drawForestTile(c, t, x, y, g.run.seed, Math.floor(g.world.width / 2));
       return;
     }
-    drawTerrain(c, t.kind === "wall", g.mode, g.run.height, x, y, g.run.seed, t.kind === "floor");
+    const northWall = g.world.tile(x, y + 1)?.kind === "wall";
+    const southWall = g.world.tile(x, y - 1)?.kind === "wall";
+    const westWall = g.world.tile(x - 1, y)?.kind === "wall";
+    const eastWall = g.world.tile(x + 1, y)?.kind === "wall";
+    drawTerrain(c, t.kind === "wall", g.mode, g.run.height, x, y, g.run.seed, t.kind === "floor", {
+      northWall,
+      southWall,
+      westWall,
+      eastWall,
+    });
     if (t.kind === "wall") return;
     if (t.kind === "floor") return;
     
@@ -483,6 +541,55 @@ export class Renderer {
     gr.addColorStop(1, `rgba(255,80,20,0)`);
     c.fillStyle = gr;
     c.fillRect(cx - radius, cy - radius, radius * 2, radius * 2);
+    c.restore();
+  }
+  /** Soft warm atmospheric haze that diffuses into ambient air around torches.
+   * Uses gentle additive blending with wide radial feathering and blur so
+   * torchlight feels atmospheric rather than a hard cutoff circle. */
+  drawTorchHaze(t: Torch, now: number) {
+    const c = this.ctx,
+      atm = this.atmosphere,
+      reduceMotion = this.game.save.settings.reduceMotion;
+    const phase = (t.x * 928.13 + t.y * 17.71) % (Math.PI * 2);
+    const flicker = reduceMotion
+      ? 1
+      : 1 + Math.sin(now / 420 + phase) * 0.045 + Math.sin(now / 190 + phase * 1.7) * 0.018;
+    const cx = this.toScreenX(t.x + 0.5),
+      cy = this.toScreenY(t.y + 0.5),
+      hazeRadius = t.lightRadius * this.size * atm.torchHazeRadius * flicker,
+      alpha = atm.torchHazeStrength * t.baseIntensity * flicker;
+    if (alpha <= 0 || hazeRadius <= 0) return;
+
+    c.save();
+    c.globalCompositeOperation = "lighter";
+    if (!reduceMotion && atm.torchHazeBlur > 0) {
+      c.filter = `blur(${atm.torchHazeBlur}px)`;
+    }
+    const gr = c.createRadialGradient(cx, cy, 0, cx, cy, hazeRadius);
+    gr.addColorStop(0, `rgba(255, 185, 95, ${0.4 * alpha})`);
+    gr.addColorStop(0.25, `rgba(255, 150, 65, ${0.22 * alpha})`);
+    gr.addColorStop(0.6, `rgba(240, 110, 45, ${0.08 * alpha})`);
+    gr.addColorStop(1, "rgba(220, 80, 30, 0)");
+    c.fillStyle = gr;
+    c.fillRect(cx - hazeRadius, cy - hazeRadius, hazeRadius * 2, hazeRadius * 2);
+    c.restore();
+  }
+  /** Faint radial vignette around the perimeter of the dungeon viewport
+   * to subtly guide focus inward and add depth without obscuring readability. */
+  drawVignette(viewportSize: number) {
+    const atm = this.atmosphere;
+    if (atm.vignetteStrength <= 0) return;
+    const c = this.ctx,
+      half = viewportSize / 2,
+      maxRadius = half * Math.SQRT2,
+      innerRadius = Math.max(0, half * Math.min(1, Math.max(0, atm.vignetteSoftness)));
+    c.save();
+    const gr = c.createRadialGradient(half, half, innerRadius, half, half, maxRadius);
+    gr.addColorStop(0, "rgba(5, 7, 14, 0)");
+    gr.addColorStop(0.65, `rgba(5, 7, 14, ${atm.vignetteStrength * 0.35})`);
+    gr.addColorStop(1, `rgba(5, 7, 14, ${atm.vignetteStrength})`);
+    c.fillStyle = gr;
+    c.fillRect(0, 0, viewportSize, viewportSize);
     c.restore();
   }
   drawRoutePath(now: number) {

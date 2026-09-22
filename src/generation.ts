@@ -11,7 +11,7 @@ import {
   DELVE_MAX_DEPTH,
 } from "./config.ts";
 import { point, type Tile, type Torch, type Player } from "./entities.ts";
-import { computeVisibilityPolygon } from "./lighting.ts";
+import { computeVisibilityPolygon, LIGHTING_CONFIG } from "./lighting.ts";
 import { getTowerEnemy } from "./scaling.ts";
 import { generatePuzzleGraph } from "./puzzle.ts";
 export type Board = {
@@ -61,7 +61,13 @@ function placeTorches(
           isWall(cx + 1, cy) || isWall(cx - 1, cy) || isWall(cx, cy + 1) || isWall(cx, cy - 1);
         if (!adjWall) continue;
         taken.add(key);
-        torches.push({ x: cx, y: cy, lightRadius: 6, baseIntensity: 1, active: true });
+        torches.push({
+          x: cx,
+          y: cy,
+          lightRadius: LIGHTING_CONFIG.torch.defaultRadius,
+          baseIntensity: LIGHTING_CONFIG.torch.defaultIntensity,
+          active: true,
+        });
         break;
       }
     }

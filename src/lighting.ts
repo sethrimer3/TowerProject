@@ -1,4 +1,60 @@
 import type { Point, Torch } from "./entities.ts";
+
+/** Centralized dungeon lighting parameters for fast tuning and consistency. */
+export const LIGHTING_CONFIG = {
+  /** Global ambient darkness overlay color and opacity.
+   * A subtle dark-purple tone that keeps the dungeon fully readable without torches. */
+  ambient: {
+    color: "#181226", // Dark purple tint
+    opacity: 0.32,    // Substantially raised ambient illumination (was 0.60 pitch dark)
+  },
+  /** Default torch properties when placed in generation */
+  torch: {
+    defaultRadius: 6.5,
+    defaultIntensity: 0.55,
+  },
+  /** Radial falloff and candle color stops.
+   * Gentle, cozy amber/candle warmth with low saturation and long feathered falloff. */
+  stops: [
+    { offset: 0.00, color: "rgba(255, 230, 185, 0.45)" }, // Soft warm amber core
+    { offset: 0.20, color: "rgba(245, 205, 150, 0.35)" },
+    { offset: 0.45, color: "rgba(220, 160, 95, 0.18)" },
+    { offset: 0.70, color: "rgba(180, 115, 60, 0.07)" },
+    { offset: 1.00, color: "rgba(140, 75, 30, 0.00)" },  // Feathered out to 0
+  ] as const,
+  /** Multi-harmonic coherent flicker configuration */
+  flicker: {
+    /** Overall flicker amplitude (+/- ~3%) */
+    amplitude: 0.035,
+    /** Harmonics for smooth, coherent, non-repeating organic flicker (no Math.random()) */
+    harmonics: [
+      { speed: 1 / 480, weight: 0.55, phaseMult: 1.0 },
+      { speed: 1 / 230, weight: 0.30, phaseMult: 2.3 },
+      { speed: 1 / 110, weight: 0.15, phaseMult: 4.1 },
+    ],
+  },
+  /** Shadow softness / penumbra properties */
+  shadow: {
+    /** Gaussian blur radius applied to the torch lightmap pass for soft penumbras */
+    blurPx: 6,
+    /** Multiplier to extend ray coverage slightly past corners to soften occlusion edges */
+    penumbraOffset: 0.06,
+  },
+};
+
+/** Computes smooth coherent flicker multiplier for a torch at a given timestamp.
+ * Torches have independent pseudo-randomized phases based on their coordinates. */
+export function getTorchFlicker(t: Pick<Torch, "x" | "y">, now: number, reduceMotion: boolean): number {
+  if (reduceMotion) return 1;
+  // High-entropy spatial hash for independent phase
+  const phase = ((t.x * 374761393) ^ (t.y * 668265263)) % 10000;
+  let wave = 0;
+  for (const h of LIGHTING_CONFIG.flicker.harmonics) {
+    wave += Math.sin(now * h.speed + phase * h.phaseMult) * h.weight;
+  }
+  return 1 + wave * LIGHTING_CONFIG.flicker.amplitude;
+}
+
 /** Tile-grid visibility-polygon computation for torch light. Walls block
  * light; the result is cached on the torch (see generation.ts) and only
  * recomputed when the torch or nearby geometry changes, never per frame. */
