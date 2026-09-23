@@ -522,37 +522,34 @@ function tryGenerateTowerRoom(derivedSeed: number, room: number): Map<string, Ti
     }
   }
 
-  // The exit always sits on the outer-most edge of the final room on the mapped path,
-  // adjacent to the outer boundary wall (y = bounds.y2 or room perimeter).
+  // The exit always sits in the outer-most boundary ring (like the entrance),
+  // opening off the final room on the mapped path. If that room doesn't touch
+  // the boundary, a short straight corridor is carved out to it.
   const exitRoom = rooms[rooms.length - 1];
   function placeExitIn(room_: { x: number; y: number; w: number; h: number }) {
-    const edgeCandidates: [number, number][] = [];
-    const fallbackCandidates: [number, number][] = [];
+    type Option = { exit: [number, number]; carve: [number, number][]; far: number };
+    const options: Option[] = [];
     for (let y = room_.y; y < room_.y + room_.h; y++)
       for (let x = room_.x; x < room_.x + room_.w; x++) {
         const p = point(x, y);
-        if (!reserved.has(p) && cells.get(p)?.kind === "floor") {
-          fallbackCandidates.push([x, y]);
-          const isEdge =
-            x === room_.x ||
-            x === room_.x + room_.w - 1 ||
-            y === room_.y ||
-            y === room_.y + room_.h - 1 ||
-            x === bounds.x1 ||
-            x === bounds.x2 ||
-            y === bounds.y1 ||
-            y === bounds.y2 ||
-            directions.some(([dx, dy]) => cells.get(point(x + dx, y + dy))?.kind === "wall");
-          if (isEdge) edgeCandidates.push([x, y]);
+        if (reserved.has(p) || cells.get(p)?.kind !== "floor") continue;
+        // Walk left, right and down to the outer ring (the top holds the entrance).
+        for (const [dx, dy] of [[-1, 0], [1, 0], [0, 1]] as const) {
+          const carve: [number, number][] = [];
+          let cx = x + dx, cy = y + dy;
+          while (cx > 0 && cx < TOWER_WIDTH - 1 && cy < TOWER_HEIGHT - 1) {
+            if (cells.get(point(cx, cy))?.kind === "wall") carve.push([cx, cy]);
+            cx += dx; cy += dy;
+          }
+          options.push({ exit: [cx, cy], carve, far: cy + Math.abs(cx - TOWER_START_X) });
         }
       }
-    const pool = edgeCandidates.length ? edgeCandidates : fallbackCandidates;
-    if (!pool.length) return null;
-    // Prefer edge candidates that are furthest from the entrance (maximizing distance/y)
-    pool.sort((a, b) => (b[1] + Math.abs(b[0] - TOWER_START_X)) - (a[1] + Math.abs(a[0] - TOWER_START_X)));
-    // Pick among the top furthest edge candidates for some variety
-    const topCount = Math.min(3, pool.length);
-    const [x, y] = pool[int(0, topCount - 1)];
+    if (!options.length) return null;
+    // Shortest corridor first, then furthest from the entrance.
+    options.sort((a, b) => a.carve.length - b.carve.length || b.far - a.far);
+    const best = options.filter((o) => o.carve.length === options[0].carve.length);
+    const { exit: [x, y], carve } = best[int(0, Math.min(3, best.length) - 1)];
+    for (const [cx, cy] of carve) { floor(cx, cy); reserved.add(point(cx, cy)); }
     set(x, y, { kind: "stairs" });
     reserved.add(point(x, y));
     return [x, y] as [number, number];
