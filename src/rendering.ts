@@ -26,12 +26,12 @@ export interface AtmosphereConfig {
 export const ATMOSPHERE_CONFIG: AtmosphereConfig = {
   // Gentle cool purple-blue tone that provides moody contrast against amber torches
   ambientColor: "rgba(36, 26, 60, 1)",
-  ambientStrength: 0.10,
-  vignetteStrength: 0.18,
-  vignetteSoftness: 0.58,
-  torchHazeStrength: 0.10,
-  torchHazeRadius: 1.25,
-  torchHazeBlur: 3,
+  ambientStrength: 0.06,
+  vignetteStrength: 0.12,
+  vignetteSoftness: 0.6,
+  torchHazeStrength: 0.08,
+  torchHazeRadius: 1.2,
+  torchHazeBlur: 4,
 };
 
 export class Renderer {
@@ -545,9 +545,15 @@ export class Renderer {
 
     c.save();
     c.beginPath();
+    // Expand the clip polygon slightly outward from the torch so occlusion
+    // edges feather into the blur instead of reading as hard geometry.
+    const penumbra = 1 + LIGHTING_CONFIG.shadow.penumbraOffset;
+    const ox = t.x + 0.5, oy = t.y + 0.5;
     t.visibilityPolygon.forEach((p, i) => {
-      const px = this.toScreenX(p.x),
-        py = this.toScreenY(p.y);
+      const wx = ox + (p.x - ox) * penumbra,
+        wy = oy + (p.y - oy) * penumbra;
+      const px = this.toScreenX(wx),
+        py = this.toScreenY(wy);
       if (i === 0) c.moveTo(px, py);
       else c.lineTo(px, py);
     });
