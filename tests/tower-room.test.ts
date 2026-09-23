@@ -86,3 +86,15 @@ test("XP is earned from kills in both modes and grants a level", () => {
   g.gainXp({ name: "x", hp: 1, attack: 20, defense: 0, tier: 3 });
   assert.ok(g.save.xp > 0);
 });
+test("a Tower run saved under an older layout version restarts its floor at the entrance", () => {
+  const g = new Game(defaults());
+  g.run.layoutVersion = 3;
+  g.run.player.x = 3;
+  g.run.player.y = 7;
+  g.run.changes["3,7"] = { kind: "floor" };
+  const migrated = new Game(JSON.parse(JSON.stringify(g.save)));
+  assert.equal(migrated.run.player.x, TOWER_START_X);
+  assert.equal(migrated.run.player.y, 0);
+  assert.deepEqual(migrated.run.changes, {});
+  assert.notEqual(migrated.world.tile(TOWER_START_X, 1).kind, "wall");
+});
