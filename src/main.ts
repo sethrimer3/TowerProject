@@ -247,7 +247,17 @@ function update() {
   text("essence", game.save.delve.essence);
   text("shards", game.save.tower.shards);
   text("level", `LV ${levelForXp(game.save.xp)}`);
-  text("message", game.paused ? "Paused · take a breath." : game.message);
+  text(
+    "message",
+    game.paused
+      ? "Paused · take a breath."
+      : highlighted
+        ? (() => {
+            const d = inspectDetails(highlighted!.x, highlighted!.y);
+            return `${d.title} — ${d.body.replace(/<[^>]+>/g, " ").trim()}`;
+          })()
+        : game.message,
+  );
   el("health").style.width = `${(100 * p.hp) / p.maxHp}%`;
   text(
     "auto-state",

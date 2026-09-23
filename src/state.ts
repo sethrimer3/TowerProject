@@ -135,11 +135,6 @@ export class Game {
     this.auto = false;
     this.summary = null;
     this.blocked = { x: 0, y: 0, until: 0 };
-    if (!this.message)
-      this.message =
-        this.mode === "tower"
-          ? "Defeat the entrance guardian and find the stairs."
-          : "Defeat the entrance guardian, claim the keys, and climb.";
   }
   settleRevival() {
     const slice = this.save[this.mode];
