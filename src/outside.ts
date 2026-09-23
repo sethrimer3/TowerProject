@@ -10,6 +10,20 @@ export function weatherForRoll(roll: number): Weather {
   return roll < 0.4 ? "cloudy" : roll < 0.7 ? "sunny" : roll < 0.9 ? "rain" : "storm";
 }
 export const outsideWeather = (seed: number) => weatherForRoll(tileRandom(81, 37, seed));
+const ASSET_BASE = (import.meta as ImportMeta & { env?: { BASE_URL?: string } }).env?.BASE_URL ?? "/";
+const outsideUrl = (name: string) => `${ASSET_BASE}assets/tilesets/outside/${name}`;
+export const OUTSIDE_SPRITE_URLS = {
+  grass: [1,2,3,4].map(n=>outsideUrl(`grass_0${n}.png`)), path: [1,2,3].map(n=>outsideUrl(`path_0${n}.png`)),
+  trees: [1,2,3].map(n=>outsideUrl(`tree_0${n}.png`)), boulders: [1,2].map(n=>outsideUrl(`boulder_0${n}.png`)),
+};
+export function outsideSpriteKind(t: Tile, x: number, y: number, seed: number, center: number) {
+  const r=tileRandom(x,y,seed), path=Math.abs(x-center)<=(y%5===2?1:0);
+  if (t.kind === "wall") return { family: r>0.2?"trees":"boulders", variant: Math.floor(tileRandom(x+17,y-9,seed)* (r>0.2?3:2)) } as const;
+  return { family: path?"path":"grass", variant: Math.floor(tileRandom(x-11,y+23,seed)*(path?3:4)) } as const;
+}
+const outsideCache=new Map<string,HTMLImageElement>();
+function outsideImage(url:string){if(typeof Image==="undefined")return null;let img=outsideCache.get(url);if(!img){img=new Image();img.src=url;outsideCache.set(url,img)}return img}
+function drawOutsideSprite(c:CanvasRenderingContext2D,t:Tile,x:number,y:number,seed:number,center:number){const id=outsideSpriteKind(t,x,y,seed,center);const img=outsideImage(OUTSIDE_SPRITE_URLS[id.family][id.variant]);if(!img?.complete||!img.naturalWidth)return false;c.save();c.imageSmoothingEnabled=false;c.drawImage(img,0,0,24,24);c.restore();return true}
 
 export class OutsideWorld implements Board {
   width: number;
@@ -34,6 +48,7 @@ export class OutsideWorld implements Board {
 }
 
 export function drawForestTile(c: CanvasRenderingContext2D, t: Tile, x: number, y: number, seed: number, center: number) {
+  if (drawOutsideSprite(c,t,x,y,seed,center)) return;
   const r = tileRandom(x, y, seed), path = Math.abs(x - center) <= (y % 5 === 2 ? 1 : 0);
   c.fillStyle = path ? "#625d42" : r < 0.5 ? "#294d35" : "#30543a";
   c.fillRect(0, 0, 24, 24);

@@ -1,0 +1,23 @@
+{
+  "tileSize": 24,
+  "grass": [
+    "grass_01.png",
+    "grass_02.png",
+    "grass_03.png",
+    "grass_04.png"
+  ],
+  "path": [
+    "path_01.png",
+    "path_02.png",
+    "path_03.png"
+  ],
+  "trees": [
+    "tree_01.png",
+    "tree_02.png",
+    "tree_03.png"
+  ],
+  "boulders": [
+    "boulder_01.png",
+    "boulder_02.png"
+  ]
+}

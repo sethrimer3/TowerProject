@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "tiles:area1": "node tools/generate-area1-tiles.mjs",
+    "tiles:outside": "node tools/generate-outside-tiles.mjs",
     "dev": "vite --host 127.0.0.1",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1",
