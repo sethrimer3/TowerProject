@@ -21,6 +21,12 @@ function image(id: GameSpriteId) {
   return sprite;
 }
 
+/** The loaded sprite image, or null while it is still loading. */
+export function gameSprite(id: GameSpriteId) {
+  const sprite = image(id);
+  return sprite?.complete && sprite.naturalWidth ? sprite : null;
+}
+
 export function drawGameSprite(c: CanvasRenderingContext2D, id: GameSpriteId) {
   const sprite = image(id);
   if (!sprite?.complete || !sprite.naturalWidth) return false;

@@ -161,10 +161,26 @@ h1 span {
 .portrait {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
   background: radial-gradient(ellipse, #46607c55, #121924);
   border-right: 1px solid var(--line);
+}
+.portrait-top {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.portrait-actions {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  padding: 0 6px 6px;
+}
+.portrait-actions button {
+  width: 100%;
 }
 .portrait canvas {
   width: 43px;
@@ -1053,7 +1069,7 @@ nav .mode-locked { opacity: .55; }
   .currencies { margin-left: auto; }
 }
 
-#log { font: inherit; font-size: 10px; padding: 3px 7px; margin-top: 3px; min-height: 24px; }
+#log, #section-pick { font: inherit; font-size: 10px; padding: 3px 7px; min-height: 24px; }
 .clear-legend { text-align: left; font-size: 12px; }
 .clear-legend p { margin: 6px 0; }
 .silver { color: #c5d0df; }
@@ -1086,9 +1102,6 @@ nav .mode-locked { opacity: .55; }
 #modal { max-height: 90dvh; overflow-y: auto; }
 /* Tower starting-section picker */
 #board { position: relative; }
-.section-pick { position: absolute; top: 0; left: 0; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 8px; font-size: 12px; line-height: 1; }
-.section-pick small { font-size: 7px; letter-spacing: 1.5px; color: #b29769; }
-.section-pick b { color: #e5d5b8; }
 .section-list { display: grid; gap: 8px; margin-top: 16px; max-height: 40vh; overflow-y: auto; }
 .section-option { display: flex; justify-content: space-between; gap: 12px; padding: 12px 14px; font-size: 12px; text-align: left; }
 .section-option span { color: #99a8bd; }

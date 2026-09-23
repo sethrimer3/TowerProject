@@ -3,6 +3,7 @@
 // flaky statistics and never touches Math.random() itself. See
 // docs/CRAFTING_AND_EQUIPMENT.md for the design source of truth.
 import { GEMS, METALS, metalStackRange, metalWeightsForFloor, speciesByName, type MaterialStack } from "./materials.ts";
+import { towerEnemyDrop } from "./scaling.ts";
 
 const COMMON_DROP_CHANCE = 0.35;
 const RARE_DROP_CHANCE = 0.02;
@@ -18,6 +19,14 @@ export function rollEnemyDrops(enemyName: string, rng: () => number): MaterialSt
   if (rng() < COMMON_DROP_CHANCE) drops.push({ id: species.common, quantity: 1 + Math.floor(rng() * 3) });
   if (rng() < RARE_DROP_CHANCE) drops.push({ id: species.rare, quantity: 1 });
   return drops;
+}
+
+/** Tower enemy identities have deterministic roles: attack-heavy drops
+ * nothing, balanced drops the zone's common part, defense-heavy drops its
+ * rare part. Every eligible kill awards exactly one part. */
+export function towerEnemyDrops(enemyName: string): MaterialStack[] {
+  const id = towerEnemyDrop(enemyName);
+  return id ? [{ id, quantity: 1 }] : [];
 }
 
 export function rollMetal(E: number, rng: () => number): MaterialStack | null {

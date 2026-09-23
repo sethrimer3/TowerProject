@@ -89,7 +89,7 @@ test("LIGHTING_CONFIG defines softened ambient darkness, warm candle stops, and 
   const f2 = getTorchFlicker(torch, 1000, false);
   assert.equal(f1, f2, "Flicker should be deterministic for the same timestamp and coordinates");
   assert.equal(getTorchFlicker(torch, 1000, true), 1, "reduceMotion must disable flicker");
-  assert.ok(Math.abs(f1 - 1) <= 0.05, "Flicker amplitude should stay within subtle ±5%");
+  assert.ok(Math.abs(f1 - 1) <= 0.1, "Flicker should read clearly but stay within ±10%");
 
   // Distinct spatial phases for different torches
   const torch2 = { x: 12, y: 3 };

@@ -35,7 +35,7 @@ import {
 import { predict } from "./combat.ts";
 import { OutsideWorld } from "./outside.ts";
 import { getEquivalentFloor, materialDef } from "./materials.ts";
-import { rollEnemyDrops, rollTreasureLoot } from "./loot.ts";
+import { rollEnemyDrops, rollTreasureLoot, towerEnemyDrops } from "./loot.ts";
 import {
   creditMaterials,
   getEquippedBonuses,
@@ -83,6 +83,23 @@ export class Game {
   linkTowerFloor() {
     this.run.floors ??= {};
     this.run.floors[this.run.height] = this.run.changes;
+  }
+  /** Grants unlimited currency, every Tower section, and every game mode.
+   * Reversible: turning Dev Mode back off leaves the grants in place, since
+   * there is no meaningful "undo" for progress the player has already seen. */
+  setDevMode(on: boolean) {
+    this.save.settings.devMode = on;
+    if (!on) return;
+    this.save.gold = 999_999_999;
+    this.save.tower.shards = 999_999_999;
+    this.save.delve.essence = 999_999_999;
+    this.save.upgrades.delve = 1;
+    const maxSection = Math.max(20, ...Object.keys(this.save.tower.sectionHp).map(Number)) + 5;
+    for (let s = 1; s <= maxSection; s++) this.save.tower.sectionHp[s] ??= 999;
+    this.save.tower.reached = Math.max(this.save.tower.reached, maxSection * TOWER_SECTION);
+    this.save.tower.best = Math.max(this.save.tower.best, this.save.tower.reached);
+    this.save.delve.reached = Math.max(this.save.delve.reached, maxSection * TOWER_SECTION);
+    this.save.delve.best = Math.max(this.save.delve.best, this.save.delve.reached);
   }
   switchMode(next: Mode) {
     if (next === this.mode) return;
@@ -497,19 +514,16 @@ export class Game {
       }
       this.run.kills++;
       this.gainXp(enemy);
-      // Persistent species drops (delve only — tower enemies are generic
-      // archetypes, not the four named species with drop tables). Gated by
-      // lootedTiles (outside `run`, so undo can't re-trigger this kill).
+      // Persistent drops are gated by lootedTiles (outside `run`), so undo
+      // can restore the enemy but can never duplicate its material reward.
       let dropText = "";
-      if (this.mode === "delve") {
-        const key = this.lootKey(x, y);
-        if (!slice.lootedTiles[key]) {
-          slice.lootedTiles[key] = true;
-          const drops = rollEnemyDrops(enemy.name, Math.random);
-          if (drops.length) {
-            creditMaterials(this.save, drops);
-            dropText = " · +" + drops.map(d => `${d.quantity} ${materialDef(d.id).name}${d.quantity > 1 ? "s" : ""}`).join(", +");
-          }
+      const key = this.lootKey(x, y);
+      if (!slice.lootedTiles[key]) {
+        slice.lootedTiles[key] = true;
+        const drops = this.mode === "tower" ? towerEnemyDrops(enemy.name) : rollEnemyDrops(enemy.name, Math.random);
+        if (drops.length) {
+          creditMaterials(this.save, drops);
+          dropText = " · +" + drops.map(d => `${d.quantity} ${materialDef(d.id).name}${d.quantity > 1 ? "s" : ""}`).join(", +");
         }
       }
       this.feedback(

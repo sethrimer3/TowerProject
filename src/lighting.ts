@@ -24,14 +24,23 @@ export const LIGHTING_CONFIG = {
   ] as const,
   /** Multi-harmonic coherent flicker configuration */
   flicker: {
-    /** Overall flicker amplitude (+/- ~3%) */
-    amplitude: 0.035,
-    /** Harmonics for smooth, coherent, non-repeating organic flicker (no Math.random()) */
+    /** Overall light intensity flicker amplitude (about +/- 8%) */
+    amplitude: 0.08,
+    /** Harmonics for smooth, coherent, non-repeating organic flicker (no Math.random()).
+     * The fast, light-weighted ones add the quick flutter of a real flame. */
     harmonics: [
-      { speed: 1 / 480, weight: 0.55, phaseMult: 1.0 },
-      { speed: 1 / 230, weight: 0.30, phaseMult: 2.3 },
-      { speed: 1 / 110, weight: 0.15, phaseMult: 4.1 },
+      { speed: 1 / 420, weight: 0.35, phaseMult: 1.0 },
+      { speed: 1 / 170, weight: 0.3, phaseMult: 2.3 },
+      { speed: 1 / 83, weight: 0.2, phaseMult: 4.1 },
+      { speed: 1 / 37, weight: 0.15, phaseMult: 6.7 },
     ],
+    /** Side-to-side flame sway, in tiles; the light pool, haze, and cast
+     * shadows move with it. */
+    swayX: 0.09,
+    /** Slight up/down bob of the flame's light, in tiles. */
+    swayY: 0.035,
+    /** Flame sprite stretch amount (+/- fraction of its height). */
+    stretch: 0.16,
   },
   /** Baked torch glow (see torch-light.ts). Computed once per torch, drawn
    * each frame as two cheap image blits. */
@@ -87,17 +96,33 @@ export const LIGHTING_CONFIG = {
   },
 };
 
+/** Per-torch phase from its tile, so torches flicker independently. */
+function torchPhase(t: Pick<Torch, "x" | "y">) {
+  return ((t.x * 374761393) ^ (t.y * 668265263)) % 10000;
+}
+
 /** Computes smooth coherent flicker multiplier for a torch at a given timestamp.
  * Torches have independent pseudo-randomized phases based on their coordinates. */
 export function getTorchFlicker(t: Pick<Torch, "x" | "y">, now: number, reduceMotion: boolean): number {
   if (reduceMotion) return 1;
-  // High-entropy spatial hash for independent phase
-  const phase = ((t.x * 374761393) ^ (t.y * 668265263)) % 10000;
+  const phase = torchPhase(t);
   let wave = 0;
   for (const h of LIGHTING_CONFIG.flicker.harmonics) {
     wave += Math.sin(now * h.speed + phase * h.phaseMult) * h.weight;
   }
   return 1 + wave * LIGHTING_CONFIG.flicker.amplitude;
+}
+
+/** How the flame is moving right now: its sideways lean and bob (in tiles,
+ * world y up) and how stretched it is. Rendering shifts the light by the
+ * sway and bends the flame sprite by the lean, so both move together. */
+export function getTorchSway(t: Pick<Torch, "x" | "y">, now: number, reduceMotion: boolean) {
+  if (reduceMotion) return { x: 0, y: 0, stretch: 1 };
+  const p = torchPhase(t) * 0.37;
+  const cfg = LIGHTING_CONFIG.flicker;
+  const lean = Math.sin(now / 310 + p) * 0.6 + Math.sin(now / 127 + p * 1.9) * 0.3 + Math.sin(now / 53 + p * 3.1) * 0.1;
+  const bob = Math.sin(now / 190 + p * 1.3) * 0.7 + Math.sin(now / 71 + p * 2.7) * 0.3;
+  return { x: lean * cfg.swayX, y: bob * cfg.swayY, stretch: 1 + bob * cfg.stretch };
 }
 
 /** Tile-grid visibility-polygon computation for torch light. Walls block

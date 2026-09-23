@@ -26,6 +26,7 @@ export function defaults(): Save {
       autoOffOnDeath: true,
       oneTapMove: false,
       showInfoBoxes: true,
+      devMode: false,
     },
     materials: emptyMaterials(),
     equipmentInventory: [],
@@ -186,6 +187,7 @@ export function decode(raw: string | null): Save {
     d.settings.autoOffOnDeath = s?.settings?.autoOffOnDeath !== false;
     d.settings.oneTapMove = s?.settings?.oneTapMove === true;
     d.settings.showInfoBoxes = s?.settings?.showInfoBoxes !== false;
+    d.settings.devMode = s?.settings?.devMode === true;
     if (s?.version === 2 || s?.version === 3) {
       if (finite(s.gold)) d.gold = Math.floor(s.gold);
       for (const g of GOLD_SHOP)

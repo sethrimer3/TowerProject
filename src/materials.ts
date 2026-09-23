@@ -40,6 +40,26 @@ export type MaterialId =
   | "eclipsePinion"
   | "ashenPlateShard"
   | "wardenSigil"
+  | "thievesTools"
+  | "knightsCrest"
+  | "slimeGel"
+  | "wardenHeartstone"
+  | "skeletonBone"
+  | "golemCore"
+  | "orcTusk"
+  | "frozenGargoyleShard"
+  | "ogreHide"
+  | "demonEmberheart"
+  | "crystalDust"
+  | "amethystCore"
+  | "wraithEctoplasm"
+  | "coralCrest"
+  | "trollWart"
+  | "sporeheart"
+  | "revenantShard"
+  | "blackstoneHeart"
+  | "whelpScale"
+  | "celestialAegis"
   | "emptyVial";
 
 export type MaterialCategory = "metal" | "gem" | "monster-common" | "monster-rare" | "utility";
@@ -151,6 +171,16 @@ export const RARE_ENHANCEMENTS: Partial<Record<MaterialId, { flatAttack?: number
   gildedMarrow: { flatDefense: 1 },
   eclipsePinion: { flatMaxHp: 3 },
   wardenSigil: { flatAttack: 1, flatDefense: 1 },
+  knightsCrest: { flatDefense: 1 },
+  wardenHeartstone: { flatMaxHp: 3 },
+  golemCore: { flatDefense: 1 },
+  frozenGargoyleShard: { flatAttack: 1, flatDefense: 1 },
+  demonEmberheart: { flatAttack: 1 },
+  amethystCore: { flatDefense: 1 },
+  coralCrest: { flatMaxHp: 3 },
+  sporeheart: { flatMaxHp: 3 },
+  blackstoneHeart: { flatDefense: 1 },
+  celestialAegis: { flatAttack: 1, flatDefense: 1 },
 };
 
 export const MATERIALS: MaterialDef[] = [
@@ -174,6 +204,26 @@ export const MATERIALS: MaterialDef[] = [
   { id: "eclipsePinion", name: "Eclipse Pinion", category: "monster-rare", description: "A feather that swallows the light. +3 Max HP.", icon: "✦" },
   { id: "ashenPlateShard", name: "Ashen Plate Shard", category: "monster-common", description: "A chip of scorched armor.", icon: "●" },
   { id: "wardenSigil", name: "Warden Sigil", category: "monster-rare", description: "A glowing rune of protection. +1 flat Attack, +1 flat Defense.", icon: "✦" },
+  { id: "thievesTools", name: "Thieves' Tools", category: "monster-common", description: "Weathered picks and blades carried through the keep.", icon: "●" },
+  { id: "knightsCrest", name: "Knight's Crest", category: "monster-rare", description: "A battered crest that still holds its defensive oath. +1 flat Defense.", icon: "✦" },
+  { id: "slimeGel", name: "Slime Gel", category: "monster-common", description: "Cool moss-flecked gel from the ruins.", icon: "●" },
+  { id: "wardenHeartstone", name: "Warden Heartstone", category: "monster-rare", description: "A living stone knot wrapped in ancient moss. +3 Max HP.", icon: "✦" },
+  { id: "skeletonBone", name: "Catacomb Bone", category: "monster-common", description: "Amber-stained bone worn smooth by the crypt.", icon: "●" },
+  { id: "golemCore", name: "Golem Core", category: "monster-rare", description: "A dense sandstone heart. +1 flat Defense.", icon: "✦" },
+  { id: "orcTusk", name: "Frost Orc Tusk", category: "monster-common", description: "A tusk rimed with permanent ice.", icon: "●" },
+  { id: "frozenGargoyleShard", name: "Frozen Gargoyle Shard", category: "monster-rare", description: "An ice-hard fragment of enchanted stone. +1 flat Attack, +1 flat Defense.", icon: "✦" },
+  { id: "ogreHide", name: "Forge Ogre Hide", category: "monster-common", description: "Heat-cured hide scarred by sparks.", icon: "●" },
+  { id: "demonEmberheart", name: "Demon Emberheart", category: "monster-rare", description: "A coal-black heart with a molten center. +1 flat Attack.", icon: "✦" },
+  { id: "crystalDust", name: "Violet Crystal Dust", category: "monster-common", description: "Glittering residue gathered from a crystal savant.", icon: "●" },
+  { id: "amethystCore", name: "Amethyst Core", category: "monster-rare", description: "A flawless geode heart. +1 flat Defense.", icon: "✦" },
+  { id: "wraithEctoplasm", name: "Drowned Ectoplasm", category: "monster-common", description: "Cold spectral residue that smells faintly of salt.", icon: "●" },
+  { id: "coralCrest", name: "Coral Crest", category: "monster-rare", description: "A living crest taken from the temple's guardian. +3 Max HP.", icon: "✦" },
+  { id: "trollWart", name: "Troll Wart", category: "monster-common", description: "A stubbornly regenerative fungal growth.", icon: "●" },
+  { id: "sporeheart", name: "Colossus Sporeheart", category: "monster-rare", description: "The pulsing heart of a vast fungal colony. +3 Max HP.", icon: "✦" },
+  { id: "revenantShard", name: "Obsidian Revenant Shard", category: "monster-common", description: "A sharp sliver of haunted black glass.", icon: "●" },
+  { id: "blackstoneHeart", name: "Blackstone Heart", category: "monster-rare", description: "An impossibly heavy core that drinks in light. +1 flat Defense.", icon: "✦" },
+  { id: "whelpScale", name: "Astral Whelp Scale", category: "monster-common", description: "A midnight scale dusted with tiny stars.", icon: "●" },
+  { id: "celestialAegis", name: "Celestial Aegis", category: "monster-rare", description: "A radiant fragment of the sanctuary's final guardian. +1 flat Attack, +1 flat Defense.", icon: "✦" },
   { id: "emptyVial", name: "Empty Vial", category: "utility", description: "A small glass vial for brewing consumables.", icon: "○" },
 ];
 
