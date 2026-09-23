@@ -30,6 +30,7 @@ import {
   type EquipmentSlot,
 } from "./equipment.ts";
 import { canCraft, getSalvageReturns, isEquipped, CONSUMABLES, canCraftConsumable, type ConsumableId } from "./crafting.ts";
+import { doorColor, doorDescription, doorName } from "./doors.ts";
 const icons = { tower: "♜", delve: "▼", gear: "♞", upgrades: "✦", settings: "⚙" };
 const SLOT_ICONS: Record<EquipmentSlot, string> = {
   weapon: "⚔", shield: "⛨", helmet: "▲", chestplate: "■", leggings: "▼", boots: "▽", gloves: "✤", necklace: "◇", ring: "○",
@@ -95,7 +96,7 @@ function inspect(x: number, y: number) {
       t.kind === "wall"
         ? "Ancient stone. Find a passage around it."
         : t.kind === "door"
-          ? `${t.color} door · requires one matching key`
+          ? `${doorName(t)} · ${doorDescription(t)}`
           : game.mode === "delve"
             ? (t.kind[0].toUpperCase() + t.kind.slice(1))
             : `${t.kind[0].toUpperCase() + t.kind.slice(1)} · row ${y}`;
@@ -131,9 +132,9 @@ function inspectDetails(x: number, y: number): { color: string; title: string; b
     return { color: KIND_COLORS.wall!, title: "Wall", body: "Ancient stone. Find a passage around it." };
   if (t.kind === "door")
     return {
-      color: COLORS[t.color!],
-      title: `${t.color![0].toUpperCase()}${t.color!.slice(1)} Door`,
-      body: "Requires one matching key.",
+      color: doorColor(t),
+      title: doorName(t),
+      body: doorDescription(t),
     };
   return {
     color: KIND_COLORS[t.kind] ?? "#c7cedb",

@@ -1,6 +1,7 @@
 import { CHUNK } from "./config.ts";
 import { point } from "./entities.ts";
 import type { Game } from "./state.ts";
+import { doorCost } from "./doors.ts";
 export type Step = { dx: number; dy: number; x: number; y: number };
 /** Find a structural route. Missing-key doors are expensive rather than
  * impassable, so a player can approach the first necessary locked door. */
@@ -44,7 +45,7 @@ export function routeTo(game: Game, x: number, y: number): Step[] | null {
         value =
           n.cost +
           1 +
-          (tile.kind === "door" && !p.keys[tile.color!] ? 10000 : 0);
+          (tile.kind === "door" && doorCost(tile, p) === null ? 10000 : 0);
       if (value >= (cost.get(next) ?? Infinity)) continue;
       cost.set(next, value);
       previous.set(next, { from: k, step: { ...dest, dx, dy } });

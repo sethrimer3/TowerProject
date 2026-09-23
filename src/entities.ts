@@ -26,7 +26,13 @@ export type Enemy = {
 export type ClearTier = "silver" | "gold" | "platinum";
 export type RewardChest = { x: number; y: number; tier: ClearTier };
 export type FloorRecord = { earned: ClearTier[]; claimed: ClearTier[] };
-export type Tile = { kind: Kind; color?: KeyColor; enemy?: Enemy; tier?: ClearTier };
+/** Declarative lock rules. `color` remains on Tile for legacy single-key
+ * doors and keys; new doors use this rule so every gameplay system shares
+ * the same requirements and consumption behavior. */
+export type DoorRule =
+  | { type: "keys"; keys: KeyColor[]; mode: "all" | "any" }
+  | { type: "fullHp" };
+export type Tile = { kind: Kind; color?: KeyColor; door?: DoorRule; enemy?: Enemy; tier?: ClearTier };
 export type Point = { x: number; y: number };
 /** A stationary wall-mounted light source, anchored to a walkable floor
  * tile adjacent to a wall. Its visibility polygon is computed once (on

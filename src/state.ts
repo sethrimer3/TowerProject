@@ -1,4 +1,5 @@
 import { isDeadlocked } from "./analysis.ts";
+import { doorBlockedMessage, doorCost, doorName } from "./doors.ts";
 import { skillAvailable } from "./skill-trees.ts";
 import { routeTo, type Step } from "./pathfinding.ts";
 import {
@@ -400,8 +401,9 @@ export class Game {
       this.reject(x, y, "A wall blocks the way.");
       return false;
     }
-    if (t.kind === "door" && !p.keys[t.color!]) {
-      this.reject(x, y, `Requires a ${t.color} key.`);
+    const keyCost = t.kind === "door" ? doorCost(t, p) : null;
+    if (t.kind === "door" && keyCost === null) {
+      this.reject(x, y, doorBlockedMessage(t));
       return false;
     }
     // Combat is predicted once, before any snapshot/undo bookkeeping, so an
@@ -428,9 +430,9 @@ export class Game {
       slice.history = slice.history.slice(-this.undoCapacity);
     }
     if (t.kind === "door") {
-      p.keys[t.color!]--;
-      this.run.keysSpent = true;
-      this.feedback(`${t.color} seal opened`);
+      for (const color of keyCost!) p.keys[color]--;
+      if (keyCost!.length) this.run.keysSpent = true;
+      this.feedback(`${doorName(t)} opened${keyCost!.length ? ` · ${keyCost!.length} key${keyCost!.length === 1 ? "" : "s"} spent` : " · full HP"}`);
     }
     if (t.kind === "enemy") {
       const enemy = t.enemy!,

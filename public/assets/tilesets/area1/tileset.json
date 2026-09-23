@@ -45,5 +45,23 @@
     "wall_center_01.png",
     "wall_center_02.png",
     "wall_center_03.png"
-  ]
+  ],
+  "doors": {
+    "a": "doors/door_a.png",
+    "b": "doors/door_b.png",
+    "c": "doors/door_c.png",
+    "ab": "doors/door_ab.png",
+    "ac": "doors/door_ac.png",
+    "bc": "doors/door_bc.png",
+    "abc": "doors/door_abc.png",
+    "steel": "doors/door_steel.png",
+    "heart": "doors/door_heart.png"
+  },
+  "doorSymbols": {
+    "a": "circle",
+    "b": "diamond",
+    "c": "triangle",
+    "steel": "four-point universal",
+    "heart": "heart crest"
+  }
 }

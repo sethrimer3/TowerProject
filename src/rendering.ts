@@ -5,7 +5,8 @@ import type { Tile, Torch } from "./entities.ts";
 import { drawForestTile, drawEntrance, OUTSIDE_SIZE } from "./outside.ts";
 import { OutdoorWeather } from "./weather.ts";
 import { LIGHTING_CONFIG, getTorchFlicker } from "./lighting.ts";
-import { drawArea1Tile } from "./area1-tileset.ts";
+import { drawArea1Door, drawArea1Tile } from "./area1-tileset.ts";
+import { doorColor } from "./doors.ts";
 
 export interface AtmosphereConfig {
   /** Screen tint color for cool dungeon atmosphere (e.g. subtle purple-blue) */
@@ -316,13 +317,14 @@ export class Renderer {
       return;
     }
     if (t.kind === "door") {
+      if (area1 && drawArea1Door(c, t)) return;
       c.fillStyle = "#090d14";
       c.fillRect(4, 2, 16, 22);
-      c.fillStyle = COLORS[t.color!];
+      c.fillStyle = doorColor(t);
       c.fillRect(5, 4, 14, 19);
       c.fillStyle = "#101b28bb";
       c.fillRect(7, 5, 10, 17);
-      c.fillStyle = COLORS[t.color!];
+      c.fillStyle = doorColor(t);
       c.fillRect(11, 10, 3, 7);
       c.fillRect(10, 9, 5, 4);
       return;

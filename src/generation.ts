@@ -16,6 +16,7 @@ import { computeVisibilityPolygon, LIGHTING_CONFIG } from "./lighting.ts";
 import { getTowerEnemy } from "./scaling.ts";
 import { generatePuzzleGraph } from "./puzzle.ts";
 import { sculptRoom } from "./room-shapes.ts";
+import { area1DoorRule, doorCost, requiredKeys } from "./doors.ts";
 export type Board = {
   width: number;
   floor: number;
@@ -195,14 +196,14 @@ export function validate(cells: Map<string, Tile>, base: number) {
     }
     if (!closed.size) return area.size === all.size;
     const next = locks.find(([k, t]) => {
-      if (!closed.has(k) || !keys[t.color!]) return false;
+      if (!closed.has(k) || doorCost(t, { keys, hp: 1, maxHp: 1 }) === null) return false;
       const [x, y] = k.split(",").map(Number);
       return directions.some(([dx, dy]) =>
         area.has(point((x + dx + WIDTH) % WIDTH, y + dy)),
       );
     });
     if (!next) return false;
-    keys[next[1].color!]--;
+    for (const color of doorCost(next[1], { keys, hp: 1, maxHp: 1 })!) keys[color]--;
     closed.delete(next[0]);
   }
   return false;
@@ -478,6 +479,18 @@ function tryGenerateTowerRoom(derivedSeed: number, room: number): Map<string, Ti
   // blocking, is what makes them a gate), so an alternate route around one
   // is not a validation failure.
   const doorGatePositions: [number, number][] = [];
+  const placeKeyIn = (room_: { x: number; y: number; w: number; h: number }, color: KeyColor) => {
+    const candidates: [number, number][] = [];
+    for (let y = room_.y; y < room_.y + room_.h; y++)
+      for (let x = room_.x; x < room_.x + room_.w; x++) {
+        const p = point(x, y);
+        if (!reserved.has(p) && cells.get(p)?.kind === "floor") candidates.push([x, y]);
+      }
+    if (!candidates.length) return false;
+    const [kx, ky] = candidates[int(0, candidates.length - 1)];
+    set(kx, ky, { kind: "key", color }); reserved.add(point(kx, ky));
+    return true;
+  };
   const edgeCount = Math.min(graph.mainPath.length, rooms.length - 1);
   for (let i = 0; i < rooms.length - 1; i++) {
     const path = carvePath(cells, point, ...centerOf(rooms[i]), ...centerOf(rooms[i + 1]), rng);
@@ -488,18 +501,15 @@ function tryGenerateTowerRoom(derivedSeed: number, room: number): Map<string, Ti
     if (edge.gate === "enemy" && edge.enemy) {
       set(gx, gy, { kind: "enemy", enemy: edge.enemy });
     } else if (edge.gate === "door" && edge.doorColor) {
-      set(gx, gy, { kind: "door", color: edge.doorColor });
+      const rule = room < 10 ? area1DoorRule(room) : { type: "keys" as const, keys: [edge.doorColor], mode: "all" as const };
+      const singleColor = rule.type === "keys" && rule.mode === "all" && rule.keys.length === 1 ? rule.keys[0] : undefined;
+      set(gx, gy, { kind: "door", color: singleColor, door: rule });
       doorGatePositions.push([gx, gy]);
       // The key always lives in an earlier room on the mandatory path (or
       // the entrance room itself), so it is reachable before this door.
       const keyRoom = rooms[i];
-      const kx = int(keyRoom.x, keyRoom.x + keyRoom.w - 1),
-        ky = int(keyRoom.y, keyRoom.y + keyRoom.h - 1),
-        kp = point(kx, ky);
-      if (!reserved.has(kp) && cells.get(kp)?.kind === "floor") {
-        set(kx, ky, { kind: "key", color: edge.doorColor });
-        reserved.add(kp);
-      }
+      const supplied = rule.type === "keys" && rule.mode === "any" ? ["yellow" as const] : requiredKeys(rule);
+      for (const color of supplied) if (!placeKeyIn(keyRoom, color)) return null;
     }
   }
 
@@ -616,9 +626,10 @@ function tryGenerateTowerRoom(derivedSeed: number, room: number): Map<string, Ti
         collected.add(k);
       }
     }
-    const next = doors.find(([k, t]) => closed.has(k) && keys[t.color!] > 0);
+    const player = { keys, hp: nominalTowerPlayer(room).maxHp, maxHp: nominalTowerPlayer(room).maxHp };
+    const next = doors.find(([k, t]) => closed.has(k) && doorCost(t, player) !== null);
     if (!next) break;
-    keys[next[1].color!]--;
+    for (const color of doorCost(next[1], player)!) keys[color]--;
     closed.delete(next[0]);
   }
   if (closed.size > 0) return null;

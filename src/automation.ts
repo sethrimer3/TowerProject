@@ -1,6 +1,7 @@
 import { predict } from "./combat.ts";
 import { point, type Tile } from "./entities.ts";
 import type { Game } from "./state.ts";
+import { doorCost } from "./doors.ts";
 export function score(t: Tile, y: number, current: number, distance: number) {
   let benefit = 0;
   if (t.kind === "reward") benefit = 10000;
@@ -8,7 +9,7 @@ export function score(t: Tile, y: number, current: number, distance: number) {
   if (t.kind === "potion") benefit = 30;
   if (t.kind === "attack" || t.kind === "defense" || t.kind === "treasure")
     benefit = 45;
-  if (t.kind === "door") benefit = t.color === "yellow" ? 24 : 20;
+  if (t.kind === "door") benefit = 24;
   if (t.kind === "enemy") benefit = 20;
   // Score against the run high-water mark: backtracking must not create fake progress.
   return benefit + Math.max(0, y - current) * 1.8 - distance * 0.18;
@@ -46,7 +47,7 @@ export function chooseStep(game: Game) {
       const combat = t.kind === "enemy" ? predict(p, t.enemy!) : null;
       if (
         t.kind === "wall" || (t.kind === "oneway" && dy !== 1) ||
-        (t.kind === "door" && !p.keys[t.color!]) ||
+        (t.kind === "door" && doorCost(t, p) === null) ||
         // Automove avoids known-lethal enemies outright; an impervious enemy
         // is still a candidate step (see below) so execution can bump it
         // harmlessly and replan, rather than treating it as a hard wall here.

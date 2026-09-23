@@ -75,6 +75,55 @@ function wallTile(mask, variant = 0) {
   return p;
 }
 
+const DOOR_COLORS = { a: "#d4aa55", b: "#5f9fd0", c: "#c56268" };
+function symbol(p, kind, cx, cy, color) {
+  const dark = PALETTE.shadow;
+  if (kind === "a") {
+    rect(p, cx - 2, cy - 3, 5, 1, color); rect(p, cx - 2, cy + 3, 5, 1, dark);
+    rect(p, cx - 3, cy - 2, 1, 5, color); rect(p, cx + 3, cy - 2, 1, 5, dark);
+  } else if (kind === "b") {
+    rect(p, cx, cy - 4, 1, 1, color); rect(p, cx - 1, cy - 3, 3, 1, color);
+    rect(p, cx - 2, cy - 2, 5, 1, color); rect(p, cx - 3, cy - 1, 7, 3, color);
+    rect(p, cx - 2, cy + 2, 5, 1, dark); rect(p, cx - 1, cy + 3, 3, 1, dark); rect(p, cx, cy + 4, 1, 1, dark);
+  } else if (kind === "c") {
+    rect(p, cx, cy - 4, 1, 1, color); rect(p, cx - 1, cy - 3, 3, 1, color);
+    rect(p, cx - 2, cy - 2, 5, 1, color); rect(p, cx - 3, cy - 1, 7, 1, color);
+    rect(p, cx - 3, cy, 7, 2, dark);
+  } else if (kind === "steel") {
+    rect(p, cx, cy - 4, 1, 9, color); rect(p, cx - 4, cy, 9, 1, color);
+    rect(p, cx - 2, cy - 2, 5, 5, dark); rect(p, cx, cy - 1, 1, 3, color);
+  } else {
+    // Restrained heart crest, kept blocky and symmetrical.
+    rect(p, cx - 4, cy - 2, 3, 3, color); rect(p, cx + 2, cy - 2, 3, 3, color);
+    rect(p, cx - 3, cy, 7, 3, color); rect(p, cx - 2, cy + 3, 5, 1, color);
+    rect(p, cx - 1, cy + 4, 3, 1, PALETTE.shadow);
+  }
+}
+function doorTile(id) {
+  const p = canvas(PALETTE.wall);
+  // Shared stone jamb, timber leaf and iron bands keep all nine variants in
+  // the same weathered-keep family.
+  rect(p, 3, 1, 18, 23, PALETTE.shadow); rect(p, 5, 2, 14, 22, "#332d2c");
+  rect(p, 6, 3, 3, 20, "#443936"); rect(p, 15, 3, 3, 20, "#443936");
+  rect(p, 1, 0, 22, 3, PALETTE.wallLight); rect(p, 1, 3, 4, 21, PALETTE.wallMid);
+  rect(p, 19, 3, 4, 21, PALETTE.shadow); rect(p, 5, 7, 14, 3, PALETTE.seam);
+  rect(p, 5, 19, 14, 3, PALETTE.seam); px(p, [[7,8],[16,8],[7,20],[16,20]], PALETTE.wallLight);
+  const ids = id === "abc" ? ["a", "b", "c"] : id.length === 2 ? id.split("") : [id];
+  if (id === "steel") {
+    rect(p, 5, 3, 14, 16, PALETTE.wallMid); rect(p, 6, 4, 12, 1, PALETTE.wallLight);
+    symbol(p, "steel", 12, 13, "#c5ced8");
+  } else if (id === "heart") {
+    rect(p, 8, 10, 9, 9, PALETTE.wallMid); symbol(p, "heart", 12, 13, "#d97882");
+  } else if (ids.length === 1) {
+    symbol(p, ids[0], 12, 14, DOOR_COLORS[ids[0]]);
+  } else {
+    const positions = ids.length === 2 ? [[8, 14], [16, 14]] : [[7, 14], [12, 14], [17, 14]];
+    ids.forEach((lock, i) => symbol(p, lock, positions[i][0], positions[i][1], DOOR_COLORS[lock]));
+    if (ids.length === 3) rect(p, 5, 4, 14, 2, PALETTE.wallLight);
+  }
+  return p;
+}
+
 mkdirSync(OUT, { recursive: true });
 for (let i = 0; i < 4; i++) save(`floor_0${i + 1}.png`, floorTile(i));
 const roles = [
@@ -83,10 +132,22 @@ const roles = [
 ];
 for (let mask = 0; mask < 16; mask++) save(`wall_${roles[mask]}.png`, wallTile(mask, mask % 3));
 for (let i = 0; i < 3; i++) save(`wall_center_0${i + 1}.png`, wallTile(15, i));
+mkdirSync(join(OUT, "doors"), { recursive: true });
+const doorIds = ["a", "b", "c", "ab", "ac", "bc", "abc", "steel", "heart"];
+for (const id of doorIds) {
+  const oldOut = OUT;
+  const pixels = doorTile(id);
+  // save() targets the tileset root; move the completed bytes into doors/.
+  save(`door_${id}.png`, pixels);
+  const { renameSync } = await import("node:fs");
+  renameSync(join(oldOut, `door_${id}.png`), join(oldOut, "doors", `door_${id}.png`));
+}
 writeFileSync(join(OUT, "tileset.json"), JSON.stringify({
   tileSize: 24, palette: PALETTE, floor: ["floor_01.png", "floor_02.png", "floor_03.png", "floor_04.png"],
   wallBitOrder: { north: 1, east: 2, south: 4, west: 8 },
   walls: Object.fromEntries(roles.map((role, mask) => [mask, `wall_${role}.png`])),
   centerVariants: ["wall_center_01.png", "wall_center_02.png", "wall_center_03.png"],
+  doors: Object.fromEntries(doorIds.map((id) => [id, `doors/door_${id}.png`])),
+  doorSymbols: { a: "circle", b: "diamond", c: "triangle", steel: "four-point universal", heart: "heart crest" },
 }, null, 2) + "\n");
-console.log(`Generated 23 opaque 24x24 PNG tiles in ${OUT}`);
+console.log(`Generated 32 opaque 24x24 PNG tiles in ${OUT}`);

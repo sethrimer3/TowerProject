@@ -1,6 +1,7 @@
 import type { Run, Tile } from "./entities.ts";
 import { predict } from "./combat.ts";
 import { generateTowerRoom } from "./generation.ts";
+import { doorCost } from "./doors.ts";
 
 const DIRS = [[1,0], [-1,0], [0,1], [0,-1]];
 
@@ -61,7 +62,7 @@ export function isDeadlocked(run: Run): boolean {
       if (t.kind === "wall") continue;
 
       if (t.kind === "door") {
-        if (run.player.keys[t.color!]) return false; // Action available
+        if (doorCost(t, run.player) !== null) return false; // Action available
         continue;
       }
 

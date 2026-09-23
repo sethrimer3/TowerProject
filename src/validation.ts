@@ -1,6 +1,7 @@
 import type { Tile, Player } from "./entities.ts";
 import { predict } from "./combat.ts";
 import { point } from "./entities.ts";
+import { doorCost } from "./doors.ts";
 
 const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 
@@ -69,8 +70,9 @@ export function validatePhysicalLayout(
       let canPass = true;
 
       if (t.kind === "door") {
-        if (!next.keys[t.color!]) canPass = false;
-        else next.keys[t.color!]--;
+        const cost = doorCost(t, { keys: next.keys as Player["keys"], hp: next.hp, maxHp: startPlayer.maxHp });
+        if (cost === null) canPass = false;
+        else for (const color of cost) next.keys[color]--;
       } else if (t.kind === "key" && !curr.consumed.has(p)) {
         next.consumed = new Set(curr.consumed).add(p);
         next.keys[t.color!] = (next.keys[t.color!] || 0) + 1;
