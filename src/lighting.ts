@@ -40,6 +40,26 @@ export const LIGHTING_CONFIG = {
     /** Multiplier to extend ray coverage slightly past corners to soften occlusion edges */
     penumbraOffset: 0.12,
   },
+  /** Torch bump lighting on floor sprites (see floor-relief.ts). */
+  relief: {
+    /** Luminance (0-255) above which a sprite pixel counts as raised. */
+    heightThreshold: 38,
+    /** Relief reach relative to the torch light radius. */
+    radiusScale: 1.1,
+    /** Distance falloff exponent; higher keeps relief tighter to the flame. */
+    falloffPower: 1.3,
+    /** Flame height above the floor, in tiles. Larger = flatter look near the torch. */
+    torchHeight: 1.1,
+    /** Overall relief amount before per-layer strengths. */
+    strength: 1.4,
+    highlightStrength: 0.55,
+    shadowStrength: 0.6,
+    /** Grazing factor (0-1) at which the second shadow pixel starts to appear. */
+    longShadowStart: 0.85,
+    longShadowStrength: 0.6,
+    highlightColor: [255, 196, 128],
+    shadowColor: [6, 4, 12],
+  },
 };
 
 /** Computes smooth coherent flicker multiplier for a torch at a given timestamp.

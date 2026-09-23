@@ -5,8 +5,10 @@ import type { Tile, Torch } from "./entities.ts";
 import { drawForestTile, drawEntrance, OUTSIDE_SIZE } from "./outside.ts";
 import { OutdoorWeather } from "./weather.ts";
 import { LIGHTING_CONFIG, getTorchFlicker } from "./lighting.ts";
-import { drawArea1Door, drawArea1Item, drawArea1Tile } from "./area1-tileset.ts";
+import { area1FloorSprite, drawArea1Door, drawArea1Item, drawArea1Tile } from "./area1-tileset.ts";
+import { drawFloorRelief } from "./floor-relief.ts";
 import { doorColor } from "./doors.ts";
+import { drawEnemySprite } from "./enemy-sprites.ts";
 
 export interface AtmosphereConfig {
   /** Screen tint color for cool dungeon atmosphere (e.g. subtle purple-blue) */
@@ -61,6 +63,19 @@ export class Renderer {
    * Drawn via the same line as an in-progress walk whenever no walk is
    * actually underway (game.route takes priority when both are set). */
   previewRoute: Array<{ x: number; y: number }> | null = null;
+  /** Fixed polyline (tile centers) for the currently drawn golden path —
+   * recomputed only when a walk/preview starts, so its shape never changes
+   * mid-walk. pathProgress is a smoothed arclength (in tiles) consumed along
+   * it, advanced independently of the hero sprite's own interpolation so the
+   * line neither skips a tile at a time nor bends toward the sprite. */
+  pathPoints: Array<{ x: number; y: number }> | null = null;
+  pathProgress = 0;
+  private pathGoalKey: string | null = null;
+  private pathLastLen = 0;
+  private pathWasLive = false;
+  /** Torches near the viewport this frame, gathered before the tile pass so
+   * floor tiles can pick up torch relief. */
+  frameTorches: Torch[] = [];
   get density() {
     if (this.game.run.outside) return OUTSIDE_SIZE;
     return VIEWPORT_TILES;
@@ -141,6 +156,7 @@ export class Renderer {
       s = this.size;
     c.fillStyle = "#0b1017";
     c.fillRect(0, 0, box.width, box.width);
+    this.frameTorches = g.run.outside ? [] : this.visibleTorches();
     for (let row = -1; row <= n; row++)
       for (let col = -1; col <= n; col++) {
         const x = col + Math.floor(this.left),
@@ -160,11 +176,12 @@ export class Renderer {
       drawEntrance(c, g.mode, Math.floor(g.world.width / 2));
       c.restore();
     } else {
-      const torches = this.visibleTorches();
+      const torches = this.frameTorches;
       for (const t of torches) this.drawTorchSprite(t);
       // Render lighting overlay via offscreen lightmap
       this.drawDungeonLightmap(box.width, torches, now);
     }
+    this.updateRoutePath(dt);
     this.drawRoutePath(now);
     c.save();
     c.translate(
@@ -279,6 +296,9 @@ export class Renderer {
     if (!drewSprite)
       drawTerrain(c, t.kind === "wall", g.mode, g.run.height, x, y, g.run.seed, t.kind === "floor", neighbors);
     if (t.kind === "wall") return;
+    // Torch bump lighting on the floor sprite, beneath any tile contents.
+    const floorSprite = drewSprite && area1FloorSprite(x, y, g.run.seed);
+    if (floorSprite) drawFloorRelief(c, floorSprite, x, y, this.frameTorches, time, g.save.settings.reduceMotion);
     if (t.kind === "floor") return;
     
     if (t.kind === "oneway") {
@@ -481,6 +501,7 @@ export class Renderer {
     }
     const tier = t.enemy!.tier;
     this.groundShadow(12, 21, 8, 2.6, 0.4);
+    if (drawEnemySprite(c, t.enemy!.name)) return;
     this.withOutline(DARK_RED, (c) => {
       if (tier === 0) {
         c.fillStyle = "#568c45";
@@ -755,8 +776,46 @@ export class Renderer {
     c.fillRect(0, 0, viewportSize, viewportSize);
     c.restore();
   }
+  /** Recompute the fixed path polyline whenever a new walk/preview starts,
+   * and smoothly advance how much of it has been consumed. Called once per
+   * frame before drawRoutePath. */
+  updateRoutePath(dt: number) {
+    const g = this.game,
+      p = g.run.player,
+      live = g.route.length > 0,
+      source = live ? g.route : this.previewRoute;
+    if (!source || source.length === 0) {
+      this.pathPoints = null;
+      this.pathProgress = 0;
+      this.pathGoalKey = null;
+      this.pathLastLen = 0;
+      this.pathWasLive = live;
+      return;
+    }
+    const goal = source[source.length - 1],
+      goalKey = `${goal.x},${goal.y}`,
+      // route only ever shrinks by one step at a time while walking, so a
+      // length increase (or a flip from preview to live) means this is a
+      // freshly (re)confirmed walk and the fixed polyline must be rebuilt.
+      isNewWalk =
+        !this.pathPoints ||
+        this.pathGoalKey !== goalKey ||
+        (live && source.length > this.pathLastLen) ||
+        (live && !this.pathWasLive);
+    if (isNewWalk) {
+      this.pathPoints = [{ x: p.x, y: p.y }, ...source];
+      this.pathProgress = 0;
+      this.pathGoalKey = goalKey;
+    }
+    this.pathLastLen = source.length;
+    this.pathWasLive = live;
+    const consumed = Math.max(0, this.pathPoints!.length - 1 - source.length),
+      rate = 1 - Math.exp(-dt * 18);
+    this.pathProgress += (consumed - this.pathProgress) * rate;
+    if (Math.abs(consumed - this.pathProgress) < 0.01) this.pathProgress = consumed;
+  }
   drawRoutePath(now: number) {
-    const route = this.game.route.length ? this.game.route : this.previewRoute;
+    const route = this.pathPoints;
     if (!route || route.length === 0) return;
     const c = this.ctx,
       s = this.size,
@@ -774,17 +833,28 @@ export class Renderer {
     // Subtle pulsing gold glow
     const pulse = 0.85 + 0.15 * Math.sin(now / 200);
 
-    const segments: Array<Array<{ x: number; y: number }>> = [];
-    // Start the line at the hero's current interpolated visual position so
-    // it recedes behind the sprite as it walks, instead of at the (already
-    // consumed) next route step.
-    let currentSegment: Array<{ x: number; y: number }> = [
-      toTileScreen(this.playerX, this.playerY),
-    ];
-    let prevGrid = { x: this.playerX, y: this.playerY };
+    // Trim the fixed polyline at the smoothed arclength progress: the shape
+    // of every remaining point is untouched (no bending toward the sprite),
+    // only the leading edge slides continuously along the segment it falls
+    // within (no per-tile jumps).
+    const trimmed: Array<{ x: number; y: number }> = [];
+    let idx = Math.floor(this.pathProgress),
+      frac = this.pathProgress - idx;
+    if (idx >= route.length - 1) {
+      idx = route.length - 1;
+      frac = 0;
+    }
+    const from = route[idx],
+      to = route[Math.min(idx + 1, route.length - 1)];
+    trimmed.push({ x: from.x + (to.x - from.x) * frac, y: from.y + (to.y - from.y) * frac });
+    for (let i = idx + 1; i < route.length; i++) trimmed.push(route[i]);
 
-    for (let i = 0; i < route.length; i++) {
-      const step = route[i];
+    const segments: Array<Array<{ x: number; y: number }>> = [];
+    let currentSegment: Array<{ x: number; y: number }> = [toTileScreen(trimmed[0].x, trimmed[0].y)];
+    let prevGrid = trimmed[0];
+
+    for (let i = 1; i < trimmed.length; i++) {
+      const step = trimmed[i];
       const pt = toTileScreen(step.x, step.y);
       const isWrap = Math.abs(step.x - prevGrid.x) > 1 || Math.abs(step.y - prevGrid.y) > 1;
       if (isWrap) {

@@ -65,6 +65,11 @@ export function drawArea1Tile(c: CanvasRenderingContext2D, wall: boolean, x: num
   c.save(); c.imageSmoothingEnabled = false; c.drawImage(sprite, 0, 0, AREA1_TILE_SIZE, AREA1_TILE_SIZE); c.restore();
   return true;
 }
+/** The loaded floor sprite for a tile, or null while it's still loading. */
+export function area1FloorSprite(x: number, y: number, seed: number) {
+  const sprite = image(AREA1_FLOOR_URLS[floorVariant(x, y, seed)]);
+  return sprite?.complete && sprite.naturalWidth ? sprite : null;
+}
 export function drawArea1Door(c: CanvasRenderingContext2D, tile: Tile) {
   const sprite = image(AREA1_DOOR_URLS[doorId(tile)]);
   if (!sprite?.complete || !sprite.naturalWidth) return false;
