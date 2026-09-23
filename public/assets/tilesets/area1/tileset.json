@@ -1,0 +1,49 @@
+{
+  "tileSize": 24,
+  "palette": {
+    "floor": "#202a36",
+    "floorLight": "#2a3644",
+    "floorDark": "#171f2a",
+    "wall": "#536273",
+    "wallLight": "#718092",
+    "wallMid": "#465464",
+    "seam": "#283442",
+    "shadow": "#1b2530",
+    "accent": "#9b927f"
+  },
+  "floor": [
+    "floor_01.png",
+    "floor_02.png",
+    "floor_03.png",
+    "floor_04.png"
+  ],
+  "wallBitOrder": {
+    "north": 1,
+    "east": 2,
+    "south": 4,
+    "west": 8
+  },
+  "walls": {
+    "0": "wall_isolated.png",
+    "1": "wall_cap_n.png",
+    "2": "wall_cap_e.png",
+    "3": "wall_corner_ne.png",
+    "4": "wall_cap_s.png",
+    "5": "wall_vertical.png",
+    "6": "wall_corner_se.png",
+    "7": "wall_tee_e.png",
+    "8": "wall_cap_w.png",
+    "9": "wall_corner_nw.png",
+    "10": "wall_horizontal.png",
+    "11": "wall_tee_n.png",
+    "12": "wall_corner_sw.png",
+    "13": "wall_tee_w.png",
+    "14": "wall_tee_s.png",
+    "15": "wall_cross.png"
+  },
+  "centerVariants": [
+    "wall_center_01.png",
+    "wall_center_02.png",
+    "wall_center_03.png"
+  ]
+}

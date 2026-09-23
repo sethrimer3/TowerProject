@@ -5,6 +5,7 @@ import type { Tile, Torch } from "./entities.ts";
 import { drawForestTile, drawEntrance, OUTSIDE_SIZE } from "./outside.ts";
 import { OutdoorWeather } from "./weather.ts";
 import { LIGHTING_CONFIG, getTorchFlicker } from "./lighting.ts";
+import { drawArea1Tile } from "./area1-tileset.ts";
 
 export interface AtmosphereConfig {
   /** Screen tint color for cool dungeon atmosphere (e.g. subtle purple-blue) */
@@ -228,12 +229,19 @@ export class Renderer {
     const southWall = g.world.tile(x, y - 1)?.kind === "wall";
     const westWall = g.world.tile(x - 1, y)?.kind === "wall";
     const eastWall = g.world.tile(x + 1, y)?.kind === "wall";
-    drawTerrain(c, t.kind === "wall", g.mode, g.run.height, x, y, g.run.seed, t.kind === "floor", {
+    const neighbors = {
       northWall,
       southWall,
       westWall,
       eastWall,
-    });
+    };
+    // Area 1 is the first ten Tower rooms. Images load asynchronously; until
+    // ready (or if an asset fails), the established procedural path remains a
+    // complete fallback. Later themes deliberately keep that path for now.
+    const area1 = g.mode === "tower" && g.run.height >= 0 && g.run.height < 10;
+    const drewSprite = area1 && drawArea1Tile(c, t.kind === "wall", x, y, g.run.seed, neighbors);
+    if (!drewSprite)
+      drawTerrain(c, t.kind === "wall", g.mode, g.run.height, x, y, g.run.seed, t.kind === "floor", neighbors);
     if (t.kind === "wall") return;
     if (t.kind === "floor") return;
     
