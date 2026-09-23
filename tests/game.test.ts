@@ -212,6 +212,10 @@ test("old runs safely migrate topology while retaining earned stats and permanen
     g = new Game(save);
   g.save.upgrades.delve = 1;
   g.switchMode("delve");
+  // Migration expectations must not depend on the wall layout of a
+  // Date.now-derived seed selected by the test runner.
+  g.run.seed = 3;
+  g.world = new World(3, g.run.changes);
   g.run.layoutVersion = undefined;
   g.run.player.y = 27;
   g.run.height = 29;

@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Game } from '../src/state.ts';
 import { defaults, decode } from '../src/save.ts';
-import { RoomWorld } from '../src/generation.ts';
+import { RoomWorld, World } from '../src/generation.ts';
 import { chooseStep } from '../src/automation.ts';
 function arena() {
   const g = new Game(defaults());
@@ -76,6 +76,10 @@ test('delve vertical movement tracks current y while preserving maxHeight', () =
   const g = new Game(defaults());
   g.save.upgrades.delve = 1;
   g.switchMode('delve');
+  // Keep the two northward cells deterministic instead of relying on a
+  // Date.now-derived map that can occasionally place a wall in the route.
+  g.run.seed = 3;
+  g.world = new World(3, g.run.changes);
   assert.equal(g.run.player.y, 0);
   assert.equal(g.run.maxHeight, 0);
 
@@ -99,5 +103,4 @@ test('legacy balances and records migrate without retroactive duplication', () =
   const g = new Game(decode(JSON.stringify(old))); g.run.height=8; g.recordProgress();
   assert.equal(g.save.tower.shards,4); g.run.height=9; g.recordProgress(); assert.equal(g.save.tower.shards,5);
 });
-
 
