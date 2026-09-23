@@ -1,30 +1,92 @@
-import { ENEMY_ARCHETYPES, TOWER_SCALING, type EnemyArchetype } from "./config.ts";
+export type TowerEnemyProfile = "attackHeavy" | "balanced" | "defenseHeavy";
 
-export function getTowerEnemy(room: number, rng: () => number, forceArchetype?: EnemyArchetype) {
-  const hpBase = TOWER_SCALING.hp(room);
-  const atkBase = TOWER_SCALING.attack(room);
-  const defBase = TOWER_SCALING.defense(room);
+export type TowerEnemyDefinition = {
+  name: string;
+  profile: TowerEnemyProfile;
+  hp: number;
+  attack: number;
+  defense: number;
+};
 
-  const archetypes: EnemyArchetype[] = ["weak", "balanced", "tank", "brute", "glassCannon", "guardian"];
-  const archetype = forceArchetype || archetypes[Math.floor(rng() * archetypes.length)];
-  const mult = ENEMY_ARCHETYPES[archetype];
+/** Ten-room Tower zones. The roster repeats every 100 rooms. Base stats are
+ * deliberately hand-tuned whole numbers, increasing by roughly 50% between
+ * adjacent zones instead of looking like raw formula output. */
+export const TOWER_ZONE_ENEMIES: readonly (readonly TowerEnemyDefinition[])[] = [
+  [
+    { name: "Goblin", profile: "attackHeavy", hp: 18, attack: 9, defense: 1 },
+    { name: "Thief", profile: "balanced", hp: 20, attack: 6, defense: 2 },
+    { name: "Armored Knight", profile: "defenseHeavy", hp: 26, attack: 5, defense: 4 },
+  ],
+  [
+    { name: "Bat", profile: "attackHeavy", hp: 27, attack: 14, defense: 2 },
+    { name: "Slime", profile: "balanced", hp: 30, attack: 9, defense: 3 },
+    { name: "Stone Warden", profile: "defenseHeavy", hp: 39, attack: 7, defense: 6 },
+  ],
+  [
+    { name: "Assassin", profile: "attackHeavy", hp: 40, attack: 21, defense: 3 },
+    { name: "Skeleton", profile: "balanced", hp: 45, attack: 14, defense: 5 },
+    { name: "Golem", profile: "defenseHeavy", hp: 60, attack: 11, defense: 10 },
+  ],
+  [
+    { name: "Mage", profile: "attackHeavy", hp: 63, attack: 32, defense: 4 },
+    { name: "Orc", profile: "balanced", hp: 70, attack: 21, defense: 8 },
+    { name: "Gargoyle", profile: "defenseHeavy", hp: 90, attack: 17, defense: 16 },
+  ],
+  [
+    { name: "Berserker", profile: "attackHeavy", hp: 95, attack: 48, defense: 6 },
+    { name: "Ogre", profile: "balanced", hp: 105, attack: 32, defense: 12 },
+    { name: "Demon", profile: "defenseHeavy", hp: 140, attack: 25, defense: 24 },
+  ],
+  [
+    { name: "Cultist", profile: "attackHeavy", hp: 145, attack: 72, defense: 9 },
+    { name: "Crystal Savant", profile: "balanced", hp: 160, attack: 48, defense: 18 },
+    { name: "Amethyst Golem", profile: "defenseHeavy", hp: 210, attack: 38, defense: 36 },
+  ],
+  [
+    { name: "Drowned Marauder", profile: "attackHeavy", hp: 215, attack: 110, defense: 14 },
+    { name: "Temple Wraith", profile: "balanced", hp: 240, attack: 72, defense: 27 },
+    { name: "Coral Knight", profile: "defenseHeavy", hp: 310, attack: 58, defense: 54 },
+  ],
+  [
+    { name: "Sporeling", profile: "attackHeavy", hp: 325, attack: 165, defense: 20 },
+    { name: "Troll", profile: "balanced", hp: 360, attack: 110, defense: 40 },
+    { name: "Spore Colossus", profile: "defenseHeavy", hp: 470, attack: 88, defense: 80 },
+  ],
+  [
+    { name: "Shadow Stalker", profile: "attackHeavy", hp: 485, attack: 250, defense: 30 },
+    { name: "Obsidian Revenant", profile: "balanced", hp: 540, attack: 165, defense: 60 },
+    { name: "Blackstone Colossus", profile: "defenseHeavy", hp: 700, attack: 130, defense: 120 },
+  ],
+  [
+    { name: "Starfire Adept", profile: "attackHeavy", hp: 730, attack: 375, defense: 45 },
+    { name: "Dragon Whelp", profile: "balanced", hp: 810, attack: 250, defense: 90 },
+    { name: "Celestial Guardian", profile: "defenseHeavy", hp: 1050, attack: 200, defense: 180 },
+  ],
+] as const;
 
-  // Random names based on archetype
-  const names = {
-    weak: ["Goblin", "Slime", "Bat"],
-    balanced: ["Orc", "Skeleton", "Thief"],
-    tank: ["Golem", "Armored Knight", "Stone Warden"],
-    brute: ["Troll", "Ogre", "Berserker"],
-    glassCannon: ["Mage", "Assassin", "Cultist"],
-    guardian: ["Gargoyle", "Demon", "Dragon Whelp"]
-  };
-  const name = names[archetype][Math.floor(rng() * names[archetype].length)];
+/** One rotation is approximately ten 50% increases. A clean 60x multiplier
+ * keeps room 101 about 50% stronger than room 100. */
+export const TOWER_CYCLE_MULTIPLIER = 60;
 
+export function towerZoneIndex(room: number) {
+  return Math.floor(Math.max(0, room) / 10) % TOWER_ZONE_ENEMIES.length;
+}
+
+export function towerCycle(room: number) {
+  return Math.floor(Math.max(0, room) / 100);
+}
+
+export function getTowerEnemy(room: number, rng: () => number, forceProfile?: TowerEnemyProfile) {
+  const roster = TOWER_ZONE_ENEMIES[towerZoneIndex(room)];
+  const definition = forceProfile
+    ? roster.find((enemy) => enemy.profile === forceProfile)!
+    : roster[Math.floor(rng() * roster.length)];
+  const multiplier = TOWER_CYCLE_MULTIPLIER ** towerCycle(room);
   return {
-    name,
-    hp: Math.max(1, Math.floor(hpBase * mult.hp)),
-    attack: Math.max(0, Math.floor(atkBase * mult.attack)),
-    defense: Math.max(0, Math.floor(defBase * mult.defense)),
-    tier: 1 // visual/legacy tier
+    name: definition.name,
+    hp: definition.hp * multiplier,
+    attack: definition.attack * multiplier,
+    defense: definition.defense * multiplier,
+    tier: 1,
   };
 }

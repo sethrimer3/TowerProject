@@ -1,6 +1,6 @@
-import { TOWER_HEIGHT, TOWER_START_X, TOWER_WIDTH, type EnemyArchetype } from "../config.ts";
+import { TOWER_HEIGHT, TOWER_START_X, TOWER_WIDTH } from "../config.ts";
 import { point, type Tile } from "../entities.ts";
-import { getTowerEnemy } from "../scaling.ts";
+import { getTowerEnemy, type TowerEnemyProfile } from "../scaling.ts";
 import type { Gate, Reward, StrategicGraph, StrategicNode, Strength } from "./types.ts";
 
 /** Layer B: express a StrategicGraph on the 17x17 grid.
@@ -219,19 +219,17 @@ function assign(graph: StrategicGraph, rects: Rect[], neighbours: number[][], rn
 
 // ---------------------------------------------------------------- tiles
 
-const ARCHETYPES_FOR: Record<Strength, EnemyArchetype[]> = {
-  weak: ["weak"],
-  normal: ["balanced", "glassCannon", "tank"],
-  strong: ["brute", "guardian", "tank"],
-  elite: ["guardian"],
+const PROFILES_FOR: Record<Strength, TowerEnemyProfile[]> = {
+  weak: ["balanced"],
+  normal: ["attackHeavy", "balanced", "defenseHeavy"],
+  strong: ["attackHeavy", "defenseHeavy"],
+  elite: ["defenseHeavy"],
 };
-/** Strong and elite enemies are drawn from deeper on the scaling curve. */
-const DEPTH_OFFSET: Record<Strength, number> = { weak: 0, normal: 0, strong: 2, elite: 5 };
 
 export function enemyTile(strength: Strength, depth: number, rng: () => number): Tile {
-  const types = ARCHETYPES_FOR[strength];
-  const archetype = types[Math.floor(rng() * types.length)];
-  return { kind: "enemy", enemy: getTowerEnemy(depth + DEPTH_OFFSET[strength], rng, archetype) };
+  const profiles = PROFILES_FOR[strength];
+  const profile = profiles[Math.floor(rng() * profiles.length)];
+  return { kind: "enemy", enemy: getTowerEnemy(depth, rng, profile) };
 }
 
 export function gateTile(gate: Gate, depth: number, rng: () => number): Tile {

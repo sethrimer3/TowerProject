@@ -5,8 +5,8 @@ import { defaults, decode } from "../src/save.ts";
 import { RoomWorld, generateTowerRoom } from "../src/generation.ts";
 import { predict } from "../src/combat.ts";
 import { isDeadlocked } from "../src/analysis.ts";
-import { getTowerEnemy } from "../src/scaling.ts";
-import { ENEMY_ARCHETYPES, TOWER_SCALING, TOWER_START_X } from "../src/config.ts";
+import { getTowerEnemy, TOWER_CYCLE_MULTIPLIER, TOWER_ZONE_ENEMIES, towerZoneIndex } from "../src/scaling.ts";
+import { TOWER_START_X } from "../src/config.ts";
 import { point, type Tile } from "../src/entities.ts";
 
 /** A tiny, fully controlled 5x5 room so each test can hand-place exactly
@@ -165,7 +165,7 @@ test("multi-floor Tower state survives a save encode/decode round trip", () => {
   // that false deadlock at either position this test visits, so the run
   // never legitimately ends and the save/reload round trip is meaningful.
   // (Re-pinned for the strategic generator, TOWER_LAYOUT_VERSION 4.)
-  g.run.seed = 2;
+  g.run.seed = 1;
   (g.world as RoomWorld).cells.set(point(1, 0), { kind: "enemy", enemy: SURVIVABLE });
   assert.ok(g.move(1, 0, false));
   g.advanceTowerRoom();
@@ -231,29 +231,49 @@ test("a deadlock caused by an impervious bump also terminates the run harmlessly
 
 // ---------- Enemy scaling ----------
 
-test("Tower enemy stats come from the polynomial scaling curve, not a fixed tier table", () => {
-  const rng = () => 0.4; // stable "balanced" archetype pick
-  const low = getTowerEnemy(1, rng, "balanced");
-  const high = getTowerEnemy(50, rng, "balanced");
-  const veryHigh = getTowerEnemy(150, rng, "balanced");
-  assert.ok(high.hp > low.hp && high.attack > low.attack && high.defense > low.defense);
-  assert.ok(veryHigh.hp > high.hp && veryHigh.attack > high.attack && veryHigh.defense > high.defense);
-  assert.equal(low.hp, Math.max(1, Math.floor(TOWER_SCALING.hp(1) * ENEMY_ARCHETYPES.balanced.hp)));
+test("each ten-room Tower zone has one fixed enemy per combat profile", () => {
+  assert.equal(TOWER_ZONE_ENEMIES.length, 10);
+  for (const roster of TOWER_ZONE_ENEMIES) {
+    assert.equal(roster.length, 3);
+    assert.deepEqual(new Set(roster.map((enemy) => enemy.profile)), new Set(["attackHeavy", "balanced", "defenseHeavy"]));
+  }
+  for (let room = 0; room < 100; room++) assert.equal(towerZoneIndex(room), Math.floor(room / 10));
 });
 
-test("enemy archetypes apply distinct multipliers to the same base scaling", () => {
-  const rng = () => 0;
-  const tank = getTowerEnemy(40, rng, "tank");
-  const glass = getTowerEnemy(40, rng, "glassCannon");
-  assert.ok(tank.defense > glass.defense);
-  assert.ok(glass.attack > tank.attack);
+test("an enemy type has identical stats everywhere within its zone", () => {
+  for (let zone = 0; zone < 10; zone++) {
+    for (const profile of ["attackHeavy", "balanced", "defenseHeavy"] as const) {
+      const first = getTowerEnemy(zone * 10, () => 0, profile);
+      const last = getTowerEnemy(zone * 10 + 9, () => 0.99, profile);
+      assert.deepEqual(first, last);
+    }
+  }
 });
 
-test("enemy scaling keeps growing well past the old tier-3/room-15 cap, with no plateau", () => {
-  const rng = () => 0.4;
-  const a = getTowerEnemy(100, rng, "balanced"),
-    b = getTowerEnemy(300, rng, "balanced");
-  assert.ok(b.hp > a.hp * 2, `expected continued growth, got ${a.hp} -> ${b.hp}`);
+test("zone stats rise by roughly fifty percent and retain distinct profiles", () => {
+  for (let zone = 0; zone < 10; zone++) {
+    const attack = getTowerEnemy(zone * 10, () => 0, "attackHeavy");
+    const balanced = getTowerEnemy(zone * 10, () => 0, "balanced");
+    const defense = getTowerEnemy(zone * 10, () => 0, "defenseHeavy");
+    assert.ok(attack.attack > balanced.attack && attack.defense < balanced.defense);
+    assert.ok(defense.defense > balanced.defense && defense.attack < balanced.attack);
+    if (zone > 0) {
+      const previous = getTowerEnemy((zone - 1) * 10, () => 0, "balanced");
+      for (const stat of ["hp", "attack", "defense"] as const)
+        assert.ok(balanced[stat] / previous[stat] >= 1.35 && balanced[stat] / previous[stat] <= 1.7);
+    }
+  }
+});
+
+test("rooms after 100 reuse the roster with a whole-number cycle multiplier", () => {
+  for (const room of [0, 9, 27, 63, 99]) {
+    const base = getTowerEnemy(room, () => 0, "balanced");
+    const repeated = getTowerEnemy(room + 100, () => 0.99, "balanced");
+    assert.equal(repeated.name, base.name);
+    assert.equal(repeated.hp, base.hp * TOWER_CYCLE_MULTIPLIER);
+    assert.equal(repeated.attack, base.attack * TOWER_CYCLE_MULTIPLIER);
+    assert.equal(repeated.defense, base.defense * TOWER_CYCLE_MULTIPLIER);
+  }
 });
 
 test("Tower enemy scaling is deterministic for a given seed/rng sequence", () => {
