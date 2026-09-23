@@ -8,8 +8,10 @@ import {
   metalUnlocked,
   GEMS,
   METALS,
+  MATERIALS,
 } from "../src/materials.ts";
-import { rollEnemyDrops, rollGold, rollMetal, rollTreasureLoot } from "../src/loot.ts";
+import { rollEnemyDrops, rollGold, rollMetal, rollTreasureLoot, towerEnemyDrops } from "../src/loot.ts";
+import { TOWER_ZONE_ENEMIES } from "../src/scaling.ts";
 import { calculateEquipmentStats, getEquipmentBaseStats } from "../src/equipment.ts";
 import {
   canCraft,
@@ -75,6 +77,22 @@ test("enemy drops: common quantity is bounded 1-3, rare is always 1, unknown spe
 test("common and rare enemy-drop rolls are independent: both, neither, or either can occur", () => {
   assert.equal(rollEnemyDrops("Dusk wing", always([0, 0])).length, 2, "both succeed");
   assert.equal(rollEnemyDrops("Dusk wing", always([0.999, 0.999])).length, 0, "neither succeeds");
+});
+
+test("each Tower zone has one no-drop enemy, one common part, and one rare part", () => {
+  const towerDropIds = new Set<string>();
+  for (const zone of TOWER_ZONE_ENEMIES) {
+    const drops = zone.map((enemy) => towerEnemyDrops(enemy.name));
+    assert.deepEqual(drops.map((drop) => drop.length), [0, 1, 1]);
+    assert.equal(MATERIALS.find((m) => m.id === drops[1][0].id)?.category, "monster-common");
+    assert.equal(MATERIALS.find((m) => m.id === drops[2][0].id)?.category, "monster-rare");
+    towerDropIds.add(drops[1][0].id);
+    towerDropIds.add(drops[2][0].id);
+  }
+  const common = [...towerDropIds].filter((id) => MATERIALS.find((m) => m.id === id)?.category === "monster-common");
+  const rare = [...towerDropIds].filter((id) => MATERIALS.find((m) => m.id === id)?.category === "monster-rare");
+  assert.equal(common.length, 10);
+  assert.equal(rare.length, 10);
 });
 
 test("treasure chests always award gold and never upgrade gear directly", () => {
@@ -261,6 +279,22 @@ test("undo/re-kill the same physical enemy cannot duplicate its material drop", 
     g.move(0, 1);
   }
   assert.equal(g.save.materials.cinderSlimeBlob ?? 0, first, "lootedTiles blocks every re-grant for this physical tile");
+});
+
+test("Tower monster parts are guaranteed and cannot be duplicated with undo", () => {
+  const g = new Game(defaults());
+  g.run.seed = 1;
+  g.run.changes["9,0"] = { kind: "enemy", enemy: { name: "Thief", hp: 1, attack: 0, defense: 0, tier: 1 } };
+  g.world = new RoomWorld(g.run.seed, 0, g.run.changes);
+  g.run.player.x = 8; g.run.player.y = 0;
+  const before = g.snapshot();
+  assert.ok(g.move(1, 0));
+  assert.equal(g.save.materials.thievesTools, 1);
+  for (let i = 0; i < 3; i++) {
+    g.restore(before);
+    assert.ok(g.move(1, 0));
+  }
+  assert.equal(g.save.materials.thievesTools, 1);
 });
 
 test("undo/reopen the same treasure chest cannot duplicate its Gold/material payout", () => {

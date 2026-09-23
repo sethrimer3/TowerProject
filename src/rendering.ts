@@ -4,14 +4,14 @@ import type { Game } from "./state.ts";
 import type { Tile, Torch } from "./entities.ts";
 import { drawForestTile, drawEntrance, OUTSIDE_SIZE } from "./outside.ts";
 import { OutdoorWeather } from "./weather.ts";
-import { LIGHTING_CONFIG, getTorchFlicker } from "./lighting.ts";
+import { LIGHTING_CONFIG, getTorchFlicker, getTorchSway } from "./lighting.ts";
 import { area1FloorSprite, drawArea1Door, drawArea1Item } from "./area1-tileset.ts";
 import { drawThemedTile } from "./themed-tilesets.ts";
 import { bakeTorchRelief, torchReaches, type BakedRelief } from "./floor-relief.ts";
 import { bakeTorchLight, lightFalloff, type BakedLight } from "./torch-light.ts";
 import { doorColor } from "./doors.ts";
 import { drawEnemySprite } from "./enemy-sprites.ts";
-import { drawGameSprite } from "./game-sprites.ts";
+import { drawGameSprite, drawGameSpriteFrame, gameSprite, torchAnimationFrame, TORCH_FRAME_COUNT } from "./game-sprites.ts";
 
 /** Tile kinds that stand up off the floor and so cast torch shadows. */
 const SHADOW_CASTERS = new Set<Tile["kind"]>(["key", "potion", "attack", "defense", "reward", "treasure", "enemy"]);
@@ -213,7 +213,7 @@ export class Renderer {
       c.restore();
     } else {
       const torches = this.frameTorches;
-      for (const t of torches) this.drawTorchSprite(t);
+      for (const t of torches) this.drawTorchSprite(t, now);
       // Render lighting overlay via offscreen lightmap
       this.drawDungeonLightmap(box.width, torches, now);
     }
@@ -610,13 +610,17 @@ export class Renderer {
   toScreenY(wy: number) {
     return (this.density - (wy - this.bottom)) * this.size;
   }
-  /** Stationary torch + flame sprite. No vertical bob — the sprite never
-   * moves; only the light (see drawTorchLight) flickers. */
-  drawTorchSprite(t: Torch) {
+  /** Torch + a living flame: the flame stretches, shrinks, and leans side
+   * to side from its base (in step with the light's sway), and its core
+   * pulses with the light's flicker. The handle stays put. */
+  drawTorchSprite(t: Torch, now: number) {
     const c = this.ctx,
       s = this.size,
       sx = (t.x - this.left) * s,
       sy = (this.density - 1 - (t.y - this.bottom)) * s;
+    const reduceMotion = this.game.save.settings.reduceMotion;
+    const sway = getTorchSway(t, now, reduceMotion);
+    const flicker = getTorchFlicker(t, now, reduceMotion);
     // Small deterministic per-torch variation (flame height/width) so a room
     // full of torches doesn't read as one sprite stamped repeatedly.
     const jitter = tileRandom(t.x, t.y, 0x7a4c);
@@ -624,18 +628,44 @@ export class Renderer {
     const flameTopY = 13 - flameH;
     const flameW = jitter > 0.5 ? 6 : 5;
     const flameX = 12 - flameW / 2;
+    const spriteFrames = !this.game.save.settings.spritesOff && !!gameSprite("torchFrames");
+    const frame = torchAnimationFrame(t.x, t.y, now, reduceMotion);
+    // Flame base in tile space (the PNG's flame meets its handle at row 36 of 96).
+    const baseX = 12, baseY = spriteFrames ? 9 : 13, height = spriteFrames ? 9 : flameH;
+    const leanPx = sway.x * 24 * 1.4;
+    const bend = (c: CanvasRenderingContext2D) => {
+      // Stretch vertically about the base and shear so the tip leans.
+      c.translate(baseX, baseY);
+      c.transform(1 / Math.sqrt(sway.stretch), 0, -leanPx / height, sway.stretch, 0, 0);
+      c.translate(-baseX, -baseY);
+    };
     c.save();
     c.translate(sx, sy);
     c.scale(s / 24, s / 24);
     this.withOutline(DARK_ORANGE, (c) => {
-      if (!this.game.save.settings.spritesOff && drawGameSprite(c, "torch")) return;
+      c.imageSmoothingEnabled = false;
+      if (spriteFrames && drawGameSpriteFrame(c, "torchFrames", frame, TORCH_FRAME_COUNT)) {
+        return;
+      }
       c.fillStyle = "#59412c";
       c.fillRect(10, 10, 4, 10);
+      c.save();
+      bend(c);
       c.fillStyle = "#df7b32";
       c.fillRect(flameX, flameTopY, flameW, flameH);
       c.fillStyle = "#ffe3a0";
       c.fillRect(11, flameTopY + 1, 3, flameH - 2);
+      c.restore();
     });
+    // Hot core glow that pulses with the flicker, following the lean.
+    const coreX = baseX + leanPx * 0.45, coreY = baseY - height * 0.45 * sway.stretch;
+    const pulse = Math.max(0, Math.min(1, 0.45 + (flicker - 1) * 5));
+    const gr = c.createRadialGradient(coreX, coreY, 0, coreX, coreY, 6);
+    gr.addColorStop(0, `rgba(255, 236, 170, ${0.55 * pulse})`);
+    gr.addColorStop(1, "rgba(255, 160, 60, 0)");
+    c.globalCompositeOperation = "lighter";
+    c.fillStyle = gr;
+    c.fillRect(coreX - 6, coreY - 6, 12, 12);
     c.restore();
   }
   /** Enumerates wall tiles currently within the viewport, in the same grid
@@ -750,11 +780,13 @@ export class Renderer {
     const bake = this.torchBake(t);
     if (!bake) return;
     const flicker = getTorchFlicker(t, now, reduceMotion);
+    const sway = getTorchSway(t, now, reduceMotion);
     const f = bake.field;
     const grow = 1 + (flicker - 1) * LIGHTING_CONFIG.glow.radiusFlicker;
     const cx = this.toScreenX(t.x + 0.5), cy = this.toScreenY(t.y + 0.5);
-    const x0 = cx + (this.toScreenX(f.left) - cx) * grow;
-    const y0 = cy + (this.toScreenY(f.top) - cy) * grow;
+    // Grow about the torch, then shift the whole pool with the flame's sway.
+    const x0 = cx + (this.toScreenX(f.left) - cx) * grow + sway.x * this.size;
+    const y0 = cy + (this.toScreenY(f.top) - cy) * grow - sway.y * this.size;
     const size = f.tiles * this.size * grow;
     c.globalCompositeOperation = op;
     c.globalAlpha = Math.min(1, alpha * flicker);
@@ -823,7 +855,9 @@ export class Renderer {
     let layer: CanvasRenderingContext2D | null = null;
     for (const caster of casters) {
       for (const t of torches) {
-        const dx = caster.x - t.x, dy = caster.y - t.y;
+        // Shadows swing gently as the flame sways.
+        const sway = getTorchSway(t, now, reduceMotion);
+        const dx = caster.x - t.x - sway.x, dy = caster.y - t.y - sway.y;
         const d = Math.hypot(dx, dy);
         if (d < 0.5 || d >= t.lightRadius) continue;
         if (!torchReaches(t, Math.round(caster.x), Math.round(caster.y))) continue;
@@ -918,8 +952,9 @@ export class Renderer {
   drawTorchHaze(c: CanvasRenderingContext2D, t: Torch, now: number, reduceMotion: boolean) {
     const atm = this.atmosphere;
     const flicker = getTorchFlicker(t, now, reduceMotion);
-    const cx = this.toScreenX(t.x + 0.5),
-      cy = this.toScreenY(t.y + 0.5),
+    const sway = getTorchSway(t, now, reduceMotion);
+    const cx = this.toScreenX(t.x + 0.5 + sway.x),
+      cy = this.toScreenY(t.y + 0.5 + sway.y),
       hazeRadius = t.lightRadius * this.size * atm.torchHazeRadius * flicker,
       alpha = atm.torchHazeStrength * t.baseIntensity * flicker;
     if (alpha <= 0 || hazeRadius <= 0) return;
