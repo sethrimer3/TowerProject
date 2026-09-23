@@ -86,6 +86,9 @@ export class Renderer {
   /** Baked per-torch glow, computed once since walls never move. */
   torchBakes = new WeakMap<Torch, BakedLight | null>();
   shadowCanvas: HTMLCanvasElement | null = null;
+  /** Opaque wall tiles for the current camera, used to mask darkness and
+   * shadows off walls with a single blit. Rebuilt only when the view moves. */
+  wallMask: { canvas: HTMLCanvasElement; key: string; world: unknown } | null = null;
   /** Black cut-outs of item/enemy/hero sprites used for torch-cast shadows.
    * Rebaked after a short while so sprites that finish loading are picked up. */
   silhouettes = new Map<string, { canvas: HTMLCanvasElement; at: number }>();
@@ -699,9 +702,8 @@ export class Renderer {
     // ever dim walkable floor, not the architecture around it).
     lm.globalCompositeOperation = "destination-out";
     lm.globalAlpha = 1;
-    for (const [wx, wy] of this.frameWalls) {
-      lm.fillRect(this.toScreenX(wx), this.toScreenY(wy + 1), this.size, this.size);
-    }
+    const walls = this.wallMaskCanvas(viewportSize);
+    if (walls) lm.drawImage(walls, 0, 0);
 
     // 4. Torchlight carves the darkness away where it falls...
     const glow = LIGHTING_CONFIG.glow;
@@ -787,7 +789,8 @@ export class Renderer {
         if (d < 0.5 || d >= t.lightRadius) continue;
         if (!torchReaches(t, Math.round(caster.x), Math.round(caster.y))) continue;
         const flicker = getTorchFlicker(t, now, reduceMotion);
-        const alpha = cfg.strength * lightFalloff(d, t.lightRadius) * flicker;
+        // Shadows fade more gently than the light itself so they stay readable.
+        const alpha = cfg.strength * Math.sqrt(lightFalloff(d, t.lightRadius)) * flicker;
         if (alpha < 0.02) continue;
         const sil = this.silhouette(caster.key, caster.draw, now);
         if (!sil) continue;
@@ -810,10 +813,24 @@ export class Renderer {
     layer.setTransform(1, 0, 0, 1, 0, 0);
     layer.globalAlpha = 1;
     layer.globalCompositeOperation = "destination-out";
-    for (const [wx, wy] of this.frameWalls)
-      layer.fillRect(this.toScreenX(wx), this.toScreenY(wy + 1), this.size, this.size);
+    const walls = this.wallMaskCanvas(viewportSize);
+    if (walls) layer.drawImage(walls, 0, 0);
     layer.globalCompositeOperation = "source-over";
     this.ctx.drawImage(this.shadowCanvas!, 0, 0);
+  }
+  wallMaskCanvas(viewportSize: number) {
+    const key = `${this.left},${this.bottom},${this.size},${viewportSize}`;
+    const world = this.game.world;
+    if (this.wallMask?.key === key && this.wallMask.world === world) return this.wallMask.canvas;
+    const canvas = this.wallMask?.canvas ?? document.createElement("canvas");
+    canvas.width = canvas.height = viewportSize;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    ctx.beginPath();
+    for (const [wx, wy] of this.frameWalls) ctx.rect(this.toScreenX(wx), this.toScreenY(wy + 1), this.size, this.size);
+    ctx.fill();
+    this.wallMask = { canvas, key, world };
+    return canvas;
   }
   ensureShadowLayer(viewportSize: number) {
     this.shadowCanvas ??= document.createElement("canvas");

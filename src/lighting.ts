@@ -56,7 +56,7 @@ export const LIGHTING_CONFIG = {
   /** Torch-cast shadows from items, enemies, and the player. */
   shadow: {
     /** Peak opacity of a shadow cast right next to a torch. */
-    strength: 0.55,
+    strength: 0.7,
     /** Shadow length (in sprite heights) right beside a torch... */
     minLength: 0.45,
     /** ...growing this much per tile of distance... */
