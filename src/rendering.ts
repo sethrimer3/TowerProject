@@ -6,7 +6,7 @@ import { drawForestTile, drawEntrance, OUTSIDE_SIZE } from "./outside.ts";
 import { OutdoorWeather } from "./weather.ts";
 import { LIGHTING_CONFIG, getTorchFlicker } from "./lighting.ts";
 import { area1FloorSprite, drawArea1Door, drawArea1Item, drawArea1Tile } from "./area1-tileset.ts";
-import { drawFloorRelief, torchReaches } from "./floor-relief.ts";
+import { bakeTorchRelief, torchReaches, type BakedRelief } from "./floor-relief.ts";
 import { bakeTorchLight, lightFalloff, type BakedLight } from "./torch-light.ts";
 import { doorColor } from "./doors.ts";
 import { drawEnemySprite } from "./enemy-sprites.ts";
@@ -85,6 +85,9 @@ export class Renderer {
   frameWalls: [number, number][] = [];
   /** Baked per-torch glow, computed once since walls never move. */
   torchBakes = new WeakMap<Torch, BakedLight | null>();
+  reliefBakes = new WeakMap<Torch, BakedRelief | null>();
+  /** Torch bakes cost a few ms each; spread them over frames on room entry. */
+  bakeBudget = 0;
   shadowCanvas: HTMLCanvasElement | null = null;
   /** Opaque wall tiles for the current camera, used to mask darkness and
    * shadows off walls with a single blit. Rebuilt only when the view moves. */
@@ -173,6 +176,7 @@ export class Renderer {
     c.fillStyle = "#0b1017";
     c.fillRect(0, 0, box.width, box.width);
     this.frameTorches = g.run.outside ? [] : this.visibleTorches();
+    this.bakeBudget = 2;
     this.frameWalls = g.run.outside ? [] : this.visibleWallTiles();
     // Ground first, then torch-cast shadows, then tile contents on top, so
     // shadows fall across the floor but never over the things casting them.
@@ -193,7 +197,10 @@ export class Renderer {
         }
     };
     eachTile(0);
-    if (!g.run.outside) this.drawEntityShadows(box.width, now);
+    if (!g.run.outside) {
+      this.drawTorchRelief(now);
+      this.drawEntityShadows(box.width, now);
+    }
     eachTile(1);
     if (g.run.outside) {
       c.save();
@@ -334,9 +341,6 @@ export class Renderer {
     if (!drewSprite)
       drawTerrain(c, t.kind === "wall", g.mode, g.run.height, x, y, g.run.seed, t.kind === "floor", neighbors);
     if (t.kind === "wall") return;
-    // Torch bump lighting on the floor sprite, beneath any tile contents.
-    const floorSprite = drewSprite && area1FloorSprite(x, y, g.run.seed);
-    if (floorSprite) drawFloorRelief(c, floorSprite, x, y, this.frameTorches, time, g.save.settings.reduceMotion);
   }
   contents(t: Tile, x: number, y: number, time: number, area1: boolean) {
     const c = this.ctx;
@@ -727,6 +731,8 @@ export class Renderer {
   torchBake(t: Torch) {
     let bake = this.torchBakes.get(t);
     if (bake === undefined) {
+      if (this.bakeBudget <= 0) return null;
+      this.bakeBudget--;
       const world = this.game.world;
       bake = bakeTorchLight(t, (x, y) => world.tile(x, y)?.kind === "wall");
       this.torchBakes.set(t, bake);
@@ -752,6 +758,37 @@ export class Renderer {
     c.globalAlpha = Math.min(1, alpha * flicker);
     c.imageSmoothingEnabled = true;
     c.drawImage(bake.canvas, x0, y0, size, size);
+  }
+
+  /** Torch bump lighting on area-one floor sprites (see floor-relief.ts):
+   * each torch's relief is baked once, then blitted with its flicker. */
+  drawTorchRelief(now: number) {
+    const g = this.game;
+    if (!(g.mode === "tower" && g.run.height >= 0 && g.run.height < 10)) return;
+    const c = this.ctx, reduceMotion = g.save.settings.reduceMotion;
+    const floorSprite = (x: number, y: number) =>
+      g.world.tile(x, y)?.kind === "wall" ? null : area1FloorSprite(x, y, g.run.seed) ?? undefined;
+    c.save();
+    c.imageSmoothingEnabled = false;
+    for (const t of this.frameTorches) {
+      let bake = this.reliefBakes.get(t);
+      if (bake === undefined) {
+        if (this.bakeBudget <= 0) continue;
+        bake = bakeTorchRelief(t, floorSprite);
+        if (bake === undefined) continue; // sprites still loading; retry next frame (cheap early exit)
+        this.bakeBudget--;
+        this.reliefBakes.set(t, bake);
+      }
+      if (!bake) continue;
+      const flicker = getTorchFlicker(t, now, reduceMotion);
+      const x0 = this.toScreenX(bake.left), y0 = this.toScreenY(bake.top), size = bake.tiles * this.size;
+      c.globalAlpha = Math.min(1, flicker);
+      c.globalCompositeOperation = "source-over";
+      c.drawImage(bake.shadow, x0, y0, size, size);
+      c.globalCompositeOperation = "lighter";
+      c.drawImage(bake.highlight, x0, y0, size, size);
+    }
+    c.restore();
   }
 
   /** Torch-cast shadows for items, enemies, and the hero. Each caster's

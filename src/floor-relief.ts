@@ -1,5 +1,5 @@
 import type { Torch } from "./entities.ts";
-import { LIGHTING_CONFIG, getTorchFlicker } from "./lighting.ts";
+import { LIGHTING_CONFIG } from "./lighting.ts";
 
 /** Torch-driven bump lighting for pixel-art floor sprites.
  *
@@ -12,8 +12,8 @@ import { LIGHTING_CONFIG, getTorchFlicker } from "./lighting.ts";
  *    darkening of block edges that face away from the flame;
  *  - shadowFar: the second groove pixel, only shown at grazing angles so
  *    grooves read deeper toward the edge of the light pool.
- * At draw time each lit floor tile blends the layers facing its torches,
- * weighted by direction, falloff, and grazing angle. */
+ * Each torch then bakes the layers facing it onto every floor tile in reach,
+ * weighted by direction, falloff, and grazing angle (see bakeTorchRelief). */
 
 export const RELIEF_SIZE = 24;
 /** Direction toward the torch, in tile pixel space (y grows downward). */
@@ -156,51 +156,66 @@ export function torchReaches(t: Torch, x: number, y: number) {
   return lit;
 }
 
-/** Draws torch relief for one floor tile into a context already transformed
- * to the tile's 24x24 space. */
-export function drawFloorRelief(
-  c: CanvasRenderingContext2D,
-  sprite: HTMLImageElement,
-  x: number,
-  y: number,
-  torches: Torch[],
-  now: number,
-  reduceMotion: boolean,
-) {
-  if (!torches.length) return;
+export type BakedRelief = {
+  /** Groove shadows, composited normally. */
+  shadow: HTMLCanvasElement;
+  /** Edge highlights, composited additively. */
+  highlight: HTMLCanvasElement;
+  /** World x of the left edge, world y of the top edge (world y grows up). */
+  left: number;
+  top: number;
+  tiles: number;
+};
+
+/** Bakes one torch's relief over every floor tile it reaches into two
+ * canvases at sprite resolution (24px per tile). Torches and walls never
+ * move, so this runs once per torch and each frame is just two blits
+ * (with flicker applied as alpha). Returns undefined while any floor sprite
+ * in range is still loading, so the caller can retry on a later frame. */
+export function bakeTorchRelief(
+  t: Torch,
+  floorSprite: (x: number, y: number) => HTMLImageElement | null | undefined,
+): BakedRelief | null | undefined {
+  if (typeof document === "undefined") return null;
   const cfg = LIGHTING_CONFIG.relief;
-  const sums: Record<ReliefDir, { light: number; far: number }> = {
-    e: { light: 0, far: 0 }, w: { light: 0, far: 0 }, n: { light: 0, far: 0 }, s: { light: 0, far: 0 },
+  const reach = Math.ceil(t.lightRadius * cfg.radiusScale) + 1;
+  const tiles = reach * 2 + 1, left = t.x - reach, bottom = t.y - reach, top = bottom + tiles;
+  const size = tiles * RELIEF_SIZE;
+  const make = () => {
+    const cv = document.createElement("canvas");
+    cv.width = cv.height = size;
+    const ctx = cv.getContext("2d")!;
+    ctx.imageSmoothingEnabled = false;
+    return { cv, ctx };
   };
+  const sh = make(), hi = make();
+  hi.ctx.globalCompositeOperation = "lighter";
   let any = false;
-  for (const t of torches) {
-    const w = reliefWeights(x, y, t, getTorchFlicker(t, now, reduceMotion));
-    if (!w || !torchReaches(t, x, y)) continue;
-    for (const dir of RELIEF_DIRS) {
-      sums[dir.key].light += w[dir.key];
-      sums[dir.key].far += w[dir.key] * w.far;
+  for (let y = bottom; y < top; y++)
+    for (let x = left; x < left + tiles; x++) {
+      const w = reliefWeights(x, y, t);
+      if (!w || !torchReaches(t, x, y)) continue;
+      const sprite = floorSprite(x, y);
+      if (sprite === undefined) return undefined;
+      if (!sprite) continue;
+      const layers = layersFor(sprite);
+      if (!layers) continue;
+      const px = (x - left) * RELIEF_SIZE, py = (top - 1 - y) * RELIEF_SIZE;
+      for (const dir of RELIEF_DIRS) {
+        const light = w[dir.key];
+        if (light < 0.01) continue;
+        const l = layers[dir.key];
+        sh.ctx.globalAlpha = Math.min(1, light * cfg.shadowStrength);
+        sh.ctx.drawImage(l.shadow, px, py);
+        const far = light * w.far;
+        if (far > 0.01) {
+          sh.ctx.globalAlpha = Math.min(1, far * cfg.shadowStrength * cfg.longShadowStrength);
+          sh.ctx.drawImage(l.shadowFar, px, py);
+        }
+        hi.ctx.globalAlpha = Math.min(1, light * cfg.highlightStrength);
+        hi.ctx.drawImage(l.highlight, px, py);
+      }
+      any = true;
     }
-    any = true;
-  }
-  if (!any) return;
-  const layers = layersFor(sprite);
-  if (!layers) return;
-  c.save();
-  c.imageSmoothingEnabled = false;
-  for (const dir of RELIEF_DIRS) {
-    const { light, far } = sums[dir.key];
-    if (light < 0.01) continue;
-    const l = layers[dir.key];
-    c.globalCompositeOperation = "source-over";
-    c.globalAlpha = Math.min(1, light * cfg.shadowStrength);
-    c.drawImage(l.shadow, 0, 0, RELIEF_SIZE, RELIEF_SIZE);
-    if (far > 0.01) {
-      c.globalAlpha = Math.min(1, far * cfg.shadowStrength * cfg.longShadowStrength);
-      c.drawImage(l.shadowFar, 0, 0, RELIEF_SIZE, RELIEF_SIZE);
-    }
-    c.globalCompositeOperation = "lighter";
-    c.globalAlpha = Math.min(1, light * cfg.highlightStrength);
-    c.drawImage(l.highlight, 0, 0, RELIEF_SIZE, RELIEF_SIZE);
-  }
-  c.restore();
+  return any ? { shadow: sh.cv, highlight: hi.cv, left, top, tiles } : null;
 }
