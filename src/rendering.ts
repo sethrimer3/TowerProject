@@ -497,6 +497,21 @@ export class Renderer {
     c.fillRect(11, flameTopY + 1, 3, flameH - 2);
     c.restore();
   }
+  /** Enumerates wall tiles currently within the viewport, in the same grid
+   * range used by draw()'s tile loop, so the darkness mask can exclude them. */
+  visibleWallTiles(): [number, number][] {
+    const g = this.game,
+      n = this.density;
+    const walls: [number, number][] = [];
+    for (let row = -1; row <= n; row++)
+      for (let col = -1; col <= n; col++) {
+        const x = col + Math.floor(this.left),
+          y = Math.floor(this.bottom) + row;
+        if (y < 0) continue;
+        if (g.world.tile(x, y)?.kind === "wall") walls.push([x, y]);
+      }
+    return walls;
+  }
   /** Creates or resizes an offscreen canvas for rendering the composite lightmap. */
   ensureLightmap(viewportSize: number) {
     if (!this.lightmapCanvas) {
@@ -537,6 +552,17 @@ export class Renderer {
         lm.fillRect(0, 0, viewportSize, viewportSize);
         lm.restore();
       }
+
+      // 3b. Punch the darkness mask out over structural walls so they stay
+      // fully readable regardless of torch proximity (darkness should only
+      // ever dim walkable floor, not the architecture around it).
+      lm.save();
+      lm.globalCompositeOperation = "destination-out";
+      lm.globalAlpha = 1;
+      for (const [wx, wy] of this.visibleWallTiles()) {
+        lm.fillRect(this.toScreenX(wx), this.toScreenY(wy + 1), this.size, this.size);
+      }
+      lm.restore();
 
       // 4. Render soft torch haze (diffuse glow into surrounding air)
       if (atm.torchHazeStrength > 0) {

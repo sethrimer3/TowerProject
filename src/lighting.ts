@@ -6,7 +6,7 @@ export const LIGHTING_CONFIG = {
    * A subtle dark-purple tone that keeps the dungeon fully readable without torches. */
   ambient: {
     color: "#181226", // Dark purple tint
-    opacity: 0.20,    // Brighter base ambient so the dungeon reads without torches at all
+    opacity: 0.20,    // Floor-only darkness pass (walls are excluded entirely, see drawDungeonLightmap)
   },
   /** Default torch properties when placed in generation */
   torch: {
