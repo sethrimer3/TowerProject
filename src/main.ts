@@ -72,7 +72,6 @@ let inventoryFilter: EquipmentSlot | "all" = "all";
 let craftSlot: EquipmentSlot = "weapon";
 let craftMetal: MetalId = "iron";
 let craftEnhancements: MaterialStack[] = [];
-let selected: { x: number; y: number } | null = null;
 const el = (id: string) => document.getElementById(id)!;
 const text = (id: string, value: unknown) =>
   (el(id).textContent = String(value));
@@ -81,26 +80,6 @@ function save() {
   if (!persist(game.save))
     game.message =
       "Storage unavailable — progress is only kept for this session.";
-}
-function inspect(x: number, y: number) {
-  selected = { x, y };
-  const t = game.world.tile(x, y),
-    p = game.run.player;
-  if (t.kind === "enemy") {
-    const e = t.enemy!,
-      r = predict(p, e);
-    el("inspect").innerHTML =
-      `<b>${e.name}</b><span>HP ${e.hp} · ATK ${e.attack} · DEF ${e.defense}</span><strong class="${r.survivable ? "safe" : "danger"}">${r.damage} damage · ${r.survivable ? "Survivable" : "LETHAL"}</strong>`;
-  } else {
-    el("inspect").textContent =
-      t.kind === "wall"
-        ? "Ancient stone. Find a passage around it."
-        : t.kind === "door"
-          ? `${doorName(t)} · ${doorDescription(t)}`
-          : game.mode === "delve"
-            ? (t.kind[0].toUpperCase() + t.kind.slice(1))
-            : `${t.kind[0].toUpperCase() + t.kind.slice(1)} · row ${y}`;
-  }
 }
 const KIND_COLORS: Partial<Record<Kind, string>> = {
   wall: "#8d97a8",
@@ -161,7 +140,6 @@ function positionInspectBox(x: number, y: number) {
   box.style.top = `${top}px`;
 }
 function showInspectBox(x: number, y: number) {
-  selected = { x, y };
   const d = inspectDetails(x, y),
     box = el("inspect-box");
   box.innerHTML = `<b style="color:${d.color}">${d.title}</b><div>${d.body}</div>`;
@@ -172,11 +150,9 @@ function showInspectBox(x: number, y: number) {
 function hideInspectBox() {
   el("inspect-box").hidden = true;
   inspectBoxVisible = false;
-  hideTileHighlight();
 }
 let highlighted: { x: number; y: number } | null = null;
 let highlightFadeTimer: ReturnType<typeof setTimeout> | undefined;
-let previewRoute: { x: number; y: number }[] | null = null;
 function tileRect(x: number, y: number) {
   const frame = el("board-frame"),
     frameRect = frame.getBoundingClientRect(),
@@ -186,21 +162,6 @@ function tileRect(x: number, y: number) {
     left = canvasRect.left - frameRect.left + (x - renderer.left) * s,
     top = canvasRect.top - frameRect.top + (n - 1 - (y - renderer.bottom)) * s;
   return { left, top, s };
-}
-function renderGoldenPath(steps: { x: number; y: number }[] | null) {
-  const frame = el("board-frame");
-  frame.querySelectorAll(".golden-path-tile").forEach((n) => n.remove());
-  if (!steps || !steps.length) return;
-  for (const step of steps) {
-    const { left, top, s } = tileRect(step.x, step.y),
-      dot = document.createElement("div");
-    dot.className = "golden-path-tile";
-    dot.style.left = `${left}px`;
-    dot.style.top = `${top}px`;
-    dot.style.width = `${s}px`;
-    dot.style.height = `${s}px`;
-    frame.appendChild(dot);
-  }
 }
 function showTileHighlight(x: number, y: number) {
   highlighted = { x, y };
@@ -217,7 +178,8 @@ function showTileHighlight(x: number, y: number) {
 }
 function hideTileHighlight() {
   highlighted = null;
-  previewRoute = null;
+  renderer.previewRoute = null;
+  hideInspectBox();
   const glow = el("tile-highlight");
   if (glow.hidden) return;
   glow.classList.remove("active");
@@ -229,16 +191,16 @@ function hideTileHighlight() {
   }, 300);
 }
 function onTap(x: number, y: number) {
-  if (game.save.settings.showInfoBoxes === false) hideInspectBox();
-  else showInspectBox(x, y);
   const already = !!(highlighted && highlighted.x === x && highlighted.y === y);
   if (game.save.settings.oneTapMove || already) {
     hideTileHighlight();
     game.walkTo(x, y);
   } else {
     showTileHighlight(x, y);
+    if (game.save.settings.showInfoBoxes === false) hideInspectBox();
+    else showInspectBox(x, y);
     const route = game.previewRoute(x, y);
-    previewRoute = route && route.length ? route.map((s) => ({ x: s.x, y: s.y })) : null;
+    renderer.previewRoute = route && route.length ? route.map((s) => ({ x: s.x, y: s.y })) : null;
   }
 }
 function update() {
@@ -246,9 +208,6 @@ function update() {
   const p = game.run.player,
     slice = game.save[game.mode];
   if (highlighted && highlighted.x === p.x && highlighted.y === p.y) hideTileHighlight();
-  if (game.route.length) renderGoldenPath(game.route.map((s) => ({ x: s.x, y: s.y })));
-  else if (highlighted && previewRoute) renderGoldenPath(previewRoute);
-  else renderGoldenPath(null);
   text("hp", `${p.hp} / ${p.maxHp}`);
   text("attack", p.attack);
   text("defense", p.defense);
@@ -339,7 +298,7 @@ function renderBoard() {
     const labels = { cloudy: "CLOUDY", sunny: "SUNNY", rain: "RAINING", storm: "THUNDERSTORM" };
     text("board-subtitle", `FOREST CLEARING · ${labels[outsideWeather(game.run.seed)]}`);
     el("inspect").textContent = "Follow the forest path and step onto the entrance at the top to begin again.";
-    hideInspectBox();
+    hideTileHighlight();
     return;
   }
   text("board-title", game.mode === "tower" ? "THE ASCENT TRIALS" : "THE HOLLOW SPIRE");
@@ -350,7 +309,7 @@ function renderBoard() {
       : "HIGHER DANGERS · GREATER REWARDS",
   );
   el("inspect").textContent = "";
-  hideInspectBox();
+  hideTileHighlight();
 }
 function navigate(id: string) {
   if (id === "delve" && !game.save.upgrades.delve) {
@@ -715,7 +674,7 @@ el("auto").onclick = () => {
   update();
 };
 el("undo").onclick = () => {
-  hideInspectBox();
+  hideTileHighlight();
   game.undo();
   update();
 };
@@ -727,13 +686,7 @@ bindInput(
   renderer,
   onTap,
   () => {
-    if (selected) {
-      const stillEnemy = game.world.tile(selected.x, selected.y).kind === "enemy";
-      if (inspectBoxVisible) {
-        if (stillEnemy) showInspectBox(selected.x, selected.y);
-        else hideInspectBox();
-      } else if (stillEnemy) inspect(selected.x, selected.y);
-    }
+    if (highlighted && inspectBoxVisible) showInspectBox(highlighted.x, highlighted.y);
     update();
   },
   () => isBoard(tab),

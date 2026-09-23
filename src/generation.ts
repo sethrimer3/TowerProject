@@ -1,4 +1,3 @@
-import { validatePhysicalLayout } from "./validation.ts";
 import {
   CHUNK,
   WIDTH,
@@ -7,16 +6,13 @@ import {
   TOWER_HEIGHT,
   TOWER_START_X,
   UNGUARDED_LOOT_CHANCE,
-  TOWER_SCALING,
   type KeyColor,
   DELVE_MAX_DEPTH,
 } from "./config.ts";
-import { point, type Tile, type Torch, type Player } from "./entities.ts";
+import { point, type Tile, type Torch } from "./entities.ts";
 import { computeVisibilityPolygon, LIGHTING_CONFIG } from "./lighting.ts";
-import { getTowerEnemy } from "./scaling.ts";
-import { generatePuzzleGraph } from "./puzzle.ts";
-import { sculptRoom } from "./room-shapes.ts";
-import { area1DoorRule, doorCost, requiredKeys } from "./doors.ts";
+import { doorCost } from "./doors.ts";
+import { generateTowerFloor } from "./tower/index.ts";
 export type Board = {
   width: number;
   floor: number;
@@ -81,7 +77,8 @@ function placeTorches(
 export const LAYOUT_VERSION = 5;
 // v3 adds declarative multi-key/condition doors and places their prerequisite
 // keys differently; old per-room coordinate mutations must not overlay it.
-export const TOWER_LAYOUT_VERSION = 3;
+// v4 replaces the maze generator with strategic chamber layouts.
+export const TOWER_LAYOUT_VERSION = 4;
 const directions = [
   [1, 0],
   [-1, 0],
@@ -417,245 +414,16 @@ export class World implements Board {
       if (Number(k.split(",")[1]) < this.floor) delete this.changes[k];
   }
 }
-/** A conservative "kept pace with the climb" player used only to prove a
- * generated room is solvable: attack/defense comfortably clear this room's
- * own polynomial enemy scaling (including the toughest archetype
- * multipliers), so the check verifies topology, key ordering and pickup
- * accounting rather than fine combat balance — that's a separate, live
- * tuning concern the player's real upgrades and gear handle at runtime. */
-function nominalTowerPlayer(room: number): Player {
-  const attack = Math.ceil(TOWER_SCALING.defense(room) * 1.4) + 6;
-  const defense = Math.ceil(TOWER_SCALING.attack(room) * 0.5);
-  const hp = Math.ceil(TOWER_SCALING.hp(room) * 5) + 300;
-  return { x: 0, y: 0, hp, maxHp: hp, attack, defense, keys: { yellow: 0, blue: 0, red: 0 } };
-}
-/** One attempt at a self-contained 20x20 challenge room. BSP-carved rooms
- * are assigned, in order, to the abstract puzzle graph's main-path nodes
- * (see puzzle.ts): each inter-room corridor becomes one gate (an enemy or a
- * locked door) placed at the corridor's own midpoint, a genuine choke point
- * since these rooms are otherwise only reachable through that one carved
- * path. A door's key is always placed in an earlier room on that same path.
- * Returns null (never throws) when either the structural choke-point check
- * or the full state-space solvability check fails, so the caller can retry
- * with a new derived seed. */
-function tryGenerateTowerRoom(derivedSeed: number, room: number): Map<string, Tile> | null {
-  const rng = random(derivedSeed);
-  const int = (lo: number, hi: number) =>
-    lo + Math.floor(rng() * (hi - lo + 1));
-  const cells = new Map<string, Tile>();
-  const set = (x: number, y: number, t: Tile) => cells.set(point(x, y), t);
-  const floor = (x: number, y: number) => set(x, y, { kind: "floor" });
-  for (let y = 0; y < TOWER_HEIGHT; y++)
-    for (let x = 0; x < TOWER_WIDTH; x++) set(x, y, { kind: "wall" });
-  const bounds = { x1: 1, x2: TOWER_WIDTH - 2, y1: 1, y2: TOWER_HEIGHT - 2 };
-  const entrance: [number, number] = [TOWER_START_X, 0];
-  // Room 0 opens onto the forest; every later room keeps a way back down.
-  set(...entrance, room > 0 ? { kind: "stairsDown" } : { kind: "floor" });
-  const reserved = new Set([point(...entrance), point(TOWER_START_X, 1)]);
-
-  const rooms = bspRooms(bounds.x1, bounds.y1, bounds.x2 - bounds.x1 + 1, bounds.y2 - bounds.y1 + 1, rng, 4);
-  if (rooms.length < 2) return null;
-  const centerOf = (r: { x: number; y: number; w: number; h: number }): [number, number] =>
-    [Math.floor(r.x + r.w / 2), Math.floor(r.y + r.h / 2)];
-  rooms.sort((a, b) => {
-    const da = Math.hypot(centerOf(a)[0] - TOWER_START_X, centerOf(a)[1] - 0);
-    const db = Math.hypot(centerOf(b)[0] - TOWER_START_X, centerOf(b)[1] - 0);
-    return da - db;
-  });
-  for (const r of rooms)
-    for (let yy = r.y; yy < r.y + r.h; yy++)
-      for (let xx = r.x; xx < r.x + r.w; xx++) floor(xx, yy);
-
-  // Entrance guardian: an immediate, unavoidable first fight before the
-  // graph-mapped rooms begin.
-  set(TOWER_START_X, 1, { kind: "enemy", enemy: getTowerEnemy(room, rng, "balanced") });
-  carvePath(cells, point, TOWER_START_X, 1, ...centerOf(rooms[0]), rng);
-
-  // Map the abstract puzzle graph's mandatory route onto the BSP rooms in
-  // generation order: one main-path edge per inter-room corridor.
-  const graph = generatePuzzleGraph(derivedSeed, room);
-  // Only door gates need a strict structural choke-point check below: a
-  // locked door consumes a finite key, so a bypass would trivialize it.
-  // Enemy gates stay topologically soft by design (reachable()'s flood fill
-  // already treats enemies as passable — combat difficulty, not physical
-  // blocking, is what makes them a gate), so an alternate route around one
-  // is not a validation failure.
-  const doorGatePositions: [number, number][] = [];
-  const placeKeyIn = (room_: { x: number; y: number; w: number; h: number }, color: KeyColor) => {
-    const candidates: [number, number][] = [];
-    for (let y = room_.y; y < room_.y + room_.h; y++)
-      for (let x = room_.x; x < room_.x + room_.w; x++) {
-        const p = point(x, y);
-        if (!reserved.has(p) && cells.get(p)?.kind === "floor") candidates.push([x, y]);
-      }
-    if (!candidates.length) return false;
-    const [kx, ky] = candidates[int(0, candidates.length - 1)];
-    set(kx, ky, { kind: "key", color }); reserved.add(point(kx, ky));
-    return true;
-  };
-  const edgeCount = Math.min(graph.mainPath.length, rooms.length - 1);
-  for (let i = 0; i < rooms.length - 1; i++) {
-    const path = carvePath(cells, point, ...centerOf(rooms[i]), ...centerOf(rooms[i + 1]), rng);
-    for (const [px, py] of path) reserved.add(point(px, py));
-    if (i >= edgeCount || path.length < 3) continue;
-    const edge = graph.mainPath[i];
-    const [gx, gy] = path[Math.floor(path.length / 2)];
-    if (edge.gate === "enemy" && edge.enemy) {
-      set(gx, gy, { kind: "enemy", enemy: edge.enemy });
-    } else if (edge.gate === "door" && edge.doorColor) {
-      const rule = room < 10 ? area1DoorRule(room) : { type: "keys" as const, keys: [edge.doorColor], mode: "all" as const };
-      const singleColor = rule.type === "keys" && rule.mode === "all" && rule.keys.length === 1 ? rule.keys[0] : undefined;
-      set(gx, gy, { kind: "door", color: singleColor, door: rule });
-      doorGatePositions.push([gx, gy]);
-      // The key always lives in an earlier room on the mandatory path (or
-      // the entrance room itself), so it is reachable before this door.
-      const keyRoom = rooms[i];
-      const supplied = rule.type === "keys" && rule.mode === "any" ? ["yellow" as const] : requiredKeys(rule);
-      for (const color of supplied) if (!placeKeyIn(keyRoom, color)) return null;
-    }
-  }
-
-  // Erode chambers into stepped alcoves and pillars without cutting off connectivity
-  for (const r of rooms) {
-    if (r.w >= 4 && r.h >= 4) {
-      sculptRoom(cells, { x1: r.x, x2: r.x + r.w - 1, y1: r.y, y2: r.y + r.h - 1 }, 0, rng, reserved);
-    }
-  }
-
-  // The exit always sits in the outer-most boundary ring (like the entrance),
-  // opening off the final room on the mapped path. If that room doesn't touch
-  // the boundary, a short straight corridor is carved out to it.
-  const exitRoom = rooms[rooms.length - 1];
-  function placeExitIn(room_: { x: number; y: number; w: number; h: number }) {
-    type Option = { exit: [number, number]; carve: [number, number][]; far: number };
-    const options: Option[] = [];
-    for (let y = room_.y; y < room_.y + room_.h; y++)
-      for (let x = room_.x; x < room_.x + room_.w; x++) {
-        const p = point(x, y);
-        if (reserved.has(p) || cells.get(p)?.kind !== "floor") continue;
-        // Walk left, right and down to the outer ring (the top holds the entrance).
-        for (const [dx, dy] of [[-1, 0], [1, 0], [0, 1]] as const) {
-          const carve: [number, number][] = [];
-          let cx = x + dx, cy = y + dy;
-          while (cx > 0 && cx < TOWER_WIDTH - 1 && cy < TOWER_HEIGHT - 1) {
-            if (cells.get(point(cx, cy))?.kind === "wall") carve.push([cx, cy]);
-            cx += dx; cy += dy;
-          }
-          options.push({ exit: [cx, cy], carve, far: cy + Math.abs(cx - TOWER_START_X) });
-        }
-      }
-    if (!options.length) return null;
-    // Shortest corridor first, then furthest from the entrance.
-    options.sort((a, b) => a.carve.length - b.carve.length || b.far - a.far);
-    const best = options.filter((o) => o.carve.length === options[0].carve.length);
-    const { exit: [x, y], carve } = best[int(0, Math.min(3, best.length) - 1)];
-    for (const [cx, cy] of carve) { floor(cx, cy); reserved.add(point(cx, cy)); }
-    set(x, y, { kind: "stairs" });
-    reserved.add(point(x, y));
-    return [x, y] as [number, number];
-  }
-  const exit = placeExitIn(exitRoom);
-  if (!exit) return null;
-
-  function place(tile: Tile) {
-    const candidates: [number, number][] = [];
-    for (let y = bounds.y1; y <= bounds.y2; y++)
-      for (let x = bounds.x1; x <= bounds.x2; x++)
-        if (!reserved.has(point(x, y)) && cells.get(point(x, y))?.kind === "floor")
-          candidates.push([x, y]);
-    if (!candidates.length) return null;
-    const [x, y] = candidates[int(0, candidates.length - 1)];
-    set(x, y, tile);
-    reserved.add(point(x, y));
-    return [x, y] as [number, number];
-  }
-  const enemyCount = Math.min(6, 2 + Math.floor(room / 4));
-  for (let i = 0; i < enemyCount; i++)
-    place({ kind: "enemy", enemy: getTowerEnemy(room, rng, "brute") });
-  // Optional reward branches from the graph become extra guarded pickups —
-  // genuine resource competition (an extra fight for an extra stat point)
-  // even though they share the room's open floor rather than a separately
-  // carved dead-end alcove.
-  for (const n of graph.nodes)
-    if (n.type === "reward" && n.reward !== "key") {
-      const guard = graph.nodes.flatMap(p => p.edges).find(e => e.target === n.id)?.enemy;
-      if (guard) place({ kind: "enemy", enemy: guard });
-      place({ kind: n.reward === "attack" ? "attack" : "defense" });
-    }
-  place({ kind: "potion", color: "blue" });
-  place({ kind: "potion", color: "red" });
-  place({ kind: "attack" });
-  place({ kind: "defense" });
-  if (room % 3 === 0) place({ kind: "treasure" });
-
-  const blockers = new Set([...cells].filter(([, t]) => t.kind === "enemy").map(([k]) => k));
-  const free = reachable(cells, point(...entrance), blockers);
-  for (const k of free)
-    if (cells.get(k)?.kind === "floor") {
-      const loot = rollUnguardedLoot(rng);
-      if (loot) cells.set(k, loot);
-    }
-
-  // Prune any floor space left structurally unreachable from the entrance
-  const fullReach = reachable(cells, point(...entrance));
-  for (const [k, t] of cells)
-    if (t.kind !== "wall" && !fullReach.has(k)) {
-      const [wx, wy] = k.split(",").map(Number);
-      set(wx, wy, { kind: "wall" });
-    }
-  if (!fullReach.has(point(...exit))) return null;
-  // Every door must be a real structural cut point: blocking it must
-  // disconnect floor space beyond it, or the BSP carving accidentally left
-  // a bypass that would let a player reach the far side without its key.
-  for (const [gx, gy] of doorGatePositions)
-    if (reachable(cells, point(...entrance), new Set([point(gx, gy)])).size >= fullReach.size - 1)
-      return null;
-  // A rational player (no starting keys) must be able to reach each key before its door
-  const doors = [...cells].filter(([, t]) => t.kind === "door");
-  const closed = new Set(doors.map(([k]) => k));
-  const collected = new Set<string>();
-  const keys: Record<KeyColor, number> = { yellow: 0, blue: 0, red: 0 };
-  let guard = closed.size + 1;
-  while (closed.size && guard-- > 0) {
-    const area = reachable(cells, point(...entrance), closed);
-    for (const k of area) {
-      const t = cells.get(k)!;
-      if (t.kind === "key" && !collected.has(k)) {
-        keys[t.color!]++;
-        collected.add(k);
-      }
-    }
-    const player = { keys, hp: nominalTowerPlayer(room).maxHp, maxHp: nominalTowerPlayer(room).maxHp };
-    const next = doors.find(([k, t]) => closed.has(k) && doorCost(t, player) !== null);
-    if (!next) break;
-    for (const color of doorCost(next[1], player)!) keys[color]--;
-    closed.delete(next[0]);
-  }
-  if (closed.size > 0) return null;
-
-  if (!validatePhysicalLayout(cells, entrance[0], entrance[1], exit[0], exit[1], nominalTowerPlayer(room)))
-    return null;
-  return cells;
-}
-/** A self-contained 20x20 challenge room whose logical progression (the
- * puzzle graph) is guaranteed solvable and whose physical layout is
- * validated before it is ever handed to the player. Retries with
- * deterministic derived seeds — never Math.random() — on any invalid
- * attempt, and fails loudly rather than silently serving a broken room. */
+/** A self-contained 17x17 Tower floor. Generation is strategy-first (see
+ * src/tower/index.ts): an abstract graph of gates, keys and rewards is
+ * planned, then embedded as chambers joined by single-tile doorways.
+ * Geometry is always valid; the key/HP economy is deliberately allowed to
+ * be harsh or occasionally unwinnable. Deterministic for (seed, room). */
 export function generateTowerRoom(
   seed: number,
   room: number,
 ): Map<string, Tile> {
-  const MAX_ATTEMPTS = 40;
-  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-    const derivedSeed =
-      seed ^ Math.imul(room + 1, 2654435761) ^ Math.imul(attempt + 1, 40503);
-    const result = tryGenerateTowerRoom(derivedSeed, room);
-    if (result) return result;
-  }
-  throw new Error(
-    `Tower room ${room} failed to generate a valid layout after ${MAX_ATTEMPTS} attempts`,
-  );
+  return generateTowerFloor(seed, room).cells;
 }
 const towerTorchCaches = new Map<string, Torch[]>();
 /** Torches for one tower room, computed once when that room is first

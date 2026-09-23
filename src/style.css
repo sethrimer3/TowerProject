@@ -446,23 +446,6 @@ canvas {
     box-shadow: 0 0 14px 4px #ffd166d0, inset 0 0 14px 2px #ffd166a0;
   }
 }
-.golden-path-tile {
-  position: absolute;
-  z-index: 3;
-  pointer-events: none;
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.golden-path-tile::after {
-  content: "";
-  width: 28%;
-  height: 28%;
-  border-radius: 50%;
-  background: #ffd166;
-  box-shadow: 0 0 6px 1px #ffd166a0;
-}
 .inspect-box {
   position: absolute;
   z-index: 5;

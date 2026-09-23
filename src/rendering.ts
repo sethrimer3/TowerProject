@@ -57,6 +57,10 @@ export class Renderer {
   lightmapCtx: CanvasRenderingContext2D | null = null;
   outlineCanvas: HTMLCanvasElement | null = null;
   outlineSilCanvas: HTMLCanvasElement | null = null;
+  /** A golden path to preview for a highlighted-but-unconfirmed destination.
+   * Drawn via the same line as an in-progress walk whenever no walk is
+   * actually underway (game.route takes priority when both are set). */
+  previewRoute: Array<{ x: number; y: number }> | null = null;
   get density() {
     if (this.game.run.outside) return OUTSIDE_SIZE;
     return VIEWPORT_TILES;
@@ -752,7 +756,7 @@ export class Renderer {
     c.restore();
   }
   drawRoutePath(now: number) {
-    const route = this.game.route;
+    const route = this.game.route.length ? this.game.route : this.previewRoute;
     if (!route || route.length === 0) return;
     const c = this.ctx,
       s = this.size,
