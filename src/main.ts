@@ -35,7 +35,7 @@ const SLOT_ICONS: Record<EquipmentSlot, string> = {
   weapon: "⚔", shield: "⛨", helmet: "▲", chestplate: "■", leggings: "▼", boots: "▽", gloves: "✤", necklace: "◇", ring: "○",
 };
 const app = document.querySelector<HTMLDivElement>("#app")!;
-app.innerHTML = `<main class="shell"><div id="currencies" class="currencies" hidden><div class="essence">✦ <b id="essence">0</b><small>COURAGE</small></div><div class="essence">◆ <b id="shards">0</b><small>INSPIRATION</small></div></div><section id="stats" class="stats" aria-label="Player statistics"><div class="portrait"><canvas id="portrait-sprite" width="24" height="24"></canvas><small>WAYFARER</small><small id="level">LV 0</small><button id="log" aria-label="Adventure log">Log</button></div><div class="vitals"><div><span class="heart">♥</span> HP <b id="hp"></b></div><div class="health-track"><i id="health"></i></div><div class="combat-stats"><span>⚔ <b id="attack"></b></span><span>⛨ <b id="defense"></b></span></div></div><div class="keys"><span class="yellow">⚿ <b id="yellow"></b></span><span class="blue">⚿ <b id="blue"></b></span><span class="red">⚿ <b id="red"></b></span></div><div class="height"><small id="height-label">HEIGHT</small><strong id="height">0</strong><div class="height-bests"><span>RUN <b id="best-run">0</b></span><span>ALL <b id="best-all">0</b></span><span id="best-reward" class="height-reward" hidden>+<b id="best-reward-val">0</b> <i id="best-reward-type">COURAGE</i></span></div></div><div class="actions"><button id="auto-settings" class="mini-action" aria-label="Automove settings" title="Automove settings"><span class="mini-icon">⚙</span><small>SETTINGS</small></button><button id="auto" class="mini-action" aria-label="Automove" title="Automove"><span class="mini-icon">✦</span><small id="auto-state">LOCKED</small></button><button id="undo" class="mini-action" aria-label="Undo" title="Undo"><span class="mini-icon">↺</span><small id="undo-state">0/1</small></button></div></section><section id="board" class="page active"><div class="tower-heading"><span class="rule"></span><span id="board-title">THE HOLLOW SPIRE</span><span class="rule"></span></div><div class="ascent"><span>↑</span><small id="board-subtitle">HIGHER DANGERS · GREATER REWARDS</small></div><div class="board" id="board-frame"><canvas id="world" aria-label="Tower grid: tap a destination or swipe to move. Keyboard arrows and WASD also work."></canvas><span class="board-caption" id="density-label">20 × 20</span><div id="inspect-box" class="inspect-box" hidden></div></div><div class="status"><span class="live-dot"></span><span id="message" aria-live="polite"></span></div><div class="controls"><div class="dpad" hidden><button data-move="-1,0" aria-label="Move left">←</button><div><button data-move="0,1" aria-label="Move up">↑</button><button data-move="0,-1" aria-label="Move down">↓</button></div><button data-move="1,0" aria-label="Move right">→</button></div></div><div id="inspect" class="inspection"></div></section><section id="gear" class="page"></section><section id="upgrades" class="page"></section><section id="settings" class="page"></section><nav aria-label="Main navigation">${Object.entries(
+app.innerHTML = `<main class="shell"><div id="currencies" class="currencies" hidden><div class="essence">✦ <b id="essence">0</b><small>COURAGE</small></div><div class="essence">◆ <b id="shards">0</b><small>INSPIRATION</small></div></div><section id="stats" class="stats" aria-label="Player statistics"><div class="portrait"><canvas id="portrait-sprite" width="24" height="24"></canvas><small>WAYFARER</small><small id="level">LV 0</small><button id="log" aria-label="Adventure log">Log</button></div><div class="vitals"><div><span class="heart">♥</span> HP <b id="hp"></b></div><div class="health-track"><i id="health"></i></div><div class="combat-stats"><span>⚔ <b id="attack"></b></span><span>⛨ <b id="defense"></b></span></div></div><div class="keys"><span class="yellow">⚿ <b id="yellow"></b></span><span class="blue">⚿ <b id="blue"></b></span><span class="red">⚿ <b id="red"></b></span></div><div class="height"><small id="height-label">HEIGHT</small><strong id="height">0</strong><div class="height-bests"><span>RUN <b id="best-run">0</b></span><span>ALL <b id="best-all">0</b></span><span id="best-reward" class="height-reward" hidden>+<b id="best-reward-val">0</b> <i id="best-reward-type">COURAGE</i></span></div></div><div class="actions"><button id="auto-settings" class="mini-action" aria-label="Automove settings" title="Automove settings"><span class="mini-icon">⚙</span><small>SETTINGS</small></button><button id="auto" class="mini-action" aria-label="Automove" title="Automove"><span class="mini-icon">✦</span><small id="auto-state">LOCKED</small></button><button id="undo" class="mini-action" aria-label="Undo" title="Undo"><span class="mini-icon">↺</span><small id="undo-state">0/1</small></button></div></section><section id="board" class="page active"><div class="tower-heading"><span class="rule"></span><span id="board-title">THE HOLLOW SPIRE</span><span class="rule"></span></div><div class="ascent"><span>↑</span><small id="board-subtitle">HIGHER DANGERS · GREATER REWARDS</small></div><div class="board" id="board-frame"><canvas id="world" aria-label="Tower grid: tap a destination or swipe to move. Keyboard arrows and WASD also work."></canvas><span class="board-caption" id="density-label">20 × 20</span><div id="tile-highlight" class="tile-highlight" hidden></div><div id="inspect-box" class="inspect-box" hidden></div></div><div class="status"><span class="live-dot"></span><span id="message" aria-live="polite"></span></div><div class="controls"><div class="dpad" hidden><button data-move="-1,0" aria-label="Move left">←</button><div><button data-move="0,1" aria-label="Move up">↑</button><button data-move="0,-1" aria-label="Move down">↓</button></div><button data-move="1,0" aria-label="Move right">→</button></div></div><div id="inspect" class="inspection"></div></section><section id="gear" class="page"></section><section id="upgrades" class="page"></section><section id="settings" class="page"></section><nav aria-label="Main navigation">${Object.entries(
   icons,
 )
   .map(
@@ -171,26 +171,57 @@ function showInspectBox(x: number, y: number) {
 function hideInspectBox() {
   el("inspect-box").hidden = true;
   inspectBoxVisible = false;
+  hideTileHighlight();
+}
+let highlighted: { x: number; y: number } | null = null;
+let highlightFadeTimer: ReturnType<typeof setTimeout> | undefined;
+function showTileHighlight(x: number, y: number) {
+  highlighted = { x, y };
+  const frame = el("board-frame"),
+    glow = el("tile-highlight"),
+    frameRect = frame.getBoundingClientRect(),
+    canvasRect = renderer.canvas.getBoundingClientRect(),
+    s = renderer.size,
+    n = renderer.density,
+    left = canvasRect.left - frameRect.left + (x - renderer.left) * s,
+    top = canvasRect.top - frameRect.top + (n - 1 - (y - renderer.bottom)) * s;
+  clearTimeout(highlightFadeTimer);
+  glow.style.left = `${left}px`;
+  glow.style.top = `${top}px`;
+  glow.style.width = `${s}px`;
+  glow.style.height = `${s}px`;
+  glow.hidden = false;
+  glow.classList.remove("fade-out");
+  glow.classList.add("active");
+}
+function hideTileHighlight() {
+  highlighted = null;
+  const glow = el("tile-highlight");
+  if (glow.hidden) return;
+  glow.classList.remove("active");
+  glow.classList.add("fade-out");
+  clearTimeout(highlightFadeTimer);
+  highlightFadeTimer = setTimeout(() => {
+    glow.hidden = true;
+    glow.classList.remove("fade-out");
+  }, 300);
 }
 function onTap(x: number, y: number) {
-  if (game.mode !== "delve") {
-    inspect(x, y);
+  if (game.save.settings.showInfoBoxes === false) hideInspectBox();
+  else showInspectBox(x, y);
+  const already = !!(highlighted && highlighted.x === x && highlighted.y === y);
+  if (game.save.settings.oneTapMove || already) {
+    hideTileHighlight();
     game.walkTo(x, y);
-    return;
+  } else {
+    showTileHighlight(x, y);
   }
-  if (game.save.settings.showInfoBoxes === false) {
-    hideInspectBox();
-    game.walkTo(x, y);
-    return;
-  }
-  const already = inspectBoxVisible && selected && selected.x === x && selected.y === y;
-  showInspectBox(x, y);
-  if (game.save.settings.oneTapMove || already) game.walkTo(x, y);
 }
 function update() {
   if (el("board").dataset.outside !== String(!!game.run.outside)) renderBoard();
   const p = game.run.player,
     slice = game.save[game.mode];
+  if (highlighted && highlighted.x === p.x && highlighted.y === p.y) hideTileHighlight();
   text("hp", `${p.hp} / ${p.maxHp}`);
   text("attack", p.attack);
   text("defense", p.defense);
@@ -338,7 +369,7 @@ function renderPage() {
 
   if (tab === "settings") {
     el("settings").innerHTML =
-      `<div class="page-title"><small>MAKE THE ASCENT YOUR OWN</small><h2>Settings</h2></div><label class="setting">Automove speed<select id="speed">${[1, 3, 6, 10].map((n) => `<option ${game.save.settings.speed === n ? "selected" : ""} value="${n}">${n} steps / sec</option>`).join("")}</select></label><label class="setting">Movement transition<select id="transition">${(["smooth", "fast", "instant"] as const).map((mode) => `<option value="${mode}" ${game.save.settings.transition === mode ? "selected" : ""}>${mode === "instant" ? "Off (instant)" : mode === "fast" ? "Fast" : "Smooth"}</option>`).join("")}</select></label><label class="setting">Show directional buttons<input type="checkbox" id="arrows" ${game.save.settings.showArrows ? "checked" : ""}></label><label class="setting">Reduce motion<input type="checkbox" id="motion" ${game.save.settings.reduceMotion ? "checked" : ""}></label><label class="setting">Weather sounds<input type="checkbox" id="weather-sound" ${game.save.settings.weatherSound !== false ? "checked" : ""}></label><label class="setting">Delve: show info boxes<input type="checkbox" id="info-boxes" ${game.save.settings.showInfoBoxes !== false ? "checked" : ""}></label><label class="setting">Delve: move with one tap<input type="checkbox" id="one-tap" ${game.save.settings.oneTapMove ? "checked" : ""}></label><p class="hint">Automation pauses outside the board tabs and while the browser is hidden. Progress saves after each action.</p><button class="wide" id="retire">Retire this ${game.mode === "tower" ? "ascent" : "delve"}</button><p class="hint">Keep your milestone rewards and enter a freshly generated ${game.mode === "tower" ? "tower" : "descent"}.</p><button class="wide danger" id="erase">Erase all progress</button><p class="seed">RUN SEED · ${game.run.seed}</p>`;
+      `<div class="page-title"><small>MAKE THE ASCENT YOUR OWN</small><h2>Settings</h2></div><label class="setting">Automove speed<select id="speed">${[1, 3, 6, 10].map((n) => `<option ${game.save.settings.speed === n ? "selected" : ""} value="${n}">${n} steps / sec</option>`).join("")}</select></label><label class="setting">Movement transition<select id="transition">${(["smooth", "fast", "instant"] as const).map((mode) => `<option value="${mode}" ${game.save.settings.transition === mode ? "selected" : ""}>${mode === "instant" ? "Off (instant)" : mode === "fast" ? "Fast" : "Smooth"}</option>`).join("")}</select></label><label class="setting">Show directional buttons<input type="checkbox" id="arrows" ${game.save.settings.showArrows ? "checked" : ""}></label><label class="setting">Reduce motion<input type="checkbox" id="motion" ${game.save.settings.reduceMotion ? "checked" : ""}></label><label class="setting">Weather sounds<input type="checkbox" id="weather-sound" ${game.save.settings.weatherSound !== false ? "checked" : ""}></label><label class="setting">Show info boxes<input type="checkbox" id="info-boxes" ${game.save.settings.showInfoBoxes !== false ? "checked" : ""}></label><label class="setting">Move with one tap<input type="checkbox" id="one-tap" ${game.save.settings.oneTapMove ? "checked" : ""}></label><p class="hint">Automation pauses outside the board tabs and while the browser is hidden. Progress saves after each action.</p><button class="wide" id="retire">Retire this ${game.mode === "tower" ? "ascent" : "delve"}</button><p class="hint">Keep your milestone rewards and enter a freshly generated ${game.mode === "tower" ? "tower" : "descent"}.</p><button class="wide danger" id="erase">Erase all progress</button><p class="seed">RUN SEED · ${game.run.seed}</p>`;
     (el("speed") as HTMLSelectElement).onchange = (e) => {
       game.save.settings.speed = Number((e.target as HTMLSelectElement).value);
       save();

@@ -420,6 +420,32 @@ canvas {
   min-height: 28px;
   padding: 3px 12px;
 }
+.tile-highlight {
+  position: absolute;
+  z-index: 4;
+  pointer-events: none;
+  box-sizing: border-box;
+  border: 2px solid #ffd166;
+  border-radius: 2px;
+  box-shadow: 0 0 8px 2px #ffd166a0, inset 0 0 10px 1px #ffd16680;
+  opacity: 0;
+}
+.tile-highlight.active {
+  opacity: 1;
+  animation: tile-glow-pulse 1s ease-in-out infinite;
+}
+.tile-highlight.fade-out {
+  opacity: 0;
+  transition: opacity 0.3s ease-out;
+}
+@keyframes tile-glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 8px 2px #ffd166a0, inset 0 0 10px 1px #ffd16680;
+  }
+  50% {
+    box-shadow: 0 0 14px 4px #ffd166d0, inset 0 0 14px 2px #ffd166a0;
+  }
+}
 .inspect-box {
   position: absolute;
   z-index: 5;

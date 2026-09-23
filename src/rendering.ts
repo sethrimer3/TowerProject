@@ -682,25 +682,27 @@ export class Renderer {
     const pulse = 0.85 + 0.15 * Math.sin(now / 200);
 
     const segments: Array<Array<{ x: number; y: number }>> = [];
-    let currentSegment: Array<{ x: number; y: number }> = [];
+    // Start the line at the hero's current interpolated visual position so
+    // it recedes behind the sprite as it walks, instead of at the (already
+    // consumed) next route step.
+    let currentSegment: Array<{ x: number; y: number }> = [
+      toTileScreen(this.playerX, this.playerY),
+    ];
+    let prevGrid = { x: this.playerX, y: this.playerY };
 
     for (let i = 0; i < route.length; i++) {
       const step = route[i];
       const pt = toTileScreen(step.x, step.y);
-      if (i === 0) {
-        currentSegment.push(pt);
-      } else {
-        const prevStep = route[i - 1];
-        const isWrap = Math.abs(step.x - prevStep.x) > 1 || Math.abs(step.y - prevStep.y) > 1;
-        if (isWrap) {
-          if (currentSegment.length > 0) {
-            segments.push(currentSegment);
-          }
-          currentSegment = [pt];
-        } else {
-          currentSegment.push(pt);
+      const isWrap = Math.abs(step.x - prevGrid.x) > 1 || Math.abs(step.y - prevGrid.y) > 1;
+      if (isWrap) {
+        if (currentSegment.length > 0) {
+          segments.push(currentSegment);
         }
+        currentSegment = [pt];
+      } else {
+        currentSegment.push(pt);
       }
+      prevGrid = step;
     }
     if (currentSegment.length > 0) {
       segments.push(currentSegment);
