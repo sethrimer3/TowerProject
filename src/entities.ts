@@ -91,9 +91,10 @@ export type Settings = {
   /** Delve: tapping a tile walks there immediately instead of requiring a
    * second tap to confirm. The info box still appears either way. */
   oneTapMove?: boolean;
-  /** Delve: whether tapping a tile shows the info box at all. When off,
-   * a single tap always walks there directly. */
-  showInfoBoxes?: boolean;
+  /** Delve: which tile-inspection surfaces appear on tap. "none" makes a
+   * single tap always walk there directly, same as the old showInfoBoxes
+   * off state. */
+  infoDisplay?: "both" | "popup" | "status" | "none";
   /** Unlimited currency, every floor section and game mode unlocked. */
   devMode?: boolean;
 };

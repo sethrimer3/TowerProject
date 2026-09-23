@@ -2,6 +2,7 @@ import { COLORS, type KeyColor } from "./config.ts";
 import type { DoorRule, Player, Tile } from "./entities.ts";
 
 export const KEY_ORDER: KeyColor[] = ["yellow", "blue", "red"];
+export const KEY_NAMES: Record<KeyColor, string> = { yellow: "Amber", blue: "Azure", red: "Crimson" };
 export type DoorId = "a" | "b" | "c" | "ab" | "ac" | "bc" | "abc" | "steel" | "heart";
 
 export function doorRule(tile: Tile): DoorRule {
@@ -36,7 +37,7 @@ export function doorDescription(tile: Tile) {
   const rule = doorRule(tile);
   if (rule.type === "fullHp") return "Opens freely while HP is full.";
   if (rule.mode === "any") return "Consumes one available key (amber, then azure, then crimson).";
-  const names = rule.keys.map((key) => ({ yellow: "amber", blue: "azure", red: "crimson" })[key]);
+  const names = rule.keys.map((key) => KEY_NAMES[key].toLowerCase());
   return `Requires ${names.join(" + ")} ${names.length === 1 ? "key" : "keys"}.`;
 }
 export function doorColor(tile: Tile) {

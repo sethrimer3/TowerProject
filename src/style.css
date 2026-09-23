@@ -487,6 +487,13 @@ canvas {
 .inspect-box .danger {
   color: #e29898 !important;
 }
+.route-box {
+  z-index: 4;
+  border-color: #5a6580;
+}
+.route-box b {
+  color: #aeb8c4;
+}
 .inspection {
   margin: 12px 0 14px;
   color: #7f8a9d;

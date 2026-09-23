@@ -25,7 +25,7 @@ export function defaults(): Save {
       reduceMotion: false,
       autoOffOnDeath: true,
       oneTapMove: false,
-      showInfoBoxes: true,
+      infoDisplay: "both",
       devMode: false,
     },
     materials: emptyMaterials(),
@@ -186,7 +186,11 @@ export function decode(raw: string | null): Save {
     d.settings.weatherSound = s?.settings?.weatherSound !== false;
     d.settings.autoOffOnDeath = s?.settings?.autoOffOnDeath !== false;
     d.settings.oneTapMove = s?.settings?.oneTapMove === true;
-    d.settings.showInfoBoxes = s?.settings?.showInfoBoxes !== false;
+    d.settings.infoDisplay = ["both", "popup", "status", "none"].includes(s?.settings?.infoDisplay)
+      ? s.settings.infoDisplay
+      : s?.settings?.showInfoBoxes === false
+        ? "none"
+        : "both";
     d.settings.devMode = s?.settings?.devMode === true;
     if (s?.version === 2 || s?.version === 3) {
       if (finite(s.gold)) d.gold = Math.floor(s.gold);

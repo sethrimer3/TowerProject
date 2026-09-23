@@ -1,5 +1,5 @@
 import { isDeadlocked } from "./analysis.ts";
-import { doorBlockedMessage, doorCost, doorName } from "./doors.ts";
+import { doorBlockedMessage, doorCost, doorName, KEY_ORDER } from "./doors.ts";
 import { skillAvailable } from "./skill-trees.ts";
 import { routeTo, type Step } from "./pathfinding.ts";
 import {
@@ -16,6 +16,7 @@ import {
   GOLD_SHOP,
   type UpgradeId,
   type GoldItemId,
+  type KeyColor,
 } from "./config.ts";
 import {
   type Save,
@@ -49,6 +50,12 @@ import {
 } from "./crafting.ts";
 import type { EquipmentSlot } from "./equipment.ts";
 import type { MaterialStack, MetalId } from "./materials.ts";
+export type RouteEffects = {
+  hp: [number, number];
+  attack: [number, number];
+  defense: [number, number];
+  keys: Partial<Record<KeyColor, [number, number]>>;
+};
 export class Game {
   mode: Mode = "tower";
   world!: Board;
@@ -229,6 +236,54 @@ export class Game {
   }
   previewRoute(x: number, y: number): Step[] | null {
     return routeTo(this, x, y);
+  }
+  /** Simulates walking a multi-tile route without mutating state, so the UI
+   * can preview cumulative HP/ATK/DEF/key changes before the player commits
+   * to the walk. Stops early at a lethal fight or a door it can't afford. */
+  previewRouteEffects(route: Step[]): RouteEffects | null {
+    if (route.length < 2) return null;
+    const p = this.run.player;
+    let hp = p.hp,
+      attack = p.attack,
+      defense = p.defense;
+    const keys = { ...p.keys },
+      startHp = hp,
+      startAttack = attack,
+      startDefense = defense,
+      startKeys = { ...p.keys };
+    for (const step of route) {
+      const t = this.world.tile(step.x, step.y);
+      if (t.kind === "enemy") {
+        const result = predict({ ...p, hp, attack, defense, keys }, t.enemy!);
+        if (result.impervious) break;
+        hp -= result.damage;
+        if (hp <= 0) {
+          hp = 0;
+          break;
+        }
+      } else if (t.kind === "door") {
+        const cost = doorCost(t, { hp, maxHp: p.maxHp, keys });
+        if (cost === null) break;
+        for (const color of cost) keys[color]--;
+      } else if (t.kind === "key") {
+        keys[t.color!]++;
+      } else if (t.kind === "potion") {
+        hp += Math.min(p.maxHp - hp, 35);
+      } else if (t.kind === "attack") {
+        attack += 2;
+      } else if (t.kind === "defense") {
+        defense++;
+      }
+    }
+    const result: RouteEffects = {
+      hp: [startHp, hp],
+      attack: [startAttack, attack],
+      defense: [startDefense, defense],
+      keys: {},
+    };
+    for (const color of KEY_ORDER)
+      if (keys[color] !== startKeys[color]) result.keys[color] = [startKeys[color], keys[color]];
+    return result;
   }
   walkTo(x: number, y: number) {
     if (this.paused || this.summary) return;
