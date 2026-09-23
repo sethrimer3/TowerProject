@@ -50,6 +50,8 @@ export class Renderer {
   atmosphere: AtmosphereConfig = { ...ATMOSPHERE_CONFIG };
   lightmapCanvas: HTMLCanvasElement | null = null;
   lightmapCtx: CanvasRenderingContext2D | null = null;
+  outlineCanvas: HTMLCanvasElement | null = null;
+  outlineSilCanvas: HTMLCanvasElement | null = null;
   get density() {
     if (this.game.run.outside) return OUTSIDE_SIZE;
     return VIEWPORT_TILES;
@@ -219,6 +221,30 @@ export class Renderer {
     c.fill();
     c.restore();
   }
+  /** Draws a sprite into an offscreen 24x24 buffer, then stamps a solid-color
+   * silhouette one pixel out in each direction before the real sprite on top
+   * — a thin outline that hugs the sprite's actual shape, not a bounding box. */
+  withOutline(color: string, draw: (c: CanvasRenderingContext2D) => void) {
+    const s = 24;
+    if (!this.outlineCanvas) this.outlineCanvas = document.createElement("canvas");
+    if (!this.outlineSilCanvas) this.outlineSilCanvas = document.createElement("canvas");
+    const off = this.outlineCanvas, sil = this.outlineSilCanvas;
+    off.width = s; off.height = s; sil.width = s; sil.height = s;
+    const offCtx = off.getContext("2d")!, silCtx = sil.getContext("2d")!;
+    offCtx.clearRect(0, 0, s, s);
+    draw(offCtx);
+    silCtx.clearRect(0, 0, s, s);
+    silCtx.drawImage(off, 0, 0);
+    silCtx.globalCompositeOperation = "source-in";
+    silCtx.fillStyle = color;
+    silCtx.fillRect(0, 0, s, s);
+    silCtx.globalCompositeOperation = "source-over";
+    const c = this.ctx;
+    c.save();
+    for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) c.drawImage(sil, dx, dy);
+    c.restore();
+    c.drawImage(off, 0, 0);
+  }
   tile(t: Tile, x: number, y: number, time: number) {
     const c = this.ctx;
     const g = this.game;
@@ -305,16 +331,18 @@ export class Renderer {
     if (t.kind === "key") {
       if (area1 && drawArea1Item(c, t)) return;
       this.groundShadow(11, 18, 5, 1.8, 0.3);
-      c.strokeStyle = COLORS[t.color!];
-      c.lineWidth = 2.5;
-      c.beginPath();
-      c.arc(15, 7, 4, 0, Math.PI * 2);
-      c.moveTo(12, 10);
-      c.lineTo(5, 18);
-      c.lineTo(3, 16);
-      c.moveTo(8, 15);
-      c.lineTo(6, 13);
-      c.stroke();
+      this.withOutline(DARK_GOLD, (c) => {
+        c.strokeStyle = COLORS[t.color!];
+        c.lineWidth = 2.5;
+        c.beginPath();
+        c.arc(15, 7, 4, 0, Math.PI * 2);
+        c.moveTo(12, 10);
+        c.lineTo(5, 18);
+        c.lineTo(3, 16);
+        c.moveTo(8, 15);
+        c.lineTo(6, 13);
+        c.stroke();
+      });
       return;
     }
     if (t.kind === "door") {
