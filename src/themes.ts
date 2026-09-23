@@ -26,13 +26,17 @@ export const DUNGEON_ENV_CONFIG = {
   blockBrightnessJitter: 0.035,
   blockHueJitter: 0.04,
   // Wall 3D lighting & contact shadows.
-  wallTopHighlightAlpha: 0.22,
-  wallBottomShadowAlpha: 0.45,
+  wallTopHighlightAlpha: 0.32,
+  wallBottomShadowAlpha: 0.4,
   contactShadowAlpha: 0.28,
   contactShadowSideAlpha: 0.18,
   // Tile seam ("grid") opacity — kept low so the grid sits behind gameplay elements.
   floorSeamAlpha: 0.35,
   wallSeamAlpha: 0.55,
+  // Multiplier applied to wall base colors so wall faces read as a clearly
+  // brighter, more solid material than the floor around them (readability
+  // baseline; keep >= 1).
+  wallBrightnessBoost: 1.22,
 };
 
 export interface TileNeighbors {
@@ -81,6 +85,19 @@ function parseHex(hex: string): [number, number, number] {
 function color(a: string, b: string, t: number) {
   const [ar, ag, ab] = parseHex(a), [br, bg, bb] = parseHex(b);
   return `rgb(${Math.round(ar * (1 - t) + br * t)},${Math.round(ag * (1 - t) + bg * t)},${Math.round(ab * (1 - t) + bb * t)})`;
+}
+
+/** Scales an "rgb(r,g,b)" or "#rrggbb" string's brightness by `factor`, clamped to 255. */
+function brighten(rgbOrHex: string, factor: number): string {
+  let r: number, g: number, b: number;
+  if (rgbOrHex.startsWith("#")) {
+    [r, g, b] = parseHex(rgbOrHex);
+  } else {
+    const m = rgbOrHex.match(/\d+/g)!;
+    [r, g, b] = m.map(Number);
+  }
+  const clamp = (v: number) => Math.min(255, Math.max(0, Math.round(v * factor)));
+  return `rgb(${clamp(r)},${clamp(g)},${clamp(b)})`;
 }
 
 /** Applies very subtle per-block brightness and hue jitter within the unified palette. */
@@ -274,7 +291,7 @@ export function drawTerrain(
 
   // Subtle per-block brightness & hue variation while staying strictly within the unified palette
   const floorColor = applyBlockVariation(rawFloor, x, y, seed);
-  const wallColor = applyBlockVariation(rawWall, x, y, seed);
+  const wallColor = brighten(applyBlockVariation(rawWall, x, y, seed), DUNGEON_ENV_CONFIG.wallBrightnessBoost);
   const seamColor = rawSeam;
   const accentColor = rawAccent;
 
@@ -302,10 +319,12 @@ export function drawTerrain(
       const jitterY = Math.round((tileRandom(x, y, seed ^ 0x2202) - 0.5) * 2);
       const split = (themeId === 2 ? 16 : 11) + jitterX;
       const rowSplit = 12 + jitterY;
-      c.fillRect(1, 1, split - 1, rowSplit - 3);
-      c.fillRect(split + 1, 1, 22 - split, rowSplit - 3);
-      c.fillRect(1, rowSplit, 6, 22 - rowSplit);
-      c.fillRect(9, rowSplit, 14, 22 - rowSplit);
+      // Mortar gaps kept to a thin 1px line so the wall face reads as a
+      // solid stone mass rather than dark mortar dominating the tile.
+      c.fillRect(1, 1, split - 1, rowSplit - 2);
+      c.fillRect(split + 1, 1, 22 - split, rowSplit - 2);
+      c.fillRect(1, rowSplit, 6, 22 - rowSplit - 1);
+      c.fillRect(9, rowSplit, 14, 22 - rowSplit - 1);
     } else if (themeId === 4) {
       c.fillRect(2, 2, 20, 19);
       c.strokeStyle = accentColor;

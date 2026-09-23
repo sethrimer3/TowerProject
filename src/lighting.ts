@@ -10,8 +10,8 @@ export const LIGHTING_CONFIG = {
   },
   /** Default torch properties when placed in generation */
   torch: {
-    defaultRadius: 4.5, // Falloff spans roughly 3-5 tiles
-    defaultIntensity: 0.5,
+    defaultRadius: 5,
+    defaultIntensity: 0.6,
   },
   /** Radial falloff and candle color stops.
    * Gentle, cozy amber/candle warmth with low saturation and long feathered falloff. */
