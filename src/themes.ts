@@ -295,11 +295,17 @@ export function drawTerrain(
     // Wall stone fill: clean, restrained block faces
     c.fillStyle = wallColor;
     if ([0, 1, 2, 6].includes(themeId)) {
-      const split = themeId === 2 ? 16 : 11;
-      c.fillRect(1, 1, split - 1, 9);
-      c.fillRect(split + 1, 1, 22 - split, 9);
-      c.fillRect(1, 12, 6, 10);
-      c.fillRect(9, 12, 14, 10);
+      // Small deterministic jitter on the brick seam position so adjacent
+      // wall tiles of the same theme don't look like one stamp repeated
+      // across the wall (widths stay fixed so tiles never bleed past 24px).
+      const jitterX = Math.round((tileRandom(x, y, seed ^ 0x2201) - 0.5) * 2);
+      const jitterY = Math.round((tileRandom(x, y, seed ^ 0x2202) - 0.5) * 2);
+      const split = (themeId === 2 ? 16 : 11) + jitterX;
+      const rowSplit = 12 + jitterY;
+      c.fillRect(1, 1, split - 1, rowSplit - 3);
+      c.fillRect(split + 1, 1, 22 - split, rowSplit - 3);
+      c.fillRect(1, rowSplit, 6, 22 - rowSplit);
+      c.fillRect(9, rowSplit, 14, 22 - rowSplit);
     } else if (themeId === 4) {
       c.fillRect(2, 2, 20, 19);
       c.strokeStyle = accentColor;

@@ -1,5 +1,5 @@
 import { CHUNK, COLORS, TOWER_HEIGHT, VIEWPORT_TILES } from "./config.ts";
-import { drawTerrain } from "./themes.ts";
+import { drawTerrain, tileRandom } from "./themes.ts";
 import type { Game } from "./state.ts";
 import type { Tile, Torch } from "./entities.ts";
 import { drawForestTile, drawEntrance, OUTSIDE_SIZE } from "./outside.ts";
@@ -479,15 +479,22 @@ export class Renderer {
       s = this.size,
       sx = (t.x - this.left) * s,
       sy = (this.density - 1 - (t.y - this.bottom)) * s;
+    // Small deterministic per-torch variation (flame height/width) so a room
+    // full of torches doesn't read as one sprite stamped repeatedly.
+    const jitter = tileRandom(t.x, t.y, 0x7a4c);
+    const flameH = 8 + Math.round(jitter * 2); // 8-9px
+    const flameTopY = 13 - flameH;
+    const flameW = jitter > 0.5 ? 6 : 5;
+    const flameX = 12 - flameW / 2;
     c.save();
     c.translate(sx, sy);
     c.scale(s / 24, s / 24);
     c.fillStyle = "#59412c";
     c.fillRect(10, 10, 4, 10);
     c.fillStyle = "#df7b32";
-    c.fillRect(9, 4, 6, 9);
+    c.fillRect(flameX, flameTopY, flameW, flameH);
     c.fillStyle = "#ffe3a0";
-    c.fillRect(11, 3, 3, 7);
+    c.fillRect(11, flameTopY + 1, 3, flameH - 2);
     c.restore();
   }
   /** Creates or resizes an offscreen canvas for rendering the composite lightmap. */
