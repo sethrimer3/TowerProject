@@ -1,5 +1,5 @@
 import { CHUNK, COLORS, TOWER_HEIGHT, VIEWPORT_TILES } from "./config.ts";
-import { drawTerrain } from "./themes.ts";
+import { drawTerrain, tileRandom } from "./themes.ts";
 import type { Game } from "./state.ts";
 import type { Tile, Torch } from "./entities.ts";
 import { drawForestTile, drawEntrance, OUTSIDE_SIZE } from "./outside.ts";
@@ -26,12 +26,12 @@ export interface AtmosphereConfig {
 export const ATMOSPHERE_CONFIG: AtmosphereConfig = {
   // Gentle cool purple-blue tone that provides moody contrast against amber torches
   ambientColor: "rgba(36, 26, 60, 1)",
-  ambientStrength: 0.10,
-  vignetteStrength: 0.18,
-  vignetteSoftness: 0.58,
-  torchHazeStrength: 0.10,
-  torchHazeRadius: 1.25,
-  torchHazeBlur: 3,
+  ambientStrength: 0.06,
+  vignetteStrength: 0.12,
+  vignetteSoftness: 0.6,
+  torchHazeStrength: 0.08,
+  torchHazeRadius: 1.2,
+  torchHazeBlur: 4,
 };
 
 export class Renderer {
@@ -201,6 +201,22 @@ export class Renderer {
       c.shadowBlur = 0;
     }
   }
+  /** Cheap, restrained grounding shadow: a soft dark ellipse under a sprite's
+   * feet. No blur filter — a two-stop radial gradient reads as soft at this
+   * tile scale for near-zero cost. */
+  groundShadow(cx: number, cy: number, rx: number, ry: number, alpha: number) {
+    const c = this.ctx;
+    const gr = c.createRadialGradient(cx, cy, 0, cx, cy, rx);
+    gr.addColorStop(0, `rgba(0,0,0,${alpha})`);
+    gr.addColorStop(0.7, `rgba(0,0,0,${alpha * 0.55})`);
+    gr.addColorStop(1, "rgba(0,0,0,0)");
+    c.save();
+    c.fillStyle = gr;
+    c.beginPath();
+    c.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+    c.fill();
+    c.restore();
+  }
   tile(t: Tile, x: number, y: number, time: number) {
     const c = this.ctx;
     const g = this.game;
@@ -232,6 +248,11 @@ export class Renderer {
       const exit = y % CHUNK === CHUNK - 1;
       c.fillStyle = exit ? "#dec58c20" : "#8eacc520";
       c.fillRect(2, 1, 20, 22);
+      // Restrained stone framing so stairways read as a deliberate architectural
+      // feature rather than a plain floor tile with steps drawn on it.
+      c.strokeStyle = exit ? "#e8c98a55" : "#9fb7cc45";
+      c.lineWidth = 1;
+      c.strokeRect(1.5, 0.5, 21, 23);
       for (let i = 0; i < 4; i++) {
         c.fillStyle = exit ? "#bda67a" : "#65707b";
         c.fillRect(4, 11 + i * 3, 16, 2);
@@ -253,6 +274,9 @@ export class Renderer {
     if (t.kind === "stairsDown") {
       c.fillStyle = "#7a9a9420";
       c.fillRect(2, 1, 20, 22);
+      c.strokeStyle = "#a9d0c845";
+      c.lineWidth = 1;
+      c.strokeRect(1.5, 0.5, 21, 23);
       for (let i = 0; i < 4; i++) {
         c.fillStyle = "#6f8a86";
         c.fillRect(4, 6 + i * 3, 16, 2);
@@ -270,6 +294,7 @@ export class Renderer {
       return;
     }
     if (t.kind === "key") {
+      this.groundShadow(11, 18, 5, 1.8, 0.3);
       c.strokeStyle = COLORS[t.color!];
       c.lineWidth = 2.5;
       c.beginPath();
@@ -295,6 +320,7 @@ export class Renderer {
       return;
     }
     if (t.kind === "potion") {
+      this.groundShadow(12, 22, 6, 1.6, 0.3);
       const isPercent = t.color === "red";
       c.fillStyle = "#bbc4ca";
       c.fillRect(9, 4, 6, 5);
@@ -320,6 +346,7 @@ export class Renderer {
       return;
     }
     if (t.kind === "attack") {
+      this.groundShadow(12, 22, 6, 1.6, 0.3);
       c.save();
       c.translate(12, 12);
       c.rotate(0.65);
@@ -335,6 +362,7 @@ export class Renderer {
       return;
     }
     if (t.kind === "defense") {
+      this.groundShadow(12, 22, 6, 1.6, 0.3);
       c.fillStyle = "#9cb0c2";
       c.beginPath();
       c.moveTo(4, 4);
@@ -352,6 +380,7 @@ export class Renderer {
       return;
     }
     if (t.kind === "reward") {
+      this.groundShadow(12, 22.5, 8, 1.8, 0.32);
       const metal = { silver: "#c5d0df", gold: "#f5cd62", platinum: "#bcfff3" }[t.tier!];
       c.fillStyle = metal;
       c.shadowColor = metal;
@@ -375,6 +404,7 @@ export class Renderer {
       return;
     }
     if (t.kind === "treasure") {
+      this.groundShadow(12, 22.5, 8, 1.8, 0.32);
       c.fillStyle = "#d0a34d";
       c.fillRect(3, 7, 18, 14);
       c.fillStyle = "#714829";
@@ -385,8 +415,7 @@ export class Renderer {
       return;
     }
     const tier = t.enemy!.tier;
-    c.fillStyle = "#0006";
-    c.fillRect(4, 20, 17, 3);
+    this.groundShadow(12, 21, 8, 2.6, 0.4);
     if (tier === 0) {
       c.fillStyle = "#568c45";
       c.fillRect(4, 12, 17, 8);
@@ -450,15 +479,22 @@ export class Renderer {
       s = this.size,
       sx = (t.x - this.left) * s,
       sy = (this.density - 1 - (t.y - this.bottom)) * s;
+    // Small deterministic per-torch variation (flame height/width) so a room
+    // full of torches doesn't read as one sprite stamped repeatedly.
+    const jitter = tileRandom(t.x, t.y, 0x7a4c);
+    const flameH = 8 + Math.round(jitter * 2); // 8-9px
+    const flameTopY = 13 - flameH;
+    const flameW = jitter > 0.5 ? 6 : 5;
+    const flameX = 12 - flameW / 2;
     c.save();
     c.translate(sx, sy);
     c.scale(s / 24, s / 24);
     c.fillStyle = "#59412c";
     c.fillRect(10, 10, 4, 10);
     c.fillStyle = "#df7b32";
-    c.fillRect(9, 4, 6, 9);
+    c.fillRect(flameX, flameTopY, flameW, flameH);
     c.fillStyle = "#ffe3a0";
-    c.fillRect(11, 3, 3, 7);
+    c.fillRect(11, flameTopY + 1, 3, flameH - 2);
     c.restore();
   }
   /** Enumerates wall tiles currently within the viewport, in the same grid
@@ -571,9 +607,15 @@ export class Renderer {
 
     c.save();
     c.beginPath();
+    // Expand the clip polygon slightly outward from the torch so occlusion
+    // edges feather into the blur instead of reading as hard geometry.
+    const penumbra = 1 + LIGHTING_CONFIG.shadow.penumbraOffset;
+    const ox = t.x + 0.5, oy = t.y + 0.5;
     t.visibilityPolygon.forEach((p, i) => {
-      const px = this.toScreenX(p.x),
-        py = this.toScreenY(p.y);
+      const wx = ox + (p.x - ox) * penumbra,
+        wy = oy + (p.y - oy) * penumbra;
+      const px = this.toScreenX(wx),
+        py = this.toScreenY(wy);
       if (i === 0) c.moveTo(px, py);
       else c.lineTo(px, py);
     });
@@ -666,25 +708,27 @@ export class Renderer {
     const pulse = 0.85 + 0.15 * Math.sin(now / 200);
 
     const segments: Array<Array<{ x: number; y: number }>> = [];
-    let currentSegment: Array<{ x: number; y: number }> = [];
+    // Start the line at the hero's current interpolated visual position so
+    // it recedes behind the sprite as it walks, instead of at the (already
+    // consumed) next route step.
+    let currentSegment: Array<{ x: number; y: number }> = [
+      toTileScreen(this.playerX, this.playerY),
+    ];
+    let prevGrid = { x: this.playerX, y: this.playerY };
 
     for (let i = 0; i < route.length; i++) {
       const step = route[i];
       const pt = toTileScreen(step.x, step.y);
-      if (i === 0) {
-        currentSegment.push(pt);
-      } else {
-        const prevStep = route[i - 1];
-        const isWrap = Math.abs(step.x - prevStep.x) > 1 || Math.abs(step.y - prevStep.y) > 1;
-        if (isWrap) {
-          if (currentSegment.length > 0) {
-            segments.push(currentSegment);
-          }
-          currentSegment = [pt];
-        } else {
-          currentSegment.push(pt);
+      const isWrap = Math.abs(step.x - prevGrid.x) > 1 || Math.abs(step.y - prevGrid.y) > 1;
+      if (isWrap) {
+        if (currentSegment.length > 0) {
+          segments.push(currentSegment);
         }
+        currentSegment = [pt];
+      } else {
+        currentSegment.push(pt);
       }
+      prevGrid = step;
     }
     if (currentSegment.length > 0) {
       segments.push(currentSegment);
@@ -727,10 +771,13 @@ export class Renderer {
     c.restore();
   }
   hero() {
+    this.groundShadow(12, 22, 8, 2.6, 0.4);
     Renderer.drawHero(this.ctx);
   }
   static drawHero(c: CanvasRenderingContext2D) {
-    c.fillStyle = "#7bacdf30";
+    // Extremely subtle local contrast disc (not a light source) so the hero
+    // silhouette stays easy to spot against both lit and unlit floor tiles.
+    c.fillStyle = "#7bacdf22";
     c.beginPath();
     c.arc(12, 14, 13, 0, Math.PI * 2);
     c.fill();

@@ -6,12 +6,12 @@ export const LIGHTING_CONFIG = {
    * A subtle dark-purple tone that keeps the dungeon fully readable without torches. */
   ambient: {
     color: "#181226", // Dark purple tint
-    opacity: 0.20,    // Experimental floor-only darkness pass: now excludes walls entirely, so this only dims floor tiles (was 0.32, and 0.60 originally)
+    opacity: 0.20,    // Floor-only darkness pass (walls are excluded entirely, see drawDungeonLightmap)
   },
   /** Default torch properties when placed in generation */
   torch: {
-    defaultRadius: 6.5,
-    defaultIntensity: 0.55,
+    defaultRadius: 4.5, // Falloff spans roughly 3-5 tiles
+    defaultIntensity: 0.5,
   },
   /** Radial falloff and candle color stops.
    * Gentle, cozy amber/candle warmth with low saturation and long feathered falloff. */
@@ -36,9 +36,9 @@ export const LIGHTING_CONFIG = {
   /** Shadow softness / penumbra properties */
   shadow: {
     /** Gaussian blur radius applied to the torch lightmap pass for soft penumbras */
-    blurPx: 6,
+    blurPx: 11,
     /** Multiplier to extend ray coverage slightly past corners to soften occlusion edges */
-    penumbraOffset: 0.06,
+    penumbraOffset: 0.12,
   },
 };
 

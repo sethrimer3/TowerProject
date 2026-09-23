@@ -17,19 +17,22 @@ export const THEMES = [
 /** Centralized tuning parameters for the procedural dungeon environment rendering. */
 export const DUNGEON_ENV_CONFIG = {
   // Density: keeping ~85-92% of floor tiles and ~75-80% of wall tiles clean/empty.
-  floorDecorDensityBase: 0.08,
-  floorDecorDensityNearWall: 0.16,
-  wallDecorDensity: 0.18,
+  floorDecorDensityBase: 0.05,
+  floorDecorDensityNearWall: 0.10,
+  wallDecorDensity: 0.11,
   // Clustering threshold: value noise must exceed this for decorative clusters to appear.
-  clusterThreshold: 0.44,
+  clusterThreshold: 0.5,
   // Per-block subtle brightness / hue variation (limits: ±3% brightness, ±4% hue shift).
   blockBrightnessJitter: 0.035,
   blockHueJitter: 0.04,
   // Wall 3D lighting & contact shadows.
-  wallTopHighlightAlpha: 0.18,
-  wallBottomShadowAlpha: 0.40,
-  contactShadowAlpha: 0.32,
-  contactShadowSideAlpha: 0.22,
+  wallTopHighlightAlpha: 0.22,
+  wallBottomShadowAlpha: 0.45,
+  contactShadowAlpha: 0.28,
+  contactShadowSideAlpha: 0.18,
+  // Tile seam ("grid") opacity — kept low so the grid sits behind gameplay elements.
+  floorSeamAlpha: 0.35,
+  wallSeamAlpha: 0.55,
 };
 
 export interface TileNeighbors {
@@ -279,21 +282,30 @@ export function drawTerrain(
   const clusterVal = noise(x / 4.5, y / 4.5, seed ^ 0x3c71);
 
   if (wall) {
-    // Wall base and perimeter seam
+    // Wall base and perimeter seam - kept crisp so walls read as a strong silhouette
     c.fillStyle = seamColor;
     c.fillRect(0, 0, 24, 24);
+    c.save();
+    c.globalAlpha = DUNGEON_ENV_CONFIG.wallSeamAlpha;
     c.strokeStyle = seamColor;
-    c.lineWidth = 0.7;
+    c.lineWidth = 0.9;
     c.strokeRect(0.4, 0.4, 23.2, 23.2);
+    c.restore();
 
     // Wall stone fill: clean, restrained block faces
     c.fillStyle = wallColor;
     if ([0, 1, 2, 6].includes(themeId)) {
-      const split = themeId === 2 ? 16 : 11;
-      c.fillRect(1, 1, split - 1, 9);
-      c.fillRect(split + 1, 1, 22 - split, 9);
-      c.fillRect(1, 12, 6, 10);
-      c.fillRect(9, 12, 14, 10);
+      // Small deterministic jitter on the brick seam position so adjacent
+      // wall tiles of the same theme don't look like one stamp repeated
+      // across the wall (widths stay fixed so tiles never bleed past 24px).
+      const jitterX = Math.round((tileRandom(x, y, seed ^ 0x2201) - 0.5) * 2);
+      const jitterY = Math.round((tileRandom(x, y, seed ^ 0x2202) - 0.5) * 2);
+      const split = (themeId === 2 ? 16 : 11) + jitterX;
+      const rowSplit = 12 + jitterY;
+      c.fillRect(1, 1, split - 1, rowSplit - 3);
+      c.fillRect(split + 1, 1, 22 - split, rowSplit - 3);
+      c.fillRect(1, rowSplit, 6, 22 - rowSplit);
+      c.fillRect(9, rowSplit, 14, 22 - rowSplit);
     } else if (themeId === 4) {
       c.fillRect(2, 2, 20, 19);
       c.strokeStyle = accentColor;
@@ -329,12 +341,15 @@ export function drawTerrain(
     c.fillStyle = `rgba(0, 0, 0, ${DUNGEON_ENV_CONFIG.wallBottomShadowAlpha})`;
     c.fillRect(0, 22, 24, 2);
   } else {
-    // Floor tile base: smooth and calm
+    // Floor tile base: smooth and calm; seam kept faint so the grid never dominates
     c.fillStyle = floorColor;
     c.fillRect(0, 0, 24, 24);
+    c.save();
+    c.globalAlpha = DUNGEON_ENV_CONFIG.floorSeamAlpha;
     c.strokeStyle = seamColor;
     c.lineWidth = 0.5;
     c.strokeRect(0.25, 0.25, 23.5, 23.5);
+    c.restore();
 
     // Wall contact shadows cast onto floors from adjacent walls (adds depth/dimensionality)
     if (neighbors) {
