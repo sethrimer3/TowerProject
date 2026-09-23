@@ -5,7 +5,8 @@ import type { Tile, Torch } from "./entities.ts";
 import { drawForestTile, drawEntrance, OUTSIDE_SIZE } from "./outside.ts";
 import { OutdoorWeather } from "./weather.ts";
 import { LIGHTING_CONFIG, getTorchFlicker } from "./lighting.ts";
-import { area1FloorSprite, drawArea1Door, drawArea1Item, drawArea1Tile } from "./area1-tileset.ts";
+import { area1FloorSprite, drawArea1Door, drawArea1Item } from "./area1-tileset.ts";
+import { drawThemedTile } from "./themed-tilesets.ts";
 import { bakeTorchRelief, torchReaches, type BakedRelief } from "./floor-relief.ts";
 import { bakeTorchLight, lightFalloff, type BakedLight } from "./torch-light.ts";
 import { doorColor } from "./doors.ts";
@@ -334,10 +335,12 @@ export class Renderer {
       westWall,
       eastWall,
     };
-    // Area 1 is the first ten Tower rooms. Images load asynchronously; until
-    // ready (or if an asset fails), the established procedural path remains a
-    // complete fallback. Later themes deliberately keep that path for now.
-    const drewSprite = area1 && drawArea1Tile(c, t.kind === "wall", x, y, g.run.seed, neighbors);
+    // Every biome has a PNG floor/wall set. Images load asynchronously; until
+    // ready (or if an asset fails), the procedural renderer remains a complete
+    // fallback and the Sprites setting can still opt out of bitmap art.
+    const drewSprite = !g.save.settings.spritesOff && drawThemedTile(
+      c, g.mode, g.run.height, t.kind === "wall", x, y, g.run.seed, neighbors,
+    );
     if (!drewSprite)
       drawTerrain(c, t.kind === "wall", g.mode, g.run.height, x, y, g.run.seed, t.kind === "floor", neighbors);
     if (t.kind === "wall") return;
