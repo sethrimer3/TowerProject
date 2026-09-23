@@ -1,15 +1,15 @@
 {
   "tileSize": 24,
   "palette": {
-    "floor": "#202a36",
-    "floorLight": "#2a3644",
-    "floorDark": "#171f2a",
-    "wall": "#536273",
-    "wallLight": "#718092",
-    "wallMid": "#465464",
-    "seam": "#283442",
-    "shadow": "#1b2530",
-    "accent": "#9b927f"
+    "floor": "#273442",
+    "floorLight": "#3a4a59",
+    "floorDark": "#151e28",
+    "wall": "#39495a",
+    "wallLight": "#8fa0ad",
+    "wallMid": "#607283",
+    "seam": "#1c2733",
+    "shadow": "#111923",
+    "accent": "#b8b29f"
   },
   "floor": [
     "floor_01.png",

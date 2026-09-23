@@ -7,9 +7,9 @@ const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const OUT = join(ROOT, "public", "assets", "tilesets", "area1");
 const SIZE = 24;
 const PALETTE = {
-  floor: "#202a36", floorLight: "#2a3644", floorDark: "#171f2a",
-  wall: "#536273", wallLight: "#718092", wallMid: "#465464",
-  seam: "#283442", shadow: "#1b2530", accent: "#9b927f",
+  floor: "#273442", floorLight: "#3a4a59", floorDark: "#151e28",
+  wall: "#39495a", wallLight: "#8fa0ad", wallMid: "#607283",
+  seam: "#1c2733", shadow: "#111923", accent: "#b8b29f",
 };
 
 const rgba = (hex) => [...hex.matchAll(/[0-9a-f]{2}/gi)].map((m) => parseInt(m[0], 16)).concat(255);
@@ -46,32 +46,66 @@ const rect = (p, x, y, w, h, color) => {
 };
 const px = (p, points, color) => points.forEach(([x, y]) => rect(p, x, y, 1, 1, color));
 
+function stone(p, x, y, w, h, fill = PALETTE.floor) {
+  rect(p, x, y, w, h, PALETTE.floorDark);
+  if (w > 2 && h > 2) rect(p, x + 1, y + 1, w - 2, h - 2, fill);
+  if (w > 3) rect(p, x + 2, y + 1, w - 3, 1, PALETTE.floorLight);
+  if (h > 3) rect(p, x + 1, y + 2, 1, h - 3, PALETTE.floorLight);
+  if (w > 3) rect(p, x + 2, y + h - 2, w - 3, 1, PALETTE.shadow);
+}
+
 function floorTile(variant) {
-  const p = canvas(PALETTE.floor);
-  rect(p, 0, 0, 24, 1, PALETTE.floorDark); rect(p, 0, 23, 24, 1, PALETTE.floorDark);
-  rect(p, 0, 1, 1, 22, PALETTE.floorDark); rect(p, 23, 1, 1, 22, PALETTE.floorDark);
-  if (variant === 0) { rect(p, 2, 2, 20, 1, PALETTE.floorLight); px(p, [[5,7],[6,7],[13,18]], PALETTE.floorLight); }
-  if (variant === 1) { rect(p, 3, 11, 18, 1, PALETTE.floorDark); rect(p, 11, 2, 1, 9, PALETTE.floorDark); px(p, [[4,4],[17,16]], PALETTE.floorLight); }
-  if (variant === 2) { px(p, [[4,5],[5,5],[6,6],[7,6],[7,7],[16,17],[17,17],[17,16]], PALETTE.floorDark); px(p, [[18,6],[8,16]], PALETTE.floorLight); }
-  if (variant === 3) { rect(p, 2, 19, 8, 1, PALETTE.floorDark); px(p, [[9,18],[10,17],[15,5],[16,5],[18,13]], PALETTE.floorLight); px(p, [[5,14],[6,14]], PALETTE.accent); }
+  const p = canvas(PALETTE.floorDark);
+  if (variant === 0) {
+    stone(p, 0, 0, 12, 8); stone(p, 12, 0, 12, 8); stone(p, 0, 8, 17, 10); stone(p, 17, 8, 7, 10);
+    stone(p, 0, 18, 9, 6); stone(p, 9, 18, 15, 6);
+    px(p, [[8,12],[9,13],[10,14],[10,15],[16,4]], PALETTE.shadow);
+  } else if (variant === 1) {
+    stone(p, 0, 0, 9, 12); stone(p, 9, 0, 15, 7); stone(p, 9, 7, 15, 8);
+    stone(p, 0, 12, 9, 12); stone(p, 9, 15, 8, 9); stone(p, 17, 15, 7, 9);
+    px(p, [[19,4],[20,5],[5,17],[6,17]], PALETTE.shadow);
+  } else if (variant === 2) {
+    // Chunky, hand-laid cobbles with clipped corners rather than noisy dots.
+    for (const [x,y,w,h] of [[0,0,8,7],[8,0,9,6],[17,0,7,8],[0,7,10,9],[10,6,8,9],[18,8,6,8],[0,16,7,8],[7,16,10,8],[17,16,7,8]]) {
+      stone(p, x, y, w, h, "#304050");
+      px(p, [[x,y],[x+w-1,y],[x,y+h-1],[x+w-1,y+h-1]], PALETTE.floorDark);
+    }
+    px(p, [[4,3],[13,10],[20,12],[11,20]], PALETTE.floorLight);
+  } else {
+    for (let y = 0; y < 24; y += 6) for (let x = 0; x < 24; x += 6)
+      stone(p, x, y, 6, 6, (x + y) % 12 ? "#2b3948" : "#314151");
+    px(p, [[3,15],[4,14],[5,14],[15,8],[16,9],[17,9],[19,20]], PALETTE.shadow);
+    px(p, [[7,3],[20,10]], PALETTE.accent);
+  }
   return p;
 }
 
 function wallTile(mask, variant = 0) {
-  const p = canvas(PALETTE.wall);
-  // Three staggered masonry courses, with tiny variant-dependent offsets.
-  rect(p, 0, 0, 24, 2, PALETTE.wallLight);
-  rect(p, 0, 7, 24, 2, PALETTE.seam); rect(p, 0, 15, 24, 2, PALETTE.seam);
-  const topSplit = [8, 13, 17][variant % 3], middleSplit = [15, 9, 12][variant % 3];
-  rect(p, topSplit, 1, 2, 6, PALETTE.seam); rect(p, middleSplit, 9, 2, 6, PALETTE.seam);
-  rect(p, 6 + variant * 4, 17, 2, 6, PALETTE.seam);
-  rect(p, 0, 22, 24, 2, PALETTE.shadow);
-  px(p, variant === 0 ? [[4,4],[18,11],[11,19]] : variant === 1 ? [[6,11],[19,4],[14,20]] : [[3,18],[11,4],[20,12]], PALETTE.wallMid);
-  // Connected sides keep their masonry open; exposed sides receive a strong rim.
-  if (!(mask & 1)) { rect(p, 0, 0, 24, 2, PALETTE.wallLight); rect(p, 0, 2, 24, 1, PALETTE.wallMid); }
-  if (!(mask & 2)) { rect(p, 21, 0, 3, 24, PALETTE.shadow); rect(p, 20, 0, 1, 24, PALETTE.wallLight); }
-  if (!(mask & 4)) { rect(p, 0, 21, 24, 3, PALETTE.shadow); rect(p, 0, 20, 24, 1, PALETTE.wallMid); }
-  if (!(mask & 8)) { rect(p, 0, 0, 3, 24, PALETTE.shadow); rect(p, 3, 0, 1, 24, PALETTE.wallLight); }
+  const p = canvas(PALETTE.seam);
+  // Recessed masonry core: irregular courses, darker than the pale structural rim.
+  const splits = [[8,16],[11,19],[6,15]][variant % 3];
+  stone(p, 0, 0, splits[0], 8, PALETTE.wall); stone(p, splits[0], 0, splits[1]-splits[0], 8, "#415264"); stone(p, splits[1], 0, 24-splits[1], 8, PALETTE.wall);
+  stone(p, 0, 8, 13, 8, "#435568"); stone(p, 13, 8, 11, 8, PALETTE.wall);
+  stone(p, 0, 16, 7 + variant * 2, 8, PALETTE.wall); stone(p, 7 + variant * 2, 16, 10, 8, "#425365"); stone(p, 17 + variant * 2, 16, 7 - variant * 2, 8, PALETTE.wall);
+  const rim = PALETTE.wallLight, hi = "#c1c2b5", mid = PALETTE.wallMid, low = "#344354";
+  // Thick, block-jointed exposed faces match the authoritative concept sheet.
+  if (!(mask & 1)) {
+    rect(p, 0, 0, 24, 6, rim); rect(p, 0, 0, 24, 1, hi); rect(p, 0, 5, 24, 1, low);
+    rect(p, 8 + variant * 3, 0, 1, 6, mid); rect(p, 17, 0, 1, 6, mid);
+  }
+  if (!(mask & 2)) {
+    rect(p, 18, 0, 6, 24, rim); rect(p, 18, 0, 1, 24, hi); rect(p, 23, 0, 1, 24, low);
+    rect(p, 18, 8 + variant * 2, 6, 1, mid); rect(p, 18, 17, 6, 1, mid);
+  }
+  if (!(mask & 4)) {
+    rect(p, 0, 18, 24, 6, rim); rect(p, 0, 18, 24, 1, hi); rect(p, 0, 23, 24, 1, low);
+    rect(p, 7, 18, 1, 6, mid); rect(p, 16 - variant * 2, 18, 1, 6, mid);
+  }
+  if (!(mask & 8)) {
+    rect(p, 0, 0, 6, 24, rim); rect(p, 0, 0, 1, 24, hi); rect(p, 5, 0, 1, 24, low);
+    rect(p, 0, 7, 6, 1, mid); rect(p, 0, 16 + variant, 6, 1, mid);
+  }
+  px(p, variant === 0 ? [[3,3],[20,11],[11,20]] : variant === 1 ? [[5,12],[20,4],[14,21]] : [[3,19],[11,4],[20,13]], "#7b8d9c");
   return p;
 }
 
