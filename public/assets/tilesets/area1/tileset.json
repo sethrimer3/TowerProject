@@ -63,5 +63,18 @@
     "c": "triangle",
     "steel": "four-point universal",
     "heart": "heart crest"
+  },
+  "items": {
+    "key_yellow": "items/key_yellow.png",
+    "key_blue": "items/key_blue.png",
+    "key_red": "items/key_red.png",
+    "potion_flat": "items/potion_flat.png",
+    "potion_percent": "items/potion_percent.png",
+    "upgrade_attack": "items/upgrade_attack.png",
+    "upgrade_defense": "items/upgrade_defense.png",
+    "chest_treasure": "items/chest_treasure.png",
+    "chest_silver": "items/chest_silver.png",
+    "chest_gold": "items/chest_gold.png",
+    "chest_platinum": "items/chest_platinum.png"
   }
 }

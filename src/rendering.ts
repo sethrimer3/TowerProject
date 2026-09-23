@@ -5,7 +5,7 @@ import type { Tile, Torch } from "./entities.ts";
 import { drawForestTile, drawEntrance, OUTSIDE_SIZE } from "./outside.ts";
 import { OutdoorWeather } from "./weather.ts";
 import { LIGHTING_CONFIG, getTorchFlicker } from "./lighting.ts";
-import { drawArea1Door, drawArea1Tile } from "./area1-tileset.ts";
+import { drawArea1Door, drawArea1Item, drawArea1Tile } from "./area1-tileset.ts";
 import { doorColor } from "./doors.ts";
 
 export interface AtmosphereConfig {
@@ -303,6 +303,7 @@ export class Renderer {
       return;
     }
     if (t.kind === "key") {
+      if (area1 && drawArea1Item(c, t)) return;
       this.groundShadow(11, 18, 5, 1.8, 0.3);
       c.strokeStyle = COLORS[t.color!];
       c.lineWidth = 2.5;
@@ -330,6 +331,7 @@ export class Renderer {
       return;
     }
     if (t.kind === "potion") {
+      if (area1 && drawArea1Item(c, t)) return;
       this.groundShadow(12, 22, 6, 1.6, 0.3);
       const isPercent = t.color === "red";
       c.fillStyle = "#bbc4ca";
@@ -356,6 +358,7 @@ export class Renderer {
       return;
     }
     if (t.kind === "attack") {
+      if (area1 && drawArea1Item(c, t)) return;
       this.groundShadow(12, 22, 6, 1.6, 0.3);
       c.save();
       c.translate(12, 12);
@@ -372,6 +375,7 @@ export class Renderer {
       return;
     }
     if (t.kind === "defense") {
+      if (area1 && drawArea1Item(c, t)) return;
       this.groundShadow(12, 22, 6, 1.6, 0.3);
       c.fillStyle = "#9cb0c2";
       c.beginPath();
@@ -390,19 +394,22 @@ export class Renderer {
       return;
     }
     if (t.kind === "reward") {
-      this.groundShadow(12, 22.5, 8, 1.8, 0.32);
-      const metal = { silver: "#c5d0df", gold: "#f5cd62", platinum: "#bcfff3" }[t.tier!];
-      c.fillStyle = metal;
-      c.shadowColor = metal;
-      c.shadowBlur = 5;
-      c.fillRect(3, 7, 18, 14);
-      c.shadowBlur = 0;
-      c.fillStyle = "#283040";
-      c.fillRect(5, 9, 14, 10);
-      c.fillStyle = metal;
-      c.fillRect(3, 12, 18, 2);
-      c.fillRect(10, 11, 4, 6);
-      if (t.tier === "platinum") { c.fillStyle = "#ffffff"; c.fillRect(11, 3, 2, 3); }
+      const spriteDrawn = area1 && drawArea1Item(c, t);
+      if (!spriteDrawn) {
+        this.groundShadow(12, 22.5, 8, 1.8, 0.32);
+        const metal = { silver: "#c5d0df", gold: "#f5cd62", platinum: "#bcfff3" }[t.tier!];
+        c.fillStyle = metal;
+        c.shadowColor = metal;
+        c.shadowBlur = 5;
+        c.fillRect(3, 7, 18, 14);
+        c.shadowBlur = 0;
+        c.fillStyle = "#283040";
+        c.fillRect(5, 9, 14, 10);
+        c.fillStyle = metal;
+        c.fillRect(3, 12, 18, 2);
+        c.fillRect(10, 11, 4, 6);
+        if (t.tier === "platinum") { c.fillStyle = "#ffffff"; c.fillRect(11, 3, 2, 3); }
+      }
       for (let i = 0; i < 3; i++) {
         const phase = g.save.settings.reduceMotion ? 0.6 : (Math.sin(time / 240 + i * 2 + x + y) + 1) / 2;
         c.globalAlpha = 0.25 + phase * 0.75;
@@ -414,6 +421,7 @@ export class Renderer {
       return;
     }
     if (t.kind === "treasure") {
+      if (area1 && drawArea1Item(c, t)) return;
       this.groundShadow(12, 22.5, 8, 1.8, 0.32);
       c.fillStyle = "#d0a34d";
       c.fillRect(3, 7, 18, 14);
