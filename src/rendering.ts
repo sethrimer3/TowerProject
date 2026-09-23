@@ -25,6 +25,11 @@ export interface AtmosphereConfig {
   torchHazeBlur: number;
 }
 
+/** Thin outline colors that mark ground items/treasure as interactable and
+ * enemies as hostile, independent of each sprite's own fill colors. */
+const DARK_GOLD = "#5c3f12";
+const DARK_RED = "#5c1620";
+
 export const ATMOSPHERE_CONFIG: AtmosphereConfig = {
   // Gentle cool purple-blue tone that provides moody contrast against amber torches
   ambientColor: "rgba(36, 26, 60, 1)",
@@ -361,82 +366,90 @@ export class Renderer {
     if (t.kind === "potion") {
       if (area1 && drawArea1Item(c, t)) return;
       this.groundShadow(12, 22, 6, 1.6, 0.3);
-      const isPercent = t.color === "red";
-      c.fillStyle = "#bbc4ca";
-      c.fillRect(9, 4, 6, 5);
-      c.fillRect(6, 10, 12, 11);
-      c.fillStyle = COLORS[t.color ?? "blue"];
-      c.fillRect(8, 12, 8, 7);
-      if (isPercent) {
-        // Diagonal stripes distinguish the percent potion by shape, not just color.
-        c.fillStyle = "#ffffffaa";
-        c.fillRect(9, 12, 1, 7);
-        c.fillRect(12, 12, 1, 7);
-        c.fillRect(15, 12, 1, 7);
-      } else {
-        // Solid highlight plus a "+" mark identifies the flat-heal potion.
-        c.fillStyle = "#ffffffcc";
-        c.fillRect(11, 13, 2, 5);
-        c.fillRect(9, 15, 6, 1);
-      }
-      c.fillStyle = "#ffd9d9";
-      c.fillRect(8, 12, 2, 4);
-      c.fillStyle = "#bd9661";
-      c.fillRect(9, 3, 6, 3);
+      this.withOutline(DARK_GOLD, (c) => {
+        const isPercent = t.color === "red";
+        c.fillStyle = "#bbc4ca";
+        c.fillRect(9, 4, 6, 5);
+        c.fillRect(6, 10, 12, 11);
+        c.fillStyle = COLORS[t.color ?? "blue"];
+        c.fillRect(8, 12, 8, 7);
+        if (isPercent) {
+          // Diagonal stripes distinguish the percent potion by shape, not just color.
+          c.fillStyle = "#ffffffaa";
+          c.fillRect(9, 12, 1, 7);
+          c.fillRect(12, 12, 1, 7);
+          c.fillRect(15, 12, 1, 7);
+        } else {
+          // Solid highlight plus a "+" mark identifies the flat-heal potion.
+          c.fillStyle = "#ffffffcc";
+          c.fillRect(11, 13, 2, 5);
+          c.fillRect(9, 15, 6, 1);
+        }
+        c.fillStyle = "#ffd9d9";
+        c.fillRect(8, 12, 2, 4);
+        c.fillStyle = "#bd9661";
+        c.fillRect(9, 3, 6, 3);
+      });
       return;
     }
     if (t.kind === "attack") {
       if (area1 && drawArea1Item(c, t)) return;
       this.groundShadow(12, 22, 6, 1.6, 0.3);
-      c.save();
-      c.translate(12, 12);
-      c.rotate(0.65);
-      c.fillStyle = "#dbe3e7";
-      c.fillRect(-2, -10, 4, 15);
-      c.fillStyle = "#8194a2";
-      c.fillRect(0, -8, 2, 12);
-      c.fillStyle = "#d6ad60";
-      c.fillRect(-6, 4, 12, 3);
-      c.fillStyle = "#8f6545";
-      c.fillRect(-2, 7, 4, 4);
-      c.restore();
+      this.withOutline(DARK_GOLD, (c) => {
+        c.save();
+        c.translate(12, 12);
+        c.rotate(0.65);
+        c.fillStyle = "#dbe3e7";
+        c.fillRect(-2, -10, 4, 15);
+        c.fillStyle = "#8194a2";
+        c.fillRect(0, -8, 2, 12);
+        c.fillStyle = "#d6ad60";
+        c.fillRect(-6, 4, 12, 3);
+        c.fillStyle = "#8f6545";
+        c.fillRect(-2, 7, 4, 4);
+        c.restore();
+      });
       return;
     }
     if (t.kind === "defense") {
       if (area1 && drawArea1Item(c, t)) return;
       this.groundShadow(12, 22, 6, 1.6, 0.3);
-      c.fillStyle = "#9cb0c2";
-      c.beginPath();
-      c.moveTo(4, 4);
-      c.lineTo(12, 2);
-      c.lineTo(20, 4);
-      c.lineTo(18, 16);
-      c.lineTo(12, 22);
-      c.lineTo(6, 16);
-      c.fill();
-      c.fillStyle = "#416391";
-      c.fillRect(7, 6, 10, 9);
-      c.fillRect(10, 13, 5, 5);
-      c.fillStyle = "#b9d3e8";
-      c.fillRect(10, 5, 2, 12);
+      this.withOutline(DARK_GOLD, (c) => {
+        c.fillStyle = "#9cb0c2";
+        c.beginPath();
+        c.moveTo(4, 4);
+        c.lineTo(12, 2);
+        c.lineTo(20, 4);
+        c.lineTo(18, 16);
+        c.lineTo(12, 22);
+        c.lineTo(6, 16);
+        c.fill();
+        c.fillStyle = "#416391";
+        c.fillRect(7, 6, 10, 9);
+        c.fillRect(10, 13, 5, 5);
+        c.fillStyle = "#b9d3e8";
+        c.fillRect(10, 5, 2, 12);
+      });
       return;
     }
     if (t.kind === "reward") {
       const spriteDrawn = area1 && drawArea1Item(c, t);
       if (!spriteDrawn) {
         this.groundShadow(12, 22.5, 8, 1.8, 0.32);
-        const metal = { silver: "#c5d0df", gold: "#f5cd62", platinum: "#bcfff3" }[t.tier!];
-        c.fillStyle = metal;
-        c.shadowColor = metal;
-        c.shadowBlur = 5;
-        c.fillRect(3, 7, 18, 14);
-        c.shadowBlur = 0;
-        c.fillStyle = "#283040";
-        c.fillRect(5, 9, 14, 10);
-        c.fillStyle = metal;
-        c.fillRect(3, 12, 18, 2);
-        c.fillRect(10, 11, 4, 6);
-        if (t.tier === "platinum") { c.fillStyle = "#ffffff"; c.fillRect(11, 3, 2, 3); }
+        this.withOutline(DARK_GOLD, (c) => {
+          const metal = { silver: "#c5d0df", gold: "#f5cd62", platinum: "#bcfff3" }[t.tier!];
+          c.fillStyle = metal;
+          c.shadowColor = metal;
+          c.shadowBlur = 5;
+          c.fillRect(3, 7, 18, 14);
+          c.shadowBlur = 0;
+          c.fillStyle = "#283040";
+          c.fillRect(5, 9, 14, 10);
+          c.fillStyle = metal;
+          c.fillRect(3, 12, 18, 2);
+          c.fillRect(10, 11, 4, 6);
+          if (t.tier === "platinum") { c.fillStyle = "#ffffff"; c.fillRect(11, 3, 2, 3); }
+        });
       }
       for (let i = 0; i < 3; i++) {
         const phase = g.save.settings.reduceMotion ? 0.6 : (Math.sin(time / 240 + i * 2 + x + y) + 1) / 2;
@@ -451,48 +464,52 @@ export class Renderer {
     if (t.kind === "treasure") {
       if (area1 && drawArea1Item(c, t)) return;
       this.groundShadow(12, 22.5, 8, 1.8, 0.32);
-      c.fillStyle = "#d0a34d";
-      c.fillRect(3, 7, 18, 14);
-      c.fillStyle = "#714829";
-      c.fillRect(5, 9, 14, 10);
-      c.fillStyle = "#ebbd58";
-      c.fillRect(3, 12, 18, 2);
-      c.fillRect(10, 11, 4, 6);
+      this.withOutline(DARK_GOLD, (c) => {
+        c.fillStyle = "#d0a34d";
+        c.fillRect(3, 7, 18, 14);
+        c.fillStyle = "#714829";
+        c.fillRect(5, 9, 14, 10);
+        c.fillStyle = "#ebbd58";
+        c.fillRect(3, 12, 18, 2);
+        c.fillRect(10, 11, 4, 6);
+      });
       return;
     }
     const tier = t.enemy!.tier;
     this.groundShadow(12, 21, 8, 2.6, 0.4);
-    if (tier === 0) {
-      c.fillStyle = "#568c45";
-      c.fillRect(4, 12, 17, 8);
-      c.fillRect(7, 7, 11, 7);
-      c.fillStyle = "#8abc58";
-      c.fillRect(8, 7, 7, 3);
-    } else if (tier === 1) {
-      c.fillStyle = "#c6c3b0";
-      c.fillRect(7, 3, 10, 9);
-      c.fillRect(10, 12, 4, 7);
-      c.fillRect(6, 13, 12, 2);
-      c.fillRect(7, 18, 3, 5);
-      c.fillRect(15, 18, 3, 5);
-      c.fillStyle = "#686d77";
-      c.fillRect(3, 12, 3, 8);
-    } else if (tier === 2) {
-      c.fillStyle = "#934354";
-      c.fillRect(9, 9, 8, 12);
-      c.fillRect(2, 6, 6, 9);
-      c.fillRect(18, 6, 5, 9);
-      c.fillRect(6, 10, 14, 5);
-    } else {
-      c.fillStyle = "#554985";
-      c.fillRect(6, 8, 13, 14);
-      c.fillRect(9, 3, 8, 10);
-      c.fillStyle = "#222033";
-      c.fillRect(8, 9, 10, 7);
-    }
-    c.fillStyle = tier === 1 ? "#17202a" : "#f5ca7d";
-    c.fillRect(9, 11, 2, 2);
-    c.fillRect(15, 11, 2, 2);
+    this.withOutline(DARK_RED, (c) => {
+      if (tier === 0) {
+        c.fillStyle = "#568c45";
+        c.fillRect(4, 12, 17, 8);
+        c.fillRect(7, 7, 11, 7);
+        c.fillStyle = "#8abc58";
+        c.fillRect(8, 7, 7, 3);
+      } else if (tier === 1) {
+        c.fillStyle = "#c6c3b0";
+        c.fillRect(7, 3, 10, 9);
+        c.fillRect(10, 12, 4, 7);
+        c.fillRect(6, 13, 12, 2);
+        c.fillRect(7, 18, 3, 5);
+        c.fillRect(15, 18, 3, 5);
+        c.fillStyle = "#686d77";
+        c.fillRect(3, 12, 3, 8);
+      } else if (tier === 2) {
+        c.fillStyle = "#934354";
+        c.fillRect(9, 9, 8, 12);
+        c.fillRect(2, 6, 6, 9);
+        c.fillRect(18, 6, 5, 9);
+        c.fillRect(6, 10, 14, 5);
+      } else {
+        c.fillStyle = "#554985";
+        c.fillRect(6, 8, 13, 14);
+        c.fillRect(9, 3, 8, 10);
+        c.fillStyle = "#222033";
+        c.fillRect(8, 9, 10, 7);
+      }
+      c.fillStyle = tier === 1 ? "#17202a" : "#f5ca7d";
+      c.fillRect(9, 11, 2, 2);
+      c.fillRect(15, 11, 2, 2);
+    });
   }
   /** Active torches roughly within the camera viewport, padded so a torch
    * whose center is just offscreen can still light visible ground. Cheap
