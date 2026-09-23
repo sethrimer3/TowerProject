@@ -1,5 +1,5 @@
 import { deflateSync } from "node:zlib";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, renameSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -135,12 +135,10 @@ for (let i = 0; i < 3; i++) save(`wall_center_0${i + 1}.png`, wallTile(15, i));
 mkdirSync(join(OUT, "doors"), { recursive: true });
 const doorIds = ["a", "b", "c", "ab", "ac", "bc", "abc", "steel", "heart"];
 for (const id of doorIds) {
-  const oldOut = OUT;
   const pixels = doorTile(id);
   // save() targets the tileset root; move the completed bytes into doors/.
   save(`door_${id}.png`, pixels);
-  const { renameSync } = await import("node:fs");
-  renameSync(join(oldOut, `door_${id}.png`), join(oldOut, "doors", `door_${id}.png`));
+  renameSync(join(OUT, `door_${id}.png`), join(OUT, "doors", `door_${id}.png`));
 }
 writeFileSync(join(OUT, "tileset.json"), JSON.stringify({
   tileSize: 24, palette: PALETTE, floor: ["floor_01.png", "floor_02.png", "floor_03.png", "floor_04.png"],

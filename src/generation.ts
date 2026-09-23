@@ -79,7 +79,9 @@ function placeTorches(
   return torches;
 }
 export const LAYOUT_VERSION = 5;
-export const TOWER_LAYOUT_VERSION = 2;
+// v3 adds declarative multi-key/condition doors and places their prerequisite
+// keys differently; old per-room coordinate mutations must not overlay it.
+export const TOWER_LAYOUT_VERSION = 3;
 const directions = [
   [1, 0],
   [-1, 0],

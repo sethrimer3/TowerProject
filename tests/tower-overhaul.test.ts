@@ -155,6 +155,11 @@ test("multi-floor Tower state survives a save encode/decode round trip", () => {
   const g = arena();
   (g.world as RoomWorld).cells.set(point(1, 0), { kind: "enemy", enemy: SURVIVABLE });
   assert.ok(g.move(1, 0, false));
+  // This fixture replaces the live room with a tiny synthetic arena; depending
+  // on the deterministic base behind deadlock analysis, clearing its only
+  // encounter can legitimately end that synthetic run. The persistence case
+  // below advances explicitly, so keep the fixture active for that operation.
+  g.summary = null;
   g.advanceTowerRoom();
   // advanceTowerRoom() re-centers the player on the new room's own entrance.
   const p1 = point(TOWER_START_X + 1, 0);

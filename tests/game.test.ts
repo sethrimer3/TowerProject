@@ -12,6 +12,7 @@ import {
   LAYOUT_VERSION,
 } from "../src/generation.ts";
 import { validatePhysicalLayout } from "../src/validation.ts";
+import { doorCost } from "../src/doors.ts";
 import { defaults, decode } from "../src/save.ts";
 import { Game } from "../src/state.ts";
 import { predict } from "../src/combat.ts";
@@ -71,6 +72,31 @@ test("doors consume matching keys; pickups and walls obey movement", () => {
   g.world.changes["15,3"] = { kind: "wall" };
   assert.equal(g.move(0, 1), false);
   assert.equal(g.run.height, 2);
+});
+test("combination, steel, and heart doors apply their runtime rules", () => {
+  const combo = new Game(defaults());
+  combo.save.upgrades.delve = 1; combo.switchMode("delve");
+  combo.world.changes["15,1"] = { kind: "door", door: { type: "keys", keys: ["yellow", "blue"], mode: "all" } };
+  combo.run.player.keys.yellow = 1; combo.run.player.keys.blue = 1;
+  assert.equal(combo.move(0, 1), true);
+  assert.equal(combo.run.player.keys.yellow, 0); assert.equal(combo.run.player.keys.blue, 0);
+  assert.equal(combo.run.keysSpent, true);
+
+  const steel = new Game(defaults());
+  steel.save.upgrades.delve = 1; steel.switchMode("delve");
+  steel.world.changes["15,1"] = { kind: "door", door: { type: "keys", keys: ["yellow", "blue", "red"], mode: "any" } };
+  steel.run.player.keys.blue = 1; steel.run.player.keys.red = 1;
+  assert.equal(steel.move(0, 1), true);
+  assert.equal(steel.run.player.keys.blue, 0); assert.equal(steel.run.player.keys.red, 1);
+
+  const heart = new Game(defaults());
+  heart.save.upgrades.delve = 1; heart.switchMode("delve");
+  heart.world.changes["15,1"] = { kind: "door", door: { type: "fullHp" } };
+  heart.run.player.hp--;
+  assert.equal(heart.move(0, 1), false);
+  heart.run.player.hp = heart.run.player.maxHp;
+  assert.equal(heart.move(0, 1), true);
+  assert.equal(heart.run.keysSpent, false);
 });
 test("automation avoids lethal fights; manual death resets immediately and awards once", () => {
   const g = new Game(defaults());
@@ -172,9 +198,10 @@ test("every Tower door is a real choke point, and its key is always reachable fi
             collected.add(k);
           }
         }
-        const next = doors.find(([k, t]) => closed.has(k) && keys[t.color!] > 0);
+        const player = { keys, hp: 1, maxHp: 1 };
+        const next = doors.find(([k, t]) => closed.has(k) && doorCost(t, player) !== null);
         if (!next) break;
-        keys[next[1].color!]--;
+        for (const color of doorCost(next[1], player)!) keys[color]--;
         closed.delete(next[0]);
       }
       assert.equal(closed.size, 0, `Seed ${seed} room ${room}: a door's key is unreachable before it`);
