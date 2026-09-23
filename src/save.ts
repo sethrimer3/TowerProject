@@ -20,7 +20,6 @@ export function defaults(): Save {
       weatherSound: true,
       transition: "smooth",
       showArrows: false,
-      density: 20,
       speed: 3,
       reduceMotion: false,
       autoOffOnDeath: true,
@@ -175,8 +174,6 @@ export function decode(raw: string | null): Save {
       if (finite(s?.upgrades?.[u.id], u.max))
         d.upgrades[u.id] = Math.floor(s.upgrades[u.id]);
     const undoCapacity = 1 + d.upgrades.undos + d.upgrades.shardUndos;
-    if ([16, 20, 24, 30].includes(s?.settings?.density))
-      d.settings.density = s.settings.density;
     if ([1, 3, 6, 10].includes(s?.settings?.speed))
       d.settings.speed = s.settings.speed;
     if (["smooth", "fast", "instant"].includes(s?.settings?.transition))

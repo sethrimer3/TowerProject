@@ -72,7 +72,6 @@ export type Settings = {
   weatherSound?: boolean;
   transition: "smooth" | "fast" | "instant";
   showArrows: boolean;
-  density: number;
   speed: number;
   reduceMotion: boolean;
   /** Requires the autoPersist upgrade to configure; otherwise Automove

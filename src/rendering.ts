@@ -50,8 +50,7 @@ export class Renderer {
   lightmapCtx: CanvasRenderingContext2D | null = null;
   get density() {
     if (this.game.run.outside) return OUTSIDE_SIZE;
-    if (this.game.mode === "tower") return VIEWPORT_TILES;
-    return this.game.save.settings.density;
+    return VIEWPORT_TILES;
   }
   constructor(
     public canvas: HTMLCanvasElement,
