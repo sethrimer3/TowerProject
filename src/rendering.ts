@@ -37,6 +37,8 @@ export interface AtmosphereConfig {
  * enemies as hostile, independent of each sprite's own fill colors. */
 const DARK_GOLD = "#5c3f12";
 const DARK_RED = "#5c1620";
+const DARK_ORANGE = "#6b3510";
+const DARK_BLUE = "#122b5c";
 
 export const ATMOSPHERE_CONFIG: AtmosphereConfig = {
   // Gentle cool purple-blue tone that provides moody contrast against amber torches
@@ -408,9 +410,9 @@ export class Renderer {
       return;
     }
     if (t.kind === "key") {
-      if (area1 && drawArea1Item(c, t)) return;
       this.groundShadow(11, 18, 5, 1.8, 0.3);
       this.withOutline(DARK_GOLD, (c) => {
+        if (area1 && drawArea1Item(c, t)) return;
         c.strokeStyle = COLORS[t.color!];
         c.lineWidth = 2.5;
         c.beginPath();
@@ -438,9 +440,9 @@ export class Renderer {
       return;
     }
     if (t.kind === "potion") {
-      if (area1 && drawArea1Item(c, t)) return;
       this.groundShadow(12, 22, 6, 1.6, 0.3);
       this.withOutline(DARK_GOLD, (c) => {
+        if (area1 && drawArea1Item(c, t)) return;
         const isPercent = t.color === "red";
         c.fillStyle = "#bbc4ca";
         c.fillRect(9, 4, 6, 5);
@@ -467,9 +469,9 @@ export class Renderer {
       return;
     }
     if (t.kind === "attack") {
-      if (area1 && drawArea1Item(c, t)) return;
       this.groundShadow(12, 22, 6, 1.6, 0.3);
       this.withOutline(DARK_GOLD, (c) => {
+        if (area1 && drawArea1Item(c, t)) return;
         c.save();
         c.translate(12, 12);
         c.rotate(0.65);
@@ -486,9 +488,9 @@ export class Renderer {
       return;
     }
     if (t.kind === "defense") {
-      if (area1 && drawArea1Item(c, t)) return;
       this.groundShadow(12, 22, 6, 1.6, 0.3);
       this.withOutline(DARK_GOLD, (c) => {
+        if (area1 && drawArea1Item(c, t)) return;
         c.fillStyle = "#9cb0c2";
         c.beginPath();
         c.moveTo(4, 4);
@@ -507,24 +509,22 @@ export class Renderer {
       return;
     }
     if (t.kind === "reward") {
-      const spriteDrawn = area1 && drawArea1Item(c, t);
-      if (!spriteDrawn) {
-        this.groundShadow(12, 22.5, 8, 1.8, 0.32);
-        this.withOutline(DARK_GOLD, (c) => {
-          const metal = { silver: "#c5d0df", gold: "#f5cd62", platinum: "#bcfff3" }[t.tier!];
-          c.fillStyle = metal;
-          c.shadowColor = metal;
-          c.shadowBlur = 5;
-          c.fillRect(3, 7, 18, 14);
-          c.shadowBlur = 0;
-          c.fillStyle = "#283040";
-          c.fillRect(5, 9, 14, 10);
-          c.fillStyle = metal;
-          c.fillRect(3, 12, 18, 2);
-          c.fillRect(10, 11, 4, 6);
-          if (t.tier === "platinum") { c.fillStyle = "#ffffff"; c.fillRect(11, 3, 2, 3); }
-        });
-      }
+      this.groundShadow(12, 22.5, 8, 1.8, 0.32);
+      this.withOutline(DARK_GOLD, (c) => {
+        if (area1 && drawArea1Item(c, t)) return;
+        const metal = { silver: "#c5d0df", gold: "#f5cd62", platinum: "#bcfff3" }[t.tier!];
+        c.fillStyle = metal;
+        c.shadowColor = metal;
+        c.shadowBlur = 5;
+        c.fillRect(3, 7, 18, 14);
+        c.shadowBlur = 0;
+        c.fillStyle = "#283040";
+        c.fillRect(5, 9, 14, 10);
+        c.fillStyle = metal;
+        c.fillRect(3, 12, 18, 2);
+        c.fillRect(10, 11, 4, 6);
+        if (t.tier === "platinum") { c.fillStyle = "#ffffff"; c.fillRect(11, 3, 2, 3); }
+      });
       for (let i = 0; i < 3; i++) {
         const phase = g.save.settings.reduceMotion ? 0.6 : (Math.sin(time / 240 + i * 2 + x + y) + 1) / 2;
         c.globalAlpha = 0.25 + phase * 0.75;
@@ -536,9 +536,9 @@ export class Renderer {
       return;
     }
     if (t.kind === "treasure") {
-      if (area1 && drawArea1Item(c, t)) return;
       this.groundShadow(12, 22.5, 8, 1.8, 0.32);
       this.withOutline(DARK_GOLD, (c) => {
+        if (area1 && drawArea1Item(c, t)) return;
         c.fillStyle = "#d0a34d";
         c.fillRect(3, 7, 18, 14);
         c.fillStyle = "#714829";
@@ -551,8 +551,8 @@ export class Renderer {
     }
     const tier = t.enemy!.tier;
     this.groundShadow(12, 21, 8, 2.6, 0.4);
-    if (!g.save.settings.spritesOff && drawEnemySprite(c, t.enemy!.name)) return;
     this.withOutline(DARK_RED, (c) => {
+      if (!g.save.settings.spritesOff && drawEnemySprite(c, t.enemy!.name)) return;
       if (tier === 0) {
         c.fillStyle = "#568c45";
         c.fillRect(4, 12, 17, 8);
@@ -627,16 +627,15 @@ export class Renderer {
     c.save();
     c.translate(sx, sy);
     c.scale(s / 24, s / 24);
-    if (!this.game.save.settings.spritesOff && drawGameSprite(c, "torch")) {
-      c.restore();
-      return;
-    }
-    c.fillStyle = "#59412c";
-    c.fillRect(10, 10, 4, 10);
-    c.fillStyle = "#df7b32";
-    c.fillRect(flameX, flameTopY, flameW, flameH);
-    c.fillStyle = "#ffe3a0";
-    c.fillRect(11, flameTopY + 1, 3, flameH - 2);
+    this.withOutline(DARK_ORANGE, (c) => {
+      if (!this.game.save.settings.spritesOff && drawGameSprite(c, "torch")) return;
+      c.fillStyle = "#59412c";
+      c.fillRect(10, 10, 4, 10);
+      c.fillStyle = "#df7b32";
+      c.fillRect(flameX, flameTopY, flameW, flameH);
+      c.fillStyle = "#ffe3a0";
+      c.fillRect(11, flameTopY + 1, 3, flameH - 2);
+    });
     c.restore();
   }
   /** Enumerates wall tiles currently within the viewport, in the same grid
@@ -1089,8 +1088,10 @@ export class Renderer {
   }
   hero() {
     this.groundShadow(12, 22, 8, 2.6, 0.4);
-    if (!this.game.save.settings.spritesOff && drawGameSprite(this.ctx, "player")) return;
-    Renderer.drawHero(this.ctx);
+    this.withOutline(DARK_BLUE, (c) => {
+      if (!this.game.save.settings.spritesOff && drawGameSprite(c, "player")) return;
+      Renderer.drawHero(c);
+    });
   }
   static drawHero(c: CanvasRenderingContext2D) {
     // Extremely subtle local contrast disc (not a light source) so the hero

@@ -248,23 +248,6 @@ for (const id of doorIds) {
   save(`door_${id}.png`, pixels);
   renameSync(join(OUT, `door_${id}.png`), join(OUT, "doors", `door_${id}.png`));
 }
-// Dilates a sprite's silhouette by one pixel of solid color, so every
-// item/treasure reads clearly as an interactable object against any floor.
-const DARK_GOLD = rgba("#5c3f12");
-function outlineSprite(p, color) {
-  const out = p.slice();
-  for (let y = 0; y < SIZE; y++) {
-    for (let x = 0; x < SIZE; x++) {
-      if (p[y * SIZE + x][3] !== 0) continue;
-      const touchesOpaque = [[x-1,y],[x+1,y],[x,y-1],[x,y+1]].some(
-        ([nx, ny]) => nx >= 0 && nx < SIZE && ny >= 0 && ny < SIZE && p[ny * SIZE + nx][3] !== 0,
-      );
-      if (touchesOpaque) out[y * SIZE + x] = color;
-    }
-  }
-  return out;
-}
-
 mkdirSync(join(OUT, "items"), { recursive: true });
 const itemTiles = {
   key_yellow: keyTile("yellow", "circle"), key_blue: keyTile("blue", "diamond"), key_red: keyTile("red", "triangle"),
@@ -272,8 +255,7 @@ const itemTiles = {
   chest_treasure: chestTile("treasure"), chest_silver: chestTile("silver"), chest_gold: chestTile("gold"), chest_platinum: chestTile("platinum"),
 };
 for (const [id, pixels] of Object.entries(itemTiles)) {
-  const outlined = outlineSprite(pixels, DARK_GOLD);
-  save(`${id}.png`, outlined); renameSync(join(OUT, `${id}.png`), join(OUT, "items", `${id}.png`));
+  save(`${id}.png`, pixels); renameSync(join(OUT, `${id}.png`), join(OUT, "items", `${id}.png`));
 }
 writeFileSync(join(OUT, "tileset.json"), JSON.stringify({
   tileSize: 24, palette: PALETTE, floor: ["floor_01.png", "floor_02.png", "floor_03.png", "floor_04.png"],
