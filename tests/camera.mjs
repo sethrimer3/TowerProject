@@ -100,6 +100,12 @@ for (const mode of ["fast", "instant", "smooth"]) {
   await page.locator('[data-tab="settings"]').click();
   await expect(page.locator("#transition")).toHaveValue(mode);
 }
+await expect(page.locator("#sprites-off")).not.toBeChecked();
+await page.locator("#sprites-off").check();
+await page.reload();
+await page.locator('[data-tab="settings"]').click();
+await expect(page.locator("#sprites-off")).toBeChecked();
+await page.locator("#sprites-off").uncheck();
 await page.screenshot({
   path: "test-results/transition-settings.png",
   fullPage: true,

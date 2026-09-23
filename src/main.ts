@@ -33,12 +33,39 @@ import {
 } from "./equipment.ts";
 import { canCraft, getSalvageReturns, isEquipped, CONSUMABLES, canCraftConsumable, type ConsumableId } from "./crafting.ts";
 import { doorColor, doorDescription, doorName } from "./doors.ts";
-const icons = { tower: "♜", delve: "▼", gear: "♞", upgrades: "✦", settings: "⚙" };
+import { AREA1_ITEM_URLS } from "./area1-tileset.ts";
+
+type UiSprite = "tower" | "delve" | "gear" | "upgrades" | "settings" | "health" | "attack" | "defense" | "undo" | "automove" | "revive" | "log" | "arrow-up" | "arrow-down" | "arrow-left" | "arrow-right" | EquipmentSlot | "gold";
+const UI_ASSET_BASE = (import.meta as ImportMeta & { env?: { BASE_URL?: string } }).env?.BASE_URL ?? "/";
+const uiSprite = (name: UiSprite, className = "ui-sprite") =>
+  `<img class="${className}" src="${UI_ASSET_BASE}assets/ui/${name}.png" alt="" aria-hidden="true">`;
+const itemSprite = (name: keyof typeof AREA1_ITEM_URLS, className = "ui-sprite") =>
+  `<img class="${className}" src="${AREA1_ITEM_URLS[name]}" alt="" aria-hidden="true">`;
+const skillSprite = (id: UpgradeId) => {
+  const reused: Partial<Record<UpgradeId, keyof typeof AREA1_ITEM_URLS>> = {
+    shardAttack: "upgrade_attack", attack: "upgrade_attack",
+    shardDefense: "upgrade_defense", defense: "upgrade_defense",
+    yellow: "key_yellow", blue: "key_blue", red: "key_red",
+  };
+  if (reused[id]) return itemSprite(reused[id]!, "skill-sprite");
+  const generated: Partial<Record<UpgradeId, UiSprite>> = {
+    shardHp: "health", hp: "health", shardUndos: "undo", undos: "undo",
+    delve: "delve", auto: "automove", autoPersist: "settings",
+    revive: "revive", legacy: "tower", quality: "tower",
+  };
+  return uiSprite(generated[id] ?? "upgrades", "skill-sprite");
+};
+const icons = {
+  tower: uiSprite("tower"), delve: uiSprite("delve"), gear: uiSprite("gear"),
+  upgrades: uiSprite("upgrades"), settings: uiSprite("settings"),
+};
 const SLOT_ICONS: Record<EquipmentSlot, string> = {
-  weapon: "⚔", shield: "⛨", helmet: "▲", chestplate: "■", leggings: "▼", boots: "▽", gloves: "✤", necklace: "◇", ring: "○",
+  weapon: uiSprite("weapon"), shield: uiSprite("shield"), helmet: uiSprite("helmet"),
+  chestplate: uiSprite("chestplate"), leggings: uiSprite("leggings"), boots: uiSprite("boots"),
+  gloves: uiSprite("gloves"), necklace: uiSprite("necklace"), ring: uiSprite("ring"),
 };
 const app = document.querySelector<HTMLDivElement>("#app")!;
-app.innerHTML = `<main class="shell"><div id="currencies" class="currencies" hidden><div class="essence">✦ <b id="essence">0</b><small>COURAGE</small></div><div class="essence">◆ <b id="shards">0</b><small>INSPIRATION</small></div></div><section id="stats" class="stats" aria-label="Player statistics"><div class="portrait"><canvas id="portrait-sprite" width="24" height="24"></canvas><small>WAYFARER</small><small id="level">LV 0</small><button id="log" aria-label="Adventure log">Log</button></div><div class="vitals"><div><span class="heart">♥</span> HP <b id="hp"></b></div><div class="health-track"><i id="health"></i></div><div class="combat-stats"><span>⚔ <b id="attack"></b></span><span>⛨ <b id="defense"></b></span></div></div><div class="keys"><span class="yellow">⚿ <b id="yellow"></b></span><span class="blue">⚿ <b id="blue"></b></span><span class="red">⚿ <b id="red"></b></span></div><div class="height"><small id="height-label">HEIGHT</small><strong id="height">0</strong><div class="height-bests"><span>RUN <b id="best-run">0</b></span><span>ALL <b id="best-all">0</b></span><span id="best-reward" class="height-reward" hidden>+<b id="best-reward-val">0</b> <i id="best-reward-type">COURAGE</i></span></div></div><div class="actions"><button id="auto-settings" class="mini-action" aria-label="Automove settings" title="Automove settings"><span class="mini-icon">⚙</span><small>SETTINGS</small></button><button id="auto" class="mini-action" aria-label="Automove" title="Automove"><span class="mini-icon">✦</span><small id="auto-state">LOCKED</small></button><button id="undo" class="mini-action" aria-label="Undo" title="Undo"><span class="mini-icon">↺</span><small id="undo-state">0/1</small></button></div></section><section id="board" class="page active"><button id="section-pick" class="section-pick" aria-label="Choose starting floor" title="Choose starting floor" hidden><small>START</small><b id="section-pick-floor">F1</b></button><div class="tower-heading"><span class="rule"></span><span id="board-title">THE HOLLOW SPIRE</span><span class="rule"></span></div><div class="ascent"><span>↑</span><small id="board-subtitle">HIGHER DANGERS · GREATER REWARDS</small></div><div class="board" id="board-frame"><canvas id="world" aria-label="Tower grid: tap a destination or swipe to move. Keyboard arrows and WASD also work."></canvas><span class="board-caption" id="density-label">20 × 20</span><div id="tile-highlight" class="tile-highlight" hidden></div><div id="inspect-box" class="inspect-box" hidden></div></div><div class="status"><span class="live-dot"></span><span id="message" aria-live="polite"></span></div><div class="controls"><div class="dpad" hidden><button data-move="-1,0" aria-label="Move left">←</button><div><button data-move="0,1" aria-label="Move up">↑</button><button data-move="0,-1" aria-label="Move down">↓</button></div><button data-move="1,0" aria-label="Move right">→</button></div></div><div id="inspect" class="inspection"></div></section><section id="gear" class="page"></section><section id="upgrades" class="page"></section><section id="settings" class="page"></section><nav aria-label="Main navigation">${Object.entries(
+app.innerHTML = `<main class="shell"><div id="currencies" class="currencies" hidden><div class="essence">✦ <b id="essence">0</b><small>COURAGE</small></div><div class="essence">◆ <b id="shards">0</b><small>INSPIRATION</small></div></div><section id="stats" class="stats" aria-label="Player statistics"><div class="portrait"><canvas id="portrait-sprite" width="24" height="24"></canvas><small>WAYFARER</small><small id="level">LV 0</small><button id="log" aria-label="Adventure log">Log</button></div><div class="vitals"><div><span class="heart">♥</span> HP <b id="hp"></b></div><div class="health-track"><i id="health"></i></div><div class="combat-stats"><span>⚔ <b id="attack"></b></span><span>⛨ <b id="defense"></b></span></div></div><div class="keys"><span class="yellow">⚿ <b id="yellow"></b></span><span class="blue">⚿ <b id="blue"></b></span><span class="red">⚿ <b id="red"></b></span></div><div class="height"><small id="height-label">HEIGHT</small><strong id="height">0</strong><div class="height-bests"><span>RUN <b id="best-run">0</b></span><span>ALL <b id="best-all">0</b></span><span id="best-reward" class="height-reward" hidden>+<b id="best-reward-val">0</b> <i id="best-reward-type">COURAGE</i></span></div></div><div class="actions"><button id="auto-settings" class="mini-action" aria-label="Automove settings" title="Automove settings"><span class="mini-icon">⚙</span><small>SETTINGS</small></button><button id="auto" class="mini-action" aria-label="Automove" title="Automove"><span class="mini-icon">✦</span><small id="auto-state">LOCKED</small></button><button id="undo" class="mini-action" aria-label="Undo" title="Undo"><span class="mini-icon">↺</span><small id="undo-state">0/1</small></button></div></section><section id="board" class="page active"><button id="section-pick" class="section-pick" aria-label="Choose starting floor" title="Choose starting floor" hidden><small>START</small><b id="section-pick-floor">F1</b></button><div class="tower-heading"><span class="rule"></span><span id="board-title">THE HOLLOW SPIRE</span><span class="rule"></span></div><div class="ascent"><span>↑</span><small id="board-subtitle">HIGHER DANGERS · GREATER REWARDS</small></div><div class="board-cell"><div class="board" id="board-frame"><canvas id="world" aria-label="Tower grid: tap a destination or swipe to move. Keyboard arrows and WASD also work."></canvas><span class="board-caption" id="density-label" hidden>20 × 20</span><div id="tile-highlight" class="tile-highlight" hidden></div><div id="inspect-box" class="inspect-box" hidden></div></div></div><div class="status"><span class="live-dot"></span><span id="message" aria-live="polite"></span></div><div class="controls"><div class="dpad" hidden><button data-move="-1,0" aria-label="Move left">←</button><div><button data-move="0,1" aria-label="Move up">↑</button><button data-move="0,-1" aria-label="Move down">↓</button></div><button data-move="1,0" aria-label="Move right">→</button></div></div><div id="inspect" class="inspection"></div></section><section id="gear" class="page"></section><section id="upgrades" class="page"></section><section id="settings" class="page"></section><nav aria-label="Main navigation">${Object.entries(
   icons,
 )
   .map(
@@ -48,6 +75,31 @@ app.innerHTML = `<main class="shell"><div id="currencies" class="currencies" hid
   .join(
     "",
   )}</nav></main><dialog id="modal"></dialog>`;
+const replaceGlyph = (selector: string, sprite: string) => {
+  const target = document.querySelector<HTMLElement>(selector);
+  if (!target) return;
+  if (target.firstChild?.nodeType === Node.TEXT_NODE) target.firstChild.textContent = "";
+  target.insertAdjacentHTML("afterbegin", sprite);
+};
+replaceGlyph(".currencies .essence:first-child", uiSprite("automove"));
+replaceGlyph(".currencies .essence:last-child", uiSprite("upgrades"));
+replaceGlyph(".heart", uiSprite("health"));
+replaceGlyph(".combat-stats span:first-child", itemSprite("upgrade_attack"));
+replaceGlyph(".combat-stats span:last-child", itemSprite("upgrade_defense"));
+replaceGlyph(".keys .yellow", itemSprite("key_yellow"));
+replaceGlyph(".keys .blue", itemSprite("key_blue"));
+replaceGlyph(".keys .red", itemSprite("key_red"));
+(document.querySelector("#auto-settings .mini-icon") as HTMLElement).innerHTML = uiSprite("settings");
+(document.querySelector("#auto .mini-icon") as HTMLElement).innerHTML = uiSprite("automove");
+(document.querySelector("#undo .mini-icon") as HTMLElement).innerHTML = uiSprite("undo");
+(document.querySelector("#log") as HTMLElement).insertAdjacentHTML("afterbegin", uiSprite("log"));
+(document.querySelector(".ascent > span") as HTMLElement).innerHTML = uiSprite("arrow-up");
+const movementSprites: Record<string, UiSprite> = {
+  "-1,0": "arrow-left", "1,0": "arrow-right", "0,1": "arrow-up", "0,-1": "arrow-down",
+};
+document.querySelectorAll<HTMLElement>("[data-move]").forEach((button) => {
+  button.innerHTML = uiSprite(movementSprites[button.dataset.move!]!);
+});
 const game = new Game(load());
 const renderer = new Renderer(document.querySelector("#world")!, game);
 Renderer.drawHero(
@@ -352,11 +404,11 @@ function renderPage() {
     const available = skillAvailable(u.id, game.save.upgrades);
     const requirements = node.requires.filter(id => !game.save.upgrades[id]).map(id => UPGRADES.find(u => u.id === id)!.name);
     el("upgrades").innerHTML = `<div class="page-title"><small>WHAT REMAINS WHEN YOU FALL</small><h2>Paths of ascension</h2><p>Follow the branches. Shape your next journey.</p></div>
-      <div class="tree-tabs" role="group" aria-label="Skill trees">${TREES.map(t => `<button data-tree="${t.id}" aria-pressed="${t.id === tree.id}"><span>${t.id === "inspiration" ? "◆" : t.id === "courage" ? "✦" : "♜"}</span>${t.name}<small>${t.gate && !game.save.upgrades[t.gate] ? "LOCKED" : "UNLOCKED"}</small></button>`).join("")}</div>
+      <div class="tree-tabs" role="group" aria-label="Skill trees">${TREES.map(t => `<button data-tree="${t.id}" aria-pressed="${t.id === tree.id}"><span>${uiSprite(t.id === "inspiration" ? "upgrades" : t.id === "courage" ? "automove" : "tower")}</span>${t.name}<small>${t.gate && !game.save.upgrades[t.gate] ? "LOCKED" : "UNLOCKED"}</small></button>`).join("")}</div>
       <section class="skill-tree ${tree.id}"><header class="tree-heading"><small>${locked ? "SEALED PATH" : `${balance} ${tree.currency === "shards" ? "INSPIRATION" : "COURAGE"}`}</small><h3>${tree.name} skill tree</h3><p>${tree.description}</p></header>
       ${locked ? `<p class="tree-lock">Unlock ${UPGRADES.find(u => u.id === tree.gate)!.name} in the ${tree.id === "courage" ? "Inspiration" : "Courage"} tree.</p>` : ""}
       <div class="tree-map"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${tree.nodes.flatMap(n => n.requires.map(id => { const parent = tree.nodes.find(p => p.id === id); return parent ? `<line x1="${parent.x}" y1="${parent.y}" x2="${n.x}" y2="${n.y}" class="${game.save.upgrades[id] ? "lit" : ""}"/>` : ""; })).join("")}</svg>
-      ${tree.nodes.map(n => { const skill = UPGRADES.find(u => u.id === n.id)!; const rank = game.save.upgrades[n.id]; return `<button class="skill-node ${rank ? "owned" : ""} ${skillAvailable(n.id, game.save.upgrades) ? "available" : "locked"} ${n.id === node.id ? "chosen" : ""}" data-skill="${n.id}" style="left:${n.x}%;top:${n.y}%" aria-label="${skill.name}, ${rank} of ${skill.max}${skillAvailable(n.id, game.save.upgrades) ? "" : ", locked"}" aria-pressed="${n.id === node.id}"><span class="node-icon">${n.icon}</span><span class="node-name">${skill.name}</span><small>${rank} / ${skill.max}</small></button>`; }).join("")}</div>
+      ${tree.nodes.map(n => { const skill = UPGRADES.find(u => u.id === n.id)!; const rank = game.save.upgrades[n.id]; return `<button class="skill-node ${rank ? "owned" : ""} ${skillAvailable(n.id, game.save.upgrades) ? "available" : "locked"} ${n.id === node.id ? "chosen" : ""}" data-skill="${n.id}" style="left:${n.x}%;top:${n.y}%" aria-label="${skill.name}, ${rank} of ${skill.max}${skillAvailable(n.id, game.save.upgrades) ? "" : ", locked"}" aria-pressed="${n.id === node.id}"><span class="node-icon">${skillSprite(n.id)}</span><span class="node-name">${skill.name}</span><small>${rank} / ${skill.max}</small></button>`; }).join("")}</div>
       <article class="skill-detail" aria-live="polite"><div><small>${level} / ${u.max} RANKS</small><h3>${u.name}</h3><p>${u.description}.</p><p class="hint">${locked ? "Unlock this tree to learn its skills." : requirements.length ? `Requires: ${requirements.join(" + ")} (one rank each).` : "Revive, undos, and unlocks apply immediately. Starting stats apply next run."}</p></div><button data-buy="${u.id}" ${!available || level >= u.max || balance < price ? "disabled" : ""}>${level >= u.max ? "MASTERED" : `Learn · ${price} ${tree.currency === "shards" ? "Inspiration" : "Courage"}`}</button></article></section>`;
     document.querySelectorAll<HTMLButtonElement>("[data-tree]").forEach(b => b.onclick = () => {
       selectedTree = b.dataset.tree as TreeId;
@@ -369,7 +421,7 @@ function renderPage() {
 
   if (tab === "settings") {
     el("settings").innerHTML =
-      `<div class="page-title"><small>MAKE THE ASCENT YOUR OWN</small><h2>Settings</h2></div><label class="setting">Automove speed<select id="speed">${[1, 3, 6, 10].map((n) => `<option ${game.save.settings.speed === n ? "selected" : ""} value="${n}">${n} steps / sec</option>`).join("")}</select></label><label class="setting">Movement transition<select id="transition">${(["smooth", "fast", "instant"] as const).map((mode) => `<option value="${mode}" ${game.save.settings.transition === mode ? "selected" : ""}>${mode === "instant" ? "Off (instant)" : mode === "fast" ? "Fast" : "Smooth"}</option>`).join("")}</select></label><label class="setting">Show directional buttons<input type="checkbox" id="arrows" ${game.save.settings.showArrows ? "checked" : ""}></label><label class="setting">Reduce motion<input type="checkbox" id="motion" ${game.save.settings.reduceMotion ? "checked" : ""}></label><label class="setting">Weather sounds<input type="checkbox" id="weather-sound" ${game.save.settings.weatherSound !== false ? "checked" : ""}></label><label class="setting">Show info boxes<input type="checkbox" id="info-boxes" ${game.save.settings.showInfoBoxes !== false ? "checked" : ""}></label><label class="setting">Move with one tap<input type="checkbox" id="one-tap" ${game.save.settings.oneTapMove ? "checked" : ""}></label><p class="hint">Automation pauses outside the board tabs and while the browser is hidden. Progress saves after each action.</p><button class="wide" id="retire">Retire this ${game.mode === "tower" ? "ascent" : "delve"}</button><p class="hint">Keep your milestone rewards and enter a freshly generated ${game.mode === "tower" ? "tower" : "descent"}.</p><button class="wide danger" id="erase">Erase all progress</button><p class="seed">RUN SEED · ${game.run.seed}</p>`;
+      `<div class="page-title"><small>MAKE THE ASCENT YOUR OWN</small><h2>Settings</h2></div><label class="setting">Automove speed<select id="speed">${[1, 3, 6, 10].map((n) => `<option ${game.save.settings.speed === n ? "selected" : ""} value="${n}">${n} steps / sec</option>`).join("")}</select></label><label class="setting">Movement transition<select id="transition">${(["smooth", "fast", "instant"] as const).map((mode) => `<option value="${mode}" ${game.save.settings.transition === mode ? "selected" : ""}>${mode === "instant" ? "Off (instant)" : mode === "fast" ? "Fast" : "Smooth"}</option>`).join("")}</select></label><label class="setting">Turn off Sprites<input type="checkbox" id="sprites-off" ${game.save.settings.spritesOff ? "checked" : ""}></label><label class="setting">Show directional buttons<input type="checkbox" id="arrows" ${game.save.settings.showArrows ? "checked" : ""}></label><label class="setting">Reduce motion<input type="checkbox" id="motion" ${game.save.settings.reduceMotion ? "checked" : ""}></label><label class="setting">Weather sounds<input type="checkbox" id="weather-sound" ${game.save.settings.weatherSound !== false ? "checked" : ""}></label><label class="setting">Show info boxes<input type="checkbox" id="info-boxes" ${game.save.settings.showInfoBoxes !== false ? "checked" : ""}></label><label class="setting">Move with one tap<input type="checkbox" id="one-tap" ${game.save.settings.oneTapMove ? "checked" : ""}></label><p class="hint">Automation pauses outside the board tabs and while the browser is hidden. Progress saves after each action.</p><button class="wide" id="retire">Retire this ${game.mode === "tower" ? "ascent" : "delve"}</button><p class="hint">Keep your milestone rewards and enter a freshly generated ${game.mode === "tower" ? "tower" : "descent"}.</p><button class="wide danger" id="erase">Erase all progress</button><p class="seed">RUN SEED · ${game.run.seed}</p>`;
     (el("speed") as HTMLSelectElement).onchange = (e) => {
       game.save.settings.speed = Number((e.target as HTMLSelectElement).value);
       save();
@@ -377,6 +429,10 @@ function renderPage() {
     (el("arrows") as HTMLInputElement).onchange = (e) => {
       game.save.settings.showArrows = (e.target as HTMLInputElement).checked;
       update();
+    };
+    (el("sprites-off") as HTMLInputElement).onchange = (e) => {
+      game.save.settings.spritesOff = (e.target as HTMLInputElement).checked;
+      save();
     };
     (el("weather-sound") as HTMLInputElement).onchange = (e) => {
       game.save.settings.weatherSound = (e.target as HTMLInputElement).checked;
@@ -429,12 +485,12 @@ function renderPage() {
 }
 function statBadges(s: { flatAttack: number; flatDefense: number; flatMaxHp: number; percentAttack: number; percentDefense: number; percentMaxHp: number }): string {
   const parts: string[] = [];
-  if (s.flatAttack) parts.push(`⚔ +${s.flatAttack}`);
-  if (s.flatDefense) parts.push(`⛨ +${s.flatDefense}`);
-  if (s.flatMaxHp) parts.push(`♥ +${s.flatMaxHp}`);
-  if (s.percentAttack) parts.push(`⚔ +${(s.percentAttack * 100).toFixed(1)}%`);
-  if (s.percentDefense) parts.push(`⛨ +${(s.percentDefense * 100).toFixed(1)}%`);
-  if (s.percentMaxHp) parts.push(`♥ +${(s.percentMaxHp * 100).toFixed(1)}%`);
+  if (s.flatAttack) parts.push(`${itemSprite("upgrade_attack", "stat-sprite")} +${s.flatAttack}`);
+  if (s.flatDefense) parts.push(`${itemSprite("upgrade_defense", "stat-sprite")} +${s.flatDefense}`);
+  if (s.flatMaxHp) parts.push(`${uiSprite("health", "stat-sprite")} +${s.flatMaxHp}`);
+  if (s.percentAttack) parts.push(`${itemSprite("upgrade_attack", "stat-sprite")} +${(s.percentAttack * 100).toFixed(1)}%`);
+  if (s.percentDefense) parts.push(`${itemSprite("upgrade_defense", "stat-sprite")} +${(s.percentDefense * 100).toFixed(1)}%`);
+  if (s.percentMaxHp) parts.push(`${uiSprite("health", "stat-sprite")} +${(s.percentMaxHp * 100).toFixed(1)}%`);
   return parts.length ? parts.join(" · ") : "No bonuses";
 }
 function showItemActions(item: CraftedEquipment, equipped: boolean) {
@@ -502,12 +558,13 @@ function craftingHtml(): string {
   const consumableRows = CONSUMABLES.map(c => {
     const ownedC = game.save.consumables[c.id] ?? 0;
     const craftableC = canCraftConsumable(game.save, c.id);
-    return `<article class="card"><div class="item-icon">○</div><div><small>${ownedC ? `OWNED × ${ownedC}` : "CONSUMABLE"} · ${c.recipe.map(r => `${r.quantity} ${materialDef(r.id).name}`).join(" + ")}</small><h3>${c.name}</h3><p>${c.description}</p></div><div class="card-actions"><button data-craft-consumable="${c.id}" ${craftableC ? "" : "disabled"}>Craft</button>${ownedC ? `<button data-use-consumable="${c.id}" ${game.run.outside || game.summary ? "disabled" : ""}>Use</button>` : ""}</div></article>`;
+    return `<article class="card"><div class="item-icon">${itemSprite("potion_flat")}</div><div><small>${ownedC ? `OWNED × ${ownedC}` : "CONSUMABLE"} · ${c.recipe.map(r => `${r.quantity} ${materialDef(r.id).name}`).join(" + ")}</small><h3>${c.name}</h3><p>${c.description}</p></div><div class="card-actions"><button data-craft-consumable="${c.id}" ${craftableC ? "" : "disabled"}>Craft</button>${ownedC ? `<button data-use-consumable="${c.id}" ${game.run.outside || game.summary ? "disabled" : ""}>Use</button>` : ""}</div></article>`;
   }).join("");
   return `<h3>1. Choose a slot</h3>${slotButtons}<h3>2. Choose a metal</h3>${metalButtons}${recipeLine}<h3>3. Optional enhancements</h3><p class="hint">Up to ${ENHANCEMENT_CAPS.gems} gems and ${ENHANCEMENT_CAPS.rareParts} rare monster parts (${totals.gems}/${ENHANCEMENT_CAPS.gems} gems, ${totals.rareParts}/${ENHANCEMENT_CAPS.rareParts} rare parts selected).</p>${gemRows}${rareRows}${preview}${craftBtn}<h3>Consumables</h3>${consumableRows}`;
 }
 function provisionsHtml(): string {
-  return `<p class="hint">Spend Gold earned in the tower on provisions that apply next run. ◇ ${game.save.gold} Gold.</p>${GOLD_SHOP.map((item) => `<article class="card"><div class="item-icon">◇</div><div><small>${game.save.provisions[item.id] ? `OWNED × ${game.save.provisions[item.id]}` : "APPLIES NEXT RUN"}</small><h3>${item.name}</h3><p>${item.description}</p></div><button data-gold="${item.id}" ${game.save.gold < item.cost ? "disabled" : ""}>Buy · ◇ ${item.cost}</button></article>`).join("")}`;
+  const provisionSprite = (id: GoldItemId) => itemSprite(id === "heal" ? "potion_flat" : id === "edge" ? "upgrade_attack" : "upgrade_defense");
+  return `<p class="hint">Spend Gold earned in the tower on provisions that apply next run. ${uiSprite("gold", "stat-sprite")} ${game.save.gold} Gold.</p>${GOLD_SHOP.map((item) => `<article class="card"><div class="item-icon">${provisionSprite(item.id)}</div><div><small>${game.save.provisions[item.id] ? `OWNED × ${game.save.provisions[item.id]}` : "APPLIES NEXT RUN"}</small><h3>${item.name}</h3><p>${item.description}</p></div><button data-gold="${item.id}" ${game.save.gold < item.cost ? "disabled" : ""}>Buy · ${uiSprite("gold", "stat-sprite")} ${item.cost}</button></article>`).join("")}`;
 }
 function renderGearPage() {
   const body =
@@ -592,11 +649,11 @@ el("log").onclick = () => {
       <div class="summary-stats"><div><strong>${highest}</strong>HIGHEST FLOOR</div><div><strong>${game.save.delve.reached}</strong>DEEPEST DEPTH</div></div>
       <p>${game.save.tower.shards} Inspiration · ${game.save.delve.essence} Courage</p>
       <p class="hint">+1 Inspiration per new height. +1 Courage at each new 10-depth milestone. Revisits never pay again.</p>
-      <div class="clear-legend"><p class="silver">Silver · all doors opened and enemies defeated.</p><p class="gold">Gold · Silver with no damage taken anywhere in the ascent.</p><p class="platinum">Platinum · Gold with no keys spent on that floor.</p><p class="diamond">Diamond · future challenge, not yet available.</p></div>
+      <div class="clear-legend"><p class="silver">${itemSprite("chest_silver", "log-sprite")} Silver · all doors opened and enemies defeated.</p><p class="gold">${itemSprite("chest_gold", "log-sprite")} Gold · Silver with no damage taken anywhere in the ascent.</p><p class="platinum">${itemSprite("chest_platinum", "log-sprite")} Platinum · Gold with no keys spent on that floor.</p><p class="diamond">Diamond · future challenge, not yet available.</p></div>
       <p class="hint">Each clear tier earns +1 Inspiration once per floor. Uncollected chests are claimed when you leave.</p>
       <div class="floor-log">${floors.map(floor => {
         const record = game.save.tower.log[floor];
-        return `<div class="floor-record"><b>Floor ${floor}</b><span>${record?.earned.length ? record.earned.map(t => `<span class="${t}">${t[0].toUpperCase() + t.slice(1)}${record.claimed.includes(t) ? " ✓" : " · chest"}</span>`).join(" · ") : "Reached"}</span></div>`;
+        return `<div class="floor-record"><b>Floor ${floor}</b><span>${record?.earned.length ? record.earned.map(t => `<span class="${t}">${itemSprite(`chest_${t}` as "chest_silver" | "chest_gold" | "chest_platinum", "log-sprite")}${t[0].toUpperCase() + t.slice(1)}${record.claimed.includes(t) ? " ✓" : " · chest"}</span>`).join(" · ") : "Reached"}</span></div>`;
       }).join("")}</div><div class="dialog-actions"><button id="log-newer" ${page === 0 ? "disabled" : ""}>Higher</button><button id="log-older" ${start < 25 ? "disabled" : ""}>Lower</button><button id="log-close">Close</button></div>`;
     el("log-newer").onclick = () => { page--; renderLog(); };
     el("log-older").onclick = () => { page++; renderLog(); };
@@ -655,7 +712,7 @@ function showSummary() {
     currencyName = game.mode === "delve" ? "COURAGE" : "INSPIRATION",
     heightName = game.mode === "tower" ? "ROOMS" : "HEIGHT";
   if (modal.open) return;
-  modal.innerHTML = `<span class="summary-icon">✦</span><small>${s.reason.toUpperCase()}</small><h2>The tower remembers.</h2><p>Your milestone and clear rewards are already saved.</p><div class="summary-stats"><div><strong>${s.height}</strong>${heightName}</div><div><strong>${s.kills}</strong>VICTORIES</div><div><strong>${game.mode === "tower" ? game.save.tower.shards : game.save.delve.essence}</strong>${currencyName} SAVED</div></div>${s.record ? "" : `<p class="hint">Milestone rewards were credited as you reached them. Clear rewards are kept.</p>`}${game.save[game.mode].revival ? `<p>Revive is available until your next move. ${currencyName[0]}${currencyName.slice(1).toLowerCase()} is awarded if you continue.</p><button class="wide" id="revive-now">Revive</button>` : ""}<button class="wide" id="again">${s.dead ? `Return to the forest` : "Begin another ascent →"}</button>`;
+  modal.innerHTML = `<span class="summary-icon">${uiSprite("automove")}</span><small>${s.reason.toUpperCase()}</small><h2>The tower remembers.</h2><p>Your milestone and clear rewards are already saved.</p><div class="summary-stats"><div><strong>${s.height}</strong>${heightName}</div><div><strong>${s.kills}</strong>VICTORIES</div><div><strong>${game.mode === "tower" ? game.save.tower.shards : game.save.delve.essence}</strong>${currencyName} SAVED</div></div>${s.record ? "" : `<p class="hint">Milestone rewards were credited as you reached them. Clear rewards are kept.</p>`}${game.save[game.mode].revival ? `<p>Revive is available until your next move. ${currencyName[0]}${currencyName.slice(1).toLowerCase()} is awarded if you continue.</p><button class="wide" id="revive-now">Revive</button>` : ""}<button class="wide" id="again">${s.dead ? `Return to the forest` : "Begin another ascent →"}</button>`;
   modal.showModal();
   const revive = document.querySelector<HTMLButtonElement>("#revive-now");
   if (revive)
@@ -680,7 +737,7 @@ function showSummary() {
 function showAutoSettings() {
   if (modal.open) return;
   const owned = !!game.save.upgrades.autoPersist;
-  modal.innerHTML = `<span class="summary-icon">⚙</span><small>WAYFINDER</small><h2>Automove settings</h2><label class="setting">Turn off upon death<input type="checkbox" id="auto-off-death" ${game.save.settings.autoOffOnDeath !== false ? "checked" : ""} ${owned ? "" : "disabled"}></label><p class="hint">${owned ? "Disable to keep the wayfinder moving after you fall in battle." : "Research Steadfast wayfinder in the Courage tree to configure this."}</p><div class="dialog-actions"><button id="auto-settings-close">Close</button></div>`;
+  modal.innerHTML = `<span class="summary-icon">${uiSprite("settings")}</span><small>WAYFINDER</small><h2>Automove settings</h2><label class="setting">Turn off upon death<input type="checkbox" id="auto-off-death" ${game.save.settings.autoOffOnDeath !== false ? "checked" : ""} ${owned ? "" : "disabled"}></label><p class="hint">${owned ? "Disable to keep the wayfinder moving after you fall in battle." : "Research Steadfast wayfinder in the Courage tree to configure this."}</p><div class="dialog-actions"><button id="auto-settings-close">Close</button></div>`;
   modal.showModal();
   el("auto-settings-close").onclick = () => modal.close();
   const cb = document.querySelector<HTMLInputElement>("#auto-off-death");

@@ -6,15 +6,15 @@ export const LIGHTING_CONFIG = {
    * A subtle dark-purple tone that keeps the dungeon fully readable without torches. */
   ambient: {
     color: "#181226", // Dark purple tint
-    opacity: 0.20,    // Floor-only darkness pass (walls are excluded entirely, see drawDungeonLightmap)
+    opacity: 0.34,    // Floor-only darkness pass (walls are excluded entirely, see drawDungeonLightmap); torchlight carves it away
   },
   /** Default torch properties when placed in generation */
   torch: {
-    defaultRadius: 4.5, // Falloff spans roughly 3-5 tiles
-    defaultIntensity: 0.5,
+    defaultRadius: 5.5, // Light reach in tiles (direct light; bounce light fades within it too)
+    defaultIntensity: 0.7,
   },
-  /** Radial falloff and candle color stops.
-   * Gentle, cozy amber/candle warmth with low saturation and long feathered falloff. */
+  /** Candle color ramp for the baked glow, from the bright core (offset 0)
+   * to the feathered edge (offset 1). Alpha is the peak for that band. */
   stops: [
     { offset: 0.00, color: "rgba(255, 230, 185, 0.45)" }, // Soft warm amber core
     { offset: 0.20, color: "rgba(245, 205, 150, 0.35)" },
@@ -33,19 +33,44 @@ export const LIGHTING_CONFIG = {
       { speed: 1 / 110, weight: 0.15, phaseMult: 4.1 },
     ],
   },
-  /** Shadow softness / penumbra properties */
+  /** Baked torch glow (see torch-light.ts). Computed once per torch, drawn
+   * each frame as two cheap image blits. */
+  glow: {
+    /** Light-field samples per tile; the field is blurred and upscaled smoothly. */
+    resolution: 8,
+    /** Falloff exponent over the light radius (higher = tighter core). */
+    falloffPower: 1.7,
+    /** Strength of the light that bends around corners (fraction of direct). */
+    bounce: 0.45,
+    /** Extra path cost per tile for bounce light, so it dies off around bends. */
+    bouncePathScale: 1.25,
+    /** Blur radius in tiles: softens occlusion edges into penumbras. */
+    softness: 0.55,
+    /** Additive warm glow strength. */
+    strength: 0.75,
+    /** How much of the ambient darkness the light removes at full brightness. */
+    carve: 0.95,
+    /** Flicker radius wobble relative to intensity flicker. */
+    radiusFlicker: 0.6,
+  },
+  /** Torch-cast shadows from items, enemies, and the player. */
   shadow: {
-    /** Gaussian blur radius applied to the torch lightmap pass for soft penumbras */
-    blurPx: 11,
-    /** Multiplier to extend ray coverage slightly past corners to soften occlusion edges */
-    penumbraOffset: 0.12,
+    /** Peak opacity of a shadow cast right next to a torch. */
+    strength: 0.55,
+    /** Shadow length (in sprite heights) right beside a torch... */
+    minLength: 0.45,
+    /** ...growing this much per tile of distance... */
+    lengthPerTile: 0.2,
+    /** ...up to this cap. */
+    maxLength: 1.3,
+    color: [8, 6, 16],
   },
   /** Torch bump lighting on floor sprites (see floor-relief.ts). */
   relief: {
     /** Luminance (0-255) above which a sprite pixel counts as raised. */
     heightThreshold: 38,
     /** Relief reach relative to the torch light radius. */
-    radiusScale: 1.1,
+    radiusScale: 0.9,
     /** Distance falloff exponent; higher keeps relief tighter to the flame. */
     falloffPower: 1.3,
     /** Flame height above the floor, in tiles. Larger = flatter look near the torch. */

@@ -12,6 +12,7 @@ import {
 import { point, type Tile, type Torch } from "./entities.ts";
 import { computeVisibilityPolygon, LIGHTING_CONFIG } from "./lighting.ts";
 import { doorCost } from "./doors.ts";
+import { tileRandom } from "./themes.ts";
 import { generateTowerFloor } from "./tower/index.ts";
 export type Board = {
   width: number;
@@ -31,45 +32,78 @@ export type Board = {
    * one was destroyed. Used for player-torch collision. */
   breakTorchAt?(x: number, y: number): boolean;
 };
-/** Places torches on walkable floor tiles that sit next to a wall (never on
- * a wall tile itself), at roughly the same density/spacing the old purely
- * decorative wall pattern used, then caches each torch's visibility
- * polygon up front so rendering never recomputes it per frame. */
+/** Torch placement tuning: roughly one torch per this many open tiles,
+ * never closer together than `minSpacing` tiles. */
+export const TORCH_PLACEMENT = { openTilesPerTorch: 30, minSpacing: 4.5, jitter: 0.35 };
+
+/** Picks out-of-the-way torch spots: plain floor tiles tucked into an
+ * L-shaped corner (a wall on one vertical and one horizontal side), never in
+ * a corridor, never beside a door or stairs, and never pinching a path (the
+ * diagonal across the corner stays open). Corners of small rooms score
+ * highest; spots are then taken greedily with a minimum spacing. */
+export function chooseTorchSpots(
+  cells: Map<string, Tile>,
+  xMin: number,
+  xMax: number,
+  yMin: number,
+  yMax: number,
+  seed: number,
+): [number, number][] {
+  const kind = (x: number, y: number) => cells.get(point(x, y))?.kind ?? "wall";
+  const isWall = (x: number, y: number) => kind(x, y) === "wall";
+  let open = 0;
+  const candidates: { x: number; y: number; score: number }[] = [];
+  for (let y = yMin; y <= yMax; y++)
+    for (let x = xMin; x <= xMax; x++) {
+      if (isWall(x, y)) continue;
+      open++;
+      if (kind(x, y) !== "floor") continue;
+      const n = isWall(x, y + 1), s = isWall(x, y - 1), e = isWall(x + 1, y), w = isWall(x - 1, y);
+      if ((n && s) || (e && w) || !(n || s) || !(e || w)) continue;
+      const vx = e ? -1 : 1, vy = n ? -1 : 1;
+      if (isWall(x + vx, y + vy)) continue;
+      let busy = false;
+      for (const [dx, dy] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) {
+        const k = kind(x + dx, y + dy);
+        if (k === "door" || k === "stairs" || k === "stairsDown" || k === "oneway") busy = true;
+      }
+      if (busy) continue;
+      // Smaller spaces read cozier with a torch: count open tiles nearby.
+      let nearby = 0;
+      for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) if (!isWall(x + dx, y + dy)) nearby++;
+      const score = 1 - nearby / 49 + tileRandom(x, y, seed ^ 0x70c4) * TORCH_PLACEMENT.jitter;
+      candidates.push({ x, y, score });
+    }
+  candidates.sort((a, b) => b.score - a.score || a.y - b.y || a.x - b.x);
+  const want = Math.max(1, Math.round(open / TORCH_PLACEMENT.openTilesPerTorch));
+  const picked: [number, number][] = [];
+  for (const c of candidates) {
+    if (picked.length >= want) break;
+    if (picked.some(([px, py]) => Math.hypot(px - c.x, py - c.y) < TORCH_PLACEMENT.minSpacing)) continue;
+    picked.push([c.x, c.y]);
+  }
+  return picked;
+}
+
+/** Places torches (see chooseTorchSpots), then caches each torch's
+ * visibility polygon up front so rendering never recomputes it per frame. */
 function placeTorches(
   cells: Map<string, Tile>,
   xMin: number,
   xMax: number,
   yMin: number,
   yMax: number,
+  seed: number,
 ): Torch[] {
   const isWall = (x: number, y: number) =>
     (cells.get(point(x, y))?.kind ?? "wall") === "wall";
-  const torches: Torch[] = [];
-  const taken = new Set<string>();
-  for (let y = yMin; y <= yMax; y++)
-    for (let x = xMin; x <= xMax; x++) {
-      if (x % 6 !== 0 || y % 7 !== 3) continue;
-      const candidates: [number, number][] = [
-        [x, y], [x + 1, y], [x, y + 1], [x - 1, y], [x, y - 1],
-      ];
-      for (const [cx, cy] of candidates) {
-        const key = point(cx, cy);
-        if (taken.has(key) || cx < xMin || cx > xMax || cy < yMin || cy > yMax) continue;
-        if (cells.get(key)?.kind !== "floor") continue;
-        const adjWall =
-          isWall(cx + 1, cy) || isWall(cx - 1, cy) || isWall(cx, cy + 1) || isWall(cx, cy - 1);
-        if (!adjWall) continue;
-        taken.add(key);
-        torches.push({
-          x: cx,
-          y: cy,
-          lightRadius: LIGHTING_CONFIG.torch.defaultRadius,
-          baseIntensity: LIGHTING_CONFIG.torch.defaultIntensity,
-          active: true,
-        });
-        break;
-      }
-    }
+  const torches: Torch[] = chooseTorchSpots(cells, xMin, xMax, yMin, yMax, seed).map(([x, y]) => ({
+    x,
+    y,
+    lightRadius: LIGHTING_CONFIG.torch.defaultRadius,
+    baseIntensity: LIGHTING_CONFIG.torch.defaultIntensity,
+    active: true,
+  }));
   for (const torch of torches)
     torch.visibilityPolygon = computeVisibilityPolygon(torch, isWall);
   return torches;
@@ -336,7 +370,7 @@ export function generate(seed: number, index: number): Map<string, Tile> {
   if (!fullMap) {
     fullMap = generateDelveMap(seed);
     delveCaches.set(seed, fullMap);
-    delveTorchCaches.set(seed, placeTorches(fullMap, 1, WIDTH - 2, 0, DELVE_MAX_DEPTH - 2));
+    delveTorchCaches.set(seed, placeTorches(fullMap, 1, WIDTH - 2, 0, DELVE_MAX_DEPTH - 2, seed));
   }
   const chunk = new Map<string, Tile>();
   for (let y = index * CHUNK; y < (index + 1) * CHUNK; y++) {
@@ -432,7 +466,7 @@ function torchesForRoom(seed: number, room: number, cells: Map<string, Tile>): T
   const key = `${seed}:${room}`;
   let t = towerTorchCaches.get(key);
   if (!t) {
-    t = placeTorches(cells, 1, TOWER_WIDTH - 2, 1, TOWER_HEIGHT - 2);
+    t = placeTorches(cells, 1, TOWER_WIDTH - 2, 1, TOWER_HEIGHT - 2, seed ^ Math.imul(room + 1, 0x9e3779b1));
     towerTorchCaches.set(key, t);
   }
   return t;

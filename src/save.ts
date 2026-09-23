@@ -17,6 +17,7 @@ export function defaults(): Save {
       UPGRADES.map((u) => [u.id, 0]),
     ) as Save["upgrades"],
     settings: {
+      spritesOff: false,
       weatherSound: true,
       transition: "smooth",
       showArrows: false,
@@ -179,6 +180,7 @@ export function decode(raw: string | null): Save {
     if (["smooth", "fast", "instant"].includes(s?.settings?.transition))
       d.settings.transition = s.settings.transition;
     d.settings.showArrows = s?.settings?.showArrows === true;
+    d.settings.spritesOff = s?.settings?.spritesOff === true;
     d.settings.reduceMotion = s?.settings?.reduceMotion === true;
     d.settings.weatherSound = s?.settings?.weatherSound !== false;
     d.settings.autoOffOnDeath = s?.settings?.autoOffOnDeath !== false;

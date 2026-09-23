@@ -6,9 +6,14 @@ import { drawForestTile, drawEntrance, OUTSIDE_SIZE } from "./outside.ts";
 import { OutdoorWeather } from "./weather.ts";
 import { LIGHTING_CONFIG, getTorchFlicker } from "./lighting.ts";
 import { area1FloorSprite, drawArea1Door, drawArea1Item, drawArea1Tile } from "./area1-tileset.ts";
-import { drawFloorRelief } from "./floor-relief.ts";
+import { drawFloorRelief, torchReaches } from "./floor-relief.ts";
+import { bakeTorchLight, lightFalloff, type BakedLight } from "./torch-light.ts";
 import { doorColor } from "./doors.ts";
 import { drawEnemySprite } from "./enemy-sprites.ts";
+import { drawGameSprite } from "./game-sprites.ts";
+
+/** Tile kinds that stand up off the floor and so cast torch shadows. */
+const SHADOW_CASTERS = new Set<Tile["kind"]>(["key", "potion", "attack", "defense", "reward", "treasure", "enemy"]);
 
 export interface AtmosphereConfig {
   /** Screen tint color for cool dungeon atmosphere (e.g. subtle purple-blue) */
@@ -76,6 +81,14 @@ export class Renderer {
   /** Torches near the viewport this frame, gathered before the tile pass so
    * floor tiles can pick up torch relief. */
   frameTorches: Torch[] = [];
+  /** Wall tiles in view this frame (shared by the shadow and darkness passes). */
+  frameWalls: [number, number][] = [];
+  /** Baked per-torch glow, computed once since walls never move. */
+  torchBakes = new WeakMap<Torch, BakedLight | null>();
+  shadowCanvas: HTMLCanvasElement | null = null;
+  /** Black cut-outs of item/enemy/hero sprites used for torch-cast shadows.
+   * Rebaked after a short while so sprites that finish loading are picked up. */
+  silhouettes = new Map<string, { canvas: HTMLCanvasElement; at: number }>();
   get density() {
     if (this.game.run.outside) return OUTSIDE_SIZE;
     return VIEWPORT_TILES;
@@ -157,18 +170,28 @@ export class Renderer {
     c.fillStyle = "#0b1017";
     c.fillRect(0, 0, box.width, box.width);
     this.frameTorches = g.run.outside ? [] : this.visibleTorches();
-    for (let row = -1; row <= n; row++)
-      for (let col = -1; col <= n; col++) {
-        const x = col + Math.floor(this.left),
-          y = Math.floor(this.bottom) + row;
-        if (y < 0) continue;
-        const sy = (n - 1 - (y - this.bottom)) * s;
-        c.save();
-        c.translate((x - this.left) * s, sy);
-        c.scale(s / 24, s / 24);
-        this.tile(g.world.tile(x, y), x, y, now);
-        c.restore();
-      }
+    this.frameWalls = g.run.outside ? [] : this.visibleWallTiles();
+    // Ground first, then torch-cast shadows, then tile contents on top, so
+    // shadows fall across the floor but never over the things casting them.
+    const eachTile = (layer: 0 | 1) => {
+      for (let row = -1; row <= n; row++)
+        for (let col = -1; col <= n; col++) {
+          const x = col + Math.floor(this.left),
+            y = Math.floor(this.bottom) + row;
+          if (y < 0) continue;
+          const t = g.world.tile(x, y);
+          if (layer === 1 && (t.kind === "wall" || t.kind === "floor")) continue;
+          const sy = (n - 1 - (y - this.bottom)) * s;
+          c.save();
+          c.translate((x - this.left) * s, sy);
+          c.scale(s / 24, s / 24);
+          this.tile(t, x, y, now, layer);
+          c.restore();
+        }
+    };
+    eachTile(0);
+    if (!g.run.outside) this.drawEntityShadows(box.width, now);
+    eachTile(1);
     if (g.run.outside) {
       c.save();
       c.translate(-this.left * s, (n - OUTSIDE_SIZE + this.bottom) * s);
@@ -271,13 +294,26 @@ export class Renderer {
     c.restore();
     c.drawImage(off, 0, 0);
   }
-  tile(t: Tile, x: number, y: number, time: number) {
+  /** Layer 0 draws the ground (terrain + floor relief); layer 1 draws
+   * whatever stands on it (items, doors, enemies...). */
+  tile(t: Tile, x: number, y: number, time: number, layer: 0 | 1 = 0) {
     const c = this.ctx;
     const g = this.game;
     if (g.run.outside) {
-      drawForestTile(c, t, x, y, g.run.seed, Math.floor(g.world.width / 2));
+      if (layer === 0) drawForestTile(c, t, x, y, g.run.seed, Math.floor(g.world.width / 2), !g.save.settings.spritesOff);
       return;
     }
+    const area1 = !g.save.settings.spritesOff && g.mode === "tower" && g.run.height >= 0 && g.run.height < 10;
+    if (layer === 0) {
+      this.ground(t, x, y, time, area1);
+      return;
+    }
+    if (t.kind === "wall" || t.kind === "floor") return;
+    this.contents(t, x, y, time, area1);
+  }
+  ground(t: Tile, x: number, y: number, time: number, area1: boolean) {
+    const c = this.ctx;
+    const g = this.game;
     const northWall = g.world.tile(x, y + 1)?.kind === "wall";
     const southWall = g.world.tile(x, y - 1)?.kind === "wall";
     const westWall = g.world.tile(x - 1, y)?.kind === "wall";
@@ -291,7 +327,6 @@ export class Renderer {
     // Area 1 is the first ten Tower rooms. Images load asynchronously; until
     // ready (or if an asset fails), the established procedural path remains a
     // complete fallback. Later themes deliberately keep that path for now.
-    const area1 = g.mode === "tower" && g.run.height >= 0 && g.run.height < 10;
     const drewSprite = area1 && drawArea1Tile(c, t.kind === "wall", x, y, g.run.seed, neighbors);
     if (!drewSprite)
       drawTerrain(c, t.kind === "wall", g.mode, g.run.height, x, y, g.run.seed, t.kind === "floor", neighbors);
@@ -299,8 +334,11 @@ export class Renderer {
     // Torch bump lighting on the floor sprite, beneath any tile contents.
     const floorSprite = drewSprite && area1FloorSprite(x, y, g.run.seed);
     if (floorSprite) drawFloorRelief(c, floorSprite, x, y, this.frameTorches, time, g.save.settings.reduceMotion);
-    if (t.kind === "floor") return;
-    
+  }
+  contents(t: Tile, x: number, y: number, time: number, area1: boolean) {
+    const c = this.ctx;
+    const g = this.game;
+
     if (t.kind === "oneway") {
       c.fillStyle = "#8a7e93";
       c.fillRect(0, 10, 24, 5);
@@ -309,6 +347,7 @@ export class Renderer {
       return;
     }
     if (t.kind === "stairs") {
+      if (!g.save.settings.spritesOff && drawGameSprite(c, "stairsUp")) return;
       const exit = y % CHUNK === CHUNK - 1;
       c.fillStyle = exit ? "#dec58c20" : "#8eacc520";
       c.fillRect(2, 1, 20, 22);
@@ -336,6 +375,7 @@ export class Renderer {
       return;
     }
     if (t.kind === "stairsDown") {
+      if (!g.save.settings.spritesOff && drawGameSprite(c, "stairsDown")) return;
       c.fillStyle = "#7a9a9420";
       c.fillRect(2, 1, 20, 22);
       c.strokeStyle = "#a9d0c845";
@@ -501,7 +541,7 @@ export class Renderer {
     }
     const tier = t.enemy!.tier;
     this.groundShadow(12, 21, 8, 2.6, 0.4);
-    if (drawEnemySprite(c, t.enemy!.name)) return;
+    if (!g.save.settings.spritesOff && drawEnemySprite(c, t.enemy!.name)) return;
     this.withOutline(DARK_RED, (c) => {
       if (tier === 0) {
         c.fillStyle = "#568c45";
@@ -577,6 +617,10 @@ export class Renderer {
     c.save();
     c.translate(sx, sy);
     c.scale(s / 24, s / 24);
+    if (!this.game.save.settings.spritesOff && drawGameSprite(c, "torch")) {
+      c.restore();
+      return;
+    }
     c.fillStyle = "#59412c";
     c.fillRect(10, 10, 4, 10);
     c.fillStyle = "#df7b32";
@@ -615,122 +659,202 @@ export class Renderer {
     return this.lightmapCtx;
   }
 
-  /** Renders ambient darkness and soft occluded torch lights to an offscreen lightmap buffer,
-   * then composites the result over the dungeon tiles. */
+  /** Renders ambient darkness and baked torch light to an offscreen lightmap,
+   * then composites the result over the dungeon tiles. Per frame this is a
+   * couple of fills plus two image blits per torch; no canvas filters. */
   drawDungeonLightmap(viewportSize: number, torches: Torch[], now: number) {
     const lm = this.ensureLightmap(viewportSize);
     const mainCtx = this.ctx;
     const atm = this.atmosphere;
     const reduceMotion = this.game.save.settings.reduceMotion;
 
-    if (lm) {
-      // 1. Clear offscreen lightmap
-      lm.clearRect(0, 0, viewportSize, viewportSize);
-
-      // 2. Base ambient darkness overlay (subtle dark purple)
-      lm.fillStyle = LIGHTING_CONFIG.ambient.color;
-      lm.globalAlpha = LIGHTING_CONFIG.ambient.opacity;
-      lm.fillRect(0, 0, viewportSize, viewportSize);
-
-      // 3. Optional cool atmospheric tint
-      if (atm.ambientStrength > 0) {
-        lm.save();
-        lm.globalAlpha = atm.ambientStrength;
-        lm.fillStyle = atm.ambientColor;
-        lm.fillRect(0, 0, viewportSize, viewportSize);
-        lm.restore();
-      }
-
-      // 3b. Punch the darkness mask out over structural walls so they stay
-      // fully readable regardless of torch proximity (darkness should only
-      // ever dim walkable floor, not the architecture around it).
-      lm.save();
-      lm.globalCompositeOperation = "destination-out";
-      lm.globalAlpha = 1;
-      for (const [wx, wy] of this.visibleWallTiles()) {
-        lm.fillRect(this.toScreenX(wx), this.toScreenY(wy + 1), this.size, this.size);
-      }
-      lm.restore();
-
-      // 4. Render soft torch haze (diffuse glow into surrounding air)
-      if (atm.torchHazeStrength > 0) {
-        for (const t of torches) {
-          this.drawTorchHaze(lm, t, now, reduceMotion);
-        }
-      }
-
-      // 5. Render direct occluded torch light with soft penumbras
-      for (const t of torches) {
-        this.drawTorchLight(lm, t, now, reduceMotion);
-      }
-
-      // 6. Composite the lightmap onto the main canvas
-      mainCtx.save();
-      mainCtx.globalCompositeOperation = "source-over";
-      mainCtx.drawImage(this.lightmapCanvas!, 0, 0);
-      mainCtx.restore();
-    } else {
+    if (!lm) {
       // Fallback if offscreen canvas cannot be instantiated (e.g. headless tests without canvas DOM)
       mainCtx.save();
       mainCtx.fillStyle = LIGHTING_CONFIG.ambient.color;
       mainCtx.globalAlpha = LIGHTING_CONFIG.ambient.opacity;
       mainCtx.fillRect(0, 0, viewportSize, viewportSize);
-      for (const t of torches) {
-        this.drawTorchLight(mainCtx, t, now, reduceMotion);
-      }
       mainCtx.restore();
+      return;
     }
+    // 1. Clear offscreen lightmap
+    lm.globalCompositeOperation = "source-over";
+    lm.globalAlpha = 1;
+    lm.clearRect(0, 0, viewportSize, viewportSize);
+
+    // 2. Base ambient darkness overlay (subtle dark purple)
+    lm.fillStyle = LIGHTING_CONFIG.ambient.color;
+    lm.globalAlpha = LIGHTING_CONFIG.ambient.opacity;
+    lm.fillRect(0, 0, viewportSize, viewportSize);
+
+    // 3. Optional cool atmospheric tint
+    if (atm.ambientStrength > 0) {
+      lm.globalAlpha = atm.ambientStrength;
+      lm.fillStyle = atm.ambientColor;
+      lm.fillRect(0, 0, viewportSize, viewportSize);
+    }
+
+    // 3b. Punch the darkness mask out over structural walls so they stay
+    // fully readable regardless of torch proximity (darkness should only
+    // ever dim walkable floor, not the architecture around it).
+    lm.globalCompositeOperation = "destination-out";
+    lm.globalAlpha = 1;
+    for (const [wx, wy] of this.frameWalls) {
+      lm.fillRect(this.toScreenX(wx), this.toScreenY(wy + 1), this.size, this.size);
+    }
+
+    // 4. Torchlight carves the darkness away where it falls...
+    const glow = LIGHTING_CONFIG.glow;
+    for (const t of torches) this.drawTorchLight(lm, t, now, reduceMotion, "destination-out", glow.carve);
+    lm.globalCompositeOperation = "source-over";
+    lm.globalAlpha = 1;
+
+    // 5. ...then soft haze and warm candle glow are added on top.
+    if (atm.torchHazeStrength > 0) {
+      for (const t of torches) this.drawTorchHaze(lm, t, now, reduceMotion);
+    }
+    for (const t of torches) this.drawTorchLight(lm, t, now, reduceMotion, "lighter", glow.strength * t.baseIntensity);
+    lm.globalCompositeOperation = "source-over";
+    lm.globalAlpha = 1;
+
+    // 6. Composite the lightmap onto the main canvas
+    mainCtx.drawImage(this.lightmapCanvas!, 0, 0);
   }
 
-  /** Warm radial light clipped to the torch's cached visibility polygon, so
-   * walls occlude it gently. Falloff is soft and feathered with penumbra blur.
-   * Brightness/radius flicker gently (+/-~3%) using coherent multi-harmonic waves. */
-  drawTorchLight(c: CanvasRenderingContext2D, t: Torch, now: number, reduceMotion: boolean) {
-    if (!t.visibilityPolygon || t.visibilityPolygon.length < 3) return;
-    const flicker = getTorchFlicker(t, now, reduceMotion);
-    const cx = this.toScreenX(t.x + 0.5),
-      cy = this.toScreenY(t.y + 0.5),
-      radius = t.lightRadius * this.size * flicker,
-      intensity = t.baseIntensity * flicker;
-
-    c.save();
-    c.beginPath();
-    // Expand the clip polygon slightly outward from the torch so occlusion
-    // edges feather into the blur instead of reading as hard geometry.
-    const penumbra = 1 + LIGHTING_CONFIG.shadow.penumbraOffset;
-    const ox = t.x + 0.5, oy = t.y + 0.5;
-    t.visibilityPolygon.forEach((p, i) => {
-      const wx = ox + (p.x - ox) * penumbra,
-        wy = oy + (p.y - oy) * penumbra;
-      const px = this.toScreenX(wx),
-        py = this.toScreenY(wy);
-      if (i === 0) c.moveTo(px, py);
-      else c.lineTo(px, py);
-    });
-    c.closePath();
-    c.clip();
-
-    if (!reduceMotion && LIGHTING_CONFIG.shadow.blurPx > 0) {
-      c.filter = `blur(${LIGHTING_CONFIG.shadow.blurPx}px)`;
+  /** The torch's baked light field (see torch-light.ts), created on first use. */
+  torchBake(t: Torch) {
+    let bake = this.torchBakes.get(t);
+    if (bake === undefined) {
+      const world = this.game.world;
+      bake = bakeTorchLight(t, (x, y) => world.tile(x, y)?.kind === "wall");
+      this.torchBakes.set(t, bake);
     }
-    c.globalCompositeOperation = "lighter";
+    return bake;
+  }
 
-    const gr = c.createRadialGradient(cx, cy, 0, cx, cy, radius);
-    for (const stop of LIGHTING_CONFIG.stops) {
-      // Extract RGBA stop and scale by intensity
-      const match = stop.color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
-      if (match) {
-        const r = match[1], g = match[2], b = match[3];
-        const baseA = match[4] !== undefined ? parseFloat(match[4]) : 1;
-        gr.addColorStop(stop.offset, `rgba(${r},${g},${b},${(baseA * intensity).toFixed(3)})`);
-      } else {
-        gr.addColorStop(stop.offset, stop.color);
+  /** Blits a torch's baked light, gently flickering in brightness and reach.
+   * The field is low-resolution and upscaled with smoothing, which keeps the
+   * falloff soft for free. */
+  drawTorchLight(c: CanvasRenderingContext2D, t: Torch, now: number, reduceMotion: boolean,
+    op: GlobalCompositeOperation, alpha: number) {
+    const bake = this.torchBake(t);
+    if (!bake) return;
+    const flicker = getTorchFlicker(t, now, reduceMotion);
+    const f = bake.field;
+    const grow = 1 + (flicker - 1) * LIGHTING_CONFIG.glow.radiusFlicker;
+    const cx = this.toScreenX(t.x + 0.5), cy = this.toScreenY(t.y + 0.5);
+    const x0 = cx + (this.toScreenX(f.left) - cx) * grow;
+    const y0 = cy + (this.toScreenY(f.top) - cy) * grow;
+    const size = f.tiles * this.size * grow;
+    c.globalCompositeOperation = op;
+    c.globalAlpha = Math.min(1, alpha * flicker);
+    c.imageSmoothingEnabled = true;
+    c.drawImage(bake.canvas, x0, y0, size, size);
+  }
+
+  /** Torch-cast shadows for items, enemies, and the hero. Each caster's
+   * sprite silhouette is sheared away from every torch that reaches it,
+   * longer the farther it stands from the flame and fainter as the light
+   * falls off. Drawn to one layer so walls can be masked out cheaply. */
+  drawEntityShadows(viewportSize: number, now: number) {
+    const torches = this.frameTorches;
+    if (!torches.length || typeof document === "undefined") return;
+    const g = this.game, n = this.density, s = this.size;
+    const cfg = LIGHTING_CONFIG.shadow;
+    const reduceMotion = g.save.settings.reduceMotion;
+    const area1 = g.mode === "tower" && g.run.height >= 0 && g.run.height < 10;
+    type Caster = { x: number; y: number; key: string; draw: () => void };
+    const casters: Caster[] = [];
+    for (let row = -1; row <= n; row++)
+      for (let col = -1; col <= n; col++) {
+        const x = col + Math.floor(this.left), y = Math.floor(this.bottom) + row;
+        if (y < 0) continue;
+        const t = g.world.tile(x, y);
+        if (!SHADOW_CASTERS.has(t.kind)) continue;
+        casters.push({
+          x, y,
+          key: `${t.kind}|${t.color}|${t.tier}|${t.enemy?.name ?? ""}|${area1}`,
+          draw: () => this.contents(t, x, y, now, area1),
+        });
+      }
+    casters.push({ x: this.playerX, y: this.playerY, key: "hero", draw: () => Renderer.drawHero(this.ctx) });
+
+    let layer: CanvasRenderingContext2D | null = null;
+    for (const caster of casters) {
+      for (const t of torches) {
+        const dx = caster.x - t.x, dy = caster.y - t.y;
+        const d = Math.hypot(dx, dy);
+        if (d < 0.5 || d >= t.lightRadius) continue;
+        if (!torchReaches(t, Math.round(caster.x), Math.round(caster.y))) continue;
+        const flicker = getTorchFlicker(t, now, reduceMotion);
+        const alpha = cfg.strength * lightFalloff(d, t.lightRadius) * flicker;
+        if (alpha < 0.02) continue;
+        const sil = this.silhouette(caster.key, caster.draw, now);
+        if (!sil) continue;
+        layer ??= this.ensureShadowLayer(viewportSize);
+        if (!layer) return;
+        // Screen-space direction away from the torch (world y is up).
+        const ux = dx / d, uy = -dy / d;
+        const k = Math.min(cfg.maxLength, cfg.minLength + d * cfg.lengthPerTile) * flicker;
+        // Sprite point (x, y) -> feet + (x-12)*perp + (22-y)*k*dir, feet at (12, 22).
+        const px = -uy, py = ux;
+        layer.setTransform(1, 0, 0, 1, (caster.x - this.left) * s, (n - 1 - (caster.y - this.bottom)) * s);
+        layer.scale(s / 24, s / 24);
+        layer.transform(px, py, -k * ux, -k * uy, 12 - 12 * px + 22 * k * ux, 22 - 12 * py + 22 * k * uy);
+        layer.globalAlpha = Math.min(1, alpha);
+        layer.drawImage(sil, 0, 0);
       }
     }
-
-    c.fillStyle = gr;
-    c.fillRect(cx - radius, cy - radius, radius * 2, radius * 2);
-    c.restore();
+    if (!layer) return;
+    // Shadows fall on the floor only, never across wall tops.
+    layer.setTransform(1, 0, 0, 1, 0, 0);
+    layer.globalAlpha = 1;
+    layer.globalCompositeOperation = "destination-out";
+    for (const [wx, wy] of this.frameWalls)
+      layer.fillRect(this.toScreenX(wx), this.toScreenY(wy + 1), this.size, this.size);
+    layer.globalCompositeOperation = "source-over";
+    this.ctx.drawImage(this.shadowCanvas!, 0, 0);
+  }
+  ensureShadowLayer(viewportSize: number) {
+    this.shadowCanvas ??= document.createElement("canvas");
+    const cv = this.shadowCanvas;
+    if (cv.width !== viewportSize || cv.height !== viewportSize) cv.width = cv.height = viewportSize;
+    const ctx = cv.getContext("2d");
+    if (!ctx) return null;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, viewportSize, viewportSize);
+    ctx.imageSmoothingEnabled = false;
+    return ctx;
+  }
+  /** A solid, crisp silhouette of whatever `draw` paints into a 24x24 tile.
+   * Faint pixels (ground ellipses, glows, sparkles) are dropped so only the
+   * body of the sprite casts a shadow. */
+  silhouette(key: string, draw: () => void, now: number) {
+    const cached = this.silhouettes.get(key);
+    if (cached && now - cached.at < 1500) return cached.canvas;
+    const canvas = cached?.canvas ?? document.createElement("canvas");
+    canvas.width = canvas.height = 24;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    if (!ctx) return null;
+    const main = this.ctx;
+    this.ctx = ctx;
+    try {
+      draw();
+    } finally {
+      this.ctx = main;
+    }
+    const img = ctx.getImageData(0, 0, 24, 24);
+    const [r, g, b] = LIGHTING_CONFIG.shadow.color;
+    for (let i = 0; i < img.data.length; i += 4) {
+      const solid = img.data[i + 3] > 140;
+      img.data[i] = r;
+      img.data[i + 1] = g;
+      img.data[i + 2] = b;
+      img.data[i + 3] = solid ? 255 : 0;
+    }
+    ctx.putImageData(img, 0, 0);
+    this.silhouettes.set(key, { canvas, at: now });
+    return canvas;
   }
 
   /** Soft warm atmospheric haze that diffuses into ambient air around torches.
@@ -744,11 +868,10 @@ export class Renderer {
       alpha = atm.torchHazeStrength * t.baseIntensity * flicker;
     if (alpha <= 0 || hazeRadius <= 0) return;
 
+    // The radial gradient is already soft, so no blur filter is needed.
     c.save();
     c.globalCompositeOperation = "lighter";
-    if (!reduceMotion && atm.torchHazeBlur > 0) {
-      c.filter = `blur(${atm.torchHazeBlur}px)`;
-    }
+    c.globalAlpha = 1;
     const gr = c.createRadialGradient(cx, cy, 0, cx, cy, hazeRadius);
     gr.addColorStop(0, `rgba(255, 200, 140, ${0.30 * alpha})`);
     gr.addColorStop(0.35, `rgba(240, 170, 100, ${0.14 * alpha})`);
@@ -909,6 +1032,7 @@ export class Renderer {
   }
   hero() {
     this.groundShadow(12, 22, 8, 2.6, 0.4);
+    if (!this.game.save.settings.spritesOff && drawGameSprite(this.ctx, "player")) return;
     Renderer.drawHero(this.ctx);
   }
   static drawHero(c: CanvasRenderingContext2D) {

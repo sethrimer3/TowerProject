@@ -146,7 +146,7 @@ function layersFor(sprite: HTMLImageElement): BakedLayers | null {
 
 const litCache = new WeakMap<Torch, Map<string, boolean>>();
 /** Whether a tile center is inside the torch's (static) visibility polygon. */
-function torchReaches(t: Torch, x: number, y: number) {
+export function torchReaches(t: Torch, x: number, y: number) {
   if (!t.visibilityPolygon || t.visibilityPolygon.length < 3) return false;
   let tiles = litCache.get(t);
   if (!tiles) litCache.set(t, (tiles = new Map()));

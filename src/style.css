@@ -482,6 +482,10 @@ canvas {
   column-gap: 10px;
   align-items: center;
 }
+.inspection:empty {
+  margin: 0;
+  min-height: 0;
+}
 .inspection b {
   color: #bfc8d6;
 }
@@ -889,10 +893,6 @@ dialog p {
   .stats {
     min-height: 75px;
   }
-  .board {
-    max-width: calc(100dvh - 330px);
-    margin-inline: auto;
-  }
   .controls {
     margin-top: 0;
   }
@@ -926,14 +926,33 @@ footer {
   flex: 1;
   min-height: 0;
 }
+/* Sizes the square playfield to the largest square that fits the space left
+   over by the surrounding chrome, in whichever dimension is tighter. */
+.board-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
 .board {
   height: min(100%, var(--board-cap));
   width: auto;
   aspect-ratio: 1;
   max-width: 100%;
-  justify-self: center;
-  align-self: center;
   margin: 0;
+}
+@supports (container-type: size) {
+  .board-cell {
+    container-type: size;
+  }
+  .board {
+    width: min(100cqw, 100cqh);
+    height: min(100cqw, 100cqh);
+    max-width: none;
+  }
 }
 canvas {
   width: 100%;
@@ -1075,3 +1094,37 @@ nav .mode-locked { opacity: .55; }
 .section-option span { color: #99a8bd; }
 .section-option.selected { border-color: #d7b46a; box-shadow: inset 0 0 0 1px #d7b46a; }
 .section-option:disabled { opacity: 0.45; }
+
+/* Pixel-art UI sprites. World items deliberately use their canonical tile
+   PNGs here too, so a key or potion always has one visual identity. */
+.ui-sprite,
+.skill-sprite,
+.stat-sprite,
+.log-sprite {
+  display: inline-block;
+  width: 1.45em;
+  height: 1.45em;
+  object-fit: contain;
+  image-rendering: pixelated;
+  vertical-align: -0.32em;
+  pointer-events: none;
+}
+.mini-action .mini-icon img { width: 20px; height: 20px; }
+nav button > span img { display: block; width: 42px; height: 42px; }
+.item-icon img {
+  display: block;
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+.tree-tabs span img { width: 34px; height: 34px; margin-inline: auto; }
+.node-icon img { width: 38px; height: 38px; }
+.skill-node.locked .node-icon img { filter: grayscale(1); opacity: .48; }
+.slot-filter button img { width: 28px; height: 28px; }
+.clear-legend .log-sprite,
+.floor-record .log-sprite { width: 24px; height: 24px; margin-right: 5px; }
+.summary-icon img { width: 72px; height: 72px; }
+#log img { width: 22px; height: 22px; margin-right: 4px; }
+.ascent > span img { width: 24px; height: 24px; }
+.dpad button img { display: block; width: 22px; height: 22px; margin: auto; }

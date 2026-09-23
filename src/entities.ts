@@ -78,6 +78,8 @@ export type Run = {
 export type MoveSnapshot = { run: Run; best: number };
 export type Revival = { snapshot: MoveSnapshot; earned: number };
 export type Settings = {
+  /** Use the original procedural renderers instead of bitmap art. */
+  spritesOff?: boolean;
   weatherSound?: boolean;
   transition: "smooth" | "fast" | "instant";
   showArrows: boolean;

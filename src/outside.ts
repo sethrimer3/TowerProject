@@ -47,8 +47,8 @@ export class OutsideWorld implements Board {
   clear() {}
 }
 
-export function drawForestTile(c: CanvasRenderingContext2D, t: Tile, x: number, y: number, seed: number, center: number) {
-  if (drawOutsideSprite(c,t,x,y,seed,center)) return;
+export function drawForestTile(c: CanvasRenderingContext2D, t: Tile, x: number, y: number, seed: number, center: number, useSprites = true) {
+  if (useSprites && drawOutsideSprite(c,t,x,y,seed,center)) return;
   const r = tileRandom(x, y, seed), path = Math.abs(x - center) <= (y % 5 === 2 ? 1 : 0);
   c.fillStyle = path ? "#625d42" : r < 0.5 ? "#294d35" : "#30543a";
   c.fillRect(0, 0, 24, 24);
