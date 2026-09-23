@@ -121,6 +121,13 @@ export class Game {
         this.run.layoutVersion = TOWER_LAYOUT_VERSION;
         this.run.changes = {};
         this.run.floors = {};
+        // The floor's geometry changed: stand at its entrance, and let
+        // syncRewards pay out any clear chests whose old spots may now be wall.
+        if (!this.run.outside) {
+          this.run.player.x = TOWER_START_X;
+          this.run.player.y = 0;
+        }
+        this.run.rewards = [];
       }
       this.linkTowerFloor();
       this.world = new RoomWorld(

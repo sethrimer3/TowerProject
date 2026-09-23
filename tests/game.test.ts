@@ -11,7 +11,7 @@ import {
   World,
   LAYOUT_VERSION,
 } from "../src/generation.ts";
-import { validatePhysicalLayout } from "../src/validation.ts";
+import { generateTowerFloor, geometryProblems, towerFloorReport } from "../src/tower/index.ts";
 import { doorCost } from "../src/doors.ts";
 import { defaults, decode } from "../src/save.ts";
 import { Game } from "../src/state.ts";
@@ -171,42 +171,43 @@ test("density is a rendering setting only: it never mutates world or run state",
   }
 });
 
-test("every Tower door is a real choke point, and its key is always reachable first, across many seeds/rooms", () => {
+test("every Tower tree door is a real choke point; shortcut doors are the only deliberate bypasses", () => {
   for (let seed = 0; seed < 60; seed += 5)
-    for (const room of [0, 3, 8, 15]) {
-      const cells = generateTowerRoom(seed, room);
+    for (const room of [0, 3, 8, 15, 40]) {
+      const { cells, embedding } = generateTowerFloor(seed, room);
       const start = point(TOWER_START_X, 0);
-      const doors = [...cells].filter(([, t]) => t.kind === "door");
-      const all = reachable(cells, start);
-      for (const [k] of doors)
+      // Shortcuts deliberately close loops; with them shut, every other
+      // door must be the only way into what it locks.
+      const shortcuts = embedding.doorways.filter((d) => d.shortcut).map((d) => point(d.x, d.y));
+      const all = reachable(cells, start, new Set(shortcuts));
+      for (const d of embedding.doorways) {
+        const t = cells.get(point(d.x, d.y))!;
+        if (t.kind !== "door" || d.shortcut) continue;
         assert.ok(
-          reachable(cells, start, new Set([k])).size < all.size - 1,
-          `Seed ${seed} room ${room}: door has a physical bypass`,
+          reachable(cells, start, new Set([...shortcuts, point(d.x, d.y)])).size < all.size - 1,
+          `Seed ${seed} room ${room}: door at ${d.x},${d.y} has a physical bypass`,
         );
-      // A rational player (no starting keys) can still open every door and
-      // reach every door-gated door in turn, key first.
-      const closed = new Set(doors.map(([k]) => k)),
-        collected = new Set<string>(),
-        keys: Record<string, number> = { yellow: 0, blue: 0, red: 0 };
-      let guard = closed.size + 1;
-      while (closed.size && guard-- > 0) {
-        const area = reachable(cells, start, closed);
-        for (const k of area) {
-          const t = cells.get(k)!;
-          if (t.kind === "key" && !collected.has(k)) {
-            keys[t.color!]++;
-            collected.add(k);
-          }
-        }
-        const player = { keys, hp: 1, maxHp: 1 };
-        const next = doors.find(([k, t]) => closed.has(k) && doorCost(t, player) !== null);
-        if (!next) break;
-        for (const color of doorCost(next[1], player)!) keys[color]--;
-        closed.delete(next[0]);
       }
-      assert.equal(closed.size, 0, `Seed ${seed} room ${room}: a door's key is unreachable before it`);
     }
 });
+test("the key economy is coherent on early floors but never force-balanced", () => {
+  let early = 0, earlyOk = 0, anyUnaffordable = 0, exchanges = 0, floors = 0;
+  for (let seed = 0; seed < 80; seed++)
+    for (const room of [0, 1, 6, 12, 30]) {
+      const a = towerFloorReport(seed, room).analysis;
+      floors++;
+      if (room <= 1) { early++; if (a.stairsKeyReachable) earlyOk++; }
+      if (!a.keyEconomyComplete) anyUnaffordable++;
+      // Higher-tier door -> several lower-tier keys (resource conversion).
+      if (a.regions.some((r) => /^(blue|red) door$/.test(r.gate) && (r.contents.match(/key/g) ?? []).length >= 3)) exchanges++;
+      assert.equal(a.emptyDeadEnds, 0, `Seed ${seed} room ${room}: empty dead end`);
+    }
+  assert.ok(earlyOk / early > 0.9, `early floors key-reachable ${earlyOk}/${early}`);
+  // Scarcity is allowed: some floors leave a door (or the stairs) unaffordable.
+  assert.ok(anyUnaffordable > 0 && anyUnaffordable < floors * 0.6, `${anyUnaffordable}/${floors} floors with an unaffordable door`);
+  assert.ok(exchanges > floors * 0.1, `${exchanges}/${floors} floors with a key exchange room`);
+});
+
 test("old runs safely migrate topology while retaining earned stats and permanent progress", () => {
   const save = defaults(),
     g = new Game(save);
@@ -265,26 +266,21 @@ test("validator rejects missing prerequisite keys and doors with bypass routes",
   assert.equal(validate(cells, 0), false);
 });
 
-test("hundreds of generated Tower rooms all pass physical solvability validation directly", () => {
+test("hundreds of generated Tower floors are geometrically valid even when their economy is not", () => {
   let checked = 0;
   for (let seed = 0; seed < 40; seed++)
     for (const room of [0, 1, 4, 9, 20, 60]) {
-      const cells = generateTowerRoom(seed, room);
-      const [ex, ey] = [...cells].find(([, t]) => t.kind === "stairs")![0]
-        .split(",")
-        .map(Number);
-      const nominal = {
-        x: 0, y: 0, hp: 100000, maxHp: 100000, attack: 100000, defense: 100000,
-        keys: { yellow: 0, blue: 0, red: 0 }, gear: [],
-      };
-      assert.ok(
-        validatePhysicalLayout(cells, TOWER_START_X, 0, ex, ey, nominal),
-        `Seed ${seed} room ${room}: exit unreachable even for an overwhelming player`,
-      );
+      const { cells, embedding } = generateTowerFloor(seed, room);
+      assert.deepEqual(geometryProblems(cells), [], `Seed ${seed} room ${room}`);
+      for (const p of embedding.placements) assert.notEqual(cells.get(point(p.x, p.y))?.kind, "wall");
+      // Only resources, never geometry, can make a floor unwinnable: with
+      // doors and enemies treated as passable the stairs are always reachable.
+      assert.ok(reachable(cells, point(TOWER_START_X, 0)).has(point(...embedding.stairs)));
       checked++;
     }
   assert.ok(checked > 200);
 });
+
 test("validator permits encounter gates but rejects physically isolated floor space", () => {
   const cells = new Map<string, import("../src/entities.ts").Tile>();
   for (let y = 0; y < 20; y++) cells.set(point(15, y), { kind: "floor" });

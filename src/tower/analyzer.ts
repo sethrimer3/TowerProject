@@ -24,8 +24,8 @@ export type FloorAnalysis = {
   /** Farthest any empty floor tile is from something to decide about. */
   longestEmptyTraversal: number;
   shortcutsPlaced: number;
-  /** Greedy keys-only simulation (enemies treated as passable, no starting
-   * keys): can every door on the floor be opened? Informational only. */
+  /** Keys-only search (enemies passable, no starting keys): can every door
+   * on the floor be opened in some order? Informational only. */
   keyEconomyComplete: boolean;
   /** Same simulation: can the stairs be reached? */
   stairsKeyReachable: boolean;
@@ -48,30 +48,55 @@ function neighbours(k: string) {
   return DIRS.map(([dx, dy]) => point(x + dx, y + dy));
 }
 
-/** Greedy keys-only sweep from the entrance; enemies count as passable. */
-export function keySweep(cells: Map<string, Tile>, entrance: string) {
-  const keys: Record<KeyColor, number> = { yellow: 0, blue: 0, red: 0 };
-  const opened = new Set<string>(), taken = new Set<string>();
-  for (let guard = 0; guard < 64; guard++) {
+/** Keys-only economy search from the entrance with no starting keys:
+ * enemies count as passable (HP is a separate question) and heart doors as
+ * openable. Explores every order of opening doors (floors hold few doors),
+ * so it answers "can a careful player afford X?", not "will a greedy one". */
+export function keyEconomy(cells: Map<string, Tile>, entrance: string, target: string) {
+  const doors = [...cells].filter(([, t]) => t.kind === "door").map(([k]) => k);
+  const index = new Map(doors.map((k, i) => [k, i]));
+  const explore = (opened: number) => {
     const seen = new Set<string>([entrance]);
     const queue = [entrance];
-    const frontier: string[] = [];
+    const frontier: number[] = [];
+    const keys: Record<KeyColor, number> = { yellow: 0, blue: 0, red: 0 };
     for (let i = 0; i < queue.length; i++)
       for (const n of neighbours(queue[i])) {
         const t = cells.get(n);
         if (!t || t.kind === "wall" || seen.has(n)) continue;
         seen.add(n);
-        if (t.kind === "door" && !opened.has(n)) { frontier.push(n); continue; }
-        if (t.kind === "key" && !taken.has(n)) { taken.add(n); keys[t.color!]++; }
+        const d = index.get(n);
+        if (d !== undefined && !(opened & (1 << d))) { frontier.push(d); continue; }
+        if (t.kind === "key") keys[t.color!]++;
         queue.push(n);
       }
-    // Heart doors are treated as openable (the player can heal first).
-    const next = frontier.find((k) => doorCost(cells.get(k)!, { keys, hp: 1, maxHp: 1 }) !== null);
-    if (!next) return { seen, frontier };
-    for (const c of doorCost(cells.get(next)!, { keys, hp: 1, maxHp: 1 })!) keys[c]--;
-    opened.add(next);
+    return { seen, frontier, keys };
+  };
+  // State: which doors are open, plus the keys left after paying for them.
+  type State = { opened: number; spent: Record<KeyColor, number> };
+  const visited = new Set<string>();
+  const stack: State[] = [{ opened: 0, spent: { yellow: 0, blue: 0, red: 0 } }];
+  let stairs = false, allDoors = doors.length === 0;
+  const limit = doors.length > 14 ? 0 : 20000; // pathological floors: report unknown as false
+  for (let steps = 0; stack.length && steps < limit; steps++) {
+    const s = stack.pop()!;
+    const id = `${s.opened}|${s.spent.yellow},${s.spent.blue},${s.spent.red}`;
+    if (visited.has(id)) continue;
+    visited.add(id);
+    const { seen, frontier, keys } = explore(s.opened);
+    if (seen.has(target)) stairs = true;
+    if (s.opened === (1 << doors.length) - 1) allDoors = true;
+    if (stairs && allDoors) break;
+    const wallet = { yellow: keys.yellow - s.spent.yellow, blue: keys.blue - s.spent.blue, red: keys.red - s.spent.red };
+    for (const d of new Set(frontier)) {
+      const cost = doorCost(cells.get(doors[d])!, { keys: wallet, hp: 1, maxHp: 1 });
+      if (!cost) continue;
+      const spent = { ...s.spent };
+      for (const c of cost) spent[c]++;
+      stack.push({ opened: s.opened | (1 << d), spent });
+    }
   }
-  return { seen: new Set<string>(), frontier: [] as string[] };
+  return { stairs, allDoors };
 }
 
 export function analyzeFloor(emb: Embedding): FloorAnalysis {
@@ -123,7 +148,7 @@ export function analyzeFloor(emb: Embedding): FloorAnalysis {
       queue.push(n);
     }
 
-  const sweep = keySweep(cells, entrance);
+  const economy = keyEconomy(cells, entrance, point(...emb.stairs));
   return {
     archetype: graph.archetype,
     depth: graph.depth,
@@ -141,8 +166,8 @@ export function analyzeFloor(emb: Embedding): FloorAnalysis {
     walkable: walkable.length,
     longestEmptyTraversal: Math.max(0, ...dist.values()),
     shortcutsPlaced: emb.shortcutsPlaced,
-    keyEconomyComplete: sweep.frontier.length === 0,
-    stairsKeyReachable: sweep.seen.has(point(...emb.stairs)),
+    keyEconomyComplete: economy.allDoors,
+    stairsKeyReachable: economy.stairs,
     dropped: emb.dropped.length,
     notes: graph.notes,
   };

@@ -26,13 +26,17 @@ const MIN_SIDE = 2;
 
 export const EMBED_TUNING = {
   /** Preferred chamber area per footprint. */
-  idealArea: { pocket: 6, room: 14, hall: 24 },
+  idealArea: { pocket: 6, room: 12, hall: 20 },
   /** Partition attempts per graph before giving up on it. */
   partitionAttempts: 40,
+  /** Valid embeddings compared per graph (best size fit wins). */
+  candidates: 6,
   /** Backtracking steps per partition. */
   searchSteps: 3000,
   /** Chance a split peels off a thin two-tile pocket instead of halving. */
   pocketSplitChance: 0.3,
+  /** Chambers are trimmed to about this many tiles per content item. */
+  roomsPerItem: 2.4,
   /** A hall with more empty tiles than this fraction gets pillars. */
   pillarEmptyFraction: 0.45,
 };
@@ -61,6 +65,7 @@ export type Embedding = {
 
 const area = (r: Rect) => (r.x2 - r.x1 + 1) * (r.y2 - r.y1 + 1);
 const inRect = (r: Rect, x: number, y: number) => x >= r.x1 && x <= r.x2 && y >= r.y1 && y <= r.y2;
+const minSide = (r: Rect) => Math.min(r.x2 - r.x1 + 1, r.y2 - r.y1 + 1);
 const centre = (r: Rect): XY => [(r.x1 + r.x2) / 2, (r.y1 + r.y2) / 2];
 const distFromEntrance = (r: Rect) => {
   const [cx, cy] = centre(r);
@@ -167,13 +172,16 @@ function assign(graph: StrategicGraph, rects: Rect[], neighbours: number[][], rn
   const leafOf: number[] = graph.nodes.map(() => -1);
   const used = new Set<number>();
   const startLeaf = rects.findIndex((r) => inRect(r, ...ENTRY));
-  if (startLeaf < 0 || area(rects[startLeaf]) < need(graph.nodes[0])) return null;
+  // The start hall is the first thing the player sees: never a sliver.
+  if (startLeaf < 0 || area(rects[startLeaf]) < need(graph.nodes[0]) || minSide(rects[startLeaf]) < 3) return null;
   let steps = 0;
   const jitter = graph.nodes.map(() => rects.map(() => rng() * 4));
 
   const score = (node: StrategicNode, leaf: number) => {
     const r = rects[leaf];
     let s = -Math.abs(area(r) - EMBED_TUNING.idealArea[node.footprint]) * 0.35;
+    // Hubs are chambers, not corridors.
+    if (node.footprint === "hall" && minSide(r) < 3) s -= 8;
     if (node.route === "main") {
       // The main route should travel away from the entrance.
       s += (distFromEntrance(r) - distFromEntrance(rects[leafOf[node.parent!]])) * 0.8;
@@ -398,7 +406,13 @@ class Furnisher {
     const node = room.node;
     const [cx, cy] = centre(room.rect);
     for (const reward of node.rewards) {
-      const options = this.walkable(room).filter(([x, y]) => this.free(room, x, y));
+      let options = this.walkable(room).filter(([x, y]) => this.free(room, x, y));
+      // A cramped room may put an item on its walking lane (it is simply
+      // picked up in passing) but never on a doorway's threshold.
+      if (!options.length)
+        options = this.walkable(room).filter(([x, y]) =>
+          this.isFloor(x, y) && !this.occupied.has(point(x, y)) &&
+          ![room.entry, ...room.exits].some(([ex, ey]) => ex === x && ey === y));
       if (!options.length) { this.dropped.push({ node: node.id, reward }); continue; }
       const key = ([x, y]: XY) => node.formation === "cluster"
         ? -(Math.abs(x - cx) + Math.abs(y - cy))
@@ -464,16 +478,31 @@ class Furnisher {
 /** Attempts to embed `graph`. Returns null only when no partition could
  * host the graph; the caller then simplifies the graph and retries. */
 export function embed(graph: StrategicGraph, rng: () => number): Embedding | null {
-  for (let attempt = 0; attempt < EMBED_TUNING.partitionAttempts; attempt++) {
+  // Several partitions usually host the graph; keep the one whose chamber
+  // sizes best match what each region holds (less dead space to trim away).
+  let best: { fit: number; result: Embedding } | null = null;
+  let found = 0;
+  for (let attempt = 0; attempt < EMBED_TUNING.partitionAttempts && found < EMBED_TUNING.candidates; attempt++) {
     const rects = partition(graph.nodes.length, rng);
     if (!rects) continue;
     const { between, neighbours } = doorwayCandidates(rects);
     const leafOf = assign(graph, rects, neighbours, rng);
     if (!leafOf) continue;
+    const fit = graph.nodes.reduce((s, n) => {
+      const r = rects[leafOf[n.id]];
+      return s + Math.abs(area(r) - targetArea(n)) + (n.footprint === "hall" && minSide(r) < 3 ? 10 : 0);
+    }, 0);
+    if (best && fit >= best.fit) { found++; continue; }
     const result = build(graph, rects, leafOf, between, rng);
-    if (result) return result;
+    if (!result) continue;
+    found++;
+    best = { fit, result };
   }
-  return null;
+  return best?.result ?? null;
+}
+
+function targetArea(node: StrategicNode) {
+  return Math.max(EMBED_TUNING.idealArea[node.footprint], need(node) * EMBED_TUNING.roomsPerItem);
 }
 
 function build(
@@ -559,6 +588,35 @@ function build(
   const stairs = stairOptions.sort((a, b) => b.s - a.s)[0];
   cells.set(point(...stairs.ring), { kind: "stairs" });
   exitsOf.get(stairsNode.id)!.push(stairs.inner);
+
+  // Trim oversized chambers down towards what their content needs, cutting
+  // whole rows/columns that hold no doorway so walls stay straight. This is
+  // what keeps a two-item pocket from becoming a 40-tile empty hall.
+  rects = rects.map((r) => ({ ...r }));
+  for (const node of graph.nodes) {
+    const r = rects[leafOf[node.id]];
+    const anchors = [entryOf.get(node.id)!.entry, ...exitsOf.get(node.id)!];
+    const target = targetArea(node);
+    while (area(r) > target * 1.2) {
+      const w = r.x2 - r.x1 + 1, h = r.y2 - r.y1 + 1;
+      const sides = ([
+        ["y1", h, (x: number, y: number) => y === r.y1],
+        ["y2", h, (x: number, y: number) => y === r.y2],
+        ["x1", w, (x: number, y: number) => x === r.x1],
+        ["x2", w, (x: number, y: number) => x === r.x2],
+      ] as const).filter(([, len, on]) => len > MIN_SIDE && !anchors.some(([x, y]) => on(x, y)));
+      if (!sides.length) break;
+      // Cut across the longer dimension first so rooms tend towards squares.
+      const [side] = sides.sort((a, b) => b[1] - a[1] + (rng() - 0.5) * 0.1)[0];
+      const line: XY[] = [];
+      for (let y = r.y1; y <= r.y2; y++)
+        for (let x = r.x1; x <= r.x2; x++)
+          if ((side === "y1" && y === r.y1) || (side === "y2" && y === r.y2) ||
+            (side === "x1" && x === r.x1) || (side === "x2" && x === r.x2)) line.push([x, y]);
+      for (const c of line) cells.set(point(...c), { kind: "wall" });
+      r[side] += side.endsWith("1") ? 1 : -1;
+    }
+  }
 
   const f = new Furnisher(cells, graph.depth, rng);
   // Furnish reward rooms before hubs so hub pillars never crowd a doorway.

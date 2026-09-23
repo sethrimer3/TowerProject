@@ -164,7 +164,8 @@ test("multi-floor Tower state survives a save encode/decode round trip", () => {
   // keeps mutating. Pin a seed verified (see git history) to never trigger
   // that false deadlock at either position this test visits, so the run
   // never legitimately ends and the save/reload round trip is meaningful.
-  g.run.seed = 1;
+  // (Re-pinned for the strategic generator, TOWER_LAYOUT_VERSION 4.)
+  g.run.seed = 2;
   (g.world as RoomWorld).cells.set(point(1, 0), { kind: "enemy", enemy: SURVIVABLE });
   assert.ok(g.move(1, 0, false));
   g.advanceTowerRoom();

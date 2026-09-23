@@ -15,7 +15,7 @@ import type { Reward, StrategicGraph, StrategicNode, Strength } from "./types.ts
  * dead end for this run. Exact door/key parity is never enforced. */
 
 /** Hard cap: a 15x15 interior cannot legibly hold more regions. */
-export const MAX_REGIONS = 12;
+export const MAX_REGIONS = 13;
 
 export const COHERENCE_TUNING = {
   /** Chance to add a missing key source for a door on the main route. */
@@ -63,6 +63,10 @@ export function keysIn(node: StrategicNode, color: KeyColor): number {
   return node.rewards.reduce((s, r) => s + count(r), 0) + node.guarded.reduce((s, g) => s + count(g.reward), 0);
 }
 
+function lockColor(n: StrategicNode): KeyColor | null {
+  return n.gate.kind === "door" ? n.gate.color : n.gate.kind === "steel" ? "yellow" : null;
+}
+
 function ancestors(nodes: StrategicNode[], id: number): number[] {
   const out: number[] = [];
   for (let p = nodes[id].parent; p !== null; p = nodes[p].parent) out.push(p);
@@ -96,7 +100,10 @@ export function planResources(graph: StrategicGraph, b: GraphBuilder, rng: () =>
     for (const door of collectDoors(graph).filter((d) => d.color === color)) {
       demand++;
       const locked = door.lockedNode === null ? new Set<number>() : subtreeOf(nodes, door.lockedNode);
-      const supply = nodes.filter((n) => !locked.has(n.id)).reduce((s, n) => s + keysIn(n, color), 0);
+      // Keys behind another lock of the same colour don't pay for this one.
+      const supply = nodes
+        .filter((n) => !locked.has(n.id) && ![n.id, ...ancestors(nodes, n.id)].some((a) => lockColor(nodes[a]) === color))
+        .reduce((s, n) => s + keysIn(n, color), 0);
       if (supply >= demand) continue;
       const chance = door.route === "main" ? COHERENCE_TUNING.main[color](depth) : COHERENCE_TUNING.optional[color];
       if (rng() < chance && addKeySource(graph, b, rng, color, door)) continue;

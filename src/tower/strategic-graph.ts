@@ -35,7 +35,7 @@ const MAX_CHILDREN: Record<Footprint, number> = { hall: 4, room: 2, pocket: 1 };
 /** Tunable depth curves. */
 export const GRAPH_TUNING = {
   /** Total regions on a floor (start + main + stairs + branches). */
-  regionBudget: (depth: number) => Math.min(MAX_REGIONS - 1, 6 + Math.floor(depth / 4)),
+  regionBudget: (depth: number) => Math.min(MAX_REGIONS - 1, 7 + Math.floor(depth / 5)),
   /** Main-route rooms between start and stairs. */
   mainRouteLength: (depth: number) => (depth < 3 ? 1 : depth < 10 ? 2 : 3),
   startPotionChance: (depth: number) => (depth === 0 ? 0.6 : 0.3),

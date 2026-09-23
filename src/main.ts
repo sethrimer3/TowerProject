@@ -6,6 +6,7 @@ import { Renderer } from "./rendering.ts";
 import { outsideWeather } from "./outside.ts";
 import { bindInput } from "./input.ts";
 import { chooseStep } from "./automation.ts";
+import { towerFloorReport } from "./tower/index.ts";
 import { predict } from "./combat.ts";
 import {
   UPGRADES,
@@ -734,6 +735,12 @@ document.addEventListener("visibilitychange", () => {
   save();
 });
 window.addEventListener("pagehide", save);
+// Developer aid (console only, no UI): `towerDebug()` prints the strategic
+// generation summary and map of the Tower floor currently being played.
+(window as unknown as { towerDebug: () => void }).towerDebug = () => {
+  const text = towerFloorReport(game.save.tower.run?.seed ?? game.run.seed, game.save.tower.run?.height ?? 0).text;
+  console.log(text);
+};
 el("stats").toggleAttribute("hidden", !isBoard(tab));
 el("currencies").toggleAttribute("hidden", tab !== "upgrades");
 renderBoard();

@@ -31,8 +31,8 @@ Retire from Settings to claim Essence. Starting-stat and equipment upgrades appl
 
 - `src/config.ts`: balancing, upgrade definitions, currency rewards.
 - `src/entities.ts`: tiles, player, equipment, and versioned save types.
-- `src/room-shapes.ts`: connected room erosion for stepped alcoves, irregular perimeters, wall fingers, and interior pillars; protected doorway anchors.
-- `src/generation.ts`: seeded PRNG, validated 30-wide / 20-high chunks, nine varied chambers with a central ascent and randomized tree branches, separating locks, parent-room keys, themed rewards, bounded chunk retention.
+- `src/generation.ts`: seeded PRNG, Delve chunks (30 wide, BSP chambers and corridors), bounded chunk retention, and the `RoomWorld` board for Tower floors.
+- `src/tower/`: strategy-first Tower floor generation, Magic-Tower style. `strategic-graph.ts` plans a floor archetype, a main route of gated hubs to the stairs, and optional branches built from the declarative micro-puzzles in `patterns.ts` (enemy guards key, blue door holds several yellow keys, key chains, choice rooms, temptations…). `resource-planner.ts` gives doors plausible key sources with depth-dependent probability, without enforcing parity, so scarce or unwinnable floors remain possible. `embedder.ts` tiles the 15x15 interior with chambers joined by one-tile gate doorways (no corridors) and arranges contents in rows, guarded niches and enemy rings. `analyzer.ts` reports doors, key sources, branches, dead ends and density; run `npm run tower:report [seed depth]`, or call `towerDebug()` in the browser console. Geometry is always validated; the economy never is.
 - `src/state.ts`: movement, pickups, doors, run lifecycle, purchases.
 - `src/combat.ts`: pure combat forecasting.
 - `src/automation.ts`: bounded breadth-first search and separate destination scoring. Stops search at interactions and replans each step to avoid assuming future keys or health.
