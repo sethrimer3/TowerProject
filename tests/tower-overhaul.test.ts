@@ -153,13 +153,20 @@ test("an opened door stays open across a floor round-trip", () => {
 
 test("multi-floor Tower state survives a save encode/decode round trip", () => {
   const g = arena();
+  // isDeadlocked() (run via checkDeadlock() after every non-floor move)
+  // never sees this fixture's synthetic cells — it independently re-derives
+  // each floor from generateTowerRoom(seed, height). arena()'s default
+  // random seed left this test's deadlock check at the mercy of whatever
+  // unrelated real room that seed happened to generate around (1, 0) and
+  // (TOWER_START_X + 1, 0), intermittently ending the run for reasons
+  // having nothing to do with the synthetic arena and desyncing
+  // save.tower.run (nulled by that end) from the still-live g.run this test
+  // keeps mutating. Pin a seed verified (see git history) to never trigger
+  // that false deadlock at either position this test visits, so the run
+  // never legitimately ends and the save/reload round trip is meaningful.
+  g.run.seed = 1;
   (g.world as RoomWorld).cells.set(point(1, 0), { kind: "enemy", enemy: SURVIVABLE });
   assert.ok(g.move(1, 0, false));
-  // This fixture replaces the live room with a tiny synthetic arena; depending
-  // on the deterministic base behind deadlock analysis, clearing its only
-  // encounter can legitimately end that synthetic run. The persistence case
-  // below advances explicitly, so keep the fixture active for that operation.
-  g.summary = null;
   g.advanceTowerRoom();
   // advanceTowerRoom() re-centers the player on the new room's own entrance.
   const p1 = point(TOWER_START_X + 1, 0);
