@@ -6,6 +6,7 @@ import {
   CHUNK,
   START_X,
   TOWER_START_X,
+  TOWER_SECTION,
   goldReward,
   xpForKill,
   levelForXp,
@@ -245,26 +246,15 @@ export class Game {
     this.summary = null;
     const u = this.save.upgrades,
       prov = this.save.provisions,
-      lvl = levelForXp(this.save.xp),
-      bonus = levelBonus(lvl),
       seed = crypto.getRandomValues(new Uint32Array(1))[0];
-    // Non-equipment base stats: baseline + permanent upgrades + level bonus.
-    // "quality" (Heirloom steel) predates crafted equipment; its ranks are
-    // folded in here as the equivalent starter-gear bonus it used to grant
-    // via the old gear() helper, so existing investment stays meaningful.
-    const baseAttack = 10 + u.attack * 2 + u.shardAttack + bonus.attack + (2 + u.quality * 2);
-    const baseDefense = 4 + u.defense + u.shardDefense + bonus.defense + (1 + u.quality);
-    const baseMaxHp = 120 + u.hp * 20 + u.shardHp * 15 + bonus.hp;
-    // Equipped crafted gear: flat bonuses first, then percentage bonuses
-    // applied to the resulting total; temporary run provisions apply last.
-    const equip = getEquippedBonuses(this.save);
-    const attack = Math.round((baseAttack + equip.flatAttack) * (1 + equip.percentAttack)) + prov.edge * 3;
-    const defense = Math.round((baseDefense + equip.flatDefense) * (1 + equip.percentDefense)) + prov.guard * 3;
-    const maxHp = Math.round((baseMaxHp + equip.flatMaxHp) * (1 + equip.percentMaxHp)) + prov.heal * 20;
+    const { attack, defense, maxHp } = this.combatStats();
+    // Tower ascents begin at the first floor of the chosen section.
+    const section = this.mode === "tower" ? this.startSection() : 0,
+      height = section * TOWER_SECTION;
     const player = {
       x: this.mode === "tower" ? TOWER_START_X : START_X,
       y: 0,
-      hp: maxHp,
+      hp: this.sectionStartHp(section, maxHp),
       maxHp,
       attack,
       defense,
@@ -294,17 +284,18 @@ export class Game {
         rewards: [],
         layoutVersion: TOWER_LAYOUT_VERSION,
         seed,
-        height: 0,
-        maxHeight: 0,
+        height,
+        maxHeight: height,
         kills: 0,
         treasures: 0,
         changes: {},
         floors: {},
         floor: 0,
         player,
+        baseStats: { attack, defense },
       };
       this.linkTowerFloor();
-      this.world = new RoomWorld(this.run.seed, 0, this.run.changes);
+      this.world = new RoomWorld(this.run.seed, height, this.run.changes);
     }
     if (outside) {
       this.run.outside = true;
@@ -314,6 +305,57 @@ export class Game {
     this.save[this.mode].run = this.run;
     this.auto = false;
     this.paused = false;
+  }
+  /** ATK/DEF/max HP from baseline + permanent upgrades + level bonus +
+   * equipped gear + this run's provisions. */
+  combatStats() {
+    const u = this.save.upgrades,
+      prov = this.save.provisions,
+      bonus = levelBonus(levelForXp(this.save.xp));
+    // "quality" (Heirloom steel) predates crafted equipment; its ranks are
+    // folded in here as the equivalent starter-gear bonus it used to grant
+    // via the old gear() helper, so existing investment stays meaningful.
+    const baseAttack = 10 + u.attack * 2 + u.shardAttack + bonus.attack + (2 + u.quality * 2);
+    const baseDefense = 4 + u.defense + u.shardDefense + bonus.defense + (1 + u.quality);
+    const baseMaxHp = 120 + u.hp * 20 + u.shardHp * 15 + bonus.hp;
+    // Equipped crafted gear: flat bonuses first, then percentage bonuses
+    // applied to the resulting total; temporary run provisions apply last.
+    const equip = getEquippedBonuses(this.save);
+    return {
+      attack: Math.round((baseAttack + equip.flatAttack) * (1 + equip.percentAttack)) + prov.edge * 3,
+      defense: Math.round((baseDefense + equip.flatDefense) * (1 + equip.percentDefense)) + prov.guard * 3,
+      maxHp: Math.round((baseMaxHp + equip.flatMaxHp) * (1 + equip.percentMaxHp)) + prov.heal * 20,
+    };
+  }
+  /** A Tower section can be started in once its first floor has been
+   * reached (which records its starting HP); section 0 always can. */
+  sectionUnlocked(section: number) {
+    return section === 0 || !!this.save.tower.sectionHp[section];
+  }
+  startSection() {
+    const s = this.save.tower.startSection;
+    return this.sectionUnlocked(s) ? s : 0;
+  }
+  /** Section 0 starts at full HP; later sections start with the best HP
+   * the player ever arrived there with (never above current max HP). */
+  sectionStartHp(section: number, maxHp: number) {
+    return section === 0 ? maxHp : Math.min(maxHp, this.save.tower.sectionHp[section]);
+  }
+  /** Choose where future ascents begin. A Tower run still on the forest
+   * path hasn't entered yet, so it moves to the new section at once; a run
+   * already inside keeps going and the choice applies to the next one. */
+  setStartSection(section: number) {
+    if (!this.sectionUnlocked(section)) return false;
+    this.save.tower.startSection = section;
+    const run = this.save.tower.run;
+    if (run?.outside) {
+      run.height = run.maxHeight = section * TOWER_SECTION;
+      run.floors = {};
+      run.changes = {};
+      run.player.hp = this.sectionStartHp(section, run.player.maxHp);
+      this.save.tower.history = [];
+    }
+    return true;
   }
   feedback(text: string) {
     this.message = text;
@@ -489,7 +531,7 @@ export class Game {
         p.y = 0;
         if (this.mode === "tower") {
           this.linkTowerFloor();
-          this.world = new RoomWorld(this.run.seed, 0, this.run.changes);
+          this.world = new RoomWorld(this.run.seed, this.run.height, this.run.changes);
         } else {
           this.world = new World(this.run.seed, this.run.changes);
         }
@@ -526,13 +568,31 @@ export class Game {
     this.enterTowerFloor();
     this.run.player.x = TOWER_START_X;
     this.run.player.y = 0;
-    this.feedback("A new chamber opens.");
+    if (this.run.height % TOWER_SECTION === 0) this.enterTowerSection();
+    else this.feedback("A new chamber opens.");
+  }
+  /** Crossing into a new 10-floor section: the way down is sealed (its
+   * first room has no down stairs), ATK/DEF gathered from items in the
+   * last section are dropped, and the HP carried in becomes this section's
+   * starting HP if it beats the previous best. */
+  enterTowerSection() {
+    const section = this.run.height / TOWER_SECTION,
+      p = this.run.player,
+      base = this.run.baseStats ?? this.combatStats(),
+      best = this.save.tower.sectionHp[section] ?? 0;
+    p.attack = base.attack;
+    p.defense = base.defense;
+    if (p.hp > best) this.save.tower.sectionHp[section] = p.hp;
+    this.feedback(
+      `Floor ${this.run.height + 1} · ATK/DEF reset` +
+        (p.hp > best ? ` · new best start HP ${p.hp}` : ""),
+    );
   }
   /** Step back onto the stairs at the foot of the current room, returning
    * to the previous room exactly as it was left: cleared tiles stay clear,
    * surviving enemies and unclaimed loot are still there to finish off. */
   descendTowerRoom() {
-    if (this.run.height <= 0) return;
+    if (this.run.height % TOWER_SECTION === 0) return;
     this.claimRewards();
     this.run.height--;
     this.enterTowerFloor();
@@ -709,22 +769,14 @@ export class Game {
    * run history. Called after any equip/unequip so gear changes apply
    * immediately in an active run, in both modes at once. */
   recomputeCombatStats() {
-    const u = this.save.upgrades,
-      prov = this.save.provisions,
-      bonus = levelBonus(levelForXp(this.save.xp));
-    const baseAttack = 10 + u.attack * 2 + u.shardAttack + bonus.attack + (2 + u.quality * 2);
-    const baseDefense = 4 + u.defense + u.shardDefense + bonus.defense + (1 + u.quality);
-    const baseMaxHp = 120 + u.hp * 20 + u.shardHp * 15 + bonus.hp;
-    const equip = getEquippedBonuses(this.save);
-    const attack = Math.round((baseAttack + equip.flatAttack) * (1 + equip.percentAttack)) + prov.edge * 3;
-    const defense = Math.round((baseDefense + equip.flatDefense) * (1 + equip.percentDefense)) + prov.guard * 3;
-    const maxHp = Math.round((baseMaxHp + equip.flatMaxHp) * (1 + equip.percentMaxHp)) + prov.heal * 20;
+    const { attack, defense, maxHp } = this.combatStats();
     for (const mode of ["tower", "delve"] as const) {
       const run = this.save[mode].run;
       if (!run || run.outside) continue;
       run.player.attack = attack;
       run.player.defense = defense;
       run.player.maxHp = maxHp;
+      if (mode === "tower") run.baseStats = { attack, defense };
       run.player.hp = Math.max(1, Math.min(run.player.hp, maxHp));
     }
   }

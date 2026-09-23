@@ -6,7 +6,7 @@ import { CONSUMABLES, type ConsumableId } from "./crafting.ts";
 export function defaults(): Save {
   return {
     version: 3,
-    tower: { run: null, history: [], revival: null, best: 0, reached: 0, shards: 0, log: {}, lootedTiles: {} },
+    tower: { run: null, history: [], revival: null, best: 0, reached: 0, shards: 0, log: {}, lootedTiles: {}, startSection: 0, sectionHp: {} },
     delve: { run: null, history: [], revival: null, best: 0, reached: 0, essence: 0, lootedTiles: {} },
     gold: 0,
     provisions: Object.fromEntries(
@@ -238,6 +238,11 @@ export function decode(raw: string | null): Save {
         d.tower.log[floor] = { earned, claimed };
       }
     }
+    if (s?.tower?.sectionHp && typeof s.tower.sectionHp === "object")
+      for (const [section, hp] of Object.entries(s.tower.sectionHp) as [string, any][])
+        if (/^[1-9]\d*$/.test(section) && finite(hp) && hp > 0) d.tower.sectionHp[section] = Math.floor(hp);
+    if (finite(s?.tower?.startSection) && (s.tower.startSection === 0 || d.tower.sectionHp[s.tower.startSection]))
+      d.tower.startSection = Math.floor(s.tower.startSection);
     // Preserve access and purchases in saves made before skill trees existed.
     if (s?.upgrades && !("delve" in s.upgrades)) {
       if (d.delve.run || d.delve.best || d.delve.essence || UPGRADES.some(u => u.currency === "essence" && d.upgrades[u.id])) d.upgrades.delve = 1;

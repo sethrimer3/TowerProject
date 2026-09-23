@@ -1,4 +1,4 @@
-import { TOWER_START_X } from "../config.ts";
+import { TOWER_SECTION, TOWER_START_X } from "../config.ts";
 import { point, type Tile } from "../entities.ts";
 import { random, reachable, rollUnguardedLoot } from "../generation.ts";
 import { analyzeFloor, formatFloorSummary, type FloorAnalysis } from "./analyzer.ts";
@@ -59,8 +59,9 @@ export function generateTowerFloor(seed: number, room: number): TowerFloor {
     const embedding = embed(graph, rng);
     if (!embedding) continue;
     const cells = embedding.cells;
-    // Room 0 opens onto the forest; every later room keeps a way back down.
-    cells.set(point(TOWER_START_X, 0), room > 0 ? { kind: "stairsDown" } : { kind: "floor" });
+    // Room 0 opens onto the forest and each section's first room (10, 20, …)
+    // is sealed below; every other room keeps a way back down.
+    cells.set(point(TOWER_START_X, 0), room % TOWER_SECTION ? { kind: "stairsDown" } : { kind: "floor" });
     // The rare unguarded find: only on floor reachable without a fight.
     const blockers = new Set([...cells].filter(([, t]) => t.kind === "enemy").map(([k]) => k));
     for (const k of reachable(cells, point(TOWER_START_X, 0), blockers))

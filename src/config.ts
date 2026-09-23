@@ -10,6 +10,8 @@ export const VIEWPORT_HEIGHT = 17;
 export const TOWER_WIDTH = 17;
 export const TOWER_HEIGHT = 17;
 export const TOWER_START_X = 8;
+/** Tower floors come in isolated sections of this many rooms. */
+export const TOWER_SECTION = 10;
 export const SAVE_KEY = "towerincramental.v1";
 export const COLORS = { yellow: "#eac16b", blue: "#6dbdf1", red: "#df797e" };
 export type KeyColor = keyof typeof COLORS;

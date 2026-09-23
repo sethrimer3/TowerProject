@@ -71,6 +71,9 @@ export type Run = {
   /** Tower only: each visited room's own changes, keyed by height, so
    * descending and re-climbing preserves what was already done there. */
   floors?: Record<number, Record<string, Tile>>;
+  /** Tower only: the ATK/DEF the run started with (base + gear +
+   * provisions), restored whenever the climb crosses into a new section. */
+  baseStats?: { attack: number; defense: number };
 };
 export type MoveSnapshot = { run: Run; best: number };
 export type Revival = { snapshot: MoveSnapshot; earned: number };
@@ -105,7 +108,16 @@ export type ModeSave = {
 };
 export type Save = {
   version: 3;
-  tower: ModeSave & { shards: number; log: Record<string, FloorRecord> };
+  tower: ModeSave & {
+    shards: number;
+    log: Record<string, FloorRecord>;
+    /** Which 10-floor section new ascents begin in (0 = floors 1–10). */
+    startSection: number;
+    /** Highest HP the player has arrived at each section's first floor
+     * with, keyed by section index (1+). Doubles as that section's
+     * starting HP and as the record of which sections are unlocked. */
+    sectionHp: Record<string, number>;
+  };
   delve: ModeSave & { essence: number };
   gold: number;
   provisions: Record<GoldItemId, number>;
