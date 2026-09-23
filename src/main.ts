@@ -176,16 +176,36 @@ function hideInspectBox() {
 }
 let highlighted: { x: number; y: number } | null = null;
 let highlightFadeTimer: ReturnType<typeof setTimeout> | undefined;
-function showTileHighlight(x: number, y: number) {
-  highlighted = { x, y };
+let previewRoute: { x: number; y: number }[] | null = null;
+function tileRect(x: number, y: number) {
   const frame = el("board-frame"),
-    glow = el("tile-highlight"),
     frameRect = frame.getBoundingClientRect(),
     canvasRect = renderer.canvas.getBoundingClientRect(),
     s = renderer.size,
     n = renderer.density,
     left = canvasRect.left - frameRect.left + (x - renderer.left) * s,
     top = canvasRect.top - frameRect.top + (n - 1 - (y - renderer.bottom)) * s;
+  return { left, top, s };
+}
+function renderGoldenPath(steps: { x: number; y: number }[] | null) {
+  const frame = el("board-frame");
+  frame.querySelectorAll(".golden-path-tile").forEach((n) => n.remove());
+  if (!steps || !steps.length) return;
+  for (const step of steps) {
+    const { left, top, s } = tileRect(step.x, step.y),
+      dot = document.createElement("div");
+    dot.className = "golden-path-tile";
+    dot.style.left = `${left}px`;
+    dot.style.top = `${top}px`;
+    dot.style.width = `${s}px`;
+    dot.style.height = `${s}px`;
+    frame.appendChild(dot);
+  }
+}
+function showTileHighlight(x: number, y: number) {
+  highlighted = { x, y };
+  const { left, top, s } = tileRect(x, y),
+    glow = el("tile-highlight");
   clearTimeout(highlightFadeTimer);
   glow.style.left = `${left}px`;
   glow.style.top = `${top}px`;
@@ -197,6 +217,7 @@ function showTileHighlight(x: number, y: number) {
 }
 function hideTileHighlight() {
   highlighted = null;
+  previewRoute = null;
   const glow = el("tile-highlight");
   if (glow.hidden) return;
   glow.classList.remove("active");
@@ -216,6 +237,8 @@ function onTap(x: number, y: number) {
     game.walkTo(x, y);
   } else {
     showTileHighlight(x, y);
+    const route = game.previewRoute(x, y);
+    previewRoute = route && route.length ? route.map((s) => ({ x: s.x, y: s.y })) : null;
   }
 }
 function update() {
@@ -223,6 +246,9 @@ function update() {
   const p = game.run.player,
     slice = game.save[game.mode];
   if (highlighted && highlighted.x === p.x && highlighted.y === p.y) hideTileHighlight();
+  if (game.route.length) renderGoldenPath(game.route.map((s) => ({ x: s.x, y: s.y })));
+  else if (highlighted && previewRoute) renderGoldenPath(previewRoute);
+  else renderGoldenPath(null);
   text("hp", `${p.hp} / ${p.maxHp}`);
   text("attack", p.attack);
   text("defense", p.defense);

@@ -202,6 +202,9 @@ export class Game {
     this.blocked = { x, y, until: performance.now() + 1000 };
     this.message = message;
   }
+  previewRoute(x: number, y: number): Step[] | null {
+    return routeTo(this, x, y);
+  }
   walkTo(x: number, y: number) {
     if (this.paused || this.summary) return;
     this.auto = false;
