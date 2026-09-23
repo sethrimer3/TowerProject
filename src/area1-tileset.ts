@@ -3,15 +3,21 @@ import { doorId } from "./doors.ts";
 import type { Tile } from "./entities.ts";
 
 export const AREA1_TILE_SIZE = 24;
-export const AREA1_FLOOR_URLS = [1, 2, 3, 4].map((n) => `/assets/tilesets/area1/floor_0${n}.png`);
+// Vite serves Pages builds beneath /TowerProject/. Root-absolute asset URLs
+// work on localhost but escape that project path in production, causing the
+// renderer to silently fall back to procedural tiles. BASE_URL is "./" in
+// this project build and "/" in direct Node tests.
+const ASSET_BASE = (import.meta as ImportMeta & { env?: { BASE_URL?: string } }).env?.BASE_URL ?? "/";
+const assetUrl = (path: string) => `${ASSET_BASE}assets/tilesets/area1/${path}`;
+export const AREA1_FLOOR_URLS = [1, 2, 3, 4].map((n) => assetUrl(`floor_0${n}.png`));
 const WALL_ROLES = [
   "isolated", "cap_n", "cap_e", "corner_ne", "cap_s", "vertical", "corner_se", "tee_e",
   "cap_w", "corner_nw", "horizontal", "tee_n", "corner_sw", "tee_w", "tee_s", "cross",
 ] as const;
-export const AREA1_WALL_URLS = WALL_ROLES.map((role) => `/assets/tilesets/area1/wall_${role}.png`);
-export const AREA1_CENTER_URLS = [1, 2, 3].map((n) => `/assets/tilesets/area1/wall_center_0${n}.png`);
+export const AREA1_WALL_URLS = WALL_ROLES.map((role) => assetUrl(`wall_${role}.png`));
+export const AREA1_CENTER_URLS = [1, 2, 3].map((n) => assetUrl(`wall_center_0${n}.png`));
 export const AREA1_DOOR_URLS = Object.fromEntries(
-  ["a", "b", "c", "ab", "ac", "bc", "abc", "steel", "heart"].map((id) => [id, `/assets/tilesets/area1/doors/door_${id}.png`]),
+  ["a", "b", "c", "ab", "ac", "bc", "abc", "steel", "heart"].map((id) => [id, assetUrl(`doors/door_${id}.png`)]),
 ) as Record<ReturnType<typeof doorId>, string>;
 
 type Neighbors = { northWall: boolean; eastWall: boolean; southWall: boolean; westWall: boolean };
