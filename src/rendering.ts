@@ -15,6 +15,11 @@ import { drawGameSprite, drawGameSpriteFrame, gameSprite, torchAnimationFrame, T
 
 /** Tile kinds that stand up off the floor and so cast torch shadows. */
 const SHADOW_CASTERS = new Set<Tile["kind"]>(["key", "potion", "attack", "defense", "reward", "treasure", "enemy"]);
+type SpriteDir = "e" | "w" | "n" | "s";
+const SPRITE_DIRS: { key: SpriteDir; dx: number; dy: number }[] = [
+  { key: "e", dx: 1, dy: 0 }, { key: "w", dx: -1, dy: 0 }, { key: "n", dx: 0, dy: -1 }, { key: "s", dx: 0, dy: 1 },
+];
+type LitCaster = { x: number; y: number; key: string; draw: () => void; hero: boolean; light: Record<SpriteDir, number> };
 const GLOW_ITEMS = new Set<Tile["kind"]>(["key", "potion", "attack", "defense", "reward", "treasure"]);
 /** A glowing object this frame: tile position, color, reach (tiles), and strength. */
 type GlowSource = { x: number; y: number; rgb: readonly number[]; radius: number; strength: number; door?: boolean };
@@ -118,6 +123,13 @@ export class Renderer {
   /** Black cut-outs of item/enemy/hero sprites used for torch-cast shadows.
    * Rebaked after a short while so sprites that finish loading are picked up. */
   silhouettes = new Map<string, { canvas: HTMLCanvasElement; at: number }>();
+  /** Directional torchlight masks per silhouette (see bakeSpriteLight). */
+  spriteLightMasks = new Map<string, { at: number; masks: Record<SpriteDir, HTMLCanvasElement> }>();
+  /** Items, enemies, and the hero in torchlight this frame, with how much
+   * light reaches each side of them. */
+  frameLit: LitCaster[] = [];
+  /** Whether this frame drew any cast shadows (reused by the darkness pass). */
+  frameShadows = false;
   get density() {
     if (this.game.run.outside) return OUTSIDE_SIZE;
     return VIEWPORT_TILES;
@@ -238,6 +250,7 @@ export class Renderer {
       this.drawContentsDarkened(dark, box.width, dpr, () => eachTile(1));
       this.drawDoorWash();
     } else eachTile(1);
+    if (!g.run.outside) this.drawSpriteLighting(now);
     if (g.run.outside) {
       c.save();
       c.translate(-this.left * s, (n - OUTSIDE_SIZE + this.bottom) * s);
@@ -260,6 +273,7 @@ export class Renderer {
     );
     c.scale(s / 24, s / 24);
     this.hero();
+    if (!g.run.outside) this.drawSpriteLighting(now, true);
     c.restore();
     if (g.run.outside) {
       this.weather.draw(c, box.width, g.run.seed, dt, g.save.settings.reduceMotion,
@@ -805,6 +819,12 @@ export class Renderer {
     // The warm glow eases off a little as the Brightness setting goes up.
     const glowScale = 1 - glow.brightDim * (1 - this.darkness);
     for (const t of torches) this.drawTorchLight(gl, t, now, reduceMotion, "lighter", glow.strength * glowScale * t.baseIntensity);
+    // Cast shadows block the warm glow too, or it would light them back up.
+    if (this.frameShadows && this.shadowCanvas) {
+      gl.globalCompositeOperation = "destination-out";
+      gl.globalAlpha = LIGHTING_CONFIG.shadow.blockLight;
+      gl.drawImage(this.shadowCanvas, 0, 0);
+    }
     gl.globalCompositeOperation = "source-over";
     gl.globalAlpha = 1;
     mainCtx.save();
@@ -844,6 +864,13 @@ export class Renderer {
     dc.fillRect(0, 0, viewportSize, viewportSize);
     const reduceMotion = this.game.save.settings.reduceMotion;
     for (const t of torches) this.drawTorchLight(dc, t, now, reduceMotion, "lighter", cfg.torchLift * k * t.baseIntensity);
+    // A shadow is where the torch's light doesn't reach: cast shadows take
+    // the torchlight back out of the darkness layer, so they read clearly.
+    if (this.frameShadows && this.shadowCanvas) {
+      dc.globalCompositeOperation = "source-over";
+      dc.globalAlpha = Math.min(1, LIGHTING_CONFIG.shadow.blockLight * k);
+      dc.drawImage(this.shadowCanvas, 0, 0);
+    }
     const s = this.size, n = this.density;
     const hx = (this.playerX - this.left + 0.5) * s, hy = (n - 0.5 - (this.playerY - this.bottom)) * s;
     const r = cfg.heroHaloRadius * s;
@@ -1111,13 +1138,15 @@ export class Renderer {
    * longer the farther it stands from the flame and fainter as the light
    * falls off. Drawn to one layer so walls can be masked out cheaply. */
   drawEntityShadows(viewportSize: number, now: number) {
+    this.frameLit = [];
+    this.frameShadows = false;
     const torches = this.frameTorches;
     if (!torches.length || typeof document === "undefined") return;
     const g = this.game, n = this.density, s = this.size;
     const cfg = LIGHTING_CONFIG.shadow;
     const reduceMotion = g.save.settings.reduceMotion;
     const area1 = g.mode === "tower" && g.run.height >= 0 && g.run.height < 10;
-    type Caster = { x: number; y: number; key: string; draw: () => void };
+    type Caster = { x: number; y: number; key: string; draw: () => void; hero?: boolean };
     const casters: Caster[] = [];
     for (let row = -1; row <= n; row++)
       for (let col = -1; col <= n; col++) {
@@ -1131,10 +1160,13 @@ export class Renderer {
           draw: () => this.contents(t, x, y, now, area1),
         });
       }
-    casters.push({ x: this.playerX, y: this.playerY, key: "hero", draw: () => Renderer.drawHero(this.ctx) });
+    casters.push({ x: this.playerX, y: this.playerY, key: "hero", draw: () => Renderer.drawHero(this.ctx), hero: true });
 
+    const darkness = this.darkness, sl = LIGHTING_CONFIG.spriteLight;
     let layer: CanvasRenderingContext2D | null = null;
     for (const caster of casters) {
+      const light: Record<SpriteDir, number> = { e: 0, w: 0, n: 0, s: 0 };
+      let lit = false;
       for (const t of torches) {
         // Shadows swing gently as the flame sways.
         const sway = getTorchSway(t, now, reduceMotion);
@@ -1143,8 +1175,19 @@ export class Renderer {
         if (d < 0.5 || d >= t.lightRadius) continue;
         if (!torchReaches(t, Math.round(caster.x), Math.round(caster.y))) continue;
         const flicker = getTorchFlicker(t, now, reduceMotion);
-        // Shadows fade more gently than the light itself so they stay readable.
-        const alpha = cfg.strength * Math.sqrt(lightFalloff(d, t.lightRadius)) * flicker;
+        const falloff = lightFalloff(d, t.lightRadius);
+        // Light on the caster: split over the sides facing the torch (screen
+        // space, y down; the torch lies opposite the shadow direction).
+        const toX = -dx / d, toY = dy / d;
+        const amount = sl.strength * Math.pow(falloff, sl.falloffPower) * flicker * (1 + sl.darkBoost * darkness);
+        light.e += Math.max(0, toX) * amount;
+        light.w += Math.max(0, -toX) * amount;
+        light.s += Math.max(0, toY) * amount;
+        light.n += Math.max(0, -toY) * amount;
+        lit = true;
+        // Shadows fade more gently than the light itself so they stay readable,
+        // and deepen as the room gets darker.
+        const alpha = Math.min(0.95, cfg.strength * Math.sqrt(falloff) * flicker * (1 + cfg.darkBoost * darkness));
         if (alpha < 0.02) continue;
         const sil = this.silhouette(caster.key, caster.draw, now);
         if (!sil) continue;
@@ -1161,6 +1204,7 @@ export class Renderer {
         layer.globalAlpha = Math.min(1, alpha);
         layer.drawImage(sil, 0, 0);
       }
+      if (lit) this.frameLit.push({ x: caster.x, y: caster.y, key: caster.key, draw: caster.draw, hero: !!caster.hero, light });
     }
     if (!layer) return;
     // Shadows fall on the floor only, never across wall tops.
@@ -1171,6 +1215,72 @@ export class Renderer {
     if (walls) layer.drawImage(walls, 0, 0);
     layer.globalCompositeOperation = "source-over";
     this.ctx.drawImage(this.shadowCanvas!, 0, 0);
+    this.frameShadows = true;
+  }
+
+  /** Four directional light masks for a sprite, from its silhouette: a fill
+   * that ramps up across the sprite toward the lit side, plus a 1px sheen on
+   * the edge pixels facing that way. Rebaked with its silhouette. */
+  spriteLightFor(key: string, draw: () => void, now: number) {
+    const sil = this.silhouette(key, draw, now);
+    const silAt = this.silhouettes.get(key)?.at;
+    if (!sil || silAt === undefined) return null;
+    const cached = this.spriteLightMasks.get(key);
+    if (cached && cached.at === silAt) return cached.masks;
+    const src = sil.getContext("2d", { willReadFrequently: true })!.getImageData(0, 0, 24, 24).data;
+    const solid = (x: number, y: number) => x >= 0 && y >= 0 && x < 24 && y < 24 && src[(y * 24 + x) * 4 + 3] > 0;
+    let minX = 24, maxX = -1, minY = 24, maxY = -1;
+    for (let y = 0; y < 24; y++)
+      for (let x = 0; x < 24; x++)
+        if (solid(x, y)) { minX = Math.min(minX, x); maxX = Math.max(maxX, x); minY = Math.min(minY, y); maxY = Math.max(maxY, y); }
+    const cfg = LIGHTING_CONFIG.spriteLight, [r, g, b] = cfg.color;
+    const spanX = Math.max(1, maxX - minX), spanY = Math.max(1, maxY - minY);
+    const masks = {} as Record<SpriteDir, HTMLCanvasElement>;
+    for (const dir of SPRITE_DIRS) {
+      const cv = cached?.masks[dir.key] ?? document.createElement("canvas");
+      cv.width = cv.height = 24;
+      const ctx = cv.getContext("2d")!;
+      const img = ctx.createImageData(24, 24);
+      for (let y = 0; y < 24; y++)
+        for (let x = 0; x < 24; x++) {
+          if (!solid(x, y)) continue;
+          const t = dir.dx > 0 ? (x - minX) / spanX : dir.dx < 0 ? (maxX - x) / spanX : dir.dy < 0 ? (maxY - y) / spanY : (y - minY) / spanY;
+          const fill = cfg.fill * Math.pow(Math.max(0, t), cfg.fillCurve);
+          const rim = solid(x + dir.dx, y + dir.dy) ? 0 : 1;
+          const i = (y * 24 + x) * 4;
+          img.data[i] = r; img.data[i + 1] = g; img.data[i + 2] = b;
+          img.data[i + 3] = Math.round(Math.max(fill, rim) * 255);
+        }
+      ctx.putImageData(img, 0, 0);
+      masks[dir.key] = cv;
+    }
+    this.spriteLightMasks.set(key, { at: silAt, masks });
+    return masks;
+  }
+
+  /** Warm torchlight on items and enemies (or, with `hero`, on the hero in
+   * the context's current tile transform), brightest on the torch side. */
+  drawSpriteLighting(now: number, hero = false) {
+    const c = this.ctx, s = this.size, n = this.density;
+    for (const lit of this.frameLit) {
+      if (lit.hero !== hero) continue;
+      const masks = this.spriteLightFor(lit.key, lit.draw, now);
+      if (!masks) continue;
+      c.save();
+      if (!hero) {
+        c.translate((lit.x - this.left) * s, (n - 1 - (lit.y - this.bottom)) * s);
+        c.scale(s / 24, s / 24);
+      }
+      c.globalCompositeOperation = "lighter";
+      c.imageSmoothingEnabled = false;
+      for (const dir of SPRITE_DIRS) {
+        const a = lit.light[dir.key];
+        if (a < 0.01) continue;
+        c.globalAlpha = Math.min(1, a);
+        c.drawImage(masks[dir.key], 0, 0);
+      }
+      c.restore();
+    }
   }
   wallMaskCanvas(viewportSize: number) {
     const key = `${this.left},${this.bottom},${this.size},${viewportSize}`;

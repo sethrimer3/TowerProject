@@ -122,6 +122,27 @@ export const LIGHTING_CONFIG = {
     /** ...up to this cap. */
     maxLength: 1.3,
     color: [8, 6, 16],
+    /** Extra shadow opacity at the darkest Brightness setting. */
+    darkBoost: 0.6,
+    /** In the darkness pass, shadows also block that much of the torch's
+     * light, so a shadow in a dark room falls to near-black. */
+    blockLight: 1,
+  },
+  /** Torchlight on items, enemies, and the hero: a warm fill that is
+   * strongest on the side facing the flame, plus a 1px sheen along the
+   * edge pixels that face it. Baked per sprite as four directional masks. */
+  spriteLight: {
+    color: [255, 208, 150],
+    /** Overall strength right beside a torch. */
+    strength: 0.6,
+    /** Fill brightness on the lit side (the rim is always full strength). */
+    fill: 0.42,
+    /** Fill ramp exponent across the sprite (higher = tighter to the lit edge). */
+    fillCurve: 1.6,
+    /** Distance falloff exponent (lower keeps sprites lit further out). */
+    falloffPower: 0.7,
+    /** Extra strength at the darkest Brightness setting. */
+    darkBoost: 0.5,
   },
   /** Torch bump lighting on floor sprites (see floor-relief.ts). */
   relief: {
