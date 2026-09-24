@@ -32,5 +32,7 @@ test("every area-one pickup and chest maps to its dedicated sprite", () => {
   assert.equal(area1ItemId({ kind: "treasure" }), "chest_treasure");
   for (const tier of ["silver", "gold", "platinum"] as const)
     assert.equal(area1ItemId({ kind: "reward", tier }), `chest_${tier}`);
-  assert.equal(Object.keys(AREA1_ITEM_URLS).length, 11);
+  assert.equal(area1ItemId({ kind: "openedChest" }), "chest_treasure_open");
+  assert.equal(area1ItemId({ kind: "openedChest", tier: "platinum" }), "chest_platinum_open");
+  assert.equal(Object.keys(AREA1_ITEM_URLS).length, 15);
 });

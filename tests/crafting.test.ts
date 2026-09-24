@@ -303,10 +303,18 @@ test("undo/reopen the same treasure chest cannot duplicate its Gold/material pay
   w.cells = new Map();
   for (let y = 0; y < 5; y++) for (let x = 0; x < 5; x++) w.cells.set(`${x},${y}`, { kind: "floor" });
   w.cells.set("1,0", { kind: "treasure" });
+  w.cells.set("4,4", { kind: "stairs" });
+  g.run.changes["1,0"] = { kind: "treasure" };
+  g.checkDeadlock = () => {};
   g.run.player.x = 0; g.run.player.y = 0;
   const before = g.snapshot();
   g.move(1, 0);
   const goldAfterFirst = g.save.gold;
+  assert.equal(g.world.tile(1, 0).kind, "openedChest");
+  assert.ok(g.undo());
+  assert.equal(g.world.tile(1, 0).kind, "treasure", "undo restores the closed chest state");
+  g.move(1, 0);
+  assert.equal(g.world.tile(1, 0).kind, "openedChest");
   for (let i = 0; i < 5; i++) {
     g.restore(before);
     w.cells.set("1,0", { kind: "treasure" });

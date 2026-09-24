@@ -14,6 +14,7 @@ export type Kind =
   | "defense"
   | "reward"
   | "treasure"
+  | "openedChest"
   | "stairs"
   | "stairsDown"
   | "oneway";

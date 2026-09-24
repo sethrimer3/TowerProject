@@ -25,6 +25,8 @@ export const AREA1_ITEM_URLS = {
   upgrade_attack: assetUrl("items/upgrade_attack.png"), upgrade_defense: assetUrl("items/upgrade_defense.png"),
   chest_treasure: assetUrl("items/chest_treasure.png"), chest_silver: assetUrl("items/chest_silver.png"),
   chest_gold: assetUrl("items/chest_gold.png"), chest_platinum: assetUrl("items/chest_platinum.png"),
+  chest_treasure_open: assetUrl("items/chest_treasure_open.png"), chest_silver_open: assetUrl("items/chest_silver_open.png"),
+  chest_gold_open: assetUrl("items/chest_gold_open.png"), chest_platinum_open: assetUrl("items/chest_platinum_open.png"),
 } as const;
 export type Area1ItemId = keyof typeof AREA1_ITEM_URLS;
 export function area1ItemId(tile: Tile): Area1ItemId | null {
@@ -33,6 +35,7 @@ export function area1ItemId(tile: Tile): Area1ItemId | null {
   if (tile.kind === "attack" || tile.kind === "defense") return `upgrade_${tile.kind}`;
   if (tile.kind === "treasure") return "chest_treasure";
   if (tile.kind === "reward") return `chest_${tile.tier ?? "silver"}`;
+  if (tile.kind === "openedChest") return `chest_${tile.tier ?? "treasure"}_open`;
   return null;
 }
 

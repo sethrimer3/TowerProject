@@ -247,11 +247,22 @@ function shieldTile() {
     ".......ssd.......", "........d........",
   ], { h: "#e5f6f3", s: ITEM.steel, d: ITEM.steelDark, g: ITEM.gold, b: "#305679" }, 3, 2);
 }
-function chestTile(tier) {
+function chestTile(tier, open = false) {
   const p = itemCanvas();
   const metal = tier === "gold" || tier === "treasure" ? [ITEM.goldDark, ITEM.gold, ITEM.goldLight]
     : tier === "platinum" ? ["#3f7187", "#8fc5d5", "#e4ffff"] : ["#425669", "#8297aa", "#d5e0e4"];
   const wood = tier === "platinum" ? ["#22394d", "#34546a", "#5c8295"] : [ITEM.woodDark, ITEM.wood, ITEM.woodLight];
+  if (open) {
+    // Raised lid, empty dark cavity, and dropped latch: unmistakably spent.
+    rect(p, 2, 2, 20, 10, ITEM.outline); rect(p, 4, 3, 16, 7, wood[1]); rect(p, 5, 4, 14, 2, wood[2]);
+    rect(p, 2, 8, 4, 5, metal[0]); rect(p, 18, 8, 4, 5, metal[0]); rect(p, 3, 9, 18, 3, metal[1]);
+    rect(p, 1, 11, 22, 12, ITEM.outline); rect(p, 3, 12, 18, 8, wood[0]); rect(p, 5, 12, 14, 5, "#111820");
+    rect(p, 1, 18, 22, 5, metal[0]); rect(p, 3, 19, 18, 2, metal[1]); rect(p, 1, 12, 4, 11, metal[1]); rect(p, 19, 12, 4, 11, metal[0]);
+    rect(p, 9, 18, 6, 5, ITEM.outline); rect(p, 10, 19, 4, 3, metal[1]); rect(p, 11, 20, 2, 2, "#111820");
+    if (tier === "gold") { px(p, [[9,2],[12,1],[15,2]], metal[2]); rect(p,9,3,7,2,metal[1]); }
+    if (tier === "platinum") { rect(p,11,0,3,4,ITEM.outline); rect(p,12,0,1,3,metal[2]); }
+    return p;
+  }
   rect(p, 1, 5, 22, 18, ITEM.outline); rect(p, 4, 3, 16, 3, ITEM.outline);
   rect(p, 3, 6, 18, 7, wood[1]); rect(p, 5, 5, 14, 3, wood[2]); rect(p, 2, 13, 20, 9, wood[0]); rect(p, 4, 15, 16, 6, wood[1]);
   rect(p, 1, 11, 22, 4, metal[0]); rect(p, 2, 11, 20, 2, metal[1]); rect(p, 1, 20, 22, 3, metal[0]); rect(p, 3, 20, 18, 2, metal[1]);
@@ -289,6 +300,8 @@ const itemTiles = {
   key_yellow: keyTile("yellow", "circle"), key_blue: keyTile("blue", "diamond"), key_red: keyTile("red", "triangle"),
   potion_flat: potionTile(false), potion_percent: potionTile(true), upgrade_attack: swordTile(), upgrade_defense: shieldTile(),
   chest_treasure: chestTile("treasure"), chest_silver: chestTile("silver"), chest_gold: chestTile("gold"), chest_platinum: chestTile("platinum"),
+  chest_treasure_open: chestTile("treasure", true), chest_silver_open: chestTile("silver", true),
+  chest_gold_open: chestTile("gold", true), chest_platinum_open: chestTile("platinum", true),
 };
 for (const [id, pixels] of Object.entries(itemTiles)) {
   save(`${id}.png`, pixels); renameSync(join(OUT, `${id}.png`), join(OUT, "items", `${id}.png`));
@@ -302,4 +315,4 @@ writeFileSync(join(OUT, "tileset.json"), JSON.stringify({
   doorSymbols: { a: "circle", b: "diamond", c: "triangle", steel: "four-point universal", heart: "heart crest" },
   items: Object.fromEntries(Object.keys(itemTiles).map((id) => [id, `items/${id}.png`])),
 }, null, 2) + "\n");
-console.log(`Generated 43 deterministic 24x24 PNG sprites in ${OUT}`);
+console.log(`Generated 47 deterministic 24x24 PNG sprites in ${OUT}`);

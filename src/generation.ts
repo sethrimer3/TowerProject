@@ -495,10 +495,12 @@ export class RoomWorld implements Board {
   tile(x: number, y: number): Tile {
     if (x < 0 || x >= this.width || y < 0 || y >= TOWER_HEIGHT)
       return { kind: "wall" };
+    const changed = this.changes[point(x, y)];
+    if (changed) return changed;
     const chest = this.rewards.find(c => c.x === x && c.y === y);
     if (chest) return { kind: "reward", tier: chest.tier };
     return (
-      this.changes[point(x, y)] ?? this.cells.get(point(x, y)) ?? {
+      this.cells.get(point(x, y)) ?? {
         kind: "wall",
       }
     );

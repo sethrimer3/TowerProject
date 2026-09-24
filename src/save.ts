@@ -46,7 +46,9 @@ const validChanges = (m: any) =>
   typeof m === "object" &&
   !Array.isArray(m) &&
   Object.entries(m).every(
-    ([k, v]: [string, any]) => /^\d+,\d+$/.test(k) && v?.kind === "floor",
+    ([k, v]: [string, any]) => /^\d+,\d+$/.test(k) && (
+      v?.kind === "floor" || (v?.kind === "openedChest" && (v.tier === undefined || ["silver", "gold", "platinum"].includes(v.tier)))
+    ),
   );
 function validRun(r: any): Run | null {
   const p = r?.player;

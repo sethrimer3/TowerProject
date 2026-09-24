@@ -205,7 +205,17 @@ export class Game {
       this.run.outside ? new OutsideWorld(this.run.seed, this.mode) : this.mode === "delve"
         ? new World(this.run.seed, this.run.changes, this.run.floor)
         : new RoomWorld(this.run.seed, this.run.height, this.run.changes);
+    const undoRewards = [...(this.run.rewards ?? [])];
     this.syncRewards();
+    // A movement undo restores the board snapshot even though the payout is
+    // lifetime state. Reopening the restored chest remains payout-gated.
+    if (this.world instanceof RoomWorld) {
+      for (const chest of undoRewards) if (
+        !this.run.rewards!.some(c => c.x === chest.x && c.y === chest.y && c.tier === chest.tier) &&
+        this.run.changes[`${chest.x},${chest.y}`]?.kind !== "openedChest"
+      ) this.run.rewards!.push(chest);
+      this.world.rewards = this.run.rewards!;
+    }
     this.recordProgress();
     this.route = [];
     this.auto = false;
@@ -611,11 +621,13 @@ export class Game {
       return true;
     }
     if (t.kind === "reward") {
+      this.run.changes[`${x},${y}`] = { kind: "openedChest", tier: t.tier };
       this.claimRewards(t.tier);
       return true;
     }
     this.collect(t, x, y);
-    if (t.kind !== "floor" && t.kind !== "stairs" && t.kind !== "stairsDown" && t.kind !== "oneway") this.world.clear(x, y);
+    if (t.kind === "treasure") this.run.changes[`${x},${y}`] = { kind: "openedChest" };
+    else if (t.kind !== "floor" && t.kind !== "stairs" && t.kind !== "stairsDown" && t.kind !== "oneway" && t.kind !== "openedChest") this.world.clear(x, y);
     this.checkClear();
     if (this.mode === "delve") {
       this.run.height = Math.max(this.run.height, y);

@@ -585,6 +585,16 @@ export class Renderer {
       });
       return;
     }
+    if (t.kind === "openedChest") {
+      this.groundShadow(12, 22.5, 9, 1.8, 0.25);
+      this.withOutline(DARK_GOLD, (c) => {
+        if (area1 && drawArea1Item(c, t)) return;
+        const metal = t.tier ? { silver: "#9aa8b8", gold: "#d5a943", platinum: "#8fd4d8" }[t.tier] : "#b98a3e";
+        c.fillStyle = "#151b22"; c.fillRect(4, 8, 16, 8);
+        c.fillStyle = metal; c.fillRect(3, 5, 18, 3); c.fillRect(3, 17, 18, 4); c.fillRect(3, 8, 3, 11); c.fillRect(18, 8, 3, 11);
+      });
+      return;
+    }
     if (t.kind === "reward") {
       this.groundShadow(12, 22.5, 8, 1.8, 0.32);
       this.withOutline(DARK_GOLD, (c) => {
@@ -602,12 +612,12 @@ export class Renderer {
         c.fillRect(10, 11, 4, 6);
         if (t.tier === "platinum") { c.fillStyle = "#ffffff"; c.fillRect(11, 3, 2, 3); }
       });
-      for (let i = 0; i < 3; i++) {
+      for (let i = 0; i < 2; i++) {
         const phase = g.save.settings.reduceMotion ? 0.6 : (Math.sin(time / 240 + i * 2 + x + y) + 1) / 2;
         c.globalAlpha = 0.25 + phase * 0.75;
         c.fillStyle = "#ffffff";
-        const sx = 3 + i * 9, sy = i === 1 ? 2 : 6;
-        c.fillRect(sx - 2, sy, 5, 1); c.fillRect(sx, sy - 2, 1, 5);
+        const sx = 5 + i * 14, sy = i ? 4 : 7;
+        c.fillRect(sx - 1, sy, 3, 1); c.fillRect(sx, sy - 1, 1, 3);
       }
       c.globalAlpha = 1;
       return;
@@ -624,6 +634,13 @@ export class Renderer {
         c.fillRect(3, 12, 18, 2);
         c.fillRect(10, 11, 4, 6);
       });
+      for (let i = 0; i < 2; i++) {
+        const phase = g.save.settings.reduceMotion ? 0.55 : (Math.sin(time / 300 + i * 3 + x + y) + 1) / 2;
+        c.globalAlpha = 0.2 + phase * 0.65; c.fillStyle = "#ffe6a0";
+        const sx = i ? 19 : 5, sy = i ? 5 : 8;
+        c.fillRect(sx - 1, sy, 3, 1); c.fillRect(sx, sy - 1, 1, 3);
+      }
+      c.globalAlpha = 1;
       return;
     }
     const tier = t.enemy!.tier;

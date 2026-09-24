@@ -75,6 +75,10 @@
     "chest_treasure": "items/chest_treasure.png",
     "chest_silver": "items/chest_silver.png",
     "chest_gold": "items/chest_gold.png",
-    "chest_platinum": "items/chest_platinum.png"
+    "chest_platinum": "items/chest_platinum.png",
+    "chest_treasure_open": "items/chest_treasure_open.png",
+    "chest_silver_open": "items/chest_silver_open.png",
+    "chest_gold_open": "items/chest_gold_open.png",
+    "chest_platinum_open": "items/chest_platinum_open.png"
   }
 }

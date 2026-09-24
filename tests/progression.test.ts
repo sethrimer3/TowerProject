@@ -72,6 +72,21 @@ test('automove walks to and collects every clear chest before the stairs', () =>
   }
   assert.equal(g.run.height,0); assert.equal(g.save.tower.shards,3); assert.equal(g.run.rewards?.length,0);
 });
+test('reward chests persist open, undo closed, and never repay after undo', () => {
+  const g = arena(), w = g.world as RoomWorld;
+  g.save.tower.log[0] = { earned: ['silver'], claimed: [] };
+  g.run.rewards = [{ x: 1, y: 0, tier: 'silver' }];
+  w.rewards = g.run.rewards;
+  const before = g.save.tower.shards;
+  assert.ok(g.move(1, 0));
+  assert.equal(g.world.tile(1, 0).kind, 'openedChest');
+  assert.equal(g.save.tower.shards, before + 1);
+  assert.ok(g.undo());
+  assert.equal(g.world.tile(1, 0).kind, 'reward');
+  assert.ok(g.move(1, 0));
+  assert.equal(g.world.tile(1, 0).kind, 'openedChest');
+  assert.equal(g.save.tower.shards, before + 1);
+});
 test('delve vertical movement tracks current y while preserving maxHeight', () => {
   const g = new Game(defaults());
   g.save.upgrades.delve = 1;
@@ -103,4 +118,3 @@ test('legacy balances and records migrate without retroactive duplication', () =
   const g = new Game(decode(JSON.stringify(old))); g.run.height=8; g.recordProgress();
   assert.equal(g.save.tower.shards,4); g.run.height=9; g.recordProgress(); assert.equal(g.save.tower.shards,5);
 });
-
