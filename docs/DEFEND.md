@@ -12,7 +12,7 @@ holds it against endless waves. Code lives in `src/defend/`.
 - The board scales to the largest 9:13 size that fits on screen without
   scrolling. Open ground uses the mossy flagstone tiles
   (`public/assets/defend/floor-*.png`), one random variant per tile, never
-  rotated (their baked-in lighting looks wrong turned) and grown 5% to close
+  rotated (their baked-in lighting looks wrong turned) and grown 15% to close
   the gaps between them.
 
 ## Building (before a run)

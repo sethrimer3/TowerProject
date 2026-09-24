@@ -29,8 +29,8 @@ const ready = (img?: HTMLImageElement): img is HTMLImageElement => !!img?.comple
 
 /** The mossy flagstone floor tiles (floor-1..4.png) specifically: drawn in
  * their PNG orientation (rotating them made the baked-in lighting look
- * wrong) and grown 5% past their tile so the gaps between them close up. */
-const FLOOR_TILE_SCALE = 1.05;
+ * wrong) and grown 15% past their tile so the gaps between them close up. */
+const FLOOR_TILE_SCALE = 1.15;
 
 /** Wall sprites, in source pixels. wall-cap.png holds a vertical run of
  * mossy cap stones at x 38–54, lit from the left; each wall cell shows a
@@ -186,7 +186,7 @@ export class DefendRenderer {
           y = Math.floor(ty * T),
           s = Math.ceil(T) + 1;
         if (ready(img)) {
-          // Mossy floor tiles only: unrotated, grown 5% about their centre.
+          // Mossy floor tiles only: unrotated, grown 15% about their centre.
           const g = s * FLOOR_TILE_SCALE;
           c.drawImage(img, x + (s - g) / 2, y + (s - g) / 2, g, g);
         } else {
