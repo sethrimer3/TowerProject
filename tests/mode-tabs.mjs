@@ -91,12 +91,15 @@ assert.equal(defendSelected, true, "DEFEND tab should be selected");
 
 const defendSection = page.locator("#defend");
 assert.equal(await defendSection.isVisible(), true, "DEFEND page section should be active/visible");
-const tileCount = await page.locator(".defend-tile").count();
-assert.equal(tileCount, 9 * 13, "DEFEND grid should render 9x13 tiles");
-const keepCount = await page.locator(".defend-tile.keep").count();
-assert.equal(keepCount, 1, "DEFEND grid should have exactly one keep tile");
-const topRowLocked = await page.locator('.defend-tile.locked[data-defend-y="0"]').count();
-assert.equal(topRowLocked, 9, "Top row should be locked in the DEFEND grid");
+const boardCanvas = page.locator("#defend-canvas");
+await page.waitForFunction(() => document.querySelector("#defend-canvas")?.style.width);
+assert.equal(await boardCanvas.isVisible(), true, "DEFEND board canvas should render");
+const box = await boardCanvas.boundingBox();
+assert.ok(box && Math.abs(box.width / box.height - 9 / 13) < 0.02, "DEFEND board should keep a 9:13 aspect ratio");
+const paletteItems = await page.locator("#defend-palette [data-item]").count();
+assert.equal(paletteItems, 4, "Build palette should list city tile, barracks, archer tower and watch tower");
+const cityTiles = await page.locator('#defend-palette [data-item="cityTile"] b').textContent();
+assert.equal(cityTiles, "×8", "Player starts with 8 city tiles");
 
 const statsVisible = await page.locator("#stats").isVisible();
 assert.equal(statsVisible, false, "Stats section should be hidden on DEFEND tab");

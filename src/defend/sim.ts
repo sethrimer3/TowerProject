@@ -660,7 +660,8 @@ export class DefendSim {
         u.path.shift();
         continue;
       }
-      this.moveToward(u, px, py, speed, dt);
+      // Something was (re)built across the route, or we're wedged: replan.
+      if (this.solid[c] || !this.moveToward(u, px, py, speed, dt)) u.path = [];
       return;
     }
     if (chase) this.moveToward(u, chase.x, chase.y, speed, dt);
