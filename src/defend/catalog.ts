@@ -25,7 +25,7 @@ export const STRUCTURES: Record<StructureKind, StructureDef> = {
     name: "Keep",
     w: 3,
     h: 3,
-    maxHp: 400,
+    maxHp: 600,
     outsideOk: false,
     description: "The heart of the city. Enemies march on it; if it falls, the defense is over.",
   },
@@ -141,7 +141,7 @@ export const archerDamage = (l: number) => 6 + l * 3;
 export const archerRange = (l: number) => 10 + l * 2;
 export const archerCooldown = (l: number) => 1.1 * Math.pow(0.85, l);
 export const watchRadius = (l: number) => 8 + l * 2;
-export const wallHp = (l: number) => Math.round(70 * (1 + l * 0.35));
+export const wallHp = (l: number) => Math.round(100 * (1 + l * 0.35));
 export const keepHp = (l: number) => Math.round(STRUCTURES.keep.maxHp * (1 + l * 0.3));
 export const civilianCount = (l: number) => 2 + l;
 export const civilianHp = (l: number) => 8 + l * 5;
@@ -179,5 +179,5 @@ export const ENEMIES: Record<EnemyKind, EnemyDef> = {
 export const waveHpScale = (wave: number) => Math.pow(1.11, wave - 1);
 export const waveBudget = (wave: number) => Math.round(6 + wave * 3.2 + Math.pow(wave, 1.4));
 
-export const SOLDIER = { hp: 30, damage: 5, cooldown: 0.8, speed: 2.4, reach: 0.75, leash: 16, size: 0.4, color: "#5b8fd9" };
+export const SOLDIER = { hp: 40, damage: 6, cooldown: 0.8, speed: 2.4, reach: 0.75, leash: 16, size: 0.4, color: "#5b8fd9" };
 export const CIVILIAN = { speed: 1.9, size: 0.3, color: "#e6d7b4", respawnSeconds: 10 };

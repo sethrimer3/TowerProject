@@ -155,7 +155,7 @@ export class DefendRenderer {
       }
     }
     // Thin tile grid.
-    c.strokeStyle = "rgba(255,255,255,0.07)";
+    c.strokeStyle = "rgba(255,255,255,0.035)";
     c.lineWidth = 1;
     c.beginPath();
     for (let tx = 1; tx < TILES_W; tx++) {
@@ -225,6 +225,8 @@ export class DefendRenderer {
     c.fillRect(x + inset + px * 0.12, y + inset + px * 0.14, w - inset * 2, h - inset * 2);
     if (b.kind === "house") {
       const roof = ROOFS[b.variant % ROOFS.length];
+      c.fillStyle = "rgba(0,0,0,0.4)";
+      c.fillRect(x + inset - 1, y + inset - 1, w - inset * 2 + 2, h - inset * 2 + 2);
       c.fillStyle = roof;
       c.fillRect(x + inset, y + inset, w - inset * 2, h - inset * 2);
       // Ridge along the long axis, lighter slope on one side.
@@ -236,57 +238,7 @@ export class DefendRenderer {
       else c.fillRect(x + w / 2 - 0.5, y + inset, Math.max(1, px * 0.07), h - inset * 2);
       return;
     }
-    this.paintStructure(c, b.kind, x, y, w, h, inset);
-  }
-
-  private paintStructure(c: CanvasRenderingContext2D, kind: StructureKind, x: number, y: number, w: number, h: number, inset: number) {
-    const px = this.px;
-    const stone = (fill: string) => {
-      c.fillStyle = fill;
-      c.fillRect(x + inset, y + inset, w - inset * 2, h - inset * 2);
-      c.strokeStyle = "rgba(0,0,0,0.45)";
-      c.lineWidth = Math.max(1, px * 0.1);
-      c.strokeRect(x + inset, y + inset, w - inset * 2, h - inset * 2);
-    };
-    if (kind === "keep") {
-      stone("#a39d90");
-      // Crenellations.
-      c.fillStyle = "#7f796d";
-      const n = 5;
-      for (let k = 0; k < n; k++) {
-        const s = (w - inset * 2) / (n * 2 - 1);
-        c.fillRect(x + inset + k * s * 2, y + inset, s, s);
-        c.fillRect(x + inset + k * s * 2, y + h - inset - s, s, s);
-      }
-      c.fillStyle = "#d8b572";
-      c.fillRect(x + w * 0.33, y + h * 0.33, w * 0.34, h * 0.34);
-      c.fillStyle = "#8a6a2c";
-      c.fillRect(x + w * 0.46, y + h * 0.22, w * 0.08, h * 0.14);
-    } else if (kind === "barracks") {
-      stone("#7a6a5a");
-      c.fillStyle = "#a03a2e";
-      c.fillRect(x + inset * 2, y + inset * 2, w - inset * 4, h - inset * 4);
-      c.fillStyle = "rgba(255,255,255,0.15)";
-      c.fillRect(x + inset * 2, y + inset * 2, (w - inset * 4) / 2, h - inset * 4);
-      c.fillStyle = SOLDIER.color;
-      c.fillRect(x + w / 2 - px * 0.3, y + h / 2 - px * 0.3, px * 0.6, px * 0.6);
-    } else if (kind === "archerTower") {
-      stone("#8c8577");
-      c.fillStyle = "#6e4a2c";
-      c.beginPath();
-      c.arc(x + w / 2, y + h / 2, Math.min(w, h) * 0.3, 0, Math.PI * 2);
-      c.fill();
-      c.fillStyle = "#c9a36a";
-      c.fillRect(x + w / 2 - px * 0.12, y + h / 2 - px * 0.5, px * 0.24, px);
-    } else if (kind === "watchTower") {
-      stone("#7d8288");
-      c.fillStyle = "#3d3f44";
-      c.fillRect(x + w * 0.3, y + h * 0.3, w * 0.4, h * 0.4);
-      c.fillStyle = "#f2d27a";
-      c.beginPath();
-      c.arc(x + w / 2, y + h / 2, Math.min(w, h) * 0.13, 0, Math.PI * 2);
-      c.fill();
-    }
+    paintStructureArt(c, b.kind, x, y, w, h, px);
   }
 
   // ── Dynamic layer ─────────────────────────────────────────────────────
@@ -408,10 +360,10 @@ export class DefendRenderer {
             c.fillRect(x, y, s, s);
             continue;
           }
-          c.fillStyle = key === o.hover ? "rgba(242,201,76,0.2)" : "rgba(242,201,76,0.06)";
+          c.fillStyle = key === o.hover ? "rgba(242,201,76,0.16)" : "rgba(242,201,76,0.04)";
           c.fillRect(x, y, s, s);
-          c.strokeStyle = key === o.hover ? "rgba(242,201,76,0.95)" : "rgba(242,201,76,0.55)";
-          c.lineWidth = Math.max(1, px * 0.16);
+          c.strokeStyle = key === o.hover ? "rgba(242,201,76,0.9)" : "rgba(242,201,76,0.38)";
+          c.lineWidth = Math.max(1, px * (key === o.hover ? 0.16 : 0.08));
           c.strokeRect(x + c.lineWidth / 2, y + c.lineWidth / 2, s - c.lineWidth, s - c.lineWidth);
         }
     }
@@ -433,4 +385,95 @@ export class DefendRenderer {
       c.stroke();
     }
   }
+}
+
+export function paintStructureArt(c: CanvasRenderingContext2D, kind: StructureKind, x: number, y: number, w: number, h: number, px: number) {
+  const inset = Math.max(1, px * 0.1);
+  const stone = (fill: string) => {
+    c.fillStyle = fill;
+    c.fillRect(x + inset, y + inset, w - inset * 2, h - inset * 2);
+    c.strokeStyle = "rgba(0,0,0,0.45)";
+    c.lineWidth = Math.max(1, px * 0.1);
+    c.strokeRect(x + inset, y + inset, w - inset * 2, h - inset * 2);
+  };
+  if (kind === "keep") {
+    stone("#a39d90");
+    // Crenellations.
+    c.fillStyle = "#7f796d";
+    const n = 5;
+    for (let k = 0; k < n; k++) {
+      const s = (w - inset * 2) / (n * 2 - 1);
+      c.fillRect(x + inset + k * s * 2, y + inset, s, s);
+      c.fillRect(x + inset + k * s * 2, y + h - inset - s, s, s);
+    }
+    c.fillStyle = "#d8b572";
+    c.fillRect(x + w * 0.33, y + h * 0.33, w * 0.34, h * 0.34);
+    c.fillStyle = "#8a6a2c";
+    c.fillRect(x + w * 0.46, y + h * 0.22, w * 0.08, h * 0.14);
+  } else if (kind === "barracks") {
+    stone("#7a6a5a");
+    c.fillStyle = "#a03a2e";
+    c.fillRect(x + inset * 2, y + inset * 2, w - inset * 4, h - inset * 4);
+    c.fillStyle = "rgba(255,255,255,0.15)";
+    c.fillRect(x + inset * 2, y + inset * 2, (w - inset * 4) / 2, h - inset * 4);
+    c.fillStyle = SOLDIER.color;
+    c.fillRect(x + w / 2 - px * 0.3, y + h / 2 - px * 0.3, px * 0.6, px * 0.6);
+  } else if (kind === "archerTower") {
+    stone("#8c8577");
+    c.fillStyle = "#6e4a2c";
+    c.beginPath();
+    c.arc(x + w / 2, y + h / 2, Math.min(w, h) * 0.3, 0, Math.PI * 2);
+    c.fill();
+    c.fillStyle = "#c9a36a";
+    c.fillRect(x + w / 2 - px * 0.12, y + h / 2 - px * 0.5, px * 0.24, px);
+  } else if (kind === "watchTower") {
+    stone("#7d8288");
+    c.fillStyle = "#3d3f44";
+    c.fillRect(x + w * 0.3, y + h * 0.3, w * 0.4, h * 0.4);
+    c.fillStyle = "#f2d27a";
+    c.beginPath();
+    c.arc(x + w / 2, y + h / 2, Math.min(w, h) * 0.13, 0, Math.PI * 2);
+    c.fill();
+  }
+}
+
+/** Palette icon for an item, drawn into a small square canvas. */
+export function paintIcon(canvas: HTMLCanvasElement, item: StructureKind | "cityTile" | "bomb") {
+  const c = canvas.getContext("2d")!;
+  const n = canvas.width;
+  c.clearRect(0, 0, n, n);
+  c.imageSmoothingEnabled = false;
+  if (item === "cityTile") {
+    const px = n / 7;
+    c.fillStyle = ROAD;
+    c.fillRect(0, 0, n, n);
+    const houses: [number, number, number, number, number][] = [
+      [0, 0, 3, 2, 0], [4, 0, 3, 3, 2], [0, 3, 2, 4, 3], [4, 4, 3, 3, 1], [3, 5, 1, 2, 4],
+    ];
+    for (const [x, y, w, h, v] of houses) {
+      c.fillStyle = ROOFS[v];
+      c.fillRect(x * px + 1, y * px + 1, w * px - 2, h * px - 2);
+    }
+    c.fillStyle = PARK;
+    c.fillRect(2 * px, 3 * px + 1, px, px);
+    return;
+  }
+  if (item === "bomb") {
+    c.fillStyle = "#2a2a2e";
+    c.beginPath();
+    c.arc(n * 0.45, n * 0.58, n * 0.3, 0, Math.PI * 2);
+    c.fill();
+    c.fillStyle = "rgba(255,255,255,0.25)";
+    c.fillRect(n * 0.3, n * 0.42, n * 0.1, n * 0.1);
+    c.fillStyle = "#8a6a3c";
+    c.fillRect(n * 0.58, n * 0.18, n * 0.08, n * 0.18);
+    c.fillStyle = "#ffb347";
+    c.fillRect(n * 0.62, n * 0.1, n * 0.12, n * 0.1);
+    return;
+  }
+  const def = { keep: [3, 3], barracks: [3, 4], archerTower: [2, 2], watchTower: [2, 2] }[item];
+  const px = n / Math.max(def[0], def[1]) / 1.1;
+  const w = def[0] * px,
+    h = def[1] * px;
+  paintStructureArt(c, item, (n - w) / 2, (n - h) / 2, w, h, px);
 }

@@ -3,20 +3,7 @@ import type { ModeSave, Run, Save } from "./entities.ts";
 import { emptyMaterials, MATERIAL_IDS, type MaterialId } from "./materials.ts";
 import { EQUIPMENT_SLOTS, type CraftedEquipment, type EquipmentSlot } from "./equipment.ts";
 import { CONSUMABLES, type ConsumableId } from "./crafting.ts";
-import { defaultDefendSave, DEFEND_WIDTH, DEFEND_HEIGHT, isBuildable, DEFEND_WALL_MAX_HP, type DefendSave, type DefendTileKind } from "./defend.ts";
-import {
-  defaultDefendWaveSave,
-  DEFEND_WAVE_COUNT,
-  ENEMY_DEFS,
-  type DefendWaveSave,
-  type EnemyKind,
-} from "./defend-enemies.ts";
-import {
-  defaultDefendTroopSave,
-  TROOP_DEFS,
-  type DefendTroopSave,
-  type TroopKind,
-} from "./defend-troops.ts";
+import { decodeDefendSave, defaultDefendSave } from "./defend/progress.ts";
 export function defaults(): Save {
   return {
     version: 3,
@@ -48,8 +35,6 @@ export function defaults(): Save {
     equipped: {},
     consumables: Object.fromEntries(CONSUMABLES.map((c) => [c.id, 0])) as Save["consumables"],
     defend: defaultDefendSave(),
-    defendWaves: defaultDefendWaveSave(),
-    defendTroops: defaultDefendTroopSave(),
   };
 }
 const finite = (n: unknown, max = 1e9) =>
@@ -179,132 +164,6 @@ function decodeEquipped(s: any, inventory: CraftedEquipment[]): Partial<Record<E
     }
   return equipped;
 }
-const DEFEND_TILE_KINDS = ["empty", "keep", "wall", "barracks_swordsman", "barracks_archer"];
-function decodeDefend(s: any): DefendSave {
-  const d = defaultDefendSave();
-  if (
-    Array.isArray(s?.tiles) &&
-    s.tiles.length === DEFEND_HEIGHT &&
-    s.tiles.every(
-      (row: any) =>
-        Array.isArray(row) &&
-        row.length === DEFEND_WIDTH &&
-        row.every((kind: any) => DEFEND_TILE_KINDS.includes(kind)),
-    ) &&
-    Number.isInteger(s?.keep?.x) &&
-    Number.isInteger(s?.keep?.y) &&
-    isBuildable(s.keep.x, s.keep.y) &&
-    s.tiles[s.keep.y][s.keep.x] === "keep" &&
-    finite(s.keepHp, s.keepMaxHp ?? 1e9) &&
-    finite(s.keepMaxHp) &&
-    Number.isInteger(s.wallCapacity) &&
-    s.wallCapacity >= 0 &&
-    s.wallCapacity <= 999 &&
-    s.tiles.flat().filter((k: DefendTileKind) => k === "wall").length <= s.wallCapacity
-  ) {
-    d.tiles = s.tiles;
-    d.keep = { x: s.keep.x, y: s.keep.y };
-    d.keepHp = s.keepHp;
-    d.keepMaxHp = s.keepMaxHp;
-    d.lost = s.lost === true;
-    d.wallCapacity = s.wallCapacity;
-    const wallHp: Record<string, number> = {};
-    d.tiles.forEach((row, y) =>
-      row.forEach((kind, x) => {
-        if (kind !== "wall") return;
-        const key = `${x},${y}`;
-        const hp = s.wallHp?.[key];
-        wallHp[key] = finite(hp, DEFEND_WALL_MAX_HP) && hp > 0 ? hp : DEFEND_WALL_MAX_HP;
-      }),
-    );
-    d.wallHp = wallHp;
-  }
-  return d;
-}
-const DEFEND_ENEMY_KINDS: EnemyKind[] = ["roach", "orc", "bombat"];
-function decodeDefendWaves(s: any): DefendWaveSave {
-  const d = defaultDefendWaveSave();
-  if (
-    Number.isInteger(s?.wavesStarted) &&
-    s.wavesStarted >= 0 &&
-    s.wavesStarted <= DEFEND_WAVE_COUNT &&
-    Number.isInteger(s?.nextEnemyId) &&
-    s.nextEnemyId >= 1 &&
-    s.nextEnemyId <= 1e6 &&
-    Array.isArray(s?.enemies) &&
-    s.enemies.length <= 200 &&
-    s.enemies.every(
-      (e: any) =>
-        Number.isInteger(e?.id) &&
-        e.id > 0 &&
-        e.id < s.nextEnemyId &&
-        DEFEND_ENEMY_KINDS.includes(e?.kind) &&
-        Number.isInteger(e?.x) &&
-        e.x >= 0 &&
-        e.x < DEFEND_WIDTH &&
-        Number.isInteger(e?.y) &&
-        e.y >= 0 &&
-        e.y < DEFEND_HEIGHT &&
-        finite(e?.maxHp, ENEMY_DEFS[e.kind as EnemyKind].hp) &&
-        finite(e?.hp, e.maxHp),
-    )
-  ) {
-    d.wavesStarted = s.wavesStarted;
-    d.nextEnemyId = s.nextEnemyId;
-    d.enemies = s.enemies.map((e: any) => ({ id: e.id, kind: e.kind, x: e.x, y: e.y, hp: e.hp, maxHp: e.maxHp }));
-  }
-  return d;
-}
-const DEFEND_TROOP_KINDS: TroopKind[] = ["swordsman", "archer"];
-function decodeDefendTroops(s: any): DefendTroopSave {
-  const d = defaultDefendTroopSave();
-  if (
-    Number.isInteger(s?.nextTroopId) &&
-    s.nextTroopId >= 1 &&
-    s.nextTroopId <= 1e6 &&
-    Array.isArray(s?.troops) &&
-    s.troops.length <= 200 &&
-    s.troops.every(
-      (t: any) =>
-        Number.isInteger(t?.id) &&
-        t.id > 0 &&
-        t.id < s.nextTroopId &&
-        DEFEND_TROOP_KINDS.includes(t?.kind) &&
-        Number.isInteger(t?.x) &&
-        t.x >= 0 &&
-        t.x < DEFEND_WIDTH &&
-        Number.isInteger(t?.y) &&
-        t.y >= 0 &&
-        t.y < DEFEND_HEIGHT &&
-        isBuildable(t?.homeX, t?.homeY) &&
-        t.homeX >= 0 &&
-        t.homeX < DEFEND_WIDTH &&
-        finite(t?.maxHp, TROOP_DEFS[t.kind as TroopKind].hp) &&
-        finite(t?.hp, t.maxHp) &&
-        t.hp > 0,
-    ) &&
-    s?.progress &&
-    typeof s.progress === "object" &&
-    !Array.isArray(s.progress) &&
-    Object.entries(s.progress).every(
-      ([key, v]: [string, any]) => /^\d+,\d+$/.test(key) && finite(v, 999),
-    )
-  ) {
-    d.nextTroopId = s.nextTroopId;
-    d.troops = s.troops.map((t: any) => ({
-      id: t.id,
-      kind: t.kind,
-      x: t.x,
-      y: t.y,
-      hp: t.hp,
-      maxHp: t.maxHp,
-      homeX: t.homeX,
-      homeY: t.homeY,
-    }));
-    d.progress = { ...s.progress };
-  }
-  return d;
-}
 function decodeConsumables(s: any): Record<ConsumableId, number> {
   const consumables = Object.fromEntries(CONSUMABLES.map((c) => [c.id, 0])) as Record<ConsumableId, number>;
   if (s && typeof s === "object")
@@ -405,9 +264,7 @@ export function decode(raw: string | null): Save {
       if (d.delve.run || d.delve.best || d.delve.essence || UPGRADES.some(u => u.currency === "essence" && d.upgrades[u.id])) d.upgrades.delve = 1;
       if (["quality", "yellow", "blue", "red"].some(id => s.upgrades[id] > 0)) d.upgrades.legacy = 1;
     }
-    d.defend = decodeDefend(s?.defend);
-    d.defendWaves = decodeDefendWaves(s?.defendWaves);
-    d.defendTroops = decodeDefendTroops(s?.defendTroops);
+    d.defend = decodeDefendSave(s?.defend);
   } catch {}
   return d;
 }

@@ -60,19 +60,19 @@ export type CityMap = {
   structures: FittedStructure[];
 };
 
-const HOUSE_SHAPES: [number, number][] = [
-  [2, 2],
-  [2, 3],
-  [3, 2],
-  [1, 2],
-  [2, 1],
-  [1, 3],
-  [3, 1],
-  [2, 4],
-  [4, 2],
-  [1, 4],
-  [4, 1],
-  [3, 3],
+/** House footprints and how often each is tried first: mostly chunky
+ * blocks, with the odd narrow terrace for variety. */
+const HOUSE_SHAPES: [number, number, number][] = [
+  [2, 2, 6],
+  [2, 3, 4],
+  [3, 2, 4],
+  [3, 3, 2],
+  [1, 2, 1.5],
+  [2, 1, 1.5],
+  [2, 4, 0.6],
+  [4, 2, 0.6],
+  [1, 3, 0.4],
+  [3, 1, 0.4],
 ];
 
 export function generateCity(
@@ -180,7 +180,9 @@ export function generateCity(
     if (t[i] !== FREE) continue;
     const x = i % CELLS_W,
       y = (i - x) / CELLS_W;
-    const order = [...HOUSE_SHAPES].sort((a, b) => hash(seed, i, a[0], a[1]) - hash(seed, i, b[0], b[1]));
+    // Weighted random order (Efraimidis–Spirakis keys).
+    const key = (sh: [number, number, number]) => Math.pow(hash01(seed, i, sh[0], sh[1]), 1 / sh[2]);
+    const order = [...HOUSE_SHAPES].sort((a, b) => key(b) - key(a));
     let placed = false;
     for (const [w, h] of order) {
       const r = { x, y, w, h };

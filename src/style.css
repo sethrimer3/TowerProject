@@ -1180,214 +1180,237 @@ nav button > span img { display: block; width: 42px; height: 42px; max-width: 10
 #log img { width: 22px; height: 22px; margin-right: 4px; }
 .ascent > span img { width: 24px; height: 24px; }
 .dpad button img { display: block; width: 22px; height: 22px; margin: auto; }
+/* ── DEFEND ─────────────────────────────────────────────────────────── */
+.defend-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.defend-tabs {
+  display: flex;
+  gap: 4px;
+}
+.defend-tabs button {
+  padding: 6px 14px;
+  font-family: Cinzel, Georgia, serif;
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+.defend-tabs button[aria-selected="true"] {
+  border-color: var(--gold);
+  color: #efd496;
+  box-shadow: inset 0 -2px #d9ac5a;
+}
 .defend-hud {
   display: flex;
   align-items: center;
   gap: 12px;
-  font-size: 13px;
-  color: #b9b5aa;
-  margin-bottom: 10px;
-}
-.defend-lost {
-  color: #d9635a;
-  font-weight: 600;
-  letter-spacing: 1px;
-}
-.defend-tools {
-  display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 10px;
+  font-size: 12px;
+  color: #b9b5aa;
 }
-.defend-tools button {
+.defend-hud b {
+  color: #efe3c6;
+}
+.defend-keep i {
+  display: inline-block;
+  width: 64px;
+  height: 7px;
+  margin: 0 4px;
+  vertical-align: middle;
+  background: #2a1c1c;
+  border: 1px solid #4a3a3a;
+}
+.defend-keep em {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #c9463d, #e3b14c);
+}
+.defend-controls {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.defend-controls button {
   padding: 6px 10px;
   font-size: 12px;
 }
-.defend-tools button.selected {
-  outline: 2px solid #c9a24b;
+.defend-controls button[aria-pressed="true"] {
+  border-color: var(--gold);
+  color: #efd496;
 }
-.defend-grid {
-  display: grid;
-  gap: 2px;
-  max-width: 420px;
-  margin: 0 auto;
+.defend-go {
+  border-color: var(--gold) !important;
+  color: #efd496;
 }
-.defend-tile {
-  box-sizing: border-box;
-  aspect-ratio: 1;
-  padding: 0;
-  border: 1px solid #3a3a42;
-  background: #23232b;
-}
-.defend-tile.locked {
-  background: #17171c;
-  cursor: not-allowed;
-}
-.defend-tile.empty.inside {
-  background: #262e22;
-}
-.defend-tile.wall {
-  background: #4a4a54;
-}
-.defend-tile.wall.edge-top {
-  border-top: 4px solid #cfc6b8;
-}
-.defend-tile.wall.edge-right {
-  border-right: 4px solid #cfc6b8;
-}
-.defend-tile.wall.edge-bottom {
-  border-bottom: 4px solid #cfc6b8;
-}
-.defend-tile.wall.edge-left {
-  border-left: 4px solid #cfc6b8;
-}
-.defend-tile.keep {
-  background: #c9a24b;
-}
-.defend-tile.empty.terrain-0 {
-  background: #23232b;
-}
-.defend-tile.empty.terrain-1 {
-  background: #262630;
-}
-.defend-tile.empty.terrain-2 {
-  background: #212129;
-}
-.defend-tile.empty.terrain-3 {
-  background: #27272f;
-}
-.defend-tile.empty.inside.terrain-0 {
-  background: #262e22;
-}
-.defend-tile.empty.inside.terrain-1 {
-  background: #293224;
-}
-.defend-tile.empty.inside.terrain-2 {
-  background: #242c20;
-}
-.defend-tile.empty.inside.terrain-3 {
-  background: #2a3325;
-}
-.defend-tile.barracks_swordsman,
-.defend-tile.barracks_archer {
-  background: #2a2a32;
-  position: relative;
-}
-.defend-barracks-mark {
-  position: absolute;
-  width: 45%;
-  height: 45%;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
-}
-.defend-barracks-mark.corner-tl {
-  top: 0;
-  left: 0;
-}
-.defend-barracks-mark.corner-tr {
-  top: 0;
-  right: 0;
-}
-.defend-barracks-mark.corner-bl {
-  bottom: 0;
-  left: 0;
-}
-.defend-barracks-mark.corner-br {
-  bottom: 0;
-  right: 0;
-}
-.defend-hud button {
+.defend-danger {
   margin-left: auto;
-  padding: 6px 12px;
+  color: #e29898;
+}
+.defend-stage {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 10px;
+}
+.defend-stage.palette-right {
+  flex-direction: row-reverse;
+}
+.defend-palette {
+  flex: none;
+  width: 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  background: #121821;
+}
+.defend-palette-title,
+.defend-palette-hint {
+  text-align: center;
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--muted);
+}
+.defend-palette-hint {
+  letter-spacing: 0.5px;
+  line-height: 1.3;
+}
+.defend-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 2px;
+  font-size: 9px;
+  line-height: 1.2;
+  background: #18202b;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.defend-item canvas {
+  width: 40px;
+  height: 40px;
+  image-rendering: pixelated;
+}
+.defend-item b {
   font-size: 12px;
+  color: #efd496;
+}
+.defend-item.empty {
+  opacity: 0.4;
+  filter: grayscale(1);
+  cursor: not-allowed;
 }
 .defend-board {
   position: relative;
-  max-width: 420px;
-  margin: 0 auto;
+  flex: none;
+  line-height: 0;
+  border: 2px solid #6a5a3a;
+  box-shadow:
+    0 0 0 1px #000,
+    0 6px 30px #0009;
 }
-.defend-enemies {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
+.defend-board canvas {
+  display: block;
+  touch-action: none;
+  image-rendering: pixelated;
 }
-.defend-enemy,
-.defend-troop {
+.defend-banner {
   position: absolute;
-  aspect-ratio: 1;
-  border-radius: 1px;
+  left: 8%;
+  right: 8%;
+  top: 38%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px;
+  line-height: 1.4;
+  text-align: center;
+  background: #0d1118ee;
+  border: 1px solid var(--gold);
+}
+.defend-banner strong {
+  font-family: Cinzel, Georgia, serif;
+  font-size: 18px;
+  color: #e29898;
+}
+.defend-banner span {
+  font-size: 12px;
+  color: #cfc6b8;
+}
+.defend-banner em {
+  font-size: 12px;
+  color: #efd496;
+}
+.defend-message {
+  min-height: 20px;
+  margin-top: 6px;
+  text-align: center;
+  font-size: 12px;
+  color: #d8c89a;
+}
+.defend-drag-ghost {
+  position: fixed;
+  z-index: 50;
+  width: 40px;
+  height: 40px;
   transform: translate(-50%, -50%);
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4);
-}
-.defend-bolts {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
   pointer-events: none;
+  opacity: 0.85;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 3px 4px #000);
 }
-.defend-bolt {
-  stroke: #f3e6b8;
-  stroke-width: 0.8;
-  opacity: 0;
-  animation: defend-bolt-fade 0.6s ease-out;
+.defend-wallet b {
+  color: #efd496;
 }
-@keyframes defend-bolt-fade {
-  0% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-  }
+.defend-section {
+  margin: 18px 0 8px;
 }
-.defend-tile.hit-flash {
-  animation: defend-tile-flash 0.2s ease-out;
+.defend-armory h4 {
+  margin: 14px 0 6px;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
 }
-@keyframes defend-tile-flash {
-  0% {
-    filter: brightness(1.7);
-  }
-  100% {
-    filter: brightness(1);
-  }
+.defend-card {
+  gap: 12px;
+  padding: 12px;
 }
-.defend-enemy.hit-flash,
-.defend-troop.hit-flash {
-  animation:
-    defend-unit-flash 0.2s ease-out,
-    defend-unit-knockback 0.22s ease-out;
+.defend-card > canvas {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  image-rendering: pixelated;
 }
-@keyframes defend-unit-flash {
-  0% {
-    filter: brightness(2.2) saturate(1.3);
-  }
-  100% {
-    filter: brightness(1);
-  }
+.defend-card > div {
+  flex: 1;
 }
-@keyframes defend-unit-knockback {
-  0% {
-    transform: translate(-50%, -50%) translate(var(--kx, 0px), var(--ky, 0px));
-  }
-  100% {
-    transform: translate(-50%, -50%) translate(0, 0);
-  }
+.defend-card p {
+  font-size: 12px;
+  color: #aab4c2;
 }
-.defend-burst {
-  position: absolute;
-  width: 16%;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0) 70%);
-  pointer-events: none;
-  animation: defend-burst-fade 0.35s ease-out forwards;
+.defend-card button {
+  flex: none;
+  max-width: 130px;
+  font-size: 11px;
 }
-@keyframes defend-burst-fade {
-  0% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(0.4);
+@media (max-width: 480px) {
+  .defend-palette {
+    width: 60px;
+    padding: 4px;
   }
-  100% {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(1.7);
+  .defend-item span {
+    display: none;
+  }
+  .defend-stage {
+    gap: 6px;
   }
 }
