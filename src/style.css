@@ -1241,11 +1241,59 @@ nav button > span img { display: block; width: 42px; height: 42px; max-width: 10
 .defend-tile.wall.edge-left {
   border-left: 4px solid #cfc6b8;
 }
-.defend-tile.barracks {
-  background: #7a5230;
-}
 .defend-tile.keep {
   background: #c9a24b;
+}
+.defend-tile.empty.terrain-0 {
+  background: #23232b;
+}
+.defend-tile.empty.terrain-1 {
+  background: #262630;
+}
+.defend-tile.empty.terrain-2 {
+  background: #212129;
+}
+.defend-tile.empty.terrain-3 {
+  background: #27272f;
+}
+.defend-tile.empty.inside.terrain-0 {
+  background: #262e22;
+}
+.defend-tile.empty.inside.terrain-1 {
+  background: #293224;
+}
+.defend-tile.empty.inside.terrain-2 {
+  background: #242c20;
+}
+.defend-tile.empty.inside.terrain-3 {
+  background: #2a3325;
+}
+.defend-tile.barracks_swordsman,
+.defend-tile.barracks_archer {
+  background: #2a2a32;
+  position: relative;
+}
+.defend-barracks-mark {
+  position: absolute;
+  width: 45%;
+  height: 45%;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
+}
+.defend-barracks-mark.corner-tl {
+  top: 0;
+  left: 0;
+}
+.defend-barracks-mark.corner-tr {
+  top: 0;
+  right: 0;
+}
+.defend-barracks-mark.corner-bl {
+  bottom: 0;
+  left: 0;
+}
+.defend-barracks-mark.corner-br {
+  bottom: 0;
+  right: 0;
 }
 .defend-hud button {
   margin-left: auto;
@@ -1262,10 +1310,32 @@ nav button > span img { display: block; width: 42px; height: 42px; max-width: 10
   inset: 0;
   pointer-events: none;
 }
-.defend-enemy {
+.defend-enemy,
+.defend-troop {
   position: absolute;
   aspect-ratio: 1;
   border-radius: 1px;
   transform: translate(-50%, -50%);
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4);
+}
+.defend-bolts {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.defend-bolt {
+  stroke: #f3e6b8;
+  stroke-width: 0.8;
+  opacity: 0;
+  animation: defend-bolt-fade 0.6s ease-out;
+}
+@keyframes defend-bolt-fade {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
 }

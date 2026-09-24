@@ -11,6 +11,12 @@ import {
   type DefendWaveSave,
   type EnemyKind,
 } from "./defend-enemies.ts";
+import {
+  defaultDefendTroopSave,
+  TROOP_DEFS,
+  type DefendTroopSave,
+  type TroopKind,
+} from "./defend-troops.ts";
 export function defaults(): Save {
   return {
     version: 3,
@@ -43,6 +49,7 @@ export function defaults(): Save {
     consumables: Object.fromEntries(CONSUMABLES.map((c) => [c.id, 0])) as Save["consumables"],
     defend: defaultDefendSave(),
     defendWaves: defaultDefendWaveSave(),
+    defendTroops: defaultDefendTroopSave(),
   };
 }
 const finite = (n: unknown, max = 1e9) =>
@@ -172,7 +179,7 @@ function decodeEquipped(s: any, inventory: CraftedEquipment[]): Partial<Record<E
     }
   return equipped;
 }
-const DEFEND_TILE_KINDS = ["empty", "keep", "wall", "barracks"];
+const DEFEND_TILE_KINDS = ["empty", "keep", "wall", "barracks_swordsman", "barracks_archer"];
 function decodeDefend(s: any): DefendSave {
   const d = defaultDefendSave();
   if (
@@ -245,6 +252,56 @@ function decodeDefendWaves(s: any): DefendWaveSave {
     d.wavesStarted = s.wavesStarted;
     d.nextEnemyId = s.nextEnemyId;
     d.enemies = s.enemies.map((e: any) => ({ id: e.id, kind: e.kind, x: e.x, y: e.y, hp: e.hp, maxHp: e.maxHp }));
+  }
+  return d;
+}
+const DEFEND_TROOP_KINDS: TroopKind[] = ["swordsman", "archer"];
+function decodeDefendTroops(s: any): DefendTroopSave {
+  const d = defaultDefendTroopSave();
+  if (
+    Number.isInteger(s?.nextTroopId) &&
+    s.nextTroopId >= 1 &&
+    s.nextTroopId <= 1e6 &&
+    Array.isArray(s?.troops) &&
+    s.troops.length <= 200 &&
+    s.troops.every(
+      (t: any) =>
+        Number.isInteger(t?.id) &&
+        t.id > 0 &&
+        t.id < s.nextTroopId &&
+        DEFEND_TROOP_KINDS.includes(t?.kind) &&
+        Number.isInteger(t?.x) &&
+        t.x >= 0 &&
+        t.x < DEFEND_WIDTH &&
+        Number.isInteger(t?.y) &&
+        t.y >= 0 &&
+        t.y < DEFEND_HEIGHT &&
+        isBuildable(t?.homeX, t?.homeY) &&
+        t.homeX >= 0 &&
+        t.homeX < DEFEND_WIDTH &&
+        finite(t?.maxHp, TROOP_DEFS[t.kind as TroopKind].hp) &&
+        finite(t?.hp, t.maxHp) &&
+        t.hp > 0,
+    ) &&
+    s?.progress &&
+    typeof s.progress === "object" &&
+    !Array.isArray(s.progress) &&
+    Object.entries(s.progress).every(
+      ([key, v]: [string, any]) => /^\d+,\d+$/.test(key) && finite(v, 999),
+    )
+  ) {
+    d.nextTroopId = s.nextTroopId;
+    d.troops = s.troops.map((t: any) => ({
+      id: t.id,
+      kind: t.kind,
+      x: t.x,
+      y: t.y,
+      hp: t.hp,
+      maxHp: t.maxHp,
+      homeX: t.homeX,
+      homeY: t.homeY,
+    }));
+    d.progress = { ...s.progress };
   }
   return d;
 }
@@ -350,6 +407,7 @@ export function decode(raw: string | null): Save {
     }
     d.defend = decodeDefend(s?.defend);
     d.defendWaves = decodeDefendWaves(s?.defendWaves);
+    d.defendTroops = decodeDefendTroops(s?.defendTroops);
   } catch {}
   return d;
 }

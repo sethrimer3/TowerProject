@@ -20,6 +20,7 @@ import {
   cityInterior,
   wallsRemaining,
   wallEdgesAt,
+  barracksCorner,
   type DefendTileKind,
 } from "./defend.ts";
 import {
@@ -30,6 +31,16 @@ import {
   startNextWave,
   stepDefendCombat,
 } from "./defend-enemies.ts";
+import {
+  TROOP_DEFS,
+  BARRACKS_TROOP_KIND,
+  BARRACKS_GARRISON_CAP,
+  fromDefendTroopSave,
+  toDefendTroopSave,
+  trainTroopsTick,
+  stepTroopCombat,
+  type Shot,
+} from "./defend-troops.ts";
 import {
   UPGRADES,
   cost,
@@ -151,7 +162,7 @@ function fadeInFromBlack() {
 let selectedTree: TreeId = "inspiration";
 let selectedSkill: UpgradeId = "shardHp";
 let treeTooltipVisible = false;
-type DefendTool = "wall" | "barracks" | "move-keep" | "remove";
+type DefendTool = "wall" | "barracks_swordsman" | "barracks_archer" | "move-keep" | "remove";
 let defendTool: DefendTool = "wall";
 const treeViews: Partial<Record<TreeId, { x: number; y: number; scale: number }>> = {};
 function getTreeView(id: TreeId) {
@@ -890,13 +901,22 @@ function provisionsHtml(): string {
 }
 const DEFEND_TOOLS: { id: DefendTool; label: string; kind?: Exclude<DefendTileKind, "empty" | "keep"> }[] = [
   { id: "wall", label: "City wall", kind: "wall" },
-  { id: "barracks", label: "Barracks", kind: "barracks" },
+  { id: "barracks_swordsman", label: "Swordsman barracks", kind: "barracks_swordsman" },
+  { id: "barracks_archer", label: "Archer barracks", kind: "barracks_archer" },
   { id: "move-keep", label: "Move keep" },
   { id: "remove", label: "Clear" },
 ];
+/** Cheap deterministic hash so the same tile always renders the same
+ * procedurally-generated street/terrain variant, with no state to persist. */
+function terrainVariant(x: number, y: number): number {
+  const h = (x * 92821 + y * 68917 + x * y * 40349) >>> 0;
+  return h % 4;
+}
+let lastDefendShots: Shot[] = [];
 function renderDefendPage() {
   const d = game.save.defend;
   const w = game.save.defendWaves;
+  const troopsSave = game.save.defendTroops;
   const state = fromDefendSave(d);
   const interior = cityInterior(state);
   const remaining = wallsRemaining(state);
@@ -911,9 +931,26 @@ function renderDefendPage() {
         .map(([side]) => `edge-${side}`)
         .join(" ");
       const inside = interior.has(`${x},${y}`);
+      const terrainClass = kind === "empty" && buildable ? `terrain-${terrainVariant(x, y)}` : "";
+      const corner = kind === "barracks_swordsman" || kind === "barracks_archer" ? barracksCorner(kind) : null;
+      const barracksMark = corner
+        ? `<span class="defend-barracks-mark corner-${corner}" style="background:${TROOP_DEFS[BARRACKS_TROOP_KIND[kind as "barracks_swordsman" | "barracks_archer"]].color}"></span>`
+        : "";
       const label =
-        kind === "keep" ? "Keep" : kind === "wall" ? "City wall" : kind === "barracks" ? "Barracks" : buildable ? (inside ? "Empty plot (inside city limits)" : "Empty plot (outside city limits)") : "Approach lane";
-      return `<button class="defend-tile ${kind} ${buildable ? "" : "locked"} ${inside ? "inside" : ""} ${edgeClasses}" data-defend-x="${x}" data-defend-y="${y}" aria-label="${label}"></button>`;
+        kind === "keep"
+          ? "Keep"
+          : kind === "wall"
+            ? "City wall"
+            : kind === "barracks_swordsman"
+              ? "Swordsman barracks"
+              : kind === "barracks_archer"
+                ? "Archer barracks"
+                : buildable
+                  ? inside
+                    ? "Empty plot (inside city limits)"
+                    : "Empty plot (outside city limits)"
+                  : "Approach lane";
+      return `<button class="defend-tile ${kind} ${buildable ? "" : "locked"} ${inside ? "inside" : ""} ${edgeClasses} ${terrainClass}" data-defend-x="${x}" data-defend-y="${y}" aria-label="${label}">${barracksMark}</button>`;
     }).join(""),
   ).join("");
   const enemyMarkers = w.enemies
@@ -925,6 +962,24 @@ function renderDefendPage() {
       return `<span class="defend-enemy" style="left:${left}%;top:${top}%;width:${sizePct}%;background:${def.color}" title="${def.name} (${e.hp}/${e.maxHp} HP)"></span>`;
     })
     .join("");
+  const troopMarkers = troopsSave.troops
+    .map((tr) => {
+      const def = TROOP_DEFS[tr.kind];
+      const sizePct = (def.pixelSize / 8) * 100;
+      const left = ((tr.x + 0.5) / DEFEND_WIDTH) * 100;
+      const top = ((tr.y + 0.5) / DEFEND_HEIGHT) * 100;
+      return `<span class="defend-troop" style="left:${left}%;top:${top}%;width:${sizePct}%;background:${def.color}" title="${def.name} (${tr.hp}/${tr.maxHp} HP)"></span>`;
+    })
+    .join("");
+  const bolts = lastDefendShots
+    .map((s) => {
+      const x1 = ((s.from.x + 0.5) / DEFEND_WIDTH) * 100,
+        y1 = ((s.from.y + 0.5) / DEFEND_HEIGHT) * 100;
+      const x2 = ((s.to.x + 0.5) / DEFEND_WIDTH) * 100,
+        y2 = ((s.to.y + 0.5) / DEFEND_HEIGHT) * 100;
+      return `<line x1="${x1}%" y1="${y1}%" x2="${x2}%" y2="${y2}%" class="defend-bolt"/>`;
+    })
+    .join("");
   const waveLabel =
     w.wavesStarted >= DEFEND_WAVE_COUNT && !waveActive
       ? "All waves cleared"
@@ -932,12 +987,12 @@ function renderDefendPage() {
         ? `Wave ${w.wavesStarted} of ${DEFEND_WAVE_COUNT} — ${w.enemies.length} enemies left`
         : `Wave ${Math.min(w.wavesStarted + 1, DEFEND_WAVE_COUNT)} of ${DEFEND_WAVE_COUNT} ready`;
   const canStartWave = !d.lost && !waveActive && w.wavesStarted < DEFEND_WAVE_COUNT;
-  el("defend").innerHTML = `<div class="page-title"><small>HOLD THE LINE</small><h2>Defend</h2><p>Wall off your city, then garrison what's inside it.</p></div>
+  el("defend").innerHTML = `<div class="page-title"><small>HOLD THE LINE</small><h2>Defend</h2><p>Wall off your city, garrison it with troops, then hold the line.</p></div>
     <div class="defend-hud"><span>Keep HP <b id="defend-hp">${d.keepHp}</b> / ${d.keepMaxHp}</span><span>City walls <b>${remaining}</b> / ${d.wallCapacity}</span>${d.lost ? `<span class="defend-lost">THE KEEP HAS FALLEN</span>` : ""}</div>
     <div class="defend-hud"><span>${waveLabel}</span><button id="defend-start-wave" ${canStartWave ? "" : "disabled"}>Start wave</button></div>
     <div class="defend-tools" role="group" aria-label="Building tools">${DEFEND_TOOLS.map((t) => `<button data-defend-tool="${t.id}" class="${t.id === defendTool ? "selected" : ""}" ${d.lost || (t.id === "wall" && remaining <= 0) ? "disabled" : ""}>${t.label}${t.id === "wall" ? ` (${remaining})` : ""}</button>`).join("")}</div>
-    <div class="defend-board"><div class="defend-grid" style="grid-template-columns:repeat(${DEFEND_WIDTH},1fr)">${tiles}</div><div class="defend-enemies">${enemyMarkers}</div></div>
-    <p class="hint">The top row is the approach lane — enemies spawn there and nothing can be built on it. Placing a city wall tile walls off its edges; two walls placed side by side merge into one run of wall. Troops and traps can only be placed on ground fully enclosed by your walls. Enemies march for the keep and chew through whatever wall blocks their path; breach it and they pour through. The keep can be relocated but never removed; if it falls, the defense is lost.</p>`;
+    <div class="defend-board"><div class="defend-grid" style="grid-template-columns:repeat(${DEFEND_WIDTH},1fr)">${tiles}</div><svg class="defend-bolts" viewBox="0 0 100 100" preserveAspectRatio="none">${bolts}</svg><div class="defend-enemies">${enemyMarkers}${troopMarkers}</div></div>
+    <p class="hint">The top row is the approach lane — enemies spawn there and nothing can be built on it. Placing a city wall tile walls off its edges; two walls placed side by side merge into one run of wall. Barracks and other defenses can only be placed on ground fully enclosed by your walls, and sit in a corner of their tile — the rest fills in as city streets. A swordsman barracks trains melee fighters; an archer barracks trains ranged fighters that fire bolts. Each barracks garrisons up to ${BARRACKS_GARRISON_CAP} troops. Enemies march for the keep and chew through whatever wall blocks their path; breach it and they pour through. The keep can be relocated but never removed; if it falls, the defense is lost.</p>`;
   el("defend-start-wave").onclick = () => {
     const next = fromDefendSave(game.save.defend);
     const nextWaves = fromDefendWaveSave(game.save.defendWaves);
@@ -961,6 +1016,7 @@ function renderDefendPage() {
       const y = Number(b.dataset.defendY);
       const next = fromDefendSave(game.save.defend);
       const tool = DEFEND_TOOLS.find((t) => t.id === defendTool)!;
+      const removedBarracks = defendTool === "remove" && (next.tiles[y]?.[x]?.kind === "barracks_swordsman" || next.tiles[y]?.[x]?.kind === "barracks_archer");
       const changed =
         defendTool === "move-keep"
           ? moveKeep(next, x, y)
@@ -969,6 +1025,12 @@ function renderDefendPage() {
             : placeBuilding(next, x, y, tool.kind!);
       if (changed) {
         game.save.defend = toDefendSave(next);
+        if (removedBarracks) {
+          const troops = fromDefendTroopSave(game.save.defendTroops);
+          troops.troops = troops.troops.filter((tr) => !(tr.homeX === x && tr.homeY === y));
+          delete troops.progress[`${x},${y}`];
+          game.save.defendTroops = toDefendTroopSave(troops);
+        }
         save();
         renderDefendPage();
       }
@@ -1226,13 +1288,17 @@ function frame(time: number) {
       update();
     }
   }
-  if (!document.hidden && tab === "defend" && !modal.open && game.save.defendWaves.enemies.length && time - lastDefendTick > DEFEND_TICK_MS) {
+  if (!document.hidden && tab === "defend" && !modal.open && !game.save.defend.lost && time - lastDefendTick > DEFEND_TICK_MS) {
     lastDefendTick = time;
     const state = fromDefendSave(game.save.defend);
     const waves = fromDefendWaveSave(game.save.defendWaves);
-    stepDefendCombat(state, waves);
+    const troops = fromDefendTroopSave(game.save.defendTroops);
+    trainTroopsTick(state, troops);
+    lastDefendShots = waves.enemies.length ? stepTroopCombat(state, waves, troops) : [];
+    if (waves.enemies.length) stepDefendCombat(state, waves);
     game.save.defend = toDefendSave(state);
     game.save.defendWaves = toDefendWaveSave(waves);
+    game.save.defendTroops = toDefendTroopSave(troops);
     renderDefendPage();
   }
   if (time - lastSave > 10000) {

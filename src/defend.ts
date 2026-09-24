@@ -13,7 +13,19 @@ export const DEFEND_HEIGHT = 13;
  * can ever be built there. */
 export const DEFEND_NO_BUILD_ROW = 0;
 
-export type DefendTileKind = "empty" | "keep" | "wall" | "barracks";
+export type DefendTileKind = "empty" | "keep" | "wall" | "barracks_swordsman" | "barracks_archer";
+
+export type BarracksKind = "barracks_swordsman" | "barracks_archer";
+export const BARRACKS_KINDS: BarracksKind[] = ["barracks_swordsman", "barracks_archer"];
+
+/** Barracks don't fill their tile — they're a small building tucked into
+ * one corner so the rest of the tile can carry procedurally generated city
+ * terrain. Each kind always claims the same corner, so it's predictable at
+ * a glance. */
+export type Corner = "tl" | "tr" | "bl" | "br";
+export function barracksCorner(kind: BarracksKind): Corner {
+  return kind === "barracks_swordsman" ? "bl" : "tr";
+}
 
 export type DefendTile = {
   kind: DefendTileKind;

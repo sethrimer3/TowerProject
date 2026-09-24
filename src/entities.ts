@@ -4,6 +4,7 @@ import type { CraftedEquipment, EquipmentSlot } from "./equipment.ts";
 import type { ConsumableId } from "./crafting.ts";
 import type { DefendSave } from "./defend.ts";
 import type { DefendWaveSave } from "./defend-enemies.ts";
+import type { DefendTroopSave } from "./defend-troops.ts";
 export type Kind =
   | "wall"
   | "floor"
@@ -143,5 +144,7 @@ export type Save = {
   defend: DefendSave;
   /** DEFEND mini-game enemy wave progress. */
   defendWaves: DefendWaveSave;
+  /** DEFEND mini-game player troop garrisons. */
+  defendTroops: DefendTroopSave;
 };
 export const point = (x: number, y: number) => `${x},${y}`;

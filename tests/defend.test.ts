@@ -63,7 +63,7 @@ test("keep starts centered and can be moved but never deleted", () => {
 test("cannot build on top of an existing building or the keep", () => {
   const s = createDefendState();
   assert.equal(placeBuilding(s, 1, 1, "wall"), true);
-  assert.equal(placeBuilding(s, 1, 1, "barracks"), false);
+  assert.equal(placeBuilding(s, 1, 1, "barracks_swordsman"), false);
   assert.equal(placeBuilding(s, s.keep.x, s.keep.y, "wall"), false);
 });
 
@@ -100,7 +100,7 @@ test("without any enclosing walls, nothing counts as inside the city limits", ()
   const s = createDefendState();
   assert.equal(cityInterior(s).size, 0);
   assert.equal(isInsideCityLimits(s, s.keep.x, s.keep.y), false);
-  assert.equal(placeBuilding(s, 1, 1, "barracks"), false, "no enclosed ground yet");
+  assert.equal(placeBuilding(s, 1, 1, "barracks_swordsman"), false, "no enclosed ground yet");
 });
 
 test("a closed ring of walls encloses its interior and adjacent walls merge their shared edge", () => {
@@ -130,8 +130,8 @@ test("troops and traps can only be placed on ground fully enclosed by the walls"
     [2, 8], [3, 8], [4, 8], [5, 8], [6, 8],
   ];
   for (const [x, y] of ring) assert.equal(placeBuilding(s, x, y, "wall"), true);
-  assert.equal(placeBuilding(s, 3, 5, "barracks"), true, "inside the walled area");
-  assert.equal(placeBuilding(s, 0, 1, "barracks"), false, "outside the walled area");
+  assert.equal(placeBuilding(s, 3, 5, "barracks_swordsman"), true, "inside the walled area");
+  assert.equal(placeBuilding(s, 0, 1, "barracks_swordsman"), false, "outside the walled area");
 });
 
 test("opening a gap in the wall exposes the interior back to the outside", () => {
