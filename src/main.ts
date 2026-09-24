@@ -126,6 +126,14 @@ function fadeInFromBlack() {
 }
 let selectedTree: TreeId = "inspiration";
 let selectedSkill: UpgradeId = "shardHp";
+let treeTooltipVisible = false;
+const treeViews: Partial<Record<TreeId, { x: number; y: number; scale: number }>> = {};
+function getTreeView(id: TreeId) {
+  return treeViews[id] ?? (treeViews[id] = { x: 0, y: 0, scale: 1 });
+}
+function clamp(n: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, n));
+}
 let gearTab: "equipped" | "inventory" | "crafting" | "provisions" = "equipped";
 let inventoryFilter: EquipmentSlot | "all" = "all";
 let craftSlot: EquipmentSlot = "weapon";
@@ -489,11 +497,13 @@ function navigate(id: string) {
   if (id === "delve" && !game.save.upgrades.delve) {
     selectedTree = "inspiration";
     selectedSkill = "delve";
+    treeTooltipVisible = true;
     id = "upgrades";
   }
   if (id === "defend" && !game.save.upgrades.legacy) {
     selectedTree = "courage";
     selectedSkill = "legacy";
+    treeTooltipVisible = true;
     id = "upgrades";
   }
   tab = id;
@@ -514,32 +524,179 @@ function navigate(id: string) {
   renderPage();
   update();
 }
+function skillTooltipHtml(id: UpgradeId): string {
+  const tree = TREES.find(t => t.id === selectedTree)!;
+  const node = tree.nodes.find(n => n.id === id)!;
+  const u = UPGRADES.find(u => u.id === id)!;
+  const level = game.save.upgrades[id];
+  const price = cost(id, level);
+  const balance = tree.currency === "shards" ? game.save.tower.shards : game.save.delve.essence;
+  const available = skillAvailable(id, game.save.upgrades);
+  const locked = !!tree.gate && !game.save.upgrades[tree.gate];
+  const maxed = level >= u.max;
+  const requirements = node.requires.filter(rid => !game.save.upgrades[rid]).map(rid => UPGRADES.find(u => u.id === rid)!.name);
+  const currency = tree.currency === "shards" ? "Inspiration" : "Courage";
+  let hint: string;
+  if (locked) hint = "Unlock this tree to learn its skills.";
+  else if (maxed) hint = "Mastered.";
+  else if (requirements.length) hint = `Requires: ${requirements.join(" + ")} (one rank each).`;
+  else if (!available) hint = "Locked.";
+  else if (balance < price) hint = `Need ${price} ${currency} · have ${balance}.`;
+  else hint = "Tap again to purchase.";
+  const canBuy = !locked && !maxed && available && balance >= price;
+  return `<b style="color:var(--tree-color)">${u.name}</b><div>${level} / ${u.max} ranks</div><div>${u.description}.</div><div class="${canBuy ? "safe" : ""}">${hint}</div>${!maxed && !locked ? `<div>Cost: ${price} ${currency}</div>` : ""}`;
+}
+function positionTreeTooltip(nodeEl: HTMLElement) {
+  const viewport = el("tree-viewport"),
+    tooltip = el("tree-tooltip"),
+    viewportRect = viewport.getBoundingClientRect(),
+    nodeRect = nodeEl.getBoundingClientRect(),
+    tooltipRect = tooltip.getBoundingClientRect();
+  let left = nodeRect.left - viewportRect.left + nodeRect.width / 2 - tooltipRect.width / 2;
+  left = clamp(left, 4, viewportRect.width - tooltipRect.width - 4);
+  let top = nodeRect.top - viewportRect.top - tooltipRect.height - 8;
+  if (top < 4) top = nodeRect.bottom - viewportRect.top + 8;
+  tooltip.style.left = `${left}px`;
+  tooltip.style.top = `${top}px`;
+}
+function showTreeTooltip(id: UpgradeId) {
+  const nodeEl = document.querySelector<HTMLElement>(`[data-skill="${id}"]`);
+  if (!nodeEl) return;
+  const tooltip = el("tree-tooltip");
+  tooltip.innerHTML = skillTooltipHtml(id);
+  tooltip.hidden = false;
+  positionTreeTooltip(nodeEl);
+}
+function hideTreeTooltip() {
+  const tooltip = document.getElementById("tree-tooltip");
+  if (tooltip) tooltip.hidden = true;
+}
+function handleSkillTap(id: UpgradeId) {
+  const tree = TREES.find(t => t.id === selectedTree)!;
+  if (selectedSkill === id && treeTooltipVisible) {
+    const locked = !!tree.gate && !game.save.upgrades[tree.gate];
+    const u = UPGRADES.find(u => u.id === id)!;
+    const level = game.save.upgrades[id];
+    const price = cost(id, level);
+    const balance = tree.currency === "shards" ? game.save.tower.shards : game.save.delve.essence;
+    const available = skillAvailable(id, game.save.upgrades);
+    if (!locked && level < u.max && available && balance >= price) {
+      game.buy(id);
+      update();
+    }
+    renderPage();
+    return;
+  }
+  selectedSkill = id;
+  treeTooltipVisible = true;
+  renderPage();
+}
+function setupTreeViewport(treeId: TreeId) {
+  const viewport = el("tree-viewport"),
+    map = el("tree-map"),
+    view = getTreeView(treeId);
+  function applyView() {
+    map.style.transform = `translate(${view.x}px,${view.y}px) scale(${view.scale})`;
+  }
+  const pointers = new Map<number, { x: number; y: number }>();
+  let dragging = false, moved = false, startX = 0, startY = 0, startViewX = 0, startViewY = 0, pinchStartDist = 0, pinchStartScale = 1, downTarget: HTMLElement | null = null;
+  viewport.onpointerdown = (e) => {
+    viewport.setPointerCapture(e.pointerId);
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.size === 1) {
+      dragging = true;
+      moved = false;
+      startX = e.clientX;
+      startY = e.clientY;
+      startViewX = view.x;
+      startViewY = view.y;
+      downTarget = e.target as HTMLElement;
+    } else if (pointers.size === 2) {
+      dragging = false;
+      const pts = [...pointers.values()];
+      pinchStartDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      pinchStartScale = view.scale;
+    }
+  };
+  viewport.onpointermove = (e) => {
+    if (!pointers.has(e.pointerId)) return;
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.size === 2) {
+      const pts = [...pointers.values()];
+      const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      if (pinchStartDist > 0) {
+        view.scale = clamp(pinchStartScale * (dist / pinchStartDist), 0.5, 2.5);
+        applyView();
+      }
+      return;
+    }
+    if (!dragging) return;
+    const dx = e.clientX - startX,
+      dy = e.clientY - startY;
+    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) moved = true;
+    if (moved) {
+      view.x = startViewX + dx;
+      view.y = startViewY + dy;
+      applyView();
+      if (treeTooltipVisible) {
+        treeTooltipVisible = false;
+        hideTreeTooltip();
+      }
+    }
+  };
+  function endPointer(e: PointerEvent) {
+    pointers.delete(e.pointerId);
+    if (pointers.size < 2) pinchStartDist = 0;
+    if (pointers.size === 0) {
+      const wasDragging = dragging;
+      dragging = false;
+      if (wasDragging && !moved) {
+        const target = downTarget?.closest<HTMLElement>("[data-skill]");
+        if (target) handleSkillTap(target.dataset.skill as UpgradeId);
+        else if (treeTooltipVisible) {
+          treeTooltipVisible = false;
+          hideTreeTooltip();
+        }
+      }
+    }
+  }
+  viewport.onpointerup = endPointer;
+  viewport.onpointercancel = endPointer;
+  viewport.onwheel = (e) => {
+    e.preventDefault();
+    const rect = viewport.getBoundingClientRect(),
+      cx = e.clientX - rect.left,
+      cy = e.clientY - rect.top,
+      prevScale = view.scale,
+      newScale = clamp(prevScale * (e.deltaY < 0 ? 1.1 : 0.9), 0.5, 2.5);
+    view.x = cx - (cx - view.x) * (newScale / prevScale);
+    view.y = cy - (cy - view.y) * (newScale / prevScale);
+    view.scale = newScale;
+    applyView();
+    if (treeTooltipVisible) showTreeTooltip(selectedSkill);
+  };
+}
 function renderPage() {
   if (tab === "gear") renderGearPage();
   if (tab === "upgrades") {
     const tree = TREES.find(t => t.id === selectedTree)!;
     const locked = !!tree.gate && !game.save.upgrades[tree.gate];
-    const node = tree.nodes.find(n => n.id === selectedSkill) ?? tree.nodes[0];
-    selectedSkill = node.id;
-    const u = UPGRADES.find(u => u.id === node.id)!;
-    const level = game.save.upgrades[u.id], price = cost(u.id, level);
     const balance = tree.currency === "shards" ? game.save.tower.shards : game.save.delve.essence;
-    const available = skillAvailable(u.id, game.save.upgrades);
-    const requirements = node.requires.filter(id => !game.save.upgrades[id]).map(id => UPGRADES.find(u => u.id === id)!.name);
+    const view = getTreeView(tree.id);
     el("upgrades").innerHTML = `<div class="page-title"><small>WHAT REMAINS WHEN YOU FALL</small><h2>Paths of ascension</h2><p>Follow the branches. Shape your next journey.</p></div>
       <div class="tree-tabs" role="group" aria-label="Skill trees">${TREES.map(t => `<button data-tree="${t.id}" aria-pressed="${t.id === tree.id}"><span>${uiSprite(t.id === "inspiration" ? "upgrades" : t.id === "courage" ? "automove" : "tower")}</span>${t.name}<small>${t.gate && !game.save.upgrades[t.gate] ? "LOCKED" : "UNLOCKED"}</small></button>`).join("")}</div>
       <section class="skill-tree ${tree.id}"><header class="tree-heading"><small>${locked ? "SEALED PATH" : `${balance} ${tree.currency === "shards" ? "INSPIRATION" : "COURAGE"}`}</small><h3>${tree.name} skill tree</h3><p>${tree.description}</p></header>
       ${locked ? `<p class="tree-lock">Unlock ${UPGRADES.find(u => u.id === tree.gate)!.name} in the ${tree.id === "courage" ? "Inspiration" : "Courage"} tree.</p>` : ""}
-      <div class="tree-map"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${tree.nodes.flatMap(n => n.requires.map(id => { const parent = tree.nodes.find(p => p.id === id); return parent ? `<line x1="${parent.x}" y1="${parent.y}" x2="${n.x}" y2="${n.y}" class="${game.save.upgrades[id] ? "lit" : ""}"/>` : ""; })).join("")}</svg>
-      ${tree.nodes.map(n => { const skill = UPGRADES.find(u => u.id === n.id)!; const rank = game.save.upgrades[n.id]; return `<button class="skill-node ${rank ? "owned" : ""} ${skillAvailable(n.id, game.save.upgrades) ? "available" : "locked"} ${n.id === node.id ? "chosen" : ""}" data-skill="${n.id}" style="left:${n.x}%;top:${n.y}%" aria-label="${skill.name}, ${rank} of ${skill.max}${skillAvailable(n.id, game.save.upgrades) ? "" : ", locked"}" aria-pressed="${n.id === node.id}"><span class="node-icon">${skillSprite(n.id)}</span><span class="node-name">${skill.name}</span><small>${rank} / ${skill.max}</small></button>`; }).join("")}</div>
-      <article class="skill-detail" aria-live="polite"><div><small>${level} / ${u.max} RANKS</small><h3>${u.name}</h3><p>${u.description}.</p><p class="hint">${locked ? "Unlock this tree to learn its skills." : requirements.length ? `Requires: ${requirements.join(" + ")} (one rank each).` : "Revive, undos, and unlocks apply immediately. Starting stats apply next run."}</p></div><button data-buy="${u.id}" ${!available || level >= u.max || balance < price ? "disabled" : ""}>${level >= u.max ? "MASTERED" : `Learn · ${price} ${tree.currency === "shards" ? "Inspiration" : "Courage"}`}</button></article></section>`;
+      <p class="tree-hint">Tap a skill for details · drag to pan · scroll or pinch to zoom</p>
+      <div class="tree-viewport" id="tree-viewport"><div class="tree-map" id="tree-map" style="transform:translate(${view.x}px,${view.y}px) scale(${view.scale})"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${tree.nodes.flatMap(n => n.requires.map(id => { const parent = tree.nodes.find(p => p.id === id); return parent ? `<line x1="${parent.x}" y1="${parent.y}" x2="${n.x}" y2="${n.y}" class="${game.save.upgrades[id] ? "lit" : ""}"/>` : ""; })).join("")}</svg>
+      ${tree.nodes.map(n => { const skill = UPGRADES.find(u => u.id === n.id)!; const rank = game.save.upgrades[n.id]; return `<button class="skill-node ${rank ? "owned" : ""} ${skillAvailable(n.id, game.save.upgrades) ? "available" : "locked"} ${n.id === selectedSkill && treeTooltipVisible ? "chosen" : ""}" data-skill="${n.id}" style="left:${n.x}%;top:${n.y}%" aria-label="${skill.name}, ${rank} of ${skill.max}${skillAvailable(n.id, game.save.upgrades) ? "" : ", locked"}" aria-pressed="${n.id === selectedSkill && treeTooltipVisible}"><span class="node-icon">${skillSprite(n.id)}</span><span class="node-name">${skill.name}</span><small>${rank} / ${skill.max}</small></button>`; }).join("")}</div><div class="inspect-box tree-tooltip" id="tree-tooltip" hidden></div></div></section>`;
     document.querySelectorAll<HTMLButtonElement>("[data-tree]").forEach(b => b.onclick = () => {
       selectedTree = b.dataset.tree as TreeId;
-      selectedSkill = TREES.find(t => t.id === selectedTree)!.nodes[0].id;
+      treeTooltipVisible = false;
       renderPage();
     });
-    document.querySelectorAll<HTMLButtonElement>("[data-skill]").forEach(b => b.onclick = () => { selectedSkill = b.dataset.skill as UpgradeId; renderPage(); });
-    document.querySelectorAll<HTMLButtonElement>("[data-buy]").forEach(b => b.onclick = () => { game.buy(b.dataset.buy as UpgradeId); update(); renderPage(); });
+    setupTreeViewport(tree.id);
+    if (treeTooltipVisible && tree.nodes.some(n => n.id === selectedSkill)) showTreeTooltip(selectedSkill);
   }
 
   if (tab === "settings") {
@@ -893,6 +1050,7 @@ el("auto").onclick = () => {
   if (!game.save.upgrades.auto) {
     selectedTree = game.save.upgrades.delve ? "courage" : "inspiration";
     selectedSkill = game.save.upgrades.delve ? "auto" : "delve";
+    treeTooltipVisible = true;
     navigate("upgrades");
     return;
   }
