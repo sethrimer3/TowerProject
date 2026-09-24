@@ -130,6 +130,13 @@ export const LIGHTING_CONFIG = {
     lengthPerTile: 0.2,
     /** ...up to this cap. */
     maxLength: 1.3,
+    /** Shadows lie on the floor behind or in front of an object: they only
+     * ever stretch up or down from its base, never rotate. Side light just
+     * leans them by this share of its sideways component... */
+    lean: 0.55,
+    /** ...and still gives at least this much vertical stretch (pointing up,
+     * behind the object), so side-lit shadows stay short, flattened shapes. */
+    minVertical: 0.4,
     color: [8, 6, 16],
     /** Extra shadow opacity at the darkest Brightness setting. */
     darkBoost: 0.6,

@@ -35,6 +35,7 @@ import { canCraft, getSalvageReturns, isEquipped, CONSUMABLES, canCraftConsumabl
 import { doorColor, doorCost, doorDescription, doorName, doorRule, KEY_NAMES } from "./doors.ts";
 import { AREA1_ITEM_URLS } from "./area1-tileset.ts";
 import { metalBarSprite, monsterPartSprite } from "./material-sprites.ts";
+import { drawGameSprite } from "./game-sprites.ts";
 
 type UiSprite = "tower" | "delve" | "defend" | "gear" | "upgrades" | "settings" | "health" | "attack" | "defense" | "undo" | "automove" | "revive" | "log" | "arrow-up" | "arrow-down" | "arrow-left" | "arrow-right" | EquipmentSlot | "gold";
 const UI_ASSET_BASE = (import.meta as ImportMeta & { env?: { BASE_URL?: string } }).env?.BASE_URL ?? "/";
@@ -103,9 +104,12 @@ document.querySelectorAll<HTMLElement>("[data-move]").forEach((button) => {
 });
 const game = new Game(load());
 const renderer = new Renderer(document.querySelector("#world")!, game);
-Renderer.drawHero(
-  (document.querySelector("#portrait-sprite") as HTMLCanvasElement).getContext("2d")!,
-);
+{
+  const portraitCtx = (document.querySelector("#portrait-sprite") as HTMLCanvasElement).getContext("2d")!;
+  if (game.save.settings.spritesOff || !drawGameSprite(portraitCtx, "player")) {
+    Renderer.drawHero(portraitCtx);
+  }
+}
 let tab = "tower",
   lastAuto = 0,
   lastRoute = 0,
