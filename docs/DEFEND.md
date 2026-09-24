@@ -40,8 +40,8 @@ holds it against endless waves. Code lives in `src/defend/`.
   can only be lifted if the city stays connected and it holds no buildings.
 - **The keep** can be moved onto any other city tile (the two swap) but never
   removed.
-- **Barracks** must be inside the city. **Archer towers** and **watch towers**
-  may stand inside or outside; outside they sit off-centre in their tile.
+- **Barracks** must be inside the city. **Archer**, **cannon** and **watch
+  towers** may stand inside or outside; outside they sit off-centre in their tile.
 - Several structures share a tile while they fit. The game picks each
   structure's exact cells (`fitLayout`): oldest first, never touching another
   structure (there's always room for a street), and every in-city structure
@@ -84,6 +84,16 @@ holds it against endless waves. Code lives in `src/defend/`.
   change what counts as open).
 - **Patrol routes** (Armory) widens how far from their barracks swordsmen
   go after enemies; its last level sends them anywhere inside the city.
+- **Cannon towers** fire slowly at the nearest ground enemy (not bats),
+  lobbing a shell in an arc that bursts with splash damage (full at the
+  centre, 40% at the edge).
+- **Explosions** (cannon shells and bombs) are ragged, layered fireballs —
+  smoke, flame, white-hot core, flung sparks — that briefly light up their
+  surroundings, then leave glowing, branching cracks that cool and fade over
+  1–3 s.
+- **Friendly fire:** blasts also hurt your swordsmen and civilians (60% of
+  the damage) until you buy Gunnery drills (cannons) or Shaped charges
+  (bombs) in the Armory.
 - **Archer towers** shoot the nearest enemy in range. **Watch towers** mark
   enemies in their radius with a gold outline; marked enemies take ×2 damage.
 - During a run the palette becomes the **consumables** palette. A **bomb**

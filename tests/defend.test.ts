@@ -327,15 +327,16 @@ test('cannon towers lob shells that burst with splash damage', () => {
   sim.spawnQueue = [];
   sim.breakT = 1e9;
   sim.enemies = [mk(1, 0), mk(2, 0.8)];
-  let shells = 0;
+  let shells = 0, scorched = false;
   for (let i = 0; i < 30 * 3; i++) {
     sim.step(1 / 30);
     shells = Math.max(shells, sim.shells.length);
+    scorched ||= sim.scorches.length > 0;
     for (const e of sim.enemies) { e.x = gx + (e.id === 1 ? 0 : 0.8); e.y = gy - 5; }
   }
   assert.ok(shells > 0, 'a shell was fired');
   assert.ok(sim.enemies.every((e) => e.hp < 1000), 'both enemies caught in the splash');
-  assert.ok(sim.scorches.length > 0 || sim.effects.some((f) => f.kind === 'boom'), 'the blast leaves its mark');
+  assert.ok(scorched, 'the blast leaves glowing cracks');
 });
 
 test('friendly fire: blasts hurt your own people until the Armory upgrade', () => {
