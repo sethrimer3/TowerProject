@@ -24,6 +24,8 @@ const SPRITE_DIRS: { key: SpriteDir; dx: number; dy: number }[] = [
 ];
 type LitCaster = { x: number; y: number; key: string; draw: () => void; hero: boolean; light: Record<SpriteDir, number> };
 const GLOW_ITEMS = new Set<Tile["kind"]>(["key", "potion", "attack", "defense", "reward", "treasure"]);
+/** A box in CSS pixels on the board canvas. */
+type Rect = { x: number; y: number; w: number; h: number };
 /** A glowing object this frame: tile position, color, reach (tiles), and strength. */
 type GlowSource = { x: number; y: number; rgb: readonly number[]; radius: number; strength: number; door?: boolean };
 const hexRgb = (hex: string) => {
@@ -314,7 +316,24 @@ export class Renderer {
       c.restore();
       this.drawObjectBloom(box.width);
       if (decorOn) this.decor.drawGlow(c, view, now, this.darkness, reduceMotion);
-      this.drawDarkened(spriteDark, box.width, dpr, LIGHTING_CONFIG.objectGlow.spriteDarkness, () => eachTile(1));
+      // Only tiles with something on them (plus room for outlines) need it.
+      const occupied: Rect[] = [];
+      for (let row = -1; row <= n; row++)
+        for (let col = -1; col <= n; col++) {
+          const x = col + Math.floor(this.left), y = Math.floor(this.bottom) + row;
+          if (y < 0) continue;
+          const kind = g.world.tile(x, y).kind;
+          if (kind === "wall" || kind === "floor") continue;
+          occupied.push({ x: (x - this.left - 0.15) * s, y: (n - 1 - (y - this.bottom) - 0.15) * s, w: 1.3 * s, h: 1.3 * s });
+        }
+      // One box around them all: clipping to many small boxes costs more
+      // than it saves.
+      if (occupied.length) {
+        const x0 = Math.min(...occupied.map((r) => r.x)), y0 = Math.min(...occupied.map((r) => r.y));
+        const x1 = Math.max(...occupied.map((r) => r.x + r.w)), y1 = Math.max(...occupied.map((r) => r.y + r.h));
+        this.drawDarkened(spriteDark, box.width, dpr, LIGHTING_CONFIG.objectGlow.spriteDarkness, () => eachTile(1),
+          { x: x0, y: y0, w: x1 - x0, h: y1 - y0 });
+      }
       this.drawDoorWash();
     } else eachTile(1);
     if (!g.run.outside) this.drawSpriteLighting(now);
@@ -1148,14 +1167,33 @@ export class Renderer {
    * multiplies a softened copy of the darkness over just their pixels, then
    * lays them on the scene: they stay a little brighter than the stone. */
   drawDarkened(dark: HTMLCanvasElement, viewportSize: number, dpr: number, amount: number, drawContents: () => void,
-    region?: { x: number; y: number; w: number; h: number }) {
+    region?: Rect | Rect[]) {
     const main = this.ctx, w = main.canvas.width, h = main.canvas.height;
-    // Work only inside `region` (CSS pixels) when given: every step below is
-    // a full-canvas blit otherwise, which is costly for a one-tile sprite.
-    const rx = region ? Math.max(0, Math.floor(region.x * dpr)) : 0, ry = region ? Math.max(0, Math.floor(region.y * dpr)) : 0;
-    const rw = (region ? Math.min(w, Math.ceil((region.x + region.w) * dpr)) : w) - rx;
-    const rh = (region ? Math.min(h, Math.ceil((region.y + region.h) * dpr)) : h) - ry;
-    if (rw <= 0 || rh <= 0) return;
+    // Work only inside `region` (CSS pixels; one box, or several whose union
+    // is used) when given: every step below is a full-canvas blit otherwise,
+    // which is costly when the sprites cover a small part of the board.
+    const boxes = (region ? (Array.isArray(region) ? region : [region]) : [{ x: 0, y: 0, w: w / dpr, h: h / dpr }])
+      .map((r) => {
+        const x = Math.max(0, Math.floor(r.x * dpr)), y = Math.max(0, Math.floor(r.y * dpr));
+        return { x, y, w: Math.min(w, Math.ceil((r.x + r.w) * dpr)) - x, h: Math.min(h, Math.ceil((r.y + r.h) * dpr)) - y };
+      })
+      .filter((r) => r.w > 0 && r.h > 0);
+    if (!boxes.length) return;
+    const rx = Math.min(...boxes.map((r) => r.x)), ry = Math.min(...boxes.map((r) => r.y));
+    const rw = Math.max(...boxes.map((r) => r.x + r.w)) - rx, rh = Math.max(...boxes.map((r) => r.y + r.h)) - ry;
+    // Each step runs clipped to the union (multiply must not run twice
+    // where boxes overlap).
+    const clipped = (c: CanvasRenderingContext2D, step: () => void) => {
+      c.save();
+      c.setTransform(1, 0, 0, 1, 0, 0);
+      if (boxes.length > 1) {
+        c.beginPath();
+        for (const b of boxes) c.rect(b.x, b.y, b.w, b.h);
+        c.clip();
+      }
+      step();
+      c.restore();
+    };
     const ensure = (cv: HTMLCanvasElement | null) => {
       const c = cv ?? document.createElement("canvas");
       if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
@@ -1165,42 +1203,44 @@ export class Renderer {
     this.contentsMaskCanvas = ensure(this.contentsMaskCanvas);
     const cc = this.contentsCanvas.getContext("2d"), mc = this.contentsMaskCanvas.getContext("2d");
     if (!cc || !mc) return drawContents();
-    cc.setTransform(1, 0, 0, 1, 0, 0);
+    const contents = this.contentsCanvas, mask = this.contentsMaskCanvas;
     cc.globalCompositeOperation = "source-over";
     cc.globalAlpha = 1;
-    cc.clearRect(rx, ry, rw, rh);
-    cc.save();
-    cc.beginPath();
-    cc.rect(rx, ry, rw, rh);
-    cc.clip();
-    cc.setTransform(dpr, 0, 0, dpr, 0, 0);
-    this.ctx = cc;
-    try {
-      drawContents();
-    } finally {
-      this.ctx = main;
-      cc.restore();
-    }
+    clipped(cc, () => {
+      cc.clearRect(rx, ry, rw, rh);
+      if (boxes.length === 1) {
+        cc.beginPath();
+        cc.rect(rx, ry, rw, rh);
+        cc.clip();
+      }
+      cc.setTransform(dpr, 0, 0, dpr, 0, 0);
+      this.ctx = cc;
+      try {
+        drawContents();
+      } finally {
+        this.ctx = main;
+      }
+    });
     // Keep the sprites' shape: multiply paints into empty pixels too, so
     // the original coverage is restored afterwards.
-    mc.setTransform(1, 0, 0, 1, 0, 0);
     mc.globalCompositeOperation = "source-over";
-    mc.clearRect(rx, ry, rw, rh);
-    mc.drawImage(this.contentsCanvas, rx, ry, rw, rh, rx, ry, rw, rh);
-    cc.setTransform(1, 0, 0, 1, 0, 0);
-    cc.globalCompositeOperation = "multiply";
-    cc.globalAlpha = amount;
+    clipped(mc, () => {
+      mc.clearRect(rx, ry, rw, rh);
+      mc.drawImage(contents, rx, ry, rw, rh, rx, ry, rw, rh);
+    });
     const k = viewportSize / w;
-    cc.drawImage(dark, rx * k, ry * k, rw * k, rh * k, rx, ry, rw, rh);
-    cc.globalCompositeOperation = "destination-in";
-    cc.globalAlpha = 1;
-    cc.drawImage(this.contentsMaskCanvas, rx, ry, rw, rh, rx, ry, rw, rh);
+    clipped(cc, () => {
+      cc.globalCompositeOperation = "multiply";
+      cc.globalAlpha = amount;
+      cc.drawImage(dark, rx * k, ry * k, rw * k, rh * k, rx, ry, rw, rh);
+      cc.globalCompositeOperation = "destination-in";
+      cc.globalAlpha = 1;
+      cc.drawImage(mask, rx, ry, rw, rh, rx, ry, rw, rh);
+    });
     cc.globalCompositeOperation = "source-over";
-    main.save();
-    main.setTransform(1, 0, 0, 1, 0, 0);
-    main.drawImage(this.contentsCanvas, rx, ry, rw, rh, rx, ry, rw, rh);
-    main.restore();
+    clipped(main, () => main.drawImage(contents, rx, ry, rw, rh, rx, ry, rw, rh));
   }
+
 
   /** Doors, stairs, items, and enemies in view, with their glow settings. */
   visibleGlowSources(now: number): GlowSource[] {

@@ -19,8 +19,9 @@ export class TileLayerCache {
   private y1 = -1;
   private incomplete = false;
   private builtAt = -Infinity;
-  /** When the current key was first painted. */
-  private keySince = -Infinity;
+  /** When the last repaint that wasn't a retry happened (a new key or a
+   * new area): retries of missing art count from here. */
+  private windowStart = -Infinity;
   /** How many repaints this cache has done (for tests and profiling). */
   builds = 0;
 
@@ -29,8 +30,9 @@ export class TileLayerCache {
     private margin = 4,
     /** How soon (ms) to retry an incomplete paint. */
     private retry = 250,
-    /** Stop retrying this long (ms) after the key changes: art that still
-     * hasn't loaded by then has failed, and the fallback stays. */
+    /** Stop retrying this long (ms) after the key or cached area changes:
+     * art that still hasn't loaded by then has failed, and the fallback
+     * stays. */
     private retryWindow = Infinity,
   ) {}
 
@@ -53,8 +55,10 @@ export class TileLayerCache {
     const vx0 = Math.floor(left) - 1, vx1 = Math.floor(left) + n, vy0 = Math.max(0, Math.floor(bottom) - 1), vy1 = Math.floor(bottom) + n;
     const covers = this.canvas && Math.max(vx0, xRange[0]) >= this.x0 && Math.min(vx1, xRange[1]) <= this.x1 && vy0 >= this.y0 && vy1 <= this.y1;
     const fullKey = `${key}|${s}|${dpr}`;
-    const retry = this.incomplete && now - this.builtAt > this.retry && now - this.keySince < this.retryWindow;
-    if (!covers || fullKey !== this.key || retry) {
+    const fresh = !covers || fullKey !== this.key;
+    const retry = this.incomplete && now - this.builtAt > this.retry && now - this.windowStart < this.retryWindow;
+    if (fresh || retry) {
+      if (fresh) this.windowStart = now;
       this.build(view, dpr, fullKey, now, xRange, paint);
     }
     if (!this.canvas) return;
@@ -97,7 +101,6 @@ export class TileLayerCache {
         ctx.restore();
       }
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    if (key !== this.key) this.keySince = now;
     this.key = key;
     this.incomplete = !complete;
     this.builtAt = now;

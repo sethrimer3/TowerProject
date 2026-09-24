@@ -792,7 +792,7 @@ function renderPage() {
 
   if (tab === "settings") {
     el("settings").innerHTML =
-      `<div class="page-title"><small>MAKE THE ASCENT YOUR OWN</small><h2>Settings</h2></div><label class="setting">Automove speed<select id="speed">${[1, 3, 6, 10].map((n) => `<option ${game.save.settings.speed === n ? "selected" : ""} value="${n}">${n} steps / sec</option>`).join("")}</select></label><label class="setting">Movement transition<select id="transition">${(["smooth", "fast", "instant"] as const).map((mode) => `<option value="${mode}" ${game.save.settings.transition === mode ? "selected" : ""}>${mode === "instant" ? "Off (instant)" : mode === "fast" ? "Fast" : "Smooth"}</option>`).join("")}</select></label><label class="setting">Brightness<span class="range-setting"><input type="range" id="brightness" min="20" max="100" step="5" value="${game.save.settings.brightness ?? 100}" aria-label="Dungeon brightness"><output id="brightness-value">${game.save.settings.brightness ?? 100}</output></span></label><label class="setting">Turn off Sprites<input type="checkbox" id="sprites-off" ${game.save.settings.spritesOff ? "checked" : ""}></label><label class="setting">Environment decor<input type="checkbox" id="decor" ${game.save.settings.decorOff ? "" : "checked"}></label><label class="setting">Show directional buttons<input type="checkbox" id="arrows" ${game.save.settings.showArrows ? "checked" : ""}></label><label class="setting">Reduce motion<input type="checkbox" id="motion" ${game.save.settings.reduceMotion ? "checked" : ""}></label><label class="setting">Weather sounds<input type="checkbox" id="weather-sound" ${game.save.settings.weatherSound !== false ? "checked" : ""}></label><label class="setting">Tile info display<select id="info-display">${([["both", "Popup + status line"], ["popup", "Popup only"], ["status", "Status line only"], ["none", "Off"]] as const).map(([mode, label]) => `<option value="${mode}" ${(game.save.settings.infoDisplay ?? "both") === mode ? "selected" : ""}>${label}</option>`).join("")}</select></label><label class="setting">Move with one tap<input type="checkbox" id="one-tap" ${game.save.settings.oneTapMove ? "checked" : ""}></label><label class="setting">Dev mode (unlimited currency, all floors &amp; modes unlocked)<input type="checkbox" id="dev-mode" ${game.save.settings.devMode ? "checked" : ""}></label><p class="hint">Automation pauses outside the board tabs and while the browser is hidden. Progress saves after each action.</p><button class="wide" id="retire">Retire this ${game.mode === "tower" ? "ascent" : "delve"}</button><p class="hint">Keep your milestone rewards and enter a freshly generated ${game.mode === "tower" ? "tower" : "descent"}.</p><button class="wide danger" id="erase">Erase all progress</button><p class="seed">RUN SEED · ${game.run.seed}</p>`;
+      `<div class="page-title"><small>MAKE THE ASCENT YOUR OWN</small><h2>Settings</h2></div><label class="setting">Automove speed<select id="speed">${[1, 3, 6, 10].map((n) => `<option ${game.save.settings.speed === n ? "selected" : ""} value="${n}">${n} steps / sec</option>`).join("")}</select></label><label class="setting">Movement transition<select id="transition">${(["smooth", "fast", "instant"] as const).map((mode) => `<option value="${mode}" ${game.save.settings.transition === mode ? "selected" : ""}>${mode === "instant" ? "Off (instant)" : mode === "fast" ? "Fast" : "Smooth"}</option>`).join("")}</select></label><label class="setting">Brightness<span class="range-setting"><input type="range" id="brightness" min="20" max="100" step="5" value="${game.save.settings.brightness ?? 100}" aria-label="Dungeon brightness"><output id="brightness-value">${game.save.settings.brightness ?? 100}</output></span></label><label class="setting">Turn off Sprites<input type="checkbox" id="sprites-off" ${game.save.settings.spritesOff ? "checked" : ""}></label><label class="setting">Environment decor<input type="checkbox" id="decor" ${game.save.settings.decorOff ? "" : "checked"}></label><label class="setting">Battery saver (30 fps while idle)<input type="checkbox" id="battery-saver" ${game.save.settings.batterySaver ? "checked" : ""}></label><label class="setting">Show directional buttons<input type="checkbox" id="arrows" ${game.save.settings.showArrows ? "checked" : ""}></label><label class="setting">Reduce motion<input type="checkbox" id="motion" ${game.save.settings.reduceMotion ? "checked" : ""}></label><label class="setting">Weather sounds<input type="checkbox" id="weather-sound" ${game.save.settings.weatherSound !== false ? "checked" : ""}></label><label class="setting">Tile info display<select id="info-display">${([["both", "Popup + status line"], ["popup", "Popup only"], ["status", "Status line only"], ["none", "Off"]] as const).map(([mode, label]) => `<option value="${mode}" ${(game.save.settings.infoDisplay ?? "both") === mode ? "selected" : ""}>${label}</option>`).join("")}</select></label><label class="setting">Move with one tap<input type="checkbox" id="one-tap" ${game.save.settings.oneTapMove ? "checked" : ""}></label><label class="setting">Dev mode (unlimited currency, all floors &amp; modes unlocked)<input type="checkbox" id="dev-mode" ${game.save.settings.devMode ? "checked" : ""}></label><p class="hint">Automation pauses outside the board tabs and while the browser is hidden. Progress saves after each action.</p><button class="wide" id="retire">Retire this ${game.mode === "tower" ? "ascent" : "delve"}</button><p class="hint">Keep your milestone rewards and enter a freshly generated ${game.mode === "tower" ? "tower" : "descent"}.</p><button class="wide danger" id="erase">Erase all progress</button><p class="seed">RUN SEED · ${game.run.seed}</p>`;
     (el("speed") as HTMLSelectElement).onchange = (e) => {
       game.save.settings.speed = Number((e.target as HTMLSelectElement).value);
       save();
@@ -814,6 +814,10 @@ function renderPage() {
     };
     (el("decor") as HTMLInputElement).onchange = (e) => {
       game.save.settings.decorOff = !(e.target as HTMLInputElement).checked;
+      save();
+    };
+    (el("battery-saver") as HTMLInputElement).onchange = (e) => {
+      game.save.settings.batterySaver = (e.target as HTMLInputElement).checked;
       save();
     };
     (el("weather-sound") as HTMLInputElement).onchange = (e) => {
@@ -1194,6 +1198,7 @@ bindInput(
   },
   () => isBoard(tab),
 );
+let lastBoardDraw = -Infinity;
 function frame(time: number) {
   if (!document.hidden && tab === "upgrades") {
     const canvas = document.querySelector<HTMLCanvasElement>(".tree-particles");
@@ -1201,7 +1206,12 @@ function frame(time: number) {
     if (canvas) treeParticles.draw(canvas, time, tree.id, tree.nodes, treeTooltipVisible ? selectedSkill : null, game.save.settings.reduceMotion);
   }
   if (!document.hidden && isBoard(tab)) {
-    renderer.draw(time);
+    // Battery saver: while nothing is moving, draw every other frame.
+    const skip = game.save.settings.batterySaver && time - lastBoardDraw < 30 && renderer.isIdle(time);
+    if (!skip) {
+      renderer.draw(time);
+      lastBoardDraw = time;
+    }
     if (
       game.route.length &&
       !game.paused &&

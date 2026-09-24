@@ -223,3 +223,73 @@ test("environment decor is on by default and its toggle persists", () => {
   assert.equal(decode(JSON.stringify({ version: 3, settings: { decorOff: "yes" } })).settings.decorOff, false);
   assert.equal(decode(JSON.stringify({ version: 3, settings: {} })).settings.decorOff, false);
 });
+
+test("battery saver is off by default and persists", () => {
+  assert.equal(defaults().settings.batterySaver, false);
+  assert.equal(decode(JSON.stringify({ version: 3, settings: { batterySaver: true } })).settings.batterySaver, true);
+  assert.equal(decode(JSON.stringify({ version: 3, settings: { batterySaver: 1 } })).settings.batterySaver, false);
+});
+
+test("the foreground pass is skipped when it has nothing to draw, and busy tracks live effects", () => {
+  let room = -1, at: [number, number] = [0, 0];
+  for (let r = 0; r < 200 && room < 0; r++) {
+    const src = decorSourceFor(fakeRoom(r), 99)!;
+    eachTile((x, y) => { if (room < 0 && tileDecor(src, x, y).crates.length && !tileDecor(src, x, y).water) { room = r; at = [x, y]; } });
+  }
+  const board = fakeRoom(room), layer = new DecorLayer(), tileAt = (x: number, y: number) => board.tile(x, y);
+  const view = { left: 0, bottom: 0, n: 17, s: 24 };
+  layer.sync(board, 99);
+  // Stand on bare floor far from the crate: nothing in front of the hero.
+  let spot: [number, number] | null = null;
+  const src = layer.src!;
+  eachTile((x, y) => {
+    const d = tileDecor(src, x, y);
+    if (!spot && board.tile(x, y).kind === "floor" && d.empty && !waterAt(src, x * TILE_PX + 12, -y * TILE_PX + 21) && Math.hypot(x - at[0], y - at[1]) > 3) spot = [x, y];
+  });
+  for (let k = 0; k < 10; k++) layer.update(0.016, 1000 + k * 16, spot![0], spot![1], tileAt, true);
+  assert.equal(layer.foregroundBounds(view, 2000, tileAt, true), null);
+  assert.equal(layer.busy, false);
+  // Breaking a crate throws pieces: now there is something to draw.
+  layer.update(0.016, 3000, at[0], at[1], tileAt, false);
+  const box = layer.foregroundBounds(view, 3000, tileAt, false);
+  assert.ok(box && box.x1 > box.x0 && box.y1 > box.y0);
+  assert.equal(layer.busy, true);
+  for (let k = 0; k < 400; k++) layer.update(0.016, 3000 + k * 16, at[0], at[1], tileAt, false);
+  assert.equal(layer.busy, false, "settled splinters don't keep the board busy");
+});
+
+test("the tile cache repaints only when the view leaves it, the key changes, or art is missing", async () => {
+  const { TileLayerCache } = await import("../src/tile-cache.ts");
+  const ctx = new Proxy({}, { get: () => () => {}, set: () => true }) as unknown as CanvasRenderingContext2D;
+  const g = globalThis as { document?: unknown };
+  const had = g.document;
+  g.document = { createElement: () => ({ width: 0, height: 0, getContext: () => ctx }) };
+  try {
+    const cache = new TileLayerCache(4, 250, 1000);
+    let painted = 0, ready = true;
+    const paint = () => { painted++; return ready; };
+    const view = { left: 5, bottom: 10, n: 17, s: 20 };
+    cache.draw(ctx, view, 2, "a", 0, [-64, 191], paint);
+    assert.equal(cache.builds, 1);
+    assert.ok(painted > 17 * 17);
+    // Small camera moves stay inside the margin.
+    cache.draw(ctx, { ...view, left: 7.5, bottom: 12.2 }, 2, "a", 16, [-64, 191], paint);
+    assert.equal(cache.builds, 1);
+    // Leaving the cached area, or a new key, repaints.
+    cache.draw(ctx, { ...view, bottom: 20 }, 2, "a", 32, [-64, 191], paint);
+    assert.equal(cache.builds, 2);
+    cache.draw(ctx, { ...view, bottom: 20 }, 2, "b", 48, [-64, 191], paint);
+    assert.equal(cache.builds, 3);
+    // Missing art is retried after the retry delay, but not forever.
+    ready = false;
+    cache.draw(ctx, view, 2, "c", 100, [-64, 191], paint);
+    cache.draw(ctx, view, 2, "c", 200, [-64, 191], paint);
+    assert.equal(cache.builds, 4);
+    cache.draw(ctx, view, 2, "c", 400, [-64, 191], paint);
+    assert.equal(cache.builds, 5);
+    cache.draw(ctx, view, 2, "c", 2000, [-64, 191], paint);
+    assert.equal(cache.builds, 5, "gives up after the retry window");
+  } finally {
+    g.document = had;
+  }
+});

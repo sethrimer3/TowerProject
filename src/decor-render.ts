@@ -136,6 +136,10 @@ export class DecorLayer {
     mask: HTMLCanvasElement; mctx: CanvasRenderingContext2D; maskKey: string;
     /** What the finished reflection in `out` shows, while it can be reused. */
     frameKey: string;
+    /** Rows of the mask with any water, for the whole-row copies. */
+    waterRows?: Uint8Array;
+    /** When `out` was last redrawn. */
+    builtAt?: number;
   } | null = null;
   /** Tiles planned per frame at most, so entering a room never stalls. */
   planBudget = 60;
@@ -632,6 +636,9 @@ export class DecorLayer {
         for (let j = 0; j < TILE_PX; j++)
           for (let i = 0; i < TILE_PX; i++)
             if (d.water![j * TILE_PX + i] === 1) m[((-y * TILE_PX + j - oy) * W + x * TILE_PX + i - ox) * 4 + 3] = 255;
+      buf.waterRows = new Uint8Array(H);
+      for (let r = 0; r < H; r++)
+        for (let q = 0; q < W; q++) if (m[(r * W + q) * 4 + 3]) { buf.waterRows[r] = 1; break; }
       buf.mctx.clearRect(0, 0, buf.mask.width, buf.mask.height);
       buf.mctx.putImageData(img, 0, 0);
     }
@@ -658,6 +665,8 @@ export class DecorLayer {
     }
     // Between ripples, the picture only changes when something mirrored
     // moves or the shimmer steps (ten times a second): reuse the last one.
+    // While rings pass, it is redrawn at most 30 times a second (the rings
+    // drawn on the surface itself still move every frame).
     const waves = reduceMotion ? [] : this.waves(v, now);
     const tick = reduceMotion ? 0 : Math.floor(now / 100);
     const frameKey = `${stillKey}|${reflections?.key ?? ""}|${tick}`;
@@ -667,8 +676,9 @@ export class DecorLayer {
       c.drawImage(buf.out, 0, 0, W, H, ox, oy, W, H);
       c.restore();
     };
-    if (!waves.length && frameKey === buf.frameKey) return blit();
-    buf.frameKey = waves.length ? "" : frameKey;
+    if (frameKey === buf.frameKey && (!waves.length || now - (buf.builtAt ?? -Infinity) < 1000 / 30)) return blit();
+    buf.frameKey = frameKey;
+    buf.builtAt = now;
     const { sctx, octx } = buf;
     sctx.setTransform(1, 0, 0, 1, 0, 0);
     sctx.globalAlpha = 1;
@@ -678,15 +688,16 @@ export class DecorLayer {
     const flip = (base: number) => sctx.setTransform(1, 0, 0, -1, -ox, 2 * base - oy);
     paint?.({ ctx: sctx, flip, tiles, near, phase: "moving" });
     sctx.setTransform(1, 0, 0, 1, 0, 0);
-    // Copy the mirror image back in strips, each pushed along the rings
-    // passing through it: whole-tile strips, or 4-pixel ones near a ring.
+    // Copy the mirror image back in strips: whole rows across the pools,
+    // shifted by the shimmer, then 4-pixel strips on the tiles a ring is
+    // crossing, each pushed along the rings passing through it.
     octx.setTransform(1, 0, 0, 1, 0, 0);
     octx.globalAlpha = 1;
     octx.globalCompositeOperation = "source-over";
     octx.clearRect(0, 0, W, H);
     const t = tick / 10, R = REFLECTION;
     const shift = (gx: number, gy: number) => {
-      let dx = reduceMotion ? 0 : Math.sin(t * 1.7 + gy * 0.8 + gx * 0.07) * R.shimmer, dy = 0;
+      let dx = reduceMotion ? 0 : Math.sin(t * 1.7 + gy * 0.8) * R.shimmer, dy = 0;
       for (const w of waves) {
         const ex = gx - w.gx, ey = (gy - w.gy) / 0.62, dist = Math.hypot(ex, ey), off = dist - w.r;
         if (Math.abs(off) >= R.rippleWidth || dist < 0.5) continue;
@@ -696,22 +707,28 @@ export class DecorLayer {
       }
       return [Math.round(dx), Math.round(dy)];
     };
+    for (let r = 0; r < H; r++) {
+      if (!buf.waterRows?.[r]) continue;
+      const [dx] = shift(0, oy + r);
+      if (dx >= 0) octx.drawImage(buf.src, dx, r, W - dx, 1, 0, r, W - dx, 1);
+      else octx.drawImage(buf.src, 0, r, W + dx, 1, -dx, r, W + dx, 1);
+    }
     for (const [x, y, d] of pools) {
       const tx = x * TILE_PX, ty = -y * TILE_PX, bx = tx - ox, by = ty - oy;
       // Rings reach this tile if its center is within their band.
       const cx = tx + 12, cy = ty + 12;
-      const rippled = waves.some((w) => Math.abs(Math.hypot(cx - w.gx, (cy - w.gy) / 0.62) - w.r) < R.rippleWidth + 20);
-      const seg = rippled ? 4 : TILE_PX;
+      if (!waves.some((w) => Math.abs(Math.hypot(cx - w.gx, (cy - w.gy) / 0.62) - w.r) < R.rippleWidth + 20)) continue;
+      octx.clearRect(bx, by, TILE_PX, TILE_PX);
       const water = d.water!;
       for (let j = 0; j < TILE_PX; j++) {
-        for (let i = 0; i < TILE_PX; i += seg) {
+        for (let i = 0; i < TILE_PX; i += 4) {
           let hasWater = false;
-          for (let k = i; k < i + seg && !hasWater; k++) hasWater = water[j * TILE_PX + k] === 1;
+          for (let k = i; k < i + 4 && !hasWater; k++) hasWater = water[j * TILE_PX + k] === 1;
           if (!hasWater) continue;
-          const [dx, dy] = shift(tx + i + seg / 2, ty + j);
+          const [dx, dy] = shift(tx + i + 2, ty + j);
           const sx = bx + i + dx, sy = by + j + dy;
-          if (sy < 0 || sy >= H || sx + seg <= 0 || sx >= W) continue;
-          octx.drawImage(buf.src, sx, sy, seg, 1, bx + i, by + j, seg, 1);
+          if (sy < 0 || sy >= H || sx + 4 <= 0 || sx >= W) continue;
+          octx.drawImage(buf.src, sx, sy, 4, 1, bx + i, by + j, 4, 1);
         }
       }
     }

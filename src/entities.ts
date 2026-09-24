@@ -92,6 +92,9 @@ export type Settings = {
   /** Hide the procedural environment dressing: moss, vines, plants, crates,
    * pools, and the forest's wind-blown grass. */
   decorOff?: boolean;
+  /** Draw the board at 30 frames a second, instead of 60, whenever nothing
+   * on it is moving. */
+  batterySaver?: boolean;
   transition: "smooth" | "fast" | "instant";
   showArrows: boolean;
   speed: number;

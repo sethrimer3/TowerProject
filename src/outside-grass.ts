@@ -63,9 +63,28 @@ export class OutsideGrass {
     return b;
   }
 
+  private builtAt = -Infinity;
+  private builtArea = "";
+  private area: { key: string; x0: number; x1: number; y0: number; y1: number } | null = null;
+
+  /** The span of tiles in view that carry grass, or null if none do. */
+  private grassArea(view: { left: number; bottom: number; n: number }, seed: number, center: number, world: Board) {
+    const key = `${this.planKey}|${Math.floor(view.left)},${Math.floor(view.bottom)},${view.n}`;
+    if (this.area?.key === key) return this.area;
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    for (let row = -1; row <= view.n; row++)
+      for (let col = -1; col <= view.n; col++) {
+        const x = col + Math.floor(view.left), y = Math.floor(view.bottom) + row;
+        if (y < 0 || !this.blades(x, y, seed, center, world).length) continue;
+        x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y);
+      }
+    this.area = x0 === Infinity ? null : { key, x0, x1, y0, y1 };
+    return this.area;
+  }
+
   private pixelBuffer(w: number, h: number) {
     if (typeof document === "undefined") return null;
-    if (!this.buffer || this.buffer.canvas.width !== w || this.buffer.canvas.height !== h) {
+    if (!this.buffer || this.buffer.img.width !== w || this.buffer.img.height !== h) {
       const canvas = document.createElement("canvas");
       canvas.width = w; canvas.height = h;
       const ctx = canvas.getContext("2d");
@@ -106,11 +125,17 @@ export class OutsideGrass {
     // Blades rooted at or below the hero's feet, under its sprite, stand in
     // front of it.
     const inFront = (gx: number, gy: number) => gy >= feetY - 1 && gy <= feetY + 12 && gx >= feetX - 10 && gx <= feetX + 10;
-    // The buffer covers the visible tiles plus a one-tile margin all round.
-    const x0 = Math.floor(view.left) - 1, yTop = Math.floor(view.bottom) + view.n + 1;
-    const W = (view.n + 3) * PX, H = (view.n + 3) * PX, ox = x0 * PX, oy = -yTop * PX;
+    // The back buffer covers only the grassy tiles in view, plus a tile of
+    // room for blades leaning sideways or rising into the row above.
+    const area = back ? this.grassArea(view, seed, center, world) : null;
+    if (back && !area) return;
+    const ox = area ? (area.x0 - 1) * PX : 0, oy = area ? -(area.y1 + 1) * PX : 0;
+    const W = area ? (area.x1 - area.x0 + 3) * PX : 0, H = area ? (area.y1 - area.y0 + 2) * PX : 0;
     const buf = back ? this.pixelBuffer(W, H) : null;
-    const px = buf?.px ?? null;
+    // Blades are recomputed at most 30 times a second; frames in between
+    // reuse the last picture.
+    const fresh = !back || !buf || reduceMotion || now - this.builtAt >= 1000 / 30 || this.builtArea !== area?.key;
+    const px = fresh ? buf?.px ?? null : null;
     const rects: number[] = [];
     const put = (color: number, x: number, y: number, h: number) => {
       if (!px) { rects.push(color, x, y, h); return; }
@@ -119,9 +144,10 @@ export class OutsideGrass {
       for (let yy = Math.max(0, y - oy), end = Math.min(H, y - oy + h); yy < end; yy++) px[yy * W + bx] = PALETTE32[color];
     };
     px?.fill(0);
+    if (back && buf && fresh) { this.builtAt = now; this.builtArea = area!.key; }
     const rows = back ? [-1, view.n] : [Math.round(hy) - 1 - Math.floor(view.bottom), Math.round(hy) - Math.floor(view.bottom)];
     const cols = back ? [-1, view.n] : [Math.round(hx) - 1 - Math.floor(view.left), Math.round(hx) + 1 - Math.floor(view.left)];
-    for (let row = rows[0]; row <= rows[1]; row++)
+    if (fresh) for (let row = rows[0]; row <= rows[1]; row++)
       for (let col = cols[0]; col <= cols[1]; col++) {
         const x = col + Math.floor(view.left), y = Math.floor(view.bottom) + row;
         if (y < 0) continue;
@@ -171,9 +197,9 @@ export class OutsideGrass {
     c.translate(-view.left * view.s, (view.n - 1 + view.bottom) * view.s);
     c.scale(view.s / PX, view.s / PX);
     if (buf) {
-      buf.ctx.putImageData(buf.img, 0, 0);
+      if (fresh) buf.ctx.putImageData(buf.img, 0, 0);
       c.imageSmoothingEnabled = false;
-      c.drawImage(buf.canvas, ox, oy);
+      c.drawImage(buf.canvas, 0, 0, W, H, ox, oy, W, H);
     } else {
       // The few blades in front of the hero (or no DOM canvas): plain rects.
       for (let k = 0; k < rects.length; k += 4) {
