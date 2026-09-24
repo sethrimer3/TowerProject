@@ -8,6 +8,7 @@
 import {
   BOMB_PRICE,
   BOMB_RADIUS,
+  SPEED3_PRICE,
   PALETTE_ITEMS,
   STRUCTURES,
   UPGRADES,
@@ -35,7 +36,7 @@ import { generateCity, type CityMap } from "./citygen.ts";
 import { DefendSim } from "./sim.ts";
 import { DefendRenderer, paintIcon, type Overlay } from "./render.ts";
 import { rollWeather, type Weather } from "./weather.ts";
-import { available, buyBomb, buyItem, buyUpgrade, canAfford, type DefendSave, type Wallet } from "./progress.ts";
+import { available, buyBomb, buyItem, buySpeed3, buyUpgrade, canAfford, type DefendSave, type Wallet } from "./progress.ts";
 
 export type DefendHost = {
   save(): DefendSave;
@@ -82,6 +83,11 @@ export class DefendPage {
   private newRecord = 0;
   private built = false;
   private weather: Weather | null = null;
+  /** Abandon needs a second click within a few seconds. */
+  private abandonArmed = 0;
+  private settingsOpen = false;
+  /** Board pointers for panning and pinch-zooming (client coords). */
+  private touches = new Map<number, { x: number; y: number }>();
 
   constructor(root: HTMLElement, host: DefendHost) {
     this.root = root;
@@ -89,7 +95,10 @@ export class DefendPage {
     window.addEventListener("resize", () => this.layoutBoard());
     window.addEventListener("pointermove", (e) => this.onPointerMove(e));
     window.addEventListener("pointerup", (e) => this.onPointerUp(e));
-    window.addEventListener("pointercancel", () => this.endDrag());
+    window.addEventListener("pointercancel", (e) => {
+      this.touches.delete(e.pointerId);
+      this.endDrag();
+    });
   }
 
   /** Called when the DEFEND tab is shown (or its data changed elsewhere). */
@@ -144,63 +153,95 @@ export class DefendPage {
     this.built = true;
     this.root.innerHTML = `
       <div class="defend-head">
-        <div class="defend-tabs" role="tablist">
-          <button data-dtab="city" role="tab">City</button>
-          <button data-dtab="armory" role="tab">Armory</button>
-        </div>
+        <div class="defend-left" id="defend-left"></div>
         <div class="defend-hud" id="defend-hud"></div>
+        <button class="defend-cog" id="defend-cog" aria-label="Defend settings" aria-expanded="false">⚙</button>
+        <div class="defend-settings" id="defend-settings" hidden></div>
       </div>
       <div class="defend-city" id="defend-city">
-        <div class="defend-controls" id="defend-controls"></div>
         <div class="defend-stage" id="defend-stage">
           <div class="defend-palette" id="defend-palette"></div>
-          <div class="defend-board" id="defend-board"><canvas id="defend-canvas" aria-label="City defense board"></canvas>
-            <div class="defend-banner" id="defend-banner" hidden></div></div>
+          <div class="defend-board" id="defend-board"><canvas id="defend-canvas" aria-label="City defense board. Scroll or pinch to zoom, drag to pan."></canvas>
+            <div class="defend-banner" id="defend-banner" hidden></div>
+            <div class="defend-message" id="defend-message" aria-live="polite"></div></div>
         </div>
-        <div class="defend-message" id="defend-message" aria-live="polite"></div>
       </div>
       <div class="defend-armory" id="defend-armory" hidden></div>`;
     this.renderer = new DefendRenderer(this.root.querySelector("#defend-canvas")!);
-    this.root.querySelectorAll<HTMLButtonElement>("[data-dtab]").forEach((b) => {
-      b.onclick = () => {
-        this.tab = b.dataset.dtab as "city" | "armory";
-        this.renderChrome();
-        requestAnimationFrame(() => this.layoutBoard());
-      };
-    });
     const canvas = this.renderer.canvas;
     canvas.addEventListener("pointerdown", (e) => this.onBoardPointerDown(e));
+    canvas.addEventListener(
+      "wheel",
+      (e) => {
+        e.preventDefault();
+        this.renderer!.zoomAt(e.clientX, e.clientY, Math.exp(-e.deltaY * 0.0015));
+      },
+      { passive: false },
+    );
+    const cog = this.root.querySelector<HTMLButtonElement>("#defend-cog")!;
+    cog.onclick = (e) => {
+      e.stopPropagation();
+      this.settingsOpen = !this.settingsOpen;
+      this.renderSettings();
+    };
+    document.addEventListener("click", (e) => {
+      if (this.settingsOpen && !(e.target as HTMLElement).closest?.("#defend-settings, #defend-cog")) {
+        this.settingsOpen = false;
+        this.renderSettings();
+      }
+    });
   }
 
   private renderChrome() {
-    this.root.querySelectorAll<HTMLButtonElement>("[data-dtab]").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.dtab === this.tab)));
     this.root.querySelector<HTMLElement>("#defend-city")!.hidden = this.tab !== "city";
     this.root.querySelector<HTMLElement>("#defend-armory")!.hidden = this.tab !== "armory";
     this.root.querySelector("#defend-stage")!.classList.toggle("palette-right", this.save.paletteSide === "right");
     this.renderControls();
     this.renderPalette();
+    this.renderSettings();
     this.updateHud();
     if (this.tab === "armory") this.renderArmory();
   }
 
+  /** The single row of controls on the left of the header. */
   private renderControls() {
-    const el = this.root.querySelector<HTMLElement>("#defend-controls")!;
+    const el = this.root.querySelector<HTMLElement>("#defend-left")!;
     if (this.phase === "build") {
-      el.innerHTML = `<button class="defend-go" id="defend-start">Start the defense</button>
-        <button id="defend-swap" title="Move the palette to the other side">⇄ Palette</button>`;
-      el.querySelector<HTMLButtonElement>("#defend-start")!.onclick = () => this.startRun();
-    } else if (this.phase === "sim") {
-      const speed = this.sim?.speed ?? 1;
-      el.innerHTML = `${[1, 2, 3].map((s) => `<button data-speed="${s}" aria-pressed="${s === speed}">${s}×</button>`).join("")}
-        <button id="defend-swap" title="Move the palette to the other side">⇄ Palette</button>
-        <button id="defend-abandon" class="defend-danger">Abandon</button>`;
-      el.querySelectorAll<HTMLButtonElement>("[data-speed]").forEach((b) => {
+      el.innerHTML = `<button data-dtab="city" aria-pressed="${this.tab === "city"}">City</button>
+        <button data-dtab="armory" aria-pressed="${this.tab === "armory"}">Armory</button>
+        <button class="defend-go" id="defend-start">Start the defense</button>`;
+      el.querySelectorAll<HTMLButtonElement>("[data-dtab]").forEach((b) => {
         b.onclick = () => {
-          if (this.sim) this.sim.speed = Number(b.dataset.speed);
-          this.renderControls();
+          this.tab = b.dataset.dtab as "city" | "armory";
+          this.renderChrome();
+          requestAnimationFrame(() => this.layoutBoard());
         };
       });
-      el.querySelector<HTMLButtonElement>("#defend-abandon")!.onclick = () => this.endRun();
+      el.querySelector<HTMLButtonElement>("#defend-start")!.onclick = () => {
+        this.tab = "city";
+        this.startRun();
+        requestAnimationFrame(() => this.layoutBoard());
+      };
+    } else if (this.phase === "sim") {
+      const armed = performance.now() < this.abandonArmed;
+      el.innerHTML = `<button id="defend-abandon" class="defend-danger ${armed ? "armed" : ""}">${armed ? "Confirm?" : "Abandon"}</button>
+        <button id="defend-speed" title="Battle speed">${this.sim?.speed ?? 1}×</button>`;
+      el.querySelector<HTMLButtonElement>("#defend-abandon")!.onclick = () => {
+        if (performance.now() < this.abandonArmed) {
+          this.abandonArmed = 0;
+          this.endRun();
+          return;
+        }
+        this.abandonArmed = performance.now() + 3000;
+        this.renderControls();
+        setTimeout(() => this.phase === "sim" && this.renderControls(), 3050);
+      };
+      el.querySelector<HTMLButtonElement>("#defend-speed")!.onclick = () => {
+        if (!this.sim) return;
+        const top = this.save.speed3 ? 3 : 2;
+        this.sim.speed = this.sim.speed >= top ? 1 : this.sim.speed + 1;
+        this.renderControls();
+      };
     } else {
       el.innerHTML = `<button class="defend-go" id="defend-rebuild">Rebuild the city</button>`;
       el.querySelector<HTMLButtonElement>("#defend-rebuild")!.onclick = () => {
@@ -212,13 +253,30 @@ export class DefendPage {
         this.renderChrome();
       };
     }
-    const swap = el.querySelector<HTMLButtonElement>("#defend-swap");
-    if (swap)
-      swap.onclick = () => {
-        this.save.paletteSide = this.save.paletteSide === "left" ? "right" : "left";
+  }
+
+  /** DEFEND-only settings, behind the cog. */
+  private renderSettings() {
+    const el = this.root.querySelector<HTMLElement>("#defend-settings");
+    const cog = this.root.querySelector<HTMLButtonElement>("#defend-cog");
+    if (!el || !cog) return;
+    el.hidden = !this.settingsOpen;
+    cog.setAttribute("aria-expanded", String(this.settingsOpen));
+    if (!this.settingsOpen) return;
+    const side = this.save.paletteSide;
+    el.innerHTML = `<small>DEFEND SETTINGS</small>
+      <div class="defend-setting"><span>Palette side</span><span class="defend-seg">
+        <button data-side="left" aria-pressed="${side === "left"}">Left</button><button data-side="right" aria-pressed="${side === "right"}">Right</button></span></div>
+      <div class="defend-setting"><span>Board view</span><button id="defend-reset-view">Reset zoom</button></div>
+      <p class="hint">Scroll or pinch to zoom; drag open ground to pan.</p>`;
+    el.querySelectorAll<HTMLButtonElement>("[data-side]").forEach((b) => {
+      b.onclick = () => {
+        this.save.paletteSide = b.dataset.side as "left" | "right";
         this.host.persist();
         this.renderChrome();
       };
+    });
+    el.querySelector<HTMLButtonElement>("#defend-reset-view")!.onclick = () => this.renderer?.resetCam();
   }
 
   private renderPalette() {
@@ -260,16 +318,15 @@ export class DefendPage {
     if (!el) return;
     const best = this.save.bestWave;
     if (this.phase === "build" || !this.sim) {
-      el.innerHTML = `<span>Best wave <b>${best}</b></span>`;
+      const html = `<span>Best wave <b>${best}</b></span>`;
+      if (el.innerHTML !== html) el.innerHTML = html;
       return;
     }
     const sim = this.sim;
     const hp = Math.max(0, sim.keepHp()),
       max = sim.keepMaxHp();
     const sky = this.weather ? (this.weather.night ? (this.weather.rain ? "Storm" : "Night") : this.weather.rain ? "Rain" : "") : "";
-    const html = `${sky ? `<span class="defend-sky">${sky}</span>` : ""}<span>Wave <b>${sim.wave}</b></span><span>Best <b>${best}</b></span>
-      <span class="defend-keep">Keep <i><em style="width:${(hp / max) * 100}%"></em></i> <b>${Math.ceil(hp)}</b></span>
-      <span>Foes <b>${sim.enemies.length + sim.spawnQueue.length}</b></span>`;
+    const html = `${sky ? `<span class="defend-sky">${sky}</span>` : ""}<span>Wave <b>${sim.wave}</b></span><span class="defend-best">Best <b>${best}</b></span><span class="defend-keep" title="Keep ${Math.ceil(hp)} / ${max}"><small>Keep</small><i><em style="width:${(hp / max) * 100}%"></em></i></span><span class="defend-foes">Foes <b>${sim.enemies.length + sim.spawnQueue.length}</b></span>`;
     if (el.innerHTML !== html) el.innerHTML = html;
   }
 
@@ -291,20 +348,25 @@ export class DefendPage {
   }
 
   /** Fit the board to the space left on screen: 9:13, as big as possible
-   * without scrolling. */
+   * without the page ever scrolling. */
   private layoutBoard() {
     if (!this.renderer || this.tab !== "city") return;
     const stage = this.root.querySelector<HTMLElement>("#defend-stage")!;
     const palette = this.root.querySelector<HTMLElement>("#defend-palette")!;
     const boardEl = this.root.querySelector<HTMLElement>("#defend-board")!;
     if (!stage.offsetParent) return;
-    const top = boardEl.getBoundingClientRect().top;
+    const top = boardEl.getBoundingClientRect().top + window.scrollY;
     const nav = document.querySelector("nav")?.getBoundingClientRect().height ?? 80;
-    const message = 26;
-    const availH = window.innerHeight - top - nav - message - 12;
+    const availH = window.innerHeight - top - nav - 16;
     const availW = stage.clientWidth - palette.offsetWidth - 10;
-    const width = Math.max(120, Math.floor(Math.min(availW, (availH * TILES_W) / TILES_H)));
+    let width = Math.max(120, Math.floor(Math.min(availW, (availH * TILES_W) / TILES_H)));
     this.renderer.resize(width);
+    // Whatever padding the page adds, shrink until nothing overflows.
+    const over = document.documentElement.scrollHeight - window.innerHeight;
+    if (over > 0) {
+      width = Math.max(120, Math.floor(width - (over * TILES_W) / TILES_H) - 1);
+      this.renderer.resize(width);
+    }
     this.draw();
   }
 
@@ -435,36 +497,81 @@ export class DefendPage {
   }
 
   private onBoardPointerDown(e: PointerEvent) {
-    if (e.button !== 0 || this.phase !== "build") return;
+    if (e.button !== 0) return;
+    // A second finger turns whatever was happening into a pinch.
+    if (this.touches.size || this.drag) {
+      if (this.drag && this.drag.from !== "bomb") this.endDrag();
+      this.touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      return;
+    }
+    if (this.phase === "build" && this.pickUp(e)) return;
+    this.touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  }
+
+  /** Start dragging whatever buildable thing is under the pointer. */
+  private pickUp(e: PointerEvent): boolean {
     const map = this.currentMap();
-    const { cx, cy } = this.eventCell(e);
+    const { cx, cy, inside } = this.eventCell(e);
+    if (!inside) return false;
     const i = cy * CELLS_W + cx;
     const owner = map.owner[i];
     const b = owner >= 0 ? map.buildings[owner] : null;
     const layout = this.save.layout;
-    if (b?.kind === "keep") return this.beginDrag({ from: "keep" }, e);
+    if (b?.kind === "keep") {
+      this.beginDrag({ from: "keep" }, e);
+      return true;
+    }
     if (b?.structureUid) {
       const s = layout.structures.find((p) => p.uid === b.structureUid);
-      if (s) return this.beginDrag({ from: "structure", uid: s.uid, kind: s.kind }, e);
+      if (s) {
+        this.beginDrag({ from: "structure", uid: s.uid, kind: s.kind }, e);
+        return true;
+      }
     }
     const tile = { tx: Math.floor(cx / SUB), ty: Math.floor(cy / SUB) };
     const key = tileKey(tile.tx, tile.ty);
-    if (layout.cityTiles.includes(key)) {
-      if (layout.structures.some((s) => s.tx === tile.tx && s.ty === tile.ty))
-        return this.setMessage("Move the buildings off this tile before moving the tile itself.");
-      if (!removeCityTile(layout, tile.tx, tile.ty)) return this.setMessage("That tile holds the city together — it can't be lifted.");
-      return this.beginDrag({ from: "cityTile", tile }, e);
+    // Empty city tiles lift; loaded or load-bearing ones leave the pointer
+    // free to pan the view instead.
+    if (layout.cityTiles.includes(key) && !layout.structures.some((s) => s.tx === tile.tx && s.ty === tile.ty) && removeCityTile(layout, tile.tx, tile.ty)) {
+      this.beginDrag({ from: "cityTile", tile }, e);
+      return true;
     }
+    return false;
   }
 
   private eventCell(e: PointerEvent) {
+    const { fx, fy } = this.renderer!.toCell(e.clientX, e.clientY);
+    const H = TILES_H * SUB;
     const r = this.renderer!.canvas.getBoundingClientRect();
-    const fx = ((e.clientX - r.left) / r.width) * CELLS_W;
-    const fy = ((e.clientY - r.top) / r.height) * (TILES_H * SUB);
-    return { cx: Math.max(0, Math.min(CELLS_W - 1, Math.floor(fx))), cy: Math.max(0, Math.min(TILES_H * SUB - 1, Math.floor(fy))), fx, fy, inside: fx >= 0 && fy >= 0 && fx < CELLS_W && fy < TILES_H * SUB };
+    const onCanvas = e.clientX >= r.left && e.clientX < r.right && e.clientY >= r.top && e.clientY < r.bottom;
+    return {
+      cx: Math.max(0, Math.min(CELLS_W - 1, Math.floor(fx))),
+      cy: Math.max(0, Math.min(H - 1, Math.floor(fy))),
+      fx,
+      fy,
+      inside: onCanvas && fx >= 0 && fy >= 0 && fx < CELLS_W && fy < H,
+    };
+  }
+
+  /** Board pointers: one drags the view, two pinch-zoom it. */
+  private trackTouch(e: PointerEvent) {
+    const before = [...this.touches.values()].map((p) => ({ ...p }));
+    this.touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    const after = [...this.touches.values()];
+    if (after.length >= 2) {
+      const [a, b] = before,
+        [c, d] = after;
+      this.renderer!.panBy((c.x + d.x - a.x - b.x) / 2, (c.y + d.y - a.y - b.y) / 2);
+      const d0 = Math.hypot(a.x - b.x, a.y - b.y);
+      if (d0 > 0) this.renderer!.zoomAt((c.x + d.x) / 2, (c.y + d.y) / 2, Math.hypot(c.x - d.x, c.y - d.y) / d0);
+    } else {
+      const prev = before[0];
+      this.renderer!.panBy(e.clientX - prev.x, e.clientY - prev.y);
+    }
   }
 
   private onPointerMove(e: PointerEvent) {
+    if (!this.drag && this.touches.has(e.pointerId)) return this.trackTouch(e);
     if (!this.drag || !this.renderer) return;
     this.dragMoved = true;
     const c = this.eventCell(e);
@@ -484,6 +591,7 @@ export class DefendPage {
   }
 
   private onPointerUp(e: PointerEvent) {
+    this.touches.delete(e.pointerId);
     if (!this.drag) return;
     this.onPointerMove(e);
     const d = this.drag;
@@ -552,6 +660,8 @@ export class DefendPage {
     }).join("");
     const bomb = `<article class="card defend-card"><canvas width="48" height="48" data-icon="bomb"></canvas><div><small>OWNED ${s.bombs}</small><h3>Bomb</h3><p>Drag onto the battlefield mid-defense to blast every enemy within ${BOMB_RADIUS.toFixed(0)} cells.</p></div>
       <button data-buy-bomb ${canAfford(w, BOMB_PRICE) ? "" : "disabled"}>Buy · ${price(BOMB_PRICE)}</button></article>`;
+    const speed = `<article class="card defend-card"><div><small>${s.speed3 ? "UNLOCKED" : "ONE-TIME UNLOCK"}</small><h3>War drums</h3><p>Adds 3× to the battle speed button.</p></div>
+      <button data-buy-speed3 ${s.speed3 || !canAfford(w, SPEED3_PRICE) ? "disabled" : ""}>${s.speed3 ? "Owned" : `Buy · ${price(SPEED3_PRICE)}`}</button></article>`;
     const groups = [...new Set(UPGRADES.map((u) => u.group))];
     const upgrades = groups
       .map(
@@ -571,6 +681,7 @@ export class DefendPage {
     el.innerHTML = `<p class="hint defend-wallet">Spend what you earn in the tower. <b>${w.gold}</b> gold · <b>${w.ironBar}</b> iron bars · <b>${w.steelBar}</b> steel bars${this.phase === "sim" ? " · upgrades apply from the next defense" : ""}</p>
       <h3 class="defend-section">City elements</h3>${items}
       <h3 class="defend-section">Consumables</h3>${bomb}
+      <h3 class="defend-section">Battle</h3>${speed}
       <h3 class="defend-section">Upgrades</h3><p class="hint">Upgrades apply to every building of that type.</p>${upgrades}`;
     el.querySelectorAll<HTMLCanvasElement>("canvas[data-icon]").forEach((c) => paintIcon(c, c.dataset.icon as StructureKind | "cityTile" | "bomb"));
     const commit = (ok: boolean) => {
@@ -581,6 +692,7 @@ export class DefendPage {
     };
     el.querySelectorAll<HTMLButtonElement>("[data-buy]").forEach((b) => (b.onclick = () => commit(buyItem(s, w, b.dataset.buy as PaletteItem))));
     el.querySelector<HTMLButtonElement>("[data-buy-bomb]")!.onclick = () => commit(buyBomb(s, w));
+    el.querySelector<HTMLButtonElement>("[data-buy-speed3]")!.onclick = () => commit(buySpeed3(s, w));
     el.querySelectorAll<HTMLButtonElement>("[data-upgrade]").forEach((b) => (b.onclick = () => commit(buyUpgrade(s, w, b.dataset.upgrade as (typeof UPGRADES)[number]["id"]))));
   }
 }

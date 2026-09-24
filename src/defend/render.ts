@@ -66,6 +66,10 @@ export class DefendRenderer {
   readonly lighting = new DefendLighting();
   private rain = new Rain();
   private lastNow = 0;
+  /** Camera: zoom `s` and translation (canvas pixels) applied to the whole
+   * board. s = 1 shows everything; the view is clamped to the board. */
+  readonly cam = { s: 1, x: 0, y: 0 };
+  static readonly MAX_ZOOM = 4;
   readonly canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
   private layer: HTMLCanvasElement;
@@ -96,6 +100,50 @@ export class DefendRenderer {
       this.layerKey = "";
     }
     this.px = w / CELLS_W;
+    this.clampCam();
+  }
+
+  /** Client (CSS) point → canvas pixels. */
+  private toCanvas(clientX: number, clientY: number) {
+    const r = this.canvas.getBoundingClientRect();
+    return { x: ((clientX - r.left) / r.width) * this.canvas.width, y: ((clientY - r.top) / r.height) * this.canvas.height };
+  }
+
+  /** Client point → board position in cells (through the camera). */
+  toCell(clientX: number, clientY: number) {
+    const p = this.toCanvas(clientX, clientY);
+    return { fx: (p.x - this.cam.x) / this.cam.s / this.px, fy: (p.y - this.cam.y) / this.cam.s / this.px };
+  }
+
+  /** Zoom by `factor`, keeping the board point under the client point fixed. */
+  zoomAt(clientX: number, clientY: number, factor: number) {
+    const p = this.toCanvas(clientX, clientY);
+    const s = Math.max(1, Math.min(DefendRenderer.MAX_ZOOM, this.cam.s * factor));
+    const k = s / this.cam.s;
+    this.cam.x = p.x - (p.x - this.cam.x) * k;
+    this.cam.y = p.y - (p.y - this.cam.y) * k;
+    this.cam.s = s;
+    this.clampCam();
+  }
+
+  /** Pan by a client-pixel delta. */
+  panBy(dx: number, dy: number) {
+    const r = this.canvas.getBoundingClientRect();
+    this.cam.x += (dx / r.width) * this.canvas.width;
+    this.cam.y += (dy / r.height) * this.canvas.height;
+    this.clampCam();
+  }
+
+  resetCam() {
+    this.cam.s = 1;
+    this.cam.x = this.cam.y = 0;
+  }
+
+  private clampCam() {
+    const W = this.canvas.width,
+      H = this.canvas.height;
+    this.cam.x = Math.min(0, Math.max(W - W * this.cam.s, this.cam.x));
+    this.cam.y = Math.min(0, Math.max(H - H * this.cam.s, this.cam.y));
   }
 
   draw(map: CityMap, sim: DefendSim | null, overlay: Overlay | null, opts: DrawOptions) {
@@ -110,6 +158,7 @@ export class DefendRenderer {
     this.lastNow = opts.now;
     const ctx = this.ctx;
     const px = this.px;
+    ctx.setTransform(this.cam.s, 0, 0, this.cam.s, this.cam.x, this.cam.y);
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(this.layer, 0, 0);
     const weather = sim ? opts.weather : null;
@@ -136,12 +185,14 @@ export class DefendRenderer {
       this.lighting.drawFlames(ctx, px, opts.now, opts.reduceMotion, intact);
     }
     if (sim) this.drawUnits(sim);
+    if (opts.grid) this.drawGrid(overlay ? 0.2 : 0.11);
+    if (overlay) this.drawOverlay(overlay);
+    // Rain falls in screen space, in front of the camera.
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     if (weather?.rain) {
       this.rain.update(dt, this.canvas.width, this.canvas.height);
       this.rain.draw(ctx, px);
     }
-    if (opts.grid) this.drawGrid(overlay ? 0.2 : 0.11);
-    if (overlay) this.drawOverlay(overlay);
   }
 
   /** Dim gold tile lines, shown only while the player is editing. */

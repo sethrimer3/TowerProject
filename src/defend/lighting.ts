@@ -477,6 +477,15 @@ function bakeLight(l: Light, map: CityMap, solid: Uint8Array, offsetX: number): 
     }
   }
   const values = blur(raw, cols, rows);
+  // Light lands on open ground only: standing buildings and wall stones stay
+  // unlit, so flames read as street-level, never hovering above the roofs.
+  for (let sy = 0; sy < rows; sy++) {
+    const cy = Math.floor(top + (sy + 0.5) / RES);
+    for (let sx = 0; sx < cols; sx++) {
+      const cx = Math.floor(left + (sx + 0.5) / RES);
+      if (cx >= 0 && cy >= 0 && cx < CELLS_W && cy < CELLS_H && solid[cellIndex(cx, cy)]) values[sy * cols + sx] = 0;
+    }
+  }
   const canvas = document.createElement("canvas");
   canvas.width = cols;
   canvas.height = rows;

@@ -3,6 +3,7 @@
  * it always starts fresh from the layout. */
 import {
   BOMB_PRICE,
+  SPEED3_PRICE,
   PALETTE_ITEMS,
   STARTING_OWNED,
   UPGRADES,
@@ -22,6 +23,8 @@ export type DefendSave = {
   bombs: number;
   bestWave: number;
   paletteSide: "left" | "right";
+  /** 3× battle speed has been bought in the Armory. */
+  speed3: boolean;
   /** Seed for the filler city, so the same layout always looks the same. */
   seed: number;
 };
@@ -34,6 +37,7 @@ export function defaultDefendSave(): DefendSave {
     bombs: 0,
     bestWave: 0,
     paletteSide: "left",
+    speed3: false,
     seed: 1 + Math.floor(Math.random() * 1e9),
   };
 }
@@ -74,6 +78,13 @@ export function buyUpgrade(save: DefendSave, w: Wallet, id: UpgradeId): boolean 
   return true;
 }
 
+export function buySpeed3(save: DefendSave, w: Wallet): boolean {
+  if (save.speed3 || !canAfford(w, SPEED3_PRICE)) return false;
+  pay(w, SPEED3_PRICE);
+  save.speed3 = true;
+  return true;
+}
+
 export function buyBomb(save: DefendSave, w: Wallet): boolean {
   if (!canAfford(w, BOMB_PRICE)) return false;
   pay(w, BOMB_PRICE);
@@ -93,6 +104,7 @@ export function decodeDefendSave(s: any): DefendSave {
   if (int(s.bombs, 0, 9999)) d.bombs = s.bombs;
   if (int(s.bestWave, 0, 1e6)) d.bestWave = s.bestWave;
   if (s.paletteSide === "right") d.paletteSide = "right";
+  if (s.speed3 === true) d.speed3 = true;
   if (int(s.seed, 0, 2 ** 32)) d.seed = s.seed;
   const l = decodeLayout(s.layout, d.owned);
   if (l) d.layout = l;

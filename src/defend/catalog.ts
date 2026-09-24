@@ -88,6 +88,7 @@ export type UpgradeId =
   | "barracksCapacity"
   | "barracksTraining"
   | "soldierArms"
+  | "soldierReach"
   | "archerDamage"
   | "archerRange"
   | "archerRate"
@@ -106,10 +107,20 @@ export type UpgradeDef = {
   describe: (level: number) => string;
 };
 
+/** At the top level of Patrol routes, swordsmen answer anywhere in the city. */
+export const SOLDIER_REACH_MAX = 4;
+
 export const UPGRADES: UpgradeDef[] = [
   { id: "barracksCapacity", group: "Barracks", name: "Garrison", maxLevel: 4, describe: (l) => `${2 + l} swordsmen per barracks` },
   { id: "barracksTraining", group: "Barracks", name: "Drill yard", maxLevel: 5, describe: (l) => `Train one every ${trainSeconds(l).toFixed(1)}s` },
   { id: "soldierArms", group: "Barracks", name: "Arms & armour", maxLevel: 6, describe: (l) => `+${l * 25}% soldier HP and damage` },
+  {
+    id: "soldierReach",
+    group: "Barracks",
+    name: "Patrol routes",
+    maxLevel: SOLDIER_REACH_MAX,
+    describe: (l) => (l >= SOLDIER_REACH_MAX ? "Swordsmen hunt anywhere in the city" : `Swordsmen hunt within ${soldierLeash(l)} cells`),
+  },
   { id: "archerDamage", group: "Archer tower", name: "Bodkin points", maxLevel: 6, describe: (l) => `${archerDamage(l)} damage per arrow` },
   { id: "archerRange", group: "Archer tower", name: "Longbows", maxLevel: 4, describe: (l) => `${archerRange(l)} cell range` },
   { id: "archerRate", group: "Archer tower", name: "Quick nock", maxLevel: 5, describe: (l) => `An arrow every ${archerCooldown(l).toFixed(2)}s` },
@@ -130,6 +141,8 @@ export function upgradePrice(level: number): Price {
 }
 
 export const BOMB_PRICE: Price = { gold: 60 };
+/** One-off unlock of the 3× battle speed. */
+export const SPEED3_PRICE: Price = { gold: 400, ironBar: 4 };
 export const BOMB_RADIUS = 3.2;
 export const BOMB_DAMAGE = 45;
 
@@ -137,6 +150,8 @@ export const BOMB_DAMAGE = 45;
 export const soldierCap = (l: number) => 2 + l;
 export const trainSeconds = (l: number) => 5 * Math.pow(0.85, l);
 export const soldierScale = (l: number) => 1 + l * 0.25;
+/** How far from their barracks swordsmen go after enemies (cells). */
+export const soldierLeash = (l: number) => (l >= SOLDIER_REACH_MAX ? Infinity : SOLDIER.leash + l * 7);
 export const archerDamage = (l: number) => 6 + l * 3;
 export const archerRange = (l: number) => 10 + l * 2;
 export const archerCooldown = (l: number) => 1.1 * Math.pow(0.85, l);

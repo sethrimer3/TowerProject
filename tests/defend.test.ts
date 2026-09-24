@@ -272,3 +272,39 @@ test('struck buildings flash', () => {
   for (let i = 0; i < 10; i++) sim.step(1 / 30);
   assert.equal(sim.flash[wall.id], 0);
 });
+
+test('patrol routes: max level sends swordsmen after enemies anywhere in the city', () => {
+  let l = squareCity();
+  // Stretch the city so its far end is well beyond the base leash.
+  for (let y = l.keep.ty + 2; y <= 12; y++) l = placeCityTile(l, l.keep.tx - 1, y) ?? l;
+  l = placeStructure(l, 'barracks', l.keep.tx + 1, l.keep.ty - 1)!;
+  const map = mapOf(l);
+  const far = (lv: number) => {
+    const levels = { ...zeroLevels(), soldierReach: lv };
+    const sim = new DefendSim(map, levels, 1);
+    for (let i = 0; i < 30 * 12; i++) sim.step(1 / 30);
+    sim.enemies = [];
+    sim.spawnQueue = [];
+    // An enemy on a street at the far end of the city.
+    let cell = -1;
+    for (let i = CELL_COUNT - 1; i >= 0 && cell < 0; i--) if (map.city[i] && map.type[i] === CellType.ROAD) cell = i;
+    const x = (cell % CELLS_W) + 0.5, y = Math.floor(cell / CELLS_W) + 0.5;
+    sim.enemies.push({ id: 9999, kind: 'ogre', x, y, hp: 1e9, maxHp: 1e9, cd: 99, jx: 0, jy: 0, distract: -1, distractT: 0, rollT: 99, marked: false, flash: 0 } as any);
+    for (let i = 0; i < 30; i++) {
+      (sim as any).indexEnemies();
+      for (const s of sim.soldiers) (sim as any).stepSoldier(s, 1 / 30);
+    }
+    return sim.soldiers.some((s) => s.target === 9999);
+  };
+  assert.equal(far(0), false, 'base patrols stay near the barracks');
+  assert.equal(far(4), true, 'citywide patrols hunt it down');
+});
+
+test('3× speed unlock is bought once and saved', async () => {
+  const { buySpeed3 } = await import('../src/defend/progress.ts');
+  const save = defaultDefendSave();
+  const wallet = { gold: 10_000, ironBar: 100, steelBar: 0 };
+  assert.ok(buySpeed3(save, wallet));
+  assert.equal(buySpeed3(save, wallet), false);
+  assert.equal(decodeDefendSave(JSON.parse(JSON.stringify(save))).speed3, true);
+});

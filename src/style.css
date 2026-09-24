@@ -1185,34 +1185,116 @@ nav button > span img { display: block; width: 42px; height: 42px; max-width: 10
 .ascent > span img { width: 24px; height: 24px; }
 .dpad button img { display: block; width: 22px; height: 22px; margin: auto; }
 /* ── DEFEND ─────────────────────────────────────────────────────────── */
+#defend.page {
+  min-height: 0;
+}
+/* One row only: controls on the left, status + settings cog on the right. */
 .defend-head {
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  flex-wrap: wrap;
+  gap: 8px;
+  flex-wrap: nowrap;
   margin-bottom: 8px;
 }
-.defend-tabs {
+.defend-left {
   display: flex;
-  gap: 4px;
+  gap: 5px;
+  flex: none;
 }
-.defend-tabs button {
-  padding: 6px 14px;
+.defend-left button,
+.defend-cog {
+  padding: 6px 11px;
   font-family: Cinzel, Georgia, serif;
   font-size: 12px;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
 }
-.defend-tabs button[aria-selected="true"] {
+.defend-left button[aria-pressed="true"] {
   border-color: var(--gold);
   color: #efd496;
   box-shadow: inset 0 -2px #d9ac5a;
 }
+.defend-danger.armed {
+  border-color: #d9635a;
+  background: #3a1a1a;
+  color: #ffb4ab;
+}
+.defend-cog {
+  flex: none;
+  padding: 6px 9px;
+  font-size: 15px;
+  line-height: 1;
+}
+.defend-cog[aria-expanded="true"] {
+  border-color: var(--gold);
+  color: #efd496;
+}
+.defend-settings {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  background: #121821;
+  border: 1px solid var(--gold);
+  box-shadow: 0 8px 30px #000a;
+}
+.defend-settings small {
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--muted);
+}
+.defend-setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  color: #cfc6b8;
+}
+.defend-setting button {
+  padding: 4px 9px;
+  font-size: 11px;
+}
+.defend-seg {
+  display: flex;
+}
+.defend-seg button[aria-pressed="true"] {
+  border-color: var(--gold);
+  color: #efd496;
+}
+.defend-settings .hint {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.4;
+}
+.defend-message {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  bottom: 6px;
+  line-height: 1.35;
+  text-align: center;
+  font-size: 12px;
+  color: #f1e2b8;
+  text-shadow: 0 1px 2px #000, 0 0 6px #000;
+  pointer-events: none;
+}
 .defend-hud {
   display: flex;
   align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  overflow: hidden;
   font-size: 12px;
   color: #b9b5aa;
 }
@@ -1223,9 +1305,12 @@ nav button > span img { display: block; width: 42px; height: 42px; max-width: 10
 .defend-hud b {
   color: #efe3c6;
 }
+.defend-keep small {
+  font-size: inherit;
+}
 .defend-keep i {
   display: inline-block;
-  width: 64px;
+  width: 70px;
   height: 7px;
   margin: 0 4px;
   vertical-align: middle;
@@ -1236,20 +1321,6 @@ nav button > span img { display: block; width: 42px; height: 42px; max-width: 10
   display: block;
   height: 100%;
   background: linear-gradient(90deg, #c9463d, #e3b14c);
-}
-.defend-controls {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  margin-bottom: 8px;
-}
-.defend-controls button {
-  padding: 6px 10px;
-  font-size: 12px;
-}
-.defend-controls button[aria-pressed="true"] {
-  border-color: var(--gold);
-  color: #efd496;
 }
 .defend-go {
   border-color: var(--gold) !important;
@@ -1357,13 +1428,6 @@ nav button > span img { display: block; width: 42px; height: 42px; max-width: 10
   font-size: 12px;
   color: #efd496;
 }
-.defend-message {
-  min-height: 20px;
-  margin-top: 6px;
-  text-align: center;
-  font-size: 12px;
-  color: #d8c89a;
-}
 .defend-drag-ghost {
   position: fixed;
   z-index: 50;
@@ -1411,6 +1475,23 @@ nav button > span img { display: block; width: 42px; height: 42px; max-width: 10
   font-size: 11px;
 }
 @media (max-width: 480px) {
+  .defend-left button,
+  .defend-cog {
+    padding: 5px 7px;
+    font-size: 10px;
+  }
+  .defend-hud {
+    gap: 6px;
+    font-size: 10px;
+  }
+  .defend-hud .defend-best,
+  .defend-hud .defend-sky,
+  .defend-keep small {
+    display: none;
+  }
+  .defend-keep i {
+    width: 40px;
+  }
   .defend-palette {
     width: 60px;
     padding: 4px;

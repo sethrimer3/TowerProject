@@ -15,6 +15,16 @@ holds it against endless waves. Code lives in `src/defend/`.
   rotated (their baked-in lighting looks wrong turned) and grown 15% to close
   the gaps between them.
 
+## Layout of the page
+
+- One header row, never two. Building: City · Armory · Start the defense on
+  the left; best wave and the ⚙ DEFEND settings (palette side, reset zoom) on
+  the right. During a battle: Abandon (click twice — it asks "Confirm?") and
+  the speed toggle (1× ⇄ 2×, plus 3× once War drums is bought in the
+  Armory) on the left; weather, wave, best, keep health and foes on the right.
+- The board is sized so the page never scrolls. Scroll-wheel or pinch zooms
+  (up to 4×); dragging open ground pans. Messages float over the board's foot.
+
 ## Building (before a run)
 
 - The **palette** (left by default, `⇄ Palette` swaps it to the right) lists
@@ -72,6 +82,8 @@ holds it against endless waves. Code lives in `src/defend/`.
   whatever gets in (troops can't pass walls — a palisade gate is a future
   upgrade; troop pathing is plain A* over open cells, so gates only need to
   change what counts as open).
+- **Patrol routes** (Armory) widens how far from their barracks swordsmen
+  go after enemies; its last level sends them anywhere inside the city.
 - **Archer towers** shoot the nearest enemy in range. **Watch towers** mark
   enemies in their radius with a gold outline; marked enemies take ×2 damage.
 - During a run the palette becomes the **consumables** palette. A **bomb**
@@ -91,6 +103,8 @@ holds it against endless waves. Code lives in `src/defend/`.
 - Units (soldiers, civilians and ground enemies) cast shadows away from the
   brightest light on their cell, looked up from a per-cell grid made during
   baking — a few batched rects per unit, cheap enough for hundreds.
+- Light only lands on open ground: roofs and wall tops stay unlit, so the
+  flames read as street-level rather than hovering over the buildings.
 - Gravel stones on the streets catch the light: a bright lip toward the
   flame, a dark one away from it.
 - A light goes out while its building is destroyed and returns when it's rebuilt.

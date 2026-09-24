@@ -31,6 +31,7 @@ import {
   keepHp,
   rebuildSeconds,
   soldierCap,
+  soldierLeash,
   soldierScale,
   trainSeconds,
   wallHp,
@@ -626,8 +627,13 @@ export class DefendSim {
     s.thinkT -= dt;
     const home = this.map.buildings[s.home];
     const hc = center(home.rect);
+    const leash = soldierLeash(this.levels.soldierReach ?? 0);
+    const citywide = !Number.isFinite(leash);
+    // Citywide patrols go after anything inside the city limits.
+    const inReach = (e: Enemy) =>
+      citywide ? this.map.city[cellIndex(clampCell(e.x, CELLS_W), clampCell(e.y, CELLS_H))] === 1 : (e.x - hc.x) ** 2 + (e.y - hc.y) ** 2 <= leash ** 2;
     let target = this.enemies.find((e) => e.id === s.target && e.hp > 0) ?? null;
-    if (target && (target.x - hc.x) ** 2 + (target.y - hc.y) ** 2 > SOLDIER.leash ** 2) target = null;
+    if (target && !inReach(target)) target = null;
     if (target && Math.hypot(target.x - s.x, target.y - s.y) <= SOLDIER.reach + ENEMIES[target.kind].size / 2) {
       if (s.cd <= 0) {
         s.cd = SOLDIER.cooldown;
@@ -638,13 +644,13 @@ export class DefendSim {
     if (s.thinkT <= 0) {
       s.thinkT = 0.5;
       // Nearest reachable enemy within the leash of the barracks.
-      const candidates = this.enemiesNear(hc.x, hc.y, SOLDIER.leash)
+      const candidates = (citywide ? this.enemies.filter(inReach) : this.enemiesNear(hc.x, hc.y, leash))
         .sort((a, b) => (a.x - s.x) ** 2 + (a.y - s.y) ** 2 - ((b.x - s.x) ** 2 + (b.y - s.y) ** 2))
         .slice(0, 3);
       target = null;
       s.path = [];
       for (const e of candidates) {
-        const path = this.findPath(s.x, s.y, e.x, e.y, SOLDIER.leash * 3);
+        const path = this.findPath(s.x, s.y, e.x, e.y, citywide ? 1e9 : leash * 3, citywide ? CELL_COUNT : 4000);
         if (path) {
           target = e;
           s.path = path;
@@ -679,7 +685,7 @@ export class DefendSim {
 
   /** A* over open cells (8-way, no corner cutting). Returns cell indices from
    * the start's neighbour up to the goal cell, or null. */
-  findPath(sx: number, sy: number, gx: number, gy: number, maxCost: number): number[] | null {
+  findPath(sx: number, sy: number, gx: number, gy: number, maxCost: number, maxNodes = 4000): number[] | null {
     const start = cellIndex(clampCell(sx, CELLS_W), clampCell(sy, CELLS_H));
     const gcx = clampCell(gx, CELLS_W),
       gcy = clampCell(gy, CELLS_H);
@@ -698,7 +704,7 @@ export class DefendSim {
     };
     heap.push(start, h(start));
     let expanded = 0;
-    while (heap.size && expanded++ < 4000) {
+    while (heap.size && expanded++ < maxNodes) {
       const i = heap.pop();
       if (i === goal) {
         const out: number[] = [];
