@@ -23,14 +23,17 @@ test('generation is deterministic, order independent and extends past the old de
   assert.ok([...generate(12, 6000).values()].some(t => t.kind !== 'wall'));
 });
 test('costs on terminal branches really separate rewards from the main labyrinth', () => {
-  for (let seed = 0; seed < 20; seed++) {
-    const r = region(seed, 0);
+  for (let seed = 0; seed < 40; seed++) for (const area of [0, 1, 3]) {
+    const r = region(seed, area);
     for (const n of r.nodes.filter(n => n.pattern?.gates.length)) {
       const e = r.edges.find(e => e.a === n.id || e.b === n.id)!;
       const route = e.b === n.id ? e.path : [...e.path].reverse();
-      const gate = route[Math.floor(route.length / 2)];
-      const visited = flood(r.cells, point(r.entry.x, r.entry.y), point(gate.x, gate.y));
-      assert.ok(!visited.has(point(n.x, n.y)), `bypassed ${n.pattern!.id} seed ${seed}`);
+      const gates = route.filter(p => ['enemy', 'door'].includes(r.cells.get(point(p.x, p.y))?.kind ?? ''));
+      assert.equal(gates.length, n.pattern!.gates.length);
+      for (const gate of gates) {
+        const visited = flood(r.cells, point(r.entry.x, r.entry.y), point(gate.x, gate.y));
+        assert.ok(!visited.has(point(n.x, n.y)), `bypassed ${n.pattern!.id} seed ${seed}`);
+      }
     }
   }
 });

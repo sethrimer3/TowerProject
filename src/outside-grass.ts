@@ -9,7 +9,7 @@ import { tileRandom } from "./themes.ts";
  * so blades on the hero's tile cover its feet. */
 
 const PX = 24;
-type Blade = { i: number; j: number; h: number; color: number; phase: number; flower: number };
+type Blade = { i: number; j: number; h: number; color: number; phase: number; flower: number; splay: number };
 const COLORS = ["#27472c", "#335c35", "#437640", "#58904c", "#74ad5c", "#8fc56c"];
 const FLOWERS = ["#f2eecb", "#f2d36b", "#c8b0f0"];
 /** How hard the wind blows, in pixels of lean at a blade's tip. */
@@ -30,13 +30,20 @@ export class OutsideGrass {
     const t = world.tile(x, y);
     if (t.kind === "floor" && outsideSpriteKind(t, x, y, seed, center).family === "grass") {
       const r = (k: number) => tileRandom(x * 41 + k * 7, y * 29 - k * 13, seed ^ 0x6a55);
-      const count = 7 + Math.floor(r(0) * 5);
-      for (let k = 1; k <= count; k++) {
-        b.push({
-          i: 1 + Math.floor(r(k) * 22), j: 3 + Math.floor(r(k + 40) * 21), h: 3 + Math.floor(r(k + 80) * 5),
-          color: Math.floor(r(k + 120) * 4), phase: r(k + 160) * Math.PI * 2,
-          flower: r(k + 200) < 0.06 ? 1 + Math.floor(r(k + 240) * FLOWERS.length) : 0,
-        });
+      // Clumps of two to four blades fanning out from one root.
+      const clumps = 6 + Math.floor(r(0) * 4);
+      for (let k = 1; k <= clumps; k++) {
+        const i = 2 + Math.floor(r(k) * 20), j = 4 + Math.floor(r(k + 40) * 20), h = 4 + Math.floor(r(k + 80) * 5);
+        const color = Math.floor(r(k + 120) * 4), phase = r(k + 160) * Math.PI * 2;
+        const n = 2 + Math.floor(r(k + 280) * 3);
+        for (let q = 0; q < n; q++) {
+          const side = q - (n - 1) / 2;
+          b.push({
+            i: i + Math.round(side), j, h: Math.max(2, h - Math.abs(Math.round(side * 2))), color: Math.max(0, color - (q % 2)),
+            phase: phase + q * 0.35, splay: side * 1.4,
+            flower: q === 0 && r(k + 200) < 0.1 ? 1 + Math.floor(r(k + 240) * FLOWERS.length) : 0,
+          });
+        }
       }
       b.sort((a, c) => a.j - c.j);
     }
@@ -83,13 +90,13 @@ export class OutsideGrass {
         for (const b of list) {
           const gx = x * PX + b.i, gy = -y * PX + b.j;
           let lean: number;
-          if (reduceMotion) lean = wind * 0.35;
+          if (reduceMotion) lean = b.splay + wind * 0.35;
           else {
             // Steady lean, a slow sway, and gusts that sweep across in bands.
             const sway = Math.sin(t * 2.1 + b.phase + gx * 0.06) * 0.5 + Math.sin(t * 3.7 + b.phase * 2) * 0.2;
             const band = Math.sin(gx * 0.021 + gy * 0.009 - t * 1.6);
             const gust = Math.pow(Math.max(0, band), 3) * 1.6;
-            lean = wind * (0.35 + sway * 0.45 + gust);
+            lean = b.splay + wind * (0.35 + sway * 0.45 + gust);
             lean += stir * Math.sin(t * 12 + b.phase) * 2.4;
           }
           // Parted and pressed down around the hero.

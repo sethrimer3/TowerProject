@@ -1,4 +1,4 @@
-import { region, depthAt } from "./delve/labyrinth.ts";
+import { region, depthAt, areasBetween, floorFor, ownerAt } from "./delve/labyrinth.ts";
 import {
   CHUNK,
   WIDTH,
@@ -108,7 +108,7 @@ function placeTorches(
     torch.visibilityPolygon = computeVisibilityPolygon(torch, isWall);
   return torches;
 }
-export const LAYOUT_VERSION = 6;
+export const LAYOUT_VERSION = 7;
 // v3 adds declarative multi-key/condition doors and places their prerequisite
 // keys differently; old per-room coordinate mutations must not overlay it.
 // v4 replaces the maze generator with strategic chamber layouts.
@@ -260,7 +260,7 @@ export function generateDelveMap(seed: number, areas = 4): Map<string, Tile> {
 export function generate(seed: number, index: number): Map<string, Tile> {
   const cells = new Map<string, Tile>();
   const min = index * CHUNK, max = min + CHUNK;
-  for (let a = Math.max(0, Math.floor((min - 35) / 108)); a <= Math.floor(max / 108); a++)
+  for (const a of areasBetween(min, max))
     for (const [k, t] of region(seed, a).cells) {
       const y = Number(k.split(',')[1]);
       if (y >= min && y < max) cells.set(k, t);
@@ -325,8 +325,11 @@ export class World implements Board {
   private torchAreas = new Map<number, Torch[]>();
   get torches(): Torch[] {
     for (let a = this.milestone; a <= this.milestone + 1; a++) if (!this.torchAreas.has(a)) {
-      const r = region(this.seed, a);
-      this.torchAreas.set(a, placeTorches(r.cells, 1, WIDTH - 2, a * 108, (a + 1) * 108 + 34, this.seed ^ a));
+      // Wall checks see neighbouring areas too, so a torch never lands on a
+      // foreign area's floor; each torch belongs to the area owning its spot.
+      const r = region(this.seed, a), cells = new Map(r.cells);
+      for (const b of [a - 1, a + 1]) if (b >= 0) for (const [k, t] of region(this.seed, b).cells) cells.set(k, t);
+      this.torchAreas.set(a, placeTorches(cells, 1, WIDTH - 2, r.minY - 2, r.maxY + 2, this.seed ^ a).filter((t) => ownerAt(this.seed, t.x, t.y) === a));
     }
     for (const a of this.torchAreas.keys()) if (a < this.milestone) this.torchAreas.delete(a);
     return [...this.torchAreas.values()].flat();
@@ -340,7 +343,7 @@ export class World implements Board {
   maintain(y: number) {
     const index = Math.floor(y / CHUNK);
     this.tile(START_X, (index + 2) * CHUNK);
-    this.floor = Math.max(this.floor, this.milestone * 108);
+    this.floor = Math.max(this.floor, floorFor(this.seed, this.milestone));
     for (const i of this.chunks.keys())
       if ((i + 1) * CHUNK <= this.floor || Math.abs(i - index) > 3) this.chunks.delete(i);
     for (const k of Object.keys(this.changes))

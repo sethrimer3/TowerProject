@@ -1,4 +1,4 @@
-import { entrance } from "./delve/labyrinth.ts";
+import { entrance, floorFor } from "./delve/labyrinth.ts";
 import { isDeadlocked } from "./analysis.ts";
 import { doorBlockedMessage, doorCost, doorName, KEY_ORDER } from "./doors.ts";
 import { skillAvailable } from "./skill-trees.ts";
@@ -142,7 +142,7 @@ export class Game {
         this.run.changes = {};
         this.run.delveMilestone = Math.floor(this.run.height / 100);
         Object.assign(this.run.player, entrance(this.run.seed, this.run.delveMilestone));
-        this.run.floor = this.run.delveMilestone * 108;
+        this.run.floor = floorFor(this.run.seed, this.run.delveMilestone);
         this.run.delveVisited = {};
         this.message =
           "The tower has reshaped. Progress kept; returned to this section’s entrance.";

@@ -122,7 +122,7 @@ export function decorSourceFor(world: Board, seed: number): DecorSource | null {
     // Each Tower room has its own character: some overgrown, some dry and
     // stacked with stores, some flooded.
     const r = (salt: number) => tileRandom(room, salt, seed ^ 0x3ec0);
-    const l = 0.12 + 0.88 * Math.pow(r(1), 0.75), d = r(2) < 0.45 ? 0.35 + r(3) * 0.65 : 0, c = 0.25 + r(4) * 0.75;
+    const l = 0.08 + 0.84 * Math.pow(r(1), 1.15), d = r(2) < 0.4 ? 0.3 + r(3) * 0.7 : 0, c = 0.25 + r(4) * 0.75;
     lush = () => l; damp = () => d; clutter = () => c;
   } else if ("chunks" in world) {
     const delve = world as World;
@@ -184,7 +184,7 @@ function wallProximity(walls: [number, number, number][], i: number, j: number) 
  * before wall proximity. */
 function overgrowthBase(src: DecorSource, fx: number, fy: number, lush: number) {
   const n = fbm(fx / 3.1, fy / 3.1, src.seed ^ 0x6d05);
-  return (n - (0.78 - lush * 0.42)) * 3.2;
+  return (n - (0.8 - lush * 0.36)) * 3;
 }
 
 /** Overgrowth (0 bare .. 1+ dense) at a tile-local pixel of a ground tile. */
@@ -245,14 +245,14 @@ function vineFrom(src: DecorSource, x: number, y: number, d: number): { gx: numb
   };
   const lush = src.lush(x, y);
   // Climbing arm: into the wall, wandering sideways, with leaves.
-  const climb = 7 + Math.floor(rng() * (10 + lush * 12));
+  const climb = 10 + Math.floor(rng() * (12 + lush * 14));
   let cx = rx, cy = ry, side = rng() < 0.5 ? -1 : 1, depth = 0;
   for (let k = 0; k < climb; k++) {
     const r = rng();
     // Never deeper than most of a tile: walls are often one tile thick.
     if (r < 0.62 && depth < 17) { cx += nx; cy += ny; depth++; } else if (r < 0.86) { cx += tx * side; cy += ty * side; } else side = -side;
     put(cx, cy, k < 3 ? 0 : 1);
-    if (k % 3 === 2 && rng() < 0.8) {
+    if (k % 2 === 1 && rng() < 0.85) {
       const ls = rng() < 0.5 ? -1 : 1;
       put(cx + tx * ls, cy + ty * ls, 2);
       if (rng() < 0.5) put(cx + tx * ls + nx, cy + ty * ls + ny, 3);
@@ -327,7 +327,7 @@ function cratesFor(src: DecorSource, x: number, y: number, rng: () => number): C
   const chance = (walls === 2 ? DECOR_CONFIG.crateCorner : DECOR_CONFIG.crateWall) * clutter;
   if (tileRandom(x * 3 + 5, y * 5 - 3, src.seed ^ 0xc4a7) >= chance) return [];
   const out: Crate[] = [];
-  const size = () => 8 + Math.floor(rng() * 3);
+  const size = () => 9 + Math.floor(rng() * 3);
   const tone = () => Math.floor(rng() * 3);
   // Anchor against the wall(s): west/east decide x, north/south decide y.
   const place = (sz: number, slot: number) => {
@@ -426,12 +426,12 @@ function planTile(src: DecorSource, x: number, y: number): TileDecor {
         const fi = dir.dx > 0 ? TILE_PX - 1 : dir.dx < 0 ? 0 : t;
         const fj = dir.dy > 0 ? 0 : dir.dy < 0 ? TILE_PX - 1 : t;
         const edge = overgrowth(src, fxT, fyT, fi, fj, floorWalls);
-        if (edge < 0.2) continue;
-        for (let depth = 0; depth < 7; depth++) {
+        if (edge < 0.3) continue;
+        for (let depth = 0; depth < 5; depth++) {
           // Pixel in this wall tile at `depth` from the face.
           const i = dir.dx > 0 ? depth : dir.dx < 0 ? TILE_PX - 1 - depth : t;
           const j = dir.dy > 0 ? TILE_PX - 1 - depth : dir.dy < 0 ? depth : t;
-          const m = edge - 0.18 - depth * 0.11;
+          const m = edge - 0.3 - depth * 0.16;
           const lv = level(m, i, j);
           const idx = j * TILE_PX + i;
           if (lv > (moss[idx] & 3)) { moss[idx] = lv | toneAt(i, j); any = true; }
@@ -445,7 +445,13 @@ function planTile(src: DecorSource, x: number, y: number): TileDecor {
   if (ground && !d.thicket) {
     const dampness = src.damp(x, y);
     if (dampness > 0) {
-      const th = 1 - dampness * 0.36;
+      const walls = wallNeighbors(src, x, y);
+      // Torches stand in a dry circle (world pixels of each nearby torch).
+      const torches: [number, number][] = [];
+      for (let dy = -1; dy <= 1; dy++)
+        for (let dx = -1; dx <= 1; dx++)
+          if (src.torch(x + dx, y + dy)) torches.push([(x + dx) * TILE_PX + 12, -(y + dy) * TILE_PX + 12]);
+      const th = 1 - dampness * 0.28;
       const water = new Uint8Array(AREA);
       // The field on a 26x26 grid (one pixel of border) so the rim can look
       // across tile seams; pixels over non-ground neighbours stay dry.
@@ -454,8 +460,12 @@ function planTile(src: DecorSource, x: number, y: number): TileDecor {
         for (let i = -1; i <= TILE_PX; i++) {
           const inside = i >= 0 && j >= 0 && i < TILE_PX && j < TILE_PX;
           if (!inside && !isGround(src.kind(x + Math.floor(i / TILE_PX), y - Math.floor(j / TILE_PX)))) continue;
+          // Pools stop a little short of the walls.
+          if (wallProximity(walls, Math.max(0, Math.min(TILE_PX - 1, i)), Math.max(0, Math.min(TILE_PX - 1, j))) > 0.8) continue;
           const fx = x + (i + 0.5) / TILE_PX, fy = -y + (j + 0.5) / TILE_PX;
           if (waterField(src, fx, fy) <= th) continue;
+          const gx = x * TILE_PX + i, gy = -y * TILE_PX + j;
+          if (torches.some(([tx, ty]) => Math.hypot(gx - tx, gy - ty) < 17)) continue;
           if (inside && grid && grid[j * TILE_PX + i] >= 0.75) continue;
           wetGrid[(j + 1) * P + i + 1] = 1;
         }
@@ -511,29 +521,31 @@ function planTile(src: DecorSource, x: number, y: number): TileDecor {
       d.crates.some((c) => i >= c.x - 1 && i <= c.x + c.w && j >= c.y - c.lift - 1 && j <= c.y + c.h) ||
       (d.water && d.water[j * TILE_PX + i] === 1);
     if (d.thicket) {
-      const count = 16 + Math.floor(rng() * 6);
-      for (let k = 0; k < count; k++) {
-        d.blades.push({
-          i: 1 + Math.floor(rng() * 22), j: 7 + Math.floor(rng() * 17), h: 5 + Math.floor(rng() * 5),
-          color: Math.floor(rng() * 4), phase: rng() * Math.PI * 2, lean: (rng() - 0.5) * 1.6,
-        });
+      // Dense clumps: a main blade with a shorter one or two beside it.
+      const clumps = 12 + Math.floor(rng() * 5);
+      for (let k = 0; k < clumps; k++) {
+        const i = 1 + Math.floor(rng() * 21), j = 5 + Math.floor(rng() * 19), h = 6 + Math.floor(rng() * 5);
+        const color = Math.floor(rng() * 4), phase = rng() * Math.PI * 2, lean = (rng() - 0.5) * 1.6;
+        d.blades.push({ i, j, h, color, phase, lean });
+        if (rng() < 0.75) d.blades.push({ i: i + 1, j, h: h - 2 - Math.floor(rng() * 2), color: Math.max(0, color - 1), phase: phase + 0.4, lean: lean + 0.8 });
+        if (rng() < 0.4) d.blades.push({ i: i - 1, j, h: h - 3, color, phase: phase - 0.3, lean: lean - 0.9 });
       }
       d.blades.sort((a, b) => a.j - b.j);
     } else {
       const mid = d.moss ? d.moss[12 * TILE_PX + 12] & 3 : 0;
       const nearWall = DIRS.some((q) => isWall(src.kind(x + q.dx, y + q.dy)));
-      const tries = 1 + (mid >= 2 ? 2 : 0);
+      const tries = mid >= 2 ? 2 : 1;
       for (let k = 0; k < tries; k++) {
         const i = 3 + Math.floor(rng() * 18), j = 5 + Math.floor(rng() * 16);
         if (busy(i, j)) continue;
         const lv = d.moss ? d.moss[j * TILE_PX + i] & 3 : 0;
         const r = rng();
-        if (lv >= 2 && r < 0.3) d.plants.push({ kind: "tuft", i, j, variant: Math.floor(rng() * 3) });
-        else if (lv >= 2 && r < 0.4) d.plants.push({ kind: "fern", i, j, variant: Math.floor(rng() * 2) });
-        else if (lv >= 1 && r < 0.46) d.plants.push({ kind: "sprout", i, j, variant: Math.floor(rng() * 3) });
-        else if (nearWall && (lv >= 1 || src.damp(x, y) > 0.3) && r < 0.56)
+        if (lv >= 2 && r < 0.25) d.plants.push({ kind: "tuft", i, j, variant: Math.floor(rng() * 3) });
+        else if (lv >= 2 && r < 0.33) d.plants.push({ kind: "fern", i, j, variant: Math.floor(rng() * 2) });
+        else if (lv >= 1 && r < 0.4) d.plants.push({ kind: "sprout", i, j, variant: Math.floor(rng() * 3) });
+        else if (nearWall && (lv >= 1 || src.damp(x, y) > 0.3) && r > 0.4 && r < 0.45)
           d.plants.push({ kind: "mushrooms", i, j, variant: Math.floor(rng() * 3), glow: rng() < 0.3 + lush * 0.2 });
-        else if (r > 0.93) d.plants.push({ kind: "pebbles", i, j, variant: Math.floor(rng() * 3) });
+        else if (r > 0.95) d.plants.push({ kind: "pebbles", i, j, variant: Math.floor(rng() * 3) });
       }
       // Cobwebs hang in the corner between two walls.
       const [n, e, s, w] = DIRS.map((q) => isWall(src.kind(x + q.dx, y + q.dy)));

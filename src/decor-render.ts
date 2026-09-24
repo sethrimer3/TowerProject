@@ -2,7 +2,7 @@ import type { Board } from "./generation.ts";
 import type { Tile } from "./entities.ts";
 import { tileRandom } from "./themes.ts";
 import {
-  decorSourceFor, FLOWER_COLORS, TILE_PX, tileDecor, waterAt,
+  decorSourceFor, FLOWER_COLORS, TILE_PX, tileDecor, valueNoise, waterAt,
   type Crate, type DecorSource, type Plant, type TileDecor,
 } from "./decor.ts";
 
@@ -26,18 +26,23 @@ const MOSS: Rgba[][] = [
 const MOSS_LIGHT: Rgba[] = [[122, 176, 84, 0.95], [106, 170, 132, 0.95]];
 const MOSS_DARK: Rgba[] = [[44, 76, 42, 0.85], [36, 72, 64, 0.85]];
 /** Vine stem (dark, mid) and leaf (mid, light). */
-const VINE: Rgba[] = [[40, 64, 34, 1], [56, 98, 46, 1], [86, 150, 62, 1], [128, 190, 86, 1]];
-const WATER_DEEP: Rgba = [22, 46, 66, 0.82];
-const WATER_MID: Rgba = [30, 62, 84, 0.8];
-const WATER_EDGE: Rgba = [78, 124, 142, 0.72];
-const WET_STONE: Rgba = [0, 0, 0, 0.2];
+const VINE: Rgba[] = [[54, 88, 44, 1], [74, 124, 54, 1], [104, 168, 70, 1], [150, 206, 100, 1]];
+/** Wall moss is a thinner, darker film than the mats on the floor. */
+const WALL_MOSS: Rgba[] = [[0, 0, 0, 0], [58, 92, 52, 0.4], [64, 104, 56, 0.6], [74, 118, 62, 0.72]];
+const WATER_DEEP: Rgba = [22, 66, 96, 0.93];
+const WATER_MID: Rgba = [30, 86, 118, 0.92];
+const WATER_SHORE: Rgba = [118, 184, 204, 0.92];
+/** The far (upper) bank shades the water just below it. */
+const WATER_BANK: Rgba = [12, 34, 52, 0.94];
+const WATER_SHEEN: Rgba = [96, 160, 190, 0.7];
+const WET_STONE: Rgba = [0, 0, 0, 0.22];
 /** Crate woods by tone: light, mid, dark, outline. */
 const WOOD = [
   ["#a67a4c", "#81593a", "#583b24", "#2a1a0e"],
   ["#9a7a55", "#765a3e", "#4f3a27", "#271a10"],
   ["#8e6440", "#6c4a2f", "#4a311e", "#24160c"],
 ];
-const GRASS = ["#2c5230", "#3a683a", "#4a7f44", "#5e9750", "#7cb462"];
+const GRASS = ["#335e35", "#427442", "#548c4a", "#6aa556", "#8cc46a"];
 const GLOWCAP: readonly number[] = [140, 240, 170];
 
 type Particle = {
@@ -161,30 +166,41 @@ export class DecorLayer {
           const v = w[j * TILE_PX + i];
           if (v === 2) blend(px, i, j, WET_STONE);
           else if (v === 1) {
-            const edge = at(i - 1, j) !== 1 || at(i + 1, j) !== 1 || at(i, j - 1) !== 1 || at(i, j + 1) !== 1;
-            const near = at(i - 2, j) !== 1 || at(i + 2, j) !== 1 || at(i, j - 2) !== 1 || at(i, j + 2) !== 1;
-            blend(px, i, j, edge ? WATER_EDGE : near ? WATER_MID : WATER_DEEP);
+            const bank = at(i, j - 1) !== 1 || at(i, j - 2) !== 1;
+            const edge = at(i - 1, j) !== 1 || at(i + 1, j) !== 1 || at(i, j + 1) !== 1;
+            const near = at(i - 2, j) !== 1 || at(i + 2, j) !== 1 || at(i, j + 2) !== 1;
+            blend(px, i, j, bank ? WATER_BANK : edge ? WATER_SHORE : near ? WATER_MID : WATER_DEEP);
+            // Long, faint reflections across the open water.
+            if (!bank && !edge && valueNoise((x * TILE_PX + i) / 6, (-y * TILE_PX + j) / 1.3, seed ^ 0x5ee) > 0.78)
+              blend(px, i, j, WATER_SHEEN);
           }
           if (v) drew = true;
         }
     }
     if (d.moss) {
+      const wall = this.src!.kind(x, y) === "wall";
       for (let j = 0; j < TILE_PX; j++)
         for (let i = 0; i < TILE_PX; i++) {
           const m = d.moss[j * TILE_PX + i], lv = m & 3, tone = m >> 2 ? 1 : 0;
           if (!lv) continue;
-          const r = h(i, j, 0x3a1);
-          const col = lv === 3 && r < 0.16 ? MOSS_LIGHT[tone] : lv >= 2 && r > 0.9 ? MOSS_DARK[tone] : MOSS[tone][lv];
-          blend(px, i, j, col);
+          if (wall) { blend(px, i, j, WALL_MOSS[lv]); drew = true; continue; }
+          // Clumps a few pixels across: lit tops and shaded hollows.
+          const clump = valueNoise((x * TILE_PX + i) / 2.6, (-y * TILE_PX + j) / 2.6, seed ^ 0x3a1);
+          const col = lv >= 2 && clump > 0.7 ? MOSS_LIGHT[tone] : lv >= 2 && clump < 0.24 ? MOSS_DARK[tone] : MOSS[tone][lv];
+          blend(px, i, j, col, lv >= 2 && clump > 0.7 ? 0.55 + 0.1 * lv : 1);
+          if (lv === 1 && h(i, j, 0x3a1) < 0.08) blend(px, i, j, MOSS_LIGHT[tone], 0.5);
           drew = true;
         }
     }
     for (const p of d.vines) { blend(px, p.i, p.j, VINE[p.c]); drew = true; }
     for (const f of d.flowers) {
       const [r, g, b] = FLOWER_COLORS[f.color];
-      const petal: Rgba = [r * 0.8, g * 0.8, b * 0.8, 1];
+      const petal: Rgba = [r * 0.85, g * 0.85, b * 0.85, 1], shade: Rgba = [r * 0.55, g * 0.55, b * 0.55, 1];
+      // Five petals round a pale heart, with a leaf at the base.
+      blend(px, f.i - 1, f.j + 2, VINE[2]); blend(px, f.i + 1, f.j + 2, VINE[3]);
       blend(px, f.i - 1, f.j, petal); blend(px, f.i + 1, f.j, petal);
-      blend(px, f.i, f.j - 1, petal); blend(px, f.i, f.j + 1, petal);
+      blend(px, f.i, f.j - 1, petal); blend(px, f.i - 1, f.j + 1, shade); blend(px, f.i + 1, f.j + 1, shade);
+      blend(px, f.i - 1, f.j - 1, petal, 0.5); blend(px, f.i + 1, f.j - 1, petal, 0.5);
       blend(px, f.i, f.j, [255, 250, 225, 1]);
       drew = true;
     }
@@ -687,7 +703,8 @@ export class DecorLayer {
     c.imageSmoothingEnabled = false;
     const hx = this.lastHero.x, hy = this.lastHero.y;
     const hgx = Math.round(hx * TILE_PX), hgy = Math.round(-hy * TILE_PX);
-    const area = { gx0: hgx + 2, gx1: hgx + 22, gy0: hgy + 4, gy1: hgy + 24 };
+    // Only blades rooted at or below the hero's feet stand in front of it.
+    const area = { gx0: hgx + 2, gx1: hgx + 22, gy0: hgy + 20, gy1: hgy + 24 };
     for (let dy = -1; dy <= 1; dy++)
       for (let dx = -1; dx <= 1; dx++) {
         const x = Math.round(hx) + dx, y = Math.round(hy) + dy;
