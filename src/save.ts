@@ -3,7 +3,7 @@ import type { ModeSave, Run, Save } from "./entities.ts";
 import { emptyMaterials, MATERIAL_IDS, type MaterialId } from "./materials.ts";
 import { EQUIPMENT_SLOTS, type CraftedEquipment, type EquipmentSlot } from "./equipment.ts";
 import { CONSUMABLES, type ConsumableId } from "./crafting.ts";
-import { defaultDefendSave, DEFEND_WIDTH, DEFEND_HEIGHT, isBuildable, type DefendSave } from "./defend.ts";
+import { defaultDefendSave, DEFEND_WIDTH, DEFEND_HEIGHT, isBuildable, type DefendSave, type DefendTileKind } from "./defend.ts";
 export function defaults(): Save {
   return {
     version: 3,
@@ -181,13 +181,18 @@ function decodeDefend(s: any): DefendSave {
     isBuildable(s.keep.x, s.keep.y) &&
     s.tiles[s.keep.y][s.keep.x] === "keep" &&
     finite(s.keepHp, s.keepMaxHp ?? 1e9) &&
-    finite(s.keepMaxHp)
+    finite(s.keepMaxHp) &&
+    Number.isInteger(s.wallCapacity) &&
+    s.wallCapacity >= 0 &&
+    s.wallCapacity <= 999 &&
+    s.tiles.flat().filter((k: DefendTileKind) => k === "wall").length <= s.wallCapacity
   ) {
     d.tiles = s.tiles;
     d.keep = { x: s.keep.x, y: s.keep.y };
     d.keepHp = s.keepHp;
     d.keepMaxHp = s.keepMaxHp;
     d.lost = s.lost === true;
+    d.wallCapacity = s.wallCapacity;
   }
   return d;
 }

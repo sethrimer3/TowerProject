@@ -30,6 +30,10 @@ export type DefendState = {
   keepHp: number;
   keepMaxHp: number;
   lost: boolean;
+  /** How many city-wall tiles the player currently owns. Placing a wall
+   * consumes one from this pool; unlocking more (a later meta-progression
+   * reward) raises it. */
+  wallCapacity: number;
 };
 
 const inBounds = (x: number, y: number) =>
@@ -53,6 +57,9 @@ const KEEP_START: DefendPos = {
 };
 const KEEP_MAX_HP = 100;
 
+/** Starting number of city-wall tiles the player has to work with. */
+export const DEFEND_STARTING_WALL_CAPACITY = 9;
+
 export function createDefendState(): DefendState {
   const tiles = emptyTiles();
   tiles[KEEP_START.y][KEEP_START.x] = { kind: "keep" };
@@ -64,6 +71,7 @@ export function createDefendState(): DefendState {
     keepHp: KEEP_MAX_HP,
     keepMaxHp: KEEP_MAX_HP,
     lost: false,
+    wallCapacity: DEFEND_STARTING_WALL_CAPACITY,
   };
 }
 
@@ -71,8 +79,77 @@ export function tileAt(state: DefendState, x: number, y: number): DefendTile | n
   return inBounds(x, y) ? state.tiles[y][x] : null;
 }
 
-/** Place a building on an empty, buildable tile. Returns false if the tile
- * is off-board, on the reserved row, or already occupied. */
+/** How many city-wall tiles are currently standing. */
+export function wallsPlaced(state: DefendState): number {
+  let n = 0;
+  for (const row of state.tiles) for (const t of row) if (t.kind === "wall") n++;
+  return n;
+}
+
+/** How many more city-wall tiles the player can still place. */
+export function wallsRemaining(state: DefendState): number {
+  return Math.max(0, state.wallCapacity - wallsPlaced(state));
+}
+
+/** The set of tiles ("x,y" keys) enclosed by the player's city walls: every
+ * buildable tile that a flood fill starting from the reserved top row (the
+ * attackers' approach lane) cannot reach without crossing a wall tile. With
+ * no walls placed nothing is enclosed, so the fill reaches the whole board
+ * and the interior is empty — the player has to wall off ground before
+ * anything else can go inside it. */
+export function cityInterior(state: DefendState): Set<string> {
+  const key = (x: number, y: number) => `${x},${y}`;
+  const outside = new Set<string>();
+  const queue: DefendPos[] = Array.from({ length: DEFEND_WIDTH }, (_, x) => ({
+    x,
+    y: DEFEND_NO_BUILD_ROW,
+  }));
+  while (queue.length) {
+    const { x, y } = queue.pop()!;
+    const k = key(x, y);
+    if (outside.has(k) || !inBounds(x, y)) continue;
+    if (state.tiles[y][x].kind === "wall") continue;
+    outside.add(k);
+    queue.push({ x: x + 1, y }, { x: x - 1, y }, { x, y: y + 1 }, { x, y: y - 1 });
+  }
+  const interior = new Set<string>();
+  for (let y = DEFEND_NO_BUILD_ROW + 1; y < DEFEND_HEIGHT; y++) {
+    for (let x = 0; x < DEFEND_WIDTH; x++) {
+      if (state.tiles[y][x].kind === "wall") continue;
+      if (!outside.has(key(x, y))) interior.add(key(x, y));
+    }
+  }
+  return interior;
+}
+
+/** Whether a tile is enclosed within the player's walled-off city. */
+export function isInsideCityLimits(state: DefendState, x: number, y: number): boolean {
+  return cityInterior(state).has(`${x},${y}`);
+}
+
+export type WallEdges = { top: boolean; right: boolean; bottom: boolean; left: boolean };
+
+/** Which sides of a wall tile still show as a wall. A shared edge between
+ * two adjacent wall tiles merges away — only the outer perimeter of a run
+ * of walls renders. Meaningless (all false) for a non-wall tile. */
+export function wallEdgesAt(state: DefendState, x: number, y: number): WallEdges {
+  if (tileAt(state, x, y)?.kind !== "wall") {
+    return { top: false, right: false, bottom: false, left: false };
+  }
+  const isWall = (nx: number, ny: number) => tileAt(state, nx, ny)?.kind === "wall";
+  return {
+    top: !isWall(x, y - 1),
+    right: !isWall(x + 1, y),
+    bottom: !isWall(x, y + 1),
+    left: !isWall(x - 1, y),
+  };
+}
+
+/** Place a building on an empty, buildable tile. A city wall is limited by
+ * `wallCapacity`; anything else (troops, traps, ...) can only be placed
+ * inside the area the player's walls currently enclose. Returns false if
+ * the tile is off-board, on the reserved row, already occupied, over
+ * capacity, or outside the city limits. */
 export function placeBuilding(
   state: DefendState,
   x: number,
@@ -81,6 +158,11 @@ export function placeBuilding(
 ): boolean {
   if (!isBuildable(x, y)) return false;
   if (state.tiles[y][x].kind !== "empty") return false;
+  if (kind === "wall") {
+    if (wallsRemaining(state) <= 0) return false;
+  } else if (!isInsideCityLimits(state, x, y)) {
+    return false;
+  }
   state.tiles[y][x] = { kind };
   return true;
 }
@@ -120,6 +202,7 @@ export type DefendSave = {
   keepHp: number;
   keepMaxHp: number;
   lost: boolean;
+  wallCapacity: number;
 };
 
 export function toDefendSave(state: DefendState): DefendSave {
@@ -129,6 +212,7 @@ export function toDefendSave(state: DefendState): DefendSave {
     keepHp: state.keepHp,
     keepMaxHp: state.keepMaxHp,
     lost: state.lost,
+    wallCapacity: state.wallCapacity,
   };
 }
 
@@ -145,5 +229,6 @@ export function fromDefendSave(save: DefendSave): DefendState {
     keepHp: save.keepHp,
     keepMaxHp: save.keepMaxHp,
     lost: save.lost,
+    wallCapacity: save.wallCapacity,
   };
 }

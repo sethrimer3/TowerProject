@@ -17,6 +17,9 @@ import {
   placeBuilding,
   removeBuilding,
   moveKeep,
+  cityInterior,
+  wallsRemaining,
+  wallEdgesAt,
   type DefendTileKind,
 } from "./defend.ts";
 import {
@@ -876,25 +879,36 @@ function provisionsHtml(): string {
   return `<p class="hint">Spend Gold earned in the tower on provisions that apply next run. ${uiSprite("gold", "stat-sprite")} ${game.save.gold} Gold.</p>${GOLD_SHOP.map((item) => `<article class="card"><div class="item-icon">${provisionSprite(item.id)}</div><div><small>${game.save.provisions[item.id] ? `OWNED × ${game.save.provisions[item.id]}` : "APPLIES NEXT RUN"}</small><h3>${item.name}</h3><p>${item.description}</p></div><button data-gold="${item.id}" ${game.save.gold < item.cost ? "disabled" : ""}>Buy · ${uiSprite("gold", "stat-sprite")} ${item.cost}</button></article>`).join("")}`;
 }
 const DEFEND_TOOLS: { id: DefendTool; label: string; kind?: Exclude<DefendTileKind, "empty" | "keep"> }[] = [
-  { id: "wall", label: "Wall", kind: "wall" },
+  { id: "wall", label: "City wall", kind: "wall" },
   { id: "barracks", label: "Barracks", kind: "barracks" },
   { id: "move-keep", label: "Move keep" },
   { id: "remove", label: "Clear" },
 ];
 function renderDefendPage() {
   const d = game.save.defend;
+  const state = fromDefendSave(d);
+  const interior = cityInterior(state);
+  const remaining = wallsRemaining(state);
   const tiles = Array.from({ length: DEFEND_HEIGHT }, (_, y) =>
     Array.from({ length: DEFEND_WIDTH }, (_, x) => {
       const kind = d.tiles[y][x];
       const buildable = isBuildable(x, y);
-      return `<button class="defend-tile ${kind} ${buildable ? "" : "locked"}" data-defend-x="${x}" data-defend-y="${y}" aria-label="${kind === "keep" ? "Keep" : kind === "empty" ? (buildable ? "Empty plot" : "Approach lane") : kind}"></button>`;
+      const edges = wallEdgesAt(state, x, y);
+      const edgeClasses = Object.entries(edges)
+        .filter(([, on]) => on)
+        .map(([side]) => `edge-${side}`)
+        .join(" ");
+      const inside = interior.has(`${x},${y}`);
+      const label =
+        kind === "keep" ? "Keep" : kind === "wall" ? "City wall" : kind === "barracks" ? "Barracks" : buildable ? (inside ? "Empty plot (inside city limits)" : "Empty plot (outside city limits)") : "Approach lane";
+      return `<button class="defend-tile ${kind} ${buildable ? "" : "locked"} ${inside ? "inside" : ""} ${edgeClasses}" data-defend-x="${x}" data-defend-y="${y}" aria-label="${label}"></button>`;
     }).join(""),
   ).join("");
-  el("defend").innerHTML = `<div class="page-title"><small>HOLD THE LINE</small><h2>Defend</h2><p>Lay out your city, keep the keep alive.</p></div>
-    <div class="defend-hud"><span>Keep HP <b id="defend-hp">${d.keepHp}</b> / ${d.keepMaxHp}</span>${d.lost ? `<span class="defend-lost">THE KEEP HAS FALLEN</span>` : ""}</div>
-    <div class="defend-tools" role="group" aria-label="Building tools">${DEFEND_TOOLS.map((t) => `<button data-defend-tool="${t.id}" class="${t.id === defendTool ? "selected" : ""}" ${d.lost ? "disabled" : ""}>${t.label}</button>`).join("")}</div>
+  el("defend").innerHTML = `<div class="page-title"><small>HOLD THE LINE</small><h2>Defend</h2><p>Wall off your city, then garrison what's inside it.</p></div>
+    <div class="defend-hud"><span>Keep HP <b id="defend-hp">${d.keepHp}</b> / ${d.keepMaxHp}</span><span>City walls <b>${remaining}</b> / ${d.wallCapacity}</span>${d.lost ? `<span class="defend-lost">THE KEEP HAS FALLEN</span>` : ""}</div>
+    <div class="defend-tools" role="group" aria-label="Building tools">${DEFEND_TOOLS.map((t) => `<button data-defend-tool="${t.id}" class="${t.id === defendTool ? "selected" : ""}" ${d.lost || (t.id === "wall" && remaining <= 0) ? "disabled" : ""}>${t.label}${t.id === "wall" ? ` (${remaining})` : ""}</button>`).join("")}</div>
     <div class="defend-grid" style="grid-template-columns:repeat(${DEFEND_WIDTH},1fr)">${tiles}</div>
-    <p class="hint">The top row is the approach lane — nothing can be built there. The keep can be relocated but never removed; if it falls, the defense is lost.</p>`;
+    <p class="hint">The top row is the approach lane — nothing can be built there. Placing a city wall tile walls off its edges; two walls placed side by side merge into one run of wall. Troops and traps can only be placed on ground fully enclosed by your walls. The keep can be relocated but never removed; if it falls, the defense is lost.</p>`;
   document.querySelectorAll<HTMLButtonElement>("[data-defend-tool]").forEach((b) => {
     b.onclick = () => {
       defendTool = b.dataset.defendTool as DefendTool;
@@ -906,16 +920,16 @@ function renderDefendPage() {
       if (game.save.defend.lost) return;
       const x = Number(b.dataset.defendX);
       const y = Number(b.dataset.defendY);
-      const state = fromDefendSave(game.save.defend);
+      const next = fromDefendSave(game.save.defend);
       const tool = DEFEND_TOOLS.find((t) => t.id === defendTool)!;
       const changed =
         defendTool === "move-keep"
-          ? moveKeep(state, x, y)
+          ? moveKeep(next, x, y)
           : defendTool === "remove"
-            ? removeBuilding(state, x, y)
-            : placeBuilding(state, x, y, tool.kind!);
+            ? removeBuilding(next, x, y)
+            : placeBuilding(next, x, y, tool.kind!);
       if (changed) {
-        game.save.defend = toDefendSave(state);
+        game.save.defend = toDefendSave(next);
         save();
         renderDefendPage();
       }

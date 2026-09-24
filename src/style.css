@@ -1213,6 +1213,7 @@ nav button > span img { display: block; width: 42px; height: 42px; max-width: 10
   margin: 0 auto;
 }
 .defend-tile {
+  box-sizing: border-box;
   aspect-ratio: 1;
   padding: 0;
   border: 1px solid #3a3a42;
@@ -1222,8 +1223,23 @@ nav button > span img { display: block; width: 42px; height: 42px; max-width: 10
   background: #17171c;
   cursor: not-allowed;
 }
+.defend-tile.empty.inside {
+  background: #262e22;
+}
 .defend-tile.wall {
-  background: #6b6b76;
+  background: #4a4a54;
+}
+.defend-tile.wall.edge-top {
+  border-top: 4px solid #cfc6b8;
+}
+.defend-tile.wall.edge-right {
+  border-right: 4px solid #cfc6b8;
+}
+.defend-tile.wall.edge-bottom {
+  border-bottom: 4px solid #cfc6b8;
+}
+.defend-tile.wall.edge-left {
+  border-left: 4px solid #cfc6b8;
 }
 .defend-tile.barracks {
   background: #7a5230;
