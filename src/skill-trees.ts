@@ -1,5 +1,5 @@
 import type { UpgradeId, Currency } from "./config.ts";
-export type TreeId = "inspiration" | "courage" | "legacy";
+export type TreeId = "inspiration" | "courage" | "legacy" | "wisdom" | "renown";
 export type SkillNode = { id: UpgradeId; icon: string; x: number; y: number; requires: UpgradeId[] };
 export const TREES: { id: TreeId; name: string; currency: Currency; gate?: UpgradeId; description: string; nodes: SkillNode[] }[] = [
   { id: "inspiration", name: "Inspiration", currency: "shards", description: "Earn Inspiration by beating your best Tower climb.", nodes: [
@@ -24,6 +24,16 @@ export const TREES: { id: TreeId; name: string; currency: Currency; gate?: Upgra
     { id: "yellow", icon: "⚿", x: 23, y: 40, requires: ["quality"] },
     { id: "blue", icon: "⚿", x: 77, y: 65, requires: ["yellow"] },
     { id: "red", icon: "⚿", x: 50, y: 87, requires: ["blue"] },
+  ] },
+  { id: "wisdom", name: "Wisdom", currency: "shards", gate: "legacy", description: "A path awaiting its final purpose.", nodes: [
+    { id: "wisdomFocus", icon: "◈", x: 50, y: 20, requires: ["legacy"] },
+    { id: "wisdomMemory", icon: "◇", x: 28, y: 52, requires: ["wisdomFocus"] },
+    { id: "wisdomSight", icon: "✧", x: 72, y: 78, requires: ["wisdomMemory"] },
+  ] },
+  { id: "renown", name: "Renown", currency: "essence", gate: "legacy", description: "A path awaiting its final purpose.", nodes: [
+    { id: "renownBanner", icon: "⚑", x: 50, y: 18, requires: ["legacy"] },
+    { id: "renownOath", icon: "◆", x: 72, y: 50, requires: ["renownBanner"] },
+    { id: "renownCrown", icon: "♛", x: 38, y: 80, requires: ["renownOath"] },
   ] },
 ];
 export function skillAvailable(id: UpgradeId, levels: Record<UpgradeId, number>) {

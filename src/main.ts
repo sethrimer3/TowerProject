@@ -55,6 +55,8 @@ const skillSprite = (id: UpgradeId) => {
     shardHp: "health", hp: "health", shardUndos: "undo", undos: "undo",
     delve: "delve", auto: "automove", autoPersist: "settings",
     revive: "revive", legacy: "tower", quality: "tower",
+    wisdomFocus: "settings", wisdomMemory: "undo", wisdomSight: "upgrades",
+    renownBanner: "tower", renownOath: "defense", renownCrown: "gear",
   };
   return uiSprite(generated[id] ?? "upgrades", "skill-sprite");
 };
@@ -608,7 +610,16 @@ function setupTreeViewport(treeId: TreeId) {
   const viewport = el("tree-viewport"),
     map = el("tree-map"),
     view = getTreeView(treeId);
+  function clampView() {
+    const width = viewport.clientWidth,
+      height = viewport.clientHeight,
+      scaledWidth = width * view.scale,
+      scaledHeight = height * view.scale;
+    view.x = scaledWidth <= width ? (width - scaledWidth) / 2 : clamp(view.x, width - scaledWidth, 0);
+    view.y = scaledHeight <= height ? (height - scaledHeight) / 2 : clamp(view.y, height - scaledHeight, 0);
+  }
   function applyView() {
+    clampView();
     map.style.transform = `translate(${view.x}px,${view.y}px) scale(${view.scale})`;
   }
   const pointers = new Map<number, { x: number; y: number }>();
@@ -638,7 +649,7 @@ function setupTreeViewport(treeId: TreeId) {
       const pts = [...pointers.values()];
       const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
       if (pinchStartDist > 0) {
-        view.scale = clamp(pinchStartScale * (dist / pinchStartDist), 0.5, 2.5);
+        view.scale = clamp(pinchStartScale * (dist / pinchStartDist), 0.75, 2.5);
         applyView();
       }
       return;
@@ -681,13 +692,14 @@ function setupTreeViewport(treeId: TreeId) {
       cx = e.clientX - rect.left,
       cy = e.clientY - rect.top,
       prevScale = view.scale,
-      newScale = clamp(prevScale * (e.deltaY < 0 ? 1.1 : 0.9), 0.5, 2.5);
+      newScale = clamp(prevScale * (e.deltaY < 0 ? 1.1 : 0.9), 0.75, 2.5);
     view.x = cx - (cx - view.x) * (newScale / prevScale);
     view.y = cy - (cy - view.y) * (newScale / prevScale);
     view.scale = newScale;
     applyView();
     if (treeTooltipVisible) showTreeTooltip(selectedSkill);
   };
+  applyView();
 }
 function renderPage() {
   if (tab === "defend") defendPage.show();
@@ -695,13 +707,10 @@ function renderPage() {
   if (tab === "upgrades") {
     const tree = TREES.find(t => t.id === selectedTree)!;
     const locked = !!tree.gate && !game.save.upgrades[tree.gate];
-    const balance = tree.currency === "shards" ? game.save.tower.shards : game.save.delve.essence;
     const view = getTreeView(tree.id);
-    el("upgrades").innerHTML = `<div class="page-title"><small>WHAT REMAINS WHEN YOU FALL</small><h2>Paths of ascension</h2><p>Follow the branches. Shape your next journey.</p></div>
-      <div class="tree-tabs" role="group" aria-label="Skill trees">${TREES.map(t => `<button data-tree="${t.id}" aria-pressed="${t.id === tree.id}"><span>${uiSprite(t.id === "inspiration" ? "upgrades" : t.id === "courage" ? "automove" : "tower")}</span>${t.name}<small>${t.gate && !game.save.upgrades[t.gate] ? "LOCKED" : "UNLOCKED"}</small></button>`).join("")}</div>
-      <section class="skill-tree ${tree.id}"><header class="tree-heading"><small>${locked ? "SEALED PATH" : `${balance} ${tree.currency === "shards" ? "INSPIRATION" : "COURAGE"}`}</small><h3>${tree.name} skill tree</h3><p>${tree.description}</p></header>
+    el("upgrades").innerHTML = `<div class="tree-tabs" role="group" aria-label="Skill trees">${TREES.map(t => `<button data-tree="${t.id}" aria-pressed="${t.id === tree.id}"><span>${uiSprite(t.id === "inspiration" ? "upgrades" : t.id === "courage" ? "automove" : t.id === "legacy" ? "tower" : t.id === "wisdom" ? "settings" : "defend")}</span>${t.name}<small>${t.gate && !game.save.upgrades[t.gate] ? "LOCKED" : "UNLOCKED"}</small></button>`).join("")}</div>
+      <section class="skill-tree ${tree.id}"><header class="tree-heading"><h3>${tree.name} skill tree</h3></header>
       ${locked ? `<p class="tree-lock">Unlock ${UPGRADES.find(u => u.id === tree.gate)!.name} in the ${tree.id === "courage" ? "Inspiration" : "Courage"} tree.</p>` : ""}
-      <p class="tree-hint">Tap a skill for details · drag to pan · scroll or pinch to zoom</p>
       <div class="tree-viewport" id="tree-viewport"><div class="tree-map" id="tree-map" style="transform:translate(${view.x}px,${view.y}px) scale(${view.scale})"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${tree.nodes.flatMap(n => n.requires.map(id => { const parent = tree.nodes.find(p => p.id === id); return parent ? `<line x1="${parent.x}" y1="${parent.y}" x2="${n.x}" y2="${n.y}" class="${game.save.upgrades[id] ? "lit" : ""}"/>` : ""; })).join("")}</svg>
       ${tree.nodes.map(n => { const skill = UPGRADES.find(u => u.id === n.id)!; const rank = game.save.upgrades[n.id]; return `<button class="skill-node ${rank ? "owned" : ""} ${skillAvailable(n.id, game.save.upgrades) ? "available" : "locked"} ${n.id === selectedSkill && treeTooltipVisible ? "chosen" : ""}" data-skill="${n.id}" style="left:${n.x}%;top:${n.y}%" aria-label="${skill.name}, ${rank} of ${skill.max}${skillAvailable(n.id, game.save.upgrades) ? "" : ", locked"}" aria-pressed="${n.id === selectedSkill && treeTooltipVisible}"><span class="node-icon">${skillSprite(n.id)}</span><span class="node-name">${skill.name}</span><small>${rank} / ${skill.max}</small></button>`; }).join("")}</div><div class="inspect-box tree-tooltip" id="tree-tooltip" hidden></div></div></section>`;
     document.querySelectorAll<HTMLButtonElement>("[data-tree]").forEach(b => b.onclick = () => {

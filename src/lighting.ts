@@ -55,6 +55,11 @@ export const LIGHTING_CONFIG = {
     bouncePathScale: 1.25,
     /** Blur radius in tiles: softens occlusion edges into penumbras. */
     softness: 0.55,
+    /** Warm sheen on wall faces beside lit floor: strongest where the face
+     * points at the flame, fading over this depth (tiles) into the wall.
+     * Gives every wall around a torch the same lit edge, whatever its art. */
+    wallSheen: 1,
+    wallSheenDepth: 0.36,
     /** Warm glow strength. The glow is blended as light (soft-light plus a
      * little additive bloom), never laid over the scene like a veil, so the
      * stone keeps its contrast instead of looking foggy. */

@@ -1058,22 +1058,26 @@ nav {
   letter-spacing: 1px;
 }
 /* Branching progression maps */
-.tree-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
-.tree-tabs button { padding: 12px 4px; font-size: 12px; }
+.page#upgrades.active { display: flex; flex-direction: column; overflow: hidden; }
+.tree-tabs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; margin: 6px 0 8px; flex-shrink: 0; }
+.tree-tabs button { min-width: 0; min-height: 64px; padding: 6px 2px; font-size: 9px; overflow: hidden; }
 .tree-tabs span, .tree-tabs small { display: block; }
-.tree-tabs span { font-size: 25px; margin-bottom: 5px; }
-.tree-tabs small { font-size: 8px; letter-spacing: 1px; margin-top: 6px; color: #9ba8b7; }
+.tree-tabs span { font-size: 18px; margin-bottom: 2px; }
+.tree-tabs span img { width: 24px; height: 24px; }
+.tree-tabs small { font-size: 6px; letter-spacing: .5px; margin-top: 3px; color: #9ba8b7; }
 .tree-tabs [aria-pressed="true"] { border-color: #d8b572; background: #343021; color: #ffe1a1; }
-.skill-tree { --tree-color: #e5bf75; border: 1px solid #63543a; background: radial-gradient(ellipse at 50% 36%, #74552326, transparent 65%), #0a1016; padding: 22px 14px 16px; border-radius: 9px; }
+.skill-tree { --tree-color: #e5bf75; display: flex; flex: 1; min-height: 0; flex-direction: column; border: 1px solid #63543a; background: radial-gradient(ellipse at 50% 36%, #74552326, transparent 65%), #0a1016; padding: 8px; border-radius: 9px; }
 .skill-tree.courage { --tree-color: #82c9b3; border-color: #355e55; background: radial-gradient(ellipse at 50% 36%, #2b92782a, transparent 65%), #090f15; }
 .skill-tree.legacy { --tree-color: #b3a0e8; border-color: #53456c; background: radial-gradient(ellipse at 50% 36%, #76599e30, transparent 65%), #0d0d17; }
+.skill-tree.wisdom { --tree-color: #79bddd; border-color: #36576c; background: radial-gradient(ellipse at 50% 36%, #3277982d, transparent 65%), #091117; }
+.skill-tree.renown { --tree-color: #dc8f79; border-color: #6c4438; background: radial-gradient(ellipse at 50% 36%, #9d4f382d, transparent 65%), #140d0c; }
 .tree-heading { text-align: center; }
 .tree-heading small { color: var(--tree-color); letter-spacing: 2px; font-size: 11px; }
-.tree-heading h3 { font-size: 21px; margin: 10px 0; }
+.tree-heading h3 { font-size: 16px; margin: 1px 0 6px; }
 .tree-heading p, .tree-lock { font-size: 11px; color: #a3afbc; text-align: center; line-height: 1.7; }
 .tree-lock { border: 1px solid #38414b; padding: 9px; }
 .tree-hint { font-size: 10px; color: #7f8a9d; text-align: center; margin: 4px 0 8px; }
-.tree-viewport { position: relative; height: 470px; margin: 6px 0 18px; overflow: hidden; border: 1px solid #232b33; border-radius: 6px; touch-action: none; cursor: grab; background: #070a0e; }
+.tree-viewport { position: relative; flex: 1; min-height: 0; margin: 0; overflow: hidden; border: 1px solid #232b33; border-radius: 6px; touch-action: none; cursor: grab; background: #070a0e; }
 .tree-viewport:active { cursor: grabbing; }
 .tree-map { position: absolute; inset: 0; transform-origin: 0 0; width: 100%; height: 100%; }
 .tree-map svg { position: absolute; width: 100%; height: 100%; overflow: visible; }
@@ -1082,7 +1086,7 @@ nav {
 .skill-node { position: absolute; transform: translate(-50%, -50%); display: flex; align-items: center; flex-direction: column; width: 96px; border: 0; background: none; padding: 0; gap: 5px; touch-action: none; }
 .skill-node:hover { background: none; color: var(--tree-color); }
 .node-icon { display: grid; place-items: center; width: 44px; height: 44px; font-size: 23px; background: #121c25; border: 1px solid #6a7480; box-shadow: 0 0 0 4px #0a1016; }
-.courage .node-icon { border-radius: 50%; }
+.courage .node-icon, .wisdom .node-icon { border-radius: 50%; }
 .legacy .node-icon { border-radius: 12px 0; }
 .node-name { font-size: 10px; line-height: 1.35; background: #0a1016e8; padding: 0 2px; }
 .skill-node small { font-size: 9px; color: #9aa7b5; background: #0a1016; }
@@ -1092,7 +1096,7 @@ nav {
 .skill-node.chosen .node-icon { outline: 2px solid var(--tree-color); outline-offset: 4px; color: var(--tree-color); }
 .tree-tooltip { max-width: 200px; z-index: 6; }
 .tree-tooltip .safe { color: #8fab79; }
-@media (min-width: 700px) { .tree-viewport { height: 520px; } .node-icon { width: 50px; height: 50px; } .node-name { font-size: 12px; } .skill-node { width: 130px; } }
+@media (min-width: 700px) { .node-icon { width: 50px; height: 50px; } .node-name { font-size: 12px; } .skill-node { width: 130px; } }
 @media (max-width: 440px) {
   nav { gap: 3px; }
   nav button { font-size: 10px; padding: 6px 1px; min-height: 60px; }

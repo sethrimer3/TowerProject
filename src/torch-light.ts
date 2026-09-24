@@ -144,6 +144,43 @@ export function torchLightField(
   const coverage = blur(floor.slice(), cols, rows, radiusPx);
   for (let i = 0; i < lit.length; i++)
     if (floor[i] && coverage[i] > 1e-3) lit[i] = Math.min(1, lit[i] / coverage[i]);
+
+  // Wall sheen: each wall face that borders floor catches the light falling
+  // just in front of it, scaled by how squarely it faces the flame, fading
+  // into the wall. Added after the blur so the lit edge stays crisp.
+  if (cfg.wallSheen > 0) {
+    const depth = cfg.wallSheenDepth;
+    const directAt = (x: number, y: number) =>
+      poly.length >= 3 && insidePolygon(x, y, poly) ? lightFalloff(Math.hypot(x - ox, y - oy), radius) : 0;
+    const isFloorTile = (i: number, j: number) => i >= 0 && j >= 0 && i < n && j < n && !wall[j * n + i];
+    for (let py = 0; py < rows; py++) {
+      const wy = top - (py + 0.5) / res;
+      for (let px = 0; px < cols; px++) {
+        const idx = py * cols + px;
+        if (floor[idx]) continue;
+        const wx = left + (px + 0.5) / res;
+        const ti = Math.floor(wx) - left, tj = Math.floor(wy) - bottom;
+        const fx = wx - Math.floor(wx), fy = wy - Math.floor(wy);
+        let best = 0;
+        // Faces of this wall tile that open onto floor: [neighbour, depth into wall, outward normal].
+        for (const [ni, nj, d, nx, ny] of [
+          [ti, tj + 1, 1 - fy, 0, 1], [ti, tj - 1, fy, 0, -1],
+          [ti + 1, tj, 1 - fx, 1, 0], [ti - 1, tj, fx, -1, 0],
+        ] as const) {
+          if (d >= depth || !isFloorTile(ni, nj)) continue;
+          // Light arriving just in front of the face, at this point along it.
+          const sx = wx + nx * (d + 0.02), sy = wy + ny * (d + 0.02);
+          const light = directAt(sx, sy);
+          if (light <= 0) continue;
+          const toX = ox - sx, toY = oy - sy, len = Math.hypot(toX, toY) || 1;
+          const facing = Math.max(0, (nx * toX + ny * toY) / len);
+          const v = cfg.wallSheen * light * (0.35 + 0.65 * facing) * Math.pow(1 - d / depth, 1.5);
+          if (v > best) best = v;
+        }
+        if (best > lit[idx]) lit[idx] = Math.min(1, best);
+      }
+    }
+  }
   return { values: lit, cols, rows, res, left, top, tiles };
 }
 

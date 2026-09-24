@@ -128,3 +128,18 @@ test("swayed light bakes share the tile grid and never spill deeper into walls",
   assert.ok(sample(left, -0.5, 2.5) < 0.01 && sample(right, -0.5, 2.5) < 0.01, "outside the wall stays dark");
   assert.ok(sample(right, 3.5, 1.5) > sample(left, 3.5, 1.5), "leaning right brightens the floor to the right");
 });
+
+test("walls around a torch catch the same lit edge on every side", () => {
+  // Mirror-image corner torches: walls north+west versus south+east.
+  const isWall = (x: number, y: number) => x < 1 || y < 1 || x > 7 || y > 7;
+  const edge = (t: { x: number; y: number; lightRadius: number }) => {
+    const f = torchLightField({ ...t, visibilityPolygon: computeVisibilityPolygon(t, isWall) }, isWall);
+    return (wx: number, wy: number) => sample(f, wx, wy);
+  };
+  const nw = edge({ x: 1, y: 7, lightRadius: 5.5 }), se = edge({ x: 7, y: 1, lightRadius: 5.5 });
+  const westFace = nw(0.94, 7.5), northFace = nw(1.5, 8.06);
+  const eastFace = se(8.06, 1.5), southFace = se(7.5, 0.94);
+  for (const v of [westFace, northFace, eastFace, southFace]) assert.ok(v > 0.5, `wall edge is lit (${v.toFixed(2)})`);
+  assert.ok(Math.abs(westFace - eastFace) < 0.05 && Math.abs(northFace - southFace) < 0.05, "mirrored walls light equally");
+  assert.ok(nw(0.5, 7.5) < westFace, "the sheen fades into the wall");
+});

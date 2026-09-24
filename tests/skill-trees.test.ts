@@ -27,6 +27,8 @@ test("fresh progression gates Delve, currencies, Courage root, and Legacy", () =
   assert.equal(restored.mode, "delve");
   assert.equal(TREES[1].nodes[0].id, "auto");
   assert.ok(TREES[0].nodes.every(n => UPGRADES.find(u => u.id === n.id)!.currency === "shards"));
+  assert.deepEqual(TREES.map(tree => tree.id), ["inspiration", "courage", "legacy", "wisdom", "renown"]);
+  assert.ok(TREES.slice(3).every(tree => tree.nodes.length >= 3));
 });
 test("older saves retain earned access without unlocking fresh saves", () => {
   const old: any = defaults();
