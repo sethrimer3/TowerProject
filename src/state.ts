@@ -1,3 +1,4 @@
+import { entrance } from "./delve/labyrinth.ts";
 import { isDeadlocked } from "./analysis.ts";
 import { doorBlockedMessage, doorCost, doorName, KEY_ORDER } from "./doors.ts";
 import { skillAvailable } from "./skill-trees.ts";
@@ -139,13 +140,14 @@ export class Game {
         this.save.delve.revival = null;
         this.run.layoutVersion = LAYOUT_VERSION;
         this.run.changes = {};
-        this.run.player.x = START_X;
-        this.run.player.y = Math.floor(this.run.player.y / CHUNK) * CHUNK;
-        this.run.floor = Math.min(this.run.floor, this.run.player.y);
+        this.run.delveMilestone = Math.floor(this.run.height / 100);
+        Object.assign(this.run.player, entrance(this.run.seed, this.run.delveMilestone));
+        this.run.floor = this.run.delveMilestone * 108;
+        this.run.delveVisited = {};
         this.message =
           "The tower has reshaped. Progress kept; returned to this section’s entrance.";
       }
-      this.world = new World(this.run.seed, this.run.changes, this.run.floor);
+      this.world = new World(this.run.seed, this.run.changes, this.run.floor, this.run.delveMilestone ?? 0);
     } else {
       this.run = slice.run;
       if (this.run.layoutVersion !== TOWER_LAYOUT_VERSION) {
@@ -208,7 +210,7 @@ export class Game {
     if (!this.run.outside && this.mode === "tower") this.linkTowerFloor();
     this.world =
       this.run.outside ? new OutsideWorld(this.run.seed, this.mode) : this.mode === "delve"
-        ? new World(this.run.seed, this.run.changes, this.run.floor)
+        ? new World(this.run.seed, this.run.changes, this.run.floor, this.run.delveMilestone ?? 0)
         : new RoomWorld(this.run.seed, this.run.height, this.run.changes);
     const undoRewards = [...(this.run.rewards ?? [])];
     this.syncRewards();
@@ -284,7 +286,7 @@ export class Game {
       } else if (t.kind === "key") {
         keys[t.color!]++;
       } else if (t.kind === "potion") {
-        hp += Math.min(p.maxHp - hp, 35);
+        hp += Math.min(p.maxHp - hp, t.amount ?? 35);
       } else if (t.kind === "attack") {
         attack += 2;
       } else if (t.kind === "defense") {
@@ -635,8 +637,19 @@ export class Game {
     else if (t.kind !== "floor" && t.kind !== "stairs" && t.kind !== "stairsDown" && t.kind !== "oneway" && t.kind !== "openedChest") this.world.clear(x, y);
     this.checkClear();
     if (this.mode === "delve") {
-      this.run.height = Math.max(this.run.height, y);
-      this.run.maxHeight = Math.max(this.run.maxHeight ?? 0, y);
+      const world = this.world as World;
+      if (t.kind === 'oneway' && world.cross(x, y)) {
+        this.run.delveMilestone = world.milestone;
+        this.run.delveVisited = {};
+        this.run.delveKnown = {};
+        slice.history = []; // Milestone passages cannot be reversed with undo.
+        this.route = [];
+        this.feedback(`Depth ${world.milestone * 100} · the passage seals behind you.`);
+      }
+      const visited = this.run.delveVisited ??= {};
+      visited[`${x},${y}`] = (visited[`${x},${y}`] ?? 0) + 1;
+      this.run.height = Math.max(this.run.height, world.depth(x, y));
+      this.run.maxHeight = Math.max(this.run.maxHeight ?? 0, this.run.height);
       (this.world as World).maintain(y);
       this.run.floor = (this.world as World).floor;
       this.recordProgress();
@@ -798,7 +811,7 @@ export class Game {
       this.feedback(`+1 ${t.color} key`);
     }
     if (t.kind === "potion") {
-      const n = Math.min(p.maxHp - p.hp, 35);
+      const n = Math.min(p.maxHp - p.hp, t.amount ?? 35);
       p.hp += n;
       this.feedback(`+${n} HP`);
     }

@@ -2,7 +2,9 @@ import { CHUNK, COLORS, TOWER_HEIGHT, VIEWPORT_TILES } from "./config.ts";
 import { drawTerrain, tileRandom } from "./themes.ts";
 import type { Game } from "./state.ts";
 import type { Tile, Torch } from "./entities.ts";
-import { drawForestTile, drawEntrance, OUTSIDE_SIZE } from "./outside.ts";
+import { drawForestTile, drawEntrance, OUTSIDE_SIZE, outsideWeather } from "./outside.ts";
+import { DecorLayer, type DecorView } from "./decor-render.ts";
+import { OutsideGrass } from "./outside-grass.ts";
 import { OutdoorWeather } from "./weather.ts";
 import { LIGHTING_CONFIG, getTorchFlicker, getTorchSway } from "./lighting.ts";
 import { area1FloorSprite, drawArea1Door, drawArea1Item } from "./area1-tileset.ts";
@@ -78,6 +80,10 @@ export class Renderer {
   seed = -1;
   outside = false;
   weather = new OutdoorWeather();
+  /** Moss, vines, plants, crates, and pools dressing the dungeon floor. */
+  decor = new DecorLayer();
+  /** Wind-blown grass in the forest outside. */
+  grass = new OutsideGrass();
   atmosphere: AtmosphereConfig = { ...ATMOSPHERE_CONFIG };
   lightmapCanvas: HTMLCanvasElement | null = null;
   lightmapCtx: CanvasRenderingContext2D | null = null;
@@ -224,6 +230,14 @@ export class Renderer {
     this.bakeBudget = 2;
     this.frameWalls = g.run.outside ? [] : this.visibleWallTiles();
     this.frameGlows = g.run.outside ? [] : this.visibleGlowSources(now);
+    const view: DecorView = { left: this.left, bottom: this.bottom, n, s };
+    const reduceMotion = g.save.settings.reduceMotion;
+    const tileAt = (x: number, y: number) => g.world.tile(x, y);
+    if (!g.run.outside) {
+      this.decor.sync(g.world, g.run.seed);
+      this.decor.update(dt, now, this.playerX, this.playerY, tileAt, reduceMotion);
+      this.frameGlows.push(...this.decor.glows(view));
+    }
     // Ground first, then torch-cast shadows, then tile contents on top, so
     // shadows fall across the floor but never over the things casting them.
     const eachTile = (layer: 0 | 1) => {
@@ -245,6 +259,7 @@ export class Renderer {
     };
     eachTile(0);
     if (!g.run.outside) {
+      this.decor.drawGround(c, view, now, tileAt, reduceMotion);
       this.drawTorchRelief(now);
       this.drawEntityShadows(box.width, now);
     }
@@ -258,6 +273,7 @@ export class Renderer {
       c.drawImage(dark, 0, 0, box.width, box.width);
       c.restore();
       this.drawObjectBloom(box.width);
+      this.decor.drawGlow(c, view, now, this.darkness, reduceMotion);
       this.drawDarkened(spriteDark, box.width, dpr, LIGHTING_CONFIG.objectGlow.spriteDarkness, () => eachTile(1));
       this.drawDoorWash();
     } else eachTile(1);
@@ -296,9 +312,16 @@ export class Renderer {
         this.ctx.setTransform(heroTransform);
         drawHero();
       });
+      // Grass and water in front of the hero sit in the same darkness as
+      // the ground they grow from.
+      this.drawDarkened(spriteDark, box.width, dpr, 1, () => this.decor.drawForeground(this.ctx, view, now, tileAt, reduceMotion));
     } else {
       drawHero();
       c.restore();
+      if (g.run.outside)
+        this.grass.draw(c, view, g.world, g.run.seed, Math.floor(g.world.width / 2), outsideWeather(g.run.seed), now, dt,
+          this.playerX, this.playerY, reduceMotion);
+      else this.decor.drawForeground(c, view, now, tileAt, reduceMotion);
     }
     if (g.run.outside) {
       this.weather.draw(c, box.width, g.run.seed, dt, g.save.settings.reduceMotion,
@@ -432,7 +455,7 @@ export class Renderer {
       c.fillStyle = "#8a7e93";
       c.fillRect(0, 10, 24, 5);
       c.fillStyle = "#a89fb3";
-      c.beginPath(); c.moveTo(5, 10); c.lineTo(12, 19); c.lineTo(19, 10); c.fill();
+      c.beginPath(); c.moveTo(5, 14); c.lineTo(12, 5); c.lineTo(19, 14); c.fill();
       return;
     }
     if (t.kind === "stairs") {

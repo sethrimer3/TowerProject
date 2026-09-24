@@ -1,5 +1,5 @@
 import type { UpgradeId, Currency } from "./config.ts";
-export type TreeId = "inspiration" | "courage" | "legacy" | "wisdom" | "renown";
+export type TreeId = "wayfinding" | "inspiration" | "courage" | "legacy" | "wisdom" | "renown";
 export type SkillNode = { id: UpgradeId; icon: string; x: number; y: number; requires: UpgradeId[] };
 export const TREES: { id: TreeId; name: string; currency: Currency; gate?: UpgradeId; description: string; nodes: SkillNode[] }[] = [
   { id: "inspiration", name: "Inspiration", currency: "shards", description: "Earn Inspiration by beating your best Tower climb.", nodes: [
@@ -18,6 +18,11 @@ export const TREES: { id: TreeId; name: string; currency: Currency; gate?: Upgra
     { id: "undos", icon: "↺", x: 23, y: 61, requires: ["hp"] },
     { id: "revive", icon: "☼", x: 77, y: 61, requires: ["defense"] },
     { id: "legacy", icon: "♜", x: 50, y: 87, requires: ["attack", "undos", "revive"] },
+  ] },
+  { id: "wayfinding", name: "Wayfinding", currency: "essence", gate: "auto", description: "Teach Delve Automove to explore, compare routes and preserve resources.", nodes: [
+    { id: "aiMemory", icon: "◇", x: 50, y: 20, requires: ["auto"] },
+    { id: "aiEvaluation", icon: "⚖", x: 25, y: 52, requires: ["aiMemory"] },
+    { id: "aiLookahead", icon: "✧", x: 75, y: 78, requires: ["aiMemory"] },
   ] },
   { id: "legacy", name: "Legacy", currency: "essence", gate: "legacy", description: "Spend Courage on heirlooms carried into every new run.", nodes: [
     { id: "quality", icon: "♜", x: 50, y: 15, requires: ["legacy"] },

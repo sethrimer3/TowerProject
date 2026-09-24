@@ -34,7 +34,7 @@ export type FloorRecord = { earned: ClearTier[]; claimed: ClearTier[] };
 export type DoorRule =
   | { type: "keys"; keys: KeyColor[]; mode: "all" | "any" }
   | { type: "fullHp" };
-export type Tile = { kind: Kind; color?: KeyColor; door?: DoorRule; enemy?: Enemy; tier?: ClearTier };
+export type Tile = { kind: Kind; amount?: number; color?: KeyColor; door?: DoorRule; enemy?: Enemy; tier?: ClearTier };
 export type Point = { x: number; y: number };
 /** A stationary wall-mounted light source, anchored to a walkable floor
  * tile adjacent to a wall. Its visibility polygon is computed once (on
@@ -65,6 +65,9 @@ export type Run = {
   rewards?: RewardChest[];
   outside?: boolean;
   layoutVersion?: number;
+  delveMilestone?: number;
+  delveKnown?: Record<string, true>;
+  delveVisited?: Record<string, number>;
   seed: number;
   player: Player;
   height: number;

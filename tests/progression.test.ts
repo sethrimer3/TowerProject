@@ -87,7 +87,7 @@ test('reward chests persist open, undo closed, and never repay after undo', () =
   assert.equal(g.world.tile(1, 0).kind, 'openedChest');
   assert.equal(g.save.tower.shards, before + 1);
 });
-test('delve vertical movement tracks current y while preserving maxHeight', () => {
+test('delve approach movement does not award physical Y as progression', () => {
   const g = new Game(defaults());
   g.save.upgrades.delve = 1;
   g.switchMode('delve');
@@ -101,16 +101,16 @@ test('delve vertical movement tracks current y while preserving maxHeight', () =
   // Manually step up (north, dy = +1)
   g.move(0, 1);
   assert.equal(g.run.player.y, 1);
-  assert.equal(g.run.maxHeight, 1);
+  assert.equal(g.run.maxHeight, 0);
 
   g.move(0, 1);
   assert.equal(g.run.player.y, 2);
-  assert.equal(g.run.maxHeight, 2);
+  assert.equal(g.run.maxHeight, 0);
 
   // Move back down (south, dy = -1)
   g.move(0, -1);
   assert.equal(g.run.player.y, 1);
-  assert.equal(g.run.maxHeight, 2); // Run best stays 2 even as current depth goes down to 1
+  assert.equal(g.run.maxHeight, 0); // Run best stays 2 even as current depth goes down to 1
 });
 test('legacy balances and records migrate without retroactive duplication', () => {
   const old = defaults(); old.tower.best=8; old.tower.shards=4;

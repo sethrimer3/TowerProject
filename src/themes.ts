@@ -1,3 +1,4 @@
+import { themeInfluence } from "./delve/labyrinth.ts";
 import type { Mode } from "./entities.ts";
 
 // Presentation only: themes never consume the generation RNG or alter tiles.
@@ -67,13 +68,12 @@ export function themeAt(mode: Mode, height: number, x: number, y: number, seed: 
     const index = Math.floor(Math.max(0, height) / 10) % 10;
     return { from: index, to: index, mix: 0, decor: index };
   }
-  const warped = Math.max(0, y + (noise(x / 11, y / 23, seed) - 0.5) * 42
-    + (noise(x / 4, y / 9, seed ^ 0x517c) - 0.5) * 14);
-  // A 16-tile transition straddles each nominal hundred-depth boundary.
-  const band = Math.floor((warped + 8) / 100);
-  const t = Math.max(0, Math.min(1, (warped - (band * 100 - 8)) / 16));
-  const mix = t * t * (3 - 2 * t);
-  const from = Math.max(0, band - 1) % 10, to = band % 10;
+  const influence = Math.max(0, themeInfluence(seed, x, y) + (noise(x / 7, y / 11, seed) - 0.5) * 0.12);
+  const lower = Math.floor(influence), fraction = influence - lower;
+  // Area influence is centered on the region's own theme, so only the
+  // half-area near each gate mixes with its neighbour.
+  const from = lower % 10, to = (lower + 1) % 10;
+  const mix = fraction * fraction * (3 - 2 * fraction);
   return { from, to, mix, decor: noise(x / 3, y / 3, seed ^ 0x713f) < mix ? to : from };
 }
 

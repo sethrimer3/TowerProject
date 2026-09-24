@@ -1,3 +1,5 @@
+import { analyzeDelve } from "./delve/analyzer.ts";
+import { capabilities, decisions } from "./delve/automove.ts";
 import { TreeParticles } from "./tree-particles.ts";
 import { TREES, skillAvailable, type TreeId } from "./skill-trees.ts";
 import "./style.css";
@@ -255,7 +257,7 @@ function inspectDetails(x: number, y: number): { color: string; title: string; b
     };
   }
   if (t.kind === "potion") {
-    const gain = Math.min(p.maxHp - p.hp, 35);
+    const gain = Math.min(p.maxHp - p.hp, t.amount ?? 35);
     return {
       color: KIND_COLORS.potion!,
       title: "Potion",
@@ -447,7 +449,7 @@ function update() {
     button.disabled = count < 1 || game.run.outside || !!game.summary;
   }
   text("height-label", game.mode === "tower" ? "HEIGHT" : "DEPTH");
-  const currentVal = displayedProgress(game.mode === "delve" ? p.y : game.run.height, !!game.run.outside);
+  const currentVal = displayedProgress(game.run.height, !!game.run.outside);
   const rawRunBest = game.run.maxHeight ?? game.run.height;
   const rawAllBest = slice.best;
   const runBest = displayedProgress(rawRunBest, !!game.run.outside);
@@ -1241,6 +1243,16 @@ window.addEventListener("pagehide", save);
 (window as unknown as { towerDebug: () => void }).towerDebug = () => {
   const text = towerFloorReport(game.save.tower.run?.seed ?? game.run.seed, game.save.tower.run?.height ?? 0).text;
   console.log(text);
+};
+// Developer-only live navigation diagnostics; no generation hints go to Automove.
+(window as unknown as { delveDebug: () => unknown }).delveDebug = () => {
+  if (!game.save.settings.devMode || game.mode !== 'delve') return null;
+  const report = { ...analyzeDelve(game.run.seed, game.run.delveMilestone ?? 0),
+    progressionDepth: game.run.height, physicalY: game.run.player.y,
+    lastMilestone: (game.run.delveMilestone ?? 0) * 100,
+    knownTiles: Object.keys(game.run.delveKnown ?? {}).length,
+    capabilities: capabilities(game), decisions: decisions.get(game) ?? [] };
+  console.log(report); return report;
 };
 // `defendDebug(seconds, { rain }?)` fast-forwards a running DEFEND
 // battle, optionally forcing its weather.

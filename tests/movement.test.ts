@@ -70,7 +70,7 @@ test("undo restores combat, health, drops, equipment, door keys and score; histo
   assert.equal(g.save.delve.history.length, 5);
   for (let i = 0; i < 5; i++) assert.ok(g.undo());
   assert.deepEqual(g.run, { ...initial, damaged: g.run.damaged, keysSpent: g.run.keysSpent });
-  assert.equal(g.save.delve.best, 5);
+  assert.equal(g.save.delve.best, (g.world as World).depth(15, 5));
   assert.equal(g.undo(), false);
   for (let i = 0; i < 6; i++) g.move(0, 1);
   assert.equal(g.save.delve.history.length, 5);
@@ -161,29 +161,14 @@ test("paired horizontal openings wrap, use destination locks, and undo correctly
   g.routeStep();
   assert.equal(g.run.player.x, 0);
 });
-test("generated wraps have paired openings and do not disconnect floor space", () => {
-  let wraps = 0;
-  // Generating and flood-filling the full 5000-row map is the expensive
-  // part; 10 seeds already gives a >99.99% chance of observing at least one
-  // wrap (each row has a 60% independent chance), so this stays fast.
+test("generated boundaries are closed and sparse region snapshots stay connected", () => {
   for (let seed = 0; seed < 10; seed++) {
-    // The delve map is one continuous corridor network generated whole and
-    // then sliced into chunks; a room can straddle a chunk boundary, so
-    // connectivity is only meaningful across the whole map (matching how
-    // `World` actually serves tiles during play — chunk boundaries are a
-    // caching detail, never a real wall), not within one sliced chunk.
     const full = generateDelveMap(seed);
     const c = generate(seed, 0);
     for (let y = 0; y < 20; y++) {
-      const left = c.get(point(0, y))!.kind !== "wall",
-        right = c.get(point(29, y))!.kind !== "wall";
-      assert.equal(left, right);
-      if (left) wraps++;
+      assert.equal(c.get(point(0, y))?.kind ?? 'wall', 'wall');
+      assert.equal(c.get(point(29, y))?.kind ?? 'wall', 'wall');
     }
-    assert.equal(
-      reachable(full, "15,0").size,
-      [...full.values()].filter((t) => t.kind !== "wall").length,
-    );
+    assert.equal(reachable(full, '15,0').size, [...full.values()].filter(t => t.kind !== 'wall').length);
   }
-  assert.ok(wraps > 0);
 });

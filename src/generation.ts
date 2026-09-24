@@ -1,3 +1,4 @@
+import { region, depthAt } from "./delve/labyrinth.ts";
 import {
   CHUNK,
   WIDTH,
@@ -7,7 +8,6 @@ import {
   TOWER_START_X,
   UNGUARDED_LOOT_CHANCE,
   type KeyColor,
-  DELVE_MAX_DEPTH,
 } from "./config.ts";
 import { point, type Tile, type Torch } from "./entities.ts";
 import { computeVisibilityPolygon, LIGHTING_CONFIG } from "./lighting.ts";
@@ -108,7 +108,7 @@ function placeTorches(
     torch.visibilityPolygon = computeVisibilityPolygon(torch, isWall);
   return torches;
 }
-export const LAYOUT_VERSION = 5;
+export const LAYOUT_VERSION = 6;
 // v3 adds declarative multi-key/condition doors and places their prerequisite
 // keys differently; old per-room coordinate mutations must not overlay it.
 // v4 replaces the maze generator with strategic chamber layouts.
@@ -251,141 +251,24 @@ type Room = {
   y2: number;
 };
 
-const delveCaches = new Map<number, Map<string, Tile>>();
-const delveTorchCaches = new Map<number, Torch[]>();
-
-export function generateDelveMap(seed: number): Map<string, Tile> {
-  const rng = random(seed);
+/** Compatibility snapshot for diagnostics; runtime generation is lazy and endless. */
+export function generateDelveMap(seed: number, areas = 4): Map<string, Tile> {
   const cells = new Map<string, Tile>();
-  const set = (x: number, y: number, t: Tile) => cells.set(point(x, y), t);
-  const floor = (x: number, y: number) => set(x, y, { kind: "floor" });
-  for (let y = 0; y < DELVE_MAX_DEPTH; y++)
-    for (let x = 0; x < WIDTH; x++) set(x, y, { kind: "wall" });
-
-  floor(START_X, 0);
-
-  const rooms = bspRooms(1, 1, WIDTH - 2, DELVE_MAX_DEPTH - 2, rng, 4);
-
-  for (let r of rooms) {
-    for (let yy = r.y; yy < r.y + r.h; yy++) {
-      for (let xx = r.x; xx < r.x + r.w; xx++) {
-        floor(xx, yy);
-      }
-    }
-  }
-
-  // We connect rooms by finding neighbors and carving
-  // Simple heuristic: connect each room to one below it
-  rooms.sort((a, b) => a.y - b.y);
-  if (rooms.length)
-    carvePath(cells, point, START_X, 0, Math.floor(rooms[0].x + rooms[0].w / 2), Math.floor(rooms[0].y + rooms[0].h / 2), rng);
-  for (let i = 0; i < rooms.length - 1; i++) {
-    const r1 = rooms[i];
-    const r2 = rooms[i + 1];
-    carvePath(cells, point, Math.floor(r1.x + r1.w / 2), Math.floor(r1.y + r1.h / 2), Math.floor(r2.x + r2.w / 2), Math.floor(r2.y + r2.h / 2), rng);
-  }
-
-  // Occasional wraparound openings link the west and east edges directly,
-  // carved outward from existing floor so they never disconnect anything.
-  for (let y = 3; y < DELVE_MAX_DEPTH - 3; y += 17) {
-    if (rng() >= 0.6) continue;
-    let minX = -1, maxX = -1;
-    for (let x = 1; x < WIDTH - 1; x++)
-      if (cells.get(point(x, y))?.kind === "floor") {
-        if (minX === -1) minX = x;
-        maxX = x;
-      }
-    if (minX === -1) continue;
-    for (let x = 0; x <= minX; x++) floor(x, y);
-    for (let x = maxX; x < WIDTH; x++) floor(x, y);
-  }
-
-  // Oneway passages every ~40 tiles. Rooms are at most 8 tall, so a chosen
-  // row can still fall inside a room's own rectangle; walling the rest of
-  // that row would bisect the room into a top and bottom half connected
-  // only at the choke column, stranding whichever half's own corridor entry
-  // isn't there. Skip any row a room's body overlaps (a corridor-only row's
-  // one floor tile is always the real connecting spine); the single
-  // whole-map reachability pass below prunes anything this still manages
-  // to strand, rather than re-flooding the whole map at every checkpoint.
-  for (let y = 40; y < DELVE_MAX_DEPTH; y += 40) {
-    if (rooms.some(r => r.y <= y && y < r.y + r.h)) continue;
-    let floorX = -1;
-    for (let x = 1; x < WIDTH - 1; x++) {
-      if (cells.get(point(x, y))?.kind === 'floor') {
-        floorX = x;
-        break;
-      }
-    }
-    if (floorX !== -1) {
-      set(floorX, y, { kind: "oneway" });
-      // block other paths at this y
-      for (let x = 1; x < WIDTH - 1; x++) {
-        if (x !== floorX) set(x, y, { kind: "wall" });
-      }
-      // ensure path above and below
-      floor(floorX, y - 1);
-      floor(floorX, y + 1);
-    }
-  }
-
-  // Prune any floor left structurally unreachable from the entrance (a rare
-  // BSP/corridor edge case) back to wall, so the map is always exactly one
-  // connected component — never a silent island of dead, inaccessible space.
-  const liveFloor = reachable(cells, point(START_X, 0));
-  for (const [k, t] of cells)
-    if (t.kind !== "wall" && !liveFloor.has(k)) set(...(k.split(",").map(Number) as [number, number]), { kind: "wall" });
-
-  // Place enemies and loot in rooms
-  for (let room of rooms) {
-    const height = room.y;
-    if (height < 2) continue; // skip entrance
-    const tier = Math.min(3, Math.floor(height / 35));
-    const names = ["Cinder slime", "Bone sentinel", "Dusk wing", "Ash warden"];
-    const cx = Math.floor(room.x + room.w / 2);
-    const cy = Math.floor(room.y + room.h / 2);
-    if (rng() < 0.3) {
-      set(cx, cy, {
-        kind: "enemy",
-        enemy: {
-          name: names[tier],
-          hp: 12 + tier * 16 + Math.floor(height * 0.5),
-          attack: 6 + tier * 4 + Math.floor(height / 12),
-          defense: 1 + tier * 2,
-          tier,
-        }
-      });
-    } else if (rng() < 0.2) {
-      set(cx, cy, { kind: "potion", color: rng() < 0.5 ? "red" : "blue" });
-    } else if (rng() < 0.1) {
-      set(cx, cy, { kind: "treasure" });
-    }
-  }
-
+  for (let a = 0; a < areas; a++) for (const [k, t] of region(seed, a).cells) cells.set(k, t);
   return cells;
 }
-
 export function generate(seed: number, index: number): Map<string, Tile> {
-  let fullMap = delveCaches.get(seed);
-  if (!fullMap) {
-    fullMap = generateDelveMap(seed);
-    delveCaches.set(seed, fullMap);
-    delveTorchCaches.set(seed, placeTorches(fullMap, 1, WIDTH - 2, 0, DELVE_MAX_DEPTH - 2, seed));
-  }
-  const chunk = new Map<string, Tile>();
-  for (let y = index * CHUNK; y < (index + 1) * CHUNK; y++) {
-    for (let x = 0; x < WIDTH; x++) {
-      const t = fullMap.get(point(x, y));
-      if (t) chunk.set(point(x, y), t);
+  const cells = new Map<string, Tile>();
+  const min = index * CHUNK, max = min + CHUNK;
+  for (let a = Math.max(0, Math.floor((min - 35) / 108)); a <= Math.floor(max / 108); a++)
+    for (const [k, t] of region(seed, a).cells) {
+      const y = Number(k.split(',')[1]);
+      if (y >= min && y < max) cells.set(k, t);
     }
-  }
-  return chunk;
+  return cells;
 }
-/** Torches for a delve seed, computed once (on first generation of that
- * seed) and cached for the process lifetime. */
 export function torchesForSeed(seed: number): Torch[] {
-  if (!delveTorchCaches.has(seed)) generate(seed, 0);
-  return delveTorchCaches.get(seed) ?? [];
+  return placeTorches(generateDelveMap(seed, 1), 1, WIDTH - 2, 0, 140, seed);
 }
 
 export function rollUnguardedLoot(rng: () => number): Tile | null {
@@ -402,6 +285,7 @@ export class World implements Board {
     public seed: number,
     public changes: Record<string, Tile>,
     public floor = 0,
+    public milestone = 0,
   ) {}
   tile(x: number, y: number): Tile {
     if (x < 0 || x >= this.width || y < this.floor) return { kind: "wall" };
@@ -424,13 +308,28 @@ export class World implements Board {
         return null;
       nx = (nx + this.width) % this.width;
     }
+    if (this.tile(nx, ny).kind === 'oneway' && (dy !== 1 || dx !== 0)) return null;
     return { x: nx, y: ny };
   }
+  cross(x: number, y: number) {
+    const gate = region(this.seed, this.milestone).gate;
+    if (x !== gate.x || y !== gate.y) return false;
+    this.changes[point(x, y - 1)] = { kind: 'wall' };
+    this.milestone++;
+    return true;
+  }
+  depth(x: number, y: number) { return depthAt(this.seed, x, y, this.milestone); }
   clear(x: number, y: number) {
     this.changes[point(x, y)] = { kind: "floor" };
   }
+  private torchAreas = new Map<number, Torch[]>();
   get torches(): Torch[] {
-    return torchesForSeed(this.seed);
+    for (let a = this.milestone; a <= this.milestone + 1; a++) if (!this.torchAreas.has(a)) {
+      const r = region(this.seed, a);
+      this.torchAreas.set(a, placeTorches(r.cells, 1, WIDTH - 2, a * 108, (a + 1) * 108 + 34, this.seed ^ a));
+    }
+    for (const a of this.torchAreas.keys()) if (a < this.milestone) this.torchAreas.delete(a);
+    return [...this.torchAreas.values()].flat();
   }
   breakTorchAt(x: number, y: number): boolean {
     const torch = this.torches.find((t) => t.active && t.x === x && t.y === y);
@@ -441,9 +340,9 @@ export class World implements Board {
   maintain(y: number) {
     const index = Math.floor(y / CHUNK);
     this.tile(START_X, (index + 2) * CHUNK);
-    this.floor = Math.max(this.floor, (index - 3) * CHUNK);
+    this.floor = Math.max(this.floor, this.milestone * 108);
     for (const i of this.chunks.keys())
-      if (i * CHUNK < this.floor) this.chunks.delete(i);
+      if ((i + 1) * CHUNK <= this.floor || Math.abs(i - index) > 3) this.chunks.delete(i);
     for (const k of Object.keys(this.changes))
       if (Number(k.split(",")[1]) < this.floor) delete this.changes[k];
   }

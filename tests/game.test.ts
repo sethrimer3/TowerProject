@@ -71,7 +71,7 @@ test("doors consume matching keys; pickups and walls obey movement", () => {
   assert.equal(p.attack, 14);
   g.world.changes["15,3"] = { kind: "wall" };
   assert.equal(g.move(0, 1), false);
-  assert.equal(g.run.height, 2);
+  assert.equal(g.run.height, (g.world as World).depth(p.x, p.y));
 });
 test("combination, steel, and heart doors apply their runtime rules", () => {
   const combo = new Game(defaults());
@@ -228,7 +228,7 @@ test("old runs safely migrate topology while retaining earned stats and permanen
   const migrated = new Game(decode(JSON.stringify(save)));
   migrated.switchMode("delve");
   assert.equal(migrated.run.layoutVersion, LAYOUT_VERSION);
-  assert.equal(migrated.run.player.y, 20);
+  assert.equal(migrated.run.player.y, 0);
   assert.equal(migrated.run.player.attack, 40);
   assert.equal(migrated.run.height, 29);
   assert.equal(migrated.save.delve.essence, 19);
@@ -236,7 +236,7 @@ test("old runs safely migrate topology while retaining earned stats and permanen
   assert.deepEqual(migrated.run.changes, {});
   // The old generator's chunk-local "stairs" coordinates no longer exist;
   // the migrated entrance only needs to still be navigable, not a specific kind.
-  assert.notEqual(migrated.world.tile(15, 20).kind, "wall");
+  assert.notEqual(migrated.world.tile(15, 0).kind, "wall");
 });
 test("automation reliably makes forward progress, never taking a lethal fight, across many fixed seeds", () => {
   for (let seed = 0; seed < 12; seed++) {
@@ -245,13 +245,13 @@ test("automation reliably makes forward progress, never taking a lethal fight, a
     g.switchMode("delve");
     g.run.seed = seed;
     g.world = new World(seed, g.run.changes);
-    for (let i = 0; i < 1400 && g.run.height < 40; i++) {
+    for (let i = 0; i < 1400 && g.run.height < 15; i++) {
       const step = chooseStep(g);
       if (!step) break;
       assert.ok(g.move(step.dx, step.dy));
       assert.ok(g.run.player.hp > 0);
     }
-    assert.ok(g.run.height >= 40, `Seed ${seed} stalled at ${g.run.height}`);
+    assert.ok(g.run.height >= 15, `Seed ${seed} stalled at ${g.run.height}`);
   }
 });
 

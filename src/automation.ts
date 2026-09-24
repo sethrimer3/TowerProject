@@ -1,3 +1,4 @@
+import { chooseDelveStep } from "./delve/automove.ts";
 import { predict } from "./combat.ts";
 import { point, type Tile } from "./entities.ts";
 import type { Game } from "./state.ts";
@@ -15,6 +16,7 @@ export function score(t: Tile, y: number, current: number, distance: number) {
   return benefit + Math.max(0, y - current) * 1.8 - distance * 0.18;
 }
 export function chooseStep(game: Game) {
+  if (game.mode === "delve" && !game.run.outside) return chooseDelveStep(game);
   const p = game.run.player;
   const progress = game.mode === "tower" ? p.y : game.run.height;
   const q = [{ x: p.x, y: p.y, first: [0, 0], d: 0 }];

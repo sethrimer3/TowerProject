@@ -2,6 +2,7 @@ export const UNGUARDED_LOOT_CHANCE = 1 / 1000;
 export const WIDTH = 30;
 export const CHUNK = 20;
 export const TOWER_CHUNK = 20;
+/** Legacy diagnostic extent only; runtime Delve has no depth cap. */
 export const DELVE_MAX_DEPTH = 5000;
 export const START_X = 15;
 export const VIEWPORT_TILES = 17;
@@ -98,6 +99,15 @@ export const UPGRADES = [
     base: 3,
     max: 1,
     currency: "essence",
+  },
+  {
+    id: "aiMemory", name: "Route memory", description: "Delve: remember explored routes, then recognize dead ends", base: 3, max: 2, currency: "essence",
+  },
+  {
+    id: "aiEvaluation", name: "Resource judgment", description: "Delve: learn combat cost, key cost, contextual rewards, then scarcity", base: 4, max: 4, currency: "essence",
+  },
+  {
+    id: "aiLookahead", name: "Labyrinth scouting", description: "Delve: +4 scouting radius and +2 interactions of route lookahead", base: 5, max: 4, currency: "essence",
   },
   {
     id: "autoPersist",

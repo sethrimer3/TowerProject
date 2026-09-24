@@ -47,7 +47,7 @@ const validChanges = (m: any) =>
   !Array.isArray(m) &&
   Object.entries(m).every(
     ([k, v]: [string, any]) => /^\d+,\d+$/.test(k) && (
-      v?.kind === "floor" || (v?.kind === "openedChest" && (v.tier === undefined || ["silver", "gold", "platinum"].includes(v.tier)))
+      (v?.kind === "floor" || v?.kind === "wall") || (v?.kind === "openedChest" && (v.tier === undefined || ["silver", "gold", "platinum"].includes(v.tier)))
     ),
   );
 function validRun(r: any): Run | null {
@@ -75,6 +75,9 @@ function validRun(r: any): Run | null {
     finite(p.attack) &&
     finite(p.defense) &&
     ["yellow", "blue", "red"].every((k) => finite(p.keys?.[k])) &&
+    (r.delveMilestone === undefined || (Number.isInteger(r.delveMilestone) && finite(r.delveMilestone))) &&
+    (r.delveKnown === undefined || (r.delveKnown && typeof r.delveKnown === 'object' && !Array.isArray(r.delveKnown) && Object.entries(r.delveKnown).every(([k, v]) => /^\d+,\d+$/.test(k) && v === true))) &&
+    (r.delveVisited === undefined || (r.delveVisited && typeof r.delveVisited === 'object' && !Array.isArray(r.delveVisited) && Object.entries(r.delveVisited).every(([k, v]) => /^\d+,\d+$/.test(k) && finite(v)))) &&
     validChanges(r.changes) &&
     (r.floors === undefined ||
       (typeof r.floors === "object" &&
