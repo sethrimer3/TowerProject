@@ -5,6 +5,7 @@ import type { Tile, Torch } from "./entities.ts";
 import { drawForestTile, drawEntrance, OUTSIDE_SIZE, outsideWeather } from "./outside.ts";
 import { DecorLayer, type DecorView, type ReflectionPainter } from "./decor-render.ts";
 import { OutsideGrass } from "./outside-grass.ts";
+import { TileLayerCache } from "./tile-cache.ts";
 import { OutdoorWeather } from "./weather.ts";
 import { LIGHTING_CONFIG, getTorchFlicker, getTorchSway } from "./lighting.ts";
 import { area1FloorSprite, drawArea1Door, drawArea1Item } from "./area1-tileset.ts";
@@ -84,6 +85,17 @@ export class Renderer {
   decor = new DecorLayer();
   /** Wind-blown grass in the forest outside. */
   grass = new OutsideGrass();
+  /** The stone (or forest floor) under everything, painted once and reused
+   * until the view leaves it or the board changes. Art still loading is
+   * retried for a few seconds. */
+  groundCache = new TileLayerCache(4, 250, 8000);
+  /** The decor's baked moss, water, vines, and plants, cached the same way
+   * (retried every frame until all of it is planned). */
+  decorCache = new TileLayerCache(2, 0);
+  /** Set while painting a ground tile if its art hadn't loaded yet. */
+  private groundIncomplete = false;
+  private worldIds = new WeakMap<object, number>();
+  private nextWorldId = 1;
   atmosphere: AtmosphereConfig = { ...ATMOSPHERE_CONFIG };
   lightmapCanvas: HTMLCanvasElement | null = null;
   lightmapCtx: CanvasRenderingContext2D | null = null;
@@ -258,12 +270,37 @@ export class Renderer {
           tc.restore();
         }
     };
-    eachTile(0);
+    // The ground rarely changes: draw it from a cache instead of tile by tile.
+    const anyWorld = g.world as { milestone?: number };
+    if (!this.worldIds.has(g.world)) this.worldIds.set(g.world, this.nextWorldId++);
+    const groundKey = [
+      this.worldIds.get(g.world), g.run.seed, g.mode, g.run.height, g.run.outside ? 1 : 0, g.world.floor, anyWorld.milestone ?? 0,
+      // Without sprite art, floor under items is drawn differently, so edits matter.
+      g.save.settings.spritesOff ? `off:${Object.keys(g.run.changes).length}` : "",
+    ].join("|");
+    const columns: [number, number] = [-64, 191];
+    this.groundCache.draw(c, view, dpr, groundKey, now, columns, (ctx, x, y) => {
+      const main = this.ctx;
+      this.ctx = ctx;
+      this.groundIncomplete = false;
+      try {
+        this.tile(g.world.tile(x, y), x, y, now, 0);
+      } finally {
+        this.ctx = main;
+      }
+      return !this.groundIncomplete;
+    });
     if (!g.run.outside) {
       // Decor goes over the torch relief (which re-lights the stone's
       // edges), so pools and crates hide the bricks beneath them.
       this.drawTorchRelief(now);
-      if (decorOn) this.decor.drawGround(c, view, now, tileAt, reduceMotion, (p) => this.paintReflections(p, now));
+      if (decorOn && this.decor.key) {
+        this.decorCache.draw(c, view, dpr, this.decor.key, now, columns, (ctx, x, y) => this.decor.bakeTile(ctx, x, y));
+        this.decor.drawGround(c, view, now, tileAt, reduceMotion, {
+          paint: (p) => this.paintReflections(p, now),
+          key: this.reflectionKey(now),
+        });
+      }
       this.drawEntityShadows(box.width, now);
     }
     // Below the default brightness: darken the ground, lay the object glows
@@ -311,14 +348,20 @@ export class Renderer {
       // masked layer as the other sprites.
       const heroTransform = c.getTransform();
       c.restore();
+      // Only the hero's surroundings need the darkening pass.
+      const hx = (this.playerX - this.left) * s, hy = (n - 1 - (this.playerY - this.bottom)) * s;
       this.drawDarkened(spriteDark, box.width, dpr, LIGHTING_CONFIG.objectGlow.heroDarkness, () => {
         this.ctx.setTransform(heroTransform);
         drawHero();
-      });
+      }, { x: hx - 0.7 * s, y: hy - 0.7 * s, w: 2.4 * s, h: 2.4 * s });
       // Grass and water in front of the hero sit in the same darkness as
-      // the ground they grow from.
-      if (decorOn)
-        this.drawDarkened(spriteDark, box.width, dpr, 1, () => this.decor.drawForeground(this.ctx, view, now, tileAt, reduceMotion));
+      // the ground they grow from; skipped when there's none this frame.
+      const fg = decorOn ? this.decor.foregroundBounds(view, now, tileAt, reduceMotion) : null;
+      if (fg)
+        this.drawDarkened(spriteDark, box.width, dpr, 1, () => this.decor.drawForeground(this.ctx, view, now, tileAt, reduceMotion), {
+          x: (fg.x0 / 24 - this.left) * s - 2, y: (fg.y0 / 24 + n - 1 + this.bottom) * s - 2,
+          w: ((fg.x1 - fg.x0) / 24) * s + 4, h: ((fg.y1 - fg.y0) / 24) * s + 4,
+        });
     } else {
       const grass = (layer: "back" | "front") =>
         this.grass.draw(c, view, g.world, g.run.seed, Math.floor(g.world.width / 2), outsideWeather(g.run.seed), now, dt,
@@ -334,7 +377,8 @@ export class Renderer {
       drawHero();
       c.restore();
       if (g.run.outside) { if (decorOn) grass("front"); }
-      else if (decorOn) this.decor.drawForeground(c, view, now, tileAt, reduceMotion);
+      else if (decorOn && this.decor.foregroundBounds(view, now, tileAt, reduceMotion))
+        this.decor.drawForeground(c, view, now, tileAt, reduceMotion);
     }
     if (g.run.outside) {
       this.weather.draw(c, box.width, g.run.seed, dt, g.save.settings.reduceMotion,
@@ -420,6 +464,23 @@ export class Renderer {
     c.restore();
     c.drawImage(off, 0, 0);
   }
+  /** Changes whenever a moving thing that shows in the water (the hero, a
+   * torch flame) would look different, so an unchanged reflection is reused. */
+  reflectionKey(now: number) {
+    const reduceMotion = this.game.save.settings.reduceMotion;
+    let key = `${Math.round(this.playerX * 24)},${Math.round(this.playerY * 24)}`;
+    for (const t of this.frameTorches) key += `|${torchAnimationFrame(t.x, t.y, now, reduceMotion)}`;
+    return key;
+  }
+  /** True when nothing on the board is moving: the hero and camera have
+   * settled, no route is being walked, no feedback is showing, and no decor
+   * effect is playing. (Torches and grass still sway.) Used by Battery saver. */
+  isIdle(now: number) {
+    const g = this.game, p = g.run.player, t = this.target(this.density), eps = 0.01;
+    return Math.abs(this.playerX - p.x) < eps && Math.abs(this.playerY - p.y) < eps &&
+      Math.abs(this.left - t.left) < eps && Math.abs(this.bottom - t.bottom) < eps &&
+      !g.route.length && g.blocked.until <= now && g.effect.until <= now && !this.decor.busy;
+  }
   /** Paints, mirrored, everything that shows in the water: the wall faces
    * above a pool, tile contents, torches, and the hero. Each is drawn by its
    * usual routine into the decor layer's reflection buffer. */
@@ -489,7 +550,8 @@ export class Renderer {
     const c = this.ctx;
     const g = this.game;
     if (g.run.outside) {
-      if (layer === 0) drawForestTile(c, t, x, y, g.run.seed, Math.floor(g.world.width / 2), !g.save.settings.spritesOff);
+      if (layer === 0 && !drawForestTile(c, t, x, y, g.run.seed, Math.floor(g.world.width / 2), !g.save.settings.spritesOff))
+        this.groundIncomplete = true;
       return;
     }
     const area1 = !g.save.settings.spritesOff && g.mode === "tower" && g.run.height >= 0 && g.run.height < 10;
@@ -519,8 +581,10 @@ export class Renderer {
     const drewSprite = !g.save.settings.spritesOff && drawThemedTile(
       c, g.mode, g.run.height, t.kind === "wall", x, y, g.run.seed, neighbors,
     );
-    if (!drewSprite)
+    if (!drewSprite) {
+      if (!g.save.settings.spritesOff) this.groundIncomplete = true;
       drawTerrain(c, t.kind === "wall", g.mode, g.run.height, x, y, g.run.seed, t.kind === "floor", neighbors);
+    }
     if (t.kind === "wall") return;
   }
   contents(t: Tile, x: number, y: number, time: number, area1: boolean) {
@@ -1083,8 +1147,15 @@ export class Renderer {
   /** Draws tile contents (doors, stairs, items, enemies) on their own layer,
    * multiplies a softened copy of the darkness over just their pixels, then
    * lays them on the scene: they stay a little brighter than the stone. */
-  drawDarkened(dark: HTMLCanvasElement, viewportSize: number, dpr: number, amount: number, drawContents: () => void) {
+  drawDarkened(dark: HTMLCanvasElement, viewportSize: number, dpr: number, amount: number, drawContents: () => void,
+    region?: { x: number; y: number; w: number; h: number }) {
     const main = this.ctx, w = main.canvas.width, h = main.canvas.height;
+    // Work only inside `region` (CSS pixels) when given: every step below is
+    // a full-canvas blit otherwise, which is costly for a one-tile sprite.
+    const rx = region ? Math.max(0, Math.floor(region.x * dpr)) : 0, ry = region ? Math.max(0, Math.floor(region.y * dpr)) : 0;
+    const rw = (region ? Math.min(w, Math.ceil((region.x + region.w) * dpr)) : w) - rx;
+    const rh = (region ? Math.min(h, Math.ceil((region.y + region.h) * dpr)) : h) - ry;
+    if (rw <= 0 || rh <= 0) return;
     const ensure = (cv: HTMLCanvasElement | null) => {
       const c = cv ?? document.createElement("canvas");
       if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
@@ -1097,31 +1168,37 @@ export class Renderer {
     cc.setTransform(1, 0, 0, 1, 0, 0);
     cc.globalCompositeOperation = "source-over";
     cc.globalAlpha = 1;
-    cc.clearRect(0, 0, w, h);
+    cc.clearRect(rx, ry, rw, rh);
+    cc.save();
+    cc.beginPath();
+    cc.rect(rx, ry, rw, rh);
+    cc.clip();
     cc.setTransform(dpr, 0, 0, dpr, 0, 0);
     this.ctx = cc;
     try {
       drawContents();
     } finally {
       this.ctx = main;
+      cc.restore();
     }
     // Keep the sprites' shape: multiply paints into empty pixels too, so
     // the original coverage is restored afterwards.
     mc.setTransform(1, 0, 0, 1, 0, 0);
     mc.globalCompositeOperation = "source-over";
-    mc.clearRect(0, 0, w, h);
-    mc.drawImage(this.contentsCanvas, 0, 0);
+    mc.clearRect(rx, ry, rw, rh);
+    mc.drawImage(this.contentsCanvas, rx, ry, rw, rh, rx, ry, rw, rh);
     cc.setTransform(1, 0, 0, 1, 0, 0);
     cc.globalCompositeOperation = "multiply";
     cc.globalAlpha = amount;
-    cc.drawImage(dark, 0, 0, viewportSize, viewportSize, 0, 0, w, h);
+    const k = viewportSize / w;
+    cc.drawImage(dark, rx * k, ry * k, rw * k, rh * k, rx, ry, rw, rh);
     cc.globalCompositeOperation = "destination-in";
     cc.globalAlpha = 1;
-    cc.drawImage(this.contentsMaskCanvas, 0, 0);
+    cc.drawImage(this.contentsMaskCanvas, rx, ry, rw, rh, rx, ry, rw, rh);
     cc.globalCompositeOperation = "source-over";
     main.save();
     main.setTransform(1, 0, 0, 1, 0, 0);
-    main.drawImage(this.contentsCanvas, 0, 0);
+    main.drawImage(this.contentsCanvas, rx, ry, rw, rh, rx, ry, rw, rh);
     main.restore();
   }
 

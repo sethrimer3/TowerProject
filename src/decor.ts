@@ -361,21 +361,33 @@ function cratesFor(src: DecorSource, x: number, y: number, rng: () => number): C
   return out;
 }
 
-const decorCache = new Map<string, TileDecor>();
+/** A number naming tile (x, y), for allocation-free map keys (x must lie
+ * in -64..191, which every board does, walls included). */
+export const tileKey = (x: number, y: number) => (y + 4) * 256 + x + 64;
+/** Plans per source, by tile key. */
+const decorCache = new Map<string, Map<number, TileDecor>>();
+let cachedPlans = 0;
 /** The full static plan for one tile. Cached; pure in (source, x, y). */
 export function tileDecor(src: DecorSource, x: number, y: number): TileDecor {
-  const key = `${src.key}:${x},${y}`;
-  let d = decorCache.get(key);
+  let plans = decorCache.get(src.key);
+  if (!plans) decorCache.set(src.key, (plans = new Map()));
+  const key = tileKey(x, y);
+  let d = plans.get(key);
   if (!d) {
     d = planTile(src, x, y);
-    if (decorCache.size > 12000) decorCache.clear();
-    decorCache.set(key, d);
+    if (++cachedPlans > 12000) {
+      decorCache.clear();
+      cachedPlans = 1;
+      decorCache.set(src.key, (plans = new Map()));
+    }
+    plans.set(key, d);
   }
   return d;
 }
 /** Drops cached plans (for tests and when a seed is abandoned). */
 export function clearDecorCache() {
   decorCache.clear();
+  cachedPlans = 0;
   vineCache.clear();
 }
 

@@ -2,7 +2,7 @@ import type { Board } from "./generation.ts";
 import type { Tile } from "./entities.ts";
 import { tileRandom } from "./themes.ts";
 import {
-  decorSourceFor, FLOWER_COLORS, TILE_PX, tileDecor, valueNoise, waterAt,
+  decorSourceFor, FLOWER_COLORS, TILE_PX, tileDecor, tileKey, valueNoise, waterAt,
   type Crate, type DecorSource, type Plant, type TileDecor,
 } from "./decor.ts";
 
@@ -29,6 +29,10 @@ export type ReflectionPainter = {
    * "moving": the hero and torch flames, painted every frame. */
   phase: "static" | "moving";
 };
+/** What the renderer supplies for reflections: a painter for its sprites,
+ * and a key that changes whenever any moving one (the hero, a torch flame)
+ * would look different, so an unchanged picture can be reused. */
+export type Reflections = { paint: (p: ReflectionPainter) => void; key: string };
 /** Reflection tuning: opacity, how far the water tints them, and how far
  * (pixels) ripples and the idle shimmer push them around. */
 export const REFLECTION = { alpha: 0.65, tint: 0.35, darken: 0.85, rippleShift: 2.2, rippleWidth: 4, shimmer: 0.7 };
@@ -105,7 +109,14 @@ function blend(px: Uint8ClampedArray, i: number, j: number, c: Rgba, alpha = 1) 
 export class DecorLayer {
   src: DecorSource | null = null;
   private world: Board | null = null;
-  private bakes = new Map<string, HTMLCanvasElement | null>();
+  /** Each tile's baked static pixels (null when it has none), by tile key. */
+  private bakes = new Map<number, HTMLCanvasElement | null>();
+  /** Tiles already planned; planning past these is budgeted per frame. */
+  private plannedTiles = new Set<number>();
+  /** The decorated tiles in view, rebuilt only when the view moves a whole
+   * tile (or while some are still waiting to be planned). */
+  private visible: { key: string; tiles: [number, number, TileDecor][]; complete: boolean } = { key: "", tiles: [], complete: false };
+  private glowCache: DecorGlow[] | null = null;
   /** Crates broken this session, by source + tile. */
   broken = new Set<string>();
   particles: Particle[] = [];
@@ -123,6 +134,8 @@ export class DecorLayer {
     still: HTMLCanvasElement; stctx: CanvasRenderingContext2D; stillKey: string;
     /** Opaque where there is water, for the pools in view. */
     mask: HTMLCanvasElement; mctx: CanvasRenderingContext2D; maskKey: string;
+    /** What the finished reflection in `out` shows, while it can be reused. */
+    frameKey: string;
   } | null = null;
   /** Tiles planned per frame at most, so entering a room never stalls. */
   planBudget = 60;
@@ -135,6 +148,9 @@ export class DecorLayer {
     const src = decorSourceFor(world, seed);
     if (src?.key !== this.src?.key) {
       this.bakes.clear();
+      this.plannedTiles.clear();
+      this.visible = { key: "", tiles: [], complete: false };
+      this.glowCache = null;
       this.particles = [];
       this.ripples = [];
       this.stir.clear();
@@ -146,22 +162,52 @@ export class DecorLayer {
   private plan(x: number, y: number): TileDecor | null {
     const src = this.src;
     if (!src) return null;
-    if (!this.bakes.has(`p:${x},${y}`)) {
+    const key = tileKey(x, y);
+    if (!this.plannedTiles.has(key)) {
       if (this.planned >= this.planBudget) return null;
       this.planned++;
-      this.bakes.set(`p:${x},${y}`, null);
+      this.plannedTiles.add(key);
     }
     return tileDecor(src, x, y);
   }
 
-  private eachTile(v: DecorView, fn: (x: number, y: number, d: TileDecor) => void) {
+  private visibleTiles(v: DecorView) {
+    const key = `${Math.floor(v.left)},${Math.floor(v.bottom)},${v.n}`;
+    if (this.visible.key === key && this.visible.complete) return this.visible.tiles;
+    const tiles: [number, number, TileDecor][] = [];
+    let complete = true;
     for (let row = -1; row <= v.n; row++)
       for (let col = -1; col <= v.n; col++) {
         const x = col + Math.floor(v.left), y = Math.floor(v.bottom) + row;
         if (y < 0) continue;
         const d = this.plan(x, y);
-        if (d && !d.empty) fn(x, y, d);
+        if (!d) complete = false;
+        else if (!d.empty) tiles.push([x, y, d]);
       }
+    this.visible = { key, tiles, complete };
+    this.glowCache = null;
+    return tiles;
+  }
+
+  /** The source's key, or null off the dungeon: part of the ground cache's key. */
+  get key() {
+    return this.src?.key ?? null;
+  }
+
+  /** Paints tile (x, y)'s baked moss, water, vines, and plants, in tile
+   * units (0..24), for the renderer's cached ground. False while the tile
+   * is still waiting to be planned. */
+  bakeTile(c: CanvasRenderingContext2D, x: number, y: number) {
+    const d = this.plan(x, y);
+    if (!d) return false;
+    if (d.empty) return true;
+    const img = this.bake(x, y, d);
+    if (img) c.drawImage(img, 0, 0, TILE_PX, TILE_PX);
+    return true;
+  }
+
+  private eachTile(v: DecorView, fn: (x: number, y: number, d: TileDecor) => void) {
+    for (const [x, y, d] of this.visibleTiles(v)) fn(x, y, d);
   }
 
   /** Applies the world-pixel transform: tile (x, y) starts at (24x, -24y). */
@@ -173,7 +219,7 @@ export class DecorLayer {
   // ---------------------------------------------------------------- baking
 
   private bake(x: number, y: number, d: TileDecor) {
-    const key = tkey(x, y);
+    const key = tileKey(x, y);
     if (this.bakes.has(key)) return this.bakes.get(key)!;
     if (typeof document === "undefined") return null;
     const cv = document.createElement("canvas");
@@ -236,8 +282,8 @@ export class DecorLayer {
       return null;
     }
     ctx.putImageData(img, 0, 0);
-    this.bakes.set(key, cv);
     if (this.bakes.size > 3000) this.bakes.clear();
+    this.bakes.set(key, cv);
     return cv;
   }
 
@@ -314,6 +360,13 @@ export class DecorLayer {
 
   /** Advances live effects and reacts to the hero: breaking crates, stirring
    * grass, rippling water. `hx`/`hy` are the interpolated tile position. */
+  /** Whether anything live is still settling (flying pieces, spreading
+   * ripples, grass still wobbling), so the frame rate shouldn't drop yet. */
+  get busy() {
+    const moving = (p: Particle) => p.kind !== "splinter" || p.z > 0 || Math.abs(p.vx) + Math.abs(p.vy) > 0.5;
+    return this.ripples.length > 0 || this.stir.size > 0 || this.particles.some(moving);
+  }
+
   update(dt: number, now: number, hx: number, hy: number, tileAt: (x: number, y: number) => Tile, reduceMotion: boolean) {
     this.planned = 0;
     const src = this.src;
@@ -487,8 +540,11 @@ export class DecorLayer {
   // ---------------------------------------------------------------- drawing
 
   /** Baked ground decor, crates, and the live water, on the ground layer. */
+  /** The live ground decor: reflections, glints, drips, ripples, crates,
+   * and tall grass. (The static pixels come from bakeTile, which the
+   * renderer caches with the rest of the ground.) */
   drawGround(c: CanvasRenderingContext2D, v: DecorView, now: number, tileAt: (x: number, y: number) => Tile, reduceMotion: boolean,
-    paintReflections?: (p: ReflectionPainter) => void) {
+    reflections?: Reflections) {
     if (!this.src) return;
     const src = this.src;
     c.save();
@@ -499,8 +555,6 @@ export class DecorLayer {
     const crates: [number, number, TileDecor][] = [];
     const thickets: [number, number, TileDecor][] = [];
     this.eachTile(v, (x, y, d) => {
-      const img = this.bake(x, y, d);
-      if (img) c.drawImage(img, x * TILE_PX, -y * TILE_PX, TILE_PX, TILE_PX);
       const floor = tileAt(x, y).kind === "floor";
       if (d.crates.length && floor) crates.push([x, y, d]);
       if (d.thicket && floor) thickets.push([x, y, d]);
@@ -513,7 +567,7 @@ export class DecorLayer {
       if (d.drip && !reduceMotion) this.dripRings(px, src, x, y, d, t);
     });
     // Reflections sit on the water, under its glints and ripple rings.
-    this.drawReflections(c, v, now, tileAt, reduceMotion, paintReflections);
+    this.drawReflections(c, v, now, tileAt, reduceMotion, reflections);
     for (const r of this.ripples) {
       const age = (now - r.t0) / 1000, fade = 1 - (now - r.t0) / r.life;
       this.ring(px, src, r.gx, r.gy, age * r.speed, `rgba(176,214,228,${(fade * 0.8).toFixed(2)})`);
@@ -550,7 +604,8 @@ export class DecorLayer {
    * shimmer, then tinted by the water and masked to it. All GPU copies: no
    * per-frame pixel readback. Assumes `c` is already in world pixels. */
   private drawReflections(c: CanvasRenderingContext2D, v: DecorView, now: number, tileAt: (x: number, y: number) => Tile,
-    reduceMotion: boolean, paint?: (p: ReflectionPainter) => void) {
+    reduceMotion: boolean, reflections?: Reflections) {
+    const paint = reflections?.paint;
     const src = this.src;
     if (!src || typeof document === "undefined") return;
     const pools: [number, number, TileDecor][] = [];
@@ -601,6 +656,19 @@ export class DecorLayer {
       paint?.({ ctx: st, flip, tiles, near, phase: "static" });
       st.setTransform(1, 0, 0, 1, 0, 0);
     }
+    // Between ripples, the picture only changes when something mirrored
+    // moves or the shimmer steps (ten times a second): reuse the last one.
+    const waves = reduceMotion ? [] : this.waves(v, now);
+    const tick = reduceMotion ? 0 : Math.floor(now / 100);
+    const frameKey = `${stillKey}|${reflections?.key ?? ""}|${tick}`;
+    const blit = () => {
+      c.save();
+      c.globalAlpha = REFLECTION.alpha;
+      c.drawImage(buf.out, 0, 0, W, H, ox, oy, W, H);
+      c.restore();
+    };
+    if (!waves.length && frameKey === buf.frameKey) return blit();
+    buf.frameKey = waves.length ? "" : frameKey;
     const { sctx, octx } = buf;
     sctx.setTransform(1, 0, 0, 1, 0, 0);
     sctx.globalAlpha = 1;
@@ -616,8 +684,7 @@ export class DecorLayer {
     octx.globalAlpha = 1;
     octx.globalCompositeOperation = "source-over";
     octx.clearRect(0, 0, W, H);
-    const waves = reduceMotion ? [] : this.waves(v, now);
-    const t = now / 1000, R = REFLECTION;
+    const t = tick / 10, R = REFLECTION;
     const shift = (gx: number, gy: number) => {
       let dx = reduceMotion ? 0 : Math.sin(t * 1.7 + gy * 0.8 + gx * 0.07) * R.shimmer, dy = 0;
       for (const w of waves) {
@@ -658,10 +725,7 @@ export class DecorLayer {
     octx.globalCompositeOperation = "destination-in";
     octx.drawImage(buf.mask, 0, 0);
     octx.globalCompositeOperation = "source-over";
-    c.save();
-    c.globalAlpha = R.alpha;
-    c.drawImage(buf.out, 0, 0, W, H, ox, oy, W, H);
-    c.restore();
+    blit();
   }
 
   private reflectionBuffers(w: number, h: number) {
@@ -674,7 +738,7 @@ export class DecorLayer {
       if (!a || !b || !s || !m) return null;
       this.refl = {
         src: a.canvas, sctx: a.ctx, out: b.canvas, octx: b.ctx, still: s.canvas, stctx: s.ctx, stillKey: "",
-        mask: m.canvas, mctx: m.ctx, maskKey: "",
+        mask: m.canvas, mctx: m.ctx, maskKey: "", frameKey: "",
       };
     }
     const r = this.refl;
@@ -682,7 +746,7 @@ export class DecorLayer {
     if (r.src.width < w || r.src.height < h) {
       const nw = Math.max(w, r.src.width), nh = Math.max(h, r.src.height);
       for (const cv of [r.src, r.out, r.still, r.mask]) { cv.width = nw; cv.height = nh; }
-      r.stillKey = r.maskKey = "";
+      r.stillKey = r.maskKey = r.frameKey = "";
     }
     r.sctx.imageSmoothingEnabled = r.octx.imageSmoothingEnabled = r.stctx.imageSmoothingEnabled = false;
     return r;
@@ -819,7 +883,9 @@ export class DecorLayer {
 
   /** Glowing flowers and caps as light sources for the darkness pass. */
   glows(v: DecorView): DecorGlow[] {
-    const out: DecorGlow[] = [];
+    this.visibleTiles(v);
+    if (this.glowCache) return this.glowCache;
+    const out: DecorGlow[] = (this.glowCache = []);
     this.eachTile(v, (x, y, d) => {
       for (const f of d.flowers)
         out.push({
@@ -881,6 +947,41 @@ export class DecorLayer {
     }
     px.flush(c);
     c.restore();
+  }
+
+  /** World-pixel box around everything drawForeground would draw this
+   * frame, or null when it would draw nothing, so the renderer can skip or
+   * shrink its darkened foreground pass. */
+  foregroundBounds(v: DecorView, now: number, tileAt: (x: number, y: number) => Tile, reduceMotion: boolean) {
+    const src = this.src;
+    if (!src) return null;
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    const add = (ax: number, ay: number, bx: number, by: number) => {
+      x0 = Math.min(x0, ax); y0 = Math.min(y0, ay); x1 = Math.max(x1, bx); y1 = Math.max(y1, by);
+    };
+    const hx = this.lastHero.x, hy = this.lastHero.y;
+    const hgx = Math.round(hx * TILE_PX), hgy = Math.round(-hy * TILE_PX);
+    let grass = false;
+    for (let dy = -1; dy <= 1 && !grass; dy++)
+      for (let dx = -1; dx <= 1 && !grass; dx++) {
+        const x = Math.round(hx) + dx, y = Math.round(hy) + dy;
+        grass = !!this.plan(x, y)?.thicket && tileAt(x, y).kind === "floor";
+      }
+    if (grass || waterAt(src, hgx + 12, hgy + 21)) add(hgx - 4, hgy, hgx + TILE_PX + 4, hgy + TILE_PX + 1);
+    for (const p of this.particles) {
+      if (p.kind === "spore" && p.glow) continue;
+      const size = p.kind === "dust" ? p.w + p.age * 4 + 1 : Math.max(p.w, p.h);
+      add(p.gx - size, p.gy - p.z - size, p.gx + size + 1, p.gy + size + 2);
+    }
+    if (!reduceMotion) {
+      const t = now / 1000;
+      this.eachTile(v, (x, y, d) => {
+        if (!d.drip || (t + d.drip.phase) % d.drip.period >= DRIP_FALL) return;
+        const gx = x * TILE_PX + d.drip.i, gy = -y * TILE_PX + d.drip.j;
+        add(gx - 1, gy - 48, gx + 2, gy + 3);
+      });
+    }
+    return x0 === Infinity ? null : { x0, y0, x1, y1 };
   }
 
   /** Things in front of the hero: grass over its feet, the water line,

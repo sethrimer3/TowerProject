@@ -47,8 +47,14 @@ export class OutsideWorld implements Board {
   clear() {}
 }
 
+/** Returns false when it drew the plain fallback because the sprite art
+ * hasn't loaded yet. */
 export function drawForestTile(c: CanvasRenderingContext2D, t: Tile, x: number, y: number, seed: number, center: number, useSprites = true) {
-  if (useSprites && drawOutsideSprite(c,t,x,y,seed,center)) return;
+  if (useSprites && drawOutsideSprite(c,t,x,y,seed,center)) return true;
+  drawForestFallback(c, t, x, y, seed, center);
+  return !useSprites;
+}
+function drawForestFallback(c: CanvasRenderingContext2D, t: Tile, x: number, y: number, seed: number, center: number) {
   const r = tileRandom(x, y, seed), path = Math.abs(x - center) <= (y % 5 === 2 ? 1 : 0);
   c.fillStyle = path ? "#625d42" : r < 0.5 ? "#294d35" : "#30543a";
   c.fillRect(0, 0, 24, 24);
