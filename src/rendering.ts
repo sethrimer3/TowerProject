@@ -233,7 +233,8 @@ export class Renderer {
     const view: DecorView = { left: this.left, bottom: this.bottom, n, s };
     const reduceMotion = g.save.settings.reduceMotion;
     const tileAt = (x: number, y: number) => g.world.tile(x, y);
-    if (!g.run.outside) {
+    const decorOn = !g.save.settings.decorOff;
+    if (!g.run.outside && decorOn) {
       this.decor.sync(g.world, g.run.seed);
       this.decor.update(dt, now, this.playerX, this.playerY, tileAt, reduceMotion);
       this.frameGlows.push(...this.decor.glows(view));
@@ -262,7 +263,7 @@ export class Renderer {
       // Decor goes over the torch relief (which re-lights the stone's
       // edges), so pools and crates hide the bricks beneath them.
       this.drawTorchRelief(now);
-      this.decor.drawGround(c, view, now, tileAt, reduceMotion);
+      if (decorOn) this.decor.drawGround(c, view, now, tileAt, reduceMotion);
       this.drawEntityShadows(box.width, now);
     }
     // Below the default brightness: darken the ground, lay the object glows
@@ -275,7 +276,7 @@ export class Renderer {
       c.drawImage(dark, 0, 0, box.width, box.width);
       c.restore();
       this.drawObjectBloom(box.width);
-      this.decor.drawGlow(c, view, now, this.darkness, reduceMotion);
+      if (decorOn) this.decor.drawGlow(c, view, now, this.darkness, reduceMotion);
       this.drawDarkened(spriteDark, box.width, dpr, LIGHTING_CONFIG.objectGlow.spriteDarkness, () => eachTile(1));
       this.drawDoorWash();
     } else eachTile(1);
@@ -316,12 +317,13 @@ export class Renderer {
       });
       // Grass and water in front of the hero sit in the same darkness as
       // the ground they grow from.
-      this.drawDarkened(spriteDark, box.width, dpr, 1, () => this.decor.drawForeground(this.ctx, view, now, tileAt, reduceMotion));
+      if (decorOn)
+        this.drawDarkened(spriteDark, box.width, dpr, 1, () => this.decor.drawForeground(this.ctx, view, now, tileAt, reduceMotion));
     } else {
       const grass = (layer: "back" | "front") =>
         this.grass.draw(c, view, g.world, g.run.seed, Math.floor(g.world.width / 2), outsideWeather(g.run.seed), now, dt,
           this.playerX, this.playerY, reduceMotion, layer);
-      if (g.run.outside) {
+      if (g.run.outside && decorOn) {
         // Grass behind the hero goes under it; the blades at its feet over it.
         const heroTransform = c.getTransform();
         c.restore();
@@ -331,8 +333,8 @@ export class Renderer {
       }
       drawHero();
       c.restore();
-      if (g.run.outside) grass("front");
-      else this.decor.drawForeground(c, view, now, tileAt, reduceMotion);
+      if (g.run.outside) { if (decorOn) grass("front"); }
+      else if (decorOn) this.decor.drawForeground(c, view, now, tileAt, reduceMotion);
     }
     if (g.run.outside) {
       this.weather.draw(c, box.width, g.run.seed, dt, g.save.settings.reduceMotion,

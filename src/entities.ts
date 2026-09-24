@@ -89,6 +89,9 @@ export type Settings = {
   /** Use the original procedural renderers instead of bitmap art. */
   spritesOff?: boolean;
   weatherSound?: boolean;
+  /** Hide the procedural environment dressing: moss, vines, plants, crates,
+   * pools, and the forest's wind-blown grass. */
+  decorOff?: boolean;
   transition: "smooth" | "fast" | "instant";
   showArrows: boolean;
   speed: number;

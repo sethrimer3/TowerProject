@@ -20,6 +20,7 @@ export function defaults(): Save {
     settings: {
       spritesOff: false,
       weatherSound: true,
+      decorOff: false,
       transition: "smooth",
       showArrows: false,
       speed: 3,
@@ -197,6 +198,7 @@ export function decode(raw: string | null): Save {
         ? Math.round(Math.min(100, Math.max(20, brightness)))
         : 100;
     d.settings.weatherSound = s?.settings?.weatherSound !== false;
+    d.settings.decorOff = s?.settings?.decorOff === true;
     d.settings.autoOffOnDeath = s?.settings?.autoOffOnDeath !== false;
     d.settings.oneTapMove = s?.settings?.oneTapMove === true;
     d.settings.infoDisplay = ["both", "popup", "status", "none"].includes(s?.settings?.infoDisplay)

@@ -6,6 +6,7 @@ import { clearDecorCache, decorSourceFor, TILE_PX, tileDecor, waterAt, type Deco
 import { DecorLayer } from "../src/decor-render.ts";
 import { OutsideGrass } from "../src/outside-grass.ts";
 import { OutsideWorld } from "../src/outside.ts";
+import { decode, defaults } from "../src/save.ts";
 
 /** A 17x17 room board shaped like a Tower RoomWorld: two chambers split by
  * a wall with a door, pillars, a torch, and a few items. */
@@ -214,4 +215,11 @@ test("outside grass only grows on grass tiles and survives reduced motion", () =
   rects.length = 0;
   grass.draw(ctx, view, world, 11, world.entranceX, "sunny", 2000, 0.016, 8, 5, true);
   assert.ok(rects.length > 100);
+});
+
+test("environment decor is on by default and its toggle persists", () => {
+  assert.equal(defaults().settings.decorOff, false);
+  assert.equal(decode(JSON.stringify({ version: 3, settings: { decorOff: true } })).settings.decorOff, true);
+  assert.equal(decode(JSON.stringify({ version: 3, settings: { decorOff: "yes" } })).settings.decorOff, false);
+  assert.equal(decode(JSON.stringify({ version: 3, settings: {} })).settings.decorOff, false);
 });

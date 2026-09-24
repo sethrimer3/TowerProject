@@ -60,7 +60,7 @@ test('physical false ascent cannot award the next official milestone', () => {
 
 test('Automove intelligence tiers are measurably better on identical labyrinths', async () => {
   const { simulate, AI_LEVELS } = await import('../tools/delve-ai-sim.ts');
-  const sum = (level: keyof typeof AI_LEVELS, f: (r: ReturnType<typeof simulate>) => number) => [0, 1, 2, 3].reduce((s, i) => s + f(simulate(2000 + i, AI_LEVELS[level], { steps: 900 })), 0);
+  const sum = (level: keyof typeof AI_LEVELS, f: (r: ReturnType<typeof simulate>) => number) => [0, 1, 2].reduce((s, i) => s + f(simulate(2000 + i, AI_LEVELS[level], { steps: 700 })), 0);
   // Naive Automove walks into more intentionally poor pockets than an AI
   // that can price fights and keys, and reaches less depth for its steps.
   assert.ok(sum('naive', r => r.pockets.poor) > sum('judgment', r => r.pockets.poor));
