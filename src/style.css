@@ -1072,11 +1072,14 @@ nav {
 .tree-heading h3 { font-size: 21px; margin: 10px 0; }
 .tree-heading p, .tree-lock { font-size: 11px; color: #a3afbc; text-align: center; line-height: 1.7; }
 .tree-lock { border: 1px solid #38414b; padding: 9px; }
-.tree-map { position: relative; height: 470px; margin: 6px 0 18px; }
+.tree-hint { font-size: 10px; color: #7f8a9d; text-align: center; margin: 4px 0 8px; }
+.tree-viewport { position: relative; height: 470px; margin: 6px 0 18px; overflow: hidden; border: 1px solid #232b33; border-radius: 6px; touch-action: none; cursor: grab; background: #070a0e; }
+.tree-viewport:active { cursor: grabbing; }
+.tree-map { position: absolute; inset: 0; transform-origin: 0 0; width: 100%; height: 100%; }
 .tree-map svg { position: absolute; width: 100%; height: 100%; overflow: visible; }
 .tree-map line { stroke: #46505b; stroke-width: 1; vector-effect: non-scaling-stroke; }
 .tree-map line.lit { stroke: var(--tree-color); stroke-width: 2; }
-.skill-node { position: absolute; transform: translate(-50%, -50%); display: flex; align-items: center; flex-direction: column; width: 96px; border: 0; background: none; padding: 0; gap: 5px; }
+.skill-node { position: absolute; transform: translate(-50%, -50%); display: flex; align-items: center; flex-direction: column; width: 96px; border: 0; background: none; padding: 0; gap: 5px; touch-action: none; }
 .skill-node:hover { background: none; color: var(--tree-color); }
 .node-icon { display: grid; place-items: center; width: 44px; height: 44px; font-size: 23px; background: #121c25; border: 1px solid #6a7480; box-shadow: 0 0 0 4px #0a1016; }
 .courage .node-icon { border-radius: 50%; }
@@ -1087,12 +1090,9 @@ nav {
 .skill-node.owned .node-icon { background: #263831; border-color: var(--tree-color); color: var(--tree-color); }
 .skill-node.available .node-icon { border-color: var(--tree-color); }
 .skill-node.chosen .node-icon { outline: 2px solid var(--tree-color); outline-offset: 4px; color: var(--tree-color); }
-.skill-detail { border-top: 1px solid #39434c; padding-top: 16px; min-height: 195px; }
-.skill-detail h3 { color: var(--tree-color); margin: 6px 0; }
-.skill-detail small { font-size: 10px; color: #a2adba; }
-.skill-detail p { font-size: 12px; line-height: 1.7; }
-.skill-detail button { width: 100%; border-color: var(--tree-color); font-size: 12px; }
-@media (min-width: 700px) { .tree-map { height: 520px; } .node-icon { width: 50px; height: 50px; } .node-name { font-size: 12px; } .skill-node { width: 130px; } }
+.tree-tooltip { max-width: 200px; z-index: 6; }
+.tree-tooltip .safe { color: #8fab79; }
+@media (min-width: 700px) { .tree-viewport { height: 520px; } .node-icon { width: 50px; height: 50px; } .node-name { font-size: 12px; } .skill-node { width: 130px; } }
 @media (max-width: 440px) {
   nav { gap: 3px; }
   nav button { font-size: 10px; padding: 6px 1px; min-height: 60px; }
