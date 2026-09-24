@@ -136,6 +136,10 @@ export class Renderer {
   frameLit: LitCaster[] = [];
   /** Whether this frame drew any cast shadows (reused by the darkness pass). */
   frameShadows = false;
+  /** Last committed vertical-stretch sign per caster/torch pair, so a shadow
+   * doesn't flip direction every time sway nudges the torch past level with
+   * the caster (see the vert calculation in drawEntityShadows). */
+  shadowVertSign = new Map<string, number>();
   get density() {
     if (this.game.run.outside) return OUTSIDE_SIZE;
     return VIEWPORT_TILES;
@@ -1260,7 +1264,18 @@ export class Renderer {
         // (up when the torch is below, down when above) plus a partial lean
         // for side light. No rotation, so nothing swings below the base.
         const lean = ux * cfg.lean;
-        const vert = Math.abs(uy) >= cfg.minVertical ? uy : uy > 0 ? cfg.minVertical : -cfg.minVertical;
+        // Below minVertical, the true direction is unreliable noise (the torch
+        // is ~level with the caster), so keep the last committed sign instead
+        // of snapping on every sway-driven crossing of uy = 0 (which flickered
+        // the shadow between two states every few seconds).
+        const vertKey = `${caster.x},${caster.y},${t.x},${t.y}`;
+        let vert: number;
+        if (Math.abs(uy) >= cfg.minVertical) {
+          vert = uy;
+          this.shadowVertSign.set(vertKey, Math.sign(uy));
+        } else {
+          vert = (this.shadowVertSign.get(vertKey) ?? (uy > 0 ? 1 : -1)) * cfg.minVertical;
+        }
         layer.setTransform(1, 0, 0, 1, (caster.x - this.left) * s, (n - 1 - (caster.y - this.bottom)) * s);
         layer.scale(s / 24, s / 24);
         // Sprite point (x, y), height h = 22 - y -> (x + h*k*lean, 22 + h*k*vert).
