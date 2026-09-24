@@ -3,7 +3,14 @@ import type { ModeSave, Run, Save } from "./entities.ts";
 import { emptyMaterials, MATERIAL_IDS, type MaterialId } from "./materials.ts";
 import { EQUIPMENT_SLOTS, type CraftedEquipment, type EquipmentSlot } from "./equipment.ts";
 import { CONSUMABLES, type ConsumableId } from "./crafting.ts";
-import { defaultDefendSave, DEFEND_WIDTH, DEFEND_HEIGHT, isBuildable, type DefendSave, type DefendTileKind } from "./defend.ts";
+import { defaultDefendSave, DEFEND_WIDTH, DEFEND_HEIGHT, isBuildable, DEFEND_WALL_MAX_HP, type DefendSave, type DefendTileKind } from "./defend.ts";
+import {
+  defaultDefendWaveSave,
+  DEFEND_WAVE_COUNT,
+  ENEMY_DEFS,
+  type DefendWaveSave,
+  type EnemyKind,
+} from "./defend-enemies.ts";
 export function defaults(): Save {
   return {
     version: 3,
@@ -35,6 +42,7 @@ export function defaults(): Save {
     equipped: {},
     consumables: Object.fromEntries(CONSUMABLES.map((c) => [c.id, 0])) as Save["consumables"],
     defend: defaultDefendSave(),
+    defendWaves: defaultDefendWaveSave(),
   };
 }
 const finite = (n: unknown, max = 1e9) =>
@@ -193,6 +201,50 @@ function decodeDefend(s: any): DefendSave {
     d.keepMaxHp = s.keepMaxHp;
     d.lost = s.lost === true;
     d.wallCapacity = s.wallCapacity;
+    const wallHp: Record<string, number> = {};
+    d.tiles.forEach((row, y) =>
+      row.forEach((kind, x) => {
+        if (kind !== "wall") return;
+        const key = `${x},${y}`;
+        const hp = s.wallHp?.[key];
+        wallHp[key] = finite(hp, DEFEND_WALL_MAX_HP) && hp > 0 ? hp : DEFEND_WALL_MAX_HP;
+      }),
+    );
+    d.wallHp = wallHp;
+  }
+  return d;
+}
+const DEFEND_ENEMY_KINDS: EnemyKind[] = ["roach", "orc", "bombat"];
+function decodeDefendWaves(s: any): DefendWaveSave {
+  const d = defaultDefendWaveSave();
+  if (
+    Number.isInteger(s?.wavesStarted) &&
+    s.wavesStarted >= 0 &&
+    s.wavesStarted <= DEFEND_WAVE_COUNT &&
+    Number.isInteger(s?.nextEnemyId) &&
+    s.nextEnemyId >= 1 &&
+    s.nextEnemyId <= 1e6 &&
+    Array.isArray(s?.enemies) &&
+    s.enemies.length <= 200 &&
+    s.enemies.every(
+      (e: any) =>
+        Number.isInteger(e?.id) &&
+        e.id > 0 &&
+        e.id < s.nextEnemyId &&
+        DEFEND_ENEMY_KINDS.includes(e?.kind) &&
+        Number.isInteger(e?.x) &&
+        e.x >= 0 &&
+        e.x < DEFEND_WIDTH &&
+        Number.isInteger(e?.y) &&
+        e.y >= 0 &&
+        e.y < DEFEND_HEIGHT &&
+        finite(e?.maxHp, ENEMY_DEFS[e.kind as EnemyKind].hp) &&
+        finite(e?.hp, e.maxHp),
+    )
+  ) {
+    d.wavesStarted = s.wavesStarted;
+    d.nextEnemyId = s.nextEnemyId;
+    d.enemies = s.enemies.map((e: any) => ({ id: e.id, kind: e.kind, x: e.x, y: e.y, hp: e.hp, maxHp: e.maxHp }));
   }
   return d;
 }
@@ -297,6 +349,7 @@ export function decode(raw: string | null): Save {
       if (["quality", "yellow", "blue", "red"].some(id => s.upgrades[id] > 0)) d.upgrades.legacy = 1;
     }
     d.defend = decodeDefend(s?.defend);
+    d.defendWaves = decodeDefendWaves(s?.defendWaves);
   } catch {}
   return d;
 }

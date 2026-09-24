@@ -23,6 +23,14 @@ import {
   type DefendTileKind,
 } from "./defend.ts";
 import {
+  DEFEND_WAVE_COUNT,
+  ENEMY_DEFS,
+  fromDefendWaveSave,
+  toDefendWaveSave,
+  startNextWave,
+  stepDefendCombat,
+} from "./defend-enemies.ts";
+import {
   UPGRADES,
   cost,
   levelForXp,
@@ -128,7 +136,9 @@ let tab = "tower",
   lastAuto = 0,
   lastRoute = 0,
   lastSave = 0,
+  lastDefendTick = 0,
   deathFaded = false;
+const DEFEND_TICK_MS = 700;
 const fadeOverlay = document.createElement("div");
 fadeOverlay.className = "fade-overlay";
 document.body.appendChild(fadeOverlay);
@@ -886,9 +896,11 @@ const DEFEND_TOOLS: { id: DefendTool; label: string; kind?: Exclude<DefendTileKi
 ];
 function renderDefendPage() {
   const d = game.save.defend;
+  const w = game.save.defendWaves;
   const state = fromDefendSave(d);
   const interior = cityInterior(state);
   const remaining = wallsRemaining(state);
+  const waveActive = w.enemies.length > 0;
   const tiles = Array.from({ length: DEFEND_HEIGHT }, (_, y) =>
     Array.from({ length: DEFEND_WIDTH }, (_, x) => {
       const kind = d.tiles[y][x];
@@ -904,11 +916,38 @@ function renderDefendPage() {
       return `<button class="defend-tile ${kind} ${buildable ? "" : "locked"} ${inside ? "inside" : ""} ${edgeClasses}" data-defend-x="${x}" data-defend-y="${y}" aria-label="${label}"></button>`;
     }).join(""),
   ).join("");
+  const enemyMarkers = w.enemies
+    .map((e) => {
+      const def = ENEMY_DEFS[e.kind];
+      const sizePct = (def.pixelSize / 8) * 100;
+      const left = ((e.x + 0.5) / DEFEND_WIDTH) * 100;
+      const top = ((e.y + 0.5) / DEFEND_HEIGHT) * 100;
+      return `<span class="defend-enemy" style="left:${left}%;top:${top}%;width:${sizePct}%;background:${def.color}" title="${def.name} (${e.hp}/${e.maxHp} HP)"></span>`;
+    })
+    .join("");
+  const waveLabel =
+    w.wavesStarted >= DEFEND_WAVE_COUNT && !waveActive
+      ? "All waves cleared"
+      : waveActive
+        ? `Wave ${w.wavesStarted} of ${DEFEND_WAVE_COUNT} — ${w.enemies.length} enemies left`
+        : `Wave ${Math.min(w.wavesStarted + 1, DEFEND_WAVE_COUNT)} of ${DEFEND_WAVE_COUNT} ready`;
+  const canStartWave = !d.lost && !waveActive && w.wavesStarted < DEFEND_WAVE_COUNT;
   el("defend").innerHTML = `<div class="page-title"><small>HOLD THE LINE</small><h2>Defend</h2><p>Wall off your city, then garrison what's inside it.</p></div>
     <div class="defend-hud"><span>Keep HP <b id="defend-hp">${d.keepHp}</b> / ${d.keepMaxHp}</span><span>City walls <b>${remaining}</b> / ${d.wallCapacity}</span>${d.lost ? `<span class="defend-lost">THE KEEP HAS FALLEN</span>` : ""}</div>
+    <div class="defend-hud"><span>${waveLabel}</span><button id="defend-start-wave" ${canStartWave ? "" : "disabled"}>Start wave</button></div>
     <div class="defend-tools" role="group" aria-label="Building tools">${DEFEND_TOOLS.map((t) => `<button data-defend-tool="${t.id}" class="${t.id === defendTool ? "selected" : ""}" ${d.lost || (t.id === "wall" && remaining <= 0) ? "disabled" : ""}>${t.label}${t.id === "wall" ? ` (${remaining})` : ""}</button>`).join("")}</div>
-    <div class="defend-grid" style="grid-template-columns:repeat(${DEFEND_WIDTH},1fr)">${tiles}</div>
-    <p class="hint">The top row is the approach lane — nothing can be built there. Placing a city wall tile walls off its edges; two walls placed side by side merge into one run of wall. Troops and traps can only be placed on ground fully enclosed by your walls. The keep can be relocated but never removed; if it falls, the defense is lost.</p>`;
+    <div class="defend-board"><div class="defend-grid" style="grid-template-columns:repeat(${DEFEND_WIDTH},1fr)">${tiles}</div><div class="defend-enemies">${enemyMarkers}</div></div>
+    <p class="hint">The top row is the approach lane — enemies spawn there and nothing can be built on it. Placing a city wall tile walls off its edges; two walls placed side by side merge into one run of wall. Troops and traps can only be placed on ground fully enclosed by your walls. Enemies march for the keep and chew through whatever wall blocks their path; breach it and they pour through. The keep can be relocated but never removed; if it falls, the defense is lost.</p>`;
+  el("defend-start-wave").onclick = () => {
+    const next = fromDefendSave(game.save.defend);
+    const nextWaves = fromDefendWaveSave(game.save.defendWaves);
+    if (startNextWave(next, nextWaves)) {
+      game.save.defend = toDefendSave(next);
+      game.save.defendWaves = toDefendWaveSave(nextWaves);
+      save();
+      renderDefendPage();
+    }
+  };
   document.querySelectorAll<HTMLButtonElement>("[data-defend-tool]").forEach((b) => {
     b.onclick = () => {
       defendTool = b.dataset.defendTool as DefendTool;
@@ -1186,6 +1225,15 @@ function frame(time: number) {
           "Waiting · no safe route. Explore or retire this ascent.";
       update();
     }
+  }
+  if (!document.hidden && tab === "defend" && !modal.open && game.save.defendWaves.enemies.length && time - lastDefendTick > DEFEND_TICK_MS) {
+    lastDefendTick = time;
+    const state = fromDefendSave(game.save.defend);
+    const waves = fromDefendWaveSave(game.save.defendWaves);
+    stepDefendCombat(state, waves);
+    game.save.defend = toDefendSave(state);
+    game.save.defendWaves = toDefendWaveSave(waves);
+    renderDefendPage();
   }
   if (time - lastSave > 10000) {
     save();

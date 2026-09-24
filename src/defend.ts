@@ -17,7 +17,13 @@ export type DefendTileKind = "empty" | "keep" | "wall" | "barracks";
 
 export type DefendTile = {
   kind: DefendTileKind;
+  /** Structural HP, only meaningful for `kind === "wall"`. Attackers wear
+   * this down; the wall is breached (reverts to empty) once it hits 0. */
+  hp?: number;
 };
+
+/** How much punishment a fresh city-wall tile can take before it's breached. */
+export const DEFEND_WALL_MAX_HP = 20;
 
 export type DefendPos = { x: number; y: number };
 
@@ -163,8 +169,23 @@ export function placeBuilding(
   } else if (!isInsideCityLimits(state, x, y)) {
     return false;
   }
-  state.tiles[y][x] = { kind };
+  state.tiles[y][x] = kind === "wall" ? { kind, hp: DEFEND_WALL_MAX_HP } : { kind };
   return true;
+}
+
+/** Damage a wall tile. Returns true if this breached it (it reverts to an
+ * empty, walkable tile); false if it's still standing, wasn't a wall, or
+ * was off-board. */
+export function damageWall(state: DefendState, x: number, y: number, amount: number): boolean {
+  const tile = tileAt(state, x, y);
+  if (!tile || tile.kind !== "wall") return false;
+  const hp = (tile.hp ?? DEFEND_WALL_MAX_HP) - amount;
+  if (hp <= 0) {
+    state.tiles[y][x] = { kind: "empty" };
+    return true;
+  }
+  tile.hp = hp;
+  return false;
 }
 
 /** Clear a built tile back to empty. The keep can never be removed this
@@ -198,6 +219,8 @@ export function damageKeep(state: DefendState, amount: number): void {
 
 export type DefendSave = {
   tiles: DefendTileKind[][];
+  /** Wall HP keyed by `"x,y"`, present only for tiles currently a wall. */
+  wallHp: Record<string, number>;
   keep: DefendPos;
   keepHp: number;
   keepMaxHp: number;
@@ -206,8 +229,15 @@ export type DefendSave = {
 };
 
 export function toDefendSave(state: DefendState): DefendSave {
+  const wallHp: Record<string, number> = {};
+  state.tiles.forEach((row, y) =>
+    row.forEach((t, x) => {
+      if (t.kind === "wall") wallHp[`${x},${y}`] = t.hp ?? DEFEND_WALL_MAX_HP;
+    }),
+  );
   return {
     tiles: state.tiles.map((row) => row.map((t) => t.kind)),
+    wallHp,
     keep: { ...state.keep },
     keepHp: state.keepHp,
     keepMaxHp: state.keepMaxHp,
@@ -224,7 +254,11 @@ export function fromDefendSave(save: DefendSave): DefendState {
   return {
     width: DEFEND_WIDTH,
     height: DEFEND_HEIGHT,
-    tiles: save.tiles.map((row) => row.map((kind) => ({ kind }))),
+    tiles: save.tiles.map((row, y) =>
+      row.map((kind, x): DefendTile =>
+        kind === "wall" ? { kind, hp: save.wallHp?.[`${x},${y}`] ?? DEFEND_WALL_MAX_HP } : { kind },
+      ),
+    ),
     keep: { ...save.keep },
     keepHp: save.keepHp,
     keepMaxHp: save.keepMaxHp,

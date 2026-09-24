@@ -1247,3 +1247,25 @@ nav button > span img { display: block; width: 42px; height: 42px; max-width: 10
 .defend-tile.keep {
   background: #c9a24b;
 }
+.defend-hud button {
+  margin-left: auto;
+  padding: 6px 12px;
+  font-size: 12px;
+}
+.defend-board {
+  position: relative;
+  max-width: 420px;
+  margin: 0 auto;
+}
+.defend-enemies {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.defend-enemy {
+  position: absolute;
+  aspect-ratio: 1;
+  border-radius: 1px;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4);
+}
