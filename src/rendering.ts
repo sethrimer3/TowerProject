@@ -438,22 +438,50 @@ export class Renderer {
         this.tile(t, x, y, now, t.kind === "wall" ? 0 : 1);
         p.ctx.globalAlpha = 1;
       }
-      if (p.phase === "moving") for (const t of this.frameTorches) {
-        if (!p.near(t.x, t.y)) continue;
-        // The torch draws in screen space: map that back to world pixels.
-        p.flip(-t.y * 24 + 21);
-        p.ctx.translate(this.left * 24, -(n - 1 + this.bottom) * 24);
-        p.ctx.scale(24 / s, 24 / s);
-        this.drawTorchSprite(t, now);
-      }
-      if (p.phase === "moving" && p.near(Math.round(this.playerX), Math.round(this.playerY))) {
-        p.flip(-this.playerY * 24 + 23);
-        p.ctx.translate(this.playerX * 24, -this.playerY * 24);
-        this.hero();
+      if (p.phase === "moving") {
+        const reduceMotion = g.save.settings.reduceMotion;
+        for (const t of this.frameTorches) {
+          if (!p.near(t.x, t.y)) continue;
+          // The torch draws in screen space: map its tile back to 0..24.
+          const frame = torchAnimationFrame(t.x, t.y, now, reduceMotion);
+          const sprite = this.reflectionSprite(`torch:${frame}`, now, (c) => {
+            c.setTransform(24 / s, 0, 0, 24 / s, -(t.x - this.left) * 24, -(n - 1 - (t.y - this.bottom)) * 24);
+            this.drawTorchSprite(t, now);
+          });
+          p.flip(-t.y * 24 + 21);
+          if (sprite) p.ctx.drawImage(sprite, t.x * 24, -t.y * 24);
+        }
+        if (p.near(Math.round(this.playerX), Math.round(this.playerY))) {
+          const sprite = this.reflectionSprite("hero", now, () => this.hero());
+          p.flip(-this.playerY * 24 + 23);
+          if (sprite) p.ctx.drawImage(sprite, this.playerX * 24, -this.playerY * 24);
+        }
       }
     } finally {
       this.ctx = main;
     }
+  }
+  /** Moving sprites (hero, torch frames) for the reflections, snapshotted
+   * into small canvases so their outline passes aren't redone every frame.
+   * Refreshed every few seconds so sprite art that loads late shows up. */
+  reflectionSprites = new Map<string, { canvas: HTMLCanvasElement; at: number }>();
+  reflectionSprite(key: string, now: number, draw: (c: CanvasRenderingContext2D) => void) {
+    const cached = this.reflectionSprites.get(key);
+    if (cached && now - cached.at < 4000) return cached.canvas;
+    const canvas = cached?.canvas ?? document.createElement("canvas");
+    canvas.width = canvas.height = 24;
+    const c = canvas.getContext("2d");
+    if (!c) return null;
+    const main = this.ctx;
+    this.ctx = c;
+    try {
+      c.imageSmoothingEnabled = false;
+      draw(c);
+    } finally {
+      this.ctx = main;
+    }
+    this.reflectionSprites.set(key, { canvas, at: now });
+    return canvas;
   }
   /** Layer 0 draws the ground (terrain + floor relief); layer 1 draws
    * whatever stands on it (items, doors, enemies...). */

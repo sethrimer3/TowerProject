@@ -118,9 +118,11 @@ export class DecorLayer {
   private lastHero = { x: 0, y: 0 };
   /** Offscreen buffers for the mirrored sprites and the rippled result. */
   private refl: {
-    src: HTMLCanvasElement; sctx: CanvasRenderingContext2D; out: HTMLCanvasElement; octx: CanvasRenderingContext2D; img: ImageData | null;
+    src: HTMLCanvasElement; sctx: CanvasRenderingContext2D; out: HTMLCanvasElement; octx: CanvasRenderingContext2D;
     /** The mirrored walls, contents, and crates, repainted only when they change. */
     still: HTMLCanvasElement; stctx: CanvasRenderingContext2D; stillKey: string;
+    /** Opaque where there is water, for the pools in view. */
+    mask: HTMLCanvasElement; mctx: CanvasRenderingContext2D; maskKey: string;
   } | null = null;
   /** Tiles planned per frame at most, so entering a room never stalls. */
   planBudget = 60;
@@ -543,9 +545,10 @@ export class DecorLayer {
 
   /** Mirrors what stands on or beside the water into it. The renderer
    * paints the sprites upside down into a small buffer (24 pixels per
-   * tile); each water pixel then samples it, pushed around by the ripple
-   * rings passing through and a faint idle shimmer, tinted by the water.
-   * Assumes `c` is already in world pixels. */
+   * tile). That image is copied back onto the pools in 1-pixel-high strips,
+   * each shifted by the ripple rings passing through it and a faint idle
+   * shimmer, then tinted by the water and masked to it. All GPU copies: no
+   * per-frame pixel readback. Assumes `c` is already in world pixels. */
   private drawReflections(c: CanvasRenderingContext2D, v: DecorView, now: number, tileAt: (x: number, y: number) => Tile,
     reduceMotion: boolean, paint?: (p: ReflectionPainter) => void) {
     const src = this.src;
@@ -561,18 +564,25 @@ export class DecorLayer {
     const W = (x1 - x0 + 1) * TILE_PX, H = (y1 - y0 + 1) * TILE_PX, ox = x0 * TILE_PX, oy = -y1 * TILE_PX;
     const buf = this.reflectionBuffers(W, H);
     if (!buf) return;
-    const { sctx, octx } = buf;
-    sctx.setTransform(1, 0, 0, 1, 0, 0);
-    sctx.globalAlpha = 1;
-    sctx.globalCompositeOperation = "source-over";
-    sctx.clearRect(0, 0, W, H);
     const wet = (x: number, y: number) => (this.plan(x, y)?.waterCount ?? 0) > 0;
     const near = (x: number, y: number) => wet(x, y) || wet(x, y - 1);
     const tiles: [number, number][] = [];
     for (let y = y0; y <= y1 + 1; y++) for (let x = x0; x <= x1; x++) if (near(x, y)) tiles.push([x, y]);
+    const area = `${src.key}|${x0},${y0},${x1},${y1}`;
+    // The water mask, rebuilt only when the pools in view change.
+    if (buf.maskKey !== area) {
+      buf.maskKey = area;
+      const img = buf.mctx.createImageData(W, H), m = img.data;
+      for (const [x, y, d] of pools)
+        for (let j = 0; j < TILE_PX; j++)
+          for (let i = 0; i < TILE_PX; i++)
+            if (d.water![j * TILE_PX + i] === 1) m[((-y * TILE_PX + j - oy) * W + x * TILE_PX + i - ox) * 4 + 3] = 255;
+      buf.mctx.clearRect(0, 0, buf.mask.width, buf.mask.height);
+      buf.mctx.putImageData(img, 0, 0);
+    }
     // Walls, contents, and crates rarely change: repaint them only when the
     // pools in view or anything standing by them does.
-    const stillKey = `${src.key}|${x0},${y0},${x1},${y1}|` + tiles.map(([x, y]) => {
+    const stillKey = area + "|" + tiles.map(([x, y]) => {
       const t = tileAt(x, y);
       return `${t.kind}${t.color ?? ""}${t.tier ?? ""}${this.broken.has(`${src.key}:${x},${y}`) ? "b" : ""}`;
     }).join(",");
@@ -591,67 +601,90 @@ export class DecorLayer {
       paint?.({ ctx: st, flip, tiles, near, phase: "static" });
       st.setTransform(1, 0, 0, 1, 0, 0);
     }
+    const { sctx, octx } = buf;
+    sctx.setTransform(1, 0, 0, 1, 0, 0);
+    sctx.globalAlpha = 1;
+    sctx.globalCompositeOperation = "source-over";
+    sctx.clearRect(0, 0, W, H);
     sctx.drawImage(buf.still, 0, 0);
     const flip = (base: number) => sctx.setTransform(1, 0, 0, -1, -ox, 2 * base - oy);
     paint?.({ ctx: sctx, flip, tiles, near, phase: "moving" });
     sctx.setTransform(1, 0, 0, 1, 0, 0);
-    const from = sctx.getImageData(0, 0, W, H).data;
-    if (!buf.img || buf.img.width !== W || buf.img.height !== H) buf.img = octx.createImageData(W, H);
-    const out = buf.img.data;
-    out.fill(0);
+    // Copy the mirror image back in strips, each pushed along the rings
+    // passing through it: whole-tile strips, or 4-pixel ones near a ring.
+    octx.setTransform(1, 0, 0, 1, 0, 0);
+    octx.globalAlpha = 1;
+    octx.globalCompositeOperation = "source-over";
+    octx.clearRect(0, 0, W, H);
     const waves = reduceMotion ? [] : this.waves(v, now);
-    const t = now / 1000, R = REFLECTION, [wr, wg, wb] = WATER_MID;
-    let any = false;
+    const t = now / 1000, R = REFLECTION;
+    const shift = (gx: number, gy: number) => {
+      let dx = reduceMotion ? 0 : Math.sin(t * 1.7 + gy * 0.8 + gx * 0.07) * R.shimmer, dy = 0;
+      for (const w of waves) {
+        const ex = gx - w.gx, ey = (gy - w.gy) / 0.62, dist = Math.hypot(ex, ey), off = dist - w.r;
+        if (Math.abs(off) >= R.rippleWidth || dist < 0.5) continue;
+        const push = Math.sin((off / R.rippleWidth) * Math.PI) * R.rippleShift * w.fade;
+        dx += (ex / dist) * push;
+        dy += (ey / dist) * push * 0.62;
+      }
+      return [Math.round(dx), Math.round(dy)];
+    };
     for (const [x, y, d] of pools) {
+      const tx = x * TILE_PX, ty = -y * TILE_PX, bx = tx - ox, by = ty - oy;
+      // Rings reach this tile if its center is within their band.
+      const cx = tx + 12, cy = ty + 12;
+      const rippled = waves.some((w) => Math.abs(Math.hypot(cx - w.gx, (cy - w.gy) / 0.62) - w.r) < R.rippleWidth + 20);
+      const seg = rippled ? 4 : TILE_PX;
       const water = d.water!;
-      for (let j = 0; j < TILE_PX; j++)
-        for (let i = 0; i < TILE_PX; i++) {
-          if (water[j * TILE_PX + i] !== 1) continue;
-          const gx = x * TILE_PX + i, gy = -y * TILE_PX + j;
-          // Push the sample along each ring passing through this pixel.
-          let dx = reduceMotion ? 0 : Math.sin(t * 1.7 + gy * 0.8 + gx * 0.07) * R.shimmer, dy = 0;
-          for (const w of waves) {
-            const ex = gx - w.gx, ey = (gy - w.gy) / 0.62, dist = Math.hypot(ex, ey), off = dist - w.r;
-            if (Math.abs(off) >= R.rippleWidth || dist < 0.5) continue;
-            const push = Math.sin((off / R.rippleWidth) * Math.PI) * R.rippleShift * w.fade;
-            dx += (ex / dist) * push;
-            dy += (ey / dist) * push * 0.62;
-          }
-          const sx = gx - ox + Math.round(dx), sy = gy - oy + Math.round(dy);
-          if (sx < 0 || sy < 0 || sx >= W || sy >= H) continue;
-          const k = (sy * W + sx) * 4, a = from[k + 3];
-          if (a < 8) continue;
-          const o = ((gy - oy) * W + (gx - ox)) * 4;
-          out[o] = (from[k] * (1 - R.tint) + wr * R.tint) * R.darken;
-          out[o + 1] = (from[k + 1] * (1 - R.tint) + wg * R.tint) * R.darken;
-          out[o + 2] = (from[k + 2] * (1 - R.tint) + wb * R.tint) * R.darken;
-          out[o + 3] = a * R.alpha;
-          any = true;
+      for (let j = 0; j < TILE_PX; j++) {
+        for (let i = 0; i < TILE_PX; i += seg) {
+          let hasWater = false;
+          for (let k = i; k < i + seg && !hasWater; k++) hasWater = water[j * TILE_PX + k] === 1;
+          if (!hasWater) continue;
+          const [dx, dy] = shift(tx + i + seg / 2, ty + j);
+          const sx = bx + i + dx, sy = by + j + dy;
+          if (sy < 0 || sy >= H || sx + seg <= 0 || sx >= W) continue;
+          octx.drawImage(buf.src, sx, sy, seg, 1, bx + i, by + j, seg, 1);
         }
+      }
     }
-    if (!any) return;
-    octx.putImageData(buf.img, 0, 0);
+    // Tinted and dimmed by the water, then kept to the water.
+    octx.globalCompositeOperation = "source-atop";
+    const [wr, wg, wb] = WATER_MID;
+    octx.fillStyle = `rgba(${wr},${wg},${wb},${R.tint})`;
+    octx.fillRect(0, 0, W, H);
+    octx.fillStyle = `rgba(0,0,0,${1 - R.darken})`;
+    octx.fillRect(0, 0, W, H);
+    octx.globalCompositeOperation = "destination-in";
+    octx.drawImage(buf.mask, 0, 0);
+    octx.globalCompositeOperation = "source-over";
+    c.save();
+    c.globalAlpha = R.alpha;
     c.drawImage(buf.out, 0, 0, W, H, ox, oy, W, H);
+    c.restore();
   }
 
   private reflectionBuffers(w: number, h: number) {
     if (!this.refl) {
-      const src = document.createElement("canvas"), out = document.createElement("canvas"), still = document.createElement("canvas");
-      const sctx = src.getContext("2d"), octx = out.getContext("2d");
-      // CPU-backed like `sctx`, so copying it across each frame needs no GPU readback.
-      const stctx = still.getContext("2d");
-      if (!sctx || !octx || !stctx) return null;
-      this.refl = { src, sctx, out, octx, img: null, still, stctx, stillKey: "" };
+      const make = () => {
+        const canvas = document.createElement("canvas"), ctx = canvas.getContext("2d");
+        return ctx ? { canvas, ctx } : null;
+      };
+      const a = make(), b = make(), s = make(), m = make();
+      if (!a || !b || !s || !m) return null;
+      this.refl = {
+        src: a.canvas, sctx: a.ctx, out: b.canvas, octx: b.ctx, still: s.canvas, stctx: s.ctx, stillKey: "",
+        mask: m.canvas, mctx: m.ctx, maskKey: "",
+      };
     }
     const r = this.refl;
     // Grow only, so walking around a room doesn't reallocate every frame.
     if (r.src.width < w || r.src.height < h) {
-      r.src.width = r.out.width = r.still.width = Math.max(w, r.src.width);
-      r.src.height = r.out.height = r.still.height = Math.max(h, r.src.height);
-      r.stillKey = "";
+      const nw = Math.max(w, r.src.width), nh = Math.max(h, r.src.height);
+      for (const cv of [r.src, r.out, r.still, r.mask]) { cv.width = nw; cv.height = nh; }
+      r.stillKey = r.maskKey = "";
     }
-    r.stctx.imageSmoothingEnabled = false;
-    r.sctx.imageSmoothingEnabled = false;
+    r.sctx.imageSmoothingEnabled = r.octx.imageSmoothingEnabled = r.stctx.imageSmoothingEnabled = false;
     return r;
   }
 
