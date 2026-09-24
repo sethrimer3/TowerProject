@@ -1274,7 +1274,16 @@ export class Renderer {
           vert = uy;
           this.shadowVertSign.set(vertKey, Math.sign(uy));
         } else {
-          vert = (this.shadowVertSign.get(vertKey) ?? (uy > 0 ? 1 : -1)) * cfg.minVertical;
+          // Never seen a decisive uy yet for this pair (e.g. the caster sits
+          // level with the torch, so sway alone keeps uy under the threshold
+          // forever): pick a sign once and cache it, rather than recomputing
+          // from the current (tiny, noisy) uy every frame.
+          let sign = this.shadowVertSign.get(vertKey);
+          if (sign === undefined) {
+            sign = uy > 0 ? 1 : -1;
+            this.shadowVertSign.set(vertKey, sign);
+          }
+          vert = sign * cfg.minVertical;
         }
         layer.setTransform(1, 0, 0, 1, (caster.x - this.left) * s, (n - 1 - (caster.y - this.bottom)) * s);
         layer.scale(s / 24, s / 24);
