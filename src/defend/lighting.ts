@@ -18,7 +18,7 @@ import { glowColor, lightFalloff } from "../torch-light.ts";
 import { CELL_COUNT, CELLS_H, CELLS_W, ORTHO, cellIndex, hash, hash01, type Rect } from "./grid.ts";
 import { CellType, type CityMap } from "./citygen.ts";
 
-export type LightKind = "lantern" | "archerTower" | "watchTower" | "door";
+export type LightKind = "lantern" | "archerTower" | "cannonTower" | "watchTower" | "door";
 export type Light = {
   id: number;
   kind: LightKind;
@@ -55,13 +55,13 @@ export function cityLights(map: CityMap): Light[] {
   const add = (l: Omit<Light, "id">) => lights.push({ ...l, id: lights.length });
   for (const b of map.buildings) {
     const r = b.rect;
-    if (b.kind === "archerTower" || b.kind === "watchTower") {
+    if (b.kind === "archerTower" || b.kind === "watchTower" || b.kind === "cannonTower") {
       const inset = 0.22;
       add({
         kind: b.kind,
         x: r.x + r.w / 2,
         y: r.y + r.h / 2,
-        radius: b.kind === "archerTower" ? 7.5 : 6.5,
+        radius: b.kind === "archerTower" ? 7.5 : b.kind === "cannonTower" ? 5.5 : 6.5,
         strength: 1,
         owner: b.id,
         inside: true,
@@ -306,7 +306,7 @@ export class DefendLighting {
     intact: (id: number) => boolean,
     ambient: { color: string; alpha: number; glow: number },
     /** Hand torches carried by units; masked to open ground. */
-    carried: { torches: { x: number; y: number; id: number }[]; solid: Uint8Array; version: number },
+    carried: { torches: { x: number; y: number; id: number; r?: number; k?: number }[]; solid: Uint8Array; version: number },
   ) {
     const W = c.canvas.width,
       H = c.canvas.height;
@@ -370,7 +370,7 @@ export class DefendLighting {
     now: number,
     reduceMotion: boolean,
     glow: number,
-    carried: { torches: { x: number; y: number; id: number }[]; solid: Uint8Array; version: number },
+    carried: { torches: { x: number; y: number; id: number; r?: number; k?: number }[]; solid: Uint8Array; version: number },
   ) {
     if (!carried.torches.length) return;
     const W = dk.canvas.width,
@@ -385,8 +385,9 @@ export class DefendLighting {
     const R = CARRIED_RADIUS * px;
     for (const t of carried.torches) {
       const f = getTorchFlicker({ x: t.id * 11, y: t.id * 5 }, now, reduceMotion);
-      d.globalAlpha = Math.min(1, 0.8 * f);
-      const r = R * (0.95 + (f - 1) * 0.6);
+      // Explosion flashes pass their own reach and brightness.
+      d.globalAlpha = Math.min(1, (t.k ?? 0.8) * f);
+      const r = (t.r ? t.r * px : R) * (0.95 + (f - 1) * 0.6);
       d.drawImage(this.torchSprite, t.x * px - r, t.y * px - r, r * 2, r * 2);
     }
     d.globalAlpha = 1;

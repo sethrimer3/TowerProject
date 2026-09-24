@@ -57,6 +57,7 @@ const ITEM_NAMES: Record<PaletteItem, string> = {
   cityTile: "City tile",
   barracks: STRUCTURES.barracks.name,
   archerTower: STRUCTURES.archerTower.name,
+  cannonTower: STRUCTURES.cannonTower.name,
   watchTower: STRUCTURES.watchTower.name,
 };
 
@@ -675,7 +676,7 @@ export class DefendPage {
       return `<article class="card defend-card"><canvas width="48" height="48" data-icon="${item}"></canvas><div><small>OWNED ${s.owned[item]} · IN PALETTE ${available(s, item)}</small><h3>${ITEM_NAMES[item]}</h3><p>${desc}</p></div>
         <button data-buy="${item}" ${canAfford(w, p) ? "" : "disabled"}>Buy · ${price(p)}</button></article>`;
     }).join("");
-    const bomb = `<article class="card defend-card"><canvas width="48" height="48" data-icon="bomb"></canvas><div><small>OWNED ${s.bombs}</small><h3>Bomb</h3><p>Drag onto the battlefield mid-defense to blast every enemy within ${BOMB_RADIUS.toFixed(0)} cells.</p></div>
+    const bomb = `<article class="card defend-card"><canvas width="48" height="48" data-icon="bomb"></canvas><div><small>OWNED ${s.bombs}</small><h3>Bomb</h3><p>Drag onto the battlefield mid-defense to blast everything within ${BOMB_RADIUS.toFixed(0)} cells — your own people too, until you buy Shaped charges.</p></div>
       <button data-buy-bomb ${canAfford(w, BOMB_PRICE) ? "" : "disabled"}>Buy · ${price(BOMB_PRICE)}</button></article>`;
     const speed = `<article class="card defend-card"><div><small>${s.speed3 ? "UNLOCKED" : "ONE-TIME UNLOCK"}</small><h3>War drums</h3><p>Adds 3× to the battle speed button.</p></div>
       <button data-buy-speed3 ${s.speed3 || !canAfford(w, SPEED3_PRICE) ? "disabled" : ""}>${s.speed3 ? "Owned" : `Buy · ${price(SPEED3_PRICE)}`}</button></article>`;

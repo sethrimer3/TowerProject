@@ -183,7 +183,10 @@ export class DefendRenderer {
     }
     if (weather) Rain.overcast(ctx, weather.rain ? 0.3 : 0.18);
     if (lit && sim) {
-      const torches = [...sim.soldiers, ...sim.civilians].map((u) => ({ x: u.x, y: u.y, id: u.id }));
+      const torches: { x: number; y: number; id: number; r?: number; k?: number }[] = [...sim.soldiers, ...sim.civilians].map((u) => ({ x: u.x, y: u.y, id: u.id }));
+      // Explosions light up their surroundings for a moment.
+      for (const fx of sim.effects)
+        if (fx.kind === "boom") torches.push({ x: fx.x, y: fx.y, id: fx.seed ?? 0, r: fx.r * 2.4, k: 1.6 * (1 - fx.t / 0.6) });
       this.lighting.drawLight(ctx, px, opts.now, opts.reduceMotion, intact, ambientFor(weather!, opts.night), {
         torches,
         solid: sim.solid,
@@ -192,7 +195,10 @@ export class DefendRenderer {
       this.lighting.drawRelief(ctx, px, weather!.rain ? 0.85 : 0.65);
       this.lighting.drawFlames(ctx, px, opts.now, opts.reduceMotion, intact);
     }
-    if (sim) this.drawUnits(sim, lit);
+    if (sim) {
+      this.drawScorches(sim);
+      this.drawUnits(sim, lit);
+    }
     if (opts.grid) this.drawGrid(overlay ? 0.2 : 0.11);
     if (overlay) this.drawOverlay(overlay);
     // Rain falls in screen space, in front of the camera.
@@ -536,14 +542,25 @@ export class DefendRenderer {
       c.lineTo((a.x - (dx / d) * 0.6) * px, (a.y - (dy / d) * 0.6) * px);
     }
     c.stroke();
+    // Cannon shells: an iron ball arcing over, its shadow on the ground.
+    for (const sh of sim.shells) {
+      const k = sh.t / sh.dur;
+      const gx = sh.x0 + (sh.x1 - sh.x0) * k,
+        gy = sh.y0 + (sh.y1 - sh.y0) * k;
+      const lift = Math.sin(Math.PI * k) * (0.8 + Math.hypot(sh.x1 - sh.x0, sh.y1 - sh.y0) * 0.12);
+      const s = Math.max(2, px * 0.3);
+      c.fillStyle = "rgba(0,0,0,0.35)";
+      c.fillRect(gx * px - s / 2, gy * px - s / 2, s, s * 0.7);
+      c.fillStyle = "#1d1d20";
+      c.fillRect(gx * px - s / 2, (gy - lift) * px - s / 2, s, s);
+      c.fillStyle = "#6a6a70";
+      c.fillRect(gx * px - s / 2, (gy - lift) * px - s / 2, Math.max(1, s / 3), Math.max(1, s / 3));
+    }
     // Effects.
     for (const fx of sim.effects) {
       const k = fx.t / 0.6;
       if (fx.kind === "boom") {
-        c.fillStyle = `rgba(255,170,60,${0.5 * (1 - k)})`;
-        c.beginPath();
-        c.arc(fx.x * px, fx.y * px, fx.r * px * (0.4 + k * 0.6), 0, Math.PI * 2);
-        c.fill();
+        this.drawExplosion(fx.x, fx.y, fx.r, k, fx.seed ?? 0);
       } else if (fx.kind === "dust") {
         c.fillStyle = `rgba(150,140,125,${0.45 * (1 - k)})`;
         c.beginPath();
@@ -557,6 +574,97 @@ export class DefendRenderer {
           c.fillRect((fx.x + Math.cos(a) * k * 0.6) * px, (fx.y + Math.sin(a) * k * 0.6) * px, s, s);
         }
       }
+    }
+  }
+
+  /** A ragged fireball: noisy blob outlines (never a clean circle) for the
+   * smoke, flame and white-hot core, plus flung sparks and debris. */
+  private drawExplosion(x: number, y: number, r: number, k: number, seed: number) {
+    const c = this.ctx;
+    const px = this.px;
+    const blob = (radius: number, salt: number, wobble: number) => {
+      const n = 16;
+      c.beginPath();
+      for (let i = 0; i <= n; i++) {
+        const a = (i / n) * Math.PI * 2 + hash01(seed, salt) * 0.8;
+        const rr = radius * (1 - wobble + wobble * 2 * hash01(seed, salt, i % n));
+        const px2 = (x + Math.cos(a) * rr) * px,
+          py2 = (y + Math.sin(a) * rr * 0.9) * px;
+        if (i === 0) c.moveTo(px2, py2);
+        else c.lineTo(px2, py2);
+      }
+      c.closePath();
+      c.fill();
+    };
+    const grow = 0.35 + 0.65 * Math.sqrt(k);
+    c.save();
+    // Smoke billows out and lingers darkest at the end.
+    c.fillStyle = `rgba(40,32,28,${0.45 * (1 - k) * Math.min(1, k * 4)})`;
+    blob(r * grow * 1.05, 1, 0.3);
+    c.globalCompositeOperation = "lighter";
+    c.fillStyle = `rgba(255,120,30,${0.75 * (1 - k)})`;
+    blob(r * grow * 0.85, 2, 0.28);
+    c.fillStyle = `rgba(255,200,90,${0.8 * (1 - k) ** 1.5})`;
+    blob(r * grow * 0.55, 3, 0.25);
+    c.fillStyle = `rgba(255,250,220,${0.9 * (1 - k) ** 3})`;
+    blob(r * grow * 0.28, 4, 0.2);
+    // Sparks and debris flung outwards.
+    const s = Math.max(1, px * 0.12);
+    for (let i = 0; i < 12; i++) {
+      const a = hash01(seed, 20, i) * Math.PI * 2;
+      const d = r * (0.3 + hash01(seed, 21, i) * 1.1) * Math.sqrt(k);
+      c.fillStyle = i % 3 ? `rgba(255,190,90,${1 - k})` : `rgba(90,70,55,${1 - k})`;
+      c.fillRect((x + Math.cos(a) * d) * px, (y + Math.sin(a) * d) * px, s, s);
+    }
+    c.restore();
+  }
+
+  /** Branching cracks, glowing like cooling embers where a blast landed. */
+  private drawScorches(sim: DefendSim) {
+    const c = this.ctx;
+    const px = this.px;
+    for (const sc of sim.scorches) {
+      const k = sc.t / sc.life;
+      const heat = (1 - k) ** 1.6;
+      // Scorched ground under the cracks.
+      c.fillStyle = `rgba(20,14,10,${0.35 * (1 - k)})`;
+      c.beginPath();
+      c.ellipse(sc.x * px, sc.y * px, sc.r * 0.55 * px, sc.r * 0.5 * px, 0, 0, Math.PI * 2);
+      c.fill();
+      c.save();
+      c.globalCompositeOperation = "lighter";
+      c.lineCap = "round";
+      const arms = 5 + (hash01(sc.seed, 30) * 3) | 0;
+      for (const [width, color] of [
+        [0.22, `rgba(255,90,20,${0.35 * heat})`],
+        [0.09, `rgba(255,190,90,${0.9 * heat})`],
+      ] as const) {
+        c.strokeStyle = color;
+        c.lineWidth = Math.max(1, px * width);
+        c.beginPath();
+        for (let i = 0; i < arms; i++) {
+          let a = (i / arms) * Math.PI * 2 + hash01(sc.seed, 31, i) * 0.9;
+          let cx = sc.x,
+            cy = sc.y;
+          c.moveTo(cx * px, cy * px);
+          const len = sc.r * (0.45 + hash01(sc.seed, 32, i) * 0.45);
+          const steps = 4;
+          for (let j = 1; j <= steps; j++) {
+            a += (hash01(sc.seed, 33, i * 7 + j) - 0.5) * 0.9;
+            cx += (Math.cos(a) * len) / steps;
+            cy += (Math.sin(a) * len) / steps;
+            c.lineTo(cx * px, cy * px);
+            // The odd little fork.
+            if (j === 2 && hash01(sc.seed, 34, i) < 0.6) {
+              const b = a + (hash01(sc.seed, 35, i) < 0.5 ? 0.9 : -0.9);
+              c.lineTo((cx + Math.cos(b) * len * 0.3) * px, (cy + Math.sin(b) * len * 0.3) * px);
+              c.moveTo(cx * px, cy * px);
+            }
+          }
+        }
+        c.stroke();
+      }
+      c.restore();
     }
   }
 
@@ -642,6 +750,20 @@ export function paintStructureArt(c: CanvasRenderingContext2D, kind: StructureKi
     c.fill();
     c.fillStyle = "#c9a36a";
     c.fillRect(x + w / 2 - px * 0.12, y + h / 2 - px * 0.5, px * 0.24, px);
+  } else if (kind === "cannonTower") {
+    stone("#6f6a62");
+    // Iron gun on a round turntable, barrel pointing north.
+    c.fillStyle = "#4a4038";
+    c.beginPath();
+    c.arc(x + w / 2, y + h / 2, Math.min(w, h) * 0.32, 0, Math.PI * 2);
+    c.fill();
+    c.fillStyle = "#26262a";
+    c.fillRect(x + w / 2 - px * 0.2, y + h * 0.12, px * 0.4, h * 0.45);
+    c.beginPath();
+    c.arc(x + w / 2, y + h / 2, Math.min(w, h) * 0.17, 0, Math.PI * 2);
+    c.fill();
+    c.fillStyle = "#6a6a70";
+    c.fillRect(x + w / 2 - px * 0.1, y + h * 0.14, px * 0.12, h * 0.1);
   } else if (kind === "watchTower") {
     stone("#7d8288");
     c.fillStyle = "#3d3f44";
@@ -687,7 +809,7 @@ export function paintIcon(canvas: HTMLCanvasElement, item: StructureKind | "city
     c.fillRect(n * 0.62, n * 0.1, n * 0.12, n * 0.1);
     return;
   }
-  const def = { keep: [3, 3], barracks: [3, 4], archerTower: [2, 2], watchTower: [2, 2] }[item];
+  const def = { keep: [3, 3], barracks: [3, 4], archerTower: [2, 2], cannonTower: [2, 2], watchTower: [2, 2] }[item];
   const px = n / Math.max(def[0], def[1]) / 1.1;
   const w = def[0] * px,
     h = def[1] * px;

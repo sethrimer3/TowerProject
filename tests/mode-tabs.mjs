@@ -97,7 +97,7 @@ assert.equal(await boardCanvas.isVisible(), true, "DEFEND board canvas should re
 const box = await boardCanvas.boundingBox();
 assert.ok(box && Math.abs(box.width / box.height - 9 / 13) < 0.02, "DEFEND board should keep a 9:13 aspect ratio");
 const paletteItems = await page.locator("#defend-palette [data-item]").count();
-assert.equal(paletteItems, 4, "Build palette should list city tile, barracks, archer tower and watch tower");
+assert.equal(paletteItems, 5, "Build palette should list city tile, barracks, archer tower, cannon tower and watch tower");
 const cityTiles = await page.locator('#defend-palette [data-item="cityTile"] b').textContent();
 assert.equal(cityTiles, "×8", "Player starts with 8 city tiles");
 

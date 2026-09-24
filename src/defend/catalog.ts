@@ -1,11 +1,11 @@
 /** Data tables for DEFEND: what the player can place, what it costs in
  * main-game currency, the universal upgrades, and the enemy roster. */
 
-export type StructureKind = "keep" | "barracks" | "archerTower" | "watchTower";
+export type StructureKind = "keep" | "barracks" | "archerTower" | "cannonTower" | "watchTower";
 /** Everything that appears in the build palette (the keep is placed from the
  * start and can only be moved, so it is not a palette item). */
 export type PaletteItem = "cityTile" | Exclude<StructureKind, "keep">;
-export const PALETTE_ITEMS: PaletteItem[] = ["cityTile", "barracks", "archerTower", "watchTower"];
+export const PALETTE_ITEMS: PaletteItem[] = ["cityTile", "barracks", "archerTower", "cannonTower", "watchTower"];
 
 export type StructureDef = {
   kind: StructureKind;
@@ -47,6 +47,15 @@ export const STRUCTURES: Record<StructureKind, StructureDef> = {
     outsideOk: true,
     description: "Looses arrows at the nearest enemy in range. Can stand inside or outside the walls.",
   },
+  cannonTower: {
+    kind: "cannonTower",
+    name: "Cannon tower",
+    w: 2,
+    h: 2,
+    maxHp: 150,
+    outsideOk: true,
+    description: "Slow, heavy guns lobbing explosive shells that burst among the enemy. Careful — the blast hurts your own people too.",
+  },
   watchTower: {
     kind: "watchTower",
     name: "Watch tower",
@@ -63,6 +72,7 @@ export const STARTING_OWNED: Record<PaletteItem, number> = {
   cityTile: 8,
   barracks: 1,
   archerTower: 1,
+  cannonTower: 0,
   watchTower: 0,
 };
 
@@ -76,6 +86,7 @@ export function purchasePrice(item: PaletteItem, owned: number): Price {
     cityTile: { gold: 120, ironBar: 1 },
     barracks: { gold: 300, ironBar: 3 },
     archerTower: { gold: 220, ironBar: 2 },
+    cannonTower: { gold: 340, ironBar: 5 },
     watchTower: { gold: 180, ironBar: 2 },
   };
   const growth = item === "cityTile" ? 1.3 : 1.5;
@@ -92,6 +103,10 @@ export type UpgradeId =
   | "archerDamage"
   | "archerRange"
   | "archerRate"
+  | "cannonDamage"
+  | "cannonRate"
+  | "cannonSafe"
+  | "bombSafe"
   | "watchRadius"
   | "wallStrength"
   | "keepStrength"
@@ -124,6 +139,10 @@ export const UPGRADES: UpgradeDef[] = [
   { id: "archerDamage", group: "Archer tower", name: "Bodkin points", maxLevel: 6, describe: (l) => `${archerDamage(l)} damage per arrow` },
   { id: "archerRange", group: "Archer tower", name: "Longbows", maxLevel: 4, describe: (l) => `${archerRange(l)} cell range` },
   { id: "archerRate", group: "Archer tower", name: "Quick nock", maxLevel: 5, describe: (l) => `An arrow every ${archerCooldown(l).toFixed(2)}s` },
+  { id: "cannonDamage", group: "Cannon tower", name: "Heavy shot", maxLevel: 5, describe: (l) => `${cannonDamage(l)} blast damage, ${cannonSplash(l).toFixed(1)} cell burst` },
+  { id: "cannonRate", group: "Cannon tower", name: "Powder monkeys", maxLevel: 4, describe: (l) => `A shell every ${cannonCooldown(l).toFixed(1)}s` },
+  { id: "cannonSafe", group: "Cannon tower", name: "Gunnery drills", maxLevel: 1, describe: (l) => (l ? "Shells spare your own people" : "Shells hurt your own people too") },
+  { id: "bombSafe", group: "Consumables", name: "Shaped charges", maxLevel: 1, describe: (l) => (l ? "Bombs spare your own people" : "Bombs hurt your own people too") },
   { id: "watchRadius", group: "Watch tower", name: "Lookouts", maxLevel: 4, describe: (l) => `${watchRadius(l)} cell marking radius` },
   { id: "wallStrength", group: "City", name: "Masonry", maxLevel: 6, describe: (l) => `${wallHp(l)} HP per wall stone` },
   { id: "keepStrength", group: "City", name: "Keep bastions", maxLevel: 6, describe: (l) => `${keepHp(l)} keep HP` },
@@ -156,6 +175,12 @@ export const archerDamage = (l: number) => 6 + l * 3;
 export const archerRange = (l: number) => 10 + l * 2;
 export const archerCooldown = (l: number) => 1.1 * Math.pow(0.85, l);
 export const watchRadius = (l: number) => 8 + l * 2;
+export const cannonDamage = (l: number) => 20 + l * 9;
+export const cannonSplash = (l: number) => 1.7 + l * 0.15;
+export const cannonCooldown = (l: number) => 2.8 * Math.pow(0.86, l);
+export const CANNON_RANGE = 11;
+/** Share of blast damage your own units take when friendly fire is on. */
+export const FRIENDLY_FIRE = 0.6;
 export const wallHp = (l: number) => Math.round(100 * (1 + l * 0.35));
 export const keepHp = (l: number) => Math.round(STRUCTURES.keep.maxHp * (1 + l * 0.3));
 export const civilianCount = (l: number) => 2 + l;

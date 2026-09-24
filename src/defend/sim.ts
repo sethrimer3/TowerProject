@@ -18,6 +18,11 @@ import { MinHeap } from "./heap.ts";
 import {
   BOMB_DAMAGE,
   BOMB_RADIUS,
+  CANNON_RANGE,
+  FRIENDLY_FIRE,
+  cannonCooldown,
+  cannonDamage,
+  cannonSplash,
   CIVILIAN,
   ENEMIES,
   HOUSE_HP_PER_CELL,
@@ -94,7 +99,11 @@ export type Civilian = {
 };
 
 export type Arrow = { x: number; y: number; target: number; damage: number; tx: number; ty: number; life: number };
-export type Effect = { kind: "boom" | "dust" | "spark"; x: number; y: number; t: number; r: number };
+export type Effect = { kind: "boom" | "dust" | "spark"; x: number; y: number; t: number; r: number; seed?: number };
+/** A cannon shell in flight: lobbed from the tower to where the target was. */
+export type Shell = { x0: number; y0: number; x1: number; y1: number; t: number; dur: number; damage: number; r: number };
+/** Glowing cracks left where something exploded; they cool and fade. */
+export type Scorch = { x: number; y: number; r: number; seed: number; t: number; life: number };
 export type SimEvent = { type: "waveStart" | "waveCleared" | "lost"; wave: number };
 
 const STEP = 1 / 30;
@@ -121,6 +130,8 @@ export class DefendSim {
   soldiers: Soldier[] = [];
   civilians: Civilian[] = [];
   arrows: Arrow[] = [];
+  shells: Shell[] = [];
+  scorches: Scorch[] = [];
   effects: Effect[] = [];
   events: SimEvent[] = [];
   wave = 0;
@@ -201,6 +212,7 @@ export class DefendSim {
     for (const e of this.enemies) this.stepEnemy(e, dt);
     this.stepTowers(dt);
     this.stepArrows(dt);
+    this.stepShells(dt);
     this.stepBarracks(dt);
     for (const s of this.soldiers) this.stepSoldier(s, dt);
     this.stepCivilians(dt);
@@ -209,6 +221,8 @@ export class DefendSim {
     this.civilians = this.civilians.filter((c) => c.hp > 0 && !this.atHome(c));
     for (const fx of this.effects) fx.t += dt;
     this.effects = this.effects.filter((fx) => fx.t < 0.6);
+    for (const s of this.scorches) s.t += dt;
+    this.scorches = this.scorches.filter((s) => s.t < s.life);
     for (const e of this.enemies) e.flash = Math.max(0, e.flash - dt);
     for (const s of this.soldiers) s.flash = Math.max(0, s.flash - dt);
     for (const c of this.civilians) c.flash = Math.max(0, c.flash - dt);
@@ -531,6 +545,10 @@ export class DefendSim {
   private stepTowers(dt: number) {
     const range = archerRange(this.levels.archerRange);
     for (const b of this.map.buildings) {
+      if (b.kind === "cannonTower" && this.intact(b)) {
+        this.stepCannon(b, dt);
+        continue;
+      }
       if (b.kind !== "archerTower" || !this.intact(b)) continue;
       const cd = (this.towerCd.get(b.id) ?? 0) - dt;
       if (cd > 0) {
@@ -554,6 +572,69 @@ export class DefendSim {
       this.towerCd.set(b.id, archerCooldown(this.levels.archerRate));
       this.arrows.push({ x: c.x, y: c.y - 0.6, target: target.id, damage: archerDamage(this.levels.archerDamage), tx: target.x, ty: target.y, life: 2 });
     }
+  }
+
+  /** Cannons fire slowly at the nearest ground enemy in range, leading
+   * nothing: the shell lands where the target stood when it fired. */
+  private stepCannon(b: Building, dt: number) {
+    const cd = (this.towerCd.get(b.id) ?? 0) - dt;
+    if (cd > 0) {
+      this.towerCd.set(b.id, cd);
+      return;
+    }
+    const c = center(b.rect);
+    let target: Enemy | null = null,
+      bd = Infinity;
+    for (const e of this.enemiesNear(c.x, c.y, CANNON_RANGE)) {
+      if (ENEMIES[e.kind].flying) continue;
+      const d = (e.x - c.x) ** 2 + (e.y - c.y) ** 2;
+      if (d < bd && d > 1.5 * 1.5) {
+        bd = d;
+        target = e;
+      }
+    }
+    if (!target) {
+      this.towerCd.set(b.id, 0);
+      return;
+    }
+    this.towerCd.set(b.id, cannonCooldown(this.levels.cannonRate));
+    const dist = Math.sqrt(bd);
+    this.shells.push({
+      x0: c.x,
+      y0: c.y - 0.4,
+      x1: target.x,
+      y1: target.y,
+      t: 0,
+      dur: 0.45 + dist * 0.07,
+      damage: cannonDamage(this.levels.cannonDamage),
+      r: cannonSplash(this.levels.cannonDamage),
+    });
+  }
+
+  private stepShells(dt: number) {
+    for (const s of this.shells) {
+      s.t += dt;
+      if (s.t >= s.dur) this.explode(s.x1, s.y1, s.r, s.damage, !this.levels.cannonSafe);
+    }
+    this.shells = this.shells.filter((s) => s.t < s.dur);
+  }
+
+  /** A blast: full damage at the centre falling to 40% at the edge. With
+   * friendly fire, your swordsmen and civilians in the blast get hurt too. */
+  explode(x: number, y: number, r: number, damage: number, friendlyFire: boolean) {
+    this.indexEnemies();
+    const hit = (d: number) => damage * (1 - 0.6 * Math.min(1, d / r));
+    for (const e of this.enemiesNear(x, y, r)) this.hurtEnemy(e, hit(Math.hypot(e.x - x, e.y - y)));
+    if (friendlyFire)
+      for (const u of [...this.soldiers, ...this.civilians]) {
+        const d = Math.hypot(u.x - x, u.y - y);
+        if (d > r || u.hp <= 0) continue;
+        u.hp -= hit(d) * FRIENDLY_FIRE;
+        u.flash = 0.12;
+      }
+    const seed = (this.rand() * 1e9) | 0;
+    this.effects.push({ kind: "boom", x, y, t: 0, r, seed });
+    this.scorches.push({ x, y, r, seed, t: 0, life: 1 + Math.min(2, r * 0.45) + this.rand() * 0.5 });
   }
 
   private stepArrows(dt: number) {
@@ -928,9 +1009,7 @@ export class DefendSim {
 
   // ── Consumables ───────────────────────────────────────────────────────
   dropBomb(x: number, y: number) {
-    this.indexEnemies();
-    for (const e of this.enemiesNear(x, y, BOMB_RADIUS)) this.hurtEnemy(e, BOMB_DAMAGE);
-    this.effects.push({ kind: "boom", x, y, t: 0, r: BOMB_RADIUS });
+    this.explode(x, y, BOMB_RADIUS, BOMB_DAMAGE, !this.levels.bombSafe);
   }
 }
 

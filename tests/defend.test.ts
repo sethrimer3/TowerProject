@@ -315,3 +315,37 @@ test('3× speed unlock is bought once and saved', async () => {
   assert.equal(buySpeed3(save, wallet), false);
   assert.equal(decodeDefendSave(JSON.parse(JSON.stringify(save))).speed3, true);
 });
+
+test('cannon towers lob shells that burst with splash damage', () => {
+  let l = squareCity();
+  l = placeStructure(l, 'cannonTower', l.keep.tx, l.keep.ty - 2)!;
+  assert.ok(l, 'cannon towers can stand outside the walls');
+  const sim = new DefendSim(mapOf(l), zeroLevels(), 1);
+  const gun = sim.map.buildings.find((b) => b.kind === 'cannonTower')!;
+  const gx = gun.rect.x + 1, gy = gun.rect.y + 1;
+  const mk = (id: number, dx: number) => ({ id, kind: 'orc', x: gx + dx, y: gy - 5, hp: 1000, maxHp: 1000, cd: 99, jx: 0, jy: 0, distract: -1, distractT: 0, rollT: 99, marked: false, flash: 0 }) as any;
+  sim.spawnQueue = [];
+  sim.breakT = 1e9;
+  sim.enemies = [mk(1, 0), mk(2, 0.8)];
+  let shells = 0;
+  for (let i = 0; i < 30 * 3; i++) {
+    sim.step(1 / 30);
+    shells = Math.max(shells, sim.shells.length);
+    for (const e of sim.enemies) { e.x = gx + (e.id === 1 ? 0 : 0.8); e.y = gy - 5; }
+  }
+  assert.ok(shells > 0, 'a shell was fired');
+  assert.ok(sim.enemies.every((e) => e.hp < 1000), 'both enemies caught in the splash');
+  assert.ok(sim.scorches.length > 0 || sim.effects.some((f) => f.kind === 'boom'), 'the blast leaves its mark');
+});
+
+test('friendly fire: blasts hurt your own people until the Armory upgrade', () => {
+  const blast = (levels: any) => {
+    const sim = new DefendSim(mapOf(squareCity()), levels, 1);
+    const civ = { id: 1, x: 10.5, y: 10.5, hp: 10, maxHp: 10, job: -1, state: 'toJob', work: 0, path: [], home: 0, thinkT: 0, flash: 0 } as any;
+    sim.civilians = [civ];
+    sim.dropBomb(10.5, 11);
+    return civ.hp;
+  };
+  assert.ok(blast(zeroLevels()) < 10, 'bombs hurt civilians by default');
+  assert.equal(blast({ ...zeroLevels(), bombSafe: 1 }), 10, 'Shaped charges spare them');
+});
