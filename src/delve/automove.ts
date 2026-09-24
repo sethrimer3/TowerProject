@@ -10,7 +10,7 @@ export function capabilities(game: Game): Capabilities {
 }
 const dirs = [[0, 1], [-1, 0], [1, 0], [0, -1]];
 export type Decision = { x: number; y: number; utility: number; travel: number; damage: number; keys: number; reward: number; frontier: boolean; deadEnd: boolean };
-const commitments = new WeakMap<Game, { run: Game['run']; from: string; route: string[] }>();
+const commitments = new WeakMap<Game, { run: Game['run']; from: string; route: string[]; target: string }>();
 export const decisions = new WeakMap<Game, Decision[]>();
 /** Deliberately uses observed tiles, never generation nodes, pattern IDs,
  * hidden route ownership, or the generator's true-continuation labels. */
@@ -20,8 +20,10 @@ export function chooseDelveStep(game: Game, override?: Capabilities) {
   // Scouting upgrades expand observation explicitly. The default radius is
   // the same 17x17 neighbourhood available to the human player.
   const visible = new Set<string>();
+  let discovered = 0;
   for (let y = Math.max(world.floor, p.y - c.lookahead); y <= p.y + c.lookahead; y++) for (let x = Math.max(0, p.x - c.lookahead); x <= Math.min(world.width - 1, p.x + c.lookahead); x++) {
-    const k = point(x, y); visible.add(k); known[k] = true;
+    const k = point(x, y); visible.add(k);
+    if (!known[k]) { known[k] = true; if (world.tile(x, y).kind !== 'wall') discovered++; }
   }
   const visits = game.run.delveVisited ?? {};
   const canKnow = (x: number, y: number) => c.memory ? known[point(x, y)] : visible.has(point(x, y)) || !!visits[point(x, y)];
@@ -29,10 +31,14 @@ export function chooseDelveStep(game: Game, override?: Capabilities) {
   const q: Search[] = [{ x: p.x, y: p.y, first: [0, 0], d: 0, player: { ...p, keys: { ...p.keys } }, damage: 0, keyCost: 0, reward: 0, interactions: 0, path: new Set([point(p.x, p.y)]) }];
   const committed = commitments.get(game);
   const here = point(p.x, p.y);
-  if (committed?.run === game.run) {
-    if (committed.route[0] === here) { committed.route.shift(); committed.from = here; }
-    if (committed.from === here && committed.route.length) {
-      const [x, y] = committed.route[0].split(',').map(Number);
+  // A committed route is followed until it ends, an interaction happens, or
+  // newly observed corridors warrant a fresh look (with a continuity bonus
+  // for the old target, so small visibility changes cannot flip-flop it).
+  const keep = committed?.run === game.run && !discovered ? committed : undefined;
+  if (keep) {
+    if (keep.route[0] === here) { keep.route.shift(); keep.from = here; }
+    if (keep.from === here && keep.route.length) {
+      const [x, y] = keep.route[0].split(',').map(Number);
       const dx = x - p.x, dy = y - p.y, tile = world.tile(x, y);
       const trial = { player: { ...p, keys: { ...p.keys } }, damage: 0, keyCost: 0, reward: 0 };
       if (Math.abs(dx) + Math.abs(dy) === 1 && world.step(p.x, p.y, dx, dy) && tile.kind !== 'wall' && apply(tile, trial, c)) {
@@ -41,6 +47,7 @@ export function chooseDelveStep(game: Game, override?: Capabilities) {
       }
     }
   }
+  const previousTarget = committed?.run === game.run ? committed.target : '';
   commitments.delete(game);
   const bestAt = new Map<string, number>();
   let best: Search | null = null, bestValue = -Infinity;
@@ -70,7 +77,8 @@ export function chooseDelveStep(game: Game, override?: Capabilities) {
         - next.d * (c.deadEnds ? 0.25 : 0.12)
         - (c.combat ? next.damage * 0.55 : 0)
         - (c.keys ? next.keyCost : 0)
-        - (c.deadEnds && deadEnd ? 18 + next.d * 0.2 : 0);
+        - (c.deadEnds && deadEnd ? 18 + next.d * 0.2 : 0)
+        + (k === previousTarget ? 6 : 0);
       // Interactions, junctions, pockets and frontiers form the observed
       // decision graph. Corridor interiors remain traversal edges.
       if (interaction || open.length !== 2 || frontier || unvisited) {
@@ -87,7 +95,7 @@ export function chooseDelveStep(game: Game, override?: Capabilities) {
     }
   }
   decisions.set(game, report.sort((a, b) => b.utility - a.utility).slice(0, 12));
-  if (best) commitments.set(game, { run: game.run, from: here, route: [...best.path].slice(1) });
+  if (best) commitments.set(game, { run: game.run, from: here, route: [...best.path].slice(1), target: point(best.x, best.y) });
   return best ? { dx: best.first[0], dy: best.first[1], label: `Exploring Delve · ${c.lookahead}-tile scouting` } : null;
 }
 function apply(tile: Tile, n: { player: Player; damage: number; keyCost: number; reward: number }, c: Capabilities) {

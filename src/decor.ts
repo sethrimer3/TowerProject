@@ -442,7 +442,7 @@ function planTile(src: DecorSource, x: number, y: number): TileDecor {
   }
 
   // --- Water: pools gather in hollows of a second field. ---
-  if (ground && !d.thicket) {
+  if (ground) {
     const dampness = src.damp(x, y);
     if (dampness > 0) {
       const walls = wallNeighbors(src, x, y);
@@ -482,6 +482,8 @@ function planTile(src: DecorSource, x: number, y: number): TileDecor {
             if (wet(i - 1, j) || wet(i + 1, j) || wet(i, j - 1) || wet(i, j + 1)) water[j * TILE_PX + i] = 2;
           }
         d.water = water;
+        // Tall grass gives way to a pool that floods much of the tile.
+        if (d.waterCount > 40) d.thicket = false;
         if (d.moss) for (let k = 0; k < AREA; k++) if (water[k] === 1) d.moss[k] = 0;
         const rng = rngFor(src, x, y, 7);
         for (let k = 0; k < 40 && d.glints.length < 5; k++) {

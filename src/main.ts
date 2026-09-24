@@ -1,4 +1,5 @@
 import { analyzeDelve } from "./delve/analyzer.ts";
+import { ownerAt, region, themeInfluence } from "./delve/labyrinth.ts";
 import { capabilities, decisions } from "./delve/automove.ts";
 import { TreeParticles } from "./tree-particles.ts";
 import { TREES, skillAvailable, type TreeId } from "./skill-trees.ts";
@@ -1247,11 +1248,17 @@ window.addEventListener("pagehide", save);
 // Developer-only live navigation diagnostics; no generation hints go to Automove.
 (window as unknown as { delveDebug: () => unknown }).delveDebug = () => {
   if (!game.save.settings.devMode || game.mode !== 'delve') return null;
-  const report = { ...analyzeDelve(game.run.seed, game.run.delveMilestone ?? 0),
-    progressionDepth: game.run.height, physicalY: game.run.player.y,
-    lastMilestone: (game.run.delveMilestone ?? 0) * 100,
+  const milestone = game.run.delveMilestone ?? 0, p = game.run.player, seed = game.run.seed;
+  const influence = themeInfluence(seed, p.x, p.y), blend = influence - Math.floor(influence);
+  const seen = decisions.get(game) ?? [];
+  const report = { ...analyzeDelve(seed, milestone),
+    progressionDepth: game.run.height, physicalY: p.y, physicalArea: ownerAt(seed, p.x, p.y),
+    lastMilestone: milestone * 100, nextMilestone: (milestone + 1) * 100,
+    transition: { gateId: `transition_${(milestone + 1) * 100}`, gate: region(seed, milestone).gate, crossed: false, previousSealed: milestone > 0 },
+    themeBlend: { [`area${Math.floor(influence) + 1}`]: +(1 - blend).toFixed(2), [`area${Math.floor(influence) + 2}`]: +blend.toFixed(2) },
     knownTiles: Object.keys(game.run.delveKnown ?? {}).length,
-    capabilities: capabilities(game), decisions: decisions.get(game) ?? [] };
+    branches: { frontiers: seen.filter(d => d.frontier).length, knownDeadEnds: seen.filter(d => d.deadEnd).length },
+    capabilities: capabilities(game), decisions: seen };
   console.log(report); return report;
 };
 // `defendDebug(seconds, { rain }?)` fast-forwards a running DEFEND

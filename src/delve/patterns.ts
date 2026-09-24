@@ -39,7 +39,7 @@ export const FALSE_ASCENTS: Pattern[] = [
   { id: 'FalseAscendingMinorReward', quality: 'poor', gates: [enemy], rewards: [{ kind: 'potion', amount: 20 }] },
 ];
 /** Trap frequency rises with depth; long detours only go on long branches. */
-export function choosePattern(rng: () => number, area: number, branch = 1): Pattern {
-  const options = DELVE_PATTERNS.filter(p => (p.minBranch ?? 0) <= branch);
+export function choosePattern(rng: () => number, area: number, branch = 1, maxGates = Infinity): Pattern {
+  const options = DELVE_PATTERNS.filter(p => (p.minBranch ?? 0) <= branch && p.gates.length <= maxGates);
   return pick(options.map(v => ({ v, w: v.quality === 'good' ? 3 : v.quality === 'poor' ? 0.7 + Math.min(1, area / 8) : 2 })), rng);
 }

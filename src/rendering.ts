@@ -259,8 +259,10 @@ export class Renderer {
     };
     eachTile(0);
     if (!g.run.outside) {
-      this.decor.drawGround(c, view, now, tileAt, reduceMotion);
+      // Decor goes over the torch relief (which re-lights the stone's
+      // edges), so pools and crates hide the bricks beneath them.
       this.drawTorchRelief(now);
+      this.decor.drawGround(c, view, now, tileAt, reduceMotion);
       this.drawEntityShadows(box.width, now);
     }
     // Below the default brightness: darken the ground, lay the object glows
@@ -316,11 +318,20 @@ export class Renderer {
       // the ground they grow from.
       this.drawDarkened(spriteDark, box.width, dpr, 1, () => this.decor.drawForeground(this.ctx, view, now, tileAt, reduceMotion));
     } else {
+      const grass = (layer: "back" | "front") =>
+        this.grass.draw(c, view, g.world, g.run.seed, Math.floor(g.world.width / 2), outsideWeather(g.run.seed), now, dt,
+          this.playerX, this.playerY, reduceMotion, layer);
+      if (g.run.outside) {
+        // Grass behind the hero goes under it; the blades at its feet over it.
+        const heroTransform = c.getTransform();
+        c.restore();
+        grass("back");
+        c.save();
+        c.setTransform(heroTransform);
+      }
       drawHero();
       c.restore();
-      if (g.run.outside)
-        this.grass.draw(c, view, g.world, g.run.seed, Math.floor(g.world.width / 2), outsideWeather(g.run.seed), now, dt,
-          this.playerX, this.playerY, reduceMotion);
+      if (g.run.outside) grass("front");
       else this.decor.drawForeground(c, view, now, tileAt, reduceMotion);
     }
     if (g.run.outside) {

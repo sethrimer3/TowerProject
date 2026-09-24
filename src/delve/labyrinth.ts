@@ -32,18 +32,19 @@ export function hash(x: number, y: number, seed: number) {
 }
 function rngFor(seed: number) { let n = 0; return () => hash(n++, 91, seed); }
 
-/** A small per-column vertical warp (a smooth walk bounded to 0..3 whose
- * neighbouring columns differ by at most one tile), so corridors meander
- * without any global tilt and every horizontal step stays 4-connected. */
+/** A small per-column vertical warp: each lattice column's 6-tile slab is
+ * shifted 0..3 tiles, neighbouring slabs by at most one. Horizontal corridors
+ * therefore take a single one-tile step between columns (staying 1 wide and
+ * 4-connected) and rows meander without any global tilt. */
 const warps = new Map<number, number[]>();
 export function warp(x: number, seed: number) {
   let w = warps.get(seed);
   if (!w) {
     w = [Math.floor(hash(0, 1, seed) * 4)];
-    for (let i = 1; i < 32; i++) w.push(Math.max(0, Math.min(3, w[i - 1] + Math.floor(hash(i, 2, seed) * 3) - 1)));
+    for (let i = 1; i < 6; i++) w.push(Math.max(0, Math.min(3, w[i - 1] + Math.floor(hash(i, 2, seed) * 3) - 1)));
     warps.set(seed, w); if (warps.size > 8) warps.delete(warps.keys().next().value!);
   }
-  return w[Math.max(0, Math.min(31, x))];
+  return w[Math.max(0, Math.min(5, Math.floor(x / 6)))];
 }
 const colX = (col: number) => 3 + col * PITCH;
 const rowY = (row: number) => 3 + row * PITCH;
@@ -237,9 +238,13 @@ export function region(seed: number, area: number): Region {
     const path = edge.b === n.id ? edge.path : [...edge.path].reverse();
     // Costs sit in the single-width throat, outside either chamber, so each
     // one is a cut tile between the pocket and the rest of the labyrinth.
-    const throat = path.filter(p => !roomTiles.has(point(p.x, p.y)));
-    const middle = Math.min(throat.length - 1, Math.floor(throat.length / 2) + n.pattern.gates.length - 1);
-    n.pattern.gates.forEach((g, i) => put(throat[middle - i], gateTile(g, n), n.depth));
+    // Only verified cut tiles qualify: a corner tile touching a room can be
+    // side-stepped. A pocket whose throat is too short for its costs takes a
+    // pattern that fits instead.
+    const cuts = path.filter(p => !roomTiles.has(point(p.x, p.y)) && separates(cells, path[0], p, n));
+    if (cuts.length < n.pattern.gates.length) n.pattern = choosePattern(rng, area, 0, cuts.length);
+    const middle = Math.min(cuts.length - 1, Math.floor(cuts.length / 2) + n.pattern.gates.length - 1);
+    n.pattern.gates.forEach((g, i) => put(cuts[middle - i], gateTile(g, n), n.depth));
     const rewards = [{ x: n.x, y: n.y }, physical(n.x - 1, rowY(n.row), seed), physical(n.x + 1, rowY(n.row), seed)];
     n.pattern.rewards.forEach((r, i) => put(rewards[i], { ...r }, n.depth));
   }
@@ -253,6 +258,17 @@ export function region(seed: number, area: number): Region {
   cache.set(key, result);
   if (cache.size > DELVE_TUNING.cacheAreas) cache.delete(cache.keys().next().value!);
   return result;
+}
+/** True when blocking `cut` disconnects `from` from the pocket at `to`. */
+function separates(cells: Map<string, Tile>, from: Point, cut: Point, to: Point) {
+  const blocked = point(cut.x, cut.y), goal = point(to.x, to.y), seen = new Set([point(from.x, from.y)]), queue = [from];
+  for (let i = 0; i < queue.length; i++) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+    const k = point(queue[i].x + dx, queue[i].y + dy);
+    if (k === blocked || seen.has(k) || !cells.has(k)) continue;
+    if (k === goal) return false;
+    seen.add(k); queue.push({ x: queue[i].x + dx, y: queue[i].y + dy });
+  }
+  return true;
 }
 /** Length (in lattice hops) of the dead-end chain ending at a pocket. */
 function branchLength(nodes: Node[], leaf: number) {
