@@ -403,3 +403,40 @@ test("Hunter's instinct sends archers toward enemies they can't see yet", () => 
   assert.equal(run(0), false);
   assert.equal(run(1), true);
 });
+
+test('park fences: street-facing, with a gate; trampled or blasted into fading splinters', async () => {
+  const { parkFences, Fences } = await import('../src/defend/fences.ts');
+  // A big city so there are plenty of parks.
+  let l = defaultLayout();
+  for (let y = 4; y <= 12; y++) for (let x = 1; x <= 7; x++) l = placeCityTile(l, x, y) ?? l;
+  let map = mapOf(l, 1), sections = parkFences(map);
+  for (let seed = 2; !sections.length && seed < 20; seed++) sections = parkFences((map = mapOf(l, seed)));
+  assert.ok(sections.length > 0, 'some parks are fenced');
+  for (const s of sections) {
+    // Every section runs along a park cell that borders a street.
+    const mx = (s.x1 + s.x2) / 2, my = (s.y1 + s.y2) / 2;
+    assert.equal(map.type[cellIndex(Math.floor(mx), Math.floor(my))], CellType.PARK);
+  }
+  const fences = new Fences();
+  fences.sync(map);
+  const s = fences.sections[0];
+  const mx = (s.x1 + s.x2) / 2, my = (s.y1 + s.y2) / 2;
+  const fake: any = { time: 0, enemies: [{ kind: 'orc', x: mx, y: my }], effects: [] };
+  fences.update(fake);
+  assert.equal(s.broken, true, 'an enemy walking across snaps it');
+  assert.ok(fences.splinters.length >= 6, 'into splinters');
+  // A blast breaks every section in reach.
+  const t = fences.sections.find((x) => !x.broken)!;
+  fake.enemies = [];
+  fake.effects = [{ kind: 'boom', x: t.x1, y: t.y1, t: 0, r: 1.5, seed: 42 }];
+  fake.time = 0.1;
+  fences.update(fake);
+  assert.equal(t.broken, true, 'blasts break fences too');
+  // Splinters fade away within 10 seconds.
+  fake.effects = [];
+  for (let i = 1; i <= 120; i++) {
+    fake.time = 0.1 + i * 0.1;
+    fences.update(fake);
+  }
+  assert.equal(fences.splinters.length, 0);
+});

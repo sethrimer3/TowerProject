@@ -29,7 +29,7 @@ try {
   const box = await page.locator("#world").boundingBox();
   await page.mouse.click(box.x + box.width * 10.5 / 20, box.y + box.width * 7.5 / 20);
   await expect(page.locator("#board-title")).toHaveText("THE ASCENT TRIALS", { timeout: 10000 });
-  await expect(page.locator("#height")).toHaveText("0");
+  await expect(page.locator("#height")).toHaveText("1");
   const result = await page.evaluate(async () => {
     const { Game } = await import("/src/state.ts");
     const { defaults } = await import("/src/save.ts");

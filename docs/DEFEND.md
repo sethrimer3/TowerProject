@@ -64,6 +64,10 @@ holds it against endless waves. Code lives in `src/defend/`.
 - Larger parks get a pond: every park cell whose eight neighbours are all
   park becomes water, drawn as overlapping jittered discs for an irregular,
   natural shore. Ponds block movement but not light.
+- About 60% of parks have a thin wooden fence along their street sides,
+  with one gap left as a gate (`fences.ts`). Fences are purely visual: an
+  enemy walking across a section, or a blast next to it, snaps it into
+  splinters that scatter, settle and fade out after 5–10 s.
 - Art: medieval roofs (terracotta, brick, timber, thatch, slate, straw)
   with crisp black outlines on whole-pixel edges; when zoomed in, the city
   is repainted at 2–3× resolution so edges stay sharp. The keep has four

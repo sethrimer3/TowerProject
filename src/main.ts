@@ -33,6 +33,11 @@ import {
   type CraftedEquipment,
   type EquipmentSlot,
 } from "./equipment.ts";
+
+// Dungeon coordinates are zero-based internally, but player-facing progress
+// starts at 1 once the entrance is crossed. The forest is the sole height /
+// depth 0 area.
+const displayedProgress = (value: number, outside = false) => outside ? 0 : value + 1;
 import { canCraft, getSalvageReturns, isEquipped, CONSUMABLES, canCraftConsumable, type ConsumableId } from "./crafting.ts";
 import { doorColor, doorCost, doorDescription, doorName, doorRule, KEY_NAMES } from "./doors.ts";
 import { AREA1_ITEM_URLS } from "./area1-tileset.ts";
@@ -442,16 +447,18 @@ function update() {
     button.disabled = count < 1 || game.run.outside || !!game.summary;
   }
   text("height-label", game.mode === "tower" ? "HEIGHT" : "DEPTH");
-  const currentVal = game.run.outside ? 0 : (game.mode === "delve" ? p.y : game.run.height);
-  const runBest = game.run.maxHeight ?? game.run.height;
-  const allBest = slice.best;
+  const currentVal = displayedProgress(game.mode === "delve" ? p.y : game.run.height, !!game.run.outside);
+  const rawRunBest = game.run.maxHeight ?? game.run.height;
+  const rawAllBest = slice.best;
+  const runBest = displayedProgress(rawRunBest, !!game.run.outside);
+  const allBest = displayedProgress(rawAllBest);
   text("height", currentVal);
   text("best-run", runBest);
   text("best-all", allBest);
   const divisor = game.mode === "delve" ? 10 : 1;
   const rewardEl = el("best-reward");
-  if (runBest > allBest) {
-    const potentialReward = Math.floor(runBest / divisor) - Math.floor(allBest / divisor);
+  if (rawRunBest > rawAllBest) {
+    const potentialReward = Math.floor(rawRunBest / divisor) - Math.floor(rawAllBest / divisor);
     text("best-reward-val", potentialReward);
     text("best-reward-type", game.mode === "delve" ? "COURAGE" : "INSPIRATION");
     rewardEl.hidden = false;
@@ -836,7 +843,7 @@ function renderPage() {
     el("retire").onclick = () =>
       confirmAction(
         "Leave your mark?",
-        `Retire at ${game.mode === "tower" ? "height" : "depth"} ${game.run.height}. Milestone rewards are already yours. Uncollected clear chests will be claimed.`,
+        `Retire at ${game.mode === "tower" ? "height" : "depth"} ${displayedProgress(game.run.height, !!game.run.outside)}. Milestone rewards are already yours. Uncollected clear chests will be claimed.`,
         "Retire ascent",
         () => {
           game.finish("Ascent retired");
@@ -1030,14 +1037,14 @@ el("log").onclick = () => {
     const start = Math.max(0, highest - page * 25);
     const floors = Array.from({ length: Math.min(25, start + 1) }, (_, i) => start - i);
     modal.innerHTML = `<small>WAYFARER’S RECORD</small><h2>Adventure log</h2>
-      <div class="summary-stats"><div><strong>${highest}</strong>HIGHEST FLOOR</div><div><strong>${game.save.delve.reached}</strong>DEEPEST DEPTH</div></div>
+      <div class="summary-stats"><div><strong>${displayedProgress(highest)}</strong>HIGHEST FLOOR</div><div><strong>${displayedProgress(game.save.delve.reached)}</strong>DEEPEST DEPTH</div></div>
       <p>${devAmount(game.save.tower.shards)} Inspiration · ${devAmount(game.save.delve.essence)} Courage</p>
       <p class="hint">+1 Inspiration per new height. +1 Courage at each new 10-depth milestone. Revisits never pay again.</p>
       <div class="clear-legend"><p class="silver">${itemSprite("chest_silver", "log-sprite")} Silver · all doors opened and enemies defeated.</p><p class="gold">${itemSprite("chest_gold", "log-sprite")} Gold · Silver with no damage taken anywhere in the ascent.</p><p class="platinum">${itemSprite("chest_platinum", "log-sprite")} Platinum · Gold with no keys spent on that floor.</p><p class="diamond">Diamond · future challenge, not yet available.</p></div>
       <p class="hint">Each clear tier earns +1 Inspiration once per floor. Uncollected chests are claimed when you leave.</p>
       <div class="floor-log">${floors.map(floor => {
         const record = game.save.tower.log[floor];
-        return `<div class="floor-record"><b>Floor ${floor}</b><span>${record?.earned.length ? record.earned.map(t => `<span class="${t}">${itemSprite(`chest_${t}` as "chest_silver" | "chest_gold" | "chest_platinum", "log-sprite")}${t[0].toUpperCase() + t.slice(1)}${record.claimed.includes(t) ? " ✓" : " · chest"}</span>`).join(" · ") : "Reached"}</span></div>`;
+        return `<div class="floor-record"><b>Floor ${displayedProgress(floor)}</b><span>${record?.earned.length ? record.earned.map(t => `<span class="${t}">${itemSprite(`chest_${t}` as "chest_silver" | "chest_gold" | "chest_platinum", "log-sprite")}${t[0].toUpperCase() + t.slice(1)}${record.claimed.includes(t) ? " ✓" : " · chest"}</span>`).join(" · ") : "Reached"}</span></div>`;
       }).join("")}</div><div class="dialog-actions"><button id="log-newer" ${page === 0 ? "disabled" : ""}>Higher</button><button id="log-older" ${start < 25 ? "disabled" : ""}>Lower</button><button id="log-close">Close</button></div>`;
     el("log-newer").onclick = () => { page--; renderLog(); };
     el("log-older").onclick = () => { page++; renderLog(); };
@@ -1081,7 +1088,7 @@ el("section-pick").onclick = () => {
 el("end-run").onclick = () =>
   confirmAction(
     "End this run?",
-    `End the current ${game.mode === "tower" ? "Tower run" : "Delve run"} at ${game.mode === "tower" ? "height" : "depth"} ${game.run.height}. Milestone rewards are already yours, and uncollected clear chests will be claimed.`,
+    `End the current ${game.mode === "tower" ? "Tower run" : "Delve run"} at ${game.mode === "tower" ? "height" : "depth"} ${displayedProgress(game.run.height, !!game.run.outside)}. Milestone rewards are already yours, and uncollected clear chests will be claimed.`,
     "End run",
     () => {
       game.finish(game.mode === "tower" ? "Tower run ended" : "Delve run ended");
@@ -1107,7 +1114,7 @@ function showSummary() {
     currencyName = game.mode === "delve" ? "COURAGE" : "INSPIRATION",
     heightName = game.mode === "tower" ? "ROOMS" : "HEIGHT";
   if (modal.open) return;
-  modal.innerHTML = `<span class="summary-icon">${uiSprite("automove")}</span><small>${s.reason.toUpperCase()}</small><h2>The tower remembers.</h2><p>Your milestone and clear rewards are already saved.</p><div class="summary-stats"><div><strong>${s.height}</strong>${heightName}</div><div><strong>${s.kills}</strong>VICTORIES</div><div><strong>${devAmount(game.mode === "tower" ? game.save.tower.shards : game.save.delve.essence)}</strong>${currencyName} SAVED</div></div>${s.record ? "" : `<p class="hint">Milestone rewards were credited as you reached them. Clear rewards are kept.</p>`}${game.save[game.mode].revival ? `<p>Revive is available until your next move. ${currencyName[0]}${currencyName.slice(1).toLowerCase()} is awarded if you continue.</p><button class="wide" id="revive-now">Revive</button>` : ""}<button class="wide" id="again">${s.dead ? `Return to the forest` : "Begin another ascent →"}</button>`;
+  modal.innerHTML = `<span class="summary-icon">${uiSprite("automove")}</span><small>${s.reason.toUpperCase()}</small><h2>The tower remembers.</h2><p>Your milestone and clear rewards are already saved.</p><div class="summary-stats"><div><strong>${displayedProgress(s.height)}</strong>${heightName}</div><div><strong>${s.kills}</strong>VICTORIES</div><div><strong>${devAmount(game.mode === "tower" ? game.save.tower.shards : game.save.delve.essence)}</strong>${currencyName} SAVED</div></div>${s.record ? "" : `<p class="hint">Milestone rewards were credited as you reached them. Clear rewards are kept.</p>`}${game.save[game.mode].revival ? `<p>Revive is available until your next move. ${currencyName[0]}${currencyName.slice(1).toLowerCase()} is awarded if you continue.</p><button class="wide" id="revive-now">Revive</button>` : ""}<button class="wide" id="again">${s.dead ? `Return to the forest` : "Begin another ascent →"}</button>`;
   modal.showModal();
   const revive = document.querySelector<HTMLButtonElement>("#revive-now");
   if (revive)
