@@ -59,6 +59,9 @@ export const LIGHTING_CONFIG = {
     strength: 0.75,
     /** How much of the ambient darkness the light removes at full brightness. */
     carve: 0.95,
+    /** The warm glow is this much dimmer at the default brightness than at
+     * the darkest setting, where torchlight should dominate. */
+    brightDim: 0.25,
     /** The glow is baked with the flame nudged this far (tiles) to each side
      * and cross-faded with its lean, so the pool sways while its edges stay
      * pinned to the walls. */
@@ -77,6 +80,29 @@ export const LIGHTING_CONFIG = {
     heroHaloAlpha: 0.42,
     /** Extra vignette at the darkest setting. */
     vignette: 0.35,
+  },
+  /** Soft glows from things in the dungeon. Each glow has a wide floor
+   * falloff; on wall tiles it is brighter but reaches only half as far,
+   * so nearby stone catches a bright wash as if lit on its face. */
+  objectGlow: {
+    enemy: { color: [235, 70, 60], radius: 1.5, strength: 0.5 },
+    item: { color: [255, 200, 90], radius: 1.3, strength: 0.45 },
+    /** Doors glow in their own lock color. */
+    door: { radius: 1.5, strength: 0.5 },
+    /** Stairs get a smaller version of the hero's cool halo. */
+    stairsRadiusScale: 0.55,
+    stairsAlphaScale: 0.85,
+    /** Wall glow: brightness multiplier and radius fraction. */
+    wallBoost: 1.5,
+    wallRadiusScale: 0.5,
+    /** Glow strength at the darkest setting; it scales with darkness and is
+     * zero at the default brightness. */
+    darkStrength: 0.9,
+    /** Gentle breathing of enemy and item glows (fraction of strength). */
+    pulse: 0.15,
+    /** Doors, stairs, items, and enemies take this fraction of the darkness
+     * the stone around them does, so they stay a little easier to read. */
+    spriteDarkness: 0.7,
   },
   /** Torch-cast shadows from items, enemies, and the player. */
   shadow: {

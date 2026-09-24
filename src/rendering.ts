@@ -15,6 +15,14 @@ import { drawGameSprite, drawGameSpriteFrame, gameSprite, torchAnimationFrame, T
 
 /** Tile kinds that stand up off the floor and so cast torch shadows. */
 const SHADOW_CASTERS = new Set<Tile["kind"]>(["key", "potion", "attack", "defense", "reward", "treasure", "enemy"]);
+const GLOW_ITEMS = new Set<Tile["kind"]>(["key", "potion", "attack", "defense", "reward", "treasure"]);
+/** A glowing object this frame: tile position, color, reach (tiles), and strength. */
+type GlowSource = { x: number; y: number; rgb: readonly number[]; radius: number; strength: number };
+const hexRgb = (hex: string) => {
+  const h = hex.replace("#", "");
+  const full = h.length === 3 ? [...h].map((c) => c + c).join("") : h.slice(0, 6);
+  return [0, 2, 4].map((i) => parseInt(full.slice(i, i + 2), 16));
+};
 
 export interface AtmosphereConfig {
   /** Screen tint color for cool dungeon atmosphere (e.g. subtle purple-blue) */
@@ -95,6 +103,14 @@ export class Renderer {
   bakeBudget = 0;
   shadowCanvas: HTMLCanvasElement | null = null;
   darkCanvas: HTMLCanvasElement | null = null;
+  contentsCanvas: HTMLCanvasElement | null = null;
+  contentsMaskCanvas: HTMLCanvasElement | null = null;
+  glowCanvas: HTMLCanvasElement | null = null;
+  glowWallCanvas: HTMLCanvasElement | null = null;
+  /** Soft round glow images, one per color, drawn scaled for every glow. */
+  glowSprites = new Map<string, HTMLCanvasElement>();
+  /** This frame's glowing objects. */
+  frameGlows: GlowSource[] = [];
   /** Opaque wall tiles for the current camera, used to mask darkness and
    * shadows off walls with a single blit. Rebuilt only when the view moves. */
   wallMask: { canvas: HTMLCanvasElement; key: string; world: unknown } | null = null;
@@ -184,6 +200,7 @@ export class Renderer {
     this.frameTorches = g.run.outside ? [] : this.visibleTorches();
     this.bakeBudget = 2;
     this.frameWalls = g.run.outside ? [] : this.visibleWallTiles();
+    this.frameGlows = g.run.outside ? [] : this.visibleGlowSources(now);
     // Ground first, then torch-cast shadows, then tile contents on top, so
     // shadows fall across the floor but never over the things casting them.
     const eachTile = (layer: 0 | 1) => {
@@ -195,11 +212,12 @@ export class Renderer {
           const t = g.world.tile(x, y);
           if (layer === 1 && (t.kind === "wall" || t.kind === "floor")) continue;
           const sy = (n - 1 - (y - this.bottom)) * s;
-          c.save();
-          c.translate((x - this.left) * s, sy);
-          c.scale(s / 24, s / 24);
+          const tc = this.ctx;
+          tc.save();
+          tc.translate((x - this.left) * s, sy);
+          tc.scale(s / 24, s / 24);
           this.tile(t, x, y, now, layer);
-          c.restore();
+          tc.restore();
         }
     };
     eachTile(0);
@@ -207,7 +225,17 @@ export class Renderer {
       this.drawTorchRelief(now);
       this.drawEntityShadows(box.width, now);
     }
-    eachTile(1);
+    // Below the default brightness: darken the ground, lay the object glows
+    // on it, then draw the objects (less darkened) on top of their glows.
+    const dark = g.run.outside ? null : this.buildDarkness(box.width, this.frameTorches, now);
+    if (dark) {
+      c.save();
+      c.globalCompositeOperation = "multiply";
+      c.drawImage(dark, 0, 0, box.width, box.width);
+      c.restore();
+      this.drawObjectGlows(box.width);
+      this.drawContentsDarkened(dark, box.width, dpr, () => eachTile(1));
+    } else eachTile(1);
     if (g.run.outside) {
       c.save();
       c.translate(-this.left * s, (n - OUTSIDE_SIZE + this.bottom) * s);
@@ -216,8 +244,7 @@ export class Renderer {
       c.restore();
     } else {
       const torches = this.frameTorches;
-      // Darkness first so the flames themselves are never dimmed by it.
-      this.drawDarkness(box.width, torches, now);
+      // Drawn after the darkness so the flames themselves are never dimmed.
       for (const t of torches) this.drawTorchSprite(t, now);
       // Render lighting overlay via offscreen lightmap
       this.drawDungeonLightmap(box.width, torches, now);
@@ -756,7 +783,9 @@ export class Renderer {
     if (atm.torchHazeStrength > 0) {
       for (const t of torches) this.drawTorchHaze(lm, t, now, reduceMotion);
     }
-    for (const t of torches) this.drawTorchLight(lm, t, now, reduceMotion, "lighter", glow.strength * t.baseIntensity);
+    // The warm glow eases off a little as the Brightness setting goes up.
+    const glowScale = 1 - glow.brightDim * (1 - this.darkness);
+    for (const t of torches) this.drawTorchLight(lm, t, now, reduceMotion, "lighter", glow.strength * glowScale * t.baseIntensity);
     lm.globalCompositeOperation = "source-over";
     lm.globalAlpha = 1;
 
@@ -770,20 +799,19 @@ export class Renderer {
     return Math.max(0, Math.min(1, (100 - (this.game.save.settings.brightness ?? 100)) / 80));
   }
 
-  /** The "Brightness" setting's dark-delving pass. Everything already drawn
-   * (floor, walls, items, enemies) is multiplied by a cool, near-black tone,
-   * so it keeps its texture and hue instead of going flat grey. Torchlight is
-   * added into that same layer as warm light, so lit pools stay bright while
-   * unlit stone sinks away, and a faint halo keeps the hero's surroundings
-   * readable. One fill, one blit per torch, one multiply composite. */
-  drawDarkness(viewportSize: number, torches: Torch[], now: number) {
+  /** The "Brightness" setting's dark-delving layer: a cool, near-black
+   * multiply tone that torchlight lifts back out as warm light, plus a
+   * faint halo around the hero. The caller multiplies it over the ground,
+   * and a softened version over doors, stairs, items, and enemies. One fill
+   * and one blit per torch. Returns null at the default brightness. */
+  buildDarkness(viewportSize: number, torches: Torch[], now: number) {
     const k = this.darkness;
-    if (k <= 0 || typeof document === "undefined") return;
+    if (k <= 0 || typeof document === "undefined") return null;
     this.darkCanvas ??= document.createElement("canvas");
     const cv = this.darkCanvas;
     if (cv.width !== viewportSize || cv.height !== viewportSize) cv.width = cv.height = viewportSize;
     const dc = cv.getContext("2d");
-    if (!dc) return;
+    if (!dc) return null;
     const cfg = LIGHTING_CONFIG.darkness;
     const mix = (i: number) => Math.round(255 + (cfg.color[i] - 255) * k);
     dc.globalCompositeOperation = "source-over";
@@ -802,11 +830,154 @@ export class Renderer {
     dc.globalAlpha = 1;
     dc.fillStyle = halo;
     dc.fillRect(hx - r, hy - r, r * 2, r * 2);
+    dc.globalCompositeOperation = "source-over";
+    return cv;
+  }
+
+  /** Object glows, laid on the already-darkened ground so the sprites drawn
+   * next sit on top of them. They grow with darkness: none at the default
+   * brightness, full strength at the darkest. */
+  drawObjectGlows(viewportSize: number) {
+    const layer = this.objectGlowLayer(viewportSize);
+    if (!layer) return;
     const c = this.ctx;
     c.save();
-    c.globalCompositeOperation = "multiply";
-    c.drawImage(cv, 0, 0);
+    c.globalCompositeOperation = "lighter";
+    c.globalAlpha = Math.min(1, LIGHTING_CONFIG.objectGlow.darkStrength * this.darkness);
+    c.drawImage(layer, 0, 0, viewportSize, viewportSize);
     c.restore();
+  }
+
+  /** Draws tile contents (doors, stairs, items, enemies) on their own layer,
+   * multiplies a softened copy of the darkness over just their pixels, then
+   * lays them on the scene: they stay a little brighter than the stone. */
+  drawContentsDarkened(dark: HTMLCanvasElement, viewportSize: number, dpr: number, drawContents: () => void) {
+    const main = this.ctx, w = main.canvas.width, h = main.canvas.height;
+    const ensure = (cv: HTMLCanvasElement | null) => {
+      const c = cv ?? document.createElement("canvas");
+      if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
+      return c;
+    };
+    this.contentsCanvas = ensure(this.contentsCanvas);
+    this.contentsMaskCanvas = ensure(this.contentsMaskCanvas);
+    const cc = this.contentsCanvas.getContext("2d"), mc = this.contentsMaskCanvas.getContext("2d");
+    if (!cc || !mc) return drawContents();
+    cc.setTransform(1, 0, 0, 1, 0, 0);
+    cc.globalCompositeOperation = "source-over";
+    cc.globalAlpha = 1;
+    cc.clearRect(0, 0, w, h);
+    cc.setTransform(dpr, 0, 0, dpr, 0, 0);
+    this.ctx = cc;
+    try {
+      drawContents();
+    } finally {
+      this.ctx = main;
+    }
+    // Keep the sprites' shape: multiply paints into empty pixels too, so
+    // the original coverage is restored afterwards.
+    mc.setTransform(1, 0, 0, 1, 0, 0);
+    mc.globalCompositeOperation = "source-over";
+    mc.clearRect(0, 0, w, h);
+    mc.drawImage(this.contentsCanvas, 0, 0);
+    cc.setTransform(1, 0, 0, 1, 0, 0);
+    cc.globalCompositeOperation = "multiply";
+    cc.globalAlpha = LIGHTING_CONFIG.objectGlow.spriteDarkness;
+    cc.drawImage(dark, 0, 0, viewportSize, viewportSize, 0, 0, w, h);
+    cc.globalCompositeOperation = "destination-in";
+    cc.globalAlpha = 1;
+    cc.drawImage(this.contentsMaskCanvas, 0, 0);
+    cc.globalCompositeOperation = "source-over";
+    main.save();
+    main.setTransform(1, 0, 0, 1, 0, 0);
+    main.drawImage(this.contentsCanvas, 0, 0);
+    main.restore();
+  }
+
+  /** Doors, stairs, items, and enemies in view, with their glow settings. */
+  visibleGlowSources(now: number): GlowSource[] {
+    const g = this.game, n = this.density, og = LIGHTING_CONFIG.objectGlow, dk = LIGHTING_CONFIG.darkness;
+    const reduceMotion = g.save.settings.reduceMotion;
+    const out: GlowSource[] = [];
+    for (let row = -1; row <= n; row++)
+      for (let col = -1; col <= n; col++) {
+        const x = col + Math.floor(this.left), y = Math.floor(this.bottom) + row;
+        if (y < 0) continue;
+        const t = g.world.tile(x, y);
+        // Slow, per-object breathing so a room of glows doesn't pulse in unison.
+        const breathe = reduceMotion ? 1 : 1 - og.pulse + og.pulse * Math.sin(now / 650 + x * 1.7 + y * 2.3);
+        if (t.kind === "enemy") out.push({ x, y, rgb: og.enemy.color, radius: og.enemy.radius, strength: og.enemy.strength * breathe });
+        else if (GLOW_ITEMS.has(t.kind)) out.push({ x, y, rgb: og.item.color, radius: og.item.radius, strength: og.item.strength * breathe });
+        else if (t.kind === "door") out.push({ x, y, rgb: hexRgb(doorColor(t)), radius: og.door.radius, strength: og.door.strength });
+        else if (t.kind === "stairs" || t.kind === "stairsDown")
+          out.push({ x, y, rgb: [150, 160, 200], radius: dk.heroHaloRadius * og.stairsRadiusScale, strength: dk.heroHaloAlpha * og.stairsAlphaScale });
+      }
+    return out;
+  }
+
+  /** A soft round glow (color at full strength in the middle, fading to
+   * nothing at the rim), cached per color and drawn scaled. */
+  glowSprite(rgb: readonly number[]) {
+    const key = rgb.join(",");
+    let cv = this.glowSprites.get(key);
+    if (!cv) {
+      cv = document.createElement("canvas");
+      cv.width = cv.height = 64;
+      const ctx = cv.getContext("2d")!;
+      const gr = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+      gr.addColorStop(0, `rgba(${key}, 1)`);
+      gr.addColorStop(0.4, `rgba(${key}, 0.45)`);
+      gr.addColorStop(1, `rgba(${key}, 0)`);
+      ctx.fillStyle = gr;
+      ctx.fillRect(0, 0, 64, 64);
+      this.glowSprites.set(key, cv);
+    }
+    return cv;
+  }
+
+  /** All object glows for this frame on one layer. Floor glow is wide and
+   * kept off the wall tops; wall glow is brighter but reaches half as far
+   * and is kept to wall tiles, so stone right beside a glowing object
+   * catches a bright wash that falls off quickly, like light on a wall face.
+   * One blit per glow (from a cached glow image) plus a few layer masks. */
+  objectGlowLayer(viewportSize: number) {
+    const sources = this.frameGlows;
+    if (!sources.length || typeof document === "undefined") return null;
+    const ensure = (cv: HTMLCanvasElement | null) => {
+      const c = cv ?? document.createElement("canvas");
+      if (c.width !== viewportSize || c.height !== viewportSize) c.width = c.height = viewportSize;
+      return c;
+    };
+    this.glowCanvas = ensure(this.glowCanvas);
+    this.glowWallCanvas = ensure(this.glowWallCanvas);
+    const floor = this.glowCanvas.getContext("2d"), wall = this.glowWallCanvas.getContext("2d");
+    const mask = this.wallMaskCanvas(viewportSize);
+    if (!floor || !wall || !mask) return null;
+    const og = LIGHTING_CONFIG.objectGlow, s = this.size, n = this.density;
+    for (const ctx of [floor, wall]) {
+      ctx.globalCompositeOperation = "source-over";
+      ctx.globalAlpha = 1;
+      ctx.clearRect(0, 0, viewportSize, viewportSize);
+      ctx.globalCompositeOperation = "lighter";
+    }
+    for (const o of sources) {
+      const sprite = this.glowSprite(o.rgb);
+      const cx = (o.x - this.left + 0.5) * s, cy = (n - 0.5 - (o.y - this.bottom)) * s;
+      const r = o.radius * s, rw = r * og.wallRadiusScale;
+      floor.globalAlpha = Math.min(1, o.strength);
+      floor.drawImage(sprite, cx - r, cy - r, r * 2, r * 2);
+      wall.globalAlpha = Math.min(1, o.strength * og.wallBoost);
+      wall.drawImage(sprite, cx - rw, cy - rw, rw * 2, rw * 2);
+    }
+    floor.globalAlpha = 1;
+    wall.globalAlpha = 1;
+    floor.globalCompositeOperation = "destination-out";
+    floor.drawImage(mask, 0, 0);
+    wall.globalCompositeOperation = "destination-in";
+    wall.drawImage(mask, 0, 0);
+    floor.globalCompositeOperation = "lighter";
+    floor.drawImage(this.glowWallCanvas, 0, 0);
+    floor.globalCompositeOperation = "source-over";
+    return this.glowCanvas;
   }
 
   /** The torch's baked light field (see torch-light.ts), created on first use. */
