@@ -118,9 +118,11 @@ test("damaging an enemy to 0 hp removes it, and a bombat explodes on death", () 
   const bombatY = state.keep.y - 1;
   waves.enemies = [{ id: 7, kind: "bombat", x: bombatX, y: bombatY, hp: ENEMY_DEFS.bombat.hp, maxHp: ENEMY_DEFS.bombat.hp }];
   const keepHpBefore = state.keepHp;
-  damageEnemy(state, waves, 7, ENEMY_DEFS.bombat.hp);
+  const impacts = damageEnemy(state, waves, 7, ENEMY_DEFS.bombat.hp, bombatX, bombatY - 1);
   assert.equal(waves.enemies.length, 0, "the bombat is removed once defeated");
   assert.ok(state.keepHp < keepHpBefore, "its death explosion reaches the adjacent keep");
+  assert.ok(impacts.some((i) => i.targetKind === "enemy" && i.targetId === 7), "the killing blow itself is reported");
+  assert.ok(impacts.some((i) => i.targetKind === "keep"), "the explosion's hit on the keep is reported too");
 });
 
 test("a non-exploding enemy (roach) leaves no blast damage behind", () => {
@@ -128,7 +130,10 @@ test("a non-exploding enemy (roach) leaves no blast damage behind", () => {
   const waves = createDefendWaveState();
   waves.enemies = [{ id: 3, kind: "roach", x: state.keep.x, y: state.keep.y - 1, hp: 6, maxHp: 6 }];
   const keepHpBefore = state.keepHp;
-  damageEnemy(state, waves, 3, 6);
+  const impacts = damageEnemy(state, waves, 3, 6, state.keep.x, state.keep.y - 2);
   assert.equal(waves.enemies.length, 0);
   assert.equal(state.keepHp, keepHpBefore, "roaches don't explode");
+  assert.deepEqual(impacts, [
+    { targetKind: "enemy", targetId: 3, x: state.keep.x, y: state.keep.y - 1, fromX: state.keep.x, fromY: state.keep.y - 2, amount: 6 },
+  ]);
 });

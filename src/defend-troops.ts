@@ -9,6 +9,7 @@ import {
   type DefendState,
   type DefendPos,
   type BarracksKind,
+  type DefendImpact,
 } from "./defend.ts";
 import { damageEnemy, type DefendWaveState } from "./defend-enemies.ts";
 
@@ -172,8 +173,13 @@ export type Shot = { from: DefendPos; to: DefendPos };
  * enemy and melee it once adjacent; archers hold their ground and shoot
  * the nearest enemy within range. Returns the archer shots fired this tick
  * (for rendering a bolt) — purely visual, not persisted. */
-export function stepTroopCombat(state: DefendState, waves: DefendWaveState, troops: DefendTroopState): Shot[] {
+export function stepTroopCombat(
+  state: DefendState,
+  waves: DefendWaveState,
+  troops: DefendTroopState,
+): { shots: Shot[]; impacts: DefendImpact[] } {
   const shots: Shot[] = [];
+  const impacts: DefendImpact[] = [];
   for (const troop of troops.troops) {
     if (!waves.enemies.length) continue;
     const def = TROOP_DEFS[troop.kind];
@@ -189,12 +195,12 @@ export function stepTroopCombat(state: DefendState, waves: DefendWaveState, troo
     if (def.ranged) {
       if (nearestDist <= def.range) {
         shots.push({ from: { x: troop.x, y: troop.y }, to: { x: nearest.x, y: nearest.y } });
-        damageEnemy(state, waves, nearest.id, def.attack);
+        impacts.push(...damageEnemy(state, waves, nearest.id, def.attack, troop.x, troop.y));
       }
       continue;
     }
     if (nearestDist <= def.range) {
-      damageEnemy(state, waves, nearest.id, def.attack);
+      impacts.push(...damageEnemy(state, waves, nearest.id, def.attack, troop.x, troop.y));
     } else {
       const step = bfsStepToward(state, { x: troop.x, y: troop.y }, { x: nearest.x, y: nearest.y });
       if (step) {
@@ -203,7 +209,7 @@ export function stepTroopCombat(state: DefendState, waves: DefendWaveState, troo
       }
     }
   }
-  return shots;
+  return { shots, impacts };
 }
 
 /** Damage a troop; once its HP reaches 0 it's removed. */

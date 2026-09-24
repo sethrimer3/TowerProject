@@ -60,12 +60,15 @@ test("an archer fires a ranged bolt without moving toward the target", () => {
   waves.enemies = [{ id: 1, kind: "roach", x: 4, y: 4, hp: 6, maxHp: 6 }];
   const troops = createDefendTroopState();
   troops.troops = [{ id: 1, kind: "archer", x: 4, y: 6, hp: 8, maxHp: 8, homeX: 4, homeY: 6 }];
-  const shots = stepTroopCombat(state, waves, troops);
+  const { shots, impacts } = stepTroopCombat(state, waves, troops);
   assert.equal(troops.troops[0].x, 4, "archer holds its ground");
   assert.equal(troops.troops[0].y, 6);
   assert.equal(waves.enemies[0].hp, 6 - TROOP_DEFS.archer.attack, "the target takes ranged damage");
   assert.equal(shots.length, 1);
   assert.deepEqual(shots[0], { from: { x: 4, y: 6 }, to: { x: 4, y: 4 } });
+  assert.deepEqual(impacts, [
+    { targetKind: "enemy", targetId: 1, x: 4, y: 4, fromX: 4, fromY: 6, amount: TROOP_DEFS.archer.attack },
+  ]);
 });
 
 test("an archer out of range holds fire and doesn't move", () => {
@@ -74,8 +77,9 @@ test("an archer out of range holds fire and doesn't move", () => {
   waves.enemies = [{ id: 1, kind: "roach", x: 8, y: 12, hp: 6, maxHp: 6 }];
   const troops = createDefendTroopState();
   troops.troops = [{ id: 1, kind: "archer", x: 0, y: 1, hp: 8, maxHp: 8, homeX: 0, homeY: 1 }];
-  const shots = stepTroopCombat(state, waves, troops);
+  const { shots, impacts } = stepTroopCombat(state, waves, troops);
   assert.equal(shots.length, 0);
+  assert.equal(impacts.length, 0);
   assert.equal(waves.enemies[0].hp, 6);
   assert.deepEqual(troops.troops[0], { id: 1, kind: "archer", x: 0, y: 1, hp: 8, maxHp: 8, homeX: 0, homeY: 1 });
 });
@@ -114,8 +118,9 @@ test("with no enemies on the board, troops stay put", () => {
   const waves = createDefendWaveState();
   const troops = createDefendTroopState();
   troops.troops = [{ id: 1, kind: "swordsman", x: 2, y: 2, hp: 12, maxHp: 12, homeX: 2, homeY: 2 }];
-  const shots = stepTroopCombat(state, waves, troops);
+  const { shots, impacts } = stepTroopCombat(state, waves, troops);
   assert.equal(shots.length, 0);
+  assert.equal(impacts.length, 0);
   assert.equal(troops.troops[0].x, 2);
   assert.equal(troops.troops[0].y, 2);
 });

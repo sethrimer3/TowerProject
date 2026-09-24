@@ -1339,3 +1339,55 @@ nav button > span img { display: block; width: 42px; height: 42px; max-width: 10
     opacity: 0;
   }
 }
+.defend-tile.hit-flash {
+  animation: defend-tile-flash 0.2s ease-out;
+}
+@keyframes defend-tile-flash {
+  0% {
+    filter: brightness(1.7);
+  }
+  100% {
+    filter: brightness(1);
+  }
+}
+.defend-enemy.hit-flash,
+.defend-troop.hit-flash {
+  animation:
+    defend-unit-flash 0.2s ease-out,
+    defend-unit-knockback 0.22s ease-out;
+}
+@keyframes defend-unit-flash {
+  0% {
+    filter: brightness(2.2) saturate(1.3);
+  }
+  100% {
+    filter: brightness(1);
+  }
+}
+@keyframes defend-unit-knockback {
+  0% {
+    transform: translate(-50%, -50%) translate(var(--kx, 0px), var(--ky, 0px));
+  }
+  100% {
+    transform: translate(-50%, -50%) translate(0, 0);
+  }
+}
+.defend-burst {
+  position: absolute;
+  width: 16%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0) 70%);
+  pointer-events: none;
+  animation: defend-burst-fade 0.35s ease-out forwards;
+}
+@keyframes defend-burst-fade {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.4);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.7);
+  }
+}

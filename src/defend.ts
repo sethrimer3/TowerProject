@@ -39,6 +39,21 @@ export const DEFEND_WALL_MAX_HP = 20;
 
 export type DefendPos = { x: number; y: number };
 
+/** A single hit, for rendering only (never persisted): a flash on whatever
+ * was struck, plus a knockback nudge — away from the attacker, sized by
+ * damage — for anything that isn't a fixed structure. */
+export type DefendImpact = {
+  targetKind: "enemy" | "troop" | "wall" | "keep";
+  /** Set for "enemy"/"troop" targets so the renderer can find that unit's
+   * marker; absent for the fixed "wall"/"keep" tiles. */
+  targetId?: number;
+  x: number;
+  y: number;
+  fromX: number;
+  fromY: number;
+  amount: number;
+};
+
 export type DefendState = {
   width: number;
   height: number;

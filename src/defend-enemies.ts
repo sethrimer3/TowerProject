@@ -11,6 +11,7 @@ import {
   damageKeep,
   type DefendState,
   type DefendPos,
+  type DefendImpact,
 } from "./defend.ts";
 
 export type EnemyKind = "roach" | "orc" | "bombat";
@@ -222,9 +223,11 @@ function frontierWalls(state: DefendState, region: DefendPos[]): DefendPos[] {
 /** Advance the wave by one tick: every enemy either steps toward the keep,
  * attacks it if already adjacent, or — if no open path to the keep exists —
  * attacks the nearest wall bordering the ground it can actually reach.
- * Breaching that wall opens a path the next tick will naturally take. */
-export function stepDefendCombat(state: DefendState, waves: DefendWaveState): void {
-  if (state.lost) return;
+ * Breaching that wall opens a path the next tick will naturally take.
+ * Returns every hit landed this tick, for the flash/knockback renderer. */
+export function stepDefendCombat(state: DefendState, waves: DefendWaveState): DefendImpact[] {
+  const impacts: DefendImpact[] = [];
+  if (state.lost) return impacts;
   for (const enemy of waves.enemies) {
     if (state.lost) break;
     const def = ENEMY_DEFS[enemy.kind];
@@ -232,6 +235,14 @@ export function stepDefendCombat(state: DefendState, waves: DefendWaveState): vo
     if (path) {
       if (path.length <= 2) {
         damageKeep(state, def.attack);
+        impacts.push({
+          targetKind: "keep",
+          x: state.keep.x,
+          y: state.keep.y,
+          fromX: enemy.x,
+          fromY: enemy.y,
+          amount: def.attack,
+        });
       } else {
         enemy.x = path[1].x;
         enemy.y = path[1].y;
@@ -251,35 +262,69 @@ export function stepDefendCombat(state: DefendState, waves: DefendWaveState): vo
       }
     }
     damageWall(state, target.x, target.y, def.attack);
+    impacts.push({
+      targetKind: "wall",
+      x: target.x,
+      y: target.y,
+      fromX: enemy.x,
+      fromY: enemy.y,
+      amount: def.attack,
+    });
   }
+  return impacts;
 }
 
-function explode(state: DefendState, at: DefendPos, def: EnemyDef): void {
+function explode(state: DefendState, at: DefendPos, def: EnemyDef): DefendImpact[] {
+  const impacts: DefendImpact[] = [];
   for (let dy = -def.explosionRadius; dy <= def.explosionRadius; dy++) {
     for (let dx = -def.explosionRadius; dx <= def.explosionRadius; dx++) {
       if (dx === 0 && dy === 0) continue;
       const x = at.x + dx,
         y = at.y + dy;
       if (!inBounds(x, y)) continue;
-      if (state.tiles[y][x].kind === "wall") damageWall(state, x, y, def.explosionDamage);
+      if (state.tiles[y][x].kind === "wall") {
+        damageWall(state, x, y, def.explosionDamage);
+        impacts.push({ targetKind: "wall", x, y, fromX: at.x, fromY: at.y, amount: def.explosionDamage });
+      }
     }
   }
   if (Math.abs(state.keep.x - at.x) <= def.explosionRadius && Math.abs(state.keep.y - at.y) <= def.explosionRadius) {
     damageKeep(state, def.explosionDamage);
+    impacts.push({
+      targetKind: "keep",
+      x: state.keep.x,
+      y: state.keep.y,
+      fromX: at.x,
+      fromY: at.y,
+      amount: def.explosionDamage,
+    });
   }
+  return impacts;
 }
 
-/** Apply damage from a defender (troop/trap, added in a later pass) to an
- * enemy. Removes it once its HP reaches 0, triggering its death explosion
- * (bombats) if it has one. */
-export function damageEnemy(state: DefendState, waves: DefendWaveState, id: number, amount: number): void {
+/** Apply damage from a defender (troop/trap) to an enemy, from an attacker
+ * at (fromX, fromY) — used to aim the hit's knockback. Removes the enemy
+ * once its HP reaches 0, triggering its death explosion (bombats) if it
+ * has one. Returns every impact this caused, for the renderer. */
+export function damageEnemy(
+  state: DefendState,
+  waves: DefendWaveState,
+  id: number,
+  amount: number,
+  fromX: number,
+  fromY: number,
+): DefendImpact[] {
   const enemy = waves.enemies.find((e) => e.id === id);
-  if (!enemy) return;
+  if (!enemy) return [];
+  const impacts: DefendImpact[] = [
+    { targetKind: "enemy", targetId: id, x: enemy.x, y: enemy.y, fromX, fromY, amount },
+  ];
   enemy.hp -= amount;
-  if (enemy.hp > 0) return;
+  if (enemy.hp > 0) return impacts;
   const def = ENEMY_DEFS[enemy.kind];
-  if (def.explodesOnDeath) explode(state, enemy, def);
+  if (def.explodesOnDeath) impacts.push(...explode(state, enemy, def));
   waves.enemies = waves.enemies.filter((e) => e.id !== id);
+  return impacts;
 }
 
 export type DefendWaveSave = DefendWaveState;
