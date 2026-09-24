@@ -2,6 +2,9 @@ import type { GoldItemId, KeyColor, UpgradeId } from "./config.ts";
 import type { MaterialId } from "./materials.ts";
 import type { CraftedEquipment, EquipmentSlot } from "./equipment.ts";
 import type { ConsumableId } from "./crafting.ts";
+import type { DefendSave } from "./defend.ts";
+import type { DefendWaveSave } from "./defend-enemies.ts";
+import type { DefendTroopSave } from "./defend-troops.ts";
 export type Kind =
   | "wall"
   | "floor"
@@ -137,5 +140,11 @@ export type Save = {
   equipmentInventory: CraftedEquipment[];
   equipped: Partial<Record<EquipmentSlot, string>>;
   consumables: Record<ConsumableId, number>;
+  /** DEFEND mini-game city layout, persisted independently of a run. */
+  defend: DefendSave;
+  /** DEFEND mini-game enemy wave progress. */
+  defendWaves: DefendWaveSave;
+  /** DEFEND mini-game player troop garrisons. */
+  defendTroops: DefendTroopSave;
 };
 export const point = (x: number, y: number) => `${x},${y}`;

@@ -1180,3 +1180,214 @@ nav button > span img { display: block; width: 42px; height: 42px; max-width: 10
 #log img { width: 22px; height: 22px; margin-right: 4px; }
 .ascent > span img { width: 24px; height: 24px; }
 .dpad button img { display: block; width: 22px; height: 22px; margin: auto; }
+.defend-hud {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: #b9b5aa;
+  margin-bottom: 10px;
+}
+.defend-lost {
+  color: #d9635a;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+.defend-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.defend-tools button {
+  padding: 6px 10px;
+  font-size: 12px;
+}
+.defend-tools button.selected {
+  outline: 2px solid #c9a24b;
+}
+.defend-grid {
+  display: grid;
+  gap: 2px;
+  max-width: 420px;
+  margin: 0 auto;
+}
+.defend-tile {
+  box-sizing: border-box;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 1px solid #3a3a42;
+  background: #23232b;
+}
+.defend-tile.locked {
+  background: #17171c;
+  cursor: not-allowed;
+}
+.defend-tile.empty.inside {
+  background: #262e22;
+}
+.defend-tile.wall {
+  background: #4a4a54;
+}
+.defend-tile.wall.edge-top {
+  border-top: 4px solid #cfc6b8;
+}
+.defend-tile.wall.edge-right {
+  border-right: 4px solid #cfc6b8;
+}
+.defend-tile.wall.edge-bottom {
+  border-bottom: 4px solid #cfc6b8;
+}
+.defend-tile.wall.edge-left {
+  border-left: 4px solid #cfc6b8;
+}
+.defend-tile.keep {
+  background: #c9a24b;
+}
+.defend-tile.empty.terrain-0 {
+  background: #23232b;
+}
+.defend-tile.empty.terrain-1 {
+  background: #262630;
+}
+.defend-tile.empty.terrain-2 {
+  background: #212129;
+}
+.defend-tile.empty.terrain-3 {
+  background: #27272f;
+}
+.defend-tile.empty.inside.terrain-0 {
+  background: #262e22;
+}
+.defend-tile.empty.inside.terrain-1 {
+  background: #293224;
+}
+.defend-tile.empty.inside.terrain-2 {
+  background: #242c20;
+}
+.defend-tile.empty.inside.terrain-3 {
+  background: #2a3325;
+}
+.defend-tile.barracks_swordsman,
+.defend-tile.barracks_archer {
+  background: #2a2a32;
+  position: relative;
+}
+.defend-barracks-mark {
+  position: absolute;
+  width: 45%;
+  height: 45%;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
+}
+.defend-barracks-mark.corner-tl {
+  top: 0;
+  left: 0;
+}
+.defend-barracks-mark.corner-tr {
+  top: 0;
+  right: 0;
+}
+.defend-barracks-mark.corner-bl {
+  bottom: 0;
+  left: 0;
+}
+.defend-barracks-mark.corner-br {
+  bottom: 0;
+  right: 0;
+}
+.defend-hud button {
+  margin-left: auto;
+  padding: 6px 12px;
+  font-size: 12px;
+}
+.defend-board {
+  position: relative;
+  max-width: 420px;
+  margin: 0 auto;
+}
+.defend-enemies {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.defend-enemy,
+.defend-troop {
+  position: absolute;
+  aspect-ratio: 1;
+  border-radius: 1px;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4);
+}
+.defend-bolts {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.defend-bolt {
+  stroke: #f3e6b8;
+  stroke-width: 0.8;
+  opacity: 0;
+  animation: defend-bolt-fade 0.6s ease-out;
+}
+@keyframes defend-bolt-fade {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.defend-tile.hit-flash {
+  animation: defend-tile-flash 0.2s ease-out;
+}
+@keyframes defend-tile-flash {
+  0% {
+    filter: brightness(1.7);
+  }
+  100% {
+    filter: brightness(1);
+  }
+}
+.defend-enemy.hit-flash,
+.defend-troop.hit-flash {
+  animation:
+    defend-unit-flash 0.2s ease-out,
+    defend-unit-knockback 0.22s ease-out;
+}
+@keyframes defend-unit-flash {
+  0% {
+    filter: brightness(2.2) saturate(1.3);
+  }
+  100% {
+    filter: brightness(1);
+  }
+}
+@keyframes defend-unit-knockback {
+  0% {
+    transform: translate(-50%, -50%) translate(var(--kx, 0px), var(--ky, 0px));
+  }
+  100% {
+    transform: translate(-50%, -50%) translate(0, 0);
+  }
+}
+.defend-burst {
+  position: absolute;
+  width: 16%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0) 70%);
+  pointer-events: none;
+  animation: defend-burst-fade 0.35s ease-out forwards;
+}
+@keyframes defend-burst-fade {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.4);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.7);
+  }
+}
