@@ -18,7 +18,7 @@ export type KeyColor = keyof typeof COLORS;
 export type Currency = "essence" | "shards";
 export const UPGRADES = [
   { id: "delve", name: "Into the depths", description: "Unlock Delve and the Courage skill tree", base: 3, max: 1, currency: "shards" },
-  { id: "legacy", name: "An enduring legacy", description: "Unlock the Legacy skill tree", base: 8, max: 1, currency: "essence" },
+  { id: "legacy", name: "An enduring legacy", description: "Unlock the Legacy skill tree and unlock Defend", base: 8, max: 1, currency: "essence" },
   {
     id: "revive",
     name: "Revive",

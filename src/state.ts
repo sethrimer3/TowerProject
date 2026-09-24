@@ -101,6 +101,7 @@ export class Game {
     this.save.tower.shards = 999_999_999;
     this.save.delve.essence = 999_999_999;
     this.save.upgrades.delve = 1;
+    this.save.upgrades.legacy = 1;
     const maxSection = Math.max(20, ...Object.keys(this.save.tower.sectionHp).map(Number)) + 5;
     for (let s = 1; s <= maxSection; s++) this.save.tower.sectionHp[s] ??= 999;
     this.save.tower.reached = Math.max(this.save.tower.reached, maxSection * TOWER_SECTION);
