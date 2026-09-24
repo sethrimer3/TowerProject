@@ -80,6 +80,31 @@ app.innerHTML = `<main class="shell"><div id="currencies" class="currencies" hid
   .join(
     "",
   )}</nav></main><dialog id="modal"></dialog>`;
+// The left rail is exclusively for the three mode actions. The identity card
+// belongs to the stat cluster, alongside HP/combat and above both item rows.
+{
+  const oldPortrait = document.querySelector<HTMLElement>(".portrait")!;
+  const identity = oldPortrait.querySelector<HTMLElement>(".portrait-top")!;
+  const hudActions = oldPortrait.querySelector<HTMLElement>(".portrait-actions")!;
+  const vitals = document.querySelector<HTMLElement>(".vitals")!;
+  const heightPanel = document.querySelector<HTMLElement>(".height")!;
+  const playerStats = document.createElement("div");
+  playerStats.className = "player-stats";
+  hudActions.classList.add("hud-controls");
+  oldPortrait.replaceWith(hudActions, playerStats);
+  playerStats.append(identity, vitals);
+  heightPanel.insertAdjacentHTML("beforeend", `<div id="height-zone" class="height-zone">THE ASCENT TRIALS</div>`);
+  vitals.insertAdjacentHTML(
+    "beforeend",
+    `<div class="inventory-divider" aria-hidden="true"></div><div class="run-consumables" aria-label="Run consumables">${CONSUMABLES.map(c => `<button type="button" data-hud-consumable="${c.id}" aria-label="Use ${c.name}" title="${c.name}: ${c.description}">${itemSprite("potion_flat", "consumable-sprite")}<b data-consumable-count="${c.id}">0</b></button>`).join("")}</div>`,
+  );
+  const boardFrame = document.querySelector<HTMLElement>("#board-frame")!;
+  boardFrame.append(
+    document.querySelector<HTMLElement>("#status-row")!,
+    document.querySelector<HTMLElement>(".controls")!,
+    document.querySelector<HTMLElement>("#inspect")!,
+  );
+}
 const replaceGlyph = (selector: string, sprite: string) => {
   const target = document.querySelector<HTMLElement>(selector);
   if (!target) return;
@@ -407,6 +432,13 @@ function update() {
   const skeletonKeys = p.skeletonKeys ?? 0;
   text("skeleton", skeletonKeys);
   el("skeleton-key").hidden = skeletonKeys < 1;
+  for (const c of CONSUMABLES) {
+    const count = game.save.consumables[c.id] ?? 0;
+    const countEl = document.querySelector<HTMLElement>(`[data-consumable-count="${c.id}"]`)!;
+    const button = countEl.closest("button") as HTMLButtonElement;
+    countEl.textContent = String(count);
+    button.disabled = count < 1 || game.run.outside || !!game.summary;
+  }
   text("height-label", game.mode === "tower" ? "HEIGHT" : "DEPTH");
   const currentVal = game.run.outside ? 0 : (game.mode === "delve" ? p.y : game.run.height);
   const runBest = game.run.maxHeight ?? game.run.height;
@@ -511,6 +543,7 @@ function renderBoard() {
   el("board").classList.toggle("mode-tower", game.mode === "tower");
   if (game.run.outside) {
     text("board-title", game.mode === "tower" ? "THE TOWER APPROACH" : "THE MOUNTAIN HOLLOW");
+    text("height-zone", game.mode === "tower" ? "THE TOWER APPROACH" : "THE MOUNTAIN HOLLOW");
     const labels = { cloudy: "CLOUDY", sunny: "SUNNY", rain: "RAINING", storm: "THUNDERSTORM" };
     text("board-subtitle", `FOREST CLEARING · ${labels[outsideWeather(game.run.seed)]}`);
     el("inspect").textContent = "Follow the forest path and step onto the entrance at the top to begin again.";
@@ -518,6 +551,7 @@ function renderBoard() {
     return;
   }
   text("board-title", game.mode === "tower" ? "THE ASCENT TRIALS" : "THE HOLLOW SPIRE");
+  text("height-zone", game.mode === "tower" ? "THE ASCENT TRIALS" : "THE HOLLOW SPIRE");
   text(
     "board-subtitle",
     game.mode === "tower"
@@ -977,6 +1011,13 @@ function renderGearPage() {
   document.querySelectorAll<HTMLButtonElement>("[data-use-consumable]").forEach(b => b.onclick = () => { game.useConsumable(b.dataset.useConsumable as ConsumableId); save(); renderPage(); update(); });
 }
 const modal = el("modal") as HTMLDialogElement;
+document.querySelectorAll<HTMLButtonElement>("[data-hud-consumable]").forEach(button => {
+  button.onclick = () => {
+    if (!game.useConsumable(button.dataset.hudConsumable as ConsumableId)) return;
+    save();
+    update();
+  };
+});
 el("log").onclick = () => {
   if (game.mode !== "tower") return;
   let page = 0;

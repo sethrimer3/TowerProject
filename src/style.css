@@ -158,16 +158,21 @@ h1 span {
 .stats[hidden] {
   display: none;
 }
-.portrait {
+.hud-controls {
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  padding: 6px;
+  gap: 4px;
+  padding: 7px;
   background: #101721;
   border-right: 1px solid var(--line);
 }
+.player-stats {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  min-width: 0;
+}
 .portrait-top {
-  min-height: 58px;
+  margin: 9px 0 9px 9px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -196,22 +201,22 @@ h1 span {
   height: 12px;
   margin-right: 3px;
 }
-.portrait canvas {
+.portrait-top canvas {
   width: 43px;
   height: 43px;
   image-rendering: pixelated;
 }
-.portrait small {
+.portrait-top small {
   font-size: 6px;
   letter-spacing: 1px;
   color: #a3adba;
 }
-.portrait #level {
+.portrait-top #level {
   color: var(--gold);
   margin-top: 2px;
 }
 .vitals {
-  padding: 10px 14px 8px;
+  padding: 10px 14px 7px 10px;
   font-size: 11px;
   letter-spacing: 1px;
   min-width: 0;
@@ -275,6 +280,50 @@ h1 span {
   margin-top: 7px;
   min-height: 17px;
   font-size: 13px;
+}
+.inventory-divider {
+  width: calc(100% - 20px);
+  height: 1px;
+  margin: 6px auto 5px;
+  background: linear-gradient(90deg, transparent, #46505e 12%, #46505e 88%, transparent);
+}
+.run-consumables {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 25px;
+}
+.run-consumables button {
+  position: relative;
+  width: 25px;
+  height: 25px;
+  min-height: 25px;
+  padding: 2px;
+  border-color: #313a47;
+  border-radius: 3px;
+}
+.run-consumables button:disabled {
+  opacity: .35;
+  cursor: default;
+}
+.consumable-sprite {
+  width: 18px;
+  height: 18px;
+  image-rendering: pixelated;
+}
+.run-consumables b {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  min-width: 11px;
+  padding: 0 2px;
+  border: 1px solid #566170;
+  border-radius: 5px;
+  background: #0b1018;
+  color: #e7e0d3;
+  font-size: 7px;
+  line-height: 10px;
+  text-align: center;
 }
 .keys b {
   font-size: 11px;
@@ -341,6 +390,16 @@ h1 span {
 }
 .height-reward i {
   font-style: normal;
+}
+.height-zone {
+  width: calc(100% - 6px);
+  margin-top: 7px;
+  padding-top: 6px;
+  border-top: 1px solid #333c49;
+  color: #9ba5b4;
+  font-size: 6px;
+  line-height: 1.35;
+  letter-spacing: 1px;
 }
 .page {
   display: none;
@@ -836,10 +895,17 @@ dialog p {
   .vitals {
     padding: 8px 7px 6px;
   }
-  .portrait span {
-    font-size: 36px;
+  .player-stats {
+    grid-template-columns: 56px minmax(0, 1fr);
   }
-  .portrait small {
+  .portrait-top {
+    margin: 7px 0 7px 6px;
+  }
+  .portrait-top canvas {
+    width: 36px;
+    height: 36px;
+  }
+  .portrait-top small {
     font-size: 5px;
   }
   .height {
@@ -1011,15 +1077,55 @@ footer {
 }
 #board.active {
   display: grid;
-  grid-template-rows: auto auto minmax(80px, 1fr) auto auto auto auto;
+  grid-template-rows: minmax(0, 1fr);
   flex: 1;
   min-height: 0;
+  position: relative;
+  overflow: hidden;
+}
+#board.active > .tower-heading,
+#board.active > .ascent {
+  display: none;
+}
+.board > .status {
+  position: absolute;
+  z-index: 6;
+  left: 8px;
+  right: 8px;
+  bottom: 7px;
+  min-height: 0;
+  margin: 0;
+  padding: 4px 7px;
+  border: 1px solid #303946aa;
+  border-radius: 3px;
+  background: #0b1018d9;
+  pointer-events: none;
+}
+.board > .inspection {
+  position: absolute;
+  z-index: 7;
+  left: 8px;
+  right: 8px;
+  bottom: 34px;
+  min-height: 0;
+  margin: 0;
+  background: #0b1018e8;
+}
+.board > .inspection:empty {
+  display: none;
+}
+.board > .controls {
+  position: absolute;
+  z-index: 8;
+  right: 8px;
+  bottom: 35px;
+  margin: 0;
 }
 /* Sizes the square playfield to the largest square that fits the space left
    over by the surrounding chrome, in whichever dimension is tighter. */
 .board-cell {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   width: 100%;
   height: 100%;
@@ -1235,6 +1341,16 @@ nav button > span img { display: block; width: 42px; height: 42px; max-width: 10
 #defend.page {
   min-height: 0;
 }
+/* DEFEND never scrolls: the tab fills the space above the nav, and the
+   board, palette and Armory list size themselves to fit inside it. */
+.shell:has(#defend.active) {
+  min-height: 0;
+}
+#defend.active {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
 /* One row only: controls on the left, status + settings cog on the right. */
 .defend-head {
   position: relative;
@@ -1335,7 +1451,9 @@ nav button > span img { display: block; width: 42px; height: 42px; max-width: 10
 .defend-hud {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  /* Right-aligned by an auto margin rather than flex-end, so an overflow
+     spills rightward where it can be measured (and pieces dropped). */
+  justify-content: flex-start;
   gap: 10px;
   flex: 1;
   min-width: 0;
@@ -1352,8 +1470,15 @@ nav button > span img { display: block; width: 42px; height: 42px; max-width: 10
 .defend-hud b {
   color: #efe3c6;
 }
-.defend-keep small {
+.defend-keep small,
+.defend-foes small {
   font-size: inherit;
+}
+.defend-hud [hidden] {
+  display: none;
+}
+.defend-hud > :first-child {
+  margin-left: auto;
 }
 .defend-keep i {
   display: inline-block;
@@ -1395,17 +1520,27 @@ nav button > span img { display: block; width: 42px; height: 42px; max-width: 10
   padding: 6px;
   border: 1px solid var(--line);
   background: #121821;
+  /* Capped to the board's height in code; extra items scroll. */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #3a4454 transparent;
 }
-.defend-palette-title,
-.defend-palette-hint {
+.defend-palette > * {
+  flex: none;
+}
+.defend-armory {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #3a4454 transparent;
+  padding-right: 4px;
+}
+.defend-palette-title {
   text-align: center;
   font-size: 9px;
   letter-spacing: 2px;
   color: var(--muted);
-}
-.defend-palette-hint {
-  letter-spacing: 0.5px;
-  line-height: 1.3;
 }
 .defend-item {
   display: flex;
@@ -1417,7 +1552,7 @@ nav button > span img { display: block; width: 42px; height: 42px; max-width: 10
   line-height: 1.2;
   background: #18202b;
   cursor: grab;
-  touch-action: none;
+  touch-action: pan-y;
   user-select: none;
 }
 .defend-item canvas {
@@ -1530,11 +1665,6 @@ nav button > span img { display: block; width: 42px; height: 42px; max-width: 10
   .defend-hud {
     gap: 6px;
     font-size: 10px;
-  }
-  .defend-hud .defend-best,
-  .defend-hud .defend-sky,
-  .defend-keep small {
-    display: none;
   }
   .defend-keep i {
     width: 40px;

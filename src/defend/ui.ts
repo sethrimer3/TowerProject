@@ -110,7 +110,7 @@ export class DefendPage {
   show() {
     if (!this.built) this.build();
     this.renderChrome();
-    requestAnimationFrame(() => this.layoutBoard());
+    this.relayout();
   }
 
   /** Called every animation frame while the tab is visible. */
@@ -230,13 +230,13 @@ export class DefendPage {
         b.onclick = () => {
           this.tab = b.dataset.dtab as "city" | "armory";
           this.renderChrome();
-          requestAnimationFrame(() => this.layoutBoard());
+          this.relayout();
         };
       });
       el.querySelector<HTMLButtonElement>("#defend-start")!.onclick = () => {
         this.tab = "city";
         this.startRun();
-        requestAnimationFrame(() => this.layoutBoard());
+        this.relayout();
       };
     } else if (this.phase === "sim") {
       const armed = performance.now() < this.abandonArmed;
@@ -311,8 +311,7 @@ export class DefendPage {
             `<button class="defend-item ${e.count ? "" : "empty"}" data-item="${e.id}" title="${e.name}" aria-label="${e.name}, ${e.count} left">
               <canvas width="48" height="48" data-icon="${e.icon}"></canvas><span>${e.name}</span><b>×${e.count}</b></button>`,
         )
-        .join("") +
-      (this.phase === "build" ? `<small class="defend-palette-hint">Drag here to pick up</small>` : "");
+        .join("");
     el.querySelectorAll<HTMLCanvasElement>("canvas[data-icon]").forEach((c) => paintIcon(c, c.dataset.icon as StructureKind | "cityTile" | "bomb"));
     el.querySelectorAll<HTMLButtonElement>("[data-item]").forEach((b) => {
       b.onpointerdown = (e) => {
@@ -343,8 +342,25 @@ export class DefendPage {
     const hp = Math.max(0, sim.keepHp()),
       max = sim.keepMaxHp();
     const sky = this.weather ? skyLabel(this.weather, this.night) : "";
-    const html = `${sky ? `<span class="defend-sky">${sky}</span>` : ""}<span>Wave <b>${sim.wave}</b></span><span class="defend-best">Best <b>${best}</b></span><span class="defend-keep" title="Keep ${Math.ceil(hp)} / ${max}"><small>Keep</small><i><em style="width:${(hp / max) * 100}%"></em></i></span><span class="defend-foes">Foes <b>${sim.enemies.length + sim.spawnQueue.length}</b></span>`;
-    if (el.innerHTML !== html) el.innerHTML = html;
+    // data-drop: the order pieces are left out when the row gets crowded.
+    const html = `${sky ? `<span class="defend-sky" data-drop="1">${sky}</span>` : ""}<span>Wave <b>${sim.wave}</b></span><span class="defend-best" data-drop="2">Best <b>${best}</b></span><span class="defend-keep" title="Keep ${Math.ceil(hp)} / ${max}"><small data-drop="3">Keep</small><i><em style="width:${(hp / max) * 100}%"></em></i></span><span class="defend-foes"><small data-drop="4">Foes </small><b>${sim.enemies.length + sim.spawnQueue.length}</b></span>`;
+    if (el.innerHTML !== html) {
+      el.innerHTML = html;
+      this.fitHud();
+    }
+  }
+
+  /** Never clip the status row: when it doesn't fit, drop whole pieces
+   * (weather, best, then labels) until it does. */
+  private fitHud() {
+    const el = this.root.querySelector<HTMLElement>("#defend-hud");
+    if (!el) return;
+    const pieces = Array.from(el.querySelectorAll<HTMLElement>("[data-drop]")).sort((a, b) => Number(a.dataset.drop) - Number(b.dataset.drop));
+    for (const p of pieces) p.hidden = false;
+    for (const p of pieces) {
+      if (el.scrollWidth <= el.clientWidth + 1) break;
+      p.hidden = true;
+    }
   }
 
   private setMessage(text: string, seconds = 3) {
@@ -367,24 +383,48 @@ export class DefendPage {
   /** Fit the board to the space left on screen: 9:13, as big as possible
    * without the page ever scrolling. */
   private layoutBoard() {
-    if (!this.renderer || this.tab !== "city") return;
+    if (!this.renderer) return;
+    this.fitHud();
+    if (this.tab === "armory") return this.layoutArmory();
     const stage = this.root.querySelector<HTMLElement>("#defend-stage")!;
     const palette = this.root.querySelector<HTMLElement>("#defend-palette")!;
     const boardEl = this.root.querySelector<HTMLElement>("#defend-board")!;
     if (!stage.offsetParent) return;
     const top = boardEl.getBoundingClientRect().top + window.scrollY;
-    const nav = document.querySelector("nav")?.getBoundingClientRect().height ?? 80;
-    const availH = window.innerHeight - top - nav - 16;
+    const availH = window.innerHeight - top - this.navHeight() - 16;
+    // The palette never sets the page height: it's capped to the board and
+    // scrolls on its own when it holds more than fits.
+    palette.style.maxHeight = `${Math.max(60, availH)}px`;
     const availW = stage.clientWidth - palette.offsetWidth - 10;
     let width = Math.max(120, Math.floor(Math.min(availW, (availH * TILES_W) / TILES_H)));
     this.renderer.resize(width);
+    palette.style.maxHeight = `${boardEl.offsetHeight}px`;
     // Whatever padding the page adds, shrink until nothing overflows.
     const over = document.documentElement.scrollHeight - window.innerHeight;
     if (over > 0) {
       width = Math.max(120, Math.floor(width - (over * TILES_W) / TILES_H) - 1);
       this.renderer.resize(width);
+      palette.style.maxHeight = `${boardEl.offsetHeight}px`;
     }
     this.draw();
+  }
+
+  /** Lay out now, and again next frame once the new DOM has settled. */
+  private relayout() {
+    this.layoutBoard();
+    requestAnimationFrame(() => this.layoutBoard());
+  }
+
+  /** The Armory list scrolls inside its own panel, so the page doesn't. */
+  private layoutArmory() {
+    const el = this.root.querySelector<HTMLElement>("#defend-armory")!;
+    if (!el.offsetParent) return;
+    const top = el.getBoundingClientRect().top + window.scrollY;
+    el.style.maxHeight = `${Math.max(120, window.innerHeight - top - this.navHeight() - 16)}px`;
+  }
+
+  private navHeight() {
+    return document.querySelector("nav")?.getBoundingClientRect().height ?? 80;
   }
 
   // ── Map & phases ──────────────────────────────────────────────────────
