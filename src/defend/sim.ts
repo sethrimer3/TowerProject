@@ -181,6 +181,8 @@ export class DefendSim {
       this.built[b.id] = b.cells.length;
       for (const c of b.cells) this.solid[c] = 1;
     }
+    // Ponds block movement like buildings do, but belong to no building.
+    for (let i = 0; i < CELL_COUNT; i++) if (map.type[i] === CellType.WATER) this.solid[i] = 1;
     this.keepId = map.buildings.find((b) => b.kind === "keep")!.id;
     this.civilianRespawn = Array(civilianCount(levels.civilianCount)).fill(0);
     this.streets = [];
@@ -323,6 +325,7 @@ export class DefendSim {
             ny = y + dy;
           if (nx < 0 || ny < 0 || nx >= CELLS_W || ny >= CELLS_H) continue;
           const n = cellIndex(nx, ny);
+          if (this.map.type[n] === CellType.WATER) continue;
           if (dx && dy && (this.solid[cellIndex(x + dx, y)] || this.solid[cellIndex(x, y + dy)] || this.solid[n])) continue;
           const step = this.enterCost(i) * (dx && dy ? SQRT2 : 1);
           // Walking *out of* cell i toward n costs i's price, which makes the

@@ -1,3 +1,4 @@
+import { TreeParticles } from "./tree-particles.ts";
 import { TREES, skillAvailable, type TreeId } from "./skill-trees.ts";
 import "./style.css";
 import { load, persist, defaults } from "./save.ts";
@@ -153,6 +154,7 @@ function fadeInFromBlack() {
   );
 }
 let selectedTree: TreeId = "inspiration";
+const treeParticles = new TreeParticles();
 let selectedSkill: UpgradeId = "shardHp";
 let treeTooltipVisible = false;
 const treeViews: Partial<Record<TreeId, { x: number; y: number; scale: number }>> = {};
@@ -651,6 +653,7 @@ function handleSkillTap(id: UpgradeId) {
     const available = skillAvailable(id, game.save.upgrades);
     if (!locked && level < u.max && available && balance >= price) {
       game.buy(id);
+      if (game.save.upgrades[id] > level && !game.save.settings.reduceMotion) treeParticles.purchase(tree.nodes.find(n => n.id === id)!);
       update();
     }
     renderPage();
@@ -766,6 +769,7 @@ function renderPage() {
       <section class="skill-tree ${tree.id}"><header class="tree-heading"><h3>${tree.name} skill tree</h3></header>
       ${locked ? `<p class="tree-lock">Unlock ${UPGRADES.find(u => u.id === tree.gate)!.name} in the ${tree.id === "courage" ? "Inspiration" : "Courage"} tree.</p>` : ""}
       <div class="tree-viewport" id="tree-viewport"><div class="tree-map" id="tree-map" style="transform:translate(${view.x}px,${view.y}px) scale(${view.scale})"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${tree.nodes.flatMap(n => n.requires.map(id => { const parent = tree.nodes.find(p => p.id === id); return parent ? `<line x1="${parent.x}" y1="${parent.y}" x2="${n.x}" y2="${n.y}" class="${game.save.upgrades[id] ? "lit" : ""}"/>` : ""; })).join("")}</svg>
+      <canvas class="tree-particles" aria-hidden="true"></canvas>
       ${tree.nodes.map(n => { const skill = UPGRADES.find(u => u.id === n.id)!; const rank = game.save.upgrades[n.id]; return `<button class="skill-node ${rank ? "owned" : ""} ${skillAvailable(n.id, game.save.upgrades) ? "available" : "locked"} ${n.id === selectedSkill && treeTooltipVisible ? "chosen" : ""}" data-skill="${n.id}" style="left:${n.x}%;top:${n.y}%" aria-label="${skill.name}, ${rank} of ${skill.max}${skillAvailable(n.id, game.save.upgrades) ? "" : ", locked"}" aria-pressed="${n.id === selectedSkill && treeTooltipVisible}"><span class="node-icon">${skillSprite(n.id)}</span><span class="node-name">${skill.name}</span><small>${rank} / ${skill.max}</small></button>`; }).join("")}</div><div class="inspect-box tree-tooltip" id="tree-tooltip" hidden></div></div></section>`;
     document.querySelectorAll<HTMLButtonElement>("[data-tree]").forEach(b => b.onclick = () => {
       selectedTree = b.dataset.tree as TreeId;
@@ -1177,6 +1181,11 @@ bindInput(
   () => isBoard(tab),
 );
 function frame(time: number) {
+  if (!document.hidden && tab === "upgrades") {
+    const canvas = document.querySelector<HTMLCanvasElement>(".tree-particles");
+    const tree = TREES.find(t => t.id === selectedTree)!;
+    if (canvas) treeParticles.draw(canvas, time, tree.id, tree.nodes, treeTooltipVisible ? selectedSkill : null, game.save.settings.reduceMotion);
+  }
   if (!document.hidden && isBoard(tab)) {
     renderer.draw(time);
     if (

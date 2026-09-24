@@ -413,7 +413,7 @@ export class DefendLighting {
       for (let cy = 0; cy < CELLS_H; cy++) {
         let run = -1;
         for (let cx = 0; cx <= CELLS_W; cx++) {
-          const open = cx < CELLS_W && !solid[cellIndex(cx, cy)];
+          const open = cx < CELLS_W && (!solid[cellIndex(cx, cy)] || (this.map?.owner[cellIndex(cx, cy)] ?? 0) < 0);
           if (open && run < 0) run = cx;
           if (!open && run >= 0) {
             g.fillRect(Math.floor(run * px), Math.floor(cy * px), Math.ceil((cx - run) * px) + 1, Math.ceil(px) + 1);
@@ -548,7 +548,7 @@ function bakeLight(l: Light, map: CityMap, solid: Uint8Array, offsetX: number): 
   const ox = l.x + offsetX,
     oy = l.y;
   const raw = new Float32Array(cols * rows);
-  const blocks = (i: number) => solid[i] === 1 && !(l.inside && map.owner[i] === l.owner);
+  const blocks = (i: number) => solid[i] === 1 && map.owner[i] >= 0 && !(l.inside && map.owner[i] === l.owner);
   for (let sy = 0; sy < rows; sy++) {
     const wy = top + (sy + 0.5) / RES;
     for (let sx = 0; sx < cols; sx++) {
@@ -589,7 +589,7 @@ function bakeLight(l: Light, map: CityMap, solid: Uint8Array, offsetX: number): 
     const cy = Math.floor(top + (sy + 0.5) / RES);
     for (let sx = 0; sx < cols; sx++) {
       const cx = Math.floor(left + (sx + 0.5) / RES);
-      if (cx >= 0 && cy >= 0 && cx < CELLS_W && cy < CELLS_H && solid[cellIndex(cx, cy)]) values[sy * cols + sx] = 0;
+      if (cx >= 0 && cy >= 0 && cx < CELLS_W && cy < CELLS_H && solid[cellIndex(cx, cy)] && map.owner[cellIndex(cx, cy)] >= 0) values[sy * cols + sx] = 0;
     }
   }
   const canvas = document.createElement("canvas");

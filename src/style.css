@@ -1680,3 +1680,5 @@ nav button > span img { display: block; width: 42px; height: 42px; max-width: 10
     gap: 6px;
   }
 }
+
+.tree-particles { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }

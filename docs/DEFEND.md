@@ -61,6 +61,14 @@ holds it against endless waves. Code lives in `src/defend/`.
   a street to its door, then deep blocks are split by straight streets until
   nothing is more than 2 cells from a road. Some small blocks become parks;
   the rest fills with houses (mostly 2 × 2 to 3 × 3), each touching a street.
+- Larger parks get a pond: every park cell whose eight neighbours are all
+  park becomes water, drawn as overlapping jittered discs for an irregular,
+  natural shore. Ponds block movement but not light.
+- Art: medieval roofs (terracotta, brick, timber, thatch, slate, straw)
+  with crisp black outlines on whole-pixel edges; when zoomed in, the city
+  is repainted at 2–3× resolution so edges stay sharp. The keep has four
+  round corner turrets, a courtyard and a hipped slate roof, with a red and
+  gold banner rippling in the wind on top.
 - Generation is seeded per save and keyed by position, so the same layout
   always produces the same city.
 

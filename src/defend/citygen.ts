@@ -34,6 +34,8 @@ export const CellType = {
   HOUSE: 3,
   STRUCT: 4,
   WALL: 5,
+  /** Pond water in a larger park: nothing walks through it. */
+  WATER: 6,
 } as const;
 export type CellType = (typeof CellType)[keyof typeof CellType];
 const FREE = 9;
@@ -159,7 +161,9 @@ export function generateCity(
   for (let i = 0; i < CELL_COUNT; i++) {
     if (t[i] !== FREE || block[i] >= 0) continue;
     const cells = flood(t, i, FREE, block, blocks++);
-    if (cells.length <= 16 && hash01(seed, Math.min(...cells), 5) < 0.16) for (const c of cells) t[c] = CellType.PARK;
+    // Small blocks often become gardens; the odd big block a proper park.
+    const roll = hash01(seed, Math.min(...cells), 5);
+    if ((cells.length <= 16 && roll < 0.16) || (cells.length > 16 && cells.length <= 42 && roll < 0.14)) for (const c of cells) t[c] = CellType.PARK;
   }
   // 7. Houses.
   const owner = new Int32Array(CELL_COUNT).fill(-1);
@@ -199,7 +203,24 @@ export function generateCity(
       } else t[i] = CellType.PARK;
     }
   }
-  // 8. Every wall cell is its own stone that can be knocked out.
+  // 8. Larger parks get a pond in their middle: every park cell whose eight
+  // neighbours are all park, so a grassy bank always rings the water.
+  const parkMark = new Int32Array(CELL_COUNT).fill(-1);
+  let parks = 0;
+  for (let i = 0; i < CELL_COUNT; i++) {
+    if (t[i] !== CellType.PARK || parkMark[i] >= 0) continue;
+    const cells = flood(t, i, CellType.PARK, parkMark, parks++);
+    if (cells.length < 9 || hash01(seed, Math.min(...cells), 41) > 0.8) continue;
+    const inner = cells.filter((c) => {
+      const x = c % CELLS_W,
+        y = (c - x) / CELLS_W;
+      for (let dy = -1; dy <= 1; dy++)
+        for (let dx = -1; dx <= 1; dx++) if (!inB(x + dx, y + dy) || t[cellIndex(x + dx, y + dy)] !== CellType.PARK) return false;
+      return true;
+    });
+    if (inner.length >= 2) for (const c of inner) t[c] = CellType.WATER;
+  }
+  // 9. Every wall cell is its own stone that can be knocked out.
   for (let i = 0; i < CELL_COUNT; i++)
     if (t[i] === CellType.WALL) {
       const x = i % CELLS_W,
