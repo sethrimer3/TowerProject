@@ -1007,6 +1007,10 @@ nav {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  /* Bleed the scroll container 6px into the shell's own side padding so the
+     scrollbar lands in that empty gutter instead of drawing over content. */
+  margin-right: -6px;
+  padding-right: 6px;
 }
 @media (max-width: 480px) {
   .shell {
