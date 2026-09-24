@@ -11,15 +11,33 @@ import { Rain, ambientFor, lightsOn, type Weather } from "./weather.ts";
 const ASSET_BASE = (import.meta as ImportMeta & { env?: { BASE_URL?: string } }).env?.BASE_URL ?? "/";
 const floorImages: HTMLImageElement[] = [];
 const floorListeners = new Set<() => void>();
+/** Wall art is cut from two hand-drawn sprites (see paintWall). */
+const wallArt: { cap?: HTMLImageElement; face?: HTMLImageElement } = {};
+function loadImage(name: string) {
+  const img = new Image();
+  img.onload = () => floorListeners.forEach((f) => f());
+  img.src = `${ASSET_BASE}assets/defend/${name}.png`;
+  return img;
+}
 function loadFloors() {
   if (floorImages.length || typeof Image === "undefined") return;
-  for (let i = 1; i <= 4; i++) {
-    const img = new Image();
-    img.onload = () => floorListeners.forEach((f) => f());
-    img.src = `${ASSET_BASE}assets/defend/floor-${i}.png`;
-    floorImages.push(img);
-  }
+  for (let i = 1; i <= 4; i++) floorImages.push(loadImage(`floor-${i}`));
+  wallArt.cap = loadImage("wall-cap");
+  wallArt.face = loadImage("wall-face");
 }
+const ready = (img?: HTMLImageElement): img is HTMLImageElement => !!img?.complete && !!img.naturalWidth;
+
+/** The mossy flagstone floor tiles (floor-1..4.png) specifically: drawn in
+ * their PNG orientation (rotating them made the baked-in lighting look
+ * wrong) and grown 5% past their tile so the gaps between them close up. */
+const FLOOR_TILE_SCALE = 1.05;
+
+/** Wall sprites, in source pixels. wall-cap.png holds a vertical run of
+ * mossy cap stones at x 38–54, lit from the left; each wall cell shows a
+ * 16 px window of it, continuing down the run. wall-face.png holds the dark
+ * brick face, hung below any wall stone with open ground to its south. */
+const CAP = { x: 38, w: 16, y0: 1, span: 62 };
+const FACE = { x0: 8, span: 64, y: 44, h: 14 };
 
 const ROOFS = ["#9a5140", "#7d5b43", "#626c78", "#8f6f3f", "#744c5e", "#56705f"];
 const ROAD = "#5f584d";
@@ -167,12 +185,10 @@ export class DefendRenderer {
         const x = Math.floor(tx * T),
           y = Math.floor(ty * T),
           s = Math.ceil(T) + 1;
-        if (img?.complete && img.naturalWidth) {
-          c.save();
-          c.translate(x + s / 2, y + s / 2);
-          c.rotate(((hash(tx, ty, 4) % 4) * Math.PI) / 2);
-          c.drawImage(img, -s / 2, -s / 2, s, s);
-          c.restore();
+        if (ready(img)) {
+          // Mossy floor tiles only: unrotated, grown 5% about their centre.
+          const g = s * FLOOR_TILE_SCALE;
+          c.drawImage(img, x + (s - g) / 2, y + (s - g) / 2, g, g);
         } else {
           c.fillStyle = "#2c3a26";
           c.fillRect(x, y, s, s);
@@ -251,34 +267,53 @@ export class DefendRenderer {
     }
   }
 
+  /** One wall stone. Edges and the hanging brick face follow the *standing*
+   * wall, so a breach gets proper broken edges. */
+  private paintWall(c: CanvasRenderingContext2D, cx: number, cy: number, solid: (i: number) => boolean) {
+    const px = this.px;
+    const x = cx * px,
+      y = cy * px;
+    const standing = (dx: number, dy: number) => {
+      const nx = cx + dx,
+        ny = cy + dy;
+      if (nx < 0 || ny < 0 || nx >= CELLS_W || ny >= CELLS_H) return false;
+      const i = cellIndex(nx, ny);
+      return this.map!.wall[i] === 1 && solid(i);
+    };
+    if (ready(wallArt.cap)) {
+      const sy = CAP.y0 + ((cy * CAP.w + cx * 37) % CAP.span);
+      c.drawImage(wallArt.cap, CAP.x, sy, CAP.w, CAP.w, x, y, px + 0.5, px + 0.5);
+    } else {
+      c.fillStyle = WALL;
+      c.fillRect(x, y, px + 0.5, px + 0.5);
+    }
+    const e = Math.max(1, px * 0.12);
+    c.fillStyle = "rgba(0,0,0,0.35)";
+    if (!standing(1, 0)) c.fillRect(x + px - e, y, e, px);
+    if (!standing(-1, 0)) c.fillRect(x, y, e, px);
+    c.fillStyle = "rgba(255,255,255,0.1)";
+    if (!standing(0, -1)) c.fillRect(x, y, px, e);
+    // The wall's south face, seen from above at a slant.
+    if (!standing(0, 1) && cy + 1 < CELLS_H) {
+      const h = px * 0.45;
+      if (ready(wallArt.face)) {
+        const sx = FACE.x0 + ((cx * CAP.w) % FACE.span);
+        c.drawImage(wallArt.face, sx, FACE.y, CAP.w, FACE.h, x, y + px, px + 0.5, h);
+      } else {
+        c.fillStyle = "#3a3a33";
+        c.fillRect(x, y + px, px + 0.5, h);
+      }
+      c.fillStyle = "rgba(0,0,0,0.3)";
+      c.fillRect(x, y + px + h - e, px + 0.5, e);
+    }
+  }
+
   private paintBuilding(c: CanvasRenderingContext2D, b: Building, sim: DefendSim | null, solid: (i: number) => boolean) {
     const px = this.px;
     const r = b.rect;
     const intact = !sim || sim.intact(b);
     if (b.kind === "wall") {
-      if (!solid(b.cells[0])) return;
-      const x = r.x * px,
-        y = r.y * px;
-      c.fillStyle = WALL;
-      c.fillRect(x, y, px + 0.5, px + 0.5);
-      c.fillStyle = "rgba(0,0,0,0.22)";
-      const off = (r.y % 2) * 0.5;
-      c.fillRect(x, y + px * 0.48, px, Math.max(1, px * 0.06));
-      c.fillRect(x + px * off, y, Math.max(1, px * 0.06), px * 0.48);
-      c.fillRect(x + px * ((off + 0.5) % 1), y + px * 0.5, Math.max(1, px * 0.06), px * 0.5);
-      // Darker lip where the wall meets open ground.
-      c.fillStyle = "rgba(0,0,0,0.3)";
-      const open = (dx: number, dy: number) => {
-        const nx = r.x + dx,
-          ny = r.y + dy;
-        return nx >= 0 && ny >= 0 && nx < CELLS_W && ny < CELLS_H && !this.map!.wall[cellIndex(nx, ny)];
-      };
-      const e = Math.max(1, px * 0.12);
-      if (open(0, 1)) c.fillRect(x, y + px - e, px, e);
-      if (open(1, 0)) c.fillRect(x + px - e, y, e, px);
-      c.fillStyle = "rgba(255,255,255,0.12)";
-      if (open(0, -1)) c.fillRect(x, y, px, e);
-      if (open(-1, 0)) c.fillRect(x, y, e, px);
+      if (solid(b.cells[0])) this.paintWall(c, r.x, r.y, solid);
       return;
     }
     if (!intact) {

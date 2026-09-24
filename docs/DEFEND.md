@@ -11,7 +11,9 @@ holds it against endless waves. Code lives in `src/defend/`.
 - The top tile row is the enemy **spawn lane** — nothing can be built there.
 - The board scales to the largest 9:13 size that fits on screen without
   scrolling. Open ground uses the mossy flagstone tiles
-  (`public/assets/defend/floor-*.png`), one random variant and rotation per tile.
+  (`public/assets/defend/floor-*.png`), one random variant per tile, never
+  rotated (their baked-in lighting looks wrong turned) and grown 5% to close
+  the gaps between them.
 
 ## Building (before a run)
 
@@ -40,6 +42,11 @@ holds it against endless waves. Code lives in `src/defend/`.
 - The **wall** is 2 cells thick and sits just *outside* the city tiles, so
   every city tile keeps its full 7 × 7 interior. The board edge is
   impassable, so no wall is built along it.
+- Wall art is cut from two sprites: each wall cell shows a 16 px window of
+  the mossy cap-stone run in `wall-cap.png` (x 38–54, continuing down the
+  run), and any stone with open ground or a breach to its south hangs a strip
+  of the brick face from `wall-face.png`. Because it is per cell, breaches
+  just show rubble with broken edges around them.
 - A plaza rings the keep, avenues run to the city edge, every structure gets
   a street to its door, then deep blocks are split by straight streets until
   nothing is more than 2 cells from a road. Some small blocks become parks;
