@@ -289,6 +289,16 @@ export class Game {
   walkTo(x: number, y: number) {
     if (this.paused || this.summary) return;
     this.auto = false;
+    const p = this.run.player;
+    // Tapping the square the player already occupies counts as moving onto
+    // it (waiting a turn), so standing on stairs and tapping self climbs or
+    // descends them.
+    if (x === p.x && y === p.y) {
+      this.route = [];
+      const waited = this.move(0, 0, true, true);
+      this.message = waited ? "Waited a turn." : "Already here.";
+      return;
+    }
     const route = routeTo(this, x, y);
     if (!route) {
       this.reject(x, y, "No route to that space.");
@@ -506,11 +516,15 @@ export class Game {
       ? `${this.run.seed}:${this.run.height}:${x},${y}`
       : `${this.run.seed}:${x},${y}`;
   }
+  /** dx=dy=0 means stand in place: re-triggers the current tile's effect
+   * (e.g. stairs) without leaving it, so tapping oneself on stairs still
+   * climbs/descends. */
   move(dx: number, dy: number, force = true, track = true) {
-    if (this.paused || this.summary || Math.abs(dx) + Math.abs(dy) !== 1)
+    const waiting = dx === 0 && dy === 0;
+    if (this.paused || this.summary || (!waiting && Math.abs(dx) + Math.abs(dy) !== 1))
       return false;
     const p = this.run.player,
-      dest = this.world.step(p.x, p.y, dx, dy);
+      dest = waiting ? { x: p.x, y: p.y } : this.world.step(p.x, p.y, dx, dy);
     if (!dest) {
       this.reject(p.x, p.y, "That edge is closed.");
       return false;

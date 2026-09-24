@@ -355,8 +355,14 @@ function hideTileHighlight() {
   }, 300);
 }
 function onTap(x: number, y: number) {
+  const p = game.run.player;
+  // Tapping the tile the player is already standing on (e.g. to climb
+  // stairs in place) has no "select, then confirm" step: update() clears
+  // the highlight on the player's own tile every frame, so a first tap
+  // would never reach a confirming second tap.
+  const self = x === p.x && y === p.y;
   const already = !!(highlighted && highlighted.x === x && highlighted.y === y);
-  if (game.save.settings.oneTapMove || already) {
+  if (self || game.save.settings.oneTapMove || already) {
     hideTileHighlight();
     game.walkTo(x, y);
   } else {
