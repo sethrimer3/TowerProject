@@ -1212,6 +1212,10 @@ nav button > span img { display: block; width: 42px; height: 42px; max-width: 10
   font-size: 12px;
   color: #b9b5aa;
 }
+.defend-sky {
+  color: #9fb4d0;
+  letter-spacing: 1px;
+}
 .defend-hud b {
   color: #efe3c6;
 }

@@ -231,3 +231,44 @@ test('saves round-trip and reject tampered layouts', () => {
   // Saves from the old tile-grid DEFEND fall back to a fresh city.
   assert.deepEqual(decodeDefendSave({ tiles: [], keep: { x: 4, y: 6 } }).layout, defaultLayout());
 });
+
+test('city lights: tower fires with corner pillars, lanterns hung on houses', async () => {
+  const { cityLights, roadStones } = await import('../src/defend/lighting.ts');
+  let l = squareCity();
+  l = placeStructure(l, 'archerTower', l.keep.tx, l.keep.ty - 3)!;
+  const map = mapOf(l);
+  const lights = cityLights(map);
+  const archer = lights.find((x) => x.kind === 'archerTower')!;
+  assert.equal(archer.pillars.length, 4, 'four corner pillars');
+  assert.ok(archer.inside, 'the tower does not shadow its own fire');
+  const lanterns = lights.filter((x) => x.kind === 'lantern');
+  assert.ok(lanterns.length >= 4);
+  for (const a of lanterns) {
+    assert.equal(map.buildings[a.owner].kind, 'house');
+    for (const b of lanterns) if (a !== b) assert.ok(Math.hypot(a.x - b.x, a.y - b.y) >= 5.5, 'lanterns are spread out');
+  }
+  assert.ok(roadStones(map).every((s) => map.type[cellIndex(Math.floor(s.x), Math.floor(s.y))] === CellType.ROAD));
+});
+
+test('weather: 30% rain, 10% night', async () => {
+  const { rollWeather, lightsOn } = await import('../src/defend/weather.ts');
+  let rain = 0, night = 0;
+  const r = (await import('../src/defend/grid.ts')).rng(42);
+  for (let i = 0; i < 20000; i++) {
+    const w = rollWeather(r);
+    rain += +w.rain;
+    night += +w.night;
+  }
+  assert.ok(Math.abs(rain / 20000 - 0.3) < 0.02);
+  assert.ok(Math.abs(night / 20000 - 0.1) < 0.015);
+  assert.equal(lightsOn({ rain: false, night: false }), false);
+});
+
+test('struck buildings flash', () => {
+  const sim = new DefendSim(mapOf(squareCity()), zeroLevels(), 1);
+  const wall = sim.map.buildings.find((b) => b.kind === 'wall')!;
+  sim.damageBuilding(wall.id, 1);
+  assert.ok(sim.flash[wall.id] > 0);
+  for (let i = 0; i < 10; i++) sim.step(1 / 30);
+  assert.equal(sim.flash[wall.id], 0);
+});

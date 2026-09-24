@@ -97,6 +97,8 @@ export type Effect = { kind: "boom" | "dust" | "spark"; x: number; y: number; t:
 export type SimEvent = { type: "waveStart" | "waveCleared" | "lost"; wave: number };
 
 const STEP = 1 / 30;
+/** How long a struck building flashes, in seconds. */
+export const BUILDING_FLASH = 0.14;
 const BREAK_SECONDS = 3;
 const SQRT2 = Math.SQRT2;
 
@@ -110,6 +112,10 @@ export class DefendSim {
   /** Built cells per building; == cells.length when intact. */
   readonly built: Int32Array;
   readonly field = new Float64Array(CELL_COUNT);
+  /** Seconds left on each building's hit flash. */
+  readonly flash: Float32Array;
+  /** Cells whose solidity changed since the renderer last drained this. */
+  changed: number[] = [];
   enemies: Enemy[] = [];
   soldiers: Soldier[] = [];
   civilians: Civilian[] = [];
@@ -146,6 +152,7 @@ export class DefendSim {
     this.hp = new Float32Array(n);
     this.maxHp = new Float32Array(n);
     this.built = new Int32Array(n);
+    this.flash = new Float32Array(n);
     for (const b of map.buildings) {
       const max =
         b.kind === "wall" ? wallHp(levels.wallStrength)
@@ -204,6 +211,7 @@ export class DefendSim {
     for (const e of this.enemies) e.flash = Math.max(0, e.flash - dt);
     for (const s of this.soldiers) s.flash = Math.max(0, s.flash - dt);
     for (const c of this.civilians) c.flash = Math.max(0, c.flash - dt);
+    for (let i = 0; i < this.flash.length; i++) if (this.flash[i] > 0) this.flash[i] = Math.max(0, this.flash[i] - dt);
     if (this.hp[this.keepId] <= 0 && !this.lost) {
       this.lost = true;
       this.events.push({ type: "lost", wave: this.wave });
@@ -435,11 +443,13 @@ export class DefendSim {
   damageBuilding(id: number, amount: number) {
     if (this.hp[id] <= 0) return;
     this.hp[id] -= amount;
+    this.flash[id] = BUILDING_FLASH;
     const b = this.map.buildings[id];
     if (this.hp[id] <= 0) {
       this.hp[id] = 0;
       this.built[id] = 0;
       for (const c of b.cells) this.solid[c] = 0;
+      this.changed.push(...b.cells);
       const p = center(b.rect);
       this.effects.push({ kind: "dust", x: p.x, y: p.y, t: 0, r: Math.max(b.rect.w, b.rect.h) * 0.7 });
       this.fieldDirty = true;
@@ -878,6 +888,7 @@ export class DefendSim {
     if (id < 0 || this.solid[cell]) return;
     const b = this.map.buildings[id];
     this.solid[cell] = 1;
+    this.changed.push(cell);
     this.built[id]++;
     this.hp[id] = Math.min(this.maxHp[id], this.hp[id] + this.maxHp[id] / b.cells.length);
     this.pushOut(cell);

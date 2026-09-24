@@ -4,7 +4,9 @@
 import { CELLS_H, CELLS_W, SPAWN_ROW, SUB, TILES_H, TILES_W, cellIndex, hash, hash01, tileKey, type Rect } from "./grid.ts";
 import { CellType, type Building, type CityMap } from "./citygen.ts";
 import { ENEMIES, SOLDIER, CIVILIAN, watchRadius, type StructureKind } from "./catalog.ts";
-import { center, type DefendSim } from "./sim.ts";
+import { BUILDING_FLASH, center, type DefendSim } from "./sim.ts";
+import { DefendLighting } from "./lighting.ts";
+import { Rain, ambientFor, lightsOn, type Weather } from "./weather.ts";
 
 const ASSET_BASE = (import.meta as ImportMeta & { env?: { BASE_URL?: string } }).env?.BASE_URL ?? "/";
 const floorImages: HTMLImageElement[] = [];
@@ -34,7 +36,18 @@ export type Overlay = {
   bomb?: { x: number; y: number; r: number } | null;
 };
 
+export type DrawOptions = {
+  /** Show the (dim, gold) tile grid — while the player is editing. */
+  grid: boolean;
+  weather: Weather | null;
+  now: number;
+  reduceMotion: boolean;
+};
+
 export class DefendRenderer {
+  readonly lighting = new DefendLighting();
+  private rain = new Rain();
+  private lastNow = 0;
   readonly canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
   private layer: HTMLCanvasElement;
@@ -67,18 +80,72 @@ export class DefendRenderer {
     this.px = w / CELLS_W;
   }
 
-  draw(map: CityMap, sim: DefendSim | null, overlay: Overlay | null) {
+  draw(map: CityMap, sim: DefendSim | null, overlay: Overlay | null, opts: DrawOptions) {
     const key = `${this.canvas.width}:${sim ? sim.mapVersion : -1}`;
     if (map !== this.map || key !== this.layerKey) {
       this.map = map;
       this.layerKey = key;
+      this.lighting.setMap(map);
       this.paintLayer(map, sim);
     }
+    const dt = this.lastNow ? (opts.now - this.lastNow) / 1000 : 0;
+    this.lastNow = opts.now;
     const ctx = this.ctx;
+    const px = this.px;
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(this.layer, 0, 0);
-    if (sim) this.drawSim(sim);
+    const weather = sim ? opts.weather : null;
+    const lit = !!weather && lightsOn(weather);
+    const intact = (id: number) => !sim || sim.intact(map.buildings[id]);
+    if (sim) {
+      const changed = sim.changed.splice(0);
+      if (lit) this.lighting.update(sim.solid, changed, intact);
+      else if (changed.length) this.lighting.invalidate(changed);
+      this.drawDamage(sim);
+      if (lit) {
+        const units = [
+          ...sim.soldiers.map((u) => ({ x: u.x, y: u.y, size: SOLDIER.size })),
+          ...sim.civilians.map((u) => ({ x: u.x, y: u.y, size: CIVILIAN.size })),
+          ...sim.enemies.filter((e) => !ENEMIES[e.kind].flying).map((e) => ({ x: e.x, y: e.y, size: ENEMIES[e.kind].size })),
+        ];
+        this.lighting.drawUnitShadows(ctx, px, units, weather!.night ? 1 : 0.8);
+      }
+    }
+    if (weather?.rain) Rain.overcast(ctx);
+    if (lit) {
+      this.lighting.drawLight(ctx, px, opts.now, opts.reduceMotion, intact, ambientFor(weather!));
+      this.lighting.drawRelief(ctx, px, weather!.rain ? 0.85 : 0.65);
+      this.lighting.drawFlames(ctx, px, opts.now, opts.reduceMotion, intact);
+    }
+    if (sim) this.drawUnits(sim);
+    if (weather?.rain) {
+      this.rain.update(dt, this.canvas.width, this.canvas.height);
+      this.rain.draw(ctx, px);
+    }
+    if (opts.grid) this.drawGrid(overlay ? 0.2 : 0.11);
     if (overlay) this.drawOverlay(overlay);
+  }
+
+  /** Dim gold tile lines, shown only while the player is editing. */
+  private drawGrid(alpha: number) {
+    const c = this.ctx;
+    const T = this.px * SUB;
+    c.save();
+    c.strokeStyle = `rgba(216,181,114,${alpha})`;
+    c.lineWidth = 1;
+    c.beginPath();
+    for (let tx = 1; tx < TILES_W; tx++) {
+      const x = Math.round(tx * T) + 0.5;
+      c.moveTo(x, 0);
+      c.lineTo(x, this.canvas.height);
+    }
+    for (let ty = 1; ty < TILES_H; ty++) {
+      const y = Math.round(ty * T) + 0.5;
+      c.moveTo(0, y);
+      c.lineTo(this.canvas.width, y);
+    }
+    c.stroke();
+    c.restore();
   }
 
   // ── Static layer ──────────────────────────────────────────────────────
@@ -90,6 +157,9 @@ export class DefendRenderer {
     const px = this.px;
     const T = px * SUB;
     c.imageSmoothingEnabled = false;
+    // Very dark grey shows in the gaps around the flagstone sprites.
+    c.fillStyle = "#17181b";
+    c.fillRect(0, 0, L.width, L.height);
     // Ground: the mossy flagstones, one randomly turned tile per board tile.
     for (let ty = 0; ty < TILES_H; ty++)
       for (let tx = 0; tx < TILES_W; tx++) {
@@ -137,12 +207,37 @@ export class DefendRenderer {
         } else if (t !== CellType.WALL || !solid(i)) {
           c.fillStyle = map.owner[i] >= 0 && !solid(i) ? RUBBLE : ROAD;
           c.fillRect(x, y, px + 0.5, px + 0.5);
-          c.fillStyle = "rgba(255,255,255,0.05)";
-          if (hash01(cx, cy, 31) < 0.5) c.fillRect(x + hash01(cx, cy, 32) * px * 0.7, y + hash01(cx, cy, 33) * px * 0.7, px * 0.25, px * 0.2);
+          // Gravel: fine grit speckle.
+          const grit = Math.max(1, px * 0.07);
+          for (let k = 0; k < 6; k++) {
+            const h = hash01(cx, cy, 60 + k);
+            c.fillStyle = h < 0.5 ? "rgba(0,0,0,0.12)" : "rgba(255,240,215,0.07)";
+            c.fillRect(x + hash01(cx, cy, 70 + k) * (px - grit), y + hash01(cx, cy, 80 + k) * (px - grit), grit, grit);
+          }
         }
       }
+    // Road stones, with a darker underside so they sit in the gravel.
+    for (const st of this.lighting.roadStones) {
+      const s = Math.max(1, st.s * px);
+      const x = st.x * px - s / 2,
+        y = st.y * px - s / 2;
+      c.fillStyle = "rgba(0,0,0,0.25)";
+      c.fillRect(x + s * 0.3, y + s * 0.35, s, s);
+      c.fillStyle = st.shade < 0.33 ? "#7a7266" : st.shade < 0.66 ? "#6b645a" : "#857c6d";
+      c.fillRect(x, y, s, s);
+    }
     // Buildings.
     for (const b of map.buildings) this.paintBuilding(c, b, sim, solid);
+    // Lantern brackets on house walls (lit only in rain and at night).
+    for (const l of this.lighting.lights) {
+      if (l.kind !== "lantern" && l.kind !== "door") continue;
+      if (sim && !sim.intact(map.buildings[l.owner])) continue;
+      const s = Math.max(2, px * 0.28);
+      c.fillStyle = "#2b2622";
+      c.fillRect(l.x * px - s / 2, l.y * px - s / 2, s, s);
+      c.fillStyle = "#8a7045";
+      c.fillRect(l.x * px - s / 4, l.y * px - s / 4, s / 2, s / 2);
+    }
     // Rubble chunks.
     for (let i = 0; i < map.type.length; i++) {
       if (map.owner[i] < 0 || solid(i)) continue;
@@ -154,21 +249,6 @@ export class DefendRenderer {
         c.fillRect(cx * px + hash01(i, k, 42) * (px - s), cy * px + hash01(i, k, 43) * (px - s), s, s);
       }
     }
-    // Thin tile grid.
-    c.strokeStyle = "rgba(255,255,255,0.035)";
-    c.lineWidth = 1;
-    c.beginPath();
-    for (let tx = 1; tx < TILES_W; tx++) {
-      const x = Math.round(tx * T) + 0.5;
-      c.moveTo(x, 0);
-      c.lineTo(x, L.height);
-    }
-    for (let ty = 1; ty < TILES_H; ty++) {
-      const y = Math.round(ty * T) + 0.5;
-      c.moveTo(0, y);
-      c.lineTo(L.width, y);
-    }
-    c.stroke();
   }
 
   private paintBuilding(c: CanvasRenderingContext2D, b: Building, sim: DefendSim | null, solid: (i: number) => boolean) {
@@ -242,9 +322,17 @@ export class DefendRenderer {
   }
 
   // ── Dynamic layer ─────────────────────────────────────────────────────
-  private drawSim(sim: DefendSim) {
+  private drawDamage(sim: DefendSim) {
     const c = this.ctx;
     const px = this.px;
+    // Struck buildings flash pale for a moment.
+    for (const b of sim.map.buildings) {
+      const f = sim.flash[b.id];
+      if (f <= 0 || !sim.intact(b)) continue;
+      const r = b.rect;
+      c.fillStyle = `rgba(255,244,220,${(f / BUILDING_FLASH) * 0.55})`;
+      c.fillRect(r.x * px, r.y * px, r.w * px, r.h * px);
+    }
     // Damage: darken hurt buildings; bars over structures.
     for (const b of sim.map.buildings) {
       const hp = sim.hp[b.id],
@@ -264,6 +352,11 @@ export class DefendRenderer {
         c.fillRect(r.x * px, r.y * px - bh - 1, bw * frac, bh);
       }
     }
+  }
+
+  private drawUnits(sim: DefendSim) {
+    const c = this.ctx;
+    const px = this.px;
     // Watch-tower radii, very faint.
     c.strokeStyle = "rgba(242,210,122,0.16)";
     c.lineWidth = Math.max(1, px * 0.08);

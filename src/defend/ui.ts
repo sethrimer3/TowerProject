@@ -34,6 +34,7 @@ import {
 import { generateCity, type CityMap } from "./citygen.ts";
 import { DefendSim } from "./sim.ts";
 import { DefendRenderer, paintIcon, type Overlay } from "./render.ts";
+import { rollWeather, type Weather } from "./weather.ts";
 import { available, buyBomb, buyItem, buyUpgrade, canAfford, type DefendSave, type Wallet } from "./progress.ts";
 
 export type DefendHost = {
@@ -41,6 +42,7 @@ export type DefendHost = {
   wallet(): Wallet;
   setWallet(w: Wallet): void;
   persist(): void;
+  reduceMotion(): boolean;
 };
 
 type Drag =
@@ -79,6 +81,7 @@ export class DefendPage {
   private messageT = 0;
   private newRecord = 0;
   private built = false;
+  private weather: Weather | null = null;
 
   constructor(root: HTMLElement, host: DefendHost) {
     this.root = root;
@@ -113,9 +116,11 @@ export class DefendPage {
     if (this.phase === "sim") this.updateHud();
   }
 
-  /** Developer aid: advance the running defense by `seconds` at once. */
-  fastForward(seconds: number) {
+  /** Developer aid: advance the running defense by `seconds` at once,
+   * optionally forcing the weather. */
+  fastForward(seconds: number, weather?: Weather) {
     if (!this.sim || this.phase !== "sim") return;
+    if (weather) this.weather = weather;
     for (let t = 0; t < seconds && this.phase === "sim"; t += 0.25) {
       this.sim.update(0.25 / this.sim.speed);
       this.handleEvents();
@@ -202,6 +207,7 @@ export class DefendPage {
         this.phase = "build";
         this.sim = null;
         this.map = null;
+        this.weather = null;
         this.hideBanner();
         this.renderChrome();
       };
@@ -260,7 +266,8 @@ export class DefendPage {
     const sim = this.sim;
     const hp = Math.max(0, sim.keepHp()),
       max = sim.keepMaxHp();
-    const html = `<span>Wave <b>${sim.wave}</b></span><span>Best <b>${best}</b></span>
+    const sky = this.weather ? (this.weather.night ? (this.weather.rain ? "Storm" : "Night") : this.weather.rain ? "Rain" : "") : "";
+    const html = `${sky ? `<span class="defend-sky">${sky}</span>` : ""}<span>Wave <b>${sim.wave}</b></span><span>Best <b>${best}</b></span>
       <span class="defend-keep">Keep <i><em style="width:${(hp / max) * 100}%"></em></i> <b>${Math.ceil(hp)}</b></span>
       <span>Foes <b>${sim.enemies.length + sim.spawnQueue.length}</b></span>`;
     if (el.innerHTML !== html) el.innerHTML = html;
@@ -320,8 +327,10 @@ export class DefendPage {
     this.sim = new DefendSim(map, { ...this.save.levels }, (Math.random() * 2 ** 31) | 0);
     this.phase = "sim";
     this.newRecord = 0;
+    this.weather = rollWeather();
     this.renderChrome();
-    this.setMessage("Here they come! Drag a bomb onto the field to thin the horde.", 4);
+    const sky = this.weather.night && this.weather.rain ? "A stormy night falls. " : this.weather.night ? "Night falls over the city. " : this.weather.rain ? "Rain rolls in. " : "";
+    this.setMessage(`${sky}Here they come! Drag a bomb onto the field to thin the horde.`, 4);
   }
 
   private endRun() {
@@ -357,7 +366,12 @@ export class DefendPage {
   private draw() {
     if (!this.renderer || !this.renderer.canvas.width) return;
     const map = this.sim ? this.sim.map : this.currentMap();
-    this.renderer.draw(map, this.sim, this.overlay());
+    this.renderer.draw(map, this.sim, this.overlay(), {
+      grid: this.phase === "build",
+      weather: this.weather,
+      now: performance.now(),
+      reduceMotion: this.host.reduceMotion(),
+    });
   }
 
   // ── Dragging ──────────────────────────────────────────────────────────

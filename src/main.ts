@@ -158,6 +158,7 @@ const defendPage = new DefendPage(el("defend"), {
     game.save.materials.steelBar = w.steelBar;
   },
   persist: save,
+  reduceMotion: () => game.save.settings.reduceMotion,
 });
 const KIND_COLORS: Partial<Record<Kind, string>> = {
   wall: "#8d97a8",
@@ -1143,8 +1144,9 @@ window.addEventListener("pagehide", save);
   const text = towerFloorReport(game.save.tower.run?.seed ?? game.run.seed, game.save.tower.run?.height ?? 0).text;
   console.log(text);
 };
-// `defendDebug(seconds)` fast-forwards a running DEFEND battle.
-(window as unknown as { defendDebug: (s: number) => void }).defendDebug = (s) => defendPage.fastForward(s);
+// `defendDebug(seconds, { rain, night }?)` fast-forwards a running DEFEND
+// battle, optionally forcing its weather.
+(window as unknown as { defendDebug: typeof defendPage.fastForward }).defendDebug = (s, w) => defendPage.fastForward(s, w);
 el("stats").toggleAttribute("hidden", !isBoard(tab));
 el("currencies").toggleAttribute("hidden", tab !== "upgrades");
 renderBoard();
