@@ -171,19 +171,18 @@ function keyTile(color, shape) {
   const dark = color === "yellow" ? ITEM.goldDark : color === "blue" ? ITEM.blueDark : ITEM.redDark;
   const mid = color === "yellow" ? ITEM.gold : color === "blue" ? "#4b9bd1" : ITEM.red;
   const light = color === "yellow" ? ITEM.goldLight : color === "blue" ? ITEM.blueLight : ITEM.redLight;
-  // Chunky diagonal shaft, teeth and three unmistakable bow silhouettes.
-  rect(p, 4, 16, 4, 4, ITEM.outline); rect(p, 7, 13, 4, 4, ITEM.outline); rect(p, 10, 10, 4, 4, ITEM.outline);
-  rect(p, 5, 16, 3, 2, mid); rect(p, 8, 13, 3, 3, mid); rect(p, 11, 10, 2, 3, light);
-  rect(p, 3, 15, 3, 2, ITEM.outline); rect(p, 3, 13, 2, 3, ITEM.outline); rect(p, 4, 14, 2, 1, light);
+  // Broad upright shaft and teeth survive native 24px rendering.
+  rect(p, 9, 9, 7, 13, ITEM.outline); rect(p, 11, 9, 4, 12, mid); rect(p, 11, 10, 2, 10, light);
+  rect(p, 14, 16, 6, 4, ITEM.outline); rect(p, 14, 17, 4, 2, mid); rect(p, 14, 12, 5, 4, ITEM.outline); rect(p, 14, 13, 3, 2, mid);
   if (shape === "circle") {
-    rect(p, 12, 3, 7, 2, ITEM.outline); rect(p, 10, 5, 3, 6, ITEM.outline); rect(p, 18, 5, 3, 6, ITEM.outline); rect(p, 12, 10, 7, 2, ITEM.outline);
-    rect(p, 13, 4, 5, 2, light); rect(p, 11, 6, 2, 4, mid); rect(p, 18, 6, 2, 4, dark); rect(p, 13, 10, 5, 1, dark);
+    rect(p, 7, 2, 11, 3, ITEM.outline); rect(p, 5, 4, 4, 7, ITEM.outline); rect(p, 16, 4, 4, 7, ITEM.outline); rect(p, 7, 9, 11, 3, ITEM.outline);
+    rect(p, 8, 3, 8, 2, light); rect(p, 6, 5, 3, 5, mid); rect(p, 16, 5, 3, 5, dark); rect(p, 8, 9, 8, 2, dark);
   } else if (shape === "diamond") {
-    for (const [x,y,w] of [[15,2,2],[12,4,8],[10,6,12],[12,8,8],[15,10,2]]) rect(p,x,y,w,2,ITEM.outline);
-    rect(p, 15, 4, 2, 2, light); rect(p, 12, 6, 3, 2, mid); rect(p, 17, 6, 3, 2, dark); rect(p, 15, 8, 2, 2, dark);
+    for (const [x,y,w] of [[11,1,4],[8,3,10],[6,5,14],[8,8,10],[11,10,4]]) rect(p,x,y,w,3,ITEM.outline);
+    rect(p, 11, 3, 4, 2, light); rect(p, 9, 5, 4, 3, mid); rect(p, 14, 5, 4, 3, dark); rect(p, 11, 8, 4, 2, dark);
   } else {
-    rect(p, 15, 2, 2, 2, ITEM.outline); rect(p, 13, 4, 6, 2, ITEM.outline); rect(p, 11, 6, 10, 2, ITEM.outline); rect(p, 9, 8, 14, 3, ITEM.outline);
-    rect(p, 15, 4, 2, 2, light); rect(p, 13, 6, 6, 2, mid); rect(p, 12, 8, 8, 2, dark);
+    rect(p, 11, 1, 4, 3, ITEM.outline); rect(p, 9, 3, 8, 3, ITEM.outline); rect(p, 7, 5, 12, 3, ITEM.outline); rect(p, 5, 8, 16, 4, ITEM.outline);
+    rect(p, 11, 4, 4, 2, light); rect(p, 9, 6, 8, 2, mid); rect(p, 8, 8, 10, 3, dark);
   }
   return p;
 }
@@ -199,9 +198,9 @@ function potionTile(percent) {
 }
 function swordTile() {
   const p = itemCanvas();
-  rect(p, 13, 1, 4, 2, ITEM.outline); rect(p, 11, 3, 6, 11, ITEM.outline); rect(p, 8, 13, 10, 4, ITEM.outline);
-  rect(p, 12, 4, 4, 9, ITEM.steel); rect(p, 13, 2, 3, 11, ITEM.steelLight); rect(p, 9, 14, 8, 2, ITEM.gold);
-  rect(p, 9, 16, 5, 7, ITEM.outline); rect(p, 10, 16, 3, 5, ITEM.wood); rect(p, 9, 21, 5, 2, ITEM.goldDark);
+  rect(p, 10, 1, 6, 3, ITEM.outline); rect(p, 8, 3, 10, 12, ITEM.outline); rect(p, 5, 13, 16, 5, ITEM.outline);
+  rect(p, 10, 3, 6, 11, ITEM.steel); rect(p, 12, 2, 3, 12, ITEM.steelLight); rect(p, 7, 14, 12, 3, ITEM.gold);
+  rect(p, 9, 17, 7, 6, ITEM.outline); rect(p, 11, 17, 3, 5, ITEM.wood); rect(p, 9, 21, 7, 2, ITEM.goldDark);
   px(p, [[13,5],[14,4],[12,9],[10,18]], "#ffffff"); return p;
 }
 function shieldTile() {
@@ -216,10 +215,10 @@ function chestTile(tier) {
   const metal = tier === "gold" || tier === "treasure" ? [ITEM.goldDark, ITEM.gold, ITEM.goldLight]
     : tier === "platinum" ? ["#3f7187", "#8fc5d5", "#e4ffff"] : ["#425669", "#8297aa", "#d5e0e4"];
   const wood = tier === "platinum" ? ["#22394d", "#34546a", "#5c8295"] : [ITEM.woodDark, ITEM.wood, ITEM.woodLight];
-  rect(p, 3, 6, 18, 15, ITEM.outline); rect(p, 5, 5, 14, 2, ITEM.outline);
-  rect(p, 5, 7, 14, 5, wood[1]); rect(p, 6, 7, 12, 2, wood[2]); rect(p, 4, 12, 16, 8, wood[0]); rect(p, 5, 14, 14, 5, wood[1]);
-  rect(p, 3, 10, 18, 3, metal[0]); rect(p, 4, 10, 16, 2, metal[1]); rect(p, 3, 18, 18, 3, metal[0]); rect(p, 4, 18, 16, 2, metal[1]);
-  rect(p, 3, 6, 3, 15, metal[0]); rect(p, 4, 7, 2, 12, metal[1]); rect(p, 18, 6, 3, 15, metal[0]); rect(p, 18, 7, 2, 12, metal[1]);
+  rect(p, 1, 5, 22, 18, ITEM.outline); rect(p, 4, 3, 16, 3, ITEM.outline);
+  rect(p, 3, 6, 18, 7, wood[1]); rect(p, 5, 5, 14, 3, wood[2]); rect(p, 2, 13, 20, 9, wood[0]); rect(p, 4, 15, 16, 6, wood[1]);
+  rect(p, 1, 11, 22, 4, metal[0]); rect(p, 2, 11, 20, 2, metal[1]); rect(p, 1, 20, 22, 3, metal[0]); rect(p, 3, 20, 18, 2, metal[1]);
+  rect(p, 1, 5, 4, 18, metal[0]); rect(p, 2, 6, 3, 15, metal[1]); rect(p, 19, 5, 4, 18, metal[0]); rect(p, 19, 6, 3, 15, metal[1]);
   rect(p, 9, 11, 6, 7, ITEM.outline); rect(p, 10, 12, 4, 5, metal[1]); rect(p, 11, 13, 2, 3, metal[2]);
   px(p, [[5,7],[7,7],[4,10],[19,7],[19,12],[5,18],[18,18]], metal[2]);
   if (tier === "gold") {
