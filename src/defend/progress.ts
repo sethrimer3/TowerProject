@@ -71,7 +71,7 @@ export function buyUpgrade(save: DefendSave, w: Wallet, id: UpgradeId): boolean 
   const def = UPGRADES.find((u) => u.id === id)!;
   const level = save.levels[id];
   if (level >= def.maxLevel) return false;
-  const price = upgradePrice(level);
+  const price = def.price ? def.price(level) : upgradePrice(level);
   if (!canAfford(w, price)) return false;
   pay(w, price);
   save.levels[id]++;
@@ -94,7 +94,7 @@ export function buyBomb(save: DefendSave, w: Wallet): boolean {
 
 // ── Decoding untrusted saves ─────────────────────────────────────────────
 const int = (n: unknown, min: number, max: number): n is number => Number.isInteger(n) && (n as number) >= min && (n as number) <= max;
-const PLACED: PlacedKind[] = ["barracks", "archerTower", "cannonTower", "watchTower"];
+const PLACED: PlacedKind[] = ["barracks", "archerBarracks", "archerTower", "cannonTower", "watchTower"];
 
 export function decodeDefendSave(s: any): DefendSave {
   const d = defaultDefendSave();

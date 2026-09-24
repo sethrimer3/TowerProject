@@ -44,6 +44,7 @@ export type DefendHost = {
   setWallet(w: Wallet): void;
   persist(): void;
   reduceMotion(): boolean;
+  devMode(): boolean;
 };
 
 type Drag =
@@ -56,6 +57,7 @@ type Drag =
 const ITEM_NAMES: Record<PaletteItem, string> = {
   cityTile: "City tile",
   barracks: STRUCTURES.barracks.name,
+  archerBarracks: STRUCTURES.archerBarracks.name,
   archerTower: STRUCTURES.archerTower.name,
   cannonTower: STRUCTURES.cannonTower.name,
   watchTower: STRUCTURES.watchTower.name,
@@ -689,14 +691,15 @@ export class DefendPage {
             .map((u) => {
               const lvl = s.levels[u.id];
               const maxed = lvl >= u.maxLevel;
-              const p = upgradePrice(lvl);
+              const p = u.price ? u.price(lvl) : upgradePrice(lvl);
               return `<article class="card defend-card defend-upgrade"><div><small>LEVEL ${lvl} / ${u.maxLevel}</small><h3>${u.name}</h3><p>${u.describe(lvl)}${maxed ? "" : ` → <b>${u.describe(lvl + 1)}</b>`}</p></div>
                 <button data-upgrade="${u.id}" ${maxed || !canAfford(w, p) ? "disabled" : ""}>${maxed ? "Maxed" : `Upgrade · ${price(p)}`}</button></article>`;
             })
             .join(""),
       )
       .join("");
-    el.innerHTML = `<p class="hint defend-wallet">Spend what you earn in the tower. <b>${w.gold}</b> gold · <b>${w.ironBar}</b> iron bars · <b>${w.steelBar}</b> steel bars${this.phase === "sim" ? " · upgrades apply from the next defense" : ""}</p>
+    const balance = (amount: number) => this.host.devMode() ? "∞" : amount;
+    el.innerHTML = `<p class="hint defend-wallet">Spend what you earn in the tower. <b>${balance(w.gold)}</b> gold · <b>${balance(w.ironBar)}</b> iron bars · <b>${balance(w.steelBar)}</b> steel bars${this.phase === "sim" ? " · upgrades apply from the next defense" : ""}</p>
       <h3 class="defend-section">City elements</h3>${items}
       <h3 class="defend-section">Consumables</h3>${bomb}
       <h3 class="defend-section">Battle</h3>${speed}

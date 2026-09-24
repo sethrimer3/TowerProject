@@ -35,7 +35,7 @@ import {
 } from "./generation.ts";
 import { predict } from "./combat.ts";
 import { OutsideWorld } from "./outside.ts";
-import { getEquivalentFloor, materialDef } from "./materials.ts";
+import { getEquivalentFloor, materialDef, MATERIALS } from "./materials.ts";
 import { rollEnemyDrops, rollTreasureLoot, towerEnemyDrops } from "./loot.ts";
 import {
   creditMaterials,
@@ -100,6 +100,11 @@ export class Game {
     this.save.gold = 999_999_999;
     this.save.tower.shards = 999_999_999;
     this.save.delve.essence = 999_999_999;
+    for (const material of MATERIALS) {
+      if (material.category === "metal" || material.category.startsWith("monster-")) {
+        this.save.materials[material.id] = 999_999_999;
+      }
+    }
     this.save.upgrades.delve = 1;
     this.save.upgrades.legacy = 1;
     const maxSection = Math.max(20, ...Object.keys(this.save.tower.sectionHp).map(Number)) + 5;

@@ -25,6 +25,19 @@ test("fresh save has delve and legacy locked; dev mode unlocks both", () => {
   assert.equal(g.save.upgrades.legacy, 1);
 });
 
+test("dev mode grants unlimited metal bars and monster parts", () => {
+  const g = new Game(defaults());
+
+  g.setDevMode(true);
+
+  assert.equal(g.save.materials.ironBar, 999_999_999);
+  assert.equal(g.save.materials.voidsteelBar, 999_999_999);
+  assert.equal(g.save.materials.cinderSlimeBlob, 999_999_999);
+  assert.equal(g.save.materials.celestialAegis, 999_999_999);
+  assert.equal(g.save.materials.garnet, 0, "gems are not part of the dev-mode resource grant");
+  assert.equal(g.save.materials.emptyVial, 0, "utility materials are not part of the dev-mode resource grant");
+});
+
 test("legacy skill tree is gated by legacy upgrade which unlocks Defend", () => {
   const legacyTree = TREES.find((t) => t.id === "legacy")!;
   assert.equal(legacyTree.gate, "legacy");

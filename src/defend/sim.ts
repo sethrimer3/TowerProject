@@ -16,6 +16,8 @@ import {
 } from "./grid.ts";
 import { MinHeap } from "./heap.ts";
 import {
+  ARCHER_UNIT,
+  archerUnitRange,
   BOMB_DAMAGE,
   BOMB_RADIUS,
   CANNON_RANGE,
@@ -70,6 +72,8 @@ export type Enemy = {
 
 export type Soldier = {
   id: number;
+  /** Swordsmen chase and hack; archers roam and shoot. */
+  kind: "sword" | "archer";
   home: number;
   x: number;
   y: number;
@@ -151,6 +155,8 @@ export class DefendSim {
   private towerCd = new Map<number, number>();
   private trainT = new Map<number, number>();
   private civilianRespawn: number[] = [];
+  /** Open city streets, for archers to wander between. */
+  private streets: number[];
   private keepId: number;
   private grid: Enemy[][] = Array.from({ length: CELL_COUNT }, () => []);
   private gridUsed: number[] = [];
@@ -177,6 +183,8 @@ export class DefendSim {
     }
     this.keepId = map.buildings.find((b) => b.kind === "keep")!.id;
     this.civilianRespawn = Array(civilianCount(levels.civilianCount)).fill(0);
+    this.streets = [];
+    for (let i = 0; i < CELL_COUNT; i++) if (map.city[i] && map.type[i] === CellType.ROAD) this.streets.push(i);
   }
 
   get keep(): Building {
@@ -214,7 +222,7 @@ export class DefendSim {
     this.stepArrows(dt);
     this.stepShells(dt);
     this.stepBarracks(dt);
-    for (const s of this.soldiers) this.stepSoldier(s, dt);
+    for (const s of this.soldiers) (s.kind === "archer" ? this.stepArcher(s, dt) : this.stepSoldier(s, dt));
     this.stepCivilians(dt);
     this.enemies = this.enemies.filter((e) => e.hp > 0);
     this.soldiers = this.soldiers.filter((s) => s.hp > 0);
@@ -665,7 +673,8 @@ export class DefendSim {
   private stepBarracks(dt: number) {
     const cap = soldierCap(this.levels.barracksCapacity);
     for (const b of this.map.buildings) {
-      if (b.kind !== "barracks" || !this.intact(b)) continue;
+      if ((b.kind !== "barracks" && b.kind !== "archerBarracks") || !this.intact(b)) continue;
+      const archer = b.kind === "archerBarracks";
       const alive = this.soldiers.filter((s) => s.home === b.id).length;
       if (alive >= cap) {
         this.trainT.set(b.id, trainSeconds(this.levels.barracksTraining));
@@ -680,14 +689,16 @@ export class DefendSim {
       const door = this.doorOf(b);
       if (door < 0) continue;
       const scale = soldierScale(this.levels.soldierArms);
+      const stats = archer ? ARCHER_UNIT : SOLDIER;
       this.soldiers.push({
         id: this.nextId++,
+        kind: archer ? "archer" : "sword",
         home: b.id,
         x: (door % CELLS_W) + 0.5,
         y: Math.floor(door / CELLS_W) + 0.5,
-        hp: SOLDIER.hp * scale,
-        maxHp: SOLDIER.hp * scale,
-        damage: SOLDIER.damage * scale,
+        hp: stats.hp * scale,
+        maxHp: stats.hp * scale,
+        damage: stats.damage * scale,
         cd: 0,
         target: -1,
         path: [],
@@ -746,6 +757,57 @@ export class DefendSim {
       }
     }
     this.followPath(s, target, SOLDIER.speed, dt);
+  }
+
+  /** Archers wander the city's streets, stopping to shoot anything within
+   * their (short) sight. With Hunter's instinct they instead path toward
+   * the nearest enemy in the city and stop once it's in range. */
+  private stepArcher(s: Soldier, dt: number) {
+    s.cd -= dt;
+    s.thinkT -= dt;
+    const range = archerUnitRange(this.levels.archerSight ?? 0);
+    // Shoot first: the nearest enemy in sight.
+    let near: Enemy | null = null,
+      nd = range * range;
+    for (const e of this.enemiesNear(s.x, s.y, range)) {
+      const d = (e.x - s.x) ** 2 + (e.y - s.y) ** 2;
+      if (d <= nd) {
+        nd = d;
+        near = e;
+      }
+    }
+    if (near) {
+      if (s.cd <= 0) {
+        s.cd = ARCHER_UNIT.cooldown;
+        this.arrows.push({ x: s.x, y: s.y, target: near.id, damage: s.damage, tx: near.x, ty: near.y, life: 2 });
+      }
+      return;
+    }
+    const hunting = (this.levels.archerHunt ?? 0) > 0;
+    if (hunting && s.thinkT <= 0) {
+      s.thinkT = 0.6;
+      const inCity = (e: Enemy) => this.map.city[cellIndex(clampCell(e.x, CELLS_W), clampCell(e.y, CELLS_H))] === 1;
+      const prey = this.enemies
+        .filter((e) => e.hp > 0 && inCity(e))
+        .sort((a, b) => (a.x - s.x) ** 2 + (a.y - s.y) ** 2 - ((b.x - s.x) ** 2 + (b.y - s.y) ** 2))
+        .slice(0, 3);
+      for (const e of prey) {
+        const path = this.findPath(s.x, s.y, e.x, e.y, 1e9, CELL_COUNT);
+        if (path) {
+          s.path = path;
+          s.target = e.id;
+          break;
+        }
+      }
+    }
+    // Nothing to hunt (or no instinct): pick a street and stroll to it.
+    if (!s.path.length && s.thinkT <= 0 && this.streets.length) {
+      s.thinkT = 0.5 + this.rand() * 1.5;
+      s.target = -1;
+      const goal = this.streets[Math.floor(this.rand() * this.streets.length)];
+      s.path = this.findPath(s.x, s.y, (goal % CELLS_W) + 0.5, Math.floor(goal / CELLS_W) + 0.5, 1e9, CELL_COUNT) ?? [];
+    }
+    this.followPath(s, null, ARCHER_UNIT.speed, dt);
   }
 
   private followPath(u: { x: number; y: number; path: number[] }, chase: { x: number; y: number } | null, speed: number, dt: number) {

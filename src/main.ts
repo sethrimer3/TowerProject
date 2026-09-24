@@ -145,6 +145,13 @@ let craftEnhancements: MaterialStack[] = [];
 const el = (id: string) => document.getElementById(id)!;
 const text = (id: string, value: unknown) =>
   (el(id).textContent = String(value));
+const devAmount = (value: number) => game.save.settings.devMode ? "∞" : String(value);
+const materialAmount = (id: MaterialId, value: number) => {
+  const category = materialDef(id).category;
+  return game.save.settings.devMode && (category === "metal" || category.startsWith("monster-"))
+    ? "∞"
+    : String(value);
+};
 const isBoard = (id: string) => id === "tower" || id === "delve";
 function save() {
   if (!persist(game.save))
@@ -161,6 +168,7 @@ const defendPage = new DefendPage(el("defend"), {
   },
   persist: save,
   reduceMotion: () => game.save.settings.reduceMotion,
+  devMode: () => game.save.settings.devMode === true,
 });
 const KIND_COLORS: Partial<Record<Kind, string>> = {
   wall: "#8d97a8",
@@ -426,8 +434,8 @@ function update() {
   floorsButton.title = towerActions ? "Choose starting floor" : "Future Delve action 2";
   logButton.classList.toggle("placeholder-action", !towerActions);
   floorsButton.classList.toggle("placeholder-action", !towerActions);
-  text("essence", game.save.delve.essence);
-  text("shards", game.save.tower.shards);
+  text("essence", devAmount(game.save.delve.essence));
+  text("shards", devAmount(game.save.tower.shards));
   text("level", `LV ${levelForXp(game.save.xp)}`);
   const infoDisplay = game.save.settings.infoDisplay ?? "both";
   const showStatusInfo = highlighted && (infoDisplay === "status" || infoDisplay === "both");
@@ -870,12 +878,12 @@ function craftingHtml(): string {
   const slotButtons = `<div class="tree-tabs slot-filter">${EQUIPMENT_SLOTS.map(s => `<button data-craft-slot="${s}" aria-pressed="${craftSlot === s}">${SLOT_ICONS[s]} ${SLOT_NAMES[s]}</button>`).join("")}</div>`;
   const metalButtons = `<div class="tree-tabs slot-filter">${METALS.map(m => `<button data-craft-metal="${m.id}" aria-pressed="${craftMetal === m.id}">${metalBarSprite(m.id)} ${m.name}</button>`).join("")}</div>`;
   const barsOwned = owned(metalDef.materialId), commonOwned = owned(recipe.commonMaterial);
-  const recipeLine = `<p class="hint">Recipe: ${metalBarSprite(metalDef.id, "stat-sprite")} <b class="${barsOwned >= recipe.bars ? "safe" : "danger"}">${recipe.bars} ${materialDef(metalDef.materialId).name}</b> (${barsOwned} owned) + ${monsterPartSprite(recipe.commonMaterial, "stat-sprite")} <b class="${commonOwned >= recipe.commonAmount ? "safe" : "danger"}">${recipe.commonAmount} ${materialDef(recipe.commonMaterial).name}</b> (${commonOwned} owned)</p>`;
+  const recipeLine = `<p class="hint">Recipe: ${metalBarSprite(metalDef.id, "stat-sprite")} <b class="${barsOwned >= recipe.bars ? "safe" : "danger"}">${recipe.bars} ${materialDef(metalDef.materialId).name}</b> (${materialAmount(metalDef.materialId, barsOwned)} owned) + ${monsterPartSprite(recipe.commonMaterial, "stat-sprite")} <b class="${commonOwned >= recipe.commonAmount ? "safe" : "danger"}">${recipe.commonAmount} ${materialDef(recipe.commonMaterial).name}</b> (${materialAmount(recipe.commonMaterial, commonOwned)} owned)</p>`;
   const stepper = (id: MaterialId, label: string, cap: number, usedInCategory: number) => {
     const qty = craftEnhancements.find(s => s.id === id)?.quantity ?? 0;
     const atCap = usedInCategory >= cap && qty === 0;
     const atOwned = qty >= owned(id);
-    return `<div class="stepper"><span>${monsterPartSprite(id, "stat-sprite")}${materialDef(id).name} <small>${label} · ${owned(id)} owned</small></span><div class="stepper-controls"><button data-enh-minus="${id}" ${qty <= 0 ? "disabled" : ""}>−</button><b>${qty}</b><button data-enh-plus="${id}" ${atCap || atOwned ? "disabled" : ""}>+</button></div></div>`;
+    return `<div class="stepper"><span>${monsterPartSprite(id, "stat-sprite")}${materialDef(id).name} <small>${label} · ${materialAmount(id, owned(id))} owned</small></span><div class="stepper-controls"><button data-enh-minus="${id}" ${qty <= 0 ? "disabled" : ""}>−</button><b>${qty}</b><button data-enh-plus="${id}" ${atCap || atOwned ? "disabled" : ""}>+</button></div></div>`;
   };
   const gemRows = GEMS.map(g => stepper(g.id, `+${(g.enhancement.percent * 100).toFixed(1)}% ${g.enhancement.stat}/ea`, ENHANCEMENT_CAPS.gems, totals.gems)).join("");
   const rareRows = (Object.keys(RARE_ENHANCEMENTS) as MaterialId[]).map(id => {
@@ -894,7 +902,7 @@ function craftingHtml(): string {
 }
 function provisionsHtml(): string {
   const provisionSprite = (id: GoldItemId) => itemSprite(id === "heal" ? "potion_flat" : id === "edge" ? "upgrade_attack" : "upgrade_defense");
-  return `<p class="hint">Spend Gold earned in the tower on provisions that apply next run. ${uiSprite("gold", "stat-sprite")} ${game.save.gold} Gold.</p>${GOLD_SHOP.map((item) => `<article class="card"><div class="item-icon">${provisionSprite(item.id)}</div><div><small>${game.save.provisions[item.id] ? `OWNED × ${game.save.provisions[item.id]}` : "APPLIES NEXT RUN"}</small><h3>${item.name}</h3><p>${item.description}</p></div><button data-gold="${item.id}" ${game.save.gold < item.cost ? "disabled" : ""}>Buy · ${uiSprite("gold", "stat-sprite")} ${item.cost}</button></article>`).join("")}`;
+  return `<p class="hint">Spend Gold earned in the tower on provisions that apply next run. ${uiSprite("gold", "stat-sprite")} ${devAmount(game.save.gold)} Gold.</p>${GOLD_SHOP.map((item) => `<article class="card"><div class="item-icon">${provisionSprite(item.id)}</div><div><small>${game.save.provisions[item.id] ? `OWNED × ${game.save.provisions[item.id]}` : "APPLIES NEXT RUN"}</small><h3>${item.name}</h3><p>${item.description}</p></div><button data-gold="${item.id}" ${game.save.gold < item.cost ? "disabled" : ""}>Buy · ${uiSprite("gold", "stat-sprite")} ${item.cost}</button></article>`).join("")}`;
 }
 function renderGearPage() {
   const body =
@@ -978,7 +986,7 @@ el("log").onclick = () => {
     const floors = Array.from({ length: Math.min(25, start + 1) }, (_, i) => start - i);
     modal.innerHTML = `<small>WAYFARER’S RECORD</small><h2>Adventure log</h2>
       <div class="summary-stats"><div><strong>${highest}</strong>HIGHEST FLOOR</div><div><strong>${game.save.delve.reached}</strong>DEEPEST DEPTH</div></div>
-      <p>${game.save.tower.shards} Inspiration · ${game.save.delve.essence} Courage</p>
+      <p>${devAmount(game.save.tower.shards)} Inspiration · ${devAmount(game.save.delve.essence)} Courage</p>
       <p class="hint">+1 Inspiration per new height. +1 Courage at each new 10-depth milestone. Revisits never pay again.</p>
       <div class="clear-legend"><p class="silver">${itemSprite("chest_silver", "log-sprite")} Silver · all doors opened and enemies defeated.</p><p class="gold">${itemSprite("chest_gold", "log-sprite")} Gold · Silver with no damage taken anywhere in the ascent.</p><p class="platinum">${itemSprite("chest_platinum", "log-sprite")} Platinum · Gold with no keys spent on that floor.</p><p class="diamond">Diamond · future challenge, not yet available.</p></div>
       <p class="hint">Each clear tier earns +1 Inspiration once per floor. Uncollected chests are claimed when you leave.</p>
@@ -1054,7 +1062,7 @@ function showSummary() {
     currencyName = game.mode === "delve" ? "COURAGE" : "INSPIRATION",
     heightName = game.mode === "tower" ? "ROOMS" : "HEIGHT";
   if (modal.open) return;
-  modal.innerHTML = `<span class="summary-icon">${uiSprite("automove")}</span><small>${s.reason.toUpperCase()}</small><h2>The tower remembers.</h2><p>Your milestone and clear rewards are already saved.</p><div class="summary-stats"><div><strong>${s.height}</strong>${heightName}</div><div><strong>${s.kills}</strong>VICTORIES</div><div><strong>${game.mode === "tower" ? game.save.tower.shards : game.save.delve.essence}</strong>${currencyName} SAVED</div></div>${s.record ? "" : `<p class="hint">Milestone rewards were credited as you reached them. Clear rewards are kept.</p>`}${game.save[game.mode].revival ? `<p>Revive is available until your next move. ${currencyName[0]}${currencyName.slice(1).toLowerCase()} is awarded if you continue.</p><button class="wide" id="revive-now">Revive</button>` : ""}<button class="wide" id="again">${s.dead ? `Return to the forest` : "Begin another ascent →"}</button>`;
+  modal.innerHTML = `<span class="summary-icon">${uiSprite("automove")}</span><small>${s.reason.toUpperCase()}</small><h2>The tower remembers.</h2><p>Your milestone and clear rewards are already saved.</p><div class="summary-stats"><div><strong>${s.height}</strong>${heightName}</div><div><strong>${s.kills}</strong>VICTORIES</div><div><strong>${devAmount(game.mode === "tower" ? game.save.tower.shards : game.save.delve.essence)}</strong>${currencyName} SAVED</div></div>${s.record ? "" : `<p class="hint">Milestone rewards were credited as you reached them. Clear rewards are kept.</p>`}${game.save[game.mode].revival ? `<p>Revive is available until your next move. ${currencyName[0]}${currencyName.slice(1).toLowerCase()} is awarded if you continue.</p><button class="wide" id="revive-now">Revive</button>` : ""}<button class="wide" id="again">${s.dead ? `Return to the forest` : "Begin another ascent →"}</button>`;
   modal.showModal();
   const revive = document.querySelector<HTMLButtonElement>("#revive-now");
   if (revive)

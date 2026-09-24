@@ -1,11 +1,11 @@
 /** Data tables for DEFEND: what the player can place, what it costs in
  * main-game currency, the universal upgrades, and the enemy roster. */
 
-export type StructureKind = "keep" | "barracks" | "archerTower" | "cannonTower" | "watchTower";
+export type StructureKind = "keep" | "barracks" | "archerBarracks" | "archerTower" | "cannonTower" | "watchTower";
 /** Everything that appears in the build palette (the keep is placed from the
  * start and can only be moved, so it is not a palette item). */
 export type PaletteItem = "cityTile" | Exclude<StructureKind, "keep">;
-export const PALETTE_ITEMS: PaletteItem[] = ["cityTile", "barracks", "archerTower", "cannonTower", "watchTower"];
+export const PALETTE_ITEMS: PaletteItem[] = ["cityTile", "barracks", "archerBarracks", "archerTower", "cannonTower", "watchTower"];
 
 export type StructureDef = {
   kind: StructureKind;
@@ -37,6 +37,15 @@ export const STRUCTURES: Record<StructureKind, StructureDef> = {
     maxHp: 160,
     outsideOk: false,
     description: "Trains swordsmen who sally out against anything that breaches the walls.",
+  },
+  archerBarracks: {
+    kind: "archerBarracks",
+    name: "Archer barracks",
+    w: 3,
+    h: 3,
+    maxHp: 150,
+    outsideOk: false,
+    description: "Trains archers who wander the city streets, loosing arrows at anything that comes near.",
   },
   archerTower: {
     kind: "archerTower",
@@ -71,6 +80,7 @@ export const STRUCTURES: Record<StructureKind, StructureDef> = {
 export const STARTING_OWNED: Record<PaletteItem, number> = {
   cityTile: 8,
   barracks: 1,
+  archerBarracks: 0,
   archerTower: 1,
   cannonTower: 0,
   watchTower: 0,
@@ -85,6 +95,7 @@ export function purchasePrice(item: PaletteItem, owned: number): Price {
   const base: Record<PaletteItem, Price> = {
     cityTile: { gold: 120, ironBar: 1 },
     barracks: { gold: 300, ironBar: 3 },
+    archerBarracks: { gold: 330, ironBar: 4 },
     archerTower: { gold: 220, ironBar: 2 },
     cannonTower: { gold: 340, ironBar: 5 },
     watchTower: { gold: 180, ironBar: 2 },
@@ -100,6 +111,8 @@ export type UpgradeId =
   | "barracksTraining"
   | "soldierArms"
   | "soldierReach"
+  | "archerSight"
+  | "archerHunt"
   | "archerDamage"
   | "archerRange"
   | "archerRate"
@@ -120,21 +133,32 @@ export type UpgradeDef = {
   name: string;
   maxLevel: number;
   describe: (level: number) => string;
+  /** Overrides the usual escalating price (for special one-offs). */
+  price?: (level: number) => Price;
 };
 
 /** At the top level of Patrol routes, swordsmen answer anywhere in the city. */
 export const SOLDIER_REACH_MAX = 4;
 
 export const UPGRADES: UpgradeDef[] = [
-  { id: "barracksCapacity", group: "Barracks", name: "Garrison", maxLevel: 4, describe: (l) => `${2 + l} swordsmen per barracks` },
+  { id: "barracksCapacity", group: "Barracks", name: "Garrison", maxLevel: 4, describe: (l) => `${2 + l} troops per barracks (swordsmen and archers)` },
   { id: "barracksTraining", group: "Barracks", name: "Drill yard", maxLevel: 5, describe: (l) => `Train one every ${trainSeconds(l).toFixed(1)}s` },
-  { id: "soldierArms", group: "Barracks", name: "Arms & armour", maxLevel: 6, describe: (l) => `+${l * 25}% soldier HP and damage` },
+  { id: "soldierArms", group: "Barracks", name: "Arms & armour", maxLevel: 6, describe: (l) => `+${l * 25}% troop HP and damage` },
   {
     id: "soldierReach",
     group: "Barracks",
     name: "Patrol routes",
     maxLevel: SOLDIER_REACH_MAX,
     describe: (l) => (l >= SOLDIER_REACH_MAX ? "Swordsmen hunt anywhere in the city" : `Swordsmen hunt within ${soldierLeash(l)} cells`),
+  },
+  { id: "archerSight", group: "Archer barracks", name: "Keen eyes", maxLevel: 4, describe: (l) => `Archers shoot within ${archerUnitRange(l)} cells` },
+  {
+    id: "archerHunt",
+    group: "Archer barracks",
+    name: "Hunter's instinct",
+    maxLevel: 1,
+    describe: (l) => (l ? "Archers track enemies through the streets" : "Archers wander the streets at random"),
+    price: () => ({ gold: 1500, ironBar: 12, steelBar: 4 }),
   },
   { id: "archerDamage", group: "Archer tower", name: "Bodkin points", maxLevel: 6, describe: (l) => `${archerDamage(l)} damage per arrow` },
   { id: "archerRange", group: "Archer tower", name: "Longbows", maxLevel: 4, describe: (l) => `${archerRange(l)} cell range` },
@@ -175,6 +199,7 @@ export const archerDamage = (l: number) => 6 + l * 3;
 export const archerRange = (l: number) => 10 + l * 2;
 export const archerCooldown = (l: number) => 1.1 * Math.pow(0.85, l);
 export const watchRadius = (l: number) => 8 + l * 2;
+export const archerUnitRange = (l: number) => 3 + l;
 export const cannonDamage = (l: number) => 20 + l * 9;
 export const cannonSplash = (l: number) => 1.7 + l * 0.15;
 export const cannonCooldown = (l: number) => 2.8 * Math.pow(0.86, l);
@@ -223,4 +248,5 @@ export const waveHpScale = (wave: number) => Math.pow(1.11, wave - 1);
 export const waveBudget = (wave: number) => Math.round(4 + wave * 2.6 + Math.pow(wave, 1.45));
 
 export const SOLDIER = { hp: 40, damage: 6, cooldown: 0.8, speed: 2.4, reach: 0.75, leash: 16, size: 0.4, color: "#5b8fd9" };
+export const ARCHER_UNIT = { hp: 24, damage: 5, cooldown: 1.1, speed: 2.1, size: 0.36, color: "#6cc08a" };
 export const CIVILIAN = { speed: 1.9, size: 0.3, color: "#e6d7b4", respawnSeconds: 10 };

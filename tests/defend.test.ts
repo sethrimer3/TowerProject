@@ -350,3 +350,56 @@ test('friendly fire: blasts hurt your own people until the Armory upgrade', () =
   assert.ok(blast(zeroLevels()) < 10, 'bombs hurt civilians by default');
   assert.equal(blast({ ...zeroLevels(), bombSafe: 1 }), 10, 'Shaped charges spare them');
 });
+
+test('archer barracks: archers roam the streets and shoot what comes near', () => {
+  let l = squareCity();
+  l = placeStructure(l, 'archerBarracks', l.keep.tx - 1, l.keep.ty - 1)!;
+  assert.ok(l, 'archer barracks fit in a city tile');
+  assert.equal(placeStructure(l, 'archerBarracks', l.keep.tx, l.keep.ty - 3), null, 'but not outside the walls');
+  const map = mapOf(l);
+  const sim = new DefendSim(map, zeroLevels(), 1);
+  sim.spawnQueue = [];
+  sim.breakT = 1e9;
+  for (let i = 0; i < 30 * 12; i++) sim.step(1 / 30);
+  const archers = sim.soldiers.filter((s) => s.kind === 'archer');
+  assert.equal(archers.length, 2, 'a full garrison of archers');
+  const home = map.buildings.find((b) => b.kind === 'archerBarracks')!;
+  const hc = { x: home.rect.x + 1.5, y: home.rect.y + 1.5 };
+  assert.ok(archers.some((a) => Math.hypot(a.x - hc.x, a.y - hc.y) > 3), 'they wander off into the streets');
+  // An enemy right beside an archer gets shot.
+  const a = archers[0];
+  const foe = { id: 777, kind: 'orc', x: a.x + 1, y: a.y, hp: 100, maxHp: 100, cd: 99, jx: 0, jy: 0, distract: -1, distractT: 0, rollT: 99, marked: false, flash: 0 } as any;
+  sim.enemies = [foe];
+  for (let i = 0; i < 30 * 2; i++) {
+    (sim as any).indexEnemies();
+    (sim as any).stepArcher(a, 1 / 30);
+    (sim as any).stepArrows(1 / 30);
+    foe.x = a.x + 1;
+    foe.y = a.y;
+  }
+  assert.ok(foe.hp < 100, 'arrows land');
+});
+
+test("Hunter's instinct sends archers toward enemies they can't see yet", () => {
+  let l = squareCity();
+  l = placeStructure(l, 'archerBarracks', l.keep.tx - 1, l.keep.ty - 1)!;
+  const map = mapOf(l);
+  const run = (hunt: number) => {
+    const sim = new DefendSim(map, { ...zeroLevels(), archerHunt: hunt }, 3);
+    sim.spawnQueue = [];
+    sim.breakT = 1e9;
+    for (let i = 0; i < 30 * 12; i++) sim.step(1 / 30);
+    let cell = -1;
+    for (let i = CELL_COUNT - 1; i >= 0 && cell < 0; i--) if (map.city[i] && map.type[i] === CellType.ROAD) cell = i;
+    const foe = { id: 555, kind: 'ogre', x: (cell % CELLS_W) + 0.5, y: Math.floor(cell / CELLS_W) + 0.5, hp: 1e9, maxHp: 1e9, cd: 99, jx: 0, jy: 0, distract: -1, distractT: 0, rollT: 99, marked: false, flash: 0 } as any;
+    sim.enemies = [foe];
+    const a = sim.soldiers.find((s) => s.kind === 'archer')!;
+    a.thinkT = 0;
+    a.path = [];
+    (sim as any).indexEnemies();
+    (sim as any).stepArcher(a, 1 / 30);
+    return a.target === 555;
+  };
+  assert.equal(run(0), false);
+  assert.equal(run(1), true);
+});

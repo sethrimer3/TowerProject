@@ -40,7 +40,7 @@ holds it against endless waves. Code lives in `src/defend/`.
   can only be lifted if the city stays connected and it holds no buildings.
 - **The keep** can be moved onto any other city tile (the two swap) but never
   removed.
-- **Barracks** must be inside the city. **Archer**, **cannon** and **watch
+- **Barracks** and **archer barracks** must be inside the city. **Archer**, **cannon** and **watch
   towers** may stand inside or outside; outside they sit off-centre in their tile.
 - Several structures share a tile while they fit. The game picks each
   structure's exact cells (`fitLayout`): oldest first, never touching another
@@ -82,6 +82,11 @@ holds it against endless waves. Code lives in `src/defend/`.
   whatever gets in (troops can't pass walls — a palisade gate is a future
   upgrade; troop pathing is plain A* over open cells, so gates only need to
   change what counts as open).
+- **Archer barracks** train archers (same garrison size, drill speed and
+  arms upgrades as the swordsmen's barracks). Archers wander random city
+  streets and stop to shoot anything within their short sight (3 cells,
+  widened by Keen eyes). The pricey one-off Hunter's instinct makes them
+  path toward the nearest enemy in the city instead, stopping at bow range.
 - **Patrol routes** (Armory) widens how far from their barracks swordsmen
   go after enemies; its last level sends them anywhere inside the city.
 - **Cannon towers** fire slowly at the nearest ground enemy (not bats),

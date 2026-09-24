@@ -3,7 +3,7 @@
  * falls or is rebuilt; units, projectiles and overlays are drawn each frame. */
 import { CELLS_H, CELLS_W, SPAWN_ROW, SUB, TILES_H, TILES_W, cellIndex, hash, hash01, tileKey, type Rect } from "./grid.ts";
 import { CellType, type Building, type CityMap } from "./citygen.ts";
-import { ENEMIES, SOLDIER, CIVILIAN, watchRadius, type StructureKind } from "./catalog.ts";
+import { ARCHER_UNIT, ENEMIES, SOLDIER, CIVILIAN, watchRadius, type StructureKind } from "./catalog.ts";
 import { BUILDING_FLASH, center, type DefendSim } from "./sim.ts";
 import { DefendLighting } from "./lighting.ts";
 import { Rain, ambientFor, type Weather } from "./weather.ts";
@@ -174,7 +174,7 @@ export class DefendRenderer {
       this.drawDamage(sim);
       if (lit) {
         const units = [
-          ...sim.soldiers.map((u) => ({ x: u.x, y: u.y, size: SOLDIER.size })),
+          ...sim.soldiers.map((u) => ({ x: u.x, y: u.y, size: u.kind === "archer" ? ARCHER_UNIT.size : SOLDIER.size })),
           ...sim.civilians.map((u) => ({ x: u.x, y: u.y, size: CIVILIAN.size })),
           ...sim.enemies.filter((e) => !ENEMIES[e.kind].flying).map((e) => ({ x: e.x, y: e.y, size: ENEMIES[e.kind].size })),
         ];
@@ -491,11 +491,17 @@ export class DefendRenderer {
     }
     // Soldiers.
     for (const u of sim.soldiers) {
-      const s = Math.max(2, SOLDIER.size * px);
-      c.fillStyle = "#1c2a40";
+      const archer = u.kind === "archer";
+      const s = Math.max(2, (archer ? ARCHER_UNIT.size : SOLDIER.size) * px);
+      c.fillStyle = archer ? "#1b3324" : "#1c2a40";
       c.fillRect(u.x * px - s / 2 - 1, u.y * px - s / 2 - 1, s + 2, s + 2);
-      c.fillStyle = u.flash > 0 ? "#fff" : SOLDIER.color;
+      c.fillStyle = u.flash > 0 ? "#fff" : archer ? ARCHER_UNIT.color : SOLDIER.color;
       c.fillRect(u.x * px - s / 2, u.y * px - s / 2, s, s);
+      if (archer) {
+        // A little bow on the off side.
+        c.fillStyle = "#b58a4f";
+        c.fillRect(u.x * px - s / 2 - Math.max(1, s * 0.3), u.y * px - s / 2, Math.max(1, s * 0.2), s);
+      }
       if (torches) this.drawHandTorch(u.x + SOLDIER.size * 0.65, u.y - SOLDIER.size * 0.45, u.id, sim.time);
     }
     // Enemies: tiny squares, gold-outlined when marked.
@@ -742,6 +748,28 @@ export function paintStructureArt(c: CanvasRenderingContext2D, kind: StructureKi
     c.fillRect(x + inset * 2, y + inset * 2, (w - inset * 4) / 2, h - inset * 4);
     c.fillStyle = SOLDIER.color;
     c.fillRect(x + w / 2 - px * 0.3, y + h / 2 - px * 0.3, px * 0.6, px * 0.6);
+  } else if (kind === "archerBarracks") {
+    stone("#6f7a5e");
+    // Green-roofed hall with a target butt out front.
+    c.fillStyle = "#3f6a45";
+    c.fillRect(x + inset * 2, y + inset * 2, w - inset * 4, h - inset * 4);
+    c.fillStyle = "rgba(255,255,255,0.14)";
+    c.fillRect(x + inset * 2, y + inset * 2, (w - inset * 4) / 2, h - inset * 4);
+    const cx = x + w / 2,
+      cy = y + h / 2,
+      r = Math.min(w, h) * 0.16;
+    c.fillStyle = "#e8dcc0";
+    c.beginPath();
+    c.arc(cx, cy, r, 0, Math.PI * 2);
+    c.fill();
+    c.fillStyle = "#b3372f";
+    c.beginPath();
+    c.arc(cx, cy, r * 0.6, 0, Math.PI * 2);
+    c.fill();
+    c.fillStyle = "#e8dcc0";
+    c.beginPath();
+    c.arc(cx, cy, r * 0.25, 0, Math.PI * 2);
+    c.fill();
   } else if (kind === "archerTower") {
     stone("#8c8577");
     c.fillStyle = "#6e4a2c";
@@ -809,7 +837,7 @@ export function paintIcon(canvas: HTMLCanvasElement, item: StructureKind | "city
     c.fillRect(n * 0.62, n * 0.1, n * 0.12, n * 0.1);
     return;
   }
-  const def = { keep: [3, 3], barracks: [3, 4], archerTower: [2, 2], cannonTower: [2, 2], watchTower: [2, 2] }[item];
+  const def = { keep: [3, 3], barracks: [3, 4], archerBarracks: [3, 3], archerTower: [2, 2], cannonTower: [2, 2], watchTower: [2, 2] }[item];
   const px = n / Math.max(def[0], def[1]) / 1.1;
   const w = def[0] * px,
     h = def[1] * px;

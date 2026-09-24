@@ -84,7 +84,7 @@ export function cityLights(map: CityMap): Light[] {
         [r.x + r.w + 0.3, r.y + r.h + 0.3],
       ])
         add({ kind: "door", x: cx, y: cy, radius: 4.5, strength: 0.9, owner: b.id, inside: false, pillars: [] });
-    } else if (b.kind === "barracks") {
+    } else if (b.kind === "barracks" || b.kind === "archerBarracks") {
       const door = doorPoint(map, r);
       if (door) add({ kind: "door", x: door.x, y: door.y, radius: 4.5, strength: 0.85, owner: b.id, inside: false, pillars: [] });
     }
