@@ -15,6 +15,24 @@ import {
  * one of the 24 sprite units across a tile, like the hero sprite. */
 
 export type DecorView = { left: number; bottom: number; n: number; s: number };
+/** Lets the renderer paint the sprites that show mirrored in the water. */
+export type ReflectionPainter = {
+  ctx: CanvasRenderingContext2D;
+  /** Sets `ctx` to world pixels mirrored about the line gy = base (the
+   * reflected thing's foot), so drawing it normally paints its reflection. */
+  flip(base: number): void;
+  /** Tiles standing on or just north of water, whose contents reflect. */
+  tiles: [number, number][];
+  /** Whether a thing at tile (x, y) would show in the water. */
+  near(x: number, y: number): boolean;
+  /** "static": walls and tile contents, painted only when they change;
+   * "moving": the hero and torch flames, painted every frame. */
+  phase: "static" | "moving";
+};
+/** Reflection tuning: opacity, how far the water tints them, and how far
+ * (pixels) ripples and the idle shimmer push them around. */
+export const REFLECTION = { alpha: 0.65, tint: 0.35, darken: 0.85, rippleShift: 2.2, rippleWidth: 4, shimmer: 0.7 };
+
 export type DecorGlow = { x: number; y: number; rgb: readonly number[]; radius: number; strength: number };
 
 type Rgba = readonly [number, number, number, number];
@@ -98,6 +116,12 @@ export class DecorLayer {
   private lastRipple = 0;
   private inWater = false;
   private lastHero = { x: 0, y: 0 };
+  /** Offscreen buffers for the mirrored sprites and the rippled result. */
+  private refl: {
+    src: HTMLCanvasElement; sctx: CanvasRenderingContext2D; out: HTMLCanvasElement; octx: CanvasRenderingContext2D; img: ImageData | null;
+    /** The mirrored walls, contents, and crates, repainted only when they change. */
+    still: HTMLCanvasElement; stctx: CanvasRenderingContext2D; stillKey: string;
+  } | null = null;
   /** Tiles planned per frame at most, so entering a room never stalls. */
   planBudget = 60;
   private planned = 0;
@@ -461,7 +485,8 @@ export class DecorLayer {
   // ---------------------------------------------------------------- drawing
 
   /** Baked ground decor, crates, and the live water, on the ground layer. */
-  drawGround(c: CanvasRenderingContext2D, v: DecorView, now: number, tileAt: (x: number, y: number) => Tile, reduceMotion: boolean) {
+  drawGround(c: CanvasRenderingContext2D, v: DecorView, now: number, tileAt: (x: number, y: number) => Tile, reduceMotion: boolean,
+    paintReflections?: (p: ReflectionPainter) => void) {
     if (!this.src) return;
     const src = this.src;
     c.save();
@@ -485,6 +510,8 @@ export class DecorLayer {
       }
       if (d.drip && !reduceMotion) this.dripRings(px, src, x, y, d, t);
     });
+    // Reflections sit on the water, under its glints and ripple rings.
+    this.drawReflections(c, v, now, tileAt, reduceMotion, paintReflections);
     for (const r of this.ripples) {
       const age = (now - r.t0) / 1000, fade = 1 - (now - r.t0) / r.life;
       this.ring(px, src, r.gx, r.gy, age * r.speed, `rgba(176,214,228,${(fade * 0.8).toFixed(2)})`);
@@ -495,6 +522,137 @@ export class DecorLayer {
     for (const [x, y, d] of thickets) this.drawBlades(px, x, y, d, t, reduceMotion, null);
     px.flush(c);
     c.restore();
+  }
+
+  /** Rings spreading on the water right now: the hero's ripples and the
+   * ceiling drips, as center, radius (pixels), and strength. */
+  private waves(v: DecorView, now: number) {
+    const out: { gx: number; gy: number; r: number; fade: number }[] = [];
+    for (const r of this.ripples) {
+      const age = (now - r.t0) / 1000;
+      out.push({ gx: r.gx, gy: r.gy, r: age * r.speed, fade: 1 - (now - r.t0) / r.life });
+    }
+    const t = now / 1000;
+    this.eachTile(v, (x, y, d) => {
+      if (!d.drip) return;
+      const age = ((t + d.drip.phase) % d.drip.period) - DRIP_FALL;
+      if (age >= 0 && age < 1.8) out.push({ gx: x * TILE_PX + d.drip.i, gy: -y * TILE_PX + d.drip.j, r: age * 11, fade: 1 - age / 1.8 });
+    });
+    return out;
+  }
+
+  /** Mirrors what stands on or beside the water into it. The renderer
+   * paints the sprites upside down into a small buffer (24 pixels per
+   * tile); each water pixel then samples it, pushed around by the ripple
+   * rings passing through and a faint idle shimmer, tinted by the water.
+   * Assumes `c` is already in world pixels. */
+  private drawReflections(c: CanvasRenderingContext2D, v: DecorView, now: number, tileAt: (x: number, y: number) => Tile,
+    reduceMotion: boolean, paint?: (p: ReflectionPainter) => void) {
+    const src = this.src;
+    if (!src || typeof document === "undefined") return;
+    const pools: [number, number, TileDecor][] = [];
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    this.eachTile(v, (x, y, d) => {
+      if (!d.water || !d.waterCount) return;
+      pools.push([x, y, d]);
+      x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y);
+    });
+    if (!pools.length) return;
+    const W = (x1 - x0 + 1) * TILE_PX, H = (y1 - y0 + 1) * TILE_PX, ox = x0 * TILE_PX, oy = -y1 * TILE_PX;
+    const buf = this.reflectionBuffers(W, H);
+    if (!buf) return;
+    const { sctx, octx } = buf;
+    sctx.setTransform(1, 0, 0, 1, 0, 0);
+    sctx.globalAlpha = 1;
+    sctx.globalCompositeOperation = "source-over";
+    sctx.clearRect(0, 0, W, H);
+    const wet = (x: number, y: number) => (this.plan(x, y)?.waterCount ?? 0) > 0;
+    const near = (x: number, y: number) => wet(x, y) || wet(x, y - 1);
+    const tiles: [number, number][] = [];
+    for (let y = y0; y <= y1 + 1; y++) for (let x = x0; x <= x1; x++) if (near(x, y)) tiles.push([x, y]);
+    // Walls, contents, and crates rarely change: repaint them only when the
+    // pools in view or anything standing by them does.
+    const stillKey = `${src.key}|${x0},${y0},${x1},${y1}|` + tiles.map(([x, y]) => {
+      const t = tileAt(x, y);
+      return `${t.kind}${t.color ?? ""}${t.tier ?? ""}${this.broken.has(`${src.key}:${x},${y}`) ? "b" : ""}`;
+    }).join(",");
+    if (stillKey !== buf.stillKey) {
+      buf.stillKey = stillKey;
+      const st = buf.stctx;
+      st.setTransform(1, 0, 0, 1, 0, 0);
+      st.clearRect(0, 0, buf.still.width, buf.still.height);
+      const flip = (base: number) => st.setTransform(1, 0, 0, -1, -ox, 2 * base - oy);
+      for (const [x, y] of tiles) {
+        const d = this.plan(x, y);
+        if (!d?.crates.length || tileAt(x, y).kind !== "floor") continue;
+        flip(-y * TILE_PX + Math.max(...d.crates.map((k) => k.y + k.h)));
+        this.drawCrates(st, x, y, d);
+      }
+      paint?.({ ctx: st, flip, tiles, near, phase: "static" });
+      st.setTransform(1, 0, 0, 1, 0, 0);
+    }
+    sctx.drawImage(buf.still, 0, 0);
+    const flip = (base: number) => sctx.setTransform(1, 0, 0, -1, -ox, 2 * base - oy);
+    paint?.({ ctx: sctx, flip, tiles, near, phase: "moving" });
+    sctx.setTransform(1, 0, 0, 1, 0, 0);
+    const from = sctx.getImageData(0, 0, W, H).data;
+    if (!buf.img || buf.img.width !== W || buf.img.height !== H) buf.img = octx.createImageData(W, H);
+    const out = buf.img.data;
+    out.fill(0);
+    const waves = reduceMotion ? [] : this.waves(v, now);
+    const t = now / 1000, R = REFLECTION, [wr, wg, wb] = WATER_MID;
+    let any = false;
+    for (const [x, y, d] of pools) {
+      const water = d.water!;
+      for (let j = 0; j < TILE_PX; j++)
+        for (let i = 0; i < TILE_PX; i++) {
+          if (water[j * TILE_PX + i] !== 1) continue;
+          const gx = x * TILE_PX + i, gy = -y * TILE_PX + j;
+          // Push the sample along each ring passing through this pixel.
+          let dx = reduceMotion ? 0 : Math.sin(t * 1.7 + gy * 0.8 + gx * 0.07) * R.shimmer, dy = 0;
+          for (const w of waves) {
+            const ex = gx - w.gx, ey = (gy - w.gy) / 0.62, dist = Math.hypot(ex, ey), off = dist - w.r;
+            if (Math.abs(off) >= R.rippleWidth || dist < 0.5) continue;
+            const push = Math.sin((off / R.rippleWidth) * Math.PI) * R.rippleShift * w.fade;
+            dx += (ex / dist) * push;
+            dy += (ey / dist) * push * 0.62;
+          }
+          const sx = gx - ox + Math.round(dx), sy = gy - oy + Math.round(dy);
+          if (sx < 0 || sy < 0 || sx >= W || sy >= H) continue;
+          const k = (sy * W + sx) * 4, a = from[k + 3];
+          if (a < 8) continue;
+          const o = ((gy - oy) * W + (gx - ox)) * 4;
+          out[o] = (from[k] * (1 - R.tint) + wr * R.tint) * R.darken;
+          out[o + 1] = (from[k + 1] * (1 - R.tint) + wg * R.tint) * R.darken;
+          out[o + 2] = (from[k + 2] * (1 - R.tint) + wb * R.tint) * R.darken;
+          out[o + 3] = a * R.alpha;
+          any = true;
+        }
+    }
+    if (!any) return;
+    octx.putImageData(buf.img, 0, 0);
+    c.drawImage(buf.out, 0, 0, W, H, ox, oy, W, H);
+  }
+
+  private reflectionBuffers(w: number, h: number) {
+    if (!this.refl) {
+      const src = document.createElement("canvas"), out = document.createElement("canvas"), still = document.createElement("canvas");
+      const sctx = src.getContext("2d"), octx = out.getContext("2d");
+      // CPU-backed like `sctx`, so copying it across each frame needs no GPU readback.
+      const stctx = still.getContext("2d");
+      if (!sctx || !octx || !stctx) return null;
+      this.refl = { src, sctx, out, octx, img: null, still, stctx, stillKey: "" };
+    }
+    const r = this.refl;
+    // Grow only, so walking around a room doesn't reallocate every frame.
+    if (r.src.width < w || r.src.height < h) {
+      r.src.width = r.out.width = r.still.width = Math.max(w, r.src.width);
+      r.src.height = r.out.height = r.still.height = Math.max(h, r.src.height);
+      r.stillKey = "";
+    }
+    r.stctx.imageSmoothingEnabled = false;
+    r.sctx.imageSmoothingEnabled = false;
+    return r;
   }
 
   /** A ring of pixels (flattened for the top-down view), only on water. */

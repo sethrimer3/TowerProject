@@ -3,7 +3,7 @@ import { drawTerrain, tileRandom } from "./themes.ts";
 import type { Game } from "./state.ts";
 import type { Tile, Torch } from "./entities.ts";
 import { drawForestTile, drawEntrance, OUTSIDE_SIZE, outsideWeather } from "./outside.ts";
-import { DecorLayer, type DecorView } from "./decor-render.ts";
+import { DecorLayer, type DecorView, type ReflectionPainter } from "./decor-render.ts";
 import { OutsideGrass } from "./outside-grass.ts";
 import { OutdoorWeather } from "./weather.ts";
 import { LIGHTING_CONFIG, getTorchFlicker, getTorchSway } from "./lighting.ts";
@@ -263,7 +263,7 @@ export class Renderer {
       // Decor goes over the torch relief (which re-lights the stone's
       // edges), so pools and crates hide the bricks beneath them.
       this.drawTorchRelief(now);
-      if (decorOn) this.decor.drawGround(c, view, now, tileAt, reduceMotion);
+      if (decorOn) this.decor.drawGround(c, view, now, tileAt, reduceMotion, (p) => this.paintReflections(p, now));
       this.drawEntityShadows(box.width, now);
     }
     // Below the default brightness: darken the ground, lay the object glows
@@ -419,6 +419,41 @@ export class Renderer {
     }
     c.restore();
     c.drawImage(off, 0, 0);
+  }
+  /** Paints, mirrored, everything that shows in the water: the wall faces
+   * above a pool, tile contents, torches, and the hero. Each is drawn by its
+   * usual routine into the decor layer's reflection buffer. */
+  paintReflections(p: ReflectionPainter, now: number) {
+    const main = this.ctx, g = this.game, s = this.size, n = this.density;
+    this.ctx = p.ctx;
+    try {
+      if (p.phase === "static") for (const [x, y] of p.tiles) {
+        const t = g.world.tile(x, y);
+        if (t.kind === "floor") continue;
+        // A wall mirrors from its lower edge; things standing on a tile, from their feet.
+        p.flip(-y * 24 + (t.kind === "wall" ? 24 : 23));
+        p.ctx.translate(x * 24, -y * 24);
+        // Stone mirrors faintly, so the pool still reads as water.
+        p.ctx.globalAlpha = t.kind === "wall" ? 0.45 : 1;
+        this.tile(t, x, y, now, t.kind === "wall" ? 0 : 1);
+        p.ctx.globalAlpha = 1;
+      }
+      if (p.phase === "moving") for (const t of this.frameTorches) {
+        if (!p.near(t.x, t.y)) continue;
+        // The torch draws in screen space: map that back to world pixels.
+        p.flip(-t.y * 24 + 21);
+        p.ctx.translate(this.left * 24, -(n - 1 + this.bottom) * 24);
+        p.ctx.scale(24 / s, 24 / s);
+        this.drawTorchSprite(t, now);
+      }
+      if (p.phase === "moving" && p.near(Math.round(this.playerX), Math.round(this.playerY))) {
+        p.flip(-this.playerY * 24 + 23);
+        p.ctx.translate(this.playerX * 24, -this.playerY * 24);
+        this.hero();
+      }
+    } finally {
+      this.ctx = main;
+    }
   }
   /** Layer 0 draws the ground (terrain + floor relief); layer 1 draws
    * whatever stands on it (items, doors, enemies...). */
