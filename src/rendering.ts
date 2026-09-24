@@ -489,7 +489,7 @@ export class Renderer {
     if (t.kind === "key") {
       this.groundShadow(11, 18, 5, 1.8, 0.3);
       this.withOutline(DARK_GOLD, (c) => {
-        if (area1 && drawArea1Item(c, t)) return;
+        if (!g.save.settings.spritesOff && drawArea1Item(c, t)) return;
         c.strokeStyle = COLORS[t.color!];
         c.lineWidth = 2.5;
         c.beginPath();
@@ -519,7 +519,7 @@ export class Renderer {
     if (t.kind === "potion") {
       this.groundShadow(12, 22, 6, 1.6, 0.3);
       this.withOutline(DARK_GOLD, (c) => {
-        if (area1 && drawArea1Item(c, t)) return;
+        if (!g.save.settings.spritesOff && drawArea1Item(c, t)) return;
         const isPercent = t.color === "red";
         c.fillStyle = "#bbc4ca";
         c.fillRect(9, 4, 6, 5);
@@ -548,10 +548,10 @@ export class Renderer {
     if (t.kind === "attack") {
       this.groundShadow(12, 22, 6, 1.6, 0.3);
       this.withOutline(DARK_GOLD, (c) => {
-        if (area1 && drawArea1Item(c, t)) return;
+        if (!g.save.settings.spritesOff && drawArea1Item(c, t)) return;
         c.save();
         c.translate(12, 12);
-        c.rotate(0.65);
+        c.rotate(-2.35);
         c.fillStyle = "#dbe3e7";
         c.fillRect(-2, -10, 4, 15);
         c.fillStyle = "#8194a2";
@@ -567,7 +567,7 @@ export class Renderer {
     if (t.kind === "defense") {
       this.groundShadow(12, 22, 6, 1.6, 0.3);
       this.withOutline(DARK_GOLD, (c) => {
-        if (area1 && drawArea1Item(c, t)) return;
+        if (!g.save.settings.spritesOff && drawArea1Item(c, t)) return;
         c.fillStyle = "#9cb0c2";
         c.beginPath();
         c.moveTo(4, 4);

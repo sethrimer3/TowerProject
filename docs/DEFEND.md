@@ -70,6 +70,25 @@ holds it against endless waves. Code lives in `src/defend/`.
 - During a run the palette becomes the **consumables** palette. A **bomb**
   can be dragged onto the field to blast everything nearby.
 
+## Weather and light (`weather.ts`, `lighting.ts`)
+
+- Each run rolls its weather: 30% rain (with a grey, slightly desaturated
+  overcast) and 10% night, independently. Rain or night lights the city:
+  lanterns hung on house walls, braziers at the keep's corners, a lamp at
+  each barracks door, and fires inside archer and watch towers.
+- Lights reuse the main game's candle colours, flicker and sway. Each pool
+  is baked once with occlusion, so walls and buildings cast shadows; an
+  archer tower's fire ignores its own roof but is blocked by its four corner
+  pillars, throwing four shadows into the street. Only lights near cells
+  that fell or were rebuilt are rebaked, a few per frame.
+- Units (soldiers, civilians and ground enemies) cast shadows away from the
+  brightest light on their cell, looked up from a per-cell grid made during
+  baking — a few batched rects per unit, cheap enough for hundreds.
+- Gravel stones on the streets catch the light: a bright lip toward the
+  flame, a dark one away from it.
+- A light goes out while its building is destroyed and returns when it's rebuilt.
+- Struck buildings, walls and the keep flash briefly.
+
 ## Economy (`progress.ts`, Armory tab)
 
 - Everything is bought with main-game gold, iron bars and steel bars.
@@ -84,4 +103,5 @@ holds it against endless waves. Code lives in `src/defend/`.
 A run in progress isn't saved; leaving the tab pauses it and reloading ends
 it. The layout, purchases, upgrades, bombs and best wave are saved.
 
-`defendDebug(seconds)` in the console fast-forwards a running battle.
+`defendDebug(seconds, { rain, night }?)` in the console fast-forwards a
+running battle, optionally forcing its weather.

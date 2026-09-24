@@ -166,49 +166,86 @@ const ITEM = {
   redDark: "#8f2d3d", red: "#d94a56", redLight: "#ffadb0",
 };
 function itemCanvas() { return canvas("#00000000"); }
-function keyTile(color, shape) {
+// Hand-placed pixel clusters: no rotated raster edges or fractional pixels.
+function pixelItem(rows, palette, x = 2, y = 2) {
   const p = itemCanvas();
-  const dark = color === "yellow" ? ITEM.goldDark : color === "blue" ? ITEM.blueDark : ITEM.redDark;
-  const mid = color === "yellow" ? ITEM.gold : color === "blue" ? "#4b9bd1" : ITEM.red;
-  const light = color === "yellow" ? ITEM.goldLight : color === "blue" ? ITEM.blueLight : ITEM.redLight;
-  // Broad upright shaft and teeth survive native 24px rendering.
-  rect(p, 9, 9, 7, 13, ITEM.outline); rect(p, 11, 9, 4, 12, mid); rect(p, 11, 10, 2, 10, light);
-  rect(p, 14, 16, 6, 4, ITEM.outline); rect(p, 14, 17, 4, 2, mid); rect(p, 14, 12, 5, 4, ITEM.outline); rect(p, 14, 13, 3, 2, mid);
-  if (shape === "circle") {
-    rect(p, 7, 2, 11, 3, ITEM.outline); rect(p, 5, 4, 4, 7, ITEM.outline); rect(p, 16, 4, 4, 7, ITEM.outline); rect(p, 7, 9, 11, 3, ITEM.outline);
-    rect(p, 8, 3, 8, 2, light); rect(p, 6, 5, 3, 5, mid); rect(p, 16, 5, 3, 5, dark); rect(p, 8, 9, 8, 2, dark);
-  } else if (shape === "diamond") {
-    for (const [x,y,w] of [[11,1,4],[8,3,10],[6,5,14],[8,8,10],[11,10,4]]) rect(p,x,y,w,3,ITEM.outline);
-    rect(p, 11, 3, 4, 2, light); rect(p, 9, 5, 4, 3, mid); rect(p, 14, 5, 4, 3, dark); rect(p, 11, 8, 4, 2, dark);
-  } else {
-    rect(p, 11, 1, 4, 3, ITEM.outline); rect(p, 9, 3, 8, 3, ITEM.outline); rect(p, 7, 5, 12, 3, ITEM.outline); rect(p, 5, 8, 16, 4, ITEM.outline);
-    rect(p, 11, 4, 4, 2, light); rect(p, 9, 6, 8, 2, mid); rect(p, 8, 8, 10, 3, dark);
+  rows.forEach((row, dy) => [...row].forEach((ch, dx) => {
+    if (palette[ch]) rect(p, x + dx, y + dy, 1, 1, palette[ch]);
+  }));
+  // A one-pixel dark silhouette keeps every pickup readable on stone and grass.
+  const ink = p.map((v) => v[3] !== 0);
+  for (let yy = 1; yy < SIZE - 1; yy++) for (let xx = 1; xx < SIZE - 1; xx++) {
+    const i = yy * SIZE + xx;
+    if (!ink[i] && [i-1,i+1,i-SIZE,i+SIZE].some((n) => ink[n])) rect(p, xx, yy, 1, 1, ITEM.outline);
   }
   return p;
 }
+function keyTile(color, shape) {
+  const prefix = color === "yellow" ? "gold" : color;
+  const palette = { h: ITEM[prefix + "Light"], m: ITEM[prefix], d: ITEM[prefix + "Dark"] };
+  const rows = [
+    "............hhhh....",
+    "..........hhmmmmhd..",
+    "..........hm....md..",
+    ".........hm......md.",
+    ".........hm......md.",
+    ".........hm......md.",
+    "..........mm....md..",
+    "..........hmmmmmdd..",
+    ".........hmmdddd....",
+    "........hmmd........",
+    ".......hmmd.........",
+    "......hmmd..........",
+    "..h..hmmd...........",
+    ".hmhhmmd............",
+    "..hmmmd.............",
+    "...hmd..............",
+    "..hmmd..............",
+    ".hmmmd..............",
+    "..ddd...............",
+  ];
+  // Matching lock shapes distinguish the keys without relying on color.
+  if (shape === "diamond") rows.splice(0, 8,
+    "............hh......", "...........hmmhd....", "..........hm..mhd...", ".........hm....mhd..",
+    "........hm......md..", ".........mm....md...", "..........mm..md....", "...........mmdd.....");
+  if (shape === "triangle") rows.splice(0, 8,
+    ".............h......", "............hmh.....", "...........hm.md....", "..........hm..mdd...",
+    ".........hm....md...", "........hm.....mdd..", "........hmmmmmmmmd..", ".........dddddddd...");
+  return pixelItem(rows, palette);
+}
 function potionTile(percent) {
-  const p = itemCanvas(), dark = percent ? ITEM.redDark : ITEM.blueDark, mid = percent ? ITEM.red : ITEM.blue, light = percent ? ITEM.redLight : ITEM.blueLight;
-  rect(p, 8, 2, 8, 3, ITEM.outline); rect(p, 9, 2, 6, 2, ITEM.woodLight); rect(p, 9, 5, 6, 4, ITEM.outline);
-  rect(p, 10, 5, 4, 4, ITEM.steelLight); rect(p, 6, 8, 12, 3, ITEM.outline); rect(p, 4, 11, 16, 9, ITEM.outline);
-  rect(p, 6, 9, 12, 3, ITEM.steel); rect(p, 5, 12, 14, 7, dark); rect(p, 7, 11, 10, 8, mid);
-  rect(p, 7, 12, 2, 4, light); rect(p, 7, 19, 10, 2, ITEM.outline);
-  if (!percent) { rect(p, 11, 12, 3, 7, "#e8f6f4"); rect(p, 9, 14, 7, 3, "#e8f6f4"); }
-  else { rect(p, 8, 13, 3, 3, "#ffe1dc"); rect(p, 14, 13, 3, 3, "#ffe1dc"); rect(p, 9, 15, 7, 3, "#ffe1dc"); rect(p, 11, 18, 3, 1, "#ffe1dc"); }
-  return p;
+  return pixelItem([
+    "......cccccc......", "......clllcd......", ".......ggsg.......", "......ghhhsg......",
+    ".......g.sg.......", "......gh..sg......", ".....gh....sg.....", "....gh......sg....",
+    "...ghhmmmmmmmgg...", "...ghhmmmmmmmdg...", "...ghmmmmmmmmddg..",
+    "...ghmmmmmmmmddg..", "...gmmmmmmmmmddg..", "...gsmmmmmmmmddg..",
+    "....gsmmmmmmddg...", ".....gssddddgg....", "......gggggg......",
+  ], { c: ITEM.woodDark, l: ITEM.woodLight, d: percent ? ITEM.redDark : ITEM.blueDark,
+    m: percent ? ITEM.red : ITEM.blue, g: "#607e91", h: "#ecffff", s: "#afced9", '.': undefined }, 3, 3).map((pixel, i) => {
+    const x = i % SIZE, y = Math.floor(i / SIZE);
+    const mark = percent
+      ? ((x === 11 && y === 13) || (x === 14 && y === 16) || (x + y === 27 && y >= 13 && y <= 16))
+      : ((x === 12 && y >= 13 && y <= 17) || (y === 15 && x >= 10 && x <= 14));
+    return mark ? rgba("#fff1d6") : pixel;
+  });
 }
 function swordTile() {
-  const p = itemCanvas();
-  rect(p, 10, 1, 6, 3, ITEM.outline); rect(p, 8, 3, 10, 12, ITEM.outline); rect(p, 5, 13, 16, 5, ITEM.outline);
-  rect(p, 10, 3, 6, 11, ITEM.steel); rect(p, 12, 2, 3, 12, ITEM.steelLight); rect(p, 7, 14, 12, 3, ITEM.gold);
-  rect(p, 9, 17, 7, 6, ITEM.outline); rect(p, 11, 17, 3, 5, ITEM.wood); rect(p, 9, 21, 7, 2, ITEM.goldDark);
-  px(p, [[13,5],[14,4],[12,9],[10,18]], "#ffffff"); return p;
+  return pixelItem([
+    "................gg..", "...............ghgd.", "..............wldd..", ".............wld....",
+    ".........gh.wld.....", ".........ghgld......", "..........ghgd......", ".........shhgg......",
+    "........shhsdgg.....", ".......shhsd..gg....", "......shhsd....d....", ".....shhsd..........",
+    "....shhsd...........", "...shhsd............", "..shhsd.............", ".shhsd..............",
+    ".hhsd...............", ".hsd................", ".sd.................",
+  ], { g: ITEM.gold, h: "#f3fcf5", d: ITEM.steelDark, s: ITEM.steel, w: ITEM.woodDark, l: ITEM.woodLight });
 }
 function shieldTile() {
-  const p = itemCanvas();
-  rect(p, 5, 3, 14, 3, ITEM.outline); rect(p, 3, 5, 18, 10, ITEM.outline); rect(p, 5, 15, 14, 4, ITEM.outline); rect(p, 8, 19, 8, 3, ITEM.outline); rect(p, 11, 22, 2, 1, ITEM.outline);
-  rect(p, 6, 4, 12, 2, ITEM.steelLight); rect(p, 5, 6, 14, 9, ITEM.steel); rect(p, 7, 15, 10, 3, "#52687b"); rect(p, 9, 18, 6, 3, ITEM.steelDark);
-  rect(p, 7, 7, 5, 8, "#4a657f"); rect(p, 12, 6, 5, 11, ITEM.steelDark); rect(p, 7, 7, 2, 6, "#a9bdca");
-  return p;
+  return pixelItem([
+    "........hh........", ".....hhhsshhh.....", "..hhhsssssssshhh..", ".hssggggggggggssd.",
+    ".hsghbbbbbbbdgsd.", ".hsghbbbbbbbdgsd.", ".hsghbbggbbbdgsd.", ".hsghbbghbbbdgsd.",
+    ".hsghggghggbdgsd.", "..sghbbghbbbdgsd.", "..sghbbgdbbbdgsd.", "..ssgbbbbbbdgssd.",
+    "...ssgbbbbdgssd..", "....ssgbbdgssd...", ".....ssgdgssd....", "......ssgssd.....",
+    ".......ssd.......", "........d........",
+  ], { h: "#e5f6f3", s: ITEM.steel, d: ITEM.steelDark, g: ITEM.gold, b: "#305679" }, 3, 2);
 }
 function chestTile(tier) {
   const p = itemCanvas();
