@@ -91,25 +91,34 @@ export const LIGHTING_CONFIG = {
    * falloff; on wall tiles it is brighter but reaches only half as far,
    * so nearby stone catches a bright wash as if lit on its face. */
   objectGlow: {
-    enemy: { color: [235, 70, 60], radius: 1.6, strength: 0.68 },
-    item: { color: [255, 200, 90], radius: 1.4, strength: 0.62 },
+    enemy: { color: [235, 70, 60], radius: 1.2, strength: 0.75 },
+    item: { color: [255, 200, 90], radius: 1.1, strength: 0.7 },
     /** Doors glow in their lock color; heart doors magenta, steel doors grey.
      * `onTop` is a faint wash of that color over the door sprite itself. */
-    door: { radius: 1.6, strength: 0.68, onTop: 0.16, heart: [235, 70, 215], steel: [175, 184, 196] },
+    door: { radius: 1.2, strength: 0.75, onTop: 0.16, heart: [235, 70, 215], steel: [175, 184, 196] },
     /** Stairs get a smaller version of the hero's cool halo. */
     stairsRadiusScale: 0.6,
     stairsAlphaScale: 1.15,
-    /** Wall glow: brightness multiplier and radius fraction. */
-    wallBoost: 1.5,
-    wallRadiusScale: 0.5,
+    /** Wall glow: brightness multiplier and radius fraction. It is drawn
+     * wider than tall and nudged upward, so the walls to the left, right,
+     * and above an object catch the most light, which reads as depth. */
+    wallBoost: 2.2,
+    wallRadiusScale: 0.8,
+    wallWiden: 1.35,
+    wallLift: 0.22,
     /** Glow strength at the darkest setting; it scales with darkness and is
-     * zero at the default brightness. */
-    darkStrength: 0.9,
+     * zero at the default brightness. Glows lift the darkness layer, so they
+     * light the stone (keeping its texture) rather than fogging over it. */
+    darkStrength: 1,
+    /** A touch of additive bloom on top, for a sense of emitted light. */
+    bloom: 0.12,
     /** Gentle breathing of enemy and item glows (fraction of strength). */
     pulse: 0.15,
     /** Doors, stairs, items, and enemies take this fraction of the darkness
      * the stone around them does, so they stay a little easier to read. */
-    spriteDarkness: 0.7,
+    spriteDarkness: 0.4,
+    /** The hero only takes a light touch of the darkness. */
+    heroDarkness: 0.25,
   },
   /** Torch-cast shadows from items, enemies, and the player. */
   shadow: {

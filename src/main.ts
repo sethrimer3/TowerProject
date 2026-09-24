@@ -217,9 +217,9 @@ function inspectDetails(x: number, y: number): { color: string; title: string; b
       body: game.mode === "tower" ? "Well-worn stone floor." : "Ancient cavern floor.",
     };
   if (t.kind === "attack")
-    return { color: KIND_COLORS.attack!, title: "Attack Shard", body: "Permanently raises ATK by 2." };
+    return { color: KIND_COLORS.attack!, title: "Attack Shard", body: "Raises ATK by 2 for this run." };
   if (t.kind === "defense")
-    return { color: KIND_COLORS.defense!, title: "Defense Shard", body: "Permanently raises DEF by 1." };
+    return { color: KIND_COLORS.defense!, title: "Defense Shard", body: "Raises DEF by 1 for this run." };
   if (t.kind === "treasure")
     return { color: KIND_COLORS.treasure!, title: "Treasure", body: "Contains gold and crafting materials." };
   if (t.kind === "reward")
@@ -596,7 +596,7 @@ function renderPage() {
           game.save = defaults();
           game.summary = null;
           game.mode = "tower";
-          game.newRun();
+          game.newRun(true);
           save();
           navigate("tower");
         },

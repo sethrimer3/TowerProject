@@ -108,6 +108,10 @@ export class Renderer {
   bakeBudget = 0;
   shadowCanvas: HTMLCanvasElement | null = null;
   darkCanvas: HTMLCanvasElement | null = null;
+  /** The darkness layer before object glows are added, used to darken the
+   * sprites themselves so their own glow never tints them. */
+  spriteDarkCanvas: HTMLCanvasElement | null = null;
+  shadowScratch: HTMLCanvasElement | null = null;
   torchGlowCanvas: HTMLCanvasElement | null = null;
   contentsCanvas: HTMLCanvasElement | null = null;
   contentsMaskCanvas: HTMLCanvasElement | null = null;
@@ -241,13 +245,14 @@ export class Renderer {
     // Below the default brightness: darken the ground, lay the object glows
     // on it, then draw the objects (less darkened) on top of their glows.
     const dark = g.run.outside ? null : this.buildDarkness(box.width, this.frameTorches, now);
-    if (dark) {
+    const spriteDark = dark && this.spriteDarkCanvas;
+    if (dark && spriteDark) {
       c.save();
       c.globalCompositeOperation = "multiply";
       c.drawImage(dark, 0, 0, box.width, box.width);
       c.restore();
-      this.drawObjectGlows(box.width);
-      this.drawContentsDarkened(dark, box.width, dpr, () => eachTile(1));
+      this.drawObjectBloom(box.width);
+      this.drawDarkened(spriteDark, box.width, dpr, LIGHTING_CONFIG.objectGlow.spriteDarkness, () => eachTile(1));
       this.drawDoorWash();
     } else eachTile(1);
     if (!g.run.outside) this.drawSpriteLighting(now);
@@ -272,9 +277,23 @@ export class Renderer {
       (n - 1 - (this.playerY - this.bottom)) * s,
     );
     c.scale(s / 24, s / 24);
-    this.hero();
-    if (!g.run.outside) this.drawSpriteLighting(now, true);
-    c.restore();
+    const drawHero = () => {
+      this.hero();
+      if (!g.run.outside) this.drawSpriteLighting(now, true);
+    };
+    if (spriteDark) {
+      // The hero takes only a light touch of the darkness, through the same
+      // masked layer as the other sprites.
+      const heroTransform = c.getTransform();
+      c.restore();
+      this.drawDarkened(spriteDark, box.width, dpr, LIGHTING_CONFIG.objectGlow.heroDarkness, () => {
+        this.ctx.setTransform(heroTransform);
+        drawHero();
+      });
+    } else {
+      drawHero();
+      c.restore();
+    }
     if (g.run.outside) {
       this.weather.draw(c, box.width, g.run.seed, dt, g.save.settings.reduceMotion,
         !g.paused && !g.summary && !document.hidden, g.save.settings.weatherSound !== false);
@@ -882,19 +901,39 @@ export class Renderer {
     dc.fillStyle = halo;
     dc.fillRect(hx - r, hy - r, r * 2, r * 2);
     dc.globalCompositeOperation = "source-over";
+    // Snapshot for darkening the sprites, before the object glows go in.
+    this.spriteDarkCanvas ??= document.createElement("canvas");
+    const sd = this.spriteDarkCanvas;
+    if (sd.width !== viewportSize || sd.height !== viewportSize) sd.width = sd.height = viewportSize;
+    const sdc = sd.getContext("2d");
+    if (sdc) {
+      sdc.globalCompositeOperation = "copy";
+      sdc.drawImage(cv, 0, 0);
+      sdc.globalCompositeOperation = "source-over";
+    }
+    // Object glows lift the darkness like light does, so they brighten and
+    // color the stone while keeping its texture, instead of fogging over it.
+    const glowLayer = this.objectGlowLayer(viewportSize);
+    if (glowLayer) {
+      dc.globalCompositeOperation = "lighter";
+      dc.globalAlpha = Math.min(1, LIGHTING_CONFIG.objectGlow.darkStrength * k);
+      dc.drawImage(glowLayer, 0, 0);
+      dc.globalCompositeOperation = "source-over";
+      dc.globalAlpha = 1;
+    }
     return cv;
   }
 
   /** Object glows, laid on the already-darkened ground so the sprites drawn
    * next sit on top of them. They grow with darkness: none at the default
    * brightness, full strength at the darkest. */
-  drawObjectGlows(viewportSize: number) {
-    const layer = this.objectGlowLayer(viewportSize);
-    if (!layer) return;
+  drawObjectBloom(viewportSize: number) {
+    const layer = this.glowCanvas;
+    if (!layer || !this.frameGlows.length) return;
     const c = this.ctx;
     c.save();
     c.globalCompositeOperation = "lighter";
-    c.globalAlpha = Math.min(1, LIGHTING_CONFIG.objectGlow.darkStrength * this.darkness);
+    c.globalAlpha = Math.min(1, LIGHTING_CONFIG.objectGlow.bloom * this.darkness);
     c.drawImage(layer, 0, 0, viewportSize, viewportSize);
     c.restore();
   }
@@ -918,7 +957,7 @@ export class Renderer {
   /** Draws tile contents (doors, stairs, items, enemies) on their own layer,
    * multiplies a softened copy of the darkness over just their pixels, then
    * lays them on the scene: they stay a little brighter than the stone. */
-  drawContentsDarkened(dark: HTMLCanvasElement, viewportSize: number, dpr: number, drawContents: () => void) {
+  drawDarkened(dark: HTMLCanvasElement, viewportSize: number, dpr: number, amount: number, drawContents: () => void) {
     const main = this.ctx, w = main.canvas.width, h = main.canvas.height;
     const ensure = (cv: HTMLCanvasElement | null) => {
       const c = cv ?? document.createElement("canvas");
@@ -948,7 +987,7 @@ export class Renderer {
     mc.drawImage(this.contentsCanvas, 0, 0);
     cc.setTransform(1, 0, 0, 1, 0, 0);
     cc.globalCompositeOperation = "multiply";
-    cc.globalAlpha = LIGHTING_CONFIG.objectGlow.spriteDarkness;
+    cc.globalAlpha = amount;
     cc.drawImage(dark, 0, 0, viewportSize, viewportSize, 0, 0, w, h);
     cc.globalCompositeOperation = "destination-in";
     cc.globalAlpha = 1;
@@ -995,8 +1034,10 @@ export class Renderer {
       cv.width = cv.height = 64;
       const ctx = cv.getContext("2d")!;
       const gr = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+      // Concentrated core, quick falloff: neighbouring glows stay distinct.
       gr.addColorStop(0, `rgba(${key}, 1)`);
-      gr.addColorStop(0.4, `rgba(${key}, 0.45)`);
+      gr.addColorStop(0.3, `rgba(${key}, 0.42)`);
+      gr.addColorStop(0.65, `rgba(${key}, 0.1)`);
       gr.addColorStop(1, `rgba(${key}, 0)`);
       ctx.fillStyle = gr;
       ctx.fillRect(0, 0, 64, 64);
@@ -1033,11 +1074,13 @@ export class Renderer {
     for (const o of sources) {
       const sprite = this.glowSprite(o.rgb);
       const cx = (o.x - this.left + 0.5) * s, cy = (n - 0.5 - (o.y - this.bottom)) * s;
-      const r = o.radius * s, rw = r * og.wallRadiusScale;
+      const r = o.radius * s, rw = r * og.wallRadiusScale, rwx = rw * og.wallWiden;
       floor.globalAlpha = Math.min(1, o.strength);
       floor.drawImage(sprite, cx - r, cy - r, r * 2, r * 2);
+      // Wider than tall and nudged up: side and upper walls catch the most.
+      const wy = cy - og.wallLift * s;
       wall.globalAlpha = Math.min(1, o.strength * og.wallBoost);
-      wall.drawImage(sprite, cx - rw, cy - rw, rw * 2, rw * 2);
+      wall.drawImage(sprite, cx - rwx, wy - rw, rwx * 2, rw * 2);
     }
     floor.globalAlpha = 1;
     wall.globalAlpha = 1;

@@ -118,7 +118,7 @@ export class Game {
   loadMode() {
     const slice = this.save[this.mode];
     if (!slice.run) {
-      this.newRun();
+      this.newRun(true);
     } else if (slice.run.outside) {
       this.run = slice.run;
       this.world = new OutsideWorld(this.run.seed, this.mode);
