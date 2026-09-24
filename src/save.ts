@@ -3,6 +3,7 @@ import type { ModeSave, Run, Save } from "./entities.ts";
 import { emptyMaterials, MATERIAL_IDS, type MaterialId } from "./materials.ts";
 import { EQUIPMENT_SLOTS, type CraftedEquipment, type EquipmentSlot } from "./equipment.ts";
 import { CONSUMABLES, type ConsumableId } from "./crafting.ts";
+import { defaultDefendSave, DEFEND_WIDTH, DEFEND_HEIGHT, isBuildable, type DefendSave } from "./defend.ts";
 export function defaults(): Save {
   return {
     version: 3,
@@ -33,6 +34,7 @@ export function defaults(): Save {
     equipmentInventory: [],
     equipped: {},
     consumables: Object.fromEntries(CONSUMABLES.map((c) => [c.id, 0])) as Save["consumables"],
+    defend: defaultDefendSave(),
   };
 }
 const finite = (n: unknown, max = 1e9) =>
@@ -162,6 +164,33 @@ function decodeEquipped(s: any, inventory: CraftedEquipment[]): Partial<Record<E
     }
   return equipped;
 }
+const DEFEND_TILE_KINDS = ["empty", "keep", "wall", "barracks"];
+function decodeDefend(s: any): DefendSave {
+  const d = defaultDefendSave();
+  if (
+    Array.isArray(s?.tiles) &&
+    s.tiles.length === DEFEND_HEIGHT &&
+    s.tiles.every(
+      (row: any) =>
+        Array.isArray(row) &&
+        row.length === DEFEND_WIDTH &&
+        row.every((kind: any) => DEFEND_TILE_KINDS.includes(kind)),
+    ) &&
+    Number.isInteger(s?.keep?.x) &&
+    Number.isInteger(s?.keep?.y) &&
+    isBuildable(s.keep.x, s.keep.y) &&
+    s.tiles[s.keep.y][s.keep.x] === "keep" &&
+    finite(s.keepHp, s.keepMaxHp ?? 1e9) &&
+    finite(s.keepMaxHp)
+  ) {
+    d.tiles = s.tiles;
+    d.keep = { x: s.keep.x, y: s.keep.y };
+    d.keepHp = s.keepHp;
+    d.keepMaxHp = s.keepMaxHp;
+    d.lost = s.lost === true;
+  }
+  return d;
+}
 function decodeConsumables(s: any): Record<ConsumableId, number> {
   const consumables = Object.fromEntries(CONSUMABLES.map((c) => [c.id, 0])) as Record<ConsumableId, number>;
   if (s && typeof s === "object")
@@ -262,6 +291,7 @@ export function decode(raw: string | null): Save {
       if (d.delve.run || d.delve.best || d.delve.essence || UPGRADES.some(u => u.currency === "essence" && d.upgrades[u.id])) d.upgrades.delve = 1;
       if (["quality", "yellow", "blue", "red"].some(id => s.upgrades[id] > 0)) d.upgrades.legacy = 1;
     }
+    d.defend = decodeDefend(s?.defend);
   } catch {}
   return d;
 }

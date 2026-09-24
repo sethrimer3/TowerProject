@@ -9,6 +9,17 @@ import { chooseStep } from "./automation.ts";
 import { towerFloorReport } from "./tower/index.ts";
 import { predict } from "./combat.ts";
 import {
+  DEFEND_WIDTH,
+  DEFEND_HEIGHT,
+  isBuildable,
+  fromDefendSave,
+  toDefendSave,
+  placeBuilding,
+  removeBuilding,
+  moveKeep,
+  type DefendTileKind,
+} from "./defend.ts";
+import {
   UPGRADES,
   cost,
   levelForXp,
@@ -127,6 +138,8 @@ function fadeInFromBlack() {
 let selectedTree: TreeId = "inspiration";
 let selectedSkill: UpgradeId = "shardHp";
 let treeTooltipVisible = false;
+type DefendTool = "wall" | "barracks" | "move-keep" | "remove";
+let defendTool: DefendTool = "wall";
 const treeViews: Partial<Record<TreeId, { x: number; y: number; scale: number }>> = {};
 function getTreeView(id: TreeId) {
   return treeViews[id] ?? (treeViews[id] = { x: 0, y: 0, scale: 1 });
@@ -677,6 +690,7 @@ function setupTreeViewport(treeId: TreeId) {
   };
 }
 function renderPage() {
+  if (tab === "defend") renderDefendPage();
   if (tab === "gear") renderGearPage();
   if (tab === "upgrades") {
     const tree = TREES.find(t => t.id === selectedTree)!;
@@ -860,6 +874,53 @@ function craftingHtml(): string {
 function provisionsHtml(): string {
   const provisionSprite = (id: GoldItemId) => itemSprite(id === "heal" ? "potion_flat" : id === "edge" ? "upgrade_attack" : "upgrade_defense");
   return `<p class="hint">Spend Gold earned in the tower on provisions that apply next run. ${uiSprite("gold", "stat-sprite")} ${game.save.gold} Gold.</p>${GOLD_SHOP.map((item) => `<article class="card"><div class="item-icon">${provisionSprite(item.id)}</div><div><small>${game.save.provisions[item.id] ? `OWNED × ${game.save.provisions[item.id]}` : "APPLIES NEXT RUN"}</small><h3>${item.name}</h3><p>${item.description}</p></div><button data-gold="${item.id}" ${game.save.gold < item.cost ? "disabled" : ""}>Buy · ${uiSprite("gold", "stat-sprite")} ${item.cost}</button></article>`).join("")}`;
+}
+const DEFEND_TOOLS: { id: DefendTool; label: string; kind?: Exclude<DefendTileKind, "empty" | "keep"> }[] = [
+  { id: "wall", label: "Wall", kind: "wall" },
+  { id: "barracks", label: "Barracks", kind: "barracks" },
+  { id: "move-keep", label: "Move keep" },
+  { id: "remove", label: "Clear" },
+];
+function renderDefendPage() {
+  const d = game.save.defend;
+  const tiles = Array.from({ length: DEFEND_HEIGHT }, (_, y) =>
+    Array.from({ length: DEFEND_WIDTH }, (_, x) => {
+      const kind = d.tiles[y][x];
+      const buildable = isBuildable(x, y);
+      return `<button class="defend-tile ${kind} ${buildable ? "" : "locked"}" data-defend-x="${x}" data-defend-y="${y}" aria-label="${kind === "keep" ? "Keep" : kind === "empty" ? (buildable ? "Empty plot" : "Approach lane") : kind}"></button>`;
+    }).join(""),
+  ).join("");
+  el("defend").innerHTML = `<div class="page-title"><small>HOLD THE LINE</small><h2>Defend</h2><p>Lay out your city, keep the keep alive.</p></div>
+    <div class="defend-hud"><span>Keep HP <b id="defend-hp">${d.keepHp}</b> / ${d.keepMaxHp}</span>${d.lost ? `<span class="defend-lost">THE KEEP HAS FALLEN</span>` : ""}</div>
+    <div class="defend-tools" role="group" aria-label="Building tools">${DEFEND_TOOLS.map((t) => `<button data-defend-tool="${t.id}" class="${t.id === defendTool ? "selected" : ""}" ${d.lost ? "disabled" : ""}>${t.label}</button>`).join("")}</div>
+    <div class="defend-grid" style="grid-template-columns:repeat(${DEFEND_WIDTH},1fr)">${tiles}</div>
+    <p class="hint">The top row is the approach lane — nothing can be built there. The keep can be relocated but never removed; if it falls, the defense is lost.</p>`;
+  document.querySelectorAll<HTMLButtonElement>("[data-defend-tool]").forEach((b) => {
+    b.onclick = () => {
+      defendTool = b.dataset.defendTool as DefendTool;
+      renderDefendPage();
+    };
+  });
+  document.querySelectorAll<HTMLButtonElement>("[data-defend-x]").forEach((b) => {
+    b.onclick = () => {
+      if (game.save.defend.lost) return;
+      const x = Number(b.dataset.defendX);
+      const y = Number(b.dataset.defendY);
+      const state = fromDefendSave(game.save.defend);
+      const tool = DEFEND_TOOLS.find((t) => t.id === defendTool)!;
+      const changed =
+        defendTool === "move-keep"
+          ? moveKeep(state, x, y)
+          : defendTool === "remove"
+            ? removeBuilding(state, x, y)
+            : placeBuilding(state, x, y, tool.kind!);
+      if (changed) {
+        game.save.defend = toDefendSave(state);
+        save();
+        renderDefendPage();
+      }
+    };
+  });
 }
 function renderGearPage() {
   const body =

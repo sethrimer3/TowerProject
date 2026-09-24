@@ -84,15 +84,19 @@ for (const width of [390, 320]) {
   assert.equal(overflow, false, `All 6 tabs should not overflow at ${width}px`);
 }
 
-// 4. Click DEFEND tab: page should be blank
+// 4. Click DEFEND tab: the city grid should render
 await page.locator('[data-tab="defend"]').click();
 const defendSelected = await page.locator('[data-tab="defend"]').evaluate((el) => el.classList.contains("selected"));
 assert.equal(defendSelected, true, "DEFEND tab should be selected");
 
 const defendSection = page.locator("#defend");
 assert.equal(await defendSection.isVisible(), true, "DEFEND page section should be active/visible");
-const defendText = (await defendSection.innerText()).trim();
-assert.equal(defendText, "", "DEFEND tab should be blank for now");
+const tileCount = await page.locator(".defend-tile").count();
+assert.equal(tileCount, 9 * 13, "DEFEND grid should render 9x13 tiles");
+const keepCount = await page.locator(".defend-tile.keep").count();
+assert.equal(keepCount, 1, "DEFEND grid should have exactly one keep tile");
+const topRowLocked = await page.locator('.defend-tile.locked[data-defend-y="0"]').count();
+assert.equal(topRowLocked, 9, "Top row should be locked in the DEFEND grid");
 
 const statsVisible = await page.locator("#stats").isVisible();
 assert.equal(statsVisible, false, "Stats section should be hidden on DEFEND tab");

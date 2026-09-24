@@ -1180,3 +1180,54 @@ nav button > span img { display: block; width: 42px; height: 42px; max-width: 10
 #log img { width: 22px; height: 22px; margin-right: 4px; }
 .ascent > span img { width: 24px; height: 24px; }
 .dpad button img { display: block; width: 22px; height: 22px; margin: auto; }
+.defend-hud {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: #b9b5aa;
+  margin-bottom: 10px;
+}
+.defend-lost {
+  color: #d9635a;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+.defend-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.defend-tools button {
+  padding: 6px 10px;
+  font-size: 12px;
+}
+.defend-tools button.selected {
+  outline: 2px solid #c9a24b;
+}
+.defend-grid {
+  display: grid;
+  gap: 2px;
+  max-width: 420px;
+  margin: 0 auto;
+}
+.defend-tile {
+  aspect-ratio: 1;
+  padding: 0;
+  border: 1px solid #3a3a42;
+  background: #23232b;
+}
+.defend-tile.locked {
+  background: #17171c;
+  cursor: not-allowed;
+}
+.defend-tile.wall {
+  background: #6b6b76;
+}
+.defend-tile.barracks {
+  background: #7a5230;
+}
+.defend-tile.keep {
+  background: #c9a24b;
+}
