@@ -9,7 +9,7 @@ import { area1FloorSprite, drawArea1Door, drawArea1Item } from "./area1-tileset.
 import { drawThemedTile } from "./themed-tilesets.ts";
 import { bakeTorchRelief, torchReaches, type BakedRelief } from "./floor-relief.ts";
 import { bakeTorchLight, lightFalloff, type BakedLight } from "./torch-light.ts";
-import { doorColor } from "./doors.ts";
+import { doorColor, doorId } from "./doors.ts";
 import { drawEnemySprite } from "./enemy-sprites.ts";
 import { drawGameSprite, drawGameSpriteFrame, gameSprite, torchAnimationFrame, TORCH_FRAME_COUNT } from "./game-sprites.ts";
 
@@ -17,7 +17,7 @@ import { drawGameSprite, drawGameSpriteFrame, gameSprite, torchAnimationFrame, T
 const SHADOW_CASTERS = new Set<Tile["kind"]>(["key", "potion", "attack", "defense", "reward", "treasure", "enemy"]);
 const GLOW_ITEMS = new Set<Tile["kind"]>(["key", "potion", "attack", "defense", "reward", "treasure"]);
 /** A glowing object this frame: tile position, color, reach (tiles), and strength. */
-type GlowSource = { x: number; y: number; rgb: readonly number[]; radius: number; strength: number };
+type GlowSource = { x: number; y: number; rgb: readonly number[]; radius: number; strength: number; door?: boolean };
 const hexRgb = (hex: string) => {
   const h = hex.replace("#", "");
   const full = h.length === 3 ? [...h].map((c) => c + c).join("") : h.slice(0, 6);
@@ -103,6 +103,7 @@ export class Renderer {
   bakeBudget = 0;
   shadowCanvas: HTMLCanvasElement | null = null;
   darkCanvas: HTMLCanvasElement | null = null;
+  torchGlowCanvas: HTMLCanvasElement | null = null;
   contentsCanvas: HTMLCanvasElement | null = null;
   contentsMaskCanvas: HTMLCanvasElement | null = null;
   glowCanvas: HTMLCanvasElement | null = null;
@@ -235,6 +236,7 @@ export class Renderer {
       c.restore();
       this.drawObjectGlows(box.width);
       this.drawContentsDarkened(dark, box.width, dpr, () => eachTile(1));
+      this.drawDoorWash();
     } else eachTile(1);
     if (g.run.outside) {
       c.save();
@@ -779,18 +781,40 @@ export class Renderer {
     lm.globalCompositeOperation = "source-over";
     lm.globalAlpha = 1;
 
-    // 5. ...then soft haze and warm candle glow are added on top.
-    if (atm.torchHazeStrength > 0) {
-      for (const t of torches) this.drawTorchHaze(lm, t, now, reduceMotion);
-    }
-    // The warm glow eases off a little as the Brightness setting goes up.
-    const glowScale = 1 - glow.brightDim * (1 - this.darkness);
-    for (const t of torches) this.drawTorchLight(lm, t, now, reduceMotion, "lighter", glow.strength * glowScale * t.baseIntensity);
     lm.globalCompositeOperation = "source-over";
     lm.globalAlpha = 1;
 
-    // 6. Composite the lightmap onto the main canvas
+    // 5. Composite the darkness onto the main canvas.
     mainCtx.drawImage(this.lightmapCanvas!, 0, 0);
+
+    // 6. Warm haze and candle glow go on their own layer, blended as light:
+    // soft-light warms and brightens while keeping dark grout dark, and a
+    // little additive bloom adds glow near the flame. (Laying the glow over
+    // the scene with normal alpha, as before, flattened contrast into fog.)
+    this.torchGlowCanvas ??= document.createElement("canvas");
+    const gcv = this.torchGlowCanvas;
+    if (gcv.width !== viewportSize || gcv.height !== viewportSize) gcv.width = gcv.height = viewportSize;
+    const gl = gcv.getContext("2d");
+    if (!gl || !torches.length) return;
+    gl.globalCompositeOperation = "source-over";
+    gl.globalAlpha = 1;
+    gl.clearRect(0, 0, viewportSize, viewportSize);
+    if (atm.torchHazeStrength > 0) {
+      for (const t of torches) this.drawTorchHaze(gl, t, now, reduceMotion);
+    }
+    // The warm glow eases off a little as the Brightness setting goes up.
+    const glowScale = 1 - glow.brightDim * (1 - this.darkness);
+    for (const t of torches) this.drawTorchLight(gl, t, now, reduceMotion, "lighter", glow.strength * glowScale * t.baseIntensity);
+    gl.globalCompositeOperation = "source-over";
+    gl.globalAlpha = 1;
+    mainCtx.save();
+    mainCtx.globalCompositeOperation = "soft-light";
+    mainCtx.globalAlpha = glow.softLight;
+    mainCtx.drawImage(gcv, 0, 0);
+    mainCtx.globalCompositeOperation = "lighter";
+    mainCtx.globalAlpha = glow.bloom;
+    mainCtx.drawImage(gcv, 0, 0);
+    mainCtx.restore();
   }
 
   /** 0 at the default brightness, 1 at the darkest setting (dungeon only). */
@@ -845,6 +869,22 @@ export class Renderer {
     c.globalCompositeOperation = "lighter";
     c.globalAlpha = Math.min(1, LIGHTING_CONFIG.objectGlow.darkStrength * this.darkness);
     c.drawImage(layer, 0, 0, viewportSize, viewportSize);
+    c.restore();
+  }
+
+  /** A faint wash of each door's glow color over the door sprite itself. */
+  drawDoorWash() {
+    const k = this.darkness, og = LIGHTING_CONFIG.objectGlow;
+    const doors = this.frameGlows.filter((o) => o.door);
+    if (!doors.length || k <= 0) return;
+    const c = this.ctx, s = this.size, n = this.density, r = 0.62 * s;
+    c.save();
+    c.globalCompositeOperation = "lighter";
+    c.globalAlpha = Math.min(1, og.door.onTop * k);
+    for (const o of doors) {
+      const cx = (o.x - this.left + 0.5) * s, cy = (n - 0.5 - (o.y - this.bottom)) * s;
+      c.drawImage(this.glowSprite(o.rgb), cx - r, cy - r, r * 2, r * 2);
+    }
     c.restore();
   }
 
@@ -907,7 +947,11 @@ export class Renderer {
         const breathe = reduceMotion ? 1 : 1 - og.pulse + og.pulse * Math.sin(now / 650 + x * 1.7 + y * 2.3);
         if (t.kind === "enemy") out.push({ x, y, rgb: og.enemy.color, radius: og.enemy.radius, strength: og.enemy.strength * breathe });
         else if (GLOW_ITEMS.has(t.kind)) out.push({ x, y, rgb: og.item.color, radius: og.item.radius, strength: og.item.strength * breathe });
-        else if (t.kind === "door") out.push({ x, y, rgb: hexRgb(doorColor(t)), radius: og.door.radius, strength: og.door.strength });
+        else if (t.kind === "door") {
+          const id = doorId(t);
+          const rgb = id === "heart" ? og.door.heart : id === "steel" ? og.door.steel : hexRgb(doorColor(t));
+          out.push({ x, y, rgb, radius: og.door.radius, strength: og.door.strength, door: true });
+        }
         else if (t.kind === "stairs" || t.kind === "stairsDown")
           out.push({ x, y, rgb: [150, 160, 200], radius: dk.heroHaloRadius * og.stairsRadiusScale, strength: dk.heroHaloAlpha * og.stairsAlphaScale });
       }

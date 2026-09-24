@@ -55,8 +55,14 @@ export const LIGHTING_CONFIG = {
     bouncePathScale: 1.25,
     /** Blur radius in tiles: softens occlusion edges into penumbras. */
     softness: 0.55,
-    /** Additive warm glow strength. */
+    /** Warm glow strength. The glow is blended as light (soft-light plus a
+     * little additive bloom), never laid over the scene like a veil, so the
+     * stone keeps its contrast instead of looking foggy. */
     strength: 0.75,
+    /** Soft-light share: warms and brightens while keeping dark grout dark. */
+    softLight: 1,
+    /** Additive share: a touch of emitted bloom near the flame. */
+    bloom: 0.3,
     /** How much of the ambient darkness the light removes at full brightness. */
     carve: 0.95,
     /** The warm glow is this much dimmer at the default brightness than at
@@ -85,13 +91,14 @@ export const LIGHTING_CONFIG = {
    * falloff; on wall tiles it is brighter but reaches only half as far,
    * so nearby stone catches a bright wash as if lit on its face. */
   objectGlow: {
-    enemy: { color: [235, 70, 60], radius: 1.5, strength: 0.5 },
-    item: { color: [255, 200, 90], radius: 1.3, strength: 0.45 },
-    /** Doors glow in their own lock color. */
-    door: { radius: 1.5, strength: 0.5 },
+    enemy: { color: [235, 70, 60], radius: 1.6, strength: 0.68 },
+    item: { color: [255, 200, 90], radius: 1.4, strength: 0.62 },
+    /** Doors glow in their lock color; heart doors magenta, steel doors grey.
+     * `onTop` is a faint wash of that color over the door sprite itself. */
+    door: { radius: 1.6, strength: 0.68, onTop: 0.16, heart: [235, 70, 215], steel: [175, 184, 196] },
     /** Stairs get a smaller version of the hero's cool halo. */
-    stairsRadiusScale: 0.55,
-    stairsAlphaScale: 0.85,
+    stairsRadiusScale: 0.6,
+    stairsAlphaScale: 1.15,
     /** Wall glow: brightness multiplier and radius fraction. */
     wallBoost: 1.5,
     wallRadiusScale: 0.5,
