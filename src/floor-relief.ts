@@ -175,6 +175,8 @@ export type BakedRelief = {
 export function bakeTorchRelief(
   t: Torch,
   floorSprite: (x: number, y: number) => HTMLImageElement | null | undefined,
+  /** Nudges the light sideways (tiles) without moving the baked region. */
+  offsetX = 0,
 ): BakedRelief | null | undefined {
   if (typeof document === "undefined") return null;
   const cfg = LIGHTING_CONFIG.relief;
@@ -193,7 +195,7 @@ export function bakeTorchRelief(
   let any = false;
   for (let y = bottom; y < top; y++)
     for (let x = left; x < left + tiles; x++) {
-      const w = reliefWeights(x, y, t);
+      const w = reliefWeights(x, y, { ...t, x: t.x + offsetX });
       if (!w || !torchReaches(t, x, y)) continue;
       const sprite = floorSprite(x, y);
       if (sprite === undefined) return undefined;

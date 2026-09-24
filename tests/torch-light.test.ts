@@ -83,3 +83,24 @@ test("torches pick room corners, keep clear of doors, and stay spaced out", () =
       assert.ok(Math.hypot(spots[i][0] - spots[j][0], spots[i][1] - spots[j][1]) >= TORCH_PLACEMENT.minSpacing);
   assert.deepEqual(chooseTorchSpots(cells, 1, 12, 1, 5, 7), spots, "placement is deterministic per seed");
 });
+
+test("a torch tucked in a corner keeps its brightest light on its own tile", () => {
+  const { isWall } = grid([
+    "#######",
+    "#.....#",
+    "#.....#",
+    "#.....#",
+    "#######",
+  ]);
+  const torch = { x: 1, y: 1, lightRadius: 5.5 };
+  const field = torchLightField({ ...torch, visibilityPolygon: computeVisibilityPolygon(torch, isWall) }, isWall);
+  let peak = 0, at = [0, 0];
+  for (let py = 0; py < field.rows; py++)
+    for (let px = 0; px < field.cols; px++) {
+      const v = field.values[py * field.cols + px];
+      if (v > peak) { peak = v; at = [field.left + (px + 0.5) / field.res, field.top - (py + 0.5) / field.res]; }
+    }
+  assert.equal(Math.floor(at[0]), torch.x, "peak x is on the torch tile");
+  assert.equal(Math.floor(at[1]), torch.y, "peak y is on the torch tile");
+  assert.ok(sample(field, 1.5, 1.5) > sample(field, 2.5, 2.5), "light is brighter on the torch tile than one tile into the room");
+});

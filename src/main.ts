@@ -34,6 +34,7 @@ import {
 import { canCraft, getSalvageReturns, isEquipped, CONSUMABLES, canCraftConsumable, type ConsumableId } from "./crafting.ts";
 import { doorColor, doorCost, doorDescription, doorName, doorRule, KEY_NAMES } from "./doors.ts";
 import { AREA1_ITEM_URLS } from "./area1-tileset.ts";
+import { metalBarSprite } from "./material-sprites.ts";
 
 type UiSprite = "tower" | "delve" | "gear" | "upgrades" | "settings" | "health" | "attack" | "defense" | "undo" | "automove" | "revive" | "log" | "arrow-up" | "arrow-down" | "arrow-left" | "arrow-right" | EquipmentSlot | "gold";
 const UI_ASSET_BASE = (import.meta as ImportMeta & { env?: { BASE_URL?: string } }).env?.BASE_URL ?? "/";
@@ -650,9 +651,9 @@ function craftingHtml(): string {
   const stats = calculateEquipmentStats(craftSlot, craftMetal, craftEnhancements);
   const ok = canCraft(game.save, craftSlot, craftMetal, craftEnhancements);
   const slotButtons = `<div class="tree-tabs slot-filter">${EQUIPMENT_SLOTS.map(s => `<button data-craft-slot="${s}" aria-pressed="${craftSlot === s}">${SLOT_ICONS[s]} ${SLOT_NAMES[s]}</button>`).join("")}</div>`;
-  const metalButtons = `<div class="tree-tabs slot-filter">${METALS.map(m => `<button data-craft-metal="${m.id}" aria-pressed="${craftMetal === m.id}">${m.name}</button>`).join("")}</div>`;
+  const metalButtons = `<div class="tree-tabs slot-filter">${METALS.map(m => `<button data-craft-metal="${m.id}" aria-pressed="${craftMetal === m.id}">${metalBarSprite(m.id)} ${m.name}</button>`).join("")}</div>`;
   const barsOwned = owned(metalDef.materialId), commonOwned = owned(recipe.commonMaterial);
-  const recipeLine = `<p class="hint">Recipe: <b class="${barsOwned >= recipe.bars ? "safe" : "danger"}">${recipe.bars} ${materialDef(metalDef.materialId).name}</b> (${barsOwned} owned) + <b class="${commonOwned >= recipe.commonAmount ? "safe" : "danger"}">${recipe.commonAmount} ${materialDef(recipe.commonMaterial).name}</b> (${commonOwned} owned)</p>`;
+  const recipeLine = `<p class="hint">Recipe: ${metalBarSprite(metalDef.id, "stat-sprite")} <b class="${barsOwned >= recipe.bars ? "safe" : "danger"}">${recipe.bars} ${materialDef(metalDef.materialId).name}</b> (${barsOwned} owned) + <b class="${commonOwned >= recipe.commonAmount ? "safe" : "danger"}">${recipe.commonAmount} ${materialDef(recipe.commonMaterial).name}</b> (${commonOwned} owned)</p>`;
   const stepper = (id: MaterialId, label: string, cap: number, usedInCategory: number) => {
     const qty = craftEnhancements.find(s => s.id === id)?.quantity ?? 0;
     const atCap = usedInCategory >= cap && qty === 0;

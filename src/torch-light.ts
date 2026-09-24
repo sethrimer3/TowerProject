@@ -119,10 +119,13 @@ export function torchLightField(
   };
 
   const values = new Float32Array(cols * rows);
+  const floor = new Float32Array(cols * rows);
   for (let py = 0; py < rows; py++) {
     const wy = top - (py + 0.5) / res;
     for (let px = 0; px < cols; px++) {
       const wx = left + (px + 0.5) / res;
+      const ti = Math.floor(wx) - left, tj = Math.floor(wy) - bottom;
+      if (!wall[tj * n + ti]) floor[py * cols + px] = 1;
       const d = Math.hypot(wx - ox, wy - oy);
       if (d >= radius) continue;
       const direct = poly.length >= 3 && insidePolygon(wx, wy, poly) ? lightFalloff(d, radius) : 0;
@@ -130,7 +133,16 @@ export function torchLightField(
       values[py * cols + px] = Math.max(direct, indirect);
     }
   }
-  return { values: blur(values, cols, rows, Math.round(res * cfg.softness)), cols, rows, res, left, top, tiles };
+  // Wall-aware blur: floor samples average only with other floor samples,
+  // so a torch tucked into a corner keeps its bright spot on its own tile
+  // instead of being dragged into the room by the dark walls beside it.
+  // Wall samples keep the plain blur, giving their faces a soft rim of light.
+  const radiusPx = Math.round(res * cfg.softness);
+  const lit = blur(values, cols, rows, radiusPx);
+  const coverage = blur(floor.slice(), cols, rows, radiusPx);
+  for (let i = 0; i < lit.length; i++)
+    if (floor[i] && coverage[i] > 1e-3) lit[i] = Math.min(1, lit[i] / coverage[i]);
+  return { values: lit, cols, rows, res, left, top, tiles };
 }
 
 const STOPS = LIGHTING_CONFIG.stops.map((s) => {

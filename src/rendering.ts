@@ -88,7 +88,8 @@ export class Renderer {
   frameWalls: [number, number][] = [];
   /** Baked per-torch glow, computed once since walls never move. */
   torchBakes = new WeakMap<Torch, BakedLight | null>();
-  reliefBakes = new WeakMap<Torch, BakedRelief | null>();
+  /** Each torch's relief baked with the light nudged left and right. */
+  reliefBakes = new WeakMap<Torch, { left: BakedRelief; right: BakedRelief } | null>();
   /** Torch bakes cost a few ms each; spread them over frames on room entry. */
   bakeBudget = 0;
   shadowCanvas: HTMLCanvasElement | null = null;
@@ -800,6 +801,7 @@ export class Renderer {
     const g = this.game;
     if (!(g.mode === "tower" && g.run.height >= 0 && g.run.height < 10)) return;
     const c = this.ctx, reduceMotion = g.save.settings.reduceMotion;
+    const cfg = LIGHTING_CONFIG.relief;
     const floorSprite = (x: number, y: number) =>
       g.world.tile(x, y)?.kind === "wall" ? null : area1FloorSprite(x, y, g.run.seed) ?? undefined;
     c.save();
@@ -808,19 +810,30 @@ export class Renderer {
       let bake = this.reliefBakes.get(t);
       if (bake === undefined) {
         if (this.bakeBudget <= 0) continue;
-        bake = bakeTorchRelief(t, floorSprite);
-        if (bake === undefined) continue; // sprites still loading; retry next frame (cheap early exit)
+        const left = bakeTorchRelief(t, floorSprite, -cfg.swayOffset);
+        if (left === undefined) continue; // sprites still loading; retry next frame (cheap early exit)
+        const right = bakeTorchRelief(t, floorSprite, cfg.swayOffset);
+        if (right === undefined) continue;
         this.bakeBudget--;
+        bake = left && right ? { left, right } : null;
         this.reliefBakes.set(t, bake);
       }
       if (!bake) continue;
+      // Brightness follows the flicker, amplified so it reads on the floor;
+      // the two nudged bakes cross-fade with the flame's lean.
       const flicker = getTorchFlicker(t, now, reduceMotion);
-      const x0 = this.toScreenX(bake.left), y0 = this.toScreenY(bake.top), size = bake.tiles * this.size;
-      c.globalAlpha = Math.min(1, flicker);
-      c.globalCompositeOperation = "source-over";
-      c.drawImage(bake.shadow, x0, y0, size, size);
-      c.globalCompositeOperation = "lighter";
-      c.drawImage(bake.highlight, x0, y0, size, size);
+      const sway = getTorchSway(t, now, reduceMotion);
+      const alpha = Math.max(0, Math.min(1, cfg.flickerBase + (flicker - 1) * cfg.flickerGain));
+      const lean = Math.max(0, Math.min(1, 0.5 + sway.x / (2 * LIGHTING_CONFIG.flicker.swayX)));
+      for (const [b, share] of [[bake.left, 1 - lean], [bake.right, lean]] as const) {
+        if (share < 0.02) continue;
+        const x0 = this.toScreenX(b.left), y0 = this.toScreenY(b.top), size = b.tiles * this.size;
+        c.globalAlpha = alpha * share;
+        c.globalCompositeOperation = "source-over";
+        c.drawImage(b.shadow, x0, y0, size, size);
+        c.globalCompositeOperation = "lighter";
+        c.drawImage(b.highlight, x0, y0, size, size);
+      }
     }
     c.restore();
   }

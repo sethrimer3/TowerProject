@@ -91,6 +91,13 @@ export const LIGHTING_CONFIG = {
     /** Grazing factor (0-1) at which the second shadow pixel starts to appear. */
     longShadowStart: 0.85,
     longShadowStrength: 0.6,
+    /** Relief brightness at a steady flame, and how strongly it follows the
+     * torch flicker (the flicker itself is only a few percent). */
+    flickerBase: 0.82,
+    flickerGain: 3.2,
+    /** Relief is baked with the light nudged this far (tiles) to each side and
+     * cross-faded with the flame's sway, so highlights shimmer back and forth. */
+    swayOffset: 0.3,
     highlightColor: [255, 196, 128],
     shadowColor: [6, 4, 12],
   },
