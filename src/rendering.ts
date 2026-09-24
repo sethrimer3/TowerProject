@@ -48,10 +48,13 @@ export interface AtmosphereConfig {
 
 /** Thin outline colors that mark ground items/treasure as interactable and
  * enemies as hostile, independent of each sprite's own fill colors. */
-const DARK_GOLD = "#5c3f12";
-const DARK_RED = "#5c1620";
-const DARK_ORANGE = "#6b3510";
-const DARK_BLUE = "#122b5c";
+const DARK_GOLD = "#6e4c17";
+const DARK_RED = "#6e1c26";
+const DARK_ORANGE = "#7d3f14";
+const DARK_BLUE = "#1a3670";
+/** Outline thickness in sprite pixels (24x24 sprite space) — chunky pixel-art
+ * strokes rather than a thin 1px line. */
+const OUTLINE_THICKNESS = 2;
 
 export const ATMOSPHERE_CONFIG: AtmosphereConfig = {
   // Gentle cool purple-blue tone that provides moody contrast against amber torches
@@ -351,8 +354,10 @@ export class Renderer {
     c.restore();
   }
   /** Draws a sprite into an offscreen 24x24 buffer, then stamps a solid-color
-   * silhouette one pixel out in each direction before the real sprite on top
-   * — a thin outline that hugs the sprite's actual shape, not a bounding box. */
+   * silhouette outward along the four cardinal directions before the real
+   * sprite on top — a chunky pixel-art outline that hugs the sprite's actual
+   * shape. Diagonal shifts are deliberately omitted, so outer corners of the
+   * silhouette stay bare instead of rounding out into a diagonal fill. */
   withOutline(color: string, draw: (c: CanvasRenderingContext2D) => void) {
     const s = 24;
     if (!this.outlineCanvas) this.outlineCanvas = document.createElement("canvas");
@@ -370,7 +375,9 @@ export class Renderer {
     silCtx.globalCompositeOperation = "source-over";
     const c = this.ctx;
     c.save();
-    for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) c.drawImage(sil, dx, dy);
+    for (let n = 1; n <= OUTLINE_THICKNESS; n++) {
+      for (const [dx, dy] of [[-n, 0], [n, 0], [0, -n], [0, n]]) c.drawImage(sil, dx, dy);
+    }
     c.restore();
     c.drawImage(off, 0, 0);
   }
@@ -1036,8 +1043,8 @@ export class Renderer {
       const gr = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
       // Concentrated core, quick falloff: neighbouring glows stay distinct.
       gr.addColorStop(0, `rgba(${key}, 1)`);
-      gr.addColorStop(0.3, `rgba(${key}, 0.42)`);
-      gr.addColorStop(0.65, `rgba(${key}, 0.1)`);
+      gr.addColorStop(0.3, `rgba(${key}, 0.55)`);
+      gr.addColorStop(0.65, `rgba(${key}, 0.15)`);
       gr.addColorStop(1, `rgba(${key}, 0)`);
       ctx.fillStyle = gr;
       ctx.fillRect(0, 0, 64, 64);
@@ -1210,6 +1217,11 @@ export class Renderer {
     for (const caster of casters) {
       const light: Record<SpriteDir, number> = { e: 0, w: 0, n: 0, s: 0 };
       let lit = false;
+      // This caster's shadows are drawn to a small scratch area (pad tiles
+      // around it) first; shadows never reach further than that.
+      const pad = 2;
+      let scratch: CanvasRenderingContext2D | null = null;
+      let casterSil: HTMLCanvasElement | null = null;
       for (const t of torches) {
         // Shadows swing gently as the flame sways.
         const sway = getTorchSway(t, now, reduceMotion);
@@ -1236,16 +1248,32 @@ export class Renderer {
         if (!sil) continue;
         layer ??= this.ensureShadowLayer(viewportSize);
         if (!layer) return;
+        casterSil = sil;
+        scratch ??= this.shadowScratchFor(pad * 2 + 1);
+        if (!scratch) return;
         // Screen-space direction away from the torch (world y is up).
         const ux = dx / d, uy = -dy / d;
         const k = Math.min(cfg.maxLength, cfg.minLength + d * cfg.lengthPerTile) * flicker;
         // Sprite point (x, y) -> feet + (x-12)*perp + (22-y)*k*dir, feet at (12, 22).
         const px = -uy, py = ux;
-        layer.setTransform(1, 0, 0, 1, (caster.x - this.left) * s, (n - 1 - (caster.y - this.bottom)) * s);
-        layer.scale(s / 24, s / 24);
-        layer.transform(px, py, -k * ux, -k * uy, 12 - 12 * px + 22 * k * ux, 22 - 12 * py + 22 * k * uy);
-        layer.globalAlpha = Math.min(1, alpha);
-        layer.drawImage(sil, 0, 0);
+        scratch.setTransform(1, 0, 0, 1, pad * s, pad * s);
+        scratch.scale(s / 24, s / 24);
+        scratch.transform(px, py, -k * ux, -k * uy, 12 - 12 * px + 22 * k * ux, 22 - 12 * py + 22 * k * uy);
+        scratch.globalAlpha = Math.min(1, alpha);
+        scratch.drawImage(sil, 0, 0);
+      }
+      // A caster's shadows never cover its own sprite (they may still fall
+      // across other sprites): cut its silhouette out, then add them in.
+      if (scratch && layer && casterSil) {
+        scratch.setTransform(1, 0, 0, 1, pad * s, pad * s);
+        scratch.scale(s / 24, s / 24);
+        scratch.globalCompositeOperation = "destination-out";
+        scratch.globalAlpha = 1;
+        scratch.drawImage(casterSil, 0, 0);
+        scratch.globalCompositeOperation = "source-over";
+        layer.setTransform(1, 0, 0, 1, 0, 0);
+        layer.globalAlpha = 1;
+        layer.drawImage(this.shadowScratch!, (caster.x - this.left - pad) * s, (n - 1 - (caster.y - this.bottom) - pad) * s);
       }
       if (lit) this.frameLit.push({ x: caster.x, y: caster.y, key: caster.key, draw: caster.draw, hero: !!caster.hero, light });
     }
@@ -1338,6 +1366,20 @@ export class Renderer {
     ctx.fill();
     this.wallMask = { canvas, key, world };
     return canvas;
+  }
+  /** A cleared scratch canvas `tiles` tiles square, for one caster's shadows. */
+  shadowScratchFor(tiles: number) {
+    this.shadowScratch ??= document.createElement("canvas");
+    const cv = this.shadowScratch, size = Math.ceil(tiles * this.size);
+    if (cv.width !== size || cv.height !== size) cv.width = cv.height = size;
+    const ctx = cv.getContext("2d");
+    if (!ctx) return null;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.globalCompositeOperation = "source-over";
+    ctx.globalAlpha = 1;
+    ctx.clearRect(0, 0, size, size);
+    ctx.imageSmoothingEnabled = false;
+    return ctx;
   }
   ensureShadowLayer(viewportSize: number) {
     this.shadowCanvas ??= document.createElement("canvas");

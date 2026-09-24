@@ -91,11 +91,11 @@ export const LIGHTING_CONFIG = {
    * falloff; on wall tiles it is brighter but reaches only half as far,
    * so nearby stone catches a bright wash as if lit on its face. */
   objectGlow: {
-    enemy: { color: [235, 70, 60], radius: 1.2, strength: 0.75 },
-    item: { color: [255, 200, 90], radius: 1.1, strength: 0.7 },
+    enemy: { color: [235, 70, 60], radius: 1.2, strength: 1.05 },
+    item: { color: [255, 200, 90], radius: 1.1, strength: 1 },
     /** Doors glow in their lock color; heart doors magenta, steel doors grey.
      * `onTop` is a faint wash of that color over the door sprite itself. */
-    door: { radius: 1.2, strength: 0.75, onTop: 0.16, heart: [235, 70, 215], steel: [175, 184, 196] },
+    door: { radius: 1.2, strength: 1.05, onTop: 0.16, heart: [235, 70, 215], steel: [175, 184, 196] },
     /** Stairs get a smaller version of the hero's cool halo. */
     stairsRadiusScale: 0.6,
     stairsAlphaScale: 1.15,
