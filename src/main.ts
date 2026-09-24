@@ -70,7 +70,7 @@ const SLOT_ICONS: Record<EquipmentSlot, string> = {
   gloves: uiSprite("gloves"), necklace: uiSprite("necklace"), ring: uiSprite("ring"),
 };
 const app = document.querySelector<HTMLDivElement>("#app")!;
-app.innerHTML = `<main class="shell"><div id="currencies" class="currencies" hidden><div class="essence">✦ <b id="essence">0</b><small>COURAGE</small></div><div class="essence">◆ <b id="shards">0</b><small>INSPIRATION</small></div></div><section id="stats" class="stats" aria-label="Player statistics"><div class="portrait"><div class="portrait-top"><canvas id="portrait-sprite" width="24" height="24"></canvas><small>WAYFARER</small><small id="level">LV 0</small></div><div class="portrait-actions"><button id="log" aria-label="Adventure log">Log</button><button id="section-pick" aria-label="Choose starting floor" title="Choose starting floor" hidden>Floors</button></div></div><div class="vitals"><div><span class="heart">♥</span> HP <b id="hp"></b></div><div class="health-track"><i id="health"></i></div><div class="combat-stats"><span>⚔ <b id="attack"></b></span><span>⛨ <b id="defense"></b></span></div></div><div class="keys"><span class="yellow">⚿ <b id="yellow"></b></span><span class="blue">⚿ <b id="blue"></b></span><span class="red">⚿ <b id="red"></b></span></div><div class="height"><small id="height-label">HEIGHT</small><strong id="height">0</strong><div class="height-bests"><span>RUN <b id="best-run">0</b></span><span>ALL <b id="best-all">0</b></span><span id="best-reward" class="height-reward" hidden>+<b id="best-reward-val">0</b> <i id="best-reward-type">COURAGE</i></span></div></div><div class="actions"><button id="auto-settings" class="mini-action" aria-label="Automove settings" title="Automove settings"><span class="mini-icon">⚙</span><small>SETTINGS</small></button><button id="auto" class="mini-action" aria-label="Automove" title="Automove"><span class="mini-icon">✦</span><small id="auto-state">LOCKED</small></button><button id="undo" class="mini-action" aria-label="Undo" title="Undo"><span class="mini-icon">↺</span><small id="undo-state">0/1</small></button></div></section><section id="board" class="page active"><div class="tower-heading"><span class="rule"></span><span id="board-title">THE HOLLOW SPIRE</span><span class="rule"></span></div><div class="ascent"><span>↑</span><small id="board-subtitle">HIGHER DANGERS · GREATER REWARDS</small></div><div class="board-cell"><div class="board" id="board-frame"><canvas id="world" aria-label="Tower grid: tap a destination or swipe to move. Keyboard arrows and WASD also work."></canvas><span class="board-caption" id="density-label" hidden>20 × 20</span><div id="tile-highlight" class="tile-highlight" hidden></div><div id="inspect-box" class="inspect-box" hidden></div><div id="route-box" class="inspect-box route-box" hidden></div></div></div><div class="status" id="status-row"><span class="live-dot"></span><span id="message" aria-live="polite"></span></div><div class="controls"><div class="dpad" hidden><button data-move="-1,0" aria-label="Move left">←</button><div><button data-move="0,1" aria-label="Move up">↑</button><button data-move="0,-1" aria-label="Move down">↓</button></div><button data-move="1,0" aria-label="Move right">→</button></div></div><div id="inspect" class="inspection"></div></section><section id="defend" class="page"></section><section id="gear" class="page"></section><section id="upgrades" class="page"></section><section id="settings" class="page"></section><nav aria-label="Main navigation">${Object.entries(
+app.innerHTML = `<main class="shell"><div id="currencies" class="currencies" hidden><div class="essence">✦ <b id="essence">0</b><small>COURAGE</small></div><div class="essence">◆ <b id="shards">0</b><small>INSPIRATION</small></div></div><section id="stats" class="stats" aria-label="Player statistics"><div class="portrait"><div class="portrait-top"><canvas id="portrait-sprite" width="24" height="24"></canvas><small>WAYFARER</small><small id="level">LV 0</small></div><div class="portrait-actions"><button id="end-run" class="danger" aria-label="End current run">End Run</button><button id="log" aria-label="Adventure log">Log</button><button id="section-pick" aria-label="Choose starting floor" title="Choose starting floor">Floors</button></div></div><div class="vitals"><div class="hp-readout"><span class="heart">♥</span><span>HP</span><b id="hp"></b></div><div class="health-track"><i id="health"></i></div><div class="combat-stats"><span class="attack-stat">⚔ <b id="attack"></b></span><span class="secret-stat-slot" aria-hidden="true"></span><span class="defense-stat">⛨ <b id="defense"></b></span><span class="secret-stat-slot" aria-hidden="true"></span></div><div class="keys"><span class="yellow">⚿ <b id="yellow"></b></span><span class="blue">⚿ <b id="blue"></b></span><span class="red">⚿ <b id="red"></b></span><span id="skeleton-key" class="skeleton-key" hidden><span aria-hidden="true">☠</span> <b id="skeleton"></b></span></div></div><div class="height"><small id="height-label">HEIGHT</small><strong id="height">0</strong><div class="height-bests"><span>RUN <b id="best-run">0</b></span><span>ALL <b id="best-all">0</b></span><span id="best-reward" class="height-reward" hidden>+<b id="best-reward-val">0</b> <i id="best-reward-type">COURAGE</i></span></div></div><div class="actions"><button id="auto-settings" class="mini-action" aria-label="Automove settings" title="Automove settings"><span class="mini-icon">⚙</span><small>SETTINGS</small></button><button id="auto" class="mini-action" aria-label="Automove" title="Automove"><span class="mini-icon">✦</span><small id="auto-state">LOCKED</small></button><button id="undo" class="mini-action" aria-label="Undo" title="Undo"><span class="mini-icon">↺</span><small id="undo-state">0/1</small></button></div></section><section id="board" class="page active"><div class="tower-heading"><span class="rule"></span><span id="board-title">THE HOLLOW SPIRE</span><span class="rule"></span></div><div class="ascent"><span>↑</span><small id="board-subtitle">HIGHER DANGERS · GREATER REWARDS</small></div><div class="board-cell"><div class="board" id="board-frame"><canvas id="world" aria-label="Tower grid: tap a destination or swipe to move. Keyboard arrows and WASD also work."></canvas><span class="board-caption" id="density-label" hidden>20 × 20</span><div id="tile-highlight" class="tile-highlight" hidden></div><div id="inspect-box" class="inspect-box" hidden></div><div id="route-box" class="inspect-box route-box" hidden></div></div></div><div class="status" id="status-row"><span class="live-dot"></span><span id="message" aria-live="polite"></span></div><div class="controls"><div class="dpad" hidden><button data-move="-1,0" aria-label="Move left">←</button><div><button data-move="0,1" aria-label="Move up">↑</button><button data-move="0,-1" aria-label="Move down">↓</button></div><button data-move="1,0" aria-label="Move right">→</button></div></div><div id="inspect" class="inspection"></div></section><section id="defend" class="page"></section><section id="gear" class="page"></section><section id="upgrades" class="page"></section><section id="settings" class="page"></section><nav aria-label="Main navigation">${Object.entries(
   icons,
 )
   .map(
@@ -89,8 +89,8 @@ const replaceGlyph = (selector: string, sprite: string) => {
 replaceGlyph(".currencies .essence:first-child", uiSprite("automove"));
 replaceGlyph(".currencies .essence:last-child", uiSprite("upgrades"));
 replaceGlyph(".heart", uiSprite("health"));
-replaceGlyph(".combat-stats span:first-child", itemSprite("upgrade_attack"));
-replaceGlyph(".combat-stats span:last-child", itemSprite("upgrade_defense"));
+replaceGlyph(".combat-stats .attack-stat", itemSprite("upgrade_attack"));
+replaceGlyph(".combat-stats .defense-stat", itemSprite("upgrade_defense"));
 replaceGlyph(".keys .yellow", itemSprite("key_yellow"));
 replaceGlyph(".keys .blue", itemSprite("key_blue"));
 replaceGlyph(".keys .red", itemSprite("key_red"));
@@ -396,6 +396,9 @@ function update() {
   text("attack", p.attack);
   text("defense", p.defense);
   for (const k of ["yellow", "blue", "red"] as const) text(k, p.keys[k]);
+  const skeletonKeys = p.skeletonKeys ?? 0;
+  text("skeleton", skeletonKeys);
+  el("skeleton-key").hidden = skeletonKeys < 1;
   text("height-label", game.mode === "tower" ? "HEIGHT" : "DEPTH");
   const currentVal = game.run.outside ? 0 : (game.mode === "delve" ? p.y : game.run.height);
   const runBest = game.run.maxHeight ?? game.run.height;
@@ -413,7 +416,16 @@ function update() {
   } else {
     rewardEl.hidden = true;
   }
-  el("section-pick").hidden = game.mode !== "tower";
+  const towerActions = game.mode === "tower";
+  const logButton = el("log") as HTMLButtonElement;
+  const floorsButton = el("section-pick") as HTMLButtonElement;
+  logButton.textContent = towerActions ? "Log" : "Button 1";
+  logButton.setAttribute("aria-label", towerActions ? "Adventure log" : "Future Delve action 1");
+  floorsButton.textContent = towerActions ? "Floors" : "Button 2";
+  floorsButton.setAttribute("aria-label", towerActions ? "Choose starting floor" : "Future Delve action 2");
+  floorsButton.title = towerActions ? "Choose starting floor" : "Future Delve action 2";
+  logButton.classList.toggle("placeholder-action", !towerActions);
+  floorsButton.classList.toggle("placeholder-action", !towerActions);
   text("essence", game.save.delve.essence);
   text("shards", game.save.tower.shards);
   text("level", `LV ${levelForXp(game.save.xp)}`);
@@ -958,6 +970,7 @@ function renderGearPage() {
 }
 const modal = el("modal") as HTMLDialogElement;
 el("log").onclick = () => {
+  if (game.mode !== "tower") return;
   let page = 0;
   const renderLog = () => {
     const highest = game.save.tower.reached;
@@ -981,6 +994,7 @@ el("log").onclick = () => {
   modal.showModal();
 };
 el("section-pick").onclick = () => {
+  if (game.mode !== "tower") return;
   const renderSections = () => {
     const tower = game.save.tower,
       maxHp = tower.run?.player.maxHp ?? game.combatStats().maxHp,
@@ -1011,6 +1025,16 @@ el("section-pick").onclick = () => {
   renderSections();
   modal.showModal();
 };
+el("end-run").onclick = () =>
+  confirmAction(
+    "End this run?",
+    `End the current ${game.mode === "tower" ? "Tower run" : "Delve run"} at ${game.mode === "tower" ? "height" : "depth"} ${game.run.height}. Milestone rewards are already yours, and uncollected clear chests will be claimed.`,
+    "End run",
+    () => {
+      game.finish(game.mode === "tower" ? "Tower run ended" : "Delve run ended");
+      update();
+    },
+  );
 function confirmAction(
   title: string,
   body: string,
@@ -1153,7 +1177,7 @@ window.addEventListener("pagehide", save);
   const text = towerFloorReport(game.save.tower.run?.seed ?? game.run.seed, game.save.tower.run?.height ?? 0).text;
   console.log(text);
 };
-// `defendDebug(seconds, { rain, night }?)` fast-forwards a running DEFEND
+// `defendDebug(seconds, { rain }?)` fast-forwards a running DEFEND
 // battle, optionally forcing its weather.
 (window as unknown as { defendDebug: typeof defendPage.fastForward }).defendDebug = (s, w) => defendPage.fastForward(s, w);
 el("stats").toggleAttribute("hidden", !isBoard(tab));

@@ -166,6 +166,10 @@ export class DefendLighting {
   private dark: HTMLCanvasElement | null = null;
   private glow: HTMLCanvasElement | null = null;
   private flameSprite: HTMLCanvasElement | null = null;
+  private torchSprite: HTMLCanvasElement | null = null;
+  private dyn: HTMLCanvasElement | null = null;
+  private ground: HTMLCanvasElement | null = null;
+  private groundKey = "";
 
   /** Point the lighting at a (new) city. */
   setMap(map: CityMap) {
@@ -294,7 +298,16 @@ export class DefendLighting {
 
   /** Darkness carved by light, then warm glow blended as light — the main
    * game's recipe. `ambient` is the overlay colour and opacity. */
-  drawLight(c: CanvasRenderingContext2D, px: number, now: number, reduceMotion: boolean, intact: (id: number) => boolean, ambient: { color: string; alpha: number; glow: number }) {
+  drawLight(
+    c: CanvasRenderingContext2D,
+    px: number,
+    now: number,
+    reduceMotion: boolean,
+    intact: (id: number) => boolean,
+    ambient: { color: string; alpha: number; glow: number },
+    /** Hand torches carried by units; masked to open ground. */
+    carried: { torches: { x: number; y: number; id: number }[]; solid: Uint8Array; version: number },
+  ) {
     const W = c.canvas.width,
       H = c.canvas.height;
     this.dark = sized(this.dark, W, H);
@@ -335,6 +348,7 @@ export class DefendLighting {
         gl.drawImage(b.canvas, x, y, w2, h2);
       }
     }
+    this.drawCarried(dk, gl, px, now, reduceMotion, ambient.glow, carried);
     c.save();
     c.drawImage(this.dark, 0, 0);
     c.globalCompositeOperation = "soft-light";
@@ -343,6 +357,71 @@ export class DefendLighting {
     c.globalAlpha = LIGHTING_CONFIG.glow.bloom;
     c.drawImage(this.glow, 0, 0);
     c.restore();
+  }
+
+  /** Units' hand torches: small unoccluded pools that move with them, so
+   * they're drawn fresh each frame onto their own layer, clipped to open
+   * ground (a torch in the street never lights a roof), then carved into the
+   * darkness and added to the glow like the fixed lights. */
+  private drawCarried(
+    dk: CanvasRenderingContext2D,
+    gl: CanvasRenderingContext2D,
+    px: number,
+    now: number,
+    reduceMotion: boolean,
+    glow: number,
+    carried: { torches: { x: number; y: number; id: number }[]; solid: Uint8Array; version: number },
+  ) {
+    if (!carried.torches.length) return;
+    const W = dk.canvas.width,
+      H = dk.canvas.height;
+    this.torchSprite ??= makeTorchSprite();
+    this.dyn = sized(this.dyn, W, H);
+    const d = this.dyn.getContext("2d")!;
+    d.globalCompositeOperation = "source-over";
+    d.globalAlpha = 1;
+    d.clearRect(0, 0, W, H);
+    d.globalCompositeOperation = "lighter";
+    const R = CARRIED_RADIUS * px;
+    for (const t of carried.torches) {
+      const f = getTorchFlicker({ x: t.id * 11, y: t.id * 5 }, now, reduceMotion);
+      d.globalAlpha = Math.min(1, 0.8 * f);
+      const r = R * (0.95 + (f - 1) * 0.6);
+      d.drawImage(this.torchSprite, t.x * px - r, t.y * px - r, r * 2, r * 2);
+    }
+    d.globalAlpha = 1;
+    d.globalCompositeOperation = "destination-in";
+    d.drawImage(this.groundMask(carried.solid, carried.version, W, H, px), 0, 0);
+    dk.globalCompositeOperation = "destination-out";
+    dk.globalAlpha = 0.85;
+    dk.drawImage(this.dyn, 0, 0);
+    gl.globalCompositeOperation = "lighter";
+    gl.globalAlpha = Math.min(1, glow * 0.8);
+    gl.drawImage(this.dyn, 0, 0);
+  }
+
+  /** White wherever the ground is open (no standing building or wall). */
+  private groundMask(solid: Uint8Array, version: number, W: number, H: number, px: number) {
+    const key = `${version}:${W}x${H}`;
+    if (key !== this.groundKey || !this.ground) {
+      this.groundKey = key;
+      this.ground = sized(this.ground, W, H);
+      const g = this.ground.getContext("2d")!;
+      g.clearRect(0, 0, W, H);
+      g.fillStyle = "#fff";
+      for (let cy = 0; cy < CELLS_H; cy++) {
+        let run = -1;
+        for (let cx = 0; cx <= CELLS_W; cx++) {
+          const open = cx < CELLS_W && !solid[cellIndex(cx, cy)];
+          if (open && run < 0) run = cx;
+          if (!open && run >= 0) {
+            g.fillRect(Math.floor(run * px), Math.floor(cy * px), Math.ceil((cx - run) * px) + 1, Math.ceil(px) + 1);
+            run = -1;
+          }
+        }
+      }
+    }
+    return this.ground;
   }
 
   /** Gravel catching the torchlight: each stone gets a bright lip on the
@@ -416,6 +495,32 @@ function sized(cv: HTMLCanvasElement | null, w: number, h: number) {
     c.height = h;
   }
   return c;
+}
+
+/** Reach of a unit's hand torch, in cells. */
+const CARRIED_RADIUS = 2.4;
+
+/** A soft pool in the candle palette, for hand torches. */
+function makeTorchSprite() {
+  const n = 64;
+  const cv = document.createElement("canvas");
+  cv.width = cv.height = n;
+  const c = cv.getContext("2d")!;
+  const img = c.createImageData(n, n);
+  for (let y = 0; y < n; y++)
+    for (let x = 0; x < n; x++) {
+      const d = Math.hypot(x + 0.5 - n / 2, y + 0.5 - n / 2) / (n / 2);
+      const v = lightFalloff(d, 1);
+      if (v <= 0) continue;
+      const [r, g, b] = glowColor(v);
+      const k = (y * n + x) * 4;
+      img.data[k] = r;
+      img.data[k + 1] = g;
+      img.data[k + 2] = b;
+      img.data[k + 3] = v * 255;
+    }
+  c.putImageData(img, 0, 0);
+  return cv;
 }
 
 function makeFlameSprite() {

@@ -1,23 +1,40 @@
-/** Per-run weather for DEFEND battles: rain (with an overcast dimming) and
- * night. Both bring the city's lanterns and tower fires out. */
+/** Per-run weather for DEFEND battles. Every battle is under cloud, so the
+ * city's lanterns and tower fires are always lit; 30% of runs are also
+ * rainy for the whole run. Night isn't rolled: it falls over every 10th
+ * wave — the boss wave — fading in as it starts and out once it's beaten. */
 
-export type Weather = { rain: boolean; night: boolean };
+export type Weather = { rain: boolean };
 
-export const CLEAR: Weather = { rain: false, night: false };
-
-/** 30% rain, 10% night — rolled independently, so a rainy night can happen. */
 export function rollWeather(rand = Math.random): Weather {
-  return { rain: rand() < 0.3, night: rand() < 0.1 };
+  return { rain: rand() < 0.3 };
 }
 
-export const lightsOn = (w: Weather) => w.rain || w.night;
+/** Every 10th wave is a boss wave, fought at night. */
+export const isBossWave = (wave: number) => wave > 0 && wave % 10 === 0;
 
-/** Darkness overlay for the lighting pass: colour, opacity, and how strong
- * the warm glow is against it. */
-export function ambientFor(w: Weather) {
-  if (w.night && w.rain) return { color: "#070a18", alpha: 0.72, glow: 0.95 };
-  if (w.night) return { color: "#080c22", alpha: 0.66, glow: 0.9 };
-  return { color: "#1c2330", alpha: 0.34, glow: 0.6 };
+/** Seconds for night to fall (or lift). */
+export const NIGHT_FADE_SECONDS = 2.5;
+
+type Ambient = { rgb: [number, number, number]; alpha: number; glow: number };
+const CLOUDY: Ambient = { rgb: [28, 35, 48], alpha: 0.3, glow: 0.55 };
+const RAIN: Ambient = { rgb: [28, 35, 48], alpha: 0.36, glow: 0.62 };
+const NIGHT: Ambient = { rgb: [8, 12, 34], alpha: 0.66, glow: 0.9 };
+const NIGHT_RAIN: Ambient = { rgb: [7, 10, 24], alpha: 0.72, glow: 0.95 };
+
+/** Darkness overlay for the lighting pass — colour, opacity, and how strong
+ * the warm glow is against it — blended by how far night has fallen (0–1). */
+export function ambientFor(w: Weather, night: number) {
+  const a = w.rain ? RAIN : CLOUDY,
+    b = w.rain ? NIGHT_RAIN : NIGHT;
+  const t = Math.max(0, Math.min(1, night));
+  const mix = (x: number, y: number) => x + (y - x) * t;
+  const [r, g, bl] = a.rgb.map((v, i) => Math.round(mix(v, b.rgb[i])));
+  return { color: `rgb(${r},${g},${bl})`, alpha: mix(a.alpha, b.alpha), glow: mix(a.glow, b.glow) };
+}
+
+/** Name for the HUD. */
+export function skyLabel(w: Weather, night: number) {
+  return night > 0.5 ? (w.rain ? "Storm" : "Night") : w.rain ? "Rain" : "Cloudy";
 }
 
 type Drop = { x: number; y: number; v: number; len: number };
@@ -76,13 +93,13 @@ export class Rain {
     c.restore();
   }
 
-  /** The grey, slightly washed-out look of an overcast day. */
-  static overcast(c: CanvasRenderingContext2D) {
+  /** The grey, washed-out look of an overcast sky (stronger in rain). */
+  static overcast(c: CanvasRenderingContext2D, strength: number) {
     const W = c.canvas.width,
       H = c.canvas.height;
     c.save();
     c.globalCompositeOperation = "saturation";
-    c.fillStyle = "rgba(128,128,128,0.3)";
+    c.fillStyle = `rgba(128,128,128,${strength})`;
     c.fillRect(0, 0, W, H);
     c.restore();
   }

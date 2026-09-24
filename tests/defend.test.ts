@@ -250,18 +250,25 @@ test('city lights: tower fires with corner pillars, lanterns hung on houses', as
   assert.ok(roadStones(map).every((s) => map.type[cellIndex(Math.floor(s.x), Math.floor(s.y))] === CellType.ROAD));
 });
 
-test('weather: 30% rain, 10% night', async () => {
-  const { rollWeather, lightsOn } = await import('../src/defend/weather.ts');
-  let rain = 0, night = 0;
+test('weather: 30% rainy runs; night falls on every 10th (boss) wave', async () => {
+  const { rollWeather, isBossWave, ambientFor, skyLabel } = await import('../src/defend/weather.ts');
+  let rain = 0;
   const r = (await import('../src/defend/grid.ts')).rng(42);
-  for (let i = 0; i < 20000; i++) {
-    const w = rollWeather(r);
-    rain += +w.rain;
-    night += +w.night;
-  }
+  for (let i = 0; i < 20000; i++) rain += +rollWeather(r).rain;
   assert.ok(Math.abs(rain / 20000 - 0.3) < 0.02);
-  assert.ok(Math.abs(night / 20000 - 0.1) < 0.015);
-  assert.equal(lightsOn({ rain: false, night: false }), false);
+  assert.deepEqual([1, 9, 10, 11, 20, 30].map(isBossWave), [false, false, true, false, true, true]);
+  // Night deepens the darkness smoothly.
+  const day = ambientFor({ rain: false }, 0), dusk = ambientFor({ rain: false }, 0.5), night = ambientFor({ rain: false }, 1);
+  assert.ok(day.alpha < dusk.alpha && dusk.alpha < night.alpha);
+  assert.equal(skyLabel({ rain: true }, 1), 'Storm');
+  assert.equal(skyLabel({ rain: false }, 0), 'Cloudy');
+});
+
+test('boss waves bring warlords, one per ten waves', () => {
+  const r = () => 0.5;
+  assert.equal(buildWave(10, r).filter((k) => k === 'warlord').length, 1);
+  assert.equal(buildWave(20, r).filter((k) => k === 'warlord').length, 2);
+  assert.equal(buildWave(19, r).includes('warlord'), false);
 });
 
 test('struck buildings flash', () => {

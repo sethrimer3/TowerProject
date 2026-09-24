@@ -936,7 +936,7 @@ export class DefendSim {
 
 export function buildWave(wave: number, rand: () => number): EnemyKind[] {
   let budget = waveBudget(wave);
-  const kinds = Object.values(ENEMIES).filter((d) => d.firstWave <= wave);
+  const kinds = Object.values(ENEMIES).filter((d) => d.firstWave <= wave && !d.boss);
   const out: EnemyKind[] = [];
   while (budget > 0) {
     const pool = kinds.filter((d) => d.cost <= budget);
@@ -947,6 +947,9 @@ export function buildWave(wave: number, rand: () => number): EnemyKind[] {
     out.push(pick.kind);
     budget -= pick.cost;
   }
+  // Every 10th wave brings warlords — one per ten waves — at the back of
+  // the horde (the queue spawns from its end, so they go at the front).
+  if (wave > 0 && wave % 10 === 0) for (let n = 0; n < wave / 10; n++) out.unshift("warlord");
   return out;
 }
 

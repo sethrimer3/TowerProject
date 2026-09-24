@@ -91,10 +91,16 @@ holds it against endless waves. Code lives in `src/defend/`.
 
 ## Weather and light (`weather.ts`, `lighting.ts`)
 
-- Each run rolls its weather: 30% rain (with a grey, slightly desaturated
-  overcast) and 10% night, independently. Rain or night lights the city:
-  lanterns hung on house walls, braziers at the keep's corners, a lamp at
-  each barracks door, and fires inside archer and watch towers.
+- Battles are always fought under cloud (a light grey overcast), so the
+  city's lights are always lit: lanterns hung on house walls, braziers at
+  the keep's corners, a lamp at each barracks door, and fires inside archer
+  and watch towers. 30% of runs are also rainy for the whole run.
+- **Every 10th wave is a boss wave**, with one Warlord per ten waves (a huge,
+  crowned brute with its own health bar). Night fades in over ~2.5 s as the
+  boss wave starts and lifts once it's cleared; a rainy run becomes night
+  rain ("Storm").
+- Swordsmen and civilians carry hand torches: small flickering pools that
+  move with them, clipped to open ground so they never light a roof.
 - Lights reuse the main game's candle colours, flicker and sway. Each pool
   is baked once with occlusion, so walls and buildings cast shadows; an
   archer tower's fire ignores its own roof but is blocked by its four corner
@@ -124,5 +130,5 @@ holds it against endless waves. Code lives in `src/defend/`.
 A run in progress isn't saved; leaving the tab pauses it and reloading ends
 it. The layout, purchases, upgrades, bombs and best wave are saved.
 
-`defendDebug(seconds, { rain, night }?)` in the console fast-forwards a
-running battle, optionally forcing its weather.
+`defendDebug(seconds, { rain }?)` in the console fast-forwards a running
+battle, optionally forcing its weather.

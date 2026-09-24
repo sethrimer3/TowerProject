@@ -35,7 +35,7 @@ import {
 import { generateCity, type CityMap } from "./citygen.ts";
 import { DefendSim } from "./sim.ts";
 import { DefendRenderer, paintIcon, type Overlay } from "./render.ts";
-import { rollWeather, type Weather } from "./weather.ts";
+import { NIGHT_FADE_SECONDS, isBossWave, rollWeather, skyLabel, type Weather } from "./weather.ts";
 import { available, buyBomb, buyItem, buySpeed3, buyUpgrade, canAfford, type DefendSave, type Wallet } from "./progress.ts";
 
 export type DefendHost = {
@@ -83,6 +83,8 @@ export class DefendPage {
   private newRecord = 0;
   private built = false;
   private weather: Weather | null = null;
+  /** How far night has fallen (0–1); it follows boss waves. */
+  private night = 0;
   /** Abandon needs a second click within a few seconds. */
   private abandonArmed = 0;
   private settingsOpen = false;
@@ -117,6 +119,7 @@ export class DefendPage {
       this.sim.update(dt);
       this.handleEvents();
     }
+    this.fadeNight(dt);
     if (this.messageT > 0) {
       this.messageT -= dt;
       if (this.messageT <= 0) this.setMessage("");
@@ -133,9 +136,19 @@ export class DefendPage {
     for (let t = 0; t < seconds && this.phase === "sim"; t += 0.25) {
       this.sim.update(0.25 / this.sim.speed);
       this.handleEvents();
+      this.fadeNight(0.25);
     }
     this.draw();
     this.updateHud();
+  }
+
+  /** Night falls while a boss wave is being fought and lifts once it's won. */
+  private fadeNight(dt: number) {
+    const sim = this.sim;
+    const fighting = !!sim && this.phase !== "build" && isBossWave(sim.wave) && (sim.spawnQueue.length > 0 || sim.enemies.length > 0 || this.phase === "over");
+    const target = fighting ? 1 : 0;
+    const step = dt / NIGHT_FADE_SECONDS;
+    this.night = target > this.night ? Math.min(target, this.night + step) : Math.max(target, this.night - step);
   }
 
   /** Pause bookkeeping when the tab is hidden, so time doesn't jump. */
@@ -249,6 +262,7 @@ export class DefendPage {
         this.sim = null;
         this.map = null;
         this.weather = null;
+        this.night = 0;
         this.hideBanner();
         this.renderChrome();
       };
@@ -325,7 +339,7 @@ export class DefendPage {
     const sim = this.sim;
     const hp = Math.max(0, sim.keepHp()),
       max = sim.keepMaxHp();
-    const sky = this.weather ? (this.weather.night ? (this.weather.rain ? "Storm" : "Night") : this.weather.rain ? "Rain" : "") : "";
+    const sky = this.weather ? skyLabel(this.weather, this.night) : "";
     const html = `${sky ? `<span class="defend-sky">${sky}</span>` : ""}<span>Wave <b>${sim.wave}</b></span><span class="defend-best">Best <b>${best}</b></span><span class="defend-keep" title="Keep ${Math.ceil(hp)} / ${max}"><small>Keep</small><i><em style="width:${(hp / max) * 100}%"></em></i></span><span class="defend-foes">Foes <b>${sim.enemies.length + sim.spawnQueue.length}</b></span>`;
     if (el.innerHTML !== html) el.innerHTML = html;
   }
@@ -390,8 +404,9 @@ export class DefendPage {
     this.phase = "sim";
     this.newRecord = 0;
     this.weather = rollWeather();
+    this.night = 0;
     this.renderChrome();
-    const sky = this.weather.night && this.weather.rain ? "A stormy night falls. " : this.weather.night ? "Night falls over the city. " : this.weather.rain ? "Rain rolls in. " : "";
+    const sky = this.weather.rain ? "Rain rolls in. " : "";
     this.setMessage(`${sky}Here they come! Drag a bomb onto the field to thin the horde.`, 4);
   }
 
@@ -420,7 +435,8 @@ export class DefendPage {
           this.setMessage(`New record — wave ${ev.wave} survived!`, 3);
         } else this.setMessage(`Wave ${ev.wave} cleared.`, 2);
       } else if (ev.type === "waveStart") {
-        if (!this.message) this.setMessage(`Wave ${ev.wave}`, 1.5);
+        if (isBossWave(ev.wave)) this.setMessage(`Boss wave ${ev.wave}! Night falls as ${ev.wave > 10 ? `${ev.wave / 10} warlords approach` : "a warlord approaches"}…`, 4);
+        else if (!this.message) this.setMessage(`Wave ${ev.wave}`, 1.5);
       } else if (ev.type === "lost") this.endRun();
     }
   }
@@ -431,6 +447,7 @@ export class DefendPage {
     this.renderer.draw(map, this.sim, this.overlay(), {
       grid: this.phase === "build",
       weather: this.weather,
+      night: this.night,
       now: performance.now(),
       reduceMotion: this.host.reduceMotion(),
     });

@@ -146,7 +146,7 @@ h1 span {
 }
 .stats {
   display: grid;
-  grid-template-columns: 70px 1fr 55px 90px 60px;
+  grid-template-columns: 96px minmax(150px, 1fr) 90px 60px;
   border: 1px solid #4a4d52;
   border-top: 2px solid #6d6b60;
   background: linear-gradient(140deg, #1c2430, #10151e);
@@ -161,26 +161,40 @@ h1 span {
 .portrait {
   display: flex;
   flex-direction: column;
-  background: radial-gradient(ellipse, #46607c55, #121924);
+  gap: 5px;
+  padding: 6px;
+  background: #101721;
   border-right: 1px solid var(--line);
 }
 .portrait-top {
-  flex: 1;
+  min-height: 58px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  background: radial-gradient(ellipse, #46607c55, #121924);
+  border: 1px solid #36404f;
+  border-radius: 4px;
+  box-shadow: inset 0 0 0 1px #0a0e15;
 }
 .portrait-actions {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+  display: grid;
+  grid-template-rows: repeat(3, 1fr);
   gap: 3px;
-  padding: 0 6px 6px;
 }
 .portrait-actions button {
   width: 100%;
+  min-height: 25px;
+  padding: 3px 2px;
+  font-size: 7px;
+  letter-spacing: .45px;
+  text-transform: uppercase;
+}
+.portrait-actions .ui-sprite {
+  width: 12px;
+  height: 12px;
+  margin-right: 3px;
 }
 .portrait canvas {
   width: 43px;
@@ -197,11 +211,12 @@ h1 span {
   margin-top: 2px;
 }
 .vitals {
-  padding: 13px 14px;
+  padding: 10px 14px 8px;
   font-size: 11px;
   letter-spacing: 1px;
+  min-width: 0;
 }
-.vitals b {
+.hp-readout b {
   float: right;
   letter-spacing: 0;
   font-size: 12px;
@@ -211,36 +226,66 @@ h1 span {
   color: #d06e75;
   margin-right: 6px;
 }
+.hp-readout {
+  min-height: 18px;
+  padding: 2px 5px;
+  border: 2px solid #303a49;
+  border-radius: 2px;
+  background:
+    linear-gradient(135deg, transparent 4px, #151d28 0) top left,
+    linear-gradient(225deg, transparent 4px, #151d28 0) top right,
+    linear-gradient(45deg, transparent 4px, #151d28 0) bottom left,
+    linear-gradient(315deg, transparent 4px, #151d28 0) bottom right;
+  background-size: 51% 51%;
+  background-repeat: no-repeat;
+  box-shadow: inset 0 0 0 1px #0b1018;
+  image-rendering: pixelated;
+}
 .health-track {
-  height: 4px;
+  height: 6px;
   background: #482a33;
-  margin: 8px 0 10px;
-  border-radius: 3px;
+  margin: 6px 3px 8px;
+  border: 1px solid #111722;
+  border-radius: 0;
   overflow: hidden;
+  box-shadow: 0 0 0 1px #394252;
 }
 .health-track i {
   display: block;
-  background: linear-gradient(90deg, #974759, #dc8890);
+  background: repeating-linear-gradient(90deg, #974759 0 5px, #b95f6c 5px 10px, #dc8890 10px 15px);
   height: 100%;
 }
 .combat-stats {
-  display: flex;
-  gap: 20px;
+  display: grid;
+  grid-template-columns: minmax(40px, 1fr) 24px minmax(40px, 1fr) 24px;
+  gap: 7px;
   color: #97a9bf;
 }
 .combat-stats span {
-  min-width: 40px;
+  min-width: 0;
+}
+.secret-stat-slot {
+  display: block;
+  visibility: hidden;
 }
 .keys {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 4px;
-  font-size: 15px;
+  align-items: center;
+  gap: 13px;
+  margin-top: 7px;
+  min-height: 17px;
+  font-size: 13px;
 }
 .keys b {
   font-size: 11px;
-  margin-left: 8px;
+  margin-left: 3px;
+}
+.skeleton-key {
+  color: #d7d2c4;
+  filter: drop-shadow(0 0 2px #d7d2c455);
+}
+.skeleton-key[hidden] {
+  display: none;
 }
 .yellow {
   color: #eac16b;
@@ -785,11 +830,11 @@ dialog p {
     font-size: 7px;
   }
   .stats {
-    grid-template-columns: 50px 1fr 38px 54px 38px;
+    grid-template-columns: 68px minmax(128px, 1fr) 54px 38px;
     min-height: 82px;
   }
   .vitals {
-    padding: 12px 9px;
+    padding: 8px 7px 6px;
   }
   .portrait span {
     font-size: 36px;
@@ -804,13 +849,15 @@ dialog p {
     font-size: 28px;
   }
   .keys {
-    font-size: 13px;
+    gap: 7px;
+    font-size: 11px;
   }
   .keys b {
     margin-left: 4px;
   }
   .combat-stats {
-    gap: 12px;
+    grid-template-columns: minmax(34px, 1fr) 14px minmax(34px, 1fr) 14px;
+    gap: 4px;
   }
   .tower-heading {
     margin-top: 20px;

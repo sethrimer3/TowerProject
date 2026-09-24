@@ -6,7 +6,7 @@ import { CellType, type Building, type CityMap } from "./citygen.ts";
 import { ENEMIES, SOLDIER, CIVILIAN, watchRadius, type StructureKind } from "./catalog.ts";
 import { BUILDING_FLASH, center, type DefendSim } from "./sim.ts";
 import { DefendLighting } from "./lighting.ts";
-import { Rain, ambientFor, lightsOn, type Weather } from "./weather.ts";
+import { Rain, ambientFor, type Weather } from "./weather.ts";
 
 const ASSET_BASE = (import.meta as ImportMeta & { env?: { BASE_URL?: string } }).env?.BASE_URL ?? "/";
 const floorImages: HTMLImageElement[] = [];
@@ -58,6 +58,8 @@ export type DrawOptions = {
   /** Show the (dim, gold) tile grid — while the player is editing. */
   grid: boolean;
   weather: Weather | null;
+  /** How far night has fallen, 0–1 (boss waves). */
+  night: number;
   now: number;
   reduceMotion: boolean;
 };
@@ -161,8 +163,9 @@ export class DefendRenderer {
     ctx.setTransform(this.cam.s, 0, 0, this.cam.s, this.cam.x, this.cam.y);
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(this.layer, 0, 0);
+    // Battles are always under cloud, so the city's lights are always lit.
     const weather = sim ? opts.weather : null;
-    const lit = !!weather && lightsOn(weather);
+    const lit = !!weather;
     const intact = (id: number) => !sim || sim.intact(map.buildings[id]);
     if (sim) {
       const changed = sim.changed.splice(0);
@@ -175,16 +178,21 @@ export class DefendRenderer {
           ...sim.civilians.map((u) => ({ x: u.x, y: u.y, size: CIVILIAN.size })),
           ...sim.enemies.filter((e) => !ENEMIES[e.kind].flying).map((e) => ({ x: e.x, y: e.y, size: ENEMIES[e.kind].size })),
         ];
-        this.lighting.drawUnitShadows(ctx, px, units, weather!.night ? 1 : 0.8);
+        this.lighting.drawUnitShadows(ctx, px, units, 0.8 + 0.2 * opts.night);
       }
     }
-    if (weather?.rain) Rain.overcast(ctx);
-    if (lit) {
-      this.lighting.drawLight(ctx, px, opts.now, opts.reduceMotion, intact, ambientFor(weather!));
+    if (weather) Rain.overcast(ctx, weather.rain ? 0.3 : 0.18);
+    if (lit && sim) {
+      const torches = [...sim.soldiers, ...sim.civilians].map((u) => ({ x: u.x, y: u.y, id: u.id }));
+      this.lighting.drawLight(ctx, px, opts.now, opts.reduceMotion, intact, ambientFor(weather!, opts.night), {
+        torches,
+        solid: sim.solid,
+        version: sim.mapVersion,
+      });
       this.lighting.drawRelief(ctx, px, weather!.rain ? 0.85 : 0.65);
       this.lighting.drawFlames(ctx, px, opts.now, opts.reduceMotion, intact);
     }
-    if (sim) this.drawUnits(sim);
+    if (sim) this.drawUnits(sim, lit);
     if (opts.grid) this.drawGrid(overlay ? 0.2 : 0.11);
     if (overlay) this.drawOverlay(overlay);
     // Rain falls in screen space, in front of the camera.
@@ -295,7 +303,7 @@ export class DefendRenderer {
     }
     // Buildings.
     for (const b of map.buildings) this.paintBuilding(c, b, sim, solid);
-    // Lantern brackets on house walls (lit only in rain and at night).
+    // Lantern brackets on house walls (lit during battles).
     for (const l of this.lighting.lights) {
       if (l.kind !== "lantern" && l.kind !== "door") continue;
       if (sim && !sim.intact(map.buildings[l.owner])) continue;
@@ -440,7 +448,18 @@ export class DefendRenderer {
     }
   }
 
-  private drawUnits(sim: DefendSim) {
+  /** The flame of a unit's hand torch: a flickering pixel or two. */
+  private drawHandTorch(x: number, y: number, id: number, t: number) {
+    const c = this.ctx;
+    const s = Math.max(1, this.px * 0.14);
+    const f = Math.sin(t * 17 + id * 1.7) * 0.5 + 0.5;
+    c.fillStyle = "#5a3b1e";
+    c.fillRect(x * this.px - s / 2, y * this.px, s, s * 1.6);
+    c.fillStyle = f > 0.5 ? "#ffe6a8" : "#ffb35c";
+    c.fillRect(x * this.px - s / 2, y * this.px - s * (1 + f * 0.5), s, s * (1 + f * 0.5));
+  }
+
+  private drawUnits(sim: DefendSim, torches: boolean) {
     const c = this.ctx;
     const px = this.px;
     // Watch-tower radii, very faint.
@@ -458,6 +477,7 @@ export class DefendRenderer {
       const s = Math.max(2, CIVILIAN.size * px);
       c.fillStyle = u.flash > 0 ? "#fff" : CIVILIAN.color;
       c.fillRect(u.x * px - s / 2, u.y * px - s / 2, s, s);
+      if (torches) this.drawHandTorch(u.x + CIVILIAN.size * 0.6, u.y - CIVILIAN.size * 0.4, u.id, sim.time);
       if (u.state === "working" && Math.floor(sim.time * 6) % 2) {
         c.fillStyle = "#f2d27a";
         c.fillRect(u.x * px + s / 2, u.y * px - s, Math.max(1, s / 2), Math.max(1, s / 2));
@@ -470,6 +490,7 @@ export class DefendRenderer {
       c.fillRect(u.x * px - s / 2 - 1, u.y * px - s / 2 - 1, s + 2, s + 2);
       c.fillStyle = u.flash > 0 ? "#fff" : SOLDIER.color;
       c.fillRect(u.x * px - s / 2, u.y * px - s / 2, s, s);
+      if (torches) this.drawHandTorch(u.x + SOLDIER.size * 0.65, u.y - SOLDIER.size * 0.45, u.id, sim.time);
     }
     // Enemies: tiny squares, gold-outlined when marked.
     for (const e of sim.enemies) {
@@ -484,8 +505,24 @@ export class DefendRenderer {
         c.fillStyle = "rgba(0,0,0,0.35)";
         c.fillRect(x + px * 0.2, y + px * 0.35, s, s);
       }
+      if (def.boss) {
+        c.fillStyle = "#1a0606";
+        c.fillRect(x - 1, y - 1, s + 2, s + 2);
+      }
       c.fillStyle = e.flash > 0 ? "#fff" : def.color;
       c.fillRect(x, y, s, s);
+      if (def.boss) {
+        // Crown of spikes and a health bar, so the boss reads at a glance.
+        c.fillStyle = "#f2c94c";
+        const k = Math.max(1, s / 5);
+        for (let n = 0; n < 3; n++) c.fillRect(x + (n * (s - k)) / 2, y - k, k, k);
+        const bw = s * 1.6,
+          bh = Math.max(2, px * 0.18);
+        c.fillStyle = "rgba(0,0,0,0.75)";
+        c.fillRect(e.x * px - bw / 2, y - k - bh - 2, bw, bh);
+        c.fillStyle = "#d9635a";
+        c.fillRect(e.x * px - bw / 2, y - k - bh - 2, bw * Math.max(0, e.hp / e.maxHp), bh);
+      }
     }
     // Arrows.
     c.strokeStyle = "#eadcb2";

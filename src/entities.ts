@@ -55,6 +55,9 @@ export type Player = {
   attack: number;
   defense: number;
   keys: Record<KeyColor, number>;
+  /** Optional secret inventory counters stay absent from legacy saves until
+   * the corresponding item has actually been found. */
+  skeletonKeys?: number;
 };
 export type Run = {
   damaged?: boolean;
