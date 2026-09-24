@@ -671,6 +671,21 @@ select {
   background: #1b2533;
   color: #d8d6d0;
 }
+.range-setting {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.range-setting input[type="range"] {
+  width: 140px;
+  accent-color: var(--gold);
+}
+.range-setting output {
+  min-width: 2.5em;
+  text-align: right;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+}
 input[type="checkbox"] {
   width: 20px;
   height: 20px;

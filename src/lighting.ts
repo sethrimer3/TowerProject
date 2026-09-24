@@ -62,6 +62,20 @@ export const LIGHTING_CONFIG = {
     /** Flicker radius wobble relative to intensity flicker. */
     radiusFlicker: 0.6,
   },
+  /** Low "Brightness" settings: a cool multiply pass over the whole dungeon
+   * (walls included) that torchlight lifts back out in warm pools. Scaled by
+   * darkness = (100 - brightness) / 80, so 100 is the untouched default. */
+  darkness: {
+    /** Multiply color at the darkest setting: deep blue-black stone. */
+    color: [24, 24, 44],
+    /** How strongly torchlight cuts through the darkness. */
+    torchLift: 0.95,
+    /** A faint cool halo around the hero so the way ahead stays readable. */
+    heroHaloRadius: 2.6,
+    heroHaloAlpha: 0.42,
+    /** Extra vignette at the darkest setting. */
+    vignette: 0.35,
+  },
   /** Torch-cast shadows from items, enemies, and the player. */
   shadow: {
     /** Peak opacity of a shadow cast right next to a torch. */
@@ -93,8 +107,8 @@ export const LIGHTING_CONFIG = {
     longShadowStrength: 0.6,
     /** Relief brightness at a steady flame, and how strongly it follows the
      * torch flicker (the flicker itself is only a few percent). */
-    flickerBase: 0.82,
-    flickerGain: 3.2,
+    flickerBase: 0.78,
+    flickerGain: 4.6,
     /** Relief is baked with the light nudged this far (tiles) to each side and
      * cross-faded with the flame's sway, so highlights shimmer back and forth. */
     swayOffset: 0.3,

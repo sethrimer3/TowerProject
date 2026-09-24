@@ -93,6 +93,7 @@ export class Renderer {
   /** Torch bakes cost a few ms each; spread them over frames on room entry. */
   bakeBudget = 0;
   shadowCanvas: HTMLCanvasElement | null = null;
+  darkCanvas: HTMLCanvasElement | null = null;
   /** Opaque wall tiles for the current camera, used to mask darkness and
    * shadows off walls with a single blit. Rebuilt only when the view moves. */
   wallMask: { canvas: HTMLCanvasElement; key: string; world: unknown } | null = null;
@@ -214,6 +215,8 @@ export class Renderer {
       c.restore();
     } else {
       const torches = this.frameTorches;
+      // Darkness first so the flames themselves are never dimmed by it.
+      this.drawDarkness(box.width, torches, now);
       for (const t of torches) this.drawTorchSprite(t, now);
       // Render lighting overlay via offscreen lightmap
       this.drawDungeonLightmap(box.width, torches, now);
@@ -760,6 +763,51 @@ export class Renderer {
     mainCtx.drawImage(this.lightmapCanvas!, 0, 0);
   }
 
+  /** 0 at the default brightness, 1 at the darkest setting (dungeon only). */
+  get darkness() {
+    if (this.game.run.outside) return 0;
+    return Math.max(0, Math.min(1, (100 - (this.game.save.settings.brightness ?? 100)) / 80));
+  }
+
+  /** The "Brightness" setting's dark-delving pass. Everything already drawn
+   * (floor, walls, items, enemies) is multiplied by a cool, near-black tone,
+   * so it keeps its texture and hue instead of going flat grey. Torchlight is
+   * added into that same layer as warm light, so lit pools stay bright while
+   * unlit stone sinks away, and a faint halo keeps the hero's surroundings
+   * readable. One fill, one blit per torch, one multiply composite. */
+  drawDarkness(viewportSize: number, torches: Torch[], now: number) {
+    const k = this.darkness;
+    if (k <= 0 || typeof document === "undefined") return;
+    this.darkCanvas ??= document.createElement("canvas");
+    const cv = this.darkCanvas;
+    if (cv.width !== viewportSize || cv.height !== viewportSize) cv.width = cv.height = viewportSize;
+    const dc = cv.getContext("2d");
+    if (!dc) return;
+    const cfg = LIGHTING_CONFIG.darkness;
+    const mix = (i: number) => Math.round(255 + (cfg.color[i] - 255) * k);
+    dc.globalCompositeOperation = "source-over";
+    dc.globalAlpha = 1;
+    dc.fillStyle = `rgb(${mix(0)}, ${mix(1)}, ${mix(2)})`;
+    dc.fillRect(0, 0, viewportSize, viewportSize);
+    const reduceMotion = this.game.save.settings.reduceMotion;
+    for (const t of torches) this.drawTorchLight(dc, t, now, reduceMotion, "lighter", cfg.torchLift * k * t.baseIntensity);
+    const s = this.size, n = this.density;
+    const hx = (this.playerX - this.left + 0.5) * s, hy = (n - 0.5 - (this.playerY - this.bottom)) * s;
+    const r = cfg.heroHaloRadius * s;
+    const halo = dc.createRadialGradient(hx, hy, 0, hx, hy, r);
+    halo.addColorStop(0, `rgba(150, 160, 200, ${cfg.heroHaloAlpha * k})`);
+    halo.addColorStop(1, "rgba(150, 160, 200, 0)");
+    dc.globalCompositeOperation = "lighter";
+    dc.globalAlpha = 1;
+    dc.fillStyle = halo;
+    dc.fillRect(hx - r, hy - r, r * 2, r * 2);
+    const c = this.ctx;
+    c.save();
+    c.globalCompositeOperation = "multiply";
+    c.drawImage(cv, 0, 0);
+    c.restore();
+  }
+
   /** The torch's baked light field (see torch-light.ts), created on first use. */
   torchBake(t: Torch) {
     let bake = this.torchBakes.get(t);
@@ -989,7 +1037,9 @@ export class Renderer {
    * to subtly guide focus inward and add depth without obscuring readability. */
   drawVignette(viewportSize: number) {
     const atm = this.atmosphere;
-    if (atm.vignetteStrength <= 0) return;
+    // Darker brightness settings close the edges in further.
+    const strength = Math.min(1, atm.vignetteStrength + this.darkness * LIGHTING_CONFIG.darkness.vignette);
+    if (strength <= 0) return;
     const c = this.ctx,
       half = viewportSize / 2,
       maxRadius = half * Math.SQRT2,
@@ -997,8 +1047,8 @@ export class Renderer {
     c.save();
     const gr = c.createRadialGradient(half, half, innerRadius, half, half, maxRadius);
     gr.addColorStop(0, "rgba(5, 7, 14, 0)");
-    gr.addColorStop(0.65, `rgba(5, 7, 14, ${atm.vignetteStrength * 0.35})`);
-    gr.addColorStop(1, `rgba(5, 7, 14, ${atm.vignetteStrength})`);
+    gr.addColorStop(0.65, `rgba(5, 7, 14, ${strength * 0.35})`);
+    gr.addColorStop(1, `rgba(5, 7, 14, ${strength})`);
     c.fillStyle = gr;
     c.fillRect(0, 0, viewportSize, viewportSize);
     c.restore();

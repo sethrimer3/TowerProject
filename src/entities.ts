@@ -85,6 +85,8 @@ export type Settings = {
   showArrows: boolean;
   speed: number;
   reduceMotion: boolean;
+  /** Dungeon brightness, 20 (very dark) to 100 (default look). */
+  brightness?: number;
   /** Requires the autoPersist upgrade to configure; otherwise Automove
    * always turns off on death. */
   autoOffOnDeath?: boolean;
