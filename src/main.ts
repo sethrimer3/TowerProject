@@ -291,9 +291,9 @@ function positionRouteBox() {
 }
 function showRouteBox(effects: RouteEffects) {
   const lines: string[] = [];
-  if (effects.hp[0] !== effects.hp[1]) lines.push(`HP (${effects.hp[0]} → ${effects.hp[1]})`);
-  if (effects.attack[0] !== effects.attack[1]) lines.push(`Atk (+${effects.attack[0]} → +${effects.attack[1]})`);
-  if (effects.defense[0] !== effects.defense[1]) lines.push(`Def (+${effects.defense[0]} → +${effects.defense[1]})`);
+  if (effects.touched.hp || effects.hp[0] !== effects.hp[1]) lines.push(`HP (${effects.hp[0]} → ${effects.hp[1]})`);
+  if (effects.touched.attack || effects.attack[0] !== effects.attack[1]) lines.push(`Atk (+${effects.attack[0]} → +${effects.attack[1]})`);
+  if (effects.touched.defense || effects.defense[0] !== effects.defense[1]) lines.push(`Def (+${effects.defense[0]} → +${effects.defense[1]})`);
   for (const color of ["yellow", "blue", "red"] as const) {
     const change = effects.keys[color];
     if (change) lines.push(`${KEY_NAMES[color]} Key (${change[0]} → ${change[1]})`);

@@ -55,6 +55,10 @@ export type RouteEffects = {
   attack: [number, number];
   defense: [number, number];
   keys: Partial<Record<KeyColor, [number, number]>>;
+  /** Which stats a tile along the route touched, even if the net effect was
+   * zero (e.g. a 0-damage fight, or a key gained then spent) — those should
+   * still surface in the tooltip rather than look untouched. */
+  touched: { hp: boolean; attack: boolean; defense: boolean; keys: Partial<Record<KeyColor, boolean>> };
 };
 export class Game {
   mode: Mode = "tower";
@@ -252,12 +256,14 @@ export class Game {
       startAttack = attack,
       startDefense = defense,
       startKeys = { ...p.keys };
+    const touched = { hp: false, attack: false, defense: false, keys: {} as Partial<Record<KeyColor, boolean>> };
     for (const step of route) {
       const t = this.world.tile(step.x, step.y);
       if (t.kind === "enemy") {
         const result = predict({ ...p, hp, attack, defense, keys }, t.enemy!);
         if (result.impervious) break;
         hp -= result.damage;
+        touched.hp = true;
         if (hp <= 0) {
           hp = 0;
           break;
@@ -265,15 +271,22 @@ export class Game {
       } else if (t.kind === "door") {
         const cost = doorCost(t, { hp, maxHp: p.maxHp, keys });
         if (cost === null) break;
-        for (const color of cost) keys[color]--;
+        for (const color of cost) {
+          keys[color]--;
+          touched.keys[color] = true;
+        }
       } else if (t.kind === "key") {
         keys[t.color!]++;
+        touched.keys[t.color!] = true;
       } else if (t.kind === "potion") {
         hp += Math.min(p.maxHp - hp, 35);
+        touched.hp = true;
       } else if (t.kind === "attack") {
         attack += 2;
+        touched.attack = true;
       } else if (t.kind === "defense") {
         defense++;
+        touched.defense = true;
       }
     }
     const result: RouteEffects = {
@@ -281,9 +294,11 @@ export class Game {
       attack: [startAttack, attack],
       defense: [startDefense, defense],
       keys: {},
+      touched,
     };
     for (const color of KEY_ORDER)
-      if (keys[color] !== startKeys[color]) result.keys[color] = [startKeys[color], keys[color]];
+      if (keys[color] !== startKeys[color] || touched.keys[color])
+        result.keys[color] = [startKeys[color], keys[color]];
     return result;
   }
   walkTo(x: number, y: number) {
