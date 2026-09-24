@@ -869,7 +869,7 @@ export class Renderer {
   /** 0 at the default brightness, 1 at the darkest setting (dungeon only). */
   get darkness() {
     if (this.game.run.outside) return 0;
-    return Math.max(0, Math.min(1, (100 - (this.game.save.settings.brightness ?? 100)) / 80));
+    return Math.max(0, Math.min(1, (100 - (this.game.save.settings.brightness ?? 60)) / 80));
   }
 
   /** The "Brightness" setting's dark-delving layer: a cool, near-black

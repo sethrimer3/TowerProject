@@ -23,7 +23,7 @@ export function defaults(): Save {
       showArrows: false,
       speed: 3,
       reduceMotion: false,
-      brightness: 100,
+      brightness: 60,
       autoOffOnDeath: true,
       oneTapMove: false,
       infoDisplay: "both",
@@ -188,7 +188,7 @@ export function decode(raw: string | null): Save {
     d.settings.brightness =
       typeof brightness === "number" && Number.isFinite(brightness)
         ? Math.round(Math.min(100, Math.max(20, brightness)))
-        : 100;
+        : 60;
     d.settings.weatherSound = s?.settings?.weatherSound !== false;
     d.settings.autoOffOnDeath = s?.settings?.autoOffOnDeath !== false;
     d.settings.oneTapMove = s?.settings?.oneTapMove === true;

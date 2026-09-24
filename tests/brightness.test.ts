@@ -8,11 +8,11 @@ const withBrightness = (brightness: unknown) => {
   return decode(JSON.stringify(save)).settings.brightness;
 };
 
-test("brightness defaults to 100 and is clamped to the 20-100 slider range", () => {
-  assert.equal(defaults().settings.brightness, 100);
+test("brightness defaults to 60 and is clamped to the 20-100 slider range", () => {
+  assert.equal(defaults().settings.brightness, 60);
   assert.equal(withBrightness(55), 55);
   assert.equal(withBrightness(5), 20);
   assert.equal(withBrightness(400), 100);
-  assert.equal(withBrightness("dark"), 100);
-  assert.equal(withBrightness(undefined), 100);
+  assert.equal(withBrightness("dark"), 60);
+  assert.equal(withBrightness(undefined), 60);
 });
