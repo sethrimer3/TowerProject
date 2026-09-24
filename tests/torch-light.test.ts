@@ -104,3 +104,27 @@ test("a torch tucked in a corner keeps its brightest light on its own tile", () 
   assert.equal(Math.floor(at[1]), torch.y, "peak y is on the torch tile");
   assert.ok(sample(field, 1.5, 1.5) > sample(field, 2.5, 2.5), "light is brighter on the torch tile than one tile into the room");
 });
+
+test("swayed light bakes share the tile grid and never spill deeper into walls", () => {
+  const { isWall } = grid([
+    "#########",
+    "#.......#",
+    "#.......#",
+    "#.......#",
+    "#########",
+  ]);
+  const torch = { x: 1, y: 1, lightRadius: 5.5 };
+  const bake = (dx: number) =>
+    torchLightField(
+      { ...torch, visibilityPolygon: computeVisibilityPolygon({ ...torch, x: torch.x + dx }, isWall) },
+      isWall, undefined, dx,
+    );
+  const left = bake(-0.12), right = bake(0.12);
+  assert.deepEqual([left.left, left.top, left.tiles], [right.left, right.top, right.tiles], "same grid placement");
+  // A wall-face sample half a tile deep: the soft rim may light it, but it stays the same
+  // whichever way the flame leans, so the glow never slides on and off the wall.
+  const rimL = sample(left, 0.25, 2.5), rimR = sample(right, 0.25, 2.5);
+  assert.ok(Math.abs(rimL - rimR) < 0.08, `wall rim stays steady (${rimL.toFixed(3)} vs ${rimR.toFixed(3)})`);
+  assert.ok(sample(left, -0.5, 2.5) < 0.01 && sample(right, -0.5, 2.5) < 0.01, "outside the wall stays dark");
+  assert.ok(sample(right, 3.5, 1.5) > sample(left, 3.5, 1.5), "leaning right brightens the floor to the right");
+});

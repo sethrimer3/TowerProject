@@ -59,8 +59,10 @@ export const LIGHTING_CONFIG = {
     strength: 0.75,
     /** How much of the ambient darkness the light removes at full brightness. */
     carve: 0.95,
-    /** Flicker radius wobble relative to intensity flicker. */
-    radiusFlicker: 0.6,
+    /** The glow is baked with the flame nudged this far (tiles) to each side
+     * and cross-faded with its lean, so the pool sways while its edges stay
+     * pinned to the walls. */
+    swayOffset: 0.12,
   },
   /** Low "Brightness" settings: a cool multiply pass over the whole dungeon
    * (walls included) that torchlight lifts back out in warm pools. Scaled by

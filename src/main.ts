@@ -34,7 +34,7 @@ import {
 import { canCraft, getSalvageReturns, isEquipped, CONSUMABLES, canCraftConsumable, type ConsumableId } from "./crafting.ts";
 import { doorColor, doorCost, doorDescription, doorName, doorRule, KEY_NAMES } from "./doors.ts";
 import { AREA1_ITEM_URLS } from "./area1-tileset.ts";
-import { metalBarSprite } from "./material-sprites.ts";
+import { metalBarSprite, monsterPartSprite } from "./material-sprites.ts";
 
 type UiSprite = "tower" | "delve" | "gear" | "upgrades" | "settings" | "health" | "attack" | "defense" | "undo" | "automove" | "revive" | "log" | "arrow-up" | "arrow-down" | "arrow-left" | "arrow-right" | EquipmentSlot | "gold";
 const UI_ASSET_BASE = (import.meta as ImportMeta & { env?: { BASE_URL?: string } }).env?.BASE_URL ?? "/";
@@ -660,12 +660,12 @@ function craftingHtml(): string {
   const slotButtons = `<div class="tree-tabs slot-filter">${EQUIPMENT_SLOTS.map(s => `<button data-craft-slot="${s}" aria-pressed="${craftSlot === s}">${SLOT_ICONS[s]} ${SLOT_NAMES[s]}</button>`).join("")}</div>`;
   const metalButtons = `<div class="tree-tabs slot-filter">${METALS.map(m => `<button data-craft-metal="${m.id}" aria-pressed="${craftMetal === m.id}">${metalBarSprite(m.id)} ${m.name}</button>`).join("")}</div>`;
   const barsOwned = owned(metalDef.materialId), commonOwned = owned(recipe.commonMaterial);
-  const recipeLine = `<p class="hint">Recipe: ${metalBarSprite(metalDef.id, "stat-sprite")} <b class="${barsOwned >= recipe.bars ? "safe" : "danger"}">${recipe.bars} ${materialDef(metalDef.materialId).name}</b> (${barsOwned} owned) + <b class="${commonOwned >= recipe.commonAmount ? "safe" : "danger"}">${recipe.commonAmount} ${materialDef(recipe.commonMaterial).name}</b> (${commonOwned} owned)</p>`;
+  const recipeLine = `<p class="hint">Recipe: ${metalBarSprite(metalDef.id, "stat-sprite")} <b class="${barsOwned >= recipe.bars ? "safe" : "danger"}">${recipe.bars} ${materialDef(metalDef.materialId).name}</b> (${barsOwned} owned) + ${monsterPartSprite(recipe.commonMaterial, "stat-sprite")} <b class="${commonOwned >= recipe.commonAmount ? "safe" : "danger"}">${recipe.commonAmount} ${materialDef(recipe.commonMaterial).name}</b> (${commonOwned} owned)</p>`;
   const stepper = (id: MaterialId, label: string, cap: number, usedInCategory: number) => {
     const qty = craftEnhancements.find(s => s.id === id)?.quantity ?? 0;
     const atCap = usedInCategory >= cap && qty === 0;
     const atOwned = qty >= owned(id);
-    return `<div class="stepper"><span>${materialDef(id).name} <small>${label} · ${owned(id)} owned</small></span><div class="stepper-controls"><button data-enh-minus="${id}" ${qty <= 0 ? "disabled" : ""}>−</button><b>${qty}</b><button data-enh-plus="${id}" ${atCap || atOwned ? "disabled" : ""}>+</button></div></div>`;
+    return `<div class="stepper"><span>${monsterPartSprite(id, "stat-sprite")}${materialDef(id).name} <small>${label} · ${owned(id)} owned</small></span><div class="stepper-controls"><button data-enh-minus="${id}" ${qty <= 0 ? "disabled" : ""}>−</button><b>${qty}</b><button data-enh-plus="${id}" ${atCap || atOwned ? "disabled" : ""}>+</button></div></div>`;
   };
   const gemRows = GEMS.map(g => stepper(g.id, `+${(g.enhancement.percent * 100).toFixed(1)}% ${g.enhancement.stat}/ea`, ENHANCEMENT_CAPS.gems, totals.gems)).join("");
   const rareRows = (Object.keys(RARE_ENHANCEMENTS) as MaterialId[]).map(id => {

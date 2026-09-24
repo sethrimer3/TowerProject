@@ -1,5 +1,5 @@
 import type { Torch } from "./entities.ts";
-import { LIGHTING_CONFIG } from "./lighting.ts";
+import { LIGHTING_CONFIG, computeVisibilityPolygon } from "./lighting.ts";
 import { insidePolygon } from "./floor-relief.ts";
 
 /** Baked, occlusion-aware torch glow.
@@ -95,6 +95,8 @@ export function torchLightField(
   torch: LightSource,
   isWall: (x: number, y: number) => boolean,
   res = LIGHTING_CONFIG.glow.resolution,
+  /** Nudges the light's origin sideways (tiles); the field stays on the tile grid. */
+  offsetX = 0,
 ): LightField {
   const cfg = LIGHTING_CONFIG.glow;
   const radius = torch.lightRadius;
@@ -102,7 +104,7 @@ export function torchLightField(
   const tiles = reach * 2 + 1;
   const left = torch.x - reach, bottom = torch.y - reach, top = bottom + tiles;
   const cols = tiles * res, rows = cols;
-  const ox = torch.x + 0.5, oy = torch.y + 0.5;
+  const ox = torch.x + 0.5 + offsetX, oy = torch.y + 0.5;
   const poly = torch.visibilityPolygon ?? [];
   const { dist, wall, n } = pathDistances(torch, reach, isWall);
 
@@ -161,10 +163,20 @@ export function glowColor(v: number) {
 
 export type BakedLight = { canvas: HTMLCanvasElement; field: LightField };
 
-/** Renders a light field to a small canvas: warm color, alpha = light level. */
-export function bakeTorchLight(torch: LightSource, isWall: (x: number, y: number) => boolean): BakedLight | null {
+/** Renders a light field to a small canvas: warm color, alpha = light level.
+ * With an offset, walls are re-occluded from the nudged flame position, so
+ * a pair of bakes can be cross-faded to sway the light without ever sliding
+ * its edges over the walls. */
+export function bakeTorchLight(
+  torch: LightSource,
+  isWall: (x: number, y: number) => boolean,
+  offsetX = 0,
+): BakedLight | null {
   if (typeof document === "undefined") return null;
-  const field = torchLightField(torch, isWall);
+  const source = offsetX
+    ? { ...torch, visibilityPolygon: computeVisibilityPolygon({ x: torch.x + offsetX, y: torch.y, lightRadius: torch.lightRadius }, isWall) }
+    : torch;
+  const field = torchLightField(source, isWall, LIGHTING_CONFIG.glow.resolution, offsetX);
   const canvas = document.createElement("canvas");
   canvas.width = field.cols;
   canvas.height = field.rows;

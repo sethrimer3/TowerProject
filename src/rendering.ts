@@ -87,7 +87,8 @@ export class Renderer {
   /** Wall tiles in view this frame (shared by the shadow and darkness passes). */
   frameWalls: [number, number][] = [];
   /** Baked per-torch glow, computed once since walls never move. */
-  torchBakes = new WeakMap<Torch, BakedLight | null>();
+  /** Each torch's glow baked with the flame nudged left and right. */
+  torchBakes = new WeakMap<Torch, { left: BakedLight; right: BakedLight } | null>();
   /** Each torch's relief baked with the light nudged left and right. */
   reliefBakes = new WeakMap<Torch, { left: BakedRelief; right: BakedRelief } | null>();
   /** Torch bakes cost a few ms each; spread them over frames on room entry. */
@@ -815,7 +816,10 @@ export class Renderer {
       if (this.bakeBudget <= 0) return null;
       this.bakeBudget--;
       const world = this.game.world;
-      bake = bakeTorchLight(t, (x, y) => world.tile(x, y)?.kind === "wall");
+      const isWall = (x: number, y: number) => world.tile(x, y)?.kind === "wall";
+      const offset = LIGHTING_CONFIG.glow.swayOffset;
+      const left = bakeTorchLight(t, isWall, -offset), right = bakeTorchLight(t, isWall, offset);
+      bake = left && right ? { left, right } : null;
       this.torchBakes.set(t, bake);
     }
     return bake;
@@ -830,17 +834,18 @@ export class Renderer {
     if (!bake) return;
     const flicker = getTorchFlicker(t, now, reduceMotion);
     const sway = getTorchSway(t, now, reduceMotion);
-    const f = bake.field;
-    const grow = 1 + (flicker - 1) * LIGHTING_CONFIG.glow.radiusFlicker;
-    const cx = this.toScreenX(t.x + 0.5), cy = this.toScreenY(t.y + 0.5);
-    // Grow about the torch, then shift the whole pool with the flame's sway.
-    const x0 = cx + (this.toScreenX(f.left) - cx) * grow + sway.x * this.size;
-    const y0 = cy + (this.toScreenY(f.top) - cy) * grow - sway.y * this.size;
-    const size = f.tiles * this.size * grow;
+    // Both bakes sit on the tile grid (never moved or scaled), so the light's
+    // edges stay flush with the walls; the lean only cross-fades between them.
+    const lean = Math.max(0, Math.min(1, 0.5 + sway.x / (2 * LIGHTING_CONFIG.flicker.swayX)));
+    const f = bake.left.field;
+    const x0 = this.toScreenX(f.left), y0 = this.toScreenY(f.top), size = f.tiles * this.size;
     c.globalCompositeOperation = op;
-    c.globalAlpha = Math.min(1, alpha * flicker);
     c.imageSmoothingEnabled = true;
-    c.drawImage(bake.canvas, x0, y0, size, size);
+    for (const [b, share] of [[bake.left, 1 - lean], [bake.right, lean]] as const) {
+      if (share < 0.02) continue;
+      c.globalAlpha = Math.min(1, alpha * flicker * share);
+      c.drawImage(b.canvas, x0, y0, size, size);
+    }
   }
 
   /** Torch bump lighting on area-one floor sprites (see floor-relief.ts):
@@ -1013,10 +1018,11 @@ export class Renderer {
   drawTorchHaze(c: CanvasRenderingContext2D, t: Torch, now: number, reduceMotion: boolean) {
     const atm = this.atmosphere;
     const flicker = getTorchFlicker(t, now, reduceMotion);
-    const sway = getTorchSway(t, now, reduceMotion);
-    const cx = this.toScreenX(t.x + 0.5 + sway.x),
-      cy = this.toScreenY(t.y + 0.5 + sway.y),
-      hazeRadius = t.lightRadius * this.size * atm.torchHazeRadius * flicker,
+    // The haze isn't occluded, so it stays put (a moving circle would slide
+    // across the walls); it only breathes with the flicker.
+    const cx = this.toScreenX(t.x + 0.5),
+      cy = this.toScreenY(t.y + 0.5),
+      hazeRadius = t.lightRadius * this.size * atm.torchHazeRadius,
       alpha = atm.torchHazeStrength * t.baseIntensity * flicker;
     if (alpha <= 0 || hazeRadius <= 0) return;
 
