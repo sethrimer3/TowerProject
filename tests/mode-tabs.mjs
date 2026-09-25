@@ -56,6 +56,16 @@ const defendVisibleLocked = await page.locator('[data-tab="defend"]').isVisible(
 assert.equal(delveVisibleUnlocked, true, "DELVE tab should be visible when unlocked");
 assert.equal(defendVisibleLocked, false, "DEFEND tab should still be hidden when legacy is not unlocked");
 
+// Short desktop/browser windows use the compact board layout. The playfield
+// must retain a real square row after the status and controls move into it.
+await page.setViewportSize({ width: 800, height: 600 });
+for (const mode of ["tower", "delve"]) {
+  await page.locator(`[data-tab="${mode}"]`).click();
+  const world = await page.locator("#world").boundingBox();
+  assert.ok(world && world.width > 0 && world.height > 0, `${mode} viewport should not collapse in a short window`);
+  assert.ok(Math.abs(world.width - world.height) < 1, `${mode} viewport should remain square in a short window`);
+}
+
 // Check overflow with Delve unlocked
 for (const width of [390, 320]) {
   await page.setViewportSize({ width, height: 844 });
