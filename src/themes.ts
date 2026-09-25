@@ -87,22 +87,23 @@ function color(a: string, b: string, t: number) {
   return `rgb(${Math.round(ar * (1 - t) + br * t)},${Math.round(ag * (1 - t) + bg * t)},${Math.round(ab * (1 - t) + bb * t)})`;
 }
 
+/** Reads an "rgb(r,g,b)" or "#rrggbb" string. */
+function parseColor(rgbOrHex: string): [number, number, number] {
+  if (rgbOrHex.startsWith("#")) return parseHex(rgbOrHex);
+  const [r, g, b] = rgbOrHex.match(/\d+/g)!.map(Number);
+  return [r, g, b];
+}
+
 /** Scales an "rgb(r,g,b)" or "#rrggbb" string's brightness by `factor`, clamped to 255. */
 function brighten(rgbOrHex: string, factor: number): string {
-  let r: number, g: number, b: number;
-  if (rgbOrHex.startsWith("#")) {
-    [r, g, b] = parseHex(rgbOrHex);
-  } else {
-    const m = rgbOrHex.match(/\d+/g)!;
-    [r, g, b] = m.map(Number);
-  }
+  const [r, g, b] = parseColor(rgbOrHex);
   const clamp = (v: number) => Math.min(255, Math.max(0, Math.round(v * factor)));
   return `rgb(${clamp(r)},${clamp(g)},${clamp(b)})`;
 }
 
 /** Applies very subtle per-block brightness and hue jitter within the unified palette. */
 function applyBlockVariation(baseColor: string, x: number, y: number, seed: number): string {
-  const [r, g, b] = parseHex(baseColor);
+  const [r, g, b] = parseColor(baseColor);
   const rBright = (tileRandom(x, y, seed ^ 0x4a1f) - 0.5) * 2 * DUNGEON_ENV_CONFIG.blockBrightnessJitter;
   const rHue = (tileRandom(x, y, seed ^ 0x9e3b) - 0.5) * 2 * DUNGEON_ENV_CONFIG.blockHueJitter;
 
@@ -392,7 +393,7 @@ function detailFor(tile: TerrainTile, r: number): DetailType {
   return type;
 }
 
-function paintDetail(p: Paint) {
+function paintDetail(p: Paint, type: DetailType) {
   const { c, tile } = p;
   const { x, y, seed } = tile;
   // Seeded deterministic variation: rotation, mirroring, subtle scale & opacity
@@ -409,7 +410,7 @@ function paintDetail(p: Paint) {
   c.scale(mirrorX * scale, mirrorY * scale);
   c.translate(-12, -12);
   c.globalAlpha = Math.min(1, Math.max(0.2, opacity));
-  DETAILS[detailFor(tile, p.r)](p);
+  DETAILS[type](p);
   c.restore();
 }
 
@@ -417,8 +418,12 @@ function paintDetail(p: Paint) {
  * floor in its blended theme colours, then (on a few walls and empty floors)
  * one restrained detail. */
 export function drawTerrain(c: CanvasRenderingContext2D, tile: TerrainTile) {
-  const p: Paint = { c, tile, ...inkAt(tile), r: tileRandom(tile.x, tile.y, tile.seed) };
+  const { x, y, seed } = tile;
+  // The detail's variation gets its own roll: the chance roll is always small
+  // when a detail is drawn, so reusing it would pin every variation.
+  const p: Paint = { c, tile, ...inkAt(tile), r: tileRandom(x, y, seed ^ 0x6b43) };
   if (tile.wall) paintWall(p);
   else paintFloor(p);
-  if (decorates(tile, p.r)) paintDetail(p);
+  const chance = tileRandom(x, y, seed);
+  if (decorates(tile, chance)) paintDetail(p, detailFor(tile, chance));
 }
