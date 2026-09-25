@@ -31,7 +31,7 @@ Rewards are credited as you climb (Courage for every 10 Delve height, Inspiratio
 
 Three modes share one page: **Tower** (compact 17 × 17 puzzle floors, generated strategy-first like a Magic Tower), **Delve** (one endless, wrapping labyrinth), and **Defend** (a city-defense simulation). Worlds are generated deterministically from the run seed, and only your changes to them are saved. The viewport shows 17 × 17 tiles with the entrance at the bottom center (20 × 20 in the forest outside); in the Delve, terrain below the last milestone gate can't be revisited.
 
-Code lives in `src/`, with the Tower generator in `src/tower/`, the Delve labyrinth in `src/delve/`, and Defend in `src/defend/`. Design documents are in `docs/`. Architecture notes, generation invariants, and development commands for contributors (human or AI) are in [AGENTS.md](AGENTS.md).
+Code lives in `src/`, with the Tower generator in `src/tower/`, the Delve labyrinth in `src/delve/`, Defend in `src/defend/`, and the pages, HUD and dialogs in `src/ui/`. Design documents are in `docs/`. Architecture notes, generation invariants, and development commands for contributors (human or AI) are in [AGENTS.md](AGENTS.md).
 
 ## Browser verification
 

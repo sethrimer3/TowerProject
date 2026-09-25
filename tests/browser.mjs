@@ -112,10 +112,13 @@ await page.locator('[data-skill="auto"]').click();
 await page.locator('[data-tab="delve"]').click();
 for (let step = 0; step < 12; step++)
   await page.getByRole("button", { name: "Move up", exact: true }).click();
-const manual = Number(await page.locator("#height").textContent());
+// Automove may spend its first steps sideways or fighting, so check that it
+// moved the player at all rather than that it gained height.
+const position = async () => JSON.stringify((await page.evaluate(() => JSON.parse(localStorage.getItem("towerincramental.v1")))).delve.run.player);
+const manual = await position();
 await page.locator("#auto").click();
 await page.waitForTimeout(2000);
-if (Number(await page.locator("#height").textContent()) <= manual)
+if ((await position()) === manual)
   throw Error("Auto unlock and climb failed");
 // The Automove button toggles; a second press pauses it.
 await page.locator("#auto").click();
