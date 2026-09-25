@@ -10,93 +10,173 @@ export function capabilities(game: Game): Capabilities {
 }
 const dirs = [[0, 1], [-1, 0], [1, 0], [0, -1]];
 export type Decision = { x: number; y: number; utility: number; travel: number; damage: number; keys: number; reward: number; frontier: boolean; deadEnd: boolean };
-const commitments = new WeakMap<Game, { run: Game['run']; from: string; route: string[]; target: string }>();
+type Commitment = { run: Game['run']; from: string; route: string[]; target: string };
+const commitments = new WeakMap<Game, Commitment>();
 export const decisions = new WeakMap<Game, Decision[]>();
+/** Tiles walked through without any interaction. */
+const TRAVERSAL = ['floor', 'openedChest', 'oneway'];
+/** Search limits: nodes expanded and route length. */
+const MAX_EXPANSIONS = 2400, MAX_TRAVEL = 180;
+
 /** Deliberately uses observed tiles, never generation nodes, pattern IDs,
  * hidden route ownership, or the generator's true-continuation labels. */
 export function chooseDelveStep(game: Game, override?: Capabilities) {
-  const c = override ?? capabilities(game), p = game.run.player, world = game.world;
-  const known = game.run.delveKnown ??= {};
-  // Scouting upgrades expand observation explicitly. The default radius is
-  // the same 17x17 neighbourhood available to the human player.
-  const visible = new Set<string>();
-  let discovered = 0;
-  for (let y = Math.max(world.floor, p.y - c.lookahead); y <= p.y + c.lookahead; y++) for (let x = Math.max(0, p.x - c.lookahead); x <= Math.min(world.width - 1, p.x + c.lookahead); x++) {
-    const k = point(x, y); visible.add(k);
-    if (!known[k]) { known[k] = true; if (world.tile(x, y).kind !== 'wall') discovered++; }
-  }
-  const visits = game.run.delveVisited ?? {};
-  const canKnow = (x: number, y: number) => c.memory ? known[point(x, y)] : visible.has(point(x, y)) || !!visits[point(x, y)];
-  type Search = { x: number; y: number; first: number[]; d: number; player: Player; damage: number; keyCost: number; reward: number; interactions: number; path: Set<string> };
-  const q: Search[] = [{ x: p.x, y: p.y, first: [0, 0], d: 0, player: { ...p, keys: { ...p.keys } }, damage: 0, keyCost: 0, reward: 0, interactions: 0, path: new Set([point(p.x, p.y)]) }];
+  const c = override ?? capabilities(game);
+  const { canKnow, discovered } = observe(game, c);
   const committed = commitments.get(game);
-  const here = point(p.x, p.y);
+  const current = committed?.run === game.run ? committed : undefined;
   // A committed route is followed until it ends, an interaction happens, or
   // newly observed corridors warrant a fresh look (with a continuity bonus
   // for the old target, so small visibility changes cannot flip-flop it).
-  const keep = committed?.run === game.run && !discovered ? committed : undefined;
-  if (keep) {
-    if (keep.route[0] === here) { keep.route.shift(); keep.from = here; }
-    if (keep.from === here && keep.route.length) {
-      const [x, y] = keep.route[0].split(',').map(Number);
-      const dx = x - p.x, dy = y - p.y, tile = world.tile(x, y);
-      const trial = { player: { ...p, keys: { ...p.keys } }, damage: 0, keyCost: 0, reward: 0 };
-      if (Math.abs(dx) + Math.abs(dy) === 1 && world.step(p.x, p.y, dx, dy) && tile.kind !== 'wall' && apply(tile, trial, c)) {
-        if (!['floor', 'openedChest'].includes(tile.kind)) commitments.delete(game);
-        return { dx, dy, label: 'Following the chosen Delve route' };
-      }
-    }
-  }
-  const previousTarget = committed?.run === game.run ? committed.target : '';
+  const followed = current && !discovered ? follow(game, current, c) : undefined;
+  if (followed) return followed;
   commitments.delete(game);
-  const bestAt = new Map<string, number>();
-  let best: Search | null = null, bestValue = -Infinity;
-  const report: Decision[] = [];
-  for (let i = 0; i < q.length && i < 2400; i++) {
-    const n = q[i]; if (n.d >= 180) continue;
-    for (const [dx, dy] of dirs) {
-      const dest = world.step(n.x, n.y, dx, dy); if (!dest || !canKnow(dest.x, dest.y)) continue;
-      const k = point(dest.x, dest.y); if (n.path.has(k)) continue;
-      const tile = world.tile(dest.x, dest.y); if (tile.kind === 'wall') continue;
-      const next: Search = { ...n, ...dest, d: n.d + 1, first: n.d ? n.first : [dx, dy], player: { ...n.player, keys: { ...n.player.keys } }, path: new Set(n.path) };
-      next.path.add(k);
-      const interaction = !['floor', 'openedChest', 'oneway'].includes(tile.kind);
-      if (interaction && next.interactions++ >= c.interactions) continue;
-      if (!apply(tile, next, c)) continue;
-      const exits = dirs.map(([xx, yy]) => world.step(dest.x, dest.y, xx, yy)).filter((v): v is { x: number; y: number } => !!v);
-      const frontier = exits.some(v => !canKnow(v.x, v.y));
-      const open = exits.filter(v => canKnow(v.x, v.y) && world.tile(v.x, v.y).kind !== 'wall');
-      const deadEnd = !frontier && open.length <= 1;
-      // Basic movement has short-term anti-oscillation but no retained map
-      // routing. Memory upgrades use every previously observed corridor.
-      const unvisited = !visits[k];
-      const exploration = unvisited ? 14 : -visits[k] * 3;
-      const upward = (dest.y - p.y) * (c.deadEnds ? 0.12 : 0.65);
-      const utility = exploration + upward + (frontier ? 8 : 0) + next.reward
-        + (tile.kind === 'oneway' ? 90 : 0)
-        - next.d * (c.deadEnds ? 0.25 : 0.12)
-        - (c.combat ? next.damage * 0.55 : 0)
-        - (c.keys ? next.keyCost : 0)
-        - (c.deadEnds && deadEnd ? 18 + next.d * 0.2 : 0)
-        + (k === previousTarget ? 6 : 0);
-      // Interactions, junctions, pockets and frontiers form the observed
-      // decision graph. Corridor interiors remain traversal edges.
-      if (interaction || open.length !== 2 || frontier || unvisited) {
-        report.push({ ...dest, utility, travel: next.d, damage: next.damage, keys: next.keyCost, reward: next.reward, frontier, deadEnd });
-        if (utility > bestValue) { bestValue = utility; best = next; }
-      }
-      // Retain resource-distinct alternatives at junctions. A consumed item
-      // can never be credited twice along a route (path membership above).
-      const label = `${k}:${next.player.keys.yellow},${next.player.keys.blue},${next.player.keys.red}:${next.interactions}:${next.player.attack}:${next.player.defense}`;
-      const merit = next.reward - next.damage * 0.55 - next.keyCost - next.d * 0.25;
-      if (merit <= (bestAt.get(label) ?? -Infinity)) continue;
-      bestAt.set(label, merit);
-      q.push(next);
-    }
+  const scan: Scan = { game, c, canKnow, visits: game.run.delveVisited ?? {}, previousTarget: current?.target ?? '', bestAt: new Map(), report: [], best: null, bestValue: -Infinity };
+  explore(scan);
+  decisions.set(game, scan.report.sort((a, b) => b.utility - a.utility).slice(0, 12));
+  const { best } = scan, p = game.run.player;
+  if (!best) return null;
+  commitments.set(game, { run: game.run, from: point(p.x, p.y), route: [...best.path].slice(1), target: point(best.x, best.y) });
+  return { dx: best.first[0], dy: best.first[1], label: `Exploring Delve · ${c.lookahead}-tile scouting` };
+}
+
+/** Marks what Automove can see now as known. Scouting upgrades expand
+ * observation explicitly; the default radius is the same 17x17 neighbourhood
+ * available to the human player. `discovered` counts newly seen open tiles. */
+function observe(game: Game, c: Capabilities) {
+  const p = game.run.player, world = game.world, r = c.lookahead;
+  const known = game.run.delveKnown ??= {};
+  const visible = new Set<string>();
+  let discovered = 0;
+  for (let y = Math.max(world.floor, p.y - r); y <= p.y + r; y++) for (let x = Math.max(0, p.x - r); x <= Math.min(world.width - 1, p.x + r); x++) {
+    const k = point(x, y); visible.add(k);
+    if (known[k]) continue;
+    known[k] = true;
+    if (world.tile(x, y).kind !== 'wall') discovered++;
   }
-  decisions.set(game, report.sort((a, b) => b.utility - a.utility).slice(0, 12));
-  if (best) commitments.set(game, { run: game.run, from: here, route: [...best.path].slice(1), target: point(best.x, best.y) });
-  return best ? { dx: best.first[0], dy: best.first[1], label: `Exploring Delve · ${c.lookahead}-tile scouting` } : null;
+  // Basic movement has short-term anti-oscillation but no retained map
+  // routing. Memory upgrades use every previously observed corridor.
+  const visits = game.run.delveVisited ?? {};
+  const canKnow = (x: number, y: number) => c.memory ? known[point(x, y)] : visible.has(point(x, y)) || !!visits[point(x, y)];
+  return { canKnow, discovered };
+}
+
+/** The next step of the committed route, if it is still one step away and
+ * still safe to take. */
+function follow(game: Game, route: Commitment, c: Capabilities) {
+  const p = game.run.player, world = game.world, here = point(p.x, p.y);
+  if (route.route[0] === here) { route.route.shift(); route.from = here; }
+  if (route.from !== here || !route.route.length) return undefined;
+  const [x, y] = route.route[0].split(',').map(Number);
+  const dx = x - p.x, dy = y - p.y, tile = world.tile(x, y);
+  const trial = { player: { ...p, keys: { ...p.keys } }, damage: 0, keyCost: 0, reward: 0 };
+  const walkable = Math.abs(dx) + Math.abs(dy) === 1 && world.step(p.x, p.y, dx, dy) && tile.kind !== 'wall';
+  if (!walkable || !apply(tile, trial, c)) return undefined;
+  if (!['floor', 'openedChest'].includes(tile.kind)) commitments.delete(game);
+  return { dx, dy, label: 'Following the chosen Delve route' };
+}
+
+/** One partial route in the search, with what walking it would cost and earn. */
+type Search = { x: number; y: number; first: number[]; d: number; player: Player; damage: number; keyCost: number; reward: number; interactions: number; path: Set<string> };
+/** The search's inputs and its running results. */
+type Scan = {
+  game: Game; c: Capabilities;
+  canKnow: (x: number, y: number) => boolean;
+  visits: Record<string, number>;
+  previousTarget: string;
+  /** Best merit seen per tile and resource state, to prune repeats. */
+  bestAt: Map<string, number>;
+  report: Decision[];
+  best: Search | null; bestValue: number;
+};
+
+/** Breadth-first search over observed tiles from the player, scoring every
+ * decision point it reaches. */
+function explore(scan: Scan) {
+  const p = scan.game.run.player;
+  const q: Search[] = [{ x: p.x, y: p.y, first: [0, 0], d: 0, player: { ...p, keys: { ...p.keys } }, damage: 0, keyCost: 0, reward: 0, interactions: 0, path: new Set([point(p.x, p.y)]) }];
+  for (let i = 0; i < q.length && i < MAX_EXPANSIONS; i++) q.push(...successors(scan, q[i]));
+}
+
+function successors(scan: Scan, n: Search) {
+  if (n.d >= MAX_TRAVEL) return [];
+  return dirs.map(dir => advance(scan, n, dir)).filter((next): next is Search => !!next);
+}
+
+/** Extends route `n` one tile in `dir`: scores the new tile, and returns the
+ * extended route when it is worth searching on from. */
+function advance(scan: Scan, n: Search, [dx, dy]: number[]): Search | undefined {
+  const { game: { world }, c } = scan;
+  const dest = world.step(n.x, n.y, dx, dy); if (!dest || !scan.canKnow(dest.x, dest.y)) return undefined;
+  const k = point(dest.x, dest.y); if (n.path.has(k)) return undefined;
+  const tile = world.tile(dest.x, dest.y); if (tile.kind === 'wall') return undefined;
+  const next: Search = { ...n, ...dest, d: n.d + 1, first: n.d ? n.first : [dx, dy], player: { ...n.player, keys: { ...n.player.keys } }, path: new Set(n.path) };
+  next.path.add(k);
+  const interaction = !TRAVERSAL.includes(tile.kind);
+  if (interaction && next.interactions++ >= c.interactions) return undefined;
+  if (!apply(tile, next, c)) return undefined;
+  consider(scan, next, dest, { tile, interaction });
+  return improves(scan, next, k) ? next : undefined;
+}
+
+/** Scores the tile route `next` ends on. Interactions, junctions, pockets and
+ * frontiers form the observed decision graph and are reported and ranked;
+ * corridor interiors remain traversal edges. */
+function consider(scan: Scan, next: Search, dest: { x: number; y: number }, { tile, interaction }: { tile: Tile; interaction: boolean }) {
+  const { game: { world }, canKnow } = scan;
+  const exits = dirs.map(([xx, yy]) => world.step(dest.x, dest.y, xx, yy)).filter((v): v is { x: number; y: number } => !!v);
+  const frontier = exits.some(v => !canKnow(v.x, v.y));
+  const open = exits.filter(v => canKnow(v.x, v.y) && world.tile(v.x, v.y).kind !== 'wall').length;
+  const deadEnd = !frontier && open <= 1;
+  const k = point(dest.x, dest.y), unvisited = !scan.visits[k];
+  const utility = utilityOf(scan, next, { tile, frontier, deadEnd, unvisited });
+  const corridorInterior = open === 2 && !(interaction || frontier || unvisited);
+  if (corridorInterior) return;
+  scan.report.push({ ...dest, utility, travel: next.d, damage: next.damage, keys: next.keyCost, reward: next.reward, frontier, deadEnd });
+  if (utility > scan.bestValue) { scan.bestValue = utility; scan.best = next; }
+}
+
+type Place = { tile: Tile; frontier: boolean; deadEnd: boolean; unvisited: boolean };
+
+/** How much Automove wants to end route `next` here. */
+function utilityOf(scan: Scan, next: Search, place: Place) {
+  // Summed in this exact order: reordering the float additions would shift
+  // reported utilities and could flip near-ties.
+  const [travel, combat, keys, deadEnd] = routeCosts(scan.c, next, place.deadEnd);
+  const continuity = point(next.x, next.y) === scan.previousTarget ? 6 : 0;
+  return appeal(scan, next, place) - travel - combat - keys - deadEnd + continuity;
+}
+
+/** What draws Automove to a place: novelty, height, the unknown, pickups and
+ * the milestone gate. */
+function appeal({ c, game, visits }: Scan, next: Search, { tile, frontier, unvisited }: Place) {
+  const exploration = unvisited ? 14 : -visits[point(next.x, next.y)] * 3;
+  const upward = (next.y - game.run.player.y) * (c.deadEnds ? 0.12 : 0.65);
+  return exploration + upward + (frontier ? 8 : 0) + next.reward + (tile.kind === 'oneway' ? 90 : 0);
+}
+
+/** What the route there costs, as far as Automove's upgrades let it judge:
+ * travel, damage taken, keys spent, and walking into a dead end. */
+function routeCosts(c: Capabilities, next: Search, deadEnd: boolean) {
+  return [
+    next.d * (c.deadEnds ? 0.25 : 0.12),
+    c.combat ? next.damage * 0.55 : 0,
+    c.keys ? next.keyCost : 0,
+    c.deadEnds && deadEnd ? 18 + next.d * 0.2 : 0,
+  ];
+}
+
+/** Retains resource-distinct alternatives at junctions: a route is searched
+ * on only if it beats every earlier route to the same tile with the same
+ * keys, interactions and stats. A consumed item can never be credited twice
+ * along a route (path membership above). */
+function improves({ bestAt }: Scan, next: Search, k: string) {
+  const { keys, attack, defense } = next.player;
+  const label = `${k}:${keys.yellow},${keys.blue},${keys.red}:${next.interactions}:${attack}:${defense}`;
+  const merit = next.reward - next.damage * 0.55 - next.keyCost - next.d * 0.25;
+  if (merit <= (bestAt.get(label) ?? -Infinity)) return false;
+  bestAt.set(label, merit);
+  return true;
 }
 type Planned = { player: Player; damage: number; keyCost: number; reward: number };
 /** Advances a planned route by one tile using the game's own step rules;
