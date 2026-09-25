@@ -149,6 +149,25 @@ from its seed; `tests/defend-replay.test.ts` pins it.
 - A light goes out while its building is destroyed and returns when it's rebuilt.
 - Struck buildings, walls and the keep flash briefly.
 
+## Drawing (`render.ts` and its passes)
+
+- `DefendRenderer` owns the camera (zoom and pan) and runs each frame's
+  passes in order. The city layer (`city-layer.ts`: flagstones, streets,
+  parks, ponds, trees, walls, houses and structures, lantern brackets,
+  rubble) is painted once into an offscreen canvas, at 2–3× when zoomed in,
+  and repainted only when a building falls or is rebuilt, the size or zoom
+  band changes, or floor and wall art finishes loading.
+- Over it each frame: park fences (`fences.ts`), building damage, unit
+  shadows, the overcast and torchlight (`lighting.ts`), the keep's banner,
+  scorches, then units, projectiles and effects (`battle-art.ts`), the
+  building grid and drag overlay (`edit-overlay.ts`), and rain in screen
+  space (`weather.ts`).
+- `structure-art.ts` holds the keep, barracks and tower art (shared by the
+  city layer and the palette icons), the banner, and the palette colours.
+- `npm run test:render` draws seeded Defend scenes (building mode, a rainy
+  battle, the night boss wave, a stormy night zoomed in) and the palette
+  icons, and compares their pixels to the recorded golden.
+
 ## Economy (`progress.ts`, Armory tab)
 
 - Everything is bought with main-game gold, iron bars and steel bars.

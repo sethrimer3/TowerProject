@@ -1,7 +1,9 @@
 // Characterization screenshots for the board renderer. Fixed scenes (Tower,
 // dim Tower, Delve, sprites off, outside, reduced motion, and decor: a crate
-// stepped on, a pool waded into, tall grass walked through) are drawn at fixed
-// timestamps with seeded randomness, and each canvas's pixels are hashed
+// stepped on, a pool waded into, tall grass walked through), plus the Defend
+// board (building mode, a rainy battle, a night boss wave and a stormy night
+// zoomed in, from the replay test's cities) and its palette icons, are drawn
+// at fixed timestamps with seeded randomness, and each canvas's pixels are hashed
 // against tests/fixtures/render.golden.json. Pixels depend on the browser and
 // GPU, so the golden is only meaningful on the machine that made it:
 // regenerate it with UPDATE_GOLDEN=1 on the code *before* a refactor, then run
@@ -199,13 +201,162 @@ const shots = await page.evaluate(async () => {
     return [...new Uint8Array(digest)].slice(0, 12).map((b) => b.toString(16).padStart(2, "0")).join("");
   };
 
+  // ── Defend ──────────────────────────────────────────────────────────────
+  // The Defend board: fixed cities stepped to fixed moments (the same
+  // scenarios as tests/defend-replay.test.ts), then drawn under each sky.
+  const { DefendRenderer } = await import("/src/defend/render.ts");
+  const { paintIcon } = await import("/src/defend/structure-art.ts");
+  const { defaultLayout, fitLayout, placeCityTile, placeStructure } = await import("/src/defend/layout.ts");
+  const { generateCity } = await import("/src/defend/citygen.ts");
+  const { DefendSim } = await import("/src/defend/sim.ts");
+  const { UPGRADES, ENEMIES } = await import("/src/defend/catalog.ts");
+  const { tileKey, SUB, TILES_W, TILES_H } = await import("/src/defend/grid.ts");
+
+  const levelsAt = (over = {}) => ({ ...Object.fromEntries(UPGRADES.map((u) => [u.id, 0])), ...over });
+  const maxLevels = () => levelsAt(Object.fromEntries(UPGRADES.map((u) => [u.id, u.maxLevel])));
+  const cityLayout = (ring, structures) => {
+    let l = defaultLayout();
+    const { tx, ty } = l.keep;
+    for (const [dx, dy] of ring) l = placeCityTile(l, tx + dx, ty + dy);
+    for (const [kind, dx, dy] of structures) l = placeStructure(l, kind, tx + dx, ty + dy);
+    return l;
+  };
+  const SQUARE = [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, -1], [-1, 1], [1, 1]];
+  const WIDE = [...SQUARE, [-2, 0], [2, 0], [-2, 1], [2, 1], [-2, -1], [2, -1], [0, -2], [-1, -2], [1, -2]];
+  const GARRISON = {
+    layout: () => cityLayout(SQUARE, [["barracks", 1, 1], ["archerBarracks", -1, -1], ["archerTower", -1, 1], ["watchTower", 1, -1], ["cannonTower", 0, -2]]),
+    citySeed: 5, levels: levelsAt, seed: 2, smash: [[20, "house"], [21, "house"], [30, "wall"]],
+  };
+  const FORTRESS = {
+    layout: () => cityLayout(WIDE, [["barracks", 1, 1], ["barracks", -2, 0], ["archerBarracks", -1, -1], ["archerBarracks", 2, 1], ["archerTower", -1, 1], ["archerTower", 0, -3], ["watchTower", 1, -1], ["cannonTower", 2, -2], ["cannonTower", -2, -2]]),
+    citySeed: 8, levels: maxLevels, seed: 9, smash: [[45, "house"], [46, "wall"], [47, "barracks"]],
+  };
+  const cityOf = (sc) => generateCity(fitLayout(sc.layout()), sc.citySeed);
+  const intactOf = (sim, kind) => sim.map.buildings.find((b) => b.kind === kind && sim.intact(b));
+  /** Steps a scenario to `seconds`, then optionally drops a bomb on the
+   * southernmost walking enemy so a fresh blast, scorch and dust are live. */
+  const battle = (sc, seconds, bomb) => {
+    const sim = new DefendSim(cityOf(sc), sc.levels(), sc.seed);
+    for (let t = 1; t <= seconds; t++) {
+      for (let f = 0; f < 4; f++) sim.update(0.25);
+      for (const [at, kind] of sc.smash) if (at === t) sim.damageBuilding(intactOf(sim, kind).id, 1e9);
+    }
+    if (bomb) {
+      const e = sim.enemies.filter((e) => !ENEMIES[e.kind].boss && !ENEMIES[e.kind].flying).sort((a, b) => b.y - a.y)[0];
+      sim.dropBomb(e.x, e.y);
+      sim.update(0.1);
+    }
+    return sim;
+  };
+  const has = {
+    boom: (s) => s.effects.some((e) => e.kind === "boom"), scorch: (s) => s.scorches.length > 0, shell: (s) => s.shells.length > 0,
+    arrow: (s) => s.arrows.length > 0, rubble: (s) => s.map.buildings.some((b) => !s.intact(b)),
+    rebuilt: (s) => s.built.some((b, id) => b > 0 && b < s.map.buildings[id].cells.length),
+    boss: (s) => s.enemies.some((e) => ENEMIES[e.kind].boss), marked: (s) => s.enemies.some((e) => e.marked),
+    bat: (s) => s.enemies.some((e) => ENEMIES[e.kind].flying), working: (s) => s.civilians.some((c) => c.state === "working"),
+    archer: (s) => s.soldiers.some((u) => u.kind === "archer"), sword: (s) => s.soldiers.some((u) => u.kind === "sword"),
+  };
+  const enemyWhere = (want) => (sim) => sim.enemies.find((e) => want(ENEMIES[e.kind]));
+
+  const DEFEND_SCENES = {
+    // Building mode: no battle, the tile grid, legal tiles, a hovered tile,
+    // a structure ghost and an aimed bomb.
+    defendEdit: () => {
+      const layout = GARRISON.layout(), map = cityOf(GARRISON);
+      const legal = new Set();
+      for (let ty = 0; ty < TILES_H; ty++) for (let tx = 0; tx < TILES_W; tx++) if (placeCityTile(layout, tx, ty)) legal.add(tileKey(tx, ty));
+      const hover = [...legal][0], [hx, hy] = hover.split(",").map(Number);
+      return {
+        map, sim: null,
+        overlay: { legal, hover, ghost: { rect: { x: hx * SUB + 2, y: hy * SUB + 1, w: 3, h: 4 }, kind: "barracks" }, bomb: { x: 30, y: 50, r: 2.5 } },
+        opts: { grid: true, weather: null, night: 0, reduceMotion: false },
+      };
+    },
+    // Early rain battle: rubble, rebuilding, cannon shells, a fresh blast,
+    // plus a hurt tower (health bar), a hurt house, and struck units.
+    defendRain: () => {
+      const sim = battle(GARRISON, 30, true);
+      const tower = intactOf(sim, "archerTower"), house = intactOf(sim, "house");
+      sim.damageBuilding(tower.id, sim.maxHp[tower.id] * 0.6);
+      sim.damageBuilding(house.id, sim.maxHp[house.id] * 0.4);
+      const struck = [sim.soldiers[0], sim.civilians[0], sim.enemies[0]].filter(Boolean);
+      if (!struck.length) throw Error("defendRain: no unit to strike");
+      for (const u of struck) u.flash = 0.1;
+      return { map: sim.map, sim, overlay: null, opts: { grid: false, weather: { rain: true }, night: 0, reduceMotion: false }, need: ["boom", "scorch", "shell", "rubble", "rebuilt", "working", "archer", "sword"] };
+    },
+    // The wave-10 boss at night and the fight at the wall, zoomed in (the
+    // city layer repainted at 2×).
+    defendNight: () => {
+      const sim = battle(FORTRESS, 400, true);
+      const boss = enemyWhere((d) => d.boss)(sim), marked = sim.enemies.find((e) => e.marked);
+      const focus = () => ({ x: (boss.x + marked.x) / 2, y: (boss.y + marked.y) / 2 });
+      return { map: sim.map, sim, overlay: null, zoom: 1.5, focus, opts: { grid: false, weather: { rain: false }, night: 0.85, reduceMotion: false }, need: ["boom", "scorch", "arrow", "boss", "marked", "rebuilt", "archer", "sword"] };
+    },
+    // A stormy night, reduced motion, zoomed right in (3×) on a bat.
+    defendStorm: () => {
+      const sim = battle(FORTRESS, 456, false);
+      return { map: sim.map, sim, overlay: null, zoom: 3, focus: enemyWhere((d) => d.flying), opts: { grid: false, weather: { rain: true }, night: 1, reduceMotion: true }, need: ["bat", "arrow"] };
+    },
+  };
+
+  const defendCanvas = document.createElement("canvas");
+  defendCanvas.style.cssText = "position:fixed;left:0;top:0";
+  document.body.append(defendCanvas);
+  const grabDefend = () => {
+    const c = defendCanvas.getContext("2d");
+    return { pixels: c.getImageData(0, 0, defendCanvas.width, defendCanvas.height).data.slice(), png: defendCanvas.toDataURL("image/png") };
+  };
+  /** A Defend scene: frames until every light has baked, then a later frame
+   * (the flag has waved, torches flickered, rain fallen). */
+  const captureDefend = (name, seed) => seeded(seed, () => {
+    const scene = DEFEND_SCENES[name]();
+    for (const need of scene.need ?? []) if (!has[need](scene.sim)) throw Error(`${name}: no ${need} in the scene`);
+    const r = new DefendRenderer(defendCanvas);
+    r.resize(504);
+    if (scene.zoom) {
+      // Zooming about a point keeps it fixed, so zoom twice: about the
+      // canvas centre, then pan the focus there.
+      const f = scene.focus(scene.sim), box = defendCanvas.getBoundingClientRect();
+      r.zoomAt(box.left + box.width / 2, box.top + box.height / 2, scene.zoom);
+      r.panBy(box.width / 2 - ((f.x / 63) * box.width * scene.zoom + r.cam.x), box.height / 2 - ((f.y / 91) * box.height * scene.zoom + r.cam.y));
+    }
+    const draw = (now) => r.draw(scene.map, scene.sim, scene.overlay, { ...scene.opts, now });
+    const out = {};
+    for (let t = 1000; t <= 2000; t += 50) draw(t);
+    out.settled = grabDefend();
+    for (let t = 2050; t <= 2600; t += 50) draw(t);
+    out.later = grabDefend();
+    return out;
+  });
+  /** Every palette icon, side by side. */
+  const captureIcons = () => {
+    const items = ["cityTile", "bomb", "keep", "barracks", "archerBarracks", "archerTower", "cannonTower", "watchTower"];
+    const sheet = document.createElement("canvas");
+    sheet.width = items.length * 48;
+    sheet.height = 48;
+    const s = sheet.getContext("2d");
+    items.forEach((item, i) => {
+      const icon = document.createElement("canvas");
+      icon.width = icon.height = 48;
+      paintIcon(icon, item);
+      s.drawImage(icon, i * 48, 0);
+    });
+    return { sheet: { pixels: s.getImageData(0, 0, sheet.width, sheet.height).data.slice(), png: sheet.toDataURL("image/png") } };
+  };
+
+  const JOBS = [
+    ...Object.keys(SCENES).map((name) => [name, (seed) => capture(name, seed)]),
+    ...Object.keys(DEFEND_SCENES).map((name) => [name, (seed) => captureDefend(name, seed)]),
+    ["defendIcons", () => captureIcons()],
+  ];
+
   const results = {};
   let seed = 1;
-  for (const name of Object.keys(SCENES)) {
+  for (const [name, run] of JOBS) {
     // Art loads asynchronously: repeat until two captures agree.
     let previous = null, stable = null;
     for (let attempt = 0; attempt < 30 && !stable; attempt++) {
-      const shot = capture(name, seed);
+      const shot = run(seed);
       const hashes = {};
       for (const [frame, { pixels }] of Object.entries(shot)) hashes[frame] = await hash(pixels);
       const key = JSON.stringify(hashes);
@@ -218,6 +369,7 @@ const shots = await page.evaluate(async () => {
     seed++;
   }
   canvas.remove();
+  defendCanvas.remove();
   return results;
 });
 

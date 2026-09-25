@@ -16,7 +16,6 @@ import {
   upgradePrice,
   type PaletteItem,
   type Price,
-  type StructureKind,
 } from "./catalog.ts";
 import { CELLS_W, SUB, TILES_H, TILES_W, tileKey, type Rect, type TilePos } from "./grid.ts";
 import {
@@ -34,7 +33,9 @@ import {
 } from "./layout.ts";
 import { generateCity, type CityMap } from "./citygen.ts";
 import { DefendSim } from "./sim.ts";
-import { DefendRenderer, paintIcon, type Overlay } from "./render.ts";
+import { DefendRenderer } from "./render.ts";
+import type { Overlay } from "./edit-overlay.ts";
+import { paintIcon, type IconItem } from "./structure-art.ts";
 import { NIGHT_FADE_SECONDS, isBossWave, rollWeather, skyLabel, type Weather } from "./weather.ts";
 import { available, buyBomb, buyItem, buySpeed3, buyUpgrade, canAfford, type DefendSave, type Wallet } from "./progress.ts";
 
@@ -299,7 +300,7 @@ export class DefendPage {
   private renderPalette() {
     const el = this.root.querySelector<HTMLElement>("#defend-palette")!;
     const s = this.save;
-    const entries: { id: string; name: string; count: number; icon: StructureKind | "cityTile" | "bomb" }[] =
+    const entries: { id: string; name: string; count: number; icon: IconItem }[] =
       this.phase === "build"
         ? PALETTE_ITEMS.map((item) => ({ id: item, name: ITEM_NAMES[item], count: available(s, item), icon: item }))
         : [{ id: "bomb", name: "Bomb", count: s.bombs, icon: "bomb" }];
@@ -312,7 +313,7 @@ export class DefendPage {
               <canvas width="48" height="48" data-icon="${e.icon}"></canvas><span>${e.name}</span><b>×${e.count}</b></button>`,
         )
         .join("");
-    el.querySelectorAll<HTMLCanvasElement>("canvas[data-icon]").forEach((c) => paintIcon(c, c.dataset.icon as StructureKind | "cityTile" | "bomb"));
+    el.querySelectorAll<HTMLCanvasElement>("canvas[data-icon]").forEach((c) => paintIcon(c, c.dataset.icon as IconItem));
     el.querySelectorAll<HTMLButtonElement>("[data-item]").forEach((b) => {
       b.onpointerdown = (e) => {
         const id = b.dataset.item!;
@@ -535,7 +536,7 @@ export class DefendPage {
     const g = document.createElement("canvas");
     g.width = g.height = 48;
     g.className = "defend-drag-ghost";
-    paintIcon(g, icon as StructureKind | "cityTile" | "bomb");
+    paintIcon(g, icon as IconItem);
     document.body.appendChild(g);
     this.ghostEl = g;
     this.onPointerMove(e);
@@ -744,7 +745,7 @@ export class DefendPage {
       <h3 class="defend-section">Consumables</h3>${bomb}
       <h3 class="defend-section">Battle</h3>${speed}
       <h3 class="defend-section">Upgrades</h3><p class="hint">Upgrades apply to every building of that type.</p>${upgrades}`;
-    el.querySelectorAll<HTMLCanvasElement>("canvas[data-icon]").forEach((c) => paintIcon(c, c.dataset.icon as StructureKind | "cityTile" | "bomb"));
+    el.querySelectorAll<HTMLCanvasElement>("canvas[data-icon]").forEach((c) => paintIcon(c, c.dataset.icon as IconItem));
     const commit = (ok: boolean) => {
       if (!ok) return;
       this.host.setWallet(w);

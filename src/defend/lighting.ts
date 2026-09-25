@@ -15,8 +15,8 @@
  * casting per unit per frame. */
 import { LIGHTING_CONFIG, getTorchFlicker, getTorchSway } from "../lighting.ts";
 import { glowColor, lightFalloff } from "../torch-light.ts";
-import { CELL_COUNT, CELLS_H, CELLS_W, ORTHO, cellIndex, hash, hash01, type Rect } from "./grid.ts";
-import { CellType, type CityMap } from "./citygen.ts";
+import { CELL_COUNT, CELLS_H, CELLS_W, ORTHO, cellInBounds, cellIndex, hash, hash01, type Rect } from "./grid.ts";
+import { CellType, type Building, type CityMap } from "./citygen.ts";
 
 export type LightKind = "lantern" | "archerTower" | "cannonTower" | "watchTower" | "door";
 export type Light = {
@@ -52,71 +52,96 @@ type Bake = {
 /** Where the lights of a city go. Deterministic per map. */
 export function cityLights(map: CityMap): Light[] {
   const lights: Light[] = [];
-  const add = (l: Omit<Light, "id">) => lights.push({ ...l, id: lights.length });
-  for (const b of map.buildings) {
-    const r = b.rect;
-    if (b.kind === "archerTower" || b.kind === "watchTower" || b.kind === "cannonTower") {
-      const inset = 0.22;
-      add({
-        kind: b.kind,
-        x: r.x + r.w / 2,
-        y: r.y + r.h / 2,
-        radius: b.kind === "archerTower" ? 7.5 : b.kind === "cannonTower" ? 5.5 : 6.5,
-        strength: 1,
-        owner: b.id,
-        inside: true,
-        pillars:
-          b.kind === "archerTower"
-            ? [
-                [r.x + inset, r.y + inset, 0.2],
-                [r.x + r.w - inset, r.y + inset, 0.2],
-                [r.x + inset, r.y + r.h - inset, 0.2],
-                [r.x + r.w - inset, r.y + r.h - inset, 0.2],
-              ]
-            : [],
-      });
-    } else if (b.kind === "keep") {
-      // Braziers on the keep's four corners.
-      for (const [cx, cy] of [
-        [r.x - 0.3, r.y - 0.3],
-        [r.x + r.w + 0.3, r.y - 0.3],
-        [r.x - 0.3, r.y + r.h + 0.3],
-        [r.x + r.w + 0.3, r.y + r.h + 0.3],
-      ])
-        add({ kind: "door", x: cx, y: cy, radius: 4.5, strength: 0.9, owner: b.id, inside: false, pillars: [] });
-    } else if (b.kind === "barracks" || b.kind === "archerBarracks") {
-      const door = doorPoint(map, r);
-      if (door) add({ kind: "door", x: door.x, y: door.y, radius: 4.5, strength: 0.85, owner: b.id, inside: false, pillars: [] });
-    }
-  }
-  // Street lanterns hung on house walls, spread along the roads.
+  const add = (l: NewLight) => lights.push({ ...l, id: lights.length });
+  for (const b of map.buildings) buildingLights(map, b).forEach(add);
+  streetLanterns(map, lights.map((l) => ({ x: l.x, y: l.y }))).forEach(add);
+  return lights;
+}
+
+type NewLight = Omit<Light, "id">;
+
+/** Reach of each tower's fire, in cells. */
+const TOWER_RADIUS: Partial<Record<Building["kind"], number>> = { archerTower: 7.5, cannonTower: 5.5, watchTower: 6.5 };
+
+/** A building's own lights: a tower's fire, the keep's braziers, a barracks
+ * door lamp. */
+function buildingLights(map: CityMap, b: Building): NewLight[] {
+  const r = b.rect;
+  const radius = TOWER_RADIUS[b.kind];
+  if (radius !== undefined) return [towerFire(b, radius)];
+  if (b.kind === "keep") return keepBraziers(b);
+  if (b.kind !== "barracks" && b.kind !== "archerBarracks") return [];
+  const door = doorPoint(map, r);
+  return door ? [{ kind: "door", x: door.x, y: door.y, radius: 4.5, strength: 0.85, owner: b.id, inside: false, pillars: [] }] : [];
+}
+
+/** A fire inside a tower. An archer tower's roof stands on four corner
+ * pillars, which block it. */
+function towerFire(b: Building, radius: number): NewLight {
+  const r = b.rect;
+  const inset = 0.22;
+  return {
+    kind: b.kind as LightKind,
+    x: r.x + r.w / 2,
+    y: r.y + r.h / 2,
+    radius,
+    strength: 1,
+    owner: b.id,
+    inside: true,
+    pillars:
+      b.kind === "archerTower"
+        ? [
+            [r.x + inset, r.y + inset, 0.2],
+            [r.x + r.w - inset, r.y + inset, 0.2],
+            [r.x + inset, r.y + r.h - inset, 0.2],
+            [r.x + r.w - inset, r.y + r.h - inset, 0.2],
+          ]
+        : [],
+  };
+}
+
+/** Braziers on the keep's four corners. */
+function keepBraziers(b: Building): NewLight[] {
+  const r = b.rect;
+  return [
+    [r.x - 0.3, r.y - 0.3],
+    [r.x + r.w + 0.3, r.y - 0.3],
+    [r.x - 0.3, r.y + r.h + 0.3],
+    [r.x + r.w + 0.3, r.y + r.h + 0.3],
+  ].map(([cx, cy]) => ({ kind: "door" as const, x: cx, y: cy, radius: 4.5, strength: 0.9, owner: b.id, inside: false, pillars: [] }));
+}
+
+/** Street lanterns hung on house walls, spread along the roads (in a
+ * hashed order), none within 5.5 cells of another light. */
+function streetLanterns(map: CityMap, taken: { x: number; y: number }[]): NewLight[] {
+  const out: NewLight[] = [];
   const candidates: { i: number; h: number }[] = [];
   for (let i = 0; i < CELL_COUNT; i++) if (map.type[i] === CellType.ROAD) candidates.push({ i, h: hash(i, 77) });
   candidates.sort((a, b) => a.h - b.h);
-  const taken: { x: number; y: number }[] = lights.map((l) => ({ x: l.x, y: l.y }));
   for (const { i } of candidates) {
     const cx = i % CELLS_W,
       cy = (i - cx) / CELLS_W;
-    // Mount on a neighbouring house.
-    let mount: [number, number, number] | null = null;
-    for (const [dx, dy] of ORTHO) {
-      const nx = cx + dx,
-        ny = cy + dy;
-      if (nx < 0 || ny < 0 || nx >= CELLS_W || ny >= CELLS_H) continue;
-      const n = cellIndex(nx, ny);
-      if (map.type[n] === CellType.HOUSE) {
-        mount = [dx, dy, map.owner[n]];
-        break;
-      }
-    }
+    const mount = lanternMount(map, cx, cy);
     if (!mount) continue;
     const x = cx + 0.5 + mount[0] * 0.36,
       y = cy + 0.5 + mount[1] * 0.36;
     if (taken.some((t) => (t.x - x) ** 2 + (t.y - y) ** 2 < 5.5 * 5.5)) continue;
     taken.push({ x, y });
-    add({ kind: "lantern", x, y, radius: 5.6, strength: 0.95, owner: mount[2], inside: false, pillars: [] });
+    out.push({ kind: "lantern", x, y, radius: 5.6, strength: 0.95, owner: mount[2], inside: false, pillars: [] });
   }
-  return lights;
+  return out;
+}
+
+/** The first house beside road cell (cx, cy): its direction and id. */
+function lanternMount(map: CityMap, cx: number, cy: number): [number, number, number] | null {
+  for (const [dx, dy] of ORTHO) {
+    const nx = cx + dx,
+      ny = cy + dy;
+    if (!cellInBounds(nx, ny)) continue;
+    const n = cellIndex(nx, ny);
+    if (map.type[n] === CellType.HOUSE) return [dx, dy, map.owner[n]];
+  }
+  return null;
 }
 
 function doorPoint(map: CityMap, r: Rect): { x: number; y: number } | null {
@@ -298,57 +323,15 @@ export class DefendLighting {
 
   /** Darkness carved by light, then warm glow blended as light — the main
    * game's recipe. `ambient` is the overlay colour and opacity. */
-  drawLight(
-    c: CanvasRenderingContext2D,
-    px: number,
-    now: number,
-    reduceMotion: boolean,
-    intact: (id: number) => boolean,
-    ambient: { color: string; alpha: number; glow: number },
-    /** Hand torches carried by units; masked to open ground. */
-    carried: { torches: { x: number; y: number; id: number; r?: number; k?: number }[]; solid: Uint8Array; version: number },
-  ) {
+  drawLight(c: CanvasRenderingContext2D, frame: LightFrame, ambient: Ambient, carried: Carried) {
     const W = c.canvas.width,
       H = c.canvas.height;
     this.dark = sized(this.dark, W, H);
     this.glow = sized(this.glow, W, H);
-    const dk = this.dark.getContext("2d")!;
-    const gl = this.glow.getContext("2d")!;
-    dk.globalCompositeOperation = "source-over";
-    dk.globalAlpha = 1;
-    dk.clearRect(0, 0, W, H);
-    dk.fillStyle = ambient.color;
-    dk.globalAlpha = ambient.alpha;
-    dk.fillRect(0, 0, W, H);
-    gl.globalCompositeOperation = "source-over";
-    gl.globalAlpha = 1;
-    gl.clearRect(0, 0, W, H);
-    dk.globalCompositeOperation = "destination-out";
-    gl.globalCompositeOperation = "lighter";
-    dk.imageSmoothingEnabled = gl.imageSmoothingEnabled = true;
-    for (const l of this.lights) {
-      const pair = this.active(l, intact);
-      if (!pair) continue;
-      const flicker = getTorchFlicker({ x: l.id * 7, y: l.id * 13 }, now, reduceMotion);
-      const sway = getTorchSway({ x: l.id * 7, y: l.id * 13 }, now, reduceMotion);
-      const lean = Math.max(0, Math.min(1, 0.5 + sway.x / (2 * LIGHTING_CONFIG.flicker.swayX)));
-      const k = l.strength * flicker;
-      for (const [b, w] of [
-        [pair[0], 1 - lean],
-        [pair[1], lean],
-      ] as const) {
-        if (w <= 0.01) continue;
-        const x = b.left * px,
-          y = (b.top + sway.y) * px,
-          w2 = (b.cols / RES) * px,
-          h2 = (b.rows / RES) * px;
-        dk.globalAlpha = Math.min(1, 0.95 * k * w);
-        dk.drawImage(b.canvas, x, y, w2, h2);
-        gl.globalAlpha = Math.min(1, ambient.glow * k * w);
-        gl.drawImage(b.canvas, x, y, w2, h2);
-      }
-    }
-    this.drawCarried(dk, gl, px, now, reduceMotion, ambient.glow, carried);
+    const layers = { dk: this.dark.getContext("2d")!, gl: this.glow.getContext("2d")! };
+    clearLayers(layers, ambient);
+    this.drawPools(layers, frame, ambient.glow);
+    this.drawCarried(layers, frame, ambient.glow, carried);
     c.save();
     c.drawImage(this.dark, 0, 0);
     c.globalCompositeOperation = "soft-light";
@@ -359,19 +342,20 @@ export class DefendLighting {
     c.restore();
   }
 
+  /** Each fixed light's baked pool, blended between its two swayed bakes
+   * by how far the flame leans. */
+  private drawPools(layers: Layers, frame: LightFrame, glow: number) {
+    for (const l of this.lights) {
+      const pair = this.active(l, frame.intact);
+      if (pair) drawPool(layers, frame, glow, { l, pair });
+    }
+  }
+
   /** Units' hand torches: small unoccluded pools that move with them, so
    * they're drawn fresh each frame onto their own layer, clipped to open
    * ground (a torch in the street never lights a roof), then carved into the
    * darkness and added to the glow like the fixed lights. */
-  private drawCarried(
-    dk: CanvasRenderingContext2D,
-    gl: CanvasRenderingContext2D,
-    px: number,
-    now: number,
-    reduceMotion: boolean,
-    glow: number,
-    carried: { torches: { x: number; y: number; id: number; r?: number; k?: number }[]; solid: Uint8Array; version: number },
-  ) {
+  private drawCarried({ dk, gl }: Layers, { px, now, reduceMotion }: LightFrame, glow: number, carried: Carried) {
     if (!carried.torches.length) return;
     const W = dk.canvas.width,
       H = dk.canvas.height;
@@ -392,7 +376,7 @@ export class DefendLighting {
     }
     d.globalAlpha = 1;
     d.globalCompositeOperation = "destination-in";
-    d.drawImage(this.groundMask(carried.solid, carried.version, W, H, px), 0, 0);
+    d.drawImage(this.groundMask(carried, px, W, H), 0, 0);
     dk.globalCompositeOperation = "destination-out";
     dk.globalAlpha = 0.85;
     dk.drawImage(this.dyn, 0, 0);
@@ -402,26 +386,16 @@ export class DefendLighting {
   }
 
   /** White wherever the ground is open (no standing building or wall). */
-  private groundMask(solid: Uint8Array, version: number, W: number, H: number, px: number) {
+  private groundMask({ solid, version }: Carried, px: number, W: number, H: number) {
     const key = `${version}:${W}x${H}`;
-    if (key !== this.groundKey || !this.ground) {
-      this.groundKey = key;
-      this.ground = sized(this.ground, W, H);
-      const g = this.ground.getContext("2d")!;
-      g.clearRect(0, 0, W, H);
-      g.fillStyle = "#fff";
-      for (let cy = 0; cy < CELLS_H; cy++) {
-        let run = -1;
-        for (let cx = 0; cx <= CELLS_W; cx++) {
-          const open = cx < CELLS_W && (!solid[cellIndex(cx, cy)] || (this.map?.owner[cellIndex(cx, cy)] ?? 0) < 0);
-          if (open && run < 0) run = cx;
-          if (!open && run >= 0) {
-            g.fillRect(Math.floor(run * px), Math.floor(cy * px), Math.ceil((cx - run) * px) + 1, Math.ceil(px) + 1);
-            run = -1;
-          }
-        }
-      }
-    }
+    if (key === this.groundKey && this.ground) return this.ground;
+    this.groundKey = key;
+    this.ground = sized(this.ground, W, H);
+    const g = this.ground.getContext("2d")!;
+    g.clearRect(0, 0, W, H);
+    g.fillStyle = "#fff";
+    const open = (i: number) => !solid[i] || (this.map?.owner[i] ?? 0) < 0;
+    for (let cy = 0; cy < CELLS_H; cy++) fillOpenRuns(g, px, cy, open);
     return this.ground;
   }
 
@@ -465,12 +439,12 @@ export class DefendLighting {
   }
 
   /** Flames: lantern hoods, tower braziers — a hot flickering core. */
-  drawFlames(c: CanvasRenderingContext2D, px: number, now: number, reduceMotion: boolean, intact: (id: number) => boolean) {
+  drawFlames(c: CanvasRenderingContext2D, { px, now, reduceMotion, intact }: LightFrame) {
     this.flameSprite ??= makeFlameSprite();
+    const lit = this.lights.filter((l) => this.active(l, intact));
     c.save();
     c.globalCompositeOperation = "lighter";
-    for (const l of this.lights) {
-      if (!this.active(l, intact)) continue;
+    for (const l of lit) {
       const f = getTorchFlicker({ x: l.id * 7, y: l.id * 13 }, now, reduceMotion);
       const sway = getTorchSway({ x: l.id * 7, y: l.id * 13 }, now, reduceMotion);
       const r = px * (l.kind === "lantern" || l.kind === "door" ? 0.9 : 1.4) * f;
@@ -480,11 +454,77 @@ export class DefendLighting {
     c.restore();
     // A pixel of actual flame on top.
     const s = Math.max(1, px * 0.18);
-    for (const l of this.lights) {
-      if (!this.active(l, intact)) continue;
+    for (const l of lit) {
       const sway = getTorchSway({ x: l.id * 7, y: l.id * 13 }, now, reduceMotion);
       c.fillStyle = "#ffe6a8";
       c.fillRect((l.x + sway.x) * px - s / 2, (l.y + sway.y * 0.5) * px - s / 2, s, s * sway.stretch);
+    }
+  }
+}
+
+/** What the lights are drawn for this frame: canvas pixels per cell, the
+ * time, and whether each light's building still stands. */
+export type LightFrame = { px: number; now: number; reduceMotion: boolean; intact: (id: number) => boolean };
+/** The darkness overlay's colour and opacity, and the glow's strength. */
+export type Ambient = { color: string; alpha: number; glow: number };
+/** A moving light: a unit's hand torch or a blast's flash (with its own
+ * reach `r` and brightness `k`). */
+export type CarriedLight = { x: number; y: number; id: number; r?: number; k?: number };
+/** Hand torches, masked to the open ground of `solid` (at map `version`). */
+export type Carried = { torches: CarriedLight[]; solid: Uint8Array; version: number };
+type Layers = { dk: CanvasRenderingContext2D; gl: CanvasRenderingContext2D };
+
+/** Clears the glow, and fills the darkness with the ambient overlay, ready
+ * for lights to be carved out of it. */
+function clearLayers({ dk, gl }: Layers, ambient: Ambient) {
+  const W = dk.canvas.width,
+    H = dk.canvas.height;
+  dk.globalCompositeOperation = "source-over";
+  dk.globalAlpha = 1;
+  dk.clearRect(0, 0, W, H);
+  dk.fillStyle = ambient.color;
+  dk.globalAlpha = ambient.alpha;
+  dk.fillRect(0, 0, W, H);
+  gl.globalCompositeOperation = "source-over";
+  gl.globalAlpha = 1;
+  gl.clearRect(0, 0, W, H);
+  dk.globalCompositeOperation = "destination-out";
+  gl.globalCompositeOperation = "lighter";
+  dk.imageSmoothingEnabled = gl.imageSmoothingEnabled = true;
+}
+
+/** One light's pool, blended between its two swayed bakes by how far the
+ * flame leans, carved into the darkness and added to the glow. */
+function drawPool({ dk, gl }: Layers, { px, now, reduceMotion }: LightFrame, glow: number, { l, pair }: { l: Light; pair: [Bake, Bake] }) {
+  const flicker = getTorchFlicker({ x: l.id * 7, y: l.id * 13 }, now, reduceMotion);
+  const sway = getTorchSway({ x: l.id * 7, y: l.id * 13 }, now, reduceMotion);
+  const lean = Math.max(0, Math.min(1, 0.5 + sway.x / (2 * LIGHTING_CONFIG.flicker.swayX)));
+  const k = l.strength * flicker;
+  for (const [b, w] of [
+    [pair[0], 1 - lean],
+    [pair[1], lean],
+  ] as const) {
+    if (w <= 0.01) continue;
+    const x = b.left * px,
+      y = (b.top + sway.y) * px,
+      w2 = (b.cols / RES) * px,
+      h2 = (b.rows / RES) * px;
+    dk.globalAlpha = Math.min(1, 0.95 * k * w);
+    dk.drawImage(b.canvas, x, y, w2, h2);
+    gl.globalAlpha = Math.min(1, glow * k * w);
+    gl.drawImage(b.canvas, x, y, w2, h2);
+  }
+}
+
+/** Fills each run of open cells along row `cy`. */
+function fillOpenRuns(g: CanvasRenderingContext2D, px: number, cy: number, open: (i: number) => boolean) {
+  let run = -1;
+  for (let cx = 0; cx <= CELLS_W; cx++) {
+    const here = cx < CELLS_W && open(cellIndex(cx, cy));
+    if (here && run < 0) run = cx;
+    if (!here && run >= 0) {
+      g.fillRect(Math.floor(run * px), Math.floor(cy * px), Math.ceil((cx - run) * px) + 1, Math.ceil(px) + 1);
+      run = -1;
     }
   }
 }
@@ -545,53 +585,71 @@ function bakeLight(l: Light, map: CityMap, solid: Uint8Array, offsetX: number): 
   const size = Math.ceil(R * 2 + 3);
   const cols = size * RES,
     rows = size * RES;
-  const ox = l.x + offsetX,
-    oy = l.y;
+  const src: Source = {
+    l,
+    o: { x: l.x + offsetX, y: l.y },
+    blocks: (i: number) => solid[i] === 1 && map.owner[i] >= 0 && !(l.inside && map.owner[i] === l.owner),
+  };
   const raw = new Float32Array(cols * rows);
-  const blocks = (i: number) => solid[i] === 1 && map.owner[i] >= 0 && !(l.inside && map.owner[i] === l.owner);
   for (let sy = 0; sy < rows; sy++) {
     const wy = top + (sy + 0.5) / RES;
-    for (let sx = 0; sx < cols; sx++) {
-      const wx = left + (sx + 0.5) / RES;
-      const d = Math.hypot(wx - ox, wy - oy);
-      if (d >= R || wx < 0 || wy < 0 || wx >= CELLS_W || wy >= CELLS_H) continue;
-      const tcx = Math.floor(wx),
-        tcy = Math.floor(wy);
-      // March from the flame; the first solid cell other than the sample's
-      // own cell casts the shadow (so building faces toward the light glow).
-      const steps = Math.ceil(d / 0.2);
-      let lit = true;
-      for (let k = 1; k < steps; k++) {
-        const px = ox + ((wx - ox) * k) / steps,
-          py = oy + ((wy - oy) * k) / steps;
-        const cx = Math.floor(px),
-          cy = Math.floor(py);
-        if (cx === tcx && cy === tcy) break;
-        if (cx < 0 || cy < 0 || cx >= CELLS_W || cy >= CELLS_H) continue;
-        if (blocks(cellIndex(cx, cy))) {
-          lit = false;
-          break;
-        }
-      }
-      if (lit)
-        for (const [px, py, pr] of l.pillars)
-          if (segmentPointDist(ox, oy, wx, wy, px, py) < pr && Math.hypot(px - ox, py - oy) < d) {
-            lit = false;
-            break;
-          }
-      if (lit) raw[sy * cols + sx] = lightFalloff(d, R);
-    }
+    for (let sx = 0; sx < cols; sx++) raw[sy * cols + sx] = lightAt(src, left + (sx + 0.5) / RES, wy);
   }
-  const values = blur(raw, cols, rows);
-  // Light lands on open ground only: standing buildings and wall stones stay
-  // unlit, so flames read as street-level, never hovering above the roofs.
-  for (let sy = 0; sy < rows; sy++) {
-    const cy = Math.floor(top + (sy + 0.5) / RES);
-    for (let sx = 0; sx < cols; sx++) {
-      const cx = Math.floor(left + (sx + 0.5) / RES);
-      if (cx >= 0 && cy >= 0 && cx < CELLS_W && cy < CELLS_H && solid[cellIndex(cx, cy)] && map.owner[cellIndex(cx, cy)] >= 0) values[sy * cols + sx] = 0;
-    }
+  const values = blur({ src: raw, cols, rows });
+  unlightStanding(values, { left, top, cols, rows }, map, solid);
+  return { canvas: glowCanvas(values, cols, rows), values, cols, rows, left, top };
+}
+
+type Point = { x: number; y: number };
+
+/** A light being baked: its flame `o` (maybe nudged) and which cells cast
+ * its shadows. */
+type Source = { l: Light; o: Point; blocks: (i: number) => boolean };
+
+/** The light reaching sample point (wx, wy), 0 when out of reach or shadowed. */
+function lightAt(src: Source, wx: number, wy: number) {
+  const { l, o } = src;
+  const d = Math.hypot(wx - o.x, wy - o.y);
+  if (d >= l.radius || !cellInBounds(wx, wy)) return 0;
+  if (rayBlocked(src, wx, wy, d) || pillarBlocked(src, { x: wx, y: wy }, d)) return 0;
+  return lightFalloff(d, l.radius);
+}
+
+/** Marches from the flame to the sample `d` away: the first solid cell
+ * other than the sample's own casts the shadow (so building faces toward the
+ * light glow). */
+function rayBlocked({ o, blocks }: Source, wx: number, wy: number, d: number) {
+  const tcx = Math.floor(wx),
+    tcy = Math.floor(wy);
+  const steps = Math.ceil(d / 0.2);
+  for (let k = 1; k < steps; k++) {
+    const px = o.x + ((wx - o.x) * k) / steps,
+      py = o.y + ((wy - o.y) * k) / steps;
+    const cx = Math.floor(px),
+      cy = Math.floor(py);
+    if (cx === tcx && cy === tcy) return false;
+    if (cellInBounds(cx, cy) && blocks(cellIndex(cx, cy))) return true;
   }
+  return false;
+}
+
+/** A roof pillar stands between the flame and the sample `d` away. */
+function pillarBlocked({ l, o }: Source, w: Point, d: number) {
+  return l.pillars.some(([px, py, pr]) => segmentPointDist(o, w, { x: px, y: py }) < pr && Math.hypot(px - o.x, py - o.y) < d);
+}
+
+/** Light lands on open ground only: standing buildings and wall stones stay
+ * unlit, so flames read as street-level, never hovering above the roofs. */
+function unlightStanding(values: Float32Array, f: { left: number; top: number; cols: number; rows: number }, map: CityMap, solid: Uint8Array) {
+  const standing = (cx: number, cy: number) => cellInBounds(cx, cy) && solid[cellIndex(cx, cy)] && map.owner[cellIndex(cx, cy)] >= 0;
+  for (let sy = 0; sy < f.rows; sy++) {
+    const cy = Math.floor(f.top + (sy + 0.5) / RES);
+    for (let sx = 0; sx < f.cols; sx++) if (standing(Math.floor(f.left + (sx + 0.5) / RES), cy)) values[sy * f.cols + sx] = 0;
+  }
+}
+
+/** The field as candle-coloured pixels, alpha by brightness. */
+function glowCanvas(values: Float32Array, cols: number, rows: number) {
   const canvas = document.createElement("canvas");
   canvas.width = cols;
   canvas.height = rows;
@@ -607,32 +665,39 @@ function bakeLight(l: Light, map: CityMap, solid: Uint8Array, offsetX: number): 
     img.data[i * 4 + 3] = Math.min(255, v * 255);
   }
   ctx.putImageData(img, 0, 0);
-  return { canvas, values, cols, rows, left, top };
+  return canvas;
 }
 
-function segmentPointDist(ax: number, ay: number, bx: number, by: number, px: number, py: number) {
-  const dx = bx - ax,
-    dy = by - ay;
-  const t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy || 1)));
-  return Math.hypot(ax + dx * t - px, ay + dy * t - py);
+/** Distance from `p` to the segment a–b. */
+function segmentPointDist(a: Point, b: Point, p: Point) {
+  const dx = b.x - a.x,
+    dy = b.y - a.y;
+  const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / (dx * dx + dy * dy || 1)));
+  return Math.hypot(a.x + dx * t - p.x, a.y + dy * t - p.y);
 }
+
+type Field = { src: Float32Array; cols: number; rows: number };
 
 /** One 3×3 box-blur pass: softens occlusion edges into penumbras. */
-function blur(src: Float32Array, cols: number, rows: number): Float32Array {
-  const out = new Float32Array(src.length);
-  for (let y = 0; y < rows; y++)
-    for (let x = 0; x < cols; x++) {
-      let acc = 0,
-        n = 0;
-      for (let dy = -1; dy <= 1; dy++)
-        for (let dx = -1; dx <= 1; dx++) {
-          const xx = x + dx,
-            yy = y + dy;
-          if (xx < 0 || yy < 0 || xx >= cols || yy >= rows) continue;
-          acc += src[yy * cols + xx];
-          n++;
-        }
-      out[y * cols + x] = acc / n;
-    }
+function blur(f: Field): Float32Array {
+  const out = new Float32Array(f.src.length);
+  for (let y = 0; y < f.rows; y++) for (let x = 0; x < f.cols; x++) out[y * f.cols + x] = boxAverage(f, x, y);
   return out;
+}
+
+const inField = (x: number, y: number, cols: number, rows: number) => x >= 0 && y >= 0 && x < cols && y < rows;
+
+/** The mean of the samples around (x, y) that lie inside the field. */
+function boxAverage({ src, cols, rows }: Field, x: number, y: number) {
+  let acc = 0,
+    n = 0;
+  for (let dy = -1; dy <= 1; dy++)
+    for (let dx = -1; dx <= 1; dx++) {
+      const xx = x + dx,
+        yy = y + dy;
+      if (!inField(xx, yy, cols, rows)) continue;
+      acc += src[yy * cols + xx];
+      n++;
+    }
+  return acc / n;
 }

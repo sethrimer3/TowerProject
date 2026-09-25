@@ -43,5 +43,14 @@
   "decorThicket.moving": "b46513cdebb521d17e3f266b",
   "decorThicket.after": "e4386a8bfc0ab4b7c2a96e46",
   "decorThicket.ripples": "c864aa57993ac3279fd8d09e",
-  "decorThicket.later": "d9540144a34acbeaf8d2d5fc"
+  "decorThicket.later": "d9540144a34acbeaf8d2d5fc",
+  "defendEdit.settled": "755ab481dfaad3196f5a2773",
+  "defendEdit.later": "2dc94cf4950316469c91c5b4",
+  "defendRain.settled": "f1d2cc5fd85fc86a18230c23",
+  "defendRain.later": "6b8977d4b59c01a2eb5480f7",
+  "defendNight.settled": "41a02cac39c2dd093d83bd15",
+  "defendNight.later": "6f61ef0e975c4f0e946ac6ca",
+  "defendStorm.settled": "aea4d075c96a945bc3dff823",
+  "defendStorm.later": "c0f0290cb972e0e09cbabab7",
+  "defendIcons.sheet": "2684982ed068777a8075dc29"
 }
