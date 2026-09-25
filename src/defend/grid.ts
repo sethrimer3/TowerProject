@@ -31,6 +31,31 @@ export const cellInBounds = (cx: number, cy: number) =>
 export const cellIndex = (cx: number, cy: number) => cy * CELLS_W + cx;
 export const cellX = (i: number) => i % CELLS_W;
 export const cellY = (i: number) => Math.floor(i / CELLS_W);
+
+/** A rect's cells that lie on the board, row by row. */
+export function rectCells(r: Rect): number[] {
+  const out: number[] = [];
+  for (let y = r.y; y < r.y + r.h; y++)
+    for (let x = r.x; x < r.x + r.w; x++) if (cellInBounds(x, y)) out.push(cellIndex(x, y));
+  return out;
+}
+
+/** Cells orthogonally touching a rect's outside edge. */
+export function sideCells(r: Rect): number[] {
+  const out: number[] = [];
+  const add = (x: number, y: number) => {
+    if (cellInBounds(x, y)) out.push(cellIndex(x, y));
+  };
+  for (let x = r.x; x < r.x + r.w; x++) {
+    add(x, r.y - 1);
+    add(x, r.y + r.h);
+  }
+  for (let y = r.y; y < r.y + r.h; y++) {
+    add(r.x - 1, y);
+    add(r.x + r.w, y);
+  }
+  return out;
+}
 export const tileOfCell = (cx: number, cy: number): TilePos => ({
   tx: Math.floor(cx / SUB),
   ty: Math.floor(cy / SUB),

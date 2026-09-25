@@ -4,8 +4,7 @@
  * smashing any building that lies across the cheapest way, and now and then
  * a house beside the street lures it off the road. */
 import { ENEMIES, type EnemyDef } from "./catalog.ts";
-import { sideCells } from "./citygen.ts";
-import { CELLS_H, CELLS_W } from "./grid.ts";
+import { CELLS_H, CELLS_W, sideCells } from "./grid.ts";
 import { cellCenter, center, clampCell, downhill, nearestPoint, rectDist } from "./pathing.ts";
 import type { DefendSim, Enemy } from "./sim.ts";
 

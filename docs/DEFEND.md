@@ -74,7 +74,8 @@ holds it against endless waves. Code lives in `src/defend/`.
   round corner turrets, a courtyard and a hipped slate roof, with a red and
   gold banner rippling in the wind on top.
 - Generation is seeded per save and keyed by position, so the same layout
-  always produces the same city.
+  always produces the same city. `tests/defend-city.test.ts` pins both
+  `fitLayout` and `generateCity` against recorded hashes.
 
 ## A run (`sim.ts`)
 

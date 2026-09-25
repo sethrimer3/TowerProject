@@ -11,7 +11,7 @@
  * and what happens to it (damage, rebuilding, blasts, movement). What each
  * kind of unit decides to do lives beside it: `enemies.ts`, `troops.ts`,
  * `civilians.ts` and `towers.ts`, with grid pathing in `pathing.ts`. */
-import { CELL_COUNT, CELLS_H, CELLS_W, cellIndex, cellX, cellY, rng } from "./grid.ts";
+import { CELL_COUNT, CELLS_H, CELLS_W, cellIndex, cellX, cellY, rng, sideCells } from "./grid.ts";
 import {
   BOMB_DAMAGE,
   BOMB_RADIUS,
@@ -27,7 +27,7 @@ import {
   type EnemyKind,
   type UpgradeId,
 } from "./catalog.ts";
-import { CellType, sideCells, type Building, type CityMap } from "./citygen.ts";
+import { CellType, type Building, type CityMap } from "./citygen.ts";
 import { atHome, Builders } from "./civilians.ts";
 import { stepEnemy } from "./enemies.ts";
 import { blocked, cellAt, cellCenter, center, fillFlowField, nearest, nearestOpen, type FieldTerrain, type Point } from "./pathing.ts";
