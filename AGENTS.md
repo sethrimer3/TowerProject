@@ -57,3 +57,17 @@ npm run tiles:area1 / tiles:outside     # regenerate tile PNGs
 - All text uses the bundled Cinzel font (`assets/fonts/Cinzel/`); no remote fonts (browser test checks this).
 - Undo, Revive, and pending death rewards have subtle invariants (Revive can't duplicate rewards; undo cancels queued routes; history persists across refreshes). The README's gameplay section is the spec for this player-facing behavior.
 - `test-gen.ts` at the root is a scratch experiment, not part of the build or tests.
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in GitHub Issues on `sethrimer3/TowerProject`, managed with the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Uses the five default labels: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: one `CONTEXT.md` and `docs/adr/` at the repo root, both created only when needed. See `docs/agents/domain.md`.
