@@ -48,7 +48,7 @@ npm run tiles:area1 / tiles:outside     # regenerate tile PNGs
 
 **Progression/economy.** Balancing, upgrade definitions, and currency rewards are in `src/config.ts`; skill trees are in `skill-trees.ts`; materials/equipment/crafting are in `materials.ts`, `equipment.ts`, `crafting.ts`, `loot.ts`. `docs/CRAFTING_AND_EQUIPMENT.md` and `docs/PROGRESSION_AND_DIFFICULTY.md` are the design source of truth. Tests (e.g. `tests/progression.test.ts`) assert numbers taken from them, so keep code and docs in agreement.
 
-**Saves.** `src/save.ts` loads defensively: `defaults()` defines every field, and loading must tolerate missing or old fields. When adding save state, add it to `defaults()`, the `Save` type in `entities.ts`, and the load normalization. Unsupported versions reset safely.
+**Saves.** `src/save.ts` loads defensively: `defaults()` defines every field, and loading must tolerate missing or old fields. When adding save state, add it to `defaults()`, the `Save` type in `entities.ts`, and a small decoder called from `decode()` (per-version steps live in `VERSION_STEPS`). Unsupported versions reset safely. `tests/save.test.ts` pins `decode()` behaviour with a corpus of mutated saves hashed against `tests/fixtures/save-decode.golden.json`; if a decode change is intended, regenerate it with `UPDATE_GOLDEN=1 node --experimental-transform-types --test tests/save.test.ts` and review which cases changed.
 
 ## Conventions
 
