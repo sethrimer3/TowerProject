@@ -110,60 +110,74 @@ export function fbm(x: number, y: number, seed: number) {
 /** Decor source for a dungeon board, or null outside (the forest has its
  * own grass, see outside-grass.ts). */
 export function decorSourceFor(world: Board, seed: number): DecorSource | null {
-  let kind: (x: number, y: number) => Kind;
-  let key: string;
-  let lush: DecorSource["lush"], damp: DecorSource["damp"], clutter: DecorSource["clutter"];
   // Matched by shape rather than instanceof, which breaks across module
   // reloads during development.
-  if ("cells" in world && "room" in world) {
-    const room = (world as RoomWorld).room, cells = (world as RoomWorld).cells, height = (world as RoomWorld).height;
-    key = `t:${seed}:${room}`;
-    kind = (x, y) => (x < 0 || y < 0 || x >= world.width || y >= height ? "wall" : cells.get(point(x, y))?.kind ?? "wall");
-    // Each Tower room has its own character: some overgrown, some dry and
-    // stacked with stores, some flooded.
-    const r = (salt: number) => tileRandom(room, salt, seed ^ 0x3ec0);
-    const l = 0.08 + 0.84 * Math.pow(r(1), 1.15), d = r(2) < 0.4 ? 0.3 + r(3) * 0.7 : 0, c = 0.25 + r(4) * 0.75;
-    lush = () => l; damp = () => d; clutter = () => c;
-  } else if ("chunks" in world) {
-    const delve = world as World;
-    key = `d:${seed}`;
-    kind = (x, y) => {
-      if (x < 0 || x >= delve.width || y < delve.floor) return "wall";
+  const terrain = "cells" in world && "room" in world ? towerTerrain(world as RoomWorld, seed)
+    : "chunks" in world ? delveTerrain(world as World, seed)
+    : null;
+  return terrain && { ...terrain, seed, torch: torchLookup(world) };
+}
+
+type Terrain = Pick<DecorSource, "key" | "kind" | "lush" | "damp" | "clutter">;
+
+function towerTerrain(world: RoomWorld, seed: number): Terrain {
+  const { room, cells, width, height } = world;
+  // Each Tower room has its own character: some overgrown, some dry and
+  // stacked with stores, some flooded.
+  const r = (salt: number) => tileRandom(room, salt, seed ^ 0x3ec0);
+  const l = 0.08 + 0.84 * Math.pow(r(1), 1.15), d = r(2) < 0.4 ? 0.3 + r(3) * 0.7 : 0, c = 0.25 + r(4) * 0.75;
+  const outside = (x: number, y: number) => x < 0 || y < 0 || x >= width || y >= height;
+  return {
+    key: `t:${seed}:${room}`,
+    kind: (x, y) => (outside(x, y) ? "wall" : cells.get(point(x, y))?.kind ?? "wall"),
+    lush: () => l, damp: () => d, clutter: () => c,
+  };
+}
+
+function delveTerrain(delve: World, seed: number): Terrain {
+  return {
+    key: `d:${seed}`,
+    kind: (x, y) => {
+      const beyond = x < 0 || x >= delve.width || y < delve.floor;
+      if (beyond) return "wall";
       delve.tile(x, y); // makes sure the chunk exists
       return delve.chunks.get(Math.floor(y / CHUNK))?.get(point(x, y))?.kind ?? "wall";
-    };
-    // The Delve drifts through lusher and drier stretches as it deepens.
-    lush = (x, y) => clamp01(valueNoise(x / 11, y / 17, seed ^ 0x1a5) * 1.5 - 0.2);
-    damp = (x, y) => clamp01(valueNoise(x / 9, y / 13, seed ^ 0x2d7) * 1.8 - 0.75);
-    clutter = (x, y) => clamp01(valueNoise(x / 8, y / 10, seed ^ 0x3f1) * 1.4 - 0.1);
-  } else return null;
-  // The Delve's torch list grows as new areas open; rebuild when it changes.
-  let torches = new Set<string>(), seen: unknown = null, count = -1;
-  return {
-    key, seed, kind, lush, damp, clutter,
-    torch(x, y) {
-      const list = world.torches ?? [];
-      if (list !== seen && list.length !== count) {
-        torches = new Set(list.map((t) => point(t.x, t.y)));
-        count = list.length;
-      }
-      seen = list;
-      return torches.has(point(x, y));
     },
+    // The Delve drifts through lusher and drier stretches as it deepens.
+    lush: (x, y) => clamp01(valueNoise(x / 11, y / 17, seed ^ 0x1a5) * 1.5 - 0.2),
+    damp: (x, y) => clamp01(valueNoise(x / 9, y / 13, seed ^ 0x2d7) * 1.8 - 0.75),
+    clutter: (x, y) => clamp01(valueNoise(x / 8, y / 10, seed ^ 0x3f1) * 1.4 - 0.1),
+  };
+}
+
+/** Whether a torch stands on a tile. The Delve's torch list grows as new
+ * areas open, so the lookup is rebuilt when it changes. */
+function torchLookup(world: Board): DecorSource["torch"] {
+  let torches = new Set<string>(), seen: unknown = null, count = -1;
+  return (x, y) => {
+    const list = world.torches ?? [];
+    if (list !== seen && list.length !== count) {
+      torches = new Set(list.map((t) => point(t.x, t.y)));
+      count = list.length;
+    }
+    seen = list;
+    return torches.has(point(x, y));
   };
 }
 
 const isWall = (k: Kind) => k === "wall";
+/** Doors, stairs and one-way gates: always drawn clean. */
+const isFixture = (k: Kind) => k === "door" || k === "stairs" || k === "stairsDown" || k === "oneway";
 /** Tiles decor may cover: open ground, including under items and enemies. */
-const isGround = (k: Kind) => k !== "wall" && k !== "door" && k !== "stairs" && k !== "stairsDown" && k !== "oneway";
+const isGround = (k: Kind) => !isWall(k) && !isFixture(k);
 
+/** A tile's 8 neighbours as [dx, dy, weight]: diagonals count half. */
+const NEIGHBORS = [-1, 0, 1].flatMap((dy) =>
+  [-1, 0, 1].filter((dx) => dx || dy).map((dx): [number, number, number] => [dx, dy, dx && dy ? 0.5 : 1]),
+);
 /** The wall tiles among a tile's 8 neighbours, as [dx, dy, weight]. */
 function wallNeighbors(src: DecorSource, x: number, y: number) {
-  const out: [number, number, number][] = [];
-  for (let dy = -1; dy <= 1; dy++)
-    for (let dx = -1; dx <= 1; dx++)
-      if ((dx || dy) && isWall(src.kind(x + dx, y + dy))) out.push([dx, dy, dx && dy ? 0.5 : 1]);
-  return out;
+  return NEIGHBORS.filter(([dx, dy]) => isWall(src.kind(x + dx, y + dy)));
 }
 /** Distance-to-wall bonus (0..1.4) at a tile-local pixel: moss creeps out
  * of the joints between wall and floor, and most of all from corners. */
@@ -291,74 +305,109 @@ const vineCache = new Map<string, { gx: number; gy: number; c: number }[] | null
 /** Vines rooted at floor tile (x, y), by edge. Cached per source. */
 function vinesAt(src: DecorSource, x: number, y: number) {
   const all: { gx: number; gy: number; c: number }[] = [];
-  const k = src.kind(x, y);
-  if (!isGround(k) || k !== "floor") return all;
+  if (src.kind(x, y) !== "floor") return all;
   for (let d = 0; d < 4; d++) {
-    const nk = src.kind(x + DIRS[d].dx, y + DIRS[d].dy);
-    if (!isWall(nk)) continue;
-    const key = `${src.key}:${x},${y}:${d}`;
-    let v = vineCache.get(key);
-    if (v === undefined) {
-      // Vines grow where it's overgrown, sampled at the middle of the edge.
-      const mi = DIRS[d].dx > 0 ? 22 : DIRS[d].dx < 0 ? 1 : 12, mj = DIRS[d].dy > 0 ? 1 : DIRS[d].dy < 0 ? 22 : 12;
-      const g = overgrowth(src, x, y, mi, mj);
-      const chance = DECOR_CONFIG.vineChance * clamp01(g * 0.9 + src.lush(x, y) * 0.2 - 0.12);
-      v = tileRandom(x * 7 + d, y * 13 - d, src.seed ^ 0x71e5) < chance ? vineFrom(src, x, y, d) : null;
-      if (vineCache.size > 20000) vineCache.clear();
-      vineCache.set(key, v);
-    }
+    const v = vineAt(src, x, y, d);
     if (v) all.push(...v);
   }
   return all;
 }
 
+/** The vine rooted on floor tile (x, y)'s edge in direction `d`, if that
+ * edge meets a wall and a vine grows there. Cached per source. */
+function vineAt(src: DecorSource, x: number, y: number, d: number) {
+  if (!isWall(src.kind(x + DIRS[d].dx, y + DIRS[d].dy))) return null;
+  const key = `${src.key}:${x},${y}:${d}`;
+  let v = vineCache.get(key);
+  if (v === undefined) {
+    v = rollVine(src, x, y, d);
+    if (vineCache.size > 20000) vineCache.clear();
+    vineCache.set(key, v);
+  }
+  return v;
+}
+
+/** Tile-local pixel at the middle of the edge facing `delta` (-1, 0 or 1). */
+const edgeMiddle = (delta: number) => (delta > 0 ? 22 : delta < 0 ? 1 : 12);
+
+/** Vines grow where it's overgrown, sampled at the middle of the edge. */
+function rollVine(src: DecorSource, x: number, y: number, d: number) {
+  const g = overgrowth(src, x, y, edgeMiddle(DIRS[d].dx), edgeMiddle(-DIRS[d].dy));
+  const chance = DECOR_CONFIG.vineChance * clamp01(g * 0.9 + src.lush(x, y) * 0.2 - 0.12);
+  return tileRandom(x * 7 + d, y * 13 - d, src.seed ^ 0x71e5) < chance ? vineFrom(src, x, y, d) : null;
+}
+
+/** Which of a tile's four sides are walls. */
+type Sides = { n: boolean; e: boolean; s: boolean; w: boolean };
+function wallSides(src: DecorSource, x: number, y: number): Sides {
+  const [n, e, s, w] = DIRS.map((d) => isWall(src.kind(x + d.dx, y + d.dy)));
+  return { n, e, s, w };
+}
+
+/** Crates need one wall or a corner to lean on, and must keep doorways and
+ * stairs clear. */
+function crateSpot(src: DecorSource, x: number, y: number, sides: Sides) {
+  const walls = Number(sides.n) + Number(sides.e) + Number(sides.s) + Number(sides.w);
+  const leans = walls === 1 || (walls === 2 && isCorner(sides));
+  if (!leans) return false;
+  return !DIRS.some((d) => isFixture(src.kind(x + d.dx, y + d.dy)));
+}
+
+/** A crate's left edge: against the west or east wall, else loosely placed. */
+function crateX(sides: Sides, sz: number, slot: number, rng: () => number) {
+  const row = slot * (sz + 1);
+  if (sides.w) return 1 + (sides.n || sides.s ? row : 0);
+  if (sides.e) return TILE_PX - 1 - sz - (sides.n || sides.s ? row : 0);
+  return 2 + row + Math.floor(rng() * 3);
+}
+
+/** A crate's top edge: against the north or south wall, else loosely placed. */
+function crateY(sides: Sides, sz: number, slot: number, rng: () => number) {
+  if (sides.n) return 2;
+  if (sides.s) return TILE_PX - 1 - sz;
+  return Math.min(3 + slot * (sz + 1) + Math.floor(rng() * 2), TILE_PX - 1 - sz);
+}
+
+const isCorner = (sides: Sides) => (sides.n || sides.s) && (sides.e || sides.w);
+
+/** Whether crates are left here at all: likelier in corners and cluttered stretches. */
+function cratesRolled(src: DecorSource, x: number, y: number, corner: boolean) {
+  const chance = (corner ? DECOR_CONFIG.crateCorner : DECOR_CONFIG.crateWall) * src.clutter(x, y);
+  return tileRandom(x * 3 + 5, y * 5 - 3, src.seed ^ 0xc4a7) < chance;
+}
+
 /** Crates stacked against the walls of tile (x, y), or none. */
 function cratesFor(src: DecorSource, x: number, y: number, rng: () => number): Crate[] {
-  const w = DIRS.map((d) => isWall(src.kind(x + d.dx, y + d.dy)));
-  const [n, e, s, wst] = w;
-  const walls = w.filter(Boolean).length;
-  if (!walls || walls > 2 || (n && s) || (e && wst)) return [];
-  // Keep doorways, stairs, and torch corners clear.
-  for (const d of DIRS) {
-    const k = src.kind(x + d.dx, y + d.dy);
-    if (k === "door" || k === "stairs" || k === "stairsDown" || k === "oneway") return [];
-  }
-  const clutter = src.clutter(x, y);
-  const chance = (walls === 2 ? DECOR_CONFIG.crateCorner : DECOR_CONFIG.crateWall) * clutter;
-  if (tileRandom(x * 3 + 5, y * 5 - 3, src.seed ^ 0xc4a7) >= chance) return [];
+  const sides = wallSides(src, x, y);
+  if (!crateSpot(src, x, y, sides)) return [];
+  const corner = isCorner(sides);
+  if (!cratesRolled(src, x, y, corner)) return [];
+  // Two or three in a corner, one or two against a wall.
+  const count = corner ? 2 + Number(rng() < 0.5) : 1 + Number(rng() < 0.4);
   const out: Crate[] = [];
-  const size = () => 9 + Math.floor(rng() * 3);
-  const tone = () => Math.floor(rng() * 3);
-  // Anchor against the wall(s): west/east decide x, north/south decide y.
-  const place = (sz: number, slot: number) => {
-    let cx: number, cy: number;
-    if (wst) cx = 1 + (e || !n && !s ? 0 : slot * (sz + 1));
-    else if (e) cx = TILE_PX - 1 - sz - (n || s ? slot * (sz + 1) : 0);
-    else cx = 2 + slot * (sz + 1) + Math.floor(rng() * 3);
-    if (n) cy = 2;
-    else if (s) cy = TILE_PX - 1 - sz;
-    else cy = 3 + slot * (sz + 1) + Math.floor(rng() * 2);
-    if (!n && !s && !(wst && e)) cy = Math.min(cy, TILE_PX - 1 - sz);
-    return { cx, cy };
-  };
-  const count = walls === 2 ? 2 + (rng() < 0.5 ? 1 : 0) : 1 + (rng() < 0.4 ? 1 : 0);
-  const base = Math.min(2, count);
-  for (let slot = 0; slot < base; slot++) {
-    const sz = size();
-    const barrel = rng() < 0.22;
-    const { cx, cy } = place(sz, slot);
-    out.push({ x: cx, y: cy, w: barrel ? sz - 2 : sz, h: sz, lift: 0, kind: barrel ? "barrel" : "crate", tone: tone() });
-  }
+  for (let slot = 0; slot < Math.min(2, count); slot++) out.push(floorCrate(sides, slot, rng));
   // A third box sits on top of the first.
-  if (count > 2 && out[0].kind === "crate") {
-    const b = out[0], sz = b.w - 1;
-    out.push({ x: b.x + Math.floor(rng() * 2), y: b.y, w: sz, h: sz, lift: 5, kind: "crate", tone: tone() });
-  }
-  for (const c of out) {
-    c.x = Math.max(0, Math.min(TILE_PX - c.w, c.x));
-    c.y = Math.max(0, Math.min(TILE_PX - c.h, c.y));
-  }
-  return out;
+  if (count > 2 && out[0].kind === "crate") out.push(stackedCrate(out[0], rng));
+  return out.map(fitInTile);
+}
+
+/** A crate or barrel standing in `slot` along the wall(s). */
+function floorCrate(sides: Sides, slot: number, rng: () => number): Crate {
+  const sz = 9 + Math.floor(rng() * 3);
+  const barrel = rng() < 0.22;
+  const x = crateX(sides, sz, slot, rng), y = crateY(sides, sz, slot, rng);
+  return { x, y, w: barrel ? sz - 2 : sz, h: sz, lift: 0, kind: barrel ? "barrel" : "crate", tone: Math.floor(rng() * 3) };
+}
+
+function stackedCrate(below: Crate, rng: () => number): Crate {
+  const sz = below.w - 1;
+  return { x: below.x + Math.floor(rng() * 2), y: below.y, w: sz, h: sz, lift: 5, kind: "crate", tone: Math.floor(rng() * 3) };
+}
+
+function fitInTile(c: Crate): Crate {
+  c.x = Math.max(0, Math.min(TILE_PX - c.w, c.x));
+  c.y = Math.max(0, Math.min(TILE_PX - c.h, c.y));
+  return c;
 }
 
 /** A number naming tile (x, y), for allocation-free map keys (x must lie
@@ -391,185 +440,323 @@ export function clearDecorCache() {
   vineCache.clear();
 }
 
+/** A tile being planned. */
+type At = { src: DecorSource; x: number; y: number };
+
+const emptyPlan = (): TileDecor => ({
+  moss: null, water: null, waterCount: 0, thicket: false, blades: [], crates: [], plants: [],
+  vines: [], flowers: [], drip: null, glints: [], empty: true,
+});
+
+/** Plans one tile layer by layer. Later layers read earlier ones (water
+ * clears moss and thickets, plants avoid crates and water), so the order
+ * below is fixed. */
 function planTile(src: DecorSource, x: number, y: number): TileDecor {
-  const kind = src.kind(x, y);
-  const wall = isWall(kind), ground = isGround(kind);
-  const d: TileDecor = {
-    moss: null, water: null, waterCount: 0, thicket: false, blades: [], crates: [], plants: [],
-    vines: [], flowers: [], drip: null, glints: [], empty: true,
-  };
-  const lush = src.lush(x, y);
-  const [l1, l2, l3] = DECOR_CONFIG.mossLevels;
-  const level = (m: number, i: number, j: number) => {
-    const v = m + (BAYER[(j & 3) * 4 + (i & 3)] / 16 - 0.5) * DECOR_CONFIG.mossDither;
-    return v > l3 ? 3 : v > l2 ? 2 : v > l1 ? 1 : 0;
-  };
-  let grid: Float32Array | null = null;
-  const toneAt = (i: number, j: number) =>
-    valueNoise((x + i / TILE_PX) / 5, (-y + j / TILE_PX) / 5, src.seed ^ 0x70e) > 0.55 ? 4 : 0;
-
-  // --- Moss: a continuous field, so it fades across tile seams. ---
-  if (ground && lush > 0.02) {
-    const moss = new Uint8Array(AREA);
-    grid = overgrowthGrid(src, x, y);
-    let any = false, sum = 0, min = Infinity;
-    for (let j = 0; j < TILE_PX; j++)
-      for (let i = 0; i < TILE_PX; i++) {
-        const m = grid[j * TILE_PX + i];
-        sum += m; min = Math.min(min, m);
-        const lv = level(m, i, j);
-        if (lv) { moss[j * TILE_PX + i] = lv | toneAt(i, j); any = true; }
-      }
-    if (any) d.moss = moss;
-    const avg = sum / AREA;
-    d.thicket = kind === "floor" && !src.torch(x, y) && avg > DECOR_CONFIG.thicketAverage && min > DECOR_CONFIG.thicketMinimum;
-  } else if (wall && lush > 0.02) {
-    // Moss creeps a few pixels up the wall from mossy floor beside it.
-    const moss = new Uint8Array(AREA);
-    let any = false;
-    for (let dI = 0; dI < 4; dI++) {
-      const dir = DIRS[dI];
-      const fxT = x - dir.dx, fyT = y - dir.dy; // the floor tile this face looks onto
-      // Face: the side of this wall tile nearest that floor tile.
-      if (!isGround(src.kind(fxT, fyT))) continue;
-      const floorWalls = wallNeighbors(src, fxT, fyT);
-      for (let t = 0; t < TILE_PX; t++) {
-        // Matching floor pixel just across the face.
-        const fi = dir.dx > 0 ? TILE_PX - 1 : dir.dx < 0 ? 0 : t;
-        const fj = dir.dy > 0 ? 0 : dir.dy < 0 ? TILE_PX - 1 : t;
-        const edge = overgrowth(src, fxT, fyT, fi, fj, floorWalls);
-        if (edge < 0.3) continue;
-        for (let depth = 0; depth < 5; depth++) {
-          // Pixel in this wall tile at `depth` from the face.
-          const i = dir.dx > 0 ? depth : dir.dx < 0 ? TILE_PX - 1 - depth : t;
-          const j = dir.dy > 0 ? TILE_PX - 1 - depth : dir.dy < 0 ? depth : t;
-          const m = edge - 0.3 - depth * 0.16;
-          const lv = level(m, i, j);
-          const idx = j * TILE_PX + i;
-          if (lv > (moss[idx] & 3)) { moss[idx] = lv | toneAt(i, j); any = true; }
-        }
-      }
-    }
-    if (any) d.moss = moss;
-  }
-
-  // --- Water: pools gather in hollows of a second field. ---
-  if (ground) {
-    const dampness = src.damp(x, y);
-    if (dampness > 0) {
-      const walls = wallNeighbors(src, x, y);
-      // Torches stand in a dry circle (world pixels of each nearby torch).
-      const torches: [number, number][] = [];
-      for (let dy = -1; dy <= 1; dy++)
-        for (let dx = -1; dx <= 1; dx++)
-          if (src.torch(x + dx, y + dy)) torches.push([(x + dx) * TILE_PX + 12, -(y + dy) * TILE_PX + 12]);
-      const th = 1 - dampness * 0.28;
-      const water = new Uint8Array(AREA);
-      // The field on a 26x26 grid (one pixel of border) so the rim can look
-      // across tile seams; pixels over non-ground neighbours stay dry.
-      const P = TILE_PX + 2, wetGrid = new Uint8Array(P * P);
-      for (let j = -1; j <= TILE_PX; j++)
-        for (let i = -1; i <= TILE_PX; i++) {
-          const inside = i >= 0 && j >= 0 && i < TILE_PX && j < TILE_PX;
-          if (!inside && !isGround(src.kind(x + Math.floor(i / TILE_PX), y - Math.floor(j / TILE_PX)))) continue;
-          // Pools stop a little short of the walls.
-          if (wallProximity(walls, Math.max(0, Math.min(TILE_PX - 1, i)), Math.max(0, Math.min(TILE_PX - 1, j))) > 0.8) continue;
-          const fx = x + (i + 0.5) / TILE_PX, fy = -y + (j + 0.5) / TILE_PX;
-          if (waterField(src, fx, fy) <= th) continue;
-          const gx = x * TILE_PX + i, gy = -y * TILE_PX + j;
-          if (torches.some(([tx, ty]) => Math.hypot(gx - tx, gy - ty) < 17)) continue;
-          if (inside && grid && grid[j * TILE_PX + i] >= 0.75) continue;
-          wetGrid[(j + 1) * P + i + 1] = 1;
-        }
-      const wet = (i: number, j: number) => wetGrid[(j + 1) * P + i + 1] === 1;
-      for (let j = 0; j < TILE_PX; j++)
-        for (let i = 0; i < TILE_PX; i++) {
-          if (wet(i, j)) { water[j * TILE_PX + i] = 1; d.waterCount++; }
-        }
-      if (d.waterCount) {
-        // Darkened wet stone around the pool's rim.
-        for (let j = 0; j < TILE_PX; j++)
-          for (let i = 0; i < TILE_PX; i++) {
-            if (water[j * TILE_PX + i]) continue;
-            if (wet(i - 1, j) || wet(i + 1, j) || wet(i, j - 1) || wet(i, j + 1)) water[j * TILE_PX + i] = 2;
-          }
-        d.water = water;
-        // Tall grass gives way to a pool that floods much of the tile.
-        if (d.waterCount > 40) d.thicket = false;
-        if (d.moss) for (let k = 0; k < AREA; k++) if (water[k] === 1) d.moss[k] = 0;
-        const rng = rngFor(src, x, y, 7);
-        for (let k = 0; k < 40 && d.glints.length < 5; k++) {
-          const i = Math.floor(rng() * TILE_PX), j = Math.floor(rng() * TILE_PX);
-          if (water[j * TILE_PX + i] === 1 && water[j * TILE_PX + Math.min(23, i + 1)] === 1) d.glints.push([i, j]);
-        }
-        // Some pools are fed by a slow drip from the ceiling.
-        if (d.waterCount > 60 && rng() < 0.4) {
-          for (let k = 0; k < 30; k++) {
-            const i = 4 + Math.floor(rng() * 16), j = 6 + Math.floor(rng() * 14);
-            if (water[j * TILE_PX + i] === 1) { d.drip = { i, j, period: 5 + rng() * 7, phase: rng() * 12 }; break; }
-          }
-        }
-      }
-    }
-  }
-
-  // --- Vines, from this tile and nearby roots (they cross tile seams). ---
-  if (lush > 0.05 && (ground || wall)) {
-    const ox = x * TILE_PX, oy = -y * TILE_PX;
-    for (let dy = -2; dy <= 2; dy++)
-      for (let dx = -2; dx <= 2; dx++)
-        for (const p of vinesAt(src, x + dx, y + dy)) {
-          const i = p.gx - ox, j = p.gy - oy;
-          if (i < 0 || j < 0 || i >= TILE_PX || j >= TILE_PX) continue;
-          if (p.c === 4) d.flowers.push({ i, j, color: Math.floor(valueNoise((x + dx) / 4, (y + dy) / 4, src.seed ^ 0xf10) * FLOWER_COLORS.length * 0.999) });
-          else d.vines.push({ i, j, c: p.c });
-        }
-    if (d.water) d.vines = d.vines.filter((v) => d.water![v.j * TILE_PX + v.i] !== 1);
-  }
-
-  // --- Standing things on plain floor. ---
-  if (kind === "floor" && !src.torch(x, y)) {
-    const rng = rngFor(src, x, y, 3);
-    if (!d.thicket && !d.waterCount) d.crates = cratesFor(src, x, y, rng);
-    const busy = (i: number, j: number) =>
-      d.crates.some((c) => i >= c.x - 1 && i <= c.x + c.w && j >= c.y - c.lift - 1 && j <= c.y + c.h) ||
-      (d.water && d.water[j * TILE_PX + i] === 1);
-    if (d.thicket) {
-      // Dense clumps: a main blade with a shorter one or two beside it.
-      const clumps = 12 + Math.floor(rng() * 5);
-      for (let k = 0; k < clumps; k++) {
-        const i = 1 + Math.floor(rng() * 21), j = 5 + Math.floor(rng() * 19), h = 6 + Math.floor(rng() * 5);
-        const color = Math.floor(rng() * 4), phase = rng() * Math.PI * 2, lean = (rng() - 0.5) * 1.6;
-        d.blades.push({ i, j, h, color, phase, lean });
-        if (rng() < 0.75) d.blades.push({ i: i + 1, j, h: h - 2 - Math.floor(rng() * 2), color: Math.max(0, color - 1), phase: phase + 0.4, lean: lean + 0.8 });
-        if (rng() < 0.4) d.blades.push({ i: i - 1, j, h: h - 3, color, phase: phase - 0.3, lean: lean - 0.9 });
-      }
-      d.blades.sort((a, b) => a.j - b.j);
-    } else {
-      const mid = d.moss ? d.moss[12 * TILE_PX + 12] & 3 : 0;
-      const nearWall = DIRS.some((q) => isWall(src.kind(x + q.dx, y + q.dy)));
-      const tries = mid >= 2 ? 2 : 1;
-      for (let k = 0; k < tries; k++) {
-        const i = 3 + Math.floor(rng() * 18), j = 5 + Math.floor(rng() * 16);
-        if (busy(i, j)) continue;
-        const lv = d.moss ? d.moss[j * TILE_PX + i] & 3 : 0;
-        const r = rng();
-        if (lv >= 2 && r < 0.25) d.plants.push({ kind: "tuft", i, j, variant: Math.floor(rng() * 3) });
-        else if (lv >= 2 && r < 0.33) d.plants.push({ kind: "fern", i, j, variant: Math.floor(rng() * 2) });
-        else if (lv >= 1 && r < 0.4) d.plants.push({ kind: "sprout", i, j, variant: Math.floor(rng() * 3) });
-        else if (nearWall && (lv >= 1 || src.damp(x, y) > 0.3) && r > 0.4 && r < 0.45)
-          d.plants.push({ kind: "mushrooms", i, j, variant: Math.floor(rng() * 3), glow: rng() < 0.3 + lush * 0.2 });
-        else if (r > 0.95) d.plants.push({ kind: "pebbles", i, j, variant: Math.floor(rng() * 3) });
-      }
-      // Cobwebs hang in the corner between two walls.
-      const [n, e, s, w] = DIRS.map((q) => isWall(src.kind(x + q.dx, y + q.dy)));
-      const corner = n && w ? 0 : n && e ? 1 : s && e ? 2 : s && w ? 3 : -1;
-      if (corner >= 0 && tileRandom(x * 11, y * 7 + 1, src.seed ^ 0xeb) < DECOR_CONFIG.cobweb * (1.2 - lush * 0.6))
-        d.plants.push({ kind: "web", i: 0, j: 0, variant: Math.floor(rng() * 2), corner });
-    }
-  }
-  d.empty = !d.moss && !d.water && !d.thicket && !d.crates.length && !d.plants.length && !d.vines.length && !d.flowers.length;
+  const at: At = { src, x, y }, kind = src.kind(x, y), lush = src.lush(x, y);
+  const d = emptyPlan();
+  const grid = lush > 0.02 ? planMoss(at, kind, d) : null;
+  if (isGround(kind)) planWater(at, grid, d);
+  if (lush > 0.05 && !isFixture(kind)) planVines(at, d);
+  if (kind === "floor" && !src.torch(x, y)) planStanding(at, d);
+  d.empty = nothingToDraw(d);
   return d;
+}
+
+function nothingToDraw(d: TileDecor) {
+  const lists = d.crates.length + d.plants.length + d.vines.length + d.flowers.length;
+  return !d.moss && !d.water && !d.thicket && !lists;
+}
+
+/** Moss level 0..3 for a field value, ordered-dithered into the stone. */
+function mossLevel(m: number, i: number, j: number) {
+  const [l1, l2, l3] = DECOR_CONFIG.mossLevels;
+  const v = m + (BAYER[(j & 3) * 4 + (i & 3)] / 16 - 0.5) * DECOR_CONFIG.mossDither;
+  return v > l3 ? 3 : v > l2 ? 2 : v > l1 ? 1 : 0;
+}
+/** Moss tone bit (4 = the lighter tone) at a tile-local pixel. */
+function mossTone({ src, x, y }: At, i: number, j: number) {
+  return valueNoise((x + i / TILE_PX) / 5, (-y + j / TILE_PX) / 5, src.seed ^ 0x70e) > 0.55 ? 4 : 0;
+}
+
+/** Moss on ground or wall. Returns the ground's overgrowth grid, which the
+ * water planner uses to keep pools out of dense growth. */
+function planMoss(at: At, kind: Kind, d: TileDecor): Float32Array | null {
+  if (isGround(kind)) return planGroundMoss(at, kind, d);
+  if (isWall(kind)) d.moss = wallMoss(at);
+  return null;
+}
+
+/** Moss is a continuous field, so it fades across tile seams. Floor this
+ * overgrown all over becomes a thicket of tall grass. */
+function planGroundMoss(at: At, kind: Kind, d: TileDecor) {
+  const { src, x, y } = at;
+  const grid = overgrowthGrid(src, x, y), moss = new Uint8Array(AREA);
+  let sum = 0, min = Infinity;
+  for (let k = 0; k < AREA; k++) {
+    const m = grid[k], i = k % TILE_PX, j = (k - i) / TILE_PX;
+    sum += m; min = Math.min(min, m);
+    const lv = mossLevel(m, i, j);
+    if (lv) moss[k] = lv | mossTone(at, i, j);
+  }
+  if (moss.some(Boolean)) d.moss = moss;
+  const overgrown = sum / AREA > DECOR_CONFIG.thicketAverage && min > DECOR_CONFIG.thicketMinimum;
+  d.thicket = kind === "floor" && !src.torch(x, y) && overgrown;
+  return grid;
+}
+
+/** Moss creeps a few pixels up the wall from mossy floor beside it. */
+function wallMoss(at: At) {
+  const moss = new Uint8Array(AREA);
+  for (const dir of DIRS) mossFace(at, dir, moss);
+  return moss.some(Boolean) ? moss : null;
+}
+
+/** Pixel coordinate `depth` pixels into a tile from the face toward `delta`
+ * (-1, 0 or 1); along a face (delta 0) it is the position `t`. */
+const fromFace = (delta: number, t: number, depth: number) => (delta > 0 ? depth : delta < 0 ? TILE_PX - 1 - depth : t);
+/** The same, wrapped into the tile: depth -1 is the neighbour's facing pixel. */
+const wrapPx = (v: number) => (v + TILE_PX) % TILE_PX;
+
+/** Moss on the face of wall tile (x, y) that looks onto the floor in the
+ * direction opposite `dir`. */
+function mossFace(at: At, dir: (typeof DIRS)[number], moss: Uint8Array) {
+  const { src, x, y } = at, fx = x - dir.dx, fy = y - dir.dy;
+  if (!isGround(src.kind(fx, fy))) return;
+  const floorWalls = wallNeighbors(src, fx, fy);
+  for (let t = 0; t < TILE_PX; t++) {
+    // The floor pixel just across the face.
+    const edge = overgrowth(src, fx, fy, wrapPx(fromFace(dir.dx, t, -1)), wrapPx(fromFace(-dir.dy, t, -1)), floorWalls);
+    if (edge < 0.3) continue;
+    for (let depth = 0; depth < 5; depth++) {
+      const i = fromFace(dir.dx, t, depth), j = fromFace(-dir.dy, t, depth), idx = j * TILE_PX + i;
+      const lv = mossLevel(edge - 0.3 - depth * 0.16, i, j);
+      if (lv > (moss[idx] & 3)) moss[idx] = lv | mossTone(at, i, j);
+    }
+  }
+}
+
+const POOL_SIDE = TILE_PX + 2;
+
+/** Where pools gather on one tile: hollows of a second noise field, sampled
+ * on a 26x26 grid (one pixel of border) so the rim can look across tile
+ * seams. Pixels over non-ground neighbours stay dry. */
+class PoolField {
+  private cells = new Uint8Array(POOL_SIDE * POOL_SIDE);
+  private walls: [number, number, number][];
+  /** World pixels of each torch on or beside the tile. */
+  private torches: [number, number][] = [];
+  private threshold: number;
+
+  constructor(private at: At, dampness: number, private grid: Float32Array | null) {
+    const { src, x, y } = at;
+    this.walls = wallNeighbors(src, x, y);
+    for (let dy = -1; dy <= 1; dy++)
+      for (let dx = -1; dx <= 1; dx++)
+        if (src.torch(x + dx, y + dy)) this.torches.push([(x + dx) * TILE_PX + 12, -(y + dy) * TILE_PX + 12]);
+    this.threshold = 1 - dampness * 0.28;
+    for (let j = -1; j <= TILE_PX; j++)
+      for (let i = -1; i <= TILE_PX; i++) if (this.collects(i, j)) this.cells[(j + 1) * POOL_SIDE + i + 1] = 1;
+  }
+
+  /** The tile's water mask (1 = water, 2 = wet rim) and its water pixel
+   * count, or null when the tile stays dry. */
+  mask(): { water: Uint8Array; count: number } | null {
+    const water = new Uint8Array(AREA);
+    let count = 0;
+    for (let k = 0; k < AREA; k++)
+      if (this.wet(k % TILE_PX, Math.floor(k / TILE_PX))) { water[k] = 1; count++; }
+    if (!count) return null;
+    for (let k = 0; k < AREA; k++)
+      if (!water[k] && this.shore(k % TILE_PX, Math.floor(k / TILE_PX))) water[k] = 2;
+    return { water, count };
+  }
+
+  private wet(i: number, j: number) {
+    return this.cells[(j + 1) * POOL_SIDE + i + 1] === 1;
+  }
+
+  /** Dry pixel beside water: darkened wet stone around the rim. */
+  private shore(i: number, j: number) {
+    return this.wet(i - 1, j) || this.wet(i + 1, j) || this.wet(i, j - 1) || this.wet(i, j + 1);
+  }
+
+  private collects(i: number, j: number) {
+    const { src, x, y } = this.at;
+    if (this.overBlockedNeighbour(i, j)) return false;
+    // Pools stop a little short of the walls.
+    if (wallProximity(this.walls, clampPx(i), clampPx(j)) > 0.8) return false;
+    if (waterField(src, x + (i + 0.5) / TILE_PX, -y + (j + 0.5) / TILE_PX) <= this.threshold) return false;
+    return !this.nearTorch(x * TILE_PX + i, -y * TILE_PX + j) && !this.dense(i, j);
+  }
+
+  /** A border pixel over a neighbouring tile that isn't ground. */
+  private overBlockedNeighbour(i: number, j: number) {
+    const { src, x, y } = this.at;
+    return !inTile(i, j) && !isGround(src.kind(x + Math.floor(i / TILE_PX), y - Math.floor(j / TILE_PX)));
+  }
+
+  /** Torches stand in a dry circle. */
+  private nearTorch(gx: number, gy: number) {
+    return this.torches.some(([tx, ty]) => Math.hypot(gx - tx, gy - ty) < 17);
+  }
+
+  /** Dense overgrowth keeps water out. */
+  private dense(i: number, j: number) {
+    return inTile(i, j) && !!this.grid && this.grid[j * TILE_PX + i] >= 0.75;
+  }
+}
+
+const inTile = (i: number, j: number) => i >= 0 && j >= 0 && i < TILE_PX && j < TILE_PX;
+const clampPx = (v: number) => Math.max(0, Math.min(TILE_PX - 1, v));
+
+/** Standing water and its wet rim. A pool floods out moss and tall grass,
+ * catches glints, and may be fed by a drip. */
+function planWater(at: At, grid: Float32Array | null, d: TileDecor) {
+  const dampness = at.src.damp(at.x, at.y);
+  if (dampness <= 0) return;
+  const pool = new PoolField(at, dampness, grid).mask();
+  if (!pool) return;
+  const { water } = pool;
+  flood(d, pool);
+  const rng = rngFor(at.src, at.x, at.y, 7);
+  d.glints = glints(water, rng);
+  // Some pools are fed by a slow drip from the ceiling.
+  if (d.waterCount > 60 && rng() < 0.4) d.drip = drip(water, rng);
+}
+
+/** Puts a pool on the plan, drowning the moss and tall grass under it. */
+function flood(d: TileDecor, { water, count }: { water: Uint8Array; count: number }) {
+  d.water = water;
+  d.waterCount = count;
+  // Tall grass gives way to a pool that floods much of the tile.
+  if (count > 40) d.thicket = false;
+  if (d.moss) for (let k = 0; k < AREA; k++) if (water[k] === 1) d.moss[k] = 0;
+}
+
+/** Water pixels that catch a moving glint: up to five, two pixels wide. */
+function glints(water: Uint8Array, rng: () => number) {
+  const out: [number, number][] = [];
+  for (let k = 0; k < 40 && out.length < 5; k++) {
+    const i = Math.floor(rng() * TILE_PX), j = Math.floor(rng() * TILE_PX);
+    if (water[j * TILE_PX + i] === 1 && water[j * TILE_PX + Math.min(23, i + 1)] === 1) out.push([i, j]);
+  }
+  return out;
+}
+
+function drip(water: Uint8Array, rng: () => number): Drip | null {
+  for (let k = 0; k < 30; k++) {
+    const i = 4 + Math.floor(rng() * 16), j = 6 + Math.floor(rng() * 14);
+    if (water[j * TILE_PX + i] === 1) return { i, j, period: 5 + rng() * 7, phase: rng() * 12 };
+  }
+  return null;
+}
+
+/** Vines from this tile and nearby roots (they cross tile seams). */
+function planVines(at: At, d: TileDecor) {
+  for (let dy = -2; dy <= 2; dy++)
+    for (let dx = -2; dx <= 2; dx++) addVinesFrom(at, dx, dy, d);
+  if (d.water) d.vines = d.vines.filter((v) => d.water![v.j * TILE_PX + v.i] !== 1);
+}
+
+/** The pixels of vines rooted at tile (x+dx, y+dy) that fall on this tile. */
+function addVinesFrom({ src, x, y }: At, dx: number, dy: number, d: TileDecor) {
+  const ox = x * TILE_PX, oy = -y * TILE_PX;
+  for (const p of vinesAt(src, x + dx, y + dy)) {
+    const i = p.gx - ox, j = p.gy - oy;
+    if (!inTile(i, j)) continue;
+    if (p.c === 4) d.flowers.push({ i, j, color: Math.floor(valueNoise((x + dx) / 4, (y + dy) / 4, src.seed ^ 0xf10) * FLOWER_COLORS.length * 0.999) });
+    else d.vines.push({ i, j, c: p.c });
+  }
+}
+
+/** Standing things on plain floor: crates, then tall grass or small plants
+ * and cobwebs. They share one generator, in that order. */
+function planStanding(at: At, d: TileDecor) {
+  const rng = rngFor(at.src, at.x, at.y, 3);
+  if (!d.thicket && !d.waterCount) d.crates = cratesFor(at.src, at.x, at.y, rng);
+  if (d.thicket) {
+    d.blades = thicketBlades(rng);
+    return;
+  }
+  d.plants = floorPlants(at, d, rng);
+  const web = cobweb(at, rng);
+  if (web) d.plants.push(web);
+}
+
+/** Dense clumps: a main blade with a shorter one or two beside it. */
+function thicketBlades(rng: () => number) {
+  const blades: Blade[] = [];
+  const clumps = 12 + Math.floor(rng() * 5);
+  for (let k = 0; k < clumps; k++) {
+    const i = 1 + Math.floor(rng() * 21), j = 5 + Math.floor(rng() * 19), h = 6 + Math.floor(rng() * 5);
+    const color = Math.floor(rng() * 4), phase = rng() * Math.PI * 2, lean = (rng() - 0.5) * 1.6;
+    blades.push({ i, j, h, color, phase, lean });
+    if (rng() < 0.75) blades.push({ i: i + 1, j, h: h - 2 - Math.floor(rng() * 2), color: Math.max(0, color - 1), phase: phase + 0.4, lean: lean + 0.8 });
+    if (rng() < 0.4) blades.push({ i: i - 1, j, h: h - 3, color, phase: phase - 0.3, lean: lean - 0.9 });
+  }
+  return blades.sort((a, b) => a.j - b.j);
+}
+
+/** Whether pixel (i, j) is taken by a crate (with a pixel of margin) or water. */
+function occupied(d: TileDecor, i: number, j: number) {
+  if (d.water && d.water[j * TILE_PX + i] === 1) return true;
+  return d.crates.some((c) => i >= c.x - 1 && i <= c.x + c.w && j >= c.y - c.lift - 1 && j <= c.y + c.h);
+}
+
+/** A spot tried for a plant, and what grows beneath it. */
+type PlantSpot = { i: number; j: number; moss: number; nearWall: boolean };
+
+/** One or two tries at a small plant; mossier tiles get two. */
+function floorPlants(at: At, d: TileDecor, rng: () => number) {
+  const plants: Plant[] = [];
+  const mossAt = (i: number, j: number) => (d.moss ? d.moss[j * TILE_PX + i] & 3 : 0);
+  const nearWall = DIRS.some((q) => isWall(at.src.kind(at.x + q.dx, at.y + q.dy)));
+  const tries = mossAt(12, 12) >= 2 ? 2 : 1;
+  for (let k = 0; k < tries; k++) {
+    const i = 3 + Math.floor(rng() * 18), j = 5 + Math.floor(rng() * 16);
+    if (occupied(d, i, j)) continue;
+    const plant = plantAt(at, { i, j, moss: mossAt(i, j), nearWall }, rng);
+    if (plant) plants.push(plant);
+  }
+  return plants;
+}
+
+/** Plants that need moss, tried in order: each grows when the spot's moss
+ * level is at least `moss` and the plant roll is below `below`. */
+const MOSS_PLANTS: readonly { kind: PlantKind; moss: number; below: number; variants: number }[] = [
+  { kind: "tuft", moss: 2, below: 0.25, variants: 3 },
+  { kind: "fern", moss: 2, below: 0.33, variants: 2 },
+  { kind: "sprout", moss: 1, below: 0.4, variants: 3 },
+];
+
+/** What grows at a spot: tufts and ferns on dense moss, sprouts on any
+ * moss, mushrooms by damp or mossy walls, and the odd pebble. */
+function plantAt(at: At, spot: PlantSpot, rng: () => number): Plant | null {
+  const { i, j, moss } = spot, r = rng();
+  const mossy = MOSS_PLANTS.find((p) => moss >= p.moss && r < p.below);
+  if (mossy) return { kind: mossy.kind, i, j, variant: Math.floor(rng() * mossy.variants) };
+  if (mushroomsGrow(at, spot, r))
+    return { kind: "mushrooms", i, j, variant: Math.floor(rng() * 3), glow: rng() < 0.3 + at.src.lush(at.x, at.y) * 0.2 };
+  if (r > 0.95) return { kind: "pebbles", i, j, variant: Math.floor(rng() * 3) };
+  return null;
+}
+
+/** Mushrooms take a narrow band of the roll, by a wall that is mossy or damp. */
+function mushroomsGrow({ src, x, y }: At, spot: PlantSpot, r: number) {
+  const rolled = r > 0.4 && r < 0.45;
+  return rolled && spot.nearWall && (spot.moss >= 1 || src.damp(x, y) > 0.3);
+}
+
+/** Wall pairs (DIRS indices) forming each cobweb corner: NW, NE, SE, SW. */
+const WEB_CORNERS = [[0, 3], [0, 1], [2, 1], [2, 3]] as const;
+
+/** Cobwebs hang in the corner between two walls. */
+function cobweb({ src, x, y }: At, rng: () => number): Plant | null {
+  const walls = DIRS.map((q) => isWall(src.kind(x + q.dx, y + q.dy)));
+  const corner = WEB_CORNERS.findIndex(([a, b]) => walls[a] && walls[b]);
+  if (corner < 0) return null;
+  if (tileRandom(x * 11, y * 7 + 1, src.seed ^ 0xeb) >= DECOR_CONFIG.cobweb * (1.2 - src.lush(x, y) * 0.6)) return null;
+  return { kind: "web", i: 0, j: 0, variant: Math.floor(rng() * 2), corner };
 }
 
 /** Tile-local pixel lookup that follows into neighbouring tiles. */

@@ -1,7 +1,8 @@
 import { TOWER_HEIGHT, TOWER_START_X, TOWER_WIDTH } from "../config.ts";
 import { point, type Tile } from "../entities.ts";
-import { getTowerEnemy, type TowerEnemyProfile } from "../scaling.ts";
-import type { Gate, Reward, StrategicGraph, StrategicNode, Strength } from "./types.ts";
+import type { Gate, ShortcutRequest, StrategicGraph, StrategicNode } from "./types.ts";
+import { area, inRect, minSide, centre, type Rect, type XY } from "./grid.ts";
+import { Furnisher, gateTile, type Dropped, type Placement } from "./furnisher.ts";
 
 /** Layer B: express a StrategicGraph on the 17x17 grid.
  *
@@ -12,13 +13,8 @@ import type { Gate, Reward, StrategicGraph, StrategicNode, Strength } from "./ty
  * lock, or an open gap. A backtracking search assigns regions to chambers so
  * that every graph edge becomes a pair of neighbouring chambers, the main
  * route moves away from the entrance, and the stairs chamber reaches the
- * outer wall. Chamber contents are then arranged in deliberate formations
- * (rows of keys, guarded niches, enemy rings) that keep walking lanes clear
- * between doorways. */
+ * outer wall. Chamber contents are then arranged by furnisher.ts. */
 
-type Rect = { x1: number; y1: number; x2: number; y2: number };
-type XY = [number, number];
-const DIRS: XY[] = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 const INTERIOR: Rect = { x1: 1, y1: 1, x2: TOWER_WIDTH - 2, y2: TOWER_HEIGHT - 2 };
 /** First tile inside the tower, directly below the entrance at (START_X, 0). */
 export const ENTRY: XY = [TOWER_START_X, 1];
@@ -37,17 +33,9 @@ export const EMBED_TUNING = {
   pocketSplitChance: 0.3,
   /** Chambers are trimmed to about this many tiles per content item. */
   roomsPerItem: 2.4,
-  /** A hall with more empty tiles than this fraction gets pillars. */
-  pillarEmptyFraction: 0.45,
 };
 
-export type Placement = {
-  node: number;
-  x: number;
-  y: number;
-  role: "reward" | "guard" | "ring" | "stairsGuard";
-  tile: Tile;
-};
+export type { Placement };
 export type Doorway = { parent: number; child: number; x: number; y: number; shortcut: boolean };
 export type Embedding = {
   /** The graph as actually furnished (niche fallbacks may move rewards). */
@@ -59,14 +47,10 @@ export type Embedding = {
   doorways: Doorway[];
   stairs: XY;
   placements: Placement[];
-  dropped: { node: number; reward: Reward }[];
+  dropped: Dropped;
   shortcutsPlaced: number;
 };
 
-const area = (r: Rect) => (r.x2 - r.x1 + 1) * (r.y2 - r.y1 + 1);
-const inRect = (r: Rect, x: number, y: number) => x >= r.x1 && x <= r.x2 && y >= r.y1 && y <= r.y2;
-const minSide = (r: Rect) => Math.min(r.x2 - r.x1 + 1, r.y2 - r.y1 + 1);
-const centre = (r: Rect): XY => [(r.x1 + r.x2) / 2, (r.y1 + r.y2) / 2];
 const distFromEntrance = (r: Rect) => {
   const [cx, cy] = centre(r);
   return Math.abs(cx - TOWER_START_X) + cy;
@@ -78,21 +62,27 @@ const touchesExitWall = (r: Rect) => r.x1 === INTERIOR.x1 || r.x2 === INTERIOR.x
 function splitRect(r: Rect, vertical: boolean, rng: () => number): [Rect, Rect] | null {
   const len = vertical ? r.x2 - r.x1 + 1 : r.y2 - r.y1 + 1;
   if (len < MIN_SIDE * 2 + 1) return null;
+  const start = vertical ? r.x1 : r.y1;
+  // Never wall off the tile beneath the entrance.
+  const blocksEntry = (wall: number) => vertical && wall === ENTRY[0] && r.y1 <= ENTRY[1];
+  const a = splitOffsets(len, rng).find((a) => !blocksEntry(start + a));
+  if (a === undefined) return null;
+  const wall = start + a;
+  return vertical
+    ? [{ ...r, x2: wall - 1 }, { ...r, x1: wall + 1 }]
+    : [{ ...r, y2: wall - 1 }, { ...r, y1: wall + 1 }];
+}
+
+/** Where a split of a side `len` long may put its wall, best first:
+ * sometimes a thin pocket at one end, then a soft bias towards balanced
+ * halves (two uniforms), then every other offset. */
+function splitOffsets(len: number, rng: () => number) {
   const lo = MIN_SIDE, hi = len - 1 - MIN_SIDE;
   const options: number[] = [];
   if (rng() < EMBED_TUNING.pocketSplitChance && len >= 7) options.push(rng() < 0.5 ? lo : hi);
-  // Two uniforms → a soft bias towards balanced halves.
   options.push(Math.round(lo + ((rng() + rng()) / 2) * (hi - lo)));
   for (let a = lo; a <= hi; a++) options.push(a);
-  for (const a of options) {
-    const wall = (vertical ? r.x1 : r.y1) + a;
-    // Never wall off the tile beneath the entrance.
-    if (vertical && wall === ENTRY[0] && r.y1 <= ENTRY[1]) continue;
-    return vertical
-      ? [{ ...r, x2: wall - 1 }, { ...r, x1: wall + 1 }]
-      : [{ ...r, y2: wall - 1 }, { ...r, y1: wall + 1 }];
-  }
-  return null;
+  return options;
 }
 
 function partition(n: number, rng: () => number): Rect[] | null {
@@ -118,33 +108,54 @@ function partition(n: number, rng: () => number): Rect[] | null {
 
 type Candidate = { x: number; y: number; a: number; b: number; inA: XY; inB: XY };
 
+const pairKey = (a: number, b: number) => (a < b ? `${a}-${b}` : `${b}-${a}`);
+
+/** Every wall tile that could become a doorway, by the pair of chambers it
+ * joins; `between(a, b)` lists them oriented from chamber a to b. */
 function doorwayCandidates(rects: Rect[]) {
-  const leafAt = (x: number, y: number) => rects.findIndex((r) => inRect(r, x, y));
-  const grid: number[][] = [];
-  for (let y = 0; y < TOWER_HEIGHT; y++) {
-    grid.push([]);
-    for (let x = 0; x < TOWER_WIDTH; x++) grid[y].push(leafAt(x, y));
-  }
-  const at = (x: number, y: number) => (x < 0 || y < 0 || x >= TOWER_WIDTH || y >= TOWER_HEIGHT ? -1 : grid[y][x]);
+  const grid = chamberGrid(rects);
   const pairs = new Map<string, Candidate[]>();
-  const add = (c: Candidate) => {
-    const k = c.a < c.b ? `${c.a}-${c.b}` : `${c.b}-${c.a}`;
+  for (const c of wallGaps(grid)) {
+    const k = pairKey(c.a, c.b);
     if (!pairs.has(k)) pairs.set(k, []);
     pairs.get(k)!.push(c);
-  };
-  for (let y = INTERIOR.y1; y <= INTERIOR.y2; y++)
-    for (let x = INTERIOR.x1; x <= INTERIOR.x2; x++) {
-      if (grid[y][x] !== -1) continue;
-      const l = at(x - 1, y), r = at(x + 1, y), u = at(x, y - 1), d = at(x, y + 1);
-      if (l >= 0 && r >= 0 && l !== r) add({ x, y, a: l, b: r, inA: [x - 1, y], inB: [x + 1, y] });
-      if (u >= 0 && d >= 0 && u !== d) add({ x, y, a: u, b: d, inA: [x, y - 1], inB: [x, y + 1] });
-    }
+  }
   const between = (a: number, b: number) =>
-    (pairs.get(a < b ? `${a}-${b}` : `${b}-${a}`) ?? []).map((c) =>
+    (pairs.get(pairKey(a, b)) ?? []).map((c) =>
       c.a === a ? c : { ...c, a: c.b, b: c.a, inA: c.inB, inB: c.inA });
   const neighbours = rects.map((_, i) =>
     rects.map((_, j) => j).filter((j) => j !== i && between(i, j).length > 0));
   return { grid, between, neighbours };
+}
+
+/** The chamber index of every tile, or -1 for wall. */
+function chamberGrid(rects: Rect[]) {
+  const grid: number[][] = [];
+  for (let y = 0; y < TOWER_HEIGHT; y++) {
+    grid.push([]);
+    for (let x = 0; x < TOWER_WIDTH; x++) grid[y].push(rects.findIndex((r) => inRect(r, x, y)));
+  }
+  return grid;
+}
+
+/** Interior wall tiles with a different chamber on each side, left/right
+ * then above/below, row by row. */
+function wallGaps(grid: number[][]) {
+  const out: Candidate[] = [];
+  for (let y = INTERIOR.y1; y <= INTERIOR.y2; y++)
+    for (let x = INTERIOR.x1; x <= INTERIOR.x2; x++) if (grid[y][x] === -1) out.push(...gapsAt(grid, x, y));
+  return out;
+}
+
+/** The doorways wall tile (x, y) could be: across it left/right, then up/down. */
+function gapsAt(grid: number[][], x: number, y: number) {
+  const out: Candidate[] = [];
+  for (const [dx, dy] of [[1, 0], [0, 1]]) {
+    const inA: XY = [x - dx, y - dy], inB: XY = [x + dx, y + dy];
+    const a = grid[inA[1]]?.[inA[0]] ?? -1, b = grid[inB[1]]?.[inB[0]] ?? -1;
+    if (a >= 0 && b >= 0 && a !== b) out.push({ x, y, a, b, inA, inB });
+  }
+  return out;
 }
 
 // ---------------------------------------------------------------- embedding
@@ -167,13 +178,17 @@ function embedOrder(graph: StrategicGraph): number[] {
   return [...main, ...rest];
 }
 
+/** The start hall is the first thing the player sees: never a sliver. */
+function startHallFits(r: Rect | undefined, start: StrategicNode) {
+  return !!r && area(r) >= need(start) && minSide(r) >= 3;
+}
+
 function assign(graph: StrategicGraph, rects: Rect[], neighbours: number[][], rng: () => number): number[] | null {
   const order = embedOrder(graph);
   const leafOf: number[] = graph.nodes.map(() => -1);
   const used = new Set<number>();
   const startLeaf = rects.findIndex((r) => inRect(r, ...ENTRY));
-  // The start hall is the first thing the player sees: never a sliver.
-  if (startLeaf < 0 || area(rects[startLeaf]) < need(graph.nodes[0]) || minSide(rects[startLeaf]) < 3) return null;
+  if (!startHallFits(rects[startLeaf], graph.nodes[0])) return null;
   let steps = 0;
   const jitter = graph.nodes.map(() => rects.map(() => rng() * 4));
 
@@ -217,260 +232,6 @@ function assign(graph: StrategicGraph, rects: Rect[], neighbours: number[][], rn
   return place(0) ? leafOf : null;
 }
 
-// ---------------------------------------------------------------- tiles
-
-const PROFILES_FOR: Record<Strength, TowerEnemyProfile[]> = {
-  weak: ["balanced"],
-  normal: ["attackHeavy", "balanced", "defenseHeavy"],
-  strong: ["attackHeavy", "defenseHeavy"],
-  elite: ["defenseHeavy"],
-};
-
-export function enemyTile(strength: Strength, depth: number, rng: () => number): Tile {
-  const profiles = PROFILES_FOR[strength];
-  const profile = profiles[Math.floor(rng() * profiles.length)];
-  return { kind: "enemy", enemy: getTowerEnemy(depth, rng, profile) };
-}
-
-export function gateTile(gate: Gate, depth: number, rng: () => number): Tile {
-  switch (gate.kind) {
-    case "open": return { kind: "floor" };
-    case "enemy": return enemyTile(gate.strength, depth, rng);
-    case "door": return { kind: "door", color: gate.color, door: { type: "keys", keys: [gate.color], mode: "all" } };
-    case "steel": return { kind: "door", door: { type: "keys", keys: ["yellow", "blue", "red"], mode: "any" } };
-    case "heart": return { kind: "door", door: { type: "fullHp" } };
-  }
-}
-
-export function rewardTile(r: Reward, rng: () => number): Tile {
-  if (r.kind === "key") return { kind: "key", color: r.color };
-  if (r.kind === "potion") return { kind: "potion", color: rng() < 0.5 ? "red" : "blue" };
-  return { kind: r.kind };
-}
-
-// ---------------------------------------------------------------- furnishing
-
-type Room = {
-  node: StrategicNode;
-  rect: Rect;
-  entry: XY;
-  /** Unit vector pointing into the room from its entrance doorway. */
-  inward: XY;
-  exits: XY[];
-};
-
-class Furnisher {
-  occupied = new Set<string>();
-  protectedCells = new Set<string>();
-  placements: Placement[] = [];
-  dropped: Embedding["dropped"] = [];
-  constructor(public cells: Map<string, Tile>, public depth: number, public rng: () => number) {}
-
-  isFloor(x: number, y: number) {
-    return this.cells.get(point(x, y))?.kind === "floor";
-  }
-  isWall(x: number, y: number) {
-    return (this.cells.get(point(x, y))?.kind ?? "wall") === "wall";
-  }
-  put(room: Room, x: number, y: number, tile: Tile, role: Placement["role"]) {
-    this.cells.set(point(x, y), tile);
-    this.occupied.add(point(x, y));
-    this.placements.push({ node: room.node.id, x, y, role, tile });
-  }
-  free(room: Room, x: number, y: number) {
-    const k = point(x, y);
-    return inRect(room.rect, x, y) && this.isFloor(x, y) && !this.occupied.has(k) && !this.protectedCells.has(k);
-  }
-  /** Walkable cells of the room (items and enemies count as walkable). */
-  walkable(room: Room) {
-    const out: XY[] = [];
-    for (let y = room.rect.y1; y <= room.rect.y2; y++)
-      for (let x = room.rect.x1; x <= room.rect.x2; x++)
-        if (this.cells.get(point(x, y))?.kind !== "wall") out.push([x, y]);
-    return out;
-  }
-  connected(room: Room) {
-    const all = this.walkable(room);
-    const seen = new Set([point(...room.entry)]);
-    const queue: XY[] = [room.entry];
-    for (let i = 0; i < queue.length; i++) {
-      const [x, y] = queue[i];
-      for (const [dx, dy] of DIRS) {
-        const nx = x + dx, ny = y + dy, k = point(nx, ny);
-        if (seen.has(k) || !inRect(room.rect, nx, ny) || this.cells.get(k)?.kind === "wall") continue;
-        seen.add(k);
-        queue.push([nx, ny]);
-      }
-    }
-    return seen.size === all.length;
-  }
-  /** Keep a clear walking lane from the entrance to every other doorway. */
-  reserveLanes(room: Room) {
-    this.protectedCells.add(point(...room.entry));
-    for (const exit of room.exits) {
-      const prev = new Map<string, string | null>([[point(...room.entry), null]]);
-      const queue: XY[] = [room.entry];
-      for (let i = 0; i < queue.length; i++) {
-        const [x, y] = queue[i];
-        if (x === exit[0] && y === exit[1]) break;
-        // Prefer moving along the room's inward axis first: straighter lanes.
-        const dirs = [...DIRS].sort((a, b) =>
-          Math.abs(b[0] * room.inward[0] + b[1] * room.inward[1]) - Math.abs(a[0] * room.inward[0] + a[1] * room.inward[1]));
-        for (const [dx, dy] of dirs) {
-          const nx = x + dx, ny = y + dy, k = point(nx, ny);
-          if (prev.has(k) || !inRect(room.rect, nx, ny) || !this.isFloor(nx, ny)) continue;
-          prev.set(k, point(x, y));
-          queue.push([nx, ny]);
-        }
-      }
-      for (let k: string | null | undefined = point(...exit); k; k = prev.get(k)) this.protectedCells.add(k);
-    }
-  }
-  /** Signed distance along the inward axis and offset from the room's
-   * mirror axis — used to lay items out in rows, back wall first. */
-  depthOf(room: Room, x: number, y: number) {
-    return (x - room.entry[0]) * room.inward[0] + (y - room.entry[1]) * room.inward[1];
-  }
-  axisOffset(room: Room, x: number, y: number) {
-    const [cx, cy] = centre(room.rect);
-    return room.inward[0] === 0 ? Math.abs(x - cx) : Math.abs(y - cy);
-  }
-  mirror(room: Room, x: number, y: number): XY {
-    return room.inward[0] === 0 ? [room.rect.x1 + room.rect.x2 - x, y] : [x, room.rect.y1 + room.rect.y2 - y];
-  }
-
-  /** PATTERN 10: a centrepiece with enemies on every open side. */
-  ring(room: Room) {
-    const node = room.node;
-    if (!node.ringGuard || !node.rewards.length) return;
-    let best: { c: XY; guards: XY[]; s: number } | null = null;
-    for (const [x, y] of this.walkable(room)) {
-      if (!this.free(room, x, y)) continue;
-      const guards: XY[] = [];
-      let ok = true;
-      for (const [dx, dy] of DIRS) {
-        const nx = x + dx, ny = y + dy;
-        if (this.isWall(nx, ny)) continue;
-        // Any other open side (a doorway, an item, a lane) would be a way
-        // around the guards.
-        if (!this.free(room, nx, ny)) { ok = false; break; }
-        guards.push([nx, ny]);
-      }
-      if (!ok || !guards.length || guards.length > 3) continue;
-      const s = this.depthOf(room, x, y) * 2 - this.axisOffset(room, x, y) + guards.length + this.rng();
-      if (!best || s > best.s) best = { c: [x, y], guards, s };
-    }
-    if (!best) return; // falls back to a plain row placement
-    this.put(room, ...best.c, rewardTile(node.rewards.shift()!, this.rng), "reward");
-    for (const g of best.guards) this.put(room, ...g, enemyTile(node.ringGuard, this.depth, this.rng), "ring");
-  }
-
-  /** A one-tile niche in the room's wall: item inside, guard in front,
-   * side cells walled so the guard is the only way in. */
-  niche(room: Room, reward: Reward, guard: Strength, prefer?: XY): XY | null {
-    let best: { n: XY; f: XY; sides: XY[]; s: number } | null = null;
-    for (const [x, y] of this.walkable(room)) {
-      if (!this.free(room, x, y)) continue;
-      for (const [dx, dy] of DIRS) {
-        // (dx,dy) points from the niche into the room; behind it must be
-        // solid wall (not a doorway), and each side either wall or a free
-        // room tile that we can wall up.
-        if (inRect(room.rect, x - dx, y - dy) || !this.isWall(x - dx, y - dy)) continue;
-        const f: XY = [x + dx, y + dy];
-        if (!this.free(room, ...f)) continue;
-        const sides: XY[] = [[x + dy, y + dx], [x - dy, y - dx]];
-        if (sides.some(([sx, sy]) => !this.isWall(sx, sy) && !this.free(room, sx, sy))) continue;
-        let s = this.depthOf(room, x, y) + this.rng() * 2;
-        if (dx === -room.inward[0] && dy === -room.inward[1]) s += 3; // back wall
-        if (prefer && prefer[0] === x && prefer[1] === y) s += 8;      // mirrored pair
-        if (!best || s > best.s) best = { n: [x, y], f, sides, s };
-      }
-    }
-    if (!best) return null;
-    const walled = best.sides.filter(([sx, sy]) => !this.isWall(sx, sy));
-    for (const s of walled) this.cells.set(point(...s), { kind: "wall" });
-    if (!this.connected(room)) {
-      for (const s of walled) this.cells.set(point(...s), { kind: "floor" });
-      return null;
-    }
-    this.put(room, ...best.n, rewardTile(reward, this.rng), "reward");
-    this.put(room, ...best.f, enemyTile(guard, this.depth, this.rng), "guard");
-    return best.n;
-  }
-
-  /** Open items: `row` fills from the back wall inwards, centred on the
-   * mirror axis (K K K); `cluster` gathers around the room centre. */
-  items(room: Room) {
-    const node = room.node;
-    const [cx, cy] = centre(room.rect);
-    for (const reward of node.rewards) {
-      let options = this.walkable(room).filter(([x, y]) => this.free(room, x, y));
-      // A cramped room may put an item on its walking lane (it is simply
-      // picked up in passing) but never on a doorway's threshold.
-      if (!options.length)
-        options = this.walkable(room).filter(([x, y]) =>
-          this.isFloor(x, y) && !this.occupied.has(point(x, y)) &&
-          ![room.entry, ...room.exits].some(([ex, ey]) => ex === x && ey === y));
-      if (!options.length) { this.dropped.push({ node: node.id, reward }); continue; }
-      const key = ([x, y]: XY) => node.formation === "cluster"
-        ? -(Math.abs(x - cx) + Math.abs(y - cy))
-        : this.depthOf(room, x, y) * 10 - this.axisOffset(room, x, y);
-      options.sort((a, b) => key(b) - key(a));
-      this.put(room, ...options[0], rewardTile(reward, this.rng), "reward");
-    }
-  }
-
-  /** Break up large empty halls with mirrored pillars so the space reads
-   * as a deliberate chamber rather than an empty rectangle. */
-  pillars(room: Room) {
-    const empty = () => this.walkable(room).filter(([x, y]) => this.free(room, x, y));
-    const total = this.walkable(room).length;
-    if (empty().length < 8 || empty().length / total < EMBED_TUNING.pillarEmptyFraction) return;
-    let budget = Math.floor(empty().length / 7);
-    // Pillars stand free of every wall so they never seal a corner or
-    // narrow a doorway; each one is mirrored for an authored look.
-    const standsFree = ([x, y]: XY) => {
-      if (!this.free(room, x, y)) return false;
-      for (let dy = -1; dy <= 1; dy++)
-        for (let dx = -1; dx <= 1; dx++)
-          if (!inRect(room.rect, x + dx, y + dy) || this.isWall(x + dx, y + dy)) return false;
-      return true;
-    };
-    const shuffled = empty().map((c) => ({ c, r: this.rng() })).sort((a, b) => a.r - b.r).map((o) => o.c);
-    for (const [x, y] of shuffled) {
-      if (budget <= 0) break;
-      if (!standsFree([x, y])) continue;
-      const m = this.mirror(room, x, y);
-      const pair: XY[] = m[0] === x && m[1] === y ? [[x, y]] : standsFree(m) ? [[x, y], m] : [];
-      if (!pair.length) continue;
-      for (const p of pair) this.cells.set(point(...p), { kind: "wall" });
-      if (!this.connected(room)) {
-        for (const p of pair) this.cells.set(point(...p), { kind: "floor" });
-        continue;
-      }
-      budget -= pair.length;
-    }
-  }
-
-  furnish(room: Room) {
-    const node = room.node;
-    this.reserveLanes(room);
-    if (node.stairsGuard && room.exits.length) {
-      const s = room.exits[room.exits.length - 1];
-      this.put(room, ...s, enemyTile(node.stairsGuard, this.depth, this.rng), "stairsGuard");
-    }
-    this.ring(room);
-    let last: XY | null = null;
-    for (const g of node.guarded) {
-      const at = this.niche(room, g.reward, g.guard, last ? this.mirror(room, ...last) : undefined);
-      if (at) last = at;
-      else node.rewards.push(g.reward); // no niche fits: leave it in the open
-    }
-    this.items(room);
-    if (node.footprint === "hall" || node.purpose === "start") this.pillars(room);
-  }
-}
-
 // ---------------------------------------------------------------- driver
 
 /** Attempts to embed `graph`. Returns null only when no partition could
@@ -481,17 +242,11 @@ export function embed(graph: StrategicGraph, rng: () => number): Embedding | nul
   let best: { fit: number; result: Embedding } | null = null;
   let found = 0;
   for (let attempt = 0; attempt < EMBED_TUNING.partitionAttempts && found < EMBED_TUNING.candidates; attempt++) {
-    const rects = partition(graph.nodes.length, rng);
-    if (!rects) continue;
-    const { between, neighbours } = doorwayCandidates(rects);
-    const leafOf = assign(graph, rects, neighbours, rng);
-    if (!leafOf) continue;
-    const fit = graph.nodes.reduce((s, n) => {
-      const r = rects[leafOf[n.id]];
-      return s + Math.abs(area(r) - targetArea(n)) + (n.footprint === "hall" && minSide(r) < 3 ? 10 : 0);
-    }, 0);
+    const layout = tryLayout(graph, rng);
+    if (!layout) continue;
+    const fit = layoutFit(graph, layout);
     if (best && fit >= best.fit) { found++; continue; }
-    const result = build(graph, rects, leafOf, between, rng);
+    const result = new FloorBuilder(graph, layout, rng).build();
     if (!result) continue;
     found++;
     best = { fit, result };
@@ -499,133 +254,220 @@ export function embed(graph: StrategicGraph, rng: () => number): Embedding | nul
   return best?.result ?? null;
 }
 
+/** Chambers, which chamber each region sits in, and the doorway candidates
+ * between chambers. */
+type Layout = { rects: Rect[]; leafOf: number[]; between: (a: number, b: number) => Candidate[] };
+
+/** One random partition with the graph assigned to it, or null. */
+function tryLayout(graph: StrategicGraph, rng: () => number): Layout | null {
+  const rects = partition(graph.nodes.length, rng);
+  if (!rects) return null;
+  const { between, neighbours } = doorwayCandidates(rects);
+  const leafOf = assign(graph, rects, neighbours, rng);
+  return leafOf && { rects, leafOf, between };
+}
+
+/** How far chamber sizes are from what each region wants (lower is better);
+ * a hub squeezed into a corridor costs extra. */
+function layoutFit(graph: StrategicGraph, { rects, leafOf }: Layout) {
+  return graph.nodes.reduce((s, n) => {
+    const r = rects[leafOf[n.id]];
+    return s + Math.abs(area(r) - targetArea(n)) + (n.footprint === "hall" && minSide(r) < 3 ? 10 : 0);
+  }, 0);
+}
+
 function targetArea(node: StrategicNode) {
   return Math.max(EMBED_TUNING.idealArea[node.footprint], need(node) * EMBED_TUNING.roomsPerItem);
 }
 
-function build(
-  graph: StrategicGraph,
-  rects: Rect[],
-  leafOf: number[],
-  between: (a: number, b: number) => Candidate[],
-  rng: () => number,
-): Embedding | null {
-  // Work on a copy: furnishing mutates reward lists (niche fallbacks).
-  graph = structuredClone(graph);
-  const cells = new Map<string, Tile>();
-  for (let y = 0; y < TOWER_HEIGHT; y++)
-    for (let x = 0; x < TOWER_WIDTH; x++)
-      cells.set(point(x, y), rects.some((r) => inRect(r, x, y)) ? { kind: "floor" } : { kind: "wall" });
+/** A trimmable side of a chamber: which edge, the length it shortens, and
+ * whether a tile lies on that edge. */
+type Edge = readonly ["x1" | "x2" | "y1" | "y2", number, (x: number, y: number) => boolean];
 
-  const doorTiles: XY[] = [];
-  const doorways: Doorway[] = [];
-  const entryOf = new Map<number, { entry: XY; inward: XY }>();
-  const exitsOf = new Map<number, XY[]>(graph.nodes.map((n) => [n.id, []]));
-  entryOf.set(0, { entry: ENTRY, inward: [0, 1] });
+/** Turns an assignment of regions to chambers into tiles: a doorway for
+ * every graph edge, the requested shortcuts, the stairs, chambers trimmed
+ * to their contents, and finally the furnishing. */
+class FloorBuilder {
+  private graph: StrategicGraph;
+  private cells = new Map<string, Tile>();
+  private doorTiles: XY[] = [];
+  private doorways: Doorway[] = [];
+  private entryOf = new Map<number, { entry: XY; inward: XY }>();
+  private exitsOf: Map<number, XY[]>;
+  private rects: Rect[];
+  private leafOf: number[];
+  private between: Layout["between"];
 
-  const chooseDoorway = (a: number, b: number) => {
-    const near = (c: Candidate, d: number) => doorTiles.some(([x, y]) => Math.abs(x - c.x) + Math.abs(y - c.y) <= d);
-    const options = between(leafOf[a], leafOf[b]).filter((c) => !near(c, 1));
+  constructor(graph: StrategicGraph, { rects, leafOf, between }: Layout, private rng: () => number) {
+    this.rects = rects;
+    this.leafOf = leafOf;
+    this.between = between;
+    // Work on a copy: furnishing mutates reward lists (niche fallbacks).
+    this.graph = structuredClone(graph);
+    for (let y = 0; y < TOWER_HEIGHT; y++)
+      for (let x = 0; x < TOWER_WIDTH; x++)
+        this.cells.set(point(x, y), rects.some((r) => inRect(r, x, y)) ? { kind: "floor" } : { kind: "wall" });
+    this.exitsOf = new Map(this.graph.nodes.map((n) => [n.id, []]));
+    this.entryOf.set(0, { entry: ENTRY, inward: [0, 1] });
+  }
+
+  build(): Embedding | null {
+    if (!this.connectRegions()) return null;
+    const shortcutsPlaced = this.placeShortcuts();
+    const stairs = this.placeStairs();
+    if (!stairs) return null;
+    this.trimChambers();
+    const f = this.furnish();
+    const { graph, cells, rects, leafOf, doorways } = this;
+    return {
+      graph, cells, rects, leafOf, doorways, stairs,
+      placements: f.placements, dropped: f.dropped, shortcutsPlaced,
+    };
+  }
+
+  /** A doorway from each region's parent into it, holding its gate. */
+  private connectRegions() {
+    for (const node of this.graph.nodes) {
+      if (node.parent === null) continue;
+      const c = this.chooseDoorway(node.parent, node.id);
+      if (!c) return false;
+      this.cut(c, node.gate);
+      this.doorways.push({ parent: node.parent, child: node.id, x: c.x, y: c.y, shortcut: false });
+      this.exitsOf.get(node.parent)!.push(c.inA);
+      this.entryOf.set(node.id, { entry: c.inB, inward: [c.inB[0] - c.x, c.inB[1] - c.y] });
+    }
+    return true;
+  }
+
+  private cut(c: Candidate, gate: Gate) {
+    this.doorTiles.push([c.x, c.y]);
+    this.cells.set(point(c.x, c.y), gateTile(gate, this.graph.depth, this.rng));
+  }
+
+  /** Whether a doorway already lies within `d` steps of candidate `c`. */
+  private nearDoor(c: { x: number; y: number }, d: number) {
+    return this.doorTiles.some(([x, y]) => Math.abs(x - c.x) + Math.abs(y - c.y) <= d);
+  }
+
+  /** The doorway between regions a and b: centred doorways read as
+   * authored, a little jitter keeps variety, and doorways keep apart. */
+  private chooseDoorway(a: number, b: number) {
+    const options = this.between(this.leafOf[a], this.leafOf[b]).filter((c) => !this.nearDoor(c, 1));
     if (!options.length) return null;
-    // Centred doorways read as authored; a little jitter keeps variety.
     const mid = options.reduce((s, c) => [s[0] + c.x / options.length, s[1] + c.y / options.length], [0, 0]);
     const score = (c: Candidate) =>
-      Math.abs(c.x - mid[0]) + Math.abs(c.y - mid[1]) + rng() * 1.5 +
-      (c.inA[0] === ENTRY[0] && c.inA[1] === ENTRY[1] ? 3 : 0) + (near(c, 2) ? 4 : 0);
+      Math.abs(c.x - mid[0]) + Math.abs(c.y - mid[1]) + this.rng() * 1.5 +
+      (c.inA[0] === ENTRY[0] && c.inA[1] === ENTRY[1] ? 3 : 0) + (this.nearDoor(c, 2) ? 4 : 0);
     return options.sort((p, q) => score(p) - score(q))[0];
-  };
-
-  for (const node of graph.nodes) {
-    if (node.parent === null) continue;
-    const c = chooseDoorway(node.parent, node.id);
-    if (!c) return null;
-    doorTiles.push([c.x, c.y]);
-    cells.set(point(c.x, c.y), gateTile(node.gate, graph.depth, rng));
-    doorways.push({ parent: node.parent, child: node.id, x: c.x, y: c.y, shortcut: false });
-    exitsOf.get(node.parent)!.push(c.inA);
-    entryOf.set(node.id, { entry: c.inB, inward: [c.inB[0] - c.x, c.inB[1] - c.y] });
   }
 
-  // Shortcuts: realise each request between the requested regions, or any
-  // other pair of main-route chambers that happen to touch.
-  let shortcutsPlaced = 0;
-  for (const req of graph.shortcuts) {
-    const main = graph.nodes.filter((n) => n.route === "main");
-    const pairs: [number, number][] = [[req.from, req.to]];
-    for (const u of main) for (const v of main) if (u.id < v.id) pairs.push([u.id, v.id]);
-    for (const [u, v] of pairs) {
-      if (graph.nodes[v].parent === u || graph.nodes[u].parent === v) continue;
-      const c = chooseDoorway(u, v);
+  /** Shortcuts: realise each request between the requested regions, or any
+   * other pair of main-route chambers that happen to touch. */
+  private placeShortcuts() {
+    let placed = 0;
+    for (const req of this.graph.shortcuts) if (this.placeShortcut(req)) placed++;
+    return placed;
+  }
+
+  private placeShortcut(req: ShortcutRequest) {
+    const nodes = this.graph.nodes;
+    for (const [u, v] of shortcutPairs(this.graph, req)) {
+      if (nodes[v].parent === u || nodes[u].parent === v) continue;
+      const c = this.chooseDoorway(u, v);
       if (!c) continue;
-      doorTiles.push([c.x, c.y]);
-      cells.set(point(c.x, c.y), gateTile(req.gate, graph.depth, rng));
-      doorways.push({ parent: u, child: v, x: c.x, y: c.y, shortcut: true });
-      exitsOf.get(u)!.push(c.inA);
-      exitsOf.get(v)!.push(c.inB);
-      shortcutsPlaced++;
-      break;
+      this.cut(c, req.gate);
+      this.doorways.push({ parent: u, child: v, x: c.x, y: c.y, shortcut: true });
+      this.exitsOf.get(u)!.push(c.inA);
+      this.exitsOf.get(v)!.push(c.inB);
+      return true;
     }
+    return false;
   }
 
-  // Stairs: in the outer wall, far from the entrance, centred on the
-  // stairs chamber's outer side.
-  const stairsNode = graph.nodes.find((n) => n.purpose === "stairs")!;
-  const sr = rects[leafOf[stairsNode.id]];
-  const stairOptions: { ring: XY; inner: XY; s: number }[] = [];
-  const consider = (ring: XY, inner: XY, offset: number) => {
-    const clash = doorTiles.some(([x, y]) => Math.abs(x - inner[0]) + Math.abs(y - inner[1]) <= 1);
-    stairOptions.push({
+  /** Stairs: in the outer wall, far from the entrance, centred on the
+   * stairs chamber's outer side. */
+  private placeStairs(): XY | null {
+    const stairsNode = this.graph.nodes.find((n) => n.purpose === "stairs")!;
+    const options = this.stairOptions(this.rects[this.leafOf[stairsNode.id]]);
+    if (!options.length) return null;
+    const stairs = options.sort((a, b) => b.s - a.s)[0];
+    this.cells.set(point(...stairs.ring), { kind: "stairs" });
+    this.exitsOf.get(stairsNode.id)!.push(stairs.inner);
+    return stairs.ring;
+  }
+
+  /** Every outer-wall tile beside the chamber (west, east, then north),
+   * with the tile inside it and a score. */
+  private stairOptions(sr: Rect) {
+    const out: { ring: XY; inner: XY; s: number }[] = [];
+    const midX = (sr.x1 + sr.x2) / 2, midY = (sr.y1 + sr.y2) / 2;
+    if (sr.x1 === INTERIOR.x1) for (let y = sr.y1; y <= sr.y2; y++) out.push(this.stairOption([0, y], [1, y], Math.abs(y - midY)));
+    if (sr.x2 === INTERIOR.x2) for (let y = sr.y1; y <= sr.y2; y++) out.push(this.stairOption([TOWER_WIDTH - 1, y], [INTERIOR.x2, y], Math.abs(y - midY)));
+    if (sr.y2 === INTERIOR.y2) for (let x = sr.x1; x <= sr.x2; x++) out.push(this.stairOption([x, TOWER_HEIGHT - 1], [x, INTERIOR.y2], Math.abs(x - midX)));
+    return out;
+  }
+
+  private stairOption(ring: XY, inner: XY, offset: number) {
+    const clash = this.nearDoor({ x: inner[0], y: inner[1] }, 1);
+    return {
       ring, inner,
-      s: Math.abs(ring[0] - TOWER_START_X) + ring[1] - offset * 0.7 - (clash ? 6 : 0) + rng() * 2,
-    });
-  };
-  if (sr.x1 === INTERIOR.x1) for (let y = sr.y1; y <= sr.y2; y++) consider([0, y], [1, y], Math.abs(y - (sr.y1 + sr.y2) / 2));
-  if (sr.x2 === INTERIOR.x2) for (let y = sr.y1; y <= sr.y2; y++) consider([TOWER_WIDTH - 1, y], [INTERIOR.x2, y], Math.abs(y - (sr.y1 + sr.y2) / 2));
-  if (sr.y2 === INTERIOR.y2) for (let x = sr.x1; x <= sr.x2; x++) consider([x, TOWER_HEIGHT - 1], [x, INTERIOR.y2], Math.abs(x - (sr.x1 + sr.x2) / 2));
-  if (!stairOptions.length) return null;
-  const stairs = stairOptions.sort((a, b) => b.s - a.s)[0];
-  cells.set(point(...stairs.ring), { kind: "stairs" });
-  exitsOf.get(stairsNode.id)!.push(stairs.inner);
+      s: Math.abs(ring[0] - TOWER_START_X) + ring[1] - offset * 0.7 - (clash ? 6 : 0) + this.rng() * 2,
+    };
+  }
 
-  // Trim oversized chambers down towards what their content needs, cutting
-  // whole rows/columns that hold no doorway so walls stay straight. This is
-  // what keeps a two-item pocket from becoming a 40-tile empty hall.
-  rects = rects.map((r) => ({ ...r }));
-  for (const node of graph.nodes) {
-    const r = rects[leafOf[node.id]];
-    const anchors = [entryOf.get(node.id)!.entry, ...exitsOf.get(node.id)!];
-    const target = targetArea(node);
-    while (area(r) > target * 1.2) {
-      const w = r.x2 - r.x1 + 1, h = r.y2 - r.y1 + 1;
-      const sides = ([
-        ["y1", h, (x: number, y: number) => y === r.y1],
-        ["y2", h, (x: number, y: number) => y === r.y2],
-        ["x1", w, (x: number, y: number) => x === r.x1],
-        ["x2", w, (x: number, y: number) => x === r.x2],
-      ] as const).filter(([, len, on]) => len > MIN_SIDE && !anchors.some(([x, y]) => on(x, y)));
-      if (!sides.length) break;
-      // Cut across the longer dimension first so rooms tend towards squares.
-      const [side] = sides.sort((a, b) => b[1] - a[1] + (rng() - 0.5) * 0.1)[0];
-      const line: XY[] = [];
-      for (let y = r.y1; y <= r.y2; y++)
-        for (let x = r.x1; x <= r.x2; x++)
-          if ((side === "y1" && y === r.y1) || (side === "y2" && y === r.y2) ||
-            (side === "x1" && x === r.x1) || (side === "x2" && x === r.x2)) line.push([x, y]);
-      for (const c of line) cells.set(point(...c), { kind: "wall" });
-      r[side] += side.endsWith("1") ? 1 : -1;
+  /** Trim oversized chambers down towards what their content needs, cutting
+   * whole rows/columns that hold no doorway so walls stay straight. This is
+   * what keeps a two-item pocket from becoming a 40-tile empty hall. */
+  private trimChambers() {
+    this.rects = this.rects.map((r) => ({ ...r }));
+    for (const node of this.graph.nodes) {
+      const r = this.rects[this.leafOf[node.id]];
+      const anchors = [this.entryOf.get(node.id)!.entry, ...this.exitsOf.get(node.id)!];
+      const target = targetArea(node);
+      while (area(r) > target * 1.2) {
+        const edge = this.edgeToTrim(r, anchors);
+        if (!edge) break;
+        this.wallOff(r, edge);
+      }
     }
   }
 
-  const f = new Furnisher(cells, graph.depth, rng);
-  // Furnish reward rooms before hubs so hub pillars never crowd a doorway.
-  const order = [...graph.nodes].sort((a, b) => (a.route === "main" ? 1 : 0) - (b.route === "main" ? 1 : 0));
-  for (const node of order) {
-    const { entry, inward } = entryOf.get(node.id)!;
-    f.furnish({ node, rect: rects[leafOf[node.id]], entry, inward, exits: exitsOf.get(node.id)! });
+  /** A side of `r` that holds no doorway and can still shrink: the longer
+   * dimension first, so rooms tend towards squares. */
+  private edgeToTrim(r: Rect, anchors: XY[]): Edge | undefined {
+    const w = r.x2 - r.x1 + 1, h = r.y2 - r.y1 + 1;
+    const sides = ([
+      ["y1", h, (x: number, y: number) => y === r.y1],
+      ["y2", h, (x: number, y: number) => y === r.y2],
+      ["x1", w, (x: number, y: number) => x === r.x1],
+      ["x2", w, (x: number, y: number) => x === r.x2],
+    ] as const).filter(([, len, on]) => len > MIN_SIDE && !anchors.some(([x, y]) => on(x, y)));
+    if (!sides.length) return undefined;
+    return sides.sort((a, b) => b[1] - a[1] + (this.rng() - 0.5) * 0.1)[0];
   }
 
-  return {
-    graph, cells, rects, leafOf, doorways, stairs: stairs.ring,
-    placements: f.placements, dropped: f.dropped, shortcutsPlaced,
-  };
+  private wallOff(r: Rect, [side, , on]: Edge) {
+    for (let y = r.y1; y <= r.y2; y++)
+      for (let x = r.x1; x <= r.x2; x++) if (on(x, y)) this.cells.set(point(x, y), { kind: "wall" });
+    r[side] += side.endsWith("1") ? 1 : -1;
+  }
+
+  /** Furnish reward rooms before hubs so hub pillars never crowd a doorway. */
+  private furnish() {
+    const f = new Furnisher(this.cells, this.graph.depth, this.rng);
+    const order = [...this.graph.nodes].sort((a, b) => (a.route === "main" ? 1 : 0) - (b.route === "main" ? 1 : 0));
+    for (const node of order) {
+      const { entry, inward } = this.entryOf.get(node.id)!;
+      f.furnish({ node, rect: this.rects[this.leafOf[node.id]], entry, inward, exits: this.exitsOf.get(node.id)! });
+    }
+    return f;
+  }
+}
+
+/** The requested shortcut first, then every pair of main-route regions. */
+function shortcutPairs(graph: StrategicGraph, req: ShortcutRequest) {
+  const main = graph.nodes.filter((n) => n.route === "main");
+  const pairs: [number, number][] = [[req.from, req.to]];
+  for (const u of main) for (const v of main) if (u.id < v.id) pairs.push([u.id, v.id]);
+  return pairs;
 }

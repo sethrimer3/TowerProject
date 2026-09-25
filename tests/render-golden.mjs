@@ -1,5 +1,6 @@
 // Characterization screenshots for the board renderer. Fixed scenes (Tower,
-// dim Tower, Delve, sprites off, outside, reduced motion) are drawn at fixed
+// dim Tower, Delve, sprites off, outside, reduced motion, and decor: a crate
+// stepped on, a pool waded into, tall grass walked through) are drawn at fixed
 // timestamps with seeded randomness, and each canvas's pixels are hashed
 // against tests/fixtures/render.golden.json. Pixels depend on the browser and
 // GPU, so the golden is only meaningful on the machine that made it:
@@ -27,6 +28,7 @@ const shots = await page.evaluate(async () => {
   const { Renderer } = await import("/src/rendering.ts");
   const { Game } = await import("/src/state.ts");
   const { defaults } = await import("/src/save.ts");
+  const { decorSourceFor, tileDecor } = await import("/src/decor.ts");
 
   const mulberry32 = (seed) => () => {
     seed = (seed + 0x6d2b79f5) | 0;
@@ -84,6 +86,28 @@ const shots = await page.evaluate(async () => {
     return p;
   };
 
+  /** A Tower game on the first floor where `want(plan)` holds for a floor
+   * tile with a plain floor tile beside it: the hero starts beside it and
+   * steps onto it. */
+  const decorScene = (settings, want) => {
+    const g = game("tower", settings);
+    for (let floor = 0; floor < 120; floor++) {
+      const src = decorSourceFor(g.world, g.run.seed), floorAt = (x, y) => g.world.tile(x, y).kind === "floor";
+      for (let y = 1; y < 16; y++)
+        for (let x = 1; x < 16; x++) {
+          if (!floorAt(x, y) || !want(tileDecor(src, x, y))) continue;
+          const from = [[0, -1], [-1, 0], [1, 0], [0, 1]].map(([dx, dy]) => ({ x: x + dx, y: y + dy }))
+            .find((f) => floorAt(f.x, f.y) && !tileDecor(src, f.x, f.y).crates.length);
+          if (!from) continue;
+          g.run.player.x = from.x;
+          g.run.player.y = from.y;
+          return { g, to: { x, y } };
+        }
+      g.advanceTowerRoom();
+    }
+    throw Error("no floor has that decor");
+  };
+
   const SCENES = {
     towerArea1: () => {
       const g = game("tower");
@@ -117,6 +141,18 @@ const shots = await page.evaluate(async () => {
       plantAll(g);
       return g;
     },
+    decorCrates: () => ({
+      ...decorScene({ brightness: 60 }, (d) => d.crates.length >= 3),
+      check: (decor) => decor.broken.size === 1 && decor.particles.some((p) => p.kind === "splinter"),
+    }),
+    decorPool: () => ({
+      ...decorScene({ brightness: 45 }, (d) => d.water?.[20 * 24 + 12] === 1 && d.waterCount > 150),
+      check: (decor) => decor.ripples.length > 0 && Array.from({ length: 17 * 17 }, (_, k) => tileDecor(decor.src, k % 17, Math.floor(k / 17))).some((d) => d.drip),
+    }),
+    decorThicket: () => ({
+      ...decorScene({ brightness: 35 }, (d) => d.thicket && d.blades.length > 20),
+      check: (decor) => decor.busy,
+    }),
   };
 
   const canvas = document.createElement("canvas");
@@ -130,13 +166,13 @@ const shots = await page.evaluate(async () => {
    * interleave: a settled frame, a frame mid-step with feedback showing and
    * a route preview, and a later frame once the camera has caught up. */
   const capture = (name, seed) => seeded(seed, () => {
-    const g = SCENES[name]();
+    const scene = SCENES[name](), g = scene.g ?? scene;
     quiet(g);
     const r = new Renderer(canvas, g);
     const out = {};
     for (let t = 1000; t <= 1400; t += 50) r.draw(t);
     out.settled = grab();
-    const to = neighbour(g), from = { ...g.run.player };
+    const to = scene.to ?? neighbour(g), from = { ...g.run.player };
     g.run.player.x = to.x;
     g.run.player.y = to.y;
     r.previewRoute = [from, to, neighbour(g)];
@@ -145,7 +181,16 @@ const shots = await page.evaluate(async () => {
     r.draw(1450);
     r.draw(1483);
     out.moving = grab();
-    for (let t = 1500; t <= 3300; t += 60) r.draw(t);
+    for (let t = 1500; t <= 3300; t += 60) {
+      r.draw(t);
+      // Ripples spread past the hero's feet.
+      if (t === 2100) out.ripples = grab();
+      // Splinters in flight, a fresh splash, grass still swaying.
+      if (t !== 1740) continue;
+      out.after = grab();
+      // Guards the scene itself: the effect it exists for must be live.
+      if (scene.check && !scene.check(r.decor)) throw Error(`${name}: its decor effect never started`);
+    }
     out.later = grab();
     return out;
   });
