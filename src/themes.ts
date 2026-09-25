@@ -113,320 +113,294 @@ function applyBlockVariation(baseColor: string, x: number, y: number, seed: numb
   return `rgb(${nr},${ng},${nb})`;
 }
 
-/** Detail types for the restrained procedural detail library. */
-type DetailType = "crack" | "masonry" | "chip" | "scratch" | "stain" | "rubble" | "themeSpecial";
+/** One tile of procedural terrain: where it is, which art set applies, and
+ * what it is. `empty` floors (nothing standing on them) may carry a detail. */
+export type TerrainTile = {
+  mode: Mode;
+  height: number;
+  seed: number;
+  x: number;
+  y: number;
+  wall: boolean;
+  empty: boolean;
+  neighbors?: TileNeighbors;
+};
 
-function drawDetail(
-  c: CanvasRenderingContext2D,
-  type: DetailType,
-  r: number,
-  themeDecorId: number,
-  accentColor: string,
-  wallColor: string,
-  seamColor: string,
-  isWall: boolean
-) {
-  const line = (...points: number[]) => {
-    c.beginPath();
-    c.moveTo(points[0], points[1]);
-    for (let i = 2; i < points.length; i += 2) c.lineTo(points[i], points[i + 1]);
-    c.stroke();
+/** A tile's four colours after theme blending and per-block variation. */
+type TerrainInk = { floor: string; wall: string; seam: string; accent: string };
+
+/** Everything a terrain painter reads. */
+type Paint = {
+  c: CanvasRenderingContext2D;
+  tile: TerrainTile;
+  ink: TerrainInk;
+  /** The theme whose wall style and motif this tile uses. */
+  theme: number;
+  /** The tile's own roll, which varies each detail. */
+  r: number;
+};
+
+function inkAt(tile: TerrainTile): { ink: TerrainInk; theme: number } {
+  const { x, y, seed } = tile;
+  const region = themeAt(tile.mode, tile.height, x, y, seed);
+  const a = THEMES[region.from], b = THEMES[region.to];
+  const baseInk = (key: keyof TerrainInk) => color(a[key], b[key], region.mix);
+  // Subtle per-block brightness & hue variation while staying strictly within the unified palette
+  const ink = {
+    floor: applyBlockVariation(baseInk("floor"), x, y, seed),
+    wall: brighten(applyBlockVariation(baseInk("wall"), x, y, seed), DUNGEON_ENV_CONFIG.wallBrightnessBoost),
+    seam: baseInk("seam"),
+    accent: baseInk("accent"),
   };
+  return { ink, theme: region.decor };
+}
 
-  switch (type) {
-    case "crack": {
-      // Fine organic fissure line with subtle branch
-      c.strokeStyle = isWall ? seamColor : wallColor;
-      c.lineWidth = 0.8;
-      const x1 = 4 + (r * 11) % 6, y1 = 4 + (r * 17) % 5;
-      const mx = 10 + (r * 23) % 4, my = 11 + (r * 19) % 3;
-      const x2 = 17 + (r * 7) % 4, y2 = 18 + (r * 13) % 4;
-      line(x1, y1, mx, my, x2, y2);
-      if (r > 0.4) {
-        line(mx, my, mx + 4, my - 3);
-      }
-      break;
+function line(c: CanvasRenderingContext2D, ...points: number[]) {
+  c.beginPath();
+  c.moveTo(points[0], points[1]);
+  for (let i = 2; i < points.length; i += 2) c.lineTo(points[i], points[i + 1]);
+  c.stroke();
+}
+
+/** Each theme's signature motif, drawn in its accent colour. */
+const THEME_MOTIFS: ((c: CanvasRenderingContext2D) => void)[] = [
+  // Rubble / cracked block
+  (c) => { c.fillRect(4, 16, 4, 3); c.fillRect(11, 18, 3, 2); line(c, 7, 4, 10, 8, 8, 12); },
+  // Trailing small vine with 2 leaves
+  (c) => { line(c, 5, 2, 7, 10, 5, 18); c.fillRect(8, 7, 3, 2); c.fillRect(2, 13, 3, 2); },
+  // Fossil rib fragment
+  (c) => { line(c, 6, 16, 15, 7); line(c, 7, 13, 10, 16); line(c, 10, 10, 13, 13); },
+  // Icicle / frost point
+  (c) => { c.beginPath(); c.moveTo(8, 3); c.lineTo(12, 3); c.lineTo(10, 13); c.fill(); },
+  // Ember fissure spark
+  (c) => { line(c, 4, 19, 9, 13, 6, 9); c.fillRect(14, 15, 2, 2); },
+  // Single crystal spire
+  (c) => {
+    c.beginPath();
+    c.moveTo(8, 19); c.lineTo(7, 10); c.lineTo(10, 6); c.lineTo(12, 18);
+    c.closePath(); c.stroke();
+  },
+  // Water ripple ring
+  (c) => { c.beginPath(); c.ellipse(12, 14, 6, 2.5, 0, 0, Math.PI * 2); c.stroke(); },
+  // Small fungal cap
+  (c) => { c.fillRect(11, 13, 2, 5); c.beginPath(); c.ellipse(12, 13, 4, 2.5, 0, Math.PI, Math.PI * 2); c.fill(); },
+  // Carved rune sigil fragment
+  (c) => line(c, 8, 5, 14, 5, 11, 11, 14, 17, 8, 17),
+  // Star gem glint
+  (c) => { line(c, 12, 6, 12, 16); line(c, 7, 11, 17, 11); c.fillRect(11, 10, 2, 2); },
+];
+
+/** The restrained procedural detail library, one painter per detail type. */
+const DETAILS = {
+  // Fine organic fissure line with subtle branch
+  crack: ({ c, tile, ink, r }: Paint) => {
+    c.strokeStyle = tile.wall ? ink.seam : ink.wall;
+    c.lineWidth = 0.8;
+    const x1 = 4 + (r * 11) % 6, y1 = 4 + (r * 17) % 5;
+    const mx = 10 + (r * 23) % 4, my = 11 + (r * 19) % 3;
+    const x2 = 17 + (r * 7) % 4, y2 = 18 + (r * 13) % 4;
+    line(c, x1, y1, mx, my, x2, y2);
+    if (r > 0.4) line(c, mx, my, mx + 4, my - 3);
+  },
+  // Clean subtle mortar seam or stone joint
+  masonry: ({ c, ink, r }: Paint) => {
+    c.strokeStyle = ink.seam;
+    c.lineWidth = 0.9;
+    const vertical = r > 0.5;
+    line(c, ...(vertical ? [12, 3, 12, 21] : [3, 12, 21, 12]));
+    if (r > 0.7) line(c, ...(vertical ? [12, 12, 20, 12] : [12, 12, 12, 20]));
+  },
+  // Chipped stone corner notch with highlight facet
+  chip: ({ c, tile, ink }: Paint) => {
+    c.fillStyle = ink.seam;
+    c.fillRect(3, 3, 4, 3);
+    c.fillStyle = tile.wall ? "rgba(255, 255, 255, 0.12)" : "rgba(255, 255, 255, 0.06)";
+    c.fillRect(3, 2, 4, 1);
+  },
+  // Faint score marks / claw or tool scratches
+  scratch: ({ c, tile, ink, r }: Paint) => {
+    c.strokeStyle = tile.wall ? ink.accent : ink.wall;
+    c.lineWidth = 0.7;
+    const sx = 6 + (r * 13) % 8, sy = 6 + (r * 19) % 8;
+    line(c, sx, sy, sx + 6, sy + 4);
+    line(c, sx + 1, sy + 3, sx + 7, sy + 7);
+  },
+  // Soft irregular translucent puddle/stain
+  stain: ({ c, r }: Paint) => {
+    c.fillStyle = "rgba(0, 0, 0, 0.22)";
+    c.beginPath();
+    c.ellipse(12, 13, 5 + (r * 4) % 3, 3 + (r * 6) % 2, (r * Math.PI), 0, Math.PI * 2);
+    c.fill();
+  },
+  // Sparse 1-3 tiny stone chips/pebbles with tiny contact shadow
+  rubble: ({ c, tile, ink, r }: Paint) => {
+    const stone = tile.wall ? ink.wall : ink.accent;
+    c.fillStyle = "rgba(0, 0, 0, 0.35)";
+    c.fillRect(6, 17, 3, 1);
+    c.fillRect(14, 18, 4, 1);
+    c.fillStyle = stone;
+    c.fillRect(6, 15, 3, 2);
+    c.fillRect(14, 16, 3, 2);
+    if (r > 0.6) {
+      c.fillStyle = "rgba(0, 0, 0, 0.3)";
+      c.fillRect(10, 19, 2, 1);
+      c.fillStyle = stone;
+      c.fillRect(10, 18, 2, 1);
     }
-    case "masonry": {
-      // Clean subtle mortar seam or stone joint
-      c.strokeStyle = seamColor;
-      c.lineWidth = 0.9;
-      const isVert = r > 0.5;
-      if (isVert) {
-        line(12, 3, 12, 21);
-        if (r > 0.7) line(12, 12, 20, 12);
-      } else {
-        line(3, 12, 21, 12);
-        if (r > 0.7) line(12, 12, 12, 20);
-      }
-      break;
-    }
-    case "chip": {
-      // Chipped stone corner notch with highlight facet
-      c.fillStyle = seamColor;
-      c.fillRect(3, 3, 4, 3);
-      c.fillStyle = isWall ? "rgba(255, 255, 255, 0.12)" : "rgba(255, 255, 255, 0.06)";
-      c.fillRect(3, 2, 4, 1);
-      break;
-    }
-    case "scratch": {
-      // Faint score marks / claw or tool scratches
-      c.strokeStyle = isWall ? accentColor : wallColor;
-      c.lineWidth = 0.7;
-      const sx = 6 + (r * 13) % 8, sy = 6 + (r * 19) % 8;
-      line(sx, sy, sx + 6, sy + 4);
-      line(sx + 1, sy + 3, sx + 7, sy + 7);
-      break;
-    }
-    case "stain": {
-      // Soft irregular translucent puddle/stain
-      c.fillStyle = "rgba(0, 0, 0, 0.22)";
-      c.beginPath();
-      c.ellipse(12, 13, 5 + (r * 4) % 3, 3 + (r * 6) % 2, (r * Math.PI), 0, Math.PI * 2);
-      c.fill();
-      break;
-    }
-    case "rubble": {
-      // Sparse 1-3 tiny stone chips/pebbles with tiny contact shadow
-      c.fillStyle = "rgba(0, 0, 0, 0.35)";
-      c.fillRect(6, 17, 3, 1);
-      c.fillRect(14, 18, 4, 1);
-      c.fillStyle = isWall ? wallColor : accentColor;
-      c.fillRect(6, 15, 3, 2);
-      c.fillRect(14, 16, 3, 2);
-      if (r > 0.6) {
-        c.fillStyle = "rgba(0, 0, 0, 0.3)";
-        c.fillRect(10, 19, 2, 1);
-        c.fillStyle = isWall ? wallColor : accentColor;
-        c.fillRect(10, 18, 2, 1);
-      }
-      break;
-    }
-    case "themeSpecial": {
-      // Signature motif from the current biome theme
-      c.strokeStyle = accentColor;
-      c.fillStyle = accentColor;
-      c.lineWidth = 1;
-      switch (themeDecorId) {
-        case 0: // Rubble / cracked block
-          c.fillRect(4, 16, 4, 3); c.fillRect(11, 18, 3, 2); line(7, 4, 10, 8, 8, 12);
-          break;
-        case 1: // Trailing small vine with 2 leaves
-          line(5, 2, 7, 10, 5, 18);
-          c.fillRect(8, 7, 3, 2);
-          c.fillRect(2, 13, 3, 2);
-          break;
-        case 2: // Fossil rib fragment
-          line(6, 16, 15, 7);
-          line(7, 13, 10, 16);
-          line(10, 10, 13, 13);
-          break;
-        case 3: // Icicle / frost point
-          c.beginPath();
-          c.moveTo(8, 3); c.lineTo(12, 3); c.lineTo(10, 13); c.fill();
-          break;
-        case 4: // Ember fissure spark
-          line(4, 19, 9, 13, 6, 9);
-          c.fillRect(14, 15, 2, 2);
-          break;
-        case 5: // Single crystal spire
-          c.beginPath();
-          c.moveTo(8, 19); c.lineTo(7, 10); c.lineTo(10, 6); c.lineTo(12, 18);
-          c.closePath(); c.stroke();
-          break;
-        case 6: // Water ripple ring
-          c.beginPath();
-          c.ellipse(12, 14, 6, 2.5, 0, 0, Math.PI * 2);
-          c.stroke();
-          break;
-        case 7: // Small fungal cap
-          c.fillRect(11, 13, 2, 5);
-          c.beginPath();
-          c.ellipse(12, 13, 4, 2.5, 0, Math.PI, Math.PI * 2);
-          c.fill();
-          break;
-        case 8: // Carved rune sigil fragment
-          line(8, 5, 14, 5, 11, 11, 14, 17, 8, 17);
-          break;
-        case 9: // Star gem glint
-          line(12, 6, 12, 16);
-          line(7, 11, 17, 11);
-          c.fillRect(11, 10, 2, 2);
-          break;
-      }
-      break;
+  },
+  // Signature motif from the current biome theme
+  themeSpecial: ({ c, ink, theme }: Paint) => {
+    c.strokeStyle = ink.accent;
+    c.fillStyle = ink.accent;
+    c.lineWidth = 1;
+    THEME_MOTIFS[theme]?.(c);
+  },
+};
+type DetailType = keyof typeof DETAILS;
+const DETAIL_TYPES = Object.keys(DETAILS) as DetailType[];
+
+// Wall stone faces: clean, restrained block faces in the wall colour.
+function brickFace({ c, tile, theme }: Paint) {
+  const { x, y, seed } = tile;
+  // Small deterministic jitter on the brick seam position so adjacent
+  // wall tiles of the same theme don't look like one stamp repeated
+  // across the wall (widths stay fixed so tiles never bleed past 24px).
+  const jitterX = Math.round((tileRandom(x, y, seed ^ 0x2201) - 0.5) * 2);
+  const jitterY = Math.round((tileRandom(x, y, seed ^ 0x2202) - 0.5) * 2);
+  const split = (theme === 2 ? 16 : 11) + jitterX;
+  const rowSplit = 12 + jitterY;
+  // Mortar gaps kept to a thin 1px line so the wall face reads as a
+  // solid stone mass rather than dark mortar dominating the tile.
+  c.fillRect(1, 1, split - 1, rowSplit - 2);
+  c.fillRect(split + 1, 1, 22 - split, rowSplit - 2);
+  c.fillRect(1, rowSplit, 6, 22 - rowSplit - 1);
+  c.fillRect(9, rowSplit, 14, 22 - rowSplit - 1);
+}
+function forgePlateFace({ c, ink }: Paint) {
+  c.fillRect(2, 2, 20, 19);
+  c.strokeStyle = ink.accent;
+  c.strokeRect(4, 4, 16, 15);
+  for (const xx of [5, 18]) {
+    for (const yy of [5, 18]) {
+      c.fillStyle = ink.seam;
+      c.fillRect(xx, yy, 2, 2);
     }
   }
 }
-
-const DETAIL_TYPES: DetailType[] = [
-  "crack",
-  "masonry",
-  "chip",
-  "scratch",
-  "stain",
-  "rubble",
-  "themeSpecial",
+function astralPillarFace({ c, ink }: Paint) {
+  c.fillRect(2, 1, 20, 21);
+  c.fillStyle = ink.accent;
+  c.fillRect(3, 2, 18, 1);
+  c.fillRect(3, 20, 18, 1);
+  c.fillRect(5, 5, 2, 13);
+  c.fillRect(17, 5, 2, 13);
+}
+function rubbleSlabFace({ c, ink }: Paint) {
+  c.beginPath();
+  c.moveTo(2, 3); c.lineTo(15, 1); c.lineTo(23, 8);
+  c.lineTo(20, 21); c.lineTo(7, 23); c.lineTo(1, 15);
+  c.closePath();
+  c.fill();
+  c.strokeStyle = ink.seam;
+  c.beginPath(); c.moveTo(15, 1); c.lineTo(11, 12); c.lineTo(20, 21); c.stroke();
+  c.beginPath(); c.moveTo(11, 12); c.lineTo(1, 15); c.stroke();
+}
+/** Each theme's wall face, by theme index. */
+const WALL_FACES = [
+  brickFace, brickFace, brickFace, rubbleSlabFace, forgePlateFace,
+  rubbleSlabFace, brickFace, rubbleSlabFace, rubbleSlabFace, astralPillarFace,
 ];
 
-export function drawTerrain(
-  c: CanvasRenderingContext2D,
-  wall: boolean,
-  mode: Mode,
-  height: number,
-  x: number,
-  y: number,
-  seed: number,
-  empty: boolean,
-  neighbors?: TileNeighbors
-) {
-  const region = themeAt(mode, height, x, y, seed);
-  const a = THEMES[region.from], b = THEMES[region.to], themeId = region.decor;
-  const baseInk = (key: "floor" | "wall" | "seam" | "accent") => color(a[key], b[key], region.mix);
-  
-  const rawFloor = baseInk("floor");
-  const rawWall = baseInk("wall");
-  const rawSeam = baseInk("seam");
-  const rawAccent = baseInk("accent");
+function paintWall(p: Paint) {
+  const { c, ink } = p;
+  // Wall base and perimeter seam - kept crisp so walls read as a strong silhouette
+  c.fillStyle = ink.seam;
+  c.fillRect(0, 0, 24, 24);
+  c.save();
+  c.globalAlpha = DUNGEON_ENV_CONFIG.wallSeamAlpha;
+  c.strokeStyle = ink.seam;
+  c.lineWidth = 0.9;
+  c.strokeRect(0.4, 0.4, 23.2, 23.2);
+  c.restore();
 
-  // Subtle per-block brightness & hue variation while staying strictly within the unified palette
-  const floorColor = applyBlockVariation(rawFloor, x, y, seed);
-  const wallColor = brighten(applyBlockVariation(rawWall, x, y, seed), DUNGEON_ENV_CONFIG.wallBrightnessBoost);
-  const seamColor = rawSeam;
-  const accentColor = rawAccent;
+  c.fillStyle = ink.wall;
+  (WALL_FACES[p.theme] ?? rubbleSlabFace)(p);
 
-  const r = tileRandom(x, y, seed);
-  const clusterVal = noise(x / 4.5, y / 4.5, seed ^ 0x3c71);
+  // Subtle wall top-edge lighting & bottom contact bevel
+  c.fillStyle = `rgba(255, 255, 255, ${DUNGEON_ENV_CONFIG.wallTopHighlightAlpha})`;
+  c.fillRect(1, 1, 22, 1);
 
-  if (wall) {
-    // Wall base and perimeter seam - kept crisp so walls read as a strong silhouette
-    c.fillStyle = seamColor;
-    c.fillRect(0, 0, 24, 24);
-    c.save();
-    c.globalAlpha = DUNGEON_ENV_CONFIG.wallSeamAlpha;
-    c.strokeStyle = seamColor;
-    c.lineWidth = 0.9;
-    c.strokeRect(0.4, 0.4, 23.2, 23.2);
-    c.restore();
+  c.fillStyle = `rgba(0, 0, 0, ${DUNGEON_ENV_CONFIG.wallBottomShadowAlpha})`;
+  c.fillRect(0, 22, 24, 2);
+}
 
-    // Wall stone fill: clean, restrained block faces
-    c.fillStyle = wallColor;
-    if ([0, 1, 2, 6].includes(themeId)) {
-      // Small deterministic jitter on the brick seam position so adjacent
-      // wall tiles of the same theme don't look like one stamp repeated
-      // across the wall (widths stay fixed so tiles never bleed past 24px).
-      const jitterX = Math.round((tileRandom(x, y, seed ^ 0x2201) - 0.5) * 2);
-      const jitterY = Math.round((tileRandom(x, y, seed ^ 0x2202) - 0.5) * 2);
-      const split = (themeId === 2 ? 16 : 11) + jitterX;
-      const rowSplit = 12 + jitterY;
-      // Mortar gaps kept to a thin 1px line so the wall face reads as a
-      // solid stone mass rather than dark mortar dominating the tile.
-      c.fillRect(1, 1, split - 1, rowSplit - 2);
-      c.fillRect(split + 1, 1, 22 - split, rowSplit - 2);
-      c.fillRect(1, rowSplit, 6, 22 - rowSplit - 1);
-      c.fillRect(9, rowSplit, 14, 22 - rowSplit - 1);
-    } else if (themeId === 4) {
-      c.fillRect(2, 2, 20, 19);
-      c.strokeStyle = accentColor;
-      c.strokeRect(4, 4, 16, 15);
-      for (const xx of [5, 18]) {
-        for (const yy of [5, 18]) {
-          c.fillStyle = seamColor;
-          c.fillRect(xx, yy, 2, 2);
-        }
-      }
-    } else if (themeId === 9) {
-      c.fillRect(2, 1, 20, 21);
-      c.fillStyle = accentColor;
-      c.fillRect(3, 2, 18, 1);
-      c.fillRect(3, 20, 18, 1);
-      c.fillRect(5, 5, 2, 13);
-      c.fillRect(17, 5, 2, 13);
-    } else {
-      c.beginPath();
-      c.moveTo(2, 3); c.lineTo(15, 1); c.lineTo(23, 8);
-      c.lineTo(20, 21); c.lineTo(7, 23); c.lineTo(1, 15);
-      c.closePath();
-      c.fill();
-      c.strokeStyle = seamColor;
-      c.beginPath(); c.moveTo(15, 1); c.lineTo(11, 12); c.lineTo(20, 21); c.stroke();
-      c.beginPath(); c.moveTo(11, 12); c.lineTo(1, 15); c.stroke();
-    }
+/** Shadows adjacent walls cast onto a floor: which side, how dark, where. */
+const CONTACT_SHADOWS: [keyof TileNeighbors, number, [number, number, number, number]][] = [
+  ["northWall", DUNGEON_ENV_CONFIG.contactShadowAlpha, [0, 0, 24, 4]],
+  ["westWall", DUNGEON_ENV_CONFIG.contactShadowSideAlpha, [0, 0, 3, 24]],
+  ["eastWall", DUNGEON_ENV_CONFIG.contactShadowSideAlpha, [21, 0, 3, 24]],
+];
 
-    // Subtle wall top-edge lighting & bottom contact bevel
-    c.fillStyle = `rgba(255, 255, 255, ${DUNGEON_ENV_CONFIG.wallTopHighlightAlpha})`;
-    c.fillRect(1, 1, 22, 1);
+function paintFloor({ c, tile, ink }: Paint) {
+  // Floor tile base: smooth and calm; seam kept faint so the grid never dominates
+  c.fillStyle = ink.floor;
+  c.fillRect(0, 0, 24, 24);
+  c.save();
+  c.globalAlpha = DUNGEON_ENV_CONFIG.floorSeamAlpha;
+  c.strokeStyle = ink.seam;
+  c.lineWidth = 0.5;
+  c.strokeRect(0.25, 0.25, 23.5, 23.5);
+  c.restore();
 
-    c.fillStyle = `rgba(0, 0, 0, ${DUNGEON_ENV_CONFIG.wallBottomShadowAlpha})`;
-    c.fillRect(0, 22, 24, 2);
-  } else {
-    // Floor tile base: smooth and calm; seam kept faint so the grid never dominates
-    c.fillStyle = floorColor;
-    c.fillRect(0, 0, 24, 24);
-    c.save();
-    c.globalAlpha = DUNGEON_ENV_CONFIG.floorSeamAlpha;
-    c.strokeStyle = seamColor;
-    c.lineWidth = 0.5;
-    c.strokeRect(0.25, 0.25, 23.5, 23.5);
-    c.restore();
-
-    // Wall contact shadows cast onto floors from adjacent walls (adds depth/dimensionality)
-    if (neighbors) {
-      if (neighbors.northWall) {
-        c.fillStyle = `rgba(0, 0, 0, ${DUNGEON_ENV_CONFIG.contactShadowAlpha})`;
-        c.fillRect(0, 0, 24, 4);
-      }
-      if (neighbors.westWall) {
-        c.fillStyle = `rgba(0, 0, 0, ${DUNGEON_ENV_CONFIG.contactShadowSideAlpha})`;
-        c.fillRect(0, 0, 3, 24);
-      }
-      if (neighbors.eastWall) {
-        c.fillStyle = `rgba(0, 0, 0, ${DUNGEON_ENV_CONFIG.contactShadowSideAlpha})`;
-        c.fillRect(21, 0, 3, 24);
-      }
-    }
+  // Wall contact shadows cast onto floors from adjacent walls (adds depth/dimensionality)
+  for (const [side, alpha, [sx, sy, sw, sh]] of CONTACT_SHADOWS) {
+    if (!tile.neighbors?.[side]) continue;
+    c.fillStyle = `rgba(0, 0, 0, ${alpha})`;
+    c.fillRect(sx, sy, sw, sh);
   }
+}
 
-  // --- RESTRAINED DECORATION PASS ---
-  // Keep empty tiles common; avoid placing identical marks on adjacent tiles;
-  // cluster decorations intentionally rather than scattering uniformly.
-  const isNearWall = !!(neighbors && (neighbors.northWall || neighbors.southWall || neighbors.westWall || neighbors.eastWall));
-  
+const isNearWall = (n?: TileNeighbors) => !!(n && (n.northWall || n.southWall || n.westWall || n.eastWall));
+
+/** Whether this tile gets a detail at all. Keep empty tiles common and
+ * cluster decorations intentionally rather than scattering uniformly. */
+function decorates(tile: TerrainTile, r: number) {
+  if (!tile.wall && !tile.empty) return false;
   // Rubble/cracks favor walls/corners over wide-open paths
-  const densityThreshold = wall
+  const densityThreshold = tile.wall
     ? DUNGEON_ENV_CONFIG.wallDecorDensity
-    : (isNearWall ? DUNGEON_ENV_CONFIG.floorDecorDensityNearWall : DUNGEON_ENV_CONFIG.floorDecorDensityBase);
-
+    : (isNearWall(tile.neighbors) ? DUNGEON_ENV_CONFIG.floorDecorDensityNearWall : DUNGEON_ENV_CONFIG.floorDecorDensityBase);
   // In clusters, threshold is slightly more lenient, but empty tiles still dominate
+  const clusterVal = noise(tile.x / 4.5, tile.y / 4.5, tile.seed ^ 0x3c71);
   const isCluster = clusterVal > DUNGEON_ENV_CONFIG.clusterThreshold;
-  const effectiveThreshold = isCluster ? densityThreshold : densityThreshold * 0.4;
+  return r < (isCluster ? densityThreshold : densityThreshold * 0.4);
+}
 
-  const canDecorate = (wall || empty) && r < effectiveThreshold;
-  if (!canDecorate) return;
-
-  // Deterministically select detail type, ensuring neighbors do not share the exact same marking
-  let detailIndex = Math.floor(tileRandom(x, y, seed ^ 0x51ef) * DETAIL_TYPES.length);
-
-  // Avoid placing identical markings on adjacent tiles
-  const leftTypeIdx = Math.floor(tileRandom(x - 1, y, seed ^ 0x51ef) * DETAIL_TYPES.length);
-  const bottomTypeIdx = Math.floor(tileRandom(x, y - 1, seed ^ 0x51ef) * DETAIL_TYPES.length);
-  if (detailIndex === leftTypeIdx || detailIndex === bottomTypeIdx) {
+function detailFor(tile: TerrainTile, r: number): DetailType {
+  const { x, y, seed } = tile;
+  // Deterministically select detail type, avoiding identical markings on adjacent tiles
+  const typeAt = (tx: number, ty: number) => Math.floor(tileRandom(tx, ty, seed ^ 0x51ef) * DETAIL_TYPES.length);
+  let detailIndex = typeAt(x, y);
+  if (detailIndex === typeAt(x - 1, y) || detailIndex === typeAt(x, y - 1)) {
     detailIndex = (detailIndex + 1) % DETAIL_TYPES.length;
   }
-
-  let selectedType = DETAIL_TYPES[detailIndex];
-
+  const type = DETAIL_TYPES[detailIndex];
   // If in the open floor walking area, favor subtle cracks/stains/scratches over bulky rubble
-  if (!wall && !isNearWall && (selectedType === "rubble" || selectedType === "masonry")) {
-    selectedType = r > 0.04 ? "stain" : "crack";
-  }
+  const openFloor = !tile.wall && !isNearWall(tile.neighbors);
+  const bulky = type === "rubble" || type === "masonry";
+  if (openFloor && bulky) return r > 0.04 ? "stain" : "crack";
+  return type;
+}
 
+function paintDetail(p: Paint) {
+  const { c, tile } = p;
+  const { x, y, seed } = tile;
   // Seeded deterministic variation: rotation, mirroring, subtle scale & opacity
   const rotStep = Math.floor(tileRandom(x, y, seed ^ 0x18ac) * 4); // 0, 90, 180, 270 deg
   const mirrorX = tileRandom(x, y, seed ^ 0x762b) > 0.5 ? -1 : 1;
   const mirrorY = tileRandom(x, y, seed ^ 0x3d9a) > 0.5 ? -1 : 1;
   const scale = 0.85 + tileRandom(x, y, seed ^ 0x9321) * 0.25; // 0.85 to 1.10
-  const opacity = (wall ? 0.65 : 0.38) + tileRandom(x, y, seed ^ 0xb482) * 0.25;
+  const opacity = (tile.wall ? 0.65 : 0.38) + tileRandom(x, y, seed ^ 0xb482) * 0.25;
 
   c.save();
   // Transform around tile center (12, 12)
@@ -434,19 +408,17 @@ export function drawTerrain(
   c.rotate((rotStep * Math.PI) / 2);
   c.scale(mirrorX * scale, mirrorY * scale);
   c.translate(-12, -12);
-
   c.globalAlpha = Math.min(1, Math.max(0.2, opacity));
-
-  drawDetail(
-    c,
-    selectedType,
-    r,
-    themeId,
-    accentColor,
-    wallColor,
-    seamColor,
-    wall
-  );
-
+  DETAILS[detailFor(tile, p.r)](p);
   c.restore();
+}
+
+/** Paints one tile of procedural terrain in 24×24 tile space: the wall or
+ * floor in its blended theme colours, then (on a few walls and empty floors)
+ * one restrained detail. */
+export function drawTerrain(c: CanvasRenderingContext2D, tile: TerrainTile) {
+  const p: Paint = { c, tile, ...inkAt(tile), r: tileRandom(tile.x, tile.y, tile.seed) };
+  if (tile.wall) paintWall(p);
+  else paintFloor(p);
+  if (decorates(tile, p.r)) paintDetail(p);
 }

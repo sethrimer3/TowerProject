@@ -66,7 +66,7 @@ function paintGround(c: CanvasRenderingContext2D, world: TileWorld, t: Tile, x: 
     c, look.mode, look.height, t.kind === "wall", x, y, look.seed, neighbors,
   );
   if (drewSprite) return true;
-  drawTerrain(c, t.kind === "wall", look.mode, look.height, x, y, look.seed, t.kind === "floor", neighbors);
+  drawTerrain(c, { mode: look.mode, height: look.height, seed: look.seed, x, y, wall: t.kind === "wall", empty: t.kind === "floor", neighbors });
   return look.spritesOff;
 }
 
