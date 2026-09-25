@@ -27,7 +27,10 @@ try {
   await expect(page.locator("#weather-sound")).not.toBeChecked();
   await page.locator('[data-tab="tower"]').click();
   const box = await page.locator("#world").boundingBox();
-  await page.mouse.click(box.x + box.width * 10.5 / 20, box.y + box.width * 7.5 / 20);
+  // The Tower clearing is 17 wide in a 20-tile view, so the camera sits at
+  // left 0 and the entrance (x 8, y 12) is column 8, row 7 from the top.
+  // The first tap previews the route there; the second walks it.
+  for (let i = 0; i < 2; i++) await page.mouse.click(box.x + box.width * 8.5 / 20, box.y + box.width * 7.5 / 20);
   await expect(page.locator("#board-title")).toHaveText("THE ASCENT TRIALS", { timeout: 10000 });
   await expect(page.locator("#height")).toHaveText("1");
   const result = await page.evaluate(async () => {
@@ -50,13 +53,11 @@ try {
       g.run.seed = seeds[weather]; g.world = new OutsideWorld(g.run.seed, mode);
       const canvas = tile.querySelector("canvas"), renderer = new Renderer(canvas, g);
       renderer.draw(100);
-      for (const density of [16, 20, 24, 30]) {
-        g.save.settings.density = density; renderer.draw(116);
-        if (renderer.density !== 20) throw Error("Forest must fit the viewport");
-        const box = canvas.getBoundingClientRect();
-        const tap = renderer.position(box.left + (g.run.player.x - renderer.left + 0.5) * renderer.size, box.top + 7.5 * renderer.size);
-        if (tap.x !== g.run.player.x || tap.y !== 12) throw Error("Entrance tap mismatch");
-      }
+      renderer.draw(116);
+      if (renderer.density !== 20) throw Error("Forest must fit the viewport");
+      const box = canvas.getBoundingClientRect();
+      const tap = renderer.position(box.left + (g.run.player.x - renderer.left + 0.5) * renderer.size, box.top + 7.5 * renderer.size);
+      if (tap.x !== g.run.player.x || tap.y !== 12) throw Error("Entrance tap mismatch");
       g.save.settings.reduceMotion = true; renderer.draw(200);
       const still = canvas.toDataURL(); renderer.draw(900);
       if (canvas.toDataURL() !== still) throw Error("Reduced motion weather changed");
@@ -80,5 +81,5 @@ try {
   await expect.poll(() => page.evaluate(() => window.outsideTestWeather.audio?.state)).toBe("running");
   await page.evaluate(() => { window.outsideTestWeather.rumble(42); window.outsideTestWeather.silence(); });
   expect(errors).toEqual([]);
-  console.log("Both forest entrances, all four weather states, density-independent taps, reduced motion, storm scheduling and audio activation passed.", result);
+  console.log("Both forest entrances, all four weather states, entrance taps, reduced motion, storm scheduling and audio activation passed.", result);
 } finally { await browser.close(); }

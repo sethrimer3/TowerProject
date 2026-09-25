@@ -20,11 +20,11 @@ Movement transitions can be set to **Smooth** (default), **Fast**, or **Off (ins
 
 Matching open left/right world edges wrap to each other. Locked doors and enemies at the destination still apply. Openings have no solid frame across them and show continuation chevrons. Viewport cropping is not a wrap boundary; the world is 30 tiles wide. Vertical movement remains continuous upward.
 
-**Undo** restores one tile move, including combat, pickups, gear, keys, doors, and height. It cancels any queued route. One history slot is available initially; four levels of **Echoes of time** expand capacity to 2, 3, 4, then 5 moves. History persists across refreshes.
+**Undo** restores one move (a tapped route counts as a single move), including combat, pickups, gear, keys, doors, and height. It cancels any queued route. One history slot is available initially; four levels of **Echoes of time** expand capacity to 2, 3, 4, then 5 moves. History persists across refreshes.
 
 Death immediately starts a fresh run at the entrance (floor 1 / height 0) and clears normal undo history. The **Revive** upgrade changes the button to Revive until the first successful move in the new run. It restores the state immediately before the fatal move. A blocked move does not expire it; undoing the first new move cannot bring it back. While Revive is available, death Essence is held pending and paid only when continuing, so reviving cannot duplicate rewards. Revive eligibility also persists across refreshes.
 
-Retire from Settings to claim Essence. Starting-stat and equipment upgrades apply on the next ascent; Wayfinder, Revive, and undo-capacity upgrades unlock immediately. Automation still avoids lethal fights and pauses outside the Tower tab, in dialogs, and when hidden. No offline progress is calculated.
+Rewards are credited as you climb (Courage for every 10 Delve height, Inspiration for each new Tower floor and floor clear), so retiring from Settings simply starts a fresh run. Starting-stat and equipment upgrades apply on the next ascent; Wayfinder, Revive, and undo-capacity upgrades unlock immediately. Automation still avoids lethal fights and pauses outside the Tower tab, in dialogs, and when hidden. No offline progress is calculated.
 
 
 ## How it's built
