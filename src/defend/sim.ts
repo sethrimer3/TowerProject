@@ -5,42 +5,21 @@
  * prefer the streets but will break through when that is much shorter.
  *
  * A run starts from a freshly generated city and never resets between
- * waves: whatever is destroyed stays destroyed unless civilians rebuild it. */
+ * waves: whatever is destroyed stays destroyed unless civilians rebuild it.
+ *
+ * `DefendSim` owns the world (buildings, crowds, waves, the enemy index)
+ * and what happens to it (damage, rebuilding, blasts, movement). What each
+ * kind of unit decides to do lives beside it: `enemies.ts`, `troops.ts`,
+ * `civilians.ts` and `towers.ts`, with grid pathing in `pathing.ts`. */
+import { CELL_COUNT, CELLS_H, CELLS_W, cellIndex, cellX, cellY, rng } from "./grid.ts";
 import {
-  CELL_COUNT,
-  CELLS_H,
-  CELLS_W,
-  cellIndex,
-  rng,
-  type Rect,
-} from "./grid.ts";
-import { MinHeap } from "./heap.ts";
-import {
-  ARCHER_UNIT,
-  archerUnitRange,
   BOMB_DAMAGE,
   BOMB_RADIUS,
-  CANNON_RANGE,
-  FRIENDLY_FIRE,
-  cannonCooldown,
-  cannonDamage,
-  cannonSplash,
-  CIVILIAN,
   ENEMIES,
+  FRIENDLY_FIRE,
   HOUSE_HP_PER_CELL,
-  SOLDIER,
   STRUCTURES,
-  archerCooldown,
-  archerDamage,
-  archerRange,
-  civilianCount,
-  civilianHp,
   keepHp,
-  rebuildSeconds,
-  soldierCap,
-  soldierLeash,
-  soldierScale,
-  trainSeconds,
   wallHp,
   watchRadius,
   waveBudget,
@@ -49,6 +28,11 @@ import {
   type UpgradeId,
 } from "./catalog.ts";
 import { CellType, sideCells, type Building, type CityMap } from "./citygen.ts";
+import { atHome, Builders } from "./civilians.ts";
+import { stepEnemy } from "./enemies.ts";
+import { blocked, cellAt, cellCenter, center, fillFlowField, nearest, nearestOpen, type FieldTerrain, type Point } from "./pathing.ts";
+import { stepArrows, stepShells, Towers } from "./towers.ts";
+import { Barracks, stepArcher, stepSwordsman } from "./troops.ts";
 
 export type Levels = Record<UpgradeId, number>;
 
@@ -110,11 +94,16 @@ export type Shell = { x0: number; y0: number; x1: number; y1: number; t: number;
 export type Scorch = { x: number; y: number; r: number; seed: number; t: number; life: number };
 export type SimEvent = { type: "waveStart" | "waveCleared" | "lost"; wave: number };
 
+/** How a unit moves this step. Flying units ignore buildings. */
+export type Stride = { speed: number; dt: number; flying?: boolean };
+/** A blast's radius and centre damage (40% at the edge); with friendly fire
+ * it also hurts your own people. */
+export type Blast = { r: number; damage: number; friendlyFire: boolean };
+
 const STEP = 1 / 30;
 /** How long a struck building flashes, in seconds. */
 export const BUILDING_FLASH = 0.14;
 const BREAK_SECONDS = 3;
-const SQRT2 = Math.SQRT2;
 
 export class DefendSim {
   readonly map: CityMap;
@@ -147,17 +136,20 @@ export class DefendSim {
   /** Bumped whenever a building is destroyed or rebuilt (static art changes). */
   mapVersion = 0;
   speed = 1;
+  /** The run's random stream. Units draw from it in step order, so a run
+   * replays exactly from its seed. */
+  readonly rand: () => number;
+  readonly keepId: number;
+  /** Open city streets, for archers to wander between. */
+  readonly streets: number[];
   private fieldDirty = true;
   private fieldT = 0;
   private acc = 0;
   private nextId = 1;
-  private rand: () => number;
-  private towerCd = new Map<number, number>();
-  private trainT = new Map<number, number>();
-  private civilianRespawn: number[] = [];
-  /** Open city streets, for archers to wander between. */
-  private streets: number[];
-  private keepId: number;
+  private terrain: FieldTerrain;
+  private towers = new Towers();
+  private barracks = new Barracks();
+  private builders: Builders;
   private grid: Enemy[][] = Array.from({ length: CELL_COUNT }, () => []);
   private gridUsed: number[] = [];
 
@@ -172,21 +164,20 @@ export class DefendSim {
     this.built = new Int32Array(n);
     this.flash = new Float32Array(n);
     for (const b of map.buildings) {
-      const max =
-        b.kind === "wall" ? wallHp(levels.wallStrength)
-        : b.kind === "house" ? HOUSE_HP_PER_CELL * b.cells.length
-        : b.kind === "keep" ? keepHp(levels.keepStrength)
-        : STRUCTURES[b.kind].maxHp;
-      this.hp[b.id] = this.maxHp[b.id] = max;
+      this.hp[b.id] = this.maxHp[b.id] = maxHpOf(b, levels);
       this.built[b.id] = b.cells.length;
       for (const c of b.cells) this.solid[c] = 1;
     }
     // Ponds block movement like buildings do, but belong to no building.
     for (let i = 0; i < CELL_COUNT; i++) if (map.type[i] === CellType.WATER) this.solid[i] = 1;
     this.keepId = map.buildings.find((b) => b.kind === "keep")!.id;
-    this.civilianRespawn = Array(civilianCount(levels.civilianCount)).fill(0);
-    this.streets = [];
-    for (let i = 0; i < CELL_COUNT; i++) if (map.city[i] && map.type[i] === CellType.ROAD) this.streets.push(i);
+    this.builders = new Builders(levels);
+    this.streets = streetCells(map);
+    this.terrain = {
+      solid: this.solid,
+      impassable: (i) => map.type[i] === CellType.WATER,
+      cost: (i) => this.enterCost(i),
+    };
   }
 
   get keep(): Building {
@@ -200,6 +191,9 @@ export class DefendSim {
   }
   intact(b: Building) {
     return this.built[b.id] === b.cells.length;
+  }
+  newId() {
+    return this.nextId++;
   }
 
   /** Advance by real elapsed seconds (fixed internal timestep). */
@@ -219,28 +213,41 @@ export class DefendSim {
     this.runWaves(dt);
     this.indexEnemies();
     this.markEnemies();
-    for (const e of this.enemies) this.stepEnemy(e, dt);
-    this.stepTowers(dt);
-    this.stepArrows(dt);
-    this.stepShells(dt);
-    this.stepBarracks(dt);
-    for (const s of this.soldiers) (s.kind === "archer" ? this.stepArcher(s, dt) : this.stepSoldier(s, dt));
-    this.stepCivilians(dt);
-    this.enemies = this.enemies.filter((e) => e.hp > 0);
-    this.soldiers = this.soldiers.filter((s) => s.hp > 0);
-    this.civilians = this.civilians.filter((c) => c.hp > 0 && !this.atHome(c));
-    for (const fx of this.effects) fx.t += dt;
-    this.effects = this.effects.filter((fx) => fx.t < 0.6);
-    for (const s of this.scorches) s.t += dt;
-    this.scorches = this.scorches.filter((s) => s.t < s.life);
-    for (const e of this.enemies) e.flash = Math.max(0, e.flash - dt);
-    for (const s of this.soldiers) s.flash = Math.max(0, s.flash - dt);
-    for (const c of this.civilians) c.flash = Math.max(0, c.flash - dt);
-    for (let i = 0; i < this.flash.length; i++) if (this.flash[i] > 0) this.flash[i] = Math.max(0, this.flash[i] - dt);
+    this.stepUnits(dt);
+    this.sweepAway();
+    this.tick(dt);
     if (this.hp[this.keepId] <= 0 && !this.lost) {
       this.lost = true;
       this.events.push({ type: "lost", wave: this.wave });
     }
+  }
+
+  /** Everyone acts, in a fixed order (it decides the random draws). */
+  private stepUnits(dt: number) {
+    for (const e of this.enemies) stepEnemy(this, e, dt);
+    this.towers.step(this, dt);
+    stepArrows(this, dt);
+    stepShells(this, dt);
+    this.barracks.step(this, dt);
+    for (const s of this.soldiers) (s.kind === "archer" ? stepArcher : stepSwordsman)(this, s, dt);
+    this.builders.step(this, dt);
+  }
+
+  /** The dead, and civilians who made it indoors, leave the board. */
+  private sweepAway() {
+    this.enemies = this.enemies.filter((e) => e.hp > 0);
+    this.soldiers = this.soldiers.filter((s) => s.hp > 0);
+    this.civilians = this.civilians.filter((c) => c.hp > 0 && !atHome(this, c));
+  }
+
+  /** Effects age, scorches cool, hit flashes fade. */
+  private tick(dt: number) {
+    for (const fx of this.effects) fx.t += dt;
+    this.effects = this.effects.filter((fx) => fx.t < 0.6);
+    for (const s of this.scorches) s.t += dt;
+    this.scorches = this.scorches.filter((s) => s.t < s.life);
+    for (const units of [this.enemies, this.soldiers, this.civilians]) for (const u of units) u.flash = Math.max(0, u.flash - dt);
+    for (let i = 0; i < this.flash.length; i++) if (this.flash[i] > 0) this.flash[i] = Math.max(0, this.flash[i] - dt);
   }
 
   // ── Waves ─────────────────────────────────────────────────────────────
@@ -270,10 +277,10 @@ export class DefendSim {
     for (let tries = 0; tries < 20; tries++) {
       const x = 1 + this.rand() * (CELLS_W - 2);
       const y = 0.5 + this.rand() * 2;
-      if (this.blocked(x, y)) continue;
+      if (blocked(this.solid, x, y)) continue;
       const hp = def.hp * waveHpScale(this.wave);
       this.enemies.push({
-        id: this.nextId++,
+        id: this.newId(),
         kind,
         x,
         y,
@@ -293,7 +300,7 @@ export class DefendSim {
   }
 
   // ── Flow field ────────────────────────────────────────────────────────
-  /** Cost of stepping into a cell for a ground enemy. */
+  /** Cost of stepping out of a cell for a ground enemy. */
   private enterCost(i: number): number {
     if (this.solid[i]) {
       const b = this.map.owner[i];
@@ -305,46 +312,15 @@ export class DefendSim {
   computeField() {
     this.fieldDirty = false;
     this.fieldT = 0.25;
-    const f = this.field;
-    f.fill(Infinity);
-    const heap = new MinHeap();
-    for (const c of this.keep.cells) {
-      f[c] = 0;
-      heap.push(c, 0);
-    }
-    while (heap.size) {
-      const i = heap.pop();
-      const k = heap.lastKey;
-      if (k > f[i]) continue;
-      const x = i % CELLS_W,
-        y = (i - x) / CELLS_W;
-      for (let dy = -1; dy <= 1; dy++)
-        for (let dx = -1; dx <= 1; dx++) {
-          if (!dx && !dy) continue;
-          const nx = x + dx,
-            ny = y + dy;
-          if (nx < 0 || ny < 0 || nx >= CELLS_W || ny >= CELLS_H) continue;
-          const n = cellIndex(nx, ny);
-          if (this.map.type[n] === CellType.WATER) continue;
-          if (dx && dy && (this.solid[cellIndex(x + dx, y)] || this.solid[cellIndex(x, y + dy)] || this.solid[n])) continue;
-          const step = this.enterCost(i) * (dx && dy ? SQRT2 : 1);
-          // Walking *out of* cell i toward n costs i's price, which makes the
-          // field value at n the true cost of the path n → keep.
-          const nk = k + (f[i] === 0 ? 1 : step);
-          if (nk < f[n]) {
-            f[n] = nk;
-            heap.push(n, nk);
-          }
-        }
-    }
+    fillFlowField(this.field, this.keep.cells, this.terrain);
   }
 
-  // ── Enemies ───────────────────────────────────────────────────────────
+  // ── Enemy index ───────────────────────────────────────────────────────
   private indexEnemies() {
     for (const i of this.gridUsed) this.grid[i].length = 0;
     this.gridUsed.length = 0;
     for (const e of this.enemies) {
-      const i = cellIndex(clampCell(e.x, CELLS_W), clampCell(e.y, CELLS_H));
+      const i = cellAt(e.x, e.y);
       if (!this.grid[i].length) this.gridUsed.push(i);
       this.grid[i].push(e);
     }
@@ -373,6 +349,13 @@ export class DefendSim {
     }
   }
 
+  /** The living soldier or civilian nearest (x, y) within `r`. */
+  nearestDefender(x: number, y: number, r: number): Soldier | Civilian | null {
+    const alive = [...this.soldiers, ...this.civilians].filter((u) => u.hp > 0);
+    return nearest(alive, { x, y }, r * r, true);
+  }
+
+  // ── Damage and rebuilding ─────────────────────────────────────────────
   hurtEnemy(e: Enemy, amount: number) {
     if (e.hp <= 0) return;
     e.hp -= e.marked ? amount * 2 : amount;
@@ -380,657 +363,22 @@ export class DefendSim {
     if (e.hp <= 0) this.effects.push({ kind: "spark", x: e.x, y: e.y, t: 0, r: ENEMIES[e.kind].size });
   }
 
-  private stepEnemy(e: Enemy, dt: number) {
-    const def = ENEMIES[e.kind];
-    e.cd -= dt;
-    const reach = def.size / 2 + 0.4;
-    // Fight any defender in reach first.
-    const foe = this.nearestDefender(e.x, e.y, reach + 0.2);
-    if (foe) {
-      if (e.cd <= 0) {
-        e.cd = def.cooldown;
-        foe.hp -= def.damage;
-        foe.flash = 0.12;
-      }
-      return;
-    }
-    if (def.flying) {
-      const k = center(this.keep.rect);
-      if (rectDist(this.keep.rect, e.x, e.y) <= reach) return this.hitBuilding(e, this.keepId);
-      return this.moveToward(e, k.x, k.y, def.speed, dt, true);
-    }
-    // A house that caught its eye.
-    if (e.distract >= 0) {
-      const b = this.map.buildings[e.distract];
-      e.distractT -= dt;
-      if (this.hp[b.id] <= 0 || !this.built[b.id] || e.distractT <= 0) e.distract = -1;
-      else if (rectDist(b.rect, e.x, e.y) <= reach) return this.hitBuilding(e, b.id);
-      else {
-        const p = nearestPoint(b.rect, e.x, e.y);
-        if (!this.moveToward(e, p.x, p.y, def.speed, dt)) e.distract = -1;
-        return;
-      }
-    }
-    const cx = clampCell(e.x, CELLS_W),
-      cy = clampCell(e.y, CELLS_H);
-    const here = cellIndex(cx, cy);
-    if (rectDist(this.keep.rect, e.x, e.y) <= reach) return this.hitBuilding(e, this.keepId);
-    // Pick the neighbouring cell with the lowest field value.
-    let best = -1,
-      bestV = this.field[here];
-    for (let dy = -1; dy <= 1; dy++)
-      for (let dx = -1; dx <= 1; dx++) {
-        if (!dx && !dy) continue;
-        const nx = cx + dx,
-          ny = cy + dy;
-        if (nx < 0 || ny < 0 || nx >= CELLS_W || ny >= CELLS_H) continue;
-        const n = cellIndex(nx, ny);
-        if (dx && dy && (this.solid[cellIndex(cx + dx, cy)] || this.solid[cellIndex(cx, cy + dy)])) continue;
-        if (this.field[n] < bestV) {
-          bestV = this.field[n];
-          best = n;
-        }
-      }
-    if (best < 0) return;
-    const bx = best % CELLS_W,
-      by = (best - bx) / CELLS_W;
-    if (this.solid[best]) {
-      // The cheapest way on goes through a building: smash it.
-      const bid = this.map.owner[best];
-      if (rectDist(this.map.buildings[bid].rect, e.x, e.y) <= reach) return this.hitBuilding(e, bid);
-      this.moveToward(e, bx + 0.5, by + 0.5, def.speed, dt);
-      return;
-    }
-    // Streets are lined with temptations.
-    e.rollT -= dt;
-    if (e.rollT <= 0) {
-      e.rollT = 0.5;
-      if (def.distraction > 0 && this.rand() < def.distraction * 0.3) {
-        for (const n of sideCells({ x: cx, y: cy, w: 1, h: 1 })) {
-          const bid = this.map.owner[n];
-          if (this.solid[n] && bid >= 0 && this.map.buildings[bid].kind === "house") {
-            e.distract = bid;
-            e.distractT = 5;
-            break;
-          }
-        }
-      }
-    }
-    this.moveToward(e, bx + 0.5 + e.jx, by + 0.5 + e.jy, def.speed, dt);
-  }
-
-  private hitBuilding(e: Enemy, id: number) {
-    if (e.cd > 0) return;
-    const def = ENEMIES[e.kind];
-    e.cd = def.cooldown;
-    this.damageBuilding(id, def.damage);
-  }
-
   damageBuilding(id: number, amount: number) {
     if (this.hp[id] <= 0) return;
     this.hp[id] -= amount;
     this.flash[id] = BUILDING_FLASH;
-    const b = this.map.buildings[id];
-    if (this.hp[id] <= 0) {
-      this.hp[id] = 0;
-      this.built[id] = 0;
-      for (const c of b.cells) this.solid[c] = 0;
-      this.changed.push(...b.cells);
-      const p = center(b.rect);
-      this.effects.push({ kind: "dust", x: p.x, y: p.y, t: 0, r: Math.max(b.rect.w, b.rect.h) * 0.7 });
-      this.fieldDirty = true;
-      this.mapVersion++;
-    }
+    if (this.hp[id] <= 0) this.collapse(this.map.buildings[id]);
   }
 
-  private nearestDefender(x: number, y: number, r: number): Soldier | Civilian | null {
-    let best: Soldier | Civilian | null = null,
-      bd = r * r;
-    for (const u of this.soldiers) {
-      const d = (u.x - x) ** 2 + (u.y - y) ** 2;
-      if (u.hp > 0 && d <= bd) {
-        bd = d;
-        best = u;
-      }
-    }
-    for (const u of this.civilians) {
-      const d = (u.x - x) ** 2 + (u.y - y) ** 2;
-      if (u.hp > 0 && d <= bd) {
-        bd = d;
-        best = u;
-      }
-    }
-    return best;
-  }
-
-  /** Steer a unit toward a point with light crowd separation; returns false
-   * if it made no headway (stuck against something). */
-  private moveToward(u: { x: number; y: number }, tx: number, ty: number, speed: number, dt: number, flying = false): boolean {
-    let dx = tx - u.x,
-      dy = ty - u.y;
-    const len = Math.hypot(dx, dy);
-    if (len < 0.02) return true;
-    dx /= len;
-    dy /= len;
-    // Separation from nearby enemies.
-    let sx = 0,
-      sy = 0;
-    for (const o of this.enemiesNear(u.x, u.y, 0.45)) {
-      if (o === u) continue;
-      const ox = u.x - o.x,
-        oy = u.y - o.y;
-      const d = Math.hypot(ox, oy) || 0.01;
-      sx += (ox / d) * (0.45 - d);
-      sy += (oy / d) * (0.45 - d);
-    }
-    const step = Math.min(len, speed * dt);
-    const mx = dx * step + sx * 0.5 * speed * dt * 4;
-    const my = dy * step + sy * 0.5 * speed * dt * 4;
-    const ox = u.x,
-      oy = u.y;
-    if (flying) {
-      u.x += mx;
-      u.y += my;
-      return true;
-    }
-    if (!this.blocked(u.x + mx, u.y)) u.x += mx;
-    if (!this.blocked(u.x, u.y + my)) u.y += my;
-    return Math.abs(u.x - ox) + Math.abs(u.y - oy) > step * 0.1;
-  }
-
-  /** A small body centred at (x, y) would overlap a solid cell or leave the board. */
-  blocked(x: number, y: number, r = 0.18): boolean {
-    for (const [px, py] of [
-      [x - r, y - r],
-      [x + r, y - r],
-      [x - r, y + r],
-      [x + r, y + r],
-    ]) {
-      if (px < 0 || py < 0 || px >= CELLS_W || py >= CELLS_H) return true;
-      if (this.solid[cellIndex(Math.floor(px), Math.floor(py))]) return true;
-    }
-    return false;
-  }
-
-  // ── Towers ────────────────────────────────────────────────────────────
-  private stepTowers(dt: number) {
-    const range = archerRange(this.levels.archerRange);
-    for (const b of this.map.buildings) {
-      if (b.kind === "cannonTower" && this.intact(b)) {
-        this.stepCannon(b, dt);
-        continue;
-      }
-      if (b.kind !== "archerTower" || !this.intact(b)) continue;
-      const cd = (this.towerCd.get(b.id) ?? 0) - dt;
-      if (cd > 0) {
-        this.towerCd.set(b.id, cd);
-        continue;
-      }
-      const c = center(b.rect);
-      let target: Enemy | null = null,
-        bd = Infinity;
-      for (const e of this.enemiesNear(c.x, c.y, range)) {
-        const d = (e.x - c.x) ** 2 + (e.y - c.y) ** 2;
-        if (d < bd) {
-          bd = d;
-          target = e;
-        }
-      }
-      if (!target) {
-        this.towerCd.set(b.id, 0);
-        continue;
-      }
-      this.towerCd.set(b.id, archerCooldown(this.levels.archerRate));
-      this.arrows.push({ x: c.x, y: c.y - 0.6, target: target.id, damage: archerDamage(this.levels.archerDamage), tx: target.x, ty: target.y, life: 2 });
-    }
-  }
-
-  /** Cannons fire slowly at the nearest ground enemy in range, leading
-   * nothing: the shell lands where the target stood when it fired. */
-  private stepCannon(b: Building, dt: number) {
-    const cd = (this.towerCd.get(b.id) ?? 0) - dt;
-    if (cd > 0) {
-      this.towerCd.set(b.id, cd);
-      return;
-    }
-    const c = center(b.rect);
-    let target: Enemy | null = null,
-      bd = Infinity;
-    for (const e of this.enemiesNear(c.x, c.y, CANNON_RANGE)) {
-      if (ENEMIES[e.kind].flying) continue;
-      const d = (e.x - c.x) ** 2 + (e.y - c.y) ** 2;
-      if (d < bd && d > 1.5 * 1.5) {
-        bd = d;
-        target = e;
-      }
-    }
-    if (!target) {
-      this.towerCd.set(b.id, 0);
-      return;
-    }
-    this.towerCd.set(b.id, cannonCooldown(this.levels.cannonRate));
-    const dist = Math.sqrt(bd);
-    this.shells.push({
-      x0: c.x,
-      y0: c.y - 0.4,
-      x1: target.x,
-      y1: target.y,
-      t: 0,
-      dur: 0.45 + dist * 0.07,
-      damage: cannonDamage(this.levels.cannonDamage),
-      r: cannonSplash(this.levels.cannonDamage),
-    });
-  }
-
-  private stepShells(dt: number) {
-    for (const s of this.shells) {
-      s.t += dt;
-      if (s.t >= s.dur) this.explode(s.x1, s.y1, s.r, s.damage, !this.levels.cannonSafe);
-    }
-    this.shells = this.shells.filter((s) => s.t < s.dur);
-  }
-
-  /** A blast: full damage at the centre falling to 40% at the edge. With
-   * friendly fire, your swordsmen and civilians in the blast get hurt too. */
-  explode(x: number, y: number, r: number, damage: number, friendlyFire: boolean) {
-    this.indexEnemies();
-    const hit = (d: number) => damage * (1 - 0.6 * Math.min(1, d / r));
-    for (const e of this.enemiesNear(x, y, r)) this.hurtEnemy(e, hit(Math.hypot(e.x - x, e.y - y)));
-    if (friendlyFire)
-      for (const u of [...this.soldiers, ...this.civilians]) {
-        const d = Math.hypot(u.x - x, u.y - y);
-        if (d > r || u.hp <= 0) continue;
-        u.hp -= hit(d) * FRIENDLY_FIRE;
-        u.flash = 0.12;
-      }
-    const seed = (this.rand() * 1e9) | 0;
-    this.effects.push({ kind: "boom", x, y, t: 0, r, seed });
-    this.scorches.push({ x, y, r, seed, t: 0, life: 1 + Math.min(2, r * 0.45) + this.rand() * 0.5 });
-  }
-
-  private stepArrows(dt: number) {
-    const byId = new Map(this.enemies.map((e) => [e.id, e]));
-    for (const a of this.arrows) {
-      a.life -= dt;
-      const t = byId.get(a.target);
-      if (t && t.hp > 0) {
-        a.tx = t.x;
-        a.ty = t.y;
-      }
-      const dx = a.tx - a.x,
-        dy = a.ty - a.y;
-      const d = Math.hypot(dx, dy);
-      const step = 16 * dt;
-      if (d <= step) {
-        if (t && t.hp > 0) this.hurtEnemy(t, a.damage);
-        a.life = 0;
-      } else {
-        a.x += (dx / d) * step;
-        a.y += (dy / d) * step;
-      }
-    }
-    this.arrows = this.arrows.filter((a) => a.life > 0);
-  }
-
-  // ── Soldiers ──────────────────────────────────────────────────────────
-  private stepBarracks(dt: number) {
-    const cap = soldierCap(this.levels.barracksCapacity);
-    for (const b of this.map.buildings) {
-      if ((b.kind !== "barracks" && b.kind !== "archerBarracks") || !this.intact(b)) continue;
-      const archer = b.kind === "archerBarracks";
-      const alive = this.soldiers.filter((s) => s.home === b.id).length;
-      if (alive >= cap) {
-        this.trainT.set(b.id, trainSeconds(this.levels.barracksTraining));
-        continue;
-      }
-      const t = (this.trainT.get(b.id) ?? 0) - dt;
-      if (t > 0) {
-        this.trainT.set(b.id, t);
-        continue;
-      }
-      this.trainT.set(b.id, trainSeconds(this.levels.barracksTraining));
-      const door = this.doorOf(b);
-      if (door < 0) continue;
-      const scale = soldierScale(this.levels.soldierArms);
-      const stats = archer ? ARCHER_UNIT : SOLDIER;
-      this.soldiers.push({
-        id: this.nextId++,
-        kind: archer ? "archer" : "sword",
-        home: b.id,
-        x: (door % CELLS_W) + 0.5,
-        y: Math.floor(door / CELLS_W) + 0.5,
-        hp: stats.hp * scale,
-        maxHp: stats.hp * scale,
-        damage: stats.damage * scale,
-        cd: 0,
-        target: -1,
-        path: [],
-        thinkT: 0,
-        flash: 0,
-      });
-    }
-  }
-
-  /** An open cell beside a building, preferring streets. */
-  doorOf(b: Building): number {
-    const sides = sideCells(b.rect).filter((i) => !this.solid[i]);
-    return sides.find((i) => this.map.type[i] === CellType.ROAD) ?? sides[0] ?? -1;
-  }
-
-  private stepSoldier(s: Soldier, dt: number) {
-    s.cd -= dt;
-    s.thinkT -= dt;
-    const home = this.map.buildings[s.home];
-    const hc = center(home.rect);
-    const leash = soldierLeash(this.levels.soldierReach ?? 0);
-    const citywide = !Number.isFinite(leash);
-    // Citywide patrols go after anything inside the city limits.
-    const inReach = (e: Enemy) =>
-      citywide ? this.map.city[cellIndex(clampCell(e.x, CELLS_W), clampCell(e.y, CELLS_H))] === 1 : (e.x - hc.x) ** 2 + (e.y - hc.y) ** 2 <= leash ** 2;
-    let target = this.enemies.find((e) => e.id === s.target && e.hp > 0) ?? null;
-    if (target && !inReach(target)) target = null;
-    if (target && Math.hypot(target.x - s.x, target.y - s.y) <= SOLDIER.reach + ENEMIES[target.kind].size / 2) {
-      if (s.cd <= 0) {
-        s.cd = SOLDIER.cooldown;
-        this.hurtEnemy(target, s.damage);
-      }
-      return;
-    }
-    if (s.thinkT <= 0) {
-      s.thinkT = 0.5;
-      // Nearest reachable enemy within the leash of the barracks.
-      const candidates = (citywide ? this.enemies.filter(inReach) : this.enemiesNear(hc.x, hc.y, leash))
-        .sort((a, b) => (a.x - s.x) ** 2 + (a.y - s.y) ** 2 - ((b.x - s.x) ** 2 + (b.y - s.y) ** 2))
-        .slice(0, 3);
-      target = null;
-      s.path = [];
-      for (const e of candidates) {
-        const path = this.findPath(s.x, s.y, e.x, e.y, citywide ? 1e9 : leash * 3, citywide ? CELL_COUNT : 4000);
-        if (path) {
-          target = e;
-          s.path = path;
-          break;
-        }
-      }
-      s.target = target ? target.id : -1;
-      if (!target) {
-        const door = this.doorOf(home);
-        if (door >= 0 && Math.hypot(s.x - (door % CELLS_W) - 0.5, s.y - Math.floor(door / CELLS_W) - 0.5) > 1.2)
-          s.path = this.findPath(s.x, s.y, (door % CELLS_W) + 0.5, Math.floor(door / CELLS_W) + 0.5, 400) ?? [];
-      }
-    }
-    this.followPath(s, target, SOLDIER.speed, dt);
-  }
-
-  /** Archers wander the city's streets, stopping to shoot anything within
-   * their (short) sight. With Hunter's instinct they instead path toward
-   * the nearest enemy in the city and stop once it's in range. */
-  private stepArcher(s: Soldier, dt: number) {
-    s.cd -= dt;
-    s.thinkT -= dt;
-    const range = archerUnitRange(this.levels.archerSight ?? 0);
-    // Shoot first: the nearest enemy in sight.
-    let near: Enemy | null = null,
-      nd = range * range;
-    for (const e of this.enemiesNear(s.x, s.y, range)) {
-      const d = (e.x - s.x) ** 2 + (e.y - s.y) ** 2;
-      if (d <= nd) {
-        nd = d;
-        near = e;
-      }
-    }
-    if (near) {
-      if (s.cd <= 0) {
-        s.cd = ARCHER_UNIT.cooldown;
-        this.arrows.push({ x: s.x, y: s.y, target: near.id, damage: s.damage, tx: near.x, ty: near.y, life: 2 });
-      }
-      return;
-    }
-    const hunting = (this.levels.archerHunt ?? 0) > 0;
-    if (hunting && s.thinkT <= 0) {
-      s.thinkT = 0.6;
-      const inCity = (e: Enemy) => this.map.city[cellIndex(clampCell(e.x, CELLS_W), clampCell(e.y, CELLS_H))] === 1;
-      const prey = this.enemies
-        .filter((e) => e.hp > 0 && inCity(e))
-        .sort((a, b) => (a.x - s.x) ** 2 + (a.y - s.y) ** 2 - ((b.x - s.x) ** 2 + (b.y - s.y) ** 2))
-        .slice(0, 3);
-      for (const e of prey) {
-        const path = this.findPath(s.x, s.y, e.x, e.y, 1e9, CELL_COUNT);
-        if (path) {
-          s.path = path;
-          s.target = e.id;
-          break;
-        }
-      }
-    }
-    // Nothing to hunt (or no instinct): pick a street and stroll to it.
-    if (!s.path.length && s.thinkT <= 0 && this.streets.length) {
-      s.thinkT = 0.5 + this.rand() * 1.5;
-      s.target = -1;
-      const goal = this.streets[Math.floor(this.rand() * this.streets.length)];
-      s.path = this.findPath(s.x, s.y, (goal % CELLS_W) + 0.5, Math.floor(goal / CELLS_W) + 0.5, 1e9, CELL_COUNT) ?? [];
-    }
-    this.followPath(s, null, ARCHER_UNIT.speed, dt);
-  }
-
-  private followPath(u: { x: number; y: number; path: number[] }, chase: { x: number; y: number } | null, speed: number, dt: number) {
-    while (u.path.length) {
-      const c = u.path[0];
-      const px = (c % CELLS_W) + 0.5,
-        py = Math.floor(c / CELLS_W) + 0.5;
-      if (Math.hypot(px - u.x, py - u.y) < 0.3) {
-        u.path.shift();
-        continue;
-      }
-      // Something was (re)built across the route, or we're wedged: replan.
-      if (this.solid[c] || !this.moveToward(u, px, py, speed, dt)) u.path = [];
-      return;
-    }
-    if (chase) this.moveToward(u, chase.x, chase.y, speed, dt);
-  }
-
-  /** A* over open cells (8-way, no corner cutting). Returns cell indices from
-   * the start's neighbour up to the goal cell, or null. */
-  findPath(sx: number, sy: number, gx: number, gy: number, maxCost: number, maxNodes = 4000): number[] | null {
-    const start = cellIndex(clampCell(sx, CELLS_W), clampCell(sy, CELLS_H));
-    const gcx = clampCell(gx, CELLS_W),
-      gcy = clampCell(gy, CELLS_H);
-    const goal = cellIndex(gcx, gcy);
-    if (this.solid[goal]) return null;
-    if (start === goal) return [];
-    const g = new Map<number, number>([[start, 0]]);
-    const prev = new Map<number, number>();
-    const heap = new MinHeap();
-    const h = (i: number) => {
-      const x = i % CELLS_W,
-        y = (i - x) / CELLS_W;
-      const ax = Math.abs(x - gcx),
-        ay = Math.abs(y - gcy);
-      return Math.max(ax, ay) + (SQRT2 - 1) * Math.min(ax, ay);
-    };
-    heap.push(start, h(start));
-    let expanded = 0;
-    while (heap.size && expanded++ < maxNodes) {
-      const i = heap.pop();
-      if (i === goal) {
-        const out: number[] = [];
-        for (let c = goal; c !== start; c = prev.get(c)!) out.push(c);
-        return out.reverse();
-      }
-      const gi = g.get(i)!;
-      if (gi > maxCost) continue;
-      const x = i % CELLS_W,
-        y = (i - x) / CELLS_W;
-      for (let dy = -1; dy <= 1; dy++)
-        for (let dx = -1; dx <= 1; dx++) {
-          if (!dx && !dy) continue;
-          const nx = x + dx,
-            ny = y + dy;
-          if (nx < 0 || ny < 0 || nx >= CELLS_W || ny >= CELLS_H) continue;
-          const n = cellIndex(nx, ny);
-          if (this.solid[n]) continue;
-          if (dx && dy && (this.solid[cellIndex(x + dx, y)] || this.solid[cellIndex(x, y + dy)])) continue;
-          const ng = gi + (dx && dy ? SQRT2 : 1);
-          if (ng < (g.get(n) ?? Infinity)) {
-            g.set(n, ng);
-            prev.set(n, i);
-            heap.push(n, ng + h(n));
-          }
-        }
-    }
-    return null;
-  }
-
-  // ── Civilians ─────────────────────────────────────────────────────────
-  private stepCivilians(dt: number) {
-    // Refill the pool: a slot counts down after its civilian dies.
-    const active = this.civilians.length;
-    let free = 0;
-    for (let i = 0; i < this.civilianRespawn.length; i++) {
-      if (this.civilianRespawn[i] > 0) this.civilianRespawn[i] -= dt;
-      else free++;
-    }
-    free -= active;
-    if (free > 0) {
-      const job = this.pickJob(center(this.keep.rect));
-      if (job >= 0) this.spawnCivilian(job);
-    }
-    for (const c of this.civilians) {
-      if (c.hp <= 0) continue;
-      c.thinkT -= dt;
-      if (c.state === "toJob") {
-        if (this.solid[c.job] || !this.jobOpen(c.job, c)) {
-          this.assignNext(c);
-          continue;
-        }
-        const jx = (c.job % CELLS_W) + 0.5,
-          jy = Math.floor(c.job / CELLS_W) + 0.5;
-        if (Math.hypot(jx - c.x, jy - c.y) < 0.35) {
-          c.state = "working";
-          c.work = 0;
-          continue;
-        }
-        if (!c.path.length && c.thinkT <= 0) {
-          c.thinkT = 1;
-          c.path = this.findPath(c.x, c.y, jx, jy, 400) ?? [];
-          if (!c.path.length && Math.hypot(jx - c.x, jy - c.y) > 1.5) this.assignNext(c, c.job);
-        }
-        this.followPath(c, { x: jx, y: jy }, CIVILIAN.speed, dt);
-      } else if (c.state === "working") {
-        if (this.solid[c.job]) {
-          this.assignNext(c);
-          continue;
-        }
-        if (this.enemiesNear(c.x, c.y, 2.5).length) {
-          // Too dangerous: come back to it later.
-          this.assignNext(c, c.job);
-          continue;
-        }
-        c.work += dt;
-        if (c.work >= rebuildSeconds(this.levels.rebuildSpeed)) {
-          this.rebuildCell(c.job);
-          this.assignNext(c);
-        }
-      } else {
-        const hx = center(this.map.buildings[c.home].rect);
-        if (!c.path.length && c.thinkT <= 0) {
-          c.thinkT = 1;
-          const door = this.doorOf(this.map.buildings[c.home]);
-          if (door >= 0) c.path = this.findPath(c.x, c.y, (door % CELLS_W) + 0.5, Math.floor(door / CELLS_W) + 0.5, 400) ?? [];
-        }
-        this.followPath(c, hx, CIVILIAN.speed, dt);
-      }
-    }
-    // Civilians who died free their slot after a delay.
-    for (const c of this.civilians)
-      if (c.hp <= 0) {
-        const slot = this.civilianRespawn.findIndex((t) => t <= 0);
-        if (slot >= 0) this.civilianRespawn[slot] = CIVILIAN.respawnSeconds;
-      }
-  }
-
-  private atHome(c: Civilian): boolean {
-    if (c.state !== "home") return false;
-    const b = this.map.buildings[c.home];
-    return this.intact(b) && rectDist(b.rect, c.x, c.y) < 0.7;
-  }
-
-  private jobOpen(cell: number, self?: Civilian): boolean {
-    return !this.civilians.some((o) => o !== self && o.hp > 0 && o.state !== "home" && o.job === cell);
-  }
-
-  /** Rubble most worth rebuilding: structures, then walls, then houses —
-   * nearest first, skipping anything with enemies close by. */
-  pickJob(from: { x: number; y: number }, skip = -1): number {
-    let best = -1,
-      bestScore = Infinity;
-    for (const b of this.map.buildings) {
-      if (this.intact(b) || b.kind === "keep") continue;
-      const tier = b.kind === "house" ? 2 : b.kind === "wall" ? 1 : 0;
-      for (const cell of b.cells) {
-        if (this.solid[cell] || cell === skip || !this.jobOpen(cell)) continue;
-        const x = (cell % CELLS_W) + 0.5,
-          y = Math.floor(cell / CELLS_W) + 0.5;
-        if (this.enemiesNear(x, y, 3).length) continue;
-        const score = tier * 1000 + Math.hypot(x - from.x, y - from.y);
-        if (score < bestScore) {
-          bestScore = score;
-          best = cell;
-        }
-      }
-    }
-    return best;
-  }
-
-  private assignNext(c: Civilian, skip = -1) {
-    c.path = [];
-    c.thinkT = 0;
-    const job = this.pickJob(c, skip);
-    if (job >= 0) {
-      c.job = job;
-      c.state = "toJob";
-    } else {
-      c.job = -1;
-      c.state = "home";
-      c.home = this.nearestHouse(c.x, c.y);
-    }
-  }
-
-  private nearestHouse(x: number, y: number): number {
-    let best = this.keepId,
-      bd = Infinity;
-    for (const b of this.map.buildings) {
-      if (b.kind !== "house" || !this.intact(b)) continue;
-      const d = rectDist(b.rect, x, y);
-      if (d < bd) {
-        bd = d;
-        best = b.id;
-      }
-    }
-    return best;
-  }
-
-  private spawnCivilian(job: number) {
-    const jx = (job % CELLS_W) + 0.5,
-      jy = Math.floor(job / CELLS_W) + 0.5;
-    const house = this.map.buildings[this.nearestHouse(jx, jy)];
-    const door = this.doorOf(house);
-    if (door < 0) return;
-    const hp = civilianHp(this.levels.civilianHealth);
-    this.civilians.push({
-      id: this.nextId++,
-      x: (door % CELLS_W) + 0.5,
-      y: Math.floor(door / CELLS_W) + 0.5,
-      hp,
-      maxHp: hp,
-      job,
-      state: "toJob",
-      work: 0,
-      path: [],
-      home: house.id,
-      thinkT: 0,
-      flash: 0,
-    });
+  private collapse(b: Building) {
+    this.hp[b.id] = 0;
+    this.built[b.id] = 0;
+    for (const c of b.cells) this.solid[c] = 0;
+    this.changed.push(...b.cells);
+    const p = center(b.rect);
+    this.effects.push({ kind: "dust", x: p.x, y: p.y, t: 0, r: Math.max(b.rect.w, b.rect.h) * 0.7 });
+    this.fieldDirty = true;
+    this.mapVersion++;
   }
 
   /** Civilians restore a building one cell at a time; it regains its
@@ -1048,34 +396,117 @@ export class DefendSim {
     this.mapVersion++;
   }
 
-  /** Nudge any unit standing in a cell that just became solid. */
+  /** Nudge any unit on foot standing in a cell that just became solid. */
   private pushOut(cell: number) {
-    const cx = cell % CELLS_W,
-      cy = Math.floor(cell / CELLS_W);
-    const units: { x: number; y: number }[] = [...this.enemies.filter((e) => !ENEMIES[e.kind].flying), ...this.soldiers, ...this.civilians];
+    const cx = cellX(cell),
+      cy = cellY(cell);
+    const units: Point[] = [...this.enemies.filter((e) => !ENEMIES[e.kind].flying), ...this.soldiers, ...this.civilians];
     for (const u of units) {
       if (Math.floor(u.x) !== cx || Math.floor(u.y) !== cy) continue;
-      let best: [number, number] | null = null,
-        bd = Infinity;
-      for (let dy = -1; dy <= 1; dy++)
-        for (let dx = -1; dx <= 1; dx++) {
-          const nx = cx + dx,
-            ny = cy + dy;
-          if (nx < 0 || ny < 0 || nx >= CELLS_W || ny >= CELLS_H || this.solid[cellIndex(nx, ny)]) continue;
-          const d = Math.hypot(nx + 0.5 - u.x, ny + 0.5 - u.y);
-          if (d < bd) {
-            bd = d;
-            best = [nx + 0.5, ny + 0.5];
-          }
-        }
-      if (best) [u.x, u.y] = best;
+      const to = nearestOpen(this.solid, cx, cy, u);
+      if (to) [u.x, u.y] = to;
     }
+  }
+
+  /** A blast: full damage at the centre falling to 40% at the edge. */
+  explode(x: number, y: number, { r, damage, friendlyFire }: Blast) {
+    this.indexEnemies();
+    const hit = (d: number) => damage * (1 - 0.6 * Math.min(1, d / r));
+    for (const e of this.enemiesNear(x, y, r)) this.hurtEnemy(e, hit(Math.hypot(e.x - x, e.y - y)));
+    if (friendlyFire)
+      for (const u of [...this.soldiers, ...this.civilians]) {
+        const d = Math.hypot(u.x - x, u.y - y);
+        if (d > r || u.hp <= 0) continue;
+        u.hp -= hit(d) * FRIENDLY_FIRE;
+        u.flash = 0.12;
+      }
+    const seed = (this.rand() * 1e9) | 0;
+    this.effects.push({ kind: "boom", x, y, t: 0, r, seed });
+    this.scorches.push({ x, y, r, seed, t: 0, life: 1 + Math.min(2, r * 0.45) + this.rand() * 0.5 });
+  }
+
+  // ── Movement ──────────────────────────────────────────────────────────
+  /** An open cell beside a building, preferring streets. */
+  doorOf(b: Building): number {
+    const sides = sideCells(b.rect).filter((i) => !this.solid[i]);
+    return sides.find((i) => this.map.type[i] === CellType.ROAD) ?? sides[0] ?? -1;
+  }
+
+  /** Steer a unit toward a point with light crowd separation; returns false
+   * if it made no headway (stuck against something). */
+  moveToward(u: Point, to: Point, { speed, dt, flying = false }: Stride): boolean {
+    let dx = to.x - u.x,
+      dy = to.y - u.y;
+    const len = Math.hypot(dx, dy);
+    if (len < 0.02) return true;
+    dx /= len;
+    dy /= len;
+    const [sx, sy] = this.separation(u);
+    const step = Math.min(len, speed * dt);
+    const mx = dx * step + sx * 0.5 * speed * dt * 4;
+    const my = dy * step + sy * 0.5 * speed * dt * 4;
+    if (flying) {
+      u.x += mx;
+      u.y += my;
+      return true;
+    }
+    const ox = u.x,
+      oy = u.y;
+    if (!blocked(this.solid, u.x + mx, u.y)) u.x += mx;
+    if (!blocked(this.solid, u.x, u.y + my)) u.y += my;
+    return Math.abs(u.x - ox) + Math.abs(u.y - oy) > step * 0.1;
+  }
+
+  /** A push away from enemies crowding within 0.45 cells. */
+  private separation(u: Point): [number, number] {
+    let sx = 0,
+      sy = 0;
+    for (const o of this.enemiesNear(u.x, u.y, 0.45)) {
+      if (o === u) continue;
+      const ox = u.x - o.x,
+        oy = u.y - o.y;
+      const d = Math.hypot(ox, oy) || 0.01;
+      sx += (ox / d) * (0.45 - d);
+      sy += (oy / d) * (0.45 - d);
+    }
+    return [sx, sy];
+  }
+
+  /** Walk a planned route cell by cell, dropping it when something was
+   * (re)built across it or the unit is wedged; with no route, head straight
+   * for `chase` if given. */
+  followPath(u: Point & { path: number[] }, chase: Point | null, speed: number, dt: number) {
+    while (u.path.length) {
+      const c = u.path[0];
+      const p = cellCenter(c);
+      if (Math.hypot(p.x - u.x, p.y - u.y) < 0.3) {
+        u.path.shift();
+        continue;
+      }
+      if (this.solid[c] || !this.moveToward(u, p, { speed, dt })) u.path = [];
+      return;
+    }
+    if (chase) this.moveToward(u, chase, { speed, dt });
   }
 
   // ── Consumables ───────────────────────────────────────────────────────
   dropBomb(x: number, y: number) {
-    this.explode(x, y, BOMB_RADIUS, BOMB_DAMAGE, !this.levels.bombSafe);
+    this.explode(x, y, { r: BOMB_RADIUS, damage: BOMB_DAMAGE, friendlyFire: !this.levels.bombSafe });
   }
+}
+
+function maxHpOf(b: Building, levels: Levels) {
+  if (b.kind === "wall") return wallHp(levels.wallStrength);
+  if (b.kind === "house") return HOUSE_HP_PER_CELL * b.cells.length;
+  if (b.kind === "keep") return keepHp(levels.keepStrength);
+  return STRUCTURES[b.kind].maxHp;
+}
+
+/** Road cells inside the city. */
+function streetCells(map: CityMap) {
+  const out: number[] = [];
+  for (let i = 0; i < CELL_COUNT; i++) if (map.city[i] && map.type[i] === CellType.ROAD) out.push(i);
+  return out;
 }
 
 export function buildWave(wave: number, rand: () => number): EnemyKind[] {
@@ -1095,14 +526,4 @@ export function buildWave(wave: number, rand: () => number): EnemyKind[] {
   // the horde (the queue spawns from its end, so they go at the front).
   if (wave > 0 && wave % 10 === 0) for (let n = 0; n < wave / 10; n++) out.unshift("warlord");
   return out;
-}
-
-const clampCell = (v: number, max: number) => Math.max(0, Math.min(max - 1, Math.floor(v)));
-export const center = (r: Rect) => ({ x: r.x + r.w / 2, y: r.y + r.h / 2 });
-function nearestPoint(r: Rect, x: number, y: number) {
-  return { x: Math.max(r.x, Math.min(r.x + r.w, x)), y: Math.max(r.y, Math.min(r.y + r.h, y)) };
-}
-function rectDist(r: Rect, x: number, y: number) {
-  const p = nearestPoint(r, x, y);
-  return Math.hypot(p.x - x, p.y - y);
 }

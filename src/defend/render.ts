@@ -4,7 +4,8 @@
 import { CELL_COUNT, CELLS_H, CELLS_W, SPAWN_ROW, SUB, TILES_H, TILES_W, cellIndex, hash, hash01, tileKey, type Rect } from "./grid.ts";
 import { CellType, type Building, type CityMap } from "./citygen.ts";
 import { ARCHER_UNIT, ENEMIES, SOLDIER, CIVILIAN, watchRadius, type StructureKind } from "./catalog.ts";
-import { BUILDING_FLASH, center, type DefendSim } from "./sim.ts";
+import { center } from "./pathing.ts";
+import { BUILDING_FLASH, type DefendSim } from "./sim.ts";
 import { DefendLighting } from "./lighting.ts";
 import { Fences } from "./fences.ts";
 import { Rain, ambientFor, type Weather } from "./weather.ts";

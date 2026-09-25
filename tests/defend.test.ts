@@ -12,6 +12,8 @@ import {
 } from '../src/defend/layout.ts';
 import { CellType, generateCity } from '../src/defend/citygen.ts';
 import { DefendSim, buildWave } from '../src/defend/sim.ts';
+import { stepArcher, stepSwordsman } from '../src/defend/troops.ts';
+import { stepArrows } from '../src/defend/towers.ts';
 import { UPGRADES, purchasePrice, STARTING_OWNED } from '../src/defend/catalog.ts';
 import { available, buyItem, buyUpgrade, decodeDefendSave, defaultDefendSave } from '../src/defend/progress.ts';
 
@@ -299,7 +301,7 @@ test('patrol routes: max level sends swordsmen after enemies anywhere in the cit
     sim.enemies.push({ id: 9999, kind: 'ogre', x, y, hp: 1e9, maxHp: 1e9, cd: 99, jx: 0, jy: 0, distract: -1, distractT: 0, rollT: 99, marked: false, flash: 0 } as any);
     for (let i = 0; i < 30; i++) {
       (sim as any).indexEnemies();
-      for (const s of sim.soldiers) (sim as any).stepSoldier(s, 1 / 30);
+      for (const s of sim.soldiers) stepSwordsman(sim, s, 1 / 30);
     }
     return sim.soldiers.some((s) => s.target === 9999);
   };
@@ -372,8 +374,8 @@ test('archer barracks: archers roam the streets and shoot what comes near', () =
   sim.enemies = [foe];
   for (let i = 0; i < 30 * 2; i++) {
     (sim as any).indexEnemies();
-    (sim as any).stepArcher(a, 1 / 30);
-    (sim as any).stepArrows(1 / 30);
+    stepArcher(sim, a, 1 / 30);
+    stepArrows(sim, 1 / 30);
     foe.x = a.x + 1;
     foe.y = a.y;
   }
@@ -397,7 +399,7 @@ test("Hunter's instinct sends archers toward enemies they can't see yet", () => 
     a.thinkT = 0;
     a.path = [];
     (sim as any).indexEnemies();
-    (sim as any).stepArcher(a, 1 / 30);
+    stepArcher(sim, a, 1 / 30);
     return a.target === 555;
   };
   assert.equal(run(0), false);

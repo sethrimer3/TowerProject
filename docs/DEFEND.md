@@ -78,6 +78,12 @@ holds it against endless waves. Code lives in `src/defend/`.
 
 ## A run (`sim.ts`)
 
+`DefendSim` holds the world and runs each step in a fixed order. Unit
+behaviour lives beside it: `enemies.ts`, `troops.ts` (barracks, swordsmen,
+archers), `civilians.ts` and `towers.ts` (towers, arrows, shells), with grid
+A*, the flow field and collision in `pathing.ts`. A run is deterministic
+from its seed; `tests/defend-replay.test.ts` pins it.
+
 - Building is only possible before the run starts. Waves then roll without
   stopping (3 s breather after each) until the keep falls.
 - Enemies are tiny squares that move freely (not grid-locked). They follow a
