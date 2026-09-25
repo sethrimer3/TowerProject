@@ -1,7 +1,7 @@
 import { point, type Player, type Tile } from '../entities.ts';
 import type { Game } from '../state.ts';
-import { predict } from '../combat.ts';
-import { doorCost } from '../doors.ts';
+import type { KeyColor } from '../config.ts';
+import { isLethal, resolveStep, type StepEffect } from '../step-effects.ts';
 
 export type Capabilities = { memory: boolean; deadEnds: boolean; combat: boolean; keys: boolean; contextual: boolean; scarcity: boolean; lookahead: number; interactions: number };
 export function capabilities(game: Game): Capabilities {
@@ -98,26 +98,37 @@ export function chooseDelveStep(game: Game, override?: Capabilities) {
   if (best) commitments.set(game, { run: game.run, from: here, route: [...best.path].slice(1), target: point(best.x, best.y) });
   return best ? { dx: best.first[0], dy: best.first[1], label: `Exploring Delve · ${c.lookahead}-tile scouting` } : null;
 }
-function apply(tile: Tile, n: { player: Player; damage: number; keyCost: number; reward: number }, c: Capabilities) {
-  const p = n.player;
-  if (tile.kind === 'enemy') {
-    const result = predict(p, tile.enemy!);
-    if (!result.survivable || result.impervious) return false;
-    p.hp -= result.damage; n.damage += result.damage;
-  } else if (tile.kind === 'door') {
-    const cost = doorCost(tile, p); if (!cost) return false;
-    for (const color of cost) {
-      n.keyCost += (color === 'red' ? 45 : color === 'blue' ? 25 : 12) * (c.scarcity && p.keys[color] <= 1 ? 1.7 : 1);
-      p.keys[color]--;
-    }
-  } else if (tile.kind === 'key') {
-    n.reward += c.contextual ? (tile.color === 'blue' ? 24 : tile.color === 'red' ? 42 : 10) / (1 + p.keys[tile.color!] * 0.2) : 10;
-    p.keys[tile.color!]++;
-  } else if (tile.kind === 'potion') {
-    const heal = Math.min(tile.amount ?? 35, p.maxHp - p.hp); p.hp += heal;
-    n.reward += c.contextual ? heal * 0.55 : 12;
-  } else if (tile.kind === 'attack' || tile.kind === 'defense') {
-    p[tile.kind] += tile.kind === 'attack' ? 2 : 1; n.reward += c.contextual ? 32 : 15;
-  } else if (tile.kind === 'treasure') n.reward += 16;
+type Planned = { player: Player; damage: number; keyCost: number; reward: number };
+/** Advances a planned route by one tile using the game's own step rules;
+ * false when the step is blocked or the fight would be lethal. */
+function apply(tile: Tile, n: Planned, c: Capabilities) {
+  const before = n.player, outcome = resolveStep(before, tile);
+  if (outcome.blocked || isLethal(outcome)) return false;
+  n.player = outcome.player;
+  n.damage += outcome.combat?.damage ?? 0;
+  n.keyCost += keyCost(outcome.keysSpent, before, c);
+  n.reward += reward(tile, before, outcome, c);
   return true;
+}
+const KEY_SPEND_COST: Record<KeyColor, number> = { yellow: 12, blue: 25, red: 45 };
+const KEY_FIND_VALUE: Partial<Record<KeyColor, number>> = { blue: 24, red: 42 };
+/** Rarer keys cost more to spend; with scarcity, spending one of the last
+ * keys of a color costs more still. */
+function keyCost(spent: KeyColor[], before: Player, c: Capabilities) {
+  const keys = { ...before.keys };
+  let total = 0;
+  for (const color of spent) {
+    total += KEY_SPEND_COST[color] * (c.scarcity && keys[color] <= 1 ? 1.7 : 1);
+    keys[color]--;
+  }
+  return total;
+}
+function reward(tile: Tile, before: Player, outcome: StepEffect, c: Capabilities) {
+  switch (tile.kind) {
+    case 'key': return c.contextual ? (KEY_FIND_VALUE[tile.color!] ?? 10) / (1 + before.keys[tile.color!] * 0.2) : 10;
+    case 'potion': return c.contextual ? outcome.healed * 0.55 : 12;
+    case 'attack': case 'defense': return c.contextual ? 32 : 15;
+    case 'treasure': return 16;
+    default: return 0;
+  }
 }

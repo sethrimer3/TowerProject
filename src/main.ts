@@ -6,6 +6,7 @@ import { TREES, skillAvailable, type TreeId } from "./skill-trees.ts";
 import "./style.css";
 import { load, persist, defaults } from "./save.ts";
 import { Game, type RouteEffects } from "./state.ts";
+import { ATTACK_SHARD, DEFENSE_SHARD, resolveStep } from "./step-effects.ts";
 import { Renderer } from "./rendering.ts";
 import { outsideWeather } from "./outside.ts";
 import { bindInput } from "./input.ts";
@@ -258,11 +259,12 @@ function inspectDetails(x: number, y: number): { color: string; title: string; b
     };
   }
   if (t.kind === "potion") {
-    const gain = Math.min(p.maxHp - p.hp, t.amount ?? 35);
+    const after = resolveStep(p, t);
+    const hp = after.blocked ? p.hp : after.player.hp;
     return {
       color: KIND_COLORS.potion!,
       title: "Potion",
-      body: `<span>Restores HP</span><br>(${p.hp} → ${p.hp + gain})`,
+      body: `<span>Restores HP</span><br>(${p.hp} → ${hp})`,
     };
   }
   if (t.kind === "stairs" || t.kind === "stairsDown") {
@@ -286,9 +288,9 @@ function inspectDetails(x: number, y: number): { color: string; title: string; b
       body: game.mode === "tower" ? "Well-worn stone floor." : "Ancient cavern floor.",
     };
   if (t.kind === "attack")
-    return { color: KIND_COLORS.attack!, title: "Attack Shard", body: "Raises ATK by 2 for this run." };
+    return { color: KIND_COLORS.attack!, title: "Attack Shard", body: `Raises ATK by ${ATTACK_SHARD} for this run.` };
   if (t.kind === "defense")
-    return { color: KIND_COLORS.defense!, title: "Defense Shard", body: "Raises DEF by 1 for this run." };
+    return { color: KIND_COLORS.defense!, title: "Defense Shard", body: `Raises DEF by ${DEFENSE_SHARD} for this run.` };
   if (t.kind === "treasure")
     return { color: KIND_COLORS.treasure!, title: "Treasure", body: "Contains gold and crafting materials." };
   if (t.kind === "reward")

@@ -1,6 +1,6 @@
 import { entrance, floorFor } from "./delve/labyrinth.ts";
 import { isDeadlocked } from "./analysis.ts";
-import { doorBlockedMessage, doorCost, doorName, KEY_ORDER } from "./doors.ts";
+import { doorBlockedMessage, doorName, KEY_ORDER } from "./doors.ts";
 import { skillAvailable } from "./skill-trees.ts";
 import { routeTo, type Step } from "./pathfinding.ts";
 import {
@@ -26,6 +26,7 @@ import {
   type Enemy,
   type Mode,
   type MoveSnapshot,
+  type Player,
 } from "./entities.ts";
 import {
   World,
@@ -34,7 +35,8 @@ import {
   TOWER_LAYOUT_VERSION,
   type Board,
 } from "./generation.ts";
-import { predict } from "./combat.ts";
+import type { CombatPrediction } from "./combat.ts";
+import { ATTACK_SHARD, DEFENSE_SHARD, isLethal, resolveStep, type StepBlocked, type StepEffect } from "./step-effects.ts";
 import { OutsideWorld } from "./outside.ts";
 import { getEquivalentFloor, materialDef, MATERIALS } from "./materials.ts";
 import { rollEnemyDrops, rollTreasureLoot, towerEnemyDrops } from "./loot.ts";
@@ -57,6 +59,8 @@ export type RouteEffects = {
   defense: [number, number];
   keys: Partial<Record<KeyColor, [number, number]>>;
 };
+/** Tiles that stay on the board after being stepped on. */
+const PERMANENT_TILES = new Set<Tile["kind"]>(["floor", "stairs", "stairsDown", "oneway", "openedChest"]);
 export class Game {
   mode: Mode = "tower";
   world!: Board;
@@ -260,47 +264,22 @@ export class Game {
    * to the walk. Stops early at a lethal fight or a door it can't afford. */
   previewRouteEffects(route: Step[]): RouteEffects | null {
     if (route.length < 2) return null;
-    const p = this.run.player;
-    let hp = p.hp,
-      attack = p.attack,
-      defense = p.defense;
-    const keys = { ...p.keys },
-      startHp = hp,
-      startAttack = attack,
-      startDefense = defense,
-      startKeys = { ...p.keys };
+    const start = this.run.player;
+    let end = start;
     for (const step of route) {
-      const t = this.world.tile(step.x, step.y);
-      if (t.kind === "enemy") {
-        const result = predict({ ...p, hp, attack, defense, keys }, t.enemy!);
-        if (result.impervious) break;
-        hp -= result.damage;
-        if (hp <= 0) {
-          hp = 0;
-          break;
-        }
-      } else if (t.kind === "door") {
-        const cost = doorCost(t, { hp, maxHp: p.maxHp, keys });
-        if (cost === null) break;
-        for (const color of cost) keys[color]--;
-      } else if (t.kind === "key") {
-        keys[t.color!]++;
-      } else if (t.kind === "potion") {
-        hp += Math.min(p.maxHp - hp, t.amount ?? 35);
-      } else if (t.kind === "attack") {
-        attack += 2;
-      } else if (t.kind === "defense") {
-        defense++;
-      }
+      const outcome = resolveStep(end, this.world.tile(step.x, step.y));
+      if (outcome.blocked) break;
+      end = outcome.player;
+      if (end.hp <= 0) break;
     }
     const result: RouteEffects = {
-      hp: [startHp, hp],
-      attack: [startAttack, attack],
-      defense: [startDefense, defense],
+      hp: [start.hp, end.hp],
+      attack: [start.attack, end.attack],
+      defense: [start.defense, end.defense],
       keys: {},
     };
     for (const color of KEY_ORDER)
-      if (keys[color] !== startKeys[color]) result.keys[color] = [startKeys[color], keys[color]];
+      if (end.keys[color] !== start.keys[color]) result.keys[color] = [start.keys[color], end.keys[color]];
     return result;
   }
   walkTo(x: number, y: number) {
@@ -523,9 +502,12 @@ export class Game {
       ? `${this.run.seed}:${this.run.height}:${x},${y}`
       : `${this.run.seed}:${x},${y}`;
   }
+  /** A single orthogonal step while play is live. */
+  canStep(dx: number, dy: number) {
+    return !this.paused && !this.summary && Math.abs(dx) + Math.abs(dy) === 1;
+  }
   move(dx: number, dy: number, force = true, track = true) {
-    if (this.paused || this.summary || Math.abs(dx) + Math.abs(dy) !== 1)
-      return false;
+    if (!this.canStep(dx, dy)) return false;
     const p = this.run.player,
       dest = this.world.step(p.x, p.y, dx, dy);
     if (!dest) {
@@ -534,77 +516,21 @@ export class Game {
     }
     const { x, y } = dest,
       t = this.world.tile(x, y);
-    if (t.kind === "wall") {
-      this.reject(x, y, "A wall blocks the way.");
+    // The step is resolved once, before any snapshot/undo bookkeeping, so a
+    // wall, lock, impervious enemy, or (automation's) declined lethal fight
+    // never touches history, damages the player, alters the enemy, or ends the run.
+    const outcome = resolveStep(p, t);
+    if (outcome.blocked) return this.rejectStep(outcome, t, x, y);
+    if (!force && isLethal(outcome)) {
+      this.feedback("Lethal encounter. Inspect the enemy before proceeding.");
       return false;
-    }
-    const keyCost = t.kind === "door" ? doorCost(t, p) : null;
-    if (t.kind === "door" && keyCost === null) {
-      this.reject(x, y, doorBlockedMessage(t));
-      return false;
-    }
-    // Combat is predicted once, before any snapshot/undo bookkeeping, so an
-    // impervious or (automation's) lethal rejection never touches history,
-    // damages the player, alters the enemy, or ends the run.
-    let combat: ReturnType<typeof predict> | null = null;
-    if (t.kind === "enemy") {
-      combat = predict(p, t.enemy!);
-      if (combat.impervious) {
-        this.reject(x, y, `Impervious — requires ${combat.requiredAttack} more ATK`);
-        this.checkDeadlock();
-        return false;
-      }
-      if (!combat.survivable && !force) {
-        this.feedback("Lethal encounter. Inspect the enemy before proceeding.");
-        return false;
-      }
     }
     this.settleRevival();
-    const before = this.snapshot(),
-      slice = this.save[this.mode];
-    if (track) {
-      slice.history.push(before);
-      slice.history = slice.history.slice(-this.undoCapacity);
-    }
-    if (t.kind === "door") {
-      for (const color of keyCost!) p.keys[color]--;
-      if (keyCost!.length) this.run.keysSpent = true;
-      this.feedback(`${doorName(t)} opened${keyCost!.length ? ` · ${keyCost!.length} key${keyCost!.length === 1 ? "" : "s"} spent` : " · full HP"}`);
-    }
-    if (t.kind === "enemy") {
-      const enemy = t.enemy!,
-        result = combat!;
-      p.hp -= result.damage;
-      if (result.damage > 0) this.run.damaged = true;
-      if (p.hp <= 0) {
-        p.hp = 0;
-        this.finalizeRun("Fallen in battle", {
-          dead: true,
-          allowRevive: true,
-          preFatalSnapshot: before,
-        });
-        return false;
-      }
-      this.run.kills++;
-      this.gainXp(enemy);
-      // Persistent drops are gated by lootedTiles (outside `run`), so undo
-      // can restore the enemy but can never duplicate its material reward.
-      let dropText = "";
-      const key = this.lootKey(x, y);
-      if (!slice.lootedTiles[key]) {
-        slice.lootedTiles[key] = true;
-        const drops = this.mode === "tower" ? towerEnemyDrops(enemy.name) : rollEnemyDrops(enemy.name, Math.random);
-        if (drops.length) {
-          creditMaterials(this.save, drops);
-          dropText = " · +" + drops.map(d => `${d.quantity} ${materialDef(d.id).name}${d.quantity > 1 ? "s" : ""}`).join(", +");
-        }
-      }
-      this.feedback(
-        (result.damage
-          ? `−${result.damage} HP · ${enemy.name} defeated`
-          : "Unscathed victory") + dropText,
-      );
-    }
+    const before = this.snapshot();
+    if (track) this.remember(before);
+    this.applyStats(outcome.player);
+    if (t.kind === "door") this.openDoor(t, outcome.keysSpent);
+    if (t.kind === "enemy" && !this.winFight(t.enemy!, outcome.combat!, before, dest)) return false;
     p.x = x;
     p.y = y;
     // Walking into a torch destroys it immediately: light, collision and
@@ -612,19 +538,7 @@ export class Game {
     // active torches from this same list.
     this.world.breakTorchAt?.(x, y);
     if (this.run.outside) {
-      if (t.kind === "stairs") {
-        this.run.outside = false;
-        p.x = this.mode === "tower" ? TOWER_START_X : START_X;
-        p.y = 0;
-        if (this.mode === "tower") {
-          this.linkTowerFloor();
-          this.world = new RoomWorld(this.run.seed, this.run.height, this.run.changes);
-        } else {
-          this.world = new World(this.run.seed, this.run.changes);
-        }
-        this.route = [];
-        this.feedback(this.mode === "tower" ? "You enter the tower." : "You enter the mountain cave.");
-      }
+      if (t.kind === "stairs") this.enterFromOutside();
       return true;
     }
     if (t.kind === "reward") {
@@ -632,34 +546,116 @@ export class Game {
       this.claimRewards(t.tier);
       return true;
     }
-    this.collect(t, x, y);
-    if (t.kind === "treasure") this.run.changes[`${x},${y}`] = { kind: "openedChest" };
-    else if (t.kind !== "floor" && t.kind !== "stairs" && t.kind !== "stairsDown" && t.kind !== "oneway" && t.kind !== "openedChest") this.world.clear(x, y);
+    this.collect(t, x, y, outcome);
+    this.consumeTile(t, x, y);
     this.checkClear();
-    if (this.mode === "delve") {
-      const world = this.world as World;
-      if (t.kind === 'oneway' && world.cross(x, y)) {
-        this.run.delveMilestone = world.milestone;
-        this.run.delveVisited = {};
-        this.run.delveKnown = {};
-        slice.history = []; // Milestone passages cannot be reversed with undo.
-        this.route = [];
-        this.feedback(`Depth ${world.milestone * 100} · the passage seals behind you.`);
-      }
-      const visited = this.run.delveVisited ??= {};
-      visited[`${x},${y}`] = (visited[`${x},${y}`] ?? 0) + 1;
-      this.run.height = Math.max(this.run.height, world.depth(x, y));
-      this.run.maxHeight = Math.max(this.run.maxHeight ?? 0, this.run.height);
-      (this.world as World).maintain(y);
-      this.run.floor = (this.world as World).floor;
-      this.recordProgress();
-    } else if (t.kind === "stairs") {
-      this.advanceTowerRoom();
-    } else if (t.kind === "stairsDown") {
-      this.descendTowerRoom();
-    }
-    if (t.kind !== "floor" && t.kind !== "oneway") this.checkDeadlock();
+    this.afterStep(t, x, y);
     return true;
+  }
+  /** Mode-specific progress once the player stands on the new tile. */
+  afterStep(t: Tile, x: number, y: number) {
+    if (this.mode === "delve") this.afterDelveStep(t, x, y);
+    else if (t.kind === "stairs") this.advanceTowerRoom();
+    else if (t.kind === "stairsDown") this.descendTowerRoom();
+    if (t.kind !== "floor" && t.kind !== "oneway") this.checkDeadlock();
+  }
+  rejectStep(outcome: StepBlocked, t: Tile, x: number, y: number): false {
+    if (outcome.blocked === "wall") this.reject(x, y, "A wall blocks the way.");
+    else if (outcome.blocked === "locked") this.reject(x, y, doorBlockedMessage(t));
+    else {
+      this.reject(x, y, `Impervious — requires ${outcome.combat.requiredAttack} more ATK`);
+      this.checkDeadlock();
+    }
+    return false;
+  }
+  remember(snapshot: MoveSnapshot) {
+    const slice = this.save[this.mode];
+    slice.history.push(snapshot);
+    slice.history = slice.history.slice(-this.undoCapacity);
+  }
+  /** Copies resolved stats onto the live player, keeping its object identity. */
+  applyStats(next: Player) {
+    const p = this.run.player;
+    p.hp = next.hp;
+    p.attack = next.attack;
+    p.defense = next.defense;
+    Object.assign(p.keys, next.keys);
+  }
+  openDoor(t: Tile, keysSpent: KeyColor[]) {
+    const n = keysSpent.length;
+    if (n) this.run.keysSpent = true;
+    this.feedback(`${doorName(t)} opened${n ? ` · ${n} key${n === 1 ? "" : "s"} spent` : " · full HP"}`);
+  }
+  /** Settles a fight whose damage is already applied. Returns false (and ends
+   * the run, allowing Revive) when the player fell. */
+  winFight(enemy: Enemy, combat: CombatPrediction, before: MoveSnapshot, at: { x: number; y: number }) {
+    if (combat.damage > 0) this.run.damaged = true;
+    if (this.run.player.hp <= 0) {
+      this.finalizeRun("Fallen in battle", {
+        dead: true,
+        allowRevive: true,
+        preFatalSnapshot: before,
+      });
+      return false;
+    }
+    this.run.kills++;
+    this.gainXp(enemy);
+    const dropText = this.creditEnemyDrops(enemy, at.x, at.y);
+    this.feedback(
+      (combat.damage
+        ? `−${combat.damage} HP · ${enemy.name} defeated`
+        : "Unscathed victory") + dropText,
+    );
+    return true;
+  }
+  /** Persistent drops are gated by lootedTiles (outside `run`), so undo can
+   * restore the enemy but can never duplicate its material reward. */
+  creditEnemyDrops(enemy: Enemy, x: number, y: number): string {
+    const slice = this.save[this.mode],
+      key = this.lootKey(x, y);
+    if (slice.lootedTiles[key]) return "";
+    slice.lootedTiles[key] = true;
+    const drops = this.mode === "tower" ? towerEnemyDrops(enemy.name) : rollEnemyDrops(enemy.name, Math.random);
+    if (!drops.length) return "";
+    creditMaterials(this.save, drops);
+    return " · +" + drops.map(d => `${d.quantity} ${materialDef(d.id).name}${d.quantity > 1 ? "s" : ""}`).join(", +");
+  }
+  enterFromOutside() {
+    const p = this.run.player;
+    this.run.outside = false;
+    p.x = this.mode === "tower" ? TOWER_START_X : START_X;
+    p.y = 0;
+    if (this.mode === "tower") {
+      this.linkTowerFloor();
+      this.world = new RoomWorld(this.run.seed, this.run.height, this.run.changes);
+    } else {
+      this.world = new World(this.run.seed, this.run.changes);
+    }
+    this.route = [];
+    this.feedback(this.mode === "tower" ? "You enter the tower." : "You enter the mountain cave.");
+  }
+  /** Removes what the step used up: chests stay behind opened, fixtures stay. */
+  consumeTile(t: Tile, x: number, y: number) {
+    if (t.kind === "treasure") this.run.changes[`${x},${y}`] = { kind: "openedChest" };
+    else if (!PERMANENT_TILES.has(t.kind)) this.world.clear(x, y);
+  }
+  afterDelveStep(t: Tile, x: number, y: number) {
+    const world = this.world as World;
+    if (t.kind === "oneway" && world.cross(x, y)) {
+      this.run.delveMilestone = world.milestone;
+      this.run.delveVisited = {};
+      this.run.delveKnown = {};
+      this.save.delve.history = []; // Milestone passages cannot be reversed with undo.
+      this.route = [];
+      this.feedback(`Depth ${world.milestone * 100} · the passage seals behind you.`);
+    }
+    const visited = this.run.delveVisited ??= {};
+    visited[`${x},${y}`] = (visited[`${x},${y}`] ?? 0) + 1;
+    this.run.height = Math.max(this.run.height, world.depth(x, y));
+    this.run.maxHeight = Math.max(this.run.maxHeight ?? 0, this.run.height);
+    world.maintain(y);
+    this.run.floor = world.floor;
+    this.recordProgress();
   }
   advanceTowerRoom() {
     this.claimRewards();
@@ -804,25 +800,12 @@ export class Game {
     }
     world.rewards = this.run.rewards;
   }
-  collect(t: Tile, x: number, y: number) {
-    const p = this.run.player;
-    if (t.kind === "key") {
-      p.keys[t.color!]++;
-      this.feedback(`+1 ${t.color} key`);
-    }
-    if (t.kind === "potion") {
-      const n = Math.min(p.maxHp - p.hp, t.amount ?? 35);
-      p.hp += n;
-      this.feedback(`+${n} HP`);
-    }
-    if (t.kind === "attack") {
-      p.attack += 2;
-      this.feedback("+2 attack");
-    }
-    if (t.kind === "defense") {
-      p.defense++;
-      this.feedback("+1 defense");
-    }
+  /** Pickup feedback and treasure payouts; stats were already applied. */
+  collect(t: Tile, x: number, y: number, outcome: StepEffect) {
+    if (t.kind === "key") this.feedback(`+1 ${t.color} key`);
+    if (t.kind === "potion") this.feedback(`+${outcome.healed} HP`);
+    if (t.kind === "attack") this.feedback(`+${ATTACK_SHARD} attack`);
+    if (t.kind === "defense") this.feedback(`+${DEFENSE_SHARD} defense`);
     if (t.kind === "treasure") {
       this.run.treasures++;
       // Generated treasure never upgrades gear directly — it always grants
