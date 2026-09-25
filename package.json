@@ -12,6 +12,7 @@
     "delve:report": "node --experimental-transform-types tools/delve-report.ts",
     "tower:report": "node --experimental-transform-types tools/tower-report.ts",
     "test": "node --experimental-transform-types --test tests/*.test.ts",
+    "test:render": "node tests/render-golden.mjs",
     "test:browser": "node tests/browser.mjs && node tests/interactions.mjs && node tests/camera.mjs && node tests/skill-trees.mjs && node tests/outside.mjs && node tests/progression.mjs && node tests/mode-tabs.mjs"
   },
   "devDependencies": {
