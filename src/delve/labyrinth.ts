@@ -207,7 +207,8 @@ function addLoops(lab: Lab) {
 /** How likely a new opening between two unlinked neighbours is (0: never). */
 function loopChance(nodes: Node[], a: Node, b: Node) {
   const shaft = (n: Node) => n.links.length === 2 && n.links.every(l => nodes[l].col === n.col);
-  if (b.row === a.row && (shaft(a) || shaft(b))) return DELVE_TUNING.shaftBreakChance;
+  const besideShaft = b.row === a.row && (shaft(a) || shaft(b));
+  if (besideShaft) return DELVE_TUNING.shaftBreakChance;
   const junctions = a.links.length > 1 && b.links.length > 1;
   return junctions ? DELVE_TUNING.loopChance : 0;
 }
@@ -215,10 +216,12 @@ function loopChance(nodes: Node[], a: Node, b: Node) {
 /** A cell's lattice point before the column warp. */
 const unwarped = (n: Node): Point => ({ x: colX(n.col), y: rowY(n.row) });
 
+const samePoint = (a: Point | undefined, b: Point) => a?.x === b.x && a?.y === b.y;
+
 /** The warped tiles of a straight lattice corridor, horizontal leg first. */
 function corridor(seed: number, from: Point, to: Point) {
   const out: Point[] = [], x2 = to.x, y2 = to.y; let { x, y } = from;
-  const add = (p: Point) => { const last = out.at(-1); if (!last || last.x !== p.x || last.y !== p.y) out.push(p); };
+  const add = (p: Point) => { if (!samePoint(out.at(-1), p)) out.push(p); };
   add(physical(x, y, seed));
   while (x !== x2 || y !== y2) {
     if (x !== x2) { const prev = physical(x, y, seed); x += Math.sign(x2 - x); add({ x, y: prev.y }); add(physical(x, y, seed)); }
@@ -339,13 +342,17 @@ function chamber({ rng, seed }: Lab, n: Node) {
   // Pattern pockets are never wide, so their throat always has room for two
   // consecutive costs; the last column never reaches the world edge.
   const room = !!n.pattern || rng() < DELVE_TUNING.chamberChance;
-  const wide = room && !n.pattern && n.col < COLS - 1 && rng() < DELVE_TUNING.wideChamberChance;
+  const wide = room && widens(n, rng);
   const rx = wide ? 2 : room ? 1 : 0, ry = room ? 1 : 0, centre = unwarped(n), tiles: Point[] = [];
   for (let dy = -ry; dy <= ry; dy++) tiles.push(...corridor(seed, { x: centre.x - rx, y: centre.y + dy }, { x: centre.x + rx, y: centre.y + dy }));
   return { room, tiles };
 }
 
-const ENEMY_NAMES = ['Cinder slime', 'Bone sentinel', 'Dusk wing', 'Ash warden'];
+/** Whether a room at `n` becomes a wide hall: never a pattern pocket or in
+ * the last column. */
+const widens = (n: Node, rng: () => number) => !n.pattern && n.col < COLS - 1 && rng() < DELVE_TUNING.wideChamberChance;
+
+const ENEMY_NAMES =['Cinder slime', 'Bone sentinel', 'Dusk wing', 'Ash warden'];
 
 /** The tile standing in for one pattern cost at cell `n`. */
 function gateTile({ rng }: Lab, g: Gate, n: Node): Tile {

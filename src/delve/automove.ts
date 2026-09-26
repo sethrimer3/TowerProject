@@ -64,16 +64,23 @@ function observe(game: Game, c: Capabilities) {
 /** The next step of the committed route, if it is still one step away and
  * still safe to take. */
 function follow(game: Game, route: Commitment, c: Capabilities) {
-  const p = game.run.player, world = game.world, here = point(p.x, p.y);
-  if (route.route[0] === here) { route.route.shift(); route.from = here; }
-  if (route.from !== here || !route.route.length) return undefined;
-  const [x, y] = route.route[0].split(',').map(Number);
+  const p = game.run.player, world = game.world;
+  const next = nextOnRoute(route, point(p.x, p.y));
+  if (!next) return undefined;
+  const [x, y] = next.split(',').map(Number);
   const dx = x - p.x, dy = y - p.y, tile = world.tile(x, y);
   const trial = { player: { ...p, keys: { ...p.keys } }, damage: 0, keyCost: 0, reward: 0 };
   const walkable = Math.abs(dx) + Math.abs(dy) === 1 && world.step(p.x, p.y, dx, dy) && tile.kind !== 'wall';
   if (!walkable || !apply(tile, trial, c)) return undefined;
   if (!['floor', 'openedChest'].includes(tile.kind)) commitments.delete(game);
   return { dx, dy, label: 'Following the chosen Delve route' };
+}
+
+/** Drops the route's first tile once the player stands on it; the tile to
+ * step to next, unless the player has left the route. */
+function nextOnRoute(route: Commitment, here: string): string | undefined {
+  if (route.route[0] === here) { route.route.shift(); route.from = here; }
+  return route.from === here ? route.route[0] : undefined;
 }
 
 /** One partial route in the search, with what walking it would cost and earn. */
@@ -203,11 +210,17 @@ function keyCost(spent: KeyColor[], before: Player, c: Capabilities) {
   }
   return total;
 }
+/** What a pickup is worth: a flat value, or with contextual evaluation one
+ * weighed against what the player holds and would heal. */
 function reward(tile: Tile, before: Player, outcome: StepEffect, c: Capabilities) {
+  return c.contextual ? contextualReward(tile, before, outcome) : PLAIN_REWARD[tile.kind] ?? 0;
+}
+const PLAIN_REWARD: Partial<Record<Tile['kind'], number>> = { key: 10, potion: 12, attack: 15, defense: 15, treasure: 16 };
+function contextualReward(tile: Tile, before: Player, outcome: StepEffect) {
   switch (tile.kind) {
-    case 'key': return c.contextual ? (KEY_FIND_VALUE[tile.color!] ?? 10) / (1 + before.keys[tile.color!] * 0.2) : 10;
-    case 'potion': return c.contextual ? outcome.healed * 0.55 : 12;
-    case 'attack': case 'defense': return c.contextual ? 32 : 15;
+    case 'key': return (KEY_FIND_VALUE[tile.color!] ?? 10) / (1 + before.keys[tile.color!] * 0.2);
+    case 'potion': return outcome.healed * 0.55;
+    case 'attack': case 'defense': return 32;
     case 'treasure': return 16;
     default: return 0;
   }

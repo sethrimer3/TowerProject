@@ -68,7 +68,7 @@ test("torches pick room corners, keep clear of doors, and stay spaced out", () =
     "#............#",
     "##############",
   ]);
-  const spots = chooseTorchSpots(cells, 1, 12, 1, 5, 7);
+  const spots = chooseTorchSpots(cells, { xMin: 1, xMax: 12, yMin: 1, yMax: 5, seed: 7 });
   assert.ok(spots.length >= 1);
   const wall = (x: number, y: number) => (cells.get(point(x, y))?.kind ?? "wall") === "wall";
   for (const [x, y] of spots) {
@@ -81,7 +81,7 @@ test("torches pick room corners, keep clear of doors, and stay spaced out", () =
   for (let i = 0; i < spots.length; i++)
     for (let j = i + 1; j < spots.length; j++)
       assert.ok(Math.hypot(spots[i][0] - spots[j][0], spots[i][1] - spots[j][1]) >= TORCH_PLACEMENT.minSpacing);
-  assert.deepEqual(chooseTorchSpots(cells, 1, 12, 1, 5, 7), spots, "placement is deterministic per seed");
+  assert.deepEqual(chooseTorchSpots(cells, { xMin: 1, xMax: 12, yMin: 1, yMax: 5, seed: 7 }), spots, "placement is deterministic per seed");
 });
 
 test("a torch tucked in a corner keeps its brightest light on its own tile", () => {

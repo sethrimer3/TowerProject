@@ -41,63 +41,64 @@ export const TORCH_PLACEMENT = { openTilesPerTorch: 30, minSpacing: 4.5, jitter:
  * a corridor, never beside a door or stairs, and never pinching a path (the
  * diagonal across the corner stays open). Corners of small rooms score
  * highest; spots are then taken greedily with a minimum spacing. */
-export function chooseTorchSpots(
-  cells: Map<string, Tile>,
-  xMin: number,
-  xMax: number,
-  yMin: number,
-  yMax: number,
-  seed: number,
-): [number, number][] {
-  const kind = (x: number, y: number) => cells.get(point(x, y))?.kind ?? "wall";
-  const isWall = (x: number, y: number) => kind(x, y) === "wall";
+export function chooseTorchSpots(cells: Map<string, Tile>, area: TorchArea): [number, number][] {
+  const kind: KindAt = (x, y) => cells.get(point(x, y))?.kind ?? "wall";
   let open = 0;
-  const candidates: { x: number; y: number; score: number }[] = [];
-  for (let y = yMin; y <= yMax; y++)
-    for (let x = xMin; x <= xMax; x++) {
-      if (isWall(x, y)) continue;
+  const candidates: TorchSpot[] = [];
+  for (let y = area.yMin; y <= area.yMax; y++)
+    for (let x = area.xMin; x <= area.xMax; x++) {
+      if (kind(x, y) === "wall") continue;
       open++;
-      if (kind(x, y) !== "floor") continue;
-      const n = isWall(x, y + 1), s = isWall(x, y - 1), e = isWall(x + 1, y), w = isWall(x - 1, y);
-      if ((n && s) || (e && w) || !(n || s) || !(e || w)) continue;
-      const vx = e ? -1 : 1, vy = n ? -1 : 1;
-      if (isWall(x + vx, y + vy)) continue;
-      let busy = false;
-      for (const [dx, dy] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) {
-        const k = kind(x + dx, y + dy);
-        if (k === "door" || k === "stairs" || k === "stairsDown" || k === "oneway") busy = true;
-      }
-      if (busy) continue;
-      // Smaller spaces read cozier with a torch: count open tiles nearby.
-      let nearby = 0;
-      for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) if (!isWall(x + dx, y + dy)) nearby++;
-      const score = 1 - nearby / 49 + tileRandom(x, y, seed ^ 0x70c4) * TORCH_PLACEMENT.jitter;
-      candidates.push({ x, y, score });
+      const score = cornerScore(kind, x, y, area.seed);
+      if (score !== null) candidates.push({ x, y, score });
     }
   candidates.sort((a, b) => b.score - a.score || a.y - b.y || a.x - b.x);
-  const want = Math.max(1, Math.round(open / TORCH_PLACEMENT.openTilesPerTorch));
+  return spaced(candidates, Math.max(1, Math.round(open / TORCH_PLACEMENT.openTilesPerTorch)));
+}
+
+/** The window (inclusive) torches go in, and the seed for their jitter. */
+export type TorchArea = { xMin: number; xMax: number; yMin: number; yMax: number; seed: number };
+type KindAt = (x: number, y: number) => Tile["kind"];
+type TorchSpot = { x: number; y: number; score: number };
+const BUSY = new Set<Tile["kind"]>(["door", "stairs", "stairsDown", "oneway"]);
+
+/** How good a torch spot (x, y) is, or null when it can't take one: plain
+ * floor in a snug corner with nothing busy beside it. */
+function cornerScore(kind: KindAt, x: number, y: number, seed: number): number | null {
+  if (kind(x, y) !== "floor" || !snugCorner(kind, x, y)) return null;
+  if (directions.some(([dx, dy]) => BUSY.has(kind(x + dx, y + dy)))) return null;
+  // Smaller spaces read cozier with a torch: count open tiles nearby.
+  let nearby = 0;
+  for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) if (kind(x + dx, y + dy) !== "wall") nearby++;
+  return 1 - nearby / 49 + tileRandom(x, y, seed ^ 0x70c4) * TORCH_PLACEMENT.jitter;
+}
+
+/** An L-shaped corner: a wall on exactly one vertical and one horizontal
+ * side, with the diagonal across the corner open. */
+function snugCorner(kind: KindAt, x: number, y: number) {
+  const wall = (dx: number, dy: number) => kind(x + dx, y + dy) === "wall";
+  const n = wall(0, 1), s = wall(0, -1), e = wall(1, 0), w = wall(-1, 0);
+  if (n === s || e === w) return false;
+  return !wall(e ? -1 : 1, n ? -1 : 1);
+}
+
+/** The best `want` spots, taken greedily at least the minimum spacing apart. */
+function spaced(candidates: TorchSpot[], want: number) {
   const picked: [number, number][] = [];
+  const crowded = (c: TorchSpot) => picked.some(([px, py]) => Math.hypot(px - c.x, py - c.y) < TORCH_PLACEMENT.minSpacing);
   for (const c of candidates) {
     if (picked.length >= want) break;
-    if (picked.some(([px, py]) => Math.hypot(px - c.x, py - c.y) < TORCH_PLACEMENT.minSpacing)) continue;
-    picked.push([c.x, c.y]);
+    if (!crowded(c)) picked.push([c.x, c.y]);
   }
   return picked;
 }
 
 /** Places torches (see chooseTorchSpots), then caches each torch's
  * visibility polygon up front so rendering never recomputes it per frame. */
-function placeTorches(
-  cells: Map<string, Tile>,
-  xMin: number,
-  xMax: number,
-  yMin: number,
-  yMax: number,
-  seed: number,
-): Torch[] {
+function placeTorches(cells: Map<string, Tile>, area: TorchArea): Torch[] {
   const isWall = (x: number, y: number) =>
     (cells.get(point(x, y))?.kind ?? "wall") === "wall";
-  const torches: Torch[] = chooseTorchSpots(cells, xMin, xMax, yMin, yMax, seed).map(([x, y]) => ({
+  const torches: Torch[] = chooseTorchSpots(cells, area).map(([x, y]) => ({
     x,
     y,
     lightRadius: LIGHTING_CONFIG.torch.defaultRadius,
@@ -157,38 +158,46 @@ export function validate(cells: Map<string, Tile>, base: number) {
   const entrance = point(START_X, base);
   const all = reachable(cells, entrance);
   if (!all.has(point(START_X, base + CHUNK - 1))) return false;
-  if ([...cells].some(([k, t]) => t.kind !== "wall" && !all.has(k)))
-    return false;
+  if ([...cells].some(([k, t]) => t.kind !== "wall" && !all.has(k))) return false;
   const locks = [...cells].filter(([, t]) => t.kind === "door");
   // Removing any one door must disconnect floor beyond it, even with all others open.
-  for (const [key] of locks)
-    if (reachable(cells, entrance, new Set([key])).size >= all.size - 1)
-      return false;
-  const closed = new Set(locks.map(([k]) => k)),
-    collected = new Set<string>();
+  if (locks.some(([key]) => reachable(cells, entrance, new Set([key])).size >= all.size - 1)) return false;
+  return unlocksInTurn(cells, entrance, locks, all.size);
+}
+
+/** Opens the doors one at a time with the keys found so far, each one that
+ * the reachable area touches and the keys pay for; true when every door
+ * opens and the whole chunk (`size` tiles) is reached. */
+function unlocksInTurn(cells: Map<string, Tile>, entrance: string, locks: [string, Tile][], size: number) {
+  const closed = new Set(locks.map(([k]) => k)), collected = new Set<string>();
   const keys: Record<KeyColor, number> = { yellow: 0, blue: 0, red: 0 };
+  const cost = (t: Tile) => doorCost(t, { keys, hp: 1, maxHp: 1 });
   for (let step = 0; step <= locks.length; step++) {
     const area = reachable(cells, entrance, closed);
-    for (const k of area) {
-      const t = cells.get(k)!;
-      if (t.kind === "key" && !collected.has(k)) {
-        keys[t.color!]++;
-        collected.add(k);
-      }
-    }
-    if (!closed.size) return area.size === all.size;
-    const next = locks.find(([k, t]) => {
-      if (!closed.has(k) || doorCost(t, { keys, hp: 1, maxHp: 1 }) === null) return false;
-      const [x, y] = k.split(",").map(Number);
-      return directions.some(([dx, dy]) =>
-        area.has(point((x + dx + WIDTH) % WIDTH, y + dy)),
-      );
-    });
+    pickUpKeys(cells, area, collected, keys);
+    if (!closed.size) return area.size === size;
+    const next = locks.find(([k, t]) => closed.has(k) && cost(t) !== null && touches(area, k));
     if (!next) return false;
-    for (const color of doorCost(next[1], { keys, hp: 1, maxHp: 1 })!) keys[color]--;
+    for (const color of cost(next[1])!) keys[color]--;
     closed.delete(next[0]);
   }
   return false;
+}
+
+/** Counts each key in `area` not collected before. */
+function pickUpKeys(cells: Map<string, Tile>, area: Set<string>, collected: Set<string>, keys: Record<KeyColor, number>) {
+  for (const k of area) {
+    const t = cells.get(k)!;
+    if (t.kind !== "key" || collected.has(k)) continue;
+    keys[t.color!]++;
+    collected.add(k);
+  }
+}
+
+/** Whether tile `k` borders `area`, wrapping round the Delve's sides. */
+function touches(area: Set<string>, k: string) {
+  const [x, y] = k.split(",").map(Number);
+  return directions.some(([dx, dy]) => area.has(point((x + dx + WIDTH) % WIDTH, y + dy)));
 }
 type Room = {
   id: number;
@@ -217,7 +226,7 @@ export function generate(seed: number, index: number): Map<string, Tile> {
   return cells;
 }
 export function torchesForSeed(seed: number): Torch[] {
-  return placeTorches(generateDelveMap(seed, 1), 1, WIDTH - 2, 0, 140, seed);
+  return placeTorches(generateDelveMap(seed, 1), { xMin: 1, xMax: WIDTH - 2, yMin: 0, yMax: 140, seed });
 }
 
 export function rollUnguardedLoot(rng: () => number): Tile | null {
@@ -227,6 +236,17 @@ export function rollUnguardedLoot(rng: () => number): Tile | null {
     return { kind: "key", color: (["yellow", "blue", "red"] as const)[choice] };
   return { kind: (["attack", "defense", "treasure"] as const)[choice - 3] };
 }
+/** Puts out the lit torch standing on (x, y); false when there is none. */
+function breakTorch(torches: Torch[], x: number, y: number) {
+  const torch = torches.find((t) => t.active && t.x === x && t.y === y);
+  if (!torch) return false;
+  torch.active = false;
+  return true;
+}
+
+/** A one-way gate only lets the player step up through it. */
+const upward = (dx: number, dy: number) => dx === 0 && dy === 1;
+
 export class World implements Board {
   width = WIDTH;
   chunks = new Map<number, Map<string, Tile>>();
@@ -237,7 +257,7 @@ export class World implements Board {
     public milestone = 0,
   ) {}
   tile(x: number, y: number): Tile {
-    if (x < 0 || x >= this.width || y < this.floor) return { kind: "wall" };
+    if (!this.inside(x, y)) return { kind: "wall" };
     const index = Math.floor(y / CHUNK);
     if (!this.chunks.has(index))
       this.chunks.set(index, generate(this.seed, index));
@@ -246,19 +266,24 @@ export class World implements Board {
       this.chunks.get(index)!.get(point(x, y)) ?? { kind: "wall" }
     );
   }
+  /** On the board and at or above the floor. */
+  private inside(x: number, y: number) {
+    return x >= 0 && x < this.width && y >= this.floor;
+  }
   step(x: number, y: number, dx: number, dy: number) {
     let nx = x + dx;
     const ny = y + dy;
     if (nx < 0 || nx >= this.width) {
-      if (
-        this.tile(0, y).kind === "wall" ||
-        this.tile(this.width - 1, y).kind === "wall"
-      )
-        return null;
+      if (!this.wraps(y)) return null;
       nx = (nx + this.width) % this.width;
     }
-    if (this.tile(nx, ny).kind === 'oneway' && (dy !== 1 || dx !== 0)) return null;
+    if (this.tile(nx, ny).kind === "oneway" && !upward(dx, dy)) return null;
     return { x: nx, y: ny };
+  }
+  /** Row `y` opens on both edges, so walking off one side comes back on
+   * the other. */
+  private wraps(y: number) {
+    return this.tile(0, y).kind !== "wall" && this.tile(this.width - 1, y).kind !== "wall";
   }
   cross(x: number, y: number) {
     const gate = region(this.seed, this.milestone).gate;
@@ -272,22 +297,23 @@ export class World implements Board {
     this.changes[point(x, y)] = { kind: "floor" };
   }
   private torchAreas = new Map<number, Torch[]>();
+  /** The torches of the current area and the next, placed once each. */
   get torches(): Torch[] {
-    for (let a = this.milestone; a <= this.milestone + 1; a++) if (!this.torchAreas.has(a)) {
-      // Wall checks see neighbouring areas too, so a torch never lands on a
-      // foreign area's floor; each torch belongs to the area owning its spot.
-      const r = region(this.seed, a), cells = new Map(r.cells);
-      for (const b of [a - 1, a + 1]) if (b >= 0) for (const [k, t] of region(this.seed, b).cells) cells.set(k, t);
-      this.torchAreas.set(a, placeTorches(cells, 1, WIDTH - 2, r.minY - 2, r.maxY + 2, this.seed ^ a).filter((t) => ownerAt(this.seed, t.x, t.y) === a));
-    }
+    for (let a = this.milestone; a <= this.milestone + 1; a++)
+      if (!this.torchAreas.has(a)) this.torchAreas.set(a, this.areaTorches(a));
     for (const a of this.torchAreas.keys()) if (a < this.milestone) this.torchAreas.delete(a);
     return [...this.torchAreas.values()].flat();
   }
+  /** Wall checks see neighbouring areas too, so a torch never lands on a
+   * foreign area's floor; each torch belongs to the area owning its spot. */
+  private areaTorches(a: number) {
+    const r = region(this.seed, a), cells = new Map(r.cells);
+    for (const b of [a - 1, a + 1]) if (b >= 0) for (const [k, t] of region(this.seed, b).cells) cells.set(k, t);
+    return placeTorches(cells, { xMin: 1, xMax: WIDTH - 2, yMin: r.minY - 2, yMax: r.maxY + 2, seed: this.seed ^ a })
+      .filter((t) => ownerAt(this.seed, t.x, t.y) === a);
+  }
   breakTorchAt(x: number, y: number): boolean {
-    const torch = this.torches.find((t) => t.active && t.x === x && t.y === y);
-    if (!torch) return false;
-    torch.active = false;
-    return true;
+    return breakTorch(this.torches, x, y);
   }
   maintain(y: number) {
     const index = Math.floor(y / CHUNK);
@@ -317,7 +343,7 @@ function torchesForRoom(seed: number, room: number, cells: Map<string, Tile>): T
   const key = `${seed}:${room}`;
   let t = towerTorchCaches.get(key);
   if (!t) {
-    t = placeTorches(cells, 1, TOWER_WIDTH - 2, 1, TOWER_HEIGHT - 2, seed ^ Math.imul(room + 1, 0x9e3779b1));
+    t = placeTorches(cells, { xMin: 1, xMax: TOWER_WIDTH - 2, yMin: 1, yMax: TOWER_HEIGHT - 2, seed: seed ^ Math.imul(room + 1, 0x9e3779b1) });
     towerTorchCaches.set(key, t);
   }
   return t;
@@ -338,14 +364,14 @@ export class RoomWorld implements Board {
     this.torches = torchesForRoom(seed, room, this.cells);
   }
   breakTorchAt(x: number, y: number): boolean {
-    const torch = this.torches.find((t) => t.active && t.x === x && t.y === y);
-    if (!torch) return false;
-    torch.active = false;
-    return true;
+    return breakTorch(this.torches, x, y);
+  }
+  /** On the 17x17 board. */
+  private inside(x: number, y: number) {
+    return x >= 0 && x < this.width && y >= 0 && y < TOWER_HEIGHT;
   }
   tile(x: number, y: number): Tile {
-    if (x < 0 || x >= this.width || y < 0 || y >= TOWER_HEIGHT)
-      return { kind: "wall" };
+    if (!this.inside(x, y)) return { kind: "wall" };
     const changed = this.changes[point(x, y)];
     if (changed) return changed;
     const chest = this.rewards.find(c => c.x === x && c.y === y);
@@ -359,8 +385,7 @@ export class RoomWorld implements Board {
   step(x: number, y: number, dx: number, dy: number) {
     const nx = x + dx,
       ny = y + dy;
-    if (nx < 0 || nx >= this.width || ny < 0 || ny >= TOWER_HEIGHT) return null;
-    return { x: nx, y: ny };
+    return this.inside(nx, ny) ? { x: nx, y: ny } : null;
   }
   clear(x: number, y: number) {
     this.changes[point(x, y)] = { kind: "floor" };
