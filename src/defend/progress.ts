@@ -14,7 +14,7 @@ import {
   type UpgradeId,
 } from "./catalog.ts";
 import { SPAWN_ROW, TILES_H, TILES_W, parseTileKey, tileKey } from "./grid.ts";
-import { defaultLayout, fitLayout, placedCount, tilesConnected, type Layout, type PlacedKind } from "./layout.ts";
+import { defaultLayout, fitLayout, placedCount, tilesConnected, type Layout, type PlacedKind, type PlacedStructure } from "./layout.ts";
 
 export type DefendSave = {
   layout: Layout;
@@ -98,42 +98,76 @@ const PLACED: PlacedKind[] = ["barracks", "archerBarracks", "archerTower", "cann
 
 export function decodeDefendSave(s: any): DefendSave {
   const d = defaultDefendSave();
-  if (!s || typeof s !== "object") return d;
-  for (const item of PALETTE_ITEMS) if (int(s.owned?.[item], STARTING_OWNED[item], 999)) d.owned[item] = s.owned[item];
-  for (const u of UPGRADES) if (int(s.levels?.[u.id], 0, u.maxLevel)) d.levels[u.id] = s.levels[u.id];
-  if (int(s.bombs, 0, 9999)) d.bombs = s.bombs;
-  if (int(s.bestWave, 0, 1e6)) d.bestWave = s.bestWave;
-  if (s.paletteSide === "right") d.paletteSide = "right";
-  if (s.speed3 === true) d.speed3 = true;
-  if (int(s.seed, 0, 2 ** 32)) d.seed = s.seed;
-  const l = decodeLayout(s.layout, d.owned);
-  if (l) d.layout = l;
+  if (!isObject(s)) return d;
+  for (const item of PALETTE_ITEMS) d.owned[item] = intOr(s.owned?.[item], STARTING_OWNED[item], 999, d.owned[item]);
+  for (const u of UPGRADES) d.levels[u.id] = intOr(s.levels?.[u.id], 0, u.maxLevel, d.levels[u.id]);
+  d.bombs = intOr(s.bombs, 0, 9999, d.bombs);
+  d.bestWave = intOr(s.bestWave, 0, 1e6, d.bestWave);
+  d.paletteSide = s.paletteSide === "right" ? "right" : "left";
+  d.speed3 = s.speed3 === true;
+  d.seed = intOr(s.seed, 0, 2 ** 32, d.seed);
+  d.layout = decodeLayout(s.layout, d.owned) ?? d.layout;
   return d;
 }
 
+const isObject = (s: unknown): s is Record<string, any> => !!s && typeof s === "object";
+const intOr = (n: unknown, min: number, max: number, fallback: number) => (int(n, min, max) ? n : fallback);
+const tileOk = (tx: unknown, ty: unknown) => int(tx, 0, TILES_W - 1) && int(ty, 0, TILES_H - 1) && ty !== SPAWN_ROW;
+
+/** The saved layout, or null unless every part of it is well formed, the
+ * player owns everything on it, and it still fits. */
 function decodeLayout(s: any, owned: Record<PaletteItem, number>): Layout | null {
-  if (!s || typeof s !== "object") return null;
-  const tileOk = (tx: unknown, ty: unknown) => int(tx, 0, TILES_W - 1) && int(ty, 0, TILES_H - 1) && ty !== SPAWN_ROW;
-  if (!tileOk(s.keep?.tx, s.keep?.ty)) return null;
-  if (!Array.isArray(s.cityTiles) || !Array.isArray(s.structures) || !int(s.nextUid, 1, 1e9)) return null;
-  const keepKey = tileKey(s.keep.tx, s.keep.ty);
-  const cityTiles: string[] = [];
-  for (const k of s.cityTiles) {
-    if (typeof k !== "string" || !/^\d+,\d+$/.test(k)) return null;
-    const { tx, ty } = parseTileKey(k);
-    if (!tileOk(tx, ty) || k === keepKey || cityTiles.includes(k)) return null;
-    cityTiles.push(k);
+  if (!isObject(s) || !tileOk(s.keep?.tx, s.keep?.ty) || !int(s.nextUid, 1, 1e9)) return null;
+  const keep = { tx: s.keep.tx, ty: s.keep.ty };
+  const cityTiles = decodeCityTiles(s.cityTiles, tileKey(keep.tx, keep.ty));
+  const structures = decodeStructures(s.structures, s.nextUid);
+  if (!cityTiles || !structures) return null;
+  const layout: Layout = { keep, cityTiles, structures, nextUid: s.nextUid };
+  return legal(layout, owned) ? layout : null;
+}
+
+/** Distinct on-board tile keys other than the keep's, or null. */
+function decodeCityTiles(list: unknown, keepKey: string): string[] | null {
+  if (!Array.isArray(list)) return null;
+  const out: string[] = [];
+  for (const k of list) {
+    if (!cityTileOk(k, keepKey, out)) return null;
+    out.push(k);
   }
-  const structures = [];
+  return out;
+}
+
+/** A well-formed tile key on the board, not the keep's, not yet listed. */
+function cityTileOk(k: unknown, keepKey: string, listed: string[]): k is string {
+  if (typeof k !== "string" || !/^\d+,\d+$/.test(k)) return false;
+  const { tx, ty } = parseTileKey(k);
+  return tileOk(tx, ty) && k !== keepKey && !listed.includes(k);
+}
+
+/** Placed structures on the board with distinct uids issued before
+ * `nextUid`, or null. */
+function decodeStructures(list: unknown, nextUid: number): PlacedStructure[] | null {
+  if (!Array.isArray(list)) return null;
+  const out: PlacedStructure[] = [];
   const uids = new Set<number>();
-  for (const p of s.structures) {
-    if (!PLACED.includes(p?.kind) || !tileOk(p.tx, p.ty) || !int(p.uid, 1, s.nextUid - 1) || uids.has(p.uid)) return null;
+  for (const p of list) {
+    if (!structureOk(p, nextUid, uids)) return null;
     uids.add(p.uid);
-    structures.push({ uid: p.uid, kind: p.kind as PlacedKind, tx: p.tx, ty: p.ty });
+    out.push({ uid: p.uid, kind: p.kind, tx: p.tx, ty: p.ty });
   }
-  const layout: Layout = { keep: { tx: s.keep.tx, ty: s.keep.ty }, cityTiles, structures, nextUid: s.nextUid };
-  if (cityTiles.length > owned.cityTile) return null;
-  for (const k of PLACED) if (placedCount(layout, k) > owned[k]) return null;
-  if (!tilesConnected(new Set([keepKey, ...cityTiles]), layout.keep)) return null;
-  return fitLayout(layout).ok ? layout : null;
+  return out;
+}
+
+const structureOk = (p: any, nextUid: number, uids: Set<number>) =>
+  PLACED.includes(p?.kind) && tileOk(p.tx, p.ty) && int(p.uid, 1, nextUid - 1) && !uids.has(p.uid);
+
+/** The player owns everything the layout places, its tiles join the keep,
+ * and its structures fit. */
+function legal(layout: Layout, owned: Record<PaletteItem, number>) {
+  const tiles = new Set([tileKey(layout.keep.tx, layout.keep.ty), ...layout.cityTiles]);
+  return affordable(layout, owned) && tilesConnected(tiles, layout.keep) && fitLayout(layout).ok;
+}
+
+function affordable(layout: Layout, owned: Record<PaletteItem, number>) {
+  return layout.cityTiles.length <= owned.cityTile && PLACED.every((k) => placedCount(layout, k) <= owned[k]);
 }
