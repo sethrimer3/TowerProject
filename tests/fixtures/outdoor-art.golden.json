@@ -1,0 +1,140 @@
+{
+  "weather 1": {
+    "frames": "8b8ce3833371",
+    "calls": "e0b4a6fa9638",
+    "rumbles": 0,
+    "canvas": "cfca0bc83864"
+  },
+  "weather 2": {
+    "frames": "d76b6b3047d5",
+    "calls": "8b7756310322",
+    "rumbles": 3,
+    "canvas": "41cfc4ea7ce6"
+  },
+  "weather 3": {
+    "frames": "d963b2d0b53d",
+    "calls": "7c73bd51f5f9",
+    "rumbles": 0,
+    "canvas": "3e7c56c6e81c"
+  },
+  "weather 4": {
+    "frames": "a28f52465c93",
+    "calls": "99e397a90ff9",
+    "rumbles": 0,
+    "canvas": "49e9952f70f1"
+  },
+  "weather 5": {
+    "frames": "da0a9eb44aba",
+    "calls": "f765fd624df3",
+    "rumbles": 0,
+    "canvas": "24f5bd3f99bc"
+  },
+  "weather 6": {
+    "frames": "e9a65e34e5c1",
+    "calls": "c7b0d5f22121",
+    "rumbles": 0,
+    "canvas": "859d3c50ab28"
+  },
+  "weather 7": {
+    "frames": "0847d29ddee4",
+    "calls": "f2cbe08dfd89",
+    "rumbles": 2,
+    "canvas": "0ac3ad5b6a4e"
+  },
+  "weather 8": {
+    "frames": "56cc49cd9fef",
+    "calls": "cf750f65d3dc",
+    "rumbles": 2,
+    "canvas": "2f84fa2a953b"
+  },
+  "forest 1 tower": {
+    "entranceX": 8,
+    "tiles": "5aac861385e4",
+    "steps": "301939357744",
+    "drawn": "82c6fa791148",
+    "canvas": "f527c0171ab0"
+  },
+  "forest 1 delve": {
+    "entranceX": 15,
+    "tiles": "554d64c166b4",
+    "steps": "f5ceb0807f3f",
+    "drawn": "f3439c6d7ff9",
+    "canvas": "381bfb356124"
+  },
+  "forest 7 tower": {
+    "entranceX": 8,
+    "tiles": "69b67d9a7c51",
+    "steps": "301939357744",
+    "drawn": "863933d7f215",
+    "canvas": "5b0d74cac9e9"
+  },
+  "forest 7 delve": {
+    "entranceX": 15,
+    "tiles": "b1ea67ea3603",
+    "steps": "f5ceb0807f3f",
+    "drawn": "2dd27edf09b8",
+    "canvas": "219a30c1d39f"
+  },
+  "forest 42 tower": {
+    "entranceX": 8,
+    "tiles": "b94c601ff11a",
+    "steps": "301939357744",
+    "drawn": "4a8aea566a21",
+    "canvas": "c5886fb7d6d3"
+  },
+  "forest 42 delve": {
+    "entranceX": 15,
+    "tiles": "cfc089ada5b0",
+    "steps": "f5ceb0807f3f",
+    "drawn": "663098004c5b",
+    "canvas": "ec6839b65672"
+  },
+  "forest 1234 tower": {
+    "entranceX": 8,
+    "tiles": "20d2b6968106",
+    "steps": "301939357744",
+    "drawn": "bc6be55dfef6",
+    "canvas": "d1a190811e54"
+  },
+  "forest 1234 delve": {
+    "entranceX": 15,
+    "tiles": "3e8f4e567a7b",
+    "steps": "f5ceb0807f3f",
+    "drawn": "eb6599db9985",
+    "canvas": "cb566e00d62c"
+  },
+  "torch 1": "1706a0c9d3f9",
+  "torch 2": "eb034d056522",
+  "torch 3": "3f23fcde1fee",
+  "torch 4": "78bcc35367ca",
+  "torch 5": "a2a4c96fedaa",
+  "torch 6": "fae4373bf0a2",
+  "torch 7": "3638b0218fc1",
+  "torch 8": "e7c435d18b2a",
+  "torch 9": "fa6181380d8d",
+  "torch 10": "21013bffbe94",
+  "torch 11": "f9997d4df3d7",
+  "torch 12": "b2acdef525b1",
+  "torch open": [
+    "636ae38c6ff5",
+    "37dfa65f8f4a",
+    "22796b6a5a60"
+  ],
+  "sprites 1 tower": {
+    "drawn": "8e554c94b0bf",
+    "canvas": "a2c9cfcca815"
+  },
+  "sprites 1 delve": {
+    "drawn": "b228dcfdc837",
+    "canvas": "7968f5416940"
+  },
+  "sprites 42 tower": {
+    "drawn": "8e554c94b0bf",
+    "canvas": "5c8fa1eb255c"
+  },
+  "sprites 42 delve": {
+    "drawn": "b228dcfdc837",
+    "canvas": "41f918dcc7bc"
+  },
+  "glow": "9b85ba92f4e7"
+}

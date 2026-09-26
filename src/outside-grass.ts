@@ -40,7 +40,7 @@ export class OutsideGrass {
     if (b) return b;
     b = [];
     const t = world.tile(x, y);
-    if (t.kind === "floor" && outsideSpriteKind(t, x, y, seed, center).family === "grass") {
+    if (t.kind === "floor" && outsideSpriteKind(t, { x, y, seed, center }).family === "grass") {
       const r = (k: number) => tileRandom(x * 41 + k * 7, y * 29 - k * 13, seed ^ 0x6a55);
       // Clumps of two to four blades fanning out from one root.
       const clumps = 6 + Math.floor(r(0) * 4);

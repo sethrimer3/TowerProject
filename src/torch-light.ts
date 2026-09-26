@@ -37,57 +37,88 @@ export function lightFalloff(d: number, radius: number) {
  * tile to each tile in the field window. Tiny grid, so a simple O(n²)
  * Dijkstra is plenty. */
 function pathDistances(torch: LightSource, reach: number, isWall: (x: number, y: number) => boolean) {
-  const n = reach * 2 + 1, left = torch.x - reach, bottom = torch.y - reach;
-  const dist = new Float32Array(n * n).fill(Infinity);
+  const n = reach * 2 + 1;
+  const g: PathGrid = { n, wall: wallWindow(torch.x - reach, torch.y - reach, n, isWall), dist: new Float32Array(n * n).fill(Infinity) };
   const done = new Uint8Array(n * n);
+  g.dist[reach * n + reach] = 0;
+  for (let best = nearestOpen(g.dist, done); best >= 0; best = nearestOpen(g.dist, done)) {
+    done[best] = 1;
+    relax(g, best);
+  }
+  return g;
+}
+
+/** The field window: its size in tiles, wall mask and walking distances. */
+type PathGrid = { n: number; wall: Uint8Array; dist: Float32Array };
+/** Neighbour steps, row by row. */
+const STEPS_8 = [[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]] as const;
+
+function wallWindow(left: number, bottom: number, n: number, isWall: (x: number, y: number) => boolean) {
   const wall = new Uint8Array(n * n);
   for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) wall[j * n + i] = isWall(left + i, bottom + j) ? 1 : 0;
-  dist[reach * n + reach] = 0;
-  for (;;) {
-    let best = -1;
-    for (let k = 0; k < n * n; k++) if (!done[k] && dist[k] < Infinity && (best < 0 || dist[k] < dist[best])) best = k;
-    if (best < 0) break;
-    done[best] = 1;
-    const bi = best % n, bj = (best - bi) / n;
-    for (let dj = -1; dj <= 1; dj++)
-      for (let di = -1; di <= 1; di++) {
-        if (!di && !dj) continue;
-        const i = bi + di, j = bj + dj;
-        if (i < 0 || j < 0 || i >= n || j >= n || wall[j * n + i]) continue;
-        if (di && dj && (wall[bj * n + i] || wall[j * n + bi])) continue;
-        const d = dist[best] + (di && dj ? Math.SQRT2 : 1);
-        if (d < dist[j * n + i]) dist[j * n + i] = d;
-      }
-  }
-  return { dist, wall, n };
+  return wall;
 }
+
+/** The closest reached tile not yet settled, or -1. */
+function nearestOpen(dist: Float32Array, done: Uint8Array) {
+  let best = -1, bestD = Infinity;
+  for (let k = 0; k < dist.length; k++)
+    if (!done[k] && dist[k] < bestD) {
+      best = k;
+      bestD = dist[k];
+    }
+  return best;
+}
+
+/** Shortens the distances of the tiles one step from `best`. */
+function relax(g: PathGrid, best: number) {
+  const bi = best % g.n, bj = (best - bi) / g.n;
+  for (const step of STEPS_8) {
+    const [di, dj] = step;
+    if (!canStep(g, bi, bj, step)) continue;
+    const k = (bj + dj) * g.n + bi + di;
+    const d = g.dist[best] + (di && dj ? Math.SQRT2 : 1);
+    if (d < g.dist[k]) g.dist[k] = d;
+  }
+}
+
+/** Onto an open tile, and diagonally only between two open sides. */
+function canStep(g: PathGrid, bi: number, bj: number, [di, dj]: readonly [number, number]) {
+  if (!open(g, bi + di, bj + dj)) return false;
+  return !(di && dj) || (open(g, bi + di, bj) && open(g, bi, bj + dj));
+}
+
+const open = (g: PathGrid, i: number, j: number) => Math.min(i, j) >= 0 && Math.max(i, j) < g.n && !g.wall[j * g.n + i];
 
 /** Separable box blur, run twice (a cheap Gaussian approximation). */
 function blur(values: Float32Array, cols: number, rows: number, radius: number) {
   if (radius < 1) return values;
   let src: Float32Array = values, dst: Float32Array = new Float32Array(values.length);
-  const width = radius * 2 + 1;
-  for (let pass = 0; pass < 2; pass++) {
-    for (let y = 0; y < rows; y++) {
-      let acc = 0;
-      for (let x = -radius; x <= radius; x++) acc += src[y * cols + Math.min(cols - 1, Math.max(0, x))];
-      for (let x = 0; x < cols; x++) {
-        dst[y * cols + x] = acc / width;
-        acc += src[y * cols + Math.min(cols - 1, x + radius + 1)] - src[y * cols + Math.max(0, x - radius)];
-      }
+  const byRow: Lines = { lines: rows, len: cols, across: cols, along: 1 };
+  const byColumn: Lines = { lines: cols, len: rows, across: 1, along: cols };
+  for (let pass = 0; pass < 2; pass++)
+    for (const lines of [byRow, byColumn]) {
+      boxPass(src, dst, lines, radius);
+      [src, dst] = [dst, src];
     }
-    [src, dst] = [dst, src];
-    for (let x = 0; x < cols; x++) {
-      let acc = 0;
-      for (let y = -radius; y <= radius; y++) acc += src[Math.min(rows - 1, Math.max(0, y)) * cols + x];
-      for (let y = 0; y < rows; y++) {
-        dst[y * cols + x] = acc / width;
-        acc += src[Math.min(rows - 1, y + radius + 1) * cols + x] - src[Math.max(0, y - radius) * cols + x];
-      }
-    }
-    [src, dst] = [dst, src];
-  }
   return src;
+}
+
+/** `lines` runs of `len` samples; sample k of line l is at l·across + k·along. */
+type Lines = { lines: number; len: number; across: number; along: number };
+
+/** A running-sum box average along every line, clamped at the ends. */
+function boxPass(src: Float32Array, dst: Float32Array, { lines, len, across, along }: Lines, radius: number) {
+  const width = radius * 2 + 1, last = len - 1;
+  for (let l = 0; l < lines; l++) {
+    const at = (k: number) => src[l * across + Math.min(last, Math.max(0, k)) * along];
+    let acc = 0;
+    for (let k = -radius; k <= radius; k++) acc += at(k);
+    for (let k = 0; k < len; k++) {
+      dst[l * across + k * along] = acc / width;
+      acc += at(k + radius + 1) - at(k - radius);
+    }
+  }
 }
 
 /** Light intensity (0-1) around a torch, before color and flicker. */

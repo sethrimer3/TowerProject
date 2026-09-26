@@ -331,8 +331,8 @@ export class Renderer {
   }
   private drawWeather(f: FrameContext) {
     const g = this.game;
-    this.weather.draw(f.c, f.width, g.run.seed, f.dt, g.save.settings.reduceMotion,
-      !g.paused && !g.summary && !document.hidden, g.save.settings.weatherSound !== false);
+    this.weather.draw(f.c, f.width, g.run.seed, { dt: f.dt, reduceMotion: g.save.settings.reduceMotion,
+      active: !g.paused && !g.summary && !document.hidden, sound: g.save.settings.weatherSound !== false });
   }
   /** The dungeon board's thin stone frame and vignette. */
   private drawFrameEdge(f: FrameContext) {

@@ -44,57 +44,93 @@ export class OutdoorWeather {
     source.onended = () => { source.disconnect(); filter.disconnect(); gain.disconnect(); if (this.source === source) this.source = undefined; };
     this.source = source; source.start();
   }
-  draw(c: CanvasRenderingContext2D, size: number, seed: number, dt: number, reduceMotion: boolean, active: boolean, sound: boolean) {
-    if (seed !== this.seed) {
-      this.silence(); this.seed = seed; this.elapsed = 0;
-      this.lightningStart = -100; this.nextThunder = 45 + tileRandom(4, 1, seed) * 30;
-    }
+  draw(c: CanvasRenderingContext2D, size: number, seed: number, frame: WeatherFrame) {
+    this.follow(seed);
     const weather: Weather = outsideWeather(seed);
-    if (active && !reduceMotion) this.elapsed += dt;
-    if (!active || !sound || reduceMotion) this.silence();
-    if (weather === "storm" && active && !reduceMotion && this.elapsed >= this.nextThunder) {
+    const live = frame.active && !frame.reduceMotion;
+    if (live) this.elapsed += frame.dt;
+    if (!live || !frame.sound) this.silence();
+    const lightning = weather === "storm" && live ? this.thunder(seed, frame.sound) : null;
+    paintWeather({ c, size, seed, elapsed: this.elapsed }, weather, lightning);
+  }
+  /** A new seed starts its weather afresh. */
+  private follow(seed: number) {
+    if (seed === this.seed) return;
+    this.silence(); this.seed = seed; this.elapsed = 0;
+    this.lightningStart = -100; this.nextThunder = 45 + tileRandom(4, 1, seed) * 30;
+  }
+  /** Strikes lightning when it's due and rumbles a couple of seconds after;
+   * returns the seconds since the last strike. */
+  private thunder(seed: number, sound: boolean) {
+    if (this.elapsed >= this.nextThunder) {
       this.lightningStart = this.elapsed; this.sounded = false;
       this.nextThunder = this.elapsed + 45 + tileRandom(Math.floor(this.elapsed), 1, seed) * 35;
     }
     const since = this.elapsed - this.lightningStart;
-    if (weather === "storm" && active && !reduceMotion && !this.sounded && since >= 2 && since < 5) {
+    if (!this.sounded && rumbleDue(since)) {
       this.sounded = true;
       if (sound) this.rumble(seed ^ Math.floor(this.elapsed));
     }
-    c.save();
-    if (weather === "sunny") {
-      const sun = c.createLinearGradient(0, 0, size, size);
-      sun.addColorStop(0, "#ffe8a321"); sun.addColorStop(1, "#ffe8a300");
-      c.fillStyle = sun; c.fillRect(0, 0, size, size);
-      c.fillStyle = "#ffeaba09";
-      for (let i = 0; i < 3; i++) { c.beginPath(); c.moveTo(size * (0.1 + i * 0.2), 0); c.lineTo(size * (0.35 + i * 0.2), size); c.lineTo(size * (0.48 + i * 0.2), size); c.lineTo(size * (0.17 + i * 0.2), 0); c.fill(); }
-    } else {
-      c.fillStyle = weather === "storm" ? "#14213550" : weather === "rain" ? "#26394730" : "#36414c18";
-      c.fillRect(0, 0, size, size);
-      // Broad cloud shadows drift slowly across the clearing.
-      for (let i = 0; i < 5; i++) {
-        const x = ((tileRandom(i, 5, seed) + this.elapsed / 250) % 1.6 - 0.3) * size;
-        const y = tileRandom(i, 9, seed) * size;
-        const cloud = c.createRadialGradient(x, y, 0, x, y, size * 0.4);
-        cloud.addColorStop(0, "#121e2b22"); cloud.addColorStop(1, "#121e2b00");
-        c.fillStyle = cloud; c.fillRect(0, 0, size, size);
-      }
-    }
-    if (weather === "rain" || weather === "storm") {
-      c.strokeStyle = weather === "storm" ? "#b4cbd33d" : "#b4cbd330";
-      c.lineWidth = Math.max(0.6, size / 700); c.beginPath();
-      for (let i = 0; i < (weather === "storm" ? 100 : 65); i++) {
-        const x = ((tileRandom(i, 11, seed) - this.elapsed * 0.07) % 1 + 1) % 1 * size;
-        const y = ((tileRandom(i, 12, seed) + this.elapsed * 0.65) % 1) * size;
-        c.moveTo(x, y); c.lineTo(x - size * 0.006, y + size * 0.023);
-      }
-      c.stroke();
-    }
-    if (weather === "storm" && !reduceMotion && active) {
-      const glow = c.createRadialGradient(size * 0.72, 0, 0, size * 0.72, 0, size * 0.6);
-      glow.addColorStop(0, `rgba(205,220,230,${lightningOpacity(since)})`);
-      glow.addColorStop(1, "rgba(205,220,230,0)"); c.fillStyle = glow; c.fillRect(0, 0, size, size);
-    }
-    c.restore();
+    return since;
   }
+}
+
+/** One frame's timing and settings for the weather. */
+export type WeatherFrame = { dt: number; reduceMotion: boolean; active: boolean; sound: boolean };
+/** Thunder follows a strike by two to five seconds. */
+const rumbleDue = (since: number) => since >= 2 && since < 5;
+type Sky = { c: CanvasRenderingContext2D; size: number; seed: number; elapsed: number };
+
+/** The whole weather overlay; `lightning` is the seconds since the last
+ * strike while a live storm shows it, else null. */
+function paintWeather(sky: Sky, weather: Weather, lightning: number | null) {
+  sky.c.save();
+  if (weather === "sunny") paintSun(sky);
+  else paintOvercast(sky, weather);
+  if (weather === "rain" || weather === "storm") paintRain(sky, weather === "storm");
+  if (lightning !== null) paintLightning(sky, lightning);
+  sky.c.restore();
+}
+
+/** A warm wash with three faint slanting sunbeams. */
+function paintSun({ c, size }: Sky) {
+  const sun = c.createLinearGradient(0, 0, size, size);
+  sun.addColorStop(0, "#ffe8a321"); sun.addColorStop(1, "#ffe8a300");
+  c.fillStyle = sun; c.fillRect(0, 0, size, size);
+  c.fillStyle = "#ffeaba09";
+  for (let i = 0; i < 3; i++) { c.beginPath(); c.moveTo(size * (0.1 + i * 0.2), 0); c.lineTo(size * (0.35 + i * 0.2), size); c.lineTo(size * (0.48 + i * 0.2), size); c.lineTo(size * (0.17 + i * 0.2), 0); c.fill(); }
+}
+
+const OVERCAST: Record<Weather, string> = { storm: "#14213550", rain: "#26394730", cloudy: "#36414c18", sunny: "#36414c18" };
+
+/** A grey tint under broad cloud shadows drifting slowly across the clearing. */
+function paintOvercast({ c, size, seed, elapsed }: Sky, weather: Weather) {
+  c.fillStyle = OVERCAST[weather];
+  c.fillRect(0, 0, size, size);
+  for (let i = 0; i < 5; i++) {
+    const x = ((tileRandom(i, 5, seed) + elapsed / 250) % 1.6 - 0.3) * size;
+    const y = tileRandom(i, 9, seed) * size;
+    const cloud = c.createRadialGradient(x, y, 0, x, y, size * 0.4);
+    cloud.addColorStop(0, "#121e2b22"); cloud.addColorStop(1, "#121e2b00");
+    c.fillStyle = cloud; c.fillRect(0, 0, size, size);
+  }
+}
+
+/** Slanting streaks of rain, heavier in a storm. */
+function paintRain({ c, size, seed, elapsed }: Sky, storm: boolean) {
+  c.strokeStyle = storm ? "#b4cbd33d" : "#b4cbd330";
+  c.lineWidth = Math.max(0.6, size / 700); c.beginPath();
+  for (let i = 0; i < (storm ? 100 : 65); i++) {
+    const x = ((tileRandom(i, 11, seed) - elapsed * 0.07) % 1 + 1) % 1 * size;
+    const y = ((tileRandom(i, 12, seed) + elapsed * 0.65) % 1) * size;
+    c.moveTo(x, y); c.lineTo(x - size * 0.006, y + size * 0.023);
+  }
+  c.stroke();
+}
+
+/** The faint glow of distant lightning in the top right. */
+function paintLightning({ c, size }: Sky, since: number) {
+  const glow = c.createRadialGradient(size * 0.72, 0, 0, size * 0.72, 0, size * 0.6);
+  glow.addColorStop(0, `rgba(205,220,230,${lightningOpacity(since)})`);
+  glow.addColorStop(1, "rgba(205,220,230,0)"); c.fillStyle = glow; c.fillRect(0, 0, size, size);
 }

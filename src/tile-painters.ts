@@ -45,7 +45,7 @@ export const isArea1 = (look: Pick<BoardLook, "mode" | "height">) => look.mode =
  * on it (items, doors, enemies...). Returns false while ground art is still
  * loading, so cached layers know to repaint it. */
 export function paintTile(c: CanvasRenderingContext2D, world: TileWorld, t: Tile, x: number, y: number, time: number, layer: 0 | 1, look: BoardLook) {
-  if (look.outside) return layer !== 0 || drawForestTile(c, t, x, y, look.seed, look.entranceX, !look.spritesOff);
+  if (look.outside) return layer !== 0 || drawForestTile(c, t, { x, y, seed: look.seed, center: look.entranceX }, !look.spritesOff);
   if (layer === 0) return paintGround(c, world, t, x, y, look);
   if (t.kind === "wall" || t.kind === "floor") return true;
   paintContents(c, t, { x, y, time, spritesOff: look.spritesOff, reduceMotion: look.reduceMotion, area1: !look.spritesOff && isArea1(look) });
