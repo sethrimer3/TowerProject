@@ -4,6 +4,7 @@ import {
   TOWER_PATTERNS,
   patternWeight,
   pick,
+  type ArchetypeProfile,
   type PatternStep,
   type TowerPattern,
   type Weighted,
@@ -112,25 +113,33 @@ function pickArchetype(depth: number, rng: () => number): Archetype {
 /** Try to place one pattern instance. Returns false (leaving the graph
  * untouched) when no main-route region has room for it. */
 function placePattern(b: GraphBuilder, pattern: TowerPattern, mainIds: number[], budget: number): boolean {
-  const cost = pattern.steps.length;
-  if (b.nodes.length + cost > budget) return false;
-  const needSlots = pattern.layout === "siblings" ? cost : 1;
+  if (b.nodes.length + pattern.steps.length > budget) return false;
+  const hosts = patternHosts(b, pattern, mainIds);
+  if (!hosts.length) return false;
+  const host = hosts[Math.floor(b.rng() * Math.min(2, hosts.length))];
+  if (pattern.layout === "chain") addChain(b, pattern, host);
+  else for (const step of pattern.steps) b.addStep(step, host, pattern);
+  return true;
+}
+
+/** Main-route regions with enough free doorways for the pattern, those with
+ * the most first so branches spread along the route. */
+function patternHosts(b: GraphBuilder, pattern: TowerPattern, mainIds: number[]) {
+  const needSlots = pattern.layout === "siblings" ? pattern.steps.length : 1;
   const hosts = (pattern.attach === "start" ? mainIds.slice(0, 1) : mainIds)
     .filter((id) => b.nodes[id].purpose !== "stairs" && b.freeSlots(id) >= needSlots);
-  if (!hosts.length) return false;
-  // Prefer hosts with the most free doorways so branches spread along the route.
-  hosts.sort((a, c) => b.freeSlots(c) - b.freeSlots(a) || b.rng() - 0.5);
-  const host = hosts[Math.floor(b.rng() * Math.min(2, hosts.length))];
+  return hosts.sort((a, c) => b.freeSlots(c) - b.freeSlots(a) || b.rng() - 0.5);
+}
+
+/** Each step of a chain opens off the one before. */
+function addChain(b: GraphBuilder, pattern: TowerPattern, host: number) {
   let parent = host;
-  for (const step of pattern.steps) {
-    const node = b.addStep(step, pattern.layout === "siblings" ? host : parent, pattern);
-    if (pattern.layout === "chain") {
-      // Chain rooms need a second doorway for the next link.
-      if (node.footprint === "pocket" && step !== pattern.steps[pattern.steps.length - 1]) node.footprint = "room";
-      parent = node.id;
-    }
-  }
-  return true;
+  pattern.steps.forEach((step, i) => {
+    const node = b.addStep(step, parent, pattern);
+    // Chain rooms need a second doorway for the next link.
+    if (node.footprint === "pocket" && i < pattern.steps.length - 1) node.footprint = "room";
+    parent = node.id;
+  });
 }
 
 export function generateStrategicGraph(seed: number, depth: number, budgetCut = 0): StrategicGraph {
@@ -140,8 +149,18 @@ export function generateStrategicGraph(seed: number, depth: number, budgetCut = 
   const profile = ARCHETYPES[archetype];
   const budget = Math.max(3, Math.min(MAX_REGIONS,
     GRAPH_TUNING.regionBudget(depth) + profile.extraBranches + (rng() < 0.5 ? 1 : 0) - budgetCut));
+  const { mainIds, stairs } = addMainRoute(b, profile, budget);
+  addBranches(b, archetype, mainIds, budget);
+  const shortcuts = planShortcuts(b, profile, mainIds, stairs);
+  const graph: StrategicGraph = { archetype, depth, nodes: b.nodes, shortcuts, notes: [] };
+  planResources(graph, b, rng);
+  return graph;
+}
 
-  // ---- main strategic route ------------------------------------------------
+/** The main strategic route: the start hall, gated hubs and transitions,
+ * then the staircase. */
+function addMainRoute(b: GraphBuilder, profile: ArchetypeProfile, budget: number) {
+  const { depth, rng } = b;
   const start = b.add({
     purpose: "start", patternId: "main", parent: null, gate: { kind: "open" },
     rewards: rng() < GRAPH_TUNING.startPotionChance(depth) ? [{ kind: "potion" }] : [],
@@ -150,47 +169,59 @@ export function generateStrategicGraph(seed: number, depth: number, budgetCut = 
   const mainIds = [start.id];
   const mainLen = Math.max(1, Math.min(3, GRAPH_TUNING.mainRouteLength(depth) + profile.mainRouteBonus,
     budget - 2 - 1));
-  for (let i = 0; i < mainLen; i++) {
-    const hub = b.add({
-      purpose: i === mainLen - 1 || rng() < 0.6 ? "hub" : "transition",
-      patternId: "main", parent: mainIds[mainIds.length - 1],
-      gate: pick(mainGateTable(depth, profile.doorBias), rng),
-      rewards: rng() < GRAPH_TUNING.hubPotionChance ? [{ kind: "potion" }] : [],
-      formation: "cluster", route: "main", footprint: "hall", tags: ["progressionRoute"],
-    });
-    if (hub.purpose === "transition") hub.footprint = "room";
-    mainIds.push(hub.id);
-  }
-  const stairsGate = pick(stairsGateTable(depth, profile.doorBias), rng);
-  const guardRoll = rng();
-  const stairs = b.add({
-    purpose: "stairs", patternId: "main", parent: mainIds[mainIds.length - 1],
-    gate: stairsGate, route: "main", footprint: "pocket", tags: ["progressionRoute"],
-    stairsGuard: stairsGate.kind === "open" && guardRoll < 0.5
-      ? ((guardRoll < 0.2 ? "strong" : "normal") as Strength) : undefined,
+  for (let i = 0; i < mainLen; i++) mainIds.push(addHub(b, profile, mainIds[mainIds.length - 1], i === mainLen - 1));
+  const stairs = addStairs(b, profile, mainIds[mainIds.length - 1]);
+  return { mainIds, stairs };
+}
+
+/** One gated region on the main route; the last is always a hub. */
+function addHub(b: GraphBuilder, profile: ArchetypeProfile, parent: number, last: boolean) {
+  const { depth, rng } = b;
+  const hub = b.add({
+    purpose: last || rng() < 0.6 ? "hub" : "transition",
+    patternId: "main", parent,
+    gate: pick(mainGateTable(depth, profile.doorBias), rng),
+    rewards: rng() < GRAPH_TUNING.hubPotionChance ? [{ kind: "potion" }] : [],
+    formation: "cluster", route: "main", footprint: "hall", tags: ["progressionRoute"],
   });
-  // ---- optional branches ---------------------------------------------------
+  if (hub.purpose === "transition") hub.footprint = "room";
+  return hub.id;
+}
+
+/** The staircase pocket; an open one may still have a guard. */
+function addStairs(b: GraphBuilder, profile: ArchetypeProfile, parent: number) {
+  const gate = pick(stairsGateTable(b.depth, profile.doorBias), b.rng);
+  const guardRoll = b.rng();
+  const guarded = gate.kind === "open" && guardRoll < 0.5;
+  return b.add({
+    purpose: "stairs", patternId: "main", parent,
+    gate, route: "main", footprint: "pocket", tags: ["progressionRoute"],
+    stairsGuard: guarded ? ((guardRoll < 0.2 ? "strong" : "normal") as Strength) : undefined,
+  });
+}
+
+/** Optional branches: pattern instances until the budget is spent or twelve
+ * of them find no room. */
+function addBranches(b: GraphBuilder, archetype: Archetype, mainIds: number[], budget: number) {
   let failures = 0;
   while (b.nodes.length < budget && failures < 12) {
     const options = TOWER_PATTERNS
       .filter((p) => b.nodes.length + p.steps.length <= budget)
-      .map((p) => ({ w: patternWeight(p, depth, archetype), v: p }))
+      .map((p) => ({ w: patternWeight(p, b.depth, archetype), v: p }))
       .filter((o) => o.w > 0);
     if (!options.length) break;
-    if (!placePattern(b, pick(options, rng), mainIds, budget)) failures++;
+    if (!placePattern(b, pick(options, b.rng), mainIds, budget)) failures++;
   }
-  // ---- shortcut ------------------------------------------------------------
-  // PATTERN 11: a locked door from early in the route to late in the route —
-  // the enemy path costs HP, the shortcut costs a key.
-  const shortcuts: StrategicGraph["shortcuts"] = [];
-  if (mainIds.length >= 2 && rng() < profile.shortcutChance)
-    shortcuts.push({
-      from: mainIds[0],
-      to: rng() < 0.5 ? stairs.id : mainIds[mainIds.length - 1],
-      gate: { kind: "door", color: depth >= 6 && rng() < 0.3 ? "blue" : "yellow" },
-    });
+}
 
-  const graph: StrategicGraph = { archetype, depth, nodes: b.nodes, shortcuts, notes: [] };
-  planResources(graph, b, rng);
-  return graph;
+/** PATTERN 11: a locked door from early in the route to late in the route —
+ * the enemy path costs HP, the shortcut costs a key. */
+function planShortcuts(b: GraphBuilder, profile: ArchetypeProfile, mainIds: number[], stairs: StrategicNode): StrategicGraph["shortcuts"] {
+  const { depth, rng } = b;
+  if (mainIds.length < 2 || rng() >= profile.shortcutChance) return [];
+  return [{
+    from: mainIds[0],
+    to: rng() < 0.5 ? stairs.id : mainIds[mainIds.length - 1],
+    gate: { kind: "door", color: depth >= 6 && rng() < 0.3 ? "blue" : "yellow" },
+  }];
 }
