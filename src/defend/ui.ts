@@ -17,25 +17,15 @@ import {
   type PaletteItem,
   type Price,
 } from "./catalog.ts";
-import { CELLS_W, SUB, TILES_H, TILES_W, tileKey, type Rect, type TilePos } from "./grid.ts";
-import {
-  cityTileSet,
-  fitLayout,
-  moveCityTile,
-  moveKeep,
-  moveStructure,
-  placeCityTile,
-  placeStructure,
-  removeCityTile,
-  removeStructure,
-  type Layout,
-  type PlacedKind,
-} from "./layout.ts";
+import { CELLS_W, SUB, TILES_H, TILES_W } from "./grid.ts";
+import { fitLayout, removeCityTile, removeStructure, type Layout } from "./layout.ts";
 import { generateCity, type CityMap } from "./citygen.ts";
 import { DefendSim } from "./sim.ts";
 import { DefendRenderer } from "./render.ts";
 import type { Overlay } from "./edit-overlay.ts";
 import { paintIcon, type IconItem } from "./structure-art.ts";
+import { BoardPointers, eventCell, type DragPointer, type DragSession } from "./board-pointers.ts";
+import { dropGhost, legalLayouts, liftsCityTile, refusal, type Drag } from "./drag-rules.ts";
 import { NIGHT_FADE_SECONDS, isBossWave, rollWeather, skyLabel, type Weather } from "./weather.ts";
 import { available, buyBomb, buyItem, buySpeed3, buyUpgrade, canAfford, type DefendSave, type Wallet } from "./progress.ts";
 
@@ -48,13 +38,6 @@ export type DefendHost = {
   devMode(): boolean;
 };
 
-type Drag =
-  | { from: "palette"; item: PaletteItem }
-  | { from: "structure"; uid: number; kind: PlacedKind }
-  | { from: "cityTile"; tile: TilePos }
-  | { from: "keep" }
-  | { from: "bomb" };
-
 const ITEM_NAMES: Record<PaletteItem, string> = {
   cityTile: "City tile",
   barracks: STRUCTURES.barracks.name,
@@ -65,6 +48,8 @@ const ITEM_NAMES: Record<PaletteItem, string> = {
 };
 
 const plural = (name: string) => (name.endsWith("s") ? name : `${name}s`);
+/** Released off the board, or over the palette. */
+const offBoard = (p: DragPointer) => !p.overBoard || p.overPalette;
 
 export class DefendPage {
   private host: DefendHost;
@@ -75,12 +60,11 @@ export class DefendPage {
   private mapLayout: Layout | null = null;
   private sim: DefendSim | null = null;
   private renderer: DefendRenderer | null = null;
-  private drag: Drag | null = null;
-  private dragMoved = false;
-  private legal = new Map<string, Layout>();
-  private hover: string | null = null;
-  private pointer = { x: 0, y: 0, cellX: 0, cellY: 0, overBoard: false, overPalette: false };
-  private ghostEl: HTMLCanvasElement | null = null;
+  private pointers = new BoardPointers({
+    renderer: () => this.renderer,
+    pickUp: (e) => this.pickUp(e),
+    drop: (session) => this.drop(session),
+  });
   private lastTime = 0;
   private message = "";
   private messageT = 0;
@@ -92,19 +76,11 @@ export class DefendPage {
   /** Abandon needs a second click within a few seconds. */
   private abandonArmed = 0;
   private settingsOpen = false;
-  /** Board pointers for panning and pinch-zooming (client coords). */
-  private touches = new Map<number, { x: number; y: number }>();
 
   constructor(root: HTMLElement, host: DefendHost) {
     this.root = root;
     this.host = host;
     window.addEventListener("resize", () => this.layoutBoard());
-    window.addEventListener("pointermove", (e) => this.onPointerMove(e));
-    window.addEventListener("pointerup", (e) => this.onPointerUp(e));
-    window.addEventListener("pointercancel", (e) => {
-      this.touches.delete(e.pointerId);
-      this.endDrag();
-    });
   }
 
   /** Called when the DEFEND tab is shown (or its data changed elsewhere). */
@@ -158,7 +134,7 @@ export class DefendPage {
   /** Pause bookkeeping when the tab is hidden, so time doesn't jump. */
   pause() {
     this.lastTime = 0;
-    this.endDrag();
+    this.pointers.end();
   }
 
   private get save() {
@@ -186,7 +162,7 @@ export class DefendPage {
       <div class="defend-armory" id="defend-armory" hidden></div>`;
     this.renderer = new DefendRenderer(this.root.querySelector("#defend-canvas")!);
     const canvas = this.renderer.canvas;
-    canvas.addEventListener("pointerdown", (e) => this.onBoardPointerDown(e));
+    canvas.addEventListener("pointerdown", (e) => this.pointers.down(e));
     canvas.addEventListener(
       "wheel",
       (e) => {
@@ -315,19 +291,22 @@ export class DefendPage {
         .join("");
     el.querySelectorAll<HTMLCanvasElement>("canvas[data-icon]").forEach((c) => paintIcon(c, c.dataset.icon as IconItem));
     el.querySelectorAll<HTMLButtonElement>("[data-item]").forEach((b) => {
-      b.onpointerdown = (e) => {
-        const id = b.dataset.item!;
-        if (e.button !== 0) return;
-        if (id === "bomb") {
-          if (!this.save.bombs || this.phase !== "sim") return this.setMessage("No bombs left — buy more in the Armory.");
-          this.beginDrag({ from: "bomb" }, e);
-        } else {
-          const item = id as PaletteItem;
-          if (!available(this.save, item)) return this.setMessage(`No ${plural(ITEM_NAMES[item].toLowerCase())} left — buy more in the Armory.`);
-          this.beginDrag({ from: "palette", item }, e);
-        }
-      };
+      b.onpointerdown = (e) => this.pressPalette(b.dataset.item!, e);
     });
+  }
+
+  /** A press on palette entry `id` picks up one of it, if any are left. */
+  private pressPalette(id: string, e: PointerEvent) {
+    if (e.button !== 0) return;
+    if (id === "bomb") return this.pressBomb(e);
+    const item = id as PaletteItem;
+    if (!available(this.save, item)) return this.setMessage(`No ${plural(ITEM_NAMES[item].toLowerCase())} left — buy more in the Armory.`);
+    this.beginDrag({ from: "palette", item }, e);
+  }
+
+  private pressBomb(e: PointerEvent) {
+    if (!this.save.bombs || this.phase !== "sim") return this.setMessage("No bombs left — buy more in the Armory.");
+    this.beginDrag({ from: "bomb" }, e);
   }
 
   private updateHud() {
@@ -499,211 +478,91 @@ export class DefendPage {
 
   // ── Dragging ──────────────────────────────────────────────────────────
   private overlay(): Overlay | null {
-    if (!this.drag || !this.dragMoved) return null;
-    if (this.drag.from === "bomb")
-      return this.pointer.overBoard ? { legal: new Set(), hover: null, ghost: null, bomb: { x: this.pointer.cellX, y: this.pointer.cellY, r: BOMB_RADIUS } } : null;
-    const legal = new Set(this.legal.keys());
-    const hover = this.pointer.overBoard ? this.hover : null;
+    const s = this.pointers.session;
+    if (!s || !s.moved) return null;
+    if (s.drag.from === "bomb")
+      return s.pointer.overBoard ? { legal: new Set(), hover: null, ghost: null, bomb: { x: s.pointer.cellX, y: s.pointer.cellY, r: BOMB_RADIUS } } : null;
+    const legal = new Set(s.legal.keys());
+    const hover = s.pointer.overBoard ? s.hover : null;
     let ghost: Overlay["ghost"] = null;
-    if (hover && this.legal.has(hover)) ghost = this.ghostFor(this.legal.get(hover)!, hover);
+    if (hover && s.legal.has(hover)) ghost = dropGhost(s.drag, s.legal.get(hover)!, hover);
     // Show the full-board highlight only while over the board.
     return { legal, hover, ghost };
   }
 
-  private ghostFor(layout: Layout, key: string): Overlay["ghost"] {
-    const d = this.drag!;
-    const [tx, ty] = key.split(",").map(Number);
-    if ((d.from === "palette" && d.item === "cityTile") || d.from === "cityTile")
-      return { rect: { x: tx * SUB, y: ty * SUB, w: SUB, h: SUB }, kind: "cityTile" };
-    const fit = fitLayout(layout);
-    if (!fit.ok) return null;
-    const uid = d.from === "structure" ? d.uid : d.from === "keep" ? 0 : layout.nextUid - 1;
-    const f = fit.structures.find((s) => s.uid === uid);
-    return f ? { rect: f.rect as Rect, kind: f.kind } : null;
-  }
-
   private beginDrag(d: Drag, e: PointerEvent) {
-    e.preventDefault();
-    this.drag = d;
-    this.dragMoved = false;
-    this.legal = d.from === "bomb" ? new Map() : this.computeLegal(d);
-    const icon =
-      d.from === "bomb" ? "bomb"
-      : d.from === "palette" ? d.item
-      : d.from === "structure" ? d.kind
-      : d.from === "keep" ? "keep"
-      : "cityTile";
-    const g = document.createElement("canvas");
-    g.width = g.height = 48;
-    g.className = "defend-drag-ghost";
-    paintIcon(g, icon as IconItem);
-    document.body.appendChild(g);
-    this.ghostEl = g;
-    this.onPointerMove(e);
+    this.pointers.begin(d, d.from === "bomb" ? new Map() : legalLayouts(d, this.save.layout), e);
   }
 
-  private computeLegal(d: Drag): Map<string, Layout> {
-    const layout = this.save.layout;
-    const out = new Map<string, Layout>();
-    for (let ty = 0; ty < TILES_H; ty++)
-      for (let tx = 0; tx < TILES_W; tx++) {
-        let next: Layout | null = null;
-        if (d.from === "palette") next = d.item === "cityTile" ? placeCityTile(layout, tx, ty) : placeStructure(layout, d.item, tx, ty);
-        else if (d.from === "structure") next = moveStructure(layout, d.uid, tx, ty);
-        else if (d.from === "cityTile") next = tx === d.tile.tx && ty === d.tile.ty ? layout : moveCityTile(layout, d.tile, { tx, ty });
-        else if (d.from === "keep") next = tx === layout.keep.tx && ty === layout.keep.ty ? layout : moveKeep(layout, tx, ty);
-        if (next) out.set(tileKey(tx, ty), next);
-      }
-    return out;
-  }
-
-  private onBoardPointerDown(e: PointerEvent) {
-    if (e.button !== 0) return;
-    // A second finger turns whatever was happening into a pinch.
-    if (this.touches.size || this.drag) {
-      if (this.drag && this.drag.from !== "bomb") this.endDrag();
-      this.touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      return;
-    }
-    if (this.phase === "build" && this.pickUp(e)) return;
-    this.touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
-  }
-
-  /** Start dragging whatever buildable thing is under the pointer. */
+  /** Start dragging whatever buildable thing is under the pointer. Only the
+   * build phase picks things up; in battle a press moves the view. */
   private pickUp(e: PointerEvent): boolean {
+    if (this.phase !== "build") return false;
     const map = this.currentMap();
-    const { cx, cy, inside } = this.eventCell(e);
+    const { cx, cy, inside } = eventCell(this.renderer!, e);
     if (!inside) return false;
-    const i = cy * CELLS_W + cx;
-    const owner = map.owner[i];
+    const drag = this.liftable(map, cx, cy);
+    if (drag) this.beginDrag(drag, e);
+    return !!drag;
+  }
+
+  /** What a press on cell (cx, cy) lifts: the keep, a structure, or an empty
+   * city tile. */
+  private liftable(map: CityMap, cx: number, cy: number): Drag | null {
+    const owner = map.owner[cy * CELLS_W + cx];
     const b = owner >= 0 ? map.buildings[owner] : null;
     const layout = this.save.layout;
-    if (b?.kind === "keep") {
-      this.beginDrag({ from: "keep" }, e);
-      return true;
-    }
-    if (b?.structureUid) {
-      const s = layout.structures.find((p) => p.uid === b.structureUid);
-      if (s) {
-        this.beginDrag({ from: "structure", uid: s.uid, kind: s.kind }, e);
-        return true;
-      }
-    }
+    if (b?.kind === "keep") return { from: "keep" };
+    const s = b?.structureUid ? layout.structures.find((p) => p.uid === b.structureUid) : undefined;
+    if (s) return { from: "structure", uid: s.uid, kind: s.kind };
     const tile = { tx: Math.floor(cx / SUB), ty: Math.floor(cy / SUB) };
-    const key = tileKey(tile.tx, tile.ty);
-    // Empty city tiles lift; loaded or load-bearing ones leave the pointer
-    // free to pan the view instead.
-    if (layout.cityTiles.includes(key) && !layout.structures.some((s) => s.tx === tile.tx && s.ty === tile.ty) && removeCityTile(layout, tile.tx, tile.ty)) {
-      this.beginDrag({ from: "cityTile", tile }, e);
-      return true;
-    }
-    return false;
+    return liftsCityTile(layout, tile) ? { from: "cityTile", tile } : null;
   }
 
-  private eventCell(e: PointerEvent) {
-    const { fx, fy } = this.renderer!.toCell(e.clientX, e.clientY);
-    const H = TILES_H * SUB;
-    const r = this.renderer!.canvas.getBoundingClientRect();
-    const onCanvas = e.clientX >= r.left && e.clientX < r.right && e.clientY >= r.top && e.clientY < r.bottom;
-    return {
-      cx: Math.max(0, Math.min(CELLS_W - 1, Math.floor(fx))),
-      cy: Math.max(0, Math.min(H - 1, Math.floor(fy))),
-      fx,
-      fy,
-      inside: onCanvas && fx >= 0 && fy >= 0 && fx < CELLS_W && fy < H,
-    };
+  /** A released drag: a bomb goes off where it lands; a city element takes
+   * the legal tile under it, or goes back to the palette off the board. */
+  private drop(session: DragSession) {
+    if (session.drag.from === "bomb") this.dropBomb(session.pointer);
+    else this.dropBuilding(session);
   }
 
-  /** Board pointers: one drags the view, two pinch-zoom it. */
-  private trackTouch(e: PointerEvent) {
-    const before = [...this.touches.values()].map((p) => ({ ...p }));
-    this.touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    const after = [...this.touches.values()];
-    if (after.length >= 2) {
-      const [a, b] = before,
-        [c, d] = after;
-      this.renderer!.panBy((c.x + d.x - a.x - b.x) / 2, (c.y + d.y - a.y - b.y) / 2);
-      const d0 = Math.hypot(a.x - b.x, a.y - b.y);
-      if (d0 > 0) this.renderer!.zoomAt((c.x + d.x) / 2, (c.y + d.y) / 2, Math.hypot(c.x - d.x, c.y - d.y) / d0);
-    } else {
-      const prev = before[0];
-      this.renderer!.panBy(e.clientX - prev.x, e.clientY - prev.y);
-    }
-  }
-
-  private onPointerMove(e: PointerEvent) {
-    if (!this.drag && this.touches.has(e.pointerId)) return this.trackTouch(e);
-    if (!this.drag || !this.renderer) return;
-    this.dragMoved = true;
-    const c = this.eventCell(e);
-    this.pointer = {
-      x: e.clientX,
-      y: e.clientY,
-      cellX: c.fx,
-      cellY: c.fy,
-      overBoard: c.inside,
-      overPalette: !!(document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null)?.closest?.("#defend-palette"),
-    };
-    this.hover = c.inside ? tileKey(Math.floor(c.cx / SUB), Math.floor(c.cy / SUB)) : null;
-    if (this.ghostEl) {
-      this.ghostEl.style.left = `${e.clientX}px`;
-      this.ghostEl.style.top = `${e.clientY}px`;
-    }
-  }
-
-  private onPointerUp(e: PointerEvent) {
-    this.touches.delete(e.pointerId);
-    if (!this.drag) return;
-    this.onPointerMove(e);
-    const d = this.drag;
+  private dropBomb(at: DragPointer) {
     const s = this.save;
-    if (d.from === "bomb") {
-      if (this.pointer.overBoard && this.sim && this.phase === "sim" && s.bombs > 0) {
-        this.sim.dropBomb(this.pointer.cellX, this.pointer.cellY);
-        s.bombs--;
-        this.host.persist();
-        this.renderPalette();
-      }
-      return this.endDrag();
-    }
-    const target = this.pointer.overBoard && this.hover ? this.legal.get(this.hover) : undefined;
-    if (target) {
-      s.layout = target;
-    } else if (!this.pointer.overBoard || this.pointer.overPalette) {
-      // Dropped off the board: pick the element back up into the palette.
-      if (d.from === "structure") s.layout = removeStructure(s.layout, d.uid);
-      else if (d.from === "cityTile") {
-        const r = removeCityTile(s.layout, d.tile.tx, d.tile.ty);
-        if (r) s.layout = r.layout;
-      } else if (d.from === "keep" && this.dragMoved) this.setMessage("The keep can be moved, but never removed.");
-    } else if (this.dragMoved && this.hover) {
-      const reason = this.illegalReason(d, this.hover);
-      if (reason) this.setMessage(reason);
-    }
-    if (s.layout !== this.mapLayout) this.host.persist();
-    this.endDrag();
+    if (!at.overBoard || !this.bombsLive()) return;
+    this.sim!.dropBomb(at.cellX, at.cellY);
+    s.bombs--;
+    this.host.persist();
     this.renderPalette();
   }
 
-  private illegalReason(d: Drag, key: string): string {
-    const [tx, ty] = key.split(",").map(Number);
-    if (ty === 0) return "Nothing can be built on the top row — that's where the enemy gathers.";
-    const inCity = cityTileSet(this.save.layout).has(key);
-    if (d.from === "palette" && d.item === "cityTile") return inCity ? "That tile is already part of the city." : "City tiles must touch the city along an edge.";
-    if (d.from === "keep") return "The keep can only move onto another city tile.";
-    if (d.from === "cityTile") return "City tiles must touch the city along an edge.";
-    const kind = d.from === "palette" ? d.item : d.from === "structure" ? d.kind : null;
-    if (kind && kind !== "cityTile" && !inCity && !STRUCTURES[kind].outsideOk) return `The ${STRUCTURES[kind].name.toLowerCase()} must go inside the city limits.`;
-    return "There isn't room for that there.";
+  /** Whether a bomb can go off: in battle, with one left. */
+  private bombsLive() {
+    return !!this.sim && this.phase === "sim" && this.save.bombs > 0;
   }
 
-  private endDrag() {
-    this.drag = null;
-    this.dragMoved = false;
-    this.legal = new Map();
-    this.hover = null;
-    this.ghostEl?.remove();
-    this.ghostEl = null;
+  private dropBuilding({ drag: d, legal, moved, pointer, hover }: DragSession) {
+    const s = this.save;
+    const at = pointer.overBoard ? hover : null;
+    const target = at ? legal.get(at) : undefined;
+    if (target) {
+      s.layout = target;
+    } else if (offBoard(pointer)) {
+      this.returnToPalette(d, moved);
+    } else if (moved && hover) {
+      this.setMessage(refusal(d, s.layout, hover));
+    }
+    if (s.layout !== this.mapLayout) this.host.persist();
+    this.renderPalette();
+  }
+
+  /** Dropped off the board: pick the element back up into the palette. */
+  private returnToPalette(d: Drag, moved: boolean) {
+    const s = this.save;
+    if (d.from === "structure") s.layout = removeStructure(s.layout, d.uid);
+    else if (d.from === "cityTile") {
+      const r = removeCityTile(s.layout, d.tile.tx, d.tile.ty);
+      if (r) s.layout = r.layout;
+    } else if (d.from === "keep" && moved) this.setMessage("The keep can be moved, but never removed.");
   }
 
   // ── Armory ────────────────────────────────────────────────────────────
