@@ -219,6 +219,25 @@ test("a reachable unexplored upward stair always means the run is not deadlocked
   assert.equal(isDeadlocked(g.run), false);
 });
 
+test("the deadlock search follows stairs into visited floors above and below", () => {
+  const find = (seed: number, h: number, kind: string) =>
+    [...generateTowerRoom(seed, h)].find(([, t]) => t.kind === kind)![0].split(",").map(Number);
+  for (const up of [true, false])
+    for (const stocked of [false, true]) {
+      const g = deadlockGame();
+      g.run.floors![1] = wallOverlay(g.run.seed, 1);
+      // Stand beside stairs on one visited floor; the other floor's matching
+      // stairs have a pickup beside them, or nothing.
+      const [from, to] = up ? [0, 1] : [1, 0];
+      g.run.height = from;
+      g.run.floors![from][point(TOWER_START_X, 0)] = { kind: "floor" };
+      g.run.floors![from][point(TOWER_START_X + 1, 0)] = { kind: up ? "stairs" : "stairsDown" };
+      const [sx, sy] = find(g.run.seed, to, up ? "stairsDown" : "stairs");
+      if (stocked) g.run.floors![to][point(sx, sy + 1)] = { kind: "attack" };
+      assert.equal(isDeadlocked(g.run), !stocked, `${up ? "up" : "down"}, ${stocked ? "stocked" : "bare"}`);
+    }
+});
+
 test("a deadlock caused by an impervious bump also terminates the run harmlessly, without Revive", () => {
   const g = deadlockGame();
   g.run.floors![0][point(TOWER_START_X + 1, 0)] = { kind: "enemy", enemy: IMPERVIOUS };
