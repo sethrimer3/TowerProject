@@ -153,57 +153,6 @@ export function reachable(
 }
 /** Validate all floor space, actual separating locks, and a consuming-key traversal.
  * No starting keys are assumed; enemies may gate otherwise connected spaces. Each child chamber gets its key in its parent. */
-
-export function bspRooms(x: number, y: number, w: number, h: number, rng: () => number, minSize = 4) {
-  const regions = [{ x, y, w, h }];
-  const rooms: any[] = [];
-  while (regions.length > 0) {
-    const r = regions.pop()!;
-    const canSplitH = r.h > minSize * 2;
-    const canSplitV = r.w > minSize * 2;
-    if (canSplitH && canSplitV) {
-      if (rng() < 0.5) splitH(r); else splitV(r);
-    } else if (canSplitH) {
-      splitH(r);
-    } else if (canSplitV) {
-      splitV(r);
-    } else {
-      rooms.push(r);
-    }
-    function splitH(r: any) {
-      const wallThick = rng() < 0.25 ? 2 : 1; 
-      const split = Math.floor(rng() * (r.h - minSize * 2 - wallThick + 1)) + minSize;
-      regions.push({ x: r.x, y: r.y, w: r.w, h: split });
-      regions.push({ x: r.x, y: r.y + split + wallThick, w: r.w, h: r.h - split - wallThick });
-    }
-    function splitV(r: any) {
-      const wallThick = rng() < 0.25 ? 2 : 1; 
-      const split = Math.floor(rng() * (r.w - minSize * 2 - wallThick + 1)) + minSize;
-      regions.push({ x: r.x, y: r.y, w: split, h: r.h });
-      regions.push({ x: r.x + split + wallThick, y: r.y, w: r.w - split - wallThick, h: r.h });
-    }
-  }
-  return rooms;
-}
-
-/** Carves a meandering 1-wide corridor and returns every cell it touched
- * (in walk order) so callers can place a choke-point gate exactly on the
- * corridor rather than guessing at coordinates. */
-export function carvePath(cells: Map<string, Tile>, pointFn: (x: number, y: number) => string, x1: number, y1: number, x2: number, y2: number, rng: () => number): [number, number][] {
-  const path: [number, number][] = [];
-  let cx = x1, cy = y1;
-  while(cx !== x2 || cy !== y2) {
-    cells.set(pointFn(cx, cy), { kind: 'floor' });
-    path.push([cx, cy]);
-    if (cx === x2) { cy += Math.sign(y2 - cy); continue; }
-    if (cy === y2) { cx += Math.sign(x2 - cx); continue; }
-    if (rng() < 0.5) cx += Math.sign(x2 - cx); else cy += Math.sign(y2 - cy);
-  }
-  cells.set(pointFn(x2, y2), { kind: 'floor' });
-  path.push([x2, y2]);
-  return path;
-}
-
 export function validate(cells: Map<string, Tile>, base: number) {
   const entrance = point(START_X, base);
   const all = reachable(cells, entrance);
