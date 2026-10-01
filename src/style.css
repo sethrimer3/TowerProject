@@ -1405,6 +1405,7 @@ nav {
 .skill-node.locked .node-icon { color: #75808b; border-style: dashed; }
 .node-icon { position: relative; }
 .node-cost { position: absolute; top: -9px; right: -9px; display: grid; place-items: center; min-width: 18px; height: 18px; padding: 0 3px; box-sizing: border-box; border-radius: 9px; font-size: 10px; line-height: 1; font-weight: 700; color: #0a1016; background: var(--tree-color); box-shadow: 0 0 0 2px #0a1016; }
+.courage .node-cost, .wisdom .node-cost { top: -6px; right: -6px; }
 .node-cost.short { color: var(--tree-color); background: #121c25; border: 1px solid var(--tree-color); }
 .skill-node.owned .node-icon { background: #263831; border-color: var(--tree-color); color: var(--tree-color); }
 .skill-node.available .node-icon { border-color: var(--tree-color); }

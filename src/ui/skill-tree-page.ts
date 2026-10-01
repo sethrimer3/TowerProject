@@ -24,6 +24,9 @@ const gemCount = (n: number) => `${n} ${n === 1 ? "Gem" : "Gems"}`;
 /** The Upgrades page: the Training table, one skill tree at a time
  * (pannable and zoomable; tap a node to see its tooltip, tap it again to
  * buy a rank), or the Archives once that skill is owned. */
+/** The trees whose buyable skills show their price on a corner badge. */
+const PRICED_TREES: TreeId[] = ["inspiration", "courage"];
+
 export class SkillTreePage {
   private tree: PageTab = "inspiration";
   private skill: UpgradeId = "handOrdering";
@@ -303,10 +306,11 @@ export class SkillTreePage {
     const chosen = n.id === this.skill && this.tooltipVisible;
     const unlocks = this.current().unlocks;
     const state = unlocks ? (rank ? ", unlocked" : "") : `, ${rank} of ${skill.max}`;
-    // In a tree of unlocks, a skill that can be bought wears its price on
-    // its corner, so the cost of each path shows at a glance.
-    const { price, affordable } = this.purchase(n.id);
-    const badge = unlocks && !rank && available && !this.locked(this.current())
+    // In the Inspiration and Courage trees, a skill that can be bought wears
+    // its next rank's price on its corner, so each path's cost shows at a
+    // glance.
+    const { price, affordable, locked, maxed } = this.purchase(n.id);
+    const badge = PRICED_TREES.includes(this.current().id) && available && !locked && !maxed
       ? `<span class="node-cost ${affordable ? "" : "short"}" aria-hidden="true">${price}</span>` : "";
     return `<button class="skill-node ${rank ? "owned" : ""} ${available ? "available" : "locked"} ${chosen ? "chosen" : ""}" data-skill="${n.id}" style="left:${n.x}%;top:${n.y}%" aria-label="${skill.name}${state}${available ? "" : ", locked"}${badge ? `, costs ${price}` : ""}" aria-pressed="${chosen}"><span class="node-icon">${skillSprite(n.id)}${badge}</span><span class="node-name">${skill.name}</span>${unlocks ? "" : `<small>${rank} / ${skill.max}</small>`}</button>`;
   }
