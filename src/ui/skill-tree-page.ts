@@ -2,12 +2,13 @@ import { upgradeCard } from "../cards.ts";
 import { revealCard } from "./card-reveal.ts";
 import { TRAINING, TRAINING_GROUPS, TRAINING_PER_LEVEL, UPGRADES, cost, trainingOpen, type TrainingId, type UpgradeId } from "../config.ts";
 import { TREES, mapNodes, skillAvailable, treeHeight, type TreeId } from "../skill-trees.ts";
-import { trainingPoints, trainingStep, trainingText, upgradeText } from "../loadout.ts";
+import { trainingPoints, trainingSpeed, trainingStep, trainingText, upgradeText } from "../loadout.ts";
+import { whole } from "../whole.ts";
 import { TreeParticles } from "../tree-particles.ts";
 import { TrainingParticles } from "../training-particles.ts";
-import { finishGems, nextTrainerGems, trainingJob, trainingSeconds, trainingSlots } from "../training-jobs.ts";
+import { BOOST_RATE, boostLeft, claimBoost, finishGems, nextTrainerGems, trainingJob, trainingMs, trainingSlots } from "../training-jobs.ts";
 import type { AppContext } from "./app.ts";
-import { clamp, el, gemIcon, skillSprite, uiSprite, type UiSprite } from "./dom.ts";
+import { adIcon, clamp, clockIcon, el, gemIcon, goldIcon, pointsIcon, skillSprite, uiSprite, type UiSprite } from "./dom.ts";
 import { TRAINING_RESET_GEMS } from "../gems.ts";
 import { bindPanZoom, type View } from "./pan-zoom.ts";
 import { ArchivesPanel, formatDuration } from "./archives-page.ts";
@@ -45,16 +46,19 @@ export class SkillTreePage {
   }
 
   render() {
-    const upgrades = this.ctx.game.save.upgrades;
-    if (this.tree === "archives" && !upgrades.archives) this.tree = "inspiration";
-    if (this.tree === "training" && !upgrades.training) this.tree = "inspiration";
-    const busy = this.ctx.game.save.archives.slots.filter(s => s.job).length;
-    // The Archives tab, once owned, sits before Wayfinding.
-    const archives = upgrades.archives ? `<button data-tree="archives" aria-pressed="${this.tree === "archives"}"><span>${uiSprite("log")}</span>Archives<small>${busy} RESEARCHING</small></button>` : "";
-    // The Training tab, once its skill is owned, comes first.
-    const training = upgrades.training ? `<button data-tree="training" aria-pressed="${this.tree === "training"}"><span>${uiSprite("attack")}</span>Training<small>${trainingPoints(this.ctx.game.save).left} POINTS</small></button>` : "";
-    const tabs = training +
-      TREES.map(t => `${t.id === "wayfinding" ? archives : ""}<button data-tree="${t.id}" aria-pressed="${t.id === this.tree}"><span>${uiSprite(TREE_ICONS[t.id] ?? "defend")}</span>${t.name}<small>${t.gate && !upgrades[t.gate] ? "LOCKED" : "UNLOCKED"}</small></button>`).join("");
+    const save = this.ctx.game.save, upgrades = save.upgrades;
+    // A tab shows once what unlocks it is owned; Dev mode shows them all.
+    const open = (id?: UpgradeId) => save.settings.devMode || !id || upgrades[id] > 0;
+    const shown = (tab: PageTab) => tab === "archives" ? open("archives") : tab === "training" ? open("training") : open(TREES.find(t => t.id === tab)?.gate);
+    if (!shown(this.tree)) this.tree = "inspiration";
+    const busy = save.archives.slots.filter(s => s.job).length;
+    const archives = open("archives") ? `<button data-tree="archives" aria-pressed="${this.tree === "archives"}"><span>${uiSprite("log")}</span>Archives<small>${busy} RESEARCHING</small></button>` : "";
+    const training = open("training") ? `<button data-tree="training" aria-pressed="${this.tree === "training"}"><span>${pointsIcon("ui-sprite")}</span>Training<small>${trainingPoints(save).left} POINTS</small></button>` : "";
+    // Inspiration, shown from the start, then Training, unlocked a little
+    // later; the Archives sit before Wayfinding.
+    const tabs = TREES.filter(t => shown(t.id)).map(t =>
+      `${t.id === "wayfinding" ? archives : ""}<button data-tree="${t.id}" aria-pressed="${t.id === this.tree}"><span>${uiSprite(TREE_ICONS[t.id] ?? "defend")}</span>${t.name}<small>${t.gate && !upgrades[t.gate] ? "LOCKED" : "UNLOCKED"}</small></button>${t.id === "inspiration" ? training : ""}`).join("")
+      + (shown("wayfinding") ? "" : archives);
     const bindTabs = () => document.querySelectorAll<HTMLButtonElement>("[data-tree]").forEach(b => b.onclick = () => {
       this.tree = b.dataset.tree as PageTab;
       this.tooltipVisible = false;
@@ -71,6 +75,17 @@ export class SkillTreePage {
       bindTabs();
       document.querySelectorAll<HTMLButtonElement>("[data-train]").forEach(b => b.onclick = () => {
         if (this.ctx.game.train(b.dataset.train as TrainingId)) this.ctx.update();
+        this.render();
+      });
+      document.querySelectorAll<HTMLButtonElement>("[data-train-gold]").forEach(b => b.onclick = () => {
+        if (this.ctx.game.trainWithGold(b.dataset.trainGold as TrainingId)) this.ctx.update();
+        this.render();
+      });
+      document.querySelector<HTMLButtonElement>("#boost-claim")?.addEventListener("click", () => {
+        if (this.ctx.game.claimTrainingBoost()) {
+          this.ctx.save();
+          this.ctx.update();
+        }
         this.render();
       });
       document.querySelectorAll<HTMLButtonElement>("[data-cancel]").forEach(b => b.onclick = () => {
@@ -119,14 +134,22 @@ export class SkillTreePage {
     if (this.tooltipVisible && tree.nodes.some(n => n.id === this.skill)) this.showTooltip();
   }
 
-  /** Asks before resetting a stat for Gems: what it costs, the points it
-   * returns, and the Gems held; Reset only when they cover it. */
+  /** Asks before resetting a stat for Gems: what it costs, what it
+   * returns (training points, Gold and time credit), and the Gems held;
+   * Reset only when they cover it. */
   private confirmReset(id: TrainingId) {
     const { game, modal } = this.ctx, row = TRAINING.find(t => t.id === id)!,
-      ranks = game.save.training[id], points = row.cost * ranks,
+      ranks = game.save.training[id], paid = game.save.trainingPaid[id], job = trainingJob(game.save.trainingJobs, id),
+      gold = paid.gold + (job?.gold ?? 0), time = paid.ms + (job ? Math.max(0, job.ms - game.trainingLeft(id)) : 0),
       short = game.save.gems < TRAINING_RESET_GEMS && !game.free;
+    const back = [
+      paid.points ? `${pointsIcon()} <b>${paid.points}</b>` : "",
+      gold ? `${goldIcon()} <b>${whole(gold)}</b>` : "",
+      time ? `${clockIcon()} <b>${formatDuration(time)}</b>` : "",
+    ].filter(Boolean).join(" ");
     modal.innerHTML = `<small>TRAINING</small><h2>Reset ${row.name}?</h2>
-      <p>Spend ${TRAINING_RESET_GEMS} Gems to reset ${row.name} to no ranks and recover all <b>${points}</b> training ${points === 1 ? "point" : "points"} spent on its ${ranks} ${ranks === 1 ? "rank" : "ranks"}.</p>
+      <p>Spend ${TRAINING_RESET_GEMS} Gems to reset ${row.name} to no ranks${job ? " and stop the rank in training" : ""}, from ${ranks} ${ranks === 1 ? "rank" : "ranks"}.</p>
+      ${back ? `<p class="reset-back">Returns ${back}</p><p class="hint">Time credit is taken off the next ranks trainers train.</p>` : ""}
       <p class="hint reset-gems">${gemIcon()} You hold ${game.save.gems} Gems${short ? ": not enough." : "."}</p>
       <div class="dialog-actions"><button id="cancel">Cancel</button><button id="confirm" ${short ? "disabled" : ""}>Reset · ${TRAINING_RESET_GEMS} Gems</button></div>`;
     modal.showModal();
@@ -141,46 +164,62 @@ export class SkillTreePage {
     };
   }
 
-  /** The hero's stats, each with what a rank is worth at the hero's level,
-   * what one more rank makes it and what that costs; tap the cost to train. */
+  /** The hero's stats, each with what a rank is worth at the hero's level
+   * and what one more rank makes it; beside them, a trainer's Gold price
+   * (a rank that takes time) and the training points that buy a rank at
+   * once. Above them, the training boost. */
   private trainingHtml() {
-    const save = this.ctx.game.save, points = trainingPoints(save), slots = trainingSlots(save);
+    const game = this.ctx.game, save = game.save, points = trainingPoints(save), slots = trainingSlots(save);
     const row = (t: (typeof TRAINING)[number]) => {
-      const { now, next, worth, affordable, unit, maxed } = trainingStep(save, t.id);
-      const price = `${t.cost} ${t.cost === 1 ? "point" : "points"}`;
+      const { now, next, worth, affordable, unit, maxed, gold, goldAffordable } = trainingStep(save, t.id);
       // A row with a most ranks says so, and once there offers no next one.
-      const most = "max" in t ? `, up to ${trainingStep({ ...save, training: { ...save.training, [t.id]: t.max } }, t.id).now}${unit}` : "";
+      const most = "max" in t ? `, up to ${trainingStep({ ...save, training: { ...save.training, [t.id]: t.max }, trainingJobs: [] }, t.id).now}${unit}` : "";
       const shown = (v: number) => trainingText(v, unit);
       // A multiplier's rank adds a percent; other rows add in their own unit.
       const step = unit === "×" ? `${worth}%` : `${unit ? worth : Math.round(worth * 10) / 10}${unit}`;
       const job = trainingJob(save.trainingJobs, t.id), full = save.trainingJobs.length >= slots;
-      const takes = formatDuration(trainingSeconds(save.training[t.id]) * 1000);
-      // A rank in training shows its countdown (tap to stop it and get the points back).
-      const buy = job
-        ? `<span class="training-job"><button class="training-box training-timer" data-cancel="${t.id}" aria-label="Training ${t.name}: tap to cancel and get the points back" title="Tap to cancel and get the points back"><span data-training-timer="${t.id}">${formatDuration(job.completesAt - this.ctx.game.clock())}</span></button>${this.finishButton(t.id, t.name, job.completesAt)}</span>`
+      const takes = formatDuration(Math.max(0, trainingMs(save.training[t.id], trainingSpeed(save)) - save.trainingCredit));
+      // A rank a trainer is training shows its countdown (tap to stop it and
+      // get the Gold back), else the trainer's price.
+      const trainer = job
+        ? `<span class="training-job"><button class="training-box training-timer" data-cancel="${t.id}" aria-label="Training ${t.name}: tap to stop and get the Gold back" title="Tap to stop and get the Gold back"><span data-training-timer="${t.id}">${formatDuration(game.trainingLeft(t.id))}</span></button>${this.finishButton(t.id, t.name)}</span>`
         : maxed
         ? `<button class="training-box training-cost" disabled aria-label="${t.name} is fully trained">Max</button>`
-        : `<button class="training-box training-cost" data-train="${t.id}" ${affordable && !full ? "" : "disabled"} aria-label="Train ${t.name} to ${shown(next)} for ${price}, taking ${takes}" title="${full ? "Every trainer is busy" : `Takes ${takes}`}">${price}</button>`;
-      const ranks = save.training[t.id];
-      const reset = `<button class="training-reset" data-reset="${t.id}" ${ranks ? "" : "disabled"} aria-label="Reset ${t.name}" title="${ranks ? `Reset ${t.name} for ${TRAINING_RESET_GEMS} Gems` : `${t.name} has no ranks to reset`}">${uiSprite("undo")}</button>`;
-      const takesText = maxed ? "" : ` · takes ${takes}`;
-      return `<div class="training-row${job ? " active" : ""}" role="listitem" data-training-row="${t.id}"><span class="training-label">${t.name}<small>+${step} a rank${most}${takesText}</small></span><span class="training-box">${shown(now)}</span><span class="training-arrow" aria-hidden="true">→</span><span class="training-box next">${shown(next)}</span>${buy}${reset}</div>`;
+        : `<button class="training-box training-cost training-gold" data-train-gold="${t.id}" ${goldAffordable && !full ? "" : "disabled"} aria-label="Pay ${whole(gold)} Gold to a trainer to train ${t.name} to ${shown(next)}, taking ${takes}" title="${full ? "Every trainer is busy" : `Takes ${takes}`}">${goldIcon()}<span>${whole(gold)}</span></button>`;
+      const now_ = maxed
+        ? ""
+        : `<button class="training-box training-cost training-now" data-train="${t.id}" ${affordable ? "" : "disabled"} aria-label="Spend ${t.cost} training ${t.cost === 1 ? "point" : "points"} to train ${t.name} now" title="Train now">${pointsIcon()}<span>${t.cost}</span></button>`;
+      const ranks = save.training[t.id], resettable = ranks > 0 || !!job;
+      const reset = `<button class="training-reset" data-reset="${t.id}" ${resettable ? "" : "disabled"} aria-label="Reset ${t.name}" title="${resettable ? `Reset ${t.name} for ${TRAINING_RESET_GEMS} Gems` : `${t.name} has no ranks to reset`}">${uiSprite("undo")}</button>`;
+      return `<div class="training-row${job ? " active" : ""}" role="listitem" data-training-row="${t.id}"><span class="training-label">${t.name}<small>+${step} a rank${most}</small></span><span class="training-box">${shown(now)}</span><span class="training-arrow" aria-hidden="true">→</span><span class="training-box next">${shown(next)}</span>${trainer}${now_}${reset}</div>`;
     };
     // Each group's rows, leaving out any whose upgrade isn't owned yet.
     const rows = (Object.entries(TRAINING_GROUPS) as [keyof typeof TRAINING_GROUPS, string][]).map(([group, name]) => {
       const open = TRAINING.filter(t => t.group === group && trainingOpen(t, save.upgrades));
       return open.length ? `<h4 class="training-group">${name}</h4>${open.map(row).join("")}` : "";
     }).join("");
+    const credit = save.trainingCredit > 0
+      ? `<span class="training-credit" title="Time credit: taken off the next ranks trainers train">${clockIcon()} <b id="training-credit">${formatDuration(save.trainingCredit)}</b></span>`
+      : "";
     return `<section class="training"><canvas class="training-particles" aria-hidden="true"></canvas><header class="tree-heading"><h3>Training</h3></header>
-      <p class="training-points">Training points: <b id="training-points">${points.left}</b> <small>· ${TRAINING_PER_LEVEL} each level · every rank grows as you level up</small></p>
+      ${this.boostHtml()}
+      <p class="training-points"><span class="training-held" title="Training points">${pointsIcon()} <b id="training-points">${points.left}</b></span>${credit}<small>Level up with ${pointsIcon()} or pay ${goldIcon()} to a trainer</small></p>
       <p class="training-points training-slots">Trainers: <b id="training-slots">${save.trainingJobs.length} / ${slots}</b> ${this.trainerButton()}</p>
       <div class="training-table" role="list" aria-label="Stat training">${rows}</div></section>`;
   }
 
+  /** The training boost: ×2, its time left or "Inactive", and the button
+   * that claims an hour more, up to four. */
+  private boostHtml() {
+    const game = this.ctx.game, left = boostLeft(game.save.trainingBoostUntil, game.clock()),
+      full = claimBoost(game.save.trainingBoostUntil, game.clock()) === null;
+    return `<div class="training-boost${left ? " active" : ""}" id="training-boost"><b class="boost-rate">×${BOOST_RATE}</b><span class="boost-time" id="boost-time">${left ? formatDuration(left) : "Inactive"}</span><button id="boost-claim" class="boost-claim" ${full ? "disabled" : ""} aria-label="Watch an ad: training goes twice as fast for an hour more, up to four" title="${full ? "Four hours is the most" : "Training goes twice as fast for an hour more"}">${adIcon()}<span>+1h</span></button></div>`;
+  }
+
   /** The Gem button that finishes a rank in training at once: one Gem per
-   * ten minutes left, rounded up. */
-  private finishButton(id: TrainingId, name: string, completesAt: number) {
-    const game = this.ctx.game, gems = game.free ? 0 : finishGems(completesAt - game.clock());
+   * ten minutes its timer shows, rounded up. */
+  private finishButton(id: TrainingId, name: string) {
+    const game = this.ctx.game, gems = game.free ? 0 : finishGems(game.trainingLeft(id));
     return `<button class="training-finish" data-finish="${id}" ${game.save.gems >= gems ? "" : "disabled"} aria-label="Finish training ${name} now for ${gemCount(gems)}" title="Finish now for ${gemCount(gems)}">${gemIcon()}<span data-finish-gems="${id}">${gems}</span></button>`;
   }
 
@@ -200,16 +239,27 @@ export class SkillTreePage {
     else if (this.tree === "training") this.tickTraining();
   }
 
-  /** Counts the timers beside the ranks in training down, with the Gems
-   * that would finish each. */
+  /** Counts the timers beside the ranks in training down (twice as fast
+   * while the boost lasts), with the Gems that would finish each, and the
+   * boost's own time. */
   private tickTraining() {
-    const game = this.ctx.game, now = game.clock();
+    const game = this.ctx.game;
     for (const job of game.save.trainingJobs) {
+      const left = game.trainingLeft(job.id);
       const span = document.querySelector<HTMLElement>(`[data-training-timer="${job.id}"]`);
-      if (span) span.textContent = formatDuration(job.completesAt - now);
+      if (span) span.textContent = formatDuration(left);
       const gems = document.querySelector<HTMLElement>(`[data-finish-gems="${job.id}"]`);
-      if (gems && !game.free) gems.textContent = String(finishGems(job.completesAt - now));
+      if (gems && !game.free) gems.textContent = String(finishGems(left));
     }
+    const boost = document.getElementById("training-boost");
+    if (boost) boost.outerHTML = this.boostHtml();
+    document.querySelector<HTMLButtonElement>("#boost-claim")?.addEventListener("click", () => {
+      if (game.claimTrainingBoost()) {
+        this.ctx.save();
+        this.ctx.update();
+      }
+      this.render();
+    });
   }
 
   /** Purchase sparkles and node glow on the particle canvas, if showing. */

@@ -238,6 +238,14 @@ export const UPGRADES = [
     currency: "inspiration",
   },
   {
+    id: "fasterTrainers",
+    name: "Faster Trainers",
+    description: "Open Faster Trainers research in the Archives: trainers train ranks faster",
+    base: 2,
+    max: 1,
+    currency: "inspiration",
+  },
+  {
     id: "spareChange",
     name: "Spare Change",
     description: "Every floor climbed for the first time in a run pays Gold: opens Gold / Floor training, and Gold / Floor research in the Archives",

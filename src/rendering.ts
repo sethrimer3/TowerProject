@@ -13,7 +13,7 @@ import type { AtmosphereConfig } from "./lighting-pass.ts";
 import { DungeonLight, type LitBoard } from "./dungeon-light.ts";
 import { RoutePath } from "./route-path.ts";
 import { BoardPopups, lunges } from "./board-popups.ts";
-import { drawLevelUp, drawRevive, LEVEL_UP_MS, REVIVE_MS } from "./level-up.ts";
+import { drawLevelUp, drawRevive, LEVEL_UP_MS, POINTS_MS, REVIVE_MS } from "./level-up.ts";
 import { drawGem, drawGemSparkle, GEM_SPARKLE_MS } from "./gem-art.ts";
 import { darknessOf, forEachViewTile, tileTransform, toTileSpace, type FrameContext } from "./render-frame.ts";
 
@@ -132,7 +132,7 @@ export class Renderer {
     this.popups.draw(f);
     this.drawEffectText(f);
     for (const at of this.game.revivedAt) drawRevive(f, f.now - at);
-    drawLevelUp(f, f.now - this.game.levelUpAt);
+    drawLevelUp(f, f.now - this.game.levelUpAt, this.game.levelUpPoints);
   }
   /** The forest clearing: its contents, the entrance, the route, the hero
    * in its grass, and the weather. */
@@ -414,7 +414,7 @@ export class Renderer {
     return Math.abs(this.playerX - p.x) < eps && Math.abs(this.playerY - p.y) < eps &&
       Math.abs(this.left - t.left) < eps && Math.abs(this.bottom - t.bottom) < eps &&
       !g.route.length && !g.encounter && now - this.arrived > ARRIVAL_GLOW_MS && g.blocked.until <= now && g.effect.until <= now && this.popups.idle && !this.decor.busy &&
-      now - g.levelUpAt >= LEVEL_UP_MS && g.revivedAt.every((at) => now - at >= REVIVE_MS) &&
+      now - g.levelUpAt >= LEVEL_UP_MS + POINTS_MS && g.revivedAt.every((at) => now - at >= REVIVE_MS) &&
       (!g.gemSparkle || now - g.gemSparkle.at >= GEM_SPARKLE_MS);
   }
   /** Active torches roughly within the camera viewport, padded so a torch

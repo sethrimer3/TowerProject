@@ -26,6 +26,17 @@ export const cardArt = (id: CardId, alt: string) =>
   `<img class="card-art" src="${UI_ASSET_BASE}assets/cards/${id}.png" alt="${alt}">`;
 export const uiSprite = (name: UiSprite, className = "ui-sprite") =>
   `<img class="${className}" src="${UI_ASSET_BASE}assets/ui/${name}.png" alt="" aria-hidden="true">`;
+/** A golden arrow pointing up: training points, earned each level. */
+export const pointsIcon = (className = "points-icon") =>
+  `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L21 13h-5.5v8h-7v-8H3z" fill="#ffc94a" stroke="#5a3200" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 6L17.5 12" stroke="#fff3b8" stroke-width="1.2" stroke-linecap="round"/></svg>`;
+/** A clock face: training time credit. */
+export const clockIcon = (className = "clock-icon") =>
+  `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="#e9e1c8" stroke="#3b2a12" stroke-width="2"/><path d="M12 7v5l3.5 2.5" fill="none" stroke="#3b2a12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+/** A small screen with a play mark: watching an ad. */
+export const adIcon = (className = "ad-icon") =>
+  `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2.5" fill="#2b2f3a" stroke="#e9e1c8" stroke-width="1.6"/><path d="M10 9l5 3-5 3z" fill="#ffc94a"/></svg>`;
+/** The Gold coin, sized to sit in a line of text. */
+export const goldIcon = () => uiSprite("gold", "ui-sprite gold-icon");
 /** A cut cyan gem, the Gems currency's icon (drawn like the board's). */
 export const gemIcon = (className = "gem-icon") =>
   `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 5h9L20 9.5 12 20.5 4 9.5z" fill="#2fa9e0"/><path d="M7.5 5h9L20 9.5H4z" fill="#8fe6ff"/><path d="M7.5 5L10 9.5 12 20.5 14 9.5 16.5 5M10 9.5L12 5 14 9.5" fill="none" stroke="#e1faff" stroke-width="0.8" stroke-linejoin="round"/><path d="M7.5 5h9L20 9.5 12 20.5 4 9.5z" fill="none" stroke="#0d3a5c" stroke-width="1.3" stroke-linejoin="round"/></svg>`;
@@ -40,7 +51,7 @@ const SKILL_ITEM_SPRITES: Partial<Record<UpgradeId, keyof typeof AREA1_ITEM_URLS
 };
 const SKILL_UI_SPRITES: Partial<Record<UpgradeId, UiSprite>> = {
   hp: "health", inspirationUndos: "undo", undos: "undo", archives: "log",
-  delve: "delve", gear: "gear", moveSpeed: "automove", training: "attack",
+  delve: "delve", gear: "gear", moveSpeed: "automove", training: "arrow-up", fasterTrainers: "automove",
   revive: "revive", spareChange: "gold", loot: "gold", legacy: "tower", quality: "tower",
   wisdomFocus: "settings", wisdomMemory: "undo", wisdomSight: "upgrades",
   renownBanner: "tower", renownOath: "defense", renownCrown: "gear",

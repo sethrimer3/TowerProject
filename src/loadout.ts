@@ -4,6 +4,7 @@ import type { Save } from "./entities.ts";
 import { BONUS_RANK, FIND_POTION_BASE, FIND_POTION_MAX, FLOOR_GOLD_BASE, FLOOR_GOLD_RANK, FLOOR_SILVER_BASE, FLOOR_SILVER_RANK, FIND_POTION_RANK, REVIVE_BASE, REVIVE_MAX, REVIVE_RANK, GOLD_SHOP, schedulePrice, POTION_PERCENT_BASE, POTION_PERCENT_RANK, TRAINING, TRAINING_PER_LEVEL, UPGRADES, isStatRow, levelForXp, trained, trainingWorth, type GoldItemId, type TrainingId, type UpgradeId } from "./config.ts";
 import { getEquippedBonuses } from "./crafting.ts";
 import { RESEARCH, researched } from "./archives.ts";
+import { trainingGold } from "./training-jobs.ts";
 
 /** What one rank of an upgrade, or one provision, adds to a character. */
 export type Grants = Partial<Record<Stat, number>>;
@@ -112,12 +113,12 @@ export function provisionOpen(save: Pick<Save, "upgrades">, id: GoldItemId) {
 export const provisionPrice = (save: Pick<Save, "provisions">, id: GoldItemId) =>
   schedulePrice(GOLD_SHOP.find((g) => g.id === id)!.price, save.provisions[id]);
 
-/** Training points: earned per level, spent on ranks of training (a rank
- * still in training is already paid for). `left`
+/** Training points: earned per level, spent on ranks of training bought
+ * with them (`trainingPaid`; trainers' ranks cost Gold instead). `left`
  * never goes below zero, even if undo takes back a level already spent. */
-export function trainingPoints(save: Pick<Save, "xp" | "training"> & Partial<Pick<Save, "freeTraining" | "trainingJobs">>) {
+export function trainingPoints(save: Pick<Save, "xp" | "trainingPaid">) {
   const earned = TRAINING_PER_LEVEL * levelForXp(save.xp),
-    spent = TRAINING.reduce((sum, t) => sum + t.cost * (save.training[t.id] + (save.trainingJobs?.some((j) => j.id === t.id) ? 1 : 0)), 0) - (save.freeTraining ?? 0);
+    spent = TRAINING.reduce((sum, t) => sum + save.trainingPaid[t.id].points, 0);
   return { earned, spent, left: Math.max(0, earned - spent) };
 }
 
@@ -169,33 +170,44 @@ const MULTIPLIER_ROWS: ReadonlySet<TrainingId> = new Set(["silverBonus", "killGo
 export const trainingText = (value: number, unit: string) => unit === "×" ? `×${value.toFixed(2)}` : `${value}${unit}`;
 
 /** Whether `id` has as many ranks as it can take. */
-export const trainingMaxed = (save: Pick<Save, "training">, id: TrainingId) => {
+/** How much faster trainers train than at first (Faster Trainers research:
+ * 0.02 a level); a rank takes its time / (1 + this). */
+export const trainingSpeed = (save: Pick<Save, "archives">) => researched(save.archives, "trainingSpeed", 0);
+
+/** Whether `id` can take no more ranks: at its most, counting a rank a
+ * trainer is training. */
+export const trainingMaxed = (save: Pick<Save, "training"> & Partial<Pick<Save, "trainingJobs">>, id: TrainingId) => {
   const row = TRAINING.find((t) => t.id === id)!;
-  return "max" in row && save.training[id] >= row.max;
+  return "max" in row && save.training[id] + (save.trainingJobs?.some((j) => j.id === id) ? 1 : 0) >= row.max;
 };
 
-/** What one more rank of `id` costs and does: to the next run's character
+/** What one more rank of `id` costs (in training points, or a trainer's
+ * Gold) and does: to the next run's character
  * for a stat, in % to what a percent potion restores or the chance a
  * potion is one, to the Gold or Silver a new floor pays, or to a
  * multiplier (its unit "×", what a rank adds in percent). A row at its most
  * ranks has no next rank to buy. */
 export function trainingStep(save: Save, id: TrainingId) {
   const row = TRAINING.find((t) => t.id === id)!, maxed = trainingMaxed(save, id),
-    affordable = !maxed && (save.settings.freePurchases || trainingPoints(save).left >= row.cost);
+    free = save.settings.freePurchases,
+    affordable = !maxed && (free || trainingPoints(save).left >= row.cost),
+    // A trainer's price, in Gold, for the next rank.
+    gold = trainingGold(row.cost, save.training[id]),
+    buy = { affordable, maxed, gold, goldAffordable: !maxed && (free || save.gold >= gold) };
   if (!isStatRow(row)) {
     const ranks = save.training[id];
-    if (id === "floorGold") return { row, unit: "", now: floorGoldAt(ranks), next: floorGoldAt(ranks + 1), worth: FLOOR_GOLD_RANK, affordable, maxed };
-    if (id === "floorSilver") return { row, unit: "", now: floorSilverAt(ranks), next: floorSilverAt(ranks + 1), worth: FLOOR_SILVER_RANK, affordable, maxed };
+    if (id === "floorGold") return { row, unit: "", now: floorGoldAt(ranks), next: floorGoldAt(ranks + 1), worth: FLOOR_GOLD_RANK, ...buy };
+    if (id === "floorSilver") return { row, unit: "", now: floorSilverAt(ranks), next: floorSilverAt(ranks + 1), worth: FLOOR_SILVER_RANK, ...buy };
     // A multiplier's rank reads as the percent it adds.
-    if (MULTIPLIER_ROWS.has(id)) return { row, unit: "×", now: bonusAt(ranks) / 100, next: bonusAt(ranks + 1) / 100, worth: BONUS_RANK, affordable, maxed };
+    if (MULTIPLIER_ROWS.has(id)) return { row, unit: "×", now: bonusAt(ranks) / 100, next: bonusAt(ranks + 1) / 100, worth: BONUS_RANK, ...buy };
     const [value, rank] = id === "findPotion" ? [findPotionChance, FIND_POTION_RANK]
       : id === "revive" ? [reviveChanceAt, REVIVE_RANK]
       : [(r: number) => POTION_PERCENT_BASE + POTION_PERCENT_RANK * r, POTION_PERCENT_RANK];
-    return { row, unit: "%", now: value(ranks) / 100, next: value(maxed ? ranks : ranks + 1) / 100, worth: rank / 100, affordable, maxed };
+    return { row, unit: "%", now: value(ranks) / 100, next: value(maxed ? ranks : ranks + 1) / 100, worth: rank / 100, ...buy };
   }
   const stat = row.stat;
   const now = loadout(save)[stat], next = loadout({ ...save, training: { ...save.training, [id]: save.training[id] + 1 } })[stat];
   const worth = trainingWorth(row, levelForXp(save.xp));
   // The hero's stat as the page shows it: whole, its fraction kept in play.
-  return { row, unit: "", now: whole(now), next: whole(next), worth, affordable, maxed };
+  return { row, unit: "", now: whole(now), next: whole(next), worth, ...buy };
 }

@@ -31,7 +31,10 @@ test("free purchases: skills, Training and provisions are bought with nothing an
   assert.ok(trainNow(g, "hp") && trainNow(g, "hp"));
   assert.equal(g.save.training.hp, 2);
   assert.deepEqual(trainingPoints(g.save), { earned: 3, spent: 0, left: 3 }, "no points spent");
-  assert.equal(g.save.freeTraining, 2 * hp.cost);
+  assert.deepEqual(g.save.trainingPaid.hp, { points: 0, gold: 0, ms: 0 }, "nor anything else");
+  assert.ok(g.trainWithGold("hp"), "a trainer trains for nothing too");
+  assert.equal(g.save.training.hp, 3, "at once");
+  assert.equal(g.save.trainingJobs.length, 0);
 
   assert.ok(g.buyGold(GOLD_SHOP[0].id));
   assert.equal(g.save.provisions[GOLD_SHOP[0].id], 1);
@@ -46,7 +49,7 @@ test("free Training stays unspent after free purchases are turned off, and saves
   assert.ok(trainNow(g, "attack"), "3 points a rank, 3 left");
   assert.ok(!trainNow(g, "attack"), "and none left after");
   const loaded = decode(JSON.stringify(g.save));
-  assert.equal(loaded.freeTraining, g.save.freeTraining);
+  assert.deepEqual(loaded.trainingPaid, g.save.trainingPaid);
   assert.equal(loaded.training.attack, 2);
 });
 

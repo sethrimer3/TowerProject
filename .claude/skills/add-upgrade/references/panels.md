@@ -52,7 +52,7 @@ Research that lasts, paid in Gold and real (wall-clock) time, run by archivists.
 
 ## Training
 
-Hero stats bought with training points (`TRAINING_PER_LEVEL` per hero level), on the Upgrades page's Training tab.
+Hero stats bought with training points (`TRAINING_PER_LEVEL` per hero level) at once, or by a trainer for Gold over time (`trainingGold` and `trainingMs` in `training-jobs.ts`), on the Upgrades page's Training tab.
 
 **Row** (`TRAINING` in `src/config.ts`): `{ id, name, group, stat, base, growth, cost, requires?, max?, description }`. `description` is what the run's training card says it does. A stat row's rank is worth `base × (1 + level / growth)` of `stat` at the hero's current level, ranks already bought included (`trainingWorth`, `trained`). `cost` is points per rank. `stat` must be one of the loadout's stats (`Stat` in `loadout.ts`). `group` is a key of `TRAINING_GROUPS` (Offense, Defense, Utility), under which the tab, and the run's training bar, list it. A new stat (like `shroud`) is added to `Stat` and `Loadout` in `loadout.ts`, carried on the run's hero (`Player`, set in `newRun` and shifted by `changeLoadout`) and read where it acts (the shroud in `combat.ts`). A row without `stat` (Potion %, Find Potion, Revive, Gold / Floor, Silver / Floor, Silver Bonus, Gold / Kill) raises something else: give it its own branch in `trainingStep` (its `unit`, now and next) and read its ranks where it's used (Potion % through `potionPercent` and `game.stepRules`, Find Potion through `percentPotionChance`, fixed on the run as it goes inside, Gold / Floor through `floorGold` when a floor pays). A multiplier row (Silver Bonus, Gold / Kill) returns unit `×`, which `trainingText` shows as ×1.30, its `worth` the percent a rank adds. `max` caps the ranks: `Game.train` refuses past it, the tab shows the row as Max, and the save decoder drops a count above it. A run still in the forest takes every purchase at once (`readyForestRuns` in `state.ts`), so nothing extra is needed for that.
 
@@ -62,7 +62,7 @@ Hero stats bought with training points (`TRAINING_PER_LEVEL` per hero level), on
 
 **Run training:** every row is also sold for Silver inside a run (`run-training.ts`). Give it a price schedule in `RUN_TRAINING_PRICES` (`config.ts`: `cheap`, base 5 and +1+N, +4+N … every five ranks, for a row open from the start; `opened`, base 10 and +2+N, +5+N …, for one a skill opens; `deep`, base 20 and +4+N, +8+N …, for one a deeper skill opens; a dearer row gets its own `{ base, step, growth }`). A stat row then works with nothing more; a row without `stat` needs its run ranks read where it acts (through `ranksInRun`, as `game.trainingNow` does for Potion % and Revive, and `trainInRun` for Find Potion), and its value in `runTrainingValue`.
 
-**Reset:** every row gets a reset button for free: `Game.resetTraining` spends `TRAINING_RESET_GEMS` Gems (`gems.ts`) to set its ranks to 0 and returns `cost × ranks` points, so a new row needs nothing for it.
+**Reset:** every row gets a reset button for free: `Game.resetTraining` spends `TRAINING_RESET_GEMS` Gems (`gems.ts`) to set its ranks to 0 and returns what its ranks were paid with (`save.trainingPaid`: points, Gold, and trainers' time as time credit), so a new row needs nothing for it.
 
 **Touches:** `config.ts`, `tests/loadout.test.ts`, `docs/PROGRESSION_AND_DIFFICULTY.md` (training paragraph), `README.md` (the Training tab paragraph), `CONTEXT.md` (Training point), `ui.golden.json` (Training tab), `save-decode` (the `training` record).
 

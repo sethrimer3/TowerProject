@@ -209,12 +209,11 @@ test("resetting a Training stat costs two Gems and returns every point spent on 
   assert.equal(g.save.training.hp, 1, "other stats keep their ranks");
   assert.equal(trainingPoints(g.save).left, left - 1, "9 points back");
   assert.ok(g.run.player.attack < attack, "the run inside loses what those ranks gave");
-  // Dev free purchases: free, and the free ranks are taken back first.
+  // Dev free purchases: free ranks paid nothing, so a reset returns nothing.
   g.save.settings.freePurchases = true;
   assert.ok(trainNow(g, "attack") && trainNow(g, "attack"));
-  assert.equal(g.save.freeTraining, 6);
+  assert.deepEqual(g.save.trainingPaid.attack, { points: 0, gold: 0, ms: 0 });
   assert.ok(g.resetTraining("attack"));
-  assert.equal(g.save.freeTraining, 0);
   assert.equal(trainingPoints(g.save).left, left - 1, "no points made from nothing");
 });
 

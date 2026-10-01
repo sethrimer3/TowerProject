@@ -1399,6 +1399,8 @@ nav {
 .courage .node-icon, .wisdom .node-icon { border-radius: 50%; }
 .legacy .node-icon { border-radius: 12px 0; }
 .node-name { font-size: 10px; line-height: 1.35; background: #0a1016e8; padding: 0 2px; }
+/* On a phone a long name wraps, so neighbouring nodes' names stay apart. */
+@media (max-width: 440px) { .node-name { max-width: 72px; } }
 .skill-node small { font-size: 9px; color: #9aa7b5; background: #0a1016; }
 .skill-node.locked .node-icon { color: #75808b; border-style: dashed; }
 .skill-node.owned .node-icon { background: #263831; border-color: var(--tree-color); color: var(--tree-color); }
@@ -1848,7 +1850,7 @@ nav button > span img { display: block; width: 42px; height: 42px; max-width: 10
 .training-table { display: grid; gap: 8px; }
 .training-group { margin: 6px 0 0; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #9aa6b6; }
 .training-group:first-child { margin-top: 0; }
-.training-row { display: grid; grid-template-columns: minmax(52px, 1fr) minmax(42px, auto) 18px minmax(42px, auto) minmax(64px, auto) 30px; align-items: center; gap: 6px; }
+.training-row { display: grid; grid-template-columns: minmax(52px, 1fr) minmax(38px, auto) 12px minmax(38px, auto) minmax(56px, auto) minmax(38px, auto) 28px; align-items: center; gap: 5px; }
 /* The Training tab's specks sit behind the rows. */
 .training-particles { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; border-radius: inherit; }
 .training > :not(.training-particles) { position: relative; }
@@ -1871,6 +1873,28 @@ button.training-cost { border-color: #d8b572; color: #ffe1a1; background: #2b271
 .training-finish:disabled, .buy-trainer:disabled { opacity: 0.45; }
 .buy-trainer { min-height: 22px; margin-left: 6px; vertical-align: middle; }
 button.training-cost:disabled { border-color: #4a5566; color: #7c8898; background: #111925; }
+/* A trainer's Gold price and the training points that train a rank now. */
+button.training-gold, button.training-now { display: inline-flex; justify-content: center; align-items: center; gap: 3px; padding: 0 5px; font-size: 11px; }
+button.training-now { border-color: #e0a63a; color: #ffe68a; background: #2e2410; }
+button.training-cost:disabled .gold-icon, button.training-cost:disabled .points-icon { opacity: 0.5; }
+.points-icon, .clock-icon, .ad-icon { width: 14px; height: 14px; vertical-align: -2px; flex-shrink: 0; }
+.ui-sprite.gold-icon { width: 14px; height: 14px; vertical-align: -2px; image-rendering: pixelated; flex-shrink: 0; }
+.training-points small .points-icon, .training-points small .gold-icon { width: 11px; height: 11px; }
+.training-held, .training-credit { display: inline-flex; align-items: center; gap: 4px; margin-right: 10px; }
+.training-held .points-icon, .training-credit .clock-icon { width: 16px; height: 16px; }
+.training-credit b { color: #e9e1c8; font-size: 13px; }
+.training-currency .points-icon { width: 15px; height: 15px; }
+/* The training boost: ×2, its time left, and the ad button. */
+.training-boost { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; padding: 5px 6px 5px 10px; border: 1px solid #4a5566; border-radius: 9px; background: #111925; }
+.training-boost .boost-rate { font-size: 17px; color: #7c8898; }
+.training-boost .boost-time { flex: 1; font-size: 11px; letter-spacing: 1px; color: #7c8898; font-variant-numeric: tabular-nums; text-transform: uppercase; }
+.training-boost.active { border-color: #5fb4d8; background: #0f2230; }
+.training-boost.active .boost-rate { color: #8fe6ff; }
+.training-boost.active .boost-time { color: #bfefff; }
+.boost-claim { min-height: 30px; padding: 0 9px; display: inline-flex; align-items: center; gap: 5px; border: 1px solid #d8b572; border-radius: 8px; background: #2b2718; color: #ffe1a1; font-size: 12px; }
+.boost-claim .ad-icon { width: 18px; height: 18px; }
+.boost-claim:disabled { opacity: 0.45; }
+.reset-back { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 
 /* --- Deck page --- */
 nav button { position: relative; }

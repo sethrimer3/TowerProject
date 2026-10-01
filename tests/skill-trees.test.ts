@@ -49,10 +49,10 @@ test("Greater Heal, then Recovery, Shroud and Find Potion, come after the Archiv
   assert.ok(g.buy("findPotion"));
   assert.equal(before - g.save.tower.inspiration, 10);
   const at = (id: string) => TREES[0].nodes.find((n) => n.id === id)!;
-  assert.deepEqual([at("greaterHeal").x, at("greaterHeal").y, at("greaterHeal").requires], [62, 106, ["archives"]]);
-  assert.deepEqual([at("recovery").x, at("recovery").y, at("recovery").requires], [50, 124, ["greaterHeal"]]);
-  assert.deepEqual([at("shroud").x, at("shroud").y, at("shroud").requires], [82, 124, ["greaterHeal"]], "Shroud sits beside Recovery");
-  assert.deepEqual([at("findPotion").x, at("findPotion").y, at("findPotion").requires], [50, 142, ["recovery"]], "Find Potion sits below Recovery");
+  assert.deepEqual([at("greaterHeal").x, at("greaterHeal").y, at("greaterHeal").requires], [86, 106, ["archives"]]);
+  assert.deepEqual([at("recovery").x, at("recovery").y, at("recovery").requires], [74, 124, ["greaterHeal"]]);
+  assert.deepEqual([at("shroud").x, at("shroud").y, at("shroud").requires], [92, 124, ["greaterHeal"]], "Shroud sits beside Recovery");
+  assert.deepEqual([at("findPotion").x, at("findPotion").y, at("findPotion").requires], [74, 142, ["recovery"]], "Find Potion sits below Recovery");
 });
 test("the hand's skills run to Focus, Gear and Heal off Buildout, Equipment after Focus, and Larger Hand, Buildout and Gear cost 1", () => {
   const at = (id: string) => TREES[0].nodes.find((n) => n.id === id)!;
@@ -127,4 +127,14 @@ test("Inspiration tree: Heal branches off Buildout, and Larger Hand leads to Foc
   g.save.tower.inspiration = 100;
   for (const id of ["handOrdering", "combatStance", "largerHand", "focus"] as const) assert.ok(g.buy(id), id);
   assert.ok(!g.save.upgrades.cardHeal);
+});
+test("Faster Trainers sits beside Blue Key off the Archives, costs 2 and opens its research", () => {
+  const node = TREES[0].nodes.find((n) => n.id === "fasterTrainers")!;
+  assert.deepEqual([node.x, node.y, node.requires], [62, 106, ["archives"]]);
+  assert.equal(cost("fasterTrainers", 0), 2);
+  assert.deepEqual(RESEARCH.fasterTrainers.requires, [{ upgrade: "fasterTrainers" }]);
+  // No two nodes of a row overlap.
+  const rows = new Map<number, number[]>();
+  for (const n of TREES[0].nodes) rows.set(n.y, [...(rows.get(n.y) ?? []), n.x]);
+  for (const [y, xs] of rows) assert.equal(new Set(xs).size, xs.length, `row ${y}`);
 });

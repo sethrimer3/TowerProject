@@ -1,4 +1,4 @@
-import type { TrainingJob } from "./training-jobs.ts";
+import type { TrainingJob, TrainingPaid } from "./training-jobs.ts";
 import type { TierRecord } from "./tiers.ts";
 import type { ArchivesSave } from "./archives.ts";
 import type { CardId } from "./cards.ts";
@@ -191,14 +191,22 @@ export type Save = {
   gold: number;
   provisions: Record<GoldItemId, number>;
   xp: number;
-  /** Ranks of each stat bought with training points (earned per level). */
+  /** Ranks of each stat trained, with training points (earned per level)
+   * or by a trainer for Gold. */
   training: Record<TrainingId, number>;
-  /** Training points' worth of ranks bought with Dev free purchases on,
-   * which cost no points. */
-  freeTraining: number;
-  /** Ranks being trained now (their points are spent), each done when the
-   * wall clock reaches it. */
+  /** What each stat's ranks were paid with, which a reset returns: the
+   * training points spent, the Gold, and the trainers' time (ms). Ranks
+   * bought with Dev free purchases paid nothing. */
+  trainingPaid: Record<TrainingId, TrainingPaid>;
+  /** Ranks being trained by a trainer now (their Gold is paid), each done
+   * when the wall clock reaches it. */
   trainingJobs: TrainingJob[];
+  /** Training time (ms) returned by resets and stopped ranks, taken off
+   * the next ranks trainers train until it is used up. */
+  trainingCredit: number;
+  /** When the training boost (ranks in training go twice as fast) runs
+   * out, as a wall-clock timestamp (ms). */
+  trainingBoostUntil: number;
   /** Trainers bought with Gems: each lets one more stat train at once. */
   trainers: number;
   upgrades: Record<UpgradeId, number>;

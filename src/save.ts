@@ -1,4 +1,4 @@
-import { TRAINER_GEMS, trainingSlots, type TrainingJob } from "./training-jobs.ts";
+import { TRAINER_GEMS, trainingSlots, type TrainingJob, type TrainingPaid } from "./training-jobs.ts";
 import { snap } from "./exact.ts";
 import { TIERS, type TierRecord } from "./tiers.ts";
 import { FIND_POTION_MAX, GOLD_SHOP, OLD_SAVE_KEY, RUN_TRAINING_CAP, SAVE_KEY, TOWER_WIDTH, TRAINING, UPGRADES, WIDTH } from "./config.ts";
@@ -25,8 +25,10 @@ export function defaults(): Save {
     ) as Save["provisions"],
     xp: 0,
     training: Object.fromEntries(TRAINING.map((t) => [t.id, 0])) as Save["training"],
-    freeTraining: 0,
+    trainingPaid: Object.fromEntries(TRAINING.map((t) => [t.id, { points: 0, gold: 0, ms: 0 }])) as Save["trainingPaid"],
     trainingJobs: [],
+    trainingCredit: 0,
+    trainingBoostUntil: 0,
     trainers: 0,
     upgrades: Object.fromEntries(
       UPGRADES.map((u) => [u.id, 0]),
@@ -242,9 +244,12 @@ function decodeProgress(s: any, d: Save, undoCapacity: number) {
   for (const g of GOLD_SHOP) d.provisions[g.id] = count(s.provisions?.[g.id], d.provisions[g.id], 999);
   d.xp = count(s.xp, d.xp);
   for (const t of TRAINING) d.training[t.id] = count(s.training?.[t.id], d.training[t.id], "max" in t ? t.max : 1e6);
-  d.freeTraining = count(s.freeTraining, d.freeTraining);
+  for (const t of TRAINING) d.trainingPaid[t.id] = decodePaid(s.trainingPaid?.[t.id], t.cost * d.training[t.id]);
   d.trainers = count(s.trainers, d.trainers, TRAINER_GEMS.length);
   d.trainingJobs = decodeTrainingJobs(s.trainingJobs, trainingSlots(d));
+  // Times in ms: credit can run to months, and the boost's end is a timestamp.
+  d.trainingCredit = count(s.trainingCredit, d.trainingCredit, Number.MAX_SAFE_INTEGER);
+  d.trainingBoostUntil = count(s.trainingBoostUntil, d.trainingBoostUntil, Number.MAX_SAFE_INTEGER);
   d.tower.inspiration = count(s.tower?.inspiration ?? s.tower?.shards, d.tower.inspiration);
   d.tower.best = count(s.tower?.best, d.tower.best);
   d.delve.courage = count(s.delve?.courage ?? s.delve?.essence, d.delve.courage);
@@ -253,13 +258,20 @@ function decodeProgress(s: any, d: Save, undoCapacity: number) {
   applyMode(d.delve, decodeMode(s.delve, undoCapacity, decodeDelveRun));
   d.delve.memory = decodeMemory(s.delve?.memory);
 }
+/** What a stat's ranks were paid with; a save from before this was kept
+ * paid for them all in points (`points`). */
+function decodePaid(raw: any, points: number): TrainingPaid {
+  if (!raw || typeof raw !== "object") return { points, gold: 0, ms: 0 };
+  return { points: count(raw.points, 0), gold: count(raw.gold, 0, Number.MAX_SAFE_INTEGER), ms: count(raw.ms, 0, Number.MAX_SAFE_INTEGER) };
+}
 /** The ranks in training: only well-formed jobs for distinct rows, up to the slots. */
 function decodeTrainingJobs(raw: any, slots: number): TrainingJob[] {
   const jobs: TrainingJob[] = [];
   if (!Array.isArray(raw)) return jobs;
   for (const j of raw) {
     const ok = TRAINING.some((t) => t.id === j?.id) && Number.isFinite(j.startedAt) && Number.isFinite(j.completesAt) && j.completesAt >= j.startedAt;
-    if (ok && !jobs.some((o) => o.id === j.id) && jobs.length < slots) jobs.push({ id: j.id, startedAt: j.startedAt, completesAt: j.completesAt });
+    if (ok && !jobs.some((o) => o.id === j.id) && jobs.length < slots)
+      jobs.push({ id: j.id, startedAt: j.startedAt, completesAt: j.completesAt, gold: count(j.gold, 0, Number.MAX_SAFE_INTEGER), ms: count(j.ms, j.completesAt - j.startedAt, Number.MAX_SAFE_INTEGER) });
   }
   return jobs;
 }

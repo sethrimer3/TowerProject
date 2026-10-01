@@ -1,4 +1,4 @@
-import { finishGems, nextTrainerGems, trainingJob, trainingSeconds, trainingSlots } from "./training-jobs.ts";
+import { claimBoost, doneAt, finishGems, nextTrainerGems, trainingGold, trainingJob, trainingMs, trainingSlots, workLeft, type TrainingJob } from "./training-jobs.ts";
 import { entrance, floorFor } from "./delve/labyrinth.ts";
 import { chooseStep } from "./automation.ts";
 import { CARDS, deckCards, handSlots, moveCard, nextHandSlotGems, placeCard, planHand, type CardId, type CardPlan } from "./cards.ts";
@@ -15,6 +15,7 @@ import {
   xpForKill,
   levelForXp,
   TRAINING,
+  TRAINING_PER_LEVEL,
   trainingOpen,
   isStatRow,
   trained,
@@ -58,7 +59,7 @@ import { snap } from "./exact.ts";
 import { whole, wholeChange, wholeHp } from "./whole.ts";
 import { MODES, milestones, type ModeProfile } from "./modes.ts";
 import { ranksInRun, runTrainingOffer } from "./run-training.ts";
-import { floorGold, floorSilver, keepUndos, killGold, silverBonus, loadout, percentPotionChance, potionPercent, provisionOpen, provisionPrice, reviveChance, trainingMaxed, trainingPoints } from "./loadout.ts";
+import { floorGold, floorSilver, keepUndos, killGold, silverBonus, loadout, percentPotionChance, potionPercent, provisionOpen, provisionPrice, reviveChance, trainingMaxed, trainingPoints, trainingSpeed } from "./loadout.ts";
 import { RESEARCH, cancelResearch, hastenResearch, hireArchivist, researched, settleArchives, startResearch, type ResearchId, type ResearchRecord } from "./archives.ts";
 import { SETTINGS } from "./settings.ts";
 import {
@@ -138,6 +139,9 @@ export class Game {
   /** When the hero last reached a new level (performance.now()), for the
    * board's level-up burst; -Infinity once undo takes the level back. */
   levelUpAt = -Infinity;
+  /** The training points the latest level-up earned, which the board
+   * raises over the hero once its burst is over. */
+  levelUpPoints = 0;
   /** When each of the latest fight's revivals lands (performance.now()),
    * for the board's golden fire; emptied by undo. */
   revivedAt: number[] = [];
@@ -681,7 +685,11 @@ export class Game {
     const level = levelForXp(this.save.xp), xp = tierBonus(this.tier, xpForKill(enemy.strength, floor));
     this.save.xp += xp;
     this.run.xp = (this.run.xp ?? 0) + xp;
-    if (levelForXp(this.save.xp) > level) this.levelUpAt = performance.now();
+    const reached = levelForXp(this.save.xp);
+    if (reached > level) {
+      this.levelUpAt = performance.now();
+      this.levelUpPoints = TRAINING_PER_LEVEL * (reached - level);
+    }
   }
   /** The single path that ends the current run, whether the player
    * accepts defeat or ends it: pays out exactly once and starts the next run
@@ -1249,39 +1257,77 @@ export class Game {
   private get canChooseCards() {
     return !!this.save.upgrades.combatStance && !!this.run.outside;
   }
-  /** Starts training one more rank of `id`, paying its points now: it takes
-   * `trainingSeconds` of the wall clock and counts once that has passed
-   * (`settleTraining`). Refused without the Training skill, for a stat
-   * already in training, with every slot busy, or without the points. With
-   * Dev free purchases it costs nothing and counts at once. */
+  /** Whether the Training skill's tab and commands are open: owned, or
+   * every page shown in Dev mode. */
+  private get trainingOpen() {
+    return !!this.save.upgrades.training || this.save.settings.devMode;
+  }
+  /** Whether one more rank of `id` can be trained at all: its row shows,
+   * and it isn't at its most. */
+  private canTrain(id: TrainingId) {
+    const row = TRAINING.find((t) => t.id === id)!;
+    return this.trainingOpen && trainingOpen(row, this.save.upgrades) && !trainingMaxed(this.save, id);
+  }
+  /** Buys one more rank of `id` with training points: it counts at once,
+   * whether or not a trainer is training the stat too. Refused without the
+   * Training skill, at the stat's most, or without the points. With Dev
+   * free purchases it costs nothing. */
   train(id: TrainingId) {
     this.settleTraining();
-    const row = TRAINING.find((t) => t.id === id)!, jobs = this.save.trainingJobs;
-    if (!this.save.upgrades.training || !trainingOpen(row, this.save.upgrades) || trainingMaxed(this.save, id) || trainingJob(jobs, id)) return false;
-    if (this.free) {
-      return this.changeLoadout(() => {
-        this.save.freeTraining += row.cost;
-        this.save.training[id]++;
-      });
-    }
-    if (jobs.length >= trainingSlots(this.save) || trainingPoints(this.save).left < row.cost) return false;
-    const now = this.clock();
-    jobs.push({ id, startedAt: now, completesAt: now + trainingSeconds(this.save.training[id]) * 1000 });
+    const row = TRAINING.find((t) => t.id === id)!;
+    if (!this.canTrain(id) || (!this.free && trainingPoints(this.save).left < row.cost)) return false;
+    return this.changeLoadout(() => {
+      if (!this.free) this.save.trainingPaid[id].points += row.cost;
+      this.save.training[id]++;
+    });
+  }
+  /** Pays a trainer `trainingGold` to train one more rank of `id`: it
+   * takes `trainingMs` of the wall clock (less any time credit, used up
+   * first) and counts once that has passed (`settleTraining`). Refused
+   * without the Training skill, for a stat already in training or at its
+   * most, with every trainer busy, or without the Gold. With Dev free
+   * purchases it costs nothing and counts at once. */
+  trainWithGold(id: TrainingId) {
+    this.settleTraining();
+    const row = TRAINING.find((t) => t.id === id)!, jobs = this.save.trainingJobs, ranks = this.save.training[id];
+    if (!this.canTrain(id) || trainingJob(jobs, id)) return false;
+    if (this.free) return this.changeLoadout(() => { this.save.training[id]++; });
+    const gold = trainingGold(row.cost, ranks);
+    if (jobs.length >= trainingSlots(this.save) || this.save.gold < gold) return false;
+    const now = this.clock(), ms = trainingMs(ranks, trainingSpeed(this.save)),
+      credit = Math.min(ms, this.save.trainingCredit);
+    this.save.gold = snap(this.save.gold - gold);
+    this.save.trainingCredit -= credit;
+    jobs.push({ id, startedAt: now, completesAt: doneAt(ms - credit, this.save.trainingBoostUntil, now), gold, ms });
+    // Time credit can cover the whole rank.
+    this.settleTraining();
     return true;
   }
-  /** Stops the training of `id`, giving its points back. */
+  /** The training time (ms, at the normal rate) the rank of `id` in
+   * training still needs: what its timer shows. */
+  trainingLeft(id: TrainingId) {
+    const job = trainingJob(this.save.trainingJobs, id);
+    return job ? workLeft(job.completesAt, this.save.trainingBoostUntil, this.clock()) : 0;
+  }
+  /** Stops the training of `id`, giving its Gold back and the time already
+   * spent on it as time credit. */
   cancelTraining(id: TrainingId) {
-    const jobs = this.save.trainingJobs;
-    if (!trainingJob(jobs, id)) return false;
-    this.save.trainingJobs = jobs.filter((j) => j.id !== id);
+    const jobs = this.save.trainingJobs, job = trainingJob(jobs, id);
+    if (!job) return false;
+    this.refundJob(job);
+    this.save.trainingJobs = jobs.filter((j) => j !== job);
     return true;
+  }
+  private refundJob(job: TrainingJob) {
+    this.save.gold = snap(this.save.gold + job.gold);
+    this.save.trainingCredit += Math.max(0, Math.round(job.ms - this.trainingLeft(job.id)));
   }
   /** Finishes the rank of `id` in training now, for `finishGems` of the
-   * time left (none with Dev free purchases). */
+   * training time its timer shows (none with Dev free purchases). */
   finishTraining(id: TrainingId) {
     const job = trainingJob(this.save.trainingJobs, id);
     if (!job) return false;
-    const gems = this.free ? 0 : finishGems(job.completesAt - this.clock());
+    const gems = this.free ? 0 : finishGems(this.trainingLeft(id));
     if (this.save.gems < gems) return false;
     this.save.gems -= gems;
     job.completesAt = Math.min(job.completesAt, this.clock());
@@ -1295,14 +1341,35 @@ export class Game {
     this.save.trainers++;
     return true;
   }
+  /** Claims an hour more of the training boost (an ad will pay for it; for
+   * now it is free), up to `BOOST_MAX_MS` banked: while it lasts, ranks in
+   * training go twice as fast. Each rank's due time moves to match. */
+  claimTrainingBoost() {
+    this.settleTraining();
+    const now = this.clock(), old = this.save.trainingBoostUntil, until = claimBoost(old, now);
+    if (until === null) return false;
+    for (const job of this.save.trainingJobs) job.completesAt = doneAt(workLeft(job.completesAt, old, now), until, now);
+    this.save.trainingBoostUntil = until;
+    return true;
+  }
+  /** Ranks trainers finished and not yet announced, oldest first; the app
+   * takes them for its notifications. */
+  trainingDone: { id: TrainingId; level: number }[] = [];
   /** Counts the ranks whose training the clock has reached, saying so in the
-   * status line; returns how many. */
+   * status line and queuing them in `trainingDone`; returns how many. A run
+   * inside gains each at once. */
   settleTraining() {
     const now = this.clock(), due = this.save.trainingJobs.filter((j) => j.completesAt <= now);
     if (!due.length) return 0;
     this.changeLoadout(() => {
       this.save.trainingJobs = this.save.trainingJobs.filter((j) => !due.includes(j));
-      for (const j of due) this.save.training[j.id]++;
+      for (const j of due) {
+        const paid = this.save.trainingPaid[j.id];
+        this.save.training[j.id]++;
+        paid.gold = snap(paid.gold + j.gold);
+        paid.ms += j.ms;
+        this.trainingDone.push({ id: j.id, level: this.save.training[j.id] });
+      }
     });
     this.message = `Training · ${due.map((j) => TRAINING.find((t) => t.id === j.id)!.name).join(", ")} complete.`;
     return due.length;
@@ -1335,18 +1402,22 @@ export class Game {
     this.afterPlayerAction();
     return true;
   }
-  /** Resets a Training stat to no ranks for `TRAINING_RESET_GEMS` Gems,
-   * returning every point spent on it. With Dev free purchases it costs
-   * nothing and takes back the free ranks first. */
+  /** Resets a Training stat to no ranks for `TRAINING_RESET_GEMS` Gems
+   * (none with Dev free purchases), returning what its ranks were paid
+   * with: the training points, the Gold, and the trainers' time as time
+   * credit. A rank still in training is stopped, the same way. */
   resetTraining(id: TrainingId) {
     this.settleTraining();
-    const row = TRAINING.find((t) => t.id === id)!, ranks = this.save.training[id];
-    if (!ranks || (!this.free && this.save.gems < TRAINING_RESET_GEMS)) return false;
+    const ranks = this.save.training[id], job = trainingJob(this.save.trainingJobs, id);
+    if ((!ranks && !job) || (!this.free && this.save.gems < TRAINING_RESET_GEMS)) return false;
     return this.changeLoadout(() => {
-      if (this.free) this.save.freeTraining = Math.max(0, this.save.freeTraining - row.cost * ranks);
-      else this.save.gems -= TRAINING_RESET_GEMS;
+      const paid = this.save.trainingPaid[id];
+      if (!this.free) this.save.gems -= TRAINING_RESET_GEMS;
+      if (job) this.refundJob(job);
+      this.save.gold = snap(this.save.gold + paid.gold);
+      this.save.trainingCredit += paid.ms;
+      this.save.trainingPaid[id] = { points: 0, gold: 0, ms: 0 };
       this.save.training[id] = 0;
-      // A rank still in training goes too, with its points back.
       this.save.trainingJobs = this.save.trainingJobs.filter((j) => j.id !== id);
     });
   }
@@ -1380,7 +1451,7 @@ export class Game {
   /** Sets archivist `slot` to research `id`'s next level, paying its Gold. */
   startResearch(slot: number, id: ResearchId) {
     this.settleResearch();
-    const started = !!this.save.upgrades.archives && startResearch(this.save, slot, id, this.clock());
+    const started = this.archivesOpen && startResearch(this.save, slot, id, this.clock());
     // Free purchases' research takes no time: it completes now.
     if (started && this.free) this.settleResearch();
     return started;
@@ -1402,8 +1473,13 @@ export class Game {
     hastenResearch(this.save.archives, slot, Math.max(0, job.completesAt - this.clock()));
     return this.settleResearch();
   }
+  /** Whether the Archives' commands are open: the skill owned, or every
+   * page shown in Dev mode. */
+  private get archivesOpen() {
+    return !!this.save.upgrades.archives || this.save.settings.devMode;
+  }
   hireArchivist() {
-    return !!this.save.upgrades.archives && hireArchivist(this.save);
+    return this.archivesOpen && hireArchivist(this.save);
   }
   /** Research completed and not yet announced, oldest first; the app takes
    * them for its notifications. */

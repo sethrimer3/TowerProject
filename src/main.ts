@@ -15,7 +15,7 @@ import { BoardOverlay } from "./ui/board-overlay.ts";
 import { boardHeadingStale, flashRed, renderAdButton, renderBoardHeading, renderHud, renderVitals, gearWaiting, upgradesWaiting } from "./ui/hud.ts";
 import { confirmAction, RunEndDialog, showLog, showSectionPicker } from "./ui/dialogs.ts";
 import { SkillTreePage } from "./ui/skill-tree-page.ts";
-import { ResearchToasts } from "./ui/research-toast.ts";
+import { ResearchToasts, researchToast, trainingToast } from "./ui/research-toast.ts";
 import { GearPage } from "./ui/gear-page.ts";
 import { DeckPage } from "./ui/deck-page.ts";
 import { RunTrainingBar } from "./ui/run-training-bar.ts";
@@ -79,7 +79,7 @@ function update() {
   document.querySelectorAll<HTMLButtonElement>("[data-tab]").forEach((b) => (b.disabled = deck.teaching && b.dataset.tab !== "deck"));
   renderHud(game, renderer, overlay);
   runTraining.render();
-  researchToasts.add(game.researchDone.splice(0));
+  researchToasts.add([...game.researchDone.splice(0).map(researchToast), ...game.trainingDone.splice(0).map(trainingToast)]);
   save();
   runEnd.check();
 }

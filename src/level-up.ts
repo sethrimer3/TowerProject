@@ -2,6 +2,9 @@ import { tileTransform, type FrameContext } from "./render-frame.ts";
 
 /** How long the level-up glow and its "LEVEL UP!" text last. */
 export const LEVEL_UP_MS = 2000;
+/** How long the training points a level-up earned rise over the hero,
+ * once its burst is over. */
+export const POINTS_MS = 1400;
 /** How long a revival's golden fire and its "REVIVED" text last. */
 export const REVIVE_MS = 1400;
 
@@ -52,8 +55,42 @@ const REVIVAL: Blaze = {
 /** The hero's level-up, drawn over the board: a fiery flash bursting
  * outward from the hero, a glow around the hero, and "LEVEL UP!" across
  * the board, `age` ms after the level was reached. */
-export function drawLevelUp(f: FrameContext, age: number) {
+export function drawLevelUp(f: FrameContext, age: number, points = 0) {
   drawBlaze(f, age, LEVEL_UP);
+  if (points > 0) drawPoints(f, age - LEVEL_UP_MS, points);
+}
+
+/** "+3" and the training points' golden arrow rising off the hero and
+ * fading, `age` ms after the level-up's burst ended. */
+function drawPoints(f: FrameContext, age: number, points: number) {
+  if (age < 0 || age >= POINTS_MS) return;
+  const t = age / POINTS_MS, c = f.c, rise = f.look.reduceMotion ? 0 : 14 * t;
+  c.save();
+  c.setTransform(tileTransform(f, f.playerX, f.playerY));
+  c.globalAlpha = Math.min(1, age / 150, (1 - t) / 0.3);
+  c.translate(12, -8 - rise);
+  c.font = "700 17px Cinzel";
+  c.textAlign = "right";
+  c.textBaseline = "middle";
+  c.lineJoin = "round";
+  c.lineWidth = 4;
+  c.strokeStyle = "#3a1200";
+  c.fillStyle = "#ffe68a";
+  const text = `+${points}`;
+  c.strokeText(text, 1, 0);
+  c.fillText(text, 1, 0);
+  // The arrow, as the Training tab draws it (24 units scaled to 16).
+  c.translate(2, -8.5);
+  c.scale(16 / 24, 16 / 24);
+  c.beginPath();
+  c.moveTo(12, 3); c.lineTo(21, 13); c.lineTo(15.5, 13); c.lineTo(15.5, 21);
+  c.lineTo(8.5, 21); c.lineTo(8.5, 13); c.lineTo(3, 13); c.closePath();
+  c.fillStyle = "#ffc94a";
+  c.strokeStyle = "#5a3200";
+  c.lineWidth = 2.5;
+  c.stroke();
+  c.fill();
+  c.restore();
 }
 
 /** The hero rising from a strike that would have felled it: a smaller,

@@ -57,6 +57,7 @@ test("each training rank is worth more as the hero levels up", () => {
   const s = defaults();
   s.xp = xpForLevel(5);
   Object.assign(s.training, { hp: 3, defense: 2, attack: 1 });
+  for (const [id, points] of [["hp", 3], ["defense", 4], ["attack", 3]] as const) s.trainingPaid[id].points = points;
   // At level 5 a rank is worth 15 HP (10 + L), 1.42 DEF (1 + L/12) and 2 ATK (1 + L/5),
   // fractions kept (the page shows the stats whole).
   const l = loadout(s);
@@ -66,7 +67,7 @@ test("each training rank is worth more as the hero levels up", () => {
     [trainingStep(s, "hp"), trainingStep(s, "attack")].map(({ now, next, worth, affordable }) => [now, next, worth, affordable]),
     [[145, 160, 15, true], [14, 16, 2, true]],
   );
-  assert.equal(trainingStep({ ...s, training: { ...s.training, hp: 6 } }, "attack").affordable, false, "3 points a rank, 2 left");
+  assert.equal(trainingStep({ ...s, trainingPaid: { ...s.trainingPaid, hp: { points: 6, gold: 0, ms: 0 } } }, "attack").affordable, false, "3 points a rank, 2 left");
   // Levelling up raises every rank already bought.
   s.xp = xpForLevel(20);
   const later = loadout(s);

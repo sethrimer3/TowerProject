@@ -41,6 +41,8 @@ export const RESEARCH_TARGETS = {
   silverBonus: { text: (v: number) => `+${v}% Silver` },
   /** The percent of its Gold a kill pays, from 100. */
   killGold: { text: (v: number) => `+${v}% Gold per kill` },
+  /** How fast trainers work: a rank of `d` takes d / (1 + speed). */
+  trainingSpeed: { text: (v: number) => `+${Math.round(v * 100)}% training speed` },
   /** How fast archivists work: a level of `d` hours takes d / (1 + speed). */
   researchSpeed: { text: (v: number) => `+${Math.round(v * 100)}% research speed` },
 } as const;
@@ -90,6 +92,15 @@ const hundredLevels = (target: ResearchTarget, value: number) => Array.from({ le
   return { gold, hours: seconds / 3600, effect: { target, op: "add", value } };
 });
 
+/** Faster Trainers: +2% training speed a level, for 100 levels. The n-th
+ * level costs 250 × n Gold and takes 1.75 × n hours, about a year and 1.26
+ * million Gold in all (Potion HP takes about seven weeks). */
+const fasterTrainersLevels = () => Array.from({ length: 100 }, (_, i): ResearchLevel => ({
+  gold: 250 * (i + 1),
+  hours: 1.75 * (i + 1),
+  effect: { target: "trainingSpeed", op: "add", value: 0.02 },
+}));
+
 /** The research library, in the order the Archives list it. */
 export const RESEARCH = {
   potionHp: {
@@ -119,6 +130,13 @@ export const RESEARCH = {
     categories: ["abilities"],
     requires: [{ upgrade: "inspirationUndos" }],
     levels: countLevels("undoCapacity"),
+  },
+  fasterTrainers: {
+    name: "Faster Trainers",
+    description: "Teach the trainers the old masters' drills: every rank a trainer trains takes less time.",
+    categories: ["progression"],
+    requires: [{ upgrade: "fasterTrainers" }],
+    levels: fasterTrainersLevels(),
   },
   floorGold: {
     name: "Gold / Floor",

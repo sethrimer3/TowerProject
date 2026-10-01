@@ -87,12 +87,20 @@ How much XP the character has gathered from kills over every run. A kill pays mo
 _Avoid_: rank
 
 **Training point**:
-The currency each level earns (three a level), spent on ranks of training in the character's stats (max HP, ATK, DEF, and the shroud once the Shroud skill is owned) and, with Recovery, Find Potion, Revive, Spare Change, Wishing Well, Wealthy and Loot, in Potion %, Find Potion, Revive, Gold / Floor, Silver / Floor, Silver Bonus and Gold / Kill on the Training tab. A stat rank's worth grows with the character's level.
+The currency each level earns (three a level), spent to buy ranks of training at once (a trainer can train them for Gold instead) in the character's stats (max HP, ATK, DEF, and the shroud once the Shroud skill is owned) and, with Recovery, Find Potion, Revive, Spare Change, Wishing Well, Wealthy and Loot, in Potion %, Find Potion, Revive, Gold / Floor, Silver / Floor, Silver Bonus and Gold / Kill on the Training tab. A stat rank's worth grows with the character's level.
 _Avoid_: skill point, stat point
 
 **Trainer**:
-One stat that can be in training at once: the hero starts with one, and each bought with Gems lets one more rank train at the same time.
+Who trains a rank for Gold, over time, instead of training points. The hero starts with one, and each bought with Gems lets one more rank train at the same time.
 _Avoid_: training slot, archivist (who does research)
+
+**Time credit**:
+Training time given back when a trainer's rank is stopped or a stat is reset: the next ranks trainers train start that far along, until it is used up.
+_Avoid_: banked time, refund time
+
+**Training boost**:
+An hour of ranks in training going twice as fast, claimed from the Training tab (by an ad, to come), up to four hours banked.
+_Avoid_: speedup, double time
 
 **Revival**:
 The hero rising at full HP from a strike that would have felled it, by the Revive skill's chance (0.5%, more with Revive training); the fight goes on.
