@@ -110,7 +110,7 @@ function trace(mode: Mode, seed: number, smartAi: boolean): string[] {
 }
 
 const SCENARIOS: [Mode, number, boolean][] = [
-  ["tower", 1, false], ["tower", 2, true], ["tower", 3, false], ["tower", 4, true],
+  ["tower", 1, false], ["tower", 2, true], ["tower", 7, false], ["tower", 4, true],
   ["delve", 5, false], ["delve", 6, true], ["delve", 7, false], ["delve", 8, true],
 ];
 

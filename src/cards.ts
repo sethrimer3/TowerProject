@@ -11,7 +11,8 @@ export const CARDS = {
   stairs: { name: "Stairs", text: "Move toward the stairs up (in the Delve, the highest open tile in view)." },
   heal: { name: "Heal", text: "Move toward the closest healing potion." },
   door: { name: "Door", text: "Move toward the closest door you hold the keys for." },
-  key: { name: "Key", text: "Move toward the closest key." },
+  yellowKey: { name: "Yellow Key", text: "Move toward the closest yellow key." },
+  blueKey: { name: "Blue Key", text: "Move toward the closest blue key." },
   monster: { name: "Monster", text: "Move toward the closest monster." },
   equipment: { name: "Equipment", text: "Move toward the closest ATK or DEF pickup." },
 } as const;
@@ -34,8 +35,8 @@ export const handSlots = (save: { upgrades: Record<UpgradeId, number>; handSlots
 export const nextHandSlotGems = (save: { upgrades: Record<UpgradeId, number>; handSlots: number }) =>
   save.upgrades.largerHand ? HAND_SLOT_GEMS[save.handSlots] ?? null : null;
 /** The hand a new profile starts with, in priority order: its whole deck.
- * HEAL and EQUIPMENT are earned from the Inspiration tree. */
-export const BASE_HAND: readonly CardId[] = ["stairs", "door", "key", "monster"];
+ * HEAL, EQUIPMENT and BLUE KEY are earned from the Inspiration tree. */
+export const BASE_HAND: readonly CardId[] = ["stairs", "door", "yellowKey", "monster"];
 /** The cards the player owns, in `CARDS` order: the base hand's, and each
  * card whose upgrade is owned. A hand holds any of them, but always STAIRS. */
 export function deckCards(upgrades: Record<UpgradeId, number>): CardId[] {
@@ -103,7 +104,8 @@ function wants(card: CardId, t: Tile, at: Position): boolean {
     case "stairs": return t.kind === "stairs";
     case "heal": return t.kind === "potion";
     case "door": return t.kind === "door" && doorCost(t, at.run.player) !== null;
-    case "key": return t.kind === "key";
+    case "yellowKey": return t.kind === "key" && t.color === "yellow";
+    case "blueKey": return t.kind === "key" && t.color === "blue";
     // An impervious monster can't be fought at all, so it is never a target.
     case "monster": return t.kind === "enemy" && !predict(at.run.player, t.enemy!).impervious;
     case "equipment": return t.kind === "attack" || t.kind === "defense";

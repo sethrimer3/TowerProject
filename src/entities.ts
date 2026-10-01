@@ -95,6 +95,9 @@ export type RunCore = {
   /** Silver held: earned from enemies and spent inside this run only, so
    * undo takes it back with the rest of the run. */
   silver?: number;
+  /** XP earned from kills this run, for the run's end dialog; undo takes
+   * it back with the rest of the run, as it does the hero's XP. */
+  xp?: number;
   /** Focus uses spent this run. What is left is what a run gets now less
    * these, so a Focus Count level completed mid-run counts at once. */
   focusUsed?: number;
@@ -196,6 +199,8 @@ export type Save = {
   /** Ranks being trained now (their points are spent), each done when the
    * wall clock reaches it. */
   trainingJobs: TrainingJob[];
+  /** Trainers bought with Gems: each lets one more stat train at once. */
+  trainers: number;
   upgrades: Record<UpgradeId, number>;
   settings: Settings;
   /** Persistent crafting-material inventory. Never part of `Run` — must

@@ -44,7 +44,7 @@ const C = {
   back: "#1b222d", border: "#d6ae68", text: "#efd496", dark: "#10161f",
   stone: "#8a93a3", stone2: "#5d6677", red: "#c8453c", red2: "#8e2a26", glass: "#cfd8e6",
   wood: "#8a5a32", wood2: "#5e3a1f", gold: "#e8c050", gold2: "#a8822a",
-  green: "#5fa451", green2: "#3a6e33", white: "#f2efe6", steel: "#c4ccd8", steel2: "#7d8898", blue: "#4f6fb0",
+  green: "#5fa451", green2: "#3a6e33", white: "#f2efe6", steel: "#c4ccd8", steel2: "#7d8898", blue: "#4f6fb0", sky: "#7fb0f0",
 };
 const canvas = () => Array.from({ length: W * H }, () => rgba(C.back));
 const rect = (p, x, y, w, h, color) => {
@@ -60,6 +60,7 @@ const FONT = {
   O: ["010", "101", "101", "101", "010"], P: ["110", "101", "110", "100", "100"], Q: ["010", "101", "101", "110", "011"],
   R: ["110", "101", "110", "101", "101"], S: ["011", "100", "010", "001", "110"], T: ["111", "010", "010", "010", "010"],
   U: ["101", "101", "101", "101", "111"], Y: ["101", "101", "010", "010", "010"],
+  B: ["110", "101", "110", "101", "110"], W: ["101", "101", "111", "111", "101"], " ": ["000", "000", "000", "000", "000"],
 };
 function label(p, text, y) {
   const width = text.length * 4 - 1;
@@ -70,6 +71,15 @@ function label(p, text, y) {
   }
 }
 
+/** A key, in `color` with a `rim` round its bow. */
+function key(p, color, rim) {
+  rect(p, 11, 14, 11, 11, rim);
+  rect(p, 12, 15, 9, 9, color);
+  rect(p, 15, 18, 3, 3, C.back);
+  rect(p, 21, 18, 16, 3, color);
+  rect(p, 31, 21, 2, 5, color);
+  rect(p, 35, 21, 2, 4, color);
+}
 // Icons fill the 32 × 32 area at (8, 8).
 const ICONS = {
   stairs(p) {
@@ -93,14 +103,8 @@ const ICONS = {
     for (const x of [20, 26]) rect(p, x, 13, 1, 25, C.wood2);
     rect(p, 29, 25, 2, 2, C.gold);
   },
-  key(p) {
-    rect(p, 11, 14, 11, 11, C.gold2);
-    rect(p, 12, 15, 9, 9, C.gold);
-    rect(p, 15, 18, 3, 3, C.back);
-    rect(p, 21, 18, 16, 3, C.gold);
-    rect(p, 31, 21, 2, 5, C.gold);
-    rect(p, 35, 21, 2, 4, C.gold);
-  },
+  yellowKey: (p) => key(p, C.gold, C.gold2),
+  blueKey: (p) => key(p, C.sky, C.blue),
   monster(p) {
     rect(p, 13, 16, 22, 20, C.green2);
     rect(p, 14, 14, 20, 20, C.green);
@@ -125,7 +129,7 @@ const ICONS = {
   },
 };
 
-const CARDS = [["stairs", "STAIRS"], ["heal", "HEAL"], ["door", "DOOR"], ["key", "KEY"], ["monster", "MONSTER"], ["equipment", "EQUIPMENT"]];
+const CARDS = [["stairs", "STAIRS"], ["heal", "HEAL"], ["door", "DOOR"], ["yellowKey", "YELLOW KEY"], ["blueKey", "BLUE KEY"], ["monster", "MONSTER"], ["equipment", "EQUIPMENT"]];
 mkdirSync(OUT, { recursive: true });
 for (const [id, name] of CARDS) {
   const p = canvas();

@@ -1,5 +1,6 @@
 import type { Gate, Reward } from '../tower/types.ts';
 import { pick } from '../tower/patterns.ts';
+import { ALL_KEY_COLORS, onlyOpenKeys, type KeyColors } from '../key-schedule.ts';
 
 /** Strategic situations placed on labyrinth pockets. Quality is the
  * generator's own label for tuning/diagnostics only; Automove never reads
@@ -38,8 +39,9 @@ export const FALSE_ASCENTS: Pattern[] = [
   { id: 'FalseAscendingDeadEnd', quality: 'poor', gates: [enemy], rewards: [] },
   { id: 'FalseAscendingMinorReward', quality: 'poor', gates: [enemy], rewards: [{ kind: 'potion', amount: 20 }] },
 ];
-/** Trap frequency rises with depth; long detours only go on long branches. */
-export function choosePattern(rng: () => number, area: number, branch = 1, maxGates = Infinity): Pattern {
-  const options = DELVE_PATTERNS.filter(p => (p.minBranch ?? 0) <= branch && p.gates.length <= maxGates);
+/** Trap frequency rises with depth; long detours only go on long branches;
+ * a pattern with a key colour `colors` closes never goes. */
+export function choosePattern(rng: () => number, area: number, branch = 1, maxGates = Infinity, colors: KeyColors = ALL_KEY_COLORS): Pattern {
+  const options = DELVE_PATTERNS.filter(p => (p.minBranch ?? 0) <= branch && p.gates.length <= maxGates && onlyOpenKeys(p, colors));
   return pick(options.map(v => ({ v, w: v.quality === 'good' ? 3 : v.quality === 'poor' ? 0.7 + Math.min(1, area / 8) : 2 })), rng);
 }

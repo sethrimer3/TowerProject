@@ -90,6 +90,10 @@ _Avoid_: rank
 The currency each level earns (three a level), spent on ranks of training in the character's stats (max HP, ATK, DEF, and the shroud once the Shroud skill is owned) and, with Recovery, Find Potion, Revive, Spare Change, Wishing Well, Wealthy and Loot, in Potion %, Find Potion, Revive, Gold / Floor, Silver / Floor, Silver Bonus and Gold / Kill on the Training tab. A stat rank's worth grows with the character's level.
 _Avoid_: skill point, stat point
 
+**Trainer**:
+One stat that can be in training at once: the hero starts with one, and each bought with Gems lets one more rank train at the same time.
+_Avoid_: training slot, archivist (who does research)
+
 **Revival**:
 The hero rising at full HP from a strike that would have felled it, by the Revive skill's chance (0.5%, more with Revive training); the fight goes on.
 _Avoid_: resurrection, second life
@@ -102,7 +106,7 @@ The damage a hero's shroud blocks in each fight: the enemy's strikes, after DEF,
 _Avoid_: shield (the equipment slot), barrier
 
 **Provision**:
-A lasting boost bought with Gold on the Gear page: each one bought adds to the loadout of every run from then on, and the next of its kind costs more.
+A lasting boost bought with Gold on the Gear page: each one bought adds to the loadout of every run from then on (a stat, or a yellow key), and the next of its kind costs more.
 _Avoid_: consumable (a crafted item used during a run), buff
 
 ### Progress
@@ -150,7 +154,7 @@ _Avoid_: lab slot, researcher
 ### The hand
 
 **Card**:
-One way of moving the hero, toward one kind of target: the stairs, a potion, a door the hero holds the keys for, a key, a monster, or an ATK or DEF pickup. A card can act when the hero can reach such a target on the current floor over open floor and items.
+One way of moving the hero, toward one kind of target: the stairs, a potion, a door the hero holds the keys for, a key of one colour (yellow, or blue), a monster, or an ATK or DEF pickup. A card can act when the hero can reach such a target on the current floor over open floor and items.
 _Avoid_: skill (a skill is something the player uses), ability
 
 **Hand**:

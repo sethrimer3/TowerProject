@@ -3,6 +3,7 @@ import type { TowerEnemyProfile } from "../scaling.ts";
 import { ARCHETYPES, keyedFloor, pick, type Weighted } from "./patterns.ts";
 import type { GraphBuilder } from "./strategic-graph.ts";
 import type { Archetype, Fork, Gate, Lane, LaneStep, Reward, StrategicNode, StrategicTag, Strength } from "./types.ts";
+import { onlyOpenKeys } from "../key-schedule.ts";
 
 /** Forks: two or three parallel lanes from one region into the next, each
  * paying a different resource, so entering asks *what* to spend.
@@ -249,7 +250,8 @@ export function planForks(b: GraphBuilder, archetype: Archetype) {
     // nor adds one.
     if (keyedFloor(depth) && (node.gate.kind === "door" || node.gate.kind === "steel")) continue;
     if (rng() >= FORK_TUNING.chance(depth)) continue;
-    const forks = forksWorth(stepValue(node.gate), depth, archetype, rng, keyedFloor(depth) ? withoutLocks : undefined);
+    const colors = b.colors, fits = (f: Fork) => onlyOpenKeys(f, colors) && (!keyedFloor(depth) || withoutLocks(f));
+    const forks = forksWorth(stepValue(node.gate), depth, archetype, rng, fits);
     if (!forks.length) continue;
     node.forks = forks;
     placed++;

@@ -14,14 +14,16 @@ import { tierCells } from "../tiers.ts";
 // v14 grows enemy DEF 1% every 20 depth.
 // v15 compounds enemy stats by equivalent floor and guards corridors.
 // v16 makes half the guard potions percent potions.
-export const LAYOUT_VERSION = 16;
+// v17 keeps blue keys and doors off the first delve's floors below 20, and
+// red below 50.
+export const LAYOUT_VERSION = 17;
 
-/** The one 20-row chunk `index` of the labyrinth, as generated. */
-export function generate(seed: number, index: number): Map<string, Tile> {
+/** The one 20-row chunk `index` of tier `tier`'s labyrinth, as generated. */
+export function generate(seed: number, index: number, tier = 1): Map<string, Tile> {
   const cells = new Map<string, Tile>();
   const min = index * CHUNK, max = min + CHUNK;
   for (const a of areasBetween(min, max))
-    for (const [k, t] of region(seed, a).cells) {
+    for (const [k, t] of region(seed, a, tier).cells) {
       const y = Number(k.split(',')[1]);
       if (y >= min && y < max) cells.set(k, t);
     }
@@ -54,11 +56,14 @@ export class World implements Board {
   get milestone() {
     return this.run.milestone;
   }
+  get tier() {
+    return this.run.tier ?? 1;
+  }
   tile(x: number, y: number): Tile {
     if (!this.inside(x, y)) return { kind: "wall" };
     const index = Math.floor(y / CHUNK);
     if (!this.chunks.has(index))
-      this.chunks.set(index, tierCells(generate(this.seed, index), this.run.tier ?? 1));
+      this.chunks.set(index, tierCells(generate(this.seed, index, this.tier), this.tier));
     return (
       this.changes[point(x, y)] ??
       withPotions(this.chunks.get(index)!.get(point(x, y)) ?? { kind: "wall" }, x, y, this.seed, this.run.percentPotions ?? 0)
@@ -86,13 +91,13 @@ export class World implements Board {
   /** Crosses the current area's milestone gate at (x, y), sealing it
    * behind; false when (x, y) isn't that gate. */
   cross(x: number, y: number) {
-    const gate = region(this.seed, this.milestone).gate;
+    const gate = region(this.seed, this.milestone, this.tier).gate;
     if (x !== gate.x || y !== gate.y) return false;
     this.changes[point(x, y - 1)] = { kind: 'wall' };
     this.run.milestone++;
     return true;
   }
-  depth(x: number, y: number) { return depthAt(this.seed, x, y, this.milestone); }
+  depth(x: number, y: number) { return depthAt(this.seed, x, y, this.milestone, this.tier); }
   clear(x: number, y: number) {
     this.changes[point(x, y)] = { kind: "floor" };
   }
@@ -107,8 +112,8 @@ export class World implements Board {
   /** Wall checks see neighbouring areas too, so a torch never lands on a
    * foreign area's floor; each torch belongs to the area owning its spot. */
   private areaTorches(a: number) {
-    const r = region(this.seed, a), cells = new Map(r.cells);
-    for (const b of [a - 1, a + 1]) if (b >= 0) for (const [k, t] of region(this.seed, b).cells) cells.set(k, t);
+    const r = region(this.seed, a, this.tier), cells = new Map(r.cells);
+    for (const b of [a - 1, a + 1]) if (b >= 0) for (const [k, t] of region(this.seed, b, this.tier).cells) cells.set(k, t);
     return placeTorches(cells, { xMin: 1, xMax: WIDTH - 2, yMin: r.minY - 2, yMax: r.maxY + 2, seed: this.seed ^ a })
       .filter((t) => ownerAt(this.seed, t.x, t.y) === a);
   }

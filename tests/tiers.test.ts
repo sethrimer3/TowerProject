@@ -37,7 +37,7 @@ test("each tier triples the last's enemy stats and pays more Gold and XP: Ã—2, Ã
   assert.deepEqual(tierTile({ kind: "potion", amount: 35 } as Tile, 3), { kind: "potion", amount: 35 });
 });
 
-test("a tier's boards are the first's with every enemy's stats multiplied", () => {
+test("past the first, a tier's boards are the one before's with every enemy's stats multiplied", () => {
   for (const mode of ["tower", "delve"] as Mode[]) {
     const g = new Game(defaults());
     g.save.upgrades.delve = 1;
@@ -45,14 +45,15 @@ test("a tier's boards are the first's with every enemy's stats multiplied", () =
     assert.equal(g.mode, mode);
     g.newRun({ seed: 11 });
     const run = g.run, profile = MODES[mode] as (typeof MODES)["tower"];
-    const one = profile.board(run as never), three = profile.board({ ...run, tier: 3 } as never);
+    // The first tier keeps blue and red keys for later floors (key-schedule.test.ts).
+    const one = profile.board({ ...run, tier: 2 } as never), three = profile.board({ ...run, tier: 3 } as never);
     let enemies = 0;
     for (let y = 0; y < 17; y++)
       for (let x = 0; x < one.width; x++) {
         const a = one.tile(x, y), b = three.tile(x, y);
         if (a.kind !== "enemy") { assert.deepEqual(b, a); continue; }
         enemies++;
-        assert.deepEqual(b, tierTile(a, 3));
+        assert.deepEqual(b, tierTile(a, 2), "three times the second tier's");
       }
     assert.ok(enemies > 0, `${mode} has enemies to compare`);
   }

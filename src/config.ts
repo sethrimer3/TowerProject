@@ -114,10 +114,10 @@ export const UPGRADES = [
     id: "aiLookahead", name: "Labyrinth scouting", description: "Delve: +4 scouting radius and +2 interactions of route lookahead", base: 5, max: 4, currency: "courage",
   },
   {
-    id: "autoPersist",
-    name: "Steadfast wayfinder",
-    description: "Choose whether Automove turns off when you fall in battle",
-    base: 6,
+    id: "extraKey",
+    name: "Extra Key",
+    description: "Open the Yellow Key provision on the Gear page: a yellow key carried into every run",
+    base: 1,
     max: 1,
     currency: "courage",
   },
@@ -193,6 +193,23 @@ export const UPGRADES = [
     description: "Add the EQUIPMENT card to your deck: it moves you toward the closest ATK or DEF pickup",
     card: "equipment",
     base: 5,
+    max: 1,
+    currency: "inspiration",
+  },
+  {
+    id: "training",
+    name: "Training",
+    description: "Open the Training tab on the Upgrades page, where you spend the training points each level earns",
+    base: 2,
+    max: 1,
+    currency: "inspiration",
+  },
+  {
+    id: "blueKey",
+    name: "Blue Key",
+    description: "Add the BLUE KEY card to your deck: it moves you toward the closest blue key",
+    card: "blueKey",
+    base: 2,
     max: 1,
     currency: "inspiration",
   },
@@ -417,17 +434,23 @@ export const BONUS_RANK = 3;
  * run, a provision's Gold): the first costs `base`, and each one after
  * costs more than the last by `step` plus the number already bought, the
  * `step` growing by `growth` every five (see `schedulePrice`). Base 5: +1+N
- * for the next five, then +4+N, +7+N … */
-export type PriceSchedule = { base: number; step: number; growth: number };
+ * for the next five, then +4+N, +7+N … Or, with `ratio`, each costs
+ * `ratio` times the one before. */
+export type PriceSchedule = { base: number; step: number; growth: number } | { base: number; ratio: number };
 /** What the purchase after `bought` costs on `schedule`: its base, and for
  * the k-th after it `step + k` more than the one before, `step` rising by
- * `growth` every five, summed here at once. */
-export function schedulePrice({ base, step, growth }: PriceSchedule, bought: number) {
+ * `growth` every five, summed here at once (or `ratio` times the one
+ * before). */
+export function schedulePrice(schedule: PriceSchedule, bought: number) {
+  if ("ratio" in schedule) return schedule.base * intPow(schedule.ratio, bought);
+  const { base, step, growth } = schedule;
   const fives = Math.floor(bought / 5), rest = bought % 5;
   return base + bought * step + bought * (bought + 1) / 2 + growth * (5 * fives * (fives - 1) / 2 + rest * fives);
 }
 /** Rows open from the start. */
 const cheap: PriceSchedule = { base: 5, step: 1, growth: 3 };
+/** Max HP: the cheapest, rising a little more slowly. */
+const vital: PriceSchedule = { base: 3, step: 1, growth: 2 };
 /** Rows a skill opens: steeper, so ranks from Inspiration's Training points
  * stay worth more than Silver's. */
 const opened: PriceSchedule = { base: 10, step: 2, growth: 3 };
@@ -437,7 +460,7 @@ const deep: PriceSchedule = { base: 20, step: 4, growth: 4 };
  * each row's price schedule. The rows open from the start cost least, the
  * ones later skills open more. */
 export const RUN_TRAINING_PRICES: Record<TrainingId, PriceSchedule> = {
-  hp: cheap,
+  hp: vital,
   attack: cheap,
   defense: cheap,
   shroud: opened,
@@ -459,7 +482,8 @@ export const trainingWorth = (row: StatTrainingRow, level: number) => row.base *
 export const trained = (row: StatTrainingRow, ranks: number, level: number) => snap(ranks * trainingWorth(row, level));
 /** Provisions, bought with Gold on the Gear page and kept for good: each
  * one bought adds its grants to every run. Each is priced by a schedule
- * like run training's (`schedulePrice`), from its `price.base` Gold. */
+ * like run training's (`schedulePrice`), from its `price.base` Gold. One
+ * with `requires` shows, and sells, only once that upgrade is owned. */
 export const GOLD_SHOP = [
   {
     id: "heal",
@@ -481,6 +505,14 @@ export const GOLD_SHOP = [
     grants: { attack: 1 },
     words: { attack: "attack every run" },
     price: { base: 15, step: 2, growth: 3 },
+  },
+  {
+    id: "yellowKey",
+    name: "Yellow Key",
+    grants: { yellow: 1 },
+    words: { yellow: "yellow key every run" },
+    price: { base: 100, ratio: 4 },
+    requires: "extraKey",
   },
 ] as const;
 export type GoldItemId = (typeof GOLD_SHOP)[number]["id"];

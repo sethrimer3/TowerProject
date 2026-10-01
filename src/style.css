@@ -1865,6 +1865,11 @@ button.training-timer { border-color: #c0483c; color: #ffd0c8; background: #2a14
 .training-box.next { border-color: #6e9a70; color: #b8f0b4; }
 .training-arrow { text-align: center; color: var(--gold); font-size: 14px; }
 button.training-cost { border-color: #d8b572; color: #ffe1a1; background: #2b2718; font-size: 10px; letter-spacing: .5px; }
+.training-job { display: grid; grid-template-columns: 1fr auto; gap: 3px; }
+.training-finish, .buy-trainer { min-height: 30px; padding: 0 5px; display: inline-flex; align-items: center; gap: 2px; border: 1px solid #2f8fbf; border-radius: 8px; background: #0f2230; color: #bfefff; font-size: 10px; }
+.training-finish .gem-icon, .buy-trainer .gem-icon { width: 13px; height: 13px; }
+.training-finish:disabled, .buy-trainer:disabled { opacity: 0.45; }
+.buy-trainer { min-height: 22px; margin-left: 6px; vertical-align: middle; }
 button.training-cost:disabled { border-color: #4a5566; color: #7c8898; background: #111925; }
 
 /* --- Deck page --- */
@@ -2342,8 +2347,11 @@ nav.in-run.drilling .run-drills {
   cursor: pointer;
 }
 .run-drills .drill-buy .ui-sprite { width: 12px; height: 12px; }
-/* Not enough Silver, or at its highest: greyed out. */
-.drill-card.short { opacity: 0.45; filter: grayscale(0.8); }
+/* Not enough Silver: the card's text and the price stay clear, and only the
+   outlines and the button's face fade. At its highest: greyed out. */
+.drill-card.short { border-color: #2c3440; }
+.run-drills .drill-card.short .drill-buy:disabled { opacity: 1; border-color: #333b47; background: #121821; color: #e8dfcf; }
+.drill-card.maxed { opacity: 0.45; filter: grayscale(0.8); }
 .training-bar { display: flex; flex-shrink: 0; gap: 5px; padding: 0 0 max(5px, env(safe-area-inset-bottom)); }
 .training-bar[hidden] { display: none; }
 .training-bar button {

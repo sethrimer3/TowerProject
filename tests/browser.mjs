@@ -44,8 +44,6 @@ if (await page.locator(".dpad").isVisible())
 if (await page.locator('[data-tab="gear"]').isVisible())
   throw Error("Tabs should be hidden inside a run");
 await page.locator("#auto-settings").click();
-if (await page.locator("#auto-off-death").count())
-  throw Error("Turn off upon death should wait for its upgrade");
 await page.locator("#settings-back").click();
 if (!(await page.locator("#world").isVisible()))
   throw Error("Back should return to the board");

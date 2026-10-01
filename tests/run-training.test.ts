@@ -25,6 +25,8 @@ function arena(silver: number, edit?: (g: Game) => void) {
 
 test("Silver prices start at the row's base and rise by a step plus the ranks bought, the step growing every five", () => {
   const prices = (id: Parameters<typeof silverPrice>[0], n: number) => Array.from({ length: n }, (_, k) => silverPrice(id, k));
+  // Max HP from 3: +1+N for five ranks, then +3+N, then +5+N.
+  assert.deepEqual(prices("hp", 12), [3, 5, 8, 12, 17, 23, 32, 42, 53, 65, 78, 94]);
   // +1+N for five ranks, then +4+N, then +7+N.
   assert.deepEqual(prices("attack", 17), [5, 7, 10, 14, 19, 25, 35, 46, 58, 71, 85, 103, 122, 142, 163, 185, 211]);
   // +2+N, then +5+N, then +8+N.
@@ -33,7 +35,7 @@ test("Silver prices start at the row's base and rise by a step plus the ranks bo
   assert.deepEqual(prices("revive", 12), [20, 25, 31, 38, 46, 55, 69, 84, 100, 117, 135, 158]);
   for (const row of TRAINING) {
     const { base } = RUN_TRAINING_PRICES[row.id];
-    assert.ok([5, 10, 20].includes(base), `${row.id} starts at 5, 10 or 20`);
+    assert.ok([3, 5, 10, 20].includes(base), `${row.id} starts at 3, 5, 10 or 20`);
     let last = 0;
     for (let k = 0; k < 1000; k++) {
       const price = silverPrice(row.id, k);

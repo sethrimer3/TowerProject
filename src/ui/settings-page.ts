@@ -8,7 +8,7 @@ import { MODES } from "../modes.ts";
 /** The settings on the page, in order; each control comes from its row in
  * SETTINGS. */
 const PAGE = [
-  "speed", "autoOffOnDeath", "transition", "fightAnimation", "brightness", "spritesOff", "decorOff", "batterySaver", "showArrows", "reduceMotion", "weatherSound",
+  "speed", "transition", "fightAnimation", "brightness", "spritesOff", "decorOff", "batterySaver", "showArrows", "reduceMotion", "weatherSound",
   "infoDisplay", "oneTapMove", "devMode", "freePurchases",
 ] as const satisfies readonly SettingKey[];
 type PageKey = (typeof PAGE)[number];
@@ -16,7 +16,6 @@ type PageKey = (typeof PAGE)[number];
 /** Settings that stay off the page until the upgrade behind them is owned. */
 const SHOWN: Partial<Record<PageKey, (save: Save) => boolean>> = {
   speed: (save) => !!save.upgrades.moveSpeed,
-  autoOffOnDeath: (save) => !!save.upgrades.autoPersist,
 };
 /** The choices a setting offers now, where research opens more of them. */
 const OFFERED: Partial<Record<PageKey, (game: PageGame) => (value: string | number) => boolean>> = {

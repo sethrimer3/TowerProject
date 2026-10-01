@@ -71,7 +71,8 @@ test("built forks lead into their region by every lane, and never into a region 
   const built = new Set<string>();
   let lanesSeen = 0;
   for (let seed = 0; seed < 120; seed++)
-    for (const room of [0, 2, 5, 12, 30]) {
+    // Blue and red doors open on floors 20 and 50 of the first tower.
+    for (const room of [0, 2, 5, 25, 55]) {
       const { cells, embedding } = generateTowerFloor(seed, room);
       const start = point(TOWER_START_X, 0);
       const shortcuts = embedding.doorways.filter((d) => d.shortcut).map((d) => point(d.x, d.y));

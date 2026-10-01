@@ -13,6 +13,7 @@ import {
 } from "./patterns.ts";
 import { planForks } from "./forks.ts";
 import { MAX_REGIONS, planResources } from "./resource-planner.ts";
+import { keyColorsOn, onlyOpenKeys, type KeyColors } from "../key-schedule.ts";
 import type {
   Archetype,
   Footprint,
@@ -49,6 +50,10 @@ export const GRAPH_TUNING = {
   stairsDoorChance: 0.5,
 };
 
+/** `table` without the options that hold a key colour `colors` closes. */
+export const openOptions = <T>(table: Weighted<T>, colors: KeyColors): Weighted<T> =>
+  table.filter((o) => onlyOpenKeys(o.v, colors));
+
 function mainGateTable(depth: number, doorBias: number): Weighted<Gate> {
   return [
     { w: 5, v: { kind: "enemy", strength: "normal" } },
@@ -75,7 +80,7 @@ function stairsGateTable(depth: number, doorBias: number): Weighted<Gate> {
 
 export class GraphBuilder {
   nodes: StrategicNode[] = [];
-  constructor(public depth: number, public rng: () => number) {}
+  constructor(public depth: number, public rng: () => number, public colors: KeyColors = keyColorsOn(depth)) {}
   add(partial: Omit<StrategicNode, "id" | "children" | "rewards" | "guarded" | "formation" | "tags"> &
     Partial<Pick<StrategicNode, "rewards" | "guarded" | "formation" | "tags">>): StrategicNode {
     const node: StrategicNode = {
@@ -94,14 +99,14 @@ export class GraphBuilder {
   }
   /** Instantiate one pattern step as a region under `parent`. */
   addStep(step: PatternStep, parent: number, pattern: TowerPattern): StrategicNode {
-    const rng = this.rng;
+    const rng = this.rng, open = <T>(table: Weighted<T>) => openOptions(table, this.colors);
     return this.add({
       purpose: step.purpose,
       patternId: pattern.id,
       parent,
-      gate: pick(step.gate, rng),
-      rewards: step.rewards ? [...pick(step.rewards, rng)] : [],
-      guarded: step.guarded ? pick(step.guarded, rng).map((g) => ({ ...g })) : [],
+      gate: pick(open(step.gate), rng),
+      rewards: step.rewards ? [...pick(open(step.rewards), rng)] : [],
+      guarded: step.guarded ? pick(open(step.guarded), rng).map((g) => ({ ...g })) : [],
       ringGuard: step.ringGuard,
       formation: step.formation ?? "row",
       route: "optional",
@@ -140,6 +145,11 @@ function patternHosts(b: GraphBuilder, pattern: TowerPattern, mainIds: number[])
   return hosts.sort((a, c) => b.freeSlots(c) - b.freeSlots(a) || tie.get(a)! - tie.get(c)!);
 }
 
+/** Whether every choice `pattern` makes keeps an option with only open key
+ * colours, so it can be placed on a floor of `colors`. */
+const patternFits = (pattern: TowerPattern, colors: KeyColors) =>
+  pattern.steps.every((s) => ([s.gate, s.rewards, s.guarded] as (Weighted<unknown> | undefined)[]).every((t) => !t || openOptions(t, colors).length > 0));
+
 /** Each step of a chain opens off the one before. */
 function addChain(b: GraphBuilder, pattern: TowerPattern, host: number) {
   let parent = host;
@@ -151,9 +161,11 @@ function addChain(b: GraphBuilder, pattern: TowerPattern, host: number) {
   });
 }
 
-export function generateStrategicGraph(seed: number, depth: number, budgetCut = 0): StrategicGraph {
+/** The floor's plan; `tier` decides which key colours it may use
+ * (`keyColorsOn`). */
+export function generateStrategicGraph(seed: number, depth: number, budgetCut = 0, tier = 1): StrategicGraph {
   const rng = random(seed);
-  const b = new GraphBuilder(depth, rng);
+  const b = new GraphBuilder(depth, rng, keyColorsOn(depth, tier));
   const archetype = pickArchetype(depth, rng);
   const profile = ARCHETYPES[archetype];
   const budget = Math.max(3, Math.min(MAX_REGIONS,
@@ -190,7 +202,7 @@ function addHub(b: GraphBuilder, profile: ArchetypeProfile, parent: number, last
   const hub = b.add({
     purpose: last || rng() < 0.6 ? "hub" : "transition",
     patternId: "main", parent,
-    gate: openFirstFloor(depth) ? { kind: "open" } : pick(mainGateTable(depth, profile.doorBias), rng),
+    gate: openFirstFloor(depth) ? { kind: "open" } : pick(openOptions(mainGateTable(depth, profile.doorBias), b.colors), rng),
     rewards: rng() < GRAPH_TUNING.hubPotionChance ? [{ kind: "potion" }] : [],
     formation: "cluster", route: "main", footprint: "hall", tags: ["progressionRoute"],
   });
@@ -203,7 +215,7 @@ function addHub(b: GraphBuilder, profile: ArchetypeProfile, parent: number, last
  * floors 2 to 5 always have the door. */
 function addStairs(b: GraphBuilder, profile: ArchetypeProfile, parent: number) {
   const { depth, rng } = b;
-  let gate = pick(stairsGateTable(depth, profile.doorBias), rng);
+  let gate = pick(openOptions(stairsGateTable(depth, profile.doorBias), b.colors), rng);
   let guard: StrategicNode["stairsGuard"];
   if (openFirstFloor(depth) || keyedFloor(depth)) gate = { kind: "open" };
   if (keyedFloor(depth)) guard = "door";
@@ -226,7 +238,7 @@ function addBranches(b: GraphBuilder, archetype: Archetype, mainIds: number[], b
   while (b.nodes.length < budget && failures < 12) {
     const options = TOWER_PATTERNS
       .filter((p) => b.nodes.length + p.steps.length <= budget)
-      .map((p) => ({ w: patternWeight(p, b.depth, archetype), v: p }))
+      .map((p) => ({ w: patternFits(p, b.colors) ? patternWeight(p, b.depth, archetype) : 0, v: p }))
       .filter((o) => o.w > 0);
     if (!options.length) break;
     if (!placePattern(b, pick(options, b.rng), mainIds, budget)) failures++;
@@ -242,6 +254,6 @@ function planShortcuts(b: GraphBuilder, profile: ArchetypeProfile, mainIds: numb
   return [{
     from: mainIds[0],
     to: rng() < 0.5 ? stairs.id : mainIds[mainIds.length - 1],
-    gate: { kind: "door", color: depth >= 6 && rng() < 0.3 ? "blue" : "yellow" },
+    gate: { kind: "door", color: depth >= 6 && b.colors.blue && rng() < 0.3 ? "blue" : "yellow" },
   }];
 }

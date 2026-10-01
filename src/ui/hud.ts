@@ -43,6 +43,7 @@ export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay)
   text("courage", devAmount(game, game.save.delve.courage));
   text("inspiration", devAmount(game, game.save.tower.inspiration));
   text("training", String(trainingPoints(game.save).left));
+  (document.querySelector(".training-currency") as HTMLElement).hidden = !game.save.upgrades.training;
   renderXp(game);
   renderStatus(game, overlay);
   // The status line sits over the board's bottom row: let the hero show through.

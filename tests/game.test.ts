@@ -201,7 +201,8 @@ test("every Tower tree door is a real choke point; shortcuts and fork lanes are 
 test("the key economy is coherent on early floors but never force-balanced", () => {
   let early = 0, earlyOk = 0, anyUnaffordable = 0, exchanges = 0, floors = 0, deep = 0;
   for (let seed = 0; seed < 80; seed++)
-    for (const room of [0, 1, 6, 12, 30]) {
+    // Blue and red keys open on floors 20 and 50 of the first tower.
+    for (const room of [0, 1, 19, 30, 55]) {
       const a = towerFloorReport(seed, room).analysis;
       floors++;
       if (room <= 1) { early++; if (a.stairsKeyReachable) earlyOk++; } else deep++;

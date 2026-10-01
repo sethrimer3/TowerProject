@@ -16,7 +16,7 @@ const LEGEND: Record<string, Tile> = {
   P: { kind: "potion" }, D: { kind: "door", color: "yellow" }, H: { kind: "door", door: { type: "fullHp" } },
   K: { kind: "key", color: "yellow" }, M: { kind: "enemy", enemy: WEAK }, L: { kind: "enemy", enemy: LETHAL },
   I: { kind: "enemy", enemy: IMPERVIOUS }, A: { kind: "attack" }, T: { kind: "treasure" }, O: { kind: "oneway" },
-  V: { kind: "stairsDown" },
+  V: { kind: "stairsDown" }, B: { kind: "key", color: "blue" },
 };
 
 /** A board drawn row by row, the first row highest; `@` is the hero. The
@@ -60,14 +60,15 @@ test("the first card in the hand that can reach a target moves the hero", () => 
   ];
   // The stairs are walled off, so STAIRS falls through to HEAL.
   assert.deepEqual(play(board(rows)), { card: "heal", to: [3, 0], steps: 3 });
-  assert.deepEqual(play(board(rows), ["key", "heal"]), { card: "key", to: [4, 0], steps: 4 });
+  assert.deepEqual(play(board(rows), ["yellowKey", "heal"]), { card: "yellowKey", to: [4, 0], steps: 4 });
 });
 
 test("each card heads for its own kind of target", () => {
   const only = (tile: string, hero = {}) => play(board([`@.${tile}`], hero), CARD_IDS)?.card ?? null;
   assert.equal(only("S"), "stairs");
   assert.equal(only("P"), "heal");
-  assert.equal(only("K"), "key");
+  assert.equal(only("K"), "yellowKey");
+  assert.equal(only("B"), "blueKey");
   assert.equal(only("M"), "monster");
   assert.equal(only("A"), "equipment");
   assert.equal(only("D", { keys: { yellow: 1, blue: 0, red: 0 } }), "door");
@@ -102,7 +103,7 @@ test("a path crosses items, taking them, but not doors, monsters or other stairs
   assert.deepEqual(play(board(["@KPTS"])), { card: "stairs", to: [4, 0], steps: 4 });
   assert.equal(play(board(["@MS"]), ["stairs"]), null, "a monster in the way blocks the path");
   assert.equal(play(board(["@DS"], { keys: { yellow: 1, blue: 0, red: 0 } }), ["stairs"]), null, "so does a door");
-  assert.equal(play(board(["@SS"]), ["key"]), null, "stairs are only ever a target");
+  assert.equal(play(board(["@SS"]), ["yellowKey"]), null, "stairs are only ever a target");
 });
 
 test("the hand only looks at the floor the hero stands on: it never heads down or through stairs", () => {
@@ -130,26 +131,34 @@ test("the Delve's paths wrap across the sides and climb through one-way gates", 
   assert.deepEqual(play(gate, ["stairs"], "delve"), { card: "stairs", to: [0, 2], steps: 2 });
 });
 
-test("the deck starts as the base hand, and HEAL and EQUIPMENT join it with their skills", () => {
+test("each key card heads for its own colour of key only", () => {
+  assert.deepEqual(play(board(["@.B.K"]), ["yellowKey"]), { card: "yellowKey", to: [4, 0], steps: 4 });
+  assert.deepEqual(play(board(["@.K.B"]), ["blueKey"]), { card: "blueKey", to: [4, 0], steps: 4 });
+  assert.equal(play(board(["@.K"]), ["blueKey"]), null);
+});
+
+test("the deck starts as the base hand, and HEAL, EQUIPMENT and BLUE KEY join it with their skills", () => {
   const none = defaults().upgrades;
-  assert.deepEqual(BASE_HAND, ["stairs", "door", "key", "monster"]);
+  assert.deepEqual(BASE_HAND, ["stairs", "door", "yellowKey", "monster"]);
   assert.equal(BASE_HAND.length, BASE_HAND_SLOTS, "the base hand fills the base slots");
-  assert.deepEqual(deckCards(none), ["stairs", "door", "key", "monster"]);
-  assert.deepEqual(deckCards({ ...none, cardHeal: 1 }), ["stairs", "heal", "door", "key", "monster"]);
-  assert.deepEqual(deckCards({ ...none, cardHeal: 1, cardGear: 1 }), CARD_IDS);
+  assert.deepEqual(deckCards(none), ["stairs", "door", "yellowKey", "monster"]);
+  assert.deepEqual(deckCards({ ...none, cardHeal: 1 }), ["stairs", "heal", "door", "yellowKey", "monster"]);
+  assert.deepEqual(deckCards({ ...none, blueKey: 1 }), ["stairs", "door", "yellowKey", "blueKey", "monster"]);
+  assert.deepEqual(deckCards({ ...none, cardHeal: 1, cardGear: 1, blueKey: 1 }), CARD_IDS);
   assert.equal(upgradeCard("cardGear"), "equipment");
+  assert.equal(upgradeCard("blueKey"), "blueKey");
   assert.equal(upgradeCard("focus"), undefined);
 });
 
 test("a deck card dropped on a slot slides the others later, or in a full hand swaps out the card there, never STAIRS", () => {
-  const hand: CardId[] = ["stairs", "door", "key"];
-  assert.deepEqual(placeCard(hand, "heal", 1, 5), ["stairs", "heal", "door", "key"]);
-  assert.deepEqual(placeCard(hand, "heal", 0, 5), ["heal", "stairs", "door", "key"]);
-  assert.deepEqual(placeCard(hand, "heal", 4, 5), ["stairs", "door", "key", "heal"], "an empty slot takes it after the last card");
-  const full: CardId[] = ["stairs", "door", "key", "monster"];
+  const hand: CardId[] = ["stairs", "door", "yellowKey"];
+  assert.deepEqual(placeCard(hand, "heal", 1, 5), ["stairs", "heal", "door", "yellowKey"]);
+  assert.deepEqual(placeCard(hand, "heal", 0, 5), ["heal", "stairs", "door", "yellowKey"]);
+  assert.deepEqual(placeCard(hand, "heal", 4, 5), ["stairs", "door", "yellowKey", "heal"], "an empty slot takes it after the last card");
+  const full: CardId[] = ["stairs", "door", "yellowKey", "monster"];
   assert.deepEqual(placeCard(full, "heal", 2, 4), ["stairs", "door", "heal", "monster"]);
   assert.equal(placeCard(full, "heal", 0, 4), null);
-  assert.deepEqual(full, ["stairs", "door", "key", "monster"], "the hand itself is left alone");
+  assert.deepEqual(full, ["stairs", "door", "yellowKey", "monster"], "the hand itself is left alone");
 });
 
 test("the hand holds four cards, five with Larger Hand, and one more for each slot bought with Gems", () => {
@@ -167,15 +176,15 @@ test("the hand holds four cards, five with Larger Hand, and one more for each sl
 
 test("a hand can plan one card alone, for a Focus", () => {
   const rows = ["S..", "...", "@.K"];
-  assert.equal(play(board(rows), ["stairs", "key"])?.card, "stairs");
-  assert.deepEqual(planHand(board(rows), ["stairs", "key"], "tower", 1)?.card, 1);
-  assert.equal(planHand(board(["@.K"]), ["stairs", "key"], "tower", 0), null, "the focused card alone, never the next");
+  assert.equal(play(board(rows), ["stairs", "yellowKey"])?.card, "stairs");
+  assert.deepEqual(planHand(board(rows), ["stairs", "yellowKey"], "tower", 1)?.card, 1);
+  assert.equal(planHand(board(["@.K"]), ["stairs", "yellowKey"], "tower", 0), null, "the focused card alone, never the next");
 });
 
 test("moving a card shifts each card between its old and new slots over one", () => {
-  const hand: CardId[] = ["stairs", "heal", "door", "key", "monster"];
-  assert.deepEqual(moveCard(hand, 0, 3), ["heal", "door", "key", "stairs", "monster"]);
-  assert.deepEqual(moveCard(hand, 4, 1), ["stairs", "monster", "heal", "door", "key"]);
+  const hand: CardId[] = ["stairs", "heal", "door", "yellowKey", "monster"];
+  assert.deepEqual(moveCard(hand, 0, 3), ["heal", "door", "yellowKey", "stairs", "monster"]);
+  assert.deepEqual(moveCard(hand, 4, 1), ["stairs", "monster", "heal", "door", "yellowKey"]);
   assert.deepEqual(moveCard(hand, 2, 2), hand);
-  assert.deepEqual(hand, ["stairs", "heal", "door", "key", "monster"], "the hand given is left alone");
+  assert.deepEqual(hand, ["stairs", "heal", "door", "yellowKey", "monster"], "the hand given is left alone");
 });

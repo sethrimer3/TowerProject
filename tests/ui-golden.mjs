@@ -87,7 +87,7 @@ try {
     };
     const rich = (s) => {
       quiet(s);
-      Object.assign(s.upgrades, { delve: 1, moveSpeed: 1, legacy: 1, revive: 1, handOrdering: 1, combatStance: 1, largerHand: 1, cardHeal: 1, focus: 1, archives: 1, inspirationUndos: 1, greaterHeal: 1, recovery: 1, findPotion: 1, shroud: 1, undos: 1, autoPersist: 1, gear: 1 });
+      Object.assign(s.upgrades, { delve: 1, moveSpeed: 1, legacy: 1, revive: 1, handOrdering: 1, combatStance: 1, largerHand: 1, cardHeal: 1, focus: 1, archives: 1, inspirationUndos: 1, greaterHeal: 1, recovery: 1, findPotion: 1, shroud: 1, undos: 1, extraKey: 1, gear: 1, training: 1, blueKey: 1 });
       s.delve.courage = 37;
       s.tower.inspiration = 21;
       s.gold = 480;
@@ -406,7 +406,7 @@ try {
   await boardTour("rich", "rich");
   await dialogsTour("rich");
   // Focus: a card with no target flashes red for free; one with a target takes the lead.
-  for (const card of ["door", "key", "monster"]) {
+  for (const card of ["door", "yellowKey", "monster"]) {
     await click(`#hand .hand-card[data-card="${card}"]`);
     await shot(`rich.focus.${card}`);
   }

@@ -73,7 +73,7 @@ export function loadout(save: Save): Loadout {
     defense: snap((own.defense + equip.flatDefense) * (1 + equip.percentDefense) + prov.defense),
     maxHp: snap((own.maxHp + equip.flatMaxHp) * (1 + equip.percentMaxHp) + prov.maxHp),
     shroud: own.shroud,
-    keys: { yellow: own.yellow, blue: own.blue, red: own.red },
+    keys: { yellow: own.yellow + prov.yellow, blue: own.blue + prov.blue, red: own.red + prov.red },
     // Undo needs Rehearsed steps: without it nothing else stores one.
     undoCapacity: save.upgrades.inspirationUndos ? researched(save.archives, "undoCapacity", own.undos) : 0,
   };
@@ -103,6 +103,11 @@ export function provisionText(id: GoldItemId) {
   return describeGrants(item.grants, item.words);
 }
 
+/** Whether provision `id` shows and sells: its upgrade, if it names one, is owned. */
+export function provisionOpen(save: Pick<Save, "upgrades">, id: GoldItemId) {
+  const item = GOLD_SHOP.find((g) => g.id === id)!;
+  return !("requires" in item) || save.upgrades[item.requires] > 0;
+}
 /** The Gold the next `id` provision costs, after those already bought. */
 export const provisionPrice = (save: Pick<Save, "provisions">, id: GoldItemId) =>
   schedulePrice(GOLD_SHOP.find((g) => g.id === id)!.price, save.provisions[id]);

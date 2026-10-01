@@ -5,6 +5,7 @@ import { FORK_TUNING, forkDepth, forksWorth, stepValue } from '../tower/forks.ts
 import { choosePattern, FALSE_ASCENTS, type Pattern } from './patterns.ts';
 import { tileRandom } from '../random.ts';
 import { intPow } from '../exact.ts';
+import { keyColorsOn, onlyOpenKeys } from '../key-schedule.ts';
 
 /** Delve is one continuous lattice of chambers (COLUMNS wide, endless rows).
  * Every lattice cell belongs to exactly one AREA. Area ownership is decided
@@ -117,12 +118,14 @@ const cache = new Map<string, Region>();
 
 /** Builds (or recalls) one area of the labyrinth. The stages run in a fixed
  * order and share one random stream, so reordering them or their draws
- * changes every map after it. */
-export function region(seed: number, area: number): Region {
+ * changes every map after it. Tier `tier` decides only which key colours
+ * its pockets, forks and junctions may use, which can change their costs
+ * and forks, so each tier past the first shares one build. */
+export function region(seed: number, area: number, tier = 1): Region {
   area = Math.max(0, Math.floor(area));
-  const key = `${seed}:${area}`;
+  const key = `${seed}:${area}:${tier > 1}`;
   const old = cache.get(key); if (old) return old;
-  const lab = lattice(seed, area);
+  const lab = lattice(seed, area, tier);
   growTree(lab);
   addLoops(lab);
   for (const e of lab.edges) e.path = corridor(seed, unwarped(lab.nodes[e.a]), unwarped(lab.nodes[e.b]));
@@ -145,6 +148,8 @@ export function region(seed: number, area: number): Region {
 /** One area's lattice graph while it is being built. */
 type Lab = {
   seed: number; area: number; rng: () => number;
+  /** The numbered delve: the first keeps blue and red keys for its deeper floors (`keyColorsOn`). */
+  tier: number;
   nodes: Node[]; edges: Edge[];
   nodeAt: (col: number, row: number) => Node | undefined;
   /** Ids of the area's own cells beside `id`. */
@@ -156,7 +161,7 @@ type Lab = {
 };
 
 /** The area's cells, unlinked, with its entrance and exit cells. */
-function lattice(seed: number, area: number): Lab {
+function lattice(seed: number, area: number, tier: number): Lab {
   const nodes: Node[] = [], index = new Map<string, number>();
   for (let col = 0; col < COLS; col++) for (let row = lower(seed, area, col); row < upper(seed, area, col); row++) {
     const id = nodes.length; index.set(`${col},${row}`, id);
@@ -168,7 +173,7 @@ function lattice(seed: number, area: number): Lab {
   const up = boundary(seed, area + 1);
   const entryCol = area ? boundary(seed, area).gateCol : 2;
   return {
-    seed, area, rng: rngFor(seed ^ Math.imul(area + 1, 0x45d9f3b)), nodes, edges: [], nodeAt, neighbors, up,
+    seed, area, tier, rng: rngFor(seed ^ Math.imul(area + 1, 0x45d9f3b)), nodes, edges: [], nodeAt, neighbors, up,
     start: idAt(entryCol, lower(seed, area, entryCol))!,
     exit: idAt(up.gateCol, up.rows[up.gateCol] - 1)!,
   };
@@ -310,8 +315,11 @@ function assignPatterns(lab: Lab) {
   if (tongueTop && isPocket(lab, tongueTop)) {
     tongueTop.falseAscent = true; tongueTop.pattern = FALSE_ASCENTS[Math.floor(rng() * FALSE_ASCENTS.length)];
   }
-  for (const n of nodes) if (!n.pattern && isPocket(lab, n)) n.pattern = choosePattern(rng, lab.area, branchLength(nodes, n.id));
+  for (const n of nodes) if (!n.pattern && isPocket(lab, n)) n.pattern = choosePattern(rng, lab.area, branchLength(nodes, n.id), Infinity, colorsAt(lab, n));
 }
+
+/** The key colours cell `n` may use, by its equivalent floor. */
+const colorsAt = (lab: Lab, n: Node) => keyColorsOn(Math.floor(n.depth / 10), lab.tier);
 
 /** A dead end other than the area's entrance or exit. */
 const isPocket = ({ start, exit }: Lab, n: Node) => n.links.length === 1 && n.id !== start && n.id !== exit;
@@ -436,7 +444,8 @@ function placePatternCosts(lab: Lab, board: Board) {
     const lanes = forks < DELVE_TUNING.forksPerArea ? forkLanes(lab, board, n, path) : null;
     if (lanes && lab.rng() < FORK_TUNING.chance(n.depth / 10)) {
       const value = n.pattern.gates.reduce((sum, g) => sum + stepValue(g), 0);
-      const [fork] = forksWorth(value, n.depth / 10, 'mixed', lab.rng, f => f.lanes.length === 2 && forkDepth(f) <= lanes[0].length);
+      const colors = colorsAt(lab, n);
+      const [fork] = forksWorth(value, n.depth / 10, 'mixed', lab.rng, f => f.lanes.length === 2 && forkDepth(f) <= lanes[0].length && onlyOpenKeys(f, colors));
       if (fork) {
         carveFork(lab, board, n, fork, lanes, path);
         forks++;
@@ -450,7 +459,7 @@ function placePatternCosts(lab: Lab, board: Board) {
     // side-stepped. A pocket whose throat is too short for its costs takes a
     // pattern that fits instead.
     const cuts = path.filter(p => !board.roomTiles.has(point(p.x, p.y)) && separates(board.cells, path[0], p, n));
-    if (cuts.length < n.pattern.gates.length) n.pattern = choosePattern(lab.rng, lab.area, 0, cuts.length);
+    if (cuts.length < n.pattern.gates.length) n.pattern = choosePattern(lab.rng, lab.area, 0, cuts.length, colorsAt(lab, n));
     const middle = Math.min(cuts.length - 1, Math.floor(cuts.length / 2) + n.pattern.gates.length - 1);
     n.pattern.gates.forEach((g, i) => board.put(cuts[middle - i], gateTile(lab, g, n), n.depth));
     placeRewards(lab, board, n);
@@ -526,10 +535,13 @@ function placeGuards(lab: Lab, board: Board) {
   }
 }
 
-/** Coherent key sources at strategic junctions; no blanket key-solvability fixup. */
-function placeJunctionKeys({ nodes, start, rng }: Lab, board: Board) {
+/** Coherent key sources at strategic junctions; no blanket key-solvability
+ * fixup. Where blue keys don't appear yet, a junction's blue key is yellow. */
+function placeJunctionKeys(lab: Lab, board: Board) {
+  const { nodes, start, rng } = lab;
   const junctions = nodes.filter(n => !n.pattern && n.id !== start && n.links.length >= 3);
-  for (const n of junctions) if (rng() < DELVE_TUNING.junctionKeyChance) board.put(n, { kind: 'key', color: rng() < 0.8 ? 'yellow' : 'blue' }, n.depth);
+  for (const n of junctions) if (rng() < DELVE_TUNING.junctionKeyChance)
+    board.put(n, { kind: 'key', color: rng() < 0.8 || !colorsAt(lab, n).blue ? 'yellow' : 'blue' }, n.depth);
 }
 
 function rowSpan(cells: Map<string, Tile>) {
@@ -562,8 +574,8 @@ export function areasBetween(minY: number, maxY: number) {
 }
 /** Lowest world row that can still matter once `milestone` gates are crossed. */
 export function floorFor(seed: number, milestone: number) { return milestone ? Math.max(0, region(seed, milestone).minY - 2) : 0; }
-export function depthAt(seed: number, x: number, y: number, milestone: number) {
-  const r = region(seed, milestone), meta = r.metadata.get(point(x, y));
+export function depthAt(seed: number, x: number, y: number, milestone: number, tier = 1) {
+  const r = region(seed, milestone, tier), meta = r.metadata.get(point(x, y));
   return Math.max(milestone * 100, Math.min(milestone * 100 + 99, meta?.depth ?? milestone * 100));
 }
 export function themeInfluence(seed: number, x: number, y: number) {

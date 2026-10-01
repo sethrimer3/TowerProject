@@ -1,4 +1,4 @@
-import { trainingJob, trainingSeconds, trainingSlots } from "./training-jobs.ts";
+import { finishGems, nextTrainerGems, trainingJob, trainingSeconds, trainingSlots } from "./training-jobs.ts";
 import { entrance, floorFor } from "./delve/labyrinth.ts";
 import { chooseStep } from "./automation.ts";
 import { CARDS, deckCards, handSlots, moveCard, nextHandSlotGems, placeCard, planHand, type CardId, type CardPlan } from "./cards.ts";
@@ -58,7 +58,7 @@ import { snap } from "./exact.ts";
 import { whole, wholeChange, wholeHp } from "./whole.ts";
 import { MODES, milestones, type ModeProfile } from "./modes.ts";
 import { ranksInRun, runTrainingOffer } from "./run-training.ts";
-import { floorGold, floorSilver, keepUndos, killGold, silverBonus, loadout, percentPotionChance, potionPercent, provisionPrice, reviveChance, trainingMaxed, trainingPoints } from "./loadout.ts";
+import { floorGold, floorSilver, keepUndos, killGold, silverBonus, loadout, percentPotionChance, potionPercent, provisionOpen, provisionPrice, reviveChance, trainingMaxed, trainingPoints } from "./loadout.ts";
 import { RESEARCH, cancelResearch, hastenResearch, hireArchivist, researched, settleArchives, startResearch, type ResearchId, type ResearchRecord } from "./archives.ts";
 import { SETTINGS } from "./settings.ts";
 import {
@@ -306,7 +306,7 @@ export class Game {
    * waits in the forest. */
   acceptDefeat() {
     if (!this.fallen) return false;
-    this.finalizeRun("Fallen in combat", true);
+    this.finalizeRun("Fallen in combat");
     return true;
   }
   private reject(x: number, y: number, message: string) {
@@ -675,23 +675,23 @@ export class Game {
     this.gains.push({ x, y, text, art });
     if (this.gains.length > MAX_GAINS) this.gains.shift();
   }
-  /** Pays the XP for beating `enemy` on equivalent floor `floor`. */
+  /** Pays the XP for beating `enemy` on equivalent floor `floor`, counting
+   * it toward the run's total too. */
   gainXp(enemy: Enemy, floor: number) {
-    const level = levelForXp(this.save.xp);
-    this.save.xp += tierBonus(this.tier, xpForKill(enemy.strength, floor));
+    const level = levelForXp(this.save.xp), xp = tierBonus(this.tier, xpForKill(enemy.strength, floor));
+    this.save.xp += xp;
+    this.run.xp = (this.run.xp ?? 0) + xp;
     if (levelForXp(this.save.xp) > level) this.levelUpAt = performance.now();
   }
   /** The single path that ends the current run, whether the player
    * accepts defeat or ends it: pays out exactly once and starts the next run
    * in the forest. */
-  private finalizeRun(reason: string, dead: boolean) {
+  private finalizeRun(reason: string) {
     const record = this.payout(), gold = this.slice.runGold;
     this.slice.history = [];
     this.route = [];
     this.newRun({ outside: true });
-    // Automove keeps running through a defeat only when the player has
-    // Steadfast wayfinder and switched off the default turn-off-on-death.
-    this.auto = dead && !!this.save.upgrades.autoPersist && !this.save.settings.autoOffOnDeath;
+    this.auto = false;
     this.dropHandPlan();
     this.message = `${reason}${record ? " · a new record" : ""}${whole(gold) ? ` · ${whole(gold)} Gold kept` : ""}. Follow the forest path to begin again.`;
   }
@@ -1204,7 +1204,7 @@ export class Game {
   finish(reason: string) {
     this.finishEncounter();
     if (this.fallen) this.acceptDefeat();
-    else this.finalizeRun(reason, false);
+    else this.finalizeRun(reason);
   }
   /** Spends training points on one rank of a stat; false if short. */
   /** Inside a run, the hand it went in with; in the forest, the hand the
@@ -1251,13 +1251,13 @@ export class Game {
   }
   /** Starts training one more rank of `id`, paying its points now: it takes
    * `trainingSeconds` of the wall clock and counts once that has passed
-   * (`settleTraining`). Refused for a stat already in training, with every
-   * slot busy, or without the points. With Dev free purchases it costs
-   * nothing and counts at once. */
+   * (`settleTraining`). Refused without the Training skill, for a stat
+   * already in training, with every slot busy, or without the points. With
+   * Dev free purchases it costs nothing and counts at once. */
   train(id: TrainingId) {
     this.settleTraining();
     const row = TRAINING.find((t) => t.id === id)!, jobs = this.save.trainingJobs;
-    if (!trainingOpen(row, this.save.upgrades) || trainingMaxed(this.save, id) || trainingJob(jobs, id)) return false;
+    if (!this.save.upgrades.training || !trainingOpen(row, this.save.upgrades) || trainingMaxed(this.save, id) || trainingJob(jobs, id)) return false;
     if (this.free) {
       return this.changeLoadout(() => {
         this.save.freeTraining += row.cost;
@@ -1274,6 +1274,25 @@ export class Game {
     const jobs = this.save.trainingJobs;
     if (!trainingJob(jobs, id)) return false;
     this.save.trainingJobs = jobs.filter((j) => j.id !== id);
+    return true;
+  }
+  /** Finishes the rank of `id` in training now, for `finishGems` of the
+   * time left (none with Dev free purchases). */
+  finishTraining(id: TrainingId) {
+    const job = trainingJob(this.save.trainingJobs, id);
+    if (!job) return false;
+    const gems = this.free ? 0 : finishGems(job.completesAt - this.clock());
+    if (this.save.gems < gems) return false;
+    this.save.gems -= gems;
+    job.completesAt = Math.min(job.completesAt, this.clock());
+    return this.settleTraining() > 0;
+  }
+  /** Buys the next trainer with Gems: one more stat can train at once. */
+  buyTrainer() {
+    const price = nextTrainerGems(this.save);
+    if (price === null || (!this.free && this.save.gems < price)) return false;
+    if (!this.free) this.save.gems -= price;
+    this.save.trainers++;
     return true;
   }
   /** Counts the ranks whose training the clock has reached, saying so in the
@@ -1403,7 +1422,7 @@ export class Game {
    * training it reaches a run already inside at once. */
   buyGold(id: GoldItemId) {
     const price = provisionPrice(this.save, id);
-    if (!this.free && this.save.gold < price) return false;
+    if (!provisionOpen(this.save, id) || (!this.free && this.save.gold < price)) return false;
     return this.changeLoadout(() => {
       if (!this.free) this.save.gold -= price;
       this.save.provisions[id]++;
@@ -1428,6 +1447,8 @@ export class Game {
           }
       const p = run.player;
       p.hp = Math.max(1, Math.min(p.hp, p.maxHp));
+      // Keys a provision adds come into the hand at once.
+      for (const color of ["yellow", "blue", "red"] as const) p.keys[color] = Math.max(0, p.keys[color] + after.keys[color] - before.keys[color]);
     }
     this.readyForestRuns();
     return true;

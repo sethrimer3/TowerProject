@@ -98,12 +98,14 @@ export class RunTrainingBar {
     return TRAINING.filter((t) => t.group === group && trainingOpen(t, this.game.save.upgrades)).map((t) => t.id);
   }
 
-  /** One card's value and price, greyed while the Silver isn't there. */
+  /** One card's value and price, its button faded while the Silver isn't
+   * there, and the whole card greyed at its highest. */
   private fill(id: TrainingId) {
     const game = this.game, card = document.querySelector<HTMLElement>(`[data-drill="${id}"]`)!;
     const offer = runTrainingOffer(game.save, game.run, id), { value, unit } = runTrainingValue(game.save, game.run, id);
     const short = !offer.maxed && !game.free && game.silver < offer.price;
-    card.classList.toggle("short", short || offer.maxed);
+    card.classList.toggle("short", short);
+    card.classList.toggle("maxed", offer.maxed);
     card.querySelector(".drill-value")!.textContent = trainingText(value, unit);
     const buy = card.querySelector<HTMLButtonElement>(".drill-buy")!;
     const label = offer.maxed ? "Max" : `${silverIcon()}<b>${offer.price.toLocaleString("en-US")}</b>`;

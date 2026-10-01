@@ -69,6 +69,13 @@ test("the hand's skills run to Focus, Gear and Heal off Buildout, Equipment afte
   assert.equal(g.buy("cardGear"), false, "Equipment waits for Focus");
   assert.ok(g.buy("focus") && g.buy("cardGear") && g.buy("gear"));
 });
+test("Training (2) follows Larger Hand, Blue Key (2) the Archives, and Extra Key (1) Movement Speed", () => {
+  const node = (id: UpgradeId) => TREES.flatMap((t) => t.nodes.map((n) => ({ ...n, tree: t.id }))).find((n) => n.id === id)!;
+  assert.deepEqual(["training", "blueKey", "extraKey"].map((id) => [node(id as UpgradeId).tree, node(id as UpgradeId).requires, cost(id as UpgradeId, 0)]),
+    [["inspiration", ["largerHand"], 2], ["inspiration", ["archives"], 2], ["courage", ["moveSpeed"], 1]]);
+  assert.equal(UPGRADES.find((u) => u.id === "blueKey")!.card, "blueKey");
+  assert.ok(!TREES.some((t) => t.nodes.some((n) => (n.id as string) === "autoPersist")), "Extra Key takes Steadfast wayfinder's place");
+});
 test("each skill in a tree of unlocks is bought once", () => {
   const unlockTrees = TREES.filter((t) => t.unlocks);
   assert.deepEqual(unlockTrees.map((t) => t.id), ["inspiration"]);

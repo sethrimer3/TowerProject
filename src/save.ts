@@ -1,4 +1,4 @@
-import { trainingSlots, type TrainingJob } from "./training-jobs.ts";
+import { TRAINER_GEMS, trainingSlots, type TrainingJob } from "./training-jobs.ts";
 import { snap } from "./exact.ts";
 import { TIERS, type TierRecord } from "./tiers.ts";
 import { FIND_POTION_MAX, GOLD_SHOP, OLD_SAVE_KEY, RUN_TRAINING_CAP, SAVE_KEY, TOWER_WIDTH, TRAINING, UPGRADES, WIDTH } from "./config.ts";
@@ -27,6 +27,7 @@ export function defaults(): Save {
     training: Object.fromEntries(TRAINING.map((t) => [t.id, 0])) as Save["training"],
     freeTraining: 0,
     trainingJobs: [],
+    trainers: 0,
     upgrades: Object.fromEntries(
       UPGRADES.map((u) => [u.id, 0]),
     ) as Save["upgrades"],
@@ -93,6 +94,7 @@ function without<R>(r: any, fields: string[]): R {
   for (const k of ["rewards", "known", "visited", ...fields]) delete r[k];
   if (r.hand !== undefined && !validHand(r.hand)) delete r.hand;
   if (r.silver !== undefined && !finite(r.silver)) delete r.silver;
+  if (r.xp !== undefined && !(Number.isInteger(r.xp) && finite(r.xp))) delete r.xp;
   delete r.focus;
   if (r.focusUsed !== undefined && !(Number.isInteger(r.focusUsed) && finite(r.focusUsed, 99))) delete r.focusUsed;
   if (r.focused !== undefined && !r.hand?.includes(r.focused)) delete r.focused;
@@ -241,7 +243,8 @@ function decodeProgress(s: any, d: Save, undoCapacity: number) {
   d.xp = count(s.xp, d.xp);
   for (const t of TRAINING) d.training[t.id] = count(s.training?.[t.id], d.training[t.id], "max" in t ? t.max : 1e6);
   d.freeTraining = count(s.freeTraining, d.freeTraining);
-  d.trainingJobs = decodeTrainingJobs(s.trainingJobs);
+  d.trainers = count(s.trainers, d.trainers, TRAINER_GEMS.length);
+  d.trainingJobs = decodeTrainingJobs(s.trainingJobs, trainingSlots(d));
   d.tower.inspiration = count(s.tower?.inspiration ?? s.tower?.shards, d.tower.inspiration);
   d.tower.best = count(s.tower?.best, d.tower.best);
   d.delve.courage = count(s.delve?.courage ?? s.delve?.essence, d.delve.courage);
@@ -251,12 +254,12 @@ function decodeProgress(s: any, d: Save, undoCapacity: number) {
   d.delve.memory = decodeMemory(s.delve?.memory);
 }
 /** The ranks in training: only well-formed jobs for distinct rows, up to the slots. */
-function decodeTrainingJobs(raw: any): TrainingJob[] {
+function decodeTrainingJobs(raw: any, slots: number): TrainingJob[] {
   const jobs: TrainingJob[] = [];
   if (!Array.isArray(raw)) return jobs;
   for (const j of raw) {
     const ok = TRAINING.some((t) => t.id === j?.id) && Number.isFinite(j.startedAt) && Number.isFinite(j.completesAt) && j.completesAt >= j.startedAt;
-    if (ok && !jobs.some((o) => o.id === j.id) && jobs.length < trainingSlots()) jobs.push({ id: j.id, startedAt: j.startedAt, completesAt: j.completesAt });
+    if (ok && !jobs.some((o) => o.id === j.id) && jobs.length < slots) jobs.push({ id: j.id, startedAt: j.startedAt, completesAt: j.completesAt });
   }
   return jobs;
 }

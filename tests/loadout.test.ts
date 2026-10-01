@@ -1,6 +1,7 @@
 import { trainNow } from "./train-now.ts";
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import type { GoldItemId } from "../src/config.ts";
 import { loadout, trainingPoints, trainingStep, upgradeText, provisionPrice, provisionText } from "../src/loadout.ts";
 import { defaults } from "../src/save.ts";
 import { GOLD_SHOP, UPGRADES, levelForXp, xpForLevel } from "../src/config.ts";
@@ -170,13 +171,13 @@ test("descriptions are written from the grants", () => {
     },
   );
   assert.deepEqual(GOLD_SHOP.map((g) => provisionText(g.id)), [
-    "+20 max HP every run", "+1 defense every run", "+1 attack every run",
+    "+20 max HP every run", "+1 defense every run", "+1 attack every run", "+1 yellow key every run",
   ]);
 });
 
 test("each provision bought costs more than the last, on run training's schedule", () => {
   const s = defaults();
-  const prices = (id: "heal" | "guard" | "edge") => Array.from({ length: 7 }, (_, n) => provisionPrice({ provisions: { ...s.provisions, [id]: n } }, id));
+  const prices = (id: GoldItemId) => Array.from({ length: 7 }, (_, n) => provisionPrice({ provisions: { ...s.provisions, [id]: n } }, id));
   assert.deepEqual(prices("heal"), [5, 7, 10, 14, 19, 25, 35]);
   assert.deepEqual(prices("guard"), [10, 13, 17, 22, 28, 35, 46]);
   assert.deepEqual(prices("edge"), [15, 18, 22, 27, 33, 40, 51]);
@@ -186,6 +187,26 @@ test("each provision bought costs more than the last, on run training's schedule
   assert.equal(s.gold, 20 - 5 - 7);
   assert.equal(g.buyGold("guard"), false, "10 Gold, 8 left");
   assert.equal(s.provisions.heal, 2);
+});
+
+test("Extra Key opens the Yellow Key provision: 100 Gold, then four times the last", () => {
+  const s = defaults(), g = new Game(s);
+  g.newRun({ outside: true });
+  assert.deepEqual(Array.from({ length: 6 }, (_, n) => provisionPrice({ provisions: { ...s.provisions, yellowKey: n } }, "yellowKey")), [100, 400, 1600, 6400, 25600, 102400]);
+  s.gold = 1000;
+  assert.equal(g.buyGold("yellowKey"), false, "closed without Extra Key");
+  s.upgrades.extraKey = 1;
+  const keys = loadout(s).keys.yellow;
+  assert.ok(g.buyGold("yellowKey") && g.buyGold("yellowKey"));
+  assert.equal(s.gold, 500);
+  assert.equal(loadout(s).keys.yellow, keys + 2, "a yellow key for each, every run");
+  assert.equal(g.run.player.keys.yellow, keys + 2, "the run in the forest takes them");
+  assert.equal(g.buyGold("yellowKey"), false, "1,600 Gold, 500 held");
+  goInside(g);
+  const held = g.run.player.keys.yellow;
+  s.gold = 1600;
+  assert.ok(g.buyGold("yellowKey"));
+  assert.equal(g.run.player.keys.yellow, held + 1, "one bought inside a run comes at once");
 });
 
 const ring = (flatAttack: number, flatMaxHp: number): CraftedEquipment => ({
@@ -246,7 +267,7 @@ test("provisions last for good: every run takes them, and one bought mid-run cou
   assert.deepEqual(g.run.loadout, { attack: 13, defense: 0, maxHp: 120, shroud: 1 });
   goInside(g);
   assert.deepEqual(hero(), ready, "the run takes its provisions inside");
-  assert.deepEqual(s.provisions, { heal: 1, edge: 1, guard: 0 }, "and keeps them for every later run");
+  assert.deepEqual(s.provisions, { heal: 1, edge: 1, guard: 0, yellowKey: 0 }, "and keeps them for every later run");
   assert.deepEqual(hero(s.delve.run!), ready, "the other forest run still has them");
   assert.ok(g.buyGold("guard"));
   assert.equal(g.run.player.defense, 1, "one bought inside a run counts at once");

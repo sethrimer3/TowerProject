@@ -1,5 +1,5 @@
 import { GOLD_SHOP, type GoldItemId } from "../config.ts";
-import { provisionPrice, provisionText } from "../loadout.ts";
+import { provisionOpen, provisionPrice, provisionText } from "../loadout.ts";
 import { canCraft, getSalvageReturns, isEquipped, CONSUMABLES, canCraftConsumable, consumableText, type ConsumableId } from "../crafting.ts";
 import {
   EQUIPMENT_SLOTS,
@@ -18,6 +18,8 @@ import type { AppContext } from "./app.ts";
 import { el, itemSprite, SLOT_ICONS, uiSprite } from "./dom.ts";
 import { devAmount } from "./hud.ts";
 
+/** Each provision's picture. */
+const PROVISION_SPRITES = { heal: "potion_flat", guard: "upgrade_defense", edge: "upgrade_attack", yellowKey: "key_yellow" } as const satisfies Record<GoldItemId, string>;
 type GearTab = "provisions" | "equipped" | "inventory" | "crafting";
 /** The tabs after Provisions, shown but closed until something unlocks them. */
 const CLOSED_TABS: GearTab[] = ["equipped", "inventory", "crafting"];
@@ -227,8 +229,8 @@ export class GearPage {
 
   private provisionsHtml(): string {
     const game = this.ctx.game;
-    const provisionSprite = (id: GoldItemId) => itemSprite(id === "heal" ? "potion_flat" : id === "edge" ? "upgrade_attack" : "upgrade_defense");
-    return `<p class="hint">Spend Gold on provisions: each one you buy is carried into every run from now on, and the next costs more. ${uiSprite("gold", "stat-sprite")} ${devAmount(game, game.save.gold)} Gold.</p>${GOLD_SHOP.map((item) => {
+    const provisionSprite = (id: GoldItemId) => itemSprite(PROVISION_SPRITES[id]);
+    return `<p class="hint">Spend Gold on provisions: each one you buy is carried into every run from now on, and the next costs more. ${uiSprite("gold", "stat-sprite")} ${devAmount(game, game.save.gold)} Gold.</p>${GOLD_SHOP.filter((item) => provisionOpen(game.save, item.id)).map((item) => {
       const owned = game.save.provisions[item.id], price = provisionPrice(game.save, item.id);
       return `<article class="card"><div class="item-icon">${provisionSprite(item.id)}</div><div><small>${owned ? `OWNED × ${owned}` : "NOT YET OWNED"}</small><h3>${item.name}</h3><p>${provisionText(item.id)}</p></div><button data-gold="${item.id}" ${game.save.gold < price && !game.free ? "disabled" : ""}>Buy · ${uiSprite("gold", "stat-sprite")} ${price}</button></article>`;
     }).join("")}`;

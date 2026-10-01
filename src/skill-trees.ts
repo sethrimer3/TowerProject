@@ -9,13 +9,15 @@ export type SkillNode = { id: UpgradeId; icon: string; x: number; y: number; req
 export type SkillTree = { id: TreeId; name: string; currency: Currency; gate?: UpgradeId; description: string; height?: number; unlocks?: boolean; nodes: SkillNode[] };
 export const TREES: SkillTree[] = [
   { id: "inspiration", name: "Inspiration", currency: "inspiration", description: "Earn Inspiration by beating your best Tower climb.", height: 172, unlocks: true, nodes: [
-    // The hand's skills, down to Focus; Gear and Heal branch off Buildout.
+    // The hand's skills, down to Focus; Gear and Heal branch off Buildout,
+    // Training off Larger Hand.
     { id: "handOrdering", icon: "▤", x: 50, y: 12, requires: [] },
     { id: "combatStance", icon: "⚔", x: 50, y: 30, requires: ["handOrdering"] },
     { id: "largerHand", icon: "▦", x: 50, y: 48, requires: ["combatStance"] },
     { id: "gear", icon: "⚒", x: 20, y: 48, requires: ["combatStance"] },
     { id: "cardHeal", icon: "♥", x: 80, y: 48, requires: ["combatStance"] },
     { id: "focus", icon: "ϟ", x: 50, y: 66, requires: ["largerHand"] },
+    { id: "training", icon: "⚔", x: 78, y: 66, requires: ["largerHand"] },
     { id: "cardGear", icon: "⛨", x: 14, y: 88, requires: ["focus"] },
     { id: "inspirationUndos", icon: "↺", x: 38, y: 88, requires: ["focus"] },
     { id: "archives", icon: "▥", x: 62, y: 88, requires: ["focus"] },
@@ -23,6 +25,7 @@ export const TREES: SkillTree[] = [
     // Research needs the Archives, so the skills that open it come after them.
     { id: "greaterHeal", icon: "✚", x: 62, y: 106, requires: ["archives"] },
     { id: "spareChange", icon: "¤", x: 22, y: 106, requires: ["archives"] },
+    { id: "blueKey", icon: "⚿", x: 42, y: 106, requires: ["archives"] },
     { id: "wealthy", icon: "¤", x: 10, y: 124, requires: ["spareChange"] },
     { id: "loot", icon: "☠", x: 30, y: 124, requires: ["spareChange"] },
     { id: "wishingWell", icon: "◎", x: 20, y: 142, requires: ["spareChange"] },
@@ -33,7 +36,7 @@ export const TREES: SkillTree[] = [
   ] },
   { id: "courage", name: "Courage", currency: "courage", gate: "delve", description: "Earn Courage by beating your best Delve depth.", nodes: [
     { id: "moveSpeed", icon: "»", x: 50, y: 10, requires: ["delve"] },
-    { id: "autoPersist", icon: "⚙", x: 82, y: 10, requires: ["moveSpeed"] },
+    { id: "extraKey", icon: "⚿", x: 82, y: 10, requires: ["moveSpeed"] },
     { id: "hp", icon: "♥", x: 18, y: 34, requires: ["moveSpeed"] },
     { id: "attack", icon: "⚔", x: 50, y: 34, requires: ["moveSpeed"] },
     { id: "defense", icon: "⛨", x: 82, y: 34, requires: ["moveSpeed"] },

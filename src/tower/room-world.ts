@@ -15,25 +15,30 @@ import { tierCells } from "../tiers.ts";
 // v9 prices a blue key at two yellow and a red at five.
 // v10 puts a boss beside the stairs of every section's last floor.
 // v11 softens weak enemies and grows enemy DEF 1% every five floors.
-export const TOWER_LAYOUT_VERSION = 12;
+// v13 keeps blue keys and doors off the first tower's floors below 20, and
+// red below 50.
+export const TOWER_LAYOUT_VERSION = 13;
 
 /** A self-contained 17x17 Tower floor. Generation is strategy-first (see
  * src/tower/index.ts): an abstract graph of gates, keys and rewards is
  * planned, then embedded as chambers joined by single-tile doorways or
  * forks of parallel lanes.
  * Geometry is always valid; the key/HP economy is deliberately allowed to
- * be harsh or occasionally unwinnable. Deterministic for (seed, room). */
+ * be harsh or occasionally unwinnable. Deterministic for (seed, room,
+ * tier); the tier changes only which key colours appear. */
 export function generateTowerRoom(
   seed: number,
   room: number,
+  tier = 1,
 ): Map<string, Tile> {
-  return generateTowerFloor(seed, room).cells;
+  return generateTowerFloor(seed, room, tier).cells;
 }
 const towerTorchCaches = new Map<string, Torch[]>();
 /** Torches for one tower room, computed once when that room is first
- * entered this session and cached by seed+room number. */
-function torchesForRoom(seed: number, room: number, cells: Map<string, Tile>): Torch[] {
-  const key = `${seed}:${room}`;
+ * entered this session and cached by seed, room number and whether it is
+ * the first tier's (whose floors may differ in their keys). */
+function torchesForRoom(seed: number, room: number, tier: number, cells: Map<string, Tile>): Torch[] {
+  const key = `${seed}:${room}:${tier > 1}`;
   let t = towerTorchCaches.get(key);
   if (!t) {
     t = placeTorches(cells, { xMin: 1, xMax: TOWER_WIDTH - 2, yMin: 1, yMax: TOWER_HEIGHT - 2, seed: seed ^ Math.imul(room + 1, 0x9e3779b1) });
@@ -57,8 +62,8 @@ export class RoomWorld implements Board {
     /** The numbered tower the floor stands in, whose enemies it scales. */
     public tier = 1,
   ) {
-    const cells = generateTowerRoom(seed, room);
-    this.torches = torchesForRoom(seed, room, cells);
+    const cells = generateTowerRoom(seed, room, tier);
+    this.torches = torchesForRoom(seed, room, tier, cells);
     this.cells = tierCells(cells, tier);
   }
   breakTorchAt(x: number, y: number): boolean {

@@ -66,7 +66,8 @@ export class RunEndDialog {
   }
 
   /** The run's totals, the same whatever ended it: where it stands, its
-   * highest, and the Gold and currency it obtained (not the balances held). */
+   * highest, and the Gold, currency and XP it obtained (not the balances
+   * held). */
   private stats() {
     const { game } = this.ctx, rules = MODES[game.mode], slice = game.save[game.mode], run = game.run;
     const stat = (value: string | number, label: string, icon = "") => `<div><strong>${icon}${value}</strong>${label}</div>`;
@@ -75,6 +76,7 @@ export class RunEndDialog {
       stat(displayedProgress(run.maxHeight ?? run.height, !!run.outside), "HIGHEST"),
       stat(whole(slice.runGold), "GOLD", uiSprite("gold")),
       stat(slice.runCurrency, rules.words.currency.toUpperCase(), uiSprite(CURRENCY_SPRITES[game.mode])),
+      stat(run.xp ?? 0, "XP"),
     ].join("");
   }
 

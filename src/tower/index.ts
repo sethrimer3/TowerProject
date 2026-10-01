@@ -9,6 +9,7 @@ import { embed, ENTRY, type Embedding } from "./embedder.ts";
 import { GraphBuilder, generateStrategicGraph } from "./strategic-graph.ts";
 import { keyedFloor, openFirstFloor } from "./patterns.ts";
 import type { StrategicGraph } from "./types.ts";
+import { ALL_KEY_COLORS, keyColorsOn, type KeyColors } from "../key-schedule.ts";
 
 /** Tower floor generation pipeline:
  *
@@ -70,14 +71,17 @@ function minimalGraph(depth: number, rng: () => number): StrategicGraph {
   return { archetype: "mixed", depth, nodes: b.nodes, shortcuts: [], notes: ["fallback minimal floor"] };
 }
 
-export function generateTowerFloor(seed: number, room: number): TowerFloor {
+/** Floor `room` of a run seeded `seed`, in tower `tier`, which decides
+ * only the key colours it may use (`keyColorsOn`). */
+export function generateTowerFloor(seed: number, room: number, tier = 1): TowerFloor {
+  const colors = keyColorsOn(room, tier);
   const MAX_ATTEMPTS = 12;
   for (let attempt = 0; attempt <= MAX_ATTEMPTS; attempt++) {
     const derived = (seed ^ Math.imul(room + 1, 2654435761) ^ Math.imul(attempt + 1, 40503)) >>> 0;
     const rng = random(derived ^ 0x9e3779b9);
     // Each failed embedding simplifies the next graph a little.
     const graph = attempt < MAX_ATTEMPTS
-      ? generateStrategicGraph(derived, room, Math.floor(attempt / 3))
+      ? generateStrategicGraph(derived, room, Math.floor(attempt / 3), tier)
       : minimalGraph(room, rng);
     const embedding = embed(graph, rng);
     if (!embedding) continue;
@@ -93,7 +97,7 @@ export function generateTowerFloor(seed: number, room: number): TowerFloor {
     const blockers = new Set([...cells].filter(([, t]) => t.kind === "enemy").map(([k]) => k));
     for (const k of reachable(cells, point(TOWER_START_X, 0), blockers))
       if (cells.get(k)?.kind === "floor" && k !== point(...ENTRY)) {
-        const loot = rollUnguardedLoot(rng);
+        const loot = rollUnguardedLoot(rng, colors);
         if (loot) cells.set(k, loot);
       }
     if (geometryProblems(cells).length) continue;
@@ -104,16 +108,19 @@ export function generateTowerFloor(seed: number, room: number): TowerFloor {
 
 /** Human-readable generation report for one floor (debugging/tuning). */
 /** The rare loot on one unguarded floor tile, or null (most rolls). */
-export function rollUnguardedLoot(rng: () => number): Tile | null {
+/** A key of a colour `colors` closes comes as a yellow key. */
+export function rollUnguardedLoot(rng: () => number, colors: KeyColors = ALL_KEY_COLORS): Tile | null {
   if (rng() >= UNGUARDED_LOOT_CHANCE) return null;
   const choice = Math.floor(rng() * 6);
-  if (choice < 3)
-    return { kind: "key", color: (["yellow", "blue", "red"] as const)[choice] };
+  if (choice < 3) {
+    const color = (["yellow", "blue", "red"] as const)[choice];
+    return { kind: "key", color: colors[color] ? color : "yellow" };
+  }
   return { kind: (["attack", "defense", "treasure"] as const)[choice - 3] };
 }
 
-export function towerFloorReport(seed: number, room: number): { analysis: FloorAnalysis; text: string } {
-  const floor = generateTowerFloor(seed, room);
+export function towerFloorReport(seed: number, room: number, tier = 1): { analysis: FloorAnalysis; text: string } {
+  const floor = generateTowerFloor(seed, room, tier);
   const analysis = analyzeFloor(floor.embedding);
   return { analysis, text: formatFloorSummary(analysis, floor.cells) };
 }
