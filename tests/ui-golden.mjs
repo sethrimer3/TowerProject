@@ -87,7 +87,7 @@ try {
     };
     const rich = (s) => {
       quiet(s);
-      Object.assign(s.upgrades, { delve: 1, auto: 1, legacy: 1, revive: 1, handOrdering: 1, combatStance: 1, largerHand: 1, cardHeal: 1, focus: 1, archives: 1, inspirationUndos: 1, greaterHeal: 1, recovery: 1, findPotion: 1, shroud: 1, undos: 1, autoPersist: 1 });
+      Object.assign(s.upgrades, { delve: 1, moveSpeed: 1, legacy: 1, revive: 1, handOrdering: 1, combatStance: 1, largerHand: 1, cardHeal: 1, focus: 1, archives: 1, inspirationUndos: 1, greaterHeal: 1, recovery: 1, findPotion: 1, shroud: 1, undos: 1, autoPersist: 1 });
       s.delve.courage = 37;
       s.tower.inspiration = 21;
       s.gold = 480;
@@ -383,9 +383,9 @@ try {
 
   await load("fresh");
   await shot("fresh.start");
-  // Inside a run the locked Automove only says where it unlocks.
+  // Inside a run the button plays and pauses the hand.
   await click("#auto");
-  await shot("fresh.autoLocked");
+  await shot("fresh.handToggled");
   await click("#auto-settings");
   await shot("fresh.settings");
   await click("#settings-back");
@@ -396,9 +396,10 @@ try {
   await tab("gear");
   await shot("fresh.gear");
   await tab("tower");
-  // In the forest it leads to the upgrade instead.
+  // In the forest it turns Automove on and off, with no upgrade needed.
   await click("#auto");
-  await shot("fresh.autoLocked.forest");
+  await click("#auto");
+  await shot("fresh.automove.forest");
 
   // A fallen hero: the defeat dialog, with an undo or without.
   await load("fallenUndo");

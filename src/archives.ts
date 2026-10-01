@@ -27,6 +27,8 @@ export type ResearchCategory = keyof typeof RESEARCH_CATEGORIES;
 export const RESEARCH_TARGETS = {
   /** Focus uses a run starts with. */
   focusPerRun: { text: (v: number) => `+${v} Focus use each run` },
+  /** Movement speed choices above 3 steps a second, once Movement Speed is owned. */
+  moveSpeed: { text: (v: number) => `${3 + v} steps / sec option` },
   /** Undos the hero can store, once Rehearsed steps has given the first. */
   undoCapacity: { text: (v: number) => `+${v} undo stored` },
   /** The percent of its HP a potion restores, from 100 (red potions aside). */
@@ -65,11 +67,11 @@ export type ResearchDefinition = {
   levels: ResearchLevel[];
 };
 
-/** Focus Count and Undo Count: +1 to `target` a level, for nine levels.
- * Level 1 costs 500 Gold and takes 8 hours; each level after takes 8 hours
- * more, and costs 500 × n Gold more than level n before it (500, 1000,
- * 2000, 3500, …). */
-const countLevels = (target: ResearchTarget) => Array.from({ length: 9 }, (_, i): ResearchLevel => ({
+/** Focus Count and Undo Count: +1 to `target` a level, for nine levels
+ * (Movement Speed takes the first six). Level 1 costs 500 Gold and takes 8
+ * hours; each level after takes 8 hours more, and costs 500 × n Gold more
+ * than level n before it (500, 1000, 2000, 3500, …). */
+const countLevels = (target: ResearchTarget, length = 9) => Array.from({ length }, (_, i): ResearchLevel => ({
   gold: 500 * (1 + (i * (i + 1)) / 2),
   hours: 8 * (i + 1),
   effect: { target, op: "add", value: 1 },
@@ -103,6 +105,13 @@ export const RESEARCH = {
     categories: ["abilities"],
     requires: [{ upgrade: "focus" }],
     levels: countLevels("focusPerRun"),
+  },
+  moveSpeed: {
+    name: "Movement Speed",
+    description: "Drill the old climbers' quickstep: the Movement speed setting goes one step a second faster.",
+    categories: ["qualityOfLife"],
+    requires: [{ upgrade: "moveSpeed" }],
+    levels: countLevels("moveSpeed", 6),
   },
   undoCount: {
     name: "Undo Count",

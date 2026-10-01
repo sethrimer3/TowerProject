@@ -147,14 +147,13 @@ With the current first-level costs, the direct prerequisite path to unlock Delve
 - Combat Stance: 1 Inspiration
 - Buildout: 1 Inspiration
 - Larger Hand: 1 Inspiration
-- Heal: 3 Inspiration
 - Focus: 10 Inspiration
 - Into the depths: 3 Inspiration
-- **Total minimum path: 19 Inspiration**
+- **Total minimum path: 16 Inspiration**
 
-Gear (5 Inspiration) now comes after Focus, beside Rehearsed steps, the Archives and Into the depths, so it is off that path. If the player earned only the guaranteed reach-based Inspiration, this places the current Delve unlock around floor 20 in Tower progression. Silver/Gold/Platinum rewards can move that timing earlier.
+Heal (3 Inspiration) branches off Buildout beside Larger Hand, and Gear (5 Inspiration) comes after Focus, beside Rehearsed steps, the Archives and Into the depths, so both are off that path. If the player earned only the guaranteed reach-based Inspiration, this places the current Delve unlock around floor 16 in Tower progression. Silver/Gold/Platinum rewards can move that timing earlier.
 
-This is a useful reference point, **not a commitment that 19 is the final desired Delve-unlock cost**.
+This is a useful reference point, **not a commitment that 16 is the final desired Delve-unlock cost**.
 
 ### Gems and the hand's slots
 

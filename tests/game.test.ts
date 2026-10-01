@@ -114,7 +114,7 @@ test("automation avoids lethal fights; a manual death waits on the player, and a
   g.finish("again");
   assert.equal(g.save.delve.courage, earned);
   g.save.delve.courage = 100;
-  g.save.upgrades.auto = 1;
+  g.save.upgrades.moveSpeed = 1;
   assert.ok(g.buy("hp"));
   g.newRun();
   assert.equal(g.run.player.maxHp, 120);

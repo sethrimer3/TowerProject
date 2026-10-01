@@ -79,7 +79,7 @@ export class FrameLoop {
       game.routeStep();
       this.host.update();
     }
-    if (game.auto && this.due(time, this.lastAuto, 1000 / game.save.settings.speed)) {
+    if (game.auto && this.due(time, this.lastAuto, 1000 / game.stepsPerSecond)) {
       this.lastAuto = time;
       game.autoTurn();
       this.host.update();

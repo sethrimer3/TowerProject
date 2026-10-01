@@ -1,6 +1,6 @@
 import { SETTINGS, type SettingKey, type Settings } from "../settings.ts";
 import type { Save } from "../entities.ts";
-import type { AppContext } from "./app.ts";
+import type { AppContext, PageGame } from "./app.ts";
 import type { BoardOverlay } from "./board-overlay.ts";
 import { capitalized, displayedProgress, el } from "./dom.ts";
 import { MODES } from "../modes.ts";
@@ -15,7 +15,12 @@ type PageKey = (typeof PAGE)[number];
 
 /** Settings that stay off the page until the upgrade behind them is owned. */
 const SHOWN: Partial<Record<PageKey, (save: Save) => boolean>> = {
+  speed: (save) => !!save.upgrades.moveSpeed,
   autoOffOnDeath: (save) => !!save.upgrades.autoPersist,
+};
+/** The choices a setting offers now, where research opens more of them. */
+const OFFERED: Partial<Record<PageKey, (game: PageGame) => (value: string | number) => boolean>> = {
+  speed: (game) => (steps) => Number(steps) <= game.maxSpeed,
 };
 const onPage = (save: Save) => PAGE.filter((key) => SHOWN[key]?.(save) ?? true);
 
@@ -42,15 +47,15 @@ const options = (choices: readonly (readonly [string | number, string])[], selec
   choices.map(([value, label]) => `<option value="${value}" ${selected === value ? "selected" : ""}>${label}</option>`).join("");
 
 /** One setting's control, showing its current value. */
-function control(key: PageKey, s: Settings): string {
-  const row = SETTINGS[key], value = s[key];
+function control(key: PageKey, game: PageGame): string {
+  const row = SETTINGS[key], value = key === "speed" ? game.stepsPerSecond : game.save.settings[key];
   switch (row.kind) {
     case "toggle": {
       const checked = "invert" in row.page ? !value : value;
       return `<label class="setting">${row.page.label}<input type="checkbox" id="${row.page.id}" ${checked ? "checked" : ""}></label>`;
     }
     case "choice":
-      return `<label class="setting">${row.page.label}<select id="${row.page.id}">${options(row.choices, value as string | number)}</select></label>`;
+      return `<label class="setting">${row.page.label}<select id="${row.page.id}">${options(row.choices.filter(([c]) => OFFERED[key]?.(game)(c) ?? true), value as string | number)}</select></label>`;
     case "range":
       return `<label class="setting">${row.page.label}<span class="range-setting"><input type="range" id="${row.page.id}" min="${row.min}" max="${row.max}" step="${row.step}" value="${value}" aria-label="${row.page.aria}"><output id="${row.page.id}-value">${value}</output></span></label>`;
   }
@@ -59,11 +64,11 @@ function control(key: PageKey, s: Settings): string {
 /** The Settings page: a way back to the board, display and control
  * options, retire, and erase. */
 export function renderSettingsPage(ctx: AppContext, overlay: BoardOverlay) {
-  const { game } = ctx, s = game.save.settings;
+  const { game } = ctx;
   const words = MODES[game.mode].words;
   el("settings").innerHTML =
     `<button class="back" id="settings-back">← Back</button><div class="page-title"><small>MAKE THE ASCENT YOUR OWN</small><h2>Settings</h2></div>` +
-    onPage(game.save).map((key) => control(key, s)).join("") +
+    onPage(game.save).map((key) => control(key, game)).join("") +
     `<p class="hint">Automation pauses outside the board tabs and while the browser is hidden. Progress saves after each action.</p><button class="wide" id="retire">Retire this ${words.run}</button><p class="hint">Keep your milestone rewards and enter a freshly generated ${words.fresh}.</p><button class="wide danger" id="erase">Erase all progress</button><p class="seed">RUN SEED · ${game.run.seed}</p>`;
   bindSettings(ctx, overlay);
 }

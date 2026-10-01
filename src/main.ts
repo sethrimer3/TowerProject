@@ -170,13 +170,7 @@ modal.addEventListener("cancel", (e) => {
 el("auto-settings").onclick = () => navigate("settings");
 el("auto").onclick = () => {
   // Inside a run the button plays and pauses the hand; in the forest it is
-  // Automove, which leads to its upgrade until bought.
-  if (game.run.outside && !game.save.upgrades.auto) {
-    if (game.save.upgrades.delve) skillTree.focus("courage", "auto");
-    else skillTree.focus("inspiration", "delve");
-    navigate("upgrades");
-    return;
-  }
+  // Automove.
   game.toggleAuto();
   update();
 };

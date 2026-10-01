@@ -18,9 +18,9 @@ await page.evaluate(()=>{const s=JSON.parse(localStorage.getItem('towerdelve.v1'
 await page.reload();await page.locator('[data-tab="upgrades"]').click();
 for(const id of ['handOrdering','combatStance','largerHand','cardHeal','focus','delve']) {await page.locator(`[data-skill="${id}"]`).click();await page.locator(`[data-skill="${id}"]`).click();if(await page.locator('#card-reveal-card').count()) await page.locator('#card-reveal-card').click();}
 await page.locator('[data-tree="courage"]').click();
-await page.locator('[data-skill="auto"]').click();
-await expect(page.locator('#tree-tooltip')).toContainText('Automove');
-await page.locator('[data-skill="auto"]').click();
+await page.locator('[data-skill="moveSpeed"]').click();
+await expect(page.locator('#tree-tooltip')).toContainText('Movement Speed');
+await page.locator('[data-skill="moveSpeed"]').click();
 await page.screenshot({path:'test-results/courage-tree.png',fullPage:true});
 // In the forest the button is Automove; inside a run it plays and pauses the hand.
 await page.locator('[data-tab="tower"]').click();await expect(page.locator('#auto-state')).toHaveText('OFF');await page.locator('#auto').click();await expect(page.locator('#auto-state')).toHaveText('ON');await page.locator('#auto').click();

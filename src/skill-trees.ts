@@ -8,39 +8,39 @@ export type SkillNode = { id: UpgradeId; icon: string; x: number; y: number; req
  * Archives), so its page shows no ranks. */
 export type SkillTree = { id: TreeId; name: string; currency: Currency; gate?: UpgradeId; description: string; height?: number; unlocks?: boolean; nodes: SkillNode[] };
 export const TREES: SkillTree[] = [
-  { id: "inspiration", name: "Inspiration", currency: "inspiration", description: "Earn Inspiration by beating your best Tower climb.", height: 190, unlocks: true, nodes: [
-    // The hand's skills, one after another down to Focus.
+  { id: "inspiration", name: "Inspiration", currency: "inspiration", description: "Earn Inspiration by beating your best Tower climb.", height: 172, unlocks: true, nodes: [
+    // The hand's skills, down to Focus; Heal branches off Buildout.
     { id: "handOrdering", icon: "▤", x: 50, y: 12, requires: [] },
     { id: "combatStance", icon: "⚔", x: 50, y: 30, requires: ["handOrdering"] },
     { id: "largerHand", icon: "▦", x: 50, y: 48, requires: ["combatStance"] },
-    { id: "cardHeal", icon: "♥", x: 50, y: 66, requires: ["largerHand"] },
-    { id: "focus", icon: "ϟ", x: 50, y: 84, requires: ["cardHeal"] },
-    { id: "cardGear", icon: "⛨", x: 14, y: 106, requires: ["focus"] },
-    { id: "inspirationUndos", icon: "↺", x: 38, y: 106, requires: ["focus"] },
-    { id: "archives", icon: "▥", x: 62, y: 106, requires: ["focus"] },
-    { id: "delve", icon: "▼", x: 86, y: 106, requires: ["focus"] },
+    { id: "cardHeal", icon: "♥", x: 80, y: 48, requires: ["combatStance"] },
+    { id: "focus", icon: "ϟ", x: 50, y: 66, requires: ["largerHand"] },
+    { id: "cardGear", icon: "⛨", x: 14, y: 88, requires: ["focus"] },
+    { id: "inspirationUndos", icon: "↺", x: 38, y: 88, requires: ["focus"] },
+    { id: "archives", icon: "▥", x: 62, y: 88, requires: ["focus"] },
+    { id: "delve", icon: "▼", x: 86, y: 88, requires: ["focus"] },
     // Research needs the Archives, so the skills that open it come after them.
-    { id: "greaterHeal", icon: "✚", x: 62, y: 124, requires: ["archives"] },
-    { id: "spareChange", icon: "¤", x: 22, y: 124, requires: ["archives"] },
-    { id: "wealthy", icon: "¤", x: 10, y: 142, requires: ["spareChange"] },
-    { id: "loot", icon: "☠", x: 30, y: 142, requires: ["spareChange"] },
-    { id: "wishingWell", icon: "◎", x: 20, y: 160, requires: ["spareChange"] },
-    { id: "recovery", icon: "✦", x: 50, y: 142, requires: ["greaterHeal"] },
-    { id: "findPotion", icon: "⚗", x: 50, y: 160, requires: ["recovery"] },
-    { id: "shroud", icon: "◈", x: 82, y: 142, requires: ["greaterHeal"] },
-    { id: "revive", icon: "☼", x: 82, y: 160, requires: ["shroud"] },
+    { id: "greaterHeal", icon: "✚", x: 62, y: 106, requires: ["archives"] },
+    { id: "spareChange", icon: "¤", x: 22, y: 106, requires: ["archives"] },
+    { id: "wealthy", icon: "¤", x: 10, y: 124, requires: ["spareChange"] },
+    { id: "loot", icon: "☠", x: 30, y: 124, requires: ["spareChange"] },
+    { id: "wishingWell", icon: "◎", x: 20, y: 142, requires: ["spareChange"] },
+    { id: "recovery", icon: "✦", x: 50, y: 124, requires: ["greaterHeal"] },
+    { id: "findPotion", icon: "⚗", x: 50, y: 142, requires: ["recovery"] },
+    { id: "shroud", icon: "◈", x: 82, y: 124, requires: ["greaterHeal"] },
+    { id: "revive", icon: "☼", x: 82, y: 142, requires: ["shroud"] },
   ] },
   { id: "courage", name: "Courage", currency: "courage", gate: "delve", description: "Earn Courage by beating your best Delve depth.", nodes: [
-    { id: "auto", icon: "✦", x: 50, y: 10, requires: ["delve"] },
-    { id: "autoPersist", icon: "⚙", x: 82, y: 10, requires: ["auto"] },
-    { id: "hp", icon: "♥", x: 18, y: 34, requires: ["auto"] },
-    { id: "attack", icon: "⚔", x: 50, y: 34, requires: ["auto"] },
-    { id: "defense", icon: "⛨", x: 82, y: 34, requires: ["auto"] },
+    { id: "moveSpeed", icon: "»", x: 50, y: 10, requires: ["delve"] },
+    { id: "autoPersist", icon: "⚙", x: 82, y: 10, requires: ["moveSpeed"] },
+    { id: "hp", icon: "♥", x: 18, y: 34, requires: ["moveSpeed"] },
+    { id: "attack", icon: "⚔", x: 50, y: 34, requires: ["moveSpeed"] },
+    { id: "defense", icon: "⛨", x: 82, y: 34, requires: ["moveSpeed"] },
     { id: "undos", icon: "↺", x: 23, y: 61, requires: ["hp"] },
     { id: "legacy", icon: "♜", x: 50, y: 87, requires: ["attack", "undos"] },
   ] },
-  { id: "wayfinding", name: "Wayfinding", currency: "courage", gate: "auto", description: "Teach Delve Automove to explore, compare routes and preserve resources.", nodes: [
-    { id: "aiMemory", icon: "◇", x: 50, y: 20, requires: ["auto"] },
+  { id: "wayfinding", name: "Wayfinding", currency: "courage", gate: "moveSpeed", description: "Teach Delve Automove to explore, compare routes and preserve resources.", nodes: [
+    { id: "aiMemory", icon: "◇", x: 50, y: 20, requires: ["moveSpeed"] },
     { id: "aiEvaluation", icon: "⚖", x: 25, y: 52, requires: ["aiMemory"] },
     { id: "aiLookahead", icon: "✧", x: 75, y: 78, requires: ["aiMemory"] },
   ] },

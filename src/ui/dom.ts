@@ -40,7 +40,7 @@ const SKILL_ITEM_SPRITES: Partial<Record<UpgradeId, keyof typeof AREA1_ITEM_URLS
 };
 const SKILL_UI_SPRITES: Partial<Record<UpgradeId, UiSprite>> = {
   hp: "health", inspirationUndos: "undo", undos: "undo", archives: "log",
-  delve: "delve", auto: "automove", autoPersist: "settings",
+  delve: "delve", moveSpeed: "automove", autoPersist: "settings",
   revive: "revive", spareChange: "gold", loot: "gold", legacy: "tower", quality: "tower",
   wisdomFocus: "settings", wisdomMemory: "undo", wisdomSight: "upgrades",
   renownBanner: "tower", renownOath: "defense", renownCrown: "gear",

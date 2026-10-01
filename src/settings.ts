@@ -26,10 +26,12 @@ export const SETTINGS = {
     page: { id: "transition", label: "Movement transition" },
   },
   showArrows: { kind: "toggle", default: false, page: { id: "arrows", label: "Show directional buttons" } },
-  /** Automove steps a second. */
+  /** Steps a second, for the hand and Automove; on the page once Movement
+   * Speed is owned, up to 3 and one more per Movement Speed research level
+   * (`Game.stepsPerSecond`, `speedChoices`). */
   speed: {
-    kind: "choice", default: 3, choices: [[1, "1 steps / sec"], [3, "3 steps / sec"], [6, "6 steps / sec"], [10, "10 steps / sec"]],
-    page: { id: "speed", label: "Automove speed" },
+    kind: "choice", default: 3, choices: [1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => [n, `${n} steps / sec`] as const),
+    page: { id: "speed", label: "Movement speed" },
   },
   reduceMotion: { kind: "toggle", default: false, page: { id: "motion", label: "Reduce motion" } },
   /** Dungeon brightness, 20 (very dark) to 100 (default look). */

@@ -157,6 +157,10 @@ _Avoid_: skill (a skill is something the player uses), ability
 The cards the player sets up before a run, in priority order, in four slots (five with Larger Hand, and more bought with Gems); it always holds the STAIRS card. Inside a run the hand moves the hero, and the player can't: the first card that can act picks its closest target, and the hero follows the shortest path there a step at a time before the hand chooses again. The player can pause it, and undo pauses it. Each run keeps the hand as ordered when it went inside.
 _Avoid_: loadout (what the character starts a run with)
 
+**Movement speed**:
+How many steps a second the hand (and Automove in the forest) takes. The player chooses it, from 1 to 3, once the Movement Speed skill is owned; Movement Speed research makes faster speeds available, up to 9.
+_Avoid_: Automove speed
+
 **Deck**:
 All the player's cards: those in the hand and those waiting outside it. Also the page where the hand is ordered (with the Combat Stance skill) and its cards chosen from the deck (with Buildout).
 

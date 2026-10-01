@@ -137,7 +137,7 @@ const headingKey = (game: Game) => {
 const HAND_ICON = { play: "▶︎", pause: "❚❚" };
 
 /** Inside a run the button plays and pauses the hand, showing the play or
- * pause icon; in the forest it turns Automove on and off, once bought. */
+ * pause icon; in the forest it turns Automove on and off. */
 function renderAutoButton(game: Game) {
   const button = el("auto"), inside = !game.run.outside;
   const label = inside ? (game.auto ? "Pause the hand" : "Play the hand") : "Automove";
@@ -148,7 +148,7 @@ function renderAutoButton(game: Game) {
     if (inside) slot.textContent = icon;
     else slot.innerHTML = uiSprite("automove");
   }
-  text("auto-state", inside ? (game.auto ? "PLAYING" : "PAUSED") : game.save.upgrades.auto ? (game.auto ? "ON" : "OFF") : "LOCKED");
+  text("auto-state", inside ? (game.auto ? "PLAYING" : "PAUSED") : game.auto ? "ON" : "OFF");
   button.classList.toggle("enabled", game.auto);
   button.setAttribute("aria-label", label);
   button.title = label;

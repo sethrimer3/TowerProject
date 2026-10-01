@@ -61,6 +61,7 @@ import { MODES, milestones, type ModeProfile } from "./modes.ts";
 import { ranksInRun, runTrainingOffer } from "./run-training.ts";
 import { floorGold, floorSilver, keepUndos, killGold, silverBonus, loadout, percentPotionChance, potionPercent, reviveChance, trainingMaxed, trainingPoints } from "./loadout.ts";
 import { RESEARCH, cancelResearch, hastenResearch, hireArchivist, researched, settleArchives, startResearch, type ResearchId, type ResearchRecord } from "./archives.ts";
+import { SETTINGS } from "./settings.ts";
 import {
   creditMaterials,
   craftEquipment as craftEquipmentItem,
@@ -462,6 +463,17 @@ export class Game {
     if (chance) this.run.percentPotions = chance;
     else delete this.run.percentPotions;
     this.run.focusUsed = 0;
+  }
+  /** The fastest Movement speed the player may choose: 3 steps a second,
+   * and one more a Movement Speed research level. */
+  get maxSpeed() {
+    return 3 + researched(this.save.archives, "moveSpeed", 0);
+  }
+  /** Steps a second the hand and Automove take: the Movement speed setting,
+   * no faster than research allows, once Movement Speed is owned; otherwise
+   * the setting's default. */
+  get stepsPerSecond() {
+    return this.save.upgrades.moveSpeed ? Math.min(this.save.settings.speed, this.maxSpeed) : SETTINGS.speed.default;
   }
   /** Focus uses a run starts with: none without the Focus skill, and more
    * with Focus Count research. */

@@ -120,8 +120,8 @@ await page.reload();
 await page.locator('[data-tab="upgrades"]').click();
 await page.locator('[data-tree="courage"]').click();
 // A skill node's first tap shows its tooltip; tapping it again buys it.
-await page.locator('[data-skill="auto"]').click();
-await page.locator('[data-skill="auto"]').click();
+await page.locator('[data-skill="moveSpeed"]').click();
+await page.locator('[data-skill="moveSpeed"]').click();
 await page.locator('[data-tab="delve"]').click();
 for (let step = 0; step < 12; step++)
   await page.getByRole("button", { name: "Move up", exact: true }).click();
@@ -145,7 +145,7 @@ await page.locator("#cancel").click();
 await page.reload();
 await page.locator('[data-tab="upgrades"]').click();
 await page.locator('[data-tree="courage"]').click();
-if ((await page.locator('[data-skill="auto"] small').textContent()) !== "1 / 1")
+if ((await page.locator('[data-skill="moveSpeed"] small').textContent()) !== "1 / 1")
   throw Error("Upgrade persistence failed");
 console.log(
   "Upgrade purchase, auto unlock, climbing, pause, erase cancellation, and upgrade persistence passed",

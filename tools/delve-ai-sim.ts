@@ -16,7 +16,7 @@ export const AI_LEVELS: Record<string, AiLevel> = {
 };
 export function simulate(seed: number, level: AiLevel, opts: { steps?: number; hp?: number; attack?: number; defense?: number; keys?: number; depthAt?: number } = {}) {
   const g = new Game(defaults());
-  g.save.upgrades.delve = 1; g.save.upgrades.auto = 1;
+  g.save.upgrades.delve = 1;
   Object.assign(g.save.upgrades, level);
   g.switchMode('delve');
   g.newRun({ seed });
