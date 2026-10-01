@@ -13,7 +13,7 @@ export type PageGame = Readonly<Pick<Game, "mode" | "run" | "save" | "fallen" | 
     Game,
     | "undo" | "acceptDefeat" | "eraseAll" | "finish" | "setDevMode"
     | "sectionUnlocked" | "startSection" | "setStartSection"
-    | "buy" | "train" | "cancelTraining" | "resetTraining" | "buyHandSlot" | "arrangeHand" | "addToHand" | "removeFromHand" | "buyGold" | "craftEquipment" | "craftConsumable" | "salvageEquipment"
+    | "buy" | "train" | "cancelTraining" | "resetTraining" | "buyHandSlot" | "arrangeHand" | "addToHand" | "placeInHand" | "removeFromHand" | "buyGold" | "craftEquipment" | "craftConsumable" | "salvageEquipment"
     | "equipItem" | "unequipSlot" | "useConsumable"
     | "clock" | "startResearch" | "cancelResearch" | "setAutoContinue" | "hireArchivist" | "finishResearchNow"
   >;

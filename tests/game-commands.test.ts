@@ -116,11 +116,35 @@ test("a manual step drops the queued route and Automove", () => {
   g.toggleAuto();
   assert.ok(g.stepManually(1, 0));
   assert.deepEqual([g.run.player.x, g.run.player.y, g.route.length, g.auto], [1, 0, 0, false]);
-  g.run.outside = true;
+});
+
+test("a deck card dragged to the hand goes into its slot, in the forest with Buildout only", () => {
+  const g = new Game(defaults());
+  g.newRun({ outside: true, seed: 1 });
+  g.save.upgrades.cardHeal = 1;
+  assert.equal(g.placeInHand("heal", 1), false, "not before Buildout");
+  g.save.upgrades.combatStance = 1;
+  assert.ok(g.removeFromHand("door"));
+  assert.ok(g.placeInHand("heal", 1));
+  assert.deepEqual(g.save.hand, ["stairs", "heal", "key", "monster"]);
+  assert.ok(g.placeInHand("door", 3), "a full hand swaps the card there out");
+  assert.deepEqual(g.save.hand, ["stairs", "heal", "key", "door"]);
+  assert.equal(g.placeInHand("monster", 0), false, "STAIRS stays");
+  assert.equal(g.placeInHand("heal", 2), false, "a card already in the hand");
+  assert.equal(g.placeInHand("monster", 4), false, "no such slot");
+  g.enterRun();
+  assert.equal(g.placeInHand("monster", 1), false, "only in the forest");
+});
+
+test("in the forest Enter goes straight in, starting the run with the hand playing", () => {
+  const g = new Game(defaults());
+  g.newRun({ outside: true, seed: 1 });
   g.toggleAuto();
-  assert.equal(g.message, "Wayfinder is searching for a route.");
-  g.toggleAuto();
-  assert.equal(g.message, "Manual climbing");
+  assert.ok(!g.auto, "the forest has no play or pause");
+  assert.ok(g.enterRun());
+  assert.ok(!g.run.outside && g.auto);
+  assert.equal(g.run.player.y, 0, "at the entrance");
+  assert.equal(g.enterRun(), false, "only from the forest");
 });
 
 test("ending a run goes straight back to the forest with the next run", () => {

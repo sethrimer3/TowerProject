@@ -6,7 +6,7 @@ import { CONSUMABLES, consumableText } from "../crafting.ts";
 import { outsideWeather } from "../outside.ts";
 import { tierBonusText, tierNumeral } from "../tiers.ts";
 import { MODES, milestones } from "../modes.ts";
-import { cardArt, displayedProgress, el, text, uiSprite } from "./dom.ts";
+import { cardArt, displayedProgress, el, ENTER_ICON, text } from "./dom.ts";
 import { CARDS } from "../cards.ts";
 import { trainingPoints } from "../loadout.ts";
 import type { BoardOverlay } from "./board-overlay.ts";
@@ -59,6 +59,8 @@ export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay)
   const { deck, addCard } = game.save.tutorials;
   document.querySelector(`[data-tab="deck"]`)?.classList.toggle("notify", !deck || (!!game.save.upgrades.combatStance && !addCard));
   document.querySelector(`[data-tab="upgrades"]`)?.classList.toggle("notify", upgradesWaiting(game));
+  renderLockedTab("gear", !!game.save.upgrades.gear, "Gear", "Unlock Gear in the Inspiration tree");
+  document.querySelector(`[data-tab="gear"]`)?.classList.toggle("notify", gearWaiting(game));
   renderLockedTab("defend", !!game.save.upgrades.legacy, "Defend", "Unlock An enduring legacy in the Courage tree");
 }
 
@@ -66,6 +68,9 @@ export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay)
  * been earned (so the run that paid it has ended by the time the tabs show)
  * and the page hasn't been opened since. */
 export const upgradesWaiting = (game: Game) => !game.save.tutorials.upgrades && game.save.tower.inspiration > 0;
+/** Whether the Gear button shows its dot: the Gear skill is owned and the
+ * page hasn't been opened since. */
+export const gearWaiting = (game: Game) => !game.save.tutorials.gear && !!game.save.upgrades.gear;
 
 /** The level at the front of the XP bar, which fills with this level's
  * progress; hovering shows the XP still needed. */
@@ -137,19 +142,19 @@ const headingKey = (game: Game) => {
 const HAND_ICON = { play: "▶︎", pause: "❚❚" };
 
 /** Inside a run the button plays and pauses the hand, showing the play or
- * pause icon; in the forest it turns Automove on and off. */
+ * pause icon; in the forest it is Enter, going straight in to start the run. */
 function renderAutoButton(game: Game) {
   const button = el("auto"), inside = !game.run.outside;
-  const label = inside ? (game.auto ? "Pause the hand" : "Play the hand") : "Automove";
-  const icon = inside ? (game.auto ? HAND_ICON.pause : HAND_ICON.play) : "automove",
+  const label = inside ? (game.auto ? "Pause the hand" : "Play the hand") : "Enter";
+  const icon = inside ? (game.auto ? HAND_ICON.pause : HAND_ICON.play) : "enter",
     slot = button.querySelector<HTMLElement>(".mini-icon")!;
   if (slot.dataset.icon !== icon) {
     slot.dataset.icon = icon;
     if (inside) slot.textContent = icon;
-    else slot.innerHTML = uiSprite("automove");
+    else slot.innerHTML = ENTER_ICON;
   }
-  text("auto-state", inside ? (game.auto ? "PLAYING" : "PAUSED") : game.auto ? "ON" : "OFF");
-  button.classList.toggle("enabled", game.auto);
+  text("auto-state", inside ? (game.auto ? "PLAYING" : "PAUSED") : "ENTER");
+  button.classList.toggle("enabled", inside && game.auto);
   button.setAttribute("aria-label", label);
   button.title = label;
 }

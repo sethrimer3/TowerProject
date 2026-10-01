@@ -1,5 +1,5 @@
 import { GOLD_SHOP, type GoldItemId } from "../config.ts";
-import { provisionText } from "../loadout.ts";
+import { provisionPrice, provisionText } from "../loadout.ts";
 import { canCraft, getSalvageReturns, isEquipped, CONSUMABLES, canCraftConsumable, consumableText, type ConsumableId } from "../crafting.ts";
 import {
   EQUIPMENT_SLOTS,
@@ -18,7 +18,9 @@ import type { AppContext } from "./app.ts";
 import { el, itemSprite, SLOT_ICONS, uiSprite } from "./dom.ts";
 import { devAmount } from "./hud.ts";
 
-type GearTab = "equipped" | "inventory" | "crafting" | "provisions";
+type GearTab = "provisions" | "equipped" | "inventory" | "crafting";
+/** The tabs after Provisions, shown but closed until something unlocks them. */
+const CLOSED_TABS: GearTab[] = ["equipped", "inventory", "crafting"];
 type Bonuses = { flatAttack: number; flatDefense: number; flatMaxHp: number; percentAttack: number; percentDefense: number; percentMaxHp: number };
 
 function statBadges(s: Bonuses): string {
@@ -36,7 +38,7 @@ const stackList = (stacks: MaterialStack[], sep: string) => stacks.map(r => `${r
 
 /** The Gear page: equipped slots, the inventory, crafting, and provisions. */
 export class GearPage {
-  private tab: GearTab = "equipped";
+  private tab: GearTab = "provisions";
   private filter: EquipmentSlot | "all" = "all";
   private craftSlot: EquipmentSlot = "weapon";
   private craftMetal: MetalId = "iron";
@@ -45,17 +47,15 @@ export class GearPage {
   constructor(private ctx: AppContext) {}
 
   render() {
+    if (CLOSED_TABS.includes(this.tab)) this.tab = "provisions";
     const body =
       this.tab === "equipped" ? this.equippedHtml()
       : this.tab === "inventory" ? this.inventoryHtml()
       : this.tab === "crafting" ? this.craftingHtml()
       : this.provisionsHtml();
-    el("gear").innerHTML = `<div class="page-title"><small>YOUR COMPANIONS IN THE DARK</small><h2>Traveler’s gear</h2><p>Craft equipment from persistent materials collected in Tower and Delve, then equip up to nine pieces at once.</p></div>
+    el("gear").innerHTML = `<div class="page-title"><small>YOUR COMPANIONS IN THE DARK</small><h2>Traveler’s gear</h2><p>Provisions bought with Gold go with you into every run.</p></div>
     <div class="tree-tabs gear-tabs" role="group" aria-label="Gear tabs">
-      <button data-geartab="equipped" aria-pressed="${this.tab === "equipped"}">Equipped</button>
-      <button data-geartab="inventory" aria-pressed="${this.tab === "inventory"}">Inventory</button>
-      <button data-geartab="crafting" aria-pressed="${this.tab === "crafting"}">Crafting</button>
-      <button data-geartab="provisions" aria-pressed="${this.tab === "provisions"}">Provisions</button>
+      ${(["provisions", ...CLOSED_TABS] as const).map((t) => `<button data-geartab="${t}" aria-pressed="${this.tab === t}" ${CLOSED_TABS.includes(t) ? `disabled title="Locked"` : ""}>${t[0].toUpperCase() + t.slice(1)}</button>`).join("")}
     </div>
     ${body}`;
     this.bind();
@@ -228,6 +228,9 @@ export class GearPage {
   private provisionsHtml(): string {
     const game = this.ctx.game;
     const provisionSprite = (id: GoldItemId) => itemSprite(id === "heal" ? "potion_flat" : id === "edge" ? "upgrade_attack" : "upgrade_defense");
-    return `<p class="hint">Spend Gold earned in the tower on provisions for your next run, spent once it goes inside. ${uiSprite("gold", "stat-sprite")} ${devAmount(game, game.save.gold)} Gold.</p>${GOLD_SHOP.map((item) => `<article class="card"><div class="item-icon">${provisionSprite(item.id)}</div><div><small>${game.save.provisions[item.id] ? `OWNED × ${game.save.provisions[item.id]}` : "APPLIES NEXT RUN"}</small><h3>${item.name}</h3><p>${provisionText(item.id)}</p></div><button data-gold="${item.id}" ${game.save.gold < item.cost && !game.free ? "disabled" : ""}>Buy · ${uiSprite("gold", "stat-sprite")} ${item.cost}</button></article>`).join("")}`;
+    return `<p class="hint">Spend Gold on provisions: each one you buy is carried into every run from now on, and the next costs more. ${uiSprite("gold", "stat-sprite")} ${devAmount(game, game.save.gold)} Gold.</p>${GOLD_SHOP.map((item) => {
+      const owned = game.save.provisions[item.id], price = provisionPrice(game.save, item.id);
+      return `<article class="card"><div class="item-icon">${provisionSprite(item.id)}</div><div><small>${owned ? `OWNED × ${owned}` : "NOT YET OWNED"}</small><h3>${item.name}</h3><p>${provisionText(item.id)}</p></div><button data-gold="${item.id}" ${game.save.gold < price && !game.free ? "disabled" : ""}>Buy · ${uiSprite("gold", "stat-sprite")} ${price}</button></article>`;
+    }).join("")}`;
   }
 }

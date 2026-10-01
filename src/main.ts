@@ -12,7 +12,7 @@ import { isBoard, type AppContext, type Tab } from "./ui/app.ts";
 import { el } from "./ui/dom.ts";
 import { buildShell } from "./ui/shell.ts";
 import { BoardOverlay } from "./ui/board-overlay.ts";
-import { boardHeadingStale, flashRed, renderAdButton, renderBoardHeading, renderHud, renderVitals, upgradesWaiting } from "./ui/hud.ts";
+import { boardHeadingStale, flashRed, renderAdButton, renderBoardHeading, renderHud, renderVitals, gearWaiting, upgradesWaiting } from "./ui/hud.ts";
 import { confirmAction, RunEndDialog, showLog, showSectionPicker } from "./ui/dialogs.ts";
 import { SkillTreePage } from "./ui/skill-tree-page.ts";
 import { ResearchToasts } from "./ui/research-toast.ts";
@@ -100,6 +100,10 @@ function unlockTarget(id: string): string {
     skillTree.focus("inspiration", "handOrdering");
     return "upgrades";
   }
+  if (id === "gear" && !game.save.upgrades.gear) {
+    skillTree.focus("inspiration", "gear");
+    return "upgrades";
+  }
   if (id === "defend" && !game.save.upgrades.legacy) {
     skillTree.focus("courage", "legacy");
     return "upgrades";
@@ -115,6 +119,8 @@ function navigate(requested: string) {
   tab = id;
   // Opening the Upgrades page clears the dot the first Inspiration put on it.
   if (id === "upgrades" && upgradesWaiting(game)) game.save.tutorials.upgrades = true;
+  // And opening the Gear page the dot the Gear skill put on it.
+  if (id === "gear" && gearWaiting(game)) game.save.tutorials.gear = true;
   deck.shown(id === "deck");
   renderer.weather.silence();
   if (isBoard(id)) {
@@ -169,9 +175,12 @@ modal.addEventListener("cancel", (e) => {
 });
 el("auto-settings").onclick = () => navigate("settings");
 el("auto").onclick = () => {
-  // Inside a run the button plays and pauses the hand; in the forest it is
-  // Automove.
-  game.toggleAuto();
+  // Inside a run the button plays and pauses the hand; in the forest it
+  // enters, starting the run.
+  if (game.run.outside) {
+    overlay.hide();
+    game.enterRun();
+  } else game.toggleAuto();
   update();
 };
 el("undo").onclick = () => {

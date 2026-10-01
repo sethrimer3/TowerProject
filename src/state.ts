@@ -1,7 +1,7 @@
 import { trainingJob, trainingSeconds, trainingSlots } from "./training-jobs.ts";
 import { entrance, floorFor } from "./delve/labyrinth.ts";
 import { chooseStep } from "./automation.ts";
-import { CARDS, deckCards, handSlots, moveCard, nextHandSlotGems, planHand, type CardId, type CardPlan } from "./cards.ts";
+import { CARDS, deckCards, handSlots, moveCard, nextHandSlotGems, placeCard, planHand, type CardId, type CardPlan } from "./cards.ts";
 import { AD_COOLDOWN_MS, AD_GEMS, TRAINING_RESET_GEMS, collectedGem, gemOn, gemSpot, missGem, reachFloor, type GemSpot } from "./gems.ts";
 import { DelvePlan } from "./delve/automove.ts";
 import { defaults } from "./save.ts";
@@ -20,7 +20,6 @@ import {
   trained,
   cost,
   UPGRADES,
-  GOLD_SHOP,
   type UpgradeId,
   type TrainingId,
   type GoldItemId,
@@ -59,7 +58,7 @@ import { snap } from "./exact.ts";
 import { whole, wholeChange, wholeHp } from "./whole.ts";
 import { MODES, milestones, type ModeProfile } from "./modes.ts";
 import { ranksInRun, runTrainingOffer } from "./run-training.ts";
-import { floorGold, floorSilver, keepUndos, killGold, silverBonus, loadout, percentPotionChance, potionPercent, reviveChance, trainingMaxed, trainingPoints } from "./loadout.ts";
+import { floorGold, floorSilver, keepUndos, killGold, silverBonus, loadout, percentPotionChance, potionPercent, provisionPrice, reviveChance, trainingMaxed, trainingPoints } from "./loadout.ts";
 import { RESEARCH, cancelResearch, hastenResearch, hireArchivist, researched, settleArchives, startResearch, type ResearchId, type ResearchRecord } from "./archives.ts";
 import { SETTINGS } from "./settings.ts";
 import {
@@ -388,16 +387,22 @@ export class Game {
     this.message = "The hand moves you inside a run.";
     return false;
   }
-  /** Inside a run, plays or pauses the hand; in the forest, turns Automove on or off. */
+  /** Plays or pauses the hand inside a run. */
   toggleAuto() {
+    if (this.run.outside) return;
     this.route = [];
     this.auto = !this.auto;
-    if (!this.run.outside) {
-      // Pausing keeps the path and the card that led it: playing on follows
-      // it from where the hero stands. A stuck hand looks again.
-      if (this.auto) this.handStuck = false;
-      this.message = this.auto ? "The hand takes over." : "Paused · the hand waits.";
-    } else this.message = this.auto ? "Wayfinder is searching for a route." : "Manual climbing";
+    // Pausing keeps the path and the card that led it: playing on follows
+    // it from where the hero stands. A stuck hand looks again.
+    if (this.auto) this.handStuck = false;
+    this.message = this.auto ? "The hand takes over." : "Paused · the hand waits.";
+  }
+  /** The forest's Enter button: goes straight in through the entrance,
+   * starting the run, as walking onto it does. */
+  enterRun() {
+    if (!this.run.outside) return false;
+    this.enterFromOutside();
+    return true;
   }
   /** One turn of automatic movement: the hand's step inside a run, or
    * Automove's in the forest. */
@@ -572,8 +577,6 @@ export class Game {
     const section = this.mode === "tower" ? this.startSection() : 0,
       height = section * TOWER_SECTION;
     const { player, loadout } = this.startingHero(this.mode, height);
-    // The provisions bought for a run are spent on it once it goes inside.
-    if (!outside) this.spendProvisions();
     const core: RunCore = {
       layoutVersion: this.rules.layoutVersion,
       seed,
@@ -627,12 +630,6 @@ export class Game {
       run.player = { ...player, x: run.player.x, y: run.player.y };
       run.loadout = loadout;
     }
-  }
-  /** Provisions are spent on the run that goes inside; a run of the other
-   * mode still in the forest no longer has them. */
-  private spendProvisions() {
-    for (const item of GOLD_SHOP) this.save.provisions[item.id] = 0;
-    this.readyForestRuns();
   }
   /** A Tower section can be started in once its first floor has been
    * reached (which records its starting HP); section 0 always can. */
@@ -937,7 +934,6 @@ export class Game {
   private enterFromOutside() {
     const p = this.run.player;
     this.run.outside = false;
-    this.spendProvisions();
     this.dealHand();
     p.x = this.rules.entranceX;
     p.y = 0;
@@ -1232,6 +1228,17 @@ export class Game {
     hand.push(id);
     return true;
   }
+  /** Drops a deck card on hand slot `slot` (Buildout, in the forest only):
+   * into the slot with room in the hand, or in a full one in place of the
+   * card there, which goes back to the deck (`placeCard`). */
+  placeInHand(id: CardId, slot: number) {
+    const hand = this.save.hand, slots = handSlots(this.save);
+    if (!this.canChooseCards || !deckCards(this.save.upgrades).includes(id) || hand.includes(id) || !(slot >= 0 && slot < slots)) return false;
+    const next = placeCard(hand, id, slot, slots);
+    if (!next) return false;
+    this.save.hand = next;
+    return true;
+  }
   /** Takes a card out of the hand, back to the deck; STAIRS always stays. */
   removeFromHand(id: CardId) {
     const hand = this.save.hand;
@@ -1392,15 +1399,15 @@ export class Game {
     if (last) this.message = `Archives · ${RESEARCH[last.research].name} level ${last.level} complete.`;
     return done;
   }
+  /** Buys one more `id` provision. Provisions last for good, so like
+   * training it reaches a run already inside at once. */
   buyGold(id: GoldItemId) {
-    const item = GOLD_SHOP.find((g) => g.id === id)!;
-    if (!this.free) {
-      if (this.save.gold < item.cost) return false;
-      this.save.gold -= item.cost;
-    }
-    this.save.provisions[id]++;
-    this.readyForestRuns();
-    return true;
+    const price = provisionPrice(this.save, id);
+    if (!this.free && this.save.gold < price) return false;
+    return this.changeLoadout(() => {
+      if (!this.free) this.save.gold -= price;
+      this.save.provisions[id]++;
+    });
   }
   /** A gear change or training applies at once to the runs of both modes: a
    * run inside gains or loses exactly what it changed in the loadout, so

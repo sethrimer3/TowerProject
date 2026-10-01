@@ -1,4 +1,4 @@
-import { CARDS, deckCards, handSlots, moveCard, nextHandSlotGems, type CardId } from "../cards.ts";
+import { CARDS, deckCards, handSlots, moveCard, nextHandSlotGems, placeCard, type CardId } from "../cards.ts";
 import type { AppContext } from "./app.ts";
 import { cardArt, el, gemIcon } from "./dom.ts";
 
@@ -8,6 +8,9 @@ const DRAG_START_PX = 4;
 /** A card being dragged along the hand row: the slot it left, the slot it
  * would drop into, and the ghost that follows the pointer. */
 type Drag = { from: number; to: number; pointer: number; x: number; y: number; lifted: boolean; ghost: HTMLElement | null };
+/** A deck card being dragged to the hand: the hand slot it would drop on
+ * (null while it is away from the hand, or over STAIRS in a full hand). */
+type DeckDrag = { card: CardId; to: number | null; pointer: number; x: number; y: number; lifted: boolean; ghost: HTMLElement | null };
 
 /** A pixel-art hand pointing up, row by row: `#` outline, `w` skin. */
 const POINTER_ROWS = [
@@ -46,6 +49,7 @@ type Lesson = "order" | "remove" | "add" | null;
  * do and nothing else on it or the tab row can be used. */
 export class DeckPage {
   private drag: Drag | null = null;
+  private deckDrag: DeckDrag | null = null;
   private showing = false;
 
   constructor(private ctx: AppContext) {}
@@ -115,7 +119,8 @@ export class DeckPage {
           : `title="Return ${name} to the deck" aria-label="${name} is in your hand: return it to the deck"`;
         return `<div class="deck-entry in-hand" role="listitem"><div class="deck-entry-art" title="${name}: in your hand">${cardArt(id, name)}</div><button type="button" class="deck-check" data-return="${id}" ${check}>${CHECK_SVG}</button></div>`;
       }
-      return `<div class="deck-entry" role="listitem"><button type="button" class="deck-add" data-add="${id}" ${full ? "disabled" : ""} title="${full ? "Your hand is full" : `Add ${name} to your hand`}" aria-label="Add ${name} to your hand">${cardArt(id, name)}</button></div>`;
+      // A full hand takes a card only by dragging it onto one to swap out.
+      return `<div class="deck-entry" role="listitem"><button type="button" class="deck-add${full ? " full" : ""}" data-add="${id}" title="${full ? `Your hand is full: drag ${name} onto a card to swap it` : `Add ${name} to your hand, or drag it to a slot`}" aria-label="${full ? `Your hand is full: drag ${name} onto a card to swap it` : `Add ${name} to your hand`}">${cardArt(id, name)}</button></div>`;
     }).join("");
     return `<section class="deck-reserve open" aria-labelledby="deck-label">
         <h3 id="deck-label" class="deck-label">Deck</h3>
@@ -212,6 +217,7 @@ export class DeckPage {
 
   private bindDeck() {
     document.querySelectorAll<HTMLButtonElement>("[data-add]").forEach((b) => (b.onclick = () => this.change(this.ctx.game.addToHand(b.dataset.add as CardId))));
+    this.bindDeckDrag();
     document.querySelectorAll<HTMLButtonElement>("[data-return]").forEach((b) => (b.onclick = () => this.change(this.ctx.game.removeFromHand(b.dataset.return as CardId))));
     const note = document.getElementById("deck-add-note");
     if (note) note.onclick = () => {
@@ -257,7 +263,86 @@ export class DeckPage {
   private cancelDrag() {
     this.drag?.ghost?.remove();
     this.drag = null;
+    this.deckDrag?.ghost?.remove();
+    this.deckDrag = null;
     document.getElementById("deck-hand")?.classList.remove("dragging");
+  }
+
+  /** Dragging a deck card onto a hand slot puts it there (`placeInHand`);
+   * a press that never lifts it adds it, as its click does from the
+   * keyboard (the captured pointer's click lands on the grid). */
+  private bindDeckDrag() {
+    const grid = document.querySelector<HTMLElement>(".deck-grid");
+    if (!grid) return;
+    grid.onpointerdown = (e) => {
+      const card = (e.target as HTMLElement).closest<HTMLButtonElement>(".deck-add");
+      if (!card || this.drag || this.deckDrag || e.button > 0) return;
+      e.preventDefault();
+      grid.setPointerCapture(e.pointerId);
+      this.deckDrag = { card: card.dataset.add as CardId, to: null, pointer: e.pointerId, x: e.clientX, y: e.clientY, lifted: false, ghost: null };
+    };
+    grid.onpointermove = (e) => {
+      const d = this.deckDrag;
+      if (!d || e.pointerId !== d.pointer) return;
+      if (!d.lifted && Math.hypot(e.clientX - d.x, e.clientY - d.y) < DRAG_START_PX) return;
+      if (!d.lifted) this.liftFromDeck(d, grid.querySelector<HTMLElement>(`[data-add="${d.card}"]`)!);
+      d.ghost!.style.transform = `translate(${e.clientX}px, ${e.clientY}px) translate(-50%, -50%)`;
+      const to = this.deckSlotAt(d.card, e.clientX, e.clientY);
+      if (to !== d.to) {
+        d.to = to;
+        this.previewPlace(d);
+      }
+    };
+    grid.onpointerup = (e) => {
+      const d = this.deckDrag;
+      if (!d || e.pointerId !== d.pointer) return;
+      this.cancelDrag();
+      if (!d.lifted) return this.change(this.ctx.game.addToHand(d.card));
+      if (d.to === null) return this.render();
+      this.change(this.ctx.game.placeInHand(d.card, d.to));
+    };
+    grid.onpointercancel = () => {
+      const lifted = this.deckDrag?.lifted;
+      this.cancelDrag();
+      if (lifted) this.render();
+    };
+  }
+
+  /** A ghost of the deck card follows the pointer toward the hand. */
+  private liftFromDeck(d: DeckDrag, card: HTMLElement) {
+    d.lifted = true;
+    el("deck-hand").classList.add("dragging");
+    const box = card.getBoundingClientRect();
+    const ghost = document.createElement("div");
+    ghost.className = "deck-ghost";
+    ghost.style.width = `${box.width}px`;
+    ghost.style.height = `${box.height}px`;
+    ghost.innerHTML = card.innerHTML;
+    document.body.append(ghost);
+    d.ghost = ghost;
+  }
+
+  /** Shows the hand as it would be with the deck card dropped on `d.to`. */
+  private previewPlace(d: DeckDrag) {
+    const save = this.ctx.game.save, slots = handSlots(save);
+    const next = d.to === null ? null : placeCard(save.hand, d.card, d.to, slots);
+    el("deck-hand").innerHTML = next ? this.slotsHtml(next, next.indexOf(d.card)) : this.slotsHtml(save.hand);
+  }
+
+  /** The hand slot a deck card held at (x, y) would drop on: the nearest
+   * one, empty slots too, while the pointer is within a slot's height of
+   * the hand; null elsewhere, or over STAIRS in a full hand. */
+  private deckSlotAt(card: CardId, x: number, y: number) {
+    const save = this.ctx.game.save, slots = handSlots(save);
+    const boxes = Array.from(el("deck-hand").querySelectorAll<HTMLElement>(".deck-slot")).slice(0, slots).map((s) => s.getBoundingClientRect());
+    let best: number | null = null, bestGap = Infinity;
+    boxes.forEach((box, i) => {
+      const reach = box.height;
+      if (x < box.left - reach || x > box.right + reach || y < box.top - reach || y > box.bottom + reach) return;
+      const gap = Math.hypot(x - (box.left + box.width / 2), y - (box.top + box.height / 2));
+      if (gap < bestGap) [best, bestGap] = [i, gap];
+    });
+    return best !== null && placeCard(save.hand, card, best, slots) ? best : null;
   }
 
   /** Saves and redraws after a change to the hand. */

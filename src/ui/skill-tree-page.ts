@@ -267,7 +267,7 @@ export class SkillTreePage {
 
   private tooltipHtml(id: UpgradeId): string {
     const node = this.current().nodes.find(n => n.id === id)!;
-    const { u, level, price, balance, locked, maxed, available, canBuy } = this.purchase(id);
+    const { u, level, price, balance, locked, maxed, available, affordable, canBuy } = this.purchase(id);
     const requirements = node.requires.filter(rid => !this.ctx.game.save.upgrades[rid]).map(rid => UPGRADES.find(u => u.id === rid)!.name);
     const currency = this.current().currency === "inspiration" ? "Inspiration" : "Courage";
     const unlocks = this.current().unlocks;
@@ -276,9 +276,11 @@ export class SkillTreePage {
     else if (maxed) hint = unlocks ? "Unlocked." : "Mastered.";
     else if (requirements.length) hint = `Requires: ${requirements.join(" + ")}${unlocks ? "" : " (one rank each)"}.`;
     else if (!available) hint = "Locked.";
-    else if (balance < price) hint = `Need ${price} ${currency} · have ${balance}.`;
-    else hint = "Tap again to purchase.";
-    return `<b style="color:var(--tree-color)">${u.name}</b>${unlocks ? "" : `<div>${level} / ${u.max} ranks</div>`}<div>${upgradeText(u.id)}.</div><div class="${canBuy ? "safe" : ""}">${hint}</div>${!maxed && !locked ? `<div>Cost: ${price} ${currency}</div>` : ""}`;
+    else if (affordable) hint = "Tap again to purchase.";
+    else hint = "";
+    // Short of the price, the cost line says how much more it takes.
+    const short = affordable ? "" : ` (need ${price - balance})`;
+    return `<b style="color:var(--tree-color)">${u.name}</b>${unlocks ? "" : `<div>${level} / ${u.max} ranks</div>`}<div>${upgradeText(u.id)}.</div>${hint ? `<div class="${canBuy ? "safe" : ""}">${hint}</div>` : ""}${!maxed && !locked ? `<div>Cost: ${price} ${currency}${short}</div>` : ""}`;
   }
 
   /** Above the selected node, or below it when there is no room above. */

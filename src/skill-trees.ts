@@ -9,10 +9,11 @@ export type SkillNode = { id: UpgradeId; icon: string; x: number; y: number; req
 export type SkillTree = { id: TreeId; name: string; currency: Currency; gate?: UpgradeId; description: string; height?: number; unlocks?: boolean; nodes: SkillNode[] };
 export const TREES: SkillTree[] = [
   { id: "inspiration", name: "Inspiration", currency: "inspiration", description: "Earn Inspiration by beating your best Tower climb.", height: 172, unlocks: true, nodes: [
-    // The hand's skills, down to Focus; Heal branches off Buildout.
+    // The hand's skills, down to Focus; Gear and Heal branch off Buildout.
     { id: "handOrdering", icon: "▤", x: 50, y: 12, requires: [] },
     { id: "combatStance", icon: "⚔", x: 50, y: 30, requires: ["handOrdering"] },
     { id: "largerHand", icon: "▦", x: 50, y: 48, requires: ["combatStance"] },
+    { id: "gear", icon: "⚒", x: 20, y: 48, requires: ["combatStance"] },
     { id: "cardHeal", icon: "♥", x: 80, y: 48, requires: ["combatStance"] },
     { id: "focus", icon: "ϟ", x: 50, y: 66, requires: ["largerHand"] },
     { id: "cardGear", icon: "⛨", x: 14, y: 88, requires: ["focus"] },

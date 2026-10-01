@@ -189,7 +189,7 @@ export const UPGRADES = [
   },
   {
     id: "cardGear",
-    name: "Gear",
+    name: "Equipment",
     description: "Add the EQUIPMENT card to your deck: it moves you toward the closest ATK or DEF pickup",
     card: "equipment",
     base: 5,
@@ -197,10 +197,18 @@ export const UPGRADES = [
     currency: "inspiration",
   },
   {
+    id: "gear",
+    name: "Gear",
+    description: "Open the Gear page: provisions bought with Gold, carried into every run",
+    base: 1,
+    max: 1,
+    currency: "inspiration",
+  },
+  {
     id: "focus",
     name: "Focus",
     description: `Inside a run, press a card in your hand to put it ahead of the others until it reaches its target (${FOCUS_PER_RUN} use a run)`,
-    base: 10,
+    base: 5,
     max: 1,
     currency: "inspiration",
   },
@@ -364,8 +372,8 @@ export const TRAINING_GROUPS = { offense: "Offense", defense: "Defense", utility
  * with `max` trains no further than that many ranks. */
 export const TRAINING = [
   { id: "hp", name: "Max HP", group: "defense", stat: "maxHp", base: 10, growth: 10, cost: 1, description: "Raises maximum HP." },
-  { id: "attack", name: "ATK", group: "offense", stat: "attack", base: 1, growth: 5, cost: 5, description: "Raises ATK, the damage each strike deals before the enemy's DEF." },
-  { id: "defense", name: "DEF", group: "defense", stat: "defense", base: 1, growth: 12, cost: 3, description: "Raises DEF, taken off the damage of every enemy strike." },
+  { id: "attack", name: "ATK", group: "offense", stat: "attack", base: 1, growth: 5, cost: 3, description: "Raises ATK, the damage each strike deals before the enemy's DEF." },
+  { id: "defense", name: "DEF", group: "defense", stat: "defense", base: 1, growth: 12, cost: 2, description: "Raises DEF, taken off the damage of every enemy strike." },
   { id: "shroud", name: "Shroud", group: "defense", stat: "shroud", base: 1, growth: 10, cost: 1, requires: "shroud", description: "Raises the damage the shroud blocks at the start of every fight." },
   { id: "potion", name: "Potion %", group: "defense", requires: "recovery", cost: 1, description: "Percent potions restore more of your maximum HP." },
   { id: "findPotion", name: "Find Potion", group: "defense", requires: "findPotion", cost: 1, max: 72, description: "More of the potions found are percent potions." },
@@ -405,22 +413,30 @@ export const FLOOR_SILVER_BASE = 3, FLOOR_SILVER_RANK = 3;
 /** What each Silver Bonus or Gold / Kill rank adds to its multiplier, in
  * percent (×1 with no ranks). */
 export const BONUS_RANK = 3;
-/** A Training row's Silver prices inside a run: the first rank bought
- * costs `base`, and each one after costs more than the last by `step` plus
- * the ranks already bought, the `step` growing by `growth` every five ranks
- * (see `silverPrice`). Base 5: +1+N for the next five, then +4+N, +7+N … */
-export type SilverSchedule = { base: number; step: number; growth: number };
+/** A price that rises with each purchase (a Training row's Silver inside a
+ * run, a provision's Gold): the first costs `base`, and each one after
+ * costs more than the last by `step` plus the number already bought, the
+ * `step` growing by `growth` every five (see `schedulePrice`). Base 5: +1+N
+ * for the next five, then +4+N, +7+N … */
+export type PriceSchedule = { base: number; step: number; growth: number };
+/** What the purchase after `bought` costs on `schedule`: its base, and for
+ * the k-th after it `step + k` more than the one before, `step` rising by
+ * `growth` every five, summed here at once. */
+export function schedulePrice({ base, step, growth }: PriceSchedule, bought: number) {
+  const fives = Math.floor(bought / 5), rest = bought % 5;
+  return base + bought * step + bought * (bought + 1) / 2 + growth * (5 * fives * (fives - 1) / 2 + rest * fives);
+}
 /** Rows open from the start. */
-const cheap: SilverSchedule = { base: 5, step: 1, growth: 3 };
+const cheap: PriceSchedule = { base: 5, step: 1, growth: 3 };
 /** Rows a skill opens: steeper, so ranks from Inspiration's Training points
  * stay worth more than Silver's. */
-const opened: SilverSchedule = { base: 10, step: 2, growth: 3 };
+const opened: PriceSchedule = { base: 10, step: 2, growth: 3 };
 /** Rows a deeper skill opens. */
-const deep: SilverSchedule = { base: 20, step: 4, growth: 4 };
+const deep: PriceSchedule = { base: 20, step: 4, growth: 4 };
 /** Training bought with Silver inside a run, lasting only for that run:
  * each row's price schedule. The rows open from the start cost least, the
  * ones later skills open more. */
-export const RUN_TRAINING_PRICES: Record<TrainingId, SilverSchedule> = {
+export const RUN_TRAINING_PRICES: Record<TrainingId, PriceSchedule> = {
   hp: cheap,
   attack: cheap,
   defense: cheap,
@@ -441,27 +457,30 @@ export const trainingWorth = (row: StatTrainingRow, level: number) => row.base *
 /** What `ranks` ranks of `row` add to the character at `level`, rounded
  * once. */
 export const trained = (row: StatTrainingRow, ranks: number, level: number) => snap(ranks * trainingWorth(row, level));
+/** Provisions, bought with Gold on the Gear page and kept for good: each
+ * one bought adds its grants to every run. Each is priced by a schedule
+ * like run training's (`schedulePrice`), from its `price.base` Gold. */
 export const GOLD_SHOP = [
   {
     id: "heal",
     name: "Traveler's elixir",
     grants: { maxHp: 20 },
-    words: { maxHp: "max HP next run" },
-    cost: 6,
-  },
-  {
-    id: "edge",
-    name: "Whetstone",
-    grants: { attack: 3 },
-    words: { attack: "attack next run" },
-    cost: 10,
+    words: { maxHp: "max HP every run" },
+    price: { base: 5, step: 1, growth: 3 },
   },
   {
     id: "guard",
     name: "Aegis charm",
-    grants: { defense: 3 },
-    words: { defense: "defense next run" },
-    cost: 10,
+    grants: { defense: 1 },
+    words: { defense: "defense every run" },
+    price: { base: 10, step: 2, growth: 3 },
+  },
+  {
+    id: "edge",
+    name: "Whetstone",
+    grants: { attack: 1 },
+    words: { attack: "attack every run" },
+    price: { base: 15, step: 2, growth: 3 },
   },
 ] as const;
 export type GoldItemId = (typeof GOLD_SHOP)[number]["id"];

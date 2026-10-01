@@ -1,7 +1,7 @@
 import { whole } from "./whole.ts";
 import { snap } from "./exact.ts";
 import type { Save } from "./entities.ts";
-import { BONUS_RANK, FIND_POTION_BASE, FIND_POTION_MAX, FLOOR_GOLD_BASE, FLOOR_GOLD_RANK, FLOOR_SILVER_BASE, FLOOR_SILVER_RANK, FIND_POTION_RANK, REVIVE_BASE, REVIVE_MAX, REVIVE_RANK, GOLD_SHOP, POTION_PERCENT_BASE, POTION_PERCENT_RANK, TRAINING, TRAINING_PER_LEVEL, UPGRADES, isStatRow, levelForXp, trained, trainingWorth, type GoldItemId, type TrainingId, type UpgradeId } from "./config.ts";
+import { BONUS_RANK, FIND_POTION_BASE, FIND_POTION_MAX, FLOOR_GOLD_BASE, FLOOR_GOLD_RANK, FLOOR_SILVER_BASE, FLOOR_SILVER_RANK, FIND_POTION_RANK, REVIVE_BASE, REVIVE_MAX, REVIVE_RANK, GOLD_SHOP, schedulePrice, POTION_PERCENT_BASE, POTION_PERCENT_RANK, TRAINING, TRAINING_PER_LEVEL, UPGRADES, isStatRow, levelForXp, trained, trainingWorth, type GoldItemId, type TrainingId, type UpgradeId } from "./config.ts";
 import { getEquippedBonuses } from "./crafting.ts";
 import { RESEARCH, researched } from "./archives.ts";
 
@@ -58,8 +58,8 @@ function add(total: Record<Stat, number>, rows: readonly (Granting & { id: strin
 
 /** The character a run would start with now: the baseline, permanent
  * upgrades and training, then equipped gear (flat bonuses, then
- * percentages of the total, fractions kept), then the provisions bought for the
- * next run. */
+ * percentages of the total, fractions kept), then the provisions bought,
+ * which last for good. */
 export function loadout(save: Save): Loadout {
   const own = { ...BASE, yellow: 0, blue: 0, red: 0 };
   add(own, UPGRADES, save.upgrades);
@@ -102,6 +102,10 @@ export function provisionText(id: GoldItemId) {
   const item = GOLD_SHOP.find((g) => g.id === id)!;
   return describeGrants(item.grants, item.words);
 }
+
+/** The Gold the next `id` provision costs, after those already bought. */
+export const provisionPrice = (save: Pick<Save, "provisions">, id: GoldItemId) =>
+  schedulePrice(GOLD_SHOP.find((g) => g.id === id)!.price, save.provisions[id]);
 
 /** Training points: earned per level, spent on ranks of training (a rank
  * still in training is already paid for). `left`

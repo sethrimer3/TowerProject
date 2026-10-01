@@ -87,7 +87,7 @@ try {
     };
     const rich = (s) => {
       quiet(s);
-      Object.assign(s.upgrades, { delve: 1, moveSpeed: 1, legacy: 1, revive: 1, handOrdering: 1, combatStance: 1, largerHand: 1, cardHeal: 1, focus: 1, archives: 1, inspirationUndos: 1, greaterHeal: 1, recovery: 1, findPotion: 1, shroud: 1, undos: 1, autoPersist: 1 });
+      Object.assign(s.upgrades, { delve: 1, moveSpeed: 1, legacy: 1, revive: 1, handOrdering: 1, combatStance: 1, largerHand: 1, cardHeal: 1, focus: 1, archives: 1, inspirationUndos: 1, greaterHeal: 1, recovery: 1, findPotion: 1, shroud: 1, undos: 1, autoPersist: 1, gear: 1 });
       s.delve.courage = 37;
       s.tower.inspiration = 21;
       s.gold = 480;
@@ -226,6 +226,15 @@ try {
     await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2, { steps: 8 });
     await page.mouse.up();
   }
+  /** Drags deck card `id` onto hand slot `to`. */
+  async function dragFromDeck(id, to) {
+    const a = await page.locator(`.deck-add[data-add="${id}"]`).boundingBox();
+    const b = await page.locator(".deck-slot").nth(to).boundingBox();
+    await page.mouse.move(a.x + a.width / 2, a.y + a.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2, { steps: 8 });
+    await page.mouse.up();
+  }
   /** The Deck's first visit teaches the drag, then taking a card out and
    * adding one; then the hand reorders and changes freely. */
   async function deckTour(prefix) {
@@ -247,6 +256,9 @@ try {
     await shot(`${prefix}.deck.returned`);
     await click('[data-add="heal"]');
     await shot(`${prefix}.deck.added`);
+    // A deck card dragged onto a slot goes there, the cards after it sliding on.
+    await dragFromDeck("door", 1);
+    await shot(`${prefix}.deck.placed`);
     // Larger Hand sells the next slot for Gems.
     await click(".deck-buy-slot");
     await shot(`${prefix}.deck.buySlot`);
@@ -323,40 +335,15 @@ try {
       await shot(`${prefix}.tree.${tree}.buy`);
     }
   }
+  /** The Gear page opens on Provisions, its other tabs closed for now;
+   * opening it clears the dot the Gear skill put on its button. */
   async function gearTour(prefix) {
+    await shot(`${prefix}.gear.waiting`);
     await tab("gear");
     await shot(`${prefix}.gear`);
-    for (const t of ["inventory", "crafting", "provisions", "equipped"]) {
-      await click(`[data-geartab="${t}"]`);
-      await shot(`${prefix}.gear.${t}`);
-      if (t === "crafting") {
-        await click(`[data-craft-slot="helmet"]`);
-        await click(`[data-craft-metal]:nth-child(2)`);
-        await shot(`${prefix}.gear.crafting.choices`);
-        const plus = page.locator("[data-enh-plus]:not([disabled])");
-        if (await plus.count()) {
-          await plus.first().click();
-          await shot(`${prefix}.gear.crafting.enhanced`);
-        }
-        if (await page.locator("#craft-btn:not([disabled])").count()) {
-          await click("#craft-btn");
-          await shot(`${prefix}.gear.crafted`);
-        }
-      }
-      if (t === "provisions" && await page.locator("[data-gold]:not([disabled])").count()) {
-        await click("[data-gold]:not([disabled])");
-        await shot(`${prefix}.gear.provisions.bought`);
-      }
-    }
-    await click("[data-geartab=inventory]");
-    if (await page.locator("[data-equip]").count()) {
-      await click("[data-equip]");
-      await shot(`${prefix}.gear.equipped.item`);
-      await click("[data-inspect]");
-      await shot(`${prefix}.gear.inspect`);
-      await closeModal();
-      await click("[data-filter]:nth-child(2)");
-      await shot(`${prefix}.gear.filtered`);
+    if (await page.locator("[data-gold]:not([disabled])").count()) {
+      await click("[data-gold]:not([disabled])");
+      await shot(`${prefix}.gear.provisions.bought`);
     }
   }
   /** Settings from inside a run: opened from the HUD, left by its Back button. */
@@ -393,13 +380,13 @@ try {
   await shot("fresh.forest");
   await tab("upgrades");
   await shot("fresh.upgrades");
-  await tab("gear");
-  await shot("fresh.gear");
+  // A skill short of its price says how much more it needs.
+  await click('[data-skill="handOrdering"]');
+  await shot("fresh.tree.short");
   await tab("tower");
-  // In the forest it turns Automove on and off, with no upgrade needed.
+  // In the forest it is Enter, going straight in.
   await click("#auto");
-  await click("#auto");
-  await shot("fresh.automove.forest");
+  await shot("fresh.entered");
 
   // A fallen hero: the defeat dialog, with an undo or without.
   await load("fallenUndo");
@@ -442,8 +429,7 @@ try {
   await boardTour("dev", "devStatus");
   await leaveRun();
   await tab("gear");
-  await click("[data-geartab=crafting]");
-  await shot("dev.gear.crafting");
+  await shot("dev.gear");
   await tab("upgrades");
   await shot("dev.upgrades");
 

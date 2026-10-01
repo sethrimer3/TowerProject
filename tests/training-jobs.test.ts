@@ -51,7 +51,7 @@ test("cancelling gives the points back, and jobs survive a save", () => {
   const { g } = game();
   const left = trainingPoints(g.save).left;
   assert.ok(g.train("attack"));
-  assert.equal(trainingPoints(g.save).left, left - 5);
+  assert.equal(trainingPoints(g.save).left, left - 3);
   const loaded = decode(JSON.stringify(g.save));
   assert.deepEqual(loaded.trainingJobs, g.save.trainingJobs);
   assert.ok(g.cancelTraining("attack"));

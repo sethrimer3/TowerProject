@@ -2075,7 +2075,10 @@ nav button.notify::after {
   background: none;
   box-shadow: 0 2px 6px #000a;
 }
+.deck-add { cursor: grab; touch-action: none; }
 .deck-add:not(:disabled):hover { box-shadow: 0 0 0 2px #ebc77f, 0 0 10px 2px #e0b25a88; }
+/* With the hand full, a deck card goes in only by dragging it onto one. */
+.deck-add.full { filter: brightness(0.75); }
 .deck-add:disabled { opacity: 1; filter: brightness(0.6); }
 /* A card already in the hand: greyed, with a check that returns it. */
 .deck-entry.in-hand .deck-entry-art { filter: grayscale(1) brightness(0.45); }

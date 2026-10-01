@@ -1,7 +1,7 @@
 import { trainNow } from "./train-now.ts";
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { loadout, trainingPoints, trainingStep, upgradeText, provisionText } from "../src/loadout.ts";
+import { loadout, trainingPoints, trainingStep, upgradeText, provisionPrice, provisionText } from "../src/loadout.ts";
 import { defaults } from "../src/save.ts";
 import { GOLD_SHOP, UPGRADES, levelForXp, xpForLevel } from "../src/config.ts";
 import type { CraftedEquipment } from "../src/equipment.ts";
@@ -60,11 +60,12 @@ test("each training rank is worth more as the hero levels up", () => {
   // fractions kept (the page shows the stats whole).
   const l = loadout(s);
   assert.deepEqual([l.attack, l.defense, l.maxHp], [12 + 2, 2.833333, 100 + 45]);
-  assert.deepEqual(trainingPoints(s), { earned: 15, spent: 3 + 6 + 5, left: 1 });
+  assert.deepEqual(trainingPoints(s), { earned: 15, spent: 3 + 4 + 3, left: 5 });
   assert.deepEqual(
-    [trainingStep(s, "hp"), trainingStep(s, "defense")].map(({ now, next, worth, affordable }) => [now, next, worth, affordable]),
-    [[145, 160, 15, true], [2, 4, 1 + 5 / 12, false]],
+    [trainingStep(s, "hp"), trainingStep(s, "attack")].map(({ now, next, worth, affordable }) => [now, next, worth, affordable]),
+    [[145, 160, 15, true], [14, 16, 2, true]],
   );
+  assert.equal(trainingStep({ ...s, training: { ...s.training, hp: 6 } }, "attack").affordable, false, "3 points a rank, 2 left");
   // Levelling up raises every rank already bought.
   s.xp = xpForLevel(20);
   const later = loadout(s);
@@ -105,9 +106,9 @@ test("training spends points and reaches a run still outside", () => {
   g.newRun({ outside: true });
   assert.equal(trainNow(g, "hp"), false);
   g.save.xp = xpForLevel(1);
-  assert.equal(trainNow(g, "attack"), false);
   assert.equal(trainNow(g, "hp"), true);
   assert.deepEqual([g.run.player.maxHp, g.run.player.hp, trainingPoints(g.save).left], [111, 111, 2]);
+  assert.equal(trainNow(g, "attack"), false, "ATK takes 3 points");
 });
 
 test("evenly spread training alone falls behind both modes' enemies by floor 75", () => {
@@ -142,8 +143,8 @@ test("gear adds flat bonuses, then its percentages of the total, fractions kept;
   s.equipped.ring = "r";
   Object.assign(s.provisions, { edge: 1, guard: 2, heal: 1 });
   const l = loadout(s);
-  assert.equal(l.attack, 19.5, "(12 + 3) × 1.1 + 3");
-  assert.equal(l.defense, 6); // 25% of no DEF is nothing
+  assert.equal(l.attack, 17.5, "(12 + 3) × 1.1 + 1");
+  assert.equal(l.defense, 2); // 25% of no DEF is nothing
   assert.equal(l.maxHp, 135.5, "110 × 1.05 + 20");
 });
 
@@ -169,8 +170,22 @@ test("descriptions are written from the grants", () => {
     },
   );
   assert.deepEqual(GOLD_SHOP.map((g) => provisionText(g.id)), [
-    "+20 max HP next run", "+3 attack next run", "+3 defense next run",
+    "+20 max HP every run", "+1 defense every run", "+1 attack every run",
   ]);
+});
+
+test("each provision bought costs more than the last, on run training's schedule", () => {
+  const s = defaults();
+  const prices = (id: "heal" | "guard" | "edge") => Array.from({ length: 7 }, (_, n) => provisionPrice({ provisions: { ...s.provisions, [id]: n } }, id));
+  assert.deepEqual(prices("heal"), [5, 7, 10, 14, 19, 25, 35]);
+  assert.deepEqual(prices("guard"), [10, 13, 17, 22, 28, 35, 46]);
+  assert.deepEqual(prices("edge"), [15, 18, 22, 27, 33, 40, 51]);
+  const g = new Game(s);
+  s.gold = 20;
+  assert.ok(g.buyGold("heal") && g.buyGold("heal"));
+  assert.equal(s.gold, 20 - 5 - 7);
+  assert.equal(g.buyGold("guard"), false, "10 Gold, 8 left");
+  assert.equal(s.provisions.heal, 2);
 });
 
 const ring = (flatAttack: number, flatMaxHp: number): CraftedEquipment => ({
@@ -179,20 +194,20 @@ const ring = (flatAttack: number, flatMaxHp: number): CraftedEquipment => ({
   baseRecipe: [], enhancements: [], createdAt: 0,
 });
 
-test("changing gear mid-run keeps the ATK gathered and the provisions the run started with", () => {
+test("changing gear mid-run keeps the ATK gathered and the provisions owned", () => {
   const g = new Game(defaults()), s = g.save;
   s.provisions.edge = 1;
   g.newRun();
-  assert.equal(g.run.player.attack, 15);
+  assert.equal(g.run.player.attack, 13);
   g.run.player.attack += 2; // an attack shard picked up
   s.equipmentInventory.push(ring(3, 10));
   assert.ok(g.equipItem("r"));
-  assert.equal(g.run.player.attack, 20);
+  assert.equal(g.run.player.attack, 18);
   assert.equal(g.run.player.maxHp, 110);
-  assert.deepEqual(g.run.loadout, { attack: 18, defense: 0, maxHp: 110 });
+  assert.deepEqual(g.run.loadout, { attack: 16, defense: 0, maxHp: 110 });
   g.unequipSlot("ring");
-  assert.equal(g.run.player.attack, 17);
-  assert.deepEqual(g.run.loadout, { attack: 15, defense: 0, maxHp: 100 });
+  assert.equal(g.run.player.attack, 15);
+  assert.deepEqual(g.run.loadout, { attack: 13, defense: 0, maxHp: 100 });
   assert.equal(g.run.player.hp, 100);
 });
 
@@ -211,7 +226,7 @@ function goInside(g: Game) {
   assert.equal(g.run.outside, false);
 }
 
-test("a run still in the forest takes every skill and provision bought there, and spends the provisions going inside", () => {
+test("provisions last for good: every run takes them, and one bought mid-run counts at once", () => {
   const g = new Game(defaults()), s = g.save;
   s.upgrades.delve = 1;
   g.switchMode("delve");
@@ -223,16 +238,17 @@ test("a run still in the forest takes every skill and provision bought there, an
   s.upgrades.greaterHeal = 1;
   assert.ok(g.buy("shroud"));
   assert.ok(g.buyGold("edge") && g.buyGold("heal"));
-  const ready = { attack: 15, maxHp: 120, hp: 120, shroud: 1 };
+  assert.equal(s.gold, 100 - 15 - 5);
+  const ready = { attack: 13, maxHp: 120, hp: 120, shroud: 1 };
   const hero = (run = g.run) => ({ attack: run.player.attack, maxHp: run.player.maxHp, hp: run.player.hp, shroud: run.player.shroud });
   assert.deepEqual(hero(), ready, "the Tower's run in the forest");
   assert.deepEqual(hero(s.delve.run!), ready, "and the Delve's");
-  assert.deepEqual(g.run.loadout, { attack: 15, defense: 0, maxHp: 120, shroud: 1 });
+  assert.deepEqual(g.run.loadout, { attack: 13, defense: 0, maxHp: 120, shroud: 1 });
   goInside(g);
   assert.deepEqual(hero(), ready, "the run takes its provisions inside");
-  assert.deepEqual(s.provisions, { heal: 0, edge: 0, guard: 0 }, "spent on it, not kept for a later run");
-  assert.deepEqual(hero(s.delve.run!), { attack: 12, maxHp: 100, hp: 100, shroud: 1 }, "the other forest run no longer has them");
+  assert.deepEqual(s.provisions, { heal: 1, edge: 1, guard: 0 }, "and keeps them for every later run");
+  assert.deepEqual(hero(s.delve.run!), ready, "the other forest run still has them");
   assert.ok(g.buyGold("guard"));
-  assert.equal(g.run.player.defense, 0, "a provision bought now waits for the next run");
-  assert.equal(s.delve.run!.player.defense, 3, "which the Delve's forest run is");
+  assert.equal(g.run.player.defense, 1, "one bought inside a run counts at once");
+  assert.equal(s.delve.run!.player.defense, 1, "and in the Delve's forest run");
 });

@@ -212,9 +212,10 @@ export type Save = {
   handSlots: number;
   /** Tutorials the player has finished: on the Deck page `deck`,
    * reordering the hand; `removeCard`, taking a card out of it; `addCard`,
-   * the note on adding cards from the deck; and `upgrades`, opening the
-   * Upgrades page once the first Inspiration is earned. */
-  tutorials: { deck: boolean; removeCard: boolean; addCard: boolean; upgrades: boolean };
+   * the note on adding cards from the deck; `upgrades`, opening the
+   * Upgrades page once the first Inspiration is earned; and `gear`, opening
+   * the Gear page once the Gear skill is owned. */
+  tutorials: { deck: boolean; removeCard: boolean; addCard: boolean; upgrades: boolean; gear: boolean };
   /** The Archives' archivists, completed research and its history
    * (archives.ts). */
   archives: ArchivesSave;

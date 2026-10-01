@@ -57,6 +57,22 @@ export function moveCard(hand: readonly CardId[], from: number, to: number): Car
   return next;
 }
 
+/** `hand` with deck card `id` dropped on slot `slot` of a hand of `slots`:
+ * with room, it goes into that slot (or after the last card, for an empty
+ * slot), each card from there sliding one slot later; in a full hand it
+ * takes the slot's place, the card there going back to the deck. Null when
+ * that card is STAIRS, which never leaves. */
+export function placeCard(hand: readonly CardId[], id: CardId, slot: number, slots: number): CardId[] | null {
+  const next = [...hand];
+  if (hand.length < slots) {
+    next.splice(Math.min(slot, hand.length), 0, id);
+    return next;
+  }
+  if (hand[slot] === "stairs") return null;
+  next[slot] = id;
+  return next;
+}
+
 /** The card that moves the hero and the path it committed to: the steps
  * still to take, the last one onto its target. */
 export type CardPlan = { card: number; path: Step[] };

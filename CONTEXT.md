@@ -79,7 +79,7 @@ _Avoid_: popup, loot text
 ### The character
 
 **Loadout**:
-What the character starts a run with: ATK, DEF, max HP, keys and how many undos it can store. It comes from the baseline, the upgrades bought, the training bought, the equipped gear and the provisions bought for that run.
+What the character starts a run with: ATK, DEF, max HP, keys and how many undos it can store. It comes from the baseline, the upgrades bought, the training bought, the equipped gear and the provisions bought.
 _Avoid_: base stats, starting stats
 
 **Level**:
@@ -102,7 +102,7 @@ The damage a hero's shroud blocks in each fight: the enemy's strikes, after DEF,
 _Avoid_: shield (the equipment slot), barrier
 
 **Provision**:
-A one-run boost bought with Gold; it adds to the loadout of the next run to go inside, and is spent when that run goes inside.
+A lasting boost bought with Gold on the Gear page: each one bought adds to the loadout of every run from then on, and the next of its kind costs more.
 _Avoid_: consumable (a crafted item used during a run), buff
 
 ### Progress

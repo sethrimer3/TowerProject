@@ -1,5 +1,5 @@
 import { whole } from "./whole.ts";
-import { RUN_TRAINING_CAP, RUN_TRAINING_PRICES, TRAINING, isStatRow, trainingOpen, type TrainingId, type TrainingRow } from "./config.ts";
+import { RUN_TRAINING_CAP, RUN_TRAINING_PRICES, schedulePrice, TRAINING, isStatRow, trainingOpen, type TrainingId, type TrainingRow } from "./config.ts";
 import type { RunCore, Save } from "./entities.ts";
 import { floorGold, floorSilver, killGold, percentPotionChance, silverBonus, potionPercent, reviveChance } from "./loadout.ts";
 
@@ -10,11 +10,7 @@ import { floorGold, floorSilver, killGold, percentPotionChance, silverBonus, pot
 /** What the rank after `bought` ranks bought this run costs in Silver: the
  * schedule's base, and for the k-th rank after it `step + k` more than the
  * one before, `step` rising by `growth` every five, summed here at once. */
-export function silverPrice(id: TrainingId, bought: number) {
-  const { base, step, growth } = RUN_TRAINING_PRICES[id];
-  const fives = Math.floor(bought / 5), rest = bought % 5;
-  return base + bought * step + bought * (bought + 1) / 2 + growth * (5 * fives * (fives - 1) / 2 + rest * fives);
-}
+export const silverPrice = (id: TrainingId, bought: number) => schedulePrice(RUN_TRAINING_PRICES[id], bought);
 
 /** The highest level `row` reaches in a run: its own `max`, or the cap. */
 export const runTrainingMax = (row: TrainingRow) => ("max" in row ? row.max : RUN_TRAINING_CAP);

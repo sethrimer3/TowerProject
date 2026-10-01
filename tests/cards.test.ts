@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { BASE_HAND, BASE_HAND_SLOTS, CARD_IDS, HAND_SLOT_GEMS, MAX_HAND_SLOTS, deckCards, handSlots, nextHandSlotGems, moveCard, planHand, upgradeCard, type CardId } from "../src/cards.ts";
+import { BASE_HAND, BASE_HAND_SLOTS, CARD_IDS, HAND_SLOT_GEMS, MAX_HAND_SLOTS, deckCards, handSlots, nextHandSlotGems, moveCard, placeCard, planHand, upgradeCard, type CardId } from "../src/cards.ts";
 import { defaults } from "../src/save.ts";
 import type { Board, Position } from "../src/board.ts";
 import type { Enemy, Run, Tile } from "../src/entities.ts";
@@ -139,6 +139,17 @@ test("the deck starts as the base hand, and HEAL and EQUIPMENT join it with thei
   assert.deepEqual(deckCards({ ...none, cardHeal: 1, cardGear: 1 }), CARD_IDS);
   assert.equal(upgradeCard("cardGear"), "equipment");
   assert.equal(upgradeCard("focus"), undefined);
+});
+
+test("a deck card dropped on a slot slides the others later, or in a full hand swaps out the card there, never STAIRS", () => {
+  const hand: CardId[] = ["stairs", "door", "key"];
+  assert.deepEqual(placeCard(hand, "heal", 1, 5), ["stairs", "heal", "door", "key"]);
+  assert.deepEqual(placeCard(hand, "heal", 0, 5), ["heal", "stairs", "door", "key"]);
+  assert.deepEqual(placeCard(hand, "heal", 4, 5), ["stairs", "door", "key", "heal"], "an empty slot takes it after the last card");
+  const full: CardId[] = ["stairs", "door", "key", "monster"];
+  assert.deepEqual(placeCard(full, "heal", 2, 4), ["stairs", "door", "heal", "monster"]);
+  assert.equal(placeCard(full, "heal", 0, 4), null);
+  assert.deepEqual(full, ["stairs", "door", "key", "monster"], "the hand itself is left alone");
 });
 
 test("the hand holds four cards, five with Larger Hand, and one more for each slot bought with Gems", () => {

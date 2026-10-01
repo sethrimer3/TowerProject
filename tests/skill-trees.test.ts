@@ -54,19 +54,20 @@ test("Greater Heal, then Recovery, Shroud and Find Potion, come after the Archiv
   assert.deepEqual([at("shroud").x, at("shroud").y, at("shroud").requires], [82, 124, ["greaterHeal"]], "Shroud sits beside Recovery");
   assert.deepEqual([at("findPotion").x, at("findPotion").y, at("findPotion").requires], [50, 142, ["recovery"]], "Find Potion sits below Recovery");
 });
-test("the hand's skills run to Focus, Heal off Buildout, Gear after Focus, and Larger Hand and Buildout cost 1", () => {
+test("the hand's skills run to Focus, Gear and Heal off Buildout, Equipment after Focus, and Larger Hand, Buildout and Gear cost 1", () => {
   const at = (id: string) => TREES[0].nodes.find((n) => n.id === id)!;
-  assert.deepEqual(["combatStance", "largerHand", "cardHeal", "focus", "cardGear"].map((id) => at(id).requires),
-    [["handOrdering"], ["combatStance"], ["combatStance"], ["largerHand"], ["focus"]]);
-  assert.deepEqual(["handOrdering", "combatStance", "largerHand"].map((id) => cost(id as UpgradeId, 0)), [1, 1, 1]);
+  assert.deepEqual(["combatStance", "gear", "largerHand", "cardHeal", "focus", "cardGear"].map((id) => at(id).requires),
+    [["handOrdering"], ["combatStance"], ["combatStance"], ["combatStance"], ["largerHand"], ["focus"]]);
+  assert.deepEqual(["handOrdering", "combatStance", "largerHand", "gear", "focus"].map((id) => cost(id as UpgradeId, 0)), [1, 1, 1, 1, 5]);
+  assert.deepEqual(["gear", "cardGear"].map((id) => UPGRADES.find((u) => u.id === id)!.name), ["Gear", "Equipment"]);
   const g = new Game(defaults());
   g.save.tower.inspiration = 100;
   assert.equal(g.buy("cardHeal"), false, "Heal waits for Buildout");
   assert.ok(g.buy("handOrdering") && g.buy("combatStance") && g.buy("cardHeal"));
   assert.equal(g.buy("focus"), false, "Focus waits for Larger Hand");
   assert.ok(g.buy("largerHand"));
-  assert.equal(g.buy("cardGear"), false, "Gear waits for Focus");
-  assert.ok(g.buy("focus") && g.buy("cardGear"));
+  assert.equal(g.buy("cardGear"), false, "Equipment waits for Focus");
+  assert.ok(g.buy("focus") && g.buy("cardGear") && g.buy("gear"));
 });
 test("each skill in a tree of unlocks is bought once", () => {
   const unlockTrees = TREES.filter((t) => t.unlocks);
