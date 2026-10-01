@@ -303,7 +303,12 @@ export class SkillTreePage {
     const chosen = n.id === this.skill && this.tooltipVisible;
     const unlocks = this.current().unlocks;
     const state = unlocks ? (rank ? ", unlocked" : "") : `, ${rank} of ${skill.max}`;
-    return `<button class="skill-node ${rank ? "owned" : ""} ${available ? "available" : "locked"} ${chosen ? "chosen" : ""}" data-skill="${n.id}" style="left:${n.x}%;top:${n.y}%" aria-label="${skill.name}${state}${available ? "" : ", locked"}" aria-pressed="${chosen}"><span class="node-icon">${skillSprite(n.id)}</span><span class="node-name">${skill.name}</span>${unlocks ? "" : `<small>${rank} / ${skill.max}</small>`}</button>`;
+    // In a tree of unlocks, a skill that can be bought wears its price on
+    // its corner, so the cost of each path shows at a glance.
+    const { price, affordable } = this.purchase(n.id);
+    const badge = unlocks && !rank && available && !this.locked(this.current())
+      ? `<span class="node-cost ${affordable ? "" : "short"}" aria-hidden="true">${price}</span>` : "";
+    return `<button class="skill-node ${rank ? "owned" : ""} ${available ? "available" : "locked"} ${chosen ? "chosen" : ""}" data-skill="${n.id}" style="left:${n.x}%;top:${n.y}%" aria-label="${skill.name}${state}${available ? "" : ", locked"}${badge ? `, costs ${price}` : ""}" aria-pressed="${chosen}"><span class="node-icon">${skillSprite(n.id)}${badge}</span><span class="node-name">${skill.name}</span>${unlocks ? "" : `<small>${rank} / ${skill.max}</small>`}</button>`;
   }
 
   /** Where buying `id` stands: its price, the balance, and whether it can
