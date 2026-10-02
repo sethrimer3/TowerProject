@@ -2417,7 +2417,7 @@ nav.in-run.drilling .run-drills {
 .drill-tip small { color: #8f9bac; }
 
 /* --- Shop --- */
-.mini-action .cart-icon { display: block; width: 18px; height: 18px; }
+.mini-action .cart-icon, .mini-action .enter-icon { display: block; width: 18px; height: 18px; }
 .mini-action { position: relative; }
 /* The day's free Gems wait to be claimed. */
 .mini-action.notify::after {
