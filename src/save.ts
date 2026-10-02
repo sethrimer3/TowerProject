@@ -42,7 +42,7 @@ export function defaults(): Save {
     consumables: Object.fromEntries(CONSUMABLES.map((c) => [c.id, 0])) as Save["consumables"],
     hand: [...BASE_HAND],
     handSlots: 0,
-    tutorials: { deck: false, removeCard: false, addCard: false, upgrades: false, gear: false },
+    tutorials: { deck: false, removeCard: false, addCard: false, upgrades: false, gear: false, onTheJob: false },
     archives: defaultArchives(),
     defend: defaultDefendSave(),
     entitlements: [],
@@ -393,7 +393,7 @@ export function decode(raw: string | null): Save {
     // Slots bought with Gems count only with Larger Hand, which opens them.
     if (d.upgrades.largerHand) d.handSlots = count(s.handSlots, 0, HAND_SLOT_GEMS.length);
     d.hand = decodeHand(s.hand, deckCards(d.upgrades), handSlots(d));
-    for (const k of ["deck", "removeCard", "addCard", "upgrades", "gear"] as const) d.tutorials[k] = s.tutorials?.[k] === true;
+    for (const k of ["deck", "removeCard", "addCard", "upgrades", "gear", "onTheJob"] as const) d.tutorials[k] = s.tutorials?.[k] === true;
   } catch {}
   return d;
 }

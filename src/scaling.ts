@@ -130,6 +130,20 @@ export const TOWER_ENEMY_STRENGTH: Record<TowerEnemyStrength, { zonesAhead: numb
   boss: { zonesAhead: 0, stats: 1.25, defense: 1.25, tier: 4 },
 };
 
+/** The first floor (1-based, the Delve's equivalent floor) where the
+ * generators place strong and elite enemies, in both modes. Below it, one
+ * asked for stands one strength lower, or as a normal enemy. */
+export const STRENGTH_FROM_FLOOR = { strong: 11, elite: 41 };
+/** The strength an enemy asked as `asked` stands at on floor `floor`
+ * (0-based): an elite below `STRENGTH_FROM_FLOOR.elite` is strong, and a
+ * strong (or demoted elite) one below `STRENGTH_FROM_FLOOR.strong` normal. */
+export function strengthOnFloor(asked: EnemyStrength, floor: number): EnemyStrength {
+  let strength = asked;
+  if (strength === "elite" && floor + 1 < STRENGTH_FROM_FLOOR.elite) strength = "strong";
+  if (strength === "strong" && floor + 1 < STRENGTH_FROM_FLOOR.strong) strength = "normal";
+  return strength;
+}
+
 /** Enemy DEF compounds on top of everything else: `rate` for every
  * `towerFloors` Tower floors climbed and every `delveDepth` Delve depth. */
 export const ENEMY_DEFENSE_GROWTH = { rate: 1.01, towerFloors: 5, delveDepth: 20 };

@@ -1,6 +1,6 @@
 import { point, type Point, type Tile } from '../entities.ts';
 import type { Fork, Gate, LaneStep, Strength } from '../tower/types.ts';
-import { bossFactor, delveDefenseGrowth, DELVE_ENEMY_NAMES, ENEMY_STAT_SCALE, enemyTier, type TowerEnemyProfile } from '../scaling.ts';
+import { bossFactor, delveDefenseGrowth, strengthOnFloor, DELVE_ENEMY_NAMES, ENEMY_STAT_SCALE, enemyTier, type TowerEnemyProfile } from '../scaling.ts';
 import { FORK_TUNING, forkDepth, forksWorth, stepValue } from '../tower/forks.ts';
 import { choosePattern, FALSE_ASCENTS, type Pattern } from './patterns.ts';
 import { tileRandom } from '../random.ts';
@@ -419,12 +419,14 @@ function gateTile({ rng }: Lab, g: LaneStep, n: Node): Tile {
   if (g.kind === 'steel') return { kind: 'door', door: { type: 'keys', keys: ['yellow', 'blue', 'red'], mode: 'any' } };
   if (g.kind === 'heart') return { kind: 'door', door: { type: 'fullHp' } };
   if (g.kind !== 'enemy') return { kind: 'floor' };
-  const { scale, defense: tough } = DELVE_ENEMY_STRENGTH[g.strength], shape = DELVE_ENEMY_PROFILE[g.profile ?? 'balanced'];
+  // Strong and elite enemies wait for their equivalent floors, as in the Tower.
+  const strength = strengthOnFloor(g.strength, Math.floor(n.depth / 10));
+  const { scale, defense: tough } = DELVE_ENEMY_STRENGTH[strength], shape = DELVE_ENEMY_PROFILE[g.profile ?? 'balanced'];
   // Populations mix around transitions: influence is fractional there.
   const population = Math.max(0, Math.round(n.influence + (rng() - 0.5) * 0.8));
-  const base = delveEnemyBase(n.depth), boss = bossFactor(g.strength);
+  const base = delveEnemyBase(n.depth), boss = bossFactor(strength);
   return { kind: 'enemy', enemy: {
-    name: DELVE_ENEMY_NAMES[population % DELVE_ENEMY_NAMES.length], tier: enemyTier(g.strength), strength: g.strength,
+    name: DELVE_ENEMY_NAMES[population % DELVE_ENEMY_NAMES.length], tier: enemyTier(strength), strength,
     hp: Math.round(base.hp * scale * shape.hp) * boss,
     attack: Math.round(base.attack * scale * shape.attack) * boss,
     // The whole DEF (base, strength and profile) compounds with depth.

@@ -68,6 +68,7 @@ test("without Spare Change a new floor pays nothing; Silver training raises it f
   assert.equal(g.save.gold, 0);
   const h = stairs();
   h.run.silver = 1000;
+  h.save.upgrades.onTheJob = 1;
   assert.ok(h.trainInRun("floorGold"));
   assert.deepEqual(runTrainingValue(h.save, h.run, "floorGold"), { value: 5, unit: "" });
   assert.ok(h.move(1, 0));

@@ -13,7 +13,7 @@ import {
 } from "./patterns.ts";
 import { planForks } from "./forks.ts";
 import { MAX_REGIONS, planResources } from "./resource-planner.ts";
-import { keyColorsOn, onlyOpenKeys, type KeyColors } from "../key-schedule.ts";
+import { heartDoorsOn, keyColorsOn, onlyOpenKeys, type KeyColors } from "../key-schedule.ts";
 import type {
   Archetype,
   Footprint,
@@ -62,7 +62,7 @@ function mainGateTable(depth: number, doorBias: number): Weighted<Gate> {
     { w: depth >= 3 ? 1 * doorBias : 0, v: { kind: "door", color: "blue" } },
     { w: depth >= 10 ? 0.5 * doorBias : 0, v: { kind: "door", color: "red" } },
     { w: depth >= 1 ? 0.5 * doorBias : 0, v: { kind: "steel" } },
-    { w: depth >= 2 ? 0.5 : 0, v: { kind: "heart" } },
+    { w: heartDoorsOn(depth) ? 0.5 : 0, v: { kind: "heart" } },
   ];
 }
 

@@ -17,7 +17,8 @@ import { tierCells } from "../tiers.ts";
 // v11 softens weak enemies and grows enemy DEF 1% every five floors.
 // v13 keeps blue keys and doors off the first tower's floors below 20, and
 // red below 50.
-export const TOWER_LAYOUT_VERSION = 13;
+// v14 places no strong enemy below floor 11 and no elite below 41.
+export const TOWER_LAYOUT_VERSION = 14;
 
 /** A self-contained 17x17 Tower floor. Generation is strategy-first (see
  * src/tower/index.ts): an abstract graph of gates, keys and rewards is

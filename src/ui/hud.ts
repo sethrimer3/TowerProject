@@ -6,7 +6,7 @@ import { CONSUMABLES, consumableText } from "../crafting.ts";
 import { outsideWeather } from "../outside.ts";
 import { tierBonusText, tierNumeral } from "../tiers.ts";
 import { MODES, milestones } from "../modes.ts";
-import { cardArt, displayedProgress, el, ENTER_ICON, text } from "./dom.ts";
+import { cardArt, CURRENCY_SPRITES, displayedProgress, el, ENTER_ICON, text, uiSprite } from "./dom.ts";
 import { CARDS } from "../cards.ts";
 import { trainingPoints } from "../loadout.ts";
 import type { BoardOverlay } from "./board-overlay.ts";
@@ -302,11 +302,35 @@ function renderProgress(game: Game) {
   const rawRunBest = game.run.maxHeight ?? game.run.height;
   const rawAllBest = game.save[game.mode].best;
   text("height", displayedProgress(game.run.height, outside));
+  renderRunEarned(game);
   const rewardEl = el("best-reward");
   rewardEl.hidden = rawRunBest <= rawAllBest;
   if (rewardEl.hidden) return;
   text("best-reward-val", milestones(rules, rawAllBest, rawRunBest));
   text("best-reward-type", rules.words.currency.toUpperCase());
+}
+
+/** The run's Inspiration (Courage in the Delve) last shown beside the
+ * height, and the mode it was shown for. */
+let earnedShown = { mode: "", amount: 0 };
+/** Beside the height inside a run, once it has earned any: the mode's
+ * currency icon and what the run has earned, flashing each time it rises. */
+function renderRunEarned(game: Game) {
+  const amount = game.run.outside ? 0 : game.save[game.mode].runCurrency, box = el("run-earned");
+  box.hidden = amount < 1;
+  const icon = el("run-earned-icon");
+  if (icon.dataset.mode !== game.mode) {
+    icon.dataset.mode = game.mode;
+    icon.innerHTML = uiSprite(CURRENCY_SPRITES[game.mode]);
+  }
+  box.title = `${MODES[game.mode].words.currency} earned this run`;
+  text("run-earned-val", String(amount));
+  const rose = earnedShown.mode === game.mode && amount > earnedShown.amount;
+  earnedShown = { mode: game.mode, amount };
+  if (!rose || box.hidden) return;
+  box.classList.remove("flash");
+  void box.offsetWidth;
+  box.classList.add("flash");
 }
 
 /** Inside a run, the ad button stands where Floors is in the forest:

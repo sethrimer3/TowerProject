@@ -4,7 +4,7 @@ import { CLEAR_TIERS } from "../tower/clear-ledger.ts";
 import { MODES } from "../modes.ts";
 import { loadout } from "../loadout.ts";
 import type { AppContext } from "./app.ts";
-import { capitalized, displayedProgress, el, itemSprite, uiSprite } from "./dom.ts";
+import { capitalized, CURRENCY_SPRITES, displayedProgress, el, itemSprite, uiSprite } from "./dom.ts";
 import { boardTitle, devAmount } from "./hud.ts";
 
 /** The modal dialogs opened from the HUD, all sharing `ctx.modal`. */
@@ -24,10 +24,6 @@ export function confirmAction(ctx: AppContext, { title, body, label, cancel }: C
     action();
   };
 }
-
-/** Each mode's currency icon, as the currencies row shows it: Inspiration
- * the Upgrades sprite, Courage the Automove one. */
-const CURRENCY_SPRITES = { tower: "upgrades", delve: "automove" } as const;
 
 /** Why the run's end dialog opened: the hero fell, the End Run button was
  * pressed while no card in the hand can act, or it was pressed by choice. */

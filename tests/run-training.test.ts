@@ -7,10 +7,11 @@ import { reviveChance } from "../src/loadout.ts";
 import { ranksInRun, runTrainingOffer, runTrainingValue, silverPrice } from "../src/run-training.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
 
-/** A Tower run inside on an open 5×5 floor, with undo and `silver` to spend. */
+/** A Tower run inside on an open 5×5 floor, with undo, On the Job and `silver` to spend. */
 function arena(silver: number, edit?: (g: Game) => void) {
   const g = new Game(defaults());
   g.save.upgrades.inspirationUndos = 1;
+  g.save.upgrades.onTheJob = 1;
   g.save.xp = xpForLevel(10);
   edit?.(g);
   const w = g.world as RoomWorld;
@@ -71,6 +72,15 @@ test("maximum HP bought for the run comes with the HP to fill it", () => {
   assert.ok(gain > 0);
   assert.equal(g.run.player.hp, 50 + gain);
   assert.equal(runTrainingValue(g.save, g.run, "hp").value, g.run.player.maxHp);
+});
+
+test("training for the run is refused without On the Job", () => {
+  const g = arena(100, (g) => (g.save.upgrades.onTheJob = 0));
+  assert.equal(g.trainsOnTheJob, false);
+  assert.equal(g.trainInRun("attack"), false, "On the Job not owned");
+  assert.equal(g.run.silver, 100);
+  g.save.upgrades.onTheJob = 1;
+  assert.ok(g.trainInRun("attack"));
 });
 
 test("training for the run is refused without the Silver or its upgrade, and in the forest", () => {

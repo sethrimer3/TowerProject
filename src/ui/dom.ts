@@ -45,6 +45,10 @@ export const gemIcon = (className = "gem-icon") =>
 export const itemSprite = (name: keyof typeof AREA1_ITEM_URLS, className = "ui-sprite") =>
   `<img class="${className}" src="${AREA1_ITEM_URLS[name]}" alt="" aria-hidden="true">`;
 
+/** Each mode's currency icon, as the currencies row shows it: Inspiration
+ * the Upgrades sprite, Courage the Automove one. */
+export const CURRENCY_SPRITES = { tower: "upgrades", delve: "automove" } as const;
+
 const SKILL_ITEM_SPRITES: Partial<Record<UpgradeId, keyof typeof AREA1_ITEM_URLS>> = {
   attack: "upgrade_attack",
   defense: "upgrade_defense",
@@ -59,7 +63,7 @@ const SKILL_UI_SPRITES: Partial<Record<UpgradeId, UiSprite>> = {
   renownBanner: "tower", renownOath: "defense", renownCrown: "gear",
 };
 /** Skills about Silver show the Gold coin drained of colour, as the purse does. */
-const SKILL_SILVER = new Set<UpgradeId>(["wealthy", "wishingWell"]);
+const SKILL_SILVER = new Set<UpgradeId>(["wealthy", "wishingWell", "onTheJob"]);
 /** Skills about the hand show a card face. */
 const SKILL_CARDS: Partial<Record<UpgradeId, CardId>> = { handOrdering: "stairs", combatStance: "monster", cardHeal: "heal", cardGear: "equipment", blueKey: "blueKey" };
 /** The forest's Enter button: an arrow going up into an arched doorway. */
@@ -83,3 +87,25 @@ export const SLOT_ICONS: Record<EquipmentSlot, string> = {
   chestplate: uiSprite("chestplate"), leggings: uiSprite("leggings"), boots: uiSprite("boots"),
   gloves: uiSprite("gloves"), necklace: uiSprite("necklace"), ring: uiSprite("ring"),
 };
+
+/** A pixel-art hand pointing up, row by row: `#` outline, `w` skin. */
+const POINTER_ROWS = [
+  "....##......",
+  "...#ww#.....",
+  "...#ww#.....",
+  "...#ww#.....",
+  "...#ww###...",
+  "...#ww#ww##.",
+  ".###ww#ww#w#",
+  "#ww#wwwwwww#",
+  "#wwwwwwwwww#",
+  ".#wwwwwwwww#",
+  ".#wwwwwwww#.",
+  "..#wwwwwww#.",
+  "...#wwwww#..",
+  "...#######..",
+];
+/** The tutorials' pointing hand. */
+export const POINTER_SVG = `<svg viewBox="0 0 12 14" shape-rendering="crispEdges" aria-hidden="true">${POINTER_ROWS.flatMap((row, y) =>
+  [...row].map((c, x) => (c === "." ? "" : `<rect x="${x}" y="${y}" width="1" height="1" fill="${c === "#" ? "#2b1d14" : "#f3d9b8"}"/>`)),
+).join("")}</svg>`;

@@ -420,6 +420,19 @@ h1 span {
   color: #f1dec1;
   line-height: 1.15;
 }
+/* The height, and beside it what the run has earned of the mode's currency. */
+.height-row { display: flex; align-items: center; justify-content: center; gap: 4px; }
+.run-earned { display: inline-flex; align-items: center; gap: 2px; color: #ffe1a1; font-size: 13px; font-weight: 700; }
+.run-earned[hidden] { display: none; }
+.run-earned .ui-sprite { width: 14px; height: 14px; }
+.run-earned.flash { animation: run-earned-flash 0.9s ease-out; }
+@keyframes run-earned-flash {
+  0% { transform: scale(1.6); filter: brightness(2.2) drop-shadow(0 0 6px #ffe27a); }
+  100% { transform: scale(1); filter: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .run-earned.flash { animation-duration: 0.01s; }
+}
 .height-reward {
   color: var(--gold);
   font-size: 7px;
@@ -1896,7 +1909,6 @@ button.training-cost { border-color: #d8b572; color: #ffe1a1; background: #2b271
 .training-job { display: grid; grid-template-columns: 1fr auto; gap: 3px; }
 .training-finish, .buy-trainer { min-height: 30px; padding: 0 5px; display: inline-flex; align-items: center; gap: 2px; border: 1px solid #2f8fbf; border-radius: 8px; background: #0f2230; color: #bfefff; font-size: 10px; }
 .training-finish .gem-icon, .buy-trainer .gem-icon { width: 13px; height: 13px; }
-.training-finish:disabled, .buy-trainer:disabled { opacity: 0.45; }
 .buy-trainer { min-height: 22px; margin-left: 6px; vertical-align: middle; }
 button.training-cost:disabled { border-color: #4a5566; color: #7c8898; background: #111925; }
 /* A trainer's Gold price and the training points that train a rank now. */
@@ -1974,7 +1986,6 @@ nav button.notify::after {
 /* Where the dragged card will land. */
 .deck-slot.held .deck-card { opacity: 0.25; }
 /* The next hand slot, for sale. */
-.deck-slot.for-sale { border-color: #3f6f86; }
 .deck-buy-slot {
   width: 100%;
   height: 100%;
@@ -1986,13 +1997,22 @@ nav button.notify::after {
   justify-content: center;
   gap: 2px;
   border: 0;
-  background: #0d1a22;
-  color: #8fe3ff;
-  font-size: 12px;
+  background: radial-gradient(circle at 50% 40%, #1d4a63, #0d1f2b 75%);
+  color: #bff2ff;
+  font-size: 13px;
+  text-shadow: 0 1px 2px #000;
 }
-.deck-buy-slot > span { font-size: 18px; line-height: 1; }
-.deck-buy-slot .gem-icon { width: 20px; height: 20px; }
-.deck-buy-slot:disabled { color: #5f7480; filter: grayscale(0.6); }
+.deck-slot.for-sale { border-color: #5fc4ee; box-shadow: 0 0 8px #2fa9e055; }
+.deck-buy-slot > span { font-size: 22px; font-weight: 700; line-height: 1; color: #e6fbff; }
+.deck-buy-slot .gem-icon { width: 22px; height: 22px; filter: drop-shadow(0 0 3px #8fe6ff99); }
+.deck-buy-slot b { color: #fff; }
+/* Gem purchases read clearly even out of reach: only the price turns red. */
+.deck-buy-slot:disabled,
+.training-finish:disabled,
+.buy-trainer:disabled { opacity: 1; filter: none; cursor: not-allowed; }
+.deck-buy-slot:disabled b,
+.training-finish:disabled span,
+.buy-trainer:disabled { color: #ffb0a4; }
 .deck-ghost {
   position: fixed;
   left: 0;
@@ -2411,6 +2431,47 @@ nav.in-run.drilling .run-drills {
 .drill-card.maxed { opacity: 0.45; filter: grayscale(0.8); }
 .training-bar { display: flex; flex-shrink: 0; gap: 5px; padding: 0 0 max(5px, env(safe-area-inset-bottom)); }
 .training-bar[hidden] { display: none; }
+/* On the Job's lesson: a note over the hand, and a hand pointing down at a
+   group button from just above it. */
+.training-bar { position: relative; }
+.job-tip {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  width: min(92%, 400px);
+  box-sizing: border-box;
+  border: 1px solid #d6ae68;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #222c3a, #101823);
+  box-shadow: 0 10px 30px #000b;
+  padding: 10px 14px;
+  text-align: center;
+  pointer-events: none;
+}
+.job-tip b { display: block; color: #efd496; font-size: 14px; margin-bottom: 4px; }
+.job-tip p { margin: 0; font-size: 12px; line-height: 1.6; color: #c3cedd; }
+.job-tip .silver-sprite { width: 14px; height: 14px; vertical-align: -2px; }
+.job-pointer {
+  position: absolute;
+  bottom: calc(100% - 4px);
+  width: 30px;
+  margin-left: -15px;
+  z-index: 31;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 2px #000c);
+  transform: rotate(180deg);
+  animation: job-point 1s ease-in-out infinite;
+}
+.job-pointer svg { display: block; width: 100%; }
+@keyframes job-point {
+  0%, 100% { transform: rotate(180deg) translateY(6px); }
+  50% { transform: rotate(180deg) translateY(0); }
+}
+.job-pointer.still { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .job-pointer { animation: none; }
+}
 .training-bar button {
   flex: 1 1 0;
   display: flex;

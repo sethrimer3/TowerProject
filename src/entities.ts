@@ -228,9 +228,11 @@ export type Save = {
   /** Tutorials the player has finished: on the Deck page `deck`,
    * reordering the hand; `removeCard`, taking a card out of it; `addCard`,
    * the note on adding cards from the deck; `upgrades`, opening the
-   * Upgrades page once the first Inspiration is earned; and `gear`, opening
-   * the Gear page once the Gear skill is owned. */
-  tutorials: { deck: boolean; removeCard: boolean; addCard: boolean; upgrades: boolean; gear: boolean };
+   * Upgrades page once the first Inspiration is earned; `gear`, opening
+   * the Gear page once the Gear skill is owned; and `onTheJob`, opening and
+   * closing a Training group under the hand in the first run after On the
+   * Job. */
+  tutorials: { deck: boolean; removeCard: boolean; addCard: boolean; upgrades: boolean; gear: boolean; onTheJob: boolean };
   /** The Archives' archivists, completed research and its history
    * (archives.ts). */
   archives: ArchivesSave;

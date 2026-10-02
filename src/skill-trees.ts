@@ -11,19 +11,20 @@ export type SkillNode = { id: UpgradeId; icon: string; x: number; y: number; req
 export type SkillTree = { id: TreeId; name: string; currency: Currency; gate?: UpgradeId | null; description: string; height?: number; unlocks?: boolean; nodes: SkillNode[] };
 export const TREES: SkillTree[] = [
   { id: "inspiration", name: "Inspiration", currency: "inspiration", description: "Earn Inspiration by beating your best Tower climb.", height: 172, unlocks: true, nodes: [
-    // The hand's skills, down to Focus; Gear and Heal branch off Buildout,
-    // Training off Larger Hand.
+    // The hand's skills, down to Focus; On the Job, Gear and Heal branch off
+    // Buildout, Training off Larger Hand, and Equipment off Gear.
     { id: "handOrdering", icon: "▤", x: 50, y: 12, requires: [] },
     { id: "combatStance", icon: "⚔", x: 50, y: 30, requires: ["handOrdering"] },
+    { id: "onTheJob", icon: "¤", x: 20, y: 30, requires: ["combatStance"] },
     { id: "largerHand", icon: "▦", x: 50, y: 48, requires: ["combatStance"] },
     { id: "gear", icon: "⚒", x: 20, y: 48, requires: ["combatStance"] },
     { id: "cardHeal", icon: "♥", x: 80, y: 48, requires: ["combatStance"] },
     { id: "focus", icon: "ϟ", x: 50, y: 66, requires: ["largerHand"] },
     { id: "training", icon: "⚔", x: 78, y: 66, requires: ["largerHand"] },
-    { id: "cardGear", icon: "⛨", x: 14, y: 88, requires: ["focus"] },
-    { id: "inspirationUndos", icon: "↺", x: 38, y: 88, requires: ["focus"] },
-    { id: "archives", icon: "▥", x: 62, y: 88, requires: ["focus"] },
-    { id: "delve", icon: "▼", x: 86, y: 88, requires: ["focus"] },
+    { id: "cardGear", icon: "⛨", x: 20, y: 66, requires: ["gear"] },
+    { id: "inspirationUndos", icon: "↺", x: 26, y: 88, requires: ["focus"] },
+    { id: "archives", icon: "▥", x: 50, y: 88, requires: ["focus"] },
+    { id: "delve", icon: "▼", x: 74, y: 88, requires: ["focus"] },
     // Research needs the Archives, so the skills that open it come after them.
     { id: "spareChange", icon: "¤", x: 14, y: 106, requires: ["archives"] },
     { id: "blueKey", icon: "⚿", x: 38, y: 106, requires: ["archives"] },

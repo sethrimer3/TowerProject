@@ -1294,6 +1294,11 @@ export class Game {
   private get trainingOpen() {
     return !!this.save.upgrades.training || this.save.settings.devMode;
   }
+  /** Whether a run's Training can be bought with Silver inside it: On the
+   * Job owned, or every page shown in Dev mode. */
+  get trainsOnTheJob() {
+    return !!this.save.upgrades.onTheJob || this.save.settings.devMode;
+  }
   /** Whether one more rank of `id` can be trained at all: its row shows,
    * and it isn't at its most. */
   private canTrain(id: TrainingId) {
@@ -1432,10 +1437,11 @@ export class Game {
   }
   /** Buys one rank of Training `id` for this run with its Silver: it counts
    * from the next turn on, until the run ends. Each purchase is a turn of
-   * its own, so undo takes it back. Refused during a fight, for a row whose
-   * upgrade isn't owned or at its highest, or without the Silver. */
+   * its own, so undo takes it back. Refused before On the Job is owned,
+   * during a fight, for a row whose upgrade isn't owned or at its highest,
+   * or without the Silver. */
   trainInRun(id: TrainingId) {
-    if (!this.playing || this.encounter) return false;
+    if (!this.trainsOnTheJob || !this.playing || this.encounter) return false;
     const offer = runTrainingOffer(this.save, this.run, id);
     if (!offer.open || offer.maxed || (!this.free && this.silver < offer.price)) return false;
     this.remember(this.snapshot());

@@ -143,7 +143,7 @@ The currency of a single run: each monster beaten pays some, more on higher floo
 _Avoid_: coins, run gold
 
 **Run training**:
-Training levels bought with Silver inside a run, on top of the hero's own, lasting only for that run.
+Training levels bought with Silver inside a run, on top of the hero's own, lasting only for that run. Opened by the Inspiration skill On the Job.
 _Avoid_: drills, run upgrades, temporary training
 
 **Courage**:

@@ -57,20 +57,23 @@ test("Greater Heal, then Recovery, Shroud and Find Potion, come after the Archiv
   assert.deepEqual([at("shroud").x, at("shroud").y, at("shroud").requires], [92, 124, ["greaterHeal"]], "Shroud sits beside Recovery");
   assert.deepEqual([at("findPotion").x, at("findPotion").y, at("findPotion").requires], [74, 142, ["recovery"]], "Find Potion sits below Recovery");
 });
-test("the hand's skills run to Focus, Gear and Heal off Buildout, Equipment after Focus, and Larger Hand, Buildout and Gear cost 1", () => {
+test("the hand's skills run to Focus, On the Job, Gear and Heal off Buildout, Equipment after Gear, and Larger Hand, Buildout, On the Job and Gear cost 1", () => {
   const at = (id: string) => TREES[0].nodes.find((n) => n.id === id)!;
-  assert.deepEqual(["combatStance", "gear", "largerHand", "cardHeal", "focus", "cardGear"].map((id) => at(id).requires),
-    [["handOrdering"], ["combatStance"], ["combatStance"], ["combatStance"], ["largerHand"], ["focus"]]);
-  assert.deepEqual(["handOrdering", "combatStance", "largerHand", "gear", "focus"].map((id) => cost(id as UpgradeId, 0)), [1, 1, 1, 1, 5]);
-  assert.deepEqual(["gear", "cardGear"].map((id) => UPGRADES.find((u) => u.id === id)!.name), ["Gear", "Equipment"]);
+  assert.deepEqual(["combatStance", "onTheJob", "gear", "largerHand", "cardHeal", "focus", "cardGear"].map((id) => at(id).requires),
+    [["handOrdering"], ["combatStance"], ["combatStance"], ["combatStance"], ["combatStance"], ["largerHand"], ["gear"]]);
+  assert.ok(at("onTheJob").x < at("combatStance").x && at("onTheJob").y === at("combatStance").y, "On the Job sits left of Buildout");
+  assert.ok(at("cardGear").x === at("gear").x && at("cardGear").y > at("gear").y, "Equipment sits under Gear");
+  assert.deepEqual(["handOrdering", "combatStance", "onTheJob", "largerHand", "gear", "focus"].map((id) => cost(id as UpgradeId, 0)), [1, 1, 1, 1, 1, 5]);
+  assert.deepEqual(["gear", "cardGear", "onTheJob"].map((id) => UPGRADES.find((u) => u.id === id)!.name), ["Gear", "Equipment", "On the Job"]);
   const g = new Game(defaults());
   g.save.tower.inspiration = 100;
   assert.equal(g.buy("cardHeal"), false, "Heal waits for Buildout");
-  assert.ok(g.buy("handOrdering") && g.buy("combatStance") && g.buy("cardHeal"));
+  assert.equal(g.buy("onTheJob"), false, "On the Job waits for Buildout");
+  assert.ok(g.buy("handOrdering") && g.buy("combatStance") && g.buy("cardHeal") && g.buy("onTheJob"));
   assert.equal(g.buy("focus"), false, "Focus waits for Larger Hand");
-  assert.ok(g.buy("largerHand"));
-  assert.equal(g.buy("cardGear"), false, "Equipment waits for Focus");
-  assert.ok(g.buy("focus") && g.buy("cardGear") && g.buy("gear"));
+  assert.equal(g.buy("cardGear"), false, "Equipment waits for Gear");
+  assert.ok(g.buy("gear") && g.buy("cardGear"));
+  assert.ok(g.buy("largerHand") && g.buy("focus"));
 });
 test("Training (2) follows Larger Hand, Blue Key (2) the Archives, and Extra Key (1) Movement Speed", () => {
   const node = (id: UpgradeId) => TREES.flatMap((t) => t.nodes.map((n) => ({ ...n, tree: t.id }))).find((n) => n.id === id)!;

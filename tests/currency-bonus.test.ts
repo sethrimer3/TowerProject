@@ -123,6 +123,7 @@ test("a floor already reached this run pays no Silver; Silver training raises it
   assert.equal(g.silver, 0);
   const h = stairs();
   h.run.silver = 1000;
+  h.save.upgrades.onTheJob = 1;
   assert.ok(h.trainInRun("floorSilver"));
   assert.deepEqual(runTrainingValue(h.save, h.run, "floorSilver"), { value: 6, unit: "" });
   h.save.upgrades.wealthy = 1;

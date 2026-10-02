@@ -1,6 +1,6 @@
 import { CARDS, deckCards, handSlots, moveCard, nextHandSlotGems, placeCard, type CardId } from "../cards.ts";
 import type { AppContext } from "./app.ts";
-import { cardArt, el, gemIcon } from "./dom.ts";
+import { cardArt, el, gemIcon, POINTER_SVG } from "./dom.ts";
 
 /** How far a press must travel before it lifts the card. */
 const DRAG_START_PX = 4;
@@ -12,26 +12,6 @@ type Drag = { from: number; to: number; pointer: number; x: number; y: number; l
  * (null while it is away from the hand, or over STAIRS in a full hand). */
 type DeckDrag = { card: CardId; to: number | null; pointer: number; x: number; y: number; lifted: boolean; ghost: HTMLElement | null };
 
-/** A pixel-art hand pointing up, row by row: `#` outline, `w` skin. */
-const POINTER_ROWS = [
-  "....##......",
-  "...#ww#.....",
-  "...#ww#.....",
-  "...#ww#.....",
-  "...#ww###...",
-  "...#ww#ww##.",
-  ".###ww#ww#w#",
-  "#ww#wwwwwww#",
-  "#wwwwwwwwww#",
-  ".#wwwwwwwww#",
-  ".#wwwwwwww#.",
-  "..#wwwwwww#.",
-  "...#wwwww#..",
-  "...#######..",
-];
-const POINTER_SVG = `<svg viewBox="0 0 12 14" shape-rendering="crispEdges" aria-hidden="true">${POINTER_ROWS.flatMap((row, y) =>
-  [...row].map((c, x) => (c === "." ? "" : `<rect x="${x}" y="${y}" width="1" height="1" fill="${c === "#" ? "#2b1d14" : "#f3d9b8"}"/>`)),
-).join("")}</svg>`;
 const X_SVG = `<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M2.5 2.5L7.5 7.5M7.5 2.5L2.5 7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`;
 const CHECK_SVG = `<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M2 5.4L4.2 7.6L8.2 2.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 

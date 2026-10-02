@@ -3,7 +3,7 @@ import type { TowerEnemyProfile } from "../scaling.ts";
 import { ARCHETYPES, keyedFloor, pick, type Weighted } from "./patterns.ts";
 import type { GraphBuilder } from "./strategic-graph.ts";
 import type { Archetype, Fork, Gate, Lane, LaneStep, Reward, StrategicNode, StrategicTag, Strength } from "./types.ts";
-import { onlyOpenKeys } from "../key-schedule.ts";
+import { heartDoorsOn, onlyOpenKeys, withoutHeart } from "../key-schedule.ts";
 
 /** Forks: two or three parallel lanes from one region into the next, each
  * paying a different resource, so entering asks *what* to spend.
@@ -263,12 +263,13 @@ const withoutLocks = (f: Fork) => !f.lanes.some((lane) => lane.some((s) => s.kin
 
 /** Forks priced near `v` for a floor `depth` deep (Delve passes its
  * equivalent floor), best first, the rest shallower and narrower first.
- * `fits` limits them to what the caller has room for. */
+ * `fits` limits them to what the caller has room for; none holds a Heart
+ * Door below `HEART_DOOR_FLOOR`. */
 export function forksWorth(v: number, depth: number, archetype: Archetype, rng: () => number, fits: (f: Fork) => boolean = () => true): Fork[] {
   let options = FORK_PATTERNS.map((p) => ({ p, w: forkWeight(p, depth, archetype) }))
     .filter(({ w }) => w > 0)
     .map(({ p, w }) => ({ w, v: build(p, rng) }))
-    .filter(({ v: fork }) => fits(fork) && forkValue(fork) <= v * FORK_TUNING.valueBand && forkValue(fork) * FORK_TUNING.valueBand >= v);
+    .filter(({ v: fork }) => fits(fork) && (heartDoorsOn(depth) || withoutHeart(fork)) && forkValue(fork) <= v * FORK_TUNING.valueBand && forkValue(fork) * FORK_TUNING.valueBand >= v);
   const chosen: Fork[] = [];
   while (options.length && chosen.length < FORK_TUNING.fallbacks) {
     const fork = pick(options, rng);

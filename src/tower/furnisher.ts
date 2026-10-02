@@ -1,6 +1,5 @@
-import { TOWER_SECTION } from "../config.ts";
 import { point, type Tile } from "../entities.ts";
-import { getTowerGateEnemy, type TowerEnemyProfile } from "../scaling.ts";
+import { getTowerGateEnemy, strengthOnFloor, type TowerEnemyProfile } from "../scaling.ts";
 import type { Gate, LaneStep, Reward, StrategicNode, Strength } from "./types.ts";
 import { centre, DIRS, inRect, type Rect, type XY } from "./grid.ts";
 
@@ -35,11 +34,11 @@ const PROFILES_FOR: Record<Strength, TowerEnemyProfile[]> = {
   boss: ["balanced"],
 };
 
-/** An enemy for floor `depth`. The first section holds no elites (the next
- * zone's roster): one there stands as a strong enemy, so no enemy below the
- * floor 10 boss can beat a new hero in a single fight. */
+/** An enemy for floor `depth`, at the strength that floor allows
+ * (`strengthOnFloor`: no strong enemy below floor 11, no elite below 41),
+ * so no enemy below the floor 10 boss can beat a new hero in a single fight. */
 function enemyTile(asked: Strength, depth: number, rng: () => number, named?: TowerEnemyProfile): Tile {
-  const strength = asked === "elite" && depth < TOWER_SECTION ? "strong" : asked;
+  const strength = strengthOnFloor(asked, depth);
   const profiles = PROFILES_FOR[strength];
   const profile = named ?? profiles[Math.floor(rng() * profiles.length)];
   return { kind: "enemy", enemy: getTowerGateEnemy(depth, strength, profile) };

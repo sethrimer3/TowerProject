@@ -230,6 +230,14 @@ export const UPGRADES = [
     currency: "inspiration",
   },
   {
+    id: "onTheJob",
+    name: "On the Job",
+    description: "Inside a run, train with the Silver you find: the Training buttons under your hand buy ranks that last the run",
+    base: 1,
+    max: 1,
+    currency: "inspiration",
+  },
+  {
     id: "focus",
     name: "Focus",
     description: `Inside a run, press a card in your hand to put it ahead of the others until it reaches its target (${FOCUS_PER_RUN} use a run)`,

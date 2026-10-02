@@ -25,3 +25,12 @@ export function onlyOpenKeys(thing: unknown, colors: KeyColors): boolean {
   if ((o.kind === "key" || o.kind === "door") && typeof o.color === "string" && !colors[o.color as KeyColor]) return false;
   return Object.values(o).every((v) => onlyOpenKeys(v, colors));
 }
+
+/** The equivalent floor (counting from 1) Heart Doors first appear on, in
+ * every tier. */
+export const HEART_DOOR_FLOOR = 31;
+/** Whether equivalent floor `floor` (0 is the first; the Delve's may be
+ * fractional) may hold a Heart Door. */
+export const heartDoorsOn = (floor: number) => Math.floor(floor) + 1 >= HEART_DOOR_FLOOR;
+/** Whether a fork holds no Heart Door. */
+export const withoutHeart = (f: { lanes: { kind: string }[][] }) => !f.lanes.some((lane) => lane.some((s) => s.kind === "heart"));
