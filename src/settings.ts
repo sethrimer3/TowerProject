@@ -48,7 +48,9 @@ export const SETTINGS = {
   /** Unlimited currency, every floor section and game mode unlocked. */
   devMode: { kind: "toggle", default: false, page: { id: "dev-mode", label: "Dev mode (unlimited currency, all floors &amp; modes unlocked)" } },
   /** Play each fight out strike by strike, damage rising off whoever was
-   * struck, instead of settling it at once. */
+   * struck, instead of settling it at once and showing it in summary. Only
+   * Instant Combat shows it, so fights play out until then
+   * (`Game.animatesFights`). */
   fightAnimation: { kind: "toggle", default: true, page: { id: "fight-animation", label: "Animate fights" } },
   /** Dev: every purchase is allowed and costs nothing, and research
    * completes the moment it starts. Unlocks and grants nothing itself. */

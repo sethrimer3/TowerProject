@@ -61,6 +61,10 @@ export const FIRST_STRIKE_MS = 250;
 export const STRIKE_SPEEDUP = 0.9;
 export const FASTEST_STRIKE_MS = 50;
 
+/** How long a revival's golden fire and its "REVIVED" text last; a fight
+ * shown in summary rounds begins its next round once it is over. */
+export const REVIVE_MS = 1400;
+
 /** One strike of a fight: who struck, for how much, when it swings (`start`
  * to `end`, in ms from the fight's start) and lands (`at`), and the HP the
  * struck side has left. Of an enemy's strike, the shroud takes what it can
@@ -105,6 +109,33 @@ export function bout(player: Player, enemy: Enemy, revives?: Revival): Bout {
     ms = Math.max(FASTEST_STRIKE_MS, ms * STRIKE_SPEEDUP);
   }
   return { strikes, duration: t };
+}
+
+/** A fight settled at once (Animate fights off), shown as summary rounds:
+ * each holds the hero's strikes as one strike and the enemy's as another,
+ * landing together. A revival ends a round, and the next begins `gap` ms
+ * later, once its fire has burned out. */
+export function summarize(fight: Bout, gap: number): Bout {
+  const strikes: Strike[] = [];
+  let t = 0, hero = null as Strike | null, enemy = null as Strike | null;
+  const close = () => {
+    for (const s of [hero, enemy]) if (s) strikes.push(s);
+    hero = enemy = null;
+  };
+  for (const s of fight.strikes) {
+    const at = { start: t, at: t, end: t };
+    if (s.by === "hero") hero = { by: "hero", damage: snap((hero?.damage ?? 0) + s.damage), hp: s.hp, ...at };
+    else {
+      const shrouded = snap((enemy?.shrouded ?? 0) + (s.shrouded ?? 0));
+      enemy = { by: "enemy", damage: snap((enemy?.damage ?? 0) + s.damage), ...(shrouded ? { shrouded } : {}), ...(s.revived ? { revived: true as const } : {}), hp: s.hp, ...at };
+      if (s.revived) {
+        close();
+        t += gap;
+      }
+    }
+  }
+  close();
+  return { strikes, duration: strikes.at(-1)?.at ?? 0 };
 }
 
 /** The hero's HP once the fight is over, from `hp` at its start. */

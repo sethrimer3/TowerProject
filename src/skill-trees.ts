@@ -37,6 +37,7 @@ export const TREES: SkillTree[] = [
   ] },
   { id: "courage", name: "Courage", currency: "courage", gate: "delve", description: "Earn Courage by beating your best Delve depth.", nodes: [
     { id: "moveSpeed", icon: "»", x: 50, y: 10, requires: ["delve"] },
+    { id: "instantCombat", icon: "↯", x: 18, y: 10, requires: ["moveSpeed"] },
     { id: "extraKey", icon: "⚿", x: 82, y: 10, requires: ["moveSpeed"] },
     { id: "hp", icon: "♥", x: 18, y: 34, requires: ["moveSpeed"] },
     { id: "attack", icon: "⚔", x: 50, y: 34, requires: ["moveSpeed"] },

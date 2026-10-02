@@ -1,5 +1,5 @@
 import { wholeChange } from "./whole.ts";
-import type { Encounter, Gain, Heal } from "./state.ts";
+import type { Encounter, Gain, Heal, ShownFight } from "./state.ts";
 import { paintContents } from "./tile-painters.ts";
 import { materialImage } from "./material-sprites.ts";
 import { paintGem } from "./gem-art.ts";
@@ -37,6 +37,17 @@ function heart() {
   }
   return heartImage.complete && heartImage.naturalWidth ? heartImage : null;
 }
+/** The enemy's HP bar: how long it takes to drain to each strike's HP (or
+ * less, when the next strike lands sooner) and to fade once the enemy falls
+ * (ms), its size and height over the enemy's tile (in tiles), and its
+ * colours. */
+const BAR_DRAIN_MS = 200;
+const BAR_FADE_MS = 300;
+const BAR_WIDTH = 0.8;
+const BAR_HEIGHT = 0.1;
+const BAR_RISE = 0.6;
+const BAR_FILL = "#d8323a";
+const BAR_EMPTY = "#2a0d10";
 /** How far a strike leans into its target at the moment it lands, in tiles. */
 const LUNGE = 0.3;
 
@@ -54,16 +65,16 @@ export class BoardPopups {
   private numbers: (Popup & { text: string; color: string })[] = [];
   /** The last heal raised. */
   private healed = 0;
-  private fight: Encounter | null = null;
+  private fight: ShownFight | null = null;
   /** How many of the fight's strikes have landed. */
   private landed = 0;
   private seed = NaN;
 
   /** Takes the game's new rewards, starting now (those that came together,
-   * like a chest's Gold and materials, one after another), the fight's
-   * strikes that have landed by `now`, and a new heal. A new run clears
-   * whatever was still showing. */
-  update(game: { run: { seed: number }; gains: Gain[]; encounter: Encounter | null; lastHeal: Heal | null }, now: number) {
+   * like a chest's Gold and materials, one after another), the latest
+   * fight's strikes that have landed by `now`, and a new heal. A new run
+   * clears whatever was still showing. */
+  update(game: { run: { seed: number }; gains: Gain[]; fight: ShownFight | null; lastHeal: Heal | null }, now: number) {
     if (game.run.seed !== this.seed) {
       this.seed = game.run.seed;
       this.rewards = [];
@@ -79,19 +90,23 @@ export class BoardPopups {
       this.rewards.push({ x: gain.x, y: gain.y, start, gain });
       start += POPUP_MS;
     }
-    this.strike(game.encounter, now);
+    this.strike(game.fight, now);
     this.rewards = this.rewards.filter((p) => now < p.start + POPUP_MS);
     this.numbers = this.numbers.filter((p) => now < p.start + POPUP_MS);
   }
-  private strike(fight: Encounter | null, now: number) {
+  private strike(fight: ShownFight | null, now: number) {
     if (fight !== this.fight) {
       this.fight = fight;
       this.landed = 0;
     }
     if (!fight) return;
-    const strikes = fight.bout.strikes;
+    const strikes = fight.bout.strikes, won = defeated(fight);
     while (this.landed < strikes.length && fight.start + strikes[this.landed].at <= now) {
-      const s = strikes[this.landed++], on = s.by === "hero" ? fight.to : fight.from,
+      const s = strikes[this.landed++];
+      // In summary, an enemy that falls has plainly lost all its HP, so only
+      // what the hero took rises, over where the hero stands at the end.
+      if (fight.summary && s.by === "hero" && !s.hp) continue;
+      const on = s.by === "hero" ? fight.to : fight.summary && won && s.at === fight.bout.duration ? fight.to : fight.from,
         start = fight.start + s.at, both = !!s.shrouded && s.damage > 0;
       if (s.shrouded)
         this.numbers.push({ x: on.x - (both ? SHROUD_SPLIT : 0), y: on.y + DAMAGE_START, start, text: String(wholeChange(s.shrouded)), color: SHROUD_COLOR });
@@ -102,13 +117,15 @@ export class BoardPopups {
         });
     }
   }
-  /** Nothing is rising or waiting to. */
-  get idle() {
-    return !this.rewards.length && !this.numbers.length;
+  /** Nothing is rising or waiting to, and the enemy's HP bar is still. */
+  idle(now: number) {
+    return !this.rewards.length && !this.numbers.length && !barMoving(this.fight, now);
   }
 
-  /** Every popup that has started, oldest first, so newer ones draw on top. */
+  /** The enemy's HP bar, then every popup that has started, oldest first,
+   * so newer ones draw on top. */
   draw(f: FrameContext) {
+    if (this.fight) drawEnemyBar(f, this.fight);
     const shown = [
       ...this.numbers.map((p) => ({ start: p.start, draw: () => this.drawText(f, p, p.text, p.color, DAMAGE_RISE, 0.55) })),
       ...this.rewards.map((p) => ({
@@ -172,6 +189,48 @@ export class BoardPopups {
     c.restore();
     return true;
   }
+}
+
+/** Whether the fight ends with the enemy felled. */
+const defeated = (fight: ShownFight) => fight.bout.strikes.some((s) => s.by === "hero" && !s.hp);
+
+/** The enemy's HP the bar shows at `now` and how visible it is: hidden
+ * until the hero's first strike lands, draining steadily to each strike's
+ * HP as it lands, then, once the enemy has fallen, fading away. A fight the
+ * hero lost leaves it standing, showing what HP the enemy has left. */
+export function enemyBar(fight: ShownFight, now: number): { hp: number; alpha: number } | null {
+  const t = now - fight.start, hits = fight.bout.strikes.filter((s) => s.by === "hero");
+  let i = -1;
+  while (i + 1 < hits.length && hits[i + 1].at <= t) i++;
+  if (i < 0) return null;
+  const s = hits[i], from = i ? hits[i - 1].hp : fight.hp,
+    drain = Math.min(BAR_DRAIN_MS, i + 1 < hits.length ? hits[i + 1].at - s.at : BAR_DRAIN_MS),
+    k = drain > 0 ? Math.min(1, (t - s.at) / drain) : 1;
+  const hp = from + (s.hp - from) * k;
+  if (s.hp || k < 1) return { hp, alpha: 1 };
+  const fade = 1 - (t - s.at - drain) / BAR_FADE_MS;
+  return fade > 0 ? { hp, alpha: fade } : null;
+}
+/** The bar is draining or fading, or waits for the hero's first strike. */
+function barMoving(fight: ShownFight | null, now: number) {
+  if (!fight) return false;
+  const hits = fight.bout.strikes.filter((s) => s.by === "hero"), last = hits.at(-1);
+  return !!last && now - fight.start < last.at + BAR_DRAIN_MS + (last.hp ? 0 : BAR_FADE_MS);
+}
+function drawEnemyBar(f: FrameContext, fight: ShownFight) {
+  const bar = enemyBar(fight, f.now);
+  if (!bar || !fight.hp) return;
+  const c = f.c, at = tileCenter(f, fight.to.x, fight.to.y + BAR_RISE),
+    w = f.s * BAR_WIDTH, h = Math.max(3, f.s * BAR_HEIGHT), x = at.x - w / 2, y = at.y - h / 2;
+  c.save();
+  c.globalAlpha = bar.alpha;
+  c.fillStyle = "#000";
+  c.fillRect(x - 1, y - 1, w + 2, h + 2);
+  c.fillStyle = BAR_EMPTY;
+  c.fillRect(x, y, w, h);
+  c.fillStyle = BAR_FILL;
+  c.fillRect(x, y, w * Math.max(0, Math.min(1, bar.hp / fight.hp)), h);
+  c.restore();
 }
 
 /** How far the hero and the enemy lean into their strikes at `now`: whoever

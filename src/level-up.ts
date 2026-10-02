@@ -1,12 +1,12 @@
 import { tileTransform, type FrameContext } from "./render-frame.ts";
+import { REVIVE_MS } from "./combat.ts";
 
 /** How long the level-up glow and its "LEVEL UP!" text last. */
 export const LEVEL_UP_MS = 2000;
 /** How long the training points a level-up earned rise over the hero,
  * once its burst is over. */
 export const POINTS_MS = 1400;
-/** How long a revival's golden fire and its "REVIVED" text last. */
-export const REVIVE_MS = 1400;
+export { REVIVE_MS };
 
 /** One of the fiery bursts over the hero: how long it lasts and fades, how
  * far its glow and flames reach, its colours, and its words. */

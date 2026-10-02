@@ -105,6 +105,14 @@ export const UPGRADES = [
     currency: "courage",
   },
   {
+    id: "instantCombat",
+    name: "Instant Combat",
+    description: "Unlock the Animate fights setting: turn it off to settle each fight at once, in one step",
+    base: 1,
+    max: 1,
+    currency: "courage",
+  },
+  {
     id: "aiMemory", name: "Route memory", description: "Delve: remember explored routes, then recognize dead ends", base: 3, max: 2, currency: "courage",
   },
   {

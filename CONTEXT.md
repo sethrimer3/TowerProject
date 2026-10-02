@@ -68,6 +68,9 @@ _Avoid_: blow, hit (a hit is the damage one strike deals)
 A fight being played out on the board, strike by strike, with its damage rising off whoever was struck and the HP it has cost so far shown in purple on the HP bar. The hero waits on the tile it came from, nothing counts until the fight is settled, and only then does the hero step onto the enemy's tile, or fall.
 _Avoid_: combat animation, pending fight
 
+**Summary round**:
+A fight settled at once (Animate fights off, once Instant Combat is owned), shown afterwards as one strike each way: all the damage the hero dealt rising off the enemy and all it took rising off the hero. An enemy that falls shows nothing, since it plainly lost all its HP. A revival ends a round, and the next begins once the revival's fire is out.
+
 **Fallen**:
 The hero lost a fight: the run waits at 0 HP, the hand paused, until the player takes the fight back (Undo, spending one) or accepts defeat, which ends the run and returns to the forest.
 _Avoid_: dead, game over

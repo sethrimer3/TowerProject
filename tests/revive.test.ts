@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { defaults } from "../src/save.ts";
 import { point, type Enemy, type Tile } from "../src/entities.ts";
-import { bout, heroHpAfter, revivals } from "../src/combat.ts";
+import { bout, heroHpAfter, REVIVE_MS, revivals } from "../src/combat.ts";
 import { reviveChance, trainingStep } from "../src/loadout.ts";
 import { TREES } from "../src/skill-trees.ts";
 import { UPGRADES } from "../src/config.ts";
@@ -120,6 +120,19 @@ test("in play, a lethal fight revives the hero by a fixed roll per run, tile and
     assert.ok(shown.revivedAt[0] > start);
     shown.finishEncounter();
     assert.ok(!shown.fallen && shown.run.player.hp === 100);
+    // Settled at once, it shows in summary rounds, each after the last
+    // revival's fire, and counts once the last has shown.
+    const quick = arena(seed, 99);
+    quick.playsFights = true;
+    quick.save.upgrades.instantCombat = 1;
+    quick.save.settings.fightAnimation = false;
+    quick.move(0, 1);
+    const summary = quick.encounter!;
+    assert.ok(summary?.summary, "a revival makes even a quick fight wait");
+    assert.deepEqual(quick.revivedAt.map((at) => at - summary.start), [0]);
+    assert.equal(summary.bout.duration, REVIVE_MS);
+    quick.finishEncounter();
+    assert.ok(!quick.fallen && quick.run.player.hp === 100);
   }
   // At 50%, about half of them.
   assert.ok(revived > 8 && fell > 8, `${revived} revived, ${fell} fell`);

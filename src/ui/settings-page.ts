@@ -16,6 +16,7 @@ type PageKey = (typeof PAGE)[number];
 /** Settings that stay off the page until the upgrade behind them is owned. */
 const SHOWN: Partial<Record<PageKey, (save: Save) => boolean>> = {
   speed: (save) => !!save.upgrades.moveSpeed,
+  fightAnimation: (save) => !!save.upgrades.instantCombat,
 };
 /** The choices a setting offers now, where research opens more of them. */
 const OFFERED: Partial<Record<PageKey, (game: PageGame) => (value: string | number) => boolean>> = {

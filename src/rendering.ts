@@ -413,7 +413,7 @@ export class Renderer {
     const g = this.game, p = g.run.player, t = this.target(this.density), eps = 0.01;
     return Math.abs(this.playerX - p.x) < eps && Math.abs(this.playerY - p.y) < eps &&
       Math.abs(this.left - t.left) < eps && Math.abs(this.bottom - t.bottom) < eps &&
-      !g.route.length && !g.encounter && now - this.arrived > ARRIVAL_GLOW_MS && g.blocked.until <= now && g.effect.until <= now && this.popups.idle && !this.decor.busy &&
+      !g.route.length && !g.encounter && now - this.arrived > ARRIVAL_GLOW_MS && g.blocked.until <= now && g.effect.until <= now && this.popups.idle(now) && !this.decor.busy &&
       now - g.levelUpAt >= LEVEL_UP_MS + POINTS_MS && g.revivedAt.every((at) => now - at >= REVIVE_MS) &&
       (!g.gemSparkle || now - g.gemSparkle.at >= GEM_SPARKLE_MS);
   }

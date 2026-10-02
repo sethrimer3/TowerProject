@@ -51,7 +51,7 @@ import {
 import { World, LAYOUT_VERSION } from "./delve/world.ts";
 import { RoomWorld, TOWER_LAYOUT_VERSION } from "./tower/room-world.ts";
 import type { Board } from "./board.ts";
-import { bout, heroHpAfter, heroHpDuring, revivals, type Bout, type CombatPrediction, type Revival } from "./combat.ts";
+import { bout, heroHpAfter, heroHpDuring, REVIVE_MS, revivals, summarize, type Bout, type CombatPrediction, type Revival } from "./combat.ts";
 import { ATTACK_SHARD, DEFENSE_SHARD, isLethal, potionHeal, resolveStep, type StepBlocked, type StepEffect, type StepRules } from "./step-effects.ts";
 import { OutsideWorld } from "./outside.ts";
 import { ClearLedger } from "./tower/clear-ledger.ts";
@@ -101,10 +101,15 @@ const MAX_GAINS = 12;
 const REVIVE_SALT = 0x7e51e;
 /** Salts the run seed for where a Gem lies on a floor. */
 const GEM_SALT = 0x6e3a1;
-/** A fight being played out round by round before it counts: the hero waits
- * at `from`, the enemy stands at `to`, and nothing changes until
- * `finishEncounter` settles it (at `start + bout.duration`, performance time). */
-export type Encounter = { from: { x: number; y: number }; to: { x: number; y: number }; bout: Bout; start: number; settle: () => void };
+/** The latest fight as the board shows it: the hero struck from `from`,
+ * the enemy (`hp` at the start) stood at `to`, and its strikes land from
+ * `start` (performance time). Played out, they are the fight's own; settled
+ * at once (`summary`), they are its summary rounds (`summarize`). */
+export type ShownFight = { from: { x: number; y: number }; to: { x: number; y: number }; bout: Bout; start: number; hp: number; summary: boolean };
+/** A fight being shown before it counts: the hero waits at `from`, the
+ * enemy stands at `to`, and nothing changes until `finishEncounter` settles
+ * it (at `start + bout.duration`). */
+export type Encounter = ShownFight & { settle: () => void };
 /** Tiles that stay on the board after being stepped on. */
 const PERMANENT_TILES = new Set<Tile["kind"]>(["floor", "stairs", "stairsDown", "oneway", "openedChest"]);
 export class Game {
@@ -136,6 +141,10 @@ export class Game {
   playsFights = false;
   /** The fight being played out, if any; steps wait until it settles. */
   encounter: Encounter | null = null;
+  /** The latest fight, for the board's damage numbers and the enemy's HP
+   * bar; cleared by undo and when the run or mode changes. Only a game that
+   * plays fights (`playsFights`) shows them. */
+  fight: ShownFight | null = null;
   /** The last potion that healed, picked up or crafted: the HP it healed
    * from and to, where the hero stood, and a number that grows with each, so
    * the HP bar can fill up to it and the board raise the HP healed. */
@@ -213,6 +222,7 @@ export class Game {
     this.auto = !this.run.outside && this.handStartsPlaying && !this.fallen;
     this.dropHandPlan();
     this.encounter = null;
+    this.fight = null;
     this.blocked = { x: 0, y: 0, until: 0 };
   }
   /** Makes `run` the live run of this mode and rebuilds its board. */
@@ -283,6 +293,7 @@ export class Game {
     this.auto = false;
     this.dropHandPlan();
     this.encounter = null;
+    this.fight = null;
     this.paused = false;
     this.blocked.until = 0;
   }
@@ -482,6 +493,11 @@ export class Game {
   get maxSpeed() {
     return 3 + researched(this.save.archives, "moveSpeed", 0);
   }
+  /** Whether fights play out strike by strike: always, until Instant
+   * Combat opens the Animate fights setting to turn it off. */
+  get animatesFights() {
+    return !this.save.upgrades.instantCombat || this.save.settings.fightAnimation;
+  }
   /** Steps a second the hand and Automove take: the Movement speed setting,
    * no faster than research allows, once Movement Speed is owned; otherwise
    * the setting's default. */
@@ -584,6 +600,7 @@ export class Game {
     this.slice.runCurrency = 0;
     this.route = [];
     this.encounter = null;
+    this.fight = null;
     // Tower ascents begin at the first floor of the chosen section.
     const section = this.mode === "tower" ? this.startSection() : 0,
       height = section * TOWER_SECTION;
@@ -759,24 +776,29 @@ export class Game {
       this.feedback("Lethal encounter. Inspect the enemy before proceeding.");
       return false;
     }
-    const animate = t.kind === "enemy" && this.playsFights && this.save.settings.fightAnimation;
+    const shows = t.kind === "enemy" && this.playsFights, animate = shows && this.animatesFights;
     // A strike that would fell the hero may revive it instead (Revive), so
     // a lost fight is played out strike by strike to see how it ends.
     const revive = isLethal(outcome) ? this.revival(dest) : undefined;
-    const fight = animate || revive ? bout(p, t.enemy!, revive) : null, start = performance.now();
+    const fight = shows || revive ? bout(p, t.enemy!, revive) : null, start = performance.now();
     const rose = fight ? revivals(fight) : [];
     if (fight && rose.length) {
       outcome.player.hp = heroHpAfter(fight, p.hp);
       outcome.combat = { ...outcome.combat!, survivable: outcome.player.hp > 0 };
     }
-    // The Animate fights setting plays the fight out before it counts.
-    if (animate) {
-      this.revivedAt = rose.map((at) => start + at);
-      this.encounter = {
-        from: { x: p.x, y: p.y }, to: dest, bout: fight!, start,
-        settle: () => this.take(t, outcome, dest, track, rose.length),
-      };
-      return true;
+    if (shows) {
+      // Animate fights plays the fight out strike by strike before it
+      // counts; otherwise it shows in summary rounds, and only one with a
+      // revival waits, for each round after the revival's fire.
+      const shown = animate ? fight! : summarize(fight!, REVIVE_MS);
+      this.fight = { from: { x: p.x, y: p.y }, to: dest, bout: shown, start, hp: t.enemy!.hp, summary: !animate };
+      this.revivedAt = shown.strikes.filter((s) => s.revived).map((s) => start + s.at);
+      if (animate || rose.length) {
+        // The same fight, so the board shows it as it plays out.
+        this.encounter = Object.assign(this.fight, { settle: () => this.take(t, outcome, dest, track, rose.length) });
+        return true;
+      }
+      return this.take(t, outcome, dest, track, rose.length);
     }
     if (rose.length) this.revivedAt = [start];
     return this.take(t, outcome, dest, track, rose.length);
