@@ -5,8 +5,10 @@ export type SkillNode = { id: UpgradeId; icon: string; x: number; y: number; req
  * its width, y of its height, so a tree taller than one screen (`height`,
  * in the same units, 100 by default) scrolls. In a tree of `unlocks`, each
  * skill is bought once (more of it comes from other panels, such as the
- * Archives), so its page shows no ranks. */
-export type SkillTree = { id: TreeId; name: string; currency: Currency; gate?: UpgradeId; description: string; height?: number; unlocks?: boolean; nodes: SkillNode[] };
+ * Archives), so its page shows no ranks. A tree's `gate` is the upgrade
+ * that opens it (none: open from the start; null: nothing opens it yet, so
+ * only Dev mode shows it, and its skills can't be bought). */
+export type SkillTree = { id: TreeId; name: string; currency: Currency; gate?: UpgradeId | null; description: string; height?: number; unlocks?: boolean; nodes: SkillNode[] };
 export const TREES: SkillTree[] = [
   { id: "inspiration", name: "Inspiration", currency: "inspiration", description: "Earn Inspiration by beating your best Tower climb.", height: 172, unlocks: true, nodes: [
     // The hand's skills, down to Focus; Gear and Heal branch off Buildout,
@@ -45,8 +47,8 @@ export const TREES: SkillTree[] = [
     { id: "undos", icon: "↺", x: 23, y: 61, requires: ["hp"] },
     { id: "legacy", icon: "♜", x: 50, y: 87, requires: ["attack", "undos"] },
   ] },
-  { id: "wayfinding", name: "Wayfinding", currency: "courage", gate: "moveSpeed", description: "Teach Delve Automove to explore, compare routes and preserve resources.", nodes: [
-    { id: "aiMemory", icon: "◇", x: 50, y: 20, requires: ["moveSpeed"] },
+  { id: "wayfinding", name: "Wayfinding", currency: "courage", gate: null, description: "Teach Delve Automove to explore, compare routes and preserve resources.", nodes: [
+    { id: "aiMemory", icon: "◇", x: 50, y: 20, requires: [] },
     { id: "aiEvaluation", icon: "⚖", x: 25, y: 52, requires: ["aiMemory"] },
     { id: "aiLookahead", icon: "✧", x: 75, y: 78, requires: ["aiMemory"] },
   ] },
@@ -70,7 +72,11 @@ export const TREES: SkillTree[] = [
 export function skillAvailable(id: UpgradeId, levels: Record<UpgradeId, number>) {
   const tree = TREES.find(t => t.nodes.some(n => n.id === id));
   const node = tree?.nodes.find(n => n.id === id);
-  return !!node && (!tree?.gate || levels[tree.gate] > 0) && node.requires.every(key => levels[key] > 0);
+  return !!node && treeOpen(tree!, levels) && node.requires.every(key => levels[key] > 0);
+}
+/** Whether `tree`'s gate is owned (or it has none). */
+export function treeOpen(tree: SkillTree, levels: Record<UpgradeId, number>) {
+  return tree.gate === undefined || (tree.gate !== null && levels[tree.gate] > 0);
 }
 /** How tall `tree` is, in view heights × 100. */
 export const treeHeight = (tree: SkillTree) => tree.height ?? 100;

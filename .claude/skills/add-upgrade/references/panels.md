@@ -23,7 +23,7 @@ The Upgrades page's trees: Inspiration (Tower currency), Courage, Wayfinding, Le
 - `x`, `y` are percentages of one view (0–100). Roots sit near the top (y ≈ 10–20), each tier about 18 lower. Keep nodes about 20+ apart horizontally on a shared row and 15+ apart vertically so their labels don't collide; check the neighbours' positions. A tree that needs more room gets a `height` (in the same units, e.g. 136) and scrolls; nodes may then sit below y = 100. Leave about 12 below the lowest node.
 - A skill that only matters once another is owned (one that opens Archives research, say) goes below that one in the tree, even when that takes more height.
 - `requires` lists `UpgradeId`s that must each have a rank; they may be in another tree (`auto` requires `delve`).
-- A tree's `gate` hides the whole tree until that upgrade is owned.
+- A tree's `gate` hides the whole tree until that upgrade is owned. `gate: null` means nothing opens it yet: only Dev mode shows it, and its skills can't be bought (`treeOpen`).
 - `icon` is the glyph in `TREES`; the sprite shown comes from `skillSprite` in `src/ui/dom.ts` (`SKILL_UI_SPRITES`, `SKILL_ITEM_SPRITES`, or `SKILL_CARDS` for card skills; default is the upgrades sprite). Add a mapping when a fitting sprite exists.
 
 **Buying:** `Game.buy` checks `skillAvailable` (gate + requires), `max` and the balance. No other code is needed to make a node buyable.

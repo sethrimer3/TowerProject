@@ -2,7 +2,7 @@ import { permanentBoost } from "../shop/entitlements.ts";
 import { upgradeCard } from "../cards.ts";
 import { revealCard } from "./card-reveal.ts";
 import { TRAINING, TRAINING_GROUPS, TRAINING_PER_LEVEL, UPGRADES, cost, trainingOpen, type TrainingId, type UpgradeId } from "../config.ts";
-import { TREES, mapNodes, skillAvailable, treeHeight, type TreeId } from "../skill-trees.ts";
+import { TREES, mapNodes, skillAvailable, treeHeight, treeOpen, type TreeId } from "../skill-trees.ts";
 import { trainingPoints, trainingSpeed, trainingStep, trainingText, upgradeText } from "../loadout.ts";
 import { whole } from "../whole.ts";
 import { TreeParticles } from "../tree-particles.ts";
@@ -53,16 +53,19 @@ export class SkillTreePage {
     const save = this.ctx.game.save, upgrades = save.upgrades;
     // A tab shows once what unlocks it is owned; Dev mode shows them all.
     const open = (id?: UpgradeId) => save.settings.devMode || !id || upgrades[id] > 0;
-    const shown = (tab: PageTab) => tab === "archives" ? open("archives") : tab === "training" ? open("training") : open(TREES.find(t => t.id === tab)?.gate);
+    const shown = (tab: PageTab) => tab === "archives" ? open("archives") : tab === "training" ? open("training")
+      : save.settings.devMode || treeOpen(TREES.find(t => t.id === tab)!, upgrades);
     if (!shown(this.tree)) this.tree = "inspiration";
     const busy = save.archives.slots.filter(s => s.job).length;
     const archives = open("archives") ? `<button data-tree="archives" aria-pressed="${this.tree === "archives"}"><span>${uiSprite("log")}</span>Archives<small>${busy} RESEARCHING</small></button>` : "";
     const training = open("training") ? `<button data-tree="training" aria-pressed="${this.tree === "training"}"><span>${pointsIcon("ui-sprite")}</span>Training<small>${trainingPoints(save).left} POINTS</small></button>` : "";
     // Inspiration, shown from the start, then Training, unlocked a little
-    // later; the Archives sit before Wayfinding.
-    const tabs = TREES.filter(t => shown(t.id)).map(t =>
-      `${t.id === "wayfinding" ? archives : ""}<button data-tree="${t.id}" aria-pressed="${t.id === this.tree}"><span>${uiSprite(TREE_ICONS[t.id] ?? "defend")}</span>${t.name}<small>${t.gate && !upgrades[t.gate] ? "LOCKED" : "UNLOCKED"}</small></button>${t.id === "inspiration" ? training : ""}`).join("")
-      + (shown("wayfinding") ? "" : archives);
+    // later; the Archives sit after Courage, before the trees after it.
+    const trees = TREES.filter(t => shown(t.id)), courage = TREES.findIndex(t => t.id === "courage");
+    const archivesAt = trees.findIndex(t => TREES.indexOf(t) > courage);
+    const tabs = trees.map((t, i) =>
+      `${i === archivesAt ? archives : ""}<button data-tree="${t.id}" aria-pressed="${t.id === this.tree}"><span>${uiSprite(TREE_ICONS[t.id] ?? "defend")}</span>${t.name}<small>${this.locked(t) ? "LOCKED" : "UNLOCKED"}</small></button>${t.id === "inspiration" ? training : ""}`).join("")
+      + (archivesAt < 0 ? archives : "");
     const bindTabs = () => document.querySelectorAll<HTMLButtonElement>("[data-tree]").forEach(b => b.onclick = () => {
       this.tree = b.dataset.tree as PageTab;
       this.tooltipVisible = false;
@@ -115,7 +118,8 @@ export class SkillTreePage {
     }
     const tree = this.current();
     const view = this.view(tree.id);
-    const lock = this.locked(tree)
+    const lock = tree.gate === null ? `<p class="tree-lock">What opens this tree is still to come.</p>`
+      : this.locked(tree)
       ? `<p class="tree-lock">Unlock ${UPGRADES.find(u => u.id === tree.gate)!.name} in the ${tree.id === "courage" ? "Inspiration" : "Courage"} tree.</p>`
       : "";
     const nodes = mapNodes(tree);
@@ -300,7 +304,7 @@ export class SkillTreePage {
     return this.views[id] ??= { x: 0, y: 0, scale: 1 };
   }
   private locked(tree: Tree) {
-    return !!tree.gate && !this.ctx.game.save.upgrades[tree.gate];
+    return !treeOpen(tree, this.ctx.game.save.upgrades);
   }
 
   private nodeHtml(n: Tree["nodes"][number]) {

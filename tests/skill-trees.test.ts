@@ -22,6 +22,9 @@ test("fresh progression gates Delve, currencies, Courage root, and Legacy", () =
   assert.equal(g.save.delve.courage, 99);
   assert.ok(g.buy("hp"));
   assert.equal(g.buy("quality"), false);
+  // Movement Speed no longer opens Wayfinding: nothing does yet.
+  assert.equal(TREES.find(t => t.id === "wayfinding")!.gate, null);
+  assert.equal(g.buy("aiMemory"), false);
   const restored = new Game(decode(JSON.stringify(g.save)));
   assert.equal(restored.save.upgrades.moveSpeed, 1);
   restored.switchMode("delve");
