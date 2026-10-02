@@ -466,15 +466,23 @@ h1 span {
   vertical-align: -0.15em;
 }
 /* Inside a run, the ad's Gems wait where Floors stands in the forest. */
+/* The Gems an ad pays, with a small "Claim" under them. */
 .gem-ad {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
   color: #8fe3ff;
 }
-.portrait-actions .gem-ad { font-size: 13px; }
-.gem-ad .gem-icon { width: 18px; height: 18px; }
+.gem-ad-amount {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  line-height: 1;
+}
+.portrait-actions .gem-ad { font-size: 13px; padding: 1px 2px; }
+.gem-ad .gem-icon { width: 16px; height: 16px; }
+.gem-ad small { font-size: 7px; line-height: 1; letter-spacing: .45px; }
 .gem-ad.waiting { visibility: hidden; }
 .page {
   display: none;

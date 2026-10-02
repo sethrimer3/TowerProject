@@ -92,7 +92,9 @@ export type RouteEffects = {
  * key a door used, a material, or the heart a Heart Door checked), or as
  * `text` where it has none. */
 export type Gain = { x: number; y: number; text: string; art: GainArt | null };
-export type GainArt = { tile: Tile; spent?: true } | { material: MaterialId; quantity: number } | { heart: true } | { gem: true };
+export type GainArt = { tile: Tile; spent?: true } | { material: MaterialId; quantity: number } | { heart: true } | { gem: true } | { coin: Coin };
+/** The coin a Gold or Silver gain raises. */
+export type Coin = "gold" | "silver";
 /** A potion's heal: the HP from and to, where the hero stood, and its number. */
 export type Heal = { from: number; to: number; x: number; y: number; id: number };
 /** Rewards kept for the board to show; older ones are dropped unseen. */
@@ -910,8 +912,8 @@ export class Game {
     // Silver belongs to the run, so it isn't gated like Gold: undo takes it back.
     const silver = this.creditSilver(silverForKill(enemy.strength, floor));
     const { gold, drops } = this.creditEnemyLoot(enemy, at.x, at.y);
-    if (gold) this.gain(at.x, at.y, `+${wholeChange(gold)} Gold`);
-    this.gain(at.x, at.y, `+${wholeChange(silver)} Silver`);
+    if (gold) this.gain(at.x, at.y, `+${wholeChange(gold)} Gold`, { coin: "gold" });
+    this.gain(at.x, at.y, `+${wholeChange(silver)} Silver`, { coin: "silver" });
     for (const d of drops) this.gain(at.x, at.y, materialText(d), { material: d.id, quantity: d.quantity });
     const opened = enemy.strength === "boss" && floor >= TIER_BOSS_FLOOR && this.openNextTier();
     this.message = [revived ? `Revived · ${enemy.name} defeated` : combat.damage ? `−${wholeChange(combat.damage)} HP · ${enemy.name} defeated` : "Unscathed victory",
@@ -1074,8 +1076,8 @@ export class Game {
       gold += this.payFloorGold(this.lootKey(-1, f));
       silver += this.payFloorSilver();
     }
-    if (gold) this.gain(x, y, `+${wholeChange(gold)} Gold`);
-    if (silver) this.gain(x, y, `+${wholeChange(silver)} Silver`);
+    if (gold) this.gain(x, y, `+${wholeChange(gold)} Gold`, { coin: "gold" });
+    if (silver) this.gain(x, y, `+${wholeChange(silver)} Silver`, { coin: "silver" });
     world.maintain(y);
     this.recordProgress();
   }
@@ -1095,8 +1097,8 @@ export class Game {
     this.enterTowerFloor(board);
     if (sectionStart) this.enterTowerSection();
     else this.feedback("A new chamber opens.");
-    if (gold) this.gain(this.run.player.x, this.run.player.y, `+${wholeChange(gold)} Gold`);
-    if (silver) this.gain(this.run.player.x, this.run.player.y, `+${wholeChange(silver)} Silver`);
+    if (gold) this.gain(this.run.player.x, this.run.player.y, `+${wholeChange(gold)} Gold`, { coin: "gold" });
+    if (silver) this.gain(this.run.player.x, this.run.player.y, `+${wholeChange(silver)} Silver`, { coin: "silver" });
   }
   /** Spare Change: Gold for a floor climbed for the first time in the run,
    * its Gold / Floor raised by research and the tier's bonus. Gated by
@@ -1232,7 +1234,7 @@ export class Game {
         const loot = rollTreasureLoot(E, this.rng);
         const gold = this.creditGold(tierGold(this.tier, loot.gold));
         creditMaterials(this.save, loot.materials);
-        this.gain(x, y, `+${wholeChange(gold)} Gold`);
+        this.gain(x, y, `+${wholeChange(gold)} Gold`, { coin: "gold" });
         for (const m of loot.materials) this.gain(x, y, materialText(m), { material: m.id, quantity: m.quantity });
         this.message = [`+${wholeChange(gold)} Gold`, ...loot.materials.map(materialText)].join(" · ");
       }

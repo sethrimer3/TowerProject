@@ -155,9 +155,18 @@ test("pickups and treasure queue their rewards to rise from their tiles", () => 
   const chest = arena({ kind: "treasure" });
   chest.move(1, 0);
   assert.match(chest.gains[0].text, /^\+\d+ Gold$/);
-  assert.equal(chest.gains[0].art, null, "gold has no sprite: its text rises");
+  assert.deepEqual(chest.gains[0].art, { coin: "gold" }, "Gold rises as its coin");
   for (const g of chest.gains.slice(1)) assert.ok(g.art && "material" in g.art);
   assert.ok(chest.gains.every((g) => g.x === 1 && g.y === 0));
+});
+
+test("every victory, a weak enemy's too, raises both its Gold and its Silver as their coins", () => {
+  const g = arena({ kind: "enemy", enemy: foe({ hp: 1, attack: 0, strength: "weak" }) }, false);
+  assert.ok(g.move(1, 0));
+  assert.deepEqual(g.gains.slice(0, 2).map((gain) => gain.art), [{ coin: "gold" }, { coin: "silver" }]);
+  assert.match(g.gains[0].text, /^\+\d+ Gold$/);
+  assert.match(g.gains[1].text, /^\+\d+ Silver$/);
+  assert.ok(g.save.gold > 0 && g.silver > 0);
 });
 
 test("the board shows rewards that came together one after another, and each strike's damage as it lands", () => {

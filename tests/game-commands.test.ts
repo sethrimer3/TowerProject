@@ -288,7 +288,7 @@ test("a run going inside gets its Focus uses once the skill is owned", () => {
 });
 
 test("a beaten enemy pays Gold by its strength, once, whatever undo does", () => {
-  for (const [strength, gold] of [["weak", 0], ["normal", 1], ["strong", 2], ["elite", 4]] as const) {
+  for (const [strength, gold] of [["weak", 1], ["normal", 1], ["strong", 2], ["elite", 4]] as const) {
     const g = arena();
     g.save.settings.devMode = true;
     const w = g.world as RoomWorld, cells = new Map(w.cells);

@@ -1,5 +1,5 @@
 import { wholeChange } from "./whole.ts";
-import type { Encounter, Gain, Heal, ShownFight } from "./state.ts";
+import type { Coin, Encounter, Gain, Heal, ShownFight } from "./state.ts";
 import { paintContents } from "./tile-painters.ts";
 import { materialImage } from "./material-sprites.ts";
 import { paintGem } from "./gem-art.ts";
@@ -23,19 +23,52 @@ const HEAL_COLOR = "#5fdc6a";
  * through rise when a strike has both, in tiles. */
 const SHROUD_COLOR = "#c9d3e0";
 const SHROUD_SPLIT = 0.22;
+/** The amount of Silver beside its coin. */
+const SILVER_COLOR = "#d6dde6";
 /** The minus sign on a key a door took. */
 const SPENT_COLOR = "#ff6b6b";
 /** The HUD's heart, raised with a check when a Heart Door opens. */
-const HEART_URL = `${(import.meta as ImportMeta & { env?: { BASE_URL?: string } }).env?.BASE_URL ?? "/"}assets/ui/health.png`;
-let heartImage: HTMLImageElement | null = null;
-/** The heart sprite, or null while it loads. */
-function heart() {
+const BASE_URL = (import.meta as ImportMeta & { env?: { BASE_URL?: string } }).env?.BASE_URL ?? "/";
+const HEART_URL = `${BASE_URL}assets/ui/health.png`;
+/** The HUD's Gold coin, raised beside the Gold or Silver found. */
+const GOLD_URL = `${BASE_URL}assets/ui/gold.png`;
+const images = new Map<string, HTMLImageElement>();
+/** The UI sprite at `url`, or null while it loads. */
+function sprite(url: string) {
   if (typeof Image === "undefined") return null;
-  if (!heartImage) {
-    heartImage = new Image();
-    heartImage.src = HEART_URL;
+  let image = images.get(url);
+  if (!image) {
+    image = new Image();
+    image.src = url;
+    images.set(url, image);
   }
-  return heartImage.complete && heartImage.naturalWidth ? heartImage : null;
+  return image.complete && image.naturalWidth ? image : null;
+}
+const heart = () => sprite(HEART_URL);
+let silverCoin: HTMLCanvasElement | null = null;
+/** The coin for `coin`, or null while it loads. There is no Silver art yet,
+ * so Silver is the Gold coin drained of colour and brightened, as the
+ * purse shows it (`.silver-sprite`), baked once. */
+function coinImage(coin: Coin): CanvasImageSource | null {
+  const gold = sprite(GOLD_URL);
+  if (!gold || coin === "gold") return gold;
+  if (!silverCoin) {
+    const canvas = document.createElement("canvas"), c = canvas.getContext("2d")!;
+    canvas.width = gold.naturalWidth;
+    canvas.height = gold.naturalHeight;
+    c.drawImage(gold, 0, 0);
+    c.globalCompositeOperation = "saturation";
+    c.fillStyle = "#808080";
+    c.fillRect(0, 0, canvas.width, canvas.height);
+    c.globalCompositeOperation = "lighter";
+    c.globalAlpha = 0.35;
+    c.drawImage(canvas, 0, 0);
+    c.globalCompositeOperation = "destination-in";
+    c.globalAlpha = 1;
+    c.drawImage(gold, 0, 0);
+    silverCoin = canvas;
+  }
+  return silverCoin;
 }
 /** The enemy's HP bar: how long it takes to drain to each strike's HP (or
  * less, when the next strike lands sooner) and to fade once the enemy falls
@@ -161,7 +194,7 @@ export class BoardPopups {
   private drawSprite(f: FrameContext, p: Popup & { gain: Gain }) {
     const art = p.gain.art;
     if (!art) return false;
-    const image = "material" in art ? materialImage(art.material) : "heart" in art ? heart() : null;
+    const image = "material" in art ? materialImage(art.material) : "heart" in art ? heart() : "coin" in art ? coinImage(art.coin) : null;
     if (!("tile" in art) && !("gem" in art) && !image) return false;
     const c = f.c, { alpha, rise } = this.phase(f, p, REWARD_RISE), look = f.look;
     c.save();
@@ -177,6 +210,11 @@ export class BoardPopups {
       }
     } else if ("gem" in art) {
       paintGem(c, f.now, true);
+    } else if ("coin" in art) {
+      // The amount, then the coin: "+5 ●" in place of "+5 Gold".
+      c.imageSmoothingEnabled = false;
+      c.drawImage(image!, 11, 3, 18, 18);
+      mark(c, p.gain.text.split(" ")[0], art.coin === "gold" ? REWARD_COLOR : SILVER_COLOR, 10, 12, 10, "right");
     } else if ("heart" in art) {
       c.imageSmoothingEnabled = false;
       c.drawImage(image!, 2, 2, 18, 18);

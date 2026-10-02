@@ -346,8 +346,9 @@ export const UPGRADES = [
 export type UpgradeId = (typeof UPGRADES)[number]["id"];
 export const cost = (id: UpgradeId, level: number) =>
   Math.ceil(UPGRADES.find((u) => u.id === id)!.base * intPow(1.65, level));
-/** Gold a beaten enemy pays, by its strength, in both modes. */
-export const ENEMY_GOLD: Record<EnemyStrength, number> = { weak: 0, normal: 1, strong: 2, elite: 4, boss: 5 };
+/** Gold a beaten enemy pays, by its strength, in both modes: every victory
+ * pays some, beside its Silver. */
+export const ENEMY_GOLD: Record<EnemyStrength, number> = { weak: 1, normal: 1, strong: 2, elite: 4, boss: 5 };
 /** Silver, the currency spent inside a run, that a beaten enemy pays per
  * base amount, by its strength. */
 export const SILVER_MULTIPLIER: Record<EnemyStrength, number> = { weak: 1, normal: 2, strong: 3, elite: 4, boss: 5 };
