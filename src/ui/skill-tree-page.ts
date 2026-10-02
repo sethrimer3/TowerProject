@@ -356,13 +356,26 @@ export class SkillTreePage {
       if (bought && !game.save.settings.reduceMotion) {
         // The first rank unlocks the node: it shines as well as bursting.
         const node = mapNodes(this.current()).find(n => n.id === id)!;
-        if (level === 0) this.particles.unlock(node);
-        else this.particles.purchase(node);
+        const at = this.iconCenter(id);
+        if (level === 0) this.particles.unlock(node, at);
+        else this.particles.purchase(node, at);
       }
       this.ctx.update();
       if (bought && card) revealCard(card, game.save.settings.reduceMotion);
     }
     this.render();
+  }
+
+  /** The centre of node `id`'s circle as a fraction of the particle canvas,
+   * which its rays and burst shine from (the node's own point is where the
+   * tree's lines meet, below it). */
+  private iconCenter(id: UpgradeId) {
+    const canvas = document.querySelector<HTMLCanvasElement>(".tree-particles");
+    const icon = document.querySelector(`[data-skill="${id}"] .node-icon`);
+    if (!canvas || !icon) return undefined;
+    const c = canvas.getBoundingClientRect(), i = icon.getBoundingClientRect();
+    if (!c.width || !c.height) return undefined;
+    return { x: (i.left + i.width / 2 - c.left) / c.width, y: (i.top + i.height / 2 - c.top) / c.height };
   }
 
   private tooltipHtml(id: UpgradeId): string {

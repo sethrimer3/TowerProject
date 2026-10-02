@@ -36,14 +36,16 @@ export class TreeParticles {
   private last = 0;
   private elapsed = 0;
 
-  purchase(node: SkillNode) {
-    this.pulses.push({ x: node.x / 100, y: node.y / 100, age: 0 });
+  /** A purchase's burst, from `at` (a fraction of the map; the node's own
+   * point unless given, such as the centre of its circle). */
+  purchase(node: SkillNode, at: Point = { x: node.x / 100, y: node.y / 100 }) {
+    this.pulses.push({ ...at, age: 0 });
   }
 
   /** A node's first rank: the purchase burst, and shimmering rays around it. */
-  unlock(node: SkillNode) {
-    this.purchase(node);
-    this.rays.push({ x: node.x / 100, y: node.y / 100, age: 0 });
+  unlock(node: SkillNode, at: Point = { x: node.x / 100, y: node.y / 100 }) {
+    this.purchase(node, at);
+    this.rays.push({ ...at, age: 0 });
   }
 
   private sample(field: Float32Array, x: number, y: number) {
@@ -196,7 +198,7 @@ function drawRays(ctx: CanvasRenderingContext2D, rays: Rays, { w, h }: Size) {
   for (let i = 0; i < RAY_COUNT; i++) {
     const angle = turn + i * Math.PI*2 / RAY_COUNT;
     const shimmer = .7 + .3*Math.sin(rays.age*11 + i*2.4);
-    const length = inner + (i % 2 ? 26 : 48) * (.35 + .65*grow) * shimmer;
+    const length = inner + (i % 2 ? 39 : 72) * (.35 + .65*grow) * shimmer;
     const spread = i % 2 ? .05 : .075;
     const ray = ctx.createRadialGradient(cx, cy, inner, cx, cy, length);
     ray.addColorStop(0, `rgba(255, 244, 200, ${.85*fade*shimmer})`);
