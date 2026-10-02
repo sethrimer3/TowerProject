@@ -439,6 +439,16 @@ try {
   await shot("dev.gear");
   await tab("upgrades");
   await shot("dev.upgrades");
+  // The Shop button atop the Upgrades, Deck and Gear pages opens the Shop,
+  // whose Back returns to the page it was opened from.
+  await click("#page-shop");
+  await shot("dev.upgrades.shop");
+  await click("#shop-back");
+  await shot("dev.upgrades.shopBack");
+  await tab("gear");
+  await click("#page-shop");
+  await click("#shop-back");
+  await shot("dev.gear.shopBack");
 
   // --- Compare ---
   const hashes = Object.fromEntries(Object.entries(shots).map(([k, html]) => [k, createHash("sha256").update(html).digest("hex").slice(0, 16)]));

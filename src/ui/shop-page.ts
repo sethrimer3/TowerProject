@@ -57,8 +57,11 @@ export class ShopPage {
     return estimatedServerTime(game.save.shop.clock, game.clock());
   }
 
-  /** Opens the page afresh, without the last visit's message. */
-  open() {
+  /** The page the Shop was opened from, which Back returns to. */
+  private from = "";
+  /** Opens the page afresh, without the last visit's message, from page `from`. */
+  open(from: string) {
+    this.from = from;
     this.message = "";
     this.render();
   }
@@ -130,7 +133,7 @@ export class ShopPage {
   }
 
   private bind() {
-    el("shop-back").onclick = () => this.ctx.navigate(this.ctx.game.mode);
+    el("shop-back").onclick = () => this.ctx.navigate(this.from || this.ctx.game.mode);
     document.querySelectorAll<HTMLButtonElement>("[data-currency]").forEach((b) => (b.onclick = () => this.showCurrency(b.dataset.currency as CurrencyId)));
     document.querySelectorAll<HTMLButtonElement>("[data-detail]").forEach((b) => (b.onclick = () => this.showDetails(offer(b.dataset.detail!)!)));
     document.querySelectorAll<HTMLButtonElement>("[data-buy]").forEach((b) => (b.onclick = () => this.choose(offer(b.dataset.buy!)!)));

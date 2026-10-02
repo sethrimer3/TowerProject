@@ -79,6 +79,7 @@ function update() {
   document.querySelector("nav")!.classList.toggle("in-run", !game.run.outside);
   // The Deck tutorial keeps the player on its page until they reorder the hand.
   document.querySelectorAll<HTMLButtonElement>("[data-tab]").forEach((b) => (b.disabled = deck.teaching && b.dataset.tab !== "deck"));
+  (el("page-shop") as HTMLButtonElement).disabled = deck.teaching;
   renderHud(game, renderer, overlay);
   runTraining.render();
   researchToasts.add([...game.researchDone.splice(0).map(researchToast), ...game.trainingDone.splice(0).map(trainingToast)]);
@@ -113,26 +114,33 @@ function unlockTarget(id: string): string {
   }
   return id;
 }
+/** The pages topped by the currencies bar and its Shop button. */
+const CURRENCY_PAGES: string[] = ["upgrades", "deck", "gear"];
 function navigate(requested: string) {
   if (deck.teaching && requested !== "deck") return;
   const id = unlockTarget(requested) as Tab;
   // Only the board plays a fight out: leaving it settles one still playing.
   game.finishEncounter();
   if (id !== "defend") defendPage.pause();
+  const from = tab;
   tab = id;
   // Opening the Upgrades page clears the dot the first Inspiration put on it.
   if (id === "upgrades" && upgradesWaiting(game)) game.save.tutorials.upgrades = true;
   // And opening the Gear page the dot the Gear skill put on it.
   if (id === "gear" && gearWaiting(game)) game.save.tutorials.gear = true;
   deck.shown(id === "deck");
-  if (id === "shop") shop.open();
+  // The Shop's Back returns to the page that opened it.
+  if (id === "shop" && from !== "shop") shop.open(from);
   renderer.weather.silence();
   if (isBoard(id)) {
     game.switchMode(id);
     renderBoardHeading(game, overlay);
   } else game.cancelRoute();
   el("stats").toggleAttribute("hidden", !isBoard(id));
-  el("currencies").toggleAttribute("hidden", id !== "upgrades");
+  // The currencies bar tops the pages that spend them, with the Shop at its
+  // end: the Upgrades page shows every currency, Deck and Gear only Gems.
+  el("currencies").toggleAttribute("hidden", !CURRENCY_PAGES.includes(id));
+  el("currencies").classList.toggle("gems-only", id !== "upgrades");
   const page = isBoard(id) ? "board" : id;
   document.querySelectorAll(".page").forEach((p) => p.classList.toggle("active", p.id === page));
   document.querySelectorAll<HTMLElement>("[data-tab]").forEach((b) => {
@@ -178,6 +186,7 @@ modal.addEventListener("cancel", (e) => {
   if (game.fallen) e.preventDefault();
 });
 el("shop-open").onclick = () => navigate("shop");
+el("page-shop").onclick = () => navigate("shop");
 el("auto-settings").onclick = () => navigate("settings");
 el("auto").onclick = () => {
   // Inside a run the button plays and pauses the hand; in the forest it
@@ -237,7 +246,7 @@ document.addEventListener("visibilitychange", () => {
 });
 window.addEventListener("pagehide", save);
 installDebugHooks(game, defendPage);
-// Start on the Tower board: stats showing, currencies (an Upgrades-only bar) hidden.
+// Start on the Tower board: stats showing, currencies (for the Upgrades, Deck and Gear pages) hidden.
 el("stats").toggleAttribute("hidden", false);
 el("currencies").toggleAttribute("hidden", true);
 renderBoardHeading(game, overlay);

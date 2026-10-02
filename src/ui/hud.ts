@@ -75,8 +75,12 @@ export const shopWaiting = (game: Game) => {
   const now = estimatedServerTime(game.save.shop.clock, game.clock());
   return OFFERS.some((o) => o.daily && !refusal(game.save, o, now));
 };
-/** Puts the dot on the Shop button while `shopWaiting`. */
-export const renderShopDot = (game: Game) => el("shop-open").classList.toggle("notify", shopWaiting(game));
+/** Puts the dot on the Shop buttons (the HUD's, and the one atop the
+ * Upgrades, Deck and Gear pages) while `shopWaiting`. */
+export const renderShopDot = (game: Game) => {
+  const waiting = shopWaiting(game);
+  for (const id of ["shop-open", "page-shop"]) el(id).classList.toggle("notify", waiting);
+};
 /** Whether the Upgrades button shows its dot: the first Inspiration has
  * been earned (so the run that paid it has ended by the time the tabs show)
  * and the page hasn't been opened since. */

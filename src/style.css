@@ -2346,6 +2346,13 @@ p.research-kept { color: #ffe1a1; }
 .research-toast b { display: block; color: #e9d4ac; font-size: 15px; letter-spacing: 1px; }
 .research-toast span { display: block; margin-top: 4px; font-size: 12px; color: #99a8bd; }
 .currency.gem-currency { color: #8fe3ff; }
+/* Deck and Gear show only the Gems they can spend; the Shop button sits at
+ * the bar's right end on all three pages, clear of the centred currencies. */
+.currencies { position: relative; padding: 0 52px; }
+.currencies.gems-only .currency:not(.gem-currency) { display: none; }
+.currencies .page-shop { position: absolute; top: 0; right: 0; width: 44px; }
+/* On a narrow phone all four of the Upgrades page's currencies need the room. */
+@media (max-width: 400px) { .currencies:not(.gems-only) { justify-content: flex-start; padding: 0 50px 0 0; } }
 
 /* --- Training for this run, with Silver --- */
 /* A Training group open shows its cards in the hand's place. */
