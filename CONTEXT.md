@@ -131,7 +131,7 @@ One of the numbered towers (Tower I to IX), or of the delves (Delve I to IX), th
 _Avoid_: new tower, prestige, world
 
 **Inspiration**:
-The Tower's currency: one for each new floor reached and each clear tier paid, spent on upgrades in the skill trees.
+The Tower's currency: one for each floor completed beyond the highest completed before (paid as the hero climbs its stairs onto the floor above) and each clear tier paid, spent on upgrades in the skill trees.
 _Avoid_: shards
 
 **Boss**:
@@ -147,11 +147,15 @@ Training levels bought with Silver inside a run, on top of the hero's own, lasti
 _Avoid_: drills, run upgrades, temporary training
 
 **Checkpoint**:
-A Tower floor every ten (10, 20, … 100) on the Goals screen, each tower with its own. Reaching it lets the player claim its reward, and its premium reward too with the Premium Pass for its set of three towers. Claims last between runs.
-_Avoid_: milestone (the currency paid per new floor), section
+A Tower floor every ten (10, 20, … 100) on the Goals screen, each tower with its own. Completing it (climbing its stairs to the floor above) lets the player claim its reward, and its premium reward too with the Premium Pass for its set of three towers. Claims last between runs.
+_Avoid_: milestone (the currency paid per floor completed), section
+
+**Floor completed**:
+A Tower floor whose stairs the hero has climbed, reaching the floor above. A tower's highest floor completed is 0 until its first floor is; the Goals screen and Inspiration both count floors completed.
+_Avoid_: floor reached (for progress), height
 
 **Warp**:
-Beginning a new Tower run at once on the floor just above a checkpoint already reached, from the Goals screen. Unlocked by claiming Tower I's first checkpoint; entering the tower from the forest always starts on floor 1.
+Beginning a new Tower run at once on the floor just above a checkpoint already completed, from the Goals screen. Unlocked by claiming Tower I's first checkpoint; entering the tower from the forest always starts on floor 1.
 _Avoid_: teleport, starting floor
 
 **Premium Pass**:

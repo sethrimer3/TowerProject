@@ -4,11 +4,12 @@ import { owns, type EntitlementId } from "./shop/entitlements.ts";
 import { TIERS } from "./tiers.ts";
 
 // Goals: each tower's checkpoints, one every ten floors, each with a reward
-// the player claims once the tower's highest floor reaches it, and a premium
+// the player claims once the checkpoint's floor is completed (the floor
+// above it reached) in that tower, and a premium
 // reward beside it, claimed the same way once the Premium Pass for the
 // tower's set of three is owned. Claims last between runs (`save.goals`).
 
-/** What a checkpoint pays: Warp (starting a run at a reached checkpoint),
+/** What a checkpoint pays: Warp (starting a run past a completed checkpoint),
  * or an amount of a currency. */
 export type GoalReward = { kind: "warp" } | { kind: "currency"; currency: CurrencyId; amount: number };
 export type Checkpoint = { floor: number; reward: GoalReward; premium: GoalReward };
@@ -55,16 +56,16 @@ export const passFor = (tower: number) => PASSES.find((p) => p.towers.includes(t
 export type GoalsSave = { claimed: Record<string, number[]>; premium: Record<string, number[]> };
 export const defaultGoals = (): GoalsSave => ({ claimed: {}, premium: {} });
 
-/** The highest floor reached in `tower` (shown from 1), in either the
- * selected tower's records or the waiting ones. */
-export function highestFloor(save: Save, tower: number) {
+/** The highest floor completed in `tower`: a floor counts once the floor
+ * above it is reached, so it is the highest height reached (0 before the
+ * first floor is completed), in the selected tower's records or the
+ * waiting ones. */
+export function floorsCompleted(save: Save, tower: number) {
   const t = save.tower;
-  if (tower === t.tier) return t.reached + 1;
-  const record = t.tierRecords[tower];
-  return record ? record.reached + 1 : 1;
+  return tower === t.tier ? t.reached : t.tierRecords[tower]?.reached ?? 0;
 }
 
-/** Where a reward stands: not reached yet, waiting for the pass (premium
+/** Where a reward stands: its floor not completed yet, waiting for the pass (premium
  * only), ready to claim, or claimed. */
 export type GoalState = "locked" | "needsPass" | "ready" | "claimed";
 
@@ -72,7 +73,7 @@ export function goalState(save: Save, tower: number, floor: number, premium: boo
   const list = (premium ? save.goals.premium : save.goals.claimed)[tower] ?? [];
   if (list.includes(floor)) return "claimed";
   if (premium && !owns(save, passFor(tower).id)) return "needsPass";
-  return highestFloor(save, tower) >= floor ? "ready" : "locked";
+  return floorsCompleted(save, tower) >= floor ? "ready" : "locked";
 }
 
 /** Claims a reward that is ready, paying it to its owner; returns it, or
@@ -89,10 +90,10 @@ export function claimGoal(save: Save, tower: number, floor: number, premium: boo
 /** Whether Warp is owned: Tower I's first checkpoint claimed. */
 export const warpUnlocked = (save: Save) => goalState(save, 1, CHECKPOINT_EVERY, false) === "claimed";
 
-/** Whether a run can warp to `floor` in `tower`: Warp owned and that
- * checkpoint reached. */
+/** Whether a run can warp past `floor` in `tower`: Warp owned and that
+ * checkpoint's floor completed. */
 export const canWarp = (save: Save, tower: number, floor: number) =>
-  warpUnlocked(save) && tower <= save.tower.tiersOpen && !!checkpoint(tower, floor) && highestFloor(save, tower) >= floor;
+  warpUnlocked(save) && tower <= save.tower.tiersOpen && !!checkpoint(tower, floor) && floorsCompleted(save, tower) >= floor;
 
 /** The premium rewards a pass opens, each currency's total. */
 export function passTotals(pass: Pass): Partial<Record<CurrencyId, number>> {

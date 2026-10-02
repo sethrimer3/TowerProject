@@ -1,4 +1,4 @@
-import { CHECKPOINTS, CHECKPOINT_EVERY, canWarp, goalState, highestFloor, passFor, passTotals, warpUnlocked, type Checkpoint, type GoalReward, type GoalState, type Pass } from "../goals.ts";
+import { CHECKPOINTS, CHECKPOINT_EVERY, canWarp, floorsCompleted, goalState, passFor, passTotals, warpUnlocked, type Checkpoint, type GoalReward, type GoalState, type Pass } from "../goals.ts";
 import { CURRENCIES, type CurrencyId } from "../shop/currency.ts";
 import { owns } from "../shop/entitlements.ts";
 import { stubServer, type ShopServer } from "../shop/server.ts";
@@ -7,7 +7,7 @@ import type { AppContext } from "./app.ts";
 import { el, gemIcon, goldIcon } from "./dom.ts";
 
 // The Goals screen: each tower drawn as a stone column rising from the
-// ground, a line up its middle lit to the highest floor reached, and a
+// ground, a line up its middle lit to the highest floor completed, and a
 // checkpoint every ten floors with its reward on the left and its premium
 // reward on the right. Opened from the forest's Goals button (Tower only).
 
@@ -68,23 +68,23 @@ export class GoalsPage {
     this.show(false);
     document.querySelectorAll<HTMLElement>("#goals [data-scroll]").forEach((s) => {
       const t = Number(s.dataset.scroll);
-      // First shown: the highest floor reached sits a little below the middle.
-      s.scrollTop = this.scrolled[t] ?? s.scrollHeight - s.clientHeight - Math.max(0, floorY(highestFloor(save, t)) - s.clientHeight * 0.4);
+      // First shown: the highest floor completed sits a little below the middle.
+      s.scrollTop = this.scrolled[t] ?? s.scrollHeight - s.clientHeight - Math.max(0, floorY(floorsCompleted(save, t)) - s.clientHeight * 0.4);
     });
   }
 
   /** One tower: its stone, the line lit to the highest floor, its checkpoints. */
   private towerPanel(tower: number) {
     const save = this.ctx.game.save,
-      high = highestFloor(save, tower),
+      high = floorsCompleted(save, tower),
       checkpoints = CHECKPOINTS[tower]!,
       top = checkpoints[checkpoints.length - 1]!.floor,
       warp = warpUnlocked(save);
     const row = (c: Checkpoint) => {
-      const reached = high >= c.floor;
+      const done = high >= c.floor;
       return `<div class="goal-row" style="bottom:${floorY(c.floor)}px">` +
         this.reward(tower, c, false) +
-        `<button class="goal-floor${reached ? " reached" : ""}${reached && warp ? " warpable" : ""}" data-warp="${tower}:${c.floor}" aria-label="Floor ${c.floor}${reached && warp ? ": warp" : ""}">${c.floor}</button>` +
+        `<button class="goal-floor${done ? " completed" : ""}${done && warp ? " warpable" : ""}" data-warp="${tower}:${c.floor}" aria-label="Floor ${c.floor}${done && warp ? ": warp" : ""}">${c.floor}</button>` +
         this.reward(tower, c, true) +
         `</div>`;
     };
@@ -99,7 +99,7 @@ export class GoalsPage {
   private reward(tower: number, c: Checkpoint, premium: boolean) {
     const state = goalState(this.ctx.game.save, tower, c.floor, premium), r = premium ? c.premium : c.reward;
     const badge = state === "claimed" ? CHECK_ICON : state === "ready" ? "" : LOCK_ICON;
-    const label = { locked: `Reach floor ${c.floor}`, needsPass: "Premium Pass", ready: "Claim", claimed: "Claimed" }[state];
+    const label = { locked: `Complete floor ${c.floor}`, needsPass: "Premium Pass", ready: "Claim", claimed: "Claimed" }[state];
     return `<button class="goal-reward ${premium ? "premium" : "standard"} ${state}" data-goal="${tower}:${c.floor}:${premium ? 1 : 0}" aria-label="${rewardText(r)}: ${label}">` +
       `<span class="goal-art">${rewardIcon(r)}${badge}</span><span class="goal-text"><b>${rewardText(r)}</b><small>${label}</small></span></button>`;
   }
@@ -109,7 +109,10 @@ export class GoalsPage {
     const save = this.ctx.game.save, strip = el("goals-strip"), pass = passFor(this.tower);
     strip.classList.toggle("instant", !animate);
     strip.style.transform = `translateX(-${(this.tower - 1) * 100}%)`;
-    el("goals-floor").textContent = `Floor ${highestFloor(save, this.tower)}`;
+    // The highest floor completed: 0 until the first floor's stairs are climbed.
+    const floor = el("goals-floor");
+    floor.textContent = `Floor ${floorsCompleted(save, this.tower)}`;
+    floor.title = "Highest floor completed";
     const passButton = el("goals-pass");
     passButton.textContent = `${owns(save, pass.id) ? "✓ " : ""}Premium Pass ${pass.n}`;
     passButton.classList.toggle("owned", owns(save, pass.id));
@@ -145,7 +148,7 @@ export class GoalsPage {
       b.onclick = () => {
         const [tower, floor] = b.dataset.warp!.split(":").map(Number) as [number, number];
         if (canWarp(game.save, tower, floor)) return this.askWarp(tower, floor);
-        this.say(highestFloor(game.save, tower) < floor ? `Reach floor ${floor} first.` : `Claim Unlock Warp at Tower I's floor ${CHECKPOINT_EVERY} to start runs here.`);
+        this.say(floorsCompleted(game.save, tower) < floor ? `Complete floor ${floor} first: climb its stairs to floor ${floor + 1}.` : `Claim Unlock Warp at Tower I's floor ${CHECKPOINT_EVERY} to start runs here.`);
       };
     });
   }
@@ -154,7 +157,7 @@ export class GoalsPage {
   private choose(tower: number, floor: number, premium: boolean) {
     const game = this.ctx.game, state: GoalState = goalState(game.save, tower, floor, premium);
     if (state === "needsPass") return this.showPass(passFor(tower));
-    if (state === "locked") return this.say(`Reach floor ${floor} in Tower ${tierNumeral(tower)} to claim it.`);
+    if (state === "locked") return this.say(`Complete floor ${floor} in Tower ${tierNumeral(tower)} to claim it.`);
     if (state === "claimed") return this.say("Already claimed.");
     const reward = game.claimGoal(tower, floor, premium);
     if (!reward) return;
@@ -168,7 +171,7 @@ export class GoalsPage {
   private warpTutorial() {
     const modal = this.ctx.modal;
     modal.innerHTML = `<small>GOALS</small><h2>Warp unlocked</h2>` +
-      `<p>Tap the floor number of any checkpoint you have reached to begin a new ascent there at once, on the floor just above it.</p>` +
+      `<p>Tap the floor number of any checkpoint you have completed to begin a new ascent there at once, on the floor just above it.</p>` +
       `<p class="hint">Glowing checkpoints can be warped to. Entering the tower from the forest always starts on floor 1.</p>` +
       `<div class="dialog-actions"><button id="warp-ok">Got it</button></div>`;
     modal.showModal();

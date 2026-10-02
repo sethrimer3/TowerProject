@@ -38,6 +38,8 @@ export type ModeProfile<R extends Run = Run> = {
     currency: string;
     /** What the progress count measures. */
     progress: string;
+    /** What the currency a new best pays is paid for (the reward under the height). */
+    newBest: string;
     /** A run in this mode. */
     run: string;
     /** What a retired run is replaced with. */
@@ -103,6 +105,7 @@ export const MODES: { tower: ModeProfile<TowerRun>; delve: ModeProfile<DelveRun>
     words: {
       currency: "Inspiration",
       progress: "height",
+      newBest: "Inspiration for each floor this ascent has completed beyond your highest: paid as you climb its stairs",
       run: "ascent",
       fresh: "tower",
       tierName: "Tower",
@@ -130,6 +133,7 @@ export const MODES: { tower: ModeProfile<TowerRun>; delve: ModeProfile<DelveRun>
     words: {
       currency: "Courage",
       progress: "depth",
+      newBest: "Courage for each new 10-depth milestone this delve has passed beyond your deepest",
       run: "delve",
       fresh: "descent",
       tierName: "Delve",

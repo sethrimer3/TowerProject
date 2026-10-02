@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { decode, defaults } from "../src/save.ts";
 import { Game } from "../src/state.ts";
-import { CHECKPOINTS, PASSES, canWarp, decodeGoals, goalState, highestFloor, passFor, passTotals, warpUnlocked } from "../src/goals.ts";
+import { CHECKPOINTS, PASSES, canWarp, decodeGoals, floorsCompleted, goalState, passFor, passTotals, warpUnlocked } from "../src/goals.ts";
 import { TIERS } from "../src/tiers.ts";
 
 test("every tower has a checkpoint each ten floors to 100; Tower I's first unlocks Warp", () => {
@@ -22,13 +22,17 @@ test("each pass covers three towers and totals its premium rewards", () => {
   assert.deepEqual(passTotals(PASSES[2]!), { gems: 3 * 550 });
 });
 
-test("a reward is claimed once, after its floor is reached; a premium one needs the pass", () => {
+test("a reward is claimed once, after its floor is completed; a premium one needs the pass", () => {
   const g = new Game(defaults());
   const save = g.save;
+  assert.equal(floorsCompleted(save, 1), 0, "a tower not yet climbed has no floor completed");
   assert.equal(goalState(save, 1, 20, false), "locked");
   assert.equal(g.claimGoal(1, 20, false), null);
-  save.tower.reached = 24; // floor 25
-  assert.equal(highestFloor(save, 1), 25);
+  save.tower.reached = 19; // standing on floor 20: not completed yet
+  assert.equal(floorsCompleted(save, 1), 19);
+  assert.equal(goalState(save, 1, 20, false), "locked");
+  save.tower.reached = 24; // floor 25 reached: floors 1 to 24 completed
+  assert.equal(floorsCompleted(save, 1), 24);
   assert.equal(goalState(save, 1, 20, false), "ready");
   const gold = save.gold;
   assert.deepEqual(g.claimGoal(1, 20, false), { kind: "currency", currency: "gold", amount: 200 });
@@ -57,10 +61,11 @@ test("Warp, once claimed, starts a run at once just above a reached checkpoint; 
   g.newRun({ outside: true });
   g.save.tower.reached = 34;
   assert.equal(warpUnlocked(g.save), false);
+  assert.equal(canWarp(g.save, 1, 30), false, "not before Warp is claimed");
   assert.equal(g.warp(1, 20), false);
   g.claimGoal(1, 10, false);
   assert.ok(warpUnlocked(g.save));
-  assert.equal(canWarp(g.save, 1, 40), false, "not past the highest floor");
+  assert.equal(canWarp(g.save, 1, 40), false, "not past the highest floor completed");
   assert.ok(g.warp(1, 30));
   assert.ok(!g.run.outside);
   assert.equal(g.run.height, 30);
@@ -76,10 +81,12 @@ test("Warp into another open tower selects it first", () => {
   const g = new Game(defaults());
   g.newRun({ outside: true });
   g.save.tower.reached = 9;
+  assert.equal(g.claimGoal(1, 10, false), null, "floor 10 isn't completed until floor 11 is reached");
+  g.save.tower.reached = 10;
   assert.ok(g.claimGoal(1, 10, false));
   g.save.tower.tiersOpen = 2;
   g.save.tower.tierRecords["2"] = { best: 12, reached: 12, log: {} };
-  assert.equal(highestFloor(g.save, 2), 13);
+  assert.equal(floorsCompleted(g.save, 2), 12);
   assert.ok(g.warp(2, 10));
   assert.equal(g.save.tower.tier, 2);
   assert.equal(g.run.tier, 2);

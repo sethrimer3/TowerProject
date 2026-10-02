@@ -308,6 +308,7 @@ function renderProgress(game: Game) {
   if (rewardEl.hidden) return;
   text("best-reward-val", milestones(rules, rawAllBest, rawRunBest));
   text("best-reward-type", rules.words.currency.toUpperCase());
+  rewardEl.title = rules.words.newBest;
 }
 
 /** The run's Inspiration (Courage in the Delve) last shown beside the
