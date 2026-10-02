@@ -3,10 +3,8 @@ import type { Mode, Tile } from "./entities.ts";
 
 /** Gems: the premium currency, kept between runs like Gold. A Gem turns up
  * on a run's floors now and then, the ad button pays some, and they buy
- * hand slots (with Larger Hand) and Training resets.
- *
- * TODO: a Shop page, where the player claims free Gems once a day (the day
- * turning at 00:00 GMT) and buys Gems with real money. */
+ * hand slots (with Larger Hand) and Training resets. The Shop (src/shop/)
+ * gives 25 free each day and sells packs of them for real money. */
 
 /** How long after a Gem is collected before another can appear (ms). */
 export const GEM_COOLDOWN_MS = 30 * 60 * 1000;

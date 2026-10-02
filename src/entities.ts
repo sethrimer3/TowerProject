@@ -9,6 +9,8 @@ import type { ConsumableId } from "./crafting.ts";
 import type { DefendSave } from "./defend/progress.ts";
 import type { GemDrop } from "./gems.ts";
 import type { Settings } from "./settings.ts";
+import type { EntitlementId } from "./shop/entitlements.ts";
+import type { ShopSave } from "./shop/ledger.ts";
 export type Kind =
   | "wall"
   | "floor"
@@ -235,5 +237,11 @@ export type Save = {
   /** DEFEND mini-game: city layout, purchases, upgrades and best wave. A
    * defense run itself is never saved. */
   defend: DefendSave;
+  /** Permanent perks bought in the Shop (shop/entitlements.ts). Erasing
+   * progress keeps them: they were paid for. */
+  entitlements: EntitlementId[];
+  /** The Shop's purchase counts, transaction history and last confirmed
+   * server time (shop/ledger.ts); what was bought lives with its owner. */
+  shop: ShopSave;
 };
 export const point = (x: number, y: number) => `${x},${y}`;

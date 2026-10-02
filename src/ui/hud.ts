@@ -10,6 +10,9 @@ import { cardArt, displayedProgress, el, ENTER_ICON, text } from "./dom.ts";
 import { CARDS } from "../cards.ts";
 import { trainingPoints } from "../loadout.ts";
 import type { BoardOverlay } from "./board-overlay.ts";
+import { estimatedServerTime } from "../shop/clock.ts";
+import { OFFERS } from "../shop/offers.ts";
+import { refusal } from "../shop/transactions.ts";
 
 /** The stats cluster, action buttons and status line around the board. */
 
@@ -62,9 +65,18 @@ export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay)
   document.querySelector(`[data-tab="upgrades"]`)?.classList.toggle("notify", upgradesWaiting(game));
   renderLockedTab("gear", !!game.save.upgrades.gear, "Gear", "Unlock Gear in the Inspiration tree");
   document.querySelector(`[data-tab="gear"]`)?.classList.toggle("notify", gearWaiting(game));
+  renderShopDot(game);
   renderLockedTab("defend", !!game.save.upgrades.legacy, "Defend", "Unlock An enduring legacy in the Courage tree");
 }
 
+/** Whether the Shop button shows its dot: a daily offer can be claimed, on
+ * the server's time as estimated (the claim itself asks the server). */
+export const shopWaiting = (game: Game) => {
+  const now = estimatedServerTime(game.save.shop.clock, game.clock());
+  return OFFERS.some((o) => o.daily && !refusal(game.save, o, now));
+};
+/** Puts the dot on the Shop button while `shopWaiting`. */
+export const renderShopDot = (game: Game) => el("shop-open").classList.toggle("notify", shopWaiting(game));
 /** Whether the Upgrades button shows its dot: the first Inspiration has
  * been earned (so the run that paid it has ended by the time the tabs show)
  * and the page hasn't been opened since. */

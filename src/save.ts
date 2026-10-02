@@ -12,6 +12,8 @@ import { keepUndos, loadout } from "./loadout.ts";
 import { BASE_HAND, CARD_IDS, HAND_SLOT_GEMS, MAX_HAND_SLOTS, deckCards, handSlots, type CardId } from "./cards.ts";
 import { decodeGemDrop, defaultGemDrop } from "./gems.ts";
 import { decodeArchives, defaultArchives } from "./archives.ts";
+import { BOOST_FOREVER, decodeEntitlements, permanentBoost } from "./shop/entitlements.ts";
+import { decodeShop, defaultShop } from "./shop/ledger.ts";
 export function defaults(): Save {
   return {
     version: 3,
@@ -43,6 +45,8 @@ export function defaults(): Save {
     tutorials: { deck: false, removeCard: false, addCard: false, upgrades: false, gear: false },
     archives: defaultArchives(),
     defend: defaultDefendSave(),
+    entitlements: [],
+    shop: defaultShop(),
   };
 }
 const finite = (n: unknown, max = 1e9) =>
@@ -378,6 +382,9 @@ export function decode(raw: string | null): Save {
     const { undoCapacity } = loadout(d);
     d.settings = decodeSettings(s.settings);
     for (const step of VERSION_STEPS.get(s.version) ?? []) step(s, d, undoCapacity);
+    d.entitlements = decodeEntitlements(s.entitlements);
+    d.shop = decodeShop(s.shop);
+    if (permanentBoost(d)) d.trainingBoostUntil = BOOST_FOREVER;
     decodeReached(s, d);
     decodeSections(s.tower, d);
     decodeTiers(s, d);

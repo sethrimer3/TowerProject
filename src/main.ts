@@ -12,7 +12,7 @@ import { isBoard, type AppContext, type Tab } from "./ui/app.ts";
 import { el } from "./ui/dom.ts";
 import { buildShell } from "./ui/shell.ts";
 import { BoardOverlay } from "./ui/board-overlay.ts";
-import { boardHeadingStale, flashRed, renderAdButton, renderBoardHeading, renderHud, renderVitals, gearWaiting, upgradesWaiting } from "./ui/hud.ts";
+import { boardHeadingStale, flashRed, renderAdButton, renderShopDot, renderBoardHeading, renderHud, renderVitals, gearWaiting, upgradesWaiting } from "./ui/hud.ts";
 import { confirmAction, RunEndDialog, showLog, showSectionPicker } from "./ui/dialogs.ts";
 import { SkillTreePage } from "./ui/skill-tree-page.ts";
 import { ResearchToasts, researchToast, trainingToast } from "./ui/research-toast.ts";
@@ -20,6 +20,7 @@ import { GearPage } from "./ui/gear-page.ts";
 import { DeckPage } from "./ui/deck-page.ts";
 import { RunTrainingBar } from "./ui/run-training-bar.ts";
 import { renderSettingsPage } from "./ui/settings-page.ts";
+import { ShopPage } from "./ui/shop-page.ts";
 
 // Wires the pages together: builds the shell, creates the game and renderer,
 // and routes navigation, HUD refreshes and input between the ui/ modules.
@@ -51,6 +52,7 @@ const overlay = new BoardOverlay(game, renderer);
 const skillTree = new SkillTreePage(ctx);
 const gear = new GearPage(ctx);
 const deck = new DeckPage(ctx);
+const shop = new ShopPage(ctx);
 const runTraining = new RunTrainingBar(game, () => update());
 const researchToasts = new ResearchToasts(() => game.save.settings.reduceMotion);
 const defendPage = new DefendPage(el("defend"), {
@@ -89,6 +91,7 @@ function renderPage() {
   if (tab === "gear") gear.render();
   if (tab === "upgrades") skillTree.render();
   if (tab === "settings") renderSettingsPage(ctx, overlay);
+  if (tab === "shop") shop.render();
 }
 /** Locked tabs point at the upgrade that unlocks them instead. */
 function unlockTarget(id: string): string {
@@ -122,6 +125,7 @@ function navigate(requested: string) {
   // And opening the Gear page the dot the Gear skill put on it.
   if (id === "gear" && gearWaiting(game)) game.save.tutorials.gear = true;
   deck.shown(id === "deck");
+  if (id === "shop") shop.open();
   renderer.weather.silence();
   if (isBoard(id)) {
     game.switchMode(id);
@@ -173,6 +177,7 @@ modal.addEventListener("cancel", (e) => {
   // The defeat dialog waits for an answer.
   if (game.fallen) e.preventDefault();
 });
+el("shop-open").onclick = () => navigate("shop");
 el("auto-settings").onclick = () => navigate("settings");
 el("auto").onclick = () => {
   // Inside a run the button plays and pauses the hand; in the forest it
@@ -206,9 +211,13 @@ bindInput(
 function archivesTick() {
   const done = game.settleResearch().length > 0 || game.settleTraining() > 0;
   if (done) update();
-  // The ad button comes back on the wall clock too.
-  else renderAdButton(game);
+  // The ad button comes back on the wall clock too, and the Shop's daily Gems.
+  else {
+    renderAdButton(game);
+    renderShopDot(game);
+  }
   if (tab === "upgrades") skillTree.archivesTick(done);
+  if (tab === "shop") shop.tick();
 }
 const loop = new FrameLoop({
   game,

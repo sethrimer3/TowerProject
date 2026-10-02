@@ -2,7 +2,7 @@ import type { Game } from "../state.ts";
 import type { ConfirmPrompt } from "./dialogs.ts";
 
 /** Every page tab. Tower and Delve both show the board. */
-export type Tab = "tower" | "delve" | "deck" | "defend" | "gear" | "upgrades" | "settings";
+export type Tab = "tower" | "delve" | "deck" | "defend" | "gear" | "upgrades" | "settings" | "shop";
 export const isBoard = (id: string): id is "tower" | "delve" => id === "tower" || id === "delve";
 
 /** The game as pages see it: its state to read (a page may change a setting
@@ -15,7 +15,7 @@ export type PageGame = Readonly<Pick<Game, "mode" | "run" | "save" | "fallen" | 
     | "sectionUnlocked" | "startSection" | "setStartSection"
     | "buy" | "train" | "trainWithGold" | "trainingLeft" | "claimTrainingBoost" | "cancelTraining" | "finishTraining" | "buyTrainer" | "resetTraining" | "buyHandSlot" | "arrangeHand" | "addToHand" | "placeInHand" | "removeFromHand" | "buyGold" | "craftEquipment" | "craftConsumable" | "salvageEquipment"
     | "equipItem" | "unequipSlot" | "useConsumable"
-    | "clock" | "startResearch" | "cancelResearch" | "setAutoContinue" | "hireArchivist" | "finishResearchNow"
+    | "clock" | "buyOffer" | "startResearch" | "cancelResearch" | "setAutoContinue" | "hireArchivist" | "finishResearchNow"
   >;
 
 /** What pages and dialogs need from the app around them. */

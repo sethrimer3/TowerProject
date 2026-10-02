@@ -2,6 +2,10 @@ import { claimBoost, doneAt, finishGems, nextTrainerGems, trainingGold, training
 import { entrance, floorFor } from "./delve/labyrinth.ts";
 import { chooseStep } from "./automation.ts";
 import { CARDS, deckCards, handSlots, moveCard, nextHandSlotGems, placeCard, planHand, type CardId, type CardPlan } from "./cards.ts";
+import { BOOST_FOREVER, goldFactor, permanentBoost } from "./shop/entitlements.ts";
+import { offer, type OfferId } from "./shop/offers.ts";
+import { purchase, type Refusal } from "./shop/transactions.ts";
+import { confirmServerTime } from "./shop/clock.ts";
 import { AD_COOLDOWN_MS, AD_GEMS, TRAINING_RESET_GEMS, collectedGem, gemOn, gemSpot, missGem, reachFloor, type GemSpot } from "./gems.ts";
 import { DelvePlan } from "./delve/automove.ts";
 import { defaults } from "./save.ts";
@@ -554,7 +558,10 @@ export class Game {
   }
   /** Erases all progress and starts again outside the Tower. */
   eraseAll() {
-    this.save = defaults();
+    // What was bought in the Shop, and its record, outlast the progress.
+    const { entitlements, shop } = this.save;
+    this.save = { ...defaults(), entitlements, shop };
+    if (permanentBoost(this.save)) this.save.trainingBoostUntil = BOOST_FOREVER;
     this.mode = "tower";
     this.newRun({ outside: true });
   }
@@ -896,10 +903,13 @@ export class Game {
     this.run.silver = snap(this.silver + silver);
     return silver;
   }
-  /** Banks Gold found in the run, fractions and all (`snap`). */
-  private creditGold(gold: number) {
+  /** Banks Gold found in the run, fractions and all (`snap`), times the
+   * Shop's coin packs owned; returns what it banked. */
+  private creditGold(found: number) {
+    const gold = snap(found * goldFactor(this.save));
     this.save.gold = snap(this.save.gold + gold);
     this.slice.runGold = snap(this.slice.runGold + gold);
+    return gold;
   }
   /** The numbered tower (or delve) the run climbs. */
   get tier() {
@@ -933,8 +943,7 @@ export class Game {
     slice.lootedTiles[key] = true;
     // Gold / Kill training and research, multiplied, then the tier's bonus.
     const raised = snap((ENEMY_GOLD[enemy.strength] * killGold(this.trainingNow) * researched(this.save.archives, "killGold", 100)) / 10_000);
-    const gold = tierGold(this.tier, raised);
-    this.creditGold(gold);
+    const gold = this.creditGold(tierGold(this.tier, raised));
     const drops = this.rules.enemyDrops(enemy.name, this.rng);
     creditMaterials(this.save, drops);
     return { gold, drops };
@@ -1072,9 +1081,7 @@ export class Game {
     const base = floorGold(this.trainingNow), slice = this.slice;
     if (!base || slice.lootedTiles[key]) return 0;
     slice.lootedTiles[key] = true;
-    const gold = tierGold(this.tier, snap((base * researched(this.save.archives, "floorGold", 100)) / 100));
-    this.creditGold(gold);
-    return gold;
+    return this.creditGold(tierGold(this.tier, snap((base * researched(this.save.archives, "floorGold", 100)) / 100)));
   }
   /** Wishing Well: Silver for a floor climbed for the first time in the
    * run, its Silver / Floor raised by research, then by Silver Bonus.
@@ -1199,8 +1206,7 @@ export class Game {
         slice.lootedTiles[key] = true;
         const E = this.rules.equivalentFloor(this.rules.progressAt(this.run, y));
         const loot = rollTreasureLoot(E, this.rng);
-        const gold = tierGold(this.tier, loot.gold);
-        this.creditGold(gold);
+        const gold = this.creditGold(tierGold(this.tier, loot.gold));
         creditMaterials(this.save, loot.materials);
         this.gain(x, y, `+${wholeChange(gold)} Gold`);
         for (const m of loot.materials) this.gain(x, y, materialText(m), { material: m.id, quantity: m.quantity });
@@ -1351,6 +1357,30 @@ export class Game {
     for (const job of this.save.trainingJobs) job.completesAt = doneAt(workLeft(job.completesAt, old, now), until, now);
     this.save.trainingBoostUntil = until;
     return true;
+  }
+  /** Buys the Shop's offer `id` at `serverNow`, a server time confirmed
+   * for this purchase (the Shop's clock records it): with its price, or,
+   * for a real-money offer, once the store confirms it was paid (`paid`);
+   * Dev free purchases pay nothing. Returns why it was refused, or null
+   * once bought. */
+  buyOffer(id: OfferId, serverNow: number, paid = false): Refusal | null {
+    const o = offer(id);
+    if (!o) return "locked";
+    confirmServerTime(this.save.shop.clock, serverNow, this.clock());
+    this.settleTraining();
+    const boosted = permanentBoost(this.save);
+    const t = purchase(this.save, o, serverNow, this.free ? "free" : paid ? "store" : "price");
+    if (typeof t === "string") return t;
+    if (!boosted && permanentBoost(this.save)) this.boostForever();
+    this.message = o.item?.kind === "entitlement" ? `${t.item}: yours for good` : `+${t.item}`;
+    return null;
+  }
+  /** The trainers' ×2 boost runs for good from now: each rank in training
+   * is due when its training left at double speed is done. */
+  private boostForever() {
+    const now = this.clock(), old = this.save.trainingBoostUntil;
+    for (const job of this.save.trainingJobs) job.completesAt = doneAt(workLeft(job.completesAt, old, now), BOOST_FOREVER, now);
+    this.save.trainingBoostUntil = BOOST_FOREVER;
   }
   /** Ranks trainers finished and not yet announced, oldest first; the app
    * takes them for its notifications. */

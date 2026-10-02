@@ -35,6 +35,8 @@ export const clockIcon = (className = "clock-icon") =>
 /** A small screen with a play mark: watching an ad. */
 export const adIcon = (className = "ad-icon") =>
   `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2.5" fill="#2b2f3a" stroke="#e9e1c8" stroke-width="1.6"/><path d="M10 9l5 3-5 3z" fill="#ffc94a"/></svg>`;
+/** A shopping cart: the Shop. */
+export const CART_ICON = `<svg class="cart-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M1.5 3.5h3l2.6 11.2h11.4l2.3-8H6" fill="none" stroke="#e9e1c8" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.4 8.8h12.4l-1.4 4.4H8.4z" fill="#ffc94a"/><circle cx="9" cy="19" r="1.9" fill="#e9e1c8"/><circle cx="17" cy="19" r="1.9" fill="#e9e1c8"/></svg>`;
 /** The Gold coin, sized to sit in a line of text. */
 export const goldIcon = () => uiSprite("gold", "ui-sprite gold-icon");
 /** A cut cyan gem, the Gems currency's icon (drawn like the board's). */

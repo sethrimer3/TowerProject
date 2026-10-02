@@ -1,3 +1,4 @@
+import { permanentBoost } from "../shop/entitlements.ts";
 import { upgradeCard } from "../cards.ts";
 import { revealCard } from "./card-reveal.ts";
 import { TRAINING, TRAINING_GROUPS, TRAINING_PER_LEVEL, UPGRADES, cost, trainingOpen, type TrainingId, type UpgradeId } from "../config.ts";
@@ -212,9 +213,13 @@ export class SkillTreePage {
   }
 
   /** The training boost: ×2, its time left or "Inactive", and the button
-   * that claims an hour more, up to four. */
+   * that claims an hour more, up to four; once Ad-Disable is owned it runs
+   * for good, and the button only says so. */
   private boostHtml() {
-    const game = this.ctx.game, left = boostLeft(game.save.trainingBoostUntil, game.clock()),
+    const game = this.ctx.game;
+    if (permanentBoost(game.save))
+      return `<div class="training-boost active" id="training-boost"><b class="boost-rate">×${BOOST_RATE}</b><span class="boost-time" id="boost-time">Permanent</span><button id="boost-claim" class="boost-claim boost-permanent" disabled aria-label="Training goes twice as fast for good" title="Training goes twice as fast for good">x${BOOST_RATE}</button></div>`;
+    const left = boostLeft(game.save.trainingBoostUntil, game.clock()),
       full = claimBoost(game.save.trainingBoostUntil, game.clock()) === null;
     return `<div class="training-boost${left ? " active" : ""}" id="training-boost"><b class="boost-rate">×${BOOST_RATE}</b><span class="boost-time" id="boost-time">${left ? formatDuration(left) : "Inactive"}</span><button id="boost-claim" class="boost-claim" ${full ? "disabled" : ""} aria-label="Watch an ad: training goes twice as fast for an hour more, up to four" title="${full ? "Four hours is the most" : "Training goes twice as fast for an hour more"}">${adIcon()}<span>+1h</span></button></div>`;
   }

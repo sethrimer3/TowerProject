@@ -188,6 +188,24 @@ _Avoid_: priority, override
 No card in the hand can act. The hand pauses and End Run lights up, and the run ends only when the player ends it; each thing the player does (an item used, a skill) checks the hand again, and it plays on once a card can act.
 _Avoid_: deadlock
 
+### The Shop
+
+**Shop**:
+The page, opened from the cart button on the HUD, where Gems are claimed free each day or bought, and one-time packs are bought. It sells offers and hands what they grant to its owner; it keeps no items itself.
+_Avoid_: store (the app store that takes real money)
+
+**Offer**:
+One thing on sale in the Shop: what it grants, how many, its price (Gems, Gold, free, real money, or only a link to the store), its rarity, and how often it can be bought.
+_Avoid_: product, listing, deal
+
+**Entitlement**:
+A permanent perk bought once, such as a coin pack's Gold multiplier or Ad-Disable's permanent ×2 training. Erasing progress keeps it.
+_Avoid_: unlock (a skill bought with Inspiration or Courage), perk
+
+**Shop day**:
+The day as the Shop counts it, from 00:00 to 00:00 GMT on the server's clock. A daily offer, such as the Daily Free Gems, can be claimed once each Shop day, and changing the device's clock never brings a new one.
+_Avoid_: daily reset, local day
+
 ### The Delve
 
 **Automove memory**:

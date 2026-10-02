@@ -289,6 +289,13 @@ try {
     await click("#auto-settings");
     await shot(`${prefix}.autoSettings`);
     await click("#settings-back");
+    // The Shop, from the HUD; nothing claimed, so no countdown reads the clock.
+    await click("#shop-open");
+    await shot(`${prefix}.shop`);
+    await click('[data-detail="coins3"]');
+    await shot(`${prefix}.shop.details`);
+    await closeModal();
+    await click("#shop-back");
     await click("#end-run");
     await shot(`${prefix}.endRun`);
     await click("#cancel");
