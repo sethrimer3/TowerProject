@@ -45,6 +45,9 @@ export const SETTINGS = {
     kind: "choice", default: "both", choices: [["both", "Popup + status line"], ["popup", "Popup only"], ["status", "Status line only"], ["none", "Off"]],
     page: { id: "info-display", label: "Tile info display" },
   },
+  /** Dress the page in the keep's look (stone, oak, brass, parchment) and
+   * play its synthesized sounds. */
+  medievalTheme: { kind: "toggle", default: false, page: { id: "medieval-theme", label: "Render Medieval Theme" } },
   /** Unlimited currency, every floor section and game mode unlocked. */
   devMode: { kind: "toggle", default: false, page: { id: "dev-mode", label: "Dev mode (unlimited currency, all floors &amp; modes unlocked)" } },
   /** Play each fight out strike by strike, damage rising off whoever was

@@ -1,3 +1,4 @@
+import { applyMedievalTheme } from "./medieval.ts";
 import { SETTINGS, type SettingKey, type Settings } from "../settings.ts";
 import type { Save } from "../entities.ts";
 import type { AppContext, PageGame } from "./app.ts";
@@ -9,7 +10,7 @@ import { MODES } from "../modes.ts";
  * SETTINGS. */
 const PAGE = [
   "speed", "transition", "fightAnimation", "brightness", "spritesOff", "decorOff", "batterySaver", "showArrows", "reduceMotion", "weatherSound",
-  "infoDisplay", "oneTapMove", "devMode", "freePurchases",
+  "infoDisplay", "oneTapMove", "medievalTheme", "devMode", "freePurchases",
 ] as const satisfies readonly SettingKey[];
 type PageKey = (typeof PAGE)[number];
 
@@ -27,12 +28,17 @@ const onPage = (save: Save) => PAGE.filter((key) => SHOWN[key]?.(save) ?? true);
 /** What a change does once written, beyond saving. */
 const AFTER: Partial<Record<PageKey, (ctx: AppContext, overlay: BoardOverlay, s: Settings) => void>> = {
   showArrows: (ctx) => ctx.update(),
+  reduceMotion: (_ctx, _o, s) => applyMedievalTheme(s),
   // The board silences the weather itself once sound is off.
   weatherSound: (ctx) => ctx.update(),
   infoDisplay: (ctx, overlay, s) => {
     if (s.infoDisplay === "status" || s.infoDisplay === "none") overlay.hideInspect();
     ctx.save();
     ctx.update();
+  },
+  medievalTheme: (ctx, _, s) => {
+    applyMedievalTheme(s);
+    ctx.save();
   },
   // Turning it on also grants everything it unlocks.
   devMode: (ctx, _, s) => {

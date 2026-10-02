@@ -1,4 +1,5 @@
 import "./style.css";
+import "./medieval.css";
 import { load, persist } from "./save.ts";
 import { Game } from "./state.ts";
 import { Renderer } from "./rendering.ts";
@@ -21,12 +22,16 @@ import { DeckPage } from "./ui/deck-page.ts";
 import { RunTrainingBar } from "./ui/run-training-bar.ts";
 import { renderSettingsPage } from "./ui/settings-page.ts";
 import { ShopPage } from "./ui/shop-page.ts";
+import { play } from "./sound.ts";
+import { applyMedievalTheme, bindMedievalFeedback } from "./ui/medieval.ts";
 
 // Wires the pages together: builds the shell, creates the game and renderer,
 // and routes navigation, HUD refreshes and input between the ui/ modules.
 
 buildShell(document.querySelector<HTMLDivElement>("#app")!);
 const game = new Game(load());
+applyMedievalTheme(game.save.settings);
+bindMedievalFeedback(() => game.save.settings.medievalTheme, () => game.save.settings.reduceMotion);
 // The frame loop settles fights as they finish playing out.
 game.playsFights = true;
 const renderer = new Renderer(document.querySelector("#world")!, game);
@@ -82,7 +87,9 @@ function update() {
   (el("page-shop") as HTMLButtonElement).disabled = deck.teaching;
   renderHud(game, renderer, overlay);
   runTraining.render();
-  researchToasts.add([...game.researchDone.splice(0).map(researchToast), ...game.trainingDone.splice(0).map(trainingToast)]);
+  const finished = [...game.researchDone.splice(0).map(researchToast), ...game.trainingDone.splice(0).map(trainingToast)];
+  if (finished.length) play("trained");
+  researchToasts.add(finished);
   save();
   runEnd.check();
 }

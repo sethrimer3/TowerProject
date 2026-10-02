@@ -28,6 +28,8 @@ import { BoardPointers, eventCell } from "./board-pointers.ts";
 import type { Drag } from "./drag-rules.ts";
 import { EditSession, type Drop } from "./edit-session.ts";
 import { NIGHT_FADE_SECONDS, isBossWave, rollWeather, skyLabel, type Weather } from "./weather.ts";
+import { play } from "../sound.ts";
+import { replay, sparksOver } from "../ui/flourish.ts";
 import { available, buyBomb, buyItem, buySpeed3, buyUpgrade, canAfford, type DefendSave, type Wallet } from "./progress.ts";
 
 export type DefendHost = {
@@ -349,6 +351,14 @@ export class DefendPage {
     if (el) el.textContent = text;
   }
 
+  /** A message worth a herald: it rises in gold (`win`) or red (`dread`). */
+  private proclaim(text: string, seconds: number, mood: "win" | "dread") {
+    this.setMessage(text, seconds);
+    const el = this.root.querySelector<HTMLElement>("#defend-message");
+    replay(el, mood === "win" ? "herald" : "dread");
+    if (mood === "win") sparksOver(el, "gold");
+  }
+
   private showBanner(html: string) {
     const b = this.root.querySelector<HTMLElement>("#defend-banner")!;
     b.innerHTML = html;
@@ -370,7 +380,8 @@ export class DefendPage {
     const boardEl = this.root.querySelector<HTMLElement>("#defend-board")!;
     if (!stage.offsetParent) return;
     const top = boardEl.getBoundingClientRect().top + window.scrollY;
-    const availH = window.innerHeight - top - this.navHeight() - 16;
+    // The themed board frame's lower brackets need 24 px below it.
+    const availH = window.innerHeight - top - this.navHeight() - (document.documentElement.classList.contains("medieval") ? 24 : 16);
     // The palette never sets the page height: it's capped to the board and
     // scrolls on its own when it holds more than fits.
     palette.style.maxHeight = `${Math.max(60, availH)}px`;
@@ -435,6 +446,8 @@ export class DefendPage {
   private endRun() {
     if (!this.sim) return;
     this.phase = "over";
+    play("fallen");
+    replay(this.root.querySelector("#defend-board"), "quake");
     const wave = this.sim.wave;
     const cleared = Math.max(0, wave - 1);
     this.showBanner(
@@ -454,10 +467,17 @@ export class DefendPage {
           this.newRecord = ev.wave;
           // Record rewards are not defined yet; this is where they will land.
           this.host.persist();
-          this.setMessage(`New record — wave ${ev.wave} survived!`, 3);
-        } else this.setMessage(`Wave ${ev.wave} cleared.`, 2);
+          this.proclaim(`New record — wave ${ev.wave} survived!`, 3, "win");
+          play("record");
+        } else {
+          this.proclaim(`Wave ${ev.wave} cleared.`, 2, "win");
+          play("wave");
+        }
       } else if (ev.type === "waveStart") {
-        if (isBossWave(ev.wave)) this.setMessage(`Boss wave ${ev.wave}! Night falls as ${ev.wave > 10 ? `${ev.wave / 10} warlords approach` : "a warlord approaches"}…`, 4);
+        if (isBossWave(ev.wave)) {
+          this.proclaim(`Boss wave ${ev.wave}! Night falls as ${ev.wave > 10 ? `${ev.wave / 10} warlords approach` : "a warlord approaches"}…`, 4, "dread");
+          play("horn");
+        }
         else if (!this.message) this.setMessage(`Wave ${ev.wave}`, 1.5);
       } else if (ev.type === "lost") this.endRun();
     }
@@ -561,15 +581,20 @@ export class DefendPage {
       <h3 class="defend-section">Battle</h3>${speed}
       <h3 class="defend-section">Upgrades</h3><p class="hint">Upgrades apply to every building of that type.</p>${upgrades}`;
     el.querySelectorAll<HTMLCanvasElement>("canvas[data-icon]").forEach((c) => paintIcon(c, c.dataset.icon as IconItem));
-    const commit = (ok: boolean) => {
+    /** A purchase rings like coins and stamps its card once the list is redrawn. */
+    const commit = (ok: boolean, card: string) => {
       if (!ok) return;
       this.host.setWallet(w);
       this.host.persist();
+      play("coin");
       this.renderArmory();
+      const bought = el.querySelector(card)?.closest(".card") ?? null;
+      replay(bought, "bought");
+      sparksOver(bought?.querySelector("button") ?? null, "gold");
     };
-    el.querySelectorAll<HTMLButtonElement>("[data-buy]").forEach((b) => (b.onclick = () => commit(buyItem(s, w, b.dataset.buy as PaletteItem))));
-    el.querySelector<HTMLButtonElement>("[data-buy-bomb]")!.onclick = () => commit(buyBomb(s, w));
-    el.querySelector<HTMLButtonElement>("[data-buy-speed3]")!.onclick = () => commit(buySpeed3(s, w));
-    el.querySelectorAll<HTMLButtonElement>("[data-upgrade]").forEach((b) => (b.onclick = () => commit(buyUpgrade(s, w, b.dataset.upgrade as (typeof UPGRADES)[number]["id"]))));
+    el.querySelectorAll<HTMLButtonElement>("[data-buy]").forEach((b) => (b.onclick = () => commit(buyItem(s, w, b.dataset.buy as PaletteItem), `[data-buy="${b.dataset.buy}"]`)));
+    el.querySelector<HTMLButtonElement>("[data-buy-bomb]")!.onclick = () => commit(buyBomb(s, w), "[data-buy-bomb]");
+    el.querySelector<HTMLButtonElement>("[data-buy-speed3]")!.onclick = () => commit(buySpeed3(s, w), "[data-buy-speed3]");
+    el.querySelectorAll<HTMLButtonElement>("[data-upgrade]").forEach((b) => (b.onclick = () => commit(buyUpgrade(s, w, b.dataset.upgrade as (typeof UPGRADES)[number]["id"]), `[data-upgrade="${b.dataset.upgrade}"]`)));
   }
 }

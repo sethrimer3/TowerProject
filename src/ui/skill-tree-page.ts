@@ -1,3 +1,4 @@
+import { play } from "../sound.ts";
 import { permanentBoost } from "../shop/entitlements.ts";
 import { upgradeCard } from "../cards.ts";
 import { revealCard } from "./card-reveal.ts";
@@ -85,7 +86,10 @@ export class SkillTreePage {
         this.render();
       });
       document.querySelectorAll<HTMLButtonElement>("[data-train-gold]").forEach(b => b.onclick = () => {
-        if (this.ctx.game.trainWithGold(b.dataset.trainGold as TrainingId)) this.ctx.update();
+        if (this.ctx.game.trainWithGold(b.dataset.trainGold as TrainingId)) {
+          this.ctx.update();
+          play("coin");
+        }
         this.render();
       });
       document.querySelector<HTMLButtonElement>("#boost-claim")?.addEventListener("click", () => {
@@ -357,6 +361,7 @@ export class SkillTreePage {
       const game = this.ctx.game;
       game.buy(id);
       const bought = game.save.upgrades[id] > level, card = upgradeCard(id);
+      if (bought) play(level === 0 ? "unlock" : "chime");
       if (bought && !game.save.settings.reduceMotion) {
         // The first rank unlocks the node: it shines as well as bursting.
         const node = mapNodes(this.current()).find(n => n.id === id)!;
