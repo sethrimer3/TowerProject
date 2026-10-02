@@ -9,10 +9,12 @@ export function doorRule(tile: Tile): DoorRule {
   return tile.door ?? { type: "keys", keys: [tile.color ?? "yellow"], mode: "all" };
 }
 /** Returns the exact keys that would be consumed. Any-key steel locks use a
- * stable amber/azure/crimson priority so their behavior is predictable. */
-export function doorCost(tile: Tile, player: Pick<Player, "keys" | "hp" | "maxHp">): KeyColor[] | null {
+ * stable amber/azure/crimson priority so their behavior is predictable. A
+ * Heart Door takes no keys and always opens: it drains HP instead
+ * (`resolveStep`). */
+export function doorCost(tile: Tile, player: Pick<Player, "keys">): KeyColor[] | null {
   const rule = doorRule(tile);
-  if (rule.type === "fullHp") return player.hp === player.maxHp ? [] : null;
+  if (rule.type === "fullHp") return [];
   if (rule.mode === "any") {
     const key = KEY_ORDER.find((color) => rule.keys.includes(color) && player.keys[color] > 0);
     return key ? [key] : null;
@@ -32,7 +34,7 @@ export function doorName(tile: Tile) {
 }
 export function doorDescription(tile: Tile) {
   const rule = doorRule(tile);
-  if (rule.type === "fullHp") return "Opens freely while HP is full.";
+  if (rule.type === "fullHp") return "Opens freely, but drains your HP to 1.";
   if (rule.mode === "any") return "Consumes one available key (amber, then azure, then crimson).";
   const names = rule.keys.map((key) => KEY_NAMES[key].toLowerCase());
   return `Requires ${names.join(" + ")} ${names.length === 1 ? "key" : "keys"}.`;
@@ -43,10 +45,10 @@ export function doorColor(tile: Tile) {
   if (rule.mode === "any" || rule.keys.length !== 1) return "#aeb8c4";
   return COLORS[rule.keys[0]];
 }
+/** Why a keyed door won't open (a Heart Door always does). */
 export function doorBlockedMessage(tile: Tile) {
   const rule = doorRule(tile);
-  if (rule.type === "fullHp") return "Requires full HP.";
-  if (rule.mode === "any") return "Requires any one key.";
+  if (rule.type === "keys" && rule.mode === "any") return "Requires any one key.";
   return doorDescription(tile).replace(/\.$/, ".");
 }
 export function area1DoorRule(room: number): DoorRule {

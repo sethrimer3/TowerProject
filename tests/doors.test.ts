@@ -28,8 +28,8 @@ test("steel consumes one key in explicit amber/azure/crimson priority", () => {
   assert.deepEqual(doorCost(door(7), player(0, 0, 1)), ["red"]);
 });
 
-test("heart opens free only at full HP and legacy doors remain compatible", () => {
+test("heart always opens without keys and legacy doors remain compatible", () => {
   assert.deepEqual(doorCost(door(8), player(0, 0, 0, 10, 10)), []);
-  assert.equal(doorCost(door(8), player(0, 0, 0, 9, 10)), null);
+  assert.deepEqual(doorCost(door(8), player(0, 0, 0, 9, 10)), []);
   assert.deepEqual(doorCost({ kind: "door", color: "red" }, player(0, 0, 1)), ["red"]);
 });

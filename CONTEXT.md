@@ -76,7 +76,7 @@ The hero lost a fight: the run waits at 0 HP, the hand paused, until the player 
 _Avoid_: dead, game over
 
 **Gain**:
-A reward just picked up (an item's stats, keys, Gold, materials, a clear chest's Inspiration), or what a door took (each key, or the full HP a Heart Door checked), shown rising from the tile it came from the moment it happens: as its sprite, or written out where it has none.
+A reward just picked up (an item's stats, keys, Gold, materials, a clear chest's Inspiration), or what a door took (each key, or the HP a Heart Door drained to 1), shown rising from the tile it came from the moment it happens: as its sprite, or written out where it has none.
 _Avoid_: popup, loot text
 
 ### The character

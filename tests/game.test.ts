@@ -86,11 +86,10 @@ test("combination, steel, and heart doors apply their runtime rules", () => {
   heart.save.upgrades.delve = 1; heart.switchMode("delve");
   heart.world.changes["15,1"] = { kind: "door", door: { type: "fullHp" } };
   heart.run.player.hp--;
-  assert.equal(heart.move(0, 1), false);
-  heart.run.player.hp = heart.run.player.maxHp;
   const keys = { ...heart.run.player.keys };
   assert.equal(heart.move(0, 1), true);
   assert.deepEqual(heart.run.player.keys, keys);
+  assert.equal(heart.run.player.hp, 1, "the Heart Door drains HP to 1");
 });
 test("automation avoids lethal fights; a manual death waits on the player, and accepting it awards once", () => {
   const g = new Game(defaults());

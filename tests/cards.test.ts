@@ -76,10 +76,10 @@ test("each card heads for its own kind of target", () => {
   assert.equal(only("."), null, "an empty floor gives no card anything to do");
 });
 
-test("a door is a target only with its keys held, a Heart Door only at full HP", () => {
+test("a door is a target only with its keys held, a Heart Door always", () => {
   assert.equal(play(board(["@.D"])), null);
   assert.equal(play(board(["@.H"]))?.card, "door");
-  assert.equal(play(board(["@.H"], { hp: 50 })), null);
+  assert.equal(play(board(["@.H"], { hp: 50 }))?.card, "door");
 });
 
 test("MONSTER takes on any monster that can be fought, lethal or not, but never an impervious one", () => {

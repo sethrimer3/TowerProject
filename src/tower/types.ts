@@ -24,7 +24,7 @@ export type Gate =
   | { kind: "enemy"; strength: Strength; profile?: TowerEnemyProfile }
   | { kind: "door"; color: KeyColor }
   /** Special locks from the door vocabulary: steel takes any one key
-   * (cheapest first), heart opens only while HP is full. */
+   * (cheapest first), heart always opens but drains HP to 1. */
   | { kind: "steel" }
   | { kind: "heart" };
 

@@ -1,7 +1,7 @@
 import { enemyStat, whole, wholeChange, wholeHp } from "../whole.ts";
 import type { EnemyStrength, Kind, Player, Tile } from "../entities.ts";
 import type { Game, RouteEffects } from "../state.ts";
-import { ATTACK_SHARD, DEFENSE_SHARD, resolveStep } from "../step-effects.ts";
+import { ATTACK_SHARD, DEFENSE_SHARD, HEART_DOOR_HP, resolveStep } from "../step-effects.ts";
 import { predict } from "../combat.ts";
 import { doorColor, doorCost, doorDescription, doorName, doorRule, KEY_NAMES } from "../doors.ts";
 import { MODES } from "../modes.ts";
@@ -49,7 +49,7 @@ const DESCRIBE: Partial<Record<Kind, Describe>> = {
     const cost = doorCost(t, p);
     const keyLine =
       doorRule(t).type === "fullHp"
-        ? ""
+        ? `<br>HP: ${wholeHp(p.hp)} → ${wholeHp(Math.min(p.hp, HEART_DOOR_HP))}`
         : `<br>${cost
             ? cost.map((color) => `${KEY_NAMES[color]} key: ${p.keys[color]} → ${p.keys[color] - 1}`).join(", ")
             : "Locked — insufficient keys"}`;

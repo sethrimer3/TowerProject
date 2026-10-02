@@ -826,8 +826,9 @@ export class Game {
   private enter(t: Tile, outcome: StepEffect, dest: { x: number; y: number }, track: boolean, revived: number) {
     const before = this.snapshot();
     if (track) this.remember(before);
+    const drained = snap(this.run.player.hp - outcome.player.hp);
     this.applyStats(outcome.player);
-    if (t.kind === "door") this.openDoor(t, outcome.keysSpent, dest);
+    if (t.kind === "door") this.openDoor(t, outcome.keysSpent, drained, dest);
     return t.kind !== "enemy" || this.winFight(t.enemy!, outcome.combat!, before, dest, revived);
   }
   /** Moves the player onto the tile and applies what standing there does. */
@@ -886,13 +887,14 @@ export class Game {
     if (this.mode === "tower") this.towerRun[what] = true;
   }
   /** Each key the door took rises from it with a minus sign; a Heart Door,
-   * which takes nothing, raises a checked heart. */
-  private openDoor(t: Tile, keysSpent: KeyColor[], at: { x: number; y: number }) {
+   * which takes the hero's HP down to 1 instead, raises a heart. */
+  private openDoor(t: Tile, keysSpent: KeyColor[], drained: number, at: { x: number; y: number }) {
     const n = keysSpent.length;
     if (n) this.mar("keysSpent");
+    if (drained > 0) this.mar("damaged");
     for (const color of keysSpent) this.gain(at.x, at.y, `−1 ${color} key`, { tile: { kind: "key", color }, spent: true });
-    if (!n) this.gain(at.x, at.y, "Full HP ✓", { heart: true });
-    this.message = `${doorName(t)} opened${n ? ` · ${n} key${n === 1 ? "" : "s"} spent` : " · full HP"}`;
+    if (!n) this.gain(at.x, at.y, `−${wholeChange(drained)} HP`, { heart: true });
+    this.message = `${doorName(t)} opened${n ? ` · ${n} key${n === 1 ? "" : "s"} spent` : " · HP drained to 1"}`;
   }
   /** Settles a fight whose damage is already applied. Returns false when
    * the player fell. */

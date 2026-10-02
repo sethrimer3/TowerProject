@@ -75,7 +75,7 @@ export function laneKeys(lane: Lane): { upfront: Keys; net: Keys } {
 }
 
 /** The resources a lane spends, so the planner can tell lanes apart: keys
- * by colour, a fight against a profile, or full HP. */
+ * by colour, a fight against a profile, or HP (a Heart Door). */
 export function laneSpends(lane: Lane): Set<string> {
   const out = new Set<string>();
   for (const step of lane) {

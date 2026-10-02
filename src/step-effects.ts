@@ -1,6 +1,6 @@
 import { snap } from "./exact.ts";
 import { predict, type CombatPrediction } from "./combat.ts";
-import { doorCost } from "./doors.ts";
+import { doorCost, doorRule } from "./doors.ts";
 import type { KeyColor } from "./config.ts";
 import type { Player, Tile } from "./entities.ts";
 
@@ -9,6 +9,8 @@ import type { Player, Tile } from "./entities.ts";
 export const POTION_HEAL = 35;
 export const ATTACK_SHARD = 2;
 export const DEFENSE_SHARD = 1;
+/** The HP a Heart Door leaves the hero. */
+export const HEART_DOOR_HP = 1;
 
 export type StepBlocked =
   | { blocked: "wall" }
@@ -58,6 +60,7 @@ export function resolveStep(player: Player, tile: Tile, rules: StepRules = BASE_
       const cost = doorCost(tile, player);
       if (cost === null) return { blocked: "locked" };
       for (const color of cost) next.keys[color]--;
+      if (doorRule(tile).type === "fullHp") next.hp = Math.min(next.hp, HEART_DOOR_HP);
       effect.keysSpent = cost;
       break;
     }

@@ -45,8 +45,10 @@ test("doors spend exactly the keys they report, or block", () => {
   assert.equal(opened.player.keys.red, 1);
   assert.deepEqual(resolveStep(player(), { kind: "door", color: "blue" }), { blocked: "locked" });
   const heart = { kind: "door", door: { type: "fullHp" } } as const;
-  assert.deepEqual(effect(player({ hp: 100 }), heart).keysSpent, []);
-  assert.equal(resolveStep(player(), heart).blocked, "locked");
+  const drained = effect(player({ hp: 100 }), heart);
+  assert.deepEqual(drained.keysSpent, []);
+  assert.equal(drained.player.hp, 1, "a Heart Door drains HP to 1");
+  assert.equal(effect(player({ hp: 7 }), heart).player.hp, 1, "at any HP");
 });
 
 test("fights apply predicted damage; lethal fights leave 0 HP, impervious ones block", () => {

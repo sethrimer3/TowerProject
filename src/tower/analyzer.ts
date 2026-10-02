@@ -145,7 +145,7 @@ function openings(cells: Map<string, Tile>, doors: string[], s: EconomyState, { 
   const wallet = { yellow: keys.yellow - s.spent.yellow, blue: keys.blue - s.spent.blue, red: keys.red - s.spent.red };
   const next: EconomyState[] = [];
   for (const d of new Set(frontier)) {
-    const cost = doorCost(cells.get(doors[d])!, { keys: wallet, hp: 1, maxHp: 1 });
+    const cost = doorCost(cells.get(doors[d])!, { keys: wallet });
     if (!cost) continue;
     const spent = { ...s.spent };
     for (const c of cost) spent[c]++;
