@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { defaults, decode } from "../src/save.ts";
+import { defaults } from "../src/save.ts";
 import { Game } from "../src/state.ts";
 import { point } from "../src/entities.ts";
 import { TOWER_SECTION, TOWER_START_X } from "../src/config.ts";
@@ -23,7 +23,7 @@ test("each section's first room has no way down; other rooms do", () => {
   for (const room of [1, 9, 11]) assert.equal(generateTowerFloor(7, room).cells.get(point(TOWER_START_X, 0))?.kind, "stairsDown");
 });
 
-test("crossing into a new section resets ATK/DEF, records start HP, and blocks descent", () => {
+test("crossing into a new section resets ATK/DEF and blocks descent", () => {
   const g = new Game(defaults());
   const base = { attack: g.run.player.attack, defense: g.run.player.defense };
   standOn(g, TOWER_SECTION - 1);
@@ -34,29 +34,7 @@ test("crossing into a new section resets ATK/DEF, records start HP, and blocks d
   assert.equal(g.run.height, TOWER_SECTION);
   assert.equal(g.run.player.attack, base.attack);
   assert.equal(g.run.player.defense, base.defense);
-  assert.equal(g.save.tower.sectionHp[1], 90);
+  assert.equal(g.run.player.hp, 90);
   g.descendTowerRoom();
   assert.equal(g.run.height, TOWER_SECTION);
-  // A worse arrival never lowers the record.
-  standOn(g, TOWER_SECTION - 1);
-  g.run.player.hp = 40;
-  climb(g);
-  assert.equal(g.save.tower.sectionHp[1], 90);
-});
-
-test("new ascents begin at the chosen unlocked section with its best HP", () => {
-  const g = new Game(defaults());
-  assert.equal(g.setStartSection(1), false);
-  g.save.tower.sectionHp[1] = 77;
-  g.newRun({ outside: true });
-  assert.ok(g.setStartSection(1));
-  // Still on the forest path, so the pending run moves at once.
-  assert.equal(g.run.height, TOWER_SECTION);
-  assert.equal(g.run.player.hp, 77);
-  g.newRun();
-  assert.equal(g.run.height, TOWER_SECTION);
-  assert.equal(g.run.player.hp, 77);
-  const loaded = decode(JSON.stringify(g.save));
-  assert.equal(loaded.tower.startSection, 1);
-  assert.equal(loaded.tower.sectionHp[1], 77);
 });

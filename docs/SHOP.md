@@ -51,7 +51,7 @@ Offers, items, currencies, entitlements, the ledger and the Shop's clock are sep
 | `currency.ts` | The currencies offers can be priced in (`CURRENCIES`: Gems, Gold): how each is read, spent and credited. |
 | `rarity.ts` | `RARITIES`, from Common to Ancestral: display name, colour, power multiplier and drop weight, as data. |
 | `items.ts` | What an offer grants (`ShopItem`: an amount of a currency, or an entitlement), checking it can be granted before anything is paid, and granting it to its owner. |
-| `entitlements.ts` | The permanent perks (`ENTITLEMENTS`), saved in `save.entitlements`, and what the game reads from them: `goldFactor` (read by `Game.creditGold`), `permanentBoost` (the training boost's end is set to never) and `adsOff`. Erasing progress keeps them. |
+| `entitlements.ts` | The permanent perks (`ENTITLEMENTS`), saved in `save.entitlements`, and what the game reads from them: `goldFactor` (read by `Game.creditGold`), `permanentBoost` (the training boost's end is set to never) and `adsOff`. The Premium Passes (`pass1` to `pass3`) are entitlements too, read by the Goals screen (`goals.ts`) and sold from it as the `passes` category, which the Shop page doesn't list. Erasing progress keeps them. |
 | `offers.ts` | The `ShopOffer` model and the catalog (`OFFERS`), the categories and their requirements. |
 | `ledger.ts` | The Shop's saved state, `save.shop`: purchase counts per offer (with the Shop day of the last, so a daily offer's count starts again), the transaction history (the last 100) and the last confirmed server time. |
 | `clock.ts` | The Shop day (`gmtDay`), recording a confirmed server time, and the estimate between confirmations. |

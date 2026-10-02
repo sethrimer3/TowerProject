@@ -2,7 +2,7 @@ import type { Game } from "../state.ts";
 import type { ConfirmPrompt } from "./dialogs.ts";
 
 /** Every page tab. Tower and Delve both show the board. */
-export type Tab = "tower" | "delve" | "deck" | "defend" | "gear" | "upgrades" | "settings" | "shop";
+export type Tab = "tower" | "delve" | "deck" | "defend" | "gear" | "upgrades" | "settings" | "shop" | "goals";
 export const isBoard = (id: string): id is "tower" | "delve" => id === "tower" || id === "delve";
 
 /** The game as pages see it: its state to read (a page may change a setting
@@ -12,7 +12,7 @@ export type PageGame = Readonly<Pick<Game, "mode" | "run" | "save" | "fallen" | 
   Pick<
     Game,
     | "undo" | "acceptDefeat" | "eraseAll" | "finish" | "setDevMode"
-    | "sectionUnlocked" | "startSection" | "setStartSection"
+    | "claimGoal" | "warp"
     | "buy" | "train" | "trainWithGold" | "trainingLeft" | "claimTrainingBoost" | "cancelTraining" | "finishTraining" | "buyTrainer" | "resetTraining" | "buyHandSlot" | "arrangeHand" | "addToHand" | "placeInHand" | "removeFromHand" | "buyGold" | "craftEquipment" | "craftConsumable" | "salvageEquipment"
     | "equipItem" | "unequipSlot" | "useConsumable"
     | "clock" | "buyOffer" | "startResearch" | "cancelResearch" | "setAutoContinue" | "hireArchivist" | "finishResearchNow"

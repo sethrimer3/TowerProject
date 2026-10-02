@@ -64,10 +64,9 @@ const v3 = () => ({
   tower: {
     ...mode(towerRun), inspiration: 17,
     log: { "3": { earned: ["silver", "gold", "bogus"], claimed: ["gold", "platinum"] }, "x": { earned: ["gold"] }, "4": { earned: "gold" }, "5": { silver: "claimed", gold: "bogus", platinum: "earned" } },
-    sectionHp: { "1": 80.5, "2": 0, "0": 50, "x": 9 },
-    startSection: 1,
   },
   delve: { ...mode(delveRun), courage: 33, memory: { known: { "1,2": true, "4,5": true }, visited: { "1,2": 3 } } },
+  goals: { claimed: { "1": [10, 20] }, premium: { "1": [10] } },
   materials: { ...defaults().materials },
   equipmentInventory: [{
     id: "e1", slot: "weapon", name: "Blade", metal: "steel",
@@ -123,8 +122,8 @@ const EDGES: [string, unknown[]][] = [
   ["delve.memory.known.6,7", [false]],
   ["tower.lootedTiles.5:6,7", [true]],
   ["tower.lootedTiles.5:6:7", [true]],
-  ["tower.sectionHp.3", [1, 0.5]],
-  ["tower.startSection", [2, 0]],
+  ["goals.claimed.1", [[10, 10, 20, 15], "x", [-10]]],
+  ["goals.premium.12", [[10]]],
   ["settings.brightness", [19, 20, 100, 101]],
   ["settings.speed", [1, 3, 10, 2]],
   ["settings.transition", ["smooth", "instant", "slow"]],
@@ -213,8 +212,6 @@ test("decode keeps a valid v3 save's progress and clamps settings", () => {
   assert.equal(d.tower.fall, null, "a fall is kept only beside a fallen hero");
   assert.deepEqual(Object.keys(d.tower.lootedTiles).sort(), ["-1:-2:-3,-4", "1234:2:3,4", "1234:3,4"]);
   assert.deepEqual(d.tower.log, { "3": { silver: "earned", gold: "claimed" }, "5": { silver: "claimed", platinum: "earned" } });
-  assert.deepEqual(d.tower.sectionHp, { "1": 80.5 });
-  assert.equal(d.tower.startSection, 1);
   assert.deepEqual(d.tower.run?.changes["4,5"], { kind: "reward", tier: "silver" });
   assert.ok(!("rewards" in d.tower.run!));
   assert.deepEqual(d.equipped, { weapon: "e1" });

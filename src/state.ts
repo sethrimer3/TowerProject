@@ -6,6 +6,7 @@ import { BOOST_FOREVER, goldFactor, permanentBoost } from "./shop/entitlements.t
 import { offer, type OfferId } from "./shop/offers.ts";
 import { purchase, type Refusal } from "./shop/transactions.ts";
 import { confirmServerTime } from "./shop/clock.ts";
+import { canWarp, claimGoal } from "./goals.ts";
 import { AD_COOLDOWN_MS, AD_GEMS, TRAINING_RESET_GEMS, collectedGem, gemOn, gemSpot, missGem, reachFloor, type GemSpot } from "./gems.ts";
 import { DelvePlan } from "./delve/automove.ts";
 import { defaults } from "./save.ts";
@@ -60,7 +61,7 @@ import { materialDef, MATERIALS } from "./materials.ts";
 import { rollTreasureLoot } from "./loot.ts";
 import { TIERS, TIER_BOSS_FLOOR, switchTier, tierBonus, tierBonusText, tierGold, tierNumeral } from "./tiers.ts";
 import { snap } from "./exact.ts";
-import { whole, wholeChange, wholeHp } from "./whole.ts";
+import { whole, wholeChange } from "./whole.ts";
 import { MODES, milestones, type ModeProfile } from "./modes.ts";
 import { ranksInRun, runTrainingOffer } from "./run-training.ts";
 import { floorGold, floorSilver, keepUndos, killGold, silverBonus, loadout, percentPotionChance, potionPercent, provisionOpen, provisionPrice, reviveChance, trainingMaxed, trainingPoints, trainingSpeed } from "./loadout.ts";
@@ -80,7 +81,7 @@ import type { EquipmentSlot } from "./equipment.ts";
 import type { MaterialId, MaterialStack, MetalId } from "./materials.ts";
 /** How a new run starts: out in the forest or at the entrance, and from
  * which seed (rolled from the game's randomness when left out). */
-export type RunStart = { outside?: boolean; seed?: number };
+export type RunStart = { outside?: boolean; seed?: number; height?: number };
 export type RouteEffects = {
   hp: [number, number];
   attack: [number, number];
@@ -179,7 +180,7 @@ export class Game {
   get undoCapacity() {
     return loadout(this.save).undoCapacity;
   }
-  /** Grants unlimited currency, every Tower section, and every game mode.
+  /** Grants unlimited currency, the first 250 floors, and every game mode.
    * Reversible: turning Dev Mode back off leaves the grants in place, since
    * there is no meaningful "undo" for progress the player has already seen. */
   setDevMode(on: boolean) {
@@ -196,8 +197,7 @@ export class Game {
     }
     this.save.upgrades.delve = 1;
     this.save.upgrades.legacy = 1;
-    const maxSection = Math.max(20, ...Object.keys(this.save.tower.sectionHp).map(Number)) + 5;
-    for (let s = 1; s <= maxSection; s++) this.save.tower.sectionHp[s] ??= 999;
+    const maxSection = 25;
     this.save.tower.reached = Math.max(this.save.tower.reached, maxSection * TOWER_SECTION);
     this.save.tower.best = Math.max(this.save.tower.best, this.save.tower.reached);
     this.save.delve.reached = Math.max(this.save.delve.reached, maxSection * TOWER_SECTION);
@@ -591,8 +591,8 @@ export class Game {
     return result;
   }
   /** Starts a new run in this mode, rolling its seed unless `start` gives
-   * one. */
-  newRun({ outside = false, seed = Math.floor(this.rng() * 2 ** 32) }: RunStart = {}) {
+   * one, on the first floor unless it gives a `height` (a Warp). */
+  newRun({ outside = false, seed = Math.floor(this.rng() * 2 ** 32), height = 0 }: RunStart = {}) {
     if (this.run) this.claimRewards();
     // A Gem the last run left lying on a floor is missed.
     if (this.save.gemDrop.out?.mode === this.mode) missGem(this.save.gemDrop);
@@ -603,10 +603,7 @@ export class Game {
     this.route = [];
     this.encounter = null;
     this.fight = null;
-    // Tower ascents begin at the first floor of the chosen section.
-    const section = this.mode === "tower" ? this.startSection() : 0,
-      height = section * TOWER_SECTION;
-    const { player, loadout } = this.startingHero(this.mode, height);
+    const { player, loadout } = this.startingHero(this.mode);
     const core: RunCore = {
       layoutVersion: this.rules.layoutVersion,
       seed,
@@ -637,15 +634,14 @@ export class Game {
     this.dropHandPlan();
     this.paused = false;
   }
-  /** The hero a run in `mode` starting at `height` gets with everything
-   * owned now, standing at the entrance's row, and the loadout it keeps. */
-  private startingHero(mode: Mode, height: number) {
+  /** The hero a run in `mode` gets with everything owned now, at full HP,
+   * standing at the entrance's row, and the loadout it keeps. */
+  private startingHero(mode: Mode) {
     const { attack, defense, maxHp, shroud, keys } = loadout(this.save);
     // Only a hero with a shroud carries one.
     const withShroud = shroud ? { shroud } : {};
-    const hp = mode === "tower" ? this.sectionStartHp(height / TOWER_SECTION, maxHp) : maxHp;
     return {
-      player: { x: MODES[mode].entranceX, y: 0, hp, maxHp, attack, defense, ...withShroud, keys } as Player,
+      player: { x: MODES[mode].entranceX, y: 0, hp: maxHp, maxHp, attack, defense, ...withShroud, keys } as Player,
       loadout: { attack, defense, maxHp, ...withShroud },
     };
   }
@@ -656,39 +652,27 @@ export class Game {
     for (const mode of ["tower", "delve"] as const) {
       const run = this.save[mode].run;
       if (!run?.outside) continue;
-      const { player, loadout } = this.startingHero(mode, run.height);
+      const { player, loadout } = this.startingHero(mode);
       run.player = { ...player, x: run.player.x, y: run.player.y };
       run.loadout = loadout;
     }
   }
-  /** A Tower section can be started in once its first floor has been
-   * reached (which records its starting HP); section 0 always can. */
-  sectionUnlocked(section: number) {
-    return section === 0 || !!this.save.tower.sectionHp[section];
+  /** Claims a Goals checkpoint's reward (or its premium one) in `tower`
+   * once reached; returns it, or null when it isn't ready. */
+  claimGoal(tower: number, floor: number, premium: boolean) {
+    const reward = claimGoal(this.save, tower, floor, premium);
+    if (reward) this.readyForestRuns();
+    return reward;
   }
-  startSection() {
-    const s = this.save.tower.startSection;
-    return this.sectionUnlocked(s) ? s : 0;
-  }
-  /** Section 0 starts at full HP; later sections start with the best HP
-   * the player ever arrived there with (never above current max HP). */
-  private sectionStartHp(section: number, maxHp: number) {
-    return section === 0 ? maxHp : Math.min(maxHp, this.save.tower.sectionHp[section]);
-  }
-  /** Choose where future ascents begin. A Tower run still on the forest
-   * path hasn't entered yet, so it moves to the new section at once; a run
-   * already inside keeps going and the choice applies to the next one. */
-  setStartSection(section: number) {
-    if (!this.sectionUnlocked(section)) return false;
-    this.save.tower.startSection = section;
-    const run = this.save.tower.run;
-    if (run?.outside) {
-      run.height = run.maxHeight = section * TOWER_SECTION;
-      run.floors = {};
-      run.changes = {};
-      run.player.hp = this.sectionStartHp(section, run.player.maxHp);
-      this.save.tower.history = [];
-    }
+  /** Warp: from the forest, begins a new Tower run in `tower` at once on
+   * the floor after the checkpoint at `floor` (the first of the next ten),
+   * once Warp is owned and that checkpoint reached. */
+  warp(tower: number, floor: number) {
+    if (this.mode !== "tower" || !this.run.outside || !canWarp(this.save, tower, floor)) return false;
+    if (tower !== this.slice.tier) this.selectTier(tower);
+    this.newRun({ outside: true, height: floor });
+    this.enterFromOutside();
+    this.message = `Warped to floor ${floor + 1}`;
     return true;
   }
   private feedback(text: string) {
@@ -1118,20 +1102,13 @@ export class Game {
   }
   /** Crossing into a new 10-floor section: the way down is sealed (its
    * first room has no down stairs), ATK/DEF gathered from items in the
-   * last section are dropped, and the HP carried in becomes this section's
-   * starting HP if it beats the previous best. */
+   * last section are dropped. */
   private enterTowerSection() {
-    const section = this.run.height / TOWER_SECTION,
-      p = this.run.player,
-      base = this.run.loadout ?? loadout(this.save),
-      best = this.save.tower.sectionHp[section] ?? 0;
+    const p = this.run.player,
+      base = this.run.loadout ?? loadout(this.save);
     p.attack = base.attack;
     p.defense = base.defense;
-    if (p.hp > best) this.save.tower.sectionHp[section] = p.hp;
-    this.feedback(
-      `Floor ${this.run.height + 1} · ATK/DEF reset` +
-        (p.hp > best ? ` · new best start HP ${wholeHp(p.hp)}` : ""),
-    );
+    this.feedback(`Floor ${this.run.height + 1} · ATK/DEF reset`);
   }
   /** Step back onto the stairs at the foot of the current room, returning
    * to the previous room exactly as it was left: cleared tiles stay clear,

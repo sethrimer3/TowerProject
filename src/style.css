@@ -494,6 +494,8 @@ h1 span {
   line-height: 1;
 }
 .portrait-actions .gem-ad { font-size: 13px; padding: 1px 2px; }
+/* End Run shows only inside a run; in the forest its place stays empty. */
+.portrait-actions #end-run[hidden] { display: block; visibility: hidden; }
 .gem-ad .gem-icon { width: 16px; height: 16px; }
 .gem-ad small { font-size: 7px; line-height: 1; letter-spacing: .45px; }
 .gem-ad.waiting { visibility: hidden; }
@@ -1496,11 +1498,53 @@ nav {
 #modal { max-height: 90dvh; overflow-y: auto; }
 /* Tower starting-section picker */
 #board { position: relative; }
-.section-list { display: grid; gap: 8px; margin-top: 16px; max-height: 40vh; overflow-y: auto; }
-.section-option { display: flex; justify-content: space-between; gap: 12px; padding: 12px 14px; font-size: 12px; text-align: left; }
-.section-option span { color: #99a8bd; }
-.section-option.selected { border-color: #d7b46a; box-shadow: inset 0 0 0 1px #d7b46a; }
-.section-option:disabled { opacity: 0.45; }
+/* Goals: a stone tower of checkpoints, the line lit to the highest floor */
+.page#goals.active { display: flex; flex-direction: column; overflow: hidden; }
+.goals-head { display: flex; align-items: flex-start; gap: 10px; flex-shrink: 0; }
+.goals-head .back { margin-top: 12px; }
+.goals-head .page-title { flex: 1; margin: 12px 0 6px; }
+.goals-head .page-title h2 { margin: 4px 0 0; }
+.goals-pass { margin-top: 12px; min-height: 36px; padding: 6px 10px; font-size: 10px; letter-spacing: .5px; color: #ffe1a1; border-color: #a8823c; background: linear-gradient(#4a3a1c, #2a2112); box-shadow: 0 0 10px #d8b57244; }
+.goals-pass.owned { color: #b7e8c4; border-color: #4f8a60; background: linear-gradient(#1f3326, #142019); box-shadow: none; }
+.goals-message { min-height: 16px; margin: 0 0 6px; font-size: 11px; color: #e5d5b8; text-align: center; flex-shrink: 0; }
+.goals-stage { position: relative; flex: 1; min-height: 0; overflow: hidden; border: 1px solid #3a3f48; border-radius: 9px; background: #07090d; }
+.goals-strip { display: flex; height: 100%; transition: transform .45s ease; }
+.goals-strip.instant { transition: none; }
+.goals-scroll { flex: 0 0 100%; height: 100%; overflow-y: auto; overflow-x: hidden; }
+.goals-tower { position: relative; margin: 0 auto; width: 100%;
+  background: linear-gradient(90deg, #000a 0%, transparent 14%, transparent 86%, #000a 100%), linear-gradient(#07090d 0, transparent 120px), url("../assets/theme/stone.svg") 0 100% / 240px 160px, #15181d; }
+.goals-ground { position: absolute; left: 0; right: 0; bottom: 0; height: 96px; background: linear-gradient(#2b3a24, #18210f 40%, #0d1209); border-top: 2px solid #4b6a35; }
+.goals-line { position: absolute; left: 50%; width: 4px; height: calc(100% - 96px); transform: translateX(-50%); background: #2c313a; border-radius: 2px; box-shadow: 0 0 0 1px #0008; }
+.goals-line.lit { background: linear-gradient(#fff3c4, #e2b55a 30px, #c8963c); box-shadow: 0 0 8px #e2b55a99, 0 0 0 1px #0008; }
+.goal-row { position: absolute; left: 0; right: 0; transform: translateY(50%); display: grid; grid-template-columns: minmax(0, 1fr) 52px minmax(0, 1fr); align-items: center; gap: 8px; padding: 0 8px; }
+.goal-floor { justify-self: center; z-index: 1; min-height: 0; width: 46px; height: 28px; padding: 0; border-radius: 14px; font-size: 13px; font-weight: 700; color: #7e899b; border: 1px solid #3c434f; background: #14181f; }
+.goal-floor.reached { color: #ffe9b0; border-color: #d8b572; background: linear-gradient(#4a3a1c, #2b2214); box-shadow: 0 0 8px #d8b57266; }
+.goal-floor.warpable { box-shadow: 0 0 6px #d8b572aa, 0 0 14px #b48cff88; border-color: #e2c8ff; }
+.goal-reward { position: relative; display: flex; align-items: center; gap: 6px; min-height: 0; padding: 5px 7px; text-align: left; border-radius: 8px; background: #141922e6; }
+.goal-reward.standard { justify-self: end; flex-direction: row-reverse; text-align: right; }
+.goal-reward.premium { justify-self: start; border-color: #6d5a2c; background: linear-gradient(#2a2212e6, #17130be6); }
+.goal-art { position: relative; flex-shrink: 0; width: 26px; height: 26px; }
+.goal-art > .goal-icon, .goal-art > .gem-icon, .goal-art > .ui-sprite.gold-icon { width: 26px; height: 26px; vertical-align: 0; }
+.goal-badge { position: absolute; right: -5px; bottom: -5px; width: 15px; height: 15px; }
+.goal-text { display: flex; flex-direction: column; min-width: 0; }
+.goal-text b { font-size: 10px; color: #e5d5b8; overflow-wrap: anywhere; }
+.goal-text small { font-size: 7px; letter-spacing: .5px; color: #8e9aab; text-transform: uppercase; }
+.goal-reward.locked, .goal-reward.needsPass, .goal-reward.claimed { opacity: .55; }
+.goal-reward.claimed .goal-text b { color: #9fb5a4; }
+.goal-reward.ready { border-color: #f1d69b; box-shadow: 0 0 10px #f1d69b66; opacity: 1; }
+.goal-reward.ready .goal-text b { color: #fff3c4; }
+.goal-reward.ready .goal-text small { color: #f1d69b; }
+.goals-floor { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); z-index: 2; padding: 6px 16px; border-radius: 14px; font-size: 13px; font-weight: 700; color: #fff3c4; background: #1c1810ee; border: 1px solid #d8b572; box-shadow: 0 2px 10px #000c; pointer-events: none; white-space: nowrap; }
+.goals-towers { display: flex; align-items: center; justify-content: center; gap: 14px; padding: 8px 0 2px; flex-shrink: 0; }
+.goals-towers button { min-height: 36px; padding: 4px 14px; font-size: 18px; }
+.goals-towers b { min-width: 90px; text-align: center; font-size: 13px; color: #e5d5b8; }
+.pass-totals { display: flex; justify-content: center; gap: 12px; margin: 14px 0 6px; }
+.pass-total { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 16px; border-radius: 8px; border: 1px solid #36404f; background: #121822; }
+.pass-total .gem-icon, .pass-total .ui-sprite.gold-icon { width: 30px; height: 30px; }
+.pass-total b { font-size: 18px; color: #e5d5b8; }
+.pass-total small { font-size: 7px; letter-spacing: 1px; color: #8e9aab; }
+.pass-total.gems { border-color: #2fa9e0; box-shadow: 0 0 12px #2fa9e055; }
+.pass-total.gems b { color: #8fe6ff; }
 
 /* Pixel-art UI sprites. World items deliberately use their canonical tile
    PNGs here too, so a key or potion always has one visual identity. */

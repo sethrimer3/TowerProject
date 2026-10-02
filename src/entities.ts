@@ -11,6 +11,7 @@ import type { GemDrop } from "./gems.ts";
 import type { Settings } from "./settings.ts";
 import type { EntitlementId } from "./shop/entitlements.ts";
 import type { ShopSave } from "./shop/ledger.ts";
+import type { GoalsSave } from "./goals.ts";
 export type Kind =
   | "wall"
   | "floor"
@@ -165,7 +166,7 @@ export type ModeSave<R extends Run = Run> = {
    * run, from milestones and clear chests, kept beside `runGold`. */
   runCurrency: number;
   /** The numbered tower (or delve) selected: the slice's records (`best`,
-   * `reached`, and the Tower's log and sections) are this tier's. */
+   * `reached`, and the Tower's log) are this tier's. */
   tier: number;
   /** The highest tier opened, from 1 to `TIERS`. */
   tiersOpen: number;
@@ -177,12 +178,6 @@ export type Save = {
   tower: ModeSave<TowerRun> & {
     inspiration: number;
     log: Record<string, FloorRecord>;
-    /** Which 10-floor section new ascents begin in (0 = floors 1–10). */
-    startSection: number;
-    /** Highest HP the player has arrived at each section's first floor
-     * with, keyed by section index (1+). Doubles as that section's
-     * starting HP and as the record of which sections are unlocked. */
-    sectionHp: Record<string, number>;
   };
   delve: ModeSave<DelveRun> & { courage: number; memory: AutomoveMemory };
   /** The premium currency, kept between runs like Gold (gems.ts). */
@@ -245,5 +240,8 @@ export type Save = {
   /** The Shop's purchase counts, transaction history and last confirmed
    * server time (shop/ledger.ts); what was bought lives with its owner. */
   shop: ShopSave;
+  /** The Goals screen's checkpoint rewards claimed in each tower, and the
+   * premium ones (goals.ts). */
+  goals: GoalsSave;
 };
 export const point = (x: number, y: number) => `${x},${y}`;

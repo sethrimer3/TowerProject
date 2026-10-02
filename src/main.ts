@@ -14,7 +14,8 @@ import { el } from "./ui/dom.ts";
 import { buildShell } from "./ui/shell.ts";
 import { BoardOverlay } from "./ui/board-overlay.ts";
 import { boardHeadingStale, flashRed, renderAdButton, renderShopDot, renderBoardHeading, renderHud, renderVitals, gearWaiting, upgradesWaiting } from "./ui/hud.ts";
-import { confirmAction, RunEndDialog, showLog, showSectionPicker } from "./ui/dialogs.ts";
+import { confirmAction, RunEndDialog, showLog } from "./ui/dialogs.ts";
+import { GoalsPage } from "./ui/goals-page.ts";
 import { SkillTreePage } from "./ui/skill-tree-page.ts";
 import { ResearchToasts, researchToast, trainingToast } from "./ui/research-toast.ts";
 import { GearPage } from "./ui/gear-page.ts";
@@ -58,6 +59,7 @@ const skillTree = new SkillTreePage(ctx);
 const gear = new GearPage(ctx);
 const deck = new DeckPage(ctx);
 const shop = new ShopPage(ctx);
+const goals = new GoalsPage(ctx);
 const runTraining = new RunTrainingBar(game, () => update());
 const researchToasts = new ResearchToasts(() => game.save.settings.reduceMotion);
 const defendPage = new DefendPage(el("defend"), {
@@ -100,6 +102,7 @@ function renderPage() {
   if (tab === "upgrades") skillTree.render();
   if (tab === "settings") renderSettingsPage(ctx, overlay);
   if (tab === "shop") shop.render();
+  if (tab === "goals") goals.render();
 }
 /** Locked tabs point at the upgrade that unlocks them instead. */
 function unlockTarget(id: string): string {
@@ -154,7 +157,9 @@ function navigate(requested: string) {
     b.classList.toggle("selected", b.dataset.tab === id);
     b.setAttribute("aria-current", b.dataset.tab === id ? "page" : "false");
   });
-  renderPage();
+  // The Goals screen opens afresh, on the tower the forest leads to.
+  if (id === "goals" && from !== "goals") goals.open();
+  else renderPage();
   update();
 }
 
@@ -175,7 +180,10 @@ el("hand").onclick = (e) => {
   update();
 };
 el("log").onclick = () => showLog(ctx);
-el("section-pick").onclick = () => showSectionPicker(ctx);
+// Goals: the Tower's checkpoints (the Delve's button is a placeholder).
+el("section-pick").onclick = () => {
+  if (game.mode === "tower") navigate("goals");
+};
 for (const [id, step] of [["tier-prev", -1], ["tier-next", 1]] as const)
   el(id).onclick = () => {
     if (!game.selectTier(game.save[game.mode].tier + step)) return;

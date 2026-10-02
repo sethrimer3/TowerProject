@@ -29,7 +29,7 @@ A Tower floor the player has stood on during this run. It stays as it was left, 
 _Avoid_: explored room, old floor
 
 **Section**:
-A run of ten Tower floors. Its first floor is sealed below, and the ATK/DEF gathered from items resets on entering it; each section remembers the best HP the player arrived with, and later ascents can start there.
+A run of ten Tower floors. Its first floor is sealed below, and the ATK/DEF gathered from items resets on entering it.
 _Avoid_: stage, chapter
 
 ### Floor layout
@@ -145,6 +145,18 @@ _Avoid_: coins, run gold
 **Run training**:
 Training levels bought with Silver inside a run, on top of the hero's own, lasting only for that run. Opened by the Inspiration skill On the Job.
 _Avoid_: drills, run upgrades, temporary training
+
+**Checkpoint**:
+A Tower floor every ten (10, 20, … 100) on the Goals screen, each tower with its own. Reaching it lets the player claim its reward, and its premium reward too with the Premium Pass for its set of three towers. Claims last between runs.
+_Avoid_: milestone (the currency paid per new floor), section
+
+**Warp**:
+Beginning a new Tower run at once on the floor just above a checkpoint already reached, from the Goals screen. Unlocked by claiming Tower I's first checkpoint; entering the tower from the forest always starts on floor 1.
+_Avoid_: teleport, starting floor
+
+**Premium Pass**:
+A one-time purchase that opens the premium checkpoint rewards in one set of three towers (I–III, IV–VI or VII–IX).
+_Avoid_: battle pass, season pass
 
 **Courage**:
 The Delve's currency: one for each new equivalent floor reached, spent on upgrades in the skill trees.

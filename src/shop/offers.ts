@@ -1,6 +1,7 @@
 import type { Save } from "../entities.ts";
 import type { Mode } from "../entities.ts";
 import { tierNumeral } from "../tiers.ts";
+import { PASSES } from "../goals.ts";
 import type { CurrencyId } from "./currency.ts";
 import type { ShopItem } from "./items.ts";
 import type { RarityId } from "./rarity.ts";
@@ -20,15 +21,17 @@ export type Price =
 /** A progression gate on a category or offer. */
 export type Requirement = { kind: "tier"; mode: Mode; tier: number };
 
-export type CategoryId = "limited" | "special" | "gems";
+export type CategoryId = "limited" | "special" | "gems" | "passes";
 export type Category = { name: string; requires?: Requirement[] };
 export const CATEGORIES: Record<CategoryId, Category> = {
   limited: { name: "Limited Offers" },
   special: { name: "One-Time Offers" },
   gems: { name: "Gems" },
+  // Sold from the Goals screen, not the Shop page.
+  passes: { name: "Premium Passes" },
 };
 
-export type OfferId = "shardPack" | "adFree" | "coins2" | "coins3" | "dailyGems" | "gems250" | "gems550" | "gems1150" | "gems2500" | "gems7500";
+export type OfferId = "shardPack" | "adFree" | "coins2" | "coins3" | "dailyGems" | "gems250" | "gems550" | "gems1150" | "gems2500" | "gems7500" | "pass1" | "pass2" | "pass3";
 export type ShopOffer = {
   id: OfferId;
   name: string;
@@ -90,6 +93,11 @@ export const OFFERS: readonly ShopOffer[] = [
   gemPack("gems1150", 1150, "gems_1150", "$19.99", "rare", "15% bonus!"),
   gemPack("gems2500", 2500, "gems_2500", "$39.99", "epic", "25% bonus!"),
   gemPack("gems7500", 7500, "gems_7500", "$99.99", "legendary", "50% bonus!"),
+  ...PASSES.map((p): ShopOffer => ({
+    id: p.id as OfferId, name: `Premium Pass ${p.n}`, category: "passes", item: { kind: "entitlement", id: p.id }, quantity: 1,
+    price: { kind: "money", sku: p.sku, label: p.label }, rarity: "legendary", purchaseLimit: 1,
+    effects: [`Premium rewards in Towers ${p.towers.map(tierNumeral).join(", ")}`], tags: ["oneTime"],
+  })),
 ];
 
 export const offer = (id: string) => OFFERS.find((o) => o.id === id);

@@ -1,5 +1,4 @@
-import { whole, wholeHp } from "../whole.ts";
-import { TOWER_SECTION } from "../config.ts";
+import { whole } from "../whole.ts";
 import { CLEAR_TIERS } from "../tower/clear-ledger.ts";
 import { MODES } from "../modes.ts";
 import { loadout } from "../loadout.ts";
@@ -149,42 +148,6 @@ export function showLog(ctx: AppContext) {
     el("log-newer").onclick = () => { page--; render(); };
     el("log-older").onclick = () => { page++; render(); };
     el("log-close").onclick = () => modal.close();
-  };
-  render();
-  modal.showModal();
-}
-
-/** Picks which Tower section (10 floors) the next ascent starts from. */
-export function showSectionPicker(ctx: AppContext) {
-  const { game, modal } = ctx;
-  if (game.mode !== "tower") return;
-  const render = () => {
-    const tower = game.save.tower,
-      maxHp = tower.run?.player.maxHp ?? loadout(game.save).maxHp,
-      current = game.startSection(),
-      unlocked = Object.keys(tower.sectionHp).map(Number),
-      // Every unlocked section, plus the next one as a locked goal.
-      count = Math.max(0, ...unlocked) + 2,
-      inside = !!tower.run && !tower.run.outside;
-    const option = (s: number) => {
-      const first = s * TOWER_SECTION + 1,
-        open = game.sectionUnlocked(s),
-        hp = s === 0 ? `${whole(maxHp)} HP · full` : open ? `${wholeHp(tower.sectionHp[s])} HP` : `Reach floor ${first}`;
-      return `<button class="section-option${s === current ? " selected" : ""}" data-section="${s}" ${open ? "" : "disabled"}><b>Floors ${first}–${first + TOWER_SECTION - 1}</b><span>${hp}</span></button>`;
-    };
-    modal.innerHTML = `<small>THE ASCENT TRIALS</small><h2>Starting floor</h2>
-      <p class="hint">Every 10 floors is its own trial: the way down seals behind you and ATK/DEF from items resets. Each trial begins with the highest HP you have ever reached its first floor with.</p>
-      <div class="section-list">${Array.from({ length: count }, (_, s) => option(s)).join("")}</div>
-      ${inside ? `<p class="hint">Your current ascent continues; the new start applies to your next one.</p>` : ""}
-      <div class="dialog-actions"><button id="section-close">Close</button></div>`;
-    modal.querySelectorAll<HTMLButtonElement>("[data-section]").forEach(b => {
-      b.onclick = () => {
-        if (!game.setStartSection(Number(b.dataset.section))) return;
-        ctx.save();
-        render();
-      };
-    });
-    el("section-close").onclick = () => modal.close();
   };
   render();
   modal.showModal();

@@ -14,10 +14,11 @@ import { decodeGemDrop, defaultGemDrop } from "./gems.ts";
 import { decodeArchives, defaultArchives } from "./archives.ts";
 import { BOOST_FOREVER, decodeEntitlements, permanentBoost } from "./shop/entitlements.ts";
 import { decodeShop, defaultShop } from "./shop/ledger.ts";
+import { decodeGoals, defaultGoals } from "./goals.ts";
 export function defaults(): Save {
   return {
     version: 3,
-    tower: { run: null, history: [], fall: null, best: 0, reached: 0, inspiration: 0, log: {}, lootedTiles: {}, runGold: 0, runCurrency: 0, startSection: 0, sectionHp: {}, tier: 1, tiersOpen: 1, tierRecords: {} },
+    tower: { run: null, history: [], fall: null, best: 0, reached: 0, inspiration: 0, log: {}, lootedTiles: {}, runGold: 0, runCurrency: 0, tier: 1, tiersOpen: 1, tierRecords: {} },
     delve: { run: null, history: [], fall: null, best: 0, reached: 0, courage: 0, lootedTiles: {}, runGold: 0, runCurrency: 0, memory: { known: {}, visited: {} }, tier: 1, tiersOpen: 1, tierRecords: {} },
     gems: 0,
     gemDrop: defaultGemDrop(),
@@ -47,6 +48,7 @@ export function defaults(): Save {
     defend: defaultDefendSave(),
     entitlements: [],
     shop: defaultShop(),
+    goals: defaultGoals(),
   };
 }
 const finite = (n: unknown, max = 1e9) =>
@@ -310,21 +312,6 @@ function decodeTowerLog(raw: any): Save["tower"]["log"] {
   }
   return log;
 }
-function decodeSectionHp(raw: any): Record<string, number> {
-  const sectionHp: Record<string, number> = {};
-  if (raw && typeof raw === "object")
-    for (const [section, hp] of Object.entries(raw) as [string, any][])
-      if (/^[1-9]\d*$/.test(section) && finite(hp) && hp > 0) sectionHp[section] = snap(hp);
-  return sectionHp;
-}
-function decodeSections(tower: any, d: Save) {
-  d.tower.log = decodeTowerLog(tower?.log);
-  d.tower.sectionHp = decodeSectionHp(tower?.sectionHp);
-  // A section can only be the start once it has been reached (has a recorded HP).
-  const start = tower?.startSection;
-  const unlocked = start === 0 || !!d.tower.sectionHp[start];
-  if (finite(start) && unlocked) d.tower.startSection = Math.floor(start);
-}
 /** Each mode's tiers: the highest opened, the one selected (its records
  * are the slice's), and the others' records. */
 function decodeTiers(s: any, d: Save) {
@@ -337,11 +324,7 @@ function decodeTiers(s: any, d: Save) {
       const tier = Number(key);
       if (!/^[1-9]$/.test(key) || tier > slice.tiersOpen || tier === slice.tier || !isRecord(r)) continue;
       const reached = count(r.reached, 0), record: TierRecord = { best: Math.max(reached, count(r.best, 0)), reached };
-      if (mode === "tower") {
-        record.log = decodeTowerLog(r.log);
-        record.sectionHp = decodeSectionHp(r.sectionHp);
-        record.startSection = r.startSection === 0 || record.sectionHp[r.startSection] ? count(r.startSection, 0) : 0;
-      }
+      if (mode === "tower") record.log = decodeTowerLog(r.log);
       slice.tierRecords[key] = record;
     }
   }
@@ -384,9 +367,10 @@ export function decode(raw: string | null): Save {
     for (const step of VERSION_STEPS.get(s.version) ?? []) step(s, d, undoCapacity);
     d.entitlements = decodeEntitlements(s.entitlements);
     d.shop = decodeShop(s.shop);
+    d.goals = decodeGoals(s.goals);
     if (permanentBoost(d)) d.trainingBoostUntil = BOOST_FOREVER;
     decodeReached(s, d);
-    decodeSections(s.tower, d);
+    d.tower.log = decodeTowerLog(s.tower?.log);
     decodeTiers(s, d);
     migratePreSkillTrees(s.upgrades, d);
     d.defend = decodeDefendSave(s.defend);

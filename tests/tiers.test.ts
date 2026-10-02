@@ -94,18 +94,18 @@ test("choosing a tier in the forest swaps in its own records; inside, or a close
   slice.tiersOpen = 2;
   assert.equal(g.selectTier(2), false, "not while a run is inside");
   g.newRun({ outside: true });
-  Object.assign(slice, { best: 120, reached: 120, log: { "5": { silver: "claimed" } }, sectionHp: { "1": 150 }, startSection: 1 });
+  Object.assign(slice, { best: 120, reached: 120, log: { "5": { silver: "claimed" } } });
   assert.equal(g.selectTier(3), false, "not a tier not yet open");
   assert.ok(g.selectTier(2));
   assert.equal(g.run.tier, 2);
   assert.equal(g.run.outside, true);
-  assert.deepEqual([slice.best, slice.reached, slice.log, slice.sectionHp, slice.startSection], [0, 0, {}, {}, 0]);
+  assert.deepEqual([slice.best, slice.reached, slice.log], [0, 0, {}]);
   assert.match(g.message, /Tower II · ×2 Gold & XP/);
   slice.reached = 4;
   assert.ok(g.selectTier(1));
   assert.equal(g.run.tier, undefined);
-  assert.deepEqual([slice.best, slice.reached, slice.log, slice.sectionHp, slice.startSection], [120, 120, { "5": { silver: "claimed" } }, { "1": 150 }, 1]);
-  assert.deepEqual(slice.tierRecords["2"], { best: 0, reached: 4, log: {}, sectionHp: {}, startSection: 0 });
+  assert.deepEqual([slice.best, slice.reached, slice.log], [120, 120, { "5": { silver: "claimed" } }]);
+  assert.deepEqual(slice.tierRecords["2"], { best: 0, reached: 4, log: {} });
 });
 
 test("each tier pays its own milestones again", () => {

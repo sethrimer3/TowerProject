@@ -98,7 +98,6 @@ try {
       s.tower.best = 31;
       s.delve.reached = 57;
       s.delve.best = 57;
-      s.tower.sectionHp = { 1: 260, 2: 340 };
       s.tower.log = {
         0: { silver: "claimed", gold: "earned" },
         4: { silver: "claimed" },
@@ -283,7 +282,7 @@ try {
       await shot(`${prefix}.log.older`);
     }
     await closeModal();
-    // Inside a run the ad's Gems stand where Floors is in the forest.
+    // Inside a run the ad's Gems stand where Goals is in the forest.
     await click("#gem-ad");
     await shot(`${prefix}.adGems`);
     await click("#auto-settings");
@@ -418,10 +417,22 @@ try {
     await shot(`rich.focus.${card}`);
   }
   await leaveRun();
-  // In the forest, Floors chooses where the next ascent starts.
+  // In the forest, Goals shows the Tower's checkpoints: claiming Unlock
+  // Warp explains it, a premium reward offers the pass, and a reached
+  // checkpoint asks to warp there.
   await click("#section-pick");
-  await shot("rich.sections");
+  await shot("rich.goals");
+  await click('[data-goal="1:10:0"]');
+  await shot("rich.goals.warpUnlocked");
+  await click("#warp-ok");
+  await shot("rich.goals.claimed");
+  await click('[data-goal="1:20:1"]');
+  await shot("rich.goals.pass");
   await closeModal();
+  await click('[data-warp="1:30"]');
+  await shot("rich.goals.warp");
+  await click("#cancel");
+  await click("#goals-back");
   await deckTour("rich");
   await cardRevealTour("rich");
   await tab("defend");

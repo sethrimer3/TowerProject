@@ -333,26 +333,28 @@ function renderRunEarned(game: Game) {
   box.classList.add("flash");
 }
 
-/** Inside a run, the ad button stands where Floors is in the forest:
+/** Inside a run, the ad button stands where Goals is in the forest:
  * showing its Gems when they can be claimed, an empty space while it waits. */
 export function renderAdButton(game: Game) {
   const inside = !game.run.outside, button = el("gem-ad") as HTMLButtonElement;
   el("section-pick").hidden = inside;
+  // Only a run inside can be ended.
+  el("end-run").hidden = !inside;
   button.hidden = !inside;
   button.classList.toggle("waiting", !game.adReady);
   button.disabled = !game.adReady;
 }
 
-/** Log and Floors act on the Tower; in the Delve they are placeholders. */
+/** Log and Goals act on the Tower; in the Delve they are placeholders. */
 function renderModeActions(game: Game) {
   const tower = game.mode === "tower";
   const logButton = el("log") as HTMLButtonElement;
   const floorsButton = el("section-pick") as HTMLButtonElement;
   logButton.textContent = tower ? "Log" : "Button 1";
   logButton.setAttribute("aria-label", tower ? "Adventure log" : "Future Delve action 1");
-  floorsButton.textContent = tower ? "Floors" : "Button 2";
-  floorsButton.setAttribute("aria-label", tower ? "Choose starting floor" : "Future Delve action 2");
-  floorsButton.title = tower ? "Choose starting floor" : "Future Delve action 2";
+  floorsButton.textContent = tower ? "Goals" : "Button 2";
+  floorsButton.setAttribute("aria-label", tower ? "Goals" : "Future Delve action 2");
+  floorsButton.title = tower ? "Goals" : "Future Delve action 2";
   logButton.classList.toggle("placeholder-action", !tower);
   floorsButton.classList.toggle("placeholder-action", !tower);
 }

@@ -5,7 +5,7 @@ import type { Save } from "../entities.ts";
 // game reads what they do through the functions here.
 // TODO: once the store is connected, restore them from its receipts.
 
-export type EntitlementId = "adFree" | "coins2" | "coins3";
+export type EntitlementId = "adFree" | "coins2" | "coins3" | "pass1" | "pass2" | "pass3";
 export type Entitlement = {
   name: string;
   /** Multiplies every Gold the hero banks; all of them multiply together. */
@@ -20,6 +20,11 @@ export const ENTITLEMENTS: Record<EntitlementId, Entitlement> = {
   adFree: { name: "Permanent Ad-Disable", goldFactor: 1.5, adsOff: true, permanentBoost: true },
   coins2: { name: "Special Coin Pack", goldFactor: 2 },
   coins3: { name: "Premium Coin Pack", goldFactor: 3 },
+  // The Premium Passes open the Goals screen's premium rewards (goals.ts),
+  // each in its set of three towers.
+  pass1: { name: "Premium Pass 1", goldFactor: 1 },
+  pass2: { name: "Premium Pass 2", goldFactor: 1 },
+  pass3: { name: "Premium Pass 3", goldFactor: 1 },
 };
 export const ENTITLEMENT_IDS = Object.keys(ENTITLEMENTS) as EntitlementId[];
 
