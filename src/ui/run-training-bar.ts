@@ -43,25 +43,27 @@ export class RunTrainingBar {
       .join("");
     bar.onclick = (e) => {
       const button = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-run-group]");
-      if (!button || button.disabled) return;
-      const group = button.dataset.runGroup as Group;
-      this.open = this.open === group ? null : group;
-      if (this.lesson) {
-        if (this.open) this.triedGroup = true;
-        else if (this.triedGroup) this.finishLesson();
-      }
-      this.hideTip();
-      this.changed();
+      if (button && !button.disabled) this.toggleGroup(button.dataset.runGroup as Group);
     };
-    const cards = el("run-drills");
+    this.bindCards(el("run-drills"));
+  }
+
+  /** Opens `group` in the hand's place, or closes it; in the lesson,
+   * closing a group opened finishes it. */
+  private toggleGroup(group: Group) {
+    this.open = this.open === group ? null : group;
+    if (this.lesson && this.open) this.triedGroup = true;
+    else if (this.lesson && this.triedGroup) this.finishLesson();
+    this.hideTip();
+    this.changed();
+  }
+
+  /** A card's price buys a rank (red sparks when it can't); its face, or a
+   * mouse over it, shows its details. */
+  private bindCards(cards: HTMLElement) {
     cards.onclick = (e) => {
       const target = e.target as HTMLElement, buy = target.closest<HTMLButtonElement>("[data-run-train]");
-      if (buy) {
-        if (!this.game.trainInRun(buy.dataset.runTrain as TrainingId)) sparkRed(buy, this.game.save.settings.reduceMotion);
-        this.changed();
-        this.refreshTip();
-        return;
-      }
+      if (buy) return this.buy(buy);
       const card = target.closest<HTMLElement>(".drill-card");
       if (card) this.showTip(card);
     };
@@ -80,12 +82,27 @@ export class RunTrainingBar {
     }, { passive: false });
   }
 
+  private buy(button: HTMLButtonElement) {
+    if (!this.game.trainInRun(button.dataset.runTrain as TrainingId)) sparkRed(button, this.game.save.settings.reduceMotion);
+    this.changed();
+    this.refreshTip();
+  }
+
   /** Shows the bar inside a run, and the open group's cards in the hand's place. */
   render() {
     const game = this.game, inside = !game.run.outside && game.trainsOnTheJob;
     el("training-bar").hidden = !inside;
-    if (!inside) this.open = null;
-    if (this.open && !this.rows(this.open).length) this.open = null;
+    // A group closes outside a run, or once none of its rows can train.
+    if (!inside || (this.open && !this.rows(this.open).length)) this.open = null;
+    this.renderGroups();
+    const rows = this.open ? this.rows(this.open) : [];
+    document.querySelector("nav")!.classList.toggle("drilling", !!this.open);
+    this.renderCards(rows);
+    this.renderLesson(inside);
+  }
+
+  /** Each group's button: closed with no rows to train, lit while open. */
+  private renderGroups() {
     document.querySelectorAll<HTMLButtonElement>("[data-run-group]").forEach((b) => {
       const group = b.dataset.runGroup as Group, open = this.rows(group).length > 0;
       b.disabled = !open;
@@ -93,8 +110,10 @@ export class RunTrainingBar {
       b.classList.toggle("selected", group === this.open);
       b.setAttribute("aria-pressed", String(group === this.open));
     });
-    const rows = this.open ? this.rows(this.open) : [];
-    document.querySelector("nav")!.classList.toggle("drilling", !!this.open);
+  }
+
+  /** The open group's cards, built again only when its rows change. */
+  private renderCards(rows: TrainingId[]) {
     if (rows.join() !== this.shown) {
       this.shown = rows.join();
       this.hideTip();
@@ -104,7 +123,6 @@ export class RunTrainingBar {
       }).join("");
     }
     for (const id of rows) this.fill(id);
-    this.renderLesson(inside);
   }
 
   /** Ends the lesson, and plays the hand on if the lesson paused it. */
@@ -123,27 +141,12 @@ export class RunTrainingBar {
    * open group's button, or the first that opens. */
   private renderLesson(inside: boolean) {
     const bar = el("training-bar");
-    let note = bar.querySelector<HTMLElement>(".job-tip"), pointer = bar.querySelector<HTMLElement>(".job-pointer");
     if (!inside || !this.lesson) {
-      note?.remove();
-      pointer?.remove();
+      bar.querySelector(".job-tip")?.remove();
+      bar.querySelector(".job-pointer")?.remove();
       return;
     }
-    if (!note || !pointer) {
-      bar.insertAdjacentHTML("beforeend", `<div class="job-tip" role="status"></div><span class="job-pointer${this.game.save.settings.reduceMotion ? " still" : ""}">${POINTER_SVG}</span>`);
-      note = bar.querySelector<HTMLElement>(".job-tip")!;
-      pointer = bar.querySelector<HTMLElement>(".job-pointer")!;
-      // The lesson pauses the hand, so the player can take it in.
-      if (this.game.auto) {
-        this.game.toggleAuto();
-        this.pausedForLesson = true;
-        // The HUD drew before the bar: redraw it with the hand paused.
-        queueMicrotask(this.changed);
-      }
-    }
-    const text = this.open
-      ? `<b>Training for this run</b><p>Press a card's price to buy a rank with ${silverIcon()} Silver. Press ${TRAINING_GROUPS[this.open].toUpperCase()} again to close it.</p>`
-      : `<b>Train on the Job</b><p>Spend the ${silverIcon()} Silver you find on upgrades that raise your stats for the rest of this run. Press any of the three menus below to open it, and press it again to close it.</p>`;
+    const { note, pointer } = this.lessonParts(bar), text = this.lessonText();
     if (note.dataset.text !== text) {
       note.dataset.text = text;
       note.innerHTML = text;
@@ -154,6 +157,27 @@ export class RunTrainingBar {
     const at = buttons.find((b) => b.dataset.runGroup === this.open) ?? buttons.find((b) => !b.disabled) ?? buttons[0];
     // The buttons share the bar's width, so a share of it stays right as the window resizes.
     pointer.style.left = `${((buttons.indexOf(at) + 0.5) / buttons.length) * 100}%`;
+  }
+
+  /** The lesson's note and pointing hand, laid over the bar when it
+   * begins; beginning pauses the hand, so the player can take it in. */
+  private lessonParts(bar: HTMLElement) {
+    const note = bar.querySelector<HTMLElement>(".job-tip"), pointer = bar.querySelector<HTMLElement>(".job-pointer");
+    if (note && pointer) return { note, pointer };
+    bar.insertAdjacentHTML("beforeend", `<div class="job-tip" role="status"></div><span class="job-pointer${this.game.save.settings.reduceMotion ? " still" : ""}">${POINTER_SVG}</span>`);
+    if (this.game.auto) {
+      this.game.toggleAuto();
+      this.pausedForLesson = true;
+      // The HUD drew before the bar: redraw it with the hand paused.
+      queueMicrotask(this.changed);
+    }
+    return { note: bar.querySelector<HTMLElement>(".job-tip")!, pointer: bar.querySelector<HTMLElement>(".job-pointer")! };
+  }
+
+  private lessonText() {
+    return this.open
+      ? `<b>Training for this run</b><p>Press a card's price to buy a rank with ${silverIcon()} Silver. Press ${TRAINING_GROUPS[this.open].toUpperCase()} again to close it.</p>`
+      : `<b>Train on the Job</b><p>Spend the ${silverIcon()} Silver you find on upgrades that raise your stats for the rest of this run. Press any of the three menus below to open it, and press it again to close it.</p>`;
   }
 
   /** The rows of `group` the hero can train. */

@@ -1,5 +1,5 @@
 import { wholeChange } from "./whole.ts";
-import type { Coin, Encounter, Gain, Heal, ShownFight } from "./state.ts";
+import type { Coin, Encounter, Gain, GainArt, Heal, ShownFight } from "./state.ts";
 import { paintContents } from "./tile-painters.ts";
 import { materialImage } from "./material-sprites.ts";
 import { paintGem } from "./gem-art.ts";
@@ -85,6 +85,12 @@ const BAR_EMPTY = "#2a0d10";
 const LUNGE = 0.3;
 
 type Popup = { x: number; y: number; start: number };
+/** A rising number's colour, how far it rises (tiles) and its size (of a tile). */
+type TextStyle = { color: string; rise: number; size: number };
+/** A reward without a sprite, written in gold. */
+const REWARD_TEXT: TextStyle = { color: REWARD_COLOR, rise: REWARD_RISE, size: 0.42 };
+/** A mark's colour, size (px in tile space) and alignment. */
+type MarkStyle = { color: string; size: number; align?: CanvasTextAlign };
 type Offset = { dx: number; dy: number };
 const STILL: Offset = { dx: 0, dy: 0 };
 
@@ -138,17 +144,16 @@ export class BoardPopups {
       const s = strikes[this.landed++];
       // In summary, an enemy that falls has plainly lost all its HP, so only
       // what the hero took rises, over where the hero stands at the end.
-      if (fight.summary && s.by === "hero" && !s.hp) continue;
-      const on = s.by === "hero" ? fight.to : fight.summary && won && s.at === fight.bout.duration ? fight.to : fight.from,
-        start = fight.start + s.at, both = !!s.shrouded && s.damage > 0;
-      if (s.shrouded)
-        this.numbers.push({ x: on.x - (both ? SHROUD_SPLIT : 0), y: on.y + DAMAGE_START, start, text: String(wholeChange(s.shrouded)), color: SHROUD_COLOR });
-      if (!s.shrouded || s.damage)
-        this.numbers.push({
-          x: on.x + (both ? SHROUD_SPLIT : 0), y: on.y + DAMAGE_START, start, text: String(wholeChange(s.damage)),
-          color: s.by === "hero" ? DAMAGE_COLOR : HERO_DAMAGE_COLOR,
-        });
+      if (!hiddenInSummary(fight, s)) this.raise(s, struckAt(fight, s, won), fight.start + s.at);
     }
+  }
+  /** A strike's numbers over `on` from `start`: the damage that got
+   * through, and what the shroud blocked in silver beside it. */
+  private raise(s: Strike, on: { x: number; y: number }, start: number) {
+    const both = !!s.shrouded && s.damage > 0, y = on.y + DAMAGE_START;
+    if (s.shrouded) this.numbers.push({ x: on.x - (both ? SHROUD_SPLIT : 0), y, start, text: String(wholeChange(s.shrouded)), color: SHROUD_COLOR });
+    if (s.shrouded && !s.damage) return;
+    this.numbers.push({ x: on.x + (both ? SHROUD_SPLIT : 0), y, start, text: String(wholeChange(s.damage)), color: s.by === "hero" ? DAMAGE_COLOR : HERO_DAMAGE_COLOR });
   }
   /** Nothing is rising or waiting to, and the enemy's HP bar is still. */
   idle(now: number) {
@@ -160,10 +165,10 @@ export class BoardPopups {
   draw(f: FrameContext) {
     if (this.fight) drawEnemyBar(f, this.fight);
     const shown = [
-      ...this.numbers.map((p) => ({ start: p.start, draw: () => this.drawText(f, p, p.text, p.color, DAMAGE_RISE, 0.55) })),
+      ...this.numbers.map((p) => ({ start: p.start, draw: () => this.drawText(f, p, p.text, { color: p.color, rise: DAMAGE_RISE, size: 0.55 }) })),
       ...this.rewards.map((p) => ({
         start: p.start,
-        draw: () => { if (!this.drawSprite(f, p)) this.drawText(f, p, p.gain.text, REWARD_COLOR, REWARD_RISE, 0.42); },
+        draw: () => { if (!this.drawSprite(f, p)) this.drawText(f, p, p.gain.text, REWARD_TEXT); },
       })),
     ].filter((p) => p.start <= f.now).sort((a, b) => a.start - b.start);
     for (const p of shown) p.draw();
@@ -176,7 +181,7 @@ export class BoardPopups {
       rise: f.look.reduceMotion ? 0 : (rise * age) / POPUP_MS,
     };
   }
-  private drawText(f: FrameContext, p: Popup, text: string, color: string, rise: number, size: number) {
+  private drawText(f: FrameContext, p: Popup, text: string, { color, rise, size }: TextStyle) {
     const c = f.c, { alpha, rise: up } = this.phase(f, p, rise), at = tileCenter(f, p.x, p.y + up);
     c.save();
     c.globalAlpha = alpha;
@@ -194,39 +199,80 @@ export class BoardPopups {
   private drawSprite(f: FrameContext, p: Popup & { gain: Gain }) {
     const art = p.gain.art;
     if (!art) return false;
-    const image = "material" in art ? materialImage(art.material) : "heart" in art ? heart() : "coin" in art ? coinImage(art.coin) : null;
-    if (!("tile" in art) && !("gem" in art) && !image) return false;
-    const c = f.c, { alpha, rise } = this.phase(f, p, REWARD_RISE), look = f.look;
+    const image = artImage(art);
+    if (!image && !paintsItself(art)) return false;
+    const c = f.c, { alpha, rise } = this.phase(f, p, REWARD_RISE);
     c.save();
     c.globalAlpha = alpha;
     toTileSpace(c, f, p.x, p.y + rise);
-    if ("tile" in art) {
-      // A key a door took shifts right to make room for its minus sign.
-      if (art.spent) c.translate(4, 0);
-      paintContents(c, art.tile, { x: p.x, y: p.y, time: f.now, spritesOff: look.spritesOff, reduceMotion: look.reduceMotion, area1: look.area1, lifted: true });
-      if (art.spent) {
-        c.translate(-4, 0);
-        mark(c, "−", SPENT_COLOR, 3, 12, 14);
-      }
-    } else if ("gem" in art) {
-      paintGem(c, f.now, true);
-    } else if ("coin" in art) {
-      // The amount, then the coin: "+5 ●" in place of "+5 Gold".
-      c.imageSmoothingEnabled = false;
-      c.drawImage(image!, 11, 3, 18, 18);
-      mark(c, p.gain.text.split(" ")[0], art.coin === "gold" ? REWARD_COLOR : SILVER_COLOR, 10, 12, 10, "right");
-    } else if ("heart" in art) {
-      c.imageSmoothingEnabled = false;
-      c.drawImage(image!, 2, 2, 18, 18);
-      check(c, 13, 13);
-    } else {
-      c.imageSmoothingEnabled = false;
-      c.drawImage(image!, 3, 3, 18, 18);
-      if (art.quantity > 1) mark(c, `×${art.quantity}`, REWARD_COLOR, 18, 21, 8, "left");
-    }
+    paintArt(c, f, p, image);
     c.restore();
     return true;
   }
+}
+
+type Strike = ShownFight["bout"]["strikes"][number];
+
+/** How many of `hits`, in order, have landed by `t`. */
+function landedBy(hits: Strike[], t: number) {
+  let n = 0;
+  while (n < hits.length && hits[n].at <= t) n++;
+  return n;
+}
+
+/** The hero's felling strike in summary rounds, which raises no number. */
+const hiddenInSummary = (fight: ShownFight, s: Strike) => fight.summary && s.by === "hero" && !s.hp;
+
+/** Where a strike's number rises: over the enemy for the hero's strikes,
+ * over the hero for the enemy's, except that in summary rounds the hero's
+ * last loss to an enemy it felled rises where the hero ends, on the enemy's
+ * tile. */
+function struckAt(fight: ShownFight, s: Strike, won: boolean) {
+  if (s.by === "hero") return fight.to;
+  return fight.summary && won && s.at === fight.bout.duration ? fight.to : fight.from;
+}
+
+/** Art drawn without an image: a tile's contents, or the Gem. */
+const paintsItself = (art: GainArt) => "tile" in art || "gem" in art;
+
+/** The image a gain's art draws from, or null where it has none or it is
+ * still loading. */
+function artImage(art: GainArt): CanvasImageSource | null {
+  if ("material" in art) return materialImage(art.material);
+  if ("heart" in art) return heart();
+  return "coin" in art ? coinImage(art.coin) : null;
+}
+
+/** A gain's art in tile space: a tile's contents (a key a door took with
+ * its minus sign), the Gem, a coin after its amount, the Heart Door's heart
+ * with a check, or a material with its count. */
+function paintArt(c: CanvasRenderingContext2D, f: FrameContext, p: Popup & { gain: Gain }, image: CanvasImageSource | null) {
+  const art = p.gain.art!;
+  if ("tile" in art) return paintSpentTile(c, f, p, art);
+  if ("gem" in art) return paintGem(c, f.now, true);
+  c.imageSmoothingEnabled = false;
+  if ("coin" in art) {
+    // The amount, then the coin: "+5 ●" in place of "+5 Gold".
+    c.drawImage(image!, 11, 3, 18, 18);
+    mark(c, p.gain.text.split(" ")[0], { x: 10, y: 12 }, { color: art.coin === "gold" ? REWARD_COLOR : SILVER_COLOR, size: 10, align: "right" });
+  } else if ("heart" in art) {
+    c.drawImage(image!, 2, 2, 18, 18);
+    check(c, 13, 13);
+  } else {
+    c.drawImage(image!, 3, 3, 18, 18);
+    if (art.quantity > 1) mark(c, `×${art.quantity}`, { x: 18, y: 21 }, { color: REWARD_COLOR, size: 8, align: "left" });
+  }
+}
+
+/** A tile's contents rising; a key a door took shifts right to make room
+ * for its minus sign. */
+function paintSpentTile(c: CanvasRenderingContext2D, f: FrameContext, p: Popup, art: Extract<GainArt, { tile: unknown }>) {
+  const look = f.look;
+  if (art.spent) c.translate(4, 0);
+  paintContents(c, art.tile, { x: p.x, y: p.y, time: f.now, spritesOff: look.spritesOff, reduceMotion: look.reduceMotion, area1: look.area1, lifted: true });
+  if (!art.spent) return;
+  c.translate(-4, 0);
+  mark(c, "−", { x: 3, y: 12 }, { color: SPENT_COLOR, size: 14 });
 }
 
 /** Whether the fight ends with the enemy felled. */
@@ -238,16 +284,19 @@ const defeated = (fight: ShownFight) => fight.bout.strikes.some((s) => s.by === 
  * hero lost leaves it standing, showing what HP the enemy has left. */
 export function enemyBar(fight: ShownFight, now: number): { hp: number; alpha: number } | null {
   const t = now - fight.start, hits = fight.bout.strikes.filter((s) => s.by === "hero");
-  let i = -1;
-  while (i + 1 < hits.length && hits[i + 1].at <= t) i++;
+  const i = landedBy(hits, t) - 1;
   if (i < 0) return null;
-  const s = hits[i], from = i ? hits[i - 1].hp : fight.hp,
-    drain = Math.min(BAR_DRAIN_MS, i + 1 < hits.length ? hits[i + 1].at - s.at : BAR_DRAIN_MS),
+  const s = hits[i], from = i ? hits[i - 1].hp : fight.hp, drain = drainMs(hits, i),
     k = drain > 0 ? Math.min(1, (t - s.at) / drain) : 1;
   const hp = from + (s.hp - from) * k;
   if (s.hp || k < 1) return { hp, alpha: 1 };
   const fade = 1 - (t - s.at - drain) / BAR_FADE_MS;
   return fade > 0 ? { hp, alpha: fade } : null;
+}
+/** How long the bar drains after hit `i`: no longer than until the next. */
+function drainMs(hits: Strike[], i: number) {
+  const next = hits[i + 1];
+  return next ? Math.min(BAR_DRAIN_MS, next.at - hits[i].at) : BAR_DRAIN_MS;
 }
 /** The bar is draining or fading, or waits for the hero's first strike. */
 function barMoving(fight: ShownFight | null, now: number) {
@@ -278,16 +327,21 @@ export function lunges(fight: Encounter | null, now: number, reduceMotion: boole
   const s = fight && !reduceMotion ? fight.bout.strikes.find((s) => s.start <= t && t < s.end) : undefined;
   if (!fight || !s) return { hero: STILL, enemy: STILL };
   const reach = LUNGE * Math.sin((Math.PI * (t - s.start)) / (s.end - s.start));
-  // One step apart, though the Delve's wrap can put them a board apart.
-  const dx = Math.sign(fight.to.x - fight.from.x) * (Math.abs(fight.to.x - fight.from.x) > 1 ? -1 : 1),
-    dy = Math.sign(fight.to.y - fight.from.y);
+  const { dx, dy } = facing(fight);
   return s.by === "hero"
     ? { hero: { dx: dx * reach, dy: dy * reach }, enemy: STILL }
     : { hero: STILL, enemy: { dx: -dx * reach, dy: -dy * reach } };
 }
 
+/** The step from the hero to the enemy: one tile apart, though the
+ * Delve's wrap can put them a board apart. */
+function facing(fight: Encounter) {
+  const across = fight.to.x - fight.from.x;
+  return { dx: Math.sign(across) * (Math.abs(across) > 1 ? -1 : 1), dy: Math.sign(fight.to.y - fight.from.y) };
+}
+
 /** Outlined text in tile space: a count, or the minus on a spent key. */
-function mark(c: CanvasRenderingContext2D, text: string, color: string, x: number, y: number, size: number, align: CanvasTextAlign = "center") {
+function mark(c: CanvasRenderingContext2D, text: string, { x, y }: { x: number; y: number }, { color, size, align = "center" }: MarkStyle) {
   c.font = `700 ${size}px Cinzel`;
   c.textAlign = align;
   c.textBaseline = "middle";
