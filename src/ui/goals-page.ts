@@ -28,7 +28,7 @@ const UNLOCK_ICONS: Record<GoalUnlock, string> = {
 };
 /** What each unlock does, shown once it is claimed. */
 const UNLOCK_TUTORIALS: Record<GoalUnlock, string> = {
-  damagePrediction: `<p>Inspect an enemy in a run and its panel now says how much HP the fight would cost you, and whether you survive it: Survivable, LETHAL, or Instakill when your first strike defeats it.</p>`,
+  damagePrediction: `<p>Inspect an enemy in a run and its panel now says how much HP the fight would cost you, and whether you survive it: Survivable, Invincible when it costs no HP, LETHAL, or Instakill when your first strike defeats it.</p>`,
   combatForecast: `<p>Inspect an enemy in a run and its panel now also says how many of your hits defeat it, or Instakill when one does.</p>`,
   attackLore: `<p>Inspect an enemy in a run and its panel now also says how much more ATK would defeat it in one hit fewer.</p>` +
     `<p class="hint">Train ATK in the run, even mid-fight, to make the most of it.</p>`,

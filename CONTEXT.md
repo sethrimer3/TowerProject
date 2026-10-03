@@ -159,7 +159,7 @@ Beginning a new Tower run at once on the floor just above a checkpoint already c
 _Avoid_: teleport, starting floor
 
 **Damage Prediction**:
-The line a monster's inspect panel adds in a run once Tower I's floor 10 checkpoint is claimed: the HP the fight would cost and whether the hero survives it (Survivable, LETHAL, or Instakill when the hero's first strike fells it).
+The line a monster's inspect panel adds in a run once Tower I's floor 10 checkpoint is claimed: the HP the fight would cost and whether the hero survives it (Survivable, Invincible when it costs no HP, LETHAL, or Instakill when the hero's first strike fells it).
 _Avoid_: combat preview
 
 **Instakill**:

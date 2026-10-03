@@ -36,11 +36,12 @@ const stairs: Describe = (t, _p, g) => {
 
 /** Damage Prediction's line, once unlocked: what the fight costs and
  * whether the hero survives it; a fight one strike wins (the hero strikes
- * first) is an Instakill. */
+ * first) is an Instakill, and one that costs no HP (as shown) Invincible. */
 function prediction(r: CombatPrediction, g: Board) {
   if (!goalUnlocked(g.save, "damagePrediction")) return "";
-  const verdict = r.turns === 1 ? "Instakill" : r.survivable ? "Survivable" : "LETHAL";
-  return `<br><strong class="${r.survivable ? "safe" : "danger"}">${Number.isFinite(r.damage) ? wholeChange(r.damage) : "∞"} damage · ${verdict}</strong>`;
+  const damage = Number.isFinite(r.damage) ? wholeChange(r.damage) : "∞";
+  const verdict = r.turns === 1 ? "Instakill" : !r.survivable ? "LETHAL" : damage === 0 ? "Invincible" : "Survivable";
+  return `<br><strong class="${r.survivable ? "safe" : "danger"}">${damage} damage · ${verdict}</strong>`;
 }
 
 const hits = (n: number) => (n === 1 ? "Instakill" : `${n.toLocaleString("en-US")} hits to defeat`);
