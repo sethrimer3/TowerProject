@@ -41,7 +41,7 @@ const requirementText =(r: ResearchRequirement) =>
 
 /** The Upgrades page's Archives tab: the archivists and what each is
  * researching, the research library (searchable, filtered by category and
- * status), and the history of completed research. */
+ * status), and a History button opening the research completed. */
 export class ArchivesPanel {
   private category: "all" | ResearchCategory = "all";
   private search = "";
@@ -55,7 +55,7 @@ export class ArchivesPanel {
       entries.map(([id, name]) => `<option value="${id}" ${id === chosen ? "selected" : ""}>${name}</option>`).join("");
     const categories: ["all" | ResearchCategory, string][] = [["all", "All categories"], ...Object.entries(RESEARCH_CATEGORIES) as [ResearchCategory, string][]];
     const statuses = (Object.entries(STATUS_FILTERS) as ["all" | ResearchStatus, string][]).filter(([id]) => id !== "locked" || save.settings.devMode);
-    return `<section class="archives"><header class="tree-heading"><h3>Archives</h3></header>
+    return `<section class="archives"><header class="tree-heading"><h3>Archives</h3><button id="research-history-open" class="research-history-open">History</button></header>
       <p class="archives-gold">${uiSprite("gold", "stat-sprite")} <b>${devAmount(this.ctx.game, save.gold)}</b> Gold <small>· research goes on while you play or are away</small></p>
       <div class="archivists" role="list" aria-label="Archivists">${this.archivistsHtml()}</div>
       <div class="research-filters">
@@ -63,8 +63,7 @@ export class ArchivesPanel {
         <select id="research-category" aria-label="Category">${options(categories, this.category)}</select>
         <select id="research-status" aria-label="Status">${options(statuses, this.shown)}</select>
       </div>
-      <div class="research-list" id="research-list" role="list" aria-label="Research">${this.listHtml()}</div>
-      <h4 class="research-history-title">History</h4>${this.historyHtml()}</section>`;
+      <div class="research-list" id="research-list" role="list" aria-label="Research">${this.listHtml()}</div></section>`;
   }
 
   bind() {
@@ -81,6 +80,7 @@ export class ArchivesPanel {
       game.research.setAutoContinue(Number(box.dataset.auto), box.checked);
       this.ctx.save();
     }));
+    el("research-history-open").onclick = () => this.showHistory();
     el("research-search").oninput = (e) => {
       this.search = (e.target as HTMLInputElement).value;
       this.refreshList();
@@ -205,6 +205,13 @@ export class ArchivesPanel {
       <div class="research-tags">${tags}</div><p>${def.description}</p>${detail}<div class="research-action">${action}</div></article>`;
   }
 
+  /** The research completed lately, newest first, in a scrolling dialog. */
+  private showHistory() {
+    const modal = this.ctx.modal;
+    modal.innerHTML = `<small>ARCHIVES</small><h2>Research history</h2>${this.historyHtml()}<div class="dialog-actions"><button id="research-history-close">Close</button></div>`;
+    el("research-history-close").onclick = () => modal.close();
+    modal.showModal();
+  }
   private historyHtml() {
     const history = this.ctx.game.save.archives.history;
     if (!history.length) return `<p class="research-empty">No research completed yet.</p>`;

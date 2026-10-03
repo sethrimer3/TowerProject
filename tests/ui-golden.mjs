@@ -329,6 +329,9 @@ try {
         await page.fill("#research-search", "no such research");
         await shot(`${prefix}.tree.archives.search`);
         await page.fill("#research-search", "");
+        await click("#research-history-open");
+        await shot(`${prefix}.tree.archives.history`);
+        await click("#research-history-close");
         continue;
       }
       const skills = await page.locator("[data-skill]").evaluateAll((bs) => bs.map((b) => b.dataset.skill));

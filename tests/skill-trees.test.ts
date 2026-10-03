@@ -103,9 +103,9 @@ test("each skill in a tree of unlocks is bought once", () => {
 
 test("a tree taller than its view places its nodes on a taller map", () => {
   const inspiration = TREES[0];
-  assert.equal(treeHeight(inspiration), 190);
+  assert.equal(treeHeight(inspiration), 208);
   assert.ok(inspiration.nodes.every((n) => n.y > 0 && n.y < treeHeight(inspiration)), "every node on the map");
-  assert.equal(mapNodes(inspiration).find((n) => n.id === "recovery")!.y, (142 * 100) / 190);
+  assert.equal(mapNodes(inspiration).find((n) => n.id === "recovery")!.y, (142 * 100) / 208);
   assert.ok(TREES.slice(1).every((t) => treeHeight(t) === 100 && mapNodes(t).every((n, i) => n.y === t.nodes[i].y)), "other trees fit one view");
 });
 test("older saves retain earned access without unlocking fresh saves", () => {
@@ -163,7 +163,8 @@ test("Faster Trainers sits right of Into the depths off the Archives, costs 2 an
   const node = at("fasterTrainers");
   assert.deepEqual([node.x, node.y, node.requires], [80, 106, ["archives"]]);
   assert.deepEqual([at("cardBlueKey").x, at("cardBlueKey").y], [20, 84], "Blue Key sits below DEF Up");
-  assert.deepEqual([at("spareChange").x, at("spareChange").y, at("spareChange").requires], [26, 124, ["delve"]], "Spare Change follows Into the depths");
+  assert.deepEqual([at("pocketMoney").x, at("pocketMoney").y, at("pocketMoney").requires], [26, 124, ["delve"]], "Pocket Money follows Into the depths");
+  assert.deepEqual([at("spareChange").x, at("spareChange").y, at("spareChange").requires], [26, 142, ["pocketMoney"]], "Spare Change follows Pocket Money");
   assert.equal(cost("fasterTrainers", 0), 2);
   assert.deepEqual(RESEARCH.fasterTrainers.requires, [{ upgrade: "fasterTrainers" }]);
   // No two nodes of a row overlap.

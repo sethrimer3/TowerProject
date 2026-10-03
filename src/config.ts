@@ -263,6 +263,14 @@ export const UPGRADES = [
     currency: "inspiration",
   },
   {
+    id: "pocketMoney",
+    name: "Pocket Money",
+    description: "Open Pocket Money research in the Archives: every run goes inside with Silver in hand",
+    base: 1,
+    max: 1,
+    currency: "inspiration",
+  },
+  {
     id: "spareChange",
     name: "Spare Change",
     description: "Every floor climbed for the first time in a run pays Gold: opens Gold / Floor training, and Gold / Floor research in the Archives",

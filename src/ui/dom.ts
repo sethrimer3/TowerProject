@@ -61,7 +61,7 @@ const SKILL_UI_SPRITES: Partial<Record<UpgradeId, UiSprite>> = {
   renownBanner: "tower", renownOath: "defense", renownCrown: "gear",
 };
 /** Skills about Silver show the Gold coin drained of colour, as the purse does. */
-const SKILL_SILVER = new Set<UpgradeId>(["wealthy", "wishingWell", "onTheJob"]);
+const SKILL_SILVER = new Set<UpgradeId>(["wealthy", "wishingWell", "onTheJob", "pocketMoney"]);
 /** Skills about the hand show a card face. */
 const SKILL_CARDS: Partial<Record<UpgradeId, CardId>> = { combatStance: "stairs", buildout: "monster", cardHeal: "heal", cardAtkUp: "atkUp", cardDefUp: "defUp", cardBlueKey: "blueKey" };
 /** The forest's Enter button: an arrow going up into an arched doorway. */

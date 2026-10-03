@@ -49,6 +49,8 @@ export const RESEARCH_TARGETS = {
   silverBonus: { name: "Silver Found", base: 100, shown: percent },
   /** The percent of its Gold a kill pays, from 100. */
   killGold: { name: "Gold per Kill", base: 100, shown: percent },
+  /** Silver a run has in hand when it goes inside. */
+  startingSilver: { name: "Starting Silver", base: 0, shown: count },
   /** How fast trainers work: a rank of `d` takes d / (1 + speed). */
   trainingSpeed: { name: "Training Speed", base: 0, shown: speed },
   /** Tiles the hand's first step toward a new target may rush across, once Rush is owned. */
@@ -102,13 +104,14 @@ const hundredLevels = (target: ResearchTarget, value: number) => Array.from({ le
   return { gold, hours: seconds / 3600, effect: { target, op: "add", value } };
 });
 
-/** Faster Trainers: +2% training speed a level, for 100 levels. The n-th
- * level costs 250 × n Gold and takes 1.75 × n hours, about a year and 1.26
- * million Gold in all (Potion HP takes about seven weeks). */
-const fasterTrainersLevels = () => Array.from({ length: 100 }, (_, i): ResearchLevel => ({
+/** Faster Trainers (+2% training speed a level) and Pocket Money (+5
+ * starting Silver a level), for 100 levels each. The n-th level costs
+ * 250 × n Gold and takes 1.75 × n hours, about a year and 1.26 million Gold
+ * in all (Potion HP takes about seven weeks). */
+const fasterTrainersLevels = (target: ResearchTarget = "trainingSpeed", value = 0.02) => Array.from({ length: 100 }, (_, i): ResearchLevel => ({
   gold: 250 * (i + 1),
   hours: 1.75 * (i + 1),
-  effect: { target: "trainingSpeed", op: "add", value: 0.02 },
+  effect: { target, op: "add", value },
 }));
 
 /** Rush: +1 tile rushed a level, for 25 levels. Each level starts from
@@ -165,6 +168,13 @@ export const RESEARCH = {
     categories: ["progression"],
     requires: [{ upgrade: "fasterTrainers" }],
     levels: fasterTrainersLevels(),
+  },
+  pocketMoney: {
+    name: "Pocket Money",
+    description: "Put a little by between climbs: every run goes inside with more Silver in hand.",
+    categories: ["economy"],
+    requires: [{ upgrade: "pocketMoney" }],
+    levels: fasterTrainersLevels("startingSilver", 5),
   },
   floorGold: {
     name: "Gold / Floor",

@@ -2431,8 +2431,9 @@ p.research-kept { color: #ffe1a1; }
 .research-action button:disabled { border-color: #4a5566; color: #7c8898; background: #111925; }
 .research-state { font-size: 10px; letter-spacing: 1px; color: #9aa6b5; }
 .research-empty { margin: 0; font-size: 11px; color: #7c8898; }
-.research-history-title { margin: 4px 0 0; font-size: 11px; font-weight: 500; letter-spacing: 2px; color: #e3d2ad; text-transform: uppercase; }
-.research-history { margin: 0; padding: 0; list-style: none; display: grid; gap: 3px; font-size: 10px; color: #b7c0cc; }
+.archives .tree-heading { position: relative; }
+.research-history-open { position: absolute; right: 0; top: 0; padding: 4px 10px; font-size: 11px; }
+.research-history { margin: 8px 0; padding: 0 4px 0 0; list-style: none; display: grid; gap: 4px; max-height: 50vh; overflow-y: auto; font-size: 11px; color: #b7c0cc; text-align: left; }
 .research-history time { margin-right: 6px; color: #8793a2; font-variant-numeric: tabular-nums; }
 @media (max-width: 440px) { .research-filters { grid-template-columns: 1fr 1fr; } .research-filters input { grid-column: 1 / -1; } }
 

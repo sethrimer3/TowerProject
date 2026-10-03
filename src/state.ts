@@ -524,9 +524,12 @@ export class Game {
     this.auto = true;
   }
   /** A run going inside keeps the hand as it was ordered on the way in,
-   * gets its Focus uses, and fixes its chance of percent potions. */
+   * gets its Focus uses and its Pocket Money Silver, and fixes its chance
+   * of percent potions. */
   private dealHand() {
     this.run.hand = [...this.save.hand];
+    const pocket = researched(this.save.archives, "startingSilver", 0);
+    if (pocket) this.run.silver = pocket;
     const chance = percentPotionChance(this.save);
     if (chance) this.run.percentPotions = chance;
     else delete this.run.percentPotions;

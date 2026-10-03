@@ -50,13 +50,14 @@ function purse(game: Game, id: string, held: number, name: string, shown = held)
 /** Gold and Silver count up to each rise. */
 const goldShown = new CountUp(), silverShown = new CountUp();
 
-/** The purse: Gems, then Gold and the run's Silver, counting up to what they
- * rose to. */
+/** The purse: Gems, then Gold and, inside a run, the run's Silver (the
+ * forest has no use for it), counting up to what they rose to. */
 function renderPurse(game: Game) {
   const now = performance.now(), instant = game.save.settings.reduceMotion;
   purse(game, "gems", game.save.gems, "Gems, kept between runs");
   purse(game, "gold", game.save.gold, "Gold, kept between runs", goldShown.show(game.save.gold, now, instant));
   purse(game, "run-silver", game.silver, "Silver, spent only inside this run", silverShown.show(game.silver, now, instant));
+  el("run-silver").parentElement!.hidden = !!game.run.outside;
 }
 
 /** Each display frame: moves on the Gold and Silver still counting up. */
@@ -338,14 +339,15 @@ function renderConsumables(game: Game) {
   }
 }
 
-/** Current height/depth, and the reward the run's new best would pay. */
+/** Current height/depth (in the forest, the tier the entrance leads to:
+ * "Tower 2"), and the reward the run's new best would pay. */
 function renderProgress(game: Game) {
   const outside = !!game.run.outside,
     rules = MODES[game.mode];
-  text("height-label", rules.words.progress.toUpperCase());
+  text("height-label", (outside ? rules.words.tierName : rules.words.progress).toUpperCase());
   const rawRunBest = game.run.maxHeight ?? game.run.height;
   const rawAllBest = game.save[game.mode].best;
-  text("height", displayedProgress(game.run.height, outside));
+  text("height", outside ? game.save[game.mode].tier : displayedProgress(game.run.height));
   renderRunEarned(game);
   const rewardEl = el("best-reward");
   rewardEl.hidden = rawRunBest <= rawAllBest;

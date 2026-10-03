@@ -10,7 +10,7 @@ export type SkillNode = { id: UpgradeId; icon: string; x: number; y: number; req
  * only Dev mode shows it, and its skills can't be bought). */
 export type SkillTree = { id: TreeId; name: string; currency: Currency; gate?: UpgradeId | null; description: string; height?: number; unlocks?: boolean; nodes: SkillNode[] };
 export const TREES: SkillTree[] = [
-  { id: "inspiration", name: "Inspiration", currency: "inspiration", description: "Earn Inspiration by beating your best Tower climb.", height: 190, unlocks: true, nodes: [
+  { id: "inspiration", name: "Inspiration", currency: "inspiration", description: "Earn Inspiration by beating your best Tower climb.", height: 208, unlocks: true, nodes: [
     // The hand's skills, down to the Archives; Gear and Training branch off Buildout,
     // ATK Up and DEF Up under Gear, and On the Job, then Heal, below Training.
     { id: "combatStance", icon: "▤", x: 50, y: 12, requires: [] },
@@ -25,16 +25,17 @@ export const TREES: SkillTree[] = [
     { id: "cardDefUp", icon: "⛨", x: 20, y: 66, requires: ["cardAtkUp"] },
     // Research needs the Archives, so the skills that open it come after them:
     // Blue Key below DEF Up, Rehearsed steps and Faster Trainers either side of
-    // Into the depths, and Spare Change and Greater Heal after it.
+    // Into the depths, and Pocket Money (then Spare Change) and Greater Heal after it.
     { id: "cardBlueKey", icon: "⚿", x: 20, y: 84, requires: ["archives"] },
     { id: "inspirationUndos", icon: "↺", x: 20, y: 106, requires: ["archives"] },
     { id: "delve", icon: "▼", x: 50, y: 106, requires: ["archives"] },
     { id: "fasterTrainers", icon: "»", x: 80, y: 106, requires: ["archives"] },
-    { id: "spareChange", icon: "¤", x: 26, y: 124, requires: ["delve"] },
+    { id: "pocketMoney", icon: "¤", x: 26, y: 124, requires: ["delve"] },
     { id: "greaterHeal", icon: "✚", x: 74, y: 124, requires: ["delve"] },
-    { id: "wealthy", icon: "¤", x: 14, y: 142, requires: ["spareChange"] },
-    { id: "loot", icon: "☠", x: 38, y: 142, requires: ["spareChange"] },
-    { id: "wishingWell", icon: "◎", x: 26, y: 160, requires: ["spareChange"] },
+    { id: "spareChange", icon: "¤", x: 26, y: 142, requires: ["pocketMoney"] },
+    { id: "wealthy", icon: "¤", x: 14, y: 160, requires: ["spareChange"] },
+    { id: "loot", icon: "☠", x: 38, y: 160, requires: ["spareChange"] },
+    { id: "wishingWell", icon: "◎", x: 26, y: 178, requires: ["spareChange"] },
     { id: "recovery", icon: "✦", x: 62, y: 142, requires: ["greaterHeal"] },
     { id: "findPotion", icon: "⚗", x: 62, y: 160, requires: ["recovery"] },
     { id: "shroud", icon: "◈", x: 86, y: 142, requires: ["greaterHeal"] },
