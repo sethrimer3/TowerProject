@@ -25,33 +25,36 @@ export const RESEARCH_CATEGORIES = {
 } as const;
 export type ResearchCategory = keyof typeof RESEARCH_CATEGORIES;
 
-const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
-/** The numbers research can change, each with the base the game reads it
- * from (before any research) and how a total of it reads. */
+const count = (n: number) => `${n}`;
+const percent = (n: number) => `${n}%`;
+/** A speed (0 = as fast as without research) as a percent of the base. */
+const speed = (n: number) => `${Math.round(100 + n * 100)}%`;
+/** The numbers research can change, each with its name, the base the game
+ * reads it from (before any research) and how a total of it reads. */
 export const RESEARCH_TARGETS = {
   /** Focus uses a run starts with. */
-  focusPerRun: { base: FOCUS_PER_RUN, shown: (n: number) => plural(n, "Focus use") },
+  focusPerRun: { name: "Focus Uses", base: FOCUS_PER_RUN, shown: count },
   /** Movement speed's most steps a second, once Movement Speed is owned. */
-  moveSpeed: { base: 3, shown: (n: number) => `${n} steps / sec` },
+  moveSpeed: { name: "Steps / Sec", base: 3, shown: count },
   /** Undos the hero can store, once Rehearsed steps has given the first;
    * its base is the loadout's own undos, so the Archives page reads it there. */
-  undoCapacity: { base: 0, shown: (n: number) => plural(n, "undo") },
+  undoCapacity: { name: "Undos Stored", base: 0, shown: count },
   /** The percent of its HP a potion restores, from 100 (red potions aside). */
-  potionHeal: { base: 100, shown: (n: number) => `${n}% potion healing` },
+  potionHeal: { name: "Potion Healing", base: 100, shown: percent },
   /** The percent of its Gold / Floor a new floor pays, from 100. */
-  floorGold: { base: 100, shown: (n: number) => `${n}% Gold per floor` },
+  floorGold: { name: "Gold per Floor", base: 100, shown: percent },
   /** The percent of its Silver / Floor a new floor pays, from 100. */
-  floorSilver: { base: 100, shown: (n: number) => `${n}% Silver per floor` },
+  floorSilver: { name: "Silver per Floor", base: 100, shown: percent },
   /** The percent of the Silver found that a run pays, from 100. */
-  silverBonus: { base: 100, shown: (n: number) => `${n}% Silver` },
+  silverBonus: { name: "Silver Found", base: 100, shown: percent },
   /** The percent of its Gold a kill pays, from 100. */
-  killGold: { base: 100, shown: (n: number) => `${n}% Gold per kill` },
+  killGold: { name: "Gold per Kill", base: 100, shown: percent },
   /** How fast trainers work: a rank of `d` takes d / (1 + speed). */
-  trainingSpeed: { base: 0, shown: (n: number) => `${Math.round(100 + n * 100)}% training speed` },
+  trainingSpeed: { name: "Training Speed", base: 0, shown: speed },
   /** Tiles the hand's first step toward a new target may rush across, once Rush is owned. */
-  rushTiles: { base: 0, shown: (n: number) => plural(n, "tile") + " rushed" },
+  rushTiles: { name: "Tiles Rushed", base: 0, shown: count },
   /** How fast archivists work: a level of `d` hours takes d / (1 + speed). */
-  researchSpeed: { base: 0, shown: (n: number) => `${Math.round(100 + n * 100)}% research speed` },
+  researchSpeed: { name: "Research Speed", base: 0, shown: speed },
 } as const;
 export type ResearchTarget = keyof typeof RESEARCH_TARGETS;
 

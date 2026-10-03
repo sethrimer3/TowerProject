@@ -131,9 +131,10 @@ test("archivists are hired one at a time for Gems, not Gold, up to the maximum",
 test("a project's next level reads as the total before and after it", () => {
   const a = owner().archives, show = (archives: typeof a, t: "focusPerRun" | "potionHeal" | "trainingSpeed") =>
     RESEARCH_TARGETS[t].shown(researched(archives, t, RESEARCH_TARGETS[t].base));
-  assert.deepEqual([show(a, "focusPerRun"), show(withNextLevel(a, "focusCount"), "focusPerRun")], ["1 Focus use", "2 Focus uses"]);
-  assert.deepEqual([show(a, "potionHeal"), show(withNextLevel(a, "potionHp"), "potionHeal")], ["100% potion healing", "103% potion healing"]);
-  assert.equal(show(a, "trainingSpeed"), "100% training speed");
+  assert.deepEqual([show(a, "focusPerRun"), show(withNextLevel(a, "focusCount"), "focusPerRun")], ["1", "2"]);
+  assert.deepEqual([show(a, "potionHeal"), show(withNextLevel(a, "potionHp"), "potionHeal")], ["100%", "103%"]);
+  assert.equal(show(a, "trainingSpeed"), "100%");
+  assert.equal(RESEARCH_TARGETS.trainingSpeed.name, "Training Speed");
   assert.equal(researchLevel(a, "focusCount"), 0, "the Archives themselves are left alone");
 });
 

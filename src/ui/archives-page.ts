@@ -1,5 +1,5 @@
 import {
-  ARCHIVISTS, RESEARCH, RESEARCH_CATEGORIES, RESEARCH_IDS, RESEARCH_TARGETS, activeSlot, cannotStart, duration, jobProgress,
+  RESEARCH, RESEARCH_CATEGORIES, RESEARCH_IDS, RESEARCH_TARGETS, activeSlot, cannotStart, duration, jobProgress,
   missing, nextArchivistPrice, nextLevel, research, researchLevel, researched, status, withNextLevel,
   type ArchivesSave, type ResearchCategory, type ResearchId, type ResearchRequirement, type ResearchStatus, type ResearchTarget,
 } from "../archives.ts";
@@ -142,18 +142,16 @@ export class ArchivesPanel {
     );
   }
 
-  /** Each archivist slot: busy (a bar, the time left, Stop), idle, the next
-   * one to hire, or locked beyond it. */
+  /** Each hired archivist, busy (a bar, the time left, Stop) or idle, then
+   * the next one to hire. */
   private archivistsHtml() {
     const game = this.ctx.game, a = game.save.archives, now = game.clock();
     const price = nextArchivistPrice(a);
-    return Array.from({ length: ARCHIVISTS.maximum }, (_, i) => {
+    // The hired archivists, then the next one for hire, if any; none beyond it.
+    return Array.from({ length: a.slots.length + (price === undefined ? 0 : 1) }, (_, i) => {
       const slot = a.slots[i], title = `<small>ARCHIVIST ${i + 1}</small>`;
-      if (!slot) {
-        if (i === a.slots.length && price !== undefined)
-          return `<article class="archivist hire" role="listitem">${title}<button class="archivist-hire${this.hireShort() ? " short" : ""}" data-hire aria-label="Hire an archivist for ${price} Gems" title="${this.hireShort() ? `Needs ${price} Gems` : "One more research runs at once"}">Hire · ${gemIcon()} <b>${price}</b></button></article>`;
-        return `<article class="archivist locked" role="listitem">${title}<p>Locked</p></article>`;
-      }
+      if (!slot)
+        return `<article class="archivist hire" role="listitem">${title}<button class="archivist-hire${this.hireShort() ? " short" : ""}" data-hire aria-label="Hire an archivist for ${price} Gems" title="${this.hireShort() ? `Needs ${price} Gems` : "One more research runs at once"}">Hire · ${gemIcon()} <b>${price}</b></button></article>`;
       const auto = `<label class="archivist-auto"><input type="checkbox" data-auto="${i}" ${slot.autoContinue ? "checked" : ""}> Auto-continue</label>`;
       const job = slot.job;
       if (!job) return `<article class="archivist idle" role="listitem">${title}<p>Idle · choose research below</p>${auto}</article>`;
@@ -191,7 +189,7 @@ export class ArchivesPanel {
     if (next) {
       const ms = duration(a, next), kept = a.progress[id];
       const target = next.effect.target, shown = (archives: ArchivesSave) => RESEARCH_TARGETS[target].shown(targetValue(save, target, archives));
-      detail = `<div class="research-next"><span class="training-box">${shown(a)}</span><span class="training-arrow" aria-hidden="true">→</span><span class="training-box next">${shown(withNextLevel(a, id))}</span>` +
+      detail = `<div class="research-next"><span class="research-target">${RESEARCH_TARGETS[target].name}:</span><span class="training-box">${shown(a)}</span><span class="training-arrow" aria-hidden="true">→</span><span class="training-box next">${shown(withNextLevel(a, id))}</span>` +
         `<span class="research-price">${uiSprite("gold", "stat-sprite")} ${currencyAmount(next.gold)} · ${formatDuration(ms)}</span></div>` +
         (kept ? `<p class="research-kept">Progress kept: ${formatDuration(kept * ms)} of ${formatDuration(ms)}</p>` : "");
     }

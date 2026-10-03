@@ -2380,7 +2380,6 @@ dialog.dismiss-anywhere { cursor: pointer; }
 .archivist b { color: #e3d2ad; font-weight: 500; }
 .archivist p { margin: 0; color: #b7c0cc; }
 .archivist.busy { border-color: #6e9a70; }
-.archivist.locked { opacity: 0.5; }
 .archivist button { min-height: 30px; padding: 4px 8px; font-size: 10px; }
 .archivist.hire { border-color: #5fc4ee; box-shadow: 0 0 8px #2fa9e055; }
 .archivist .archivist-hire { display: inline-flex; align-items: center; justify-content: center; gap: 4px; border: 1px solid #5fc4ee; background: radial-gradient(circle at 50% 40%, #1d4a63, #0d1f2b 75%); color: #bff2ff; font-size: 11px; text-shadow: 0 1px 2px #000; }
@@ -2407,6 +2406,7 @@ dialog.dismiss-anywhere { cursor: pointer; }
 /* What the next level changes, old → new as on the Training tab, then its price. */
 .research-next { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 4px 0; }
 .research-next .training-box { min-height: 26px; padding: 3px 8px; font-size: 11px; }
+.research-target { color: #e3d2ad; font-size: 11px; }
 .research-price { color: #b7c0cc; font-size: 11px; }
 p.research-kept { color: #ffe1a1; }
 .research-action { display: flex; justify-content: flex-end; margin-top: 6px; }
