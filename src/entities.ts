@@ -89,8 +89,7 @@ export type RunCore = {
   changes: Record<string, Tile>;
   floor: number;
   /** The ATK/DEF/max HP the run started with (its loadout), shifted by any
-   * gear change since. In the Tower, ATK/DEF return to it whenever the
-   * climb crosses into a new section. */
+   * gear change since. */
   loadout?: { attack: number; defense: number; maxHp: number; shroud?: number };
   /** The hand as it was ordered when the run went inside: the cards that
    * move the hero for the rest of the run. */

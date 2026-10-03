@@ -2051,12 +2051,9 @@ nav button.notify::after {
 .deck-buy-slot .gem-icon { width: 22px; height: 22px; filter: drop-shadow(0 0 3px #8fe6ff99); }
 .deck-buy-slot b { color: #fff; }
 /* Gem purchases read clearly even out of reach: only the price turns red. */
-.deck-buy-slot:disabled,
-.training-finish:disabled,
-.buy-trainer:disabled { opacity: 1; filter: none; cursor: not-allowed; }
-.deck-buy-slot:disabled b,
-.training-finish:disabled span,
-.buy-trainer:disabled { color: #ffb0a4; }
+.deck-buy-slot.short b,
+.training-finish.short span,
+.buy-trainer.short { color: #ffb0a4; }
 .deck-ghost {
   position: fixed;
   left: 0;
@@ -2338,6 +2335,17 @@ dialog.dismiss-anywhere { cursor: pointer; }
 @keyframes flash-red {
   0%, 60% { box-shadow: 0 0 0 2px #ff5a4a, 0 0 14px 4px #e0302a; background-color: #5a1510; }
 }
+/* A refused purchase's sparks (`sparkRed`), each flying out at its own `--turn`. */
+.drill-buy { position: relative; }
+.red-spark {
+  position: absolute; left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px 0 0 -2px;
+  border-radius: 50%; background: #ff6b5a; box-shadow: 0 0 4px 1px #e0302a; pointer-events: none;
+  animation: red-spark 0.55s ease-out forwards;
+}
+@keyframes red-spark {
+  0% { transform: rotate(var(--turn)) translateY(0) scale(1); opacity: 1; }
+  100% { transform: rotate(var(--turn)) translateY(-22px) scale(0.3); opacity: 0; }
+}
 
 /* --- Archives --- */
 .archives { display: flex; flex: 1; min-height: 0; flex-direction: column; gap: 10px; overflow-y: auto; border: 1px solid #4d5a44; background: radial-gradient(ellipse at 50% 20%, #3d552e22, transparent 65%), #0a1016; padding: 8px 10px 12px; border-radius: 9px; }
@@ -2471,7 +2479,7 @@ nav.in-run.drilling .run-drills {
 /* Not enough Silver: the card's text and the price stay clear, and only the
    outlines and the button's face fade. At its highest: greyed out. */
 .drill-card.short { border-color: #2c3440; }
-.run-drills .drill-card.short .drill-buy:disabled { opacity: 1; border-color: #333b47; background: #121821; color: #e8dfcf; }
+.run-drills .drill-card.short .drill-buy { opacity: 1; border-color: #333b47; background: #121821; color: #e8dfcf; }
 .drill-card.maxed { opacity: 0.45; filter: grayscale(0.8); }
 .training-bar { display: flex; flex-shrink: 0; gap: 5px; padding: 0 0 max(5px, env(safe-area-inset-bottom)); }
 .training-bar[hidden] { display: none; }

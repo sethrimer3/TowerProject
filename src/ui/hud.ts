@@ -282,6 +282,22 @@ export function flashRed(target: Element) {
   target.addEventListener("animationend", () => target.classList.remove("flash-red"), { once: true });
 }
 
+/** A refused purchase: the red flash, with red sparks bursting off `target`
+ * (only the flash when motion is reduced). */
+export function sparkRed(target: HTMLElement, reduceMotion: boolean) {
+  flashRed(target);
+  if (reduceMotion) return;
+  target.querySelectorAll(".red-spark").forEach((s) => s.remove());
+  const SPARKS = 8;
+  for (let i = 0; i < SPARKS; i++) {
+    const spark = document.createElement("i"), turn = (i + 0.5) / SPARKS;
+    spark.className = "red-spark";
+    spark.style.setProperty("--turn", `${turn}turn`);
+    spark.addEventListener("animationend", () => spark.remove(), { once: true });
+    target.append(spark);
+  }
+}
+
 function renderConsumables(game: Game) {
   for (const c of CONSUMABLES) {
     const count = game.save.consumables[c.id] ?? 0;

@@ -8,6 +8,8 @@ import { routeTotalLines, tileInfo, tileInfoLine } from "./tile-info.ts";
  * tapping it again, or any tap with "Move with one tap" on, walks there. */
 export class BoardOverlay {
   private highlighted: { x: number; y: number } | null = null;
+  /** The board the highlighted tile is on (`boardKey`). */
+  private highlightedOn = "";
   private fadeTimer: ReturnType<typeof setTimeout> | undefined;
   private inspectVisible = false;
   private routeVisible = false;
@@ -34,9 +36,18 @@ export class BoardOverlay {
     if (this.routeVisible && this.routeEffects) this.showRoute(this.routeEffects);
   }
 
-  /** Clears the highlight once the player reaches the highlighted tile. */
+  /** Clears the highlight once the player reaches the highlighted tile, or
+   * stands on another board (a new Tower floor, run or mode), where it
+   * means nothing. */
   clearIfAt(p: { x: number; y: number }) {
-    if (this.isHighlighted(p)) this.hide();
+    if (this.isHighlighted(p) || (this.highlighted && this.highlightedOn !== this.boardKey())) this.hide();
+  }
+
+  /** Names the board the hero stands on: the mode, the run, outside or in,
+   * and the Tower floor. */
+  private boardKey() {
+    const { mode, run } = this.game;
+    return `${mode}:${run.seed}:${run.outside ? "out" : mode === "tower" ? run.height : "in"}`;
   }
 
   /** The highlighted tile's info as one line, when the status row shows it. */
@@ -109,6 +120,7 @@ export class BoardOverlay {
 
   private highlight(x: number, y: number) {
     this.highlighted = { x, y };
+    this.highlightedOn = this.boardKey();
     const { left, top, s } = this.tileRect(x, y),
       glow = el("tile-highlight");
     clearTimeout(this.fadeTimer);

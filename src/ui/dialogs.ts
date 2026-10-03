@@ -24,6 +24,11 @@ export function confirmAction(ctx: AppContext, { title, body, label, cancel }: C
   };
 }
 
+/** Offers the Shop when a Gem purchase finds too few Gems held. */
+export function askForGems(ctx: AppContext) {
+  confirmAction(ctx, { title: "Not enough Gems", body: "Not enough gems. Go to the store?", label: "Go to Shop", cancel: "Cancel" }, () => ctx.navigate("shop"));
+}
+
 /** Why the run's end dialog opened: the hero fell, the End Run button was
  * pressed while no card in the hand can act, or it was pressed by choice. */
 type RunEndCause = "fallen" | "stuck" | "chosen";

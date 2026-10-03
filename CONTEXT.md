@@ -29,7 +29,7 @@ A Tower floor the player has stood on during this run. It stays as it was left, 
 _Avoid_: explored room, old floor
 
 **Section**:
-A run of ten Tower floors. Its first floor is sealed below, and the ATK/DEF gathered from items resets on entering it.
+A run of ten Tower floors. Its first floor is sealed below; the hero keeps every stat on entering it.
 _Avoid_: stage, chapter
 
 ### Floor layout

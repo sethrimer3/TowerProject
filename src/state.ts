@@ -1079,8 +1079,8 @@ export class Game {
       silver = this.payFloorSilver();
     }
     this.enterTowerFloor(board);
-    if (sectionStart) this.enterTowerSection();
-    else this.feedback("A new chamber opens.");
+    // A new section's first floor is sealed below; the hero keeps every stat.
+    this.feedback(sectionStart ? `Floor ${this.run.height + 1} · the way down is sealed` : "A new chamber opens.");
     if (gold) this.gain(this.run.player.x, this.run.player.y, `+${wholeChange(gold)} Gold`, { coin: "gold" });
     if (silver) this.gain(this.run.player.x, this.run.player.y, `+${wholeChange(silver)} Silver`, { coin: "silver" });
   }
@@ -1099,16 +1099,6 @@ export class Game {
   private payFloorSilver() {
     const base = floorSilver(this.trainingNow);
     return base ? this.creditSilver(snap((base * researched(this.save.archives, "floorSilver", 100)) / 100)) : 0;
-  }
-  /** Crossing into a new 10-floor section: the way down is sealed (its
-   * first room has no down stairs), ATK/DEF gathered from items in the
-   * last section are dropped. */
-  private enterTowerSection() {
-    const p = this.run.player,
-      base = this.run.loadout ?? loadout(this.save);
-    p.attack = base.attack;
-    p.defense = base.defense;
-    this.feedback(`Floor ${this.run.height + 1} · ATK/DEF reset`);
   }
   /** Step back onto the stairs at the foot of the current room, returning
    * to the previous room exactly as it was left: cleared tiles stay clear,

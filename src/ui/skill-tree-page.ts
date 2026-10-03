@@ -1,3 +1,4 @@
+import { askForGems } from "./dialogs.ts";
 import { play } from "../sound.ts";
 import { permanentBoost } from "../shop/entitlements.ts";
 import { upgradeCard } from "../cards.ts";
@@ -104,6 +105,8 @@ export class SkillTreePage {
         this.render();
       });
       document.querySelectorAll<HTMLButtonElement>("[data-finish]").forEach(b => b.onclick = () => {
+        const game = this.ctx.game;
+        if (!game.free && game.save.gems < finishGems(game.trainingLeft(b.dataset.finish as TrainingId))) return askForGems(this.ctx);
         if (this.ctx.game.finishTraining(b.dataset.finish as TrainingId)) {
           this.ctx.save();
           this.ctx.update();
@@ -111,6 +114,7 @@ export class SkillTreePage {
         this.render();
       });
       document.querySelector<HTMLButtonElement>("#buy-trainer")?.addEventListener("click", () => {
+        if (this.trainerShort()) return askForGems(this.ctx);
         if (this.ctx.game.buyTrainer()) {
           this.ctx.save();
           this.ctx.update();
@@ -154,6 +158,7 @@ export class SkillTreePage {
       ranks = game.save.training[id], paid = game.save.trainingPaid[id], job = trainingJob(game.save.trainingJobs, id),
       gold = paid.gold + (job?.gold ?? 0), time = paid.ms + (job ? Math.max(0, job.ms - game.trainingLeft(id)) : 0),
       short = game.save.gems < TRAINING_RESET_GEMS && !game.free;
+    if (short) return askForGems(this.ctx);
     const back = [
       paid.points ? `${pointsIcon()} <b>${paid.points}</b>` : "",
       gold ? `${goldIcon()} <b>${whole(gold)}</b>` : "",
@@ -162,8 +167,8 @@ export class SkillTreePage {
     modal.innerHTML = `<small>TRAINING</small><h2>Reset ${row.name}?</h2>
       <p>Spend ${TRAINING_RESET_GEMS} Gems to reset ${row.name} to no ranks${job ? " and stop the rank in training" : ""}, from ${ranks} ${ranks === 1 ? "rank" : "ranks"}.</p>
       ${back ? `<p class="reset-back">Returns ${back}</p><p class="hint">Time credit is taken off the next ranks trainers train.</p>` : ""}
-      <p class="hint reset-gems">${gemIcon()} You hold ${game.save.gems} Gems${short ? ": not enough." : "."}</p>
-      <div class="dialog-actions"><button id="cancel">Cancel</button><button id="confirm" ${short ? "disabled" : ""}>Reset · ${TRAINING_RESET_GEMS} Gems</button></div>`;
+      <p class="hint reset-gems">${gemIcon()} You hold ${game.save.gems} Gems.</p>
+      <div class="dialog-actions"><button id="cancel">Cancel</button><button id="confirm">Reset · ${TRAINING_RESET_GEMS} Gems</button></div>`;
     modal.showModal();
     el("cancel").onclick = () => modal.close();
     el("confirm").onclick = () => {
@@ -236,15 +241,21 @@ export class SkillTreePage {
    * ten minutes its timer shows, rounded up. */
   private finishButton(id: TrainingId, name: string) {
     const game = this.ctx.game, gems = game.free ? 0 : finishGems(game.trainingLeft(id));
-    return `<button class="training-finish" data-finish="${id}" ${game.save.gems >= gems ? "" : "disabled"} aria-label="Finish training ${name} now for ${gemCount(gems)}" title="Finish now for ${gemCount(gems)}">${gemIcon()}<span data-finish-gems="${id}">${gems}</span></button>`;
+    return `<button class="training-finish${game.save.gems >= gems ? "" : " short"}" data-finish="${id}" aria-label="Finish training ${name} now for ${gemCount(gems)}" title="Finish now for ${gemCount(gems)}">${gemIcon()}<span data-finish-gems="${id}">${gems}</span></button>`;
+  }
+
+  /** Whether the Gems held fall short of the next trainer. */
+  private trainerShort() {
+    const game = this.ctx.game, price = nextTrainerGems(game.save);
+    return price !== null && !game.free && game.save.gems < price;
   }
 
   /** The Gem button that buys one more trainer, or nothing once all are. */
   private trainerButton() {
     const game = this.ctx.game, price = nextTrainerGems(game.save);
     if (price === null) return "";
-    const short = !game.free && game.save.gems < price;
-    return `<button id="buy-trainer" class="buy-trainer" ${short ? "disabled" : ""} aria-label="Buy a trainer for ${price} Gems: one more stat trains at once" title="${short ? `Needs ${price} Gems` : "One more stat trains at once"}">+ ${gemIcon()} ${price}</button>`;
+    const short = this.trainerShort();
+    return `<button id="buy-trainer" class="buy-trainer${short ? " short" : ""}" aria-label="Buy a trainer for ${price} Gems: one more stat trains at once" title="${short ? `Needs ${price} Gems` : "One more stat trains at once"}">+ ${gemIcon()} ${price}</button>`;
   }
 
   /** Once a second while the page shows: the Archives' countdowns, or the

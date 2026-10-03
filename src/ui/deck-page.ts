@@ -1,3 +1,4 @@
+import { askForGems } from "./dialogs.ts";
 import { CARDS, deckCards, handSlots, moveCard, nextHandSlotGems, placeCard, type CardId } from "../cards.ts";
 import type { AppContext } from "./app.ts";
 import { cardArt, el, gemIcon, POINTER_SVG } from "./dom.ts";
@@ -128,7 +129,7 @@ export class DeckPage {
     const { save, free } = this.ctx.game, price = nextHandSlotGems(save);
     if (price === null || this.lesson === "order" || this.lesson === "remove") return "";
     const short = save.gems < price && !free;
-    return `<div class="deck-slot for-sale" role="listitem"><button type="button" class="deck-buy-slot" data-buy-slot ${short ? "disabled" : ""} title="${short ? `Needs ${price} Gems` : `Buy a hand slot for ${price} Gems`}" aria-label="Buy a hand slot for ${price} Gems"><span>+</span>${gemIcon()}<b>${price}</b></button></div>`;
+    return `<div class="deck-slot for-sale" role="listitem"><button type="button" class="deck-buy-slot${short ? " short" : ""}" data-buy-slot title="${short ? `Needs ${price} Gems` : `Buy a hand slot for ${price} Gems`}" aria-label="Buy a hand slot for ${price} Gems"><span>+</span>${gemIcon()}<b>${price}</b></button></div>`;
   }
 
   private cardSlotsHtml(hand: readonly CardId[], held: number | null) {
@@ -151,7 +152,7 @@ export class DeckPage {
     row.onclick = (e) => {
       const x = (e.target as HTMLElement).closest<HTMLButtonElement>(".deck-remove");
       if (x) this.remove(x.dataset.remove as CardId);
-      if ((e.target as HTMLElement).closest(".deck-buy-slot:not(:disabled)")) this.buySlot();
+      if ((e.target as HTMLElement).closest(".deck-buy-slot")) this.buySlot();
     };
     row.onpointerdown = (e) => {
       const card = (e.target as HTMLElement).closest<HTMLButtonElement>(".deck-card");
@@ -330,6 +331,7 @@ export class DeckPage {
   private buySlot() {
     const { game } = this.ctx, price = nextHandSlotGems(game.save);
     if (price === null) return;
+    if (!game.free && game.save.gems < price) return askForGems(this.ctx);
     this.ctx.confirm(
       {
         title: "Buy a hand slot?",

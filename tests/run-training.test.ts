@@ -53,7 +53,7 @@ test("training for the run spends Silver and raises the stat at once; undo takes
   assert.ok(g.trainInRun("attack"));
   assert.equal(g.silver, 95);
   assert.equal(g.run.player.attack, attack + trained(row, 1, level));
-  assert.equal(g.run.loadout!.attack, g.run.player.attack, "kept when a new section resets ATK");
+  assert.equal(g.run.loadout!.attack, g.run.player.attack);
   assert.equal(runTrainingOffer(g.save, g.run, "attack").level, 1);
   assert.equal(runTrainingOffer(g.save, g.run, "attack").price, 7, "the next costs more");
   assert.equal(g.save.training.attack, 0, "the hero's own training is untouched");

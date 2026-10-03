@@ -3,7 +3,7 @@ import { TRAINING, TRAINING_GROUPS, trainingOpen, type TrainingId } from "../con
 import { runTrainingOffer, runTrainingValue } from "../run-training.ts";
 import { trainingText } from "../loadout.ts";
 import { el, itemSprite, POINTER_SVG, uiSprite } from "./dom.ts";
-import { flashRed } from "./hud.ts";
+import { sparkRed } from "./hud.ts";
 
 type Group = keyof typeof TRAINING_GROUPS;
 /** Each group's button icon. */
@@ -20,8 +20,8 @@ const silverIcon = () => uiSprite("gold", "ui-sprite silver-sprite");
  * it again brings the hand back. Pressing or hovering a card's face shows
  * what it trains and its level. The bar shows once On the Job is owned;
  * the first run after it teaches the bar (`lesson`): a note over the hand
- * and a hand pointing at a group button, until the player opens a group
- * and closes it again. */
+ * and a hand pointing at a group button, the hand paused, until the
+ * player opens a group and closes it again. */
 export class RunTrainingBar {
   /** The group shown in the hand's place, if any. */
   private open: Group | null = null;
@@ -32,6 +32,9 @@ export class RunTrainingBar {
   /** Whether the player opened a group while the lesson showed: closing it
    * then finishes the lesson. */
   private triedGroup = false;
+  /** Whether the lesson paused the hand when it began: finishing the lesson
+   * sets it playing again. */
+  private pausedForLesson = false;
 
   constructor(private game: Game, private changed: () => void) {
     const bar = el("training-bar");
@@ -45,7 +48,7 @@ export class RunTrainingBar {
       this.open = this.open === group ? null : group;
       if (this.lesson) {
         if (this.open) this.triedGroup = true;
-        else if (this.triedGroup) this.game.save.tutorials.onTheJob = true;
+        else if (this.triedGroup) this.finishLesson();
       }
       this.hideTip();
       this.changed();
@@ -54,7 +57,7 @@ export class RunTrainingBar {
     cards.onclick = (e) => {
       const target = e.target as HTMLElement, buy = target.closest<HTMLButtonElement>("[data-run-train]");
       if (buy) {
-        if (!this.game.trainInRun(buy.dataset.runTrain as TrainingId)) flashRed(buy);
+        if (!this.game.trainInRun(buy.dataset.runTrain as TrainingId)) sparkRed(buy, this.game.save.settings.reduceMotion);
         this.changed();
         this.refreshTip();
         return;
@@ -104,6 +107,13 @@ export class RunTrainingBar {
     this.renderLesson(inside);
   }
 
+  /** Ends the lesson, and plays the hand on if the lesson paused it. */
+  private finishLesson() {
+    this.game.save.tutorials.onTheJob = true;
+    if (this.pausedForLesson && !this.game.auto) this.game.toggleAuto();
+    this.pausedForLesson = false;
+  }
+
   /** Whether the bar's lesson waits: the first run inside after On the Job. */
   private get lesson() {
     return !!this.game.save.upgrades.onTheJob && !this.game.save.tutorials.onTheJob;
@@ -123,6 +133,13 @@ export class RunTrainingBar {
       bar.insertAdjacentHTML("beforeend", `<div class="job-tip" role="status"></div><span class="job-pointer${this.game.save.settings.reduceMotion ? " still" : ""}">${POINTER_SVG}</span>`);
       note = bar.querySelector<HTMLElement>(".job-tip")!;
       pointer = bar.querySelector<HTMLElement>(".job-pointer")!;
+      // The lesson pauses the hand, so the player can take it in.
+      if (this.game.auto) {
+        this.game.toggleAuto();
+        this.pausedForLesson = true;
+        // The HUD drew before the bar: redraw it with the hand paused.
+        queueMicrotask(this.changed);
+      }
     }
     const text = this.open
       ? `<b>Training for this run</b><p>Press a card's price to buy a rank with ${silverIcon()} Silver. Press ${TRAINING_GROUPS[this.open].toUpperCase()} again to close it.</p>`
@@ -159,7 +176,8 @@ export class RunTrainingBar {
       buy.dataset.label = label;
       buy.innerHTML = label;
     }
-    buy.disabled = offer.maxed || short;
+    // Short of Silver it still answers a press, with red sparks.
+    buy.disabled = offer.maxed;
     buy.setAttribute("aria-label", offer.maxed ? `${offer.row.name} is at its highest level` : `Train ${offer.row.name} for this run for ${offer.price} Silver`);
   }
 
