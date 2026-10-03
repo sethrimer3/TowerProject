@@ -52,7 +52,7 @@ test("Revive is a 10 Inspiration skill below Shroud, and the Courage tree no lon
   const where = TREES.filter((t) => t.nodes.some((n) => n.id === "revive")).map((t) => t.id);
   assert.deepEqual(where, ["inspiration"]);
   assert.deepEqual(TREES.find((t) => t.id === "inspiration")!.nodes.find((n) => n.id === "revive")!.requires, ["shroud"]);
-  assert.deepEqual(TREES.find((t) => t.id === "courage")!.nodes.find((n) => n.id === "legacy")!.requires, ["attack", "undos"]);
+  assert.deepEqual(TREES.find((t) => t.id === "courage")!.nodes.find((n) => n.id === "legacy")!.requires, ["focus", "undos"]);
 });
 
 /** A Delve run on `seed` with the hero two tiles below a Brute in a walled

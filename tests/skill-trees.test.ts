@@ -13,7 +13,7 @@ test("fresh progression gates Delve, currencies, Courage root, and Legacy", () =
   assert.equal(g.mode, "tower");
   assert.equal(g.buy("moveSpeed"), false);
   assert.equal(g.buy("delve"), false);
-  for (const id of ["handOrdering", "combatStance", "largerHand", "focus", "delve"] as const) assert.ok(g.buy(id));
+  for (const id of ["handOrdering", "combatStance", "largerHand", "archives", "delve"] as const) assert.ok(g.buy(id));
   assert.equal(g.save.delve.courage, 100);
   g.switchMode("delve");
   assert.equal(g.mode, "delve");
@@ -37,7 +37,7 @@ test("fresh progression gates Delve, currencies, Courage root, and Legacy", () =
 test("Greater Heal, then Recovery, Shroud and Find Potion, come after the Archives, whose research they open", () => {
   const g = new Game(defaults());
   g.save.tower.inspiration = 1000;
-  for (const id of ["handOrdering", "combatStance", "largerHand", "focus"] as const) assert.ok(g.buy(id));
+  for (const id of ["handOrdering", "combatStance", "largerHand"] as const) assert.ok(g.buy(id));
   assert.equal(g.buy("greaterHeal"), false, "the Archives come first");
   assert.ok(g.buy("archives"));
   assert.equal(g.buy("recovery"), false, "Greater Heal comes first");
@@ -57,16 +57,16 @@ test("Greater Heal, then Recovery, Shroud and Find Potion, come after the Archiv
   assert.deepEqual([at("shroud").x, at("shroud").y, at("shroud").requires], [92, 124, ["greaterHeal"]], "Shroud sits beside Recovery");
   assert.deepEqual([at("findPotion").x, at("findPotion").y, at("findPotion").requires], [74, 142, ["recovery"]], "Find Potion sits below Recovery");
 });
-test("the hand's skills run to Focus, Gear and Training off Buildout, Equipment after Gear, On the Job then Heal below Training, and Larger Hand, Buildout, Training, On the Job and Gear cost 1", () => {
+test("the hand's skills run to the Archives, Gear and Training off Buildout, Equipment after Gear, On the Job then Heal below Training, and Larger Hand, Buildout, Training, On the Job and Gear cost 1", () => {
   const at = (id: string) => TREES[0].nodes.find((n) => n.id === id)!;
-  assert.deepEqual(["combatStance", "training", "onTheJob", "cardHeal", "gear", "largerHand", "focus", "cardGear"].map((id) => at(id).requires),
+  assert.deepEqual(["combatStance", "training", "onTheJob", "cardHeal", "gear", "largerHand", "archives", "cardGear"].map((id) => at(id).requires),
     [["handOrdering"], ["combatStance"], ["training"], ["onTheJob"], ["combatStance"], ["combatStance"], ["largerHand"], ["gear"]]);
   assert.ok(at("training").x > at("combatStance").x && at("training").y === at("combatStance").y, "Training sits right of Buildout");
   assert.ok(at("onTheJob").x === at("training").x && at("onTheJob").y > at("training").y, "On the Job sits below Training");
   assert.ok(at("cardHeal").x === at("onTheJob").x && at("cardHeal").y > at("onTheJob").y, "Heal sits below On the Job");
   assert.ok(at("gear").x < at("combatStance").x && at("gear").y === at("combatStance").y, "Gear sits left of Buildout");
   assert.ok(at("cardGear").x === at("gear").x && at("cardGear").y > at("gear").y, "Equipment sits under Gear");
-  assert.deepEqual(["handOrdering", "combatStance", "training", "onTheJob", "largerHand", "gear", "focus"].map((id) => cost(id as UpgradeId, 0)), [1, 1, 1, 1, 1, 1, 5]);
+  assert.deepEqual(["handOrdering", "combatStance", "training", "onTheJob", "largerHand", "gear", "archives"].map((id) => cost(id as UpgradeId, 0)), [1, 1, 1, 1, 1, 1, 5]);
   assert.deepEqual(["gear", "cardGear", "onTheJob"].map((id) => UPGRADES.find((u) => u.id === id)!.name), ["Gear", "Equipment", "On the Job"]);
   const g = new Game(defaults());
   g.save.tower.inspiration = 100;
@@ -74,10 +74,10 @@ test("the hand's skills run to Focus, Gear and Training off Buildout, Equipment 
   assert.equal(g.buy("onTheJob"), false, "On the Job waits for Training");
   assert.equal(g.buy("cardHeal"), false, "Heal waits for On the Job");
   assert.ok(g.buy("training") && g.buy("onTheJob") && g.buy("cardHeal"));
-  assert.equal(g.buy("focus"), false, "Focus waits for Larger Hand");
+  assert.equal(g.buy("archives"), false, "the Archives wait for Larger Hand");
   assert.equal(g.buy("cardGear"), false, "Equipment waits for Gear");
   assert.ok(g.buy("gear") && g.buy("cardGear"));
-  assert.ok(g.buy("largerHand") && g.buy("focus"));
+  assert.ok(g.buy("largerHand") && g.buy("archives"));
 });
 test("Training (1) follows Buildout, Blue Key (2) the Archives, and Extra Key (1) Movement Speed", () => {
   const node = (id: UpgradeId) => TREES.flatMap((t) => t.nodes.map((n) => ({ ...n, tree: t.id }))).find((n) => n.id === id)!;
@@ -129,14 +129,26 @@ test("Movement Speed opens 1 to 3 steps a second, and each research level one mo
   assert.deepEqual(RESEARCH.moveSpeed.levels, RESEARCH.focusCount.levels.slice(0, 6).map((l) => ({ ...l, effect: { ...l.effect, target: "moveSpeed" } })));
   assert.deepEqual(RESEARCH.moveSpeed.requires, [{ upgrade: "moveSpeed" }]);
 });
-test("Inspiration tree: Heal follows On the Job, and Larger Hand leads to Focus", () => {
+test("Inspiration tree: Heal follows On the Job, Larger Hand leads to the Archives (5), and Into the Depths follows them", () => {
   const node = (id: UpgradeId) => TREES[0].nodes.find((n) => n.id === id)!;
   assert.deepEqual(node("cardHeal").requires, ["onTheJob"]);
-  assert.deepEqual(node("focus").requires, ["largerHand"]);
+  assert.deepEqual([node("archives").x, node("archives").y, node("archives").requires], [50, 66, ["largerHand"]]);
+  assert.deepEqual([node("delve").x, node("delve").y, node("delve").requires], [50, 88, ["archives"]]);
+  assert.deepEqual(node("inspirationUndos").requires, ["archives"]);
+  assert.equal(cost("archives", 0), 5);
   const g = new Game(defaults());
   g.save.tower.inspiration = 100;
-  for (const id of ["handOrdering", "combatStance", "largerHand", "focus"] as const) assert.ok(g.buy(id), id);
+  for (const id of ["handOrdering", "combatStance", "largerHand", "archives", "delve"] as const) assert.ok(g.buy(id), id);
   assert.ok(!g.save.upgrades.cardHeal);
+});
+test("Focus (5 Courage) takes Tempered Edge's place in the Courage tree, which is gone", () => {
+  const courage = TREES.find((t) => t.id === "courage")!;
+  const focus = courage.nodes.find((n) => n.id === "focus")!;
+  assert.deepEqual([focus.x, focus.y, focus.requires], [50, 34, ["moveSpeed"]]);
+  assert.ok(!TREES[0].nodes.some((n) => n.id === "focus"), "no longer in the Inspiration tree");
+  assert.ok(!UPGRADES.some((u) => (u.id as string) === "attack"), "Tempered Edge is gone");
+  assert.deepEqual([UPGRADES.find((u) => u.id === "focus")!.currency, cost("focus", 0)], ["courage", 5]);
+  assert.deepEqual(courage.nodes.find((n) => n.id === "legacy")!.requires, ["focus", "undos"]);
 });
 test("Faster Trainers sits beside Blue Key off the Archives, costs 2 and opens its research", () => {
   const node = TREES[0].nodes.find((n) => n.id === "fasterTrainers")!;

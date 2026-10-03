@@ -11,7 +11,7 @@ export type SkillNode = { id: UpgradeId; icon: string; x: number; y: number; req
 export type SkillTree = { id: TreeId; name: string; currency: Currency; gate?: UpgradeId | null; description: string; height?: number; unlocks?: boolean; nodes: SkillNode[] };
 export const TREES: SkillTree[] = [
   { id: "inspiration", name: "Inspiration", currency: "inspiration", description: "Earn Inspiration by beating your best Tower climb.", height: 172, unlocks: true, nodes: [
-    // The hand's skills, down to Focus; Gear and Training branch off Buildout,
+    // The hand's skills, down to the Archives; Gear and Training branch off Buildout,
     // Equipment off Gear, and On the Job, then Heal, below Training.
     { id: "handOrdering", icon: "▤", x: 50, y: 12, requires: [] },
     { id: "combatStance", icon: "⚔", x: 50, y: 30, requires: ["handOrdering"] },
@@ -20,11 +20,10 @@ export const TREES: SkillTree[] = [
     { id: "gear", icon: "⚒", x: 20, y: 30, requires: ["combatStance"] },
     { id: "onTheJob", icon: "¤", x: 80, y: 48, requires: ["training"] },
     { id: "cardHeal", icon: "♥", x: 80, y: 66, requires: ["onTheJob"] },
-    { id: "focus", icon: "ϟ", x: 50, y: 66, requires: ["largerHand"] },
+    { id: "archives", icon: "▥", x: 50, y: 66, requires: ["largerHand"] },
     { id: "cardGear", icon: "⛨", x: 20, y: 48, requires: ["gear"] },
-    { id: "inspirationUndos", icon: "↺", x: 26, y: 88, requires: ["focus"] },
-    { id: "archives", icon: "▥", x: 50, y: 88, requires: ["focus"] },
-    { id: "delve", icon: "▼", x: 74, y: 88, requires: ["focus"] },
+    { id: "inspirationUndos", icon: "↺", x: 26, y: 88, requires: ["archives"] },
+    { id: "delve", icon: "▼", x: 50, y: 88, requires: ["archives"] },
     // Research needs the Archives, so the skills that open it come after them.
     { id: "spareChange", icon: "¤", x: 14, y: 106, requires: ["archives"] },
     { id: "blueKey", icon: "⚿", x: 38, y: 106, requires: ["archives"] },
@@ -43,10 +42,10 @@ export const TREES: SkillTree[] = [
     { id: "instantCombat", icon: "↯", x: 18, y: 10, requires: ["moveSpeed"] },
     { id: "extraKey", icon: "⚿", x: 82, y: 10, requires: ["moveSpeed"] },
     { id: "hp", icon: "♥", x: 18, y: 34, requires: ["moveSpeed"] },
-    { id: "attack", icon: "⚔", x: 50, y: 34, requires: ["moveSpeed"] },
+    { id: "focus", icon: "ϟ", x: 50, y: 34, requires: ["moveSpeed"] },
     { id: "defense", icon: "⛨", x: 82, y: 34, requires: ["moveSpeed"] },
     { id: "undos", icon: "↺", x: 23, y: 61, requires: ["hp"] },
-    { id: "legacy", icon: "♜", x: 50, y: 87, requires: ["attack", "undos"] },
+    { id: "legacy", icon: "♜", x: 50, y: 87, requires: ["focus", "undos"] },
   ] },
   { id: "wayfinding", name: "Wayfinding", currency: "courage", gate: null, description: "Teach Delve Automove to explore, compare routes and preserve resources.", nodes: [
     { id: "aiMemory", icon: "◇", x: 50, y: 20, requires: [] },

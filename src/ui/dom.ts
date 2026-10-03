@@ -50,7 +50,6 @@ export const itemSprite = (name: keyof typeof AREA1_ITEM_URLS, className = "ui-s
 export const CURRENCY_SPRITES = { tower: "upgrades", delve: "automove" } as const;
 
 const SKILL_ITEM_SPRITES: Partial<Record<UpgradeId, keyof typeof AREA1_ITEM_URLS>> = {
-  attack: "upgrade_attack",
   defense: "upgrade_defense",
   yellow: "key_yellow", blue: "key_blue", red: "key_red", extraKey: "key_yellow",
   greaterHeal: "potion_flat", recovery: "potion_percent",

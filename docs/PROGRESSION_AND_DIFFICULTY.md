@@ -140,14 +140,14 @@ Instead:
 
 ### Current Inspiration-tree reference
 
-Every Inspiration skill is an unlock, bought once; more of what one gives comes from other panels (Rehearsed steps, 10 Inspiration after Focus, gives the first undo and opens Undo Count research).
+Every Inspiration skill is an unlock, bought once; more of what one gives comes from other panels (Rehearsed steps, 10 Inspiration after the Archives, gives the first undo and opens Undo Count research).
 
 With the current first-level costs, the direct prerequisite path to unlock Delve is approximately:
 
 - Combat Stance: 1 Inspiration
 - Buildout: 1 Inspiration
 - Larger Hand: 1 Inspiration
-- Focus: 5 Inspiration
+- Archives: 5 Inspiration
 - Into the depths: 3 Inspiration
 - **Total minimum path: 11 Inspiration**
 
@@ -307,7 +307,7 @@ This is preferable to having a new metal tier become available and immediately g
 
 ### The Archives
 
-The Archives skill (10 Inspiration, after Focus, off the Delve path) opens the second progression axis: research paid in Gold and real time, running between sessions. Its limits are Gold, the archivists (one at first, up to five, hired for 1000, 2500, 5000 and 10000 Gold) and the clock. The first project is Focus Count (after the Focus skill): nine levels, each +1 Focus use a run; level n takes 8n hours, and costs 500 Gold for level 1 and 500 × (n − 1) more than level n − 1 after it (500, 1000, 2000, 3500, 5500, 8000, 11000, 14500, 18500; 64,500 Gold and 360 hours in all). Undo Count (after the Rehearsed steps skill, listed after Focus Count) costs and takes exactly what Focus Count does, each level +1 undo stored. These numbers live in `src/archives.ts` and `tests/archives.test.ts` asserts them. Potion HP (after the Greater Heal skill, 3 Inspiration below the Archives, so 34 Inspiration down the path; listed first as the easier to reach) raises what every potion restores by 3% a level, for 100 levels (×4 at the top), the Cinder Tonic included and the red potion not; the first four levels draw players in (15 s for 10 Gold, 1 min for 25, 5 min for 50, 10 min for 75), then the formula starts over from level 5 for a smooth seam: the m-th level after the first four takes m/4 hours and costs 100 × m Gold (15 min and 100 Gold at level 5, 24 h and 9,600 Gold at level 100; 465,760 Gold and about 1,164 hours in all). Research counts the moment it completes, even mid-run: a run counts the Focus uses it has spent, not those left, and potions read the research as the hero steps on them.
+The Archives skill (5 Inspiration, after Larger Hand, on the Delve path: Into the depths follows it) opens the second progression axis: research paid in Gold and real time, running between sessions. Its limits are Gold, the archivists (one at first, up to five, hired for 1000, 2500, 5000 and 10000 Gold) and the clock. The first project is Focus Count (after the Focus skill): nine levels, each +1 Focus use a run; level n takes 8n hours, and costs 500 Gold for level 1 and 500 × (n − 1) more than level n − 1 after it (500, 1000, 2000, 3500, 5500, 8000, 11000, 14500, 18500; 64,500 Gold and 360 hours in all). Undo Count (after the Rehearsed steps skill, listed after Focus Count) costs and takes exactly what Focus Count does, each level +1 undo stored. These numbers live in `src/archives.ts` and `tests/archives.test.ts` asserts them. Potion HP (after the Greater Heal skill, 3 Inspiration below the Archives, so 34 Inspiration down the path; listed first as the easier to reach) raises what every potion restores by 3% a level, for 100 levels (×4 at the top), the Cinder Tonic included and the red potion not; the first four levels draw players in (15 s for 10 Gold, 1 min for 25, 5 min for 50, 10 min for 75), then the formula starts over from level 5 for a smooth seam: the m-th level after the first four takes m/4 hours and costs 100 × m Gold (15 min and 100 Gold at level 5, 24 h and 9,600 Gold at level 100; 465,760 Gold and about 1,164 hours in all). Research counts the moment it completes, even mid-run: a run counts the Focus uses it has spent, not those left, and potions read the research as the hero steps on them.
 
 
 Recovery (10 Inspiration below Greater Heal, 44 down the path) brings percent potions onto the floors of runs that go inside with it: each of the Tower's potions and the Delve's corridor-guard potions (not the pockets' sized ones) is one with a chance fixed when the run goes inside, 2% at first, each restoring the regular 35 HP plus 1% of max HP, and 0.25% more per rank of Potion % training (1 training point a rank, the same at every level). Before Recovery each is a regular potion, so buying it only adds healing; over time the percent share grows to dominate the flat one, which keeps potions useful as max HP scales in long-term progression.
