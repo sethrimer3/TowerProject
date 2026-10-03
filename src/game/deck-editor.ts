@@ -25,7 +25,7 @@ export class DeckEditor {
   /** Whether cards can go in and out of the hand: Buildout owned, in the
    * forest. */
   private get canChoose() {
-    return !!this.save.upgrades.combatStance && this.inForest;
+    return !!this.save.upgrades.buildout && this.inForest;
   }
 
   /** Whether `id` is a deck card not yet in the hand, free to be placed. */
@@ -45,7 +45,7 @@ export class DeckEditor {
    * both slots hold cards. */
   private canArrange(from: number, to: number) {
     const n = this.save.hand.length;
-    return !!this.save.upgrades.handOrdering && this.inForest && inRange(from, n) && inRange(to, n);
+    return !!this.save.upgrades.combatStance && this.inForest && inRange(from, n) && inRange(to, n);
   }
 
   /** Puts a deck card into the hand's first empty slot (Buildout, in the

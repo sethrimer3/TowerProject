@@ -105,7 +105,7 @@ test("a run fixes its chance of percent potions when it goes inside, from what w
   g.save.xp = xpForLevel(5);
   g.newRun({ outside: true, seed: 3 });
   g.save.tower.inspiration = 100;
-  for (const id of ["handOrdering", "combatStance", "largerHand", "archives", "delve", "greaterHeal", "recovery", "findPotion"] as const) assert.ok(g.buy(id), id);
+  for (const id of ["combatStance", "buildout", "largerHand", "archives", "delve", "greaterHeal", "recovery", "findPotion"] as const) assert.ok(g.buy(id), id);
   assert.ok(trainNow(g, "findPotion") && trainNow(g, "findPotion"));
   g.walkTo(g.run.player.x, ENTRANCE_Y);
   for (let i = 0; i < 20 && g.route.length; i++) g.routeStep();

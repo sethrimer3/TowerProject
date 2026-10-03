@@ -118,7 +118,7 @@ function unlockTarget(id: string): string {
  * page on that skill instead. */
 const LOCKED_TABS = new Map<string, { skill: UpgradeId; tree: TreeId }>([
   ["delve", { skill: "delve", tree: "inspiration" }],
-  ["deck", { skill: "handOrdering", tree: "inspiration" }],
+  ["deck", { skill: "combatStance", tree: "inspiration" }],
   ["gear", { skill: "gear", tree: "inspiration" }],
   ["defend", { skill: "legacy", tree: "courage" }],
 ]);

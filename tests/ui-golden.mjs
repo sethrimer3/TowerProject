@@ -87,7 +87,7 @@ try {
     };
     const rich = (s) => {
       quiet(s);
-      Object.assign(s.upgrades, { delve: 1, moveSpeed: 1, legacy: 1, revive: 1, handOrdering: 1, combatStance: 1, largerHand: 1, cardHeal: 1, focus: 1, archives: 1, inspirationUndos: 1, greaterHeal: 1, recovery: 1, findPotion: 1, shroud: 1, undos: 1, extraKey: 1, gear: 1, training: 1, blueKey: 1, pathfinder: 1 });
+      Object.assign(s.upgrades, { delve: 1, moveSpeed: 1, legacy: 1, revive: 1, combatStance: 1, buildout: 1, largerHand: 1, cardHeal: 1, focus: 1, archives: 1, inspirationUndos: 1, greaterHeal: 1, recovery: 1, findPotion: 1, shroud: 1, undos: 1, extraKey: 1, gear: 1, training: 1, cardBlueKey: 1, pathfinder: 1 });
       s.delve.courage = 37;
       s.tower.inspiration = 21;
       s.gold = 480;
@@ -268,8 +268,8 @@ try {
   async function cardRevealTour(prefix) {
     await tab("upgrades");
     await click('[data-tree="inspiration"]');
-    await click('[data-skill="cardGear"]');
-    await click('[data-skill="cardGear"]');
+    await click('[data-skill="cardAtkUp"]');
+    await click('[data-skill="cardAtkUp"]');
     await shot(`${prefix}.cardReveal`);
     await click("#card-reveal-card");
     await shot(`${prefix}.cardRevealed`);
@@ -387,7 +387,7 @@ try {
   await tab("upgrades");
   await shot("fresh.upgrades");
   // A skill short of its price says how much more it needs.
-  await click('[data-skill="handOrdering"]');
+  await click('[data-skill="combatStance"]');
   await shot("fresh.tree.short");
   await tab("tower");
   // In the forest it is Enter, going straight in.

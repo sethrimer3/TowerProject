@@ -72,10 +72,10 @@ export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay)
   (document.querySelector(".dpad") as HTMLElement).hidden = !game.save.settings.showArrows;
   renderLockedTab("delve", !!game.save.upgrades.delve, "Delve", "Unlock Into the depths in the Inspiration tree");
   renderAdButton(game);
-  renderLockedTab("deck", !!game.save.upgrades.handOrdering, "Deck", "Unlock Combat Stance in the Inspiration tree");
+  renderLockedTab("deck", !!game.save.upgrades.combatStance, "Deck", "Unlock Combat Stance in the Inspiration tree");
   // A new Deck lesson waits behind the button until its tutorial is done.
   const { deck, addCard } = game.save.tutorials;
-  document.querySelector(`[data-tab="deck"]`)?.classList.toggle("notify", !deck || (!!game.save.upgrades.combatStance && !addCard));
+  document.querySelector(`[data-tab="deck"]`)?.classList.toggle("notify", !deck || (!!game.save.upgrades.buildout && !addCard));
   document.querySelector(`[data-tab="upgrades"]`)?.classList.toggle("notify", upgradesWaiting(game));
   renderLockedTab("gear", !!game.save.upgrades.gear, "Gear", "Unlock Gear in the Inspiration tree");
   document.querySelector(`[data-tab="gear"]`)?.classList.toggle("notify", gearWaiting(game));

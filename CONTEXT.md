@@ -201,7 +201,7 @@ _Avoid_: lab slot, researcher
 ### The hand
 
 **Card**:
-One way of moving the hero, toward one kind of target: the stairs, a potion, a door the hero holds the keys for, a key of one colour (yellow, or blue), a monster, or an ATK or DEF pickup. A card can act when the hero can reach such a target on the current floor over open floor and items.
+One way of moving the hero, toward one kind of target: the stairs, a potion, a door the hero holds the keys for, a key of one colour (yellow, or blue), a monster, an ATK pickup, or a DEF pickup. A card can act when the hero can reach such a target on the current floor over open floor and items.
 _Avoid_: skill (a skill is something the player uses), ability
 
 **Hand**:

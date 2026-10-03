@@ -43,7 +43,7 @@ const PRICED_TREES: TreeId[] = ["inspiration", "courage"];
 
 export class SkillTreePage {
   private tree: PageTab = "inspiration";
-  private skill: UpgradeId = "handOrdering";
+  private skill: UpgradeId = "combatStance";
   private tooltipVisible = false;
   private views: Partial<Record<TreeId, View>> = {};
   private particles = new TreeParticles();

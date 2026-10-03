@@ -73,7 +73,7 @@ export class DeckPage {
   private get lesson(): Lesson {
     const { tutorials, upgrades } = this.ctx.game.save;
     if (!tutorials.deck) return "order";
-    if (!upgrades.combatStance) return null;
+    if (!upgrades.buildout) return null;
     if (!tutorials.removeCard) return "remove";
     return tutorials.addCard ? null : "add";
   }
@@ -121,7 +121,7 @@ export class DeckPage {
         <div class="deck-hand" id="deck-hand" role="list" aria-label="Hand, in the order its cards are tried">${this.slotsHtml(save.hand)}</div>
         ${tip}
       </section>
-      ${save.upgrades.combatStance && lesson !== "remove" ? this.deckHtml(lesson === "add") : this.lockedDeckHtml(!!save.upgrades.combatStance)}
+      ${save.upgrades.buildout && lesson !== "remove" ? this.deckHtml(lesson === "add") : this.lockedDeckHtml(!!save.upgrades.buildout)}
     </div>`;
     this.bindHand();
     this.bindDeck();
@@ -195,7 +195,7 @@ export class DeckPage {
    * lesson. */
   private removable(id: CardId) {
     const lesson = this.lesson;
-    if (!this.ctx.game.save.upgrades.combatStance || id === "stairs") return false;
+    if (!this.ctx.game.save.upgrades.buildout || id === "stairs") return false;
     if (lesson === "order") return false;
     return lesson !== "remove" || id === this.removeTarget;
   }

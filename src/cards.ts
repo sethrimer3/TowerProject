@@ -14,7 +14,8 @@ export const CARDS = {
   yellowKey: { name: "Yellow Key", text: "Move toward the closest yellow key." },
   blueKey: { name: "Blue Key", text: "Move toward the closest blue key." },
   monster: { name: "Monster", text: "Move toward the closest monster." },
-  equipment: { name: "Equipment", text: "Move toward the closest ATK or DEF pickup." },
+  atkUp: { name: "ATK Up", text: "Move toward the closest ATK pickup." },
+  defUp: { name: "DEF Up", text: "Move toward the closest DEF pickup." },
 } as const;
 export type CardId = keyof typeof CARDS;
 export const CARD_IDS = Object.keys(CARDS) as CardId[];
@@ -40,7 +41,7 @@ export const handSlots = (save: { upgrades: Record<UpgradeId, number>; handSlots
 export const nextHandSlotGems = (save: { upgrades: Record<UpgradeId, number>; handSlots: number }) =>
   save.upgrades.largerHand ? HAND_SLOT_GEMS[save.handSlots] ?? null : null;
 /** The hand a new profile starts with, in priority order: its whole deck.
- * HEAL, EQUIPMENT and BLUE KEY are earned from the Inspiration tree. */
+ * HEAL, ATK UP, DEF UP and BLUE KEY are earned from the Inspiration tree. */
 export const BASE_HAND: readonly CardId[] = ["stairs", "door", "yellowKey", "monster"];
 /** The cards the player owns, in `CARDS` order: the base hand's, and each
  * card whose upgrade is owned. A hand holds any of them, but always STAIRS. */
@@ -115,7 +116,8 @@ const WANTS: Record<CardId, (t: Tile, at: Position) => boolean> = {
   blueKey: (t) => t.kind === "key" && t.color === "blue",
   // An impervious monster can't be fought at all, so it is never a target.
   monster: (t, at) => t.kind === "enemy" && !predict(at.run.player, t.enemy!).impervious,
-  equipment: (t) => t.kind === "attack" || t.kind === "defense",
+  atkUp: (t) => t.kind === "attack",
+  defUp: (t) => t.kind === "defense",
 };
 
 /** The first card in `hand` with a target the hero can reach, and the

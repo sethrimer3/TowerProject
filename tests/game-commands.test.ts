@@ -123,7 +123,7 @@ test("a deck card dragged to the hand goes into its slot, in the forest with Bui
   g.newRun({ outside: true, seed: 1 });
   g.save.upgrades.cardHeal = 1;
   assert.equal(g.deck.place("heal", 1), false, "not before Buildout");
-  g.save.upgrades.combatStance = 1;
+  g.save.upgrades.buildout = 1;
   assert.ok(g.deck.remove("door"));
   assert.ok(g.deck.place("heal", 1));
   assert.deepEqual(g.save.hand, ["stairs", "heal", "yellowKey", "monster"]);
@@ -175,7 +175,7 @@ test("the Deck reorders the hand only with Combat Stance and in the forest, and 
   const g = new Game(defaults());
   g.newRun({ outside: true, seed: 1 });
   assert.equal(g.deck.arrange(0, 2), false, "not before Combat Stance is bought");
-  g.save.upgrades.handOrdering = 1;
+  g.save.upgrades.combatStance = 1;
   assert.ok(g.deck.arrange(0, 2));
   const ordered = ["door", "yellowKey", "stairs", "monster"];
   assert.deepEqual(g.save.hand, ordered);
@@ -197,7 +197,7 @@ test("Buildout moves cards between the deck and the hand in the forest, and STAI
   const g = new Game(defaults());
   g.newRun({ outside: true, seed: 1 });
   assert.equal(g.deck.remove("monster"), false, "not before Buildout is bought");
-  g.save.upgrades.combatStance = 1;
+  g.save.upgrades.buildout = 1;
   g.save.upgrades.cardHeal = 1;
   g.save.hand.push("heal");
   assert.equal(g.deck.remove("stairs"), false, "STAIRS can't leave the hand");
@@ -208,7 +208,7 @@ test("Buildout moves cards between the deck and the hand in the forest, and STAI
   assert.ok(g.deck.add("monster"));
   assert.deepEqual(g.save.hand, ["stairs", "door", "yellowKey", "monster"], "an added card takes the first empty slot");
   assert.equal(g.deck.add("monster"), false, "a card already in the hand");
-  assert.equal(g.deck.add("equipment"), false, "a card the player doesn't own");
+  assert.equal(g.deck.add("atkUp"), false, "a card the player doesn't own");
   assert.equal(g.deck.add("heal"), false, "four slots until Larger Hand");
   g.save.upgrades.largerHand = 1;
   assert.ok(g.deck.add("heal"));

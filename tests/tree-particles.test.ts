@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { TreeParticles } from '../src/tree-particles.ts';
 import type { SkillNode } from '../src/skill-trees.ts';
 
-const node: SkillNode = { id: 'handOrdering', x: 50, y: 50, requires: [], icon: '' };
+const node: SkillNode = { id: 'combatStance', x: 50, y: 50, requires: [], icon: '' };
 
 test('ambient rotation is CCW and selected rotation is stronger CW in screen coordinates', () => {
   const ambient = new TreeParticles(), selected = new TreeParticles();
@@ -20,7 +20,7 @@ test('connection current flows from prerequisite toward child', () => {
   const fluid = new TreeParticles();
   const nodes: SkillNode[] = [
     { ...node, x: 20 },
-    { ...node, id: 'combatStance', x: 80, requires: [node.id] },
+    { ...node, id: 'buildout', x: 80, requires: [node.id] },
   ];
   for (let i=0; i<90; i++) fluid['step'](1/30, { w: 600, h: 400, nodes, selected: null });
   assert.ok(fluid['u'][20*40+20] > 0, 'middle of link must move toward the child');

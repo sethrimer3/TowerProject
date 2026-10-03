@@ -10,34 +10,35 @@ export type SkillNode = { id: UpgradeId; icon: string; x: number; y: number; req
  * only Dev mode shows it, and its skills can't be bought). */
 export type SkillTree = { id: TreeId; name: string; currency: Currency; gate?: UpgradeId | null; description: string; height?: number; unlocks?: boolean; nodes: SkillNode[] };
 export const TREES: SkillTree[] = [
-  { id: "inspiration", name: "Inspiration", currency: "inspiration", description: "Earn Inspiration by beating your best Tower climb.", height: 172, unlocks: true, nodes: [
+  { id: "inspiration", name: "Inspiration", currency: "inspiration", description: "Earn Inspiration by beating your best Tower climb.", height: 190, unlocks: true, nodes: [
     // The hand's skills, down to the Archives; Gear and Training branch off Buildout,
-    // Equipment off Gear, and On the Job, then Heal, below Training.
-    { id: "handOrdering", icon: "▤", x: 50, y: 12, requires: [] },
-    { id: "combatStance", icon: "⚔", x: 50, y: 30, requires: ["handOrdering"] },
-    { id: "training", icon: "⚔", x: 80, y: 30, requires: ["combatStance"] },
-    { id: "largerHand", icon: "▦", x: 50, y: 48, requires: ["combatStance"] },
-    { id: "gear", icon: "⚒", x: 20, y: 30, requires: ["combatStance"] },
+    // ATK Up and DEF Up under Gear, and On the Job, then Heal, below Training.
+    { id: "combatStance", icon: "▤", x: 50, y: 12, requires: [] },
+    { id: "buildout", icon: "⚔", x: 50, y: 30, requires: ["combatStance"] },
+    { id: "training", icon: "⚔", x: 80, y: 30, requires: ["buildout"] },
+    { id: "largerHand", icon: "▦", x: 50, y: 48, requires: ["buildout"] },
+    { id: "gear", icon: "⚒", x: 20, y: 30, requires: ["buildout"] },
     { id: "onTheJob", icon: "¤", x: 80, y: 48, requires: ["training"] },
     { id: "cardHeal", icon: "♥", x: 80, y: 66, requires: ["onTheJob"] },
     { id: "archives", icon: "▥", x: 50, y: 66, requires: ["largerHand"] },
-    { id: "cardGear", icon: "⛨", x: 20, y: 48, requires: ["gear"] },
+    { id: "cardAtkUp", icon: "⚔", x: 20, y: 48, requires: ["gear"] },
+    { id: "cardDefUp", icon: "⛨", x: 20, y: 66, requires: ["cardAtkUp"] },
     // Research needs the Archives, so the skills that open it come after them:
-    // Blue Key beside them, Rehearsed steps and Faster Trainers either side of
+    // Blue Key below DEF Up, Rehearsed steps and Faster Trainers either side of
     // Into the depths, and Spare Change and Greater Heal after it.
-    { id: "blueKey", icon: "⚿", x: 20, y: 66, requires: ["archives"] },
-    { id: "inspirationUndos", icon: "↺", x: 20, y: 88, requires: ["archives"] },
-    { id: "delve", icon: "▼", x: 50, y: 88, requires: ["archives"] },
-    { id: "fasterTrainers", icon: "»", x: 80, y: 88, requires: ["archives"] },
-    { id: "spareChange", icon: "¤", x: 26, y: 106, requires: ["delve"] },
-    { id: "greaterHeal", icon: "✚", x: 74, y: 106, requires: ["delve"] },
-    { id: "wealthy", icon: "¤", x: 14, y: 124, requires: ["spareChange"] },
-    { id: "loot", icon: "☠", x: 38, y: 124, requires: ["spareChange"] },
-    { id: "wishingWell", icon: "◎", x: 26, y: 142, requires: ["spareChange"] },
-    { id: "recovery", icon: "✦", x: 62, y: 124, requires: ["greaterHeal"] },
-    { id: "findPotion", icon: "⚗", x: 62, y: 142, requires: ["recovery"] },
-    { id: "shroud", icon: "◈", x: 86, y: 124, requires: ["greaterHeal"] },
-    { id: "revive", icon: "☼", x: 86, y: 142, requires: ["shroud"] },
+    { id: "cardBlueKey", icon: "⚿", x: 20, y: 84, requires: ["archives"] },
+    { id: "inspirationUndos", icon: "↺", x: 20, y: 106, requires: ["archives"] },
+    { id: "delve", icon: "▼", x: 50, y: 106, requires: ["archives"] },
+    { id: "fasterTrainers", icon: "»", x: 80, y: 106, requires: ["archives"] },
+    { id: "spareChange", icon: "¤", x: 26, y: 124, requires: ["delve"] },
+    { id: "greaterHeal", icon: "✚", x: 74, y: 124, requires: ["delve"] },
+    { id: "wealthy", icon: "¤", x: 14, y: 142, requires: ["spareChange"] },
+    { id: "loot", icon: "☠", x: 38, y: 142, requires: ["spareChange"] },
+    { id: "wishingWell", icon: "◎", x: 26, y: 160, requires: ["spareChange"] },
+    { id: "recovery", icon: "✦", x: 62, y: 142, requires: ["greaterHeal"] },
+    { id: "findPotion", icon: "⚗", x: 62, y: 160, requires: ["recovery"] },
+    { id: "shroud", icon: "◈", x: 86, y: 142, requires: ["greaterHeal"] },
+    { id: "revive", icon: "☼", x: 86, y: 160, requires: ["shroud"] },
   ] },
   { id: "courage", name: "Courage", currency: "courage", gate: "delve", description: "Earn Courage by beating your best Delve depth.", nodes: [
     { id: "moveSpeed", icon: "»", x: 50, y: 10, requires: ["delve"] },

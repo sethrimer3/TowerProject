@@ -60,7 +60,7 @@ const FONT = {
   O: ["010", "101", "101", "101", "010"], P: ["110", "101", "110", "100", "100"], Q: ["010", "101", "101", "110", "011"],
   R: ["110", "101", "110", "101", "101"], S: ["011", "100", "010", "001", "110"], T: ["111", "010", "010", "010", "010"],
   U: ["101", "101", "101", "101", "111"], Y: ["101", "101", "010", "010", "010"],
-  B: ["110", "101", "110", "101", "110"], W: ["101", "101", "111", "111", "101"], " ": ["000", "000", "000", "000", "000"],
+  B: ["110", "101", "110", "101", "110"], F: ["111", "100", "110", "100", "100"], W:["101", "101", "111", "111", "101"], " ": ["000", "000", "000", "000", "000"],
 };
 function label(p, text, y) {
   const width = text.length * 4 - 1;
@@ -117,19 +117,24 @@ const ICONS = {
     rect(p, 18, 28, 12, 2, C.dark);
     px(p, [[19, 30], [22, 30], [25, 30], [28, 30]], C.white);
   },
-  equipment(p) {
-    // A sword over a shield.
-    rect(p, 18, 15, 16, 16, C.blue);
-    rect(p, 20, 31, 12, 3, C.blue);
-    rect(p, 23, 34, 6, 2, C.blue);
-    rect(p, 20, 17, 12, 12, C.steel2);
-    for (let i = 0; i < 18; i++) rect(p, 11 + i, 34 - i, 2, 2, C.steel);
-    rect(p, 11, 30, 7, 2, C.gold2);
-    rect(p, 9, 35, 3, 3, C.wood);
+  atkUp(p) {
+    // A sword.
+    for (let i = 0; i < 18; i++) rect(p, 14 + i, 32 - i, 3, 3, C.steel);
+    rect(p, 13, 29, 9, 3, C.gold2);
+    rect(p, 17, 31, 3, 7, C.gold2);
+    rect(p, 10, 36, 4, 4, C.wood);
+  },
+  defUp(p) {
+    // A shield.
+    rect(p, 14, 13, 20, 18, C.blue);
+    rect(p, 16, 31, 16, 4, C.blue);
+    rect(p, 20, 35, 8, 3, C.blue);
+    rect(p, 17, 16, 14, 13, C.steel2);
+    rect(p, 23, 16, 2, 19, C.blue);
   },
 };
 
-const CARDS = [["stairs", "STAIRS"], ["heal", "HEAL"], ["door", "DOOR"], ["yellowKey", "YELLOW KEY"], ["blueKey", "BLUE KEY"], ["monster", "MONSTER"], ["equipment", "EQUIPMENT"]];
+const CARDS = [["stairs", "STAIRS"], ["heal", "HEAL"], ["door", "DOOR"], ["yellowKey", "YELLOW KEY"], ["blueKey", "BLUE KEY"], ["monster", "MONSTER"], ["atkUp", "ATK UP"], ["defUp", "DEF UP"]];
 mkdirSync(OUT, { recursive: true });
 for (const [id, name] of CARDS) {
   const p = canvas();

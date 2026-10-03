@@ -15,7 +15,7 @@ const LEGEND: Record<string, Tile> = {
   "#": { kind: "wall" }, ".": { kind: "floor" }, "@": { kind: "floor" }, S: { kind: "stairs" },
   P: { kind: "potion" }, D: { kind: "door", color: "yellow" }, H: { kind: "door", door: { type: "fullHp" } },
   K: { kind: "key", color: "yellow" }, M: { kind: "enemy", enemy: WEAK }, L: { kind: "enemy", enemy: LETHAL },
-  I: { kind: "enemy", enemy: IMPERVIOUS }, A: { kind: "attack" }, T: { kind: "treasure" }, O: { kind: "oneway" },
+  I: { kind: "enemy", enemy: IMPERVIOUS }, A: { kind: "attack" }, F: { kind: "defense" }, T: { kind: "treasure" }, O: { kind: "oneway" },
   V: { kind: "stairsDown" }, B: { kind: "key", color: "blue" },
 };
 
@@ -70,9 +70,10 @@ test("each card heads for its own kind of target", () => {
   assert.equal(only("K"), "yellowKey");
   assert.equal(only("B"), "blueKey");
   assert.equal(only("M"), "monster");
-  assert.equal(only("A"), "equipment");
+  assert.equal(only("A"), "atkUp");
+  assert.equal(only("F"), "defUp");
   assert.equal(only("D", { keys: { yellow: 1, blue: 0, red: 0 } }), "door");
-  assert.equal(only("T"), null, "EQUIPMENT doesn't head for chests");
+  assert.equal(only("T"), null, "ATK UP and DEF UP don't head for chests");
   assert.equal(only("."), null, "an empty floor gives no card anything to do");
 });
 
@@ -157,10 +158,11 @@ test("the deck starts as the base hand, and HEAL, EQUIPMENT and BLUE KEY join it
   assert.equal(BASE_HAND.length, BASE_HAND_SLOTS, "the base hand fills the base slots");
   assert.deepEqual(deckCards(none), ["stairs", "door", "yellowKey", "monster"]);
   assert.deepEqual(deckCards({ ...none, cardHeal: 1 }), ["stairs", "heal", "door", "yellowKey", "monster"]);
-  assert.deepEqual(deckCards({ ...none, blueKey: 1 }), ["stairs", "door", "yellowKey", "blueKey", "monster"]);
-  assert.deepEqual(deckCards({ ...none, cardHeal: 1, cardGear: 1, blueKey: 1 }), CARD_IDS);
-  assert.equal(upgradeCard("cardGear"), "equipment");
-  assert.equal(upgradeCard("blueKey"), "blueKey");
+  assert.deepEqual(deckCards({ ...none, cardBlueKey: 1 }), ["stairs", "door", "yellowKey", "blueKey", "monster"]);
+  assert.deepEqual(deckCards({ ...none, cardHeal: 1, cardAtkUp: 1, cardDefUp: 1, cardBlueKey: 1 }), CARD_IDS);
+  assert.equal(upgradeCard("cardAtkUp"), "atkUp");
+  assert.equal(upgradeCard("cardDefUp"), "defUp");
+  assert.equal(upgradeCard("cardBlueKey"), "blueKey");
   assert.equal(upgradeCard("focus"), undefined);
 });
 

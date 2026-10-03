@@ -20,10 +20,10 @@ function freeSave() {
 
 test("free purchases: skills, Training and provisions are bought with nothing and cost nothing", () => {
   const g = new Game(freeSave());
-  assert.ok(g.buy("handOrdering"));
-  assert.equal(g.save.upgrades.handOrdering, 1);
+  assert.ok(g.buy("combatStance"));
+  assert.equal(g.save.upgrades.combatStance, 1);
   assert.equal(g.save.tower.inspiration, 0);
-  assert.ok(!g.buy("handOrdering"), "a maxed skill still can't be bought");
+  assert.ok(!g.buy("combatStance"), "a maxed skill still can't be bought");
   assert.ok(!g.buy("cardHeal"), "nor one whose requirements aren't owned");
 
   const hp = TRAINING.find((t) => t.id === "hp")!;
@@ -85,7 +85,7 @@ test("without free purchases, nothing is bought on credit", () => {
   g.save.upgrades.archives = 1;
   g.save.upgrades.greaterHeal = 1;
   g.clock = () => T0;
-  assert.ok(!g.buy("handOrdering"));
+  assert.ok(!g.buy("combatStance"));
   assert.ok(!trainNow(g, "hp"));
   assert.ok(!g.gear.buyProvision(GOLD_SHOP[0].id));
   assert.equal(craftConsumable(g.save, "cinderTonic"), false);

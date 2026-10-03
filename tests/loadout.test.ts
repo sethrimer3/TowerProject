@@ -31,7 +31,7 @@ test("Rehearsed steps gives the first undo; without it nothing else stores one",
 test("each rank of an upgrade adds its grant", () => {
   const s = defaults();
   Object.assign(s.upgrades, {
-    handOrdering: 1, combatStance: 1, defense: 2, quality: 1,
+    combatStance: 1, buildout: 1, defense: 2, quality: 1,
     yellow: 1, blue: 2, red: 3, undos: 2, inspirationUndos: 1, shroud: 1,
   });
   assert.deepEqual(loadout(s), {
@@ -158,7 +158,7 @@ test("descriptions are written from the grants", () => {
   const text = Object.fromEntries(UPGRADES.map((u) => [u.id, upgradeText(u.id)]));
   assert.deepEqual(
     { defense: text.defense, yellow: text.yellow, blue: text.blue, red: text.red,
-      quality: text.quality, undos: text.undos, handOrdering: text.handOrdering, combatStance: text.combatStance,
+      quality: text.quality, undos: text.undos, combatStance: text.combatStance, buildout: text.buildout,
       inspirationUndos: text.inspirationUndos, revive: text.revive },
     {
       defense: "+1 starting defense",
@@ -167,8 +167,8 @@ test("descriptions are written from the grants", () => {
       red: "+1 starting crimson key",
       quality: "+2 weapon attack and +1 armor defense",
       undos: "Store one additional undo (up to 14)",
-      handOrdering: "Open the Deck, where you reorder the cards in your hand before a run",
-      combatStance: "Unlock the Deck: add its cards to your hand, or set them aside, to choose what a run heads for",
+      combatStance: "Open the Deck, where you reorder the cards in your hand before a run",
+      buildout: "Unlock the Deck: add its cards to your hand, or set them aside, to choose what a run heads for",
       inspirationUndos: "Rewind an action, and open Undo Count research in the Archives",
       revive: "When a strike would fell you, a 0.5% chance to rise at full HP and fight on: opens Revive training",
     },
