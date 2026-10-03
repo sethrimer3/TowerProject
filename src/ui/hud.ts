@@ -43,6 +43,7 @@ export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay)
   renderProgress(game);
   renderModeActions(game);
   text("gems-held", devAmount(game, game.save.gems));
+  text("gold-held", devAmount(game, game.save.gold));
   text("courage", devAmount(game, game.save.delve.courage));
   text("inspiration", devAmount(game, game.save.tower.inspiration));
   text("training", String(trainingPoints(game.save).left));

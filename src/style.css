@@ -2429,7 +2429,7 @@ p.research-kept { color: #ffe1a1; }
 .currencies { position: relative; padding: 0 52px; }
 .currencies.gems-only .currency:not(.gem-currency) { display: none; }
 .currencies .page-shop { position: absolute; top: 0; right: 0; width: 44px; }
-/* On a narrow phone all four of the Upgrades page's currencies need the room. */
+/* On a narrow phone all five of the Upgrades page's currencies need the room. */
 @media (max-width: 400px) { .currencies:not(.gems-only) { justify-content: flex-start; padding: 0 50px 0 0; } }
 
 /* --- Training for this run, with Silver --- */

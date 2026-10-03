@@ -64,6 +64,7 @@ test("the hand's skills run to Focus, Gear and Training off Buildout, Equipment 
   assert.ok(at("training").x > at("combatStance").x && at("training").y === at("combatStance").y, "Training sits right of Buildout");
   assert.ok(at("onTheJob").x === at("training").x && at("onTheJob").y > at("training").y, "On the Job sits below Training");
   assert.ok(at("cardHeal").x === at("onTheJob").x && at("cardHeal").y > at("onTheJob").y, "Heal sits below On the Job");
+  assert.ok(at("gear").x < at("combatStance").x && at("gear").y === at("combatStance").y, "Gear sits left of Buildout");
   assert.ok(at("cardGear").x === at("gear").x && at("cardGear").y > at("gear").y, "Equipment sits under Gear");
   assert.deepEqual(["handOrdering", "combatStance", "training", "onTheJob", "largerHand", "gear", "focus"].map((id) => cost(id as UpgradeId, 0)), [1, 1, 1, 1, 1, 1, 5]);
   assert.deepEqual(["gear", "cardGear", "onTheJob"].map((id) => UPGRADES.find((u) => u.id === id)!.name), ["Gear", "Equipment", "On the Job"]);
