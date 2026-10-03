@@ -212,6 +212,10 @@ _Avoid_: loadout (what the character starts a run with)
 How many steps a second the hand (and Automove in the forest) takes. The player chooses it, from 1 to 3, once the Movement Speed skill is owned; Movement Speed research makes faster speeds available, up to 9.
 _Avoid_: Automove speed
 
+**Rush**:
+The hand's first step toward a new target carrying on along the path across empty floor in the same step, stopping on the tile before anything else. How many tiles it may cross comes from Rush research, once the Rush skill is owned.
+_Avoid_: dash, sprint, leap
+
 **Deck**:
 All the player's cards: those in the hand and those waiting outside it. Also the page where the hand is ordered (with the Combat Stance skill) and its cards chosen from the deck (with Buildout).
 

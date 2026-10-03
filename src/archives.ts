@@ -1,6 +1,7 @@
 import { levelForXp, type UpgradeId } from "./config.ts";
 import type { Settings } from "./settings.ts";
 import { finite as finiteIn, isRecord, wholeIn } from "./decode.ts";
+import { intPow } from "./exact.ts";
 
 // The Archives: research that lasts between runs. An archivist takes one
 // research project at a time; each level costs Gold and real time, and once
@@ -44,6 +45,8 @@ export const RESEARCH_TARGETS = {
   killGold: { text: (v: number) => `+${v}% Gold per kill` },
   /** How fast trainers work: a rank of `d` takes d / (1 + speed). */
   trainingSpeed: { text: (v: number) => `+${Math.round(v * 100)}% training speed` },
+  /** Tiles the hand's first step toward a new target may rush across, once Rush is owned. */
+  rushTiles: { text: (v: number) => `+${v} tile rushed` },
   /** How fast archivists work: a level of `d` hours takes d / (1 + speed). */
   researchSpeed: { text: (v: number) => `+${Math.round(v * 100)}% research speed` },
 } as const;
@@ -102,6 +105,17 @@ const fasterTrainersLevels = () => Array.from({ length: 100 }, (_, i): ResearchL
   effect: { target: "trainingSpeed", op: "add", value: 0.02 },
 }));
 
+/** Rush: +1 tile rushed a level, for 25 levels. Each level starts from
+ * Faster Trainers' (250 × n Gold, 1.75 × n hours) and grows steeper: Gold
+ * doubles each level and time grows 20% (250 Gold and 1.75 hours at level
+ * 1, about 105 billion Gold and 145 days at 25; 201 billion and 697 days in
+ * all), since a faster pace of play is worth the most. */
+const rushLevels = () => Array.from({ length: 25 }, (_, i): ResearchLevel => ({
+  gold: 250 * (i + 1) * intPow(2, i),
+  hours: 1.75 * (i + 1) * intPow(1.2, i),
+  effect: { target: "rushTiles", op: "add", value: 1 },
+}));
+
 /** The research library, in the order the Archives list it. */
 export const RESEARCH = {
   potionHp: {
@@ -124,6 +138,13 @@ export const RESEARCH = {
     categories: ["qualityOfLife"],
     requires: [{ upgrade: "moveSpeed" }],
     levels: countLevels("moveSpeed", 6),
+  },
+  rush: {
+    name: "Rush",
+    description: "Learn the old climbers' dash: the hand's first step toward a new target rushes across more empty tiles at once.",
+    categories: ["abilities"],
+    requires: [{ upgrade: "rush" }],
+    levels: rushLevels(),
   },
   undoCount: {
     name: "Undo Count",

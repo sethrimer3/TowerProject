@@ -50,13 +50,12 @@ export const itemSprite = (name: keyof typeof AREA1_ITEM_URLS, className = "ui-s
 export const CURRENCY_SPRITES = { tower: "upgrades", delve: "automove" } as const;
 
 const SKILL_ITEM_SPRITES: Partial<Record<UpgradeId, keyof typeof AREA1_ITEM_URLS>> = {
-  defense: "upgrade_defense",
   yellow: "key_yellow", blue: "key_blue", red: "key_red", extraKey: "key_yellow",
   greaterHeal: "potion_flat", recovery: "potion_percent",
 };
 const SKILL_UI_SPRITES: Partial<Record<UpgradeId, UiSprite>> = {
   inspirationUndos: "undo", undos: "undo", archives: "log",
-  delve: "delve", gear: "gear", moveSpeed: "automove", instantCombat: "attack", training: "arrow-up", fasterTrainers: "automove",
+  delve: "delve", gear: "gear", moveSpeed: "automove", rush: "automove", instantCombat: "attack", training: "arrow-up", fasterTrainers: "automove",
   revive: "revive", spareChange: "gold", loot: "gold", legacy: "tower", quality: "tower",
   wisdomFocus: "settings", wisdomMemory: "undo", wisdomSight: "upgrades",
   renownBanner: "tower", renownOath: "defense", renownCrown: "gear",

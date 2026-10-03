@@ -40,11 +40,11 @@ export const UPGRADES = [
     currency: "courage",
   },
   {
-    id: "defense",
-    name: "Stone skin",
-    grants: { defense: 1 },
-    base: 4,
-    max: 50,
+    id: "rush",
+    name: "Rush",
+    description: "Unlock Rush research in the Archives: the hand's first step toward a new target rushes across empty tiles",
+    base: 1,
+    max: 1,
     currency: "courage",
   },
   {

@@ -5,9 +5,11 @@ import {
 } from "../archives.ts";
 import { UPGRADES } from "../config.ts";
 import type { AppContext } from "./app.ts";
-import { devAmount } from "./hud.ts";
+import { currencyAmount, devAmount } from "./hud.ts";
 import { el, uiSprite } from "./dom.ts";
 
+/** The status filter's choices; Locked only in Dev mode, the one place
+ * research not yet unlocked is listed. */
 const STATUS_FILTERS: Record<"all" | ResearchStatus, string> = {
   all: "All research", available: "Available", active: "Researching", completed: "Completed", locked: "Locked",
 };
@@ -45,13 +47,14 @@ export class ArchivesPanel {
     const options = <T extends string>(entries: [T, string][], chosen: T) =>
       entries.map(([id, name]) => `<option value="${id}" ${id === chosen ? "selected" : ""}>${name}</option>`).join("");
     const categories: ["all" | ResearchCategory, string][] = [["all", "All categories"], ...Object.entries(RESEARCH_CATEGORIES) as [ResearchCategory, string][]];
+    const statuses = (Object.entries(STATUS_FILTERS) as ["all" | ResearchStatus, string][]).filter(([id]) => id !== "locked" || save.settings.devMode);
     return `<section class="archives"><header class="tree-heading"><h3>Archives</h3></header>
       <p class="archives-gold">${uiSprite("gold", "stat-sprite")} <b>${devAmount(this.ctx.game, save.gold)}</b> Gold <small>· research goes on while you play or are away</small></p>
       <div class="archivists" role="list" aria-label="Archivists">${this.archivistsHtml()}</div>
       <div class="research-filters">
         <input type="search" id="research-search" placeholder="Search research" aria-label="Search research" value="${this.search.replace(/"/g, "&quot;")}">
         <select id="research-category" aria-label="Category">${options(categories, this.category)}</select>
-        <select id="research-status" aria-label="Status">${options(Object.entries(STATUS_FILTERS) as ["all" | ResearchStatus, string][], this.shown)}</select>
+        <select id="research-status" aria-label="Status">${options(statuses, this.shown)}</select>
       </div>
       <div class="research-list" id="research-list" role="list" aria-label="Research">${this.listHtml()}</div>
       <h4 class="research-history-title">History</h4>${this.historyHtml()}</section>`;
@@ -139,10 +142,13 @@ export class ArchivesPanel {
     }).join("");
   }
 
+  /** Whether project `id` is listed: unlocked (or Dev mode, which lists
+   * everything), and in the chosen category and status and the search. */
   private matches(id: ResearchId) {
-    const def = research(id), words = this.search.trim().toLowerCase();
-    return (this.category === "all" || def.categories.includes(this.category)) &&
-      (this.shown === "all" || status(this.ctx.game.save, id) === this.shown) &&
+    const save = this.ctx.game.save, def = research(id), state = status(save, id), words = this.search.trim().toLowerCase();
+    return (state !== "locked" || save.settings.devMode) &&
+      (this.category === "all" || def.categories.includes(this.category)) &&
+      (this.shown === "all" || state === this.shown) &&
       (!words || `${def.name} ${def.description}`.toLowerCase().includes(words));
   }
 
@@ -160,7 +166,7 @@ export class ArchivesPanel {
     let detail = "", action: string;
     if (next) {
       const ms = duration(a, next), kept = a.progress[id];
-      detail = `<p class="research-next">Next: ${RESEARCH_TARGETS[next.effect.target].text(next.effect.value)} · ${uiSprite("gold", "stat-sprite")} ${next.gold} · ${formatDuration(ms)}</p>` +
+      detail = `<p class="research-next">Next: ${RESEARCH_TARGETS[next.effect.target].text(next.effect.value)} · ${uiSprite("gold", "stat-sprite")} ${currencyAmount(next.gold)} · ${formatDuration(ms)}</p>` +
         (kept ? `<p class="research-kept">Progress kept: ${formatDuration(kept * ms)} of ${formatDuration(ms)}</p>` : "");
     }
     if (state === "completed") action = `<span class="research-state">Complete</span>`;
@@ -169,7 +175,7 @@ export class ArchivesPanel {
     else {
       const slot = a.slots.findIndex((s) => !s.job);
       const why = slot < 0 ? "Every archivist is busy." : cannotStart(save, slot, id);
-      action = `<button data-research="${id}" ${why ? `disabled title="${why}"` : ""}>Research · ${uiSprite("gold", "stat-sprite")} ${next!.gold}</button>`;
+      action = `<button data-research="${id}" ${why ? `disabled title="${why}"` : ""}>Research · ${uiSprite("gold", "stat-sprite")} ${currencyAmount(next!.gold)}</button>`;
     }
     return `<article class="research ${state}" role="listitem"><div class="research-head"><b>${def.name}</b><small>LEVEL ${level} / ${def.levels.length}</small></div>
       <div class="research-tags">${tags}</div><p>${def.description}</p>${detail}<div class="research-action">${action}</div></article>`;

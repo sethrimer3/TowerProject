@@ -89,6 +89,9 @@ export type GainArt = { tile: Tile; spent?: true } | { material: MaterialId; qua
 export type Coin = "gold" | "silver";
 /** A potion's heal: the HP from and to, where the hero stood, and its number. */
 export type Heal = { from: number; to: number; x: number; y: number; id: number };
+/** A rush: the tiles the hero rushed off in one step, in order, and when
+ * (performance time). */
+export type Rush = { tiles: { x: number; y: number }[]; at: number };
 /** Rewards kept for the board to show; older ones are dropped unseen. */
 const MAX_GAINS = 12;
 /** Salts the run seed for Revive's rolls, apart from the world's own. */
@@ -153,6 +156,9 @@ export class Game {
   /** When each of the latest fight's revivals lands (performance.now()),
    * for the board's golden fire; emptied by undo. */
   revivedAt: number[] = [];
+  /** The latest rush: the tiles the hero rushed off, in order, and when
+   * (performance.now()), for the board's fading echoes of the hero. */
+  rush: Rush | null = null;
   /** Delve Automove's committed route and last weighed decisions. */
   readonly delvePlan = new DelvePlan();
   /** The Training tab's commands. */
@@ -439,19 +445,50 @@ export class Game {
    * first card in priority order that can reach a target. When none can,
    * the hero waits and the End Run button lights up. */
   private handTurn() {
+    const fresh = !this.cardPlan;
     const { plan, lost } = this.nextHandPlan();
     this.handStuck = !plan;
     if (!plan) return this.handWaits();
-    const step = plan.path.shift()!;
+    const step = plan.path.shift()!, p = this.run.player, from = { x: p.x, y: p.y };
     this.cardPlan = plan.path.length ? plan : null;
     this.activeCard = plan.card;
     const id = this.hand[plan.card];
     this.message = lost ? `Focus lost · ${CARDS[lost].name} has no path to a target · ${CARDS[id].name} leads.` : this.cardMessage(id);
+    const rushes = fresh && this.rushTiles > 0 && this.emptyAt(step.x, step.y);
     // The board changes only as the hero moves, so a refused step means the
     // plan is stale: drop it and let the next turn choose again.
-    if (!this.move(step.dx, step.dy, true)) this.cardPlan = null;
+    if (!this.move(step.dx, step.dy, true)) return void (this.cardPlan = null);
+    if (rushes) this.rushOn(plan, from);
     // The focused card's last step reaches its target: the focus is spent.
-    else if (!this.cardPlan && id === this.run.focused) this.run.focused = undefined;
+    if (!this.cardPlan && id === this.run.focused) this.run.focused = undefined;
+  }
+  /** Rush: the first step toward a new target, onto an empty tile, goes on
+   * along the path in the same step across up to `rushTiles` more empty
+   * tiles, stopping on the tile before anything else. One turn and one undo. */
+  private rushOn(plan: CardPlan, from: { x: number; y: number }) {
+    const p = this.run.player, tiles = [from];
+    for (let left = this.rushTiles; left > 0 && plan.path.length && this.emptyAt(plan.path[0].x, plan.path[0].y); left--) {
+      const at = { x: p.x, y: p.y }, next = plan.path.shift()!;
+      if (!this.move(next.dx, next.dy, true, false)) {
+        plan.path = [];
+        break;
+      }
+      tiles.push(at);
+    }
+    this.cardPlan = plan.path.length ? plan : null;
+    if (tiles.length > 1) this.rush = { tiles, at: performance.now() };
+  }
+  /** Tiles the hand's first step toward a new target may rush across: none
+   * without the Rush skill, and one more a Rush research level. */
+  get rushTiles() {
+    return this.save.upgrades.rush ? researched(this.save.archives, "rushTiles", 0) : 0;
+  }
+  /** Whether (x, y) is empty floor a rush may cross: nothing on it, no torch
+   * and no Gem. */
+  private emptyAt(x: number, y: number) {
+    const gem = this.gemFinder.gem;
+    return this.world.tile(x, y).kind === "floor" && !(gem && gem.x === x && gem.y === y) &&
+      !this.world.torches?.some((t) => t.active && t.x === x && t.y === y);
   }
   /** The path the hand follows this turn: the one committed, else the
    * focused card's while it has a path to a target (`lost` once it has

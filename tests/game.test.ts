@@ -113,9 +113,9 @@ test("automation avoids lethal fights; a manual death waits on the player, and a
   g.finish("again");
   assert.equal(g.save.delve.courage, earned);
   g.save.delve.courage = 100;
-  g.save.upgrades.moveSpeed = 1;
+  g.save.upgrades.legacy = 1;
   const defense = g.run.player.defense;
-  assert.ok(g.buy("defense"));
+  assert.ok(g.buy("quality"));
   g.newRun();
   assert.equal(g.run.player.defense, defense + 1);
 });
@@ -233,7 +233,7 @@ test("old runs safely migrate topology while retaining earned stats and permanen
   g.run.changes["15,25"] = { kind: "floor" };
   save.delve.courage = 19;
   save.delve.reached = 29; // isolate migration from unrelated milestone crediting
-  save.upgrades.defense = 2;
+  save.upgrades.undos = 2;
   const migrated = new Game(decode(JSON.stringify(save)));
   migrated.switchMode("delve");
   assert.equal(migrated.run.layoutVersion, LAYOUT_VERSION);
@@ -241,7 +241,7 @@ test("old runs safely migrate topology while retaining earned stats and permanen
   assert.equal(migrated.run.player.attack, 40);
   assert.equal(migrated.run.height, 29);
   assert.equal(migrated.save.delve.courage, 19);
-  assert.equal(migrated.save.upgrades.defense, 2);
+  assert.equal(migrated.save.upgrades.undos, 2);
   assert.deepEqual(migrated.run.changes, {});
   // The old generator's chunk-local "stairs" coordinates no longer exist;
   // the migrated entrance only needs to still be navigable, not a specific kind.

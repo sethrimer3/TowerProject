@@ -46,7 +46,7 @@ export const TREES: SkillTree[] = [
     { id: "extraKey", icon: "⚿", x: 82, y: 10, requires: ["moveSpeed"] },
     { id: "pathfinder", icon: "⌖", x: 18, y: 34, requires: ["moveSpeed"] },
     { id: "focus", icon: "ϟ", x: 50, y: 34, requires: ["moveSpeed"] },
-    { id: "defense", icon: "⛨", x: 82, y: 34, requires: ["moveSpeed"] },
+    { id: "rush", icon: "⇶", x: 82, y: 34, requires: ["moveSpeed"] },
     { id: "undos", icon: "↺", x: 23, y: 61, requires: ["pathfinder"] },
     { id: "legacy", icon: "♜", x: 50, y: 87, requires: ["focus", "undos"] },
   ] },
