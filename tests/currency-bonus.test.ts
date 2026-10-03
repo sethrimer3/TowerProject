@@ -22,7 +22,7 @@ test("Wealthy, Loot and Wishing Well cost 2 Inspiration each, after Spare Change
     assert.equal(cost(skill, 0), 2);
     assert.equal(g.buy(skill), false, `${skill} waits for Spare Change`);
   }
-  for (const id of ["handOrdering", "combatStance", "largerHand", "cardHeal", "focus", "archives", "spareChange"] as const) assert.ok(g.buy(id));
+  for (const id of ["handOrdering", "combatStance", "largerHand", "focus", "archives", "spareChange"] as const) assert.ok(g.buy(id));
   for (const [skill] of SKILLS) assert.ok(g.buy(skill), skill);
 });
 

@@ -115,8 +115,10 @@ export class GoalsPage {
     const state = goalState(this.ctx.game.save, tower, c.floor, premium), r = premium ? c.premium : c.reward;
     const badge = state === "claimed" ? CHECK_ICON : state === "ready" ? "" : LOCK_ICON;
     const label = { locked: `Complete floor ${c.floor}`, needsPass: "Premium Pass", ready: "Claim", claimed: "Claimed" }[state];
+    // A locked standard reward says nothing more: pressing it says which floor to complete.
+    const shown = state === "locked" && !premium ? "" : `<small>${label}</small>`;
     return `<button class="goal-reward ${premium ? "premium" : "standard"} ${state}" data-goal="${tower}:${c.floor}:${premium ? 1 : 0}" aria-label="${rewardText(r)}: ${label}">` +
-      `<span class="goal-art">${rewardIcon(r)}${badge}</span><span class="goal-text"><b>${rewardText(r)}</b><small>${label}</small></span></button>`;
+      `<span class="goal-art">${rewardIcon(r)}${badge}</span><span class="goal-text"><b>${rewardText(r)}</b>${shown}</span></button>`;
   }
 
   /** Brings the tower in view across, and its floor, pass and name. */

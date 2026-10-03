@@ -208,7 +208,7 @@ export const UPGRADES = [
     id: "training",
     name: "Training",
     description: "Open the Training tab on the Upgrades page, where you spend the training points each level earns",
-    base: 2,
+    base: 1,
     max: 1,
     currency: "inspiration",
   },

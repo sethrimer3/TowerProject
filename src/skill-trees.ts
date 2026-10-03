@@ -11,15 +11,15 @@ export type SkillNode = { id: UpgradeId; icon: string; x: number; y: number; req
 export type SkillTree = { id: TreeId; name: string; currency: Currency; gate?: UpgradeId | null; description: string; height?: number; unlocks?: boolean; nodes: SkillNode[] };
 export const TREES: SkillTree[] = [
   { id: "inspiration", name: "Inspiration", currency: "inspiration", description: "Earn Inspiration by beating your best Tower climb.", height: 172, unlocks: true, nodes: [
-    // The hand's skills, down to Focus; On the Job, Gear and Heal branch off
-    // Buildout, as does Training, and Equipment off Gear.
+    // The hand's skills, down to Focus; Gear and Training branch off Buildout,
+    // Equipment off Gear, and On the Job, then Heal, below Training.
     { id: "handOrdering", icon: "▤", x: 50, y: 12, requires: [] },
     { id: "combatStance", icon: "⚔", x: 50, y: 30, requires: ["handOrdering"] },
-    { id: "onTheJob", icon: "¤", x: 20, y: 30, requires: ["combatStance"] },
     { id: "training", icon: "⚔", x: 80, y: 30, requires: ["combatStance"] },
     { id: "largerHand", icon: "▦", x: 50, y: 48, requires: ["combatStance"] },
     { id: "gear", icon: "⚒", x: 20, y: 48, requires: ["combatStance"] },
-    { id: "cardHeal", icon: "♥", x: 80, y: 48, requires: ["combatStance"] },
+    { id: "onTheJob", icon: "¤", x: 80, y: 48, requires: ["training"] },
+    { id: "cardHeal", icon: "♥", x: 80, y: 66, requires: ["onTheJob"] },
     { id: "focus", icon: "ϟ", x: 50, y: 66, requires: ["largerHand"] },
     { id: "cardGear", icon: "⛨", x: 20, y: 66, requires: ["gear"] },
     { id: "inspirationUndos", icon: "↺", x: 26, y: 88, requires: ["focus"] },
