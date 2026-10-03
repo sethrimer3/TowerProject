@@ -148,9 +148,8 @@ function navigate(requested: string) {
   } else game.cancelRoute();
   el("stats").toggleAttribute("hidden", !isBoard(id));
   // The currencies bar tops the pages that spend them, with the Shop at its
-  // end: the Upgrades page shows every currency, Deck and Gear only Gems.
+  // end, every currency on each.
   el("currencies").toggleAttribute("hidden", !CURRENCY_PAGES.includes(id));
-  el("currencies").classList.toggle("gems-only", id !== "upgrades");
   const page = isBoard(id) ? "board" : id;
   document.querySelectorAll(".page").forEach((p) => p.classList.toggle("active", p.id === page));
   document.querySelectorAll<HTMLElement>("[data-tab]").forEach((b) => {

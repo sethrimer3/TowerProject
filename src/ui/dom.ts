@@ -109,3 +109,18 @@ const POINTER_ROWS = [
 export const POINTER_SVG = `<svg viewBox="0 0 12 14" shape-rendering="crispEdges" aria-hidden="true">${POINTER_ROWS.flatMap((row, y) =>
   [...row].map((c, x) => (c === "." ? "" : `<rect x="${x}" y="${y}" width="1" height="1" fill="${c === "#" ? "#2b1d14" : "#f3d9b8"}"/>`)),
 ).join("")}</svg>`;
+
+/** Raises `html` (an amount gained, such as "+20" with its icon) from over
+ * `target`, fading as it rises, then removes it. It sits outside `#app`, in
+ * the page's body, so a page drawn again under it leaves it rising. */
+export function riseFrom(target: HTMLElement | null, html: string) {
+  if (!target) return;
+  const box = target.getBoundingClientRect(), pop = document.createElement("div");
+  pop.className = "rise-pop";
+  pop.innerHTML = html;
+  pop.style.left = `${box.left + box.width / 2}px`;
+  // Near the top of the screen it starts lower, so it rises over the value instead of out of view.
+  pop.style.top = `${Math.max(box.top, 56)}px`;
+  pop.addEventListener("animationend", () => pop.remove());
+  document.body.append(pop);
+}

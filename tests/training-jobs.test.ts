@@ -27,7 +27,7 @@ test("a stat's first ranks are quick, then each takes a quarter hour more", () =
 test("a trainer's Gold: 20 a point, times the rank's number", () => {
   assert.deepEqual([trainingGold(1, 0), trainingGold(1, 9), trainingGold(3, 0), trainingGold(2, 4)], [20, 200, 60, 200]);
   const { g } = game();
-  assert.equal(trainingStep(g.save, "attack").gold, 60);
+  assert.equal(trainingStep(g.save, "attack").gold, 20, "ATK costs 1 point a rank");
 });
 
 test("training needs the Training skill, or Dev mode", () => {
@@ -43,18 +43,23 @@ test("training needs the Training skill, or Dev mode", () => {
 });
 
 test("training points buy a rank at once, without Gold, time or a trainer", () => {
-  const { g } = game();
+  const { g, wait } = game();
   const before = loadout(g.save).maxHp, points = trainingPoints(g.save).left, gold = g.save.gold;
   assert.ok(g.trainWithGold("defense"), "the one trainer is busy");
   assert.ok(g.train("hp"));
   assert.equal(g.save.training.hp, 1, "at once");
   assert.equal(trainingPoints(g.save).left, points - 1);
-  assert.equal(g.save.gold, gold - 40, "only the trainer's Gold");
+  assert.equal(g.save.gold, gold - 20, "only the trainer's Gold");
   assert.ok(loadout(g.save).maxHp > before);
   assert.equal(g.run.player.maxHp, loadout(g.save).maxHp, "a run in the forest takes it");
-  // A stat in a trainer's hands can still be bought with points.
+  // Bought with points while a trainer trains it, the rank counts at once
+  // and the trainer stops: its Gold back, the time spent as credit.
+  wait(10);
   assert.ok(g.train("defense"));
   assert.equal(g.save.training.defense, 1);
+  assert.deepEqual(g.save.trainingJobs, []);
+  assert.equal(g.save.gold, gold, "the trainer's Gold back");
+  assert.equal(g.save.trainingCredit, 10_000, "the time spent as credit");
   g.save.xp = 0;
   assert.equal(g.train("hp"), false, "no points left");
 });

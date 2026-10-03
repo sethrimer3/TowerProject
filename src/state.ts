@@ -1275,14 +1275,16 @@ export class Game {
     const row = TRAINING.find((t) => t.id === id)!;
     return this.trainingOpen && trainingOpen(row, this.save.upgrades) && !trainingMaxed(this.save, id);
   }
-  /** Buys one more rank of `id` with training points: it counts at once,
-   * whether or not a trainer is training the stat too. Refused without the
+  /** Buys one more rank of `id` with training points: it counts at once.
+   * A trainer training the stat stops, as `cancelTraining` does: its Gold
+   * comes back and the time spent becomes time credit. Refused without the
    * Training skill, at the stat's most, or without the points. With Dev
    * free purchases it costs nothing. */
   train(id: TrainingId) {
     this.settleTraining();
     const row = TRAINING.find((t) => t.id === id)!;
     if (!this.canTrain(id) || (!this.free && trainingPoints(this.save).left < row.cost)) return false;
+    this.cancelTraining(id);
     return this.changeLoadout(() => {
       if (!this.free) this.save.trainingPaid[id].points += row.cost;
       this.save.training[id]++;

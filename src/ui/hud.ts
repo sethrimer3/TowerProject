@@ -9,6 +9,7 @@ import { MODES, milestones } from "../modes.ts";
 import { cardArt, CURRENCY_SPRITES, displayedProgress, el, ENTER_ICON, text, uiSprite } from "./dom.ts";
 import { CARDS } from "../cards.ts";
 import { trainingPoints } from "../loadout.ts";
+import { goalsWaiting } from "../goals.ts";
 import type { BoardOverlay } from "./board-overlay.ts";
 import { estimatedServerTime } from "../shop/clock.ts";
 import { OFFERS } from "../shop/offers.ts";
@@ -16,7 +17,19 @@ import { refusal } from "../shop/transactions.ts";
 
 /** The stats cluster, action buttons and status line around the board. */
 
-export const devAmount = (game: Pick<Game, "save">, value: number) => game.save.settings.devMode ? "∞" : String(whole(value));
+export const devAmount = (game: Pick<Game, "save">, value: number) => game.save.settings.devMode ? "∞" : currencyAmount(whole(value));
+const UNITS = ["M", "B", "T", "Qa", "Qi"];
+/** A currency held, bounded in width: in full with thousands separators
+ * below a million, then in millions, billions … with two decimals, rounded
+ * down (1.23M, 456.78B), and past the last unit in scientific notation. */
+export function currencyAmount(n: number) {
+  if (n < 1e6) return n.toLocaleString("en-US");
+  let unit = 0, size = 1e6;
+  while (unit < UNITS.length - 1 && n >= size * 1000) [unit, size] = [unit + 1, size * 1000];
+  if (n >= size * 1000) return n.toExponential(2);
+  // Whole hundredths of the unit, so no rounding creeps in (1,150,000 is 1.15M).
+  return `${(Math.floor(n / (size / 100)) / 100).toFixed(2)}${UNITS[unit]}`;
+}
 /** An amount short enough for the HUD's narrow purse: in full below 10,000,
  * then to three figures in thousands, millions or billions (12.3K, 456M). */
 export function shortAmount(n: number) {
@@ -46,7 +59,7 @@ export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay)
   text("gold-held", devAmount(game, game.save.gold));
   text("courage", devAmount(game, game.save.delve.courage));
   text("inspiration", devAmount(game, game.save.tower.inspiration));
-  text("training", String(trainingPoints(game.save).left));
+  text("training", currencyAmount(trainingPoints(game.save).left));
   (document.querySelector(".training-currency") as HTMLElement).hidden = !game.save.upgrades.training && !game.save.settings.devMode;
   renderXp(game);
   renderStatus(game, overlay);
@@ -375,6 +388,8 @@ function renderModeActions(game: Game) {
   floorsButton.title = tower ? "Goals" : "Future Delve action 2";
   logButton.classList.toggle("placeholder-action", !tower);
   floorsButton.classList.toggle("placeholder-action", !tower);
+  // A dot while a Goals reward waits to be claimed.
+  floorsButton.classList.toggle("notify", tower && goalsWaiting(game.save));
 }
 
 function renderStatus(game: Game, overlay: BoardOverlay) {

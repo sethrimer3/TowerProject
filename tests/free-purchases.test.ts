@@ -46,11 +46,11 @@ test("free Training stays unspent after free purchases are turned off, and saves
   trainNow(g, "attack");
   g.save.settings.freePurchases = false;
   assert.equal(trainingPoints(g.save).left, 3);
-  assert.ok(trainNow(g, "attack"), "3 points a rank, 3 left");
+  for (let i = 0; i < 3; i++) assert.ok(trainNow(g, "attack"), "1 point a rank, 3 left");
   assert.ok(!trainNow(g, "attack"), "and none left after");
   const loaded = decode(JSON.stringify(g.save));
   assert.deepEqual(loaded.trainingPaid, g.save.trainingPaid);
-  assert.equal(loaded.training.attack, 2);
+  assert.equal(loaded.training.attack, 4);
 });
 
 test("free purchases: crafting takes no materials", () => {

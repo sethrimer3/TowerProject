@@ -90,6 +90,12 @@ export function goalState(save: Save, tower: number, floor: number, premium: boo
   return floorsCompleted(save, tower) >= floor ? "ready" : "locked";
 }
 
+/** Whether any open tower has a reward ready to claim, standard or premium
+ * (the Goals button's dot). */
+export const goalsWaiting = (save: Save) =>
+  Array.from({ length: save.tower.tiersOpen }, (_, i) => i + 1).some((tower) =>
+    CHECKPOINTS[tower]!.some((c) => goalState(save, tower, c.floor, false) === "ready" || goalState(save, tower, c.floor, true) === "ready"));
+
 /** Claims a reward that is ready, paying it to its owner; returns it, or
  * null when it isn't ready. */
 export function claimGoal(save: Save, tower: number, floor: number, premium: boolean): GoalReward | null {

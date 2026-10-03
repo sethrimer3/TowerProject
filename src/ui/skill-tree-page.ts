@@ -11,7 +11,7 @@ import { TreeParticles } from "../tree-particles.ts";
 import { TrainingParticles } from "../training-particles.ts";
 import { BOOST_RATE, boostLeft, claimBoost, finishGems, nextTrainerGems, trainingJob, trainingMs, trainingSlots } from "../training-jobs.ts";
 import type { AppContext } from "./app.ts";
-import { adIcon, clamp, clockIcon, el, gemIcon, goldIcon, pointsIcon, skillSprite, uiSprite, type UiSprite } from "./dom.ts";
+import { adIcon, clamp, clockIcon, el, gemIcon, goldIcon, pointsIcon, riseFrom, skillSprite, uiSprite, type UiSprite } from "./dom.ts";
 import { TRAINING_RESET_GEMS } from "../gems.ts";
 import { bindPanZoom, type View } from "./pan-zoom.ts";
 import { ArchivesPanel, formatDuration } from "./archives-page.ts";
@@ -83,8 +83,10 @@ export class SkillTreePage {
       el("upgrades").innerHTML = `<div class="tree-tabs" role="group" aria-label="Skill trees">${tabs}</div>${this.trainingHtml()}`;
       bindTabs();
       document.querySelectorAll<HTMLButtonElement>("[data-train]").forEach(b => b.onclick = () => {
+        const refund = this.refundWatch();
         if (this.ctx.game.train(b.dataset.train as TrainingId)) this.ctx.update();
         this.render();
+        refund();
       });
       document.querySelectorAll<HTMLButtonElement>("[data-train-gold]").forEach(b => b.onclick = () => {
         if (this.ctx.game.trainWithGold(b.dataset.trainGold as TrainingId)) {
@@ -101,8 +103,10 @@ export class SkillTreePage {
         this.render();
       });
       document.querySelectorAll<HTMLButtonElement>("[data-cancel]").forEach(b => b.onclick = () => {
+        const refund = this.refundWatch();
         if (this.ctx.game.cancelTraining(b.dataset.cancel as TrainingId)) this.ctx.update();
         this.render();
+        refund();
       });
       document.querySelectorAll<HTMLButtonElement>("[data-finish]").forEach(b => b.onclick = () => {
         const game = this.ctx.game;
@@ -223,6 +227,19 @@ export class SkillTreePage {
       <p class="training-points"><span class="training-held" title="Training points">${pointsIcon()} <b id="training-points">${points.left}</b></span>${credit}<small>Level up with ${pointsIcon()} or pay ${goldIcon()} to a trainer</small></p>
       <p class="training-points training-slots">Trainers: <b id="training-slots">${save.trainingJobs.length} / ${slots}</b> ${this.trainerButton()}</p>
       <div class="training-table" role="list" aria-label="Stat training">${rows}</div></section>`;
+  }
+
+  /** Notes the Gold and time credit held now; the function it returns,
+   * called once the page is drawn again, raises what a stopped trainer gave
+   * back over each: the Gold over the currencies bar's, the time over the
+   * time credit's clock. */
+  private refundWatch() {
+    const save = this.ctx.game.save, gold = save.gold, credit = save.trainingCredit;
+    return () => {
+      const back = whole(save.gold - gold), time = save.trainingCredit - credit;
+      if (back > 0) riseFrom(el("gold-held"), `${goldIcon()} +${back}`);
+      if (time > 0) riseFrom(document.getElementById("training-credit"), `${clockIcon()} +${formatDuration(time)}`);
+    };
   }
 
   /** The training boost: ×2, its time left or "Inactive", and the button

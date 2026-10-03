@@ -67,7 +67,7 @@ test("each training rank is worth more as the hero levels up", () => {
     [trainingStep(s, "hp"), trainingStep(s, "attack")].map(({ now, next, worth, affordable }) => [now, next, worth, affordable]),
     [[145, 160, 15, true], [14, 16, 2, true]],
   );
-  assert.equal(trainingStep({ ...s, trainingPaid: { ...s.trainingPaid, hp: { points: 6, gold: 0, ms: 0 } } }, "attack").affordable, false, "3 points a rank, 2 left");
+  assert.equal(trainingStep({ ...s, trainingPaid: { ...s.trainingPaid, hp: { points: 8, gold: 0, ms: 0 } } }, "attack").affordable, false, "1 point a rank, none left");
   // Levelling up raises every rank already bought.
   s.xp = xpForLevel(20);
   const later = loadout(s);
@@ -110,17 +110,20 @@ test("training spends points and reaches a run still outside", () => {
   g.save.xp = xpForLevel(1);
   assert.equal(trainNow(g, "hp"), true);
   assert.deepEqual([g.run.player.maxHp, g.run.player.hp, trainingPoints(g.save).left], [111, 111, 2]);
-  assert.equal(trainNow(g, "attack"), false, "ATK takes 3 points");
+  assert.equal(trainNow(g, "attack"), true, "ATK takes 1 point");
+  assert.equal(trainNow(g, "defense"), true, "DEF takes 1 point");
+  assert.equal(trainNow(g, "hp"), false, "no points left");
 });
 
-test("evenly spread training alone falls behind both modes' enemies by floor 75", () => {
+test("evenly spread training alone still beats both modes' normal enemies at floor 100", () => {
   // The levels a hero reaches by each floor when every run climbs about 1.5
   // floors past the last, clearing the floors below again (see
   // docs/PROGRESSION_AND_DIFFICULTY.md).
   const hero = (level: number) => {
     const s = defaults(), points = 3 * level;
     s.xp = xpForLevel(level);
-    Object.assign(s.training, { hp: Math.floor(points / 3), defense: Math.floor(points / 9), attack: Math.floor(points / 15) });
+    // Every row costs 1 point a rank: a third of the points each.
+    Object.assign(s.training, { hp: Math.floor(points / 3), defense: Math.floor(points / 3), attack: Math.floor(points / 3) });
     const l = loadout(s);
     return { x: 0, y: 0, hp: l.maxHp, maxHp: l.maxHp, attack: l.attack, defense: l.defense, keys: l.keys };
   };
@@ -131,7 +134,8 @@ test("evenly spread training alone falls behind both modes' enemies by floor 75"
   const wins = (level: number, floor: number) => [getTowerGateEnemy(floor - 1, "normal", "balanced"), delve(floor - 1)].map((e) => predict(hero(level), e).survivable);
   assert.deepEqual(wins(7, 10), [true, true]);
   assert.deepEqual(wins(28, 50), [true, true]);
-  assert.deepEqual(wins(39, 75), [false, false]);
+  assert.deepEqual(wins(39, 75), [true, true]);
+  assert.deepEqual(wins(50, 100), [true, true]);
 });
 
 test("gear adds flat bonuses, then its percentages of the total, fractions kept; provisions come last", () => {

@@ -414,8 +414,8 @@ export const TRAINING_GROUPS = { offense: "Offense", defense: "Defense", utility
  * with `max` trains no further than that many ranks. */
 export const TRAINING = [
   { id: "hp", name: "Max HP", group: "defense", stat: "maxHp", base: 10, growth: 10, cost: 1, description: "Raises maximum HP." },
-  { id: "attack", name: "ATK", group: "offense", stat: "attack", base: 1, growth: 5, cost: 3, description: "Raises ATK, the damage each strike deals before the enemy's DEF." },
-  { id: "defense", name: "DEF", group: "defense", stat: "defense", base: 1, growth: 12, cost: 2, description: "Raises DEF, taken off the damage of every enemy strike." },
+  { id: "attack", name: "ATK", group: "offense", stat: "attack", base: 1, growth: 5, cost: 1, description: "Raises ATK, the damage each strike deals before the enemy's DEF." },
+  { id: "defense", name: "DEF", group: "defense", stat: "defense", base: 1, growth: 12, cost: 1, description: "Raises DEF, taken off the damage of every enemy strike." },
   { id: "shroud", name: "Shroud", group: "defense", stat: "shroud", base: 1, growth: 10, cost: 1, requires: "shroud", description: "Raises the damage the shroud blocks at the start of every fight." },
   { id: "potion", name: "Potion %", group: "defense", requires: "recovery", cost: 1, description: "Percent potions restore more of your maximum HP." },
   { id: "findPotion", name: "Find Potion", group: "defense", requires: "findPotion", cost: 1, max: 72, description: "More of the potions found are percent potions." },

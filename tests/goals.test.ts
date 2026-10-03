@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { decode, defaults } from "../src/save.ts";
 import { Game } from "../src/state.ts";
-import { CHECKPOINTS, PASSES, canWarp, decodeGoals, floorsCompleted, goalState, goalUnlocked, passFor, passTotals, warpUnlocked } from "../src/goals.ts";
+import { CHECKPOINTS, PASSES, canWarp, decodeGoals, floorsCompleted, goalState, goalsWaiting, goalUnlocked, passFor, passTotals, warpUnlocked } from "../src/goals.ts";
 import { TIERS } from "../src/tiers.ts";
 
 test("every tower has a checkpoint each ten floors to 100; Tower I's first four unlock Damage Prediction, Combat Forecast, Attack Lore and Warp", () => {
@@ -108,4 +108,17 @@ test("decoding keeps known towers' checkpoint floors, each once", () => {
     premium: { "2": [100] },
   });
   assert.deepEqual(decodeGoals(null), { claimed: {}, premium: {} });
+});
+
+test("the Goals button's dot shows while a reward in an open tower waits to be claimed", () => {
+  const g = new Game(defaults());
+  assert.equal(goalsWaiting(g.save), false);
+  g.save.tower.reached = 10;
+  assert.equal(goalsWaiting(g.save), true, "floor 10's reward is ready");
+  assert.ok(g.claimGoal(1, 10, false));
+  assert.equal(goalsWaiting(g.save), false, "a premium reward without the pass doesn't count");
+  g.save.tower.tierRecords[2] = { ...g.save.tower.tierRecords[2], reached: 20 } as never;
+  assert.equal(goalsWaiting(g.save), false, "nor one in a tower not yet open");
+  g.save.tower.tiersOpen = 2;
+  assert.equal(goalsWaiting(g.save), true, "a tower opened brings its own");
 });
