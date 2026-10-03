@@ -100,7 +100,7 @@ export type Revival = (strike: number) => boolean;
  * then goes on from the next round, the enemy as it was. */
 export function bout(player: Player, enemy: Enemy, revives?: Revival): Bout {
   if (snap(player.attack - enemy.defense) <= 0) return { strikes: [], duration: 0 };
-  return play([], player, enemy, { enemyHp: enemy.hp, heroHp: player.hp, shroud: player.shroud ?? 0, attack: enemy.attack, t: 0, ms: FIRST_STRIKE_MS, enemyStrikes: 0, enemyNext: false }, revives);
+  return play([], { player, enemy, revives }, { enemyHp: enemy.hp, heroHp: player.hp, shroud: player.shroud ?? 0, attack: enemy.attack, t: 0, ms: FIRST_STRIKE_MS, enemyStrikes: 0, enemyNext: false });
 }
 
 /** Where a fight stands before its next strike: each side's HP, what is
@@ -108,40 +108,55 @@ export function bout(player: Player, enemy: Enemy, revives?: Revival): Bout {
  * it takes, the enemy's strikes so far, and whose strike it is. */
 type BoutState = { enemyHp: number; heroHp: number; shroud: number; attack: number; t: number; ms: number; enemyStrikes: number; enemyNext: boolean };
 
+/** A strike before it is timed. */
+type Blow = Omit<Strike, "start" | "at" | "end">;
+
+/** The two sides of a fight, and whether a strike that would fell the
+ * hero revives it instead. */
+export type Fighters = { player: Player; enemy: Enemy; revives?: Revival };
+
 /** Plays a fight on from `state`, after the strikes already in `strikes`. */
-function play(strikes: Strike[], player: Player, enemy: Enemy, state: BoutState, revives?: Revival): Bout {
-  const hit = snap(player.attack - enemy.defense);
-  let { enemyHp, heroHp, shroud, attack, t, ms, enemyStrikes, enemyNext } = state;
-  const strike = (by: Strike["by"], damage: number, hp: number, shrouded = 0, revived = false) => {
-    strikes.push({ by, damage, ...(shrouded ? { shrouded } : {}), ...(revived ? { revived: true as const } : {}), start: t, at: t + ms / 2, end: t + ms, hp });
-    t += ms;
+function play(strikes: Strike[], { player, enemy, revives }: Fighters, state: BoutState): Bout {
+  const hit = snap(player.attack - enemy.defense), s = { ...state };
+  // Each strike keeps its fields in the same order: its blow, its timing, then the HP left.
+  const strike = ({ hp, ...blow }: Blow) => {
+    strikes.push({ ...blow, start: s.t, at: s.t + s.ms / 2, end: s.t + s.ms, hp });
+    s.t += s.ms;
   };
   for (;;) {
-    if (!enemyNext) {
-      enemyHp = snap(Math.max(0, enemyHp - hit));
-      strike("hero", hit, enemyHp);
-      if (!enemyHp) break;
+    if (!s.enemyNext) {
+      s.enemyHp = snap(Math.max(0, s.enemyHp - hit));
+      strike({ by: "hero", damage: hit, hp: s.enemyHp });
+      if (!s.enemyHp) break;
     }
-    enemyNext = false;
-    const struck = snap(Math.max(0, attack - player.defense)), shrouded = Math.min(shroud, struck), taken = snap(struck - shrouded);
-    shroud = snap(shroud - shrouded);
-    heroHp = snap(Math.max(0, heroHp - taken));
-    const revived = !heroHp && !!revives?.(enemyStrikes);
-    if (revived) heroHp = player.maxHp;
-    enemyStrikes++;
-    strike("enemy", taken, heroHp, shrouded, revived);
-    if (!heroHp) break;
-    attack = raisedAttack(attack);
-    ms = Math.max(FASTEST_STRIKE_MS, ms * STRIKE_SPEEDUP);
+    s.enemyNext = false;
+    strike(enemyBlow(s, player, revives));
+    if (!s.heroHp) break;
+    s.attack = raisedAttack(s.attack);
+    s.ms = Math.max(FASTEST_STRIKE_MS, s.ms * STRIKE_SPEEDUP);
   }
-  return { strikes, duration: t };
+  return { strikes, duration: s.t };
+}
+
+/** The enemy strikes the hero in `s`: the shroud takes what it can, the
+ * rest comes off the hero's HP, and a strike that would fell the hero may
+ * revive it at full HP. */
+function enemyBlow(s: BoutState, player: Player, revives?: Revival): Blow {
+  const struck = snap(Math.max(0, s.attack - player.defense)), shrouded = Math.min(s.shroud, struck), taken = snap(struck - shrouded);
+  s.shroud = snap(s.shroud - shrouded);
+  s.heroHp = snap(Math.max(0, s.heroHp - taken));
+  const revived = !s.heroHp && !!revives?.(s.enemyStrikes);
+  if (revived) s.heroHp = player.maxHp;
+  s.enemyStrikes++;
+  return { by: "enemy", damage: taken, ...(shrouded ? { shrouded } : {}), ...(revived ? { revived: true as const } : {}), hp: s.heroHp };
 }
 
 /** The fight played on with the hero's stats changed mid-fight (training
  * bought in a run): the strikes before `from` stand as they were, and from
  * strike `from` on the hero fights as `player`, whose `hp` and `shroud`
  * are what the hero has left at that point. */
-export function resume(fight: Bout, from: number, player: Player, enemy: Enemy, revives?: Revival): Bout {
+export function resume(fight: Bout, from: number, fighters: Fighters): Bout {
+  const { player, enemy } = fighters;
   const kept = fight.strikes.slice(0, from), next = fight.strikes[from];
   if (!next) return { strikes: kept, duration: fight.duration };
   let enemyHp = enemy.hp, attack = enemy.attack, ms = FIRST_STRIKE_MS, enemyStrikes = 0;
@@ -155,7 +170,7 @@ export function resume(fight: Bout, from: number, player: Player, enemy: Enemy, 
     ms = Math.max(FASTEST_STRIKE_MS, ms * STRIKE_SPEEDUP);
   }
   const state = { enemyHp, heroHp: player.hp, shroud: player.shroud ?? 0, attack, t: next.start, ms, enemyStrikes, enemyNext: next.by === "enemy" };
-  return play(kept, player, enemy, state, revives);
+  return play(kept, fighters, state);
 }
 
 /** A fight settled at once (Animate fights off), shown as summary rounds:

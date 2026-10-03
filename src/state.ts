@@ -1214,7 +1214,7 @@ export class Game {
       hp = s.hp;
       shroud = snap(Math.max(0, shroud - (s.shrouded ?? 0)));
     }
-    fight.bout = resume(fight.bout, from, { ...p, hp, shroud }, fight.enemy, this.revival(fight.to));
+    fight.bout = resume(fight.bout, from, { player: { ...p, hp, shroud }, enemy: fight.enemy, revives: this.revival(fight.to) });
     this.revivedAt = fight.bout.strikes.filter((s) => s.revived).map((s) => fight.start + s.at);
     const o = fight.outcome, end = heroHpAfter(fight.bout, p.hp),
       damage = snap(fight.bout.strikes.reduce((sum, s) => (s.by === "enemy" ? sum + s.damage : sum), 0));

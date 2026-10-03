@@ -146,6 +146,13 @@ function climb(at: Position, reached: Reached[]): Reached | undefined {
   return best;
 }
 
+/** Whether row `y` is within the hand's reach of the hero, and not below
+ * the board's floor. */
+function inReach({ world, run }: Position, y: number) {
+  const p = run.player;
+  return y >= Math.max(world.floor, p.y - REACH) && y <= p.y + REACH;
+}
+
 /** Breadth-first search from the hero over crossable tiles. Returns every
  * tile reached, closest first, each with the shortest path to it; a tile
  * that isn't crossable is reached but never walked through. */
@@ -158,7 +165,7 @@ function search(at: Position): Reached[] {
     const from = walk[i];
     for (const [dx, dy] of [[0, 1], [1, 0], [0, -1], [-1, 0]] as const) {
       const dest = world.step(from.x, from.y, dx, dy);
-      if (!dest || dest.y < Math.max(world.floor, p.y - REACH) || dest.y > p.y + REACH) continue;
+      if (!dest || !inReach(at, dest.y)) continue;
       const k = point(dest.x, dest.y);
       if (seen.has(k)) continue;
       seen.add(k);
