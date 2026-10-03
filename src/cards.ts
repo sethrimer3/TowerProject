@@ -4,11 +4,11 @@ import type { Step } from "./pathfinding.ts";
 import { doorCost } from "./doors.ts";
 import { predict } from "./combat.ts";
 import { UPGRADES, VIEWPORT_TILES, type UpgradeId } from "./config.ts";
-import type { Mode } from "./entities.ts";
+import type { DelveRun, Mode } from "./entities.ts";
 
 /** Every card a hand can hold: its name and what it moves the hero toward. */
 export const CARDS = {
-  stairs: { name: "Stairs", text: "Move toward the stairs up (in the Delve, the highest open tile in view)." },
+  stairs: { name: "Stairs", text: "Move toward the stairs up (in the Delve, the highest open tile in view, above any row reached this run)." },
   heal: { name: "Heal", text: "Move toward the closest healing potion." },
   door: { name: "Door", text: "Move toward the closest door you hold the keys for." },
   yellowKey: { name: "Yellow Key", text: "Move toward the closest yellow key." },
@@ -129,13 +129,14 @@ export function planHand(at: Position, hand: readonly CardId[], mode: Mode, only
   return null;
 }
 
-/** The Delve's STAIRS target: the highest crossable tile in view above the
- * hero, the closest of those tied for highest. */
+/** The Delve's STAIRS target: the highest crossable tile in view above
+ * every row the hero has reached this run, the closest of those tied for
+ * highest. A row it has stood on before is no climb. */
 function climb(at: Position, reached: Reached[]): Reached | undefined {
-  const p = at.run.player;
+  const p = at.run.player, top = Math.max(p.y, (at.run as DelveRun).top ?? p.y);
   let best: Reached | undefined;
   for (const r of reached)
-    if (CROSSABLE.has(r.tile.kind) && r.y > p.y && r.y <= p.y + VIEW_ABOVE && (!best || r.y > best.y)) best = r;
+    if (CROSSABLE.has(r.tile.kind) && r.y > top && r.y <= p.y + VIEW_ABOVE && (!best || r.y > best.y)) best = r;
   return best;
 }
 

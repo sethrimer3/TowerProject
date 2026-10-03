@@ -133,6 +133,7 @@ function decodeTowerRun(r: any): TowerRun | null {
  * DelveRun needs. */
 function decodeDelveRun(r: any): DelveRun | null {
   if (!validCore(r, WIDTH) || !validDelveState(r)) return null;
+  if (r.top !== undefined && !Number.isInteger(r.top)) delete r.top;
   return without(r, TOWER_FIELDS);
 }
 

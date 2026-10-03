@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { BASE_HAND, BASE_HAND_SLOTS, CARD_IDS, HAND_SLOT_GEMS, MAX_HAND_SLOTS, deckCards, handSlots, nextHandSlotGems, moveCard, placeCard, planHand, upgradeCard, type CardId } from "../src/cards.ts";
 import { defaults } from "../src/save.ts";
 import type { Board, Position } from "../src/board.ts";
-import type { Enemy, Run, Tile } from "../src/entities.ts";
+import type { DelveRun, Enemy, Run, Tile } from "../src/entities.ts";
 
 const WEAK: Enemy = { name: "Weak", hp: 1, attack: 1, defense: 0, tier: 0, strength: "normal" };
 /** Hits hard enough to kill the hero, but can be fought. */
@@ -122,6 +122,20 @@ test("in the Delve, STAIRS climbs to the highest open tile in view above the her
   assert.deepEqual(play(board(rows), ["stairs"], "delve"), { card: "stairs", to: [0, 3], steps: 4 });
   assert.equal(play(board(["...", ".@."]), ["stairs"], "tower"), null, "a Tower floor has no climbing without stairs");
   assert.equal(play(board(["###", ".@."]), ["stairs", "heal"], "delve"), null, "nothing above: the card falls through");
+});
+
+test("in the Delve, STAIRS never climbs back to a row the hero has reached before", () => {
+  const rows = [
+    ".##",
+    "...",
+    "#@P",
+  ];
+  const back = board(rows);
+  (back.run as DelveRun).top = 2;
+  assert.equal(play(back, ["stairs", "heal"], "delve")?.card, "heal", "the top row was reached already: the card falls through");
+  const below = board(rows);
+  (below.run as DelveRun).top = 1;
+  assert.deepEqual(play(below, ["stairs"], "delve"), { card: "stairs", to: [0, 2], steps: 3 }, "a row beyond the highest reached is a climb");
 });
 
 test("the Delve's paths wrap across the sides and climb through one-way gates", () => {

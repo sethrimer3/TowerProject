@@ -133,6 +133,9 @@ export type TowerRun = RunCore & {
 export type DelveRun = RunCore & {
   /** Milestone gates crossed: the area the labyrinth is sealed below. */
   milestone: number;
+  /** The highest row the hero has stood on this run (absent: the row it
+   * stands on). The STAIRS card climbs only to rows above it. */
+  top?: number;
 };
 /** What Delve Automove has seen of the descent in the labyrinth, and how
  * often the player has stood on each tile. It is kept beside the run, not

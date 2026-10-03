@@ -1051,6 +1051,8 @@ export class Game {
     }
     const visited = this.save.delve.memory.visited;
     visited[`${x},${y}`] = (visited[`${x},${y}`] ?? 0) + 1;
+    const run = this.delveRun;
+    run.top = Math.max(run.top ?? y, y);
     const floorBefore = this.rules.equivalentFloor(this.run.maxHeight ?? 0);
     this.run.height = Math.max(this.run.height, world.depth(x, y));
     this.run.maxHeight = Math.max(this.run.maxHeight ?? 0, this.run.height);
