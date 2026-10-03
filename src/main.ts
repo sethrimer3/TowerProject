@@ -2,6 +2,7 @@ import type { UpgradeId } from "./config.ts";
 import type { TreeId } from "./skill-trees.ts";
 import "./style.css";
 import "./medieval.css";
+import "./neon.css";
 import { load, persist } from "./save.ts";
 import { Game } from "./state.ts";
 import { Renderer } from "./rendering.ts";

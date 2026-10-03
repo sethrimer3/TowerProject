@@ -1,0 +1,164 @@
+/* Neon theme: every surface drawn as warm, glowing laser lines on black.
+   Every selector is scoped under `html.neon` so nothing changes while the
+   theme is off. Loaded after style.css and medieval.css. */
+html.neon {
+  --neon-pink: #ff4fc0;
+  --neon-amber: #ffb347;
+  --neon-yellow: #ffe866;
+  --neon-orange: #ff7a3d;
+  --neon-lime: #9dff6a;
+  --gold: var(--neon-yellow);
+  --muted: #c98fb0;
+  --line: var(--neon-pink);
+  color: #ffe9f6;
+  background: #05030a;
+}
+html.neon body {
+  background:
+    radial-gradient(ellipse at 30% 15%, #ff4fc014, transparent 55%),
+    radial-gradient(ellipse at 75% 85%, #ffb34712, transparent 55%),
+    #05030a;
+}
+html.neon * {
+  scrollbar-color: var(--neon-pink) transparent;
+}
+html.neon ::-webkit-scrollbar-thumb {
+  background-color: #ff4fc055;
+  background-image: none;
+  box-shadow: 0 0 6px #ff4fc0 inset;
+}
+
+/* Text glows like a lit tube. */
+html.neon h1,
+html.neon h2,
+html.neon h3,
+html.neon .page-title,
+html.neon .section-title,
+html.neon .tower-heading {
+  color: #fff4d6;
+  text-shadow: 0 0 4px var(--neon-amber), 0 0 12px var(--neon-orange);
+}
+html.neon .eyebrow,
+html.neon .hint,
+html.neon .board-caption {
+  color: var(--muted);
+}
+
+/* Buttons: a hollow tube, brighter when touched. */
+html.neon button,
+html.neon select,
+html.neon input {
+  color: #ffe1f3;
+  background: transparent;
+  border: 2px solid var(--neon-pink);
+  border-radius: 6px;
+  box-shadow: 0 0 6px #ff4fc0aa, inset 0 0 6px #ff4fc066;
+  text-shadow: 0 0 6px #ff4fc0;
+  transition: box-shadow 0.15s, border-color 0.15s, color 0.15s;
+}
+html.neon button:hover {
+  color: #fff;
+  border-color: var(--neon-yellow);
+  box-shadow: 0 0 10px var(--neon-yellow), inset 0 0 8px #ffe86688;
+  text-shadow: 0 0 6px var(--neon-yellow);
+}
+html.neon button:active {
+  box-shadow: 0 0 16px var(--neon-yellow), inset 0 0 14px var(--neon-yellow);
+}
+html.neon button:focus-visible,
+html.neon select:focus-visible,
+html.neon input:focus-visible {
+  outline: 2px solid var(--neon-yellow);
+  outline-offset: 3px;
+}
+html.neon button:disabled {
+  opacity: 0.3;
+  box-shadow: none;
+  text-shadow: none;
+}
+html.neon option {
+  background: #05030a;
+  color: #ffe1f3;
+}
+
+/* Panels: outlined in amber light, open on black. */
+html.neon .stats,
+html.neon .card,
+html.neon .upgrade,
+html.neon .setting,
+html.neon .range-setting,
+html.neon .inspect-box,
+html.neon .shop,
+html.neon .skill-tree,
+html.neon .currencies {
+  background: #05030acc;
+  border: 2px solid var(--neon-amber);
+  border-radius: 8px;
+  box-shadow: 0 0 8px #ffb34799, inset 0 0 10px #ffb34733;
+}
+html.neon .board {
+  border: 2px solid var(--neon-pink);
+  box-shadow: 0 0 14px #ff4fc0aa, inset 0 0 10px #ff4fc055;
+}
+html.neon .rule,
+html.neon .inventory-divider {
+  background: var(--neon-pink);
+  border-color: var(--neon-pink);
+  box-shadow: 0 0 6px var(--neon-pink);
+}
+
+/* Tabs: the selected one burns yellow. */
+html.neon nav button.selected {
+  color: #fff;
+  border-color: var(--neon-yellow);
+  background: transparent;
+  box-shadow: 0 0 12px var(--neon-yellow), inset 0 0 10px #ffe86688;
+}
+html.neon nav button.selected > span {
+  color: #fff;
+}
+
+/* Bars: thin tubes filled with light. */
+html.neon .xp-track,
+html.neon .health-track {
+  background: transparent;
+  border: 1px solid var(--neon-pink);
+  box-shadow: 0 0 6px #ff4fc0aa;
+}
+html.neon .currency,
+html.neon .purse,
+html.neon .height {
+  text-shadow: 0 0 6px var(--neon-amber);
+}
+html.neon .safe {
+  color: var(--neon-lime);
+  text-shadow: 0 0 6px var(--neon-lime);
+}
+html.neon .danger {
+  color: var(--neon-orange);
+  text-shadow: 0 0 6px var(--neon-orange);
+}
+
+/* Dialogs float in the dark, ringed in pink. */
+html.neon dialog {
+  color: #ffe9f6;
+  background: #07040dee;
+  border: 2px solid var(--neon-pink);
+  border-radius: 10px;
+  box-shadow: 0 0 18px var(--neon-pink), inset 0 0 14px #ff4fc055;
+}
+html.neon dialog::backdrop {
+  background: #000000cc;
+}
+
+/* The tubes hum: a slow flicker of the glow, unless motion is reduced. */
+@keyframes neon-hum {
+  0%, 100% { filter: none; }
+  48% { filter: brightness(1.08); }
+  50% { filter: brightness(0.92); }
+  52% { filter: brightness(1.05); }
+}
+html.neon:not(.reduce-motion) .page-title,
+html.neon:not(.reduce-motion) nav button.selected {
+  animation: neon-hum 4s infinite;
+}

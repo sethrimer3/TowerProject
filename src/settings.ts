@@ -48,6 +48,9 @@ export const SETTINGS = {
   /** Dress the page in the keep's look (stone, oak, brass, parchment) and
    * play its synthesized sounds. */
   medievalTheme: { kind: "toggle", default: false, page: { id: "medieval-theme", label: "Render Medieval Theme" } },
+  /** Draw the page out of warm, glowing laser lines on black. Turning it on
+   * turns the Medieval theme off, and the other way round. */
+  neonTheme: { kind: "toggle", default: false, page: { id: "neon-theme", label: "Render Neon Theme" } },
   /** Unlimited currency, every floor section and game mode unlocked. */
   devMode: { kind: "toggle", default: false, page: { id: "dev-mode", label: "Dev mode (unlimited currency, all floors &amp; modes unlocked)" } },
   /** Play each fight out strike by strike, damage rising off whoever was

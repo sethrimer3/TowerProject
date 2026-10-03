@@ -10,7 +10,7 @@ import { MODES } from "../modes.ts";
  * SETTINGS. */
 const PAGE = [
   "speed", "transition", "fightAnimation", "brightness", "spritesOff", "decorOff", "batterySaver", "showArrows", "reduceMotion", "weatherSound",
-  "infoDisplay", "oneTapMove", "medievalTheme", "devMode", "freePurchases",
+  "infoDisplay", "oneTapMove", "medievalTheme", "neonTheme", "devMode", "freePurchases",
 ] as const satisfies readonly SettingKey[];
 type PageKey = (typeof PAGE)[number];
 
@@ -37,8 +37,18 @@ const AFTER: Partial<Record<PageKey, (ctx: AppContext, overlay: BoardOverlay, s:
     ctx.update();
   },
   medievalTheme: (ctx, _, s) => {
+    const other = s.neonTheme && s.medievalTheme;
+    if (other) s.neonTheme = false;
     applyMedievalTheme(s);
     ctx.save();
+    if (other) ctx.renderPage();
+  },
+  neonTheme: (ctx, _, s) => {
+    const other = s.neonTheme && s.medievalTheme;
+    if (other) s.medievalTheme = false;
+    applyMedievalTheme(s);
+    ctx.save();
+    if (other) ctx.renderPage();
   },
   // Turning it on also grants everything it unlocks.
   devMode: (ctx, _, s) => {

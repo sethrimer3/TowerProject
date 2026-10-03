@@ -6,9 +6,13 @@ import { flourishesEnabledBy, sparks } from "./flourish.ts";
  * for its animations. */
 export const MEDIEVAL_CLASS = "medieval";
 
-export function applyMedievalTheme(settings: { medievalTheme: boolean; reduceMotion: boolean }) {
+/** The laser-line look: `neon.css` is scoped to this class on the root. */
+export const NEON_CLASS = "neon";
+
+export function applyMedievalTheme(settings: { medievalTheme: boolean; neonTheme: boolean; reduceMotion: boolean }) {
   const root = document.documentElement.classList;
   root.toggle(MEDIEVAL_CLASS, settings.medievalTheme);
+  root.toggle(NEON_CLASS, settings.neonTheme);
   root.toggle("reduce-motion", settings.reduceMotion);
 }
 

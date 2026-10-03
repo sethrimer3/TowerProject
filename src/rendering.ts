@@ -11,6 +11,7 @@ import { torchAnimationFrame } from "./game-sprites.ts";
 import { isArea1, paintHero, paintHeroFallback, paintTile, paintTorch, type BoardLook } from "./tile-painters.ts";
 import type { AtmosphereConfig } from "./lighting-pass.ts";
 import { DungeonLight, type LitBoard } from "./dungeon-light.ts";
+import { drawNeonContents, drawNeonGround, drawNeonTorch, paintNeonHero } from "./neon-board.ts";
 import { RoutePath } from "./route-path.ts";
 import { BoardPopups, lunges } from "./board-popups.ts";
 import { drawLevelUp, drawRevive, LEVEL_UP_MS, POINTS_MS, REVIVE_MS } from "./level-up.ts";
@@ -123,12 +124,32 @@ export class Renderer {
   }
   draw(now: number) {
     const f = this.beginFrame(now);
-    // Ground first; in the dungeon the light then runs the frame (relief,
-    // decor, shadows, contents, torches, route, hero, frame) over it.
-    this.drawGround(f);
-    if (f.look.outside) this.drawOutside(f);
-    else this.light.draw(f, this.litBoard(f));
+    if (this.neon && !f.look.outside) this.drawNeonBoard(f);
+    else {
+      // Ground first; in the dungeon the light then runs the frame (relief,
+      // decor, shadows, contents, torches, route, hero, frame) over it.
+      this.drawGround(f);
+      if (f.look.outside) this.drawOutside(f);
+      else this.light.draw(f, this.litBoard(f));
+    }
     drawRushEchoes(f, this.game.rush);
+    this.drawOverlays(f);
+  }
+  /** The Neon theme's dungeon: laser-line walls, contents, torches, route
+   * and hero on black, with no lighting, decor or ambient effects. */
+  private drawNeonBoard(f: FrameContext) {
+    drawNeonGround(f);
+    drawNeonContents(f, this.enemyLunge);
+    for (const t of f.torches) drawNeonTorch(f, t);
+    this.drawRoute(f);
+    const c = f.c;
+    c.save();
+    c.setTransform(tileTransform(f, f.playerX, f.playerY));
+    paintNeonHero(c);
+    c.restore();
+  }
+  /** Gameplay feedback drawn over every board. */
+  private drawOverlays(f: FrameContext) {
     this.drawBlockedMark(f);
     // A Gem shines above the darkness, so it can be seen and tapped.
     const gem = this.game.gemFinder.gem, sparkle = this.game.gemFinder.sparkle;
@@ -196,7 +217,7 @@ export class Renderer {
     };
     f.torches = outside ? [] : this.visibleTorches();
     f.walls = outside ? [] : this.visibleWallTiles();
-    f.glows = outside ? [] : this.light.glows(f);
+    f.glows = outside || this.neon ? [] : this.light.glows(f);
     if (!outside && this.decorOn) {
       this.decor.sync(g.world, g.run.seed);
       this.decor.update({ dt, now, hx: this.playerX, hy: this.playerY, tileAt: this.tileAt, reduceMotion: f.look.reduceMotion });
@@ -390,8 +411,12 @@ export class Renderer {
     c.shadowBlur = 0;
   }
 
+  private get neon() {
+    return this.game.save.settings.neonTheme;
+  }
+  /** Decor waits for neon versions of its own, so the Neon theme turns it off. */
   private get decorOn() {
-    return !this.game.save.settings.decorOff;
+    return !this.game.save.settings.decorOff && !this.neon;
   }
   private tileAt = (x: number, y: number) => this.game.world.tile(x, y);
   private decorFrame(f: FrameContext): DecorFrame {
