@@ -211,3 +211,43 @@ test("Faster Trainers research: +2% training speed a level, for 100 levels, abou
   assert.ok(g.training.trainWithGold("hp"));
   assert.equal(g.training.left("hp"), 450_000);
 });
+
+test("auto-continue starts the next rank the moment one is done, while the Gold lasts", () => {
+  const { g, wait } = game();
+  g.training.setAutoContinue("attack", true);
+  assert.ok(g.training.autoContinues("attack"));
+  g.save.gold = trainingGold(1, 0) + trainingGold(1, 1) + trainingGold(1, 2) - 1;
+  assert.ok(g.training.trainWithGold("attack"));
+  wait(15);
+  assert.equal(g.training.settle(), 1);
+  assert.equal(g.save.training.attack, 1);
+  const [job] = g.save.trainingJobs;
+  assert.equal(job.id, "attack", "the next rank started");
+  assert.equal(job.startedAt, g.clock());
+  assert.equal(g.save.gold, trainingGold(1, 2) - 1, "and was paid for");
+  // Ranks the clock passed while the game was closed count in turn, each
+  // starting when the last was done; the third can't be paid for.
+  wait(3600);
+  assert.equal(g.training.settle(), 1);
+  assert.equal(g.save.training.attack, 2);
+  assert.deepEqual(g.save.trainingJobs, [], "no Gold for the next");
+  // Unticked, a finished rank starts nothing.
+  g.save.gold = 10_000;
+  g.training.setAutoContinue("attack", false);
+  assert.ok(g.training.trainWithGold("attack"));
+  wait(3600);
+  g.training.settle();
+  assert.deepEqual(g.save.trainingJobs, []);
+});
+
+test("auto-continue chains ranks done while away, and is saved", () => {
+  const { g, wait } = game();
+  g.training.setAutoContinue("hp", true);
+  assert.ok(g.training.trainWithGold("hp"));
+  wait(15 + 60 + 10);
+  assert.equal(g.training.settle(), 2, "two ranks passed");
+  assert.equal(g.save.training.hp, 2);
+  assert.equal(g.save.trainingJobs[0].startedAt, g.clock() - 10 * 1000, "the third started when the second was done");
+  assert.deepEqual(decode(JSON.stringify(g.save)).trainingAuto, ["hp"]);
+  assert.deepEqual(decode(JSON.stringify({ ...g.save, trainingAuto: ["nope", "hp", 3] })).trainingAuto, ["hp"]);
+});

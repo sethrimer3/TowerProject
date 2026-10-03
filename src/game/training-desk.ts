@@ -68,14 +68,43 @@ export class TrainingDesk {
     if (this.host.free) return changeLoadout(save, () => { save.training[id]++; });
     const ranks = save.training[id], gold = trainingGold(rowOf(id).cost, ranks);
     if (save.trainingJobs.length >= trainingSlots(save) || save.gold < gold) return false;
-    const now = this.host.clock(), ms = trainingMs(ranks, trainingSpeed(save)),
+    this.start(id, gold, this.host.clock());
+    // Time credit can cover the whole rank.
+    this.settle();
+    return true;
+  }
+
+  /** Pays `gold` and starts a trainer on the next rank of `id` at `now`,
+   * its time less any time credit (used up first). */
+  private start(id: TrainingId, gold: number, now: number) {
+    const save = this.save, ms = trainingMs(save.training[id], trainingSpeed(save)),
       credit = Math.min(ms, save.trainingCredit);
     save.gold = snap(save.gold - gold);
     save.trainingCredit -= credit;
     save.trainingJobs.push({ id, startedAt: now, completesAt: doneAt(ms - credit, save.trainingBoostUntil, now), gold, ms });
-    // Time credit can cover the whole rank.
-    this.settle();
-    return true;
+  }
+
+  /** Whether `id`'s trainer starts its next rank as soon as one is done. */
+  autoContinues(id: TrainingId) {
+    return this.save.trainingAuto.includes(id);
+  }
+
+  /** Turns `id`'s auto-continue on or off: while on, each rank its trainer
+   * finishes starts the next at once, when the Gold is there. */
+  setAutoContinue(id: TrainingId, on: boolean) {
+    const auto = this.save.trainingAuto.filter((a) => a !== id);
+    this.save.trainingAuto = on ? [...auto, id] : auto;
+  }
+
+  /** Starts the next rank of `id` the moment `after` finished, if its
+   * auto-continue is on, it can train further and the trainer's Gold is
+   * held (none with Dev free purchases, though the rank still takes its
+   * time). */
+  private continueAfter(after: TrainingJob) {
+    const save = this.save, id = after.id;
+    if (!this.autoContinues(id) || !this.canTrain(id) || trainingJob(save.trainingJobs, id)) return;
+    const gold = this.host.free ? 0 : trainingGold(rowOf(id).cost, save.training[id]);
+    if (save.trainingJobs.length < trainingSlots(save) && save.gold >= gold) this.start(id, gold, after.completesAt);
   }
 
   /** The training time (ms, at the normal rate) the rank of `id` in
@@ -153,15 +182,27 @@ export class TrainingDesk {
   /** Counts the ranks whose training the clock has reached, saying so in the
    * status line and queuing them in `done`; returns how many. A run inside
    * gains each at once. */
+  /** A stat set to auto-continue starts its next rank from the moment the
+   * last was done, so ranks the clock passed while the game was closed
+   * count too, in order, as long as the Gold lasts. */
   settle() {
-    const save = this.save, now = this.host.clock(), due = save.trainingJobs.filter((j) => j.completesAt <= now);
-    if (!due.length) return 0;
+    const save = this.save, now = this.host.clock(), finished: TrainingJob[] = [];
+    if (!this.due(now)) return 0;
     changeLoadout(save, () => {
-      save.trainingJobs = save.trainingJobs.filter((j) => !due.includes(j));
-      for (const j of due) this.complete(j);
+      for (let job = this.due(now); job; job = this.due(now)) {
+        save.trainingJobs = save.trainingJobs.filter((j) => j !== job);
+        this.complete(job);
+        this.continueAfter(job);
+        finished.push(job);
+      }
     });
-    this.host.message = `Training · ${due.map((j) => rowOf(j.id).name).join(", ")} complete.`;
-    return due.length;
+    this.host.message = `Training · ${[...new Set(finished.map((j) => rowOf(j.id).name))].join(", ")} complete.`;
+    return finished.length;
+  }
+
+  /** The earliest rank in training due by `now`, if any. */
+  private due(now: number) {
+    return this.save.trainingJobs.reduce<TrainingJob | undefined>((first, j) => j.completesAt <= now && (!first || j.completesAt < first.completesAt) ? j : first, undefined);
   }
 
   /** Counts a rank a trainer finished and records what it was paid with. */

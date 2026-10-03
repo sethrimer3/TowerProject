@@ -200,6 +200,9 @@ export type Save = {
   /** Ranks being trained by a trainer now (their Gold is paid), each done
    * when the wall clock reaches it. */
   trainingJobs: TrainingJob[];
+  /** Stats whose trainer starts the next rank as soon as one is done, when
+   * the Gold is there (the Training tab's auto-continue boxes). */
+  trainingAuto: TrainingId[];
   /** Training time (ms) returned by resets and stopped ranks, taken off
    * the next ranks trainers train until it is used up. */
   trainingCredit: number;

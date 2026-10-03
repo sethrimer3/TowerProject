@@ -143,6 +143,10 @@ export class SkillTreePage {
       this.saveAfter(training.buyTrainer());
     });
     this.onEach("data-reset", (id) => this.confirmReset(id));
+    document.querySelectorAll<HTMLInputElement>("[data-auto]").forEach(box => box.onchange = () => {
+      training.setAutoContinue(box.dataset.auto as TrainingId, box.checked);
+      this.ctx.save();
+    });
   }
 
   /** Binds each button carrying `attribute` to `action` with its row. */
@@ -272,7 +276,14 @@ export class SkillTreePage {
     const nowButton = step.maxed
       ? ""
       : `<button class="training-box training-cost training-now" data-train="${t.id}" ${step.affordable ? "" : "disabled"} aria-label="Spend ${t.cost} training ${t.cost === 1 ? "point" : "points"} to train ${t.name} now" title="Train now">${pointsIcon()}<span>${t.cost}</span></button>`;
-    return `<div class="training-row${job ? " active" : ""}" role="listitem" data-training-row="${t.id}"><span class="training-label">${t.name}<small>+${rank} a rank${most}</small></span><span class="training-box">${shown(now)}</span><span class="training-arrow" aria-hidden="true">→</span><span class="training-box next">${shown(next)}</span>${this.trainerHtml(t, step)}${nowButton}${this.resetButton(t, !!job)}</div>`;
+    return `<div class="training-row${job ? " active" : ""}" role="listitem" data-training-row="${t.id}"><span class="training-label">${this.autoBox(t)}${t.name}<small>+${rank} a rank${most}</small></span><span class="training-box">${shown(now)}</span><span class="training-arrow" aria-hidden="true">→</span><span class="training-box next">${shown(next)}</span>${this.trainerHtml(t, step)}${nowButton}${this.resetButton(t, !!job)}</div>`;
+  }
+
+  /** The row's auto-continue box: while ticked, its trainer starts the
+   * next rank as soon as one is done, when the Gold is there. */
+  private autoBox(t: TrainingRow) {
+    const on = this.ctx.game.training.autoContinues(t.id);
+    return `<input type="checkbox" class="training-auto" data-auto="${t.id}" ${on ? "checked" : ""} aria-label="Auto-continue ${t.name}: train the next rank as soon as one is done" title="Auto-continue: train the next rank as soon as one is done">`;
   }
 
   /** A rank a trainer is training shows its countdown (tap to stop it and

@@ -30,6 +30,7 @@ export function defaults(): Save {
     training: Object.fromEntries(TRAINING.map((t) => [t.id, 0])) as Save["training"],
     trainingPaid: Object.fromEntries(TRAINING.map((t) => [t.id, { points: 0, gold: 0, ms: 0 }])) as Save["trainingPaid"],
     trainingJobs: [],
+    trainingAuto: [],
     trainingCredit: 0,
     trainingBoostUntil: 0,
     trainers: 0,
@@ -262,6 +263,7 @@ function decodeTraining(s: any, d: Save) {
   for (const t of TRAINING) d.trainingPaid[t.id] = decodePaid(s.trainingPaid?.[t.id], t.cost * d.training[t.id]);
   d.trainers = count(s.trainers, d.trainers, TRAINER_GEMS.length);
   d.trainingJobs = decodeTrainingJobs(s.trainingJobs, trainingSlots(d));
+  d.trainingAuto = TRAINING.filter((t) => Array.isArray(s.trainingAuto) && s.trainingAuto.includes(t.id)).map((t) => t.id);
   // Times in ms: credit can run to months, and the boost's end is a timestamp.
   d.trainingCredit = count(s.trainingCredit, d.trainingCredit, Number.MAX_SAFE_INTEGER);
   d.trainingBoostUntil = count(s.trainingBoostUntil, d.trainingBoostUntil, Number.MAX_SAFE_INTEGER);

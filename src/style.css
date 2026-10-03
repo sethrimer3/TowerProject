@@ -1981,6 +1981,8 @@ button.training-timer { border-color: #c0483c; color: #ffd0c8; background: #2a14
 .training-reset:disabled { border-color: #333c49; background: #111925; opacity: 0.45; }
 .reset-gems { display: flex; align-items: center; justify-content: center; gap: 6px; }
 .training-label { font-size: 11px; letter-spacing: 1px; color: #e3d2ad; }
+/* Auto-continue: the trainer starts the stat's next rank once one is done. */
+.training-auto { width: 14px; height: 14px; margin: 0 5px 0 0; vertical-align: -2px; accent-color: var(--gold); cursor: pointer; }
 .training-label small { display: block; font-size: 9px; letter-spacing: .5px; color: #9aa6b6; }
 .training-box { padding: 6px 8px; min-height: 30px; display: grid; place-items: center; border: 1px solid #4a5566; border-radius: 8px; background: #111925; font-size: 12px; color: #dfe5ee; }
 .training-box.next { border-color: #6e9a70; color: #b8f0b4; }

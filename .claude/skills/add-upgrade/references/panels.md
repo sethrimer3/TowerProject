@@ -64,6 +64,8 @@ Hero stats bought with training points (`TRAINING_PER_LEVEL` per hero level) at 
 
 **Reset:** every row gets a reset button for free: `game.training.reset` spends `TRAINING_RESET_GEMS` Gems (`gems.ts`) to set its ranks to 0 and returns what its ranks were paid with (`save.trainingPaid`: points, Gold, and trainers' time as time credit), so a new row needs nothing for it.
 
+**Auto-continue:** every row also gets an auto-continue box for free (`save.trainingAuto`): when its trainer finishes a rank, `game.training.settle` starts the next if the Gold is there, so a new row needs nothing for it.
+
 **Touches:** `config.ts`, `tests/loadout.test.ts`, `docs/PROGRESSION_AND_DIFFICULTY.md` (training paragraph), `README.md` (the Training tab paragraph), `CONTEXT.md` (Training point), `ui.golden.json` (Training tab), `save-decode` (the `training` record).
 
 ---
