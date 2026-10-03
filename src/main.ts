@@ -15,7 +15,7 @@ import { isBoard, type AppContext, type Tab } from "./ui/app.ts";
 import { el } from "./ui/dom.ts";
 import { buildShell } from "./ui/shell.ts";
 import { BoardOverlay } from "./ui/board-overlay.ts";
-import { boardHeadingStale, flashRed, renderAdButton, renderShopDot, renderBoardHeading, renderHud, renderVitals, gearWaiting, upgradesWaiting } from "./ui/hud.ts";
+import { boardHeadingStale, flashRed, renderAdButton, renderShopDot, renderBoardHeading, renderHud, renderVitals, purseFrame, gearWaiting, upgradesWaiting } from "./ui/hud.ts";
 import { confirmAction, RunEndDialog, showLog } from "./ui/dialogs.ts";
 import { GoalsPage } from "./ui/goals-page.ts";
 import { SkillTreePage } from "./ui/skill-tree-page.ts";
@@ -258,6 +258,7 @@ const loop = new FrameLoop({
   defendFrame: (time) => defendPage.frame(time),
   update,
   vitals: () => renderVitals(game),
+  purse: (time) => purseFrame(game, time),
   save,
 });
 document.addEventListener("visibilitychange", () => {

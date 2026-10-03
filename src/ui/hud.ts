@@ -11,6 +11,7 @@ import { CARDS, cardText } from "../cards.ts";
 import { trainingPoints } from "../loadout.ts";
 import { goalsWaiting } from "../goals.ts";
 import type { BoardOverlay } from "./board-overlay.ts";
+import { CountUp } from "./count-up.ts";
 import { estimatedServerTime } from "../shop/clock.ts";
 import { OFFERS } from "../shop/offers.ts";
 import { refusal } from "../shop/transactions.ts";
@@ -39,12 +40,28 @@ export function shortAmount(n: number) {
   const v = n / size, digits = v < 10 ? 2 : v < 100 ? 1 : 0, step = size / 10 ** digits;
   return `${Math.floor(n / step) / 10 ** digits}${unit}`;
 }
-/** Shows `value` in the purse's `id`, shortened, the exact amount in its
- * tooltip (∞ in Dev mode). */
-function purse(game: Game, id: string, held: number, name: string) {
+/** Shows `held` in the purse's `id`, shortened (`shown` while it counts up
+ * to it), the exact amount in its tooltip (∞ in Dev mode). */
+function purse(game: Game, id: string, held: number, name: string, shown = held) {
   const dev = game.save.settings.devMode, value = whole(held);
-  text(id, dev ? "∞" : shortAmount(value));
+  text(id, dev ? "∞" : shortAmount(whole(shown)));
   el(id).parentElement!.title = `${name}: ${dev ? "∞" : value.toLocaleString("en-US")}`;
+}
+/** Gold and Silver count up to each rise. */
+const goldShown = new CountUp(), silverShown = new CountUp();
+
+/** The purse: Gems, then Gold and the run's Silver, counting up to what they
+ * rose to. */
+function renderPurse(game: Game) {
+  const now = performance.now(), instant = game.save.settings.reduceMotion;
+  purse(game, "gems", game.save.gems, "Gems, kept between runs");
+  purse(game, "gold", game.save.gold, "Gold, kept between runs", goldShown.show(game.save.gold, now, instant));
+  purse(game, "run-silver", game.silver, "Silver, spent only inside this run", silverShown.show(game.silver, now, instant));
+}
+
+/** Each display frame: moves on the Gold and Silver still counting up. */
+export function purseFrame(game: Game, now: number) {
+  if (goldShown.counting(now) || silverShown.counting(now)) renderPurse(game);
 }
 
 /** Refreshes every HUD readout from game state. */
@@ -228,10 +245,7 @@ export function renderVitals(game: Game) {
   text("defense", whole(p.defense));
   text("shroud", whole(p.shroud ?? 0));
   el("shroud-stat").hidden = !game.save.upgrades.shroud;
-  purse(game, "gems", game.save.gems, "Gems, kept between runs");
-  purse(game, "gold", game.save.gold, "Gold, kept between runs");
-  text("run-silver", shortAmount(whole(game.silver)));
-  el("run-silver").parentElement!.title = `Silver, spent only inside this run: ${whole(game.silver).toLocaleString("en-US")}`;
+  renderPurse(game);
   for (const k of ["yellow", "blue", "red"] as const) text(k, p.keys[k]);
   const skeletonKeys = p.skeletonKeys ?? 0;
   text("skeleton", skeletonKeys);
@@ -364,7 +378,7 @@ function renderRunEarned(game: Game) {
   box.classList.add("flash");
 }
 
-/** The ad button stands under Log in the forest and inside a run, in both
+/** The ad button stands under the purse in the forest and inside a run, in both
  * modes: showing its Gems when they can be claimed, an empty space while
  * it waits. Goals takes End Run's place in the forest. */
 export function renderAdButton(game: Game) {

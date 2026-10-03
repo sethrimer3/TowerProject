@@ -182,24 +182,29 @@ h1 span {
   border-radius: 4px;
   box-shadow: inset 0 0 0 1px #0a0e15;
 }
+/* The left rail: the currencies held, large, above the ad's Gems. */
 .portrait-actions {
   flex: 1;
-  display: grid;
-  grid-template-rows: repeat(3, 1fr);
+  display: flex;
+  flex-direction: column;
   gap: 3px;
 }
-.portrait-actions button {
+/* End Run inside a run and Goals in the forest share the top row, Log the
+   one under it, in both modes. */
+.height-actions {
   width: 100%;
-  min-height: 25px;
-  padding: 3px 2px;
+  margin-top: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.height-actions button {
+  width: 100%;
+  min-height: 22px;
+  padding: 2px;
   font-size: 7px;
   letter-spacing: .45px;
   text-transform: uppercase;
-}
-.portrait-actions .ui-sprite {
-  width: 12px;
-  height: 12px;
-  margin-right: 3px;
 }
 .portrait-top canvas {
   width: 43px;
@@ -447,32 +452,33 @@ h1 span {
 .height-reward i {
   font-style: normal;
 }
-/* The currencies held, one a line under the height: Gems, Gold, Silver. */
+/* The currencies held, one a line down the left rail: Gems, Gold, Silver,
+   as large as the rail allows. */
 .purse {
-  width: calc(100% - 6px);
-  margin-top: 6px;
-  padding-top: 6px;
-  border-top: 1px solid #333c49;
+  flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-  font-size: 12px;
-  color: #d1d9e6;
+  justify-content: space-evenly;
+  gap: 2px;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  color: #e4e8ee;
 }
 .purse > span {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   white-space: nowrap;
 }
 .purse .ui-sprite,
 .purse .gem-icon {
-  width: 14px;
-  height: 14px;
+  width: 18px;
+  height: 18px;
   flex: none;
 }
 .gem-stat b { color: #8fe3ff; }
+.gold-stat b { color: #ffd86b; }
 .gem-icon {
   width: 1em;
   height: 1em;
@@ -492,12 +498,7 @@ h1 span {
   gap: 4px;
   line-height: 1;
 }
-.portrait-actions .gem-ad { font-size: 13px; padding: 1px 2px; }
-/* End Run inside a run and Goals in the forest share the top row, Log the
-   middle, and the ad's Gems the bottom, in both modes. */
-.portrait-actions #end-run, .portrait-actions #section-pick { grid-row: 1; }
-.portrait-actions #log { grid-row: 2; }
-.portrait-actions #gem-ad { grid-row: 3; }
+.portrait-actions .gem-ad { width: 100%; min-height: 25px; font-size: 13px; padding: 1px 2px; text-transform: uppercase; }
 .gem-ad .gem-icon { width: 16px; height: 16px; }
 .gem-ad small { font-size: 7px; line-height: 1; letter-spacing: .45px; }
 .gem-ad.waiting { visibility: hidden; }
@@ -1072,8 +1073,22 @@ dialog p {
     font-size: 7px;
   }
   .stats {
-    grid-template-columns: 68px minmax(128px, 1fr) 54px 38px;
+    grid-template-columns: 80px minmax(128px, 1fr) 52px 38px;
     min-height: 82px;
+  }
+  .hud-controls {
+    padding: 6px 5px;
+  }
+  .purse {
+    font-size: 15px;
+  }
+  .purse > span {
+    gap: 3px;
+  }
+  .purse .ui-sprite,
+  .purse .gem-icon {
+    width: 15px;
+    height: 15px;
   }
   .vitals {
     padding: 8px 7px 6px;
@@ -1459,7 +1474,7 @@ nav {
   nav button > span img { width: 26px; height: 26px; }
 }
 
-#log, #section-pick { font: inherit; font-size: 10px; padding: 3px 7px; min-height: 24px; }
+#log, #section-pick { font: inherit; font-size: 9px; padding: 2px; min-height: 22px; }
 #section-pick { position: relative; }
 /* A Goals reward waits to be claimed. */
 #section-pick.notify::after {

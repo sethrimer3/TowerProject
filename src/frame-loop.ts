@@ -17,6 +17,8 @@ export type FrameLoopHost = {
   archivesTick(): void;
   /** Refreshes only the HP readouts, as a fight's strikes land. */
   vitals(): void;
+  /** Moves on the purse's Gold and Silver while they count up. */
+  purse(time: number): void;
   save(): void;
 };
 
@@ -53,7 +55,10 @@ export class FrameLoop {
     const { host } = this, tab = host.tab();
     if (!document.hidden) {
       if (tab === "upgrades") host.upgradesFrame(time);
-      if (isBoard(tab)) this.boardFrame(time);
+      if (isBoard(tab)) {
+        this.boardFrame(time);
+        host.purse(time);
+      }
       if (tab === "defend" && !host.modal.open) host.defendFrame(time);
     }
     if (time - this.lastArchives > ARCHIVES_TICK_MS) {
