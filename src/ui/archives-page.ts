@@ -6,7 +6,7 @@ import {
 import { UPGRADES } from "../config.ts";
 import type { AppContext } from "./app.ts";
 import { currencyAmount, devAmount } from "./hud.ts";
-import { el, uiSprite } from "./dom.ts";
+import { el, gemIcon, uiSprite } from "./dom.ts";
 
 /** The status filter's choices; Locked only in Dev mode, the one place
  * research not yet unlocked is listed. */
@@ -127,7 +127,7 @@ export class ArchivesPanel {
       const slot = a.slots[i], title = `<small>ARCHIVIST ${i + 1}</small>`;
       if (!slot) {
         if (i === a.slots.length && price !== undefined)
-          return `<article class="archivist hire" role="listitem">${title}<button data-hire ${game.save.gold < price && !game.free ? "disabled" : ""}>Hire · ${uiSprite("gold", "stat-sprite")} ${price}</button></article>`;
+          return `<article class="archivist hire" role="listitem">${title}<button data-hire ${game.save.gems < price && !game.free ? "disabled" : ""} aria-label="Hire an archivist for ${price} Gems">Hire · ${gemIcon()} ${price}</button></article>`;
         return `<article class="archivist locked" role="listitem">${title}<p>Locked</p></article>`;
       }
       const auto = `<label class="archivist-auto"><input type="checkbox" data-auto="${i}" ${slot.autoContinue ? "checked" : ""}> Auto-continue</label>`;

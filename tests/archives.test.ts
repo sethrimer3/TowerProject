@@ -114,18 +114,24 @@ test("research speed shortens the time a level takes, not the definition", () =>
   assert.equal(formatDuration(Math.round(10 * HOUR / 1.3)), "7h 41m");
 });
 
-test("archivists are hired one at a time for Gold, up to the maximum", () => {
-  const save = owner(ARCHIVISTS.prices.reduce((a, b) => a + b, 0));
+test("archivists are hired one at a time for Gems, not Gold, up to the maximum", () => {
+  assert.deepEqual(ARCHIVISTS.prices, [200, 500, 900, 1400]);
+  const save = owner(1e9);
+  save.gems = 199;
+  assert.equal(hireArchivist(save), false, "Gold doesn't hire");
+  save.gems = ARCHIVISTS.prices.reduce((a, b) => a + b, 0);
   for (let i = 0; i < ARCHIVISTS.prices.length; i++) assert.ok(hireArchivist(save));
   assert.equal(save.archives.slots.length, ARCHIVISTS.maximum);
-  assert.equal(save.gold, 0);
-  save.gold = 1e9;
+  assert.equal(save.gems, 0);
+  assert.equal(save.gold, 1e9);
+  save.gems = 1e9;
   assert.equal(hireArchivist(save), false);
 });
 
 test("the Archives save and load, dropping anything malformed", () => {
   const save = owner();
-  hireArchivist(save);
+  save.gems = ARCHIVISTS.prices[0];
+  assert.ok(hireArchivist(save));
   save.archives.slots[1].autoContinue = true;
   startResearch(save, 1, "focusCount", T0);
   settleArchives(save, T0 + 8 * HOUR);

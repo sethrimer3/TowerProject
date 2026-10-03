@@ -194,8 +194,8 @@ export const RESEARCH_IDS = Object.keys(RESEARCH) as ResearchId[];
 export const research = (id: ResearchId): ResearchDefinition => RESEARCH[id];
 
 /** Archivist slots: the Archives start with `start`, and each further one,
- * up to `maximum`, is hired for the next price in Gold. */
-export const ARCHIVISTS = { start: 1, maximum: 5, prices: [1000, 2500, 5000, 10000] } as const;
+ * up to `maximum`, is hired for the next price in Gems. */
+export const ARCHIVISTS = { start: 1, maximum: 5, prices: [200, 500, 900, 1400] } as const;
 /** How many completions the history keeps, newest last. */
 export const HISTORY_LIMIT = 200;
 
@@ -223,10 +223,12 @@ export function defaultArchives(): ArchivesSave {
 }
 
 /** What the Archives read from the rest of the profile (a `Save`), and
- * the Gold they spend. */
+ * the Gold and Gems they spend. */
 export type ArchivesOwner = {
   archives: ArchivesSave;
   gold: number;
+  /** Gems, which hire archivists. */
+  gems: number;
   upgrades: Record<UpgradeId, number>;
   /** Lifetime XP, for the hero's level. */
   xp: number;
@@ -356,15 +358,15 @@ export function settleArchives(o: ArchivesOwner, now: number): ResearchRecord[] 
   return done;
 }
 
-/** The Gold the next archivist costs, or undefined when all are hired. */
+/** The Gems the next archivist costs, or undefined when all are hired. */
 export const nextArchivistPrice = (a: ArchivesSave): number | undefined => ARCHIVISTS.prices[a.slots.length - ARCHIVISTS.start];
-/** Hires the next archivist for its Gold. */
+/** Hires the next archivist for its Gems. */
 export function hireArchivist(o: ArchivesOwner) {
   const price = nextArchivistPrice(o.archives);
   if (price === undefined) return false;
   if (!o.settings.freePurchases) {
-    if (o.gold < price) return false;
-    o.gold -= price;
+    if (o.gems < price) return false;
+    o.gems -= price;
   }
   o.archives.slots.push({ autoContinue: false });
   return true;
