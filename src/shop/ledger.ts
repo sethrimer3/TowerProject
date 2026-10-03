@@ -1,5 +1,6 @@
 import { OFFERS, type OfferId } from "./offers.ts";
 import type { ShopClock } from "./clock.ts";
+import { time, whole, wholeIn } from "../decode.ts";
 
 // The Shop's own saved state (`save.shop`): how often each offer has been
 // bought, the transactions made, and the last server time confirmed. What
@@ -20,8 +21,6 @@ export const HISTORY_KEPT = 100;
 
 export const defaultShop = (): ShopSave => ({ counts: {}, history: [], clock: { server: 0, local: 0 } });
 
-const whole = (n: unknown): n is number => Number.isInteger(n) && (n as number) >= 0;
-const time = (n: unknown) => (typeof n === "number" && Number.isFinite(n) && n >= 0 ? n : 0);
 
 /** A saved ShopSave, field by field; anything malformed is dropped. */
 export function decodeShop(raw: any): ShopSave {
@@ -29,13 +28,18 @@ export function decodeShop(raw: any): ShopSave {
   if (!raw || typeof raw !== "object") return d;
   for (const o of OFFERS) {
     const c = raw.counts?.[o.id];
-    if (c && whole(c.n) && c.n > 0 && whole(c.day)) d.counts[o.id] = { n: c.n, day: c.day };
+    if (validCount(c)) d.counts[o.id] = { n: c.n, day: c.day };
   }
   if (Array.isArray(raw.history))
     d.history = raw.history
-      .filter((t: any) => t && OFFERS.some((o) => o.id === t.offer) && time(t.at) && typeof t.item === "string" && typeof t.price === "string")
+      .filter(validTransaction)
       .slice(-HISTORY_KEPT)
       .map((t: any) => ({ at: t.at, offer: t.offer, item: t.item, price: t.price }));
   d.clock = { server: time(raw.clock?.server), local: time(raw.clock?.local) };
   return d;
 }
+/** An offer's purchase count: one or more, on a Shop day. */
+const validCount = (c: any) => !!c && wholeIn(c.n, 1, Infinity) && whole(c.day);
+/** A purchase of a known offer, at a time, with what it granted and cost. */
+const validTransaction = (t: any) =>
+  !!t && OFFERS.some((o) => o.id === t.offer) && !!time(t.at) && typeof t.item === "string" && typeof t.price === "string";

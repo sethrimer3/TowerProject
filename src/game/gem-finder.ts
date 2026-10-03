@@ -41,7 +41,7 @@ export class GemFinder {
   /** The Gem lying on the floor the board shows, if any. */
   get gem(): GemSpot | null {
     const { mode, run, save } = this.host;
-    return run.outside ? null : gemOn(save.gemDrop, mode, run.seed, this.floor);
+    return run.outside ? null : gemOn(save.gemDrop, { mode, seed: run.seed, floor: this.floor });
   }
 
   /** The hero stands somewhere new inside a run: it takes a Gem lying on
@@ -53,11 +53,11 @@ export class GemFinder {
     if (!playing) return;
     const drop = save.gemDrop, p = run.player, gem = this.gem, floor = this.floor;
     if (gem && gem.x === p.x && gem.y === p.y) this.take(gem);
-    if (!reachFloor(drop, mode, run.seed, floor, this.host.clock())) return;
+    if (!reachFloor(drop, { mode, seed: run.seed, floor }, this.host.clock())) return;
     const view = Math.floor(VIEWPORT_TILES / 2);
-    const [minY, maxY] = mode === "tower" ? [0, Infinity] : [p.y - view, p.y + view];
+    const rows = mode === "tower" ? { minY: 0, maxY: Infinity } : { minY: p.y - view, maxY: p.y + view };
     // Where it lies is fixed for the run and floor, like the floor itself.
-    const spot = gemSpot(this.host.world, p, minY, maxY, random(run.seed ^ GEM_SALT ^ Math.imul(floor + 1, 0x9e3779b1)));
+    const spot = gemSpot(this.host.world, p, rows, random(run.seed ^ GEM_SALT ^ Math.imul(floor + 1, 0x9e3779b1)));
     if (spot) drop.out = { mode, seed: run.seed, floor, ...spot };
   }
 

@@ -1,5 +1,5 @@
 import { TRAINER_GEMS, trainingSlots, type TrainingJob, type TrainingPaid } from "./training-jobs.ts";
-import { snap } from "./exact.ts";
+import { count, dropInvalid, finite, fraction, isRecord, wholeIn } from "./decode.ts";
 import { TIERS, type TierRecord } from "./tiers.ts";
 import { FIND_POTION_MAX, GOLD_SHOP, OLD_SAVE_KEY, RUN_TRAINING_CAP, SAVE_KEY, TOWER_WIDTH, TRAINING, UPGRADES, WIDTH } from "./config.ts";
 import type { AutomoveMemory, DelveRun, FloorRecord, ModeSave, Fall, MoveSnapshot, Run, Save, TowerRun } from "./entities.ts";
@@ -51,14 +51,6 @@ export function defaults(): Save {
     goals: defaultGoals(),
   };
 }
-const finite = (n: unknown, max = 1e9) =>
-  typeof n === "number" && Number.isFinite(n) && n >= 0 && n <= max;
-const isRecord = (v: any) => !!v && typeof v === "object" && !Array.isArray(v);
-/** A floored count from `raw` when it is a finite number within `max`. */
-const count = (raw: any, fallback: number, max?: number) =>
-  finite(raw, max) ? Math.floor(raw) : fallback;
-/** An amount kept with its fraction (Gold), on the `snap` grid. */
-const fraction = (raw: any, fallback: number) => (finite(raw) ? snap(raw) : fallback);
 const CHEST_TIERS = ["silver", "gold", "platinum"] as const;
 const KEY_COLORS = ["yellow", "blue", "red"] as const;
 const POINT_KEY = /^\d+,\d+$/;
@@ -95,31 +87,35 @@ const validCore = (r: any, width: number) =>
 const validDelveState = (r: any) => Number.isInteger(r.milestone) && finite(r.milestone);
 const TOWER_FIELDS = ["damaged", "keysSpent", "floors"];
 const DELVE_FIELDS = ["milestone"];
-/** Drops fields a run of this mode doesn't keep: the other mode's, and an
- * older run's clear chest list and Automove memory (clear chests stand in
- * `changes` now, and the memory beside the run). */
-function without<R>(r: any, fields: string[]): R {
-  for (const k of ["rewards", "known", "visited", ...fields]) delete r[k];
-  if (r.hand !== undefined && !validHand(r.hand)) delete r.hand;
-  if (r.silver !== undefined && !finite(r.silver)) delete r.silver;
-  if (r.xp !== undefined && !(Number.isInteger(r.xp) && finite(r.xp))) delete r.xp;
-  delete r.focus;
-  if (r.focusUsed !== undefined && !(Number.isInteger(r.focusUsed) && finite(r.focusUsed, 99))) delete r.focusUsed;
-  if (r.focused !== undefined && !r.hand?.includes(r.focused)) delete r.focused;
-  if (r.training !== undefined && !validRunTraining(r.training)) delete r.training;
-  if (r.tier !== undefined && !(Number.isInteger(r.tier) && r.tier >= 2 && r.tier <= TIERS)) delete r.tier;
-  if (r.percentPotions !== undefined && !(Number.isInteger(r.percentPotions) && r.percentPotions > 0 && r.percentPotions <= FIND_POTION_MAX)) delete r.percentPotions;
-  return r;
-}
 /** Training ranks bought in a run: known rows, each a whole number of ranks. */
 const validRunTraining = (t: any) =>
-  !!t && typeof t === "object" && !Array.isArray(t) &&
-  Object.entries(t).every(([id, n]) => TRAINING.some((row) => row.id === id) && Number.isInteger(n) && (n as number) >= 0 && (n as number) <= RUN_TRAINING_CAP);
+  isRecord(t) && Object.entries(t).every(([id, n]) => TRAINING.some((row) => row.id === id) && wholeIn(n, 0, RUN_TRAINING_CAP));
 /** A run's hand: known cards, each once, no more than a hand can hold,
  * STAIRS among them. */
 const validHand = (h: any) =>
   Array.isArray(h) && h.length <= MAX_HAND_SLOTS && new Set(h).size === h.length &&
   h.every((id) => CARD_IDS.includes(id)) && h.includes("stairs");
+/** A run's optional fields, each dropped when malformed. */
+const RUN_FIELD_CHECKS = {
+  hand: validHand,
+  silver: (v: unknown) => finite(v),
+  xp: (v: unknown) => wholeIn(v, 0, 1e9),
+  focusUsed: (v: unknown) => wholeIn(v, 0, 99),
+  // The hand is checked first: a focused card must be in it.
+  focused: (v: unknown, r: any) => !!r.hand?.includes(v),
+  training: validRunTraining,
+  tier: (v: unknown) => wholeIn(v, 2, TIERS),
+  percentPotions: (v: unknown) => wholeIn(v, 1, FIND_POTION_MAX),
+};
+/** Drops fields a run of this mode doesn't keep: the other mode's, an
+ * older run's clear chest list, Automove memory and Focus (clear chests
+ * stand in `changes` now, and the memory beside the run), and malformed
+ * optional fields. */
+function without<R>(r: any, fields: string[]): R {
+  for (const k of ["rewards", "known", "visited", "focus", ...fields]) delete r[k];
+  dropInvalid(r, RUN_FIELD_CHECKS);
+  return r;
+}
 /** Validate an untrusted Tower run; null unless it has the shape a
  * TowerRun needs. */
 function decodeTowerRun(r: any): TowerRun | null {
@@ -133,32 +129,35 @@ function decodeTowerRun(r: any): TowerRun | null {
  * DelveRun needs. */
 function decodeDelveRun(r: any): DelveRun | null {
   if (!validCore(r, WIDTH) || !validDelveState(r)) return null;
-  if (r.top !== undefined && !Number.isInteger(r.top)) delete r.top;
+  dropInvalid(r, { top: Number.isInteger });
   return without(r, TOWER_FIELDS);
 }
 
 // --- Mode slices ---
 type DecodedMode<R extends Run> = Pick<ModeSave<R>, "run" | "history" | "fall" | "lootedTiles" | "runGold" | "runCurrency">;
 type RunDecoder<R extends Run> = (raw: any) => R | null;
+const validSnapshot = (value: any) => !!value && finite(value.best) && finite(value.xp);
 function snapshot<R extends Run>(value: any, decodeRun: RunDecoder<R>): MoveSnapshot<R> | null {
-  if (!value || !finite(value.best) || !finite(value.xp)) return null;
+  if (!validSnapshot(value)) return null;
   const run = decodeRun(value.run);
   return run ? { run, best: value.best, xp: Math.floor(value.xp) } : null;
 }
+/** Whether an undo snapshot belongs to `run`: its seed and layout. */
+const sameRun = <R extends Run>(item: MoveSnapshot<R> | null, run: Run): item is MoveSnapshot<R> =>
+  !!item && item.run.seed === run.seed && item.run.layoutVersion === run.layoutVersion;
 /** Undo history only survives for the same seed and layout as the live run. */
 function decodeHistory<R extends Run>(raw: any, run: R, undoCapacity: number, decodeRun: RunDecoder<R>): MoveSnapshot<R>[] {
   if (!Array.isArray(raw)) return [];
   return keepUndos(raw, undoCapacity)
     .map((item) => snapshot(item, decodeRun))
-    .filter((item): item is MoveSnapshot<R> =>
-      !!item && item.run.seed === run.seed && item.run.layoutVersion === run.layoutVersion);
+    .filter((item): item is MoveSnapshot<R> => sameRun(item, run));
 }
 /** A fall is kept only beside a run whose hero lies fallen, from the same
  * run and layout. */
 function decodeFall<R extends Run>(raw: any, run: R, decodeRun: RunDecoder<R>): Fall<R> | null {
   if (run.outside || run.player.hp > 0) return null;
   const item = snapshot(raw?.snapshot, decodeRun);
-  if (!item || item.run.seed !== run.seed || item.run.layoutVersion !== run.layoutVersion) return null;
+  if (!sameRun(item, run)) return null;
   return { snapshot: item, by: typeof raw.by === "string" ? raw.by : "" };
 }
 /** Automove's memory, each half kept only when every entry is well formed. */
@@ -250,6 +249,15 @@ function decodeProgress(s: any, d: Save, undoCapacity: number) {
   d.gemDrop = decodeGemDrop(s.gemDrop);
   for (const g of GOLD_SHOP) d.provisions[g.id] = count(s.provisions?.[g.id], d.provisions[g.id], 999);
   d.xp = count(s.xp, d.xp);
+  decodeTraining(s, d);
+  decodeModeRecords(s.tower ?? {}, s.delve ?? {}, d);
+  applyMode(d.tower, decodeMode(s.tower, undoCapacity, decodeTowerRun));
+  applyMode(d.delve, decodeMode(s.delve, undoCapacity, decodeDelveRun));
+  d.delve.memory = decodeMemory(s.delve?.memory);
+}
+/** The hero's Training: ranks, what they were paid with, the trainers and
+ * their jobs, the time credit and the boost. */
+function decodeTraining(s: any, d: Save) {
   for (const t of TRAINING) d.training[t.id] = count(s.training?.[t.id], d.training[t.id], "max" in t ? t.max : 1e6);
   for (const t of TRAINING) d.trainingPaid[t.id] = decodePaid(s.trainingPaid?.[t.id], t.cost * d.training[t.id]);
   d.trainers = count(s.trainers, d.trainers, TRAINER_GEMS.length);
@@ -257,13 +265,13 @@ function decodeProgress(s: any, d: Save, undoCapacity: number) {
   // Times in ms: credit can run to months, and the boost's end is a timestamp.
   d.trainingCredit = count(s.trainingCredit, d.trainingCredit, Number.MAX_SAFE_INTEGER);
   d.trainingBoostUntil = count(s.trainingBoostUntil, d.trainingBoostUntil, Number.MAX_SAFE_INTEGER);
-  d.tower.inspiration = count(s.tower?.inspiration ?? s.tower?.shards, d.tower.inspiration);
-  d.tower.best = count(s.tower?.best, d.tower.best);
-  d.delve.courage = count(s.delve?.courage ?? s.delve?.essence, d.delve.courage);
-  d.delve.best = count(s.delve?.best, d.delve.best);
-  applyMode(d.tower, decodeMode(s.tower, undoCapacity, decodeTowerRun));
-  applyMode(d.delve, decodeMode(s.delve, undoCapacity, decodeDelveRun));
-  d.delve.memory = decodeMemory(s.delve?.memory);
+}
+/** Each mode's currency (under its older name too) and best. */
+function decodeModeRecords(tower: any, delve: any, d: Save) {
+  d.tower.inspiration = count(tower.inspiration ?? tower.shards, d.tower.inspiration);
+  d.tower.best = count(tower.best, d.tower.best);
+  d.delve.courage = count(delve.courage ?? delve.essence, d.delve.courage);
+  d.delve.best = count(delve.best, d.delve.best);
 }
 /** What a stat's ranks were paid with; a save from before this was kept
  * paid for them all in points (`points`). */
@@ -276,12 +284,18 @@ function decodeTrainingJobs(raw: any, slots: number): TrainingJob[] {
   const jobs: TrainingJob[] = [];
   if (!Array.isArray(raw)) return jobs;
   for (const j of raw) {
-    const ok = TRAINING.some((t) => t.id === j?.id) && Number.isFinite(j.startedAt) && Number.isFinite(j.completesAt) && j.completesAt >= j.startedAt;
-    if (ok && !jobs.some((o) => o.id === j.id) && jobs.length < slots)
-      jobs.push({ id: j.id, startedAt: j.startedAt, completesAt: j.completesAt, gold: count(j.gold, 0, Number.MAX_SAFE_INTEGER), ms: count(j.ms, j.completesAt - j.startedAt, Number.MAX_SAFE_INTEGER) });
+    const fits = jobs.length < slots && !jobs.some((o) => o.id === j?.id);
+    if (fits && validJob(j)) jobs.push(decodeJob(j));
   }
   return jobs;
 }
+/** A job for a known row, completing no earlier than it started. */
+const validJob = (j: any) =>
+  TRAINING.some((t) => t.id === j?.id) && Number.isFinite(j.startedAt) && Number.isFinite(j.completesAt) && j.completesAt >= j.startedAt;
+const decodeJob = (j: any): TrainingJob => ({
+  id: j.id, startedAt: j.startedAt, completesAt: j.completesAt,
+  gold: count(j.gold, 0, Number.MAX_SAFE_INTEGER), ms: count(j.ms, j.completesAt - j.startedAt, Number.MAX_SAFE_INTEGER),
+});
 /** Version 1 had a single run (the endless climb); it becomes the Delve slice. */
 function migrateV1(s: any, d: Save, undoCapacity: number) {
   d.delve.best = count(s.best, d.delve.best);
@@ -299,19 +313,26 @@ function decodeTowerLog(raw: any): Save["tower"]["log"] {
   const log: Save["tower"]["log"] = {};
   if (!raw || typeof raw !== "object") return log;
   for (const [floor, record] of Object.entries(raw) as [string, any][]) {
-    if (!/^\d+$/.test(floor) || !finite(Number(floor)) || !record || typeof record !== "object") continue;
-    // Older saves list the tiers: { earned: [...], claimed: [...] }.
-    const listed = Array.isArray(record.earned);
-    const entry: FloorRecord = {};
-    for (const t of CHEST_TIERS) {
-      const state = listed
-        ? record.earned.includes(t) && (Array.isArray(record.claimed) && record.claimed.includes(t) ? "claimed" : "earned")
-        : record[t];
-      if (state === "earned" || state === "claimed") entry[t] = state;
-    }
+    if (!/^\d+$/.test(floor) || !finite(Number(floor)) || !isRecord(record)) continue;
+    const entry = decodeFloorRecord(record);
     if (Object.keys(entry).length) log[floor] = entry;
   }
   return log;
+}
+function decodeFloorRecord(record: any): FloorRecord {
+  const entry: FloorRecord = {};
+  for (const t of CHEST_TIERS) {
+    const state = chestState(record, t);
+    if (state === "earned" || state === "claimed") entry[t] = state;
+  }
+  return entry;
+}
+/** A clear tier's state on a floor's record. Older saves list the tiers:
+ * { earned: [...], claimed: [...] }. */
+function chestState(record: any, t: (typeof CHEST_TIERS)[number]) {
+  if (!Array.isArray(record.earned)) return record[t];
+  if (!record.earned.includes(t)) return undefined;
+  return Array.isArray(record.claimed) && record.claimed.includes(t) ? "claimed" : "earned";
 }
 /** Each mode's tiers: the highest opened, the one selected (its records
  * are the slice's), and the others' records. */
@@ -320,16 +341,22 @@ function decodeTiers(s: any, d: Save) {
     const raw = s?.[mode], slice = d[mode];
     slice.tiersOpen = Math.max(1, count(raw?.tiersOpen, 1, TIERS));
     slice.tier = Math.max(1, Math.min(slice.tiersOpen, count(raw?.tier, 1)));
-    if (!isRecord(raw?.tierRecords)) continue;
-    for (const [key, r] of Object.entries(raw.tierRecords) as [string, any][]) {
-      const tier = Number(key);
-      if (!/^[1-9]$/.test(key) || tier > slice.tiersOpen || tier === slice.tier || !isRecord(r)) continue;
-      const reached = count(r.reached, 0), record: TierRecord = { best: Math.max(reached, count(r.best, 0)), reached };
-      if (mode === "tower") record.log = decodeTowerLog(r.log);
-      slice.tierRecords[key] = record;
-    }
+    if (isRecord(raw?.tierRecords)) decodeTierRecords(raw.tierRecords, slice, mode === "tower");
   }
 }
+type TieredSlice = Pick<ModeSave, "tier" | "tiersOpen" | "tierRecords">;
+/** The records of each tier opened but not selected; the Tower's keep their log. */
+function decodeTierRecords(raw: Record<string, any>, slice: TieredSlice, logs: boolean) {
+  for (const [key, r] of Object.entries(raw)) {
+    if (!isOtherTier(key, slice) || !isRecord(r)) continue;
+    const reached = count(r.reached, 0), record: TierRecord = { best: Math.max(reached, count(r.best, 0)), reached };
+    if (logs) record.log = decodeTowerLog(r.log);
+    slice.tierRecords[key] = record;
+  }
+}
+/** Whether `key` names an opened tier other than the one selected. */
+const isOtherTier = (key: string, slice: TieredSlice) =>
+  /^[1-9]$/.test(key) && Number(key) <= slice.tiersOpen && Number(key) !== slice.tier;
 const touchedDelve = (d: Save) =>
   !!(d.delve.run || d.delve.best || d.delve.courage) ||
   UPGRADES.some((u) => u.currency === "courage" && d.upgrades[u.id]);

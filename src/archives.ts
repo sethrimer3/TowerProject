@@ -1,5 +1,6 @@
 import { levelForXp, type UpgradeId } from "./config.ts";
 import type { Settings } from "./settings.ts";
+import { finite as finiteIn, isRecord, wholeIn } from "./decode.ts";
 
 // The Archives: research that lasts between runs. An archivist takes one
 // research project at a time; each level costs Gold and real time, and once
@@ -349,9 +350,11 @@ export function hireArchivist(o: ArchivesOwner) {
 }
 
 // --- Saves ---
-const finite = (n: unknown): n is number => typeof n === "number" && Number.isFinite(n) && n >= 0 && n <= 1e15;
-const isRecord = (v: unknown): v is Record<string, any> => !!v && typeof v === "object" && !Array.isArray(v);
+/** A saved time (ms) or Gold amount. */
+const finite = (n: unknown): n is number => finiteIn(n, 1e15);
 const isResearch = (id: unknown): id is ResearchId => typeof id === "string" && RESEARCH_IDS.includes(id as ResearchId);
+/** A level of research `id` that exists: 1 to its last. */
+const isLevelOf = (id: ResearchId, n: unknown): n is number => wholeIn(n, 1, research(id).levels.length);
 
 /** The saved Archives, each part kept when it is well formed: completed
  * levels within each project's maximum, a job only for the level after the
@@ -359,35 +362,58 @@ const isResearch = (id: unknown): id is ResearchId => typeof id === "string" && 
 export function decodeArchives(raw: any): ArchivesSave {
   const a = defaultArchives();
   if (!isRecord(raw)) return a;
-  if (isRecord(raw.levels))
-    for (const id of RESEARCH_IDS) {
-      const n = raw.levels[id];
-      if (Number.isInteger(n) && n > 0 && n <= research(id).levels.length) a.levels[id] = n;
-    }
-  if (isRecord(raw.progress))
-    for (const id of RESEARCH_IDS) {
-      const p = raw.progress[id];
-      if (finite(p) && p > 0 && p < 1 && nextLevel(a, id)) a.progress[id] = p;
-    }
-  if (Array.isArray(raw.slots) && raw.slots.length >= ARCHIVISTS.start && raw.slots.length <= ARCHIVISTS.maximum) {
-    const busy = new Set<ResearchId>();
-    a.slots = raw.slots.map((s: any): ArchivistSlot => {
-      const slot: ArchivistSlot = { autoContinue: s?.autoContinue === true };
-      const j = s?.job;
-      if (
-        isRecord(j) && isResearch(j.research) && !busy.has(j.research) && j.level === researchLevel(a, j.research) + 1 &&
-        nextLevel(a, j.research) && finite(j.startedAt) && finite(j.completesAt) && j.completesAt >= j.startedAt && finite(j.paid)
-      ) {
-        busy.add(j.research);
-        slot.job = { research: j.research, level: j.level, startedAt: j.startedAt, completesAt: j.completesAt, paid: Math.floor(j.paid) };
-      }
-      return slot;
-    });
-  }
-  if (Array.isArray(raw.history))
-    a.history = raw.history
-      .filter((r: any) => isRecord(r) && finite(r.at) && isResearch(r.research) && Number.isInteger(r.level) && r.level > 0 && r.level <= research(r.research).levels.length)
-      .slice(-HISTORY_LIMIT)
-      .map((r: any) => ({ at: r.at, research: r.research, level: r.level }));
+  if (isRecord(raw.levels)) decodeLevels(raw.levels, a);
+  if (isRecord(raw.progress)) decodeKeptProgress(raw.progress, a);
+  if (validSlotCount(raw.slots)) a.slots = decodeSlots(raw.slots, a);
+  if (Array.isArray(raw.history)) a.history = decodeHistory(raw.history);
   return a;
+}
+
+/** As many archivists' slots as can be hired. */
+const validSlotCount = (slots: unknown): slots is any[] =>
+  Array.isArray(slots) && slots.length >= ARCHIVISTS.start && slots.length <= ARCHIVISTS.maximum;
+
+function decodeLevels(levels: Record<string, any>, a: ArchivesSave) {
+  for (const id of RESEARCH_IDS) if (isLevelOf(id, levels[id])) a.levels[id] = levels[id];
+}
+
+/** The share done of each stopped project, kept while it has a next level. */
+function decodeKeptProgress(progress: Record<string, any>, a: ArchivesSave) {
+  for (const id of RESEARCH_IDS) {
+    const p = progress[id];
+    if (isShare(p) && nextLevel(a, id)) a.progress[id] = p;
+  }
+}
+
+/** A share of a level done: more than none, less than all. */
+const isShare = (p: unknown): p is number => finite(p) && p > 0 && p < 1;
+
+/** Each archivist's slot; a job is kept only for its project's next level,
+ * and only in the first slot that holds that project. */
+function decodeSlots(raw: any[], a: ArchivesSave): ArchivistSlot[] {
+  const busy = new Set<ResearchId>();
+  return raw.map((s: any): ArchivistSlot => {
+    const slot: ArchivistSlot = { autoContinue: s?.autoContinue === true };
+    const j = s?.job;
+    if (validJob(j, a) && !busy.has(j.research)) {
+      busy.add(j.research);
+      slot.job = { research: j.research, level: j.level, startedAt: j.startedAt, completesAt: j.completesAt, paid: Math.floor(j.paid) };
+    }
+    return slot;
+  });
+}
+
+/** A job researching the level after the one its project completed. */
+const isNextJob = (j: any, a: ArchivesSave): j is ResearchJob =>
+  isRecord(j) && isResearch(j.research) && j.level === researchLevel(a, j.research) + 1 && !!nextLevel(a, j.research);
+
+/** A job that completes no earlier than it started, and its Gold paid. */
+const validJobTimes = (j: any) => finite(j.startedAt) && finite(j.completesAt) && j.completesAt >= j.startedAt && finite(j.paid);
+const validJob = (j: any, a: ArchivesSave): j is ResearchJob => isNextJob(j, a) && validJobTimes(j);
+
+function decodeHistory(raw: any[]): ResearchRecord[] {
+  return raw
+    .filter((r: any) => isRecord(r) && finite(r.at) && isResearch(r.research) && isLevelOf(r.research, r.level))
+    .slice(-HISTORY_LIMIT)
+    .map((r: any) => ({ at: r.at, research: r.research, level: r.level }));
 }

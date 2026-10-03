@@ -18,25 +18,25 @@ const MINUTE = 60 * 1000;
 
 test("a Gem appears on the next new floor, then waits out its cooldown after it is collected", () => {
   const d = defaultGemDrop();
-  assert.ok(reachFloor(d, "tower", 7, 0, 0), "the first new floor");
+  assert.ok(reachFloor(d, { mode: "tower", seed: 7, floor: 0 }, 0), "the first new floor");
   d.out = { mode: "tower", seed: 7, floor: 0, x: 3, y: 3 };
   collectedGem(d, 1000);
   assert.equal(d.readyAt, 1000 + GEM_COOLDOWN_MS);
   assert.equal(GEM_COOLDOWN_MS, 30 * MINUTE);
-  assert.equal(reachFloor(d, "tower", 7, 1, 1000 + 29 * MINUTE), false, "still cooling down");
-  assert.equal(reachFloor(d, "tower", 7, 1, 1000 + 31 * MINUTE), false, "floor 1 is no longer new");
-  assert.ok(reachFloor(d, "tower", 7, 2, 1000 + 31 * MINUTE), "the next new floor after the cooldown");
+  assert.equal(reachFloor(d, { mode: "tower", seed: 7, floor: 1 }, 1000 + 29 * MINUTE), false, "still cooling down");
+  assert.equal(reachFloor(d, { mode: "tower", seed: 7, floor: 1 }, 1000 + 31 * MINUTE), false, "floor 1 is no longer new");
+  assert.ok(reachFloor(d, { mode: "tower", seed: 7, floor: 2 }, 1000 + 31 * MINUTE), "the next new floor after the cooldown");
 });
 
 test("a Gem left behind is missed, and another comes three new floors on until one is collected", () => {
   const d = defaultGemDrop();
-  assert.ok(reachFloor(d, "tower", 7, 0, 0));
+  assert.ok(reachFloor(d, { mode: "tower", seed: 7, floor: 0 }, 0));
   d.out = { mode: "tower", seed: 7, floor: 0, x: 3, y: 3 };
-  assert.equal(reachFloor(d, "tower", 7, 0, 0), false, "standing on its floor keeps it");
+  assert.equal(reachFloor(d, { mode: "tower", seed: 7, floor: 0 }, 0), false, "standing on its floor keeps it");
   assert.ok(d.out);
   const found: number[] = [];
   for (let floor = 1; floor <= 9; floor++) {
-    if (reachFloor(d, "tower", 7, floor, 0)) {
+    if (reachFloor(d, { mode: "tower", seed: 7, floor: floor }, 0)) {
       found.push(floor);
       d.out = { mode: "tower", seed: 7, floor, x: 3, y: 3 };
     }
@@ -44,13 +44,13 @@ test("a Gem left behind is missed, and another comes three new floors on until o
   assert.equal(GEM_MISSED_FLOORS, 3);
   assert.deepEqual(found, [3, 6, 9], "every third floor while each is missed");
   // Going back down a floor leaves it behind too, and counts no new floor.
-  assert.equal(reachFloor(d, "tower", 7, 8, 0), false);
+  assert.equal(reachFloor(d, { mode: "tower", seed: 7, floor: 8 }, 0), false);
   assert.equal(d.out, null);
   assert.equal(d.wait, GEM_MISSED_FLOORS);
   // The other mode's run doesn't miss it, and a Gem out keeps others away.
   d.out = { mode: "tower", seed: 7, floor: 8, x: 3, y: 3 };
   d.wait = 0;
-  assert.equal(reachFloor(d, "delve", 9, 0, 0), false);
+  assert.equal(reachFloor(d, { mode: "delve", seed: 9, floor: 0 }, 0), false);
   assert.ok(d.out);
 });
 
@@ -88,13 +88,13 @@ test("a Gem lies on a plain floor tile the hero can walk to, past items but not 
   const spots = new Set<string>();
   const rng = random(5);
   for (let i = 0; i < 200; i++) {
-    const s = gemSpot(b, { x: 0, y: 0 }, 0, Infinity, rng)!;
+    const s = gemSpot(b, { x: 0, y: 0 }, { minY: 0, maxY: Infinity }, rng)!;
     spots.add(`${s.x},${s.y}`);
   }
   assert.deepEqual([...spots].sort(), ["2,0"], "not the hero's tile, the key's, or past the door");
-  assert.equal(gemSpot(board(["."]), { x: 0, y: 0 }, 0, Infinity, rng), null, "none where nothing is free");
+  assert.equal(gemSpot(board(["."]), { x: 0, y: 0 }, { minY: 0, maxY: Infinity }, rng), null, "none where nothing is free");
   const rows = board(["...", "...", "..."]);
-  for (let i = 0; i < 50; i++) assert.ok(gemSpot(rows, { x: 1, y: 1 }, 0, 2, rng)!.y > 1, "rows above the hero first");
+  for (let i = 0; i < 50; i++) assert.ok(gemSpot(rows, { x: 1, y: 1 }, { minY: 0, maxY: 2 }, rng)!.y > 1, "rows above the hero first");
 });
 
 test("a Gem lies out of the way: off the paths between the hero and the targets, tucked into a nook", () => {
@@ -106,7 +106,7 @@ test("a Gem lies out of the way: off the paths between the hero and the targets,
     "#.##D##",
     "#.#####",
   ]);
-  for (let i = 0; i < 30; i++) assert.deepEqual(gemSpot(b, { x: 0, y: 1 }, 0, Infinity, rng), { x: 1, y: 3 }, "the nook's end");
+  for (let i = 0; i < 30; i++) assert.deepEqual(gemSpot(b, { x: 0, y: 1 }, { minY: 0, maxY: Infinity }, rng), { x: 1, y: 3 }, "the nook's end");
   // An open room: a corner away from the line between hero and key.
   const room = board([
     ".....",
@@ -115,7 +115,7 @@ test("a Gem lies out of the way: off the paths between the hero and the targets,
   ]);
   const spots = new Set<string>();
   for (let i = 0; i < 50; i++) {
-    const s = gemSpot(room, { x: 0, y: 0 }, 0, Infinity, rng)!;
+    const s = gemSpot(room, { x: 0, y: 0 }, { minY: 0, maxY: Infinity }, rng)!;
     spots.add(`${s.x},${s.y}`);
   }
   assert.deepEqual([...spots], ["4,2"], "the far corner");

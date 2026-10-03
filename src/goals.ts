@@ -134,12 +134,17 @@ export function decodeGoals(raw: any): GoalsSave {
   const goals = defaultGoals();
   for (const key of ["claimed", "premium"] as const) {
     const byTower = raw?.[key];
-    if (!byTower || typeof byTower !== "object") continue;
-    for (const [tower, floors] of Object.entries(byTower) as [string, unknown][]) {
-      if (!CHECKPOINTS[Number(tower)] || !/^[1-9]$/.test(tower) || !Array.isArray(floors)) continue;
-      const known = [...new Set(floors)].filter((f): f is number => typeof f === "number" && !!checkpoint(Number(tower), f));
-      if (known.length) goals[key][tower] = known.sort((a, b) => a - b);
-    }
+    if (byTower && typeof byTower === "object") decodeClaims(byTower, goals[key]);
   }
   return goals;
 }
+/** Each known tower's claimed checkpoint floors, each once, in order. */
+function decodeClaims(byTower: object, claims: Record<string, number[]>) {
+  for (const [tower, floors] of Object.entries(byTower) as [string, unknown][]) {
+    if (!isTower(tower) || !Array.isArray(floors)) continue;
+    const known = [...new Set(floors)].filter((f): f is number => typeof f === "number" && !!checkpoint(Number(tower), f));
+    if (known.length) claims[tower] = known.sort((a, b) => a - b);
+  }
+}
+/** A tower with checkpoints, by its saved key (1 to 9). */
+const isTower = (key: string) => /^[1-9]$/.test(key) && !!CHECKPOINTS[Number(key)];
