@@ -1,14 +1,15 @@
 import { enemyStat, whole, wholeChange, wholeHp } from "../whole.ts";
-import type { EnemyStrength, Kind, Player, Tile } from "../entities.ts";
+import type { Enemy, EnemyStrength, Kind, Player, Tile } from "../entities.ts";
 import type { Game, RouteEffects } from "../state.ts";
 import { ATTACK_SHARD, DEFENSE_SHARD, HEART_DOOR_HP, resolveStep } from "../step-effects.ts";
-import { predict } from "../combat.ts";
+import { attackForFewerHits, predict } from "../combat.ts";
+import { goalUnlocked } from "../goals.ts";
 import { doorColor, doorCost, doorDescription, doorName, doorRule, KEY_NAMES } from "../doors.ts";
 import { MODES } from "../modes.ts";
 
 /** What the inspect panel says about one board tile. */
 export type TileInfo = { color: string; title: string; body: string };
-type Board = Pick<Game, "world" | "run" | "mode" | "stepRules">;
+type Board = Pick<Game, "world" | "run" | "mode" | "stepRules" | "save">;
 type Describe = (t: Tile, p: Player, g: Board) => Omit<TileInfo, "color">;
 
 const KIND_COLORS: Partial<Record<Kind, string>> = {
@@ -33,15 +34,30 @@ const stairs: Describe = (t, _p, g) => {
   return { title: t.kind === "stairs" ? "Stairs Up" : "Stairs Down", body: `Leads to Floor ${target}` };
 };
 
+const hits = (n: number) => (n === 1 ? "Instakill" : `${n.toLocaleString("en-US")} hits to defeat`);
+
+/** The Goals' lines under a fight's prediction, once unlocked: Combat
+ * Forecast's hits to defeat the enemy, and Attack Lore's ATK more that
+ * takes one hit fewer. */
+function forecast(p: Player, e: Enemy, turns: number, g: Board) {
+  if (!turns || g.run.outside) return "";
+  let lines = "";
+  if (goalUnlocked(g.save, "combatForecast")) lines += `<br><span class="forecast">${hits(turns)}</span>`;
+  const more = goalUnlocked(g.save, "attackLore") ? attackForFewerHits(p, e) : null;
+  if (more) lines += `<br><span class="forecast lore">+${more.toLocaleString("en-US")} ATK: ${turns === 2 ? "Instakill" : `${(turns - 1).toLocaleString("en-US")} hits`}</span>`;
+  return lines;
+}
+
 /** Strong and elite enemies and bosses say so in the inspect title. */
 const RANK: Record<EnemyStrength, string> = { weak: "", normal: "", strong: "Strong ", elite: "Elite ", boss: "Boss " };
 
 const DESCRIBE: Partial<Record<Kind, Describe>> = {
-  enemy: (t, p) => {
+  enemy: (t, p, g) => {
     const e = t.enemy!, r = predict(p, e);
     return {
       title: RANK[e.strength] + e.name,
-      body: `<span>HP ${enemyStat(e.hp)} · ATK ${enemyStat(e.attack)} · DEF ${enemyStat(e.defense)}</span><br><strong class="${r.survivable ? "safe" : "danger"}">${Number.isFinite(r.damage) ? wholeChange(r.damage) : "∞"} damage · ${r.survivable ? "Survivable" : "LETHAL"}</strong>`,
+      body: `<span>HP ${enemyStat(e.hp)} · ATK ${enemyStat(e.attack)} · DEF ${enemyStat(e.defense)}</span><br><strong class="${r.survivable ? "safe" : "danger"}">${Number.isFinite(r.damage) ? wholeChange(r.damage) : "∞"} damage · ${r.survivable ? "Survivable" : "LETHAL"}</strong>` +
+        forecast(p, e, r.impervious ? 0 : r.turns, g),
     };
   },
   wall: () => ({ title: "Wall", body: "Ancient stone. Find a passage around it." }),

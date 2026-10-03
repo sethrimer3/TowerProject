@@ -155,8 +155,16 @@ A Tower floor whose stairs the hero has climbed, reaching the floor above. A tow
 _Avoid_: floor reached (for progress), height
 
 **Warp**:
-Beginning a new Tower run at once on the floor just above a checkpoint already completed, from the Goals screen. Unlocked by claiming Tower I's first checkpoint; entering the tower from the forest always starts on floor 1.
+Beginning a new Tower run at once on the floor just above a checkpoint already completed, from the Goals screen. Unlocked by claiming Tower I's floor 30 checkpoint; entering the tower from the forest always starts on floor 1.
 _Avoid_: teleport, starting floor
+
+**Combat Forecast**:
+The line a monster's inspect panel adds in a run once Tower I's floor 10 checkpoint is claimed: how many of the hero's hits defeat it, or Instakill for one.
+_Avoid_: hit count, kill preview
+
+**Attack Lore**:
+The line a monster's inspect panel adds in a run once Tower I's floor 20 checkpoint is claimed: the fewest whole points of ATK more that would defeat it in one hit fewer.
+_Avoid_: attack breakpoint
 
 **Premium Pass**:
 A one-time purchase that opens the premium checkpoint rewards in one set of three towers (I–III, IV–VI or VII–IX).

@@ -417,14 +417,17 @@ try {
     await shot(`rich.focus.${card}`);
   }
   await leaveRun();
-  // In the forest, Goals shows the Tower's checkpoints: claiming Unlock
-  // Warp explains it, a premium reward offers the pass, and a reached
-  // checkpoint asks to warp there.
+  // In the forest, Goals shows the Tower's checkpoints: claiming an unlock
+  // (Combat Forecast, then Warp) explains it, a premium reward offers the
+  // pass, and a reached checkpoint asks to warp there.
   await click("#section-pick");
   await shot("rich.goals");
   await click('[data-goal="1:10:0"]');
+  await shot("rich.goals.forecastUnlocked");
+  await click("#unlock-ok");
+  await click('[data-goal="1:30:0"]');
   await shot("rich.goals.warpUnlocked");
-  await click("#warp-ok");
+  await click("#unlock-ok");
   await shot("rich.goals.claimed");
   await click('[data-goal="1:20:1"]');
   await shot("rich.goals.pass");

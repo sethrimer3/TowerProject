@@ -713,6 +713,12 @@ canvas {
 .inspect-box .danger {
   color: #e29898 !important;
 }
+.inspect-box .forecast {
+  color: #a9c4ee;
+}
+.inspect-box .forecast.lore {
+  color: #e8b878;
+}
 .route-box {
   z-index: 4;
   border-color: #5a6580;

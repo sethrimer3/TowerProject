@@ -52,7 +52,7 @@ import {
 import { World, LAYOUT_VERSION } from "./delve/world.ts";
 import { RoomWorld, TOWER_LAYOUT_VERSION } from "./tower/room-world.ts";
 import type { Board } from "./board.ts";
-import { bout, heroHpAfter, heroHpDuring, REVIVE_MS, revivals, summarize, type Bout, type CombatPrediction, type Revival } from "./combat.ts";
+import { bout, heroHpAfter, heroHpDuring, resume, REVIVE_MS, revivals, summarize, type Bout, type CombatPrediction, type Revival } from "./combat.ts";
 import { ATTACK_SHARD, DEFENSE_SHARD, isLethal, potionHeal, resolveStep, type StepBlocked, type StepEffect, type StepRules } from "./step-effects.ts";
 import { OutsideWorld } from "./outside.ts";
 import { ClearLedger } from "./tower/clear-ledger.ts";
@@ -112,7 +112,7 @@ export type ShownFight = { from: { x: number; y: number }; to: { x: number; y: n
 /** A fight being shown before it counts: the hero waits at `from`, the
  * enemy stands at `to`, and nothing changes until `finishEncounter` settles
  * it (at `start + bout.duration`). */
-export type Encounter = ShownFight & { settle: () => void };
+export type Encounter = ShownFight & { enemy: Enemy; outcome: StepEffect; settle: () => void };
 /** Tiles that stay on the board after being stepped on. */
 const PERMANENT_TILES = new Set<Tile["kind"]>(["floor", "stairs", "stairsDown", "oneway", "openedChest"]);
 export class Game {
@@ -781,7 +781,8 @@ export class Game {
       this.revivedAt = shown.strikes.filter((s) => s.revived).map((s) => start + s.at);
       if (animate || rose.length) {
         // The same fight, so the board shows it as it plays out.
-        this.encounter = Object.assign(this.fight, { settle: () => this.take(t, outcome, dest, track, rose.length) });
+        const encounter: Encounter = Object.assign(this.fight, { enemy: t.enemy!, outcome, settle: () => this.take(t, outcome, dest, track, revivals(encounter.bout).length) });
+        this.encounter = encounter;
         return true;
       }
       return this.take(t, outcome, dest, track, rose.length);
@@ -1404,11 +1405,12 @@ export class Game {
   }
   /** Buys one rank of Training `id` for this run with its Silver: it counts
    * from the next turn on, until the run ends. Each purchase is a turn of
-   * its own, so undo takes it back. Refused before On the Job is owned,
-   * during a fight, for a row whose upgrade isn't owned or at its highest,
+   * its own, so undo takes it back. Bought while a fight plays out, it
+   * counts in that fight from its next strike (`retrainFight`). Refused
+   * before On the Job is owned, during a fight shown in summary rounds, for a row whose upgrade isn't owned or at its highest,
    * or without the Silver. */
   trainInRun(id: TrainingId) {
-    if (!this.trainsOnTheJob || !this.playing || this.encounter) return false;
+    if (!this.trainsOnTheJob || !this.playing || this.encounter?.summary) return false;
     const offer = runTrainingOffer(this.save, this.run, id);
     if (!offer.open || offer.maxed || (!this.free && this.silver < offer.price)) return false;
     this.remember(this.snapshot());
@@ -1421,15 +1423,39 @@ export class Game {
       for (const stats of [this.run.player, this.run.loadout]) if (stats) stats[stat] = snap((stats[stat] ?? 0) + gain);
       // More maximum HP comes with the HP to fill it.
       if (stat === "maxHp") this.run.player.hp = snap(this.run.player.hp + gain);
+      if (this.encounter) this.retrainFight(this.encounter, stat === "maxHp" ? gain : 0);
     } else if (id === "findPotion") {
       const chance = percentPotionChance(this.trainingNow);
       this.run.percentPotions = chance;
       // The floor stood on shows its new percent potions at once.
       if (this.world instanceof RoomWorld) this.world.percentPotions = chance;
-    }
+    } else if (id === "revive" && this.encounter) this.retrainFight(this.encounter, 0);
     this.message = `${row.name} trained for this run · level ${offer.level + 1}`;
     this.afterPlayerAction();
     return true;
+  }
+  /** Training bought while a fight plays out counts in it from the first
+   * strike not yet swinging: the fight plays on from there with the hero's
+   * stats as they are now (more max HP raising the HP left by `hpGain`),
+   * and the step commits the new ending once it is over. */
+  private retrainFight(fight: Encounter, hpGain: number) {
+    const p = this.run.player, strikes = fight.bout.strikes, elapsed = performance.now() - fight.start;
+    let from = strikes.findIndex((s) => s.start > elapsed);
+    if (from < 0) from = strikes.length;
+    let hp = p.hp, shroud = p.shroud ?? 0;
+    for (const s of strikes.slice(0, from)) {
+      if (s.by !== "enemy") continue;
+      // The HP shown so far rises with the max HP bought.
+      if (s.hp) s.hp = snap(s.hp + hpGain);
+      hp = s.hp;
+      shroud = snap(Math.max(0, shroud - (s.shrouded ?? 0)));
+    }
+    fight.bout = resume(fight.bout, from, { ...p, hp, shroud }, fight.enemy, this.revival(fight.to));
+    this.revivedAt = fight.bout.strikes.filter((s) => s.revived).map((s) => fight.start + s.at);
+    const o = fight.outcome, end = heroHpAfter(fight.bout, p.hp),
+      damage = snap(fight.bout.strikes.reduce((sum, s) => (s.by === "enemy" ? sum + s.damage : sum), 0));
+    Object.assign(o.player, { hp: end, attack: p.attack, defense: p.defense, maxHp: p.maxHp });
+    o.combat = { ...o.combat!, damage, survivable: end > 0 };
   }
   /** Resets a Training stat to no ranks for `TRAINING_RESET_GEMS` Gems
    * (none with Dev free purchases), returning what its ranks were paid

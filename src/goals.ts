@@ -9,9 +9,14 @@ import { TIERS } from "./tiers.ts";
 // reward beside it, claimed the same way once the Premium Pass for the
 // tower's set of three is owned. Claims last between runs (`save.goals`).
 
-/** What a checkpoint pays: Warp (starting a run past a completed checkpoint),
- * or an amount of a currency. */
-export type GoalReward = { kind: "warp" } | { kind: "currency"; currency: CurrencyId; amount: number };
+/** What a checkpoint can unlock: Combat Forecast (an enemy's inspect panel
+ * says how many hits defeat it), Attack Lore (and how much more ATK would
+ * take one hit fewer), and Warp (starting a run past a completed
+ * checkpoint). */
+export type GoalUnlock = "combatForecast" | "attackLore" | "warp";
+export const UNLOCK_NAMES: Record<GoalUnlock, string> = { combatForecast: "Combat Forecast", attackLore: "Attack Lore", warp: "Warp" };
+/** What a checkpoint pays: an unlock, or an amount of a currency. */
+export type GoalReward = { kind: "unlock"; unlock: GoalUnlock } | { kind: "currency"; currency: CurrencyId; amount: number };
 export type Checkpoint = { floor: number; reward: GoalReward; premium: GoalReward };
 
 /** Floors between checkpoints. */
@@ -22,14 +27,21 @@ export const CHECKPOINTS_PER_TOWER = 10;
 const gold = (amount: number): GoalReward => ({ kind: "currency", currency: "gold", amount });
 const gems = (amount: number): GoalReward => ({ kind: "currency", currency: "gems", amount });
 
+const unlock = (unlock: GoalUnlock): GoalReward => ({ kind: "unlock", unlock });
+/** Tower I's first checkpoints: an unlock each, and Gems. */
+const TOWER_ONE: Record<number, Omit<Checkpoint, "floor">> = {
+  10: { reward: unlock("combatForecast"), premium: gems(15) },
+  20: { reward: unlock("attackLore"), premium: gems(25) },
+  30: { reward: unlock("warp"), premium: gems(35) },
+};
+
 /** A tower's checkpoints, lowest first.
  * TODO: the stub rewards (100 Gold × checkpoint × tower, 10 Gems × checkpoint)
  * are placeholders, to be tuned. */
 function towerCheckpoints(tower: number): Checkpoint[] {
   return Array.from({ length: CHECKPOINTS_PER_TOWER }, (_, i) => {
-    const n = i + 1, floor = n * CHECKPOINT_EVERY;
-    if (tower === 1 && n === 1) return { floor, reward: { kind: "warp" }, premium: gold(100) };
-    return { floor, reward: gold(100 * n * tower), premium: gems(10 * n) };
+    const n = i + 1, floor = n * CHECKPOINT_EVERY, set = tower === 1 ? TOWER_ONE[floor] : undefined;
+    return { floor, ...(set ?? { reward: gold(100 * n * tower), premium: gems(10 * n) }) };
   });
 }
 
@@ -87,8 +99,13 @@ export function claimGoal(save: Save, tower: number, floor: number, premium: boo
   return reward;
 }
 
-/** Whether Warp is owned: Tower I's first checkpoint claimed. */
-export const warpUnlocked = (save: Save) => goalState(save, 1, CHECKPOINT_EVERY, false) === "claimed";
+/** Whether `what` is owned: the Tower I checkpoint that unlocks it claimed. */
+export const goalUnlocked = (save: Save, what: GoalUnlock) => goalState(save, 1, unlockFloor(what), false) === "claimed";
+/** The Tower I checkpoint floor whose reward unlocks `what`. */
+export const unlockFloor = (what: GoalUnlock) =>
+  CHECKPOINTS[1]!.find((c) => c.reward.kind === "unlock" && c.reward.unlock === what)!.floor;
+/** Whether Warp is owned. */
+export const warpUnlocked = (save: Save) => goalUnlocked(save, "warp");
 
 /** Whether a run can warp past `floor` in `tower`: Warp owned and that
  * checkpoint's floor completed. */
