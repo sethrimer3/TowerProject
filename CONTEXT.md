@@ -51,7 +51,7 @@ One way through a fork: one to three tiles of gates walked in order, sometimes w
 _Avoid_: corridor, path
 
 **Enemy strength**:
-How hard the floor asked an enemy to be: weak, normal, strong or elite. Strong enemies are the zone's own made tougher, elite ones come from the next zone. The board shows it round the enemy (a dark red rim for normal, bright red with one chevron for strong, bright red inside a gold rim with two chevrons for elite) and the inspect title names strong and elite.
+How hard the floor asked an enemy to be: weak, normal, strong or elite. Strong enemies are the zone's own made tougher, elite ones come from the next zone. The board shows it round the enemy (a dark red rim for normal, bright red with one chevron for strong, bright red inside a gold rim with two chevrons for elite) and the inspect title and fight messages name weak, strong and elite (and a boss) before the enemy's name.
 _Avoid_: tier, rank, level
 
 ### Fights
@@ -157,6 +157,10 @@ _Avoid_: floor reached (for progress), height
 **Warp**:
 Beginning a new Tower run at once on the floor just above a checkpoint already completed, from the Goals screen. Unlocked by claiming Tower I's floor 40 checkpoint; entering the tower from the forest always starts on floor 1.
 _Avoid_: teleport, starting floor
+
+**Route preview**:
+The route to a tapped tile drawn on the board, with a Route totals box of what happens along it (HP lost, keys spent, items picked up). Shown once the Courage skill Pathfinder is owned; before that a tap only highlights and inspects the tile.
+_Avoid_: path preview
 
 **Damage Prediction**:
 The line a monster's inspect panel adds in a run once Tower I's floor 10 checkpoint is claimed: the HP the fight would cost and whether the hero survives it (Survivable, Invincible when it costs no HP, LETHAL, or Instakill when the hero's first strike fells it).

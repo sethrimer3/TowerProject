@@ -114,9 +114,10 @@ test("automation avoids lethal fights; a manual death waits on the player, and a
   assert.equal(g.save.delve.courage, earned);
   g.save.delve.courage = 100;
   g.save.upgrades.moveSpeed = 1;
-  assert.ok(g.buy("hp"));
+  const defense = g.run.player.defense;
+  assert.ok(g.buy("defense"));
   g.newRun();
-  assert.equal(g.run.player.maxHp, 120);
+  assert.equal(g.run.player.defense, defense + 1);
 });
 /** A seasoned hero (the Automove simulator's), since the Delve's enemies
  * are as strong as the Tower's from its first depth. */
@@ -200,8 +201,8 @@ test("every Tower tree door is a real choke point; shortcuts and fork lanes are 
 test("the key economy is coherent on early floors but never force-balanced", () => {
   let early = 0, earlyOk = 0, anyUnaffordable = 0, exchanges = 0, floors = 0, deep = 0;
   for (let seed = 0; seed < 80; seed++)
-    // Blue and red keys open on floors 20 and 50 of the first tower.
-    for (const room of [0, 1, 19, 30, 55]) {
+    // Blue and red keys open on floors 21 and 51 of the first tower.
+    for (const room of [0, 1, 20, 30, 55]) {
       const a = towerFloorReport(seed, room).analysis;
       floors++;
       if (room <= 1) { early++; if (a.stairsKeyReachable) earlyOk++; } else deep++;
@@ -232,7 +233,7 @@ test("old runs safely migrate topology while retaining earned stats and permanen
   g.run.changes["15,25"] = { kind: "floor" };
   save.delve.courage = 19;
   save.delve.reached = 29; // isolate migration from unrelated milestone crediting
-  save.upgrades.hp = 2;
+  save.upgrades.defense = 2;
   const migrated = new Game(decode(JSON.stringify(save)));
   migrated.switchMode("delve");
   assert.equal(migrated.run.layoutVersion, LAYOUT_VERSION);
@@ -240,7 +241,7 @@ test("old runs safely migrate topology while retaining earned stats and permanen
   assert.equal(migrated.run.player.attack, 40);
   assert.equal(migrated.run.height, 29);
   assert.equal(migrated.save.delve.courage, 19);
-  assert.equal(migrated.save.upgrades.hp, 2);
+  assert.equal(migrated.save.upgrades.defense, 2);
   assert.deepEqual(migrated.run.changes, {});
   // The old generator's chunk-local "stairs" coordinates no longer exist;
   // the migrated entrance only needs to still be navigable, not a specific kind.

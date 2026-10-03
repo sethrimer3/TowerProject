@@ -3,7 +3,7 @@ import type { TowerEnemyProfile } from "../scaling.ts";
 import { ARCHETYPES, keyedFloor, pick, type Weighted } from "./patterns.ts";
 import type { GraphBuilder } from "./strategic-graph.ts";
 import type { Archetype, Fork, Gate, Lane, LaneStep, Reward, StrategicNode, StrategicTag, Strength } from "./types.ts";
-import { heartDoorsOn, onlyOpenKeys, withoutHeart } from "../key-schedule.ts";
+import { YELLOW_ONLY, heartDoorsOn, onlyOpenKeys, withoutHeart } from "../key-schedule.ts";
 
 /** Forks: two or three parallel lanes from one region into the next, each
  * paying a different resource, so entering asks *what* to spend.
@@ -250,13 +250,18 @@ export function planForks(b: GraphBuilder, archetype: Archetype) {
     // nor adds one.
     if (keyedFloor(depth) && (node.gate.kind === "door" || node.gate.kind === "steel")) continue;
     if (rng() >= FORK_TUNING.chance(depth)) continue;
-    const colors = b.colors, fits = (f: Fork) => onlyOpenKeys(f, colors) && (!keyedFloor(depth) || withoutLocks(f));
+    const colors = b.colors, bypass = b.bypass && node.route === "main";
+    const fits = (f: Fork) => onlyOpenKeys(f, colors) && (!keyedFloor(depth) || withoutLocks(f)) && (!bypass || bypassesRareKeys(f));
     const forks = forksWorth(stepValue(node.gate), depth, archetype, rng, fits);
     if (!forks.length) continue;
     node.forks = forks;
     placed++;
   }
 }
+
+/** Whether some lane of the fork needs no blue or red key, so a hero
+ * without one still gets through. */
+const bypassesRareKeys = (f: Fork) => f.lanes.some((lane) => onlyOpenKeys(lane, YELLOW_ONLY));
 
 /** A fork with no lane through a door that takes keys. */
 const withoutLocks = (f: Fork) => !f.lanes.some((lane) => lane.some((s) => s.kind === "door" || s.kind === "steel"));

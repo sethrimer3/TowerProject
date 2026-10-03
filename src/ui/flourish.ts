@@ -66,3 +66,28 @@ export function replay(el: Element | null, cls: string) {
   el.classList.add(cls);
   el.addEventListener("animationend", () => el.classList.remove(cls), { once: true });
 }
+
+/** A ring of Gem-blue glints bursting out round `el` and a ring of light
+ * widening behind them: the ad's Gems claimed. Drawn whatever the theme;
+ * the caller leaves it out with Reduce motion on. */
+export function gemSparkle(el: Element) {
+  const r = el.getBoundingClientRect(), layer = document.createElement("div");
+  layer.className = "gem-sparkle";
+  layer.style.left = `${r.left + r.width / 2}px`;
+  layer.style.top = `${r.top + r.height / 2}px`;
+  layer.style.setProperty("--w", `${r.width.toFixed(1)}px`);
+  layer.style.setProperty("--h", `${r.height.toFixed(1)}px`);
+  layer.setAttribute("aria-hidden", "true");
+  const count = 12;
+  let html = `<b class="gem-sparkle-ring"></b>`;
+  for (let i = 0; i < count; i++) {
+    // Evenly round an ellipse a little wider than the button, every other
+    // glint flung further, smaller and a moment later.
+    const a = (i / count) * Math.PI * 2, far = i % 2 ? 1.25 : 0.95;
+    const dx = Math.cos(a) * (r.width / 2 + 14) * far, dy = Math.sin(a) * (r.height / 2 + 14) * far;
+    html += `<i style="--dx:${dx.toFixed(1)}px;--dy:${dy.toFixed(1)}px;--size:${i % 2 ? 9 : 13}px;--delay:${i % 2 ? 90 : 0}ms">✦</i>`;
+  }
+  layer.innerHTML = html;
+  document.body.appendChild(layer);
+  setTimeout(() => layer.remove(), 1100);
+}

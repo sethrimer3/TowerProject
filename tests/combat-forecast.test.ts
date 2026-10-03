@@ -5,6 +5,7 @@ import { Game } from "../src/state.ts";
 import { defaults } from "../src/save.ts";
 import { tileInfo } from "../src/ui/tile-info.ts";
 import type { Enemy, Player } from "../src/entities.ts";
+import { enemyTitle } from "../src/scaling.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
 
 const hero = (attack: number): Player => ({ x: 0, y: 0, hp: 100, maxHp: 100, attack, defense: 0, keys: { yellow: 0, blue: 0, red: 0 } });
@@ -50,4 +51,13 @@ test("the enemy panel adds Damage Prediction, Combat Forecast's hits and Attack 
   g.save.goals.claimed["1"] = [30];
   assert.match(body(1), /\+3 ATK: 4 hits/);
   assert.doesNotMatch(body(2), /ATK:/, "nothing fewer than one hit");
+});
+
+test("an enemy's title puts its strength before its name, unless it is a normal one", () => {
+  const e = (strength: Enemy["strength"]) => ({ name: "Slime", strength });
+  assert.equal(enemyTitle(e("weak")), "Weak Slime");
+  assert.equal(enemyTitle(e("normal")), "Slime");
+  assert.equal(enemyTitle(e("strong")), "Strong Slime");
+  assert.equal(enemyTitle(e("elite")), "Elite Slime");
+  assert.equal(enemyTitle(e("boss")), "Boss Slime");
 });

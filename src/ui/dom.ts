@@ -55,7 +55,7 @@ const SKILL_ITEM_SPRITES: Partial<Record<UpgradeId, keyof typeof AREA1_ITEM_URLS
   greaterHeal: "potion_flat", recovery: "potion_percent",
 };
 const SKILL_UI_SPRITES: Partial<Record<UpgradeId, UiSprite>> = {
-  hp: "health", inspirationUndos: "undo", undos: "undo", archives: "log",
+  inspirationUndos: "undo", undos: "undo", archives: "log",
   delve: "delve", gear: "gear", moveSpeed: "automove", instantCombat: "attack", training: "arrow-up", fasterTrainers: "automove",
   revive: "revive", spareChange: "gold", loot: "gold", legacy: "tower", quality: "tower",
   wisdomFocus: "settings", wisdomMemory: "undo", wisdomSight: "upgrades",

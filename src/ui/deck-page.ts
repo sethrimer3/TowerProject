@@ -1,5 +1,5 @@
 import { askForGems } from "./dialogs.ts";
-import { CARDS, deckCards, handSlots, moveCard, nextHandSlotGems, placeCard, type CardId } from "../cards.ts";
+import { CARDS, cardText, deckCards, handSlots, moveCard, nextHandSlotGems, placeCard, type CardId } from "../cards.ts";
 import type { AppContext } from "./app.ts";
 import { cardArt, el, gemIcon, POINTER_SVG } from "./dom.ts";
 
@@ -143,7 +143,7 @@ export class DeckPage {
       const removable = !!this.ctx.game.save.upgrades.combatStance && id !== "stairs" && lesson !== "order" && (lesson !== "remove" || id === target);
       const shown = lesson === "remove" && id === target;
       const x = removable ? `<button type="button" class="deck-remove${shown ? " shown" : ""}" data-remove="${id}" title="Return ${card.name} to the deck" aria-label="Return ${card.name} to the deck">${X_SVG}</button>` : "";
-      return `<div class="deck-slot${i === held ? " held" : ""}" role="listitem"><button type="button" class="deck-card" data-slot="${i}" ${fixed ? "disabled" : ""} aria-label="${card.name}, slot ${i + 1} of ${hand.length}. Drag, or press the left and right arrow keys, to move it." title="${card.name}: ${card.text}">${cardArt(id, card.name)}</button>${x}${lesson === "order" && id === "stairs" ? pointer("at-card") : ""}${shown ? pointer("at-x") : ""}</div>`;
+      return `<div class="deck-slot${i === held ? " held" : ""}" role="listitem"><button type="button" class="deck-card" data-slot="${i}" ${fixed ? "disabled" : ""} aria-label="${card.name}, slot ${i + 1} of ${hand.length}. Drag, or press the left and right arrow keys, to move it." title="${card.name}: ${cardText(id, this.ctx.game.save.upgrades)}">${cardArt(id, card.name)}</button>${x}${lesson === "order" && id === "stairs" ? pointer("at-card") : ""}${shown ? pointer("at-x") : ""}</div>`;
     }).join("");
   }
 

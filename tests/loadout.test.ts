@@ -31,13 +31,13 @@ test("Rehearsed steps gives the first undo; without it nothing else stores one",
 test("each rank of an upgrade adds its grant", () => {
   const s = defaults();
   Object.assign(s.upgrades, {
-    hp: 2, handOrdering: 1, combatStance: 1, defense: 2, quality: 1,
+    handOrdering: 1, combatStance: 1, defense: 2, quality: 1,
     yellow: 1, blue: 2, red: 3, undos: 2, inspirationUndos: 1, shroud: 1,
   });
   assert.deepEqual(loadout(s), {
     attack: 12 + 2,
     defense: 0 + 2 + 1,
-    maxHp: 100 + 2 * 20,
+    maxHp: 100,
     shroud: 1,
     keys: { yellow: 1, blue: 2, red: 3 },
     undoCapacity: 2 + 1,
@@ -157,11 +157,10 @@ test("gear adds flat bonuses, then its percentages of the total, fractions kept;
 test("descriptions are written from the grants", () => {
   const text = Object.fromEntries(UPGRADES.map((u) => [u.id, upgradeText(u.id)]));
   assert.deepEqual(
-    { hp: text.hp, defense: text.defense, yellow: text.yellow, blue: text.blue, red: text.red,
+    { defense: text.defense, yellow: text.yellow, blue: text.blue, red: text.red,
       quality: text.quality, undos: text.undos, handOrdering: text.handOrdering, combatStance: text.combatStance,
       inspirationUndos: text.inspirationUndos, revive: text.revive },
     {
-      hp: "+20 starting maximum HP",
       defense: "+1 starting defense",
       yellow: "+1 starting amber key",
       blue: "+1 starting azure key",

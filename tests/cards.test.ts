@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { BASE_HAND, BASE_HAND_SLOTS, CARD_IDS, HAND_SLOT_GEMS, MAX_HAND_SLOTS, deckCards, handSlots, nextHandSlotGems, moveCard, placeCard, planHand, upgradeCard, type CardId } from "../src/cards.ts";
+import { BASE_HAND, BASE_HAND_SLOTS, CARDS, CARD_IDS, cardText, HAND_SLOT_GEMS, MAX_HAND_SLOTS, deckCards, handSlots, nextHandSlotGems, moveCard, placeCard, planHand, upgradeCard, type CardId } from "../src/cards.ts";
 import { defaults } from "../src/save.ts";
 import type { Board, Position } from "../src/board.ts";
 import type { DelveRun, Enemy, Run, Tile } from "../src/entities.ts";
@@ -201,4 +201,13 @@ test("moving a card shifts each card between its old and new slots over one", ()
   assert.deepEqual(moveCard(hand, 4, 1), ["stairs", "monster", "heal", "door", "yellowKey"]);
   assert.deepEqual(moveCard(hand, 2, 2), hand);
   assert.deepEqual(hand, ["stairs", "heal", "door", "yellowKey", "monster"], "the hand given is left alone");
+});
+
+test("the Stairs card mentions the Delve only once Into the depths is owned", () => {
+  const s = defaults();
+  assert.equal(cardText("stairs", s.upgrades), "Move toward the stairs up.");
+  assert.equal(cardText("door", s.upgrades), CARDS.door.text);
+  s.upgrades.delve = 1;
+  assert.equal(cardText("stairs", s.upgrades), CARDS.stairs.text);
+  assert.match(cardText("stairs", s.upgrades), /Delve/);
 });

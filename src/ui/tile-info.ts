@@ -1,5 +1,6 @@
 import { enemyStat, whole, wholeChange, wholeHp } from "../whole.ts";
-import type { Enemy, EnemyStrength, Kind, Player, Tile } from "../entities.ts";
+import type { Enemy, Kind, Player, Tile } from "../entities.ts";
+import { enemyTitle } from "../scaling.ts";
 import type { Game, RouteEffects } from "../state.ts";
 import { ATTACK_SHARD, DEFENSE_SHARD, HEART_DOOR_HP, resolveStep } from "../step-effects.ts";
 import { attackForFewerHits, predict, type CombatPrediction } from "../combat.ts";
@@ -60,14 +61,11 @@ function forecast(p: Player, e: Enemy, turns: number, g: Board) {
   return lines;
 }
 
-/** Strong and elite enemies and bosses say so in the inspect title. */
-const RANK: Record<EnemyStrength, string> = { weak: "", normal: "", strong: "Strong ", elite: "Elite ", boss: "Boss " };
-
 const DESCRIBE: Partial<Record<Kind, Describe>> = {
   enemy: (t, p, g) => {
     const e = t.enemy!, r = predict(p, e);
     return {
-      title: RANK[e.strength] + e.name,
+      title: enemyTitle(e),
       body: `<span>HP ${enemyStat(e.hp)} · ATK ${enemyStat(e.attack)} · DEF ${enemyStat(e.defense)}</span>` + prediction(r, g) + forecast(p, e, r.impervious ? 0 : r.turns, g),
     };
   },

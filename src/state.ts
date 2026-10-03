@@ -1,7 +1,7 @@
 import { claimBoost, doneAt, finishGems, nextTrainerGems, trainingGold, trainingJob, trainingMs, trainingSlots, workLeft, type TrainingJob } from "./training-jobs.ts";
 import { entrance, floorFor } from "./delve/labyrinth.ts";
 import { chooseStep } from "./automation.ts";
-import { CARDS, deckCards, handSlots, moveCard, nextHandSlotGems, placeCard, planHand, type CardId, type CardPlan } from "./cards.ts";
+import { CARDS, cardText, deckCards, handSlots, moveCard, nextHandSlotGems, placeCard, planHand, type CardId, type CardPlan } from "./cards.ts";
 import { BOOST_FOREVER, goldFactor, permanentBoost } from "./shop/entitlements.ts";
 import { offer, type OfferId } from "./shop/offers.ts";
 import { purchase, type Refusal } from "./shop/transactions.ts";
@@ -60,6 +60,7 @@ import { TowerClimb } from "./tower/climb.ts";
 import { materialDef, MATERIALS } from "./materials.ts";
 import { rollTreasureLoot } from "./loot.ts";
 import { TIERS, TIER_BOSS_FLOOR, switchTier, tierBonus, tierBonusText, tierGold, tierNumeral } from "./tiers.ts";
+import { enemyTitle } from "./scaling.ts";
 import { snap } from "./exact.ts";
 import { whole, wholeChange } from "./whole.ts";
 import { MODES, milestones, type ModeProfile } from "./modes.ts";
@@ -464,7 +465,7 @@ export class Game {
     const id = this.hand[plan.card];
     this.message = lost
       ? `Focus lost · ${CARDS[lost].name} has no path to a target · ${CARDS[id].name} leads.`
-      : `${id === this.run.focused ? "Focus · " : ""}${CARDS[id].name} · ${CARDS[id].text}`;
+      : `${id === this.run.focused ? "Focus · " : ""}${CARDS[id].name} · ${cardText(id, this.save.upgrades)}`;
     // The board changes only as the hero moves, so a refused step means the
     // plan is stale: drop it and let the next turn choose again.
     if (!this.move(step.dx, step.dy, true)) this.cardPlan = null;
@@ -550,7 +551,7 @@ export class Game {
     this.activeCard = card;
     this.handStuck = false;
     this.auto = true;
-    this.message = `Focus · ${CARDS[id].name} · ${CARDS[id].text}`;
+    this.message = `Focus · ${CARDS[id].name} · ${cardText(id, this.save.upgrades)}`;
     return "focused";
   }
   /** Forgets the hand's committed path and which card glows. */
@@ -717,11 +718,11 @@ export class Game {
    * the player to undo the fight or accept defeat. */
   private fallIn(before: MoveSnapshot, enemy: Enemy) {
     this.run.player.hp = 0;
-    this.slice.fall = { snapshot: before, by: enemy.name };
+    this.slice.fall = { snapshot: before, by: enemyTitle(enemy) };
     this.route = [];
     this.auto = false;
     this.dropHandPlan();
-    this.message = `Fallen in combat against ${enemy.name}.`;
+    this.message = `Fallen in combat against ${enemyTitle(enemy)}.`;
   }
   /** Keys every physical enemy kill / treasure chest by seed (+height for
    * Tower, whose x/y space is reused per room) so persistent loot can be
@@ -901,7 +902,7 @@ export class Game {
     this.gain(at.x, at.y, `+${wholeChange(silver)} Silver`, { coin: "silver" });
     for (const d of drops) this.gain(at.x, at.y, materialText(d), { material: d.id, quantity: d.quantity });
     const opened = enemy.strength === "boss" && floor >= TIER_BOSS_FLOOR && this.openNextTier();
-    this.message = [revived ? `Revived · ${enemy.name} defeated` : combat.damage ? `−${wholeChange(combat.damage)} HP · ${enemy.name} defeated` : "Unscathed victory",
+    this.message = [revived ? `Revived · ${enemyTitle(enemy)} defeated` : combat.damage ? `−${wholeChange(combat.damage)} HP · ${enemyTitle(enemy)} defeated` : "Unscathed victory",
       ...(gold ? [`+${wholeChange(gold)} Gold`] : []), `+${wholeChange(silver)} Silver`, ...drops.map(materialText),
       ...(opened ? [`${this.rules.words.tierName} ${tierNumeral(this.slice.tiersOpen)} opened`] : [])].join(" · ");
     return true;
@@ -1263,6 +1264,11 @@ export class Game {
    * every page shown in Dev mode. */
   private get trainingOpen() {
     return !!this.save.upgrades.training || this.save.settings.devMode;
+  }
+  /** Whether a tapped tile shows the route there and its totals: the
+   * Courage skill Pathfinder owned, or Dev mode. */
+  get showsRoutes() {
+    return !!this.save.upgrades.pathfinder || this.save.settings.devMode;
   }
   /** Whether a run's Training can be bought with Silver inside it: On the
    * Job owned, or every page shown in Dev mode. */

@@ -79,14 +79,14 @@ export class BoardOverlay {
     this.inspectVisible = false;
   }
 
-  /** Highlights the tile, shows its info and the route there, and draws
-   * the route preview on the board. */
+  /** Highlights the tile and shows its info; with Pathfinder, also the
+   * route there, drawn on the board, and its totals. */
   private preview(x: number, y: number) {
     this.highlight(x, y);
     const popup = this.shows("popup");
     if (popup) this.showInspect(x, y);
     else this.hideInspect();
-    const route = this.game.previewRoute(x, y);
+    const route = this.game.showsRoutes ? this.game.previewRoute(x, y) : null;
     this.renderer.previewRoute = route?.length ? route.map((s) => ({ x: s.x, y: s.y })) : null;
     const effects = popup && route ? this.game.previewRouteEffects(route) : null;
     if (effects) this.showRoute(effects);

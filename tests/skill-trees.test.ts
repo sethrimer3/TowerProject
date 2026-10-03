@@ -17,10 +17,13 @@ test("fresh progression gates Delve, currencies, Courage root, and Legacy", () =
   assert.equal(g.save.delve.courage, 100);
   g.switchMode("delve");
   assert.equal(g.mode, "delve");
-  assert.equal(g.buy("hp"), false);
+  assert.equal(g.buy("pathfinder"), false);
   assert.ok(g.buy("moveSpeed"));
   assert.equal(g.save.delve.courage, 99);
-  assert.ok(g.buy("hp"));
+  assert.equal(g.showsRoutes, false, "no route preview before Pathfinder");
+  assert.ok(g.buy("pathfinder"));
+  assert.equal(g.save.delve.courage, 98, "Pathfinder costs 1 Courage");
+  assert.ok(g.showsRoutes);
   assert.equal(g.buy("quality"), false);
   // Movement Speed no longer opens Wayfinding: nothing does yet.
   assert.equal(TREES.find(t => t.id === "wayfinding")!.gate, null);

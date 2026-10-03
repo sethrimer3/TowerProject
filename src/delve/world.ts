@@ -17,7 +17,8 @@ import { tierCells } from "../tiers.ts";
 // v17 keeps blue keys and doors off the first delve's floors below 20, and
 // red below 50.
 // v18 places no strong enemy below equivalent floor 11 and no elite below 41.
-export const LAYOUT_VERSION = 18;
+// v19 opens blue keys on equivalent floor 21 and red on 51.
+export const LAYOUT_VERSION = 19;
 
 /** The one 20-row chunk `index` of tier `tier`'s labyrinth, as generated. */
 export function generate(seed: number, index: number, tier = 1): Map<string, Tile> {

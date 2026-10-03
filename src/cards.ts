@@ -18,6 +18,11 @@ export const CARDS = {
 } as const;
 export type CardId = keyof typeof CARDS;
 export const CARD_IDS = Object.keys(CARDS) as CardId[];
+/** What card `id` does, as the player is told: STAIRS says how it climbs
+ * in the Delve only once Into the depths is owned. */
+export function cardText(id: CardId, upgrades: Record<UpgradeId, number>): string {
+  return id === "stairs" && !upgrades.delve ? "Move toward the stairs up." : CARDS[id].text;
+}
 
 /** How many cards a hand holds before Larger Hand, and at most, with
  * Larger Hand's slot and every slot bought with Gems. */

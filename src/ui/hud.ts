@@ -7,7 +7,7 @@ import { outsideWeather } from "../outside.ts";
 import { tierBonusText, tierNumeral } from "../tiers.ts";
 import { MODES, milestones } from "../modes.ts";
 import { cardArt, CURRENCY_SPRITES, displayedProgress, el, ENTER_ICON, text, uiSprite } from "./dom.ts";
-import { CARDS } from "../cards.ts";
+import { CARDS, cardText } from "../cards.ts";
 import { trainingPoints } from "../loadout.ts";
 import { goalsWaiting } from "../goals.ts";
 import type { BoardOverlay } from "./board-overlay.ts";
@@ -200,7 +200,7 @@ function renderHand(game: Game) {
     shownHand = hand.join();
     // Room for five cards, and narrower cards for a bigger hand.
     row.style.setProperty("--slots", String(Math.max(5, hand.length)));
-    row.innerHTML = hand.map((id, i) => `<div class="hand-card" role="listitem" data-card="${id}" data-hand-slot="${i}" title="${CARDS[id].name}: ${CARDS[id].text}">${cardArt(id, CARDS[id].name)}</div>`).join("");
+    row.innerHTML = hand.map((id, i) => `<div class="hand-card" role="listitem" data-card="${id}" data-hand-slot="${i}" title="${CARDS[id].name}: ${cardText(id, game.save.upgrades)}">${cardArt(id, CARDS[id].name)}</div>`).join("");
   }
   // Paused, the card that made the latest step still glows.
   const glowing = game.handStuck ? null : game.activeCard;
@@ -364,14 +364,14 @@ function renderRunEarned(game: Game) {
   box.classList.add("flash");
 }
 
-/** Inside a run, the ad button stands where Goals is in the forest:
- * showing its Gems when they can be claimed, an empty space while it waits. */
+/** The ad button stands under Log in the forest and inside a run, in both
+ * modes: showing its Gems when they can be claimed, an empty space while
+ * it waits. Goals takes End Run's place in the forest. */
 export function renderAdButton(game: Game) {
   const inside = !game.run.outside, button = el("gem-ad") as HTMLButtonElement;
   el("section-pick").hidden = inside;
   // Only a run inside can be ended.
   el("end-run").hidden = !inside;
-  button.hidden = !inside;
   button.classList.toggle("waiting", !game.adReady);
   button.disabled = !game.adReady;
 }

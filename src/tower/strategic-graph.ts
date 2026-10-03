@@ -13,7 +13,7 @@ import {
 } from "./patterns.ts";
 import { planForks } from "./forks.ts";
 import { MAX_REGIONS, planResources } from "./resource-planner.ts";
-import { heartDoorsOn, keyColorsOn, onlyOpenKeys, type KeyColors } from "../key-schedule.ts";
+import { YELLOW_ONLY, bypassesRareKeys, heartDoorsOn, keyColorsOn, onlyOpenKeys, type KeyColors } from "../key-schedule.ts";
 import type {
   Archetype,
   Footprint,
@@ -80,7 +80,14 @@ function stairsGateTable(depth: number, doorBias: number): Weighted<Gate> {
 
 export class GraphBuilder {
   nodes: StrategicNode[] = [];
-  constructor(public depth: number, public rng: () => number, public colors: KeyColors = keyColorsOn(depth)) {}
+  /** The key colours a gate on the way to the stairs may take on its own;
+   * with `bypass`, only yellow (`bypassesRareKeys`). */
+  mainColors: KeyColors;
+  /** `bypass`: a blue or red door on the way to the stairs only ever
+   * stands in a fork beside a lane without one. */
+  constructor(public depth: number, public rng: () => number, public colors: KeyColors = keyColorsOn(depth), public bypass = false) {
+    this.mainColors = bypass ? YELLOW_ONLY : colors;
+  }
   add(partial: Omit<StrategicNode, "id" | "children" | "rewards" | "guarded" | "formation" | "tags"> &
     Partial<Pick<StrategicNode, "rewards" | "guarded" | "formation" | "tags">>): StrategicNode {
     const node: StrategicNode = {
@@ -165,7 +172,7 @@ function addChain(b: GraphBuilder, pattern: TowerPattern, host: number) {
  * (`keyColorsOn`). */
 export function generateStrategicGraph(seed: number, depth: number, budgetCut = 0, tier = 1): StrategicGraph {
   const rng = random(seed);
-  const b = new GraphBuilder(depth, rng, keyColorsOn(depth, tier));
+  const b = new GraphBuilder(depth, rng, keyColorsOn(depth, tier), bypassesRareKeys(tier));
   const archetype = pickArchetype(depth, rng);
   const profile = ARCHETYPES[archetype];
   const budget = Math.max(3, Math.min(MAX_REGIONS,
@@ -202,7 +209,7 @@ function addHub(b: GraphBuilder, profile: ArchetypeProfile, parent: number, last
   const hub = b.add({
     purpose: last || rng() < 0.6 ? "hub" : "transition",
     patternId: "main", parent,
-    gate: openFirstFloor(depth) ? { kind: "open" } : pick(openOptions(mainGateTable(depth, profile.doorBias), b.colors), rng),
+    gate: openFirstFloor(depth) ? { kind: "open" } : pick(openOptions(mainGateTable(depth, profile.doorBias), b.mainColors), rng),
     rewards: rng() < GRAPH_TUNING.hubPotionChance ? [{ kind: "potion" }] : [],
     formation: "cluster", route: "main", footprint: "hall", tags: ["progressionRoute"],
   });
@@ -215,7 +222,7 @@ function addHub(b: GraphBuilder, profile: ArchetypeProfile, parent: number, last
  * floors 2 to 5 always have the door. */
 function addStairs(b: GraphBuilder, profile: ArchetypeProfile, parent: number) {
   const { depth, rng } = b;
-  let gate = pick(openOptions(stairsGateTable(depth, profile.doorBias), b.colors), rng);
+  let gate = pick(openOptions(stairsGateTable(depth, profile.doorBias), b.mainColors), rng);
   let guard: StrategicNode["stairsGuard"];
   if (openFirstFloor(depth) || keyedFloor(depth)) gate = { kind: "open" };
   if (keyedFloor(depth)) guard = "door";

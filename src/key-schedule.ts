@@ -5,16 +5,26 @@ import type { KeyColor } from "./config.ts";
 export type KeyColors = Readonly<Record<KeyColor, boolean>>;
 export const ALL_KEY_COLORS: KeyColors = { yellow: true, blue: true, red: true };
 /** In the first tower and delve, the equivalent floor (counting from 1)
- * each key colour first appears on. Later tiers use every colour from their
- * first floor, as before: a hero who reaches them already has what the
- * blue and red keys ask for. */
-export const FIRST_TIER_KEY_FLOORS: Record<KeyColor, number> = { yellow: 1, blue: 20, red: 50 };
+ * each key colour first appears on: the first floor of a section, past the
+ * boss before it. Later tiers use every colour from their first floor, as
+ * before: a hero who reaches them already has what the blue and red keys
+ * ask for. */
+export const FIRST_TIER_KEY_FLOORS: Record<KeyColor, number> = { yellow: 1, blue: 21, red: 51 };
 /** The colours open on equivalent floor `floor` (0 is the first) of tier `tier`. */
 export function keyColorsOn(floor: number, tier = 1): KeyColors {
   if (tier > 1) return ALL_KEY_COLORS;
   const open = (c: KeyColor) => floor + 1 >= FIRST_TIER_KEY_FLOORS[c];
   return { yellow: open("yellow"), blue: open("blue"), red: open("red") };
 }
+/** Only yellow keys: what a first-tower floor's way to the stairs may ask
+ * for without another way round (`bypassesRareKeys`). */
+export const YELLOW_ONLY: KeyColors = { yellow: true, blue: false, red: false };
+/** Whether tier `tier`'s Tower floors keep every blue and red door off the
+ * single way to the stairs: a main-route gate is never one, and a fork
+ * there offers one only beside a lane that needs neither colour. In the
+ * first tower a hero meeting them may not have the key yet; from the
+ * second on, upgrades carry it past such a bottleneck. */
+export const bypassesRareKeys = (tier: number) => tier <= 1;
 /** Whether `thing` (a gate, reward, pattern step or fork, however deeply
  * nested) holds no key or door of a closed colour. A potion's colour names
  * its kind, not a key, so only keys and doors count. */

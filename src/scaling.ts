@@ -160,6 +160,12 @@ export const BOSS_OVER_STRONG = 2;
  * ATK by: BOSS_OVER_STRONG for a boss, 1 for every other. */
 export const bossFactor = (strength: EnemyStrength) => (strength === "boss" ? BOSS_OVER_STRONG : 1);
 
+/** Weak, strong and elite enemies and bosses say so before their name. */
+const RANK: Record<EnemyStrength, string> = { weak: "Weak ", normal: "", strong: "Strong ", elite: "Elite ", boss: "Boss " };
+/** What the game calls an enemy: its name, after its strength unless it
+ * is a normal one. */
+export const enemyTitle = (e: { name: string; strength?: EnemyStrength }) => (e.strength ? RANK[e.strength] : "") + e.name;
+
 /** The tier an enemy of each strength carries, in both modes. */
 export const enemyTier = (strength: EnemyStrength) => TOWER_ENEMY_STRENGTH[strength].tier;
 

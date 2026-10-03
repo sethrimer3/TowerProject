@@ -18,7 +18,9 @@ import { tierCells } from "../tiers.ts";
 // v13 keeps blue keys and doors off the first tower's floors below 20, and
 // red below 50.
 // v14 places no strong enemy below floor 11 and no elite below 41.
-export const TOWER_LAYOUT_VERSION = 14;
+// v15 opens blue keys on floor 21 and red on 51, and in the first tower
+// keeps every blue and red door off the single way to the stairs.
+export const TOWER_LAYOUT_VERSION = 15;
 
 /** A self-contained 17x17 Tower floor. Generation is strategy-first (see
  * src/tower/index.ts): an abstract graph of gates, keys and rewards is

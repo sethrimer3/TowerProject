@@ -478,7 +478,6 @@ h1 span {
   height: 1em;
   vertical-align: -0.15em;
 }
-/* Inside a run, the ad's Gems wait where Floors stands in the forest. */
 /* The Gems an ad pays, with a small "Claim" under them. */
 .gem-ad {
   display: flex;
@@ -494,8 +493,11 @@ h1 span {
   line-height: 1;
 }
 .portrait-actions .gem-ad { font-size: 13px; padding: 1px 2px; }
-/* End Run shows only inside a run; in the forest its place stays empty. */
-.portrait-actions #end-run[hidden] { display: block; visibility: hidden; }
+/* End Run inside a run and Goals in the forest share the top row, Log the
+   middle, and the ad's Gems the bottom, in both modes. */
+.portrait-actions #end-run, .portrait-actions #section-pick { grid-row: 1; }
+.portrait-actions #log { grid-row: 2; }
+.portrait-actions #gem-ad { grid-row: 3; }
 .gem-ad .gem-icon { width: 16px; height: 16px; }
 .gem-ad small { font-size: 7px; line-height: 1; letter-spacing: .45px; }
 .gem-ad.waiting { visibility: hidden; }
@@ -2674,3 +2676,29 @@ nav.in-run.drilling .run-drills {
 @media (prefers-reduced-motion: reduce) { .rise-pop { animation-name: rise-pop-still; } }
 html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
 @keyframes rise-pop-still { 0%, 70% { opacity: 1; } 100% { opacity: 0; } }
+
+/* The ad's Gems claimed (`gemSparkle`): glints bursting out round the
+   button, turning as they go, over a widening ring of light. */
+.gem-sparkle { position: fixed; z-index: 100; width: 0; height: 0; pointer-events: none; }
+.gem-sparkle i {
+  position: absolute; left: 0; top: 0; font-style: normal; line-height: 1;
+  font-size: var(--size); margin: calc(var(--size) / -2) 0 0 calc(var(--size) / -2);
+  color: #e6faff; text-shadow: 0 0 4px #8fe3ff, 0 0 9px #3fb8ff;
+  animation: gem-sparkle 0.85s cubic-bezier(0.2, 0.7, 0.3, 1) var(--delay) both;
+}
+.gem-sparkle-ring {
+  position: absolute; left: 0; top: 0; width: var(--w); height: var(--h);
+  margin: calc(var(--h) / -2) 0 0 calc(var(--w) / -2); border-radius: 50%;
+  border: 2px solid #8fe3ff; box-shadow: 0 0 10px #3fb8ff, inset 0 0 8px #3fb8ff80;
+  animation: gem-sparkle-ring 0.6s ease-out both;
+}
+@keyframes gem-sparkle {
+  0% { transform: translate(0, 0) scale(0.2) rotate(0deg); opacity: 0; }
+  25% { opacity: 1; }
+  60% { transform: translate(var(--dx), var(--dy)) scale(1) rotate(90deg); opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(0.3) rotate(180deg); opacity: 0; }
+}
+@keyframes gem-sparkle-ring {
+  from { transform: scale(0.6); opacity: 0.9; }
+  to { transform: scale(1.6); opacity: 0; }
+}

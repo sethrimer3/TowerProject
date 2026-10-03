@@ -398,7 +398,7 @@ export class SkillTreePage {
         else this.particles.purchase(node, at);
       }
       this.ctx.update();
-      if (bought && card) revealCard(card, game.save.settings.reduceMotion);
+      if (bought && card) revealCard(card, game.save.upgrades, game.save.settings.reduceMotion);
     }
     this.render();
   }

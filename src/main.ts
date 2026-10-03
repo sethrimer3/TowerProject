@@ -25,6 +25,7 @@ import { renderSettingsPage } from "./ui/settings-page.ts";
 import { ShopPage } from "./ui/shop-page.ts";
 import { play } from "./sound.ts";
 import { applyMedievalTheme, bindMedievalFeedback } from "./ui/medieval.ts";
+import { gemSparkle } from "./ui/flourish.ts";
 
 // Wires the pages together: builds the shell, creates the game and renderer,
 // and routes navigation, HUD refreshes and input between the ui/ modules.
@@ -191,6 +192,7 @@ for (const [id, step] of [["tier-prev", -1], ["tier-next", 1]] as const)
   };
 el("gem-ad").onclick = () => {
   if (!game.claimAdGems()) return;
+  if (!game.save.settings.reduceMotion) gemSparkle(el("gem-ad"));
   save();
   update();
 };
