@@ -30,16 +30,26 @@ export const soldOut = (save: Save, offer: ShopOffer, now: number) =>
 
 /** Why `offer` can't be bought at `now` paid by `payment`, or null when it can. */
 export function refusal(save: Save, offer: ShopOffer, now: number, payment: Payment = "price"): Refusal | null {
+  return unavailable(save, offer, now) ?? unpaid(save, offer, payment);
+}
+
+/** Why `offer` isn't for sale at `now`: locked, outside its dates, a store
+ * link, sold out, or its item already owned; null when it is. */
+function unavailable(save: Save, offer: ShopOffer, now: number): Refusal | null {
   if (unmet(save, CATEGORIES[offer.category].requires) || unmet(save, offer.requires)) return "locked";
-  if (offer.startTime !== undefined && now < offer.startTime) return "notStarted";
-  if (offer.endTime !== undefined && now >= offer.endTime) return "expired";
+  if (now < (offer.startTime ?? -Infinity)) return "notStarted";
+  if (now >= (offer.endTime ?? Infinity)) return "expired";
   if (!offer.item) return "storeLink";
   if (soldOut(save, offer, now)) return "limit";
-  if (grantRefusal(save, offer.item)) return "owned";
+  return grantRefusal(save, offer.item) ? "owned" : null;
+}
+
+/** Why `payment` doesn't pay for `offer`: real money the store hasn't
+ * confirmed, or a currency short; null when it pays (always, free). */
+function unpaid(save: Save, { price }: ShopOffer, payment: Payment): Refusal | null {
   if (payment === "free") return null;
-  if (offer.price.kind === "money" && payment !== "store") return "unpaid";
-  if (offer.price.kind === "currency" && CURRENCIES[offer.price.currency].balance(save) < offer.price.amount) return "short";
-  return null;
+  if (price.kind === "money") return payment === "store" ? null : "unpaid";
+  return price.kind === "currency" && CURRENCIES[price.currency].balance(save) < price.amount ? "short" : null;
 }
 
 /** What `price` costs, as the page and the history write it. */

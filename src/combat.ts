@@ -164,25 +164,28 @@ export function resume(fight: Bout, from: number, player: Player, enemy: Enemy, 
  * later, once its fire has burned out. */
 export function summarize(fight: Bout, gap: number): Bout {
   const strikes: Strike[] = [];
-  let t = 0, hero = null as Strike | null, enemy = null as Strike | null;
-  const close = () => {
-    for (const s of [hero, enemy]) if (s) strikes.push(s);
-    hero = enemy = null;
-  };
+  let t = 0, round: Round = {};
   for (const s of fight.strikes) {
-    const at = { start: t, at: t, end: t };
-    if (s.by === "hero") hero = { by: "hero", damage: snap((hero?.damage ?? 0) + s.damage), hp: s.hp, ...at };
-    else {
-      const shrouded = snap((enemy?.shrouded ?? 0) + (s.shrouded ?? 0));
-      enemy = { by: "enemy", damage: snap((enemy?.damage ?? 0) + s.damage), ...(shrouded ? { shrouded } : {}), ...(s.revived ? { revived: true as const } : {}), hp: s.hp, ...at };
-      if (s.revived) {
-        close();
-        t += gap;
-      }
-    }
+    round = withStrike(round, s, t);
+    if (s.by === "hero" || !s.revived) continue;
+    strikes.push(...roundStrikes(round));
+    round = {};
+    t += gap;
   }
-  close();
+  strikes.push(...roundStrikes(round));
   return { strikes, duration: strikes.at(-1)?.at ?? 0 };
+}
+
+/** A summary round so far: the hero's strikes as one, the enemy's as another. */
+type Round = { hero?: Strike; enemy?: Strike };
+const roundStrikes = ({ hero, enemy }: Round) => [hero, enemy].filter((s): s is Strike => !!s);
+
+/** `round` with strike `s` added to its side's, landing at `t`. */
+function withStrike(round: Round, s: Strike, t: number): Round {
+  const at = { start: t, at: t, end: t };
+  if (s.by === "hero") return { ...round, hero: { by: "hero", damage: snap((round.hero?.damage ?? 0) + s.damage), hp: s.hp, ...at } };
+  const prev = round.enemy, shrouded = snap((prev?.shrouded ?? 0) + (s.shrouded ?? 0));
+  return { ...round, enemy: { by: "enemy", damage: snap((prev?.damage ?? 0) + s.damage), ...(shrouded ? { shrouded } : {}), ...(s.revived ? { revived: true as const } : {}), hp: s.hp, ...at } };
 }
 
 /** The hero's HP once the fight is over, from `hp` at its start. */

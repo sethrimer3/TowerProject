@@ -1,3 +1,5 @@
+import type { UpgradeId } from "./config.ts";
+import type { TreeId } from "./skill-trees.ts";
 import "./style.css";
 import "./medieval.css";
 import { load, persist } from "./save.ts";
@@ -107,24 +109,19 @@ function renderPage() {
 }
 /** Locked tabs point at the upgrade that unlocks them instead. */
 function unlockTarget(id: string): string {
-  if (id === "delve" && !game.save.upgrades.delve) {
-    skillTree.focus("inspiration", "delve");
-    return "upgrades";
-  }
-  if (id === "deck" && !game.save.upgrades.handOrdering) {
-    skillTree.focus("inspiration", "handOrdering");
-    return "upgrades";
-  }
-  if (id === "gear" && !game.save.upgrades.gear) {
-    skillTree.focus("inspiration", "gear");
-    return "upgrades";
-  }
-  if (id === "defend" && !game.save.upgrades.legacy) {
-    skillTree.focus("courage", "legacy");
-    return "upgrades";
-  }
-  return id;
+  const lock = LOCKED_TABS.get(id);
+  if (!lock || game.save.upgrades[lock.skill]) return id;
+  skillTree.focus(lock.tree, lock.skill);
+  return "upgrades";
 }
+/** Tabs opened by a skill not yet owned: pressed, they open the Upgrades
+ * page on that skill instead. */
+const LOCKED_TABS = new Map<string, { skill: UpgradeId; tree: TreeId }>([
+  ["delve", { skill: "delve", tree: "inspiration" }],
+  ["deck", { skill: "handOrdering", tree: "inspiration" }],
+  ["gear", { skill: "gear", tree: "inspiration" }],
+  ["defend", { skill: "legacy", tree: "courage" }],
+]);
 /** The pages topped by the currencies bar and its Shop button. */
 const CURRENCY_PAGES: string[] = ["upgrades", "deck", "gear"];
 function navigate(requested: string) {
@@ -135,10 +132,7 @@ function navigate(requested: string) {
   if (id !== "defend") defendPage.pause();
   const from = tab;
   tab = id;
-  // Opening the Upgrades page clears the dot the first Inspiration put on it.
-  if (id === "upgrades" && upgradesWaiting(game)) game.save.tutorials.upgrades = true;
-  // And opening the Gear page the dot the Gear skill put on it.
-  if (id === "gear" && gearWaiting(game)) game.save.tutorials.gear = true;
+  clearDots(id);
   deck.shown(id === "deck");
   // The Shop's Back returns to the page that opened it.
   if (id === "shop" && from !== "shop") shop.open(from);
@@ -147,9 +141,23 @@ function navigate(requested: string) {
     game.switchMode(id);
     renderBoardHeading(game, overlay);
   } else game.cancelRoute();
+  showPage(id);
+  // The Goals screen opens afresh, on the tower the forest leads to.
+  if (id === "goals" && from !== "goals") goals.open();
+  else renderPage();
+  update();
+}
+/** Opening the Upgrades page clears the dot the first Inspiration put on
+ * it, and opening the Gear page the dot the Gear skill put on it. */
+function clearDots(id: Tab) {
+  if (id === "upgrades" && upgradesWaiting(game)) game.save.tutorials.upgrades = true;
+  if (id === "gear" && gearWaiting(game)) game.save.tutorials.gear = true;
+}
+/** Shows page `id` and marks its tab; the stats sit over the board, and
+ * the currencies bar, with the Shop at its end, tops the pages that spend
+ * them, every currency on each. */
+function showPage(id: Tab) {
   el("stats").toggleAttribute("hidden", !isBoard(id));
-  // The currencies bar tops the pages that spend them, with the Shop at its
-  // end, every currency on each.
   el("currencies").toggleAttribute("hidden", !CURRENCY_PAGES.includes(id));
   const page = isBoard(id) ? "board" : id;
   document.querySelectorAll(".page").forEach((p) => p.classList.toggle("active", p.id === page));
@@ -157,10 +165,6 @@ function navigate(requested: string) {
     b.classList.toggle("selected", b.dataset.tab === id);
     b.setAttribute("aria-current", b.dataset.tab === id ? "page" : "false");
   });
-  // The Goals screen opens afresh, on the tower the forest leads to.
-  if (id === "goals" && from !== "goals") goals.open();
-  else renderPage();
-  update();
 }
 
 document.querySelectorAll<HTMLButtonElement>("[data-hud-consumable]").forEach(button => {

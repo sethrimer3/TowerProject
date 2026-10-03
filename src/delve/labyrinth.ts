@@ -315,7 +315,7 @@ function assignPatterns(lab: Lab) {
   if (tongueTop && isPocket(lab, tongueTop)) {
     tongueTop.falseAscent = true; tongueTop.pattern = FALSE_ASCENTS[Math.floor(rng() * FALSE_ASCENTS.length)];
   }
-  for (const n of nodes) if (!n.pattern && isPocket(lab, n)) n.pattern = choosePattern(rng, lab.area, branchLength(nodes, n.id), Infinity, colorsAt(lab, n));
+  for (const n of nodes) if (!n.pattern && isPocket(lab, n)) n.pattern = choosePattern(rng, { area: lab.area, branch: branchLength(nodes, n.id) }, colorsAt(lab, n));
 }
 
 /** The key colours cell `n` may use, by its equivalent floor. */
@@ -441,31 +441,43 @@ function placePatternCosts(lab: Lab, board: Board) {
   let forks = 0;
   for (const n of lab.nodes) {
     if (!n.pattern) continue;
-    const edge = lab.edges.find(e => e.a === n.id || e.b === n.id)!;
-    const path = edge.b === n.id ? edge.path : [...edge.path].reverse();
-    const lanes = forks < DELVE_TUNING.forksPerArea ? forkLanes(lab, board, n, path) : null;
-    if (lanes && lab.rng() < FORK_TUNING.chance(n.depth / 10)) {
-      const value = n.pattern.gates.reduce((sum, g) => sum + stepValue(g), 0);
-      const colors = colorsAt(lab, n);
-      const [fork] = forksWorth(value, n.depth / 10, 'mixed', lab.rng, f => f.lanes.length === 2 && forkDepth(f) <= lanes[0].length && onlyOpenKeys(f, colors));
-      if (fork) {
-        carveFork(lab, board, n, fork, lanes, path);
-        forks++;
-        placeRewards(lab, board, n);
-        continue;
-      }
-    }
-    // Costs sit in the single-width throat, outside either chamber, so each
-    // one is a cut tile between the pocket and the rest of the labyrinth.
-    // Only verified cut tiles qualify: a corner tile touching a room can be
-    // side-stepped. A pocket whose throat is too short for its costs takes a
-    // pattern that fits instead.
-    const cuts = path.filter(p => !board.roomTiles.has(point(p.x, p.y)) && separates(board.cells, path[0], p, n));
-    if (cuts.length < n.pattern.gates.length) n.pattern = choosePattern(lab.rng, lab.area, 0, cuts.length, colorsAt(lab, n));
-    const middle = Math.min(cuts.length - 1, Math.floor(cuts.length / 2) + n.pattern.gates.length - 1);
-    n.pattern.gates.forEach((g, i) => board.put(cuts[middle - i], gateTile(lab, g, n), n.depth));
+    const path = throatPath(lab, n);
+    if (forks < DELVE_TUNING.forksPerArea && tryFork(lab, board, n, path)) forks++;
+    else placeCosts(lab, board, n, path);
     placeRewards(lab, board, n);
   }
+}
+
+/** The corridor into pocket `n`, from the neighbour's side. */
+function throatPath(lab: Lab, n: Node) {
+  const edge = lab.edges.find(e => e.a === n.id || e.b === n.id)!;
+  return edge.b === n.id ? edge.path : [...edge.path].reverse();
+}
+
+/** Turns the throat into a fork when lanes fit beside it, the fork chance
+ * rolls it, and a fork worth the pattern's costs (two lanes, no deeper than
+ * the throat, its keys open here) is found; returns whether it did. */
+function tryFork(lab: Lab, board: Board, n: Node, path: Point[]) {
+  const lanes = forkLanes(board, n, path);
+  if (!lanes || lab.rng() >= FORK_TUNING.chance(n.depth / 10)) return false;
+  const value = n.pattern!.gates.reduce((sum, g) => sum + stepValue(g), 0);
+  const colors = colorsAt(lab, n);
+  const [fork] = forksWorth(value, n.depth / 10, 'mixed', lab.rng, f => f.lanes.length === 2 && forkDepth(f) <= lanes[0].length && onlyOpenKeys(f, colors));
+  if (!fork) return false;
+  carveFork(lab, board, n, { fork, lanes, path });
+  return true;
+}
+
+/** Costs sit in the single-width throat, outside either chamber, so each
+ * one is a cut tile between the pocket and the rest of the labyrinth. Only
+ * verified cut tiles qualify: a corner tile touching a room can be
+ * side-stepped. A pocket whose throat is too short for its costs takes a
+ * pattern that fits instead. */
+function placeCosts(lab: Lab, board: Board, n: Node, path: Point[]) {
+  const cuts = path.filter(p => !board.roomTiles.has(point(p.x, p.y)) && separates(board.cells, path[0], p, n));
+  if (cuts.length < n.pattern!.gates.length) n.pattern = choosePattern(lab.rng, { area: lab.area, branch: 0, maxGates: cuts.length }, colorsAt(lab, n));
+  const pattern = n.pattern!, middle = Math.min(cuts.length - 1, Math.floor(cuts.length / 2) + pattern.gates.length - 1);
+  pattern.gates.forEach((g, i) => board.put(cuts[middle - i], gateTile(lab, g, n), n.depth));
 }
 
 function placeRewards(lab: Lab, board: Board, n: Node) {
@@ -473,33 +485,55 @@ function placeRewards(lab: Lab, board: Board, n: Node) {
   n.pattern!.rewards.forEach((r, i) => board.put(rewards[i], { ...r }, n.depth));
 }
 
+const shift = (p: Point, d: Point, k = 1): Point => ({ x: p.x + d.x * k, y: p.y + d.y * k });
+
+/** Whether pocket `n` can take a fork: it holds something worth reaching
+ * and has costs to trade, and isn't a false ascent. */
+const forkable = (n: Node) => !!n.pattern!.gates.length && !!n.pattern!.rewards.length && !n.falseAscent;
+
 /** Where a fork's two lanes would run into pocket `n`: one tile either side
  * of its throat, from the neighbouring chamber into the pocket's, or null
- * when the pocket holds nothing worth reaching, has no costs to trade, or
- * its throat isn't a straight run between two chambers with solid rock
- * either side. Lanes are listed from the neighbour's side. */
-function forkLanes(lab: Lab, board: Board, n: Node, path: Point[]): Point[][] | null {
-  if (!n.pattern!.gates.length || !n.pattern!.rewards.length || n.falseAscent) return null;
-  const at = (p: Point) => point(p.x, p.y);
-  const throat = path.filter(p => !board.roomTiles.has(at(p)));
-  const first = path.indexOf(throat[0]);
-  if (!throat.length || first < 1 || path.indexOf(throat[throat.length - 1]) !== first + throat.length - 1) return null;
-  const dir = { x: throat[0].x - path[first - 1].x, y: throat[0].y - path[first - 1].y };
-  if (!throat.every((p, i) => p.x === throat[0].x + dir.x * i && p.y === throat[0].y + dir.y * i)) return null;
-  const side = { x: dir.y, y: dir.x };
-  const lanes = [-1, 1].map(o => throat.map(p => ({ x: p.x + side.x * o, y: p.y + side.y * o })));
-  const rock = (p: Point) => !board.cells.has(at(p));
-  const room = (p: Point) => board.roomTiles.has(at(p));
-  const fits = lanes.every((lane, i) => {
-    const o = i ? 1 : -1, last = lane[lane.length - 1];
-    return lane.every(p => rock(p) && rock({ x: p.x + side.x * o, y: p.y + side.y * o })) &&
-      room({ x: lane[0].x - dir.x, y: lane[0].y - dir.y }) && room({ x: last.x + dir.x, y: last.y + dir.y });
-  });
-  return fits ? lanes : null;
+ * when the pocket can't take a fork (`forkable`) or its throat isn't a
+ * straight run between two chambers with solid rock either side. Lanes are
+ * listed from the neighbour's side. */
+function forkLanes(board: Board, n: Node, path: Point[]): Point[][] | null {
+  if (!forkable(n)) return null;
+  const run = straightThroat(board, path);
+  if (!run) return null;
+  const { throat, dir } = run, side = { x: dir.y, y: dir.x };
+  const lanes = [-1, 1].map(o => throat.map(p => shift(p, side, o)));
+  return lanes.every((lane, i) => laneFits(board, lane, dir, shift({ x: 0, y: 0 }, side, i ? 1 : -1))) ? lanes : null;
 }
 
+/** The throat of `path` (its tiles outside every chamber) and the way it
+ * runs, when it is one straight run entered from a chamber tile; null
+ * otherwise. */
+function straightThroat(board: Board, path: Point[]): { throat: Point[]; dir: Point } | null {
+  const throat = path.filter(p => !board.roomTiles.has(point(p.x, p.y)));
+  const first = path.indexOf(throat[0]);
+  if (first < 1 || !contiguous(path, throat, first)) return null;
+  const dir = { x: throat[0].x - path[first - 1].x, y: throat[0].y - path[first - 1].y };
+  return throat.every((p, i) => p.x === throat[0].x + dir.x * i && p.y === throat[0].y + dir.y * i) ? { throat, dir } : null;
+}
+
+/** Whether `throat` is one unbroken stretch of `path` from index `first`. */
+const contiguous = (path: Point[], throat: Point[], first: number) =>
+  throat.length > 0 && path.indexOf(throat[throat.length - 1]) === first + throat.length - 1;
+
+/** Whether a lane runs through solid rock, with rock on its far side
+ * (`out`), from a chamber tile before it to a chamber tile after it. */
+function laneFits(board: Board, lane: Point[], dir: Point, out: Point) {
+  const rock = (p: Point) => !board.cells.has(point(p.x, p.y));
+  const room = (p: Point) => board.roomTiles.has(point(p.x, p.y));
+  return lane.every(p => rock(p) && rock(shift(p, out))) && room(shift(lane[0], dir, -1)) && room(shift(lane[lane.length - 1], dir));
+}
+
+/** A fork chosen for a pocket: the fork, the tiles of its lanes, and the
+ * throat it replaces. */
+type ForkPlan = { fork: Fork; lanes: Point[][]; path: Point[] };
+
 /** Fills the old throat back in and cuts the fork's lanes beside it. */
-function carveFork(lab: Lab, board: Board, n: Node, fork: Fork, lanes: Point[][], path: Point[]) {
+function carveFork(lab: Lab, board: Board, n: Node, { fork, lanes, path }: ForkPlan) {
   for (const p of path) if (!board.roomTiles.has(point(p.x, p.y))) { board.cells.delete(point(p.x, p.y)); board.metadata.delete(point(p.x, p.y)); }
   lanes.forEach((lane, i) => lane.forEach((p, k) => {
     const step = fork.lanes[i][k];
@@ -509,32 +543,45 @@ function carveFork(lab: Lab, board: Board, n: Node, fork: Fork, lanes: Point[][]
   n.lanes = lanes;
 }
 
+/** A corridor guard's rolls: its strength, profile, and the reward beside it, if any. */
+type GuardRoll = { strength: Strength; profile: TowerEnemyProfile; reward?: 'potion' | 'attack' | 'defense' };
+const GUARD_STRENGTHS = Object.entries(DELVE_TUNING.guardStrengths) as [Strength, number][];
+const GUARD_PROFILES: TowerEnemyProfile[] = ['attackHeavy', 'balanced', 'defenseHeavy'];
+const GUARD_REWARDS = Object.entries(DELVE_TUNING.guardRewards) as ['potion' | 'attack' | 'defense', number][];
+
 /** Guards the labyrinth's corridors: each corridor that doesn't lead into a
  * pocket may get one enemy on its middle corridor tile, outside any chamber,
  * with a random strength and profile, and often a potion or shard on the
  * corridor tile beside it. */
 function placeGuards(lab: Lab, board: Board) {
   const { nodes, rng } = lab, pockets = new Set(nodes.filter(n => n.pattern).map(n => n.id));
-  const strengths = Object.entries(DELVE_TUNING.guardStrengths) as [Strength, number][];
-  const profiles: TowerEnemyProfile[] = ['attackHeavy', 'balanced', 'defenseHeavy'];
-  const rewards = Object.entries(DELVE_TUNING.guardRewards) as ['potion' | 'attack' | 'defense', number][];
+  const intoPocket = (e: Lab['edges'][number]) => pockets.has(e.a) || pockets.has(e.b);
   for (const e of lab.edges) {
-    if (pockets.has(e.a) || pockets.has(e.b) || rng() >= DELVE_TUNING.guardChance) continue;
+    if (intoPocket(e) || rng() >= DELVE_TUNING.guardChance) continue;
+    // Rolled before looking for room, so every guarded corridor draws alike.
+    const guard = rollGuard(rng);
     const open = e.path.filter(p => !board.roomTiles.has(point(p.x, p.y)) && board.cells.get(point(p.x, p.y))?.kind === 'floor');
-    const strength = strengths[pickWeighted(rng, strengths.map(([, w]) => w))][0];
-    const profile = profiles[Math.floor(rng() * profiles.length)];
-    let roll = rng();
-    const reward = rewards.find(([, chance]) => (roll -= chance) < 0)?.[0];
-    if (!open.length) continue;
-    const middle = Math.floor(open.length / 2), at = open[middle], depth = board.metadata.get(point(at.x, at.y))!.depth;
-    board.put(at, gateTile(lab, { kind: 'enemy', strength, profile }, { ...nodes[e.a], depth }), depth);
-    const beside = open[middle + 1];
-    if (!reward || !beside) continue;
-    // A guard's potion may be a percent potion, as the run decides
-    // (`withPotions`).
-    const tile: Tile = reward === 'potion' ? { kind: 'potion', color: 'blue' } : { kind: reward };
-    board.put(beside, tile, board.metadata.get(point(beside.x, beside.y))!.depth);
+    if (open.length) placeGuard(lab, board, open, guard, nodes[e.a]);
   }
+}
+
+function rollGuard(rng: () => number): GuardRoll {
+  const strength = GUARD_STRENGTHS[pickWeighted(rng, GUARD_STRENGTHS.map(([, w]) => w))][0];
+  const profile = GUARD_PROFILES[Math.floor(rng() * GUARD_PROFILES.length)];
+  let roll = rng();
+  return { strength, profile, reward: GUARD_REWARDS.find(([, chance]) => (roll -= chance) < 0)?.[0] };
+}
+
+/** The guard on the middle of the corridor's `open` tiles, and its reward
+ * on the tile after it. A guard's potion may be a percent potion, as the
+ * run decides (`withPotions`). */
+function placeGuard(lab: Lab, board: Board, open: Point[], { strength, profile, reward }: GuardRoll, from: Node) {
+  const middle = Math.floor(open.length / 2), at = open[middle], depth = board.metadata.get(point(at.x, at.y))!.depth;
+  board.put(at, gateTile(lab, { kind: 'enemy', strength, profile }, { ...from, depth }), depth);
+  const beside = open[middle + 1];
+  if (!reward || !beside) return;
+  const tile: Tile = reward === 'potion' ? { kind: 'potion', color: 'blue' } : { kind: reward };
+  board.put(beside, tile, board.metadata.get(point(beside.x, beside.y))!.depth);
 }
 
 /** Coherent key sources at strategic junctions; no blanket key-solvability

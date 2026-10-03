@@ -244,27 +244,40 @@ export function planForks(b: GraphBuilder, archetype: Archetype) {
   let placed = 0;
   for (const node of b.nodes) {
     if (placed >= FORK_TUNING.maxPerFloor) break;
-    if (node.parent === null || node.gate.kind === "open" || !worthReaching(b.nodes, node.id)) continue;
-    // Floors 2 to 5 lay a key behind every door, planned from its gate: a
-    // fork there never replaces a lock (the embedder may fall back to it)
-    // nor adds one.
-    if (keyedFloor(depth) && (node.gate.kind === "door" || node.gate.kind === "steel")) continue;
-    if (rng() >= FORK_TUNING.chance(depth)) continue;
-    const colors = b.colors, bypass = b.bypass && node.route === "main";
-    const fits = (f: Fork) => onlyOpenKeys(f, colors) && (!keyedFloor(depth) || withoutLocks(f)) && (!bypass || bypassesRareKeys(f));
-    const forks = forksWorth(stepValue(node.gate), depth, archetype, rng, fits);
+    if (!mayFork(b, node) || rng() >= FORK_TUNING.chance(depth)) continue;
+    const forks = forksWorth(stepValue(node.gate), depth, archetype, rng, forkFits(b, node));
     if (!forks.length) continue;
     node.forks = forks;
     placed++;
   }
 }
 
+/** Whether `node`'s gate may become a fork: a gate into a region worth
+ * reaching. Floors 2 to 5 lay a key behind every door, planned from its
+ * gate: a fork there never replaces a lock (the embedder may fall back to
+ * it). */
+function mayFork(b: GraphBuilder, node: StrategicNode) {
+  if (node.parent === null || node.gate.kind === "open" || !worthReaching(b.nodes, node.id)) return false;
+  return !keyedFloor(b.depth) || !isLock(node.gate);
+}
+
+/** The forks `node` may take: only keys open on this floor, no lock on
+ * floors 2 to 5, and in the first tower a lane past blue and red on the
+ * main route. */
+function forkFits(b: GraphBuilder, node: StrategicNode) {
+  const colors = b.colors, keyed = keyedFloor(b.depth), bypass = b.bypass && node.route === "main";
+  return (f: Fork) => onlyOpenKeys(f, colors) && (!keyed || withoutLocks(f)) && (!bypass || bypassesRareKeys(f));
+}
+
+/** A door that takes keys. */
+const isLock = (s: { kind: string }) => s.kind === "door" || s.kind === "steel";
+
 /** Whether some lane of the fork needs no blue or red key, so a hero
  * without one still gets through. */
 const bypassesRareKeys = (f: Fork) => f.lanes.some((lane) => onlyOpenKeys(lane, YELLOW_ONLY));
 
 /** A fork with no lane through a door that takes keys. */
-const withoutLocks = (f: Fork) => !f.lanes.some((lane) => lane.some((s) => s.kind === "door" || s.kind === "steel"));
+const withoutLocks = (f: Fork) => !f.lanes.some((lane) => lane.some(isLock));
 
 /** Forks priced near `v` for a floor `depth` deep (Delve passes its
  * equivalent floor), best first, the rest shallower and narrower first.

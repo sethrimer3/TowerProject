@@ -1,7 +1,7 @@
 import { whole } from "./whole.ts";
 import { snap } from "./exact.ts";
 import type { Save } from "./entities.ts";
-import { BONUS_RANK, FIND_POTION_BASE, FIND_POTION_MAX, FLOOR_GOLD_BASE, FLOOR_GOLD_RANK, FLOOR_SILVER_BASE, FLOOR_SILVER_RANK, FIND_POTION_RANK, REVIVE_BASE, REVIVE_MAX, REVIVE_RANK, GOLD_SHOP, schedulePrice, POTION_PERCENT_BASE, POTION_PERCENT_RANK, TRAINING, TRAINING_PER_LEVEL, UPGRADES, isStatRow, levelForXp, trained, trainingWorth, type GoldItemId, type TrainingId, type UpgradeId } from "./config.ts";
+import { BONUS_RANK, FIND_POTION_BASE, FIND_POTION_MAX, FLOOR_GOLD_BASE, FLOOR_GOLD_RANK, FLOOR_SILVER_BASE, FLOOR_SILVER_RANK, FIND_POTION_RANK, REVIVE_BASE, REVIVE_MAX, REVIVE_RANK, GOLD_SHOP, schedulePrice, POTION_PERCENT_BASE, POTION_PERCENT_RANK, TRAINING, TRAINING_PER_LEVEL, UPGRADES, isStatRow, levelForXp, trained, trainingWorth, type GoldItemId, type StatTrainingRow, type TrainingId, type TrainingRow, type UpgradeId } from "./config.ts";
 import { getEquippedBonuses } from "./crafting.ts";
 import { RESEARCH, researched } from "./archives.ts";
 import { trainingGold } from "./training-jobs.ts";
@@ -188,26 +188,47 @@ export const trainingMaxed = (save: Pick<Save, "training"> & Partial<Pick<Save, 
  * multiplier (its unit "×", what a rank adds in percent). A row at its most
  * ranks has no next rank to buy. */
 export function trainingStep(save: Save, id: TrainingId) {
-  const row = TRAINING.find((t) => t.id === id)!, maxed = trainingMaxed(save, id),
-    free = save.settings.freePurchases,
-    affordable = !maxed && (free || trainingPoints(save).left >= row.cost),
-    // A trainer's price, in Gold, for the next rank.
-    gold = trainingGold(row.cost, save.training[id]),
-    buy = { affordable, maxed, gold, goldAffordable: !maxed && (free || save.gold >= gold) };
-  if (!isStatRow(row)) {
-    const ranks = save.training[id];
-    if (id === "floorGold") return { row, unit: "", now: floorGoldAt(ranks), next: floorGoldAt(ranks + 1), worth: FLOOR_GOLD_RANK, ...buy };
-    if (id === "floorSilver") return { row, unit: "", now: floorSilverAt(ranks), next: floorSilverAt(ranks + 1), worth: FLOOR_SILVER_RANK, ...buy };
-    // A multiplier's rank reads as the percent it adds.
-    if (MULTIPLIER_ROWS.has(id)) return { row, unit: "×", now: bonusAt(ranks) / 100, next: bonusAt(ranks + 1) / 100, worth: BONUS_RANK, ...buy };
-    const [value, rank] = id === "findPotion" ? [findPotionChance, FIND_POTION_RANK]
-      : id === "revive" ? [reviveChanceAt, REVIVE_RANK]
-      : [(r: number) => POTION_PERCENT_BASE + POTION_PERCENT_RANK * r, POTION_PERCENT_RANK];
-    return { row, unit: "%", now: value(ranks) / 100, next: value(maxed ? ranks : ranks + 1) / 100, worth: rank / 100, ...buy };
-  }
-  const stat = row.stat;
+  const row = TRAINING.find((t) => t.id === id)!, maxed = trainingMaxed(save, id);
+  const buy = trainingPrices(save, row, maxed);
+  if (isStatRow(row)) return { row, ...statStep(save, row), ...buy };
+  return { row, ...valueStep(id, save.training[id], maxed), ...buy };
+}
+
+/** Whether the next rank of `row` can be bought now with training points
+ * (`affordable`) or Gold (`goldAffordable`), whether there is one, and a
+ * trainer's Gold price for it. */
+function trainingPrices(save: Save, row: TrainingRow, maxed: boolean) {
+  const free = save.settings.freePurchases, gold = trainingGold(row.cost, save.training[row.id]);
+  return {
+    affordable: !maxed && (free || trainingPoints(save).left >= row.cost),
+    maxed,
+    gold,
+    goldAffordable: !maxed && (free || save.gold >= gold),
+  };
+}
+
+/** A stat row: the hero's stat now and with one more rank, as the page
+ * shows it (whole, its fraction kept in play), and what a rank adds at the
+ * hero's level. */
+function statStep(save: Save, row: StatTrainingRow) {
+  const stat = row.stat, id = row.id;
   const now = loadout(save)[stat], next = loadout({ ...save, training: { ...save.training, [id]: save.training[id] + 1 } })[stat];
-  const worth = trainingWorth(row, levelForXp(save.xp));
-  // The hero's stat as the page shows it: whole, its fraction kept in play.
-  return { row, unit: "", now: whole(now), next: whole(next), worth, ...buy };
+  return { unit: "", now: whole(now), next: whole(next), worth: trainingWorth(row, levelForXp(save.xp)) };
+}
+
+/** Any other row at `ranks`: the Gold or Silver a new floor pays, a
+ * multiplier (a rank reads as the percent it adds), or a percentage. */
+function valueStep(id: TrainingId, ranks: number, maxed: boolean) {
+  if (id === "floorGold") return { unit: "", now: floorGoldAt(ranks), next: floorGoldAt(ranks + 1), worth: FLOOR_GOLD_RANK };
+  if (id === "floorSilver") return { unit: "", now: floorSilverAt(ranks), next: floorSilverAt(ranks + 1), worth: FLOOR_SILVER_RANK };
+  if (MULTIPLIER_ROWS.has(id)) return { unit: "×", now: bonusAt(ranks) / 100, next: bonusAt(ranks + 1) / 100, worth: BONUS_RANK };
+  const [value, rank] = percentRow(id);
+  return { unit: "%", now: value(ranks) / 100, next: value(maxed ? ranks : ranks + 1) / 100, worth: rank / 100 };
+}
+
+/** A percentage row's value at a number of ranks, and what a rank adds. */
+function percentRow(id: TrainingId): [(ranks: number) => number, number] {
+  if (id === "findPotion") return [findPotionChance, FIND_POTION_RANK];
+  if (id === "revive") return [reviveChanceAt, REVIVE_RANK];
+  return [(r: number) => POTION_PERCENT_BASE + POTION_PERCENT_RANK * r, POTION_PERCENT_RANK];
 }

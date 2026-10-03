@@ -410,12 +410,21 @@ export class Renderer {
    * or popup is showing, no level-up is shining, and no decor
    * effect is playing. (Torches and grass still sway.) Used by Battery saver. */
   isIdle(now: number) {
-    const g = this.game, p = g.run.player, t = this.target(this.density), eps = 0.01;
-    return Math.abs(this.playerX - p.x) < eps && Math.abs(this.playerY - p.y) < eps &&
-      Math.abs(this.left - t.left) < eps && Math.abs(this.bottom - t.bottom) < eps &&
-      !g.route.length && !g.encounter && now - this.arrived > ARRIVAL_GLOW_MS && g.blocked.until <= now && g.effect.until <= now && this.popups.idle(now) && !this.decor.busy &&
+    const g = this.game;
+    return this.settled() && !g.route.length && !g.encounter && this.popups.idle(now) && !this.decor.busy && this.effectsOver(now);
+  }
+  /** The hero and the camera stand where they are headed. */
+  private settled() {
+    const p = this.game.run.player, t = this.target(this.density), near = (a: number, b: number) => Math.abs(a - b) < 0.01;
+    return near(this.playerX, p.x) && near(this.playerY, p.y) && near(this.left, t.left) && near(this.bottom, t.bottom);
+  }
+  /** Every timed effect has played out: the arrival glow, a blocked step,
+   * the feedback text, the level-up, revivals and a Gem's sparkle. */
+  private effectsOver(now: number) {
+    const g = this.game, sparkle = g.gemFinder.sparkle;
+    return now - this.arrived > ARRIVAL_GLOW_MS && g.blocked.until <= now && g.effect.until <= now &&
       now - g.levelUpAt >= LEVEL_UP_MS + POINTS_MS && g.revivedAt.every((at) => now - at >= REVIVE_MS) &&
-      (!g.gemFinder.sparkle || now - g.gemFinder.sparkle.at >= GEM_SPARKLE_MS);
+      (!sparkle || now - sparkle.at >= GEM_SPARKLE_MS);
   }
   /** Active torches roughly within the camera viewport, padded so a torch
    * whose center is just offscreen can still light visible ground. Cheap

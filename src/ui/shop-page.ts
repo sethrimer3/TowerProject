@@ -30,6 +30,9 @@ export function countdown(ms: number) {
   return `${two(Math.floor(s / 3600))}:${two(Math.floor(s / 60) % 60)}:${two(s % 60)}`;
 }
 
+/** An offer's button: its label, whether it is closed, and the line under it. */
+type OfferAction = { label: string; disabled: boolean; why: string };
+
 /** The Shop page: limited offers, then one-time offers not yet owned, then
  * the Gem offers in two columns, then the one-time offers owned. Each card
  * opens its details; its button buys it. Free claims and purchases count
@@ -106,15 +109,22 @@ export class ShopPage {
 
   /** The label and state of `o`'s button, and a line under it saying why it
    * waits, if it does. */
-  private action(o: ShopOffer): { label: string; disabled: boolean; why: string } {
-    const save = this.ctx.game.save, now = this.now, why = refusal(save, o, now, this.ctx.game.free ? "free" : "store");
+  private action(o: ShopOffer): OfferAction {
     if (o.price.kind === "store") return { label: "Go to store", disabled: false, why: "" };
+    const why = refusal(this.ctx.game.save, o, this.now, this.ctx.game.free ? "free" : "store");
+    if (why) return this.refused(o, why);
+    return { label: o.price.kind === "free" ? "Claim" : this.priceLabel(o), disabled: this.busy, why: "" };
+  }
+
+  /** A refused offer's button, closed, and the line under it saying why:
+   * when a daily one comes back, how many were bought, or the currency held. */
+  private refused(o: ShopOffer, why: Refusal): OfferAction {
+    const save = this.ctx.game.save, now = this.now;
     if (why === "limit" && o.daily) return { label: "Claimed", disabled: true, why: `Next in <span data-countdown="day">${countdown(untilNextDay(now))}</span>` };
     if (why === "limit" || why === "owned") return { label: o.purchaseLimit === 1 ? "Owned" : `Purchased ${timesBought(save, o, now)}/${o.purchaseLimit}`, disabled: true, why: "" };
     if (why === "short" && o.price.kind === "currency")
       return { label: this.priceLabel(o), disabled: true, why: `You have ${whole(CURRENCIES[o.price.currency].balance(save)).toLocaleString("en-US")} ${CURRENCIES[o.price.currency].name}` };
-    if (why) return { label: this.priceLabel(o), disabled: true, why: REFUSALS[why] };
-    return { label: o.price.kind === "free" ? "Claim" : this.priceLabel(o), disabled: this.busy, why: "" };
+    return { label: this.priceLabel(o), disabled: true, why: REFUSALS[why] };
   }
 
   private card(o: ShopOffer) {

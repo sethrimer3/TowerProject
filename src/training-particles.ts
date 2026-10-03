@@ -16,6 +16,16 @@ const GOLD = [243, 207, 130], BLUE = [38, 84, 205], RED = [255, 52, 40];
  * centre (pixels) it reaches. */
 const STREAM = 170, REACH = 38;
 
+/** Sizes the canvas to its box at the screen's pixel density (at most 2)
+ * and clears it, drawing in CSS pixels. */
+function fitCanvas(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, w: number, h: number) {
+  const dpr = Math.min(devicePixelRatio || 1, 2), width = Math.round(w * dpr), height = Math.round(h * dpr);
+  if (canvas.width !== width) canvas.width = width;
+  if (canvas.height !== height) canvas.height = height;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+}
+
 /** The Training tab's backdrop: golden square specks drifting softly. Once
  * a rank is in training they all fade to dark blue, and a steady stream of
  * the same kind of fluid the skill trees use carries them left to right
@@ -35,17 +45,11 @@ export class TrainingParticles {
   draw(canvas: HTMLCanvasElement, time: number, scene: TrainingScene) {
     const ctx = canvas.getContext("2d"), w = canvas.clientWidth, h = canvas.clientHeight;
     if (!ctx || !w || !h) return;
-    const dpr = Math.min(devicePixelRatio || 1, 2), width = Math.round(w * dpr), height = Math.round(h * dpr);
-    if (canvas.width !== width) canvas.width = width;
-    if (canvas.height !== height) canvas.height = height;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, w, h);
+    fitCanvas(canvas, ctx, w, h);
     if (scene.reduced) return;
     const size = { w, h }, key = `${w}x${h}`;
     if (!this.specks.length || key !== this.canvasSize) this.reset(size, key);
-    const dt = this.last && time - this.last < 150 ? Math.min((time - this.last) / 1000, 1 / 30) : 0;
-    this.last = time;
-    this.clock += dt;
+    const dt = this.tick(time);
     // The fluid steps at most 30 times a second; drawing stays smooth.
     this.elapsed += dt;
     if (this.elapsed >= 1 / 30) {
@@ -57,6 +61,15 @@ export class TrainingParticles {
       paint(ctx, s, size);
     }
     ctx.globalAlpha = 1;
+  }
+
+  /** The seconds since the last frame, at most a thirtieth; none after a
+   * pause (the page hidden, or the tab away). */
+  private tick(time: number) {
+    const gap = time - this.last, dt = this.last && gap < 150 ? Math.min(gap / 1000, 1 / 30) : 0;
+    this.last = time;
+    this.clock += dt;
+    return dt;
   }
 
   /** A still fluid and fresh golden specks. */

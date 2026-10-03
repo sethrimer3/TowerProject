@@ -105,17 +105,18 @@ function pathTo(r: Reached): Step[] {
 /** Whether `card` wants the tile, from where the hero stands. The Delve's
  * STAIRS card is decided over the whole search instead (`climb`). */
 function wants(card: CardId, t: Tile, at: Position): boolean {
-  switch (card) {
-    case "stairs": return t.kind === "stairs";
-    case "heal": return t.kind === "potion";
-    case "door": return t.kind === "door" && doorCost(t, at.run.player) !== null;
-    case "yellowKey": return t.kind === "key" && t.color === "yellow";
-    case "blueKey": return t.kind === "key" && t.color === "blue";
-    // An impervious monster can't be fought at all, so it is never a target.
-    case "monster": return t.kind === "enemy" && !predict(at.run.player, t.enemy!).impervious;
-    case "equipment": return t.kind === "attack" || t.kind === "defense";
-  }
+  return WANTS[card](t, at);
 }
+const WANTS: Record<CardId, (t: Tile, at: Position) => boolean> = {
+  stairs: (t) => t.kind === "stairs",
+  heal: (t) => t.kind === "potion",
+  door: (t, at) => t.kind === "door" && doorCost(t, at.run.player) !== null,
+  yellowKey: (t) => t.kind === "key" && t.color === "yellow",
+  blueKey: (t) => t.kind === "key" && t.color === "blue",
+  // An impervious monster can't be fought at all, so it is never a target.
+  monster: (t, at) => t.kind === "enemy" && !predict(at.run.player, t.enemy!).impervious,
+  equipment: (t) => t.kind === "attack" || t.kind === "defense",
+};
 
 /** The first card in `hand` with a target the hero can reach, and the
  * shortest path to its closest target; null when no card can act. It looks

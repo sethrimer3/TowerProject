@@ -39,9 +39,17 @@ export const FALSE_ASCENTS: Pattern[] = [
   { id: 'FalseAscendingDeadEnd', quality: 'poor', gates: [enemy], rewards: [] },
   { id: 'FalseAscendingMinorReward', quality: 'poor', gates: [enemy], rewards: [{ kind: 'potion', amount: 20 }] },
 ];
+/** Where a pocket's pattern goes: its area, the branch it ends, and the
+ * most gates its throat holds. */
+export type PatternPlace = { area: number; branch?: number; maxGates?: number };
 /** Trap frequency rises with depth; long detours only go on long branches;
  * a pattern with a key colour `colors` closes never goes. */
-export function choosePattern(rng: () => number, area: number, branch = 1, maxGates = Infinity, colors: KeyColors = ALL_KEY_COLORS): Pattern {
+export function choosePattern(rng: () => number, { area, branch = 1, maxGates = Infinity }: PatternPlace, colors: KeyColors = ALL_KEY_COLORS): Pattern {
   const options = DELVE_PATTERNS.filter(p => (p.minBranch ?? 0) <= branch && p.gates.length <= maxGates && onlyOpenKeys(p, colors));
-  return pick(options.map(v => ({ v, w: v.quality === 'good' ? 3 : v.quality === 'poor' ? 0.7 + Math.min(1, area / 8) : 2 })), rng);
+  return pick(options.map(v => ({ v, w: patternWeight(v, area) })), rng);
+}
+/** How often a pattern is drawn: good ones most, poor ones more with each area. */
+function patternWeight(v: Pattern, area: number) {
+  if (v.quality === 'good') return 3;
+  return v.quality === 'poor' ? 0.7 + Math.min(1, area / 8) : 2;
 }
