@@ -94,8 +94,8 @@ try {
       s.gems = 260;
       s.xp = 900;
       for (const k of Object.keys(s.materials)) s.materials[k] = 120;
-      s.tower.reached = 31;
-      s.tower.best = 31;
+      s.tower.reached = 41;
+      s.tower.best = 41;
       s.delve.reached = 57;
       s.delve.best = 57;
       s.tower.log = {
@@ -418,14 +418,14 @@ try {
   }
   await leaveRun();
   // In the forest, Goals shows the Tower's checkpoints: claiming an unlock
-  // (Combat Forecast, then Warp) explains it, a premium reward offers the
+  // (Damage Prediction, then Warp) explains it, a premium reward offers the
   // pass, and a reached checkpoint asks to warp there.
   await click("#section-pick");
   await shot("rich.goals");
   await click('[data-goal="1:10:0"]');
-  await shot("rich.goals.forecastUnlocked");
+  await shot("rich.goals.predictionUnlocked");
   await click("#unlock-ok");
-  await click('[data-goal="1:30:0"]');
+  await click('[data-goal="1:40:0"]');
   await shot("rich.goals.warpUnlocked");
   await click("#unlock-ok");
   await shot("rich.goals.claimed");

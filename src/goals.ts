@@ -9,12 +9,13 @@ import { TIERS } from "./tiers.ts";
 // reward beside it, claimed the same way once the Premium Pass for the
 // tower's set of three is owned. Claims last between runs (`save.goals`).
 
-/** What a checkpoint can unlock: Combat Forecast (an enemy's inspect panel
- * says how many hits defeat it), Attack Lore (and how much more ATK would
- * take one hit fewer), and Warp (starting a run past a completed
+/** What a checkpoint can unlock: Damage Prediction (an enemy's inspect
+ * panel says what the fight would cost and whether it is survivable),
+ * Combat Forecast (how many hits defeat it), Attack Lore (and how much more
+ * ATK would take one hit fewer), and Warp (starting a run past a completed
  * checkpoint). */
-export type GoalUnlock = "combatForecast" | "attackLore" | "warp";
-export const UNLOCK_NAMES: Record<GoalUnlock, string> = { combatForecast: "Combat Forecast", attackLore: "Attack Lore", warp: "Warp" };
+export type GoalUnlock = "damagePrediction" | "combatForecast" | "attackLore" | "warp";
+export const UNLOCK_NAMES: Record<GoalUnlock, string> = { damagePrediction: "Damage Prediction", combatForecast: "Combat Forecast", attackLore: "Attack Lore", warp: "Warp" };
 /** What a checkpoint pays: an unlock, or an amount of a currency. */
 export type GoalReward = { kind: "unlock"; unlock: GoalUnlock } | { kind: "currency"; currency: CurrencyId; amount: number };
 export type Checkpoint = { floor: number; reward: GoalReward; premium: GoalReward };
@@ -30,9 +31,10 @@ const gems = (amount: number): GoalReward => ({ kind: "currency", currency: "gem
 const unlock = (unlock: GoalUnlock): GoalReward => ({ kind: "unlock", unlock });
 /** Tower I's first checkpoints: an unlock each, and Gems. */
 const TOWER_ONE: Record<number, Omit<Checkpoint, "floor">> = {
-  10: { reward: unlock("combatForecast"), premium: gems(15) },
-  20: { reward: unlock("attackLore"), premium: gems(25) },
-  30: { reward: unlock("warp"), premium: gems(35) },
+  10: { reward: unlock("damagePrediction"), premium: gems(10) },
+  20: { reward: unlock("combatForecast"), premium: gems(15) },
+  30: { reward: unlock("attackLore"), premium: gems(25) },
+  40: { reward: unlock("warp"), premium: gems(35) },
 };
 
 /** A tower's checkpoints, lowest first.

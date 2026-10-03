@@ -155,15 +155,23 @@ A Tower floor whose stairs the hero has climbed, reaching the floor above. A tow
 _Avoid_: floor reached (for progress), height
 
 **Warp**:
-Beginning a new Tower run at once on the floor just above a checkpoint already completed, from the Goals screen. Unlocked by claiming Tower I's floor 30 checkpoint; entering the tower from the forest always starts on floor 1.
+Beginning a new Tower run at once on the floor just above a checkpoint already completed, from the Goals screen. Unlocked by claiming Tower I's floor 40 checkpoint; entering the tower from the forest always starts on floor 1.
 _Avoid_: teleport, starting floor
 
+**Damage Prediction**:
+The line a monster's inspect panel adds in a run once Tower I's floor 10 checkpoint is claimed: the HP the fight would cost and whether the hero survives it (Survivable, LETHAL, or Instakill when the hero's first strike fells it).
+_Avoid_: combat preview
+
+**Instakill**:
+A fight the hero's first strike wins, so the monster never strikes back.
+_Avoid_: one-shot
+
 **Combat Forecast**:
-The line a monster's inspect panel adds in a run once Tower I's floor 10 checkpoint is claimed: how many of the hero's hits defeat it, or Instakill for one.
+The line a monster's inspect panel adds in a run once Tower I's floor 20 checkpoint is claimed: how many of the hero's hits defeat it, or Instakill for one.
 _Avoid_: hit count, kill preview
 
 **Attack Lore**:
-The line a monster's inspect panel adds in a run once Tower I's floor 20 checkpoint is claimed: the fewest whole points of ATK more that would defeat it in one hit fewer.
+The line a monster's inspect panel adds in a run once Tower I's floor 30 checkpoint is claimed: the fewest whole points of ATK more that would defeat it in one hit fewer.
 _Avoid_: attack breakpoint
 
 **Premium Pass**:

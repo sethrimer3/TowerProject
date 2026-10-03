@@ -27,18 +27,24 @@ test("Attack Lore finds the fewest whole points of ATK that take one hit fewer",
   assert.equal(attackForFewerHits(hero(10), foe(50, 0)), 3);
 });
 
-test("the enemy panel adds Combat Forecast's hits and Attack Lore's ATK once each Goal is claimed", () => {
+test("the enemy panel adds Damage Prediction, Combat Forecast's hits and Attack Lore's ATK once each Goal is claimed", () => {
   const g = new Game(defaults());
   const w = g.world as RoomWorld;
   w.cells = new Map([["1,0", { kind: "enemy", enemy: foe(50, 0) }], ["2,0", { kind: "enemy", enemy: foe(5, 0) }]]);
   Object.assign(g.run.player, { attack: 10, defense: 0 });
   const body = (x: number) => tileInfo(g, x, 0).body;
-  assert.doesNotMatch(body(1), /hits|Instakill|ATK:/);
+  assert.doesNotMatch(body(1), /damage|hits|Instakill|ATK:/);
   g.save.goals.claimed["1"] = [10];
+  assert.match(body(1), /26 damage · Survivable/);
+  assert.match(body(2), /0 damage · Instakill/, "the hero's first strike fells it");
+  assert.doesNotMatch(body(1), /hits|ATK:/);
+  g.save.goals.claimed["1"] = [20];
+  assert.doesNotMatch(body(1), /damage/);
   assert.match(body(1), /5 hits to defeat/);
   assert.match(body(2), /Instakill/);
-  assert.doesNotMatch(body(1), /ATK:/);
   g.save.goals.claimed["1"] = [10, 20];
+  assert.equal(body(2).match(/Instakill/g)!.length, 1, "said once");
+  g.save.goals.claimed["1"] = [30];
   assert.match(body(1), /\+3 ATK: 4 hits/);
   assert.doesNotMatch(body(2), /ATK:/, "nothing fewer than one hit");
 });

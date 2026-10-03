@@ -18,15 +18,17 @@ const GROUND_PX = 96;
 const TOP_PX = 160;
 
 const CURRENCY_ICONS: Record<CurrencyId, () => string> = { gems: () => gemIcon("gem-icon goal-icon"), gold: goldIcon };
-/** Each unlock's icon: Combat Forecast an eye over crossed blades, Attack
+/** Each unlock's icon: Damage Prediction a cracked heart, Combat Forecast an eye over crossed blades, Attack
  * Lore an open book with a rising arrow, Warp a portal's swirl. */
 const UNLOCK_ICONS: Record<GoalUnlock, string> = {
+  damagePrediction: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5S3.5 15 3.5 9A4.5 4.5 0 0 1 12 6.6 4.5 4.5 0 0 1 20.5 9c0 6-8.5 11.5-8.5 11.5z" fill="#4a1a22" stroke="#e86d7a" stroke-width="1.6" stroke-linejoin="round"/><path d="M12.5 7.5l-2 4 3 1.5-2 4" fill="none" stroke="#ffd0d5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
   combatForecast: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19L17 7M19 19L7 7" stroke="#c9ced8" stroke-width="2" stroke-linecap="round"/><path d="M3.5 9.5C6 5.5 9 4 12 4s6 1.5 8.5 5.5C18 13.5 15 15 12 15s-6-1.5-8.5-5.5z" fill="#1c2a44" stroke="#8fc4ff" stroke-width="1.5"/><circle cx="12" cy="9.5" r="2.6" fill="#8fc4ff"/></svg>`,
   attackLore: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7.5C9.5 5.5 6.5 5 3 5.5v12c3.5-.5 6.5 0 9 2 2.5-2 5.5-2.5 9-2v-12c-3.5-.5-6.5 0-9 2z" fill="#3a2a1a" stroke="#e2a15c" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 7.5v12" stroke="#e2a15c" stroke-width="1.2"/><path d="M16.5 15V9.5M14.3 11.6l2.2-2.3 2.2 2.3" fill="none" stroke="#ffd59a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
   warp: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="12" rx="8" ry="10" fill="#2a1d4a" stroke="#c9a6ff" stroke-width="1.6"/><path d="M12 6.5c3 0 4.6 2.4 4 4.8-.6 2.3-3.4 3.3-5.2 2-1.5-1-1.2-3.2.4-3.6 1.1-.3 2 .6 1.6 1.5" fill="none" stroke="#f0e2ff" stroke-width="1.5" stroke-linecap="round"/></svg>`,
 };
 /** What each unlock does, shown once it is claimed. */
 const UNLOCK_TUTORIALS: Record<GoalUnlock, string> = {
+  damagePrediction: `<p>Inspect an enemy in a run and its panel now says how much HP the fight would cost you, and whether you survive it: Survivable, LETHAL, or Instakill when your first strike defeats it.</p>`,
   combatForecast: `<p>Inspect an enemy in a run and its panel now also says how many of your hits defeat it, or Instakill when one does.</p>`,
   attackLore: `<p>Inspect an enemy in a run and its panel now also says how much more ATK would defeat it in one hit fewer.</p>` +
     `<p class="hint">Train ATK in the run, even mid-fight, to make the most of it.</p>`,
