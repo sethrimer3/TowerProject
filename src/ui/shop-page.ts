@@ -122,8 +122,9 @@ export class ShopPage {
     const save = this.ctx.game.save, now = this.now;
     if (why === "limit" && o.daily) return { label: "Claimed", disabled: true, why: `Next in <span data-countdown="day">${countdown(untilNextDay(now))}</span>` };
     if (why === "limit" || why === "owned") return { label: o.purchaseLimit === 1 ? "Owned" : `Purchased ${timesBought(save, o, now)}/${o.purchaseLimit}`, disabled: true, why: "" };
+    // Short of Gems, the offer stays pressable: a press points to the Gem packs.
     if (why === "short" && o.price.kind === "currency")
-      return { label: this.priceLabel(o), disabled: true, why: `You have ${whole(CURRENCIES[o.price.currency].balance(save)).toLocaleString("en-US")} ${CURRENCIES[o.price.currency].name}` };
+      return { label: this.priceLabel(o), disabled: o.price.currency !== "gems", why: `You have ${whole(CURRENCIES[o.price.currency].balance(save)).toLocaleString("en-US")} ${CURRENCIES[o.price.currency].name}` };
     return { label: this.priceLabel(o), disabled: true, why: REFUSALS[why] };
   }
 
@@ -191,6 +192,11 @@ export class ShopPage {
   /** A card's button: an expensive Gem price asks first; the rest buy at once. */
   private choose(o: ShopOffer) {
     const p = o.price;
+    if (p.kind === "currency" && p.currency === "gems" && !this.ctx.game.free && this.ctx.game.save.gems < p.amount) {
+      this.say("Not enough Gems: buy a Gem pack below.");
+      el("shop-message").textContent = this.message;
+      return document.querySelector(".shop-gems")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
     if (p.kind === "currency" && p.currency === "gems" && p.amount >= CONFIRM_GEMS && !this.ctx.game.free) return this.showDetails(o);
     void this.buy(o);
   }

@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   ARCHIVISTS, HISTORY_LIMIT, RESEARCH, RESEARCH_CATEGORIES, RESEARCH_IDS, RESEARCH_TARGETS, cancelResearch, decodeArchives,
-  defaultArchives, duration, hireArchivist, jobProgress, researched, settleArchives, startResearch, status,
+  defaultArchives, duration, hireArchivist, jobProgress, researchLevel, researched, settleArchives, startResearch, status, withNextLevel,
 } from "../src/archives.ts";
 import { UPGRADES } from "../src/config.ts";
 import { decode, defaults } from "../src/save.ts";
@@ -126,6 +126,15 @@ test("archivists are hired one at a time for Gems, not Gold, up to the maximum",
   assert.equal(save.gold, 1e9);
   save.gems = 1e9;
   assert.equal(hireArchivist(save), false);
+});
+
+test("a project's next level reads as the total before and after it", () => {
+  const a = owner().archives, show = (archives: typeof a, t: "focusPerRun" | "potionHeal" | "trainingSpeed") =>
+    RESEARCH_TARGETS[t].shown(researched(archives, t, RESEARCH_TARGETS[t].base));
+  assert.deepEqual([show(a, "focusPerRun"), show(withNextLevel(a, "focusCount"), "focusPerRun")], ["1 Focus use", "2 Focus uses"]);
+  assert.deepEqual([show(a, "potionHeal"), show(withNextLevel(a, "potionHp"), "potionHeal")], ["100% potion healing", "103% potion healing"]);
+  assert.equal(show(a, "trainingSpeed"), "100% training speed");
+  assert.equal(researchLevel(a, "focusCount"), 0, "the Archives themselves are left alone");
 });
 
 test("the Archives save and load, dropping anything malformed", () => {

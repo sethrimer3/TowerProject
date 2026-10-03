@@ -1,12 +1,15 @@
 import {
   ARCHIVISTS, RESEARCH, RESEARCH_CATEGORIES, RESEARCH_IDS, RESEARCH_TARGETS, activeSlot, cannotStart, duration, jobProgress,
-  missing, nextArchivistPrice, nextLevel, research, researchLevel, status,
-  type ResearchCategory, type ResearchId, type ResearchRequirement, type ResearchStatus,
+  missing, nextArchivistPrice, nextLevel, research, researchLevel, researched, status, withNextLevel,
+  type ArchivesSave, type ResearchCategory, type ResearchId, type ResearchRequirement, type ResearchStatus, type ResearchTarget,
 } from "../archives.ts";
 import { UPGRADES } from "../config.ts";
+import type { Save } from "../entities.ts";
+import { loadout } from "../loadout.ts";
 import type { AppContext } from "./app.ts";
 import { currencyAmount, devAmount } from "./hud.ts";
 import { el, gemIcon, uiSprite } from "./dom.ts";
+import { askForGems } from "./dialogs.ts";
 
 /** The status filter's choices; Locked only in Dev mode, the one place
  * research not yet unlocked is listed. */
@@ -27,7 +30,11 @@ const formatDate = (at: number) => {
   const d = new Date(at), two = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${two(d.getMonth() + 1)}-${two(d.getDate())} ${two(d.getHours())}:${two(d.getMinutes())}`;
 };
-const requirementText = (r: ResearchRequirement) =>
+/** `target`'s total with the Archives as `archives`, as the game reads it:
+ * Undo Count from the loadout's own undos, the rest from their base. */
+const targetValue = (save: Save, target: ResearchTarget, archives: ArchivesSave) =>
+  target === "undoCapacity" ? loadout({ ...save, archives }).undoCapacity : researched(archives, target, RESEARCH_TARGETS[target].base);
+const requirementText =(r: ResearchRequirement) =>
   "upgrade" in r ? UPGRADES.find((u) => u.id === r.upgrade)!.name
   : "research" in r ? `${RESEARCH[r.research as ResearchId].name} level ${r.level}`
   : `Hero level ${r.playerLevel}`;
@@ -67,7 +74,7 @@ export class ArchivesPanel {
       this.ctx.update();
       this.rerender();
     };
-    document.querySelectorAll<HTMLButtonElement>("[data-hire]").forEach((b) => (b.onclick = () => act(game.research.hire())));
+    document.querySelectorAll<HTMLButtonElement>("[data-hire]").forEach((b) => (b.onclick = () => this.hire(act)));
     document.querySelectorAll<HTMLButtonElement>("[data-stop]").forEach((b) => (b.onclick = () => act(game.research.cancel(Number(b.dataset.stop)))));
     document.querySelectorAll<HTMLButtonElement>("[data-finish]").forEach((b) => (b.onclick = () => act(game.research.finishNow(Number(b.dataset.finish)).length > 0)));
     document.querySelectorAll<HTMLInputElement>("[data-auto]").forEach((box) => (box.onchange = () => {
@@ -118,6 +125,23 @@ export class ArchivesPanel {
     }));
   }
 
+  /** Whether the Gems held fall short of the next archivist. */
+  private hireShort() {
+    const game = this.ctx.game, price = nextArchivistPrice(game.save.archives);
+    return price !== undefined && !game.free && game.save.gems < price;
+  }
+  /** Asks before spending Gems on the next archivist, or offers the Shop
+   * when too few are held. */
+  private hire(act: (done: boolean) => void) {
+    const game = this.ctx.game, price = nextArchivistPrice(game.save.archives);
+    if (price === undefined) return;
+    if (this.hireShort()) return askForGems(this.ctx);
+    this.ctx.confirm(
+      { title: "Hire an archivist?", body: `Spend ${price} Gems on one more archivist: one more research runs at once.`, label: `Hire · ${price} Gems`, cancel: "Cancel" },
+      () => act(game.research.hire()),
+    );
+  }
+
   /** Each archivist slot: busy (a bar, the time left, Stop), idle, the next
    * one to hire, or locked beyond it. */
   private archivistsHtml() {
@@ -127,7 +151,7 @@ export class ArchivesPanel {
       const slot = a.slots[i], title = `<small>ARCHIVIST ${i + 1}</small>`;
       if (!slot) {
         if (i === a.slots.length && price !== undefined)
-          return `<article class="archivist hire" role="listitem">${title}<button data-hire ${game.save.gems < price && !game.free ? "disabled" : ""} aria-label="Hire an archivist for ${price} Gems">Hire · ${gemIcon()} ${price}</button></article>`;
+          return `<article class="archivist hire" role="listitem">${title}<button class="archivist-hire${this.hireShort() ? " short" : ""}" data-hire aria-label="Hire an archivist for ${price} Gems" title="${this.hireShort() ? `Needs ${price} Gems` : "One more research runs at once"}">Hire · ${gemIcon()} <b>${price}</b></button></article>`;
         return `<article class="archivist locked" role="listitem">${title}<p>Locked</p></article>`;
       }
       const auto = `<label class="archivist-auto"><input type="checkbox" data-auto="${i}" ${slot.autoContinue ? "checked" : ""}> Auto-continue</label>`;
@@ -166,7 +190,9 @@ export class ArchivesPanel {
     let detail = "", action: string;
     if (next) {
       const ms = duration(a, next), kept = a.progress[id];
-      detail = `<p class="research-next">Next: ${RESEARCH_TARGETS[next.effect.target].text(next.effect.value)} · ${uiSprite("gold", "stat-sprite")} ${currencyAmount(next.gold)} · ${formatDuration(ms)}</p>` +
+      const target = next.effect.target, shown = (archives: ArchivesSave) => RESEARCH_TARGETS[target].shown(targetValue(save, target, archives));
+      detail = `<div class="research-next"><span class="training-box">${shown(a)}</span><span class="training-arrow" aria-hidden="true">→</span><span class="training-box next">${shown(withNextLevel(a, id))}</span>` +
+        `<span class="research-price">${uiSprite("gold", "stat-sprite")} ${currencyAmount(next.gold)} · ${formatDuration(ms)}</span></div>` +
         (kept ? `<p class="research-kept">Progress kept: ${formatDuration(kept * ms)} of ${formatDuration(ms)}</p>` : "");
     }
     if (state === "completed") action = `<span class="research-state">Complete</span>`;

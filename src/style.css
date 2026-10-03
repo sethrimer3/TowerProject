@@ -2073,6 +2073,7 @@ nav button.notify::after {
 .deck-buy-slot b { color: #fff; }
 /* Gem purchases read clearly even out of reach: only the price turns red. */
 .deck-buy-slot.short b,
+.archivist-hire.short b,
 .training-finish.short span,
 .buy-trainer.short { color: #ffb0a4; }
 .deck-ghost {
@@ -2381,6 +2382,10 @@ dialog.dismiss-anywhere { cursor: pointer; }
 .archivist.busy { border-color: #6e9a70; }
 .archivist.locked { opacity: 0.5; }
 .archivist button { min-height: 30px; padding: 4px 8px; font-size: 10px; }
+.archivist.hire { border-color: #5fc4ee; box-shadow: 0 0 8px #2fa9e055; }
+.archivist .archivist-hire { display: inline-flex; align-items: center; justify-content: center; gap: 4px; border: 1px solid #5fc4ee; background: radial-gradient(circle at 50% 40%, #1d4a63, #0d1f2b 75%); color: #bff2ff; font-size: 11px; text-shadow: 0 1px 2px #000; }
+.archivist-hire .gem-icon { width: 16px; height: 16px; filter: drop-shadow(0 0 3px #8fe6ff99); }
+.archivist-hire b { color: #fff; }
 .archivist-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .archivist-auto { display: flex; align-items: center; gap: 5px; font-size: 10px; color: #b7c0cc; cursor: pointer; }
 .archivist-auto input { width: 16px; height: 16px; }
@@ -2399,7 +2404,10 @@ dialog.dismiss-anywhere { cursor: pointer; }
 .research-head small { font-size: 9px; letter-spacing: 1px; color: #8793a2; white-space: nowrap; }
 .research-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; }
 .research-tag { padding: 1px 6px; border: 1px solid #4a5566; border-radius: 8px; font-size: 8px; letter-spacing: 1px; text-transform: uppercase; color: #9aa6b5; }
-p.research-next { color: #b8f0b4; }
+/* What the next level changes, old → new as on the Training tab, then its price. */
+.research-next { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 4px 0; }
+.research-next .training-box { min-height: 26px; padding: 3px 8px; font-size: 11px; }
+.research-price { color: #b7c0cc; font-size: 11px; }
 p.research-kept { color: #ffe1a1; }
 .research-action { display: flex; justify-content: flex-end; margin-top: 6px; }
 .research-action button { min-height: 32px; padding: 5px 10px; font-size: 10px; border-color: #d8b572; color: #ffe1a1; background: #2b2718; }

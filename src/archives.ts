@@ -1,4 +1,4 @@
-import { levelForXp, type UpgradeId } from "./config.ts";
+import { FOCUS_PER_RUN, levelForXp, type UpgradeId } from "./config.ts";
 import type { Settings } from "./settings.ts";
 import { finite as finiteIn, isRecord, wholeIn } from "./decode.ts";
 import { intPow } from "./exact.ts";
@@ -25,30 +25,33 @@ export const RESEARCH_CATEGORIES = {
 } as const;
 export type ResearchCategory = keyof typeof RESEARCH_CATEGORIES;
 
-/** The numbers research can change, each with how one effect on it reads. */
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
+/** The numbers research can change, each with the base the game reads it
+ * from (before any research) and how a total of it reads. */
 export const RESEARCH_TARGETS = {
   /** Focus uses a run starts with. */
-  focusPerRun: { text: (v: number) => `+${v} Focus use each run` },
-  /** Movement speed choices above 3 steps a second, once Movement Speed is owned. */
-  moveSpeed: { text: (v: number) => `${3 + v} steps / sec option` },
-  /** Undos the hero can store, once Rehearsed steps has given the first. */
-  undoCapacity: { text: (v: number) => `+${v} undo stored` },
+  focusPerRun: { base: FOCUS_PER_RUN, shown: (n: number) => plural(n, "Focus use") },
+  /** Movement speed's most steps a second, once Movement Speed is owned. */
+  moveSpeed: { base: 3, shown: (n: number) => `${n} steps / sec` },
+  /** Undos the hero can store, once Rehearsed steps has given the first;
+   * its base is the loadout's own undos, so the Archives page reads it there. */
+  undoCapacity: { base: 0, shown: (n: number) => plural(n, "undo") },
   /** The percent of its HP a potion restores, from 100 (red potions aside). */
-  potionHeal: { text: (v: number) => `+${v}% potion healing` },
+  potionHeal: { base: 100, shown: (n: number) => `${n}% potion healing` },
   /** The percent of its Gold / Floor a new floor pays, from 100. */
-  floorGold: { text: (v: number) => `+${v}% Gold per floor` },
+  floorGold: { base: 100, shown: (n: number) => `${n}% Gold per floor` },
   /** The percent of its Silver / Floor a new floor pays, from 100. */
-  floorSilver: { text: (v: number) => `+${v}% Silver per floor` },
+  floorSilver: { base: 100, shown: (n: number) => `${n}% Silver per floor` },
   /** The percent of the Silver found that a run pays, from 100. */
-  silverBonus: { text: (v: number) => `+${v}% Silver` },
+  silverBonus: { base: 100, shown: (n: number) => `${n}% Silver` },
   /** The percent of its Gold a kill pays, from 100. */
-  killGold: { text: (v: number) => `+${v}% Gold per kill` },
+  killGold: { base: 100, shown: (n: number) => `${n}% Gold per kill` },
   /** How fast trainers work: a rank of `d` takes d / (1 + speed). */
-  trainingSpeed: { text: (v: number) => `+${Math.round(v * 100)}% training speed` },
+  trainingSpeed: { base: 0, shown: (n: number) => `${Math.round(100 + n * 100)}% training speed` },
   /** Tiles the hand's first step toward a new target may rush across, once Rush is owned. */
-  rushTiles: { text: (v: number) => `+${v} tile rushed` },
+  rushTiles: { base: 0, shown: (n: number) => plural(n, "tile") + " rushed" },
   /** How fast archivists work: a level of `d` hours takes d / (1 + speed). */
-  researchSpeed: { text: (v: number) => `+${Math.round(v * 100)}% research speed` },
+  researchSpeed: { base: 0, shown: (n: number) => `${Math.round(100 + n * 100)}% research speed` },
 } as const;
 export type ResearchTarget = keyof typeof RESEARCH_TARGETS;
 
@@ -255,6 +258,10 @@ export function researched(a: ArchivesSave, target: ResearchTarget, base: number
   }
   return set ?? (base + add) * multiply;
 }
+/** The Archives as they would be with `id`'s next level completed, to show
+ * what it changes. */
+export const withNextLevel = (a: ArchivesSave, id: ResearchId): ArchivesSave =>
+  ({ ...a, levels: { ...a.levels, [id]: researchLevel(a, id) + 1 } });
 
 /** How long `level` takes with the research speed the Archives have now,
  * in ms. The definition keeps its own hours. */
