@@ -7,15 +7,14 @@ export const isBoard = (id: string): id is "tower" | "delve" => id === "tower" |
 
 /** The game as pages see it: its state to read (a page may change a setting
  * or a purchase in the save, never swap the save, run or mode), and the
- * commands that change the rest. */
+ * commands that change the rest: its own, and those of its desks (Training,
+ * the Archives, the Deck and Gear). */
 export type PageGame = Readonly<Pick<Game, "mode" | "run" | "save" | "fallen" | "handStuck" | "stepRules" | "free" | "maxSpeed" | "stepsPerSecond">> &
   Pick<
     Game,
     | "undo" | "acceptDefeat" | "eraseAll" | "finish" | "setDevMode"
-    | "claimGoal" | "warp"
-    | "buy" | "train" | "trainWithGold" | "trainingLeft" | "claimTrainingBoost" | "cancelTraining" | "finishTraining" | "buyTrainer" | "resetTraining" | "buyHandSlot" | "arrangeHand" | "addToHand" | "placeInHand" | "removeFromHand" | "buyGold" | "craftEquipment" | "craftConsumable" | "salvageEquipment"
-    | "equipItem" | "unequipSlot" | "useConsumable"
-    | "clock" | "buyOffer" | "startResearch" | "cancelResearch" | "setAutoContinue" | "hireArchivist" | "finishResearchNow"
+    | "claimGoal" | "warp" | "buy" | "useConsumable" | "clock" | "buyOffer"
+    | "training" | "research" | "deck" | "gear"
   >;
 
 /** What pages and dialogs need from the app around them. */

@@ -197,9 +197,9 @@ export class DeckPage {
   }
 
   private bindDeck() {
-    document.querySelectorAll<HTMLButtonElement>("[data-add]").forEach((b) => (b.onclick = () => this.change(this.ctx.game.addToHand(b.dataset.add as CardId))));
+    document.querySelectorAll<HTMLButtonElement>("[data-add]").forEach((b) => (b.onclick = () => this.change(this.ctx.game.deck.add(b.dataset.add as CardId))));
     this.bindDeckDrag();
-    document.querySelectorAll<HTMLButtonElement>("[data-return]").forEach((b) => (b.onclick = () => this.change(this.ctx.game.removeFromHand(b.dataset.return as CardId))));
+    document.querySelectorAll<HTMLButtonElement>("[data-return]").forEach((b) => (b.onclick = () => this.change(this.ctx.game.deck.remove(b.dataset.return as CardId))));
     const note = document.getElementById("deck-add-note");
     if (note) note.onclick = () => {
       this.ctx.game.save.tutorials.addCard = true;
@@ -278,9 +278,9 @@ export class DeckPage {
       const d = this.deckDrag;
       if (!d || e.pointerId !== d.pointer) return;
       this.cancelDrag();
-      if (!d.lifted) return this.change(this.ctx.game.addToHand(d.card));
+      if (!d.lifted) return this.change(this.ctx.game.deck.add(d.card));
       if (d.to === null) return this.render();
-      this.change(this.ctx.game.placeInHand(d.card, d.to));
+      this.change(this.ctx.game.deck.place(d.card, d.to));
     };
     grid.onpointercancel = () => {
       const lifted = this.deckDrag?.lifted;
@@ -340,7 +340,7 @@ export class DeckPage {
         cancel: "Cancel",
       },
       () => {
-        this.change(game.buyHandSlot());
+        this.change(game.deck.buySlot());
         this.ctx.update();
       },
     );
@@ -355,7 +355,7 @@ export class DeckPage {
   private drop(from: number, to: number) {
     const save = this.ctx.game.save;
     const moved = save.hand[from];
-    if (from === to || !this.ctx.game.arrangeHand(from, to)) return this.render();
+    if (from === to || !this.ctx.game.deck.arrange(from, to)) return this.render();
     const taught = this.lesson === "order" && moved === "stairs";
     if (taught) save.tutorials.deck = true;
     this.change(true);
@@ -368,7 +368,7 @@ export class DeckPage {
   private remove(id: CardId) {
     const save = this.ctx.game.save;
     const taught = this.lesson === "remove";
-    if (!this.ctx.game.removeFromHand(id)) return;
+    if (!this.ctx.game.deck.remove(id)) return;
     if (taught) save.tutorials.removeCard = true;
     this.change(true);
     if (!taught) return;

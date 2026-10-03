@@ -90,7 +90,7 @@ function update() {
   (el("page-shop") as HTMLButtonElement).disabled = deck.teaching;
   renderHud(game, renderer, overlay);
   runTraining.render();
-  const finished = [...game.researchDone.splice(0).map(researchToast), ...game.trainingDone.splice(0).map(trainingToast)];
+  const finished = [...game.research.done.splice(0).map(researchToast), ...game.training.done.splice(0).map(trainingToast)];
   if (finished.length) play("trained");
   researchToasts.add(finished);
   save();
@@ -191,7 +191,7 @@ for (const [id, step] of [["tier-prev", -1], ["tier-next", 1]] as const)
     update();
   };
 el("gem-ad").onclick = () => {
-  if (!game.claimAdGems()) return;
+  if (!game.gemFinder.claimAd()) return;
   if (!game.save.settings.reduceMotion) gemSparkle(el("gem-ad"));
   save();
   update();
@@ -234,7 +234,7 @@ bindInput(
 
 /** Research completes on the wall clock, whatever page shows. */
 function archivesTick() {
-  const done = game.settleResearch().length > 0 || game.settleTraining() > 0;
+  const done = game.research.settle().length > 0 || game.training.settle() > 0;
   if (done) update();
   // The ad button comes back on the wall clock too, and the Shop's daily Gems.
   else {

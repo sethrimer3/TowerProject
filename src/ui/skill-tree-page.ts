@@ -84,19 +84,19 @@ export class SkillTreePage {
       bindTabs();
       document.querySelectorAll<HTMLButtonElement>("[data-train]").forEach(b => b.onclick = () => {
         const refund = this.refundWatch();
-        if (this.ctx.game.train(b.dataset.train as TrainingId)) this.ctx.update();
+        if (this.ctx.game.training.train(b.dataset.train as TrainingId)) this.ctx.update();
         this.render();
         refund();
       });
       document.querySelectorAll<HTMLButtonElement>("[data-train-gold]").forEach(b => b.onclick = () => {
-        if (this.ctx.game.trainWithGold(b.dataset.trainGold as TrainingId)) {
+        if (this.ctx.game.training.trainWithGold(b.dataset.trainGold as TrainingId)) {
           this.ctx.update();
           play("coin");
         }
         this.render();
       });
       document.querySelector<HTMLButtonElement>("#boost-claim")?.addEventListener("click", () => {
-        if (this.ctx.game.claimTrainingBoost()) {
+        if (this.ctx.game.training.claimBoost()) {
           this.ctx.save();
           this.ctx.update();
         }
@@ -104,14 +104,14 @@ export class SkillTreePage {
       });
       document.querySelectorAll<HTMLButtonElement>("[data-cancel]").forEach(b => b.onclick = () => {
         const refund = this.refundWatch();
-        if (this.ctx.game.cancelTraining(b.dataset.cancel as TrainingId)) this.ctx.update();
+        if (this.ctx.game.training.cancel(b.dataset.cancel as TrainingId)) this.ctx.update();
         this.render();
         refund();
       });
       document.querySelectorAll<HTMLButtonElement>("[data-finish]").forEach(b => b.onclick = () => {
         const game = this.ctx.game;
-        if (!game.free && game.save.gems < finishGems(game.trainingLeft(b.dataset.finish as TrainingId))) return askForGems(this.ctx);
-        if (this.ctx.game.finishTraining(b.dataset.finish as TrainingId)) {
+        if (!game.free && game.save.gems < finishGems(game.training.left(b.dataset.finish as TrainingId))) return askForGems(this.ctx);
+        if (this.ctx.game.training.finish(b.dataset.finish as TrainingId)) {
           this.ctx.save();
           this.ctx.update();
         }
@@ -119,7 +119,7 @@ export class SkillTreePage {
       });
       document.querySelector<HTMLButtonElement>("#buy-trainer")?.addEventListener("click", () => {
         if (this.trainerShort()) return askForGems(this.ctx);
-        if (this.ctx.game.buyTrainer()) {
+        if (this.ctx.game.training.buyTrainer()) {
           this.ctx.save();
           this.ctx.update();
         }
@@ -160,7 +160,7 @@ export class SkillTreePage {
   private confirmReset(id: TrainingId) {
     const { game, modal } = this.ctx, row = TRAINING.find(t => t.id === id)!,
       ranks = game.save.training[id], paid = game.save.trainingPaid[id], job = trainingJob(game.save.trainingJobs, id),
-      gold = paid.gold + (job?.gold ?? 0), time = paid.ms + (job ? Math.max(0, job.ms - game.trainingLeft(id)) : 0),
+      gold = paid.gold + (job?.gold ?? 0), time = paid.ms + (job ? Math.max(0, job.ms - game.training.left(id)) : 0),
       short = game.save.gems < TRAINING_RESET_GEMS && !game.free;
     if (short) return askForGems(this.ctx);
     const back = [
@@ -177,7 +177,7 @@ export class SkillTreePage {
     el("cancel").onclick = () => modal.close();
     el("confirm").onclick = () => {
       modal.close();
-      if (game.resetTraining(id)) {
+      if (game.training.reset(id)) {
         this.ctx.save();
         this.ctx.update();
       }
@@ -203,7 +203,7 @@ export class SkillTreePage {
       // A rank a trainer is training shows its countdown (tap to stop it and
       // get the Gold back), else the trainer's price.
       const trainer = job
-        ? `<span class="training-job"><button class="training-box training-timer" data-cancel="${t.id}" aria-label="Training ${t.name}: tap to stop and get the Gold back" title="Tap to stop and get the Gold back"><span data-training-timer="${t.id}">${formatDuration(game.trainingLeft(t.id))}</span></button>${this.finishButton(t.id, t.name)}</span>`
+        ? `<span class="training-job"><button class="training-box training-timer" data-cancel="${t.id}" aria-label="Training ${t.name}: tap to stop and get the Gold back" title="Tap to stop and get the Gold back"><span data-training-timer="${t.id}">${formatDuration(game.training.left(t.id))}</span></button>${this.finishButton(t.id, t.name)}</span>`
         : maxed
         ? `<button class="training-box training-cost" disabled aria-label="${t.name} is fully trained">Max</button>`
         : `<button class="training-box training-cost training-gold" data-train-gold="${t.id}" ${goldAffordable && !full ? "" : "disabled"} aria-label="Pay ${whole(gold)} Gold to a trainer to train ${t.name} to ${shown(next)}, taking ${takes}" title="${full ? "Every trainer is busy" : `Takes ${takes}`}">${goldIcon()}<span>${whole(gold)}</span></button>`;
@@ -257,7 +257,7 @@ export class SkillTreePage {
   /** The Gem button that finishes a rank in training at once: one Gem per
    * ten minutes its timer shows, rounded up. */
   private finishButton(id: TrainingId, name: string) {
-    const game = this.ctx.game, gems = game.free ? 0 : finishGems(game.trainingLeft(id));
+    const game = this.ctx.game, gems = game.free ? 0 : finishGems(game.training.left(id));
     return `<button class="training-finish${game.save.gems >= gems ? "" : " short"}" data-finish="${id}" aria-label="Finish training ${name} now for ${gemCount(gems)}" title="Finish now for ${gemCount(gems)}">${gemIcon()}<span data-finish-gems="${id}">${gems}</span></button>`;
   }
 
@@ -289,7 +289,7 @@ export class SkillTreePage {
   private tickTraining() {
     const game = this.ctx.game;
     for (const job of game.save.trainingJobs) {
-      const left = game.trainingLeft(job.id);
+      const left = game.training.left(job.id);
       const span = document.querySelector<HTMLElement>(`[data-training-timer="${job.id}"]`);
       if (span) span.textContent = formatDuration(left);
       const gems = document.querySelector<HTMLElement>(`[data-finish-gems="${job.id}"]`);
@@ -298,7 +298,7 @@ export class SkillTreePage {
     const boost = document.getElementById("training-boost");
     if (boost) boost.outerHTML = this.boostHtml();
     document.querySelector<HTMLButtonElement>("#boost-claim")?.addEventListener("click", () => {
-      if (game.claimTrainingBoost()) {
+      if (game.training.claimBoost()) {
         this.ctx.save();
         this.ctx.update();
       }

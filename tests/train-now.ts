@@ -5,9 +5,9 @@ import type { TrainingId } from "../src/config.ts";
  * (owning the Training skill that opens it). */
 export function trainNow(g: Game, id: TrainingId) {
   g.save.upgrades.training = 1;
-  if (!g.train(id)) return false;
+  if (!g.training.train(id)) return false;
   const job = g.save.trainingJobs.find((j) => j.id === id);
   if (job) job.completesAt = 0;
-  g.settleTraining();
+  g.training.settle();
   return true;
 }

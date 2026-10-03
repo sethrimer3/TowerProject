@@ -372,8 +372,8 @@ export function renderAdButton(game: Game) {
   el("section-pick").hidden = inside;
   // Only a run inside can be ended.
   el("end-run").hidden = !inside;
-  button.classList.toggle("waiting", !game.adReady);
-  button.disabled = !game.adReady;
+  button.classList.toggle("waiting", !game.gemFinder.adReady);
+  button.disabled = !game.gemFinder.adReady;
 }
 
 /** Log and Goals act on the Tower; in the Delve they are placeholders. */

@@ -186,9 +186,9 @@ test("each provision bought costs more than the last, on run training's schedule
   assert.deepEqual(prices("edge"), [15, 18, 22, 27, 33, 40, 51]);
   const g = new Game(s);
   s.gold = 20;
-  assert.ok(g.buyGold("heal") && g.buyGold("heal"));
+  assert.ok(g.gear.buyProvision("heal") && g.gear.buyProvision("heal"));
   assert.equal(s.gold, 20 - 5 - 7);
-  assert.equal(g.buyGold("guard"), false, "10 Gold, 8 left");
+  assert.equal(g.gear.buyProvision("guard"), false, "10 Gold, 8 left");
   assert.equal(s.provisions.heal, 2);
 });
 
@@ -197,18 +197,18 @@ test("Extra Key opens the Yellow Key provision: 100 Gold, then four times the la
   g.newRun({ outside: true });
   assert.deepEqual(Array.from({ length: 6 }, (_, n) => provisionPrice({ provisions: { ...s.provisions, yellowKey: n } }, "yellowKey")), [100, 400, 1600, 6400, 25600, 102400]);
   s.gold = 1000;
-  assert.equal(g.buyGold("yellowKey"), false, "closed without Extra Key");
+  assert.equal(g.gear.buyProvision("yellowKey"), false, "closed without Extra Key");
   s.upgrades.extraKey = 1;
   const keys = loadout(s).keys.yellow;
-  assert.ok(g.buyGold("yellowKey") && g.buyGold("yellowKey"));
+  assert.ok(g.gear.buyProvision("yellowKey") && g.gear.buyProvision("yellowKey"));
   assert.equal(s.gold, 500);
   assert.equal(loadout(s).keys.yellow, keys + 2, "a yellow key for each, every run");
   assert.equal(g.run.player.keys.yellow, keys + 2, "the run in the forest takes them");
-  assert.equal(g.buyGold("yellowKey"), false, "1,600 Gold, 500 held");
+  assert.equal(g.gear.buyProvision("yellowKey"), false, "1,600 Gold, 500 held");
   goInside(g);
   const held = g.run.player.keys.yellow;
   s.gold = 1600;
-  assert.ok(g.buyGold("yellowKey"));
+  assert.ok(g.gear.buyProvision("yellowKey"));
   assert.equal(g.run.player.keys.yellow, held + 1, "one bought inside a run comes at once");
 });
 
@@ -225,11 +225,11 @@ test("changing gear mid-run keeps the ATK gathered and the provisions owned", ()
   assert.equal(g.run.player.attack, 13);
   g.run.player.attack += 2; // an attack shard picked up
   s.equipmentInventory.push(ring(3, 10));
-  assert.ok(g.equipItem("r"));
+  assert.ok(g.gear.equip("r"));
   assert.equal(g.run.player.attack, 18);
   assert.equal(g.run.player.maxHp, 110);
   assert.deepEqual(g.run.loadout, { attack: 16, defense: 0, maxHp: 110 });
-  g.unequipSlot("ring");
+  g.gear.unequip("ring");
   assert.equal(g.run.player.attack, 15);
   assert.deepEqual(g.run.loadout, { attack: 13, defense: 0, maxHp: 100 });
   assert.equal(g.run.player.hp, 100);
@@ -239,7 +239,7 @@ test("a gear change reaches a run still outside, which starts at its new full HP
   const g = new Game(defaults());
   g.newRun({ outside: true });
   g.save.equipmentInventory.push(ring(3, 10));
-  g.equipItem("r");
+  g.gear.equip("r");
   assert.deepEqual([g.run.player.attack, g.run.player.maxHp, g.run.player.hp], [15, 110, 110]);
 });
 
@@ -261,7 +261,7 @@ test("provisions last for good: every run takes them, and one bought mid-run cou
   s.gold = 100;
   s.upgrades.greaterHeal = 1;
   assert.ok(g.buy("shroud"));
-  assert.ok(g.buyGold("edge") && g.buyGold("heal"));
+  assert.ok(g.gear.buyProvision("edge") && g.gear.buyProvision("heal"));
   assert.equal(s.gold, 100 - 15 - 5);
   const ready = { attack: 13, maxHp: 120, hp: 120, shroud: 1 };
   const hero = (run = g.run) => ({ attack: run.player.attack, maxHp: run.player.maxHp, hp: run.player.hp, shroud: run.player.shroud });
@@ -272,7 +272,7 @@ test("provisions last for good: every run takes them, and one bought mid-run cou
   assert.deepEqual(hero(), ready, "the run takes its provisions inside");
   assert.deepEqual(s.provisions, { heal: 1, edge: 1, guard: 0, yellowKey: 0 }, "and keeps them for every later run");
   assert.deepEqual(hero(s.delve.run!), ready, "the other forest run still has them");
-  assert.ok(g.buyGold("guard"));
+  assert.ok(g.gear.buyProvision("guard"));
   assert.equal(g.run.player.defense, 1, "one bought inside a run counts at once");
   assert.equal(s.delve.run!.player.defense, 1, "and in the Delve's forest run");
 });

@@ -32,11 +32,11 @@ test("free purchases: skills, Training and provisions are bought with nothing an
   assert.equal(g.save.training.hp, 2);
   assert.deepEqual(trainingPoints(g.save), { earned: 3, spent: 0, left: 3 }, "no points spent");
   assert.deepEqual(g.save.trainingPaid.hp, { points: 0, gold: 0, ms: 0 }, "nor anything else");
-  assert.ok(g.trainWithGold("hp"), "a trainer trains for nothing too");
+  assert.ok(g.training.trainWithGold("hp"), "a trainer trains for nothing too");
   assert.equal(g.save.training.hp, 3, "at once");
   assert.equal(g.save.trainingJobs.length, 0);
 
-  assert.ok(g.buyGold(GOLD_SHOP[0].id));
+  assert.ok(g.gear.buyProvision(GOLD_SHOP[0].id));
   assert.equal(g.save.provisions[GOLD_SHOP[0].id], 1);
   assert.equal(g.save.gold, 0);
 });
@@ -70,12 +70,12 @@ test("free purchases: research costs no Gold and completes the moment it starts;
   save.upgrades.greaterHeal = 1;
   const g = new Game(save);
   g.clock = () => T0;
-  assert.ok(g.startResearch(0, "potionHp"));
+  assert.ok(g.research.start(0, "potionHp"));
   assert.equal(save.archives.levels.potionHp, 1);
   assert.equal(save.archives.slots[0].job, undefined, "done already");
   assert.equal(save.gold, 0);
-  assert.deepEqual(g.researchDone.map((r) => [r.research, r.level]), [["potionHp", 1]]);
-  assert.ok(g.hireArchivist());
+  assert.deepEqual(g.research.done.map((r) => [r.research, r.level]), [["potionHp", 1]]);
+  assert.ok(g.research.hire());
   assert.equal(save.archives.slots.length, 2);
   assert.equal(save.gold, 0);
 });
@@ -87,10 +87,10 @@ test("without free purchases, nothing is bought on credit", () => {
   g.clock = () => T0;
   assert.ok(!g.buy("handOrdering"));
   assert.ok(!trainNow(g, "hp"));
-  assert.ok(!g.buyGold(GOLD_SHOP[0].id));
+  assert.ok(!g.gear.buyProvision(GOLD_SHOP[0].id));
   assert.equal(craftConsumable(g.save, "cinderTonic"), false);
-  assert.ok(!g.startResearch(0, "potionHp"));
-  assert.ok(!g.hireArchivist());
+  assert.ok(!g.research.start(0, "potionHp"));
+  assert.ok(!g.research.hire());
 });
 
 test("completed research queues for its notification, oldest first, however many complete at once", () => {
@@ -101,11 +101,11 @@ test("completed research queues for its notification, oldest first, however many
   save.archives.slots[0].autoContinue = true;
   const g = new Game(save);
   g.clock = () => T0;
-  assert.ok(g.startResearch(0, "potionHp"));
-  assert.deepEqual(g.researchDone, []);
+  assert.ok(g.research.start(0, "potionHp"));
+  assert.deepEqual(g.research.done, []);
   g.clock = () => T0 + 10 * 60_000; // 15 s + 1 min + 5 min pass while away
-  g.settleResearch();
-  assert.deepEqual(g.researchDone.map((r) => r.level), [1, 2, 3]);
+  g.research.settle();
+  assert.deepEqual(g.research.done.map((r) => r.level), [1, 2, 3]);
 });
 
 test("free purchases: Defend buys for nothing", () => {

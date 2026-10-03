@@ -64,11 +64,11 @@ export class ArchivesPanel {
       this.ctx.update();
       this.rerender();
     };
-    document.querySelectorAll<HTMLButtonElement>("[data-hire]").forEach((b) => (b.onclick = () => act(game.hireArchivist())));
-    document.querySelectorAll<HTMLButtonElement>("[data-stop]").forEach((b) => (b.onclick = () => act(game.cancelResearch(Number(b.dataset.stop)))));
-    document.querySelectorAll<HTMLButtonElement>("[data-finish]").forEach((b) => (b.onclick = () => act(game.finishResearchNow(Number(b.dataset.finish)).length > 0)));
+    document.querySelectorAll<HTMLButtonElement>("[data-hire]").forEach((b) => (b.onclick = () => act(game.research.hire())));
+    document.querySelectorAll<HTMLButtonElement>("[data-stop]").forEach((b) => (b.onclick = () => act(game.research.cancel(Number(b.dataset.stop)))));
+    document.querySelectorAll<HTMLButtonElement>("[data-finish]").forEach((b) => (b.onclick = () => act(game.research.finishNow(Number(b.dataset.finish)).length > 0)));
     document.querySelectorAll<HTMLInputElement>("[data-auto]").forEach((box) => (box.onchange = () => {
-      game.setAutoContinue(Number(box.dataset.auto), box.checked);
+      game.research.setAutoContinue(Number(box.dataset.auto), box.checked);
       this.ctx.save();
     }));
     el("research-search").oninput = (e) => {
@@ -108,7 +108,7 @@ export class ArchivesPanel {
     const game = this.ctx.game;
     document.querySelectorAll<HTMLButtonElement>("[data-research]").forEach((b) => (b.onclick = () => {
       const slot = game.save.archives.slots.findIndex((s) => !s.job);
-      if (slot >= 0 && game.startResearch(slot, b.dataset.research as ResearchId)) {
+      if (slot >= 0 && game.research.start(slot, b.dataset.research as ResearchId)) {
         this.ctx.update();
         this.rerender();
       }

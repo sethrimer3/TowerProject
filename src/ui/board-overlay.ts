@@ -19,7 +19,7 @@ export class BoardOverlay {
 
   tap(x: number, y: number) {
     // A Gem is collected wherever the hero stands.
-    if (this.game.collectGemAt(x, y)) {
+    if (this.game.gemFinder.collectAt(x, y)) {
       this.hide();
       return;
     }

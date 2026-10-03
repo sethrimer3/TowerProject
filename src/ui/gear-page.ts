@@ -73,18 +73,18 @@ export class GearPage {
     const item = (id: string) => game.save.equipmentInventory.find(e => e.id === id);
     const handlers: Record<string, (value: string) => void> = {
       geartab: (v) => { this.tab = v as GearTab; this.rerender(); },
-      gold: (v) => { if (game.buyGold(v as GoldItemId)) this.bought = v as GoldItemId; this.changed(); },
+      gold: (v) => { if (game.gear.buyProvision(v as GoldItemId)) this.bought = v as GoldItemId; this.changed(); },
       slot: (v) => this.openSlot(v as EquipmentSlot),
       filter: (v) => { this.filter = v as EquipmentSlot | "all"; this.rerender(); },
       inspect: (v) => { const it = item(v); if (it) this.showItemActions(it, isEquipped(game.save, it.id)); },
-      equip: (v) => { game.equipItem(v); this.changed(); },
-      unequip: (v) => { game.unequipSlot(v as EquipmentSlot); this.changed(); },
+      equip: (v) => { game.gear.equip(v); this.changed(); },
+      unequip: (v) => { game.gear.unequip(v as EquipmentSlot); this.changed(); },
       salvage: (v) => { const it = item(v); if (it) this.confirmSalvage(it); },
       craftSlot: (v) => { this.craftSlot = v as EquipmentSlot; this.enhancements = []; this.rerender(); },
       craftMetal: (v) => { this.craftMetal = v as MetalId; this.rerender(); },
       enhPlus: (v) => this.adjustEnhancement(v as MaterialId, 1),
       enhMinus: (v) => this.adjustEnhancement(v as MaterialId, -1),
-      craftConsumable: (v) => { game.craftConsumable(v as ConsumableId); this.saved(); },
+      craftConsumable: (v) => { game.gear.craftConsumable(v as ConsumableId); this.saved(); },
       useConsumable: (v) => { game.useConsumable(v as ConsumableId); this.changed(); },
     };
     for (const [key, handle] of Object.entries(handlers)) {
@@ -93,7 +93,7 @@ export class GearPage {
     }
     const craftBtn = document.querySelector<HTMLButtonElement>("#craft-btn");
     if (craftBtn) craftBtn.onclick = () => {
-      if (game.craftEquipment(this.craftSlot, this.craftMetal, this.enhancements)) this.enhancements = [];
+      if (game.gear.craftEquipment(this.craftSlot, this.craftMetal, this.enhancements)) this.enhancements = [];
       this.saved();
     };
   }
@@ -147,7 +147,7 @@ export class GearPage {
         label: "Salvage",
         cancel: "Keep it",
       },
-      () => { this.ctx.game.salvageEquipment(item.id); this.changed(); },
+      () => { this.ctx.game.gear.salvage(item.id); this.changed(); },
     );
   }
 
@@ -160,9 +160,9 @@ export class GearPage {
     el("item-close").onclick = () => modal.close();
     const button = (id: string) => document.querySelector<HTMLButtonElement>(`#${id}`);
     const equipBtn = button("item-equip");
-    if (equipBtn) equipBtn.onclick = () => { game.equipItem(item.id); modal.close(); this.changed(); };
+    if (equipBtn) equipBtn.onclick = () => { game.gear.equip(item.id); modal.close(); this.changed(); };
     const unequipBtn = button("item-unequip");
-    if (unequipBtn) unequipBtn.onclick = () => { game.unequipSlot(item.slot); modal.close(); this.changed(); };
+    if (unequipBtn) unequipBtn.onclick = () => { game.gear.unequip(item.slot); modal.close(); this.changed(); };
     const salvageBtn = button("item-salvage");
     if (salvageBtn) salvageBtn.onclick = () => this.confirmSalvage(item);
   }

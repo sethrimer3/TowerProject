@@ -126,7 +126,7 @@ export class Renderer {
     else this.light.draw(f, this.litBoard(f));
     this.drawBlockedMark(f);
     // A Gem shines above the darkness, so it can be seen and tapped.
-    const gem = this.game.gem, sparkle = this.game.gemSparkle;
+    const gem = this.game.gemFinder.gem, sparkle = this.game.gemFinder.sparkle;
     if (gem) drawGem(f, gem.x, gem.y);
     if (sparkle) drawGemSparkle(f, sparkle.x, sparkle.y, f.now - sparkle.at);
     this.popups.draw(f);
@@ -415,7 +415,7 @@ export class Renderer {
       Math.abs(this.left - t.left) < eps && Math.abs(this.bottom - t.bottom) < eps &&
       !g.route.length && !g.encounter && now - this.arrived > ARRIVAL_GLOW_MS && g.blocked.until <= now && g.effect.until <= now && this.popups.idle(now) && !this.decor.busy &&
       now - g.levelUpAt >= LEVEL_UP_MS + POINTS_MS && g.revivedAt.every((at) => now - at >= REVIVE_MS) &&
-      (!g.gemSparkle || now - g.gemSparkle.at >= GEM_SPARKLE_MS);
+      (!g.gemFinder.sparkle || now - g.gemFinder.sparkle.at >= GEM_SPARKLE_MS);
   }
   /** Active torches roughly within the camera viewport, padded so a torch
    * whose center is just offscreen can still light visible ground. Cheap

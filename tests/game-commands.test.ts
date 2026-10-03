@@ -122,18 +122,18 @@ test("a deck card dragged to the hand goes into its slot, in the forest with Bui
   const g = new Game(defaults());
   g.newRun({ outside: true, seed: 1 });
   g.save.upgrades.cardHeal = 1;
-  assert.equal(g.placeInHand("heal", 1), false, "not before Buildout");
+  assert.equal(g.deck.place("heal", 1), false, "not before Buildout");
   g.save.upgrades.combatStance = 1;
-  assert.ok(g.removeFromHand("door"));
-  assert.ok(g.placeInHand("heal", 1));
+  assert.ok(g.deck.remove("door"));
+  assert.ok(g.deck.place("heal", 1));
   assert.deepEqual(g.save.hand, ["stairs", "heal", "yellowKey", "monster"]);
-  assert.ok(g.placeInHand("door", 3), "a full hand swaps the card there out");
+  assert.ok(g.deck.place("door", 3), "a full hand swaps the card there out");
   assert.deepEqual(g.save.hand, ["stairs", "heal", "yellowKey", "door"]);
-  assert.equal(g.placeInHand("monster", 0), false, "STAIRS stays");
-  assert.equal(g.placeInHand("heal", 2), false, "a card already in the hand");
-  assert.equal(g.placeInHand("monster", 4), false, "no such slot");
+  assert.equal(g.deck.place("monster", 0), false, "STAIRS stays");
+  assert.equal(g.deck.place("heal", 2), false, "a card already in the hand");
+  assert.equal(g.deck.place("monster", 4), false, "no such slot");
   g.enterRun();
-  assert.equal(g.placeInHand("monster", 1), false, "only in the forest");
+  assert.equal(g.deck.place("monster", 1), false, "only in the forest");
 });
 
 test("in the forest Enter goes straight in, starting the run with the hand playing", () => {
@@ -174,19 +174,19 @@ test("erasing everything leaves a fresh save with a new run outside the Tower", 
 test("the Deck reorders the hand only with Combat Stance and in the forest, and a run keeps the hand it went in with", () => {
   const g = new Game(defaults());
   g.newRun({ outside: true, seed: 1 });
-  assert.equal(g.arrangeHand(0, 2), false, "not before Combat Stance is bought");
+  assert.equal(g.deck.arrange(0, 2), false, "not before Combat Stance is bought");
   g.save.upgrades.handOrdering = 1;
-  assert.ok(g.arrangeHand(0, 2));
+  assert.ok(g.deck.arrange(0, 2));
   const ordered = ["door", "yellowKey", "stairs", "monster"];
   assert.deepEqual(g.save.hand, ordered);
   assert.deepEqual(g.hand, ordered, "in the forest the hand is the one the next run takes");
-  assert.equal(g.arrangeHand(0, 4), false);
-  assert.equal(g.arrangeHand(-1, 0), false);
+  assert.equal(g.deck.arrange(0, 4), false);
+  assert.equal(g.deck.arrange(-1, 0), false);
   g.walkTo(g.run.player.x, ENTRANCE_Y);
   for (let i = 0; i < 20 && g.route.length; i++) g.routeStep();
   assert.equal(g.run.outside, false);
   assert.deepEqual(g.run.hand, ordered, "the run saves the hand's order on the way in");
-  assert.equal(g.arrangeHand(0, 1), false, "not inside a run");
+  assert.equal(g.deck.arrange(0, 1), false, "not inside a run");
   g.save.hand = ["stairs", "monster", "yellowKey", "door"];
   assert.deepEqual(g.hand, ordered, "a later change waits for the next run");
   const loaded = new Game(decode(JSON.stringify(g.save)));
@@ -196,28 +196,28 @@ test("the Deck reorders the hand only with Combat Stance and in the forest, and 
 test("Buildout moves cards between the deck and the hand in the forest, and STAIRS always stays", () => {
   const g = new Game(defaults());
   g.newRun({ outside: true, seed: 1 });
-  assert.equal(g.removeFromHand("monster"), false, "not before Buildout is bought");
+  assert.equal(g.deck.remove("monster"), false, "not before Buildout is bought");
   g.save.upgrades.combatStance = 1;
   g.save.upgrades.cardHeal = 1;
   g.save.hand.push("heal");
-  assert.equal(g.removeFromHand("stairs"), false, "STAIRS can't leave the hand");
-  assert.ok(g.removeFromHand("monster"));
-  assert.ok(g.removeFromHand("heal"));
+  assert.equal(g.deck.remove("stairs"), false, "STAIRS can't leave the hand");
+  assert.ok(g.deck.remove("monster"));
+  assert.ok(g.deck.remove("heal"));
   assert.deepEqual(g.save.hand, ["stairs", "door", "yellowKey"]);
-  assert.equal(g.removeFromHand("heal"), false, "a card already in the deck");
-  assert.ok(g.addToHand("monster"));
+  assert.equal(g.deck.remove("heal"), false, "a card already in the deck");
+  assert.ok(g.deck.add("monster"));
   assert.deepEqual(g.save.hand, ["stairs", "door", "yellowKey", "monster"], "an added card takes the first empty slot");
-  assert.equal(g.addToHand("monster"), false, "a card already in the hand");
-  assert.equal(g.addToHand("equipment"), false, "a card the player doesn't own");
-  assert.equal(g.addToHand("heal"), false, "four slots until Larger Hand");
+  assert.equal(g.deck.add("monster"), false, "a card already in the hand");
+  assert.equal(g.deck.add("equipment"), false, "a card the player doesn't own");
+  assert.equal(g.deck.add("heal"), false, "four slots until Larger Hand");
   g.save.upgrades.largerHand = 1;
-  assert.ok(g.addToHand("heal"));
-  assert.equal(g.addToHand("heal"), false);
+  assert.ok(g.deck.add("heal"));
+  assert.equal(g.deck.add("heal"), false);
   assert.deepEqual(decode(JSON.stringify(g.save)).hand, ["stairs", "door", "yellowKey", "monster", "heal"], "the hand is saved as chosen");
   g.walkTo(g.run.player.x, ENTRANCE_Y);
   for (let i = 0; i < 20 && g.route.length; i++) g.routeStep();
   assert.equal(g.run.outside, false);
-  assert.equal(g.removeFromHand("heal"), false, "not inside a run");
+  assert.equal(g.deck.remove("heal"), false, "not inside a run");
 });
 
 /** An arena with the Focus skill and `uses` Focus uses left this run (of

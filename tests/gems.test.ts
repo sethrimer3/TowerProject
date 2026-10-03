@@ -139,7 +139,7 @@ function arena(edit?: (g: Game) => void) {
 test("in a run, a Gem turns up on the floor, and touching it pays one and starts the cooldown; undo can't bring it back", () => {
   const g = arena();
   g.move(1, 0);
-  const gem = g.gem!;
+  const gem = g.gemFinder.gem!;
   assert.ok(gem, "a Gem on the run's first floor");
   assert.equal(g.world.tile(gem.x, gem.y).kind, "floor");
   assert.notDeepEqual([gem.x, gem.y], [g.run.player.x, g.run.player.y]);
@@ -148,28 +148,28 @@ test("in a run, a Gem turns up on the floor, and touching it pays one and starts
   path(gem.x > 1 ? 1 : -1, 0, Math.abs(gem.x - 1));
   path(0, 1, gem.y);
   assert.equal(g.save.gems, 1);
-  assert.equal(g.gem, null);
+  assert.equal(g.gemFinder.gem, null);
   assert.equal(g.save.gemDrop.readyAt, 1_000_000 + GEM_COOLDOWN_MS);
-  assert.ok(g.gemSparkle && g.gains.some((x) => x.text === "+1 Gem"));
+  assert.ok(g.gemFinder.sparkle && g.gains.some((x) => x.text === "+1 Gem"));
   assert.ok(g.undo());
   assert.equal(g.save.gems, 1, "undo leaves the Gem paid");
-  assert.equal(g.gem, null, "and doesn't put it back");
+  assert.equal(g.gemFinder.gem, null, "and doesn't put it back");
 });
 
 test("a Gem is collected by tapping it from anywhere on the board", () => {
   const g = arena();
   g.move(0, 1);
-  const gem = g.gem!;
-  assert.equal(g.collectGemAt(gem.x === 2 ? 3 : 2, 2), false, "no Gem there");
-  assert.ok(g.collectGemAt(gem.x, gem.y));
+  const gem = g.gemFinder.gem!;
+  assert.equal(g.gemFinder.collectAt(gem.x === 2 ? 3 : 2, 2), false, "no Gem there");
+  assert.ok(g.gemFinder.collectAt(gem.x, gem.y));
   assert.equal(g.save.gems, 1);
-  assert.equal(g.collectGemAt(gem.x, gem.y), false, "only once");
+  assert.equal(g.gemFinder.collectAt(gem.x, gem.y), false, "only once");
 });
 
 test("a Gem left on a floor or in an ended run is missed, and owed three new floors on", () => {
   const g = arena();
   g.move(1, 0);
-  assert.ok(g.gem);
+  assert.ok(g.gemFinder.gem);
   g.finish("Ended");
   assert.equal(g.save.gemDrop.out, null);
   assert.equal(g.save.gemDrop.wait, GEM_MISSED_FLOORS, "owed into the next run");
@@ -180,15 +180,15 @@ test("the ad's Gems: seven, then ten minutes before the next", () => {
   const g = arena();
   let now = 5_000_000;
   g.clock = () => now;
-  assert.ok(g.adReady, "ready on a new profile");
-  assert.ok(g.claimAdGems());
+  assert.ok(g.gemFinder.adReady, "ready on a new profile");
+  assert.ok(g.gemFinder.claimAd());
   assert.equal(g.save.gems, AD_GEMS);
   assert.equal(AD_GEMS, 7);
-  assert.equal(g.claimAdGems(), false);
+  assert.equal(g.gemFinder.claimAd(), false);
   now += AD_COOLDOWN_MS - 1;
-  assert.equal(g.adReady, false);
+  assert.equal(g.gemFinder.adReady, false);
   now += 1;
-  assert.ok(g.claimAdGems());
+  assert.ok(g.gemFinder.claimAd());
   assert.equal(g.save.gems, 14);
   assert.equal(AD_COOLDOWN_MS, 10 * MINUTE);
 });
@@ -200,10 +200,10 @@ test("resetting a Training stat costs two Gems and returns every point spent on 
   assert.ok(trainNow(g, "hp"));
   const attack = g.run.player.attack;
   assert.equal(trainingPoints(g.save).left, left - 4);
-  assert.equal(g.resetTraining("attack"), false, "no Gems");
+  assert.equal(g.training.reset("attack"), false, "no Gems");
   g.save.gems = TRAINING_RESET_GEMS;
-  assert.equal(g.resetTraining("defense"), false, "no ranks to reset");
-  assert.ok(g.resetTraining("attack"));
+  assert.equal(g.training.reset("defense"), false, "no ranks to reset");
+  assert.ok(g.training.reset("attack"));
   assert.equal(g.save.gems, 0);
   assert.equal(g.save.training.attack, 0);
   assert.equal(g.save.training.hp, 1, "other stats keep their ranks");
@@ -213,20 +213,20 @@ test("resetting a Training stat costs two Gems and returns every point spent on 
   g.save.settings.freePurchases = true;
   assert.ok(trainNow(g, "attack") && trainNow(g, "attack"));
   assert.deepEqual(g.save.trainingPaid.attack, { points: 0, gold: 0, ms: 0 });
-  assert.ok(g.resetTraining("attack"));
+  assert.ok(g.training.reset("attack"));
   assert.equal(trainingPoints(g.save).left, left - 1, "no points made from nothing");
 });
 
 test("Larger Hand opens hand slots for Gems, each dearer than the last", () => {
   const g = arena();
   g.save.gems = 2000;
-  assert.equal(g.buyHandSlot(), false, "not before Larger Hand");
+  assert.equal(g.deck.buySlot(), false, "not before Larger Hand");
   g.save.upgrades.largerHand = 1;
   const paid: number[] = [];
-  while (g.buyHandSlot()) paid.push(2000 - g.save.gems - paid.reduce((a, b) => a + b, 0));
+  while (g.deck.buySlot()) paid.push(2000 - g.save.gems - paid.reduce((a, b) => a + b, 0));
   assert.deepEqual(paid, [50, 200, 400, 600], "as far as 2000 Gems go");
   assert.equal(g.save.handSlots, paid.length);
   g.save.gems = 10_000;
-  while (g.buyHandSlot());
+  while (g.deck.buySlot());
   assert.equal(g.save.handSlots, 6, "six slots to buy in all");
 });

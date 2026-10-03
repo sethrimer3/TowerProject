@@ -118,15 +118,15 @@ test("Ad-Disable runs the trainers' ×2 boost for good, ranks already training i
   let now = 1_790_000_000_000;
   g.clock = () => now;
   // Max HP's first rank takes 15 s; 10 s are left after 5.
-  assert.ok(g.trainWithGold("hp"));
+  assert.ok(g.training.trainWithGold("hp"));
   now += 5000;
-  const left = g.trainingLeft("hp");
+  const left = g.training.left("hp");
   assert.equal(g.buyOffer("adFree", NOON, true), null);
   assert.ok(permanentBoost(g.save));
   assert.equal(g.save.trainingBoostUntil, BOOST_FOREVER);
   assert.equal(g.save.trainingJobs[0].completesAt, now + left / 2, "what was left goes twice as fast");
   assert.equal(workLeft(g.save.trainingJobs[0].completesAt, g.save.trainingBoostUntil, now), left);
-  assert.equal(g.claimTrainingBoost(), false, "no more to claim");
+  assert.equal(g.training.claimBoost(), false, "no more to claim");
   const back = decode(JSON.stringify(g.save));
   assert.equal(back.trainingBoostUntil, BOOST_FOREVER);
   back.trainingBoostUntil = 0;

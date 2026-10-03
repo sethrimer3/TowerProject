@@ -29,6 +29,11 @@ export function ranksInRun(save: Pick<Save, "training">, run: Pick<RunCore, "tra
 /** What buying one more rank of `id` in `run` means: the level it stands
  * at and can reach, the Silver it costs, and whether it is open (its
  * upgrade owned) and not yet at its highest. */
+/** A row's next rank for the run: its row, ranks bought this run, the
+ * level it stands at and its most, its Silver price, and whether it shows
+ * and is maxed. */
+export type RunTrainingOffer = ReturnType<typeof runTrainingOffer>;
+
 export function runTrainingOffer(save: Pick<Save, "training" | "upgrades">, run: Pick<RunCore, "training">, id: TrainingId) {
   const row = TRAINING.find((t) => t.id === id)!, bought = boughtInRun(run, id);
   const level = save.training[id] + bought, max = runTrainingMax(row);

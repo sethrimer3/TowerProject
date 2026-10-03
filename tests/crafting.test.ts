@@ -325,7 +325,7 @@ test("craft equipment, undo unrelated gameplay: both the equipment and the spent
   g.save.materials.ironBar = 40;
   g.save.materials.cinderSlimeBlob = 12;
   const before = g.snapshot();
-  const item = g.craftEquipment("weapon", "iron", []);
+  const item = g.gear.craftEquipment("weapon", "iron", []);
   assert.ok(item);
   assert.equal(g.save.materials.ironBar, 0);
   g.restore(before);

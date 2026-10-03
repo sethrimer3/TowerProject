@@ -1,16 +1,15 @@
-import { claimBoost, doneAt, finishGems, nextTrainerGems, trainingGold, trainingJob, trainingMs, trainingSlots, workLeft, type TrainingJob } from "./training-jobs.ts";
 import { entrance, floorFor } from "./delve/labyrinth.ts";
 import { chooseStep } from "./automation.ts";
-import { CARDS, cardText, deckCards, handSlots, moveCard, nextHandSlotGems, placeCard, planHand, type CardId, type CardPlan } from "./cards.ts";
-import { BOOST_FOREVER, goldFactor, permanentBoost } from "./shop/entitlements.ts";
+import { CARDS, cardText, planHand, type CardId, type CardPlan } from "./cards.ts";
+import { BOOST_FOREVER, permanentBoost } from "./shop/entitlements.ts";
 import { offer, type OfferId } from "./shop/offers.ts";
 import { purchase, type Refusal } from "./shop/transactions.ts";
 import { confirmServerTime } from "./shop/clock.ts";
 import { canWarp, claimGoal } from "./goals.ts";
-import { AD_COOLDOWN_MS, AD_GEMS, TRAINING_RESET_GEMS, collectedGem, gemOn, gemSpot, missGem, reachFloor, type GemSpot } from "./gems.ts";
+import { missGem } from "./gems.ts";
 import { DelvePlan } from "./delve/automove.ts";
 import { defaults } from "./save.ts";
-import { random, stream, tileRandom } from "./random.ts";
+import { stream, tileRandom } from "./random.ts";
 import { doorBlockedMessage, doorName, KEY_ORDER } from "./doors.ts";
 import { skillAvailable } from "./skill-trees.ts";
 import { routeTo, type Step } from "./pathfinding.ts";
@@ -19,21 +18,16 @@ import {
   TOWER_SECTION,
   xpForKill,
   levelForXp,
-  TRAINING,
   TRAINING_PER_LEVEL,
-  trainingOpen,
   isStatRow,
   trained,
   cost,
   UPGRADES,
   type UpgradeId,
   type TrainingId,
-  type GoldItemId,
   type KeyColor,
+  type StatTrainingRow,
   FOCUS_PER_RUN,
-  ENEMY_GOLD,
-  silverForKill,
-  VIEWPORT_TILES,
 } from "./config.ts";
 import {
   type Save,
@@ -52,34 +46,30 @@ import {
 import { World, LAYOUT_VERSION } from "./delve/world.ts";
 import { RoomWorld, TOWER_LAYOUT_VERSION } from "./tower/room-world.ts";
 import type { Board } from "./board.ts";
-import { bout, heroHpAfter, heroHpDuring, resume, REVIVE_MS, revivals, summarize, type Bout, type CombatPrediction, type Revival } from "./combat.ts";
+import { bout, heroHpAfter, heroHpDuring, resume, REVIVE_MS, revivals, summarize, type Bout, type Revival } from "./combat.ts";
 import { ATTACK_SHARD, DEFENSE_SHARD, isLethal, potionHeal, resolveStep, type StepBlocked, type StepEffect, type StepRules } from "./step-effects.ts";
 import { OutsideWorld } from "./outside.ts";
 import { ClearLedger } from "./tower/clear-ledger.ts";
 import { TowerClimb } from "./tower/climb.ts";
 import { materialDef, MATERIALS } from "./materials.ts";
-import { rollTreasureLoot } from "./loot.ts";
 import { TIERS, TIER_BOSS_FLOOR, switchTier, tierBonus, tierBonusText, tierGold, tierNumeral } from "./tiers.ts";
 import { enemyTitle } from "./scaling.ts";
 import { snap } from "./exact.ts";
 import { whole, wholeChange } from "./whole.ts";
 import { MODES, milestones, type ModeProfile } from "./modes.ts";
-import { ranksInRun, runTrainingOffer } from "./run-training.ts";
-import { floorGold, floorSilver, keepUndos, killGold, silverBonus, loadout, percentPotionChance, potionPercent, provisionOpen, provisionPrice, reviveChance, trainingMaxed, trainingPoints, trainingSpeed } from "./loadout.ts";
-import { RESEARCH, cancelResearch, hastenResearch, hireArchivist, researched, settleArchives, startResearch, type ResearchId, type ResearchRecord } from "./archives.ts";
+import { ranksInRun, runTrainingOffer, type RunTrainingOffer } from "./run-training.ts";
+import { keepUndos, loadout, percentPotionChance, potionPercent, reviveChance } from "./loadout.ts";
+import { researched } from "./archives.ts";
 import { SETTINGS } from "./settings.ts";
-import {
-  creditMaterials,
-  craftEquipment as craftEquipmentItem,
-  salvageEquipment as salvageEquipmentItem,
-  equipItem as equipItemAction,
-  unequipSlot as unequipSlotAction,
-  craftConsumable as craftConsumableItem,
-  CONSUMABLES,
-  type ConsumableId,
-} from "./crafting.ts";
-import type { EquipmentSlot } from "./equipment.ts";
-import type { MaterialId, MaterialStack, MetalId } from "./materials.ts";
+import { CONSUMABLES, type ConsumableId } from "./crafting.ts";
+import type { MaterialId, MaterialStack } from "./materials.ts";
+import { TrainingDesk } from "./game/training-desk.ts";
+import { ResearchDesk } from "./game/research-desk.ts";
+import { DeckEditor } from "./game/deck-editor.ts";
+import { GearDesk } from "./game/gear-desk.ts";
+import { GemFinder } from "./game/gem-finder.ts";
+import { RunPurse } from "./game/run-purse.ts";
+import { readyForestRuns, startingHero } from "./game/hero-sync.ts";
 /** How a new run starts: out in the forest or at the entrance, and from
  * which seed (rolled from the game's randomness when left out). */
 export type RunStart = { outside?: boolean; seed?: number; height?: number };
@@ -103,8 +93,9 @@ export type Heal = { from: number; to: number; x: number; y: number; id: number 
 const MAX_GAINS = 12;
 /** Salts the run seed for Revive's rolls, apart from the world's own. */
 const REVIVE_SALT = 0x7e51e;
-/** Salts the run seed for where a Gem lies on a floor. */
-const GEM_SALT = 0x6e3a1;
+/** A step resolved and about to be taken: the tile stepped onto, what it
+ * does, where it is, and whether it goes in the undo history. */
+type TakenStep = { tile: Tile; outcome: StepEffect; dest: { x: number; y: number }; track: boolean };
 /** The latest fight as the board shows it: the hero struck from `from`,
  * the enemy (`hp` at the start) stood at `to`, and its strikes land from
  * `start` (performance time). Played out, they are the fight's own; settled
@@ -162,11 +153,18 @@ export class Game {
   /** When each of the latest fight's revivals lands (performance.now()),
    * for the board's golden fire; emptied by undo. */
   revivedAt: number[] = [];
-  /** Where and when (performance.now()) the latest Gem was collected, for
-   * the board's sparkle. */
-  gemSparkle: { x: number; y: number; at: number } | null = null;
   /** Delve Automove's committed route and last weighed decisions. */
   readonly delvePlan = new DelvePlan();
+  /** The Training tab's commands. */
+  readonly training = new TrainingDesk(this);
+  /** The Archives' commands. */
+  readonly research = new ResearchDesk(this);
+  /** The Deck page's commands over the next run's hand. */
+  readonly deck = new DeckEditor(this);
+  /** The Gear page's commands: provisions, crafting and equipment. */
+  readonly gear = new GearDesk(this);
+  /** The Gem on the board, collecting it, and the ad's Gems. */
+  readonly gemFinder = new GemFinder(this);
   /** `rng` is the game's randomness: new run seeds, enemy drops and
    * treasure loot all draw from it (the `game` stream unless given), so a
    * seeded stream replays a game and no visual effect can shift it. */
@@ -273,7 +271,7 @@ export class Game {
     const record = this.run.height > this.slice.reached;
     this.recordProgress();
     this.claimRewards();
-    this.creditGold(tierGold(this.tier, this.rules.endGold(this.run)));
+    this.purse.gold(tierGold(this.tier, this.rules.endGold(this.run)));
     return record;
   }
   snapshot(): MoveSnapshot {
@@ -306,9 +304,10 @@ export class Game {
     const run = structuredClone(past);
     if (this.mode !== "tower") return run;
     const now = this.towerRun, then = run as TowerRun;
-    const sameRun = now.seed === then.seed;
-    if (sameRun && now.damaged) then.damaged = true;
-    if (sameRun && now.height === then.height && now.keysSpent) then.keysSpent = true;
+    if (now.seed !== then.seed) return run;
+    const sameFloor = now.height === then.height;
+    if (now.damaged) then.damaged = true;
+    if (sameFloor && now.keysSpent) then.keysSpent = true;
     return run;
   }
   undo() {
@@ -362,8 +361,12 @@ export class Game {
       if (end.keys[color] !== start.keys[color]) result.keys[color] = [start.keys[color], end.keys[color]];
     return result;
   }
+  /** Whether play waits: paused, fallen, or a fight playing out. */
+  private get busy() {
+    return this.paused || this.fallen || !!this.encounter;
+  }
   walkTo(x: number, y: number) {
-    if (this.paused || this.fallen || this.encounter) return;
+    if (this.busy) return;
     if (!this.manualMoves) {
       this.handMovesNote();
       return;
@@ -375,11 +378,7 @@ export class Game {
       return;
     }
     // The whole tap-to-walk route counts as a single undo step, not one per tile.
-    if (route.length) {
-      const slice = this.slice;
-      slice.history.push(this.snapshot());
-      slice.history = keepUndos(slice.history, this.undoCapacity);
-    }
+    if (route.length) this.remember(this.snapshot());
     this.route = route;
     this.message = route.length ? "Walking to destination." : "Already here.";
   }
@@ -440,37 +439,42 @@ export class Game {
    * first card in priority order that can reach a target. When none can,
    * the hero waits and the End Run button lights up. */
   private handTurn() {
-    let plan = this.cardPlan, lost: CardId | null = null;
-    const focused = this.run.focused;
-    if (!plan && focused) {
-      // The focused card keeps the lead while it has a path to a target.
-      plan = planHand(this, this.hand, this.mode, this.hand.indexOf(focused));
-      if (!plan) {
-        this.run.focused = undefined;
-        lost = focused;
-      }
-    }
-    plan ??= planHand(this, this.hand, this.mode);
+    const { plan, lost } = this.nextHandPlan();
     this.handStuck = !plan;
-    if (!plan) {
-      this.cardPlan = null;
-      this.activeCard = null;
-      this.auto = false;
-      this.message = "No card can move · end the run, or use an item or skill.";
-      return;
-    }
+    if (!plan) return this.handWaits();
     const step = plan.path.shift()!;
     this.cardPlan = plan.path.length ? plan : null;
     this.activeCard = plan.card;
     const id = this.hand[plan.card];
-    this.message = lost
-      ? `Focus lost · ${CARDS[lost].name} has no path to a target · ${CARDS[id].name} leads.`
-      : `${id === this.run.focused ? "Focus · " : ""}${CARDS[id].name} · ${cardText(id, this.save.upgrades)}`;
+    this.message = lost ? `Focus lost · ${CARDS[lost].name} has no path to a target · ${CARDS[id].name} leads.` : this.cardMessage(id);
     // The board changes only as the hero moves, so a refused step means the
     // plan is stale: drop it and let the next turn choose again.
     if (!this.move(step.dx, step.dy, true)) this.cardPlan = null;
     // The focused card's last step reaches its target: the focus is spent.
     else if (!this.cardPlan && id === this.run.focused) this.run.focused = undefined;
+  }
+  /** The path the hand follows this turn: the one committed, else the
+   * focused card's while it has a path to a target (`lost` once it has
+   * none), else the first card's in priority order that can act. */
+  private nextHandPlan(): { plan: CardPlan | null; lost: CardId | null } {
+    if (this.cardPlan) return { plan: this.cardPlan, lost: null };
+    const focused = this.run.focused;
+    if (!focused) return { plan: planHand(this, this.hand, this.mode), lost: null };
+    const plan = planHand(this, this.hand, this.mode, this.hand.indexOf(focused));
+    if (plan) return { plan, lost: null };
+    this.run.focused = undefined;
+    return { plan: planHand(this, this.hand, this.mode), lost: focused };
+  }
+  /** No card can act: the hand pauses and End Run lights up. */
+  private handWaits() {
+    this.cardPlan = null;
+    this.activeCard = null;
+    this.auto = false;
+    this.message = "No card can move · end the run, or use an item or skill.";
+  }
+  /** The status line for card `id` leading the hand. */
+  private cardMessage(id: CardId) {
+    return `${id === this.run.focused ? "Focus · " : ""}${CARDS[id].name} · ${cardText(id, this.save.upgrades)}`;
   }
   /** After something the player does inside a run (an item used, a skill),
    * a stuck hand checks its cards again and plays on if one can act. */
@@ -551,7 +555,7 @@ export class Game {
     this.activeCard = card;
     this.handStuck = false;
     this.auto = true;
-    this.message = `Focus · ${CARDS[id].name} · ${cardText(id, this.save.upgrades)}`;
+    this.message = this.cardMessage(id);
     return "focused";
   }
   /** Forgets the hand's committed path and which card glows. */
@@ -604,7 +608,7 @@ export class Game {
     this.route = [];
     this.encounter = null;
     this.fight = null;
-    const { player, loadout } = this.startingHero(this.mode);
+    const { player, loadout } = startingHero(this.save, this.mode);
     const core: RunCore = {
       layoutVersion: this.rules.layoutVersion,
       seed,
@@ -635,41 +639,22 @@ export class Game {
     this.dropHandPlan();
     this.paused = false;
   }
-  /** The hero a run in `mode` gets with everything owned now, at full HP,
-   * standing at the entrance's row, and the loadout it keeps. */
-  private startingHero(mode: Mode) {
-    const { attack, defense, maxHp, shroud, keys } = loadout(this.save);
-    // Only a hero with a shroud carries one.
-    const withShroud = shroud ? { shroud } : {};
-    return {
-      player: { x: MODES[mode].entranceX, y: 0, hp: maxHp, maxHp, attack, defense, ...withShroud, keys } as Player,
-      loadout: { attack, defense, maxHp, ...withShroud },
-    };
-  }
-  /** A run still in the forest hasn't started: after anything bought,
-   * unlocked, trained or equipped, it takes everything owned now, as if it
-   * had just begun. */
-  private readyForestRuns() {
-    for (const mode of ["tower", "delve"] as const) {
-      const run = this.save[mode].run;
-      if (!run?.outside) continue;
-      const { player, loadout } = this.startingHero(mode);
-      run.player = { ...player, x: run.player.x, y: run.player.y };
-      run.loadout = loadout;
-    }
-  }
   /** Claims a Goals checkpoint's reward (or its premium one) in `tower`
    * once reached; returns it, or null when it isn't ready. */
   claimGoal(tower: number, floor: number, premium: boolean) {
     const reward = claimGoal(this.save, tower, floor, premium);
-    if (reward) this.readyForestRuns();
+    if (reward) readyForestRuns(this.save);
     return reward;
+  }
+  /** Whether a Tower run in the forest may warp to the checkpoint at `floor`. */
+  private canWarpTo(tower: number, floor: number) {
+    return this.mode === "tower" && !!this.run.outside && canWarp(this.save, tower, floor);
   }
   /** Warp: from the forest, begins a new Tower run in `tower` at once on
    * the floor after the checkpoint at `floor` (the first of the next ten),
    * once Warp is owned and that checkpoint reached. */
   warp(tower: number, floor: number) {
-    if (this.mode !== "tower" || !this.run.outside || !canWarp(this.save, tower, floor)) return false;
+    if (!this.canWarpTo(tower, floor)) return false;
     if (tower !== this.slice.tier) this.selectTier(tower);
     this.newRun({ outside: true, height: floor });
     this.enterFromOutside();
@@ -686,7 +671,7 @@ export class Game {
     };
   }
   /** Queues a reward to rise from (x, y). */
-  private gain(x: number, y: number, text: string, art: GainArt | null = null) {
+  gain(x: number, y: number, text: string, art: GainArt | null = null) {
     this.gains.push({ x, y, text, art });
     if (this.gains.length > MAX_GAINS) this.gains.shift();
   }
@@ -724,16 +709,9 @@ export class Game {
     this.dropHandPlan();
     this.message = `Fallen in combat against ${enemyTitle(enemy)}.`;
   }
-  /** Keys every physical enemy kill / treasure chest by seed (+height for
-   * Tower, whose x/y space is reused per room) so persistent loot can be
-   * gated outside `run` — undoing a kill/chest reverts the tile, but never
-   * re-grants the reward for the same physical kill/chest. */
-  private lootKey(x: number, y: number): string {
-    return this.rules.lootKey(this.run, x, y);
-  }
   /** Inside a run the hero is still standing in: not in the forest, not
    * fallen. */
-  private get playing() {
+  get playing() {
     return !this.run.outside && !this.fallen;
   }
   /** The hero fell in the fight just taken: the run waits at 0 HP, the hand
@@ -743,7 +721,7 @@ export class Game {
   }
   /** A single orthogonal step while play is live. */
   private canStep(dx: number, dy: number) {
-    return !this.paused && !this.fallen && !this.encounter && Math.abs(dx) + Math.abs(dy) === 1;
+    return !this.busy && Math.abs(dx) + Math.abs(dy) === 1;
   }
   move(dx: number, dy: number, force = true, track = true) {
     if (!this.canStep(dx, dy)) return false;
@@ -763,33 +741,38 @@ export class Game {
       this.feedback("Lethal encounter. Inspect the enemy before proceeding.");
       return false;
     }
-    const shows = t.kind === "enemy" && this.playsFights, animate = shows && this.animatesFights;
-    // A strike that would fell the hero may revive it instead (Revive), so
-    // a lost fight is played out strike by strike to see how it ends.
-    const revive = isLethal(outcome) ? this.revival(dest) : undefined;
-    const fight = shows || revive ? bout(p, t.enemy!, revive) : null, start = performance.now();
-    const rose = fight ? revivals(fight) : [];
-    if (fight && rose.length) {
+    const step: TakenStep = { tile: t, outcome, dest, track };
+    return t.kind === "enemy" ? this.fightStep(step, t.enemy!) : this.take(step);
+  }
+  /** Steps into `enemy`. A strike that would fell the hero may revive it
+   * instead (Revive), so a lost fight is played out strike by strike to see
+   * how it ends; a game that plays fights shows it on the board. */
+  private fightStep(step: TakenStep, enemy: Enemy) {
+    const p = this.run.player, outcome = step.outcome;
+    const revive = isLethal(outcome) ? this.revival(step.dest) : undefined;
+    if (!this.playsFights && !revive) return this.take(step);
+    const fight = bout(p, enemy, revive), start = performance.now(), rose = revivals(fight).length;
+    if (rose) {
       outcome.player.hp = heroHpAfter(fight, p.hp);
       outcome.combat = { ...outcome.combat!, survivable: outcome.player.hp > 0 };
     }
-    if (shows) {
-      // Animate fights plays the fight out strike by strike before it
-      // counts; otherwise it shows in summary rounds, and only one with a
-      // revival waits, for each round after the revival's fire.
-      const shown = animate ? fight! : summarize(fight!, REVIVE_MS);
-      this.fight = { from: { x: p.x, y: p.y }, to: dest, bout: shown, start, hp: t.enemy!.hp, summary: !animate };
-      this.revivedAt = shown.strikes.filter((s) => s.revived).map((s) => start + s.at);
-      if (animate || rose.length) {
-        // The same fight, so the board shows it as it plays out.
-        const encounter: Encounter = Object.assign(this.fight, { enemy: t.enemy!, outcome, settle: () => this.take(t, outcome, dest, track, revivals(encounter.bout).length) });
-        this.encounter = encounter;
-        return true;
-      }
-      return this.take(t, outcome, dest, track, rose.length);
-    }
-    if (rose.length) this.revivedAt = [start];
-    return this.take(t, outcome, dest, track, rose.length);
+    if (this.playsFights) return this.showFight(step, enemy, fight, start);
+    if (rose) this.revivedAt = [start];
+    return this.take(step, rose);
+  }
+  /** Shows `fight` on the board. Animate fights plays it out strike by
+   * strike before it counts; otherwise it shows in summary rounds, and only
+   * one with a revival waits, for each round after the revival's fire. */
+  private showFight(step: TakenStep, enemy: Enemy, fight: Bout, start: number) {
+    const p = this.run.player, animate = this.animatesFights, rose = revivals(fight).length;
+    const shown = animate ? fight : summarize(fight, REVIVE_MS);
+    this.fight = { from: { x: p.x, y: p.y }, to: step.dest, bout: shown, start, hp: enemy.hp, summary: !animate };
+    this.revivedAt = shown.strikes.filter((s) => s.revived).map((s) => start + s.at);
+    if (!animate && !rose) return this.take(step, rose);
+    // The same fight, so the board shows it as it plays out.
+    const encounter: Encounter = Object.assign(this.fight, { enemy, outcome: step.outcome, settle: () => this.take(step, revivals(encounter.bout).length) });
+    this.encounter = encounter;
+    return true;
   }
   /** Whether each strike at (x, y) that would fell the hero revives it: a
    * fixed number per run, floor, tile and strike, under the Revive chance,
@@ -803,21 +786,21 @@ export class Game {
     return (strike) => tileRandom(at.x, at.y, (seed ^ Math.imul(strike + 1, 0x85ebca6b)) | 0) * 10000 < chance;
   }
   /** Takes a resolved step: in through its door or fight, then onto the tile. */
-  private take(t: Tile, outcome: StepEffect, dest: { x: number; y: number }, track: boolean, revived = 0) {
-    if (!this.enter(t, outcome, dest, track, revived)) return false;
-    this.land(t, dest.x, dest.y, outcome);
-    this.gemStep();
+  private take(step: TakenStep, revived = 0) {
+    if (!this.enter(step, revived)) return false;
+    this.land(step.tile, step.dest.x, step.dest.y, step.outcome);
+    this.gemFinder.step();
     return true;
   }
   /** Commits a resolved step: undo history, stats, and the door or fight on
    * the way in. Returns false when the player fell. */
-  private enter(t: Tile, outcome: StepEffect, dest: { x: number; y: number }, track: boolean, revived: number) {
+  private enter({ tile: t, outcome, dest, track }: TakenStep, revived: number) {
     const before = this.snapshot();
     if (track) this.remember(before);
     const drained = snap(this.run.player.hp - outcome.player.hp);
     this.applyStats(outcome.player);
     if (t.kind === "door") this.openDoor(t, outcome.keysSpent, drained, dest);
-    return t.kind !== "enemy" || this.winFight(t.enemy!, outcome.combat!, before, dest, revived);
+    return t.kind !== "enemy" || this.winFight({ enemy: t.enemy!, damage: outcome.combat!.damage, at: dest, revived }, before);
   }
   /** Moves the player onto the tile and applies what standing there does. */
   private land(t: Tile, x: number, y: number, outcome: StepEffect) {
@@ -886,8 +869,9 @@ export class Game {
   }
   /** Settles a fight whose damage is already applied. Returns false when
    * the player fell. */
-  private winFight(enemy: Enemy, combat: CombatPrediction, before: MoveSnapshot, at: { x: number; y: number }, revived: number) {
-    if (combat.damage > 0) this.mar("damaged");
+  private winFight(fight: FightEnd, before: MoveSnapshot) {
+    const { enemy, at } = fight;
+    if (fight.damage > 0) this.mar("damaged");
     if (this.run.player.hp <= 0) {
       this.fallIn(before, enemy);
       return false;
@@ -896,32 +880,24 @@ export class Game {
     const floor = this.rules.equivalentFloor(this.rules.progressAt(this.run, at.y));
     this.gainXp(enemy, floor);
     // Silver belongs to the run, so it isn't gated like Gold: undo takes it back.
-    const silver = this.creditSilver(silverForKill(enemy.strength, floor));
-    const { gold, drops } = this.creditEnemyLoot(enemy, at.x, at.y);
-    if (gold) this.gain(at.x, at.y, `+${wholeChange(gold)} Gold`, { coin: "gold" });
-    this.gain(at.x, at.y, `+${wholeChange(silver)} Silver`, { coin: "silver" });
+    const purse = this.purse, silver = purse.killSilver(enemy, floor);
+    const { gold, drops } = purse.enemyLoot(enemy, at.x, at.y);
+    this.gainCoins(at, gold, silver);
     for (const d of drops) this.gain(at.x, at.y, materialText(d), { material: d.id, quantity: d.quantity });
     const opened = enemy.strength === "boss" && floor >= TIER_BOSS_FLOOR && this.openNextTier();
-    this.message = [revived ? `Revived · ${enemyTitle(enemy)} defeated` : combat.damage ? `−${wholeChange(combat.damage)} HP · ${enemyTitle(enemy)} defeated` : "Unscathed victory",
-      ...(gold ? [`+${wholeChange(gold)} Gold`] : []), `+${wholeChange(silver)} Silver`, ...drops.map(materialText),
+    this.message = [fightText(fight), ...coinsText(gold, silver), ...drops.map(materialText),
       ...(opened ? [`${this.rules.words.tierName} ${tierNumeral(this.slice.tiersOpen)} opened`] : [])].join(" · ");
     return true;
   }
-  /** Adds Silver found in the run, raised by Silver Bonus training and
-   * research (the two multiplied), fractions and all; returns what it
-   * added. */
-  private creditSilver(base: number) {
-    const silver = snap((base * silverBonus(this.trainingNow) * researched(this.save.archives, "silverBonus", 100)) / 10_000);
-    this.run.silver = snap(this.silver + silver);
-    return silver;
+  /** Raises the Gold and Silver just found from `at`, each only when some
+   * was; a kill always shows its Silver. */
+  private gainCoins(at: { x: number; y: number }, gold: number, silver: number, alwaysSilver = true) {
+    if (gold) this.gain(at.x, at.y, `+${wholeChange(gold)} Gold`, { coin: "gold" });
+    if (silver || alwaysSilver) this.gain(at.x, at.y, `+${wholeChange(silver)} Silver`, { coin: "silver" });
   }
-  /** Banks Gold found in the run, fractions and all (`snap`), times the
-   * Shop's coin packs owned; returns what it banked. */
-  private creditGold(found: number) {
-    const gold = snap(found * goldFactor(this.save));
-    this.save.gold = snap(this.save.gold + gold);
-    this.slice.runGold = snap(this.slice.runGold + gold);
-    return gold;
+  /** What the run finds is paid through its purse. */
+  private get purse() {
+    return new RunPurse(this.save, this.mode, this.run, this.rng);
   }
   /** The numbered tower (or delve) the run climbs. */
   get tier() {
@@ -938,27 +914,16 @@ export class Game {
   /** Chooses which opened tier the next run climbs, from the forest: the
    * mode's records become that tier's and a fresh run waits outside it. */
   selectTier(tier: number) {
-    const slice = this.slice;
-    if (!this.run.outside || tier < 1 || tier > slice.tiersOpen || tier === slice.tier) return false;
-    switchTier(slice, tier);
+    if (!this.canSelectTier(tier)) return false;
+    switchTier(this.slice, tier);
     this.newRun({ outside: true });
     this.message = `${this.rules.words.tierName} ${tierNumeral(tier)} · ${tierBonusText(tier)} Gold & XP`;
     return true;
   }
-  /** An enemy's Gold (by its strength) and material drops. Both are gated
-   * by lootedTiles (outside `run`), so undo can restore the enemy but can
-   * never pay for it twice. */
-  private creditEnemyLoot(enemy: Enemy, x: number, y: number): { gold: number; drops: MaterialStack[] } {
-    const slice = this.slice,
-      key = this.lootKey(x, y);
-    if (slice.lootedTiles[key]) return { gold: 0, drops: [] };
-    slice.lootedTiles[key] = true;
-    // Gold / Kill training and research, multiplied, then the tier's bonus.
-    const raised = snap((ENEMY_GOLD[enemy.strength] * killGold(this.trainingNow) * researched(this.save.archives, "killGold", 100)) / 10_000);
-    const gold = this.creditGold(tierGold(this.tier, raised));
-    const drops = this.rules.enemyDrops(enemy.name, this.rng);
-    creditMaterials(this.save, drops);
-    return { gold, drops };
+  /** Whether the forest may switch to `tier`: opened, and not the one selected. */
+  private canSelectTier(tier: number) {
+    const slice = this.slice;
+    return !!this.run.outside && tier !== slice.tier && tier >= 1 && tier <= slice.tiersOpen;
   }
   private enterFromOutside() {
     const p = this.run.player;
@@ -973,61 +938,7 @@ export class Game {
     this.auto = this.handStartsPlaying;
     this.dropHandPlan();
     this.feedback(this.rules.words.enter);
-    this.gemStep();
-  }
-  /** The floor a Gem belongs to: the Tower floor the hero stands on, or in
-   * the Delve the furthest equivalent floor reached. */
-  private get gemFloor() {
-    const r = this.run;
-    return this.mode === "tower" ? r.height : this.rules.equivalentFloor(r.maxHeight ?? r.height);
-  }
-  /** The Gem lying on the floor the board shows, if any. */
-  get gem(): GemSpot | null {
-    return this.run.outside ? null : gemOn(this.save.gemDrop, this.mode, this.run.seed, this.gemFloor);
-  }
-  /** The hero stands somewhere new inside a run: it takes a Gem lying on
-   * its tile, a Gem left on another floor is missed, and on a new floor
-   * (once the last Gem's cooldown is over) a new one may appear: on a plain
-   * tile the hero can walk to, in the Delve within the view. */
-  private gemStep() {
-    if (!this.playing) return;
-    const drop = this.save.gemDrop, p = this.run.player, gem = this.gem;
-    if (gem && gem.x === p.x && gem.y === p.y) this.takeGem(gem);
-    if (!reachFloor(drop, this.mode, this.run.seed, this.gemFloor, this.clock())) return;
-    const view = Math.floor(VIEWPORT_TILES / 2);
-    const [minY, maxY] = this.mode === "tower" ? [0, Infinity] : [p.y - view, p.y + view];
-    // Where it lies is fixed for the run and floor, like the floor itself.
-    const spot = gemSpot(this.world, p, minY, maxY, random(this.run.seed ^ GEM_SALT ^ Math.imul(this.gemFloor + 1, 0x9e3779b1)));
-    if (spot) drop.out = { mode: this.mode, seed: this.run.seed, floor: this.gemFloor, ...spot };
-  }
-  /** Pays the Gem and starts the cooldown to the next; it vanishes in a sparkle. */
-  private takeGem(gem: GemSpot) {
-    this.save.gems++;
-    collectedGem(this.save.gemDrop, this.clock());
-    this.gemSparkle = { x: gem.x, y: gem.y, at: performance.now() };
-    this.gain(gem.x, gem.y, "+1 Gem", { gem: true });
-  }
-  /** Collects the Gem at (x, y) on the board, tapped from anywhere; false
-   * when none lies there. */
-  collectGemAt(x: number, y: number) {
-    const gem = this.gem;
-    if (!gem || gem.x !== x || gem.y !== y) return false;
-    this.takeGem(gem);
-    this.message = "+1 Gem";
-    return true;
-  }
-  /** Whether the ad's Gems can be claimed now. */
-  get adReady() {
-    return this.clock() >= this.save.gemDrop.adReadyAt;
-  }
-  /** Claims the ad's Gems, and the button waits out its cooldown. No ad
-   * plays yet: this is where watching one will be hooked up. */
-  claimAdGems() {
-    if (!this.adReady) return false;
-    this.save.gems += AD_GEMS;
-    this.save.gemDrop.adReadyAt = this.clock() + AD_COOLDOWN_MS;
-    this.message = `+${AD_GEMS} Gems`;
-    return true;
+    this.gemFinder.step();
   }
   /** Removes what the step used up: chests stay behind opened, fixtures stay. */
   private consumeTile(t: Tile, x: number, y: number) {
@@ -1054,25 +965,30 @@ export class Game {
     visited[`${x},${y}`] = (visited[`${x},${y}`] ?? 0) + 1;
     const run = this.delveRun;
     run.top = Math.max(run.top ?? y, y);
-    const floorBefore = this.rules.equivalentFloor(this.run.maxHeight ?? 0);
-    this.run.height = Math.max(this.run.height, world.depth(x, y));
-    this.run.maxHeight = Math.max(this.run.maxHeight ?? 0, this.run.height);
-    // Each new equivalent floor is the Delve's floor climbed (Spare Change),
-    // keyed off the labyrinth's columns (x = -1) so it pays once a run.
-    let gold = 0, silver = 0;
-    for (let f = floorBefore + 1; f <= this.rules.equivalentFloor(this.run.maxHeight); f++) {
-      gold += this.payFloorGold(this.lootKey(-1, f));
-      silver += this.payFloorSilver();
-    }
-    if (gold) this.gain(x, y, `+${wholeChange(gold)} Gold`, { coin: "gold" });
-    if (silver) this.gain(x, y, `+${wholeChange(silver)} Silver`, { coin: "silver" });
+    const floorBefore = this.rules.equivalentFloor(run.maxHeight ?? 0);
+    run.height = Math.max(run.height, world.depth(x, y));
+    run.maxHeight = Math.max(run.maxHeight ?? 0, run.height);
+    this.payDelveFloors(floorBefore, { x, y });
     world.maintain(y);
     this.recordProgress();
   }
+  /** Each new equivalent floor past `floorBefore` is the Delve's floor
+   * climbed (Spare Change, Wishing Well), keyed off the labyrinth's columns
+   * (x = -1) so it pays once a run. */
+  private payDelveFloors(floorBefore: number, at: { x: number; y: number }) {
+    const purse = this.purse, last = this.rules.equivalentFloor(this.run.maxHeight ?? 0);
+    let gold = 0, silver = 0;
+    for (let f = floorBefore + 1; f <= last; f++) {
+      gold += purse.floorGold(purse.floorKey(-1, f));
+      silver += purse.floorSilver();
+    }
+    this.gainCoins(at, gold, silver, false);
+  }
   advanceTowerRoom() {
     this.claimRewards();
+    const purse = this.purse, p = this.run.player;
     // Keyed by the stairs taken, so a floor pays once a run, whatever undo does.
-    const gold = this.payFloorGold(this.lootKey(this.run.player.x, this.run.player.y));
+    const gold = purse.floorGold(purse.floorKey(p.x, p.y));
     const highest = this.run.maxHeight ?? this.run.height;
     const { board, sectionStart } = this.climb.up();
     // Silver belongs to the run, so the run's own highest floor gates it:
@@ -1080,29 +996,12 @@ export class Game {
     let silver = 0;
     if (this.run.height > highest) {
       this.run.maxHeight = this.run.height;
-      silver = this.payFloorSilver();
+      silver = purse.floorSilver();
     }
     this.enterTowerFloor(board);
     // A new section's first floor is sealed below; the hero keeps every stat.
     this.feedback(sectionStart ? `Floor ${this.run.height + 1} · the way down is sealed` : "A new chamber opens.");
-    if (gold) this.gain(this.run.player.x, this.run.player.y, `+${wholeChange(gold)} Gold`, { coin: "gold" });
-    if (silver) this.gain(this.run.player.x, this.run.player.y, `+${wholeChange(silver)} Silver`, { coin: "silver" });
-  }
-  /** Spare Change: Gold for a floor climbed for the first time in the run,
-   * its Gold / Floor raised by research and the tier's bonus. Gated by
-   * `key` in lootedTiles, like a kill's Gold; returns what it paid. */
-  private payFloorGold(key: string) {
-    const base = floorGold(this.trainingNow), slice = this.slice;
-    if (!base || slice.lootedTiles[key]) return 0;
-    slice.lootedTiles[key] = true;
-    return this.creditGold(tierGold(this.tier, snap((base * researched(this.save.archives, "floorGold", 100)) / 100)));
-  }
-  /** Wishing Well: Silver for a floor climbed for the first time in the
-   * run, its Silver / Floor raised by research, then by Silver Bonus.
-   * Returns what it paid. */
-  private payFloorSilver() {
-    const base = floorSilver(this.trainingNow);
-    return base ? this.creditSilver(snap((base * researched(this.save.archives, "floorSilver", 100)) / 100)) : 0;
+    this.gainCoins(p, gold, silver, false);
   }
   /** Step back onto the stairs at the foot of the current room, returning
    * to the previous room exactly as it was left: cleared tiles stay clear,
@@ -1182,34 +1081,23 @@ export class Game {
   }
   /** Pickup rewards and treasure payouts; stats were already applied. */
   private collect(t: Tile, x: number, y: number, outcome: StepEffect) {
-    const text = t.kind === "key" ? `+1 ${t.color} key`
-      : t.kind === "potion" ? `+${wholeChange(outcome.healed)} HP`
-      : t.kind === "attack" ? `+${ATTACK_SHARD} attack`
-      : t.kind === "defense" ? `+${DEFENSE_SHARD} defense`
-      : null;
+    const text = pickupText(t, outcome);
     if (text) {
       this.gain(x, y, text, { tile: { ...t } });
       if (t.kind === "potion") this.recordHeal(outcome.healed);
       this.message = text;
     }
-    if (t.kind === "treasure") {
-      this.run.treasures++;
-      // Generated treasure never upgrades gear directly — it always grants
-      // Gold, plus independent chances at metal, an Empty Vial, and gems.
-      // Gated by lootedTiles so undo/reopen can't duplicate the payout.
-      const key = this.lootKey(x, y);
-      const slice = this.slice;
-      if (!slice.lootedTiles[key]) {
-        slice.lootedTiles[key] = true;
-        const E = this.rules.equivalentFloor(this.rules.progressAt(this.run, y));
-        const loot = rollTreasureLoot(E, this.rng);
-        const gold = this.creditGold(tierGold(this.tier, loot.gold));
-        creditMaterials(this.save, loot.materials);
-        this.gain(x, y, `+${wholeChange(gold)} Gold`, { coin: "gold" });
-        for (const m of loot.materials) this.gain(x, y, materialText(m), { material: m.id, quantity: m.quantity });
-        this.message = [`+${wholeChange(gold)} Gold`, ...loot.materials.map(materialText)].join(" · ");
-      }
-    }
+    if (t.kind === "treasure") this.openTreasure(x, y);
+  }
+  /** A treasure chest: counted, and paid once per physical chest (undo and
+   * reopening can't pay it again). */
+  private openTreasure(x: number, y: number) {
+    this.run.treasures++;
+    const loot = this.purse.treasure(x, y);
+    if (!loot) return;
+    this.gain(x, y, `+${wholeChange(loot.gold)} Gold`, { coin: "gold" });
+    for (const m of loot.materials) this.gain(x, y, materialText(m), { material: m.id, quantity: m.quantity });
+    this.message = [`+${wholeChange(loot.gold)} Gold`, ...loot.materials.map(materialText)].join(" · ");
   }
   /** Ends the run (the End Run button), or, fallen, accepts defeat. */
   finish(reason: string) {
@@ -1217,53 +1105,10 @@ export class Game {
     if (this.fallen) this.acceptDefeat();
     else this.finalizeRun(reason);
   }
-  /** Spends training points on one rank of a stat; false if short. */
   /** Inside a run, the hand it went in with; in the forest, the hand the
    * next run will take, as the Deck orders it. */
   get hand(): readonly CardId[] {
     return this.run.hand ?? this.save.hand;
-  }
-  /** Moves the hand's card in slot `from` to slot `to`, the cards between
-   * shifting over one (Combat Stance, in the forest only). */
-  arrangeHand(from: number, to: number) {
-    const n = this.save.hand.length;
-    if (!this.save.upgrades.handOrdering || !this.run.outside || !(from >= 0 && from < n && to >= 0 && to < n)) return false;
-    this.save.hand = moveCard(this.save.hand, from, to);
-    return true;
-  }
-  /** Puts a deck card into the hand's first empty slot (Buildout, in
-   * the forest only). */
-  addToHand(id: CardId) {
-    const hand = this.save.hand;
-    if (!this.canChooseCards || !deckCards(this.save.upgrades).includes(id) || hand.includes(id) || hand.length >= handSlots(this.save)) return false;
-    hand.push(id);
-    return true;
-  }
-  /** Drops a deck card on hand slot `slot` (Buildout, in the forest only):
-   * into the slot with room in the hand, or in a full one in place of the
-   * card there, which goes back to the deck (`placeCard`). */
-  placeInHand(id: CardId, slot: number) {
-    const hand = this.save.hand, slots = handSlots(this.save);
-    if (!this.canChooseCards || !deckCards(this.save.upgrades).includes(id) || hand.includes(id) || !(slot >= 0 && slot < slots)) return false;
-    const next = placeCard(hand, id, slot, slots);
-    if (!next) return false;
-    this.save.hand = next;
-    return true;
-  }
-  /** Takes a card out of the hand, back to the deck; STAIRS always stays. */
-  removeFromHand(id: CardId) {
-    const hand = this.save.hand;
-    if (!this.canChooseCards || id === "stairs" || !hand.includes(id)) return false;
-    this.save.hand = hand.filter((c) => c !== id);
-    return true;
-  }
-  private get canChooseCards() {
-    return !!this.save.upgrades.combatStance && !!this.run.outside;
-  }
-  /** Whether the Training skill's tab and commands are open: owned, or
-   * every page shown in Dev mode. */
-  private get trainingOpen() {
-    return !!this.save.upgrades.training || this.save.settings.devMode;
   }
   /** Whether a tapped tile shows the route there and its totals: the
    * Courage skill Pathfinder owned, or Dev mode. */
@@ -1275,98 +1120,6 @@ export class Game {
   get trainsOnTheJob() {
     return !!this.save.upgrades.onTheJob || this.save.settings.devMode;
   }
-  /** Whether one more rank of `id` can be trained at all: its row shows,
-   * and it isn't at its most. */
-  private canTrain(id: TrainingId) {
-    const row = TRAINING.find((t) => t.id === id)!;
-    return this.trainingOpen && trainingOpen(row, this.save.upgrades) && !trainingMaxed(this.save, id);
-  }
-  /** Buys one more rank of `id` with training points: it counts at once.
-   * A trainer training the stat stops, as `cancelTraining` does: its Gold
-   * comes back and the time spent becomes time credit. Refused without the
-   * Training skill, at the stat's most, or without the points. With Dev
-   * free purchases it costs nothing. */
-  train(id: TrainingId) {
-    this.settleTraining();
-    const row = TRAINING.find((t) => t.id === id)!;
-    if (!this.canTrain(id) || (!this.free && trainingPoints(this.save).left < row.cost)) return false;
-    this.cancelTraining(id);
-    return this.changeLoadout(() => {
-      if (!this.free) this.save.trainingPaid[id].points += row.cost;
-      this.save.training[id]++;
-    });
-  }
-  /** Pays a trainer `trainingGold` to train one more rank of `id`: it
-   * takes `trainingMs` of the wall clock (less any time credit, used up
-   * first) and counts once that has passed (`settleTraining`). Refused
-   * without the Training skill, for a stat already in training or at its
-   * most, with every trainer busy, or without the Gold. With Dev free
-   * purchases it costs nothing and counts at once. */
-  trainWithGold(id: TrainingId) {
-    this.settleTraining();
-    const row = TRAINING.find((t) => t.id === id)!, jobs = this.save.trainingJobs, ranks = this.save.training[id];
-    if (!this.canTrain(id) || trainingJob(jobs, id)) return false;
-    if (this.free) return this.changeLoadout(() => { this.save.training[id]++; });
-    const gold = trainingGold(row.cost, ranks);
-    if (jobs.length >= trainingSlots(this.save) || this.save.gold < gold) return false;
-    const now = this.clock(), ms = trainingMs(ranks, trainingSpeed(this.save)),
-      credit = Math.min(ms, this.save.trainingCredit);
-    this.save.gold = snap(this.save.gold - gold);
-    this.save.trainingCredit -= credit;
-    jobs.push({ id, startedAt: now, completesAt: doneAt(ms - credit, this.save.trainingBoostUntil, now), gold, ms });
-    // Time credit can cover the whole rank.
-    this.settleTraining();
-    return true;
-  }
-  /** The training time (ms, at the normal rate) the rank of `id` in
-   * training still needs: what its timer shows. */
-  trainingLeft(id: TrainingId) {
-    const job = trainingJob(this.save.trainingJobs, id);
-    return job ? workLeft(job.completesAt, this.save.trainingBoostUntil, this.clock()) : 0;
-  }
-  /** Stops the training of `id`, giving its Gold back and the time already
-   * spent on it as time credit. */
-  cancelTraining(id: TrainingId) {
-    const jobs = this.save.trainingJobs, job = trainingJob(jobs, id);
-    if (!job) return false;
-    this.refundJob(job);
-    this.save.trainingJobs = jobs.filter((j) => j !== job);
-    return true;
-  }
-  private refundJob(job: TrainingJob) {
-    this.save.gold = snap(this.save.gold + job.gold);
-    this.save.trainingCredit += Math.max(0, Math.round(job.ms - this.trainingLeft(job.id)));
-  }
-  /** Finishes the rank of `id` in training now, for `finishGems` of the
-   * training time its timer shows (none with Dev free purchases). */
-  finishTraining(id: TrainingId) {
-    const job = trainingJob(this.save.trainingJobs, id);
-    if (!job) return false;
-    const gems = this.free ? 0 : finishGems(this.trainingLeft(id));
-    if (this.save.gems < gems) return false;
-    this.save.gems -= gems;
-    job.completesAt = Math.min(job.completesAt, this.clock());
-    return this.settleTraining() > 0;
-  }
-  /** Buys the next trainer with Gems: one more stat can train at once. */
-  buyTrainer() {
-    const price = nextTrainerGems(this.save);
-    if (price === null || (!this.free && this.save.gems < price)) return false;
-    if (!this.free) this.save.gems -= price;
-    this.save.trainers++;
-    return true;
-  }
-  /** Claims an hour more of the training boost (an ad will pay for it; for
-   * now it is free), up to `BOOST_MAX_MS` banked: while it lasts, ranks in
-   * training go twice as fast. Each rank's due time moves to match. */
-  claimTrainingBoost() {
-    this.settleTraining();
-    const now = this.clock(), old = this.save.trainingBoostUntil, until = claimBoost(old, now);
-    if (until === null) return false;
-    for (const job of this.save.trainingJobs) job.completesAt = doneAt(workLeft(job.completesAt, old, now), until, now);
-    this.save.trainingBoostUntil = until;
-    return true;
-  }
   /** Buys the Shop's offer `id` at `serverNow`, a server time confirmed
    * for this purchase (the Shop's clock records it): with its price, or,
    * for a real-money offer, once the store confirms it was paid (`paid`);
@@ -1376,73 +1129,74 @@ export class Game {
     const o = offer(id);
     if (!o) return "locked";
     confirmServerTime(this.save.shop.clock, serverNow, this.clock());
-    this.settleTraining();
+    this.training.settle();
     const boosted = permanentBoost(this.save);
-    const t = purchase(this.save, o, serverNow, this.free ? "free" : paid ? "store" : "price");
+    const t = purchase(this.save, o, serverNow, this.payment(paid));
     if (typeof t === "string") return t;
-    if (!boosted && permanentBoost(this.save)) this.boostForever();
+    // A Premium Pass's boost runs for good from now.
+    if (!boosted && permanentBoost(this.save)) this.training.boostForever();
     this.message = o.item?.kind === "entitlement" ? `${t.item}: yours for good` : `+${t.item}`;
     return null;
   }
-  /** The trainers' ×2 boost runs for good from now: each rank in training
-   * is due when its training left at double speed is done. */
-  private boostForever() {
-    const now = this.clock(), old = this.save.trainingBoostUntil;
-    for (const job of this.save.trainingJobs) job.completesAt = doneAt(workLeft(job.completesAt, old, now), BOOST_FOREVER, now);
-    this.save.trainingBoostUntil = BOOST_FOREVER;
-  }
-  /** Ranks trainers finished and not yet announced, oldest first; the app
-   * takes them for its notifications. */
-  trainingDone: { id: TrainingId; level: number }[] = [];
-  /** Counts the ranks whose training the clock has reached, saying so in the
-   * status line and queuing them in `trainingDone`; returns how many. A run
-   * inside gains each at once. */
-  settleTraining() {
-    const now = this.clock(), due = this.save.trainingJobs.filter((j) => j.completesAt <= now);
-    if (!due.length) return 0;
-    this.changeLoadout(() => {
-      this.save.trainingJobs = this.save.trainingJobs.filter((j) => !due.includes(j));
-      for (const j of due) {
-        const paid = this.save.trainingPaid[j.id];
-        this.save.training[j.id]++;
-        paid.gold = snap(paid.gold + j.gold);
-        paid.ms += j.ms;
-        this.trainingDone.push({ id: j.id, level: this.save.training[j.id] });
-      }
-    });
-    this.message = `Training · ${due.map((j) => TRAINING.find((t) => t.id === j.id)!.name).join(", ")} complete.`;
-    return due.length;
+  /** How a Shop purchase is paid: for nothing (Dev), by the store, or with its price. */
+  private payment(paid: boolean) {
+    if (this.free) return "free";
+    return paid ? "store" : "price";
   }
   /** Buys one rank of Training `id` for this run with its Silver: it counts
    * from the next turn on, until the run ends. Each purchase is a turn of
    * its own, so undo takes it back. Bought while a fight plays out, it
    * counts in that fight from its next strike (`retrainFight`). Refused
-   * before On the Job is owned, during a fight shown in summary rounds, for a row whose upgrade isn't owned or at its highest,
-   * or without the Silver. */
+   * before On the Job is owned, during a fight shown in summary rounds, for
+   * a row whose upgrade isn't owned or at its highest, or without the
+   * Silver. */
   trainInRun(id: TrainingId) {
-    if (!this.trainsOnTheJob || !this.playing || this.encounter?.summary) return false;
+    if (!this.mayTrainInRun) return false;
     const offer = runTrainingOffer(this.save, this.run, id);
-    if (!offer.open || offer.maxed || (!this.free && this.silver < offer.price)) return false;
+    if (!this.canBuy(offer)) return false;
     this.remember(this.snapshot());
     if (!this.free) this.run.silver = snap(this.silver - offer.price);
     this.run.training = { ...this.run.training, [id]: offer.bought + 1 };
-    const row = offer.row;
-    if (isStatRow(row)) {
-      const level = levelForXp(this.save.xp), stat = row.stat,
-        gain = snap(trained(row, offer.level + 1, level) - trained(row, offer.level, level));
-      for (const stats of [this.run.player, this.run.loadout]) if (stats) stats[stat] = snap((stats[stat] ?? 0) + gain);
-      // More maximum HP comes with the HP to fill it.
-      if (stat === "maxHp") this.run.player.hp = snap(this.run.player.hp + gain);
-      if (this.encounter) this.retrainFight(this.encounter, stat === "maxHp" ? gain : 0);
-    } else if (id === "findPotion") {
-      const chance = percentPotionChance(this.trainingNow);
-      this.run.percentPotions = chance;
-      // The floor stood on shows its new percent potions at once.
-      if (this.world instanceof RoomWorld) this.world.percentPotions = chance;
-    } else if (id === "revive" && this.encounter) this.retrainFight(this.encounter, 0);
-    this.message = `${row.name} trained for this run · level ${offer.level + 1}`;
+    this.applyRunTraining(offer);
+    this.message = `${offer.row.name} trained for this run · level ${offer.level + 1}`;
     this.afterPlayerAction();
     return true;
+  }
+  /** Whether the run's next rank of a row is for sale and its Silver held. */
+  private canBuy(offer: RunTrainingOffer) {
+    return offer.open && !offer.maxed && (this.free || this.silver >= offer.price);
+  }
+  /** What a rank bought for the run changes now: a stat, the chance of
+   * percent potions, or Revive in a fight playing out. */
+  private applyRunTraining({ row, level }: RunTrainingOffer) {
+    if (isStatRow(row)) this.raiseRunStat(row, level);
+    else if (row.id === "findPotion") this.raisePercentPotions();
+    else if (row.id === "revive" && this.encounter) this.retrainFight(this.encounter, 0);
+  }
+  /** Whether Training can be bought for the run now: On the Job owned,
+   * inside a run, and no fight shown in summary rounds. */
+  private get mayTrainInRun() {
+    return this.trainsOnTheJob && this.playing && !this.encounter?.summary;
+  }
+  /** A stat row's rank bought for the run: the hero and the run's loadout
+   * gain what the rank from `level` adds at the hero's level, and a fight
+   * playing out goes on with it. */
+  private raiseRunStat(row: StatTrainingRow, level: number) {
+    const heroLevel = levelForXp(this.save.xp), stat = row.stat, p = this.run.player,
+      gain = snap(trained(row, level + 1, heroLevel) - trained(row, level, heroLevel));
+    p[stat] = snap((p[stat] ?? 0) + gain);
+    const kept = this.run.loadout;
+    if (kept) kept[stat] = snap((kept[stat] ?? 0) + gain);
+    // More maximum HP comes with the HP to fill it.
+    if (stat === "maxHp") p.hp = snap(p.hp + gain);
+    if (this.encounter) this.retrainFight(this.encounter, stat === "maxHp" ? gain : 0);
+  }
+  /** Find Potion bought for the run: its chance of percent potions rises,
+   * and the floor stood on shows its new percent potions at once. */
+  private raisePercentPotions() {
+    const chance = percentPotionChance(this.trainingNow);
+    this.run.percentPotions = chance;
+    if (this.world instanceof RoomWorld) this.world.percentPotions = chance;
   }
   /** Training bought while a fight plays out counts in it from the first
    * strike not yet swinging: the fight plays on from there with the hero's
@@ -1467,150 +1221,28 @@ export class Game {
     Object.assign(o.player, { hp: end, attack: p.attack, defense: p.defense, maxHp: p.maxHp });
     o.combat = { ...o.combat!, damage, survivable: end > 0 };
   }
-  /** Resets a Training stat to no ranks for `TRAINING_RESET_GEMS` Gems
-   * (none with Dev free purchases), returning what its ranks were paid
-   * with: the training points, the Gold, and the trainers' time as time
-   * credit. A rank still in training is stopped, the same way. */
-  resetTraining(id: TrainingId) {
-    this.settleTraining();
-    const ranks = this.save.training[id], job = trainingJob(this.save.trainingJobs, id);
-    if ((!ranks && !job) || (!this.free && this.save.gems < TRAINING_RESET_GEMS)) return false;
-    return this.changeLoadout(() => {
-      const paid = this.save.trainingPaid[id];
-      if (!this.free) this.save.gems -= TRAINING_RESET_GEMS;
-      if (job) this.refundJob(job);
-      this.save.gold = snap(this.save.gold + paid.gold);
-      this.save.trainingCredit += paid.ms;
-      this.save.trainingPaid[id] = { points: 0, gold: 0, ms: 0 };
-      this.save.training[id] = 0;
-      this.save.trainingJobs = this.save.trainingJobs.filter((j) => j.id !== id);
-    });
-  }
-  /** Buys the next hand slot with Gems (Larger Hand opens them); the next
-   * run's hand can hold one more card. */
-  buyHandSlot() {
-    const price = nextHandSlotGems(this.save);
-    if (price === null || (!this.free && this.save.gems < price)) return false;
-    if (!this.free) this.save.gems -= price;
-    this.save.handSlots++;
-    return true;
-  }
   buy(id: UpgradeId) {
     if (!skillAvailable(id, this.save.upgrades)) return false;
-    const u = UPGRADES.find((u) => u.id === id)!;
-    const n = this.save.upgrades[id],
-      price = cost(id, n),
-      balance =
-        u.currency === "courage" ? this.save.delve.courage : this.save.tower.inspiration;
-    if (n >= u.max || (!this.free && price > balance)) return false;
-    if (!this.free) {
-      if (u.currency === "courage") this.save.delve.courage -= price;
-      else this.save.tower.inspiration -= price;
-    }
+    const u = UPGRADES.find((u) => u.id === id)!, n = this.save.upgrades[id];
+    if (n >= u.max || !this.spendTreeCurrency(u.currency === "courage", cost(id, n))) return false;
     this.save.upgrades[id]++;
-    this.readyForestRuns();
+    readyForestRuns(this.save);
+    return true;
+  }
+  /** Pays `price` in Courage, or else Inspiration (nothing with Dev free
+   * purchases); false when short. */
+  private spendTreeCurrency(courage: boolean, price: number) {
+    if (this.free) return true;
+    const save = this.save;
+    if (price > (courage ? save.delve.courage : save.tower.inspiration)) return false;
+    if (courage) save.delve.courage -= price;
+    else save.tower.inspiration -= price;
     return true;
   }
   /** The wall clock the Archives' research runs on (ms); tests set it. */
   clock: () => number = () => Date.now();
-  /** Sets archivist `slot` to research `id`'s next level, paying its Gold. */
-  startResearch(slot: number, id: ResearchId) {
-    this.settleResearch();
-    const started = this.archivesOpen && startResearch(this.save, slot, id, this.clock());
-    // Free purchases' research takes no time: it completes now.
-    if (started && this.free) this.settleResearch();
-    return started;
-  }
-  /** Stops archivist `slot`'s research, refunding its Gold and keeping the
-   * time already spent on it for when it starts again. */
-  cancelResearch(slot: number) {
-    return cancelResearch(this.save, slot, this.clock());
-  }
-  /** Whether archivist `slot` starts the next level on its own. */
-  setAutoContinue(slot: number, on: boolean) {
-    const s = this.save.archives.slots[slot];
-    if (s) s.autoContinue = on;
-  }
-  /** Dev mode: finishes archivist `slot`'s research now. */
-  finishResearchNow(slot: number) {
-    const job = this.save.archives.slots[slot]?.job;
-    if (!this.save.settings.devMode || !job) return [];
-    hastenResearch(this.save.archives, slot, Math.max(0, job.completesAt - this.clock()));
-    return this.settleResearch();
-  }
-  /** Whether the Archives' commands are open: the skill owned, or every
-   * page shown in Dev mode. */
-  private get archivesOpen() {
-    return !!this.save.upgrades.archives || this.save.settings.devMode;
-  }
-  hireArchivist() {
-    return this.archivesOpen && hireArchivist(this.save);
-  }
-  /** Research completed and not yet announced, oldest first; the app takes
-   * them for its notifications. */
-  researchDone: ResearchRecord[] = [];
-  /** Completes the research that the clock has reached, saying so in the
-   * status line and queuing it in `researchDone`. */
-  settleResearch(): ResearchRecord[] {
-    const done = settleArchives(this.save, this.clock());
-    if (done.length) this.readyForestRuns();
-    this.researchDone.push(...done);
-    const last = done.at(-1);
-    if (last) this.message = `Archives · ${RESEARCH[last.research].name} level ${last.level} complete.`;
-    return done;
-  }
-  /** Buys one more `id` provision. Provisions last for good, so like
-   * training it reaches a run already inside at once. */
-  buyGold(id: GoldItemId) {
-    const price = provisionPrice(this.save, id);
-    if (!provisionOpen(this.save, id) || (!this.free && this.save.gold < price)) return false;
-    return this.changeLoadout(() => {
-      if (!this.free) this.save.gold -= price;
-      this.save.provisions[id]++;
-    });
-  }
-  /** A gear change or training applies at once to the runs of both modes: a
-   * run inside gains or loses exactly what it changed in the loadout, so
-   * ATK/DEF gathered from items and the provisions it started with are kept,
-   * and a run still in the forest takes everything owned now. */
-  private changeLoadout(change: () => boolean | void) {
-    const before = loadout(this.save);
-    if (change() === false) return false;
-    const after = loadout(this.save);
-    for (const mode of ["tower", "delve"] as const) {
-      const run = this.save[mode].run;
-      if (!run || run.outside) continue;
-      for (const stats of [run.player, run.loadout])
-        if (stats)
-          for (const stat of ["attack", "defense", "maxHp", "shroud"] as const) {
-            const change = snap(after[stat] - before[stat]);
-            if (change) stats[stat] = snap((stats[stat] ?? 0) + change);
-          }
-      const p = run.player;
-      p.hp = Math.max(1, Math.min(p.hp, p.maxHp));
-      // Keys a provision adds come into the hand at once.
-      for (const color of ["yellow", "blue", "red"] as const) p.keys[color] = Math.max(0, p.keys[color] + after.keys[color] - before.keys[color]);
-    }
-    this.readyForestRuns();
-    return true;
-  }
-  craftEquipment(slot: EquipmentSlot, metal: MetalId, enhancements: MaterialStack[]) {
-    return craftEquipmentItem(this.save, slot, metal, enhancements);
-  }
-  salvageEquipment(itemId: string) {
-    return salvageEquipmentItem(this.save, itemId);
-  }
-  equipItem(itemId: string) {
-    return this.changeLoadout(() => equipItemAction(this.save, itemId));
-  }
-  unequipSlot(slot: EquipmentSlot) {
-    this.changeLoadout(() => unequipSlotAction(this.save, slot));
-  }
-  craftConsumable(id: ConsumableId) {
-    return craftConsumableItem(this.save, id);
-  }
   useConsumable(id: ConsumableId) {
-    if (!this.playing || this.encounter || (this.save.consumables[id] ?? 0) <= 0) return false;
+    if (!this.canUse(id)) return false;
     const def = CONSUMABLES.find(c => c.id === id)!;
     const p = this.run.player;
     const n = snap(Math.min(p.maxHp - p.hp, potionHeal(def.healAmount, this.stepRules)));
@@ -1621,11 +1253,41 @@ export class Game {
     this.afterPlayerAction();
     return true;
   }
+  /** Whether a crafted consumable `id` can be used now: one held, inside a
+   * run, with no fight playing out. */
+  private canUse(id: ConsumableId) {
+    return this.playing && !this.encounter && (this.save.consumables[id] ?? 0) > 0;
+  }
   /** Records a potion's heal of `n` HP, already applied, where the hero stands. */
   private recordHeal(n: number) {
     if (n <= 0) return;
     const p = this.run.player;
     this.lastHeal = { from: p.hp - n, to: p.hp, x: p.x, y: p.y, id: (this.lastHeal?.id ?? 0) + 1 };
+  }
+}
+
+/** A fight the hero won: the enemy beaten at `at`, the HP it cost, and
+ * how many times the hero revived in it. */
+type FightEnd = { enemy: Enemy; damage: number; at: { x: number; y: number }; revived: number };
+
+/** How the status line opens on a fight won. */
+function fightText({ enemy, damage, revived }: FightEnd) {
+  if (revived) return `Revived · ${enemyTitle(enemy)} defeated`;
+  return damage ? `−${wholeChange(damage)} HP · ${enemyTitle(enemy)} defeated` : "Unscathed victory";
+}
+
+/** A kill's Gold (when it paid any) and Silver, as the status line names them. */
+const coinsText = (gold: number, silver: number) => [...(gold ? [`+${wholeChange(gold)} Gold`] : []), `+${wholeChange(silver)} Silver`];
+
+/** What picking up `t` shows: the key, the HP a potion healed, or the
+ * shard's stat; null for anything else. */
+function pickupText(t: Tile, outcome: StepEffect) {
+  switch (t.kind) {
+    case "key": return `+1 ${t.color} key`;
+    case "potion": return `+${wholeChange(outcome.healed)} HP`;
+    case "attack": return `+${ATTACK_SHARD} attack`;
+    case "defense": return `+${DEFENSE_SHARD} defense`;
+    default: return null;
   }
 }
 
