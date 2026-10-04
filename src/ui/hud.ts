@@ -7,7 +7,7 @@ import { outsideWeather } from "../outside.ts";
 import { tierNumeral, tierRewardText } from "../tiers.ts";
 import { MODES, milestones } from "../modes.ts";
 import { cardArt, CURRENCY_SPRITES, displayedProgress, el, ENTER_ICON, text, uiSprite } from "./dom.ts";
-import { CARDS, IN_PLACE, cardText, type CardId } from "../cards.ts";
+import { CARDS, IN_PLACE, cardText, isSiphon, type CardId } from "../cards.ts";
 import { BADGES } from "../badges.ts";
 import { badgeStyle } from "./badge-token.ts";
 import { trainingPoints, trainingWaiting } from "../loadout.ts";
@@ -218,17 +218,17 @@ function renderAutoButton(game: Game) {
 /** The hand (and its badges) the cards were last drawn for. */
 let shownHand = "";
 /** A hand card's tooltip: its name and text, inside a run the badge it
- * holds, and KEY SIPHON's uses so far this run. */
+ * holds, and a siphon's uses so far this run. */
 function handCardTitle(game: Game, id: CardId) {
   let title = `${CARDS[id].name}: ${cardText(id, game.save.upgrades)}`;
   if (game.run.outside) return title;
   const badge = game.run.badges?.[id];
   if (badge) title += `
 Badge: ${BADGES[badge.id].name}, level ${badge.level}`;
-  if (id === "keySiphon") {
-    const uses = game.run.siphoned ?? 0;
+  if (isSiphon(id)) {
+    const uses = game.cardUses(id), next = game.siphonCost(id);
     title += `
-Used ${uses} time${uses === 1 ? "" : "s"} this run; the next use takes ${game.siphonCost} level${game.siphonCost === 1 ? "" : "s"}.`;
+Used ${uses} time${uses === 1 ? "" : "s"} this run; the next use takes ${next} level${next === 1 ? "" : "s"}.`;
   }
   return title;
 }

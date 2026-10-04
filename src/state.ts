@@ -1,6 +1,6 @@
 import { entrance, floorFor } from "./delve/labyrinth.ts";
 import { chooseStep } from "./automation.ts";
-import { CARDS, cardText, planHand, type CardId, type CardPlan, type CardRules } from "./cards.ts";
+import { CARDS, KEY_TO_HP_PERCENT, SIPHONS, TRADER_YELLOW_KEYS, cardText, isSiphon, planHand, type CardId, type CardPlan, type CardRules, type SiphonCard } from "./cards.ts";
 import { BADGE_IDS, BADGES, MAX_COPIES, badgeValue, runBadges, type BadgeId, type RunBadge } from "./badges.ts";
 import { BOOST_FOREVER, permanentBoost } from "./shop/entitlements.ts";
 import { offer, type OfferId } from "./shop/offers.ts";
@@ -487,8 +487,8 @@ export class Game {
     // A card that acts in place takes the turn without a step.
     if (!plan.path.length) {
       this.cardPlan = null;
-      const p = this.run.player, key = `${this.rules.lootKey(this.run, p.x, p.y)}:siphon${this.run.siphoned ?? 0}`;
-      this.siphon(this.scaleOf(id));
+      const p = this.run.player, key = `${this.rules.lootKey(this.run, p.x, p.y)}:${id}${this.cardUses(id)}`;
+      this.actInPlace(id, this.scaleOf(id));
       if (id === this.run.focused) this.run.focused = undefined;
       this.activate(plan.card, key);
       return;
@@ -565,10 +565,11 @@ export class Game {
     return (100 + (badge.id === "effective" ? v : -v)) / 100;
   }
   /** Whether Skip on card `card` rolls for its target at (x, y): never for
-   * a boss, nor the Delve's STAIRS card's climb (no stairs). */
+   * a boss, the Delve's STAIRS card's climb (no stairs), or a torch (no tile
+   * to vanish). */
   private rollsSkip(card: CardId, x: number, y: number) {
     const badge: RunBadge | undefined = this.run.badges?.[card];
-    if (badge?.id !== "skip" || this.run.outside) return false;
+    if (badge?.id !== "skip" || this.run.outside || card === "torch") return false;
     const t = this.world.tile(x, y);
     if (t.kind === "enemy" && (t.enemy!.strength === "boss" || t.enemy!.strength === "greaterBoss")) return false;
     return card !== "stairs" || t.kind === "stairs";
@@ -719,43 +720,78 @@ export class Game {
     this.recordHeal(healed);
     this.message = `${BADGES[id].name} · +${wholeChange(healed)} HP`;
   }
-  /** Whether a card that acts in place can act now (`planHand` asks):
-   * KEY SIPHON, inside a run, while enough Max HP training levels are left
-   * for its next use. */
+  /** Whether a card that acts in place can act now (`planHand` asks),
+   * inside a run only: a siphon while enough of its training levels are
+   * left for its next use, BK TRADER while 3 yellow keys are held, and YK TO
+   * HP while a yellow key is held and its whole heal would land. */
   canAct(card: CardId) {
-    return card === "keySiphon" && this.siphonLevel >= this.siphonCost;
+    if (this.run.outside) return false;
+    const p = this.run.player;
+    if (isSiphon(card)) return this.siphonLevel(card) >= this.siphonCost(card);
+    if (card === "blueTrader") return p.keys.yellow >= TRADER_YELLOW_KEYS;
+    if (card === "keyToHp") return p.keys.yellow >= 1 && snap(p.maxHp - p.hp) >= this.keyHeal();
+    return false;
   }
-  /** The run's Max HP training level, as KEY SIPHON drains it: the hero's
-   * own ranks and those bought with Silver this run, less the levels
-   * siphoned (1 for the first use, 2 for the second, and so on); 0 outside
-   * a run. */
-  get siphonLevel() {
+  /** Times card `card`, one that acts in place, has acted this run. */
+  cardUses(card: CardId) {
+    return this.run.cardUses?.[card] ?? 0;
+  }
+  /** YK TO HP's heal: 10% of max HP. */
+  private keyHeal() {
+    return snap((this.run.player.maxHp * KEY_TO_HP_PERCENT) / 100);
+  }
+  /** The run's training level of the row siphon `card` drains (Max HP for
+   * KEY SIPHON, DEF for BK SIPHON, ATK for RK SIPHON): the hero's own ranks
+   * and those bought with Silver this run, less the levels it siphoned (1
+   * for the first use, 2 for the second, and so on); 0 outside a run. */
+  siphonLevel(card: SiphonCard) {
     if (this.run.outside) return 0;
-    const uses = this.run.siphoned ?? 0;
-    return this.save.training.hp + boughtInRun(this.run, "hp") - (uses * (uses + 1)) / 2;
+    const uses = this.cardUses(card), row = SIPHONS[card].row;
+    return this.save.training[row] + boughtInRun(this.run, row) - (uses * (uses + 1)) / 2;
   }
-  /** The Max HP training levels KEY SIPHON's next use takes: one more than
-   * the last. */
-  get siphonCost() {
-    return (this.run.siphoned ?? 0) + 1;
+  /** The training levels siphon `card`'s next use takes: one more than the
+   * last. */
+  siphonCost(card: SiphonCard) {
+    return this.cardUses(card) + 1;
   }
-  /** KEY SIPHON: a turn with no step that trades the run's top Max HP
-   * training levels (`siphonCost` of them) for a yellow key. The hero and
-   * the run's loadout lose the max HP those levels add at the hero's level,
-   * for the rest of the run only, HP falling only as far as the new max; it
-   * is a turn of its own, so undo takes it back. */
-  private siphon(scale = 1) {
-    const level = this.siphonLevel, levels = this.siphonCost, p = this.run.player, heroLevel = levelForXp(this.save.xp);
-    const row = TRAINING.find((t) => t.id === "hp") as StatTrainingRow;
-    const loss = snap(trained(row, level, heroLevel) - trained(row, level - levels, heroLevel));
+  /** A card that acts in place takes its turn, with no step: a turn of its
+   * own, so undo takes it back. Effective and Dampen scale what it gives
+   * (`scale`), never what it costs. */
+  private actInPlace(card: CardId, scale = 1) {
+    const p = this.run.player;
     this.remember(this.snapshot());
-    p.maxHp = snap(p.maxHp - loss);
-    p.hp = Math.min(p.hp, p.maxHp);
-    if (this.run.loadout) this.run.loadout.maxHp = snap(this.run.loadout.maxHp - loss);
-    p.keys.yellow = snap(p.keys.yellow + scale);
-    this.run.siphoned = levels;
-    this.gain(p.x, p.y, `−${wholeChange(loss)} max HP`, { heart: true });
-    this.gain(p.x, p.y, `+${keyCount(scale)} yellow key`, { tile: { kind: "key", color: "yellow" } });
+    if (isSiphon(card)) this.siphon(card, scale);
+    else if (card === "blueTrader") {
+      p.keys.yellow = snap(p.keys.yellow - TRADER_YELLOW_KEYS);
+      p.keys.blue = snap(p.keys.blue + scale);
+      this.gain(p.x, p.y, `−${TRADER_YELLOW_KEYS} yellow keys`, { tile: { kind: "key", color: "yellow" } });
+      this.gain(p.x, p.y, `+${keyCount(scale)} blue key`, { tile: { kind: "key", color: "blue" } });
+    } else if (card === "keyToHp") {
+      const healed = snap(Math.min(p.maxHp - p.hp, snap(this.keyHeal() * scale)));
+      p.keys.yellow = snap(p.keys.yellow - 1);
+      p.hp = snap(p.hp + healed);
+      this.gain(p.x, p.y, "−1 yellow key", { tile: { kind: "key", color: "yellow" } });
+      this.recordHeal(healed);
+    }
+    (this.run.cardUses ??= {})[card] = this.cardUses(card) + 1;
+  }
+  /** A siphon's turn: the run's top levels of its training row (its
+   * `siphonCost`) traded for a key of its colour. The hero and the run's
+   * loadout lose what those levels add at the hero's level, for the rest of
+   * the run only (max HP: HP falls only as far as the new max). */
+  private siphon(card: SiphonCard, scale: number) {
+    const { row: id, color } = SIPHONS[card], level = this.siphonLevel(card), levels = this.siphonCost(card);
+    const p = this.run.player, heroLevel = levelForXp(this.save.xp);
+    const row = TRAINING.find((t) => t.id === id) as StatTrainingRow;
+    const stat = row.stat as "maxHp" | "attack" | "defense";
+    const loss = snap(trained(row, level, heroLevel) - trained(row, level - levels, heroLevel));
+    p[stat] = snap(p[stat] - loss);
+    if (stat === "maxHp") p.hp = Math.min(p.hp, p.maxHp);
+    if (this.run.loadout) this.run.loadout[stat] = snap(this.run.loadout[stat] - loss);
+    p.keys[color] = snap(p.keys[color] + scale);
+    const lost = stat === "maxHp" ? `−${wholeChange(loss)} max HP` : `−${wholeChange(loss)} ${stat === "attack" ? "ATK" : "DEF"}`;
+    this.gain(p.x, p.y, lost, stat === "maxHp" ? { heart: true } : { tile: { kind: stat } });
+    this.gain(p.x, p.y, `+${keyCount(scale)} ${color} key`, { tile: { kind: "key", color } });
   }
   /** Rush: the first step toward a new target, onto an empty tile, goes on
    * along the path in the same step across up to `rushTiles` more empty
@@ -1670,7 +1706,7 @@ type FightEnd = { enemy: Enemy; damage: number; at: { x: number; y: number }; re
  * added `extra` (or, below 0, given it back, up to `maxHp`). */
 const afterExtra = (hp: number, extra = 0, maxHp = Infinity) => (extra ? snap(Math.min(maxHp, Math.max(0, hp - extra))) : hp);
 /** How Skip's message names what vanished, by tile kind. */
-const SKIPPED_NAMES: Partial<Record<Tile["kind"], string>> = { door: "The door", key: "The key", potion: "The potion", attack: "The ATK shard", defense: "The DEF shard" };
+const SKIPPED_NAMES: Partial<Record<Tile["kind"], string>> = { door: "The door", key: "The key", potion: "The potion", attack: "The ATK shard", defense: "The DEF shard", treasure: "The chest", reward: "The chest" };
 /** How many rows from the hero the walk to the nearest ? looks. */
 const MARK_REACH = 40;
 

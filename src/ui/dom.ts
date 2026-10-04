@@ -68,7 +68,10 @@ const SKILL_UI_SPRITES: Partial<Record<UpgradeId, UiSprite>> = {
 /** Skills about Silver show the Gold coin drained of colour, as the purse does. */
 const SKILL_SILVER = new Set<UpgradeId>(["wealthy", "wishingWell", "onTheJob", "pocketMoney"]);
 /** Skills about the hand show a card face. */
-const SKILL_CARDS: Partial<Record<UpgradeId, CardId>> = { combatStance: "stairs", buildout: "monster", cardHeal: "heal", cardAtkUp: "atkUp", cardDefUp: "defUp", cardBlueKey: "blueKey", keySiphon: "keySiphon" };
+const SKILL_CARDS: Partial<Record<UpgradeId, CardId>> = { combatStance: "stairs", buildout: "monster", cardHeal: "heal", cardAtkUp: "atkUp", cardDefUp: "defUp", cardBlueKey: "blueKey", keySiphon: "keySiphon",
+  cardYellowDoor: "yellowDoor", cardHeartDoor: "heartDoor", cardWeakEnemy: "weakEnemy", cardBaseEnemy: "baseEnemy", cardStrongEnemy: "strongEnemy",
+  cardEliteEnemy: "eliteEnemy", cardBossEnemy: "bossEnemy", cardChest: "chest", blueSiphon: "blueSiphon", blueTrader: "blueTrader", keyToHp: "keyToHp",
+  cardRedKey: "redKey", redSiphon: "redSiphon", cardTorch: "torch" };
 /** The forest's Enter button: an arrow going up into an arched doorway. */
 export const ENTER_ICON = `<svg class="enter-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 22.5V11a8.5 8.5 0 0 1 17 0v11.5z" fill="#1b1410"/><path d="M3.5 22.5V11a8.5 8.5 0 0 1 17 0v11.5" fill="none" stroke="#c9b48a" stroke-width="2" stroke-linejoin="round"/><path d="M12 21V11.5M8 15.2l4-4 4 4" fill="none" stroke="#ffe27a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 /** Two cards fanned out: the Deck's icon, made from the card faces. */

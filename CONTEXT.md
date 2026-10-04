@@ -125,8 +125,11 @@ The damage a hero's shroud blocks in each fight: the enemy's strikes, after DEF,
 _Avoid_: shield (the equipment slot), barrier
 
 **Key Siphon**:
-A card that moves nowhere: its turn trades Max HP training levels, for the rest of the run only, for a yellow key, each use in a run taking one level more than the last (1, then 2, then 3 …). Skipped once the run has too few Max HP training levels left for the next use.
-_Avoid_: key trade, drain
+A card that moves nowhere: its turn trades Max HP training levels, for the rest of the run only, for a yellow key, each use in a run taking one level more than the last (1, then 2, then 3 …). Skipped once the run has too few Max HP training levels left for the next use. **BK Siphon** and **RK Siphon** do the same with DEF and ATK training levels, for a blue and a red key, each counting its own uses; the three are the **siphons**.
+_Avoid_: drain
+
+**Key trade**:
+A card that moves nowhere and trades keys it holds for something else: **BK Trader** (3 yellow keys for a blue key) and **YK to HP** (a yellow key for 10% of max HP, only while that much HP is missing). Skipped while it can't pay.
 
 **Regen**:
 The HP a hero regains with every step taken in a run, after whatever the step did, up to max HP. A Rush turn counts as one step. The Regen skill opens Regen training, which gives it.

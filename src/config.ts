@@ -343,6 +343,22 @@ export const UPGRADES = [
     max: 1,
     currency: "inspiration",
   },
+  // The cards below Buy Quantity: the doors, the enemies by strength, then
+  // chests, the key trades and torches.
+  { id: "cardYellowDoor", name: "Yellow Door", description: "Add the YELLOW DOOR card to your deck: it moves you toward the closest yellow door, while you hold a yellow key", card: "yellowDoor", base: 5, max: 1, currency: "inspiration" },
+  { id: "cardHeartDoor", name: "Heart Door", description: "Add the HEART DOOR card to your deck: it moves you toward the closest Heart Door", card: "heartDoor", base: 5, max: 1, currency: "inspiration" },
+  { id: "cardWeakEnemy", name: "Weak Enemy", description: "Add the WEAK ENEMY card to your deck: it moves you toward the closest weak enemy", card: "weakEnemy", base: 10, max: 1, currency: "inspiration" },
+  { id: "cardBaseEnemy", name: "Base Enemy", description: "Add the BASE ENEMY card to your deck: it moves you toward the closest enemy that is neither weak, strong, elite nor a boss", card: "baseEnemy", base: 10, max: 1, currency: "inspiration" },
+  { id: "cardStrongEnemy", name: "Strong Enemy", description: "Add the STRONG ENEMY card to your deck: it moves you toward the closest strong enemy", card: "strongEnemy", base: 10, max: 1, currency: "inspiration" },
+  { id: "cardEliteEnemy", name: "Elite Enemy", description: "Add the ELITE ENEMY card to your deck: it moves you toward the closest elite enemy", card: "eliteEnemy", base: 10, max: 1, currency: "inspiration" },
+  { id: "cardBossEnemy", name: "Boss Enemy", description: "Add the BOSS ENEMY card to your deck: it moves you toward the closest boss or Greater Boss", card: "bossEnemy", base: 10, max: 1, currency: "inspiration" },
+  { id: "cardChest", name: "Chest", description: "Add the CHEST card to your deck: it moves you toward the closest closed chest, treasure or area reward", card: "chest", base: 10, max: 1, currency: "inspiration" },
+  { id: "blueSiphon", name: "BK Siphon", description: "Add the BK SIPHON card to your deck: it trades DEF training levels, for the rest of the run, for a blue key, each use costing one level more than the last", card: "blueSiphon", base: 10, max: 1, currency: "inspiration" },
+  { id: "blueTrader", name: "BK Trader", description: "Add the BK TRADER card to your deck: it trades 3 yellow keys for a blue key, without moving", card: "blueTrader", base: 10, max: 1, currency: "inspiration" },
+  { id: "keyToHp", name: "YK to HP", description: "Add the YK TO HP card to your deck: it trades a yellow key for 10% of your max HP, without moving, while you are missing at least that much", card: "keyToHp", base: 10, max: 1, currency: "inspiration" },
+  { id: "cardRedKey", name: "Red Key", description: "Add the RED KEY card to your deck: it moves you toward the closest red key", card: "redKey", base: 10, max: 1, currency: "inspiration" },
+  { id: "redSiphon", name: "RK Siphon", description: "Add the RK SIPHON card to your deck: it trades ATK training levels, for the rest of the run, for a red key, each use costing one level more than the last", card: "redSiphon", base: 10, max: 1, currency: "inspiration" },
+  { id: "cardTorch", name: "Torch", description: "Add the TORCH card to your deck: it moves you toward the closest lit torch, putting it out", card: "torch", base: 10, max: 1, currency: "inspiration" },
   {
     id: "inspirationUndos",
     name: "Rehearsed steps",

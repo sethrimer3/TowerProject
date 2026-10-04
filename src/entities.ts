@@ -118,9 +118,9 @@ export type RunCore = {
   /** Training ranks bought with Silver this run, on top of the hero's own:
    * they last only for this run. */
   training?: Partial<Record<TrainingId, number>>;
-  /** Times KEY SIPHON has traded Max HP training levels for yellow keys this
-   * run (the nth use took n levels): lost only for this run. */
-  siphoned?: number;
+  /** Times each card that acts in place (cards.ts `IN_PLACE`) has acted this
+   * run: a siphon's nth use took n training levels, lost only for this run. */
+  cardUses?: Partial<Record<CardId, number>>;
   /** Which numbered tower (or delve) the run climbs, from 2 up (tiers.ts);
    * absent for the first. */
   tier?: number;

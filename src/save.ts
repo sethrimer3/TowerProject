@@ -9,7 +9,7 @@ import { CONSUMABLES, type ConsumableId } from "./crafting.ts";
 import { decodeDefendSave, defaultDefendSave } from "./defend/progress.ts";
 import { decodeSettings, defaultSettings } from "./settings.ts";
 import { keepUndos, loadout } from "./loadout.ts";
-import { BASE_HAND, CARD_IDS, HAND_SLOT_GEMS, MAX_HAND_SLOTS, deckCards, handSlots, type CardId } from "./cards.ts";
+import { BASE_HAND, CARD_IDS, HAND_SLOT_GEMS, IN_PLACE, MAX_HAND_SLOTS, deckCards, handSlots, type CardId } from "./cards.ts";
 import { decodeGemDrop, defaultGemDrop } from "./gems.ts";
 import { decodeArchives, defaultArchives } from "./archives.ts";
 import { BOOST_FOREVER, decodeEntitlements, permanentBoost } from "./shop/entitlements.ts";
@@ -117,7 +117,7 @@ const RUN_FIELD_CHECKS = {
   // The hand is checked first: a focused card must be in it.
   focused: (v: unknown, r: any) => !!r.hand?.includes(v),
   training: validRunTraining,
-  siphoned: (v: unknown) => wholeIn(v, 1, 1e6),
+  cardUses: (v: unknown) => isRecord(v) && Object.entries(v).every(([id, n]) => IN_PLACE.has(id as CardId) && wholeIn(n, 1, 1e6)),
   tier: (v: unknown) => wholeIn(v, 2, TIERS),
   percentPotions: (v: unknown) => wholeIn(v, 1, FIND_POTION_MAX),
   // The hand is checked first: every card holding a badge must be in it.

@@ -68,7 +68,7 @@ const near = (a: number, b: number) => Math.abs(a - b) < 1e-6;
 test("KEY SIPHON trades Max HP training levels for a yellow key without moving, one level more each use", () => {
   const g = corridor(3), p = g.run.player, maxHp = p.maxHp, keys = p.keys.yellow;
   const worth = trainingWorth(hpRow, levelForXp(g.save.xp));
-  assert.deepEqual([g.siphonLevel, g.siphonCost], [3, 1]);
+  assert.deepEqual([g.siphonLevel("keySiphon"), g.siphonCost("keySiphon")], [3, 1]);
   g.autoTurn();
   assert.deepEqual([p.x, p.y], [0, 0], "no step");
   assert.equal(p.keys.yellow, keys + 1);
@@ -76,11 +76,11 @@ test("KEY SIPHON trades Max HP training levels for a yellow key without moving, 
   assert.equal(g.run.loadout!.maxHp, p.maxHp);
   assert.ok(p.hp <= p.maxHp, "HP falls with max HP");
   assert.equal(g.save.tower.history.length, 1, "a turn of its own");
-  assert.deepEqual([g.siphonLevel, g.siphonCost], [2, 2]);
+  assert.deepEqual([g.siphonLevel("keySiphon"), g.siphonCost("keySiphon")], [2, 2]);
   g.autoTurn();
   assert.equal(p.keys.yellow, keys + 2);
   assert.ok(near(p.maxHp, maxHp - 3 * worth), "the second takes two");
-  assert.deepEqual([g.run.siphoned, g.siphonLevel, g.siphonCost], [2, 0, 3]);
+  assert.deepEqual([g.cardUses("keySiphon"), g.siphonLevel("keySiphon"), g.siphonCost("keySiphon")], [2, 0, 3]);
   assert.equal(g.canAct("keySiphon"), false);
   g.autoTurn();
   assert.deepEqual([p.x, p.y], [1, 0], "skipped: STAIRS moves the hero");
@@ -91,7 +91,7 @@ test("KEY SIPHON trades Max HP training levels for a yellow key without moving, 
 test("with fewer levels left than the next use takes, the card is skipped", () => {
   const g = corridor(2);
   g.autoTurn();
-  assert.deepEqual([g.siphonLevel, g.siphonCost], [1, 2]);
+  assert.deepEqual([g.siphonLevel("keySiphon"), g.siphonCost("keySiphon")], [1, 2]);
   assert.equal(g.canAct("keySiphon"), false);
   assert.equal(planHand(g, g.hand, "tower")?.card, 1, "STAIRS plays instead");
 });
@@ -107,14 +107,14 @@ test("undo takes a siphon back, and the next run starts with its max HP whole", 
   const g = corridor(1);
   const maxHp = g.run.player.maxHp;
   g.autoTurn();
-  assert.equal(g.run.siphoned, 1);
+  assert.equal(g.cardUses("keySiphon"), 1);
   assert.ok(g.undo());
   assert.equal(g.run.player.maxHp, maxHp);
-  assert.equal(g.run.siphoned, undefined);
+  assert.equal(g.run.cardUses, undefined);
   g.autoTurn();
   g.newRun({ seed: 8 });
   assert.equal(g.run.player.maxHp, loadout(g.save).maxHp);
-  assert.equal(g.siphonLevel, 1);
+  assert.equal(g.siphonLevel("keySiphon"), 1);
 });
 
 test("Max HP bought with Silver this run can be siphoned too; with no Max HP training the card is skipped", () => {
@@ -124,13 +124,13 @@ test("Max HP bought with Silver this run can be siphoned too; with no Max HP tra
   const g = corridor(0, (s) => (s.upgrades.onTheJob = 1));
   g.run.silver = 100;
   assert.ok(g.trainInRun("hp"));
-  assert.equal(g.siphonLevel, 1);
+  assert.equal(g.siphonLevel("keySiphon"), 1);
   assert.deepEqual(planHand(g, g.hand, "tower"), { card: 0, path: [] });
 });
 
 test("no siphon in the forest", () => {
   const g = corridor(3);
   g.newRun({ outside: true, seed: 9 });
-  assert.equal(g.siphonLevel, 0);
+  assert.equal(g.siphonLevel("keySiphon"), 0);
   assert.equal(g.canAct("keySiphon"), false);
 });

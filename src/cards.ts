@@ -1,10 +1,10 @@
 import { point, type Tile } from "./entities.ts";
 import { litTorches, takesSomething, type Position } from "./board.ts";
 import type { Step } from "./pathfinding.ts";
-import { doorCost } from "./doors.ts";
+import { doorCost, doorRule } from "./doors.ts";
 import { predict } from "./combat.ts";
-import { UPGRADES, VIEWPORT_TILES, type UpgradeId } from "./config.ts";
-import type { DelveRun, Mode } from "./entities.ts";
+import { UPGRADES, VIEWPORT_TILES, type KeyColor, type TrainingId, type UpgradeId } from "./config.ts";
+import type { DelveRun, EnemyStrength, Mode } from "./entities.ts";
 
 /** Every card a hand can hold: its name and what it moves the hero toward. */
 export const CARDS = {
@@ -17,9 +17,36 @@ export const CARDS = {
   atkUp: { name: "ATK Up", text: "Move toward the closest ATK pickup." },
   defUp: { name: "DEF Up", text: "Move toward the closest DEF pickup." },
   keySiphon: { name: "Key Siphon", text: "Trade Max HP training levels for a yellow key, without moving, for the rest of the run. The first use takes 1 level and each use after takes 1 more (2, then 3…). Skipped without enough levels left." },
+  yellowDoor: { name: "Yellow Door", text: "Move toward the closest yellow door, while you hold a yellow key." },
+  heartDoor: { name: "Heart Door", text: "Move toward the closest Heart Door." },
+  weakEnemy: { name: "Weak Enemy", text: "Move toward the closest weak enemy." },
+  baseEnemy: { name: "Base Enemy", text: "Move toward the closest enemy that is neither weak, strong, elite nor a boss." },
+  strongEnemy: { name: "Strong Enemy", text: "Move toward the closest strong enemy." },
+  eliteEnemy: { name: "Elite Enemy", text: "Move toward the closest elite enemy." },
+  bossEnemy: { name: "Boss Enemy", text: "Move toward the closest boss or Greater Boss." },
+  chest: { name: "Chest", text: "Move toward the closest closed chest: a treasure chest or an area reward chest." },
+  blueSiphon: { name: "BK Siphon", text: "Trade DEF training levels for a blue key, without moving, for the rest of the run. The first use takes 1 level and each use after takes 1 more (2, then 3…). Skipped without enough levels left." },
+  blueTrader: { name: "BK Trader", text: "Trade 3 yellow keys for a blue key, without moving. Skipped with fewer than 3 yellow keys." },
+  keyToHp: { name: "YK to HP", text: "Trade a yellow key for 10% of your max HP, without moving. Skipped without a yellow key, or while you are missing less than 10% of your max HP." },
+  redKey: { name: "Red Key", text: "Move toward the closest red key." },
+  redSiphon: { name: "RK Siphon", text: "Trade ATK training levels for a red key, without moving, for the rest of the run. The first use takes 1 level and each use after takes 1 more (2, then 3…). Skipped without enough levels left." },
+  torch: { name: "Torch", text: "Move toward the closest lit torch, putting it out." },
 } as const;
 export type CardId = keyof typeof CARDS;
 export const CARD_IDS = Object.keys(CARDS) as CardId[];
+/** The siphon cards: the training row each drains for the rest of the run,
+ * and the key it gives for them. */
+export const SIPHONS = {
+  keySiphon: { row: "hp", color: "yellow" },
+  blueSiphon: { row: "defense", color: "blue" },
+  redSiphon: { row: "attack", color: "red" },
+} as const satisfies Partial<Record<CardId, { row: TrainingId; color: KeyColor }>>;
+export type SiphonCard = keyof typeof SIPHONS;
+export const isSiphon = (id: CardId): id is SiphonCard => id in SIPHONS;
+/** BK TRADER's price: the yellow keys it trades for one blue key. */
+export const TRADER_YELLOW_KEYS = 3;
+/** YK TO HP's heal: this percent of max HP for one yellow key. */
+export const KEY_TO_HP_PERCENT = 10;
 /** What card `id` does, as the player is told: STAIRS says how it climbs
  * in the Delve only once Into the depths is owned. */
 export function cardText(id: CardId, upgrades: Record<UpgradeId, number>): string {
@@ -86,8 +113,8 @@ export function placeCard(hand: readonly CardId[], id: CardId, slot: number, slo
  * hero stands (`IN_PLACE`) plans no steps. */
 export type CardPlan = { card: number; path: Step[] };
 /** Cards that act where the hero stands, a turn with no step, rather than
- * moving toward a target: KEY SIPHON. */
-export const IN_PLACE = new Set<CardId>(["keySiphon"]);
+ * moving toward a target: the siphons and the key trades. */
+export const IN_PLACE = new Set<CardId>(["keySiphon", "blueSiphon", "redSiphon", "blueTrader", "keyToHp"]);
 /** What a card's badge changes about planning it (badges.ts), as
  * `HandAt.cardRules` gives it: nothing when absent. */
 export type CardRules = {
@@ -144,20 +171,44 @@ function pathTo(r: Reached): Step[] {
 
 /** Whether `card` wants the tile, from where the hero stands. The Delve's
  * STAIRS card is decided over the whole search instead (`climb`). */
-function wants(card: CardId, t: Tile, at: Position, rules?: CardRules): boolean {
-  return WANTS[card](t, at, rules);
+function wants(card: CardId, r: Reached, at: Position, rules?: CardRules): boolean {
+  return WANTS[card](r.tile, at, rules, r);
 }
-const WANTS: Record<CardId, (t: Tile, at: Position, rules?: CardRules) => boolean> = {
+/** A monster that can be fought, of one of `strengths` (any, without): an
+ * impervious monster can't be fought at all, so it is never a target. */
+const fightable = (strengths?: readonly EnemyStrength[]) => (t: Tile, at: Position) =>
+  t.kind === "enemy" && (!strengths || strengths.includes(t.enemy!.strength)) && !predict(at.run.player, t.enemy!).impervious;
+const never = () => false;
+const WANTS: Record<CardId, (t: Tile, at: Position, rules: CardRules | undefined, r: Reached) => boolean> = {
   stairs: (t) => t.kind === "stairs",
   heal: (t) => t.kind === "potion",
   door: (t, at, rules) => t.kind === "door" && doorCost(t, at.run.player, rules?.scale) !== null,
   yellowKey: (t) => t.kind === "key" && t.color === "yellow",
   blueKey: (t) => t.kind === "key" && t.color === "blue",
-  // An impervious monster can't be fought at all, so it is never a target.
-  monster: (t, at) => t.kind === "enemy" && !predict(at.run.player, t.enemy!).impervious,
+  monster: fightable(),
   atkUp: (t) => t.kind === "attack",
   defUp: (t) => t.kind === "defense",
-  keySiphon: () => false,
+  keySiphon: never,
+  // A single yellow door only (a Steel Door is DOOR's), one the yellow keys
+  // held pay for.
+  yellowDoor: (t, at, rules) => {
+    if (t.kind !== "door") return false;
+    const rule = doorRule(t);
+    return rule.type === "keys" && rule.mode === "all" && rule.keys.length === 1 && rule.keys[0] === "yellow" && doorCost(t, at.run.player, rules?.scale) !== null;
+  },
+  heartDoor: (t) => t.kind === "door" && doorRule(t).type === "fullHp",
+  weakEnemy: fightable(["weak"]),
+  baseEnemy: fightable(["normal"]),
+  strongEnemy: fightable(["strong"]),
+  eliteEnemy: fightable(["elite"]),
+  bossEnemy: fightable(["boss", "greaterBoss"]),
+  chest: (t) => t.kind === "treasure" || t.kind === "reward",
+  blueSiphon: never,
+  blueTrader: never,
+  keyToHp: never,
+  redKey: (t) => t.kind === "key" && t.color === "red",
+  redSiphon: never,
+  torch: (_t, at, _rules, r) => !!at.world.torches?.some((torch) => torch.active && torch.x === r.x && torch.y === r.y),
 };
 
 const NONE: ReadonlySet<string> = new Set();
@@ -205,8 +256,8 @@ export function planHand(at: HandAt, hand: readonly CardId[], mode: Mode, only?:
  * which tells Skip Open Nodes what ground is already open. */
 function targetOf(at: Position, id: CardId, mode: Mode, pool: Reached[], reached: Reached[], rules?: CardRules) {
   if (id === "stairs" && mode === "delve") return climb(at, pool);
-  if (!rules?.stairward && !rules?.skipOpen) return pool.find((r) => wants(id, r.tile, at, rules));
-  let targets = pool.filter((r) => wants(id, r.tile, at, rules));
+  if (!rules?.stairward && !rules?.skipOpen) return pool.find((r) => wants(id, r, at, rules));
+  let targets = pool.filter((r) => wants(id, r, at, rules));
   if (rules.skipOpen) targets = targets.filter((r) => !passesOver(at, r, reached, rules.skipOpen!));
   if (!rules.stairward || targets.length < 2) return targets[0];
   return mode === "delve" ? highest(targets) : nearestStairs(at, targets);

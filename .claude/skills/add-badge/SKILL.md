@@ -27,7 +27,7 @@ Make a **card matrix**: one row per badge, one column per card in `CARDS`, and i
 
 - **Contradictions.** Paired or mirror badges whose wording doesn't mirror (a pasted line left unchanged). Propose the reading that keeps the pair symmetric.
 - **Trigger.** Does it fire only when its card activates on its target, on any touch of that card's item type (whichever card led the step), or while planning? This decides whether it lives in `activate`, `resolveStep` or `CardRules`.
-- **Odd cards.** STAIRS (Tower stairs vs the Delve's climb, which has no stairs tile), KEY SIPHON (acts in place, no target tile), and any card with no item type.
+- **Odd cards.** STAIRS (Tower stairs vs the Delve's climb, which has no stairs tile), the cards that act in place (`IN_PLACE`: the siphons and key trades, no target tile), TORCH (its target is a torch on a floor tile, nothing to vanish), and any card with no item type.
 - **Existing rules it runs into.** Read the rule each affected tile already follows. For example, a Heart Door already leaves the hero at exactly 1 HP, so "takes more" does nothing there. Name each conflict.
 - **Fractions in whole quantities.** A percentage applied to keys, door costs or counts makes them fractional everywhere they're read: saves, `snap`, display rounding (`whole.ts`), the "holds keys for" checks in pathing and previews. Spell out the case where it blocks (for example, 1 key held against a 1.05 cost).
 - **Lethality.** Can the extra damage kill? Do `isLethal`, the previews and the planners count it?

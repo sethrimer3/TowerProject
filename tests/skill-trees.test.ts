@@ -108,9 +108,9 @@ test("each skill in a tree of unlocks is bought once", () => {
 
 test("a tree taller than its view places its nodes on a taller map", () => {
   const inspiration = TREES[0];
-  assert.equal(treeHeight(inspiration), 208);
+  assert.equal(treeHeight(inspiration), 280);
   assert.ok(inspiration.nodes.every((n) => n.y > 0 && n.y < treeHeight(inspiration)), "every node on the map");
-  assert.equal(mapNodes(inspiration).find((n) => n.id === "recovery")!.y, (160 * 100) / 208);
+  assert.equal(mapNodes(inspiration).find((n) => n.id === "recovery")!.y, (160 * 100) / 280);
   assert.ok(TREES.slice(1).every((t) => treeHeight(t) === 100 && mapNodes(t).every((n, i) => n.y === t.nodes[i].y)), "other trees fit one view");
 });
 test("older saves retain earned access without unlocking fresh saves", () => {
