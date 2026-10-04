@@ -9,7 +9,7 @@ import { chooseStep } from "../src/automation.ts";
 import type { Mode, Tile } from "../src/entities.ts";
 
 // Characterization trace for the run bookkeeping around a step: undo, Revive,
-// reloading a mode, room clears and their reward chests. Seeded Tower and
+// reloading a mode, cleared rooms and area reward chests. Seeded Tower and
 // Delve runs mix Automove and random moves with undos, reloads and cleared
 // rooms, and every action's observable state is hashed against a golden file.
 // Regenerate (only when a gameplay change is intended) with UPDATE_GOLDEN=1.
@@ -85,8 +85,8 @@ function observe(g: Game, action: unknown, result: unknown) {
   return canonical({
     action, result, message: g.message, fallen: g.fallen,
     player: r.player, height: r.height, floor: r.floor, outside: !!r.outside,
-    ...(g.mode === "tower" ? { damaged: r.damaged, keysSpent: r.keysSpent } : {}),
-    log: g.save.tower.log, shards: g.save.tower.inspiration, essence: g.save.delve.courage,
+    ...(g.mode === "tower" ? { damaged: r.damaged } : {}),
+    areas: g.save.goals, shards: g.save.tower.inspiration, essence: g.save.delve.courage,
     gold: g.save.gold, reached: slice.reached, best: slice.best,
     history: slice.history.length, fall: !!slice.fall,
     changes: r.changes, floors: r.floors ?? null, route: g.route.length, auto: g.auto, paused: g.paused,
@@ -129,9 +129,10 @@ function trace(mode: Mode, seed: number): string[] {
         action = "empty";
         emptyRoom(g, roll < 0.22);
       } else if (roll < 0.33) {
-        // Forgetting the floor's clears lets it be cleared again.
+        // Forgetting the areas earned lets them be earned again.
         action = "forget";
-        delete g.save.tower.log[g.run.height];
+        g.save.goals.mastered = {};
+        g.save.goals.cleared = {};
       } else if (roll < 0.36) {
         action = "ambush";
         result = ambush(g, DIRS[Math.floor(rng() * 4)]);

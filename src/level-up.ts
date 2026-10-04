@@ -1,11 +1,15 @@
 import { tileTransform, type FrameContext } from "./render-frame.ts";
 import { REVIVE_MS } from "./combat.ts";
+import { INSPIRATION_URL, sprite } from "./board-popups.ts";
+import { CLEARED_INSPIRATION, type AreaReward } from "./tower/area-ledger.ts";
 
 /** How long the level-up glow and its "LEVEL UP!" text last. */
 export const LEVEL_UP_MS = 2000;
 /** How long the training points a level-up earned rise over the hero,
  * once its burst is over. */
 export const POINTS_MS = 1400;
+/** How long an area reward's burst and its words last. */
+export const AREA_BURST_MS = 3200;
 export { REVIVE_MS };
 
 /** One of the fiery bursts over the hero: how long it lasts and fades, how
@@ -51,6 +55,29 @@ const REVIVAL: Blaze = {
   text: "REVIVED", textSize: 0.065, textMin: 16, outline: "#3a2600", shadow: "rgba(255, 196, 40, 0.9)",
   fill: ["#fffbe0", "#ffe07a", "#e8a91c"],
 };
+
+/** An area reward chest opened: a golden blaze as big as the level-up's,
+ * its title across the board and what it gave under it. */
+const AREA: Omit<Blaze, "text"> = {
+  ms: AREA_BURST_MS, fadeMs: 600, burstMs: 900, flames: 18, glow: 38, reach: 1.1,
+  glowColors: ["255, 236, 150", "255, 196, 60", "220, 140, 0"],
+  flameTail: "230, 150, 0", flameMid: "255, 205, 60", flameTip: "255, 250, 205", flashEdge: "255, 214, 90",
+  textSize: 0.08, textMin: 20, outline: "#3a2600", shadow: "rgba(255, 196, 40, 0.9)",
+  fill: ["#fffbe0", "#ffe07a", "#e8a91c"],
+};
+const AREA_TITLES: Record<AreaReward, string> = { mastered: "AREA MASTERED", cleared: "ENEMIES CLEARED" };
+/** Starts loading the Inspiration icon, so the burst has it from its first frame. */
+export const preloadAreaBurst = () => void sprite(INSPIRATION_URL);
+
+/** An area reward's chest opened, `age` ms ago: the blaze, its title, and
+ * under it "Checkpoint Warp Unlocked" or the Inspiration it paid. */
+export function drawAreaBurst(f: FrameContext, age: number, reward: AreaReward) {
+  const b: Blaze = { ...AREA, text: AREA_TITLES[reward] };
+  if (!drawBlaze(f, age, b)) return;
+  const fade = Math.min(1, (b.ms - age) / b.fadeMs);
+  const sub = reward === "mastered" ? "Checkpoint Warp Unlocked" : `+${CLEARED_INSPIRATION}`;
+  drawWords(f, age, fade, b, sub, 0.6, 0.1, reward === "cleared" ? sprite(INSPIRATION_URL) : null);
+}
 
 /** The hero's level-up, drawn over the board: a fiery flash bursting
  * outward from the hero, a glow around the hero, and "LEVEL UP!" across
@@ -99,8 +126,9 @@ export function drawRevive(f: FrameContext, age: number) {
   drawBlaze(f, age, REVIVAL);
 }
 
+/** Draws the blaze `age` ms in; false once it is over (or not begun). */
 function drawBlaze(f: FrameContext, age: number, b: Blaze) {
-  if (age < 0 || age >= b.ms) return;
+  if (age < 0 || age >= b.ms) return false;
   const fade = Math.min(1, (b.ms - age) / b.fadeMs);
   const c = f.c;
   c.save();
@@ -109,7 +137,8 @@ function drawBlaze(f: FrameContext, age: number, b: Blaze) {
   drawGlow(c, age, fade, f.look.reduceMotion, b);
   if (!f.look.reduceMotion && age < b.burstMs) drawBurst(c, age / b.burstMs, b);
   c.restore();
-  drawText(f, age, fade, b);
+  drawWords(f, age, fade, b, b.text, 1, 0);
+  return true;
 }
 
 /** Warm light around the hero (in tile space, where a tile is 24 units),
@@ -163,15 +192,20 @@ function drawBurst(c: CanvasRenderingContext2D, t: number, b: Blaze) {
   }
 }
 
-/** The blaze's words across the upper board, popping in and fading with
- * the glow. */
-function drawText(f: FrameContext, age: number, fade: number, b: Blaze) {
+/** A line of the blaze's words across the upper board, popping in and
+ * fading with the glow: `scale` of the title's size, `down` a share of the
+ * board's width below the title, and an icon after the words. */
+function drawWords(f: FrameContext, age: number, fade: number, b: Blaze, text: string, scale: number, down: number, icon: CanvasImageSource | null = null) {
   const c = f.c, pop = f.look.reduceMotion ? 1 : Math.min(1, 0.6 + age / 375);
+  const size = Math.max(b.textMin, f.width * b.textSize) * scale;
   c.save();
   c.globalAlpha = fade;
-  c.translate(f.width / 2, f.width * 0.32);
+  c.translate(f.width / 2, f.width * (0.32 + down));
   c.scale(pop, pop);
-  c.font = `700 ${Math.max(b.textMin, f.width * b.textSize)}px Cinzel`;
+  c.font = `700 ${size}px Cinzel`;
+  // The words and icon together stand centred.
+  const iconSize = icon ? size * 1.9 : 0, gap = icon ? size * 0.15 : 0;
+  if (icon) c.translate(-(iconSize + gap) / 2, 0);
   c.textAlign = "center";
   c.textBaseline = "middle";
   c.lineJoin = "round";
@@ -179,12 +213,19 @@ function drawText(f: FrameContext, age: number, fade: number, b: Blaze) {
   c.strokeStyle = b.outline;
   c.shadowColor = b.shadow;
   c.shadowBlur = 14;
-  c.strokeText(b.text, 0, 0);
+  c.strokeText(text, 0, 0);
   const fill = c.createLinearGradient(0, -f.width * 0.04, 0, f.width * 0.04);
   fill.addColorStop(0, b.fill[0]);
   fill.addColorStop(0.5, b.fill[1]);
   fill.addColorStop(1, b.fill[2]);
   c.fillStyle = fill;
-  c.fillText(b.text, 0, 0);
+  c.fillText(text, 0, 0);
+  if (icon) {
+    // A pale glow lifts the dark constellation off the board.
+    c.shadowColor = "rgba(190, 225, 255, 0.95)";
+    c.shadowBlur = 10;
+    c.imageSmoothingEnabled = false;
+    c.drawImage(icon, c.measureText(text).width / 2 + gap, -iconSize / 2, iconSize, iconSize);
+  }
   c.restore();
 }

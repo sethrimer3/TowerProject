@@ -40,16 +40,16 @@ export type Enemy = {
   tier: number;
   strength: EnemyStrength;
 };
-export type ClearTier = "silver" | "gold" | "platinum";
-/** A floor's clear tiers: each one earned, and then claimed once paid. */
-export type FloorRecord = Partial<Record<ClearTier, "earned" | "claimed">>;
+/** An area reward chest's metal: gold for an area mastered, silver for one
+ * cleared (tower/area-ledger.ts). */
+export type ChestTier = "silver" | "gold";
 /** Declarative lock rules. `color` remains on Tile for legacy single-key
  * doors and keys; new doors use this rule so every gameplay system shares
  * the same requirements and consumption behavior. */
 export type DoorRule =
   | { type: "keys"; keys: KeyColor[]; mode: "all" | "any" }
   | { type: "fullHp" };
-export type Tile = { kind: Kind; amount?: number; color?: KeyColor; door?: DoorRule; enemy?: Enemy; tier?: ClearTier };
+export type Tile = { kind: Kind; amount?: number; color?: KeyColor; door?: DoorRule; enemy?: Enemy; tier?: ChestTier };
 export type Point = { x: number; y: number };
 /** A stationary wall-mounted light source, anchored to a walkable floor
  * tile adjacent to a wall. Its visibility polygon is computed once (on
@@ -135,10 +135,9 @@ export type RunCore = {
 };
 /** A Tower ascent. */
 export type TowerRun = RunCore & {
-  /** Whether the player has taken damage, or spent keys, on this floor:
-   * the clear tiers it can still earn. */
+  /** Whether the hero has taken fight damage in this area (the ten floors
+   * from the current section's first): whether it can still be mastered. */
   damaged: boolean;
-  keysSpent: boolean;
   /** Each other visited floor's changes, keyed by height, so descending
    * and re-climbing preserves what was already done there. The current
    * floor's are `changes`; see TowerClimb. */
@@ -180,10 +179,10 @@ export type ModeSave<R extends Run = Run> = {
    * `lootedTiles`, since undo never takes Gold back. */
   runGold: number;
   /** The mode's currency (Inspiration or Courage) earned during the current
-   * run, from milestones and clear chests, kept beside `runGold`. */
+   * run, from milestones and areas cleared, kept beside `runGold`. */
   runCurrency: number;
   /** The numbered tower (or delve) selected: the slice's records (`best`,
-   * `reached`, and the Tower's log) are this tier's. */
+   * and `reached`) are this tier's. */
   tier: number;
   /** The highest tier opened, from 1 to `TIERS`. */
   tiersOpen: number;
@@ -196,7 +195,6 @@ export type Save = {
   version: 3;
   tower: ModeSave<TowerRun> & {
     inspiration: number;
-    log: Record<string, FloorRecord>;
   };
   delve: ModeSave<DelveRun> & { courage: number; memory: AutomoveMemory };
   /** The premium currency, kept between runs like Gold (gems.ts). */

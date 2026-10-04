@@ -59,30 +59,25 @@ export function tierCells(cells: Map<string, Tile>, tier: number) {
   return out;
 }
 
-/** What a mode keeps for each tier on its own: its records, and in the
- * Tower its clear log. The selected tier's live in the mode's
- * save slice; the others wait in `tierRecords`. */
+/** What a mode keeps for each tier on its own: its records. The selected
+ * tier's live in the mode's save slice; the others wait in `tierRecords`. */
 export type TierRecord = {
   best: number;
   reached: number;
-  log?: Save["tower"]["log"];
 };
-type Slice = ModeSave & Partial<Pick<Save["tower"], "log">>;
 
 /** The selected tier's records, taken out of the slice. */
-function recordOf(slice: Slice): TierRecord {
-  const { best, reached, log } = slice;
-  return log ? { best, reached, log } : { best, reached };
+function recordOf({ best, reached }: ModeSave): TierRecord {
+  return { best, reached };
 }
 
 /** Moves the slice's records aside and brings `tier`'s in (fresh ones for
  * a tier never climbed). The caller starts a new run for it. */
-export function switchTier(slice: Slice, tier: number) {
+export function switchTier(slice: ModeSave, tier: number) {
   slice.tierRecords[slice.tier] = recordOf(slice);
-  const next = slice.tierRecords[tier] ?? { best: 0, reached: 0, ...(slice.log ? { log: {} } : {}) };
+  const next = slice.tierRecords[tier] ?? { best: 0, reached: 0 };
   delete slice.tierRecords[tier];
   slice.best = next.best;
   slice.reached = next.reached;
-  if (slice.log) slice.log = next.log ?? {};
   slice.tier = tier;
 }

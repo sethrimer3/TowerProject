@@ -299,9 +299,9 @@ mkdirSync(join(OUT, "items"), { recursive: true });
 const itemTiles = {
   key_yellow: keyTile("yellow", "circle"), key_blue: keyTile("blue", "diamond"), key_red: keyTile("red", "triangle"),
   potion_flat: potionTile(false), potion_percent: potionTile(true), upgrade_attack: swordTile(), upgrade_defense: shieldTile(),
-  chest_treasure: chestTile("treasure"), chest_silver: chestTile("silver"), chest_gold: chestTile("gold"), chest_platinum: chestTile("platinum"),
+  chest_treasure: chestTile("treasure"), chest_silver: chestTile("silver"), chest_gold: chestTile("gold"),
   chest_treasure_open: chestTile("treasure", true), chest_silver_open: chestTile("silver", true),
-  chest_gold_open: chestTile("gold", true), chest_platinum_open: chestTile("platinum", true),
+  chest_gold_open: chestTile("gold", true),
 };
 for (const [id, pixels] of Object.entries(itemTiles)) {
   save(`${id}.png`, pixels); renameSync(join(OUT, `${id}.png`), join(OUT, "items", `${id}.png`));

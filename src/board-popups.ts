@@ -32,9 +32,11 @@ const BASE_URL = (import.meta as ImportMeta & { env?: { BASE_URL?: string } }).e
 const HEART_URL = `${BASE_URL}assets/ui/health.png`;
 /** The HUD's Gold coin, raised beside the Gold or Silver found. */
 const GOLD_URL = `${BASE_URL}assets/ui/gold.png`;
+/** The HUD's Inspiration icon. */
+export const INSPIRATION_URL = `${BASE_URL}assets/ui/upgrades.png`;
 const images = new Map<string, HTMLImageElement>();
 /** The UI sprite at `url`, or null while it loads. */
-function sprite(url: string) {
+export function sprite(url: string) {
   if (typeof Image === "undefined") return null;
   let image = images.get(url);
   if (!image) {

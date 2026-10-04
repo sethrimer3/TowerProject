@@ -3,9 +3,6 @@ import assert from 'node:assert/strict';
 import { Game } from '../src/state.ts';
 import { defaults, decode } from '../src/save.ts';
 import { RoomWorld } from '../src/tower/room-world.ts';
-import { chooseStep } from '../src/automation.ts';
-/** How many clear chests stand on the board. */
-const chests = (g: Game) => Object.values(g.run.changes).filter(t => t.kind === 'reward').length;
 function arena() {
   const g = new Game(defaults());
   g.save.upgrades.inspirationUndos = 1; // undo needs Rehearsed steps
@@ -27,48 +24,18 @@ test('milestones are immediate, incremental and cannot be farmed with undo or re
   }
   g.finish('test'); assert.equal(g.save.delve.courage, 3);
 });
-test('uncollected rewards survive reload, undo, departure, death and retirement exactly once', () => {
-  for (const action of ['reload','undo','stairs','death','retire','mode']) {
-    // The arena is clear from the start, so the first step earns its chests.
-    const g = arena(), before = g.snapshot(); g.move(1, 0);
-    if (action === 'reload') {
-      const loaded = new Game(decode(JSON.stringify(g.save)));
-      assert.equal(chests(loaded), 3); loaded.finish('test');
-      assert.equal(loaded.save.tower.inspiration, 3); continue;
-    }
-    if (action === 'undo') g.restore(before);
-    if (action === 'stairs') g.advanceTowerRoom();
-    if (action === 'retire') g.finish('test');
-    if (action === 'mode') { g.save.upgrades.delve=1; g.switchMode('delve'); }
-    if (action === 'death') {
-      // Lethal but damageable (low defense so it's not impervious).
-      (g.world as RoomWorld).cells.set('2,0', {kind:'enemy',enemy:{name:'doom',hp:99999,attack:999,defense:0,tier:3}});
-      g.move(1,0);
-      assert.ok(g.acceptDefeat());
-    }
-    assert.equal(g.save.tower.inspiration, action === 'stairs' ? 4 : 3, action);
-  }
-});
-test('automove walks to and collects every clear chest before the stairs', () => {
-  const g = arena(); g.move(1, 0);
-  for (let n=0; n<50 && chests(g); n++) {
-    const step = chooseStep(g); assert.ok(step); assert.ok(g.move(step.dx,step.dy));
-  }
-  assert.equal(g.run.height,0); assert.equal(g.save.tower.inspiration,3); assert.equal(chests(g),0);
-});
-test('reward chests persist open, undo closed, and never repay after undo', () => {
+test('area chests persist open, undo closed, and never pay', () => {
   const g = arena(), w = g.world as RoomWorld;
-  g.save.tower.log[0] = { silver: 'earned' };
   g.run.changes['1,0'] = { kind: 'reward', tier: 'silver' };
   const before = g.save.tower.inspiration;
   assert.ok(g.move(1, 0));
   assert.equal(g.world.tile(1, 0).kind, 'openedChest');
-  assert.equal(g.save.tower.inspiration, before + 1);
+  assert.equal(g.save.tower.inspiration, before);
   assert.ok(g.undo());
   assert.equal(g.world.tile(1, 0).kind, 'reward');
   assert.ok(g.move(1, 0));
   assert.equal(g.world.tile(1, 0).kind, 'openedChest');
-  assert.equal(g.save.tower.inspiration, before + 1);
+  assert.equal(g.save.tower.inspiration, before);
 });
 test('delve approach movement does not award physical Y as progression', () => {
   const g = new Game(defaults());
@@ -96,7 +63,7 @@ test('delve approach movement does not award physical Y as progression', () => {
 });
 test('legacy balances and records migrate without retroactive duplication', () => {
   const old = defaults(); old.tower.best=8; old.tower.inspiration=4;
-  delete (old.tower as any).reached; delete (old.tower as any).log;
+  delete (old.tower as any).reached;
   const g = new Game(decode(JSON.stringify(old))); g.run.height=8; g.recordProgress();
   assert.equal(g.save.tower.inspiration,4); g.run.height=9; g.recordProgress(); assert.equal(g.save.tower.inspiration,5);
 });

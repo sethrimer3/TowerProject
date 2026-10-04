@@ -1,8 +1,8 @@
 import { TRAINER_GEMS, trainingSlots, type TrainingJob, type TrainingPaid } from "./training-jobs.ts";
 import { count, dropInvalid, finite, fraction, isRecord, wholeIn } from "./decode.ts";
-import { TIERS, type TierRecord } from "./tiers.ts";
+import { TIERS } from "./tiers.ts";
 import { FIND_POTION_MAX, GOLD_SHOP, OLD_SAVE_KEY, RUN_TRAINING_CAP, SAVE_KEY, TOWER_WIDTH, TRAINING, UPGRADES, WIDTH } from "./config.ts";
-import type { AutomoveMemory, DelveRun, FloorRecord, ModeSave, Fall, MoveSnapshot, Run, Save, TowerRun } from "./entities.ts";
+import type { AutomoveMemory, DelveRun, ModeSave, Fall, MoveSnapshot, Run, Save, TowerRun } from "./entities.ts";
 import { emptyMaterials, MATERIAL_IDS, type MaterialId } from "./materials.ts";
 import { EQUIPMENT_SLOTS, type CraftedEquipment, type EquipmentSlot } from "./equipment.ts";
 import { CONSUMABLES, type ConsumableId } from "./crafting.ts";
@@ -19,7 +19,7 @@ import { decodeBadges, defaultBadges, validRunBadges } from "./badges.ts";
 export function defaults(): Save {
   return {
     version: 3,
-    tower: { run: null, history: [], fall: null, best: 0, reached: 0, inspiration: 0, log: {}, lootedTiles: {}, runGold: 0, runCurrency: 0, tier: 1, tiersOpen: 1, tierRecords: {} },
+    tower: { run: null, history: [], fall: null, best: 0, reached: 0, inspiration: 0, lootedTiles: {}, runGold: 0, runCurrency: 0, tier: 1, tiersOpen: 1, tierRecords: {} },
     delve: { run: null, history: [], fall: null, best: 0, reached: 0, courage: 0, lootedTiles: {}, runGold: 0, runCurrency: 0, memory: { known: {}, visited: {} }, tier: 1, tiersOpen: 1, tierRecords: {} },
     gems: 0,
     gemDrop: defaultGemDrop(),
@@ -57,7 +57,7 @@ export function defaults(): Save {
     goals: defaultGoals(),
   };
 }
-const CHEST_TIERS = ["silver", "gold", "platinum"] as const;
+const CHEST_TIERS = ["silver", "gold"] as const;
 const KEY_COLORS = ["yellow", "blue", "red"] as const;
 const POINT_KEY = /^\d+,\d+$/;
 /** Every key is an `x,y` point and every value passes `valid`. */
@@ -92,7 +92,7 @@ const validPlayer = (p: any, width: number) =>
 const validCore = (r: any, width: number) =>
   !!r && validOutside(r) && validCounters(r) && validPlayer(r.player, width) && validChanges(r.changes);
 const validDelveState = (r: any) => Number.isInteger(r.milestone) && finite(r.milestone);
-const TOWER_FIELDS = ["damaged", "keysSpent", "floors"];
+const TOWER_FIELDS = ["damaged", "floors"];
 const DELVE_FIELDS = ["milestone"];
 /** Training ranks bought in a run: known rows, each a whole number of ranks. */
 const validRunTraining = (t: any) =>
@@ -120,9 +120,9 @@ const RUN_FIELD_CHECKS = {
   skipped: (v: any) => isRecord(v) && wholeIn(v.floor, 0, 1e6) && Array.isArray(v.tiles) && v.tiles.every((t: unknown) => typeof t === "string" && POINT_KEY.test(t)),
 };
 /** Drops fields a run of this mode doesn't keep: the other mode's, an
- * older run's clear chest list, Automove memory and Focus (clear chests
- * stand in `changes` now, and the memory beside the run), and malformed
- * optional fields. */
+ * older run's chest list, Automove memory and Focus (chests stand in
+ * `changes` now, and the memory beside the run), and malformed optional
+ * fields. */
 function without<R>(r: any, fields: string[]): R {
   for (const k of ["rewards", "known", "visited", "focus", ...fields]) delete r[k];
   dropInvalid(r, RUN_FIELD_CHECKS);
@@ -132,10 +132,9 @@ function without<R>(r: any, fields: string[]): R {
  * TowerRun needs. */
 function decodeTowerRun(r: any): TowerRun | null {
   if (!validCore(r, TOWER_WIDTH) || !validFloors(r.floors)) return null;
-  // Older runs have no damage/key history; do not assume a perfect attempt.
+  // Older runs have no damage history; do not assume a perfect attempt.
   r.damaged = r.damaged !== false;
-  r.keysSpent = r.keysSpent !== false;
-  return without(r, DELVE_FIELDS);
+  return without(r, [...DELVE_FIELDS, "keysSpent"]);
 }
 /** Validate an untrusted Delve run; null unless it has the shape a
  * DelveRun needs. */
@@ -325,31 +324,6 @@ function decodeReached(s: any, d: Save) {
     d[mode].best = Math.max(d[mode].best, d[mode].reached);
   }
 }
-function decodeTowerLog(raw: any): Save["tower"]["log"] {
-  const log: Save["tower"]["log"] = {};
-  if (!raw || typeof raw !== "object") return log;
-  for (const [floor, record] of Object.entries(raw) as [string, any][]) {
-    if (!/^\d+$/.test(floor) || !finite(Number(floor)) || !isRecord(record)) continue;
-    const entry = decodeFloorRecord(record);
-    if (Object.keys(entry).length) log[floor] = entry;
-  }
-  return log;
-}
-function decodeFloorRecord(record: any): FloorRecord {
-  const entry: FloorRecord = {};
-  for (const t of CHEST_TIERS) {
-    const state = chestState(record, t);
-    if (state === "earned" || state === "claimed") entry[t] = state;
-  }
-  return entry;
-}
-/** A clear tier's state on a floor's record. Older saves list the tiers:
- * { earned: [...], claimed: [...] }. */
-function chestState(record: any, t: (typeof CHEST_TIERS)[number]) {
-  if (!Array.isArray(record.earned)) return record[t];
-  if (!record.earned.includes(t)) return undefined;
-  return Array.isArray(record.claimed) && record.claimed.includes(t) ? "claimed" : "earned";
-}
 /** Each mode's tiers: the highest opened, the one selected (its records
  * are the slice's), and the others' records. */
 function decodeTiers(s: any, d: Save) {
@@ -357,17 +331,16 @@ function decodeTiers(s: any, d: Save) {
     const raw = s?.[mode], slice = d[mode];
     slice.tiersOpen = Math.max(1, count(raw?.tiersOpen, 1, TIERS));
     slice.tier = Math.max(1, Math.min(slice.tiersOpen, count(raw?.tier, 1)));
-    if (isRecord(raw?.tierRecords)) decodeTierRecords(raw.tierRecords, slice, mode === "tower");
+    if (isRecord(raw?.tierRecords)) decodeTierRecords(raw.tierRecords, slice);
   }
 }
 type TieredSlice = Pick<ModeSave, "tier" | "tiersOpen" | "tierRecords">;
-/** The records of each tier opened but not selected; the Tower's keep their log. */
-function decodeTierRecords(raw: Record<string, any>, slice: TieredSlice, logs: boolean) {
+/** The records of each tier opened but not selected. */
+function decodeTierRecords(raw: Record<string, any>, slice: TieredSlice) {
   for (const [key, r] of Object.entries(raw)) {
     if (!isOtherTier(key, slice) || !isRecord(r)) continue;
-    const reached = count(r.reached, 0), record: TierRecord = { best: Math.max(reached, count(r.best, 0)), reached };
-    if (logs) record.log = decodeTowerLog(r.log);
-    slice.tierRecords[key] = record;
+    const reached = count(r.reached, 0);
+    slice.tierRecords[key] = { best: Math.max(reached, count(r.best, 0)), reached };
   }
 }
 /** Whether `key` names an opened tier other than the one selected. */
@@ -414,7 +387,6 @@ export function decode(raw: string | null): Save {
     d.goals = decodeGoals(s.goals);
     if (permanentBoost(d)) d.trainingBoostUntil = BOOST_FOREVER;
     decodeReached(s, d);
-    d.tower.log = decodeTowerLog(s.tower?.log);
     decodeTiers(s, d);
     migratePreSkillTrees(s.upgrades, d);
     d.defend = decodeDefendSave(s.defend);

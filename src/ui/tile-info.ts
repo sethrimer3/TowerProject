@@ -5,6 +5,7 @@ import type { Game, RouteEffects } from "../state.ts";
 import { HEART_DOOR_HP, resolveStep, shardGain } from "../step-effects.ts";
 import { attackForFewerHits, predict, type CombatPrediction } from "../combat.ts";
 import { goalUnlocked } from "../goals.ts";
+import { chestReward, CLEARED_INSPIRATION } from "../tower/area-ledger.ts";
 import { doorColor, doorCost, doorDescription, doorName, doorRule, KEY_NAMES } from "../doors.ts";
 import { MODES } from "../modes.ts";
 
@@ -97,7 +98,9 @@ const DESCRIBE: Partial<Record<Kind, Describe>> = {
   attack: (t) => ({ title: "Attack Shard", body: `Raises ATK by ${enemyStat(shardGain(t))} for this run.` }),
   defense: (t) => ({ title: "Defense Shard", body: `Raises DEF by ${enemyStat(shardGain(t))} for this run.` }),
   treasure: () => ({ title: "Treasure", body: "Contains gold and crafting materials." }),
-  reward: () => ({ title: "Reward Chest", body: "Clear reward — claim it here." }),
+  reward: (t) => chestReward(t.tier) === "mastered"
+    ? { title: "Mastery Chest", body: "The area below was climbed without taking damage: its checkpoint can be warped to." }
+    : { title: "Clearing Chest", body: `Every enemy in the area below was defeated: +${CLEARED_INSPIRATION} Inspiration, already yours.` },
 };
 
 /** Title, colour and HTML body for the tile at (x, y), as seen by the player. */

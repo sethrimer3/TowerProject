@@ -18,7 +18,7 @@ This document defines the first-pass economy for persistent crafting resources, 
    - `equivalentFloor = towerFloor` in Tower.
    - `equivalentFloor = floor(delveDepth / 10)` in Delve.
    - Therefore Tower floor 70 and Delve depth 700 have the same material unlock tier.
-8. Existing Tower **clear-reward chests** (Silver/Gold/Platinum clear rewards that grant Inspiration) are a separate reward system. This document changes generated `treasure` chests, not clear-reward chests.
+8. Tower **area chests** (an area mastered or cleared, whose rewards are paid as they are earned) are a separate reward system. This document changes generated `treasure` chests, not clear-reward chests.
 
 ---
 

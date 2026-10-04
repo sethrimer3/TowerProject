@@ -421,17 +421,13 @@ export function renderAdButton(game: Game) {
   button.disabled = !game.gemFinder.adReady;
 }
 
-/** Log and Goals act on the Tower; in the Delve they are placeholders. */
+/** Goals acts on the Tower; in the Delve it is a placeholder. */
 function renderModeActions(game: Game) {
   const tower = game.mode === "tower";
-  const logButton = el("log") as HTMLButtonElement;
   const floorsButton = el("section-pick") as HTMLButtonElement;
-  logButton.textContent = tower ? "Log" : "Button 1";
-  logButton.setAttribute("aria-label", tower ? "Adventure log" : "Future Delve action 1");
   floorsButton.textContent = tower ? "Goals" : "Button 2";
   floorsButton.setAttribute("aria-label", tower ? "Goals" : "Future Delve action 2");
   floorsButton.title = tower ? "Goals" : "Future Delve action 2";
-  logButton.classList.toggle("placeholder-action", !tower);
   floorsButton.classList.toggle("placeholder-action", !tower);
   // A dot while a Goals reward waits to be claimed.
   floorsButton.classList.toggle("notify", tower && goalsWaiting(game.save));

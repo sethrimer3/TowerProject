@@ -63,10 +63,9 @@ const v3 = () => ({
   settings,
   tower: {
     ...mode(towerRun), inspiration: 17,
-    log: { "3": { earned: ["silver", "gold", "bogus"], claimed: ["gold", "platinum"] }, "x": { earned: ["gold"] }, "4": { earned: "gold" }, "5": { silver: "claimed", gold: "bogus", platinum: "earned" } },
   },
   delve: { ...mode(delveRun), courage: 33, memory: { known: { "1,2": true, "4,5": true }, visited: { "1,2": 3 } } },
-  goals: { claimed: { "1": [10, 20] }, premium: { "1": [10] } },
+  goals: { claimed: { "1": [10, 20] }, premium: { "1": [10] }, mastered: { "1": [10, 20] }, cleared: { "1": [10, 110] } },
   materials: { ...defaults().materials },
   equipmentInventory: [{
     id: "e1", slot: "weapon", name: "Blade", metal: "steel",
@@ -116,7 +115,8 @@ const EDGES: [string, unknown[]][] = [
   ["tower.run.height", [1e9, 1e9 + 1]],
   ["delve.run.milestone", [1.5]],
   ["tower.run.changes.9,9", [{ kind: "openedChest" }, { kind: "openedChest", tier: "wood" }, { kind: "enemy" }, { kind: "reward" }, { kind: "reward", tier: "bronze" }]],
-  ["tower.log.3", [{ silver: "earned" }, { silver: "paid" }, []]],
+  ["goals.mastered.1", [[15], [10, 10], "10"]],
+  ["goals.cleared.2", [[105], [-10], [120]]],
   ["tower.run.floors.x", [{}]],
   ["delve.memory.visited.x", [1]],
   ["delve.memory.known.6,7", [false]],
@@ -211,7 +211,7 @@ test("decode keeps a valid v3 save's progress and clamps settings", () => {
   assert.deepEqual(d.tower.history.map((h) => h.xp), [0, 0]);
   assert.equal(d.tower.fall, null, "a fall is kept only beside a fallen hero");
   assert.deepEqual(Object.keys(d.tower.lootedTiles).sort(), ["-1:-2:-3,-4", "1234:2:3,4", "1234:3,4"]);
-  assert.deepEqual(d.tower.log, { "3": { silver: "earned", gold: "claimed" }, "5": { silver: "claimed", platinum: "earned" } });
+  assert.deepEqual([d.goals.mastered, d.goals.cleared], [{ 1: [10, 20] }, { 1: [10, 110] }]);
   assert.deepEqual(d.tower.run?.changes["4,5"], { kind: "reward", tier: "silver" });
   assert.ok(!("rewards" in d.tower.run!));
   assert.deepEqual(d.equipped, { weapon: "e1" });
@@ -262,7 +262,7 @@ test("saves from before the currencies were renamed keep their Inspiration and C
 test("each mode's run keeps only its own fields, on its own board's width, and Automove's memory sits beside the Delve run", () => {
   const d = decode(JSON.stringify(v3()));
   const tower = d.tower.run as any, delve = d.delve.run as any;
-  assert.deepEqual([tower.damaged, tower.keysSpent, "floors" in tower, "milestone" in tower], [false, true, true, false]);
+  assert.deepEqual([tower.damaged, "keysSpent" in tower, "floors" in tower, "milestone" in tower], [false, false, true, false]);
   assert.deepEqual(["floors", "damaged", "keysSpent", "known", "visited"].filter((k) => k in delve), []);
   assert.equal(delve.milestone, 1);
   assert.deepEqual(d.delve.memory, { known: { "1,2": true, "4,5": true }, visited: { "1,2": 3 } });

@@ -16,7 +16,7 @@ test("area-one floor variants are deterministic and bounded", () => {
 test("asset URLs retain a deployable base instead of escaping to the host root", () => {
   assert.match(AREA1_FLOOR_URLS[0], /assets\/tilesets\/area1\/floor_01\.png$/);
   assert.match(AREA1_DOOR_URLS.heart, /assets\/tilesets\/area1\/doors\/door_heart\.png$/);
-  assert.match(AREA1_ITEM_URLS.chest_platinum, /assets\/tilesets\/area1\/items\/chest_platinum\.png$/);
+  assert.match(AREA1_ITEM_URLS.chest_gold, /assets\/tilesets\/area1\/items\/chest_gold\.png$/);
 });
 
 test("every area-one pickup and chest maps to its dedicated sprite", () => {
@@ -28,9 +28,9 @@ test("every area-one pickup and chest maps to its dedicated sprite", () => {
   assert.equal(area1ItemId({ kind: "attack" }), "upgrade_attack");
   assert.equal(area1ItemId({ kind: "defense" }), "upgrade_defense");
   assert.equal(area1ItemId({ kind: "treasure" }), "chest_treasure");
-  for (const tier of ["silver", "gold", "platinum"] as const)
+  for (const tier of ["silver", "gold"] as const)
     assert.equal(area1ItemId({ kind: "reward", tier }), `chest_${tier}`);
   assert.equal(area1ItemId({ kind: "openedChest" }), "chest_treasure_open");
-  assert.equal(area1ItemId({ kind: "openedChest", tier: "platinum" }), "chest_platinum_open");
-  assert.equal(Object.keys(AREA1_ITEM_URLS).length, 15);
+  assert.equal(area1ItemId({ kind: "openedChest", tier: "gold" }), "chest_gold_open");
+  assert.equal(Object.keys(AREA1_ITEM_URLS).length, 13);
 });

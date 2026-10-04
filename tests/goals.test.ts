@@ -56,13 +56,13 @@ test("a reward is claimed once, after its floor is completed; a premium one need
   assert.equal(goalState(save, 1, 60, true), "locked");
   // Claims and the pass survive a reload; erasing progress keeps only the pass.
   const loaded = decode(JSON.stringify(save));
-  assert.deepEqual(loaded.goals, { claimed: { "1": [50] }, premium: { "1": [50] } });
+  assert.deepEqual(loaded.goals, { claimed: { "1": [50] }, premium: { "1": [50] }, mastered: {}, cleared: {} });
   g.eraseAll();
-  assert.deepEqual(g.save.goals, { claimed: {}, premium: {} });
+  assert.deepEqual(g.save.goals, { claimed: {}, premium: {}, mastered: {}, cleared: {} });
   assert.equal(goalState(g.save, 1, 10, true), "locked");
 });
 
-test("Warp, once claimed, starts a run at once just above a reached checkpoint; entering starts on floor 1", () => {
+test("Warp, once claimed, starts a run at once just above a mastered checkpoint; entering starts on floor 1", () => {
   const g = new Game(defaults());
   g.newRun({ outside: true });
   g.save.tower.reached = 44;
@@ -74,7 +74,8 @@ test("Warp, once claimed, starts a run at once just above a reached checkpoint; 
   assert.ok(goalUnlocked(g.save, "damagePrediction"));
   g.claimGoal(1, 40, false);
   assert.ok(warpUnlocked(g.save));
-  assert.equal(canWarp(g.save, 1, 50), false, "not past the highest floor completed");
+  assert.equal(canWarp(g.save, 1, 40), false, "not before its area is mastered");
+  g.save.goals.mastered[1] = [40];
   assert.ok(g.warp(1, 40));
   assert.ok(!g.run.outside);
   assert.equal(g.run.height, 40);
@@ -94,8 +95,9 @@ test("Warp into another open tower selects it first", () => {
   g.save.tower.reached = 40;
   assert.ok(g.claimGoal(1, 40, false));
   g.save.tower.tiersOpen = 2;
-  g.save.tower.tierRecords["2"] = { best: 12, reached: 12, log: {} };
+  g.save.tower.tierRecords["2"] = { best: 12, reached: 12 };
   assert.equal(floorsCompleted(g.save, 2), 12);
+  g.save.goals.mastered[2] = [10];
   assert.ok(g.warp(2, 10));
   assert.equal(g.save.tower.tier, 2);
   assert.equal(g.run.tier, 2);
@@ -106,8 +108,10 @@ test("decoding keeps known towers' checkpoint floors, each once", () => {
   assert.deepEqual(decodeGoals({ claimed: { "1": [20, 10, 10, 15, "x"], "0": [10], "10": [10] }, premium: { "2": [100], "3": "x" } }), {
     claimed: { "1": [10, 20] },
     premium: { "2": [100] },
+    mastered: {},
+    cleared: {},
   });
-  assert.deepEqual(decodeGoals(null), { claimed: {}, premium: {} });
+  assert.deepEqual(decodeGoals(null), { claimed: {}, premium: {}, mastered: {}, cleared: {} });
 });
 
 test("the Goals button's dot shows while a reward in an open tower waits to be claimed", () => {

@@ -1,7 +1,8 @@
-import { CHECKPOINTS, UNLOCK_NAMES, canWarp, floorsCompleted, goalState, passFor, passTotals, unlockFloor, warpUnlocked, type Checkpoint, type GoalReward, type GoalState, type GoalUnlock, type Pass } from "../goals.ts";
+import { CHECKPOINTS, UNLOCK_NAMES, areaCleared, areaMastered, canWarp, floorsCompleted, goalState, passFor, passTotals, unlockFloor, warpUnlocked, type Checkpoint, type GoalReward, type GoalState, type GoalUnlock, type Pass } from "../goals.ts";
 import { CURRENCIES, type CurrencyId } from "../shop/currency.ts";
 import { owns } from "../shop/entitlements.ts";
 import { stubServer, type ShopServer } from "../shop/server.ts";
+import { CLEARED_INSPIRATION } from "../tower/area-ledger.ts";
 import { tierNumeral } from "../tiers.ts";
 import type { AppContext } from "./app.ts";
 import { el, gemIcon, goldIcon } from "./dom.ts";
@@ -9,7 +10,9 @@ import { el, gemIcon, goldIcon } from "./dom.ts";
 // The Goals screen: each tower drawn as a stone column rising from the
 // ground, a line up its middle lit to the highest floor completed, and a
 // checkpoint every ten floors with its reward on the left and its premium
-// reward on the right. Opened from the forest's Goals button (Tower only).
+// reward on the right. Beside a checkpoint's floor, a golden swirl once its
+// area is mastered (with Warp owned: it can be warped to) and a green check
+// once it is cleared. Opened from the forest's Goals button (Tower only).
 
 /** Pixels per floor up the tower, the ground under floor 0, and the tower
  * standing on past the last checkpoint, off the top. */
@@ -32,10 +35,13 @@ const UNLOCK_TUTORIALS: Record<GoalUnlock, string> = {
   combatForecast: `<p>Inspect an enemy in a run and its panel now also says how many of your hits defeat it, or Instakill when one does.</p>`,
   attackLore: `<p>Inspect an enemy in a run and its panel now also says how much more ATK would defeat it in one hit fewer.</p>` +
     `<p class="hint">Train ATK in the run, even mid-fight, to make the most of it.</p>`,
-  warp: `<p>Tap the floor number of any checkpoint you have completed to begin a new ascent there at once, on the floor just above it.</p>` +
-    `<p class="hint">Glowing checkpoints can be warped to. Entering the tower from the forest always starts on floor 1.</p>`,
+  warp: `<p>Master an area, climbing its ten floors without taking damage, to warp to its checkpoint: tap the floor number to begin a new ascent there at once, on the floor just above it.</p>` +
+    `<p class="hint">Checkpoints with a golden swirl can be warped to. Entering the tower from the forest always starts on floor 1.</p>`,
 };
 const LOCK_ICON = `<svg class="goal-badge" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7.5" rx="1.5" fill="#3a3f4b" stroke="#c9ced8" stroke-width="1.1"/><path d="M5.2 7V5.2a2.8 2.8 0 0 1 5.6 0V7" fill="none" stroke="#c9ced8" stroke-width="1.4"/></svg>`;
+/** Beside a checkpoint's floor: its area mastered (a golden swirl, shown once Warp is owned) and cleared (a green check). */
+const SWIRL_MARK = `<svg class="goal-mark" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#3a2a08" stroke="#ffd34d" stroke-width="1.6"/><path d="M12 5.5c3.6 0 6 2.7 5.4 5.9-.6 3-3.8 4.5-6.3 3.3-2.1-1-2.1-3.9-.1-4.6 1.4-.5 2.7.5 2.3 1.7" fill="none" stroke="#fff1b0" stroke-width="1.8" stroke-linecap="round"/></svg>`;
+const CLEARED_MARK = `<svg class="goal-mark" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#1f6a34" stroke="#8ff0a8" stroke-width="1.6"/><path d="M7 12.5l3.4 3.4L17.2 8.4" fill="none" stroke="#f0fff4" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const CHECK_ICON = `<svg class="goal-badge" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="#1f5a34" stroke="#9fe0b0" stroke-width="1.1"/><path d="M4.6 8.3l2.3 2.3 4.6-5" fill="none" stroke="#e8fff0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
 const rewardIcon = (r: GoalReward) => (r.kind === "unlock" ? UNLOCK_ICONS[r.unlock] : CURRENCY_ICONS[r.currency]());
@@ -96,10 +102,13 @@ export class GoalsPage {
       top = checkpoints[checkpoints.length - 1]!.floor,
       warp = warpUnlocked(save);
     const row = (c: Checkpoint) => {
-      const done = high >= c.floor;
+      const done = high >= c.floor, warpable = canWarp(save, tower, c.floor);
+      const mastered = warp && areaMastered(save, tower, c.floor), cleared = areaCleared(save, tower, c.floor);
+      const marks = (cleared ? `<span title="Enemies cleared: floors ${c.floor - 9}–${c.floor}">${CLEARED_MARK}</span>` : "") +
+        (mastered ? `<span title="Area mastered: warp here">${SWIRL_MARK}</span>` : "");
       return `<div class="goal-row" style="bottom:${floorY(c.floor)}px">` +
-        this.reward(tower, c, false) +
-        `<button class="goal-floor${done ? " completed" : ""}${done && warp ? " warpable" : ""}" data-warp="${tower}:${c.floor}" aria-label="Floor ${c.floor}${done && warp ? ": warp" : ""}">${c.floor}</button>` +
+        `<div class="goal-left">${this.reward(tower, c, false)}${marks ? `<span class="goal-marks">${marks}</span>` : ""}</div>` +
+        `<button class="goal-floor${done ? " completed" : ""}${warpable ? " warpable" : ""}" data-warp="${tower}:${c.floor}" aria-label="Floor ${c.floor}${warpable ? ": warp" : ""}">${c.floor}</button>` +
         this.reward(tower, c, true) +
         `</div>`;
     };
@@ -165,9 +174,17 @@ export class GoalsPage {
       b.onclick = () => {
         const [tower, floor] = b.dataset.warp!.split(":").map(Number) as [number, number];
         if (canWarp(game.save, tower, floor)) return this.askWarp(tower, floor);
-        this.say(floorsCompleted(game.save, tower) < floor ? `Complete floor ${floor} first: climb its stairs to floor ${floor + 1}.` : `Claim Unlock Warp at Tower I's floor ${unlockFloor("warp")} to start runs here.`);
+        this.say(this.warpRefusal(tower, floor));
       };
     });
+  }
+
+  /** Why the checkpoint at `floor` can't be warped to yet, and what each of its marks means. */
+  private warpRefusal(tower: number, floor: number) {
+    const save = this.ctx.game.save, from = floor - 9;
+    const cleared = areaCleared(save, tower, floor) ? ` Floors ${from}–${floor} cleared of enemies: +${CLEARED_INSPIRATION} Inspiration paid.` : "";
+    if (!areaMastered(save, tower, floor)) return `Master floors ${from}–${floor}, climbing them without taking damage, to warp here.${cleared}`;
+    return `Floors ${from}–${floor} mastered. Claim Unlock Warp at Tower I's floor ${unlockFloor("warp")} to start runs here.${cleared}`;
   }
 
   /** A reward pressed: claimed when ready, the pass offered when it needs one. */

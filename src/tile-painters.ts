@@ -284,7 +284,7 @@ function paintOpenedChest(c: CanvasRenderingContext2D, t: Tile, art: TileArt) {
   if (!art.lifted) groundShadow(c, 12, 22.5, 9, 1.8, 0.25);
   withOutline(c, DARK_GOLD, (c) => {
     if (art.area1 && drawArea1Item(c, t)) return;
-    const metal = t.tier ? { silver: "#9aa8b8", gold: "#d5a943", platinum: "#8fd4d8" }[t.tier] : "#b98a3e";
+    const metal = t.tier ? { silver: "#9aa8b8", gold: "#d5a943" }[t.tier] : "#b98a3e";
     c.fillStyle = "#151b22"; c.fillRect(4, 8, 16, 8);
     c.fillStyle = metal; c.fillRect(3, 5, 18, 3); c.fillRect(3, 17, 18, 4); c.fillRect(3, 8, 3, 11); c.fillRect(18, 8, 3, 11);
   });
@@ -294,7 +294,7 @@ function paintReward(c: CanvasRenderingContext2D, t: Tile, art: TileArt) {
   if (!art.lifted) groundShadow(c, 12, 22.5, 8, 1.8, 0.32);
   withOutline(c, DARK_GOLD, (c) => {
     if (art.area1 && drawArea1Item(c, t)) return;
-    const metal = { silver: "#c5d0df", gold: "#f5cd62", platinum: "#bcfff3" }[t.tier!];
+    const metal = { silver: "#c5d0df", gold: "#f5cd62" }[t.tier!];
     c.fillStyle = metal;
     c.shadowColor = metal;
     c.shadowBlur = 5;
@@ -305,7 +305,6 @@ function paintReward(c: CanvasRenderingContext2D, t: Tile, art: TileArt) {
     c.fillStyle = metal;
     c.fillRect(3, 12, 18, 2);
     c.fillRect(10, 11, 4, 6);
-    if (t.tier === "platinum") { c.fillStyle = "#ffffff"; c.fillRect(11, 3, 2, 3); }
   });
   for (let i = 0; i < 2; i++) {
     const phase = art.reduceMotion ? 0.6 : (Math.sin(art.time / 240 + i * 2 + art.x + art.y) + 1) / 2;

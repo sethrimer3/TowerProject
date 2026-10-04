@@ -339,16 +339,3 @@ test("a fallen hero's run waits at 0 HP with its own height and kills until defe
   assert.equal(g.save.tower.fall, null);
 });
 
-test("clear rewards are paid out exactly once across a fatal encounter", () => {
-  const g = arena();
-  g.move(0, 1); // arena has no enemies/doors, so the first step earns its chests
-  assert.ok(Object.values(g.run.changes).some((t) => t.kind === "reward"));
-  (g.world as RoomWorld).cells.set(point(1, 1), { kind: "enemy", enemy: LETHAL });
-  const inspirationBefore = g.save.tower.inspiration;
-  g.move(1, 0, true);
-  assert.ok(g.acceptDefeat());
-  const inspirationAfterDeath = g.save.tower.inspiration;
-  assert.ok(inspirationAfterDeath > inspirationBefore);
-  // Nothing left to claim a second time.
-  for (const entry of Object.values(g.save.tower.log)) assert.ok(!Object.values(entry).includes("earned"));
-});

@@ -20,7 +20,7 @@ The numbers in this skill are examples of the conventions, not the live values. 
 - Archives: `RESEARCH`, `RESEARCH_TARGETS`, `ResearchRequirement` in `src/archives.ts`.
 - Training: `TRAINING`, `trainingWorth`, `TRAINING_PER_LEVEL` in `src/config.ts`.
 - Defend Armory: `UPGRADES`, `upgradePrice`, `UpgradeDef` in `src/defend/catalog.ts`.
-- Income, to judge when something becomes affordable: `docs/PROGRESSION_AND_DIFFICULTY.md` (Inspiration ≈ 1 per new best Tower floor plus clear tiers, slowing past floor 100; Courage ≈ 1 per new best equivalent floor, likewise; Gold from kills, treasure and run ends).
+- Income, to judge when something becomes affordable: `docs/PROGRESSION_AND_DIFFICULTY.md` (Inspiration ≈ 1 per new best Tower floor plus 10 per area cleared, slowing past floor 100; Courage ≈ 1 per new best equivalent floor, likewise; Gold from kills, treasure and run ends).
 
 `references/panels.md` has, for each panel, the fields a row takes, how its price works, how its effect reaches the game, how it can unlock or be unlocked by others, and the files, tests and goldens a new row touches. Read the section for each panel the upgrade involves.
 

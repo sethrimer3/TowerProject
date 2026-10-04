@@ -4,7 +4,6 @@ import { point, type Tile } from "./entities.ts";
 import type { Game } from "./state.ts";
 import type { Position } from "./board.ts";
 import { doorCost } from "./doors.ts";
-import { ClearLedger } from "./tower/clear-ledger.ts";
 
 const BENEFIT: Partial<Record<Tile["kind"], number>> = {
   reward: 10000,
@@ -28,10 +27,8 @@ export function score(t: Tile, y: number, current: number, distance: number) {
 export function chooseStep(game: Game) {
   if (game.mode === "delve" && !game.run.outside)
     return chooseDelveStep(game, { memory: game.save.delve.memory, plan: game.delvePlan, capabilities: capabilities(game.save.upgrades), rules: game.stepRules });
-  const tower = game.mode === "tower";
   const best = new Search(game, {
-    progress: tower ? game.run.player.y : game.run.height,
-    stairsWait: tower && ClearLedger.hasChests(game.towerRun),
+    progress: game.mode === "tower" ? game.run.player.y : game.run.height,
   }).run();
   if (!best) return null;
   const kind = game.world.tile(best.x, best.y).kind;
@@ -59,9 +56,8 @@ type Combat = ReturnType<typeof predict>;
 const lethal = (c: Combat) => !c.survivable && !c.impervious;
 
 /** What the search scores against: the run's progress mark (so
- * backtracking isn't progress), and whether the stairs must wait (a Tower
- * floor's clear chests still stand). */
-type SearchRules = { progress: number; stairsWait: boolean };
+ * backtracking isn't progress). */
+type SearchRules = { progress: number };
 
 /** Breadth-first search from the player for the best-scoring tile to head
  * for. It walks only through floor and stairs, so it stops at every
@@ -126,8 +122,7 @@ class Search {
     if (t.kind === "wall" || t.kind === "stairsDown") return true;
     if (t.kind === "oneway") return dy !== 1;
     if (t.kind === "door") return doorCost(t, this.at.run.player) === null;
-    if (t.kind === "enemy") return lethal(combat!);
-    return t.kind === "stairs" && this.rules.stairsWait;
+    return t.kind === "enemy" && lethal(combat!);
   }
 
   private worth(t: Tile, next: Node, combat: Combat | null) {

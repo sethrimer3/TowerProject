@@ -44,7 +44,7 @@ import {
   type Mode,
   type MoveSnapshot,
   type Player,
-  type ClearTier,
+  type ChestTier,
   type NoticeTree,
 } from "./entities.ts";
 import { World, LAYOUT_VERSION } from "./delve/world.ts";
@@ -53,7 +53,7 @@ import type { Board } from "./board.ts";
 import { bout, heroHpAfter, heroHpDuring, resume, REVIVE_MS, revivals, summarize, type Bout, type Revival } from "./combat.ts";
 import { isLethal, potionHeal, regenerate, resolveStep, type StepBlocked, type StepEffect, type StepRules, shardGain } from "./step-effects.ts";
 import { OutsideWorld } from "./outside.ts";
-import { ClearLedger } from "./tower/clear-ledger.ts";
+import { AreaLedger, chestReward, CLEARED_INSPIRATION, type AreaReward } from "./tower/area-ledger.ts";
 import { TowerClimb } from "./tower/climb.ts";
 import { materialDef, MATERIALS } from "./materials.ts";
 import { TIERS, TIER_BOSS_FLOOR, switchTier, tierGold, tierNumeral, tierRewardText, tierXp } from "./tiers.ts";
@@ -162,6 +162,9 @@ export class Game {
   /** When each of the latest fight's revivals lands (performance.now()),
    * for the board's golden fire; emptied by undo. */
   revivedAt: number[] = [];
+  /** The area reward whose chest was last opened, and when
+   * (performance.now()), for the board's golden burst; cleared by undo. */
+  areaBurst: { reward: AreaReward; at: number } | null = null;
   /** The latest rush: the tiles the hero rushed off, in order, and when
    * (performance.now()), for the board's fading echoes of the hero. */
   rush: Rush | null = null;
@@ -221,7 +224,6 @@ export class Game {
     if (next === this.mode) return;
     if (next === "delve" && !this.save.upgrades.delve) return;
     this.finishEncounter();
-    this.claimRewards();
     this.mode = next;
     this.loadMode();
   }
@@ -232,7 +234,6 @@ export class Game {
       if (!run.outside) this.upgradeLayout();
       this.adoptRun(run);
     }
-    this.syncRewards();
     this.recordProgress();
     this.route = [];
     this.auto = !this.run.outside && this.handStartsPlaying && !this.fallen;
@@ -272,8 +273,7 @@ export class Game {
     this.message =
       "The tower has reshaped. Progress kept; returned to this section’s entrance.";
   }
-  /** The floor's geometry changed: stand at its entrance, and let
-   * syncRewards pay out any clear chests whose old spots may now be wall. */
+  /** The floor's geometry changed: stand at its entrance. */
   private reshapeTower(run: TowerRun) {
     run.layoutVersion = TOWER_LAYOUT_VERSION;
     run.changes = {};
@@ -285,7 +285,6 @@ export class Game {
   private payout(): boolean {
     const record = this.run.height > this.slice.reached;
     this.recordProgress();
-    this.claimRewards();
     this.purse.gold(tierGold(this.tier, this.rules.endGold(this.run)));
     return record;
   }
@@ -293,16 +292,15 @@ export class Game {
     return { run: structuredClone(this.run), best: this.slice.best, xp: this.save.xp };
   }
   restore(snapshot: MoveSnapshot) {
-    this.claimRewards();
-    // The snapshot's board brings back any chest it had; one already paid
-    // pays nothing when opened again.
+    // The snapshot's board brings back any chest it had; area rewards are
+    // paid when earned, so opening one again pays nothing.
     this.adoptRun(this.rewound(snapshot.run));
-    this.syncRewards();
     // Lifetime achievements are never rolled back by movement undo, but XP
     // (and any level it reached) is: the kill it paid for is undone.
     this.recordProgress();
     if (levelForXp(snapshot.xp) < levelForXp(this.save.xp)) this.levelUpAt = -Infinity;
     this.revivedAt = [];
+    this.areaBurst = null;
     this.save.xp = snapshot.xp;
     this.route = [];
     // Undo pauses the hand, so the player can act before it carries on.
@@ -313,16 +311,15 @@ export class Game {
     this.paused = false;
     this.blocked.until = 0;
   }
-  /** A copy of an earlier state of the run. Damage taken and keys spent on
-   * this floor stay on record, so undo never wins back a better clear tier. */
+  /** A copy of an earlier state of the run. Damage taken in this area
+   * stays on record, so undo never wins back the chance to master it. */
   private rewound(past: Run): Run {
     const run = structuredClone(past);
     if (this.mode !== "tower") return run;
     const now = this.towerRun, then = run as TowerRun;
     if (now.seed !== then.seed) return run;
-    const sameFloor = now.height === then.height;
-    if (now.damaged) then.damaged = true;
-    if (sameFloor && now.keysSpent) then.keysSpent = true;
+    const sameArea = Math.floor(now.height / TOWER_SECTION) === Math.floor(then.height / TOWER_SECTION);
+    if (sameArea && now.damaged) then.damaged = true;
     return run;
   }
   undo() {
@@ -796,7 +793,6 @@ export class Game {
   /** Starts a new run in this mode, rolling its seed unless `start` gives
    * one, on the first floor unless it gives a `height` (a Warp). */
   newRun({ outside = false, seed = Math.floor(this.rng() * 2 ** 32), height = 0 }: RunStart = {}) {
-    if (this.run) this.claimRewards();
     // A Gem the last run left lying on a floor is missed.
     if (this.save.gemDrop.out?.mode === this.mode) missGem(this.save.gemDrop);
     this.slice.fall = null;
@@ -820,7 +816,7 @@ export class Game {
       ...(this.slice.tier > 1 ? { tier: this.slice.tier } : {}),
     };
     this.run = this.mode === "tower"
-      ? { damaged: false, keysSpent: false, ...core }
+      ? { damaged: false, ...core }
       : { ...core, milestone: 0 };
     this.run.loadout = loadout;
     this.world = this.rules.board(this.run);
@@ -1024,12 +1020,11 @@ export class Game {
     }
     if (t.kind === "reward") {
       this.run.changes[`${x},${y}`] = { kind: "openedChest", tier: t.tier };
-      this.claimRewards(t.tier, { x, y });
+      this.openAreaChest(t.tier);
       return;
     }
     this.collect(t, x, y, outcome);
     this.consumeTile(t, x, y);
-    this.checkClear();
     this.afterStep(t, x, y);
   }
   /** Mode-specific progress once the player stands on the new tile. */
@@ -1059,17 +1054,15 @@ export class Game {
     p.defense = next.defense;
     Object.assign(p.keys, next.keys);
   }
-  /** Marks the Tower floor as no longer cleared without damage, or
-   * without spending keys; the Delve has no clear tiers. */
-  private mar(what: "damaged" | "keysSpent") {
-    if (this.mode === "tower") this.towerRun[what] = true;
+  /** Marks the Tower area as no longer mastered; the Delve has no areas. */
+  private markDamaged() {
+    if (this.mode === "tower") this.towerRun.damaged = true;
   }
   /** Each key the door took rises from it with a minus sign; a Heart Door,
-   * which takes the hero's HP down to 1 instead, raises a heart. */
+   * which takes the hero's HP down to 1 instead, raises a heart (a toll,
+   * not damage: it never costs an area's mastery). */
   private openDoor(t: Tile, keysSpent: KeyColor[], drained: number, at: { x: number; y: number }) {
     const n = keysSpent.length;
-    if (n) this.mar("keysSpent");
-    if (drained > 0) this.mar("damaged");
     for (const color of keysSpent) this.gain(at.x, at.y, `−1 ${color} key`, { tile: { kind: "key", color }, spent: true });
     if (!n) this.gain(at.x, at.y, `−${wholeChange(drained)} HP`, { heart: true });
     this.message = `${doorName(t)} opened${n ? ` · ${n} key${n === 1 ? "" : "s"} spent` : " · HP drained to 1"}`;
@@ -1078,7 +1071,7 @@ export class Game {
    * the player fell. */
   private winFight(fight: FightEnd, before: MoveSnapshot) {
     const { enemy, at } = fight;
-    if (fight.damage > 0) this.mar("damaged");
+    if (fight.damage > 0) this.markDamaged();
     if (this.run.player.hp <= 0) {
       this.fallIn(before, enemy);
       return false;
@@ -1192,7 +1185,6 @@ export class Game {
     this.gainCoins(at, gold, silver, false);
   }
   advanceTowerRoom() {
-    this.claimRewards();
     const purse = this.purse, p = this.run.player;
     // Keyed by the stairs taken, so a floor pays once a run, whatever undo does.
     const gold = purse.floorGold(purse.floorKey(p.x, p.y));
@@ -1207,7 +1199,9 @@ export class Game {
     }
     this.enterTowerFloor(board);
     // A new section's first floor is sealed below; the hero keeps every stat.
-    this.feedback(sectionStart ? `Floor ${this.run.height + 1} · the way down is sealed` : "A new chamber opens.");
+    const earned = sectionStart ? new AreaLedger(this.save).enter(this.towerRun, board) : [];
+    this.feedback(earned.length ? `Floors ${this.run.height - TOWER_SECTION + 1}–${this.run.height} ${earned.join(" and ")} · reward ahead` :
+      sectionStart ? `Floor ${this.run.height + 1} · the way down is sealed` : "A new chamber opens.");
     this.gainCoins(p, gold, silver, false);
   }
   /** Step back onto the stairs at the foot of the current room, returning
@@ -1215,18 +1209,13 @@ export class Game {
    * surviving enemies and unclaimed loot are still there to finish off. */
   descendTowerRoom() {
     if (this.climb.sealedBelow) return;
-    this.claimRewards();
     this.enterTowerFloor(this.climb.down()!.board);
     this.feedback("You descend to the room below.");
   }
-  /** Stands on the floor the climb just reached, as it was left. Keys reset
-   * per visit; damage taken anywhere in the run keeps counting toward the
-   * whole-ascent Gold clear. */
+  /** Stands on the floor the climb just reached, as it was left. */
   private enterTowerFloor(board: RoomWorld) {
-    this.towerRun.keysSpent = false;
     this.recordProgress();
     this.world = board;
-    this.syncRewards();
   }
   private get climb() {
     return new TowerClimb(this.towerRun);
@@ -1260,31 +1249,12 @@ export class Game {
     if (this.mode !== "delve") throw new Error("Not a Delve run");
     return this.run as DelveRun;
   }
-  /** Clear rewards live in the Tower's log, beside this run. */
-  private get ledger() {
-    return new ClearLedger(this.save.tower);
-  }
-  private syncRewards() {
-    if (this.mode === "tower" && this.world instanceof RoomWorld) this.ledger.settle(this.towerRun);
-  }
-  /** Pays clear rewards: the chest opened at `at`, or every tier still owed. */
-  private claimRewards(tier?: ClearTier, at?: { x: number; y: number }) {
-    if (this.mode !== "tower") return 0;
-    const earned = tier ? this.ledger.open(tier, this.towerRun) : this.ledger.claimAll(this.towerRun);
-    if (!earned) return 0;
-    const text = `+${earned} Inspiration`;
-    if (at) {
-      this.gain(at.x, at.y, text);
-      this.message = `${text} · clear reward`;
-    } else this.feedback(`${text} · clear reward${earned > 1 ? "s" : ""}`);
-    return earned;
-  }
-  /** Once a Tower floor has no enemies or doors left, earns its clear tiers
-   * and sets their chests by the stairs. */
-  private checkClear() {
-    if (this.mode !== "tower") return;
-    for (const tier of this.ledger.check(this.world, this.towerRun))
-      this.feedback(`${tier[0].toUpperCase() + tier.slice(1)} clear · reward by the stairs`);
+  /** An area reward chest opened: its reward was paid when earned, so it
+   * only shows it, with the board's golden burst. */
+  private openAreaChest(tier: ChestTier | undefined) {
+    const reward = chestReward(tier);
+    this.areaBurst = { reward, at: performance.now() };
+    this.message = reward === "mastered" ? "Area mastered · checkpoint warp unlocked" : `Enemies cleared · +${CLEARED_INSPIRATION} Inspiration`;
   }
   /** Pickup rewards and treasure payouts; stats were already applied. */
   private collect(t: Tile, x: number, y: number, outcome: StepEffect) {

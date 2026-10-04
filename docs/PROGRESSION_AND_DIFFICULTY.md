@@ -55,7 +55,7 @@ The player should be able to **reach a floor before they are powerful enough to 
 
 ### Mastery progression
 
-**Mastery progression** is returning to earlier floors and earning their Silver, Gold, and eventually Platinum clear status after persistent upgrades make those challenges realistically achievable.
+**Mastery progression** is returning to earlier areas and clearing and mastering them after persistent upgrades make those challenges realistically achievable.
 
 The intended loop is:
 
@@ -64,51 +64,39 @@ The intended loop is:
 3. Purchase persistent research upgrades.
 4. Find/craft stronger equipment.
 5. Return to earlier Tower floors.
-6. Earn Silver/Gold/Platinum status on floors that were previously too difficult to master.
+6. Clear and master areas that were previously too difficult.
 7. Use those mastery rewards to accelerate further progression.
 8. Push upward again.
 
 **Core design principle:** *first access demonstrates progression; later mastery demonstrates accumulated power.*
 
-A floor should not generally be balanced so that a player is expected to reach it, fully clear it, and earn Gold on the same first visit.
+An area should not generally be balanced so that a player is expected to reach it, fully clear it, and master it on the same first visit.
 
 ---
 
-## 3. Tower clear tiers
+## 3. Tower area rewards
 
-The current game has Silver, Gold, and Platinum clear rewards. The intended long-term meanings are:
+Every ten Tower floors ending at a Goals checkpoint (1–10, 11–20 …) are an **area** (a section: its first floor is sealed below). Climbing onto the next area's first floor judges the area left behind (`src/tower/area-ledger.ts`):
 
-### Silver
+### Cleared
 
-Clear the floor's required combat/obstacles and complete the floor.
+No enemy is left on any of the area's floors. It pays 10 Inspiration (about one a floor), at any height.
 
-Silver should primarily test **sufficient overall power to fully clear content that could previously be bypassed**.
+Clearing should primarily test **sufficient overall power to fully clear content that could previously be bypassed**.
 
-### Gold
+### Mastered
 
-Meet Silver requirements without taking damage on that floor.
+The hero took no fight damage anywhere in the area, in one run (a Heart Door's toll, draining to 1 HP, doesn't count: it can stand on the only way up). Mastering an area that ends at a checkpoint unlocks warping to that checkpoint (once Warp, Tower I's floor 40 reward, is owned); areas past the last checkpoint can't be mastered until checkpoints are defined there.
 
-Gold should test a substantially stronger build than merely reaching or Silver-clearing the floor.
+Mastery should test a substantially stronger build than merely reaching or clearing the area, and may reasonably lag significantly behind the player's current maximum Tower height.
 
-### Platinum
-
-Meet Gold requirements while also satisfying the floor's additional optimization condition (currently avoiding key expenditure).
-
-Platinum should remain the high-mastery reward and may reasonably lag significantly behind the player's current maximum Tower height.
-
-### Important implementation rule: mastery conditions are floor-local
-
-Damage or resource expenditure on another Tower floor should not invalidate mastery on the floor currently being attempted.
-
-For example, taking damage on Floor 18 must not prevent the player from earning Gold on Floor 19 if Floor 19 itself is completed without damage.
-
-When this progression system is implemented/refactored, mastery tracking should therefore be stored **per floor attempt**, rather than treating damage anywhere in the entire ascent as damage for every later floor.
+Each reward is paid the moment it is earned, once per area in each tower, and kept for good. A chest for each (gold for mastered, silver for cleared) stands in front of the hero on the next floor; opening it shows the reward but pays nothing more.
 
 ### No artificial medal lock
 
-Silver/Gold/Platinum should not normally have a rule such as "Gold cannot be earned until Floor 20 is reached."
+Area rewards have no rule such as "mastery cannot be earned until Floor 20 is reached."
 
-Instead, enemy difficulty and persistent-power progression should make Gold *practically* unobtainable until the player has acquired enough research/equipment. A sufficiently clever or unusually optimized player may earn a mastery tier somewhat earlier than the expected curve.
+Instead, enemy difficulty and persistent-power progression should make mastery *practically* unobtainable until the player has acquired enough research/equipment. A sufficiently clever or unusually optimized player may master an area somewhat earlier than the expected curve.
 
 ---
 
@@ -122,7 +110,7 @@ The current progression model awards approximately **1 Inspiration for each new 
 
 ### Mastery Inspiration
 
-First-time Silver/Gold/Platinum rewards may grant additional Inspiration. These are **bonus/acceleration income**, not the baseline progression budget.
+Clearing an area grants 10 more Inspiration, once per area in each tower. This is **bonus/acceleration income**, not the baseline progression budget.
 
 ### Balance rule
 
@@ -136,7 +124,7 @@ Instead:
 
 - **mandatory progression upgrades** should be affordable primarily from guaranteed reach income and earlier content;
 - **mastery rewards** should let strong/efficient players buy upgrades sooner or buy additional optional upgrades;
-- Gold/Platinum rewards should not be required for ordinary forward progression unless that dependency is explicitly designed and tested.
+- area rewards should not be required for ordinary forward progression unless that dependency is explicitly designed and tested.
 
 ### Current Inspiration-tree reference
 
@@ -152,7 +140,7 @@ With the current first-level costs, the direct prerequisite path to unlock Delve
 - Into the depths: 3 Inspiration
 - **Total minimum path: 12 Inspiration**
 
-Gear (1 Inspiration) branches off Buildout, left of it, then ATK Up (5 Inspiration, below Gear: the ATK UP card, heading for ATK pickups) and DEF Up (5 Inspiration, below ATK Up: the DEF UP card, heading for DEF pickups). Trainers (1 Inspiration, on the path between Buildout and Larger Hand) hires the first trainer on the Training tab, which is open from the start for training points. On the Job (1 Inspiration, right of Buildout: Training bought with Silver inside a run) branches off Buildout, then Regen (1 Inspiration, below On the Job: Regen training) and Heal (3 Inspiration) below Regen, so those five are off that path. Then Blue Key (2 Inspiration, after the Archives, below DEF Up) adds the BLUE KEY card, and Faster Trainers (2 Inspiration, after the Archives, right of Into the depths) opens Faster Trainers research (+2% training speed a level for 100 levels; the n-th level costs 250 × n Gold and takes 1.75 × n hours, about 368 days and 1.26 million Gold in all, against Potion HP's seven weeks); both are off the path too. In the Courage tree, Rush (1 Courage, after Movement Speed) opens Rush research (+1 tile rushed a level for 25 levels: the n-th level costs 250 × n × 2^(n−1) Gold and takes 1.75 × n × 1.2^(n−1) hours, Faster Trainers' levels made steeper, about 201 billion Gold and 697 days in all), since a faster pace of play is worth the most; it took the place of Stone skin (+1 DEF a rank). Badges (2 Courage, after Focus) opens card badges, drawn with Gems (20 each, 200 for ten) by rarity (common 70%, rare 27%, epic 3%; 5 commons, 4 rares and 4 epics in the stock pool), 80 copies taking one to level 7, after which it leaves the pool and its rarity's share goes to those still drawable. Simulated, a given common reaches level 7 after about 540 draws (11k Gems), a rare about 740 (15k), an epic about 1,030 (21k), and every stock badge about 1,040 draws (21k Gems), since the last draws all land on the few badges still open; each badge added to the pool raises these. The XP badge pays its value (1, 4, 9 … 49) times `xpBase(floor) / xpBase(0)`, so it stays the same share of a kill's XP at every height: about 0.11×, 1.8× and 5.4× a normal kill at levels 1, 4 and 7. On MONSTER (one activation a kill) that multiplies a run's XP by about 1.1, 2.8 and 6.4, and since levels grow with the cube root of lifetime XP, a hero's level by about 1.04, 1.41 and 1.86 in the long run. If the player earned only the guaranteed reach-based Inspiration, this places the current Delve unlock around floor 11 in Tower progression. Silver/Gold/Platinum rewards can move that timing earlier.
+Gear (1 Inspiration) branches off Buildout, left of it, then ATK Up (5 Inspiration, below Gear: the ATK UP card, heading for ATK pickups) and DEF Up (5 Inspiration, below ATK Up: the DEF UP card, heading for DEF pickups). Trainers (1 Inspiration, on the path between Buildout and Larger Hand) hires the first trainer on the Training tab, which is open from the start for training points. On the Job (1 Inspiration, right of Buildout: Training bought with Silver inside a run) branches off Buildout, then Regen (1 Inspiration, below On the Job: Regen training) and Heal (3 Inspiration) below Regen, so those five are off that path. Then Blue Key (2 Inspiration, after the Archives, below DEF Up) adds the BLUE KEY card, and Faster Trainers (2 Inspiration, after the Archives, right of Into the depths) opens Faster Trainers research (+2% training speed a level for 100 levels; the n-th level costs 250 × n Gold and takes 1.75 × n hours, about 368 days and 1.26 million Gold in all, against Potion HP's seven weeks); both are off the path too. In the Courage tree, Rush (1 Courage, after Movement Speed) opens Rush research (+1 tile rushed a level for 25 levels: the n-th level costs 250 × n × 2^(n−1) Gold and takes 1.75 × n × 1.2^(n−1) hours, Faster Trainers' levels made steeper, about 201 billion Gold and 697 days in all), since a faster pace of play is worth the most; it took the place of Stone skin (+1 DEF a rank). Badges (2 Courage, after Focus) opens card badges, drawn with Gems (20 each, 200 for ten) by rarity (common 70%, rare 27%, epic 3%; 5 commons, 4 rares and 4 epics in the stock pool), 80 copies taking one to level 7, after which it leaves the pool and its rarity's share goes to those still drawable. Simulated, a given common reaches level 7 after about 540 draws (11k Gems), a rare about 740 (15k), an epic about 1,030 (21k), and every stock badge about 1,040 draws (21k Gems), since the last draws all land on the few badges still open; each badge added to the pool raises these. The XP badge pays its value (1, 4, 9 … 49) times `xpBase(floor) / xpBase(0)`, so it stays the same share of a kill's XP at every height: about 0.11×, 1.8× and 5.4× a normal kill at levels 1, 4 and 7. On MONSTER (one activation a kill) that multiplies a run's XP by about 1.1, 2.8 and 6.4, and since levels grow with the cube root of lifetime XP, a hero's level by about 1.04, 1.41 and 1.86 in the long run. If the player earned only the guaranteed reach-based Inspiration, this places the current Delve unlock around floor 11 in Tower progression. Areas cleared can move that timing earlier.
 
 This is a useful reference point, **not a commitment that 12 is the final desired Delve-unlock cost**.
 
@@ -168,7 +156,7 @@ Gems are the premium currency, kept between runs. A run's floors give one Gem at
 
 Beating the boss on floor 100 of the highest tower opened opens the next, up to Tower IX; the Delve's boss at equivalent floor 100 (depth 1,000) opens the next delve the same way (`src/tiers.ts`). Tier *n*'s enemies have 3^(n−1) times tier 1's HP, ATK and DEF on the same layouts. Combat is linear in those stats (each strike deals ATK − DEF, against HP), so a hero with three times the ATK, DEF, max HP and shroud fights each enemy exactly as before: the same rounds, the same share of HP lost. What doesn't scale makes the next tier a little harder still: flat potions (35 HP), ATK/DEF pickups and the enemy's ATK rising at least 1 a round (negligible at these numbers); improving potions and pickups is left to upgrade trees. Silver pays the same, so a run buys about the same run training levels, each worth a third as much against the enemies: surviving as far takes a higher baseline (Training through levels, gear, research).
 
-Each tier pays more Gold (kills, treasure, the Delve's end-of-run Gold), per tier in tenths: ×1, ×2, ×3.1, ×4.3, ×5.6, ×7, ×8.5, ×10.1, ×11.8 (each step one more than the last, plus a tenth more every tier after the second), Gold keeping its fraction (1 Gold is 3.1 in Tower III). Kill XP grows by the same factor as the enemies' stats: ×3 in Tower II, ×9 in III, up to ×6,561 in IX, so the hero levels as much faster as the enemies are stronger. So a hero strong enough for a higher tier farms more Gold and XP per unit time there. Each tier keeps its own records and pays its milestones again from its first floor (on the schedule above), so climbing more towers raises the Inspiration and Courage available overall. Floor-clear chests are tracked per tier too, for now: that system is to be revamped.
+Each tier pays more Gold (kills, treasure, the Delve's end-of-run Gold), per tier in tenths: ×1, ×2, ×3.1, ×4.3, ×5.6, ×7, ×8.5, ×10.1, ×11.8 (each step one more than the last, plus a tenth more every tier after the second), Gold keeping its fraction (1 Gold is 3.1 in Tower III). Kill XP grows by the same factor as the enemies' stats: ×3 in Tower II, ×9 in III, up to ×6,561 in IX, so the hero levels as much faster as the enemies are stronger. So a hero strong enough for a higher tier farms more Gold and XP per unit time there. Each tier keeps its own records and pays its milestones again from its first floor (on the schedule above), so climbing more towers raises the Inspiration and Courage available overall. Areas mastered and cleared are tracked per tower too.
 
 ---
 
@@ -179,9 +167,8 @@ The player should usually be several progression steps ahead of the floors they 
 A useful initial tuning target is:
 
 - **Reach ceiling:** current maximum Tower progression.
-- **Silver ceiling:** generally several floors behind the reach ceiling.
-- **Gold ceiling:** farther behind Silver.
-- **Platinum ceiling:** farther behind Gold.
+- **Clearing ceiling:** generally several floors behind the reach ceiling.
+- **Mastery ceiling:** farther behind clearing.
 
 This lag should come from combat math, research, equipment, and player optimization—not from explicit medal locks.
 
@@ -189,21 +176,21 @@ This lag should come from combat math, research, equipment, and player optimizat
 
 These are approximate playtest targets, not hard rules:
 
-| Highest Tower floor reached | Delve-equivalent depth | Rough Silver mastery target | Rough Gold mastery target | Rough Platinum target |
-|---:|---:|---:|---:|---:|
-| 10 | 100 | Floors 0–5 | Floors 0–2 | Floor 0 or none |
-| 20 | 200 | Floors 0–15 | Floors 0–8 | Floors 0–3 |
-| 30 | 300 | Floors 0–25 | Floors 0–18 | Floors 0–10 |
-| 50 | 500 | Floors 0–45 | Floors 0–35 | Floors 0–25 |
-| 75 | 750 | Floors 0–70 | Floors 0–58 | Floors 0–45 |
-| 100 | 1000 | Floors 0–95 | Floors 0–83 | Floors 0–70 |
+| Highest Tower floor reached | Delve-equivalent depth | Rough clearing target | Rough mastery target |
+|---:|---:|---:|---:|
+| 10 | 100 | none | none |
+| 20 | 200 | Floors 1–10 | none |
+| 30 | 300 | Floors 1–20 | Floors 1–10 |
+| 50 | 500 | Floors 1–40 | Floors 1–30 |
+| 75 | 750 | Floors 1–60 | Floors 1–50 |
+| 100 | 1000 | Floors 1–90 | Floors 1–80 |
 
 These targets are intentionally broad. Actual mastery will vary based on build quality and player decisions.
 
 The important relationship is:
 
 ```text
-maximum reached > reliable Silver ceiling > reliable Gold ceiling > reliable Platinum ceiling
+maximum reached > reliable clearing ceiling > reliable mastery ceiling
 ```
 
 ---
@@ -220,7 +207,7 @@ Enemy power in both modes should derive from the shared equivalent-floor value `
 
    Each level earns three training points, spent on the Training tab, open from the start. A rank is bought with points at once, or, once the Trainers skill is owned, by a trainer for Gold over time, on its own schedule per stat that counts only the ranks trainers finished (`save.trainerRanks`), so points never raise it (`trainingGold`: 20 Gold a point of its cost times the trainer's rank number; `trainingSeconds`, divided by 1 + the Faster Trainers speed, and halved while the training boost lasts); a Gem reset returns the points, the Gold, and all the training time spent on the stat into the time bank, which any stat's next trainer ranks use after their own time credit. A training rank (1 point for every row; `TRAINING` in `src/config.ts`) is worth `base × (1 + level / growth)` at the hero's current level (`trainingWorth`): max HP 10 + L, ATK 1 + L/5, DEF 1 + L/12, Shroud 1 + L/10 (once the Shroud skill opens it), each stat's ranks summed with their fractions kept (`trained`; the hero's stats keep fractions everywhere and show rounded down). Levelling up raises every rank already bought, so saving points never pays. Since ATK and DEF cost 1 point a rank like max HP, training alone no longer falls behind by itself: at those levels, an evenly trained hero (points split three ways) with nothing else beats a normal balanced Tower enemy for almost nothing on floors 10 to 60, 3% of its HP on floor 75 (8% in the Delve, 11% against a strong Tower enemy), and still wins on floor 100 (16%, and 54% in the Delve). TODO: rebalance the curves so research, gear and upgrades are needed from the mid-game on. Putting every point into one stat is worse: DEF or HP alone leaves the hero's ATK below enemy DEF by about floor 40, and ATK alone leaves it too little HP. `tests/loadout.test.ts` checks the floor 10, 50, 75 and 100 cases. Strength also sets the Gold it pays in both modes (`ENEMY_GOLD` in `src/config.ts`: weak 1, normal 1, strong 2, elite 4, boss 5); the Delve's end of a run adds one Gold per treasure opened. Kills also pay Silver, held in the run alone (`run.silver`) and spent on run training: `silverForKill` (`src/config.ts`) pays 1 on equivalent floors 1–10, 1 more every ten floors after, times `SILVER_MULTIPLIER` for the enemy's strength (weak 1, normal 2, strong 3, elite 4, boss 5). Run training sells Training levels for the run alone, starting from the hero's own level: each row's first costs `RUN_TRAINING_PRICES[id].base` Silver (3 for max HP, 5 for ATK and DEF, 10 for the rows a skill opens, such as Shroud, Potion % and the currency rows, 20 for Find Potion and Revive), and the k-th after it costs `step + growth × ⌊(k − 1) / 5⌋ + k` more than the one before (`silverPrice`): max HP +1+k for five ranks, then +3+k, +5+k … (3, 5, 8, 12, 17, 23, 32 …); the base-5 rows +1+k for five ranks, then +4+k, +7+k …; the base-10 rows +2+k, +5+k, +8+k …; the base-20 rows +4+k, +8+k, +12+k …. ATK costs 5, 7, 10, 14, 19, 25, 35 …, 85 for the 11th, about 300 for the 21st and 7,850 for the 100th; prices grow with the square of the rank, so Training points bought with Inspiration stay worth more than Silver past the first few ranks. A row stops at its `max`, or at level 1,000 (`RUN_TRAINING_CAP`). Every enemy carries its `strength`, which the board shows: a dark red rim for normal, a bright red rim and one chevron for strong, bright red inside a gold rim and two chevrons for elite, and the same with three chevrons and a wider glow for a boss.
 4. **Careless play can die from the first floor.** `ENEMY_STAT_SCALE` (`src/scaling.ts`) multiplies every enemy's stats in both modes (HP ×2, ATK ×2, DEF ×1), so it is the one knob for overall difficulty. On top of it, the Tower's zone rosters (`TOWER_ZONE_ENEMIES`, one per `TOWER_ZONE_FLOORS` floors) make the first ten floors' enemies Goblin 30 HP / 16 ATK / 1 DEF, Thief 32 / 12 / 2 and Armored Knight 36 / 10 / 3: no one of them, even strong, beats a new hero (100 HP, 12 ATK, 0 DEF) in a single fight (a strong Armored Knight costs the most, 75 HP), so the first floors are lost to a poor route through several fights rather than to one, while the floor 10 boss (a strong Thief with twice its HP and ATK) costs 268 and does beat that hero. The first section has no elites (the furnisher places a strong enemy instead), since an elite is the next zone's roster. Each later zone rises about 50% over the one before, so every zone builds on that baseline; every zone was scaled down from the earlier rosters by the same ratios, by profile (attack-heavy HP ×5/6 and ATK ×8/9, balanced HP ×4/5, defense-heavy HP ×9/13 and DEF ×3/4), so the steps between zones are unchanged. The Delve's enemies come from `DELVE_ENEMY_BASE` (`delveEnemyBase` in `src/delve/labyrinth.ts`): the Tower's first balanced enemy (32 HP / 12 ATK / 2 DEF in play) with every stat ×1.0414 for each equivalent floor (ten depth), so ×1.5 every ten floors like the Tower's zones and ×58 every hundred where the Tower's cycle is ×60, keeping the two modes on one curve. A Delve area (ten equivalent floors) also holds about as many enemies as ten Tower floors, about 64 (the milestone gate's boss, pocket and fork costs, and the corridor guards of `placeGuards`), with about the Tower's potions and shards (the guards' rewards). An ATK or DEF shard raises its stat by 1 in the first tower and 2.75 times as much in each tower after (`tierShard` in `src/tiers.ts`: 2.75, 7.5625, …), against the enemies' ×3 a tower, so shards fall slowly behind the stats they answer.
-5. **Do not balance only for first reach.** The curve must also leave room for research/equipment to convert previously difficult floors into Silver/Gold mastery content.
+5. **Do not balance only for first reach.** The curve must also leave room for research/equipment to convert previously difficult areas into content to clear and master.
 6. **Persistent power should matter more than temporary floor pickups at checkpoint milestones.** See the checkpoint section below.
 
 ### Difficulty data should be centralized
@@ -286,7 +273,7 @@ The crafting document currently uses these progression bands:
 | Starsteel | 75 | 750 | Advanced progression |
 | Voidsteel | 100 | 1000 | High progression |
 
-These thresholds are useful anchors for difficulty tuning. A new equipment tier should make a noticeable band of earlier floors newly Silver/Gold-capable without instantly trivializing the current reach ceiling.
+These thresholds are useful anchors for difficulty tuning. A new equipment tier should make a noticeable band of earlier areas newly clearable or masterable without instantly trivializing the current reach ceiling.
 
 ---
 
@@ -370,14 +357,14 @@ Skipped floors grant no:
 - enemy materials;
 - chest materials;
 - Inspiration;
-- Silver/Gold/Platinum status;
+- area rewards (mastered or cleared);
 - other per-floor rewards.
 
 A checkpoint is a convenience feature, not an offline-reward or skip-reward mechanic.
 
 ### Lower floors remain intentionally replayable
 
-If the player wants to pursue Silver/Gold/Platinum on an earlier floor, farm its enemy drops, or gather its chest materials, they can deliberately begin from Floor 0 or a lower checkpoint.
+If the player wants to clear or master an earlier area, farm its enemy drops, or gather its chest materials, they can deliberately begin from Floor 0 or a lower checkpoint.
 
 ### Checkpoint as run lower bound
 
@@ -428,7 +415,7 @@ Future balancing should preserve these rules:
 6. Higher equipment tiers should create noticeable power spikes without trivializing the current frontier.
 7. Checkpoints remove repetition but never award rewards for skipped content.
 8. Starting from a checkpoint must be viable using persistent power rather than assuming skipped temporary pickups.
-9. Silver/Gold/Platinum conditions should be evaluated per floor attempt.
+9. Area rewards are judged over one run's climb through the area.
 10. Difficulty formulas, equipment power, and research costs must be tuned together rather than independently.
 
 ---
@@ -441,11 +428,11 @@ Before treating exact numbers as final, automated simulations and playtests shou
 - deepest Delve depth reached;
 - character level at each major progression milestone;
 - Inspiration earned from reach progression;
-- Inspiration earned from Silver/Gold/Platinum mastery;
+- Inspiration earned from areas cleared;
 - Inspiration spent and research nodes owned;
 - currently equipped metal tier;
 - total Attack/Defense/Max HP from equipment;
-- Silver/Gold/Platinum ceiling relative to maximum reached floor;
+- clearing and mastery ceilings relative to maximum reached floor;
 - death rate by equivalent floor;
 - time/runs required to unlock each 10-floor checkpoint;
 - time/runs required to craft the first item and full set from each metal tier.
@@ -454,14 +441,14 @@ Before treating exact numbers as final, automated simulations and playtests shou
 
 Rebalance if simulation shows any of the following:
 
-- players routinely Gold-clear the same floor on first reach;
-- players can reach far beyond floors they are capable of Silver-clearing;
+- players routinely master the same area on first reach;
+- players can reach far beyond areas they are capable of clearing;
 - an upgrade required for progression is unaffordable without clearing the content it is supposed to enable;
 - a newly unlocked equipment tier immediately trivializes the current frontier;
 - a newly unlocked equipment tier does not noticeably improve mastery of earlier floors;
 - checkpoint starts are unusable without farming temporary pickups on lower floors first;
 - skipping to checkpoints becomes more rewarding than actually playing lower floors;
-- Gold/Platinum rewards become mandatory rather than aspirational/accelerative.
+- area rewards become mandatory rather than aspirational/accelerative.
 
 ---
 

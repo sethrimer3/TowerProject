@@ -6,20 +6,24 @@ An incremental dungeon RPG: the player climbs the Tower's puzzle floors and delv
 
 ### Tower clears
 
-**Cleared floor**:
-A Tower floor with no enemy or door left on it.
-_Avoid_: empty room, finished floor
+**Area**:
+The ten floors of a Tower section, from its sealed first floor to the checkpoint floor that ends it (floors 1 to 10, 11 to 20 …). Judged as the hero climbs onto the next area's first floor.
+_Avoid_: zone, floor range
 
-**Clear tier**:
-A grade a cleared floor earns: silver for any clear, gold if the run has taken no damage, platinum if it has also spent no keys on that floor. Each tier is earned once per floor, for good.
-_Avoid_: medal, rank
+**Mastered area**:
+An area climbed in one run without taking fight damage (a Heart Door's toll doesn't count). Mastering an area that ends at a checkpoint lets runs warp to that checkpoint, once Warp is owned.
+_Avoid_: gold clear, perfect area
 
-**Clear chest**:
-A chest standing by the stairs of a cleared floor for one clear tier; opening it pays one Inspiration. Chests still standing when the player leaves the floor or the run are paid anyway.
-_Avoid_: reward chest, clear reward
+**Cleared area**:
+An area left with no enemy on any of its floors; pays 10 Inspiration.
+_Avoid_: silver clear, cleared floor
 
-**Clear ledger**:
-The lifetime record, per floor, of which clear tiers were earned and which were paid, so a tier pays exactly once however the run is undone, revived, reloaded or replaced.
+**Area chest**:
+A chest set in front of the hero on the first floor of the next area for each area reward just earned: gold for mastered, silver for cleared. The reward is already paid; opening it only shows it.
+_Avoid_: clear chest, reward chest
+
+**Area ledger**:
+The lifetime record, by tower, of the areas mastered and cleared, so each pays exactly once however the run is undone, revived, reloaded or replaced.
 _Avoid_: tower log, reward log
 
 ### The climb
@@ -76,7 +80,7 @@ The hero lost a fight: the run waits at 0 HP, the hand paused, until the player 
 _Avoid_: dead, game over
 
 **Gain**:
-A reward just picked up (an item's stats, keys, Gold, materials, a clear chest's Inspiration), or what a door took (each key, or the HP a Heart Door drained to 1), shown rising from the tile it came from the moment it happens: as its sprite, or written out where it has none.
+A reward just picked up (an item's stats, keys, Gold, materials, a treasure chest's Gold), or what a door took (each key, or the HP a Heart Door drained to 1), shown rising from the tile it came from the moment it happens: as its sprite, or written out where it has none.
 _Avoid_: popup, loot text
 
 ### The character
@@ -139,11 +143,11 @@ The one scale both modes' progress maps onto: a Tower floor counts as itself, an
 _Avoid_: effective floor, tier
 
 **Tier**:
-One of the numbered towers (Tower I to IX), or of the delves (Delve I to IX), that a run climbs. Beating the boss on floor 100 of the highest one opened opens the next. Each has the same floors as the first with monsters three times as strong as the one before, pays more Gold, pays XP times the same factor as its monsters' stats, and keeps its own records, milestones and clear chests. Not to be confused with a clear tier or a monster's rank.
+One of the numbered towers (Tower I to IX), or of the delves (Delve I to IX), that a run climbs. Beating the boss on floor 100 of the highest one opened opens the next. Each has the same floors as the first with monsters three times as strong as the one before, pays more Gold, pays XP times the same factor as its monsters' stats, and keeps its own records, milestones and area rewards. Not to be confused with a monster's rank.
 _Avoid_: new tower, prestige, world
 
 **Inspiration**:
-The Tower's currency: one for each floor completed beyond the highest completed before (paid as the hero climbs its stairs onto the floor above) and each clear tier paid, spent on upgrades in the skill trees.
+The Tower's currency: one for each floor completed beyond the highest completed before (paid as the hero climbs its stairs onto the floor above) and 10 for each area cleared, spent on upgrades in the skill trees.
 _Avoid_: shards
 
 **Boss**:

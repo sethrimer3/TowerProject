@@ -16,6 +16,7 @@ import { adIcon, clamp, clockIcon, el, gemIcon, goldIcon, pointsIcon, riseFrom, 
 import { TRAINING_RESET_GEMS } from "../gems.ts";
 import { bindPanZoom, type View } from "./pan-zoom.ts";
 import { ArchivesPanel, formatDuration } from "./archives-page.ts";
+import { currencyHelp } from "./currency-help.ts";
 
 type Tree = (typeof TREES)[number];
 
@@ -194,18 +195,34 @@ export class SkillTreePage {
     const view = this.view(tree.id);
     const nodes = mapNodes(tree);
     el("upgrades").innerHTML = `${tabs}
-      <section class="skill-tree ${tree.id}"><header class="tree-heading"><h3>${tree.name} skill tree</h3></header>
+      <section class="skill-tree ${tree.id}"><header class="tree-heading"><h3>${tree.name} skill tree${this.helpButton(tree)}</h3></header>
       ${this.lockHtml(tree)}
       <div class="tree-viewport" id="tree-viewport"><div class="tree-map" id="tree-map" style="${treeHeight(tree) === 100 ? "" : `height:${treeHeight(tree)}%;`}transform:translate(${view.x}px,${view.y}px) scale(${view.scale})"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${this.linesHtml(nodes)}</svg>
       <canvas class="tree-particles" aria-hidden="true"></canvas>
       ${nodes.map(n => this.nodeHtml(n)).join("")}</div><div class="inspect-box tree-tooltip" id="tree-tooltip" hidden></div></div></section>`;
     this.bindTabs();
+    if (tree.id === "inspiration" || tree.id === "courage") el("tree-help").onclick = () => this.showHelp(tree.id as "inspiration" | "courage");
     bindPanZoom(el("tree-viewport"), el("tree-map"), view, {
       tap: (target) => this.tapped(target),
       pan: () => this.hideTooltip(),
       zoom: () => { if (this.tooltipVisible) this.showTooltip(); },
     });
     if (this.tooltipVisible && tree.nodes.some(n => n.id === this.skill)) this.showTooltip();
+  }
+
+  /** The ? beside the Inspiration and Courage trees' headings. */
+  private helpButton(tree: Tree) {
+    return tree.id === "inspiration" || tree.id === "courage"
+      ? `<button class="tree-help" id="tree-help" aria-label="How ${tree.name} is earned" title="How ${tree.name} is earned">?</button>`
+      : "";
+  }
+
+  /** How the tree's currency is earned. */
+  private showHelp(tree: "inspiration" | "courage") {
+    const modal = this.ctx.modal, help = currencyHelp(this.ctx.game.save, tree);
+    modal.innerHTML = `<small>UPGRADES</small><h2>${help.title}</h2>${help.body}<div class="dialog-actions"><button id="tree-help-ok">Got it</button></div>`;
+    modal.showModal();
+    el("tree-help-ok").onclick = () => modal.close();
   }
 
   /** Why a tree can't be bought from yet, if it can't. */

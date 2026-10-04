@@ -126,7 +126,7 @@ function bindSettings(ctx: AppContext, overlay: BoardOverlay) {
     ctx.confirm(
       {
         title: "Leave your mark?",
-        body: `Retire at ${MODES[game.mode].words.progress} ${displayedProgress(game.run.height, !!game.run.outside)}. Milestone rewards are already yours. Uncollected clear chests will be claimed.`,
+        body: `Retire at ${MODES[game.mode].words.progress} ${displayedProgress(game.run.height, !!game.run.outside)}. Milestone rewards are already yours.`,
         label: `Retire ${MODES[game.mode].words.run}`,
         cancel: MODES[game.mode].words.keepGoing,
       },

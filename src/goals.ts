@@ -7,7 +7,8 @@ import { TIERS } from "./tiers.ts";
 // the player claims once the checkpoint's floor is completed (the floor
 // above it reached) in that tower, and a premium
 // reward beside it, claimed the same way once the Premium Pass for the
-// tower's set of three is owned. Claims last between runs (`save.goals`).
+// tower's set of three is owned. Claims last between runs (`save.goals`),
+// as do each tower's areas mastered and cleared (tower/area-ledger.ts).
 
 /** What a checkpoint can unlock: Damage Prediction (an enemy's inspect
  * panel says what the fight would cost and whether it is survivable),
@@ -65,10 +66,21 @@ export const PASSES: readonly Pass[] = [
 /** The pass whose set holds `tower`. */
 export const passFor = (tower: number) => PASSES.find((p) => p.towers.includes(tower))!;
 
-/** What the Goals save keeps: the floors of the checkpoints claimed in
- * each tower, and of the premium rewards claimed. */
-export type GoalsSave = { claimed: Record<string, number[]>; premium: Record<string, number[]> };
-export const defaultGoals = (): GoalsSave => ({ claimed: {}, premium: {} });
+/** What the Goals save keeps, by tower: the floors of the checkpoints
+ * claimed, and of the premium rewards claimed; and each area mastered (no
+ * damage taken across it; only an area ending at a checkpoint) and cleared
+ * (no enemy left in it), by the area's last floor. */
+export type GoalsSave = {
+  claimed: Record<string, number[]>;
+  premium: Record<string, number[]>;
+  mastered: Record<string, number[]>;
+  cleared: Record<string, number[]>;
+};
+export const defaultGoals = (): GoalsSave => ({ claimed: {}, premium: {}, mastered: {}, cleared: {} });
+
+/** Whether the area ending on `floor` in `tower` is mastered, or cleared. */
+export const areaMastered = (save: Save, tower: number, floor: number) => !!save.goals.mastered[tower]?.includes(floor);
+export const areaCleared = (save: Save, tower: number, floor: number) => !!save.goals.cleared[tower]?.includes(floor);
 
 /** The highest floor completed in `tower`: a floor counts once the floor
  * above it is reached, so it is the highest height reached (0 before the
@@ -115,10 +127,10 @@ export const unlockFloor = (what: GoalUnlock) =>
 /** Whether Warp is owned. */
 export const warpUnlocked = (save: Save) => goalUnlocked(save, "warp");
 
-/** Whether a run can warp past `floor` in `tower`: Warp owned and that
- * checkpoint's floor completed. */
+/** Whether a run can warp past `floor` in `tower`: Warp owned and the area
+ * ending at that checkpoint mastered. */
 export const canWarp = (save: Save, tower: number, floor: number) =>
-  warpUnlocked(save) && tower <= save.tower.tiersOpen && !!checkpoint(tower, floor) && floorsCompleted(save, tower) >= floor;
+  warpUnlocked(save) && tower <= save.tower.tiersOpen && !!checkpoint(tower, floor) && areaMastered(save, tower, floor);
 
 /** The premium rewards a pass opens, each currency's total. */
 export function passTotals(pass: Pass): Partial<Record<CurrencyId, number>> {
@@ -129,21 +141,26 @@ export function passTotals(pass: Pass): Partial<Record<CurrencyId, number>> {
   return totals;
 }
 
-/** The saved claims: known towers and checkpoint floors, each once. */
+/** The saved claims and areas: known towers and floors, each once. Claims
+ * and areas mastered are checkpoint floors; an area cleared may end past
+ * the last checkpoint, on any multiple of ten. */
 export function decodeGoals(raw: any): GoalsSave {
   const goals = defaultGoals();
-  for (const key of ["claimed", "premium"] as const) {
+  for (const key of ["claimed", "premium", "mastered", "cleared"] as const) {
     const byTower = raw?.[key];
-    if (byTower && typeof byTower === "object") decodeClaims(byTower, goals[key]);
+    const valid = key === "cleared" ? areaEnd : (tower: number, f: number) => !!checkpoint(tower, f);
+    if (byTower && typeof byTower === "object") decodeFloors(byTower, goals[key], valid);
   }
   return goals;
 }
-/** Each known tower's claimed checkpoint floors, each once, in order. */
-function decodeClaims(byTower: object, claims: Record<string, number[]>) {
+/** The last floor of an area. */
+const areaEnd = (_tower: number, f: number) => Number.isSafeInteger(f) && f > 0 && f % CHECKPOINT_EVERY === 0;
+/** Each known tower's valid floors, each once, in order. */
+function decodeFloors(byTower: object, out: Record<string, number[]>, valid: (tower: number, floor: number) => boolean) {
   for (const [tower, floors] of Object.entries(byTower) as [string, unknown][]) {
     if (!isTower(tower) || !Array.isArray(floors)) continue;
-    const known = [...new Set(floors)].filter((f): f is number => typeof f === "number" && !!checkpoint(Number(tower), f));
-    if (known.length) claims[tower] = known.sort((a, b) => a - b);
+    const known = [...new Set(floors)].filter((f): f is number => typeof f === "number" && valid(Number(tower), f));
+    if (known.length) out[tower] = known.sort((a, b) => a - b);
   }
 }
 /** A tower with checkpoints, by its saved key (1 to 9). */

@@ -189,8 +189,7 @@ h1 span {
   flex-direction: column;
   gap: 3px;
 }
-/* End Run inside a run and Goals in the forest share the top row, Log the
-   one under it, in both modes. */
+/* End Run inside a run and Goals in the forest share one row, in both modes. */
 .height-actions {
   width: 100%;
   margin-top: 5px;
@@ -1456,6 +1455,8 @@ nav {
 .tree-heading { text-align: center; }
 .tree-heading small { color: var(--tree-color); letter-spacing: 2px; font-size: 11px; }
 .tree-heading h3 { font-size: 16px; margin: 1px 0 6px; }
+/* How the tree's currency is earned. */
+.tree-help { display: inline-grid; place-items: center; width: 22px; height: 22px; min-height: 0; margin-left: 8px; padding: 0; border-radius: 50%; font: inherit; font-size: 13px; font-weight: 700; vertical-align: 1px; color: var(--tree-color, #e5d5b8); }
 .tree-heading p, .tree-lock { font-size: 11px; color: #a3afbc; text-align: center; line-height: 1.7; }
 .tree-lock { border: 1px solid #38414b; padding: 9px; }
 .tree-hint { font-size: 10px; color: #7f8a9d; text-align: center; margin: 4px 0 8px; }
@@ -1500,7 +1501,7 @@ nav {
   nav button > span img { width: 26px; height: 26px; }
 }
 
-#log, #section-pick { font: inherit; font-size: 9px; padding: 2px; min-height: 22px; }
+#section-pick { font: inherit; font-size: 9px; padding: 2px; min-height: 22px; }
 #section-pick { position: relative; }
 /* A Goals reward waits to be claimed. */
 #section-pick.notify::after {
@@ -1514,15 +1515,8 @@ nav {
   background: #d8352b;
   box-shadow: 0 0 0 2px #10161f, 0 0 6px #ff4a3a;
 }
-.clear-legend { text-align: left; font-size: 12px; }
-.clear-legend p { margin: 6px 0; }
 .silver { color: #c5d0df; }
 .gold { color: #f5cd62; }
-.platinum { color: #bcfff3; }
-.diamond { color: #99d9ff; }
-.floor-log { max-height: 30vh; overflow-y: auto; text-align: left; }
-.floor-record { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid #ffffff18; font-size: 12px; }
-.floor-record > span { text-align: right; }
 /* Crafting/equipment page */
 .gear-tabs { grid-template-columns: repeat(2, 1fr); }
 .slot-filter { grid-template-columns: repeat(5, 1fr); margin: 12px 0; }
@@ -1579,6 +1573,12 @@ nav {
 .goals-line { position: absolute; left: 50%; width: 4px; height: calc(100% - 96px); transform: translateX(-50%); background: #2c313a; border-radius: 2px; box-shadow: 0 0 0 1px #0008; }
 .goals-line.lit { background: linear-gradient(#fff3c4, #e2b55a 30px, #c8963c); box-shadow: 0 0 8px #e2b55a99, 0 0 0 1px #0008; }
 .goal-row { position: absolute; left: 0; right: 0; transform: translateY(50%); display: grid; grid-template-columns: minmax(0, 1fr) 52px minmax(0, 1fr); align-items: center; gap: 8px; padding: 0 8px; }
+/* The standard reward, then its area's marks just left of the floor number. */
+.goal-left { display: flex; justify-content: flex-end; align-items: center; gap: 4px; min-width: 0; }
+.goal-left > .goal-reward { min-width: 0; }
+.goal-marks { display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; }
+.goal-marks > span { display: block; line-height: 0; }
+.goal-mark { width: 16px; height: 16px; filter: drop-shadow(0 0 3px #000c); }
 .goal-floor { justify-self: center; z-index: 1; min-height: 0; width: 46px; height: 28px; padding: 0; border-radius: 14px; font-size: 13px; font-weight: 700; color: #7e899b; border: 1px solid #3c434f; background: #14181f; }
 .goal-floor.completed { color: #ffe9b0; border-color: #d8b572; background: linear-gradient(#4a3a1c, #2b2214); box-shadow: 0 0 8px #d8b57266; }
 .goal-floor.warpable { box-shadow: 0 0 6px #d8b572aa, 0 0 14px #b48cff88; border-color: #e2c8ff; }
@@ -1612,8 +1612,7 @@ nav {
    PNGs here too, so a key or potion always has one visual identity. */
 .ui-sprite,
 .skill-sprite,
-.stat-sprite,
-.log-sprite {
+.stat-sprite {
   display: inline-block;
   width: 1.45em;
   height: 1.45em;
@@ -1635,10 +1634,7 @@ nav button > span img { display: block; width: 42px; height: 42px; max-width: 10
 .node-icon img { width: 38px; height: 38px; }
 .skill-node.locked .node-icon img { filter: grayscale(1); opacity: .48; }
 .slot-filter button img { width: 28px; height: 28px; }
-.clear-legend .log-sprite,
-.floor-record .log-sprite { width: 24px; height: 24px; margin-right: 5px; }
 .summary-icon img { width: 72px; height: 72px; }
-#log img { width: 22px; height: 22px; margin-right: 4px; }
 .ascent > span img { width: 24px; height: 24px; }
 .dpad button img { display: block; width: 22px; height: 22px; margin: auto; }
 /* ── DEFEND ─────────────────────────────────────────────────────────── */

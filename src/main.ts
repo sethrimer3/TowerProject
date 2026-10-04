@@ -17,7 +17,7 @@ import { el } from "./ui/dom.ts";
 import { buildShell } from "./ui/shell.ts";
 import { BoardOverlay } from "./ui/board-overlay.ts";
 import { boardHeadingStale, flashRed, renderAdButton, renderShopDot, renderBoardHeading, renderHud, renderVitals, purseFrame, gearWaiting, upgradesWaiting } from "./ui/hud.ts";
-import { confirmAction, RunEndDialog, showLog } from "./ui/dialogs.ts";
+import { confirmAction, RunEndDialog } from "./ui/dialogs.ts";
 import { GoalsPage } from "./ui/goals-page.ts";
 import { SkillTreePage } from "./ui/skill-tree-page.ts";
 import { ResearchToasts, researchToast, trainingToast } from "./ui/research-toast.ts";
@@ -188,7 +188,6 @@ el("hand").onclick = (e) => {
   if (result === "noPath") flashRed(card);
   update();
 };
-el("log").onclick = () => showLog(ctx);
 // Goals: the Tower's checkpoints (the Delve's button is a placeholder).
 el("section-pick").onclick = () => {
   if (game.mode === "tower") navigate("goals");

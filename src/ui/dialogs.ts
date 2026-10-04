@@ -1,10 +1,9 @@
 import { whole } from "../whole.ts";
-import { CLEAR_TIERS } from "../tower/clear-ledger.ts";
 import { MODES } from "../modes.ts";
 import { loadout } from "../loadout.ts";
 import type { AppContext } from "./app.ts";
-import { capitalized, CURRENCY_SPRITES, displayedProgress, el, itemSprite, uiSprite } from "./dom.ts";
-import { boardTitle, devAmount } from "./hud.ts";
+import { capitalized, CURRENCY_SPRITES, displayedProgress, el, uiSprite } from "./dom.ts";
+import { boardTitle } from "./hud.ts";
 
 /** The modal dialogs opened from the HUD, all sharing `ctx.modal`. */
 
@@ -84,7 +83,7 @@ export class RunEndDialog {
     const ctx = this.ctx, { game, modal } = ctx;
     const words = MODES[game.mode].words, slice = game.save[game.mode];
     const where = `${words.progress} ${displayedProgress(game.run.height, !!game.run.outside)}`;
-    const kept = `Milestone rewards and the Gold found are already saved${game.mode === "tower" ? "; uncollected clear chests will be claimed" : ""}.`;
+    const kept = "Milestone rewards and the Gold found are already saved.";
     const stats = `<div class="summary-stats compact">${this.stats()}</div>`;
     if (cause === "fallen") {
       const undos = slice.history.length, by = slice.fall?.by;
@@ -122,38 +121,4 @@ export class RunEndDialog {
       ctx.navigate(game.mode);
     };
   }
-}
-
-const LOG_PAGE = 25;
-
-/** The Tower's adventure log: records, clear tiers, and floors 25 at a time. */
-export function showLog(ctx: AppContext) {
-  const { game, modal } = ctx;
-  if (game.mode !== "tower") return;
-  let page = 0;
-  const floorRecord = (floor: number) => {
-    const record = game.save.tower.log[floor];
-    const earned = CLEAR_TIERS.filter(t => record?.[t]);
-    const tiers = earned.length
-      ? earned.map(t => `<span class="${t}">${itemSprite(`chest_${t}` as "chest_silver" | "chest_gold" | "chest_platinum", "log-sprite")}${t[0].toUpperCase() + t.slice(1)}${record![t] === "claimed" ? " ✓" : " · chest"}</span>`).join(" · ")
-      : "Reached";
-    return `<div class="floor-record"><b>Floor ${displayedProgress(floor)}</b><span>${tiers}</span></div>`;
-  };
-  const render = () => {
-    const highest = game.save.tower.reached;
-    const start = Math.max(0, highest - page * LOG_PAGE);
-    const floors = Array.from({ length: Math.min(LOG_PAGE, start + 1) }, (_, i) => start - i);
-    modal.innerHTML = `<small>WAYFARER’S RECORD</small><h2>Adventure log</h2>
-      <div class="summary-stats"><div><strong>${displayedProgress(highest)}</strong>HIGHEST FLOOR</div><div><strong>${displayedProgress(game.save.delve.reached)}</strong>DEEPEST DEPTH</div></div>
-      <p>${devAmount(game, game.save.tower.inspiration)} Inspiration · ${devAmount(game, game.save.delve.courage)} Courage</p>
-      <p class="hint">+1 Inspiration for each floor completed beyond your highest, paid as you climb its stairs. +1 Courage at each new 10-depth milestone. Past floor 100 (depth 1,000) a point takes 10 times as far, past floor 1,000 100 times, and past floor 10,000 none. Revisits never pay again.</p>
-      <div class="clear-legend"><p class="silver">${itemSprite("chest_silver", "log-sprite")} Silver · all doors opened and enemies defeated.</p><p class="gold">${itemSprite("chest_gold", "log-sprite")} Gold · Silver with no damage taken anywhere in the ascent.</p><p class="platinum">${itemSprite("chest_platinum", "log-sprite")} Platinum · Gold with no keys spent on that floor.</p><p class="diamond">Diamond · future challenge, not yet available.</p></div>
-      <p class="hint">Each clear tier earns +1 Inspiration once per floor. Uncollected chests are claimed when you leave.</p>
-      <div class="floor-log">${floors.map(floorRecord).join("")}</div><div class="dialog-actions"><button id="log-newer" ${page === 0 ? "disabled" : ""}>Higher</button><button id="log-older" ${start < LOG_PAGE ? "disabled" : ""}>Lower</button><button id="log-close">Close</button></div>`;
-    el("log-newer").onclick = () => { page--; render(); };
-    el("log-older").onclick = () => { page++; render(); };
-    el("log-close").onclick = () => modal.close();
-  };
-  render();
-  modal.showModal();
 }

@@ -94,7 +94,7 @@ const digest = () => {
 
 const KINDS: Tile["kind"][] = ["wall", "floor", "enemy", "key", "door", "potion", "attack", "defense", "reward", "treasure", "openedChest", "stairs", "stairsDown", "oneway"];
 const COLORS: (KeyColor | undefined)[] = [undefined, "yellow", "blue", "red"];
-const TIERS: Tile["tier"][] = [undefined, "silver", "gold", "platinum"];
+const TIERS: Tile["tier"][] = [undefined, "silver", "gold"];
 
 function tiles(): Tile[] {
   const out: Tile[] = [];

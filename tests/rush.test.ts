@@ -19,8 +19,7 @@ function corridor(levels: number, skill = true) {
   for (let x = 0; x < 8; x++) w.cells.set(`${x},0`, { kind: "floor" });
   w.cells.set("5,0", { kind: "key", color: "yellow" });
   w.cells.set("7,0", { kind: "stairs" });
-  // An enemy out of reach keeps the floor from counting as cleared, so no
-  // clear chests appear on the corridor.
+  // An enemy out of reach, off the corridor.
   w.cells.set("7,1", { kind: "enemy", enemy: { name: "rat", hp: 1, attack: 0, defense: 0, tier: 0, strength: "normal" } });
   w.torches = [];
   g.run.player.x = 0;

@@ -52,7 +52,7 @@ const PLANTS: Tile[] = [
   { kind: "door", door: { type: "keys", keys: ["yellow", "blue"], mode: "all" } }, { kind: "door", door: { type: "fullHp" } },
   { kind: "potion" }, { kind: "potion", color: "red", amount: 60 }, { kind: "attack" }, { kind: "defense" },
   { kind: "treasure" }, { kind: "openedChest" }, { kind: "openedChest", tier: "gold" },
-  { kind: "reward", tier: "silver" }, { kind: "reward", tier: "gold" }, { kind: "reward", tier: "platinum" },
+  { kind: "reward", tier: "silver" }, { kind: "reward", tier: "gold" },
   ...(["weak", "normal", "strong", "elite"] as const).map((strength, tier): Tile => ({ kind: "enemy", enemy: { name: `Planted ${tier}`, hp: 20, attack: 5, defense: 1, tier, strength } })),
   { kind: "enemy", enemy: { name: "Slime", hp: 20, attack: 5, defense: 1, tier: 0, strength: "elite" } },
   { kind: "stairs" }, { kind: "stairsDown" }, { kind: "oneway" },

@@ -98,11 +98,8 @@ try {
       s.tower.best = 41;
       s.delve.reached = 57;
       s.delve.best = 57;
-      s.tower.log = {
-        0: { silver: "claimed", gold: "earned" },
-        4: { silver: "claimed" },
-        30: { silver: "earned", gold: "earned", platinum: "earned" },
-      };
+      s.goals.mastered = { 1: [10, 30] };
+      s.goals.cleared = { 1: [10, 20] };
       s.provisions.heal = 2;
     };
     /** A Tower run whose hero, down to 1 HP, has just fallen to the first
@@ -329,13 +326,6 @@ try {
     await shot(`${prefix}.cardRevealed`);
   }
   async function dialogsTour(prefix) {
-    await click("#log");
-    await shot(`${prefix}.log`);
-    if (await page.locator("#log-older:not([disabled])").count()) {
-      await click("#log-older");
-      await shot(`${prefix}.log.older`);
-    }
-    await closeModal();
     // Inside a run the ad's Gems stand where Goals is in the forest.
     await click("#gem-ad");
     await shot(`${prefix}.adGems`);
@@ -360,6 +350,12 @@ try {
     for (const tree of await page.locator("[data-tree]").evaluateAll((bs) => bs.map((b) => b.dataset.tree))) {
       await click(`[data-tree="${tree}"]`);
       await shot(`${prefix}.tree.${tree}`);
+      // The Inspiration and Courage trees explain how their currency is earned.
+      if (await page.locator("#tree-help").count()) {
+        await click("#tree-help");
+        await shot(`${prefix}.tree.${tree}.help`);
+        await click("#tree-help-ok");
+      }
       if (tree === "training") {
         // Train each stat the points still cover.
         for (const stat of await page.locator("[data-train]:not([disabled])").evaluateAll((bs) => bs.map((b) => b.dataset.train))) {
@@ -476,7 +472,8 @@ try {
   await leaveRun();
   // In the forest, Goals shows the Tower's checkpoints: claiming an unlock
   // (Damage Prediction, then Warp) explains it, a premium reward offers the
-  // pass, and a reached checkpoint asks to warp there.
+  // pass, a mastered checkpoint asks to warp there, and one completed but
+  // not mastered says what warping takes.
   await click("#section-pick");
   await shot("rich.goals");
   await click('[data-goal="1:10:0"]');
@@ -489,6 +486,8 @@ try {
   await click('[data-goal="1:20:1"]');
   await shot("rich.goals.pass");
   await closeModal();
+  await click('[data-warp="1:20"]');
+  await shot("rich.goals.unmastered");
   await click('[data-warp="1:30"]');
   await shot("rich.goals.warp");
   await click("#cancel");
