@@ -264,6 +264,9 @@ A ? on a tile the Deprioritize badge passed over on this floor: no card's path c
 **Floor Skipped**:
 Skip on the STAIRS card in the Tower: the hero climbs two floors instead of one, never standing on the floor between.
 
+**Floor Skip Reward**:
+Gold paid for a floor skipped: Floor Skip Reward research's percent of the Gold the floor's battles and chests still held (each closed chest counted at its average). What it counts pays no Gold if met later.
+
 **Activation**:
 A card of the hand doing what it is for: its path's last step reaching its target, or a card that acts in place acting. Card badges pay on activation.
 _Avoid_: trigger, proc

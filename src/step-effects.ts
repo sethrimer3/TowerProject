@@ -56,6 +56,9 @@ export type StepRules = {
   /** Effective and Dampen, on the step that activates their card: what the
    * target's effect is multiplied by (1.05 is 5% stronger). */
   scale?: number;
+  /** The percent of its toll a Heart Door drains (Heart Door Resilience
+   * research), 100 when absent. */
+  heartToll?: number;
 };
 export const BASE_RULES: StepRules = { potionHeal: 100, percentPotion: 0, regen: 0 };
 /** The HP a potion of `amount` restores under `rules`, rounded. */
@@ -86,8 +89,11 @@ export function resolveStep(player: Player, tile: Tile, rules: StepRules = BASE_
       if (cost === null) return { blocked: "locked" };
       for (const color of cost) next.keys[color] = snap(next.keys[color] - scaled(1));
       // A Heart Door's toll, all but 1 HP, shrinks under a weaker scale and
-      // never grows past it.
-      if (doorRule(tile).type === "fullHp") next.hp = Math.min(next.hp, snap(next.hp - (next.hp - HEART_DOOR_HP) * Math.min(1, scale)));
+      // never grows past it; Heart Door Resilience shrinks it by its percent.
+      if (doorRule(tile).type === "fullHp") {
+        const toll = snap((next.hp - HEART_DOOR_HP) * Math.min(1, scale) * (rules.heartToll ?? 100) / 100);
+        next.hp = Math.min(next.hp, snap(next.hp - toll));
+      }
       effect.keysSpent = cost;
       if (scale !== 1 && cost.length) effect.keyAmount = scaled(1);
       break;

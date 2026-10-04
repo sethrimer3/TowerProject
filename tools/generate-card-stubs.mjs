@@ -239,6 +239,13 @@ const ICONS = {
     sword(p);
     smallKey(p, C.red, C.red2);
   },
+  steelDoor(p) {
+    // Any one key opens it: a steel door with a pip of each key colour.
+    door(p, C.steel, C.steel2, C.dark);
+    rect(p, 17, 17, 2, 2, C.gold);
+    rect(p, 23, 17, 2, 2, C.sky);
+    rect(p, 29, 17, 2, 2, C.red);
+  },
   torch(p) {
     rect(p, 22, 22, 4, 16, C.wood);
     rect(p, 20, 20, 8, 3, C.steel2);
@@ -253,7 +260,7 @@ const ICONS = {
 const CARDS = [["stairs", "STAIRS"], ["heal", "HEAL"], ["door", "DOOR"], ["yellowKey", "YELLOW KEY"], ["blueKey", "BLUE KEY"], ["monster", "MONSTER"], ["atkUp", "ATK UP"], ["defUp", "DEF UP"], ["keySiphon", "KEY SIPHON"],
   ["yellowDoor", "YELLOW DOOR"], ["heartDoor", "HEART DOOR"], ["weakEnemy", "WEAK ENEMY"], ["baseEnemy", "BASE ENEMY"], ["strongEnemy", "STRONG ENEMY"],
   ["eliteEnemy", "ELITE ENEMY"], ["bossEnemy", "BOSS ENEMY"], ["chest", "CHEST"], ["blueSiphon", "BK SIPHON"], ["blueTrader", "BK TRADER"], ["keyToHp", "YK TO HP"],
-  ["redKey", "RED KEY"], ["redSiphon", "RK SIPHON"], ["torch", "TORCH"]];
+  ["redKey", "RED KEY"], ["redSiphon", "RK SIPHON"], ["torch", "TORCH"], ["steelDoor", "STEEL DOOR"]];
 mkdirSync(OUT, { recursive: true });
 for (const [id, name] of CARDS) {
   const p = canvas();

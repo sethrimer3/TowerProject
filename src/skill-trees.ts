@@ -10,7 +10,7 @@ export type SkillNode = { id: UpgradeId; icon: string; x: number; y: number; req
  * only Dev mode shows it, and its skills can't be bought). */
 export type SkillTree = { id: TreeId; name: string; currency: Currency; gate?: UpgradeId | null; description: string; height?: number; unlocks?: boolean; nodes: SkillNode[] };
 export const TREES: SkillTree[] = [
-  { id: "inspiration", name: "Inspiration", currency: "inspiration", description: "Earn Inspiration by beating your best Tower climb.", height: 280, unlocks: true, nodes: [
+  { id: "inspiration", name: "Inspiration", currency: "inspiration", description: "Earn Inspiration by beating your best Tower climb.", height: 300, unlocks: true, nodes: [
     // The hand's skills, down to the Archives: Buildout, Training, Larger Hand. Gear and
     // On the Job branch off Buildout, ATK Up and DEF Up under Gear, and Regen, then Heal,
     // below On the Job.
@@ -49,8 +49,9 @@ export const TREES: SkillTree[] = [
     { id: "revive", icon: "☼", x: 90, y: 178, requires: ["shroud"] },
     // The cards down the middle under Buy Quantity: Yellow Door, Heart Door,
     // Weak Enemy (Base, then Strong, to its left; Elite, then Boss, to its
-    // right), Chest, BK Siphon (BK Trader, then YK to HP, to its left; Red
-    // Key, then RK Siphon, to its right) and Torch.
+    // right), Chest, Heart Door Resilience, BK Siphon (BK Trader, then YK to
+    // HP, to its left; Red Key, then RK Siphon, to its right) and Floor Skip
+    // Reward (Torch to its left, Steel Door to its right).
     { id: "cardYellowDoor", icon: "⚿", x: 50, y: 178, requires: ["buyQuantity"] },
     { id: "cardHeartDoor", icon: "♥", x: 50, y: 196, requires: ["cardYellowDoor"] },
     { id: "cardWeakEnemy", icon: "☠", x: 50, y: 214, requires: ["cardHeartDoor"] },
@@ -59,12 +60,15 @@ export const TREES: SkillTree[] = [
     { id: "cardEliteEnemy", icon: "☠", x: 70, y: 214, requires: ["cardWeakEnemy"] },
     { id: "cardBossEnemy", icon: "☠", x: 90, y: 214, requires: ["cardEliteEnemy"] },
     { id: "cardChest", icon: "▣", x: 50, y: 232, requires: ["cardWeakEnemy"] },
-    { id: "blueSiphon", icon: "⚿", x: 50, y: 250, requires: ["cardChest"] },
-    { id: "blueTrader", icon: "⚿", x: 30, y: 250, requires: ["blueSiphon"] },
-    { id: "keyToHp", icon: "♥", x: 10, y: 250, requires: ["blueTrader"] },
-    { id: "cardRedKey", icon: "⚿", x: 70, y: 250, requires: ["blueSiphon"] },
-    { id: "redSiphon", icon: "⚿", x: 90, y: 250, requires: ["cardRedKey"] },
-    { id: "cardTorch", icon: "☼", x: 50, y: 268, requires: ["blueSiphon"] },
+    { id: "heartDoorResilience", icon: "♥", x: 50, y: 250, requires: ["cardChest"] },
+    { id: "blueSiphon", icon: "⚿", x: 50, y: 268, requires: ["heartDoorResilience"] },
+    { id: "blueTrader", icon: "⚿", x: 30, y: 268, requires: ["blueSiphon"] },
+    { id: "keyToHp", icon: "♥", x: 10, y: 268, requires: ["blueTrader"] },
+    { id: "cardRedKey", icon: "⚿", x: 70, y: 268, requires: ["blueSiphon"] },
+    { id: "redSiphon", icon: "⚿", x: 90, y: 268, requires: ["cardRedKey"] },
+    { id: "floorSkipReward", icon: "↷", x: 50, y: 286, requires: ["blueSiphon"] },
+    { id: "cardTorch", icon: "☼", x: 30, y: 286, requires: ["floorSkipReward"] },
+    { id: "cardSteelDoor", icon: "⚿", x: 70, y: 286, requires: ["floorSkipReward"] },
   ] },
   { id: "courage", name: "Courage", currency: "courage", gate: "delve", description: "Earn Courage by beating your best Delve depth.", nodes: [
     { id: "moveSpeed", icon: "»", x: 50, y: 10, requires: ["delve"] },

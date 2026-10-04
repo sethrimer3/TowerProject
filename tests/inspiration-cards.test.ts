@@ -9,8 +9,9 @@ import { RoomWorld } from "../src/tower/room-world.ts";
 import type { EnemyStrength, Save, Tile } from "../src/entities.ts";
 
 /** The new Inspiration card nodes, in the order they can be bought, with
- * their price and the node each needs. */
-const NODES: [UpgradeId, number, UpgradeId, CardId][] = [
+ * their price, the node each needs and its card (null for a node that opens
+ * research instead). */
+const NODES: [UpgradeId, number, UpgradeId, CardId | null][] = [
   ["cardYellowDoor", 5, "buyQuantity", "yellowDoor"],
   ["cardHeartDoor", 5, "cardYellowDoor", "heartDoor"],
   ["cardWeakEnemy", 10, "cardHeartDoor", "weakEnemy"],
@@ -19,12 +20,15 @@ const NODES: [UpgradeId, number, UpgradeId, CardId][] = [
   ["cardEliteEnemy", 10, "cardWeakEnemy", "eliteEnemy"],
   ["cardBossEnemy", 10, "cardEliteEnemy", "bossEnemy"],
   ["cardChest", 10, "cardWeakEnemy", "chest"],
-  ["blueSiphon", 10, "cardChest", "blueSiphon"],
+  ["heartDoorResilience", 10, "cardChest", null],
+  ["blueSiphon", 10, "heartDoorResilience", "blueSiphon"],
   ["blueTrader", 10, "blueSiphon", "blueTrader"],
   ["keyToHp", 10, "blueTrader", "keyToHp"],
   ["cardRedKey", 10, "blueSiphon", "redKey"],
   ["redSiphon", 10, "cardRedKey", "redSiphon"],
-  ["cardTorch", 10, "blueSiphon", "torch"],
+  ["floorSkipReward", 10, "blueSiphon", null],
+  ["cardTorch", 10, "floorSkipReward", "torch"],
+  ["cardSteelDoor", 10, "floorSkipReward", "steelDoor"],
 ];
 
 test("each card node costs its price, waits for the node above it and adds its card to the deck", () => {
@@ -35,12 +39,12 @@ test("each card node costs its price, waits for the node above it and adds its c
   for (const [id, price, requires, card] of NODES) {
     assert.deepEqual(nodes.find((n) => n.id === id)!.requires, [requires], id);
     assert.equal(cost(id, 0), price, id);
-    assert.equal(upgradeCard(id), card);
-    assert.ok(!deckCards(g.save.upgrades).includes(card));
+    assert.equal(upgradeCard(id) ?? null, card);
+    if (card) assert.ok(!deckCards(g.save.upgrades).includes(card));
     const before = g.save.tower.inspiration;
     assert.ok(g.buy(id), id);
     assert.equal(before - g.save.tower.inspiration, price);
-    assert.ok(deckCards(g.save.upgrades).includes(card), `${card} joins the deck`);
+    if (card) assert.ok(deckCards(g.save.upgrades).includes(card), `${card} joins the deck`);
   }
   assert.equal(g.buy("cardTorch"), false, "bought once");
 });
@@ -106,6 +110,15 @@ test("YELLOW DOOR heads for a single yellow door, while a yellow key is held", (
   g.run.player.keys.blue = 1;
   assert.deepEqual(target(g, "yellowDoor"), [9, 1], "not the Steel Door or the blue one");
   assert.deepEqual(target(g, "heartDoor"), [3, 1]);
+});
+
+test("STEEL DOOR heads for a Steel Door, while a key it takes is held", () => {
+  const steel: Tile = { kind: "door", door: { type: "keys", keys: ["yellow", "blue", "red"], mode: "any" } };
+  const g = floor({ 4: { kind: "door", color: "yellow" }, 9: steel, 3: { kind: "door", door: { type: "fullHp" } } });
+  g.run.player.keys.yellow = 0;
+  assert.equal(target(g, "steelDoor"), null, "no key, no target");
+  g.run.player.keys.red = 1;
+  assert.deepEqual(target(g, "steelDoor"), [9, 1], "any one key opens it; not the yellow door or the Heart Door");
 });
 
 test("CHEST heads for a treasure chest or an area reward chest, never an opened one", () => {

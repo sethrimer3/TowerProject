@@ -51,6 +51,11 @@ export const RESEARCH_TARGETS = {
   floorSilver: { name: "Silver per Floor", base: 100, shown: percent },
   /** The percent of the Silver found that a run pays, from 100. */
   silverBonus: { name: "Silver Found", base: 100, shown: percent },
+  /** The percent of its toll a Heart Door drains, from 100. */
+  heartToll: { name: "Heart Door Toll", base: 100, shown: percent },
+  /** The percent of the Gold a skipped floor's chests and battles held that
+   * skipping it pays, from 0. */
+  floorSkipGold: { name: "Floor Skip Gold", base: 0, shown: percent },
   /** The percent of its Gold a kill pays, from 100. */
   killGold: { name: "Gold per Kill", base: 100, shown: percent },
   /** Silver a run has in hand when it goes inside. */
@@ -88,13 +93,14 @@ export type ResearchDefinition = {
 };
 
 /** Focus Count and Undo Count: +1 to `target` a level, for nine levels
- * (Movement Speed takes the first six). Level 1 costs 500 Gold and takes 8
- * hours; each level after takes 8 hours more, and costs 500 × n Gold more
- * than level n before it (500, 1000, 2000, 3500, …). */
-const countLevels = (target: ResearchTarget, length = 9) => Array.from({ length }, (_, i): ResearchLevel => ({
+ * (Movement Speed takes the first six; Heart Door Resilience, −5% a level,
+ * ten, and Floor Skip Reward, +10% a level, eleven). Level 1 costs 500 Gold
+ * and takes 8 hours; each level after takes 8 hours more, and costs 500 × n
+ * Gold more than level n before it (500, 1000, 2000, 3500, …). */
+const countLevels = (target: ResearchTarget, length = 9, value = 1) => Array.from({ length }, (_, i): ResearchLevel => ({
   gold: 500 * (1 + (i * (i + 1)) / 2),
   hours: 8 * (i + 1),
-  effect: { target, op: "add", value: 1 },
+  effect: { target, op: "add", value },
 }));
 
 /** Potion HP (+3% potion healing a level), Regen (+3% of the HP Regen
@@ -228,6 +234,20 @@ export const RESEARCH = {
     categories: ["economy"],
     requires: [{ upgrade: "loot" }],
     levels: hundredLevels("killGold", 3),
+  },
+  heartDoorResilience: {
+    name: "Heart Door Resilience",
+    description: "Harden your heart: every Heart Door drains 5% less HP a level.",
+    categories: ["defense"],
+    requires: [{ upgrade: "heartDoorResilience" }],
+    levels: countLevels("heartToll", 10, -5),
+  },
+  floorSkipReward: {
+    name: "Floor Skip Reward",
+    description: "Glance at what you pass: when Skip climbs past a floor, collect a share of the Gold its chests and battles held.",
+    categories: ["economy"],
+    requires: [{ upgrade: "floorSkipReward" }],
+    levels: countLevels("floorSkipGold", 11, 10),
   },
 } satisfies Record<string, ResearchDefinition>;
 export type ResearchId = keyof typeof RESEARCH;

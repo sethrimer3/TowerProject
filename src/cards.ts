@@ -1,7 +1,7 @@
 import { point, type Tile } from "./entities.ts";
 import { litTorches, takesSomething, type Position } from "./board.ts";
 import type { Step } from "./pathfinding.ts";
-import { doorCost, doorRule } from "./doors.ts";
+import { doorCost, doorId, doorRule } from "./doors.ts";
 import { predict } from "./combat.ts";
 import { UPGRADES, VIEWPORT_TILES, type KeyColor, type TrainingId, type UpgradeId } from "./config.ts";
 import type { DelveRun, EnemyStrength, Mode } from "./entities.ts";
@@ -31,6 +31,7 @@ export const CARDS = {
   redKey: { name: "Red Key", text: "Move toward the closest red key." },
   redSiphon: { name: "RK Siphon", text: "Trade ATK training levels for a red key, without moving, for the rest of the run. The first use takes 1 level and each use after takes 1 more (2, then 3…). Skipped without enough levels left." },
   torch: { name: "Torch", text: "Move toward the closest lit torch, putting it out." },
+  steelDoor: { name: "Steel Door", text: "Move toward the closest Steel Door, while you hold a key it takes." },
 } as const;
 export type CardId = keyof typeof CARDS;
 export const CARD_IDS = Object.keys(CARDS) as CardId[];
@@ -209,6 +210,8 @@ const WANTS: Record<CardId, (t: Tile, at: Position, rules: CardRules | undefined
   redKey: (t) => t.kind === "key" && t.color === "red",
   redSiphon: never,
   torch: (_t, at, _rules, r) => !!at.world.torches?.some((torch) => torch.active && torch.x === r.x && torch.y === r.y),
+  // A Steel Door (any one key opens it), one the keys held pay for.
+  steelDoor: (t, at, rules) => t.kind === "door" && doorId(t) === "steel" && doorCost(t, at.run.player, rules?.scale) !== null,
 };
 
 const NONE: ReadonlySet<string> = new Set();

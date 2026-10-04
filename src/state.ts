@@ -961,7 +961,8 @@ export class Game {
     // Regen research raises the HP each step regains by its percent.
     const regen = this.run.outside || !this.run.player.regen ? 0
       : snap((this.run.player.regen * researched(this.save.archives, "regenPercent", 100)) / 100);
-    return { potionHeal: researched(this.save.archives, "potionHeal", 100), percentPotion: potionPercent(this.trainingNow), regen };
+    return { potionHeal: researched(this.save.archives, "potionHeal", 100), percentPotion: potionPercent(this.trainingNow), regen,
+      heartToll: researched(this.save.archives, "heartToll", 100) };
   }
   /** The upgrades owned and the Training ranks that count now: the hero's
    * own, and those this run bought with Silver. */
@@ -1466,6 +1467,8 @@ export class Game {
     // Skip on STAIRS climbs past the next floor, which pays nothing; an area
     // climbed past is still judged as its section ends.
     const skipped = this.floorSkip ? this.climb.up() : null;
+    // Floor Skip Reward pays a share of the Gold the floor passed held.
+    const skipGold = skipped ? purse.skippedFloorGold(skipped.board) : 0;
     const passed = skipped?.sectionStart ? new AreaLedger(this.save).enter(this.towerRun, skipped.board) : [];
     const { board, sectionStart } = this.climb.up();
     // Silver belongs to the run, so the run's own highest floor gates it:
@@ -1481,7 +1484,7 @@ export class Game {
     if (skipped) this.feedback(passed.length ? `Floor Skipped · floors ${this.run.height - TOWER_SECTION}–${this.run.height - 1} ${passed.join(" and ")}` : "Floor Skipped", 1000);
     else this.feedback(earned.length ? `Floors ${this.run.height - TOWER_SECTION + 1}–${this.run.height} ${earned.join(" and ")} · reward ahead` :
       sectionStart ? `Floor ${this.run.height + 1} · the way down is sealed` : "A new chamber opens.");
-    this.gainCoins(p, gold, silver, false);
+    this.gainCoins(p, snap(gold + skipGold), silver, false);
   }
   /** Step back onto the stairs at the foot of the current room, returning
    * to the previous room exactly as it was left: cleared tiles stay clear,

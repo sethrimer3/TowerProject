@@ -1,10 +1,11 @@
 import { researched } from "../archives.ts";
 import { ENEMY_GOLD, silverForKill } from "../config.ts";
 import { creditMaterials } from "../crafting.ts";
+import type { RoomWorld } from "../tower/room-world.ts";
 import type { Enemy, Mode, Run, Save } from "../entities.ts";
 import { snap } from "../exact.ts";
 import { floorGold, floorSilver, killGold, silverBonus } from "../loadout.ts";
-import { rollTreasureLoot } from "../loot.ts";
+import { averageGold, rollTreasureLoot } from "../loot.ts";
 import type { MaterialStack } from "../materials.ts";
 import { MODES, type ModeProfile } from "../modes.ts";
 import { ranksInRun } from "../run-training.ts";
@@ -82,13 +83,19 @@ export class RunPurse {
     return this.silver(scale === 1 ? base : snap(base * scale));
   }
 
+  /** A kill's Gold before the tier's bonus: by the enemy's strength, raised
+   * by Gold / Kill training and research, multiplied. */
+  private killGold(enemy: Enemy) {
+    return snap((ENEMY_GOLD[enemy.strength] * killGold(this.trainingNow) * researched(this.save.archives, "killGold", 100)) / 10_000);
+  }
+
   /** An enemy's Gold (by its strength) and material drops, once per
    * physical kill. */
   enemyLoot(enemy: Enemy, x: number, y: number, scale = 1): { gold: number; drops: MaterialStack[] } {
     if (!this.loot(this.lootKey(x, y))) return { gold: 0, drops: [] };
-    // Gold / Kill training and research, multiplied, then the tier's bonus;
-    // Effective or Dampen on the card that took the fight scales it too.
-    const raised = snap((ENEMY_GOLD[enemy.strength] * killGold(this.trainingNow) * researched(this.save.archives, "killGold", 100) * scale) / 10_000);
+    // Then the tier's bonus; Effective or Dampen on the card that took the
+    // fight scales it too.
+    const raised = scale === 1 ? this.killGold(enemy) : snap(this.killGold(enemy) * scale);
     const gold = this.gold(tierGold(this.tier, raised));
     const drops = this.rules.enemyDrops(enemy.name, this.rng);
     creditMaterials(this.save, drops);
@@ -115,6 +122,27 @@ export class RunPurse {
     const base = floorGold(this.trainingNow);
     if (!base || !this.loot(key)) return 0;
     return this.gold(tierGold(this.tier, this.researched(base, "floorGold")));
+  }
+
+  /** Floor Skip Reward: when Skip climbs past the floor the run stands on
+   * (`board`), its research percent of the Gold that floor's battles and
+   * chests still hold: each enemy's kill Gold and each closed treasure
+   * chest's average Gold (`averageGold`), with the tier's bonus. Each enemy
+   * and chest counted is marked looted, so one fought or opened later pays
+   * no Gold again, and the floor pays once a run. Returns what it paid. */
+  skippedFloorGold(board: RoomWorld) {
+    const percent = researched(this.save.archives, "floorSkipGold", 0);
+    if (!percent || !this.loot(`${this.lootKey(-1, -1)}:skipped`)) return 0;
+    const chest = averageGold(this.rules.equivalentFloor(this.rules.progressAt(this.run, 0)));
+    let found = 0;
+    for (let y = 0; y < board.height; y++)
+      for (let x = 0; x < board.width; x++) {
+        const t = board.tile(x, y);
+        if (t.kind !== "enemy" && t.kind !== "treasure") continue;
+        if (!this.loot(this.lootKey(x, y))) continue;
+        found = snap(found + (t.kind === "enemy" ? this.killGold(t.enemy!) : chest));
+      }
+    return found ? this.gold(tierGold(this.tier, snap((found * percent) / 100))) : 0;
   }
 
   /** A card badge's Gold (Gold Touch, Goldback) for a card reaching its

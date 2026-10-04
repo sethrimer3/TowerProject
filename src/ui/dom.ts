@@ -61,7 +61,7 @@ const SKILL_ITEM_SPRITES: Partial<Record<UpgradeId, keyof typeof AREA1_ITEM_URLS
 const SKILL_UI_SPRITES: Partial<Record<UpgradeId, UiSprite>> = {
   inspirationUndos: "undo", undos: "undo", archives: "log",
   delve: "delve", gear: "gear", moveSpeed: "automove", rush: "automove", instantCombat: "attack", trainers: "arrow-up", fasterTrainers: "automove", buyQuantity: "arrow-up",
-  revive: "revive", spareChange: "gold", loot: "gold", legacy: "tower", quality: "tower",
+  revive: "revive", spareChange: "gold", loot: "gold", floorSkipReward: "gold", legacy: "tower", quality: "tower",
   wisdomFocus: "settings", wisdomMemory: "undo", wisdomSight: "upgrades",
   renownBanner: "tower", renownOath: "defense", renownCrown: "gear",
 };
@@ -71,7 +71,7 @@ const SKILL_SILVER = new Set<UpgradeId>(["wealthy", "wishingWell", "onTheJob", "
 const SKILL_CARDS: Partial<Record<UpgradeId, CardId>> = { combatStance: "stairs", buildout: "monster", cardHeal: "heal", cardAtkUp: "atkUp", cardDefUp: "defUp", cardBlueKey: "blueKey", keySiphon: "keySiphon",
   cardYellowDoor: "yellowDoor", cardHeartDoor: "heartDoor", cardWeakEnemy: "weakEnemy", cardBaseEnemy: "baseEnemy", cardStrongEnemy: "strongEnemy",
   cardEliteEnemy: "eliteEnemy", cardBossEnemy: "bossEnemy", cardChest: "chest", blueSiphon: "blueSiphon", blueTrader: "blueTrader", keyToHp: "keyToHp",
-  cardRedKey: "redKey", redSiphon: "redSiphon", cardTorch: "torch" };
+  cardRedKey: "redKey", redSiphon: "redSiphon", cardTorch: "torch", cardSteelDoor: "steelDoor", heartDoorResilience: "heartDoor" };
 /** The forest's Enter button: an arrow going up into an arched doorway. */
 export const ENTER_ICON = `<svg class="enter-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 22.5V11a8.5 8.5 0 0 1 17 0v11.5z" fill="#1b1410"/><path d="M3.5 22.5V11a8.5 8.5 0 0 1 17 0v11.5" fill="none" stroke="#c9b48a" stroke-width="2" stroke-linejoin="round"/><path d="M12 21V11.5M8 15.2l4-4 4 4" fill="none" stroke="#ffe27a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 /** Two cards fanned out: the Deck's icon, made from the card faces. */

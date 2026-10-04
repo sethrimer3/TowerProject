@@ -520,6 +520,41 @@ test("Skip on STAIRS climbs two floors, with Floor Skipped", () => {
   assert.equal(skipped.save.tower.reached, 2);
 });
 
+test("Floor Skip Reward pays its percent of the Gold the floor skipped held, once", async () => {
+  const { ENEMY_GOLD } = await import("../src/config.ts");
+  const { averageGold } = await import("../src/loot.ts");
+  const { RESEARCH } = await import("../src/archives.ts");
+  assert.deepEqual(RESEARCH.floorSkipReward.levels.map((l) => l.effect.value), Array(11).fill(10), "11 levels of 10%");
+  assert.deepEqual(RESEARCH.floorSkipReward.levels.slice(0, 9).map((l) => l.gold), RESEARCH.focusCount.levels.map((l) => l.gold), "Focus Count's curve");
+  for (let seed = 1; seed < 500; seed++) {
+    const g = floor(["@.S"]);
+    g.save.archives.levels.floorSkipReward = 3;
+    g.run.hand = ["stairs"];
+    g.run.seed = seed;
+    badge(g, "stairs", "skip", 7);
+    const gold = g.save.gold;
+    turns(g, 2);
+    if (g.run.height !== 2) continue;
+    // Floor 1 as Skip passed it: every enemy's kill Gold and every chest's
+    // average Gold, 30% of it.
+    const passed = new RoomWorld(seed, 1, {}, g.run.percentPotions);
+    let held = 0;
+    for (let y = 0; y < passed.height; y++)
+      for (let x = 0; x < passed.width; x++) {
+        const t = passed.tile(x, y);
+        if (t.kind === "enemy") held += ENEMY_GOLD[t.enemy!.strength];
+        if (t.kind === "treasure") held += averageGold(1);
+      }
+    assert.ok(held > 0);
+    assert.ok(Math.abs(g.save.gold - gold - held * 0.3) < 1e-6, `${g.save.gold - gold} of ${held}`);
+    assert.ok(g.gains.some((gain) => gain.art && "coin" in gain.art && gain.art.coin === "gold"), "shown as a Gold gain");
+    const looted = Object.keys(g.save.tower.lootedTiles).filter((k) => k.startsWith(`${seed}:1:`));
+    assert.ok(looted.length > 1, "the floor's enemies and chests are counted as looted");
+    return;
+  }
+  assert.fail("no seed skips");
+});
+
 test("Dev mode owns the Badges box and every badge at the top level", () => {
   const g = new Game(defaults());
   g.setDevMode(true);
