@@ -21,7 +21,7 @@ import { devAmount } from "./hud.ts";
 /** Each provision's picture. */
 const PROVISION_SPRITES = { heal: "potion_flat", guard: "upgrade_defense", edge: "upgrade_attack", yellowKey: "key_yellow" } as const satisfies Record<GoldItemId, string>;
 /** Short names for a provision's stats, in the total its owned copies give. */
-const TOTAL_WORDS: Record<Stat, string> = { attack: "ATK", defense: "DEF", maxHp: "MAX HP", shroud: "SHROUD", yellow: "YELLOW KEYS", blue: "BLUE KEYS", red: "RED KEYS", undos: "UNDOS" };
+const TOTAL_WORDS: Record<Stat, string> = { attack: "ATK", defense: "DEF", maxHp: "MAX HP", shroud: "SHROUD", regen: "REGEN", yellow: "YELLOW KEYS", blue: "BLUE KEYS", red: "RED KEYS", undos: "UNDOS" };
 type GearTab = "provisions" | "equipped" | "inventory" | "crafting";
 /** The tabs after Provisions, shown but closed until something unlocks them. */
 const CLOSED_TABS: GearTab[] = ["equipped", "inventory", "crafting"];

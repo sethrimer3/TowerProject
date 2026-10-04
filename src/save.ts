@@ -81,6 +81,7 @@ const validPlayer = (p: any, width: number) =>
   Number.isInteger(p.y) && finite(p.y) &&
   finite(p.hp) && p.hp >= 0 && finite(p.maxHp) && p.hp <= p.maxHp &&
   finite(p.attack) && finite(p.defense) && (p.shroud === undefined || (finite(p.shroud) && p.shroud >= 0)) &&
+  (p.regen === undefined || (finite(p.regen) && p.regen >= 0)) &&
   KEY_COLORS.every((k) => finite(p.keys?.[k]));
 /** Checks every run passes, whatever its mode; `width` is the mode's board. */
 const validCore = (r: any, width: number) =>

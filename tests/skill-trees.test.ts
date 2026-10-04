@@ -62,13 +62,14 @@ test("Greater Heal, then Recovery, Shroud and Find Potion, come after Into the d
   assert.deepEqual([at("shroud").x, at("shroud").y, at("shroud").requires], [86, 142, ["greaterHeal"]], "Shroud sits beside Recovery");
   assert.deepEqual([at("findPotion").x, at("findPotion").y, at("findPotion").requires], [62, 160, ["recovery"]], "Find Potion sits below Recovery");
 });
-test("the hand's skills run to the Archives, Gear and Training off Buildout, ATK Up then DEF Up after Gear, On the Job then Heal below Training, and Larger Hand, Buildout, Training, On the Job and Gear cost 1", () => {
+test("the hand's skills run to the Archives, Gear and Training off Buildout, ATK Up then DEF Up after Gear, On the Job, Regen then Heal below Training, and Larger Hand, Buildout, Training, On the Job and Gear cost 1", () => {
   const at = (id: string) => TREES[0].nodes.find((n) => n.id === id)!;
-  assert.deepEqual(["buildout", "training", "onTheJob", "cardHeal", "gear", "largerHand", "archives", "cardAtkUp", "cardDefUp"].map((id) => at(id).requires),
-    [["combatStance"], ["buildout"], ["training"], ["onTheJob"], ["buildout"], ["buildout"], ["largerHand"], ["gear"], ["cardAtkUp"]]);
+  assert.deepEqual(["buildout", "training", "onTheJob", "regen", "cardHeal", "gear", "largerHand", "archives", "cardAtkUp", "cardDefUp"].map((id) => at(id).requires),
+    [["combatStance"], ["buildout"], ["training"], ["onTheJob"], ["regen"], ["buildout"], ["buildout"], ["largerHand"], ["gear"], ["cardAtkUp"]]);
   assert.ok(at("training").x > at("buildout").x && at("training").y === at("buildout").y, "Training sits right of Buildout");
   assert.ok(at("onTheJob").x === at("training").x && at("onTheJob").y > at("training").y, "On the Job sits below Training");
-  assert.ok(at("cardHeal").x === at("onTheJob").x && at("cardHeal").y > at("onTheJob").y, "Heal sits below On the Job");
+  assert.ok(at("regen").x === at("onTheJob").x && at("regen").y > at("onTheJob").y, "Regen sits below On the Job");
+  assert.ok(at("cardHeal").x === at("regen").x && at("cardHeal").y > at("regen").y, "Heal sits below Regen");
   assert.ok(at("gear").x < at("buildout").x && at("gear").y === at("buildout").y, "Gear sits left of Buildout");
   assert.ok(at("cardAtkUp").x === at("gear").x && at("cardAtkUp").y > at("gear").y, "ATK Up sits under Gear");
   assert.ok(at("cardDefUp").x === at("cardAtkUp").x && at("cardDefUp").y > at("cardAtkUp").y, "DEF Up sits under ATK Up");
@@ -79,8 +80,8 @@ test("the hand's skills run to the Archives, Gear and Training off Buildout, ATK
   g.save.tower.inspiration = 100;
   assert.ok(g.buy("combatStance") && g.buy("buildout"));
   assert.equal(g.buy("onTheJob"), false, "On the Job waits for Training");
-  assert.equal(g.buy("cardHeal"), false, "Heal waits for On the Job");
-  assert.ok(g.buy("training") && g.buy("onTheJob") && g.buy("cardHeal"));
+  assert.equal(g.buy("cardHeal"), false, "Heal waits for Regen");
+  assert.ok(g.buy("training") && g.buy("onTheJob") && g.buy("regen") && g.buy("cardHeal"));
   assert.equal(g.buy("archives"), false, "the Archives wait for Larger Hand");
   assert.equal(g.buy("cardAtkUp"), false, "ATK Up waits for Gear");
   assert.equal(g.buy("cardDefUp"), false, "DEF Up waits for ATK Up");
@@ -137,9 +138,9 @@ test("Movement Speed opens 1 to 3 steps a second, and each research level one mo
   assert.deepEqual(RESEARCH.moveSpeed.levels, RESEARCH.focusCount.levels.slice(0, 6).map((l) => ({ ...l, effect: { ...l.effect, target: "moveSpeed" } })));
   assert.deepEqual(RESEARCH.moveSpeed.requires, [{ upgrade: "moveSpeed" }]);
 });
-test("Inspiration tree: Heal follows On the Job, Larger Hand leads to the Archives (5), and Into the Depths follows them", () => {
+test("Inspiration tree: Heal follows Regen, Larger Hand leads to the Archives (5), and Into the Depths follows them", () => {
   const node = (id: UpgradeId) => TREES[0].nodes.find((n) => n.id === id)!;
-  assert.deepEqual(node("cardHeal").requires, ["onTheJob"]);
+  assert.deepEqual(node("cardHeal").requires, ["regen"]);
   assert.deepEqual([node("archives").x, node("archives").y, node("archives").requires], [50, 66, ["largerHand"]]);
   assert.deepEqual([node("delve").x, node("delve").y, node("delve").requires], [50, 106, ["archives"]]);
   assert.deepEqual(node("inspirationUndos").requires, ["archives"]);

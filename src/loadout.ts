@@ -8,7 +8,7 @@ import { trainingGold } from "./training-jobs.ts";
 
 /** What one rank of an upgrade, or one provision, adds to a character. */
 export type Grants = Partial<Record<Stat, number>>;
-export type Stat = "attack" | "defense" | "maxHp" | "shroud" | "yellow" | "blue" | "red" | "undos";
+export type Stat = "attack" | "defense" | "maxHp" | "shroud" | "regen" | "yellow" | "blue" | "red" | "undos";
 
 /** The character a run starts with. */
 export type Loadout = {
@@ -17,20 +17,23 @@ export type Loadout = {
   maxHp: number;
   /** The damage the shroud blocks at the start of every fight. */
   shroud: number;
+  /** The HP regained with every step in a run (Regen). */
+  regen: number;
   keys: { yellow: number; blue: number; red: number };
   undoCapacity: number;
 };
 
 /** Every character's baseline: 10 ATK plus the starter weapon (+2), which
  * Heirloom steel improves; no DEF; 100 HP; no shroud (Shroud gives the
- * first point); no undo (Rehearsed steps gives the first). */
-const BASE = { attack: 12, defense: 0, maxHp: 100, shroud: 0, undos: 0 };
+ * first point); no Regen; no undo (Rehearsed steps gives the first). */
+const BASE = { attack: 12, defense: 0, maxHp: 100, shroud: 0, regen: 0, undos: 0 };
 
 const WORDS: Record<Stat, string> = {
   attack: "starting attack",
   defense: "starting defense",
   maxHp: "starting maximum HP",
   shroud: "damage blocked each fight",
+  regen: "HP regained each step",
   yellow: "starting amber key",
   blue: "starting azure key",
   red: "starting crimson key",
@@ -66,7 +69,7 @@ export function loadout(save: Save): Loadout {
   add(own, UPGRADES, save.upgrades);
   const level = levelForXp(save.xp);
   for (const row of TRAINING) if (isStatRow(row)) own[row.stat] += trained(row, save.training[row.id], level);
-  const prov = { attack: 0, defense: 0, maxHp: 0, shroud: 0, yellow: 0, blue: 0, red: 0, undos: 0 };
+  const prov = { attack: 0, defense: 0, maxHp: 0, shroud: 0, regen: 0, yellow: 0, blue: 0, red: 0, undos: 0 };
   add(prov, GOLD_SHOP, save.provisions);
   const equip = getEquippedBonuses(save);
   return {
@@ -74,6 +77,7 @@ export function loadout(save: Save): Loadout {
     defense: snap((own.defense + equip.flatDefense) * (1 + equip.percentDefense) + prov.defense),
     maxHp: snap((own.maxHp + equip.flatMaxHp) * (1 + equip.percentMaxHp) + prov.maxHp),
     shroud: own.shroud,
+    regen: own.regen,
     keys: { yellow: own.yellow + prov.yellow, blue: own.blue + prov.blue, red: own.red + prov.red },
     // Undo needs Rehearsed steps: without it nothing else stores one.
     undoCapacity: save.upgrades.inspirationUndos ? researched(save.archives, "undoCapacity", own.undos) : 0,
@@ -213,8 +217,13 @@ function trainingPrices(save: Save, row: TrainingRow, maxed: boolean) {
 function statStep(save: Save, row: StatTrainingRow) {
   const stat = row.stat, id = row.id;
   const now = loadout(save)[stat], next = loadout({ ...save, training: { ...save.training, [id]: save.training[id] + 1 } })[stat];
-  return { unit: "", now: whole(now), next: whole(next), worth: trainingWorth(row, levelForXp(save.xp)) };
+  return { unit: "", now: shownStat(stat, now), next: shownStat(stat, next), worth: trainingWorth(row, levelForXp(save.xp)) };
 }
+
+/** A stat as the Training rows show it: whole, but Regen, a fraction of an
+ * HP a step, to the hundredth (rounded down, like `whole`). */
+export const shownStat = (stat: StatTrainingRow["stat"], value: number) =>
+  stat === "regen" ? Math.floor(Math.round(value * 1e6) / 1e4) / 100 : whole(value);
 
 /** Any other row at `ranks`: the Gold or Silver a new floor pays, a
  * multiplier (a rank reads as the percent it adds), or a percentage. */

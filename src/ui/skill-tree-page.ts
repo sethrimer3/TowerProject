@@ -271,7 +271,9 @@ export class SkillTreePage {
     const most = "max" in t ? `, up to ${trainingStep({ ...save, training: { ...save.training, [t.id]: t.max }, trainingJobs: [] }, t.id).now}${unit}` : "";
     const shown = (v: number) => trainingText(v, unit);
     // A multiplier's rank adds a percent; other rows add in their own unit.
-    const rank = unit === "×" ? `${worth}%` : `${unit ? worth : Math.round(worth * 10) / 10}${unit}`;
+    // A rank worth under 1 (Regen's) reads to the hundredth.
+    const places = worth < 1 ? 100 : 10;
+    const rank = unit === "×" ? `${worth}%` : `${unit ? worth : Math.round(worth * places) / places}${unit}`;
     const job = trainingJob(save.trainingJobs, t.id);
     const nowButton = step.maxed
       ? ""

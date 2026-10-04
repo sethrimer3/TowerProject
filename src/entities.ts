@@ -71,6 +71,8 @@ export type Player = {
   /** The damage the shroud blocks at the start of every fight (none when
    * absent). */
   shroud?: number;
+  /** The HP regained with every step in a run (Regen; none when absent). */
+  regen?: number;
   keys: Record<KeyColor, number>;
   /** Optional secret inventory counters stay absent from legacy saves until
    * the corresponding item has actually been found. */
@@ -90,7 +92,7 @@ export type RunCore = {
   floor: number;
   /** The ATK/DEF/max HP the run started with (its loadout), shifted by any
    * gear change since. */
-  loadout?: { attack: number; defense: number; maxHp: number; shroud?: number };
+  loadout?: { attack: number; defense: number; maxHp: number; shroud?: number; regen?: number };
   /** The hand as it was ordered when the run went inside: the cards that
    * move the hero for the rest of the run. */
   hand?: CardId[];

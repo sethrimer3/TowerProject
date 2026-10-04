@@ -82,7 +82,7 @@ _Avoid_: popup, loot text
 ### The character
 
 **Loadout**:
-What the character starts a run with: ATK, DEF, max HP, keys and how many undos it can store. It comes from the baseline, the upgrades bought, the training bought, the equipped gear and the provisions bought.
+What the character starts a run with: ATK, DEF, max HP, shroud, Regen, keys and how many undos it can store. It comes from the baseline, the upgrades bought, the training bought, the equipped gear and the provisions bought.
 _Avoid_: base stats, starting stats
 
 **Level**:
@@ -115,6 +115,10 @@ The red, striped potion: it restores a regular potion's HP plus a share of max H
 **Shroud**:
 The damage a hero's shroud blocks in each fight: the enemy's strikes, after DEF, wear it away before any HP is lost, and it is whole again when the next fight starts. The Shroud skill gives the first point; Shroud training adds more.
 _Avoid_: shield (the equipment slot), barrier
+
+**Regen**:
+The HP a hero regains with every step taken in a run, after whatever the step did, up to max HP. A Rush turn counts as one step. The Regen skill opens Regen training, which gives it.
+_Avoid_: regeneration, healing (a potion's)
 
 **Provision**:
 A lasting boost bought with Gold on the Gear page: each one bought adds to the loadout of every run from then on (a stat, or a yellow key), and the next of its kind costs more.

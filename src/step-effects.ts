@@ -33,11 +33,12 @@ export type StepOutcome = StepBlocked | StepEffect;
 
 /** What upgrades change about stepping, read at the moment of the step so
  * a research level completed mid-run counts at once: the percent of its HP
- * a potion restores (Potion HP research), and what a percent potion
- * restores beyond its HP, in hundredths of a percent of max HP (Recovery
- * and Potion % training). */
-export type StepRules = { potionHeal: number; percentPotion: number };
-export const BASE_RULES: StepRules = { potionHeal: 100, percentPotion: 0 };
+ * a potion restores (Potion HP research), what a percent potion restores
+ * beyond its HP, in hundredths of a percent of max HP (Recovery and
+ * Potion % training), and the HP the step regains (Regen: none in the
+ * forest, or on the tiles a Rush crosses after its first step). */
+export type StepRules = { potionHeal: number; percentPotion: number; regen: number };
+export const BASE_RULES: StepRules = { potionHeal: 100, percentPotion: 0, regen: 0 };
 /** The HP a potion of `amount` restores under `rules`, rounded. */
 export const potionHeal = (amount: number, rules: StepRules) => snap((amount * rules.potionHeal) / 100);
 
@@ -83,8 +84,15 @@ export function resolveStep(player: Player, tile: Tile, rules: StepRules = BASE_
       next.defense += DEFENSE_SHARD;
       break;
   }
+  // Regen comes after the step's fight, door or pickup.
+  next.hp = regenerate(next.hp, next.maxHp, rules);
   return effect;
 }
+
+/** `hp` after a step's Regen under `rules`, up to `maxHp`; a fallen hero
+ * (0 HP) regains nothing. */
+export const regenerate = (hp: number, maxHp: number, rules: StepRules) =>
+  rules.regen && hp > 0 && hp < maxHp ? snap(Math.min(maxHp, hp + rules.regen)) : hp;
 
 /** A fight the player would not survive. */
 export const isLethal = (effect: StepEffect) => !!effect.combat && !effect.combat.survivable;

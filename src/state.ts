@@ -47,7 +47,7 @@ import { World, LAYOUT_VERSION } from "./delve/world.ts";
 import { RoomWorld, TOWER_LAYOUT_VERSION } from "./tower/room-world.ts";
 import type { Board } from "./board.ts";
 import { bout, heroHpAfter, heroHpDuring, resume, REVIVE_MS, revivals, summarize, type Bout, type Revival } from "./combat.ts";
-import { ATTACK_SHARD, DEFENSE_SHARD, isLethal, potionHeal, resolveStep, type StepBlocked, type StepEffect, type StepRules } from "./step-effects.ts";
+import { ATTACK_SHARD, DEFENSE_SHARD, isLethal, potionHeal, regenerate, resolveStep, type StepBlocked, type StepEffect, type StepRules } from "./step-effects.ts";
 import { OutsideWorld } from "./outside.ts";
 import { ClearLedger } from "./tower/clear-ledger.ts";
 import { TowerClimb } from "./tower/climb.ts";
@@ -469,7 +469,7 @@ export class Game {
     const p = this.run.player, tiles = [from];
     for (let left = this.rushTiles; left > 0 && plan.path.length && this.emptyAt(plan.path[0].x, plan.path[0].y); left--) {
       const at = { x: p.x, y: p.y }, next = plan.path.shift()!;
-      if (!this.move(next.dx, next.dy, true, false)) {
+      if (!this.move(next.dx, next.dy, true, false, false)) {
         plan.path = [];
         break;
       }
@@ -559,7 +559,8 @@ export class Game {
   /** What research changes about stepping now: the step rules every move,
    * preview, inspect box and planner resolves with. */
   get stepRules(): StepRules {
-    return { potionHeal: researched(this.save.archives, "potionHeal", 100), percentPotion: potionPercent(this.trainingNow) };
+    const regen = this.run.outside ? 0 : this.run.player.regen ?? 0;
+    return { potionHeal: researched(this.save.archives, "potionHeal", 100), percentPotion: potionPercent(this.trainingNow), regen };
   }
   /** The upgrades owned and the Training ranks that count now: the hero's
    * own, and those this run bought with Silver. */
@@ -763,7 +764,9 @@ export class Game {
   private canStep(dx: number, dy: number) {
     return !this.busy && Math.abs(dx) + Math.abs(dy) === 1;
   }
-  move(dx: number, dy: number, force = true, track = true) {
+  /** One step by (dx, dy); `regen` false for the tiles a Rush crosses after
+   * its first step, so a rushed turn regains HP once. */
+  move(dx: number, dy: number, force = true, track = true, regen = true) {
     if (!this.canStep(dx, dy)) return false;
     const p = this.run.player,
       dest = this.world.step(p.x, p.y, dx, dy);
@@ -775,7 +778,7 @@ export class Game {
     // The step is resolved once, before any snapshot/undo bookkeeping, so a
     // wall, lock, impervious enemy, or (automation's) declined lethal fight
     // never touches history, damages the player, alters the enemy, or ends the run.
-    const outcome = resolveStep(p, t, this.stepRules);
+    const outcome = resolveStep(p, t, regen ? this.stepRules : { ...this.stepRules, regen: 0 });
     if (outcome.blocked) return this.rejectStep(outcome, t, dest.x, dest.y);
     if (!force && isLethal(outcome)) {
       this.feedback("Lethal encounter. Inspect the enemy before proceeding.");
@@ -793,7 +796,7 @@ export class Game {
     if (!this.playsFights && !revive) return this.take(step);
     const fight = bout(p, enemy, revive), start = performance.now(), rose = revivals(fight).length;
     if (rose) {
-      outcome.player.hp = heroHpAfter(fight, p.hp);
+      outcome.player.hp = regenerate(heroHpAfter(fight, p.hp), p.maxHp, this.stepRules);
       outcome.combat = { ...outcome.combat!, survivable: outcome.player.hp > 0 };
     }
     if (this.playsFights) return this.showFight(step, enemy, fight, start);
@@ -1256,10 +1259,10 @@ export class Game {
     }
     fight.bout = resume(fight.bout, from, { player: { ...p, hp, shroud }, enemy: fight.enemy, revives: this.revival(fight.to) });
     this.revivedAt = fight.bout.strikes.filter((s) => s.revived).map((s) => fight.start + s.at);
-    const o = fight.outcome, end = heroHpAfter(fight.bout, p.hp),
+    const o = fight.outcome, fought = heroHpAfter(fight.bout, p.hp), end = regenerate(fought, p.maxHp, this.stepRules),
       damage = snap(fight.bout.strikes.reduce((sum, s) => (s.by === "enemy" ? sum + s.damage : sum), 0));
     Object.assign(o.player, { hp: end, attack: p.attack, defense: p.defense, maxHp: p.maxHp });
-    o.combat = { ...o.combat!, damage, survivable: end > 0 };
+    o.combat = { ...o.combat!, damage, survivable: fought > 0 };
   }
   buy(id: UpgradeId) {
     if (!skillAvailable(id, this.save.upgrades)) return false;

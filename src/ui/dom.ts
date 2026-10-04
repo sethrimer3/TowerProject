@@ -51,7 +51,7 @@ export const CURRENCY_SPRITES = { tower: "upgrades", delve: "automove" } as cons
 
 const SKILL_ITEM_SPRITES: Partial<Record<UpgradeId, keyof typeof AREA1_ITEM_URLS>> = {
   yellow: "key_yellow", blue: "key_blue", red: "key_red", extraKey: "key_yellow",
-  greaterHeal: "potion_flat", recovery: "potion_percent",
+  greaterHeal: "potion_flat", regen: "potion_flat", recovery: "potion_percent",
 };
 const SKILL_UI_SPRITES: Partial<Record<UpgradeId, UiSprite>> = {
   inspirationUndos: "undo", undos: "undo", archives: "log",

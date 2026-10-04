@@ -12,14 +12,15 @@ export type SkillTree = { id: TreeId; name: string; currency: Currency; gate?: U
 export const TREES: SkillTree[] = [
   { id: "inspiration", name: "Inspiration", currency: "inspiration", description: "Earn Inspiration by beating your best Tower climb.", height: 208, unlocks: true, nodes: [
     // The hand's skills, down to the Archives; Gear and Training branch off Buildout,
-    // ATK Up and DEF Up under Gear, and On the Job, then Heal, below Training.
+    // ATK Up and DEF Up under Gear, and On the Job, Regen, then Heal, below Training.
     { id: "combatStance", icon: "▤", x: 50, y: 12, requires: [] },
     { id: "buildout", icon: "⚔", x: 50, y: 30, requires: ["combatStance"] },
     { id: "training", icon: "⚔", x: 80, y: 30, requires: ["buildout"] },
     { id: "largerHand", icon: "▦", x: 50, y: 48, requires: ["buildout"] },
     { id: "gear", icon: "⚒", x: 20, y: 30, requires: ["buildout"] },
     { id: "onTheJob", icon: "¤", x: 80, y: 48, requires: ["training"] },
-    { id: "cardHeal", icon: "♥", x: 80, y: 66, requires: ["onTheJob"] },
+    { id: "regen", icon: "♥", x: 80, y: 66, requires: ["onTheJob"] },
+    { id: "cardHeal", icon: "♥", x: 80, y: 84, requires: ["regen"] },
     { id: "archives", icon: "▥", x: 50, y: 66, requires: ["largerHand"] },
     { id: "cardAtkUp", icon: "⚔", x: 20, y: 48, requires: ["gear"] },
     { id: "cardDefUp", icon: "⛨", x: 20, y: 66, requires: ["cardAtkUp"] },

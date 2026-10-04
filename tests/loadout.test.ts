@@ -12,9 +12,9 @@ import { predict } from "../src/combat.ts";
 import { delveDefenseGrowth, getTowerGateEnemy } from "../src/scaling.ts";
 import { delveEnemyBase } from "../src/delve/labyrinth.ts";
 
-test("a new character starts at 12 ATK, 0 DEF, 100 HP, no shroud, no keys and no undo", () => {
+test("a new character starts at 12 ATK, 0 DEF, 100 HP, no shroud, no Regen, no keys and no undo", () => {
   assert.deepEqual(loadout(defaults()), {
-    attack: 12, defense: 0, maxHp: 100, shroud: 0, keys: { yellow: 0, blue: 0, red: 0 }, undoCapacity: 0,
+    attack: 12, defense: 0, maxHp: 100, shroud: 0, regen: 0, keys: { yellow: 0, blue: 0, red: 0 }, undoCapacity: 0,
   });
 });
 
@@ -39,6 +39,7 @@ test("each rank of an upgrade adds its grant", () => {
     defense: 0 + 1,
     maxHp: 100,
     shroud: 1,
+    regen: 0,
     keys: { yellow: 1, blue: 2, red: 3 },
     undoCapacity: 2 + 1,
   });
@@ -177,17 +178,17 @@ test("descriptions are written from the grants", () => {
   ]);
 });
 
-test("each provision bought costs more than the last, on run training's schedule", () => {
+test("each provision bought costs more than the last, on run training's schedule compounding 5% a buy", () => {
   const s = defaults();
   const prices = (id: GoldItemId) => Array.from({ length: 7 }, (_, n) => provisionPrice({ provisions: { ...s.provisions, [id]: n } }, id));
-  assert.deepEqual(prices("heal"), [5, 7, 10, 14, 19, 25, 35]);
-  assert.deepEqual(prices("guard"), [10, 13, 17, 22, 28, 35, 46]);
-  assert.deepEqual(prices("edge"), [15, 18, 22, 27, 33, 40, 51]);
+  assert.deepEqual(prices("heal"), [5, 8, 12, 17, 24, 32, 47]);
+  assert.deepEqual(prices("guard"), [10, 14, 19, 26, 35, 45, 62]);
+  assert.deepEqual(prices("edge"), [15, 19, 25, 32, 41, 52, 69]);
   const g = new Game(s);
   s.gold = 20;
   assert.ok(g.gear.buyProvision("heal") && g.gear.buyProvision("heal"));
-  assert.equal(s.gold, 20 - 5 - 7);
-  assert.equal(g.gear.buyProvision("guard"), false, "10 Gold, 8 left");
+  assert.equal(s.gold, 20 - 5 - 8);
+  assert.equal(g.gear.buyProvision("guard"), false, "10 Gold, 7 left");
   assert.equal(s.provisions.heal, 2);
 });
 

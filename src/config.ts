@@ -239,6 +239,14 @@ export const UPGRADES = [
     currency: "inspiration",
   },
   {
+    id: "regen",
+    name: "Regen",
+    description: "Open Regen training: regain HP with every step you take in a run",
+    base: 1,
+    max: 1,
+    currency: "inspiration",
+  },
+  {
     id: "focus",
     name: "Focus",
     description: `Inside a run, press a card in your hand to put it ahead of the others until it reaches its target (${FOCUS_PER_RUN} use a run)`,
@@ -412,8 +420,8 @@ export const TRAINING_GROUPS = { offense: "Offense", defense: "Defense", utility
 /** What training raises, each rank costing `cost` points. A stat row is
  * worth `base` × (1 + level / `growth`) of `stat` at the hero's level (see
  * `trainingWorth`), so every rank already bought grows as the hero levels
- * up and saving points up never pays. Shroud adds to the damage the
- * shroud blocks each fight. Potion % adds `POTION_PERCENT_RANK`
+ * up and saving points up never pays. Regen adds to the HP regained each
+ * step in a run, Shroud to the damage the shroud blocks each fight. Potion % adds `POTION_PERCENT_RANK`
  * to what a percent potion restores, Find Potion `FIND_POTION_RANK` to
  * the chance a potion is a percent potion, Gold / Floor
  * `FLOOR_GOLD_RANK` to the Gold a new floor pays and Silver / Floor
@@ -425,6 +433,7 @@ export const TRAINING = [
   { id: "hp", name: "Max HP", group: "defense", stat: "maxHp", base: 10, growth: 10, cost: 1, description: "Raises maximum HP." },
   { id: "attack", name: "ATK", group: "offense", stat: "attack", base: 1, growth: 5, cost: 1, description: "Raises ATK, the damage each strike deals before the enemy's DEF." },
   { id: "defense", name: "DEF", group: "defense", stat: "defense", base: 1, growth: 12, cost: 1, description: "Raises DEF, taken off the damage of every enemy strike." },
+  { id: "regen", name: "Regen", group: "defense", stat: "regen", base: 0.1, growth: 12, cost: 1, requires: "regen", description: "Raises the HP regained with every step taken in a run." },
   { id: "shroud", name: "Shroud", group: "defense", stat: "shroud", base: 1, growth: 10, cost: 1, requires: "shroud", description: "Raises the damage the shroud blocks at the start of every fight." },
   { id: "potion", name: "Potion %", group: "defense", requires: "recovery", cost: 1, description: "Percent potions restore more of your maximum HP." },
   { id: "findPotion", name: "Find Potion", group: "defense", requires: "findPotion", cost: 1, max: 72, description: "More of the potions found are percent potions." },
@@ -468,18 +477,20 @@ export const BONUS_RANK = 3;
  * run, a provision's Gold): the first costs `base`, and each one after
  * costs more than the last by `step` plus the number already bought, the
  * `step` growing by `growth` every five (see `schedulePrice`). Base 5: +1+N
- * for the next five, then +4+N, +7+N … Or, with `ratio`, each costs
- * `ratio` times the one before. */
-export type PriceSchedule = { base: number; step: number; growth: number } | { base: number; ratio: number };
+ * for the next five, then +4+N, +7+N … With `compound`, that price is
+ * then multiplied by `compound` for each one already bought, rounded up.
+ * Or, with `ratio`, each costs `ratio` times the one before. */
+export type PriceSchedule = { base: number; step: number; growth: number; compound?: number } | { base: number; ratio: number };
 /** What the purchase after `bought` costs on `schedule`: its base, and for
  * the k-th after it `step + k` more than the one before, `step` rising by
- * `growth` every five, summed here at once (or `ratio` times the one
- * before). */
+ * `growth` every five, summed here at once, then compounded (or `ratio`
+ * times the one before). */
 export function schedulePrice(schedule: PriceSchedule, bought: number) {
   if ("ratio" in schedule) return schedule.base * intPow(schedule.ratio, bought);
-  const { base, step, growth } = schedule;
+  const { base, step, growth, compound } = schedule;
   const fives = Math.floor(bought / 5), rest = bought % 5;
-  return base + bought * step + bought * (bought + 1) / 2 + growth * (5 * fives * (fives - 1) / 2 + rest * fives);
+  const price = base + bought * step + bought * (bought + 1) / 2 + growth * (5 * fives * (fives - 1) / 2 + rest * fives);
+  return compound ? Math.ceil(price * intPow(compound, bought)) : price;
 }
 /** Rows open from the start. */
 const cheap: PriceSchedule = { base: 5, step: 1, growth: 3 };
@@ -497,6 +508,7 @@ export const RUN_TRAINING_PRICES: Record<TrainingId, PriceSchedule> = {
   hp: vital,
   attack: cheap,
   defense: cheap,
+  regen: cheap,
   shroud: opened,
   potion: opened,
   findPotion: deep,
@@ -516,29 +528,32 @@ export const trainingWorth = (row: StatTrainingRow, level: number) => row.base *
 export const trained = (row: StatTrainingRow, ranks: number, level: number) => snap(ranks * trainingWorth(row, level));
 /** Provisions, bought with Gold on the Gear page and kept for good: each
  * one bought adds its grants to every run. Each is priced by a schedule
- * like run training's (`schedulePrice`), from its `price.base` Gold. One
+ * like run training's (`schedulePrice`), from its `price.base` Gold; the
+ * stat provisions' prices also compound by `PROVISION_COMPOUND` a buy. One
  * with `requires` shows, and sells, only once that upgrade is owned. */
+/** What each stat provision bought multiplies the next one's price by. */
+const PROVISION_COMPOUND = 1.05;
 export const GOLD_SHOP = [
   {
     id: "heal",
     name: "Traveler's elixir",
     grants: { maxHp: 20 },
     words: { maxHp: "max HP every run" },
-    price: { base: 5, step: 1, growth: 3 },
+    price: { base: 5, step: 1, growth: 3, compound: PROVISION_COMPOUND },
   },
   {
     id: "guard",
     name: "Aegis charm",
     grants: { defense: 1 },
     words: { defense: "defense every run" },
-    price: { base: 10, step: 2, growth: 3 },
+    price: { base: 10, step: 2, growth: 3, compound: PROVISION_COMPOUND },
   },
   {
     id: "edge",
     name: "Whetstone",
     grants: { attack: 1 },
     words: { attack: "attack every run" },
-    price: { base: 15, step: 2, growth: 3 },
+    price: { base: 15, step: 2, growth: 3, compound: PROVISION_COMPOUND },
   },
   {
     id: "yellowKey",

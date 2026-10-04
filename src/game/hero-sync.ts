@@ -4,21 +4,21 @@ import { loadout, type Loadout } from "../loadout.ts";
 import { MODES } from "../modes.ts";
 
 /** The stats the loadout carries into a run's hero. */
-type HeroStats = { attack: number; defense: number; maxHp: number; shroud?: number };
+type HeroStats = { attack: number; defense: number; maxHp: number; shroud?: number; regen?: number };
 
 const BOTH_MODES = ["tower", "delve"] as const;
-const SHIFTED_STATS = ["attack", "defense", "maxHp", "shroud"] as const;
+const SHIFTED_STATS = ["attack", "defense", "maxHp", "shroud", "regen"] as const;
 const KEY_COLORS = ["yellow", "blue", "red"] as const;
 
 /** The hero a run in `mode` gets with everything owned now, at full HP,
  * standing at the entrance's row, and the loadout it keeps. */
 export function startingHero(save: Save, mode: Mode) {
-  const { attack, defense, maxHp, shroud, keys } = loadout(save);
-  // Only a hero with a shroud carries one.
-  const withShroud = shroud ? { shroud } : {};
+  const { attack, defense, maxHp, shroud, regen, keys } = loadout(save);
+  // Only a hero with a shroud, or Regen, carries one.
+  const extras = { ...(shroud ? { shroud } : {}), ...(regen ? { regen } : {}) };
   return {
-    player: { x: MODES[mode].entranceX, y: 0, hp: maxHp, maxHp, attack, defense, ...withShroud, keys } as Player,
-    loadout: { attack, defense, maxHp, ...withShroud },
+    player: { x: MODES[mode].entranceX, y: 0, hp: maxHp, maxHp, attack, defense, ...extras, keys } as Player,
+    loadout: { attack, defense, maxHp, ...extras },
   };
 }
 
