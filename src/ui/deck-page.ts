@@ -209,7 +209,7 @@ export class DeckPage {
   private lockedDeckHtml(soon: boolean) {
     return `<section class="deck-reserve" aria-label="Deck (locked)">
         <h3 class="deck-label">Deck</h3>
-        <div class="deck-reserve-slots" aria-hidden="true">${"<i></i>".repeat(10)}</div>
+        <div class="deck-reserve-slots" aria-hidden="true">${"<i></i>".repeat(14)}</div>
         <p class="deck-lock"><b>Locked</b>${soon ? "Take a card out of your hand first." : "Unlock Buildout in the Inspiration tree to choose your hand's cards from here."}</p>
       </section>`;
   }

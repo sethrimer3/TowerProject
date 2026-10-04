@@ -65,6 +65,9 @@ export const SETTINGS = {
   buyQuantity: {
     kind: "choice", default: 1, choices: [[1, "x1"], [5, "x5"], [10, "x10"], [100, "x100"], ["max", "Max"]],
   },
+  /** Draw on each enemy the HP its fight would cost (`damage-labels.ts`).
+   * Only Damage Visual, Tower I's floor 50 goal, shows it. */
+  damageVisual: { kind: "toggle", default: true, page: { id: "damage-visual", label: "Show damage on enemies" } },
 } as const satisfies Record<string, Setting>;
 
 export type SettingKey = keyof typeof SETTINGS;

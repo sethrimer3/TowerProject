@@ -5,11 +5,12 @@ import type { AppContext, PageGame } from "./app.ts";
 import type { BoardOverlay } from "./board-overlay.ts";
 import { capitalized, displayedProgress, el } from "./dom.ts";
 import { MODES } from "../modes.ts";
+import { goalUnlocked } from "../goals.ts";
 
 /** The settings on the page, in order; each control comes from its row in
  * SETTINGS. */
 const PAGE = [
-  "transition", "fightAnimation", "brightness", "spritesOff", "decorOff", "batterySaver", "showArrows", "reduceMotion", "weatherSound",
+  "transition", "fightAnimation", "damageVisual", "brightness", "spritesOff", "decorOff", "batterySaver", "showArrows", "reduceMotion", "weatherSound",
   "infoDisplay", "oneTapMove", "medievalTheme", "neonTheme", "devMode", "freePurchases",
 ] as const satisfies readonly SettingKey[];
 type PageKey = (typeof PAGE)[number];
@@ -17,6 +18,7 @@ type PageKey = (typeof PAGE)[number];
 /** Settings that stay off the page until the upgrade behind them is owned. */
 const SHOWN: Partial<Record<PageKey, (save: Save) => boolean>> = {
   fightAnimation: (save) => !!save.upgrades.instantCombat,
+  damageVisual: (save) => goalUnlocked(save, "damageVisual"),
 };
 const onPage = (save: Save) => PAGE.filter((key) => SHOWN[key]?.(save) ?? true);
 

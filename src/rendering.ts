@@ -14,6 +14,8 @@ import { DungeonLight, type LitBoard } from "./dungeon-light.ts";
 import { drawNeonContents, drawNeonGround, drawNeonTorch, paintNeonHero } from "./neon-board.ts";
 import { RoutePath } from "./route-path.ts";
 import { BoardPopups, lunges } from "./board-popups.ts";
+import { DamagePredictions, drawDamageLabels } from "./damage-labels.ts";
+import { goalUnlocked } from "./goals.ts";
 import { AREA_BURST_MS, drawAreaBurst, preloadAreaBurst, drawLevelUp, drawRevive, LEVEL_UP_MS, POINTS_MS, REVIVE_MS } from "./level-up.ts";
 import { drawPoof, POOF_MS } from "./poof.ts";
 import { drawGem, drawGemSparkle, GEM_SPARKLE_MS } from "./gem-art.ts";
@@ -60,6 +62,7 @@ export class Renderer {
   private nextWorldId = 1;
   private light = new DungeonLight();
   private routePath = new RoutePath();
+  private predictions = new DamagePredictions();
   /** Damage numbers and rewards rising off their tiles. */
   popups = new BoardPopups();
   /** The Tower floor the hero was last drawn on (seed and height), and when
@@ -152,6 +155,7 @@ export class Renderer {
   }
   /** Gameplay feedback drawn over every board. */
   private drawOverlays(f: FrameContext) {
+    this.drawDamageLabels(f);
     this.drawSkipMarks(f);
     this.drawBadgeMarks(f);
     this.drawBlockedMark(f);
@@ -385,6 +389,13 @@ export class Renderer {
     c.fillRect(0, w - 2, w, 2);
     c.fillRect(0, 0, 2, w);
     c.fillRect(w - 2, 0, 2, w);
+  }
+  /** Damage Visual: what each enemy in view would cost, once its goal is
+   * claimed and while its setting is on. */
+  private drawDamageLabels(f: FrameContext) {
+    const g = this.game;
+    if (g.run.outside || !g.save.settings.damageVisual || !goalUnlocked(g.save, "damageVisual")) return;
+    drawDamageLabels(f, this.predictions, g.run.player, g.fight);
   }
   /** A fading red cross where a step was refused. */
   /** Skip Open Nodes' marks: a violet X on each door or monster it passed
