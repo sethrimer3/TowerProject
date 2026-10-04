@@ -11,7 +11,10 @@ const rowOf = (id: TrainingId) => TRAINING.find((t) => t.id === id)!;
 
 /** The Training tab's commands: ranks bought with training points, or
  * trained by a trainer paid in Gold over the wall clock, the trainers and
- * their boost, and resets. Ranks reach a run inside at once. */
+ * their boost, and resets. Ranks reach a run inside at once. The two ways
+ * keep separate schedules: a trainer's Gold and time count only the ranks
+ * trainers finished (`save.trainerRanks`), so points never make them
+ * dearer. */
 export class TrainingDesk {
   /** Ranks trainers finished and not yet announced, oldest first; the app
    * takes them for its notifications. */
@@ -23,22 +26,21 @@ export class TrainingDesk {
     return this.host.save;
   }
 
-  /** Whether the Training skill's tab and commands are open: owned, or
-   * every page shown in Dev mode. */
-  private get open() {
-    return !!this.save.upgrades.training || this.save.settings.devMode;
+  /** Whether trainers work: the Trainers skill is owned, or Dev mode. */
+  get hired() {
+    return !!this.save.upgrades.trainers || this.save.settings.devMode;
   }
 
   /** Whether one more rank of `id` can be trained at all: its row shows,
    * and it isn't at its most. */
   private canTrain(id: TrainingId) {
-    return this.open && trainingOpen(rowOf(id), this.save.upgrades) && !trainingMaxed(this.save, id);
+    return trainingOpen(rowOf(id), this.save.upgrades) && !trainingMaxed(this.save, id);
   }
 
   /** Buys one more rank of `id` with training points: it counts at once.
    * A trainer training the stat stops, as `cancel` does: its Gold comes
-   * back and the time spent becomes the stat's time credit. Refused without the
-   * Training skill, at the stat's most, or without the points. With Dev
+   * back and the time spent becomes the stat's time credit. Refused at the
+   * stat's most, or without the points. With Dev
    * free purchases it costs nothing. */
   train(id: TrainingId) {
     this.settle();
@@ -57,16 +59,17 @@ export class TrainingDesk {
 
   /** Pays a trainer `trainingGold` to train one more rank of `id`: it
    * takes `trainingMs` of the wall clock (less the stat's time credit,
-   * used up first) and counts once that has passed (`settle`). Refused without the
-   * Training skill, for a stat already in training or at its most, with
+   * used up first) and counts once that has passed (`settle`). Both go by
+   * the ranks trainers finished, not those bought with points. Refused
+   * without the Trainers skill, for a stat already in training or at its most, with
    * every trainer busy, or without the Gold. With Dev free purchases it
    * costs nothing and counts at once. */
   trainWithGold(id: TrainingId) {
     this.settle();
     const save = this.save;
-    if (!this.canTrain(id) || trainingJob(save.trainingJobs, id)) return false;
-    if (this.host.free) return changeLoadout(save, () => { save.training[id]++; });
-    const ranks = save.training[id], gold = trainingGold(rowOf(id).cost, ranks);
+    if (!this.hired || !this.canTrain(id) || trainingJob(save.trainingJobs, id)) return false;
+    if (this.host.free) return changeLoadout(save, () => { save.training[id]++; save.trainerRanks[id]++; });
+    const gold = trainingGold(rowOf(id).cost, save.trainerRanks[id]);
     if (save.trainingJobs.length >= trainingSlots(save) || save.gold < gold) return false;
     this.start(id, gold, this.host.clock());
     // Time credit can cover the whole rank.
@@ -77,7 +80,7 @@ export class TrainingDesk {
   /** Pays `gold` and starts a trainer on the next rank of `id` at `now`,
    * its time less the stat's time credit (used up first). */
   private start(id: TrainingId, gold: number, now: number) {
-    const save = this.save, ms = trainingMs(save.training[id], trainingSpeed(save)),
+    const save = this.save, ms = trainingMs(save.trainerRanks[id], trainingSpeed(save)),
       credit = Math.min(ms, save.trainingCredit[id]);
     save.gold = snap(save.gold - gold);
     save.trainingCredit[id] -= credit;
@@ -103,7 +106,7 @@ export class TrainingDesk {
   private continueAfter(after: TrainingJob) {
     const save = this.save, id = after.id;
     if (!this.autoContinues(id) || !this.canTrain(id) || trainingJob(save.trainingJobs, id)) return;
-    const gold = this.host.free ? 0 : trainingGold(rowOf(id).cost, save.training[id]);
+    const gold = this.host.free ? 0 : trainingGold(rowOf(id).cost, save.trainerRanks[id]);
     if (save.trainingJobs.length < trainingSlots(save) && save.gold >= gold) this.start(id, gold, after.completesAt);
   }
 
@@ -119,7 +122,7 @@ export class TrainingDesk {
    * rank's whole time less the stat's time credit. */
   toNextRank(id: TrainingId) {
     if (trainingJob(this.save.trainingJobs, id)) return this.left(id);
-    return Math.max(0, trainingMs(this.save.training[id], trainingSpeed(this.save)) - this.save.trainingCredit[id]);
+    return Math.max(0, trainingMs(this.save.trainerRanks[id], trainingSpeed(this.save)) - this.save.trainingCredit[id]);
   }
 
   /** Stops the training of `id`, giving its Gold back and the time already
@@ -151,6 +154,7 @@ export class TrainingDesk {
 
   /** Buys the next trainer with Gems: one more stat can train at once. */
   buyTrainer() {
+    if (!this.hired) return false;
     const price = nextTrainerGems(this.save);
     if (!this.affords(price)) return false;
     if (!this.host.free) this.save.gems -= price!;
@@ -217,6 +221,7 @@ export class TrainingDesk {
   private complete(job: TrainingJob) {
     const save = this.save, paid = save.trainingPaid[job.id];
     save.training[job.id]++;
+    save.trainerRanks[job.id]++;
     paid.gold = snap(paid.gold + job.gold);
     paid.ms += job.ms;
     this.done.push({ id: job.id, level: save.training[job.id] });
@@ -239,6 +244,7 @@ export class TrainingDesk {
       save.trainingCredit[id] += paid.ms;
       save.trainingPaid[id] = { points: 0, gold: 0, ms: 0 };
       save.training[id] = 0;
+      save.trainerRanks[id] = 0;
       save.trainingJobs = save.trainingJobs.filter((j) => j.id !== id);
     });
   }

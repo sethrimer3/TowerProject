@@ -10,7 +10,7 @@ import { RESEARCH } from "../src/archives.ts";
 const HOUR = 3_600_000;
 const game = (level = 10) => {
   const g = new Game(defaults());
-  g.save.upgrades.training = 1;
+  g.save.upgrades.trainers = 1;
   g.newRun({ outside: true });
   g.save.xp = xpForLevel(level);
   g.save.gold = 10_000;
@@ -30,16 +30,39 @@ test("a trainer's Gold: 20 a point, times the rank's number", () => {
   assert.equal(trainingStep(g.save, "attack").gold, 20, "ATK costs 1 point a rank");
 });
 
-test("training needs the Training skill, or Dev mode", () => {
+test("training points work from the start; trainers need the Trainers skill, or Dev mode", () => {
   const { g } = game();
-  g.save.upgrades.training = 0;
-  assert.equal(g.training.train("hp"), false);
+  g.save.upgrades.trainers = 0;
+  assert.ok(g.training.train("hp"), "points need no skill");
   assert.equal(g.training.trainWithGold("hp"), false);
+  g.save.gems = 1000;
+  assert.equal(g.training.buyTrainer(), false);
   g.save.settings.devMode = true;
-  assert.ok(g.training.train("hp"));
+  assert.ok(g.training.trainWithGold("attack"));
   g.save.settings.devMode = false;
-  g.save.upgrades.training = 1;
+  g.save.upgrades.trainers = 1;
+  assert.ok(g.training.buyTrainer());
   assert.ok(g.training.trainWithGold("hp"));
+});
+
+test("points and trainers keep separate schedules: points never make a trainer dearer or slower", () => {
+  const { g, wait } = game();
+  for (let i = 0; i < 5; i++) assert.ok(g.training.train("attack"));
+  assert.equal(g.save.training.attack, 5);
+  assert.equal(trainingStep(g.save, "attack").gold, 20, "a trainer's first rank's Gold");
+  assert.equal(g.training.toNextRank("attack"), 15_000, "and its first rank's time");
+  assert.ok(g.training.trainWithGold("attack"));
+  wait(15);
+  g.training.settle();
+  assert.deepEqual([g.save.training.attack, g.save.trainerRanks.attack], [6, 1]);
+  assert.equal(trainingStep(g.save, "attack").gold, 40, "the trainer's second rank");
+  assert.equal(g.training.toNextRank("attack"), 60_000);
+  assert.ok(g.training.train("attack"));
+  assert.equal(trainingStep(g.save, "attack").gold, 40, "points left the trainer's schedule alone");
+  assert.deepEqual(decode(JSON.stringify(g.save)).trainerRanks, g.save.trainerRanks, "saved");
+  g.save.gems = 2;
+  assert.ok(g.training.reset("attack"));
+  assert.equal(g.save.trainerRanks.attack, 0, "a reset starts the trainer's schedule over");
 });
 
 test("training points buy a rank at once, without Gold, time or a trainer", () => {
@@ -117,7 +140,7 @@ test("one stat trains at a time, and each trainer bought with Gems adds one", ()
 test("Gems finish a rank at once: one per ten minutes left, rounded up", () => {
   assert.deepEqual([0, -5, 1, 600_000, 600_001, 1_800_000].map(finishGems), [0, 0, 1, 1, 2, 3]);
   const { g, wait } = game();
-  g.save.training.hp = 5; // its next rank takes 30 minutes
+  g.save.training.hp = g.save.trainerRanks.hp = 5; // its next rank takes 30 minutes
   assert.ok(g.training.trainWithGold("hp"));
   wait(60);
   assert.equal(g.training.finish("hp"), false, "29 minutes left take 3 Gems");
@@ -131,7 +154,7 @@ test("Gems finish a rank at once: one per ten minutes left, rounded up", () => {
 
 test("stopping a rank gives its Gold back and its time spent as credit, which the next rank uses up", () => {
   const { g, wait } = game();
-  g.save.training.hp = 5; // 30 minutes
+  g.save.training.hp = g.save.trainerRanks.hp = 5; // 30 minutes
   assert.ok(g.training.trainWithGold("hp"));
   const loaded = decode(JSON.stringify(g.save));
   assert.deepEqual(loaded.trainingJobs, g.save.trainingJobs, "jobs survive a save");
@@ -150,14 +173,14 @@ test("stopping a rank gives its Gold back and its time spent as credit, which th
   g.training.settle();
   g.save.trainingCredit.attack = 10 * HOUR;
   g.save.trainingCredit.defense = 10 * HOUR;
-  g.save.training.attack = 4; // 15 minutes
+  g.save.training.attack = g.save.trainerRanks.attack = 4; // 15 minutes
   assert.equal(g.training.toNextRank("attack"), 0);
   assert.ok(g.training.trainWithGold("attack"));
   assert.equal(g.save.training.attack, 5);
   assert.equal(g.save.trainingCredit.attack, 10 * HOUR - 15 * 60_000);
   assert.equal(g.save.trainingCredit.defense, 10 * HOUR, "another stat's credit is its own");
   // Credit counts only for its own stat.
-  g.save.training.hp = 4;
+  g.save.training.hp = g.save.trainerRanks.hp = 4;
   assert.ok(g.training.trainWithGold("hp"));
   assert.equal(g.training.left("hp"), 15 * 60_000, "DEF's credit leaves Max HP's rank whole");
   const bad = decode(JSON.stringify({ ...g.save, trainingJobs: [{ id: "nope", startedAt: 1, completesAt: 2 }, { id: "hp", startedAt: "x" }] }));
@@ -168,18 +191,18 @@ test("a Gem reset returns the points, the Gold and the trainers' time as credit"
   const { g, wait } = game();
   g.save.gems = 2;
   assert.ok(g.training.train("hp"));
-  assert.ok(g.training.trainWithGold("hp"));
-  wait(60);
+  assert.ok(g.training.trainWithGold("hp")); // a trainer's first rank: 15 s
+  wait(15);
   g.training.settle();
-  assert.ok(g.training.trainWithGold("hp")); // the third rank: five minutes
-  wait(100);
+  assert.ok(g.training.trainWithGold("hp")); // its second: a minute
+  wait(40);
   const points = trainingPoints(g.save).left;
   assert.ok(g.training.reset("hp"));
   assert.equal(g.save.training.hp, 0);
   assert.deepEqual(g.save.trainingJobs, [], "the rank in training stops");
   assert.equal(trainingPoints(g.save).left, points + 1);
   assert.equal(g.save.gold, 10_000);
-  assert.equal(g.save.trainingCredit.hp, 60_000 + 100_000, "the minute trained, and the 100 s of the stopped rank");
+  assert.equal(g.save.trainingCredit.hp, 15_000 + 40_000, "the 15 s trained, and the 40 s of the stopped rank");
   assert.deepEqual(decode(JSON.stringify(g.save)).trainingCredit, g.save.trainingCredit);
   assert.equal(decode(JSON.stringify({ ...g.save, trainingCredit: 5 })).trainingCredit.hp, 0, "an old single credit is dropped");
 });
@@ -193,7 +216,7 @@ test("the boost doubles training for up to four hours, banked an hour a claim", 
   assert.equal(doneAt(3 * HOUR, now + HOUR, now), now + 2 * HOUR);
   assert.equal(workLeft(now + 2 * HOUR, now + HOUR, now), 3 * HOUR);
   const { g, wait } = game();
-  g.save.training.hp = 7; // an hour
+  g.save.training.hp = g.save.trainerRanks.hp = 7; // an hour
   assert.ok(g.training.trainWithGold("hp"));
   wait(600);
   assert.ok(g.training.claimBoost());
@@ -217,7 +240,7 @@ test("Faster Trainers research: +2% training speed a level, for 100 levels, abou
   assert.equal(trainingMs(4, 0.5), 600_000);
   const { g } = game();
   g.save.archives.levels.fasterTrainers = 50;
-  g.save.training.hp = 4; // 15 minutes, at double speed
+  g.save.training.hp = g.save.trainerRanks.hp = 4; // 15 minutes, at double speed
   assert.ok(g.training.trainWithGold("hp"));
   assert.equal(g.training.left("hp"), 450_000);
 });

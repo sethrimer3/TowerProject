@@ -206,9 +206,9 @@ export const UPGRADES = [
     currency: "inspiration",
   },
   {
-    id: "training",
-    name: "Training",
-    description: "Open the Training tab on the Upgrades page, where you spend the training points each level earns",
+    id: "trainers",
+    name: "Trainers",
+    description: "Hire a trainer on the Training tab: pay Gold to train a stat over time, on its own schedule beside training points",
     base: 1,
     max: 1,
     currency: "inspiration",

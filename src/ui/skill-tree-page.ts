@@ -5,7 +5,7 @@ import { upgradeCard } from "../cards.ts";
 import { revealCard } from "./card-reveal.ts";
 import { TRAINING, TRAINING_GROUPS, TRAINING_PER_LEVEL, UPGRADES, cost, trainingOpen, type TrainingId, type UpgradeId } from "../config.ts";
 import { TREES, mapNodes, skillAvailable, treeHeight, treeOpen, type TreeId } from "../skill-trees.ts";
-import { trainingPoints, trainingStep, trainingText, upgradeText } from "../loadout.ts";
+import { trainingPoints, trainingStep, trainingText, trainingWaiting, upgradeText } from "../loadout.ts";
 import { whole } from "../whole.ts";
 import { TreeParticles } from "../tree-particles.ts";
 import { TrainingParticles } from "../training-particles.ts";
@@ -83,21 +83,24 @@ export class SkillTreePage {
     return save.settings.devMode || !id || save.upgrades[id] > 0;
   }
 
-  /** A tab shows once what unlocks it is owned; Dev mode shows them all. */
+  /** A tab shows once what unlocks it is owned (Training from the start);
+   * Dev mode shows them all. */
   private shown(tab: PageTab) {
-    if (tab === "archives" || tab === "training") return this.opened(tab);
+    if (tab === "training") return true;
+    if (tab === "archives") return this.opened(tab);
     const save = this.ctx.game.save;
     return save.settings.devMode || treeOpen(TREES.find(t => t.id === tab)!, save.upgrades);
   }
 
-  /** The tab buttons: Inspiration, shown from the start, then Training,
-   * unlocked a little later; the Archives sit after Courage, before the
+  /** The tab buttons: Inspiration and Training, shown from the start (the
+   * Training tab wearing a dot while training points can be spent); the Archives sit after Courage, before the
    * trees after it. */
   private tabsHtml() {
     const save = this.ctx.game.save;
     const busy = save.archives.slots.filter(s => s.job).length;
     const archives = this.opened("archives") ? `<button data-tree="archives" aria-pressed="${this.tree === "archives"}"><span>${uiSprite("log")}</span>Archives<small>${busy} RESEARCHING</small></button>` : "";
-    const training = this.opened("training") ? `<button data-tree="training" aria-pressed="${this.tree === "training"}"><span>${pointsIcon("ui-sprite")}</span>Training<small>${trainingPoints(save).left} POINTS</small></button>` : "";
+    const trainingDot = this.tree !== "training" && trainingWaiting(save) ? ` class="notify"` : "";
+    const training = `<button data-tree="training" aria-pressed="${this.tree === "training"}"${trainingDot}><span>${pointsIcon("ui-sprite")}</span>Training<small>${trainingPoints(save).left} POINTS</small></button>`;
     const trees = TREES.filter(t => this.shown(t.id)), courage = TREES.findIndex(t => t.id === "courage");
     const archivesAt = trees.findIndex(t => TREES.indexOf(t) > courage);
     return trees.map((t, i) =>
@@ -252,7 +255,7 @@ export class SkillTreePage {
    * (a rank that takes time) and the training points that buy a rank at
    * once. Above them, the training boost. */
   private trainingHtml() {
-    const save = this.ctx.game.save, points = trainingPoints(save), slots = trainingSlots(save);
+    const game = this.ctx.game, save = game.save, points = trainingPoints(save), slots = trainingSlots(save), hired = game.training.hired;
     const row = (t: TrainingRow) => this.trainingRowHtml(t);
     // Each group's rows, leaving out any whose upgrade isn't owned yet.
     const rows = (Object.entries(TRAINING_GROUPS) as [keyof typeof TRAINING_GROUPS, string][]).map(([group, name]) => {
@@ -260,28 +263,28 @@ export class SkillTreePage {
       return open.length ? `<h4 class="training-group">${name}</h4>${open.map(row).join("")}` : "";
     }).join("");
     return `<section class="training"><canvas class="training-particles" aria-hidden="true"></canvas><header class="tree-heading"><h3>Training</h3></header>
-      ${this.boostHtml()}
-      <p class="training-points"><span class="training-held" title="Training points">${pointsIcon()} <b id="training-points">${points.left}</b></span><small>Level up with ${pointsIcon()} or pay ${goldIcon()} to a trainer</small></p>
-      <p class="training-points training-slots">Trainers: <b id="training-slots">${save.trainingJobs.length} / ${slots}</b> ${this.trainerButton()}</p>
+      ${hired ? this.boostHtml() : ""}
+      <p class="training-points"><span class="training-held" title="Training points">${pointsIcon()} <b id="training-points">${points.left}</b></span><small>${hired ? `Level up with ${pointsIcon()} or pay ${goldIcon()} to a trainer` : `Each level earns ${TRAINING_PER_LEVEL} ${pointsIcon()}`}</small></p>
+      ${hired ? `<p class="training-points training-slots">Trainers: <b id="training-slots">${save.trainingJobs.length} / ${slots}</b> ${this.trainerButton()}</p>` : ""}
       <div class="training-table" role="list" aria-label="Stat training">${rows}</div></section>`;
   }
 
-  /** One stat's row: its value now and after a rank, the training time
-   * its next rank still needs (its time credit taken off), the trainer
-   * (its countdown while it trains), the points that train it now, and
-   * reset. */
+  /** One stat's row: its value now and after a rank, the points that train
+   * it now, and reset; once the Trainers skill is owned, also the training
+   * time its next rank still needs (its time credit taken off) and the
+   * trainer (its countdown while it trains). */
   private trainingRowHtml(t: TrainingRow) {
-    const game = this.ctx.game, save = game.save, step = trainingStep(save, t.id), { now, next, unit } = step;
+    const game = this.ctx.game, save = game.save, step = trainingStep(save, t.id), { now, next, unit } = step, hired = game.training.hired;
     // A row with a most ranks says so, and once there offers no next one.
     const most = "max" in t ? `up to ${trainingStep({ ...save, training: { ...save.training, [t.id]: t.max }, trainingJobs: [] }, t.id).now}${unit}` : "";
     const shown = (v: number) => trainingText(v, unit);
-    const time = step.maxed ? "" : `<span class="training-left" title="Training time to the next rank">${clockIcon()}<span data-training-left="${t.id}">${formatDuration(game.training.toNextRank(t.id))}</span></span>`;
+    const time = step.maxed || !hired ? "" : `<span class="training-left" title="Training time to the next rank">${clockIcon()}<span data-training-left="${t.id}">${formatDuration(game.training.toNextRank(t.id))}</span></span>`;
     const notes = [time, most].filter(Boolean).join(" · ");
     const job = trainingJob(save.trainingJobs, t.id);
     const nowButton = step.maxed
       ? ""
       : `<button class="training-box training-cost training-now" data-train="${t.id}" ${step.affordable ? "" : "disabled"} aria-label="Spend ${t.cost} training ${t.cost === 1 ? "point" : "points"} to train ${t.name} now" title="Train now">${pointsIcon()}<span>${t.cost}</span></button>`;
-    return `<div class="training-row${job ? " active" : ""}" role="listitem" data-training-row="${t.id}"><span class="training-label">${this.autoBox(t)}${t.name}<small>${notes}</small></span><span class="training-box">${shown(now)}</span><span class="training-arrow" aria-hidden="true">→</span><span class="training-box next">${shown(next)}</span>${this.trainerHtml(t, step)}${nowButton}${this.resetButton(t, !!job)}</div>`;
+    return `<div class="training-row${job ? " active" : ""}" role="listitem" data-training-row="${t.id}"><span class="training-label">${hired ? this.autoBox(t) : ""}${t.name}${notes ? `<small>${notes}</small>` : ""}</span><span class="training-box">${shown(now)}</span><span class="training-arrow" aria-hidden="true">→</span><span class="training-box next">${shown(next)}</span>${hired ? this.trainerHtml(t, step) : ""}${nowButton}${this.resetButton(t, !!job)}</div>`;
   }
 
   /** The row's auto-continue box: while ticked, its trainer starts the

@@ -111,7 +111,7 @@ test("one-time packs are bought once, kept by an erase, and multiply every Gold 
 
 test("Ad-Disable runs the trainers' ×2 boost for good, ranks already training included", () => {
   const g = new Game(defaults());
-  g.save.upgrades.training = 1;
+  g.save.upgrades.trainers = 1;
   g.newRun({ outside: true });
   g.save.xp = xpForLevel(10);
   g.save.gold = 10_000;

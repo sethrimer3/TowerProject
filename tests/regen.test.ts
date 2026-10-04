@@ -14,7 +14,7 @@ test("Regen costs 1 Inspiration between On the Job and Heal, and opens a Defense
   const g = new Game(defaults());
   g.save.tower.inspiration = 1000;
   assert.equal(cost("regen", 0), 1);
-  for (const id of ["combatStance", "buildout", "training"] as const) assert.ok(g.buy(id));
+  for (const id of ["combatStance", "buildout", "trainers"] as const) assert.ok(g.buy(id));
   assert.equal(g.buy("regen"), false, "waits for On the Job");
   assert.equal(g.buy("cardHeal"), false, "Heal waits for Regen");
   assert.ok(g.buy("onTheJob"));

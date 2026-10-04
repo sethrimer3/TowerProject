@@ -16,8 +16,8 @@ export const TREES: SkillTree[] = [
     // below On the Job.
     { id: "combatStance", icon: "▤", x: 50, y: 12, requires: [] },
     { id: "buildout", icon: "⚔", x: 50, y: 30, requires: ["combatStance"] },
-    { id: "training", icon: "⚔", x: 50, y: 48, requires: ["buildout"] },
-    { id: "largerHand", icon: "▦", x: 50, y: 66, requires: ["training"] },
+    { id: "trainers", icon: "⚔", x: 50, y: 48, requires: ["buildout"] },
+    { id: "largerHand", icon: "▦", x: 50, y: 66, requires: ["trainers"] },
     { id: "gear", icon: "⚒", x: 20, y: 30, requires: ["buildout"] },
     { id: "onTheJob", icon: "¤", x: 80, y: 30, requires: ["buildout"] },
     { id: "regen", icon: "♥", x: 80, y: 48, requires: ["onTheJob"] },

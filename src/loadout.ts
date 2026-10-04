@@ -1,7 +1,7 @@
 import { whole } from "./whole.ts";
 import { snap } from "./exact.ts";
 import type { Save } from "./entities.ts";
-import { BONUS_RANK, FIND_POTION_BASE, FIND_POTION_MAX, FLOOR_GOLD_BASE, FLOOR_GOLD_RANK, FLOOR_SILVER_BASE, FLOOR_SILVER_RANK, FIND_POTION_RANK, REVIVE_BASE, REVIVE_MAX, REVIVE_RANK, GOLD_SHOP, schedulePrice, POTION_PERCENT_BASE, POTION_PERCENT_RANK, TRAINING, TRAINING_PER_LEVEL, UPGRADES, isStatRow, levelForXp, trained, trainingWorth, type GoldItemId, type StatTrainingRow, type TrainingId, type TrainingRow, type UpgradeId } from "./config.ts";
+import { BONUS_RANK, FIND_POTION_BASE, FIND_POTION_MAX, FLOOR_GOLD_BASE, FLOOR_GOLD_RANK, FLOOR_SILVER_BASE, FLOOR_SILVER_RANK, FIND_POTION_RANK, REVIVE_BASE, REVIVE_MAX, REVIVE_RANK, GOLD_SHOP, schedulePrice, POTION_PERCENT_BASE, POTION_PERCENT_RANK, TRAINING, TRAINING_PER_LEVEL, UPGRADES, isStatRow, levelForXp, trained, trainingOpen, trainingWorth, type GoldItemId, type StatTrainingRow, type TrainingId, type TrainingRow, type UpgradeId } from "./config.ts";
 import { getEquippedBonuses } from "./crafting.ts";
 import { RESEARCH, researched } from "./archives.ts";
 import { trainingGold } from "./training-jobs.ts";
@@ -126,6 +126,13 @@ export function trainingPoints(save: Pick<Save, "xp" | "trainingPaid">) {
   return { earned, spent, left: Math.max(0, earned - spent) };
 }
 
+/** Whether training points can be spent now: some row that shows can
+ * take a rank they pay for (the Upgrades and Training tabs' dot). */
+export function trainingWaiting(save: Save) {
+  const left = trainingPoints(save).left;
+  return left > 0 && TRAINING.some((t) => t.cost <= left && trainingOpen(t, save.upgrades) && !trainingMaxed(save, t.id));
+}
+
 /** What a percent potion restores beyond its HP, in hundredths of a
  * percent of max HP: none without Recovery. */
 export const potionPercent = (save: Pick<Save, "upgrades" | "training">) =>
@@ -202,7 +209,7 @@ export function trainingStep(save: Save, id: TrainingId) {
  * (`affordable`) or Gold (`goldAffordable`), whether there is one, and a
  * trainer's Gold price for it. */
 function trainingPrices(save: Save, row: TrainingRow, maxed: boolean) {
-  const free = save.settings.freePurchases, gold = trainingGold(row.cost, save.training[row.id]);
+  const free = save.settings.freePurchases, gold = trainingGold(row.cost, save.trainerRanks[row.id]);
   return {
     affordable: !maxed && (free || trainingPoints(save).left >= row.cost),
     maxed,

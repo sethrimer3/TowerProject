@@ -214,6 +214,9 @@ export type Save = {
    * training points spent, the Gold, and the trainers' time (ms). Ranks
    * bought with Dev free purchases paid nothing. */
   trainingPaid: Record<TrainingId, TrainingPaid>;
+  /** Ranks of each stat trainers have finished: the trainers' own schedule
+   * (Gold and time), apart from ranks bought with training points. */
+  trainerRanks: Record<TrainingId, number>;
   /** Ranks being trained by a trainer now (their Gold is paid), each done
    * when the wall clock reaches it. */
   trainingJobs: TrainingJob[];

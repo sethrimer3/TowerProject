@@ -94,7 +94,7 @@ The currency each level earns (three a level), spent to buy ranks of training at
 _Avoid_: skill point, stat point
 
 **Trainer**:
-Who trains a rank for Gold, over time, instead of training points. The hero starts with one, and each bought with Gems lets one more rank train at the same time.
+Who trains a rank for Gold, over time, instead of training points, on each stat's own schedule (only ranks trainers finished raise its Gold and time). The Trainers skill hires the first, and each bought with Gems lets one more rank train at the same time.
 _Avoid_: training slot, archivist (who does research)
 
 **Time credit**:
