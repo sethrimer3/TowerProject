@@ -7,7 +7,7 @@ import { outsideWeather } from "../outside.ts";
 import { tierBonusText, tierNumeral } from "../tiers.ts";
 import { MODES, milestones } from "../modes.ts";
 import { cardArt, CURRENCY_SPRITES, displayedProgress, el, ENTER_ICON, text, uiSprite } from "./dom.ts";
-import { CARDS, cardText } from "../cards.ts";
+import { CARDS, IN_PLACE, cardText } from "../cards.ts";
 import { trainingPoints } from "../loadout.ts";
 import { goalsWaiting } from "../goals.ts";
 import type { BoardOverlay } from "./board-overlay.ts";
@@ -227,6 +227,9 @@ function renderHand(game: Game) {
   row.querySelectorAll<HTMLElement>(".hand-card").forEach((card, i) => {
     card.classList.toggle("active", i === glowing);
     card.classList.toggle("focused", i === focused);
+    // A card that acts in place greys out while it can't (KEY SIPHON with
+    // no DEF training left).
+    card.classList.toggle("unable", !game.run.outside && IN_PLACE.has(hand[i]) && !game.canAct(hand[i]));
   });
   el("end-run").classList.toggle("deadlocked", game.handStuck && !game.run.outside);
 }

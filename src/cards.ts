@@ -16,6 +16,7 @@ export const CARDS = {
   monster: { name: "Monster", text: "Move toward the closest monster." },
   atkUp: { name: "ATK Up", text: "Move toward the closest ATK pickup." },
   defUp: { name: "DEF Up", text: "Move toward the closest DEF pickup." },
+  keySiphon: { name: "Key Siphon", text: "Trade a level of DEF training, for the rest of the run, for a yellow key, without moving. Skipped with no DEF training left." },
 } as const;
 export type CardId = keyof typeof CARDS;
 export const CARD_IDS = Object.keys(CARDS) as CardId[];
@@ -81,8 +82,15 @@ export function placeCard(hand: readonly CardId[], id: CardId, slot: number, slo
 }
 
 /** The card that moves the hero and the path it committed to: the steps
- * still to take, the last one onto its target. */
+ * still to take, the last one onto its target. A card that acts where the
+ * hero stands (`IN_PLACE`) plans no steps. */
 export type CardPlan = { card: number; path: Step[] };
+/** Cards that act where the hero stands, a turn with no step, rather than
+ * moving toward a target: KEY SIPHON. */
+export const IN_PLACE = new Set<CardId>(["keySiphon"]);
+/** Where the hand plans from: the board and the run, and whether a card
+ * that acts in place can act now (none can when this is absent). */
+export type HandAt = Position & { canAct?: (card: CardId) => boolean };
 
 /** Tiles a card's path may cross on the way to its target, taking what
  * lies there: open floor and every item. Walls, doors, monsters and stairs
@@ -118,17 +126,23 @@ const WANTS: Record<CardId, (t: Tile, at: Position) => boolean> = {
   monster: (t, at) => t.kind === "enemy" && !predict(at.run.player, t.enemy!).impervious,
   atkUp: (t) => t.kind === "attack",
   defUp: (t) => t.kind === "defense",
+  keySiphon: () => false,
 };
 
-/** The first card in `hand` with a target the hero can reach, and the
- * shortest path to its closest target; null when no card can act. It looks
+/** The first card in `hand` that can act: one with a target the hero can
+ * reach, and the shortest path to its closest target, or one that acts in
+ * place and can now (`canAct`), with no path; null when no card can. It looks
  * only at the floor the hero stands on: stairs up end a path, and stairs
  * down are never crossed or a target. With `only`, it plans that card
  * alone (a Focus). */
-export function planHand(at: Position, hand: readonly CardId[], mode: Mode, only?: number): CardPlan | null {
+export function planHand(at: HandAt, hand: readonly CardId[], mode: Mode, only?: number): CardPlan | null {
   const reached = search(at);
   for (let card = 0; card < hand.length; card++) {
     if (only !== undefined && card !== only) continue;
+    if (IN_PLACE.has(hand[card])) {
+      if (at.canAct?.(hand[card])) return { card, path: [] };
+      continue;
+    }
     const target = hand[card] === "stairs" && mode === "delve"
       ? climb(at, reached)
       : reached.find((r) => wants(hand[card], r.tile, at));

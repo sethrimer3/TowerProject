@@ -140,7 +140,7 @@ Instead:
 
 ### Current Inspiration-tree reference
 
-Every Inspiration skill is an unlock, bought once; more of what one gives comes from other panels (Rehearsed steps, 10 Inspiration after the Archives, gives the first undo and opens Undo Count research).
+Every Inspiration skill is an unlock, bought once; more of what one gives comes from other panels (Rehearsed steps, 5 Inspiration after the Archives, gives the first undo and opens Undo Count research).
 
 With the current first-level costs, the direct prerequisite path to unlock Delve is approximately:
 
@@ -331,6 +331,8 @@ Below Spare Change stand three skills of 2 Inspiration each (17 down the path), 
 Training and research multiply: 30% from each makes ×1.3 × 1.3 = ×1.69. Silver therefore keeps its fractions, like Gold (`snap`), shown rounded down.
 
 Shroud (10 Inspiration below Greater Heal, beside Recovery, 24 down the path) gives the hero a shroud that blocks the first 1 damage of every fight, whole again at each fight's start, and opens Shroud training (1 training point a rank, each worth 1 + L/10 at level L, like the other stats). Because it renews every fight, a point of shroud is worth far more over a run than a point of max HP, so its ranks are worth a tenth of max HP's. The shroud comes off the damage after DEF, so it matters most against enemies DEF has fallen behind; fight forecasts count it.
+
+Key Siphon (5 Inspiration, below Into the depths, between Pocket Money and Greater Heal) begins the tree's middle path, which is to run on down past the money and healing branches. It adds the KEY SIPHON card: when the hand plays it, the hero stands still for a turn and trades one level of DEF training for a yellow key, losing the DEF that level gives at the hero's level (1 + L/12) for the rest of the run only. Its levels are the hero's own DEF ranks and any bought with Silver in the run; with none left the card is skipped. Regen Research (2 Inspiration, below Key Siphon) opens Regen research: +3% to what Regen training gives a step, a level, not compounding, for 100 levels, with Potion HP's Gold and hours (465,760 Gold and about seven weeks in all).
 
 Regen (1 Inspiration, below On the Job, above Heal) opens Regen training in the Defense group: each rank gives 0.1 × (1 + L/12) HP back with every step taken in a run at level L (DEF's growth on a tenth of its base), priced like DEF (1 training point, a trainer's Gold and time like any row, and 5 Silver for the first rank bought in a run, on DEF's schedule). The HP comes after whatever the step did (a fight won, a door, a potion), up to max HP, never to a hero a fight felled, and not in the forest. A Rush turn counts as one step, so the tiles it rushes across after its first regain nothing. Route previews, the inspect panel and Automove count it like any other part of the step.
 ---

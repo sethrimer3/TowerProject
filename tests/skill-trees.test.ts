@@ -58,9 +58,9 @@ test("Greater Heal, then Recovery, Shroud and Find Potion, come after Into the d
   assert.equal(before - g.save.tower.inspiration, 10);
   const at = (id: string) => TREES[0].nodes.find((n) => n.id === id)!;
   assert.deepEqual([at("greaterHeal").x, at("greaterHeal").y, at("greaterHeal").requires], [74, 124, ["delve"]]);
-  assert.deepEqual([at("recovery").x, at("recovery").y, at("recovery").requires], [62, 142, ["greaterHeal"]]);
-  assert.deepEqual([at("shroud").x, at("shroud").y, at("shroud").requires], [86, 142, ["greaterHeal"]], "Shroud sits beside Recovery");
-  assert.deepEqual([at("findPotion").x, at("findPotion").y, at("findPotion").requires], [62, 160, ["recovery"]], "Find Potion sits below Recovery");
+  assert.deepEqual([at("recovery").x, at("recovery").y, at("recovery").requires], [70, 142, ["greaterHeal"]]);
+  assert.deepEqual([at("shroud").x, at("shroud").y, at("shroud").requires], [90, 142, ["greaterHeal"]], "Shroud sits beside Recovery");
+  assert.deepEqual([at("findPotion").x, at("findPotion").y, at("findPotion").requires], [70, 160, ["recovery"]], "Find Potion sits below Recovery");
 });
 test("the hand's skills run to the Archives, Gear and Training off Buildout, ATK Up then DEF Up after Gear, On the Job, Regen then Heal below Training, and Larger Hand, Buildout, Training, On the Job and Gear cost 1", () => {
   const at = (id: string) => TREES[0].nodes.find((n) => n.id === id)!;

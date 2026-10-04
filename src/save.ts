@@ -106,6 +106,7 @@ const RUN_FIELD_CHECKS = {
   // The hand is checked first: a focused card must be in it.
   focused: (v: unknown, r: any) => !!r.hand?.includes(v),
   training: validRunTraining,
+  siphoned: (v: unknown) => wholeIn(v, 1, 1e6),
   tier: (v: unknown) => wholeIn(v, 2, TIERS),
   percentPotions: (v: unknown) => wholeIn(v, 1, FIND_POTION_MAX),
 };

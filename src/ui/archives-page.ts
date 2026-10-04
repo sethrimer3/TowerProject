@@ -179,19 +179,22 @@ export class ArchivesPanel {
     return ids.length ? ids.map((id) => this.researchHtml(id)).join("") : `<p class="research-empty">No research matches.</p>`;
   }
 
-  /** One project: its level, what its next level costs, takes and gives,
-   * any progress kept, and the button to start it. */
+  /** One project, kept short so more fit in view: its name, tags and
+   * level on one line, its description, then what its next level gives,
+   * costs and takes beside the button to start it, and any progress kept. */
   private researchHtml(id: ResearchId) {
     const save = this.ctx.game.save, a = save.archives, def = research(id);
     const level = researchLevel(a, id), next = nextLevel(a, id), state = status(save, id);
     const tags = def.categories.map((c) => `<span class="research-tag">${RESEARCH_CATEGORIES[c]}</span>`).join("");
-    let detail = "", action: string;
+    let detail = "", kept = "", action: string;
     if (next) {
-      const ms = duration(a, next), kept = a.progress[id];
+      const ms = duration(a, next), share = a.progress[id];
       const target = next.effect.target, shown = (archives: ArchivesSave) => RESEARCH_TARGETS[target].shown(targetValue(save, target, archives));
-      detail = `<div class="research-next"><span class="research-target">${RESEARCH_TARGETS[target].name}:</span><span class="training-box">${shown(a)}</span><span class="training-arrow" aria-hidden="true">→</span><span class="training-box next">${shown(withNextLevel(a, id))}</span>` +
-        `<span class="research-price">${uiSprite("gold", "stat-sprite")} ${currencyAmount(next.gold)} · ${formatDuration(ms)}</span></div>` +
-        (kept ? `<p class="research-kept">Progress kept: ${formatDuration(kept * ms)} of ${formatDuration(ms)}</p>` : "");
+      // The Research button shows the Gold; without it, the price does.
+      const gold = state === "available" ? "" : `${uiSprite("gold", "stat-sprite")} ${currencyAmount(next.gold)} · `;
+      detail = `<span class="research-target">${RESEARCH_TARGETS[target].name}:</span><span class="training-box">${shown(a)}</span><span class="training-arrow" aria-hidden="true">→</span><span class="training-box next">${shown(withNextLevel(a, id))}</span>` +
+        `<span class="research-price">${gold}${formatDuration(ms)}</span>`;
+      if (share) kept = `<p class="research-kept">Progress kept: ${formatDuration(share * ms)} of ${formatDuration(ms)}</p>`;
     }
     if (state === "completed") action = `<span class="research-state">Complete</span>`;
     else if (state === "active") action = `<span class="research-state">Archivist ${activeSlot(a, id) + 1}</span>`;
@@ -201,8 +204,8 @@ export class ArchivesPanel {
       const why = slot < 0 ? "Every archivist is busy." : cannotStart(save, slot, id);
       action = `<button data-research="${id}" ${why ? `disabled title="${why}"` : ""}>Research · ${uiSprite("gold", "stat-sprite")} ${currencyAmount(next!.gold)}</button>`;
     }
-    return `<article class="research ${state}" role="listitem"><div class="research-head"><b>${def.name}</b><small>LEVEL ${level} / ${def.levels.length}</small></div>
-      <div class="research-tags">${tags}</div><p>${def.description}</p>${detail}<div class="research-action">${action}</div></article>`;
+    return `<article class="research ${state}" role="listitem"><div class="research-head"><b>${def.name}</b><span class="research-tags">${tags}</span><small>LEVEL ${level} / ${def.levels.length}</small></div>
+      <p>${def.description}</p><div class="research-next">${detail}<span class="research-action">${action}</span></div>${kept}</article>`;
   }
 
   /** The research completed lately, newest first, in a scrolling dialog. */

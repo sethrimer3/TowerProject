@@ -41,6 +41,8 @@ export const RESEARCH_TARGETS = {
   undoCapacity: { name: "Undos Stored", base: 0, shown: count },
   /** The percent of its HP a potion restores, from 100 (red potions aside). */
   potionHeal: { name: "Potion Healing", base: 100, shown: percent },
+  /** The percent of its Regen training a step regains, from 100. */
+  regenPercent: { name: "Regen", base: 100, shown: percent },
   /** The percent of its Gold / Floor a new floor pays, from 100. */
   floorGold: { name: "Gold per Floor", base: 100, shown: percent },
   /** The percent of its Silver / Floor a new floor pays, from 100. */
@@ -91,7 +93,8 @@ const countLevels = (target: ResearchTarget, length = 9) => Array.from({ length 
   effect: { target, op: "add", value: 1 },
 }));
 
-/** Potion HP (+3% potion healing a level) and Gold / Floor (+5% of the
+/** Potion HP (+3% potion healing a level), Regen (+3% of the HP Regen
+ * training gives a step, a level) and Gold / Floor (+5% of the
  * Gold a new floor pays a level), for 100 levels each. The first four
  * are quick, to draw players in (15 s for 10 Gold, 1 min for 25, 5 min for
  * 50, 10 min for 75); then the formula starts over from level 5, so the
@@ -133,6 +136,13 @@ export const RESEARCH = {
     categories: ["defense"],
     requires: [{ upgrade: "greaterHeal" }],
     levels: hundredLevels("potionHeal", 3),
+  },
+  regen: {
+    name: "Regen",
+    description: "Steadier breath: every step regains more HP.",
+    categories: ["defense"],
+    requires: [{ upgrade: "regenResearch" }],
+    levels: hundredLevels("regenPercent", 3),
   },
   focusCount: {
     name: "Focus Count",

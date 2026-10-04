@@ -152,17 +152,18 @@ test("each key card heads for its own colour of key only", () => {
   assert.equal(play(board(["@.K"]), ["blueKey"]), null);
 });
 
-test("the deck starts as the base hand, and HEAL, EQUIPMENT and BLUE KEY join it with their skills", () => {
+test("the deck starts as the base hand, and HEAL, EQUIPMENT, BLUE KEY and KEY SIPHON join it with their skills", () => {
   const none = defaults().upgrades;
   assert.deepEqual(BASE_HAND, ["stairs", "door", "yellowKey", "monster"]);
   assert.equal(BASE_HAND.length, BASE_HAND_SLOTS, "the base hand fills the base slots");
   assert.deepEqual(deckCards(none), ["stairs", "door", "yellowKey", "monster"]);
   assert.deepEqual(deckCards({ ...none, cardHeal: 1 }), ["stairs", "heal", "door", "yellowKey", "monster"]);
   assert.deepEqual(deckCards({ ...none, cardBlueKey: 1 }), ["stairs", "door", "yellowKey", "blueKey", "monster"]);
-  assert.deepEqual(deckCards({ ...none, cardHeal: 1, cardAtkUp: 1, cardDefUp: 1, cardBlueKey: 1 }), CARD_IDS);
+  assert.deepEqual(deckCards({ ...none, cardHeal: 1, cardAtkUp: 1, cardDefUp: 1, cardBlueKey: 1, keySiphon: 1 }), CARD_IDS);
   assert.equal(upgradeCard("cardAtkUp"), "atkUp");
   assert.equal(upgradeCard("cardDefUp"), "defUp");
   assert.equal(upgradeCard("cardBlueKey"), "blueKey");
+  assert.equal(upgradeCard("keySiphon"), "keySiphon");
   assert.equal(upgradeCard("focus"), undefined);
 });
 

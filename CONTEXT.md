@@ -116,6 +116,10 @@ The red, striped potion: it restores a regular potion's HP plus a share of max H
 The damage a hero's shroud blocks in each fight: the enemy's strikes, after DEF, wear it away before any HP is lost, and it is whole again when the next fight starts. The Shroud skill gives the first point; Shroud training adds more.
 _Avoid_: shield (the equipment slot), barrier
 
+**Key Siphon**:
+A card that moves nowhere: its turn trades one level of DEF training, for the rest of the run only, for a yellow key. Skipped once the run has no DEF training left.
+_Avoid_: key trade, drain
+
 **Regen**:
 The HP a hero regains with every step taken in a run, after whatever the step did, up to max HP. A Rush turn counts as one step. The Regen skill opens Regen training, which gives it.
 _Avoid_: regeneration, healing (a potion's)

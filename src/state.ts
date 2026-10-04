@@ -23,6 +23,7 @@ import {
   trained,
   cost,
   UPGRADES,
+  TRAINING,
   type UpgradeId,
   type TrainingId,
   type KeyColor,
@@ -57,7 +58,7 @@ import { enemyTitle } from "./scaling.ts";
 import { snap } from "./exact.ts";
 import { whole, wholeChange } from "./whole.ts";
 import { MODES, milestones, type ModeProfile } from "./modes.ts";
-import { ranksInRun, runTrainingOffer, type RunTrainingOffer } from "./run-training.ts";
+import { boughtInRun, ranksInRun, runTrainingOffer, type RunTrainingOffer } from "./run-training.ts";
 import { keepUndos, loadout, percentPotionChance, potionPercent, reviveChance } from "./loadout.ts";
 import { researched } from "./archives.ts";
 import { SETTINGS } from "./settings.ts";
@@ -449,11 +450,18 @@ export class Game {
     const { plan, lost } = this.nextHandPlan();
     this.handStuck = !plan;
     if (!plan) return this.handWaits();
-    const step = plan.path.shift()!, p = this.run.player, from = { x: p.x, y: p.y };
-    this.cardPlan = plan.path.length ? plan : null;
     this.activeCard = plan.card;
     const id = this.hand[plan.card];
     this.message = lost ? `Focus lost · ${CARDS[lost].name} has no path to a target · ${CARDS[id].name} leads.` : this.cardMessage(id);
+    // A card that acts in place takes the turn without a step.
+    if (!plan.path.length) {
+      this.cardPlan = null;
+      this.siphon();
+      if (id === this.run.focused) this.run.focused = undefined;
+      return;
+    }
+    const step = plan.path.shift()!, p = this.run.player, from = { x: p.x, y: p.y };
+    this.cardPlan = plan.path.length ? plan : null;
     const rushes = fresh && this.rushTiles > 0 && this.emptyAt(step.x, step.y);
     // The board changes only as the hero moves, so a refused step means the
     // plan is stale: drop it and let the next turn choose again.
@@ -461,6 +469,34 @@ export class Game {
     if (rushes) this.rushOn(plan, from);
     // The focused card's last step reaches its target: the focus is spent.
     if (!this.cardPlan && id === this.run.focused) this.run.focused = undefined;
+  }
+  /** Whether a card that acts in place can act now (`planHand` asks):
+   * KEY SIPHON, inside a run, while a level of DEF training is left. */
+  canAct(card: CardId) {
+    return card === "keySiphon" && this.siphonLevel > 0;
+  }
+  /** The run's DEF training level, as KEY SIPHON drains it: the hero's own
+   * ranks and those bought with Silver this run, less the levels siphoned;
+   * 0 outside a run. */
+  get siphonLevel() {
+    if (this.run.outside) return 0;
+    return this.save.training.defense + boughtInRun(this.run, "defense") - (this.run.siphoned ?? 0);
+  }
+  /** KEY SIPHON: a turn with no step that trades the run's top level of
+   * DEF training for a yellow key. The hero and the run's loadout lose what
+   * that level adds at the hero's level, for the rest of the run only; it
+   * is a turn of its own, so undo takes it back. */
+  private siphon() {
+    const level = this.siphonLevel, p = this.run.player, heroLevel = levelForXp(this.save.xp);
+    const row = TRAINING.find((t) => t.id === "defense") as StatTrainingRow;
+    const loss = snap(trained(row, level, heroLevel) - trained(row, level - 1, heroLevel));
+    this.remember(this.snapshot());
+    p.defense = snap(p.defense - loss);
+    if (this.run.loadout) this.run.loadout.defense = snap(this.run.loadout.defense - loss);
+    p.keys.yellow++;
+    this.run.siphoned = (this.run.siphoned ?? 0) + 1;
+    this.gain(p.x, p.y, `−${wholeChange(loss)} DEF`, { tile: { kind: "defense" }, spent: true });
+    this.gain(p.x, p.y, "+1 yellow key", { tile: { kind: "key", color: "yellow" } });
   }
   /** Rush: the first step toward a new target, onto an empty tile, goes on
    * along the path in the same step across up to `rushTiles` more empty
@@ -559,7 +595,9 @@ export class Game {
   /** What research changes about stepping now: the step rules every move,
    * preview, inspect box and planner resolves with. */
   get stepRules(): StepRules {
-    const regen = this.run.outside ? 0 : this.run.player.regen ?? 0;
+    // Regen research raises the HP each step regains by its percent.
+    const regen = this.run.outside || !this.run.player.regen ? 0
+      : snap((this.run.player.regen * researched(this.save.archives, "regenPercent", 100)) / 100);
     return { potionHeal: researched(this.save.archives, "potionHeal", 100), percentPotion: potionPercent(this.trainingNow), regen };
   }
   /** The upgrades owned and the Training ranks that count now: the hero's

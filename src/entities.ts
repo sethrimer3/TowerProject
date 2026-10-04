@@ -116,6 +116,9 @@ export type RunCore = {
   /** Training ranks bought with Silver this run, on top of the hero's own:
    * they last only for this run. */
   training?: Partial<Record<TrainingId, number>>;
+  /** Levels of DEF training KEY SIPHON has traded for yellow keys this
+   * run: lost only for this run. */
+  siphoned?: number;
   /** Which numbered tower (or delve) the run climbs, from 2 up (tiers.ts);
    * absent for the first. */
   tier?: number;
