@@ -15,7 +15,7 @@ import { decodeArchives, defaultArchives } from "./archives.ts";
 import { BOOST_FOREVER, decodeEntitlements, permanentBoost } from "./shop/entitlements.ts";
 import { decodeShop, defaultShop } from "./shop/ledger.ts";
 import { decodeGoals, defaultGoals } from "./goals.ts";
-import { decodeModifiers, defaultModifiers, validRunModifiers } from "./modifiers.ts";
+import { decodeBadges, defaultBadges, validRunBadges } from "./badges.ts";
 export function defaults(): Save {
   return {
     version: 3,
@@ -45,7 +45,7 @@ export function defaults(): Save {
     consumables: Object.fromEntries(CONSUMABLES.map((c) => [c.id, 0])) as Save["consumables"],
     hand: [...BASE_HAND],
     handSlots: 0,
-    modifiers: defaultModifiers(),
+    badges: defaultBadges(),
     tutorials: { deck: false, removeCard: false, addCard: false, upgrades: false, gear: false, onTheJob: false },
     treeNotices: { inspiration: false, courage: false },
     archives: defaultArchives(),
@@ -112,9 +112,9 @@ const RUN_FIELD_CHECKS = {
   siphoned: (v: unknown) => wholeIn(v, 1, 1e6),
   tier: (v: unknown) => wholeIn(v, 2, TIERS),
   percentPotions: (v: unknown) => wholeIn(v, 1, FIND_POTION_MAX),
-  // The hand is checked first: every card holding a modifier must be in it.
-  mods: (v: unknown, r: any) => validRunModifiers(v) && Object.keys(v as object).every((card) => r.hand?.includes(card)),
-  modFloors: (v: unknown) => isRecord(v) && Object.entries(v).every(([k, n]) => (k === "stairward" || k === "skipOpen") && wholeIn(n, 0, 1e6)),
+  // The hand is checked first: every card holding a badge must be in it.
+  badges: (v: unknown, r: any) => validRunBadges(v) && Object.keys(v as object).every((card) => r.hand?.includes(card)),
+  badgeFloors: (v: unknown) => isRecord(v) && Object.entries(v).every(([k, n]) => (k === "stairward" || k === "skipOpen") && wholeIn(n, 0, 1e6)),
   skipped: (v: any) => isRecord(v) && wholeIn(v.floor, 0, 1e6) && Array.isArray(v.tiles) && v.tiles.every((t: unknown) => typeof t === "string" && POINT_KEY.test(t)),
 };
 /** Drops fields a run of this mode doesn't keep: the other mode's, an
@@ -416,7 +416,7 @@ export function decode(raw: string | null): Save {
     // Slots bought with Gems count only with Larger Hand, which opens them.
     if (d.upgrades.largerHand) d.handSlots = count(s.handSlots, 0, HAND_SLOT_GEMS.length);
     d.hand = decodeHand(s.hand, deckCards(d.upgrades), handSlots(d));
-    d.modifiers = decodeModifiers(s.modifiers, d.upgrades);
+    d.badges = decodeBadges(s.badges, d.upgrades);
     for (const k of ["deck", "removeCard", "addCard", "upgrades", "gear", "onTheJob"] as const) d.tutorials[k] = s.tutorials?.[k] === true;
     for (const k of ["inspiration", "courage"] as const) d.treeNotices[k] = s.treeNotices?.[k] === true;
   } catch {}

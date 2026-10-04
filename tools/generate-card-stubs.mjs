@@ -80,13 +80,33 @@ function key(p, color, rim) {
   rect(p, 31, 21, 2, 5, color);
   rect(p, 35, 21, 2, 4, color);
 }
-/** A shield (DEF UP's icon, and KEY SIPHON's under its key). */
+/** A shield (DEF UP's icon). */
 function shield(p) {
   rect(p, 14, 13, 20, 18, C.blue);
   rect(p, 16, 31, 16, 4, C.blue);
   rect(p, 20, 35, 8, 3, C.blue);
   rect(p, 17, 16, 14, 13, C.steel2);
   rect(p, 23, 16, 2, 19, C.blue);
+}
+/** A heart (KEY SIPHON's, under its key): the curve
+ * (x² + y² − 1)³ ≤ x²y³ over 28 × 26 pixels, dark red round its edge with a
+ * light spot on its upper left lobe. */
+function heart(p) {
+  const left = 10, top = 11, w = 28, h = 26;
+  const inside = (i, j) => {
+    if (i < 0 || j < 0 || i >= w || j >= h) return false;
+    const x = ((i + 0.5) / w) * 2.6 - 1.3, y = 1.25 - ((j + 0.5) / h) * 2.5;
+    const a = x * x + y * y - 1;
+    return a * a * a - x * x * y * y * y <= 0;
+  };
+  for (let j = 0; j < h; j++)
+    for (let i = 0; i < w; i++) {
+      if (!inside(i, j)) continue;
+      const edge = !inside(i - 1, j) || !inside(i + 1, j) || !inside(i, j - 1) || !inside(i, j + 1);
+      rect(p, left + i, top + j, 1, 1, edge ? C.red2 : C.red);
+    }
+  rect(p, 15, 15, 3, 2, C.white);
+  rect(p, 14, 17, 2, 2, C.white);
 }
 // Icons fill the 32 × 32 area at (8, 8).
 const ICONS = {
@@ -134,9 +154,9 @@ const ICONS = {
   },
   defUp: shield,
   keySiphon(p) {
-    // DEF traded for a yellow key: a small key laid over the shield,
+    // Max HP traded for a yellow key: a small key laid over the heart,
     // reaching out past its edge.
-    shield(p);
+    heart(p);
     rect(p, 11, 18, 9, 9, C.gold2);
     rect(p, 12, 19, 7, 7, C.gold);
     rect(p, 14, 21, 3, 3, C.back);

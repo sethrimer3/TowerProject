@@ -4,10 +4,12 @@ import type { Renderer } from "../rendering.ts";
 import { levelForXp, xpForLevel } from "../config.ts";
 import { CONSUMABLES, consumableText } from "../crafting.ts";
 import { outsideWeather } from "../outside.ts";
-import { tierBonusText, tierNumeral } from "../tiers.ts";
+import { tierNumeral, tierRewardText } from "../tiers.ts";
 import { MODES, milestones } from "../modes.ts";
 import { cardArt, CURRENCY_SPRITES, displayedProgress, el, ENTER_ICON, text, uiSprite } from "./dom.ts";
-import { CARDS, IN_PLACE, cardText } from "../cards.ts";
+import { CARDS, IN_PLACE, cardText, type CardId } from "../cards.ts";
+import { BADGES } from "../badges.ts";
+import { badgeStyle } from "./badge-token.ts";
 import { trainingPoints } from "../loadout.ts";
 import { goalsWaiting } from "../goals.ts";
 import type { BoardOverlay } from "./board-overlay.ts";
@@ -162,11 +164,11 @@ export function renderBoardHeading(game: Game, overlay: BoardOverlay) {
   overlay.hide();
 }
 
-/** Once a second tier is open: the tier climbed and its Gold & XP bonus. */
+/** Once a second tier is open: the tier climbed and its Gold and XP bonuses. */
 function tierLine(game: Game) {
   const slice = game.save[game.mode];
   if (slice.tiersOpen < 2) return null;
-  return `${MODES[game.mode].words.tierName.toUpperCase()} ${tierNumeral(slice.tier)} · ${tierBonusText(slice.tier)} GOLD & XP`;
+  return `${MODES[game.mode].words.tierName.toUpperCase()} ${tierNumeral(slice.tier)} · ${tierRewardText(slice.tier).toUpperCase()}`;
 }
 
 /** In the forest, once a second tier is open, the arrows beside the board
@@ -178,7 +180,7 @@ function renderTierArrows(game: Game) {
     const button = el(id) as HTMLButtonElement;
     button.hidden = !shown;
     button.disabled = to < 1 || to > slice.tiersOpen;
-    button.title = button.disabled ? "" : `${name} ${tierNumeral(to)} · ${tierBonusText(to)} Gold & XP`;
+    button.title = button.disabled ? "" : `${name} ${tierNumeral(to)} · ${tierRewardText(to)}`;
   }
 }
 
@@ -210,17 +212,38 @@ function renderAutoButton(game: Game) {
   button.title = label;
 }
 
-/** The hand the cards were last drawn for. */
+/** The hand (and its badges) the cards were last drawn for. */
 let shownHand = "";
+/** A hand card's tooltip: its name and text, inside a run the badge it
+ * holds, and KEY SIPHON's uses so far this run. */
+function handCardTitle(game: Game, id: CardId) {
+  let title = `${CARDS[id].name}: ${cardText(id, game.save.upgrades)}`;
+  if (game.run.outside) return title;
+  const badge = game.run.badges?.[id];
+  if (badge) title += `
+Badge: ${BADGES[badge.id].name}, level ${badge.level}`;
+  if (id === "keySiphon") {
+    const uses = game.run.siphoned ?? 0;
+    title += `
+Used ${uses} time${uses === 1 ? "" : "s"} this run; the next use takes ${game.siphonCost} level${game.siphonCost === 1 ? "" : "s"}.`;
+  }
+  return title;
+}
+/** The level of the badge a hand card holds inside a run, on its top right corner. */
+function handBadgeHtml(game: Game, id: CardId) {
+  const badge = game.run.outside ? undefined : game.run.badges?.[id];
+  return badge ? `<span class="hand-badge-level" style="${badgeStyle(badge.id)}" aria-hidden="true">${badge.level}</span>` : "";
+}
 /** The active hand in the row under the board, the card that made the
  * latest step glowing (paused too); End Run lights up while no card can act. */
 function renderHand(game: Game) {
   const row = el("hand"), hand = game.hand;
-  if (hand.join() !== shownHand) {
-    shownHand = hand.join();
+  const key = `${hand.join()}|${game.run.outside ? "" : JSON.stringify(game.run.badges ?? {})}`;
+  if (key !== shownHand) {
+    shownHand = key;
     // Room for five cards, and narrower cards for a bigger hand.
     row.style.setProperty("--slots", String(Math.max(5, hand.length)));
-    row.innerHTML = hand.map((id, i) => `<div class="hand-card" role="listitem" data-card="${id}" data-hand-slot="${i}" title="${CARDS[id].name}: ${cardText(id, game.save.upgrades)}">${cardArt(id, CARDS[id].name)}</div>`).join("");
+    row.innerHTML = hand.map((id, i) => `<div class="hand-card" role="listitem" data-card="${id}" data-hand-slot="${i}">${cardArt(id, CARDS[id].name)}${handBadgeHtml(game, id)}</div>`).join("");
   }
   // Paused, the card that made the latest step still glows.
   const glowing = game.handStuck ? null : game.activeCard;
@@ -229,8 +252,10 @@ function renderHand(game: Game) {
   row.querySelectorAll<HTMLElement>(".hand-card").forEach((card, i) => {
     card.classList.toggle("active", i === glowing);
     card.classList.toggle("focused", i === focused);
-    // A card that acts in place greys out while it can't (KEY SIPHON with
-    // no DEF training left).
+    const title = handCardTitle(game, hand[i]);
+    if (card.title !== title) card.title = title;
+    // A card that acts in place greys out while it can't (KEY SIPHON
+    // without the Max HP training levels its next use takes).
     card.classList.toggle("unable", !game.run.outside && IN_PLACE.has(hand[i]) && !game.canAct(hand[i]));
   });
   el("end-run").classList.toggle("deadlocked", game.handStuck && !game.run.outside);

@@ -806,6 +806,7 @@ nav:not(.in-run) .hand {
   min-height: 69px;
 }
 .hand-card {
+  position: relative;
   aspect-ratio: 3 / 4;
   border-radius: 3px;
   transition: box-shadow 0.15s;
@@ -816,12 +817,32 @@ nav:not(.in-run) .hand {
   height: 100%;
   image-rendering: pixelated;
 }
+/* Inside a run, the level of the badge the card holds, in its colours. */
+.hand-badge-level {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 2px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--rarity);
+  border-radius: 4px;
+  background: #0c1018e6;
+  color: var(--badge);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
+  box-shadow: 0 1px 3px #000c;
+}
 /* The card that made the latest step. */
 .hand-card.active {
   box-shadow: 0 0 0 2px #ebc77f, 0 0 12px 3px #e0b25a;
 }
-/* A card that acts in place but can't now (KEY SIPHON with no DEF
- * training left): the hand skips it. */
+/* A card that acts in place but can't now (KEY SIPHON without the Max HP
+ * training levels its next use takes): the hand skips it. */
 .hand-card.unable img {
   filter: grayscale(1) brightness(0.55);
 }
@@ -2737,9 +2758,9 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
   to { transform: scale(1.6); opacity: 0; }
 }
 
-/* --- Card modifiers (Deck page) --- */
-.deck-page.with-mods { height: 100%; }
-/* The deck and the Modifiers box side by side, each scrolling on its own. */
+/* --- Card badges (Deck page) --- */
+.deck-page.with-badges { height: 100%; }
+/* The deck and the Badges box side by side, each scrolling on its own. */
 .deck-columns {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -2751,9 +2772,9 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
 .deck-columns > .deck-reserve.open { overflow-y: auto; }
 .deck-columns .deck-grid { grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); gap: 9px; }
 .deck-columns .deck-reserve-slots { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.deck-mods { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
-.mod-draws { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-.mod-draw {
+.deck-badges { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+.badge-draws { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.badge-draw {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -2767,12 +2788,12 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
   letter-spacing: 1px;
   box-shadow: 0 0 8px #2fa9e055;
 }
-.mod-draw span { display: flex; align-items: center; gap: 3px; }
-.mod-draw .gem-icon { width: 15px; height: 15px; }
-.mod-draw b { color: #fff; }
-.mod-draw.short b { color: #ff6b6b; }
-.mod-draw:disabled { opacity: 0.45; cursor: default; box-shadow: none; }
-.mod-box {
+.badge-draw span { display: flex; align-items: center; gap: 3px; }
+.badge-draw .gem-icon { width: 15px; height: 15px; }
+.badge-draw b { color: #fff; }
+.badge-draw.short b { color: #ff6b6b; }
+.badge-draw:disabled { opacity: 0.45; cursor: default; box-shadow: none; }
+.badge-box {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
@@ -2781,14 +2802,14 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
   padding: 8px;
   background: #0a0e14;
 }
-.mod-empty { font-size: 11px; line-height: 1.6; color: #7f8a9d; }
-.mod-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); gap: 14px 6px; padding-top: 6px; }
-.mod-entry { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.mod-pick { display: block; min-height: 0; padding: 0; border: 0; background: none; cursor: grab; touch-action: none; }
-.mod-pick:hover { border: 0; }
-.mod-count { font-size: 10px; letter-spacing: 1px; color: #a9b6c8; }
-.mod-entry.attached .mod-token { box-shadow: 0 0 0 2px #ebc77f, 0 0 10px 2px #e0b25a77, 0 2px 6px #000a; }
-.mod-detach {
+.badge-empty { font-size: 11px; line-height: 1.6; color: #7f8a9d; }
+.badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); gap: 14px 6px; padding-top: 6px; }
+.badge-entry { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.badge-pick { display: block; min-height: 0; padding: 0; border: 0; background: none; cursor: grab; touch-action: none; }
+.badge-pick:hover { border: 0; }
+.badge-count { font-size: 10px; letter-spacing: 1px; color: #a9b6c8; }
+.badge-entry.attached .badge-token { box-shadow: 0 0 0 2px #ebc77f, 0 0 10px 2px #e0b25a77, 0 2px 6px #000a; }
+.badge-detach {
   position: absolute;
   top: -7px;
   left: -2px;
@@ -2805,12 +2826,12 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
   color: #fff;
   box-shadow: 0 1px 4px #000c;
 }
-.mod-detach svg { width: 11px; height: 11px; }
-.mod-detach:hover { background: #cf4034; color: #fff; }
+.badge-detach svg { width: 11px; height: 11px; }
+.badge-detach:hover { background: #cf4034; color: #fff; }
 
 /* A token: a rounded square in the colour of its rarity, its symbol in its
    own colour, and its level on a gold star at the corner. */
-.mod-token {
+.badge-token {
   position: relative;
   display: grid;
   place-items: center;
@@ -2821,16 +2842,16 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
   background: linear-gradient(160deg, #1f2836, #0b0f16);
   box-shadow: inset 0 0 10px color-mix(in srgb, var(--rarity) 45%, transparent), 0 2px 6px #000a;
 }
-.mod-glyph { font-family: system-ui, sans-serif; font-size: 22px; line-height: 1; color: var(--mod); text-shadow: 0 0 6px color-mix(in srgb, var(--mod) 70%, transparent); }
-.mod-level { position: absolute; top: -9px; right: -9px; width: 22px; height: 22px; display: grid; place-items: center; }
-.mod-level svg { position: absolute; inset: 0; width: 100%; height: 100%; fill: #f5c542; stroke: #5a3d00; stroke-width: 1.4; stroke-linejoin: round; filter: drop-shadow(0 1px 2px #000c); }
-.mod-level b { position: relative; top: 1px; font-size: 10px; font-weight: 700; color: #2a1a00; }
-.mod-token.big { width: 96px; height: 96px; border-width: 3px; border-radius: 22px; }
-.mod-token.big .mod-glyph { font-size: 52px; }
-.mod-token.big .mod-level { top: -16px; right: -16px; width: 42px; height: 42px; }
-.mod-token.big .mod-level b { font-size: 17px; }
-/* The badge a card wears for its modifier, at its top right. */
-.mod-badge {
+.badge-glyph { font-family: system-ui, sans-serif; font-size: 22px; line-height: 1; color: var(--badge); text-shadow: 0 0 6px color-mix(in srgb, var(--badge) 70%, transparent); }
+.badge-level { position: absolute; top: -9px; right: -9px; width: 22px; height: 22px; display: grid; place-items: center; }
+.badge-level svg { position: absolute; inset: 0; width: 100%; height: 100%; fill: #f5c542; stroke: #5a3d00; stroke-width: 1.4; stroke-linejoin: round; filter: drop-shadow(0 1px 2px #000c); }
+.badge-level b { position: relative; top: 1px; font-size: 10px; font-weight: 700; color: #2a1a00; }
+.badge-token.big { width: 96px; height: 96px; border-width: 3px; border-radius: 22px; }
+.badge-token.big .badge-glyph { font-size: 52px; }
+.badge-token.big .badge-level { top: -16px; right: -16px; width: 42px; height: 42px; }
+.badge-token.big .badge-level b { font-size: 17px; }
+/* The mark a card wears for the badge it holds, at its top right. */
+.badge-mark {
   position: absolute;
   top: 3px;
   right: 3px;
@@ -2842,26 +2863,24 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
   border: 1.5px solid var(--rarity);
   border-radius: 5px;
   background: #0c1018e6;
-  color: var(--mod);
+  color: var(--badge);
   font-family: system-ui, sans-serif;
   font-size: 11px;
   line-height: 1;
   pointer-events: none;
   box-shadow: 0 1px 3px #000c;
 }
-/* In the hand, clear of the X that returns the card. */
-.deck-slot .mod-badge { top: 17px; }
-.deck-slot.mod-target, .deck-entry.mod-target { border-radius: 5px; box-shadow: 0 0 0 2px #c08bff, 0 0 12px 3px #a874ff99; }
-.deck-ghost.mod-ghost { box-shadow: none; display: grid; place-items: center; }
-.mod-detail { display: grid; place-items: center; margin: 18px 0 12px; }
-.mod-slider { display: flex; align-items: center; gap: 10px; margin: 10px 0 2px; font-size: 12px; color: #c9d3e0; }
-.mod-slider input { flex: 1; accent-color: #c08bff; }
-.mod-slider output { min-width: 72px; text-align: right; color: #f1d69b; }
-.mod-slider-note { display: block; font-size: 10px; color: #7f8a9d; }
-.mod-detail-meta { font-size: 12px; color: #a9b6c8; }
+.deck-slot.badge-target, .deck-entry.badge-target { border-radius: 5px; box-shadow: 0 0 0 2px #c08bff, 0 0 12px 3px #a874ff99; }
+.deck-ghost.badge-ghost { box-shadow: none; display: grid; place-items: center; }
+.badge-detail { display: grid; place-items: center; margin: 18px 0 12px; }
+.badge-slider { display: flex; align-items: center; gap: 10px; margin: 10px 0 2px; font-size: 12px; color: #c9d3e0; }
+.badge-slider input { flex: 1; accent-color: #c08bff; }
+.badge-slider output { min-width: 72px; text-align: right; color: #f1d69b; }
+.badge-slider-note { display: block; font-size: 10px; color: #7f8a9d; }
+.badge-detail-meta { font-size: 12px; color: #a9b6c8; }
 
-/* --- Modifiers drawn --- */
-.mod-reveal {
+/* --- Badges drawn --- */
+.badge-reveal {
   position: fixed;
   inset: 0;
   z-index: 60;
@@ -2875,12 +2894,12 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
   overflow: hidden;
   cursor: pointer;
 }
-.mod-reveal-head { position: absolute; top: 16px; left: 16px; right: 16px; display: flex; align-items: center; justify-content: space-between; }
-.mod-reveal-count { font-size: 15px; letter-spacing: 3px; color: #e9d4ac; }
-.mod-reveal-skip { min-height: 0; padding: 6px 14px; font-size: 12px; letter-spacing: 2px; }
-.mod-reveal-show { display: flex; flex-direction: column; align-items: center; gap: 18px; }
-.mod-reveal-stage { position: relative; display: grid; place-items: center; width: 200px; height: 170px; }
-.mod-reveal-rays {
+.badge-reveal-head { position: absolute; top: 16px; left: 16px; right: 16px; display: flex; align-items: center; justify-content: space-between; }
+.badge-reveal-count { font-size: 15px; letter-spacing: 3px; color: #e9d4ac; }
+.badge-reveal-skip { min-height: 0; padding: 6px 14px; font-size: 12px; letter-spacing: 2px; }
+.badge-reveal-show { display: flex; flex-direction: column; align-items: center; gap: 18px; }
+.badge-reveal-stage { position: relative; display: grid; place-items: center; width: 200px; height: 170px; }
+.badge-reveal-rays {
   position: absolute;
   left: 50%;
   top: 50%;
@@ -2897,14 +2916,14 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
   transform: translate(-50%, -50%);
   animation: card-rays-in 0.6s 0.6s ease-out backwards, card-rays-turn 16s linear infinite;
 }
-.mod-reveal-show.first .mod-token { animation: mod-rise 0.85s cubic-bezier(0.2, 0.9, 0.3, 1.08) backwards; }
-.mod-reveal-text { max-width: 320px; text-align: center; }
-.mod-reveal-show.first .mod-reveal-text { animation: card-text-in 0.5s 0.7s ease-out backwards; }
-.mod-reveal-text small { display: block; font-size: 10px; letter-spacing: 3px; color: #b9c9bd; }
-.mod-reveal-text b { display: block; margin: 6px 0; font-size: 22px; font-weight: 500; color: #f3ead8; }
-.mod-reveal-text p { font-size: 13px; line-height: 1.6; color: #b9c9bd; }
-/* A repeat: a coin token drops onto the modifier, which thumps as it lands. */
-.mod-coin {
+.badge-reveal-show.first .badge-token { animation: badge-rise 0.85s cubic-bezier(0.2, 0.9, 0.3, 1.08) backwards; }
+.badge-reveal-text { max-width: 320px; text-align: center; }
+.badge-reveal-show.first .badge-reveal-text { animation: card-text-in 0.5s 0.7s ease-out backwards; }
+.badge-reveal-text small { display: block; font-size: 10px; letter-spacing: 3px; color: #b9c9bd; }
+.badge-reveal-text b { display: block; margin: 6px 0; font-size: 22px; font-weight: 500; color: #f3ead8; }
+.badge-reveal-text p { font-size: 13px; line-height: 1.6; color: #b9c9bd; }
+/* A repeat: a coin token drops onto the badge, which thumps as it lands. */
+.badge-coin {
   position: absolute;
   left: 50%;
   top: 50%;
@@ -2917,18 +2936,18 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
   background: radial-gradient(circle at 35% 30%, #fff8, transparent 45%), var(--rarity);
   box-shadow: 0 0 14px 4px color-mix(in srgb, var(--rarity) 60%, transparent);
   opacity: 0;
-  animation: mod-coin-drop 0.7s 0.1s ease-in forwards;
+  animation: badge-coin-drop 0.7s 0.1s ease-in forwards;
 }
-.mod-reveal-show.repeat .mod-token { animation: mod-thump 0.32s 0.72s ease-out; }
-.mod-tally { font-size: 30px; letter-spacing: 2px; color: #f3ead8; min-height: 40px; }
-.mod-have { display: inline-block; font-weight: 600; }
-.mod-need { display: inline-block; opacity: 0; color: #a9b6c8; }
-.mod-tally.counted .mod-have, .mod-tally.reset .mod-have { animation: mod-bounce 0.5s ease-out; }
-.mod-tally.counted .mod-need { animation: mod-fade-in 0.3s 0.35s ease-out forwards; }
-.mod-tally.reset .mod-need { opacity: 1; }
+.badge-reveal-show.repeat .badge-token { animation: badge-thump 0.32s 0.72s ease-out; }
+.badge-tally { font-size: 30px; letter-spacing: 2px; color: #f3ead8; min-height: 40px; }
+.badge-have { display: inline-block; font-weight: 600; }
+.badge-need { display: inline-block; opacity: 0; color: #a9b6c8; }
+.badge-tally.counted .badge-have, .badge-tally.reset .badge-have { animation: badge-bounce 0.5s ease-out; }
+.badge-tally.counted .badge-need { animation: badge-fade-in 0.3s 0.35s ease-out forwards; }
+.badge-tally.reset .badge-need { opacity: 1; }
 /* A level reached sparkles onto the star, which bounces. */
-.mod-token.leveled .mod-level { animation: mod-star-pop 0.6s ease-out; }
-.mod-token.leveled .mod-level::after {
+.badge-token.leveled .badge-level { animation: badge-star-pop 0.6s ease-out; }
+.badge-token.leveled .badge-level::after {
   content: "";
   position: absolute;
   inset: -90%;
@@ -2938,61 +2957,61 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
   mask-image: radial-gradient(circle, transparent 22%, #000 30%, transparent 70%);
   opacity: 0;
   pointer-events: none;
-  animation: mod-sparkle 0.8s ease-out;
+  animation: badge-sparkle 0.8s ease-out;
 }
-.mod-reveal-go { min-width: 160px; letter-spacing: 2px; }
-.mod-reveal-summary { display: flex; flex-direction: column; align-items: center; gap: 16px; }
-.mod-reveal-kicker { font-size: 11px; letter-spacing: 3px; color: #e9d4ac; }
-.mod-sum-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 22px 12px; max-width: 420px; }
-.mod-sum { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; animation: mod-pop 0.35s calc(var(--i) * 70ms) ease-out backwards; }
-.mod-sum small { font-size: 9px; letter-spacing: 1px; color: #a9b6c8; text-align: center; }
-.mod-sum-tag { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 9px; font-weight: 700; letter-spacing: 1px; }
-.mod-sum-tag.new { color: #f5c542; }
-.mod-sum-tag.up { color: #8dff7a; animation: mod-tag-bounce 0.6s calc(var(--i) * 70ms + 0.4s) ease-out 3; }
-.mod-sum-tag.up i { font-style: normal; margin-right: 2px; }
-.mod-reveal.still *, .mod-reveal.still *::after { animation: none !important; }
-.mod-reveal.still .mod-coin { display: none; }
-.mod-reveal.still .mod-need { opacity: 1; }
-@keyframes mod-rise {
+.badge-reveal-go { min-width: 160px; letter-spacing: 2px; }
+.badge-reveal-summary { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.badge-reveal-kicker { font-size: 11px; letter-spacing: 3px; color: #e9d4ac; }
+.badge-sum-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 22px 12px; max-width: 420px; }
+.badge-sum { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; animation: badge-pop 0.35s calc(var(--i) * 70ms) ease-out backwards; }
+.badge-sum small { font-size: 9px; letter-spacing: 1px; color: #a9b6c8; text-align: center; }
+.badge-sum-tag { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 9px; font-weight: 700; letter-spacing: 1px; }
+.badge-sum-tag.new { color: #f5c542; }
+.badge-sum-tag.up { color: #8dff7a; animation: badge-tag-bounce 0.6s calc(var(--i) * 70ms + 0.4s) ease-out 3; }
+.badge-sum-tag.up i { font-style: normal; margin-right: 2px; }
+.badge-reveal.still *, .badge-reveal.still *::after { animation: none !important; }
+.badge-reveal.still .badge-coin { display: none; }
+.badge-reveal.still .badge-need { opacity: 1; }
+@keyframes badge-rise {
   from { transform: translateY(60vh) scale(0.7); }
   to { transform: none; }
 }
-@keyframes mod-coin-drop {
+@keyframes badge-coin-drop {
   0% { opacity: 0; transform: translateY(-180px) scale(1); }
   15% { opacity: 1; }
   85% { opacity: 1; transform: translateY(0) scale(0.75); }
   100% { opacity: 0; transform: translateY(6px) scale(0.35); }
 }
-@keyframes mod-thump {
+@keyframes badge-thump {
   40% { transform: scale(1.08, 0.9); }
   to { transform: none; }
 }
-@keyframes mod-bounce {
+@keyframes badge-bounce {
   0% { transform: translateY(0) scale(1); }
   35% { transform: translateY(-12px) scale(1.25); }
   65% { transform: translateY(2px) scale(0.95); }
   to { transform: none; }
 }
 /* The tag is centred with a transform, so its bounce keeps the centring. */
-@keyframes mod-tag-bounce {
+@keyframes badge-tag-bounce {
   0%, 100% { transform: translateX(-50%); }
   40% { transform: translateX(-50%) translateY(-6px) scale(1.15); }
 }
-@keyframes mod-fade-in {
+@keyframes badge-fade-in {
   from { opacity: 0; transform: translateX(-6px); }
   to { opacity: 1; transform: none; }
 }
-@keyframes mod-star-pop {
+@keyframes badge-star-pop {
   0% { transform: scale(1); }
   35% { transform: scale(1.6) rotate(-12deg); }
   70% { transform: scale(0.9) rotate(4deg); }
   to { transform: none; }
 }
-@keyframes mod-sparkle {
+@keyframes badge-sparkle {
   0% { opacity: 1; transform: scale(0.3) rotate(0deg); }
   to { opacity: 0; transform: scale(1.5) rotate(45deg); }
 }
-@keyframes mod-pop {
+@keyframes badge-pop {
   from { opacity: 0; transform: scale(0.4); }
   to { opacity: 1; transform: none; }
 }

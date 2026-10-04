@@ -72,6 +72,12 @@ export class RunTrainingBar {
       const card = (e.target as HTMLElement).closest<HTMLElement>(".drill-card");
       if (card && card !== this.tipFor) this.showTip(card);
     });
+    // A mouse leaving the card hides its details, even into the strip's
+    // empty space past the last card.
+    cards.addEventListener("pointerout", (e) => {
+      if (e.pointerType !== "mouse" || !this.tipFor) return;
+      if (!this.tipFor.contains(e.relatedTarget as Node | null)) this.hideTip();
+    });
     cards.addEventListener("pointerleave", () => this.hideTip());
     cards.addEventListener("scroll", () => this.hideTip());
     // With no scrollbar shown, a mouse wheel scrolls the cards sideways.

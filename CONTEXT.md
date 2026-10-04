@@ -117,7 +117,7 @@ The damage a hero's shroud blocks in each fight: the enemy's strikes, after DEF,
 _Avoid_: shield (the equipment slot), barrier
 
 **Key Siphon**:
-A card that moves nowhere: its turn trades one level of DEF training, for the rest of the run only, for a yellow key. Skipped once the run has no DEF training left.
+A card that moves nowhere: its turn trades Max HP training levels, for the rest of the run only, for a yellow key, each use in a run taking one level more than the last (1, then 2, then 3 …). Skipped once the run has too few Max HP training levels left for the next use.
 _Avoid_: key trade, drain
 
 **Regen**:
@@ -135,7 +135,7 @@ The one scale both modes' progress maps onto: a Tower floor counts as itself, an
 _Avoid_: effective floor, tier
 
 **Tier**:
-One of the numbered towers (Tower I to IX), or of the delves (Delve I to IX), that a run climbs. Beating the boss on floor 100 of the highest one opened opens the next. Each has the same floors as the first with monsters three times as strong as the one before, pays more Gold and XP, and keeps its own records, milestones and clear chests. Not to be confused with a clear tier or a monster's rank.
+One of the numbered towers (Tower I to IX), or of the delves (Delve I to IX), that a run climbs. Beating the boss on floor 100 of the highest one opened opens the next. Each has the same floors as the first with monsters three times as strong as the one before, pays more Gold, pays XP times the same factor as its monsters' stats, and keeps its own records, milestones and clear chests. Not to be confused with a clear tier or a monster's rank.
 _Avoid_: new tower, prestige, world
 
 **Inspiration**:
@@ -235,12 +235,12 @@ _Avoid_: diamond, crystal, premium
 Putting one card of the hand ahead of the others inside a run, until the hero reaches its target or the card has no path to one. A run has a limited number of Focus uses.
 _Avoid_: priority, override
 
-**Card modifier**:
-A token bought with Gems (drawn by rarity: common, rare or epic) and attached to one card, changing what the card does when it activates: paying something (HP, Silver, Gold, XP), gating it (it acts only while a condition holds) or changing its target (Stairward, Skip Open Nodes, Charge). A card holds one, and a modifier sits on one card at a time. More copies of a modifier raise its level, up to 7.
+**Card badge**:
+A token bought with Gems (drawn by rarity: common, rare or epic) and attached to one card, changing what the card does when it activates: paying something (HP, Silver, Gold, XP), gating it (it acts only while a condition holds) or changing its target (Stairward, Skip Open Nodes, Charge). A card holds one, and a badge sits on one card at a time. More copies of a badge raise its level, up to 7.
 _Avoid_: rune, gem, charm, enchantment
 
 **Activation**:
-A card of the hand doing what it is for: its path's last step reaching its target, or a card that acts in place acting. Card modifiers pay on activation.
+A card of the hand doing what it is for: its path's last step reaching its target, or a card that acts in place acting. Card badges pay on activation.
 _Avoid_: trigger, proc
 
 **Stuck hand**:

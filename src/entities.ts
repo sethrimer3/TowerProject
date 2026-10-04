@@ -2,7 +2,7 @@ import type { TrainingJob, TrainingPaid } from "./training-jobs.ts";
 import type { TierRecord } from "./tiers.ts";
 import type { ArchivesSave } from "./archives.ts";
 import type { CardId } from "./cards.ts";
-import type { ModifiersSave, RunModifier } from "./modifiers.ts";
+import type { BadgesSave, RunBadge } from "./badges.ts";
 import type { GoldItemId, KeyColor, TrainingId, UpgradeId } from "./config.ts";
 import type { MaterialId } from "./materials.ts";
 import type { CraftedEquipment, EquipmentSlot } from "./equipment.ts";
@@ -117,18 +117,18 @@ export type RunCore = {
   /** Training ranks bought with Silver this run, on top of the hero's own:
    * they last only for this run. */
   training?: Partial<Record<TrainingId, number>>;
-  /** Levels of DEF training KEY SIPHON has traded for yellow keys this
-   * run: lost only for this run. */
+  /** Times KEY SIPHON has traded Max HP training levels for yellow keys this
+   * run (the nth use took n levels): lost only for this run. */
   siphoned?: number;
   /** Which numbered tower (or delve) the run climbs, from 2 up (tiers.ts);
    * absent for the first. */
   tier?: number;
-  /** The card modifiers on the hand's cards as the run went inside
-   * (modifiers.ts), fixed for the run. */
-  mods?: Partial<Record<CardId, RunModifier>>;
-  /** The floor each cooling-down modifier (Stairward, Skip Open Nodes) last
+  /** The card badges on the hand's cards as the run went inside
+   * (badges.ts), fixed for the run. */
+  badges?: Partial<Record<CardId, RunBadge>>;
+  /** The floor each cooling-down badge (Stairward, Skip Open Nodes) last
    * worked on: it works again on that floor, or once enough floors pass. */
-  modFloors?: Partial<Record<"stairward" | "skipOpen", number>>;
+  badgeFloors?: Partial<Record<"stairward" | "skipOpen", number>>;
   /** The doors and monsters Skip Open Nodes passed over on floor `floor`
    * (points), skipped and marked for the rest of that floor. */
   skipped?: { floor: number; tiles: string[] };
@@ -242,9 +242,9 @@ export type Save = {
   hand: CardId[];
   /** Hand slots bought with Gems (after Larger Hand's). */
   handSlots: number;
-  /** The card modifiers owned, which card holds each, and where their
-   * draws' stream stands (modifiers.ts). */
-  modifiers: ModifiersSave;
+  /** The card badges owned, which card holds each, and where their
+   * draws' stream stands (badges.ts). */
+  badges: BadgesSave;
   /** Tutorials the player has finished: on the Deck page `deck`,
    * reordering the hand; `removeCard`, taking a card out of it; `addCard`,
    * the note on adding cards from the deck; `upgrades`, opening the

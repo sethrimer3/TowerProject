@@ -1,7 +1,7 @@
 import { entrance, floorFor } from "./delve/labyrinth.ts";
 import { chooseStep } from "./automation.ts";
 import { CARDS, cardText, planHand, type CardId, type CardPlan, type CardRules } from "./cards.ts";
-import { MODIFIERS, modifierValue, runModifiers, type ModifierId } from "./modifiers.ts";
+import { BADGES, badgeValue, runBadges, type BadgeId } from "./badges.ts";
 import { BOOST_FOREVER, permanentBoost } from "./shop/entitlements.ts";
 import { offer, type OfferId } from "./shop/offers.ts";
 import { purchase, type Refusal } from "./shop/transactions.ts";
@@ -56,7 +56,7 @@ import { OutsideWorld } from "./outside.ts";
 import { ClearLedger } from "./tower/clear-ledger.ts";
 import { TowerClimb } from "./tower/climb.ts";
 import { materialDef, MATERIALS } from "./materials.ts";
-import { TIERS, TIER_BOSS_FLOOR, switchTier, tierBonus, tierBonusText, tierGold, tierNumeral } from "./tiers.ts";
+import { TIERS, TIER_BOSS_FLOOR, switchTier, tierGold, tierNumeral, tierRewardText, tierXp } from "./tiers.ts";
 import { enemyTitle } from "./scaling.ts";
 import { snap } from "./exact.ts";
 import { whole, wholeChange } from "./whole.ts";
@@ -72,7 +72,7 @@ import { ResearchDesk } from "./game/research-desk.ts";
 import { DeckEditor } from "./game/deck-editor.ts";
 import { GearDesk } from "./game/gear-desk.ts";
 import { GemFinder } from "./game/gem-finder.ts";
-import { ModifierDesk } from "./game/modifier-desk.ts";
+import { BadgeDesk } from "./game/badge-desk.ts";
 import { RunPurse } from "./game/run-purse.ts";
 import { readyForestRuns, startingHero } from "./game/hero-sync.ts";
 /** How a new run starts: out in the forest or at the entrance, and from
@@ -176,9 +176,9 @@ export class Game {
   readonly gear = new GearDesk(this);
   /** The Gem on the board, collecting it, and the ad's Gems. */
   readonly gemFinder = new GemFinder(this);
-  /** The Deck page's card modifiers: drawing them with Gems and attaching
+  /** The Deck page's card badges: drawing them with Gems and attaching
    * them to cards. */
-  readonly modifiers = new ModifierDesk(this);
+  readonly badges = new BadgeDesk(this);
   /** `rng` is the game's randomness: new run seeds, enemy drops and
    * treasure loot all draw from it (the `game` stream unless given), so a
    * seeded stream replays a game and no visual effect can shift it. */
@@ -490,14 +490,14 @@ export class Game {
       this.activate(plan.card, key);
     };
   }
-  /** What card `card`'s modifier changes about planning it (`planHand`
+  /** What card `card`'s badge changes about planning it (`planHand`
    * asks): a gate closes it while its condition fails, and Stairward and
    * Skip Open Nodes count only on floors they aren't cooling down on. */
   cardRules(card: CardId): CardRules | undefined {
-    const mod = this.run.mods?.[card];
-    if (!mod || this.run.outside) return undefined;
-    const v = modifierValue(mod.id, mod.level, mod.pick), p = this.run.player;
-    switch (mod.id) {
+    const badge = this.run.badges?.[card];
+    if (!badge || this.run.outside) return undefined;
+    const v = badgeValue(badge.id, badge.level, badge.pick), p = this.run.player;
+    switch (badge.id) {
       case "hpGate": return { closed: !(p.hp < snap((p.maxHp * v) / 100)) };
       case "yellowGate": return { closed: !(p.keys.yellow < v) };
       case "blueGate": return { closed: !(p.keys.blue < v) };
@@ -508,24 +508,24 @@ export class Game {
       default: return undefined;
     }
   }
-  /** The floor card modifiers count by: the Tower floor, or the Delve's
+  /** The floor card badges count by: the Tower floor, or the Delve's
    * equivalent floor where the hero stands. */
   private get modFloor() {
     return this.rules.equivalentFloor(this.rules.progressAt(this.run, this.run.player.y));
   }
-  /** Whether a cooling-down modifier works on this floor: never used, used
+  /** Whether a cooling-down badge works on this floor: never used, used
    * on this floor already, or `every` floors on from the last it worked on. */
   private cooled(kind: "stairward" | "skipOpen", every: number) {
-    const last = this.run.modFloors?.[kind], floor = this.modFloor;
+    const last = this.run.badgeFloors?.[kind], floor = this.modFloor;
     return last === undefined || last === floor || floor - last >= every;
   }
-  /** A cooling-down modifier works on this floor: it rests from here. */
+  /** A cooling-down badge works on this floor: it rests from here. */
   private markUsed(kind: "stairward" | "skipOpen") {
-    (this.run.modFloors ??= {})[kind] = this.modFloor;
+    (this.run.badgeFloors ??= {})[kind] = this.modFloor;
   }
   /** A new plan for card `id` under Stairward counts as its use. */
   private coolDown(id: CardId) {
-    if (this.run.mods?.[id]?.id === "stairward" && this.cardRules(id)?.stairward) this.markUsed("stairward");
+    if (this.run.badges?.[id]?.id === "stairward" && this.cardRules(id)?.stairward) this.markUsed("stairward");
   }
   /** The doors and monsters Skip Open Nodes passed over on this floor, as
    * points, for the planner and the board's marks. */
@@ -541,21 +541,21 @@ export class Game {
     if (!this.run.skipped.tiles.includes(k)) this.run.skipped.tiles.push(k);
     this.markUsed("skipOpen");
   }
-  /** Card `card` of the hand activates: its modifier pays what it gives.
+  /** Card `card` of the hand activates: its badge pays what it gives.
    * Gold is paid once per target (`key`, gated by lootedTiles like a kill's),
    * since undo can't take it back; HP, Silver and XP are the run's or in
    * its undo snapshot. */
   private activate(card: number, key: string) {
-    const id = this.hand[card], mod = id && this.run.mods?.[id];
-    if (!mod || !this.playing) return;
-    const v = modifierValue(mod.id, mod.level, mod.pick), p = this.run.player;
-    switch (mod.id) {
-      case "hp": return this.modifierHeal(v, mod.id);
-      case "hpPercent": return this.modifierHeal(snap((p.maxHp * v) / 100), mod.id);
+    const id = this.hand[card], badge = id && this.run.badges?.[id];
+    if (!badge || !this.playing) return;
+    const v = badgeValue(badge.id, badge.level, badge.pick), p = this.run.player;
+    switch (badge.id) {
+      case "hp": return this.badgeHeal(v, badge.id);
+      case "hpPercent": return this.badgeHeal(snap((p.maxHp * v) / 100), badge.id);
       case "silverTouch": return this.gainCoins(p, 0, this.purse.silver(v));
-      case "goldTouch": return this.gainCoins(p, this.purse.modifierGold(`mod:${id}:${key}`, v), 0, false);
+      case "goldTouch": return this.gainCoins(p, this.purse.badgeGold(`badge:${id}:${key}`, v), 0, false);
       case "goldback":
-        if (card === this.hand.length - 1) this.gainCoins(p, this.purse.modifierGold(`mod:${id}:${key}`, v), 0, false);
+        if (card === this.hand.length - 1) this.gainCoins(p, this.purse.badgeGold(`badge:${id}:${key}`, v), 0, false);
         return;
       case "xp": {
         const xp = Math.round((v * xpBase(this.modFloor)) / xpBase(0));
@@ -564,40 +564,50 @@ export class Game {
       }
     }
   }
-  /** Heals up to `n` HP for modifier `id`, as a potion's heal shows. */
-  private modifierHeal(n: number, id: ModifierId) {
+  /** Heals up to `n` HP for badge `id`, as a potion's heal shows. */
+  private badgeHeal(n: number, id: BadgeId) {
     const p = this.run.player, healed = snap(Math.min(p.maxHp - p.hp, n));
     if (healed <= 0) return;
     p.hp = snap(p.hp + healed);
     this.recordHeal(healed);
-    this.message = `${MODIFIERS[id].name} · +${wholeChange(healed)} HP`;
+    this.message = `${BADGES[id].name} · +${wholeChange(healed)} HP`;
   }
   /** Whether a card that acts in place can act now (`planHand` asks):
-   * KEY SIPHON, inside a run, while a level of DEF training is left. */
+   * KEY SIPHON, inside a run, while enough Max HP training levels are left
+   * for its next use. */
   canAct(card: CardId) {
-    return card === "keySiphon" && this.siphonLevel > 0;
+    return card === "keySiphon" && this.siphonLevel >= this.siphonCost;
   }
-  /** The run's DEF training level, as KEY SIPHON drains it: the hero's own
-   * ranks and those bought with Silver this run, less the levels siphoned;
-   * 0 outside a run. */
+  /** The run's Max HP training level, as KEY SIPHON drains it: the hero's
+   * own ranks and those bought with Silver this run, less the levels
+   * siphoned (1 for the first use, 2 for the second, and so on); 0 outside
+   * a run. */
   get siphonLevel() {
     if (this.run.outside) return 0;
-    return this.save.training.defense + boughtInRun(this.run, "defense") - (this.run.siphoned ?? 0);
+    const uses = this.run.siphoned ?? 0;
+    return this.save.training.hp + boughtInRun(this.run, "hp") - (uses * (uses + 1)) / 2;
   }
-  /** KEY SIPHON: a turn with no step that trades the run's top level of
-   * DEF training for a yellow key. The hero and the run's loadout lose what
-   * that level adds at the hero's level, for the rest of the run only; it
+  /** The Max HP training levels KEY SIPHON's next use takes: one more than
+   * the last. */
+  get siphonCost() {
+    return (this.run.siphoned ?? 0) + 1;
+  }
+  /** KEY SIPHON: a turn with no step that trades the run's top Max HP
+   * training levels (`siphonCost` of them) for a yellow key. The hero and
+   * the run's loadout lose the max HP those levels add at the hero's level,
+   * for the rest of the run only, HP falling only as far as the new max; it
    * is a turn of its own, so undo takes it back. */
   private siphon() {
-    const level = this.siphonLevel, p = this.run.player, heroLevel = levelForXp(this.save.xp);
-    const row = TRAINING.find((t) => t.id === "defense") as StatTrainingRow;
-    const loss = snap(trained(row, level, heroLevel) - trained(row, level - 1, heroLevel));
+    const level = this.siphonLevel, levels = this.siphonCost, p = this.run.player, heroLevel = levelForXp(this.save.xp);
+    const row = TRAINING.find((t) => t.id === "hp") as StatTrainingRow;
+    const loss = snap(trained(row, level, heroLevel) - trained(row, level - levels, heroLevel));
     this.remember(this.snapshot());
-    p.defense = snap(p.defense - loss);
-    if (this.run.loadout) this.run.loadout.defense = snap(this.run.loadout.defense - loss);
+    p.maxHp = snap(p.maxHp - loss);
+    p.hp = Math.min(p.hp, p.maxHp);
+    if (this.run.loadout) this.run.loadout.maxHp = snap(this.run.loadout.maxHp - loss);
     p.keys.yellow++;
-    this.run.siphoned = (this.run.siphoned ?? 0) + 1;
-    this.gain(p.x, p.y, `−${wholeChange(loss)} DEF`, { tile: { kind: "defense" }, spent: true });
+    this.run.siphoned = levels;
+    this.gain(p.x, p.y, `−${wholeChange(loss)} max HP`, { heart: true });
     this.gain(p.x, p.y, "+1 yellow key", { tile: { kind: "key", color: "yellow" } });
   }
   /** Rush: the first step toward a new target, onto an empty tile, goes on
@@ -670,8 +680,8 @@ export class Game {
    * of percent potions. */
   private dealHand() {
     this.run.hand = [...this.save.hand];
-    const mods = this.save.upgrades.cardModifiers ? runModifiers(this.save.modifiers, this.run.hand) : {};
-    if (Object.keys(mods).length) this.run.mods = mods;
+    const badges = this.save.upgrades.cardBadges ? runBadges(this.save.badges, this.run.hand) : {};
+    if (Object.keys(badges).length) this.run.badges = badges;
     const pocket = researched(this.save.archives, "startingSilver", 0);
     if (pocket) this.run.silver = pocket;
     const chance = percentPotionChance(this.save);
@@ -865,7 +875,7 @@ export class Game {
   /** Pays the XP for beating `enemy` on equivalent floor `floor`, counting
    * it toward the run's total too. */
   gainXp(enemy: Enemy, floor: number) {
-    this.addXp(tierBonus(this.tier, xpForKill(enemy.strength, floor)));
+    this.addXp(tierXp(this.tier, xpForKill(enemy.strength, floor)));
   }
   /** Adds `xp` to the hero's and the run's, raising the level-up burst
    * when it reaches a new level. */
@@ -1113,7 +1123,7 @@ export class Game {
     if (!this.canSelectTier(tier)) return false;
     switchTier(this.slice, tier);
     this.newRun({ outside: true });
-    this.message = `${this.rules.words.tierName} ${tierNumeral(tier)} · ${tierBonusText(tier)} Gold & XP`;
+    this.message = `${this.rules.words.tierName} ${tierNumeral(tier)} · ${tierRewardText(tier)}`;
     return true;
   }
   /** Whether the forest may switch to `tier`: opened, and not the one selected. */

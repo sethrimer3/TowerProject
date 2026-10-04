@@ -1,4 +1,5 @@
 import type { Game, RouteEffects } from "../state.ts";
+import type { Step } from "../pathfinding.ts";
 import type { Renderer } from "../rendering.ts";
 import { el } from "./dom.ts";
 import { routeTotalLines, tileInfo, tileInfoLine } from "./tile-info.ts";
@@ -14,6 +15,10 @@ export class BoardOverlay {
   private inspectVisible = false;
   private routeVisible = false;
   private routeEffects: RouteEffects | null = null;
+  /** The previewed route's tiles, to total again when the hero changes. */
+  private route: Step[] | null = null;
+  /** Where the highlight was last placed (`track`), and whether on screen. */
+  private placed = "";
 
   constructor(private game: Game, private renderer: Renderer) {}
 
@@ -29,11 +34,40 @@ export class BoardOverlay {
     } else this.preview(x, y);
   }
 
-  /** Re-renders the open boxes after the board changed under them. */
-  refresh() {
+  /** Re-renders the open boxes after the board changed under them. With
+   * `retrained` (a run training purchase, the hero standing where it was),
+   * the route's totals are worked out again for the hero's new stats, as
+   * the inspect box's forecast is. */
+  refresh(retrained = false) {
     if (!this.highlighted) return;
     if (this.inspectVisible) this.showInspect(this.highlighted.x, this.highlighted.y);
+    if (retrained && this.routeEffects && this.route) this.routeEffects = this.game.previewRouteEffects(this.route) ?? this.routeEffects;
     if (this.routeVisible && this.routeEffects) this.showRoute(this.routeEffects);
+    this.placed = "";
+    this.track();
+  }
+
+  /** Keeps the highlight and its boxes on the highlighted tile as the
+   * camera moves (the Delve's follows the hero), hiding them while the
+   * tile is off the board and showing them again once it is back. Run each
+   * board frame; it does nothing while nothing moved. */
+  track() {
+    if (!this.highlighted) return;
+    const { x, y } = this.highlighted, r = this.renderer, n = r.density;
+    const onScreen = x + 0.5 >= r.left && x + 0.5 <= r.left + n && y + 0.5 >= r.bottom && y + 0.5 <= r.bottom + n;
+    const { left, top, s } = this.tileRect(x, y);
+    const key = `${onScreen}:${left.toFixed(1)}:${top.toFixed(1)}:${s}`;
+    if (key === this.placed) return;
+    this.placed = key;
+    const visibility = onScreen ? "" : "hidden";
+    const glow = el("tile-highlight");
+    glow.style.visibility = visibility;
+    el("inspect-box").style.visibility = visibility;
+    el("route-box").style.visibility = visibility;
+    if (!onScreen) return;
+    this.placeGlow(left, top, s);
+    if (this.inspectVisible) this.placeInspect(x, y);
+    if (this.routeVisible) this.placeRoute();
   }
 
   /** Clears the highlight once the player reaches the highlighted tile, or
@@ -63,8 +97,16 @@ export class BoardOverlay {
     this.hideInspect();
     this.hideRoute();
     this.routeEffects = null;
+    this.route = null;
+    this.placed = "";
     const glow = el("tile-highlight");
-    if (glow.hidden) return;
+    el("inspect-box").style.visibility = "";
+    el("route-box").style.visibility = "";
+    if (glow.hidden || glow.style.visibility === "hidden") {
+      glow.style.visibility = "";
+      glow.hidden = true;
+      return;
+    }
     glow.classList.remove("active");
     glow.classList.add("fade-out");
     clearTimeout(this.fadeTimer);
@@ -92,6 +134,9 @@ export class BoardOverlay {
     if (effects) this.showRoute(effects);
     else this.hideRoute();
     this.routeEffects = effects;
+    this.route = route?.length ? route : null;
+    this.placed = "";
+    this.track();
   }
 
   private isHighlighted(p: { x: number; y: number }) {
@@ -124,22 +169,32 @@ export class BoardOverlay {
     const { left, top, s } = this.tileRect(x, y),
       glow = el("tile-highlight");
     clearTimeout(this.fadeTimer);
-    glow.style.left = `${left}px`;
-    glow.style.top = `${top}px`;
-    glow.style.width = `${s}px`;
-    glow.style.height = `${s}px`;
+    this.placeGlow(left, top, s);
     glow.hidden = false;
     glow.classList.remove("fade-out");
     glow.classList.add("active");
   }
 
-  /** Above the tile, or below it when there is no room above. */
+  private placeGlow(left: number, top: number, s: number) {
+    const glow = el("tile-highlight");
+    glow.style.left = `${left}px`;
+    glow.style.top = `${top}px`;
+    glow.style.width = `${s}px`;
+    glow.style.height = `${s}px`;
+  }
+
   private showInspect(x: number, y: number) {
     const d = tileInfo(this.game, x, y),
       box = el("inspect-box");
     box.innerHTML = `<b style="color:${d.color}">${d.title}</b><div>${d.body}</div>`;
     box.hidden = false;
     this.inspectVisible = true;
+    this.placeInspect(x, y);
+  }
+
+  /** Above the tile, or below it when there is no room above. */
+  private placeInspect(x: number, y: number) {
+    const box = el("inspect-box");
     const { left: tileLeft, top: tileTop, s, frameRect } = this.tileRect(x, y),
       boxRect = box.getBoundingClientRect();
     let left = tileLeft + s / 2 - boxRect.width / 2;
@@ -150,7 +205,6 @@ export class BoardOverlay {
     box.style.top = `${top}px`;
   }
 
-  /** Just below the inspect box, or above it when there is no room below. */
   private showRoute(effects: RouteEffects) {
     const lines = routeTotalLines(effects);
     const box = el("route-box");
@@ -162,6 +216,12 @@ export class BoardOverlay {
     box.innerHTML = `<b>Route totals</b><div>${lines.join("<br>")}</div>`;
     box.hidden = false;
     this.routeVisible = true;
+    this.placeRoute();
+  }
+
+  /** Just below the inspect box, or above it when there is no room below. */
+  private placeRoute() {
+    const box = el("route-box");
     const inspectBox = el("inspect-box"),
       frameRect = el("board-frame").getBoundingClientRect(),
       inspectTop = parseFloat(inspectBox.style.top) || 0,

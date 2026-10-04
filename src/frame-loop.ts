@@ -19,6 +19,8 @@ export type FrameLoopHost = {
   vitals(): void;
   /** Moves on the purse's Gold and Silver while they count up. */
   purse(time: number): void;
+  /** Keeps the tile highlight on its tile as the camera moves. */
+  highlight(): void;
   save(): void;
 };
 
@@ -58,6 +60,7 @@ export class FrameLoop {
       if (isBoard(tab)) {
         this.boardFrame(time);
         host.purse(time);
+        host.highlight();
       }
       if (tab === "defend" && !host.modal.open) host.defendFrame(time);
     }

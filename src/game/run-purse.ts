@@ -115,10 +115,10 @@ export class RunPurse {
     return this.gold(tierGold(this.tier, this.researched(base, "floorGold")));
   }
 
-  /** A card modifier's Gold (Gold Touch, Goldback) for a card reaching its
+  /** A card badge's Gold (Gold Touch, Goldback) for a card reaching its
    * target, with the tier's bonus: once per target (`key`, in lootedTiles),
    * since undo can't take Gold back. Returns what it paid. */
-  modifierGold(key: string, amount: number) {
+  badgeGold(key: string, amount: number) {
     if (!this.loot(key)) return 0;
     return this.gold(tierGold(this.tier, amount));
   }

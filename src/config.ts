@@ -255,9 +255,9 @@ export const UPGRADES = [
     currency: "courage",
   },
   {
-    id: "cardModifiers",
-    name: "Card Modifiers",
-    description: "Open the Modifiers box on the Deck page: tokens bought with Gems that change what a card does when it activates",
+    id: "cardBadges",
+    name: "Badges",
+    description: "Open the Badges box on the Deck page: tokens bought with Gems that change what a card does when it activates",
     base: 2,
     max: 1,
     currency: "courage",
@@ -281,7 +281,7 @@ export const UPGRADES = [
   {
     id: "keySiphon",
     name: "Key Siphon",
-    description: "Add the KEY SIPHON card to your deck: it trades a level of DEF training, for the rest of the run, for a yellow key",
+    description: "Add the KEY SIPHON card to your deck: it trades Max HP training levels, for the rest of the run, for a yellow key, each use costing one level more than the last",
     card: "keySiphon",
     base: 5,
     max: 1,

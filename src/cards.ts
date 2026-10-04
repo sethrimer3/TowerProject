@@ -16,7 +16,7 @@ export const CARDS = {
   monster: { name: "Monster", text: "Move toward the closest monster." },
   atkUp: { name: "ATK Up", text: "Move toward the closest ATK pickup." },
   defUp: { name: "DEF Up", text: "Move toward the closest DEF pickup." },
-  keySiphon: { name: "Key Siphon", text: "Trade a level of DEF training, for the rest of the run, for a yellow key, without moving. Skipped with no DEF training left." },
+  keySiphon: { name: "Key Siphon", text: "Trade Max HP training levels for a yellow key, without moving, for the rest of the run. The first use takes 1 level and each use after takes 1 more (2, then 3…). Skipped without enough levels left." },
 } as const;
 export type CardId = keyof typeof CARDS;
 export const CARD_IDS = Object.keys(CARDS) as CardId[];
@@ -88,7 +88,7 @@ export type CardPlan = { card: number; path: Step[] };
 /** Cards that act where the hero stands, a turn with no step, rather than
  * moving toward a target: KEY SIPHON. */
 export const IN_PLACE = new Set<CardId>(["keySiphon"]);
-/** What a card's modifier changes about planning it (modifiers.ts), as
+/** What a card's badge changes about planning it (badges.ts), as
  * `HandAt.cardRules` gives it: nothing when absent. */
 export type CardRules = {
   /** A gate whose condition doesn't hold: the card can't act. A Focus
@@ -105,7 +105,7 @@ export type CardRules = {
 };
 /** Where the hand plans from: the board and the run, whether a card that
  * acts in place can act now (none can when this is absent), and what each
- * card's modifier changes (`cardRules`). */
+ * card's badge changes (`cardRules`). */
 export type HandAt = Position & { canAct?: (card: CardId) => boolean; cardRules?: (card: CardId) => CardRules | undefined };
 
 /** Tiles a card's path may cross on the way to its target, taking what
@@ -149,7 +149,7 @@ const WANTS: Record<CardId, (t: Tile, at: Position) => boolean> = {
  * reach, and the shortest path to its closest target, or one that acts in
  * place and can now (`canAct`), with no path; null when no card can. It looks
  * only at the floor the hero stands on: stairs up end a path, and stairs
- * down are never crossed or a target. A card's modifier may close it (a
+ * down are never crossed or a target. A card's badge may close it (a
  * gate) or change its target (`cardRules`). With `only`, it plans that
  * card alone (a Focus), whatever its gate. */
 export function planHand(at: HandAt, hand: readonly CardId[], mode: Mode, only?: number): CardPlan | null {
@@ -169,7 +169,7 @@ export function planHand(at: HandAt, hand: readonly CardId[], mode: Mode, only?:
 }
 
 /** Card `id`'s target among the tiles `pool` reached (closest first): the
- * closest it wants, or as its modifier picks. `reached` is the plain search,
+ * closest it wants, or as its badge picks. `reached` is the plain search,
  * which tells Skip Open Nodes what ground is already open. */
 function targetOf(at: Position, id: CardId, mode: Mode, pool: Reached[], reached: Reached[], rules?: CardRules) {
   if (id === "stairs" && mode === "delve") return climb(at, pool);

@@ -54,7 +54,7 @@ export const TREES: SkillTree[] = [
     { id: "focus", icon: "ϟ", x: 50, y: 34, requires: ["moveSpeed"] },
     { id: "rush", icon: "⇶", x: 82, y: 34, requires: ["moveSpeed"] },
     { id: "undos", icon: "↺", x: 23, y: 61, requires: ["pathfinder"] },
-    { id: "cardModifiers", icon: "◪", x: 70, y: 61, requires: ["focus"] },
+    { id: "cardBadges", icon: "◪", x: 70, y: 61, requires: ["focus"] },
     { id: "legacy", icon: "♜", x: 50, y: 87, requires: ["focus", "undos"] },
   ] },
   { id: "wayfinding", name: "Wayfinding", currency: "courage", gate: null, description: "Teach Delve Automove to explore, compare routes and preserve resources.", nodes: [

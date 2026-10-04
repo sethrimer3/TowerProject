@@ -64,7 +64,11 @@ const gear = new GearPage(ctx);
 const deck = new DeckPage(ctx);
 const shop = new ShopPage(ctx);
 const goals = new GoalsPage(ctx);
-const runTraining = new RunTrainingBar(game, () => update());
+// A run training purchase changes the hero, so the highlighted enemy's forecast too.
+const runTraining = new RunTrainingBar(game, () => {
+  overlay.refresh(true);
+  update();
+});
 const researchToasts = new ResearchToasts(() => game.save.settings.reduceMotion);
 const defendPage = new DefendPage(el("defend"), {
   save: () => game.save.defend,
@@ -260,6 +264,7 @@ const loop = new FrameLoop({
   update,
   vitals: () => renderVitals(game),
   purse: (time) => purseFrame(game, time),
+  highlight: () => overlay.track(),
   save,
 });
 document.addEventListener("visibilitychange", () => {

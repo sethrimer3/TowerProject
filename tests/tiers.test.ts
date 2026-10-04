@@ -4,7 +4,7 @@ import { Game } from "../src/state.ts";
 import { decode, defaults } from "../src/save.ts";
 import { ENEMY_GOLD, xpForKill } from "../src/config.ts";
 import { MODES } from "../src/modes.ts";
-import { TIERS, TIER_BONUS_TENTHS, tierBonus, tierBonusText, tierGold, tierNumeral, tierStats, tierTile } from "../src/tiers.ts";
+import { TIERS, TIER_BONUS_TENTHS, tierXp, tierBonusText, tierGold, tierNumeral, tierStats, tierTile } from "../src/tiers.ts";
 import type { Enemy, Mode, Tile } from "../src/entities.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
 
@@ -25,11 +25,11 @@ function arena(tier: number, foe: Enemy, height = 3) {
   return g;
 }
 
-test("each tier triples the last's enemy stats and pays more Gold and XP: ×2, ×3.1, ×4.3, … ×11.8", () => {
+test("each tier triples the last's enemy stats and XP, and pays more Gold: ×2, ×3.1, ×4.3, … ×11.8", () => {
   assert.deepEqual(Array.from({ length: TIERS }, (_, i) => tierStats(i + 1)), [1, 3, 9, 27, 81, 243, 729, 2187, 6561]);
   assert.deepEqual(TIER_BONUS_TENTHS, [10, 20, 31, 43, 56, 70, 85, 101, 118]);
   assert.deepEqual([1, 2, 3, 9].map(tierBonusText), ["×1", "×2", "×3.1", "×11.8"]);
-  assert.deepEqual([tierBonus(1, 7), tierBonus(2, 7), tierBonus(3, 10), tierBonus(4, 1)], [7, 14, 31, 4]);
+  assert.deepEqual([tierXp(1, 7), tierXp(2, 7), tierXp(3, 10), tierXp(4, 1)], [7, 21, 90, 27]);
   assert.deepEqual([1, 4, 9].map(tierNumeral), ["I", "IV", "IX"]);
   const tile: Tile = { kind: "enemy", enemy: enemy("normal") };
   assert.equal(tierTile(tile, 1), tile);
@@ -59,13 +59,13 @@ test("past the first, a tier's boards are the one before's with every enemy's st
   }
 });
 
-test("kills in a higher tier pay its bonus in Gold and XP, and the same Silver", () => {
+test("kills in a higher tier pay its Gold bonus and its stat factor in XP, and the same Silver", () => {
   const one = arena(1, enemy("strong")), three = arena(3, enemy("strong"));
   assert.ok(one.move(1, 0) && three.move(1, 0));
   assert.equal(one.save.gold, ENEMY_GOLD.strong);
   assert.equal(three.save.gold, tierGold(3, ENEMY_GOLD.strong));
   assert.equal(three.save.gold, 6.2, "Gold keeps its fraction");
-  assert.equal(three.save.xp, tierBonus(3, xpForKill("strong", 3)));
+  assert.equal(three.save.xp, tierXp(3, xpForKill("strong", 3)));
   assert.equal(three.silver, one.silver);
   assert.equal(three.run.tier, 3);
   assert.equal(one.run.tier, undefined, "the first tier's runs carry no tier");
@@ -100,7 +100,7 @@ test("choosing a tier in the forest swaps in its own records; inside, or a close
   assert.equal(g.run.tier, 2);
   assert.equal(g.run.outside, true);
   assert.deepEqual([slice.best, slice.reached, slice.log], [0, 0, {}]);
-  assert.match(g.message, /Tower II · ×2 Gold & XP/);
+  assert.match(g.message, /Tower II · ×2 Gold · ×3 XP/);
   slice.reached = 4;
   assert.ok(g.selectTier(1));
   assert.equal(g.run.tier, undefined);

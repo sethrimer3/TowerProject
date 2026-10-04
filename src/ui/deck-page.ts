@@ -2,11 +2,11 @@ import { askForGems } from "./dialogs.ts";
 import { CARDS, cardText, deckCards, handSlots, moveCard, nextHandSlotGems, placeCard, type CardId } from "../cards.ts";
 import type { AppContext } from "./app.ts";
 import { cardArt, el, gemIcon, POINTER_SVG } from "./dom.ts";
-import { DRAW_GEMS, type DrawCount } from "../game/modifier-desk.ts";
-import { cardWith, MODIFIER_IDS, MODIFIERS, modifierLevel, modifierValue, type ModifierId } from "../modifiers.ts";
+import { DRAW_GEMS, type DrawCount } from "../game/badge-desk.ts";
+import { cardWith, BADGE_IDS, BADGES, badgeLevel, badgeValue, type BadgeId } from "../badges.ts";
 import { RARITIES } from "../shop/rarity.ts";
-import { revealDraws } from "./modifier-reveal.ts";
-import { badgeHtml, modifierText, progressText, tokenHtml } from "./modifier-token.ts";
+import { revealDraws } from "./badge-reveal.ts";
+import { cardBadgeHtml, badgeText, progressText, tokenHtml } from "./badge-token.ts";
 
 /** How far a press must travel before it lifts the card. */
 const DRAG_START_PX = 4;
@@ -17,9 +17,9 @@ type Drag = { from: number; to: number; pointer: number; x: number; y: number; l
 /** A deck card being dragged to the hand: the hand slot it would drop on
  * (null while it is away from the hand, or over STAIRS in a full hand). */
 type DeckDrag = { card: CardId; to: number | null; pointer: number; x: number; y: number; lifted: boolean; ghost: HTMLElement | null };
-/** A modifier token being dragged to a card: the card it would attach to
+/** A badge token being dragged to a card: the card it would attach to
  * (null while it is over none). */
-type ModDrag = { mod: ModifierId; card: CardId | null; pointer: number; x: number; y: number; lifted: boolean; ghost: HTMLElement | null };
+type BadgeDrag = { badge: BadgeId; card: CardId | null; pointer: number; x: number; y: number; lifted: boolean; ghost: HTMLElement | null };
 
 const X_SVG = `<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M2.5 2.5L7.5 7.5M7.5 2.5L2.5 7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`;
 const CHECK_SVG = `<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M2 5.4L4.2 7.6L8.2 2.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
@@ -28,7 +28,7 @@ const ARROW_STEPS = new Map([["ArrowLeft", -1], ["ArrowRight", 1]]);
 
 /** Whether a drag's pointer is the one pressed and, until it lifts, has
  * travelled far enough to lift the card. */
-const travelled = (d: Drag | DeckDrag | ModDrag, e: PointerEvent) =>
+const travelled = (d: Drag | DeckDrag | BadgeDrag, e: PointerEvent) =>
   e.pointerId === d.pointer && (d.lifted || Math.hypot(e.clientX - d.x, e.clientY - d.y) >= DRAG_START_PX);
 
 /** The enabled button matching `selector` that the primary button pressed. */
@@ -74,7 +74,7 @@ type Lesson = "order" | "remove" | "add" | null;
 export class DeckPage {
   private drag: Drag | null = null;
   private deckDrag: DeckDrag | null = null;
-  private modDrag: ModDrag | null = null;
+  private badgeDrag: BadgeDrag | null = null;
   private showing = false;
 
   constructor(private ctx: AppContext) {}
@@ -124,7 +124,7 @@ export class DeckPage {
       : lesson === "remove"
         ? `<div class="deck-tip" role="status"><b>Choose your cards</b><p>You can take cards out of your hand, and your runs will stop heading for their targets. Press the X on ${CARDS[this.removeTarget!].name.toUpperCase()} to return it to your deck.</p></div>`
         : "";
-    el("deck").innerHTML = `<div class="deck-page${this.showsModifiers ? " with-mods" : ""}">
+    el("deck").innerHTML = `<div class="deck-page${this.showsBadges ? " with-badges" : ""}">
       <section class="deck-hand-area" aria-labelledby="deck-hand-label">
         <h3 id="deck-hand-label" class="deck-label">Hand</h3>
         <div class="deck-hand" id="deck-hand" role="list" aria-label="Hand, in the order its cards are tried">${this.slotsHtml(save.hand)}</div>
@@ -134,50 +134,50 @@ export class DeckPage {
     </div>`;
     this.bindHand();
     this.bindDeck();
-    this.bindModifiers();
+    this.bindBadges();
   }
 
-  /** Whether the Modifiers box shows: Card Modifiers owned, and no lesson
+  /** Whether the Badges box shows: Badges owned, and no lesson
    * waiting on the player. */
-  private get showsModifiers() {
-    return !!this.ctx.game.save.upgrades.cardModifiers && !this.waitsOnPlayer;
+  private get showsBadges() {
+    return !!this.ctx.game.save.upgrades.cardBadges && !this.waitsOnPlayer;
   }
 
-  /** The deck, and beside it (with Card Modifiers) the Modifiers box, each
+  /** The deck, and beside it (with Badges) the Badges box, each
    * in its own column. */
   private columnsHtml() {
     const save = this.ctx.game.save, lesson = this.lesson;
     const deck = save.upgrades.buildout && lesson !== "remove" ? this.deckHtml(lesson === "add") : this.lockedDeckHtml(!!save.upgrades.buildout);
-    return this.showsModifiers ? `<div class="deck-columns">${deck}${this.modifiersHtml()}</div>` : deck;
+    return this.showsBadges ? `<div class="deck-columns">${deck}${this.badgesHtml()}</div>` : deck;
   }
 
-  /** The draw buttons over the Modifiers box, which lists each modifier
+  /** The draw buttons over the Badges box, which lists each badge
    * owned: its token (pressed for what it does, dragged onto a card to
    * attach it), the copies toward its next level, and, once it is on a
    * card, the X that takes it off. */
-  private modifiersHtml() {
-    const { save } = this.ctx.game, mods = save.modifiers;
-    const owned = MODIFIER_IDS.filter((id) => mods.owned[id]);
+  private badgesHtml() {
+    const { save } = this.ctx.game, badges = save.badges;
+    const owned = BADGE_IDS.filter((id) => badges.owned[id]);
     const entries = owned.map((id) => {
-      const copies = mods.owned[id]!.copies, on = cardWith(mods, id), name = MODIFIERS[id].name;
-      const x = on ? `<button type="button" class="mod-detach" data-detach="${id}" title="Take ${name} off ${CARDS[on].name}" aria-label="Take ${name} off ${CARDS[on].name}">${X_SVG}</button>` : "";
-      return `<div class="mod-entry${on ? " attached" : ""}" role="listitem"><button type="button" class="mod-pick" data-mod="${id}" title="${name}${on ? ` · on ${CARDS[on].name}` : ""}: press for details, or drag it onto a card" aria-label="${name}, level ${modifierLevel(copies)}${on ? `, on ${CARDS[on].name}` : ""}">${tokenHtml(id, modifierLevel(copies))}</button>${x}<small class="mod-count">${progressText(copies)}</small></div>`;
+      const copies = badges.owned[id]!.copies, on = cardWith(badges, id), name = BADGES[id].name;
+      const x = on ? `<button type="button" class="badge-detach" data-detach="${id}" title="Take ${name} off ${CARDS[on].name}" aria-label="Take ${name} off ${CARDS[on].name}">${X_SVG}</button>` : "";
+      return `<div class="badge-entry${on ? " attached" : ""}" role="listitem"><button type="button" class="badge-pick" data-badge="${id}" title="${name}${on ? ` · on ${CARDS[on].name}` : ""}: press for details, or drag it onto a card" aria-label="${name}, level ${badgeLevel(copies)}${on ? `, on ${CARDS[on].name}` : ""}">${tokenHtml(id, badgeLevel(copies))}</button>${x}<small class="badge-count">${progressText(copies)}</small></div>`;
     }).join("");
-    return `<section class="deck-mods" aria-labelledby="mods-label">
-        <div class="mod-draws">${this.drawButton(1)}${this.drawButton(10)}</div>
-        <div class="mod-box">
-          <h3 id="mods-label" class="deck-label">Modifiers</h3>
-          ${owned.length ? `<div class="mod-grid" role="list" aria-label="Your modifiers">${entries}</div>` : `<p class="mod-empty">Draw modifiers with Gems, then drag one onto a card to change what it does.</p>`}
+    return `<section class="deck-badges" aria-labelledby="badges-label">
+        <div class="badge-draws">${this.drawButton(1)}${this.drawButton(10)}</div>
+        <div class="badge-box">
+          <h3 id="badges-label" class="deck-label">Badges</h3>
+          ${owned.length ? `<div class="badge-grid" role="list" aria-label="Your badges">${entries}</div>` : `<p class="badge-empty">Draw badges with Gems, then drag one onto a card to change what it does.</p>`}
         </div>
       </section>`;
   }
 
-  /** The button that draws `count` modifiers: red-priced when short of
+  /** The button that draws `count` badges: red-priced when short of
    * Gems, and unavailable only once the pool has too few left. */
   private drawButton(count: DrawCount) {
     const { game } = this.ctx, price = DRAW_GEMS[count], short = !game.free && game.save.gems < price;
-    const can = game.modifiers.canDraw(count);
-    return `<button type="button" class="mod-draw${short ? " short" : ""}" data-draw="${count}" ${can ? "" : "disabled"} title="${can ? `Draw ${count === 1 ? "a modifier" : "10 modifiers"} for ${price} Gems` : "Every modifier is at its top level"}">Draw ×${count}<span>${gemIcon()}<b>${price}</b></span></button>`;
+    const can = game.badges.canDraw(count);
+    return `<button type="button" class="badge-draw${short ? " short" : ""}" data-draw="${count}" ${can ? "" : "disabled"} title="${can ? `Draw ${count === 1 ? "a badge" : "10 badges"} for ${price} Gems` : "Every badge is at its top level"}">Draw ×${count}<span>${gemIcon()}<b>${price}</b></span></button>`;
   }
 
   /** The deck's cards on a grid: those in the hand greyed with a check that
@@ -244,12 +244,12 @@ export class DeckPage {
   }
 
   /** The end of card `id`'s opening tag and what follows it, with the
-   * Modifiers box showing: a mark that a token can be dropped on the card,
-   * and the badge of the modifier it holds. */
+   * Badges box showing: a mark that a token can be dropped on the card,
+   * and the mark of the badge it holds. */
   private modTarget(id: CardId) {
-    if (!this.showsModifiers) return ">";
-    const mod = this.ctx.game.save.modifiers.cards[id];
-    return ` data-mod-card="${id}">${mod ? badgeHtml(mod) : ""}`;
+    if (!this.showsBadges) return ">";
+    const badge = this.ctx.game.save.badges.cards[id];
+    return ` data-badge-card="${id}">${badge ? cardBadgeHtml(badge) : ""}`;
   }
 
   /** Whether a hand card wears an X: any but STAIRS once Buildout is owned,
@@ -364,9 +364,9 @@ export class DeckPage {
   private cancelDrag() {
     this.drag?.ghost?.remove();
     this.drag = null;
-    this.modDrag?.ghost?.remove();
-    this.modDrag = null;
-    document.querySelectorAll(".mod-target").forEach((t) => t.classList.remove("mod-target"));
+    this.badgeDrag?.ghost?.remove();
+    this.badgeDrag = null;
+    document.querySelectorAll(".badge-target").forEach((t) => t.classList.remove("badge-target"));
     this.deckDrag?.ghost?.remove();
     this.deckDrag = null;
     document.getElementById("deck-hand")?.classList.remove("dragging");
@@ -443,95 +443,95 @@ export class DeckPage {
     return best !== null && placeCard(save.hand, card, best, slots) ? best : null;
   }
 
-  private bindModifiers() {
-    const section = document.querySelector<HTMLElement>(".deck-mods");
+  private bindBadges() {
+    const section = document.querySelector<HTMLElement>(".deck-badges");
     if (!section) return;
     section.querySelectorAll<HTMLButtonElement>("[data-draw]").forEach((b) => (b.onclick = () => this.draw(Number(b.dataset.draw) as DrawCount)));
-    section.querySelectorAll<HTMLButtonElement>("[data-detach]").forEach((b) => (b.onclick = () => this.change(this.ctx.game.modifiers.detach(b.dataset.detach as ModifierId))));
-    const grid = section.querySelector<HTMLElement>(".mod-grid");
+    section.querySelectorAll<HTMLButtonElement>("[data-detach]").forEach((b) => (b.onclick = () => this.change(this.ctx.game.badges.detach(b.dataset.detach as BadgeId))));
+    const grid = section.querySelector<HTMLElement>(".badge-grid");
     if (!grid) return;
     grid.onpointerdown = (e) => this.pressToken(grid, e);
     grid.onpointermove = (e) => this.dragToken(e);
     grid.onpointerup = (e) => {
-      const d = this.modDrag;
+      const d = this.badgeDrag;
       if (!d || e.pointerId !== d.pointer) return;
       this.cancelDrag();
-      if (!d.lifted) return this.showModifier(d.mod);
-      if (d.card) this.change(this.ctx.game.modifiers.attach(d.mod, d.card));
+      if (!d.lifted) return this.showBadge(d.badge);
+      if (d.card) this.change(this.ctx.game.badges.attach(d.badge, d.card));
     };
     grid.onpointercancel = () => this.cancelDrag();
     // From the keyboard, Enter or Space on a token shows what it does.
     grid.onkeydown = (e) => {
-      const token = (e.target as HTMLElement).closest<HTMLButtonElement>(".mod-pick");
+      const token = (e.target as HTMLElement).closest<HTMLButtonElement>(".badge-pick");
       if (!token || (e.key !== "Enter" && e.key !== " ")) return;
       e.preventDefault();
-      this.showModifier(token.dataset.mod as ModifierId);
+      this.showBadge(token.dataset.badge as BadgeId);
     };
   }
 
   /** A press on a token starts a drag (not yet lifted). */
   private pressToken(grid: HTMLElement, e: PointerEvent) {
-    const token = pressed(e, ".mod-pick");
-    if (!token || this.drag || this.deckDrag || this.modDrag) return;
+    const token = pressed(e, ".badge-pick");
+    if (!token || this.drag || this.deckDrag || this.badgeDrag) return;
     e.preventDefault();
     grid.setPointerCapture(e.pointerId);
-    this.modDrag = { mod: token.dataset.mod as ModifierId, card: null, pointer: e.pointerId, x: e.clientX, y: e.clientY, lifted: false, ghost: null };
+    this.badgeDrag = { badge: token.dataset.badge as BadgeId, card: null, pointer: e.pointerId, x: e.clientX, y: e.clientY, lifted: false, ghost: null };
   }
 
   /** Once lifted, the token's ghost follows the pointer, and the card under
    * it (in the hand or the deck) lights up as where it would attach. */
   private dragToken(e: PointerEvent) {
-    const d = this.modDrag;
+    const d = this.badgeDrag;
     if (!d || !travelled(d, e)) return;
     if (!d.lifted) {
       d.lifted = true;
-      d.ghost = ghostOf(document.querySelector<HTMLElement>(`.mod-pick[data-mod="${d.mod}"]`)!);
-      d.ghost.classList.add("mod-ghost");
+      d.ghost = ghostOf(document.querySelector<HTMLElement>(`.badge-pick[data-badge="${d.badge}"]`)!);
+      d.ghost.classList.add("badge-ghost");
     }
     follow(d.ghost!, e);
-    const over = document.elementFromPoint(e.clientX, e.clientY)?.closest<HTMLElement>("[data-mod-card]") ?? null;
+    const over = document.elementFromPoint(e.clientX, e.clientY)?.closest<HTMLElement>("[data-badge-card]") ?? null;
     const card = (over?.dataset.modCard as CardId | undefined) ?? null;
     if (card === d.card) return;
     d.card = card;
-    document.querySelectorAll(".mod-target").forEach((t) => t.classList.remove("mod-target"));
-    if (card) document.querySelectorAll(`[data-mod-card="${card}"]`).forEach((t) => t.classList.add("mod-target"));
+    document.querySelectorAll(".badge-target").forEach((t) => t.classList.remove("badge-target"));
+    if (card) document.querySelectorAll(`[data-badge-card="${card}"]`).forEach((t) => t.classList.add("badge-target"));
   }
 
-  /** Draws modifiers for their Gems (asking for Gems when short), then
+  /** Draws badges for their Gems (asking for Gems when short), then
    * shows what was drawn. */
   private draw(count: DrawCount) {
     const { game } = this.ctx;
     if (!game.free && game.save.gems < DRAW_GEMS[count]) return askForGems(this.ctx);
-    const draws = game.modifiers.draw(count);
+    const draws = game.badges.draw(count);
     if (!draws) return;
     this.ctx.save();
     this.ctx.update();
     this.render();
-    revealDraws(draws, game.save.settings.reduceMotion, (id) => game.save.modifiers.owned[id]?.pick ?? 0);
+    revealDraws(draws, game.save.settings.reduceMotion, (id) => game.save.badges.owned[id]?.pick ?? 0);
   }
 
-  /** A modifier's details: what it does at its level, its copies toward the
+  /** A badge's details: what it does at its level, its copies toward the
    * next, the card it is on, and for a gate the threshold it checks, chosen
    * on a slider among those its level opened. */
-  private showModifier(id: ModifierId) {
-    const { game } = this.ctx, owned = game.save.modifiers.owned[id];
+  private showBadge(id: BadgeId) {
+    const { game } = this.ctx, owned = game.save.badges.owned[id];
     if (!owned) return;
-    const def = MODIFIERS[id], level = modifierLevel(owned.copies), on = cardWith(game.save.modifiers, id);
+    const def = BADGES[id], level = badgeLevel(owned.copies), on = cardWith(game.save.badges, id);
     const rarity = RARITIES[def.rarity], progress = progressText(owned.copies);
     const gate = def.kind === "gate"
-      ? `<label class="mod-slider">Threshold<input type="range" id="mod-pick" min="0" max="${level - 1}" step="1" value="${owned.pick}" ${level > 1 ? "" : "disabled"}><output id="mod-pick-value">${this.thresholdText(id, owned.pick)}</output></label><small class="mod-slider-note">${level > 1 ? "Each level opens a tighter threshold." : "Level up to open tighter thresholds."}</small>`
+      ? `<label class="badge-slider">Threshold<input type="range" id="badge-pick" min="0" max="${level - 1}" step="1" value="${owned.pick}" ${level > 1 ? "" : "disabled"}><output id="badge-pick-value">${this.thresholdText(id, owned.pick)}</output></label><small class="badge-slider-note">${level > 1 ? "Each level opens a tighter threshold." : "Level up to open tighter thresholds."}</small>`
       : "";
     const modal = this.ctx.modal;
-    modal.innerHTML = `<small><span style="color:${rarity.color}">${rarity.displayName.toUpperCase()}</span> · LEVEL ${level}</small><h2>${def.name}</h2><div class="mod-detail">${tokenHtml(id, level, "big")}</div><p id="mod-detail-text">${modifierText(id, level, owned.pick)}</p>${gate}<p class="mod-detail-meta">${progress === "MAX" ? "Top level reached." : `${progress} copies toward level ${level + 1}.`}${on ? ` On ${CARDS[on].name}.` : " On no card: drag it onto one."}</p><button class="wide" id="mod-detail-ok">Done</button>`;
-    const slider = modal.querySelector<HTMLInputElement>("#mod-pick");
+    modal.innerHTML = `<small><span style="color:${rarity.color}">${rarity.displayName.toUpperCase()}</span> · LEVEL ${level}</small><h2>${def.name}</h2><div class="badge-detail">${tokenHtml(id, level, "big")}</div><p id="badge-detail-text">${badgeText(id, level, owned.pick)}</p>${gate}<p class="badge-detail-meta">${progress === "MAX" ? "Top level reached." : `${progress} copies toward level ${level + 1}.`}${on ? ` On ${CARDS[on].name}.` : " On no card: drag it onto one."}</p><button class="wide" id="badge-detail-ok">Done</button>`;
+    const slider = modal.querySelector<HTMLInputElement>("#badge-pick");
     if (slider) slider.oninput = () => {
       const pick = Number(slider.value);
-      if (!game.modifiers.setPick(id, pick)) return;
-      modal.querySelector("#mod-pick-value")!.textContent = this.thresholdText(id, pick);
-      modal.querySelector("#mod-detail-text")!.textContent = modifierText(id, level, pick);
+      if (!game.badges.setPick(id, pick)) return;
+      modal.querySelector("#badge-pick-value")!.textContent = this.thresholdText(id, pick);
+      modal.querySelector("#badge-detail-text")!.textContent = badgeText(id, level, pick);
       this.ctx.save();
     };
-    modal.querySelector<HTMLButtonElement>("#mod-detail-ok")!.onclick = () => modal.close();
+    modal.querySelector<HTMLButtonElement>("#badge-detail-ok")!.onclick = () => modal.close();
     modal.addEventListener("close", () => {
       if (this.showing) this.render();
     }, { once: true });
@@ -539,9 +539,9 @@ export class DeckPage {
   }
 
   /** A gate's threshold as the slider shows it: "HP < 75%", "YK < 4". */
-  private thresholdText(id: ModifierId, pick: number) {
-    const v = modifierValue(id, MODIFIERS[id].values.length, pick);
-    return id === "hpGate" ? `HP < ${v}%` : `${MODIFIERS[id].name.replace(" <", "")} < ${v}`;
+  private thresholdText(id: BadgeId, pick: number) {
+    const v = badgeValue(id, BADGES[id].values.length, pick);
+    return id === "hpGate" ? `HP < ${v}%` : `${BADGES[id].name.replace(" <", "")} < ${v}`;
   }
 
   /** Asks before spending Gems on the next hand slot. */
@@ -563,7 +563,7 @@ export class DeckPage {
     );
   }
 
-  /** Saves and redraws after a change to the hand or its modifiers. */
+  /** Saves and redraws after a change to the hand or its badges. */
   private change(changed: boolean) {
     if (changed) this.ctx.save();
     this.render();
