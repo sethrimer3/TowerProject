@@ -2850,11 +2850,12 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
 .badge-token.big .badge-glyph { font-size: 52px; }
 .badge-token.big .badge-level { top: -16px; right: -16px; width: 42px; height: 42px; }
 .badge-token.big .badge-level b { font-size: 17px; }
-/* The mark a card wears for the badge it holds, at its top right. */
+/* The mark a card wears for the badge it holds, at its top left, clear of
+   the X (top right) and the check (bottom right). */
 .badge-mark {
   position: absolute;
   top: 3px;
-  right: 3px;
+  left: 3px;
   z-index: 1;
   display: grid;
   place-items: center;
