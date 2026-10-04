@@ -108,6 +108,8 @@ const FOREST_SPEED = 3;
 const LESSON_SPEED = 3;
 /** Salts the run seed for Revive's rolls, apart from the world's own. */
 const REVIVE_SALT = 0x7e51e;
+/** Salts the run seed for Find Yellow Key's roll on each new floor. */
+const YELLOW_KEY_SALT = 0x6e11a;
 /** Mixed into the run seed to start Skip's stream of rolls. */
 const SKIP_SALT = 0x5c1b7;
 /** How far mulberry32's state moves each draw: the stream's `n`th number
@@ -962,7 +964,7 @@ export class Game {
     const regen = this.run.outside || !this.run.player.regen ? 0
       : snap((this.run.player.regen * researched(this.save.archives, "regenPercent", 100)) / 100);
     return { potionHeal: researched(this.save.archives, "potionHeal", 100), percentPotion: potionPercent(this.trainingNow), regen,
-      heartToll: researched(this.save.archives, "heartToll", 100) };
+      heartToll: researched(this.save.archives, "heartToll", 100), keyCost: researched(this.save.archives, "keyCost", 1000) };
   }
   /** The upgrades owned and the Training ranks that count now: the hero's
    * own, and those this run bought with Silver. */
@@ -1259,7 +1261,7 @@ export class Game {
     // Effective's added damage rises off the hero; Dampen's given back heals.
     if (extra > 0 && p.hp > 0) this.gain(p.x, p.y, `−${wholeChange(extra)} HP`, { heart: true });
     else if (extra < 0) this.recordHeal(-extra);
-    return this.winFight({ enemy: t.enemy!, damage: snap(outcome.combat!.damage + extra), at: dest, revived, scale: outcome.scale }, before);
+    return this.winFight({ enemy: t.enemy!, damage: snap(outcome.combat!.damage + extra), at: dest, revived, scale: outcome.scale, instakill: outcome.combat!.turns === 1 }, before);
   }
   /** Moves the player onto the tile and applies what standing there does. */
   private land(t: Tile, x: number, y: number, outcome: StepEffect) {
@@ -1355,7 +1357,7 @@ export class Game {
     this.gainXp(enemy, floor, scale);
     // Silver belongs to the run, so it isn't gated like Gold: undo takes it back.
     const purse = this.purse, silver = purse.killSilver(enemy, floor, scale);
-    const { gold, drops } = purse.enemyLoot(enemy, at.x, at.y, scale);
+    const { gold, drops } = purse.enemyLoot(enemy, at.x, at.y, scale, fight.instakill);
     this.gainCoins(at, gold, silver);
     for (const d of drops) this.gain(at.x, at.y, materialText(d), { material: d.id, quantity: d.quantity });
     const opened = enemy.strength === "boss" && floor >= TIER_BOSS_FLOOR && this.openNextTier();
@@ -1377,12 +1379,14 @@ export class Game {
   get tier() {
     return this.run.tier ?? 1;
   }
-  /** Beating the floor-100 boss of the highest tier opened opens the next;
-   * undo never closes it again. */
+  /** Beating the floor-100 boss of the highest Tower opened opens the next
+   * Tower and the Delve's cave of the same number (a Delve boss opens
+   * nothing); undo never closes them again. */
   private openNextTier() {
     const slice = this.slice;
-    if (this.tier !== slice.tiersOpen || slice.tiersOpen >= TIERS) return false;
+    if (this.mode !== "tower" || this.tier !== slice.tiersOpen || slice.tiersOpen >= TIERS) return false;
     slice.tiersOpen++;
+    this.save.delve.tiersOpen = slice.tiersOpen;
     return true;
   }
   /** Chooses which opened tier the next run climbs, from the forest: the
@@ -1456,8 +1460,21 @@ export class Game {
     for (let f = floorBefore + 1; f <= last; f++) {
       gold += purse.floorGold(purse.floorKey(-1, f));
       silver += purse.floorSilver();
+      silver += purse.interest();
+      this.findYellowKey(f, at);
     }
     this.gainCoins(at, gold, silver, false);
+  }
+  /** Find Yellow Key: on floor `floor` climbed for the first time in the
+   * run, a yellow key under the research's chance. The roll is a fixed
+   * number per run seed and floor, so undo and a replay find the same
+   * keys, and more research only ever adds some. */
+  private findYellowKey(floor: number, at: { x: number; y: number }) {
+    const chance = researched(this.save.archives, "yellowKeyChance", 0);
+    if (!chance || tileRandom(-1, floor, (this.run.seed ^ YELLOW_KEY_SALT) | 0) * 1000 >= chance) return;
+    const keys = this.run.player.keys;
+    keys.yellow = snap(keys.yellow + 1);
+    this.gain(at.x, at.y, "+1 yellow key", { tile: { kind: "key", color: "yellow" } });
   }
   advanceTowerRoom() {
     const purse = this.purse, p = this.run.player;
@@ -1477,6 +1494,8 @@ export class Game {
     if (this.run.height > highest) {
       this.run.maxHeight = this.run.height;
       silver = purse.floorSilver();
+      silver += purse.interest();
+      this.findYellowKey(this.run.height, p);
     }
     this.enterTowerFloor(board);
     // A new section's first floor is sealed below; the hero keeps every stat.
@@ -1768,7 +1787,8 @@ export class Game {
 
 /** A fight the hero won: the enemy beaten at `at`, the HP it cost, and
  * how many times the hero revived in it. */
-type FightEnd = { enemy: Enemy; damage: number; at: { x: number; y: number }; revived: number; scale?: number };
+/** A fight won: `instakill` when the hero's first strike ended it (Mug). */
+type FightEnd = { enemy: Enemy; damage: number; at: { x: number; y: number }; revived: number; scale?: number; instakill?: boolean };
 
 /** HP left after a fight's own damage, `hp`, once a badge's scale has
  * added `extra` (or, below 0, given it back, up to `maxHp`). */

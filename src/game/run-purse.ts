@@ -84,18 +84,20 @@ export class RunPurse {
   }
 
   /** A kill's Gold before the tier's bonus: by the enemy's strength, raised
-   * by Gold / Kill training and research, multiplied. */
-  private killGold(enemy: Enemy) {
-    return snap((ENEMY_GOLD[enemy.strength] * killGold(this.trainingNow) * researched(this.save.archives, "killGold", 100)) / 10_000);
+   * by Gold / Kill training and research, multiplied, and for an
+   * `instakill` (the hero's first strike ended it) by Mug research too. */
+  private killGold(enemy: Enemy, instakill = false) {
+    const gold = snap((ENEMY_GOLD[enemy.strength] * killGold(this.trainingNow) * researched(this.save.archives, "killGold", 100)) / 10_000);
+    return instakill ? snap((gold * researched(this.save.archives, "instakillGold", 100)) / 100) : gold;
   }
 
   /** An enemy's Gold (by its strength) and material drops, once per
    * physical kill. */
-  enemyLoot(enemy: Enemy, x: number, y: number, scale = 1): { gold: number; drops: MaterialStack[] } {
+  enemyLoot(enemy: Enemy, x: number, y: number, scale = 1, instakill = false): { gold: number; drops: MaterialStack[] } {
     if (!this.loot(this.lootKey(x, y))) return { gold: 0, drops: [] };
     // Then the tier's bonus; Effective or Dampen on the card that took the
     // fight scales it too.
-    const raised = scale === 1 ? this.killGold(enemy) : snap(this.killGold(enemy) * scale);
+    const base = this.killGold(enemy, instakill), raised = scale === 1 ? base : snap(base * scale);
     const gold = this.gold(tierGold(this.tier, raised));
     const drops = this.rules.enemyDrops(enemy.name, this.rng);
     creditMaterials(this.save, drops);
@@ -165,5 +167,18 @@ export class RunPurse {
   floorSilver() {
     const base = floorSilver(this.trainingNow);
     return base ? this.silver(this.researched(base, "floorSilver")) : 0;
+  }
+
+  /** Interest: for a floor climbed for the first time in the run, after
+   * its Wishing Well Silver, Interest % research's share of the Silver
+   * held, up to Max Interest. Silver Bonus doesn't raise it. Returns what
+   * it added. */
+  interest() {
+    const rate = researched(this.save.archives, "interestRate", 0);
+    if (!rate) return 0;
+    const held = this.run.silver ?? 0;
+    const paid = Math.min(researched(this.save.archives, "interestCap", 50), snap((held * rate) / 1000));
+    if (paid > 0) this.run.silver = snap(held + paid);
+    return paid > 0 ? paid : 0;
   }
 }

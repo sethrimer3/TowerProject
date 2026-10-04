@@ -55,18 +55,18 @@ export const itemSprite = (name: keyof typeof AREA1_ITEM_URLS, className = "ui-s
 export const CURRENCY_SPRITES = { tower: "upgrades", delve: "automove" } as const;
 
 const SKILL_ITEM_SPRITES: Partial<Record<UpgradeId, keyof typeof AREA1_ITEM_URLS>> = {
-  yellow: "key_yellow", blue: "key_blue", red: "key_red", extraKey: "key_yellow",
+  yellow: "key_yellow", blue: "key_blue", red: "key_red", extraKey: "key_yellow", findYellowKey: "key_yellow", keyEfficiency: "key_yellow",
   greaterHeal: "potion_flat", regen: "potion_flat", regenResearch: "potion_flat", recovery: "potion_percent",
 };
 const SKILL_UI_SPRITES: Partial<Record<UpgradeId, UiSprite>> = {
   inspirationUndos: "undo", undos: "undo", archives: "log",
   delve: "delve", gear: "gear", moveSpeed: "automove", rush: "automove", instantCombat: "attack", trainers: "arrow-up", fasterTrainers: "automove", buyQuantity: "arrow-up",
-  revive: "revive", spareChange: "gold", loot: "gold", floorSkipReward: "gold", legacy: "tower", quality: "tower",
+  revive: "revive", spareChange: "gold", loot: "gold", floorSkipReward: "gold", mug: "gold", legacy: "tower", quality: "tower",
   wisdomFocus: "settings", wisdomMemory: "undo", wisdomSight: "upgrades",
   renownBanner: "tower", renownOath: "defense", renownCrown: "gear",
 };
 /** Skills about Silver show the Gold coin drained of colour, as the purse does. */
-const SKILL_SILVER = new Set<UpgradeId>(["wealthy", "wishingWell", "onTheJob", "pocketMoney"]);
+const SKILL_SILVER = new Set<UpgradeId>(["wealthy", "wishingWell", "onTheJob", "pocketMoney", "interest", "maxInterest"]);
 /** Skills about the hand show a card face. */
 const SKILL_CARDS: Partial<Record<UpgradeId, CardId>> = { combatStance: "stairs", buildout: "monster", cardHeal: "heal", cardAtkUp: "atkUp", cardDefUp: "defUp", cardBlueKey: "blueKey", keySiphon: "keySiphon",
   cardYellowDoor: "yellowDoor", cardHeartDoor: "heartDoor", cardWeakEnemy: "weakEnemy", cardBaseEnemy: "baseEnemy", cardStrongEnemy: "strongEnemy",

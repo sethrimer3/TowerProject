@@ -334,12 +334,14 @@ function decodeReached(s: any, d: Save) {
     d[mode].best = Math.max(d[mode].best, d[mode].reached);
   }
 }
-/** Each mode's tiers: the highest opened, the one selected (its records
- * are the slice's), and the others' records. */
+/** Each mode's tiers: the highest opened (the Tower's, which the Delve's
+ * caves follow), the one selected (its records are the slice's), and the
+ * others' records. */
 function decodeTiers(s: any, d: Save) {
+  const open = Math.max(1, count(s?.tower?.tiersOpen, 1, TIERS));
   for (const mode of ["tower", "delve"] as const) {
     const raw = s?.[mode], slice = d[mode];
-    slice.tiersOpen = Math.max(1, count(raw?.tiersOpen, 1, TIERS));
+    slice.tiersOpen = open;
     slice.tier = Math.max(1, Math.min(slice.tiersOpen, count(raw?.tier, 1)));
     if (isRecord(raw?.tierRecords)) decodeTierRecords(raw.tierRecords, slice);
   }

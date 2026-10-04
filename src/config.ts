@@ -34,11 +34,16 @@ export const UPGRADES = [
   {
     id: "undos",
     name: "Echoes of time",
-    grants: { undos: 1 },
+    description: "Open Undo Count research in the Archives, or 5 more levels of it once Rehearsed steps has opened it",
     base: 5,
-    max: 4,
+    max: 1,
     currency: "courage",
   },
+  { id: "findYellowKey", name: "Find Yellow Key", description: "Open Find Yellow Key research in the Archives: each new floor climbed may hand you a yellow key", base: 10, max: 1, currency: "courage" },
+  { id: "keyEfficiency", name: "Key Efficiency", description: "Open Key Efficiency research in the Archives: each level makes a door take less of a key", base: 10, max: 1, currency: "courage" },
+  { id: "interest", name: "Interest", description: "Open Interest % research in the Archives: each new floor climbed adds a share of the Silver you hold, up to a limit", base: 10, max: 1, currency: "courage" },
+  { id: "maxInterest", name: "Max Interest", description: "Open Max Interest research in the Archives: each level raises the most Interest a floor pays", base: 10, max: 1, currency: "courage" },
+  { id: "mug", name: "Mug", description: "Open Mug research in the Archives: each level adds Gold to a kill your first strike makes", base: 10, max: 1, currency: "courage" },
   {
     id: "rush",
     name: "Rush",
@@ -366,7 +371,7 @@ export const UPGRADES = [
   {
     id: "inspirationUndos",
     name: "Rehearsed steps",
-    description: "Rewind an action, and open Undo Count research in the Archives",
+    description: "Rewind an action, and open Undo Count research in the Archives, or 5 more levels of it once Echoes of time has opened it",
     grants: { undos: 1 },
     base: 5,
     max: 1,

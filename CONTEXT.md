@@ -146,7 +146,7 @@ The one scale both modes' progress maps onto: a Tower floor counts as itself, an
 _Avoid_: effective floor, tier
 
 **Tier**:
-One of the numbered towers (Tower I to IX), or of the delves (Delve I to IX), that a run climbs. Beating the boss on floor 100 of the highest one opened opens the next. Each has the same floors as the first with monsters three times as strong as the one before, pays more Gold, pays XP times the same factor as its monsters' stats, and keeps its own records, milestones and area rewards. Not to be confused with a monster's rank.
+One of the numbered towers (Tower I to IX), or of the delves' caves (Delve I to IX), that a run climbs. Beating the boss on floor 100 of the highest tower opened opens the next tower and the cave of the same number. Each has the same floors as the first with monsters three times as strong as the one before, pays more Gold, pays XP times the same factor as its monsters' stats, and keeps its own records, milestones and area rewards. Not to be confused with a monster's rank.
 _Avoid_: new tower, prestige, world
 
 **Inspiration**:
@@ -263,6 +263,10 @@ A ? on a tile the Deprioritize badge passed over on this floor: no card's path c
 
 **Floor Skipped**:
 Skip on the STAIRS card in the Tower: the hero climbs two floors instead of one, never standing on the floor between.
+
+**Interest**:
+Silver added on each floor climbed for the first time in a run: Interest % research's share of the Silver held, at most Max Interest's limit (50 at first).
+_Avoid_: dividend
 
 **Floor Skip Reward**:
 Gold paid for a floor skipped: Floor Skip Reward research's percent of the Gold the floor's battles and chests still held (each closed chest counted at its average). What it counts pays no Gold if met later.

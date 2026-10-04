@@ -101,7 +101,7 @@ export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay)
   renderLockedTab("gear", !!game.save.upgrades.gear, "Gear", "Unlock Gear in the Inspiration tree");
   document.querySelector(`[data-tab="gear"]`)?.classList.toggle("notify", gearWaiting(game));
   renderShopDot(game);
-  renderLockedTab("defend", !!game.save.upgrades.legacy, "Defend", "Unlock An enduring legacy in the Courage tree");
+  renderLockedTab("defend", !!game.save.upgrades.legacy, "Defend", "Not yet open");
 }
 
 /** Whether the Shop button shows its dot: a daily offer can be claimed, on
@@ -467,8 +467,8 @@ function renderUndo(game: Game) {
   text("undo-state", count);
   undo.setAttribute("aria-label", `Undo (${count})`);
   undo.disabled = !slice.history.length;
-  // Undo needs Rehearsed steps.
-  undo.hidden = !game.save.upgrades.inspirationUndos;
+  // Undo needs Rehearsed steps, or Echoes of time and Undo Count research.
+  undo.hidden = !game.undoCapacity;
 }
 
 function renderLockedTab(id: string, unlocked: boolean, name: string, hint: string) {

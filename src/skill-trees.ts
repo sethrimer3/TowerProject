@@ -70,7 +70,7 @@ export const TREES: SkillTree[] = [
     { id: "cardTorch", icon: "☼", x: 30, y: 268, requires: ["floorSkipReward"] },
     { id: "cardSteelDoor", icon: "⚿", x: 70, y: 268, requires: ["floorSkipReward"] },
   ] },
-  { id: "courage", name: "Courage", currency: "courage", gate: "delve", description: "Earn Courage by beating your best Delve depth.", nodes: [
+  { id: "courage", name: "Courage", currency: "courage", gate: "delve", description: "Earn Courage by beating your best Delve depth.", height: 150, nodes: [
     { id: "moveSpeed", icon: "»", x: 50, y: 10, requires: ["delve"] },
     { id: "instantCombat", icon: "↯", x: 18, y: 10, requires: ["moveSpeed"] },
     { id: "extraKey", icon: "⚿", x: 82, y: 10, requires: ["moveSpeed"] },
@@ -79,7 +79,13 @@ export const TREES: SkillTree[] = [
     { id: "rush", icon: "⇶", x: 82, y: 34, requires: ["moveSpeed"] },
     { id: "undos", icon: "↺", x: 23, y: 61, requires: ["pathfinder"] },
     { id: "cardBadges", icon: "◪", x: 70, y: 61, requires: ["focus"] },
-    { id: "legacy", icon: "♜", x: 50, y: 87, requires: ["focus", "undos"] },
+    // The research skills down the middle under Focus: Find Yellow Key, Key
+    // Efficiency, then Interest, with Max Interest to its left and Mug to its right.
+    { id: "findYellowKey", icon: "⚿", x: 50, y: 87, requires: ["focus"] },
+    { id: "keyEfficiency", icon: "⚿", x: 50, y: 111, requires: ["findYellowKey"] },
+    { id: "interest", icon: "¤", x: 50, y: 135, requires: ["keyEfficiency"] },
+    { id: "maxInterest", icon: "¤", x: 22, y: 135, requires: ["interest"] },
+    { id: "mug", icon: "☠", x: 78, y: 135, requires: ["interest"] },
   ] },
   { id: "wayfinding", name: "Wayfinding", currency: "courage", gate: null, description: "Teach Delve Automove to explore, compare routes and preserve resources.", nodes: [
     { id: "aiMemory", icon: "◇", x: 50, y: 20, requires: [] },

@@ -80,8 +80,9 @@ export function loadout(save: Save): Loadout {
     shroud: own.shroud,
     regen: own.regen,
     keys: { yellow: own.yellow + prov.yellow, blue: own.blue + prov.blue, red: own.red + prov.red },
-    // Undo needs Rehearsed steps: without it nothing else stores one.
-    undoCapacity: save.upgrades.inspirationUndos ? researched(save.archives, "undoCapacity", own.undos) : 0,
+    // Undo needs Rehearsed steps (its first undo) or Echoes of time: Undo
+    // Count research, which either opens, stores the rest.
+    undoCapacity: save.upgrades.inspirationUndos || save.upgrades.undos ? researched(save.archives, "undoCapacity", own.undos) : 0,
   };
 }
 

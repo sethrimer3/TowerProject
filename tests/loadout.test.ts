@@ -18,21 +18,21 @@ test("a new character starts at 12 ATK, 0 DEF, 100 HP, no shroud, no Regen, no k
   });
 });
 
-test("Rehearsed steps gives the first undo; without it nothing else stores one", () => {
+test("Rehearsed steps gives the first undo; Echoes of time gives none, only research", () => {
   const s = defaults();
-  s.upgrades.undos = 2;
-  assert.equal(loadout(s).undoCapacity, 0, "Echoes of time alone");
-  s.upgrades.inspirationUndos = 1;
-  assert.equal(loadout(s).undoCapacity, 1 + 2);
   s.archives.levels.undoCount = 3;
-  assert.equal(loadout(s).undoCapacity, 1 + 2 + 3, "Undo Count research adds to it");
+  assert.equal(loadout(s).undoCapacity, 0, "research needs one of the two skills");
+  s.upgrades.undos = 1;
+  assert.equal(loadout(s).undoCapacity, 3, "Echoes of time alone: research only");
+  s.upgrades.inspirationUndos = 1;
+  assert.equal(loadout(s).undoCapacity, 1 + 3, "Undo Count research adds to Rehearsed steps' undo");
 });
 
 test("each rank of an upgrade adds its grant", () => {
   const s = defaults();
   Object.assign(s.upgrades, {
     combatStance: 1, buildout: 1, quality: 1,
-    yellow: 1, blue: 2, red: 3, undos: 2, inspirationUndos: 1, shroud: 1,
+    yellow: 1, blue: 2, red: 3, undos: 1, inspirationUndos: 1, shroud: 1,
   });
   assert.deepEqual(loadout(s), {
     attack: 12 + 2,
@@ -41,7 +41,7 @@ test("each rank of an upgrade adds its grant", () => {
     shroud: 1,
     regen: 0,
     keys: { yellow: 1, blue: 2, red: 3 },
-    undoCapacity: 2 + 1,
+    undoCapacity: 1,
   });
 });
 
@@ -166,10 +166,10 @@ test("descriptions are written from the grants", () => {
       blue: "+1 starting azure key",
       red: "+1 starting crimson key",
       quality: "+2 weapon attack and +1 armor defense",
-      undos: "Store one additional undo (up to 14)",
+      undos: "Open Undo Count research in the Archives, or 5 more levels of it once Rehearsed steps has opened it",
       combatStance: "Open the Deck, where you reorder the cards in your hand before a run",
       buildout: "Unlock the Deck: add its cards to your hand, or set them aside, to choose what a run heads for",
-      inspirationUndos: "Rewind an action, and open Undo Count research in the Archives",
+      inspirationUndos: "Rewind an action, and open Undo Count research in the Archives, or 5 more levels of it once Echoes of time has opened it",
       revive: "When a strike would fell you, a 0.5% chance to rise at full HP and fight on: opens Revive training",
     },
   );

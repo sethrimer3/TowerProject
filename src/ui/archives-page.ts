@@ -1,6 +1,6 @@
 import {
   RESEARCH, RESEARCH_CATEGORIES, RESEARCH_IDS, RESEARCH_TARGETS, activeSlot, cannotStart, duration, jobProgress,
-  missing, nextArchivistPrice, nextLevel, research, researchLevel, researched, status, withNextLevel,
+  maxLevel, missing, nextArchivistPrice, nextLevel, research, researchLevel, researched, status, withNextLevel,
   type ArchivesSave, type ResearchCategory, type ResearchId, type ResearchRequirement, type ResearchStatus, type ResearchTarget,
 } from "../archives.ts";
 import { UPGRADES } from "../config.ts";
@@ -36,6 +36,7 @@ const targetValue = (save: Save, target: ResearchTarget, archives: ArchivesSave)
   target === "undoCapacity" ? loadout({ ...save, archives }).undoCapacity : researched(archives, target, RESEARCH_TARGETS[target].base);
 const requirementText =(r: ResearchRequirement) =>
   "upgrade" in r ? UPGRADES.find((u) => u.id === r.upgrade)!.name
+  : "anyUpgrade" in r ? r.anyUpgrade.map((id) => UPGRADES.find((u) => u.id === id)!.name).join(" or ")
   : "research" in r ? `${RESEARCH[r.research as ResearchId].name} level ${r.level}`
   : `Hero level ${r.playerLevel}`;
 
@@ -210,7 +211,7 @@ export class ArchivesPanel {
    * costs and takes beside the button to start it, and any progress kept. */
   private researchHtml(id: ResearchId) {
     const save = this.ctx.game.save, a = save.archives, def = research(id);
-    const level = researchLevel(a, id), next = nextLevel(a, id), state = status(save, id);
+    const level = researchLevel(a, id), next = nextLevel(a, id, save.upgrades), state = status(save, id);
     let detail = "", price = "", kept = "", action: string;
     if (next) {
       const ms = duration(a, next), share = a.progress[id];
@@ -229,7 +230,7 @@ export class ArchivesPanel {
       const why = slot < 0 ? "Every archivist is busy." : cannotStart(save, slot, id);
       action = `<button data-research="${id}" ${why ? `disabled title="${why}"` : ""}>Research · ${uiSprite("gold", "stat-sprite")} ${currencyAmount(next!.gold)}</button>`;
     }
-    return `<article class="research ${state}" role="listitem"><div class="research-head"><b>${def.name}</b><small>LEVEL ${level} / ${def.levels.length}</small></div>
+    return `<article class="research ${state}" role="listitem"><div class="research-head"><b>${def.name}</b><small>LEVEL ${level} / ${maxLevel(id, save.upgrades)}</small></div>
       <p>${def.description}</p><div class="research-next">${detail}<span class="research-action">${price}${action}</span></div>${kept}</article>`;
   }
 
@@ -244,6 +245,6 @@ export class ArchivesPanel {
     const history = this.ctx.game.save.archives.history;
     if (!history.length) return `<p class="research-empty">No research completed yet.</p>`;
     return `<ol class="research-history">${[...history].reverse().map((r) =>
-      `<li><time>${formatDate(r.at)}</time> ${RESEARCH[r.research].name} level ${r.level} completed</li>`).join("")}</ol>`;
+      `<li><time>${formatDate(r.at)}</time> ${RESEARCH[r.research].name} level ${r.level}</li>`).join("")}</ol>`;
   }
 }

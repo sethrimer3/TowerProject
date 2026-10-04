@@ -29,6 +29,8 @@ export type ResearchCategory = keyof typeof RESEARCH_CATEGORIES;
 
 const count = (n: number) => `${n}`;
 const percent = (n: number) => `${n}%`;
+/** A number kept in tenths of a percent (whole numbers, so sums stay exact) as a percent. */
+const tenths = (n: number) => `${n / 10}%`;
 /** A speed (0 = as fast as without research) as a percent of the base. */
 const speed = (n: number) => `${Math.round(100 + n * 100)}%`;
 /** The numbers research can change, each with its name, the base the game
@@ -58,6 +60,19 @@ export const RESEARCH_TARGETS = {
   floorSkipGold: { name: "Floor Skip Gold", base: 0, shown: percent },
   /** The percent of its Gold a kill pays, from 100. */
   killGold: { name: "Gold per Kill", base: 100, shown: percent },
+  /** The chance, in tenths of a percent, that a new floor climbed hands
+   * the hero a yellow key. */
+  yellowKeyChance: { name: "Yellow Key Chance", base: 0, shown: tenths },
+  /** How much of a key each key colour a door takes costs, in tenths of a
+   * percent, from 1,000 (a whole key). */
+  keyCost: { name: "Key Cost", base: 1000, shown: tenths },
+  /** The share of the Silver held that a new floor climbed adds, in tenths
+   * of a percent. */
+  interestRate: { name: "Interest", base: 0, shown: tenths },
+  /** The most Silver Interest pays a floor. */
+  interestCap: { name: "Max Interest", base: 50, shown: count },
+  /** The percent of its Gold a kill the hero's first strike makes pays, from 100. */
+  instakillGold: { name: "Gold per Instakill", base: 100, shown: percent },
   /** Silver a run has in hand when it goes inside. */
   startingSilver: { name: "Starting Silver", base: 0, shown: count },
   /** How fast trainers work: a rank of `d` takes d / (1 + speed). */
@@ -81,6 +96,7 @@ export type ResearchLevel = { gold: number; hours: number; effect: ResearchEffec
  * another project's level, or the hero's level. */
 export type ResearchRequirement =
   | { upgrade: UpgradeId }
+  | { anyUpgrade: UpgradeId[] }
   | { research: string; level: number }
   | { playerLevel: number };
 export type ResearchDefinition = {
@@ -90,6 +106,9 @@ export type ResearchDefinition = {
   requires: ResearchRequirement[];
   /** Level 1 first; the project's maximum level is its length. */
   levels: ResearchLevel[];
+  /** When set, only `levels` of them are open for each of `upgrades`
+   * owned (Undo Count: 5 for each of Rehearsed steps and Echoes of time). */
+  levelsPer?: { upgrades: UpgradeId[]; levels: number };
 };
 
 /** Focus Count and Undo Count: +1 to `target` a level, for nine levels
@@ -138,6 +157,19 @@ const rushLevels = () => Array.from({ length: 25 }, (_, i): ResearchLevel => ({
   effect: { target: "rushTiles", op: "add", value: 1 },
 }));
 
+/** Max Interest's limits by level, up from 50 Silver a floor. */
+const INTEREST_CAPS = [100, 200, 350, 500, 750, 1000, 1500, 2000, 2750, 3750, 5000, 6500, 8250, 10000, 12500, 15000, 20000, 25000, 35000, 50000];
+/** Max Interest: Focus Count's schedule (500 × (1 + n(n+1)/2) Gold, 8 × n
+ * hours) with its Gold raised 20% compounding a level, to the nearest 100
+ * (500 Gold at level 1, about 3 million at 20 and 11.5 million in all). At
+ * the full limit each level pays back its Gold in 10 floors at first and in
+ * 100 to 370 floors from level 8 on, counting Silver as Gold. */
+const maxInterestLevels = () => INTEREST_CAPS.map((value, i): ResearchLevel => ({
+  gold: Math.round((500 * (1 + (i * (i + 1)) / 2) * intPow(1.2, i)) / 100) * 100,
+  hours: 8 * (i + 1),
+  effect: { target: "interestCap", op: "set", value },
+}));
+
 /** Buy Quantity: one level for each quantity past x1 (x5, x10, x100,
  * Max), 1,000 to 100,000 Gold and 4 to 48 hours. */
 const BUY_QUANTITY_LEVELS: [gold: number, hours: number][] = [[1000, 4], [5000, 12], [25000, 24], [100000, 48]];
@@ -183,8 +215,9 @@ export const RESEARCH = {
     name: "Undo Count",
     description: "Rehearse old climbs to store more undos.",
     categories: ["abilities"],
-    requires: [{ upgrade: "inspirationUndos" }],
-    levels: countLevels("undoCapacity"),
+    requires: [{ anyUpgrade: ["inspirationUndos", "undos"] }],
+    levels: countLevels("undoCapacity", 10),
+    levelsPer: { upgrades: ["inspirationUndos", "undos"], levels: 5 },
   },
   fasterTrainers: {
     name: "Faster Trainers",
@@ -249,6 +282,41 @@ export const RESEARCH = {
     requires: [{ upgrade: "floorSkipReward" }],
     levels: countLevels("floorSkipGold", 11, 10),
   },
+  findYellowKey: {
+    name: "Find Yellow Key",
+    description: "Learn where climbers drop things: each new floor climbed has a chance to hand you a yellow key.",
+    categories: ["economy"],
+    requires: [{ upgrade: "findYellowKey" }],
+    levels: hundredLevels("yellowKeyChance", 4).slice(0, 50),
+  },
+  keyEfficiency: {
+    name: "Key Efficiency",
+    description: "Work the locks gently: every door takes less of each key.",
+    categories: ["economy"],
+    requires: [{ upgrade: "keyEfficiency" }],
+    levels: hundredLevels("keyCost", -5),
+  },
+  interest: {
+    name: "Interest %",
+    description: "Put your Silver to work: each new floor climbed adds a share of the Silver you hold, after the floor's other Silver, up to Max Interest.",
+    categories: ["economy"],
+    requires: [{ upgrade: "interest" }],
+    levels: hundredLevels("interestRate", 1),
+  },
+  maxInterest: {
+    name: "Max Interest",
+    description: "Find richer lenders: Interest pays more Silver a floor at most.",
+    categories: ["economy"],
+    requires: [{ upgrade: "maxInterest" }],
+    levels: maxInterestLevels(),
+  },
+  mug: {
+    name: "Mug",
+    description: "Empty their pockets before they fall: a kill your first strike makes pays more Gold.",
+    categories: ["economy"],
+    requires: [{ upgrade: "mug" }],
+    levels: hundredLevels("instakillGold", 2),
+  },
 } satisfies Record<string, ResearchDefinition>;
 export type ResearchId = keyof typeof RESEARCH;
 export const RESEARCH_IDS = Object.keys(RESEARCH) as ResearchId[];
@@ -299,9 +367,17 @@ export type ArchivesOwner = {
 };
 
 export const researchLevel = (a: ArchivesSave, id: ResearchId) => a.levels[id] ?? 0;
-/** The level `id` would research next, or undefined once it is complete. */
-export const nextLevel = (a: ArchivesSave, id: ResearchId): ResearchLevel | undefined =>
-  research(id).levels[researchLevel(a, id)];
+/** The most levels of `id` open with `upgrades` owned: all of them, or
+ * `levelsPer` for each of its upgrades owned. Without `upgrades`, all. */
+export function maxLevel(id: ResearchId, upgrades?: Record<UpgradeId, number>) {
+  const def = research(id), per = def.levelsPer;
+  if (!per || !upgrades) return def.levels.length;
+  return Math.min(def.levels.length, per.levels * per.upgrades.filter((u) => upgrades[u] > 0).length);
+}
+/** The level `id` would research next, or undefined once it is complete
+ * (or, given the `upgrades` owned, once every level they open is). */
+export const nextLevel = (a: ArchivesSave, id: ResearchId, upgrades?: Record<UpgradeId, number>): ResearchLevel | undefined =>
+  researchLevel(a, id) < maxLevel(id, upgrades) ? research(id).levels[researchLevel(a, id)] : undefined;
 
 /** `base` changed by every completed research level aimed at `target`. */
 export function researched(a: ArchivesSave, target: ResearchTarget, base: number) {
@@ -328,6 +404,7 @@ export const duration = (a: ArchivesSave, level: ResearchLevel) =>
 
 const met = (o: ArchivesOwner, r: ResearchRequirement) =>
   "upgrade" in r ? o.upgrades[r.upgrade] > 0
+  : "anyUpgrade" in r ? r.anyUpgrade.some((u) => o.upgrades[u] > 0)
   : "research" in r ? researchLevel(o.archives, r.research as ResearchId) >= r.level
   : levelForXp(o.xp) >= r.playerLevel;
 /** The requirements `id` still waits on. */
@@ -339,8 +416,8 @@ export const activeSlot = (a: ArchivesSave, id: ResearchId) => a.slots.findIndex
 export type ResearchStatus = "locked" | "available" | "active" | "completed";
 export function status(o: ArchivesOwner, id: ResearchId): ResearchStatus {
   if (activeSlot(o.archives, id) >= 0) return "active";
-  if (!nextLevel(o.archives, id)) return "completed";
-  return missing(o, id).length ? "locked" : "available";
+  if (missing(o, id).length) return "locked";
+  return nextLevel(o.archives, id, o.upgrades) ? "available" : "completed";
 }
 
 /** A job's share done at `now`, 0–1 (a clock set back reads as no progress). */
@@ -349,7 +426,7 @@ export const jobProgress = (job: ResearchJob, now: number) =>
 
 /** Why `id` can't start in `slot` now, or null when it can. */
 export function cannotStart(o: ArchivesOwner, slot: number, id: ResearchId): string | null {
-  const a = o.archives, level = nextLevel(a, id);
+  const a = o.archives, level = nextLevel(a, id, o.upgrades);
   if (!a.slots[slot] || a.slots[slot].job) return "That archivist is busy.";
   if (!level) return "Research complete.";
   if (activeSlot(a, id) >= 0) return "Already being researched.";

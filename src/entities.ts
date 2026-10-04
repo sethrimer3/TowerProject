@@ -195,7 +195,8 @@ export type ModeSave<R extends Run = Run> = {
   /** The numbered tower (or delve) selected: the slice's records (`best`,
    * and `reached`) are this tier's. */
   tier: number;
-  /** The highest tier opened, from 1 to `TIERS`. */
+  /** The highest tier opened, from 1 to `TIERS`: the Tower's, which the
+   * Delve's caves follow. */
   tiersOpen: number;
   /** The other tiers' records, by tier, while another is selected. */
   tierRecords: Record<string, TierRecord>;

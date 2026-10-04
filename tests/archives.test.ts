@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   ARCHIVISTS, HISTORY_LIMIT, RESEARCH, RESEARCH_CATEGORIES, RESEARCH_IDS, RESEARCH_TARGETS, cancelResearch, decodeArchives,
-  defaultArchives, duration, hireArchivist, jobProgress, researchLevel, researched, settleArchives, startResearch, status, withNextLevel,
+  defaultArchives, duration, hireArchivist, jobProgress, maxLevel, researchLevel, researched, settleArchives, startResearch, status, withNextLevel,
 } from "../src/archives.ts";
 import { UPGRADES } from "../src/config.ts";
 import { decode, defaults } from "../src/save.ts";
@@ -210,12 +210,12 @@ test("Potion HP: +3% a level for 100 levels; quick first levels, then the formul
   assert.deepEqual(RESEARCH.potionHp.categories, ["defense"]);
 });
 
-test("Undo Count needs Rehearsed steps, costs what Focus Count does, and each level stores one more undo at once", () => {
+test("Undo Count needs Rehearsed steps or Echoes of time, costs what Focus Count does, and each level stores one more undo at once", () => {
   const save = owner();
   const g = new Game(save);
   g.clock = () => T0;
   assert.deepEqual(
-    RESEARCH.undoCount.levels.map(({ gold, hours }) => [gold, hours]),
+    RESEARCH.undoCount.levels.slice(0, 9).map(({ gold, hours }) => [gold, hours]),
     RESEARCH.focusCount.levels.map(({ gold, hours }) => [gold, hours]),
   );
   assert.equal(status(save, "undoCount"), "locked");
@@ -226,8 +226,32 @@ test("Undo Count needs Rehearsed steps, costs what Focus Count does, and each le
   g.clock = () => T0 + 8 * HOUR;
   assert.equal(g.research.settle().length, 1);
   assert.equal(g.undoCapacity, 2);
-  save.archives.levels.undoCount = RESEARCH.undoCount.levels.length;
-  assert.equal(g.undoCapacity, 1 + 9);
+  save.archives.levels.undoCount = 5;
+  assert.equal(g.undoCapacity, 1 + 5);
+});
+
+test("Undo Count opens 5 levels for each of Rehearsed steps and Echoes of time owned, either first", () => {
+  for (const first of ["inspirationUndos", "undos"] as const) {
+    const save = owner();
+    const g = new Game(save);
+    g.clock = () => T0;
+    save.upgrades[first] = 1;
+    assert.equal(maxLevel("undoCount", save.upgrades), 5, first);
+    assert.equal(status(save, "undoCount"), "available");
+    save.archives.levels.undoCount = 5;
+    assert.equal(status(save, "undoCount"), "completed", "5 levels with one skill");
+    assert.equal(g.research.start(0, "undoCount"), false);
+    save.upgrades[first === "undos" ? "inspirationUndos" : "undos"] = 1;
+    assert.equal(maxLevel("undoCount", save.upgrades), 10);
+    assert.ok(g.research.start(0, "undoCount"), "the second skill opens 5 more");
+  }
+  // Echoes of time alone stores no undo until research does.
+  const save = owner();
+  save.upgrades.undos = 1;
+  const g = new Game(save);
+  assert.equal(g.undoCapacity, 0);
+  save.archives.levels.undoCount = 2;
+  assert.equal(g.undoCapacity, 2);
 });
 
 test("Potion HP needs Greater Heal, and every level strengthens potions at once, mid-run too", () => {
