@@ -157,7 +157,7 @@ export const delveDefenseGrowth = (depth: number) =>
 
 /** How many times a strong enemy's HP and ATK a boss has, in both modes. */
 export const BOSS_OVER_STRONG = 2;
-/** How many times a boss's HP and ATK a Greater Boss has. */
+/** How many times a boss's HP, ATK and DEF a Greater Boss has. */
 export const GREATER_BOSS_OVER_BOSS = 2;
 /** What an enemy of `strength` multiplies a strong enemy's rounded HP and
  * ATK by: BOSS_OVER_STRONG for a boss, GREATER_BOSS_OVER_BOSS times that
@@ -189,7 +189,7 @@ export function getTowerGateEnemy(room: number, strength: TowerEnemyStrength, pr
     name: base.name,
     hp: Math.round(base.hp * stats) * boss,
     attack: Math.round(base.attack * stats) * boss,
-    defense: Math.round(base.defense * defense * towerDefenseGrowth(room)),
+    defense: Math.round(base.defense * defense * towerDefenseGrowth(room)) * (strength === "greaterBoss" ? GREATER_BOSS_OVER_BOSS : 1),
     tier,
     strength,
   };

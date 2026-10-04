@@ -155,7 +155,7 @@ The monster guarding the way up at the end of every ten floors: in front of the 
 _Avoid_: area boss, guardian
 
 **Greater Boss**:
-The Tower floor's secret monster: once every torch on a floor is put out, it appears on the open floor nearest the stairs, once a floor each run. It has twice a boss's HP and ATK and pays twice a boss's rewards, but guards nothing.
+The Tower floor's secret monster: once every torch on a floor is put out, it appears on the open floor nearest the stairs, once a floor each run. It has twice a boss's HP, ATK and DEF and pays twice a boss's rewards, but guards nothing.
 _Avoid_: super boss, secret boss
 
 **Silver**:

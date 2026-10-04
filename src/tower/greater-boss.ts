@@ -36,6 +36,6 @@ export function greaterBossSpot(floor: RoomWorld, taken: readonly Point[]): Poin
 }
 
 /** The Greater Boss of `floor`: its floor's boss with GREATER_BOSS_OVER_BOSS
- * times the HP and ATK (`bossFactor`), in the floor's tier. */
+ * times the HP and ATK (`bossFactor`) and DEF, in the floor's tier. */
 export const greaterBoss = (floor: RoomWorld): Tile =>
   tierTile({ kind: "enemy", enemy: getTowerGateEnemy(floor.room, "greaterBoss", "balanced") }, floor.tier);

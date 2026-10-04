@@ -29,12 +29,12 @@ function besideLastTorch(seed = 3, undos = false) {
 }
 const greaterBosses = (changes: Record<string, Tile>) => Object.entries(changes).filter(([, t]) => t.enemy?.strength === "greaterBoss");
 
-test("a Greater Boss has twice a boss's HP and ATK, a boss's DEF, and twice its rewards", () => {
+test("a Greater Boss has twice a boss's HP, ATK and DEF, and twice its rewards", () => {
   for (const room of [0, 9, 49]) {
     const boss = getTowerGateEnemy(room, "boss", "balanced"), greater = getTowerGateEnemy(room, "greaterBoss", "balanced");
     assert.equal(greater.hp, boss.hp * GREATER_BOSS_OVER_BOSS);
     assert.equal(greater.attack, boss.attack * GREATER_BOSS_OVER_BOSS);
-    assert.equal(greater.defense, boss.defense);
+    assert.equal(greater.defense, boss.defense * GREATER_BOSS_OVER_BOSS);
     assert.equal(enemyTitle(greater), `Greater Boss ${boss.name}`);
   }
   assert.equal(BOSS_OVER_STRONG * GREATER_BOSS_OVER_BOSS, 4);
