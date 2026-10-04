@@ -14,14 +14,15 @@ import { BUY_QUANTITIES, quantityLabel } from "./buy-quantity.ts";
 // runs on while the game is closed and tests set the clock.
 
 /** The groups the research library can be filtered by. */
+/** The research categories, in the order the library lists its groups. */
 export const RESEARCH_CATEGORIES = {
-  combat: "Combat",
-  economy: "Economy",
-  defense: "Defense",
-  abilities: "Abilities",
-  equipment: "Equipment",
-  progression: "Progression",
   qualityOfLife: "Quality of life",
+  progression: "Progression",
+  abilities: "Abilities",
+  offense: "Offense",
+  defense: "Defense",
+  economy: "Economy",
+  equipment: "Equipment",
   special: "Special",
 } as const;
 export type ResearchCategory = keyof typeof RESEARCH_CATEGORIES;

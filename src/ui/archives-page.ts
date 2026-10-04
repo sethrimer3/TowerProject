@@ -194,26 +194,31 @@ export class ArchivesPanel {
       (!words || `${def.name} ${def.description}`.toLowerCase().includes(words));
   }
 
+  /** The listed projects grouped under a heading per category, each by its
+   * first category, the groups in `RESEARCH_CATEGORIES` order. */
   private listHtml() {
     const ids = RESEARCH_IDS.filter((id) => this.matches(id));
-    return ids.length ? ids.map((id) => this.researchHtml(id)).join("") : `<p class="research-empty">No research matches.</p>`;
+    if (!ids.length) return `<p class="research-empty">No research matches.</p>`;
+    return (Object.entries(RESEARCH_CATEGORIES) as [ResearchCategory, string][]).map(([category, name]) => {
+      const group = ids.filter((id) => research(id).categories[0] === category);
+      return group.length ? `<h4 class="research-group">${name}</h4>${group.map((id) => this.researchHtml(id)).join("")}` : "";
+    }).join("");
   }
 
-  /** One project, kept short so more fit in view: its name, tags and
-   * level on one line, its description, then what its next level gives,
+  /** One project, kept short so more fit in view: its name and level on
+   * one line, its description, then what its next level gives, and what it
    * costs and takes beside the button to start it, and any progress kept. */
   private researchHtml(id: ResearchId) {
     const save = this.ctx.game.save, a = save.archives, def = research(id);
     const level = researchLevel(a, id), next = nextLevel(a, id), state = status(save, id);
-    const tags = def.categories.map((c) => `<span class="research-tag">${RESEARCH_CATEGORIES[c]}</span>`).join("");
-    let detail = "", kept = "", action: string;
+    let detail = "", price = "", kept = "", action: string;
     if (next) {
       const ms = duration(a, next), share = a.progress[id];
       const target = next.effect.target, shown = (archives: ArchivesSave) => RESEARCH_TARGETS[target].shown(targetValue(save, target, archives));
       // The Research button shows the Gold; without it, the price does.
       const gold = state === "available" ? "" : `${uiSprite("gold", "stat-sprite")} ${currencyAmount(next.gold)} · `;
-      detail = `<span class="research-target">${RESEARCH_TARGETS[target].name}:</span><span class="training-box">${shown(a)}</span><span class="training-arrow" aria-hidden="true">→</span><span class="training-box next">${shown(withNextLevel(a, id))}</span>` +
-        `<span class="research-price">${gold}${formatDuration(ms)}</span>`;
+      detail = `<span class="research-target">${RESEARCH_TARGETS[target].name}:</span><span class="training-box">${shown(a)}</span><span class="training-arrow" aria-hidden="true">→</span><span class="training-box next">${shown(withNextLevel(a, id))}</span>`;
+      price = `<span class="research-price">${gold}${formatDuration(ms)}</span>`;
       if (share) kept = `<p class="research-kept">Progress kept: ${formatDuration(share * ms)} of ${formatDuration(ms)}</p>`;
     }
     if (state === "completed") action = `<span class="research-state">Complete</span>`;
@@ -224,8 +229,8 @@ export class ArchivesPanel {
       const why = slot < 0 ? "Every archivist is busy." : cannotStart(save, slot, id);
       action = `<button data-research="${id}" ${why ? `disabled title="${why}"` : ""}>Research · ${uiSprite("gold", "stat-sprite")} ${currencyAmount(next!.gold)}</button>`;
     }
-    return `<article class="research ${state}" role="listitem"><div class="research-head"><b>${def.name}</b><span class="research-tags">${tags}</span><small>LEVEL ${level} / ${def.levels.length}</small></div>
-      <p>${def.description}</p><div class="research-next">${detail}<span class="research-action">${action}</span></div>${kept}</article>`;
+    return `<article class="research ${state}" role="listitem"><div class="research-head"><b>${def.name}</b><small>LEVEL ${level} / ${def.levels.length}</small></div>
+      <p>${def.description}</p><div class="research-next">${detail}<span class="research-action">${price}${action}</span></div>${kept}</article>`;
   }
 
   /** The research completed lately, newest first, in a scrolling dialog. */

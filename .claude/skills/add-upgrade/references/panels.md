@@ -37,8 +37,8 @@ The Upgrades page's trees: Inspiration (Tower currency), Courage, Wayfinding, Le
 
 Research that lasts, paid in Gold and real (wall-clock) time, run by archivists. Unlocked by the `archives` skill.
 
-**Row** (`RESEARCH` in `src/archives.ts`, listed in this order on the page): `{ name, description, categories, requires, levels }`.
-- `categories`: keys of `RESEARCH_CATEGORIES` (combat, economy, defense, abilities, equipment, progression, qualityOfLife, special), used by the library's filters.
+**Row** (`RESEARCH` in `src/archives.ts`, listed in this order within its category's group on the page): `{ name, description, categories, requires, levels }`.
+- `categories`: keys of `RESEARCH_CATEGORIES` (qualityOfLife, progression, abilities, offense, defense, economy, equipment, special, in the order the library lists its groups), used by the library's filters and headings: a project is listed under its first category.
 - `requires`: any of `{ upgrade: UpgradeId }`, `{ research: id, level }`, `{ playerLevel: n }`. The library lists a project only once these are met (Dev mode lists all).
 - `levels`: one `{ gold, hours, effect }` per level; the max level is the array's length. Write them as a small formula with a comment, like `countLevels` (Focus Count's and Undo Count's: 500 × (1 + n(n+1)/2) Gold, 8 × n hours).
 - `effect`: `{ target, op: "add" | "multiply" | "set", value }`. Adds sum, then multipliers apply, a `set` overrides.
