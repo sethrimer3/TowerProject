@@ -1,5 +1,6 @@
 import { RUN_TRAINING_CAP, RUN_TRAINING_PRICES, schedulePrice, TRAINING, isStatRow, trainingOpen, type TrainingId, type TrainingRow } from "./config.ts";
 import type { RunCore, Save } from "./entities.ts";
+import { bulkBuy, type BuyQuantity } from "./buy-quantity.ts";
 import { floorGold, floorSilver, killGold, percentPotionChance, silverBonus, potionPercent, reviveChance, shownStat } from "./loadout.ts";
 
 /** Run training: Training ranks bought with Silver inside a run, on top of
@@ -37,6 +38,14 @@ export function runTrainingOffer(save: Pick<Save, "training" | "upgrades">, run:
   const row = TRAINING.find((t) => t.id === id)!, bought = boughtInRun(run, id);
   const level = save.training[id] + bought, max = runTrainingMax(row);
   return { row, bought, level, max, price: silverPrice(id, bought), open: trainingOpen(row, save.upgrades), maxed: level >= max };
+}
+
+/** What one press of `id`'s price buys in `run` at Buy Quantity `q`: the
+ * ranks (up to its most) and their Silver, and whether `silver` pays for
+ * them. */
+export function runTrainingBulk(save: Pick<Save, "training" | "upgrades">, run: Pick<RunCore, "training">, id: TrainingId, q: BuyQuantity, silver: number) {
+  const offer = runTrainingOffer(save, run, id);
+  return bulkBuy(q, Math.max(0, offer.max - offer.level), (k) => silverPrice(id, offer.bought + k), silver);
 }
 
 /** What row `id` stands at in `run` now, as the run's cards show it: the

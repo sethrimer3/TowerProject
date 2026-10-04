@@ -6,7 +6,7 @@ import { DRAW_GEMS, type DrawCount } from "../game/badge-desk.ts";
 import { cardWith, BADGE_IDS, BADGES, badgeLevel, badgeValue, type BadgeId } from "../badges.ts";
 import { RARITIES } from "../shop/rarity.ts";
 import { revealDraws } from "./badge-reveal.ts";
-import { cardBadgeHtml, badgeText, progressText, tokenHtml } from "./badge-token.ts";
+import { badgeLevelsHtml, cardBadgeHtml, badgeText, progressText, tokenHtml } from "./badge-token.ts";
 
 /** Where a hand card dropped on the deck goes: back to the deck. */
 const TO_DECK = -1;
@@ -541,13 +541,14 @@ export class DeckPage {
       ? `<label class="badge-slider">Threshold<input type="range" id="badge-pick" min="0" max="${level - 1}" step="1" value="${owned.pick}" ${level > 1 ? "" : "disabled"}><output id="badge-pick-value">${this.thresholdText(id, owned.pick)}</output></label><small class="badge-slider-note">${level > 1 ? "Each level opens a tighter threshold." : "Level up to open tighter thresholds."}</small>`
       : "";
     const modal = this.ctx.modal;
-    modal.innerHTML = `<small><span style="color:${rarity.color}">${rarity.displayName.toUpperCase()}</span> · LEVEL ${level}</small><h2>${def.name}</h2><div class="badge-detail">${tokenHtml(id, level, "big")}</div><p id="badge-detail-text">${badgeText(id, level, owned.pick)}</p>${gate}<p class="badge-detail-meta">${progress === "MAX" ? "Top level reached." : `${progress} copies toward level ${level + 1}.`}${on ? ` On ${CARDS[on].name}.` : " On no card: drag it onto one."}</p><button class="wide" id="badge-detail-ok">Done</button>`;
+    modal.innerHTML = `<small><span style="color:${rarity.color}">${rarity.displayName.toUpperCase()}</span> · LEVEL ${level}</small><h2>${def.name}</h2><div class="badge-detail">${tokenHtml(id, level, "big")}</div><p id="badge-detail-text">${badgeText(id, level, owned.pick)}</p>${gate}<p id="badge-detail-levels">${badgeLevelsHtml(id, level, owned.pick)}</p><p class="badge-detail-meta">${progress === "MAX" ? "Top level reached." : `${progress} copies toward level ${level + 1}.`}${on ? ` On ${CARDS[on].name}.` : " On no card: drag it onto one."}</p><button class="wide" id="badge-detail-ok">Done</button>`;
     const slider = modal.querySelector<HTMLInputElement>("#badge-pick");
     if (slider) slider.oninput = () => {
       const pick = Number(slider.value);
       if (!game.badges.setPick(id, pick)) return;
       modal.querySelector("#badge-pick-value")!.textContent = this.thresholdText(id, pick);
       modal.querySelector("#badge-detail-text")!.textContent = badgeText(id, level, pick);
+      modal.querySelector("#badge-detail-levels")!.innerHTML = badgeLevelsHtml(id, level, pick);
       this.ctx.save();
     };
     modal.querySelector<HTMLButtonElement>("#badge-detail-ok")!.onclick = () => modal.close();

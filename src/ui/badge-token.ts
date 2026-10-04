@@ -35,3 +35,15 @@ export function progressText(copies: number) {
 export function badgeText(id: BadgeId, level: number, pick = 0) {
   return badgeDef(id).text(badgeValue(id, level, pick));
 }
+
+/** Every level's value of badge `id`, concisely, the one in use (`level`'s,
+ * or a gate's picked threshold) in bold: "By level: 1 · 4 · <b>9</b> · … 49 HP". */
+export function badgeLevelsHtml(id: BadgeId, level: number, pick = 0) {
+  const def = badgeDef(id), gate = def.kind === "gate";
+  const current = gate ? Math.max(0, Math.min(pick, level - 1)) : level - 1;
+  const values = def.values.map((v, i) => {
+    const text = gate ? `&lt;${v}` : String(v);
+    return i === current ? `<b>${text}</b>` : text;
+  });
+  return `<small class="badge-levels">By level: ${def.lead ? `${def.lead} ` : ""}${values.join(" · ")} ${def.unit}</small>`;
+}

@@ -7,8 +7,11 @@ import type { Player, Tile } from "./entities.ts";
 /** What stepping onto each pickup grants. The single source for the move
  * itself, route previews, the inspect panel, and Automove's planning. */
 export const POTION_HEAL = 35;
-export const ATTACK_SHARD = 2;
-export const DEFENSE_SHARD = 1;
+/** What an ATK or DEF shard raises its stat by in the first tier; a later
+ * tier's shards carry their own `amount` (`tierShard`). */
+export const SHARD = 1;
+/** What the ATK or DEF shard `tile` raises its stat by. */
+export const shardGain = (tile: Tile) => tile.amount ?? SHARD;
 /** The HP a Heart Door leaves the hero. */
 export const HEART_DOOR_HP = 1;
 
@@ -78,10 +81,10 @@ export function resolveStep(player: Player, tile: Tile, rules: StepRules = BASE_
       break;
     }
     case "attack":
-      next.attack += ATTACK_SHARD;
+      next.attack = snap(next.attack + shardGain(tile));
       break;
     case "defense":
-      next.defense += DEFENSE_SHARD;
+      next.defense = snap(next.defense + shardGain(tile));
       break;
   }
   // Regen comes after the step's fight, door or pickup.

@@ -51,7 +51,7 @@ import { World, LAYOUT_VERSION } from "./delve/world.ts";
 import { RoomWorld, TOWER_LAYOUT_VERSION } from "./tower/room-world.ts";
 import type { Board } from "./board.ts";
 import { bout, heroHpAfter, heroHpDuring, resume, REVIVE_MS, revivals, summarize, type Bout, type Revival } from "./combat.ts";
-import { ATTACK_SHARD, DEFENSE_SHARD, isLethal, potionHeal, regenerate, resolveStep, type StepBlocked, type StepEffect, type StepRules } from "./step-effects.ts";
+import { isLethal, potionHeal, regenerate, resolveStep, type StepBlocked, type StepEffect, type StepRules, shardGain } from "./step-effects.ts";
 import { OutsideWorld } from "./outside.ts";
 import { ClearLedger } from "./tower/clear-ledger.ts";
 import { TowerClimb } from "./tower/climb.ts";
@@ -59,9 +59,10 @@ import { materialDef, MATERIALS } from "./materials.ts";
 import { TIERS, TIER_BOSS_FLOOR, switchTier, tierGold, tierNumeral, tierRewardText, tierXp } from "./tiers.ts";
 import { enemyTitle } from "./scaling.ts";
 import { snap } from "./exact.ts";
-import { whole, wholeChange } from "./whole.ts";
+import { enemyStat, whole, wholeChange } from "./whole.ts";
 import { MODES, milestones, type ModeProfile } from "./modes.ts";
-import { boughtInRun, ranksInRun, runTrainingOffer, type RunTrainingOffer } from "./run-training.ts";
+import { boughtInRun, ranksInRun, runTrainingBulk, runTrainingOffer, type RunTrainingOffer } from "./run-training.ts";
+import { openQuantities, type BuyQuantity } from "./buy-quantity.ts";
 import { keepUndos, loadout, percentPotionChance, potionPercent, reviveChance } from "./loadout.ts";
 import { researched } from "./archives.ts";
 import { SETTINGS } from "./settings.ts";
@@ -1349,35 +1350,56 @@ export class Game {
     if (this.free) return "free";
     return paid ? "store" : "price";
   }
-  /** Buys one rank of Training `id` for this run with its Silver: it counts
+  /** Buys ranks of Training `id` for this run with its Silver, one or as
+   * many as Buy Quantity `quantity` takes (`runTrainingBulk`): they count
    * from the next turn on, until the run ends. Each purchase is a turn of
-   * its own, so undo takes it back. Bought while a fight plays out, it
-   * counts in that fight from its next strike (`retrainFight`). Refused
+   * its own, so undo takes it back. Bought while a fight plays out, they
+   * count in that fight from its next strike (`retrainFight`). Refused
    * before On the Job is owned, during a fight shown in summary rounds, for
    * a row whose upgrade isn't owned or at its highest, or without the
-   * Silver. */
-  trainInRun(id: TrainingId) {
+   * Silver for them all. */
+  trainInRun(id: TrainingId, quantity: BuyQuantity = 1) {
     if (!this.mayTrainInRun) return false;
-    const offer = runTrainingOffer(this.save, this.run, id);
-    if (!this.canBuy(offer)) return false;
+    const first = runTrainingOffer(this.save, this.run, id);
+    if (!first.open || first.maxed) return false;
+    const bulk = runTrainingBulk(this.save, this.run, id, quantity, this.free ? Infinity : this.silver);
+    if (!bulk.affordable) return false;
     this.remember(this.snapshot());
-    if (!this.free) this.run.silver = snap(this.silver - offer.price);
-    this.run.training = { ...this.run.training, [id]: offer.bought + 1 };
-    this.applyRunTraining(offer);
-    this.message = `${offer.row.name} trained for this run · level ${offer.level + 1}`;
+    if (!this.free) this.run.silver = snap(this.silver - bulk.cost);
+    let hpGain = 0;
+    for (let i = 0; i < bulk.count; i++) {
+      const offer = runTrainingOffer(this.save, this.run, id);
+      this.run.training = { ...this.run.training, [id]: offer.bought + 1 };
+      hpGain = snap(hpGain + this.applyRunTraining(offer));
+    }
+    // A fight playing out goes on with the stats (or Revive) bought.
+    if (this.encounter && (isStatRow(first.row) || id === "revive")) this.retrainFight(this.encounter, hpGain);
+    this.message = `${first.row.name} trained for this run · level ${first.level + bulk.count}`;
     this.afterPlayerAction();
     return true;
   }
-  /** Whether the run's next rank of a row is for sale and its Silver held. */
-  private canBuy(offer: RunTrainingOffer) {
-    return offer.open && !offer.maxed && (this.free || this.silver >= offer.price);
+  /** The Buy Quantity choices open: x1 once the Buy Quantity skill is owned
+   * (or in Dev mode), and one more per level of its research; none before. */
+  get buyQuantities(): readonly BuyQuantity[] {
+    return this.save.upgrades.buyQuantity || this.save.settings.devMode ? openQuantities(researched(this.save.archives, "buyQuantity", 0)) : [];
   }
-  /** What a rank bought for the run changes now: a stat, the chance of
-   * percent potions, or Revive in a fight playing out. */
+  /** How many ranks a Training press buys: the quantity chosen, while it is open, else one. */
+  get buyQuantity(): BuyQuantity {
+    const chosen = this.save.settings.buyQuantity;
+    return this.buyQuantities.includes(chosen) ? chosen : 1;
+  }
+  /** Chooses the Buy Quantity, if it is open. */
+  setBuyQuantity(q: BuyQuantity) {
+    if (!this.buyQuantities.includes(q)) return false;
+    this.save.settings.buyQuantity = q;
+    return true;
+  }
+  /** What a rank bought for the run changes now: a stat, or the chance of
+   * percent potions. Returns the max HP it added. */
   private applyRunTraining({ row, level }: RunTrainingOffer) {
-    if (isStatRow(row)) this.raiseRunStat(row, level);
-    else if (row.id === "findPotion") this.raisePercentPotions();
-    else if (row.id === "revive" && this.encounter) this.retrainFight(this.encounter, 0);
+    if (isStatRow(row)) return this.raiseRunStat(row, level);
+    if (row.id === "findPotion") this.raisePercentPotions();
+    return 0;
   }
   /** Whether Training can be bought for the run now: On the Job owned,
    * inside a run, and no fight shown in summary rounds. */
@@ -1385,8 +1407,8 @@ export class Game {
     return this.trainsOnTheJob && this.playing && !this.encounter?.summary;
   }
   /** A stat row's rank bought for the run: the hero and the run's loadout
-   * gain what the rank from `level` adds at the hero's level, and a fight
-   * playing out goes on with it. */
+   * gain what the rank from `level` adds at the hero's level. Returns the
+   * max HP it added. */
   private raiseRunStat(row: StatTrainingRow, level: number) {
     const heroLevel = levelForXp(this.save.xp), stat = row.stat, p = this.run.player,
       gain = snap(trained(row, level + 1, heroLevel) - trained(row, level, heroLevel));
@@ -1395,7 +1417,7 @@ export class Game {
     if (kept) kept[stat] = snap((kept[stat] ?? 0) + gain);
     // More maximum HP comes with the HP to fill it.
     if (stat === "maxHp") p.hp = snap(p.hp + gain);
-    if (this.encounter) this.retrainFight(this.encounter, stat === "maxHp" ? gain : 0);
+    return stat === "maxHp" ? gain : 0;
   }
   /** Find Potion bought for the run: its chance of percent potions rises,
    * and the floor stood on shows its new percent potions at once. */
@@ -1508,8 +1530,8 @@ function pickupText(t: Tile, outcome: StepEffect) {
   switch (t.kind) {
     case "key": return `+1 ${t.color} key`;
     case "potion": return `+${wholeChange(outcome.healed)} HP`;
-    case "attack": return `+${ATTACK_SHARD} attack`;
-    case "defense": return `+${DEFENSE_SHARD} defense`;
+    case "attack": return `+${enemyStat(shardGain(t))} attack`;
+    case "defense": return `+${enemyStat(shardGain(t))} defense`;
     default: return null;
   }
 }

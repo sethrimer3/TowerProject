@@ -37,9 +37,16 @@ export const tierRewardText = (tier: number) => `${tierBonusText(tier)} Gold · 
 /** A tier's number as the tower shows it: I, II, … IX. */
 export const tierNumeral = (tier: number) => ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"][tier - 1]!;
 
-/** `tile` as it stands in `tier`: an enemy with its stats multiplied. */
+/** How many times tier 1's ATK or DEF a shard in `tier` raises: ×2.75
+ * compounding each tier (1, 2.75, 7.5625, …), its fraction kept. */
+export const tierShard = (tier: number) => snap(intPow(11, tier - 1) / intPow(4, tier - 1));
+
+/** `tile` as it stands in `tier`: an enemy with its stats multiplied, or
+ * an ATK or DEF shard raising its stat by `tierShard`. */
 export function tierTile(tile: Tile, tier: number): Tile {
-  if (tier <= 1 || tile.kind !== "enemy" || !tile.enemy) return tile;
+  if (tier <= 1) return tile;
+  if (tile.kind === "attack" || tile.kind === "defense") return { ...tile, amount: tierShard(tier) };
+  if (tile.kind !== "enemy" || !tile.enemy) return tile;
   const f = tierStats(tier), e: Enemy = tile.enemy;
   return { ...tile, enemy: { ...e, hp: e.hp * f, attack: e.attack * f, defense: e.defense * f } };
 }

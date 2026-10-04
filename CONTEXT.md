@@ -158,6 +158,10 @@ _Avoid_: coins, run gold
 Training levels bought with Silver inside a run, on top of the hero's own, lasting only for that run. Opened by the Inspiration skill On the Job.
 _Avoid_: drills, run upgrades, temporary training
 
+**Buy Quantity**:
+How many Training ranks one press buys, with training points or with Silver in a run: x1, then x5, x10, x100 and Max (as many as what is held pays for) as its research opens them.
+_Avoid_: bulk buy, multiplier
+
 **Checkpoint**:
 A Tower floor every ten (10, 20, … 100) on the Goals screen, each tower with its own. Completing it (climbing its stairs to the floor above) lets the player claim its reward, and its premium reward too with the Premium Pass for its set of three towers. Claims last between runs.
 _Avoid_: milestone (the currency paid per floor completed), section

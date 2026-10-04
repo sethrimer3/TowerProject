@@ -2,7 +2,7 @@ import { enemyStat, whole, wholeChange, wholeHp } from "../whole.ts";
 import type { Enemy, Kind, Player, Tile } from "../entities.ts";
 import { enemyTitle } from "../scaling.ts";
 import type { Game, RouteEffects } from "../state.ts";
-import { ATTACK_SHARD, DEFENSE_SHARD, HEART_DOOR_HP, resolveStep } from "../step-effects.ts";
+import { HEART_DOOR_HP, resolveStep, shardGain } from "../step-effects.ts";
 import { attackForFewerHits, predict, type CombatPrediction } from "../combat.ts";
 import { goalUnlocked } from "../goals.ts";
 import { doorColor, doorCost, doorDescription, doorName, doorRule, KEY_NAMES } from "../doors.ts";
@@ -94,8 +94,8 @@ const DESCRIBE: Partial<Record<Kind, Describe>> = {
   stairs,
   stairsDown: stairs,
   floor: (_t, _p, g) => ({ title: "Floor", body: MODES[g.mode].words.floor }),
-  attack: () => ({ title: "Attack Shard", body: `Raises ATK by ${ATTACK_SHARD} for this run.` }),
-  defense: () => ({ title: "Defense Shard", body: `Raises DEF by ${DEFENSE_SHARD} for this run.` }),
+  attack: (t) => ({ title: "Attack Shard", body: `Raises ATK by ${enemyStat(shardGain(t))} for this run.` }),
+  defense: (t) => ({ title: "Defense Shard", body: `Raises DEF by ${enemyStat(shardGain(t))} for this run.` }),
   treasure: () => ({ title: "Treasure", body: "Contains gold and crafting materials." }),
   reward: () => ({ title: "Reward Chest", body: "Clear reward — claim it here." }),
 };

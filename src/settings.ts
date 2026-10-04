@@ -61,6 +61,12 @@ export const SETTINGS = {
   /** Dev: every purchase is allowed and costs nothing, and research
    * completes the moment it starts. Unlocks and grants nothing itself. */
   freePurchases: { kind: "toggle", default: false, page: { id: "free-purchases", label: "Dev: free purchases (instant research)" } },
+  /** How many Training ranks one press buys (`buy-quantity.ts`): chosen
+   * on the Training tab or the run's training bar once Buy Quantity is
+   * owned, not on the Settings page. */
+  buyQuantity: {
+    kind: "choice", default: 1, choices: [[1, "x1"], [5, "x5"], [10, "x10"], [100, "x100"], ["max", "Max"]],
+  },
 } as const satisfies Record<string, Setting>;
 
 export type SettingKey = keyof typeof SETTINGS;

@@ -1,6 +1,6 @@
 import { levelProgress, badgeDef, badgeLevel, type BadgeDraw, type BadgeId } from "../badges.ts";
 import { RARITIES } from "../shop/rarity.ts";
-import { badgeStyle, badgeText, tokenHtml } from "./badge-token.ts";
+import { badgeLevelsHtml, badgeStyle, badgeText, tokenHtml } from "./badge-token.ts";
 
 /** When a repeat draw's coin lands on its token, and when a level reached
  * flashes onto the star (ms). */
@@ -63,7 +63,7 @@ const continueHtml = (more: boolean) =>
 /** A badge's name and rarity, over what it does. */
 function caption(draw: BadgeDraw, small: string, pick: number) {
   const def = badgeDef(draw.id), level = badgeLevel(draw.after);
-  return `<div class="badge-reveal-text"><small>${small} · <span style="color:${RARITIES[def.rarity].color}">${RARITIES[def.rarity].displayName.toUpperCase()}</span></small><b>${def.name}</b><p>${badgeText(draw.id, level, pick)}</p></div>`;
+  return `<div class="badge-reveal-text"><small>${small} · <span style="color:${RARITIES[def.rarity].color}">${RARITIES[def.rarity].displayName.toUpperCase()}</span></small><b>${def.name}</b><p>${badgeText(draw.id, level, pick)}</p><p class="badge-reveal-levels">${badgeLevelsHtml(draw.id, level, pick)}</p></div>`;
 }
 
 /** A badge drawn for the first time: it rises, rays turning behind it. */
@@ -100,6 +100,7 @@ function playRepeat(layer: HTMLElement, draw: BadgeDraw, pick: number, later: (m
     const small = layer.querySelector<HTMLElement>(".badge-reveal-text small");
     if (small) small.firstChild!.textContent = `LEVEL ${after} · `;
     layer.querySelector<HTMLElement>(".badge-reveal-text p")!.textContent = badgeText(draw.id, after, pick);
+    layer.querySelector<HTMLElement>(".badge-reveal-levels")!.innerHTML = badgeLevelsHtml(draw.id, after, pick);
   });
 }
 

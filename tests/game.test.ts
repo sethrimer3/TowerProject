@@ -62,7 +62,7 @@ test("doors consume matching keys; pickups and walls obey movement", () => {
   assert.equal(p.keys.blue, 0);
   g.world.changes["15,2"] = { kind: "attack" };
   g.move(0, 1);
-  assert.equal(p.attack, 14);
+  assert.equal(p.attack, 13);
   g.world.changes["15,3"] = { kind: "wall" };
   assert.equal(g.move(0, 1), false);
   assert.equal(g.run.height, (g.world as World).depth(p.x, p.y));

@@ -1,6 +1,7 @@
 import type { Game } from "../state.ts";
 import { TRAINING, TRAINING_GROUPS, trainingOpen, type TrainingId } from "../config.ts";
-import { runTrainingOffer, runTrainingValue } from "../run-training.ts";
+import { runTrainingBulk, runTrainingOffer, runTrainingValue } from "../run-training.ts";
+import { buyQuantityHtml, maxCount, readQuantity } from "./buy-quantity-select.ts";
 import { trainingText } from "../loadout.ts";
 import { el, itemSprite, POINTER_SVG, uiSprite } from "./dom.ts";
 import { sparkRed } from "./hud.ts";
@@ -40,7 +41,14 @@ export class RunTrainingBar {
     const bar = el("training-bar");
     bar.innerHTML = (Object.entries(TRAINING_GROUPS) as [Group, string][])
       .map(([group, name]) => `<button type="button" data-run-group="${group}" aria-pressed="false">${GROUP_ICONS[group]}<span>${name}</span></button>`)
-      .join("");
+      .join("") + `<span class="run-buy-quantity"></span>`;
+    // Buy Quantity, at the right of the group buttons once the skill is owned.
+    bar.onchange = (e) => {
+      const select = (e.target as HTMLElement).closest<HTMLSelectElement>("[data-buy-quantity]");
+      if (!select) return;
+      this.game.setBuyQuantity(readQuantity(select.value));
+      this.changed();
+    };
     bar.onclick = (e) => {
       const button = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-run-group]");
       if (button && !button.disabled) this.toggleGroup(button.dataset.runGroup as Group);
@@ -89,7 +97,7 @@ export class RunTrainingBar {
   }
 
   private buy(button: HTMLButtonElement) {
-    if (!this.game.trainInRun(button.dataset.runTrain as TrainingId)) sparkRed(button, this.game.save.settings.reduceMotion);
+    if (!this.game.trainInRun(button.dataset.runTrain as TrainingId, this.game.buyQuantity)) sparkRed(button, this.game.save.settings.reduceMotion);
     this.changed();
     this.refreshTip();
   }
@@ -101,6 +109,7 @@ export class RunTrainingBar {
     // A group closes outside a run, or once none of its rows can train.
     if (!inside || (this.open && !this.rows(this.open).length)) this.open = null;
     this.renderGroups();
+    this.renderQuantity();
     const rows = this.open ? this.rows(this.open) : [];
     document.querySelector("nav")!.classList.toggle("drilling", !!this.open);
     this.renderCards(rows);
@@ -116,6 +125,17 @@ export class RunTrainingBar {
       b.classList.toggle("selected", group === this.open);
       b.setAttribute("aria-pressed", String(group === this.open));
     });
+  }
+
+  /** The Buy Quantity dropdown, built again only when its choices change. */
+  private renderQuantity() {
+    const slot = el("training-bar").querySelector<HTMLElement>(".run-buy-quantity")!;
+    const html = buyQuantityHtml(this.game.buyQuantities, this.game.buyQuantity);
+    if (slot.dataset.html !== html) {
+      slot.dataset.html = html;
+      slot.innerHTML = html;
+    }
+    slot.hidden = !html;
   }
 
   /** The open group's cards, built again only when its rows change. */
@@ -191,24 +211,26 @@ export class RunTrainingBar {
     return TRAINING.filter((t) => t.group === group && trainingOpen(t, this.game.save.upgrades)).map((t) => t.id);
   }
 
-  /** One card's value and price, its button faded while the Silver isn't
+  /** One card's value and price (for the ranks the Buy Quantity buys, a
+   * Max press's count over it), its button faded while the Silver isn't
    * there, and the whole card greyed at its highest. */
   private fill(id: TrainingId) {
     const game = this.game, card = document.querySelector<HTMLElement>(`[data-drill="${id}"]`)!;
     const offer = runTrainingOffer(game.save, game.run, id), { value, unit } = runTrainingValue(game.save, game.run, id);
-    const short = !offer.maxed && !game.free && game.silver < offer.price;
+    const q = game.buyQuantity, bulk = runTrainingBulk(game.save, game.run, id, q, game.free ? Infinity : game.silver);
+    const short = !offer.maxed && !bulk.affordable;
     card.classList.toggle("short", short);
     card.classList.toggle("maxed", offer.maxed);
     card.querySelector(".drill-value")!.textContent = trainingText(value, unit);
     const buy = card.querySelector<HTMLButtonElement>(".drill-buy")!;
-    const label = offer.maxed ? "Max" : `${silverIcon()}<b>${offer.price.toLocaleString("en-US")}</b>`;
+    const label = offer.maxed ? "Max" : `${maxCount(q, bulk.count)}${silverIcon()}<b>${bulk.cost.toLocaleString("en-US")}</b>`;
     if (buy.dataset.label !== label) {
       buy.dataset.label = label;
       buy.innerHTML = label;
     }
     // Short of Silver it still answers a press, with red sparks.
     buy.disabled = offer.maxed;
-    buy.setAttribute("aria-label", offer.maxed ? `${offer.row.name} is at its highest level` : `Train ${offer.row.name} for this run for ${offer.price} Silver`);
+    buy.setAttribute("aria-label", offer.maxed ? `${offer.row.name} is at its highest level` : `Train ${offer.row.name} for this run, ${bulk.count === 1 ? "one rank" : `${bulk.count} ranks`}, for ${bulk.cost} Silver`);
   }
 
   private showTip(card: HTMLElement) {

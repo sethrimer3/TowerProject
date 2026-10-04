@@ -28,7 +28,8 @@ export const TREES: SkillTree[] = [
     // Research needs the Archives, so the skills that open it come after them:
     // Blue Key below DEF Up, Rehearsed steps and Faster Trainers either side of
     // Into the depths, and Pocket Money (then Spare Change) and Greater Heal after it,
-    // either side of the core path down the middle: Key Siphon, then Regen Research.
+    // either side of the core path down the middle (Key Siphon, then Buy Quantity). Regen Research
+    // stands under Greater Heal, Recovery and Shroud under it.
     { id: "cardBlueKey", icon: "⚿", x: 20, y: 84, requires: ["archives"] },
     { id: "inspirationUndos", icon: "↺", x: 20, y: 106, requires: ["archives"] },
     { id: "delve", icon: "▼", x: 50, y: 106, requires: ["archives"] },
@@ -36,15 +37,16 @@ export const TREES: SkillTree[] = [
     { id: "pocketMoney", icon: "¤", x: 26, y: 124, requires: ["delve"] },
     { id: "greaterHeal", icon: "✚", x: 74, y: 124, requires: ["delve"] },
     { id: "keySiphon", icon: "⚿", x: 50, y: 124, requires: ["delve"] },
-    { id: "regenResearch", icon: "♥", x: 50, y: 142, requires: ["keySiphon"] },
+    { id: "buyQuantity", icon: "×", x: 50, y: 142, requires: ["keySiphon"] },
     { id: "spareChange", icon: "¤", x: 26, y: 142, requires: ["pocketMoney"] },
     { id: "wealthy", icon: "¤", x: 14, y: 160, requires: ["spareChange"] },
     { id: "loot", icon: "☠", x: 38, y: 160, requires: ["spareChange"] },
     { id: "wishingWell", icon: "◎", x: 26, y: 178, requires: ["spareChange"] },
-    { id: "recovery", icon: "✦", x: 70, y: 142, requires: ["greaterHeal"] },
-    { id: "findPotion", icon: "⚗", x: 70, y: 160, requires: ["recovery"] },
-    { id: "shroud", icon: "◈", x: 90, y: 142, requires: ["greaterHeal"] },
-    { id: "revive", icon: "☼", x: 90, y: 160, requires: ["shroud"] },
+    { id: "regenResearch", icon: "♥", x: 80, y: 142, requires: ["greaterHeal"] },
+    { id: "recovery", icon: "✦", x: 70, y: 160, requires: ["regenResearch"] },
+    { id: "findPotion", icon: "⚗", x: 70, y: 178, requires: ["recovery"] },
+    { id: "shroud", icon: "◈", x: 90, y: 160, requires: ["regenResearch"] },
+    { id: "revive", icon: "☼", x: 90, y: 178, requires: ["shroud"] },
   ] },
   { id: "courage", name: "Courage", currency: "courage", gate: "delve", description: "Earn Courage by beating your best Delve depth.", nodes: [
     { id: "moveSpeed", icon: "»", x: 50, y: 10, requires: ["delve"] },

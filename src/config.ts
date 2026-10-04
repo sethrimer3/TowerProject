@@ -296,6 +296,14 @@ export const UPGRADES = [
     currency: "inspiration",
   },
   {
+    id: "buyQuantity",
+    name: "Buy Quantity",
+    description: "Choose how many Training ranks one press buys, with training points or with Silver in a run (x1 at first): Buy Quantity research in the Archives opens x5, x10, x100 and Max",
+    base: 5,
+    max: 1,
+    currency: "inspiration",
+  },
+  {
     id: "pocketMoney",
     name: "Pocket Money",
     description: "Open Pocket Money research in the Archives: every run goes inside with Silver in hand",

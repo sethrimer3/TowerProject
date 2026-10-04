@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { ATTACK_SHARD, DEFENSE_SHARD, POTION_HEAL, resolveStep, type StepEffect, type StepRules } from "../src/step-effects.ts";
+import { POTION_HEAL, SHARD, resolveStep, type StepEffect, type StepRules } from "../src/step-effects.ts";
 import type { Player, Tile } from "../src/entities.ts";
 
 const player = (over: Partial<Player> = {}): Player => ({
@@ -13,8 +13,8 @@ const effect = (p: Player, t: Tile, rules?: StepRules) => {
 };
 
 test("pickups grant their documented amounts", () => {
-  assert.equal(effect(player(), { kind: "attack" }).player.attack, 10 + ATTACK_SHARD);
-  assert.equal(effect(player(), { kind: "defense" }).player.defense, 2 + DEFENSE_SHARD);
+  assert.equal(effect(player(), { kind: "attack" }).player.attack, 10 + SHARD);
+  assert.equal(effect(player(), { kind: "defense" }).player.defense, 2 + SHARD);
   assert.equal(effect(player(), { kind: "key", color: "blue" }).player.keys.blue, 1);
   const potion = effect(player(), { kind: "potion" });
   assert.equal(potion.healed, POTION_HEAL);

@@ -82,8 +82,9 @@ test("Shroud blocks 1 damage a fight and opens Shroud training, each rank worth 
   assert.equal(trainNow(g, "shroud"), false, "not before Shroud");
   assert.equal(g.run.player.shroud, undefined, "no shroud yet");
   g.save.tower.inspiration = 10;
-  assert.equal(g.buy("shroud"), false, "not before Greater Heal");
+  assert.equal(g.buy("shroud"), false, "not before Greater Heal and Regen Research");
   g.save.upgrades.greaterHeal = 1;
+  g.save.upgrades.regenResearch = 1;
   assert.ok(g.buy("shroud"));
   assert.equal(loadout(g.save).shroud, 1);
   assert.equal(g.save.tower.inspiration, 0, "10 Inspiration");
@@ -260,6 +261,7 @@ test("provisions last for good: every run takes them, and one bought mid-run cou
   s.tower.inspiration = 100;
   s.gold = 100;
   s.upgrades.greaterHeal = 1;
+  s.upgrades.regenResearch = 1;
   assert.ok(g.buy("shroud"));
   assert.ok(g.gear.buyProvision("edge") && g.gear.buyProvision("heal"));
   assert.equal(s.gold, 100 - 15 - 5);

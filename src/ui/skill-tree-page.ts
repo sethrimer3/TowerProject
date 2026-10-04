@@ -5,9 +5,10 @@ import { upgradeCard } from "../cards.ts";
 import { revealCard } from "./card-reveal.ts";
 import { TRAINING, TRAINING_GROUPS, TRAINING_PER_LEVEL, UPGRADES, cost, trainingOpen, type TrainingId, type UpgradeId } from "../config.ts";
 import { TREES, mapNodes, skillAvailable, treeHeight, treeOpen, type TreeId } from "../skill-trees.ts";
-import { trainingPoints, trainingStep, trainingText, trainingWaiting, upgradeText } from "../loadout.ts";
+import { trainingBulk, trainingPoints, trainingStep, trainingText, trainingWaiting, upgradeText } from "../loadout.ts";
 import { whole } from "../whole.ts";
 import { TreeParticles } from "../tree-particles.ts";
+import { buyQuantityHtml, maxCount, readQuantity } from "./buy-quantity-select.ts";
 import { TrainingParticles } from "../training-particles.ts";
 import { BOOST_RATE, boostLeft, claimBoost, finishGems, nextTrainerGems, trainingJob, trainingSlots } from "../training-jobs.ts";
 import type { AppContext } from "./app.ts";
@@ -132,7 +133,13 @@ export class SkillTreePage {
    * finish and reset, the boost and the next trainer. */
   private bindTraining() {
     const training = this.ctx.game.training;
-    this.onEach("data-train", (id) => this.withRefund(() => training.train(id)));
+    this.onEach("data-train", (id) => this.withRefund(() => training.train(id, this.ctx.game.buyQuantity)));
+    const quantity = document.querySelector<HTMLSelectElement>("[data-buy-quantity]");
+    if (quantity) quantity.onchange = () => {
+      this.ctx.game.setBuyQuantity(readQuantity(quantity.value));
+      this.ctx.save();
+      this.render();
+    };
     this.onEach("data-train-gold", (id) => {
       if (training.trainWithGold(id)) {
         this.ctx.update();
@@ -259,6 +266,8 @@ export class SkillTreePage {
   private trainingHtml() {
     const game = this.ctx.game, save = game.save, points = trainingPoints(save), slots = trainingSlots(save), hired = game.training.hired;
     const row = (t: TrainingRow) => this.trainingRowHtml(t);
+    // Buy Quantity sits at the right of the trainers' row, or the points' without trainers.
+    const quantity = buyQuantityHtml(game.buyQuantities, game.buyQuantity);
     // Each group's rows, leaving out any whose upgrade isn't owned yet.
     const rows = (Object.entries(TRAINING_GROUPS) as [keyof typeof TRAINING_GROUPS, string][]).map(([group, name]) => {
       const open = TRAINING.filter(t => t.group === group && trainingOpen(t, save.upgrades));
@@ -269,8 +278,8 @@ export class SkillTreePage {
       : "";
     return `<section class="training"><canvas class="training-particles" aria-hidden="true"></canvas><header class="tree-heading"><h3>Training</h3></header>
       ${hired ? this.boostHtml() : ""}
-      <p class="training-points"><span class="training-held" title="Training points">${pointsIcon()} <b id="training-points">${points.left}</b></span>${bank}<small>${hired ? `Level up with ${pointsIcon()} or pay ${goldIcon()} to a trainer` : `Each level earns ${TRAINING_PER_LEVEL} ${pointsIcon()}`}</small></p>
-      ${hired ? `<p class="training-points training-slots">Trainers: <b id="training-slots">${save.trainingJobs.length} / ${slots}</b> ${this.trainerButton()}</p>` : ""}
+      <p class="training-points"><span class="training-held" title="Training points">${pointsIcon()} <b id="training-points">${points.left}</b></span>${bank}<small>${hired ? `Level up with ${pointsIcon()} or pay ${goldIcon()} to a trainer` : `Each level earns ${TRAINING_PER_LEVEL} ${pointsIcon()}`}</small>${hired ? "" : quantity}</p>
+      ${hired ? `<p class="training-points training-slots">Trainers: <b id="training-slots">${save.trainingJobs.length} / ${slots}</b> ${this.trainerButton()}${quantity}</p>` : ""}
       <div class="training-table" role="list" aria-label="Stat training">${rows}</div></section>`;
   }
 
@@ -279,7 +288,11 @@ export class SkillTreePage {
    * time its next rank still needs (its time credit taken off) and the
    * trainer (its countdown while it trains). */
   private trainingRowHtml(t: TrainingRow) {
-    const game = this.ctx.game, save = game.save, step = trainingStep(save, t.id), { now, next, unit } = step, hired = game.training.hired;
+    const game = this.ctx.game, save = game.save, step = trainingStep(save, t.id), hired = game.training.hired;
+    // A Buy Quantity above x1 shows its price for the ranks it buys and
+    // the value they reach.
+    const q = game.buyQuantity, bulk = trainingBulk(save, t.id, q), count = step.maxed ? 1 : Math.max(1, bulk.count);
+    const { now, unit } = step, next = count === 1 ? step.next : trainingStep(save, t.id, count).next;
     // A row with a most ranks says so, and once there offers no next one.
     const most = "max" in t ? `up to ${trainingStep({ ...save, training: { ...save.training, [t.id]: t.max }, trainingJobs: [] }, t.id).now}${unit}` : "";
     const shown = (v: number) => trainingText(v, unit);
@@ -288,7 +301,7 @@ export class SkillTreePage {
     const job = trainingJob(save.trainingJobs, t.id);
     const nowButton = step.maxed
       ? ""
-      : `<button class="training-box training-cost training-now" data-train="${t.id}" ${step.affordable ? "" : "disabled"} aria-label="Spend ${t.cost} training ${t.cost === 1 ? "point" : "points"} to train ${t.name} now" title="Train now">${pointsIcon()}<span>${t.cost}</span></button>`;
+      : `<button class="training-box training-cost training-now" data-train="${t.id}" ${bulk.affordable ? "" : "disabled"} aria-label="Spend ${bulk.cost} training ${bulk.cost === 1 ? "point" : "points"} to train ${t.name} ${count === 1 ? "one rank" : `${count} ranks`} now" title="Train now">${maxCount(q, count)}${pointsIcon()}<span>${bulk.cost}</span></button>`;
     return `<div class="training-row${job ? " active" : ""}" role="listitem" data-training-row="${t.id}"><span class="training-label">${hired ? this.autoBox(t) : ""}${t.name}${notes ? `<small>${notes}</small>` : ""}</span><span class="training-box">${shown(now)}</span><span class="training-arrow" aria-hidden="true">→</span><span class="training-box next">${shown(next)}</span>${hired ? this.trainerHtml(t, step) : ""}${nowButton}${this.resetButton(t, !!job)}</div>`;
   }
 

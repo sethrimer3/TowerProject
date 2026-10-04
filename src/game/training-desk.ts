@@ -1,7 +1,8 @@
 import { TRAINING, trainingOpen, type TrainingId } from "../config.ts";
 import { snap } from "../exact.ts";
 import { TRAINING_RESET_GEMS } from "../gems.ts";
-import { trainingMaxed, trainingPoints, trainingSpeed } from "../loadout.ts";
+import type { BuyQuantity } from "../buy-quantity.ts";
+import { trainingBulk, trainingMaxed, trainingSpeed } from "../loadout.ts";
 import { BOOST_FOREVER } from "../shop/entitlements.ts";
 import { claimBoost, doneAt, finishGems, nextTrainerGems, trainingGold, trainingJob, trainingMs, workLeft, trainingSlots, type TrainingJob } from "../training-jobs.ts";
 import { affordsGems, type DeskHost } from "./desk.ts";
@@ -37,24 +38,23 @@ export class TrainingDesk {
     return trainingOpen(rowOf(id), this.save.upgrades) && !trainingMaxed(this.save, id);
   }
 
-  /** Buys one more rank of `id` with training points: it counts at once.
+  /** Buys more ranks of `id` with training points, one or as many as
+   * Buy Quantity `quantity` takes (`trainingBulk`): they count at once.
    * A trainer training the stat stops, as `cancel` does: its Gold comes
    * back and the time spent becomes the stat's time credit. Refused at the
    * stat's most, or without the points. With Dev
    * free purchases it costs nothing. */
-  train(id: TrainingId) {
+  train(id: TrainingId, quantity: BuyQuantity = 1) {
     this.settle();
-    const row = rowOf(id), free = this.host.free;
-    if (!this.canTrain(id) || !this.affordsPoints(row.cost)) return false;
+    const free = this.host.free;
+    if (!this.canTrain(id)) return false;
+    const { count, cost, affordable } = trainingBulk(this.save, id, quantity);
+    if (!affordable) return false;
     this.cancel(id);
     return changeLoadout(this.save, () => {
-      if (!free) this.save.trainingPaid[id].points += row.cost;
-      this.save.training[id]++;
+      if (!free) this.save.trainingPaid[id].points += cost;
+      this.save.training[id] += count;
     });
-  }
-
-  private affordsPoints(points: number) {
-    return this.host.free || trainingPoints(this.save).left >= points;
   }
 
   /** Pays a trainer `trainingGold` to train one more rank of `id`: it

@@ -4,7 +4,8 @@ import { Game } from "../src/state.ts";
 import { decode, defaults } from "../src/save.ts";
 import { ENEMY_GOLD, xpForKill } from "../src/config.ts";
 import { MODES } from "../src/modes.ts";
-import { TIERS, TIER_BONUS_TENTHS, tierXp, tierBonusText, tierGold, tierNumeral, tierStats, tierTile } from "../src/tiers.ts";
+import { TIERS, TIER_BONUS_TENTHS, tierXp, tierBonusText, tierGold, tierNumeral, tierShard, tierStats, tierTile } from "../src/tiers.ts";
+import { resolveStep, type StepEffect } from "../src/step-effects.ts";
 import type { Enemy, Mode, Tile } from "../src/entities.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
 
@@ -37,6 +38,15 @@ test("each tier triples the last's enemy stats and XP, and pays more Gold: ×2, 
   assert.deepEqual(tierTile({ kind: "potion", amount: 35 } as Tile, 3), { kind: "potion", amount: 35 });
 });
 
+test("ATK and DEF shards give 1 in the first tier, ×2.75 compounding each tier after", () => {
+  assert.deepEqual([1, 2, 3, 4].map(tierShard), [1, 2.75, 7.5625, 20.796875]);
+  const hero = { x: 0, y: 0, hp: 10, maxHp: 10, attack: 5, defense: 2, keys: { yellow: 0, blue: 0, red: 0 } };
+  for (const kind of ["attack", "defense"] as const) {
+    const gain = (tier: number) => (resolveStep(hero, tierTile({ kind }, tier)) as StepEffect).player[kind] - hero[kind];
+    assert.deepEqual([gain(1), gain(2), gain(3)], [1, 2.75, 7.5625], kind);
+  }
+});
+
 test("past the first, a tier's boards are the one before's with every enemy's stats multiplied", () => {
   for (const mode of ["tower", "delve"] as Mode[]) {
     const g = new Game(defaults());
@@ -51,6 +61,7 @@ test("past the first, a tier's boards are the one before's with every enemy's st
     for (let y = 0; y < 17; y++)
       for (let x = 0; x < one.width; x++) {
         const a = one.tile(x, y), b = three.tile(x, y);
+        if (a.kind === "attack" || a.kind === "defense") { assert.deepEqual([a.amount, b], [tierShard(2), { ...a, amount: tierShard(3) }]); continue; }
         if (a.kind !== "enemy") { assert.deepEqual(b, a); continue; }
         enemies++;
         assert.deepEqual(b, tierTile(a, 2), "three times the second tier's");

@@ -2621,6 +2621,13 @@ nav.in-run.drilling .run-drills {
 .training-bar .group-sprite { width: 22px; height: 22px; }
 .training-bar button.selected { border-color: #d6ae68; color: #efd496; box-shadow: inset 0 -2px #d9ac5a; }
 .training-bar button:disabled { opacity: 0.4; }
+/* Buy Quantity: how many ranks a Training press buys, at the bar's right. */
+.run-buy-quantity { display: flex; flex-shrink: 0; }
+.run-buy-quantity[hidden] { display: none; }
+select.buy-quantity { min-height: 30px; padding: 2px 6px; font-family: Cinzel, Georgia, serif; font-size: 11px; letter-spacing: 1px; color: #efd496; background: #10161f; border: 1px solid #6b5a3a; border-radius: 6px; }
+.training-points select.buy-quantity { float: right; min-height: 24px; }
+/* "x12": the ranks a Max press buys, before its price. */
+.buy-count { margin-right: 3px; font-size: 9px; color: #f3ead8; opacity: 0.85; }
 .drill-tip {
   position: fixed;
   z-index: 20;
@@ -2884,6 +2891,9 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
 .badge-slider output { min-width: 72px; text-align: right; color: #f1d69b; }
 .badge-slider-note { display: block; font-size: 10px; color: #7f8a9d; }
 .badge-detail-meta { font-size: 12px; color: #a9b6c8; }
+/* Every level's value under a badge's description, the one in use bright. */
+.badge-levels, .badge-reveal-text .badge-levels { display: block; font-size: 11px; letter-spacing: 0; line-height: 1.5; color: #8f9cb0; }
+.badge-levels b, .badge-reveal-text .badge-levels b { display: inline; margin: 0; font-size: inherit; font-weight: 700; color: #f3ead8; }
 
 /* --- Badges drawn --- */
 .badge-reveal {

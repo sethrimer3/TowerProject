@@ -2,6 +2,7 @@ import { FOCUS_PER_RUN, levelForXp, type UpgradeId } from "./config.ts";
 import type { Settings } from "./settings.ts";
 import { finite as finiteIn, isRecord, wholeIn } from "./decode.ts";
 import { intPow } from "./exact.ts";
+import { BUY_QUANTITIES, quantityLabel } from "./buy-quantity.ts";
 
 // The Archives: research that lasts between runs. An archivist takes one
 // research project at a time; each level costs Gold and real time, and once
@@ -57,6 +58,8 @@ export const RESEARCH_TARGETS = {
   trainingSpeed: { name: "Training Speed", base: 0, shown: speed },
   /** Tiles the hand's first step toward a new target may rush across, once Rush is owned. */
   rushTiles: { name: "Tiles Rushed", base: 0, shown: count },
+  /** Buy quantities opened past x1: x5, x10, x100, then Max. */
+  buyQuantity: { name: "Buy Quantity", base: 0, shown: (n: number) => quantityLabel(BUY_QUANTITIES[Math.min(n, BUY_QUANTITIES.length - 1)]!) },
   /** How fast archivists work: a level of `d` hours takes d / (1 + speed). */
   researchSpeed: { name: "Research Speed", base: 0, shown: speed },
 } as const;
@@ -128,6 +131,10 @@ const rushLevels = () => Array.from({ length: 25 }, (_, i): ResearchLevel => ({
   effect: { target: "rushTiles", op: "add", value: 1 },
 }));
 
+/** Buy Quantity: one level for each quantity past x1 (x5, x10, x100,
+ * Max), 1,000 to 100,000 Gold and 4 to 48 hours. */
+const BUY_QUANTITY_LEVELS: [gold: number, hours: number][] = [[1000, 4], [5000, 12], [25000, 24], [100000, 48]];
+
 /** The research library, in the order the Archives list it. */
 export const RESEARCH = {
   potionHp: {
@@ -178,6 +185,13 @@ export const RESEARCH = {
     categories: ["progression"],
     requires: [{ upgrade: "fasterTrainers" }],
     levels: fasterTrainersLevels(),
+  },
+  buyQuantity: {
+    name: "Buy Quantity",
+    description: "Drill the trainers in batches: each level opens a larger Buy Quantity for Training (x5, x10, x100, then Max).",
+    categories: ["qualityOfLife"],
+    requires: [{ upgrade: "buyQuantity" }],
+    levels: BUY_QUANTITY_LEVELS.map(([gold, hours]): ResearchLevel => ({ gold, hours, effect: { target: "buyQuantity", op: "add", value: 1 } })),
   },
   pocketMoney: {
     name: "Pocket Money",

@@ -11,20 +11,24 @@ import type { Save } from "../src/entities.ts";
 
 const hpRow = TRAINING.find((t) => t.id === "hp")! as StatTrainingRow;
 
-test("Rehearsed steps costs 5; Key Siphon (5) follows Into the depths, Regen Research (2) Key Siphon", () => {
+test("Rehearsed steps costs 5; Key Siphon (5) follows Into the depths, Buy Quantity (5) Key Siphon, Regen Research (2) Greater Heal", () => {
   assert.equal(cost("inspirationUndos", 0), 5);
   const g = new Game(defaults());
   g.save.tower.inspiration = 1000;
   for (const id of ["combatStance", "buildout", "trainers", "largerHand", "archives"] as const) assert.ok(g.buy(id));
   assert.equal(g.buy("keySiphon"), false, "waits for Into the depths");
   assert.ok(g.buy("delve"));
-  assert.equal(g.buy("regenResearch"), false, "waits for Key Siphon");
+  assert.equal(g.buy("buyQuantity"), false, "waits for Key Siphon");
+  assert.equal(g.buy("regenResearch"), false, "waits for Greater Heal");
   const before = g.save.tower.inspiration;
   assert.ok(g.buy("keySiphon"));
   assert.equal(before - g.save.tower.inspiration, 5);
   assert.ok(deckCards(g.save.upgrades).includes("keySiphon"), "its card joins the deck");
+  assert.ok(g.buy("buyQuantity"));
+  assert.equal(before - g.save.tower.inspiration, 5 + 5);
+  assert.ok(g.buy("greaterHeal"));
   assert.ok(g.buy("regenResearch"));
-  assert.equal(before - g.save.tower.inspiration, 5 + 2);
+  assert.equal(before - g.save.tower.inspiration, 5 + 5 + 3 + 2);
 });
 
 test("Regen research: +3% Regen a level, priced and timed like Potion HP, needing Regen Research", () => {
