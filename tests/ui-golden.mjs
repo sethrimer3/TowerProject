@@ -122,6 +122,15 @@ try {
       g.move(0, 1, true);
       return { save: JSON.stringify(g.save), targets: [] };
     };
+    /** A save waiting in the forest outside the Tower, built by the real game. */
+    const forest = (edit) => {
+      const s = defaults();
+      edit?.(s);
+      const g = new Game(s);
+      g.switchMode("tower");
+      g.newRun({ outside: true });
+      return { save: JSON.stringify(g.save), targets: [] };
+    };
     return {
       fresh: make(quiet),
       towerFloor: inside(quiet, 3),
@@ -135,6 +144,13 @@ try {
       // Built last, so the fixtures above keep their run seeds.
       fallenUndo: fallen((s) => { s.upgrades.inspirationUndos = 1; }),
       fallenBare: fallen(),
+      // In the forest with Card Modifiers: a few owned, two on cards.
+      modifiers: forest((s) => {
+        rich(s);
+        s.upgrades.cardModifiers = 1;
+        Object.assign(s.tutorials, { deck: true, removeCard: true, addCard: true, upgrades: true });
+        s.modifiers = { owned: { hp: { copies: 4, pick: 0 }, xp: { copies: 1, pick: 0 }, hpGate: { copies: 3, pick: 1 }, charge: { copies: 2, pick: 0 } }, cards: { stairs: "hp", monster: "charge" }, rng: 99 };
+      }),
     };
   });
 
@@ -263,6 +279,35 @@ try {
     await shot(`${prefix}.deck.buySlot`);
     await click("#confirm");
     await shot(`${prefix}.deck.slotBought`);
+  }
+  /** Card Modifiers on the Deck page: a token's details (a gate's slider),
+   * one dragged onto a card and one taken off, then one draw and ten. */
+  async function modifiersTour(prefix) {
+    await tab("deck");
+    await shot(`${prefix}.deck`);
+    await click('.mod-pick[data-mod="hpGate"]');
+    await shot(`${prefix}.detail`);
+    await click("#mod-detail-ok");
+    // The page draws again once the dialog's close event has fired.
+    await settled();
+    const a = await page.locator('.mod-pick[data-mod="xp"]').boundingBox();
+    const b = await page.locator('.deck-entry[data-mod-card="door"]').boundingBox();
+    await page.mouse.move(a.x + a.width / 2, a.y + a.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2, { steps: 8 });
+    await page.mouse.up();
+    await shot(`${prefix}.attached`);
+    await click('[data-detach="charge"]');
+    await shot(`${prefix}.detached`);
+    await click('[data-draw="1"]');
+    await shot(`${prefix}.drawn`);
+    await click(".mod-reveal-go");
+    await click('[data-draw="10"]');
+    await shot(`${prefix}.ten`);
+    await click(".mod-reveal-skip");
+    await shot(`${prefix}.ten.summary`);
+    await click(".mod-reveal-go");
+    await shot(`${prefix}.afterDraws`);
   }
   /** Buying a card's skill raises the card over the screen until pressed. */
   async function cardRevealTour(prefix) {
@@ -466,6 +511,9 @@ try {
   await click("#page-shop");
   await click("#shop-back");
   await shot("dev.gear.shopBack");
+
+  await load("modifiers");
+  await modifiersTour("mods");
 
   // --- Compare ---
   const hashes = Object.fromEntries(Object.entries(shots).map(([k, html]) => [k, createHash("sha256").update(html).digest("hex").slice(0, 16)]));

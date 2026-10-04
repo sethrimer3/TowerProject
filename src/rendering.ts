@@ -150,6 +150,7 @@ export class Renderer {
   }
   /** Gameplay feedback drawn over every board. */
   private drawOverlays(f: FrameContext) {
+    this.drawSkipMarks(f);
     this.drawBlockedMark(f);
     // A Gem shines above the darkness, so it can be seen and tapped.
     const gem = this.game.gemFinder.gem, sparkle = this.game.gemFinder.sparkle;
@@ -377,6 +378,29 @@ export class Renderer {
     c.fillRect(w - 2, 0, 2, w);
   }
   /** A fading red cross where a step was refused. */
+  /** Skip Open Nodes' marks: a violet X on each door or monster it passed
+   * over on this floor. */
+  private drawSkipMarks(f: FrameContext) {
+    const marks = this.game.skipMarks;
+    if (!marks.length) return;
+    const c = f.c, s = f.s, r = s * 0.2;
+    c.save();
+    c.lineCap = "round";
+    for (const k of marks) {
+      const [wx, wy] = k.split(",").map(Number), x = (wx - f.left + 0.5) * s + s * 0.22, y = (f.n - 0.5 - (wy - f.bottom)) * s - s * 0.22;
+      for (const [color, width] of [["#000c", Math.max(3, s * 0.12)], ["#d7a6ff", Math.max(1.5, s * 0.06)]] as const) {
+        c.strokeStyle = color;
+        c.lineWidth = width;
+        c.beginPath();
+        c.moveTo(x - r / 2, y - r / 2);
+        c.lineTo(x + r / 2, y + r / 2);
+        c.moveTo(x + r / 2, y - r / 2);
+        c.lineTo(x - r / 2, y + r / 2);
+        c.stroke();
+      }
+    }
+    c.restore();
+  }
   private drawBlockedMark(f: FrameContext) {
     const g = this.game, c = f.c, s = f.s;
     if (g.blocked.until <= f.now) return;

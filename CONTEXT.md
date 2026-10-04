@@ -235,6 +235,14 @@ _Avoid_: diamond, crystal, premium
 Putting one card of the hand ahead of the others inside a run, until the hero reaches its target or the card has no path to one. A run has a limited number of Focus uses.
 _Avoid_: priority, override
 
+**Card modifier**:
+A token bought with Gems (drawn by rarity: common, rare or epic) and attached to one card, changing what the card does when it activates: paying something (HP, Silver, Gold, XP), gating it (it acts only while a condition holds) or changing its target (Stairward, Skip Open Nodes, Charge). A card holds one, and a modifier sits on one card at a time. More copies of a modifier raise its level, up to 7.
+_Avoid_: rune, gem, charm, enchantment
+
+**Activation**:
+A card of the hand doing what it is for: its path's last step reaching its target, or a card that acts in place acting. Card modifiers pay on activation.
+_Avoid_: trigger, proc
+
 **Stuck hand**:
 No card in the hand can act. The hand pauses and End Run lights up, and the run ends only when the player ends it; each thing the player does (an item used, a skill) checks the hand again, and it plays on once a card can act.
 _Avoid_: deadlock

@@ -23,11 +23,13 @@ export function tileRandom(x: number, y: number, seed: number) {
 /** The game's independent random streams, one per purpose, so drawing from
  * one never shifts another: `game` for what decides play outside the world
  * itself (new run seeds, enemy drops, treasure loot), `effects` for what
- * only shows (particles and the like). Worlds don't use these: each board
+ * only shows (particles and the like), `modifiers` for the card modifiers
+ * a Gem purchase draws (seeding the stream saved with the profile, which
+ * draws carry on from: modifiers.ts). Worlds don't use these: each board
  * is a pure function of its run seed (`random`, `tileRandom`). A new purpose,
  * such as a chance-based effect or a minigame, gets its own name here. */
-export type StreamName = "game" | "effects";
-const STREAMS: StreamName[] = ["game", "effects"];
+export type StreamName = "game" | "effects" | "modifiers";
+const STREAMS: StreamName[] = ["game", "effects", "modifiers"];
 let streams = seeded(startSeed("game"));
 
 /** The start-up seed of the named set of streams: the one a test pinned

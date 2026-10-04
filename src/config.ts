@@ -255,6 +255,14 @@ export const UPGRADES = [
     currency: "courage",
   },
   {
+    id: "cardModifiers",
+    name: "Card Modifiers",
+    description: "Open the Modifiers box on the Deck page: tokens bought with Gems that change what a card does when it activates",
+    base: 2,
+    max: 1,
+    currency: "courage",
+  },
+  {
     id: "archives",
     name: "Archives",
     description: "Unlock the Archives on the Upgrades page: research that lasts, paid in Gold and real time",

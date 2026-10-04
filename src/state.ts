@@ -1,6 +1,7 @@
 import { entrance, floorFor } from "./delve/labyrinth.ts";
 import { chooseStep } from "./automation.ts";
-import { CARDS, cardText, planHand, type CardId, type CardPlan } from "./cards.ts";
+import { CARDS, cardText, planHand, type CardId, type CardPlan, type CardRules } from "./cards.ts";
+import { MODIFIERS, modifierValue, runModifiers, type ModifierId } from "./modifiers.ts";
 import { BOOST_FOREVER, permanentBoost } from "./shop/entitlements.ts";
 import { offer, type OfferId } from "./shop/offers.ts";
 import { purchase, type Refusal } from "./shop/transactions.ts";
@@ -17,6 +18,7 @@ import {
   TOWER_START_X,
   TOWER_SECTION,
   xpForKill,
+  xpBase,
   levelForXp,
   TRAINING_PER_LEVEL,
   isStatRow,
@@ -69,6 +71,7 @@ import { ResearchDesk } from "./game/research-desk.ts";
 import { DeckEditor } from "./game/deck-editor.ts";
 import { GearDesk } from "./game/gear-desk.ts";
 import { GemFinder } from "./game/gem-finder.ts";
+import { ModifierDesk } from "./game/modifier-desk.ts";
 import { RunPurse } from "./game/run-purse.ts";
 import { readyForestRuns, startingHero } from "./game/hero-sync.ts";
 /** How a new run starts: out in the forest or at the entrance, and from
@@ -172,6 +175,9 @@ export class Game {
   readonly gear = new GearDesk(this);
   /** The Gem on the board, collecting it, and the ad's Gems. */
   readonly gemFinder = new GemFinder(this);
+  /** The Deck page's card modifiers: drawing them with Gems and attaching
+   * them to cards. */
+  readonly modifiers = new ModifierDesk(this);
   /** `rng` is the game's randomness: new run seeds, enemy drops and
    * treasure loot all draw from it (the `game` stream unless given), so a
    * seeded stream replays a game and no visual effect can shift it. */
@@ -453,22 +459,117 @@ export class Game {
     this.activeCard = plan.card;
     const id = this.hand[plan.card];
     this.message = lost ? `Focus lost · ${CARDS[lost].name} has no path to a target · ${CARDS[id].name} leads.` : this.cardMessage(id);
+    if (fresh) this.coolDown(id);
     // A card that acts in place takes the turn without a step.
     if (!plan.path.length) {
       this.cardPlan = null;
+      const p = this.run.player, key = `${this.rules.lootKey(this.run, p.x, p.y)}:siphon${this.run.siphoned ?? 0}`;
       this.siphon();
       if (id === this.run.focused) this.run.focused = undefined;
+      this.activate(plan.card, key);
       return;
     }
+    const goal = plan.path[plan.path.length - 1], key = this.rules.lootKey(this.run, goal.x, goal.y);
     const step = plan.path.shift()!, p = this.run.player, from = { x: p.x, y: p.y };
     this.cardPlan = plan.path.length ? plan : null;
     const rushes = fresh && this.rushTiles > 0 && this.emptyAt(step.x, step.y);
     // The board changes only as the hero moves, so a refused step means the
     // plan is stale: drop it and let the next turn choose again.
     if (!this.move(step.dx, step.dy, true)) return void (this.cardPlan = null);
-    if (rushes) this.rushOn(plan, from);
-    // The focused card's last step reaches its target: the focus is spent.
-    if (!this.cardPlan && id === this.run.focused) this.run.focused = undefined;
+    if (rushes && !this.rushOn(plan, from)) return;
+    if (this.cardPlan) return;
+    // The card's last step reaches its target: a focus on it is spent, and
+    // it activates (once a fight into its target has played out).
+    if (id === this.run.focused) this.run.focused = undefined;
+    const fight = this.encounter;
+    if (!fight) return this.activate(plan.card, key);
+    const settle = fight.settle;
+    fight.settle = () => {
+      settle();
+      this.activate(plan.card, key);
+    };
+  }
+  /** What card `card`'s modifier changes about planning it (`planHand`
+   * asks): a gate closes it while its condition fails, and Stairward and
+   * Skip Open Nodes count only on floors they aren't cooling down on. */
+  cardRules(card: CardId): CardRules | undefined {
+    const mod = this.run.mods?.[card];
+    if (!mod || this.run.outside) return undefined;
+    const v = modifierValue(mod.id, mod.level, mod.pick), p = this.run.player;
+    switch (mod.id) {
+      case "hpGate": return { closed: !(p.hp < snap((p.maxHp * v) / 100)) };
+      case "yellowGate": return { closed: !(p.keys.yellow < v) };
+      case "blueGate": return { closed: !(p.keys.blue < v) };
+      case "redGate": return { closed: !(p.keys.red < v) };
+      case "stairward": return this.cooled("stairward", v) ? { stairward: true } : undefined;
+      case "skipOpen": return this.cooled("skipOpen", v) ? { skipOpen: { skipped: new Set(this.skipMarks), skip: (x, y) => this.skipTile(x, y) } } : undefined;
+      case "charge": return { charge: v };
+      default: return undefined;
+    }
+  }
+  /** The floor card modifiers count by: the Tower floor, or the Delve's
+   * equivalent floor where the hero stands. */
+  private get modFloor() {
+    return this.rules.equivalentFloor(this.rules.progressAt(this.run, this.run.player.y));
+  }
+  /** Whether a cooling-down modifier works on this floor: never used, used
+   * on this floor already, or `every` floors on from the last it worked on. */
+  private cooled(kind: "stairward" | "skipOpen", every: number) {
+    const last = this.run.modFloors?.[kind], floor = this.modFloor;
+    return last === undefined || last === floor || floor - last >= every;
+  }
+  /** A cooling-down modifier works on this floor: it rests from here. */
+  private markUsed(kind: "stairward" | "skipOpen") {
+    (this.run.modFloors ??= {})[kind] = this.modFloor;
+  }
+  /** A new plan for card `id` under Stairward counts as its use. */
+  private coolDown(id: CardId) {
+    if (this.run.mods?.[id]?.id === "stairward" && this.cardRules(id)?.stairward) this.markUsed("stairward");
+  }
+  /** The doors and monsters Skip Open Nodes passed over on this floor, as
+   * points, for the planner and the board's marks. */
+  get skipMarks(): string[] {
+    const skipped = this.run.skipped;
+    return skipped && !this.run.outside && skipped.floor === this.modFloor ? skipped.tiles : [];
+  }
+  /** Skip Open Nodes passes over (x, y) for the rest of the floor. */
+  private skipTile(x: number, y: number) {
+    const floor = this.modFloor;
+    if (this.run.skipped?.floor !== floor) this.run.skipped = { floor, tiles: [] };
+    const k = `${x},${y}`;
+    if (!this.run.skipped.tiles.includes(k)) this.run.skipped.tiles.push(k);
+    this.markUsed("skipOpen");
+  }
+  /** Card `card` of the hand activates: its modifier pays what it gives.
+   * Gold is paid once per target (`key`, gated by lootedTiles like a kill's),
+   * since undo can't take it back; HP, Silver and XP are the run's or in
+   * its undo snapshot. */
+  private activate(card: number, key: string) {
+    const id = this.hand[card], mod = id && this.run.mods?.[id];
+    if (!mod || !this.playing) return;
+    const v = modifierValue(mod.id, mod.level, mod.pick), p = this.run.player;
+    switch (mod.id) {
+      case "hp": return this.modifierHeal(v, mod.id);
+      case "hpPercent": return this.modifierHeal(snap((p.maxHp * v) / 100), mod.id);
+      case "silverTouch": return this.gainCoins(p, 0, this.purse.silver(v));
+      case "goldTouch": return this.gainCoins(p, this.purse.modifierGold(`mod:${id}:${key}`, v), 0, false);
+      case "goldback":
+        if (card === this.hand.length - 1) this.gainCoins(p, this.purse.modifierGold(`mod:${id}:${key}`, v), 0, false);
+        return;
+      case "xp": {
+        const xp = Math.round((v * xpBase(this.modFloor)) / xpBase(0));
+        this.addXp(xp);
+        return this.gain(p.x, p.y, `+${xp} XP`);
+      }
+    }
+  }
+  /** Heals up to `n` HP for modifier `id`, as a potion's heal shows. */
+  private modifierHeal(n: number, id: ModifierId) {
+    const p = this.run.player, healed = snap(Math.min(p.maxHp - p.hp, n));
+    if (healed <= 0) return;
+    p.hp = snap(p.hp + healed);
+    this.recordHeal(healed);
+    this.message = `${MODIFIERS[id].name} · +${wholeChange(healed)} HP`;
   }
   /** Whether a card that acts in place can act now (`planHand` asks):
    * KEY SIPHON, inside a run, while a level of DEF training is left. */
@@ -500,19 +601,23 @@ export class Game {
   }
   /** Rush: the first step toward a new target, onto an empty tile, goes on
    * along the path in the same step across up to `rushTiles` more empty
-   * tiles, stopping on the tile before anything else. One turn and one undo. */
+   * tiles, stopping on the tile before anything else. One turn and one undo.
+   * Returns false when a step was refused, leaving the target unreached. */
   private rushOn(plan: CardPlan, from: { x: number; y: number }) {
     const p = this.run.player, tiles = [from];
+    let moved = true;
     for (let left = this.rushTiles; left > 0 && plan.path.length && this.emptyAt(plan.path[0].x, plan.path[0].y); left--) {
       const at = { x: p.x, y: p.y }, next = plan.path.shift()!;
       if (!this.move(next.dx, next.dy, true, false, false)) {
         plan.path = [];
+        moved = false;
         break;
       }
       tiles.push(at);
     }
     this.cardPlan = plan.path.length ? plan : null;
     if (tiles.length > 1) this.rush = { tiles, at: performance.now() };
+    return moved;
   }
   /** Tiles the hand's first step toward a new target may rush across: none
    * without the Rush skill, and one more a Rush research level. */
@@ -564,6 +669,8 @@ export class Game {
    * of percent potions. */
   private dealHand() {
     this.run.hand = [...this.save.hand];
+    const mods = this.save.upgrades.cardModifiers ? runModifiers(this.save.modifiers, this.run.hand) : {};
+    if (Object.keys(mods).length) this.run.mods = mods;
     const pocket = researched(this.save.archives, "startingSilver", 0);
     if (pocket) this.run.silver = pocket;
     const chance = percentPotionChance(this.save);
@@ -757,7 +864,12 @@ export class Game {
   /** Pays the XP for beating `enemy` on equivalent floor `floor`, counting
    * it toward the run's total too. */
   gainXp(enemy: Enemy, floor: number) {
-    const level = levelForXp(this.save.xp), xp = tierBonus(this.tier, xpForKill(enemy.strength, floor));
+    this.addXp(tierBonus(this.tier, xpForKill(enemy.strength, floor)));
+  }
+  /** Adds `xp` to the hero's and the run's, raising the level-up burst
+   * when it reaches a new level. */
+  private addXp(xp: number) {
+    const level = levelForXp(this.save.xp);
     this.save.xp += xp;
     this.run.xp = (this.run.xp ?? 0) + xp;
     const reached = levelForXp(this.save.xp);

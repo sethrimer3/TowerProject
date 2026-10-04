@@ -13,6 +13,7 @@ The Upgrades page's trees: Inspiration (Tower currency), Courage, Wayfinding, Le
 **Row** (`UPGRADES` in `src/config.ts`): `{ id, name, description?, grants?, words?, card?, base, max, currency }`.
 - `grants` (e.g. `{ attack: 2 }`, per rank) makes it a stat upgrade: `loadout()` adds it and `upgradeText` writes the description from it, so leave `description` out. `words` renames a stat in that text.
 - Otherwise `description` is the player-facing text, and the effect is code that checks `save.upgrades.<id>` (look at how `focus` and `training` are read in `state.ts`, `hud.ts`, `ui/skill-tree-page.ts`, or `revive` through `reviveChance` in `loadout.ts`).
+- A card modifier is not an upgrade row: it is a `MODIFIERS` entry in `src/modifiers.ts`, drawn with Gems on the Deck page. One that should join the draw pool only once a skill is owned names it in `unlock`.
 - `card` adds a card to the deck (`deckCards` in `cards.ts`); the card itself needs a `CARDS` entry and face art.
 
 **Inspiration tree:** its skills are unlocks (`unlocks: true` on the tree): each has `max: 1`, is bought once and shows no rank count (a test holds every node to one rank). More of what one gives comes from another panel, usually Archives research it opens (Rehearsed steps gives the first undo and opens Undo Count).
