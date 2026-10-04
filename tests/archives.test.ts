@@ -262,3 +262,28 @@ test("the Game's research commands need the Archives skill", () => {
   assert.equal(g.research.finishNow(0).length, 1);
   assert.equal(g.save.archives.levels.focusCount, 1);
 });
+
+test("Rush completes an archivist's research for a Gem per ten minutes left, rounded up", () => {
+  const g = new Game(owner());
+  g.clock = () => T0;
+  assert.equal(g.research.rushGems(0), 0, "nothing to rush while idle");
+  assert.ok(g.research.start(0, "focusCount"));
+  const job = g.save.archives.slots[0].job!;
+  assert.equal(g.research.rushGems(0), Math.ceil((job.completesAt - T0) / 600_000));
+  // 25 minutes left: two whole ten minutes and part of a third.
+  const now = job.completesAt - 25 * 60_000;
+  g.clock = () => now;
+  assert.equal(g.research.rushGems(0), 3);
+  g.save.gems = 2;
+  assert.deepEqual(g.research.rush(0), [], "too few Gems");
+  assert.equal(g.save.gems, 2);
+  assert.equal(g.save.archives.levels.focusCount ?? 0, 0);
+  g.save.gems = 5;
+  assert.equal(g.research.rush(0).length, 1);
+  assert.equal(g.save.gems, 2);
+  assert.equal(g.save.archives.levels.focusCount, 1);
+  assert.equal(g.save.archives.slots[0].job, undefined);
+  // Dev free purchases rush for nothing.
+  g.save.settings.freePurchases = true;
+  assert.equal(g.research.rushGems(0), 0);
+});

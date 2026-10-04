@@ -194,7 +194,8 @@ const headingKey = (game: Game) => {
 const HAND_ICON = { play: "▶︎", pause: "❚❚" };
 
 /** Inside a run the button plays and pauses the hand, showing the play or
- * pause icon; in the forest it is Enter, going straight in to start the run. */
+ * pause icon, with the hero's movement speed under it (*3x*: steps a
+ * second); in the forest it is Enter, going straight in to start the run. */
 function renderAutoButton(game: Game) {
   const button = el("auto"), inside = !game.run.outside;
   const label = inside ? (game.auto ? "Pause the hand" : "Play the hand") : "Enter";
@@ -206,6 +207,9 @@ function renderAutoButton(game: Game) {
     else slot.innerHTML = ENTER_ICON;
   }
   text("auto-state", inside ? (game.auto ? "PLAYING" : "PAUSED") : "ENTER");
+  const speed = el("auto-speed");
+  speed.hidden = !inside;
+  text("auto-speed", `${game.stepsPerSecond}x`);
   button.classList.toggle("enabled", inside && game.auto);
   button.setAttribute("aria-label", label);
   button.title = label;

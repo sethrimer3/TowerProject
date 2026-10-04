@@ -8,7 +8,7 @@ import type { Save } from "../entities.ts";
 import { loadout } from "../loadout.ts";
 import type { AppContext } from "./app.ts";
 import { currencyAmount, devAmount } from "./hud.ts";
-import { el, gemIcon, uiSprite } from "./dom.ts";
+import { el, gemCount, gemIcon, uiSprite } from "./dom.ts";
 import { askForGems } from "./dialogs.ts";
 
 /** The status filter's choices; Locked only in Dev mode, the one place
@@ -76,6 +76,11 @@ export class ArchivesPanel {
     document.querySelectorAll<HTMLButtonElement>("[data-hire]").forEach((b) => (b.onclick = () => this.hire(act)));
     document.querySelectorAll<HTMLButtonElement>("[data-stop]").forEach((b) => (b.onclick = () => act(game.research.cancel(Number(b.dataset.stop)))));
     document.querySelectorAll<HTMLButtonElement>("[data-finish]").forEach((b) => (b.onclick = () => act(game.research.finishNow(Number(b.dataset.finish)).length > 0)));
+    document.querySelectorAll<HTMLButtonElement>("[data-rush]").forEach((b) => (b.onclick = () => {
+      const slot = Number(b.dataset.rush);
+      if (this.rushShort(slot)) return askForGems(this.ctx);
+      act(game.research.rush(slot).length > 0);
+    }));
     document.querySelectorAll<HTMLInputElement>("[data-auto]").forEach((box) => (box.onchange = () => {
       game.research.setAutoContinue(Number(box.dataset.auto), box.checked);
       this.ctx.save();
@@ -107,6 +112,9 @@ export class ArchivesPanel {
       fill.style.width = `${(jobProgress(job, now) * 100).toFixed(2)}%`;
       const left = document.querySelector(`[data-countdown="${i}"]`);
       if (left) left.textContent = `${formatDuration(job.completesAt - now)} left`;
+      const rush = document.querySelector<HTMLButtonElement>(`[data-rush="${i}"]`), gems = document.querySelector(`[data-rush-gems="${i}"]`);
+      rush?.classList.toggle("short", this.rushShort(i));
+      if (gems) gems.textContent = String(this.ctx.game.research.rushGems(i));
     });
   }
 
@@ -123,6 +131,18 @@ export class ArchivesPanel {
         this.rerender();
       }
     }));
+  }
+
+  /** Whether the Gems held fall short of rushing archivist `slot`'s research. */
+  private rushShort(slot: number) {
+    const game = this.ctx.game;
+    return !game.free && game.save.gems < game.research.rushGems(slot);
+  }
+  /** The Rush button that completes archivist `slot`'s research at once,
+   * for one Gem per ten minutes left, rounded up. */
+  private rushHtml(slot: number) {
+    const gems = this.ctx.game.research.rushGems(slot), short = this.rushShort(slot);
+    return `<button class="archivist-rush${short ? " short" : ""}" data-rush="${slot}" aria-label="Rush: complete this research now for ${gemCount(gems)}" title="${short ? `Needs ${gemCount(gems)}` : `Complete now for ${gemCount(gems)}`}">Rush · ${gemIcon()} <b data-rush-gems="${slot}">${gems}</b></button>`;
   }
 
   /** Whether the Gems held fall short of the next archivist. */
@@ -160,7 +180,7 @@ export class ArchivesPanel {
       return `<article class="archivist busy" role="listitem">${title}<b>${def.name} · level ${job.level}</b>
         <div class="research-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.floor(done * 100)}"><i data-progress="${i}" style="width:${(done * 100).toFixed(2)}%"></i></div>
         <p><span data-countdown="${i}">${formatDuration(job.completesAt - now)} left</span></p>
-        <div class="archivist-actions">${auto}<button data-stop="${i}" title="Stop: the Gold comes back, and the time spent is kept for later">Stop</button>${finish}</div></article>`;
+        <div class="archivist-actions">${auto}<button data-stop="${i}" title="Stop: the Gold comes back, and the time spent is kept for later">Stop</button>${this.rushHtml(i)}${finish}</div></article>`;
     }).join("");
   }
 

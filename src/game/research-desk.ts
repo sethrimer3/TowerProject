@@ -1,6 +1,7 @@
 import { RESEARCH, cancelResearch, hastenResearch, hireArchivist, settleArchives, startResearch, type ResearchId, type ResearchRecord } from "../archives.ts";
+import { finishGems } from "../training-jobs.ts";
 import { readyForestRuns } from "./hero-sync.ts";
-import type { DeskHost } from "./desk.ts";
+import { affordsGems, type DeskHost } from "./desk.ts";
 
 /** The Archives' commands: research run by archivists on the wall clock.
  * Every level completed reaches a run still in the forest at once. */
@@ -40,6 +41,24 @@ export class ResearchDesk {
   setAutoContinue(slot: number, on: boolean) {
     const s = this.save.archives.slots[slot];
     if (s) s.autoContinue = on;
+  }
+
+  /** The Gems that rush archivist `slot`'s research to completion now: one
+   * per ten minutes left, rounded up, as for a rank in training (none with
+   * Dev free purchases, or when it has none). */
+  rushGems(slot: number) {
+    const job = this.save.archives.slots[slot]?.job;
+    return !job || this.host.free ? 0 : finishGems(job.completesAt - this.host.clock());
+  }
+
+  /** Rushes archivist `slot`'s research: pays `rushGems` and completes it
+   * now. Returns what completed. */
+  rush(slot: number) {
+    const job = this.save.archives.slots[slot]?.job, gems = this.rushGems(slot);
+    if (!job || !affordsGems(this.host, gems)) return [];
+    this.save.gems -= gems;
+    hastenResearch(this.save.archives, slot, Math.max(0, job.completesAt - this.host.clock()));
+    return this.settle();
   }
 
   /** Dev mode: finishes archivist `slot`'s research now. */

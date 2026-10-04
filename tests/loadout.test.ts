@@ -45,12 +45,12 @@ test("each rank of an upgrade adds its grant", () => {
   });
 });
 
-test("each level earns three training points and nothing else", () => {
+test("each level earns two training points and nothing else", () => {
   const s = defaults();
   s.xp = xpForLevel(15);
   assert.equal(levelForXp(s.xp), 15);
   assert.equal(levelForXp(s.xp - 1), 14);
-  assert.deepEqual(trainingPoints(s), { earned: 45, spent: 0, left: 45 });
+  assert.deepEqual(trainingPoints(s), { earned: 30, spent: 0, left: 30 });
   assert.deepEqual(loadout(s), loadout(defaults()));
 });
 
@@ -58,12 +58,12 @@ test("each training rank is worth more as the hero levels up", () => {
   const s = defaults();
   s.xp = xpForLevel(5);
   Object.assign(s.training, { hp: 3, defense: 2, attack: 1 });
-  for (const [id, points] of [["hp", 3], ["defense", 4], ["attack", 3]] as const) s.trainingPaid[id].points = points;
+  for (const [id, points] of [["hp", 3], ["defense", 2], ["attack", 0]] as const) s.trainingPaid[id].points = points;
   // At level 5 a rank is worth 15 HP (10 + L), 1.42 DEF (1 + L/12) and 2 ATK (1 + L/5),
   // fractions kept (the page shows the stats whole).
   const l = loadout(s);
   assert.deepEqual([l.attack, l.defense, l.maxHp], [12 + 2, 2.833333, 100 + 45]);
-  assert.deepEqual(trainingPoints(s), { earned: 15, spent: 3 + 4 + 3, left: 5 });
+  assert.deepEqual(trainingPoints(s), { earned: 10, spent: 3 + 2, left: 5 });
   assert.deepEqual(
     [trainingStep(s, "hp"), trainingStep(s, "attack")].map(({ now, next, worth, affordable }) => [now, next, worth, affordable]),
     [[145, 160, 15, true], [14, 16, 2, true]],
@@ -111,10 +111,9 @@ test("training spends points and reaches a run still outside", () => {
   assert.equal(trainNow(g, "hp"), false);
   g.save.xp = xpForLevel(1);
   assert.equal(trainNow(g, "hp"), true);
-  assert.deepEqual([g.run.player.maxHp, g.run.player.hp, trainingPoints(g.save).left], [111, 111, 2]);
+  assert.deepEqual([g.run.player.maxHp, g.run.player.hp, trainingPoints(g.save).left], [111, 111, 1]);
   assert.equal(trainNow(g, "attack"), true, "ATK takes 1 point");
-  assert.equal(trainNow(g, "defense"), true, "DEF takes 1 point");
-  assert.equal(trainNow(g, "hp"), false, "no points left");
+  assert.equal(trainNow(g, "defense"), false, "no points left");
 });
 
 test("evenly spread training alone still beats both modes' normal enemies at floor 100", () => {

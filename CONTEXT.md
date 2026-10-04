@@ -215,7 +215,7 @@ One project in the Archives, researched a level at a time; each completed level 
 _Avoid_: tech, study
 
 **Archivist**:
-One research slot: it works on one research level at a time, and optionally auto-continues to the next.
+One research slot: it works on one research level at a time, and optionally auto-continues to the next. Its research can be rushed: completed at once for Gems (not the hand's Rush).
 _Avoid_: lab slot, researcher
 
 ### The hand

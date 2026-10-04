@@ -446,7 +446,7 @@ export function levelForXp(xp: number) {
   return low;
 }
 /** Training points each level earns, to spend on the hero's stats. */
-export const TRAINING_PER_LEVEL = 3;
+export const TRAINING_PER_LEVEL = 2;
 /** The groups the Training tab, and a run's training bar, show the rows
  * in, in order. */
 export const TRAINING_GROUPS = { offense: "Offense", defense: "Defense", utility: "Utility" } as const;

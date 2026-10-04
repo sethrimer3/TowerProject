@@ -177,7 +177,7 @@ test("undoing a kill takes back its XP and the level it reached", () => {
   assert.ok(g.move(0, 1));
   assert.equal(levelForXp(g.save.xp), 1);
   assert.ok(g.levelUpAt > -Infinity);
-  assert.equal(g.levelUpPoints, 3, "the board raises the training points earned");
+  assert.equal(g.levelUpPoints, 2, "the board raises the training points earned");
   assert.ok(g.undo());
   assert.equal(g.save.xp, xpForLevel(1) - 1);
   assert.equal(g.levelUpAt, -Infinity);

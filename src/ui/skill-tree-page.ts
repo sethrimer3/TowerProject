@@ -12,7 +12,7 @@ import { buyQuantityHtml, maxCount, readQuantity } from "./buy-quantity-select.t
 import { TrainingParticles } from "../training-particles.ts";
 import { BOOST_RATE, boostLeft, claimBoost, finishGems, nextTrainerGems, trainingJob, trainingSlots } from "../training-jobs.ts";
 import type { AppContext } from "./app.ts";
-import { adIcon, clamp, clockIcon, el, gemIcon, goldIcon, pointsIcon, riseFrom, skillSprite, uiSprite, type UiSprite } from "./dom.ts";
+import { adIcon, clamp, clockIcon, el, gemCount, gemIcon, goldIcon, pointsIcon, redoIcon, riseFrom, skillSprite, uiSprite, type UiSprite } from "./dom.ts";
 import { TRAINING_RESET_GEMS } from "../gems.ts";
 import { bindPanZoom, type View } from "./pan-zoom.ts";
 import { ArchivesPanel, formatDuration } from "./archives-page.ts";
@@ -24,7 +24,6 @@ const TREE_ICONS: Record<string, UiSprite> = {
   inspiration: "upgrades", courage: "automove", legacy: "tower", wisdom: "settings",
 };
 type PageTab = TreeId | "training" | "archives";
-const gemCount = (n: number) => `${n} ${n === 1 ? "Gem" : "Gems"}`;
 
 /** The Upgrades page: the Training table, one skill tree at a time
  * (pannable and zoomable; tap a node to see its tooltip, tap it again to
@@ -285,9 +284,13 @@ export class SkillTreePage {
     const row = (t: TrainingRow) => this.trainingRowHtml(t);
     // Buy Quantity sits at the right of the trainers' row, or the points' without trainers.
     const quantity = buyQuantityHtml(game.buyQuantities, game.buyQuantity);
-    // Each group's rows, leaving out any whose upgrade isn't owned yet.
+    // A stat a trainer is training moves up under the trainers, in the
+    // order they started, until its training ends.
+    const training = (t: TrainingRow) => !!trainingJob(save.trainingJobs, t.id);
+    const inTraining = save.trainingJobs.map(j => TRAINING.find(t => t.id === j.id)!).filter(t => trainingOpen(t, save.upgrades));
+    // Each group's other rows, leaving out any whose upgrade isn't owned yet.
     const rows = (Object.entries(TRAINING_GROUPS) as [keyof typeof TRAINING_GROUPS, string][]).map(([group, name]) => {
-      const open = TRAINING.filter(t => t.group === group && trainingOpen(t, save.upgrades));
+      const open = TRAINING.filter(t => t.group === group && trainingOpen(t, save.upgrades) && !training(t));
       return open.length ? `<h4 class="training-group">${name}</h4>${open.map(row).join("")}` : "";
     }).join("");
     const bank = save.trainingBank > 0
@@ -297,6 +300,7 @@ export class SkillTreePage {
       ${hired ? this.boostHtml() : ""}
       <p class="training-points"><span class="training-held" title="Training points">${pointsIcon()} <b id="training-points">${points.left}</b></span>${bank}<small>${hired ? `Level up with ${pointsIcon()} or pay ${goldIcon()} to a trainer` : `Each level earns ${TRAINING_PER_LEVEL} ${pointsIcon()}`}</small>${hired ? "" : quantity}</p>
       ${hired ? `<p class="training-points training-slots">Trainers: <b id="training-slots">${save.trainingJobs.length} / ${slots}</b> ${this.trainerButton()}${quantity}</p>` : ""}
+      ${inTraining.length ? `<div class="training-table training-busy" role="list" aria-label="Stats in training">${inTraining.map(row).join("")}</div>` : ""}
       <div class="training-table" role="list" aria-label="Stat training">${rows}</div></section>`;
   }
 
@@ -319,14 +323,15 @@ export class SkillTreePage {
     const nowButton = step.maxed
       ? ""
       : `<button class="training-box training-cost training-now" data-train="${t.id}" ${bulk.affordable ? "" : "disabled"} aria-label="Spend ${bulk.cost} training ${bulk.cost === 1 ? "point" : "points"} to train ${t.name} ${count === 1 ? "one rank" : `${count} ranks`} now" title="Train now">${maxCount(q, count)}${pointsIcon()}<span>${bulk.cost}</span></button>`;
-    return `<div class="training-row${job ? " active" : ""}" role="listitem" data-training-row="${t.id}"><span class="training-label">${hired ? this.autoBox(t) : ""}${t.name}${notes ? `<small>${notes}</small>` : ""}</span><span class="training-box">${shown(now)}</span><span class="training-arrow" aria-hidden="true">→</span><span class="training-box next">${shown(next)}</span>${hired ? this.trainerHtml(t, step) : ""}${nowButton}${this.resetButton(t, !!job)}</div>`;
+    return `<div class="training-row${job ? " active" : ""}" role="listitem" data-training-row="${t.id}"><span class="training-label">${job ? this.autoBox(t) : ""}${t.name}${notes ? `<small>${notes}</small>` : ""}</span><span class="training-box">${shown(now)}</span><span class="training-arrow" aria-hidden="true">→</span><span class="training-box next">${shown(next)}</span>${hired ? this.trainerHtml(t, step) : ""}${nowButton}${this.resetButton(t, !!job)}</div>`;
   }
 
-  /** The row's auto-continue box: while ticked, its trainer starts the
-   * next rank as soon as one is done, when the Gold is there. */
+  /** A row in training's auto-continue box, with its loop icon: while
+   * ticked, its trainer starts the next rank as soon as one is done, when
+   * the Gold is there. */
   private autoBox(t: TrainingRow) {
     const on = this.ctx.game.training.autoContinues(t.id);
-    return `<input type="checkbox" class="training-auto" data-auto="${t.id}" ${on ? "checked" : ""} aria-label="Auto-continue ${t.name}: train the next rank as soon as one is done" title="Auto-continue: train the next rank as soon as one is done">`;
+    return `<label class="training-auto-box" title="Auto-continue: train the next rank as soon as one is done"><input type="checkbox" class="training-auto" data-auto="${t.id}" ${on ? "checked" : ""} aria-label="Auto-continue ${t.name}: train the next rank as soon as one is done">${redoIcon()}</label>`;
   }
 
   /** A rank a trainer is training shows its countdown (tap to stop it and

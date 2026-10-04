@@ -10,7 +10,7 @@ import { Game } from "../src/state.ts";
 
 const T0 = Date.UTC(2026, 8, 30, 12);
 
-/** A penniless level-1 hero (3 training points) with Dev free purchases on. */
+/** A penniless level-1 hero (2 training points) with Dev free purchases on. */
 function freeSave() {
   const save = defaults();
   save.xp = xpForLevel(1);
@@ -30,7 +30,7 @@ test("free purchases: skills, Training and provisions are bought with nothing an
   assert.ok(trainingStep(g.save, "hp").affordable);
   assert.ok(trainNow(g, "hp") && trainNow(g, "hp"));
   assert.equal(g.save.training.hp, 2);
-  assert.deepEqual(trainingPoints(g.save), { earned: 3, spent: 0, left: 3 }, "no points spent");
+  assert.deepEqual(trainingPoints(g.save), { earned: 2, spent: 0, left: 2 }, "no points spent");
   assert.deepEqual(g.save.trainingPaid.hp, { points: 0, gold: 0, ms: 0 }, "nor anything else");
   assert.ok(g.training.trainWithGold("hp"), "a trainer trains for nothing too");
   assert.equal(g.save.training.hp, 3, "at once");
@@ -45,12 +45,12 @@ test("free Training stays unspent after free purchases are turned off, and saves
   const g = new Game(freeSave());
   trainNow(g, "attack");
   g.save.settings.freePurchases = false;
-  assert.equal(trainingPoints(g.save).left, 3);
-  for (let i = 0; i < 3; i++) assert.ok(trainNow(g, "attack"), "1 point a rank, 3 left");
+  assert.equal(trainingPoints(g.save).left, 2);
+  for (let i = 0; i < 2; i++) assert.ok(trainNow(g, "attack"), "1 point a rank, 2 left");
   assert.ok(!trainNow(g, "attack"), "and none left after");
   const loaded = decode(JSON.stringify(g.save));
   assert.deepEqual(loaded.trainingPaid, g.save.trainingPaid);
-  assert.equal(loaded.training.attack, 4);
+  assert.equal(loaded.training.attack, 3);
 });
 
 test("free purchases: crafting takes no materials", () => {
