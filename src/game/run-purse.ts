@@ -10,6 +10,18 @@ import { MODES, type ModeProfile } from "../modes.ts";
 import { ranksInRun } from "../run-training.ts";
 import { goldFactor } from "../shop/entitlements.ts";
 import { tierGold } from "../tiers.ts";
+import { raised, wornEffects } from "../equipment/effects.ts";
+import { keepDrop, rollBossDrop, rollMaterials } from "../equipment/acquire.ts";
+import type { EquipItem } from "../equipment/inventory.ts";
+import { CATEGORIES, type EquipMaterialId } from "../equipment/catalog.ts";
+
+/** What a kill gave toward Equipment, once it is open: upgrade materials,
+ * and a boss's Standard piece (or, the inventory full, its salvage). */
+export type EquipmentLoot = {
+  materials: { id: EquipMaterialId; quantity: number } | null;
+  item: EquipItem | null;
+  salvaged: { id: EquipMaterialId; quantity: number } | null;
+};
 
 /** What a run finds: Gold, banked in the save as it is found, and Silver,
  * which belongs to the run. Gold paid for a physical kill, chest or floor
@@ -58,10 +70,16 @@ export class RunPurse {
     return this.rules.lootKey(this.run, x, y);
   }
 
+  /** What the equipment this mode's hero wears does. */
+  private get worn() {
+    return wornEffects(this.save, this.mode);
+  }
+
   /** Banks Gold found in the run, fractions and all (`snap`), times the
-   * Shop's coin packs owned; returns what it banked. */
+   * Shop's coin packs owned and raised by equipment's Gold found; returns
+   * what it banked. */
   gold(found: number) {
-    const gold = snap(found * goldFactor(this.save));
+    const gold = snap(raised(found, this.worn.goldFind) * goldFactor(this.save));
     this.save.gold = snap(this.save.gold + gold);
     this.slice.runGold = snap(this.slice.runGold + gold);
     return gold;
@@ -71,7 +89,8 @@ export class RunPurse {
    * research (the two multiplied), fractions and all; returns what it
    * added. */
   silver(base: number) {
-    const silver = snap((base * silverBonus(this.trainingNow) * researched(this.save.archives, "silverBonus", 100)) / 10_000);
+    const bonus = snap((base * silverBonus(this.trainingNow) * researched(this.save.archives, "silverBonus", 100)) / 10_000);
+    const silver = raised(bonus, this.worn.silverFind);
     this.run.silver = snap((this.run.silver ?? 0) + silver);
     return silver;
   }
@@ -82,17 +101,35 @@ export class RunPurse {
     return this.silver(scale === 1 ? base : snap(base * scale));
   }
 
-  /** An enemy's Gold (by its strength) and material drops, once per
+  /** An enemy's Gold (by its strength), material drops and, once Equipment
+   * is open, its upgrade materials and a boss's equipment, once per
    * physical kill. */
-  enemyLoot(enemy: Enemy, x: number, y: number, scale = 1): { gold: number; drops: MaterialStack[] } {
-    if (!this.loot(this.lootKey(x, y))) return { gold: 0, drops: [] };
+  enemyLoot(enemy: Enemy, x: number, y: number, scale = 1): { gold: number; drops: MaterialStack[]; equipment: EquipmentLoot | null } {
+    if (!this.loot(this.lootKey(x, y))) return { gold: 0, drops: [], equipment: null };
     // Gold / Kill training and research, multiplied, then the tier's bonus;
     // Effective or Dampen on the card that took the fight scales it too.
     const raised = snap((ENEMY_GOLD[enemy.strength] * killGold(this.trainingNow) * researched(this.save.archives, "killGold", 100) * scale) / 10_000);
     const gold = this.gold(tierGold(this.tier, raised));
     const drops = this.rules.enemyDrops(enemy.name, this.rng);
     creditMaterials(this.save, drops);
-    return { gold, drops };
+    return { gold, drops, equipment: this.equipmentLoot(enemy, y) };
+  }
+
+  /** A kill's upgrade materials and a boss's equipment, on the equivalent
+   * floor at row `y`; nothing before Equipment opens. */
+  private equipmentLoot(enemy: Enemy, y: number): EquipmentLoot | null {
+    const e = this.save.equipment;
+    if (!e.unlocked) return null;
+    const floor = this.rules.equivalentFloor(this.rules.progressAt(this.run, y)), worn = this.worn;
+    const materials = rollMaterials(enemy.strength, floor, worn.materialFind, this.rng);
+    if (materials) e.materials[materials.id] += materials.quantity;
+    const drop = rollBossDrop(enemy.strength, floor, worn.bossDrops, this.rng);
+    const kept = drop && keepDrop(e, drop);
+    return {
+      materials,
+      item: kept?.item ?? null,
+      salvaged: kept && !kept.item ? { id: CATEGORIES[drop!.category].material, quantity: kept.salvaged } : null,
+    };
   }
 
   /** A treasure chest's Gold and materials, once per physical chest, or

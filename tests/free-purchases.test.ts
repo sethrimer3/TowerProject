@@ -2,7 +2,8 @@ import { trainNow } from "./train-now.ts";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { GOLD_SHOP, TRAINING, xpForLevel } from "../src/config.ts";
-import { craftConsumable, craftEquipment } from "../src/crafting.ts";
+import { craftConsumable } from "../src/crafting.ts";
+import { addItem } from "../src/equipment/inventory.ts";
 import { buyBomb, buyItem, buyUpgrade, defaultDefendSave } from "../src/defend/progress.ts";
 import { trainingPoints, trainingStep } from "../src/loadout.ts";
 import { decode, defaults } from "../src/save.ts";
@@ -55,13 +56,22 @@ test("free Training stays unspent after free purchases are turned off, and saves
 
 test("free purchases: crafting takes no materials", () => {
   const save = freeSave();
-  const item = craftEquipment(save, "weapon", "iron", [{ id: "ruby", quantity: 2 }], () => "free-1");
-  assert.ok(item);
-  assert.ok(Object.values(save.materials).every((n) => n === 0));
-  assert.equal(craftEquipment(save, "weapon", "iron", [{ id: "ruby", quantity: 99 }]), null, "enhancement caps still hold");
   assert.ok(craftConsumable(save, "cinderTonic"));
   assert.equal(save.consumables.cinderTonic, 1);
   assert.ok(Object.values(save.materials).every((n) => n === 0));
+});
+
+test("free purchases: equipment levels and Gem pulls cost nothing, and caps still hold", () => {
+  const g = new Game(freeSave()), e = g.save.equipment;
+  e.unlocked = true;
+  const sword = addItem(e, "knightsSword", "common")!;
+  assert.equal(g.equipment.levelUp(sword.id, 100), 19, "up to Common's level 20");
+  assert.equal(g.equipment.levelUp(sword.id), "maxed");
+  assert.equal(sword.spent, undefined, "nothing invested");
+  assert.equal(g.save.gold, 0);
+  const pulled = g.equipment.pull("ring", 10);
+  assert.ok(Array.isArray(pulled) && pulled.length === 10);
+  assert.equal(g.save.gems, 0);
 });
 
 test("free purchases: research costs no Gold and completes the moment it starts; archivists are free", () => {

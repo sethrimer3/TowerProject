@@ -1,6 +1,5 @@
 import type { CardId } from "../cards.ts";
 import type { UpgradeId } from "../config.ts";
-import type { EquipmentSlot } from "../equipment.ts";
 import { AREA1_ITEM_URLS } from "../area1-tileset.ts";
 
 /** Small DOM, number and sprite helpers shared by every page. */
@@ -19,7 +18,7 @@ export const displayedProgress = (value: number, outside = false) => outside ? 0
 /** `word` with its first letter in capitals. */
 export const capitalized = (word: string) => word[0].toUpperCase() + word.slice(1);
 
-export type UiSprite = "tower" | "delve" | "defend" | "gear" | "upgrades" | "settings" | "health" | "attack" | "defense" | "undo" | "automove" | "revive" | "log" | "arrow-up" | "arrow-down" | "arrow-left" | "arrow-right" | EquipmentSlot | "gold";
+export type UiSprite = "tower" | "delve" | "defend" | "gear" | "upgrades" | "settings" | "health" | "attack" | "defense" | "undo" | "automove" | "revive" | "log" | "arrow-up" | "arrow-down" | "arrow-left" | "arrow-right" | "gold";
 const UI_ASSET_BASE = (import.meta as ImportMeta & { env?: { BASE_URL?: string } }).env?.BASE_URL ?? "/";
 /** A card's face, from public/assets/cards/. */
 export const cardArt = (id: CardId, alt: string) =>
@@ -85,12 +84,6 @@ export const TAB_ICONS = {
   tower: uiSprite("tower"), delve: uiSprite("delve"), deck: DECK_ICON, defend: uiSprite("defend"), gear: uiSprite("gear"),
   upgrades: uiSprite("upgrades"), settings: uiSprite("settings"),
 };
-export const SLOT_ICONS: Record<EquipmentSlot, string> = {
-  weapon: uiSprite("weapon"), shield: uiSprite("shield"), helmet: uiSprite("helmet"),
-  chestplate: uiSprite("chestplate"), leggings: uiSprite("leggings"), boots: uiSprite("boots"),
-  gloves: uiSprite("gloves"), necklace: uiSprite("necklace"), ring: uiSprite("ring"),
-};
-
 /** A pixel-art hand pointing up, row by row: `#` outline, `w` skin. */
 const POINTER_ROWS = [
   "....##......",

@@ -1,9 +1,9 @@
 import { whole } from "./whole.ts";
 import { bulkBuy, type BuyQuantity } from "./buy-quantity.ts";
 import { snap } from "./exact.ts";
-import type { Save } from "./entities.ts";
+import type { Mode, Save } from "./entities.ts";
 import { BONUS_RANK, FIND_POTION_BASE, FIND_POTION_MAX, FLOOR_GOLD_BASE, FLOOR_GOLD_RANK, FLOOR_SILVER_BASE, FLOOR_SILVER_RANK, FIND_POTION_RANK, REVIVE_BASE, REVIVE_MAX, REVIVE_RANK, GOLD_SHOP, schedulePrice, POTION_PERCENT_BASE, POTION_PERCENT_RANK, TRAINING, TRAINING_PER_LEVEL, UPGRADES, isStatRow, levelForXp, trained, trainingOpen, trainingWorth, type GoldItemId, type StatTrainingRow, type TrainingId, type TrainingRow, type UpgradeId } from "./config.ts";
-import { getEquippedBonuses } from "./crafting.ts";
+import { wornEffects } from "./equipment/effects.ts";
 import { RESEARCH, researched } from "./archives.ts";
 import { trainingGold } from "./training-jobs.ts";
 
@@ -20,7 +20,12 @@ export type Loadout = {
   shroud: number;
   /** The HP regained with every step in a run (Regen). */
   regen: number;
+  /** The percent more ATK struck against bosses (equipment). */
+  bossAttack: number;
   keys: { yellow: number; blue: number; red: number };
+  /** Keys the equipment worn hands a run as it starts (on top of `keys`):
+   * kept apart so changing equipment never adds keys to a run inside. */
+  startKeys: { yellow: number; blue: number };
   undoCapacity: number;
 };
 
@@ -61,25 +66,30 @@ function add(total: Record<Stat, number>, rows: readonly (Granting & { id: strin
       total[stat] += n * (ranks[row.id] ?? 0);
 }
 
-/** The character a run would start with now: the baseline, permanent
- * upgrades and training, then equipped gear (flat bonuses, then
- * percentages of the total, fractions kept), then the provisions bought,
- * which last for good. */
-export function loadout(save: Save): Loadout {
+/** The character a run in `mode` would start with now: the baseline,
+ * permanent upgrades and training, then the equipment that mode's hero
+ * wears (flat bonuses, then percentages of the total, fractions kept),
+ * then the provisions bought, which last for good. */
+export function loadout(save: Save, mode: Mode = "tower"): Loadout {
   const own = { ...BASE, yellow: 0, blue: 0, red: 0 };
   add(own, UPGRADES, save.upgrades);
   const level = levelForXp(save.xp);
   for (const row of TRAINING) if (isStatRow(row)) own[row.stat] += trained(row, save.training[row.id], level);
   const prov = { attack: 0, defense: 0, maxHp: 0, shroud: 0, regen: 0, yellow: 0, blue: 0, red: 0, undos: 0 };
   add(prov, GOLD_SHOP, save.provisions);
-  const equip = getEquippedBonuses(save);
+  const eq = wornEffects(save, mode);
+  // A drawback (Bloodprice Blade's max HP) never takes a stat below zero, or max HP below 1.
+  const percent = (base: number, pct: number) => (pct ? snap(Math.max(0, (base * (100 + pct)) / 100)) : base);
+  const plus = (base: number, more: number) => (more ? snap(base + more) : base);
   return {
-    attack: snap((own.attack + equip.flatAttack) * (1 + equip.percentAttack) + prov.attack),
-    defense: snap((own.defense + equip.flatDefense) * (1 + equip.percentDefense) + prov.defense),
-    maxHp: snap((own.maxHp + equip.flatMaxHp) * (1 + equip.percentMaxHp) + prov.maxHp),
-    shroud: own.shroud,
-    regen: own.regen,
+    attack: snap(percent(plus(own.attack, eq.attack), eq.attackPct) + prov.attack),
+    defense: snap(percent(plus(own.defense, eq.defense), eq.defensePct) + prov.defense),
+    maxHp: Math.max(1, snap(percent(plus(own.maxHp, eq.maxHp), eq.maxHpPct) + prov.maxHp)),
+    shroud: plus(own.shroud, eq.shroud),
+    regen: plus(own.regen, eq.regen),
+    bossAttack: eq.bossAttack,
     keys: { yellow: own.yellow + prov.yellow, blue: own.blue + prov.blue, red: own.red + prov.red },
+    startKeys: { yellow: eq.yellowKeys, blue: eq.blueKeys },
     // Undo needs Rehearsed steps: without it nothing else stores one.
     undoCapacity: save.upgrades.inspirationUndos ? researched(save.archives, "undoCapacity", own.undos) : 0,
   };

@@ -26,6 +26,42 @@ _Avoid_: clear chest, reward chest
 The lifetime record, by tower, of the areas mastered and cleared, so each pays exactly once however the run is undone, revived, reloaded or replaced.
 _Avoid_: tower log, reward log
 
+### Equipment
+
+**Equipment**:
+The pieces a hero wears, one per category (Weapon, Chestplate, Helmet, Gloves, Boots, Cape, Belt, Ring, Amulet), opened by first reaching floor 60. Kept in one shared inventory between runs.
+_Avoid_: gear (the Gear page and its provisions), items (pickups on the board)
+
+**Loadout** (equipment):
+The pieces one mode's hero wears; the Tower and the Delve each have their own, drawn from the shared inventory.
+_Avoid_: build, set
+
+**Standard piece**:
+A category's plain piece, dropped by bosses from floor 60.
+_Avoid_: common item (Common is a rarity)
+
+**Unique piece**:
+One of a category's three named pieces with a specialised ability, from Gem pulls only.
+_Avoid_: legendary, artifact
+
+**Upgrade material**:
+A category's leveling currency (Whetstone, Iron Rivets …), dropped by enemies and returned by dismantling.
+_Avoid_: crafting material, monster part
+
+**Merge**:
+Three copies of a piece at one rarity becoming one of the next rarity; the chosen target keeps its level.
+_Avoid_: fuse, combine
+
+**Dismantle**:
+Breaking pieces into their upgrade material.
+_Avoid_: salvage (used only for the amount returned), destroy
+
+**Pity**:
+The count, per category, of Gem pulls since the last Rare; the 100th without one is a Rare.
+
+**Blacksmith**:
+The forest building, standing once Equipment is open, that opens the Equipment screen.
+
 ### The climb
 
 **Visited floor**:

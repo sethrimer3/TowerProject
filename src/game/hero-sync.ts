@@ -4,18 +4,19 @@ import { loadout, type Loadout } from "../loadout.ts";
 import { MODES } from "../modes.ts";
 
 /** The stats the loadout carries into a run's hero. */
-type HeroStats = { attack: number; defense: number; maxHp: number; shroud?: number; regen?: number };
+type HeroStats = { attack: number; defense: number; maxHp: number; shroud?: number; regen?: number; bossAttack?: number };
 
 const BOTH_MODES = ["tower", "delve"] as const;
-const SHIFTED_STATS = ["attack", "defense", "maxHp", "shroud", "regen"] as const;
+const SHIFTED_STATS = ["attack", "defense", "maxHp", "shroud", "regen", "bossAttack"] as const;
 const KEY_COLORS = ["yellow", "blue", "red"] as const;
 
 /** The hero a run in `mode` gets with everything owned now, at full HP,
  * standing at the entrance's row, and the loadout it keeps. */
 export function startingHero(save: Save, mode: Mode) {
-  const { attack, defense, maxHp, shroud, regen, keys } = loadout(save);
-  // Only a hero with a shroud, or Regen, carries one.
-  const extras = { ...(shroud ? { shroud } : {}), ...(regen ? { regen } : {}) };
+  const { attack, defense, maxHp, shroud, regen, bossAttack, keys: owned, startKeys } = loadout(save, mode);
+  const keys = { ...owned, yellow: owned.yellow + startKeys.yellow, blue: owned.blue + startKeys.blue };
+  // Only a hero with a shroud, Regen or a boss bonus carries one.
+  const extras = { ...(shroud ? { shroud } : {}), ...(regen ? { regen } : {}), ...(bossAttack ? { bossAttack } : {}) };
   return {
     player: { x: MODES[mode].entranceX, y: 0, hp: maxHp, maxHp, attack, defense, ...extras, keys } as Player,
     loadout: { attack, defense, maxHp, ...extras },
@@ -38,16 +39,16 @@ export function readyForestRuns(save: Save) {
 /** A gear change or training applies at once to the runs of both modes: a
  * run inside gains or loses exactly what `change` did to the loadout, so
  * ATK/DEF gathered from items and the provisions it started with are kept,
- * and a run still in the forest takes everything owned now. `change`
+ * and a run still in the forest takes everything owned now. Each mode's run
+ * follows its own loadout (its hero's equipment). `change`
  * returning false changes nothing; returns whether it went through. */
 export function changeLoadout(save: Save, change: () => boolean | void) {
-  const before = loadout(save);
+  const before = BOTH_MODES.map((mode) => loadout(save, mode));
   if (change() === false) return false;
-  const after = loadout(save);
-  for (const mode of BOTH_MODES) {
+  BOTH_MODES.forEach((mode, i) => {
     const run = save[mode].run;
-    if (run && !run.outside) shiftRun(run, before, after);
-  }
+    if (run && !run.outside) shiftRun(run, before[i], loadout(save, mode));
+  });
   readyForestRuns(save);
   return true;
 }

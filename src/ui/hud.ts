@@ -17,6 +17,7 @@ import { CountUp } from "./count-up.ts";
 import { estimatedServerTime } from "../shop/clock.ts";
 import { OFFERS } from "../shop/offers.ts";
 import { refusal } from "../shop/transactions.ts";
+import { equipmentWaiting } from "../equipment/inventory.ts";
 
 /** The stats cluster, action buttons and status line around the board. */
 
@@ -98,8 +99,8 @@ export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay)
   const { deck, addCard } = game.save.tutorials;
   document.querySelector(`[data-tab="deck"]`)?.classList.toggle("notify", !deck || (!!game.save.upgrades.buildout && !addCard));
   document.querySelector(`[data-tab="upgrades"]`)?.classList.toggle("notify", upgradesWaiting(game) || game.treeWaiting("inspiration") || game.treeWaiting("courage") || trainingWaiting(game.save));
-  renderLockedTab("gear", !!game.save.upgrades.gear, "Gear", "Unlock Gear in the Inspiration tree");
-  document.querySelector(`[data-tab="gear"]`)?.classList.toggle("notify", gearWaiting(game));
+  renderLockedTab("gear", !!game.save.upgrades.gear || game.save.equipment.unlocked, "Gear", "Unlock Gear in the Inspiration tree");
+  document.querySelector(`[data-tab="gear"]`)?.classList.toggle("notify", gearWaiting(game) || equipmentWaiting(game.save));
   renderShopDot(game);
   renderLockedTab("defend", !!game.save.upgrades.legacy, "Defend", "Unlock An enduring legacy in the Courage tree");
 }
@@ -209,7 +210,7 @@ function renderAutoButton(game: Game) {
   text("auto-state", inside ? (game.auto ? "PLAYING" : "PAUSED") : "ENTER");
   const speed = el("auto-speed");
   speed.hidden = !inside;
-  text("auto-speed", `${game.stepsPerSecond}x`);
+  text("auto-speed", `${Math.round(game.moveRate * 100) / 100}x`);
   button.classList.toggle("enabled", inside && game.auto);
   button.setAttribute("aria-label", label);
   button.title = label;
