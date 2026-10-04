@@ -68,10 +68,10 @@ export class SkillTreePage {
     if (this.tree === "archives") this.renderArchives(tabs);
     else if (this.tree === "training") this.renderTraining(tabs);
     else this.renderTree(tabs);
-    // Showing the Inspiration tree clears the dot a run's Inspiration put on it.
-    const save = this.ctx.game.save;
-    if (this.tree === "inspiration" && save.inspirationNotice) {
-      save.inspirationNotice = false;
+    // Showing the Inspiration or Courage tree clears the dot a run's currency put on it.
+    const notices = this.ctx.game.save.treeNotices;
+    if ((this.tree === "inspiration" || this.tree === "courage") && notices[this.tree]) {
+      notices[this.tree] = false;
       this.ctx.update();
     }
   }
@@ -101,7 +101,7 @@ export class SkillTreePage {
     const trees = TREES.filter(t => this.shown(t.id)), courage = TREES.findIndex(t => t.id === "courage");
     const archivesAt = trees.findIndex(t => TREES.indexOf(t) > courage);
     return trees.map((t, i) =>
-      `${i === archivesAt ? archives : ""}<button data-tree="${t.id}" aria-pressed="${t.id === this.tree}"${t.id === "inspiration" && this.tree !== t.id && this.ctx.game.inspirationWaiting ? ` class="notify"` : ""}><span>${uiSprite(TREE_ICONS[t.id] ?? "defend")}</span>${t.name}<small>${this.locked(t) ? "LOCKED" : "UNLOCKED"}</small></button>${t.id === "inspiration" ? training : ""}`).join("")
+      `${i === archivesAt ? archives : ""}<button data-tree="${t.id}" aria-pressed="${t.id === this.tree}"${(t.id === "inspiration" || t.id === "courage") && this.tree !== t.id && this.ctx.game.treeWaiting(t.id) ? ` class="notify"` : ""}><span>${uiSprite(TREE_ICONS[t.id] ?? "defend")}</span>${t.name}<small>${this.locked(t) ? "LOCKED" : "UNLOCKED"}</small></button>${t.id === "inspiration" ? training : ""}`).join("")
       + (archivesAt < 0 ? archives : "");
   }
 

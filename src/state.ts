@@ -45,6 +45,7 @@ import {
   type MoveSnapshot,
   type Player,
   type ClearTier,
+  type NoticeTree,
 } from "./entities.ts";
 import { World, LAYOUT_VERSION } from "./delve/world.ts";
 import { RoomWorld, TOWER_LAYOUT_VERSION } from "./tower/room-world.ts";
@@ -883,8 +884,8 @@ export class Game {
    * in the forest. */
   private finalizeRun(reason: string) {
     const record = this.payout(), gold = this.slice.runGold;
-    // A run that earned Inspiration sends the player to spend it.
-    if (this.rules === MODES.tower && this.slice.runCurrency > 0) this.save.inspirationNotice = true;
+    // A run that earned its currency sends the player to spend it.
+    if (this.slice.runCurrency > 0) this.save.treeNotices[this.rules === MODES.tower ? "inspiration" : "courage"] = true;
     this.slice.history = [];
     this.route = [];
     this.newRun({ outside: true });
@@ -1424,12 +1425,14 @@ export class Game {
     const held = u.currency === "courage" ? this.save.delve.courage : this.save.tower.inspiration;
     return n < u.max && (this.free || cost(id, n) <= held);
   }
-  /** Whether the Inspiration tab (and the Upgrades button leading to it)
-   * wears a dot: in the forest, after a run that earned Inspiration, while
-   * a skill in its tree can be bought. Showing that tree clears it. */
-  get inspirationWaiting() {
-    return this.save.inspirationNotice && !!this.run.outside &&
-      TREES.find((t) => t.id === "inspiration")!.nodes.some((n) => this.canBuySkill(n.id));
+  /** Whether `tree`'s tab (and the Upgrades button leading to it) wears a
+   * dot: in the forest, after a run that earned the tree's currency
+   * (Inspiration from the Tower, Courage from the Delve), while a skill in
+   * it can be bought (so never while the tree is locked). Showing that tree
+   * clears it. */
+  treeWaiting(tree: NoticeTree) {
+    return this.save.treeNotices[tree] && !!this.run.outside &&
+      TREES.find((t) => t.id === tree)!.nodes.some((n) => this.canBuySkill(n.id));
   }
   buy(id: UpgradeId) {
     if (!this.canBuySkill(id)) return false;

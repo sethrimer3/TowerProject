@@ -96,7 +96,7 @@ export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay)
   // A new Deck lesson waits behind the button until its tutorial is done.
   const { deck, addCard } = game.save.tutorials;
   document.querySelector(`[data-tab="deck"]`)?.classList.toggle("notify", !deck || (!!game.save.upgrades.buildout && !addCard));
-  document.querySelector(`[data-tab="upgrades"]`)?.classList.toggle("notify", upgradesWaiting(game) || game.inspirationWaiting);
+  document.querySelector(`[data-tab="upgrades"]`)?.classList.toggle("notify", upgradesWaiting(game) || game.treeWaiting("inspiration") || game.treeWaiting("courage"));
   renderLockedTab("gear", !!game.save.upgrades.gear, "Gear", "Unlock Gear in the Inspiration tree");
   document.querySelector(`[data-tab="gear"]`)?.classList.toggle("notify", gearWaiting(game));
   renderShopDot(game);

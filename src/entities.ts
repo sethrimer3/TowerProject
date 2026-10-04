@@ -190,6 +190,8 @@ export type ModeSave<R extends Run = Run> = {
   /** The other tiers' records, by tier, while another is selected. */
   tierRecords: Record<string, TierRecord>;
 };
+/** The skill trees a run's currency calls the player back to. */
+export type NoticeTree = "inspiration" | "courage";
 export type Save = {
   version: 3;
   tower: ModeSave<TowerRun> & {
@@ -251,10 +253,11 @@ export type Save = {
    * closing a Training group under the hand in the first run after On the
    * Job. */
   tutorials: { deck: boolean; removeCard: boolean; addCard: boolean; upgrades: boolean; gear: boolean; onTheJob: boolean };
-  /** A run that earned Inspiration has ended since the Inspiration tree was
-   * last shown: its tab (and the Upgrades tab) wear a dot in the forest
-   * while a skill there can be bought. */
-  inspirationNotice: boolean;
+  /** Per tree: a run that earned its currency (Inspiration in the Tower,
+   * Courage in the Delve) has ended since the tree was last shown, so its
+   * tab (and the Upgrades tab) wear a dot in the forest while a skill there
+   * can be bought. */
+  treeNotices: Record<NoticeTree, boolean>;
   /** The Archives' archivists, completed research and its history
    * (archives.ts). */
   archives: ArchivesSave;

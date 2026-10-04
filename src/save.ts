@@ -47,7 +47,7 @@ export function defaults(): Save {
     handSlots: 0,
     modifiers: defaultModifiers(),
     tutorials: { deck: false, removeCard: false, addCard: false, upgrades: false, gear: false, onTheJob: false },
-    inspirationNotice: false,
+    treeNotices: { inspiration: false, courage: false },
     archives: defaultArchives(),
     defend: defaultDefendSave(),
     entitlements: [],
@@ -418,7 +418,7 @@ export function decode(raw: string | null): Save {
     d.hand = decodeHand(s.hand, deckCards(d.upgrades), handSlots(d));
     d.modifiers = decodeModifiers(s.modifiers, d.upgrades);
     for (const k of ["deck", "removeCard", "addCard", "upgrades", "gear", "onTheJob"] as const) d.tutorials[k] = s.tutorials?.[k] === true;
-    d.inspirationNotice = s.inspirationNotice === true;
+    for (const k of ["inspiration", "courage"] as const) d.treeNotices[k] = s.treeNotices?.[k] === true;
   } catch {}
   return d;
 }
