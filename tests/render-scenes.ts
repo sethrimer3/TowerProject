@@ -170,6 +170,24 @@ const LATER_BOARD_SCENES: Record<string, () => BoardScene> = {
     return { g, to, fight: true };
   },
   towerClimb: () => ({ g: game("tower", { brightness: 70 }), climb: true }),
+  /** Damage Visual claimed: enemies on floor tiles near the hero wear what
+   * each fight costs, gold, green (free), red (lethal), shortened, and ∞. */
+  towerDamageLabels: () => {
+    const g = game("tower", { brightness: 70 });
+    g.save.goals.claimed = { 1: [50] };
+    const p = g.run.player, step = neighbour(g), spots: Point[] = [];
+    for (let dy = 1; dy <= 5 && spots.length < 5; dy++)
+      for (let dx = -3; dx <= 3 && spots.length < 5; dx++) {
+        const x = p.x + dx, y = p.y + dy;
+        if (g.world.tile(x, y).kind === "floor" && !(x === step.x && y === step.y)) spots.push({ x, y });
+      }
+    const stats = [[40, 9, 1], [5, 30, 0], [400, 60, 2], [90_000, 900, 0], [30, 5, 50]];
+    spots.forEach(({ x, y }, i) => {
+      const [hp, attack, defense] = stats[i]!;
+      g.run.changes[`${x},${y}`] = { kind: "enemy", enemy: { name: "Slime", hp: hp!, attack: attack!, defense: defense!, tier: 0, strength: "normal" } };
+    });
+    return { g };
+  },
 };
 
 /** One board scene on `canvas` (408×408 CSS pixels), fully synchronous so

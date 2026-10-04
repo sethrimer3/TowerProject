@@ -62,5 +62,10 @@
   "towerClimb.moving": "52d6324c67df28de35d24df5",
   "towerClimb.after": "ff8cc63c77cc6d2fd75165da",
   "towerClimb.ripples": "097513c0c7121280c7bd6bd6",
-  "towerClimb.later": "7b90ad4a0cd73429cfa66a90"
+  "towerClimb.later": "7b90ad4a0cd73429cfa66a90",
+  "towerDamageLabels.settled": "1261b239c92c1ef394596c66",
+  "towerDamageLabels.moving": "d8e5eaf377d79ab79251fd75",
+  "towerDamageLabels.after": "61c70474e7208003be970041",
+  "towerDamageLabels.ripples": "4eb0d69dc5936d984ffced86",
+  "towerDamageLabels.later": "4c58d6e2513640e03a98fb8d"
 }

@@ -13,10 +13,13 @@ import { TIERS } from "./tiers.ts";
 /** What a checkpoint can unlock: Damage Prediction (an enemy's inspect
  * panel says what the fight would cost and whether it is survivable),
  * Combat Forecast (how many hits defeat it), Attack Lore (and how much more
- * ATK would take one hit fewer), and Warp (starting a run past a completed
- * checkpoint). */
-export type GoalUnlock = "damagePrediction" | "combatForecast" | "attackLore" | "warp";
-export const UNLOCK_NAMES: Record<GoalUnlock, string> = { damagePrediction: "Damage Prediction", combatForecast: "Combat Forecast", attackLore: "Attack Lore", warp: "Warp" };
+ * ATK would take one hit fewer), Warp (starting a run past a completed
+ * checkpoint) and Damage Visual (each enemy on the board wears what its
+ * fight would cost). */
+export type GoalUnlock = "damagePrediction" | "combatForecast" | "attackLore" | "warp" | "damageVisual";
+export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
+  damagePrediction: "Damage Prediction", combatForecast: "Combat Forecast", attackLore: "Attack Lore", warp: "Warp", damageVisual: "Damage Visual",
+};
 /** What a checkpoint pays: an unlock, or an amount of a currency. */
 export type GoalReward = { kind: "unlock"; unlock: GoalUnlock } | { kind: "currency"; currency: CurrencyId; amount: number };
 export type Checkpoint = { floor: number; reward: GoalReward; premium: GoalReward };
@@ -36,6 +39,7 @@ const TOWER_ONE: Record<number, Omit<Checkpoint, "floor">> = {
   20: { reward: unlock("combatForecast"), premium: gems(15) },
   30: { reward: unlock("attackLore"), premium: gems(25) },
   40: { reward: unlock("warp"), premium: gems(35) },
+  50: { reward: unlock("damageVisual"), premium: gems(50) },
 };
 
 /** A tower's checkpoints, lowest first.
