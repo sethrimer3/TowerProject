@@ -164,10 +164,12 @@
   "dev.gear.shopBack": "b43fb5d4dcd5e601",
   "badges.deck": "eb838c2533bb96b5",
   "badges.detail": "cb417c1de6035246",
-  "badges.attached": "0586ef8f827a1efe",
-  "badges.detached": "d55e6e8fefc16ce3",
-  "badges.drawn": "38e0fd89c3d3be81",
-  "badges.ten": "420d48d9bd607707",
-  "badges.ten.summary": "946a5405ecd1a6f9",
-  "badges.afterDraws": "f48fdcfcf5721d06"
+  "badges.attached": "86418a9c57946297",
+  "badges.detached": "5a48ffbbb992bc62",
+  "badges.drawn": "8f238e88112a2421",
+  "badges.ten": "f6ea931c3136d554",
+  "badges.ten.summary": "15314d9815e0c41f",
+  "badges.afterDraws": "dc519a222b1d61c9",
+  "badges.overDeck": "459ec0ee2a034c48",
+  "badges.returned": "a7dc7db084deee0e"
 }

@@ -8,11 +8,14 @@ import { RARITIES } from "../shop/rarity.ts";
 import { revealDraws } from "./badge-reveal.ts";
 import { cardBadgeHtml, badgeText, progressText, tokenHtml } from "./badge-token.ts";
 
+/** Where a hand card dropped on the deck goes: back to the deck. */
+const TO_DECK = -1;
 /** How far a press must travel before it lifts the card. */
 const DRAG_START_PX = 4;
 
 /** A card being dragged along the hand row: the slot it left, the slot it
- * would drop into, and the ghost that follows the pointer. */
+ * would drop into (`TO_DECK` while it is over the deck, to return it), and
+ * the ghost that follows the pointer. */
 type Drag = { from: number; to: number; pointer: number; x: number; y: number; lifted: boolean; ghost: HTMLElement | null };
 /** A deck card being dragged to the hand: the hand slot it would drop on
  * (null while it is away from the hand, or over STAIRS in a full hand). */
@@ -191,10 +194,10 @@ export class DeckPage {
         const check = stays
           ? `disabled title="STAIRS always stays in your hand" aria-label="${name} is in your hand and always stays there"`
           : `title="Return ${name} to the deck" aria-label="${name} is in your hand: return it to the deck"`;
-        return `<div class="deck-entry in-hand" role="listitem"${this.modTarget(id)}<div class="deck-entry-art" title="${name}: in your hand">${cardArt(id, name)}</div><button type="button" class="deck-check" data-return="${id}" ${check}>${CHECK_SVG}</button></div>`;
+        return `<div class="deck-entry in-hand" role="listitem"${this.badgeTarget(id)}<div class="deck-entry-art" title="${name}: in your hand">${cardArt(id, name)}</div><button type="button" class="deck-check" data-return="${id}" ${check}>${CHECK_SVG}</button></div>`;
       }
       // A full hand takes a card only by dragging it onto one to swap out.
-      return `<div class="deck-entry" role="listitem"${this.modTarget(id)}<button type="button" class="deck-add${full ? " full" : ""}" data-add="${id}" title="${full ? `Your hand is full: drag ${name} onto a card to swap it` : `Add ${name} to your hand, or drag it to a slot`}" aria-label="${full ? `Your hand is full: drag ${name} onto a card to swap it` : `Add ${name} to your hand`}">${cardArt(id, name)}</button></div>`;
+      return `<div class="deck-entry" role="listitem"${this.badgeTarget(id)}<button type="button" class="deck-add${full ? " full" : ""}" data-add="${id}" title="${full ? `Your hand is full: drag ${name} onto a card to swap it` : `Add ${name} to your hand, or drag it to a slot`}" aria-label="${full ? `Your hand is full: drag ${name} onto a card to swap it` : `Add ${name} to your hand`}">${cardArt(id, name)}</button></div>`;
     }).join("");
     return `<section class="deck-reserve open" aria-labelledby="deck-label">
         <h3 id="deck-label" class="deck-label">Deck</h3>
@@ -240,13 +243,13 @@ export class DeckPage {
     const pointed = lesson === "remove" && id === this.removeTarget;
     const x = this.removable(id) ? `<button type="button" class="deck-remove${pointed ? " shown" : ""}" data-remove="${id}" title="Return ${card.name} to the deck" aria-label="Return ${card.name} to the deck">${X_SVG}</button>` : "";
     const lessonPointer = lesson === "order" && id === "stairs" ? this.pointer("at-card") : pointed ? this.pointer("at-x") : "";
-    return `<div class="deck-slot${held ? " held" : ""}" role="listitem"${this.modTarget(id)}<button type="button" class="deck-card" data-slot="${i}" ${fixed ? "disabled" : ""} aria-label="${card.name}, slot ${i + 1} of ${count}. Drag, or press the left and right arrow keys, to move it." title="${card.name}: ${cardText(id, upgrades)}">${cardArt(id, card.name)}</button>${x}${lessonPointer}</div>`;
+    return `<div class="deck-slot${held ? " held" : ""}" role="listitem"${this.badgeTarget(id)}<button type="button" class="deck-card" data-slot="${i}" ${fixed ? "disabled" : ""} aria-label="${card.name}, slot ${i + 1} of ${count}. Drag, or press the left and right arrow keys, to move it." title="${card.name}: ${cardText(id, upgrades)}">${cardArt(id, card.name)}</button>${x}${lessonPointer}</div>`;
   }
 
   /** The end of card `id`'s opening tag and what follows it, with the
    * Badges box showing: a mark that a token can be dropped on the card,
    * and the mark of the badge it holds. */
-  private modTarget(id: CardId) {
+  private badgeTarget(id: CardId) {
     if (!this.showsBadges) return ">";
     const badge = this.ctx.game.save.badges.cards[id];
     return ` data-badge-card="${id}">${badge ? cardBadgeHtml(badge) : ""}`;
@@ -280,7 +283,9 @@ export class DeckPage {
       const d = this.drag;
       if (!d || e.pointerId !== d.pointer) return;
       this.cancelDrag();
-      if (d.lifted) this.drop(d.from, d.to);
+      if (!d.lifted) return;
+      if (d.to === TO_DECK) this.remove(this.ctx.game.save.hand[d.from]);
+      else this.drop(d.from, d.to);
     };
     row.onpointercancel = () => {
       this.cancelDrag();
@@ -300,13 +305,14 @@ export class DeckPage {
   }
 
   /** The card lifts once the press has travelled far enough; its ghost
-   * follows the pointer and the hand previews the slot it would drop in. */
+   * follows the pointer and the hand previews the slot it would drop in,
+   * or, held over the deck, the hand without it. */
   private dragHandCard(e: PointerEvent) {
     const d = this.drag;
     if (!d || !travelled(d, e)) return;
     if (!d.lifted) this.lift(d);
     follow(d.ghost!, e);
-    const to = this.slotAt(e.clientX, e.clientY);
+    const to = this.overDeck(d, e.clientX, e.clientY) ? TO_DECK : this.slotAt(e.clientX, e.clientY);
     if (to === d.to) return;
     d.to = to;
     this.preview(d);
@@ -344,9 +350,21 @@ export class DeckPage {
     this.preview(d);
   }
 
-  /** Shows the hand as it would be with the card dropped in `d.to`. */
+  /** Shows the hand as it would be with the card dropped in `d.to`, or
+   * returned to the deck, which lights up as where it would go. */
   private preview(d: Drag) {
-    el("deck-hand").innerHTML = this.slotsHtml(moveCard(this.ctx.game.save.hand, d.from, d.to), d.to);
+    const hand = this.ctx.game.save.hand, toDeck = d.to === TO_DECK;
+    el("deck-hand").innerHTML = toDeck ? this.slotsHtml(hand.filter((_, i) => i !== d.from)) : this.slotsHtml(moveCard(hand, d.from, d.to), d.to);
+    document.querySelector(".deck-reserve")?.classList.toggle("drop-target", toDeck);
+  }
+
+  /** Whether (x, y) is over the open deck, and the dragged card can go back
+   * to it (as its X would return it). */
+  private overDeck(d: Drag, x: number, y: number) {
+    const deck = document.querySelector<HTMLElement>(".deck-reserve.open"), id = this.ctx.game.save.hand[d.from];
+    if (!deck || !this.removable(id)) return false;
+    const box = deck.getBoundingClientRect();
+    return x >= box.left && x <= box.right && y >= box.top && y <= box.bottom;
   }
 
   /** The slot whose middle is nearest (x, y), among the slots holding
@@ -370,6 +388,7 @@ export class DeckPage {
     this.deckDrag?.ghost?.remove();
     this.deckDrag = null;
     document.getElementById("deck-hand")?.classList.remove("dragging");
+    document.querySelector(".deck-reserve")?.classList.remove("drop-target");
   }
 
   /** Dragging a deck card onto a hand slot puts it there (`placeInHand`);
@@ -490,7 +509,7 @@ export class DeckPage {
     }
     follow(d.ghost!, e);
     const over = document.elementFromPoint(e.clientX, e.clientY)?.closest<HTMLElement>("[data-badge-card]") ?? null;
-    const card = (over?.dataset.modCard as CardId | undefined) ?? null;
+    const card = (over?.dataset.badgeCard as CardId | undefined) ?? null;
     if (card === d.card) return;
     d.card = card;
     document.querySelectorAll(".badge-target").forEach((t) => t.classList.remove("badge-target"));

@@ -308,6 +308,15 @@ try {
     await shot(`${prefix}.ten.summary`);
     await click(".badge-reveal-go");
     await shot(`${prefix}.afterDraws`);
+    // A hand card dragged onto the deck goes back to it.
+    const card = await page.locator('.deck-slot[data-badge-card="monster"] .deck-card').boundingBox();
+    const deck = await page.locator(".deck-reserve.open").boundingBox();
+    await page.mouse.move(card.x + card.width / 2, card.y + card.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(deck.x + deck.width / 2, deck.y + deck.height / 2, { steps: 8 });
+    await shot(`${prefix}.overDeck`);
+    await page.mouse.up();
+    await shot(`${prefix}.returned`);
   }
   /** Buying a card's skill raises the card over the screen until pressed. */
   async function cardRevealTour(prefix) {

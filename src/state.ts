@@ -510,18 +510,18 @@ export class Game {
   }
   /** The floor card badges count by: the Tower floor, or the Delve's
    * equivalent floor where the hero stands. */
-  private get modFloor() {
+  private get badgeFloor() {
     return this.rules.equivalentFloor(this.rules.progressAt(this.run, this.run.player.y));
   }
   /** Whether a cooling-down badge works on this floor: never used, used
    * on this floor already, or `every` floors on from the last it worked on. */
   private cooled(kind: "stairward" | "skipOpen", every: number) {
-    const last = this.run.badgeFloors?.[kind], floor = this.modFloor;
+    const last = this.run.badgeFloors?.[kind], floor = this.badgeFloor;
     return last === undefined || last === floor || floor - last >= every;
   }
   /** A cooling-down badge works on this floor: it rests from here. */
   private markUsed(kind: "stairward" | "skipOpen") {
-    (this.run.badgeFloors ??= {})[kind] = this.modFloor;
+    (this.run.badgeFloors ??= {})[kind] = this.badgeFloor;
   }
   /** A new plan for card `id` under Stairward counts as its use. */
   private coolDown(id: CardId) {
@@ -531,11 +531,11 @@ export class Game {
    * points, for the planner and the board's marks. */
   get skipMarks(): string[] {
     const skipped = this.run.skipped;
-    return skipped && !this.run.outside && skipped.floor === this.modFloor ? skipped.tiles : [];
+    return skipped && !this.run.outside && skipped.floor === this.badgeFloor ? skipped.tiles : [];
   }
   /** Skip Open Nodes passes over (x, y) for the rest of the floor. */
   private skipTile(x: number, y: number) {
-    const floor = this.modFloor;
+    const floor = this.badgeFloor;
     if (this.run.skipped?.floor !== floor) this.run.skipped = { floor, tiles: [] };
     const k = `${x},${y}`;
     if (!this.run.skipped.tiles.includes(k)) this.run.skipped.tiles.push(k);
@@ -558,7 +558,7 @@ export class Game {
         if (card === this.hand.length - 1) this.gainCoins(p, this.purse.badgeGold(`badge:${id}:${key}`, v), 0, false);
         return;
       case "xp": {
-        const xp = Math.round((v * xpBase(this.modFloor)) / xpBase(0));
+        const xp = Math.round((v * xpBase(this.badgeFloor)) / xpBase(0));
         this.addXp(xp);
         return this.gain(p.x, p.y, `+${xp} XP`);
       }

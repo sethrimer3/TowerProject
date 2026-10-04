@@ -2238,6 +2238,8 @@ nav button.notify::after, .tree-tabs button.notify::after {
 .deck-hand.dragging .deck-remove { display: none; }
 .deck-reserve.open { overflow: visible; background: #0a0e14; }
 .deck-reserve.open::after { display: none; }
+/* A hand card held over the deck: dropping it returns it there. */
+.deck-reserve.drop-target { box-shadow: 0 0 0 2px #ebc77f, 0 0 14px 3px #e0b25a88; }
 .deck-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(62px, 1fr));
