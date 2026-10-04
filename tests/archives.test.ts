@@ -215,8 +215,8 @@ test("Undo Count needs Rehearsed steps or Echoes of time, costs what Focus Count
   const g = new Game(save);
   g.clock = () => T0;
   assert.deepEqual(
-    RESEARCH.undoCount.levels.slice(0, 9).map(({ gold, hours }) => [gold, hours]),
-    RESEARCH.focusCount.levels.map(({ gold, hours }) => [gold, hours]),
+    RESEARCH.undoCount.levels.map(({ gold, hours }) => [gold, hours]),
+    RESEARCH.focusCount.levels.slice(0, 8).map(({ gold, hours }) => [gold, hours]),
   );
   assert.equal(status(save, "undoCount"), "locked");
   assert.equal(g.research.start(0, "undoCount"), false);
@@ -226,24 +226,24 @@ test("Undo Count needs Rehearsed steps or Echoes of time, costs what Focus Count
   g.clock = () => T0 + 8 * HOUR;
   assert.equal(g.research.settle().length, 1);
   assert.equal(g.undoCapacity, 2);
-  save.archives.levels.undoCount = 5;
-  assert.equal(g.undoCapacity, 1 + 5);
+  save.archives.levels.undoCount = 4;
+  assert.equal(g.undoCapacity, 1 + 4);
 });
 
-test("Undo Count opens 5 levels for each of Rehearsed steps and Echoes of time owned, either first", () => {
+test("Undo Count opens 4 levels for each of Rehearsed steps and Echoes of time owned, either first", () => {
   for (const first of ["inspirationUndos", "undos"] as const) {
     const save = owner();
     const g = new Game(save);
     g.clock = () => T0;
     save.upgrades[first] = 1;
-    assert.equal(maxLevel("undoCount", save.upgrades), 5, first);
+    assert.equal(maxLevel("undoCount", save.upgrades), 4, first);
     assert.equal(status(save, "undoCount"), "available");
-    save.archives.levels.undoCount = 5;
-    assert.equal(status(save, "undoCount"), "completed", "5 levels with one skill");
+    save.archives.levels.undoCount = 4;
+    assert.equal(status(save, "undoCount"), "completed", "4 levels with one skill");
     assert.equal(g.research.start(0, "undoCount"), false);
     save.upgrades[first === "undos" ? "inspirationUndos" : "undos"] = 1;
-    assert.equal(maxLevel("undoCount", save.upgrades), 10);
-    assert.ok(g.research.start(0, "undoCount"), "the second skill opens 5 more");
+    assert.equal(maxLevel("undoCount", save.upgrades), 8);
+    assert.ok(g.research.start(0, "undoCount"), "the second skill opens 4 more");
   }
   // Echoes of time alone stores no undo until research does.
   const save = owner();

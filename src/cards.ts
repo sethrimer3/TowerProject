@@ -3,6 +3,7 @@ import { litTorches, takesSomething, type Position } from "./board.ts";
 import type { Step } from "./pathfinding.ts";
 import { doorCost, doorId, doorRule } from "./doors.ts";
 import { predict } from "./combat.ts";
+import { snap } from "./exact.ts";
 import { UPGRADES, VIEWPORT_TILES, type KeyColor, type TrainingId, type UpgradeId } from "./config.ts";
 import type { DelveRun, EnemyStrength, Mode } from "./entities.ts";
 
@@ -149,7 +150,15 @@ export type HandAt = Position & {
   /** Tiles marked with a ? (Deprioritize): no card's path crosses or ends
    * on them. */
   marked?: ReadonlySet<string>;
+  /** How much of a key each key colour a door takes costs, in tenths of a
+   * percent (Key Efficiency research), 1,000 when absent: the door cards
+   * want a door the keys held pay for at that cost. */
+  keyCost?: number;
 };
+
+/** What each key a door takes costs a card heading for it: Key Efficiency
+ * times the card's Effective or Dampen. */
+const keyScale = (at: HandAt, rules?: CardRules) => snap(((rules?.scale ?? 1) * (at.keyCost ?? 1000)) / 1000);
 
 /** Tiles a card's path may cross on the way to its target, taking what
  * lies there: open floor and every item. Walls, doors, monsters and stairs
@@ -172,7 +181,7 @@ function pathTo(r: Reached): Step[] {
 
 /** Whether `card` wants the tile, from where the hero stands. The Delve's
  * STAIRS card is decided over the whole search instead (`climb`). */
-function wants(card: CardId, r: Reached, at: Position, rules?: CardRules): boolean {
+function wants(card: CardId, r: Reached, at: HandAt, rules?: CardRules): boolean {
   return WANTS[card](r.tile, at, rules, r);
 }
 /** A monster that can be fought, of one of `strengths` (any, without): an
@@ -180,10 +189,10 @@ function wants(card: CardId, r: Reached, at: Position, rules?: CardRules): boole
 const fightable = (strengths?: readonly EnemyStrength[]) => (t: Tile, at: Position) =>
   t.kind === "enemy" && (!strengths || strengths.includes(t.enemy!.strength)) && !predict(at.run.player, t.enemy!).impervious;
 const never = () => false;
-const WANTS: Record<CardId, (t: Tile, at: Position, rules: CardRules | undefined, r: Reached) => boolean> = {
+const WANTS: Record<CardId, (t: Tile, at: HandAt, rules: CardRules | undefined, r: Reached) => boolean> = {
   stairs: (t) => t.kind === "stairs",
   heal: (t) => t.kind === "potion",
-  door: (t, at, rules) => t.kind === "door" && doorCost(t, at.run.player, rules?.scale) !== null,
+  door: (t, at, rules) => t.kind === "door" && doorCost(t, at.run.player, keyScale(at, rules)) !== null,
   yellowKey: (t) => t.kind === "key" && t.color === "yellow",
   blueKey: (t) => t.kind === "key" && t.color === "blue",
   monster: fightable(),
@@ -195,7 +204,7 @@ const WANTS: Record<CardId, (t: Tile, at: Position, rules: CardRules | undefined
   yellowDoor: (t, at, rules) => {
     if (t.kind !== "door") return false;
     const rule = doorRule(t);
-    return rule.type === "keys" && rule.mode === "all" && rule.keys.length === 1 && rule.keys[0] === "yellow" && doorCost(t, at.run.player, rules?.scale) !== null;
+    return rule.type === "keys" && rule.mode === "all" && rule.keys.length === 1 && rule.keys[0] === "yellow" && doorCost(t, at.run.player, keyScale(at, rules)) !== null;
   },
   heartDoor: (t) => t.kind === "door" && doorRule(t).type === "fullHp",
   weakEnemy: fightable(["weak"]),
@@ -211,7 +220,7 @@ const WANTS: Record<CardId, (t: Tile, at: Position, rules: CardRules | undefined
   redSiphon: never,
   torch: (_t, at, _rules, r) => !!at.world.torches?.some((torch) => torch.active && torch.x === r.x && torch.y === r.y),
   // A Steel Door (any one key opens it), one the keys held pay for.
-  steelDoor: (t, at, rules) => t.kind === "door" && doorId(t) === "steel" && doorCost(t, at.run.player, rules?.scale) !== null,
+  steelDoor: (t, at, rules) => t.kind === "door" && doorId(t) === "steel" && doorCost(t, at.run.player, keyScale(at, rules)) !== null,
 };
 
 const NONE: ReadonlySet<string> = new Set();
@@ -257,7 +266,7 @@ export function planHand(at: HandAt, hand: readonly CardId[], mode: Mode, only?:
 /** Card `id`'s target among the tiles `pool` reached (closest first): the
  * closest it wants, or as its badge picks. `reached` is the plain search,
  * which tells Skip Open Nodes what ground is already open. */
-function targetOf(at: Position, id: CardId, mode: Mode, pool: Reached[], reached: Reached[], rules?: CardRules) {
+function targetOf(at: HandAt, id: CardId, mode: Mode, pool: Reached[], reached: Reached[], rules?: CardRules) {
   if (id === "stairs" && mode === "delve") return climb(at, pool);
   if (!rules?.stairward && !rules?.skipOpen) return pool.find((r) => wants(id, r, at, rules));
   let targets = pool.filter((r) => wants(id, r, at, rules));
@@ -372,9 +381,9 @@ function search(at: Position, marked: ReadonlySet<string>): Reached[] {
 
 /** Whether Charge's path may go through `t`: a monster that can be fought
  * (lethal or not) or a door the hero holds the keys for. */
-function chargeable(t: Tile, at: Position) {
+function chargeable(t: Tile, at: HandAt) {
   if (t.kind === "enemy") return !predict(at.run.player, t.enemy!).impervious;
-  return t.kind === "door" && doorCost(t, at.run.player) !== null;
+  return t.kind === "door" && doorCost(t, at.run.player, keyScale(at)) !== null;
 }
 
 /** The search as Charge makes it: breadth-first over crossable tiles and
@@ -382,7 +391,7 @@ function chargeable(t: Tile, at: Position) {
  * Each tile is reached once, by its shortest path, however many it charges
  * through; a tile is walked on from once per count of charges spent, so a
  * longer path that spent fewer can still go further. */
-function chargeSearch(at: Position, charge: number, marked: ReadonlySet<string>): Reached[] {
+function chargeSearch(at: HandAt, charge: number, marked: ReadonlySet<string>): Reached[] {
   const { world, run } = at, p = run.player;
   const walked = new Set([`0|${point(p.x, p.y)}`]), seen = new Set([point(p.x, p.y)]);
   const walk: { r: Reached; spent: number }[] = [{ r: { x: p.x, y: p.y, tile: world.tile(p.x, p.y), dx: 0, dy: 0, from: null }, spent: 0 }];

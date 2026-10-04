@@ -237,3 +237,16 @@ test("the hand's paths go round items and lit torches when an equally short way 
   litMiddle.world.torches = [{ x: 0, y: 1, active: true }] as Board["torches"];
   assert.ok(!planHand(litMiddle, ["stairs"], "tower")!.path.some((s) => s.x === 0 && s.y === 1), "round the lit torch");
 });
+
+test("the door cards plan by Key Efficiency: less than a whole key opens a door once it is cheap enough", () => {
+  const short = { keys: { yellow: 0.9, blue: 0, red: 0 } };
+  const at = (keyCost?: number) => ({ ...board(["@.D"], short), keyCost });
+  for (const card of ["door", "yellowDoor"] as const) {
+    assert.equal(planHand(at(), [card], "tower"), null, `${card}: 0.9 of a key opens nothing at full cost`);
+    assert.equal(planHand(at(950), [card], "tower"), null, `${card}: nor at 95%`);
+    assert.ok(planHand(at(900), [card], "tower"), `${card}: at 90% it does`);
+  }
+  // A card's Dampen multiplies with it: 94% of 95% is under 0.9.
+  assert.equal(planHand(at(940), ["door"], "tower"), null);
+  assert.ok(planHand({ ...at(940), cardRules: () => ({ scale: 0.95 }) }, ["door"], "tower"));
+});

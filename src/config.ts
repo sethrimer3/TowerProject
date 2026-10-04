@@ -34,7 +34,7 @@ export const UPGRADES = [
   {
     id: "undos",
     name: "Echoes of time",
-    description: "Open Undo Count research in the Archives, or 5 more levels of it once Rehearsed steps has opened it",
+    description: "Open Undo Count research in the Archives, or 4 more levels of it once Rehearsed steps has opened it",
     base: 5,
     max: 1,
     currency: "courage",
@@ -371,7 +371,7 @@ export const UPGRADES = [
   {
     id: "inspirationUndos",
     name: "Rehearsed steps",
-    description: "Rewind an action, and open Undo Count research in the Archives, or 5 more levels of it once Echoes of time has opened it",
+    description: "Rewind an action, and open Undo Count research in the Archives, or 4 more levels of it once Echoes of time has opened it",
     grants: { undos: 1 },
     base: 5,
     max: 1,

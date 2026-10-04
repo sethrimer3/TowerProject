@@ -16,7 +16,7 @@ The Upgrades page's trees: Inspiration (Tower currency), Courage, Wayfinding, Le
 - A card badge is not an upgrade row: it is a `BADGES` entry in `src/badges.ts`, drawn with Gems on the Deck page. One that should join the draw pool only once a skill is owned names it in `unlock`.
 - `card` adds a card to the deck (`deckCards` in `cards.ts`); the card itself needs a `CARDS` entry and face art.
 
-**Inspiration tree:** its skills are unlocks (`unlocks: true` on the tree): each has `max: 1`, is bought once and shows no rank count (a test holds every node to one rank). More of what one gives comes from another panel, usually Archives research it opens (Rehearsed steps gives the first undo and opens five levels of Undo Count).
+**Inspiration tree:** its skills are unlocks (`unlocks: true` on the tree): each has `max: 1`, is bought once and shows no rank count (a test holds every node to one rank). More of what one gives comes from another panel, usually Archives research it opens (Rehearsed steps gives the first undo and opens four levels of Undo Count).
 
 **Price:** `cost(id, rank) = ceil(base × 1.65^rank)`, the same curve for every node, paid in `currency`. Existing bases run from 1 (roots) to about 12 (deep one-offs). Total for all ranks = Σ over rank 0…max−1.
 
@@ -40,7 +40,7 @@ Research that lasts, paid in Gold and real (wall-clock) time, run by archivists.
 **Row** (`RESEARCH` in `src/archives.ts`, listed in this order within its category's group on the page): `{ name, description, categories, requires, levels }`.
 - `categories`: keys of `RESEARCH_CATEGORIES` (qualityOfLife, progression, abilities, offense, defense, economy, equipment, special, in the order the library lists its groups), used by the library's filters and headings: a project is listed under its first category.
 - `requires`: any of `{ upgrade: UpgradeId }`, `{ anyUpgrade: UpgradeId[] }` (one of them owned), `{ research: id, level }`, `{ playerLevel: n }`.
-- `levelsPer` (optional): `{ upgrades, levels }` opens only `levels` of the project for each of `upgrades` owned (Undo Count: five each for Rehearsed steps and Echoes of time); `maxLevel` reads it. The library lists a project only once these are met (Dev mode lists all).
+- `levelsPer` (optional): `{ upgrades, levels }` opens only `levels` of the project for each of `upgrades` owned (Undo Count: four each for Rehearsed steps and Echoes of time); `maxLevel` reads it. The library lists a project only once these are met (Dev mode lists all).
 - `levels`: one `{ gold, hours, effect }` per level; the max level is the array's length. Write them as a small formula with a comment, like `countLevels` (Focus Count's and Undo Count's: 500 × (1 + n(n+1)/2) Gold, 8 × n hours).
 - `effect`: `{ target, op: "add" | "multiply" | "set", value }`. Adds sum, then multipliers apply, a `set` overrides.
 

@@ -109,11 +109,8 @@ test("a new Tower floor pays Silver / Floor, with research and Silver Bonus but 
   assert.ok(g.move(1, 0));
   assert.equal(g.run.height, 4);
   assert.equal(g.silver, 8.58, "6 × 1.1 × 1.3");
-  assert.ok(g.undo());
-  assert.equal(g.silver, 0, "undo takes the Silver back with the climb");
-  standBeside(g);
-  assert.ok(g.move(1, 0));
-  assert.equal(g.silver, 8.58, "and climbing again pays it again, once");
+  assert.equal(g.undo(), false, "the climb can't be undone");
+  assert.equal(g.silver, 8.58);
 });
 
 test("a floor already reached this run pays no Silver; Silver training raises it for the run", () => {

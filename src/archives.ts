@@ -107,7 +107,7 @@ export type ResearchDefinition = {
   /** Level 1 first; the project's maximum level is its length. */
   levels: ResearchLevel[];
   /** When set, only `levels` of them are open for each of `upgrades`
-   * owned (Undo Count: 5 for each of Rehearsed steps and Echoes of time). */
+   * owned (Undo Count: 4 for each of Rehearsed steps and Echoes of time). */
   levelsPer?: { upgrades: UpgradeId[]; levels: number };
 };
 
@@ -216,8 +216,8 @@ export const RESEARCH = {
     description: "Rehearse old climbs to store more undos.",
     categories: ["abilities"],
     requires: [{ anyUpgrade: ["inspirationUndos", "undos"] }],
-    levels: countLevels("undoCapacity", 10),
-    levelsPer: { upgrades: ["inspirationUndos", "undos"], levels: 5 },
+    levels: countLevels("undoCapacity", 8),
+    levelsPer: { upgrades: ["inspirationUndos", "undos"], levels: 4 },
   },
   fasterTrainers: {
     name: "Faster Trainers",

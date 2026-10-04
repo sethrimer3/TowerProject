@@ -63,18 +63,16 @@ test("Key Efficiency: a door takes less of each key, so less than a whole key op
   assert.equal(g.stepRules.keyCost, 980, "read at once, mid-run");
 });
 
-test("Interest adds its share of the Silver held on a new floor, up to Max Interest, after Wishing Well, and undo takes it back", () => {
+test("Interest adds its share of the Silver held on a new floor, up to Max Interest, after Wishing Well", () => {
   const g = stairs();
   g.run.silver = 1000;
   g.save.archives.levels.interest = 100;
   assert.ok(g.move(1, 0));
   assert.equal(g.run.silver, 1050, "10% of 1,000 is 100, capped at 50");
-  assert.ok(g.undo());
-  assert.equal(g.run.silver, 1000);
   g.save.archives.levels.maxInterest = 1;
   standBeside(g);
   assert.ok(g.move(1, 0));
-  assert.equal(g.run.silver, 1100, "Max Interest's first level: 100");
+  assert.equal(g.run.silver, 1050 + 100, "Max Interest's first level: 100");
   const small = stairs();
   small.run.silver = 200;
   small.save.archives.levels.interest = 25;
@@ -94,7 +92,7 @@ test("Interest adds its share of the Silver held on a new floor, up to Max Inter
   assert.equal(climb(100), afterWell + afterWell / 10);
 });
 
-test("Find Yellow Key: a fixed roll per run and floor, more research only adding keys, and undo finds the same", () => {
+test("Find Yellow Key: a fixed roll per run and floor, more research only adding keys", () => {
   const found = (levels: number) => {
     const g = stairs(4242);
     g.save.archives.levels.findYellowKey = levels;
@@ -112,19 +110,6 @@ test("Find Yellow Key: a fixed roll per run and floor, more research only adding
   assert.ok(some.length > 0 && some.every((h) => all.includes(h)), "20% finds every key 10% did");
   assert.ok(all.length >= 5 && all.length <= 22, `about 20% of 60 floors (${all.length})`);
   assert.deepEqual(found(50), all, "the same run finds the same keys");
-  // Undo takes a key found back, and climbing again finds it again.
-  const g = stairs(4242);
-  g.save.archives.levels.findYellowKey = 50;
-  g.run.height = all[0]! - 1;
-  standBeside(g);
-  const before = g.run.player.keys.yellow;
-  assert.ok(g.move(1, 0));
-  assert.equal(g.run.player.keys.yellow, before + 1);
-  assert.ok(g.undo());
-  assert.equal(g.run.player.keys.yellow, before);
-  standBeside(g);
-  assert.ok(g.move(1, 0));
-  assert.equal(g.run.player.keys.yellow, before + 1);
 });
 
 test("Mug raises the Gold of a kill the hero's first strike makes, and only that", () => {

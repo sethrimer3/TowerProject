@@ -341,15 +341,12 @@ export class Game {
     this.paused = false;
     this.blocked.until = 0;
   }
-  /** A copy of an earlier state of the run. Damage taken in this area
-   * stays on record, so undo never wins back the chance to master it. */
+  /** A copy of an earlier state of the run, on the same floor (a Tower
+   * floor's climb forgets the history). Damage taken in this area stays on
+   * record, so undo never wins back the chance to master it. */
   private rewound(past: Run): Run {
     const run = structuredClone(past);
-    if (this.mode !== "tower") return run;
-    const now = this.towerRun, then = run as TowerRun;
-    if (now.seed !== then.seed) return run;
-    const sameArea = Math.floor(now.height / TOWER_SECTION) === Math.floor(then.height / TOWER_SECTION);
-    if (sameArea && now.damaged) then.damaged = true;
+    if (this.mode === "tower" && this.towerRun.damaged) (run as TowerRun).damaged = true;
     return run;
   }
   undo() {
@@ -964,7 +961,12 @@ export class Game {
     const regen = this.run.outside || !this.run.player.regen ? 0
       : snap((this.run.player.regen * researched(this.save.archives, "regenPercent", 100)) / 100);
     return { potionHeal: researched(this.save.archives, "potionHeal", 100), percentPotion: potionPercent(this.trainingNow), regen,
-      heartToll: researched(this.save.archives, "heartToll", 100), keyCost: researched(this.save.archives, "keyCost", 1000) };
+      heartToll: researched(this.save.archives, "heartToll", 100), keyCost: this.keyCost };
+  }
+  /** How much of a key each key a door takes costs, in tenths of a percent
+   * (Key Efficiency research): what steps pay and the door cards plan by. */
+  get keyCost() {
+    return researched(this.save.archives, "keyCost", 1000);
   }
   /** The upgrades owned and the Training ranks that count now: the hero's
    * own, and those this run bought with Silver. */
@@ -1477,8 +1479,10 @@ export class Game {
     this.gain(at.x, at.y, "+1 yellow key", { tile: { kind: "key", color: "yellow" } });
   }
   advanceTowerRoom() {
+    // Undo stays on the floor it was taken on: climbing forgets the history.
+    this.slice.history = [];
     const purse = this.purse, p = this.run.player;
-    // Keyed by the stairs taken, so a floor pays once a run, whatever undo does.
+    // Keyed by the stairs taken, so a floor climbed again after going down pays nothing.
     const gold = purse.floorGold(purse.floorKey(p.x, p.y));
     const highest = this.run.maxHeight ?? this.run.height;
     // Skip on STAIRS climbs past the next floor, which pays nothing; an area
@@ -1488,8 +1492,8 @@ export class Game {
     const skipGold = skipped ? purse.skippedFloorGold(skipped.board) : 0;
     const passed = skipped?.sectionStart ? new AreaLedger(this.save).enter(this.towerRun, skipped.board) : [];
     const { board, sectionStart } = this.climb.up();
-    // Silver belongs to the run, so the run's own highest floor gates it:
-    // undo takes back the Silver and the record together.
+    // Only a floor new to the run pays Silver: the run's own highest floor
+    // gates it.
     let silver = 0;
     if (this.run.height > highest) {
       this.run.maxHeight = this.run.height;
@@ -1510,6 +1514,8 @@ export class Game {
    * surviving enemies and unclaimed loot are still there to finish off. */
   descendTowerRoom() {
     if (this.climb.sealedBelow) return;
+    // Undo stays on the floor it was taken on: going down forgets the history.
+    this.slice.history = [];
     this.enterTowerFloor(this.climb.down()!.board);
     this.feedback("You descend to the room below.");
   }
