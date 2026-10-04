@@ -80,10 +80,10 @@ test("the Delve pays Gold / Floor for each new equivalent floor (ten depth) once
   const world = g.world as World;
   world.depth = () => 25;
   g.run.maxHeight = 5;
-  const step = (g as unknown as { afterDelveStep(t: unknown, x: number, y: number): void }).afterDelveStep.bind(g);
-  step({ kind: "floor" }, g.run.player.x, g.run.player.y);
+  const step = (g as unknown as { afterDelveStep(t: unknown, x: number, y: number, from: { x: number; y: number }): void }).afterDelveStep.bind(g);
+  step({ kind: "floor" }, g.run.player.x, g.run.player.y, g.run.player);
   assert.equal(g.save.gold, 6, "floors 1 and 2");
   g.run.maxHeight = 5;
-  step({ kind: "floor" }, g.run.player.x, g.run.player.y);
+  step({ kind: "floor" }, g.run.player.x, g.run.player.y, g.run.player);
   assert.equal(g.save.gold, 6, "each pays once a run");
 });

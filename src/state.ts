@@ -1267,7 +1267,7 @@ export class Game {
   }
   /** Moves the player onto the tile and applies what standing there does. */
   private land(t: Tile, x: number, y: number, outcome: StepEffect) {
-    const p = this.run.player;
+    const p = this.run.player, from = { x: p.x, y: p.y };
     p.x = x;
     p.y = y;
     this.unmark(x, y);
@@ -1287,7 +1287,7 @@ export class Game {
     this.collect(t, x, y, outcome);
     this.consumeTile(t, x, y);
     if (t.kind !== "stairs" && t.kind !== "stairsDown") this.callGreaterBoss();
-    this.afterStep(t, x, y);
+    this.afterStep(t, x, y, from);
   }
   /** A Tower floor's secret: with every torch on it out, a Greater Boss
    * appears on the open floor nearest the stairs, once a floor a run. It is
@@ -1304,9 +1304,10 @@ export class Game {
     run.changes[`${at.x},${at.y}`] = greaterBoss(world);
     this.summoned = { ...at, at: performance.now() };
   }
-  /** Mode-specific progress once the player stands on the new tile. */
-  private afterStep(t: Tile, x: number, y: number) {
-    if (this.mode === "delve") this.afterDelveStep(t, x, y);
+  /** Mode-specific progress once the player stands on the new tile,
+   * stepped onto from `from`. */
+  private afterStep(t: Tile, x: number, y: number, from: { x: number; y: number }) {
+    if (this.mode === "delve") this.afterDelveStep(t, x, y, from);
     else if (t.kind === "stairs") this.advanceTowerRoom();
     else if (t.kind === "stairsDown") this.descendTowerRoom();
   }
@@ -1432,9 +1433,13 @@ export class Game {
   private forgetLabyrinth() {
     if (this.mode === "delve") this.save.delve.memory = { known: {}, visited: {} };
   }
-  private afterDelveStep(t: Tile, x: number, y: number) {
+  private afterDelveStep(t: Tile, x: number, y: number, from: { x: number; y: number }) {
     const world = this.world;
     if (!(world instanceof World)) return;
+    // Undo stays on the floor it was taken on: crossing a floor line (each
+    // ten depth, either way) forgets the history.
+    const floorAt = (at: { x: number; y: number }) => this.rules.equivalentFloor(world.depth(at.x, at.y));
+    if (floorAt(from) !== floorAt({ x, y })) this.save.delve.history = [];
     // The world keeps the run's milestone and floor itself.
     if (t.kind === "oneway" && world.cross(x, y)) {
       this.forgetLabyrinth();

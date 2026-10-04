@@ -139,6 +139,6 @@ test("the Delve pays Silver / Floor for each new equivalent floor (ten depth)", 
   (g as unknown as { enterFromOutside(): void }).enterFromOutside();
   (g.world as World).depth = () => 25;
   g.run.maxHeight = 5;
-  (g as unknown as { afterDelveStep(t: unknown, x: number, y: number): void }).afterDelveStep({ kind: "floor" }, g.run.player.x, g.run.player.y);
+  (g as unknown as { afterDelveStep(t: unknown, x: number, y: number, from: { x: number; y: number }): void }).afterDelveStep({ kind: "floor" }, g.run.player.x, g.run.player.y, g.run.player);
   assert.equal(g.silver, 6, "floors 1 and 2");
 });

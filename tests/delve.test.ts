@@ -93,3 +93,28 @@ test('torches sit on plain floor, once, even where areas interlock', () => {
     for (const t of w.torches) assert.equal(w.tile(t.x, t.y).kind, 'floor', `torch at ${t.x},${t.y}`);
   }
 });
+
+test('undo stays on its equivalent floor: a step across a floor line (each ten depth) forgets the history', () => {
+  const g = new Game(defaults());
+  g.save.upgrades.delve = g.save.upgrades.inspirationUndos = 1;
+  g.switchMode('delve');
+  g.newRun({ seed: 42 });
+  (g as unknown as { enterFromOutside(): void }).enterFromOutside();
+  const world = g.world as World, floorAt = (x: number, y: number) => Math.floor(world.depth(x, y) / 10);
+  const plain = (x: number, y: number) => world.tile(x, y).kind === 'floor';
+  // Two pairs of plain floor tiles side by side: one across a line, one not.
+  let across: number[] | undefined, within: number[] | undefined;
+  for (const key of region(42, 0).metadata.keys()) {
+    const [x, y] = key.split(',').map(Number);
+    if (!plain(x, y) || !plain(x, y + 1) || world.step(x, y, 0, 1)?.y !== y + 1) continue;
+    if (floorAt(x, y) !== floorAt(x, y + 1)) across ??= [x, y];
+    else within ??= [x, y];
+  }
+  assert.ok(across && within, 'the labyrinth has both');
+  for (const [[x, y], undoes] of [[within!, true], [across!, false]] as const) {
+    g.save.delve.history = [];
+    Object.assign(g.run.player, { x, y });
+    assert.ok(g.move(0, 1));
+    assert.equal(g.undo(), undoes, undoes ? 'a step on the floor can be undone' : 'a step across the line cannot');
+  }
+});
