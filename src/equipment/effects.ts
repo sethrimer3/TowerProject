@@ -7,6 +7,8 @@ import { snap } from "../exact.ts";
 import { EFFECTS, itemDef, type EffectKind, type EffectLine } from "./catalog.ts";
 import { atLeast, RARITY_TIERS, type EquipRarity } from "./balance.ts";
 import { findItem, type EquipItem, type EquipmentSave } from "./inventory.ts";
+import { slotValue } from "./slot-effects.ts";
+import { slotEffects } from "./slots.ts";
 
 export type EffectTotals = Record<EffectKind, number>;
 const KINDS = Object.keys(EFFECTS) as EffectKind[];
@@ -29,8 +31,8 @@ export function itemLines(item: Pick<EquipItem, "def" | "rarity" | "level">) {
 }
 
 /** Everything `mode`'s loadout does, each kind summed: lines open at their
- * piece's rarity, and for that mode (a Tower-only line adds nothing in the
- * Delve). */
+ * piece's rarity and the effects its open slots hold, each for that mode
+ * (a Tower-only one adds nothing in the Delve). */
 export function equipmentEffects(e: EquipmentSave, mode: Mode): EffectTotals {
   const totals = noEffects();
   if (!e.unlocked) return totals;
@@ -39,6 +41,8 @@ export function equipmentEffects(e: EquipmentSave, mode: Mode): EffectTotals {
     if (!item) continue;
     for (const { line, open, value } of itemLines(item))
       if (open && (!line.mode || line.mode === mode)) totals[line.kind] = snap(totals[line.kind] + value);
+    for (const { def, rarity } of slotEffects(item))
+      if (!def.mode || def.mode === mode) totals[def.kind] = snap(totals[def.kind] + slotValue(def, rarity, item.level));
   }
   return totals;
 }

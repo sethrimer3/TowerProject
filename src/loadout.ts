@@ -4,6 +4,7 @@ import { snap } from "./exact.ts";
 import type { Mode, Save } from "./entities.ts";
 import { BONUS_RANK, FIND_POTION_BASE, FIND_POTION_MAX, FLOOR_GOLD_BASE, FLOOR_GOLD_RANK, FLOOR_SILVER_BASE, FLOOR_SILVER_RANK, FIND_POTION_RANK, REVIVE_BASE, REVIVE_MAX, REVIVE_RANK, GOLD_SHOP, schedulePrice, POTION_PERCENT_BASE, POTION_PERCENT_RANK, TRAINING, TRAINING_PER_LEVEL, UPGRADES, isStatRow, levelForXp, trained, trainingOpen, trainingWorth, type GoldItemId, type StatTrainingRow, type TrainingId, type TrainingRow, type UpgradeId } from "./config.ts";
 import { wornEffects } from "./equipment/effects.ts";
+import { PIERCE_CAP } from "./equipment/balance.ts";
 import { RESEARCH, researched } from "./archives.ts";
 import { trainingGold } from "./training-jobs.ts";
 
@@ -22,6 +23,8 @@ export type Loadout = {
   regen: number;
   /** The percent more ATK struck against bosses (equipment). */
   bossAttack: number;
+  /** The percent of enemy DEF ignored (equipment's Piercing), up to `PIERCE_CAP`. */
+  pierce: number;
   keys: { yellow: number; blue: number; red: number };
   /** Keys the equipment worn hands a run as it starts (on top of `keys`):
    * kept apart so changing equipment never adds keys to a run inside. */
@@ -88,6 +91,7 @@ export function loadout(save: Save, mode: Mode = "tower"): Loadout {
     shroud: plus(own.shroud, eq.shroud),
     regen: plus(own.regen, eq.regen),
     bossAttack: eq.bossAttack,
+    pierce: Math.min(eq.pierce, PIERCE_CAP),
     keys: { yellow: own.yellow + prov.yellow, blue: own.blue + prov.blue, red: own.red + prov.red },
     startKeys: { yellow: eq.yellowKeys, blue: eq.blueKeys },
     // Undo needs Rehearsed steps (its first undo) or Echoes of time: Undo

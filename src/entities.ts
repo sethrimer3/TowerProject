@@ -78,6 +78,9 @@ export type Player = {
   /** The percent more ATK the hero strikes bosses with (equipment; none
    * when absent). */
   bossAttack?: number;
+  /** The percent of an enemy's DEF the hero's strikes ignore (equipment's
+   * Piercing; none when absent). */
+  pierce?: number;
   keys: Record<KeyColor, number>;
   /** Optional secret inventory counters stay absent from legacy saves until
    * the corresponding item has actually been found. */
@@ -97,7 +100,7 @@ export type RunCore = {
   floor: number;
   /** The ATK/DEF/max HP the run started with (its loadout), shifted by any
    * gear change since. */
-  loadout?: { attack: number; defense: number; maxHp: number; shroud?: number; regen?: number; bossAttack?: number };
+  loadout?: { attack: number; defense: number; maxHp: number; shroud?: number; regen?: number; bossAttack?: number; pierce?: number };
   /** The hand as it was ordered when the run went inside: the cards that
    * move the hero for the rest of the run. */
   hand?: CardId[];

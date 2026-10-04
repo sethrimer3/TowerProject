@@ -44,12 +44,12 @@ export const EQUIP_MATERIALS: Record<EquipMaterialId, EquipMaterialDef> = {
 export const materialOf = (category: CategoryId) => CATEGORIES[category].material;
 
 /** What an item can do, each read in one place: the loadout (stats, shroud,
- * Regen, starting keys), combat (`bossAttack`), the step rules (healing),
+ * Regen, starting keys), combat (`bossAttack`, `pierce`), the step rules (healing),
  * the run's purse (Gold, Silver, materials, boss drops), the hero's XP, and
  * movement. Percent kinds are in percent (5 is +5%). */
 export type EffectKind =
   | "attack" | "defense" | "maxHp" | "attackPct" | "defensePct" | "maxHpPct"
-  | "shroud" | "regen" | "yellowKeys" | "blueKeys" | "bossAttack"
+  | "shroud" | "regen" | "yellowKeys" | "blueKeys" | "bossAttack" | "pierce"
   | "potionHeal" | "victoryHeal" | "floorHeal"
   | "goldFind" | "silverFind" | "xpGain" | "materialFind" | "bossDrops" | "startSilver"
   | "moveSpeed" | "rushTiles";
@@ -70,6 +70,7 @@ export const EFFECTS: Record<EffectKind, EffectText> = {
   yellowKeys: { words: "yellow key each run", plural: "yellow keys each run", whole: true },
   blueKeys: { words: "blue key each run", plural: "blue keys each run", whole: true },
   bossAttack: { words: "ATK against bosses", percent: true },
+  pierce: { words: "of enemy DEF ignored", percent: true, lead: "" },
   potionHeal: { words: "HP from potions", percent: true },
   victoryHeal: { words: "of max HP healed after each victory", percent: true, lead: "" },
   floorHeal: { words: "of max HP healed on each new floor", percent: true, lead: "" },
