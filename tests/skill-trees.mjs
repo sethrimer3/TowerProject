@@ -16,7 +16,7 @@ await expect(page.locator('#upgrades')).not.toContainText('Tap a skill for detai
 await expect(page.locator('.tree-heading')).not.toContainText(/INSPIRATION|COURAGE/);
 await page.evaluate(()=>{const s=JSON.parse(localStorage.getItem('towerdelve.v1'));s.tower.inspiration=100;s.delve.courage=100;sessionStorage.setItem('__treeFixture',JSON.stringify(s));});
 await page.reload();await page.locator('[data-tab="upgrades"]').click();
-for(const id of ['combatStance','buildout','largerHand','training','onTheJob','cardHeal','archives','delve']) {await page.locator(`[data-skill="${id}"]`).click();await page.locator(`[data-skill="${id}"]`).click();if(await page.locator('#card-reveal-card').count()) await page.locator('#card-reveal-card').click();}
+for(const id of ['combatStance','buildout','training','largerHand','onTheJob','cardHeal','archives','delve']) {await page.locator(`[data-skill="${id}"]`).click();await page.locator(`[data-skill="${id}"]`).click();if(await page.locator('#card-reveal-card').count()) await page.locator('#card-reveal-card').click();}
 await page.locator('[data-tree="courage"]').click();
 await page.locator('[data-skill="moveSpeed"]').click();
 await expect(page.locator('#tree-tooltip')).toContainText('Movement Speed');

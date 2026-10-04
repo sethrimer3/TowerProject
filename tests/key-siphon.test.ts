@@ -15,7 +15,7 @@ test("Rehearsed steps costs 5; Key Siphon (5) follows Into the depths, Regen Res
   assert.equal(cost("inspirationUndos", 0), 5);
   const g = new Game(defaults());
   g.save.tower.inspiration = 1000;
-  for (const id of ["combatStance", "buildout", "largerHand", "archives"] as const) assert.ok(g.buy(id));
+  for (const id of ["combatStance", "buildout", "training", "largerHand", "archives"] as const) assert.ok(g.buy(id));
   assert.equal(g.buy("keySiphon"), false, "waits for Into the depths");
   assert.ok(g.buy("delve"));
   assert.equal(g.buy("regenResearch"), false, "waits for Key Siphon");

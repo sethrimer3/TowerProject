@@ -12,7 +12,7 @@ import { DelvePlan } from "./delve/automove.ts";
 import { defaults } from "./save.ts";
 import { stream, tileRandom } from "./random.ts";
 import { doorBlockedMessage, doorName, KEY_ORDER } from "./doors.ts";
-import { skillAvailable } from "./skill-trees.ts";
+import { TREES, skillAvailable } from "./skill-trees.ts";
 import { routeTo, type Step } from "./pathfinding.ts";
 import {
   TOWER_START_X,
@@ -883,6 +883,8 @@ export class Game {
    * in the forest. */
   private finalizeRun(reason: string) {
     const record = this.payout(), gold = this.slice.runGold;
+    // A run that earned Inspiration sends the player to spend it.
+    if (this.rules === MODES.tower && this.slice.runCurrency > 0) this.save.inspirationNotice = true;
     this.slice.history = [];
     this.route = [];
     this.newRun({ outside: true });
@@ -1414,10 +1416,25 @@ export class Game {
     Object.assign(o.player, { hp: end, attack: p.attack, defense: p.defense, maxHp: p.maxHp });
     o.combat = { ...o.combat!, damage, survivable: fought > 0 };
   }
-  buy(id: UpgradeId) {
+  /** Whether skill `id` can be bought now: open, below its last rank, and
+   * paid for by the currency held (anything, with Dev free purchases). */
+  canBuySkill(id: UpgradeId) {
     if (!skillAvailable(id, this.save.upgrades)) return false;
     const u = UPGRADES.find((u) => u.id === id)!, n = this.save.upgrades[id];
-    if (n >= u.max || !this.spendTreeCurrency(u.currency === "courage", cost(id, n))) return false;
+    const held = u.currency === "courage" ? this.save.delve.courage : this.save.tower.inspiration;
+    return n < u.max && (this.free || cost(id, n) <= held);
+  }
+  /** Whether the Inspiration tab (and the Upgrades button leading to it)
+   * wears a dot: in the forest, after a run that earned Inspiration, while
+   * a skill in its tree can be bought. Showing that tree clears it. */
+  get inspirationWaiting() {
+    return this.save.inspirationNotice && !!this.run.outside &&
+      TREES.find((t) => t.id === "inspiration")!.nodes.some((n) => this.canBuySkill(n.id));
+  }
+  buy(id: UpgradeId) {
+    if (!this.canBuySkill(id)) return false;
+    const u = UPGRADES.find((u) => u.id === id)!, n = this.save.upgrades[id];
+    if (!this.spendTreeCurrency(u.currency === "courage", cost(id, n))) return false;
     this.save.upgrades[id]++;
     readyForestRuns(this.save);
     return true;

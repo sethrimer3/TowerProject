@@ -251,6 +251,10 @@ export type Save = {
    * closing a Training group under the hand in the first run after On the
    * Job. */
   tutorials: { deck: boolean; removeCard: boolean; addCard: boolean; upgrades: boolean; gear: boolean; onTheJob: boolean };
+  /** A run that earned Inspiration has ended since the Inspiration tree was
+   * last shown: its tab (and the Upgrades tab) wear a dot in the forest
+   * while a skill there can be bought. */
+  inspirationNotice: boolean;
   /** The Archives' archivists, completed research and its history
    * (archives.ts). */
   archives: ArchivesSave;

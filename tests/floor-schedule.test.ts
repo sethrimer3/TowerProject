@@ -1,6 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { generateTowerFloor } from "../src/tower/index.ts";
+import { generateStrategicGraph } from "../src/tower/strategic-graph.ts";
+import { gateTile } from "../src/tower/furnisher.ts";
 import { region } from "../src/delve/labyrinth.ts";
 import { STRENGTH_FROM_FLOOR, strengthOnFloor } from "../src/scaling.ts";
 import { HEART_DOOR_FLOOR, heartDoorsOn } from "../src/key-schedule.ts";
@@ -52,4 +54,35 @@ test("the Delve's first areas hold no strong or elite enemy below equivalent flo
         if (isHeart(t)) assert.ok(floor >= 30, `a Heart Door on floor ${floor + 1}`);
       }
     }
+});
+
+test("Tower I's first ten floors lay a potion in about 35% of the doorways on the way to the stairs, in place of enemies", () => {
+  const share = (depth: number, tier = 1) => {
+    let potions = 0, gates = 0;
+    for (let seed = 1; seed <= 400; seed++)
+      for (const n of generateStrategicGraph(seed * 7919, depth, 0, tier).nodes)
+        if (n.route === "main" && n.parent !== null) {
+          gates++;
+          if (n.gate.kind === "potion") potions++;
+        }
+    return potions / gates;
+  };
+  for (let depth = 0; depth < 10; depth++) {
+    const s = share(depth);
+    assert.ok(s > 0.3 && s < 0.4, `floor ${depth + 1}: ${s}`);
+  }
+  assert.equal(share(10), 0, "none from floor 11");
+  assert.equal(share(3, 2), 0, "none in later towers");
+  // Each becomes a potion standing in the doorway.
+  assert.equal(gateTile({ kind: "potion" }, 3, () => 0.5).kind, "potion");
+  let laid = 0;
+  for (let seed = 1; seed <= 20; seed++) {
+    const { embedding: e } = generateTowerFloor(seed * 7919, 6);
+    for (const d of e.doorways)
+      if (!d.shortcut && e.graph.nodes[d.child].route === "main" && e.graph.nodes[d.child].gate.kind === "potion") {
+        assert.equal(e.cells.get(`${d.x},${d.y}`)?.kind, "potion", `seed ${seed}: the doorway at ${d.x},${d.y}`);
+        laid++;
+      }
+  }
+  assert.ok(laid > 0, "floor 7 lays some");
 });

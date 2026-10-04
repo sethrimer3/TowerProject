@@ -36,7 +36,7 @@ export type FloorAnalysis = {
 };
 
 function gateLabel(g: Gate): string {
-  if (g.kind === "open") return "open";
+  if (g.kind === "open" || g.kind === "potion") return g.kind;
   if (g.kind === "enemy" && g.profile) return `${g.strength} ${g.profile} enemy`;
   if (g.kind === "enemy") return `${g.strength} enemy`;
   if (g.kind === "door") return `${g.color} door`;
@@ -171,7 +171,7 @@ export function analyzeFloor(emb: Embedding): FloorAnalysis {
     doors: doorCounts(cells),
     keys: keySources(emb),
     forks: nodes.reduce<Record<string, number>>((out, n) => (n.forks ? tally(out, n.forks[0].patternId) : 0, out), {}),
-    progressionGates: nodes.filter((n) => n.route === "main" && n.gate.kind !== "open").length,
+    progressionGates: nodes.filter((n) => n.route === "main" && n.gate.kind !== "open" && n.gate.kind !== "potion").length,
     strategicBranches: nodes.filter((n) => n.route === "optional" && n.parent !== null && nodes[n.parent].route === "main").length,
     rewardDeadEnds: leaves.filter(hasContent).length,
     emptyDeadEnds: leaves.filter((n) => !hasContent(n)).length,

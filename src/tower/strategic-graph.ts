@@ -48,11 +48,30 @@ export const GRAPH_TUNING = {
   hubPotionChance: 0.3,
   /** Of the stairs no enemy guards, the share with a yellow door in front. */
   stairsDoorChance: 0.5,
+  /** On the first tower's first floors (`earlyPotions`), the share of the
+   * gates on the way to the stairs that are a potion instead of an enemy. */
+  earlyPotionShare: 0.35,
+  earlyPotionFloors: 10,
 };
+
+/** Whether floor `depth` of tower `tier` lays potions in some of the main
+ * route's doorways in place of enemies. */
+export const earlyPotions = (depth: number, tier: number) => tier === 1 && depth < GRAPH_TUNING.earlyPotionFloors;
 
 /** `table` without the options that hold a key colour `colors` closes. */
 export const openOptions = <T>(table: Weighted<T>, colors: KeyColors): Weighted<T> =>
   table.filter((o) => onlyOpenKeys(o.v, colors));
+
+/** `table` with a potion taking `earlyPotionShare` of its weight, all of it
+ * from the enemies (as much as they have). */
+function withPotionGates(table: Weighted<Gate>): Weighted<Gate> {
+  const total = table.reduce((s, o) => s + o.w, 0);
+  const enemies = table.reduce((s, o) => (o.v.kind === "enemy" ? s + o.w : s), 0);
+  const potion = Math.min(enemies, GRAPH_TUNING.earlyPotionShare * total);
+  if (!potion) return table;
+  const left = (enemies - potion) / enemies;
+  return [...table.map((o) => (o.v.kind === "enemy" ? { w: o.w * left, v: o.v } : o)), { w: potion, v: { kind: "potion" } }];
+}
 
 function mainGateTable(depth: number, doorBias: number): Weighted<Gate> {
   return [
@@ -83,6 +102,9 @@ export class GraphBuilder {
   /** The key colours a gate on the way to the stairs may take on its own;
    * with `bypass`, only yellow (`bypassesRareKeys`). */
   mainColors: KeyColors;
+  /** Whether the main route's gates may be potions in place of enemies
+   * (`earlyPotions`). */
+  potions = false;
   /** `bypass`: a blue or red door on the way to the stairs only ever
    * stands in a fork beside a lane without one. */
   constructor(public depth: number, public rng: () => number, public colors: KeyColors = keyColorsOn(depth), public bypass = false) {
@@ -173,6 +195,7 @@ function addChain(b: GraphBuilder, pattern: TowerPattern, host: number) {
 export function generateStrategicGraph(seed: number, depth: number, budgetCut = 0, tier = 1): StrategicGraph {
   const rng = random(seed);
   const b = new GraphBuilder(depth, rng, keyColorsOn(depth, tier), bypassesRareKeys(tier));
+  b.potions = earlyPotions(depth, tier);
   const archetype = pickArchetype(depth, rng);
   const profile = ARCHETYPES[archetype];
   const budget = Math.max(3, Math.min(MAX_REGIONS,
@@ -203,13 +226,28 @@ function addMainRoute(b: GraphBuilder, profile: ArchetypeProfile, budget: number
   return { mainIds, stairs };
 }
 
+/** The options for a gate on the way to the stairs: only the key colours it
+ * may take there, and on the first tower's first floors potions in some
+ * enemies' place. */
+function mainGates(b: GraphBuilder, table: Weighted<Gate>) {
+  const open = openOptions(table, b.mainColors);
+  return b.potions ? withPotionGates(open) : open;
+}
+
+/** A gate on the way to the stairs that must cost nothing (floor 1's, and
+ * the stairs pocket's on floors 2 to 5): open, or where potions take
+ * enemies' place, as often a potion as a gate drawn from a table. */
+function freeGate(b: GraphBuilder): Gate {
+  return b.potions && b.rng() < GRAPH_TUNING.earlyPotionShare ? { kind: "potion" } : { kind: "open" };
+}
+
 /** One gated region on the main route; the last is always a hub. */
 function addHub(b: GraphBuilder, profile: ArchetypeProfile, parent: number, last: boolean) {
   const { depth, rng } = b;
   const hub = b.add({
     purpose: last || rng() < 0.6 ? "hub" : "transition",
     patternId: "main", parent,
-    gate: openFirstFloor(depth) ? { kind: "open" } : pick(openOptions(mainGateTable(depth, profile.doorBias), b.mainColors), rng),
+    gate: openFirstFloor(depth) ? freeGate(b) : pick(mainGates(b, mainGateTable(depth, profile.doorBias)), rng),
     rewards: rng() < GRAPH_TUNING.hubPotionChance ? [{ kind: "potion" }] : [],
     formation: "cluster", route: "main", footprint: "hall", tags: ["progressionRoute"],
   });
@@ -222,11 +260,11 @@ function addHub(b: GraphBuilder, profile: ArchetypeProfile, parent: number, last
  * floors 2 to 5 always have the door. */
 function addStairs(b: GraphBuilder, profile: ArchetypeProfile, parent: number) {
   const { depth, rng } = b;
-  let gate = pick(openOptions(stairsGateTable(depth, profile.doorBias), b.mainColors), rng);
+  let gate = pick(mainGates(b, stairsGateTable(depth, profile.doorBias)), rng);
   let guard: StrategicNode["stairsGuard"];
-  if (openFirstFloor(depth) || keyedFloor(depth)) gate = { kind: "open" };
+  if (openFirstFloor(depth) || keyedFloor(depth)) gate = freeGate(b);
   if (keyedFloor(depth)) guard = "door";
-  else if (!openFirstFloor(depth) && gate.kind === "open") {
+  else if (!openFirstFloor(depth) && (gate.kind === "open" || gate.kind === "potion")) {
     const guardRoll = rng();
     if (guardRoll < 0.5) guard = guardRoll < 0.2 ? "strong" : "normal";
     else if (rng() < GRAPH_TUNING.stairsDoorChance) guard = "door";

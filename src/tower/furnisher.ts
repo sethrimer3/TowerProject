@@ -51,6 +51,7 @@ export function gateTile(gate: Gate, depth: number, rng: () => number): Tile {
     case "door": return { kind: "door", color: gate.color, door: { type: "keys", keys: [gate.color], mode: "all" } };
     case "steel": return { kind: "door", door: { type: "keys", keys: ["yellow", "blue", "red"], mode: "any" } };
     case "heart": return { kind: "door", door: { type: "fullHp" } };
+    case "potion": return rewardTile({ kind: "potion" }, rng);
   }
 }
 

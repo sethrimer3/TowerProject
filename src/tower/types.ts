@@ -26,7 +26,10 @@ export type Gate =
   /** Special locks from the door vocabulary: steel takes any one key
    * (cheapest first), heart always opens but drains HP to 1. */
   | { kind: "steel" }
-  | { kind: "heart" };
+  | { kind: "heart" }
+  /** No cost at all: a potion lies in the doorway, in an enemy's place on
+   * the way to the stairs of the first tower's first floors. */
+  | { kind: "potion" };
 
 export type Reward =
   | { kind: "key"; color: KeyColor }

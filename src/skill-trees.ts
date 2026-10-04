@@ -11,17 +11,18 @@ export type SkillNode = { id: UpgradeId; icon: string; x: number; y: number; req
 export type SkillTree = { id: TreeId; name: string; currency: Currency; gate?: UpgradeId | null; description: string; height?: number; unlocks?: boolean; nodes: SkillNode[] };
 export const TREES: SkillTree[] = [
   { id: "inspiration", name: "Inspiration", currency: "inspiration", description: "Earn Inspiration by beating your best Tower climb.", height: 208, unlocks: true, nodes: [
-    // The hand's skills, down to the Archives; Gear and Training branch off Buildout,
-    // ATK Up and DEF Up under Gear, and On the Job, Regen, then Heal, below Training.
+    // The hand's skills, down to the Archives: Buildout, Training, Larger Hand. Gear and
+    // On the Job branch off Buildout, ATK Up and DEF Up under Gear, and Regen, then Heal,
+    // below On the Job.
     { id: "combatStance", icon: "▤", x: 50, y: 12, requires: [] },
     { id: "buildout", icon: "⚔", x: 50, y: 30, requires: ["combatStance"] },
-    { id: "training", icon: "⚔", x: 80, y: 30, requires: ["buildout"] },
-    { id: "largerHand", icon: "▦", x: 50, y: 48, requires: ["buildout"] },
+    { id: "training", icon: "⚔", x: 50, y: 48, requires: ["buildout"] },
+    { id: "largerHand", icon: "▦", x: 50, y: 66, requires: ["training"] },
     { id: "gear", icon: "⚒", x: 20, y: 30, requires: ["buildout"] },
-    { id: "onTheJob", icon: "¤", x: 80, y: 48, requires: ["training"] },
-    { id: "regen", icon: "♥", x: 80, y: 66, requires: ["onTheJob"] },
-    { id: "cardHeal", icon: "♥", x: 80, y: 84, requires: ["regen"] },
-    { id: "archives", icon: "▥", x: 50, y: 66, requires: ["largerHand"] },
+    { id: "onTheJob", icon: "¤", x: 80, y: 30, requires: ["buildout"] },
+    { id: "regen", icon: "♥", x: 80, y: 48, requires: ["onTheJob"] },
+    { id: "cardHeal", icon: "♥", x: 80, y: 66, requires: ["regen"] },
+    { id: "archives", icon: "▥", x: 50, y: 84, requires: ["largerHand"] },
     { id: "cardAtkUp", icon: "⚔", x: 20, y: 48, requires: ["gear"] },
     { id: "cardDefUp", icon: "⛨", x: 20, y: 66, requires: ["cardAtkUp"] },
     // Research needs the Archives, so the skills that open it come after them:

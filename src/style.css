@@ -2022,9 +2022,9 @@ button.training-cost:disabled .gold-icon, button.training-cost:disabled .points-
 .reset-back { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 
 /* --- Deck page --- */
-nav button { position: relative; }
-/* A lesson, or the first Inspiration, waits behind the button. */
-nav button.notify::after {
+nav button, .tree-tabs button { position: relative; }
+/* A lesson, or Inspiration to spend, waits behind the button. */
+nav button.notify::after, .tree-tabs button.notify::after {
   content: "";
   position: absolute;
   top: 5px;

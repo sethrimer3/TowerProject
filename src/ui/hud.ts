@@ -79,6 +79,8 @@ export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay)
   text("inspiration", devAmount(game, game.save.tower.inspiration));
   text("training", currencyAmount(trainingPoints(game.save).left));
   (document.querySelector(".training-currency") as HTMLElement).hidden = !game.save.upgrades.training && !game.save.settings.devMode;
+  // Courage means nothing until the Delve, which pays it, is open.
+  (document.querySelector(".courage-currency") as HTMLElement).hidden = !game.save.upgrades.delve && !game.save.settings.devMode;
   renderXp(game);
   renderStatus(game, overlay);
   // The status line sits over the board's bottom row: let the hero show through.
@@ -94,7 +96,7 @@ export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay)
   // A new Deck lesson waits behind the button until its tutorial is done.
   const { deck, addCard } = game.save.tutorials;
   document.querySelector(`[data-tab="deck"]`)?.classList.toggle("notify", !deck || (!!game.save.upgrades.buildout && !addCard));
-  document.querySelector(`[data-tab="upgrades"]`)?.classList.toggle("notify", upgradesWaiting(game));
+  document.querySelector(`[data-tab="upgrades"]`)?.classList.toggle("notify", upgradesWaiting(game) || game.inspirationWaiting);
   renderLockedTab("gear", !!game.save.upgrades.gear, "Gear", "Unlock Gear in the Inspiration tree");
   document.querySelector(`[data-tab="gear"]`)?.classList.toggle("notify", gearWaiting(game));
   renderShopDot(game);

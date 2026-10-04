@@ -9,7 +9,7 @@ test("Pocket Money costs 1 Inspiration after Into the depths, and opens research
   const g = new Game(defaults());
   g.save.tower.inspiration = 1000;
   assert.equal(cost("pocketMoney", 0), 1);
-  for (const id of ["combatStance", "buildout", "largerHand", "archives"] as const) assert.ok(g.buy(id));
+  for (const id of ["combatStance", "buildout", "training", "largerHand", "archives"] as const) assert.ok(g.buy(id));
   assert.equal(g.buy("pocketMoney"), false, "waits for Into the depths");
   assert.ok(g.buy("delve"));
   assert.ok(g.buy("pocketMoney"));

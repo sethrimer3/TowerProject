@@ -43,6 +43,7 @@ export function stepValue(step: LaneStep): number {
     case "door": return GATE_VALUE.door[step.color];
     case "steel": return GATE_VALUE.steel;
     case "heart": return GATE_VALUE.heart;
+    case "potion": return -GATE_VALUE.reward.potion;
     case "enemy": return GATE_VALUE.enemy[step.strength];
     case "reward": return -rewardValue(step.reward);
   }
@@ -252,12 +253,16 @@ export function planForks(b: GraphBuilder, archetype: Archetype) {
   }
 }
 
+/** Whether crossing `gate` costs anything: an open doorway or a potion in
+ * it costs nothing, so there's no cost for a fork to offer a choice of. */
+const paid = (gate: Gate) => gate.kind !== "open" && gate.kind !== "potion";
+
 /** Whether `node`'s gate may become a fork: a gate into a region worth
  * reaching. Floors 2 to 5 lay a key behind every door, planned from its
  * gate: a fork there never replaces a lock (the embedder may fall back to
  * it). */
 function mayFork(b: GraphBuilder, node: StrategicNode) {
-  if (node.parent === null || node.gate.kind === "open" || !worthReaching(b.nodes, node.id)) return false;
+  if (node.parent === null || !paid(node.gate) || !worthReaching(b.nodes, node.id)) return false;
   return !keyedFloor(b.depth) || !isLock(node.gate);
 }
 
