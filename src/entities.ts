@@ -137,6 +137,9 @@ export type RunCore = {
    * and the tiles still marked with a ? or, once the hand was stuck, a !
    * (points); stepping on one clears its mark. */
   marks?: { floor: number; made: number; tiles: string[]; bangs: string[] };
+  /** How many of Skip's rolls this run has drawn from its stream, which
+   * starts from the run seed. */
+  skipRolls?: number;
 };
 /** A Tower ascent. */
 export type TowerRun = RunCore & {

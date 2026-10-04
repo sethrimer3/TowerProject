@@ -10,7 +10,7 @@ import { canWarp, claimGoal } from "./goals.ts";
 import { missGem } from "./gems.ts";
 import { DelvePlan } from "./delve/automove.ts";
 import { defaults } from "./save.ts";
-import { stream, tileRandom } from "./random.ts";
+import { random, stream, tileRandom } from "./random.ts";
 import { doorBlockedMessage, doorName, KEY_ORDER } from "./doors.ts";
 import { TREES, skillAvailable } from "./skill-trees.ts";
 import { routeTo, type Step } from "./pathfinding.ts";
@@ -103,8 +103,11 @@ export type Rush = { tiles: { x: number; y: number }[]; at: number };
 const MAX_GAINS = 12;
 /** Salts the run seed for Revive's rolls, apart from the world's own. */
 const REVIVE_SALT = 0x7e51e;
-/** Mixed into the seed of Skip's rolls. */
+/** Mixed into the run seed to start Skip's stream of rolls. */
 const SKIP_SALT = 0x5c1b7;
+/** How far mulberry32's state moves each draw: the stream's `n`th number
+ * is the first of the stream started `n` steps on. */
+const STREAM_STEP = 0x6d2b79f5;
 /** A step resolved and about to be taken: the tile stepped onto, what it
  * does, where it is, and whether it goes in the undo history. */
 type TakenStep = { tile: Tile; outcome: StepEffect; dest: { x: number; y: number }; track: boolean };
@@ -496,7 +499,7 @@ export class Game {
     const rushes = fresh && this.rushTiles > 0 && this.emptyAt(step.x, step.y);
     // The card's last step onto its target: Skip may make it vanish (or, on
     // the Tower's stairs, climb two floors), and Effective or Dampen scale it.
-    const last = !this.cardPlan, skips = last && this.skips(id, step.x, step.y);
+    const last = !this.cardPlan, rolls = last && this.rollsSkip(id, step.x, step.y), skips = rolls && this.skipRoll() < this.skipChance(id);
     if (skips && this.world.tile(step.x, step.y).kind !== "stairs") {
       this.vanish(step.x, step.y);
       if (id === this.run.focused) this.run.focused = undefined;
@@ -516,10 +519,16 @@ export class Game {
     // it activates (once a fight into its target has played out).
     if (id === this.run.focused) this.run.focused = undefined;
     const fight = this.encounter;
-    if (!fight) return this.activate(plan.card, key);
+    // A roll counts once the step is in the undo history (after a fight,
+    // once it settles), so undo takes it back with the step.
+    if (!fight) {
+      if (rolls) this.skipRolled();
+      return this.activate(plan.card, key);
+    }
     const settle = fight.settle;
     fight.settle = () => {
       settle();
+      if (rolls) this.skipRolled();
       this.activate(plan.card, key);
     };
   }
@@ -555,23 +564,37 @@ export class Game {
     const v = badgeValue(badge.id, badge.level, badge.pick);
     return (100 + (badge.id === "effective" ? v : -v)) / 100;
   }
-  /** Whether Skip on card `card` makes its target at (x, y) vanish: a fixed
-   * number per run, floor and tile under its chance, so undo can't roll it
-   * again. Never a boss, nor the Delve's STAIRS card's climb (no stairs). */
-  private skips(card: CardId, x: number, y: number) {
+  /** Whether Skip on card `card` rolls for its target at (x, y): never for
+   * a boss, nor the Delve's STAIRS card's climb (no stairs). */
+  private rollsSkip(card: CardId, x: number, y: number) {
     const badge: RunBadge | undefined = this.run.badges?.[card];
     if (badge?.id !== "skip" || this.run.outside) return false;
     const t = this.world.tile(x, y);
     if (t.kind === "enemy" && (t.enemy!.strength === "boss" || t.enemy!.strength === "greaterBoss")) return false;
-    if (card === "stairs" && t.kind !== "stairs") return false;
-    const seed = (this.run.seed ^ SKIP_SALT ^ Math.imul(this.badgeFloor + 1, 0x9e3779b1)) | 0;
-    return tileRandom(x, y, seed) * 100 < badgeValue(badge.id, badge.level, badge.pick);
+    return card !== "stairs" || t.kind === "stairs";
+  }
+  /** Skip's chance on card `card`, as a fraction. */
+  private skipChance(card: CardId) {
+    const badge = this.run.badges![card]!;
+    return badgeValue(badge.id, badge.level, badge.pick) / 100;
+  }
+  /** Skip's next roll: the next number of its own stream, started from the
+   * run seed (the floors' seed), so a run of the same seed played the same
+   * way skips the same targets. `run.skipRolls` counts those drawn. */
+  private skipRoll() {
+    const n = this.run.skipRolls ?? 0;
+    return random(((this.run.seed ^ SKIP_SALT) + Math.imul(n, STREAM_STEP)) >>> 0)();
+  }
+  /** Skip's roll is spent: the stream moves on. */
+  private skipRolled() {
+    this.run.skipRolls = (this.run.skipRolls ?? 0) + 1;
   }
   /** Skip: the card's target at (x, y) vanishes in a puff, without effect.
    * A turn of its own, so undo brings it back. */
   private vanish(x: number, y: number) {
     const t = this.world.tile(x, y);
     this.remember(this.snapshot());
+    this.skipRolled();
     this.world.clear(x, y);
     this.vanished = { x, y, at: performance.now() };
     this.message = `Skip · ${t.kind === "enemy" ? enemyTitle(t.enemy!) : SKIPPED_NAMES[t.kind] ?? "the target"} vanished`;

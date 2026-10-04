@@ -14,6 +14,7 @@ import {
 import { DRAW_GEMS } from "../src/game/badge-desk.ts";
 import { doorCost } from "../src/doors.ts";
 import { keyCount } from "../src/whole.ts";
+import { random } from "../src/random.ts";
 
 test("Badges costs 2 Courage and follows Focus in the Courage tree", () => {
   const g = new Game(defaults());
@@ -461,11 +462,35 @@ test("Skip may make the card's target vanish without effect, the same after undo
   assert.equal(g.world.tile(2, 0).kind, "floor", "the monster is gone");
   assert.deepEqual([g.run.player.hp, g.run.kills, g.silver], [g.run.player.maxHp, 0, 0], "without a fight or its rewards");
   assert.equal(g.run.changes["2,0"]?.kind, "floor");
+  assert.equal(g.run.skipRolls, 1);
   assert.ok(g.undo());
   assert.equal(g.run.changes["2,0"], undefined, "undo brings the monster back");
+  assert.equal(g.run.skipRolls, undefined, "and takes its roll back");
   assert.ok(make(seed).vanished, "the same seed and tile roll the same");
   assert.equal(g.cardRules("monster"), undefined, "nothing closes it for the floor");
   assert.ok(!g.cardResting("monster"));
+});
+
+test("Skip's rolls come in order from their own stream, started from the run seed", () => {
+  const play = (seed: number) => {
+    const g = floor(["@.M.M.M.M.M.M.M.M"]);
+    g.run.hand = ["monster"];
+    g.run.seed = seed;
+    badge(g, "monster", "skip", 7);
+    const skipped: boolean[] = [];
+    for (let t = 0; t < 60 && skipped.length < 8; t++) {
+      const rolls = g.run.skipRolls ?? 0;
+      g.vanished = null;
+      g.autoTurn();
+      if ((g.run.skipRolls ?? 0) > rolls) skipped.push(!!g.vanished);
+    }
+    return skipped;
+  };
+  for (const seed of [7, 1234, 99999]) {
+    const stream = random((seed ^ 0x5c1b7) >>> 0), expected = Array.from({ length: 8 }, () => stream() < 0.19);
+    assert.deepEqual(play(seed), expected, `seed ${seed}`);
+    assert.deepEqual(play(seed), expected, "the same run played the same way skips the same");
+  }
 });
 
 test("Skip never makes a boss vanish on MONSTER", () => {
