@@ -10,5 +10,8 @@ export const whole = (n: number) => (Number.isFinite(n) ? Math.floor(n + 1e-9) :
 export const wholeHp = (hp: number) => (hp > 0 ? Math.max(1, whole(hp)) : 0);
 /** An amount gained or lost, to the nearest whole. */
 export const wholeChange = (n: number) => (Number.isFinite(n) ? Math.round(n) : n);
+/** Keys held or moved, which badges can make fractional: whole, or to two
+ * decimals (rounded down) when they aren't. */
+export const keyCount = (n: number) => (Number.isInteger(n) || !Number.isFinite(n) ? String(n) : (Math.floor(n * 100 + 1e-6) / 100).toFixed(2));
 /** An enemy's stat: whole, or to two decimals. */
 export const enemyStat = (n: number) => (Number.isInteger(n) || !Number.isFinite(n) ? String(n) : String(Math.round(n * 100) / 100));

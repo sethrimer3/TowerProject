@@ -133,6 +133,10 @@ export type RunCore = {
   /** The doors and monsters Skip Open Nodes passed over on floor `floor`
    * (points), skipped and marked for the rest of that floor. */
   skipped?: { floor: number; tiles: string[] };
+  /** Deprioritize on floor `floor`: how many targets it has marked there,
+   * and the tiles still marked with a ? or, once the hand was stuck, a !
+   * (points); stepping on one clears its mark. */
+  marks?: { floor: number; made: number; tiles: string[]; bangs: string[] };
 };
 /** A Tower ascent. */
 export type TowerRun = RunCore & {

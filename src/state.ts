@@ -1,7 +1,7 @@
 import { entrance, floorFor } from "./delve/labyrinth.ts";
 import { chooseStep } from "./automation.ts";
 import { CARDS, cardText, planHand, type CardId, type CardPlan, type CardRules } from "./cards.ts";
-import { BADGES, badgeValue, runBadges, type BadgeId } from "./badges.ts";
+import { BADGE_IDS, BADGES, MAX_COPIES, badgeValue, runBadges, type BadgeId, type RunBadge } from "./badges.ts";
 import { BOOST_FOREVER, permanentBoost } from "./shop/entitlements.ts";
 import { offer, type OfferId } from "./shop/offers.ts";
 import { purchase, type Refusal } from "./shop/transactions.ts";
@@ -51,7 +51,7 @@ import { World, LAYOUT_VERSION } from "./delve/world.ts";
 import { RoomWorld, TOWER_LAYOUT_VERSION } from "./tower/room-world.ts";
 import type { Board } from "./board.ts";
 import { bout, heroHpAfter, heroHpDuring, resume, REVIVE_MS, revivals, summarize, type Bout, type Revival } from "./combat.ts";
-import { isLethal, potionHeal, regenerate, resolveStep, type StepBlocked, type StepEffect, type StepRules, shardGain } from "./step-effects.ts";
+import { HEART_DOOR_HP, isLethal, potionHeal, regenerate, resolveStep, type StepBlocked, type StepEffect, type StepRules, shardGain } from "./step-effects.ts";
 import { OutsideWorld } from "./outside.ts";
 import { AreaLedger, chestReward, CLEARED_INSPIRATION, type AreaReward } from "./tower/area-ledger.ts";
 import { TowerClimb } from "./tower/climb.ts";
@@ -60,7 +60,7 @@ import { materialDef, MATERIALS } from "./materials.ts";
 import { TIERS, TIER_BOSS_FLOOR, switchTier, tierGold, tierNumeral, tierRewardText, tierXp } from "./tiers.ts";
 import { enemyTitle } from "./scaling.ts";
 import { snap } from "./exact.ts";
-import { enemyStat, whole, wholeChange } from "./whole.ts";
+import { enemyStat, keyCount, whole, wholeChange } from "./whole.ts";
 import { MODES, milestones, type ModeProfile } from "./modes.ts";
 import { boughtInRun, ranksInRun, runTrainingBulk, runTrainingOffer, type RunTrainingOffer } from "./run-training.ts";
 import { openQuantities, type BuyQuantity } from "./buy-quantity.ts";
@@ -103,6 +103,8 @@ export type Rush = { tiles: { x: number; y: number }[]; at: number };
 const MAX_GAINS = 12;
 /** Salts the run seed for Revive's rolls, apart from the world's own. */
 const REVIVE_SALT = 0x7e51e;
+/** Mixed into the seed of Skip's rolls. */
+const SKIP_SALT = 0x5c1b7;
 /** A step resolved and about to be taken: the tile stepped onto, what it
  * does, where it is, and whether it goes in the undo history. */
 type TakenStep = { tile: Tile; outcome: StepEffect; dest: { x: number; y: number }; track: boolean };
@@ -169,6 +171,14 @@ export class Game {
   /** Where a Greater Boss last appeared, and when (performance.now()), for
    * the board's poof; cleared by undo. */
   summoned: { x: number; y: number; at: number } | null = null;
+  /** Where Skip last made a card's target vanish, and when
+   * (performance.now()), for the board's poof; cleared by undo. */
+  vanished: { x: number; y: number; at: number } | null = null;
+  /** Effective or Dampen on the step being taken: what the card's target's
+   * effect is multiplied by; 1 on every other step. */
+  private stepScale = 1;
+  /** Skip on STAIRS succeeded: the climb goes up two floors. */
+  private floorSkip = false;
   /** The latest rush: the tiles the hero rushed off, in order, and when
    * (performance.now()), for the board's fading echoes of the hero. */
   rush: Rush | null = null;
@@ -218,6 +228,9 @@ export class Game {
     }
     this.save.upgrades.delve = 1;
     this.save.upgrades.legacy = 1;
+    // The Deck page with its Badges box, and every badge at the top level.
+    for (const id of ["combatStance", "buildout", "cardBadges"] as const) this.save.upgrades[id] = Math.max(1, this.save.upgrades[id]);
+    for (const id of BADGE_IDS) this.save.badges.owned[id] = { copies: MAX_COPIES, pick: this.save.badges.owned[id]?.pick ?? 0 };
     const maxSection = 25;
     this.save.tower.reached = Math.max(this.save.tower.reached, maxSection * TOWER_SECTION);
     this.save.tower.best = Math.max(this.save.tower.best, this.save.tower.reached);
@@ -306,6 +319,7 @@ export class Game {
     this.revivedAt = [];
     this.areaBurst = null;
     this.summoned = null;
+    this.vanished = null;
     this.save.xp = snapshot.xp;
     this.route = [];
     // Undo pauses the hand, so the player can act before it carries on.
@@ -457,7 +471,10 @@ export class Game {
    * the hero waits and the End Run button lights up. */
   private handTurn() {
     const fresh = !this.cardPlan;
-    const { plan, lost } = this.nextHandPlan();
+    const next = this.nextHandPlan(), lost = next.lost;
+    let plan = next.plan;
+    // Stuck with tiles marked ?: the nearest becomes ! for Deprioritize's card.
+    while (!plan && this.raiseBang()) plan = planHand(this, this.hand, this.mode);
     this.handStuck = !plan;
     if (!plan) return this.handWaits();
     this.activeCard = plan.card;
@@ -468,7 +485,7 @@ export class Game {
     if (!plan.path.length) {
       this.cardPlan = null;
       const p = this.run.player, key = `${this.rules.lootKey(this.run, p.x, p.y)}:siphon${this.run.siphoned ?? 0}`;
-      this.siphon();
+      this.siphon(this.scaleOf(id));
       if (id === this.run.focused) this.run.focused = undefined;
       this.activate(plan.card, key);
       return;
@@ -477,9 +494,22 @@ export class Game {
     const step = plan.path.shift()!, p = this.run.player, from = { x: p.x, y: p.y };
     this.cardPlan = plan.path.length ? plan : null;
     const rushes = fresh && this.rushTiles > 0 && this.emptyAt(step.x, step.y);
+    // The card's last step onto its target: Skip may make it vanish (or, on
+    // the Tower's stairs, climb two floors), and Effective or Dampen scale it.
+    const last = !this.cardPlan, skips = last && this.skips(id, step.x, step.y);
+    if (skips && this.world.tile(step.x, step.y).kind !== "stairs") {
+      this.vanish(step.x, step.y);
+      if (id === this.run.focused) this.run.focused = undefined;
+      return;
+    }
+    this.floorSkip = skips;
+    this.stepScale = last ? this.scaleOf(id) : 1;
     // The board changes only as the hero moves, so a refused step means the
     // plan is stale: drop it and let the next turn choose again.
-    if (!this.move(step.dx, step.dy, true)) return void (this.cardPlan = null);
+    const moved = this.move(step.dx, step.dy, true);
+    this.stepScale = 1;
+    this.floorSkip = false;
+    if (!moved) return void (this.cardPlan = null);
     if (rushes && !this.rushOn(plan, from)) return;
     if (this.cardPlan) return;
     // The card's last step reaches its target: a focus on it is spent, and
@@ -508,8 +538,99 @@ export class Game {
       case "stairward": return this.cooled("stairward", v) ? { stairward: true } : undefined;
       case "skipOpen": return this.cooled("skipOpen", v) ? { skipOpen: { skipped: new Set(this.skipMarks), skip: (x, y) => this.skipTile(x, y) } } : undefined;
       case "charge": return { charge: v };
+      case "effective": case "dampen": return { scale: this.scaleOf(card) };
+      case "deprioritize": {
+        const m = this.floorMarks;
+        if (m.bangs.length) return { bang: new Set(m.bangs) };
+        return m.made < v ? { deprioritize: (x, y) => this.markTile(x, y) } : { closed: true };
+      }
       default: return undefined;
     }
+  }
+  /** What card `card`'s Effective or Dampen multiplies its target's effect
+   * by when it activates: 1 with neither. */
+  private scaleOf(card: CardId) {
+    const badge = this.run.badges?.[card];
+    if (!badge || this.run.outside || BADGES[badge.id].kind !== "scale") return 1;
+    const v = badgeValue(badge.id, badge.level, badge.pick);
+    return (100 + (badge.id === "effective" ? v : -v)) / 100;
+  }
+  /** Whether Skip on card `card` makes its target at (x, y) vanish: a fixed
+   * number per run, floor and tile under its chance, so undo can't roll it
+   * again. Never a boss, nor the Delve's STAIRS card's climb (no stairs). */
+  private skips(card: CardId, x: number, y: number) {
+    const badge: RunBadge | undefined = this.run.badges?.[card];
+    if (badge?.id !== "skip" || this.run.outside) return false;
+    const t = this.world.tile(x, y);
+    if (t.kind === "enemy" && (t.enemy!.strength === "boss" || t.enemy!.strength === "greaterBoss")) return false;
+    if (card === "stairs" && t.kind !== "stairs") return false;
+    const seed = (this.run.seed ^ SKIP_SALT ^ Math.imul(this.badgeFloor + 1, 0x9e3779b1)) | 0;
+    return tileRandom(x, y, seed) * 100 < badgeValue(badge.id, badge.level, badge.pick);
+  }
+  /** Skip: the card's target at (x, y) vanishes in a puff, without effect.
+   * A turn of its own, so undo brings it back. */
+  private vanish(x: number, y: number) {
+    const t = this.world.tile(x, y);
+    this.remember(this.snapshot());
+    this.world.clear(x, y);
+    this.vanished = { x, y, at: performance.now() };
+    this.message = `Skip · ${t.kind === "enemy" ? enemyTitle(t.enemy!) : SKIPPED_NAMES[t.kind] ?? "the target"} vanished`;
+  }
+  /** Deprioritize's marks on this floor: none yet on a floor it hasn't
+   * marked. */
+  private get floorMarks() {
+    const m = this.run.marks, floor = this.badgeFloor;
+    return m && !this.run.outside && m.floor === floor ? m : { floor, made: 0, tiles: [] as string[], bangs: [] as string[] };
+  }
+  /** Deprioritize passes over (x, y): marked ? for the rest of the floor. */
+  private markTile(x: number, y: number) {
+    const m = (this.run.marks = this.floorMarks), k = `${x},${y}`;
+    if (!m.tiles.includes(k)) m.tiles.push(k);
+    m.made++;
+  }
+  /** The tiles marked ? on this floor, which no card's path crosses
+   * (`planHand` reads it). */
+  get marked(): ReadonlySet<string> {
+    return new Set(this.floorMarks.tiles);
+  }
+  /** The ? and ! marks on this floor, for the board. */
+  get badgeMarks() {
+    const m = this.floorMarks;
+    return { asked: m.tiles, bangs: m.bangs };
+  }
+  /** The hand is stuck: the ? nearest the hero by walk becomes !, which
+   * Deprioritize's card heads for. False with none left to raise. */
+  private raiseBang() {
+    const m = this.floorMarks;
+    if (!m.tiles.length) return false;
+    const p = this.run.player, away = new Map([[`${p.x},${p.y}`, 0]]), walk = [{ x: p.x, y: p.y }];
+    for (let i = 0; i < walk.length; i++) {
+      const at = walk[i], d = away.get(`${at.x},${at.y}`)!;
+      for (const [dx, dy] of [[0, 1], [1, 0], [0, -1], [-1, 0]] as const) {
+        const next = this.world.step(at.x, at.y, dx, dy);
+        if (!next || away.has(`${next.x},${next.y}`) || Math.abs(next.y - p.y) > MARK_REACH || this.world.tile(next.x, next.y).kind === "wall") continue;
+        away.set(`${next.x},${next.y}`, d + 1);
+        walk.push(next);
+      }
+    }
+    const far = (t: string) => away.get(t) ?? Infinity;
+    const k = m.tiles.reduce((best, t) => (far(t) < far(best) ? t : best));
+    this.run.marks = { ...m, tiles: m.tiles.filter((t) => t !== k), bangs: [...m.bangs, k] };
+    return true;
+  }
+  /** Stepping on a marked tile clears its mark. */
+  private unmark(x: number, y: number) {
+    const m = this.run.marks, k = `${x},${y}`;
+    if (!m || (!m.tiles.includes(k) && !m.bangs.includes(k))) return;
+    this.run.marks = { ...m, tiles: m.tiles.filter((t) => t !== k), bangs: m.bangs.filter((t) => t !== k) };
+  }
+  /** Whether card `id` rests greyed out for the rest of the floor:
+   * Deprioritize with every mark made and no ! to head for. */
+  cardResting(id: CardId) {
+    const badge = this.run.badges?.[id];
+    if (badge?.id !== "deprioritize" || this.run.outside) return false;
+    const m = this.floorMarks;
+    return !m.bangs.length && m.made >= badgeValue(badge.id, badge.level, badge.pick);
   }
   /** The floor card badges count by: the Tower floor, or the Delve's
    * equivalent floor where the hero stands. */
@@ -600,7 +721,7 @@ export class Game {
    * the run's loadout lose the max HP those levels add at the hero's level,
    * for the rest of the run only, HP falling only as far as the new max; it
    * is a turn of its own, so undo takes it back. */
-  private siphon() {
+  private siphon(scale = 1) {
     const level = this.siphonLevel, levels = this.siphonCost, p = this.run.player, heroLevel = levelForXp(this.save.xp);
     const row = TRAINING.find((t) => t.id === "hp") as StatTrainingRow;
     const loss = snap(trained(row, level, heroLevel) - trained(row, level - levels, heroLevel));
@@ -608,10 +729,10 @@ export class Game {
     p.maxHp = snap(p.maxHp - loss);
     p.hp = Math.min(p.hp, p.maxHp);
     if (this.run.loadout) this.run.loadout.maxHp = snap(this.run.loadout.maxHp - loss);
-    p.keys.yellow++;
+    p.keys.yellow = snap(p.keys.yellow + scale);
     this.run.siphoned = levels;
     this.gain(p.x, p.y, `−${wholeChange(loss)} max HP`, { heart: true });
-    this.gain(p.x, p.y, "+1 yellow key", { tile: { kind: "key", color: "yellow" } });
+    this.gain(p.x, p.y, `+${keyCount(scale)} yellow key`, { tile: { kind: "key", color: "yellow" } });
   }
   /** Rush: the first step toward a new target, onto an empty tile, goes on
    * along the path in the same step across up to `rushTiles` more empty
@@ -860,13 +981,13 @@ export class Game {
     this.message = `Warped to floor ${floor + 1}`;
     return true;
   }
-  private feedback(text: string) {
+  private feedback(text: string, ms = 1300) {
     this.message = text;
     this.effect = {
       text,
       x: this.run.player.x,
       y: this.run.player.y,
-      until: performance.now() + 1300,
+      until: performance.now() + ms,
     };
   }
   /** Queues a reward to rise from (x, y). */
@@ -876,8 +997,9 @@ export class Game {
   }
   /** Pays the XP for beating `enemy` on equivalent floor `floor`, counting
    * it toward the run's total too. */
-  gainXp(enemy: Enemy, floor: number) {
-    this.addXp(tierXp(this.tier, xpForKill(enemy.strength, floor)));
+  gainXp(enemy: Enemy, floor: number, scale = 1) {
+    const xp = tierXp(this.tier, xpForKill(enemy.strength, floor));
+    this.addXp(scale === 1 ? xp : Math.round(xp * scale));
   }
   /** Adds `xp` to the hero's and the run's, raising the level-up burst
    * when it reaches a new level. */
@@ -943,7 +1065,8 @@ export class Game {
     // The step is resolved once, before any snapshot/undo bookkeeping, so a
     // wall, lock, impervious enemy, or (automation's) declined lethal fight
     // never touches history, damages the player, alters the enemy, or ends the run.
-    const outcome = resolveStep(p, t, regen ? this.stepRules : { ...this.stepRules, regen: 0 });
+    const rules: StepRules = { ...this.stepRules, ...(regen ? {} : { regen: 0 }), ...(this.stepScale !== 1 ? { scale: this.stepScale } : {}) };
+    const outcome = resolveStep(p, t, rules);
     if (outcome.blocked) return this.rejectStep(outcome, t, dest.x, dest.y);
     if (!force && isLethal(outcome)) {
       this.feedback("Lethal encounter. Inspect the enemy before proceeding.");
@@ -961,7 +1084,7 @@ export class Game {
     if (!this.playsFights && !revive) return this.take(step);
     const fight = bout(p, enemy, revive), start = performance.now(), rose = revivals(fight).length;
     if (rose) {
-      outcome.player.hp = regenerate(heroHpAfter(fight, p.hp), p.maxHp, this.stepRules);
+      outcome.player.hp = regenerate(afterExtra(heroHpAfter(fight, p.hp), outcome.extraDamage, p.maxHp), p.maxHp, this.stepRules);
       outcome.combat = { ...outcome.combat!, survivable: outcome.player.hp > 0 };
     }
     if (this.playsFights) return this.showFight(step, enemy, fight, start);
@@ -1007,14 +1130,20 @@ export class Game {
     if (track) this.remember(before);
     const drained = snap(this.run.player.hp - outcome.player.hp);
     this.applyStats(outcome.player);
-    if (t.kind === "door") this.openDoor(t, outcome.keysSpent, drained, dest);
-    return t.kind !== "enemy" || this.winFight({ enemy: t.enemy!, damage: outcome.combat!.damage, at: dest, revived }, before);
+    if (t.kind === "door") this.openDoor(t, outcome.keysSpent, drained, dest, outcome.keyAmount);
+    if (t.kind !== "enemy") return true;
+    const extra = outcome.extraDamage ?? 0, p = this.run.player;
+    // Effective's added damage rises off the hero; Dampen's given back heals.
+    if (extra > 0 && p.hp > 0) this.gain(p.x, p.y, `−${wholeChange(extra)} HP`, { heart: true });
+    else if (extra < 0) this.recordHeal(-extra);
+    return this.winFight({ enemy: t.enemy!, damage: snap(outcome.combat!.damage + extra), at: dest, revived, scale: outcome.scale }, before);
   }
   /** Moves the player onto the tile and applies what standing there does. */
   private land(t: Tile, x: number, y: number, outcome: StepEffect) {
     const p = this.run.player;
     p.x = x;
     p.y = y;
+    this.unmark(x, y);
     // Walking into a torch destroys it immediately: light, collision and
     // sprite all disappear the same frame since rendering only ever draws
     // active torches from this same list.
@@ -1082,11 +1211,12 @@ export class Game {
   /** Each key the door took rises from it with a minus sign; a Heart Door,
    * which takes the hero's HP down to 1 instead, raises a heart (a toll,
    * not damage: it never costs an area's mastery). */
-  private openDoor(t: Tile, keysSpent: KeyColor[], drained: number, at: { x: number; y: number }) {
+  private openDoor(t: Tile, keysSpent: KeyColor[], drained: number, at: { x: number; y: number }, amount = 1) {
     const n = keysSpent.length;
-    for (const color of keysSpent) this.gain(at.x, at.y, `−1 ${color} key`, { tile: { kind: "key", color }, spent: true });
+    for (const color of keysSpent) this.gain(at.x, at.y, `−${keyCount(amount)} ${color} key`, { tile: { kind: "key", color }, spent: true });
     if (!n) this.gain(at.x, at.y, `−${wholeChange(drained)} HP`, { heart: true });
-    this.message = `${doorName(t)} opened${n ? ` · ${n} key${n === 1 ? "" : "s"} spent` : " · HP drained to 1"}`;
+    const spent = amount === 1 ? `${n} key${n === 1 ? "" : "s"} spent` : `${keyCount(snap(n * amount))} keys spent`;
+    this.message = `${doorName(t)} opened${n ? ` · ${spent}` : this.run.player.hp > HEART_DOOR_HP ? " · HP drained" : " · HP drained to 1"}`;
   }
   /** Settles a fight whose damage is already applied. Returns false when
    * the player fell. */
@@ -1098,11 +1228,11 @@ export class Game {
       return false;
     }
     this.run.kills++;
-    const floor = this.rules.equivalentFloor(this.rules.progressAt(this.run, at.y));
-    this.gainXp(enemy, floor);
+    const floor = this.rules.equivalentFloor(this.rules.progressAt(this.run, at.y)), scale = fight.scale ?? 1;
+    this.gainXp(enemy, floor, scale);
     // Silver belongs to the run, so it isn't gated like Gold: undo takes it back.
-    const purse = this.purse, silver = purse.killSilver(enemy, floor);
-    const { gold, drops } = purse.enemyLoot(enemy, at.x, at.y);
+    const purse = this.purse, silver = purse.killSilver(enemy, floor, scale);
+    const { gold, drops } = purse.enemyLoot(enemy, at.x, at.y, scale);
     this.gainCoins(at, gold, silver);
     for (const d of drops) this.gain(at.x, at.y, materialText(d), { material: d.id, quantity: d.quantity });
     const opened = enemy.strength === "boss" && floor >= TIER_BOSS_FLOOR && this.openNextTier();
@@ -1210,6 +1340,10 @@ export class Game {
     // Keyed by the stairs taken, so a floor pays once a run, whatever undo does.
     const gold = purse.floorGold(purse.floorKey(p.x, p.y));
     const highest = this.run.maxHeight ?? this.run.height;
+    // Skip on STAIRS climbs past the next floor, which pays nothing; an area
+    // climbed past is still judged as its section ends.
+    const skipped = this.floorSkip ? this.climb.up() : null;
+    const passed = skipped?.sectionStart ? new AreaLedger(this.save).enter(this.towerRun, skipped.board) : [];
     const { board, sectionStart } = this.climb.up();
     // Silver belongs to the run, so the run's own highest floor gates it:
     // undo takes back the Silver and the record together.
@@ -1221,7 +1355,8 @@ export class Game {
     this.enterTowerFloor(board);
     // A new section's first floor is sealed below; the hero keeps every stat.
     const earned = sectionStart ? new AreaLedger(this.save).enter(this.towerRun, board) : [];
-    this.feedback(earned.length ? `Floors ${this.run.height - TOWER_SECTION + 1}–${this.run.height} ${earned.join(" and ")} · reward ahead` :
+    if (skipped) this.feedback(passed.length ? `Floor Skipped · floors ${this.run.height - TOWER_SECTION}–${this.run.height - 1} ${passed.join(" and ")}` : "Floor Skipped", 1000);
+    else this.feedback(earned.length ? `Floors ${this.run.height - TOWER_SECTION + 1}–${this.run.height} ${earned.join(" and ")} · reward ahead` :
       sectionStart ? `Floor ${this.run.height + 1} · the way down is sealed` : "A new chamber opens.");
     this.gainCoins(p, gold, silver, false);
   }
@@ -1435,8 +1570,10 @@ export class Game {
     }
     fight.bout = resume(fight.bout, from, { player: { ...p, hp, shroud }, enemy: fight.enemy, revives: this.revival(fight.to) });
     this.revivedAt = fight.bout.strikes.filter((s) => s.revived).map((s) => fight.start + s.at);
-    const o = fight.outcome, fought = heroHpAfter(fight.bout, p.hp), end = regenerate(fought, p.maxHp, this.stepRules),
-      damage = snap(fight.bout.strikes.reduce((sum, s) => (s.by === "enemy" ? sum + s.damage : sum), 0));
+    const o = fight.outcome, damage = snap(fight.bout.strikes.reduce((sum, s) => (s.by === "enemy" ? sum + s.damage : sum), 0));
+    // A badge's scale adds to (or gives back) the new fight's damage.
+    if (o.scale) o.extraDamage = snap(damage * o.scale - damage);
+    const fought = afterExtra(heroHpAfter(fight.bout, p.hp), o.extraDamage, p.maxHp), end = regenerate(fought, p.maxHp, this.stepRules);
     Object.assign(o.player, { hp: end, attack: p.attack, defense: p.defense, maxHp: p.maxHp });
     o.combat = { ...o.combat!, damage, survivable: fought > 0 };
   }
@@ -1504,7 +1641,15 @@ export class Game {
 
 /** A fight the hero won: the enemy beaten at `at`, the HP it cost, and
  * how many times the hero revived in it. */
-type FightEnd = { enemy: Enemy; damage: number; at: { x: number; y: number }; revived: number };
+type FightEnd = { enemy: Enemy; damage: number; at: { x: number; y: number }; revived: number; scale?: number };
+
+/** HP left after a fight's own damage, `hp`, once a badge's scale has
+ * added `extra` (or, below 0, given it back, up to `maxHp`). */
+const afterExtra = (hp: number, extra = 0, maxHp = Infinity) => (extra ? snap(Math.min(maxHp, Math.max(0, hp - extra))) : hp);
+/** How Skip's message names what vanished, by tile kind. */
+const SKIPPED_NAMES: Partial<Record<Tile["kind"], string>> = { door: "The door", key: "The key", potion: "The potion", attack: "The ATK shard", defense: "The DEF shard" };
+/** How many rows from the hero the walk to the nearest ? looks. */
+const MARK_REACH = 40;
 
 /** How the status line opens on a fight won. */
 function fightText({ enemy, damage, revived }: FightEnd) {
@@ -1519,7 +1664,7 @@ const coinsText = (gold: number, silver: number) => [...(gold ? [`+${wholeChange
  * shard's stat; null for anything else. */
 function pickupText(t: Tile, outcome: StepEffect) {
   switch (t.kind) {
-    case "key": return `+1 ${t.color} key`;
+    case "key": return `+${keyCount(outcome.keyAmount ?? 1)} ${t.color} key`;
     case "potion": return `+${wholeChange(outcome.healed)} HP`;
     case "attack": return `+${enemyStat(shardGain(t))} attack`;
     case "defense": return `+${enemyStat(shardGain(t))} defense`;

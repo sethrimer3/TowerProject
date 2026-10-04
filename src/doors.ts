@@ -1,3 +1,4 @@
+import { snap } from "./exact.ts";
 import { COLORS, type KeyColor } from "./config.ts";
 import type { DoorRule, Player, Tile } from "./entities.ts";
 
@@ -12,14 +13,17 @@ export function doorRule(tile: Tile): DoorRule {
  * stable amber/azure/crimson priority so their behavior is predictable. A
  * Heart Door takes no keys and always opens: it drains HP instead
  * (`resolveStep`). */
-export function doorCost(tile: Tile, player: Pick<Player, "keys">): KeyColor[] | null {
+export function doorCost(tile: Tile, player: Pick<Player, "keys">, scale = 1): KeyColor[] | null {
   const rule = doorRule(tile);
   if (rule.type === "fullHp") return [];
+  // Keys may be fractional (Effective, Dampen): each colour the door takes
+  // needs a whole key, or `scale` of one, held.
+  const need = scale === 1 ? 1 : snap(scale);
   if (rule.mode === "any") {
-    const key = KEY_ORDER.find((color) => rule.keys.includes(color) && player.keys[color] > 0);
+    const key = KEY_ORDER.find((color) => rule.keys.includes(color) && player.keys[color] >= need);
     return key ? [key] : null;
   }
-  return rule.keys.every((color) => player.keys[color] > 0) ? [...rule.keys] : null;
+  return rule.keys.every((color) => player.keys[color] >= need) ? [...rule.keys] : null;
 }
 export function doorId(tile: Tile): DoorId {
   const rule = doorRule(tile);

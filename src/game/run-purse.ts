@@ -77,16 +77,18 @@ export class RunPurse {
   }
 
   /** A kill's Silver, by the enemy's strength and the equivalent floor. */
-  killSilver(enemy: Enemy, floor: number) {
-    return this.silver(silverForKill(enemy.strength, floor));
+  killSilver(enemy: Enemy, floor: number, scale = 1) {
+    const base = silverForKill(enemy.strength, floor);
+    return this.silver(scale === 1 ? base : snap(base * scale));
   }
 
   /** An enemy's Gold (by its strength) and material drops, once per
    * physical kill. */
-  enemyLoot(enemy: Enemy, x: number, y: number): { gold: number; drops: MaterialStack[] } {
+  enemyLoot(enemy: Enemy, x: number, y: number, scale = 1): { gold: number; drops: MaterialStack[] } {
     if (!this.loot(this.lootKey(x, y))) return { gold: 0, drops: [] };
-    // Gold / Kill training and research, multiplied, then the tier's bonus.
-    const raised = snap((ENEMY_GOLD[enemy.strength] * killGold(this.trainingNow) * researched(this.save.archives, "killGold", 100)) / 10_000);
+    // Gold / Kill training and research, multiplied, then the tier's bonus;
+    // Effective or Dampen on the card that took the fight scales it too.
+    const raised = snap((ENEMY_GOLD[enemy.strength] * killGold(this.trainingNow) * researched(this.save.archives, "killGold", 100) * scale) / 10_000);
     const gold = this.gold(tierGold(this.tier, raised));
     const drops = this.rules.enemyDrops(enemy.name, this.rng);
     creditMaterials(this.save, drops);

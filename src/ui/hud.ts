@@ -1,4 +1,4 @@
-import { whole, wholeHp } from "../whole.ts";
+import { keyCount, whole, wholeHp } from "../whole.ts";
 import type { Game } from "../state.ts";
 import type { Renderer } from "../rendering.ts";
 import { levelForXp, xpForLevel } from "../config.ts";
@@ -258,8 +258,9 @@ function renderHand(game: Game) {
     const title = handCardTitle(game, hand[i]);
     if (card.title !== title) card.title = title;
     // A card that acts in place greys out while it can't (KEY SIPHON
-    // without the Max HP training levels its next use takes).
-    card.classList.toggle("unable", !game.run.outside && IN_PLACE.has(hand[i]) && !game.canAct(hand[i]));
+    // without the Max HP training levels its next use takes), and one
+    // resting for the floor (Deprioritize with every mark made).
+    card.classList.toggle("unable", !game.run.outside && ((IN_PLACE.has(hand[i]) && !game.canAct(hand[i])) || game.cardResting(hand[i])));
   });
   el("end-run").classList.toggle("deadlocked", game.handStuck && !game.run.outside);
 }
@@ -280,7 +281,7 @@ export function renderVitals(game: Game) {
   text("shroud", whole(p.shroud ?? 0));
   el("shroud-stat").hidden = !game.save.upgrades.shroud;
   renderPurse(game);
-  for (const k of ["yellow", "blue", "red"] as const) text(k, p.keys[k]);
+  for (const k of ["yellow", "blue", "red"] as const) text(k, keyCount(p.keys[k]));
   const skeletonKeys = p.skeletonKeys ?? 0;
   text("skeleton", skeletonKeys);
   el("skeleton-key").hidden = skeletonKeys < 1;

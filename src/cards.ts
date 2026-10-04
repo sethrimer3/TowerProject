@@ -102,11 +102,26 @@ export type CardRules = {
   skipOpen?: { skipped: ReadonlySet<string>; skip: (x: number, y: number) => void };
   /** Charge: how many monsters and doors the path may go through. */
   charge?: number;
+  /** Effective and Dampen: what the target's effect is multiplied by, so
+   * the DOOR card wants only doors whose scaled keys are held. */
+  scale?: number;
+  /** Deprioritize: the card passes over the target it would pick,
+   * reporting it to be marked with a ?, and doesn't act this time. */
+  deprioritize?: (x: number, y: number) => void;
+  /** Deprioritize with the hand stuck: the ! tiles the card heads for,
+   * the closest first, by any path. */
+  bang?: ReadonlySet<string>;
 };
 /** Where the hand plans from: the board and the run, whether a card that
  * acts in place can act now (none can when this is absent), and what each
  * card's badge changes (`cardRules`). */
-export type HandAt = Position & { canAct?: (card: CardId) => boolean; cardRules?: (card: CardId) => CardRules | undefined };
+export type HandAt = Position & {
+  canAct?: (card: CardId) => boolean;
+  cardRules?: (card: CardId) => CardRules | undefined;
+  /** Tiles marked with a ? (Deprioritize): no card's path crosses or ends
+   * on them. */
+  marked?: ReadonlySet<string>;
+};
 
 /** Tiles a card's path may cross on the way to its target, taking what
  * lies there: open floor and every item. Walls, doors, monsters and stairs
@@ -129,13 +144,13 @@ function pathTo(r: Reached): Step[] {
 
 /** Whether `card` wants the tile, from where the hero stands. The Delve's
  * STAIRS card is decided over the whole search instead (`climb`). */
-function wants(card: CardId, t: Tile, at: Position): boolean {
-  return WANTS[card](t, at);
+function wants(card: CardId, t: Tile, at: Position, rules?: CardRules): boolean {
+  return WANTS[card](t, at, rules);
 }
-const WANTS: Record<CardId, (t: Tile, at: Position) => boolean> = {
+const WANTS: Record<CardId, (t: Tile, at: Position, rules?: CardRules) => boolean> = {
   stairs: (t) => t.kind === "stairs",
   heal: (t) => t.kind === "potion",
-  door: (t, at) => t.kind === "door" && doorCost(t, at.run.player) !== null,
+  door: (t, at, rules) => t.kind === "door" && doorCost(t, at.run.player, rules?.scale) !== null,
   yellowKey: (t) => t.kind === "key" && t.color === "yellow",
   blueKey: (t) => t.kind === "key" && t.color === "blue",
   // An impervious monster can't be fought at all, so it is never a target.
@@ -145,6 +160,8 @@ const WANTS: Record<CardId, (t: Tile, at: Position) => boolean> = {
   keySiphon: () => false,
 };
 
+const NONE: ReadonlySet<string> = new Set();
+
 /** The first card in `hand` that can act: one with a target the hero can
  * reach, and the shortest path to its closest target, or one that acts in
  * place and can now (`canAct`), with no path; null when no card can. It looks
@@ -153,16 +170,31 @@ const WANTS: Record<CardId, (t: Tile, at: Position) => boolean> = {
  * gate) or change its target (`cardRules`). With `only`, it plans that
  * card alone (a Focus), whatever its gate. */
 export function planHand(at: HandAt, hand: readonly CardId[], mode: Mode, only?: number): CardPlan | null {
-  const reached = search(at);
+  const marked = new Set(at.marked ?? NONE);
+  let reached = search(at, marked);
   for (let card = 0; card < hand.length; card++) {
     if (only !== undefined && card !== only) continue;
     const rules = at.cardRules?.(hand[card]);
     if (only === undefined && rules?.closed) continue;
+    if (rules?.bang) {
+      // The hand is stuck: the card heads for the closest ! by any way.
+      const bang = rules.bang;
+      const target = search(at, NONE).find((r) => bang.has(point(r.x, r.y)));
+      if (target) return { card, path: pathTo(target) };
+      continue;
+    }
     if (IN_PLACE.has(hand[card])) {
       if (at.canAct?.(hand[card])) return { card, path: [] };
       continue;
     }
-    const target = targetOf(at, hand[card], mode, rules?.charge ? chargeSearch(at, rules.charge) : reached, reached, rules);
+    const target = targetOf(at, hand[card], mode, rules?.charge ? chargeSearch(at, rules.charge, marked) : reached, reached, rules);
+    if (target && rules?.deprioritize) {
+      // Passed over and marked: the cards after it go round it too.
+      rules.deprioritize(target.x, target.y);
+      marked.add(point(target.x, target.y));
+      reached = search(at, marked);
+      continue;
+    }
     if (target) return { card, path: pathTo(target) };
   }
   return null;
@@ -173,8 +205,8 @@ export function planHand(at: HandAt, hand: readonly CardId[], mode: Mode, only?:
  * which tells Skip Open Nodes what ground is already open. */
 function targetOf(at: Position, id: CardId, mode: Mode, pool: Reached[], reached: Reached[], rules?: CardRules) {
   if (id === "stairs" && mode === "delve") return climb(at, pool);
-  if (!rules?.stairward && !rules?.skipOpen) return pool.find((r) => wants(id, r.tile, at));
-  let targets = pool.filter((r) => wants(id, r.tile, at));
+  if (!rules?.stairward && !rules?.skipOpen) return pool.find((r) => wants(id, r.tile, at, rules));
+  let targets = pool.filter((r) => wants(id, r.tile, at, rules));
   if (rules.skipOpen) targets = targets.filter((r) => !passesOver(at, r, reached, rules.skipOpen!));
   if (!rules.stairward || targets.length < 2) return targets[0];
   return mode === "delve" ? highest(targets) : nearestStairs(at, targets);
@@ -250,8 +282,9 @@ function inReach({ world, run }: Position, y: number) {
  * those the one stepping on the fewest tiles that hold something (items,
  * chests and lit torches: `takesSomething`), so the hand's paths go round
  * what other cards aim at unless no equally short way does; a tile that
- * isn't crossable is reached but never walked through. */
-function search(at: Position): Reached[] {
+ * isn't crossable is reached but never walked through, and a tile marked
+ * with a ? is neither. */
+function search(at: Position, marked: ReadonlySet<string>): Reached[] {
   const { world, run } = at, p = run.player, lit = litTorches(world);
   type Walked = { r: Reached; depth: number; items: number };
   const first: Walked = { r: { x: p.x, y: p.y, tile: world.tile(p.x, p.y), dx: 0, dy: 0, from: null }, depth: 0, items: 0 };
@@ -266,6 +299,7 @@ function search(at: Position): Reached[] {
       const tile = world.tile(dest.x, dest.y);
       if (tile.kind === "wall") continue;
       const k = point(dest.x, dest.y), taken = items + (takesSomething(tile, dest.x, dest.y, lit) ? 1 : 0);
+      if (marked.has(k)) continue;
       const known = seen.get(k);
       if (known) {
         // Not walked on from yet (the walk goes a whole depth at a time),
@@ -294,7 +328,7 @@ function chargeable(t: Tile, at: Position) {
  * Each tile is reached once, by its shortest path, however many it charges
  * through; a tile is walked on from once per count of charges spent, so a
  * longer path that spent fewer can still go further. */
-function chargeSearch(at: Position, charge: number): Reached[] {
+function chargeSearch(at: Position, charge: number, marked: ReadonlySet<string>): Reached[] {
   const { world, run } = at, p = run.player;
   const walked = new Set([`0|${point(p.x, p.y)}`]), seen = new Set([point(p.x, p.y)]);
   const walk: { r: Reached; spent: number }[] = [{ r: { x: p.x, y: p.y, tile: world.tile(p.x, p.y), dx: 0, dy: 0, from: null }, spent: 0 }];
@@ -307,6 +341,7 @@ function chargeSearch(at: Position, charge: number): Reached[] {
       const tile = world.tile(dest.x, dest.y);
       if (tile.kind === "wall") continue;
       const k = point(dest.x, dest.y), next = { ...dest, tile, dx, dy, from };
+      if (marked.has(k)) continue;
       if (!seen.has(k)) {
         seen.add(k);
         reached.push(next);

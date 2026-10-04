@@ -15,9 +15,11 @@ export type BadgeRarity = "common" | "rare" | "epic";
 export const RARITY_WEIGHTS: Record<BadgeRarity, number> = { common: 70, rare: 27, epic: 3 };
 
 /** What a badge does: `reward`s pay on activation, `gate`s let the card
- * act only while their condition holds (a Focus overrides them), and the
- * rest (`aim`) change which target the card picks. */
-export type BadgeKind = "reward" | "gate" | "aim";
+ * act only while their condition holds (a Focus overrides them), `aim`s
+ * change which target the card picks, `scale`s make the target's effect
+ * stronger or weaker when the card activates on it, and `chance`s may
+ * make the target vanish instead. */
+export type BadgeKind = "reward" | "gate" | "aim" | "scale" | "chance";
 
 type BadgeDef = {
   name: string;
@@ -41,6 +43,7 @@ type BadgeDef = {
 
 const LEVELS = [1, 2, 3, 4, 5, 6, 7];
 const SQUARES = [1, 4, 9, 16, 25, 36, 49];
+const PERCENTS = [5, 10, 15, 20, 25, 30, 35];
 const KEY_LIMITS = [10, 8, 6, 4, 3, 2, 1];
 const COOLDOWNS = [7, 6, 5, 4, 3, 2, 1];
 const every = (n: number) => (n === 1 ? "every floor" : `once every ${n} floors`);
@@ -52,10 +55,14 @@ export const BADGES = {
   goldback: { name: "Goldback", rarity: "common", kind: "reward", glyph: "⇥", color: "#f5c542", values: LEVELS, unit: "Gold", text: (v) => `On the last card in the hand, gain ${v} Gold each time it activates (Gold bonuses apply).` },
   xp: { name: "XP", rarity: "common", kind: "reward", glyph: "✧", color: "#9be86f", values: SQUARES, unit: "XP", text: (v) => `Gain ${v} XP each time the card activates, rising with the floor like a kill's XP.` },
   hpGate: { name: "HP <", rarity: "common", kind: "gate", glyph: "♡", color: "#ff9b8a", values: [100, 90, 75, 50, 35, 20, 5], unit: "% of max HP", text: (v) => `The card acts only while HP is below ${v}% of max HP.` },
+  effective: { name: "Effective", rarity: "common", kind: "scale", glyph: "▲", color: "#7be07b", values: PERCENTS, unit: "%", text: (v) => `When the card activates, its target's effect is ${v}% stronger: a potion heals more, a key or shard gives more, a door takes more of each key, and a monster deals ${v}% more damage in all, which can fell you, and pays ${v}% more Silver, Gold and XP. A Heart Door can't take more.` },
+  dampen: { name: "Dampen", rarity: "common", kind: "scale", glyph: "▼", color: "#8ab4ff", values: PERCENTS, unit: "%", text: (v) => `When the card activates, its target's effect is ${v}% weaker: a potion heals less, a key or shard gives less, a door takes less of each key, a Heart Door takes ${v}% less HP, and a monster deals ${v}% less damage in all and pays ${v}% less Silver, Gold and XP.` },
   hpPercent: { name: "HP %", rarity: "rare", kind: "reward", glyph: "♥", color: "#ff4fa3", values: LEVELS, unit: "% of max HP", text: (v) => `Gain ${v}% of max HP each time the card activates.` },
   goldTouch: { name: "Gold Touch", rarity: "rare", kind: "reward", glyph: "◉", color: "#ffc93c", values: LEVELS, unit: "Gold", text: (v) => `Gain ${v} Gold each time the card activates (Gold bonuses apply).` },
   yellowGate: { name: "YK <", rarity: "rare", kind: "gate", glyph: "⚿", color: "#f2d24b", values: KEY_LIMITS, unit: "yellow keys", text: (v) => `The card acts only while you hold fewer than ${v} yellow keys.` },
   blueGate: { name: "BK <", rarity: "rare", kind: "gate", glyph: "⚿", color: "#5aa9ff", values: KEY_LIMITS, unit: "blue keys", text: (v) => `The card acts only while you hold fewer than ${v} blue keys.` },
+  deprioritize: { name: "Deprioritize", rarity: "rare", kind: "aim", glyph: "?", color: "#ffb347", values: LEVELS, unit: "marks a floor", text: (v) => `Passes over the first ${v} target${v === 1 ? "" : "s"} the card picks on each floor, marking each with a ?, then rests for the floor. Every card's path goes round a ? while it can. When no card can move, the nearest ? becomes ! and the card heads for it.` },
+  skip: { name: "Skip", rarity: "rare", kind: "chance", glyph: "↷", color: "#c0f0ff", values: [7, 9, 11, 13, 15, 17, 19], unit: "%", text: (v) => `${v}% chance, when the card activates, that its target vanishes without effect (never a boss on MONSTER). On STAIRS in the Tower, you climb two floors instead of one.` },
   redGate: { name: "RK <", rarity: "epic", kind: "gate", glyph: "⚿", color: "#ff5a5a", values: KEY_LIMITS, unit: "red keys", text: (v) => `The card acts only while you hold fewer than ${v} red keys.` },
   stairward: { name: "Stairward", rarity: "epic", kind: "aim", glyph: "⇡", color: "#7fe0ff", values: COOLDOWNS, unit: "floors", lead: "every", text: (v) => `Picks the target nearest the stairs (in the Delve, the highest) rather than the nearest to you; works ${every(v)}.` },
   skipOpen: { name: "Skip Open Nodes", rarity: "epic", kind: "aim", glyph: "⤳", color: "#c08bff", values: COOLDOWNS, unit: "floors", lead: "every", text: (v) => `Skips, and marks, any door or monster that opens no new ground, for the rest of the floor; works ${every(v)}.` },

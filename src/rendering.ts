@@ -153,6 +153,7 @@ export class Renderer {
   /** Gameplay feedback drawn over every board. */
   private drawOverlays(f: FrameContext) {
     this.drawSkipMarks(f);
+    this.drawBadgeMarks(f);
     this.drawBlockedMark(f);
     // A Gem shines above the darkness, so it can be seen and tapped.
     const gem = this.game.gemFinder.gem, sparkle = this.game.gemFinder.sparkle;
@@ -166,6 +167,8 @@ export class Renderer {
     if (area) drawAreaBurst(f, f.now - area.at, area.reward);
     const summoned = this.game.summoned;
     if (summoned) drawPoof(f, summoned.x, summoned.y, f.now - summoned.at);
+    const vanished = this.game.vanished;
+    if (vanished) drawPoof(f, vanished.x, vanished.y, f.now - vanished.at);
   }
   /** The forest clearing: its contents, the entrance, the route, the hero
    * in its grass, and the weather. */
@@ -407,6 +410,27 @@ export class Renderer {
     }
     c.restore();
   }
+  /** Deprioritize's marks: an amber ? on each tile it passed over on this
+   * floor, and a red ! on each the stuck hand now heads for. */
+  private drawBadgeMarks(f: FrameContext) {
+    const { asked, bangs } = this.game.badgeMarks;
+    if (!asked.length && !bangs.length) return;
+    const c = f.c, s = f.s;
+    c.save();
+    c.font = `bold ${Math.max(10, Math.round(s * 0.42))}px Cinzel, serif`;
+    c.textAlign = "center";
+    c.textBaseline = "middle";
+    c.lineWidth = Math.max(2, s * 0.08);
+    c.strokeStyle = "#000c";
+    for (const [marks, glyph, color] of [[asked, "?", "#ffb347"], [bangs, "!", "#ff5a5a"]] as const)
+      for (const k of marks) {
+        const [wx, wy] = k.split(",").map(Number), x = (wx - f.left + 0.5) * s + s * 0.22, y = (f.n - 0.5 - (wy - f.bottom)) * s - s * 0.22;
+        c.strokeText(glyph, x, y);
+        c.fillStyle = color;
+        c.fillText(glyph, x, y);
+      }
+    c.restore();
+  }
   private drawBlockedMark(f: FrameContext) {
     const g = this.game, c = f.c, s = f.s;
     if (g.blocked.until <= f.now) return;
@@ -492,7 +516,7 @@ export class Renderer {
     return now - this.arrived > ARRIVAL_GLOW_MS && (!g.rush || now - g.rush.at >= RUSH_ECHO_MS) && g.blocked.until <= now && g.effect.until <= now &&
       now - g.levelUpAt >= LEVEL_UP_MS + POINTS_MS && g.revivedAt.every((at) => now - at >= REVIVE_MS) &&
       (!g.areaBurst || now - g.areaBurst.at >= AREA_BURST_MS) &&
-      (!g.summoned || now - g.summoned.at >= POOF_MS) &&
+      (!g.summoned || now - g.summoned.at >= POOF_MS) && (!g.vanished || now - g.vanished.at >= POOF_MS) &&
       (!sparkle || now - sparkle.at >= GEM_SPARKLE_MS);
   }
   /** Active torches roughly within the camera viewport, padded so a torch

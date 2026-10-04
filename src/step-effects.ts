@@ -31,6 +31,15 @@ export type StepEffect = {
   keysSpent: KeyColor[];
   /** Potions only: HP actually restored (capped at max HP). */
   healed: number;
+  /** Doors and keys: how much of a key each key colour took or gave, when
+   * a badge's scale made it other than 1. */
+  keyAmount?: number;
+  /** Enemies only, under a badge's scale: the damage added to the fight's
+   * (or, below 0, given back) once it is over. */
+  extraDamage?: number;
+  /** Enemies only: the scale the fight was taken under, which its Silver,
+   * Gold and XP are multiplied by too. */
+  scale?: number;
 };
 export type StepOutcome = StepBlocked | StepEffect;
 
@@ -40,7 +49,14 @@ export type StepOutcome = StepBlocked | StepEffect;
  * beyond its HP, in hundredths of a percent of max HP (Recovery and
  * Potion % training), and the HP the step regains (Regen: none in the
  * forest, or on the tiles a Rush crosses after its first step). */
-export type StepRules = { potionHeal: number; percentPotion: number; regen: number };
+export type StepRules = {
+  potionHeal: number;
+  percentPotion: number;
+  regen: number;
+  /** Effective and Dampen, on the step that activates their card: what the
+   * target's effect is multiplied by (1.05 is 5% stronger). */
+  scale?: number;
+};
 export const BASE_RULES: StepRules = { potionHeal: 100, percentPotion: 0, regen: 0 };
 /** The HP a potion of `amount` restores under `rules`, rounded. */
 export const potionHeal = (amount: number, rules: StepRules) => snap((amount * rules.potionHeal) / 100);
@@ -50,41 +66,50 @@ export const potionHeal = (amount: number, rules: StepRules) => snap((amount * r
  * AI planning all apply the same rules without touching game state. */
 export function resolveStep(player: Player, tile: Tile, rules: StepRules = BASE_RULES): StepOutcome {
   if (tile.kind === "wall") return { blocked: "wall" };
+  const scale = rules.scale ?? 1, scaled = (n: number) => (scale === 1 ? n : snap(n * scale));
   const next: Player = { ...player, keys: { ...player.keys } };
   const effect: StepEffect = { player: next, combat: null, keysSpent: [], healed: 0 };
   switch (tile.kind) {
     case "enemy": {
       const combat = predict(player, tile.enemy!);
       if (combat.impervious) return { blocked: "impervious", combat };
-      next.hp = snap(Math.max(0, next.hp - combat.damage));
-      effect.combat = combat;
+      // The fight plays out as predicted; a scale adds to (or gives back)
+      // its damage once it is over, which can fell the hero.
+      const damage = scaled(combat.damage);
+      next.hp = snap(Math.max(0, next.hp - damage));
+      effect.combat = scale === 1 ? combat : { ...combat, survivable: next.hp > 0 };
+      if (scale !== 1) Object.assign(effect, { extraDamage: snap(damage - combat.damage), scale });
       break;
     }
     case "door": {
-      const cost = doorCost(tile, player);
+      const cost = doorCost(tile, player, scale);
       if (cost === null) return { blocked: "locked" };
-      for (const color of cost) next.keys[color]--;
-      if (doorRule(tile).type === "fullHp") next.hp = Math.min(next.hp, HEART_DOOR_HP);
+      for (const color of cost) next.keys[color] = snap(next.keys[color] - scaled(1));
+      // A Heart Door's toll, all but 1 HP, shrinks under a weaker scale and
+      // never grows past it.
+      if (doorRule(tile).type === "fullHp") next.hp = Math.min(next.hp, snap(next.hp - (next.hp - HEART_DOOR_HP) * Math.min(1, scale)));
       effect.keysSpent = cost;
+      if (scale !== 1 && cost.length) effect.keyAmount = scaled(1);
       break;
     }
     case "key":
-      next.keys[tile.color!]++;
+      next.keys[tile.color!] = snap(next.keys[tile.color!] + scaled(1));
+      if (scale !== 1) effect.keyAmount = scaled(1);
       break;
     case "potion": {
       // A percent (red) potion restores its HP, which Potion HP leaves alone,
       // and a share of max HP.
       const amount = tile.amount ?? POTION_HEAL;
-      const heal = tile.color === "red" ? snap(amount + (next.maxHp * rules.percentPotion) / 10000) : potionHeal(amount, rules);
+      const heal = scaled(tile.color === "red" ? snap(amount + (next.maxHp * rules.percentPotion) / 10000) : potionHeal(amount, rules));
       effect.healed = snap(Math.min(next.maxHp - next.hp, heal));
       next.hp = snap(next.hp + effect.healed);
       break;
     }
     case "attack":
-      next.attack = snap(next.attack + shardGain(tile));
+      next.attack = snap(next.attack + scaled(shardGain(tile)));
       break;
     case "defense":
-      next.defense = snap(next.defense + shardGain(tile));
+      next.defense = snap(next.defense + scaled(shardGain(tile)));
       break;
   }
   // Regen comes after the step's fight, door or pickup.

@@ -252,8 +252,14 @@ Putting one card of the hand ahead of the others inside a run, until the hero re
 _Avoid_: priority, override
 
 **Card badge**:
-A token bought with Gems (drawn by rarity: common, rare or epic) and attached to one card, changing what the card does when it activates: paying something (HP, Silver, Gold, XP), gating it (it acts only while a condition holds) or changing its target (Stairward, Skip Open Nodes, Charge). A card holds one, and a badge sits on one card at a time. More copies of a badge raise its level, up to 7.
+A token bought with Gems (drawn by rarity: common, rare or epic) and attached to one card, changing what the card does when it activates: paying something (HP, Silver, Gold, XP), gating it (it acts only while a condition holds), changing its target (Stairward, Skip Open Nodes, Charge, Deprioritize), scaling its target's effect (Effective, Dampen) or making it vanish (Skip). A card holds one, and a badge sits on one card at a time. More copies of a badge raise its level, up to 7.
 _Avoid_: rune, gem, charm, enchantment
+
+**Deprioritize mark**:
+A ? on a tile the Deprioritize badge passed over on this floor: no card's path crosses it while another way exists. When the hand is stuck, the nearest becomes a !, which the badge's card heads for. Stepping on the tile clears its mark.
+
+**Floor Skipped**:
+Skip on the STAIRS card in the Tower: the hero climbs two floors instead of one, never standing on the floor between.
 
 **Activation**:
 A card of the hand doing what it is for: its path's last step reaching its target, or a card that acts in place acting. Card badges pay on activation.
