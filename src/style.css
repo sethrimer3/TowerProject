@@ -2211,12 +2211,11 @@ nav button.notify::after, .tree-tabs button.notify::after {
 .skill-sprite.card-sprite { image-rendering: pixelated; object-fit: contain; }
 .deck-page { display: flex; flex-direction: column; gap: 14px; min-height: 100%; padding: 10px 2px 4px; }
 .deck-label { font-size: 13px; letter-spacing: 2px; color: #e9d4ac; text-transform: uppercase; margin: 0 0 8px; }
-/* The hand's slots: as many to a row as fit, at most seven. */
+/* The hand's slots: as many to a row as fill the width. */
 .deck-hand {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(max(52px, (100% - 6 * 8px) / 7), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
   gap: 8px;
-  max-width: 496px;
   touch-action: none;
 }
 .deck-slot {
@@ -2327,9 +2326,8 @@ nav button.notify::after, .tree-tabs button.notify::after {
 .deck-reserve > .deck-label { position: relative; z-index: 1; color: #6c778a; }
 .deck-reserve-slots {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(max(52px, (100% - 6 * 8px) / 7), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
   gap: 8px;
-  max-width: 496px;
   filter: brightness(0.7);
 }
 .deck-reserve-slots i { aspect-ratio: 3 / 4; border: 1px dashed #3a4454; border-radius: 5px; background: #0d1118; }
