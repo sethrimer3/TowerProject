@@ -9,19 +9,25 @@ import { TIERS } from "./tiers.ts";
 // reward beside it, claimed the same way once the Premium Pass for the
 // tower's set of three is owned. Claims last between runs (`save.goals`),
 // as do each tower's areas mastered and cleared (tower/area-ledger.ts).
+// Floor 100's reward in every tower below the last opens the next tower.
 
 /** What a checkpoint can unlock: Damage Prediction (an enemy's inspect
  * panel says what the fight would cost and whether it is survivable),
  * Combat Forecast (how many hits defeat it), Attack Lore (and how much more
  * ATK would take one hit fewer), Warp (starting a run past a completed
- * checkpoint) and Damage Visual (each enemy on the board wears what its
- * fight would cost). */
-export type GoalUnlock = "damagePrediction" | "combatForecast" | "attackLore" | "warp" | "damageVisual";
+ * checkpoint), Damage Visual (each enemy on the board wears what its
+ * fight would cost) and Relative Damage Color (Tower II: that cost coloured
+ * by its share of the hero's HP). */
+export type GoalUnlock = "damagePrediction" | "combatForecast" | "attackLore" | "warp" | "damageVisual" | "relativeDamageColor";
 export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   damagePrediction: "Damage Prediction", combatForecast: "Combat Forecast", attackLore: "Attack Lore", warp: "Warp", damageVisual: "Damage Visual",
+  relativeDamageColor: "Relative Damage Color",
 };
-/** What a checkpoint pays: an unlock, or an amount of a currency. */
-export type GoalReward = { kind: "unlock"; unlock: GoalUnlock } | { kind: "currency"; currency: CurrencyId; amount: number };
+/** What a checkpoint pays: an unlock, the next tower opened, or an amount of a currency. */
+export type GoalReward =
+  | { kind: "unlock"; unlock: GoalUnlock }
+  | { kind: "tower"; tower: number }
+  | { kind: "currency"; currency: CurrencyId; amount: number };
 export type Checkpoint = { floor: number; reward: GoalReward; premium: GoalReward };
 
 /** Floors between checkpoints. */
@@ -42,13 +48,22 @@ const TOWER_ONE: Record<number, Omit<Checkpoint, "floor">> = {
   50: { reward: unlock("damageVisual"), premium: gems(50) },
 };
 
+/** Tower II's first checkpoint: an unlock. */
+const TOWER_TWO: Record<number, Omit<Checkpoint, "floor">> = {
+  10: { reward: unlock("relativeDamageColor"), premium: gems(10) },
+};
+/** The checkpoint floor whose reward opens the next tower. */
+export const TOWER_UNLOCK_FLOOR = 100;
+
 /** A tower's checkpoints, lowest first.
  * TODO: the stub rewards (100 Gold × checkpoint × tower, 10 Gems × checkpoint)
  * are placeholders, to be tuned. */
 function towerCheckpoints(tower: number): Checkpoint[] {
+  const sets: Record<number, Record<number, Omit<Checkpoint, "floor">>> = { 1: TOWER_ONE, 2: TOWER_TWO };
   return Array.from({ length: CHECKPOINTS_PER_TOWER }, (_, i) => {
-    const n = i + 1, floor = n * CHECKPOINT_EVERY, set = tower === 1 ? TOWER_ONE[floor] : undefined;
-    return { floor, ...(set ?? { reward: gold(100 * n * tower), premium: gems(10 * n) }) };
+    const n = i + 1, floor = n * CHECKPOINT_EVERY, set = sets[tower]?.[floor];
+    const opens = floor === TOWER_UNLOCK_FLOOR && tower < TIERS ? { kind: "tower" as const, tower: tower + 1 } : null;
+    return { floor, ...(set ?? { reward: opens ?? gold(100 * n * tower), premium: gems(10 * n) }) };
   });
 }
 
@@ -119,15 +134,33 @@ export function claimGoal(save: Save, tower: number, floor: number, premium: boo
   if (!c || goalState(save, tower, floor, premium) !== "ready") return null;
   const reward = premium ? c.premium : c.reward;
   if (reward.kind === "currency") CURRENCIES[reward.currency].credit(save, reward.amount);
+  if (reward.kind === "tower") openTower(save, reward.tower);
   ((premium ? save.goals.premium : save.goals.claimed)[tower] ??= []).push(floor);
   return reward;
 }
 
-/** Whether `what` is owned: the Tower I checkpoint that unlocks it claimed. */
-export const goalUnlocked = (save: Save, what: GoalUnlock) => goalState(save, 1, unlockFloor(what), false) === "claimed";
-/** The Tower I checkpoint floor whose reward unlocks `what`. */
-export const unlockFloor = (what: GoalUnlock) =>
-  CHECKPOINTS[1]!.find((c) => c.reward.kind === "unlock" && c.reward.unlock === what)!.floor;
+/** Opens `tower` and every one below it, and the Delve's caves with them
+ * (they follow the Towers opened); a tower already open stays so. */
+function openTower(save: Save, tower: number) {
+  save.tower.tiersOpen = Math.max(save.tower.tiersOpen, Math.min(TIERS, tower));
+  save.delve.tiersOpen = save.tower.tiersOpen;
+}
+
+/** Whether `what` is owned: the checkpoint that unlocks it claimed. */
+export const goalUnlocked = (save: Save, what: GoalUnlock) => {
+  const at = unlockAt(what);
+  return goalState(save, at.tower, at.floor, false) === "claimed";
+};
+/** The tower and checkpoint floor whose reward unlocks `what`. */
+export function unlockAt(what: GoalUnlock) {
+  for (let tower = 1; tower <= TIERS; tower++) {
+    const c = CHECKPOINTS[tower]!.find((c) => c.reward.kind === "unlock" && c.reward.unlock === what);
+    if (c) return { tower, floor: c.floor };
+  }
+  throw new Error(`no checkpoint unlocks ${what}`);
+}
+/** The checkpoint floor whose reward unlocks `what`. */
+export const unlockFloor = (what: GoalUnlock) => unlockAt(what).floor;
 /** Whether Warp is owned. */
 export const warpUnlocked = (save: Save) => goalUnlocked(save, "warp");
 

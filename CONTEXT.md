@@ -182,7 +182,7 @@ The one scale both modes' progress maps onto: a Tower floor counts as itself, an
 _Avoid_: effective floor, tier
 
 **Tier**:
-One of the numbered towers (Tower I to IX), or of the delves' caves (Delve I to IX), that a run climbs. Beating the boss on floor 100 of the highest tower opened opens the next tower and the cave of the same number. Each has the same floors as the first with monsters three times as strong as the one before, pays more Gold, pays XP times the same factor as its monsters' stats, and keeps its own records, milestones and area rewards. Not to be confused with a monster's rank.
+One of the numbered towers (Tower I to IX), or of the delves' caves (Delve I to IX), that a run climbs. Claiming floor 100's checkpoint in a tower (once its boss is beaten) opens the next tower and the cave of the same number. Each has the same floors as the first with monsters three times as strong as the one before, pays more Gold, pays XP times the same factor as its monsters' stats, and keeps its own records, milestones and area rewards. Not to be confused with a monster's rank.
 _Avoid_: new tower, prestige, world
 
 **Inspiration**:
@@ -232,6 +232,10 @@ _Avoid_: combat preview
 **Damage Visual**:
 The cost of each fight drawn in the lower-left corner of every monster on the board, without inspecting it, once Tower I's floor 50 checkpoint is claimed: the HP Damage Prediction would show, shortened (1.2K), red when lethal (∞ when the hero can't hurt it), a gray 0 for an Instakill, a white 0 when the monster strikes but costs no HP, gold otherwise.
 _Avoid_: damage numbers, damage overlay
+
+**Relative Damage Color**:
+Tower II's floor 10 checkpoint unlock: Damage Visual's numbers coloured by the share of the hero's current HP each fight would cost, sliding from bright green below 1% through yellow at 10% and orange at 25% to red at 50% or more (an Instakill stays gray, a lethal fight red).
+_Avoid_: damage gradient
 
 **Instakill**:
 A fight the hero's first strike wins, so the monster never strikes back.

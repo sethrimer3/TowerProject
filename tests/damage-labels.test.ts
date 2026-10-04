@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { DamagePredictions, damageLabel, drawDamageLabels } from "../src/damage-labels.ts";
+import { DamagePredictions, damageLabel, drawDamageLabels, relativeColor } from "../src/damage-labels.ts";
 import { predict } from "../src/combat.ts";
 import type { Enemy, Player, Tile } from "../src/entities.ts";
 import type { FrameContext } from "../src/render-frame.ts";
@@ -43,6 +43,17 @@ test("a label is red when lethal or the enemy can't be hurt, gray for an Instaki
   assert.equal(damageLabel(p.cost(hero({ shroud: 100 }), enemy(30, 8, 1)), 100).color, "#ffffff");
   const impervious = new DamagePredictions().cost(hero({ attack: 1 }), enemy(30, 8, 5));
   assert.equal(damageLabel(impervious, 100).text, "∞");
+});
+
+test("with Relative Damage Color, a label slides from green below 1% of the hero's HP through yellow and orange to red from 50%", () => {
+  assert.deepEqual([0, 0.005, 0.01, 0.1, 0.25, 0.5, 0.9].map(relativeColor), ["#4dff6a", "#4dff6a", "#4dff6a", "#ffe14d", "#ff9a3d", "#ff5a5a", "#ff5a5a"]);
+  assert.equal(relativeColor(0.055), "#a6f05c", "halfway from green to yellow");
+  const label = (damage: number, hp: number, turns = 3) => damageLabel({ damage, turns }, hp, true).color;
+  assert.deepEqual([label(0, 100), label(10, 100), label(25, 1000), label(60, 100)], ["#4dff6a", "#ffe14d", relativeColor(0.025), "#ff5a5a"]);
+  assert.deepEqual([label(50, 200), label(50, 100)], ["#ff9a3d", "#ff5a5a"], "the same fight is redder the less HP is left");
+  assert.equal(label(0, 100, 1), "#9aa3b2", "an Instakill stays gray");
+  assert.equal(label(100, 100), "#ff5a5a", "a lethal fight stays red");
+  assert.equal(damageLabel({ damage: 10, turns: 3 }, 100).color, "#ffe08a", "gold without it");
 });
 
 test("each enemy in view is labelled at its lower-left corner, but not the one being fought", () => {

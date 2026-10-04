@@ -82,28 +82,16 @@ test("kills in a higher tier pay its Gold bonus and its stat factor in XP, and t
   assert.equal(one.run.tier, undefined, "the first tier's runs carry no tier");
 });
 
-test("beating the floor-100 boss of the highest tier opened opens the next, and undo keeps it open", () => {
+test("beating the floor-100 boss opens nothing by itself: its floor's goal opens the next tier (goals.test.ts)", () => {
   const g = arena(1, enemy("boss"), 99);
-  g.save.upgrades.inspirationUndos = 1;
   assert.ok(g.move(1, 0));
-  assert.equal(g.save.tower.tiersOpen, 2);
-  assert.match(g.message, /Tower II opened/);
-  assert.ok(g.undo());
-  assert.equal(g.save.tower.tiersOpen, 2);
-  const lower = arena(1, enemy("boss"), 89);
-  assert.ok(lower.move(1, 0));
-  assert.equal(lower.save.tower.tiersOpen, 1, "floor 90's boss opens nothing");
-  const again = arena(2, enemy("boss"), 99);
-  again.save.tower.tiersOpen = 3;
-  assert.ok(again.move(1, 0));
-  assert.equal(again.save.tower.tiersOpen, 3, "only the highest tier opened opens another");
+  assert.deepEqual([g.save.tower.tiersOpen, g.save.delve.tiersOpen], [1, 1]);
+  assert.doesNotMatch(g.message, /opened/);
 });
 
-test("the Delve's caves follow the Towers opened: a Tower boss opens both", () => {
-  const g = arena(1, enemy("boss"), 99);
-  assert.ok(g.move(1, 0));
-  assert.deepEqual([g.save.tower.tiersOpen, g.save.delve.tiersOpen], [2, 2]);
-  const saved: any = JSON.parse(JSON.stringify(g.save));
+test("the Delve's caves follow the Towers opened", () => {
+  const saved: any = JSON.parse(JSON.stringify(defaults()));
+  saved.tower.tiersOpen = 2;
   saved.delve.tiersOpen = 5;
   assert.equal(decode(JSON.stringify(saved)).delve.tiersOpen, 2, "a save's caves follow its Towers");
   saved.tower.tiersOpen = 4;

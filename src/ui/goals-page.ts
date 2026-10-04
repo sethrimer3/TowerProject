@@ -3,7 +3,7 @@ import { CURRENCIES, type CurrencyId } from "../shop/currency.ts";
 import { owns } from "../shop/entitlements.ts";
 import { stubServer, type ShopServer } from "../shop/server.ts";
 import { CLEARED_INSPIRATION } from "../tower/area-ledger.ts";
-import { tierNumeral } from "../tiers.ts";
+import { tierNumeral, tierRewardText, tierStats } from "../tiers.ts";
 import type { AppContext } from "./app.ts";
 import { el, gemIcon, goldIcon } from "./dom.ts";
 
@@ -23,14 +23,17 @@ const TOP_PX = 160;
 const CURRENCY_ICONS: Record<CurrencyId, () => string> = { gems: () => gemIcon("gem-icon goal-icon"), gold: goldIcon };
 /** Each unlock's icon: Damage Prediction a cracked heart, Combat Forecast an eye over crossed blades, Attack
  * Lore an open book with a rising arrow, Warp a portal's swirl, Damage Visual a monster's tile with a red
- * number in its corner. */
+ * number in its corner, Relative Damage Color that tile over a green-to-red bar. */
 const UNLOCK_ICONS: Record<GoalUnlock, string> = {
   damagePrediction: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5S3.5 15 3.5 9A4.5 4.5 0 0 1 12 6.6 4.5 4.5 0 0 1 20.5 9c0 6-8.5 11.5-8.5 11.5z" fill="#4a1a22" stroke="#e86d7a" stroke-width="1.6" stroke-linejoin="round"/><path d="M12.5 7.5l-2 4 3 1.5-2 4" fill="none" stroke="#ffd0d5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
   combatForecast: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19L17 7M19 19L7 7" stroke="#c9ced8" stroke-width="2" stroke-linecap="round"/><path d="M3.5 9.5C6 5.5 9 4 12 4s6 1.5 8.5 5.5C18 13.5 15 15 12 15s-6-1.5-8.5-5.5z" fill="#1c2a44" stroke="#8fc4ff" stroke-width="1.5"/><circle cx="12" cy="9.5" r="2.6" fill="#8fc4ff"/></svg>`,
   attackLore: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7.5C9.5 5.5 6.5 5 3 5.5v12c3.5-.5 6.5 0 9 2 2.5-2 5.5-2.5 9-2v-12c-3.5-.5-6.5 0-9 2z" fill="#3a2a1a" stroke="#e2a15c" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 7.5v12" stroke="#e2a15c" stroke-width="1.2"/><path d="M16.5 15V9.5M14.3 11.6l2.2-2.3 2.2 2.3" fill="none" stroke="#ffd59a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
   warp: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="12" rx="8" ry="10" fill="#2a1d4a" stroke="#c9a6ff" stroke-width="1.6"/><path d="M12 6.5c3 0 4.6 2.4 4 4.8-.6 2.3-3.4 3.3-5.2 2-1.5-1-1.2-3.2.4-3.6 1.1-.3 2 .6 1.6 1.5" fill="none" stroke="#f0e2ff" stroke-width="1.5" stroke-linecap="round"/></svg>`,
   damageVisual: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="2.5" fill="#1d2230" stroke="#8d97a8" stroke-width="1.3"/><path d="M8 15.5c0-4.5 1.8-8 4.5-8s4.5 3.5 4.5 8l-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1z" fill="#6b3a44" stroke="#df797e" stroke-width="1.2" stroke-linejoin="round"/><circle cx="11" cy="11" r="0.9" fill="#ffd0d5"/><circle cx="14" cy="11" r="0.9" fill="#ffd0d5"/><path d="M4.5 20.5v-5h2.6a1.6 1.6 0 0 1 0 3.2H4.5" fill="none" stroke="#000" stroke-width="2.6" stroke-linejoin="round"/><path d="M4.5 20.5v-5h2.6a1.6 1.6 0 0 1 0 3.2H4.5" fill="none" stroke="#ff5a5a" stroke-width="1.4" stroke-linejoin="round"/></svg>`,
+  relativeDamageColor: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="goal-spectrum"><stop offset="0" stop-color="#4dff6a"/><stop offset=".35" stop-color="#ffe14d"/><stop offset=".65" stop-color="#ff9a3d"/><stop offset="1" stop-color="#ff5a5a"/></linearGradient></defs><rect x="2.5" y="2.5" width="19" height="14" rx="2.5" fill="#1d2230" stroke="#8d97a8" stroke-width="1.3"/><path d="M8.5 13.5c0-3.6 1.5-6.5 3.5-6.5s3.5 2.9 3.5 6.5l-1.2-.8-1.2.8-1.1-.8-1.1.8-1.2-.8z" fill="#6b3a44" stroke="#df797e" stroke-width="1.1" stroke-linejoin="round"/><rect x="2.5" y="18" width="19" height="3.5" rx="1.75" fill="url(#goal-spectrum)" stroke="#000" stroke-width=".8"/></svg>`,
 };
+/** The next tower's reward: a tower's silhouette with its door lit. */
+const TOWER_ICON = `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21.5V8.5H4.5v-5h3v2h2.2v-2h4.6v2h2.2v-2h3v5H18v13z" fill="#3a3f4b" stroke="#c9ced8" stroke-width="1.3" stroke-linejoin="round"/><path d="M10 21.5v-4a2 2 0 0 1 4 0v4z" fill="#ffd34d"/><rect x="11" y="10" width="2" height="3" rx=".5" fill="#ffd34d"/></svg>`;
 /** What each unlock does, shown once it is claimed and again whenever its claimed reward is pressed. */
 const UNLOCK_TUTORIALS: Record<GoalUnlock, string> = {
   damagePrediction: `<p>Inspect an enemy in a run and its panel now says how much HP the fight would cost you, and whether you survive it: Survivable, Invincible when it costs no HP, LETHAL, or Instakill when your first strike defeats it.</p>`,
@@ -39,6 +42,8 @@ const UNLOCK_TUTORIALS: Record<GoalUnlock, string> = {
     `<p class="hint">Train ATK in the run, even mid-fight, to make the most of it.</p>`,
   warp: `<p>Master an area, climbing its ten floors without taking damage, to warp to its checkpoint: tap the floor number to begin a new ascent there at once, on the floor just above it.</p>` +
     `<p class="hint">Checkpoints with a golden swirl can be warped to. Entering the tower from the forest always starts on floor 1.</p>`,
+  relativeDamageColor: `<p>Each enemy's damage number now takes its colour from your HP as it stands: bright green when the fight costs under 1% of it, sliding through yellow at 10% and orange at 25% to red at half your HP or more.</p>` +
+    `<p class="hint">Gray still marks an Instakill, and red a lethal fight.</p>`,
   damageVisual: `<p>Every enemy on the board now shows, in its lower-left corner, how much HP its fight would cost you: red when it is lethal, white when it strikes you but costs no HP, gray when your first strike defeats it, and ∞ when you can't hurt it.</p>` +
     `<p class="hint">Turn it off in Settings if the board feels crowded.</p>`,
 };
@@ -48,8 +53,11 @@ const SWIRL_MARK = `<svg class="goal-mark" viewBox="0 0 24 24" aria-hidden="true
 const CLEARED_MARK = `<svg class="goal-mark" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#1f6a34" stroke="#8ff0a8" stroke-width="1.6"/><path d="M7 12.5l3.4 3.4L17.2 8.4" fill="none" stroke="#f0fff4" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const CHECK_ICON = `<svg class="goal-badge" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="#1f5a34" stroke="#9fe0b0" stroke-width="1.1"/><path d="M4.6 8.3l2.3 2.3 4.6-5" fill="none" stroke="#e8fff0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
-const rewardIcon = (r: GoalReward) => (r.kind === "unlock" ? UNLOCK_ICONS[r.unlock] : CURRENCY_ICONS[r.currency]());
-const rewardText = (r: GoalReward) => (r.kind === "unlock" ? `Unlock ${UNLOCK_NAMES[r.unlock]}` : `${r.amount.toLocaleString("en-US")} ${CURRENCIES[r.currency].name}`);
+const rewardIcon = (r: GoalReward) => (r.kind === "unlock" ? UNLOCK_ICONS[r.unlock] : r.kind === "tower" ? TOWER_ICON : CURRENCY_ICONS[r.currency]());
+const rewardText = (r: GoalReward) =>
+  r.kind === "unlock" ? `Unlock ${UNLOCK_NAMES[r.unlock]}`
+  : r.kind === "tower" ? `Unlock Tower ${tierNumeral(r.tower)}`
+  : `${r.amount.toLocaleString("en-US")} ${CURRENCIES[r.currency].name}`;
 /** Where floor `f` stands, from the bottom of the tower. */
 const floorY = (f: number) => GROUND_PX + f * FLOOR_PX;
 
@@ -199,7 +207,8 @@ export class GoalsPage {
     if (state === "claimed") {
       // An unlock pressed again shows what it does once more.
       const r = checkpoint(tower, floor)![premium ? "premium" : "reward"];
-      return r.kind === "unlock" ? this.unlockTutorial(r.unlock, true) : this.say("Already claimed.");
+      if (r.kind === "unlock") return this.unlockTutorial(r.unlock, true);
+      return r.kind === "tower" ? this.towerOpened(r.tower, true) : this.say("Already claimed.");
     }
     const reward = game.claimGoal(tower, floor, premium);
     if (!reward) return;
@@ -207,6 +216,18 @@ export class GoalsPage {
     this.ctx.update();
     this.render();
     if (reward.kind === "unlock") this.unlockTutorial(reward.unlock);
+    if (reward.kind === "tower") this.towerOpened(reward.tower);
+  }
+
+  /** The next tower opened, shown once it is claimed and `again` when its claimed reward is pressed. */
+  private towerOpened(tower: number, again = false) {
+    const modal = this.ctx.modal, name = `Tower ${tierNumeral(tower)}`;
+    modal.innerHTML = `<small>GOALS</small><h2>${name}${again ? "" : " unlocked"}</h2>` +
+      `<p>Access the next tower: choose ${name} with the arrows beside the forest's entrance. Its enemies are ${tierStats(tower)} times as strong as Tower I's, and pay ${tierRewardText(tower)}.</p>` +
+      `<p class="hint">The cave of the same number opens in the Delve with it.</p>` +
+      `<div class="dialog-actions"><button id="unlock-ok">Got it</button></div>`;
+    modal.showModal();
+    el("unlock-ok").onclick = () => modal.close();
   }
 
   /** What an unlock does, shown once it is claimed, and `again` when its claimed reward is pressed. */
