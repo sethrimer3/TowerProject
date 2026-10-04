@@ -124,12 +124,8 @@ test("older saves retain earned access without unlocking fresh saves", () => {
   assert.equal(saved.upgrades.legacy, 1);
   assert.equal(saved.upgrades.quality, 2);
 });
-test("Movement Speed opens 1 to 3 steps a second, and each research level one more", () => {
+test("Movement Speed research lets the run's arrows go one step a second faster a level", () => {
   const g = new Game(defaults());
-  g.save.settings.speed = 2;
-  assert.equal(g.stepsPerSecond, 3, "unowned, the hand keeps the default speed");
-  g.save.upgrades.moveSpeed = 1;
-  assert.equal(g.stepsPerSecond, 2);
   g.save.settings.speed = 9;
   assert.equal(g.maxSpeed, 3);
   assert.equal(g.stepsPerSecond, 3, "no faster than research allows");

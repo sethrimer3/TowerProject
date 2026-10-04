@@ -83,7 +83,7 @@ export const UPGRADES = [
   {
     id: "moveSpeed",
     name: "Movement Speed",
-    description: "Unlock the Movement speed setting: 1 to 3 steps a second",
+    description: "Open the Archives' Movement Speed research: each level lets the run's speed arrows go one step a second faster than 3",
     base: 1,
     max: 1,
     currency: "courage",

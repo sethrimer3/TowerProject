@@ -221,6 +221,15 @@ el("auto").onclick = () => {
   } else game.toggleAuto();
   update();
 };
+// The speed arrows beside play/pause, inside a run.
+el("speed-down").onclick = () => {
+  game.changeSpeed(-1);
+  update();
+};
+el("speed-up").onclick = () => {
+  game.changeSpeed(1);
+  update();
+};
 el("undo").onclick = () => {
   overlay.hide();
   game.undo();

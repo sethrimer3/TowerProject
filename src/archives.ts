@@ -36,7 +36,7 @@ const speed = (n: number) => `${Math.round(100 + n * 100)}%`;
 export const RESEARCH_TARGETS = {
   /** Focus uses a run starts with. */
   focusPerRun: { name: "Focus Uses", base: FOCUS_PER_RUN, shown: count },
-  /** Movement speed's most steps a second, once Movement Speed is owned. */
+  /** The run's speed arrows' most steps a second, once Movement Speed is owned. */
   moveSpeed: { name: "Steps / Sec", base: 3, shown: count },
   /** Undos the hero can store, once Rehearsed steps has given the first;
    * its base is the loadout's own undos, so the Archives page reads it there. */
@@ -161,7 +161,7 @@ export const RESEARCH = {
   },
   moveSpeed: {
     name: "Movement Speed",
-    description: "Drill the old climbers' quickstep: the Movement speed setting goes one step a second faster.",
+    description: "Drill the old climbers' quickstep: the run's speed arrows go one step a second faster.",
     categories: ["qualityOfLife"],
     requires: [{ upgrade: "moveSpeed" }],
     levels: countLevels("moveSpeed", 6),

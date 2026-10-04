@@ -268,7 +268,7 @@ export type Save = {
    * the Gear page once the Gear skill is owned; and `onTheJob`, opening and
    * closing a Training group under the hand in the first run after On the
    * Job. */
-  tutorials: { deck: boolean; removeCard: boolean; addCard: boolean; upgrades: boolean; gear: boolean; onTheJob: boolean };
+  tutorials: { deck: boolean; removeCard: boolean; addCard: boolean; upgrades: boolean; gear: boolean; onTheJob: boolean; speed: boolean };
   /** Per tree: a run that earned its currency (Inspiration in the Tower,
    * Courage in the Delve) has ended since the tree was last shown, so its
    * tab (and the Upgrades tab) wear a dot in the forest while a skill there

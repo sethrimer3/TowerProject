@@ -66,7 +66,6 @@ import { boughtInRun, ranksInRun, runTrainingBulk, runTrainingOffer, type RunTra
 import { openQuantities, type BuyQuantity } from "./buy-quantity.ts";
 import { keepUndos, loadout, percentPotionChance, potionPercent, reviveChance } from "./loadout.ts";
 import { researched } from "./archives.ts";
-import { SETTINGS } from "./settings.ts";
 import { CONSUMABLES, type ConsumableId } from "./crafting.ts";
 import type { MaterialId, MaterialStack } from "./materials.ts";
 import { TrainingDesk } from "./game/training-desk.ts";
@@ -101,6 +100,12 @@ export type Heal = { from: number; to: number; x: number; y: number; id: number 
 export type Rush = { tiles: { x: number; y: number }[]; at: number };
 /** Rewards kept for the board to show; older ones are dropped unseen. */
 const MAX_GAINS = 12;
+/** The forest's Automove walks at least this many steps a second, however
+ * slow the run's arrows were last set. */
+const FOREST_SPEED = 3;
+/** The speed the second floor's lesson teaches: one press of › from a new
+ * hero's 2. */
+const LESSON_SPEED = 3;
 /** Salts the run seed for Revive's rolls, apart from the world's own. */
 const REVIVE_SALT = 0x7e51e;
 /** Mixed into the run seed to start Skip's stream of rolls. */
@@ -256,7 +261,8 @@ export class Game {
     }
     this.recordProgress();
     this.route = [];
-    this.auto = !this.run.outside && this.handStartsPlaying && !this.fallen;
+    if (!this.run.outside && this.handStartsPlaying && !this.fallen) this.playHand();
+    else this.auto = false;
     this.dropHandPlan();
     this.encounter = null;
     this.fight = null;
@@ -445,12 +451,67 @@ export class Game {
   /** Plays or pauses the hand inside a run. */
   toggleAuto() {
     if (this.run.outside) return;
+    // The speed lesson keeps the hand paused until the arrow is pressed.
+    if (this.teachesSpeed) {
+      this.message = "Press › to speed up.";
+      return;
+    }
     this.route = [];
-    this.auto = !this.auto;
+    if (this.auto) this.auto = false;
+    else this.playHand();
     // Pausing keeps the path and the card that led it: playing on follows
     // it from where the hero stands. A stuck hand looks again.
     if (this.auto) this.handStuck = false;
     this.message = this.auto ? "The hand takes over." : "Paused · the hand waits.";
+  }
+  /** Sets the hand playing: at 1 step a second if the speed arrows slowed
+   * it to 0, and never while the speed lesson waits. */
+  private playHand() {
+    if (this.teachesSpeed) {
+      this.auto = false;
+      return;
+    }
+    if (this.save.settings.speed <= 0) this.save.settings.speed = 1;
+    this.auto = true;
+  }
+  /** The run's speed arrows: one step a second slower or faster, from 0 to
+   * `maxSpeed`. Slowing to 0 pauses the hand, and speeding up from 0 plays
+   * it; in the speed lesson, reaching its speed ends the lesson and plays
+   * the hand on. Returns whether the speed changed. */
+  changeSpeed(by: -1 | 1) {
+    if (this.run.outside || (by < 0 && this.teachesSpeed)) return false;
+    const from = this.stepsPerSecond, to = Math.max(0, Math.min(this.maxSpeed, from + by));
+    if (to === from) return false;
+    const lesson = this.teachesSpeed;
+    this.save.settings.speed = to;
+    if (to === 0) {
+      this.route = [];
+      this.auto = false;
+      this.message = "Paused · the hand waits.";
+    } else if (lesson && !this.teachesSpeed) {
+      this.save.tutorials.speed = true;
+      this.playHand();
+      this.handStuck = false;
+    } else if (from === 0) this.playHand();
+    return true;
+  }
+  /** Whether the speed lesson waits: inside a run past the first floor,
+   * slower than its speed, until the player has once sped up to it. */
+  get teachesSpeed() {
+    return !this.run.outside && !this.save.tutorials.speed && this.save.settings.speed < LESSON_SPEED && this.pastFirstFloor;
+  }
+  private get pastFirstFloor() {
+    return this.rules.equivalentFloor(this.run.maxHeight ?? this.run.height) >= 1;
+  }
+  /** Reaching the second floor starts the speed lesson, pausing the hand,
+   * or, already that fast, passes it by for good. */
+  private startSpeedLesson() {
+    if (this.save.tutorials.speed || !this.pastFirstFloor) return;
+    if (this.save.settings.speed >= LESSON_SPEED) this.save.tutorials.speed = true;
+    else {
+      this.auto = false;
+      this.message = "Press › beside play to move faster.";
+    }
   }
   /** The forest's Enter button: goes straight in through the entrance,
    * starting the run, as walking onto it does. */
@@ -856,7 +917,7 @@ export class Game {
     if (!plan) return;
     this.handStuck = false;
     this.cardPlan = plan;
-    this.auto = true;
+    this.playHand();
   }
   /** A run going inside keeps the hand as it was ordered on the way in,
    * gets its Focus uses and its Pocket Money Silver, and fixes its chance
@@ -872,8 +933,8 @@ export class Game {
     else delete this.run.percentPotions;
     this.run.focusUsed = 0;
   }
-  /** The fastest Movement speed the player may choose: 3 steps a second,
-   * and one more a Movement Speed research level. */
+  /** The fastest speed the run's arrows reach: 3 steps a second, and one
+   * more a Movement Speed research level. */
   get maxSpeed() {
     return 3 + researched(this.save.archives, "moveSpeed", 0);
   }
@@ -882,11 +943,12 @@ export class Game {
   get animatesFights() {
     return !this.save.upgrades.instantCombat || this.save.settings.fightAnimation;
   }
-  /** Steps a second the hand and Automove take: the Movement speed setting,
-   * no faster than research allows, once Movement Speed is owned; otherwise
-   * the setting's default. */
+  /** Steps a second the hand and Automove take: the speed the run's arrows
+   * set (0 only while the hand is paused), no faster than research allows;
+   * the forest walks at least `FOREST_SPEED`. */
   get stepsPerSecond() {
-    return this.save.upgrades.moveSpeed ? Math.min(this.save.settings.speed, this.maxSpeed) : SETTINGS.speed.default;
+    const speed = Math.min(this.save.settings.speed, this.maxSpeed);
+    return this.run.outside ? Math.max(speed, FOREST_SPEED) : speed;
   }
   /** Focus uses a run starts with: none without the Focus skill, and more
    * with Focus Count research. */
@@ -934,7 +996,7 @@ export class Game {
     this.cardPlan = this.encounter ? null : plan;
     this.activeCard = card;
     this.handStuck = false;
-    this.auto = true;
+    this.playHand();
     this.message = this.cardMessage(id);
     return "focused";
   }
@@ -1014,7 +1076,8 @@ export class Game {
       this.dealHand();
     }
     this.slice.run = this.run;
-    this.auto = !outside && this.handStartsPlaying;
+    if (!outside && this.handStartsPlaying) this.playHand();
+    else this.auto = false;
     this.dropHandPlan();
     this.paused = false;
   }
@@ -1345,7 +1408,8 @@ export class Game {
     this.forgetLabyrinth();
     this.route = [];
     // Inside, the hand takes over from the player (or Automove).
-    this.auto = this.handStartsPlaying;
+    if (this.handStartsPlaying) this.playHand();
+    else this.auto = false;
     this.dropHandPlan();
     this.feedback(this.rules.words.enter);
     this.gemFinder.step();
@@ -1444,6 +1508,7 @@ export class Game {
     slice.best = Math.max(slice.best, reached);
     this.rules.credit(this.save, earned);
     slice.runCurrency += earned;
+    this.startSpeedLesson();
     return earned;
   }
   /** How the current mode differs from the other. */

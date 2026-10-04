@@ -236,7 +236,7 @@ The cards the player sets up before a run, in priority order, in four slots (fiv
 _Avoid_: loadout (what the character starts a run with)
 
 **Movement speed**:
-How many steps a second the hand (and Automove in the forest) takes. The player chooses it, from 1 to 3, once the Movement Speed skill is owned; Movement Speed research makes faster speeds available, up to 9.
+How many steps a second the hand (and Automove in the forest) takes. The player sets it inside a run with the arrows beside play/pause, from 0 (paused) to 3; Movement Speed research, which the Movement Speed skill opens, makes faster speeds available, up to 9. A new hero starts at 2; the forest walks at least 3.
 _Avoid_: Automove speed
 
 **Rush**:

@@ -6,7 +6,7 @@ import { CONSUMABLES, consumableText } from "../crafting.ts";
 import { outsideWeather } from "../outside.ts";
 import { tierNumeral, tierRewardText } from "../tiers.ts";
 import { MODES, milestones } from "../modes.ts";
-import { cardArt, CURRENCY_SPRITES, displayedProgress, el, ENTER_ICON, text, uiSprite } from "./dom.ts";
+import { cardArt, CURRENCY_SPRITES, displayedProgress, el, ENTER_ICON, POINTER_SVG, text, uiSprite } from "./dom.ts";
 import { CARDS, IN_PLACE, cardText, isSiphon, type CardId } from "../cards.ts";
 import { BADGES } from "../badges.ts";
 import { badgeStyle } from "./badge-token.ts";
@@ -195,7 +195,8 @@ const HAND_ICON = { play: "▶︎", pause: "❚❚" };
 
 /** Inside a run the button plays and pauses the hand, showing the play or
  * pause icon, with the hero's movement speed under it (*3x*: steps a
- * second); in the forest it is Enter, going straight in to start the run. */
+ * second) between the arrows that change it; in the forest it is Enter,
+ * going straight in to start the run. */
 function renderAutoButton(game: Game) {
   const button = el("auto"), inside = !game.run.outside;
   const label = inside ? (game.auto ? "Pause the hand" : "Play the hand") : "Enter";
@@ -207,12 +208,27 @@ function renderAutoButton(game: Game) {
     else slot.innerHTML = ENTER_ICON;
   }
   text("auto-state", inside ? (game.auto ? "PLAYING" : "PAUSED") : "ENTER");
-  const speed = el("auto-speed");
-  speed.hidden = !inside;
-  text("auto-speed", `${game.stepsPerSecond}x`);
+  renderSpeed(game, inside);
+  // The speed lesson waits on the › arrow, not on play.
+  (button as HTMLButtonElement).disabled = inside && game.teachesSpeed;
   button.classList.toggle("enabled", inside && game.auto);
   button.setAttribute("aria-label", label);
   button.title = label;
+}
+
+/** The speed under play/pause, between its arrows: ‹ closed at 0, › at the
+ * most research allows. While the speed lesson waits, a hand points up at
+ * ›, and ‹ stays closed. */
+function renderSpeed(game: Game, inside: boolean) {
+  const row = el("auto-speed"), steps = game.stepsPerSecond, lesson = inside && game.teachesSpeed;
+  row.hidden = !inside;
+  text("speed-value", `${steps}x`);
+  (el("speed-down") as HTMLButtonElement).disabled = steps <= 0 || lesson;
+  (el("speed-up") as HTMLButtonElement).disabled = steps >= game.maxSpeed;
+  let pointer = row.querySelector<HTMLElement>(".speed-pointer");
+  if (lesson && !pointer) {
+    row.insertAdjacentHTML("beforeend", `<span class="speed-pointer${game.save.settings.reduceMotion ? " still" : ""}">${POINTER_SVG}</span>`);
+  } else if (!lesson) pointer?.remove();
 }
 
 /** The hand (and its badges) the cards were last drawn for. */
