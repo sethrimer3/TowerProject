@@ -187,7 +187,7 @@ test("stopping a rank gives its Gold back and its time spent as credit, which th
   assert.deepEqual(bad.trainingJobs, []);
 });
 
-test("a Gem reset returns the points, the Gold and the trainers' time as credit", () => {
+test("a Gem reset returns the points, the Gold, and all the stat's training time to the time bank", () => {
   const { g, wait } = game();
   g.save.gems = 2;
   assert.ok(g.training.train("hp"));
@@ -202,7 +202,9 @@ test("a Gem reset returns the points, the Gold and the trainers' time as credit"
   assert.deepEqual(g.save.trainingJobs, [], "the rank in training stops");
   assert.equal(trainingPoints(g.save).left, points + 1);
   assert.equal(g.save.gold, 10_000);
-  assert.equal(g.save.trainingCredit.hp, 15_000 + 40_000, "the 15 s trained, and the 40 s of the stopped rank");
+  assert.equal(g.save.trainingBank, 15_000 + 40_000, "the 15 s trained, and the 40 s of the stopped rank");
+  assert.equal(g.save.trainingCredit.hp, 0, "none left as the stat's own credit");
+  assert.equal(decode(JSON.stringify(g.save)).trainingBank, g.save.trainingBank, "saved");
   assert.deepEqual(decode(JSON.stringify(g.save)).trainingCredit, g.save.trainingCredit);
   assert.equal(decode(JSON.stringify({ ...g.save, trainingCredit: 5 })).trainingCredit.hp, 0, "an old single credit is dropped");
 });
@@ -283,4 +285,29 @@ test("auto-continue chains ranks done while away, and is saved", () => {
   assert.equal(g.save.trainingJobs[0].startedAt, g.clock() - 10 * 1000, "the third started when the second was done");
   assert.deepEqual(decode(JSON.stringify(g.save)).trainingAuto, ["hp"]);
   assert.deepEqual(decode(JSON.stringify({ ...g.save, trainingAuto: ["nope", "hp", 3] })).trainingAuto, ["hp"]);
+});
+
+test("the time bank serves any stat, after that stat's own time credit", () => {
+  const { g, wait } = game();
+  g.save.gems = 2;
+  g.save.trainerRanks.attack = 4; // a 15-minute rank
+  g.save.trainingCredit.attack = 5 * 60_000;
+  g.save.trainingCredit.hp = 60 * 60_000;
+  assert.ok(g.training.trainWithGold("attack"));
+  wait(60);
+  assert.ok(g.training.reset("attack"), "its credit and the minute spent go to the bank");
+  assert.equal(g.save.trainingBank, 6 * 60_000);
+  assert.equal(g.save.trainingCredit.attack, 0);
+  // DEF has no credit of its own: the bank pays its first two ranks
+  // (15 s and 1 min) and part of the third (5 min).
+  g.save.training.defense = g.save.trainerRanks.defense = 2;
+  g.save.trainingCredit.defense = 60_000;
+  assert.equal(g.training.toNextRank("defense"), 0, "its credit, then the bank, cover the 5 minutes");
+  assert.ok(g.training.trainWithGold("defense"));
+  assert.equal(g.save.training.defense, 3, "counted at once");
+  assert.equal(g.save.trainingCredit.defense, 0, "its own credit used first");
+  assert.equal(g.save.trainingBank, 2 * 60_000, "then 4 minutes of the bank");
+  // Max HP's own credit covers its rank, leaving the bank alone.
+  assert.ok(g.training.trainWithGold("hp"));
+  assert.equal(g.save.trainingBank, 2 * 60_000);
 });

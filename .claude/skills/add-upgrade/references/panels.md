@@ -63,7 +63,7 @@ Hero stats bought with training points (`TRAINING_PER_LEVEL` per hero level) at 
 
 **Run training:** every row is also sold for Silver inside a run (`run-training.ts`). Give it a price schedule in `RUN_TRAINING_PRICES` (`config.ts`: `cheap`, base 5 and +1+N, +4+N … every five ranks, for a row open from the start; `opened`, base 10 and +2+N, +5+N …, for one a skill opens; `deep`, base 20 and +4+N, +8+N …, for one a deeper skill opens; a dearer row gets its own `{ base, step, growth }`). A stat row then works with nothing more; a row without `stat` needs its run ranks read where it acts (through `ranksInRun`, as `game.trainingNow` does for Potion % and Revive, and `trainInRun` for Find Potion), and its value in `runTrainingValue`.
 
-**Reset:** every row gets a reset button for free: `game.training.reset` spends `TRAINING_RESET_GEMS` Gems (`gems.ts`) to set its ranks to 0 and returns what its ranks were paid with (`save.trainingPaid`: points, Gold, and trainers' time as time credit), so a new row needs nothing for it.
+**Reset:** every row gets a reset button for free: `game.training.reset` spends `TRAINING_RESET_GEMS` Gems (`gems.ts`) to set its ranks to 0 and returns what its ranks were paid with (`save.trainingPaid`: points, Gold, and trainers' time into the shared time bank, `save.trainingBank`), so a new row needs nothing for it.
 
 **Auto-continue:** every row also gets an auto-continue box for free (`save.trainingAuto`): when its trainer finishes a rank, `game.training.settle` starts the next if the Gold is there, so a new row needs nothing for it.
 

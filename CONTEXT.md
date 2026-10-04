@@ -98,8 +98,12 @@ Who trains a rank for Gold, over time, instead of training points, on each stat'
 _Avoid_: training slot, archivist (who does research)
 
 **Time credit**:
-Training time given back to a stat when its trainer's rank is stopped (by hand, or by buying the rank with training points) or the stat is reset: that stat's next ranks trainers train start that far along, until it is used up. Each stat keeps its own.
+Training time given back to a stat when its trainer's rank is stopped (by hand, or by buying the rank with training points): that stat's next ranks trainers train start that far along, until it is used up. Each stat keeps its own.
 _Avoid_: banked time, refund time
+
+**Time bank**:
+Training time a Gem reset returns: all the time spent on the reset stat (its trainers' ranks, a rank in training, and its time credit). Any stat's next ranks trainers train use it, after that stat's own time credit, until it is used up.
+_Avoid_: common credit, time pool
 
 **Training boost**:
 An hour of ranks in training going twice as fast, claimed from the Training tab (by an ad, to come), up to four hours banked.

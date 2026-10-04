@@ -78,13 +78,15 @@ export class TrainingDesk {
   }
 
   /** Pays `gold` and starts a trainer on the next rank of `id` at `now`,
-   * its time less the stat's time credit (used up first). */
+   * its time less the stat's time credit, then the time bank (each used
+   * up first). */
   private start(id: TrainingId, gold: number, now: number) {
     const save = this.save, ms = trainingMs(save.trainerRanks[id], trainingSpeed(save)),
-      credit = Math.min(ms, save.trainingCredit[id]);
+      credit = Math.min(ms, save.trainingCredit[id]), bank = Math.min(ms - credit, save.trainingBank);
     save.gold = snap(save.gold - gold);
     save.trainingCredit[id] -= credit;
-    save.trainingJobs.push({ id, startedAt: now, completesAt: doneAt(ms - credit, save.trainingBoostUntil, now), gold, ms });
+    save.trainingBank -= bank;
+    save.trainingJobs.push({ id, startedAt: now, completesAt: doneAt(ms - credit - bank, save.trainingBoostUntil, now), gold, ms });
   }
 
   /** Whether `id`'s trainer starts its next rank as soon as one is done. */
@@ -119,10 +121,10 @@ export class TrainingDesk {
 
   /** The training time (ms, at the normal rate) the next rank of `id`
    * still needs: what is left of the rank in training, or else the next
-   * rank's whole time less the stat's time credit. */
+   * rank's whole time less the stat's time credit and the time bank. */
   toNextRank(id: TrainingId) {
     if (trainingJob(this.save.trainingJobs, id)) return this.left(id);
-    return Math.max(0, trainingMs(this.save.trainerRanks[id], trainingSpeed(this.save)) - this.save.trainingCredit[id]);
+    return Math.max(0, trainingMs(this.save.trainerRanks[id], trainingSpeed(this.save)) - this.save.trainingCredit[id] - this.save.trainingBank);
   }
 
   /** Stops the training of `id`, giving its Gold back and the time already
@@ -229,8 +231,9 @@ export class TrainingDesk {
 
   /** Resets a Training stat to no ranks for `TRAINING_RESET_GEMS` Gems
    * (none with Dev free purchases), returning what its ranks were paid
-   * with: the training points, the Gold, and the trainers' time as the
-   * stat's time credit. A rank still in training is stopped, the same way. */
+   * with: the training points, the Gold, and all the training time spent
+   * on the stat (its trainers' ranks, the rank in training, and its time
+   * credit) into the time bank, which any stat's next ranks use. */
   reset(id: TrainingId) {
     this.settle();
     const save = this.save, job = trainingJob(save.trainingJobs, id);
@@ -241,7 +244,8 @@ export class TrainingDesk {
       if (!this.host.free) save.gems -= TRAINING_RESET_GEMS;
       if (job) this.refund(job);
       save.gold = snap(save.gold + paid.gold);
-      save.trainingCredit[id] += paid.ms;
+      save.trainingBank += paid.ms + save.trainingCredit[id];
+      save.trainingCredit[id] = 0;
       save.trainingPaid[id] = { points: 0, gold: 0, ms: 0 };
       save.training[id] = 0;
       save.trainerRanks[id] = 0;

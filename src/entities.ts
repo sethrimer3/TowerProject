@@ -227,6 +227,9 @@ export type Save = {
    * in training was stopped (by hand, or bought with points) or the stat
    * reset, taken off that stat's next ranks until it is used up. */
   trainingCredit: Record<TrainingId, number>;
+  /** The time bank: training time (ms) a Gem reset returned, taken off any
+   * stat's next ranks (after that stat's own time credit) until used up. */
+  trainingBank: number;
   /** When the training boost (ranks in training go twice as fast) runs
    * out, as a wall-clock timestamp (ms). */
   trainingBoostUntil: number;

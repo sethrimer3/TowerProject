@@ -2029,8 +2029,9 @@ button.training-cost:disabled .gold-icon, button.training-cost:disabled .points-
 .points-icon, .clock-icon, .ad-icon { width: 14px; height: 14px; vertical-align: -2px; flex-shrink: 0; }
 .ui-sprite.gold-icon { width: 14px; height: 14px; vertical-align: -2px; image-rendering: pixelated; flex-shrink: 0; }
 .training-points small .points-icon, .training-points small .gold-icon { width: 11px; height: 11px; }
-.training-held { display: inline-flex; align-items: center; gap: 4px; margin-right: 10px; }
-.training-held .points-icon { width: 16px; height: 16px; }
+.training-held, .training-bank { display: inline-flex; align-items: center; gap: 4px; margin-right: 10px; }
+.training-held .points-icon, .training-bank .clock-icon { width: 16px; height: 16px; }
+.training-bank b { color: #e9e1c8; font-size: 13px; }
 .training-currency .points-icon { width: 15px; height: 15px; }
 /* The training boost: ×2, its time left, and the ad button. */
 .training-boost { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; padding: 5px 6px 5px 10px; border: 1px solid #4a5566; border-radius: 9px; background: #111925; }

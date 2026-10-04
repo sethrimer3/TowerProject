@@ -227,7 +227,7 @@ export class SkillTreePage {
     const back = this.resetReturns(id);
     modal.innerHTML = `<small>TRAINING</small><h2>Reset ${row.name}?</h2>
       <p>Spend ${TRAINING_RESET_GEMS} Gems to reset ${row.name} to no ranks${job ? " and stop the rank in training" : ""}, from ${ranks} ${ranks === 1 ? "rank" : "ranks"}.</p>
-      ${back ? `<p class="reset-back">Returns ${back}</p><p class="hint">Time credit is taken off ${row.name}'s next ranks trainers train.</p>` : ""}
+      ${back ? `<p class="reset-back">Returns ${back}</p><p class="hint">The time goes to the time bank, taken off any stat's next ranks trainers train.</p>` : ""}
       <p class="hint reset-gems">${gemIcon()} You hold ${game.save.gems} Gems.</p>
       <div class="dialog-actions"><button id="cancel">Cancel</button><button id="confirm">Reset · ${TRAINING_RESET_GEMS} Gems</button></div>`;
     modal.showModal();
@@ -239,10 +239,12 @@ export class SkillTreePage {
   }
 
   /** What resetting `id` gives back: the training points, the Gold (a rank
-   * in training's too) and the trainers' time, as the dialog shows them. */
+   * in training's too) and all the training time spent on it (its trainers'
+   * ranks, the rank in training and its time credit), as the dialog shows
+   * them. */
   private resetReturns(id: TrainingId) {
     const game = this.ctx.game, paid = game.save.trainingPaid[id], job = trainingJob(game.save.trainingJobs, id);
-    const gold = paid.gold + (job?.gold ?? 0), time = paid.ms + (job ? Math.max(0, job.ms - game.training.left(id)) : 0);
+    const gold = paid.gold + (job?.gold ?? 0), time = paid.ms + game.save.trainingCredit[id] + (job ? Math.max(0, job.ms - game.training.left(id)) : 0);
     return [
       paid.points ? `${pointsIcon()} <b>${paid.points}</b>` : "",
       gold ? `${goldIcon()} <b>${whole(gold)}</b>` : "",
@@ -262,9 +264,12 @@ export class SkillTreePage {
       const open = TRAINING.filter(t => t.group === group && trainingOpen(t, save.upgrades));
       return open.length ? `<h4 class="training-group">${name}</h4>${open.map(row).join("")}` : "";
     }).join("");
+    const bank = save.trainingBank > 0
+      ? `<span class="training-bank" title="Time bank: taken off any stat's next ranks trainers train, after its own time credit">${clockIcon()} <b id="training-bank">${formatDuration(save.trainingBank)}</b></span>`
+      : "";
     return `<section class="training"><canvas class="training-particles" aria-hidden="true"></canvas><header class="tree-heading"><h3>Training</h3></header>
       ${hired ? this.boostHtml() : ""}
-      <p class="training-points"><span class="training-held" title="Training points">${pointsIcon()} <b id="training-points">${points.left}</b></span><small>${hired ? `Level up with ${pointsIcon()} or pay ${goldIcon()} to a trainer` : `Each level earns ${TRAINING_PER_LEVEL} ${pointsIcon()}`}</small></p>
+      <p class="training-points"><span class="training-held" title="Training points">${pointsIcon()} <b id="training-points">${points.left}</b></span>${bank}<small>${hired ? `Level up with ${pointsIcon()} or pay ${goldIcon()} to a trainer` : `Each level earns ${TRAINING_PER_LEVEL} ${pointsIcon()}`}</small></p>
       ${hired ? `<p class="training-points training-slots">Trainers: <b id="training-slots">${save.trainingJobs.length} / ${slots}</b> ${this.trainerButton()}</p>` : ""}
       <div class="training-table" role="list" aria-label="Stat training">${rows}</div></section>`;
   }
@@ -316,10 +321,11 @@ export class SkillTreePage {
    * trainer gave back over each: the Gold over the currencies bar's, the
    * time over its row's time to the next rank. */
   private refundWatch() {
-    const save = this.ctx.game.save, gold = save.gold, credit = { ...save.trainingCredit };
+    const save = this.ctx.game.save, gold = save.gold, credit = { ...save.trainingCredit }, bank = save.trainingBank;
     return () => {
       const back = whole(save.gold - gold);
       if (back > 0) riseFrom(el("gold-held"), `${goldIcon()} +${back}`);
+      if (save.trainingBank > bank) riseFrom(document.getElementById("training-bank"), `${clockIcon()} +${formatDuration(save.trainingBank - bank)}`);
       for (const t of TRAINING) {
         const time = save.trainingCredit[t.id] - credit[t.id];
         if (time > 0) riseFrom(document.querySelector<HTMLElement>(`[data-training-left="${t.id}"]`), `${clockIcon()} +${formatDuration(time)}`);
