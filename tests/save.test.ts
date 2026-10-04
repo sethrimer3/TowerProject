@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { decode, defaults } from "../src/save.ts";
 import { BASE_HAND } from "../src/cards.ts";
+import { defaultEquipment } from "../src/equipment/inventory.ts";
 
 // Characterization corpus for decode(): every field path of several base saves
 // is replaced by hostile values, and each decoded result is hashed against a
@@ -68,12 +69,16 @@ const v3 = () => ({
   delve: { ...mode(delveRun), courage: 33, memory: { known: { "1,2": true, "4,5": true }, visited: { "1,2": 3 } } },
   goals: { claimed: { "1": [10, 20] }, premium: { "1": [10] }, mastered: { "1": [10, 20] }, cleared: { "1": [10, 110] } },
   materials: { ...defaults().materials },
-  equipmentInventory: [{
-    id: "e1", slot: "weapon", name: "Blade", metal: "steel",
-    flatAttack: 3, flatDefense: 0, flatMaxHp: 0, percentAttack: 0.1, percentDefense: 0, percentMaxHp: 0,
-    baseRecipe: [], enhancements: [], createdAt: 1700000000000,
-  }],
-  equipped: { weapon: "e1", armor: "missing" },
+  equipment: {
+    ...defaultEquipment(), unlocked: true, seen: true, nextId: 3,
+    items: [
+      { id: "e1", def: "knightsSword", rarity: "uncommon", level: 7, spent: { gold: 840, material: 14 } },
+      { id: "e2", def: "ringOfFury", rarity: "rare", level: 1, locked: true },
+    ],
+    equipped: { tower: { weapon: "e1", armor: "missing" }, delve: { weapon: "e1", ring: "e2" } },
+    materials: { ...defaultEquipment().materials, whetstone: 12, amber: 3 },
+    pity: { ...defaultEquipment().pity, ring: 41 },
+  },
   consumables: { ...defaults().consumables },
 });
 // Each base mutates only the subtrees where it behaves differently, keeping the
@@ -132,12 +137,16 @@ const EDGES: [string, unknown[]][] = [
   ["gold", [1e9, 1e9 + 1]],
   ["provisions.heal", [999, 1000]],
   ["upgrades.undos", [0, 5, 99]],
-  ["equipmentInventory.0.percentAttack", [10, 11]],
-  ["equipmentInventory.0.flatAttack", [9999, 10000]],
-  ["equipmentInventory.0.metal", ["iron", "voidsteel", "tin"]],
-  ["equipmentInventory.0.id", ["", "x".repeat(100)]],
-  ["equipmentInventory.0.baseRecipe", [[{ id: "nope", quantity: 1 }], [{ id: "ironBar", quantity: 1000 }], [{ id: "ironBar", quantity: 999 }]]],
-  ["equipped.weapon", ["e2"]],
+  ["equipment.items.0.level", [0, 40, 41, 2.5]],
+  ["equipment.items.0.def", ["nope", "kingsbane"]],
+  ["equipment.items.0.rarity", ["epic", "common"]],
+  ["equipment.items.0.id", ["", "x1", "e2"]],
+  ["equipment.items.0.spent.gold", [-1, 1.5]],
+  ["equipment.equipped.tower.weapon", ["e2", "e9"]],
+  ["equipment.equipped.delve.ring", ["e1"]],
+  ["equipment.pity.ring", [99, 100, -1, 3.5]],
+  ["equipment.materials.amber", [-5, 1.5]],
+  ["equipment.nextId", [0, 2]],
   ["outside:tower.run.player.y", [11, 12]],
   ["outside:tower.run.floor", [1]],
   ["outside:tower.run.height", [1]],
@@ -215,7 +224,9 @@ test("decode keeps a valid v3 save's progress and clamps settings", () => {
   assert.deepEqual([d.goals.mastered, d.goals.cleared], [{ 1: [10, 20] }, { 1: [10, 110] }]);
   assert.deepEqual(d.tower.run?.changes["4,5"], { kind: "reward", tier: "silver" });
   assert.ok(!("rewards" in d.tower.run!));
-  assert.deepEqual(d.equipped, { weapon: "e1" });
+  assert.deepEqual(d.equipment.equipped, { tower: { weapon: "e1" }, delve: { weapon: "e1", ring: "e2" } });
+  assert.deepEqual(d.equipment.items.map((i) => [i.id, i.level, !!i.locked]), [["e1", 7, false], ["e2", 1, true]]);
+  assert.equal(d.equipment.pity.ring, 41);
 });
 
 test("decode migrates v1 saves into the Delve slice and legacy settings", () => {
@@ -241,7 +252,7 @@ test("a malformed run.floors drops only that run, not the rest of the save", () 
   assert.equal(d.tower.run, null);
   assert.equal(d.gold, 120.7);
   assert.equal(d.delve.run?.seed, 1234);
-  assert.equal(d.equipmentInventory.length, 1);
+  assert.equal(d.equipment.items.length, 2);
 });
 
 test("decode rejects runs that break player invariants", () => {

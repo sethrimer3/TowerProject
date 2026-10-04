@@ -1,0 +1,253 @@
+# Equipment
+
+**Status:** Implemented. This is the design source of truth for Equipment; the code lives in `src/equipment/` (static data in `catalog.ts`, every balance number in `balance.ts`). It supersedes the crafted equipment of `CRAFTING_AND_EQUIPMENT.md` (sections 6 to 11), which was never opened to players and has been removed.
+
+**Every number on this page is a tunable starting value**, chosen to sit beside the game's existing stats at floor 60 and to be retuned after playtesting. Changing one is a one-line edit in `balance.ts` or `catalog.ts`; saves name items only by definition id, rarity and level, so retuning never breaks a save (an item's level over a lowered cap comes down to the cap on load).
+
+## 1. Unlock
+
+- Equipment opens the first time the hero's best reaches **floor 60** (`EQUIPMENT_FLOOR`) in either mode: Tower floor 60, or Delve depth 590 (equivalent floor 60), in any tier. Saves already past it open it on load.
+- The moment it opens inside a run, a golden burst reads *EQUIPMENT UNLOCKED · A Blacksmith opens in the forest*, and the status line says so. Back in the forest, a dialog explains it once and offers to visit the Blacksmith.
+- From then on the **Blacksmith** stands in the forest clearing, up and left of the path (a stone forge with a red banner bearing a breastplate). Tapping it opens the Equipment screen. Before the unlock it isn't there at all.
+- The Gear tab opens with Equipment even without the Gear skill (only its Equipment tab then), and wears a dot until the Equipment screen is first seen.
+- Bosses drop equipment, and every enemy drops upgrade materials, only once Equipment is open.
+
+## 2. Loadouts
+
+The **inventory is shared**; each mode's hero has its **own loadout** (`save.equipment.equipped.tower` and `.delve`). A piece may be worn in both. The Equipped view switches between the two and can copy one onto the other. Each loadout wears one piece of each category.
+
+What a loadout does is never written into the hero's stats: `loadout(save, mode)` works it out from what is worn now, and a change while a run is inside shifts that run by exactly the difference (`changeLoadout`). Equipping, unequipping, leveling, merging, reloading and switching modes therefore never count a bonus twice. Starting keys from equipment are handed out only as a run starts, so equipping and unequipping inside a run can't mint keys.
+
+## 3. Categories and materials
+
+Each category levels with its own upgrade material. Materials are currencies (`save.equipment.materials`), not inventory pieces.
+
+| Category | Role | Material | Material theme |
+|---|---|---|---|
+| Weapon | Offense: ATK, boss fights and what kills pay | Whetstone | A fine-grit stone that hones every edge. |
+| Chestplate | Defense: DEF, max HP and sustain | Iron Rivets | Rivets and plate scraps, hammered into armor. |
+| Helmet | The first blow: shroud, and what each fight teaches | Quilted Padding | Thick lining that softens the first blow. |
+| Gloves | Handling: ATK, keys and potions | Tanned Leather | Supple hide for a sure grip. |
+| Boots | Movement: speed, Rush and fresh floors | Hobnails | Iron studs for sure footing on worn stone. |
+| Cape | Fortune: Gold, Silver and materials | Spun Silk | Fine thread that catches the light, and the luck. |
+| Belt | Provisions: potions, max HP and Silver | Brass Buckles | Clasps that keep provisions close at hand. |
+| Ring | Power: percentages of ATK, DEF and max HP | Moonstone | A pale stone that holds a quiet charge. |
+| Amulet | Life: max HP, regeneration and healing | Amber | Warm resin around a trapped spark of life. |
+
+Each category's icon, each material's icon, and the dismantle (hammer), merge (three arrows into one), level up (arrow) and lock icons are 12 × 12 pixel art drawn as inline SVG (`ui/equipment-icons.ts`).
+
+## 4. Rarity
+
+Rarity always shows as a word and a letter mark (C, U, R) beside its colour, and its border thickens with it, so it never depends on colour alone. Powers and colours come from the Shop's rarity table (`shop/rarity.ts`), so Epic and above can be added as rows later.
+
+| Rarity | Mark | Power (every scaling line ×) | Max level | Merge | Dismantle returns |
+|---|---|---:|---:|---|---:|
+| Common | C | 1 | 20 | 3 → 1 Uncommon | 5 |
+| Uncommon | U | 1.25 | 40 | 3 → 1 Rare | 20 |
+| Rare | R | 1.6 | 60 | top (for now) | 75 |
+
+A Unique piece dismantles for twice its rarity's amount (`UNIQUE_SALVAGE`), since it was bought with Gems.
+
+Higher rarity raises the power of every line, opens the lines marked for it (each Unique opens one at Uncommon and one at Rare; Standard pieces too), and raises the level cap.
+
+## 5. Effects
+
+Each line of an item is `(base + perLevel × (level − 1)) × rarity power`, kept on the game's snap grid (millionths); a *fixed* line ignores both (Bloodprice Blade's drawback). Keys and Rush tiles count whole units only (rounded down). All effects are deterministic: no random rolls, affixes, dodge or crits.
+
+| Effect | Read by |
+|---|---|
+| ATK, DEF, max HP (flat, then percent of the total) | `loadout` (flat after training, percent of that, then provisions) |
+| Shroud, Regen | `loadout` |
+| Yellow / blue keys each run | `startingHero` (only as a run starts) |
+| ATK against bosses | `attackAgainst` in `combat.ts` (bosses and Greater Bosses) |
+| HP from potions | `Game.stepRules` (raises the Potion HP percent) |
+| Max HP healed after each victory | `StepRules.victoryHeal` → `healAfterVictory` in `step-effects.ts` |
+| Max HP healed on each new floor | `Game.floorHeal` (a Tower floor first reached, each new Delve equivalent floor) |
+| Gold / Silver found | `RunPurse.gold` / `RunPurse.silver` |
+| XP from kills | `Game.gainXp` |
+| Upgrade materials from kills, boss equipment drop chance | `RunPurse.enemyLoot` |
+| Silver at the start of each run | `Game.dealHand` (beside Pocket Money) |
+| Movement speed | `Game.moveRate` (the hand's and Automove's steps a second) |
+| Tiles a Rush crosses | `Game.rushTiles` (also lets the hand rush without the Rush skill) |
+
+A line marked *(Tower only)* or *(Delve only)* counts only in that mode's loadout. Effects stack lightly across categories (a ring's ATK % multiplies the weapon's flat ATK, two heals both heal); there are no set bonuses.
+
+## 6. Catalogue
+
+Each category has one **Standard** piece (from bosses) and three **Unique** pieces (from Gem pulls only), each with a distinct identity. Values below are at level 1; *Growth* is each line's per-level gain, in order, before the rarity's power.
+
+### Weapons
+
+| Piece | Class | Identity | Common, level 1 | Uncommon, level 1 | Rare, level 1 | Growth a level (each line, before rarity) |
+|---|---|---|---|---|---|---|
+| Knight's Sword | Standard | Reliable raw ATK | +3 ATK | +3.75 ATK; +2.5% ATK | +4.8 ATK; +3.2% ATK; +1.6 DEF | 0.5 / 0.1 / 0.25 |
+| Kingsbane | Unique | Boss slayer: hits bosses harder and shakes loose more equipment | +2 ATK; +10% ATK against bosses | +2.5 ATK; +12.5% ATK against bosses; +1.88% ATK | +3.2 ATK; +16% ATK against bosses; +2.4% ATK; +8% boss equipment drop chance | 0.3 / 0.25 / 0.08 / 0.1 |
+| Reaper's Scythe | Unique | Clears floors for profit: more XP and Silver from every kill | +2 ATK; +5% XP from kills | +2.5 ATK; +6.25% XP from kills; +6.25% Silver found | +3.2 ATK; +8% XP from kills; +8% Silver found; 0.8% of max HP healed after each victory | 0.3 / 0.2 / 0.2 / 0.01 |
+| Bloodprice Blade | Unique | High risk: the most ATK of any weapon, paid for in max HP | +8% ATK; −10% max HP | +10% ATK; −10% max HP; +3.75 ATK | +12.8% ATK; −10% max HP; +4.8 ATK; 2.4% of max HP healed after each victory | 0.2 / fixed / 0.5 / 0.03 |
+
+### Chestplates
+
+| Piece | Class | Identity | Common, level 1 | Uncommon, level 1 | Rare, level 1 | Growth a level (each line, before rarity) |
+|---|---|---|---|---|---|---|
+| Steel Cuirass | Standard | Reliable raw DEF | +2 DEF | +2.5 DEF; +2.5% DEF | +3.2 DEF; +3.2% DEF; +32 max HP | 0.4 / 0.1 / 4 |
+| Bastion Plate | Unique | Raw defense: DEF, more DEF, then a shroud for the first blows | +3 DEF | +3.75 DEF; +3.75% DEF | +4.8 DEF; +4.8% DEF; +8 shroud (damage blocked each fight) | 0.5 / 0.12 / 1 |
+| Giant's Hauberk | Unique | A deep pool of HP to outlast long fights | +30 max HP | +37.5 max HP; +5% max HP | +48 max HP; +6.4% max HP; +3.2 DEF | 6 / 0.12 / 0.3 |
+| Verdant Mail | Unique | Sustain: regains HP as the hero walks and climbs | +0.5 HP regained each step; +1 DEF | +0.63 HP regained each step; +1.25 DEF; 2.5% of max HP healed on each new floor | +0.8 HP regained each step; +1.6 DEF; 3.2% of max HP healed on each new floor; 1.6% of max HP healed after each victory | 0.05 / 0.2 / 0.05 / 0.02 |
+
+### Helmets
+
+| Piece | Class | Identity | Common, level 1 | Uncommon, level 1 | Rare, level 1 | Growth a level (each line, before rarity) |
+|---|---|---|---|---|---|---|
+| Iron Helm | Standard | Reliable max HP and DEF | +15 max HP | +18.75 max HP; +1.25 DEF | +24 max HP; +1.6 DEF; +4.8 shroud (damage blocked each fight) | 3 / 0.25 / 0.5 |
+| Sentinel's Visor | Unique | Blocks the first blows of every fight | +6 shroud (damage blocked each fight) | +7.5 shroud (damage blocked each fight); +2.5% DEF | +9.6 shroud (damage blocked each fight); +3.2% DEF; +4.8% max HP | 1.2 / 0.08 / 0.1 |
+| Scholar's Circlet | Unique | Levels the hero faster, for more training points | +8% XP from kills | +10% XP from kills; +18.75 max HP | +12.8% XP from kills; +24 max HP; +8% Silver found | 0.3 / 3 / 0.2 |
+| Miner's Helm | Unique | Made for the Delve: heals on new floors and digs up more there | +10 max HP; 3% of max HP healed on each new floor (Delve only) | +12.5 max HP; 3.75% of max HP healed on each new floor (Delve only); +12.5% XP from kills (Delve only) | +16 max HP; 4.8% of max HP healed on each new floor (Delve only); +16% XP from kills (Delve only); +16% upgrade materials from kills (Delve only) | 2 / 0.06 / 0.3 / 0.3 |
+
+### Gloves
+
+| Piece | Class | Identity | Common, level 1 | Uncommon, level 1 | Rare, level 1 | Growth a level (each line, before rarity) |
+|---|---|---|---|---|---|---|
+| Leather Gauntlets | Standard | Reliable ATK and DEF | +2 ATK | +2.5 ATK; +1.25 DEF | +3.2 ATK; +1.6 DEF; +3.2% ATK | 0.3 / 0.2 / 0.08 |
+| Brawler's Wraps | Unique | More ATK, and a little life back from every win | +3 ATK | +3.75 ATK; +3.75% ATK | +4.8 ATK; +4.8% ATK; 0.8% of max HP healed after each victory | 0.45 / 0.1 / 0.02 |
+| Locksmith's Gloves | Unique | Keys: starts every run with spare yellow keys | +1 yellow key each run | +1 yellow key each run; +1.25 DEF | +1 yellow key each run; +1.6 DEF; +1 blue key each run | 0.04 / 0.2 / fixed |
+| Alchemist's Gloves | Unique | Potions: every potion heals more | +10% HP from potions | +12.5% HP from potions; +12.5 max HP | +16% HP from potions; +16 max HP; +0.48 HP regained each step | 0.4 / 2 / 0.03 |
+
+### Boots
+
+| Piece | Class | Identity | Common, level 1 | Uncommon, level 1 | Rare, level 1 | Growth a level (each line, before rarity) |
+|---|---|---|---|---|---|---|
+| Traveler's Boots | Standard | Reliable DEF and a little speed | +1 DEF | +1.25 DEF; +6.25% movement speed | +1.6 DEF; +8% movement speed; +24 max HP | 0.25 / 0.15 / 3 |
+| Fleetstep Boots | Unique | Raw speed: the hand walks faster everywhere | +10% movement speed | +12.5% movement speed; +1.25 DEF | +16% movement speed; +1.6 DEF; +1 tile a Rush crosses | 0.4 / 0.2 / fixed |
+| Pathfinder's Treads | Unique | Automation: each Rush crosses more empty floor | +1 tile a Rush crosses | +1 tile a Rush crosses; +6.25% movement speed | +1 tile a Rush crosses; +8% movement speed; 1.6% of max HP healed on each new floor | 0.05 / 0.2 / 0.03 |
+| Delver's Greaves | Unique | Made for the Delve: faster, and healed by each new depth | +15% movement speed (Delve only); 2% of max HP healed on each new floor (Delve only) | +18.75% movement speed (Delve only); 2.5% of max HP healed on each new floor (Delve only); +6.25% Gold found (Delve only) | +24% movement speed (Delve only); 3.2% of max HP healed on each new floor (Delve only); +8% Gold found (Delve only); +1 tile a Rush crosses (Delve only) | 0.5 / 0.05 / 0.2 / 0.03 |
+
+### Capes
+
+| Piece | Class | Identity | Common, level 1 | Uncommon, level 1 | Rare, level 1 | Growth a level (each line, before rarity) |
+|---|---|---|---|---|---|---|
+| Wool Cloak | Standard | Reliable max HP and a little DEF | +10 max HP | +12.5 max HP; +1.25 DEF | +16 max HP; +1.6 DEF; +4.8% Gold found | 2 / 0.2 / 0.1 |
+| Magpie's Mantle | Unique | Wealth: more Gold, then Silver, from everything found | +8% Gold found | +10% Gold found; +6.25% Silver found | +12.8% Gold found; +8% Silver found; +16 Silver at the start of each run | 0.3 / 0.2 / 1 |
+| Gatherer's Shroud | Unique | Materials: more upgrade materials, and more boss drops | +10% upgrade materials from kills | +12.5% upgrade materials from kills; +2.5% boss equipment drop chance | +16% upgrade materials from kills; +3.2% boss equipment drop chance; +6.4% Gold found | 0.4 / 0.05 / 0.1 |
+| Pilgrim's Cape | Unique | A steady climb: heals on every new floor | 3% of max HP healed on each new floor | 3.75% of max HP healed on each new floor; +6.25% HP from potions | 4.8% of max HP healed on each new floor; +8% HP from potions; +4.8% max HP | 0.08 / 0.2 / 0.08 |
+
+### Belts
+
+| Piece | Class | Identity | Common, level 1 | Uncommon, level 1 | Rare, level 1 | Growth a level (each line, before rarity) |
+|---|---|---|---|---|---|---|
+| Leather Belt | Standard | Reliable max HP | +20 max HP | +25 max HP; +6.25% HP from potions | +32 max HP; +8% HP from potions; +1.6 DEF | 4 / 0.2 / 0.25 |
+| Provisioner's Belt | Unique | Potions: the strongest potion bonus | +15% HP from potions | +18.75% HP from potions; +6.25 Silver at the start of each run | +24% HP from potions; +8 Silver at the start of each run; +0.48 HP regained each step | 0.5 / 0.5 / 0.04 |
+| Champion's Girdle | Unique | Max HP that grows with everything else | +4% max HP | +5% max HP; +25 max HP | +6.4% max HP; +32 max HP; +4.8 shroud (damage blocked each fight) | 0.12 / 4 / 0.6 |
+| Merchant's Sash | Unique | Silver: buys run training from the first floor | +15 Silver at the start of each run | +18.75 Silver at the start of each run; +6.25% Silver found | +24 Silver at the start of each run; +8% Silver found; +4.8% Gold found | 1.5 / 0.2 / 0.1 |
+
+### Rings
+
+| Piece | Class | Identity | Common, level 1 | Uncommon, level 1 | Rare, level 1 | Growth a level (each line, before rarity) |
+|---|---|---|---|---|---|---|
+| Silver Band | Standard | A little of every percentage | +1.5% ATK | +1.88% ATK; +1.88% DEF | +2.4% ATK; +2.4% DEF; +2.4% max HP | 0.06 / 0.06 / 0.06 |
+| Ring of Fury | Unique | Offense in percent: scales with every point of ATK | +3% ATK | +3.75% ATK; +5% ATK against bosses | +4.8% ATK; +6.4% ATK against bosses; 0.8% of max HP healed after each victory | 0.1 / 0.15 / 0.01 |
+| Ring of Warding | Unique | Defense in percent: scales with every point of DEF | +3% DEF | +3.75% DEF; +3.75 shroud (damage blocked each fight) | +4.8% DEF; +4.8 shroud (damage blocked each fight); +3.2% max HP | 0.1 / 0.6 / 0.06 |
+| Spire Signet | Unique | Made for the Tower: ATK and DEF there, and more boss drops | +2.5% ATK (Tower only); +2.5% DEF (Tower only) | +3.13% ATK (Tower only); +3.13% DEF (Tower only); +6.25% Gold found (Tower only) | +4% ATK (Tower only); +4% DEF (Tower only); +8% Gold found (Tower only); +4.8% boss equipment drop chance (Tower only) | 0.08 / 0.08 / 0.2 / 0.05 |
+
+### Amulets
+
+| Piece | Class | Identity | Common, level 1 | Uncommon, level 1 | Rare, level 1 | Growth a level (each line, before rarity) |
+|---|---|---|---|---|---|---|
+| Amber Pendant | Standard | Max HP in percent, and a little Regen | +1.5% max HP | +1.88% max HP; +0.25 HP regained each step | +2.4% max HP; +0.32 HP regained each step; +4.8% XP from kills | 0.06 / 0.02 / 0.1 |
+| Heart of the Grove | Unique | Regeneration: the most HP back with every step | +0.6 HP regained each step | +0.75 HP regained each step; +3.75% max HP | +0.96 HP regained each step; +4.8% max HP; 3.2% of max HP healed on each new floor | 0.06 / 0.1 / 0.05 |
+| Sage's Locket | Unique | Learning: more XP, then more materials and Silver | +10% XP from kills | +12.5% XP from kills; +6.25% upgrade materials from kills | +16% XP from kills; +8% upgrade materials from kills; +8% Silver found | 0.35 / 0.2 / 0.2 |
+| Phoenix Talisman | Unique | Rises from each fight: heals a share of max HP after every win | 1.5% of max HP healed after each victory | 1.88% of max HP healed after each victory; +25 max HP | 2.4% of max HP healed after each victory; +32 max HP; +0.48 HP regained each step | 0.03 / 4 / 0.03 |
+
+## 7. Leveling
+
+Raising a piece one level costs Gold and its category's material:
+
+- Gold: `5 × L × (L + 9)`
+- Material: `⌈L × (L + 10) / 20⌉`
+
+where `L` is the current level. Both rise smoothly with the square of the level.
+
+| Level | Gold | Material |
+|---|---|---|
+| 1 → 2 | 50 | 1 |
+| 2 → 3 | 110 | 2 |
+| 5 → 6 | 350 | 4 |
+| 10 → 11 | 950 | 10 |
+| 20 → 21 | 2,900 | 30 |
+| 30 → 31 | 5,850 | 60 |
+| 40 → 41 | 9,800 | 100 |
+| 50 → 51 | 14,750 | 150 |
+| 59 → 60 | 20,060 | 204 |
+
+From level 1, reaching level 20 costs 20,900 Gold and 225 material; level 40, 137,800 Gold and 1,430; level 60, 430,700 Gold and 4,415. The Item view levels by 1, by 10, or as far as the Gold and material allow (Max).
+
+**Investment** is recorded on each piece (`spent`: the Gold and material leveling it cost) for a future equipment reset; there is no reset yet. Dismantling never returns it, and a merge's used-up copies lose theirs (the merge dialog warns when a copy was leveled).
+
+## 8. Merging
+
+Three pieces of the **same definition and rarity** make one of the next rarity. The player opens the piece to keep (the target): it moves up a rarity **keeping its level**, lock, loadouts and investment; the player picks the two copies used up (the two lowest-level unprotected ones are picked to start). Locked or worn copies are never offered; the target itself may be locked or worn. The Forge view lists every piece with enough copies ready.
+
+## 9. Dismantling
+
+Dismantling breaks pieces into their category's material (section 4 amounts). From the Inventory's Select mode (any number of pieces, across categories) or the Forge's quick buttons (every unprotected piece of a rarity). The confirmation shows the count, the rarities, the materials returned, and a warning for valuable pieces (Rare, Unique or leveled). Locked and worn pieces can't be selected or dismantled; unlock or take them off first. The materials gained rise from their balances (*+20*).
+
+## 10. Inventory
+
+At most **500** pieces (`EQUIPMENT_CAPACITY`). A boss drop that finds the inventory full is dismantled at once into its material; a Gem pull needs room for every piece it brings. The Inventory filters by category and by rarity together, sorts by rarity, level, category, newest or name, and selects several pieces at once to dismantle or (two) to compare. Each card shows the icon, name, category, Standard or Unique, the rarity word and mark, level and cap, its open effects, a Unique's identity, where it's worn and whether it's locked.
+
+## 11. Boss drops (Standard pieces)
+
+From the boss of floor 60 up (equivalent floor, so Delve depth 590 too), once Equipment is open. Each physical kill pays once (`lootedTiles`, so undo can't farm it).
+
+| Enemy | Chance | Common | Uncommon | Rare |
+|---|---:|---:|---:|---:|
+| Boss | 60% | 78% | 22% | — |
+| Greater Boss | 100% | 55% | 45% | — |
+
+The category is even among the nine. Boss equipment drop chance (Kingsbane, Gatherer's Shroud, Spire Signet) adds percentage points to the chance. Rare comes only from merging and Gem pulls.
+
+## 12. Upgrade material drops
+
+Every enemy, once Equipment is open, of one category at random, paid once per physical kill:
+
+| Enemy | Chance | Amount |
+|---|---:|---:|
+| Weak | 10% | 1 |
+| Normal | 15% | 1 |
+| Strong | 30% | 2 |
+| Elite | 50% | 3 |
+| Boss | 100% | 8 |
+| Greater Boss | 100% | 20 |
+
+The amount is multiplied by `1 + ⌊equivalent floor / 25⌋` (×3 at floor 60, ×5 at floor 100) and raised by Material Find (rounded down, never below the base).
+
+## 13. Gem pulls (Unique pieces)
+
+The Acquire view pulls in one chosen category: each pull brings one of its three Uniques, evenly, at a rolled rarity.
+
+| Pull | Price |
+|---|---:|
+| ×1 | 20 Gems |
+| ×10 | 200 Gems |
+
+| Rarity | Rate |
+|---|---:|
+| Common | 72% |
+| Uncommon | 25% |
+| Rare | 3% |
+
+**Pity** is counted per category (`save.equipment.pity`): the 100th pull in a row without a Rare in that category is a Rare, and any Rare (natural or pity) starts the count over. A ×10 resolves its pulls one at a time, so pity can land mid-way; all ten show together in one results view, pity Rares marked. The count shows on each category's button and in the pool box. Pulls draw from the save's own stream (`save.equipment.rng`, seeded once from `stream("equipment")`), so reloading can't reroll them. The buttons always look active; short of Gems, the price turns red and a press offers the Shop.
+
+## 14. Save shape
+
+`save.equipment` (`decodeEquipment` in `equipment/inventory.ts`):
+
+| Field | Holds |
+|---|---|
+| `unlocked`, `announce`, `seen` | Opened; the forest dialog still to show; the Equipment screen seen (the Gear dot) |
+| `items` | Each piece: `id` (`e1`, `e2` …, never reused), `def` (catalogue id), `rarity`, `level`, `locked?`, `spent?` (Gold and material invested) |
+| `equipped.tower`, `equipped.delve` | Category → item id, per mode |
+| `materials` | The nine upgrade material balances |
+| `pity` | Pulls since the last Rare, per category |
+| `nextId`, `rng` | The next item id; the pull stream's state |
+
+No catalogue data (names, effects) is saved. Decoding drops unknown definitions and rarities, duplicate ids and pieces past the capacity, clamps levels to the rarity's cap, keeps loadouts to owned pieces of the right category, and resets anything malformed to its default. Saves from before Equipment load with it closed and empty (opened at once if their best is already floor 60); the old crafted-equipment fields are dropped.

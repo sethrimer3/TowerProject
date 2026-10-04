@@ -79,6 +79,14 @@ export function drawAreaBurst(f: FrameContext, age: number, reward: AreaReward) 
   drawWords(f, age, fade, b, sub, 0.6, 0.1, reward === "cleared" ? sprite(INSPIRATION_URL) : null);
 }
 
+/** Equipment opening on floor 60, `age` ms ago: the area reward's blaze,
+ * "EQUIPMENT UNLOCKED" across the board and where to find it under it. */
+export function drawEquipmentBurst(f: FrameContext, age: number) {
+  const b: Blaze = { ...AREA, textSize: 0.06, text: "EQUIPMENT UNLOCKED" };
+  if (!drawBlaze(f, age, b)) return;
+  drawWords(f, age, Math.min(1, (b.ms - age) / b.fadeMs), b, "A Blacksmith opens in the forest", 0.6, 0.1, null);
+}
+
 /** The hero's level-up, drawn over the board: a fiery flash bursting
  * outward from the hero, a glow around the hero, and "LEVEL UP!" across
  * the board, `age` ms after the level was reached. */

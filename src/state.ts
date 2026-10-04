@@ -51,7 +51,7 @@ import { World, LAYOUT_VERSION } from "./delve/world.ts";
 import { RoomWorld, TOWER_LAYOUT_VERSION } from "./tower/room-world.ts";
 import type { Board } from "./board.ts";
 import { bout, heroHpAfter, heroHpDuring, resume, REVIVE_MS, revivals, summarize, type Bout, type Revival } from "./combat.ts";
-import { HEART_DOOR_HP, isLethal, potionHeal, regenerate, resolveStep, type StepBlocked, type StepEffect, type StepRules, shardGain } from "./step-effects.ts";
+import { HEART_DOOR_HP, healAfterVictory, isLethal, potionHeal, regenerate, resolveStep, type StepBlocked, type StepEffect, type StepRules, shardGain } from "./step-effects.ts";
 import { OutsideWorld } from "./outside.ts";
 import { AreaLedger, chestReward, CLEARED_INSPIRATION, type AreaReward } from "./tower/area-ledger.ts";
 import { TowerClimb } from "./tower/climb.ts";
@@ -74,7 +74,11 @@ import { DeckEditor } from "./game/deck-editor.ts";
 import { GearDesk } from "./game/gear-desk.ts";
 import { GemFinder } from "./game/gem-finder.ts";
 import { BadgeDesk } from "./game/badge-desk.ts";
-import { RunPurse } from "./game/run-purse.ts";
+import { RunPurse, type EquipmentLoot } from "./game/run-purse.ts";
+import { EquipmentDesk } from "./game/equipment-desk.ts";
+import { raised, wornEffects } from "./equipment/effects.ts";
+import { EQUIPMENT_FLOOR, RARITY_TIERS } from "./equipment/balance.ts";
+import { EQUIP_MATERIALS, EQUIP_MATERIAL_IDS, itemDef } from "./equipment/catalog.ts";
 import { readyForestRuns, startingHero } from "./game/hero-sync.ts";
 /** How a new run starts: out in the forest or at the entrance, and from
  * which seed (rolled from the game's randomness when left out). */
@@ -178,6 +182,9 @@ export class Game {
   /** The area reward whose chest was last opened, and when
    * (performance.now()), for the board's golden burst; cleared by undo. */
   areaBurst: { reward: AreaReward; at: number } | null = null;
+  /** When Equipment opened on floor 60 (performance.now()), for the
+   * board's burst. */
+  equipmentBurstAt = -Infinity;
   /** Where a Greater Boss last appeared, and when (performance.now()), for
    * the board's poof; cleared by undo. */
   summoned: { x: number; y: number; at: number } | null = null;
@@ -204,6 +211,9 @@ export class Game {
   readonly gear = new GearDesk(this);
   /** The Gem on the board, collecting it, and the ad's Gems. */
   readonly gemFinder = new GemFinder(this);
+  /** The Equipment screen's commands: leveling, merging, dismantling,
+   * equipping and Gem pulls. */
+  readonly equipment = new EquipmentDesk(this);
   /** The Deck page's card badges: drawing them with Gems and attaching
    * them to cards. */
   readonly badges = new BadgeDesk(this);
@@ -212,6 +222,8 @@ export class Game {
    * seeded stream replays a game and no visual effect can shift it. */
   constructor(public save: Save, private rng: () => number = stream("game")) {
     this.loadMode();
+    // A save already past floor 60 opens Equipment at once, and its Blacksmith.
+    if (this.openEquipment() && this.run.outside) this.world = this.buildWorld();
   }
   /** Dev: whether every purchase is allowed and costs nothing (and research
    * takes no time). */
@@ -219,7 +231,7 @@ export class Game {
     return this.save.settings.freePurchases;
   }
   get undoCapacity() {
-    return loadout(this.save).undoCapacity;
+    return loadout(this.save, this.mode).undoCapacity;
   }
   /** Grants unlimited currency, the first 250 floors, and every game mode.
    * Reversible: turning Dev Mode back off leaves the grants in place, since
@@ -241,6 +253,10 @@ export class Game {
     // The Deck page with its Badges box, and every badge at the top level.
     for (const id of ["combatStance", "buildout", "cardBadges"] as const) this.save.upgrades[id] = Math.max(1, this.save.upgrades[id]);
     for (const id of BADGE_IDS) this.save.badges.owned[id] = { copies: MAX_COPIES, pick: this.save.badges.owned[id]?.pick ?? 0 };
+    // Equipment, with materials to spare.
+    this.save.equipment.unlocked = true;
+    for (const id of EQUIP_MATERIAL_IDS) this.save.equipment.materials[id] = 999_999_999;
+    if (this.run.outside) this.world = this.buildWorld();
     const maxSection = 25;
     this.save.tower.reached = Math.max(this.save.tower.reached, maxSection * TOWER_SECTION);
     this.save.tower.best = Math.max(this.save.tower.best, this.save.tower.reached);
@@ -279,7 +295,7 @@ export class Game {
   /** The live run's board, regenerated from its seed and changes. */
   private buildWorld(): Board {
     const r = this.run;
-    return r.outside ? new OutsideWorld(r.seed, this.mode) : this.rules.board(r);
+    return r.outside ? new OutsideWorld(r.seed, this.mode, this.save.equipment.unlocked) : this.rules.board(r);
   }
   /** Map edits saved under an older layout can't be applied to the new one:
    * they are dropped, and progress, stats and inventory are kept. */
@@ -876,7 +892,7 @@ export class Game {
   /** Tiles the hand's first step toward a new target may rush across: none
    * without the Rush skill, and one more a Rush research level. */
   get rushTiles() {
-    return this.save.upgrades.rush ? researched(this.save.archives, "rushTiles", 0) : 0;
+    return (this.save.upgrades.rush ? researched(this.save.archives, "rushTiles", 0) : 0) + this.worn.rushTiles;
   }
   /** Whether (x, y) is empty floor a rush may cross: nothing on it, no torch
    * and no Gem. */
@@ -925,7 +941,7 @@ export class Game {
     this.run.hand = [...this.save.hand];
     const badges = this.save.upgrades.cardBadges ? runBadges(this.save.badges, this.run.hand) : {};
     if (Object.keys(badges).length) this.run.badges = badges;
-    const pocket = researched(this.save.archives, "startingSilver", 0);
+    const pocket = snap(researched(this.save.archives, "startingSilver", 0) + this.worn.startSilver);
     if (pocket) this.run.silver = pocket;
     const chance = percentPotionChance(this.save);
     if (chance) this.run.percentPotions = chance;
@@ -949,6 +965,15 @@ export class Game {
     const speed = Math.min(this.save.settings.speed, this.maxSpeed);
     return this.run.outside ? Math.max(speed, FOREST_SPEED) : speed;
   }
+  /** Steps a second the hero actually takes: `stepsPerSecond`, raised by
+   * the movement speed the equipment worn gives. */
+  get moveRate() {
+    return raised(this.stepsPerSecond, this.worn.moveSpeed);
+  }
+  /** What the equipment this mode's hero wears does now. */
+  get worn() {
+    return wornEffects(this.save, this.mode);
+  }
   /** Focus uses a run starts with: none without the Focus skill, and more
    * with Focus Count research. */
   private get focusPerRun() {
@@ -960,8 +985,9 @@ export class Game {
     // Regen research raises the HP each step regains by its percent.
     const regen = this.run.outside || !this.run.player.regen ? 0
       : snap((this.run.player.regen * researched(this.save.archives, "regenPercent", 100)) / 100);
-    return { potionHeal: researched(this.save.archives, "potionHeal", 100), percentPotion: potionPercent(this.trainingNow), regen,
-      heartToll: researched(this.save.archives, "heartToll", 100), keyCost: this.keyCost };
+    const worn = this.worn, potionHeal = raised(researched(this.save.archives, "potionHeal", 100), worn.potionHeal);
+    return { potionHeal, percentPotion: potionPercent(this.trainingNow), regen,
+      heartToll: researched(this.save.archives, "heartToll", 100), keyCost: this.keyCost, ...(worn.victoryHeal ? { victoryHeal: worn.victoryHeal } : {}) };
   }
   /** How much of a key each key a door takes costs, in tenths of a percent
    * (Key Efficiency research): what steps pay and the door cards plan by. */
@@ -1074,7 +1100,7 @@ export class Game {
     this.world = this.rules.board(this.run);
     if (outside) {
       this.run.outside = true;
-      this.world = new OutsideWorld(seed, this.mode);
+      this.world = new OutsideWorld(seed, this.mode, this.save.equipment.unlocked);
       this.message = "Follow the forest path to the entrance.";
     } else {
       this.forgetLabyrinth();
@@ -1125,8 +1151,9 @@ export class Game {
   /** Pays the XP for beating `enemy` on equivalent floor `floor`, counting
    * it toward the run's total too. */
   gainXp(enemy: Enemy, floor: number, scale = 1) {
-    const xp = tierXp(this.tier, xpForKill(enemy.strength, floor));
-    this.addXp(scale === 1 ? xp : Math.round(xp * scale));
+    const xp = tierXp(this.tier, xpForKill(enemy.strength, floor)), gain = this.worn.xpGain;
+    const raisedXp = gain ? Math.round((xp * (100 + gain)) / 100) : xp;
+    this.addXp(scale === 1 ? raisedXp : Math.round(raisedXp * scale));
   }
   /** Adds `xp` to the hero's and the run's, raising the level-up burst
    * when it reaches a new level. */
@@ -1211,7 +1238,8 @@ export class Game {
     if (!this.playsFights && !revive) return this.take(step);
     const fight = bout(p, enemy, revive), start = performance.now(), rose = revivals(fight).length;
     if (rose) {
-      outcome.player.hp = regenerate(afterExtra(heroHpAfter(fight, p.hp), outcome.extraDamage, p.maxHp), p.maxHp, this.stepRules);
+      const rules = this.stepRules;
+      outcome.player.hp = regenerate(healAfterVictory(afterExtra(heroHpAfter(fight, p.hp), outcome.extraDamage, p.maxHp), p.maxHp, rules), p.maxHp, rules);
       outcome.combat = { ...outcome.combat!, survivable: outcome.player.hp > 0 };
     }
     if (this.playsFights) return this.showFight(step, enemy, fight, start);
@@ -1360,11 +1388,13 @@ export class Game {
     this.gainXp(enemy, floor, scale);
     // Silver belongs to the run, so it isn't gated like Gold: undo takes it back.
     const purse = this.purse, silver = purse.killSilver(enemy, floor, scale);
-    const { gold, drops } = purse.enemyLoot(enemy, at.x, at.y, scale, fight.instakill);
+    const { gold, drops, equipment } = purse.enemyLoot(enemy, at.x, at.y, scale, fight.instakill);
     this.gainCoins(at, gold, silver);
     for (const d of drops) this.gain(at.x, at.y, materialText(d), { material: d.id, quantity: d.quantity });
+    const found = equipmentTexts(equipment);
+    for (const text of found) this.gain(at.x, at.y, text);
     const opened = enemy.strength === "boss" && floor >= TIER_BOSS_FLOOR && this.openNextTier();
-    this.message = [fightText(fight), ...coinsText(gold, silver), ...drops.map(materialText),
+    this.message = [fightText(fight), ...coinsText(gold, silver), ...drops.map(materialText), ...found,
       ...(opened ? [`${this.rules.words.tierName} ${tierNumeral(this.slice.tiersOpen)} opened`] : [])].join(" · ");
     return true;
   }
@@ -1469,6 +1499,7 @@ export class Game {
       silver += purse.floorSilver();
       silver += purse.interest();
       this.findYellowKey(f, at);
+      this.floorHeal();
     }
     this.gainCoins(at, gold, silver, false);
   }
@@ -1505,6 +1536,7 @@ export class Game {
       silver = purse.floorSilver();
       silver += purse.interest();
       this.findYellowKey(this.run.height, p);
+      this.floorHeal();
     }
     this.enterTowerFloor(board);
     // A new section's first floor is sealed below; the hero keeps every stat.
@@ -1541,8 +1573,41 @@ export class Game {
     slice.best = Math.max(slice.best, reached);
     this.rules.credit(this.save, earned);
     slice.runCurrency += earned;
+    if (this.openEquipment()) {
+      this.equipmentBurstAt = performance.now();
+      this.message = "Equipment unlocked · a Blacksmith opens in the forest";
+    }
     this.startSpeedLesson();
     return earned;
+  }
+  /** Whether (x, y) is the forest Blacksmith's building, which opens the
+   * Equipment screen when tapped. */
+  atBlacksmith(x: number, y: number) {
+    return this.run.outside && this.world instanceof OutsideWorld && this.world.isBlacksmith(x, y);
+  }
+  /** Opens Equipment the first time either mode's best reaches floor 60
+   * (`EQUIPMENT_FLOOR`; Delve depth 590), to be announced; returns whether
+   * it opened now. Once open it stays open. */
+  private openEquipment() {
+    const e = this.save.equipment;
+    if (e.unlocked) return false;
+    const reached = (["tower", "delve"] as const).some((mode) => {
+      const slice = this.save[mode], bests = [slice.best, ...Object.values(slice.tierRecords).map((r) => r.best)];
+      return bests.some((best) => MODES[mode].equivalentFloor(best) + 1 >= EQUIPMENT_FLOOR);
+    });
+    if (!reached) return false;
+    e.unlocked = true;
+    e.announce = true;
+    return true;
+  }
+  /** Equipment's heal on a floor reached for the first time in the run (a
+   * share of max HP, by `floorHeal`), shown like a potion's. */
+  private floorHeal() {
+    const pct = this.worn.floorHeal, p = this.run.player;
+    if (!pct || p.hp <= 0) return;
+    const n = snap(Math.min(p.maxHp - p.hp, (p.maxHp * pct) / 100));
+    p.hp = snap(p.hp + n);
+    this.recordHeal(n);
   }
   /** How the current mode differs from the other. */
   private get rules(): ModeProfile {
@@ -1730,7 +1795,8 @@ export class Game {
     const o = fight.outcome, damage = snap(fight.bout.strikes.reduce((sum, s) => (s.by === "enemy" ? sum + s.damage : sum), 0));
     // A badge's scale adds to (or gives back) the new fight's damage.
     if (o.scale) o.extraDamage = snap(damage * o.scale - damage);
-    const fought = afterExtra(heroHpAfter(fight.bout, p.hp), o.extraDamage, p.maxHp), end = regenerate(fought, p.maxHp, this.stepRules);
+    const rules = this.stepRules, fought = afterExtra(heroHpAfter(fight.bout, p.hp), o.extraDamage, p.maxHp);
+    const end = regenerate(healAfterVictory(fought, p.maxHp, rules), p.maxHp, rules);
     Object.assign(o.player, { hp: end, attack: p.attack, defense: p.defense, maxHp: p.maxHp });
     o.combat = { ...o.combat!, damage, survivable: fought > 0 };
   }
@@ -1815,6 +1881,15 @@ function fightText({ enemy, damage, revived }: FightEnd) {
   return damage ? `−${wholeChange(damage)} HP · ${enemyTitle(enemy)} defeated` : "Unscathed victory";
 }
 
+/** What a kill gave toward Equipment, as the status line and the board name it. */
+function equipmentTexts(loot: EquipmentLoot | null) {
+  if (!loot) return [];
+  const texts: string[] = [];
+  if (loot.materials) texts.push(`+${loot.materials.quantity} ${EQUIP_MATERIALS[loot.materials.id].name}`);
+  if (loot.item) texts.push(`${RARITY_TIERS[loot.item.rarity].name} ${itemDef(loot.item.def)!.name}!`);
+  if (loot.salvaged) texts.push(`Inventory full · +${loot.salvaged.quantity} ${EQUIP_MATERIALS[loot.salvaged.id].name}`);
+  return texts;
+}
 /** A kill's Gold (when it paid any) and Silver, as the status line names them. */
 const coinsText = (gold: number, silver: number) => [...(gold ? [`+${wholeChange(gold)} Gold`] : []), `+${wholeChange(silver)} Silver`];
 

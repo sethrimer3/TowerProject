@@ -22,6 +22,8 @@ import { GoalsPage } from "./ui/goals-page.ts";
 import { SkillTreePage } from "./ui/skill-tree-page.ts";
 import { ResearchToasts, researchToast, trainingToast } from "./ui/research-toast.ts";
 import { GearPage } from "./ui/gear-page.ts";
+import { EQUIPMENT_FLOOR } from "./equipment/balance.ts";
+import { equipmentWaiting } from "./equipment/inventory.ts";
 import { DeckPage } from "./ui/deck-page.ts";
 import { RunTrainingBar } from "./ui/run-training-bar.ts";
 import { renderSettingsPage } from "./ui/settings-page.ts";
@@ -58,7 +60,8 @@ const ctx: AppContext = {
   confirm: (prompt, action) => confirmAction(ctx, prompt, action),
 };
 const runEnd = new RunEndDialog(ctx);
-const overlay = new BoardOverlay(game, renderer);
+// Tapping the forest's Blacksmith opens the Equipment screen.
+const overlay = new BoardOverlay(game, renderer, openBlacksmith);
 const skillTree = new SkillTreePage(ctx);
 const gear = new GearPage(ctx);
 const deck = new DeckPage(ctx);
@@ -102,6 +105,7 @@ function update() {
   researchToasts.add(finished);
   save();
   runEnd.check();
+  announceEquipment();
 }
 function renderPage() {
   if (tab === "defend") defendPage.show();
@@ -116,6 +120,8 @@ function renderPage() {
 function unlockTarget(id: string): string {
   const lock = LOCKED_TABS.get(id);
   if (!lock || game.save.upgrades[lock.skill]) return id;
+  // Equipment opens the Gear page too, Gear skill or not.
+  if (id === "gear" && game.save.equipment.unlocked) return id;
   skillTree.focus(lock.tree, lock.skill);
   return "upgrades";
 }
@@ -141,6 +147,8 @@ function navigate(requested: string) {
   deck.shown(id === "deck");
   // The Shop's Back returns to the page that opened it.
   if (id === "shop" && from !== "shop") shop.open(from);
+  // A newly opened Equipment screen greets the first visit to the Gear page.
+  if (id === "gear" && from !== "gear" && equipmentWaiting(game.save)) gear.openEquipment();
   renderer.weather.silence();
   if (isBoard(id)) {
     game.switchMode(id);
@@ -157,6 +165,24 @@ function navigate(requested: string) {
 function clearDots(id: Tab) {
   if (id === "upgrades" && upgradesWaiting(game)) game.save.tutorials.upgrades = true;
   if (id === "gear" && gearWaiting(game)) game.save.tutorials.gear = true;
+}
+/** Opens the Gear page on its Equipment screen. */
+function openBlacksmith() {
+  gear.openEquipment();
+  navigate("gear");
+}
+/** Once Equipment opens, back in the forest (never mid-run), a dialog says
+ * so and offers the Blacksmith. */
+function announceEquipment() {
+  const e = game.save.equipment;
+  if (!e.announce || !game.run.outside || game.fallen || modal.open) return;
+  e.announce = false;
+  confirmAction(ctx, {
+    title: "Equipment unlocked",
+    body: `You reached floor ${EQUIPMENT_FLOOR}. A Blacksmith has opened in the forest: tap it, or the Gear tab, to wear weapons, armour and trinkets, level them up and merge them. Bosses now drop equipment, and every enemy drops upgrade materials.`,
+    label: "Visit the Blacksmith",
+    cancel: "Later",
+  }, openBlacksmith);
 }
 /** Shows page `id` and marks its tab; the stats sit over the board, and
  * the currencies bar, with the Shop at its end, tops the pages that spend

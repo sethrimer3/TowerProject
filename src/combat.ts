@@ -10,8 +10,17 @@ export type CombatPrediction = {
   requiredAttack: number;
 };
 
+/** The ATK the hero strikes `enemy` with: its own, raised against a boss
+ * or Greater Boss by the percent its equipment gives (`bossAttack`). */
+export function attackAgainst(player: Player, enemy: Enemy) {
+  const boss = enemy.strength === "boss" || enemy.strength === "greaterBoss";
+  return boss && player.bossAttack ? snap((player.attack * (100 + player.bossAttack)) / 100) : player.attack;
+}
+/** What each of the hero's strikes takes off `enemy`'s HP (0 or less: none). */
+const heroHit = (player: Player, enemy: Enemy) => snap(attackAgainst(player, enemy) - enemy.defense);
+
 export function predict(player: Player, enemy: Enemy): CombatPrediction {
-  const hit = snap(player.attack - enemy.defense);
+  const hit = heroHit(player, enemy);
   if (hit <= 0) {
     return {
       impervious: true,
@@ -19,7 +28,7 @@ export function predict(player: Player, enemy: Enemy): CombatPrediction {
       turns: Infinity,
       damage: Infinity,
       survivable: false,
-      requiredAttack: snap(enemy.defense - player.attack + 1),
+      requiredAttack: snap(enemy.defense - attackAgainst(player, enemy) + 1),
     };
   }
   // Snapped, so 10.2 HP against strikes of 1.02 takes 10, as it does played out.
@@ -99,7 +108,7 @@ export type Revival = (strike: number) => boolean;
  * raises the hero at full HP from a strike that would fell it: the fight
  * then goes on from the next round, the enemy as it was. */
 export function bout(player: Player, enemy: Enemy, revives?: Revival): Bout {
-  if (snap(player.attack - enemy.defense) <= 0) return { strikes: [], duration: 0 };
+  if (heroHit(player, enemy) <= 0) return { strikes: [], duration: 0 };
   return play([], { player, enemy, revives }, { enemyHp: enemy.hp, heroHp: player.hp, shroud: player.shroud ?? 0, attack: enemy.attack, t: 0, ms: FIRST_STRIKE_MS, enemyStrikes: 0, enemyNext: false });
 }
 
@@ -117,7 +126,7 @@ export type Fighters = { player: Player; enemy: Enemy; revives?: Revival };
 
 /** Plays a fight on from `state`, after the strikes already in `strikes`. */
 function play(strikes: Strike[], { player, enemy, revives }: Fighters, state: BoutState): Bout {
-  const hit = snap(player.attack - enemy.defense), s = { ...state };
+  const hit = heroHit(player, enemy), s = { ...state };
   // Each strike keeps its fields in the same order: its blow, its timing, then the HP left.
   const strike = ({ hp, ...blow }: Blow) => {
     strikes.push({ ...blow, start: s.t, at: s.t + s.ms / 2, end: s.t + s.ms, hp });

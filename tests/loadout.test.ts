@@ -5,7 +5,7 @@ import type { GoldItemId } from "../src/config.ts";
 import { loadout, trainingPoints, trainingStep, upgradeText, provisionPrice, provisionText } from "../src/loadout.ts";
 import { defaults } from "../src/save.ts";
 import { GOLD_SHOP, UPGRADES, levelForXp, xpForLevel } from "../src/config.ts";
-import type { CraftedEquipment } from "../src/equipment.ts";
+import { addItem } from "../src/equipment/inventory.ts";
 import { Game } from "../src/state.ts";
 import { ENTRANCE_Y } from "../src/outside.ts";
 import { predict } from "../src/combat.ts";
@@ -14,7 +14,7 @@ import { delveEnemyBase } from "../src/delve/labyrinth.ts";
 
 test("a new character starts at 12 ATK, 0 DEF, 100 HP, no shroud, no Regen, no keys and no undo", () => {
   assert.deepEqual(loadout(defaults()), {
-    attack: 12, defense: 0, maxHp: 100, shroud: 0, regen: 0, keys: { yellow: 0, blue: 0, red: 0 }, undoCapacity: 0,
+    attack: 12, defense: 0, maxHp: 100, shroud: 0, regen: 0, bossAttack: 0, keys: { yellow: 0, blue: 0, red: 0 }, startKeys: { yellow: 0, blue: 0 }, undoCapacity: 0,
   });
 });
 
@@ -40,7 +40,9 @@ test("each rank of an upgrade adds its grant", () => {
     maxHp: 100,
     shroud: 1,
     regen: 0,
+    bossAttack: 0,
     keys: { yellow: 1, blue: 2, red: 3 },
+    startKeys: { yellow: 0, blue: 0 },
     undoCapacity: 1,
   });
 });
@@ -141,18 +143,17 @@ test("evenly spread training alone still beats both modes' normal enemies at flo
 
 test("gear adds flat bonuses, then its percentages of the total, fractions kept; provisions come last", () => {
   const s = defaults();
-  const ring: CraftedEquipment = {
-    id: "r", slot: "ring", name: "Ring", metal: "iron",
-    flatAttack: 3, flatDefense: 0, flatMaxHp: 10, percentAttack: 0.1, percentDefense: 0.25, percentMaxHp: 0.05,
-    baseRecipe: [], enhancements: [], createdAt: 0,
-  };
-  s.equipmentInventory.push(ring);
-  s.equipped.ring = "r";
+  s.equipment.unlocked = true;
+  // Uncommon (×1.25): +3.75 ATK and +2.5% ATK; +37.5 max HP and +5% max HP.
+  s.equipment.equipped.tower.weapon = addItem(s.equipment, "knightsSword", "uncommon")!.id;
+  s.equipment.equipped.tower.chestplate = addItem(s.equipment, "giantsHauberk", "uncommon")!.id;
   Object.assign(s.provisions, { edge: 1, guard: 2, heal: 1 });
   const l = loadout(s);
-  assert.equal(l.attack, 17.5, "(12 + 3) × 1.1 + 1");
-  assert.equal(l.defense, 2); // 25% of no DEF is nothing
-  assert.equal(l.maxHp, 135.5, "110 × 1.05 + 20");
+  assert.equal(l.attack, 17.14375, "(12 + 3.75) × 1.025 + 1");
+  assert.equal(l.defense, 2);
+  assert.equal(l.maxHp, 164.375, "137.5 × 1.05 + 20");
+  // The Delve's hero wears nothing yet.
+  assert.equal(loadout(s, "delve").attack, 13);
 });
 
 test("descriptions are written from the grants", () => {
@@ -212,11 +213,13 @@ test("Extra Key opens the Yellow Key provision: 100 Gold, then four times the la
   assert.equal(g.run.player.keys.yellow, held + 1, "one bought inside a run comes at once");
 });
 
-const ring = (flatAttack: number, flatMaxHp: number): CraftedEquipment => ({
-  id: "r", slot: "ring", name: "Ring", metal: "iron",
-  flatAttack, flatDefense: 0, flatMaxHp, percentAttack: 0, percentDefense: 0, percentMaxHp: 0,
-  baseRecipe: [], enhancements: [], createdAt: 0,
-});
+/** Opens Equipment and adds a Common Knight's Sword (+3 ATK at level 1). */
+function armoury(g: Game) {
+  const e = g.save.equipment;
+  e.unlocked = true;
+  const sword = addItem(e, "knightsSword", "common")!;
+  return sword.id;
+}
 
 test("changing gear mid-run keeps the ATK gathered and the provisions owned", () => {
   const g = new Game(defaults()), s = g.save;
@@ -224,12 +227,11 @@ test("changing gear mid-run keeps the ATK gathered and the provisions owned", ()
   g.newRun();
   assert.equal(g.run.player.attack, 13);
   g.run.player.attack += 2; // an attack shard picked up
-  s.equipmentInventory.push(ring(3, 10));
-  assert.ok(g.gear.equip("r"));
+  const sword = armoury(g);
+  assert.ok(g.equipment.equip("tower", sword));
   assert.equal(g.run.player.attack, 18);
-  assert.equal(g.run.player.maxHp, 110);
-  assert.deepEqual(g.run.loadout, { attack: 16, defense: 0, maxHp: 110 });
-  g.gear.unequip("ring");
+  assert.deepEqual(g.run.loadout, { attack: 16, defense: 0, maxHp: 100 });
+  g.equipment.unequip("tower", "weapon");
   assert.equal(g.run.player.attack, 15);
   assert.deepEqual(g.run.loadout, { attack: 13, defense: 0, maxHp: 100 });
   assert.equal(g.run.player.hp, 100);
@@ -238,9 +240,11 @@ test("changing gear mid-run keeps the ATK gathered and the provisions owned", ()
 test("a gear change reaches a run still outside, which starts at its new full HP", () => {
   const g = new Game(defaults());
   g.newRun({ outside: true });
-  g.save.equipmentInventory.push(ring(3, 10));
-  g.gear.equip("r");
-  assert.deepEqual([g.run.player.attack, g.run.player.maxHp, g.run.player.hp], [15, 110, 110]);
+  const e = g.save.equipment;
+  e.unlocked = true;
+  g.equipment.equip("tower", addItem(e, "knightsSword", "common")!.id);
+  g.equipment.equip("tower", addItem(e, "giantsHauberk", "common")!.id);
+  assert.deepEqual([g.run.player.attack, g.run.player.maxHp, g.run.player.hp], [15, 130, 130]);
 });
 
 /** Walks the hero from the forest in through the entrance. */

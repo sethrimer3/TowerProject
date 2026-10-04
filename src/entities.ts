@@ -5,7 +5,7 @@ import type { CardId } from "./cards.ts";
 import type { BadgesSave, RunBadge } from "./badges.ts";
 import type { GoldItemId, KeyColor, TrainingId, UpgradeId } from "./config.ts";
 import type { MaterialId } from "./materials.ts";
-import type { CraftedEquipment, EquipmentSlot } from "./equipment.ts";
+import type { EquipmentSave } from "./equipment/inventory.ts";
 import type { ConsumableId } from "./crafting.ts";
 import type { DefendSave } from "./defend/progress.ts";
 import type { GemDrop } from "./gems.ts";
@@ -75,6 +75,9 @@ export type Player = {
   shroud?: number;
   /** The HP regained with every step in a run (Regen; none when absent). */
   regen?: number;
+  /** The percent more ATK the hero strikes bosses with (equipment; none
+   * when absent). */
+  bossAttack?: number;
   keys: Record<KeyColor, number>;
   /** Optional secret inventory counters stay absent from legacy saves until
    * the corresponding item has actually been found. */
@@ -94,7 +97,7 @@ export type RunCore = {
   floor: number;
   /** The ATK/DEF/max HP the run started with (its loadout), shifted by any
    * gear change since. */
-  loadout?: { attack: number; defense: number; maxHp: number; shroud?: number; regen?: number };
+  loadout?: { attack: number; defense: number; maxHp: number; shroud?: number; regen?: number; bossAttack?: number };
   /** The hand as it was ordered when the run went inside: the cards that
    * move the hero for the rest of the run. */
   hand?: CardId[];
@@ -250,8 +253,10 @@ export type Save = {
   /** Persistent crafting-material inventory. Never part of `Run` — must
    * survive movement undo, death, and new runs. */
   materials: Record<MaterialId, number>;
-  equipmentInventory: CraftedEquipment[];
-  equipped: Partial<Record<EquipmentSlot, string>>;
+  /** Equipment, opened on floor 60: the pieces owned, what each mode's
+   * hero wears, the upgrade materials, and the Gem pulls' pity
+   * (equipment/inventory.ts). */
+  equipment: EquipmentSave;
   consumables: Record<ConsumableId, number>;
   /** The active hand: the cards that move the hero inside a run, in
    * priority order. Set up before a run; a new profile starts with the

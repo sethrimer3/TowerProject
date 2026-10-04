@@ -20,12 +20,18 @@ export class BoardOverlay {
   /** Where the highlight was last placed (`track`), and whether on screen. */
   private placed = "";
 
-  constructor(private game: Game, private renderer: Renderer) {}
+  /** `blacksmith` opens the Equipment screen (the forest's Blacksmith tapped). */
+  constructor(private game: Game, private renderer: Renderer, private blacksmith: () => void = () => {}) {}
 
   tap(x: number, y: number) {
     // A Gem is collected wherever the hero stands.
     if (this.game.gemFinder.collectAt(x, y)) {
       this.hide();
+      return;
+    }
+    if (this.game.atBlacksmith(x, y)) {
+      this.hide();
+      this.blacksmith();
       return;
     }
     if (this.game.save.settings.oneTapMove || this.isHighlighted({ x, y })) {

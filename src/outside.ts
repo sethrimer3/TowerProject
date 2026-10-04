@@ -54,18 +54,35 @@ function drawOutsideSprite(c: CanvasRenderingContext2D, t: Tile, s: ForestSpot) 
   return true;
 }
 
+/** Where the Blacksmith stands once Equipment is open: up and to the left
+ * of the path, by the entrance column `center`. It takes `BLACKSMITH`'s
+ * tiles (walls under its walls and roof), and the trees around them make
+ * way for a small yard (`yard`). */
+export const BLACKSMITH = { dx: -6, width: 3, y: 8, height: 3 } as const;
+const YARD = { dx: BLACKSMITH.dx - 1, width: BLACKSMITH.width + 2, y: BLACKSMITH.y - 1, height: BLACKSMITH.height + 1 };
+const within = (r: { dx: number; width: number; y: number; height: number }, center: number, x: number, y: number) =>
+  x >= center + r.dx && x < center + r.dx + r.width && y >= r.y && y < r.y + r.height;
+/** Whether (x, y) is one of the Blacksmith's tiles, by the entrance column. */
+export const onBlacksmith = (center: number, x: number, y: number) => within(BLACKSMITH, center, x, y);
+
 export class OutsideWorld implements Board {
   width: number;
   floor = 0;
   entranceX: number;
-  constructor(public seed: number, public mode: Mode) {
+  /** `blacksmith`: Equipment is open, so its Blacksmith stands in the clearing. */
+  constructor(public seed: number, public mode: Mode, public blacksmith = false) {
     this.width = MODES[mode].width;
     this.entranceX = MODES[mode].entranceX;
   }
   tile(x: number, y: number): Tile {
     if (!this.inside(x, y)) return { kind: "wall" };
     if (x === this.entranceX && y === ENTRANCE_Y) return { kind: "stairs" };
+    if (this.blacksmith && within(YARD, this.entranceX, x, y)) return { kind: onBlacksmith(this.entranceX, x, y) ? "wall" : "floor" };
     return this.wooded(x, y) ? { kind: "wall" } : { kind: "floor" };
+  }
+  /** Whether (x, y) is the Blacksmith, which a tap opens. */
+  isBlacksmith(x: number, y: number) {
+    return this.blacksmith && onBlacksmith(this.entranceX, x, y);
   }
   step(x: number, y: number, dx: number, dy: number) {
     const xx = x + dx, yy = y + dy;
@@ -183,4 +200,61 @@ function drawCaveMouth(c: CanvasRenderingContext2D, x: number, base: number) {
   c.fillStyle = "#182725"; c.beginPath(); c.moveTo(x - 35, base + 9); c.lineTo(x - 29, base - 34); c.lineTo(x - 9, base - 57); c.lineTo(x + 21, base - 46); c.lineTo(x + 38, base + 9); c.closePath(); c.fill();
   c.fillStyle = "#0e191a"; c.beginPath(); c.moveTo(x - 22, base + 8); c.lineTo(x - 16, base - 26); c.lineTo(x + 10, base - 36); c.lineTo(x + 23, base + 8); c.fill();
   c.fillStyle = "#828c75"; c.fillRect(x - 14, base + 6, 28, 4); c.fillRect(x - 18, base + 15, 36, 4);
+}
+
+/** The Blacksmith, in the same world space as the entrance: a small stone
+ * forge under a slate roof, its door facing the path's side of the
+ * clearing, a forge-lit window, a chimney, and on the roof's gable a banner
+ * with a breastplate, so its purpose reads even when small. */
+export function drawBlacksmith(c: CanvasRenderingContext2D, center: number) {
+  const left = (center + BLACKSMITH.dx) * 24, w = BLACKSMITH.width * 24;
+  const top = (OUTSIDE_SIZE - BLACKSMITH.y - BLACKSMITH.height) * 24, base = (OUTSIDE_SIZE - BLACKSMITH.y) * 24;
+  const wallTop = top + 26;
+  c.save();
+  // Shadow on the grass, then the stone walls.
+  c.fillStyle = "#16291f88"; c.fillRect(left - 2, base - 4, w + 6, 7);
+  c.fillStyle = "#4d5550"; c.fillRect(left + 3, wallTop, w - 6, base - wallTop);
+  for (let row = 0; row < 4; row++) for (let col = 0; col < 5; col++) {
+    c.fillStyle = (row + col) % 3 ? "#6c746c" : "#79817a";
+    c.fillRect(left + 4 + col * 13 + (row % 2) * 6, wallTop + 2 + row * 11, 12, 10);
+  }
+  c.fillStyle = "#3a403c"; c.fillRect(left + 3, base - 3, w - 6, 3);
+  // The forge-lit window on the left, the chimney on the right.
+  c.fillStyle = "#2a1a12"; c.fillRect(left + 9, wallTop + 9, 14, 12);
+  c.fillStyle = "#ff9a3a"; c.fillRect(left + 11, wallTop + 11, 10, 8);
+  c.fillStyle = "#ffd27a"; c.fillRect(left + 13, wallTop + 14, 6, 5);
+  c.fillStyle = "#5b5f5a"; c.fillRect(left + w - 18, top - 4, 9, 20);
+  c.fillStyle = "#3d403c"; c.fillRect(left + w - 19, top - 6, 11, 3);
+  c.fillStyle = "#ff8a30"; c.fillRect(left + w - 16, top - 5, 5, 2);
+  // The slate roof, overhanging the walls.
+  c.fillStyle = "#2e3640";
+  c.beginPath(); c.moveTo(left - 3, wallTop + 2); c.lineTo(left + 10, top + 2); c.lineTo(left + w - 10, top + 2); c.lineTo(left + w + 3, wallTop + 2); c.closePath(); c.fill();
+  c.fillStyle = "#47525e";
+  for (let i = 0; i < 3; i++) c.fillRect(left + 4 + i * 3, top + 7 + i * 6, w - 8 - i * 6, 2);
+  c.fillStyle = "#1d232a"; c.fillRect(left - 3, wallTop + 1, w + 6, 3);
+  // The door, toward the path.
+  const door = left + w / 2 + 4;
+  c.fillStyle = "#2b1d14"; c.fillRect(door - 8, base - 22, 16, 22);
+  c.fillStyle = "#6b4a2c"; c.fillRect(door - 6, base - 20, 12, 20);
+  c.fillStyle = "#4e3520"; c.fillRect(door - 1, base - 20, 2, 20);
+  c.fillStyle = "#e0c070"; c.fillRect(door + 3, base - 11, 2, 2);
+  // The banner on the gable: a breastplate on red cloth.
+  drawBreastplateBanner(c, left + w / 2, top - 2);
+  c.restore();
+}
+
+/** A hanging red banner, 18 wide, with a pale breastplate on it, its top
+ * centred on (x, y). */
+function drawBreastplateBanner(c: CanvasRenderingContext2D, x: number, y: number) {
+  c.fillStyle = "#3a2414"; c.fillRect(x - 11, y, 22, 3);
+  c.fillStyle = "#8e2a22";
+  c.beginPath(); c.moveTo(x - 9, y + 3); c.lineTo(x + 9, y + 3); c.lineTo(x + 9, y + 24); c.lineTo(x, y + 20); c.lineTo(x - 9, y + 24); c.closePath(); c.fill();
+  c.fillStyle = "#b8442f"; c.fillRect(x - 9, y + 3, 18, 2);
+  // The breastplate: shoulders, a chest narrowing to the waist, and its ridge.
+  c.fillStyle = "#e3e6e8";
+  c.beginPath();
+  c.moveTo(x - 6, y + 6); c.lineTo(x - 2, y + 7); c.lineTo(x + 2, y + 7); c.lineTo(x + 6, y + 6);
+  c.lineTo(x + 5, y + 11); c.lineTo(x + 4, y + 16); c.lineTo(x - 4, y + 16); c.lineTo(x - 5, y + 11);
+  c.closePath(); c.fill();
+  c.fillStyle = "#9aa3ab"; c.fillRect(x - 0.5, y + 8, 1, 8); c.fillRect(x - 4, y + 15, 8, 1);
 }

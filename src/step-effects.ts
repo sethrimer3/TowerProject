@@ -56,6 +56,9 @@ export type StepRules = {
   /** Effective and Dampen, on the step that activates their card: what the
    * target's effect is multiplied by (1.05 is 5% stronger). */
   scale?: number;
+  /** The percent of max HP the hero regains after each fight it wins
+   * (equipment), before the step's Regen. */
+  victoryHeal?: number;
   /** The percent of its toll a Heart Door drains (Heart Door Resilience
    * research), 100 when absent. */
   heartToll?: number;
@@ -82,7 +85,7 @@ export function resolveStep(player: Player, tile: Tile, rules: StepRules = BASE_
       // The fight plays out as predicted; a scale adds to (or gives back)
       // its damage once it is over, which can fell the hero.
       const damage = scaled(combat.damage);
-      next.hp = snap(Math.max(0, next.hp - damage));
+      next.hp = healAfterVictory(snap(Math.max(0, next.hp - damage)), next.maxHp, rules);
       effect.combat = scale === 1 ? combat : { ...combat, survivable: next.hp > 0 };
       if (scale !== 1) Object.assign(effect, { extraDamage: snap(damage - combat.damage), scale });
       break;
@@ -128,6 +131,11 @@ export function resolveStep(player: Player, tile: Tile, rules: StepRules = BASE_
   next.hp = regenerate(next.hp, next.maxHp, rules);
   return effect;
 }
+
+/** `hp` after a won fight's victory heal under `rules` (a share of
+ * `maxHp`, up to it); a fallen hero (0 HP) regains nothing. */
+export const healAfterVictory = (hp: number, maxHp: number, rules: StepRules) =>
+  rules.victoryHeal && hp > 0 && hp < maxHp ? snap(Math.min(maxHp, hp + (maxHp * rules.victoryHeal) / 100)) : hp;
 
 /** `hp` after a step's Regen under `rules`, up to `maxHp`; a fallen hero
  * (0 HP) regains nothing. */

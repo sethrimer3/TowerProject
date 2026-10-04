@@ -12,16 +12,6 @@ import {
 } from "../src/materials.ts";
 import { rollEnemyDrops, rollGold, rollMetal, rollTreasureLoot, towerEnemyDrops } from "../src/loot.ts";
 import { TOWER_ZONE_ENEMIES } from "../src/scaling.ts";
-import { calculateEquipmentStats, getEquipmentBaseStats } from "../src/equipment.ts";
-import {
-  canCraft,
-  craftEquipment,
-  equipItem,
-  getEquippedBonuses,
-  getSalvageReturns,
-  salvageEquipment,
-  unequipSlot,
-} from "../src/crafting.ts";
 
 // --- Deterministic RNG helpers ---
 const always = (values: number[]) => {
@@ -107,134 +97,26 @@ test("gold formula matches the documented range at floor 0", () => {
   assert.equal(rollGold(0, constant(0.999)), 6);
 });
 
-test("crafting subtracts exact material costs and rejects insufficient materials", () => {
-  const save = defaults();
-  assert.equal(canCraft(save, "weapon", "iron", []), false);
-  save.materials.ironBar = 40;
-  save.materials.cinderSlimeBlob = 12;
-  assert.equal(canCraft(save, "weapon", "iron", []), true);
-  const item = craftEquipment(save, "weapon", "iron", []);
-  assert.ok(item);
-  assert.equal(save.materials.ironBar, 0);
-  assert.equal(save.materials.cinderSlimeBlob, 0);
-  assert.equal(craftEquipment(save, "weapon", "iron", []), null, "materials already spent");
-});
-
-test("crafted items get unique ids, and distinct enhancement choices produce distinct gear", () => {
-  const save = defaults();
-  save.materials.ironBar = 100;
-  save.materials.sentinelBone = 30;
-  save.materials.ruby = 5;
-  const a = craftEquipment(save, "ring", "iron", []);
-  const b = craftEquipment(save, "ring", "iron", [{ id: "ruby", quantity: 5 }]);
-  assert.ok(a && b);
-  assert.notEqual(a!.id, b!.id);
-  assert.notEqual(a!.percentAttack, b!.percentAttack);
-  assert.equal(save.equipmentInventory.length, 2, "two distinct persistent objects, not a stacked count");
-});
-
-test("equip/unequip: only one item per slot, and equipping swaps without deleting the previous item", () => {
-  const save = defaults();
-  save.materials.ironBar = 200;
-  save.materials.sentinelBone = 30;
-  const ringA = craftEquipment(save, "ring", "iron", [])!;
-  const ringB = craftEquipment(save, "ring", "iron", [])!;
-  equipItem(save, ringA.id);
-  assert.equal(save.equipped.ring, ringA.id);
-  equipItem(save, ringB.id);
-  assert.equal(save.equipped.ring, ringB.id, "equipping a new item replaces the old one in that slot");
-  assert.equal(save.equipmentInventory.length, 2, "the replaced item is not deleted, just unequipped");
-  unequipSlot(save, "ring");
-  assert.equal(save.equipped.ring, undefined);
-});
-
-test("equipped stat aggregation sums flat and percent bonuses across all equipped slots", () => {
-  const save = defaults();
-  save.materials.ironBar = 500;
-  save.materials.sentinelBone = 100;
-  save.materials.gildedMarrow = 10;
-  save.materials.ruby = 10;
-  const shield = craftEquipment(save, "shield", "iron", [{ id: "gildedMarrow", quantity: 3 }])!;
-  const ring = craftEquipment(save, "ring", "iron", [{ id: "ruby", quantity: 2 }])!;
-  equipItem(save, shield.id);
-  equipItem(save, ring.id);
-  const bonuses = getEquippedBonuses(save);
-  assert.equal(bonuses.flatDefense, shield.flatDefense + ring.flatDefense);
-  assert.ok(Math.abs(bonuses.percentAttack - ring.percentAttack) < 1e-9);
-});
-
-test("salvage returns 40% of base bars/common parts, rounded down, and never returns gems or rare parts", () => {
-  const save = defaults();
-  save.materials.ironBar = 40;
-  save.materials.cinderSlimeBlob = 13;
-  save.materials.emberNucleus = 5;
-  const item = craftEquipment(save, "weapon", "iron", [{ id: "emberNucleus", quantity: 5 }])!;
-  const returns = getSalvageReturns(item);
-  const bars = returns.find((r) => r.id === "ironBar")!;
-  const common = returns.find((r) => r.id === "cinderSlimeBlob")!;
-  assert.equal(bars.quantity, Math.floor(40 * 0.4));
-  assert.equal(common.quantity, Math.floor(12 * 0.4));
-  assert.equal(returns.some((r) => r.id === "emberNucleus"), false, "rare parts are never returned pre-research");
-  const before = { ...save.materials };
-  assert.equal(salvageEquipment(save, item.id), true);
-  assert.equal(save.materials.ironBar, before.ironBar + bars.quantity);
-  assert.equal(save.equipmentInventory.length, 0);
-});
-
-test("an equipped item cannot be salvaged until unequipped", () => {
+test("materials persist across a save encode/decode round trip", () => {
   const save = defaults();
   save.materials.ironBar = 40;
   save.materials.cinderSlimeBlob = 12;
-  const item = craftEquipment(save, "weapon", "iron", [])!;
-  equipItem(save, item.id);
-  assert.equal(salvageEquipment(save, item.id), false);
-  unequipSlot(save, "weapon");
-  assert.equal(salvageEquipment(save, item.id), true);
-});
-
-test("slot stat formulas apply the documented metal power multipliers", () => {
-  assert.equal(getEquipmentBaseStats("weapon", "iron").attack, 4);
-  assert.equal(getEquipmentBaseStats("weapon", "embersteel").attack, 14);
-  assert.equal(getEquipmentBaseStats("weapon", "voidsteel").attack, 28);
-  assert.equal(getEquipmentBaseStats("shield", "voidsteel").defense, 21);
-  assert.equal(getEquipmentBaseStats("chestplate", "embersteel").defense, 11);
-  assert.equal(getEquipmentBaseStats("chestplate", "embersteel").maxHp, 35);
-});
-
-test("crafted equipment stats are finalized at craft time and never silently recomputed", () => {
-  const stats = calculateEquipmentStats("shield", "iron", [
-    { id: "ruby", quantity: 5 },
-    { id: "gildedMarrow", quantity: 7 },
-  ]);
-  assert.equal(stats.flatDefense, 3 + 7);
-  assert.ok(Math.abs(stats.percentAttack - 0.05) < 1e-9);
-});
-
-test("materials, equipment, and equipped state persist across a save encode/decode round trip", () => {
-  const save = defaults();
-  save.materials.ironBar = 40;
-  save.materials.cinderSlimeBlob = 12;
-  const item = craftEquipment(save, "weapon", "iron", [])!;
-  equipItem(save, item.id);
   save.materials.garnet = 3;
   const loaded = decode(JSON.stringify(save));
   assert.equal(loaded.materials.garnet, 3);
-  assert.equal(loaded.equipmentInventory.length, 1);
-  assert.equal(loaded.equipmentInventory[0].id, item.id);
-  assert.equal(loaded.equipped.weapon, item.id);
+  assert.equal(loaded.materials.ironBar, 40);
 });
 
 test("a version-2 (pre-crafting) save migrates with empty materials/equipment rather than being invalidated", () => {
   const old = defaults();
   (old as any).version = 2;
   delete (old as any).materials;
-  delete (old as any).equipmentInventory;
-  delete (old as any).equipped;
+  delete (old as any).equipment;
   delete (old as any).consumables;
   const loaded = decode(JSON.stringify(old));
   assert.equal(loaded.materials.ironBar, 0);
-  assert.deepEqual(loaded.equipmentInventory, []);
-  assert.deepEqual(loaded.equipped, {});
+  assert.deepEqual(loaded.equipment.items, []);
+  assert.equal(loaded.equipment.unlocked, false);
 });
 
 test("materials persist through death, undo, and new runs (never part of Run)", () => {
@@ -318,17 +200,4 @@ test("undo/reopen the same treasure chest cannot duplicate its Gold/material pay
   assert.equal(g.save.tower.runGold, goldAfterFirst, "the run's Gold counts the chest once and undo keeps it");
   g.newRun();
   assert.equal(g.save.tower.runGold, 0, "a new run starts its Gold count afresh");
-});
-
-test("craft equipment, undo unrelated gameplay: both the equipment and the spent materials remain (spend is not run-scoped)", () => {
-  const g = new Game(defaults());
-  g.save.materials.ironBar = 40;
-  g.save.materials.cinderSlimeBlob = 12;
-  const before = g.snapshot();
-  const item = g.gear.craftEquipment("weapon", "iron", []);
-  assert.ok(item);
-  assert.equal(g.save.materials.ironBar, 0);
-  g.restore(before);
-  assert.equal(g.save.materials.ironBar, 0, "crafting spend is persistent, not part of the run snapshot");
-  assert.equal(g.save.equipmentInventory.length, 1, "the crafted item is not undone either");
 });

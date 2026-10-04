@@ -4,7 +4,7 @@ import { TIERS } from "./tiers.ts";
 import { FIND_POTION_MAX, GOLD_SHOP, OLD_SAVE_KEY, RUN_TRAINING_CAP, SAVE_KEY, TOWER_WIDTH, TRAINING, UPGRADES, WIDTH } from "./config.ts";
 import type { AutomoveMemory, DelveRun, ModeSave, Fall, MoveSnapshot, Run, Save, TowerRun } from "./entities.ts";
 import { emptyMaterials, MATERIAL_IDS, type MaterialId } from "./materials.ts";
-import { EQUIPMENT_SLOTS, type CraftedEquipment, type EquipmentSlot } from "./equipment.ts";
+import { decodeEquipment, defaultEquipment } from "./equipment/inventory.ts";
 import { CONSUMABLES, type ConsumableId } from "./crafting.ts";
 import { decodeDefendSave, defaultDefendSave } from "./defend/progress.ts";
 import { decodeSettings, defaultSettings } from "./settings.ts";
@@ -42,8 +42,7 @@ export function defaults(): Save {
     ) as Save["upgrades"],
     settings: defaultSettings(),
     materials: emptyMaterials(),
-    equipmentInventory: [],
-    equipped: {},
+    equipment: defaultEquipment(),
     consumables: Object.fromEntries(CONSUMABLES.map((c) => [c.id, 0])) as Save["consumables"],
     hand: [...BASE_HAND],
     handSlots: 0,
@@ -93,6 +92,7 @@ const validPlayer = (p: any, width: number) =>
   finite(p.hp) && p.hp >= 0 && finite(p.maxHp) && p.hp <= p.maxHp &&
   finite(p.attack) && finite(p.defense) && (p.shroud === undefined || (finite(p.shroud) && p.shroud >= 0)) &&
   (p.regen === undefined || (finite(p.regen) && p.regen >= 0)) &&
+  (p.bossAttack === undefined || (finite(p.bossAttack) && p.bossAttack >= 0)) &&
   KEY_COLORS.every((k) => finite(p.keys?.[k]));
 /** Checks every run passes, whatever its mode; `width` is the mode's board. */
 const validCore = (r: any, width: number) =>
@@ -222,41 +222,17 @@ function decodeMaterials(s: any): Record<MaterialId, number> {
     for (const id of MATERIAL_IDS) materials[id] = count(s[id], materials[id]);
   return materials;
 }
-const validStacks = (arr: any): boolean =>
-  Array.isArray(arr) &&
-  arr.every((m: any) => MATERIAL_IDS.includes(m?.id) && finite(m?.quantity, 999));
-const validEquipment = (e: any) =>
-  typeof e?.id === "string" && e.id.length > 0 && e.id.length < 100 &&
-  EQUIPMENT_SLOTS.includes(e.slot) &&
-  typeof e.name === "string" && e.name.length < 100 &&
-  ["iron", "steel", "silversteel", "embersteel", "starsteel", "voidsteel"].includes(e.metal) &&
-  finite(e.flatAttack, 9999) && finite(e.flatDefense, 9999) && finite(e.flatMaxHp, 9999) &&
-  finite(e.percentAttack, 10) && finite(e.percentDefense, 10) && finite(e.percentMaxHp, 10) &&
-  validStacks(e.baseRecipe) && validStacks(e.enhancements) &&
-  finite(e.createdAt, 1e15);
-function decodeEquipmentInventory(s: any): CraftedEquipment[] {
-  return Array.isArray(s) ? s.filter(validEquipment) : [];
-}
-const owns = (inventory: CraftedEquipment[], id: unknown, slot: EquipmentSlot) =>
-  typeof id === "string" && inventory.some((e) => e.id === id && e.slot === slot);
-function decodeEquipped(s: any, inventory: CraftedEquipment[]): Partial<Record<EquipmentSlot, string>> {
-  const equipped: Partial<Record<EquipmentSlot, string>> = {};
-  if (isRecord(s))
-    for (const slot of EQUIPMENT_SLOTS) if (owns(inventory, s[slot], slot)) equipped[slot] = s[slot];
-  return equipped;
-}
 function decodeConsumables(s: any): Record<ConsumableId, number> {
   const consumables = Object.fromEntries(CONSUMABLES.map((c) => [c.id, 0])) as Record<ConsumableId, number>;
   if (s && typeof s === "object")
     for (const c of CONSUMABLES) consumables[c.id] = count(s[c.id], consumables[c.id], 999);
   return consumables;
 }
-/** Older (version-2) saves intentionally get an empty material/equipment
- * inventory rather than being invalidated. */
+/** Older (version-2) saves intentionally get an empty material inventory
+ * rather than being invalidated. The crafted equipment of earlier saves
+ * (`equipmentInventory`, never reachable in play) is dropped. */
 function decodeInventory(s: any, d: Save) {
   d.materials = decodeMaterials(s.materials);
-  d.equipmentInventory = decodeEquipmentInventory(s.equipmentInventory);
-  d.equipped = decodeEquipped(s.equipped, d.equipmentInventory);
   d.consumables = decodeConsumables(s.consumables);
 }
 
@@ -394,6 +370,7 @@ export function decode(raw: string | null): Save {
     const { undoCapacity } = loadout(d);
     d.settings = decodeSettings(s.settings);
     for (const step of VERSION_STEPS.get(s.version) ?? []) step(s, d, undoCapacity);
+    d.equipment = decodeEquipment(s.equipment);
     d.entitlements = decodeEntitlements(s.entitlements);
     d.shop = decodeShop(s.shop);
     d.goals = decodeGoals(s.goals);

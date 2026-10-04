@@ -17,6 +17,7 @@ import { CountUp } from "./count-up.ts";
 import { estimatedServerTime } from "../shop/clock.ts";
 import { OFFERS } from "../shop/offers.ts";
 import { refusal } from "../shop/transactions.ts";
+import { equipmentWaiting } from "../equipment/inventory.ts";
 
 /** The stats cluster, action buttons and status line around the board. */
 
@@ -98,8 +99,8 @@ export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay)
   const { deck, addCard } = game.save.tutorials;
   document.querySelector(`[data-tab="deck"]`)?.classList.toggle("notify", !deck || (!!game.save.upgrades.buildout && !addCard));
   document.querySelector(`[data-tab="upgrades"]`)?.classList.toggle("notify", upgradesWaiting(game) || game.treeWaiting("inspiration") || game.treeWaiting("courage") || trainingWaiting(game.save));
-  renderLockedTab("gear", !!game.save.upgrades.gear, "Gear", "Unlock Gear in the Inspiration tree");
-  document.querySelector(`[data-tab="gear"]`)?.classList.toggle("notify", gearWaiting(game));
+  renderLockedTab("gear", !!game.save.upgrades.gear || game.save.equipment.unlocked, "Gear", "Unlock Gear in the Inspiration tree");
+  document.querySelector(`[data-tab="gear"]`)?.classList.toggle("notify", gearWaiting(game) || equipmentWaiting(game.save));
   renderShopDot(game);
   renderLockedTab("defend", !!game.save.upgrades.legacy, "Defend", "Not yet open");
 }
@@ -222,7 +223,8 @@ function renderAutoButton(game: Game) {
 function renderSpeed(game: Game, inside: boolean) {
   const row = el("auto-speed"), steps = game.stepsPerSecond, lesson = inside && game.teachesSpeed;
   row.hidden = !inside;
-  text("speed-value", `${steps}x`);
+  // Equipment's movement speed shows in the steps actually taken.
+  text("speed-value", `${Math.round(game.moveRate * 100) / 100}x`);
   (el("speed-down") as HTMLButtonElement).disabled = steps <= 0 || lesson;
   (el("speed-up") as HTMLButtonElement).disabled = steps >= game.maxSpeed;
   let pointer = row.querySelector<HTMLElement>(".speed-pointer");

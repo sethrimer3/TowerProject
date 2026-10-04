@@ -148,6 +148,25 @@ try {
         Object.assign(s.tutorials, { deck: true, removeCard: true, addCard: true, upgrades: true });
         s.badges = { owned: { hp: { copies: 4, pick: 0 }, xp: { copies: 1, pick: 0 }, hpGate: { copies: 3, pick: 1 }, charge: { copies: 2, pick: 0 } }, cards: { stairs: "hp", monster: "charge" }, rng: 99 };
       }),
+      // In the forest the first time back after floor 60: Equipment just
+      // opened (the game announces it), a few pieces owned, two worn.
+      equipment: forest((s) => {
+        rich(s);
+        s.tower.best = 59;
+        Object.assign(s.tutorials, { gear: true, upgrades: true });
+        const item = (id, def, rarity, level, extra) => ({ id, def, rarity, level, ...extra });
+        Object.assign(s.equipment, {
+          items: [
+            item("e1", "knightsSword", "uncommon", 12, { spent: { gold: 3300, material: 70 } }),
+            item("e2", "knightsSword", "common", 1), item("e3", "knightsSword", "common", 4), item("e4", "knightsSword", "common", 1),
+            item("e5", "ringOfFury", "rare", 1, { locked: true }), item("e6", "steelCuirass", "common", 3), item("e7", "bastionPlate", "uncommon", 1),
+          ],
+          equipped: { tower: { weapon: "e1", ring: "e5" }, delve: {} },
+          materials: { ...s.equipment.materials, whetstone: 40, rivets: 12, amber: 3 },
+          pity: { ...s.equipment.pity, ring: 97 },
+          nextId: 8,
+        });
+      }),
     };
   });
 
@@ -526,6 +545,42 @@ try {
 
   await load("badges");
   await badgesTour("badges");
+
+  // Equipment: announced back in the forest, opened through the Blacksmith,
+  // then each view, an item, a merge, a dismantle and a ×10 pull.
+  await load("equipment");
+  await shot("equipment.announced");
+  await click("#confirm");
+  await shot("equipment.loadout");
+  await click('[data-eq-slot="weapon"]');
+  await shot("equipment.slot");
+  await click('[data-eq-pick="e1"]');
+  await shot("equipment.item");
+  await click("#eq-close");
+  await click('[data-eq-view="inventory"]');
+  await shot("equipment.inventory");
+  await click('[data-eq-cat="weapon"]');
+  await click('[data-eq-rar="common"]');
+  await shot("equipment.filtered");
+  await click('[data-eq-select="toggle"]');
+  await click('[data-eq-item="e2"]');
+  await click('[data-eq-item="e3"]');
+  await shot("equipment.selected");
+  await click('[data-eq-dismantle]');
+  await shot("equipment.dismantle.confirm");
+  await click("#eq-cancel");
+  await click('[data-eq-view="forge"]');
+  await shot("equipment.forge");
+  await click('[data-eq-merge]');
+  await shot("equipment.merge");
+  await click("#eq-do-merge");
+  await shot("equipment.merged");
+  await click("#eq-close");
+  await click('[data-eq-view="pulls"]');
+  await click('[data-eq-pullcat="ring"]');
+  await shot("equipment.pulls");
+  await click('[data-eq-pull="10"]');
+  await shot("equipment.pulled");
 
   // --- Compare ---
   const hashes = Object.fromEntries(Object.entries(shots).map(([k, html]) => [k, createHash("sha256").update(html).digest("hex").slice(0, 16)]));

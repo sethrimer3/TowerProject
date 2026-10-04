@@ -1,6 +1,6 @@
 # Crafting, Materials, Enemy Drops, and Equipment
 
-**Status:** Design source of truth for the planned crafting/equipment system. Gameplay implementation is intentionally separate.
+**Status:** Design source of truth for materials, enemy drops, treasure chests and consumable crafting. Its crafted equipment (sections 6 to 11) was never opened to players and is **superseded by [EQUIPMENT.md](EQUIPMENT.md)**: equipment now comes from boss drops and Gem pulls, levels with upgrade materials, and merges by rarity.
 
 This document defines the first-pass economy for persistent crafting resources, enemy-specific materials, treasure chests, craftable equipment, enhancement materials, equipment inventory, and salvage.
 
