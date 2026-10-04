@@ -116,6 +116,10 @@ How:
 
 `.claude/skills/add-upgrade/` defines a new skill-tree node, Archives research, Training stat or Defend Armory upgrade: it writes a spec (panel, name, cost, levels, placement, research hours, unlocks) for approval, then builds it. Its `references/panels.md` describes each panel's rows, prices, effects and unlocks; keep it current when those mechanisms change.
 
+### Adding a card badge
+
+`.claude/skills/add-badge/` adds a new card badge: it reads the badge system, asks the questions the request leaves open (each badge's effect on every card, triggers, fractions, lethality, bosses, undo, the Dev grant) with proposed defaults, writes a spec for approval, then builds it. Keep its file list current when the badge mechanism moves.
+
 ### Issue tracker
 
 Issues live in GitHub Issues on `sethrimer3/TowerProject`, managed with the `gh` CLI. See `docs/agents/issue-tracker.md`.
