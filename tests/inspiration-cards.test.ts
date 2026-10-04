@@ -13,15 +13,15 @@ import type { EnemyStrength, Save, Tile } from "../src/entities.ts";
  * research instead). */
 const NODES: [UpgradeId, number, UpgradeId, CardId | null][] = [
   ["cardYellowDoor", 5, "buyQuantity", "yellowDoor"],
-  ["cardHeartDoor", 5, "cardYellowDoor", "heartDoor"],
-  ["cardWeakEnemy", 10, "cardHeartDoor", "weakEnemy"],
+  ["heartDoorResilience", 10, "cardYellowDoor", null],
+  ["cardHeartDoor", 5, "heartDoorResilience", "heartDoor"],
+  ["cardWeakEnemy", 10, "heartDoorResilience", "weakEnemy"],
   ["cardBaseEnemy", 10, "cardWeakEnemy", "baseEnemy"],
   ["cardStrongEnemy", 10, "cardBaseEnemy", "strongEnemy"],
   ["cardEliteEnemy", 10, "cardWeakEnemy", "eliteEnemy"],
   ["cardBossEnemy", 10, "cardEliteEnemy", "bossEnemy"],
   ["cardChest", 10, "cardWeakEnemy", "chest"],
-  ["heartDoorResilience", 10, "cardChest", null],
-  ["blueSiphon", 10, "heartDoorResilience", "blueSiphon"],
+  ["blueSiphon", 10, "cardChest", "blueSiphon"],
   ["blueTrader", 10, "blueSiphon", "blueTrader"],
   ["keyToHp", 10, "blueTrader", "keyToHp"],
   ["cardRedKey", 10, "blueSiphon", "redKey"],
@@ -56,6 +56,8 @@ test("a card node can't be bought before the one above it", () => {
   g.save.upgrades.buyQuantity = 1;
   assert.equal(g.buy("cardHeartDoor"), false);
   assert.ok(g.buy("cardYellowDoor"));
+  assert.equal(g.buy("cardHeartDoor"), false);
+  assert.ok(g.buy("heartDoorResilience"));
   assert.ok(g.buy("cardHeartDoor"));
 });
 
