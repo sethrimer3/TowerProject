@@ -2010,6 +2010,9 @@ button.training-timer { border-color: #c0483c; color: #ffd0c8; background: #2a14
 /* Auto-continue: the trainer starts the stat's next rank once one is done. */
 .training-auto { width: 14px; height: 14px; margin: 0 5px 0 0; vertical-align: -2px; accent-color: var(--gold); cursor: pointer; }
 .training-label small { display: block; font-size: 9px; letter-spacing: .5px; color: #9aa6b6; }
+/* The training time a row's next rank still needs. */
+.training-left { display: inline-flex; align-items: center; gap: 2px; }
+.training-left .clock-icon { width: 10px; height: 10px; }
 .training-box { padding: 6px 8px; min-height: 30px; display: grid; place-items: center; border: 1px solid #4a5566; border-radius: 8px; background: #111925; font-size: 12px; color: #dfe5ee; }
 .training-box.next { border-color: #6e9a70; color: #b8f0b4; }
 .training-arrow { text-align: center; color: var(--gold); font-size: 14px; }
@@ -2026,9 +2029,8 @@ button.training-cost:disabled .gold-icon, button.training-cost:disabled .points-
 .points-icon, .clock-icon, .ad-icon { width: 14px; height: 14px; vertical-align: -2px; flex-shrink: 0; }
 .ui-sprite.gold-icon { width: 14px; height: 14px; vertical-align: -2px; image-rendering: pixelated; flex-shrink: 0; }
 .training-points small .points-icon, .training-points small .gold-icon { width: 11px; height: 11px; }
-.training-held, .training-credit { display: inline-flex; align-items: center; gap: 4px; margin-right: 10px; }
-.training-held .points-icon, .training-credit .clock-icon { width: 16px; height: 16px; }
-.training-credit b { color: #e9e1c8; font-size: 13px; }
+.training-held { display: inline-flex; align-items: center; gap: 4px; margin-right: 10px; }
+.training-held .points-icon { width: 16px; height: 16px; }
 .training-currency .points-icon { width: 15px; height: 15px; }
 /* The training boost: ×2, its time left, and the ad button. */
 .training-boost { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; padding: 5px 6px 5px 10px; border: 1px solid #4a5566; border-radius: 9px; background: #111925; }
@@ -2706,8 +2708,8 @@ nav.in-run.drilling .run-drills {
 .shop-guaranteed b { color: #ecd19d; }
 .shop-history { margin-top: 10px; font-size: 11px; color: var(--muted); }
 .shop-history ul { padding-left: 18px; line-height: 1.7; }
-/* What a stopped trainer gives back, rising from the Gold and time credit
- * it lands in (`riseFrom`). */
+/* What a stopped trainer gives back, rising from the Gold and from its
+ * row's time to the next rank (`riseFrom`). */
 .rise-pop {
   position: fixed;
   z-index: 50;

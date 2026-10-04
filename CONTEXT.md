@@ -98,7 +98,7 @@ Who trains a rank for Gold, over time, instead of training points. The hero star
 _Avoid_: training slot, archivist (who does research)
 
 **Time credit**:
-Training time given back when a trainer's rank is stopped or a stat is reset: the next ranks trainers train start that far along, until it is used up.
+Training time given back to a stat when its trainer's rank is stopped (by hand, or by buying the rank with training points) or the stat is reset: that stat's next ranks trainers train start that far along, until it is used up. Each stat keeps its own.
 _Avoid_: banked time, refund time
 
 **Training boost**:

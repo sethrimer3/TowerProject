@@ -37,7 +37,7 @@ export class TrainingDesk {
 
   /** Buys one more rank of `id` with training points: it counts at once.
    * A trainer training the stat stops, as `cancel` does: its Gold comes
-   * back and the time spent becomes time credit. Refused without the
+   * back and the time spent becomes the stat's time credit. Refused without the
    * Training skill, at the stat's most, or without the points. With Dev
    * free purchases it costs nothing. */
   train(id: TrainingId) {
@@ -56,8 +56,8 @@ export class TrainingDesk {
   }
 
   /** Pays a trainer `trainingGold` to train one more rank of `id`: it
-   * takes `trainingMs` of the wall clock (less any time credit, used up
-   * first) and counts once that has passed (`settle`). Refused without the
+   * takes `trainingMs` of the wall clock (less the stat's time credit,
+   * used up first) and counts once that has passed (`settle`). Refused without the
    * Training skill, for a stat already in training or at its most, with
    * every trainer busy, or without the Gold. With Dev free purchases it
    * costs nothing and counts at once. */
@@ -75,12 +75,12 @@ export class TrainingDesk {
   }
 
   /** Pays `gold` and starts a trainer on the next rank of `id` at `now`,
-   * its time less any time credit (used up first). */
+   * its time less the stat's time credit (used up first). */
   private start(id: TrainingId, gold: number, now: number) {
     const save = this.save, ms = trainingMs(save.training[id], trainingSpeed(save)),
-      credit = Math.min(ms, save.trainingCredit);
+      credit = Math.min(ms, save.trainingCredit[id]);
     save.gold = snap(save.gold - gold);
-    save.trainingCredit -= credit;
+    save.trainingCredit[id] -= credit;
     save.trainingJobs.push({ id, startedAt: now, completesAt: doneAt(ms - credit, save.trainingBoostUntil, now), gold, ms });
   }
 
@@ -114,8 +114,16 @@ export class TrainingDesk {
     return job ? workLeft(job.completesAt, this.save.trainingBoostUntil, this.host.clock()) : 0;
   }
 
+  /** The training time (ms, at the normal rate) the next rank of `id`
+   * still needs: what is left of the rank in training, or else the next
+   * rank's whole time less the stat's time credit. */
+  toNextRank(id: TrainingId) {
+    if (trainingJob(this.save.trainingJobs, id)) return this.left(id);
+    return Math.max(0, trainingMs(this.save.training[id], trainingSpeed(this.save)) - this.save.trainingCredit[id]);
+  }
+
   /** Stops the training of `id`, giving its Gold back and the time already
-   * spent on it as time credit. */
+   * spent on it as the stat's time credit. */
   cancel(id: TrainingId) {
     const jobs = this.save.trainingJobs, job = trainingJob(jobs, id);
     if (!job) return false;
@@ -126,7 +134,7 @@ export class TrainingDesk {
 
   private refund(job: TrainingJob) {
     this.save.gold = snap(this.save.gold + job.gold);
-    this.save.trainingCredit += Math.max(0, Math.round(job.ms - this.left(job.id)));
+    this.save.trainingCredit[job.id] += Math.max(0, Math.round(job.ms - this.left(job.id)));
   }
 
   /** Finishes the rank of `id` in training now, for `finishGems` of the
@@ -216,8 +224,8 @@ export class TrainingDesk {
 
   /** Resets a Training stat to no ranks for `TRAINING_RESET_GEMS` Gems
    * (none with Dev free purchases), returning what its ranks were paid
-   * with: the training points, the Gold, and the trainers' time as time
-   * credit. A rank still in training is stopped, the same way. */
+   * with: the training points, the Gold, and the trainers' time as the
+   * stat's time credit. A rank still in training is stopped, the same way. */
   reset(id: TrainingId) {
     this.settle();
     const save = this.save, job = trainingJob(save.trainingJobs, id);
@@ -228,7 +236,7 @@ export class TrainingDesk {
       if (!this.host.free) save.gems -= TRAINING_RESET_GEMS;
       if (job) this.refund(job);
       save.gold = snap(save.gold + paid.gold);
-      save.trainingCredit += paid.ms;
+      save.trainingCredit[id] += paid.ms;
       save.trainingPaid[id] = { points: 0, gold: 0, ms: 0 };
       save.training[id] = 0;
       save.trainingJobs = save.trainingJobs.filter((j) => j.id !== id);

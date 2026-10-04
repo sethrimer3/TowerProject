@@ -220,9 +220,10 @@ export type Save = {
   /** Stats whose trainer starts the next rank as soon as one is done, when
    * the Gold is there (the Training tab's auto-continue boxes). */
   trainingAuto: TrainingId[];
-  /** Training time (ms) returned by resets and stopped ranks, taken off
-   * the next ranks trainers train until it is used up. */
-  trainingCredit: number;
+  /** Each stat's time credit: training time (ms) given back when its rank
+   * in training was stopped (by hand, or bought with points) or the stat
+   * reset, taken off that stat's next ranks until it is used up. */
+  trainingCredit: Record<TrainingId, number>;
   /** When the training boost (ranks in training go twice as fast) runs
    * out, as a wall-clock timestamp (ms). */
   trainingBoostUntil: number;

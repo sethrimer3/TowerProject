@@ -32,7 +32,7 @@ export function defaults(): Save {
     trainingPaid: Object.fromEntries(TRAINING.map((t) => [t.id, { points: 0, gold: 0, ms: 0 }])) as Save["trainingPaid"],
     trainingJobs: [],
     trainingAuto: [],
-    trainingCredit: 0,
+    trainingCredit: Object.fromEntries(TRAINING.map((t) => [t.id, 0])) as Save["trainingCredit"],
     trainingBoostUntil: 0,
     trainers: 0,
     upgrades: Object.fromEntries(
@@ -266,7 +266,7 @@ function decodeProgress(s: any, d: Save, undoCapacity: number) {
   d.delve.memory = decodeMemory(s.delve?.memory);
 }
 /** The hero's Training: ranks, what they were paid with, the trainers and
- * their jobs, the time credit and the boost. */
+ * their jobs, each stat's time credit and the boost. */
 function decodeTraining(s: any, d: Save) {
   for (const t of TRAINING) d.training[t.id] = count(s.training?.[t.id], d.training[t.id], "max" in t ? t.max : 1e6);
   for (const t of TRAINING) d.trainingPaid[t.id] = decodePaid(s.trainingPaid?.[t.id], t.cost * d.training[t.id]);
@@ -274,7 +274,7 @@ function decodeTraining(s: any, d: Save) {
   d.trainingJobs = decodeTrainingJobs(s.trainingJobs, trainingSlots(d));
   d.trainingAuto = TRAINING.filter((t) => Array.isArray(s.trainingAuto) && s.trainingAuto.includes(t.id)).map((t) => t.id);
   // Times in ms: credit can run to months, and the boost's end is a timestamp.
-  d.trainingCredit = count(s.trainingCredit, d.trainingCredit, Number.MAX_SAFE_INTEGER);
+  for (const t of TRAINING) d.trainingCredit[t.id] = count(s.trainingCredit?.[t.id], 0, Number.MAX_SAFE_INTEGER);
   d.trainingBoostUntil = count(s.trainingBoostUntil, d.trainingBoostUntil, Number.MAX_SAFE_INTEGER);
 }
 /** Each mode's currency (under its older name too) and best. */

@@ -59,7 +59,8 @@ test("training points buy a rank at once, without Gold, time or a trainer", () =
   assert.equal(g.save.training.defense, 1);
   assert.deepEqual(g.save.trainingJobs, []);
   assert.equal(g.save.gold, gold, "the trainer's Gold back");
-  assert.equal(g.save.trainingCredit, 10_000, "the time spent as credit");
+  assert.equal(g.save.trainingCredit.defense, 10_000, "the time spent as DEF's credit");
+  assert.equal(g.save.trainingCredit.hp, 0, "no other stat's");
   g.save.xp = 0;
   assert.equal(g.training.train("hp"), false, "no points left");
 });
@@ -137,20 +138,28 @@ test("stopping a rank gives its Gold back and its time spent as credit, which th
   wait(600);
   assert.ok(g.training.cancel("hp"));
   assert.equal(g.save.gold, 10_000);
-  assert.equal(g.save.trainingCredit, 600_000, "ten minutes of credit");
+  assert.equal(g.save.trainingCredit.hp, 600_000, "ten minutes of credit");
+  assert.equal(g.training.toNextRank("hp"), 20 * 60_000, "the next rank shows what is left of it");
   assert.equal(g.training.cancel("hp"), false);
   // The next rank starts ten minutes in.
   assert.ok(g.training.trainWithGold("hp"));
-  assert.equal(g.save.trainingCredit, 0);
+  assert.equal(g.save.trainingCredit.hp, 0);
   assert.equal(g.training.left("hp"), 20 * 60_000);
   // Credit enough for a whole rank counts it at once.
   wait(1200);
   g.training.settle();
-  g.save.trainingCredit = 10 * HOUR;
+  g.save.trainingCredit.attack = 10 * HOUR;
+  g.save.trainingCredit.defense = 10 * HOUR;
   g.save.training.attack = 4; // 15 minutes
+  assert.equal(g.training.toNextRank("attack"), 0);
   assert.ok(g.training.trainWithGold("attack"));
   assert.equal(g.save.training.attack, 5);
-  assert.equal(g.save.trainingCredit, 10 * HOUR - 15 * 60_000);
+  assert.equal(g.save.trainingCredit.attack, 10 * HOUR - 15 * 60_000);
+  assert.equal(g.save.trainingCredit.defense, 10 * HOUR, "another stat's credit is its own");
+  // Credit counts only for its own stat.
+  g.save.training.hp = 4;
+  assert.ok(g.training.trainWithGold("hp"));
+  assert.equal(g.training.left("hp"), 15 * 60_000, "DEF's credit leaves Max HP's rank whole");
   const bad = decode(JSON.stringify({ ...g.save, trainingJobs: [{ id: "nope", startedAt: 1, completesAt: 2 }, { id: "hp", startedAt: "x" }] }));
   assert.deepEqual(bad.trainingJobs, []);
 });
@@ -170,8 +179,9 @@ test("a Gem reset returns the points, the Gold and the trainers' time as credit"
   assert.deepEqual(g.save.trainingJobs, [], "the rank in training stops");
   assert.equal(trainingPoints(g.save).left, points + 1);
   assert.equal(g.save.gold, 10_000);
-  assert.equal(g.save.trainingCredit, 60_000 + 100_000, "the minute trained, and the 100 s of the stopped rank");
+  assert.equal(g.save.trainingCredit.hp, 60_000 + 100_000, "the minute trained, and the 100 s of the stopped rank");
   assert.deepEqual(decode(JSON.stringify(g.save)).trainingCredit, g.save.trainingCredit);
+  assert.equal(decode(JSON.stringify({ ...g.save, trainingCredit: 5 })).trainingCredit.hp, 0, "an old single credit is dropped");
 });
 
 test("the boost doubles training for up to four hours, banked an hour a claim", () => {
