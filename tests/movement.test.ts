@@ -65,7 +65,7 @@ test("unreachable wall target does not move; accessible detour beats missing-key
 });
 test("undo restores combat, health, drops, equipment, door keys and score; history caps at five", () => {
   const g = corridor();
-  g.save.upgrades.undos = 4;
+  g.save.archives.levels.undoCount = 4;
   g.run.changes["15,1"] = enemy;
   g.run.changes["15,2"] = { kind: "treasure" };
   g.run.changes["15,3"] = { kind: "key", color: "yellow" };

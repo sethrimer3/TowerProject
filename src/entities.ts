@@ -121,9 +121,9 @@ export type RunCore = {
   /** Training ranks bought with Silver this run, on top of the hero's own:
    * they last only for this run. */
   training?: Partial<Record<TrainingId, number>>;
-  /** Times KEY SIPHON has traded Max HP training levels for yellow keys this
-   * run (the nth use took n levels): lost only for this run. */
-  siphoned?: number;
+  /** Times each card that acts in place (cards.ts `IN_PLACE`) has acted this
+   * run: a siphon's nth use took n training levels, lost only for this run. */
+  cardUses?: Partial<Record<CardId, number>>;
   /** Which numbered tower (or delve) the run climbs, from 2 up (tiers.ts);
    * absent for the first. */
   tier?: number;
@@ -198,7 +198,8 @@ export type ModeSave<R extends Run = Run> = {
   /** The numbered tower (or delve) selected: the slice's records (`best`,
    * and `reached`) are this tier's. */
   tier: number;
-  /** The highest tier opened, from 1 to `TIERS`. */
+  /** The highest tier opened, from 1 to `TIERS`: the Tower's, which the
+   * Delve's caves follow. */
   tiersOpen: number;
   /** The other tiers' records, by tier, while another is selected. */
   tierRecords: Record<string, TierRecord>;
@@ -273,7 +274,7 @@ export type Save = {
    * the Gear page once the Gear skill is owned; and `onTheJob`, opening and
    * closing a Training group under the hand in the first run after On the
    * Job. */
-  tutorials: { deck: boolean; removeCard: boolean; addCard: boolean; upgrades: boolean; gear: boolean; onTheJob: boolean };
+  tutorials: { deck: boolean; removeCard: boolean; addCard: boolean; upgrades: boolean; gear: boolean; onTheJob: boolean; speed: boolean };
   /** Per tree: a run that earned its currency (Inspiration in the Tower,
    * Courage in the Delve) has ended since the tree was last shown, so its
    * tab (and the Upgrades tab) wear a dot in the forest while a skill there

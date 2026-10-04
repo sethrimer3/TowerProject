@@ -10,7 +10,7 @@ export type SkillNode = { id: UpgradeId; icon: string; x: number; y: number; req
  * only Dev mode shows it, and its skills can't be bought). */
 export type SkillTree = { id: TreeId; name: string; currency: Currency; gate?: UpgradeId | null; description: string; height?: number; unlocks?: boolean; nodes: SkillNode[] };
 export const TREES: SkillTree[] = [
-  { id: "inspiration", name: "Inspiration", currency: "inspiration", description: "Earn Inspiration by beating your best Tower climb.", height: 208, unlocks: true, nodes: [
+  { id: "inspiration", name: "Inspiration", currency: "inspiration", description: "Earn Inspiration by beating your best Tower climb.", height: 280, unlocks: true, nodes: [
     // The hand's skills, down to the Archives: Buildout, Training, Larger Hand. Gear and
     // On the Job branch off Buildout, ATK Up and DEF Up under Gear, and Regen, then Heal,
     // below On the Job.
@@ -47,8 +47,30 @@ export const TREES: SkillTree[] = [
     { id: "findPotion", icon: "⚗", x: 70, y: 178, requires: ["recovery"] },
     { id: "shroud", icon: "◈", x: 90, y: 160, requires: ["regenResearch"] },
     { id: "revive", icon: "☼", x: 90, y: 178, requires: ["shroud"] },
+    // The cards down the middle under Buy Quantity: Yellow Door, Heart Door
+    // Resilience (Heart Door to its left), Weak Enemy (Base, then Strong, to its left; Elite, then Boss, to its
+    // right), Chest, BK Siphon (BK Trader, then YK to HP, to its left; Red
+    // Key, then RK Siphon, to its right) and Floor Skip Reward (Torch to its
+    // left, Steel Door to its right).
+    { id: "cardYellowDoor", icon: "⚿", x: 50, y: 178, requires: ["buyQuantity"] },
+    { id: "heartDoorResilience", icon: "♥", x: 50, y: 196, requires: ["cardYellowDoor"] },
+    { id: "cardHeartDoor", icon: "♥", x: 30, y: 196, requires: ["heartDoorResilience"] },
+    { id: "cardWeakEnemy", icon: "☠", x: 50, y: 214, requires: ["heartDoorResilience"] },
+    { id: "cardBaseEnemy", icon: "☠", x: 30, y: 214, requires: ["cardWeakEnemy"] },
+    { id: "cardStrongEnemy", icon: "☠", x: 10, y: 214, requires: ["cardBaseEnemy"] },
+    { id: "cardEliteEnemy", icon: "☠", x: 70, y: 214, requires: ["cardWeakEnemy"] },
+    { id: "cardBossEnemy", icon: "☠", x: 90, y: 214, requires: ["cardEliteEnemy"] },
+    { id: "cardChest", icon: "▣", x: 50, y: 232, requires: ["cardWeakEnemy"] },
+    { id: "blueSiphon", icon: "⚿", x: 50, y: 250, requires: ["cardChest"] },
+    { id: "blueTrader", icon: "⚿", x: 30, y: 250, requires: ["blueSiphon"] },
+    { id: "keyToHp", icon: "♥", x: 10, y: 250, requires: ["blueTrader"] },
+    { id: "cardRedKey", icon: "⚿", x: 70, y: 250, requires: ["blueSiphon"] },
+    { id: "redSiphon", icon: "⚿", x: 90, y: 250, requires: ["cardRedKey"] },
+    { id: "floorSkipReward", icon: "↷", x: 50, y: 268, requires: ["blueSiphon"] },
+    { id: "cardTorch", icon: "☼", x: 30, y: 268, requires: ["floorSkipReward"] },
+    { id: "cardSteelDoor", icon: "⚿", x: 70, y: 268, requires: ["floorSkipReward"] },
   ] },
-  { id: "courage", name: "Courage", currency: "courage", gate: "delve", description: "Earn Courage by beating your best Delve depth.", nodes: [
+  { id: "courage", name: "Courage", currency: "courage", gate: "delve", description: "Earn Courage by beating your best Delve depth.", height: 150, nodes: [
     { id: "moveSpeed", icon: "»", x: 50, y: 10, requires: ["delve"] },
     { id: "instantCombat", icon: "↯", x: 18, y: 10, requires: ["moveSpeed"] },
     { id: "extraKey", icon: "⚿", x: 82, y: 10, requires: ["moveSpeed"] },
@@ -57,7 +79,13 @@ export const TREES: SkillTree[] = [
     { id: "rush", icon: "⇶", x: 82, y: 34, requires: ["moveSpeed"] },
     { id: "undos", icon: "↺", x: 23, y: 61, requires: ["pathfinder"] },
     { id: "cardBadges", icon: "◪", x: 70, y: 61, requires: ["focus"] },
-    { id: "legacy", icon: "♜", x: 50, y: 87, requires: ["focus", "undos"] },
+    // The research skills down the middle under Focus: Find Yellow Key, Key
+    // Efficiency, then Interest, with Max Interest to its left and Mug to its right.
+    { id: "findYellowKey", icon: "⚿", x: 50, y: 87, requires: ["focus"] },
+    { id: "keyEfficiency", icon: "⚿", x: 50, y: 111, requires: ["findYellowKey"] },
+    { id: "interest", icon: "¤", x: 50, y: 135, requires: ["keyEfficiency"] },
+    { id: "maxInterest", icon: "¤", x: 22, y: 135, requires: ["interest"] },
+    { id: "mug", icon: "☠", x: 78, y: 135, requires: ["interest"] },
   ] },
   { id: "wayfinding", name: "Wayfinding", currency: "courage", gate: null, description: "Teach Delve Automove to explore, compare routes and preserve resources.", nodes: [
     { id: "aiMemory", icon: "◇", x: 50, y: 20, requires: [] },

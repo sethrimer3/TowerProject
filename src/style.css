@@ -646,9 +646,15 @@ canvas {
 .mini-action[hidden] {
   display: none;
 }
-/* Under play/pause inside a run: the hero's movement speed, steps a second. */
+/* Under play/pause inside a run: the hero's movement speed, steps a second,
+   between the arrows that slow and speed it. Each arrow fills its side of
+   the row, so a press near it counts. */
 .auto-speed {
-  margin-top: -2px;
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  margin-top: -3px;
   font-size: 8px;
   line-height: 1;
   letter-spacing: 0.5px;
@@ -657,6 +663,46 @@ canvas {
 }
 .auto-speed[hidden] {
   display: none;
+}
+.auto-speed small {
+  font-size: inherit;
+}
+/* By id, so neither theme's button look reaches them. */
+#auto-speed .speed-arrow {
+  min-height: 0;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 14px;
+  line-height: 1;
+  color: #c9b48a;
+}
+#auto-speed .speed-arrow:hover {
+  color: #f1d69b;
+}
+#auto-speed .speed-arrow:disabled {
+  opacity: 0.25;
+}
+/* The speed lesson's hand, pointing up at the › arrow from below. */
+.speed-pointer {
+  position: absolute;
+  top: calc(100% - 2px);
+  right: -2px;
+  width: 24px;
+  z-index: 31;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 2px #000c);
+  animation: speed-point 1s ease-in-out infinite;
+}
+.speed-pointer svg { display: block; width: 100%; }
+@keyframes speed-point {
+  0%, 100% { transform: translateY(6px); }
+  50% { transform: translateY(0); }
+}
+.speed-pointer.still { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .speed-pointer { animation: none; }
 }
 .mini-action.enabled {
   border-color: #b59861;

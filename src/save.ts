@@ -9,7 +9,7 @@ import { CONSUMABLES, type ConsumableId } from "./crafting.ts";
 import { decodeDefendSave, defaultDefendSave } from "./defend/progress.ts";
 import { decodeSettings, defaultSettings } from "./settings.ts";
 import { keepUndos, loadout } from "./loadout.ts";
-import { BASE_HAND, CARD_IDS, HAND_SLOT_GEMS, MAX_HAND_SLOTS, deckCards, handSlots, type CardId } from "./cards.ts";
+import { BASE_HAND, CARD_IDS, HAND_SLOT_GEMS, IN_PLACE, MAX_HAND_SLOTS, deckCards, handSlots, type CardId } from "./cards.ts";
 import { decodeGemDrop, defaultGemDrop } from "./gems.ts";
 import { decodeArchives, defaultArchives } from "./archives.ts";
 import { BOOST_FOREVER, decodeEntitlements, permanentBoost } from "./shop/entitlements.ts";
@@ -47,7 +47,7 @@ export function defaults(): Save {
     hand: [...BASE_HAND],
     handSlots: 0,
     badges: defaultBadges(),
-    tutorials: { deck: false, removeCard: false, addCard: false, upgrades: false, gear: false, onTheJob: false },
+    tutorials: { deck: false, removeCard: false, addCard: false, upgrades: false, gear: false, onTheJob: false, speed: false },
     treeNotices: { inspiration: false, courage: false },
     archives: defaultArchives(),
     defend: defaultDefendSave(),
@@ -117,7 +117,7 @@ const RUN_FIELD_CHECKS = {
   // The hand is checked first: a focused card must be in it.
   focused: (v: unknown, r: any) => !!r.hand?.includes(v),
   training: validRunTraining,
-  siphoned: (v: unknown) => wholeIn(v, 1, 1e6),
+  cardUses: (v: unknown) => isRecord(v) && Object.entries(v).every(([id, n]) => IN_PLACE.has(id as CardId) && wholeIn(n, 1, 1e6)),
   tier: (v: unknown) => wholeIn(v, 2, TIERS),
   percentPotions: (v: unknown) => wholeIn(v, 1, FIND_POTION_MAX),
   // The hand is checked first: every card holding a badge must be in it.
@@ -310,12 +310,14 @@ function decodeReached(s: any, d: Save) {
     d[mode].best = Math.max(d[mode].best, d[mode].reached);
   }
 }
-/** Each mode's tiers: the highest opened, the one selected (its records
- * are the slice's), and the others' records. */
+/** Each mode's tiers: the highest opened (the Tower's, which the Delve's
+ * caves follow), the one selected (its records are the slice's), and the
+ * others' records. */
 function decodeTiers(s: any, d: Save) {
+  const open = Math.max(1, count(s?.tower?.tiersOpen, 1, TIERS));
   for (const mode of ["tower", "delve"] as const) {
     const raw = s?.[mode], slice = d[mode];
-    slice.tiersOpen = Math.max(1, count(raw?.tiersOpen, 1, TIERS));
+    slice.tiersOpen = open;
     slice.tier = Math.max(1, Math.min(slice.tiersOpen, count(raw?.tier, 1)));
     if (isRecord(raw?.tierRecords)) decodeTierRecords(raw.tierRecords, slice);
   }
@@ -381,7 +383,7 @@ export function decode(raw: string | null): Save {
     if (d.upgrades.largerHand) d.handSlots = count(s.handSlots, 0, HAND_SLOT_GEMS.length);
     d.hand = decodeHand(s.hand, deckCards(d.upgrades), handSlots(d));
     d.badges = decodeBadges(s.badges, d.upgrades);
-    for (const k of ["deck", "removeCard", "addCard", "upgrades", "gear", "onTheJob"] as const) d.tutorials[k] = s.tutorials?.[k] === true;
+    for (const k of ["deck", "removeCard", "addCard", "upgrades", "gear", "onTheJob", "speed"] as const) d.tutorials[k] = s.tutorials?.[k] === true;
     for (const k of ["inspiration", "courage"] as const) d.treeNotices[k] = s.treeNotices?.[k] === true;
   } catch {}
   return d;

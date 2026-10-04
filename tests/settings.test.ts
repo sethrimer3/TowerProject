@@ -10,7 +10,7 @@ const decoded = (settings: unknown) => decode(JSON.stringify({ version: 3, setti
 function values(row: Setting): { good: unknown[]; bad: unknown[] } {
   switch (row.kind) {
     case "toggle": return { good: [true, false], bad: ["yes", 1, 0, null, {}] };
-    case "choice": return { good: row.choices.map(([c]) => c), bad: [String(row.choices[0][0]) + "x", null, [], row.default === 3 ? "3" : 3] };
+    case "choice": return { good: row.choices.map(([c]) => c), bad: [String(row.choices[0][0]) + "x", null, [], typeof row.default === "number" ? String(row.default) : 3] };
     case "range": return { good: [row.min, row.max, row.default], bad: ["50", NaN, Infinity, null] };
   }
 }

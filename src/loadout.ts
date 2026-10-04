@@ -90,8 +90,9 @@ export function loadout(save: Save, mode: Mode = "tower"): Loadout {
     bossAttack: eq.bossAttack,
     keys: { yellow: own.yellow + prov.yellow, blue: own.blue + prov.blue, red: own.red + prov.red },
     startKeys: { yellow: eq.yellowKeys, blue: eq.blueKeys },
-    // Undo needs Rehearsed steps: without it nothing else stores one.
-    undoCapacity: save.upgrades.inspirationUndos ? researched(save.archives, "undoCapacity", own.undos) : 0,
+    // Undo needs Rehearsed steps (its first undo) or Echoes of time: Undo
+    // Count research, which either opens, stores the rest.
+    undoCapacity: save.upgrades.inspirationUndos || save.upgrades.undos ? researched(save.archives, "undoCapacity", own.undos) : 0,
   };
 }
 

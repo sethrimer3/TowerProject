@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { BASE_HAND, BASE_HAND_SLOTS, CARDS, CARD_IDS, cardText, HAND_SLOT_GEMS, MAX_HAND_SLOTS, deckCards, handSlots, nextHandSlotGems, moveCard, placeCard, planHand, upgradeCard, type CardId } from "../src/cards.ts";
 import { defaults } from "../src/save.ts";
+import { UPGRADES } from "../src/config.ts";
 import type { Board, Position } from "../src/board.ts";
 import type { DelveRun, Enemy, Run, Tile } from "../src/entities.ts";
 
@@ -73,7 +74,7 @@ test("each card heads for its own kind of target", () => {
   assert.equal(only("A"), "atkUp");
   assert.equal(only("F"), "defUp");
   assert.equal(only("D", { keys: { yellow: 1, blue: 0, red: 0 } }), "door");
-  assert.equal(only("T"), null, "ATK UP and DEF UP don't head for chests");
+  assert.equal(only("T"), "chest", "only CHEST heads for a chest");
   assert.equal(only("."), null, "an empty floor gives no card anything to do");
 });
 
@@ -159,7 +160,7 @@ test("the deck starts as the base hand, and HEAL, EQUIPMENT, BLUE KEY and KEY SI
   assert.deepEqual(deckCards(none), ["stairs", "door", "yellowKey", "monster"]);
   assert.deepEqual(deckCards({ ...none, cardHeal: 1 }), ["stairs", "heal", "door", "yellowKey", "monster"]);
   assert.deepEqual(deckCards({ ...none, cardBlueKey: 1 }), ["stairs", "door", "yellowKey", "blueKey", "monster"]);
-  assert.deepEqual(deckCards({ ...none, cardHeal: 1, cardAtkUp: 1, cardDefUp: 1, cardBlueKey: 1, keySiphon: 1 }), CARD_IDS);
+  assert.deepEqual(deckCards({ ...none, ...Object.fromEntries(UPGRADES.filter((u) => "card" in u).map((u) => [u.id, 1])) }), CARD_IDS);
   assert.equal(upgradeCard("cardAtkUp"), "atkUp");
   assert.equal(upgradeCard("cardDefUp"), "defUp");
   assert.equal(upgradeCard("cardBlueKey"), "blueKey");
@@ -235,4 +236,17 @@ test("the hand's paths go round items and lit torches when an equally short way 
   const litMiddle = board(["..S", "...", "@.."]);
   litMiddle.world.torches = [{ x: 0, y: 1, active: true }] as Board["torches"];
   assert.ok(!planHand(litMiddle, ["stairs"], "tower")!.path.some((s) => s.x === 0 && s.y === 1), "round the lit torch");
+});
+
+test("the door cards plan by Key Efficiency: less than a whole key opens a door once it is cheap enough", () => {
+  const short = { keys: { yellow: 0.9, blue: 0, red: 0 } };
+  const at = (keyCost?: number) => ({ ...board(["@.D"], short), keyCost });
+  for (const card of ["door", "yellowDoor"] as const) {
+    assert.equal(planHand(at(), [card], "tower"), null, `${card}: 0.9 of a key opens nothing at full cost`);
+    assert.equal(planHand(at(950), [card], "tower"), null, `${card}: nor at 95%`);
+    assert.ok(planHand(at(900), [card], "tower"), `${card}: at 90% it does`);
+  }
+  // A card's Dampen multiplies with it: 94% of 95% is under 0.9.
+  assert.equal(planHand(at(940), ["door"], "tower"), null);
+  assert.ok(planHand({ ...at(940), cardRules: () => ({ scale: 0.95 }) }, ["door"], "tower"));
 });

@@ -44,7 +44,7 @@ test("Spare Change opens Gold / Floor training (3, and 2 a rank) and its researc
   assert.equal(researched(save.archives, "floorGold", 100), 115);
 });
 
-test("a floor climbed for the first time in a run pays Gold / Floor, with research and the tier's bonus, once", () => {
+test("a floor climbed for the first time in a run pays Gold / Floor, with research and the tier's bonus", () => {
   const g = stairs(3);
   g.save.training.floorGold = 1;
   g.save.archives.levels.floorGold = 2;
@@ -53,12 +53,8 @@ test("a floor climbed for the first time in a run pays Gold / Floor, with resear
   const paid = tierGold(3, 5 * 1.1);
   assert.equal(g.save.gold, paid);
   assert.equal(paid, 17.05);
-  assert.ok(g.undo());
-  assert.equal(g.run.height, 3);
-  // Undo rebuilt the floor: the same stairs again.
-  standBeside(g);
-  assert.ok(g.move(1, 0));
-  assert.equal(g.save.gold, paid, "undo can't make a floor pay twice");
+  assert.equal(g.undo(), false, "undo stays on the floor it was taken on");
+  assert.equal(g.run.height, 4);
 });
 
 test("without Spare Change a new floor pays nothing; Silver training raises it for the run", () => {
@@ -84,10 +80,10 @@ test("the Delve pays Gold / Floor for each new equivalent floor (ten depth) once
   const world = g.world as World;
   world.depth = () => 25;
   g.run.maxHeight = 5;
-  const step = (g as unknown as { afterDelveStep(t: unknown, x: number, y: number): void }).afterDelveStep.bind(g);
-  step({ kind: "floor" }, g.run.player.x, g.run.player.y);
+  const step = (g as unknown as { afterDelveStep(t: unknown, x: number, y: number, from: { x: number; y: number }): void }).afterDelveStep.bind(g);
+  step({ kind: "floor" }, g.run.player.x, g.run.player.y, g.run.player);
   assert.equal(g.save.gold, 6, "floors 1 and 2");
   g.run.maxHeight = 5;
-  step({ kind: "floor" }, g.run.player.x, g.run.player.y);
+  step({ kind: "floor" }, g.run.player.x, g.run.player.y, g.run.player);
   assert.equal(g.save.gold, 6, "each pays once a run");
 });

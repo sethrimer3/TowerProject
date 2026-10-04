@@ -9,19 +9,14 @@ import { MODES } from "../modes.ts";
 /** The settings on the page, in order; each control comes from its row in
  * SETTINGS. */
 const PAGE = [
-  "speed", "transition", "fightAnimation", "brightness", "spritesOff", "decorOff", "batterySaver", "showArrows", "reduceMotion", "weatherSound",
+  "transition", "fightAnimation", "brightness", "spritesOff", "decorOff", "batterySaver", "showArrows", "reduceMotion", "weatherSound",
   "infoDisplay", "oneTapMove", "medievalTheme", "neonTheme", "devMode", "freePurchases",
 ] as const satisfies readonly SettingKey[];
 type PageKey = (typeof PAGE)[number];
 
 /** Settings that stay off the page until the upgrade behind them is owned. */
 const SHOWN: Partial<Record<PageKey, (save: Save) => boolean>> = {
-  speed: (save) => !!save.upgrades.moveSpeed,
   fightAnimation: (save) => !!save.upgrades.instantCombat,
-};
-/** The choices a setting offers now, where research opens more of them. */
-const OFFERED: Partial<Record<PageKey, (game: PageGame) => (value: string | number) => boolean>> = {
-  speed: (game) => (steps) => Number(steps) <= game.maxSpeed,
 };
 const onPage = (save: Save) => PAGE.filter((key) => SHOWN[key]?.(save) ?? true);
 
@@ -64,14 +59,14 @@ const options = (choices: readonly (readonly [string | number, string])[], selec
 
 /** One setting's control, showing its current value. */
 function control(key: PageKey, game: PageGame): string {
-  const row = SETTINGS[key], value = key === "speed" ? game.stepsPerSecond : game.save.settings[key];
+  const row = SETTINGS[key], value = game.save.settings[key];
   switch (row.kind) {
     case "toggle": {
       const checked = "invert" in row.page ? !value : value;
       return `<label class="setting">${row.page.label}<input type="checkbox" id="${row.page.id}" ${checked ? "checked" : ""}></label>`;
     }
     case "choice":
-      return `<label class="setting">${row.page.label}<select id="${row.page.id}">${options(row.choices.filter(([c]) => OFFERED[key]?.(game)(c) ?? true), value as string | number)}</select></label>`;
+      return `<label class="setting">${row.page.label}<select id="${row.page.id}">${options(row.choices, value as string | number)}</select></label>`;
     case "range":
       return `<label class="setting">${row.page.label}<span class="range-setting"><input type="range" id="${row.page.id}" min="${row.min}" max="${row.max}" step="${row.step}" value="${value}" aria-label="${row.page.aria}"><output id="${row.page.id}-value">${value}</output></span></label>`;
   }

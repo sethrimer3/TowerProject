@@ -59,6 +59,12 @@ export type StepRules = {
   /** The percent of max HP the hero regains after each fight it wins
    * (equipment), before the step's Regen. */
   victoryHeal?: number;
+  /** The percent of its toll a Heart Door drains (Heart Door Resilience
+   * research), 100 when absent. */
+  heartToll?: number;
+  /** How much of a key each key colour a door takes costs, in tenths of a
+   * percent (Key Efficiency research), 1,000 when absent. */
+  keyCost?: number;
 };
 export const BASE_RULES: StepRules = { potionHeal: 100, percentPotion: 0, regen: 0 };
 /** The HP a potion of `amount` restores under `rules`, rounded. */
@@ -85,14 +91,20 @@ export function resolveStep(player: Player, tile: Tile, rules: StepRules = BASE_
       break;
     }
     case "door": {
-      const cost = doorCost(tile, player, scale);
+      // Key Efficiency makes each key the door takes cost less, on top of
+      // a badge's scale.
+      const keyScale = snap((scale * (rules.keyCost ?? 1000)) / 1000);
+      const cost = doorCost(tile, player, keyScale);
       if (cost === null) return { blocked: "locked" };
-      for (const color of cost) next.keys[color] = snap(next.keys[color] - scaled(1));
+      for (const color of cost) next.keys[color] = snap(next.keys[color] - keyScale);
       // A Heart Door's toll, all but 1 HP, shrinks under a weaker scale and
-      // never grows past it.
-      if (doorRule(tile).type === "fullHp") next.hp = Math.min(next.hp, snap(next.hp - (next.hp - HEART_DOOR_HP) * Math.min(1, scale)));
+      // never grows past it; Heart Door Resilience shrinks it by its percent.
+      if (doorRule(tile).type === "fullHp") {
+        const toll = snap((next.hp - HEART_DOOR_HP) * Math.min(1, scale) * (rules.heartToll ?? 100) / 100);
+        next.hp = Math.min(next.hp, snap(next.hp - toll));
+      }
       effect.keysSpent = cost;
-      if (scale !== 1 && cost.length) effect.keyAmount = scaled(1);
+      if (keyScale !== 1 && cost.length) effect.keyAmount = keyScale;
       break;
     }
     case "key":

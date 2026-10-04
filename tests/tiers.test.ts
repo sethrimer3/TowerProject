@@ -99,6 +99,17 @@ test("beating the floor-100 boss of the highest tier opened opens the next, and 
   assert.equal(again.save.tower.tiersOpen, 3, "only the highest tier opened opens another");
 });
 
+test("the Delve's caves follow the Towers opened: a Tower boss opens both", () => {
+  const g = arena(1, enemy("boss"), 99);
+  assert.ok(g.move(1, 0));
+  assert.deepEqual([g.save.tower.tiersOpen, g.save.delve.tiersOpen], [2, 2]);
+  const saved: any = JSON.parse(JSON.stringify(g.save));
+  saved.delve.tiersOpen = 5;
+  assert.equal(decode(JSON.stringify(saved)).delve.tiersOpen, 2, "a save's caves follow its Towers");
+  saved.tower.tiersOpen = 4;
+  assert.equal(decode(JSON.stringify(saved)).delve.tiersOpen, 4);
+});
+
 test("choosing a tier in the forest swaps in its own records; inside, or a closed one, is refused", () => {
   const g = new Game(defaults());
   const slice = g.save.tower;
@@ -136,7 +147,7 @@ test("each tier pays its own milestones again", () => {
 test("the tiers survive a save and reload; bad ones fall back", () => {
   const g = new Game(defaults());
   g.save.upgrades.delve = 1;
-  g.save.delve.tiersOpen = 3;
+  g.save.tower.tiersOpen = g.save.delve.tiersOpen = 3;
   g.switchMode("delve");
   g.newRun({ outside: true });
   g.selectTier(3);
@@ -144,7 +155,7 @@ test("the tiers survive a save and reload; bad ones fall back", () => {
   const back = decode(JSON.stringify(g.save));
   assert.deepEqual([back.delve.tier, back.delve.tiersOpen, back.delve.tierRecords], [3, 3, { "1": { best: 50, reached: 50 } }]);
   assert.equal(back.delve.run!.tier, 3);
-  const bad = decode(JSON.stringify({ ...g.save, delve: { ...g.save.delve, tiersOpen: 12, tier: 5, tierRecords: { "7": { best: 1, reached: 1 } }, run: { ...g.save.delve.run, tier: 1 } } }));
+  const bad = decode(JSON.stringify({ ...g.save, tower: { ...g.save.tower, tiersOpen: 12 }, delve: { ...g.save.delve, tiersOpen: 12, tier: 5, tierRecords: { "7": { best: 1, reached: 1 } }, run: { ...g.save.delve.run, tier: 1 } } }));
   assert.deepEqual([bad.delve.tiersOpen, bad.delve.tier, bad.delve.tierRecords], [1, 1, {}]);
   assert.equal(bad.delve.run!.tier, undefined);
 });

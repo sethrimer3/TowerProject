@@ -1,6 +1,6 @@
 import { entrance, floorFor } from "./delve/labyrinth.ts";
 import { chooseStep } from "./automation.ts";
-import { CARDS, cardText, planHand, type CardId, type CardPlan, type CardRules } from "./cards.ts";
+import { CARDS, KEY_TO_HP_PERCENT, SIPHONS, TRADER_YELLOW_KEYS, cardText, isSiphon, planHand, type CardId, type CardPlan, type CardRules, type SiphonCard } from "./cards.ts";
 import { BADGE_IDS, BADGES, MAX_COPIES, badgeValue, runBadges, type BadgeId, type RunBadge } from "./badges.ts";
 import { BOOST_FOREVER, permanentBoost } from "./shop/entitlements.ts";
 import { offer, type OfferId } from "./shop/offers.ts";
@@ -66,7 +66,6 @@ import { boughtInRun, ranksInRun, runTrainingBulk, runTrainingOffer, type RunTra
 import { openQuantities, type BuyQuantity } from "./buy-quantity.ts";
 import { keepUndos, loadout, percentPotionChance, potionPercent, reviveChance } from "./loadout.ts";
 import { researched } from "./archives.ts";
-import { SETTINGS } from "./settings.ts";
 import { CONSUMABLES, type ConsumableId } from "./crafting.ts";
 import type { MaterialId, MaterialStack } from "./materials.ts";
 import { TrainingDesk } from "./game/training-desk.ts";
@@ -105,8 +104,16 @@ export type Heal = { from: number; to: number; x: number; y: number; id: number 
 export type Rush = { tiles: { x: number; y: number }[]; at: number };
 /** Rewards kept for the board to show; older ones are dropped unseen. */
 const MAX_GAINS = 12;
+/** The forest's Automove walks at least this many steps a second, however
+ * slow the run's arrows were last set. */
+const FOREST_SPEED = 3;
+/** The speed the second floor's lesson teaches: one press of › from a new
+ * hero's 2. */
+const LESSON_SPEED = 3;
 /** Salts the run seed for Revive's rolls, apart from the world's own. */
 const REVIVE_SALT = 0x7e51e;
+/** Salts the run seed for Find Yellow Key's roll on each new floor. */
+const YELLOW_KEY_SALT = 0x6e11a;
 /** Mixed into the run seed to start Skip's stream of rolls. */
 const SKIP_SALT = 0x5c1b7;
 /** How far mulberry32's state moves each draw: the stream's `n`th number
@@ -272,7 +279,8 @@ export class Game {
     }
     this.recordProgress();
     this.route = [];
-    this.auto = !this.run.outside && this.handStartsPlaying && !this.fallen;
+    if (!this.run.outside && this.handStartsPlaying && !this.fallen) this.playHand();
+    else this.auto = false;
     this.dropHandPlan();
     this.encounter = null;
     this.fight = null;
@@ -349,15 +357,12 @@ export class Game {
     this.paused = false;
     this.blocked.until = 0;
   }
-  /** A copy of an earlier state of the run. Damage taken in this area
-   * stays on record, so undo never wins back the chance to master it. */
+  /** A copy of an earlier state of the run, on the same floor (a Tower
+   * floor's climb forgets the history). Damage taken in this area stays on
+   * record, so undo never wins back the chance to master it. */
   private rewound(past: Run): Run {
     const run = structuredClone(past);
-    if (this.mode !== "tower") return run;
-    const now = this.towerRun, then = run as TowerRun;
-    if (now.seed !== then.seed) return run;
-    const sameArea = Math.floor(now.height / TOWER_SECTION) === Math.floor(then.height / TOWER_SECTION);
-    if (sameArea && now.damaged) then.damaged = true;
+    if (this.mode === "tower" && this.towerRun.damaged) (run as TowerRun).damaged = true;
     return run;
   }
   undo() {
@@ -461,12 +466,67 @@ export class Game {
   /** Plays or pauses the hand inside a run. */
   toggleAuto() {
     if (this.run.outside) return;
+    // The speed lesson keeps the hand paused until the arrow is pressed.
+    if (this.teachesSpeed) {
+      this.message = "Press › to speed up.";
+      return;
+    }
     this.route = [];
-    this.auto = !this.auto;
+    if (this.auto) this.auto = false;
+    else this.playHand();
     // Pausing keeps the path and the card that led it: playing on follows
     // it from where the hero stands. A stuck hand looks again.
     if (this.auto) this.handStuck = false;
     this.message = this.auto ? "The hand takes over." : "Paused · the hand waits.";
+  }
+  /** Sets the hand playing: at 1 step a second if the speed arrows slowed
+   * it to 0, and never while the speed lesson waits. */
+  private playHand() {
+    if (this.teachesSpeed) {
+      this.auto = false;
+      return;
+    }
+    if (this.save.settings.speed <= 0) this.save.settings.speed = 1;
+    this.auto = true;
+  }
+  /** The run's speed arrows: one step a second slower or faster, from 0 to
+   * `maxSpeed`. Slowing to 0 pauses the hand, and speeding up from 0 plays
+   * it; in the speed lesson, reaching its speed ends the lesson and plays
+   * the hand on. Returns whether the speed changed. */
+  changeSpeed(by: -1 | 1) {
+    if (this.run.outside || (by < 0 && this.teachesSpeed)) return false;
+    const from = this.stepsPerSecond, to = Math.max(0, Math.min(this.maxSpeed, from + by));
+    if (to === from) return false;
+    const lesson = this.teachesSpeed;
+    this.save.settings.speed = to;
+    if (to === 0) {
+      this.route = [];
+      this.auto = false;
+      this.message = "Paused · the hand waits.";
+    } else if (lesson && !this.teachesSpeed) {
+      this.save.tutorials.speed = true;
+      this.playHand();
+      this.handStuck = false;
+    } else if (from === 0) this.playHand();
+    return true;
+  }
+  /** Whether the speed lesson waits: inside a run past the first floor,
+   * slower than its speed, until the player has once sped up to it. */
+  get teachesSpeed() {
+    return !this.run.outside && !this.save.tutorials.speed && this.save.settings.speed < LESSON_SPEED && this.pastFirstFloor;
+  }
+  private get pastFirstFloor() {
+    return this.rules.equivalentFloor(this.run.maxHeight ?? this.run.height) >= 1;
+  }
+  /** Reaching the second floor starts the speed lesson, pausing the hand,
+   * or, already that fast, passes it by for good. */
+  private startSpeedLesson() {
+    if (this.save.tutorials.speed || !this.pastFirstFloor) return;
+    if (this.save.settings.speed >= LESSON_SPEED) this.save.tutorials.speed = true;
+    else {
+      this.auto = false;
+      this.message = "Press › beside play to move faster.";
+    }
   }
   /** The forest's Enter button: goes straight in through the entrance,
    * starting the run, as walking onto it does. */
@@ -503,8 +563,8 @@ export class Game {
     // A card that acts in place takes the turn without a step.
     if (!plan.path.length) {
       this.cardPlan = null;
-      const p = this.run.player, key = `${this.rules.lootKey(this.run, p.x, p.y)}:siphon${this.run.siphoned ?? 0}`;
-      this.siphon(this.scaleOf(id));
+      const p = this.run.player, key = `${this.rules.lootKey(this.run, p.x, p.y)}:${id}${this.cardUses(id)}`;
+      this.actInPlace(id, this.scaleOf(id));
       if (id === this.run.focused) this.run.focused = undefined;
       this.activate(plan.card, key);
       return;
@@ -581,10 +641,11 @@ export class Game {
     return (100 + (badge.id === "effective" ? v : -v)) / 100;
   }
   /** Whether Skip on card `card` rolls for its target at (x, y): never for
-   * a boss, nor the Delve's STAIRS card's climb (no stairs). */
+   * a boss, the Delve's STAIRS card's climb (no stairs), or a torch (no tile
+   * to vanish). */
   private rollsSkip(card: CardId, x: number, y: number) {
     const badge: RunBadge | undefined = this.run.badges?.[card];
-    if (badge?.id !== "skip" || this.run.outside) return false;
+    if (badge?.id !== "skip" || this.run.outside || card === "torch") return false;
     const t = this.world.tile(x, y);
     if (t.kind === "enemy" && (t.enemy!.strength === "boss" || t.enemy!.strength === "greaterBoss")) return false;
     return card !== "stairs" || t.kind === "stairs";
@@ -735,43 +796,78 @@ export class Game {
     this.recordHeal(healed);
     this.message = `${BADGES[id].name} · +${wholeChange(healed)} HP`;
   }
-  /** Whether a card that acts in place can act now (`planHand` asks):
-   * KEY SIPHON, inside a run, while enough Max HP training levels are left
-   * for its next use. */
+  /** Whether a card that acts in place can act now (`planHand` asks),
+   * inside a run only: a siphon while enough of its training levels are
+   * left for its next use, BK TRADER while 3 yellow keys are held, and YK TO
+   * HP while a yellow key is held and its whole heal would land. */
   canAct(card: CardId) {
-    return card === "keySiphon" && this.siphonLevel >= this.siphonCost;
+    if (this.run.outside) return false;
+    const p = this.run.player;
+    if (isSiphon(card)) return this.siphonLevel(card) >= this.siphonCost(card);
+    if (card === "blueTrader") return p.keys.yellow >= TRADER_YELLOW_KEYS;
+    if (card === "keyToHp") return p.keys.yellow >= 1 && snap(p.maxHp - p.hp) >= this.keyHeal();
+    return false;
   }
-  /** The run's Max HP training level, as KEY SIPHON drains it: the hero's
-   * own ranks and those bought with Silver this run, less the levels
-   * siphoned (1 for the first use, 2 for the second, and so on); 0 outside
-   * a run. */
-  get siphonLevel() {
+  /** Times card `card`, one that acts in place, has acted this run. */
+  cardUses(card: CardId) {
+    return this.run.cardUses?.[card] ?? 0;
+  }
+  /** YK TO HP's heal: 10% of max HP. */
+  private keyHeal() {
+    return snap((this.run.player.maxHp * KEY_TO_HP_PERCENT) / 100);
+  }
+  /** The run's training level of the row siphon `card` drains (Max HP for
+   * KEY SIPHON, DEF for BK SIPHON, ATK for RK SIPHON): the hero's own ranks
+   * and those bought with Silver this run, less the levels it siphoned (1
+   * for the first use, 2 for the second, and so on); 0 outside a run. */
+  siphonLevel(card: SiphonCard) {
     if (this.run.outside) return 0;
-    const uses = this.run.siphoned ?? 0;
-    return this.save.training.hp + boughtInRun(this.run, "hp") - (uses * (uses + 1)) / 2;
+    const uses = this.cardUses(card), row = SIPHONS[card].row;
+    return this.save.training[row] + boughtInRun(this.run, row) - (uses * (uses + 1)) / 2;
   }
-  /** The Max HP training levels KEY SIPHON's next use takes: one more than
-   * the last. */
-  get siphonCost() {
-    return (this.run.siphoned ?? 0) + 1;
+  /** The training levels siphon `card`'s next use takes: one more than the
+   * last. */
+  siphonCost(card: SiphonCard) {
+    return this.cardUses(card) + 1;
   }
-  /** KEY SIPHON: a turn with no step that trades the run's top Max HP
-   * training levels (`siphonCost` of them) for a yellow key. The hero and
-   * the run's loadout lose the max HP those levels add at the hero's level,
-   * for the rest of the run only, HP falling only as far as the new max; it
-   * is a turn of its own, so undo takes it back. */
-  private siphon(scale = 1) {
-    const level = this.siphonLevel, levels = this.siphonCost, p = this.run.player, heroLevel = levelForXp(this.save.xp);
-    const row = TRAINING.find((t) => t.id === "hp") as StatTrainingRow;
-    const loss = snap(trained(row, level, heroLevel) - trained(row, level - levels, heroLevel));
+  /** A card that acts in place takes its turn, with no step: a turn of its
+   * own, so undo takes it back. Effective and Dampen scale what it gives
+   * (`scale`), never what it costs. */
+  private actInPlace(card: CardId, scale = 1) {
+    const p = this.run.player;
     this.remember(this.snapshot());
-    p.maxHp = snap(p.maxHp - loss);
-    p.hp = Math.min(p.hp, p.maxHp);
-    if (this.run.loadout) this.run.loadout.maxHp = snap(this.run.loadout.maxHp - loss);
-    p.keys.yellow = snap(p.keys.yellow + scale);
-    this.run.siphoned = levels;
-    this.gain(p.x, p.y, `−${wholeChange(loss)} max HP`, { heart: true });
-    this.gain(p.x, p.y, `+${keyCount(scale)} yellow key`, { tile: { kind: "key", color: "yellow" } });
+    if (isSiphon(card)) this.siphon(card, scale);
+    else if (card === "blueTrader") {
+      p.keys.yellow = snap(p.keys.yellow - TRADER_YELLOW_KEYS);
+      p.keys.blue = snap(p.keys.blue + scale);
+      this.gain(p.x, p.y, `−${TRADER_YELLOW_KEYS} yellow keys`, { tile: { kind: "key", color: "yellow" } });
+      this.gain(p.x, p.y, `+${keyCount(scale)} blue key`, { tile: { kind: "key", color: "blue" } });
+    } else if (card === "keyToHp") {
+      const healed = snap(Math.min(p.maxHp - p.hp, snap(this.keyHeal() * scale)));
+      p.keys.yellow = snap(p.keys.yellow - 1);
+      p.hp = snap(p.hp + healed);
+      this.gain(p.x, p.y, "−1 yellow key", { tile: { kind: "key", color: "yellow" } });
+      this.recordHeal(healed);
+    }
+    (this.run.cardUses ??= {})[card] = this.cardUses(card) + 1;
+  }
+  /** A siphon's turn: the run's top levels of its training row (its
+   * `siphonCost`) traded for a key of its colour. The hero and the run's
+   * loadout lose what those levels add at the hero's level, for the rest of
+   * the run only (max HP: HP falls only as far as the new max). */
+  private siphon(card: SiphonCard, scale: number) {
+    const { row: id, color } = SIPHONS[card], level = this.siphonLevel(card), levels = this.siphonCost(card);
+    const p = this.run.player, heroLevel = levelForXp(this.save.xp);
+    const row = TRAINING.find((t) => t.id === id) as StatTrainingRow;
+    const stat = row.stat as "maxHp" | "attack" | "defense";
+    const loss = snap(trained(row, level, heroLevel) - trained(row, level - levels, heroLevel));
+    p[stat] = snap(p[stat] - loss);
+    if (stat === "maxHp") p.hp = Math.min(p.hp, p.maxHp);
+    if (this.run.loadout) this.run.loadout[stat] = snap(this.run.loadout[stat] - loss);
+    p.keys[color] = snap(p.keys[color] + scale);
+    const lost = stat === "maxHp" ? `−${wholeChange(loss)} max HP` : `−${wholeChange(loss)} ${stat === "attack" ? "ATK" : "DEF"}`;
+    this.gain(p.x, p.y, lost, stat === "maxHp" ? { heart: true } : { tile: { kind: stat } });
+    this.gain(p.x, p.y, `+${keyCount(scale)} ${color} key`, { tile: { kind: "key", color } });
   }
   /** Rush: the first step toward a new target, onto an empty tile, goes on
    * along the path in the same step across up to `rushTiles` more empty
@@ -836,7 +932,7 @@ export class Game {
     if (!plan) return;
     this.handStuck = false;
     this.cardPlan = plan;
-    this.auto = true;
+    this.playHand();
   }
   /** A run going inside keeps the hand as it was ordered on the way in,
    * gets its Focus uses and its Pocket Money Silver, and fixes its chance
@@ -852,8 +948,8 @@ export class Game {
     else delete this.run.percentPotions;
     this.run.focusUsed = 0;
   }
-  /** The fastest Movement speed the player may choose: 3 steps a second,
-   * and one more a Movement Speed research level. */
+  /** The fastest speed the run's arrows reach: 3 steps a second, and one
+   * more a Movement Speed research level. */
   get maxSpeed() {
     return 3 + researched(this.save.archives, "moveSpeed", 0);
   }
@@ -862,11 +958,12 @@ export class Game {
   get animatesFights() {
     return !this.save.upgrades.instantCombat || this.save.settings.fightAnimation;
   }
-  /** Steps a second the hand and Automove take: the Movement speed setting,
-   * no faster than research allows, once Movement Speed is owned; otherwise
-   * the setting's default. */
+  /** Steps a second the hand and Automove take: the speed the run's arrows
+   * set (0 only while the hand is paused), no faster than research allows;
+   * the forest walks at least `FOREST_SPEED`. */
   get stepsPerSecond() {
-    return this.save.upgrades.moveSpeed ? Math.min(this.save.settings.speed, this.maxSpeed) : SETTINGS.speed.default;
+    const speed = Math.min(this.save.settings.speed, this.maxSpeed);
+    return this.run.outside ? Math.max(speed, FOREST_SPEED) : speed;
   }
   /** Steps a second the hero actually takes: `stepsPerSecond`, raised by
    * the movement speed the equipment worn gives. */
@@ -889,7 +986,13 @@ export class Game {
     const regen = this.run.outside || !this.run.player.regen ? 0
       : snap((this.run.player.regen * researched(this.save.archives, "regenPercent", 100)) / 100);
     const worn = this.worn, potionHeal = raised(researched(this.save.archives, "potionHeal", 100), worn.potionHeal);
-    return { potionHeal, percentPotion: potionPercent(this.trainingNow), regen, ...(worn.victoryHeal ? { victoryHeal: worn.victoryHeal } : {}) };
+    return { potionHeal, percentPotion: potionPercent(this.trainingNow), regen,
+      heartToll: researched(this.save.archives, "heartToll", 100), keyCost: this.keyCost, ...(worn.victoryHeal ? { victoryHeal: worn.victoryHeal } : {}) };
+  }
+  /** How much of a key each key a door takes costs, in tenths of a percent
+   * (Key Efficiency research): what steps pay and the door cards plan by. */
+  get keyCost() {
+    return researched(this.save.archives, "keyCost", 1000);
   }
   /** The upgrades owned and the Training ranks that count now: the hero's
    * own, and those this run bought with Silver. */
@@ -924,7 +1027,7 @@ export class Game {
     this.cardPlan = this.encounter ? null : plan;
     this.activeCard = card;
     this.handStuck = false;
-    this.auto = true;
+    this.playHand();
     this.message = this.cardMessage(id);
     return "focused";
   }
@@ -1004,7 +1107,8 @@ export class Game {
       this.dealHand();
     }
     this.slice.run = this.run;
-    this.auto = !outside && this.handStartsPlaying;
+    if (!outside && this.handStartsPlaying) this.playHand();
+    else this.auto = false;
     this.dropHandPlan();
     this.paused = false;
   }
@@ -1187,11 +1291,11 @@ export class Game {
     // Effective's added damage rises off the hero; Dampen's given back heals.
     if (extra > 0 && p.hp > 0) this.gain(p.x, p.y, `−${wholeChange(extra)} HP`, { heart: true });
     else if (extra < 0) this.recordHeal(-extra);
-    return this.winFight({ enemy: t.enemy!, damage: snap(outcome.combat!.damage + extra), at: dest, revived, scale: outcome.scale }, before);
+    return this.winFight({ enemy: t.enemy!, damage: snap(outcome.combat!.damage + extra), at: dest, revived, scale: outcome.scale, instakill: outcome.combat!.turns === 1 }, before);
   }
   /** Moves the player onto the tile and applies what standing there does. */
   private land(t: Tile, x: number, y: number, outcome: StepEffect) {
-    const p = this.run.player;
+    const p = this.run.player, from = { x: p.x, y: p.y };
     p.x = x;
     p.y = y;
     this.unmark(x, y);
@@ -1211,7 +1315,7 @@ export class Game {
     this.collect(t, x, y, outcome);
     this.consumeTile(t, x, y);
     if (t.kind !== "stairs" && t.kind !== "stairsDown") this.callGreaterBoss();
-    this.afterStep(t, x, y);
+    this.afterStep(t, x, y, from);
   }
   /** A Tower floor's secret: with every torch on it out, a Greater Boss
    * appears on the open floor nearest the stairs, once a floor a run. It is
@@ -1228,9 +1332,10 @@ export class Game {
     run.changes[`${at.x},${at.y}`] = greaterBoss(world);
     this.summoned = { ...at, at: performance.now() };
   }
-  /** Mode-specific progress once the player stands on the new tile. */
-  private afterStep(t: Tile, x: number, y: number) {
-    if (this.mode === "delve") this.afterDelveStep(t, x, y);
+  /** Mode-specific progress once the player stands on the new tile,
+   * stepped onto from `from`. */
+  private afterStep(t: Tile, x: number, y: number, from: { x: number; y: number }) {
+    if (this.mode === "delve") this.afterDelveStep(t, x, y, from);
     else if (t.kind === "stairs") this.advanceTowerRoom();
     else if (t.kind === "stairsDown") this.descendTowerRoom();
   }
@@ -1283,7 +1388,7 @@ export class Game {
     this.gainXp(enemy, floor, scale);
     // Silver belongs to the run, so it isn't gated like Gold: undo takes it back.
     const purse = this.purse, silver = purse.killSilver(enemy, floor, scale);
-    const { gold, drops, equipment } = purse.enemyLoot(enemy, at.x, at.y, scale);
+    const { gold, drops, equipment } = purse.enemyLoot(enemy, at.x, at.y, scale, fight.instakill);
     this.gainCoins(at, gold, silver);
     for (const d of drops) this.gain(at.x, at.y, materialText(d), { material: d.id, quantity: d.quantity });
     const found = equipmentTexts(equipment);
@@ -1307,12 +1412,14 @@ export class Game {
   get tier() {
     return this.run.tier ?? 1;
   }
-  /** Beating the floor-100 boss of the highest tier opened opens the next;
-   * undo never closes it again. */
+  /** Beating the floor-100 boss of the highest Tower opened opens the next
+   * Tower and the Delve's cave of the same number (a Delve boss opens
+   * nothing); undo never closes them again. */
   private openNextTier() {
     const slice = this.slice;
-    if (this.tier !== slice.tiersOpen || slice.tiersOpen >= TIERS) return false;
+    if (this.mode !== "tower" || this.tier !== slice.tiersOpen || slice.tiersOpen >= TIERS) return false;
     slice.tiersOpen++;
+    this.save.delve.tiersOpen = slice.tiersOpen;
     return true;
   }
   /** Chooses which opened tier the next run climbs, from the forest: the
@@ -1339,7 +1446,8 @@ export class Game {
     this.forgetLabyrinth();
     this.route = [];
     // Inside, the hand takes over from the player (or Automove).
-    this.auto = this.handStartsPlaying;
+    if (this.handStartsPlaying) this.playHand();
+    else this.auto = false;
     this.dropHandPlan();
     this.feedback(this.rules.words.enter);
     this.gemFinder.step();
@@ -1355,9 +1463,13 @@ export class Game {
   private forgetLabyrinth() {
     if (this.mode === "delve") this.save.delve.memory = { known: {}, visited: {} };
   }
-  private afterDelveStep(t: Tile, x: number, y: number) {
+  private afterDelveStep(t: Tile, x: number, y: number, from: { x: number; y: number }) {
     const world = this.world;
     if (!(world instanceof World)) return;
+    // Undo stays on the floor it was taken on: crossing a floor line (each
+    // ten depth, either way) forgets the history.
+    const floorAt = (at: { x: number; y: number }) => this.rules.equivalentFloor(world.depth(at.x, at.y));
+    if (floorAt(from) !== floorAt({ x, y })) this.save.delve.history = [];
     // The world keeps the run's milestone and floor itself.
     if (t.kind === "oneway" && world.cross(x, y)) {
       this.forgetLabyrinth();
@@ -1385,26 +1497,45 @@ export class Game {
     for (let f = floorBefore + 1; f <= last; f++) {
       gold += purse.floorGold(purse.floorKey(-1, f));
       silver += purse.floorSilver();
+      silver += purse.interest();
+      this.findYellowKey(f, at);
       this.floorHeal();
     }
     this.gainCoins(at, gold, silver, false);
   }
+  /** Find Yellow Key: on floor `floor` climbed for the first time in the
+   * run, a yellow key under the research's chance. The roll is a fixed
+   * number per run seed and floor, so undo and a replay find the same
+   * keys, and more research only ever adds some. */
+  private findYellowKey(floor: number, at: { x: number; y: number }) {
+    const chance = researched(this.save.archives, "yellowKeyChance", 0);
+    if (!chance || tileRandom(-1, floor, (this.run.seed ^ YELLOW_KEY_SALT) | 0) * 1000 >= chance) return;
+    const keys = this.run.player.keys;
+    keys.yellow = snap(keys.yellow + 1);
+    this.gain(at.x, at.y, "+1 yellow key", { tile: { kind: "key", color: "yellow" } });
+  }
   advanceTowerRoom() {
+    // Undo stays on the floor it was taken on: climbing forgets the history.
+    this.slice.history = [];
     const purse = this.purse, p = this.run.player;
-    // Keyed by the stairs taken, so a floor pays once a run, whatever undo does.
+    // Keyed by the stairs taken, so a floor climbed again after going down pays nothing.
     const gold = purse.floorGold(purse.floorKey(p.x, p.y));
     const highest = this.run.maxHeight ?? this.run.height;
     // Skip on STAIRS climbs past the next floor, which pays nothing; an area
     // climbed past is still judged as its section ends.
     const skipped = this.floorSkip ? this.climb.up() : null;
+    // Floor Skip Reward pays a share of the Gold the floor passed held.
+    const skipGold = skipped ? purse.skippedFloorGold(skipped.board) : 0;
     const passed = skipped?.sectionStart ? new AreaLedger(this.save).enter(this.towerRun, skipped.board) : [];
     const { board, sectionStart } = this.climb.up();
-    // Silver belongs to the run, so the run's own highest floor gates it:
-    // undo takes back the Silver and the record together.
+    // Only a floor new to the run pays Silver: the run's own highest floor
+    // gates it.
     let silver = 0;
     if (this.run.height > highest) {
       this.run.maxHeight = this.run.height;
       silver = purse.floorSilver();
+      silver += purse.interest();
+      this.findYellowKey(this.run.height, p);
       this.floorHeal();
     }
     this.enterTowerFloor(board);
@@ -1413,13 +1544,15 @@ export class Game {
     if (skipped) this.feedback(passed.length ? `Floor Skipped · floors ${this.run.height - TOWER_SECTION}–${this.run.height - 1} ${passed.join(" and ")}` : "Floor Skipped", 1000);
     else this.feedback(earned.length ? `Floors ${this.run.height - TOWER_SECTION + 1}–${this.run.height} ${earned.join(" and ")} · reward ahead` :
       sectionStart ? `Floor ${this.run.height + 1} · the way down is sealed` : "A new chamber opens.");
-    this.gainCoins(p, gold, silver, false);
+    this.gainCoins(p, snap(gold + skipGold), silver, false);
   }
   /** Step back onto the stairs at the foot of the current room, returning
    * to the previous room exactly as it was left: cleared tiles stay clear,
    * surviving enemies and unclaimed loot are still there to finish off. */
   descendTowerRoom() {
     if (this.climb.sealedBelow) return;
+    // Undo stays on the floor it was taken on: going down forgets the history.
+    this.slice.history = [];
     this.enterTowerFloor(this.climb.down()!.board);
     this.feedback("You descend to the room below.");
   }
@@ -1444,6 +1577,7 @@ export class Game {
       this.equipmentBurstAt = performance.now();
       this.message = "Equipment unlocked · a Blacksmith opens in the forest";
     }
+    this.startSpeedLesson();
     return earned;
   }
   /** Whether (x, y) is the forest Blacksmith's building, which opens the
@@ -1730,13 +1864,14 @@ export class Game {
 
 /** A fight the hero won: the enemy beaten at `at`, the HP it cost, and
  * how many times the hero revived in it. */
-type FightEnd = { enemy: Enemy; damage: number; at: { x: number; y: number }; revived: number; scale?: number };
+/** A fight won: `instakill` when the hero's first strike ended it (Mug). */
+type FightEnd = { enemy: Enemy; damage: number; at: { x: number; y: number }; revived: number; scale?: number; instakill?: boolean };
 
 /** HP left after a fight's own damage, `hp`, once a badge's scale has
  * added `extra` (or, below 0, given it back, up to `maxHp`). */
 const afterExtra = (hp: number, extra = 0, maxHp = Infinity) => (extra ? snap(Math.min(maxHp, Math.max(0, hp - extra))) : hp);
 /** How Skip's message names what vanished, by tile kind. */
-const SKIPPED_NAMES: Partial<Record<Tile["kind"], string>> = { door: "The door", key: "The key", potion: "The potion", attack: "The ATK shard", defense: "The DEF shard" };
+const SKIPPED_NAMES: Partial<Record<Tile["kind"], string>> = { door: "The door", key: "The key", potion: "The potion", attack: "The ATK shard", defense: "The DEF shard", treasure: "The chest", reward: "The chest" };
 /** How many rows from the hero the walk to the nearest ? looks. */
 const MARK_REACH = 40;
 

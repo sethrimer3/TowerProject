@@ -161,8 +161,11 @@ The damage a hero's shroud blocks in each fight: the enemy's strikes, after DEF,
 _Avoid_: shield (the equipment slot), barrier
 
 **Key Siphon**:
-A card that moves nowhere: its turn trades Max HP training levels, for the rest of the run only, for a yellow key, each use in a run taking one level more than the last (1, then 2, then 3 …). Skipped once the run has too few Max HP training levels left for the next use.
-_Avoid_: key trade, drain
+A card that moves nowhere: its turn trades Max HP training levels, for the rest of the run only, for a yellow key, each use in a run taking one level more than the last (1, then 2, then 3 …). Skipped once the run has too few Max HP training levels left for the next use. **BK Siphon** and **RK Siphon** do the same with DEF and ATK training levels, for a blue and a red key, each counting its own uses; the three are the **siphons**.
+_Avoid_: drain
+
+**Key trade**:
+A card that moves nowhere and trades keys it holds for something else: **BK Trader** (3 yellow keys for a blue key) and **YK to HP** (a yellow key for 10% of max HP, only while that much HP is missing). Skipped while it can't pay.
 
 **Regen**:
 The HP a hero regains with every step taken in a run, after whatever the step did, up to max HP. A Rush turn counts as one step. The Regen skill opens Regen training, which gives it.
@@ -179,7 +182,7 @@ The one scale both modes' progress maps onto: a Tower floor counts as itself, an
 _Avoid_: effective floor, tier
 
 **Tier**:
-One of the numbered towers (Tower I to IX), or of the delves (Delve I to IX), that a run climbs. Beating the boss on floor 100 of the highest one opened opens the next. Each has the same floors as the first with monsters three times as strong as the one before, pays more Gold, pays XP times the same factor as its monsters' stats, and keeps its own records, milestones and area rewards. Not to be confused with a monster's rank.
+One of the numbered towers (Tower I to IX), or of the delves' caves (Delve I to IX), that a run climbs. Beating the boss on floor 100 of the highest tower opened opens the next tower and the cave of the same number. Each has the same floors as the first with monsters three times as strong as the one before, pays more Gold, pays XP times the same factor as its monsters' stats, and keeps its own records, milestones and area rewards. Not to be confused with a monster's rank.
 _Avoid_: new tower, prestige, world
 
 **Inspiration**:
@@ -269,7 +272,7 @@ The cards the player sets up before a run, in priority order, in four slots (fiv
 _Avoid_: loadout (what the character starts a run with)
 
 **Movement speed**:
-How many steps a second the hand (and Automove in the forest) takes. The player chooses it, from 1 to 3, once the Movement Speed skill is owned; Movement Speed research makes faster speeds available, up to 9.
+How many steps a second the hand (and Automove in the forest) takes. The player sets it inside a run with the arrows beside play/pause, from 0 (paused) to 3; Movement Speed research, which the Movement Speed skill opens, makes faster speeds available, up to 9. A new hero starts at 2; the forest walks at least 3.
 _Avoid_: Automove speed
 
 **Rush**:
@@ -296,6 +299,13 @@ A ? on a tile the Deprioritize badge passed over on this floor: no card's path c
 
 **Floor Skipped**:
 Skip on the STAIRS card in the Tower: the hero climbs two floors instead of one, never standing on the floor between.
+
+**Interest**:
+Silver added on each floor climbed for the first time in a run: Interest % research's share of the Silver held, at most Max Interest's limit (50 at first).
+_Avoid_: dividend
+
+**Floor Skip Reward**:
+Gold paid for a floor skipped: Floor Skip Reward research's percent of the Gold the floor's battles and chests still held (each closed chest counted at its average). What it counts pays no Gold if met later.
 
 **Activation**:
 A card of the hand doing what it is for: its path's last step reaching its target, or a card that acts in place acting. Card badges pay on activation.

@@ -108,10 +108,11 @@ test("each skill in a tree of unlocks is bought once", () => {
 
 test("a tree taller than its view places its nodes on a taller map", () => {
   const inspiration = TREES[0];
-  assert.equal(treeHeight(inspiration), 208);
+  assert.equal(treeHeight(inspiration), 280);
   assert.ok(inspiration.nodes.every((n) => n.y > 0 && n.y < treeHeight(inspiration)), "every node on the map");
-  assert.equal(mapNodes(inspiration).find((n) => n.id === "recovery")!.y, (160 * 100) / 208);
-  assert.ok(TREES.slice(1).every((t) => treeHeight(t) === 100 && mapNodes(t).every((n, i) => n.y === t.nodes[i].y)), "other trees fit one view");
+  assert.equal(mapNodes(inspiration).find((n) => n.id === "recovery")!.y, (160 * 100) / 280);
+  assert.equal(treeHeight(TREES.find((t) => t.id === "courage")!), 150);
+  assert.ok(TREES.slice(2).every((t) => treeHeight(t) === 100 && mapNodes(t).every((n, i) => n.y === t.nodes[i].y)), "other trees fit one view");
 });
 test("older saves retain earned access without unlocking fresh saves", () => {
   const old: any = defaults();
@@ -124,12 +125,8 @@ test("older saves retain earned access without unlocking fresh saves", () => {
   assert.equal(saved.upgrades.legacy, 1);
   assert.equal(saved.upgrades.quality, 2);
 });
-test("Movement Speed opens 1 to 3 steps a second, and each research level one more", () => {
+test("Movement Speed research lets the run's arrows go one step a second faster a level", () => {
   const g = new Game(defaults());
-  g.save.settings.speed = 2;
-  assert.equal(g.stepsPerSecond, 3, "unowned, the hand keeps the default speed");
-  g.save.upgrades.moveSpeed = 1;
-  assert.equal(g.stepsPerSecond, 2);
   g.save.settings.speed = 9;
   assert.equal(g.maxSpeed, 3);
   assert.equal(g.stepsPerSecond, 3, "no faster than research allows");
@@ -161,7 +158,22 @@ test("Focus (5 Courage) takes Tempered Edge's place in the Courage tree, which i
   assert.ok(!TREES[0].nodes.some((n) => n.id === "focus"), "no longer in the Inspiration tree");
   assert.ok(!UPGRADES.some((u) => (u.id as string) === "attack"), "Tempered Edge is gone");
   assert.deepEqual([UPGRADES.find((u) => u.id === "focus")!.currency, cost("focus", 0)], ["courage", 5]);
-  assert.deepEqual(courage.nodes.find((n) => n.id === "legacy")!.requires, ["focus", "undos"]);
+});
+test("Echoes of time leads nowhere; the research skills (10 Courage each) take An enduring legacy's place under Focus", () => {
+  const courage = TREES.find((t) => t.id === "courage")!;
+  const at = (id: string) => courage.nodes.find((n) => n.id === id)!;
+  assert.ok(!courage.nodes.some((n) => n.requires.includes("undos")), "nothing below Echoes of time");
+  assert.ok(!TREES.some((t) => t.nodes.some((n) => n.id === "legacy")), "An enduring legacy is no node");
+  assert.deepEqual([at("findYellowKey").x, at("findYellowKey").y, at("findYellowKey").requires], [50, 87, ["focus"]]);
+  assert.deepEqual(at("keyEfficiency").requires, ["findYellowKey"]);
+  assert.deepEqual(at("interest").requires, ["keyEfficiency"]);
+  assert.deepEqual([at("maxInterest").x < at("interest").x, at("maxInterest").requires], [true, ["interest"]]);
+  assert.deepEqual([at("mug").x > at("interest").x, at("mug").requires], [true, ["interest"]]);
+  for (const id of ["findYellowKey", "keyEfficiency", "interest", "maxInterest", "mug"] as const) {
+    const row = UPGRADES.find((u) => u.id === id)!;
+    assert.deepEqual([row.currency, row.max, cost(id, 0)], ["courage", 1, 10], id);
+  }
+  assert.deepEqual([UPGRADES.find((u) => u.id === "undos")!.max, cost("undos", 0)], [1, 5]);
 });
 test("Faster Trainers sits right of Into the depths off the Archives, costs 2 and opens its research", () => {
   const at = (id: string) => TREES[0].nodes.find((n) => n.id === id)!;

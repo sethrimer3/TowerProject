@@ -109,11 +109,8 @@ test("a new Tower floor pays Silver / Floor, with research and Silver Bonus but 
   assert.ok(g.move(1, 0));
   assert.equal(g.run.height, 4);
   assert.equal(g.silver, 8.58, "6 × 1.1 × 1.3");
-  assert.ok(g.undo());
-  assert.equal(g.silver, 0, "undo takes the Silver back with the climb");
-  standBeside(g);
-  assert.ok(g.move(1, 0));
-  assert.equal(g.silver, 8.58, "and climbing again pays it again, once");
+  assert.equal(g.undo(), false, "the climb can't be undone");
+  assert.equal(g.silver, 8.58);
 });
 
 test("a floor already reached this run pays no Silver; Silver training raises it for the run", () => {
@@ -142,6 +139,6 @@ test("the Delve pays Silver / Floor for each new equivalent floor (ten depth)", 
   (g as unknown as { enterFromOutside(): void }).enterFromOutside();
   (g.world as World).depth = () => 25;
   g.run.maxHeight = 5;
-  (g as unknown as { afterDelveStep(t: unknown, x: number, y: number): void }).afterDelveStep({ kind: "floor" }, g.run.player.x, g.run.player.y);
+  (g as unknown as { afterDelveStep(t: unknown, x: number, y: number, from: { x: number; y: number }): void }).afterDelveStep({ kind: "floor" }, g.run.player.x, g.run.player.y, g.run.player);
   assert.equal(g.silver, 6, "floors 1 and 2");
 });

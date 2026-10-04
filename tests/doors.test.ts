@@ -33,3 +33,27 @@ test("heart always opens without keys and legacy doors remain compatible", () =>
   assert.deepEqual(doorCost(door(8), player(0, 0, 0, 9, 10)), []);
   assert.deepEqual(doorCost({ kind: "door", color: "red" }, player(0, 0, 1)), ["red"]);
 });
+
+test("Heart Door Resilience research shrinks a Heart Door's toll 5% a level, for ten levels, on Focus Count's curve", async () => {
+  const { resolveStep, BASE_RULES } = await import("../src/step-effects.ts");
+  const { RESEARCH, researched } = await import("../src/archives.ts");
+  const { Game } = await import("../src/state.ts");
+  const { defaults } = await import("../src/save.ts");
+  const heart: Tile = { kind: "door", door: { type: "fullHp" } };
+  const hpAfter = (heartToll?: number, scale?: number) => {
+    const out = resolveStep(player(0, 0, 0, 101, 101), heart, { ...BASE_RULES, heartToll, scale });
+    return "player" in out ? out.player.hp : null;
+  };
+  assert.equal(hpAfter(), 1, "without research it leaves 1 HP");
+  assert.equal(hpAfter(50), 51, "half the toll at level 10");
+  assert.equal(hpAfter(50, 0.8), 61, "after Dampen's scale");
+  const levels = RESEARCH.heartDoorResilience.levels;
+  assert.deepEqual(levels.map((l) => l.gold), RESEARCH.focusCount.levels.concat({ gold: 23_000 } as never).map((l) => l.gold));
+  assert.deepEqual(levels.map((l) => l.hours), Array.from({ length: 10 }, (_, i) => 8 * (i + 1)));
+  assert.deepEqual(RESEARCH.heartDoorResilience.requires, [{ upgrade: "heartDoorResilience" }]);
+  const g = new Game(defaults());
+  assert.equal(g.stepRules.heartToll, 100);
+  g.save.archives.levels.heartDoorResilience = 10;
+  assert.equal(researched(g.save.archives, "heartToll", 100), 50);
+  assert.equal(g.stepRules.heartToll, 50, "read at the moment of the step");
+});
