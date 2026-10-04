@@ -55,7 +55,7 @@ One way through a fork: one to three tiles of gates walked in order, sometimes w
 _Avoid_: corridor, path
 
 **Enemy strength**:
-How hard the floor asked an enemy to be: weak, normal, strong or elite. Strong enemies are the zone's own made tougher, elite ones come from the next zone. The board shows it round the enemy (a dark red rim for normal, bright red with one chevron for strong, bright red inside a gold rim with two chevrons for elite) and the inspect title and fight messages name weak, strong and elite (and a boss) before the enemy's name.
+How hard the floor asked an enemy to be: weak, normal, strong or elite. Strong enemies are the zone's own made tougher, elite ones come from the next zone. The board shows it round the enemy (a dark red rim for normal, bright red with one chevron for strong, bright red inside a gold rim with two chevrons for elite) and the inspect title and fight messages name weak, strong and elite (and a boss or Greater Boss) before the enemy's name.
 _Avoid_: tier, rank, level
 
 ### Fights
@@ -153,6 +153,10 @@ _Avoid_: shards
 **Boss**:
 The monster guarding the way up at the end of every ten floors: in front of the stairs on the Tower's 10th, 20th, … floors, and below each Delve milestone gate. It has twice a strong monster's HP and ATK, and must be beaten to climb on.
 _Avoid_: area boss, guardian
+
+**Greater Boss**:
+The Tower floor's secret monster: once every torch on a floor is put out, it appears on the open floor nearest the stairs, once a floor each run. It has twice a boss's HP and ATK and pays twice a boss's rewards, but guards nothing.
+_Avoid_: super boss, secret boss
 
 **Silver**:
 The currency of a single run: each monster beaten pays some, more on higher floors and for stronger monsters (and each new floor, with Wishing Well), and it is spent only inside that run, on run training. Undo takes it back with the kill, and it is gone when the run ends.

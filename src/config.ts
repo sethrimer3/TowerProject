@@ -405,11 +405,12 @@ export type UpgradeId = (typeof UPGRADES)[number]["id"];
 export const cost = (id: UpgradeId, level: number) =>
   Math.ceil(UPGRADES.find((u) => u.id === id)!.base * intPow(1.65, level));
 /** Gold a beaten enemy pays, by its strength, in both modes: every victory
- * pays some, beside its Silver. */
-export const ENEMY_GOLD: Record<EnemyStrength, number> = { weak: 1, normal: 1, strong: 2, elite: 4, boss: 5 };
+ * pays some, beside its Silver. A Greater Boss pays twice a boss's Gold,
+ * Silver and XP. */
+export const ENEMY_GOLD: Record<EnemyStrength, number> = { weak: 1, normal: 1, strong: 2, elite: 4, boss: 5, greaterBoss: 10 };
 /** Silver, the currency spent inside a run, that a beaten enemy pays per
  * base amount, by its strength. */
-export const SILVER_MULTIPLIER: Record<EnemyStrength, number> = { weak: 1, normal: 2, strong: 3, elite: 4, boss: 5 };
+export const SILVER_MULTIPLIER: Record<EnemyStrength, number> = { weak: 1, normal: 2, strong: 3, elite: 4, boss: 5, greaterBoss: 10 };
 /** Silver a beaten enemy pays on equivalent floor `floor` (0 is the first):
  * a weak enemy's 1, plus 1 every ten floors (2 from floor 11), times its
  * strength's multiplier. */
@@ -419,7 +420,7 @@ export const silverForKill = (strength: EnemyStrength, floor: number) =>
 export const goldReward = (treasures: number) => treasures;
 /** XP a beaten enemy pays per base amount, by its strength (the same
  * proportions as the forks' `GATE_VALUE`). */
-export const XP_MULTIPLIER: Record<EnemyStrength, number> = { weak: 2, normal: 3, strong: 5, elite: 8, boss: 12 };
+export const XP_MULTIPLIER: Record<EnemyStrength, number> = { weak: 2, normal: 3, strong: 5, elite: 8, boss: 12, greaterBoss: 24 };
 /** The base XP a kill pays on equivalent floor `floor` (0 is the first): 3,
  * rising with the square root of the floor (×2 by floor 30, ×3.3 by 100,
  * ×10 by 1000). The XP a level needs rises faster, so each floor is worth a

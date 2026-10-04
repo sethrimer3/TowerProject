@@ -128,6 +128,7 @@ export const TOWER_ENEMY_STRENGTH: Record<TowerEnemyStrength, { zonesAhead: numb
   strong: { zonesAhead: 0, stats: 1.25, defense: 1.25, tier: 2 },
   elite: { zonesAhead: 1, stats: 1, defense: 1, tier: 3 },
   boss: { zonesAhead: 0, stats: 1.25, defense: 1.25, tier: 4 },
+  greaterBoss: { zonesAhead: 0, stats: 1.25, defense: 1.25, tier: 4 },
 };
 
 /** The first floor (1-based, the Delve's equivalent floor) where the
@@ -156,12 +157,16 @@ export const delveDefenseGrowth = (depth: number) =>
 
 /** How many times a strong enemy's HP and ATK a boss has, in both modes. */
 export const BOSS_OVER_STRONG = 2;
+/** How many times a boss's HP and ATK a Greater Boss has. */
+export const GREATER_BOSS_OVER_BOSS = 2;
 /** What an enemy of `strength` multiplies a strong enemy's rounded HP and
- * ATK by: BOSS_OVER_STRONG for a boss, 1 for every other. */
-export const bossFactor = (strength: EnemyStrength) => (strength === "boss" ? BOSS_OVER_STRONG : 1);
+ * ATK by: BOSS_OVER_STRONG for a boss, GREATER_BOSS_OVER_BOSS times that
+ * for a Greater Boss, 1 for every other. */
+export const bossFactor = (strength: EnemyStrength) =>
+  strength === "boss" ? BOSS_OVER_STRONG : strength === "greaterBoss" ? BOSS_OVER_STRONG * GREATER_BOSS_OVER_BOSS : 1;
 
 /** Weak, strong and elite enemies and bosses say so before their name. */
-const RANK: Record<EnemyStrength, string> = { weak: "Weak ", normal: "", strong: "Strong ", elite: "Elite ", boss: "Boss " };
+const RANK: Record<EnemyStrength, string> = { weak: "Weak ", normal: "", strong: "Strong ", elite: "Elite ", boss: "Boss ", greaterBoss: "Greater Boss " };
 /** What the game calls an enemy: its name, after its strength unless it
  * is a normal one. */
 export const enemyTitle = (e: { name: string; strength?: EnemyStrength }) => (e.strength ? RANK[e.strength] : "") + e.name;

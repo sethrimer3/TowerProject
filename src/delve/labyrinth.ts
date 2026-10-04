@@ -402,6 +402,8 @@ export const DELVE_ENEMY_STRENGTH: Record<Strength, { scale: number; defense: nu
   elite: { scale: 3, defense: 4 },
   // A strong enemy, then `bossFactor` doubles its HP and ATK.
   boss: { scale: 1.5, defense: 2 },
+  // The Delve places none (it appears only on Tower floors); as a boss.
+  greaterBoss: { scale: 1.5, defense: 2 },
 };
 /** How a named profile reshapes one: attack-heavy enemies hit harder but
  * fold sooner (hard on a low-DEF build), defense-heavy ones are armoured

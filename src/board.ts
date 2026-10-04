@@ -1,4 +1,4 @@
-import { point, type Run, type Tile, type Torch } from "./entities.ts";
+import { point, type Kind, type Run, type Tile, type Torch } from "./entities.ts";
 import { tileRandom } from "./random.ts";
 
 /** A board the player walks: the Delve labyrinth, a Tower floor, or the
@@ -21,6 +21,20 @@ export type Board = {
    * one was destroyed. Used for player-torch collision. */
   breakTorchAt?(x: number, y: number): boolean;
 };
+
+/** Tiles the hero takes something from by stepping on them: every pickup
+ * and treasure chest. An area reward chest isn't one: it is meant to be
+ * opened on the way past. */
+const OBTAINABLE = new Set<Kind>(["key", "potion", "attack", "defense", "treasure"]);
+/** The tiles of `board` holding a lit torch, which a step onto puts out. */
+export const litTorches = (board: Board) =>
+  new Set((board.torches ?? []).filter((t) => t.active).map((t) => point(t.x, t.y)));
+/** Whether a step onto `tile` at (x, y) takes something: an item, a chest
+ * or a lit torch (`lit`, from `litTorches`). Paths go round such tiles
+ * whenever an equally short way avoids them, leaving them to the cards that
+ * aim at them. */
+export const takesSomething = (tile: Tile, x: number, y: number, lit: ReadonlySet<string>) =>
+  OBTAINABLE.has(tile.kind) || lit.has(point(x, y));
 
 /** Where the planners (routes and Automove) start from: a board and the
  * run standing on it. A Game is one; so is any hand-built pair. */

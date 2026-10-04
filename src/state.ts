@@ -55,6 +55,7 @@ import { isLethal, potionHeal, regenerate, resolveStep, type StepBlocked, type S
 import { OutsideWorld } from "./outside.ts";
 import { AreaLedger, chestReward, CLEARED_INSPIRATION, type AreaReward } from "./tower/area-ledger.ts";
 import { TowerClimb } from "./tower/climb.ts";
+import { callsGreaterBoss, greaterBoss, greaterBossSpot } from "./tower/greater-boss.ts";
 import { materialDef, MATERIALS } from "./materials.ts";
 import { TIERS, TIER_BOSS_FLOOR, switchTier, tierGold, tierNumeral, tierRewardText, tierXp } from "./tiers.ts";
 import { enemyTitle } from "./scaling.ts";
@@ -165,6 +166,9 @@ export class Game {
   /** The area reward whose chest was last opened, and when
    * (performance.now()), for the board's golden burst; cleared by undo. */
   areaBurst: { reward: AreaReward; at: number } | null = null;
+  /** Where a Greater Boss last appeared, and when (performance.now()), for
+   * the board's poof; cleared by undo. */
+  summoned: { x: number; y: number; at: number } | null = null;
   /** The latest rush: the tiles the hero rushed off, in order, and when
    * (performance.now()), for the board's fading echoes of the hero. */
   rush: Rush | null = null;
@@ -301,6 +305,7 @@ export class Game {
     if (levelForXp(snapshot.xp) < levelForXp(this.save.xp)) this.levelUpAt = -Infinity;
     this.revivedAt = [];
     this.areaBurst = null;
+    this.summoned = null;
     this.save.xp = snapshot.xp;
     this.route = [];
     // Undo pauses the hand, so the player can act before it carries on.
@@ -1025,7 +1030,23 @@ export class Game {
     }
     this.collect(t, x, y, outcome);
     this.consumeTile(t, x, y);
+    if (t.kind !== "stairs" && t.kind !== "stairsDown") this.callGreaterBoss();
     this.afterStep(t, x, y);
+  }
+  /** A Tower floor's secret: with every torch on it out, a Greater Boss
+   * appears on the open floor nearest the stairs, once a floor a run. It is
+   * checked on every step, since undo brings back the run but not the
+   * torches. */
+  private callGreaterBoss() {
+    const world = this.world;
+    if (this.mode !== "tower" || !(world instanceof RoomWorld)) return;
+    const run = this.towerRun;
+    if (!callsGreaterBoss(world, run.summoned)) return;
+    const gem = this.gemFinder.gem, at = greaterBossSpot(world, gem ? [run.player, gem] : [run.player]);
+    if (!at) return;
+    run.summoned = [...(run.summoned ?? []), world.room];
+    run.changes[`${at.x},${at.y}`] = greaterBoss(world);
+    this.summoned = { ...at, at: performance.now() };
   }
   /** Mode-specific progress once the player stands on the new tile. */
   private afterStep(t: Tile, x: number, y: number) {

@@ -60,3 +60,23 @@ test("Delve Automove plans on a hand-built board, keeping what it saw and chose"
   assert.equal(plan.decisions?.[0].y, 3);
   assert.ok(memory.known["2,3"]);
 });
+
+test("a route goes round an item when an equally short way does, and over it when none does", () => {
+  const tiles = new Map<string, Tile>();
+  for (let x = 0; x < 3; x++) for (let y = 0; y < 3; y++) tiles.set(`${x},${y}`, { kind: "floor" });
+  tiles.set("1,1", { kind: "key", color: "yellow" });
+  const world: Board = {
+    width: 3,
+    floor: 0,
+    tile: (x, y) => tiles.get(`${x},${y}`) ?? { kind: "wall" },
+    step: (x, y, dx, dy) => ({ x: x + dx, y: y + dy }),
+    clear: () => {},
+  };
+  const run = { player: { x: 0, y: 1, hp: 10, maxHp: 20, attack: 1, defense: 0, keys: { yellow: 0, blue: 0, red: 0 } } } as unknown as DelveRun;
+  // Straight across is the one shortest way, so it takes the key.
+  assert.deepEqual(routeTo({ world, run }, 2, 1)!.map((s) => [s.x, s.y]), [[1, 1], [2, 1]]);
+  // To the far corner, of the equally short ways, one goes round it.
+  const corner = routeTo({ world, run }, 2, 2)!;
+  assert.equal(corner.length, 3);
+  assert.ok(!corner.some((s) => s.x === 1 && s.y === 1));
+});

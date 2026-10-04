@@ -214,3 +214,25 @@ test("the Stairs card mentions the Delve only once Into the depths is owned", ()
   assert.equal(cardText("stairs", s.upgrades), CARDS.stairs.text);
   assert.match(cardText("stairs", s.upgrades), /Delve/);
 });
+
+test("the hand's paths go round items and lit torches when an equally short way does", () => {
+  const rows = [
+    "..S",
+    "P..",
+    "@..",
+  ];
+  const plan = planHand(board(rows), ["stairs"], "tower")!;
+  assert.equal(plan.path.length, 4, "never a longer path");
+  assert.ok(!plan.path.some((s) => s.x === 0 && s.y === 1), "round the potion, not over it");
+  // With no way round as short, the path takes what lies on it.
+  const corridor = planHand(board(["@PS"]), ["stairs"], "tower")!;
+  assert.deepEqual(corridor.path.map((s) => [s.x, s.y]), [[1, 0], [2, 0]]);
+  // Every item kind is gone round, and so is a lit torch.
+  for (const tile of ["K", "A", "F", "T"]) {
+    const path = planHand(board(["..S", `${tile}..`, "@.."]), ["stairs"], "tower")!.path;
+    assert.ok(!path.some((s) => s.x === 0 && s.y === 1), tile);
+  }
+  const litMiddle = board(["..S", "...", "@.."]);
+  litMiddle.world.torches = [{ x: 0, y: 1, active: true }] as Board["torches"];
+  assert.ok(!planHand(litMiddle, ["stairs"], "tower")!.path.some((s) => s.x === 0 && s.y === 1), "round the lit torch");
+});

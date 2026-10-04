@@ -1,5 +1,5 @@
 import { point, type Tile } from "./entities.ts";
-import type { Position } from "./board.ts";
+import { litTorches, takesSomething, type Position } from "./board.ts";
 import type { Step } from "./pathfinding.ts";
 import { doorCost } from "./doors.ts";
 import { predict } from "./combat.ts";
@@ -246,25 +246,36 @@ function inReach({ world, run }: Position, y: number) {
 }
 
 /** Breadth-first search from the hero over crossable tiles. Returns every
- * tile reached, closest first, each with the shortest path to it; a tile
- * that isn't crossable is reached but never walked through. */
+ * tile reached, closest first, each with the shortest path to it, and of
+ * those the one stepping on the fewest tiles that hold something (items,
+ * chests and lit torches: `takesSomething`), so the hand's paths go round
+ * what other cards aim at unless no equally short way does; a tile that
+ * isn't crossable is reached but never walked through. */
 function search(at: Position): Reached[] {
-  const { world, run } = at, p = run.player;
-  const seen = new Set([point(p.x, p.y)]);
-  const walk: Reached[] = [{ x: p.x, y: p.y, tile: world.tile(p.x, p.y), dx: 0, dy: 0, from: null }];
+  const { world, run } = at, p = run.player, lit = litTorches(world);
+  type Walked = { r: Reached; depth: number; items: number };
+  const first: Walked = { r: { x: p.x, y: p.y, tile: world.tile(p.x, p.y), dx: 0, dy: 0, from: null }, depth: 0, items: 0 };
+  const seen = new Map([[point(p.x, p.y), first]]);
+  const walk: Walked[] = [first];
   const reached: Reached[] = [];
   for (let i = 0; i < walk.length; i++) {
-    const from = walk[i];
+    const { r: from, depth, items } = walk[i];
     for (const [dx, dy] of [[0, 1], [1, 0], [0, -1], [-1, 0]] as const) {
       const dest = world.step(from.x, from.y, dx, dy);
       if (!dest || !inReach(at, dest.y)) continue;
-      const k = point(dest.x, dest.y);
-      if (seen.has(k)) continue;
-      seen.add(k);
       const tile = world.tile(dest.x, dest.y);
       if (tile.kind === "wall") continue;
-      const next = { ...dest, tile, dx, dy, from };
-      reached.push(next);
+      const k = point(dest.x, dest.y), taken = items + (takesSomething(tile, dest.x, dest.y, lit) ? 1 : 0);
+      const known = seen.get(k);
+      if (known) {
+        // Not walked on from yet (the walk goes a whole depth at a time),
+        // so a path as short taking less can still replace its own.
+        if (known.depth === depth + 1 && taken < known.items) Object.assign(known.r, { dx, dy, from }), (known.items = taken);
+        continue;
+      }
+      const next: Walked = { r: { ...dest, tile, dx, dy, from }, depth: depth + 1, items: taken };
+      seen.set(k, next);
+      reached.push(next.r);
       if (CROSSABLE.has(tile.kind)) walk.push(next);
     }
   }

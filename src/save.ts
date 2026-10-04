@@ -65,8 +65,14 @@ const pointMap = (m: any, valid: (v: any) => boolean) =>
   isRecord(m) && Object.entries(m).every(([k, v]) => POINT_KEY.test(k) && valid(v));
 
 // --- Runs ---
+/** The one enemy a run's changes may hold: a Greater Boss called onto the
+ * floor (tower/greater-boss.ts). */
+const validGreaterBoss = (e: any) =>
+  isRecord(e) && e.strength === "greaterBoss" && typeof e.name === "string" &&
+  finite(e.hp) && e.hp > 0 && finite(e.attack) && e.attack >= 0 && finite(e.defense) && e.defense >= 0 && finite(e.tier);
 const validChange = (v: any) =>
   v?.kind === "floor" || v?.kind === "wall" ||
+  (v?.kind === "enemy" && validGreaterBoss(v.enemy)) ||
   (v?.kind === "openedChest" && (v.tier === undefined || CHEST_TIERS.includes(v.tier))) ||
   (v?.kind === "reward" && CHEST_TIERS.includes(v.tier));
 const validChanges = (m: any) => pointMap(m, validChange);
@@ -92,7 +98,7 @@ const validPlayer = (p: any, width: number) =>
 const validCore = (r: any, width: number) =>
   !!r && validOutside(r) && validCounters(r) && validPlayer(r.player, width) && validChanges(r.changes);
 const validDelveState = (r: any) => Number.isInteger(r.milestone) && finite(r.milestone);
-const TOWER_FIELDS = ["damaged", "floors"];
+const TOWER_FIELDS = ["damaged", "floors", "summoned"];
 const DELVE_FIELDS = ["milestone"];
 /** Training ranks bought in a run: known rows, each a whole number of ranks. */
 const validRunTraining = (t: any) =>
@@ -134,6 +140,7 @@ function decodeTowerRun(r: any): TowerRun | null {
   if (!validCore(r, TOWER_WIDTH) || !validFloors(r.floors)) return null;
   // Older runs have no damage history; do not assume a perfect attempt.
   r.damaged = r.damaged !== false;
+  dropInvalid(r, { summoned: (v: unknown) => Array.isArray(v) && v.every(Number.isInteger) });
   return without(r, [...DELVE_FIELDS, "keysSpent"]);
 }
 /** Validate an untrusted Delve run; null unless it has the shape a

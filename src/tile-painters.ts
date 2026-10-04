@@ -375,12 +375,12 @@ const ENEMY_BODIES: ((c: CanvasRenderingContext2D) => void)[] = [
 /** A band round an enemy's silhouette: every pixel within `r` sprite pixels
  * of it, in `color` at `alpha`. */
 type Ring = { r: number; color: string; alpha: number };
-const RED = "#9c1f2e", BRIGHT_RED = "#ff3b2b", GOLD_RIM = "#f4c64e", CHEVRON = "#ffe6a8";
+const RED = "#9c1f2e", BRIGHT_RED = "#ff3b2b", GOLD_RIM = "#f4c64e", VIOLET_RIM = "#b45cff", CHEVRON = "#ffe6a8";
 /** How an enemy's strength shows: bands outside its black outline (the
  * outermost first), and rank chevrons over the sprite. Normal is a dark red
  * rim fading out, strong a bright red one with one chevron, elite a bright
- * red band inside a gold rim with two, and a boss the elite's bands with
- * three. Only opaque bands cast torch shadows
+ * red band inside a gold rim with two, a boss the elite's bands with
+ * three, and a Greater Boss a gold band inside a violet rim with four. Only opaque bands cast torch shadows
  * (see toShadow in entity-lighting.ts), so the faint outer glow never
  * fattens one. */
 const ENEMY_LOOK: Record<EnemyStrength, { rings: Ring[]; chevrons: number }> = {
@@ -389,6 +389,7 @@ const ENEMY_LOOK: Record<EnemyStrength, { rings: Ring[]; chevrons: number }> = {
   strong: { rings: [{ r: 3, color: BRIGHT_RED, alpha: 0.45 }, { r: 2, color: BRIGHT_RED, alpha: 1 }], chevrons: 1 },
   elite: { rings: [{ r: 3, color: GOLD_RIM, alpha: 1 }, { r: 2, color: BRIGHT_RED, alpha: 1 }], chevrons: 2 },
   boss: { rings: [{ r: 3, color: GOLD_RIM, alpha: 1 }, { r: 2, color: BRIGHT_RED, alpha: 1 }], chevrons: 3 },
+  greaterBoss: { rings: [{ r: 3, color: VIOLET_RIM, alpha: 1 }, { r: 2, color: GOLD_RIM, alpha: 1 }], chevrons: 4 },
 };
 /** The one-pixel black outline hugging every enemy, inside its glow.
  * Cardinal only, so the silhouette's outer corners stay crisp. */

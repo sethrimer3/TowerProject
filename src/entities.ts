@@ -30,8 +30,9 @@ export type Kind =
   | "oneway";
 /** How hard a generator asked an enemy to be. Strong and elite enemies wear
  * a brighter glow and rank chevrons, so the player can tell them apart. A
- * boss guards the way up at the end of every ten floors. */
-export type EnemyStrength = "weak" | "normal" | "strong" | "elite" | "boss";
+ * boss guards the way up at the end of every ten floors, and a Greater
+ * Boss appears on a Tower floor whose every torch is put out. */
+export type EnemyStrength = "weak" | "normal" | "strong" | "elite" | "boss" | "greaterBoss";
 export type Enemy = {
   name: string;
   hp: number;
@@ -142,6 +143,9 @@ export type TowerRun = RunCore & {
    * and re-climbing preserves what was already done there. The current
    * floor's are `changes`; see TowerClimb. */
   floors?: Record<number, Record<string, Tile>>;
+  /** The heights of the floors where a Greater Boss has appeared this run
+   * (tower/greater-boss.ts), each once. */
+  summoned?: number[];
 };
 /** A Delve descent. */
 export type DelveRun = RunCore & {

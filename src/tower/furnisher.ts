@@ -32,6 +32,7 @@ const PROFILES_FOR: Record<Strength, TowerEnemyProfile[]> = {
   strong: ["attackHeavy", "defenseHeavy"],
   elite: ["defenseHeavy"],
   boss: ["balanced"],
+  greaterBoss: ["balanced"],
 };
 
 /** An enemy for floor `depth`, at the strength that floor allows

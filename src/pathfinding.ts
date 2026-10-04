@@ -1,6 +1,6 @@
 import { CHUNK } from "./config.ts";
 import { point } from "./entities.ts";
-import type { Position } from "./board.ts";
+import { litTorches, takesSomething, type Position } from "./board.ts";
 import type { KeyColor } from "./config.ts";
 import { doorCost } from "./doors.ts";
 export type Step = { dx: number; dy: number; x: number; y: number };
@@ -8,6 +8,11 @@ export type Step = { dx: number; dy: number; x: number; y: number };
  * lengthen a route, only to pick the cheaper of two equally long ones (a
  * yellow door beside a blue one). */
 const KEY_TIE_BREAK: Record<KeyColor, number> = { yellow: 1e-4, blue: 3e-4, red: 8e-4 };
+/** Route cost for crossing a tile that holds something (`takesSomething`):
+ * below one step, so a route never lengthens to go round it, but above the
+ * key tie-breaks, so of two equally long routes it takes the one crossing
+ * fewer items and lit torches. */
+const ITEM_TIE_BREAK = 1e-2;
 /** Find a structural route. Missing-key doors are expensive rather than
  * impassable, so a player can approach the first necessary locked door. */
 export function routeTo(at: Position, x: number, y: number): Step[] | null {
@@ -16,7 +21,8 @@ export function routeTo(at: Position, x: number, y: number): Step[] | null {
   if (w.tile(x, y).kind === "wall") return null;
   const start = point(p.x, p.y),
     goal = point(x, y),
-    cost = new Map([[start, 0]]);
+    cost = new Map([[start, 0]]),
+    lit = litTorches(w);
   const previous = new Map<string, { from: string; step: Step }>();
   const queue = [{ x: p.x, y: p.y, cost: 0 }];
   const minY = Math.max(w.floor, Math.min(y, p.y) - CHUNK),
@@ -51,6 +57,7 @@ export function routeTo(at: Position, x: number, y: number): Step[] | null {
         value =
           n.cost +
           1 +
+          (takesSomething(tile, dest.x, dest.y, lit) ? ITEM_TIE_BREAK : 0) +
           (keys === null ? 10000 : keys.reduce((s, c) => s + KEY_TIE_BREAK[c], 0));
       if (value >= (cost.get(next) ?? Infinity)) continue;
       cost.set(next, value);
