@@ -1,5 +1,5 @@
-/** The numbered towers (and delves) a run can climb: beating the boss on
- * floor 100 of one opens the next, up to `TIERS`. Each tier's enemies have
+/** The numbered towers (and delves) a run can climb: claiming floor 100's
+ * goal in one opens the next, up to `TIERS` (goals.ts). Each tier's enemies have
  * `TIER_STAT_FACTOR` times the stats of the tier below, so a hero needs
  * about that many times its ATK, DEF and HP to go as far; each pays more
  * Gold (`tierGold`), and XP by the same factor as the stats (`tierXp`);
@@ -10,8 +10,6 @@ import { intPow, snap } from "./exact.ts";
 
 export const TIERS = 9;
 export const TIER_STAT_FACTOR = 3;
-/** The equivalent floor (0 is the first) whose boss opens the next tier. */
-export const TIER_BOSS_FLOOR = 99;
 
 /** How many times tier 1's stats an enemy of `tier` has: 1, 3, 9, … */
 export const tierStats = (tier: number) => intPow(TIER_STAT_FACTOR, tier - 1);

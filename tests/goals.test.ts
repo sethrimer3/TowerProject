@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { decode, defaults } from "../src/save.ts";
 import { Game } from "../src/state.ts";
-import { CHECKPOINTS, PASSES, canWarp, decodeGoals, floorsCompleted, goalState, goalsWaiting, goalUnlocked, passFor, passTotals, warpUnlocked } from "../src/goals.ts";
+import { CHECKPOINTS, PASSES, canWarp, decodeGoals, floorsCompleted, goalState, goalsWaiting, goalUnlocked, passFor, passTotals, unlockFloor, warpUnlocked } from "../src/goals.ts";
 import { TIERS } from "../src/tiers.ts";
 
 test("every tower has a checkpoint each ten floors to 100; Tower I's first five unlock Damage Prediction, Combat Forecast, Attack Lore, Warp and Damage Visual", () => {
@@ -17,8 +17,39 @@ test("every tower has a checkpoint each ten floors to 100; Tower I's first five 
     { floor: 40, reward: { kind: "unlock", unlock: "warp" }, premium: gems(35) },
     { floor: 50, reward: { kind: "unlock", unlock: "damageVisual" }, premium: gems(50) },
   ]);
+  assert.deepEqual(CHECKPOINTS[2]![0], { floor: 10, reward: { kind: "unlock", unlock: "relativeDamageColor" }, premium: gems(10) });
   // The stubs: 100 Gold × checkpoint × tower, 10 Gems × checkpoint.
   assert.deepEqual(CHECKPOINTS[3]![1], { floor: 20, reward: { kind: "currency", currency: "gold", amount: 600 }, premium: { kind: "currency", currency: "gems", amount: 20 } });
+  // Floor 100 opens the next tower, in every tower but the last.
+  for (let tower = 1; tower < TIERS; tower++)
+    assert.deepEqual(CHECKPOINTS[tower]![9], { floor: 100, reward: { kind: "tower", tower: tower + 1 }, premium: gems(100) });
+  assert.deepEqual(CHECKPOINTS[TIERS]![9]!.reward, { kind: "currency", currency: "gold", amount: 1000 * TIERS });
+});
+
+test("claiming floor 100's goal opens the next tower and its cave; an older tower's claim closes nothing", () => {
+  const g = new Game(defaults());
+  g.newRun({ outside: true });
+  g.save.tower.reached = 99;
+  assert.equal(g.claimGoal(1, 100, false), null, "not before floor 101 is reached: its boss beaten");
+  g.save.tower.reached = 100;
+  assert.deepEqual(g.claimGoal(1, 100, false), { kind: "tower", tower: 2 });
+  assert.deepEqual([g.save.tower.tiersOpen, g.save.delve.tiersOpen], [2, 2]);
+  assert.ok(g.selectTier(2));
+  g.save.tower.tiersOpen = 4;
+  g.save.tower.reached = 100;
+  assert.ok(g.claimGoal(2, 100, false));
+  assert.deepEqual([g.save.tower.tiersOpen, g.save.delve.tiersOpen], [4, 4], "Tower III was open already");
+});
+
+test("Relative Damage Color is owned once Tower II's floor 10 is claimed", () => {
+  const g = new Game(defaults());
+  g.save.tower.tiersOpen = 2;
+  g.save.tower.tierRecords["2"] = { best: 10, reached: 10 };
+  assert.equal(goalUnlocked(g.save, "relativeDamageColor"), false);
+  assert.equal(unlockFloor("relativeDamageColor"), 10);
+  assert.ok(g.claimGoal(2, 10, false));
+  assert.ok(goalUnlocked(g.save, "relativeDamageColor"));
+  assert.equal(goalUnlocked(g.save, "damagePrediction"), false, "Tower I's floor 10 is its own");
 });
 
 test("each pass covers three towers and totals its premium rewards", () => {

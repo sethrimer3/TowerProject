@@ -57,7 +57,7 @@ import { AreaLedger, chestReward, CLEARED_INSPIRATION, type AreaReward } from ".
 import { TowerClimb } from "./tower/climb.ts";
 import { callsGreaterBoss, greaterBoss, greaterBossSpot } from "./tower/greater-boss.ts";
 import { materialDef, MATERIALS } from "./materials.ts";
-import { TIERS, TIER_BOSS_FLOOR, switchTier, tierGold, tierNumeral, tierRewardText, tierXp } from "./tiers.ts";
+import { switchTier, tierGold, tierNumeral, tierRewardText, tierXp } from "./tiers.ts";
 import { enemyTitle } from "./scaling.ts";
 import { snap } from "./exact.ts";
 import { enemyStat, keyCount, whole, wholeChange } from "./whole.ts";
@@ -1393,9 +1393,7 @@ export class Game {
     for (const d of drops) this.gain(at.x, at.y, materialText(d), { material: d.id, quantity: d.quantity });
     const found = equipmentTexts(equipment);
     for (const text of found) this.gain(at.x, at.y, text);
-    const opened = enemy.strength === "boss" && floor >= TIER_BOSS_FLOOR && this.openNextTier();
-    this.message = [fightText(fight), ...coinsText(gold, silver), ...drops.map(materialText), ...found,
-      ...(opened ? [`${this.rules.words.tierName} ${tierNumeral(this.slice.tiersOpen)} opened`] : [])].join(" · ");
+    this.message = [fightText(fight), ...coinsText(gold, silver), ...drops.map(materialText), ...found].join(" · ");
     return true;
   }
   /** Raises the Gold and Silver just found from `at`, each only when some
@@ -1411,16 +1409,6 @@ export class Game {
   /** The numbered tower (or delve) the run climbs. */
   get tier() {
     return this.run.tier ?? 1;
-  }
-  /** Beating the floor-100 boss of the highest Tower opened opens the next
-   * Tower and the Delve's cave of the same number (a Delve boss opens
-   * nothing); undo never closes them again. */
-  private openNextTier() {
-    const slice = this.slice;
-    if (this.mode !== "tower" || this.tier !== slice.tiersOpen || slice.tiersOpen >= TIERS) return false;
-    slice.tiersOpen++;
-    this.save.delve.tiersOpen = slice.tiersOpen;
-    return true;
   }
   /** Chooses which opened tier the next run climbs, from the forest: the
    * mode's records become that tier's and a fresh run waits outside it. */

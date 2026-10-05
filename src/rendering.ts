@@ -393,11 +393,12 @@ export class Renderer {
     c.fillRect(w - 2, 0, 2, w);
   }
   /** Damage Visual: what each enemy in view would cost, once its goal is
-   * claimed and while its setting is on. */
+   * claimed and while its setting is on, coloured by its share of the
+   * hero's HP once Relative Damage Color is claimed too. */
   private drawDamageLabels(f: FrameContext) {
     const g = this.game;
     if (g.run.outside || !g.save.settings.damageVisual || !goalUnlocked(g.save, "damageVisual")) return;
-    drawDamageLabels(f, this.predictions, g.run.player, g.fight);
+    drawDamageLabels(f, this.predictions, g.run.player, g.fight, goalUnlocked(g.save, "relativeDamageColor"));
   }
   /** A fading red cross where a step was refused. */
   /** Skip Open Nodes' marks: a violet X on each door or monster it passed
