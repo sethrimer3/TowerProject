@@ -150,6 +150,9 @@ export type HandAt = Position & {
   /** Tiles marked with a ? (Deprioritize): no card's path crosses or ends
    * on them. */
   marked?: ReadonlySet<string>;
+  /** Tiles Ignore marked: no card's path, nor Target's, ever crosses or
+   * ends on them. */
+  ignored?: ReadonlySet<string>;
   /** How much of a key each key colour a door takes costs, in tenths of a
    * percent (Key Efficiency research), 1,000 when absent: the door cards
    * want a door the keys held pay for at that cost. */
@@ -233,7 +236,7 @@ const NONE: ReadonlySet<string> = new Set();
  * gate) or change its target (`cardRules`). With `only`, it plans that
  * card alone (a Focus), whatever its gate. */
 export function planHand(at: HandAt, hand: readonly CardId[], mode: Mode, only?: number): CardPlan | null {
-  const marked = new Set(at.marked ?? NONE);
+  const ignored = at.ignored ?? NONE, marked = new Set([...(at.marked ?? NONE), ...ignored]);
   let reached = search(at, marked);
   for (let card = 0; card < hand.length; card++) {
     if (only !== undefined && card !== only) continue;
@@ -242,7 +245,7 @@ export function planHand(at: HandAt, hand: readonly CardId[], mode: Mode, only?:
     if (rules?.bang) {
       // The hand is stuck: the card heads for the closest ! by any way.
       const bang = rules.bang;
-      const target = search(at, NONE).find((r) => bang.has(point(r.x, r.y)));
+      const target = search(at, ignored).find((r) => bang.has(point(r.x, r.y)));
       if (target) return { card, path: pathTo(target) };
       continue;
     }
@@ -261,6 +264,15 @@ export function planHand(at: HandAt, hand: readonly CardId[], mode: Mode, only?:
     if (target) return { card, path: pathTo(target) };
   }
   return null;
+}
+
+/** Target's path to (x, y): the shortest over crossable tiles, round the
+ * tiles Ignore marked, its last step onto the tile, whatever stands there
+ * (a monster is fought, a door opened); null when the hero can't reach it
+ * or stands on it. */
+export function planTarget(at: HandAt, x: number, y: number): Step[] | null {
+  const target = search(at, at.ignored ?? NONE).find((r) => r.x === x && r.y === y);
+  return target ? pathTo(target) : null;
 }
 
 /** Card `id`'s target among the tiles `pool` reached (closest first): the

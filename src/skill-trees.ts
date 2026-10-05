@@ -70,7 +70,7 @@ export const TREES: SkillTree[] = [
     { id: "cardTorch", icon: "☼", x: 30, y: 268, requires: ["floorSkipReward"] },
     { id: "cardSteelDoor", icon: "⚿", x: 70, y: 268, requires: ["floorSkipReward"] },
   ] },
-  { id: "courage", name: "Courage", currency: "courage", gate: "delve", description: "Earn Courage by beating your best Delve depth.", height: 150, nodes: [
+  { id: "courage", name: "Courage", currency: "courage", gate: "delve", description: "Earn Courage by beating your best Delve depth.", height: 198, nodes: [
     { id: "moveSpeed", icon: "»", x: 50, y: 10, requires: ["delve"] },
     { id: "instantCombat", icon: "↯", x: 18, y: 10, requires: ["moveSpeed"] },
     { id: "extraKey", icon: "⚿", x: 82, y: 10, requires: ["moveSpeed"] },
@@ -86,6 +86,13 @@ export const TREES: SkillTree[] = [
     { id: "interest", icon: "¤", x: 50, y: 135, requires: ["keyEfficiency"] },
     { id: "maxInterest", icon: "¤", x: 22, y: 135, requires: ["interest"] },
     { id: "mug", icon: "☠", x: 78, y: 135, requires: ["interest"] },
+    // The run's charges under them: Refocus, Ignore and Target, each
+    // Ignore and Target with the skill that regains it below.
+    { id: "refocus", icon: "ϟ", x: 22, y: 161, requires: ["maxInterest"] },
+    { id: "ignore", icon: "⊘", x: 50, y: 161, requires: ["interest"] },
+    { id: "target", icon: "⌖", x: 78, y: 161, requires: ["mug"] },
+    { id: "ignoreMore", icon: "⊘", x: 50, y: 185, requires: ["ignore"] },
+    { id: "targetMore", icon: "⌖", x: 78, y: 185, requires: ["target"] },
   ] },
   { id: "wayfinding", name: "Wayfinding", currency: "courage", gate: null, description: "Teach Delve Automove to explore, compare routes and preserve resources.", nodes: [
     { id: "aiMemory", icon: "◇", x: 50, y: 20, requires: [] },

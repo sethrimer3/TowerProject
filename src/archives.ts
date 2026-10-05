@@ -1,4 +1,4 @@
-import { FOCUS_PER_RUN, levelForXp, type UpgradeId } from "./config.ts";
+import { FOCUS_PER_RUN, IGNORE_PER_RUN, REGAIN_FLOORS, TARGET_PER_RUN, levelForXp, type UpgradeId } from "./config.ts";
 import type { Settings } from "./settings.ts";
 import { finite as finiteIn, isRecord, wholeIn } from "./decode.ts";
 import { intPow } from "./exact.ts";
@@ -38,6 +38,16 @@ const speed = (n: number) => `${Math.round(100 + n * 100)}%`;
 export const RESEARCH_TARGETS = {
   /** Focus uses a run starts with. */
   focusPerRun: { name: "Focus Uses", base: FOCUS_PER_RUN, shown: count },
+  /** New floors a run climbs to regain a Focus use, once Refocus is owned. */
+  refocusFloors: { name: "Floors per Focus", base: REGAIN_FLOORS, shown: count },
+  /** Ignore uses a run starts with. */
+  ignorePerRun: { name: "Ignore Uses", base: IGNORE_PER_RUN, shown: count },
+  /** New floors a run climbs to regain an Ignore use, once Ignore More is owned. */
+  ignoreFloors: { name: "Floors per Ignore", base: REGAIN_FLOORS, shown: count },
+  /** Target uses a run starts with. */
+  targetPerRun: { name: "Target Uses", base: TARGET_PER_RUN, shown: count },
+  /** New floors a run climbs to regain a Target use, once Target More is owned. */
+  targetFloors: { name: "Floors per Target", base: REGAIN_FLOORS, shown: count },
   /** The run's speed arrows' most steps a second, once Movement Speed is owned. */
   moveSpeed: { name: "Steps / Sec", base: 3, shown: count },
   /** Undos the hero can store, once Rehearsed steps has given the first;
@@ -173,6 +183,30 @@ const maxInterestLevels = () => INTEREST_CAPS.map((value, i): ResearchLevel => (
 /** Buy Quantity: one level for each quantity past x1 (x5, x10, x100,
  * Max), 1,000 to 100,000 Gold and 4 to 48 hours. */
 const BUY_QUANTITY_LEVELS: [gold: number, hours: number][] = [[1000, 4], [5000, 12], [25000, 24], [100000, 48]];
+
+/** Refocus, Ignore More and Target More: one floor fewer to regain a use
+ * a level, for 90 levels (100 floors down to 10). Focus Count's Gold (500 ×
+ * (1 + n(n−1)/2) at level n), raised `growth` compounding a level (Refocus
+ * 1, Ignore More 1.05, Target More 1.1) to the nearest 100, and 4.25 × n
+ * hours, about two years in all: 60.8 million Gold for Refocus, 2.1
+ * billion for Ignore More and 85.4 billion for Target More. */
+const regainLevels = (target: ResearchTarget, growth: number) => Array.from({ length: 90 }, (_, i): ResearchLevel => ({
+  gold: Math.round((500 * (1 + (i * (i + 1)) / 2) * intPow(growth, i)) / 100) * 100,
+  hours: 4.25 * (i + 1),
+  effect: { target, op: "add", value: -1 },
+}));
+/** Ignore Count: +1 Ignore use a level, for nine levels (1 use up to 10).
+ * Steeper than Focus Count, less than Target Count: 100,000 Gold at level
+ * 1, five times as much each level (39 billion at 9, 48.8 billion in all),
+ * and 12 × n hours (540 in all). */
+const ignoreCountLevels = () => Array.from({ length: 9 }, (_, i): ResearchLevel => ({
+  gold: 100_000 * intPow(5, i),
+  hours: 12 * (i + 1),
+  effect: { target: "ignorePerRun", op: "add", value: 1 },
+}));
+/** Target Count: +1 Target use a level, for four levels (1 use up to 5),
+ * ten times the Gold and twice the time each level. */
+const TARGET_COUNT_LEVELS: [gold: number, hours: number][] = [[10_000_000, 24], [100_000_000, 48], [1_000_000_000, 96], [10_000_000_000, 192]];
 
 /** The research library, in the order the Archives list it. */
 export const RESEARCH = {
@@ -316,6 +350,41 @@ export const RESEARCH = {
     categories: ["economy"],
     requires: [{ upgrade: "mug" }],
     levels: hundredLevels("instakillGold", 2),
+  },
+  refocus: {
+    name: "Refocus",
+    description: "Catch your breath between climbs: a run regains a Focus use in fewer new floors.",
+    categories: ["abilities"],
+    requires: [{ upgrade: "refocus" }],
+    levels: regainLevels("refocusFloors", 1),
+  },
+  ignoreCount: {
+    name: "Ignore Count",
+    description: "Learn which stones to step around: start each run with more Ignore uses.",
+    categories: ["abilities"],
+    requires: [{ upgrade: "ignore" }],
+    levels: ignoreCountLevels(),
+  },
+  ignoreMore: {
+    name: "Ignore More",
+    description: "Keep your eyes moving: a run regains an Ignore use in fewer new floors.",
+    categories: ["abilities"],
+    requires: [{ upgrade: "ignoreMore" }],
+    levels: regainLevels("ignoreFloors", 1.05),
+  },
+  targetCount: {
+    name: "Target Count",
+    description: "Map the old climbers' shortcuts: start each run with more Target uses.",
+    categories: ["abilities"],
+    requires: [{ upgrade: "target" }],
+    levels: TARGET_COUNT_LEVELS.map(([gold, hours]): ResearchLevel => ({ gold, hours, effect: { target: "targetPerRun", op: "add", value: 1 } })),
+  },
+  targetMore: {
+    name: "Target More",
+    description: "Pick your marks faster: a run regains a Target use in fewer new floors.",
+    categories: ["abilities"],
+    requires: [{ upgrade: "targetMore" }],
+    levels: regainLevels("targetFloors", 1.1),
   },
 } satisfies Record<string, ResearchDefinition>;
 export type ResearchId = keyof typeof RESEARCH;
@@ -462,6 +531,26 @@ export function cancelResearch(o: ArchivesOwner, slot: number, now: number) {
   if (done > 0 && done < 1) o.archives.progress[job.research] = done;
   o.gold += job.paid;
   o.archives.slots[slot].job = undefined;
+  return true;
+}
+
+/** Why busy archivist `slot` can't switch from its job to `id`, or null
+ * when it can: as for starting `id`, with the archivist idle and its job's
+ * Gold back. An idle archivist answers as `cannotStart`. */
+export function cannotSwitch(o: ArchivesOwner, slot: number, id: ResearchId): string | null {
+  const job = o.archives.slots[slot]?.job;
+  if (!job) return cannotStart(o, slot, id);
+  if (job.research === id) return "Already being researched.";
+  const slots = o.archives.slots.map((s, i) => (i === slot ? { ...s, job: undefined } : s));
+  return cannotStart({ ...o, gold: o.gold + job.paid, archives: { ...o.archives, slots } }, slot, id);
+}
+/** Switches busy archivist `slot` to `id` at `now`: its job stops (the
+ * Gold back, the share done kept, as `cancelResearch`), and `id`'s next
+ * level starts. False, changing nothing, when it can't. */
+export function switchResearch(o: ArchivesOwner, slot: number, id: ResearchId, now: number) {
+  if (!o.archives.slots[slot]?.job || cannotSwitch(o, slot, id)) return false;
+  cancelResearch(o, slot, now);
+  begin(o, slot, id, now);
   return true;
 }
 

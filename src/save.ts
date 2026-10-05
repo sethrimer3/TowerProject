@@ -115,6 +115,11 @@ const RUN_FIELD_CHECKS = {
   silver: (v: unknown) => finite(v),
   xp: (v: unknown) => wholeIn(v, 0, 1e9),
   focusUsed: (v: unknown) => wholeIn(v, 0, 99),
+  ignoreUsed: (v: unknown) => wholeIn(v, 0, 99),
+  targetUsed: (v: unknown) => wholeIn(v, 0, 99),
+  regain: (v: unknown) => isRecord(v) && Object.entries(v).every(([k, n]) => ["focus", "ignore", "target"].includes(k) && wholeIn(n, 1, 1e6)),
+  ignored: (v: any) => isRecord(v) && wholeIn(v.floor, 0, 1e6) && Array.isArray(v.tiles) && v.tiles.every((t: unknown) => typeof t === "string" && POINT_KEY.test(t)),
+  targeted: (v: unknown) => typeof v === "string" && POINT_KEY.test(v),
   // The hand is checked first: a focused card must be in it.
   focused: (v: unknown, r: any) => !!r.hand?.includes(v),
   training: validRunTraining,

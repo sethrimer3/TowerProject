@@ -353,6 +353,14 @@ function renderFocus(game: Game) {
   stat.hidden = !game.save.upgrades.focus;
   text("focus-left", game.focusLeft);
   stat.setAttribute("aria-label", `Focus: ${game.focusLeft} left`);
+  for (const c of ["ignore", "target"] as const) {
+    const button = el(`${c}-stat`), left = game.chargesLeft(c), name = c === "ignore" ? "Ignore" : "Target";
+    button.hidden = !game.save.upgrades[c];
+    button.classList.toggle("armed", game.armed === c);
+    text(`${c}-left`, left);
+    button.setAttribute("aria-label", `${name}: ${left} left`);
+    button.setAttribute("aria-pressed", String(game.armed === c));
+  }
 }
 
 /** Replays a brief red flash on `target`, as a refusal. */

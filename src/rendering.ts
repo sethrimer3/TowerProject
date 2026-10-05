@@ -158,6 +158,7 @@ export class Renderer {
     this.drawDamageLabels(f);
     this.drawSkipMarks(f);
     this.drawBadgeMarks(f);
+    this.drawChargeMarks(f);
     this.drawBlockedMark(f);
     // A Gem shines above the darkness, so it can be seen and tapped.
     const gem = this.game.gemFinder.gem, sparkle = this.game.gemFinder.sparkle;
@@ -442,6 +443,46 @@ export class Renderer {
         c.fillStyle = color;
         c.fillText(glyph, x, y);
       }
+    c.restore();
+  }
+  /** Ignore's marks: a red ⊘ over each tile ignored on this floor; and
+   * Target's: a blue ring and cross over the tile the hero heads for. */
+  private drawChargeMarks(f: FrameContext) {
+    const g = this.game, ignored = g.ignored, targeted = g.run.outside ? undefined : g.run.targeted;
+    if (!ignored.size && !targeted) return;
+    const c = f.c, s = f.s, r = s * 0.3;
+    const centre = (k: string) => {
+      const [wx, wy] = k.split(",").map(Number);
+      return [(wx - f.left + 0.5) * s, (f.n - 0.5 - (wy - f.bottom)) * s] as const;
+    };
+    c.save();
+    c.lineCap = "round";
+    for (const k of ignored) {
+      const [x, y] = centre(k);
+      for (const [color, width] of [["#000c", Math.max(3, s * 0.13)], ["#ff6a5a", Math.max(1.5, s * 0.07)]] as const) {
+        c.strokeStyle = color;
+        c.lineWidth = width;
+        c.beginPath();
+        c.arc(x, y, r, 0, Math.PI * 2);
+        c.moveTo(x - r * 0.7, y + r * 0.7);
+        c.lineTo(x + r * 0.7, y - r * 0.7);
+        c.stroke();
+      }
+    }
+    if (targeted) {
+      const [x, y] = centre(targeted);
+      for (const [color, width] of [["#000c", Math.max(3, s * 0.12)], ["#7ad8ff", Math.max(1.5, s * 0.06)]] as const) {
+        c.strokeStyle = color;
+        c.lineWidth = width;
+        c.beginPath();
+        c.arc(x, y, r, 0, Math.PI * 2);
+        for (const [dx, dy] of [[0, 1], [1, 0], [0, -1], [-1, 0]]) {
+          c.moveTo(x + dx * r * 0.6, y + dy * r * 0.6);
+          c.lineTo(x + dx * r * 1.4, y + dy * r * 1.4);
+        }
+        c.stroke();
+      }
+    }
     c.restore();
   }
   private drawBlockedMark(f: FrameContext) {

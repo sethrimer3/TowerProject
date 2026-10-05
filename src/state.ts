@@ -1,6 +1,6 @@
 import { entrance, floorFor } from "./delve/labyrinth.ts";
 import { chooseStep } from "./automation.ts";
-import { CARDS, KEY_TO_HP_PERCENT, SIPHONS, TRADER_YELLOW_KEYS, cardText, isSiphon, planHand, type CardId, type CardPlan, type CardRules, type SiphonCard } from "./cards.ts";
+import { CARDS, KEY_TO_HP_PERCENT, SIPHONS, TRADER_YELLOW_KEYS, cardText, isSiphon, planHand, planTarget, type CardId, type CardPlan, type CardRules, type SiphonCard } from "./cards.ts";
 import { BADGE_IDS, BADGES, MAX_COPIES, badgeValue, runBadges, type BadgeId, type RunBadge } from "./badges.ts";
 import { BOOST_FOREVER, permanentBoost } from "./shop/entitlements.ts";
 import { offer, type OfferId } from "./shop/offers.ts";
@@ -30,7 +30,6 @@ import {
   type TrainingId,
   type KeyColor,
   type StatTrainingRow,
-  FOCUS_PER_RUN,
 } from "./config.ts";
 import {
   type Save,
@@ -66,6 +65,7 @@ import { boughtInRun, ranksInRun, runTrainingBulk, runTrainingOffer, type RunTra
 import { openQuantities, type BuyQuantity } from "./buy-quantity.ts";
 import { keepUndos, loadout, percentPotionChance, potionPercent, reviveChance } from "./loadout.ts";
 import { researched } from "./archives.ts";
+import { chargesLeft, chargesPerRun, climbFloor, spendCharge, type Charge } from "./run-charges.ts";
 import { CONSUMABLES, type ConsumableId } from "./crafting.ts";
 import type { MaterialId, MaterialStack } from "./materials.ts";
 import { TrainingDesk } from "./game/training-desk.ts";
@@ -264,6 +264,7 @@ export class Game {
     if (next === this.mode) return;
     if (next === "delve" && !this.save.upgrades.delve) return;
     this.finishEncounter();
+    this.armed = null;
     this.mode = next;
     this.loadMode();
   }
@@ -365,6 +366,7 @@ export class Game {
   undo() {
     // A fight still playing out counts first, so undo takes it back.
     this.finishEncounter();
+    this.armed = null;
     const slice = this.slice;
     // Fallen, undo spends one and takes back the fight the hero fell in.
     const fall = this.fallen ? slice.fall : null;
@@ -546,6 +548,8 @@ export class Game {
    * first card in priority order that can reach a target. When none can,
    * the hero waits and the End Run button lights up. */
   private handTurn() {
+    const target = this.targetTurn();
+    if (target === true) return;
     const fresh = !this.cardPlan;
     const next = this.nextHandPlan(), lost = next.lost;
     let plan = next.plan;
@@ -555,7 +559,8 @@ export class Game {
     if (!plan) return this.handWaits();
     this.activeCard = plan.card;
     const id = this.hand[plan.card];
-    this.message = lost ? `Focus lost · ${CARDS[lost].name} has no path to a target · ${CARDS[id].name} leads.` : this.cardMessage(id);
+    this.message = lost ? `Focus lost · ${CARDS[lost].name} has no path to a target · ${CARDS[id].name} leads.`
+      : target === "lost" ? `Target lost · no path to the tile · ${CARDS[id].name} leads.` : this.cardMessage(id);
     if (fresh) this.coolDown(id);
     // A card that acts in place takes the turn without a step.
     if (!plan.path.length) {
@@ -944,6 +949,7 @@ export class Game {
     if (chance) this.run.percentPotions = chance;
     else delete this.run.percentPotions;
     this.run.focusUsed = 0;
+    for (const k of ["ignoreUsed", "targetUsed", "regain", "ignored", "targeted"] as const) delete this.run[k];
   }
   /** The fastest speed the run's arrows reach: 3 steps a second, and one
    * more a Movement Speed research level. */
@@ -970,11 +976,6 @@ export class Game {
   /** What the equipment this mode's hero wears does now. */
   get worn() {
     return wornEffects(this.save, this.mode);
-  }
-  /** Focus uses a run starts with: none without the Focus skill, and more
-   * with Focus Count research. */
-  private get focusPerRun() {
-    return this.save.upgrades.focus ? researched(this.save.archives, "focusPerRun", FOCUS_PER_RUN) : 0;
   }
   /** What research changes about stepping now: the step rules every move,
    * preview, inspect box and planner resolves with. */
@@ -1003,8 +1004,100 @@ export class Game {
   /** Focus uses left: this run's inside one, or in the forest what the
    * next run will start with. */
   get focusLeft() {
-    if (this.run.outside) return this.focusPerRun;
-    return Math.max(0, this.focusPerRun - (this.run.focusUsed ?? 0));
+    return this.chargesLeft("focus");
+  }
+  /** Uses of charge `c` (Focus, Ignore, Target) left: this run's inside
+   * one, or in the forest what the next run will start with. */
+  chargesLeft(c: Charge) {
+    return this.run.outside ? chargesPerRun(this.save, c) : chargesLeft(this.save, this.run, c);
+  }
+  /** Ignore or Target waiting for the board tap that says where. */
+  armed: "ignore" | "target" | null = null;
+  /** Readies Ignore or Target (or, armed already, puts it away): the next
+   * board tap marks or targets that tile. */
+  arm(c: "ignore" | "target"): "armed" | "disarmed" | "unavailable" | "spent" {
+    if (!this.save.upgrades[c] || this.run.outside || this.fallen) return "unavailable";
+    if (this.armed === c) {
+      this.armed = null;
+      this.message = this.auto ? "The hand takes over." : "Paused · the hand waits.";
+      return "disarmed";
+    }
+    if (this.chargesLeft(c) < 1) return "spent";
+    this.armed = c;
+    this.message = c === "ignore" ? "Ignore · tap a tile the hero won't step on." : "Target · tap a tile to send the hero there.";
+    return "armed";
+  }
+  /** The board tap Ignore or Target was armed for, on (x, y): Ignore marks
+   * the tile for the rest of the floor, and Target sends the hero there.
+   * A tile it can't take (a wall, the hero's own, one already ignored, or
+   * for Target one out of reach) costs nothing and keeps it armed. */
+  useArmed(x: number, y: number): "used" | "invalid" | "noPath" | "unavailable" {
+    const c = this.armed;
+    if (!c || !this.save.upgrades[c] || this.run.outside || this.fallen || this.chargesLeft(c) < 1) {
+      this.armed = null;
+      return "unavailable";
+    }
+    return c === "ignore" ? this.ignoreTile(x, y) : this.targetTile(x, y);
+  }
+  /** The tiles Ignore marked on this floor, which no card's path nor
+   * Target's crosses (`planHand` reads it). */
+  get ignored(): ReadonlySet<string> {
+    const m = this.run.ignored;
+    return new Set(m && !this.run.outside && m.floor === this.badgeFloor ? m.tiles : []);
+  }
+  private ignoreTile(x: number, y: number): "used" | "invalid" {
+    const p = this.run.player, k = `${x},${y}`;
+    if (this.world.tile(x, y).kind === "wall" || (p.x === x && p.y === y) || this.ignored.has(k)) return "invalid";
+    const floor = this.badgeFloor;
+    if (this.run.ignored?.floor !== floor) this.run.ignored = { floor, tiles: [] };
+    this.run.ignored.tiles.push(k);
+    spendCharge(this.run, "ignore");
+    this.armed = null;
+    // The hand plans again, round the tile, and a stuck hand looks again.
+    this.cardPlan = null;
+    this.message = "Ignore · the hero won't step there on this floor.";
+    this.afterPlayerAction();
+    return "used";
+  }
+  private targetTile(x: number, y: number): "used" | "noPath" {
+    if (!planTarget(this, x, y)) return "noPath";
+    spendCharge(this.run, "target");
+    this.armed = null;
+    this.run.targeted = `${x},${y}`;
+    this.route = [];
+    this.cardPlan = null;
+    this.activeCard = null;
+    this.handStuck = false;
+    this.playHand();
+    this.message = "Target · the hero heads for the tile.";
+    return "used";
+  }
+  /** Target's turn: one step along the way to its tile, the last onto it.
+   * "lost" when the tile is out of reach now (Target is lost, and the hand
+   * leads this turn), false when there is none. */
+  private targetTurn(): boolean | "lost" {
+    const k = this.run.targeted;
+    if (!k) return false;
+    const [x, y] = k.split(",").map(Number), path = planTarget(this, x, y);
+    if (!path) {
+      this.run.targeted = undefined;
+      this.message = "Target lost · no path to the tile.";
+      return "lost";
+    }
+    this.cardPlan = null;
+    this.activeCard = null;
+    const step = path[0], last = path.length === 1;
+    const moved = this.move(step.dx, step.dy, true);
+    if (last || !moved) {
+      this.run.targeted = undefined;
+      if (!moved) this.message = "Target · the way is barred · the hand leads.";
+    } else this.message = "Target · the hero heads for the tile.";
+    return true;
+  }
+  /** A new floor climbed for the first time in the run: Refocus, Ignore
+   * More and Target More count it, and each charge regained shows. */
+  private regainCharges(at: { x: number; y: number }) {
+    for (const c of climbFloor(this.save, this.run)) this.gain(at.x, at.y, `+1 ${c === "focus" ? "Focus" : c === "ignore" ? "Ignore" : "Target"}`);
   }
   /** Puts the hand's card in slot `card` ahead of the others until it
    * reaches its target, spending a Focus use; the hand plays on to it. A
@@ -1070,6 +1163,7 @@ export class Game {
   newRun({ outside = false, seed = Math.floor(this.rng() * 2 ** 32), height = 0 }: RunStart = {}) {
     // A Gem the last run left lying on a floor is missed.
     if (this.save.gemDrop.out?.mode === this.mode) missGem(this.save.gemDrop);
+    this.armed = null;
     this.slice.fall = null;
     this.slice.history = [];
     this.slice.runGold = 0;
@@ -1486,6 +1580,7 @@ export class Game {
       silver += purse.floorSilver();
       silver += purse.interest();
       this.findYellowKey(f, at);
+      this.regainCharges(at);
       this.floorHeal();
     }
     this.gainCoins(at, gold, silver, false);
@@ -1519,6 +1614,9 @@ export class Game {
     // gates it.
     let silver = 0;
     if (this.run.height > highest) {
+      // Each floor new to the run counts toward a charge's regain, a floor
+      // climbed past by Skip too.
+      for (let f = highest; f < this.run.height; f++) this.regainCharges(p);
       this.run.maxHeight = this.run.height;
       silver = purse.floorSilver();
       silver += purse.interest();

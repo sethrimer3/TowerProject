@@ -113,6 +113,18 @@ export type RunCore = {
   /** Focus uses spent this run. What is left is what a run gets now less
    * these, so a Focus Count level completed mid-run counts at once. */
   focusUsed?: number;
+  /** Ignore and Target uses spent this run, counted like Focus's. */
+  ignoreUsed?: number;
+  targetUsed?: number;
+  /** New floors counted toward each charge's next regained use (Refocus,
+   * Ignore More, Target More; run-charges.ts), while it is below full. */
+  regain?: Partial<Record<"focus" | "ignore" | "target", number>>;
+  /** The tiles Ignore marked on floor `floor` (points): no card's path, or
+   * Target's, steps on them for the rest of that floor. */
+  ignored?: { floor: number; tiles: string[] };
+  /** The tile (a point) Target sends the hero to, until it gets there or
+   * has no path left. */
+  targeted?: string;
   /** The chance each potion on this run's floors is a percent potion, in
    * hundredths of a percent, from Recovery and Find Potion training when it
    * went inside (none without). Fixed for the run, so its floors never

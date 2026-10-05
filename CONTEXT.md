@@ -320,6 +320,18 @@ _Avoid_: diamond, crystal, premium
 Putting one card of the hand ahead of the others inside a run, until the hero reaches its target or the card has no path to one. A run has a limited number of Focus uses.
 _Avoid_: priority, override
 
+**Charge**:
+One of a run's limited uses of Focus, Ignore or Target. Each regains a use every so many new floors climbed once its regain skill (Refocus, Ignore More, Target More) is owned.
+_Avoid_: token, mana
+
+**Ignore**:
+Marking a tile inside a run so the hero never steps on it for the rest of that floor.
+_Avoid_: block, ban
+
+**Target**:
+Sending the hero inside a run to a tile the player taps, ahead of the hand, until it arrives.
+_Avoid_: waypoint, goto
+
 **Card badge**:
 A token bought with Gems (drawn by rarity: common, rare or epic) and attached to one card, changing what the card does when it activates: paying something (HP, Silver, Gold, XP), gating it (it acts only while a condition holds), changing its target (Stairward, Skip Open Nodes, Charge, Deprioritize), scaling its target's effect (Effective, Dampen) or making it vanish (Skip). A card holds one, and a badge sits on one card at a time. More copies of a badge raise its level, up to 7.
 _Avoid_: rune, gem, charm, enchantment

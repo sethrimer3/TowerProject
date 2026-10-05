@@ -1,4 +1,4 @@
-import { RESEARCH, cancelResearch, hastenResearch, hireArchivist, settleArchives, startResearch, type ResearchId, type ResearchRecord } from "../archives.ts";
+import { RESEARCH, cancelResearch, hastenResearch, hireArchivist, settleArchives, startResearch, switchResearch, type ResearchId, type ResearchRecord } from "../archives.ts";
 import { finishGems } from "../training-jobs.ts";
 import { readyForestRuns } from "./hero-sync.ts";
 import { affordsGems, type DeskHost } from "./desk.ts";
@@ -29,6 +29,15 @@ export class ResearchDesk {
     // Free purchases' research takes no time: it completes now.
     if (started && this.host.free) this.settle();
     return started;
+  }
+
+  /** Switches busy archivist `slot` to research `id`'s next level: its
+   * research stops as `cancel` does, and `id` starts, paying its Gold. */
+  switchTo(slot: number, id: ResearchId) {
+    this.settle();
+    const switched = this.open && switchResearch(this.save, slot, id, this.host.clock());
+    if (switched && this.host.free) this.settle();
+    return switched;
   }
 
   /** Stops archivist `slot`'s research, refunding its Gold and keeping the

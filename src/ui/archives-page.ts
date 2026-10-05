@@ -1,5 +1,5 @@
 import {
-  RESEARCH, RESEARCH_CATEGORIES, RESEARCH_IDS, RESEARCH_TARGETS, cannotStart, duration, jobProgress,
+  RESEARCH, RESEARCH_CATEGORIES, RESEARCH_IDS, RESEARCH_TARGETS, activeSlot, cannotSwitch, duration, jobProgress,
   maxLevel, missing, nextArchivistPrice, nextLevel, research, researchLevel, researched, status, withNextLevel,
   type ArchivesSave, type ResearchCategory, type ResearchId, type ResearchRequirement, type ResearchTarget,
 } from "../archives.ts";
@@ -36,16 +36,19 @@ const requirementText =(r: ResearchRequirement) =>
 
 /** The Upgrades page's Archives tab: the archivists, one a row, each busy
  * one with what it is researching, and a History button opening the
- * research completed. Pressing an idle archivist opens Select Research for
- * it: the research it can start (searchable, filtered by category), an X
- * to go back without choosing, and each Research button starting that
- * research and going back. */
+ * research completed. Pressing an archivist opens Select Research for it:
+ * the research it can start (searchable, filtered by category), an X to go
+ * back without choosing, and each Research button starting that research
+ * and going back. For a busy archivist the list shows its research too,
+ * and choosing another asks to switch to it. */
 export class ArchivesPanel {
   private category: "all" | ResearchCategory = "all";
   private search = "";
-  /** The idle archivist Select Research is choosing for, or null on the
+  /** The archivist Select Research is choosing for, or null on the
    * archivists' view. */
   private picking: number | null = null;
+  /** What that archivist was researching when Select Research opened. */
+  private pickedFrom: ResearchId | undefined;
 
   constructor(private ctx: AppContext, private rerender: () => void) {}
 
@@ -56,8 +59,9 @@ export class ArchivesPanel {
 
   html() {
     const save = this.ctx.game.save;
-    // An archivist set to work since (auto-continue, Dev mode) needs no choice.
-    if (this.picking !== null && save.archives.slots[this.picking]?.job !== undefined) this.picking = null;
+    // An archivist set to other work since (auto-continue, Dev mode) needs no choice.
+    const job = this.picking === null ? undefined : save.archives.slots[this.picking]?.job;
+    if (job && job.research !== this.pickedFrom) this.picking = null;
     const gold = `<p class="archives-gold">${uiSprite("gold", "stat-sprite")} <b>${devAmount(this.ctx.game, save.gold)}</b> Gold <small>· research goes on while you play or are away</small></p>`;
     if (this.picking !== null) return this.pickHtml(this.picking, gold);
     return `<section class="archives"><header class="tree-heading"><h3>Archives</h3><button id="research-history-open" class="research-history-open">History</button></header>
@@ -89,9 +93,10 @@ export class ArchivesPanel {
     };
     if (this.picking !== null) return this.bindPick();
     document.querySelectorAll<HTMLElement>("[data-pick]").forEach((a) => (a.onclick = (e) => {
-      // The auto-continue box keeps its own press.
-      if ((e.target as Element).closest("label, input")) return;
+      // The auto-continue box and a busy archivist's buttons keep their own presses.
+      if ((e.target as Element).closest("label, input, [data-stop], [data-rush], [data-finish]")) return;
       this.picking = Number(a.dataset.pick);
+      this.pickedFrom = game.save.archives.slots[this.picking]?.job?.research;
       this.rerender();
     }));
     document.querySelectorAll<HTMLButtonElement>("[data-hire]").forEach((b) => (b.onclick = () => this.hire(act)));
@@ -148,11 +153,22 @@ export class ArchivesPanel {
   }
   private bindList() {
     const game = this.ctx.game;
-    document.querySelectorAll<HTMLButtonElement>("[data-research]").forEach((b) => (b.onclick = () => {
-      if (this.picking === null || !game.research.start(this.picking, b.dataset.research as ResearchId)) return;
+    const done = (ok: boolean) => {
+      if (!ok) return;
       this.picking = null;
       this.ctx.update();
       this.rerender();
+    };
+    document.querySelectorAll<HTMLButtonElement>("[data-research]").forEach((b) => (b.onclick = () => {
+      const slot = this.picking, id = b.dataset.research as ResearchId;
+      if (slot === null) return;
+      const job = game.save.archives.slots[slot]?.job;
+      if (!job) return done(game.research.start(slot, id));
+      const from = RESEARCH[job.research].name, to = RESEARCH[id].name;
+      this.ctx.confirm(
+        { title: "Switch research?", body: `Archivist ${slot + 1} stops ${from} and starts ${to}. ${from}'s Gold comes back, and the time spent on it is kept for later.`, label: `Switch to ${to}`, cancel: "Cancel" },
+        () => done(game.research.switchTo(slot, id)),
+      );
     }));
   }
 
@@ -200,7 +216,7 @@ export class ArchivesPanel {
       if (!job) return `<article class="archivist idle" role="listitem" data-pick="${i}">${title}<button class="archivist-pick" aria-label="Select research for archivist ${i + 1}">Idle · Select research</button>${auto}</article>`;
       const def = RESEARCH[job.research], done = jobProgress(job, now);
       const finish = game.save.settings.devMode ? `<button data-finish="${i}">Finish now</button>` : "";
-      return `<article class="archivist busy" role="listitem">${title}<b>${def.name} · level ${job.level}</b>
+      return `<article class="archivist busy" role="listitem" data-pick="${i}" title="Select research: switch this archivist to other research">${title}<b>${def.name} · level ${job.level}</b>
         <div class="research-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.floor(done * 100)}"><i data-progress="${i}" style="width:${(done * 100).toFixed(2)}%"></i></div>
         <p><span data-countdown="${i}">${formatDuration(job.completesAt - now)} left</span></p>
         <div class="archivist-actions">${auto}<button data-stop="${i}" title="Stop: the Gold comes back, and the time spent is kept for later">Stop</button>${this.rushHtml(i)}${finish}</div></article>`;
@@ -211,7 +227,9 @@ export class ArchivesPanel {
    * lists those still locked too), in the chosen category and the search. */
   private matches(id: ResearchId) {
     const save = this.ctx.game.save, def = research(id), state = status(save, id), words = this.search.trim().toLowerCase();
-    return (state === "available" || (state === "locked" && save.settings.devMode)) &&
+    // A busy archivist's own research shows among the choices.
+    const own = state === "active" && this.picking !== null && activeSlot(save.archives, id) === this.picking;
+    return (state === "available" || own || (state === "locked" && save.settings.devMode)) &&
       (this.category === "all" || def.categories.includes(this.category)) &&
       (!words || `${def.name} ${def.description}`.toLowerCase().includes(words));
   }
@@ -246,9 +264,10 @@ export class ArchivesPanel {
         : formatDuration(ms);
       price = `<span class="research-price">${gold}${time}</span>`;
     }
-    if (state === "locked") action = `<span class="research-state">Requires ${missing(save, id).map(requirementText).join(" + ")}</span>`;
+    if (state === "active") action = `<span class="research-state">Researching</span>`;
+    else if (state === "locked") action = `<span class="research-state">Requires ${missing(save, id).map(requirementText).join(" + ")}</span>`;
     else {
-      const why = this.picking === null ? "Choose an archivist first." : cannotStart(save, this.picking, id);
+      const why = this.picking === null ? "Choose an archivist first." : cannotSwitch(save, this.picking, id);
       action = `<button data-research="${id}" ${why ? `disabled title="${why}"` : ""}>Research · ${uiSprite("gold", "stat-sprite")} ${currencyAmount(next!.gold)}</button>`;
     }
     return `<article class="research ${state}" role="listitem"><div class="research-head"><b>${def.name}</b><small>LEVEL ${level} / ${maxLevel(id, save.upgrades)}</small></div>

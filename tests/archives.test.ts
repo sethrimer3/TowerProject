@@ -1,8 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  ARCHIVISTS, HISTORY_LIMIT, RESEARCH, RESEARCH_CATEGORIES, RESEARCH_IDS, RESEARCH_TARGETS, cancelResearch, decodeArchives,
-  defaultArchives, duration, hireArchivist, jobProgress, maxLevel, researchLevel, researched, settleArchives, startResearch, status, withNextLevel,
+  ARCHIVISTS, HISTORY_LIMIT, RESEARCH, RESEARCH_CATEGORIES, RESEARCH_IDS, RESEARCH_TARGETS, cancelResearch, cannotStart, decodeArchives,
+  cannotSwitch, defaultArchives, duration, hireArchivist, jobProgress, maxLevel, researchLevel, researched, settleArchives, startResearch, status, switchResearch, withNextLevel,
 } from "../src/archives.ts";
 import { UPGRADES } from "../src/config.ts";
 import { decode, defaults } from "../src/save.ts";
@@ -310,4 +310,24 @@ test("Rush completes an archivist's research for a Gem per ten minutes left, rou
   // Dev free purchases rush for nothing.
   g.save.settings.freePurchases = true;
   assert.equal(g.research.rushGems(0), 0);
+});
+
+test("a busy archivist switches research: its Gold back, its time kept, the new project paid and started", () => {
+  const save = owner(1_000);
+  save.upgrades.rush = 1;
+  assert.ok(startResearch(save, 0, "focusCount", T0));
+  assert.equal(save.gold, 500);
+  assert.equal(cannotSwitch(save, 0, "focusCount"), "Already being researched.");
+  assert.equal(switchResearch(save, 0, "focusCount", T0), false);
+  assert.equal(cannotSwitch(save, 0, "rush"), null, "the job's Gold back pays for the new one");
+  assert.equal(cannotStart(save, 0, "rush"), "That archivist is busy.");
+  assert.ok(switchResearch(save, 0, "rush", T0 + 2 * HOUR));
+  assert.equal(save.archives.slots[0].job?.research, "rush");
+  assert.equal(save.gold, 1_000 - 250);
+  assert.equal(save.archives.progress.focusCount, 0.25, "two of Focus Count's eight hours are kept");
+  // Too little Gold, even with the job's back, changes nothing.
+  save.gold = 0;
+  assert.ok(cannotSwitch(save, 0, "focusCount"));
+  assert.equal(switchResearch(save, 0, "focusCount", T0 + 3 * HOUR), false);
+  assert.equal(save.archives.slots[0].job?.research, "rush");
 });

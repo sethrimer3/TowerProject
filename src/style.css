@@ -2573,6 +2573,9 @@ dialog.dismiss-anywhere { cursor: pointer; }
 }
 .focus-stat[hidden] { display: none; }
 .focus-stat svg { width: 13px; height: 18px; }
+.charge-stat { padding: 0; cursor: pointer; font: inherit; }
+.charge-stat svg { width: 15px; height: 15px; }
+.charge-stat.armed { border-color: #ffe27a; box-shadow: 0 0 6px #ffe27a; }
 .focus-stat b {
   position: absolute;
   right: -3px;
@@ -2623,8 +2626,8 @@ dialog.dismiss-anywhere { cursor: pointer; }
 .archivist p { margin: 0; color: #b7c0cc; }
 .archivist.busy { border-color: #6e9a70; }
 .archivist button { min-height: 30px; padding: 4px 8px; font-size: 10px; }
-.archivist.idle { cursor: pointer; }
-.archivist.idle:hover { border-color: #d8b572; }
+.archivist.idle, .archivist.busy { cursor: pointer; }
+.archivist.idle:hover, .archivist.busy:hover { border-color: #d8b572; }
 .archivist .archivist-pick { border-color: #d8b572; color: #ffe1a1; background: #2b2718; }
 .archivist.hire { border-color: #5fc4ee; box-shadow: 0 0 8px #2fa9e055; }
 .archivist .archivist-hire { display: inline-flex; align-items: center; justify-content: center; gap: 4px; border: 1px solid #5fc4ee; background: radial-gradient(circle at 50% 40%, #1d4a63, #0d1f2b 75%); color: #bff2ff; font-size: 11px; text-shadow: 0 1px 2px #000; }

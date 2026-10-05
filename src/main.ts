@@ -199,6 +199,21 @@ el("hand").onclick = (e) => {
   if (result === "noPath") flashRed(card);
   update();
 };
+// Ignore and Target: readied by their button, used by the next board tap.
+for (const c of ["ignore", "target"] as const)
+  el(`${c}-stat`).onclick = () => {
+    overlay.hide();
+    if (game.arm(c) === "spent") flashRed(el(`${c}-stat`));
+    update();
+  };
+/** A board tap: where a readied Ignore or Target goes, else the overlay's. */
+function boardTap(x: number, y: number) {
+  if (!game.armed) return overlay.tap(x, y);
+  const c = game.armed, result = game.useArmed(x, y);
+  if (result === "invalid" || result === "noPath") flashRed(el(`${c}-stat`));
+  save();
+  update();
+}
 // Goals: the Tower's checkpoints (the Delve's button is a placeholder).
 el("section-pick").onclick = () => {
   if (game.mode === "tower") navigate("goals");
@@ -252,7 +267,7 @@ document
 bindInput(
   game,
   renderer,
-  (x, y) => overlay.tap(x, y),
+  boardTap,
   () => {
     overlay.refresh();
     update();

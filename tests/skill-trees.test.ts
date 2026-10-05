@@ -111,7 +111,7 @@ test("a tree taller than its view places its nodes on a taller map", () => {
   assert.equal(treeHeight(inspiration), 280);
   assert.ok(inspiration.nodes.every((n) => n.y > 0 && n.y < treeHeight(inspiration)), "every node on the map");
   assert.equal(mapNodes(inspiration).find((n) => n.id === "recovery")!.y, (160 * 100) / 280);
-  assert.equal(treeHeight(TREES.find((t) => t.id === "courage")!), 150);
+  assert.equal(treeHeight(TREES.find((t) => t.id === "courage")!), 198);
   assert.ok(TREES.slice(2).every((t) => treeHeight(t) === 100 && mapNodes(t).every((n, i) => n.y === t.nodes[i].y)), "other trees fit one view");
 });
 test("older saves retain earned access without unlocking fresh saves", () => {
