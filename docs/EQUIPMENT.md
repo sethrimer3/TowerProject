@@ -200,7 +200,7 @@ Dismantling breaks pieces into their category's material (section 4 amounts). Fr
 
 ## 10. Inventory
 
-At most **500** pieces (`EQUIPMENT_CAPACITY`). A boss drop that finds the inventory full is dismantled at once into its material; a Gem pull needs room for every piece it brings. The List view shows the loadout (nine slots ringed round the hero; an empty slot shows only its category below) over the inventory as a grid of square tiles. It filters by category and by rarity together, sorts by rarity, level, category, newest or name, and selects several pieces at once to dismantle or (two) to compare. Each tile shows the icon on its rarity's colour, the rarity mark, the level, a check when the loadout shown wears it, a lock, and a star for a Unique; tapping it opens the piece.
+At most **500** pieces (`EQUIPMENT_CAPACITY`). A boss drop that finds the inventory full is dismantled at once into its material; a Gem pull needs room for every piece it brings. The List view shows the loadout (nine slots in a 3×3 grid shaped like the hero: ring, helmet, amulet; weapon, chestplate, cape; gloves, boots, belt; the Tower/Delve switch at its top left; an empty slot shows only its category below) over the inventory as a grid of square tiles. It filters by category and by rarity together, sorts by rarity, level, category, newest or name, and selects several pieces at once to dismantle or (two) to compare. Each tile shows the icon on its rarity's colour, the rarity mark, the level, a check when the loadout shown wears it, a lock, and a star for a Unique; tapping it opens the piece.
 
 ## 11. Boss drops (Standard pieces)
 
@@ -230,12 +230,12 @@ The amount is multiplied by `1 + ⌊equivalent floor / 25⌋` (×3 at floor 60, 
 
 ## 13. Gem pulls (Unique pieces)
 
-The Acquire view pulls in one chosen category: each pull brings one of its three Uniques, evenly, at a rolled rarity. The pieces pulled show on a full-screen result.
+The Acquire view pulls in one chosen category, or of **all types** for 10% less (`PULL_ALL_DISCOUNT`): each pull brings one of its category's three Uniques, evenly, at a rolled rarity, an all-types pull drawing its category evenly from the nine first. The pieces pulled show on a full-screen result.
 
 | Pull | Price |
 |---|---:|
-| ×1 | 20 Gems |
-| ×10 | 200 Gems |
+| ×1 | 20 Gems (all types: 18) |
+| ×10 | 200 Gems (all types: 180) |
 
 | Rarity | Rate |
 |---|---:|
@@ -243,7 +243,7 @@ The Acquire view pulls in one chosen category: each pull brings one of its three
 | Uncommon | 25% |
 | Rare | 3% |
 
-**Pity** is counted per category (`save.equipment.pity`): the 100th pull in a row without a Rare in that category is a Rare, and any Rare (natural or pity) starts the count over. A ×10 resolves its pulls one at a time, so pity can land mid-way; all ten show together in one results view, pity Rares marked. The count shows on each category's button and in the pool box. Pulls draw from the save's own stream (`save.equipment.rng`, seeded once from `stream("equipment")`), so reloading can't reroll them. The buttons always look active; short of Gems, the price turns red and a press offers the Shop.
+**Pity** is counted per category (`save.equipment.pity`; an all-types pull counts toward the category it lands in): the 100th pull in a row without a Rare in that category is a Rare, and any Rare (natural or pity) starts the count over. A ×10 resolves its pulls one at a time, so pity can land mid-way; all ten show together in one results view, pity Rares marked. The count shows on each category's button and in the pool box. Pulls draw from the save's own stream (`save.equipment.rng`, seeded once from `stream("equipment")`), so reloading can't reroll them. The buttons always look active; short of Gems, the price turns red and a press offers the Shop.
 
 ## 14. Save shape
 

@@ -10,10 +10,10 @@ import { loadout } from "../src/loadout.ts";
 import { predict } from "../src/combat.ts";
 import { resolveStep } from "../src/step-effects.ts";
 import {
-  CATEGORIES, CATEGORY_IDS, EQUIP_MATERIALS, EQUIP_MATERIAL_IDS, ITEMS, materialOf, standardOf, uniquesOf,
+  CATEGORIES, CATEGORY_IDS, EQUIP_MATERIALS, EQUIP_MATERIAL_IDS, ITEMS, itemDef, materialOf, standardOf, uniquesOf,
 } from "../src/equipment/catalog.ts";
 import {
-  BOSS_DROPS, EQUIPMENT_CAPACITY, MATERIAL_DROPS, PITY, PULL_GEMS, PULL_RATES, RARITY_TIERS,
+  BOSS_DROPS, EQUIPMENT_CAPACITY, MATERIAL_DROPS, PITY, PULL_GEMS, PULL_RATES, pullGems, RARITY_TIERS,
   upgradeGold, upgradeMaterial,
 } from "../src/equipment/balance.ts";
 import {
@@ -226,6 +226,25 @@ test("pulls cost 20 and 200 Gems, need room, and bring only the category's Uniqu
   g.save.gems = 1000;
   assert.equal(g.equipment.pull("ring", 10), "room");
   assert.equal(g.save.gems, 1000, "a refused pull takes nothing");
+});
+
+test("pulls of all types cost 10% less and bring Uniques of every category", () => {
+  assert.equal(pullGems(1, true), 18);
+  assert.equal(pullGems(10, true), 180);
+  const g = new Game(defaults());
+  g.save.equipment.unlocked = true;
+  g.save.gems = 18 + 180 * 6;
+  const pulled = [g.equipment.pull("all", 1), ...Array.from({ length: 6 }, () => g.equipment.pull("all", 10))];
+  assert.equal(g.save.gems, 0);
+  const items = pulled.flatMap((r) => (Array.isArray(r) ? r.map((x) => x.item) : assert.fail(String(r))));
+  assert.equal(items.length, 61);
+  assert.ok(items.every((i) => itemDef(i.def)!.class === "unique"));
+  assert.deepEqual(new Set(items.map((i) => itemDef(i.def)!.category)), new Set(CATEGORY_IDS), "61 pulls reach all nine");
+  // Each category's pity counts its own pulls since its last Rare.
+  const since = Object.fromEntries(CATEGORY_IDS.map((c) => [c, 0]));
+  for (const i of items) { const c = itemDef(i.def)!.category; since[c] = i.rarity === "rare" ? 0 : since[c] + 1; }
+  assert.deepEqual(g.save.equipment.pity, since);
+  assert.equal(g.equipment.pull("all", 1), "gems");
 });
 
 test("pull rarities follow the configured rates", () => {

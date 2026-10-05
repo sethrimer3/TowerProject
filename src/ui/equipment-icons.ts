@@ -102,6 +102,10 @@ function pixelSvg(rows: string[], className: string) {
   return `<svg class="${className}" viewBox="0 0 12 12" shape-rendering="crispEdges" aria-hidden="true">${rects}</svg>`;
 }
 
+/** A category's icon as coloured pixels on its 12×12 grid, for drawing on
+ * a canvas (the slag of an assemble). */
+export const iconPixels = (id: CategoryId) =>
+  CATEGORY_ROWS[id].flatMap((row, y) => [...row].flatMap((ch, x) => (PALETTE[ch] ? [{ x, y, color: PALETTE[ch] }] : [])));
 /** A category's icon (the shape of its piece). */
 export const categoryIcon = (id: CategoryId, className = "equip-icon") => pixelSvg(CATEGORY_ROWS[id], className);
 /** The rows of every icon, for tests. */

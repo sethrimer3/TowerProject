@@ -1,6 +1,6 @@
 import type { Mode } from "../entities.ts";
 import { stream } from "../random.ts";
-import { EQUIP_RARITIES, PULL_GEMS, type PullCount } from "../equipment/balance.ts";
+import { EQUIP_RARITIES, pullGems, type PullCount } from "../equipment/balance.ts";
 import type { CategoryId } from "../equipment/catalog.ts";
 import { pull } from "../equipment/acquire.ts";
 import {
@@ -127,18 +127,20 @@ export class EquipmentDesk {
     return result;
   }
 
-  /** Whether `count` pulls in a category can be made now, or why not. */
-  pullRefusal(count: PullCount): PullRefusal | null {
+  /** Whether `count` pulls in a category (or of all, `all`) can be made
+   * now, or why not. */
+  pullRefusal(count: PullCount, all = false): PullRefusal | null {
     if (!this.open) return "locked";
     if (roomLeft(this.e) < count) return "room";
-    return affordsGems(this.host, PULL_GEMS[count]) ? null : "gems";
+    return affordsGems(this.host, pullGems(count, all)) ? null : "gems";
   }
-  /** `count` Gem pulls of `category`'s Unique pieces, paid in Gems and
-   * resolved one by one (pity counting through them). */
-  pull(category: CategoryId, count: PullCount): { item: EquipItem; pity: boolean }[] | PullRefusal {
-    const refusal = this.pullRefusal(count);
+  /** `count` Gem pulls of `category`'s Unique pieces, or of every
+   * category's at a discount (`"all"`), paid in Gems and resolved one by
+   * one (pity counting through them). */
+  pull(category: CategoryId | "all", count: PullCount): { item: EquipItem; pity: boolean }[] | PullRefusal {
+    const all = category === "all", refusal = this.pullRefusal(count, all);
     if (refusal) return refusal;
-    if (!this.host.free) this.save.gems -= PULL_GEMS[count];
+    if (!this.host.free) this.save.gems -= pullGems(count, all);
     return pull(this.e, category, count, stream("equipment"));
   }
 
