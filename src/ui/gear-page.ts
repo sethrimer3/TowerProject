@@ -17,7 +17,7 @@ const TAB_NAMES: Record<GearTab, string> = { provisions: "Provisions", equipment
 const stackList = (stacks: MaterialStack[], sep: string) => stacks.map(r => `${r.quantity} ${materialDef(r.id).name}`).join(sep);
 
 /** The Gear page: provisions (the Gear skill), Equipment (open from the
- * first floor 60) and crafting (closed for now). */
+ * first floor 60) and crafting (with provisions, the Gear skill). */
 export class GearPage {
   private tab: GearTab = "provisions";
   /** The provision just bought, whose icon glows on the next render. */
@@ -31,7 +31,7 @@ export class GearPage {
   /** Which tabs can be opened now. */
   private open(tab: GearTab) {
     const save = this.ctx.game.save;
-    return tab === "provisions" ? !!save.upgrades.gear : tab === "equipment" ? save.equipment.unlocked : false;
+    return tab === "equipment" ? save.equipment.unlocked : !!save.upgrades.gear;
   }
 
   /** Opens on the Equipment screen (the forest's Blacksmith, or Equipment
@@ -46,7 +46,7 @@ export class GearPage {
     const save = this.ctx.game.save;
     if (this.tab === "equipment") save.equipment.seen = true;
     const body = this.tab === "equipment" ? this.equipment.html() : this.tab === "crafting" ? this.craftingHtml() : this.provisionsHtml();
-    const tabs = (["provisions", "equipment", "crafting"] as const).filter((t) => t !== "provisions" || save.upgrades.gear);
+    const tabs = (["provisions", "equipment", "crafting"] as const).filter((t) => t === "equipment" || save.upgrades.gear);
     const lockHint = (t: GearTab) => t === "equipment" ? `Claim Tower I's floor ${unlockFloor("equipment")} Goal to open Equipment` : "Locked";
     const intro = this.tab === "equipment"
       ? `<h2>Equipment</h2><p>Each hero wears one piece of each kind; level them with Gold and materials, merge three alike into a rarer one.</p>`
@@ -94,7 +94,7 @@ export class GearPage {
     this.ctx.update();
   }
 
-  /** Crafting: consumables from monster materials (the tab is closed for now). */
+  /** Crafting: consumables from monster materials. */
   private craftingHtml(): string {
     const game = this.ctx.game;
     return `<h3>Consumables</h3>${CONSUMABLES.map(c => {

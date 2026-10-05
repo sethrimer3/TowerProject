@@ -419,7 +419,7 @@ try {
       await shot(`${prefix}.tree.${tree}.buy`);
     }
   }
-  /** The Gear page opens on Provisions, its other tabs closed for now;
+  /** The Gear page opens on Provisions, beside Crafting;
    * opening it clears the dot the Gear skill put on its button. */
   async function gearTour(prefix) {
     await shot(`${prefix}.gear.waiting`);
@@ -429,6 +429,10 @@ try {
       await click("[data-gold]:not([disabled])");
       await shot(`${prefix}.gear.provisions.bought`);
     }
+    // Crafting opens with provisions: consumables from monster materials.
+    await click('[data-geartab="crafting"]');
+    await shot(`${prefix}.gear.crafting`);
+    await click('[data-geartab="provisions"]');
   }
   /** Settings from inside a run: opened from the HUD, left by its Back button. */
   async function settingsTour(prefix) {
