@@ -1,12 +1,13 @@
 import type { Mode } from "../entities.ts";
 import { stream } from "../random.ts";
-import { PULL_GEMS, type PullCount } from "../equipment/balance.ts";
+import { EQUIP_RARITIES, PULL_GEMS, type PullCount } from "../equipment/balance.ts";
 import type { CategoryId } from "../equipment/catalog.ts";
 import { pull } from "../equipment/acquire.ts";
 import {
   dismantle, equip, findItem, levelUp, merge, roomLeft, setLocked, unequip,
   type EquipItem,
 } from "../equipment/inventory.ts";
+import { firstRoll, improve, keepCurrent, refine, spendChoice, takeCandidate } from "../equipment/slots.ts";
 import { changeLoadout } from "./hero-sync.ts";
 import { affordsGems, type DeskHost } from "./desk.ts";
 
@@ -76,6 +77,54 @@ export class EquipmentDesk {
     return this.open && from !== to && changeLoadout(this.save, () => {
       this.e.equipped[to] = { ...this.e.equipped[from] };
     });
+  }
+
+  // --- Effect slots ---
+
+  /** A newly opened slot's free first roll (`firstRoll`). */
+  firstRoll(id: string, index: number) {
+    if (!this.open) return "missing" as const;
+    return firstRoll(this.e, id, index, stream("equipment"));
+  }
+  /** A paid Refine of a slot (`refine`): its candidates, or why not. */
+  refine(id: string, index: number) {
+    if (!this.open) return "missing" as const;
+    return refine(this.e, this.save, id, index, this.host.free, stream("equipment"));
+  }
+  /** Takes candidate `pick` into the slot. */
+  takeCandidate(id: string, index: number, pick: number) {
+    if (!this.open) return "missing" as const;
+    let result: ReturnType<typeof takeCandidate> = "missing";
+    changeLoadout(this.save, () => {
+      result = takeCandidate(this.e, id, index, pick);
+      return typeof result !== "string";
+    });
+    return result;
+  }
+  /** Keeps the slot's effect and lets its candidates go. */
+  keepCurrent(id: string, index: number) {
+    return this.open ? keepCurrent(this.e, id, index) : ("missing" as const);
+  }
+  /** Spends a Choice on `effect` (`spendChoice`). */
+  spendChoice(id: string, index: number, effect: string) {
+    if (!this.open) return "missing" as const;
+    let result: ReturnType<typeof spendChoice> = "missing";
+    changeLoadout(this.save, () => {
+      result = spendChoice(this.e, id, index, effect);
+      return typeof result !== "string";
+    });
+    return result;
+  }
+  /** Raises the slot's effect one rarity (`improve`). */
+  improve(id: string, index: number) {
+    if (!this.open) return "missing" as const;
+    let result: ReturnType<typeof improve> = "missing";
+    changeLoadout(this.save, () => {
+      result = improve(this.e, this.save, id, index, this.host.free);
+      // It returns the new rarity, or a refusal: both are strings.
+      return (EQUIP_RARITIES as readonly string[]).includes(result);
+    });
+    return result;
   }
 
   /** Whether `count` pulls in a category can be made now, or why not. */

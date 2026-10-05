@@ -8,13 +8,29 @@ import { isRecord, wholeIn } from "../decode.ts";
 import { snap } from "../exact.ts";
 import { CATEGORY_IDS, EQUIP_MATERIAL_IDS, itemDef, materialOf, type CategoryId, type EquipMaterialId } from "./catalog.ts";
 import {
-  EQUIP_RARITIES, EQUIPMENT_CAPACITY, PITY, RARITY_TIERS, UNIQUE_SALVAGE, upgradeGold, upgradeMaterial,
-  type EquipRarity,
+  EFFECT_CANDIDATES, EQUIP_RARITIES, EQUIPMENT_CAPACITY, openSlots, PITY, RARITY_TIERS, rarityRank, REFINE_CHOICE_EVERY, UNIQUE_SALVAGE,
+  upgradeGold, upgradeMaterial, type EquipRarity,
 } from "./balance.ts";
+import { inPool } from "./slot-effects.ts";
 
+/** An effect a slot holds or is offered: its id (slot-effects.ts) and rarity. */
+export type EffectChoice = { effect: string; rarity: EquipRarity };
+/** One effect slot of an item, only what is the item's own: the effect
+ * chosen and its rarity (none until its first choice), the paid Refines
+ * made of it (`refinement`, which only ever rises), the Choices it has
+ * spent, and the candidates on offer (kept until one is taken or the
+ * current effect kept, so reloading never rolls them again). */
+export type EffectSlot = {
+  effect?: string;
+  rarity?: EquipRarity;
+  refinement?: number;
+  choicesUsed?: number;
+  offer?: EffectChoice[];
+};
 /** One piece owned. `spent` is what leveling it has cost (Gold and its
  * material), so a later reset can return exactly that; consumed copies'
- * investment is lost with them. */
+ * investment is lost with them. `slots` holds an entry for each effect slot
+ * opened so far (`openSlots`). */
 export type EquipItem = {
   id: string;
   def: string;
@@ -22,6 +38,7 @@ export type EquipItem = {
   level: number;
   locked?: true;
   spent?: { gold: number; material: number };
+  slots: EffectSlot[];
 };
 export type Loadout = Partial<Record<CategoryId, string>>;
 export type EquipmentSave = {
@@ -55,6 +72,13 @@ export const defaultEquipment = (): EquipmentSave => ({
 export const findItem = (e: EquipmentSave, id: string) => e.items.find((i) => i.id === id);
 export const categoryOf = (item: EquipItem) => itemDef(item.def)!.category;
 export const maxLevel = (item: EquipItem) => RARITY_TIERS[item.rarity].maxLevel;
+/** The effect slots open on `item` now. */
+export const openSlotCount = (item: Pick<EquipItem, "rarity" | "level">) => openSlots(item.rarity, item.level);
+/** Gives `item` an empty entry for each slot its rarity and level have
+ * opened; one already there is never taken away. */
+export function fillSlots(item: EquipItem) {
+  while (item.slots.length < openSlotCount(item)) item.slots.push({});
+}
 /** The modes whose loadout wears `id`. */
 export const wornIn = (e: EquipmentSave, id: string) => (["tower", "delve"] as const).filter((m) => Object.values(e.equipped[m]).includes(id));
 export const isEquipped = (e: EquipmentSave, id: string) => wornIn(e, id).length > 0;
@@ -77,7 +101,7 @@ export function curveCost(level: number) {
 }
 /** The material a dismantled `item` returns: its rarity's salvage (twice
  * for a Unique), never what leveling it cost. */
-export const salvageOf = (item: EquipItem) => RARITY_TIERS[item.rarity].salvage * (itemDef(item.def)!.class === "unique" ? UNIQUE_SALVAGE : 1);
+export const salvageOf = (item: Pick<EquipItem, "def" | "rarity">) => RARITY_TIERS[item.rarity].salvage * (itemDef(item.def)!.class === "unique" ? UNIQUE_SALVAGE : 1);
 
 // --- Changing ---
 
@@ -85,7 +109,8 @@ export const salvageOf = (item: EquipItem) => RARITY_TIERS[item.rarity].salvage 
  * inventory is full. */
 export function addItem(e: EquipmentSave, def: string, rarity: EquipRarity): EquipItem | null {
   if (roomLeft(e) <= 0 || !itemDef(def)) return null;
-  const item: EquipItem = { id: `e${e.nextId++}`, def, rarity, level: 1 };
+  const item: EquipItem = { id: `e${e.nextId++}`, def, rarity, level: 1, slots: [] };
+  fillSlots(item);
   e.items.push(item);
   return item;
 }
@@ -113,6 +138,7 @@ export function levelUp(e: EquipmentSave, purse: { gold: number }, id: string, l
     item.level++;
     gained++;
   }
+  fillSlots(item);
   return gained || refusal;
 }
 
@@ -128,8 +154,10 @@ export function mergeFodder(e: EquipmentSave, target: EquipItem) {
 export type MergeRefusal = "missing" | "top" | "count" | "mismatch" | "protected";
 /** Merges `fodder` into `targetId`: exactly `merge − 1` other copies of the
  * same definition and rarity, none locked or worn. The target moves up one
- * rarity keeping its level, lock, loadouts and investment; the copies are
- * gone, with what leveling them cost. */
+ * rarity keeping its level, lock, loadouts, investment and effect slots
+ * (their effects and Refinement untouched: the new rarity only lets them
+ * rise higher, and opens the next slot once leveled past the old cap); the
+ * copies are gone, with what leveling them cost. */
 export function merge(e: EquipmentSave, targetId: string, fodder: string[]): EquipItem | MergeRefusal {
   const target = findItem(e, targetId);
   if (!target) return "missing";
@@ -199,6 +227,32 @@ export function unequip(e: EquipmentSave, mode: Mode, category: CategoryId) {
 const validItem = (i: any): i is EquipItem =>
   isRecord(i) && typeof i.id === "string" && /^e\d{1,9}$/.test(i.id) && typeof i.def === "string" && !!itemDef(i.def) &&
   EQUIP_RARITIES.includes(i.rarity) && wholeIn(i.level, 1, Number.MAX_SAFE_INTEGER);
+const decodeChoice = (c: any, cap: EquipRarity, category: CategoryId): EffectChoice | null =>
+  isRecord(c) && typeof c.effect === "string" && inPool(category, c.effect) && EQUIP_RARITIES.includes(c.rarity)
+    ? { effect: c.effect, rarity: rarityRank(c.rarity) > rarityRank(cap) ? cap : c.rarity } : null;
+/** An item's saved slots: an effect still in its category's pool, at a
+ * rarity no higher than the item allows, never the same effect in two
+ * slots; Refinement and Choices spent as whole counts; an offer of known
+ * effects. A save from before effect slots gets empty ones, ready for
+ * their free first choice. */
+function decodeSlots(raw: unknown, item: EquipItem): EffectSlot[] {
+  const cap = RARITY_TIERS[item.rarity].maxEffect, category = itemDef(item.def)!.category;
+  const slots: EffectSlot[] = [], held = new Set<string>();
+  for (const r of Array.isArray(raw) ? raw.slice(0, EQUIP_RARITIES.length) : []) {
+    const slot: EffectSlot = {};
+    if (isRecord(r)) {
+      const chosen = decodeChoice(r, cap, category);
+      if (chosen && !held.has(chosen.effect)) { held.add(chosen.effect); slot.effect = chosen.effect; slot.rarity = chosen.rarity; }
+      if (wholeIn(r.refinement, 1, Number.MAX_SAFE_INTEGER)) slot.refinement = r.refinement;
+      const earned = Math.floor((slot.refinement ?? 0) / REFINE_CHOICE_EVERY);
+      if (wholeIn(r.choicesUsed, 1, earned)) slot.choicesUsed = r.choicesUsed;
+      const offer = Array.isArray(r.offer) ? r.offer.slice(0, EFFECT_CANDIDATES).map((c) => decodeChoice(c, cap, category)).filter((c): c is EffectChoice => !!c) : [];
+      if (offer.length) slot.offer = offer;
+    }
+    slots.push(slot);
+  }
+  return slots;
+}
 const decodeSpent = (s: any) =>
   isRecord(s) && wholeIn(s.gold, 0, Number.MAX_SAFE_INTEGER) && wholeIn(s.material, 0, Number.MAX_SAFE_INTEGER) && (s.gold || s.material)
     ? { gold: s.gold, material: s.material } : undefined;
@@ -219,7 +273,10 @@ export function decodeEquipment(raw: unknown): EquipmentSave {
       ids.add(i.id);
       const spent = decodeSpent(i.spent);
       // A level over its rarity's cap (a cap lowered since) comes down to it.
-      e.items.push({ id: i.id, def: i.def, rarity: i.rarity, level: Math.min(i.level, RARITY_TIERS[i.rarity as EquipRarity].maxLevel), ...(i.locked === true ? { locked: true as const } : {}), ...(spent ? { spent } : {}) });
+      const item: EquipItem = { id: i.id, def: i.def, rarity: i.rarity, level: Math.min(i.level, RARITY_TIERS[i.rarity as EquipRarity].maxLevel), ...(i.locked === true ? { locked: true as const } : {}), ...(spent ? { spent } : {}), slots: [] };
+      item.slots = decodeSlots((i as { slots?: unknown }).slots, item);
+      fillSlots(item);
+      e.items.push(item);
     }
   for (const mode of ["tower", "delve"] as const) {
     const worn = isRecord(raw.equipped) ? raw.equipped[mode] : undefined;

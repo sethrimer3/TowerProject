@@ -33,18 +33,26 @@ export function pullOne(e: EquipmentSave, category: CategoryId, rng: () => numbe
 
 /** mulberry32's step: each draw moves the state on by this much. */
 const STEP = 0x6d2b79f5;
-/** `count` pulls in `category`, resolved in order (pity counts through
- * them), carrying on the saved stream (seeded from `seed` the first time).
- * The caller makes sure there is room and has taken the Gems. */
-export function pull(e: EquipmentSave, category: CategoryId, count: number, seed: () => number) {
+/** Runs `draw` on Equipment's saved stream (seeded from `seed` the first
+ * time) and saves where it stopped, so nothing it rolls (pulls, effect
+ * candidates) can be rolled again by reloading. */
+export function withSavedStream<T>(e: EquipmentSave, seed: () => number, draw: (rng: () => number) => T): T {
   const state = e.rng ?? Math.floor(seed() * 4294967296);
   const rng = random(state);
   let used = 0;
-  const counted = () => (used++, rng());
-  const results: { item: EquipItem; pity: boolean }[] = [];
-  for (let i = 0; i < count; i++) results.push(pullOne(e, category, counted));
+  const result = draw(() => (used++, rng()));
   e.rng = (state + Math.imul(used, STEP)) >>> 0;
-  return results;
+  return result;
+}
+/** `count` pulls in `category`, resolved in order (pity counts through
+ * them), carrying on the saved stream. The caller makes sure there is room
+ * and has taken the Gems. */
+export function pull(e: EquipmentSave, category: CategoryId, count: number, seed: () => number) {
+  return withSavedStream(e, seed, (rng) => {
+    const results: { item: EquipItem; pity: boolean }[] = [];
+    for (let i = 0; i < count; i++) results.push(pullOne(e, category, rng));
+    return results;
+  });
 }
 
 /** A beaten boss's equipment on equivalent floor `floor` (0-based, as
@@ -65,7 +73,7 @@ export function rollBossDrop(strength: EnemyStrength, floor: number, bonus: numb
 export function keepDrop(e: EquipmentSave, drop: { def: string; rarity: EquipRarity; category: CategoryId }) {
   const item = addItem(e, drop.def, drop.rarity);
   if (item) return { item, salvaged: 0 };
-  const salvaged = salvageOf({ id: "", def: drop.def, rarity: drop.rarity, level: 1 });
+  const salvaged = salvageOf(drop);
   e.materials[materialOf(drop.category)] += salvaged;
   return { item: null, salvaged };
 }

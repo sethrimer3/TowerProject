@@ -48,7 +48,15 @@ Rarity always shows as a word and a letter mark (C, U, R) beside its colour, and
 
 A Unique piece dismantles for twice its rarity's amount (`UNIQUE_SALVAGE`), since it was bought with Gems.
 
-Higher rarity raises the power of every line, opens the lines marked for it (each Unique opens one at Uncommon and one at Rare; Standard pieces too), and raises the level cap.
+Higher rarity raises the power of every line, opens the lines marked for it (each Unique opens one at Uncommon and one at Rare; Standard pieces too), and raises the level cap; leveling past the old cap then opens another **effect slot** (section 15):
+
+| Rarity | Level range | Effect slots available | Slot opens at | Maximum effect rarity |
+|---|---|---:|---:|---|
+| Common | 1–20 | 1 | Level 1 | Common |
+| Uncommon | 1–40 | 2 | Level 21 | Uncommon |
+| Rare | 1–60 | 3 | Level 41 | Rare |
+
+Each rarity's row in `RARITY_TIERS` holds its cap (`maxLevel`), the level its slot opens at (`slotLevel`, one past the cap below) and its `maxEffect`; `openSlots(rarity, level)` counts the slots from the table, so a rarity added later (Epic with a cap of 80, say) opens a fourth slot at 61 with no other change.
 
 ## 5. Effects
 
@@ -184,7 +192,7 @@ From level 1, reaching level 20 costs 20,900 Gold and 225 material; level 40, 13
 
 ## 8. Merging
 
-Three pieces of the **same definition and rarity** make one of the next rarity. The player opens the piece to keep (the target): it moves up a rarity **keeping its level**, lock, loadouts and investment; the player picks the two copies used up (the two lowest-level unprotected ones are picked to start). Locked or worn copies are never offered; the target itself may be locked or worn. The Forge view lists every piece with enough copies ready.
+Three pieces of the **same definition and rarity** make one of the next rarity. The player opens the piece to keep (the target): it moves up a rarity **keeping its level**, lock, loadouts, investment, **effect slots, their effects and their Refinement** (nothing is rerolled: the new rarity raises the cap, lets its slots hold rarer effects, and opens the next slot once leveled past the old cap); the player picks the two copies used up (the two lowest-level unprotected ones are picked to start). Locked or worn copies are never offered; the target itself may be locked or worn. The Forge view lists every piece with enough copies ready.
 
 ## 9. Dismantling
 
@@ -244,10 +252,94 @@ The Acquire view pulls in one chosen category: each pull brings one of its three
 | Field | Holds |
 |---|---|
 | `unlocked`, `announce`, `seen` | Opened; the forest dialog still to show; the Equipment screen seen (the Gear dot) |
-| `items` | Each piece: `id` (`e1`, `e2` …, never reused), `def` (catalogue id), `rarity`, `level`, `locked?`, `spent?` (Gold and material invested) |
+| `items` | Each piece: `id` (`e1`, `e2` …, never reused), `def` (catalogue id), `rarity`, `level`, `locked?`, `spent?` (Gold and material invested), `slots` (one per slot opened: `effect?`, `rarity?`, `refinement?`, `choicesUsed?`, `offer?`) |
 | `equipped.tower`, `equipped.delve` | Category → item id, per mode |
 | `materials` | The nine upgrade material balances |
 | `pity` | Pulls since the last Rare, per category |
-| `nextId`, `rng` | The next item id; the pull stream's state |
+| `nextId`, `rng` | The next item id; the stream pulls and effect candidates draw from |
 
-No catalogue data (names, effects) is saved. Decoding drops unknown definitions and rarities, duplicate ids and pieces past the capacity, clamps levels to the rarity's cap, keeps loadouts to owned pieces of the right category, and resets anything malformed to its default. Saves from before Equipment load with it closed and empty (opened at once if their best is already floor 60); the old crafted-equipment fields are dropped.
+No catalogue data (names, effects) is saved. Decoding drops unknown definitions and rarities, duplicate ids and pieces past the capacity, clamps levels to the rarity's cap, keeps loadouts to owned pieces of the right category, and resets anything malformed to its default. Saves from before Equipment load with it closed and empty (opened at once if their best is already floor 60); the old crafted-equipment fields are dropped. Pieces saved before effect slots get an empty slot for each their rarity and level have opened, each ready for its free first roll; a slot's effect is dropped if its category can no longer hold it or another slot holds it, its rarity is clamped to the item's, and Choices spent beyond those earned are dropped.
+
+## 15. Effect slots and Refinement
+
+An item has two layers. Its **intrinsic** lines (sections 5 and 6) are fixed by its definition: its base stats and, for a Unique, its signature ability. Its **effect slots** are its own: secondary bonuses opened by rarity and level and chosen by the player, so two copies of the same piece share an identity but can grow different bonuses. Slot effects are kept to about half an intrinsic line's strength, so a Unique's specialization always leads.
+
+**The loop.** Obtain a piece, level it, reach its rarity's cap, merge three copies into the next rarity, level past the old cap, open another slot, refine it, and repeat.
+
+### Effects and pools
+
+Each effect (`SLOT_EFFECTS` in `equipment/slot-effects.ts`) has an id, a name, a family, the effect kind it adds to (read where section 5 says), its value at level 1 and per level, and optionally a mode. Its value is `(base + perLevel × (level − 1)) × its rarity's power`, so a rarer version of an effect is the same effect, stronger and scaling faster; its name carries its rarity as a numeral (Fleetness I, II, III). Each category rolls from its families (`CATEGORY_FAMILIES`):
+
+| Effect | Family | What it does (level 1, Common) | Per level | At level 60, Rare |
+|---|---|---|---:|---|
+| Keen Edge | Might | +1.5 ATK | 0.25 | +26 ATK |
+| Ferocity | Might | +1% ATK | 0.04 | +5.38% ATK |
+| Piercing | Might | 2% of enemy DEF ignored | 0.05 | 7.92% of enemy DEF ignored |
+| Giantslayer | Might | +4% ATK against bosses | 0.12 | +17.73% ATK against bosses |
+| Bulwark | Guard | +1 DEF | 0.2 | +20.48 DEF |
+| Fortitude | Guard | +1% DEF | 0.04 | +5.38% DEF |
+| Warding | Guard | +3 shroud (damage blocked each fight) | 0.5 | +52 shroud (damage blocked each fight) |
+| Vigor | Vitality | +10 max HP | 2 | +204.8 max HP |
+| Constitution | Vitality | +1% max HP | 0.04 | +5.38% max HP |
+| Mending | Vitality | +0.2 HP regained each step | 0.02 | +2.21 HP regained each step |
+| Second Wind | Recovery | 0.3% of max HP healed after each victory | 0.01 | 1.42% of max HP healed after each victory |
+| Fresh Air | Recovery | 1% of max HP healed on each new floor | 0.03 | 4.43% of max HP healed on each new floor |
+| Tonic | Recovery | +4% HP from potions | 0.15 | +20.56% HP from potions |
+| Fleetness | Mobility | +3% movement speed | 0.1 | +14.24% movement speed |
+| Spire Stride | Mobility | +5% movement speed (Tower only) | 0.15 | +22.16% movement speed |
+| Deep Stride | Mobility | +5% movement speed (Delve only) | 0.15 | +22.16% movement speed |
+| Prospector | Fortune | +2% Gold found | 0.08 | +10.75% Gold found |
+| Silver Tongue | Fortune | +2% Silver found | 0.08 | +10.75% Silver found |
+| Scavenger | Fortune | +3% upgrade materials from kills | 0.12 | +16.13% upgrade materials from kills |
+| Bounty | Fortune | +1% boss equipment drop chance | 0.03 | +4.43% boss equipment drop chance |
+| Purse Strings | Fortune | +3 Silver at the start of each run | 0.3 | +33.12 Silver at the start of each run |
+| Studious | Lore | +2% XP from kills | 0.08 | +10.75% XP from kills |
+| Spire Scholar | Lore | +3.5% XP from kills (Tower only) | 0.12 | +16.93% XP from kills |
+| Deep Scholar | Lore | +3.5% XP from kills (Delve only) | 0.12 | +16.93% XP from kills |
+
+| Category | Families | Effects |
+|---|---|---|
+| Weapon | Might, Lore | 7 |
+| Chestplate | Guard, Vitality | 6 |
+| Helmet | Guard, Vitality, Lore | 9 |
+| Gloves | Might, Recovery | 7 |
+| Boots | Mobility, Recovery, Guard | 9 |
+| Cape | Fortune, Guard | 8 |
+| Belt | Vitality, Recovery, Fortune | 11 |
+| Ring | Might, Guard, Vitality | 10 |
+| Amulet | Vitality, Recovery, Lore | 9 |
+
+**Piercing** is the one new effect kind: a share of the enemy's DEF the hero's strikes ignore (`defenseAgainst` in `combat.ts`), at most 50% (`PIERCE_CAP`). It changes each strike by a fixed amount, so the forecast and the fight still agree; there is no crit, dodge or other chance in any slot effect.
+
+### Rolling
+
+A candidate's rarity is rolled by `EFFECT_RARITY_WEIGHTS` (Common 70, Uncommon 25, Rare 5), among the rarities up to the item's `maxEffect` (the weights of those allowed are rescaled), so a Common item rolls only Common effects. An offer is `EFFECT_CANDIDATES` (3) different effects from the pool, never one another slot of the item holds. Rolls draw from the save's Equipment stream, and an offer is saved with its slot until the player answers it, so reloading can't reroll.
+
+- **First roll (free).** A newly opened slot offers 3 candidates at no cost; the player takes one. It rolls once: asking again shows the same offer.
+- **Refine (paid).** On a slot holding an effect: pay the cost, and 3 new candidates appear beside the **current** effect, which stays. The player takes one, or **Keep Current**. Nothing is lost by keeping: the Refine still counts. A slot can hold one offer at a time.
+- **Improve (paid).** The current effect, one rarity higher, up to the item's `maxEffect`: deterministic, for `IMPROVE_COST_FACTOR` (3) Refines' worth. After a merge, this is how an effect chosen at the old rarity rises.
+
+| Item rarity | Refine cost | Improve cost |
+|---|---|---|
+| Common | 1,000 Gold + 10 material | 3,000 Gold + 30 material |
+| Uncommon | 5,000 Gold + 40 material | 15,000 Gold + 120 material |
+| Rare | 20,000 Gold + 120 material | 60,000 Gold + 360 material |
+
+The material is the item's category's (`REFINE_COST`).
+
+### Refinement and milestones
+
+Every paid Refine adds one to that slot's **Refinement** (`slot.refinement`), which only ever rises: it is saved with the slot, kept through merges, and never taken back for keeping the current effect.
+
+| Refinement | Milestone |
+|---|---|
+| Every 5th (5, 15, 25 …) | The offer's first candidate is at the item's highest effect rarity (`REFINE_GUARANTEE_EVERY`) |
+| Every 10th (10, 20 …) | The same guarantee, and a **Choice** (`REFINE_CHOICE_EVERY`) |
+
+A **Choice** picks any effect of the slot's pool (less those its other slots hold) at the item's highest effect rarity, outright. Choices are earned per slot (`⌊refinement / 10⌋`, less `choicesUsed`) and kept until spent. This is the deterministic endpoint: luck decides how soon a slot holds the effect wanted, and ten Refines guarantee it at the top rarity, however unlucky the rolls.
+
+### Screens
+
+The item view shows its rarity, level and cap, what the next rarity brings (*Uncommon raises the level cap to 40; Level 21 then opens effect slot 2*), its intrinsic lines, and each slot: its effect and value, its Refinement and Choices, a free roll for a new slot, or *Unlocks at Level 41 · needs Rare* for one not open yet. A slot's screen shows CURRENT, the NEW CANDIDATES with Keep Current, *Refinement: 7 / 10* and the next milestone, and Refine, Improve and Use a Choice (which lists the pool by family). Inventory cards show each slot's effect as a chip.
+
+**Every number in this section is a balancing parameter, not a design constraint**: slot levels and caps, candidate count, rarity weights, costs, milestone spacing, effect values and families are all one-line edits in `balance.ts` and `slot-effects.ts`.

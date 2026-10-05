@@ -16,8 +16,13 @@ export function attackAgainst(player: Player, enemy: Enemy) {
   const boss = enemy.strength === "boss" || enemy.strength === "greaterBoss";
   return boss && player.bossAttack ? snap((player.attack * (100 + player.bossAttack)) / 100) : player.attack;
 }
+/** The DEF `enemy` holds against the hero: its own, less the percent the
+ * hero's equipment pierces (`pierce`). */
+export function defenseAgainst(player: Player, enemy: Enemy) {
+  return player.pierce ? snap((enemy.defense * (100 - player.pierce)) / 100) : enemy.defense;
+}
 /** What each of the hero's strikes takes off `enemy`'s HP (0 or less: none). */
-const heroHit = (player: Player, enemy: Enemy) => snap(attackAgainst(player, enemy) - enemy.defense);
+const heroHit = (player: Player, enemy: Enemy) => snap(attackAgainst(player, enemy) - defenseAgainst(player, enemy));
 
 export function predict(player: Player, enemy: Enemy): CombatPrediction {
   const hit = heroHit(player, enemy);
@@ -28,7 +33,7 @@ export function predict(player: Player, enemy: Enemy): CombatPrediction {
       turns: Infinity,
       damage: Infinity,
       survivable: false,
-      requiredAttack: snap(enemy.defense - attackAgainst(player, enemy) + 1),
+      requiredAttack: snap(defenseAgainst(player, enemy) - attackAgainst(player, enemy) + 1),
     };
   }
   // Snapped, so 10.2 HP against strikes of 1.02 takes 10, as it does played out.
@@ -54,7 +59,7 @@ export function attackForFewerHits(player: Player, enemy: Enemy): number | null 
   const { impervious, turns } = predict(player, enemy);
   if (impervious || turns <= 1) return null;
   const fewer = (more: number) => predict({ ...player, attack: snap(player.attack + more) }, enemy).turns < turns;
-  let more = Math.max(1, Math.ceil(snap(enemy.hp / (turns - 1) + enemy.defense - player.attack)));
+  let more = Math.max(1, Math.ceil(snap(enemy.hp / (turns - 1) + defenseAgainst(player, enemy) - player.attack)));
   while (more > 1 && fewer(more - 1)) more--;
   while (!fewer(more)) more++;
   return more;

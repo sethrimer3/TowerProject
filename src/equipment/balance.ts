@@ -22,24 +22,34 @@ export type RarityTier = {
   power: number;
   /** The highest level an item of this rarity reaches. */
   maxLevel: number;
+  /** The level at which this rarity's effect slot opens: one level past the
+   * rarity below's cap (1 for the first), so merging up and leveling past
+   * the old ceiling is what opens it. Each rarity adds one slot. */
+  slotLevel: number;
+  /** The rarest effect a slot on an item of this rarity can hold. */
+  maxEffect: EquipRarity;
   /** What merging `merge` copies of this rarity makes; null at the top. */
   next: EquipRarity | null;
   merge: number;
   /** Upgrade material a dismantled piece of this rarity returns. */
   salvage: number;
 };
-const tier = (id: EquipRarity, mark: string, maxLevel: number, next: EquipRarity | null, salvage: number): RarityTier => ({
+const tier = (id: EquipRarity, mark: string, maxLevel: number, slotLevel: number, next: EquipRarity | null, salvage: number): RarityTier => ({
   name: SHOP_RARITIES[id].displayName, mark, color: SHOP_RARITIES[id].color, power: SHOP_RARITIES[id].powerMultiplier,
-  maxLevel, next, merge: 3, salvage,
+  maxLevel, slotLevel, maxEffect: id, next, merge: 3, salvage,
 });
 export const RARITY_TIERS: Record<EquipRarity, RarityTier> = {
-  common: tier("common", "C", 20, "uncommon", 5),
-  uncommon: tier("uncommon", "U", 40, "rare", 20),
-  rare: tier("rare", "R", 60, null, 75),
+  common: tier("common", "C", 20, 1, "uncommon", 5),
+  uncommon: tier("uncommon", "U", 40, 21, "rare", 20),
+  rare: tier("rare", "R", 60, 41, null, 75),
 };
 export const rarityRank = (r: EquipRarity) => EQUIP_RARITIES.indexOf(r);
 /** Whether `r` is `from` or above. */
 export const atLeast = (r: EquipRarity, from: EquipRarity) => rarityRank(r) >= rarityRank(from);
+/** How many effect slots an item of `rarity` at `level` has open: one for
+ * each rarity up to its own whose `slotLevel` it has reached. */
+export const openSlots = (rarity: EquipRarity, level: number) =>
+  EQUIP_RARITIES.filter((r) => rarityRank(r) <= rarityRank(rarity) && RARITY_TIERS[r].slotLevel <= level).length;
 
 /** The floor whose first visit opens Equipment (and the lowest boss floor
  * that drops it): Tower floor 60, or Delve depth 590 (equivalent floor 60). */
@@ -84,3 +94,28 @@ export const PULL_GEMS = { 1: 20, 10: 200 } as const;
 export type PullCount = keyof typeof PULL_GEMS;
 export const PULL_RATES: Record<EquipRarity, number> = { common: 72, uncommon: 25, rare: 3 };
 export const PITY = 100;
+
+/** Effect slots: how many candidates each roll offers, and the percent
+ * weights of a candidate's rarity (never above the item's `maxEffect`; the
+ * weights of the rarities allowed are rescaled). */
+export const EFFECT_CANDIDATES = 3;
+export const EFFECT_RARITY_WEIGHTS: Record<EquipRarity, number> = { common: 70, uncommon: 25, rare: 5 };
+
+/** What one paid Refine of a slot costs, by the item's rarity: Gold and its
+ * category's material. A slot's first roll is free. */
+export const REFINE_COST: Record<EquipRarity, { gold: number; material: number }> = {
+  common: { gold: 1000, material: 10 },
+  uncommon: { gold: 5000, material: 40 },
+  rare: { gold: 20000, material: 120 },
+};
+/** Improving a slot's effect one rarity costs this many Refines' worth. */
+export const IMPROVE_COST_FACTOR = 3;
+/** Refinement milestones: every `REFINE_GUARANTEE_EVERY`th Refine of a slot
+ * offers at least one candidate at the item's highest effect rarity, and
+ * every `REFINE_CHOICE_EVERY`th earns a Choice: any effect of the
+ * category's pool, at that rarity, picked outright. */
+export const REFINE_GUARANTEE_EVERY = 5;
+export const REFINE_CHOICE_EVERY = 10;
+
+/** The most of an enemy's DEF the hero's strikes can ignore (Piercing). */
+export const PIERCE_CAP = 50;
