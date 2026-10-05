@@ -266,7 +266,17 @@ export class Game {
     this.finishEncounter();
     this.armed = null;
     this.mode = next;
+    if (next === "delve") this.save.tutorials.delve = true;
     this.loadMode();
+  }
+  /** The forest's lesson waiting on the Tower's board: Enter, until a run
+   * has once gone inside from the forest; then, once Into the depths is
+   * owned, the Delve tab, until the Delve has once been opened. */
+  get forestLesson(): "enter" | "delve" | null {
+    if (this.mode !== "tower" || !this.run.outside) return null;
+    const { enter, delve } = this.save.tutorials;
+    if (!enter) return "enter";
+    return this.save.upgrades.delve && !delve ? "delve" : null;
   }
   loadMode() {
     const run = this.slice.run;
@@ -1520,6 +1530,7 @@ export class Game {
   private enterFromOutside() {
     const p = this.run.player;
     this.run.outside = false;
+    this.save.tutorials.enter = true;
     this.dealHand();
     p.x = this.rules.entranceX;
     p.y = 0;

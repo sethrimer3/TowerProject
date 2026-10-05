@@ -176,7 +176,7 @@ test("descriptions are written from the grants", () => {
     },
   );
   assert.deepEqual(GOLD_SHOP.map((g) => provisionText(g.id)), [
-    "+20 max HP every run", "+1 defense every run", "+1 attack every run", "+1 yellow key every run",
+    "+20 max HP", "+1 defense", "+1 attack", "+1 yellow key",
   ]);
 });
 

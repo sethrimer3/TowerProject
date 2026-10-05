@@ -35,7 +35,7 @@ type RunEndCause = "fallen" | "stuck" | "chosen";
 /** The run's end dialog, one for every way a run ends: it says what brought
  * it up, shows the same totals of what the run obtained, and asks what next.
  * A fallen hero must answer it (undo the fight, once undo is unlocked and
- * one is left, or accept defeat), after which the forest fades in from
+ * one is left, or return to the entrance), after which the forest fades in from
  * black; otherwise the player ends the run or keeps going.
  * TODO: show the run's totals another way, viewable during the run and
  * when it ends (the victories, among more), in place of this summary. */
@@ -92,7 +92,9 @@ export class RunEndDialog {
         : undos ? `<p>Undo takes back the fight, and the hand waits for you.</p>`
         : `<p class="hint">No undo is left to take the fight back.</p>`;
       const button = undos ? `<button id="defeat-undo">Undo (${undos} left)</button>` : "";
-      modal.innerHTML = `<span class="summary-icon">${uiSprite("revive")}</span><small>FALLEN IN COMBAT</small><h2>Your hero has fallen.</h2><p>${by ? `Defeated by ${by}` : "Defeated"} at ${where}. ${kept}</p>${stats}${takeBack}<div class="dialog-actions">${button}<button id="defeat-accept">Accept defeat</button></div>`;
+      // Encourages another run: the next one is a new layout, and what this one earned can make the hero stronger.
+      const again = `<p>Look over what this ${words.run} earned, spend it to grow stronger, and try again: the ${words.tierName} will shift to a new layout for your next ${words.run}.</p>`;
+      modal.innerHTML = `<span class="summary-icon">${uiSprite("revive")}</span><small>FALLEN IN COMBAT</small><h2>Regroup and try again.</h2><p>${by ? `Felled by ${by}` : "Felled"} at ${where}. ${kept}</p>${stats}${again}${takeBack}<div class="dialog-actions">${button}<button id="defeat-accept">Return to entrance</button></div>`;
       modal.showModal();
       const undo = document.querySelector<HTMLButtonElement>("#defeat-undo");
       if (undo)

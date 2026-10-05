@@ -708,6 +708,61 @@ canvas {
 @media (prefers-reduced-motion: reduce) {
   .speed-pointer { animation: none; }
 }
+/* The forest's lessons: a note over the top of the board, and a hand
+   pointing up at Enter from below, or down at the Delve tab. */
+.forest-tip {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  width: min(88%, 360px);
+  box-sizing: border-box;
+  border: 1px solid #d6ae68;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #222c3a, #101823);
+  box-shadow: 0 10px 30px #000b;
+  padding: 10px 14px;
+  color: #efd496;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: center;
+  pointer-events: none;
+}
+#auto { position: relative; }
+.forest-pointer {
+  position: absolute;
+  z-index: 31;
+  width: 26px;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 2px #000c);
+}
+.forest-pointer svg { display: block; width: 100%; }
+.forest-pointer.enter {
+  top: calc(100% - 2px);
+  left: 50%;
+  margin-left: -13px;
+  animation: forest-point-up 1s ease-in-out infinite;
+}
+.forest-pointer.delve {
+  bottom: calc(100% - 4px);
+  left: 50%;
+  margin-left: -13px;
+  transform: rotate(180deg);
+  animation: forest-point-down 1s ease-in-out infinite;
+}
+@keyframes forest-point-up {
+  0%, 100% { transform: translateY(6px); }
+  50% { transform: translateY(0); }
+}
+@keyframes forest-point-down {
+  0%, 100% { transform: rotate(180deg) translateY(6px); }
+  50% { transform: rotate(180deg) translateY(0); }
+}
+.forest-pointer.still { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .forest-pointer { animation: none; }
+}
 .mini-action.enabled {
   border-color: #b59861;
   color: #ecd19d;

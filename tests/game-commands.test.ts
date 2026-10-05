@@ -363,3 +363,22 @@ test("undo stays on the floor it was taken on: climbing or going down forgets th
   assert.equal(g.run.height, 3);
   assert.deepEqual([save.tower.history.length, g.undo(), g.run.height], [0, false, 3], "nor the way down");
 });
+
+test("the forest's lessons: Enter until a run goes inside, then the Delve tab once Into the depths is owned", () => {
+  const g = new Game(defaults());
+  assert.equal(g.forestLesson, null, "a new game starts inside its first run");
+  g.newRun({ outside: true });
+  assert.equal(g.forestLesson, "enter");
+  g.enterRun();
+  assert.equal(g.forestLesson, null);
+  g.newRun({ outside: true });
+  assert.equal(g.forestLesson, null, "Enter is taught once");
+  g.save.upgrades.delve = 1;
+  assert.equal(g.forestLesson, "delve");
+  g.switchMode("delve");
+  assert.equal(g.forestLesson, null, "only the Tower's board teaches");
+  g.switchMode("tower");
+  assert.equal(g.forestLesson, null, "opening the Delve finishes its lesson");
+  const saved = decode(JSON.stringify(g.save)).tutorials;
+  assert.ok(saved.enter && saved.delve);
+});

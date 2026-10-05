@@ -47,7 +47,7 @@ export class GearPage {
     const lockHint = (t: GearTab) => t === "equipment" ? `Claim Tower I's floor ${unlockFloor("equipment")} Goal to open Equipment` : "Locked";
     const intro = this.tab === "equipment"
       ? `<h2>Equipment</h2><p>Each hero wears one piece of each kind: tap a piece to equip or level it, and assemble three alike into a rarer one.</p>`
-      : `<h2>Traveler’s gear</h2><p>Provisions bought with Gold go with you into every run.</p>`;
+      : `<h2>Traveler’s gear<button class="tree-help" id="gear-help" aria-label="About provisions" title="About provisions">?</button></h2>`;
     el("gear").innerHTML = `<div class="page-title"><small>YOUR COMPANIONS IN THE DARK</small>${intro}</div>
     <div class="tree-tabs gear-tabs" role="group" aria-label="Gear tabs">
       ${tabs.map((t) => `<button data-geartab="${t}" aria-pressed="${this.tab === t}" ${this.open(t) ? "" : `disabled title="${lockHint(t)}"`}>${TAB_NAMES[t]}</button>`).join("")}
@@ -55,6 +55,15 @@ export class GearPage {
     ${body}`;
     this.bind();
     if (this.tab === "equipment") this.equipment.bind();
+    else el("gear-help").onclick = () => this.showHelp();
+  }
+
+  /** The Provisions screen's help, behind its heading's ? button. */
+  private showHelp() {
+    const modal = this.ctx.modal;
+    modal.innerHTML = `<small>GEAR</small><h2>Provisions</h2><p>Provisions are bought with Gold and kept for good: each one you own goes with you into every run.</p><p class="hint">Each one bought makes the next of its kind cost more.</p><div class="dialog-actions"><button id="gear-help-ok">Got it</button></div>`;
+    modal.showModal();
+    el("gear-help-ok").onclick = () => modal.close();
   }
 
   /** Click handlers by data attribute; each gets that attribute's value. */
@@ -92,7 +101,7 @@ export class GearPage {
     // What all the copies owned add, for provisions giving more than one.
     const total = (item: (typeof GOLD_SHOP)[number], owned: number) =>
       (Object.entries(item.grants) as [Stat, number][]).filter(([, n]) => n > 1).map(([stat, n]) => ` · +${n * owned} ${TOTAL_WORDS[stat]}`).join("");
-    return `<div class="provision-head"><div class="purse-big" title="Gold">${uiSprite("gold")}<b>${devAmount(game, game.save.gold)}</b></div><p class="hint">Spend Gold on provisions: each one you buy is carried into every run from now on, and the next costs more.</p></div>${GOLD_SHOP.filter((item) => provisionOpen(game.save, item.id)).map((item) => {
+    return `<div class="provision-head"><div class="purse-big" title="Gold">${uiSprite("gold")}<b>${devAmount(game, game.save.gold)}</b></div></div>${GOLD_SHOP.filter((item) => provisionOpen(game.save, item.id)).map((item) => {
       const owned = game.save.provisions[item.id], price = provisionPrice(game.save, item.id);
       return `<article class="card"><div class="item-icon${item.id === bought ? " bought" : ""}">${provisionSprite(item.id)}</div><div><small>${owned ? `OWNED × ${owned}${total(item, owned)}` : "NOT YET OWNED"}</small><h3>${item.name}</h3><p>${provisionText(item.id)}</p></div><button data-gold="${item.id}" ${game.save.gold < price && !game.free ? "disabled" : ""}>Buy · ${uiSprite("gold", "stat-sprite")} ${price}</button></article>`;
     }).join("")}`;
