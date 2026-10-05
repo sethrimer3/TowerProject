@@ -2,7 +2,7 @@ import { whole } from "./whole.ts";
 import { bulkBuy, type BuyQuantity } from "./buy-quantity.ts";
 import { snap } from "./exact.ts";
 import type { Mode, Save } from "./entities.ts";
-import { BONUS_RANK, FIND_POTION_BASE, FIND_POTION_MAX, FLOOR_GOLD_BASE, FLOOR_GOLD_RANK, FLOOR_SILVER_BASE, FLOOR_SILVER_RANK, FIND_POTION_RANK, REVIVE_BASE, REVIVE_MAX, REVIVE_RANK, GOLD_SHOP, schedulePrice, POTION_PERCENT_BASE, POTION_PERCENT_RANK, TRAINING, TRAINING_PER_LEVEL, UPGRADES, isStatRow, levelForXp, trained, trainingOpen, trainingWorth, type GoldItemId, type StatTrainingRow, type TrainingId, type TrainingRow, type UpgradeId } from "./config.ts";
+import { FIND_POTION_BASE, FIND_POTION_MAX, FLOOR_GOLD_BASE, FLOOR_GOLD_RANK, FLOOR_SILVER_BASE, FLOOR_SILVER_RANK, FIND_POTION_RANK, REVIVE_BASE, REVIVE_MAX, REVIVE_RANK, GOLD_SHOP, KILL_GOLD_RANK, SILVER_BONUS_RANK, schedulePrice, POTION_PERCENT_BASE, POTION_PERCENT_RANK, TRAINING, TRAINING_PER_LEVEL, UPGRADES, isStatRow, levelForXp, trained, trainingOpen, trainingWorth, type GoldItemId, type StatTrainingRow, type TrainingId, type TrainingRow, type UpgradeId } from "./config.ts";
 import { wornEffects } from "./equipment/effects.ts";
 import { RESEARCH, researched } from "./archives.ts";
 import { trainingGold } from "./training-jobs.ts";
@@ -179,14 +179,15 @@ const floorSilverAt = (ranks: number) => FLOOR_SILVER_BASE + FLOOR_SILVER_RANK *
 /** Silver Bonus training's multiplier on all Silver a run finds, in
  * percent: 100 without Wealthy. */
 export const silverBonus = (save: Pick<Save, "upgrades" | "training">) =>
-  bonusAt(save.upgrades.wealthy ? save.training.silverBonus : 0);
+  bonusAt(save.upgrades.wealthy ? save.training.silverBonus : 0, SILVER_BONUS_RANK);
 /** Gold / Kill training's multiplier on the Gold a kill pays, in percent:
  * 100 without Loot. */
 export const killGold = (save: Pick<Save, "upgrades" | "training">) =>
-  bonusAt(save.upgrades.loot ? save.training.killGold : 0);
-const bonusAt = (ranks: number) => 100 + BONUS_RANK * ranks;
-/** The training rows shown as a multiplier (×1.30), their value in percent. */
-const MULTIPLIER_ROWS: ReadonlySet<TrainingId> = new Set(["silverBonus", "killGold"]);
+  bonusAt(save.upgrades.loot ? save.training.killGold : 0, KILL_GOLD_RANK);
+const bonusAt = (ranks: number, rank: number) => 100 + rank * ranks;
+/** The training rows shown as a multiplier (×1.30), their value in percent,
+ * and what a rank adds. */
+const MULTIPLIER_ROWS: ReadonlyMap<TrainingId, number> = new Map([["silverBonus", SILVER_BONUS_RANK], ["killGold", KILL_GOLD_RANK]]);
 
 /** How a Training row's value reads: a multiplier as ×1.30, the others
  * with their unit after. */
@@ -258,7 +259,8 @@ export const shownStat = (stat: StatTrainingRow["stat"], value: number) =>
 function valueStep(id: TrainingId, ranks: number, maxed: boolean, count = 1) {
   if (id === "floorGold") return { unit: "", now: floorGoldAt(ranks), next: floorGoldAt(ranks + count), worth: FLOOR_GOLD_RANK };
   if (id === "floorSilver") return { unit: "", now: floorSilverAt(ranks), next: floorSilverAt(ranks + count), worth: FLOOR_SILVER_RANK };
-  if (MULTIPLIER_ROWS.has(id)) return { unit: "×", now: bonusAt(ranks) / 100, next: bonusAt(ranks + count) / 100, worth: BONUS_RANK };
+  const bonus = MULTIPLIER_ROWS.get(id);
+  if (bonus !== undefined) return { unit: "×", now: bonusAt(ranks, bonus) / 100, next: bonusAt(ranks + count, bonus) / 100, worth: bonus };
   const [value, rank] = percentRow(id);
   return { unit: "%", now: value(ranks) / 100, next: value(maxed ? ranks : ranks + count) / 100, worth: rank / 100 };
 }

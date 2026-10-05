@@ -484,8 +484,9 @@ export const TRAINING_GROUPS = { offense: "Offense", defense: "Defense", utility
  * to what a percent potion restores, Find Potion `FIND_POTION_RANK` to
  * the chance a potion is a percent potion, Gold / Floor
  * `FLOOR_GOLD_RANK` to the Gold a new floor pays and Silver / Floor
- * `FLOOR_SILVER_RANK` to its Silver, and Silver Bonus and Gold / Kill
- * `BONUS_RANK` percent to their multiplier, the same at every level. A row
+ * `FLOOR_SILVER_RANK` to its Silver, and Silver Bonus `SILVER_BONUS_RANK`
+ * and Gold / Kill `KILL_GOLD_RANK` percent to their multiplier, the same at
+ * every level. A row
  * with `requires` shows, and trains, only once that upgrade is owned; one
  * with `max` trains no further than that many ranks. */
 export const TRAINING = [
@@ -522,16 +523,16 @@ export const FIND_POTION_BASE = 200, FIND_POTION_RANK = 25, FIND_POTION_MAX = 20
  * rank, up to 50% (99 ranks). */
 export const REVIVE_BASE = 50, REVIVE_RANK = 50, REVIVE_MAX = 5000;
 /** The Gold each floor climbed for the first time in a run pays, before
- * the tier's bonus and Gold / Floor research: 3 with Spare Change, and 2
+ * the tier's bonus and Gold / Floor research: 3 with Spare Change, and 1
  * more for each Gold / Floor rank. */
-export const FLOOR_GOLD_BASE = 3, FLOOR_GOLD_RANK = 2;
+export const FLOOR_GOLD_BASE = 3, FLOOR_GOLD_RANK = 1;
 /** The Silver each floor climbed for the first time in a run pays, before
  * Silver / Floor research and Silver Bonus: 3 with Wishing Well, and 3
  * more for each Silver / Floor rank. */
 export const FLOOR_SILVER_BASE = 3, FLOOR_SILVER_RANK = 3;
 /** What each Silver Bonus or Gold / Kill rank adds to its multiplier, in
  * percent (×1 with no ranks). */
-export const BONUS_RANK = 3;
+export const SILVER_BONUS_RANK = 1, KILL_GOLD_RANK = 3;
 /** A price that rises with each purchase (a Training row's Silver inside a
  * run, a provision's Gold): the first costs `base`, and each one after
  * costs more than the last by `step` plus the number already bought, the
