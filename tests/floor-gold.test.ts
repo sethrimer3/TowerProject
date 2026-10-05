@@ -26,7 +26,7 @@ function standBeside(g: Game) {
   Object.assign(g.run.player, { x: 0, y: 0 });
 }
 
-test("Spare Change opens Gold / Floor training (3, and 2 a rank) and its research", () => {
+test("Spare Change opens Gold / Floor training (3, and 1 a rank) and its research", () => {
   const save = defaults(), row = TRAINING.find((t) => t.id === "floorGold")!;
   assert.equal(floorGold(save), 0);
   assert.equal(trainingOpen(row, save.upgrades), false);
@@ -34,8 +34,8 @@ test("Spare Change opens Gold / Floor training (3, and 2 a rank) and its researc
   assert.ok(trainingOpen(row, save.upgrades));
   assert.equal(floorGold(save), 3);
   save.training.floorGold = 4;
-  assert.equal(floorGold(save), 11);
-  assert.deepEqual([trainingStep(save, "floorGold").now, trainingStep(save, "floorGold").next], [11, 13]);
+  assert.equal(floorGold(save), 7);
+  assert.deepEqual([trainingStep(save, "floorGold").now, trainingStep(save, "floorGold").next], [7, 8]);
   assert.deepEqual(RESEARCH.floorGold.requires, [{ upgrade: "spareChange" }]);
   assert.equal(RESEARCH.floorGold.levels.length, 100);
   // Priced and timed like Potion HP, level for level.
@@ -50,9 +50,9 @@ test("a floor climbed for the first time in a run pays Gold / Floor, with resear
   g.save.archives.levels.floorGold = 2;
   assert.ok(g.move(1, 0));
   assert.equal(g.run.height, 4);
-  const paid = tierGold(3, 5 * 1.1);
+  const paid = tierGold(3, 4 * 1.1);
   assert.equal(g.save.gold, paid);
-  assert.equal(paid, 17.05);
+  assert.equal(paid, 13.64);
   assert.equal(g.undo(), false, "undo stays on the floor it was taken on");
   assert.equal(g.run.height, 4);
 });
@@ -66,9 +66,9 @@ test("without Spare Change a new floor pays nothing; Silver training raises it f
   h.run.silver = 1000;
   h.save.upgrades.onTheJob = 1;
   assert.ok(h.trainInRun("floorGold"));
-  assert.deepEqual(runTrainingValue(h.save, h.run, "floorGold"), { value: 5, unit: "" });
+  assert.deepEqual(runTrainingValue(h.save, h.run, "floorGold"), { value: 4, unit: "" });
   assert.ok(h.move(1, 0));
-  assert.equal(h.save.gold, 5);
+  assert.equal(h.save.gold, 4);
 });
 
 test("the Delve pays Gold / Floor for each new equivalent floor (ten depth) once", () => {

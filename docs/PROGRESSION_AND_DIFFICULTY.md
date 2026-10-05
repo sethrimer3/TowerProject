@@ -306,17 +306,17 @@ Revive (10 Inspiration below Shroud, 34 down the path; formerly a Courage skill 
 
 Pocket Money (1 Inspiration after Into the depths, beside Greater Heal, 12 down the path) opens Pocket Money research (100 levels, the same Gold and hours as Faster Trainers': the n-th level 250 × n Gold and 1.75 × n hours), listed before Gold / Floor: every run goes inside with 5 Silver more in hand a level (500 at 100), counted when it goes inside, so a level completed mid-run waits for the next run. It spends no other bonus (Silver Bonus doesn't multiply it).
 
-Spare Change (3 Inspiration below Pocket Money, 15 down the path) pays Gold for each floor climbed for the first time in a run (the Tower's stairs up, the Delve's each new ten depth): 3, and 2 more per rank of Gold / Floor training (1 training point a rank, the same at every level; 10 Silver for the first run rank), raised 5% a level by Gold / Floor research (100 levels, the same Gold and hours as Potion HP's, listed after Undo Count) and then by the tower's Gold bonus. A floor pays once a run, gated like a kill's Gold (`lootedTiles`), so undo can't repeat it. It rewards climbing over farming: a run that goes deeper banks more, and by floor 50 the starting 3 Gold a floor matches a normal monster or two per floor.
+Spare Change (3 Inspiration below Pocket Money, 15 down the path) pays Gold for each floor climbed for the first time in a run (the Tower's stairs up, the Delve's each new ten depth): 3, and 1 more per rank of Gold / Floor training (1 training point a rank, the same at every level; 10 Silver for the first run rank), raised 5% a level by Gold / Floor research (100 levels, the same Gold and hours as Potion HP's, listed after Undo Count) and then by the tower's Gold bonus. A floor pays once a run, gated like a kill's Gold (`lootedTiles`), so undo can't repeat it. It rewards climbing over farming: a run that goes deeper banks more, and by floor 50 the starting 3 Gold a floor matches a normal monster or two per floor.
 
 Below Spare Change stand three skills of 2 Inspiration each (17 down the path), each opening a Utility training row (1 training point a rank, the same at every level; 10 Silver for the first run rank) and Archives research of the same name (100 levels, the same Gold and hours as Gold / Floor's, listed after it in this order):
 
 | Skill | Opens | Training | Research | Applies to |
 |---|---|---|---|---|
 | Wishing Well | Silver / Floor | 3 Silver, +3 a rank | +5% a level | each floor climbed above the run's highest so far (the Tower), or each new ten depth (the Delve); Silver belongs to the run, so undo takes it back with the climb |
-| Wealthy | Silver Bonus | ×1, +3% a rank | +3% a level | all Silver a run finds: kills and Silver / Floor |
+| Wealthy | Silver Bonus | ×1, +1% a rank | +3% a level | all Silver a run finds: kills and Silver / Floor |
 | Loot | Gold / Kill | ×1, +3% a rank | +3% a level | each kill's Gold, before the tier's bonus |
 
-Training and research multiply: 30% from each makes ×1.3 × 1.3 = ×1.69. Silver therefore keeps its fractions, like Gold (`snap`), shown rounded down.
+Training and research multiply: 30% from each makes ×1.3 × 1.3 = ×1.69 (Gold / Kill at 10 ranks and 10 levels; Silver Bonus needs 30 ranks for its 30%). Silver therefore keeps its fractions, like Gold (`snap`), shown rounded down.
 
 Shroud (10 Inspiration below Regen Research, beside Recovery, 26 down the path) gives the hero a shroud that blocks the first 1 damage of every fight, whole again at each fight's start, and opens Shroud training (1 training point a rank, each worth 1 + L/10 at level L, like the other stats). Because it renews every fight, a point of shroud is worth far more over a run than a point of max HP, so its ranks are worth a tenth of max HP's. The shroud comes off the damage after DEF, so it matters most against enemies DEF has fallen behind; fight forecasts count it.
 
