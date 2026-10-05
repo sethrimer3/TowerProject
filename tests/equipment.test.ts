@@ -22,7 +22,7 @@ import {
 } from "../src/equipment/inventory.ts";
 import { lineValue, effectText } from "../src/equipment/effects.ts";
 import { keepDrop, pull, pullOne, rollBossDrop, rollMaterials, rollRarity } from "../src/equipment/acquire.ts";
-import { ICON_ROWS } from "../src/ui/equipment-icons.ts";
+import { ICON_ROWS, pieceRows } from "../src/ui/equipment-icons.ts";
 import type { Enemy } from "../src/entities.ts";
 
 const open = (): EquipmentSave => ({ ...defaultEquipment(), unlocked: true });
@@ -57,6 +57,14 @@ test("each icon is a 12×12 grid", () => {
     assert.equal(rows.length, 12, id);
     for (const row of rows) assert.equal(row.length, 12, `${id}: ${row}`);
   }
+});
+
+test("every piece wears its own icon, each Unique one of its own", () => {
+  const drawn = ITEMS.map((i) => pieceRows(i.id).join("/"));
+  assert.equal(new Set(drawn).size, ITEMS.length, "no two pieces look alike");
+  for (const item of ITEMS) if (item.class === "unique") assert.ok(item.id in ICON_ROWS, `${item.id} has its own icon`);
+  for (const [id, rows] of Object.entries(ICON_ROWS))
+    for (const row of rows) for (const ch of row) assert.ok(ch === "." || ch === "#" || /[a-z]/.test(ch), `${id} uses a known colour`);
 });
 
 test("lines grow with level and rarity power; fixed lines don't; whole kinds round down", () => {
