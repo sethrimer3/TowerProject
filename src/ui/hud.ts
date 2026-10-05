@@ -462,13 +462,14 @@ export function boostTime(ms: number) {
 }
 
 /** The Gold ad, inside a run: ×1.5 Gold for 20 minutes a claim, stored up
- * to two hours, glowing while the boost lasts; closed once the store is full. */
+ * to two hours, glowing with the time left while the boost lasts and
+ * reading Inactive with none stored; closed once the store is full. */
 function renderGoldAd(game: Game, inside: boolean) {
   const button = el("gold-ad") as HTMLButtonElement, left = game.gemFinder.goldBoostLeft;
   button.hidden = !inside;
   button.classList.toggle("active", left > 0);
   button.disabled = !game.gemFinder.goldAdReady;
-  text("gold-ad-time", left > 0 ? boostTime(left) : "Claim");
+  text("gold-ad-time", left > 0 ? boostTime(left) : "Inactive");
   const label = left > 0
     ? `Gold ×${GOLD_BOOST_FACTOR}: ${boostTime(left)} left${button.disabled ? " (full)" : `; claim ${GOLD_BOOST_MS / 60_000} more minutes`}`
     : `Claim Gold ×${GOLD_BOOST_FACTOR} for ${GOLD_BOOST_MS / 60_000} minutes`;
