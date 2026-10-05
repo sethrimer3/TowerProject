@@ -25,7 +25,7 @@ import { GearPage } from "./ui/gear-page.ts";
 import { equipmentWaiting } from "./equipment/inventory.ts";
 import { DeckPage } from "./ui/deck-page.ts";
 import { RunTrainingBar } from "./ui/run-training-bar.ts";
-import { renderForestLesson } from "./ui/forest-lesson.ts";
+import { renderBoardLesson } from "./ui/board-lesson.ts";
 import { renderSettingsPage } from "./ui/settings-page.ts";
 import { ShopPage } from "./ui/shop-page.ts";
 import { play } from "./sound.ts";
@@ -100,7 +100,7 @@ function update() {
   (el("page-shop") as HTMLButtonElement).disabled = deck.teaching;
   renderHud(game, renderer, overlay);
   runTraining.render();
-  renderForestLesson(game, tab === "tower");
+  renderBoardLesson(game, tab === "tower", update);
   const finished = [...game.research.done.splice(0).map(researchToast), ...game.training.done.splice(0).map(trainingToast)];
   if (finished.length) play("trained");
   researchToasts.add(finished);

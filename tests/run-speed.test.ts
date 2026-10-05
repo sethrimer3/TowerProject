@@ -5,7 +5,9 @@ import { decode, defaults } from "../src/save.ts";
 
 /** A new hero inside a run on floor 1, the hand playing. */
 function inside() {
-  const g = new Game(defaults());
+  const s = defaults();
+  s.tutorials.climb = true;
+  const g = new Game(s);
   if (g.run.outside) g.enterRun();
   assert.ok(!g.run.outside && g.auto);
   return g;

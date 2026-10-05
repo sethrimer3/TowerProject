@@ -8,10 +8,18 @@ import { chooseStep } from "../src/automation.ts";
 import { CONSUMABLES } from "../src/crafting.ts";
 import { silverForKill } from "../src/config.ts";
 
+/** A new game's save, its first run's note already dismissed, so the hand
+ * plays as a run starts. */
+function taught() {
+  const s = defaults();
+  s.tutorials.climb = true;
+  return s;
+}
+
 /** A Tower floor of open tiles with `size` columns and rows, the player in
  * the corner and (when it fits) the stairs opposite. */
 function arena(size = 5) {
-  const g = new Game(defaults());
+  const g = new Game(taught());
   g.save.upgrades.inspirationUndos = 1; // undo needs Rehearsed steps
   const w = g.world as RoomWorld;
   w.cells = new Map();
@@ -94,7 +102,7 @@ test("inside a run only Dev mode lets the player move the hero", () => {
 });
 
 test("an Automove turn in the forest takes the step automation chooses and names it", () => {
-  const g = new Game(defaults());
+  const g = new Game(taught());
   g.newRun({ outside: true, seed: 1 });
   assert.ok(!g.auto, "the player walks the forest");
   const step = chooseStep(g);
@@ -119,7 +127,7 @@ test("a manual step drops the queued route and Automove", () => {
 });
 
 test("a deck card dragged to the hand goes into its slot, in the forest with Buildout only", () => {
-  const g = new Game(defaults());
+  const g = new Game(taught());
   g.newRun({ outside: true, seed: 1 });
   g.save.upgrades.cardHeal = 1;
   assert.equal(g.deck.place("heal", 1), false, "not before Buildout");
@@ -137,7 +145,7 @@ test("a deck card dragged to the hand goes into its slot, in the forest with Bui
 });
 
 test("in the forest Enter goes straight in, starting the run with the hand playing", () => {
-  const g = new Game(defaults());
+  const g = new Game(taught());
   g.newRun({ outside: true, seed: 1 });
   g.toggleAuto();
   assert.ok(!g.auto, "the forest has no play or pause");
@@ -172,7 +180,7 @@ test("erasing everything leaves a fresh save with a new run outside the Tower", 
 });
 
 test("the Deck reorders the hand only with Combat Stance and in the forest, and a run keeps the hand it went in with", () => {
-  const g = new Game(defaults());
+  const g = new Game(taught());
   g.newRun({ outside: true, seed: 1 });
   assert.equal(g.deck.arrange(0, 2), false, "not before Combat Stance is bought");
   g.save.upgrades.combatStance = 1;
@@ -194,7 +202,7 @@ test("the Deck reorders the hand only with Combat Stance and in the forest, and 
 });
 
 test("Buildout moves cards between the deck and the hand in the forest, and STAIRS always stays", () => {
-  const g = new Game(defaults());
+  const g = new Game(taught());
   g.newRun({ outside: true, seed: 1 });
   assert.equal(g.deck.remove("monster"), false, "not before Buildout is bought");
   g.save.upgrades.buildout = 1;
@@ -275,7 +283,7 @@ test("a focused card that loses its path hands the lead back", () => {
 });
 
 test("a run going inside gets its Focus uses once the skill is owned", () => {
-  const g = new Game(defaults());
+  const g = new Game(taught());
   g.newRun({ outside: true, seed: 1 });
   assert.equal(g.focusLeft, 0);
   g.save.upgrades.focus = 1;
@@ -332,7 +340,7 @@ test("a beaten enemy pays silver into the run, and undo takes it back", () => {
 });
 
 test("ending a run keeps the Gold found in it and says how much", () => {
-  const g = new Game(defaults());
+  const g = new Game(taught());
   g.switchMode("tower");
   g.newRun({ seed: 3 });
   g.save.gold = 40;
@@ -364,21 +372,39 @@ test("undo stays on the floor it was taken on: climbing or going down forgets th
   assert.deepEqual([save.tower.history.length, g.undo(), g.run.height], [0, false, 3], "nor the way down");
 });
 
-test("the forest's lessons: Enter until a run goes inside, then the Delve tab once Into the depths is owned", () => {
+test("a new game's first run holds the hand paused until its note is dismissed, then plays at 2x", () => {
   const g = new Game(defaults());
-  assert.equal(g.forestLesson, null, "a new game starts inside its first run");
+  assert.equal(g.boardLesson, "climb");
+  assert.equal(g.auto, false);
+  g.toggleAuto();
+  assert.equal(g.auto, false, "play waits on the note");
+  assert.equal(g.changeSpeed(1), false, "so do the arrows");
+  assert.ok(g.dismissLesson());
+  assert.equal(g.boardLesson, null);
+  assert.ok(g.auto);
+  assert.equal(g.stepsPerSecond, 2);
+  assert.equal(new Game(decode(JSON.stringify(g.save))).boardLesson, null, "dismissed for good");
+});
+
+test("the forest's lessons: try again until dismissed or a run goes inside, then the Delve tab once Into the depths is owned", () => {
+  const g = new Game(taught());
+  assert.equal(g.boardLesson, null);
   g.newRun({ outside: true });
-  assert.equal(g.forestLesson, "enter");
+  assert.equal(g.boardLesson, "enter");
+  assert.ok(g.dismissLesson());
+  assert.equal(g.boardLesson, null, "dismissed without entering");
+  assert.ok(g.run.outside);
+  g.save.tutorials.enter = false;
   g.enterRun();
-  assert.equal(g.forestLesson, null);
   g.newRun({ outside: true });
-  assert.equal(g.forestLesson, null, "Enter is taught once");
+  assert.equal(g.boardLesson, null, "entering a run finishes it too");
   g.save.upgrades.delve = 1;
-  assert.equal(g.forestLesson, "delve");
+  assert.equal(g.boardLesson, "delve");
+  assert.equal(g.dismissLesson(), false, "the Delve lesson waits on the Delve tab");
   g.switchMode("delve");
-  assert.equal(g.forestLesson, null, "only the Tower's board teaches");
+  assert.equal(g.boardLesson, null, "only the Tower's board teaches");
   g.switchMode("tower");
-  assert.equal(g.forestLesson, null, "opening the Delve finishes its lesson");
+  assert.equal(g.boardLesson, null, "opening the Delve finishes its lesson");
   const saved = decode(JSON.stringify(g.save)).tutorials;
-  assert.ok(saved.enter && saved.delve);
+  assert.ok(saved.climb && saved.enter && saved.delve);
 });

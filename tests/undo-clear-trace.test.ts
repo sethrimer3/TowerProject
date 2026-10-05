@@ -100,6 +100,7 @@ function trace(mode: Mode, seed: number): string[] {
   performance.now = () => 1000;
   try {
     const save = defaults();
+    save.tutorials.climb = true;
     save.upgrades.delve = 1;
     save.upgrades.inspirationUndos = 1;
     save.upgrades.revive = 1;

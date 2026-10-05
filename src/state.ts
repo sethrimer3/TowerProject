@@ -83,6 +83,8 @@ import { readyForestRuns, startingHero } from "./game/hero-sync.ts";
 /** How a new run starts: out in the forest or at the entrance, and from
  * which seed (rolled from the game's randomness when left out). */
 export type RunStart = { outside?: boolean; seed?: number; height?: number };
+/** A lesson shown on the Tower's board (`Game.boardLesson`). */
+export type BoardLesson = "climb" | "enter" | "delve";
 export type RouteEffects = {
   hp: [number, number];
   attack: [number, number];
@@ -269,14 +271,31 @@ export class Game {
     if (next === "delve") this.save.tutorials.delve = true;
     this.loadMode();
   }
-  /** The forest's lesson waiting on the Tower's board: Enter, until a run
-   * has once gone inside from the forest; then, once Into the depths is
-   * owned, the Delve tab, until the Delve has once been opened. */
-  get forestLesson(): "enter" | "delve" | null {
-    if (this.mode !== "tower" || !this.run.outside) return null;
-    const { enter, delve } = this.save.tutorials;
+  /** The lesson waiting on the Tower's board: in a new game's first run,
+   * `climb`, which holds the hand paused until dismissed; in the forest,
+   * `enter`, until dismissed or a run goes inside from the forest; then,
+   * once Into the depths is owned, `delve`, until the Delve is opened. */
+  get boardLesson(): BoardLesson | null {
+    if (this.mode !== "tower") return null;
+    const { climb, enter, delve } = this.save.tutorials;
+    if (!this.run.outside) return climb || this.fallen ? null : "climb";
     if (!enter) return "enter";
     return this.save.upgrades.delve && !delve ? "delve" : null;
+  }
+  /** Dismisses the `climb` or `enter` lesson (the `delve` lesson waits on
+   * the Delve tab); dismissing `climb` sets the hand playing. */
+  dismissLesson() {
+    const lesson = this.boardLesson;
+    if (lesson === "climb") {
+      this.save.tutorials.climb = true;
+      if (this.handStartsPlaying) this.playHand();
+    } else if (lesson === "enter") this.save.tutorials.enter = true;
+    else return false;
+    return true;
+  }
+  /** Whether the first run's lesson holds the hand paused. */
+  private get teachesClimb() {
+    return this.boardLesson === "climb";
   }
   loadMode() {
     const run = this.slice.run;
@@ -475,9 +494,14 @@ export class Game {
   /** Plays or pauses the hand inside a run. */
   toggleAuto() {
     if (this.run.outside) return;
-    // The speed lesson keeps the hand paused until the arrow is pressed.
+    // The speed lesson keeps the hand paused until the arrow is pressed,
+    // and the first run's until its note is dismissed.
     if (this.teachesSpeed) {
       this.message = "Press › to speed up.";
+      return;
+    }
+    if (this.teachesClimb) {
+      this.message = "Tap the note to begin.";
       return;
     }
     this.route = [];
@@ -489,9 +513,9 @@ export class Game {
     this.message = this.auto ? "The hand takes over." : "Paused · the hand waits.";
   }
   /** Sets the hand playing: at 1 step a second if the speed arrows slowed
-   * it to 0, and never while the speed lesson waits. */
+   * it to 0, and never while the speed or first run's lesson waits. */
   private playHand() {
-    if (this.teachesSpeed) {
+    if (this.teachesSpeed || this.teachesClimb) {
       this.auto = false;
       return;
     }
@@ -503,7 +527,7 @@ export class Game {
    * it; in the speed lesson, reaching its speed ends the lesson and plays
    * the hand on. Returns whether the speed changed. */
   changeSpeed(by: -1 | 1) {
-    if (this.run.outside || (by < 0 && this.teachesSpeed)) return false;
+    if (this.run.outside || this.teachesClimb || (by < 0 && this.teachesSpeed)) return false;
     const from = this.stepsPerSecond, to = Math.max(0, Math.min(this.maxSpeed, from + by));
     if (to === from) return false;
     const lesson = this.teachesSpeed;

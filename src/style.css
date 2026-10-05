@@ -708,9 +708,10 @@ canvas {
 @media (prefers-reduced-motion: reduce) {
   .speed-pointer { animation: none; }
 }
-/* The forest's lessons: a note over the top of the board, and a hand
-   pointing up at Enter from below, or down at the Delve tab. */
-.forest-tip {
+/* The board's lessons: a note over the top of the board (a button when a
+   tap dismisses it), and in the forest a hand pointing up at Enter from
+   below, or down at the Delve tab. */
+.board-tip {
   position: absolute;
   top: 10px;
   left: 50%;
@@ -729,6 +730,10 @@ canvas {
   text-align: center;
   pointer-events: none;
 }
+.board-tip b { display: block; font-weight: inherit; }
+.board-tip p { margin: 6px 0 0; font-size: 12px; line-height: 1.6; color: #c3cedd; }
+.board-tip small { display: block; margin-top: 6px; font-size: 10px; letter-spacing: 1px; color: #8d9db1; }
+.board-tip.dismissable { min-height: 0; font-family: inherit; cursor: pointer; pointer-events: auto; }
 #auto { position: relative; }
 .forest-pointer {
   position: absolute;

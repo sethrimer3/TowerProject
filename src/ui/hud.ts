@@ -210,8 +210,9 @@ function renderAutoButton(game: Game) {
   }
   text("auto-state", inside ? (game.auto ? "PLAYING" : "PAUSED") : "ENTER");
   renderSpeed(game, inside);
-  // The speed lesson waits on the › arrow, not on play.
-  (button as HTMLButtonElement).disabled = inside && game.teachesSpeed;
+  // The speed lesson waits on the › arrow, not on play; the first run's
+  // note, on its tap.
+  (button as HTMLButtonElement).disabled = inside && (game.teachesSpeed || game.boardLesson === "climb");
   button.classList.toggle("enabled", inside && game.auto);
   button.setAttribute("aria-label", label);
   button.title = label;
@@ -219,14 +220,15 @@ function renderAutoButton(game: Game) {
 
 /** The speed under play/pause, between its arrows: ‹ closed at 0, › at the
  * most research allows. While the speed lesson waits, a hand points up at
- * ›, and ‹ stays closed. */
+ * ›, and ‹ stays closed; while the first run's note waits, both do. */
 function renderSpeed(game: Game, inside: boolean) {
   const row = el("auto-speed"), steps = game.stepsPerSecond, lesson = inside && game.teachesSpeed;
   row.hidden = !inside;
   // Equipment's movement speed shows in the steps actually taken.
   text("speed-value", `${Math.round(game.moveRate * 100) / 100}x`);
-  (el("speed-down") as HTMLButtonElement).disabled = steps <= 0 || lesson;
-  (el("speed-up") as HTMLButtonElement).disabled = steps >= game.maxSpeed;
+  const held = game.boardLesson === "climb";
+  (el("speed-down") as HTMLButtonElement).disabled = steps <= 0 || lesson || held;
+  (el("speed-up") as HTMLButtonElement).disabled = steps >= game.maxSpeed || held;
   let pointer = row.querySelector<HTMLElement>(".speed-pointer");
   if (lesson && !pointer) {
     row.insertAdjacentHTML("beforeend", `<span class="speed-pointer${game.save.settings.reduceMotion ? " still" : ""}">${POINTER_SVG}</span>`);

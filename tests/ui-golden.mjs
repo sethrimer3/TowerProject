@@ -67,6 +67,7 @@ try {
      * the real game so the run is valid. */
     const inside = (edit, rooms = 0) => {
       const s = defaults();
+      s.tutorials.climb = true;
       edit?.(s);
       const g = new Game(s);
       g.switchMode("tower");
@@ -106,6 +107,7 @@ try {
      * enemy on the floor, the defeat dialog waiting. */
     const fallen = (edit) => {
       const s = defaults();
+      s.tutorials.climb = true;
       quiet(s);
       edit?.(s);
       const g = new Game(s);
@@ -454,6 +456,9 @@ try {
 
   await load("fresh");
   await shot("fresh.start");
+  // A new game's note holds the hand paused until it is tapped.
+  await click(".board-tip");
+  await shot("fresh.noteDismissed");
   // Inside a run the button plays and pauses the hand.
   await click("#auto");
   await shot("fresh.handToggled");
