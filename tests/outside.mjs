@@ -17,15 +17,18 @@ try {
   });
   await page.reload();
   await expect(page.locator("#board-title")).toHaveText("THE TOWER APPROACH");
-  await page.locator('[data-tab="delve"]').click();
+  // The sign at the foot of the Tower forest's path leads to the Delve's.
+  await page.locator("#forest-sign").click();
   await expect(page.locator("#board-title")).toHaveText("THE MOUNTAIN HOLLOW");
   await expect(page.locator("#board")).not.toHaveClass(/mode-tower/);
-  await page.locator('[data-tab="settings"]').click();
+  await page.locator("#auto-settings").click();
   await page.locator("#weather-sound").uncheck();
   await page.reload();
-  await page.locator('[data-tab="settings"]').click();
+  await page.locator("#auto-settings").click();
   await expect(page.locator("#weather-sound")).not.toBeChecked();
-  await page.locator('[data-tab="tower"]').click();
+  // A reload opens on the Tower, whose forest the board button shows.
+  await page.locator('[data-tab="board"]').click();
+  await expect(page.locator("#board-title")).toHaveText("THE TOWER APPROACH");
   const box = await page.locator("#world").boundingBox();
   // The Tower clearing is 17 wide in a 20-tile view, so the camera sits at
   // left 0 and the entrance (x 8, y 12) is column 8, row 7 from the top.

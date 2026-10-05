@@ -41,8 +41,11 @@ try {
   // The random streams' start-up seeds, pinned by name, so they never depend
   // on which module (or the dev server's client) drew from Math.random first.
   globalThis.__pinnedSeeds = { game: 3513001552, defend: 2079646450 };
-  // The hand would keep stepping inside a run; snapshots need the board still.
+  // The hand would keep stepping inside a run; snapshots need the board
+  // still. It starts paused, and pressing play (or a card's Focus) shows it
+  // playing without its turns ever running, so no snapshot races a step.
   globalThis.__handStartsPaused = true;
+  globalThis.__handHeld = true;
     crypto.getRandomValues = (arr) => { for (let i = 0; i < arr.length; i++) arr[i] = Math.floor(rng() * 2 ** 32); return arr; };
     const fixture = sessionStorage.getItem("__uiFixture");
     if (fixture) localStorage.setItem("towerdelve.v1", fixture);

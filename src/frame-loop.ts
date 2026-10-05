@@ -26,6 +26,12 @@ export type FrameLoopHost = {
   save(): void;
 };
 
+/** Whether a page has asked the hand never to take its turns, playing or
+ * not (`globalThis.__handHeld`): the UI snapshot suite, so pressing play
+ * or a card's Focus changes the HUD but never moves the board under a
+ * snapshot. */
+const handHeld = () => !!(globalThis as { __handHeld?: boolean }).__handHeld;
+
 /** Walked routes advance one tile per this many ms. */
 const ROUTE_STEP_MS = 130;
 /** Battery saver: while nothing moves, draw at most every this many ms. */
@@ -90,7 +96,7 @@ export class FrameLoop {
       game.routeStep();
       this.host.update();
     }
-    if (game.auto && this.due(time, this.lastAuto, 1000 / game.moveRate)) {
+    if (game.auto && !handHeld() && this.due(time, this.lastAuto, 1000 / game.moveRate)) {
       this.lastAuto = time;
       game.autoTurn();
       this.host.update();

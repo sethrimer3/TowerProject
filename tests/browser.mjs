@@ -21,6 +21,15 @@ await page.evaluate(() => {
 });
 await page.reload();
 await page.evaluate(() => document.fonts.ready);
+/** Shows the Delve's board: the board button, then (from the Tower's
+ * forest) the sign down the path. */
+async function toDelve() {
+  const board = page.locator('[data-tab="board"]');
+  if (await board.isVisible()) await board.click();
+  if ((await board.getAttribute("aria-label")) !== "Delve") await page.locator("#forest-sign").click();
+}
+/** A forest run's hero starts on row 6; the entrance is on row 12. */
+const FOREST_STEPS = 6;
 const fontCheck = await page.evaluate(() => ({
   loaded: document.fonts.check("16px Cinzel"),
   wrong: [
@@ -50,14 +59,16 @@ if (!(await page.locator("#world").isVisible()))
 // Inside a run the tabs are hidden: end the first Tower run to reach the forest.
 await page.locator("#end-run").click();
 await page.locator("#confirm").click();
-await page.locator('[data-tab="settings"]').click();
+await page.locator("#auto-settings").click();
 await page.locator("#arrows").check();
-await page.locator('[data-tab="delve"]').click();
+await page.locator("#settings-back").click();
+await toDelve();
+await page.locator("#enter-run").click();
 await page.getByRole("button", { name: "Move up", exact: true }).click();
 if ((await page.locator("#height").textContent()) !== "1")
   throw Error("Movement failed");
+// A reload mid-Delve-run opens the Delve where it was.
 await page.reload();
-await page.locator('[data-tab="delve"]').click();
 if ((await page.locator("#height").textContent()) !== "1")
   throw Error("Save failed");
 // The viewport is a fixed 17 × 17 tiles, independent of world size.
@@ -94,9 +105,9 @@ console.log(
   }),
 );
 for (let i = 0; i < 2; i++) {
-  await page.locator('[data-tab="delve"]').click();
+  await toDelve();
   // Restart now begins outside; reaching the cave must not earn depth.
-  for (let step = 0; step < 12; step++)
+  for (let step = 0; step < FOREST_STEPS; step++)
     await page.getByRole("button", { name: "Move up", exact: true }).click();
   // The HUD counts the cave's first row as 1, so check the saved run instead.
   const entered = await page.evaluate(() => JSON.parse(localStorage.getItem("towerdelve.v1")).delve.run);
@@ -120,8 +131,8 @@ await page.locator('[data-tree="courage"]').click();
 // A skill node's first tap shows its tooltip; tapping it again buys it.
 await page.locator('[data-skill="moveSpeed"]').click();
 await page.locator('[data-skill="moveSpeed"]').click();
-await page.locator('[data-tab="delve"]').click();
-for (let step = 0; step < 12; step++)
+await toDelve();
+for (let step = 0; step < FOREST_STEPS; step++)
   await page.getByRole("button", { name: "Move up", exact: true }).click();
 // Automove may spend its first steps sideways or fighting, so check that it
 // moved the player at all rather than that it gained height.
@@ -141,7 +152,10 @@ if ((await page.locator("#height").textContent()) !== before)
 await page.locator("#auto-settings").click();
 await page.locator("#erase").click();
 await page.locator("#cancel").click();
+// The reload reopens the Delve run; ending it shows the tabs again.
 await page.reload();
+await page.locator("#end-run").click();
+await page.locator("#confirm").click();
 await page.locator('[data-tab="upgrades"]').click();
 await page.locator('[data-tree="courage"]').click();
 if ((await page.locator('[data-skill="moveSpeed"] small').textContent()) !== "1 / 1")
@@ -149,7 +163,7 @@ if ((await page.locator('[data-skill="moveSpeed"] small').textContent()) !== "1 
 console.log(
   "Upgrade purchase, auto unlock, climbing, pause, erase cancellation, and upgrade persistence passed",
 );
-await page.locator('[data-tab="delve"]').click();
+await toDelve();
 await page.screenshot({ path: "test-results/rooms-wide.png", fullPage: true });
 await page.setViewportSize({ width: 320, height: 640 });
 await page.screenshot({

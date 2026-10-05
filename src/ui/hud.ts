@@ -195,7 +195,7 @@ function renderTierArrows(game: Game) {
 /** What the board's heading shows: redrawn when it changes. */
 const headingKey = (game: Game) => {
   const slice = game.save[game.mode];
-  return `${!!game.run.outside}:${slice.tier}:${slice.tiersOpen}`;
+  return `${game.mode}:${!!game.run.outside}:${slice.tier}:${slice.tiersOpen}`;
 };
 
 /** The button's icon inside a run, by what pressing it does: text glyphs
