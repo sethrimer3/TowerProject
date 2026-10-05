@@ -224,9 +224,9 @@ test("Larger Hand opens hand slots for Gems, each dearer than the last", () => {
   g.save.upgrades.largerHand = 1;
   const paid: number[] = [];
   while (g.deck.buySlot()) paid.push(2000 - g.save.gems - paid.reduce((a, b) => a + b, 0));
-  assert.deepEqual(paid, [50, 200, 400, 600], "as far as 2000 Gems go");
+  assert.deepEqual(paid, [50, 100, 200, 300, 400, 500], "as far as 2000 Gems go");
   assert.equal(g.save.handSlots, paid.length);
-  g.save.gems = 10_000;
+  g.save.gems = 100_000;
   while (g.deck.buySlot());
-  assert.equal(g.save.handSlots, 6, "six slots to buy in all");
+  assert.equal(g.save.handSlots, 21, "21 slots to buy in all");
 });

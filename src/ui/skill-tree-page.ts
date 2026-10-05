@@ -125,7 +125,10 @@ export class SkillTreePage {
   }
 
   private renderTraining(tabs: string) {
+    // The rows scroll; a purchase redraws them without moving the list.
+    const scrolled = document.querySelector(".training-scroll")?.scrollTop ?? 0;
     el("upgrades").innerHTML = `${tabs}${this.trainingHtml()}`;
+    document.querySelector(".training-scroll")!.scrollTop = scrolled;
     this.bindTabs();
     this.bindTraining();
   }
@@ -194,12 +197,15 @@ export class SkillTreePage {
     const tree = this.current();
     const view = this.view(tree.id);
     const nodes = mapNodes(tree);
+    // A tree taller than one view scrolls, with a margin above its first
+    // row and below its last so no node is cut off on a short screen.
+    const tall = treeHeight(tree) !== 100;
     el("upgrades").innerHTML = `${tabs}
       <section class="skill-tree ${tree.id}"><header class="tree-heading"><h3>${tree.name} skill tree${this.helpButton(tree)}</h3></header>
       ${this.lockHtml(tree)}
-      <div class="tree-viewport" id="tree-viewport"><div class="tree-map" id="tree-map" style="${treeHeight(tree) === 100 ? "" : `height:${treeHeight(tree)}%;`}transform:translate(${view.x}px,${view.y}px) scale(${view.scale})"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${this.linesHtml(nodes)}</svg>
+      <div class="tree-viewport" id="tree-viewport"><div class="tree-map${tall ? " tall" : ""}" id="tree-map" style="${tall ? `--tree-height:${treeHeight(tree)}%;` : ""}transform:translate(${view.x}px,${view.y}px) scale(${view.scale})"><div class="tree-layer"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${this.linesHtml(nodes)}</svg>
       <canvas class="tree-particles" aria-hidden="true"></canvas>
-      ${nodes.map(n => this.nodeHtml(n)).join("")}</div><div class="inspect-box tree-tooltip" id="tree-tooltip" hidden></div></div></section>`;
+      ${nodes.map(n => this.nodeHtml(n)).join("")}</div></div><div class="inspect-box tree-tooltip" id="tree-tooltip" hidden></div></div></section>`;
     this.bindTabs();
     if (tree.id === "inspiration" || tree.id === "courage") el("tree-help").onclick = () => this.showHelp(tree.id as "inspiration" | "courage");
     bindPanZoom(el("tree-viewport"), el("tree-map"), view, {
@@ -301,8 +307,8 @@ export class SkillTreePage {
       ${hired ? this.boostHtml() : ""}
       <p class="training-points"><span class="training-held" title="Training points">${pointsIcon()} <b id="training-points">${points.left}</b></span>${bank}<small>${hired ? `Level up with ${pointsIcon()} or pay ${goldIcon()} to a trainer` : `Each level earns ${TRAINING_PER_LEVEL} ${pointsIcon()}`}</small>${hired ? "" : quantity}</p>
       ${hired ? `<p class="training-points training-slots">Trainers: <b id="training-slots">${save.trainingJobs.length} / ${slots}</b> ${this.trainerButton()}${quantity}</p>` : ""}
-      ${inTraining.length ? `<div class="training-table training-busy" role="list" aria-label="Stats in training">${inTraining.map(row).join("")}</div>` : ""}
-      <div class="training-table" role="list" aria-label="Stat training">${rows}</div></section>`;
+      <div class="training-scroll">${inTraining.length ? `<div class="training-table training-busy" role="list" aria-label="Stats in training">${inTraining.map(row).join("")}</div>` : ""}
+      <div class="training-table" role="list" aria-label="Stat training">${rows}</div></div></section>`;
   }
 
   /** One stat's row: its value now and after a rank, the points that train

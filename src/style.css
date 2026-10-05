@@ -1588,6 +1588,11 @@ nav {
 .tree-viewport { position: relative; flex: 1; min-height: 0; margin: 0; overflow: hidden; border: 1px solid #232b33; border-radius: 6px; touch-action: none; cursor: grab; background: #070a0e; }
 .tree-viewport:active { cursor: grabbing; }
 .tree-map { position: absolute; inset: 0; transform-origin: 0 0; width: 100%; height: 100%; }
+/* The lines, particles and nodes, placed by percentages of the tree's height; a
+   tall tree's layer stands inset from the map's top and bottom by a margin. */
+.tree-layer { position: absolute; inset: 0; }
+.tree-map.tall { height: calc(var(--tree-height) + 2 * var(--tree-margin)); --tree-margin: 48px; }
+.tree-map.tall .tree-layer { inset: var(--tree-margin) 0; }
 .tree-map svg { position: absolute; width: 100%; height: 100%; overflow: visible; }
 .tree-map line { stroke: #46505b; stroke-width: 1; vector-effect: non-scaling-stroke; }
 .tree-map line.lit { stroke: var(--tree-color); stroke-width: 2; }
@@ -2239,6 +2244,8 @@ nav button > span img { display: block; width: 42px; height: 42px; max-width: 10
 .training-points b { color: var(--gold); font-size: 15px; }
 .training-points small { color: #8793a2; font-size: 9px; }
 .training-table { display: grid; gap: 8px; }
+/* The rows scroll under the points and trainers; the scrollbar sits in the panel's padding. */
+.training-scroll { flex: 1; min-height: 0; display: grid; align-content: start; gap: 8px; overflow-y: auto; overscroll-behavior: contain; margin-right: -8px; padding-right: 8px; }
 .training-group { margin: 6px 0 0; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #9aa6b6; }
 .training-group:first-child { margin-top: 0; }
 .training-row { display: grid; grid-template-columns: minmax(52px, 1fr) minmax(38px, auto) 12px minmax(38px, auto) minmax(56px, auto) minmax(38px, auto) 28px; align-items: center; gap: 5px; }

@@ -185,11 +185,11 @@ test("the hand holds four cards, five with Larger Hand, and one more for each sl
   assert.equal(nextHandSlotGems({ upgrades, handSlots: 0 }), null, "none for sale before Larger Hand");
   const larger = { ...upgrades, largerHand: 1 };
   assert.equal(handSlots({ upgrades: larger, handSlots: 0 }), 5);
-  assert.deepEqual(HAND_SLOT_GEMS, [50, 200, 400, 600, 800, 1000]);
+  assert.deepEqual(HAND_SLOT_GEMS, [50, 100, 200, 300, 400, 500, 600, 750, 1000, 1200, 1400, 1600, 1800, 2500, 3500, 4500, 5500, 6500, 7500, 8500, 10000]);
   assert.deepEqual(HAND_SLOT_GEMS.map((_, n) => nextHandSlotGems({ upgrades: larger, handSlots: n })), [...HAND_SLOT_GEMS]);
   assert.equal(nextHandSlotGems({ upgrades: larger, handSlots: HAND_SLOT_GEMS.length }), null, "every slot bought");
   assert.equal(handSlots({ upgrades: larger, handSlots: HAND_SLOT_GEMS.length }), MAX_HAND_SLOTS);
-  assert.equal(MAX_HAND_SLOTS, 11);
+  assert.equal(MAX_HAND_SLOTS, 26);
 });
 
 test("a hand can plan one card alone, for a Focus", () => {

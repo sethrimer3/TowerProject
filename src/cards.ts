@@ -60,7 +60,9 @@ export function cardText(id: CardId, upgrades: Record<UpgradeId, number>): strin
 export const BASE_HAND_SLOTS = 4;
 /** What each hand slot bought with Gems costs, in order (Larger Hand opens
  * them). */
-export const HAND_SLOT_GEMS = [50, 200, 400, 600, 800, 1000] as const;
+export const HAND_SLOT_GEMS = [
+  50, 100, 200, 300, 400, 500, 600, 750, 1000, 1200, 1400, 1600, 1800, 2500, 3500, 4500, 5500, 6500, 7500, 8500, 10000,
+] as const;
 export const MAX_HAND_SLOTS = BASE_HAND_SLOTS + 1 + HAND_SLOT_GEMS.length;
 /** How many cards the player's hand holds: the base, one more with Larger
  * Hand, and each slot bought with Gems. */

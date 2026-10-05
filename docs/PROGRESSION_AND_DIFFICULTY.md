@@ -150,7 +150,7 @@ Tower I and Delve I hold only yellow keys and doors (and steel doors) through fl
 
 ### Gems and the hand's slots
 
-Gems are the premium currency, kept between runs. A run's floors give one Gem at a time: the next new floor reached (Tower floor, or each 10 Delve depth) holds one, then none for 30 minutes after it is collected; one missed (its floor left, or its run ended) comes back every 3 new floors until collected. The ad button pays 7 Gems every 10 minutes (not yet a real ad). The hand holds 4 cards, 5 with Larger Hand, and Larger Hand sells six more slots for 50, 200, 400, 600, 800 and 1,000 Gems (3,050 in all, 11 slots), sold whether or not the deck has cards to fill them yet. A Training stat resets for 2 Gems, returning every point spent on it. Still to come: a Shop page with free Gems once a day (resetting at 00:00 GMT) and Gems bought with real money.
+Gems are the premium currency, kept between runs. A run's floors give one Gem at a time: the next new floor reached (Tower floor, or each 10 Delve depth) holds one, then none for 30 minutes after it is collected; one missed (its floor left, or its run ended) comes back every 3 new floors until collected. The ad button pays 7 Gems every 10 minutes (not yet a real ad). The hand holds 4 cards, 5 with Larger Hand, and Larger Hand sells 21 more slots for 50, 100, 200, 300, 400, 500, 600, 750, 1,000, 1,200, 1,400, 1,600, 1,800, 2,500, 3,500, 4,500, 5,500, 6,500, 7,500, 8,500 and 10,000 Gems (58,400 in all, 26 slots), sold whether or not the deck has cards to fill them yet. A Training stat resets for 2 Gems, returning every point spent on it. Still to come: a Shop page with free Gems once a day (resetting at 00:00 GMT) and Gems bought with real money.
 
 ### Higher towers (tiers)
 
