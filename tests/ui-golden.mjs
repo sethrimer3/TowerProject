@@ -148,12 +148,12 @@ try {
         Object.assign(s.tutorials, { deck: true, removeCard: true, addCard: true, upgrades: true });
         s.badges = { owned: { hp: { copies: 4, pick: 0 }, xp: { copies: 1, pick: 0 }, hpGate: { copies: 3, pick: 1 }, charge: { copies: 2, pick: 0 } }, cards: { stairs: "hp", monster: "charge" }, rng: 99 };
       }),
-      // In the forest the first time back after floor 60: Equipment just
-      // opened (the game announces it), a few pieces owned, two worn.
+      // In the forest with Tower I's floor 60 completed: its Goal, still to
+      // claim, opens Equipment; a few pieces owned, two worn.
       equipment: forest((s) => {
         rich(s);
         s.gold = 20000;
-        s.tower.best = 59;
+        s.tower.best = s.tower.reached = 60;
         Object.assign(s.tutorials, { gear: true, upgrades: true });
         const item = (id, def, rarity, level, extra) => ({ id, def, rarity, level, slots: [], ...extra });
         Object.assign(s.equipment, {
@@ -547,11 +547,14 @@ try {
   await load("badges");
   await badgesTour("badges");
 
-  // Equipment: announced back in the forest, opened through the Blacksmith,
-  // then each view, an item, a merge, a dismantle and a ×10 pull.
+  // Equipment: claimed from Tower I's floor 60 Goal, opened through the
+  // claim's Visit the Blacksmith, then each view, an item, a merge, a
+  // dismantle and a ×10 pull.
   await load("equipment");
-  await shot("equipment.announced");
-  await click("#confirm");
+  await click("#section-pick");
+  await click('[data-goal="1:60:0"]');
+  await shot("equipment.claimed");
+  await click("#unlock-visit");
   await shot("equipment.loadout");
   await click('[data-eq-slot="weapon"]');
   await shot("equipment.slot");

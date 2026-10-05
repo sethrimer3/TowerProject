@@ -6,7 +6,7 @@
 
 ## 1. Unlock
 
-- Equipment opens the first time the hero's best reaches **floor 60** (`EQUIPMENT_FLOOR`) in either mode: Tower floor 60, or Delve depth 590 (equivalent floor 60), in any tier. Saves already past it open it on load.
+- Equipment opens by claiming Tower I's **floor 60** checkpoint reward on the Goals screen (the `equipment` unlock in `goals.ts`; `claimGoal` sets `save.equipment.unlocked`). The claim's dialog offers *Visit the Blacksmith*. Reaching a floor opens nothing by itself.
 - The moment it opens inside a run, a golden burst reads *EQUIPMENT UNLOCKED · A Blacksmith opens in the forest*, and the status line says so. Back in the forest, a dialog explains it once and offers to visit the Blacksmith.
 - From then on the **Blacksmith** stands in the forest clearing, up and left of the path (a stone forge with a red banner bearing a breastplate). Tapping it opens the Equipment screen. Before the unlock it isn't there at all.
 - The Gear tab opens with Equipment even without the Gear skill (only its Equipment tab then), and wears a dot until the Equipment screen is first seen.
@@ -204,7 +204,7 @@ At most **500** pieces (`EQUIPMENT_CAPACITY`). A boss drop that finds the invent
 
 ## 11. Boss drops (Standard pieces)
 
-From the boss of floor 60 up (equivalent floor, so Delve depth 590 too), once Equipment is open. Each physical kill pays once (`lootedTiles`, so undo can't farm it).
+From every boss and Greater Boss, on any floor and in either mode, once Equipment is open. Each physical kill pays once (`lootedTiles`, so undo can't farm it).
 
 | Enemy | Chance | Common | Uncommon | Rare |
 |---|---:|---:|---:|---:|
@@ -251,14 +251,14 @@ The Acquire view pulls in one chosen category: each pull brings one of its three
 
 | Field | Holds |
 |---|---|
-| `unlocked`, `announce`, `seen` | Opened; the forest dialog still to show; the Equipment screen seen (the Gear dot) |
+| `unlocked`, `seen` | Opened (by the floor 60 Goal); the Equipment screen seen (the Gear dot) |
 | `items` | Each piece: `id` (`e1`, `e2` …, never reused), `def` (catalogue id), `rarity`, `level`, `locked?`, `spent?` (Gold and material invested), `slots` (one per slot opened: `effect?`, `rarity?`, `refinement?`, `choicesUsed?`, `offer?`) |
 | `equipped.tower`, `equipped.delve` | Category → item id, per mode |
 | `materials` | The nine upgrade material balances |
 | `pity` | Pulls since the last Rare, per category |
 | `nextId`, `rng` | The next item id; the stream pulls and effect candidates draw from |
 
-No catalogue data (names, effects) is saved. Decoding drops unknown definitions and rarities, duplicate ids and pieces past the capacity, clamps levels to the rarity's cap, keeps loadouts to owned pieces of the right category, and resets anything malformed to its default. Saves from before Equipment load with it closed and empty (opened at once if their best is already floor 60); the old crafted-equipment fields are dropped. Pieces saved before effect slots get an empty slot for each their rarity and level have opened, each ready for its free first roll; a slot's effect is dropped if its category can no longer hold it or another slot holds it, its rarity is clamped to the item's, and Choices spent beyond those earned are dropped.
+No catalogue data (names, effects) is saved. Decoding drops unknown definitions and rarities, duplicate ids and pieces past the capacity, clamps levels to the rarity's cap, keeps loadouts to owned pieces of the right category, and resets anything malformed to its default. Saves from before Equipment load with it closed and empty (opened by claiming the floor 60 Goal); the old crafted-equipment fields are dropped. Pieces saved before effect slots get an empty slot for each their rarity and level have opened, each ready for its free first roll; a slot's effect is dropped if its category can no longer hold it or another slot holds it, its rarity is clamped to the item's, and Choices spent beyond those earned are dropped.
 
 ## 15. Effect slots and Refinement
 

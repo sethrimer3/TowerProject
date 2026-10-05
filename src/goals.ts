@@ -16,12 +16,13 @@ import { TIERS } from "./tiers.ts";
  * Combat Forecast (how many hits defeat it), Attack Lore (and how much more
  * ATK would take one hit fewer), Warp (starting a run past a completed
  * checkpoint), Damage Visual (each enemy on the board wears what its
- * fight would cost) and Relative Damage Color (Tower II: that cost coloured
- * by its share of the hero's HP). */
-export type GoalUnlock = "damagePrediction" | "combatForecast" | "attackLore" | "warp" | "damageVisual" | "relativeDamageColor";
+ * fight would cost), Relative Damage Color (Tower II: that cost coloured
+ * by its share of the hero's HP) and Equipment (the Blacksmith, equipment
+ * and its materials). */
+export type GoalUnlock = "damagePrediction" | "combatForecast" | "attackLore" | "warp" | "damageVisual" | "relativeDamageColor" | "equipment";
 export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   damagePrediction: "Damage Prediction", combatForecast: "Combat Forecast", attackLore: "Attack Lore", warp: "Warp", damageVisual: "Damage Visual",
-  relativeDamageColor: "Relative Damage Color",
+  relativeDamageColor: "Relative Damage Color", equipment: "Equipment",
 };
 /** What a checkpoint pays: an unlock, the next tower opened, or an amount of a currency. */
 export type GoalReward =
@@ -46,6 +47,7 @@ const TOWER_ONE: Record<number, Omit<Checkpoint, "floor">> = {
   30: { reward: unlock("attackLore"), premium: gems(25) },
   40: { reward: unlock("warp"), premium: gems(35) },
   50: { reward: unlock("damageVisual"), premium: gems(50) },
+  60: { reward: unlock("equipment"), premium: gems(60) },
 };
 
 /** Tower II's first checkpoint: an unlock. */
@@ -135,6 +137,9 @@ export function claimGoal(save: Save, tower: number, floor: number, premium: boo
   const reward = premium ? c.premium : c.reward;
   if (reward.kind === "currency") CURRENCIES[reward.currency].credit(save, reward.amount);
   if (reward.kind === "tower") openTower(save, reward.tower);
+  // Equipment keeps its own flag, which a save past floor 60 before this
+  // checkpoint paid it may already hold.
+  if (reward.kind === "unlock" && reward.unlock === "equipment") save.equipment.unlocked = true;
   ((premium ? save.goals.premium : save.goals.claimed)[tower] ??= []).push(floor);
   return reward;
 }

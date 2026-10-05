@@ -16,7 +16,7 @@ import { RoutePath } from "./route-path.ts";
 import { BoardPopups, lunges } from "./board-popups.ts";
 import { DamagePredictions, drawDamageLabels } from "./damage-labels.ts";
 import { goalUnlocked } from "./goals.ts";
-import { AREA_BURST_MS, drawAreaBurst, drawEquipmentBurst, preloadAreaBurst, drawLevelUp, drawRevive, LEVEL_UP_MS, POINTS_MS, REVIVE_MS } from "./level-up.ts";
+import { AREA_BURST_MS, drawAreaBurst, preloadAreaBurst, drawLevelUp, drawRevive, LEVEL_UP_MS, POINTS_MS, REVIVE_MS } from "./level-up.ts";
 import { drawPoof, POOF_MS } from "./poof.ts";
 import { drawGem, drawGemSparkle, GEM_SPARKLE_MS } from "./gem-art.ts";
 import { drawRushEchoes, RUSH_ECHO_MS } from "./rush-echoes.ts";
@@ -169,7 +169,6 @@ export class Renderer {
     drawLevelUp(f, f.now - this.game.levelUpAt, this.game.levelUpPoints);
     const area = this.game.areaBurst;
     if (area) drawAreaBurst(f, f.now - area.at, area.reward);
-    if (f.now - this.game.equipmentBurstAt < AREA_BURST_MS) drawEquipmentBurst(f, f.now - this.game.equipmentBurstAt);
     const summoned = this.game.summoned;
     if (summoned) drawPoof(f, summoned.x, summoned.y, f.now - summoned.at);
     const vanished = this.game.vanished;
@@ -529,7 +528,7 @@ export class Renderer {
     const g = this.game, sparkle = g.gemFinder.sparkle;
     return now - this.arrived > ARRIVAL_GLOW_MS && (!g.rush || now - g.rush.at >= RUSH_ECHO_MS) && g.blocked.until <= now && g.effect.until <= now &&
       now - g.levelUpAt >= LEVEL_UP_MS + POINTS_MS && g.revivedAt.every((at) => now - at >= REVIVE_MS) &&
-      (!g.areaBurst || now - g.areaBurst.at >= AREA_BURST_MS) && now - g.equipmentBurstAt >= AREA_BURST_MS &&
+      (!g.areaBurst || now - g.areaBurst.at >= AREA_BURST_MS) &&
       (!g.summoned || now - g.summoned.at >= POOF_MS) && (!g.vanished || now - g.vanished.at >= POOF_MS) &&
       (!sparkle || now - sparkle.at >= GEM_SPARKLE_MS);
   }

@@ -2165,6 +2165,8 @@ button.training-timer { border-color: #c0483c; color: #ffd0c8; background: #2a14
 .training-reset:disabled { border-color: #333c49; background: #111925; opacity: 0.45; }
 .reset-gems { display: flex; align-items: center; justify-content: center; gap: 6px; }
 .training-label { font-size: 11px; letter-spacing: 1px; color: #e3d2ad; }
+/* A row's level, and the level a trainer is taking it to. */
+.training-level { color: var(--gold); white-space: nowrap; }
 /* Auto-continue: the trainer starts the stat's next rank once one is done. */
 .training-auto-box { display: inline-flex; align-items: center; gap: 2px; margin-right: 5px; vertical-align: -3px; cursor: pointer; }
 .training-auto { width: 14px; height: 14px; margin: 0; accent-color: var(--gold); cursor: pointer; }

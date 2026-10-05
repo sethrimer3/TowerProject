@@ -51,9 +51,6 @@ export const atLeast = (r: EquipRarity, from: EquipRarity) => rarityRank(r) >= r
 export const openSlots = (rarity: EquipRarity, level: number) =>
   EQUIP_RARITIES.filter((r) => rarityRank(r) <= rarityRank(rarity) && RARITY_TIERS[r].slotLevel <= level).length;
 
-/** The floor whose first visit opens Equipment (and the lowest boss floor
- * that drops it): Tower floor 60, or Delve depth 590 (equivalent floor 60). */
-export const EQUIPMENT_FLOOR = 60;
 /** The most pieces the inventory holds (materials are currencies apart). */
 export const EQUIPMENT_CAPACITY = 500;
 /** A Unique piece, bought with Gems, salvages for this many times a Standard's. */
@@ -66,8 +63,8 @@ export const UNIQUE_SALVAGE = 2;
 export const upgradeGold = (level: number) => 5 * level * (level + 9);
 export const upgradeMaterial = (level: number) => Math.ceil((level * (level + 10)) / 20);
 
-/** Boss drops (Standard pieces only), from the boss of floor `EQUIPMENT_FLOOR`
- * up: the chance in percent a boss drops one, then its rarity's weights.
+/** Boss drops (Standard pieces only), from every boss once Equipment is
+ * open: the chance in percent a boss drops one, then its rarity's weights.
  * A Greater Boss always drops one. Unique pieces never drop. */
 export const BOSS_DROPS: Partial<Record<EnemyStrength, { chance: number; rarity: Partial<Record<EquipRarity, number>> }>> = {
   boss: { chance: 60, rarity: { common: 78, uncommon: 22 } },

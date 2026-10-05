@@ -132,7 +132,7 @@ export class RunPurse {
     const floor = this.rules.equivalentFloor(this.rules.progressAt(this.run, y)), worn = this.worn;
     const materials = rollMaterials(enemy.strength, floor, worn.materialFind, this.rng);
     if (materials) e.materials[materials.id] += materials.quantity;
-    const drop = rollBossDrop(enemy.strength, floor, worn.bossDrops, this.rng);
+    const drop = rollBossDrop(enemy.strength, worn.bossDrops, this.rng);
     const kept = drop && keepDrop(e, drop);
     return {
       materials,

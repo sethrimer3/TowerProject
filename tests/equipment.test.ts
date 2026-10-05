@@ -4,6 +4,7 @@ import { defaults, decode } from "../src/save.ts";
 import { Game } from "../src/state.ts";
 import { OutsideWorld, BLACKSMITH } from "../src/outside.ts";
 import { MODES } from "../src/modes.ts";
+import { unlockFloor } from "../src/goals.ts";
 import { random } from "../src/random.ts";
 import { loadout } from "../src/loadout.ts";
 import { predict } from "../src/combat.ts";
@@ -12,7 +13,7 @@ import {
   CATEGORIES, CATEGORY_IDS, EQUIP_MATERIALS, EQUIP_MATERIAL_IDS, ITEMS, materialOf, standardOf, uniquesOf,
 } from "../src/equipment/catalog.ts";
 import {
-  BOSS_DROPS, EQUIPMENT_CAPACITY, EQUIPMENT_FLOOR, MATERIAL_DROPS, PITY, PULL_GEMS, PULL_RATES, RARITY_TIERS,
+  BOSS_DROPS, EQUIPMENT_CAPACITY, MATERIAL_DROPS, PITY, PULL_GEMS, PULL_RATES, RARITY_TIERS,
   upgradeGold, upgradeMaterial,
 } from "../src/equipment/balance.ts";
 import {
@@ -127,19 +128,18 @@ test("decoding drops unknown pieces, clamps levels to the cap, and keeps loadout
 
 // --- Unlock and the Blacksmith ---
 
-test("Equipment opens once the best reaches floor 60 in either mode, announced once", () => {
-  const below = defaults();
-  below.tower.best = EQUIPMENT_FLOOR - 2; // height 58 = floor 59
-  assert.equal(new Game(below).save.equipment.unlocked, false);
-  for (const set of [(s: ReturnType<typeof defaults>) => (s.tower.best = EQUIPMENT_FLOOR - 1), (s: ReturnType<typeof defaults>) => (s.delve.best = (EQUIPMENT_FLOOR - 1) * 10)]) {
-    const s = defaults();
-    set(s);
-    const g = new Game(s);
-    assert.equal(g.save.equipment.unlocked, true);
-    assert.equal(g.save.equipment.announce, true);
-    g.save.equipment.announce = false;
-    assert.equal(new Game(decode(JSON.stringify(g.save))).save.equipment.announce, false, "not announced again");
-  }
+test("Equipment opens by claiming Tower I's floor 60 Goal, not by reaching a floor", () => {
+  const floor = unlockFloor("equipment");
+  assert.equal(floor, 60);
+  const s = defaults();
+  s.tower.best = s.tower.reached = 200;
+  s.delve.best = 2000;
+  const g = new Game(s);
+  assert.equal(g.save.equipment.unlocked, false, "reaching floors opens nothing");
+  g.newRun({ outside: true, seed: 7 });
+  assert.equal(g.claimGoal(1, floor, false)?.kind, "unlock");
+  assert.equal(g.save.equipment.unlocked, true);
+  assert.equal(new Game(decode(JSON.stringify(g.save))).save.equipment.unlocked, true, "kept by the save");
 });
 
 test("the Blacksmith stands in the forest only once Equipment is open, beside the path", () => {
@@ -147,11 +147,11 @@ test("the Blacksmith stands in the forest only once Equipment is open, beside th
   before.newRun({ outside: true, seed: 7 });
   const x = MODES.tower.entranceX + BLACKSMITH.dx + 1, y = BLACKSMITH.y + 1;
   assert.equal(before.atBlacksmith(x, y), false);
-  const s = defaults();
-  s.tower.best = EQUIPMENT_FLOOR - 1;
-  const g = new Game(s);
+  const g = new Game(defaults());
   g.newRun({ outside: true, seed: 7 });
-  assert.equal(g.atBlacksmith(x, y), true);
+  g.save.tower.reached = 60;
+  g.claimGoal(1, 60, false);
+  assert.equal(g.atBlacksmith(x, y), true, "standing at once in the forest the claim was made from");
   assert.equal(g.world.tile(x, y).kind, "wall", "its walls block the way");
   const forest = new OutsideWorld(7, "tower", true);
   // The path to the entrance stays open.
@@ -162,20 +162,19 @@ test("the Blacksmith stands in the forest only once Equipment is open, beside th
 
 const enemy = (strength: Enemy["strength"]): Enemy => ({ name: "Test", hp: 10, attack: 1, defense: 0, strength });
 
-test("bosses drop only Standard pieces, and only from floor 60", () => {
-  assert.equal(rollBossDrop("boss", EQUIPMENT_FLOOR - 2, 0, seq([0])), null, "floor 59");
-  assert.equal(rollBossDrop("strong", 200, 0, seq([0])), null, "only bosses");
+test("bosses drop only Standard pieces, on any floor", () => {
+  assert.equal(rollBossDrop("strong", 0, seq([0])), null, "only bosses");
   const rng = random(42);
   let drops = 0;
   for (let i = 0; i < 2000; i++) {
-    const d = rollBossDrop("boss", EQUIPMENT_FLOOR - 1, 0, rng);
+    const d = rollBossDrop("boss", 0, rng);
     if (!d) continue;
     drops++;
     assert.equal(ITEMS.find((it) => it.id === d.def)!.class, "standard");
     assert.notEqual(d.rarity, "rare", "a boss drops Common or Uncommon");
   }
   assert.ok(Math.abs(drops / 2000 - BOSS_DROPS.boss!.chance / 100) < 0.05, `${drops} of 2000`);
-  assert.ok(rollBossDrop("greaterBoss", 100, 0, seq([0.99, 0, 0])), "a Greater Boss always drops one");
+  assert.ok(rollBossDrop("greaterBoss", 0, seq([0.99, 0, 0])), "a Greater Boss always drops one");
 });
 
 test("a full inventory salvages a boss drop at once", () => {
@@ -193,11 +192,11 @@ test("material drops scale with the enemy and the floor, raised by Material Find
   assert.equal(rollMaterials("boss", 100, 50, seq([0, 0]))!.quantity, 60);
 });
 
-test("a boss beaten after Equipment opens pays its drop through the run, once per physical kill", () => {
+test("a boss beaten after Equipment opens pays its drop through the run, once per physical kill, on any floor", () => {
   const s = defaults();
-  s.tower.best = EQUIPMENT_FLOOR - 1;
+  s.equipment.unlocked = true;
   const g = new Game(s, seq([0]));
-  g.newRun({ seed: 3, height: EQUIPMENT_FLOOR - 1 });
+  g.newRun({ seed: 3, height: 9 });
   const purse = (g as any).purse;
   const first = purse.enemyLoot(enemy("boss"), 4, 4);
   assert.ok(first.equipment.item, "a drop at the 0 roll");

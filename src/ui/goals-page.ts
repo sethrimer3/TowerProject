@@ -23,12 +23,14 @@ const TOP_PX = 160;
 const CURRENCY_ICONS: Record<CurrencyId, () => string> = { gems: () => gemIcon("gem-icon goal-icon"), gold: goldIcon };
 /** Each unlock's icon: Damage Prediction a cracked heart, Combat Forecast an eye over crossed blades, Attack
  * Lore an open book with a rising arrow, Warp a portal's swirl, Damage Visual a monster's tile with a red
- * number in its corner, Relative Damage Color that tile over a green-to-red bar. */
+ * number in its corner, Relative Damage Color that tile over a green-to-red bar, Equipment an anvil
+ * under a hammer. */
 const UNLOCK_ICONS: Record<GoalUnlock, string> = {
   damagePrediction: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5S3.5 15 3.5 9A4.5 4.5 0 0 1 12 6.6 4.5 4.5 0 0 1 20.5 9c0 6-8.5 11.5-8.5 11.5z" fill="#4a1a22" stroke="#e86d7a" stroke-width="1.6" stroke-linejoin="round"/><path d="M12.5 7.5l-2 4 3 1.5-2 4" fill="none" stroke="#ffd0d5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
   combatForecast: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19L17 7M19 19L7 7" stroke="#c9ced8" stroke-width="2" stroke-linecap="round"/><path d="M3.5 9.5C6 5.5 9 4 12 4s6 1.5 8.5 5.5C18 13.5 15 15 12 15s-6-1.5-8.5-5.5z" fill="#1c2a44" stroke="#8fc4ff" stroke-width="1.5"/><circle cx="12" cy="9.5" r="2.6" fill="#8fc4ff"/></svg>`,
   attackLore: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7.5C9.5 5.5 6.5 5 3 5.5v12c3.5-.5 6.5 0 9 2 2.5-2 5.5-2.5 9-2v-12c-3.5-.5-6.5 0-9 2z" fill="#3a2a1a" stroke="#e2a15c" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 7.5v12" stroke="#e2a15c" stroke-width="1.2"/><path d="M16.5 15V9.5M14.3 11.6l2.2-2.3 2.2 2.3" fill="none" stroke="#ffd59a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
   warp: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="12" rx="8" ry="10" fill="#2a1d4a" stroke="#c9a6ff" stroke-width="1.6"/><path d="M12 6.5c3 0 4.6 2.4 4 4.8-.6 2.3-3.4 3.3-5.2 2-1.5-1-1.2-3.2.4-3.6 1.1-.3 2 .6 1.6 1.5" fill="none" stroke="#f0e2ff" stroke-width="1.5" stroke-linecap="round"/></svg>`,
+  equipment: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h13.5c2 0 3.5-1 4-2.5v3c-.5 1.8-2 3-4 3H15l1.5 4h-9L9 15.5H6.5C4.5 15.5 3 14 3 12z" fill="#3a3f4b" stroke="#c9ced8" stroke-width="1.4" stroke-linejoin="round"/><path d="M13 9.5L18.5 4" stroke="#b07a42" stroke-width="2" stroke-linecap="round"/><rect x="15.6" y="1.6" width="6" height="3.2" rx=".8" transform="rotate(45 18.6 3.2)" fill="#8d97a8" stroke="#e6ebf2" stroke-width="1"/></svg>`,
   damageVisual: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="2.5" fill="#1d2230" stroke="#8d97a8" stroke-width="1.3"/><path d="M8 15.5c0-4.5 1.8-8 4.5-8s4.5 3.5 4.5 8l-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1z" fill="#6b3a44" stroke="#df797e" stroke-width="1.2" stroke-linejoin="round"/><circle cx="11" cy="11" r="0.9" fill="#ffd0d5"/><circle cx="14" cy="11" r="0.9" fill="#ffd0d5"/><path d="M4.5 20.5v-5h2.6a1.6 1.6 0 0 1 0 3.2H4.5" fill="none" stroke="#000" stroke-width="2.6" stroke-linejoin="round"/><path d="M4.5 20.5v-5h2.6a1.6 1.6 0 0 1 0 3.2H4.5" fill="none" stroke="#ff5a5a" stroke-width="1.4" stroke-linejoin="round"/></svg>`,
   relativeDamageColor: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="goal-spectrum"><stop offset="0" stop-color="#4dff6a"/><stop offset=".35" stop-color="#ffe14d"/><stop offset=".65" stop-color="#ff9a3d"/><stop offset="1" stop-color="#ff5a5a"/></linearGradient></defs><rect x="2.5" y="2.5" width="19" height="14" rx="2.5" fill="#1d2230" stroke="#8d97a8" stroke-width="1.3"/><path d="M8.5 13.5c0-3.6 1.5-6.5 3.5-6.5s3.5 2.9 3.5 6.5l-1.2-.8-1.2.8-1.1-.8-1.1.8-1.2-.8z" fill="#6b3a44" stroke="#df797e" stroke-width="1.1" stroke-linejoin="round"/><rect x="2.5" y="18" width="19" height="3.5" rx="1.75" fill="url(#goal-spectrum)" stroke="#000" stroke-width=".8"/></svg>`,
 };
@@ -46,6 +48,8 @@ const UNLOCK_TUTORIALS: Record<GoalUnlock, string> = {
     `<p class="hint">Gray still marks an Instakill, and red a lethal fight.</p>`,
   damageVisual: `<p>Every enemy on the board now shows, in its lower-left corner, how much HP its fight would cost you: red when it is lethal, white when it strikes you but costs no HP, gray when your first strike defeats it, and ∞ when you can't hurt it.</p>` +
     `<p class="hint">Turn it off in Settings if the board feels crowded.</p>`,
+  equipment: `<p>A Blacksmith opens in the forest: tap it, or the Gear tab, to wear weapons, armour and trinkets, level them up with Gold and materials, and merge them.</p>` +
+    `<p class="hint">Every boss now has a chance to drop equipment, on any floor, and every enemy drops upgrade materials.</p>`,
 };
 const LOCK_ICON = `<svg class="goal-badge" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7.5" rx="1.5" fill="#3a3f4b" stroke="#c9ced8" stroke-width="1.1"/><path d="M5.2 7V5.2a2.8 2.8 0 0 1 5.6 0V7" fill="none" stroke="#c9ced8" stroke-width="1.4"/></svg>`;
 /** Beside a checkpoint's floor: its area mastered (a golden swirl, shown once Warp is owned) and cleared (a green check). */
@@ -233,10 +237,13 @@ export class GoalsPage {
   /** What an unlock does, shown once it is claimed, and `again` when its claimed reward is pressed. */
   private unlockTutorial(what: GoalUnlock, again = false) {
     const modal = this.ctx.modal;
+    // Equipment, newly claimed, offers its Blacksmith at once.
+    const visit = what === "equipment" && !again;
     modal.innerHTML = `<small>GOALS</small><h2>${UNLOCK_NAMES[what]}${again ? "" : " unlocked"}</h2>` + UNLOCK_TUTORIALS[what] +
-      `<div class="dialog-actions"><button id="unlock-ok">Got it</button></div>`;
+      `<div class="dialog-actions"><button id="unlock-ok">${visit ? "Later" : "Got it"}</button>${visit ? `<button id="unlock-visit">Visit the Blacksmith</button>` : ""}</div>`;
     modal.showModal();
     el("unlock-ok").onclick = () => modal.close();
+    if (visit) el("unlock-visit").onclick = () => (modal.close(), this.ctx.navigate("gear"));
   }
 
   private askWarp(tower: number, floor: number) {

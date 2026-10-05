@@ -323,7 +323,14 @@ export class SkillTreePage {
     const nowButton = step.maxed
       ? ""
       : `<button class="training-box training-cost training-now" data-train="${t.id}" ${bulk.affordable ? "" : "disabled"} aria-label="Spend ${bulk.cost} training ${bulk.cost === 1 ? "point" : "points"} to train ${t.name} ${count === 1 ? "one rank" : `${count} ranks`} now" title="Train now">${maxCount(q, count)}${pointsIcon()}<span>${bulk.cost}</span></button>`;
-    return `<div class="training-row${job ? " active" : ""}" role="listitem" data-training-row="${t.id}"><span class="training-label">${job ? this.autoBox(t) : ""}${t.name}${notes ? `<small>${notes}</small>` : ""}</span><span class="training-box">${shown(now)}</span><span class="training-arrow" aria-hidden="true">→</span><span class="training-box next">${shown(next)}</span>${hired ? this.trainerHtml(t, step) : ""}${nowButton}${this.resetButton(t, !!job)}</div>`;
+    return `<div class="training-row${job ? " active" : ""}" role="listitem" data-training-row="${t.id}"><span class="training-label">${job ? this.autoBox(t) : ""}${t.name} - ${this.levelText(t.id, !!job)}${notes ? `<small>${notes}</small>` : ""}</span><span class="training-box">${shown(now)}</span><span class="training-arrow" aria-hidden="true">→</span><span class="training-box next">${shown(next)}</span>${hired ? this.trainerHtml(t, step) : ""}${nowButton}${this.resetButton(t, !!job)}</div>`;
+  }
+
+  /** A row's level, its ranks, and while a trainer trains the next, the
+   * level it reaches: "Lv 5", or "Lv 5 → 6". */
+  private levelText(id: TrainingId, training: boolean) {
+    const ranks = this.ctx.game.save.training[id];
+    return `<span class="training-level">Lv ${ranks}${training ? ` → ${ranks + 1}` : ""}</span>`;
   }
 
   /** A row in training's auto-continue box, with its loop icon: while

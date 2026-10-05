@@ -29,7 +29,7 @@ _Avoid_: tower log, reward log
 ### Equipment
 
 **Equipment**:
-The pieces a hero wears, one per category (Weapon, Chestplate, Helmet, Gloves, Boots, Cape, Belt, Ring, Amulet), opened by first reaching floor 60. Kept in one shared inventory between runs.
+The pieces a hero wears, one per category (Weapon, Chestplate, Helmet, Gloves, Boots, Cape, Belt, Ring, Amulet), opened by claiming Tower I's floor 60 Goal. Kept in one shared inventory between runs.
 _Avoid_: gear (the Gear page and its provisions), items (pickups on the board)
 
 **Loadout** (equipment):
@@ -37,7 +37,7 @@ The pieces one mode's hero wears; the Tower and the Delve each have their own, d
 _Avoid_: build, set
 
 **Standard piece**:
-A category's plain piece, dropped by bosses from floor 60.
+A category's plain piece, dropped by bosses on any floor once Equipment is open.
 _Avoid_: common item (Common is a rarity)
 
 **Unique piece**:

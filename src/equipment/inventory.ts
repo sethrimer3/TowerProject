@@ -42,10 +42,8 @@ export type EquipItem = {
 };
 export type Loadout = Partial<Record<CategoryId, string>>;
 export type EquipmentSave = {
-  /** Set the first time the hero reaches floor 60 (`EQUIPMENT_FLOOR`). */
+  /** Set by claiming Tower I's floor-60 Goal (goals.ts). */
   unlocked: boolean;
-  /** The unlock still to announce on the board. */
-  announce: boolean;
   /** Set once the Equipment tab has been opened after the unlock (its dot). */
   seen: boolean;
   items: EquipItem[];
@@ -63,7 +61,7 @@ export type EquipmentSave = {
 
 const zeroes = <K extends string>(keys: readonly K[]) => Object.fromEntries(keys.map((k) => [k, 0])) as Record<K, number>;
 export const defaultEquipment = (): EquipmentSave => ({
-  unlocked: false, announce: false, seen: false, items: [], equipped: { tower: {}, delve: {} },
+  unlocked: false, seen: false, items: [], equipped: { tower: {}, delve: {} },
   materials: zeroes(EQUIP_MATERIAL_IDS), pity: zeroes(CATEGORY_IDS), nextId: 1, rng: null,
 });
 
@@ -264,7 +262,6 @@ export function decodeEquipment(raw: unknown): EquipmentSave {
   const e = defaultEquipment();
   if (!isRecord(raw)) return e;
   e.unlocked = raw.unlocked === true;
-  e.announce = e.unlocked && raw.announce === true;
   e.seen = e.unlocked && raw.seen === true;
   const ids = new Set<string>();
   if (Array.isArray(raw.items))

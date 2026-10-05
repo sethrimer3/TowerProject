@@ -77,7 +77,7 @@ import { BadgeDesk } from "./game/badge-desk.ts";
 import { RunPurse, type EquipmentLoot } from "./game/run-purse.ts";
 import { EquipmentDesk } from "./game/equipment-desk.ts";
 import { raised, wornEffects } from "./equipment/effects.ts";
-import { EQUIPMENT_FLOOR, RARITY_TIERS } from "./equipment/balance.ts";
+import { RARITY_TIERS } from "./equipment/balance.ts";
 import { EQUIP_MATERIALS, EQUIP_MATERIAL_IDS, itemDef } from "./equipment/catalog.ts";
 import { readyForestRuns, startingHero } from "./game/hero-sync.ts";
 /** How a new run starts: out in the forest or at the entrance, and from
@@ -184,7 +184,6 @@ export class Game {
   areaBurst: { reward: AreaReward; at: number } | null = null;
   /** When Equipment opened on floor 60 (performance.now()), for the
    * board's burst. */
-  equipmentBurstAt = -Infinity;
   /** Where a Greater Boss last appeared, and when (performance.now()), for
    * the board's poof; cleared by undo. */
   summoned: { x: number; y: number; at: number } | null = null;
@@ -222,8 +221,6 @@ export class Game {
    * seeded stream replays a game and no visual effect can shift it. */
   constructor(public save: Save, private rng: () => number = stream("game")) {
     this.loadMode();
-    // A save already past floor 60 opens Equipment at once, and its Blacksmith.
-    if (this.openEquipment() && this.run.outside) this.world = this.buildWorld();
   }
   /** Dev: whether every purchase is allowed and costs nothing (and research
    * takes no time). */
@@ -1117,6 +1114,8 @@ export class Game {
   claimGoal(tower: number, floor: number, premium: boolean) {
     const reward = claimGoal(this.save, tower, floor, premium);
     if (reward) readyForestRuns(this.save);
+    // Equipment's Blacksmith opens in the forest at once.
+    if (reward?.kind === "unlock" && reward.unlock === "equipment" && this.run.outside) this.world = this.buildWorld();
     return reward;
   }
   /** Whether a Tower run in the forest may warp to the checkpoint at `floor`. */
@@ -1561,10 +1560,6 @@ export class Game {
     slice.best = Math.max(slice.best, reached);
     this.rules.credit(this.save, earned);
     slice.runCurrency += earned;
-    if (this.openEquipment()) {
-      this.equipmentBurstAt = performance.now();
-      this.message = "Equipment unlocked · a Blacksmith opens in the forest";
-    }
     this.startSpeedLesson();
     return earned;
   }
@@ -1572,21 +1567,6 @@ export class Game {
    * Equipment screen when tapped. */
   atBlacksmith(x: number, y: number) {
     return this.run.outside && this.world instanceof OutsideWorld && this.world.isBlacksmith(x, y);
-  }
-  /** Opens Equipment the first time either mode's best reaches floor 60
-   * (`EQUIPMENT_FLOOR`; Delve depth 590), to be announced; returns whether
-   * it opened now. Once open it stays open. */
-  private openEquipment() {
-    const e = this.save.equipment;
-    if (e.unlocked) return false;
-    const reached = (["tower", "delve"] as const).some((mode) => {
-      const slice = this.save[mode], bests = [slice.best, ...Object.values(slice.tierRecords).map((r) => r.best)];
-      return bests.some((best) => MODES[mode].equivalentFloor(best) + 1 >= EQUIPMENT_FLOOR);
-    });
-    if (!reached) return false;
-    e.unlocked = true;
-    e.announce = true;
-    return true;
   }
   /** Equipment's heal on a floor reached for the first time in the run (a
    * share of max HP, by `floorHeal`), shown like a potion's. */

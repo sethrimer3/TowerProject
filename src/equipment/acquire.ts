@@ -6,7 +6,7 @@ import type { EnemyStrength } from "../entities.ts";
 import { random } from "../random.ts";
 import { CATEGORY_IDS, materialOf, standardOf, uniquesOf, type CategoryId, type EquipMaterialId } from "./catalog.ts";
 import {
-  BOSS_DROPS, EQUIP_RARITIES, EQUIPMENT_FLOOR, MATERIAL_DROPS, MATERIAL_FLOORS, PITY, PULL_RATES,
+  BOSS_DROPS, EQUIP_RARITIES, MATERIAL_DROPS, MATERIAL_FLOORS, PITY, PULL_RATES,
   type EquipRarity,
 } from "./balance.ts";
 import { addItem, salvageOf, type EquipItem, type EquipmentSave } from "./inventory.ts";
@@ -55,13 +55,12 @@ export function pull(e: EquipmentSave, category: CategoryId, count: number, seed
   });
 }
 
-/** A beaten boss's equipment on equivalent floor `floor` (0-based, as
- * heights are): a Standard piece of a random category at a rolled rarity,
- * by its strength's chance raised by `bonus` percentage points, from the
- * floor-60 boss up. Null when it drops none. */
-export function rollBossDrop(strength: EnemyStrength, floor: number, bonus: number, rng: () => number) {
+/** A beaten boss's equipment: a Standard piece of a random category at a
+ * rolled rarity, by its strength's chance raised by `bonus` percentage
+ * points, on any floor. Null when it drops none. */
+export function rollBossDrop(strength: EnemyStrength, bonus: number, rng: () => number) {
   const table = BOSS_DROPS[strength];
-  if (!table || floor + 1 < EQUIPMENT_FLOOR) return null;
+  if (!table) return null;
   if (rng() * 100 >= table.chance + bonus) return null;
   const rarity = rollRarity(table.rarity, rng());
   const category = pick(CATEGORY_IDS, rng());

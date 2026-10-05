@@ -22,7 +22,6 @@ import { GoalsPage } from "./ui/goals-page.ts";
 import { SkillTreePage } from "./ui/skill-tree-page.ts";
 import { ResearchToasts, researchToast, trainingToast } from "./ui/research-toast.ts";
 import { GearPage } from "./ui/gear-page.ts";
-import { EQUIPMENT_FLOOR } from "./equipment/balance.ts";
 import { equipmentWaiting } from "./equipment/inventory.ts";
 import { DeckPage } from "./ui/deck-page.ts";
 import { RunTrainingBar } from "./ui/run-training-bar.ts";
@@ -105,7 +104,6 @@ function update() {
   researchToasts.add(finished);
   save();
   runEnd.check();
-  announceEquipment();
 }
 function renderPage() {
   if (tab === "defend") defendPage.show();
@@ -170,19 +168,6 @@ function clearDots(id: Tab) {
 function openBlacksmith() {
   gear.openEquipment();
   navigate("gear");
-}
-/** Once Equipment opens, back in the forest (never mid-run), a dialog says
- * so and offers the Blacksmith. */
-function announceEquipment() {
-  const e = game.save.equipment;
-  if (!e.announce || !game.run.outside || game.fallen || modal.open) return;
-  e.announce = false;
-  confirmAction(ctx, {
-    title: "Equipment unlocked",
-    body: `You reached floor ${EQUIPMENT_FLOOR}. A Blacksmith has opened in the forest: tap it, or the Gear tab, to wear weapons, armour and trinkets, level them up and merge them. Bosses now drop equipment, and every enemy drops upgrade materials.`,
-    label: "Visit the Blacksmith",
-    cancel: "Later",
-  }, openBlacksmith);
 }
 /** Shows page `id` and marks its tab; the stats sit over the board, and
  * the currencies bar, with the Shop at its end, tops the pages that spend
