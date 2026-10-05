@@ -84,7 +84,6 @@ const v3 = () => ({
     materials: { ...defaultEquipment().materials, whetstone: 12, amber: 3 },
     pity: { ...defaultEquipment().pity, ring: 41 },
   },
-  consumables: { ...defaults().consumables },
 });
 // Each base mutates only the subtrees where it behaves differently, keeping the
 // corpus small: snapshots nested in history/fall reuse the run validator.

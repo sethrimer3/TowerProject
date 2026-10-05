@@ -9,7 +9,6 @@ import { Renderer } from "./rendering.ts";
 import { bindInput } from "./input.ts";
 import { DefendPage } from "./defend/ui.ts";
 import { drawGameSprite } from "./game-sprites.ts";
-import type { ConsumableId } from "./crafting.ts";
 import { FrameLoop } from "./frame-loop.ts";
 import { installDebugHooks } from "./debug-hooks.ts";
 import { isBoard, type AppContext, type Tab } from "./ui/app.ts";
@@ -185,13 +184,6 @@ function showPage(id: Tab) {
   });
 }
 
-document.querySelectorAll<HTMLButtonElement>("[data-hud-consumable]").forEach(button => {
-  button.onclick = () => {
-    if (!game.useConsumable(button.dataset.hudConsumable as ConsumableId)) return;
-    save();
-    update();
-  };
-});
 // Focus: pressing a hand card inside a run puts it ahead of the others.
 el("hand").onclick = (e) => {
   const card = (e.target as HTMLElement).closest<HTMLElement>(".hand-card");

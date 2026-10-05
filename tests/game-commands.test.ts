@@ -5,7 +5,6 @@ import { decode, defaults } from "../src/save.ts";
 import { ENTRANCE_Y } from "../src/outside.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import { chooseStep } from "../src/automation.ts";
-import { CONSUMABLES } from "../src/crafting.ts";
 import { silverForKill } from "../src/config.ts";
 
 /** A new game's save, its first run's note already dismissed, so the hand
@@ -44,19 +43,20 @@ test("inside a run the hand plays, and a turn steps along the first card's path"
 test("a hand with no card that can act pauses, lights End Run, and plays on after the player acts", () => {
   const g = arena(3);
   (g.world as RoomWorld).cells.set("2,2", { kind: "floor" });
-  const tonic = CONSUMABLES[0].id;
-  g.save.consumables[tonic] = 2;
+  // Training for the run alone (On the Job) is a player action.
+  g.save.upgrades.onTheJob = 1;
+  g.run.silver = 1e9;
   g.autoTurn();
   assert.ok(g.handStuck && !g.auto && g.activeCard === null && !g.fallen);
   assert.deepEqual([g.run.player.x, g.run.player.y], [0, 0]);
   assert.match(g.message, /^No card can move/);
   // Acting while nothing has changed leaves it paused.
-  assert.ok(g.useConsumable(tonic));
+  assert.ok(g.trainInRun("attack"));
   assert.ok(g.handStuck && !g.auto);
   // Once the floor has changed (here, a key appearing, as a skill might
   // make), the player's next action sets the hand playing again.
   (g.world as RoomWorld).cells.set("2,0", { kind: "key", color: "yellow" });
-  assert.ok(g.useConsumable(tonic));
+  assert.ok(g.trainInRun("attack"));
   assert.ok(!g.handStuck && g.auto);
   g.autoTurn();
   assert.equal(g.save.hand[g.activeCard!], "yellowKey");

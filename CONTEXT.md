@@ -195,7 +195,7 @@ _Avoid_: regeneration, healing (a potion's)
 
 **Provision**:
 A lasting boost bought with Gold on the Gear page: each one bought adds to the loadout of every run from then on (a stat, or a yellow key), and the next of its kind costs more.
-_Avoid_: consumable (a crafted item used during a run), buff
+_Avoid_: consumable, buff
 
 ### Progress
 

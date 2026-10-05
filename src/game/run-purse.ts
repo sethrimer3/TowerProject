@@ -1,6 +1,5 @@
 import { researched } from "../archives.ts";
 import { ENEMY_GOLD, silverForKill } from "../config.ts";
-import { creditMaterials } from "../crafting.ts";
 import type { RoomWorld } from "../tower/room-world.ts";
 import type { Enemy, Mode, Run, Save } from "../entities.ts";
 import { snap } from "../exact.ts";
@@ -110,18 +109,15 @@ export class RunPurse {
     return instakill ? snap((gold * researched(this.save.archives, "instakillGold", 100)) / 100) : gold;
   }
 
-  /** An enemy's Gold (by its strength), material drops and, once Equipment
-   * is open, its upgrade materials and a boss's equipment, once per
-   * physical kill. */
-  enemyLoot(enemy: Enemy, x: number, y: number, scale = 1, instakill = false): { gold: number; drops: MaterialStack[]; equipment: EquipmentLoot | null } {
-    if (!this.loot(this.lootKey(x, y))) return { gold: 0, drops: [], equipment: null };
+  /** An enemy's Gold (by its strength) and, once Equipment is open, its
+   * upgrade materials and a boss's equipment, once per physical kill. */
+  enemyLoot(enemy: Enemy, x: number, y: number, scale = 1, instakill = false): { gold: number; equipment: EquipmentLoot | null } {
+    if (!this.loot(this.lootKey(x, y))) return { gold: 0, equipment: null };
     // Then the tier's bonus; Effective or Dampen on the card that took the
     // fight scales it too.
     const base = this.killGold(enemy, instakill), raised = scale === 1 ? base : snap(base * scale);
     const gold = this.gold(tierGold(this.tier, raised));
-    const drops = this.rules.enemyDrops(enemy.name, this.rng);
-    creditMaterials(this.save, drops);
-    return { gold, drops, equipment: this.equipmentLoot(enemy, y) };
+    return { gold, equipment: this.equipmentLoot(enemy, y) };
   }
 
   /** A kill's upgrade materials and a boss's equipment, on the equivalent
@@ -141,16 +137,14 @@ export class RunPurse {
     };
   }
 
-  /** A treasure chest's Gold and materials, once per physical chest, or
-   * null when it was already paid. Generated treasure never upgrades gear
-   * directly: it always grants Gold, plus independent chances at metal, an
-   * Empty Vial, and gems. */
+  /** A treasure chest's Gold and metal bars, once per physical chest, or
+   * null when it was already paid. */
   treasure(x: number, y: number): { gold: number; materials: MaterialStack[] } | null {
     if (!this.loot(this.lootKey(x, y))) return null;
     const rules = this.rules;
     const loot = rollTreasureLoot(rules.equivalentFloor(rules.progressAt(this.run, y)), this.rng);
     const gold = this.gold(tierGold(this.tier, loot.gold));
-    creditMaterials(this.save, loot.materials);
+    for (const m of loot.materials) this.save.materials[m.id] += m.quantity;
     return { gold, materials: loot.materials };
   }
 

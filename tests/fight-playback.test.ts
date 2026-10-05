@@ -205,18 +205,6 @@ test("a potion records the HP it healed from and to, for the HP bar to fill up",
   assert.equal(full.lastHeal, null, "a potion at full HP heals nothing to show");
 });
 
-test("a crafted potion records its heal just as a picked-up one does", () => {
-  const g = arena({ kind: "floor" });
-  g.run.outside = false;
-  g.run.player.hp = g.run.player.maxHp - 10;
-  g.save.consumables.cinderTonic = 1;
-  assert.ok(g.useConsumable("cinderTonic"));
-  const hp = g.run.player.hp;
-  assert.deepEqual(g.lastHeal, { from: hp - 10, to: hp, x: 0, y: 0, id: 1 }, "it heals only the HP missing");
-  assert.match(g.message, /\+10 HP$/);
-  assert.equal(g.effect.until, 0, "the green number shows it, not text over the board");
-});
-
 test("each heal raises its HP healed in green over the hero, once", () => {
   const popups = new BoardPopups();
   const game = { run: { seed: 1 }, gains: [], fight: null, lastHeal: { from: 40, to: 75, x: 3, y: 2, id: 1 } };

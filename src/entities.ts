@@ -6,7 +6,6 @@ import type { BadgesSave, RunBadge } from "./badges.ts";
 import type { GoldItemId, KeyColor, TrainingId, UpgradeId } from "./config.ts";
 import type { MaterialId } from "./materials.ts";
 import type { EquipmentSave } from "./equipment/inventory.ts";
-import type { ConsumableId } from "./crafting.ts";
 import type { DefendSave } from "./defend/progress.ts";
 import type { GemDrop } from "./gems.ts";
 import type { Settings } from "./settings.ts";
@@ -272,7 +271,6 @@ export type Save = {
    * hero wears, the upgrade materials, and the Gem pulls' pity
    * (equipment/inventory.ts). */
   equipment: EquipmentSave;
-  consumables: Record<ConsumableId, number>;
   /** The active hand: the cards that move the hero inside a run, in
    * priority order. Set up before a run; a new profile starts with the
    * base hand. */

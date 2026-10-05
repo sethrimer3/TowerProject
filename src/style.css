@@ -365,11 +365,6 @@ h1 span {
   opacity: .35;
   cursor: default;
 }
-.consumable-sprite {
-  width: 18px;
-  height: 18px;
-  image-rendering: pixelated;
-}
 .run-consumables b {
   position: absolute;
   right: -3px;

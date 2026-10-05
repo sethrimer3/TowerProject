@@ -43,12 +43,9 @@ test("each mode builds its own board from a run and enters it at its own column"
   assert.deepEqual([tower.entranceX, delve.entranceX], [TOWER_START_X, START_X]);
 });
 
-test("loot keys, drops and end-of-run gold differ by mode", () => {
+test("loot keys and end-of-run gold differ by mode", () => {
   assert.equal(tower.lootKey(run(), 3, 4), "7:12:3,4");
   assert.equal(delve.lootKey(run(), 3, 4), "7:3,4");
   assert.equal(tower.endGold(run()), 0);
   assert.equal(delve.endGold(run()), goldReward(2));
-  let draws = 0;
-  tower.enemyDrops("Cinder slime", () => (draws++, 0));
-  assert.equal(draws, 0, "Tower drops are fixed per enemy");
 });

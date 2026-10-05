@@ -2,7 +2,6 @@ import { trainNow } from "./train-now.ts";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { GOLD_SHOP, TRAINING, xpForLevel } from "../src/config.ts";
-import { craftConsumable } from "../src/crafting.ts";
 import { addItem } from "../src/equipment/inventory.ts";
 import { buyBomb, buyItem, buyUpgrade, defaultDefendSave } from "../src/defend/progress.ts";
 import { trainingPoints, trainingStep } from "../src/loadout.ts";
@@ -54,13 +53,6 @@ test("free Training stays unspent after free purchases are turned off, and saves
   assert.equal(loaded.training.attack, 3);
 });
 
-test("free purchases: crafting takes no materials", () => {
-  const save = freeSave();
-  assert.ok(craftConsumable(save, "cinderTonic"));
-  assert.equal(save.consumables.cinderTonic, 1);
-  assert.ok(Object.values(save.materials).every((n) => n === 0));
-});
-
 test("free purchases: equipment levels and Gem pulls cost nothing, and caps still hold", () => {
   const g = new Game(freeSave()), e = g.save.equipment;
   e.unlocked = true;
@@ -98,7 +90,6 @@ test("without free purchases, nothing is bought on credit", () => {
   assert.ok(!g.buy("combatStance"));
   assert.ok(!trainNow(g, "hp"));
   assert.ok(!g.gear.buyProvision(GOLD_SHOP[0].id));
-  assert.equal(craftConsumable(g.save, "cinderTonic"), false);
   assert.ok(!g.research.start(0, "potionHp"));
   assert.ok(!g.research.hire());
 });
