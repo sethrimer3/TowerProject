@@ -1763,7 +1763,9 @@ nav {
 .pull-deal { margin: 4px 0; color: #ffe08a; font-size: 12px; }
 .gem-buy .was { color: #a99; font-size: .85em; text-decoration: line-through; }
 .pull-box { padding: 8px 10px; border: 1px solid #6b5a35; border-radius: 5px; background: #16202c; }
-.pull-pool { margin: 4px 0; padding-left: 18px; text-align: left; font-size: 11px; line-height: 1.5; }
+.pull-pool { margin: 4px 0; padding: 0; list-style: none; text-align: left; font-size: 11px; line-height: 1.5; }
+.pull-pool li { display: flex; align-items: center; gap: 6px; margin: 3px 0; }
+.pull-pool .equip-icon { flex: none; width: 24px; height: 24px; }
 .pull-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
 .pull-buttons button { padding: 10px 6px; font-size: 12px; }
 /* Equipment screen: the loadout ring over a grid of tiles, the views' tabs

@@ -34,7 +34,7 @@ Each category levels with its own upgrade material. Materials are currencies (`s
 | Ring | Power: percentages of ATK, DEF and max HP | Moonstone | A pale stone that holds a quiet charge. |
 | Amulet | Life: max HP, regeneration and healing | Amber | Warm resin around a trapped spark of life. |
 
-Each category's icon, each material's icon, and the dismantle (hammer), merge (three arrows into one), level up (arrow) and lock icons are 12 × 12 pixel art drawn as inline SVG (`ui/equipment-icons.ts`).
+Each category's icon (on filters and empty slots), each piece's icon (every Unique and the Silver Band its own, so pieces of a category tell apart at a glance; the other Standard pieces wear their category's), each material's icon, and the dismantle (hammer), merge (three arrows into one), level up (arrow) and lock icons are 12 × 12 pixel art drawn as inline SVG (`ui/equipment-icons.ts`).
 
 ## 4. Rarity
 

@@ -20,7 +20,7 @@ import type { AppContext } from "./app.ts";
 import { askForGems } from "./dialogs.ts";
 import { el, gemIcon, riseFrom, uiSprite } from "./dom.ts";
 import { currencyAmount, devAmount } from "./hud.ts";
-import { ACTION_ICONS, categoryIcon, materialIcon } from "./equipment-icons.ts";
+import { ACTION_ICONS, categoryIcon, itemIcon, materialIcon } from "./equipment-icons.ts";
 import { playSlagMerge } from "./slag-merge.ts";
 
 /** The Equipment screen's views, chosen by the tabs along its bottom: the
@@ -104,7 +104,7 @@ export class EquipmentPanel {
   private tile(item: EquipItem, attr: string, extra = "") {
     const def = itemDef(item.def)!, worn = this.e.equipped[this.mode][def.category] === item.id;
     const label = `${def.name}, ${RARITY_TIERS[item.rarity].name}, Level ${item.level}${worn ? `, worn in the ${MODE_NAMES[this.mode]}` : ""}${item.locked ? ", locked" : ""}`;
-    return `<button class="eq-tile rar-${item.rarity}${extra}" data-${attr}="${item.id}" title="${label}" aria-label="${label}">${categoryIcon(def.category, "eq-tile-icon")}
+    return `<button class="eq-tile rar-${item.rarity}${extra}" data-${attr}="${item.id}" title="${label}" aria-label="${label}">${itemIcon(def.id, "eq-tile-icon")}
       <span class="eq-tile-mark">${RARITY_TIERS[item.rarity].mark}</span><span class="eq-tile-level">${item.level}</span>
       ${worn ? `<span class="eq-tile-worn" aria-hidden="true">✓</span>` : ""}${item.locked ? `<span class="eq-tile-lock">${ACTION_ICONS.lock}</span>` : ""}${def.class === "unique" ? `<span class="eq-tile-unique" aria-hidden="true">★</span>` : ""}</button>`;
   }
@@ -257,7 +257,7 @@ export class EquipmentPanel {
   private doAssemble() {
     if (!this.target) return;
     const going = [this.target, ...this.copies].map((id) => findItem(this.e, id)).filter((i): i is EquipItem => !!i)
-      .map((i) => ({ category: categoryOf(i), rarity: i.rarity }));
+      .map((i) => ({ def: i.def, rarity: i.rarity }));
     const result = this.game.equipment.merge(this.target, this.copies);
     if (typeof result === "string") return;
     const id = this.target;
@@ -265,7 +265,7 @@ export class EquipmentPanel {
     this.copies = [];
     this.changed();
     const item = findItem(this.e, id);
-    if (item) playSlagMerge(going, { category: categoryOf(item), rarity: item.rarity }, this.game.save.settings.reduceMotion, () => this.showResult("Assemble Complete!", [item]));
+    if (item) playSlagMerge(going, { def: item.def, rarity: item.rarity }, this.game.save.settings.reduceMotion, () => this.showResult("Assemble Complete!", [item]));
   }
 
   // --- Acquire: Gem pulls ---
@@ -284,7 +284,7 @@ export class EquipmentPanel {
     const box = all
       ? `<h3>All types ${off}</h3><p class="pull-deal">${PULL_ALL_DISCOUNT}% off: each pull brings a Unique piece of a random category, any of the nine.</p>
         <p class="hint">Rates: ${rates}. Each pull counts toward its own category's pity: the ${PITY}th in a row without a Rare in a category is a Rare.</p>`
-      : `<h3>${categoryIcon(c)} ${CATEGORIES[c].plural}</h3><ul class="pull-pool">${uniquesOf(c).map((d) => `<li><strong>${d.name}</strong>: ${d.identity}</li>`).join("")}</ul>
+      : `<h3>${categoryIcon(c)} ${CATEGORIES[c].plural}</h3><ul class="pull-pool">${uniquesOf(c).map((d) => `<li>${itemIcon(d.id)}<span><strong>${d.name}</strong>: ${d.identity}</span></li>`).join("")}</ul>
         <p class="hint">Rates: ${rates}. Pity: ${this.e.pity[c]}/${PITY}. The ${PITY}th pull in a row without a Rare ${CATEGORIES[c].name.toLowerCase()} is a Rare; each category counts its own.</p>`;
     return `<p class="hint">Choose a category, or all types for ${PULL_ALL_DISCOUNT}% less, then pull: each pull brings a Unique piece at a rolled rarity. Bosses never drop Unique pieces.</p>
       <div class="pull-cats">${cats}</div>
@@ -406,7 +406,7 @@ export class EquipmentPanel {
     const protectedNote = isProtected(this.e, item) ? `<p class="hint">${item.locked ? "Locked" : "Worn"}: it can't be dismantled or used up in a merge until you ${item.locked ? "unlock it" : "take it off"}.</p>` : "";
     const invested = item.spent ? `<p class="hint">Invested: ${currencyAmount(item.spent.gold)} Gold and ${item.spent.material} ${EQUIP_MATERIALS[mat].name}.</p>` : "";
     modal.innerHTML = `<small>${CATEGORIES[category].name.toUpperCase()} · ${def.class === "unique" ? "UNIQUE" : "STANDARD"}</small>
-      <h2 class="equip-title"><span class="equip-icon-frame rar-${item.rarity}">${categoryIcon(category)}</span>${def.name}</h2>
+      <h2 class="equip-title"><span class="equip-icon-frame rar-${item.rarity}">${itemIcon(def.id)}</span>${def.name}</h2>
       <p class="item-meta">${rarityTag(item.rarity)} Level ${item.level}/${maxLevel(item)}</p>${this.progressHtml(item)}<p class="item-identity">${def.identity}.</p>
       <h3 class="equip-heading">Intrinsic</h3><ul class="effect-list">${lines}</ul>
       <h3 class="equip-heading">Effect slots</h3>${this.slotsHtml(item)}${this.compareWorn(item)}${level}${invested}${protectedNote}

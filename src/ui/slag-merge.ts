@@ -1,4 +1,3 @@
-import type { CategoryId } from "../equipment/catalog.ts";
 import { RARITY_TIERS, type EquipRarity } from "../equipment/balance.ts";
 import { stream } from "../random.ts";
 import { iconPixels } from "./equipment-icons.ts";
@@ -13,7 +12,8 @@ const SHOW = 450, MELT = 1650, FLOW = 2650, FORM = 3550, HOLD = 4300;
 /** Slag's colours, from cooling red to white-hot. */
 const SLAG = ["#7a1606", "#c2380c", "#ff6a14", "#ffa53a", "#ffe08a"];
 
-type Spec = { category: CategoryId; rarity: EquipRarity };
+/** A piece by its definition id and rarity. */
+type Spec = { def: string; rarity: EquipRarity };
 type Bit = {
   color: string;
   /** Where it starts (the piece going in), pools, gathers and ends (the piece made). */
@@ -58,10 +58,10 @@ export function playSlagMerge(inputs: Spec[], result: Spec, reduceMotion: boolea
   const p = Math.max(4, Math.floor(Math.min(w / 3.4, h / 2.6) / 14)), q = Math.floor(p * 1.5);
   const rowY = h * 0.36, poolY = rowY + 8 * p, midY = h * 0.56;
   const xs = inputs.map((_, i) => w * (0.5 + (i - (inputs.length - 1) / 2) * 0.3));
-  const made = iconPixels(result.category);
+  const made = iconPixels(result.def);
   const bits: Bit[] = [];
   inputs.forEach((spec, i) => {
-    for (const px of iconPixels(spec.category)) {
+    for (const px of iconPixels(spec.def)) {
       const k = bits.length, target = made[k % made.length];
       bits.push({
         color: px.color,
