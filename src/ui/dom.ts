@@ -85,7 +85,7 @@ export const skillSprite = (id: UpgradeId) => {
 };
 export const TAB_ICONS = {
   tower: uiSprite("tower"), delve: uiSprite("delve"), deck: DECK_ICON, defend: uiSprite("defend"), gear: uiSprite("gear"),
-  upgrades: uiSprite("upgrades"), settings: uiSprite("settings"),
+  upgrades: uiSprite("upgrades"), shop: CART_ICON,
 };
 /** A pixel-art hand pointing up, row by row: `#` outline, `w` skin. */
 const POINTER_ROWS = [

@@ -22,6 +22,7 @@ export function defaults(): Save {
     delve: { run: null, history: [], fall: null, best: 0, reached: 0, courage: 0, lootedTiles: {}, runGold: 0, runCurrency: 0, memory: { known: {}, visited: {} }, tier: 1, tiersOpen: 1, tierRecords: {} },
     gems: 0,
     gemDrop: defaultGemDrop(),
+    goldBoostUntil: 0,
     gold: 0,
     provisions: Object.fromEntries(
       GOLD_SHOP.map((g) => [g.id, 0]),
@@ -241,6 +242,7 @@ function decodeProgress(s: any, d: Save, undoCapacity: number) {
   d.gold = fraction(s.gold, d.gold);
   d.gems = count(s.gems, d.gems);
   d.gemDrop = decodeGemDrop(s.gemDrop);
+  d.goldBoostUntil = count(s.goldBoostUntil, 0, Number.MAX_SAFE_INTEGER);
   for (const g of GOLD_SHOP) d.provisions[g.id] = count(s.provisions?.[g.id], d.provisions[g.id], 999);
   d.xp = count(s.xp, d.xp);
   decodeTraining(s, d);

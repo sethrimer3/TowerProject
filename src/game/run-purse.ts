@@ -9,6 +9,7 @@ import type { MaterialStack } from "../materials.ts";
 import { MODES, type ModeProfile } from "../modes.ts";
 import { ranksInRun } from "../run-training.ts";
 import { goldFactor } from "../shop/entitlements.ts";
+import { goldBoostFactor } from "../gold-boost.ts";
 import { tierGold } from "../tiers.ts";
 import { raised, wornEffects } from "../equipment/effects.ts";
 import { keepDrop, rollBossDrop, rollMaterials } from "../equipment/acquire.ts";
@@ -34,6 +35,8 @@ export class RunPurse {
     private readonly mode: Mode,
     private readonly run: Run,
     private readonly rng: () => number,
+    /** The wall clock now (ms), for the Gold ad's boost. */
+    private readonly now = 0,
   ) {}
 
   private get rules(): ModeProfile {
@@ -76,10 +79,10 @@ export class RunPurse {
   }
 
   /** Banks Gold found in the run, fractions and all (`snap`), times the
-   * Shop's coin packs owned and raised by equipment's Gold found; returns
-   * what it banked. */
+   * Shop's coin packs owned and the Gold ad's boost while it lasts, and
+   * raised by equipment's Gold found; returns what it banked. */
   gold(found: number) {
-    const gold = snap(raised(found, this.worn.goldFind) * goldFactor(this.save));
+    const gold = snap(raised(found, this.worn.goldFind) * goldFactor(this.save) * goldBoostFactor(this.save, this.now));
     this.save.gold = snap(this.save.gold + gold);
     this.slice.runGold = snap(this.slice.runGold + gold);
     return gold;

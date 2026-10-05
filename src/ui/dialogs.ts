@@ -23,6 +23,19 @@ export function confirmAction(ctx: AppContext, { title, body, label, cancel }: C
   };
 }
 
+/** The ? button beside a page heading, which `showHelp` answers. */
+export const helpButton = (about: string) =>
+  `<button class="tree-help" id="tree-help" aria-label="${about}" title="${about}">?</button>`;
+
+/** A page's explanations, kept off the page to spare it clutter: opened by
+ * the ? beside its heading. */
+export function showHelp(ctx: AppContext, eyebrow: string, title: string, body: string) {
+  const modal = ctx.modal;
+  modal.innerHTML = `<small>${eyebrow}</small><h2>${title}</h2>${body}<div class="dialog-actions"><button id="tree-help-ok">Got it</button></div>`;
+  modal.showModal();
+  el("tree-help-ok").onclick = () => modal.close();
+}
+
 /** Offers the Shop when a Gem purchase finds too few Gems held. */
 export function askForGems(ctx: AppContext) {
   confirmAction(ctx, { title: "Not enough Gems", body: "Not enough gems. Go to the store?", label: "Go to Shop", cancel: "Cancel" }, () => ctx.navigate("shop"));

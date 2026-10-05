@@ -127,7 +127,8 @@ for (let step = 0; step < 12; step++)
 // moved the player at all rather than that it gained height.
 const position = async () => JSON.stringify((await page.evaluate(() => JSON.parse(localStorage.getItem("towerdelve.v1")))).delve.run.player);
 const manual = await position();
-await page.locator("#auto").click();
+// Enter in the forest (under Goals), or play inside a run.
+await page.locator("#enter-run:visible, #auto:visible").first().click();
 await page.waitForTimeout(2000);
 if ((await position()) === manual)
   throw Error("Auto unlock and climb failed");

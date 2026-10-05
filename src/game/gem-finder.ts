@@ -3,6 +3,7 @@ import { VIEWPORT_TILES } from "../config.ts";
 import type { Mode, Run } from "../entities.ts";
 import { AD_COOLDOWN_MS, AD_GEMS, collectedGem, gemOn, gemSpot, reachFloor, type GemSpot } from "../gems.ts";
 import { MODES } from "../modes.ts";
+import { canClaimGoldBoost, claimGoldBoost, goldBoostLeft, GOLD_BOOST_FACTOR, GOLD_BOOST_MS } from "../gold-boost.ts";
 import { random } from "../random.ts";
 import type { GainArt } from "../state.ts";
 import type { DeskHost } from "./desk.ts";
@@ -93,6 +94,24 @@ export class GemFinder {
     save.gems += AD_GEMS;
     save.gemDrop.adReadyAt = this.host.clock() + AD_COOLDOWN_MS;
     this.host.message = `+${AD_GEMS} Gems`;
+    return true;
+  }
+
+  /** The Gold ad's boost time left (ms). */
+  get goldBoostLeft() {
+    return goldBoostLeft(this.host.save, this.host.clock());
+  }
+
+  /** Whether the Gold ad can add time: its store isn't full. */
+  get goldAdReady() {
+    return canClaimGoldBoost(this.host.save, this.host.clock());
+  }
+
+  /** Stores the Gold ad's time: Gold found ×1.5 for 20 more minutes, up
+   * to two hours. No ad plays yet, as with the Gems'. */
+  claimGoldAd() {
+    if (!claimGoldBoost(this.host.save, this.host.clock())) return false;
+    this.host.message = `Gold ×${GOLD_BOOST_FACTOR} for ${GOLD_BOOST_MS / 60_000} more minutes`;
     return true;
   }
 }

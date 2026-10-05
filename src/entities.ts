@@ -231,6 +231,9 @@ export type Save = {
   /** Where the Gems found on floors and the ad button's stand: never part
    * of a run, so undo can't touch them. */
   gemDrop: GemDrop;
+  /** When the Gold ad's boost (Gold found ×1.5) runs out, as a wall-clock
+   * timestamp (ms): `gold-boost.ts`. */
+  goldBoostUntil: number;
   gold: number;
   provisions: Record<GoldItemId, number>;
   xp: number;

@@ -40,7 +40,7 @@ export function renderBoardLesson(game: Game, onBoard: boolean, dismissed: () =>
   }
   // In the forest the hand sits inside the button it points at: Enter,
   // from below, or the Delve tab, from above.
-  const target = lesson === "climb" ? null : lesson === "enter" ? el("auto") : document.querySelector<HTMLElement>(`nav [data-tab="delve"]`)!;
+  const target = lesson === "climb" ? null : lesson === "enter" ? el("enter-run") : document.querySelector<HTMLElement>(`nav [data-tab="delve"]`)!;
   if (!target) pointer?.remove();
   else if (pointer?.parentElement !== target || pointer.dataset.lesson !== lesson) {
     pointer?.remove();

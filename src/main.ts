@@ -29,7 +29,7 @@ import { renderSettingsPage } from "./ui/settings-page.ts";
 import { ShopPage } from "./ui/shop-page.ts";
 import { play } from "./sound.ts";
 import { applyMedievalTheme, bindMedievalFeedback } from "./ui/medieval.ts";
-import { gemSparkle } from "./ui/flourish.ts";
+import { gemSparkle, goldSparkle } from "./ui/flourish.ts";
 
 // Wires the pages together: builds the shell, creates the game and renderer,
 // and routes navigation, HUD refreshes and input between the ui/ modules.
@@ -96,7 +96,6 @@ function update() {
   document.querySelector("nav")!.classList.toggle("in-run", !game.run.outside);
   // The Deck tutorial keeps the player on its page until they reorder the hand.
   document.querySelectorAll<HTMLButtonElement>("[data-tab]").forEach((b) => (b.disabled = deck.teaching && b.dataset.tab !== "deck"));
-  (el("page-shop") as HTMLButtonElement).disabled = deck.teaching;
   renderHud(game, renderer, overlay);
   runTraining.render();
   renderBoardLesson(game, tab === "tower", update);
@@ -132,7 +131,7 @@ const LOCKED_TABS = new Map<string, { skill: UpgradeId; tree: TreeId }>([
   ["gear", { skill: "gear", tree: "inspiration" }],
   ["defend", { skill: "legacy", tree: "courage" }],
 ]);
-/** The pages topped by the currencies bar and its Shop button. */
+/** The pages topped by the currencies bar. */
 const CURRENCY_PAGES: string[] = ["upgrades", "deck", "gear"];
 function navigate(requested: string) {
   if (deck.teaching && requested !== "deck") return;
@@ -171,8 +170,7 @@ function openBlacksmith() {
   navigate("gear");
 }
 /** Shows page `id` and marks its tab; the stats sit over the board, and
- * the currencies bar, with the Shop at its end, tops the pages that spend
- * them, every currency on each. */
+ * the currencies bar tops the pages that spend them, every currency on each. */
 function showPage(id: Tab) {
   el("stats").toggleAttribute("hidden", !isBoard(id));
   el("currencies").toggleAttribute("hidden", !CURRENCY_PAGES.includes(id));
@@ -224,21 +222,28 @@ el("gem-ad").onclick = () => {
   save();
   update();
 };
+el("gold-ad").onclick = () => {
+  if (!game.gemFinder.claimGoldAd()) return;
+  if (!game.save.settings.reduceMotion) goldSparkle(el("gold-ad"));
+  save();
+  update();
+};
 el("end-run").onclick = () => runEnd.ask();
 modal.addEventListener("cancel", (e) => {
   // The defeat dialog waits for an answer.
   if (game.fallen) e.preventDefault();
 });
-el("shop-open").onclick = () => navigate("shop");
-el("page-shop").onclick = () => navigate("shop");
 el("auto-settings").onclick = () => navigate("settings");
+// Inside a run the button plays and pauses the hand.
 el("auto").onclick = () => {
-  // Inside a run the button plays and pauses the hand; in the forest it
-  // enters, starting the run.
-  if (game.run.outside) {
-    overlay.hide();
-    game.enterRun();
-  } else game.toggleAuto();
+  if (!game.run.outside) game.toggleAuto();
+  update();
+};
+// In the forest, Enter (under Goals) goes straight in, starting the run.
+el("enter-run").onclick = () => {
+  if (!game.run.outside) return;
+  overlay.hide();
+  game.enterRun();
   update();
 };
 // The speed arrows beside play/pause, inside a run.

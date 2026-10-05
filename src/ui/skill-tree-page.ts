@@ -1,4 +1,4 @@
-import { askForGems } from "./dialogs.ts";
+import { askForGems, helpButton, showHelp } from "./dialogs.ts";
 import { play } from "../sound.ts";
 import { permanentBoost } from "../shop/entitlements.ts";
 import { upgradeCard } from "../cards.ts";
@@ -131,6 +131,7 @@ export class SkillTreePage {
     document.querySelector(".training-scroll")!.scrollTop = scrolled;
     this.bindTabs();
     this.bindTraining();
+    el("tree-help").onclick = () => this.showTrainingHelp();
   }
 
   /** The Training tab's buttons: each row's points and trainer, cancel,
@@ -219,17 +220,26 @@ export class SkillTreePage {
 
   /** The ? beside the Inspiration and Courage trees' headings. */
   private helpButton(tree: Tree) {
-    return tree.id === "inspiration" || tree.id === "courage"
-      ? `<button class="tree-help" id="tree-help" aria-label="How ${tree.name} is earned" title="How ${tree.name} is earned">?</button>`
-      : "";
+    return tree.id === "inspiration" || tree.id === "courage" ? helpButton(`How ${tree.name} is earned`) : "";
+  }
+
+  /** How Training works: the text the tab keeps off its rows. */
+  private showTrainingHelp() {
+    const hired = this.ctx.game.training.hired, p = (text: string) => `<p>${text}</p>`;
+    const body = p(`Each level the hero gains earns ${TRAINING_PER_LEVEL} Training Points. Spend them to train a stat a rank at once.`) +
+      p("A rank is worth more as the hero levels up, ranks already bought included.") +
+      (hired
+        ? p("Or pay Gold to a trainer: the rank takes the time under the stat's name, and trainers work while you play or are away. Each trainer trains one stat at a time; Gems hire more.") +
+          p(`Watching an ad makes training go ×${BOOST_RATE} as fast for an hour, up to four hours stored. Tick a stat in training to have its trainer start the next rank as soon as one is done.`) +
+          p("Stopping a trainer gives the Gold back and keeps the time spent as credit toward that stat's next rank.")
+        : "");
+    showHelp(this.ctx, "UPGRADES", "Training", body);
   }
 
   /** How the tree's currency is earned. */
   private showHelp(tree: "inspiration" | "courage") {
-    const modal = this.ctx.modal, help = currencyHelp(this.ctx.game.save, tree);
-    modal.innerHTML = `<small>UPGRADES</small><h2>${help.title}</h2>${help.body}<div class="dialog-actions"><button id="tree-help-ok">Got it</button></div>`;
-    modal.showModal();
-    el("tree-help-ok").onclick = () => modal.close();
+    const help = currencyHelp(this.ctx.game.save, tree);
+    showHelp(this.ctx, "UPGRADES", help.title, help.body);
   }
 
   /** Why a tree can't be bought from yet, if it can't. */
@@ -304,9 +314,9 @@ export class SkillTreePage {
     const bank = save.trainingBank > 0
       ? `<span class="training-bank" title="Time bank: taken off any stat's next ranks trainers train, after its own time credit">${clockIcon()} <b id="training-bank">${formatDuration(save.trainingBank)}</b></span>`
       : "";
-    return `<section class="training"><canvas class="training-particles" aria-hidden="true"></canvas><header class="tree-heading"><h3>Training</h3></header>
+    return `<section class="training"><canvas class="training-particles" aria-hidden="true"></canvas><header class="tree-heading"><h3>Training${helpButton("How Training works")}</h3></header>
       ${hired ? this.boostHtml() : ""}
-      <p class="training-points"><span class="training-held" title="Training points">${pointsIcon()} <b id="training-points">${points.left}</b></span>${bank}<small>${hired ? `Level up with ${pointsIcon()} or pay ${goldIcon()} to a trainer` : `Each level earns ${TRAINING_PER_LEVEL} ${pointsIcon()}`}</small>${hired ? "" : quantity}</p>
+      <div class="training-points"><span class="training-held" title="Training points"><span class="points-held">${pointsIcon()}<b id="training-points">${points.left}</b></span><small>Training Points</small></span>${bank}${hired ? "" : quantity}</div>
       ${hired ? `<p class="training-points training-slots">Trainers: <b id="training-slots">${save.trainingJobs.length} / ${slots}</b> ${this.trainerButton()}${quantity}</p>` : ""}
       <div class="training-scroll">${inTraining.length ? `<div class="training-table training-busy" role="list" aria-label="Stats in training">${inTraining.map(row).join("")}</div>` : ""}
       <div class="training-table" role="list" aria-label="Stat training">${rows}</div></div></section>`;

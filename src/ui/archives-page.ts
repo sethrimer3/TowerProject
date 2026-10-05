@@ -7,9 +7,9 @@ import { UPGRADES } from "../config.ts";
 import type { Save } from "../entities.ts";
 import { loadout } from "../loadout.ts";
 import type { AppContext } from "./app.ts";
-import { currencyAmount, devAmount } from "./hud.ts";
+import { currencyAmount } from "./hud.ts";
 import { el, gemCount, gemIcon, uiSprite } from "./dom.ts";
-import { askForGems } from "./dialogs.ts";
+import { askForGems, helpButton, showHelp } from "./dialogs.ts";
 
 /** `ms` as the largest two units: "2d 4h", "7h 41m", "12m 5s", "3s". */
 export function formatDuration(ms: number) {
@@ -62,21 +62,19 @@ export class ArchivesPanel {
     // An archivist set to other work since (auto-continue, Dev mode) needs no choice.
     const job = this.picking === null ? undefined : save.archives.slots[this.picking]?.job;
     if (job && job.research !== this.pickedFrom) this.picking = null;
-    const gold = `<p class="archives-gold">${uiSprite("gold", "stat-sprite")} <b>${devAmount(this.ctx.game, save.gold)}</b> Gold <small>· research goes on while you play or are away</small></p>`;
-    if (this.picking !== null) return this.pickHtml(this.picking, gold);
-    return `<section class="archives"><header class="tree-heading"><h3>Archives</h3><button id="research-history-open" class="research-history-open">History</button></header>
-      ${gold}
+    // The currencies bar above shows the Gold research costs.
+    if (this.picking !== null) return this.pickHtml(this.picking);
+    return `<section class="archives"><header class="tree-heading"><h3>Archives${helpButton("How the Archives work")}</h3><button id="research-history-open" class="research-history-open">History</button></header>
       <div class="archivists" role="list" aria-label="Archivists">${this.archivistsHtml()}</div></section>`;
   }
 
   /** Select Research for archivist `slot`: the filters over the list, and
    * the X that goes back. */
-  private pickHtml(slot: number, gold: string) {
+  private pickHtml(slot: number) {
     const options = <T extends string>(entries: [T, string][], chosen: T) =>
       entries.map(([id, name]) => `<option value="${id}" ${id === chosen ? "selected" : ""}>${name}</option>`).join("");
     const categories: ["all" | ResearchCategory, string][] = [["all", "All categories"], ...Object.entries(RESEARCH_CATEGORIES) as [ResearchCategory, string][]];
     return `<section class="archives picking"><header class="tree-heading"><h3>Select Research</h3><small class="research-pick-for">ARCHIVIST ${slot + 1}</small><button id="research-pick-close" class="research-pick-close" aria-label="Back to the archivists without choosing" title="Back">✕</button></header>
-      ${gold}
       <div class="research-filters">
         <input type="search" id="research-search" placeholder="Search research" aria-label="Search research" value="${this.search.replace(/"/g, "&quot;")}">
         <select id="research-category" aria-label="Category">${options(categories, this.category)}</select>
@@ -92,6 +90,7 @@ export class ArchivesPanel {
       this.rerender();
     };
     if (this.picking !== null) return this.bindPick();
+    el("tree-help").onclick = () => this.showHelp();
     document.querySelectorAll<HTMLElement>("[data-pick]").forEach((a) => (a.onclick = (e) => {
       // The auto-continue box and a busy archivist's buttons keep their own presses.
       if ((e.target as Element).closest("label, input, [data-stop], [data-rush], [data-finish]")) return;
@@ -199,6 +198,16 @@ export class ArchivesPanel {
       { title: "Hire an archivist?", body: `Spend ${price} Gems on one more archivist: one more research runs at once.`, label: `Hire · ${price} Gems`, cancel: "Cancel" },
       () => act(game.research.hire()),
     );
+  }
+
+  /** How the Archives work: the text the tab keeps off its rows. */
+  private showHelp() {
+    const p = (text: string) => `<p>${text}</p>`;
+    showHelp(this.ctx, "UPGRADES", "Archives",
+      p("Archivists research projects whose effects last between runs. Pick an idle archivist to choose its research; each level costs Gold and takes time.") +
+      p("Research goes on while you play or are away. Each archivist works on one project at a time; Gems hire more.") +
+      p("Auto-continue starts the project's next level as soon as one completes, when the Gold is there. Stop gives the Gold back and keeps the time spent for later; Gems finish a level at once.") +
+      p("History lists every level completed."));
   }
 
   /** Each hired archivist, busy (a bar, the time left, Stop) or idle, then

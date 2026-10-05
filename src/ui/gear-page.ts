@@ -1,5 +1,6 @@
 import { GOLD_SHOP, type GoldItemId } from "../config.ts";
-import { provisionOpen, provisionPrice, provisionText, type Stat } from "../loadout.ts";
+import { loadout, provisionOpen, provisionPrice, provisionText, type Stat } from "../loadout.ts";
+import { keyCount, whole } from "../whole.ts";
 import { unlockFloor } from "../goals.ts";
 import type { AppContext } from "./app.ts";
 import { el, itemSprite, uiSprite } from "./dom.ts";
@@ -10,6 +11,13 @@ import { EquipmentPanel } from "./equipment-panel.ts";
 const PROVISION_SPRITES = { heal: "potion_flat", guard: "upgrade_defense", edge: "upgrade_attack", yellowKey: "key_yellow" } as const satisfies Record<GoldItemId, string>;
 /** Short names for a provision's stats, in the total its owned copies give. */
 const TOTAL_WORDS: Record<Stat, string> = { attack: "ATK", defense: "DEF", maxHp: "MAX HP", shroud: "SHROUD", regen: "REGEN", yellow: "YELLOW KEYS", blue: "BLUE KEYS", red: "RED KEYS", undos: "UNDOS" };
+/** Pictures for the starting stats over the provisions; the rest go by their short name. */
+const STAT_SPRITES: Partial<Record<Stat, string>> = {
+  maxHp: uiSprite("health"), attack: itemSprite("upgrade_attack"), defense: itemSprite("upgrade_defense"),
+  yellow: itemSprite("key_yellow"), blue: itemSprite("key_blue"), red: itemSprite("key_red"),
+};
+/** The order the starting stats show in. */
+const STAT_ORDER: Stat[] = ["maxHp", "attack", "defense", "shroud", "regen", "yellow", "blue", "red", "undos"];
 type GearTab = "provisions" | "equipment";
 const TAB_NAMES: Record<GearTab, string> = { provisions: "Provisions", equipment: "Equipment" };
 
@@ -93,15 +101,32 @@ export class GearPage {
     this.ctx.update();
   }
 
+  /** The hero's starting stats that the provisions on sale raise, as a
+   * run in the board's mode starts with them; a stat just raised glows. */
+  private startingStatsHtml(open: (typeof GOLD_SHOP)[number][], bought: GoldItemId | null) {
+    const game = this.ctx.game, l = loadout(game.save, game.mode);
+    const value: Record<Stat, number> = {
+      attack: l.attack, defense: l.defense, maxHp: l.maxHp, shroud: l.shroud, regen: l.regen,
+      yellow: l.keys.yellow + l.startKeys.yellow, blue: l.keys.blue + l.startKeys.blue, red: l.keys.red, undos: l.undoCapacity,
+    };
+    const raised = new Set(Object.keys(GOLD_SHOP.find((item) => item.id === bought)?.grants ?? {}));
+    const stats = STAT_ORDER.filter((stat) => open.some((item) => stat in item.grants));
+    if (!stats.length) return "";
+    const shown = (stat: Stat) => (stat === "yellow" || stat === "blue" || stat === "red" ? keyCount(value[stat]) : whole(value[stat]));
+    return `<div class="starting-stats"><small>STARTING STATS</small><div class="starting-stat-row">${stats.map((stat) =>
+      `<span class="starting-stat${raised.has(stat) ? " raised" : ""}" title="${TOTAL_WORDS[stat]}">${STAT_SPRITES[stat] ?? `<i>${TOTAL_WORDS[stat]}</i>`}<b>${shown(stat)}</b></span>`).join("")}</div></div>`;
+  }
+
   private provisionsHtml(): string {
     const game = this.ctx.game;
     const provisionSprite = (id: GoldItemId) => itemSprite(PROVISION_SPRITES[id]);
     const bought = this.bought;
     this.bought = null;
+    const open = GOLD_SHOP.filter((item) => provisionOpen(game.save, item.id));
     // What all the copies owned add, for provisions giving more than one.
     const total = (item: (typeof GOLD_SHOP)[number], owned: number) =>
       (Object.entries(item.grants) as [Stat, number][]).filter(([, n]) => n > 1).map(([stat, n]) => ` · +${n * owned} ${TOTAL_WORDS[stat]}`).join("");
-    return `<div class="provision-head"><div class="purse-big" title="Gold">${uiSprite("gold")}<b>${devAmount(game, game.save.gold)}</b></div></div>${GOLD_SHOP.filter((item) => provisionOpen(game.save, item.id)).map((item) => {
+    return `<div class="provision-head"><div class="purse-big" title="Gold">${uiSprite("gold")}<b>${devAmount(game, game.save.gold)}</b></div>${this.startingStatsHtml(open, bought)}</div>${open.map((item) => {
       const owned = game.save.provisions[item.id], price = provisionPrice(game.save, item.id);
       return `<article class="card"><div class="item-icon${item.id === bought ? " bought" : ""}">${provisionSprite(item.id)}</div><div><small>${owned ? `OWNED × ${owned}${total(item, owned)}` : "NOT YET OWNED"}</small><h3>${item.name}</h3><p>${provisionText(item.id)}</p></div><button data-gold="${item.id}" ${game.save.gold < price && !game.free ? "disabled" : ""}>Buy · ${uiSprite("gold", "stat-sprite")} ${price}</button></article>`;
     }).join("")}`;

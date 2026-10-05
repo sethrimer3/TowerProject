@@ -500,6 +500,14 @@ h1 span {
 .gem-ad .gem-icon { width: 16px; height: 16px; }
 .gem-ad small { font-size: 7px; line-height: 1; letter-spacing: .45px; }
 .gem-ad.waiting { visibility: hidden; }
+/* Inside a run the Gold ad stands beside the Gems'. */
+.ad-row { display: flex; gap: 3px; }
+.ad-row > .gem-ad { flex: 1; min-width: 0; }
+.gold-ad { color: #ffd86b; }
+.gold-ad .ui-sprite { width: 14px; height: 14px; }
+.gold-ad .gem-ad-amount { gap: 1px; font-size: 11px; }
+.gold-ad.active { border-color: #d9b45a; box-shadow: 0 0 6px #ffd86b66, inset 0 0 6px #ffd86b33; }
+.gold-ad:disabled { opacity: 1; }
 .page {
   display: none;
 }
@@ -729,7 +737,24 @@ canvas {
 .board-tip p { margin: 6px 0 0; font-size: 12px; line-height: 1.6; color: #c3cedd; }
 .board-tip small { display: block; margin-top: 6px; font-size: 10px; letter-spacing: 1px; color: #8d9db1; }
 .board-tip.dismissable { min-height: 0; font-family: inherit; cursor: pointer; pointer-events: auto; }
-#auto { position: relative; }
+#auto, #enter-run { position: relative; }
+/* In the forest the tier the entrance leads to rises to the top of its
+   column, and Goals and Enter, under it, share the space left. */
+.stats.outside .height { justify-content: flex-start; padding-top: 6px; padding-bottom: 6px; }
+.stats.outside .height-actions { flex: 1; padding-top: 4px; gap: 4px; }
+.stats.outside .height-actions button { flex: 1; font-size: 9px; }
+.enter-run {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  color: #ffe1a1;
+  border-color: #b59861;
+  background: linear-gradient(180deg, #3a2f1c, #221a10);
+}
+.enter-run .enter-icon { display: block; width: 22px; height: 22px; }
+.enter-run small { font-size: 8px; letter-spacing: .5px; }
 .forest-pointer {
   position: absolute;
   z-index: 31;
@@ -1620,7 +1645,7 @@ nav {
 @media (max-width: 440px) {
   nav { gap: 3px; }
   nav button { font-size: 10px; padding: 6px 1px; min-height: 60px; }
-  nav button > span img { width: 32px; height: 32px; }
+  nav button > span :is(img, svg) { width: 32px; height: 32px; }
 }
 @media (max-width: 360px) {
   .brand { flex-wrap: wrap; gap: 8px; }
@@ -1629,7 +1654,7 @@ nav {
 @media (max-width: 340px) {
   nav { gap: 2px; }
   nav button { font-size: 9px; min-height: 54px; }
-  nav button > span img { width: 26px; height: 26px; }
+  nav button > span :is(img, svg) { width: 26px; height: 26px; }
 }
 
 #section-pick { font: inherit; font-size: 9px; padding: 2px; min-height: 22px; }
@@ -1824,6 +1849,20 @@ dialog.eq-result #eq-ok { flex: 0 1 220px; padding: 14px; font-size: 20px; }
 .purse-big { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; min-width: 84px; padding: 10px 12px; border: 1px solid #6b5a35; border-radius: 5px; background: #1a2431; }
 .purse-big img { width: 34px; height: 34px; image-rendering: pixelated; }
 .purse-big b { font-size: 22px; font-weight: 500; color: var(--gold); line-height: 1; }
+/* Beside the Gold: the starting stats the provisions on sale raise. */
+.starting-stats { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; border: 1px solid #3a4658; border-radius: 5px; background: #141c27; }
+.starting-stats > small { font-size: 8px; letter-spacing: 2px; color: #8f9bac; }
+.starting-stat-row { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.starting-stat { display: inline-flex; align-items: center; gap: 4px; font-size: 16px; color: #e9e1c8; }
+.starting-stat img { width: 20px; height: 20px; image-rendering: pixelated; vertical-align: middle; }
+.starting-stat i { font-style: normal; font-size: 9px; letter-spacing: 1px; color: #a8afbc; }
+.starting-stat.raised b { animation: stat-raised 0.9s ease-out; }
+@keyframes stat-raised {
+  0% { color: #fff; text-shadow: none; }
+  25% { color: #fff3b8; text-shadow: 0 0 8px #ffd77a; }
+  100% { color: inherit; text-shadow: none; }
+}
+@media (prefers-reduced-motion: reduce) { .starting-stat.raised b { animation: none; } }
 /* A provision's icon glows once when one is bought. */
 .item-icon.bought { border-radius: 50%; animation: provision-glow 0.9s ease-out; }
 @keyframes provision-glow {
@@ -1904,7 +1943,7 @@ dialog.eq-result #eq-ok { flex: 0 1 220px; padding: 14px; font-size: 20px; }
   pointer-events: none;
 }
 .mini-action .mini-icon img { width: 20px; height: 20px; }
-nav button > span img { display: block; width: 42px; height: 42px; max-width: 100%; object-fit: contain; }
+nav button > span :is(img, svg) { display: block; width: 42px; height: 42px; max-width: 100%; object-fit: contain; }
 .item-icon img {
   display: block;
   width: 52px;
@@ -2315,10 +2354,20 @@ button.training-cost:disabled .gold-icon, button.training-cost:disabled .points-
 .points-icon, .clock-icon, .ad-icon { width: 14px; height: 14px; vertical-align: -2px; flex-shrink: 0; }
 .ui-sprite.gold-icon { width: 14px; height: 14px; vertical-align: -2px; image-rendering: pixelated; flex-shrink: 0; }
 .training-points small .points-icon, .training-points small .gold-icon { width: 11px; height: 11px; }
-.training-held, .training-bank { display: inline-flex; align-items: center; gap: 4px; margin-right: 10px; }
-.training-held .points-icon, .training-bank .clock-icon { width: 16px; height: 16px; }
+.training-bank { display: inline-flex; align-items: center; gap: 4px; margin-right: 10px; }
+.training-bank .clock-icon { width: 16px; height: 16px; }
+/* The points held, large in a rounded box, named under it. */
+div.training-points { display: flex; align-items: center; gap: 10px; }
+div.training-points select.buy-quantity { float: none; margin-left: auto; }
+.training-held { display: inline-flex; flex-direction: column; align-items: center; gap: 3px; padding: 5px 14px 6px; border: 1px solid #8d794e; border-radius: 10px; background: linear-gradient(180deg, #2a2618, #17150f); box-shadow: inset 0 0 8px #0008; }
+.points-held { display: inline-flex; align-items: center; gap: 5px; line-height: 1; }
+.training-held .points-icon { width: 20px; height: 20px; }
+.training-points .training-held b { font-size: 24px; }
+.training-points .training-held small { font-size: 8px; letter-spacing: 1px; color: #c9b88f; text-transform: uppercase; }
 .training-bank b { color: #e9e1c8; font-size: 13px; }
-.training-currency .points-icon { width: 15px; height: 15px; }
+/* Every currency's icon the size and baseline of the sprites, so all the
+   amounts and labels sit on one line. */
+.currency > .gem-icon, .currency > .points-icon { width: 1.45em; height: 1.45em; vertical-align: -0.32em; }
 /* The training boost: ×2, its time left, and the ad button. */
 .training-boost { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; padding: 5px 6px 5px 10px; border: 1px solid #4a5566; border-radius: 9px; background: #111925; }
 .training-boost .boost-rate { font-size: 17px; color: #7c8898; }
@@ -2709,11 +2758,8 @@ dialog.dismiss-anywhere { cursor: pointer; }
 
 /* --- Archives --- */
 .archives { display: flex; flex: 1; min-height: 0; flex-direction: column; gap: 10px; overflow-y: auto; border: 1px solid #4d5a44; background: radial-gradient(ellipse at 50% 20%, #3d552e22, transparent 65%), #0a1016; padding: 8px 10px 12px; border-radius: 9px; }
-.archives-gold { margin: 0; font-size: 11px; letter-spacing: 1px; color: #c9d0da; }
-.archives-gold b { color: var(--gold); font-size: 15px; }
-.archives-gold small { color: #8793a2; font-size: 9px; }
 /* One archivist a row; an idle one opens Select Research when pressed. */
-.archivists { display: grid; grid-template-columns: 1fr; gap: 6px; }
+.archivists { display: grid; grid-template-columns: 1fr; gap: 6px; margin-top: 14px; }
 .archivist { display: flex; flex-direction: column; gap: 5px; min-width: 0; padding: 7px 8px; border: 1px solid #3d4858; border-radius: 7px; background: #111925; font-size: 11px; }
 .archivist small { font-size: 9px; letter-spacing: 2px; color: #8793a2; }
 .archivist b { color: #e3d2ad; font-weight: 500; }
@@ -2801,12 +2847,6 @@ dialog.dismiss-anywhere { cursor: pointer; }
 .research-toast b { display: block; color: #e9d4ac; font-size: 15px; letter-spacing: 1px; }
 .research-toast span { display: block; margin-top: 4px; font-size: 12px; color: #99a8bd; }
 .currency.gem-currency { color: #8fe3ff; }
-/* The Shop button sits at the bar's right end on all three pages, clear of
- * the centred currencies. */
-.currencies { position: relative; padding: 0 52px; }
-.currencies .page-shop { position: absolute; top: 0; right: 0; width: 44px; }
-/* On a narrow phone all five currencies need the room. */
-@media (max-width: 400px) { .currencies { justify-content: flex-start; padding: 0 50px 0 0; } }
 
 /* --- Training for this run, with Silver --- */
 /* A Training group open shows its cards in the hand's place. */
@@ -2833,7 +2873,7 @@ nav.in-run.drilling .run-drills {
   align-items: center;
   justify-content: space-between;
   gap: 2px;
-  padding: 6px 4px;
+  padding: 4px 4px 4px;
   border: 1px solid #4b5566;
   border-radius: 4px;
   background: linear-gradient(#1d2531, #121821);
@@ -2842,22 +2882,27 @@ nav.in-run.drilling .run-drills {
   scroll-snap-align: start;
 }
 .drill-name { font-size: 10px; color: #efd496; letter-spacing: 0.5px; white-space: nowrap; }
-.drill-value { font-size: 15px; color: #eee5d4; }
-/* Written over the nav's tab buttons, which the cards sit among. */
+.drill-value { font-size: 14px; line-height: 1.1; color: #eee5d4; }
+/* Written over the nav's tab buttons, which the cards sit among: the
+   card's full width along its bottom, large enough to see and press. */
 .run-drills .drill-buy {
   display: flex;
   flex: none;
   flex-direction: row;
+  align-self: stretch;
   align-items: center;
-  gap: 3px;
+  justify-content: center;
+  gap: 4px;
   min-height: 0;
-  padding: 2px 8px;
-  font-size: 11px;
-  background: linear-gradient(#2a3342, #18202b);
-  border-color: #6b778a;
+  height: 28px;
+  padding: 0 4px;
+  font-size: 14px;
+  color: #f4ead2;
+  background: linear-gradient(#3a4558, #1f2836);
+  border-color: #a99a72;
   cursor: pointer;
 }
-.run-drills .drill-buy .ui-sprite { width: 12px; height: 12px; }
+.run-drills .drill-buy .ui-sprite { width: 15px; height: 15px; }
 /* Not enough Silver: the card's text and the price stay clear, and only the
    outlines and the button's face fade. At its highest: greyed out. */
 .drill-card.short { border-color: #2c3440; }
@@ -3061,6 +3106,8 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
   border: 2px solid #8fe3ff; box-shadow: 0 0 10px #3fb8ff, inset 0 0 8px #3fb8ff80;
   animation: gem-sparkle-ring 0.6s ease-out both;
 }
+.gem-sparkle.gold i { color: #fff6d6; text-shadow: 0 0 4px #ffd86b, 0 0 9px #e0a52a; }
+.gem-sparkle.gold .gem-sparkle-ring { border-color: #ffd86b; box-shadow: 0 0 10px #e0a52a, inset 0 0 8px #e0a52a80; }
 @keyframes gem-sparkle {
   0% { transform: translate(0, 0) scale(0.2) rotate(0deg); opacity: 0; }
   25% { opacity: 1; }

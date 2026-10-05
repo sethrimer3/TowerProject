@@ -348,19 +348,12 @@ try {
     await shot(`${prefix}.cardRevealed`);
   }
   async function dialogsTour(prefix) {
-    // Inside a run the ad's Gems stand where Goals is in the forest.
+    // Inside a run the ad's Gems stand under the purse, beside the Gold ad.
     await click("#gem-ad");
     await shot(`${prefix}.adGems`);
     await click("#auto-settings");
     await shot(`${prefix}.autoSettings`);
     await click("#settings-back");
-    // The Shop, from the HUD; nothing claimed, so no countdown reads the clock.
-    await click("#shop-open");
-    await shot(`${prefix}.shop`);
-    await click('[data-detail="coins3"]');
-    await shot(`${prefix}.shop.details`);
-    await closeModal();
-    await click("#shop-back");
     await click("#end-run");
     await shot(`${prefix}.endRun`);
     await click("#cancel");
@@ -473,8 +466,8 @@ try {
   await click('[data-skill="combatStance"]');
   await shot("fresh.tree.short");
   await tab("tower");
-  // In the forest it is Enter, going straight in.
-  await click("#auto");
+  // In the forest Enter, under Goals, goes straight in.
+  await click("#enter-run");
   await shot("fresh.entered");
 
   // A fallen hero: the defeat dialog, with an undo or without.
@@ -543,14 +536,18 @@ try {
   await shot("dev.gear");
   await tab("upgrades");
   await shot("dev.upgrades");
-  // The Shop button atop the Upgrades, Deck and Gear pages opens the Shop,
-  // whose Back returns to the page it was opened from.
-  await click("#page-shop");
+  // The Shop tab, at the bottom right outside a run, opens the Shop, whose
+  // Back returns to the page it was opened from; nothing claimed, so no
+  // countdown reads the clock.
+  await tab("shop");
   await shot("dev.upgrades.shop");
+  await click('[data-detail="coins3"]');
+  await shot("dev.shop.details");
+  await closeModal();
   await click("#shop-back");
   await shot("dev.upgrades.shopBack");
   await tab("gear");
-  await click("#page-shop");
+  await tab("shop");
   await click("#shop-back");
   await shot("dev.gear.shopBack");
 

@@ -5,7 +5,7 @@ import { levelForXp, xpForLevel } from "../config.ts";
 import { outsideWeather } from "../outside.ts";
 import { tierNumeral, tierRewardText } from "../tiers.ts";
 import { MODES, milestones } from "../modes.ts";
-import { cardArt, CURRENCY_SPRITES, displayedProgress, el, ENTER_ICON, POINTER_SVG, text, uiSprite } from "./dom.ts";
+import { cardArt, CURRENCY_SPRITES, displayedProgress, el, POINTER_SVG, text, uiSprite } from "./dom.ts";
 import { CARDS, IN_PLACE, cardText, isSiphon, type CardId } from "../cards.ts";
 import { BADGES } from "../badges.ts";
 import { badgeStyle } from "./badge-token.ts";
@@ -17,6 +17,7 @@ import { estimatedServerTime } from "../shop/clock.ts";
 import { OFFERS } from "../shop/offers.ts";
 import { refusal } from "../shop/transactions.ts";
 import { equipmentWaiting } from "../equipment/inventory.ts";
+import { GOLD_BOOST_FACTOR, GOLD_BOOST_MS } from "../gold-boost.ts";
 
 /** The stats cluster, action buttons and status line around the board. */
 
@@ -52,14 +53,21 @@ function purse(game: Game, id: string, held: number, name: string, shown = held)
 /** Gold and Silver count up to each rise. */
 const goldShown = new CountUp(), silverShown = new CountUp();
 
-/** The purse: Gems, then Gold and, inside a run, the run's Silver (the
- * forest has no use for it), counting up to what they rose to. */
+/** The purse: Gems, then Gold and, inside a run, the run's Silver,
+ * counting up to what they rose to. In the forest Silver shows what the
+ * next run starts with, once that is any. */
 function renderPurse(game: Game) {
   const now = performance.now(), instant = game.save.settings.reduceMotion;
   purse(game, "gems", game.save.gems, "Gems, kept between runs");
   purse(game, "gold", game.save.gold, "Gold, kept between runs", goldShown.show(game.save.gold, now, instant));
-  purse(game, "run-silver", game.silver, "Silver, spent only inside this run", silverShown.show(game.silver, now, instant));
-  el("run-silver").parentElement!.hidden = !!game.run.outside;
+  if (game.run.outside) {
+    const start = game.startingSilver;
+    purse(game, "run-silver", start, "Silver each run starts with");
+    el("run-silver").parentElement!.hidden = start <= 0;
+  } else {
+    purse(game, "run-silver", game.silver, "Silver, spent only inside this run", silverShown.show(game.silver, now, instant));
+    el("run-silver").parentElement!.hidden = false;
+  }
 }
 
 /** Each display frame: moves on the Gold and Silver still counting up. */
@@ -109,11 +117,9 @@ export const shopWaiting = (game: Game) => {
   const now = estimatedServerTime(game.save.shop.clock, game.clock());
   return OFFERS.some((o) => o.daily && !refusal(game.save, o, now));
 };
-/** Puts the dot on the Shop buttons (the HUD's, and the one atop the
- * Upgrades, Deck and Gear pages) while `shopWaiting`. */
+/** Puts the dot on the Shop tab while `shopWaiting`. */
 export const renderShopDot = (game: Game) => {
-  const waiting = shopWaiting(game);
-  for (const id of ["shop-open", "page-shop"]) el(id).classList.toggle("notify", waiting);
+  document.querySelector(`[data-tab="shop"]`)?.classList.toggle("notify", shopWaiting(game));
 };
 /** Whether the Upgrades button shows its dot: the first Inspiration has
  * been earned (so the run that paid it has ended by the time the tabs show)
@@ -194,19 +200,18 @@ const HAND_ICON = { play: "▶︎", pause: "❚❚" };
 
 /** Inside a run the button plays and pauses the hand, showing the play or
  * pause icon, with the hero's movement speed under it (*3x*: steps a
- * second) between the arrows that change it; in the forest it is Enter,
- * going straight in to start the run. */
+ * second) between the arrows that change it. In the forest it gives way to
+ * Enter, under Goals, which goes straight in to start the run. */
 function renderAutoButton(game: Game) {
   const button = el("auto"), inside = !game.run.outside;
-  const label = inside ? (game.auto ? "Pause the hand" : "Play the hand") : "Enter";
-  const icon = inside ? (game.auto ? HAND_ICON.pause : HAND_ICON.play) : "enter",
+  button.hidden = !inside;
+  el("enter-run").hidden = inside;
+  el("stats").classList.toggle("outside", !inside);
+  const label = game.auto ? "Pause the hand" : "Play the hand";
+  const icon = game.auto ? HAND_ICON.pause : HAND_ICON.play,
     slot = button.querySelector<HTMLElement>(".mini-icon")!;
-  if (slot.dataset.icon !== icon) {
-    slot.dataset.icon = icon;
-    if (inside) slot.textContent = icon;
-    else slot.innerHTML = ENTER_ICON;
-  }
-  text("auto-state", inside ? (game.auto ? "PLAYING" : "PAUSED") : "ENTER");
+  if (inside && slot.textContent !== icon) slot.textContent = icon;
+  text("auto-state", game.auto ? "PLAYING" : "PAUSED");
   renderSpeed(game, inside);
   // The speed lesson waits on the › arrow, not on play; the first run's
   // note, on its tap.
@@ -299,7 +304,11 @@ export function renderVitals(game: Game) {
   text("shroud", whole(p.shroud ?? 0));
   el("shroud-stat").hidden = !game.save.upgrades.shroud;
   renderPurse(game);
-  for (const k of ["yellow", "blue", "red"] as const) text(k, keyCount(p.keys[k]));
+  for (const k of ["yellow", "blue", "red"] as const) {
+    text(k, keyCount(p.keys[k]));
+    // The forest shows the keys a run starts with: only those it has.
+    el(k).parentElement!.hidden = !!game.run.outside && p.keys[k] <= 0;
+  }
   const skeletonKeys = p.skeletonKeys ?? 0;
   text("skeleton", skeletonKeys);
   el("skeleton-key").hidden = skeletonKeys < 1;
@@ -432,9 +441,10 @@ function renderRunEarned(game: Game) {
   box.classList.add("flash");
 }
 
-/** The ad button stands under the purse in the forest and inside a run, in both
- * modes: showing its Gems when they can be claimed, an empty space while
- * it waits. Goals takes End Run's place in the forest. */
+/** The ad buttons stand under the purse: the Gems' in the forest and
+ * inside a run, in both modes, showing its Gems when they can be claimed,
+ * an empty space while it waits; and inside a run beside it the Gold
+ * ad's, with the boost time stored. End Run takes Goals' place inside. */
 export function renderAdButton(game: Game) {
   const inside = !game.run.outside, button = el("gem-ad") as HTMLButtonElement;
   el("section-pick").hidden = inside;
@@ -442,6 +452,28 @@ export function renderAdButton(game: Game) {
   el("end-run").hidden = !inside;
   button.classList.toggle("waiting", !game.gemFinder.adReady);
   button.disabled = !game.gemFinder.adReady;
+  renderGoldAd(game, inside);
+}
+
+/** Boost time left, short enough for the narrow button: 18m, 1h40m. */
+export function boostTime(ms: number) {
+  const minutes = Math.ceil(ms / 60_000), h = Math.floor(minutes / 60), m = minutes % 60;
+  return h ? `${h}h${m ? `${String(m).padStart(2, "0")}m` : ""}` : `${m}m`;
+}
+
+/** The Gold ad, inside a run: ×1.5 Gold for 20 minutes a claim, stored up
+ * to two hours, glowing while the boost lasts; closed once the store is full. */
+function renderGoldAd(game: Game, inside: boolean) {
+  const button = el("gold-ad") as HTMLButtonElement, left = game.gemFinder.goldBoostLeft;
+  button.hidden = !inside;
+  button.classList.toggle("active", left > 0);
+  button.disabled = !game.gemFinder.goldAdReady;
+  text("gold-ad-time", left > 0 ? boostTime(left) : "Claim");
+  const label = left > 0
+    ? `Gold ×${GOLD_BOOST_FACTOR}: ${boostTime(left)} left${button.disabled ? " (full)" : `; claim ${GOLD_BOOST_MS / 60_000} more minutes`}`
+    : `Claim Gold ×${GOLD_BOOST_FACTOR} for ${GOLD_BOOST_MS / 60_000} minutes`;
+  button.title = label;
+  button.setAttribute("aria-label", label);
 }
 
 /** Goals acts on the Tower; in the Delve it is a placeholder. */

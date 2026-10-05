@@ -972,7 +972,7 @@ export class Game {
     this.run.hand = [...this.save.hand];
     const badges = this.save.upgrades.cardBadges ? runBadges(this.save.badges, this.run.hand) : {};
     if (Object.keys(badges).length) this.run.badges = badges;
-    const pocket = snap(researched(this.save.archives, "startingSilver", 0) + this.worn.startSilver);
+    const pocket = this.startingSilver;
     if (pocket) this.run.silver = pocket;
     const chance = percentPotionChance(this.save);
     if (chance) this.run.percentPotions = chance;
@@ -1029,6 +1029,11 @@ export class Game {
   /** Silver held this run. */
   get silver() {
     return this.run.silver ?? 0;
+  }
+  /** The Silver a run starts with as it goes inside: Pocket Money research
+   * and worn Equipment's. */
+  get startingSilver() {
+    return snap(researched(this.save.archives, "startingSilver", 0) + this.worn.startSilver);
   }
   /** Focus uses left: this run's inside one, or in the forest what the
    * next run will start with. */
@@ -1525,7 +1530,7 @@ export class Game {
   }
   /** What the run finds is paid through its purse. */
   private get purse() {
-    return new RunPurse(this.save, this.mode, this.run, this.rng);
+    return new RunPurse(this.save, this.mode, this.run, this.rng, this.clock());
   }
   /** The numbered tower (or delve) the run climbs. */
   get tier() {

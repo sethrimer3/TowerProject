@@ -70,9 +70,9 @@ export function replay(el: Element | null, cls: string) {
 /** A ring of Gem-blue glints bursting out round `el` and a ring of light
  * widening behind them: the ad's Gems claimed. Drawn whatever the theme;
  * the caller leaves it out with Reduce motion on. */
-export function gemSparkle(el: Element) {
+export function gemSparkle(el: Element, tint = "") {
   const r = el.getBoundingClientRect(), layer = document.createElement("div");
-  layer.className = "gem-sparkle";
+  layer.className = `gem-sparkle${tint ? ` ${tint}` : ""}`;
   layer.style.left = `${r.left + r.width / 2}px`;
   layer.style.top = `${r.top + r.height / 2}px`;
   layer.style.setProperty("--w", `${r.width.toFixed(1)}px`);
@@ -91,3 +91,5 @@ export function gemSparkle(el: Element) {
   document.body.appendChild(layer);
   setTimeout(() => layer.remove(), 1100);
 }
+/** The same burst in gold glints, for the Gold ad. */
+export const goldSparkle = (el: Element) => gemSparkle(el, "gold");
