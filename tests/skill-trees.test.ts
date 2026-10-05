@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { defaults, decode } from "../src/save.ts";
 import { Game } from "../src/state.ts";
-import { TREES, mapNodes, treeHeight } from "../src/skill-trees.ts";
+import { TREES, columnGap, mapNodes, treeHeight } from "../src/skill-trees.ts";
 import { UPGRADES, cost, type UpgradeId } from "../src/config.ts";
 import { RESEARCH } from "../src/archives.ts";
 test("fresh progression gates Delve, currencies, Courage root, and Legacy", () => {
@@ -230,4 +230,11 @@ test("a Delve run that earned Courage puts a dot on the Courage tab in the fores
   assert.ok(g.buy("moveSpeed"));
   assert.equal(g.treeWaiting("courage"), false, "spent");
   assert.ok(decode(JSON.stringify(g.save)).treeNotices.courage, "kept until the tree is shown");
+});
+
+test("a tree's column gap is the least distance across between two nodes in one row", () => {
+  const tree = (id: string) => TREES.find(t => t.id === id)!;
+  assert.equal(columnGap(tree("inspiration")), 20, "its five-across rows");
+  assert.equal(columnGap(tree("courage")), 28);
+  assert.equal(columnGap({ ...tree("courage"), nodes: [tree("courage").nodes[0]] }), 100, "no row holds two");
 });

@@ -1580,13 +1580,15 @@ nav {
 .tree-heading p, .tree-lock { font-size: 11px; color: #a3afbc; text-align: center; line-height: 1.7; }
 .tree-lock { border: 1px solid #38414b; padding: 9px; }
 .tree-hint { font-size: 10px; color: #7f8a9d; text-align: center; margin: 4px 0 8px; }
-.tree-viewport { position: relative; flex: 1; min-height: 0; margin: 0; overflow: hidden; border: 1px solid #232b33; border-radius: 6px; touch-action: none; cursor: grab; background: #070a0e; }
+.tree-viewport { container-type: inline-size; position: relative; flex: 1; min-height: 0; margin: 0; overflow: hidden; border: 1px solid #232b33; border-radius: 6px; touch-action: none; cursor: grab; background: #070a0e; }
 .tree-viewport:active { cursor: grabbing; }
 .tree-map { position: absolute; inset: 0; transform-origin: 0 0; width: 100%; height: 100%; }
 /* The lines, particles and nodes, placed by percentages of the tree's height; a
-   tall tree's layer stands inset from the map's top and bottom by a margin. */
+   tall tree's layer stands inset from the map's top and bottom by a margin. On a
+   short screen a tall tree's view height is at least --tree-unit × 100, so rows
+   18 units apart (the tightest) stay a node's height apart, and it scrolls further. */
 .tree-layer { position: absolute; inset: 0; }
-.tree-map.tall { height: calc(var(--tree-height) + 2 * var(--tree-margin)); --tree-margin: 48px; }
+.tree-map.tall { height: calc(max(var(--tree-height), var(--tree-rows) * var(--tree-unit)) + 2 * var(--tree-margin)); --tree-margin: 48px; --tree-unit: 5px; }
 .tree-map.tall .tree-layer { inset: var(--tree-margin) 0; }
 .tree-map svg { position: absolute; width: 100%; height: 100%; overflow: visible; }
 .tree-map line { stroke: #46505b; stroke-width: 1; vector-effect: non-scaling-stroke; }
@@ -1596,9 +1598,13 @@ nav {
 .node-icon { display: grid; place-items: center; width: 44px; height: 44px; font-size: 23px; background: #121c25; border: 1px solid #6a7480; box-shadow: 0 0 0 4px #0a1016; }
 .courage .node-icon, .wisdom .node-icon { border-radius: 50%; }
 .legacy .node-icon { border-radius: 12px 0; }
-.node-name { font-size: 10px; line-height: 1.35; background: #0a1016e8; padding: 0 2px; }
+/* A name is never wider than the space to the next node in its row (--column-gap, a
+   percentage of the tree's width), so names side by side never touch. */
+.node-name { font-size: 10px; line-height: 1.35; background: #0a1016e8; padding: 0 2px; max-width: calc(var(--column-gap, 100) * 1cqw - 4px); }
 /* On a phone a long name wraps, so neighbouring nodes' names stay apart. */
-@media (max-width: 440px) { .node-name { max-width: 72px; } }
+@media (max-width: 440px) { .node-name { max-width: min(72px, calc(var(--column-gap, 100) * 1cqw - 4px)); } }
+/* The narrowest phones: a slightly smaller name, so its longest word fits. */
+@media (max-width: 340px) { .node-name { font-size: 9px; } }
 .skill-node small { font-size: 9px; color: #9aa7b5; background: #0a1016; }
 .skill-node.locked .node-icon { color: #75808b; border-style: dashed; }
 .node-icon { position: relative; }

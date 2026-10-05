@@ -127,6 +127,15 @@ export function treeOpen(tree: SkillTree, levels: Record<UpgradeId, number>) {
 }
 /** How tall `tree` is, in view heights × 100. */
 export const treeHeight = (tree: SkillTree) => tree.height ?? 100;
+/** The least distance across, in percent of the width, between two of
+ * `tree`'s nodes in one row (100 when no row holds two): how wide a node's
+ * name may be. */
+export function columnGap(tree: SkillTree) {
+  let gap = 100;
+  for (const a of tree.nodes) for (const b of tree.nodes)
+    if (a !== b && a.y === b.y) gap = Math.min(gap, Math.abs(a.x - b.x));
+  return gap;
+}
 /** `tree`'s nodes placed on its map: y as a percentage of the map's height. */
 export const mapNodes = (tree: SkillTree): SkillNode[] =>
   tree.nodes.map((n) => ({ ...n, y: (n.y * 100) / treeHeight(tree) }));

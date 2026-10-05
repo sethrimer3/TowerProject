@@ -4,7 +4,7 @@ import { permanentBoost } from "../shop/entitlements.ts";
 import { upgradeCard } from "../cards.ts";
 import { revealCard } from "./card-reveal.ts";
 import { TRAINING, TRAINING_GROUPS, TRAINING_PER_LEVEL, UPGRADES, cost, trainingOpen, type TrainingId, type UpgradeId } from "../config.ts";
-import { TREES, mapNodes, skillAvailable, treeHeight, treeOpen, type TreeId } from "../skill-trees.ts";
+import { TREES, columnGap, mapNodes, skillAvailable, treeHeight, treeOpen, type TreeId } from "../skill-trees.ts";
 import { trainingBulk, trainingPoints, trainingStep, trainingText, trainingWaiting, upgradeText } from "../loadout.ts";
 import { whole } from "../whole.ts";
 import { TreeParticles } from "../tree-particles.ts";
@@ -198,12 +198,13 @@ export class SkillTreePage {
     const view = this.view(tree.id);
     const nodes = mapNodes(tree);
     // A tree taller than one view scrolls, with a margin above its first
-    // row and below its last so no node is cut off on a short screen.
+    // row and below its last so no node is cut off on a short screen, and
+    // never shorter than its rows need to keep their nodes apart.
     const tall = treeHeight(tree) !== 100;
     el("upgrades").innerHTML = `${tabs}
       <section class="skill-tree ${tree.id}"><header class="tree-heading"><h3>${tree.name} skill tree${this.helpButton(tree)}</h3></header>
       ${this.lockHtml(tree)}
-      <div class="tree-viewport" id="tree-viewport"><div class="tree-map${tall ? " tall" : ""}" id="tree-map" style="${tall ? `--tree-height:${treeHeight(tree)}%;` : ""}transform:translate(${view.x}px,${view.y}px) scale(${view.scale})"><div class="tree-layer"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${this.linesHtml(nodes)}</svg>
+      <div class="tree-viewport" id="tree-viewport" style="--column-gap:${columnGap(tree)}"><div class="tree-map${tall ? " tall" : ""}" id="tree-map" style="${tall ? `--tree-height:${treeHeight(tree)}%;--tree-rows:${treeHeight(tree)};` : ""}transform:translate(${view.x}px,${view.y}px) scale(${view.scale})"><div class="tree-layer"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${this.linesHtml(nodes)}</svg>
       <canvas class="tree-particles" aria-hidden="true"></canvas>
       ${nodes.map(n => this.nodeHtml(n)).join("")}</div></div><div class="inspect-box tree-tooltip" id="tree-tooltip" hidden></div></div></section>`;
     this.bindTabs();
