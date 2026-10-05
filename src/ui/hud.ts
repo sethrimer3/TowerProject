@@ -490,7 +490,8 @@ function renderModeActions(game: Game) {
 }
 
 function renderStatus(game: Game, overlay: BoardOverlay) {
-  el("status-row").hidden = game.save.settings.infoDisplay === "popup";
+  const infoDisplay = game.save.settings.infoDisplay;
+  el("status-row").hidden = infoDisplay === "popup" || infoDisplay === "none";
   text("message", game.paused ? "Paused · take a breath." : overlay.statusLine() ?? game.message);
 }
 
