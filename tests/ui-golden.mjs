@@ -419,7 +419,7 @@ try {
       await shot(`${prefix}.tree.${tree}.buy`);
     }
   }
-  /** The Gear page opens on Provisions, beside Crafting;
+  /** The Gear page opens on Provisions;
    * opening it clears the dot the Gear skill put on its button. */
   async function gearTour(prefix) {
     await shot(`${prefix}.gear.waiting`);
@@ -429,10 +429,6 @@ try {
       await click("[data-gold]:not([disabled])");
       await shot(`${prefix}.gear.provisions.bought`);
     }
-    // Crafting opens with provisions: consumables from monster materials.
-    await click('[data-geartab="crafting"]');
-    await shot(`${prefix}.gear.crafting`);
-    await click('[data-geartab="provisions"]');
   }
   /** Settings from inside a run: opened from the HUD, left by its Back button. */
   async function settingsTour(prefix) {
@@ -565,9 +561,11 @@ try {
   await shot("equipment.claimed");
   await click("#unlock-visit");
   await shot("equipment.loadout");
-  await click('[data-eq-slot="weapon"]');
+  // An empty slot in the loadout ring shows only its category below.
+  await click('[data-eq-slot="helmet"]');
   await shot("equipment.slot");
-  await click('[data-eq-pick="e1"]');
+  await click('[data-eq-slot="helmet"]');
+  await click('[data-eq-item="e1"]');
   await shot("equipment.item");
   // Its effect slot: Refine offers candidates beside the current effect,
   // which stays when kept; a fresh piece's slot rolls free.
@@ -579,30 +577,31 @@ try {
   await shot("equipment.kept");
   await click("#eq-back");
   await click("#eq-close");
-  await click('[data-eq-view="inventory"]');
-  await shot("equipment.inventory");
   await click('[data-eq-cat="weapon"]');
   await click('[data-eq-rar="common"]');
   await shot("equipment.filtered");
   await click('[data-eq-select="toggle"]');
-  await click('[data-eq-item="e2"]');
-  await click('[data-eq-item="e3"]');
+  await click('.eq-grid [data-eq-item="e2"]');
+  await click('.eq-grid [data-eq-item="e3"]');
   await shot("equipment.selected");
   await click('[data-eq-dismantle]');
   await shot("equipment.dismantle.confirm");
   await click("#eq-cancel");
-  await click('[data-eq-view="forge"]');
-  await shot("equipment.forge");
-  await click('[data-eq-merge]');
+  // Assemble: choose the piece to keep, its copies fill in, and the result
+  // shows full screen.
+  await click('[data-eq-view="assemble"]');
+  await shot("equipment.assemble");
+  await click('[data-eq-target]');
   await shot("equipment.merge");
-  await click("#eq-do-merge");
+  await click("#eq-asm-go");
   await shot("equipment.merged");
-  await click("#eq-close");
+  await click("#eq-ok");
   await click('[data-eq-view="pulls"]');
   await click('[data-eq-pullcat="ring"]');
   await shot("equipment.pulls");
   await click('[data-eq-pull="10"]');
   await shot("equipment.pulled");
+  await click("#eq-ok");
 
   // --- Compare ---
   const hashes = Object.fromEntries(Object.entries(shots).map(([k, html]) => [k, createHash("sha256").update(html).digest("hex").slice(0, 16)]));

@@ -22,12 +22,11 @@ import { el, gemIcon, riseFrom, uiSprite } from "./dom.ts";
 import { currencyAmount, devAmount } from "./hud.ts";
 import { ACTION_ICONS, categoryIcon, materialIcon } from "./equipment-icons.ts";
 
-/** The Equipment tab's views: what each hero wears, the pieces owned, the
- * forge (merging and salvage), and Gem pulls. */
-type View = "loadout" | "inventory" | "forge" | "pulls";
-const VIEWS: { id: View; name: string }[] = [
-  { id: "loadout", name: "Equipped" }, { id: "inventory", name: "Inventory" }, { id: "forge", name: "Forge" }, { id: "pulls", name: "Acquire" },
-];
+/** The Equipment screen's views, chosen by the tabs along its bottom: the
+ * list (the loadout over the inventory), Assemble (merging) and Acquire
+ * (Gem pulls). */
+type View = "list" | "assemble" | "pulls";
+const VIEWS: { id: View; name: string }[] = [{ id: "list", name: "List" }, { id: "assemble", name: "Assemble" }, { id: "pulls", name: "Acquire" }];
 type SortKey = "rarity" | "level" | "category" | "newest" | "name";
 const SORTS: { id: SortKey; name: string }[] = [
   { id: "rarity", name: "Rarity" }, { id: "level", name: "Level" }, { id: "category", name: "Category" }, { id: "newest", name: "Newest" }, { id: "name", name: "Name" },
@@ -43,12 +42,18 @@ const nameOf = (item: EquipItem) => itemDef(item.def)!.name;
 const article = (word: string) => `${/^[AEIOU]/.test(word) ? "an" : "a"} ${word}`;
 const rarityTag = (r: EquipRarity) => `<span class="rarity-tag rar-${r}">${RARITY_TIERS[r].name}</span>`;
 const matAmount = (id: EquipMaterialId, n: number) => `${materialIcon(id)}<b>${currencyAmount(n)}</b>`;
+/** Where each category's slot sits around the hero in the loadout diagram,
+ * as percentages of its width and height: a ring, the weapon at the top. */
+const RING = CATEGORY_IDS.map((_, i) => {
+  const angle = ((i / CATEGORY_IDS.length) * 2 - 0.5) * Math.PI;
+  return { left: 50 + 38 * Math.cos(angle), top: 50 + 38 * Math.sin(angle) };
+});
 
 /** The Equipment screen, inside the Gear page (and opened by the forest's
  * Blacksmith). Each view is drawn from the save; presses go through the
  * game's EquipmentDesk. */
 export class EquipmentPanel {
-  private view: View = "loadout";
+  private view: View = "list";
   /** The loadout shown: the board's mode when the page opens. */
   private mode: Mode = "tower";
   private category: CategoryId | "all" = "all";
@@ -57,6 +62,10 @@ export class EquipmentPanel {
   private selecting = false;
   private selected = new Set<string>();
   private pullCategory: CategoryId = "weapon";
+  /** The piece being assembled into the next rarity, and the copies chosen
+   * to use up. */
+  private target: string | null = null;
+  private copies: string[] = [];
 
   constructor(private ctx: AppContext) {}
 
@@ -67,19 +76,21 @@ export class EquipmentPanel {
     return this.ctx.game.save.equipment;
   }
 
-  /** Opens on the loadout of the mode the board shows. */
+  /** Opens on the list, with the loadout of the mode the board shows. */
   opened() {
-    this.view = "loadout";
+    this.view = "list";
     this.mode = this.game.mode;
     this.selected.clear();
     this.selecting = false;
+    this.target = null;
   }
 
   html() {
-    const body = this.view === "loadout" ? this.loadoutHtml() : this.view === "inventory" ? this.inventoryHtml()
-      : this.view === "forge" ? this.forgeHtml() : this.pullsHtml();
-    return `${this.materialsHtml()}<div class="tree-tabs equip-views" role="group" aria-label="Equipment views">${VIEWS.map((v) =>
-      `<button data-eq-view="${v.id}" aria-pressed="${this.view === v.id}">${v.name}</button>`).join("")}</div>${body}`;
+    const body = this.view === "list" ? this.listHtml() : this.view === "assemble" ? this.assembleHtml() : this.pullsHtml();
+    const ready = this.mergeable().length > 0;
+    return `${this.materialsHtml()}<div class="eq-screen">${body}</div>
+      <div class="eq-views" role="group" aria-label="Equipment views">${VIEWS.map((v) =>
+        `<button data-eq-view="${v.id}" aria-pressed="${this.view === v.id}">${v.name}${v.id === "assemble" && ready ? `<span class="eq-new" title="A piece is ready to assemble">N</span>` : ""}</button>`).join("")}</div>`;
   }
 
   /** The nine material balances, and Gold, always in sight. */
@@ -88,22 +99,41 @@ export class EquipmentPanel {
     return `<div class="equip-materials" id="equip-materials" aria-label="Upgrade materials"><span class="mat-balance" title="Gold">${uiSprite("gold", "ui-sprite gold-icon")}<b>${devAmount(this.game, this.game.save.gold)}</b></span>${mats}</div>`;
   }
 
-  // --- Views ---
+  /** A piece as a square tile: its icon on its rarity's colour, the rarity
+   * mark, its level, a check when the shown loadout wears it, a lock. */
+  private tile(item: EquipItem, attr: string, extra = "") {
+    const def = itemDef(item.def)!, worn = this.e.equipped[this.mode][def.category] === item.id;
+    const label = `${def.name}, ${RARITY_TIERS[item.rarity].name}, Level ${item.level}${worn ? `, worn in the ${MODE_NAMES[this.mode]}` : ""}${item.locked ? ", locked" : ""}`;
+    return `<button class="eq-tile rar-${item.rarity}${extra}" data-${attr}="${item.id}" title="${label}" aria-label="${label}">${categoryIcon(def.category, "eq-tile-icon")}
+      <span class="eq-tile-mark">${RARITY_TIERS[item.rarity].mark}</span><span class="eq-tile-level">${item.level}</span>
+      ${worn ? `<span class="eq-tile-worn" aria-hidden="true">✓</span>` : ""}${item.locked ? `<span class="eq-tile-lock">${ACTION_ICONS.lock}</span>` : ""}${def.class === "unique" ? `<span class="eq-tile-unique" aria-hidden="true">★</span>` : ""}</button>`;
+  }
+  /** An empty place for a piece of `category`, its icon dimmed. */
+  private ghost(category: CategoryId, attr = "", label = CATEGORIES[category].name) {
+    return `<${attr ? "button" : "span"} class="eq-tile eq-ghost"${attr} title="${label}" aria-label="${label}">${categoryIcon(category, "eq-tile-icon")}</${attr ? "button" : "span"}>`;
+  }
 
+  // --- List: the loadout over the inventory ---
+
+  private listHtml() {
+    return this.loadoutHtml() + this.inventoryHtml();
+  }
+
+  /** The hero (the mode's sign) ringed by its nine slots. A worn piece opens
+   * its details; an empty slot shows only that category below. */
   private loadoutHtml() {
-    const worn = this.e.equipped[this.mode];
-    const modes = this.game.save.upgrades.delve
-      ? `<div class="tree-tabs equip-modes" role="group" aria-label="Loadout">${(["tower", "delve"] as const).map((m) =>
-        `<button data-eq-mode="${m}" aria-pressed="${this.mode === m}">${uiSprite(m)} ${MODE_NAMES[m]}</button>`).join("")}</div>
-        <p class="hint">Each mode's hero wears its own pieces from the shared inventory. <button class="link-button" data-eq-copy="${this.mode === "tower" ? "delve" : "tower"}">Copy the ${MODE_NAMES[this.mode === "tower" ? "delve" : "tower"]} loadout here</button></p>` : "";
-    const slots = CATEGORY_IDS.map((c) => {
-      const item = worn[c] ? findItem(this.e, worn[c]!) : undefined;
-      const body = item ? `<h3>${nameOf(item)}</h3><p class="item-meta">${rarityTag(item.rarity)} Lv ${item.level}/${maxLevel(item)}</p>` : `<h3 class="empty-slot">Empty</h3><p class="item-meta">Tap to choose</p>`;
-      return `<button class="equip-slot${item ? ` rar-${item.rarity}` : ""}" data-eq-slot="${c}"><span class="equip-icon-frame${item ? ` rar-${item.rarity}` : ""}">${categoryIcon(c)}</span><span><small>${CATEGORIES[c].name.toUpperCase()}</small>${body}</span></button>`;
+    const worn = this.e.equipped[this.mode], delve = !!this.game.save.upgrades.delve;
+    const slots = CATEGORY_IDS.map((c, i) => {
+      const item = worn[c] ? findItem(this.e, worn[c]!) : undefined, at = `style="left:${RING[i].left.toFixed(1)}%;top:${RING[i].top.toFixed(1)}%"`;
+      return `<span class="eq-ring-slot" ${at}>${item ? this.tile(item, "eq-item") : this.ghost(c, ` data-eq-slot="${c}"`, `${CATEGORIES[c].name}: empty`)}</span>`;
     }).join("");
+    const hero = delve
+      ? `<button class="eq-hero" data-eq-mode="${this.mode === "tower" ? "delve" : "tower"}" title="Showing the ${MODE_NAMES[this.mode]} loadout: switch to the ${MODE_NAMES[this.mode === "tower" ? "delve" : "tower"]}'s">${uiSprite(this.mode)}<small>${MODE_NAMES[this.mode]}</small></button>`
+      : `<span class="eq-hero">${uiSprite(this.mode)}<small>${MODE_NAMES[this.mode]}</small></span>`;
     const totals = equipmentEffects(this.e, this.mode), lines = (Object.entries(totals) as [keyof typeof totals, number][]).filter(([, v]) => v);
-    const summary = lines.length ? `<ul class="effect-list">${lines.map(([k, v]) => `<li>${effectText(k, v)}</li>`).join("")}</ul>` : `<p class="hint">Nothing worn yet: tap a slot to choose a piece.</p>`;
-    return `${modes}<div class="equip-slots">${slots}</div><h3 class="equip-heading">${MODE_NAMES[this.mode]} loadout totals</h3>${summary}`;
+    const summary = lines.length ? lines.map(([k, v]) => effectText(k, v)).join(" · ") : "Nothing worn yet: tap a piece below to equip it.";
+    const copy = delve ? ` <button class="link-button" data-eq-copy="${this.mode === "tower" ? "delve" : "tower"}">Copy the ${MODE_NAMES[this.mode === "tower" ? "delve" : "tower"]} loadout here</button>` : "";
+    return `<div class="eq-loadout" aria-label="${MODE_NAMES[this.mode]} loadout"><div class="eq-ring">${slots}${hero}</div></div><p class="eq-totals">${summary}${copy}</p>`;
   }
 
   /** The pieces shown after the filters, in the chosen order. */
@@ -131,11 +161,14 @@ export class EquipmentPanel {
 
   private inventoryHtml() {
     const items = this.shown();
-    const head = `<p class="hint equip-count">${this.e.items.length} / ${EQUIPMENT_CAPACITY} pieces</p>`;
+    const head = `<h3 class="eq-section">Pieces <small>${this.e.items.length} / ${EQUIPMENT_CAPACITY}</small></h3>`;
     const actions = this.selecting ? this.selectionBar() : "";
-    const list = items.length ? `<div class="equip-grid">${items.map((i) => this.itemCard(i)).join("")}</div>`
+    const grid = items.length ? `<div class="eq-grid">${items.map((i) => {
+      const extra = this.selected.has(i.id) ? " selected" : this.selecting && isProtected(this.e, i) ? " eq-blocked" : "";
+      return this.tile(i, "eq-item", extra);
+    }).join("")}</div>`
       : `<p class="hint">${this.e.items.length ? "No pieces match these filters." : "No equipment yet. Bosses from floor 60 drop Standard pieces, and Gem pulls in Acquire bring Unique ones."}</p>`;
-    return head + this.filtersHtml() + actions + list;
+    return head + this.filtersHtml() + actions + grid + this.salvageHtml();
   }
 
   /** The selection's actions: dismantle what can be, compare two. */
@@ -145,49 +178,84 @@ export class EquipmentPanel {
     return `<div class="equip-selection"><span>${chosen.length} selected</span><button data-eq-select="none"${chosen.length ? "" : " disabled"}>Clear</button>${compare}<button class="danger" data-eq-dismantle="selected"${chosen.length ? "" : " disabled"}>${ACTION_ICONS.dismantle} Dismantle</button></div>`;
   }
 
-  /** One piece as a card: icon, name, category, rarity (word and border),
-   * level, what it does, and whether it is worn or locked. */
-  private itemCard(item: EquipItem, action = "eq-item") {
-    const def = itemDef(item.def)!, worn = wornIn(this.e, item.id), selected = this.selected.has(item.id);
-    const blocked = this.selecting && isProtected(this.e, item);
-    const flags = [
-      ...worn.map((m) => `<span class="equip-flag worn" title="Worn in the ${MODE_NAMES[m]}">${uiSprite(m, "ui-sprite flag-sprite")}E</span>`),
-      ...(item.locked ? [`<span class="equip-flag locked" title="Locked">${ACTION_ICONS.lock}</span>`] : []),
-    ].join("");
-    const lines = itemLines(item).filter((l) => l.open).map((l) => effectText(l.line.kind, l.value, l.line.mode)).join(" · ");
-    const slots = slotPlan(item).map(({ slot, open }) => {
-      const def = slot?.effect ? slotEffectDef(slot.effect) : undefined;
-      return def && slot?.rarity ? `<span class="slot-chip rar-${slot.rarity}">${slotEffectName(def, slot.rarity)}</span>` : `<span class="slot-chip ${open ? "slot-empty" : "slot-locked"}">${open ? "Empty" : "Locked"}</span>`;
-    }).join("");
-    return `<button class="equip-card rar-${item.rarity}${selected ? " selected" : ""}" data-${action}="${item.id}"${blocked ? ` disabled title="Locked or worn: unlock or take it off first"` : ""} aria-pressed="${this.selecting ? selected : false}">
-      <span class="equip-icon-frame rar-${item.rarity}">${categoryIcon(def.category)}<span class="rarity-mark">${RARITY_TIERS[item.rarity].mark}</span></span>
-      <span class="equip-card-body"><small>${CATEGORIES[def.category].name.toUpperCase()} · ${def.class === "unique" ? "UNIQUE" : "STANDARD"}</small>
-      <strong>${def.name}</strong><span class="item-meta">${rarityTag(item.rarity)} Lv ${item.level}/${maxLevel(item)} ${flags}</span>
-      <span class="item-lines">${lines}</span><span class="item-slots">${slots}</span>${def.class === "unique" ? `<span class="item-identity">${def.identity}</span>` : ""}</span></button>`;
-  }
-
-  private forgeHtml() {
-    // Each definition and rarity with enough unprotected copies to merge.
-    const sets = new Map<string, EquipItem[]>();
-    for (const i of this.e.items) {
-      if (!RARITY_TIERS[i.rarity].next) continue;
-      const key = `${i.def}|${i.rarity}`;
-      sets.set(key, [...(sets.get(key) ?? []), i]);
-    }
-    const ready = [...sets.values()].filter((group) => group.some((t) => mergeFodder(this.e, t).length >= RARITY_TIERS[t.rarity].merge - 1));
-    const merges = ready.length ? ready.map((group) => {
-      const target = [...group].sort((a, b) => b.level - a.level || idNumber(a) - idNumber(b))[0];
-      return `<div class="forge-row"><span class="equip-icon-frame rar-${target.rarity}">${categoryIcon(categoryOf(target))}</span><span><strong>${nameOf(target)}</strong> ${rarityTag(target.rarity)} × ${group.length}</span><button data-eq-merge="${target.id}">${ACTION_ICONS.merge} Merge</button></div>`;
-    }).join("") : `<p class="hint">Three copies of the same piece at the same rarity merge into one of the next rarity. None are ready yet.</p>`;
+  /** Quick salvage: every unprotected piece of a rarity at once. */
+  private salvageHtml() {
     const quick = EQUIP_RARITIES.map((r) => {
       const n = this.e.items.filter((i) => i.rarity === r && !isProtected(this.e, i)).length;
       return `<button data-eq-salvage-all="${r}"${n ? "" : " disabled"}>${ACTION_ICONS.dismantle} All ${RARITY_TIERS[r].name} (${n})</button>`;
     }).join("");
     const salvage = EQUIP_RARITIES.map((r) => `${RARITY_TIERS[r].name} ${RARITY_TIERS[r].salvage}`).join(" · ");
-    return `<h3 class="equip-heading">${ACTION_ICONS.merge} Merge</h3><p class="hint">Merging keeps the piece you choose, with its level; the other two copies are used up.</p>${merges}
-      <h3 class="equip-heading">${ACTION_ICONS.dismantle} Salvage</h3><p class="hint">Dismantling breaks a piece into its category's material (${salvage}; Unique pieces twice that). Upgrades put into it are not returned. Locked and worn pieces are never included.</p>
-      <div class="equip-quick">${quick}</div><p class="hint">Or choose pieces one by one: Inventory, then Select.</p>`;
+    return `<details class="eq-salvage"><summary>${ACTION_ICONS.dismantle} Salvage</summary><p class="hint">Dismantling breaks a piece into its category's material (${salvage}; Unique pieces twice that). Upgrades put into it are not returned. Locked and worn pieces are never included; to choose pieces one by one, press Select.</p>
+      <div class="equip-quick">${quick}</div></details>`;
   }
+
+  // --- Assemble: three alike into the next rarity ---
+
+  /** Every piece with enough unprotected copies to assemble, best first. */
+  private mergeable() {
+    return this.e.items.filter((i) => RARITY_TIERS[i.rarity].next && mergeFodder(this.e, i).length >= RARITY_TIERS[i.rarity].merge - 1)
+      .sort((a, b) => rarityRank(b.rarity) - rarityRank(a.rarity) || b.level - a.level || idNumber(a) - idNumber(b));
+  }
+
+  /** Starts assembling `id`: the piece kept, with its lowest-level copies
+   * chosen to use up. */
+  private assemble(id: string) {
+    const item = findItem(this.e, id);
+    if (!item || !RARITY_TIERS[item.rarity].next) return;
+    this.target = id;
+    this.copies = mergeFodder(this.e, item).slice(0, RARITY_TIERS[item.rarity].merge - 1).map((i) => i.id);
+    this.view = "assemble";
+  }
+
+  /** The result above its inputs (the piece kept, plus the copies used up),
+   * what is still needed, and below it the pieces to choose from. */
+  private assembleHtml() {
+    const target = this.target ? findItem(this.e, this.target) : undefined;
+    if (!target || !RARITY_TIERS[target.rarity].next) {
+      this.target = null;
+      const ready = this.mergeable();
+      const list = ready.length ? `<div class="eq-grid">${ready.map((i) => this.tile(i, "eq-target")).join("")}</div>`
+        : `<p class="hint">Three copies of the same piece at the same rarity assemble into one of the next rarity. None are ready yet: locked and worn copies don't count.</p>`;
+      return `<div class="eq-assemble"><div class="eq-recipe"><span class="eq-tile eq-ghost eq-result-slot" aria-hidden="true">?</span><span class="eq-arrow" aria-hidden="true">◀</span>
+        <span class="eq-inputs"><span class="eq-tile eq-ghost" aria-hidden="true"></span><span class="eq-plus">+</span><span class="eq-tile eq-ghost" aria-hidden="true"></span><span class="eq-tile eq-ghost" aria-hidden="true"></span></span></div>
+        <p class="eq-need">Choose the piece to keep</p></div><h3 class="eq-section">List</h3>${list}${this.assembleActions(false)}`;
+    }
+    const t = RARITY_TIERS[target.rarity], next = t.next!, need = t.merge - 1, category = categoryOf(target);
+    const fodder = mergeFodder(this.e, target), copies = this.copies.map((id) => fodder.find((i) => i.id === id)).filter((i): i is EquipItem => !!i);
+    const result = { ...target, rarity: next };
+    const inputs = [this.tile(target, "eq-untarget", " eq-kept"), `<span class="eq-plus">+</span>`,
+      ...Array.from({ length: need }, (_, k) => copies[k] ? this.tile(copies[k], "eq-unpick") : this.ghost(category))].join("");
+    const unlocks = itemDef(target.def)!.effects.filter((l) => l.from === next).map((l) => effectText(l.kind, lineValue(l, next, target.level), l.mode));
+    const lost = copies.filter((i) => i.level > 1 || i.spent);
+    const warning = lost.length ? `<p class="warning">⚠ ${lost.length === 1 ? "One copy has" : `${lost.length} copies have`} been leveled: what was put into ${lost.length === 1 ? "it" : "them"} (${currencyAmount(lost.reduce((n, i) => n + (i.spent?.gold ?? 0), 0))} Gold, ${lost.reduce((n, i) => n + (i.spent?.material ?? 0), 0)} material) is lost.</p>` : "";
+    const blocked = this.e.items.filter((i) => i.id !== target.id && i.def === target.def && i.rarity === target.rarity && isProtected(this.e, i));
+    const left = fodder.filter((i) => !this.copies.includes(i.id));
+    const list = left.length ? `<div class="eq-grid">${left.map((i) => this.tile(i, "eq-pick")).join("")}</div>` : `<p class="hint">No other copies left to choose.</p>`;
+    return `<div class="eq-assemble"><div class="eq-recipe">${this.tile(result as EquipItem, "eq-result", " eq-result-slot")}<span class="eq-arrow" aria-hidden="true">◀</span><span class="eq-inputs">${inputs}</span></div>
+      <p class="eq-need">Need ${need}× <span class="rar-${target.rarity} eq-need-name">${nameOf(target)}</span> ${rarityTag(target.rarity)} · ${copies.length}/${need}</p></div>
+      <p class="hint">${rarityTag(target.rarity)} Lv ${target.level} → ${rarityTag(next)} Lv ${target.level} (up to ${RARITY_TIERS[next].maxLevel}). It keeps its effect slots, their effects and Refinement; leveling it to ${RARITY_TIERS[next].slotLevel} opens effect slot ${rarityRank(next) + 1}.${unlocks.length ? ` Unlocks: ${unlocks.join(" · ")}.` : ""}</p>
+      ${warning}${blocked.length ? `<p class="hint">Not offered (locked or worn): ${blocked.map((i) => `${nameOf(i)} Lv ${i.level}`).join(", ")}.</p>` : ""}
+      <h3 class="eq-section">List</h3>${list}${this.assembleActions(copies.length === need)}`;
+  }
+
+  private assembleActions(ready: boolean) {
+    return `<div class="eq-assemble-actions"><button id="eq-asm-cancel" class="danger"${this.target ? "" : " disabled"}>Cancel</button><button id="eq-asm-go" class="eq-go"${ready ? "" : " disabled"}>${ACTION_ICONS.merge} Assemble</button></div>`;
+  }
+
+  /** Assembles the chosen piece, then shows what it became. */
+  private doAssemble() {
+    if (!this.target) return;
+    const result = this.game.equipment.merge(this.target, this.copies);
+    if (typeof result === "string") return;
+    const id = this.target;
+    this.target = null;
+    this.copies = [];
+    this.changed();
+    const item = findItem(this.e, id);
+    if (item) this.showResult("Assemble Complete!", [item]);
+  }
+
+  // --- Acquire: Gem pulls ---
 
   private pullsHtml() {
     const c = this.pullCategory, gems = this.game.save.gems;
@@ -205,6 +273,37 @@ export class EquipmentPanel {
       <div class="pull-buttons">${button(1)}${button(10)}</div><p class="hint">${gemIcon()} ${devAmount(this.game, gems)} held</p></div>`;
   }
 
+  /** `count` Gem pulls in the chosen category, then every result at once. */
+  private pull(count: PullCount) {
+    const result = this.game.equipment.pull(this.pullCategory, count);
+    if (result === "gems") return askForGems(this.ctx);
+    const { modal } = this.ctx;
+    if (result === "room" || result === "locked") {
+      modal.innerHTML = `<h2>No room</h2><p>The inventory holds ${EQUIPMENT_CAPACITY} pieces. Dismantle some to make room for ${count}.</p><div class="dialog-actions"><button id="eq-close">Close</button></div>`;
+      modal.showModal();
+      el("eq-close").onclick = () => modal.close();
+      return;
+    }
+    this.ctx.save();
+    this.ctx.update();
+    this.rerender();
+    const rares = result.filter((r) => r.item.rarity === "rare").length;
+    this.showResult(rares ? `${rares} Rare!` : "Pull Complete!", result.map((r) => r.item), result.filter((r) => r.pity).map((r) => r.item.id),
+      `Pity now ${this.e.pity[this.pullCategory]}/${PITY}.`);
+  }
+
+  /** The full screen shown after an assemble or a pull: what came of it,
+   * each piece with its name and rarity, and OK. */
+  private showResult(title: string, items: EquipItem[], pity: string[] = [], note = "") {
+    const { modal } = this.ctx;
+    const cards = items.map((item) => `<div class="eq-result-item">${this.tile(item, "eq-shown")}<strong>${nameOf(item)}</strong>${rarityTag(item.rarity)}${pity.includes(item.id) ? `<small>Pity</small>` : ""}</div>`).join("");
+    modal.classList.add("eq-result");
+    modal.innerHTML = `<h2 class="eq-result-title">${title}</h2><div class="eq-result-items">${cards}</div>${note ? `<p class="hint">${note}</p>` : ""}<div class="dialog-actions"><button id="eq-ok" class="eq-go">OK</button></div>`;
+    modal.addEventListener("close", () => modal.classList.remove("eq-result"), { once: true });
+    if (!modal.open) modal.showModal();
+    el("eq-ok").onclick = () => modal.close();
+  }
+
   // --- Presses ---
 
   /** Click handlers by data attribute; each gets that attribute's value. */
@@ -213,7 +312,7 @@ export class EquipmentPanel {
       eqView: (v) => { this.view = v as View; this.selecting = false; this.selected.clear(); this.rerender(); },
       eqMode: (v) => { this.mode = v as Mode; this.rerender(); },
       eqCopy: (v) => { this.game.equipment.copyLoadout(v as Mode, this.mode); this.changed(); },
-      eqSlot: (v) => this.chooseFor(v as CategoryId),
+      eqSlot: (v) => { this.category = this.category === v ? "all" : v as CategoryId; this.rerender(); },
       eqCat: (v) => { this.category = v as CategoryId | "all"; this.rerender(); },
       eqRar: (v) => { this.rarity = v as EquipRarity | "all"; this.rerender(); },
       eqSelect: (v) => {
@@ -223,14 +322,23 @@ export class EquipmentPanel {
       },
       eqItem: (v) => {
         if (!this.selecting) return this.showItem(v);
+        const item = findItem(this.e, v);
+        if (!item || isProtected(this.e, item)) return;
         if (this.selected.has(v)) this.selected.delete(v);
         else this.selected.add(v);
         this.rerender();
       },
       eqCompare: () => { const [a, b] = [...this.selected]; this.showCompare(a, b); },
       eqDismantle: () => this.confirmDismantle([...this.selected]),
-      eqMerge: (v) => this.showMerge(v),
       eqSalvageAll: (v) => this.confirmDismantle(this.e.items.filter((i) => i.rarity === v && !isProtected(this.e, i)).map((i) => i.id)),
+      eqTarget: (v) => { this.assemble(v); this.rerender(); },
+      eqUntarget: () => { this.target = null; this.rerender(); },
+      eqPick: (v) => {
+        const target = this.target ? findItem(this.e, this.target) : undefined;
+        if (target && this.copies.length < RARITY_TIERS[target.rarity].merge - 1) this.copies.push(v);
+        this.rerender();
+      },
+      eqUnpick: (v) => { this.copies = this.copies.filter((id) => id !== v); this.rerender(); },
       eqPullcat: (v) => { this.pullCategory = v as CategoryId; this.rerender(); },
       eqPull: (v) => this.pull(Number(v) as PullCount),
     };
@@ -238,6 +346,9 @@ export class EquipmentPanel {
       const attr = key.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`);
       document.querySelectorAll<HTMLElement>(`#gear [data-${attr}]`).forEach((b) => (b.onclick = () => handle(b.dataset[key]!, b)));
     }
+    const on = (id: string, fn: () => void) => { const b = document.querySelector<HTMLButtonElement>(`#gear #${id}`); if (b) b.onclick = fn; };
+    on("eq-asm-cancel", () => { this.target = null; this.copies = []; this.rerender(); });
+    on("eq-asm-go", () => this.doAssemble());
     const sort = document.querySelector<HTMLSelectElement>("#eq-sort");
     if (sort) sort.onchange = () => { this.sort = sort.value as SortKey; this.rerender(); };
   }
@@ -250,21 +361,6 @@ export class EquipmentPanel {
     this.ctx.save();
     this.ctx.renderPage();
     this.ctx.update();
-  }
-
-  /** A slot pressed: the pieces of its category to wear, the one worn first. */
-  private chooseFor(category: CategoryId) {
-    const { modal } = this.ctx, wornId = this.e.equipped[this.mode][category];
-    const items = this.e.items.filter((i) => categoryOf(i) === category)
-      .sort((a, b) => Number(b.id === wornId) - Number(a.id === wornId) || rarityRank(b.rarity) - rarityRank(a.rarity) || b.level - a.level);
-    const list = items.length ? `<div class="equip-grid modal-list">${items.map((i) => this.itemCard(i, "eq-pick")).join("")}</div>` : `<p class="hint">No ${CATEGORIES[category].plural.toLowerCase()} owned yet.</p>`;
-    modal.innerHTML = `<small>${MODE_NAMES[this.mode].toUpperCase()} LOADOUT</small><h2>${categoryIcon(category)} ${CATEGORIES[category].name}</h2><p class="hint">${CATEGORIES[category].role}.</p>${list}
-      <div class="dialog-actions">${wornId ? `<button id="eq-unequip">Take off</button>` : ""}<button id="eq-close">Close</button></div>`;
-    modal.showModal();
-    el("eq-close").onclick = () => modal.close();
-    const off = document.querySelector<HTMLButtonElement>("#eq-unequip");
-    if (off) off.onclick = () => { this.game.equipment.unequip(this.mode, category); modal.close(); this.changed(); };
-    modal.querySelectorAll<HTMLElement>("[data-eq-pick]").forEach((b) => (b.onclick = () => this.showItem(b.dataset.eqPick!)));
   }
 
   /** A piece's details: everything it does at each rarity, how it compares
@@ -286,7 +382,7 @@ export class EquipmentPanel {
       ? `<button data-eq-off="${m}">Take off (${MODE_NAMES[m]})</button>`
       : `<button data-eq-on="${m}">Equip (${MODE_NAMES[m]})</button>`).join("");
     const fodder = mergeFodder(this.e, item), next = RARITY_TIERS[item.rarity].next;
-    const mergeButton = next ? `<button id="eq-merge"${fodder.length >= RARITY_TIERS[item.rarity].merge - 1 ? "" : " disabled"} title="Needs ${RARITY_TIERS[item.rarity].merge - 1} more unlocked, unworn copies">${ACTION_ICONS.merge} Merge (${fodder.length}/${RARITY_TIERS[item.rarity].merge - 1})</button>` : "";
+    const mergeButton = next ? `<button id="eq-merge"${fodder.length >= RARITY_TIERS[item.rarity].merge - 1 ? "" : " disabled"} title="Needs ${RARITY_TIERS[item.rarity].merge - 1} more unlocked, unworn copies">${ACTION_ICONS.merge} Assemble (${fodder.length}/${RARITY_TIERS[item.rarity].merge - 1})</button>` : "";
     const protectedNote = isProtected(this.e, item) ? `<p class="hint">${item.locked ? "Locked" : "Worn"}: it can't be dismantled or used up in a merge until you ${item.locked ? "unlock it" : "take it off"}.</p>` : "";
     const invested = item.spent ? `<p class="hint">Invested: ${currencyAmount(item.spent.gold)} Gold and ${item.spent.material} ${EQUIP_MATERIALS[mat].name}.</p>` : "";
     modal.innerHTML = `<small>${CATEGORIES[category].name.toUpperCase()} · ${def.class === "unique" ? "UNIQUE" : "STANDARD"}</small>
@@ -303,7 +399,7 @@ export class EquipmentPanel {
     on("#eq-level10", level1(10));
     on("#eq-levelmax", level1(maxLevel(item)));
     on("#eq-lock", () => { this.game.equipment.setLocked(item.id, !item.locked); this.ctx.save(); this.rerender(); this.showItem(item.id); });
-    on("#eq-merge", () => this.showMerge(item.id));
+    on("#eq-merge", () => { modal.close(); this.assemble(item.id); this.rerender(); });
     on("#eq-dismantle", () => this.confirmDismantle([item.id]));
     modal.querySelectorAll<HTMLElement>("[data-eq-slotopen]").forEach((b) => (b.onclick = () => this.showSlot(item.id, Number(b.dataset.eqSlotopen))));
     modal.querySelectorAll<HTMLElement>("[data-eq-on]").forEach((b) => (b.onclick = () => { this.game.equipment.equip(b.dataset.eqOn as Mode, item.id); this.changed(); this.showItem(item.id); }));
@@ -447,47 +543,6 @@ export class EquipmentPanel {
     el("eq-close").onclick = () => modal.close();
   }
 
-  /** The merge for `targetId`: it survives; the player picks the copies used
-   * up (the two lowest-level ones at first), warned when they were leveled. */
-  private showMerge(targetId: string) {
-    const target = findItem(this.e, targetId);
-    if (!target) return;
-    const t = RARITY_TIERS[target.rarity], next = t.next;
-    if (!next) return;
-    const need = t.merge - 1, fodder = mergeFodder(this.e, target);
-    const chosen = new Set(fodder.slice(0, need).map((i) => i.id));
-    const blocked = this.e.items.filter((i) => i.id !== target.id && i.def === target.def && i.rarity === target.rarity && isProtected(this.e, i));
-    const { modal } = this.ctx;
-    const draw = () => {
-      const picked = fodder.filter((i) => chosen.has(i.id));
-      const lost = picked.filter((i) => i.level > 1 || i.spent);
-      const unlocks = itemDef(target.def)!.effects.filter((l) => l.from === next).map((l) => effectText(l.kind, lineValue(l, next, target.level), l.mode));
-      const list = fodder.map((i) => `<label class="merge-pick"><input type="checkbox" data-merge-pick="${i.id}"${chosen.has(i.id) ? " checked" : ""}> ${nameOf(i)} ${rarityTag(i.rarity)} Lv ${i.level}</label>`).join("");
-      const blockedList = blocked.length ? `<p class="hint">Not offered (locked or worn): ${blocked.map((i) => `${nameOf(i)} Lv ${i.level}`).join(", ")}.</p>` : "";
-      const warning = lost.length ? `<p class="warning">⚠ ${lost.length === 1 ? "One copy has" : `${lost.length} copies have`} been leveled: what was put into ${lost.length === 1 ? "it" : "them"} (${currencyAmount(lost.reduce((n, i) => n + (i.spent?.gold ?? 0), 0))} Gold, ${lost.reduce((n, i) => n + (i.spent?.material ?? 0), 0)} material) is lost.</p>` : "";
-      modal.innerHTML = `<small>${ACTION_ICONS.merge} MERGE</small><h2>${nameOf(target)}</h2>
-        <p>${rarityTag(target.rarity)} Lv ${target.level} → ${rarityTag(next)} Lv ${target.level} (up to ${RARITY_TIERS[next].maxLevel})</p>
-        ${unlocks.length ? `<p class="hint">Unlocks: ${unlocks.join(" · ")}</p>` : ""}
-        <p class="hint">It keeps its effect slots, their effects and Refinement. Its slots may then hold ${RARITY_TIERS[next].name} effects, and leveling it to ${RARITY_TIERS[next].slotLevel} opens effect slot ${rarityRank(next) + 1}.</p>
-        <p class="hint">Choose ${need} copies to use up (${picked.length}/${need}). The piece you opened survives.</p><div class="merge-list">${list}</div>${blockedList}${warning}
-        <div class="dialog-actions"><button id="eq-cancel">Cancel</button><button id="eq-do-merge"${picked.length === need ? "" : " disabled"}>${ACTION_ICONS.merge} Merge</button></div>`;
-      modal.querySelectorAll<HTMLInputElement>("[data-merge-pick]").forEach((box) => (box.onchange = () => {
-        if (box.checked) chosen.add(box.dataset.mergePick!);
-        else chosen.delete(box.dataset.mergePick!);
-        draw();
-      }));
-      el("eq-cancel").onclick = () => modal.close();
-      el("eq-do-merge").onclick = () => {
-        const result = this.game.equipment.merge(target.id, picked.map((i) => i.id));
-        if (typeof result === "string") return;
-        this.changed();
-        this.showItem(target.id);
-      };
-    };
-    draw();
-    if (!modal.open) modal.showModal();
-  }
-
   /** Asks before dismantling `ids` (none locked or worn): how many, their
    * rarities, the materials returned, and a warning for valuable ones. */
   private confirmDismantle(ids: string[]) {
@@ -517,25 +572,4 @@ export class EquipmentPanel {
     };
   }
 
-  /** `count` Gem pulls in the chosen category, then every result in one dialog. */
-  private pull(count: PullCount) {
-    const result = this.game.equipment.pull(this.pullCategory, count);
-    if (result === "gems") return askForGems(this.ctx);
-    const { modal } = this.ctx;
-    if (result === "room" || result === "locked") {
-      modal.innerHTML = `<h2>No room</h2><p>The inventory holds ${EQUIPMENT_CAPACITY} pieces. Dismantle some in the Forge to make room for ${count}.</p><div class="dialog-actions"><button id="eq-close">Close</button></div>`;
-      modal.showModal();
-      el("eq-close").onclick = () => modal.close();
-      return;
-    }
-    this.ctx.save();
-    this.ctx.update();
-    this.rerender();
-    const cards = result.map(({ item, pity }) => `<div class="pull-result rar-${item.rarity}"><span class="equip-icon-frame rar-${item.rarity}">${categoryIcon(categoryOf(item))}<span class="rarity-mark">${RARITY_TIERS[item.rarity].mark}</span></span><strong>${nameOf(item)}</strong>${rarityTag(item.rarity)}${pity ? `<small>Pity</small>` : ""}</div>`).join("");
-    const rares = result.filter((r) => r.item.rarity === "rare").length;
-    modal.innerHTML = `<small>${CATEGORIES[this.pullCategory].plural.toUpperCase()} · ${count} PULL${count === 1 ? "" : "S"}</small><h2>${rares ? `${rares} Rare!` : "Pulled"}</h2>
-      <div class="pull-results">${cards}</div><p class="hint">Pity now ${this.e.pity[this.pullCategory]}/${PITY}.</p><div class="dialog-actions"><button id="eq-close">Close</button></div>`;
-    modal.showModal();
-    el("eq-close").onclick = () => modal.close();
-  }
 }
