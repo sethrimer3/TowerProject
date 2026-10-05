@@ -6,7 +6,7 @@ import { drawForestTile } from "./outside.ts";
 import { getTorchFlicker, getTorchSway } from "./lighting.ts";
 import { drawArea1Door, drawArea1Item, drawArea1Quoins, wallAdjacencyMask } from "./area1-tileset.ts";
 import { drawThemedTile } from "./themed-tilesets.ts";
-import { doorColor } from "./doors.ts";
+import { doorColor, doorRule } from "./doors.ts";
 import { drawEnemySprite, enemySpriteReady } from "./enemy-sprites.ts";
 import { DELVE_ENEMY_NAMES } from "./scaling.ts";
 import { drawGameSprite, drawGameSpriteFrame, gameSprite, torchAnimationFrame, TORCH_FRAME_COUNT } from "./game-sprites.ts";
@@ -206,9 +206,24 @@ function paintDoor(c: CanvasRenderingContext2D, t: Tile, art: TileArt) {
   c.fillRect(5, 4, 14, 19);
   c.fillStyle = "#101b28bb";
   c.fillRect(7, 5, 10, 17);
+  if (doorRule(t).type === "fullHp") return paintDoorHeart(c);
   c.fillStyle = doorColor(t);
   c.fillRect(11, 10, 3, 7);
   c.fillRect(10, 9, 5, 4);
+}
+
+/** A Heart Door's panel bears a heart in place of the keyhole. */
+function paintDoorHeart(c: CanvasRenderingContext2D) {
+  c.fillStyle = "#e0445a";
+  c.beginPath();
+  c.moveTo(12, 19);
+  c.lineTo(7.6, 14.2);
+  c.arc(10, 12, 2.6, Math.PI * 0.82, Math.PI * 1.95);
+  c.arc(14, 12, 2.6, Math.PI * 1.05, Math.PI * 0.18);
+  c.closePath();
+  c.fill();
+  c.fillStyle = "#ffd0d6";
+  c.fillRect(9, 11, 2, 1);
 }
 
 function paintPotion(c: CanvasRenderingContext2D, t: Tile, art: TileArt) {

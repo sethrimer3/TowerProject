@@ -123,8 +123,9 @@ const countLevels = (target: ResearchTarget, length = 9, value = 1) => Array.fro
 }));
 
 /** Potion HP (+3% potion healing a level), Regen (+3% of the HP Regen
- * training gives a step, a level) and Gold / Floor (+5% of the
- * Gold a new floor pays a level), for 100 levels each. The first four
+ * training gives a step, a level), Gold / Floor (+5% of the Gold a new
+ * floor pays a level) and Pocket Money (+5 starting Silver a level), for
+ * 100 levels each. The first four
  * are quick, to draw players in (15 s for 10 Gold, 1 min for 25, 5 min for
  * 50, 10 min for 75); then the formula starts over from level 5, so the
  * seam is smooth: the m-th level after them (level 4 + m) takes m / 4 hours
@@ -136,14 +137,13 @@ const hundredLevels = (target: ResearchTarget, value: number) => Array.from({ le
   return { gold, hours: seconds / 3600, effect: { target, op: "add", value } };
 });
 
-/** Faster Trainers (+2% training speed a level) and Pocket Money (+5
- * starting Silver a level), for 100 levels each. The n-th level costs
- * 250 × n Gold and takes 1.75 × n hours, about a year and 1.26 million Gold
- * in all (Potion HP takes about seven weeks). */
-const fasterTrainersLevels = (target: ResearchTarget = "trainingSpeed", value = 0.02) => Array.from({ length: 100 }, (_, i): ResearchLevel => ({
+/** Faster Trainers (+2% training speed a level), for 100 levels. The n-th
+ * level costs 250 × n Gold and takes 1.75 × n hours, about a year and 1.26
+ * million Gold in all (Potion HP takes about seven weeks). */
+const fasterTrainersLevels = () => Array.from({ length: 100 }, (_, i): ResearchLevel => ({
   gold: 250 * (i + 1),
   hours: 1.75 * (i + 1),
-  effect: { target, op: "add", value },
+  effect: { target: "trainingSpeed", op: "add", value: 0.02 },
 }));
 
 /** Rush: +1 tile rushed a level, for 25 levels. Each level starts from
@@ -238,7 +238,7 @@ export const RESEARCH = {
     description: "Put a little by between climbs: every run goes inside with more Silver in hand.",
     categories: ["economy"],
     requires: [{ upgrade: "pocketMoney" }],
-    levels: fasterTrainersLevels("startingSilver", 5),
+    levels: hundredLevels("startingSilver", 5),
   },
   floorGold: {
     name: "Gold / Floor",

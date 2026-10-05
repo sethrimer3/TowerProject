@@ -1,9 +1,10 @@
 import { BUY_QUANTITIES, quantityLabel, type BuyQuantity } from "../buy-quantity.ts";
 
 /** The Buy Quantity dropdown ("x1", "x5", … "Max") among the quantities
- * open, the one in use selected; nothing before the skill is owned. */
+ * open, the one in use selected; nothing until there is more than x1 to
+ * choose from. */
 export function buyQuantityHtml(open: readonly BuyQuantity[], chosen: BuyQuantity) {
-  if (!open.length) return "";
+  if (open.length < 2) return "";
   const options = open.map((q) => `<option value="${q}"${q === chosen ? " selected" : ""}>${quantityLabel(q)}</option>`).join("");
   return `<select class="buy-quantity" data-buy-quantity aria-label="Buy quantity: ranks one press buys" title="Ranks one press buys">${options}</select>`;
 }

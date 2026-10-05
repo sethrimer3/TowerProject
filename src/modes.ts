@@ -104,7 +104,7 @@ export const MODES: { tower: ModeProfile<TowerRun>; delve: ModeProfile<DelveRun>
     lootKey: (run, x, y) => `${run.seed}:${run.height}:${x},${y}`,
     words: {
       currency: "Inspiration",
-      progress: "height",
+      progress: "floor",
       newBest: "Inspiration for each floor this ascent has completed beyond your highest: paid as you climb its stairs",
       run: "ascent",
       fresh: "tower",

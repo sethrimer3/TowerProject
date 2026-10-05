@@ -189,10 +189,12 @@ h1 span {
   flex-direction: column;
   gap: 3px;
 }
-/* End Run inside a run and Goals in the forest share one row, in both modes. */
+/* End Run inside a run and Goals in the forest share one row, in both
+   modes, at the bottom of the column. */
 .height-actions {
   width: 100%;
-  margin-top: 5px;
+  margin-top: auto;
+  padding-top: 5px;
   display: flex;
   flex-direction: column;
   gap: 3px;
@@ -424,8 +426,10 @@ h1 span {
   color: #f1dec1;
   line-height: 1.15;
 }
-/* The height, and beside it what the run has earned of the mode's currency. */
-.height-row { display: flex; align-items: center; justify-content: center; gap: 4px; }
+/* The tier over the floor, and under it what the run has earned of the
+   mode's currency. */
+.height .height-tier { margin-bottom: 1px; white-space: nowrap; letter-spacing: 1px; }
+.height-tier[hidden] { display: none; }
 .run-earned { display: inline-flex; align-items: center; gap: 2px; color: #ffe1a1; font-size: 13px; font-weight: 700; }
 .run-earned[hidden] { display: none; }
 .run-earned .ui-sprite { width: 14px; height: 14px; }
@@ -2587,13 +2591,17 @@ dialog.dismiss-anywhere { cursor: pointer; }
 .archives-gold { margin: 0; font-size: 11px; letter-spacing: 1px; color: #c9d0da; }
 .archives-gold b { color: var(--gold); font-size: 15px; }
 .archives-gold small { color: #8793a2; font-size: 9px; }
-.archivists { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+/* One archivist a row; an idle one opens Select Research when pressed. */
+.archivists { display: grid; grid-template-columns: 1fr; gap: 6px; }
 .archivist { display: flex; flex-direction: column; gap: 5px; min-width: 0; padding: 7px 8px; border: 1px solid #3d4858; border-radius: 7px; background: #111925; font-size: 11px; }
 .archivist small { font-size: 9px; letter-spacing: 2px; color: #8793a2; }
 .archivist b { color: #e3d2ad; font-weight: 500; }
 .archivist p { margin: 0; color: #b7c0cc; }
 .archivist.busy { border-color: #6e9a70; }
 .archivist button { min-height: 30px; padding: 4px 8px; font-size: 10px; }
+.archivist.idle { cursor: pointer; }
+.archivist.idle:hover { border-color: #d8b572; }
+.archivist .archivist-pick { border-color: #d8b572; color: #ffe1a1; background: #2b2718; }
 .archivist.hire { border-color: #5fc4ee; box-shadow: 0 0 8px #2fa9e055; }
 .archivist .archivist-hire { display: inline-flex; align-items: center; justify-content: center; gap: 4px; border: 1px solid #5fc4ee; background: radial-gradient(circle at 50% 40%, #1d4a63, #0d1f2b 75%); color: #bff2ff; font-size: 11px; text-shadow: 0 1px 2px #000; }
 .archivist-hire .gem-icon { width: 16px; height: 16px; filter: drop-shadow(0 0 3px #8fe6ff99); }
@@ -2606,7 +2614,7 @@ dialog.dismiss-anywhere { cursor: pointer; }
 .archivist-auto input { width: 16px; height: 16px; }
 .research-bar { height: 7px; border: 1px solid #3d4858; border-radius: 4px; background: #0a0f16; overflow: hidden; }
 .research-bar i { display: block; height: 100%; background: linear-gradient(90deg, #4f8a55, #a6e39a); }
-.research-filters { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr); gap: 6px; }
+.research-filters { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 6px; }
 .research-filters input, .research-filters select { min-width: 0; padding: 8px; border: 1px solid #445062; border-radius: 4px; background: #1b2533; color: #d8d6d0; font: inherit; font-size: 11px; }
 .research-list { display: grid; gap: 6px; }
 .research { padding: 5px 9px; border: 1px solid #3d4858; border-radius: 7px; background: #111925; font-size: 11px; }
@@ -2627,7 +2635,8 @@ dialog.dismiss-anywhere { cursor: pointer; }
 .research-next .training-box { min-height: 22px; padding: 1px 7px; font-size: 11px; }
 .research-target { color: #e3d2ad; font-size: 11px; }
 .research-price { color: #b7c0cc; font-size: 11px; }
-p.research-kept { color: #ffe1a1; }
+/* The time left of research with progress kept. */
+.research-time.kept { color: #b4ecb0; }
 .research-action { display: flex; align-items: center; justify-content: flex-end; gap: 6px; margin-left: auto; }
 .research-action button { min-height: 26px; padding: 3px 10px; font-size: 10px; border-color: #d8b572; color: #ffe1a1; background: #2b2718; }
 .research-action button:disabled { border-color: #4a5566; color: #7c8898; background: #111925; }
@@ -2635,9 +2644,13 @@ p.research-kept { color: #ffe1a1; }
 .research-empty { margin: 0; font-size: 11px; color: #7c8898; }
 .archives .tree-heading { position: relative; }
 .research-history-open { position: absolute; right: 0; top: 0; padding: 4px 10px; font-size: 11px; }
+/* Select Research: the archivist it chooses for under the heading, and the
+ * X that goes back at the top right. */
+.research-pick-for { display: block; font-size: 9px; letter-spacing: 2px; color: #8793a2; }
+.research-pick-close { position: absolute; right: 0; top: 0; min-width: 30px; min-height: 30px; padding: 2px 8px; font-size: 14px; line-height: 1; }
 .research-history { margin: 8px 0; padding: 0 4px 0 0; list-style: none; display: grid; gap: 4px; max-height: 50vh; overflow-y: auto; font-size: 11px; color: #b7c0cc; text-align: left; }
 .research-history time { margin-right: 6px; color: #8793a2; font-variant-numeric: tabular-nums; }
-@media (max-width: 440px) { .research-filters { grid-template-columns: 1fr 1fr; } .research-filters input { grid-column: 1 / -1; } }
+@media (max-width: 440px) { .research-filters { grid-template-columns: 1fr; } }
 
 /* Silver: the run's own currency, shown beside Gold. */
 .silver-sprite { filter: grayscale(1) brightness(1.35); }

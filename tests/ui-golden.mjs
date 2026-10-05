@@ -396,12 +396,17 @@ try {
       if (tree === "archives") {
         // Idle archivists, so nothing shown depends on the clock; the
         // research costs more Gold than the save holds.
-        await page.fill("#research-search", "no such research");
-        await shot(`${prefix}.tree.archives.search`);
-        await page.fill("#research-search", "");
         await click("#research-history-open");
         await shot(`${prefix}.tree.archives.history`);
         await click("#research-history-close");
+        // An idle archivist opens Select Research; its X goes back.
+        await click("[data-pick]");
+        await shot(`${prefix}.tree.archives.pick`);
+        await page.fill("#research-search", "no such research");
+        await shot(`${prefix}.tree.archives.search`);
+        await page.fill("#research-search", "");
+        await click("#research-pick-close");
+        await shot(`${prefix}.tree.archives.picked`);
         continue;
       }
       const skills = await page.locator("[data-skill]").evaluateAll((bs) => bs.map((b) => b.dataset.skill));

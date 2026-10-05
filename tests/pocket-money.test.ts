@@ -5,7 +5,7 @@ import { defaults } from "../src/save.ts";
 import { cost } from "../src/config.ts";
 import { RESEARCH } from "../src/archives.ts";
 
-test("Pocket Money costs 1 Inspiration after Into the depths, and opens research priced like Faster Trainers", () => {
+test("Pocket Money costs 1 Inspiration after Into the depths, and opens research priced like Gold / Floor", () => {
   const g = new Game(defaults());
   g.save.tower.inspiration = 1000;
   assert.equal(cost("pocketMoney", 0), 1);
@@ -14,7 +14,7 @@ test("Pocket Money costs 1 Inspiration after Into the depths, and opens research
   assert.ok(g.buy("delve"));
   assert.ok(g.buy("pocketMoney"));
   assert.deepEqual(RESEARCH.pocketMoney.requires, [{ upgrade: "pocketMoney" }]);
-  const ours = RESEARCH.pocketMoney.levels, theirs = RESEARCH.fasterTrainers.levels;
+  const ours = RESEARCH.pocketMoney.levels, theirs = RESEARCH.floorGold.levels;
   assert.deepEqual(ours.map((l) => [l.gold, l.hours]), theirs.map((l) => [l.gold, l.hours]));
   assert.ok(ours.every((l) => l.effect.target === "startingSilver" && l.effect.op === "add" && l.effect.value === 5));
 });

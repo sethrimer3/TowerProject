@@ -113,6 +113,7 @@ export class SkillTreePage {
     document.querySelectorAll<HTMLButtonElement>("[data-tree]").forEach(b => b.onclick = () => {
       this.tree = b.dataset.tree as PageTab;
       this.tooltipVisible = false;
+      this.archives.reset();
       this.render();
     });
   }

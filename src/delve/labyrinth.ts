@@ -5,7 +5,7 @@ import { FORK_TUNING, forkDepth, forksWorth, stepValue } from '../tower/forks.ts
 import { choosePattern, FALSE_ASCENTS, type Pattern } from './patterns.ts';
 import { tileRandom } from '../random.ts';
 import { intPow } from '../exact.ts';
-import { keyColorsOn, onlyOpenKeys } from '../key-schedule.ts';
+import { heartDoorsOn, keyColorsOn, onlyOpenKeys, withoutHeart } from '../key-schedule.ts';
 
 /** Delve is one continuous lattice of chambers (COLUMNS wide, endless rows).
  * Every lattice cell belongs to exactly one AREA. Area ownership is decided
@@ -463,8 +463,8 @@ function tryFork(lab: Lab, board: Board, n: Node, path: Point[]) {
   const lanes = forkLanes(board, n, path);
   if (!lanes || lab.rng() >= FORK_TUNING.chance(n.depth / 10)) return false;
   const value = n.pattern!.gates.reduce((sum, g) => sum + stepValue(g), 0);
-  const colors = colorsAt(lab, n);
-  const [fork] = forksWorth(value, n.depth / 10, 'mixed', lab.rng, f => f.lanes.length === 2 && forkDepth(f) <= lanes[0].length && onlyOpenKeys(f, colors));
+  const colors = colorsAt(lab, n), hearts = heartDoorsOn(n.depth / 10, lab.tier);
+  const [fork] = forksWorth(value, n.depth / 10, 'mixed', lab.rng, f => f.lanes.length === 2 && forkDepth(f) <= lanes[0].length && onlyOpenKeys(f, colors) && (hearts || withoutHeart(f)));
   if (!fork) return false;
   carveFork(lab, board, n, { fork, lanes, path });
   return true;

@@ -36,11 +36,15 @@ export function onlyOpenKeys(thing: unknown, colors: KeyColors): boolean {
   return Object.values(o).every((v) => onlyOpenKeys(v, colors));
 }
 
-/** The equivalent floor (counting from 1) Heart Doors first appear on, in
- * every tier. */
+/** The equivalent floor (counting from 1) Heart Doors first appear on from
+ * the second tier on. */
 export const HEART_DOOR_FLOOR = 31;
+/** The same in the first tower and delve: past floor 100, so a new hero has
+ * time to prepare for them. */
+export const FIRST_TIER_HEART_DOOR_FLOOR = 101;
 /** Whether equivalent floor `floor` (0 is the first; the Delve's may be
- * fractional) may hold a Heart Door. */
-export const heartDoorsOn = (floor: number) => Math.floor(floor) + 1 >= HEART_DOOR_FLOOR;
+ * fractional) of tier `tier` may hold a Heart Door. */
+export const heartDoorsOn = (floor: number, tier = 1) =>
+  Math.floor(floor) + 1 >= (tier > 1 ? HEART_DOOR_FLOOR : FIRST_TIER_HEART_DOOR_FLOOR);
 /** Whether a fork holds no Heart Door. */
 export const withoutHeart = (f: { lanes: { kind: string }[][] }) => !f.lanes.some((lane) => lane.some((s) => s.kind === "heart"));

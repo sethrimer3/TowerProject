@@ -391,11 +391,15 @@ function renderConsumables(game: Game) {
   }
 }
 
-/** Current height/depth (in the forest, the tier the entrance leads to:
- * "Tower 2"), and the reward the run's new best would pay. */
+/** Current floor/depth under the tier climbed ("Tower 2"; in the forest,
+ * just the tier the entrance leads to), and the reward the run's new best
+ * would pay. */
 function renderProgress(game: Game) {
   const outside = !!game.run.outside,
     rules = MODES[game.mode];
+  const tier = el("height-tier");
+  tier.hidden = outside;
+  text("height-tier", `${rules.words.tierName} ${game.save[game.mode].tier}`.toUpperCase());
   text("height-label", (outside ? rules.words.tierName : rules.words.progress).toUpperCase());
   const rawRunBest = game.run.maxHeight ?? game.run.height;
   const rawAllBest = game.save[game.mode].best;
@@ -409,10 +413,10 @@ function renderProgress(game: Game) {
   rewardEl.title = rules.words.newBest;
 }
 
-/** The run's Inspiration (Courage in the Delve) last shown beside the
- * height, and the mode it was shown for. */
+/** The run's Inspiration (Courage in the Delve) last shown under the
+ * floor, and the mode it was shown for. */
 let earnedShown = { mode: "", amount: 0 };
-/** Beside the height inside a run, once it has earned any: the mode's
+/** On a line under the floor inside a run, once it has earned any: the mode's
  * currency icon and what the run has earned, flashing each time it rises. */
 function renderRunEarned(game: Game) {
   const amount = game.run.outside ? 0 : game.save[game.mode].runCurrency, box = el("run-earned");

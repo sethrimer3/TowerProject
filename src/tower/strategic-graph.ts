@@ -73,7 +73,7 @@ function withPotionGates(table: Weighted<Gate>): Weighted<Gate> {
   return [...table.map((o) => (o.v.kind === "enemy" ? { w: o.w * left, v: o.v } : o)), { w: potion, v: { kind: "potion" } }];
 }
 
-function mainGateTable(depth: number, doorBias: number): Weighted<Gate> {
+function mainGateTable(depth: number, doorBias: number, hearts: boolean): Weighted<Gate> {
   return [
     { w: 5, v: { kind: "enemy", strength: "normal" } },
     { w: 1.5 + Math.min(2, depth * 0.1), v: { kind: "enemy", strength: "strong" } },
@@ -81,7 +81,7 @@ function mainGateTable(depth: number, doorBias: number): Weighted<Gate> {
     { w: depth >= 3 ? 1 * doorBias : 0, v: { kind: "door", color: "blue" } },
     { w: depth >= 10 ? 0.5 * doorBias : 0, v: { kind: "door", color: "red" } },
     { w: depth >= 1 ? 0.5 * doorBias : 0, v: { kind: "steel" } },
-    { w: heartDoorsOn(depth) ? 0.5 : 0, v: { kind: "heart" } },
+    { w: hearts ? 0.5 : 0, v: { kind: "heart" } },
   ];
 }
 
@@ -105,6 +105,8 @@ export class GraphBuilder {
   /** Whether the main route's gates may be potions in place of enemies
    * (`earlyPotions`). */
   potions = false;
+  /** Whether the floor may hold a Heart Door (`heartDoorsOn`). */
+  hearts = false;
   /** `bypass`: a blue or red door on the way to the stairs only ever
    * stands in a fork beside a lane without one. */
   constructor(public depth: number, public rng: () => number, public colors: KeyColors = keyColorsOn(depth), public bypass = false) {
@@ -196,6 +198,7 @@ export function generateStrategicGraph(seed: number, depth: number, budgetCut = 
   const rng = random(seed);
   const b = new GraphBuilder(depth, rng, keyColorsOn(depth, tier), bypassesRareKeys(tier));
   b.potions = earlyPotions(depth, tier);
+  b.hearts = heartDoorsOn(depth, tier);
   const archetype = pickArchetype(depth, rng);
   const profile = ARCHETYPES[archetype];
   const budget = Math.max(3, Math.min(MAX_REGIONS,
@@ -247,7 +250,7 @@ function addHub(b: GraphBuilder, profile: ArchetypeProfile, parent: number, last
   const hub = b.add({
     purpose: last || rng() < 0.6 ? "hub" : "transition",
     patternId: "main", parent,
-    gate: openFirstFloor(depth) ? freeGate(b) : pick(mainGates(b, mainGateTable(depth, profile.doorBias)), rng),
+    gate: openFirstFloor(depth) ? freeGate(b) : pick(mainGates(b, mainGateTable(depth, profile.doorBias, b.hearts)), rng),
     rewards: rng() < GRAPH_TUNING.hubPotionChance ? [{ kind: "potion" }] : [],
     formation: "cluster", route: "main", footprint: "hall", tags: ["progressionRoute"],
   });
