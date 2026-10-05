@@ -14,7 +14,7 @@
 
 ## 2. Loadouts
 
-The **inventory is shared**; each mode's hero has its **own loadout** (`save.equipment.equipped.tower` and `.delve`). A piece may be worn in both. The Equipped view switches between the two and can copy one onto the other. Each loadout wears one piece of each category.
+The **inventory is shared**; each mode's hero has its **own loadout** (`save.equipment.equipped.tower` and `.delve`). A piece may be worn in both. The List view's loadout ring switches between the two (tap the hero in its middle) and can copy one onto the other. Each loadout wears one piece of each category.
 
 What a loadout does is never written into the hero's stats: `loadout(save, mode)` works it out from what is worn now, and a change while a run is inside shifts that run by exactly the difference (`changeLoadout`). Equipping, unequipping, leveling, merging, reloading and switching modes therefore never count a bonus twice. Starting keys from equipment are handed out only as a run starts, so equipping and unequipping inside a run can't mint keys.
 
@@ -192,15 +192,15 @@ From level 1, reaching level 20 costs 20,900 Gold and 225 material; level 40, 13
 
 ## 8. Merging
 
-Three pieces of the **same definition and rarity** make one of the next rarity. The player opens the piece to keep (the target): it moves up a rarity **keeping its level**, lock, loadouts, investment, **effect slots, their effects and their Refinement** (nothing is rerolled: the new rarity raises the cap, lets its slots hold rarer effects, and opens the next slot once leveled past the old cap); the player picks the two copies used up (the two lowest-level unprotected ones are picked to start). Locked or worn copies are never offered; the target itself may be locked or worn. The Forge view lists every piece with enough copies ready.
+Three pieces of the **same definition and rarity** make one of the next rarity. In the Assemble view the player chooses the piece to keep (the target), shown beside the copies to use up with the result it makes: it moves up a rarity **keeping its level**, lock, loadouts, investment, **effect slots, their effects and their Refinement** (nothing is rerolled: the new rarity raises the cap, lets its slots hold rarer effects, and opens the next slot once leveled past the old cap); the player picks the two copies used up (the two lowest-level unprotected ones are picked to start). Locked or worn copies are never offered; the target itself may be locked or worn. Assemble lists every piece with enough copies ready (its tab wears an *N* while one is), and ends on a full-screen *Assemble Complete!* with the piece made.
 
 ## 9. Dismantling
 
-Dismantling breaks pieces into their category's material (section 4 amounts). From the Inventory's Select mode (any number of pieces, across categories) or the Forge's quick buttons (every unprotected piece of a rarity). The confirmation shows the count, the rarities, the materials returned, and a warning for valuable pieces (Rare, Unique or leveled). Locked and worn pieces can't be selected or dismantled; unlock or take them off first. The materials gained rise from their balances (*+20*).
+Dismantling breaks pieces into their category's material (section 4 amounts). From the List view's Select mode (any number of pieces, across categories) or its Salvage quick buttons (every unprotected piece of a rarity). The confirmation shows the count, the rarities, the materials returned, and a warning for valuable pieces (Rare, Unique or leveled). Locked and worn pieces can't be selected or dismantled; unlock or take them off first. The materials gained rise from their balances (*+20*).
 
 ## 10. Inventory
 
-At most **500** pieces (`EQUIPMENT_CAPACITY`). A boss drop that finds the inventory full is dismantled at once into its material; a Gem pull needs room for every piece it brings. The Inventory filters by category and by rarity together, sorts by rarity, level, category, newest or name, and selects several pieces at once to dismantle or (two) to compare. Each card shows the icon, name, category, Standard or Unique, the rarity word and mark, level and cap, its open effects, a Unique's identity, where it's worn and whether it's locked.
+At most **500** pieces (`EQUIPMENT_CAPACITY`). A boss drop that finds the inventory full is dismantled at once into its material; a Gem pull needs room for every piece it brings. The List view shows the loadout (nine slots ringed round the hero; an empty slot shows only its category below) over the inventory as a grid of square tiles. It filters by category and by rarity together, sorts by rarity, level, category, newest or name, and selects several pieces at once to dismantle or (two) to compare. Each tile shows the icon on its rarity's colour, the rarity mark, the level, a check when the loadout shown wears it, a lock, and a star for a Unique; tapping it opens the piece.
 
 ## 11. Boss drops (Standard pieces)
 
@@ -230,7 +230,7 @@ The amount is multiplied by `1 + ⌊equivalent floor / 25⌋` (×3 at floor 60, 
 
 ## 13. Gem pulls (Unique pieces)
 
-The Acquire view pulls in one chosen category: each pull brings one of its three Uniques, evenly, at a rolled rarity.
+The Acquire view pulls in one chosen category: each pull brings one of its three Uniques, evenly, at a rolled rarity. The pieces pulled show on a full-screen result.
 
 | Pull | Price |
 |---|---:|
@@ -340,6 +340,6 @@ A **Choice** picks any effect of the slot's pool (less those its other slots hol
 
 ### Screens
 
-The item view shows its rarity, level and cap, what the next rarity brings (*Uncommon raises the level cap to 40; Level 21 then opens effect slot 2*), its intrinsic lines, and each slot: its effect and value, its Refinement and Choices, a free roll for a new slot, or *Unlocks at Level 41 · needs Rare* for one not open yet. A slot's screen shows CURRENT, the NEW CANDIDATES with Keep Current, *Refinement: 7 / 10* and the next milestone, and Refine, Improve and Use a Choice (which lists the pool by family). Inventory cards show each slot's effect as a chip.
+The item view shows its rarity, level and cap, what the next rarity brings (*Uncommon raises the level cap to 40; Level 21 then opens effect slot 2*), its intrinsic lines, and each slot: its effect and value, its Refinement and Choices, a free roll for a new slot, or *Unlocks at Level 41 · needs Rare* for one not open yet. A slot's screen shows CURRENT, the NEW CANDIDATES with Keep Current, *Refinement: 7 / 10* and the next milestone, and Refine, Improve and Use a Choice (which lists the pool by family). 
 
 **Every number in this section is a balancing parameter, not a design constraint**: slot levels and caps, candidate count, rarity weights, costs, milestone spacing, effect values and families are all one-line edits in `balance.ts` and `slot-effects.ts`.
