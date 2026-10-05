@@ -44,13 +44,14 @@ export function withSavedStream<T>(e: EquipmentSave, seed: () => number, draw: (
   e.rng = (state + Math.imul(used, STEP)) >>> 0;
   return result;
 }
-/** `count` pulls in `category`, resolved in order (pity counts through
- * them), carrying on the saved stream. The caller makes sure there is room
- * and has taken the Gems. */
-export function pull(e: EquipmentSave, category: CategoryId, count: number, seed: () => number) {
+/** `count` pulls in `category`, or of all categories (`"all"`: each
+ * pull's category drawn evenly first), resolved in order (pity counts
+ * through them, each category its own), carrying on the saved stream. The
+ * caller makes sure there is room and has taken the Gems. */
+export function pull(e: EquipmentSave, category: CategoryId | "all", count: number, seed: () => number) {
   return withSavedStream(e, seed, (rng) => {
     const results: { item: EquipItem; pity: boolean }[] = [];
-    for (let i = 0; i < count; i++) results.push(pullOne(e, category, rng));
+    for (let i = 0; i < count; i++) results.push(pullOne(e, category === "all" ? pick(CATEGORY_IDS, rng()) : category, rng));
     return results;
   });
 }

@@ -4,12 +4,10 @@
  * uses for it. Code that needs a per-mode answer asks `MODES[mode]` rather
  * than branching on the mode; features only the Tower has still test for it. */
 import { START_X, TOWER_START_X, TOWER_WIDTH, WIDTH, goldReward } from "./config.ts";
-import type { MaterialStack } from "./materials.ts";
 import type { DelveRun, Mode, Run, Save, TowerRun } from "./entities.ts";
 import { LAYOUT_VERSION, World } from "./delve/world.ts";
 import { RoomWorld, TOWER_LAYOUT_VERSION } from "./tower/room-world.ts";
 import type { Board } from "./board.ts";
-import { rollEnemyDrops, towerEnemyDrops } from "./loot.ts";
 
 export type ModeProfile<R extends Run = Run> = {
   /** The balance of the currency this mode pays, and paying it. */
@@ -27,8 +25,6 @@ export type ModeProfile<R extends Run = Run> = {
   layoutVersion: number;
   /** The board a run inside the mode plays on, regenerated from its seed. */
   board(run: R): Board;
-  /** What a beaten enemy drops. */
-  enemyDrops(name: string, rng: () => number): MaterialStack[];
   /** Gold paid when a run ends. */
   endGold(run: R): number;
   /** Keys a kill or treasure so it pays out once, whatever undo does. */
@@ -98,7 +94,6 @@ export const MODES: { tower: ModeProfile<TowerRun>; delve: ModeProfile<DelveRun>
     entranceX: TOWER_START_X,
     layoutVersion: TOWER_LAYOUT_VERSION,
     board: (run) => new RoomWorld(run.seed, run.height, run.changes, run.percentPotions, run.tier),
-    enemyDrops: (name) => towerEnemyDrops(name),
     endGold: () => 0,
     // Tower floors reuse the same x/y space, so the floor is part of the key.
     lootKey: (run, x, y) => `${run.seed}:${run.height}:${x},${y}`,
@@ -127,7 +122,6 @@ export const MODES: { tower: ModeProfile<TowerRun>; delve: ModeProfile<DelveRun>
     entranceX: START_X,
     layoutVersion: LAYOUT_VERSION,
     board: (run) => new World(run),
-    enemyDrops: (name, rng) => rollEnemyDrops(name, rng),
     endGold: (run) => goldReward(run.treasures),
     lootKey: (run, x, y) => `${run.seed}:${x},${y}`,
     words: {

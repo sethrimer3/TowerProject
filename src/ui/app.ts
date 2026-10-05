@@ -13,7 +13,7 @@ export type PageGame = Readonly<Pick<Game, "mode" | "run" | "save" | "fallen" | 
   Pick<
     Game,
     | "undo" | "acceptDefeat" | "eraseAll" | "finish" | "setDevMode"
-    | "claimGoal" | "warp" | "buy" | "setBuyQuantity" | "useConsumable" | "clock" | "buyOffer"
+    | "claimGoal" | "warp" | "buy" | "setBuyQuantity" | "clock" | "buyOffer"
     | "training" | "research" | "deck" | "badges" | "gear" | "equipment"
   >;
 

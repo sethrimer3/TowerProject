@@ -1,5 +1,3 @@
-import { CONSUMABLES, consumableText } from "../crafting.ts";
-import { BASE_RULES } from "../step-effects.ts";
 import { CART_ICON, ENTER_ICON, gemIcon, pointsIcon, itemSprite, TAB_ICONS, uiSprite, type UiSprite } from "./dom.ts";
 import { AD_GEMS } from "../gems.ts";
 
@@ -47,7 +45,7 @@ function arrangeHud() {
   playerStats.append(identity, vitals);
   vitals.insertAdjacentHTML(
     "beforeend",
-    `<div class="inventory-divider" aria-hidden="true"></div><div class="run-consumables" aria-label="Run consumables">${FOCUS_STAT}${CHARGE_BUTTONS}${CONSUMABLES.map(c => `<button type="button" data-hud-consumable="${c.id}" aria-label="Use ${c.name}" title="${c.name}: ${consumableText(c, BASE_RULES)}">${itemSprite("potion_flat", "consumable-sprite")}<b data-consumable-count="${c.id}">0</b></button>`).join("")}</div>`,
+    `<div class="inventory-divider" aria-hidden="true"></div><div class="run-consumables" aria-label="Run consumables">${FOCUS_STAT}${CHARGE_BUTTONS}</div>`,
   );
   const boardFrame = document.querySelector<HTMLElement>("#board-frame")!;
   boardFrame.append(

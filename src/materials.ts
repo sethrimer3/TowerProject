@@ -1,5 +1,5 @@
-// Central data-driven tables for the persistent crafting-materials economy.
-// See docs/CRAFTING_AND_EQUIPMENT.md for the design source of truth.
+// The metal bars treasure chests hold, which the Defend page spends.
+// (Equipment's upgrade materials are its own, in equipment/catalog.ts.)
 
 export type MetalId =
   | "iron"
@@ -9,59 +9,15 @@ export type MetalId =
   | "starsteel"
   | "voidsteel";
 
-export type GemId =
-  | "garnet"
-  | "sapphire"
-  | "emerald"
-  | "ruby"
-  | "amethyst"
-  | "diamond";
-
-export type EnemySpeciesId =
-  | "cinderSlime"
-  | "boneSentinel"
-  | "duskWing"
-  | "ashWarden";
-
 export type MaterialId =
   | "ironBar"
   | "steelBar"
   | "silversteelBar"
   | "embersteelBar"
   | "starsteelBar"
-  | "voidsteelBar"
-  | GemId
-  | "cinderSlimeBlob"
-  | "emberNucleus"
-  | "sentinelBone"
-  | "gildedMarrow"
-  | "duskFeather"
-  | "eclipsePinion"
-  | "ashenPlateShard"
-  | "wardenSigil"
-  | "thievesTools"
-  | "knightsCrest"
-  | "slimeGel"
-  | "wardenHeartstone"
-  | "skeletonBone"
-  | "golemCore"
-  | "orcTusk"
-  | "frozenGargoyleShard"
-  | "ogreHide"
-  | "demonEmberheart"
-  | "crystalDust"
-  | "amethystCore"
-  | "wraithEctoplasm"
-  | "coralCrest"
-  | "trollWart"
-  | "sporeheart"
-  | "revenantShard"
-  | "blackstoneHeart"
-  | "whelpScale"
-  | "celestialAegis"
-  | "emptyVial";
+  | "voidsteelBar";
 
-export type MaterialCategory = "metal" | "gem" | "monster-common" | "monster-rare" | "utility";
+export type MaterialCategory = "metal";
 
 export type MaterialDef = {
   id: MaterialId;
@@ -106,118 +62,13 @@ export function metalUnlocked(id: MetalId, E: number): boolean {
   return E >= METALS.find((m) => m.id === id)!.unlockFloor;
 }
 
-export type GemDef = {
-  id: GemId;
-  name: string;
-  unlockFloor: number;
-  chance: (E: number) => number;
-  enhancement: { stat: "attack" | "defense" | "maxHp"; percent: number };
-};
-
-export const GEMS: GemDef[] = [
-  {
-    id: "garnet", name: "Garnet", unlockFloor: 0,
-    chance: (E) => Math.min(0.04, 0.015 + 0.0005 * E),
-    enhancement: { stat: "attack", percent: 0.005 },
-  },
-  {
-    id: "sapphire", name: "Sapphire", unlockFloor: 20,
-    chance: (E) => (E < 20 ? 0 : Math.min(0.03, 0.005 + 0.0005 * (E - 20))),
-    enhancement: { stat: "defense", percent: 0.005 },
-  },
-  {
-    id: "emerald", name: "Emerald", unlockFloor: 40,
-    chance: (E) => (E < 40 ? 0 : Math.min(0.025, 0.003 + 0.0005 * (E - 40))),
-    enhancement: { stat: "maxHp", percent: 0.005 },
-  },
-  {
-    id: "ruby", name: "Ruby", unlockFloor: 55,
-    chance: (E) => (E < 55 ? 0 : Math.min(0.02, 0.002 + 0.0005 * (E - 55))),
-    enhancement: { stat: "attack", percent: 0.01 },
-  },
-  {
-    id: "amethyst", name: "Amethyst", unlockFloor: 70,
-    chance: (E) => (E < 70 ? 0 : Math.min(0.015, 0.001 + 0.001 * (E - 70))),
-    enhancement: { stat: "defense", percent: 0.01 },
-  },
-  {
-    id: "diamond", name: "Diamond", unlockFloor: 90,
-    chance: (E) => (E < 90 ? 0 : Math.min(0.01, 0.0005 + 0.0005 * (E - 90))),
-    enhancement: { stat: "maxHp", percent: 0.01 },
-  },
-];
-
-const ENEMY_SPECIES: Record<EnemySpeciesId, { name: string; common: MaterialId; rare: MaterialId }> = {
-  cinderSlime: { name: "Cinder slime", common: "cinderSlimeBlob", rare: "emberNucleus" },
-  boneSentinel: { name: "Bone sentinel", common: "sentinelBone", rare: "gildedMarrow" },
-  duskWing: { name: "Dusk wing", common: "duskFeather", rare: "eclipsePinion" },
-  ashWarden: { name: "Ash warden", common: "ashenPlateShard", rare: "wardenSigil" },
-};
-
-export function speciesByName(name: string) {
-  return Object.values(ENEMY_SPECIES).find((s) => s.name === name) ?? null;
-}
-
-/** +1 flat Attack, +1 flat Defense, +3 Max HP, or Attack+Defense, per unit added while crafting. */
-export const RARE_ENHANCEMENTS: Partial<Record<MaterialId, { flatAttack?: number; flatDefense?: number; flatMaxHp?: number }>> = {
-  emberNucleus: { flatAttack: 1 },
-  gildedMarrow: { flatDefense: 1 },
-  eclipsePinion: { flatMaxHp: 3 },
-  wardenSigil: { flatAttack: 1, flatDefense: 1 },
-  knightsCrest: { flatDefense: 1 },
-  wardenHeartstone: { flatMaxHp: 3 },
-  golemCore: { flatDefense: 1 },
-  frozenGargoyleShard: { flatAttack: 1, flatDefense: 1 },
-  demonEmberheart: { flatAttack: 1 },
-  amethystCore: { flatDefense: 1 },
-  coralCrest: { flatMaxHp: 3 },
-  sporeheart: { flatMaxHp: 3 },
-  blackstoneHeart: { flatDefense: 1 },
-  celestialAegis: { flatAttack: 1, flatDefense: 1 },
-};
-
 export const MATERIALS: MaterialDef[] = [
-  { id: "ironBar", name: "Iron Bar", category: "metal", description: "The common backbone of every tier's equipment recipe.", icon: "▮" },
+  { id: "ironBar", name: "Iron Bar", category: "metal", description: "The common backbone of every defense.", icon: "▮" },
   { id: "steelBar", name: "Steel Bar", category: "metal", description: "Refined and dependable.", icon: "▮" },
   { id: "silversteelBar", name: "Silversteel Bar", category: "metal", description: "Streaked with pale silver veins.", icon: "▮" },
   { id: "embersteelBar", name: "Embersteel Bar", category: "metal", description: "Warm to the touch, faintly glowing.", icon: "▮" },
   { id: "starsteelBar", name: "Starsteel Bar", category: "metal", description: "Impossibly light, flecked with starlight.", icon: "▮" },
   { id: "voidsteelBar", name: "Voidsteel Bar", category: "metal", description: "Drinks in the light around it.", icon: "▮" },
-  { id: "garnet", name: "Garnet", category: "gem", description: "A deep red enhancement stone. +0.5% Attack.", icon: "◆" },
-  { id: "sapphire", name: "Sapphire", category: "gem", description: "A cool blue enhancement stone. +0.5% Defense.", icon: "◆" },
-  { id: "emerald", name: "Emerald", category: "gem", description: "A verdant enhancement stone. +0.5% Max HP.", icon: "◆" },
-  { id: "ruby", name: "Ruby", category: "gem", description: "A fierce enhancement stone. +1% Attack.", icon: "◆" },
-  { id: "amethyst", name: "Amethyst", category: "gem", description: "A violet enhancement stone. +1% Defense.", icon: "◆" },
-  { id: "diamond", name: "Diamond", category: "gem", description: "A flawless enhancement stone. +1% Max HP.", icon: "◆" },
-  { id: "cinderSlimeBlob", name: "Cinder Slime Blob", category: "monster-common", description: "Still faintly warm.", icon: "●" },
-  { id: "emberNucleus", name: "Ember Nucleus", category: "monster-rare", description: "A hardened core of trapped heat. +1 flat Attack.", icon: "✦" },
-  { id: "sentinelBone", name: "Sentinel Bone", category: "monster-common", description: "Dense and unnaturally cold.", icon: "●" },
-  { id: "gildedMarrow", name: "Gilded Marrow", category: "monster-rare", description: "Marrow laced with precious metal. +1 flat Defense.", icon: "✦" },
-  { id: "duskFeather", name: "Dusk Feather", category: "monster-common", description: "Impossibly light.", icon: "●" },
-  { id: "eclipsePinion", name: "Eclipse Pinion", category: "monster-rare", description: "A feather that swallows the light. +3 Max HP.", icon: "✦" },
-  { id: "ashenPlateShard", name: "Ashen Plate Shard", category: "monster-common", description: "A chip of scorched armor.", icon: "●" },
-  { id: "wardenSigil", name: "Warden Sigil", category: "monster-rare", description: "A glowing rune of protection. +1 flat Attack, +1 flat Defense.", icon: "✦" },
-  { id: "thievesTools", name: "Thieves' Tools", category: "monster-common", description: "Weathered picks and blades carried through the keep.", icon: "●" },
-  { id: "knightsCrest", name: "Knight's Crest", category: "monster-rare", description: "A battered crest that still holds its defensive oath. +1 flat Defense.", icon: "✦" },
-  { id: "slimeGel", name: "Slime Gel", category: "monster-common", description: "Cool moss-flecked gel from the ruins.", icon: "●" },
-  { id: "wardenHeartstone", name: "Warden Heartstone", category: "monster-rare", description: "A living stone knot wrapped in ancient moss. +3 Max HP.", icon: "✦" },
-  { id: "skeletonBone", name: "Catacomb Bone", category: "monster-common", description: "Amber-stained bone worn smooth by the crypt.", icon: "●" },
-  { id: "golemCore", name: "Golem Core", category: "monster-rare", description: "A dense sandstone heart. +1 flat Defense.", icon: "✦" },
-  { id: "orcTusk", name: "Frost Orc Tusk", category: "monster-common", description: "A tusk rimed with permanent ice.", icon: "●" },
-  { id: "frozenGargoyleShard", name: "Frozen Gargoyle Shard", category: "monster-rare", description: "An ice-hard fragment of enchanted stone. +1 flat Attack, +1 flat Defense.", icon: "✦" },
-  { id: "ogreHide", name: "Forge Ogre Hide", category: "monster-common", description: "Heat-cured hide scarred by sparks.", icon: "●" },
-  { id: "demonEmberheart", name: "Demon Emberheart", category: "monster-rare", description: "A coal-black heart with a molten center. +1 flat Attack.", icon: "✦" },
-  { id: "crystalDust", name: "Violet Crystal Dust", category: "monster-common", description: "Glittering residue gathered from a crystal savant.", icon: "●" },
-  { id: "amethystCore", name: "Amethyst Core", category: "monster-rare", description: "A flawless geode heart. +1 flat Defense.", icon: "✦" },
-  { id: "wraithEctoplasm", name: "Drowned Ectoplasm", category: "monster-common", description: "Cold spectral residue that smells faintly of salt.", icon: "●" },
-  { id: "coralCrest", name: "Coral Crest", category: "monster-rare", description: "A living crest taken from the temple's guardian. +3 Max HP.", icon: "✦" },
-  { id: "trollWart", name: "Troll Wart", category: "monster-common", description: "A stubbornly regenerative fungal growth.", icon: "●" },
-  { id: "sporeheart", name: "Colossus Sporeheart", category: "monster-rare", description: "The pulsing heart of a vast fungal colony. +3 Max HP.", icon: "✦" },
-  { id: "revenantShard", name: "Obsidian Revenant Shard", category: "monster-common", description: "A sharp sliver of haunted black glass.", icon: "●" },
-  { id: "blackstoneHeart", name: "Blackstone Heart", category: "monster-rare", description: "An impossibly heavy core that drinks in light. +1 flat Defense.", icon: "✦" },
-  { id: "whelpScale", name: "Astral Whelp Scale", category: "monster-common", description: "A midnight scale dusted with tiny stars.", icon: "●" },
-  { id: "celestialAegis", name: "Celestial Aegis", category: "monster-rare", description: "A radiant fragment of the sanctuary's final guardian. +1 flat Attack, +1 flat Defense.", icon: "✦" },
-  { id: "emptyVial", name: "Empty Vial", category: "utility", description: "A small glass vial for brewing consumables.", icon: "○" },
 ];
 
 export const MATERIAL_IDS = MATERIALS.map((m) => m.id);

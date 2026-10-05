@@ -89,6 +89,13 @@ export const MATERIAL_FLOORS = 25;
  * `PITY` in a row without a Rare in its category is a Rare. */
 export const PULL_GEMS = { 1: 20, 10: 200 } as const;
 export type PullCount = keyof typeof PULL_GEMS;
+/** Pulls of all categories at once (each pull's category drawn evenly) cost
+ * this many percent less. */
+export const PULL_ALL_DISCOUNT = 10;
+/** What `count` pulls cost: in one category, or of all (`all`), less
+ * `PULL_ALL_DISCOUNT`. */
+export const pullGems = (count: PullCount, all = false) =>
+  all ? (PULL_GEMS[count] * (100 - PULL_ALL_DISCOUNT)) / 100 : PULL_GEMS[count];
 export const PULL_RATES: Record<EquipRarity, number> = { common: 72, uncommon: 25, rare: 3 };
 export const PITY = 100;
 

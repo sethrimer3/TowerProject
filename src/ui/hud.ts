@@ -2,7 +2,6 @@ import { keyCount, whole, wholeHp } from "../whole.ts";
 import type { Game } from "../state.ts";
 import type { Renderer } from "../rendering.ts";
 import { levelForXp, xpForLevel } from "../config.ts";
-import { CONSUMABLES, consumableText } from "../crafting.ts";
 import { outsideWeather } from "../outside.ts";
 import { tierNumeral, tierRewardText } from "../tiers.ts";
 import { MODES, milestones } from "../modes.ts";
@@ -73,7 +72,6 @@ export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay)
   overlay.clearIfAt(game.run.player);
   renderVitals(game);
   renderFocus(game);
-  renderConsumables(game);
   renderProgress(game);
   renderModeActions(game);
   text("gems-held", devAmount(game, game.save.gems));
@@ -386,18 +384,6 @@ export function sparkRed(target: HTMLElement, reduceMotion: boolean) {
     spark.style.setProperty("--turn", `${turn}turn`);
     spark.addEventListener("animationend", () => spark.remove(), { once: true });
     target.append(spark);
-  }
-}
-
-function renderConsumables(game: Game) {
-  for (const c of CONSUMABLES) {
-    const count = game.save.consumables[c.id] ?? 0;
-    const countEl = document.querySelector<HTMLElement>(`[data-consumable-count="${c.id}"]`)!;
-    const button = countEl.closest("button") as HTMLButtonElement;
-    countEl.textContent = String(count);
-    button.disabled = count < 1 || game.run.outside || game.fallen;
-    // Potion HP research changes what it restores.
-    button.title = `${c.name}: ${consumableText(c, game.stepRules)}`;
   }
 }
 

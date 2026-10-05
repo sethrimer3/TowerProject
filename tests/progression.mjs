@@ -9,7 +9,7 @@ assert.equal(await page.locator('.tower-heading').isVisible(),false);
 // The left rail holds the purse: Gems, Gold, then Silver; the height column holds Log.
 assert.deepEqual(await page.locator('.hud-controls .purse > span').evaluateAll((s) => s.map((e) => e.className)), ['gem-stat', 'gold-stat', 'silver-stat']);
 assert.equal(await page.locator('.height .height-actions #log').count(), 1);
-assert.equal(await page.locator('.run-consumables [data-hud-consumable="cinderTonic"]').count(),1);
+assert.equal(await page.locator('[data-hud-consumable]').count(),0);
 await page.getByRole('button',{name:'Adventure log',exact:true}).click();
 await page.getByRole('heading',{name:'Adventure log'}).waitFor();
 assert.ok(await page.locator('#modal').innerText().then(t=>t.includes('Diamond')));

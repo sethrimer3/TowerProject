@@ -1,10 +1,9 @@
 import type { GoldItemId } from "../config.ts";
-import { craftConsumable, type ConsumableId } from "../crafting.ts";
 import { provisionOpen, provisionPrice } from "../loadout.ts";
 import { changeLoadout } from "./hero-sync.ts";
 import type { DeskHost } from "./desk.ts";
 
-/** The Gear page's commands: provisions and crafting (Equipment has its own
+/** The Gear page's commands: provisions (Equipment has its own
  * desk). Whatever changes the loadout reaches the runs of both modes at
  * once. */
 export class GearDesk {
@@ -23,9 +22,5 @@ export class GearDesk {
       if (!free) save.gold -= price;
       save.provisions[id]++;
     });
-  }
-
-  craftConsumable(id: ConsumableId) {
-    return craftConsumable(this.save, id);
   }
 }

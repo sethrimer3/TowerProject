@@ -50,7 +50,7 @@ import { World, LAYOUT_VERSION } from "./delve/world.ts";
 import { RoomWorld, TOWER_LAYOUT_VERSION } from "./tower/room-world.ts";
 import type { Board } from "./board.ts";
 import { bout, heroHpAfter, heroHpDuring, resume, REVIVE_MS, revivals, summarize, type Bout, type Revival } from "./combat.ts";
-import { HEART_DOOR_HP, healAfterVictory, isLethal, potionHeal, regenerate, resolveStep, type StepBlocked, type StepEffect, type StepRules, shardGain } from "./step-effects.ts";
+import { HEART_DOOR_HP, healAfterVictory, isLethal, regenerate, resolveStep, type StepBlocked, type StepEffect, type StepRules, shardGain } from "./step-effects.ts";
 import { OutsideWorld } from "./outside.ts";
 import { AreaLedger, chestReward, CLEARED_INSPIRATION, type AreaReward } from "./tower/area-ledger.ts";
 import { TowerClimb } from "./tower/climb.ts";
@@ -66,7 +66,6 @@ import { openQuantities, type BuyQuantity } from "./buy-quantity.ts";
 import { keepUndos, loadout, percentPotionChance, potionPercent, reviveChance } from "./loadout.ts";
 import { researched } from "./archives.ts";
 import { chargesLeft, chargesPerRun, climbFloor, spendCharge, type Charge } from "./run-charges.ts";
-import { CONSUMABLES, type ConsumableId } from "./crafting.ts";
 import type { MaterialId, MaterialStack } from "./materials.ts";
 import { TrainingDesk } from "./game/training-desk.ts";
 import { ResearchDesk } from "./game/research-desk.ts";
@@ -242,11 +241,7 @@ export class Game {
     this.save.gems = 999_999_999;
     this.save.tower.inspiration = 999_999_999;
     this.save.delve.courage = 999_999_999;
-    for (const material of MATERIALS) {
-      if (material.category === "metal" || material.category.startsWith("monster-")) {
-        this.save.materials[material.id] = 999_999_999;
-      }
-    }
+    for (const material of MATERIALS) this.save.materials[material.id] = 999_999_999;
     this.save.upgrades.delve = 1;
     this.save.upgrades.legacy = 1;
     // The Deck page with its Badges box, and every badge at the top level.
@@ -1515,12 +1510,11 @@ export class Game {
     this.gainXp(enemy, floor, scale);
     // Silver belongs to the run, so it isn't gated like Gold: undo takes it back.
     const purse = this.purse, silver = purse.killSilver(enemy, floor, scale);
-    const { gold, drops, equipment } = purse.enemyLoot(enemy, at.x, at.y, scale, fight.instakill);
+    const { gold, equipment } = purse.enemyLoot(enemy, at.x, at.y, scale, fight.instakill);
     this.gainCoins(at, gold, silver);
-    for (const d of drops) this.gain(at.x, at.y, materialText(d), { material: d.id, quantity: d.quantity });
     const found = equipmentTexts(equipment);
     for (const text of found) this.gain(at.x, at.y, text);
-    this.message = [fightText(fight), ...coinsText(gold, silver), ...drops.map(materialText), ...found].join(" · ");
+    this.message = [fightText(fight), ...coinsText(gold, silver), ...found].join(" · ");
     return true;
   }
   /** Raises the Gold and Silver just found from `at`, each only when some
@@ -1938,23 +1932,6 @@ export class Game {
   }
   /** The wall clock the Archives' research runs on (ms); tests set it. */
   clock: () => number = () => Date.now();
-  useConsumable(id: ConsumableId) {
-    if (!this.canUse(id)) return false;
-    const def = CONSUMABLES.find(c => c.id === id)!;
-    const p = this.run.player;
-    const n = snap(Math.min(p.maxHp - p.hp, potionHeal(def.healAmount, this.stepRules)));
-    p.hp = snap(p.hp + n);
-    this.save.consumables[id]--;
-    this.recordHeal(n);
-    this.message = `${def.name} · +${wholeChange(n)} HP`;
-    this.afterPlayerAction();
-    return true;
-  }
-  /** Whether a crafted consumable `id` can be used now: one held, inside a
-   * run, with no fight playing out. */
-  private canUse(id: ConsumableId) {
-    return this.playing && !this.encounter && (this.save.consumables[id] ?? 0) > 0;
-  }
   /** Records a potion's heal of `n` HP, already applied, where the hero stands. */
   private recordHeal(n: number) {
     if (n <= 0) return;

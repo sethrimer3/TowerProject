@@ -5,7 +5,6 @@ import { FIND_POTION_MAX, GOLD_SHOP, OLD_SAVE_KEY, RUN_TRAINING_CAP, SAVE_KEY, T
 import type { AutomoveMemory, DelveRun, ModeSave, Fall, MoveSnapshot, Run, Save, TowerRun } from "./entities.ts";
 import { emptyMaterials, MATERIAL_IDS, type MaterialId } from "./materials.ts";
 import { decodeEquipment, defaultEquipment } from "./equipment/inventory.ts";
-import { CONSUMABLES, type ConsumableId } from "./crafting.ts";
 import { decodeDefendSave, defaultDefendSave } from "./defend/progress.ts";
 import { decodeSettings, defaultSettings } from "./settings.ts";
 import { keepUndos, loadout } from "./loadout.ts";
@@ -43,7 +42,6 @@ export function defaults(): Save {
     settings: defaultSettings(),
     materials: emptyMaterials(),
     equipment: defaultEquipment(),
-    consumables: Object.fromEntries(CONSUMABLES.map((c) => [c.id, 0])) as Save["consumables"],
     hand: [...BASE_HAND],
     handSlots: 0,
     badges: defaultBadges(),
@@ -228,18 +226,11 @@ function decodeMaterials(s: any): Record<MaterialId, number> {
     for (const id of MATERIAL_IDS) materials[id] = count(s[id], materials[id]);
   return materials;
 }
-function decodeConsumables(s: any): Record<ConsumableId, number> {
-  const consumables = Object.fromEntries(CONSUMABLES.map((c) => [c.id, 0])) as Record<ConsumableId, number>;
-  if (s && typeof s === "object")
-    for (const c of CONSUMABLES) consumables[c.id] = count(s[c.id], consumables[c.id], 999);
-  return consumables;
-}
 /** Older (version-2) saves intentionally get an empty material inventory
  * rather than being invalidated. The crafted equipment of earlier saves
  * (`equipmentInventory`, never reachable in play) is dropped. */
 function decodeInventory(s: any, d: Save) {
   d.materials = decodeMaterials(s.materials);
-  d.consumables = decodeConsumables(s.consumables);
 }
 
 // --- Settings, currencies and records ---
