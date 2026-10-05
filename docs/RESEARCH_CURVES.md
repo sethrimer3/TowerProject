@@ -39,6 +39,19 @@ const ARCHIVE_MINUTES = curve([1, 9, 23, 44, 73, 112, 162, 225, 301, 391], 2, 10
 
 Gold's C rises from 12.1 at level 10 to 20 at 100 (20 million Gold). The minutes' C rises from 3.9 to 14.4 (144,000 minutes, 100 days). In all: about 497 million Gold, and 2,874 days quoted (about 1,154 days for Research Speed itself, each level sped up by those before it).
 
+## Older projects: a linear start with a power term
+
+Projects first priced linearly keep their early levels and add a gentle power term, so no level gets cheaper and the late levels rise well above their old prices:
+
+| Project | Gold | Hours |
+|---|---|---|
+| Potion HP's schedule (Potion HP, Regen, Pocket Money, Gold / Floor, Silver / Floor, Silver Bonus, Gold / Kill, Find Yellow Key, Key Efficiency, Interest %, Mug); m = level − 4, after four hand-set quick levels | 100m + m³ | m/4 + m²/100 |
+| Faster Trainers | 250n + 2n³ | 1.75n + n²/20 |
+| Refocus | 500(1 + n(n−1)/2) + 8n³ | n²/10 |
+| Ignore More, Target More | 500(1 + n(n−1)/2) × 1.05ⁿ⁻¹ or 1.1ⁿ⁻¹ (steeper than cubic, kept as is) | n²/10 |
+
+The power term takes over from the linear one at about level 10 to 35. The regain projects' time is purely quadratic, so their early levels are quicker than before (6 minutes at level 1); they pass the old 4.25n hours at level 43.
+
 ## Checking a new schedule
 
 - Every level costs more Gold and takes longer than the one before.

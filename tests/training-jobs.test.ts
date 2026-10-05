@@ -232,13 +232,13 @@ test("the boost doubles training for up to four hours, banked an hour a claim", 
   assert.equal(decode(JSON.stringify(g.save)).trainingBoostUntil, g.save.trainingBoostUntil);
 });
 
-test("Faster Trainers research: +2% training speed a level, for 100 levels, about a year", () => {
+test("Faster Trainers research: +2% training speed a level, for 100 levels, 250n + 2n³ Gold and 1.75n + n²/20 hours", () => {
   const levels = RESEARCH.fasterTrainers.levels;
   assert.equal(levels.length, 100);
-  assert.deepEqual([levels[0].gold, levels[0].hours, levels[99].gold, levels[99].hours], [250, 1.75, 25_000, 175]);
+  assert.deepEqual([levels[0].gold, levels[0].hours, levels[99].gold, levels[99].hours], [252, 1.8, 2_025_000, 675]);
   const hours = levels.reduce((sum, l) => sum + l.hours, 0);
-  assert.ok(hours > 360 * 24 && hours < 370 * 24, `${hours} hours`);
-  assert.ok(hours > 7 * RESEARCH.potionHp.levels.reduce((sum, l) => sum + l.hours, 0));
+  assert.ok(hours > 1070 * 24 && hours < 1076 * 24, `${hours} hours`);
+  assert.ok(hours > 6 * RESEARCH.potionHp.levels.reduce((sum, l) => sum + l.hours, 0));
   assert.equal(trainingMs(4, 0.5), 600_000);
   const { g } = game();
   g.save.archives.levels.fasterTrainers = 50;

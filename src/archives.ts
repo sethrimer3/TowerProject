@@ -141,26 +141,29 @@ const countLevels = (target: ResearchTarget, length = 9, value = 1) => Array.fro
  * 100 levels each. The first four
  * are quick, to draw players in (15 s for 10 Gold, 1 min for 25, 5 min for
  * 50, 10 min for 75); then the formula starts over from level 5, so the
- * seam is smooth: the m-th level after them (level 4 + m) takes m / 4 hours
- * and costs 100 × m Gold (15 min and 100 Gold at level 5, 24 h and 9,600 at
- * 100). */
+ * seam is smooth: the m-th level after them (level 4 + m) takes m / 4 +
+ * m² / 100 hours and costs 100 × m + m³ Gold, a linear start that grows
+ * quadratic in time and cubic in Gold (docs/RESEARCH_CURVES.md): 15.6 min
+ * and 101 Gold at level 5, about 4.8 days and 894,000 Gold at 100; about
+ * 174 days and 22.2 million Gold in all. */
 const POTION_HP_START: [gold: number, seconds: number][] = [[10, 15], [25, 60], [50, 300], [75, 600]];
 const hundredLevels = (target: ResearchTarget, value: number) => Array.from({ length: 100 }, (_, i): ResearchLevel => {
-  const m = i + 1 - POTION_HP_START.length, [gold, seconds] = POTION_HP_START[i] ?? [100 * m, 900 * m];
+  const m = i + 1 - POTION_HP_START.length, [gold, seconds] = POTION_HP_START[i] ?? [100 * m + m * m * m, 900 * m + 36 * m * m];
   return { gold, hours: seconds / 3600, effect: { target, op: "add", value } };
 });
 
 /** Faster Trainers (+2% training speed a level), for 100 levels. The n-th
- * level costs 250 × n Gold and takes 1.75 × n hours, about a year and 1.26
- * million Gold in all (Potion HP takes about seven weeks). */
+ * level costs 250 × n + 2 × n³ Gold and takes 1.75 × n + n² / 20 hours: a
+ * linear start that grows cubic and quadratic (2.03 million Gold and 28
+ * days at level 100; about 52.3 million Gold and 2.9 years in all). */
 const fasterTrainersLevels = () => Array.from({ length: 100 }, (_, i): ResearchLevel => ({
-  gold: 250 * (i + 1),
-  hours: 1.75 * (i + 1),
+  gold: 250 * (i + 1) + 2 * intPow(i + 1, 3),
+  hours: 1.75 * (i + 1) + ((i + 1) * (i + 1)) / 20,
   effect: { target: "trainingSpeed", op: "add", value: 0.02 },
 }));
 
 /** Rush: +1 tile rushed a level, for 25 levels. Each level starts from
- * Faster Trainers' (250 × n Gold, 1.75 × n hours) and grows steeper: Gold
+ * 250 × n Gold and 1.75 × n hours (Faster Trainers' first levels) and grows steeper: Gold
  * doubles each level and time grows 20% (250 Gold and 1.75 hours at level
  * 1, about 105 billion Gold and 145 days at 25; 201 billion and 697 days in
  * all), since a faster pace of play is worth the most. */
@@ -189,13 +192,14 @@ const BUY_QUANTITY_LEVELS: [gold: number, hours: number][] = [[1000, 4], [5000, 
 
 /** Refocus, Ignore More and Target More: one floor fewer to regain a use
  * a level, for 90 levels (100 floors down to 10). Focus Count's Gold (500 ×
- * (1 + n(n−1)/2) at level n), raised `growth` compounding a level (Refocus
- * 1, Ignore More 1.05, Target More 1.1) to the nearest 100, and 4.25 × n
- * hours, about two years in all: 60.8 million Gold for Refocus, 2.1
- * billion for Ignore More and 85.4 billion for Target More. */
-const regainLevels = (target: ResearchTarget, growth: number) => Array.from({ length: 90 }, (_, i): ResearchLevel => ({
-  gold: Math.round((500 * (1 + (i * (i + 1)) / 2) * intPow(growth, i)) / 100) * 100,
-  hours: 4.25 * (i + 1),
+ * (1 + n(n−1)/2) at level n), plus `cubic` × n³, raised `growth`
+ * compounding a level, to the nearest 100 (Refocus: no growth and 8 × n³,
+ * 7.8 million at level 90 and 195 million in all; Ignore More: ×1.05 a
+ * level, 2.1 billion in all; Target More: ×1.1, 85.4 billion), and n² / 10
+ * hours (6 minutes at level 1, 34 days at 90, about 2.8 years in all). */
+const regainLevels = (target: ResearchTarget, growth: number, cubic = 0) => Array.from({ length: 90 }, (_, i): ResearchLevel => ({
+  gold: Math.round(((500 * (1 + (i * (i + 1)) / 2) + cubic * intPow(i + 1, 3)) * intPow(growth, i)) / 100) * 100,
+  hours: ((i + 1) * (i + 1)) / 10,
   effect: { target, op: "add", value: -1 },
 }));
 /** Ignore Count: +1 Ignore use a level, for nine levels (1 use up to 10).
@@ -402,7 +406,7 @@ export const RESEARCH = {
     description: "Catch your breath between climbs: a run regains a Focus use in fewer new floors.",
     categories: ["abilities"],
     requires: [{ upgrade: "refocus" }],
-    levels: regainLevels("refocusFloors", 1),
+    levels: regainLevels("refocusFloors", 1, 8),
   },
   ignoreCount: {
     name: "Ignore Count",
