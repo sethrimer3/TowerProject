@@ -59,6 +59,28 @@ _Avoid_: salvage (used only for the amount returned), destroy
 **Pity**:
 The count, per category, of Gem pulls since the last Rare; the 100th without one is a Rare.
 
+**Intrinsic line**:
+One of a piece's fixed effects, set by its definition (its base stats and a Unique's signature ability).
+_Avoid_: affix, base effect
+
+**Effect slot**:
+A place on a piece for one chosen effect, opened by its rarity and level (one per rarity, at one level past the cap below).
+_Avoid_: socket, affix, prefix, suffix
+
+**Refine**:
+Paying to roll new candidates for an effect slot beside the effect it holds, which stays unless the player takes one.
+_Avoid_: reroll (it never replaces on its own)
+
+**Refinement**:
+A slot's count of Refines, which only rises; its milestones guarantee a top-rarity candidate and earn Choices.
+_Avoid_: pity (the Gem pulls' count)
+
+**Choice**:
+A Refinement milestone's reward: any effect of the slot's pool, at the piece's highest effect rarity, taken outright.
+
+**Improve**:
+Raising the effect a slot holds one rarity, up to the piece's own.
+
 **Blacksmith**:
 The forest building, standing once Equipment is open, that opens the Equipment screen.
 

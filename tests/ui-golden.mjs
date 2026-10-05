@@ -152,12 +152,13 @@ try {
       // opened (the game announces it), a few pieces owned, two worn.
       equipment: forest((s) => {
         rich(s);
+        s.gold = 20000;
         s.tower.best = 59;
         Object.assign(s.tutorials, { gear: true, upgrades: true });
-        const item = (id, def, rarity, level, extra) => ({ id, def, rarity, level, ...extra });
+        const item = (id, def, rarity, level, extra) => ({ id, def, rarity, level, slots: [], ...extra });
         Object.assign(s.equipment, {
           items: [
-            item("e1", "knightsSword", "uncommon", 12, { spent: { gold: 3300, material: 70 } }),
+            item("e1", "knightsSword", "uncommon", 12, { spent: { gold: 3300, material: 70 }, slots: [{ effect: "keenEdge", rarity: "common", refinement: 7 }] }),
             item("e2", "knightsSword", "common", 1), item("e3", "knightsSword", "common", 4), item("e4", "knightsSword", "common", 1),
             item("e5", "ringOfFury", "rare", 1, { locked: true }), item("e6", "steelCuirass", "common", 3), item("e7", "bastionPlate", "uncommon", 1),
           ],
@@ -556,6 +557,15 @@ try {
   await shot("equipment.slot");
   await click('[data-eq-pick="e1"]');
   await shot("equipment.item");
+  // Its effect slot: Refine offers candidates beside the current effect,
+  // which stays when kept; a fresh piece's slot rolls free.
+  await click('[data-eq-slotopen="0"]');
+  await shot("equipment.refine");
+  await click("#eq-refine");
+  await shot("equipment.refined");
+  await click("#eq-keep");
+  await shot("equipment.kept");
+  await click("#eq-back");
   await click("#eq-close");
   await click('[data-eq-view="inventory"]');
   await shot("equipment.inventory");

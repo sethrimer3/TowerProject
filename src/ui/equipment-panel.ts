@@ -39,6 +39,8 @@ const REFUSALS: Partial<Record<SlotRefusal, string>> = {
 };
 const idNumber = (item: EquipItem) => Number(item.id.slice(1));
 const nameOf = (item: EquipItem) => itemDef(item.def)!.name;
+/** "a Rare", "an Uncommon". */
+const article = (word: string) => `${/^[AEIOU]/.test(word) ? "an" : "a"} ${word}`;
 const rarityTag = (r: EquipRarity) => `<span class="rarity-tag rar-${r}">${RARITY_TIERS[r].name}</span>`;
 const matAmount = (id: EquipMaterialId, n: number) => `${materialIcon(id)}<b>${currencyAmount(n)}</b>`;
 
@@ -361,7 +363,7 @@ export class EquipmentPanel {
     const milestone = nextMilestone(slot), refinement = slot.refinement ?? 0;
     const progress = slot.effect ? `<div class="refine-progress"><small>REFINEMENT</small><p>Refinement: ${refinement} / ${milestone.at}</p>
       <div class="refine-bar"><span style="width:${Math.round(((refinement % REFINE_GUARANTEE_EVERY) / REFINE_GUARANTEE_EVERY) * 100)}%"></span></div>
-      <p class="hint">Next milestone: ${this.milestoneText(item, milestone.reward)}. Every Refine counts, whatever you keep: every ${REFINE_GUARANTEE_EVERY}th guarantees a ${RARITY_TIERS[effectCap(item)].name} candidate, every ${REFINE_CHOICE_EVERY}th earns a Choice.</p></div>` : "";
+      <p class="hint">Next milestone: ${this.milestoneText(item, milestone.reward)}. Every Refine counts, whatever you keep: every ${REFINE_GUARANTEE_EVERY}th guarantees ${article(RARITY_TIERS[effectCap(item)].name)} candidate, every ${REFINE_CHOICE_EVERY}th earns a Choice.</p></div>` : "";
     const rc = refineCost(item), ic = improveCost(item);
     const canImprove = slot.rarity && rarityRank(slot.rarity) < rarityRank(effectCap(item));
     const actions = slot.effect && !slot.offer ? `<p class="level-cost">Refine: ${costText(rc)}</p>
