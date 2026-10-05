@@ -31,8 +31,9 @@ async function fixture(edit, arg = null) {
     new Function("s", "arg", body)(s, arg);
     sessionStorage.setItem("__fixture", JSON.stringify(s));
   }, [`(${edit})(s, arg)`, arg]);
+  // A Delve run inside opens where it was; a forest shows the board too.
   await page.reload();
-  await page.locator('[data-tab="delve"]').click();
+  await expect(page.locator("#world")).toBeVisible();
 }
 /** Taps a tile, mapped through the Delve camera: a 17-tile view on a
  * 30-wide world, centred on the player and clamped to the edges. */
@@ -97,8 +98,10 @@ const place = (s, { seed, x, y, open = [], closed = [], stats = {}, undo = false
   s.delve.fall = null;
 };
 
-// A fresh save has no Delve run until Delve is unlocked and opened.
+// A fresh save has no Delve run until Delve is unlocked and its forest
+// reached, by the sign down the Tower forest's path.
 await fixture((s) => { s.upgrades.delve = 1; });
+await page.locator("#forest-sign").click();
 
 // Swipes in all four directions, below the key.
 await fixture(place, {
@@ -149,7 +152,6 @@ await swipe(0, -1);
 await expect(page.locator("#defeat-undo")).toBeVisible();
 await expect.poll(async () => (await player()).hp).toBe(0);
 await page.reload();
-await page.locator('[data-tab="delve"]').click();
 await expect(page.locator("#defeat-undo")).toBeVisible();
 await page.locator("#defeat-undo").click();
 await expect.poll(async () => (await player()).y).toBe(enemy.y - 1);

@@ -5,6 +5,8 @@ import { MODES } from "./modes.ts";
 
 export const OUTSIDE_SIZE = 20;
 export const ENTRANCE_Y = 12;
+/** The row a run's hero starts the forest on, partway up the path. */
+export const OUTSIDE_START_Y = 6;
 export type Weather = "cloudy" | "sunny" | "rain" | "storm";
 export function weatherForRoll(roll: number): Weather {
   return roll < 0.4 ? "cloudy" : roll < 0.7 ? "sunny" : roll < 0.9 ? "rain" : "storm";
@@ -83,6 +85,11 @@ export class OutsideWorld implements Board {
   /** Whether (x, y) is the Blacksmith, which a tap opens. */
   isBlacksmith(x: number, y: number) {
     return this.blacksmith && onBlacksmith(this.entranceX, x, y);
+  }
+  /** Whether (x, y) is the foot of the path, under the sign to the other
+   * mode's forest: stepping onto it goes there (`Game.swapForest`). */
+  atExit(x: number, y: number) {
+    return x === this.entranceX && y === 0;
   }
   step(x: number, y: number, dx: number, dy: number) {
     const xx = x + dx, yy = y + dy;

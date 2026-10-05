@@ -354,6 +354,12 @@ try {
     await click("#auto-settings");
     await shot(`${prefix}.autoSettings`);
     await click("#settings-back");
+    // Research opens over the run, paused; its Back plays on. A Gem reset
+    // waits for the forest.
+    await click("#run-research");
+    await shot(`${prefix}.runResearch`);
+    await click("#research-back");
+    await shot(`${prefix}.runResearch.back`);
     await click("#end-run");
     await shot(`${prefix}.endRun`);
     await click("#cancel");
@@ -371,39 +377,6 @@ try {
         await shot(`${prefix}.tree.${tree}.help`);
         await click("#tree-help-ok");
       }
-      if (tree === "training") {
-        // Train each stat the points still cover.
-        for (const stat of await page.locator("[data-train]:not([disabled])").evaluateAll((bs) => bs.map((b) => b.dataset.train))) {
-          // Training one stat can spend the last point another needed.
-          if (!(await page.locator(`[data-train="${stat}"]:not([disabled])`).count())) continue;
-          await click(`[data-train="${stat}"]:not([disabled])`);
-          await shot(`${prefix}.tree.training.${stat}`);
-        }
-        // A trained stat resets for Gems, asking first.
-        if (await page.locator("[data-reset]:not([disabled])").count()) {
-          await click("[data-reset]:not([disabled])");
-          await shot(`${prefix}.tree.training.resetAsk`);
-          await click("#confirm");
-          await shot(`${prefix}.tree.training.reset`);
-        }
-        continue;
-      }
-      if (tree === "archives") {
-        // Idle archivists, so nothing shown depends on the clock; the
-        // research costs more Gold than the save holds.
-        await click("#research-history-open");
-        await shot(`${prefix}.tree.archives.history`);
-        await click("#research-history-close");
-        // An idle archivist opens Select Research; its X goes back.
-        await click("[data-pick]");
-        await shot(`${prefix}.tree.archives.pick`);
-        await page.fill("#research-search", "no such research");
-        await shot(`${prefix}.tree.archives.search`);
-        await page.fill("#research-search", "");
-        await click("#research-pick-close");
-        await shot(`${prefix}.tree.archives.picked`);
-        continue;
-      }
       const skills = await page.locator("[data-skill]").evaluateAll((bs) => bs.map((b) => b.dataset.skill));
       for (const skill of skills.slice(0, 3)) {
         await click(`[data-skill="${skill}"]`);
@@ -412,6 +385,52 @@ try {
       // Second tap on the selected node buys it when affordable.
       await click(`[data-skill="${skills[skills.length > 2 ? 2 : 0]}"]`);
       await shot(`${prefix}.tree.${tree}.buy`);
+    }
+  }
+  /** The Research page: Training, and the Archives once that skill is owned. */
+  async function researchTour(prefix) {
+    await tab("research");
+    await shot(`${prefix}.research`);
+    const tabs = await page.locator("[data-research-tab]").evaluateAll((bs) => bs.map((b) => b.dataset.researchTab));
+    for (const id of tabs.length ? tabs : ["training"]) {
+      if (tabs.length) await click(`[data-research-tab="${id}"]`);
+      await shot(`${prefix}.research.${id}`);
+      if (await page.locator("#research-help").count()) {
+        await click("#research-help");
+        await shot(`${prefix}.research.${id}.help`);
+        await click("#tree-help-ok");
+      }
+      if (id === "training") {
+        // Train each stat the points still cover.
+        for (const stat of await page.locator("[data-train]:not([disabled])").evaluateAll((bs) => bs.map((b) => b.dataset.train))) {
+          // Training one stat can spend the last point another needed.
+          if (!(await page.locator(`[data-train="${stat}"]:not([disabled])`).count())) continue;
+          await click(`[data-train="${stat}"]:not([disabled])`);
+          await shot(`${prefix}.research.training.${stat}`);
+        }
+        // A trained stat resets for Gems, asking first.
+        if (await page.locator("[data-reset]:not([disabled])").count()) {
+          await click("[data-reset]:not([disabled])");
+          await shot(`${prefix}.research.training.resetAsk`);
+          await click("#confirm");
+          await shot(`${prefix}.research.training.reset`);
+        }
+      }
+      if (id === "archives") {
+        // Idle archivists, so nothing shown depends on the clock; the
+        // research costs more Gold than the save holds.
+        await click("#research-history-open");
+        await shot(`${prefix}.research.archives.history`);
+        await click("#research-history-close");
+        // An idle archivist opens Select Research; its X goes back.
+        await click("[data-pick]");
+        await shot(`${prefix}.research.archives.pick`);
+        await page.fill("#research-search", "no such research");
+        await shot(`${prefix}.research.archives.search`);
+        await page.fill("#research-search", "");
+        await click("#research-pick-close");
+        await shot(`${prefix}.research.archives.picked`);
+      }
     }
   }
   /** The Gear page opens on Provisions;
@@ -465,7 +484,7 @@ try {
   // A skill short of its price says how much more it needs.
   await click('[data-skill="combatStance"]');
   await shot("fresh.tree.short");
-  await tab("tower");
+  await tab("board");
   // In the forest Enter, under Goals, goes straight in.
   await click("#enter-run");
   await shot("fresh.entered");
@@ -524,8 +543,13 @@ try {
   await tab("defend");
   await shot("rich.defend");
   await upgradesTour("rich");
+  await researchTour("rich");
   await gearTour("rich");
-  await tab("delve");
+  // The sign at the foot of the forest path leads to the Delve's forest,
+  // and the mode button takes its art.
+  await tab("board");
+  await shot("rich.forestSign");
+  await click("#forest-sign");
   await shot("rich.delve");
   await settingsTour("rich");
 

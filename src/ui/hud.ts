@@ -5,7 +5,7 @@ import { levelForXp, xpForLevel } from "../config.ts";
 import { outsideWeather } from "../outside.ts";
 import { tierNumeral, tierRewardText } from "../tiers.ts";
 import { MODES, milestones } from "../modes.ts";
-import { cardArt, CURRENCY_SPRITES, displayedProgress, el, POINTER_SVG, text, uiSprite } from "./dom.ts";
+import { capitalized, cardArt, CURRENCY_SPRITES, displayedProgress, el, POINTER_SVG, text, uiSprite } from "./dom.ts";
 import { CARDS, IN_PLACE, cardText, isSiphon, type CardId } from "../cards.ts";
 import { BADGES } from "../badges.ts";
 import { badgeStyle } from "./badge-token.ts";
@@ -98,13 +98,16 @@ export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay)
   text("density-label", `${renderer.density} × ${renderer.density}`);
   renderUndo(game);
   (document.querySelector(".dpad") as HTMLElement).hidden = !game.save.settings.showArrows;
-  renderLockedTab("delve", !!game.save.upgrades.delve, "Delve", "Unlock Into the depths in the Inspiration tree");
+  renderModeTab(game);
+  renderForestSign(game);
+  el("run-research").hidden = !!game.run.outside;
   renderAdButton(game);
   renderLockedTab("deck", !!game.save.upgrades.combatStance, "Deck", "Unlock Combat Stance in the Inspiration tree");
   // A new Deck lesson waits behind the button until its tutorial is done.
   const { deck, addCard } = game.save.tutorials;
   document.querySelector(`[data-tab="deck"]`)?.classList.toggle("notify", !deck || (!!game.save.upgrades.buildout && !addCard));
-  document.querySelector(`[data-tab="upgrades"]`)?.classList.toggle("notify", upgradesWaiting(game) || game.treeWaiting("inspiration") || game.treeWaiting("courage") || trainingWaiting(game.save));
+  document.querySelector(`[data-tab="upgrades"]`)?.classList.toggle("notify", upgradesWaiting(game) || game.treeWaiting("inspiration") || game.treeWaiting("courage"));
+  document.querySelector(`[data-tab="research"]`)?.classList.toggle("notify", trainingWaiting(game.save));
   renderLockedTab("gear", !!game.save.upgrades.gear || game.save.equipment.unlocked, "Gear", "Unlock Gear in the Inspiration tree");
   document.querySelector(`[data-tab="gear"]`)?.classList.toggle("notify", gearWaiting(game) || equipmentWaiting(game.save));
   renderShopDot(game);
@@ -159,7 +162,8 @@ export function renderBoardHeading(game: Game, overlay: BoardOverlay) {
   if (game.run.outside) {
     const labels = { cloudy: "CLOUDY", sunny: "SUNNY", rain: "RAINING", storm: "THUNDERSTORM" };
     text("board-subtitle", tiers ?? `FOREST CLEARING · ${labels[outsideWeather(game.run.seed)]}`);
-    el("inspect").textContent = "Follow the forest path and step onto the entrance at the top to begin again.";
+    // The sign down the path stands where this hint would.
+    el("inspect").textContent = game.canSwapForest ? "" : "Follow the forest path and step onto the entrance at the top to begin again.";
   } else {
     text("board-subtitle", tiers ?? words.subtitle);
     el("inspect").textContent = "";
@@ -505,6 +509,31 @@ function renderUndo(game: Game) {
   undo.disabled = !slice.history.length;
   // Undo needs Rehearsed steps, or Echoes of time and Undo Count research.
   undo.hidden = !game.undoCapacity;
+}
+
+/** The tab bar's mode button wears the active mode's art and name. */
+function renderModeTab(game: Game) {
+  const icon = el("mode-icon");
+  if (icon.dataset.mode === game.mode) return;
+  icon.dataset.mode = game.mode;
+  icon.innerHTML = uiSprite(game.mode);
+  const button = icon.parentElement!, name = capitalized(game.mode);
+  button.title = name;
+  button.setAttribute("aria-label", name);
+}
+
+/** The forest's sign at the foot of the path, once the Delve is open: the
+ * other mode's art over a down arrow. */
+function renderForestSign(game: Game) {
+  const sign = el("forest-sign"), other = game.mode === "tower" ? "delve" : "tower";
+  sign.hidden = !game.canSwapForest;
+  if (sign.hidden || sign.dataset.to === other) return;
+  sign.dataset.to = other;
+  sign.querySelector(".sign-icon")!.innerHTML = uiSprite(other);
+  sign.querySelector(".sign-arrow")!.innerHTML = uiSprite("arrow-down");
+  const label = other === "delve" ? "Down the path to the Delve" : "Down the path to the Tower";
+  sign.title = label;
+  sign.setAttribute("aria-label", label);
 }
 
 function renderLockedTab(id: string, unlocked: boolean, name: string, hint: string) {

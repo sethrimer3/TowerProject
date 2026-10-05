@@ -51,7 +51,7 @@ import { RoomWorld, TOWER_LAYOUT_VERSION } from "./tower/room-world.ts";
 import type { Board } from "./board.ts";
 import { bout, heroHpAfter, heroHpDuring, resume, REVIVE_MS, revivals, summarize, type Bout, type Revival } from "./combat.ts";
 import { HEART_DOOR_HP, healAfterVictory, isLethal, regenerate, resolveStep, type StepBlocked, type StepEffect, type StepRules, shardGain } from "./step-effects.ts";
-import { OutsideWorld } from "./outside.ts";
+import { OUTSIDE_START_Y, OutsideWorld } from "./outside.ts";
 import { AreaLedger, chestReward, CLEARED_INSPIRATION, type AreaReward } from "./tower/area-ledger.ts";
 import { TowerClimb } from "./tower/climb.ts";
 import { callsGreaterBoss, greaterBoss, greaterBossSpot } from "./tower/greater-boss.ts";
@@ -153,6 +153,9 @@ export class Game {
    * skill) checks the hand again, and it plays on once a card can act. */
   handStuck = false;
   paused = false;
+  /** While a page covers the board inside a run: whether the hand played
+   * and its speed, brought back by `resumeFromPage`. Never saved. */
+  private heldPlay: { auto: boolean; speed: number } | null = null;
   message = "";
   effect = { text: "", x: 0, y: 0, until: 0 };
   /** Rewards picked up since the board last took them, oldest first. */
@@ -221,6 +224,10 @@ export class Game {
    * treasure loot all draw from it (the `game` stream unless given), so a
    * seeded stream replays a game and no visual effect can shift it. */
   constructor(public save: Save, private rng: () => number = stream("game")) {
+    // A Delve run left inside (the page reloaded mid-run) opens where it
+    // was: no tab leads to the Delve, only the forest's sign.
+    const inside = (run: Run | null) => !!run && !run.outside;
+    if (save.upgrades.delve && inside(save.delve.run) && !inside(save.tower.run)) this.mode = "delve";
     this.loadMode();
   }
   /** Dev: whether every purchase is allowed and costs nothing (and research
@@ -257,14 +264,39 @@ export class Game {
     this.save.delve.reached = Math.max(this.save.delve.reached, maxSection * TOWER_SECTION);
     this.save.delve.best = Math.max(this.save.delve.best, this.save.delve.reached);
   }
-  switchMode(next: Mode) {
+  /** Makes `next` the active mode. A mode with no run yet starts one inside
+   * (a new game's first), or in its forest when `outside`. */
+  switchMode(next: Mode, outside = false) {
     if (next === this.mode) return;
     if (next === "delve" && !this.save.upgrades.delve) return;
     this.finishEncounter();
     this.armed = null;
     this.mode = next;
     if (next === "delve") this.save.tutorials.delve = true;
-    this.loadMode();
+    this.loadMode(outside);
+  }
+  /** Whether the forest's sign leads to the other mode's forest: in the
+   * forest, once Into the depths is owned. */
+  get canSwapForest() {
+    return !!this.run.outside && !!this.save.upgrades.delve && !this.fallen;
+  }
+  /** The forest's sign, tapped or walked onto: down the path to the other
+   * mode's forest. The hero leaves this forest at its start, and arrives at
+   * the other's. */
+  swapForest() {
+    if (!this.canSwapForest) return false;
+    this.toForestStart();
+    this.switchMode(this.mode === "tower" ? "delve" : "tower", true);
+    if (!this.run.outside) return true;
+    this.toForestStart();
+    this.message = this.mode === "tower" ? "The path leads back to the Tower." : "The path leads down to the Delve.";
+    return true;
+  }
+  /** Puts the hero on the forest's start tile, partway up the path. */
+  private toForestStart() {
+    const p = this.run.player;
+    p.x = this.rules.entranceX;
+    p.y = OUTSIDE_START_Y;
   }
   /** The lesson waiting on the Tower's board: in a new game's first run,
    * `climb`, which holds the hand paused until dismissed; in the forest,
@@ -292,9 +324,9 @@ export class Game {
   private get teachesClimb() {
     return this.boardLesson === "climb";
   }
-  loadMode() {
+  loadMode(outside = false) {
     const run = this.slice.run;
-    if (!run) this.newRun();
+    if (!run) this.newRun({ outside });
     else {
       if (!run.outside) this.upgradeLayout();
       this.adoptRun(run);
@@ -506,6 +538,24 @@ export class Game {
     // it from where the hero stands. A stuck hand looks again.
     if (this.auto) this.handStuck = false;
     this.message = this.auto ? "The hand takes over." : "Paused · the hand waits.";
+  }
+  /** Pauses the hand while a page covers the board inside a run (the
+   * Research page), keeping whether it played and its speed for
+   * `resumeFromPage`. */
+  pauseForPage() {
+    if (this.run.outside || this.heldPlay) return;
+    this.heldPlay = { auto: this.auto, speed: this.save.settings.speed };
+    this.route = [];
+    this.auto = false;
+  }
+  /** Back on the board: the hand plays or waits, at the speed, as it did
+   * when the page opened. */
+  resumeFromPage() {
+    const held = this.heldPlay;
+    this.heldPlay = null;
+    if (!held || this.run.outside || this.fallen) return;
+    this.save.settings.speed = held.speed;
+    this.auto = held.auto;
   }
   /** Sets the hand playing: at 1 step a second if the speed arrows slowed
    * it to 0, and never while the speed or first run's lesson waits. */
@@ -1198,6 +1248,7 @@ export class Game {
     // A Gem the last run left lying on a floor is missed.
     if (this.save.gemDrop.out?.mode === this.mode) missGem(this.save.gemDrop);
     this.armed = null;
+    this.heldPlay = null;
     this.slice.fall = null;
     this.slice.history = [];
     this.slice.runGold = 0;
@@ -1225,6 +1276,7 @@ export class Game {
     this.world = this.rules.board(this.run);
     if (outside) {
       this.run.outside = true;
+      this.toForestStart();
       this.world = new OutsideWorld(seed, this.mode, this.save.equipment.unlocked);
       this.message = "Follow the forest path to the entrance.";
     } else {
@@ -1432,6 +1484,7 @@ export class Game {
     this.world.breakTorchAt?.(x, y);
     if (this.run.outside) {
       if (t.kind === "stairs") this.enterFromOutside();
+      else if (this.world instanceof OutsideWorld && this.world.atExit(x, y)) this.swapForest();
       return;
     }
     if (t.kind === "reward") {

@@ -9,6 +9,8 @@ export type FrameLoopHost = {
   tab(): Tab;
   /** Redraws the skill tree's particles while the Upgrades page shows. */
   upgradesFrame(time: number): void;
+  /** Redraws the Training tab's particles while the Research page shows. */
+  researchFrame(time: number): void;
   /** Advances the Defend battle while its page shows. */
   defendFrame(time: number): void;
   update(): void;
@@ -57,6 +59,7 @@ export class FrameLoop {
     const { host } = this, tab = host.tab();
     if (!document.hidden) {
       if (tab === "upgrades") host.upgradesFrame(time);
+      if (tab === "research") host.researchFrame(time);
       if (isBoard(tab)) {
         this.boardFrame(time);
         host.purse(time);

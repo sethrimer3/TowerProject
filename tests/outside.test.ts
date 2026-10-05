@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { defaults, decode } from "../src/save.ts";
-import { OutsideWorld, ENTRANCE_Y, weatherForRoll, outsideWeather } from "../src/outside.ts";
+import { OutsideWorld, ENTRANCE_Y, OUTSIDE_START_Y, weatherForRoll, outsideWeather } from "../src/outside.ts";
 import { lightningOpacity } from "../src/weather.ts";
 import { chooseStep } from "../src/automation.ts";
 
@@ -38,7 +38,7 @@ for (const mode of ["tower", "delve"] as const) {
     const loaded = new Game(decode(JSON.stringify(g.save)));
     loaded.switchMode(mode);
     assert.ok(loaded.world instanceof OutsideWorld);
-    assert.equal(loaded.run.player.y, 1);
+    assert.equal(loaded.run.player.y, OUTSIDE_START_Y + 1);
     assert.equal(outsideWeather(loaded.run.seed), outsideWeather(g.run.seed));
     const beforeWalk = loaded.run.player.y;
     loaded.walkTo(loaded.run.player.x, ENTRANCE_Y);

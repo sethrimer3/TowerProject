@@ -1,8 +1,9 @@
 import type { Game } from "../state.ts";
 import type { ConfirmPrompt } from "./dialogs.ts";
 
-/** Every page tab. Tower and Delve both show the board. */
-export type Tab = "tower" | "delve" | "deck" | "defend" | "gear" | "upgrades" | "settings" | "shop" | "goals";
+/** Every page. Tower and Delve both show the board (the tab bar's one
+ * mode button, `board`, opens the active mode's). */
+export type Tab = "tower" | "delve" | "deck" | "defend" | "gear" | "upgrades" | "research" | "settings" | "shop" | "goals";
 export const isBoard = (id: string): id is "tower" | "delve" => id === "tower" || id === "delve";
 
 /** The game as pages see it: its state to read (a page may change a setting

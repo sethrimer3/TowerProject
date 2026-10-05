@@ -83,10 +83,21 @@ export const skillSprite = (id: UpgradeId) => {
   if (SKILL_SILVER.has(id)) return uiSprite("gold", "skill-sprite silver-sprite");
   return uiSprite(SKILL_UI_SPRITES[id] ?? "upgrades", "skill-sprite");
 };
-export const TAB_ICONS = {
-  tower: uiSprite("tower"), delve: uiSprite("delve"), deck: DECK_ICON, defend: uiSprite("defend"), gear: uiSprite("gear"),
-  upgrades: uiSprite("upgrades"), shop: CART_ICON,
-};
+/** An hourglass running gold beside a golden arrow up: the Research page,
+ * Training and the Archives, what grows with time. */
+export const RESEARCH_ICON = `<svg class="research-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 2.5h11M3 21.5h11" stroke="#c9b48a" stroke-width="1.8" stroke-linecap="round"/><path d="M4.5 2.5c0 5 4 6.5 4 9.5s-4 4.5-4 9.5h8c0-5-4-6.5-4-9.5s4-4.5 4-9.5z" fill="#1b1410" stroke="#e9e1c8" stroke-width="1.5" stroke-linejoin="round"/><path d="M6.5 6h4L8.5 9.5zM5.8 20.5c.6-2.6 1.8-3.6 2.7-4.3.9.7 2.1 1.7 2.7 4.3z" fill="#ffc94a"/><path d="M18.5 4L23 9.5h-2.8V15h-3.4V9.5H14z" fill="#ffc94a" stroke="#5a3200" stroke-width="1.1" stroke-linejoin="round"/></svg>`;
+/** The tab bar along the bottom, in order: icons only, each named for
+ * screen readers and on hover. `board` is the active mode's board, its icon
+ * that mode's (set by the HUD). */
+export const NAV_TABS = [
+  { id: "board", name: "Tower", icon: uiSprite("tower") },
+  { id: "upgrades", name: "Upgrades", icon: uiSprite("upgrades") },
+  { id: "deck", name: "Deck", icon: DECK_ICON },
+  { id: "gear", name: "Gear", icon: uiSprite("gear") },
+  { id: "research", name: "Research", icon: RESEARCH_ICON },
+  { id: "defend", name: "Defend", icon: uiSprite("defend") },
+  { id: "shop", name: "Shop", icon: CART_ICON },
+] as const;
 /** A pixel-art hand pointing up, row by row: `#` outline, `w` skin. */
 const POINTER_ROWS = [
   "....##......",

@@ -582,6 +582,28 @@ canvas {
   z-index: 3;
 }
 .tier-arrow[hidden] { display: none; }
+/* The forest's sign at the foot of the path, once the Delve is open: the
+   other mode's art over a down arrow, standing just above the tile whose
+   step leads there (placed by BoardOverlay.placeSign), over the status line. */
+.forest-sign {
+  position: absolute;
+  z-index: 9;
+  transform: translate(-50%, -100%);
+  width: calc(var(--tile, 24px) * 3.4);
+  min-height: 0;
+  padding: 4px 4px 3px;
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+  border: 2px solid #6b4a24;
+  border-radius: 6px;
+  background: linear-gradient(#8a6537, #5d3f1f);
+  box-shadow: 0 3px 0 #2b1a0a, 0 4px 10px #000a, 0 0 12px #ffc94a40;
+}
+.forest-sign[hidden] { display: none; }
+.forest-sign .sign-icon img { display: block; width: calc(var(--tile, 24px) * 2.2); height: calc(var(--tile, 24px) * 2.2); image-rendering: pixelated; }
+.forest-sign .sign-arrow img { display: block; width: var(--tile, 24px); height: var(--tile, 24px); }
+.forest-sign:hover { border-color: #d8b572; }
 .tier-arrow.tier-prev { left: 6px; }
 .tier-arrow.tier-next { right: 6px; }
 .tier-arrow:disabled { opacity: 0.3; box-shadow: none; }
@@ -902,9 +924,10 @@ canvas {
 .danger {
   color: #e29898 !important;
 }
+/* The tab bar: one solid strip of icons, the open page's lit. */
 nav {
   display: flex;
-  gap: 5px;
+  gap: 0;
   margin-top: 10px;
   background: #111722;
   position: sticky;
@@ -919,16 +942,19 @@ nav button {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 5px;
   font-family: Cinzel, Georgia;
   font-size: 11px;
-  min-height: 69px;
-  padding: 9px 2px;
+  min-height: 60px;
+  padding: 8px 2px;
   background: linear-gradient(#1b222d, #10161f);
   border-color: #333c49;
+  border-radius: 0;
   text-align: center;
   line-height: 1.2;
 }
+nav button + button { border-left-width: 0; }
+nav > button:first-of-type { border-radius: 8px 0 0 8px; }
+nav > button:last-of-type { border-radius: 0 8px 8px 0; }
 nav button[hidden] {
   display: none;
 }
@@ -1584,8 +1610,9 @@ nav {
   letter-spacing: 1px;
 }
 /* Branching progression maps */
-.page#upgrades.active { display: flex; flex-direction: column; overflow: hidden; }
-.tree-tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; margin: 6px 0 8px; flex-shrink: 0; }
+.page:is(#upgrades, #research).active { display: flex; flex-direction: column; overflow: hidden; }
+#research-back { align-self: flex-start; margin-top: 12px; flex-shrink: 0; }
+.tree-tabs { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 5px; margin: 6px 0 8px; flex-shrink: 0; }
 .tree-tabs button { min-width: 0; min-height: 64px; padding: 6px 2px; font-size: 9px; overflow: hidden; }
 .tree-tabs span, .tree-tabs small { display: block; }
 .tree-tabs span { font-size: 18px; margin-bottom: 2px; }

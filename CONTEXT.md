@@ -291,6 +291,10 @@ _Avoid_: tech, study
 One research slot: it works on one research level at a time, and optionally auto-continues to the next. Its research can be rushed: completed at once for Gems (not the hand's Rush).
 _Avoid_: lab slot, researcher
 
+**Research page**:
+The page holding what grows with time: Training and, once that skill is owned, the Archives, a tab each. Inside a run it opens from the HUD with the run paused. Not to be confused with a single research project.
+_Avoid_: lab page, training screen
+
 ### The hand
 
 **Card**:
@@ -376,6 +380,10 @@ The day as the Shop counts it, from 00:00 to 00:00 GMT on the server's clock. A 
 _Avoid_: daily reset, local day
 
 ### The Delve
+
+**Forest sign**:
+The sign at the foot of each forest's path once the Delve is open, showing the other place: tapped, or walked onto, it leads to the other mode's forest. It is the only way between the Tower and the Delve.
+_Avoid_: Delve tab, mode switch
 
 **Automove memory**:
 What Delve Automove has seen of the labyrinth during this run, and how often the player has stood on each tile. Undo leaves it as it is, since what was seen stays seen; it is forgotten when a run enters the labyrinth, when a milestone gate seals behind the player, and when the layout changes.

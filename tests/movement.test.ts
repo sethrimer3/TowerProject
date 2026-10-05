@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
+import { OUTSIDE_START_Y } from "../src/outside.ts";
 import { defaults, decode } from "../src/save.ts";
 import { point, type Tile } from "../src/entities.ts";
 import { generate } from "../src/delve/world.ts";
@@ -91,7 +92,7 @@ test("a fatal fight stops a walked route; accepting defeat starts the next run, 
   assert.deepEqual([g.run.seed, g.run.player.y, g.run.player.hp], [seed, 1, 0], "stopped before the fight");
   assert.ok(g.acceptDefeat());
   assert.notEqual(g.run.seed, seed);
-  assert.equal(g.run.player.y, 0);
+  assert.equal(g.run.player.y, OUTSIDE_START_Y);
   assert.equal(g.save.delve.history.length, 0);
   assert.equal(g.undo(), false);
   assert.equal(g.save.delve.courage, 0);

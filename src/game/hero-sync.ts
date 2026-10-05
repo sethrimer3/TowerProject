@@ -40,14 +40,20 @@ export function readyForestRuns(save: Save) {
  * run inside gains or loses exactly what `change` did to the loadout, so
  * ATK/DEF gathered from items and the provisions it started with are kept,
  * and a run still in the forest takes everything owned now. Each mode's run
- * follows its own loadout (its hero's equipment). `change`
- * returning false changes nothing; returns whether it went through. */
+ * follows its own loadout (its hero's equipment). The run's undo history
+ * (and a fall's snapshot) shifts with it, so undo never takes back what was
+ * bought, only the steps. `change` returning false changes nothing;
+ * returns whether it went through. */
 export function changeLoadout(save: Save, change: () => boolean | void) {
   const before = BOTH_MODES.map((mode) => loadout(save, mode));
   if (change() === false) return false;
   BOTH_MODES.forEach((mode, i) => {
-    const run = save[mode].run;
-    if (run && !run.outside) shiftRun(run, before[i], loadout(save, mode));
+    const slice = save[mode], run = slice.run;
+    if (!run || run.outside) return;
+    const after = loadout(save, mode);
+    shiftRun(run, before[i], after);
+    for (const snapshot of slice.history) shiftRun(snapshot.run, before[i], after);
+    if (slice.fall) shiftRun(slice.fall.snapshot.run, before[i], after);
   });
   readyForestRuns(save);
   return true;

@@ -229,12 +229,19 @@ export class TrainingDesk {
     this.done.push({ id: job.id, level: save.training[job.id] });
   }
 
+  /** Whether a Gem reset is open: only from the forest. */
+  get canReset() {
+    return !!this.host.run.outside;
+  }
+
   /** Resets a Training stat to no ranks for `TRAINING_RESET_GEMS` Gems
    * (none with Dev free purchases), returning what its ranks were paid
    * with: the training points, the Gold, and all the training time spent
    * on the stat (its trainers' ranks, the rank in training, and its time
-   * credit) into the time bank, which any stat's next ranks use. */
+   * credit) into the time bank, which any stat's next ranks use. Never
+   * inside a run: a run's hero is only ever trained up, never reshaped. */
   reset(id: TrainingId) {
+    if (!this.canReset) return false;
     this.settle();
     const save = this.save, job = trainingJob(save.trainingJobs, id);
     const trained = save.training[id] > 0 || !!job;

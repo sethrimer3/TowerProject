@@ -64,7 +64,7 @@ export class ArchivesPanel {
     if (job && job.research !== this.pickedFrom) this.picking = null;
     // The currencies bar above shows the Gold research costs.
     if (this.picking !== null) return this.pickHtml(this.picking);
-    return `<section class="archives"><header class="tree-heading"><h3>Archives${helpButton("How the Archives work")}</h3><button id="research-history-open" class="research-history-open">History</button></header>
+    return `<section class="archives"><header class="tree-heading"><h3>Archives${helpButton("How the Archives work", "research-help")}</h3><button id="research-history-open" class="research-history-open">History</button></header>
       <div class="archivists" role="list" aria-label="Archivists">${this.archivistsHtml()}</div></section>`;
   }
 
@@ -90,7 +90,7 @@ export class ArchivesPanel {
       this.rerender();
     };
     if (this.picking !== null) return this.bindPick();
-    el("tree-help").onclick = () => this.showHelp();
+    el("research-help").onclick = () => this.showHelp();
     document.querySelectorAll<HTMLElement>("[data-pick]").forEach((a) => (a.onclick = (e) => {
       // The auto-continue box and a busy archivist's buttons keep their own presses.
       if ((e.target as Element).closest("label, input, [data-stop], [data-rush], [data-finish]")) return;

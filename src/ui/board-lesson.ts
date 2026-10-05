@@ -4,13 +4,13 @@ import { el, POINTER_SVG } from "./dom.ts";
 // The lessons on the Tower's board (`game.boardLesson`): a note over the top
 // of the board. The first run's (`climb`) and the forest's `enter` are
 // dismissed by tapping the note; in the forest the tutorials' pointing hand
-// shows the button to press next, Enter or the Delve tab, and `delve` waits
-// until the Delve is opened.
+// shows the button to press next, Enter or the sign down the path to the
+// Delve, and `delve` waits until the Delve is opened.
 
 const NOTES: Record<BoardLesson, { title: string; text?: string }> = {
   climb: { title: "Climb the Tower to gain Inspiration, XP and resources." },
   enter: { title: "Enter the Tower to try again.", text: "Open Upgrades and check the Inspiration tree: the Inspiration this run earned unlocks new skills." },
-  delve: { title: "Switch to a Delve run to gain Courage, XP and resources." },
+  delve: { title: "Follow the path down to the Delve to gain Courage, XP and resources." },
 };
 
 /** Shows the waiting lesson's note (and, in the forest, its hand) while the
@@ -39,8 +39,8 @@ export function renderBoardLesson(game: Game, onBoard: boolean, dismissed: () =>
     };
   }
   // In the forest the hand sits inside the button it points at: Enter,
-  // from below, or the Delve tab, from above.
-  const target = lesson === "climb" ? null : lesson === "enter" ? el("enter-run") : document.querySelector<HTMLElement>(`nav [data-tab="delve"]`)!;
+  // from below, or the forest's sign, from above.
+  const target = lesson === "climb" ? null : lesson === "enter" ? el("enter-run") : el("forest-sign");
   if (!target) pointer?.remove();
   else if (pointer?.parentElement !== target || pointer.dataset.lesson !== lesson) {
     pointer?.remove();

@@ -24,8 +24,10 @@ export function confirmAction(ctx: AppContext, { title, body, label, cancel }: C
 }
 
 /** The ? button beside a page heading, which `showHelp` answers. */
-export const helpButton = (about: string) =>
-  `<button class="tree-help" id="tree-help" aria-label="${about}" title="${about}">?</button>`;
+/** The ? beside a page's heading; `id` keeps each page's apart, since an
+ * inactive page keeps its markup. */
+export const helpButton = (about: string, id = "tree-help") =>
+  `<button class="tree-help" id="${id}" aria-label="${about}" title="${about}">?</button>`;
 
 /** A page's explanations, kept off the page to spare it clutter: opened by
  * the ? beside its heading. */

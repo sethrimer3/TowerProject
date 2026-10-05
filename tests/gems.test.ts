@@ -193,13 +193,20 @@ test("the ad's Gems: seven, then ten minutes before the next", () => {
   assert.equal(AD_COOLDOWN_MS, 10 * MINUTE);
 });
 
-test("resetting a Training stat costs two Gems and returns every point spent on it, inside a run too", () => {
+test("resetting a Training stat costs two Gems and returns every point spent on it, only between runs", () => {
   const g = arena((g) => { g.save.xp = xpForLevel(10); });
   const left = trainingPoints(g.save).left;
   for (let i = 0; i < 3; i++) assert.ok(trainNow(g, "attack"));
   assert.ok(trainNow(g, "hp"));
-  const attack = g.run.player.attack;
   assert.equal(trainingPoints(g.save).left, left - 4);
+  g.save.gems = TRAINING_RESET_GEMS;
+  assert.ok(!g.training.canReset);
+  assert.equal(g.training.reset("attack"), false, "no reset inside a run");
+  assert.equal(g.save.gems, TRAINING_RESET_GEMS, "nothing paid");
+  g.finish("again");
+  assert.ok(g.run.outside && g.training.canReset);
+  const attack = g.run.player.attack;
+  g.save.gems = 0;
   assert.equal(g.training.reset("attack"), false, "no Gems");
   g.save.gems = TRAINING_RESET_GEMS;
   assert.equal(g.training.reset("defense"), false, "no ranks to reset");
@@ -208,7 +215,7 @@ test("resetting a Training stat costs two Gems and returns every point spent on 
   assert.equal(g.save.training.attack, 0);
   assert.equal(g.save.training.hp, 1, "other stats keep their ranks");
   assert.equal(trainingPoints(g.save).left, left - 1, "3 points back");
-  assert.ok(g.run.player.attack < attack, "the run inside loses what those ranks gave");
+  assert.ok(g.run.player.attack < attack, "the forest's hero loses what those ranks gave");
   // Dev free purchases: free ranks paid nothing, so a reset returns nothing.
   g.save.settings.freePurchases = true;
   assert.ok(trainNow(g, "attack") && trainNow(g, "attack"));

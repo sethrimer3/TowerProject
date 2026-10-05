@@ -16,6 +16,7 @@ import { el } from "./ui/dom.ts";
 import { buildShell } from "./ui/shell.ts";
 import { BoardOverlay } from "./ui/board-overlay.ts";
 import { boardHeadingStale, flashRed, renderAdButton, renderShopDot, renderBoardHeading, renderHud, renderVitals, purseFrame, gearWaiting, upgradesWaiting } from "./ui/hud.ts";
+import { ResearchPage } from "./ui/research-page.ts";
 import { confirmAction, RunEndDialog } from "./ui/dialogs.ts";
 import { GoalsPage } from "./ui/goals-page.ts";
 import { SkillTreePage } from "./ui/skill-tree-page.ts";
@@ -62,6 +63,7 @@ const runEnd = new RunEndDialog(ctx);
 // Tapping the forest's Blacksmith opens the Equipment screen.
 const overlay = new BoardOverlay(game, renderer, openBlacksmith);
 const skillTree = new SkillTreePage(ctx);
+const research = new ResearchPage(ctx);
 const gear = new GearPage(ctx);
 const deck = new DeckPage(ctx);
 const shop = new ShopPage(ctx);
@@ -91,6 +93,7 @@ function save() {
 }
 /** Refreshes the HUD from game state, saves, and asks a fallen hero's player what next. */
 function update() {
+  followMode();
   if (boardHeadingStale(game)) renderBoardHeading(game, overlay);
   // Inside a run the tabs give way to an empty row, kept for the hand.
   document.querySelector("nav")!.classList.toggle("in-run", !game.run.outside);
@@ -105,11 +108,20 @@ function update() {
   save();
   runEnd.check();
 }
+/** The board follows the game's mode: walking down the forest path
+ * swaps it (`Game.swapForest`) without a tab press. */
+function followMode() {
+  if (!isBoard(tab) || tab === game.mode) return;
+  tab = game.mode;
+  overlay.hide();
+  renderer.weather.silence();
+}
 function renderPage() {
   if (tab === "defend") defendPage.show();
   if (tab === "deck") deck.render();
   if (tab === "gear") gear.render();
   if (tab === "upgrades") skillTree.render();
+  if (tab === "research") research.render();
   if (tab === "settings") renderSettingsPage(ctx, overlay);
   if (tab === "shop") shop.render();
   if (tab === "goals") goals.render();
@@ -126,16 +138,18 @@ function unlockTarget(id: string): string {
 /** Tabs opened by a skill not yet owned: pressed, they open the Upgrades
  * page on that skill instead. */
 const LOCKED_TABS = new Map<string, { skill: UpgradeId; tree: TreeId }>([
-  ["delve", { skill: "delve", tree: "inspiration" }],
   ["deck", { skill: "combatStance", tree: "inspiration" }],
   ["gear", { skill: "gear", tree: "inspiration" }],
   ["defend", { skill: "legacy", tree: "courage" }],
 ]);
 /** The pages topped by the currencies bar. */
-const CURRENCY_PAGES: string[] = ["upgrades", "deck", "gear"];
+const CURRENCY_PAGES: string[] = ["upgrades", "research", "deck", "gear"];
+/** Opens page `requested`: `board` is the active mode's board. Leaving the
+ * board inside a run pauses the hand, and coming back plays it on as it
+ * was (`Game.pauseForPage`). */
 function navigate(requested: string) {
   if (deck.teaching && requested !== "deck") return;
-  const id = unlockTarget(requested) as Tab;
+  const id = unlockTarget(requested === "board" ? game.mode : requested) as Tab;
   // Only the board plays a fight out: leaving it settles one still playing.
   game.finishEncounter();
   if (id !== "defend") defendPage.pause();
@@ -150,8 +164,12 @@ function navigate(requested: string) {
   renderer.weather.silence();
   if (isBoard(id)) {
     game.switchMode(id);
+    game.resumeFromPage();
     renderBoardHeading(game, overlay);
-  } else game.cancelRoute();
+  } else {
+    if (isBoard(from)) game.pauseForPage();
+    game.cancelRoute();
+  }
   showPage(id);
   // The Goals screen opens afresh, on the tower the forest leads to.
   if (id === "goals" && from !== "goals") goals.open();
@@ -177,8 +195,9 @@ function showPage(id: Tab) {
   const page = isBoard(id) ? "board" : id;
   document.querySelectorAll(".page").forEach((p) => p.classList.toggle("active", p.id === page));
   document.querySelectorAll<HTMLElement>("[data-tab]").forEach((b) => {
-    b.classList.toggle("selected", b.dataset.tab === id);
-    b.setAttribute("aria-current", b.dataset.tab === id ? "page" : "false");
+    const open = b.dataset.tab === id || (b.dataset.tab === "board" && isBoard(id));
+    b.classList.toggle("selected", open);
+    b.setAttribute("aria-current", open ? "page" : "false");
   });
 }
 
@@ -234,6 +253,14 @@ modal.addEventListener("cancel", (e) => {
   if (game.fallen) e.preventDefault();
 });
 el("auto-settings").onclick = () => navigate("settings");
+// Inside a run, Research opens Training and the Archives with the run paused.
+el("run-research").onclick = () => navigate("research");
+// The forest's sign: down the path to the other mode's forest.
+el("forest-sign").onclick = () => {
+  overlay.hide();
+  if (game.swapForest()) save();
+  update();
+};
 // Inside a run the button plays and pauses the hand.
 el("auto").onclick = () => {
   if (!game.run.outside) game.toggleAuto();
@@ -283,7 +310,7 @@ function archivesTick() {
     renderAdButton(game);
     renderShopDot(game);
   }
-  if (tab === "upgrades") skillTree.archivesTick(done);
+  if (tab === "research") research.archivesTick(done);
   if (tab === "shop") shop.tick();
 }
 const loop = new FrameLoop({
@@ -292,12 +319,16 @@ const loop = new FrameLoop({
   modal,
   tab: () => tab,
   upgradesFrame: (time) => skillTree.drawParticles(time),
+  researchFrame: (time) => research.drawParticles(time),
   archivesTick,
   defendFrame: (time) => defendPage.frame(time),
   update,
   vitals: () => renderVitals(game),
   purse: (time) => purseFrame(game, time),
-  highlight: () => overlay.track(),
+  highlight: () => {
+    overlay.track();
+    overlay.placeSign();
+  },
   save,
 });
 document.addEventListener("visibilitychange", () => {

@@ -1,3 +1,4 @@
+import { MODES } from "../modes.ts";
 import type { Game, RouteEffects } from "../state.ts";
 import type { Step } from "../pathfinding.ts";
 import type { Renderer } from "../rendering.ts";
@@ -156,6 +157,22 @@ export class BoardOverlay {
   }
 
   /** Where tile (x, y) sits inside the board frame, in CSS pixels. */
+  /** Keeps the forest's sign (shown by the HUD) standing just above the
+   * foot of the path, where walking swaps forests, its arrow pointing down
+   * at it; run each board frame. */
+  placeSign() {
+    const sign = el("forest-sign");
+    if (sign.hidden) return;
+    // Its foot on the row above the path's last tile, clear of the status line.
+    const { left, top, s } = this.tileRect(MODES[this.game.mode].entranceX, 1);
+    const key = `${left.toFixed(1)}:${top.toFixed(1)}:${s}`;
+    if (sign.dataset.placed === key) return;
+    sign.dataset.placed = key;
+    sign.style.left = `${left + s / 2}px`;
+    sign.style.top = `${top}px`;
+    sign.style.setProperty("--tile", `${s}px`);
+  }
+
   private tileRect(x: number, y: number) {
     const r = this.renderer,
       frameRect = el("board-frame").getBoundingClientRect(),
