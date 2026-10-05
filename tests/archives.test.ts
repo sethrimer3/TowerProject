@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   ARCHIVISTS, HISTORY_LIMIT, RESEARCH, RESEARCH_CATEGORIES, RESEARCH_IDS, RESEARCH_TARGETS, cancelResearch, cannotStart, decodeArchives,
-  cannotSwitch, defaultArchives, duration, hireArchivist, jobProgress, maxLevel, researchLevel, researched, settleArchives, startResearch, status, switchResearch, withNextLevel,
+  cannotSwitch, defaultArchives, duration, price, hireArchivist, jobProgress, maxLevel, researchLevel, researched, settleArchives, startResearch, status, switchResearch, withNextLevel,
 } from "../src/archives.ts";
 import { UPGRADES } from "../src/config.ts";
 import { decode, defaults } from "../src/save.ts";
@@ -114,10 +114,63 @@ test("research speed shortens the time a level takes, not the definition", () =>
   assert.equal(formatDuration(Math.round(10 * HOUR / 1.3)), "7h 41m");
 });
 
+test("Research Speed and Research Cost Discount: open with the Archives, linear benefit, quadratic time, cubic Gold", () => {
+  for (const id of ["researchSpeed", "researchCostDiscount"] as const) {
+    const levels = RESEARCH[id].levels;
+    assert.deepEqual(RESEARCH[id].requires, [{ upgrade: "archives" }]);
+    assert.equal(levels.length, 100);
+    assert.deepEqual(levels.slice(0, 10).map((l) => l.gold), [40, 83, 211, 522, 1120, 2100, 3580, 5670, 8470, 12120]);
+    assert.deepEqual(levels.slice(0, 10).map((l) => Math.round(l.hours * 60)), [1, 9, 23, 44, 73, 112, 162, 225, 301, 391]);
+    assert.equal(levels[99].gold, 20_000_000);
+    assert.equal(levels[99].hours, 2400, "100 days");
+    for (let i = 1; i < 100; i++) {
+      assert.ok(levels[i].gold > levels[i - 1].gold && levels[i].hours > levels[i - 1].hours, `${id} ${i + 1}`);
+      // The coefficients C × n³ (Gold) and C × n² (minutes) only rise from level 3.
+      if (i >= 3) assert.ok(levels[i].gold / (i + 1) ** 3 >= levels[i - 1].gold / i ** 3 * 0.99, `${id} Gold ${i + 1}`);
+      if (i >= 3) assert.ok(levels[i].hours / (i + 1) ** 2 >= levels[i - 1].hours / i ** 2 * 0.99, `${id} time ${i + 1}`);
+    }
+  }
+  const a = defaultArchives();
+  a.levels.researchSpeed = 50;
+  assert.equal(RESEARCH_TARGETS.researchSpeed.shown(researched(a, "researchSpeed", 0)), "200%");
+  assert.equal(duration(a, { gold: 1, hours: 48, effect: { target: "focusPerRun", op: "add", value: 1 } }), 24 * HOUR, "48 hours at 200% take 24");
+  a.levels.researchCostDiscount = 100;
+  assert.equal(RESEARCH_TARGETS.researchCost.shown(researched(a, "researchCost", 1000)), "70%");
+  assert.equal(price(a, { gold: 1000, hours: 1, effect: { target: "focusPerRun", op: "add", value: 1 } }), 700);
+});
+
+test("Research Cost Discount takes its share off every research's Gold as it starts", () => {
+  const save = owner(10_000);
+  save.archives.levels.researchCostDiscount = 10;
+  assert.ok(startResearch(save, 0, "focusCount", T0));
+  assert.equal(save.gold, 10_000 - 485, "3% off 500");
+  assert.equal(save.archives.slots[0].job!.paid, 485);
+  cancelResearch(save, 0, T0);
+  assert.equal(save.gold, 10_000, "a stop gives back what was paid");
+  save.gold = 499;
+  assert.equal(cannotStart(save, 0, "focusCount"), null, "485 Gold is enough");
+});
+
+test("a Research Speed level completed hastens the research under way, keeping its share done", () => {
+  const save = owner(1e6);
+  save.gems = ARCHIVISTS.prices[0];
+  hireArchivist(save);
+  startResearch(save, 0, "focusCount", T0); // 8 hours
+  startResearch(save, 1, "researchSpeed", T0); // 1 minute
+  const at = T0 + 60_000;
+  settleArchives(save, at);
+  assert.equal(save.archives.levels.researchSpeed, 1);
+  const job = save.archives.slots[0].job!, whole = Math.round((8 * HOUR) / 1.02);
+  assert.equal(job.completesAt - job.startedAt, whole, "the whole level now takes 8 hours at 102%");
+  assert.ok(Math.abs(jobProgress(job, at) - 60_000 / (8 * HOUR)) < 1e-6, "its share done is kept");
+  assert.equal(job.completesAt, job.startedAt + whole);
+  assert.ok(Math.abs(job.completesAt - at - (8 * HOUR - 60_000) / 1.02) <= 1, "the time left is prorated");
+});
+
 test("archivists are hired one at a time for Gems, not Gold, up to the maximum", () => {
-  assert.deepEqual(ARCHIVISTS.prices, [200, 500, 900, 1400]);
+  assert.deepEqual(ARCHIVISTS.prices, [100, 400, 1400, 3000]);
   const save = owner(1e9);
-  save.gems = 199;
+  save.gems = 99;
   assert.equal(hireArchivist(save), false, "Gold doesn't hire");
   save.gems = ARCHIVISTS.prices.reduce((a, b) => a + b, 0);
   for (let i = 0; i < ARCHIVISTS.prices.length; i++) assert.ok(hireArchivist(save));
@@ -206,7 +259,7 @@ test("Potion HP: +3% a level for 100 levels; quick first levels, then the formul
   assert.equal(levels.reduce((sum, l) => sum + l.gold, 0), 465_760);
   assert.deepEqual(levels.slice(0, 4).map((l) => duration(defaultArchives(), l)), [15_000, 60_000, 300_000, 600_000]);
   assert.ok(levels.every((l) => l.effect.target === "potionHeal" && l.effect.op === "add" && l.effect.value === 3));
-  assert.deepEqual(RESEARCH_IDS.slice(0, 3), ["potionHp", "regen", "focusCount"], "listed first, Regen beside it, before Focus Count");
+  assert.deepEqual(RESEARCH_IDS.slice(0, 5), ["researchSpeed", "researchCostDiscount", "potionHp", "regen", "focusCount"], "after the Archives' own two, Regen beside it, before Focus Count");
   assert.deepEqual(RESEARCH.potionHp.categories, ["defense"]);
 });
 

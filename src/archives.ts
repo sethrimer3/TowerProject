@@ -93,6 +93,9 @@ export const RESEARCH_TARGETS = {
   buyQuantity: { name: "Buy Quantity", base: 0, shown: (n: number) => quantityLabel(BUY_QUANTITIES[Math.min(n, BUY_QUANTITIES.length - 1)]!) },
   /** How fast archivists work: a level of `d` hours takes d / (1 + speed). */
   researchSpeed: { name: "Research Speed", base: 0, shown: speed },
+  /** The percent of its Gold a research level costs, in tenths of a
+   * percent, from 1,000 (the full price). */
+  researchCost: { name: "Research Cost", base: 1000, shown: tenths },
 } as const;
 export type ResearchTarget = keyof typeof RESEARCH_TARGETS;
 
@@ -208,8 +211,51 @@ const ignoreCountLevels = () => Array.from({ length: 9 }, (_, i): ResearchLevel 
  * ten times the Gold and twice the time each level. */
 const TARGET_COUNT_LEVELS: [gold: number, hours: number][] = [[10_000_000, 24], [100_000_000, 48], [1_000_000_000, 96], [10_000_000_000, 192]];
 
+/** `n` rounded to three significant figures, so long schedules read neatly. */
+function neat(n: number) {
+  let unit = 1;
+  while (n >= 1000 * unit) unit *= 10;
+  return Math.round(n / unit) * unit;
+}
+/** A long research schedule, per docs/RESEARCH_CURVES.md: the hand-set
+ * `first` levels, then C(n) × n^`power` to level `length`, three significant
+ * figures. C rises smoothly from the last hand-set level's (first[k−1] / k^power)
+ * to `end` at the last level, as C(n) = top − k / (n + `bend`): fastest just
+ * after the hand-set levels, a larger `bend` straighter. */
+function curve(first: readonly number[], power: number, length: number, end: number, bend: number) {
+  const k0 = first.length, c0 = first[k0 - 1]! / intPow(k0, power);
+  const k = ((end - c0) * (k0 + bend) * (length + bend)) / (length - k0), top = end + k / (length + bend);
+  return Array.from({ length }, (_, i) => first[i] ?? neat((top - k / (i + 1 + bend)) * intPow(i + 1, power)));
+}
+/** Research Speed's and Research Cost Discount's Gold: the first ten levels
+ * by hand (40 to 12,120), then about C × n³, C rising from 12.1 to 20 (20
+ * million Gold at level 100). */
+const ARCHIVE_GOLD = curve([40, 83, 211, 522, 1120, 2100, 3580, 5670, 8470, 12120], 3, 100, 20, 12);
+/** Their minutes: the first ten by hand (1 to 391), then about C × n², C
+ * rising from 3.9 to 14.4 (144,000 minutes, 100 days, at level 100, before
+ * the Research Speed already done shortens it). */
+const ARCHIVE_MINUTES = curve([1, 9, 23, 44, 73, 112, 162, 225, 301, 391], 2, 100, 14.4, 137);
+/** Research Speed (+2% research speed a level) and Research Cost Discount
+ * (0.3% off every research's Gold a level), for 100 levels each. */
+const archiveLevels = (effect: ResearchEffect) =>
+  ARCHIVE_GOLD.map((gold, i): ResearchLevel => ({ gold, hours: ARCHIVE_MINUTES[i]! / 60, effect }));
+
 /** The research library, in the order the Archives list it. */
 export const RESEARCH = {
+  researchSpeed: {
+    name: "Research Speed",
+    description: "Train the archivists to read faster: every research takes less time, research under way included.",
+    categories: ["progression"],
+    requires: [{ upgrade: "archives" }],
+    levels: archiveLevels({ target: "researchSpeed", op: "add", value: 0.02 }),
+  },
+  researchCostDiscount: {
+    name: "Research Cost Discount",
+    description: "Haggle with the booksellers: every research costs less Gold.",
+    categories: ["progression"],
+    requires: [{ upgrade: "archives" }],
+    levels: archiveLevels({ target: "researchCost", op: "add", value: -3 }),
+  },
   potionHp: {
     name: "Potion HP",
     description: "Stronger draughts: every potion restores more HP.",
@@ -393,7 +439,7 @@ export const research = (id: ResearchId): ResearchDefinition => RESEARCH[id];
 
 /** Archivist slots: the Archives start with `start`, and each further one,
  * up to `maximum`, is hired for the next price in Gems. */
-export const ARCHIVISTS = { start: 1, maximum: 5, prices: [200, 500, 900, 1400] } as const;
+export const ARCHIVISTS = { start: 1, maximum: 5, prices: [100, 400, 1400, 3000] } as const;
 /** How many completions the history keeps, newest last. */
 export const HISTORY_LIMIT = 200;
 
@@ -471,6 +517,13 @@ export const withNextLevel = (a: ArchivesSave, id: ResearchId): ArchivesSave =>
 export const duration = (a: ArchivesSave, level: ResearchLevel) =>
   Math.round((level.hours * 3_600_000) / (1 + researched(a, "researchSpeed", 0)));
 
+/** The Gold `level` costs with the Research Cost Discount the Archives have
+ * now. The definition keeps its own Gold. */
+export const price = (a: ArchivesSave, level: ResearchLevel) =>
+  Math.round((level.gold * researched(a, "researchCost", 1000)) / 1000);
+/** The research speed's factor: a level of `d` hours takes d / factor. */
+const speedFactor = (a: ArchivesSave) => 1 + researched(a, "researchSpeed", 0);
+
 const met = (o: ArchivesOwner, r: ResearchRequirement) =>
   "upgrade" in r ? o.upgrades[r.upgrade] > 0
   : "anyUpgrade" in r ? r.anyUpgrade.some((u) => o.upgrades[u] > 0)
@@ -500,7 +553,7 @@ export function cannotStart(o: ArchivesOwner, slot: number, id: ResearchId): str
   if (!level) return "Research complete.";
   if (activeSlot(a, id) >= 0) return "Already being researched.";
   if (missing(o, id).length) return "Locked.";
-  if (!o.settings.freePurchases && o.gold < level.gold) return `Need ${level.gold} Gold.`;
+  if (!o.settings.freePurchases && o.gold < price(a, level)) return `Need ${price(a, level)} Gold.`;
   return null;
 }
 
@@ -513,7 +566,7 @@ export function startResearch(o: ArchivesOwner, slot: number, id: ResearchId, no
 }
 function begin(o: ArchivesOwner, slot: number, id: ResearchId, now: number) {
   const a = o.archives, level = nextLevel(a, id)!, free = o.settings.freePurchases;
-  const ms = free ? 0 : duration(a, level), paid = free ? 0 : level.gold;
+  const ms = free ? 0 : duration(a, level), paid = free ? 0 : price(a, level);
   const done = a.progress[id] ?? 0;
   delete a.progress[id];
   o.gold -= paid;
@@ -564,6 +617,19 @@ export function hastenResearch(a: ArchivesSave, slot: number, ms: number) {
   return true;
 }
 
+/** A research speed change at `at`: every job under way keeps its share
+ * done, and its whole time and the time left become `ratio` of what they
+ * were. */
+function hastenAll(a: ArchivesSave, ratio: number, at: number) {
+  for (const { job } of a.slots) {
+    if (!job || job.completesAt <= at) continue;
+    const whole = job.completesAt - job.startedAt, share = jobProgress(job, at);
+    const ms = Math.round(whole * ratio);
+    job.startedAt = at - Math.round(share * ms);
+    job.completesAt = job.startedAt + ms;
+  }
+}
+
 /** Completes every job due by `now`, oldest first, recording each. An
  * archivist set to auto-continue starts the project's next level the
  * moment the last completed, paying for it, so research done while the game
@@ -579,7 +645,10 @@ export function settleArchives(o: ArchivesOwner, now: number): ResearchRecord[] 
     if (!due) break;
     const { i, job } = due;
     a.slots[i].job = undefined;
+    const before = speedFactor(a);
     a.levels[job.research] = job.level;
+    const after = speedFactor(a);
+    if (after !== before) hastenAll(a, before / after, job.completesAt);
     const record = { at: job.completesAt, research: job.research, level: job.level };
     a.history.push(record);
     done.push(record);
