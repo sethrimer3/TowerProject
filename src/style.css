@@ -2390,6 +2390,9 @@ button.training-cost:disabled .gold-icon, button.training-cost:disabled .points-
 /* The points held, large in a rounded box, named under it. */
 div.training-points { display: flex; align-items: center; gap: 10px; }
 div.training-points select.buy-quantity { float: none; margin-left: auto; }
+.training-trainers { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 2px; }
+.training-end { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; }
+.training-end select.buy-quantity, .training-end .training-bank { margin: 0; }
 .training-held { display: inline-flex; flex-direction: column; align-items: center; gap: 3px; padding: 5px 14px 6px; border: 1px solid #8d794e; border-radius: 10px; background: linear-gradient(180deg, #2a2618, #17150f); box-shadow: inset 0 0 8px #0008; }
 .points-held { display: inline-flex; align-items: center; gap: 5px; line-height: 1; }
 .training-held .points-icon { width: 20px; height: 20px; }
@@ -2732,6 +2735,39 @@ dialog.dismiss-anywhere { cursor: pointer; }
 }
 @media (prefers-reduced-motion: reduce) {
   .card-reveal-rays, .card-reveal-card, .card-reveal-text { animation: none; }
+}
+/* A reward's reveal (Shop purchases, Goals currency): the card reveal's
+   rise, with the prize in place of a card, and gold rays only behind a
+   permanent unlock. A press anywhere claims it. */
+.reward-reveal { cursor: pointer; }
+.reward-reveal-prize {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-height: 0;
+  padding: 18px 22px 14px;
+  border: 1px solid #d6ae68;
+  border-radius: 14px;
+  background: radial-gradient(circle at 50% 35%, #3a3020, #14110b);
+  box-shadow: 0 0 0 2px #f5dc9c55, 0 0 28px 8px #e9b84a66, 0 14px 30px #000c;
+  animation: card-rise 0.9s cubic-bezier(0.2, 0.9, 0.3, 1.08) backwards;
+}
+.reward-reveal-prize .gem-icon, .reward-reveal-prize .ui-sprite { width: 72px; height: 72px; }
+.reward-reveal-star { font-size: 64px; line-height: 1; color: #ffd76a; text-shadow: 0 0 18px #ffbf3c; }
+.reward-reveal-amount { font-size: 28px; font-weight: 500; color: #ffe7a6; letter-spacing: 1px; }
+.reward-reveal .card-reveal-text small { color: #e9c77e; }
+.reward-reveal .card-reveal-text b { color: #fbf0d4; }
+.reward-reveal .card-reveal-text span { color: #8d794e; }
+.reward-reveal.permanent .card-reveal-rays {
+  background:
+    radial-gradient(circle, #ffe9a8aa 0 12%, #e9b84a55 22%, transparent 48%),
+    repeating-conic-gradient(from 0deg, #f5cf6a 0deg 5deg, transparent 5deg 15deg);
+}
+.reward-reveal.still .reward-reveal-prize { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .reward-reveal-prize { animation: none; }
 }
 
 /* --- Focus --- */

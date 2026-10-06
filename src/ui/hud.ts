@@ -295,6 +295,9 @@ function renderHand(game: Game) {
 /** True when the heading still shows the other side of the forest entrance. */
 export const boardHeadingStale = (game: Game) => el("board").dataset.heading !== headingKey(game);
 
+/** The key colours the run of this seed has held, for the HUD's key row. */
+let keysSeen: { run: number | null; colors: Set<string> } = { run: null, colors: new Set() };
+
 /** HP, ATK, DEF (and the shroud, once owned), the run's Gold and keys. During a fight being played out, HP counts down
  * strike by strike. */
 export function renderVitals(game: Game) {
@@ -308,10 +311,14 @@ export function renderVitals(game: Game) {
   text("shroud", whole(p.shroud ?? 0));
   el("shroud-stat").hidden = !game.save.upgrades.shroud;
   renderPurse(game);
+  // Inside a run, blue and red keys show once the hero holds one, and stay
+  // for the rest of the run; the forest shows only the keys a run starts with.
+  const run = game.run;
+  if (keysSeen.run !== run.seed) keysSeen = { run: run.seed, colors: new Set() };
   for (const k of ["yellow", "blue", "red"] as const) {
     text(k, keyCount(p.keys[k]));
-    // The forest shows the keys a run starts with: only those it has.
-    el(k).parentElement!.hidden = !!game.run.outside && p.keys[k] <= 0;
+    if (p.keys[k] > 0) keysSeen.colors.add(k);
+    el(k).parentElement!.hidden = run.outside ? p.keys[k] <= 0 : k !== "yellow" && !keysSeen.colors.has(k);
   }
   const skeletonKeys = p.skeletonKeys ?? 0;
   text("skeleton", skeletonKeys);

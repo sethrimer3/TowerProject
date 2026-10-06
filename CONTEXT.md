@@ -248,7 +248,7 @@ The route to a tapped tile drawn on the board, with a Route totals box of what h
 _Avoid_: path preview
 
 **Damage Prediction**:
-The line a monster's inspect panel adds in a run once Tower I's floor 10 checkpoint is claimed: the HP the fight would cost and whether the hero survives it (Survivable, Invincible when it costs no HP, LETHAL, or Instakill when the hero's first strike fells it).
+The line a monster's inspect panel adds in a run once Tower I's floor 10 checkpoint is claimed: the HP the fight would cost and whether the hero survives it (Survivable, Harmless when it costs no HP, LETHAL, or Instakill when the hero's first strike fells it).
 _Avoid_: combat preview
 
 **Damage Visual**:

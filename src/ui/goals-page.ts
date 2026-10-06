@@ -2,10 +2,12 @@ import { CHECKPOINTS, UNLOCK_NAMES, areaCleared, checkpoint, areaMastered, canWa
 import { CURRENCIES, type CurrencyId } from "../shop/currency.ts";
 import { owns } from "../shop/entitlements.ts";
 import { stubServer, type ShopServer } from "../shop/server.ts";
+import { offer } from "../shop/offers.ts";
 import { CLEARED_INSPIRATION } from "../tower/area-ledger.ts";
 import { tierNumeral, tierRewardText, tierStats } from "../tiers.ts";
 import type { AppContext } from "./app.ts";
 import { el, gemIcon, goldIcon } from "./dom.ts";
+import { goalRewardShown, offerShown, revealReward } from "./reward-reveal.ts";
 
 // The Goals screen: each tower drawn as a stone column rising from the
 // ground, a line up its middle lit to the highest floor completed, and a
@@ -38,11 +40,11 @@ const UNLOCK_ICONS: Record<GoalUnlock, string> = {
 const TOWER_ICON = `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21.5V8.5H4.5v-5h3v2h2.2v-2h4.6v2h2.2v-2h3v5H18v13z" fill="#3a3f4b" stroke="#c9ced8" stroke-width="1.3" stroke-linejoin="round"/><path d="M10 21.5v-4a2 2 0 0 1 4 0v4z" fill="#ffd34d"/><rect x="11" y="10" width="2" height="3" rx=".5" fill="#ffd34d"/></svg>`;
 /** What each unlock does, shown once it is claimed and again whenever its claimed reward is pressed. */
 const UNLOCK_TUTORIALS: Record<GoalUnlock, string> = {
-  damagePrediction: `<p>Inspect an enemy in a run and its panel now says how much HP the fight would cost you, and whether you survive it: Survivable, Invincible when it costs no HP, LETHAL, or Instakill when your first strike defeats it.</p>`,
+  damagePrediction: `<p>Inspect an enemy in a run and its panel now says how much HP the fight would cost you, and whether you survive it: Survivable, Harmless when it costs no HP, LETHAL, or Instakill when your first strike defeats it.</p>`,
   combatForecast: `<p>Inspect an enemy in a run and its panel now also says how many of your hits defeat it, or Instakill when one does.</p>`,
   attackLore: `<p>Inspect an enemy in a run and its panel now also says how much more ATK would defeat it in one hit fewer.</p>` +
     `<p class="hint">Train ATK in the run, even mid-fight, to make the most of it.</p>`,
-  warp: `<p>Master an area, climbing its ten floors without taking damage, to warp to its checkpoint: tap the floor number to begin a new ascent there at once, on the floor just above it.</p>` +
+  warp: `<p>Master an area, climbing its ten floors without taking damage, to warp to the next checkpoint: tap the floor number to begin a new ascent there at once, on the floor just above it.</p>` +
     `<p class="hint">Checkpoints with a golden swirl can be warped to. Entering the tower from the forest always starts on floor 1.</p>`,
   relativeDamageColor: `<p>Each enemy's damage number now takes its colour from your HP as it stands: bright green when the fight costs under 1% of it, sliding through yellow at 10% and orange at 25% to red at half your HP or more.</p>` +
     `<p class="hint">Gray still marks an Instakill, and red a lethal fight.</p>`,
@@ -221,6 +223,8 @@ export class GoalsPage {
     this.render();
     if (reward.kind === "unlock") this.unlockTutorial(reward.unlock);
     if (reward.kind === "tower") this.towerOpened(reward.tower);
+    const shown = goalRewardShown(reward);
+    if (shown) revealReward(shown, game.save.settings.reduceMotion);
   }
 
   /** The next tower opened, shown once it is claimed and `again` when its claimed reward is pressed. */
@@ -291,6 +295,8 @@ export class GoalsPage {
       this.message = `Premium Pass ${pass.n} unlocked!`;
       this.ctx.update();
       this.render();
+      const shown = offerShown(offer(pass.id)!);
+      if (shown) revealReward(shown, game.save.settings.reduceMotion);
     } finally {
       this.busy = false;
     }

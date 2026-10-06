@@ -5,8 +5,9 @@ import { MODES } from "./modes.ts";
 
 export const OUTSIDE_SIZE = 20;
 export const ENTRANCE_Y = 12;
-/** The row a run's hero starts the forest on, partway up the path. */
-export const OUTSIDE_START_Y = 6;
+/** The row a run's hero starts the forest on: the crossroads partway up
+ * the path, where it widens (`onPath`). */
+export const OUTSIDE_START_Y = 7;
 export type Weather = "cloudy" | "sunny" | "rain" | "storm";
 export function weatherForRoll(roll: number): Weather {
   return roll < 0.4 ? "cloudy" : roll < 0.7 ? "sunny" : roll < 0.9 ? "rain" : "storm";

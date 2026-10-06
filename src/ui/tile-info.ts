@@ -38,11 +38,11 @@ const stairs: Describe = (t, _p, g) => {
 
 /** Damage Prediction's line, once unlocked: what the fight costs and
  * whether the hero survives it; a fight one strike wins (the hero strikes
- * first) is an Instakill, and one that costs no HP (as shown) Invincible. */
+ * first) is an Instakill, and one that costs no HP (as shown) Harmless. */
 function prediction(r: CombatPrediction, g: Board) {
   if (!goalUnlocked(g.save, "damagePrediction")) return "";
   const damage = Number.isFinite(r.damage) ? wholeChange(r.damage) : "∞";
-  const verdict = r.turns === 1 ? "Instakill" : !r.survivable ? "LETHAL" : damage === 0 ? "Invincible" : "Survivable";
+  const verdict = r.turns === 1 ? "Instakill" : !r.survivable ? "LETHAL" : damage === 0 ? "Harmless" : "Survivable";
   return `<br><strong class="${r.survivable ? "safe" : "danger"}">${damage} damage · ${verdict}</strong>`;
 }
 
@@ -99,7 +99,7 @@ const DESCRIBE: Partial<Record<Kind, Describe>> = {
   defense: (t) => ({ title: "Defense Shard", body: `Raises DEF by ${enemyStat(shardGain(t))} for this run.` }),
   treasure: () => ({ title: "Treasure", body: "Contains gold and crafting materials." }),
   reward: (t) => chestReward(t.tier) === "mastered"
-    ? { title: "Mastery Chest", body: "The area below was climbed without taking damage: its checkpoint can be warped to." }
+    ? { title: "Mastery Chest", body: "The area below was climbed without taking damage: the next checkpoint can be warped to." }
     : { title: "Clearing Chest", body: `Every enemy in the area below was defeated: +${CLEARED_INSPIRATION} Inspiration, already yours.` },
 };
 

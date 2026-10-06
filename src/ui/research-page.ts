@@ -194,7 +194,7 @@ export class ResearchPage {
   private trainingHtml() {
     const game = this.ctx.game, save = game.save, points = trainingPoints(save), slots = trainingSlots(save), hired = game.training.hired;
     const row = (t: TrainingRow) => this.trainingRowHtml(t);
-    // Buy Quantity sits at the right of the trainers' row, or the points' without trainers.
+    // Buy Quantity sits at the right of the points' row, or before the points at the end of the trainers' row.
     const quantity = buyQuantityHtml(game.buyQuantities, game.buyQuantity);
     // A stat a trainer is training moves up under the trainers, in the
     // order they started, until its training ends.
@@ -208,10 +208,13 @@ export class ResearchPage {
     const bank = save.trainingBank > 0
       ? `<span class="training-bank" title="Time bank: taken off any stat's next ranks trainers train, after its own time credit">${clockIcon()} <b id="training-bank">${formatDuration(save.trainingBank)}</b></span>`
       : "";
+    // The points held, at the right end of the trainers' row once there are trainers.
+    const held = `<span class="training-held" title="Training points"><span class="points-held">${pointsIcon()}<b id="training-points">${points.left}</b></span><small>Training Points</small></span>`;
     return `<section class="training"><canvas class="training-particles" aria-hidden="true"></canvas><header class="tree-heading"><h3>Training${helpButton("How Training works", "research-help")}</h3></header>
       ${hired ? this.boostHtml() : ""}
-      <div class="training-points"><span class="training-held" title="Training points"><span class="points-held">${pointsIcon()}<b id="training-points">${points.left}</b></span><small>Training Points</small></span>${bank}${hired ? "" : quantity}</div>
-      ${hired ? `<p class="training-points training-slots">Trainers: <b id="training-slots">${save.trainingJobs.length} / ${slots}</b> ${this.trainerButton()}${quantity}</p>` : ""}
+      ${hired
+        ? `<div class="training-points training-slots"><span class="training-trainers">Trainers: <b id="training-slots">${save.trainingJobs.length} / ${slots}</b> ${this.trainerButton()}</span><span class="training-end">${quantity}${bank}${held}</span></div>`
+        : `<div class="training-points">${held}${bank}${quantity}</div>`}
       <div class="training-scroll">${inTraining.length ? `<div class="training-table training-busy" role="list" aria-label="Stats in training">${inTraining.map(row).join("")}</div>` : ""}
       <div class="training-table" role="list" aria-label="Stat training">${rows}</div></div></section>`;
   }

@@ -111,19 +111,19 @@ export class RunEndDialog {
       const again = `<p>Look over what this ${words.run} earned, spend it to grow stronger, and try again: the ${words.tierName} will shift to a new layout for your next ${words.run}.</p>`;
       modal.innerHTML = `<span class="summary-icon">${uiSprite("revive")}</span><small>FALLEN IN COMBAT</small><h2>Regroup and try again.</h2><p>${by ? `Felled by ${by}` : "Felled"} at ${where}. ${kept}</p>${stats}${again}${takeBack}<div class="dialog-actions">${button}<button id="defeat-accept">Return to entrance</button></div>`;
       modal.showModal();
+      // Undo, or else return to the entrance: however the dialog closes,
+      // even dismissed by the browser itself (a phone's Back, or coming back
+      // to the tab, can close it past the cancel guard), the hero never stays
+      // fallen on the floor with no dialog to answer.
+      let undoing = false;
       const undo = document.querySelector<HTMLButtonElement>("#defeat-undo");
-      if (undo)
-        undo.onclick = () => {
-          modal.close();
-          game.undo();
-          ctx.navigate(game.mode);
-        };
-      el("defeat-accept").onclick = () => {
-        modal.close();
-        game.acceptDefeat();
-        this.fadeInFromBlack();
+      if (undo) undo.onclick = () => ((undoing = true), modal.close());
+      el("defeat-accept").onclick = () => modal.close();
+      modal.addEventListener("close", () => {
+        if (undoing) game.undo();
+        else if (game.acceptDefeat()) this.fadeInFromBlack();
         ctx.navigate(game.mode);
-      };
+      }, { once: true });
       return;
     }
     const [label, title, why] = cause === "stuck"

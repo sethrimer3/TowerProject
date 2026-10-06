@@ -39,7 +39,7 @@ test("the enemy panel adds Damage Prediction, Combat Forecast's hits and Attack 
   assert.match(body(1), /26 damage · Survivable/);
   assert.match(body(2), /0 damage · Instakill/, "the hero's first strike fells it");
   g.run.player.defense = 1000;
-  assert.match(body(1), /0 damage · Invincible/, "a fight that costs no HP");
+  assert.match(body(1), /0 damage · Harmless/, "a fight that costs no HP");
   g.run.player.defense = 0;
   assert.doesNotMatch(body(1), /hits|ATK:/);
   g.save.goals.claimed["1"] = [20];

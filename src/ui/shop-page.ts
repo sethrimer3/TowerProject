@@ -7,6 +7,7 @@ import { stubServer, type ShopServer } from "../shop/server.ts";
 import { priceText, refusal, soldOut, timesBought, type Refusal } from "../shop/transactions.ts";
 import type { AppContext } from "./app.ts";
 import { el, gemIcon, goldIcon } from "./dom.ts";
+import { offerShown, revealReward } from "./reward-reveal.ts";
 
 /** Gem prices from this up ask the player to confirm first. */
 export const CONFIRM_GEMS = 200;
@@ -220,6 +221,8 @@ export class ShopPage {
       const refused = this.ctx.game.buyOffer(o.id, now, paid);
       this.say(refused ? REFUSALS[refused] : `${o.name}: ${o.price.kind === "free" ? "claimed" : "purchased"}!`);
       this.ctx.update();
+      const shown = refused ? null : offerShown(o);
+      if (shown) revealReward(shown, this.ctx.game.save.settings.reduceMotion);
     } finally {
       this.busy = false;
       this.render();
