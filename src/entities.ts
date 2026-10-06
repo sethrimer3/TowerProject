@@ -209,6 +209,9 @@ export type ModeSave<R extends Run = Run> = {
   /** The mode's currency (Inspiration or Courage) earned during the current
    * run, from milestones and areas cleared, kept beside `runGold`. */
   runCurrency: number;
+  /** Whether the current run has climbed past the tier's record (`reached`
+   * as the run began), for the run's end dialog. */
+  runRecord: boolean;
   /** The numbered tower (or delve) selected: the slice's records (`best`,
    * and `reached`) are this tier's. */
   tier: number;
@@ -299,6 +302,12 @@ export type Save = {
    * tab (and the Upgrades tab) wear a dot in the forest while a skill there
    * can be bought. */
   treeNotices: Record<NoticeTree, boolean>;
+  /** What the HUD's dots were last dismissed at: the hero's `level` and the
+   * Archives' `archives` events (levels completed plus archivists hired)
+   * when the Research page was last opened, which the run's Research
+   * button compares; and the deck's `cards` when the Deck page was last
+   * opened, which the Deck tab compares. */
+  seen: { level: number; archives: number; cards: CardId[] };
   /** The Archives' archivists, completed research and its history
    * (archives.ts). */
   archives: ArchivesSave;

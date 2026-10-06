@@ -52,7 +52,7 @@ import type { Board } from "./board.ts";
 import { bout, heroHpAfter, heroHpDuring, resume, REVIVE_MS, revivals, summarize, type Bout, type Revival } from "./combat.ts";
 import { HEART_DOOR_HP, healAfterVictory, isLethal, regenerate, resolveStep, type StepBlocked, type StepEffect, type StepRules, shardGain } from "./step-effects.ts";
 import { OUTSIDE_START_Y, OutsideWorld } from "./outside.ts";
-import { AreaLedger, chestReward, CLEARED_INSPIRATION, type AreaReward } from "./tower/area-ledger.ts";
+import { AREA_BURST_MS, AreaLedger, chestReward, CLEARED_INSPIRATION, type AreaReward } from "./tower/area-ledger.ts";
 import { TowerClimb } from "./tower/climb.ts";
 import { callsGreaterBoss, greaterBoss, greaterBossSpot } from "./tower/greater-boss.ts";
 import { materialDef, MATERIALS } from "./materials.ts";
@@ -183,9 +183,10 @@ export class Game {
   /** When each of the latest fight's revivals lands (performance.now()),
    * for the board's golden fire; emptied by undo. */
   revivedAt: number[] = [];
-  /** The area reward whose chest was last opened, and when
-   * (performance.now()), for the board's golden burst; cleared by undo. */
-  areaBurst: { reward: AreaReward; at: number } | null = null;
+  /** The area rewards whose chests were opened, each with when its golden
+   * burst starts (performance.now()): a chest opened while another's burst
+   * plays waits for it to end. Emptied by undo. */
+  areaBursts: { reward: AreaReward; at: number }[] = [];
   /** When Equipment opened on floor 60 (performance.now()), for the
    * board's burst. */
   /** Where a Greater Boss last appeared, and when (performance.now()), for
@@ -398,7 +399,7 @@ export class Game {
     this.recordProgress();
     if (levelForXp(snapshot.xp) < levelForXp(this.save.xp)) this.levelUpAt = -Infinity;
     this.revivedAt = [];
-    this.areaBurst = null;
+    this.areaBursts = [];
     this.summoned = null;
     this.vanished = null;
     this.save.xp = snapshot.xp;
@@ -1253,6 +1254,7 @@ export class Game {
     this.slice.history = [];
     this.slice.runGold = 0;
     this.slice.runCurrency = 0;
+    this.slice.runRecord = false;
     this.route = [];
     this.encounter = null;
     this.fight = null;
@@ -1741,6 +1743,7 @@ export class Game {
     const slice = this.slice;
     const reached = Math.max(slice.reached, this.run.height);
     const earned = milestones(this.rules, slice.reached, reached);
+    if (reached > slice.reached) slice.runRecord = true;
     slice.reached = reached;
     slice.best = Math.max(slice.best, reached);
     this.rules.credit(this.save, earned);
@@ -1783,8 +1786,9 @@ export class Game {
   /** An area reward chest opened: its reward was paid when earned, so it
    * only shows it, with the board's golden burst. */
   private openAreaChest(tier: ChestTier | undefined) {
-    const reward = chestReward(tier);
-    this.areaBurst = { reward, at: performance.now() };
+    const reward = chestReward(tier), now = performance.now();
+    const playing = this.areaBursts.filter((b) => now - b.at < AREA_BURST_MS), last = playing.at(-1);
+    this.areaBursts = [...playing, { reward, at: last ? Math.max(now, last.at + AREA_BURST_MS) : now }];
     this.message = reward === "mastered" ? "Area mastered · checkpoint warp unlocked" : `Enemies cleared · +${CLEARED_INSPIRATION} Inspiration`;
   }
   /** Pickup rewards and treasure payouts; stats were already applied. */

@@ -49,7 +49,9 @@ export class SkillTreePage {
 
   render() {
     if (!this.shown(this.tree)) this.tree = "inspiration";
-    this.renderTree(`<div class="tree-tabs" role="group" aria-label="Skill trees">${this.tabsHtml()}</div>`);
+    // One tree alone needs no tab row.
+    const shown = TREES.filter(t => this.shown(t.id)).length;
+    this.renderTree(shown > 1 ? `<div class="tree-tabs" role="group" aria-label="Skill trees">${this.tabsHtml()}</div>` : "");
     // Showing the Inspiration or Courage tree clears the dot a run's currency put on it.
     const notices = this.ctx.game.save.treeNotices;
     if ((this.tree === "inspiration" || this.tree === "courage") && notices[this.tree]) {

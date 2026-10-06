@@ -18,6 +18,8 @@ import type { RoomWorld } from "./room-world.ts";
 export type AreaReward = "mastered" | "cleared";
 /** The Inspiration an area cleared pays: about one a floor. */
 export const CLEARED_INSPIRATION = 10;
+/** How long an area reward's burst and its words last on the board. */
+export const AREA_BURST_MS = 3200;
 /** Each reward's chest. */
 export const AREA_CHEST: Record<AreaReward, ChestTier> = { mastered: "gold", cleared: "silver" };
 /** The reward a chest shows. */

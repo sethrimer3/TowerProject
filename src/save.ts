@@ -18,8 +18,8 @@ import { decodeBadges, defaultBadges, validRunBadges } from "./badges.ts";
 export function defaults(): Save {
   return {
     version: 3,
-    tower: { run: null, history: [], fall: null, best: 0, reached: 0, inspiration: 0, lootedTiles: {}, runGold: 0, runCurrency: 0, tier: 1, tiersOpen: 1, tierRecords: {} },
-    delve: { run: null, history: [], fall: null, best: 0, reached: 0, courage: 0, lootedTiles: {}, runGold: 0, runCurrency: 0, memory: { known: {}, visited: {} }, tier: 1, tiersOpen: 1, tierRecords: {} },
+    tower: { run: null, history: [], fall: null, best: 0, reached: 0, inspiration: 0, lootedTiles: {}, runGold: 0, runCurrency: 0, runRecord: false, tier: 1, tiersOpen: 1, tierRecords: {} },
+    delve: { run: null, history: [], fall: null, best: 0, reached: 0, courage: 0, lootedTiles: {}, runGold: 0, runCurrency: 0, runRecord: false, memory: { known: {}, visited: {} }, tier: 1, tiersOpen: 1, tierRecords: {} },
     gems: 0,
     gemDrop: defaultGemDrop(),
     goldBoostUntil: 0,
@@ -48,6 +48,7 @@ export function defaults(): Save {
     badges: defaultBadges(),
     tutorials: { deck: false, removeCard: false, addCard: false, upgrades: false, gear: false, onTheJob: false, speed: false, climb: false, enter: false, delve: false },
     treeNotices: { inspiration: false, courage: false },
+    seen: { level: 0, archives: 0, cards: [...BASE_HAND] },
     archives: defaultArchives(),
     defend: defaultDefendSave(),
     entitlements: [],
@@ -160,7 +161,7 @@ function decodeDelveRun(r: any): DelveRun | null {
 }
 
 // --- Mode slices ---
-type DecodedMode<R extends Run> = Pick<ModeSave<R>, "run" | "history" | "fall" | "lootedTiles" | "runGold" | "runCurrency">;
+type DecodedMode<R extends Run> = Pick<ModeSave<R>, "run" | "history" | "fall" | "lootedTiles" | "runGold" | "runCurrency" | "runRecord">;
 type RunDecoder<R extends Run> = (raw: any) => R | null;
 const validSnapshot = (value: any) => !!value && finite(value.best) && finite(value.xp);
 function snapshot<R extends Run>(value: any, decodeRun: RunDecoder<R>): MoveSnapshot<R> | null {
@@ -209,6 +210,7 @@ function decodeMode<R extends Run>(s: any, undoCapacity: number, decodeRun: RunD
     lootedTiles: decodeLootedTiles(s?.lootedTiles),
     runGold: run ? fraction(s.runGold, 0) : 0,
     runCurrency: run ? count(s.runCurrency, 0) : 0,
+    runRecord: !!run && s.runRecord === true,
   };
 }
 function applyMode<R extends Run>(slice: ModeSave<R>, decoded: DecodedMode<R>) {
@@ -218,6 +220,7 @@ function applyMode<R extends Run>(slice: ModeSave<R>, decoded: DecodedMode<R>) {
   slice.lootedTiles = decoded.lootedTiles;
   slice.runGold = decoded.runGold;
   slice.runCurrency = decoded.runCurrency;
+  slice.runRecord = decoded.runRecord;
 }
 
 // --- Inventory ---
@@ -359,6 +362,11 @@ function decodeHand(raw: any, owned: CardId[], slots: number): CardId[] {
   const hand = [...new Set(raw.filter((id): id is CardId => owned.includes(id)))].slice(0, slots);
   return validHand(hand) ? hand : [...BASE_HAND];
 }
+/** The dots' dismissals; a save without them has seen the deck it holds. */
+function decodeSeen(s: any, d: Save): Save["seen"] {
+  const cards = Array.isArray(s?.cards) ? CARD_IDS.filter((id) => s.cards.includes(id)) : deckCards(d.upgrades);
+  return { level: count(s?.level, 0), archives: count(s?.archives, 0), cards };
+}
 export function decode(raw: string | null): Save {
   const d = defaults();
   try {
@@ -384,6 +392,7 @@ export function decode(raw: string | null): Save {
     d.badges = decodeBadges(s.badges, d.upgrades);
     for (const k of ["deck", "removeCard", "addCard", "upgrades", "gear", "onTheJob", "speed", "climb", "enter", "delve"] as const) d.tutorials[k] = s.tutorials?.[k] === true;
     for (const k of ["inspiration", "courage"] as const) d.treeNotices[k] = s.treeNotices?.[k] === true;
+    d.seen = decodeSeen(s.seen, d);
   } catch {}
   return d;
 }

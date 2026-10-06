@@ -1243,6 +1243,14 @@ dialog p {
   color: #e8cd94;
   margin-bottom: 5px;
 }
+/* Over the run's totals when it climbed past the tier's record. */
+.summary-record {
+  margin: 18px 0 -12px;
+  font: 700 15px Cinzel, Georgia, serif;
+  letter-spacing: 1px;
+  color: #ffd76a;
+  text-shadow: 0 0 10px rgba(255, 190, 70, 0.55);
+}
 /* Five figures to a row (the defeat dialog) fit a phone's width. */
 .summary-stats.compact {
   gap: 6px;
@@ -2914,6 +2922,7 @@ dialog.dismiss-anywhere { cursor: pointer; }
 .research-toast b { display: block; color: #e9d4ac; font-size: 15px; letter-spacing: 1px; }
 .research-toast span { display: block; margin-top: 4px; font-size: 12px; color: #99a8bd; }
 .currency.gem-currency { color: #8fe3ff; }
+.currency.silver-currency { color: #d6dde6; }
 
 /* --- Training for this run, with Silver --- */
 /* A Training group open shows its cards in the hand's place. */
@@ -3060,7 +3069,7 @@ select.buy-quantity { min-height: 30px; padding: 2px 6px; font-family: Cinzel, G
 .drill-tip small { color: #8f9bac; }
 
 /* --- Shop --- */
-.mini-action .cart-icon, .mini-action .enter-icon { display: block; width: 18px; height: 18px; }
+.mini-action .cart-icon, .mini-action .enter-icon, .mini-action .research-icon { display: block; width: 18px; height: 18px; }
 .mini-action { position: relative; }
 /* The day's free Gems wait to be claimed. */
 .mini-action.notify::after {
@@ -3453,3 +3462,10 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
 .slag-merge canvas { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
 .slag-caption { position: absolute; top: 12%; left: 0; right: 0; margin: 0; color: #ffd27a; font-size: 16px; letter-spacing: 1px; text-align: center; text-shadow: 0 0 8px #ff6a14; }
 .slag-skip { position: absolute; bottom: 8%; left: 0; right: 0; color: #8b7a66; font-size: 11px; text-align: center; }
+
+/* A training-point button just spent: a brief golden glow. */
+.training-now.spent { animation: points-spent 0.7s ease-out; }
+@keyframes points-spent {
+  0% { box-shadow: 0 0 0 2px #ffe27a, 0 0 18px 6px rgba(255, 210, 90, 0.85); filter: brightness(1.6); }
+  100% { box-shadow: 0 0 0 0 transparent, 0 0 0 0 transparent; filter: none; }
+}

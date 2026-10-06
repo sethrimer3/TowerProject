@@ -1,4 +1,4 @@
-import { RESEARCH, cancelResearch, hastenResearch, hireArchivist, settleArchives, startResearch, switchResearch, type ResearchId, type ResearchRecord } from "../archives.ts";
+import { RESEARCH, RESEARCH_IDS, cancelResearch, status, hastenResearch, hireArchivist, settleArchives, startResearch, switchResearch, type ResearchId, type ResearchRecord } from "../archives.ts";
 import { finishGems } from "../training-jobs.ts";
 import { readyForestRuns } from "./hero-sync.ts";
 import { affordsGems, type DeskHost } from "./desk.ts";
@@ -20,6 +20,19 @@ export class ResearchDesk {
    * page shown in Dev mode. */
   private get open() {
     return !!this.save.upgrades.archives || this.save.settings.devMode;
+  }
+
+  /** Whether an archivist stands idle while some research is open to it. */
+  get idle() {
+    return this.open && this.save.archives.slots.some((s) => !s.job) &&
+      RESEARCH_IDS.some((id) => status(this.save, id) === "available");
+  }
+
+  /** The events that can leave an archivist idle, counted: research levels
+   * completed and archivists hired. It only ever rises. */
+  get events() {
+    const a = this.save.archives;
+    return Object.values(a.levels).reduce((sum, n) => sum + (n ?? 0), 0) + a.slots.length;
   }
 
   /** Sets archivist `slot` to research `id`'s next level, paying its Gold. */

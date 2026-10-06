@@ -112,10 +112,10 @@ test("climbing onto an area's first floor pays at once; opening the chest shows 
   assert.match(g.message, /mastered and cleared/);
   const paid = g.save.tower.inspiration;
   assert.ok(g.move(0, 1, true));
-  assert.equal(g.areaBurst?.reward, "mastered");
+  assert.deepEqual(g.areaBursts.map((b) => b.reward), ["mastered"]);
   assert.equal(g.save.tower.inspiration, paid, "the chest pays nothing more");
   g.undo();
-  assert.equal(g.areaBurst, null);
+  assert.deepEqual(g.areaBursts, []);
   assert.equal(g.save.tower.inspiration, paid, "undo never takes an area's reward back");
   assert.ok(areaMastered(g.save, 1, 10));
 });

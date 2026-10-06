@@ -1,3 +1,4 @@
+import { deckCards } from "./cards.ts";
 import type { UpgradeId } from "./config.ts";
 import type { TreeId } from "./skill-trees.ts";
 import "./style.css";
@@ -15,7 +16,7 @@ import { isBoard, type AppContext, type Tab } from "./ui/app.ts";
 import { el } from "./ui/dom.ts";
 import { buildShell } from "./ui/shell.ts";
 import { BoardOverlay } from "./ui/board-overlay.ts";
-import { boardHeadingStale, flashRed, renderAdButton, renderShopDot, renderBoardHeading, renderHud, renderVitals, purseFrame, gearWaiting, upgradesWaiting } from "./ui/hud.ts";
+import { boardHeadingStale, flashRed, renderAdButton, renderShopDot, renderBoardHeading, renderHud, renderVitals, purseFrame, gearWaiting, upgradesWaiting, dismissResearch } from "./ui/hud.ts";
 import { ResearchPage } from "./ui/research-page.ts";
 import { confirmAction, RunEndDialog } from "./ui/dialogs.ts";
 import { GoalsPage } from "./ui/goals-page.ts";
@@ -177,10 +178,13 @@ function navigate(requested: string) {
   update();
 }
 /** Opening the Upgrades page clears the dot the first Inspiration put on
- * it, and opening the Gear page the dot the Gear skill put on it. */
+ * it, the Gear page the dot the Gear skill put on it, the Research page
+ * the run's Research dot, and the Deck page the dot new cards put on it. */
 function clearDots(id: Tab) {
   if (id === "upgrades" && upgradesWaiting(game)) game.save.tutorials.upgrades = true;
   if (id === "gear" && gearWaiting(game)) game.save.tutorials.gear = true;
+  if (id === "research") dismissResearch(game);
+  if (id === "deck") game.save.seen.cards = deckCards(game.save.upgrades);
 }
 /** Opens the Gear page on its Equipment screen. */
 function openBlacksmith() {

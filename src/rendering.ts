@@ -168,8 +168,7 @@ export class Renderer {
     this.drawEffectText(f);
     for (const at of this.game.revivedAt) drawRevive(f, f.now - at);
     drawLevelUp(f, f.now - this.game.levelUpAt, this.game.levelUpPoints);
-    const area = this.game.areaBurst;
-    if (area) drawAreaBurst(f, f.now - area.at, area.reward);
+    for (const area of this.game.areaBursts) if (f.now >= area.at) drawAreaBurst(f, f.now - area.at, area.reward);
     const summoned = this.game.summoned;
     if (summoned) drawPoof(f, summoned.x, summoned.y, f.now - summoned.at);
     const vanished = this.game.vanished;
@@ -569,7 +568,7 @@ export class Renderer {
     const g = this.game, sparkle = g.gemFinder.sparkle;
     return now - this.arrived > ARRIVAL_GLOW_MS && (!g.rush || now - g.rush.at >= RUSH_ECHO_MS) && g.blocked.until <= now && g.effect.until <= now &&
       now - g.levelUpAt >= LEVEL_UP_MS + POINTS_MS && g.revivedAt.every((at) => now - at >= REVIVE_MS) &&
-      (!g.areaBurst || now - g.areaBurst.at >= AREA_BURST_MS) &&
+      g.areaBursts.every((b) => now - b.at >= AREA_BURST_MS) &&
       (!g.summoned || now - g.summoned.at >= POOF_MS) && (!g.vanished || now - g.vanished.at >= POOF_MS) &&
       (!sparkle || now - sparkle.at >= GEM_SPARKLE_MS);
   }

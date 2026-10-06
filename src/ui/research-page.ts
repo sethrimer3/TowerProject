@@ -83,7 +83,11 @@ export class ResearchPage {
    * finish and reset, the boost and the next trainer. */
   private bindTraining() {
     const training = this.ctx.game.training;
-    this.onEach("data-train", (id) => this.withRefund(() => training.train(id, this.ctx.game.buyQuantity)));
+    this.onEach("data-train", (id) => {
+      let spent = false;
+      this.withRefund(() => (spent = training.train(id, this.ctx.game.buyQuantity)));
+      if (spent) glow(document.querySelector<HTMLElement>(`[data-train="${id}"]`));
+    });
     const quantity = document.querySelector<HTMLSelectElement>("[data-buy-quantity]");
     if (quantity) quantity.onchange = () => {
       this.ctx.game.setBuyQuantity(readQuantity(quantity.value));
@@ -365,4 +369,11 @@ export class ResearchPage {
     });
     this.trainingParticles.draw(canvas, time, { lanes, reduced: this.ctx.game.save.settings.reduceMotion });
   }
+}
+
+/** Lights `button` up for a moment: the points it took were spent. */
+function glow(button: HTMLElement | null) {
+  if (!button) return;
+  button.classList.add("spent");
+  button.addEventListener("animationend", () => button.classList.remove("spent"), { once: true });
 }

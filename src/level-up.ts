@@ -1,16 +1,14 @@
 import { tileTransform, type FrameContext } from "./render-frame.ts";
 import { REVIVE_MS } from "./combat.ts";
 import { INSPIRATION_URL, sprite } from "./board-popups.ts";
-import { CLEARED_INSPIRATION, type AreaReward } from "./tower/area-ledger.ts";
+import { AREA_BURST_MS, CLEARED_INSPIRATION, type AreaReward } from "./tower/area-ledger.ts";
 
 /** How long the level-up glow and its "LEVEL UP!" text last. */
 export const LEVEL_UP_MS = 2000;
 /** How long the training points a level-up earned rise over the hero,
  * once its burst is over. */
 export const POINTS_MS = 1400;
-/** How long an area reward's burst and its words last. */
-export const AREA_BURST_MS = 3200;
-export { REVIVE_MS };
+export { AREA_BURST_MS, REVIVE_MS };
 
 /** One of the fiery bursts over the hero: how long it lasts and fades, how
  * far its glow and flames reach, its colours, and its words. */

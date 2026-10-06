@@ -81,17 +81,21 @@ export class RunEndDialog {
 
   /** The run's totals, the same whatever ended it: where it stands, its
    * highest, and the Gold, currency and XP it obtained (not the balances
-   * held). */
+   * held). A run that climbed past the tier's record says so over them,
+   * and its highest goes unsaid while it stands there. */
   private stats() {
     const { game } = this.ctx, rules = MODES[game.mode], slice = game.save[game.mode], run = game.run;
     const stat = (value: string | number, label: string, icon = "") => `<div><strong>${icon}${value}</strong>${label}</div>`;
-    return [
+    const highest = run.maxHeight ?? run.height, record = slice.runRecord && !run.outside;
+    const stats = [
       stat(displayedProgress(run.height, !!run.outside), rules.words.progress.toUpperCase()),
-      stat(displayedProgress(run.maxHeight ?? run.height, !!run.outside), "HIGHEST"),
+      record && run.height === highest ? "" : stat(displayedProgress(highest, !!run.outside), "HIGHEST"),
       stat(whole(slice.runGold), "GOLD", uiSprite("gold")),
       stat(slice.runCurrency, rules.words.currency.toUpperCase(), uiSprite(CURRENCY_SPRITES[game.mode])),
       stat(run.xp ?? 0, "XP"),
     ].join("");
+    const cheer = record ? `<p class="summary-record">Highest ${rules.words.progress.toLowerCase()} reached!</p>` : "";
+    return `${cheer}<div class="summary-stats compact">${stats}</div>`;
   }
 
   private show(cause: RunEndCause) {
@@ -99,7 +103,7 @@ export class RunEndDialog {
     const words = MODES[game.mode].words, slice = game.save[game.mode];
     const where = `${words.progress} ${displayedProgress(game.run.height, !!game.run.outside)}`;
     const kept = "Milestone rewards and the Gold found are already saved.";
-    const stats = `<div class="summary-stats compact">${this.stats()}</div>`;
+    const stats = this.stats();
     if (cause === "fallen") {
       const undos = slice.history.length, by = slice.fall?.by;
       // Undo goes unmentioned until Rehearsed steps unlocks it.

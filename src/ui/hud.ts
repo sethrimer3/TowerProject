@@ -6,7 +6,7 @@ import { outsideWeather } from "../outside.ts";
 import { tierNumeral, tierRewardText } from "../tiers.ts";
 import { MODES, milestones } from "../modes.ts";
 import { capitalized, cardArt, CURRENCY_SPRITES, displayedProgress, el, POINTER_SVG, text, uiSprite } from "./dom.ts";
-import { CARDS, IN_PLACE, cardText, isSiphon, type CardId } from "../cards.ts";
+import { CARDS, IN_PLACE, cardText, deckCards, isSiphon, type CardId } from "../cards.ts";
 import { BADGES } from "../badges.ts";
 import { badgeStyle } from "./badge-token.ts";
 import { trainingPoints, trainingWaiting } from "../loadout.ts";
@@ -70,6 +70,16 @@ function renderPurse(game: Game) {
   }
 }
 
+/** The currencies bar's Silver: the run's inside one, or in the forest
+ * what the next run starts with, shown once that is any. */
+function renderSilverHeld(game: Game) {
+  const outside = !!game.run.outside, silver = outside ? game.startingSilver : game.silver;
+  const box = el("silver-held").parentElement!;
+  box.hidden = outside && silver <= 0;
+  box.title = outside ? "Silver each run starts with" : "Silver, spent only inside this run";
+  text("silver-held", currencyAmount(whole(silver)));
+}
+
 /** Each display frame: moves on the Gold and Silver still counting up. */
 export function purseFrame(game: Game, now: number) {
   if (goldShown.counting(now) || silverShown.counting(now)) renderPurse(game);
@@ -84,6 +94,7 @@ export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay)
   renderModeActions(game);
   text("gems-held", devAmount(game, game.save.gems));
   text("gold-held", devAmount(game, game.save.gold));
+  renderSilverHeld(game);
   text("courage", devAmount(game, game.save.delve.courage));
   text("inspiration", devAmount(game, game.save.tower.inspiration));
   text("training", currencyAmount(trainingPoints(game.save).left));
@@ -101,11 +112,12 @@ export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay)
   renderModeTab(game);
   renderForestSign(game);
   el("run-research").hidden = !!game.run.outside;
+  el("run-research").classList.toggle("notify", !game.run.outside && researchWaiting(game));
   renderAdButton(game);
   renderLockedTab("deck", !!game.save.upgrades.combatStance, "Deck", "Unlock Combat Stance in the Inspiration tree");
   // A new Deck lesson waits behind the button until its tutorial is done.
   const { deck, addCard } = game.save.tutorials;
-  document.querySelector(`[data-tab="deck"]`)?.classList.toggle("notify", !deck || (!!game.save.upgrades.buildout && !addCard));
+  document.querySelector(`[data-tab="deck"]`)?.classList.toggle("notify", !deck || (!!game.save.upgrades.buildout && !addCard) || deckWaiting(game));
   document.querySelector(`[data-tab="upgrades"]`)?.classList.toggle("notify", upgradesWaiting(game) || game.treeWaiting("inspiration") || game.treeWaiting("courage"));
   document.querySelector(`[data-tab="research"]`)?.classList.toggle("notify", trainingWaiting(game.save));
   renderLockedTab("gear", !!game.save.upgrades.gear || game.save.equipment.unlocked, "Gear", "Unlock Gear in the Inspiration tree");
@@ -131,6 +143,26 @@ export const upgradesWaiting = (game: Game) => !game.save.tutorials.upgrades && 
 /** Whether the Gear button shows its dot: the Gear skill is owned and the
  * page hasn't been opened since. */
 export const gearWaiting = (game: Game) => !game.save.tutorials.gear && !!game.save.upgrades.gear;
+
+/** Whether the run's Research button wears its dot: training points can
+ * be spent and the hero has levelled up since the Research page was last
+ * opened, or an archivist stands idle and research has completed (or an
+ * archivist been hired) since. Opening the page dismisses it
+ * (`dismissResearch`) until the next such event. */
+export const researchWaiting = (game: Game) => {
+  const seen = game.save.seen;
+  return (trainingWaiting(game.save) && levelForXp(game.save.xp) > seen.level) ||
+    (game.research.idle && game.research.events > seen.archives);
+};
+/** Dismisses the run's Research dot until the next level-up or idle archivist. */
+export function dismissResearch(game: Game) {
+  game.save.seen.level = levelForXp(game.save.xp);
+  game.save.seen.archives = game.research.events;
+}
+/** Whether the Deck tab wears its dot: the deck holds a card (from a skill,
+ * a Goal or anywhere else) the Deck page hasn't shown since it was earned. */
+export const deckWaiting = (game: Game) =>
+  !!game.save.upgrades.combatStance && deckCards(game.save.upgrades).some((id) => !game.save.seen.cards.includes(id));
 
 /** The level at the front of the XP bar, which fills with this level's
  * progress; hovering shows the XP still needed. */
