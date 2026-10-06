@@ -952,7 +952,10 @@ nav button {
   text-align: center;
   line-height: 1.2;
 }
-nav button + button { border-left-width: 0; }
+/* Each button keeps all four borders and overlaps its neighbour's left one,
+   so the selected button's gold edge shows on both sides. */
+nav button + button { margin-left: -1px; }
+nav button.selected { z-index: 1; }
 nav > button:first-of-type { border-radius: 8px 0 0 8px; }
 nav > button:last-of-type { border-radius: 0 8px 8px 0; }
 nav button[hidden] {
@@ -1670,7 +1673,6 @@ nav {
 .tree-tooltip .safe { color: #8fab79; }
 @media (min-width: 700px) { .node-icon { width: 50px; height: 50px; } .node-name { font-size: 12px; } .skill-node { width: 130px; } }
 @media (max-width: 440px) {
-  nav { gap: 3px; }
   nav button { font-size: 10px; padding: 6px 1px; min-height: 60px; }
   nav button > span :is(img, svg) { width: 32px; height: 32px; }
 }
@@ -1679,7 +1681,6 @@ nav {
   .currencies { margin-left: auto; }
 }
 @media (max-width: 340px) {
-  nav { gap: 2px; }
   nav button { font-size: 9px; min-height: 54px; }
   nav button > span :is(img, svg) { width: 26px; height: 26px; }
 }
