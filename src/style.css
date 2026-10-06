@@ -2363,7 +2363,7 @@ button.training-timer { border-color: #c0483c; color: #ffd0c8; background: #2a14
 .training-auto { width: 14px; height: 14px; margin: 0; accent-color: var(--gold); cursor: pointer; }
 .training-auto-box .redo-icon { width: 13px; height: 13px; flex-shrink: 0; }
 /* The stats a trainer is training, moved up under the trainers. */
-.training-busy { margin: -4px 0 10px; }
+.training-busy { margin-bottom: 2px; }
 .training-label small { display: block; font-size: 9px; letter-spacing: .5px; color: #9aa6b6; }
 /* The training time a row's next rank still needs. */
 .training-left { display: inline-flex; align-items: center; gap: 2px; }
