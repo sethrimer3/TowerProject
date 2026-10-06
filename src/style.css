@@ -953,9 +953,10 @@ nav button {
   line-height: 1.2;
 }
 /* Each button keeps all four borders and overlaps its neighbour's left one,
-   so the selected button's gold edge shows on both sides. */
+   so the selected or hovered button's edge shows on both sides. */
 nav button + button { margin-left: -1px; }
 nav button.selected { z-index: 1; }
+nav button:hover { z-index: 2; }
 nav > button:first-of-type { border-radius: 8px 0 0 8px; }
 nav > button:last-of-type { border-radius: 0 8px 8px 0; }
 nav button[hidden] {
