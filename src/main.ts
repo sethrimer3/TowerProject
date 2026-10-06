@@ -303,7 +303,11 @@ bindInput(
 
 /** Research completes on the wall clock, whatever page shows. */
 function archivesTick() {
-  const done = game.research.settle().length > 0 || game.training.settle() > 0;
+  const researched = game.research.settle().length > 0, trained = game.training.settle() > 0;
+  const done = researched || trained;
+  // Saved before anything is drawn, so what completed is kept even if the
+  // page fails to show it.
+  if (done) save();
   if (done) update();
   // The ad button comes back on the wall clock too, and the Shop's daily Gems.
   else {

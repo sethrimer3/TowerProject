@@ -32,6 +32,16 @@ export type FrameLoopHost = {
  * snapshot. */
 const handHeld = () => !!(globalThis as { __handHeld?: boolean }).__handHeld;
 
+/** Runs `part` of a frame, reporting an error it throws instead of
+ * letting it end the frame. */
+function guard(part: () => void) {
+  try {
+    part();
+  } catch (e) {
+    console.error(e);
+  }
+}
+
 /** Walked routes advance one tile per this many ms. */
 const ROUTE_STEP_MS = 130;
 /** Battery saver: while nothing moves, draw at most every this many ms. */
@@ -61,27 +71,31 @@ export class FrameLoop {
     this.lastAuto = performance.now();
   }
 
+  /** Each frame's parts run apart, and the next frame is asked for first,
+   * so an error in one part (reported to the console) never stops the
+   * others, or the loop itself: research and training still complete, and
+   * the game still saves. */
   private frame = (time: number) => {
+    requestAnimationFrame(this.frame);
     const { host } = this, tab = host.tab();
     if (!document.hidden) {
-      if (tab === "upgrades") host.upgradesFrame(time);
-      if (tab === "research") host.researchFrame(time);
+      if (tab === "upgrades") guard(() => host.upgradesFrame(time));
+      if (tab === "research") guard(() => host.researchFrame(time));
       if (isBoard(tab)) {
-        this.boardFrame(time);
-        host.purse(time);
-        host.highlight();
+        guard(() => this.boardFrame(time));
+        guard(() => host.purse(time));
+        guard(() => host.highlight());
       }
-      if (tab === "defend" && !host.modal.open) host.defendFrame(time);
+      if (tab === "defend" && !host.modal.open) guard(() => host.defendFrame(time));
     }
     if (time - this.lastArchives > ARCHIVES_TICK_MS) {
-      host.archivesTick();
       this.lastArchives = time;
+      guard(() => host.archivesTick());
     }
     if (time - this.lastSave > AUTOSAVE_MS) {
-      host.save();
       this.lastSave = time;
+      guard(() => host.save());
     }
-    requestAnimationFrame(this.frame);
   };
 
   private boardFrame(time: number) {
