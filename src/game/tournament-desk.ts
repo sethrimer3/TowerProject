@@ -1,9 +1,10 @@
 import { goalUnlocked } from "../goals.ts";
 import { confirmServerTime, estimatedServerTime } from "../shop/clock.ts";
 import { CURRENCIES } from "../shop/currency.ts";
-import type { Prize } from "../tournament/prizes.ts";
+import { nextLeague, type League } from "../tournament/leagues.ts";
+import { prizeLevel, type Prize } from "../tournament/prizes.ts";
 import { CLAIMS_KEPT, ENTRIES_KEPT, type TournamentSave } from "../tournament/progress.ts";
-import { CLAIM_MS, latestTournament, nextTournament, phaseOf, type Phase } from "../tournament/schedule.ts";
+import { CLAIM_MS, latestTournament, nextTournament, phaseOf, scoreCounts, tournamentById, type Phase } from "../tournament/schedule.ts";
 import type { Standing, TournamentInfo } from "../tournament/server.ts";
 import { addGemTicket, gemTicketPrice, grantFreeTicket, nextTicket, spendTicket, takeAdTicket } from "../tournament/tickets.ts";
 import { affordsGems, type DeskHost } from "./desk.ts";
@@ -45,18 +46,48 @@ export class TournamentDesk {
     return this.unlocked && phaseOf(info, serverNow, info.finalizedAt) === "open" && grantFreeTicket(this.t, info.id);
   }
 
-  /** The tournament the player last heard of, or the one the schedule says
-   * opened last while the server hasn't answered. */
+  /** The server's report, while it is of the latest tournament to have
+   * opened: once the next opens on the clock, an older report says nothing
+   * of it (until the server is asked again). */
+  get live(): TournamentInfo | null {
+    const info = this.info;
+    return info && info.id === latestTournament(this.now).id ? info : null;
+  }
+
+  /** The latest tournament to have opened, as the server reported it, or as
+   * the schedule says while the server hasn't answered. */
   get tournament() {
-    return this.info ?? latestTournament(this.now);
+    return this.live ?? latestTournament(this.now);
   }
 
   /** Where the tournament stands now (estimated). Until the server has
    * answered, a tournament past its grace counts as over, its results
    * unknown, rather than ending for good. */
   get phase(): Phase {
-    const t = this.tournament, now = this.now, phase = phaseOf(t, now, this.info?.finalizedAt ?? null);
-    return !this.info && phase === "ending" && now >= t.graceEndsAt ? "upcoming" : phase;
+    const live = this.live, t = this.tournament, now = this.now, phase = phaseOf(t, now, live?.finalizedAt ?? null);
+    return !live && phase === "ending" && now >= t.graceEndsAt ? "upcoming" : phase;
+  }
+
+  /** Whether the grace is over and the server's final results are still to
+   * come, so the server is asked again now and then. */
+  get awaitingResults() {
+    const live = this.live;
+    return this.unlocked && !!live && live.finalizedAt === null && this.now >= live.graceEndsAt;
+  }
+
+  /** Whether depth reached now still counts in tournament `id`. */
+  counts(id: string) {
+    return scoreCounts(tournamentById(id), this.now);
+  }
+
+  /** The final results of the latest tournament, once the server has
+   * reported them and the player entered it: their place, prize level, and
+   * the league it moves them to (`save.tournament.league` being the one
+   * they played it in). */
+  get final(): { place: number; entrants: number; level: number; league: League } | null {
+    const live = this.live, e = live && this.t.entries[live.id];
+    if (!live || live.finalizedAt === null || this.now < live.finalizedAt || !e?.entrants) return null;
+    return { place: e.place, entrants: e.entrants, level: prizeLevel(e.place, e.entrants), league: nextLeague(this.t.league, e.place, e.entrants) };
   }
 
   /** When the next tournament opens: the latest's opening while it is
@@ -74,7 +105,8 @@ export class TournamentDesk {
   /** The tournament open for entry now, by id, or null. Tickets can only be
    * taken while one is open, and only once the server has reported it. */
   private get openId() {
-    return this.unlocked && this.info && this.phase === "open" ? this.info.id : null;
+    const live = this.live;
+    return this.unlocked && live && this.phase === "open" ? live.id : null;
   }
 
   /** How the next Ticket is had while out of them: an ad, or Gems. */
@@ -124,11 +156,13 @@ export class TournamentDesk {
   }
 
   /** Keeps a tournament run's `score` in tournament `id` as the entry's
-   * best, waiting to be sent (`pending`) until the server takes it. */
+   * best, waiting to be sent (`pending`) until the server takes it; only
+   * while depth still counts (the grace not over), since none reached
+   * after it ever does. */
   recordScore(id: string, score: number) {
     const e = this.t.entries[id];
     // A score no better than one the server has already taken waits for nothing.
-    if (!e || (e.pending === null && score <= e.best)) return;
+    if (!e || (e.pending === null && score <= e.best) || !this.counts(id)) return;
     this.t.entries[id] = { ...e, best: Math.max(e.best, score), pending: Math.max(e.pending ?? 0, score) };
   }
 
@@ -155,7 +189,7 @@ export class TournamentDesk {
   /** Whether the tournament the server last reported has a final prize
    * waiting: finalized under a day ago, entered, and not yet claimed. */
   get claimable() {
-    const info = this.info, at = info?.finalizedAt ?? null;
+    const info = this.live, at = info?.finalizedAt ?? null;
     return !!info && at !== null && this.now < at + CLAIM_MS && !!this.t.entries[info.id] && !this.t.claimed.includes(info.id);
   }
 

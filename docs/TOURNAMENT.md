@@ -1,6 +1,6 @@
 # The Tournament (plan)
 
-Status: **steps 1 to 3 of the build order built** (the rules, save and stub server, the tournament run, and the screens, *Claim rewards* among them; `src/tournament/`, `ui/tournament-page.ts`); left are checking the Ending and Results phases through, Tickets in the purse, and the goldens. This is the design and the build order for the Tournament, a twice-weekly global competition in the Delve.
+Status: **steps 1 to 4 of the build order built** (the rules, save and stub server, the tournament run, the screens, and the Ending and Results phases with *Claim rewards* and expiry; `src/tournament/`, `ui/tournament-page.ts`); left are Tickets in the purse and the goldens. This is the design and the build order for the Tournament, a twice-weekly global competition in the Delve.
 
 ## Summary
 
@@ -24,7 +24,7 @@ All times are GMT on the server's clock (`src/shop/clock.ts`'s confirmed server 
 
 A tournament's id is the GMT date its entry day starts (`2026-10-07`). Wednesday's Results phase ends well before Saturday opens, and Saturday's before Wednesday's, so at most one tournament is ever live. The schedule is pure functions of a server time (`phaseAt(now)`, `tournamentAt(now)`, `nextOpen(now)`), so it is unit-tested without a server.
 
-Depth a run reaches after the 4 hours are up never counts. A run still inside then plays on as a normal Delve run.
+Depth a run reaches after the 4 hours are up never counts (`TournamentDesk.counts`, which `recordScore` checks). A run still inside then plays on as a normal Delve run, its score what it reached before.
 
 ## Leagues
 
@@ -118,7 +118,7 @@ Each entry spends one Ticket. A player may enter as often as they have Tickets; 
 - The run carries `tournament: { id, league, entry, seeds, drawn, back }` (`TournamentRun` on the `DelveRun`, checked by `isTournamentRun` in `decodeDelveRun`), so a reload mid-run is still a tournament run (and opens in the Delve, opened or not), and the HUD's height column reads *Delve 3+* over the depth.
 - **Undo** works as usual; the score is the deepest depth reached, as the HUD counts it (`tournamentScore`), which undo can't raise.
 - The forest sign can't be reached from inside, so a tournament run can't be swapped out. Ending it, by defeat or End Run, goes through `finalizeRun` as every run does, which keeps the score to send (`TournamentDesk.recordScore`: the entry's best, and `pending` until the server takes it), then returns the Delve to the tier the player had selected and the player to the forest they began from (`back`).
-- **Sending the score:** the run's end dialog sends it as it opens (`TournamentClient.sendRun`) and shows the place once the server answers; a score the server already holds isn't kept to send again. One that couldn't be sent waits in `pending` and is tried again every 30 seconds (`TournamentClient.tick`, from the once-a-second tick) until the server takes it or its tournament's grace is over.
+- **Sending the score:** the once-a-second tick keeps the depth of a tournament run inside as it rises (`TournamentClient.tick`, through `recordScore`, only while it counts), so depth reached before the grace ends is sent even when the run goes on past it; the run's end dialog sends it as it opens (`TournamentClient.sendRun`) and shows the place once the server answers; a score the server already holds isn't kept to send again. One that couldn't be sent waits in `pending` and is tried again every 30 seconds until the server takes it or its tournament's grace is over.
 
 ## Screens and controls
 
@@ -128,7 +128,7 @@ Each entry spends one Ticket. A player may enter as often as they have Tickets; 
 
 **HUD — Tournament button:** `#tournament-button` (trophy icon), at the top of the forest's actions column, over Settings, labelled with the phase (`2d5h` until the next opens, `OPEN`, `ENDING`, `CLAIM`), refreshed by the once-a-second tick (`renderTournamentButton` in `ui/hud.ts`). A dot while a final prize waits to be claimed (worn by the run menu's hamburger too). Inside a run, it goes into the run menu (`.run-menu-items`, before End Run) once the player has entered the current tournament, and is gone otherwise.
 
-**Talking to the server:** the app asks for the live tournament as it starts, as the Tournament page opens, and whenever the tick sees the Tournament unlocked or its phase change (`refreshTournament` in `main.ts`), so a tournament opening while the game is open grants its Ticket, with its celebration. Until the server has answered, a tournament past its grace counts as over (`upcoming`), not ending for good.
+**Talking to the server:** the app asks for the live tournament as it starts, as the Tournament page opens, and whenever the tick sees the Tournament unlocked or its phase change (`refreshTournament` in `main.ts`), so a tournament opening while the game is open grants its Ticket, with its celebration; past the grace it asks again each minute until the results are final (`TournamentDesk.awaitingResults`). The server's report counts only while it is of the latest tournament to have opened (`TournamentDesk.live`): once the next opens on the clock, the desk reads the schedule until the server is asked again, so the next shows open even before it answers. Until the server has answered, a tournament past its grace counts as over (`upcoming`), not ending for good.
 
 **Tournament page** (`ui/tournament-page.ts`, `TournamentPage`, a `section.page` with a Back button to whichever screen opened it, like the Shop's; the tick redraws only its countdown, and the whole page only when the phase changes, so no button is redrawn under a press):
 
@@ -137,11 +137,11 @@ Each entry spends one Ticket. A player may enter as often as they have Tickets; 
 3. Tickets held, with the ticket icon.
 4. While Open: **Begin Tournament**, or the ad / Gem Ticket offer when out of Tickets.
 5. The player's best score this tournament, their place and percentile in the league (*12th of 1,480 · top 1%*), and the anticipated prize level; or the league's top prize when they haven't entered.
-6. In Results: the final place and prize, and **Claim rewards** (gone once claimed, or after 24 hours: *Rewards expired*).
+6. In Results: the final place and prize, **Claim rewards** (gone once claimed, or after 24 hours: *Rewards expired*), and the league the results move the player to (*Promoted to Silver League*, *Moved down to …*, *Staying in the …*; `TournamentDesk.final`). After the Results, until the next opens, the same under *Last tournament*, over the next tournament's top prize.
 7. **All prizes**: a dialog with every league's ten levels, the player's league first, the promotion and demotion zones marked.
 8. A version that is too old sees only *Update the game to take part in the Tournament* (TODO, below).
 
-**Run end dialog:** a tournament run's `RunEndDialog` adds a *Tournament* block over its usual totals: the score, then *Place: …* once the server answers (*Checking your place…* until then, *Offline — your score will be sent later* if it can't be reached).
+**Run end dialog:** a tournament run's `RunEndDialog` adds a *Tournament* block over its usual totals: the score, then *Place: …* once the server answers (*Checking your place…* until then, *Offline — your score will be sent later* if it can't be reached). A run ended after the grace shows the score kept before it, and *The tournament has ended: depth reached since doesn't count.*
 
 ## The server (stubbed)
 
@@ -215,7 +215,7 @@ The confirmed server time is the Shop's (`save.shop`'s clock), shared, so there'
 1. **Rules without screens** (built): the Goal, schedule, leagues, prizes (with the oscillation test), Tickets, save and stub server, all in Node tests.
 2. **The run** (built): begin a tournament run (league cave, server seeds and the run's own streams, ×1.1 enemies, the flag), its score, submission on `finalizeRun`, the end dialog's block.
 3. **Screens** (built, but for Tickets in the purse): the forest hall, the HUD button and its phases, the Tournament page, All prizes, the free Ticket's celebration, the ad and Gem Ticket offers, the run-menu button.
-4. **Ending and claims:** the Ending and Results phases, *Claim rewards* (`TournamentClient.claim`, built with the page), expiry.
+4. **Ending and claims** (built): the Ending and Results phases (depth counted until the grace ends, the results asked for each minute after it, the final place and league move), *Claim rewards* (`TournamentClient.claim`), expiry, and the next tournament opening over an old report; `tests/tournament-ending.test.ts`.
 5. **Goldens:** `ui.golden.json` (the Goals page's floor 70 text, plus new UI-suite steps for the page and button), `save-decode` (the new save field), and a forest-with-hall scene added to `LATER_BOARD_SCENES` (`render-calls`, `render.golden.json`). Tournament runs are new, so no gameplay golden changes; one golden of a seeded tournament run (`step-trace` style) pins its seeds and stats.
 
 ## Future (TODO)

@@ -40,6 +40,9 @@ export function latestTournament(now: number): Tournament {
   return tournamentOn(day);
 }
 
+/** Tournament `id`'s timeline. */
+export const tournamentById = (id: string) => latestTournament(Date.parse(id));
+
 /** The next tournament to open after `now`. */
 export function nextTournament(now: number): Tournament {
   let day = gmtDay(now) + 1;

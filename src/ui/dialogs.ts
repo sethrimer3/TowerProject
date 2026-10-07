@@ -113,13 +113,16 @@ export class RunEndDialog {
   private tournamentBlock() {
     const { game } = this.ctx, t = game.mode === "delve" ? (game.run as DelveRun).tournament : undefined;
     if (!t || game.run.outside) return "";
-    const client = this.tournament;
+    // Past the grace, depth no longer counts: the score is what was kept before it.
+    const client = this.tournament, counts = game.tournament.counts(t.id);
+    const score = counts ? tournamentScore(game.run) : (game.save.tournament.entries[t.id]?.best ?? 0);
     void client?.sendRun().then((s) => {
       const line = document.getElementById("summary-tournament-place");
-      if (line) line.textContent = s ? `Place: ${placeText(s.place, s.entrants)}` : "Offline — your score will be sent later";
+      if (line) line.textContent = s ? `Place: ${placeText(s.place, s.entrants)}` : counts ? "Offline — your score will be sent later" : "";
     });
     return `<div class="summary-tournament"><small>TOURNAMENT · ${LEAGUE_INFO[t.league].name.toUpperCase()} LEAGUE</small>` +
-      `<p>Score: <b>${tournamentScore(game.run)}</b></p><p id="summary-tournament-place">${client ? "Checking your place…" : ""}</p></div>`;
+      `<p>Score: <b>${score}</b></p>${counts ? "" : `<p class="hint">The tournament has ended: depth reached since doesn't count.</p>`}` +
+      `<p id="summary-tournament-place">${client ? "Checking your place…" : ""}</p></div>`;
   }
 
   /** While the Gold ad's boost ran during the run, the Gold it found then

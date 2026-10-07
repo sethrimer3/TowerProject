@@ -362,15 +362,20 @@ function archivesTick() {
     tournamentStage = stage;
     void refreshTournament();
   }
+  // Past the grace, it is asked again each minute until the results are final.
+  else if (game.tournament.awaitingResults && game.clock() - tournamentAskedAt >= 60_000) void refreshTournament();
   if (tab === "tournament") tournamentPage.rerender();
   if (tab === "research") research.archivesTick(done);
   if (tab === "shop") shop.tick();
 }
 /** The Tournament's stage the tick last saw (unlocked, and its phase). */
 let tournamentStage = `${game.tournament.unlocked}|${game.tournament.phase}`;
+/** When the Tournament's server was last asked (the game's clock). */
+let tournamentAskedAt = -Infinity;
 /** Asks the Tournament's server for the live tournament, and celebrates the
  * free Ticket a newly opened one grants. */
 async function refreshTournament() {
+  tournamentAskedAt = game.clock();
   const granted = await tournament.refresh();
   if (granted)
     revealReward(

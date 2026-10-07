@@ -1,5 +1,5 @@
 import type { Game } from "../state.ts";
-import { latestTournament } from "./schedule.ts";
+import { tournamentById } from "./schedule.ts";
 import { tournamentScore } from "./run.ts";
 import type { Prize } from "./prizes.ts";
 import type { Standing, TournamentServer } from "./server.ts";
@@ -64,12 +64,21 @@ export class TournamentClient {
    * dialog opens), kept until sent; returns the standing after it, or null
    * while the server can't be reached. */
   async sendRun(): Promise<Standing | null> {
-    const run = this.game.mode === "delve" ? this.game.run : null, t = run && "milestone" in run ? run.tournament : undefined;
-    if (!run || !t) return null;
-    this.game.tournament.recordScore(t.id, tournamentScore(run));
+    const t = this.recordRun();
+    if (!t) return null;
     await this.sendPending();
     const e = this.game.save.tournament.entries[t.id];
     return e && e.pending === null && e.entrants ? { id: t.id, best: e.best, place: e.place, entrants: e.entrants, final: false } : null;
+  }
+
+  /** Keeps the score of the tournament run inside now, while its depth
+   * still counts (`recordScore`), so depth reached before the grace ends is
+   * sent even if the run goes on past it; returns the run's tournament. */
+  private recordRun() {
+    const run = this.game.mode === "delve" && !this.game.run.outside ? this.game.run : null;
+    const t = run && "milestone" in run ? run.tournament : undefined;
+    if (run && t) this.game.tournament.recordScore(t.id, tournamentScore(run));
+    return t;
   }
 
   /** How long a score that couldn't be sent waits before it is tried again. */
@@ -81,6 +90,7 @@ export class TournamentClient {
   /** Once a second: sends any score still waiting, unless a send is under
    * way or the last try was under `RETRY_MS` ago. */
   tick(now = Date.now()) {
+    this.recordRun();
     const waiting = Object.values(this.game.save.tournament.entries).some((e) => e.pending !== null);
     if (!waiting || this.sending || now - this.triedAt < TournamentClient.RETRY_MS) return;
     this.triedAt = now;
@@ -104,7 +114,7 @@ export class TournamentClient {
       if (standing) {
         desk.sent(id, score);
         desk.recordStanding(standing);
-      } else if (now >= latestTournament(Date.parse(id)).graceEndsAt) desk.sent(id, score);
+      } else if (now >= tournamentById(id).graceEndsAt) desk.sent(id, score);
     }
   }
 }

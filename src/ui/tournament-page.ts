@@ -102,7 +102,7 @@ export class TournamentPage {
       case "upcoming": return `Opens in <b>${countdown(desk.nextOpensAt - now)}</b>`;
       case "open": return `<b class="live">Open</b> · entry closes in <b>${countdown(t.closesAt - now)}</b>`;
       case "ending": return now < t.graceEndsAt ? `Ending · runs inside still count for <b>${countdown(t.graceEndsAt - now)}</b>` : "Ending · the final results are being tallied";
-      case "results": return `Final results · claim within <b>${countdown(desk.info!.finalizedAt! + CLAIM_MS - now)}</b>`;
+      case "results": return `Final results · claim within <b>${countdown(desk.live!.finalizedAt! + CLAIM_MS - now)}</b>`;
     }
   }
 
@@ -124,22 +124,40 @@ export class TournamentPage {
   }
 
   /** The player's best score and place, with the prize it pays; the
-   * league's top prize while they haven't entered. In Results, *Claim
-   * rewards*. */
+   * league's top prize while they haven't entered. Once the results are
+   * final, the final place, prize and league, and *Claim rewards* (or that
+   * they were claimed or expired); after the Results, the last tournament's
+   * over the next one's top prize. */
   private standing() {
     const game = this.ctx.game, desk = game.tournament, t = desk.tournament, league = game.save.tournament.league;
-    const prizes = desk.info?.prizes[league] ?? PRIZES[league], e = game.save.tournament.entries[t.id];
-    if (!e) return `<div class="tournament-standing"><p>Top prize</p>${prizeHtml(prizes[0]!)}</div>`;
-    const final = desk.phase === "results", rows = [`<p>Best score: <b>${e.best}</b>${e.pending !== null ? ` <small>(waiting to be sent)</small>` : ""}</p>`];
-    if (e.entrants) {
-      const level = prizeLevel(e.place, e.entrants);
-      rows.push(`<p>${final ? "Final place" : "Place"}: <b>${placeText(e.place, e.entrants)}</b></p>`, `<p>${final ? "Prize" : "Prize if it ends now"} (level ${level})</p>${prizeHtml(prizes[level - 1]!)}`);
-    } else rows.push(`<p class="hint">Your place shows once the server has your score.</p>`);
+    const table = desk.live?.prizes ?? PRIZES, prizes = table[league], e = game.save.tournament.entries[t.id], phase = desk.phase;
+    const final = desk.final, next = phase === "upcoming" && final ? final.league : league;
+    const top = `<div class="tournament-standing"><p>Top prize</p>${prizeHtml(table[next][0]!)}</div>`;
+    if (!e) return top;
+    const over = phase === "results" || phase === "upcoming", rows: string[] = [];
+    if (phase === "upcoming") rows.push(`<small class="tournament-last">LAST TOURNAMENT</small>`);
+    rows.push(`<p>Best score: <b>${e.best}</b>${e.pending !== null && !over ? ` <small>(waiting to be sent)</small>` : ""}</p>`);
     if (final) {
       const claimed = game.save.tournament.claimed.includes(t.id);
-      rows.push(claimed ? `<p class="hint">Rewards claimed.</p>` : desk.claimable ? `<button class="tournament-begin" id="tournament-claim"${this.busy ? " disabled" : ""}>Claim rewards</button>` : `<p class="hint">Rewards expired.</p>`);
-    }
-    return `<div class="tournament-standing">${rows.join("")}</div>`;
+      rows.push(
+        `<p>Final place: <b>${placeText(final.place, final.entrants)}</b></p>`,
+        `<p>Prize (level ${final.level})</p>${prizeHtml(prizes[final.level - 1]!)}`,
+        claimed ? `<p class="hint">Rewards claimed.</p>` : desk.claimable ? `<button class="tournament-begin" id="tournament-claim"${this.busy ? " disabled" : ""}>Claim rewards</button>` : `<p class="hint">Rewards expired.</p>`,
+        this.leagueMove(league, final.league),
+      );
+    } else if (over) rows.push(`<p class="hint">The final results show once the server answers.</p>`);
+    else if (e.entrants) {
+      const level = prizeLevel(e.place, e.entrants);
+      rows.push(`<p>Place: <b>${placeText(e.place, e.entrants)}</b></p>`, `<p>Prize if it ends now (level ${level})</p>${prizeHtml(prizes[level - 1]!)}`);
+    } else rows.push(`<p class="hint">Your place shows once the server has your score.</p>`);
+    return `<div class="tournament-standing">${rows.join("")}</div>${phase === "upcoming" ? top : ""}`;
+  }
+
+  /** Where the final results move the player: up, down, or staying. */
+  private leagueMove(from: League, to: League) {
+    const name = `${leagueTrophy(to, "league-trophy small")}<b>${LEAGUE_INFO[to].name} League</b>`;
+    const move = LEAGUES.indexOf(to) - LEAGUES.indexOf(from);
+    return `<p class="tournament-move${move > 0 ? " up" : move < 0 ? " down" : ""}">${move > 0 ? `Promoted to ${name}` : move < 0 ? `Moved down to ${name}` : `Staying in the ${name}`}</p>`;
   }
 
   private bind() {
