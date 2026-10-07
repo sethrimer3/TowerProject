@@ -170,7 +170,7 @@ export class EquipmentPanel {
       const extra = this.selected.has(i.id) ? " selected" : this.selecting && isProtected(this.e, i) ? " eq-blocked" : "";
       return this.tile(i, "eq-item", extra);
     }).join("")}</div>`
-      : `<p class="hint">${this.e.items.length ? "No pieces match these filters." : "No equipment yet. Bosses from floor 60 drop Standard pieces, and Gem pulls in Acquire bring Unique ones."}</p>`;
+      : `<p class="hint">${this.e.items.length ? "No pieces match these filters." : "No equipment yet. Any boss may drop a Standard piece, and Gem pulls in Acquire bring Unique ones."}</p>`;
     return head + this.filtersHtml() + actions + grid + this.salvageHtml();
   }
 

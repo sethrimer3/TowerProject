@@ -163,8 +163,8 @@ export class BoardOverlay {
   placeSign() {
     const sign = el("forest-sign");
     if (sign.hidden) return;
-    // Its foot on the row above the path's last tile, clear of the status line.
-    const { left, top, s } = this.tileRect(MODES[this.game.mode].entranceX, 1);
+    // Its foot on the top edge of the path's last tile.
+    const { left, top, s } = this.tileRect(MODES[this.game.mode].entranceX, 0);
     const key = `${left.toFixed(1)}:${top.toFixed(1)}:${s}`;
     if (sign.dataset.placed === key) return;
     sign.dataset.placed = key;
