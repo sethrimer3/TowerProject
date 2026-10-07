@@ -1,4 +1,5 @@
 import { chromium, expect } from "@playwright/test";
+import { fixClock } from "./fixed-clock.mjs";
 import { openMenu } from "./run-menu.mjs";
 const browser = await chromium.launch({ headless: true, channel: process.env.PLAYWRIGHT_CHANNEL || "msedge" });
 try {
@@ -9,6 +10,7 @@ try {
     const fixture = sessionStorage.getItem("outsideFixture");
     if (fixture) { localStorage.setItem("towerdelve.v1", fixture); sessionStorage.removeItem("outsideFixture"); }
   });
+  await fixClock(page);
   await page.goto(process.env.TEST_URL || "http://127.0.0.1:5173/");
   await page.evaluate(async () => {
     const { Game } = await import("/src/state.ts"), { defaults } = await import("/src/save.ts");

@@ -1,9 +1,11 @@
 import { chromium } from '@playwright/test';
+import { fixClock } from "./fixed-clock.mjs";
 import assert from 'node:assert/strict';
 const browser = await chromium.launch({ headless: true, channel: process.env.PLAYWRIGHT_CHANNEL || 'msedge' });
 const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
 const errors = []; page.on('pageerror', (e) => errors.push(e.message));
 await page.addInitScript(() => { const fixture = sessionStorage.getItem('hudFixture'); if (fixture) { localStorage.setItem('towerdelve.v1', fixture); sessionStorage.removeItem('hudFixture'); } });
+await fixClock(page);
 await page.goto(process.env.TEST_URL || 'http://127.0.0.1:5173/');
 const shown = (selector) => page.locator(selector).isVisible();
 

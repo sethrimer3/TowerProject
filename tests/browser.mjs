@@ -1,4 +1,5 @@
 import { chromium } from "@playwright/test";
+import { fixClock } from "./fixed-clock.mjs";
 import { openMenu } from "./run-menu.mjs";
 const browser = await chromium.launch({
   headless: true,
@@ -11,6 +12,7 @@ const page = await browser.newPage({
 const errors = [];
 page.on("pageerror", (e) => errors.push(e.message));
 await page.addInitScript(() => { const fixture = sessionStorage.getItem("__treeFixture"); if (fixture) { localStorage.setItem("towerdelve.v1", fixture); sessionStorage.removeItem("__treeFixture"); } });
+await fixClock(page);
 await page.goto(process.env.TEST_URL || "http://127.0.0.1:5173/");
 // Movement fixtures begin after the Delve unlock; fresh progression has its own suite.
 await page.evaluate(() => {

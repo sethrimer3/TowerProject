@@ -1,4 +1,5 @@
 import { chromium } from "@playwright/test";
+import { fixClock } from "./fixed-clock.mjs";
 import assert from "node:assert/strict";
 import { openMenu } from "./run-menu.mjs";
 
@@ -22,6 +23,7 @@ await page.addInitScript(() => {
 });
 
 const url = process.env.TEST_URL || "http://127.0.0.1:5173/";
+await fixClock(page);
 await page.goto(url);
 
 // 0. A fresh game starts inside a Tower run, where the tabs are hidden but

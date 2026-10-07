@@ -1,9 +1,11 @@
 import { chromium, expect } from '@playwright/test';
+import { fixClock } from "./fixed-clock.mjs";
 import { openMenu } from "./run-menu.mjs";
 const browser = await chromium.launch({headless:true,channel:'msedge'});
 const page = await browser.newPage({viewport:{width:390,height:844}});
 const errors=[];page.on('pageerror',e=>errors.push(e.message));
 await page.addInitScript(() => { const fixture = sessionStorage.getItem("__treeFixture"); if (fixture) { localStorage.setItem("towerdelve.v1", fixture); sessionStorage.removeItem("__treeFixture"); } });
+await fixClock(page);
 await page.goto(process.env.TEST_URL || 'http://127.0.0.1:5173/');
 // Inside a run the tabs are hidden: end the first Tower run to reach the forest.
 await openMenu(page); await page.locator("#end-run").click();

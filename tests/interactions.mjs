@@ -1,4 +1,5 @@
 import { chromium, expect } from "@playwright/test";
+import { fixClock } from "./fixed-clock.mjs";
 import { openMenu } from "./run-menu.mjs";
 const browser = await chromium.launch({
   headless: true,
@@ -14,6 +15,7 @@ await page.addInitScript(() => {
     sessionStorage.removeItem("__fixture");
   }
 });
+await fixClock(page);
 await page.goto(process.env.TEST_URL || "http://127.0.0.1:5173/");
 // Inside a run the tabs are hidden: end the first Tower run to reach the forest.
 await openMenu(page); await page.locator("#end-run").click();
