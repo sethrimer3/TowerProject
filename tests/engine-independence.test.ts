@@ -116,7 +116,7 @@ test("saved and played-by generation calls no inexact Math function", () => {
 const GENERATION = [
   ...readdirSync(new URL("../src/tower/", import.meta.url)).map((f) => `tower/${f}`),
   "delve/labyrinth.ts", "delve/patterns.ts", "delve/world.ts", "torches.ts", "board.ts", "random.ts", "exact.ts",
-  "scaling.ts", "config.ts", "defend/citygen.ts", "defend/layout.ts", "defend/grid.ts",
+  "scaling.ts", "enemy-curves.ts", "config.ts", "defend/citygen.ts", "defend/layout.ts", "defend/grid.ts",
 ];
 
 test("generation modules use no ** (intPow or sqrt instead)", () => {

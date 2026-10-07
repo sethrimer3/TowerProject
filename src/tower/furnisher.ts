@@ -38,17 +38,17 @@ const PROFILES_FOR: Record<Strength, TowerEnemyProfile[]> = {
 /** An enemy for floor `depth`, at the strength that floor allows
  * (`strengthOnFloor`: no strong enemy below floor 11, no elite below 41),
  * so no enemy below the floor 10 boss can beat a new hero in a single fight. */
-function enemyTile(asked: Strength, depth: number, rng: () => number, named?: TowerEnemyProfile): Tile {
+function enemyTile(asked: Strength, depth: number, rng: () => number, named?: TowerEnemyProfile, tower = 1): Tile {
   const strength = strengthOnFloor(asked, depth);
   const profiles = PROFILES_FOR[strength];
   const profile = named ?? profiles[Math.floor(rng() * profiles.length)];
-  return { kind: "enemy", enemy: getTowerGateEnemy(depth, strength, profile) };
+  return { kind: "enemy", enemy: getTowerGateEnemy(depth, strength, profile, tower) };
 }
 
-export function gateTile(gate: Gate, depth: number, rng: () => number): Tile {
+export function gateTile(gate: Gate, depth: number, rng: () => number, tower = 1): Tile {
   switch (gate.kind) {
     case "open": return { kind: "floor" };
-    case "enemy": return enemyTile(gate.strength, depth, rng, gate.profile);
+    case "enemy": return enemyTile(gate.strength, depth, rng, gate.profile, tower);
     case "door": return { kind: "door", color: gate.color, door: { type: "keys", keys: [gate.color], mode: "all" } };
     case "steel": return { kind: "door", door: { type: "keys", keys: ["yellow", "blue", "red"], mode: "any" } };
     case "heart": return { kind: "door", door: { type: "fullHp" } };
@@ -57,8 +57,8 @@ export function gateTile(gate: Gate, depth: number, rng: () => number): Tile {
 }
 
 /** One tile of a fork's lane. */
-export function laneTile(step: LaneStep, depth: number, rng: () => number): Tile {
-  return step.kind === "reward" ? rewardTile(step.reward, rng) : gateTile(step, depth, rng);
+export function laneTile(step: LaneStep, depth: number, rng: () => number, tower = 1): Tile {
+  return step.kind === "reward" ? rewardTile(step.reward, rng) : gateTile(step, depth, rng, tower);
 }
 
 function rewardTile(r: Reward, rng: () => number): Tile {
@@ -104,7 +104,7 @@ export class Furnisher {
   protectedCells = new Set<string>();
   placements: Placement[] = [];
   dropped: Dropped = [];
-  constructor(public cells: Map<string, Tile>, public depth: number, public rng: () => number) {}
+  constructor(public cells: Map<string, Tile>, public depth: number, public rng: () => number, public tower = 1) {}
 
   isFloor(x: number, y: number) {
     return this.cells.get(point(x, y))?.kind === "floor";
@@ -183,7 +183,7 @@ export class Furnisher {
     const best = this.ringSpot(room);
     if (!best) return; // falls back to a plain row placement
     this.put(room, ...best.c, rewardTile(node.rewards.shift()!, this.rng), "reward");
-    for (const g of best.guards) this.put(room, ...g, enemyTile(node.ringGuard, this.depth, this.rng), "ring");
+    for (const g of best.guards) this.put(room, ...g, enemyTile(node.ringGuard, this.depth, this.rng, undefined, this.tower), "ring");
   }
 
   /** The best centrepiece for a ring: deep in the room, on its mirror axis. */
@@ -214,7 +214,7 @@ export class Furnisher {
     if (!best) return null;
     if (!this.wallUp(room, best.sides.filter(([sx, sy]) => !this.isWall(sx, sy)))) return null;
     this.put(room, ...best.n, rewardTile(reward, this.rng), "reward");
-    this.put(room, ...best.f, enemyTile(guard, this.depth, this.rng), "guard");
+    this.put(room, ...best.f, enemyTile(guard, this.depth, this.rng, undefined, this.tower), "guard");
     return best.n;
   }
 
@@ -314,7 +314,7 @@ export class Furnisher {
     this.reserveLanes(room);
     if (node.stairsGuard && room.exits.length) {
       const s = room.exits[room.exits.length - 1];
-      const guard = node.stairsGuard === "door" ? gateTile({ kind: "door", color: "yellow" }, this.depth, this.rng) : enemyTile(node.stairsGuard, this.depth, this.rng);
+      const guard = node.stairsGuard === "door" ? gateTile({ kind: "door", color: "yellow" }, this.depth, this.rng) : enemyTile(node.stairsGuard, this.depth, this.rng, undefined, this.tower);
       this.put(room, ...s, guard, "stairsGuard");
     }
     this.ring(room);

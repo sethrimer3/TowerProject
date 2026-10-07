@@ -46,7 +46,8 @@ export function tierTile(tile: Tile, tier: number): Tile {
   if (tile.kind === "attack" || tile.kind === "defense") return { ...tile, amount: tierShard(tier) };
   if (tile.kind !== "enemy" || !tile.enemy) return tile;
   const f = tierStats(tier), e: Enemy = tile.enemy;
-  return { ...tile, enemy: { ...e, hp: e.hp * f, attack: e.attack * f, defense: e.defense * f } };
+  // Stats keep their fractions, snapped like every other (exact.ts).
+  return { ...tile, enemy: { ...e, hp: snap(e.hp * f), attack: snap(e.attack * f), defense: snap(e.defense * f) } };
 }
 
 /** Every tile of `cells` as it stands in `tier` (the same map in tier 1). */

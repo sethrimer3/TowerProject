@@ -9,8 +9,8 @@ import { addItem } from "../src/equipment/inventory.ts";
 import { Game } from "../src/state.ts";
 import { ENTRANCE_Y } from "../src/outside.ts";
 import { predict } from "../src/combat.ts";
-import { delveDefenseGrowth, getTowerGateEnemy } from "../src/scaling.ts";
-import { delveEnemyBase } from "../src/delve/labyrinth.ts";
+import { getTowerGateEnemy } from "../src/scaling.ts";
+import { enemyStats } from "../src/enemy-curves.ts";
 
 test("a new character starts at 12 ATK, 0 DEF, 100 HP, no shroud, no Regen, no keys and no undo", () => {
   assert.deepEqual(loadout(defaults()), {
@@ -131,10 +131,7 @@ test("evenly spread training alone still beats both modes' normal enemies at flo
     const l = loadout(s);
     return { x: 0, y: 0, hp: l.maxHp, maxHp: l.maxHp, attack: l.attack, defense: l.defense, keys: l.keys };
   };
-  const delve = (floor: number) => {
-    const b = delveEnemyBase(floor * 10);
-    return { name: "Cinder slime", tier: 1, strength: "normal" as const, hp: Math.round(b.hp), attack: Math.round(b.attack), defense: Math.round(b.defense * delveDefenseGrowth(floor * 10)) };
-  };
+  const delve = (floor: number) => ({ name: "Cinder slime", tier: 1, strength: "normal" as const, ...enemyStats("delve", 1, floor * 10, "normal", "balanced") });
   const wins = (level: number, floor: number) => [getTowerGateEnemy(floor - 1, "normal", "balanced"), delve(floor - 1)].map((e) => predict(hero(level), e).survivable);
   assert.deepEqual(wins(7, 10), [true, true]);
   assert.deepEqual(wins(28, 50), [true, true]);

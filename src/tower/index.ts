@@ -60,7 +60,7 @@ function insideStairs([x, y]: XY): XY {
 /** Smallest possible floor: start hall → stairs. Always embeddable. It
  * keeps the first floors' rules: floor 1's stairs stand open, and floors 2
  * to 5 have a yellow door before them and its key in the start hall. */
-function minimalGraph(depth: number, rng: () => number): StrategicGraph {
+function minimalGraph(depth: number, rng: () => number, tier: number): StrategicGraph {
   const b = new GraphBuilder(depth, rng);
   const keyed = keyedFloor(depth);
   b.add({ purpose: "start", patternId: "main", parent: null, gate: { kind: "open" }, route: "main", footprint: "hall",
@@ -68,11 +68,11 @@ function minimalGraph(depth: number, rng: () => number): StrategicGraph {
   b.add({ purpose: "stairs", patternId: "main", parent: 0, route: "main", footprint: "pocket",
     gate: openFirstFloor(depth) || keyed ? { kind: "open" } : { kind: "enemy", strength: "normal" },
     ...(keyed ? { stairsGuard: "door" as const } : {}) });
-  return { archetype: "mixed", depth, nodes: b.nodes, shortcuts: [], notes: ["fallback minimal floor"] };
+  return { archetype: "mixed", depth, ...(tier > 1 ? { tower: tier } : {}), nodes: b.nodes, shortcuts: [], notes: ["fallback minimal floor"] };
 }
 
 /** Floor `room` of a run seeded `seed`, in tower `tier`, which decides
- * only the key colours it may use (`keyColorsOn`). */
+ * the key colours it may use (`keyColorsOn`) and its enemy curve. */
 export function generateTowerFloor(seed: number, room: number, tier = 1): TowerFloor {
   const colors = keyColorsOn(room, tier);
   const MAX_ATTEMPTS = 12;
@@ -82,7 +82,7 @@ export function generateTowerFloor(seed: number, room: number, tier = 1): TowerF
     // Each failed embedding simplifies the next graph a little.
     const graph = attempt < MAX_ATTEMPTS
       ? generateStrategicGraph(derived, room, Math.floor(attempt / 3), tier)
-      : minimalGraph(room, rng);
+      : minimalGraph(room, rng, tier);
     const embedding = embed(graph, rng);
     if (!embedding) continue;
     const cells = embedding.cells;
@@ -92,7 +92,7 @@ export function generateTowerFloor(seed: number, room: number, tier = 1): TowerF
     // A section's last floor puts its boss on the one tile beside the
     // stairs, in place of any guard there, so it must be beaten to climb.
     if (isBossFloor(room))
-      cells.set(point(...insideStairs(embedding.stairs)), { kind: "enemy", enemy: getTowerGateEnemy(room, "boss", "balanced") });
+      cells.set(point(...insideStairs(embedding.stairs)), { kind: "enemy", enemy: getTowerGateEnemy(room, "boss", "balanced", tier) });
     // The rare unguarded find: only on floor reachable without a fight.
     const blockers = new Set([...cells].filter(([, t]) => t.kind === "enemy").map(([k]) => k));
     for (const k of reachable(cells, point(TOWER_START_X, 0), blockers))

@@ -112,8 +112,12 @@ _Avoid_: stairs gate (the gate is the stairs room's way in)
 One way through a fork: one to three tiles of gates walked in order, sometimes with an item between them (a treasure, or a key that pays for the door after it).
 _Avoid_: corridor, path
 
+**Enemy curve**:
+How strong a normal, balanced enemy is on each floor of a tower or delve: HP and ATK set at a few anchor floors and grown smoothly between them, and DEF a share of ATK. Every enemy is that floor's curve times its strength and profile, so a boss placed on any floor takes that floor's value.
+_Avoid_: power budget, enemy table, zone stats
+
 **Enemy strength**:
-How hard the floor asked an enemy to be: weak, normal, strong or elite. Strong enemies are the zone's own made tougher, elite ones come from the next zone. The board shows it round the enemy (a dark red rim for normal, bright red with one chevron for strong, bright red inside a gold rim with two chevrons for elite) and the inspect title and fight messages name weak, strong and elite (and a boss or Greater Boss) before the enemy's name.
+How hard the floor asked an enemy to be: weak, normal, strong or elite. Each strength multiplies its floor's enemy curve: strong enemies are the floor's own made tougher, elite ones come from the next zone (the Tower's curve ten floors on). The board shows it round the enemy (a dark red rim for normal, bright red with one chevron for strong, bright red inside a gold rim with two chevrons for elite) and the inspect title and fight messages name weak, strong and elite (and a boss or Greater Boss) before the enemy's name.
 _Avoid_: tier, rank, level
 
 ### Fights

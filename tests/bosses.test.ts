@@ -5,7 +5,7 @@ import { TOWER_START_X, WIDTH } from "../src/config.ts";
 import { point, type Tile } from "../src/entities.ts";
 import { region } from "../src/delve/labyrinth.ts";
 import { generateTowerFloor, isBossFloor } from "../src/tower/index.ts";
-import { BOSS_OVER_STRONG, getTowerGateEnemy } from "../src/scaling.ts";
+import { getTowerGateEnemy } from "../src/scaling.ts";
 
 // A boss guards the way up at the end of every ten floors: beside the stairs
 // on each Tower section's last floor, and at each Delve milestone gate.
@@ -30,14 +30,24 @@ test("a boss stands on the only way to each boss floor's stairs, and on no other
     }
 });
 
-test("a Tower boss has twice a strong enemy's HP and ATK", () => {
-  for (const room of [9, 19, 49]) {
+test("a Tower boss has twice a strong enemy's HP and ATK, on any floor", () => {
+  for (const room of [0, 4, 9, 19, 49, 333]) {
     const strong = getTowerGateEnemy(room, "strong", "balanced"), boss = getTowerGateEnemy(room, "boss", "balanced");
-    assert.equal(boss.hp, strong.hp * BOSS_OVER_STRONG);
-    assert.equal(boss.attack, strong.attack * BOSS_OVER_STRONG);
-    assert.equal(boss.defense, strong.defense);
+    // Each is rounded to hundredths on its own.
+    assert.ok(Math.abs(boss.hp - strong.hp * 2) <= 0.02 && Math.abs(boss.attack - strong.attack * 2) <= 0.02);
+    assert.ok(boss.defense > strong.defense);
     assert.equal(boss.name, strong.name);
   }
+});
+
+test("tenth-floor bosses below floor 50 stand about where they stood before the enemy curves", () => {
+  // Floors 10 to 40's bosses as the old zone rosters made them: HP, ATK, DEF.
+  const before = [[80, 30, 3], [120, 46, 4], [180, 70, 7], [280, 106, 11]];
+  before.forEach(([hp, attack, defense], i) => {
+    const boss = getTowerGateEnemy(i * 10 + 9, "boss", "balanced");
+    assert.ok(boss.hp <= hp * 1.02 && boss.attack <= attack * 1.02 && boss.defense <= defense * 1.07, `floor ${i * 10 + 10}: ${JSON.stringify(boss)}`);
+    assert.ok(boss.hp >= hp * 0.95 && boss.attack >= attack * 0.9, `floor ${i * 10 + 10}: ${JSON.stringify(boss)}`);
+  });
 });
 
 test("each Delve milestone gate is held by a boss the way up must pass", () => {

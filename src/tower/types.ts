@@ -128,6 +128,8 @@ export type Archetype =
 export type StrategicGraph = {
   archetype: Archetype;
   depth: number;
+  /** The numbered tower whose enemy curve furnishes it; absent for the first. */
+  tower?: number;
   nodes: StrategicNode[];
   shortcuts: ShortcutRequest[];
   /** Notes from the resource planner, e.g. "blue door left without key". */

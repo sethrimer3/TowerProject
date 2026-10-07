@@ -1,10 +1,10 @@
 import { point, type Point, type Tile } from '../entities.ts';
 import type { Fork, Gate, LaneStep, Strength } from '../tower/types.ts';
-import { bossFactor, delveDefenseGrowth, strengthOnFloor, DELVE_ENEMY_NAMES, ENEMY_STAT_SCALE, enemyTier, type TowerEnemyProfile } from '../scaling.ts';
+import { strengthOnFloor, DELVE_ENEMY_NAMES, enemyTier, type TowerEnemyProfile } from '../scaling.ts';
+import { enemyStats } from '../enemy-curves.ts';
 import { FORK_TUNING, forkDepth, forksWorth, stepValue } from '../tower/forks.ts';
 import { choosePattern, FALSE_ASCENTS, type Pattern } from './patterns.ts';
 import { tileRandom } from '../random.ts';
-import { intPow } from '../exact.ts';
 import { heartDoorsOn, keyColorsOn, onlyOpenKeys, withoutHeart } from '../key-schedule.ts';
 
 /** Delve is one continuous lattice of chambers (COLUMNS wide, endless rows).
@@ -118,12 +118,12 @@ const cache = new Map<string, Region>();
 
 /** Builds (or recalls) one area of the labyrinth. The stages run in a fixed
  * order and share one random stream, so reordering them or their draws
- * changes every map after it. Tier `tier` decides only which key colours
- * its pockets, forks and junctions may use, which can change their costs
- * and forks, so each tier past the first shares one build. */
+ * changes every map after it. Tier `tier` decides which key colours its
+ * pockets, forks and junctions may use, which can change their costs and
+ * forks, and the enemy curve its enemies come from. */
 export function region(seed: number, area: number, tier = 1): Region {
   area = Math.max(0, Math.floor(area));
-  const key = `${seed}:${area}:${tier > 1}`;
+  const key = `${seed}:${area}:${tier}`;
   const old = cache.get(key); if (old) return old;
   const lab = lattice(seed, area, tier);
   growTree(lab);
@@ -375,47 +375,8 @@ function chamber({ rng, seed }: Lab, n: Node) {
 const widens = (n: Node, rng: () => number) => !n.pattern && n.col < COLS - 1 && rng() < DELVE_TUNING.wideChamberChance;
 
 
-/** A normal, balanced Delve enemy before `ENEMY_STAT_SCALE` on the first
- * equivalent floor: the Tower's first balanced enemy (the Thief). Every stat
- * then compounds by `floorGrowth` for each equivalent floor (ten depth), ×1.5
- * every ten floors like the Tower's zones (×58 every hundred, where the
- * Tower's cycle is ×60). */
-export const DELVE_ENEMY_BASE = { hp: 16, attack: 6, defense: 2, floorGrowth: 1.0414 };
-
-/** A normal, balanced Delve enemy's stats at `depth`, unrounded, before its
- * strength and profile. */
-export function delveEnemyBase(depth: number) {
-  const b = DELVE_ENEMY_BASE, growth = intPow(b.floorGrowth, Math.floor(Math.max(0, depth) / 10));
-  return {
-    hp: b.hp * ENEMY_STAT_SCALE.hp * growth,
-    attack: b.attack * ENEMY_STAT_SCALE.attack * growth,
-    defense: b.defense * ENEMY_STAT_SCALE.defense * growth,
-  };
-}
-
-/** How each gate strength scales a Delve enemy: HP and attack multiply, and
- * defense rises by a flat bonus (before `delveDefenseGrowth`). */
-export const DELVE_ENEMY_STRENGTH: Record<Strength, { scale: number; defense: number }> = {
-  weak: { scale: 0.75, defense: 0 },
-  normal: { scale: 1, defense: 0 },
-  strong: { scale: 1.5, defense: 2 },
-  elite: { scale: 3, defense: 4 },
-  // A strong enemy, then `bossFactor` doubles its HP and ATK.
-  boss: { scale: 1.5, defense: 2 },
-  // The Delve places none (it appears only on Tower floors); as a boss.
-  greaterBoss: { scale: 1.5, defense: 2 },
-};
-/** How a named profile reshapes one: attack-heavy enemies hit harder but
- * fold sooner (hard on a low-DEF build), defense-heavy ones are armoured
- * but weak (hard on a low-ATK build). */
-export const DELVE_ENEMY_PROFILE: Record<TowerEnemyProfile, { hp: number; attack: number; defense: number }> = {
-  attackHeavy: { hp: 0.85, attack: 1.4, defense: 0 },
-  balanced: { hp: 1, attack: 1, defense: 0 },
-  defenseHeavy: { hp: 1.1, attack: 0.7, defense: 2 },
-};
-
 /** The tile standing in for one pattern cost or fork lane step at cell `n`. */
-function gateTile({ rng }: Lab, g: LaneStep, n: Node): Tile {
+function gateTile({ rng, tier }: Lab, g: LaneStep, n: Node): Tile {
   if (g.kind === 'reward') return { ...g.reward };
   if (g.kind === 'door') return { kind: 'door', color: g.color };
   if (g.kind === 'steel') return { kind: 'door', door: { type: 'keys', keys: ['yellow', 'blue', 'red'], mode: 'any' } };
@@ -423,16 +384,12 @@ function gateTile({ rng }: Lab, g: LaneStep, n: Node): Tile {
   if (g.kind !== 'enemy') return { kind: 'floor' };
   // Strong and elite enemies wait for their equivalent floors, as in the Tower.
   const strength = strengthOnFloor(g.strength, Math.floor(n.depth / 10));
-  const { scale, defense: tough } = DELVE_ENEMY_STRENGTH[strength], shape = DELVE_ENEMY_PROFILE[g.profile ?? 'balanced'];
   // Populations mix around transitions: influence is fractional there.
   const population = Math.max(0, Math.round(n.influence + (rng() - 0.5) * 0.8));
-  const base = delveEnemyBase(n.depth), boss = bossFactor(strength);
   return { kind: 'enemy', enemy: {
     name: DELVE_ENEMY_NAMES[population % DELVE_ENEMY_NAMES.length], tier: enemyTier(strength), strength,
-    hp: Math.round(base.hp * scale * shape.hp) * boss,
-    attack: Math.round(base.attack * scale * shape.attack) * boss,
-    // The whole DEF (base, strength and profile) compounds with depth.
-    defense: Math.round((base.defense + tough + shape.defense) * delveDefenseGrowth(n.depth)),
+    // The delve's own enemy curve, read at this depth.
+    ...enemyStats('delve', tier, n.depth, strength, g.profile ?? 'balanced'),
   } };
 }
 

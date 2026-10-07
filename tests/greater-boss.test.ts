@@ -4,7 +4,7 @@ import { defaults, decode } from "../src/save.ts";
 import { Game } from "../src/state.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import { greaterBossSpot } from "../src/tower/greater-boss.ts";
-import { BOSS_OVER_STRONG, GREATER_BOSS_OVER_BOSS, enemyTitle, getTowerGateEnemy } from "../src/scaling.ts";
+import { GREATER_BOSS_OVER_BOSS, enemyTitle, getTowerGateEnemy } from "../src/scaling.ts";
 import { ENEMY_GOLD, SILVER_MULTIPLIER, XP_MULTIPLIER } from "../src/config.ts";
 import type { Tile } from "../src/entities.ts";
 
@@ -37,7 +37,7 @@ test("a Greater Boss has twice a boss's HP, ATK and DEF, and twice its rewards",
     assert.equal(greater.defense, boss.defense * GREATER_BOSS_OVER_BOSS);
     assert.equal(enemyTitle(greater), `Greater Boss ${boss.name}`);
   }
-  assert.equal(BOSS_OVER_STRONG * GREATER_BOSS_OVER_BOSS, 4);
+  assert.equal(GREATER_BOSS_OVER_BOSS, 2);
   assert.equal(ENEMY_GOLD.greaterBoss, 2 * ENEMY_GOLD.boss);
   assert.equal(SILVER_MULTIPLIER.greaterBoss, 2 * SILVER_MULTIPLIER.boss);
   assert.equal(XP_MULTIPLIER.greaterBoss, 2 * XP_MULTIPLIER.boss);

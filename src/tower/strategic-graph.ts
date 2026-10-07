@@ -193,7 +193,7 @@ function addChain(b: GraphBuilder, pattern: TowerPattern, host: number) {
 }
 
 /** The floor's plan; `tier` decides which key colours it may use
- * (`keyColorsOn`). */
+ * (`keyColorsOn`) and the enemy curve its enemies come from. */
 export function generateStrategicGraph(seed: number, depth: number, budgetCut = 0, tier = 1): StrategicGraph {
   const rng = random(seed);
   const b = new GraphBuilder(depth, rng, keyColorsOn(depth, tier), bypassesRareKeys(tier));
@@ -207,7 +207,7 @@ export function generateStrategicGraph(seed: number, depth: number, budgetCut = 
   addBranches(b, archetype, mainIds, budget);
   const shortcuts = planShortcuts(b, profile, mainIds, stairs);
   planForks(b, archetype);
-  const graph: StrategicGraph = { archetype, depth, nodes: b.nodes, shortcuts, notes: [] };
+  const graph: StrategicGraph = { archetype, depth, ...(tier > 1 ? { tower: tier } : {}), nodes: b.nodes, shortcuts, notes: [] };
   planResources(graph, b, rng);
   return graph;
 }

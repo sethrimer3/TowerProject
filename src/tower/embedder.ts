@@ -381,7 +381,7 @@ class FloorBuilder {
 
   private cut(c: Candidate, gate: Gate) {
     this.doorTiles.push([c.x, c.y]);
-    this.cells.set(point(c.x, c.y), gateTile(gate, this.graph.depth, this.rng));
+    this.cells.set(point(c.x, c.y), gateTile(gate, this.graph.depth, this.rng, this.graph.tower));
   }
 
   /** Whether a doorway already lies within `d` steps of candidate `c`. */
@@ -464,7 +464,7 @@ class FloorBuilder {
     const tiles = Array.from({ length: depth }, (_, k) => step(from, u, k));
     tiles.forEach((p, k) => {
       const laneStep = fork.lanes[lane][k];
-      this.cells.set(point(...p), laneStep ? laneTile(laneStep, this.graph.depth, this.rng) : { kind: "floor" });
+      this.cells.set(point(...p), laneStep ? laneTile(laneStep, this.graph.depth, this.rng, this.graph.tower) : { kind: "floor" });
       this.doorTiles.push(p);
       this.doorways.push({ parent: node.parent!, child: node.id, x: p[0], y: p[1], shortcut: false, lane });
     });
@@ -618,7 +618,7 @@ class FloorBuilder {
 
   /** Furnish reward rooms before hubs so hub pillars never crowd a doorway. */
   private furnish() {
-    const f = new Furnisher(this.cells, this.graph.depth, this.rng);
+    const f = new Furnisher(this.cells, this.graph.depth, this.rng, this.graph.tower);
     const order = [...this.graph.nodes].sort((a, b) => (a.route === "main" ? 1 : 0) - (b.route === "main" ? 1 : 0));
     for (const node of order) {
       const { entry, inward } = this.entryOf.get(node.id)!;

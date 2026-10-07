@@ -5,8 +5,8 @@ import { defaults, decode } from "../src/save.ts";
 import { RoomWorld, generateTowerRoom } from "../src/tower/room-world.ts";
 import { predict } from "../src/combat.ts";
 import { isDeadlocked } from "../src/analysis.ts";
-import { delveDefenseGrowth, getTowerEnemy, getTowerGateEnemy, TOWER_CYCLE_MULTIPLIER, TOWER_ZONE_ENEMIES, towerDefenseGrowth, towerZoneIndex } from "../src/scaling.ts";
-import { intPow } from "../src/exact.ts";
+import { enemyTier, getTowerGateEnemy, TOWER_ZONE_ENEMIES, towerZoneIndex } from "../src/scaling.ts";
+import { enemyStats } from "../src/enemy-curves.ts";
 import { TOWER_HEIGHT, TOWER_START_X, TOWER_WIDTH } from "../src/config.ts";
 import { point, type Tile } from "../src/entities.ts";
 
@@ -250,75 +250,40 @@ test("each ten-room Tower zone has one fixed enemy per combat profile", () => {
   for (let room = 0; room < 100; room++) assert.equal(towerZoneIndex(room), Math.floor(room / 10));
 });
 
-test("an enemy type has identical stats everywhere within its zone", () => {
+test("an enemy type keeps its name through its zone and grows floor by floor", () => {
   for (let zone = 0; zone < 10; zone++) {
     for (const profile of ["attackHeavy", "balanced", "defenseHeavy"] as const) {
-      const first = getTowerEnemy(zone * 10, () => 0, profile);
-      const last = getTowerEnemy(zone * 10 + 9, () => 0.99, profile);
-      assert.deepEqual(first, last);
+      const first = getTowerGateEnemy(zone * 10, "normal", profile), last = getTowerGateEnemy(zone * 10 + 9, "normal", profile);
+      assert.equal(first.name, last.name);
+      assert.equal(first.name, TOWER_ZONE_ENEMIES[zone].find((e) => e.profile === profile)!.name);
+      for (const stat of ["hp", "attack", "defense"] as const) assert.ok(last[stat] > first[stat], `zone ${zone + 1} ${profile} ${stat}`);
     }
   }
+  // The roster repeats every hundred floors, under the curve's own stats.
+  assert.equal(getTowerGateEnemy(105, "normal", "balanced").name, getTowerGateEnemy(5, "normal", "balanced").name);
 });
 
-test("zone stats rise by roughly fifty percent and retain distinct profiles", () => {
-  for (let zone = 0; zone < 10; zone++) {
-    const attack = getTowerEnemy(zone * 10, () => 0, "attackHeavy");
-    const balanced = getTowerEnemy(zone * 10, () => 0, "balanced");
-    const defense = getTowerEnemy(zone * 10, () => 0, "defenseHeavy");
+test("profiles reshape the floor's balanced enemy", () => {
+  for (const room of [0, 9, 55, 99, 250]) {
+    const attack = getTowerGateEnemy(room, "normal", "attackHeavy");
+    const balanced = getTowerGateEnemy(room, "normal", "balanced");
+    const defense = getTowerGateEnemy(room, "normal", "defenseHeavy");
     assert.ok(attack.attack > balanced.attack && attack.defense < balanced.defense);
     assert.ok(defense.defense > balanced.defense && defense.attack < balanced.attack);
-    if (zone > 0) {
-      const previous = getTowerEnemy((zone - 1) * 10, () => 0, "balanced");
-      for (const stat of ["hp", "attack", "defense"] as const)
-        assert.ok(balanced[stat] / previous[stat] >= 1.35 && balanced[stat] / previous[stat] <= 1.7);
-    }
   }
 });
 
-test("rooms after 100 reuse the roster with a whole-number cycle multiplier", () => {
-  for (const room of [0, 9, 27, 63, 99]) {
-    const base = getTowerEnemy(room, () => 0, "balanced");
-    const repeated = getTowerEnemy(room + 100, () => 0.99, "balanced");
-    assert.equal(repeated.name, base.name);
-    assert.equal(repeated.hp, base.hp * TOWER_CYCLE_MULTIPLIER);
-    assert.equal(repeated.attack, base.attack * TOWER_CYCLE_MULTIPLIER);
-    assert.equal(repeated.defense, base.defense * TOWER_CYCLE_MULTIPLIER);
-  }
-});
-
-test("strong gate enemies are hardened locals, weak ones softer, and elites come from the next zone", () => {
+test("Tower gate enemies take their stats from the Tower's enemy curve; elites come from the next zone", () => {
   for (const room of [0, 14, 95, 250]) {
-    const growth = towerDefenseGrowth(room);
     for (const profile of ["attackHeavy", "balanced", "defenseHeavy"] as const) {
-      const local = getTowerEnemy(room, () => 0, profile), def = Math.round(local.defense * growth);
-      assert.deepEqual(getTowerGateEnemy(room, "normal", profile), { ...local, defense: def, strength: "normal" });
-      assert.deepEqual(getTowerGateEnemy(room, "weak", profile),
-        { ...local, hp: Math.round(local.hp * 0.75), attack: Math.round(local.attack * 0.75), defense: def, strength: "weak" });
-      const strong = getTowerGateEnemy(room, "strong", profile);
-      assert.equal(strong.name, local.name);
-      assert.equal(strong.tier, 2);
-      assert.equal(strong.strength, "strong");
-      for (const stat of ["hp", "attack"] as const) assert.equal(strong[stat], Math.round(local[stat] * 1.25));
-      assert.equal(strong.defense, Math.round(local.defense * 1.25 * growth));
-      const elite = getTowerGateEnemy(room, "elite", profile), visitor = getTowerEnemy(room + 10, () => 0, profile);
-      assert.deepEqual(elite, { ...visitor, defense: Math.round(visitor.defense * growth), tier: 3, strength: "elite" });
+      for (const strength of ["weak", "normal", "strong", "boss"] as const) {
+        const e = getTowerGateEnemy(room, strength, profile);
+        assert.deepEqual(e, { name: getTowerGateEnemy(room, "normal", profile).name, ...enemyStats("tower", 1, room, strength, profile), tier: enemyTier(strength), strength });
+      }
+      const elite = getTowerGateEnemy(room, "elite", profile), visitor = getTowerGateEnemy(room + 10, "normal", profile);
+      assert.deepEqual(elite, { ...visitor, tier: 3, strength: "elite" });
     }
   }
-});
-
-test("enemy DEF compounds 1% every 5 Tower floors and every 20 Delve depth", () => {
-  assert.deepEqual([0, 4, 5, 9, 10, 99].map(towerDefenseGrowth), [1, 1, 1.01, 1.01, 1.01 * 1.01, intPow(1.01, 19)]);
-  assert.deepEqual([0, 19, 20, 99, 1000].map(delveDefenseGrowth), [1, 1, 1.01, intPow(1.01, 4), intPow(1.01, 50)]);
-  // Floor 100's normal defense-heavy enemy: 135 DEF before growth.
-  assert.equal(getTowerGateEnemy(99, "normal", "defenseHeavy").defense, Math.round(135 * intPow(1.01, 19)));
-});
-
-test("Tower enemy scaling is deterministic for a given seed/rng sequence", () => {
-  let calls = 0;
-  const rng = () => (calls++, 0.5);
-  const a = getTowerEnemy(10, (() => { let c = 0; return () => (c++, 0.5); })());
-  const b = getTowerEnemy(10, (() => { let c = 0; return () => (c++, 0.5); })());
-  assert.deepEqual(a, b);
 });
 
 // ---------- Death / finalization ----------

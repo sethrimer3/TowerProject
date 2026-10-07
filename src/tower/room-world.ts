@@ -23,7 +23,8 @@ import { tierCells } from "../tiers.ts";
 // v16 lays a potion in about 35% of the doorways on the way to the stairs of
 // the first tower's first ten floors, in place of enemies.
 // v17 places no Heart Door below floor 101 in the first tower.
-export const TOWER_LAYOUT_VERSION = 17;
+// v18 takes every enemy's stats from the tower's enemy curve (enemy-curves.ts).
+export const TOWER_LAYOUT_VERSION = 18;
 
 /** A self-contained 17x17 Tower floor. Generation is strategy-first (see
  * src/tower/index.ts): an abstract graph of gates, keys and rewards is
@@ -31,7 +32,8 @@ export const TOWER_LAYOUT_VERSION = 17;
  * forks of parallel lanes.
  * Geometry is always valid; the key/HP economy is deliberately allowed to
  * be harsh or occasionally unwinnable. Deterministic for (seed, room,
- * tier); the tier changes only which key colours appear. */
+ * tier); the tier changes which key colours appear and the enemy curve its
+ * enemies come from, never where anything stands. */
 export function generateTowerRoom(
   seed: number,
   room: number,
