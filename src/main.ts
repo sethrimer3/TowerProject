@@ -383,6 +383,7 @@ async function refreshTournament() {
       game.save.settings.reduceMotion,
     );
   update();
+  if (tab === "tournament") tournamentPage.rerender();
 }
 const loop = new FrameLoop({
   game,

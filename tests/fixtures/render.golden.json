@@ -67,5 +67,10 @@
   "towerDamageLabels.moving": "95a1caca2a906454c073ee4f",
   "towerDamageLabels.after": "c48cfc64927c3a653cfa00e4",
   "towerDamageLabels.ripples": "f98102f15d1965f53c811e6e",
-  "towerDamageLabels.later": "010d80d039d51cdc2ff8d81c"
+  "towerDamageLabels.later": "010d80d039d51cdc2ff8d81c",
+  "forestHall.settled": "ed8db351c31ab069fa0edbfa",
+  "forestHall.moving": "090e02828ef2a16d98e038eb",
+  "forestHall.after": "a668e26d3c380a29e07a8c95",
+  "forestHall.ripples": "a9a7ff520857e377f35b0cc4",
+  "forestHall.later": "2814f245ae412b4592386b2f"
 }

@@ -98,6 +98,15 @@ const scope: Record<string, (p: string[]) => boolean> = {
   v1: (p) => !nested(p),
   outside: under("tower.run"),
   preSkillTrees: under("upgrades", "delve.run", "delve.best", "delve.courage"),
+  tournament: under("tournament", "delve.run.tournament"),
+};
+/** The Tournament's save, with a tournament run inside the Delve (a v3 save
+ * besides, so its other fields decode as v3's do). */
+const tournamentRun = { id: "2026-10-07", league: "gold", entry: "2026-10-07#3", seeds: { layout: 11, game: 22, equipment: 4294967295 }, drawn: { game: 5, equipment: 0 }, back: { mode: "tower", tier: 2 } };
+const tournamentSave = {
+  tickets: 2, league: "gold", granted: "2026-10-07", adTicket: "2026-10-07", gemTickets: { id: "2026-10-07", bought: 3 },
+  entries: { "2026-10-03": { best: 41, place: 12, entrants: 980, pending: null, entry: "2026-10-03#1" }, "2026-10-07": { best: 9, place: 0, entrants: 0, pending: 9, entry: "2026-10-07#3" } },
+  claimed: ["2026-09-30", "2026-10-03"],
 };
 const bases: Record<string, () => any> = {
   v3,
@@ -108,6 +117,10 @@ const bases: Record<string, () => any> = {
     const s = v3();
     delete (s.upgrades as any).delve;
     return { ...s, upgrades: { ...s.upgrades, yellow: 1 } };
+  },
+  tournament: () => {
+    const s = v3();
+    return { ...s, tournament: structuredClone(tournamentSave), delve: { ...s.delve, run: delveRun({ tier: 5, tournament: structuredClone(tournamentRun) }) } };
   },
 };
 const HOSTILE: [string, unknown][] = [
@@ -161,6 +174,15 @@ const EDGES: [string, unknown[]][] = [
   ["outside:tower.run.player.y", [11, 12]],
   ["outside:tower.run.floor", [1]],
   ["outside:tower.run.height", [1]],
+  ["tournament:tournament.league", ["champion", "bronze"]],
+  ["tournament:tournament.granted", ["2026-1-07", "2026-10-07T00"]],
+  ["tournament:tournament.entries.2026-10-07.pending", [0, 2.5]],
+  ["tournament:tournament.entries.not-a-date", [{ best: 1 }]],
+  ["tournament:tournament.claimed", [["2026-10-03", "2026-10-03", "x"], Array.from({ length: 10 }, (_, i) => `2026-09-${String(i + 10)}`)]],
+  ["tournament:delve.run.tournament.seeds.layout", [4294967296, 0]],
+  ["tournament:delve.run.tournament.back.tier", [0, 9]],
+  ["tournament:delve.run.tournament.back.mode", ["defend"]],
+  ["tournament:delve.run.tournament.id", ["2026-10-07x"]],
 ];
 
 function paths(value: any, prefix: string[] = []): string[][] {
@@ -238,6 +260,13 @@ test("decode keeps a valid v3 save's progress and clamps settings", () => {
   assert.deepEqual(d.equipment.equipped, { tower: { weapon: "e1" }, delve: { weapon: "e1", ring: "e2" } });
   assert.deepEqual(d.equipment.items.map((i) => [i.id, i.level, !!i.locked]), [["e1", 7, false], ["e2", 1, true], ["e3", 25, false]]);
   assert.equal(d.equipment.pity.ring, 41);
+});
+
+test("decode keeps the Tournament's save and a tournament run inside a cave not yet opened", () => {
+  const d = decode(JSON.stringify(bases.tournament()));
+  assert.deepEqual(d.tournament, tournamentSave);
+  assert.deepEqual((d.delve.run as any)?.tournament, tournamentRun);
+  assert.equal(d.delve.run?.tier, 5);
 });
 
 test("decode migrates v1 saves into the Delve slice and legacy settings", () => {

@@ -1,6 +1,6 @@
 # The Tournament (plan)
 
-Status: **steps 1 to 4 of the build order built** (the rules, save and stub server, the tournament run, the screens, and the Ending and Results phases with *Claim rewards* and expiry; `src/tournament/`, `ui/tournament-page.ts`); left are Tickets in the purse and the goldens. This is the design and the build order for the Tournament, a twice-weekly global competition in the Delve.
+Status: **the build order is built** (the rules, save and stub server, the tournament run, the screens, the Ending and Results phases with *Claim rewards* and expiry, and the goldens; `src/tournament/`, `ui/tournament-page.ts`); left are Tickets in the purse and the Future items below. This is the design and the build order for the Tournament, a twice-weekly global competition in the Delve.
 
 ## Summary
 
@@ -216,7 +216,7 @@ The confirmed server time is the Shop's (`save.shop`'s clock), shared, so there'
 2. **The run** (built): begin a tournament run (league cave, server seeds and the run's own streams, ×1.1 enemies, the flag), its score, submission on `finalizeRun`, the end dialog's block.
 3. **Screens** (built, but for Tickets in the purse): the forest hall, the HUD button and its phases, the Tournament page, All prizes, the free Ticket's celebration, the ad and Gem Ticket offers, the run-menu button.
 4. **Ending and claims** (built): the Ending and Results phases (depth counted until the grace ends, the results asked for each minute after it, the final place and league move), *Claim rewards* (`TournamentClient.claim`), expiry, and the next tournament opening over an old report; `tests/tournament-ending.test.ts`.
-5. **Goldens:** `ui.golden.json` (the Goals page's floor 70 text, plus new UI-suite steps for the page and button), `save-decode` (the new save field), and a forest-with-hall scene added to `LATER_BOARD_SCENES` (`render-calls`, `render.golden.json`). Tournament runs are new, so no gameplay golden changes; one golden of a seeded tournament run (`step-trace` style) pins its seeds and stats.
+5. **Goldens** (built): `ui.golden.json` (the Goals page's floor 70 text, and the UI suite's `tournament` fixture: the button, the page after a tournament's Results, All prizes, then the clock moved on to a new tournament's free Ticket, its Open page, its Results and the claim), `save-decode` (a `tournament` base: the save and a tournament run inside, with its hostile values and edges), a forest with the Blacksmith and the Hall in `LATER_BOARD_SCENES` (`forestHall`: `render-calls`, `render.golden.json`), and `tests/tournament-trace.test.ts` (`tournament-trace.golden.json`: seeded Copper, Silver and Champion runs played by the hand from the stand-in's seeds, pinning the seeds, the ×1.1 enemies and the run's own streams, and two players on different game streams playing the same run).
 
 ## Future (TODO)
 

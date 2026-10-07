@@ -188,6 +188,17 @@ const LATER_BOARD_SCENES: Record<string, () => BoardScene> = {
     });
     return { g };
   },
+  /** The Delve's forest once Equipment and the Tournament are open: the
+   * Blacksmith left of the path, the Tournament Hall right of it. */
+  forestHall: () => {
+    const g = game("delve", { brightness: 70 });
+    g.save.goals.claimed = { 1: [60, 70] };
+    g.save.equipment.unlocked = true;
+    g.newRun({ outside: true });
+    const world = g.world as { blacksmith?: boolean; hall?: boolean };
+    if (!world.blacksmith || !world.hall) throw Error("the forest has no Blacksmith or Hall");
+    return { g };
+  },
 };
 
 /** One board scene on `canvas` (408×408 CSS pixels), fully synchronous so

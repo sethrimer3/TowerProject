@@ -179,6 +179,19 @@ try {
           nextId: 8,
         });
       }),
+      // In the forest with the Tournament open (Tower I's floor 70 claimed):
+      // Saturday's tournament entered and its Results over, and a score kept
+      // for Wednesday's. Built last, so the fixtures above keep their seeds.
+      tournament: forest((s) => {
+        rich(s);
+        s.goals.claimed = { 1: [70] };
+        Object.assign(s.tutorials, { upgrades: true });
+        s.tournament.tickets = 1;
+        s.tournament.entries = {
+          "2026-10-03": { best: 52, place: 0, entrants: 0, pending: null, entry: "2026-10-03#1" },
+          "2026-10-07": { best: 70, place: 0, entrants: 0, pending: null, entry: "2026-10-07#1" },
+        };
+      }),
     };
   });
 
@@ -656,6 +669,32 @@ try {
   await click('[data-eq-pull="10"]');
   await shot("equipment.pulled");
   await click("#eq-ok");
+
+  // The Tournament: on Monday, the button's countdown and the page with
+  // Saturday's final results, expired; All prizes. Then the clock moves on
+  // (last, so no other snapshot sees it): Wednesday's opens, granting its
+  // Ticket with a celebration; its Results come, and the prize is claimed.
+  await load("tournament");
+  await shot("tournament.forest");
+  await click("#tournament-button");
+  await shot("tournament.page");
+  await click("#tournament-all");
+  await shot("tournament.prizes");
+  await click("#prizes-ok");
+  await page.clock.setFixedTime(new Date("2026-10-07T01:00:00Z"));
+  await page.locator(".reward-reveal").waitFor();
+  await shot("tournament.ticket");
+  await click(".reward-reveal");
+  await shot("tournament.open");
+  await page.clock.setFixedTime(new Date("2026-10-08T05:30:00Z"));
+  await page.locator("#tournament-claim").waitFor();
+  await shot("tournament.results");
+  await click("#tournament-claim");
+  await page.locator(".reward-reveal").waitFor();
+  await shot("tournament.claimed");
+  await click(".reward-reveal");
+  await click("#tournament-back");
+  await shot("tournament.forestAfter");
 
   // --- Compare ---
   const hashes = Object.fromEntries(Object.entries(shots).map(([k, html]) => [k, createHash("sha256").update(html).digest("hex").slice(0, 16)]));

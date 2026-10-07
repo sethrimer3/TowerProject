@@ -68,21 +68,27 @@ export class TournamentPage {
     void this.refresh().then(() => this.rerender());
   }
 
-  /** The phase the page was last drawn in. */
-  private shownPhase = "";
+  /** What the page last drew, but for the countdown. */
+  private shown = "";
+  /** What the page shows but for the countdown: the phase, and what the
+   * player holds and knows of the tournament. */
+  private state() {
+    const desk = this.ctx.game.tournament, t = this.ctx.game.save.tournament;
+    return JSON.stringify([desk.phase, desk.tournament.id, desk.claimable, desk.nextTicket, t.tickets, t.league, t.entries[desk.tournament.id] ?? null, t.claimed]);
+  }
   /** Every second while the page shows, and once the server answers: the
-   * countdown, or the whole page once the phase has changed (only then, so
-   * a button is never redrawn under a press). */
+   * countdown, or the whole page once anything else it shows has changed
+   * (only then, so a button is never redrawn under a press). */
   rerender() {
     if (!el("tournament").classList.contains("active")) return;
     const phase = document.getElementById("tournament-phase");
-    if (phase && this.shownPhase === this.ctx.game.tournament.phase) phase.innerHTML = this.phaseText();
+    if (phase && this.shown === this.state()) phase.innerHTML = this.phaseText();
     else this.render();
   }
 
   render() {
     const game = this.ctx.game, league = game.save.tournament.league;
-    this.shownPhase = game.tournament.phase;
+    this.shown = this.state();
     el("tournament").innerHTML =
       `<button class="back" id="tournament-back">← Back</button><div class="page-title"><small>WEDNESDAYS AND SATURDAYS · GMT</small><h2>Tournament</h2></div>` +
       `<div class="tournament-league">${leagueTrophy(league)}<div><b>${LEAGUE_INFO[league].name} League</b><small>${caveLabel(league)} · enemies ×1.1</small></div></div>` +
