@@ -2,7 +2,7 @@ import { entrance, floorFor } from "./delve/labyrinth.ts";
 import { chooseStep } from "./automation.ts";
 import { CARDS, KEY_TO_HP_PERCENT, SIPHONS, TRADER_YELLOW_KEYS, cardText, isSiphon, planHand, planTarget, type CardId, type CardPlan, type CardRules, type SiphonCard } from "./cards.ts";
 import { BADGE_IDS, BADGES, MAX_COPIES, badgeValue, runBadges, type BadgeId, type RunBadge } from "./badges.ts";
-import { BOOST_FOREVER, permanentBoost } from "./shop/entitlements.ts";
+import { adsOff, BOOST_FOREVER, permanentBoost } from "./shop/entitlements.ts";
 import { noteGoldBoost } from "./gold-boost.ts";
 import { offer, type OfferId } from "./shop/offers.ts";
 import { purchase, type Refusal } from "./shop/transactions.ts";
@@ -1850,6 +1850,8 @@ export class Game {
     if (typeof t === "string") return t;
     // A Coin Pack's training speed starts from now.
     this.training.repace(pace);
+    // Ad-Disable's ×1.5 Gold is for good: the Gold ad's stored time goes.
+    if (adsOff(this.save)) this.save.goldBoostUntil = 0;
     this.message = o.item?.kind === "entitlement" ? `${t.item}: yours for good` : `+${t.item}`;
     return null;
   }

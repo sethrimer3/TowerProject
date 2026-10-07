@@ -11,7 +11,7 @@ import { keepUndos, loadout } from "./loadout.ts";
 import { BASE_HAND, CARD_IDS, HAND_SLOT_GEMS, IN_PLACE, MAX_HAND_SLOTS, deckCards, handSlots, type CardId } from "./cards.ts";
 import { decodeGemDrop, defaultGemDrop } from "./gems.ts";
 import { decodeArchives, defaultArchives } from "./archives.ts";
-import { BOOST_FOREVER, decodeEntitlements, permanentBoost } from "./shop/entitlements.ts";
+import { adsOff, BOOST_FOREVER, decodeEntitlements, permanentBoost } from "./shop/entitlements.ts";
 import { decodeShop, defaultShop } from "./shop/ledger.ts";
 import { decodeGoals, defaultGoals } from "./goals.ts";
 import { decodeBadges, defaultBadges, validRunBadges } from "./badges.ts";
@@ -391,6 +391,8 @@ export function decode(raw: string | null): Save {
     // The boost runs for good only while a pack that grants it is owned.
     if (permanentBoost(d)) d.trainingBoostUntil = BOOST_FOREVER;
     else if (d.trainingBoostUntil === BOOST_FOREVER) d.trainingBoostUntil = 0;
+    // With Ad-Disable there is no Gold ad, so no time stored by one.
+    if (adsOff(d)) d.goldBoostUntil = 0;
     decodeReached(s, d);
     decodeTiers(s, d);
     migratePreSkillTrees(s.upgrades, d);

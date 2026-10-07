@@ -5,6 +5,7 @@ import { AD_COOLDOWN_MS, AD_GEMS, collectedGem, gemOn, gemSpot, reachFloor, type
 import { MODES } from "../modes.ts";
 import { canClaimGoldBoost, claimGoldBoost, goldBoostLeft, GOLD_BOOST_FACTOR, GOLD_BOOST_MS, noteGoldBoost } from "../gold-boost.ts";
 import { random } from "../random.ts";
+import { adsOff } from "../shop/entitlements.ts";
 import type { GainArt } from "../state.ts";
 import type { DeskHost } from "./desk.ts";
 
@@ -103,16 +104,17 @@ export class GemFinder {
     return goldBoostLeft(this.host.save, this.host.clock());
   }
 
-  /** Whether the Gold ad can add time: its store isn't full. */
+  /** Whether the Gold ad can add time: its store isn't full, and there is
+   * a Gold ad at all (none once Ad-Disable is owned). */
   get goldAdReady() {
-    return canClaimGoldBoost(this.host.save, this.host.clock());
+    return !adsOff(this.host.save) && canClaimGoldBoost(this.host.save, this.host.clock());
   }
 
   /** Stores the Gold ad's time: Gold found ×1.5 for 20 more minutes, up
    * to two hours. No ad plays yet, as with the Gems'. */
   claimGoldAd() {
     const { save, mode, playing } = this.host;
-    if (!claimGoldBoost(save, this.host.clock())) return false;
+    if (!this.goldAdReady || !claimGoldBoost(save, this.host.clock())) return false;
     if (playing) noteGoldBoost(save, save[mode], this.host.clock());
     this.host.message = `Gold ×${GOLD_BOOST_FACTOR} for ${GOLD_BOOST_MS / 60_000} more minutes`;
     return true;

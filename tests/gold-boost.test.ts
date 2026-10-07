@@ -77,6 +77,22 @@ test("a run keeps the Gold it found while boosted, before the boost, for its end
   assert.equal(g.save.tower.runBoostGold, 0, "entering while the boost lasts counts it");
 });
 
+test("Ad-Disable clears the Gold ad's stored time and takes no more", () => {
+  const g = new Game(defaults());
+  let now = 5_000_000;
+  g.clock = () => now;
+  assert.ok(g.gemFinder.claimGoldAd());
+  assert.equal(g.gemFinder.goldBoostLeft, GOLD_BOOST_MS);
+  assert.equal(g.buyOffer("adFree", now, true), null);
+  assert.equal(g.gemFinder.goldBoostLeft, 0, "the countdown is gone");
+  assert.equal(g.gemFinder.goldAdReady, false);
+  assert.equal(g.gemFinder.claimGoldAd(), false, "no Gold ad to claim");
+  const save = defaults();
+  save.entitlements = ["adFree"];
+  save.goldBoostUntil = now + GOLD_BOOST_MS;
+  assert.equal(decode(JSON.stringify(save)).goldBoostUntil, 0, "a save with Ad-Disable keeps none");
+});
+
 test("the Gold boost's end is saved, and a bad value starts with none", () => {
   const save = defaults();
   save.goldBoostUntil = 123_456;
