@@ -1,7 +1,7 @@
 import { askForGems, helpButton, showHelp } from "./dialogs.ts";
 import { play } from "../sound.ts";
 import { permanentBoost, trainingRate } from "../shop/entitlements.ts";
-import { TRAINING, TRAINING_GROUPS, TRAINING_PER_LEVEL, isStatRow, trainingOpen, type TrainingId } from "../config.ts";
+import { TRAINING, TRAINING_GROUPS, TRAINING_PER_LEVEL, isStatRow, levelForXp, trainingOpen, type TrainingId } from "../config.ts";
 import { trainingBulk, trainingPoints, trainingStep, trainingText, trainingWaiting } from "../loadout.ts";
 import { whole } from "../whole.ts";
 import { buyQuantityHtml, maxCount, readQuantity } from "./buy-quantity-select.ts";
@@ -45,11 +45,13 @@ export class ResearchPage {
   }
 
   /** The tab buttons, Training's wearing a dot while training points can be
-   * spent; none while Training is the only tab. */
+   * spent and the hero has levelled up since that tab last showed (so
+   * turning to the Archives never brings back a dot already seen); none
+   * while Training is the only tab. */
   private tabsHtml() {
     if (!this.archivesOpen) return "";
     const save = this.ctx.game.save, busy = save.archives.slots.filter(s => s.job).length;
-    const trainingDot = this.tab !== "training" && trainingWaiting(save) ? ` class="notify"` : "";
+    const trainingDot = this.tab !== "training" && trainingWaiting(save) && levelForXp(save.xp) > save.seen.training ? ` class="notify"` : "";
     return `<div class="tree-tabs" role="group" aria-label="Research">` +
       `<button data-research-tab="training" aria-pressed="${this.tab === "training"}"${trainingDot}><span>${pointsIcon("ui-sprite")}</span>Training<small>${trainingPoints(save).left} POINTS</small></button>` +
       `<button data-research-tab="archives" aria-pressed="${this.tab === "archives"}"><span>${uiSprite("log")}</span>Archives<small>${busy} RESEARCHING</small></button></div>`;
@@ -70,6 +72,8 @@ export class ResearchPage {
   }
 
   private renderTraining(tabs: string) {
+    const save = this.ctx.game.save;
+    save.seen.training = levelForXp(save.xp);
     // The rows scroll; a purchase redraws them without moving the list.
     const scrolled = document.querySelector(".training-scroll")?.scrollTop ?? 0;
     el("research").innerHTML = `${tabs}${this.trainingHtml()}`;

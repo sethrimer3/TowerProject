@@ -313,9 +313,10 @@ export type Save = {
   /** What the HUD's dots were last dismissed at: the hero's `level` and the
    * Archives' `archives` events (levels completed plus archivists hired)
    * when the Research page was last opened, which the run's Research
-   * button compares; and the deck's `cards` when the Deck page was last
-   * opened, which the Deck tab compares. */
-  seen: { level: number; archives: number; cards: CardId[] };
+   * button compares; the hero's `training` level when the Research page's
+   * Training tab last showed, which that tab's dot compares; and the deck's
+   * `cards` when the Deck page was last opened, which the Deck tab compares. */
+  seen: { level: number; training: number; archives: number; cards: CardId[] };
   /** The Archives' archivists, completed research and its history
    * (archives.ts). */
   archives: ArchivesSave;

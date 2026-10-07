@@ -139,9 +139,13 @@ export const shopWaiting = (game: Game) => {
   const now = estimatedServerTime(game.save.shop.clock, game.clock());
   return OFFERS.some((o) => o.period === 1 && !refusal(game.save, o, now));
 };
-/** Puts the dot on the Shop tab while `shopWaiting`. */
+/** Puts the dot on the Shop tab, and the run menu's Shop and hamburger, while `shopWaiting`. */
 export const renderShopDot = (game: Game) => {
-  document.querySelector(`[data-tab="shop"]`)?.classList.toggle("notify", shopWaiting(game));
+  const waiting = shopWaiting(game);
+  document.querySelector(`[data-tab="shop"]`)?.classList.toggle("notify", waiting);
+  el("run-shop").classList.toggle("notify", waiting);
+  // Inside a run the menu's Shop is folded away, so the hamburger wears it too.
+  el("run-menu-toggle").classList.toggle("notify", waiting);
 };
 /** Whether the Upgrades button shows its dot: the first Inspiration has
  * been earned (so the run that paid it has ended by the time the tabs show)

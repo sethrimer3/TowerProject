@@ -688,7 +688,8 @@ canvas {
    buttons the hamburger opens (run-menu.ts). Its frame, a thin white
    outline round the two, slides left over the stats to fit them, with a
    bounce, as they fade in; closing, they fade out first and the frame
-   slides back in. Its cells, two rows of them, fill right to left, End Run
+   slides back in. Its cells, two rows of them, fill right to left (Settings
+   over the Shop beside the hamburger), End Run
    taking both rows of the leftmost column. */
 .run-menu {
   position: relative;
@@ -1889,7 +1890,6 @@ nav {
 .pull-off { position: absolute; top: -8px; right: -4px; padding: 1px 5px; border: 1px solid #fff; border-radius: 4px; background: #e0402c; color: #fff; font-size: 10px; font-weight: 700; transform: rotate(4deg); }
 .pull-box h3 .pull-off { position: static; display: inline-block; margin-left: 4px; vertical-align: middle; }
 .pull-box-all { border-color: #e8b84a; }
-.pull-deal { margin: 4px 0; color: #ffe08a; font-size: 12px; }
 .gem-buy .was { color: #a99; font-size: .85em; text-decoration: line-through; }
 .pull-box { padding: 8px 10px; border: 1px solid #6b5a35; border-radius: 5px; background: #16202c; }
 .pull-pool { margin: 4px 0; padding: 0; list-style: none; text-align: left; font-size: 11px; line-height: 1.5; }

@@ -51,7 +51,7 @@ export function defaults(): Save {
     badges: defaultBadges(),
     tutorials: { deck: false, removeCard: false, addCard: false, upgrades: false, gear: false, onTheJob: false, speed: false, climb: false, enter: false, delve: false },
     treeNotices: { inspiration: false, courage: false },
-    seen: { level: 0, archives: 0, cards: [...BASE_HAND] },
+    seen: { level: 0, training: 0, archives: 0, cards: [...BASE_HAND] },
     archives: defaultArchives(),
     defend: defaultDefendSave(),
     entitlements: [],
@@ -376,7 +376,7 @@ function decodeHand(raw: any, owned: CardId[], slots: number): CardId[] {
 /** The dots' dismissals; a save without them has seen the deck it holds. */
 function decodeSeen(s: any, d: Save): Save["seen"] {
   const cards = Array.isArray(s?.cards) ? CARD_IDS.filter((id) => s.cards.includes(id)) : deckCards(d.upgrades);
-  return { level: count(s?.level, 0), archives: count(s?.archives, 0), cards };
+  return { level: count(s?.level, 0), training: count(s?.training, 0), archives: count(s?.archives, 0), cards };
 }
 export function decode(raw: string | null): Save {
   const d = defaults();

@@ -3,6 +3,7 @@ import { loadout, provisionOpen, provisionPrice, provisionText, type Stat } from
 import { keyCount, whole } from "../whole.ts";
 import { unlockFloor } from "../goals.ts";
 import type { AppContext } from "./app.ts";
+import { helpButton } from "./dialogs.ts";
 import { el, itemSprite, uiSprite } from "./dom.ts";
 import { devAmount } from "./hud.ts";
 import { EquipmentPanel } from "./equipment-panel.ts";
@@ -54,7 +55,7 @@ export class GearPage {
     const tabs = (["provisions", "equipment"] as const).filter((t) => t === "equipment" || save.upgrades.gear);
     const lockHint = (t: GearTab) => t === "equipment" ? `Claim Tower I's floor ${unlockFloor("equipment")} Goal to open Equipment` : "Locked";
     const intro = this.tab === "equipment"
-      ? `<h2>Equipment</h2><p>Each hero wears one piece of each kind: tap a piece to equip or level it, and assemble three alike into a rarer one.</p>`
+      ? `<h2>Equipment${helpButton("How Equipment works", "equip-help")}</h2>`
       : `<h2>Traveler’s gear<button class="tree-help" id="gear-help" aria-label="About provisions" title="About provisions">?</button></h2>`;
     el("gear").innerHTML = `<div class="page-title"><small>YOUR COMPANIONS IN THE DARK</small>${intro}</div>
     <div class="tree-tabs gear-tabs" role="group" aria-label="Gear tabs">
@@ -62,8 +63,10 @@ export class GearPage {
     </div>
     ${body}`;
     this.bind();
-    if (this.tab === "equipment") this.equipment.bind();
-    else el("gear-help").onclick = () => this.showHelp();
+    if (this.tab === "equipment") {
+      this.equipment.bind();
+      el("equip-help").onclick = () => this.equipment.showHelp();
+    } else el("gear-help").onclick = () => this.showHelp();
   }
 
   /** The Provisions screen's help, behind its heading's ? button. */

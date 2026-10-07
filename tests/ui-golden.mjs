@@ -365,6 +365,11 @@ try {
     await shot(`${prefix}.runMenu`);
     await click("#run-menu-toggle");
     await shot(`${prefix}.runMenu.closed`);
+    // The menu's Shop opens the Shop over the run; its Back returns to it.
+    await menuClick("#run-shop");
+    await shot(`${prefix}.runShop`);
+    await click("#shop-back");
+    await shot(`${prefix}.runShop.back`);
     await menuClick("#auto-settings");
     await shot(`${prefix}.autoSettings`);
     await click("#settings-back");
@@ -601,6 +606,10 @@ try {
   await shot("equipment.claimed");
   await click("#unlock-visit");
   await shot("equipment.loadout");
+  // The ? beside the heading holds what the views leave unsaid.
+  await click("#equip-help");
+  await shot("equipment.help");
+  await click("#tree-help-ok");
   // An empty slot in the loadout ring shows only its category below.
   await click('[data-eq-slot="helmet"]');
   await shot("equipment.slot");

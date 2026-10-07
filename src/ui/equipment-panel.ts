@@ -17,7 +17,7 @@ import {
   choicesLeft, effectCap, improveCost, nextMilestone, refineCost, slotEffects, slotPlan, slotPool, type SlotRefusal,
 } from "../equipment/slots.ts";
 import type { AppContext } from "./app.ts";
-import { askForGems } from "./dialogs.ts";
+import { askForGems, showHelp } from "./dialogs.ts";
 import { el, gemIcon, riseFrom, uiSprite } from "./dom.ts";
 import { currencyAmount, devAmount } from "./hud.ts";
 import { ACTION_ICONS, categoryIcon, itemIcon, materialIcon } from "./equipment-icons.ts";
@@ -133,7 +133,7 @@ export class EquipmentPanel {
       ? `<button class="eq-mode" data-eq-mode="${other}" title="Showing the ${MODE_NAMES[this.mode]} loadout: switch to the ${MODE_NAMES[other]}'s">${uiSprite(this.mode)}<span>${MODE_NAMES[this.mode]}</span><b aria-hidden="true">⇄</b></button>`
       : `<span class="eq-mode">${uiSprite(this.mode)}<span>${MODE_NAMES[this.mode]}</span></span>`;
     const totals = equipmentEffects(this.e, this.mode), lines = (Object.entries(totals) as [keyof typeof totals, number][]).filter(([, v]) => v);
-    const summary = lines.length ? `<ul class="eq-totals">${lines.map(([k, v]) => `<li>${effectText(k, v)}</li>`).join("")}</ul>` : `<p class="eq-totals-empty">Nothing worn yet: tap a piece below to equip it.</p>`;
+    const summary = lines.length ? `<ul class="eq-totals">${lines.map(([k, v]) => `<li>${effectText(k, v)}</li>`).join("")}</ul>` : `<p class="eq-totals-empty">Nothing worn yet.</p>`;
     const copy = delve ? `<button class="link-button eq-copy" data-eq-copy="${other}">Copy the ${MODE_NAMES[other]}'s</button>` : "";
     return `<div class="eq-loadout" aria-label="${MODE_NAMES[this.mode]} loadout"><div class="eq-loadout-head">${switcher}<h3>Loadout</h3>${copy}</div>
       <div class="eq-slots">${slots}</div>${summary}</div>`;
@@ -170,7 +170,7 @@ export class EquipmentPanel {
       const extra = this.selected.has(i.id) ? " selected" : this.selecting && isProtected(this.e, i) ? " eq-blocked" : "";
       return this.tile(i, "eq-item", extra);
     }).join("")}</div>`
-      : `<p class="hint">${this.e.items.length ? "No pieces match these filters." : "No equipment yet. Any boss may drop a Standard piece, and Gem pulls in Acquire bring Unique ones."}</p>`;
+      : `<p class="hint">${this.e.items.length ? "No pieces match these filters." : "No equipment yet."}</p>`;
     return head + this.filtersHtml() + actions + grid + this.salvageHtml();
   }
 
@@ -187,9 +187,7 @@ export class EquipmentPanel {
       const n = this.e.items.filter((i) => i.rarity === r && !isProtected(this.e, i)).length;
       return `<button data-eq-salvage-all="${r}"${n ? "" : " disabled"}>${ACTION_ICONS.dismantle} All ${RARITY_TIERS[r].name} (${n})</button>`;
     }).join("");
-    const salvage = EQUIP_RARITIES.map((r) => `${RARITY_TIERS[r].name} ${RARITY_TIERS[r].salvage}`).join(" · ");
-    return `<details class="eq-salvage"><summary>${ACTION_ICONS.dismantle} Salvage</summary><p class="hint">Dismantling breaks a piece into its category's material (${salvage}; Unique pieces twice that). Upgrades put into it are not returned. Locked and worn pieces are never included; to choose pieces one by one, press Select.</p>
-      <div class="equip-quick">${quick}</div></details>`;
+    return `<details class="eq-salvage"><summary>${ACTION_ICONS.dismantle} Salvage</summary><div class="equip-quick">${quick}</div></details>`;
   }
 
   // --- Assemble: three alike into the next rarity ---
@@ -218,10 +216,9 @@ export class EquipmentPanel {
       this.target = null;
       const ready = this.mergeable();
       const list = ready.length ? `<div class="eq-grid">${ready.map((i) => this.tile(i, "eq-target")).join("")}</div>`
-        : `<p class="hint">Three copies of the same piece at the same rarity assemble into one of the next rarity. None are ready yet: locked and worn copies don't count.</p>`;
+        : `<p class="hint">None are ready yet.</p>`;
       const empty = `<span class="eq-tile eq-ghost" aria-hidden="true"></span>`;
-      return `<div class="eq-assemble"><p class="eq-formula"><b>3</b> alike <span class="eq-formula-arrow">→</span> <b>1</b> of the next rarity</p>
-        <div class="eq-recipe"><span class="eq-inputs">${this.inputsHtml([empty, empty, empty])}</span><span class="eq-arrow" aria-hidden="true">▶</span><span class="eq-tile eq-ghost eq-result-slot" aria-hidden="true">?</span></div>
+      return `<div class="eq-assemble"><div class="eq-recipe"><span class="eq-inputs">${this.inputsHtml([empty, empty, empty])}</span><span class="eq-arrow" aria-hidden="true">▶</span><span class="eq-tile eq-ghost eq-result-slot" aria-hidden="true">?</span></div>
         <p class="eq-need">Choose the piece to keep</p></div><h3 class="eq-section">List</h3>${list}${this.assembleActions(false)}`;
     }
     const t = RARITY_TIERS[target.rarity], next = t.next!, need = t.merge - 1, category = categoryOf(target);
@@ -238,7 +235,7 @@ export class EquipmentPanel {
     return `<div class="eq-assemble"><p class="eq-formula"><b>${t.merge}×</b> <span class="rar-${target.rarity} eq-need-name">${nameOf(target)}</span> ${rarityTag(target.rarity)} <span class="eq-formula-arrow">→</span> <b>1×</b> <span class="rar-${next} eq-need-name">${nameOf(target)}</span> ${rarityTag(next)}</p>
       <div class="eq-recipe"><span class="eq-inputs">${inputs}</span><span class="eq-arrow" aria-hidden="true">▶</span>${this.tile(result as EquipItem, "eq-result", " eq-result-slot")}</div>
       <p class="eq-need">${copies.length + 1} of ${t.merge} pieces chosen${copies.length === need ? ": ready to assemble" : `: choose ${need - copies.length} more below`}</p></div>
-      <p class="hint">${rarityTag(target.rarity)} Lv ${target.level} → ${rarityTag(next)} Lv ${target.level} (up to ${RARITY_TIERS[next].maxLevel}). It keeps its effect slots, their effects and Refinement; leveling it to ${RARITY_TIERS[next].slotLevel} opens effect slot ${rarityRank(next) + 1}.${unlocks.length ? ` Unlocks: ${unlocks.join(" · ")}.` : ""}</p>
+      <p class="hint">${rarityTag(target.rarity)} Lv ${target.level} → ${rarityTag(next)} Lv ${target.level} (up to ${RARITY_TIERS[next].maxLevel}); leveling it to ${RARITY_TIERS[next].slotLevel} opens effect slot ${rarityRank(next) + 1}.${unlocks.length ? ` Unlocks: ${unlocks.join(" · ")}.` : ""}</p>
       ${warning}${blocked.length ? `<p class="hint">Not offered (locked or worn): ${blocked.map((i) => `${nameOf(i)} Lv ${i.level}`).join(", ")}.</p>` : ""}
       <h3 class="eq-section">List</h3>${list}${this.assembleActions(copies.length === need)}`;
   }
@@ -282,12 +279,10 @@ export class EquipmentPanel {
       return `<button class="gem-buy${short ? " short" : ""}" data-eq-pull="${n}">Pull ×${n} · ${gemIcon()} ${was}<span class="price">${price}</span></button>`;
     };
     const box = all
-      ? `<h3>All types ${off}</h3><p class="pull-deal">${PULL_ALL_DISCOUNT}% off: each pull brings a Unique piece of a random category, any of the nine.</p>
-        <p class="hint">Rates: ${rates}. Each pull counts toward its own category's pity: the ${PITY}th in a row without a Rare in a category is a Rare.</p>`
+      ? `<h3>All types ${off}</h3><p class="hint">Rates: ${rates}</p>`
       : `<h3>${categoryIcon(c)} ${CATEGORIES[c].plural}</h3><ul class="pull-pool">${uniquesOf(c).map((d) => `<li>${itemIcon(d.id)}<span><strong>${d.name}</strong>: ${d.identity}</span></li>`).join("")}</ul>
-        <p class="hint">Rates: ${rates}. Pity: ${this.e.pity[c]}/${PITY}. The ${PITY}th pull in a row without a Rare ${CATEGORIES[c].name.toLowerCase()} is a Rare; each category counts its own.</p>`;
-    return `<p class="hint">Choose a category, or all types for ${PULL_ALL_DISCOUNT}% less, then pull: each pull brings a Unique piece at a rolled rarity. Bosses never drop Unique pieces.</p>
-      <div class="pull-cats">${cats}</div>
+        <p class="hint">Rates: ${rates} · Pity ${this.e.pity[c]}/${PITY}</p>`;
+    return `<div class="pull-cats">${cats}</div>
       <div class="pull-box${all ? " pull-box-all" : ""}">${box}
       <div class="pull-buttons">${button(1)}${button(10)}</div><p class="hint">${gemIcon()} ${devAmount(this.game, gems)} held</p></div>`;
   }
@@ -371,6 +366,16 @@ export class EquipmentPanel {
     on("eq-asm-go", () => this.doAssemble());
     const sort = document.querySelector<HTMLSelectElement>("#eq-sort");
     if (sort) sort.onchange = () => { this.sort = sort.value as SortKey; this.rerender(); };
+  }
+
+  /** How Equipment works: the text kept off its views, behind the ? beside
+   * the page's heading. */
+  showHelp() {
+    const salvage = EQUIP_RARITIES.map((r) => `${RARITY_TIERS[r].name} ${RARITY_TIERS[r].salvage}`).join(" · ");
+    showHelp(this.ctx, "GEAR", "Equipment", `<p><b>Wearing.</b> Each hero wears one piece of each kind; the Tower and the Delve keep separate loadouts. Tap a piece to equip, level or lock it. Bosses may drop Standard pieces; Gem pulls bring Unique ones.</p>
+      <p><b>Assemble.</b> Three copies of a piece at the same rarity make one of the next rarity, with a higher level cap. The piece kept keeps its level, effect slots and Refinement; what was put into the others is lost. Locked and worn copies don't count.</p>
+      <p><b>Acquire.</b> Each pull brings a Unique piece at a rolled rarity, of the chosen category, or of a random one for ${PULL_ALL_DISCOUNT}% less. The ${PITY}th pull in a row without a Rare in a category is a Rare.</p>
+      <p><b>Salvage.</b> Dismantling turns a piece into its category's material (${salvage}; Unique twice that), not returning upgrades. Locked and worn pieces are never included; press Select to choose pieces one by one.</p>`);
   }
 
   private rerender() {

@@ -5,8 +5,8 @@ import { el } from "./dom.ts";
  * column, in Settings' place. Pressed, a thin white frame appears round it
  * and Research under it and slides left over the stats, settling with a
  * bounce, as the buttons it holds fade in, two rows of them: Settings
- * beside the hamburger, End Run filling both rows at the far left, and
- * more to come in the blank cells, each new column widening it leftward
+ * beside the hamburger with the Shop under it, End Run filling both rows at
+ * the far left, and more to come, each new column widening it leftward
  * (`.run-menu-items` lays them out right to left). Pressed again, they fade
  * out, the frame slides back in and goes (the timing is all in the CSS).
  * In the forest Settings stands back in the column and the hamburger is
