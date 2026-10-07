@@ -248,11 +248,11 @@ export class ResearchPage {
   }
 
   /** A row's level, its ranks, and while a trainer trains the next, the
-   * level it reaches: "Lv 5", or "Lv 5 → 6"; a stat row with a most ranks
-   * adds it: "Lv 5 / 6,000". */
+   * level it reaches: "Lv 5", or "Lv 5 → 6"; a row with a most ranks adds
+   * it: "Lv 5 / 6,000". */
   private levelText(id: TrainingId, training: boolean) {
     const ranks = this.ctx.game.save.training[id], row = TRAINING.find((t) => t.id === id)!;
-    const most = "max" in row && isStatRow(row) ? ` / ${row.max.toLocaleString("en-US")}` : "";
+    const most = "max" in row ? ` / ${row.max.toLocaleString("en-US")}` : "";
     return `<span class="training-level">Lv ${ranks}${training ? ` → ${ranks + 1}` : ""}${most}</span>`;
   }
 
