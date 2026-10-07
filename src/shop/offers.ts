@@ -50,8 +50,9 @@ export type ShopOffer = {
   startTime?: number;
   endTime?: number;
   requires?: Requirement[];
-  /** What it does, guaranteed. Randomized items will list their possible
-   * effects apart from these. */
+  /** What it does, guaranteed, in a few words each, beyond the currencies
+   * its item grants (the page shows those as icons). Randomized items will
+   * list their possible effects apart from these. */
   effects: string[];
   /** A highlight on its card ("10% bonus!"). */
   badge?: string;
@@ -62,14 +63,14 @@ export type ShopOffer = {
 const shardPack = (id: OfferId, shards: number, gems: number, sku: string, label: string, rarity: RarityId): ShopOffer => ({
   id, name: `${shards} Ascension Shard Pack`, category: "limited", item: { kind: "bundle", amounts: { shards, gems } }, quantity: 1,
   price: { kind: "money", sku, label }, rarity, purchaseLimit: 1, period: SHARD_PACK_DAYS,
-  effects: [`+${shards} Ascension Shards`, `+${gems} Gems`, "One every two weeks"], tags: ["limited"],
+  effects: ["Every two weeks"], tags: ["limited"],
 });
 /** Shop days between purchases of each Ascension Shard pack. */
 export const SHARD_PACK_DAYS = 14;
 
 const gemPack = (id: OfferId, gems: number, sku: string, label: string, rarity: RarityId, badge?: string): ShopOffer => ({
   id, name: `${gems.toLocaleString("en-US")} Gem Pack`, category: "gems", item: { kind: "currency", currency: "gems", amount: gems }, quantity: 1,
-  price: { kind: "money", sku, label }, rarity, purchaseLimit: null, effects: [`+${gems.toLocaleString("en-US")} Gems`], badge, tags: [],
+  price: { kind: "money", sku, label }, rarity, purchaseLimit: null, effects: [], badge, tags: [],
 });
 
 /** Every offer, in the order the page shows each category's. */
@@ -79,21 +80,21 @@ export const OFFERS: readonly ShopOffer[] = [
   {
     id: "adFree", name: "Permanent Ad-Disable", category: "special", item: { kind: "entitlement", id: "adFree" }, quantity: 1,
     price: { kind: "money", sku: "ad_free", label: "$9.95" }, rarity: "epic", purchaseLimit: 1,
-    effects: ["No more ads", "Permanent ×1.5 Gold"], tags: ["oneTime"],
+    effects: ["No ads", "×1.5 Gold forever"], tags: ["oneTime"],
   },
   {
     id: "coins2", name: "Special Coin Pack", category: "special", item: { kind: "entitlement", id: "coins2" }, quantity: 1,
     price: { kind: "money", sku: "coins_x2", label: "$9.95" }, rarity: "epic", purchaseLimit: 1,
-    effects: ["Permanent ×2 Gold, on all Gold earned", "Permanent ×2 training"], tags: ["oneTime"],
+    effects: ["×2 Gold forever", "×2 training speed forever"], tags: ["oneTime"],
   },
   {
     id: "coins3", name: "Premium Coin Pack", category: "special", item: { kind: "entitlement", id: "coins3" }, quantity: 1,
     price: { kind: "money", sku: "coins_x3", label: "$29.95" }, rarity: "legendary", purchaseLimit: 1,
-    effects: ["Permanent ×3 Gold", "Permanent ×3 training", "Multiplies with ×2 and every other bonus"], tags: ["oneTime"],
+    effects: ["×3 Gold forever", "×3 training speed forever", "Stacks with ×2"], tags: ["oneTime"],
   },
   {
     id: "dailyGems", name: "Daily Free Gems", category: "gems", item: { kind: "currency", currency: "gems", amount: 25 }, quantity: 1,
-    price: { kind: "free" }, rarity: "common", purchaseLimit: 1, period: 1, effects: ["+25 Gems", "Once a day: resets at 00:00 GMT"], tags: ["free"],
+    price: { kind: "free" }, rarity: "common", purchaseLimit: 1, period: 1, effects: ["Free daily, 00:00 GMT"], tags: ["free"],
   },
   gemPack("gems250", 250, "gems_250", "$4.99", "common"),
   gemPack("gems550", 550, "gems_550", "$9.99", "uncommon", "10% bonus!"),

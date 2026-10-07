@@ -2,6 +2,7 @@ import { whole } from "../whole.ts";
 import { CURRENCIES, type CurrencyId } from "../shop/currency.ts";
 import { estimatedServerTime } from "../shop/clock.ts";
 import { CATEGORIES, OFFERS, offer, requirementText, unmet, type CategoryId, type ShopOffer } from "../shop/offers.ts";
+import { bundleAmounts } from "../shop/items.ts";
 import { RARITIES } from "../shop/rarity.ts";
 import { stubServer, type ShopServer } from "../shop/server.ts";
 import { availableAgain, priceText, refusal, soldOut, timesBought, type Refusal } from "../shop/transactions.ts";
@@ -12,6 +13,15 @@ import { offerShown, revealReward } from "./reward-reveal.ts";
 /** Gem prices from this up ask the player to confirm first. */
 export const CONFIRM_GEMS = 200;
 const CURRENCY_ICONS: Record<CurrencyId, () => string> = { gems: () => gemIcon(), shards: () => shardIcon(), gold: goldIcon };
+
+/** The currencies `o` grants, each a large icon over its amount: what a
+ * card shows in place of writing them out. */
+function rewards(o: ShopOffer) {
+  const item = o.item, list = item?.kind === "currency" ? [[item.currency, item.amount] as const] : item?.kind === "bundle" ? bundleAmounts(item.amounts) : [];
+  return list.length
+    ? `<span class="shop-rewards">${list.map(([c, n]) => `<span class="shop-reward" aria-label="${n.toLocaleString("en-US")} ${CURRENCIES[c].name}">${CURRENCY_ICONS[c]()}<b>${n.toLocaleString("en-US")}</b></span>`).join("")}</span>`
+    : "";
+}
 
 /** What the player is told when an offer can't be bought. */
 const REFUSALS: Record<Refusal, string> = {
@@ -135,7 +145,7 @@ export class ShopPage {
   private card(o: ShopOffer) {
     const r = RARITIES[o.rarity], a = this.action(o), ends = o.endTime !== undefined && o.endTime > this.now;
     return `<article class="shop-card${o.category === "limited" ? " shop-banner" : ""}" style="--rarity: ${r.color}">
-      <button class="shop-card-face" data-detail="${o.id}" aria-label="${o.name}: details"><small class="shop-rarity">${r.displayName}</small><b class="shop-name">${o.name}</b>${o.badge ? `<span class="shop-badge">${o.badge}</span>` : ""}<span class="shop-effects">${o.effects.join(" · ")}</span>${ends ? `<small class="shop-expires">Expires in <span data-countdown="${o.id}">${countdown(o.endTime! - this.now)}</span></small>` : ""}</button>
+      <button class="shop-card-face" data-detail="${o.id}" aria-label="${o.name}: details"><small class="shop-rarity">${r.displayName}</small><b class="shop-name">${o.name}</b>${o.badge ? `<span class="shop-badge">${o.badge}</span>` : ""}${rewards(o)}${o.effects.length ? `<span class="shop-effects">${o.effects.join(" · ")}</span>` : ""}${ends ? `<small class="shop-expires">Expires in <span data-countdown="${o.id}">${countdown(o.endTime! - this.now)}</span></small>` : ""}</button>
       <button class="shop-buy" data-buy="${o.id}" ${a.disabled ? "disabled" : ""}>${a.label}</button>${a.why ? `<small class="shop-why">${a.why}</small>` : ""}</article>`;
   }
 
@@ -184,7 +194,7 @@ export class ShopPage {
       lines.push(`After: ${whole(c.balance(save) - o.price.amount).toLocaleString("en-US")} ${c.name}`);
     }
     if (o.purchaseLimit !== null) lines.push(`Purchased ${timesBought(save, o, this.now)}/${o.purchaseLimit}${o.period === 1 ? " today" : o.period ? `, one every ${o.period} days` : ""}`);
-    modal.innerHTML = `<small style="color: ${r.color}">${r.displayName.toUpperCase()}</small><h2>${o.name}</h2><p class="shop-guaranteed"><b>Guaranteed</b><br>${o.effects.join("<br>")}</p><p>${lines.join("<br>")}</p>${a.why ? `<p class="shop-why">${a.why}</p>` : ""}<div class="dialog-actions"><button id="cancel">Cancel</button><button id="confirm" ${a.disabled ? "disabled" : ""}>${a.label}</button></div>`;
+    modal.innerHTML = `<small style="color: ${r.color}">${r.displayName.toUpperCase()}</small><h2>${o.name}</h2><p class="shop-guaranteed"><b>Guaranteed</b></p>${rewards(o)}${o.effects.length ? `<p class="shop-guaranteed">${o.effects.join("<br>")}</p>` : ""}<p>${lines.join("<br>")}</p>${a.why ? `<p class="shop-why">${a.why}</p>` : ""}<div class="dialog-actions"><button id="cancel">Cancel</button><button id="confirm" ${a.disabled ? "disabled" : ""}>${a.label}</button></div>`;
     modal.showModal();
     el("cancel").onclick = () => modal.close();
     el("confirm").onclick = () => {

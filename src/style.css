@@ -3246,6 +3246,12 @@ select.buy-quantity { min-height: 30px; padding: 2px 6px; font-family: Cinzel, G
 .shop-name { font-size: 14px; color: #e9d4ac; overflow-wrap: anywhere; }
 .shop-badge { font-size: 10px; color: #7ff07a; }
 .shop-effects { font-size: 11px; line-height: 1.5; color: #99a8bd; }
+/* The currencies an offer grants: a large icon over each amount. */
+.shop-rewards { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 2px 0; }
+.shop-reward { display: inline-flex; flex-direction: column; align-items: center; gap: 1px; min-width: 44px; }
+.shop-reward .gem-icon, .shop-reward .shard-icon, .shop-reward .gold-icon { width: 34px; height: 34px; filter: drop-shadow(0 0 5px color-mix(in srgb, var(--rarity, #8fe6ff) 45%, transparent)); }
+.shop-reward b { font-size: 16px; color: #f3e2bd; }
+dialog .shop-rewards { justify-content: center; margin: 4px 0 10px; }
 .shop-expires { font-size: 10px; color: #ff9a6a; }
 .shop-buy { min-height: 34px; padding: 6px 8px; font-size: 13px; color: #ecd19d; }
 .shop-buy .gem-icon, .shop-buy .shard-icon, .shop-buy .gold-icon { width: 14px; height: 14px; vertical-align: -2px; }
