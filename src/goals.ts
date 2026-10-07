@@ -18,11 +18,13 @@ import { TIERS } from "./tiers.ts";
  * checkpoint), Damage Visual (each enemy on the board wears what its
  * fight would cost), Relative Damage Color (Tower II: that cost coloured
  * by its share of the hero's HP) and Equipment (the Blacksmith, equipment
- * and its materials). */
-export type GoalUnlock = "damagePrediction" | "combatForecast" | "attackLore" | "warp" | "damageVisual" | "relativeDamageColor" | "equipment";
+ * and its materials) and the Tournament (twice-weekly global competition
+ * in the Delve, docs/TOURNAMENT.md). */
+export type GoalUnlock =
+  | "damagePrediction" | "combatForecast" | "attackLore" | "warp" | "damageVisual" | "relativeDamageColor" | "equipment" | "tournament";
 export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   damagePrediction: "Damage Prediction", combatForecast: "Combat Forecast", attackLore: "Attack Lore", warp: "Warp", damageVisual: "Damage Visual",
-  relativeDamageColor: "Relative Damage Color", equipment: "Equipment",
+  relativeDamageColor: "Relative Damage Color", equipment: "Equipment", tournament: "Tournament",
 };
 /** What a checkpoint pays: an unlock, the next tower opened, or an amount of a currency. */
 export type GoalReward =
@@ -40,7 +42,7 @@ const gold = (amount: number): GoalReward => ({ kind: "currency", currency: "gol
 const gems = (amount: number): GoalReward => ({ kind: "currency", currency: "gems", amount });
 
 const unlock = (unlock: GoalUnlock): GoalReward => ({ kind: "unlock", unlock });
-/** Tower I's first checkpoints: an unlock each, and Gems. */
+/** Tower I's first seven checkpoints: an unlock each, and Gems. */
 const TOWER_ONE: Record<number, Omit<Checkpoint, "floor">> = {
   10: { reward: unlock("damagePrediction"), premium: gems(10) },
   20: { reward: unlock("combatForecast"), premium: gems(15) },
@@ -48,6 +50,7 @@ const TOWER_ONE: Record<number, Omit<Checkpoint, "floor">> = {
   40: { reward: unlock("warp"), premium: gems(35) },
   50: { reward: unlock("damageVisual"), premium: gems(50) },
   60: { reward: unlock("equipment"), premium: gems(60) },
+  70: { reward: unlock("tournament"), premium: gems(70) },
 };
 
 /** Tower II's first checkpoint: an unlock. */

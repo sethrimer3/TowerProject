@@ -12,6 +12,7 @@ import type { Settings } from "./settings.ts";
 import type { EntitlementId } from "./shop/entitlements.ts";
 import type { ShopSave } from "./shop/ledger.ts";
 import type { GoalsSave } from "./goals.ts";
+import type { TournamentSave } from "./tournament/progress.ts";
 export type Kind =
   | "wall"
   | "floor"
@@ -330,5 +331,8 @@ export type Save = {
   /** The Goals screen's checkpoint rewards claimed in each tower, and the
    * premium ones (goals.ts). */
   goals: GoalsSave;
+  /** The Tournament's Tickets, league, and what the player last heard of
+   * each tournament entered (tournament/progress.ts). */
+  tournament: TournamentSave;
 };
 export const point = (x: number, y: number) => `${x},${y}`;

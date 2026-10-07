@@ -65,31 +65,31 @@ test("a reward is claimed once, after its floor is completed; a premium one need
   const g = new Game(defaults());
   const save = g.save;
   assert.equal(floorsCompleted(save, 1), 0, "a tower not yet climbed has no floor completed");
-  assert.equal(goalState(save, 1, 70, false), "locked");
-  assert.equal(g.claimGoal(1, 70, false), null);
-  save.tower.reached = 69; // standing on floor 70: not completed yet
-  assert.equal(floorsCompleted(save, 1), 69);
-  assert.equal(goalState(save, 1, 70, false), "locked");
-  save.tower.reached = 74; // floor 75 reached: floors 1 to 74 completed
-  assert.equal(floorsCompleted(save, 1), 74);
-  assert.equal(goalState(save, 1, 70, false), "ready");
+  assert.equal(goalState(save, 1, 80, false), "locked");
+  assert.equal(g.claimGoal(1, 80, false), null);
+  save.tower.reached = 79; // standing on floor 80: not completed yet
+  assert.equal(floorsCompleted(save, 1), 79);
+  assert.equal(goalState(save, 1, 80, false), "locked");
+  save.tower.reached = 84; // floor 85 reached: floors 1 to 84 completed
+  assert.equal(floorsCompleted(save, 1), 84);
+  assert.equal(goalState(save, 1, 80, false), "ready");
   const gold = save.gold;
-  assert.deepEqual(g.claimGoal(1, 70, false), { kind: "currency", currency: "gold", amount: 700 });
-  assert.equal(save.gold, gold + 700);
-  assert.equal(goalState(save, 1, 70, false), "claimed");
-  assert.equal(g.claimGoal(1, 70, false), null, "never twice");
-  assert.equal(goalState(save, 1, 70, true), "needsPass");
-  assert.equal(g.claimGoal(1, 70, true), null);
+  assert.deepEqual(g.claimGoal(1, 80, false), { kind: "currency", currency: "gold", amount: 800 });
+  assert.equal(save.gold, gold + 800);
+  assert.equal(goalState(save, 1, 80, false), "claimed");
+  assert.equal(g.claimGoal(1, 80, false), null, "never twice");
+  assert.equal(goalState(save, 1, 80, true), "needsPass");
+  assert.equal(g.claimGoal(1, 80, true), null);
   assert.equal(g.buyOffer("pass1", 0, true), null);
-  assert.equal(goalState(save, 1, 70, true), "ready");
-  assert.equal(goalState(save, 4, 70, true), "needsPass", "the first pass opens only Towers I to III");
+  assert.equal(goalState(save, 1, 80, true), "ready");
+  assert.equal(goalState(save, 4, 80, true), "needsPass", "the first pass opens only Towers I to III");
   const gems = save.gems;
-  g.claimGoal(1, 70, true);
-  assert.equal(save.gems, gems + 70);
-  assert.equal(goalState(save, 1, 80, true), "locked");
+  g.claimGoal(1, 80, true);
+  assert.equal(save.gems, gems + 80);
+  assert.equal(goalState(save, 1, 90, true), "locked");
   // Claims and the pass survive a reload; erasing progress keeps only the pass.
   const loaded = decode(JSON.stringify(save));
-  assert.deepEqual(loaded.goals, { claimed: { "1": [70] }, premium: { "1": [70] }, mastered: {}, cleared: {} });
+  assert.deepEqual(loaded.goals, { claimed: { "1": [80] }, premium: { "1": [80] }, mastered: {}, cleared: {} });
   g.eraseAll();
   assert.deepEqual(g.save.goals, { claimed: {}, premium: {}, mastered: {}, cleared: {} });
   assert.equal(goalState(g.save, 1, 10, true), "locked");

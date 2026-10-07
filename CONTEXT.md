@@ -387,6 +387,30 @@ _Avoid_: unlock (a skill bought with Inspiration or Courage), perk
 The day as the Shop counts it, from 00:00 to 00:00 GMT on the server's clock. A daily offer, such as the Daily Free Gems, can be claimed once each Shop day, and changing the device's clock never brings a new one.
 _Avoid_: daily reset, local day
 
+### The Tournament
+
+**Tournament**:
+A global competition, opened by Tower I's floor 70 Goal: entry is open all of each Wednesday and Saturday (GMT), and each entry is one Delve run whose depth is ranked against every other player in the same league.
+_Avoid_: event, contest, season
+
+**League**:
+The bracket a player competes in: Copper, Silver, Gold, Platinum or Champion, each playing its own Delve cave (1, 3, 5, 7 or 9). The top 13% move up after each tournament; the bottom 20% move down, but never back into Copper or Silver.
+_Avoid_: division, tier (a tier is a numbered tower or cave)
+
+**Ticket**:
+What entering a tournament costs. Each tournament grants one; more come from an ad, then for Gems.
+_Avoid_: pass (a Premium Pass is the Goals screen's), token
+
+**Entry**:
+One tournament run, paid for with a Ticket. A player may enter as often as they have Tickets; their best score counts.
+
+**Score**:
+The deepest depth a tournament run reached. Players with the same score share the lowest place among them.
+
+**Prize level**:
+One of the ten bands a league's prizes are paid by, from the top 3% of entrants to the bottom 20%.
+_Avoid_: tier, rank
+
 ### The Delve
 
 **Forest sign**:

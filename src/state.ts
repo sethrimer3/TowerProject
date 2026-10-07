@@ -76,6 +76,7 @@ import { GemFinder } from "./game/gem-finder.ts";
 import { BadgeDesk } from "./game/badge-desk.ts";
 import { RunPurse, type EquipmentLoot } from "./game/run-purse.ts";
 import { EquipmentDesk } from "./game/equipment-desk.ts";
+import { TournamentDesk } from "./game/tournament-desk.ts";
 import { raised, wornEffects } from "./equipment/effects.ts";
 import { RARITY_TIERS } from "./equipment/balance.ts";
 import { EQUIP_MATERIALS, EQUIP_MATERIAL_IDS, itemDef } from "./equipment/catalog.ts";
@@ -219,6 +220,9 @@ export class Game {
   /** The Equipment screen's commands: leveling, merging, dismantling,
    * equipping and Gem pulls. */
   readonly equipment = new EquipmentDesk(this);
+  /** The Tournament's commands: the server's reports, Tickets, standings
+   * and prizes. */
+  readonly tournament = new TournamentDesk(this);
   /** The Deck page's card badges: drawing them with Gems and attaching
    * them to cards. */
   readonly badges = new BadgeDesk(this);

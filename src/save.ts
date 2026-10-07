@@ -14,6 +14,7 @@ import { decodeArchives, defaultArchives } from "./archives.ts";
 import { adsOff, BOOST_FOREVER, decodeEntitlements, permanentBoost } from "./shop/entitlements.ts";
 import { decodeShop, defaultShop } from "./shop/ledger.ts";
 import { decodeGoals, defaultGoals } from "./goals.ts";
+import { decodeTournament, defaultTournament } from "./tournament/progress.ts";
 import { decodeBadges, defaultBadges, validRunBadges } from "./badges.ts";
 import { runTrainingMax } from "./run-training.ts";
 export function defaults(): Save {
@@ -56,6 +57,7 @@ export function defaults(): Save {
     entitlements: [],
     shop: defaultShop(),
     goals: defaultGoals(),
+    tournament: defaultTournament(),
   };
 }
 const CHEST_TIERS = ["silver", "gold"] as const;
@@ -390,6 +392,7 @@ export function decode(raw: string | null): Save {
     d.entitlements = decodeEntitlements(s.entitlements);
     d.shop = decodeShop(s.shop);
     d.goals = decodeGoals(s.goals);
+    d.tournament = decodeTournament(s.tournament);
     // The boost runs for good only while a pack that grants it is owned.
     if (permanentBoost(d)) d.trainingBoostUntil = BOOST_FOREVER;
     else if (d.trainingBoostUntil === BOOST_FOREVER) d.trainingBoostUntil = 0;
