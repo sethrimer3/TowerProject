@@ -1,7 +1,7 @@
 import { TRAINER_GEMS, trainingSlots, type TrainingJob, type TrainingPaid } from "./training-jobs.ts";
 import { count, dropInvalid, finite, fraction, isRecord, wholeIn } from "./decode.ts";
 import { TIERS } from "./tiers.ts";
-import { FIND_POTION_MAX, GOLD_SHOP, OLD_SAVE_KEY, RUN_TRAINING_CAP, SAVE_KEY, TOWER_WIDTH, TRAINING, UPGRADES, WIDTH } from "./config.ts";
+import { FIND_POTION_MAX, GOLD_SHOP, OLD_SAVE_KEY, SAVE_KEY, TOWER_WIDTH, TRAINING, UPGRADES, WIDTH } from "./config.ts";
 import type { AutomoveMemory, DelveRun, ModeSave, Fall, MoveSnapshot, Run, Save, TowerRun } from "./entities.ts";
 import { emptyMaterials, MATERIAL_IDS, type MaterialId } from "./materials.ts";
 import { decodeEquipment, defaultEquipment } from "./equipment/inventory.ts";
@@ -15,11 +15,12 @@ import { BOOST_FOREVER, decodeEntitlements, permanentBoost } from "./shop/entitl
 import { decodeShop, defaultShop } from "./shop/ledger.ts";
 import { decodeGoals, defaultGoals } from "./goals.ts";
 import { decodeBadges, defaultBadges, validRunBadges } from "./badges.ts";
+import { runTrainingMax } from "./run-training.ts";
 export function defaults(): Save {
   return {
     version: 3,
-    tower: { run: null, history: [], fall: null, best: 0, reached: 0, inspiration: 0, lootedTiles: {}, runGold: 0, runCurrency: 0, runRecord: false, tier: 1, tiersOpen: 1, tierRecords: {} },
-    delve: { run: null, history: [], fall: null, best: 0, reached: 0, courage: 0, lootedTiles: {}, runGold: 0, runCurrency: 0, runRecord: false, memory: { known: {}, visited: {} }, tier: 1, tiersOpen: 1, tierRecords: {} },
+    tower: { run: null, history: [], fall: null, best: 0, reached: 0, inspiration: 0, lootedTiles: {}, runGold: 0, runBoostGold: null, runCurrency: 0, runRecord: false, tier: 1, tiersOpen: 1, tierRecords: {} },
+    delve: { run: null, history: [], fall: null, best: 0, reached: 0, courage: 0, lootedTiles: {}, runGold: 0, runBoostGold: null, runCurrency: 0, runRecord: false, memory: { known: {}, visited: {} }, tier: 1, tiersOpen: 1, tierRecords: {} },
     gems: 0,
     gemDrop: defaultGemDrop(),
     goldBoostUntil: 0,
@@ -101,9 +102,13 @@ const validCore = (r: any, width: number) =>
 const validDelveState = (r: any) => Number.isInteger(r.milestone) && finite(r.milestone);
 const TOWER_FIELDS = ["damaged", "floors", "summoned"];
 const DELVE_FIELDS = ["milestone"];
-/** Training ranks bought in a run: known rows, each a whole number of ranks. */
+/** Training ranks bought in a run: known rows, each a whole number of
+ * ranks, no more than the row reaches in a run. */
 const validRunTraining = (t: any) =>
-  isRecord(t) && Object.entries(t).every(([id, n]) => TRAINING.some((row) => row.id === id) && wholeIn(n, 0, RUN_TRAINING_CAP));
+  isRecord(t) && Object.entries(t).every(([id, n]) => {
+    const row = TRAINING.find((r) => r.id === id);
+    return !!row && wholeIn(n, 0, runTrainingMax(row));
+  });
 /** A run's hand: known cards, each once, no more than a hand can hold,
  * STAIRS among them. */
 const validHand = (h: any) =>
@@ -161,7 +166,7 @@ function decodeDelveRun(r: any): DelveRun | null {
 }
 
 // --- Mode slices ---
-type DecodedMode<R extends Run> = Pick<ModeSave<R>, "run" | "history" | "fall" | "lootedTiles" | "runGold" | "runCurrency" | "runRecord">;
+type DecodedMode<R extends Run> = Pick<ModeSave<R>, "run" | "history" | "fall" | "lootedTiles" | "runGold" | "runBoostGold" | "runCurrency" | "runRecord">;
 type RunDecoder<R extends Run> = (raw: any) => R | null;
 const validSnapshot = (value: any) => !!value && finite(value.best) && finite(value.xp);
 function snapshot<R extends Run>(value: any, decodeRun: RunDecoder<R>): MoveSnapshot<R> | null {
@@ -209,6 +214,7 @@ function decodeMode<R extends Run>(s: any, undoCapacity: number, decodeRun: RunD
     fall: run ? decodeFall(s.fall, run, decodeRun) : null,
     lootedTiles: decodeLootedTiles(s?.lootedTiles),
     runGold: run ? fraction(s.runGold, 0) : 0,
+    runBoostGold: run && s.runBoostGold !== null && s.runBoostGold !== undefined ? fraction(s.runBoostGold, 0) : null,
     runCurrency: run ? count(s.runCurrency, 0) : 0,
     runRecord: !!run && s.runRecord === true,
   };
@@ -219,6 +225,7 @@ function applyMode<R extends Run>(slice: ModeSave<R>, decoded: DecodedMode<R>) {
   slice.fall = decoded.fall;
   slice.lootedTiles = decoded.lootedTiles;
   slice.runGold = decoded.runGold;
+  slice.runBoostGold = decoded.runBoostGold;
   slice.runCurrency = decoded.runCurrency;
   slice.runRecord = decoded.runRecord;
 }
@@ -381,7 +388,9 @@ export function decode(raw: string | null): Save {
     d.entitlements = decodeEntitlements(s.entitlements);
     d.shop = decodeShop(s.shop);
     d.goals = decodeGoals(s.goals);
+    // The boost runs for good only while a pack that grants it is owned.
     if (permanentBoost(d)) d.trainingBoostUntil = BOOST_FOREVER;
+    else if (d.trainingBoostUntil === BOOST_FOREVER) d.trainingBoostUntil = 0;
     decodeReached(s, d);
     decodeTiers(s, d);
     migratePreSkillTrees(s.upgrades, d);

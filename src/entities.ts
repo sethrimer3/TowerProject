@@ -206,6 +206,10 @@ export type ModeSave<R extends Run = Run> = {
   /** Gold picked up during the current run, kept outside `run` like
    * `lootedTiles`, since undo never takes Gold back. */
   runGold: number;
+  /** The Gold the current run found while the Gold ad's boost lasted,
+   * before the boost (it banked `GOLD_BOOST_FACTOR` times this), or null
+   * while the boost hasn't run during the run; for the run's end dialog. */
+  runBoostGold: number | null;
   /** The mode's currency (Inspiration or Courage) earned during the current
    * run, from milestones and areas cleared, kept beside `runGold`. */
   runCurrency: number;

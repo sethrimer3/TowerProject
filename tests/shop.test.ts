@@ -6,7 +6,7 @@ import { xpForLevel } from "../src/config.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
 import { workLeft } from "../src/training-jobs.ts";
 import { DAY_MS, confirmServerTime, estimatedServerTime, gmtDay, untilNextDay } from "../src/shop/clock.ts";
-import { BOOST_FOREVER, goldFactor, permanentBoost } from "../src/shop/entitlements.ts";
+import { BOOST_FOREVER, goldFactor, permanentBoost, trainingRate } from "../src/shop/entitlements.ts";
 import { HISTORY_KEPT } from "../src/shop/ledger.ts";
 import { OFFERS, offer, type ShopOffer } from "../src/shop/offers.ts";
 import { purchase, refusal, soldOut, timesBought } from "../src/shop/transactions.ts";
@@ -109,7 +109,7 @@ test("one-time packs are bought once, kept by an erase, and multiply every Gold 
   assert.ok(h.gains.some((gain) => gain.text === "+18 Gold"));
 });
 
-test("Ad-Disable runs the trainers' ×2 boost for good, ranks already training included", () => {
+test("the Special Coin Pack runs the trainers' ×2 boost for good, ranks already training included", () => {
   const g = new Game(defaults());
   g.save.upgrades.trainers = 1;
   g.newRun({ outside: true });
@@ -122,6 +122,9 @@ test("Ad-Disable runs the trainers' ×2 boost for good, ranks already training i
   now += 5000;
   const left = g.training.left("hp");
   assert.equal(g.buyOffer("adFree", NOON, true), null);
+  assert.ok(!permanentBoost(g.save), "Ad-Disable doesn't");
+  assert.equal(g.training.left("hp"), left);
+  assert.equal(g.buyOffer("coins2", NOON, true), null);
   assert.ok(permanentBoost(g.save));
   assert.equal(g.save.trainingBoostUntil, BOOST_FOREVER);
   assert.equal(g.save.trainingJobs[0].completesAt, now + left / 2, "what was left goes twice as fast");
@@ -131,6 +134,29 @@ test("Ad-Disable runs the trainers' ×2 boost for good, ranks already training i
   assert.equal(back.trainingBoostUntil, BOOST_FOREVER);
   back.trainingBoostUntil = 0;
   assert.equal(decode(JSON.stringify(back)).trainingBoostUntil, BOOST_FOREVER, "the entitlement keeps it on");
+});
+
+test("the Premium Coin Pack makes training ×3 as fast, ×6 with the Special Coin Pack's boost", () => {
+  const g = new Game(defaults());
+  g.save.upgrades.trainers = 1;
+  g.newRun({ outside: true });
+  g.save.xp = xpForLevel(10);
+  g.save.gold = 10_000;
+  let now = 1_790_000_000_000;
+  g.clock = () => now;
+  // Max HP's first rank takes 15 s; 12 s are left after 3.
+  assert.ok(g.training.trainWithGold("hp"));
+  now += 3000;
+  assert.equal(g.buyOffer("coins3", NOON, true), null);
+  assert.equal(trainingRate(g.save), 3);
+  assert.equal(g.training.left("hp"), 12_000, "the training left is kept");
+  assert.equal(g.save.trainingJobs[0].completesAt, now + 4000, "and goes three times as fast");
+  assert.equal(g.buyOffer("coins2", NOON, true), null);
+  assert.equal(g.save.trainingJobs[0].completesAt, now + 2000, "six times with both");
+  now += 1000;
+  assert.equal(g.training.left("hp"), 6000);
+  now += 1000;
+  assert.equal(g.training.settle(), 1);
 });
 
 test("the Shop's save decodes field by field and keeps only the latest history", () => {

@@ -79,10 +79,13 @@ export class RunPurse {
   }
 
   /** Banks Gold found in the run, fractions and all (`snap`), times the
-   * Shop's coin packs owned and the Gold ad's boost while it lasts, and
-   * raised by equipment's Gold found; returns what it banked. */
+   * Shop's coin packs owned and the Gold ad's boost while it lasts (what
+   * it found while boosted kept in `runBoostGold`), and raised by
+   * equipment's Gold found; returns what it banked. */
   gold(found: number) {
-    const gold = snap(raised(found, this.worn.goldFind) * goldFactor(this.save) * goldBoostFactor(this.save, this.now));
+    const before = raised(found, this.worn.goldFind) * goldFactor(this.save), boost = goldBoostFactor(this.save, this.now);
+    const gold = snap(before * boost);
+    if (boost !== 1) this.slice.runBoostGold = snap((this.slice.runBoostGold ?? 0) + before);
     this.save.gold = snap(this.save.gold + gold);
     this.slice.runGold = snap(this.slice.runGold + gold);
     return gold;

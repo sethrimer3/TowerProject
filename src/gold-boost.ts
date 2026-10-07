@@ -1,4 +1,4 @@
-import type { Save } from "./entities.ts";
+import type { ModeSave, Save } from "./entities.ts";
 
 /** The Gold ad: each one watched (no ad plays yet) stores real time in
  * which all Gold a run finds is multiplied, up to a cap. */
@@ -15,6 +15,12 @@ export const goldBoostLeft = (save: Pick<Save, "goldBoostUntil">, now: number) =
 
 /** What Gold found at `now` is multiplied by: the boost's factor while it lasts. */
 export const goldBoostFactor = (save: Pick<Save, "goldBoostUntil">, now: number) => (now < save.goldBoostUntil ? GOLD_BOOST_FACTOR : 1);
+
+/** Records in `slice` that the boost ran during its run, when it lasts at
+ * `now` (the run's end dialog then shows it, even with no Gold found). */
+export function noteGoldBoost(save: Pick<Save, "goldBoostUntil">, slice: Pick<ModeSave, "runBoostGold">, now: number) {
+  if (now < save.goldBoostUntil) slice.runBoostGold ??= 0;
+}
 
 /** Whether another ad can add time: the store isn't full. */
 export const canClaimGoldBoost = (save: Pick<Save, "goldBoostUntil">, now: number) => goldBoostLeft(save, now) < GOLD_BOOST_MAX_MS;

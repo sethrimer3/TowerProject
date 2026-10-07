@@ -501,18 +501,18 @@ export const TRAINING_GROUPS = { offense: "Offense", defense: "Defense", utility
  * with `requires` shows, and trains, only once that upgrade is owned; one
  * with `max` trains no further than that many ranks. */
 export const TRAINING = [
-  { id: "hp", name: "Max HP", group: "defense", stat: "maxHp", base: 10, growth: 10, cost: 1, description: "Raises maximum HP." },
-  { id: "attack", name: "ATK", group: "offense", stat: "attack", base: 1, growth: 5, cost: 1, description: "Raises ATK, the damage each strike deals before the enemy's DEF." },
-  { id: "defense", name: "DEF", group: "defense", stat: "defense", base: 1, growth: 12, cost: 1, description: "Raises DEF, taken off the damage of every enemy strike." },
-  { id: "regen", name: "Regen", group: "defense", stat: "regen", base: 0.1, growth: 12, cost: 1, requires: "regen", description: "Raises the HP regained with every step taken in a run." },
+  { id: "hp", name: "Max HP", group: "defense", stat: "maxHp", base: 10, growth: 10, cost: 1, max: 6000, description: "Raises maximum HP." },
+  { id: "attack", name: "ATK", group: "offense", stat: "attack", base: 1, growth: 5, cost: 1, max: 6000, description: "Raises ATK, the damage each strike deals before the enemy's DEF." },
+  { id: "defense", name: "DEF", group: "defense", stat: "defense", base: 1, growth: 12, cost: 1, max: 6000, description: "Raises DEF, taken off the damage of every enemy strike." },
+  { id: "regen", name: "Regen", group: "defense", stat: "regen", base: 0.1, growth: 12, cost: 1, max: 6000, requires: "regen", description: "Raises the HP regained with every step taken in a run." },
   { id: "shroud", name: "Shroud", group: "defense", stat: "shroud", base: 1, growth: 10, cost: 1, requires: "shroud", description: "Raises the damage the shroud blocks at the start of every fight." },
   { id: "potion", name: "Potion %", group: "defense", requires: "recovery", cost: 1, description: "Percent potions restore more of your maximum HP." },
   { id: "findPotion", name: "Find Potion", group: "defense", requires: "findPotion", cost: 1, max: 72, description: "More of the potions found are percent potions." },
   { id: "revive", name: "Revive", group: "defense", requires: "revive", cost: 1, max: 99, description: "Raises the chance a strike that would fell you revives you at full HP instead." },
-  { id: "floorGold", name: "Gold / Floor", group: "utility", requires: "spareChange", cost: 1, description: "Raises the Gold paid for each floor climbed for the first time in a run." },
-  { id: "floorSilver", name: "Silver / Floor", group: "utility", requires: "wishingWell", cost: 1, description: "Raises the Silver paid for each floor climbed for the first time in a run." },
-  { id: "silverBonus", name: "Silver Bonus", group: "utility", requires: "wealthy", cost: 1, description: "Multiplies all Silver found in a run." },
-  { id: "killGold", name: "Gold / Kill", group: "utility", requires: "loot", cost: 1, description: "Multiplies the Gold each kill pays." },
+  { id: "floorGold", name: "Gold / Floor", group: "utility", requires: "spareChange", cost: 1, max: 150, description: "Raises the Gold paid for each floor climbed for the first time in a run." },
+  { id: "floorSilver", name: "Silver / Floor", group: "utility", requires: "wishingWell", cost: 1, max: 150, description: "Raises the Silver paid for each floor climbed for the first time in a run." },
+  { id: "silverBonus", name: "Silver Bonus", group: "utility", requires: "wealthy", cost: 1, max: 150, description: "Multiplies all Silver found in a run." },
+  { id: "killGold", name: "Gold / Kill", group: "utility", requires: "loot", cost: 1, max: 150, description: "Multiplies the Gold each kill pays." },
 ] as const;
 export type TrainingId = (typeof TRAINING)[number]["id"];
 export type TrainingRow = (typeof TRAINING)[number];

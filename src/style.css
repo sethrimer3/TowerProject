@@ -1251,6 +1251,22 @@ dialog p {
   color: #ffd76a;
   text-shadow: 0 0 10px rgba(255, 190, 70, 0.55);
 }
+/* Under the run's totals while the Gold ad's boost ran during it. */
+.summary-boost {
+  margin: -12px 0 18px;
+  font-size: 13px;
+  color: #c9b88f;
+}
+.summary-boost b {
+  color: #ffd86b;
+}
+.summary-boost .ui-sprite {
+  width: 14px;
+  height: 14px;
+  margin-right: 3px;
+  vertical-align: -2px;
+  image-rendering: pixelated;
+}
 /* Five figures to a row (the defeat dialog) fit a phone's width. */
 .summary-stats.compact {
   gap: 6px;
@@ -2420,6 +2436,10 @@ div.training-points select.buy-quantity { float: none; margin-left: auto; }
 .boost-claim { min-height: 30px; padding: 0 9px; display: inline-flex; align-items: center; gap: 5px; border: 1px solid #d8b572; border-radius: 8px; background: #2b2718; color: #ffe1a1; font-size: 12px; }
 .boost-claim .ad-icon { width: 18px; height: 18px; }
 .boost-claim:disabled { opacity: 0.45; }
+/* The Shop's permanent training speed, glowing on the trainers' row. */
+.training-speed { margin-left: 6px; padding: 1px 7px; border: 1px solid #5fb4d8; border-radius: 8px; background: #0f2230; color: #bff4ff; font-size: 15px; font-weight: 700; text-shadow: 0 0 6px #8fe6ff, 0 0 12px #5fb4d8; box-shadow: 0 0 8px #5fb4d866, inset 0 0 6px #5fb4d833; animation: training-speed-glow 2.4s ease-in-out infinite; }
+@keyframes training-speed-glow { 50% { box-shadow: 0 0 14px #8fe6ffaa, inset 0 0 8px #5fb4d855; text-shadow: 0 0 9px #bff4ff, 0 0 16px #5fb4d8; } }
+html.reduce-motion .training-speed { animation: none; }
 .reset-back { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 
 /* --- Deck page --- */
@@ -3083,7 +3103,6 @@ select.buy-quantity { min-height: 30px; padding: 2px 6px; font-family: Cinzel, G
   background: #d8352b;
   box-shadow: 0 0 0 2px #10161f, 0 0 6px #ff4a3a;
 }
-.boost-claim.boost-permanent:disabled { opacity: 1; color: #ffe27a; border-color: #b59861; font-weight: 700; }
 #shop-back { margin-top: 12px; }
 #shop-back + .page-title { margin-top: 16px; margin-bottom: 14px; }
 .shop-purse { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }

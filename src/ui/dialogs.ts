@@ -1,4 +1,5 @@
-import { whole } from "../whole.ts";
+import { whole, wholeChange } from "../whole.ts";
+import { GOLD_BOOST_FACTOR } from "../gold-boost.ts";
 import { MODES } from "../modes.ts";
 import { loadout } from "../loadout.ts";
 import type { AppContext } from "./app.ts";
@@ -95,7 +96,16 @@ export class RunEndDialog {
       stat(run.xp ?? 0, "XP"),
     ].join("");
     const cheer = record ? `<p class="summary-record">Highest ${rules.words.progress.toLowerCase()} reached!</p>` : "";
-    return `${cheer}<div class="summary-stats compact">${stats}</div>`;
+    return `${cheer}<div class="summary-stats compact">${stats}</div>${this.boostLine()}`;
+  }
+
+  /** While the Gold ad's boost ran during the run, the Gold it found then
+   * and what the boost made of it: 50 Gold × 1.5 boost = 75 Gold. */
+  private boostLine() {
+    const found = this.ctx.game.save[this.ctx.game.mode].runBoostGold;
+    if (found === null) return "";
+    const gold = uiSprite("gold");
+    return `<p class="summary-boost">${gold}${wholeChange(found)} Gold × ${GOLD_BOOST_FACTOR} boost = ${gold}<b>${wholeChange(found * GOLD_BOOST_FACTOR)} Gold</b></p>`;
   }
 
   private show(cause: RunEndCause) {

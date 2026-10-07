@@ -72,17 +72,17 @@ export const OFFERS: readonly ShopOffer[] = [
   {
     id: "adFree", name: "Permanent Ad-Disable", category: "special", item: { kind: "entitlement", id: "adFree" }, quantity: 1,
     price: { kind: "money", sku: "ad_free", label: "$9.95" }, rarity: "epic", purchaseLimit: 1,
-    effects: ["No more ads", "Permanent ×2 training", "Permanent ×1.5 Gold"], tags: ["oneTime"],
+    effects: ["No more ads", "Permanent ×1.5 Gold"], tags: ["oneTime"],
   },
   {
     id: "coins2", name: "Special Coin Pack", category: "special", item: { kind: "entitlement", id: "coins2" }, quantity: 1,
     price: { kind: "money", sku: "coins_x2", label: "$9.95" }, rarity: "epic", purchaseLimit: 1,
-    effects: ["Permanent ×2 Gold, on all Gold earned"], tags: ["oneTime"],
+    effects: ["Permanent ×2 Gold, on all Gold earned", "Permanent ×2 training"], tags: ["oneTime"],
   },
   {
     id: "coins3", name: "Premium Coin Pack", category: "special", item: { kind: "entitlement", id: "coins3" }, quantity: 1,
     price: { kind: "money", sku: "coins_x3", label: "$29.95" }, rarity: "legendary", purchaseLimit: 1,
-    effects: ["Permanent ×3 Gold", "Multiplies with ×2 and every other bonus"], tags: ["oneTime"],
+    effects: ["Permanent ×3 Gold", "Permanent ×3 training", "Multiplies with ×2 and every other bonus"], tags: ["oneTime"],
   },
   {
     id: "dailyGems", name: "Daily Free Gems", category: "gems", item: { kind: "currency", currency: "gems", amount: 25 }, quantity: 1,

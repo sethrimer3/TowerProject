@@ -209,11 +209,13 @@ test("a Gem reset returns the points, the Gold, and all the stat's training time
   assert.equal(decode(JSON.stringify({ ...g.save, trainingCredit: 5 })).trainingCredit.hp, 0, "an old single credit is dropped");
 });
 
-test("the boost doubles training for up to four hours, banked an hour a claim", () => {
+test("the boost doubles training for up to four hours, banked an hour a claim, refused within ten minutes of that", () => {
   const now = 10 * HOUR;
   assert.equal(claimBoost(0, now), now + HOUR);
   assert.equal(claimBoost(now + 3.5 * HOUR, now), now + BOOST_MAX_MS);
   assert.equal(claimBoost(now + BOOST_MAX_MS, now), null, "full");
+  assert.equal(claimBoost(now + BOOST_MAX_MS - 10 * 60_000, now), null, "within ten minutes of full");
+  assert.equal(claimBoost(now + BOOST_MAX_MS - 11 * 60_000, now), now + BOOST_MAX_MS, "eleven minutes short: capped at four hours");
   assert.equal(doneAt(HOUR, now + HOUR, now), now + HOUR / 2);
   assert.equal(doneAt(3 * HOUR, now + HOUR, now), now + 2 * HOUR);
   assert.equal(workLeft(now + 2 * HOUR, now + HOUR, now), 3 * HOUR);
@@ -225,8 +227,8 @@ test("the boost doubles training for up to four hours, banked an hour a claim", 
   assert.equal(g.training.left("hp"), 50 * 60_000);
   wait(60);
   assert.equal(g.training.left("hp"), 48 * 60_000, "the timer counts down twice as fast");
-  for (let i = 0; i < 4; i++) assert.ok(g.training.claimBoost(), "up to four hours, the last one capped");
-  assert.equal(g.training.claimBoost(), false, "four hours at most");
+  for (let i = 0; i < 3; i++) assert.ok(g.training.claimBoost(), "up to 3 h 59 min");
+  assert.equal(g.training.claimBoost(), false, "not within ten minutes of four hours");
   wait(24 * 60);
   assert.equal(g.training.settle(), 1, "done in 25 minutes");
   assert.equal(decode(JSON.stringify(g.save)).trainingBoostUntil, g.save.trainingBoostUntil);

@@ -3,7 +3,7 @@ import { snap } from "../exact.ts";
 import { TRAINING_RESET_GEMS } from "../gems.ts";
 import type { BuyQuantity } from "../buy-quantity.ts";
 import { trainingBulk, trainingMaxed, trainingSpeed } from "../loadout.ts";
-import { BOOST_FOREVER } from "../shop/entitlements.ts";
+import { BOOST_FOREVER, permanentBoost, trainingRate } from "../shop/entitlements.ts";
 import { claimBoost, doneAt, finishGems, nextTrainerGems, trainingGold, trainingJob, trainingMs, workLeft, trainingSlots, type TrainingJob } from "../training-jobs.ts";
 import { affordsGems, type DeskHost } from "./desk.ts";
 import { changeLoadout } from "./hero-sync.ts";
@@ -86,7 +86,7 @@ export class TrainingDesk {
     save.gold = snap(save.gold - gold);
     save.trainingCredit[id] -= credit;
     save.trainingBank -= bank;
-    save.trainingJobs.push({ id, startedAt: now, completesAt: doneAt(ms - credit - bank, save.trainingBoostUntil, now), gold, ms });
+    save.trainingJobs.push({ id, startedAt: now, completesAt: doneAt(ms - credit - bank, save.trainingBoostUntil, now, trainingRate(save)), gold, ms });
   }
 
   /** Whether `id`'s trainer starts its next rank as soon as one is done. */
@@ -116,7 +116,7 @@ export class TrainingDesk {
    * training still needs: what its timer shows. */
   left(id: TrainingId) {
     const job = trainingJob(this.save.trainingJobs, id);
-    return job ? workLeft(job.completesAt, this.save.trainingBoostUntil, this.host.clock()) : 0;
+    return job ? workLeft(job.completesAt, this.save.trainingBoostUntil, this.host.clock(), trainingRate(this.save)) : 0;
   }
 
   /** The training time (ms, at the normal rate) the next rank of `id`
@@ -180,17 +180,34 @@ export class TrainingDesk {
     return true;
   }
 
-  /** The trainers' ×2 boost runs for good from now (a Premium Pass). */
-  boostForever() {
-    this.boostUntil(BOOST_FOREVER, this.host.clock());
+  /** How fast training goes now: the boost's end and the Shop's
+   * permanent rate, to hand back to `repace` once either may change. */
+  get pace() {
+    return { until: this.save.trainingBoostUntil, rate: trainingRate(this.save) };
+  }
+
+  /** After a Shop purchase that went at `before`: the Special Coin Pack's
+   * ×2 boost runs for good from now, and each rank in training is due when
+   * its training left is done at the new pace (the Premium Coin Pack's ×3). */
+  repace(before: { until: number; rate: number }) {
+    if (permanentBoost(this.save)) this.save.trainingBoostUntil = BOOST_FOREVER;
+    this.retime(before, this.host.clock());
   }
 
   /** The boost now lasts until `until`: each rank in training is due when
    * its training left is done at the new rate. */
   private boostUntil(until: number, now: number) {
-    const old = this.save.trainingBoostUntil;
-    for (const job of this.save.trainingJobs) job.completesAt = doneAt(workLeft(job.completesAt, old, now), until, now);
+    const before = this.pace;
     this.save.trainingBoostUntil = until;
+    this.retime(before, now);
+  }
+
+  /** Moves each rank in training's due time from the pace `before` to the
+   * one now, keeping the training it has left. */
+  private retime(before: { until: number; rate: number }, now: number) {
+    const { until, rate } = this.pace;
+    if (until === before.until && rate === before.rate) return;
+    for (const job of this.save.trainingJobs) job.completesAt = doneAt(workLeft(job.completesAt, before.until, now, before.rate), until, now, rate);
   }
 
   /** Counts the ranks whose training the clock has reached, saying so in the

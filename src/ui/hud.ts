@@ -18,6 +18,7 @@ import { OFFERS } from "../shop/offers.ts";
 import { refusal } from "../shop/transactions.ts";
 import { equipmentWaiting } from "../equipment/inventory.ts";
 import { GOLD_BOOST_FACTOR, GOLD_BOOST_MS } from "../gold-boost.ts";
+import { adsOff } from "../shop/entitlements.ts";
 
 /** The stats cluster, action buttons and status line around the board. */
 
@@ -506,10 +507,12 @@ export function boostTime(ms: number) {
 
 /** The Gold ad, inside a run: ×1.5 Gold for 20 minutes a claim, stored up
  * to two hours, glowing with the time left while the boost lasts and
- * reading Inactive with none stored; closed once the store is full. */
+ * reading Inactive with none stored; closed once the store is full. Gone
+ * once Ad-Disable is owned (its ×1.5 Gold is for good), the Gems' button
+ * stretching into its place. */
 function renderGoldAd(game: Game, inside: boolean) {
   const button = el("gold-ad") as HTMLButtonElement, left = game.gemFinder.goldBoostLeft;
-  button.hidden = !inside;
+  button.hidden = !inside || adsOff(game.save);
   button.classList.toggle("active", left > 0);
   button.disabled = !game.gemFinder.goldAdReady;
   text("gold-ad-time", left > 0 ? boostTime(left) : "Inactive");

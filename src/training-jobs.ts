@@ -27,8 +27,9 @@ export const FINISH_GEM_SECONDS = 600;
 export const TRAINING_GOLD_PER_POINT = 20;
 /** The training boost: while it lasts, ranks in training go `BOOST_RATE`
  * times as fast. Each claim adds `BOOST_STEP_MS`, up to `BOOST_MAX_MS`
- * banked. */
-export const BOOST_RATE = 2, BOOST_STEP_MS = 3_600_000, BOOST_MAX_MS = 4 * BOOST_STEP_MS;
+ * banked, and can't be made while what is banked lies within
+ * `BOOST_CLAIM_MARGIN_MS` of that. */
+export const BOOST_RATE = 2, BOOST_STEP_MS = 3_600_000, BOOST_MAX_MS = 4 * BOOST_STEP_MS, BOOST_CLAIM_MARGIN_MS = 10 * 60_000;
 
 /** One rank being trained: it counts when `completesAt` (ms) is reached.
  * `gold` is what was paid for it and `ms` the whole training time it
@@ -66,22 +67,24 @@ export const trainingJob = (jobs: readonly TrainingJob[], id: TrainingId) => job
 export const boostLeft = (boostUntil: number, now: number) => Math.max(0, boostUntil - now);
 
 /** The training still to do (ms, at the normal rate) on a job due at
- * `completesAt`, with the boost running to `boostUntil`: the boosted part
- * of the wait counts double. This is what the job's timer shows, so it
- * counts down twice as fast while the boost lasts. */
-export function workLeft(completesAt: number, boostUntil: number, now: number) {
+ * `completesAt`, with the boost running to `boostUntil` and training going
+ * `rate` times as fast besides (the Premium Coin Pack's ×3): the boosted
+ * part of the wait counts double. This is what the job's timer shows, so
+ * it counts down twice as fast while the boost lasts. */
+export function workLeft(completesAt: number, boostUntil: number, now: number, rate = 1) {
   const boosted = Math.max(0, Math.min(completesAt, boostUntil) - now);
-  return Math.max(0, BOOST_RATE * boosted + Math.max(0, completesAt - Math.max(now, boostUntil)));
+  return Math.max(0, rate * (BOOST_RATE * boosted + Math.max(0, completesAt - Math.max(now, boostUntil))));
 }
 /** When `work` ms of training started at `now` are done, with the boost
- * running to `boostUntil`. */
-export function doneAt(work: number, boostUntil: number, now: number) {
-  const boosted = boostLeft(boostUntil, now);
-  return Math.round(work <= BOOST_RATE * boosted ? now + work / BOOST_RATE : now + boosted + (work - BOOST_RATE * boosted));
+ * running to `boostUntil` and training going `rate` times as fast besides. */
+export function doneAt(work: number, boostUntil: number, now: number, rate = 1) {
+  const boosted = boostLeft(boostUntil, now), wall = work / rate;
+  return Math.round(wall <= BOOST_RATE * boosted ? now + wall / BOOST_RATE : now + boosted + (wall - BOOST_RATE * boosted));
 }
-/** The boost's end after one more claim at `now`, or null when it is full:
- * an hour more, up to `BOOST_MAX_MS` banked. */
+/** The boost's end after one more claim at `now`, or null when it can't be
+ * claimed: an hour more, up to `BOOST_MAX_MS` banked, refused while what is
+ * banked is within `BOOST_CLAIM_MARGIN_MS` of that. */
 export function claimBoost(boostUntil: number, now: number): number | null {
   const left = boostLeft(boostUntil, now);
-  return left >= BOOST_MAX_MS ? null : now + Math.min(BOOST_MAX_MS, left + BOOST_STEP_MS);
+  return left >= BOOST_MAX_MS - BOOST_CLAIM_MARGIN_MS ? null : now + Math.min(BOOST_MAX_MS, left + BOOST_STEP_MS);
 }

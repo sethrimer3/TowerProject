@@ -3,7 +3,7 @@ import { VIEWPORT_TILES } from "../config.ts";
 import type { Mode, Run } from "../entities.ts";
 import { AD_COOLDOWN_MS, AD_GEMS, collectedGem, gemOn, gemSpot, reachFloor, type GemSpot } from "../gems.ts";
 import { MODES } from "../modes.ts";
-import { canClaimGoldBoost, claimGoldBoost, goldBoostLeft, GOLD_BOOST_FACTOR, GOLD_BOOST_MS } from "../gold-boost.ts";
+import { canClaimGoldBoost, claimGoldBoost, goldBoostLeft, GOLD_BOOST_FACTOR, GOLD_BOOST_MS, noteGoldBoost } from "../gold-boost.ts";
 import { random } from "../random.ts";
 import type { GainArt } from "../state.ts";
 import type { DeskHost } from "./desk.ts";
@@ -87,7 +87,8 @@ export class GemFinder {
   }
 
   /** Claims the ad's Gems, and the button waits out its cooldown. No ad
-   * plays yet: this is where watching one will be hooked up. */
+   * plays yet: this is where watching one will be hooked up, and with
+   * Ad-Disable owned (`adsOff`) none ever will: the press just pays. */
   claimAd() {
     if (!this.adReady) return false;
     const save = this.host.save;
@@ -110,7 +111,9 @@ export class GemFinder {
   /** Stores the Gold ad's time: Gold found ×1.5 for 20 more minutes, up
    * to two hours. No ad plays yet, as with the Gems'. */
   claimGoldAd() {
-    if (!claimGoldBoost(this.host.save, this.host.clock())) return false;
+    const { save, mode, playing } = this.host;
+    if (!claimGoldBoost(save, this.host.clock())) return false;
+    if (playing) noteGoldBoost(save, save[mode], this.host.clock());
     this.host.message = `Gold ×${GOLD_BOOST_FACTOR} for ${GOLD_BOOST_MS / 60_000} more minutes`;
     return true;
   }

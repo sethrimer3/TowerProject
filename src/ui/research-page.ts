@@ -1,12 +1,12 @@
 import { askForGems, helpButton, showHelp } from "./dialogs.ts";
 import { play } from "../sound.ts";
-import { permanentBoost } from "../shop/entitlements.ts";
-import { TRAINING, TRAINING_GROUPS, TRAINING_PER_LEVEL, trainingOpen, type TrainingId } from "../config.ts";
+import { permanentBoost, trainingRate } from "../shop/entitlements.ts";
+import { TRAINING, TRAINING_GROUPS, TRAINING_PER_LEVEL, isStatRow, trainingOpen, type TrainingId } from "../config.ts";
 import { trainingBulk, trainingPoints, trainingStep, trainingText, trainingWaiting } from "../loadout.ts";
 import { whole } from "../whole.ts";
 import { buyQuantityHtml, maxCount, readQuantity } from "./buy-quantity-select.ts";
 import { TrainingParticles } from "../training-particles.ts";
-import { BOOST_RATE, boostLeft, claimBoost, finishGems, nextTrainerGems, trainingJob, trainingSlots } from "../training-jobs.ts";
+import { BOOST_CLAIM_MARGIN_MS, BOOST_MAX_MS, BOOST_RATE, boostLeft, claimBoost, finishGems, nextTrainerGems, trainingJob, trainingSlots } from "../training-jobs.ts";
 import type { AppContext } from "./app.ts";
 import { adIcon, clockIcon, el, gemCount, gemIcon, goldIcon, pointsIcon, redoIcon, riseFrom, uiSprite } from "./dom.ts";
 import { TRAINING_RESET_GEMS } from "../gems.ts";
@@ -217,7 +217,7 @@ export class ResearchPage {
     return `<section class="training"><canvas class="training-particles" aria-hidden="true"></canvas><header class="tree-heading"><h3>Training${helpButton("How Training works", "research-help")}</h3></header>
       ${hired ? this.boostHtml() : ""}
       ${hired
-        ? `<div class="training-points training-slots"><span class="training-trainers">Trainers: <b id="training-slots">${save.trainingJobs.length} / ${slots}</b> ${this.trainerButton()}</span><span class="training-end">${quantity}${bank}${held}</span></div>`
+        ? `<div class="training-points training-slots"><span class="training-trainers">Trainers: <b id="training-slots">${save.trainingJobs.length} / ${slots}</b> ${this.trainerButton()}${this.speedHtml()}</span><span class="training-end">${quantity}${bank}${held}</span></div>`
         : `<div class="training-points">${held}${bank}${quantity}</div>`}
       <div class="training-scroll">${inTraining.length ? `<div class="training-table training-busy" role="list" aria-label="Stats in training">${inTraining.map(row).join("")}</div>` : ""}
       <div class="training-table" role="list" aria-label="Stat training">${rows}</div></div></section>`;
@@ -233,8 +233,10 @@ export class ResearchPage {
     // the value they reach.
     const q = game.buyQuantity, bulk = trainingBulk(save, t.id, q), count = step.maxed ? 1 : Math.max(1, bulk.count);
     const { now, unit } = step, next = count === 1 ? step.next : trainingStep(save, t.id, count).next;
-    // A row with a most ranks says so, and once there offers no next one.
-    const most = "max" in t ? `up to ${trainingStep({ ...save, training: { ...save.training, [t.id]: t.max }, trainingJobs: [] }, t.id).now}${unit}` : "";
+    // A row with a most ranks says so, and once there offers no next one: a
+    // stat's worth grows with the hero's level, so its level shows its most
+    // ranks instead.
+    const most = "max" in t && !isStatRow(t) ? `up to ${trainingStep({ ...save, training: { ...save.training, [t.id]: t.max }, trainingJobs: [] }, t.id).now}${unit}` : "";
     const shown = (v: number) => trainingText(v, unit);
     const time = step.maxed || !hired ? "" : `<span class="training-left" title="Training time to the next rank">${clockIcon()}<span data-training-left="${t.id}">${formatDuration(game.training.toNextRank(t.id))}</span></span>`;
     const notes = [time, most].filter(Boolean).join(" · ");
@@ -246,10 +248,12 @@ export class ResearchPage {
   }
 
   /** A row's level, its ranks, and while a trainer trains the next, the
-   * level it reaches: "Lv 5", or "Lv 5 → 6". */
+   * level it reaches: "Lv 5", or "Lv 5 → 6"; a stat row with a most ranks
+   * adds it: "Lv 5 / 6,000". */
   private levelText(id: TrainingId, training: boolean) {
-    const ranks = this.ctx.game.save.training[id];
-    return `<span class="training-level">Lv ${ranks}${training ? ` → ${ranks + 1}` : ""}</span>`;
+    const ranks = this.ctx.game.save.training[id], row = TRAINING.find((t) => t.id === id)!;
+    const most = "max" in row && isStatRow(row) ? ` / ${row.max.toLocaleString("en-US")}` : "";
+    return `<span class="training-level">Lv ${ranks}${training ? ` → ${ranks + 1}` : ""}${most}</span>`;
   }
 
   /** A row in training's auto-continue box, with its loop icon: while
@@ -298,15 +302,25 @@ export class ResearchPage {
   }
 
   /** The training boost: ×2, its time left or "Inactive", and the button
-   * that claims an hour more, up to four; once Ad-Disable is owned it runs
-   * for good, and the button only says so. */
+   * that claims an hour more, up to four (closed while what is stored is
+   * within ten minutes of that); none once the Special Coin Pack runs it
+   * for good, `speedHtml` saying so instead. */
   private boostHtml() {
     const game = this.ctx.game;
-    if (permanentBoost(game.save))
-      return `<div class="training-boost active" id="training-boost"><b class="boost-rate">×${BOOST_RATE}</b><span class="boost-time" id="boost-time">Permanent</span><button id="boost-claim" class="boost-claim boost-permanent" disabled aria-label="Training goes twice as fast for good" title="Training goes twice as fast for good">x${BOOST_RATE}</button></div>`;
+    if (permanentBoost(game.save)) return "";
     const left = boostLeft(game.save.trainingBoostUntil, game.clock()),
       full = claimBoost(game.save.trainingBoostUntil, game.clock()) === null;
-    return `<div class="training-boost${left ? " active" : ""}" id="training-boost"><b class="boost-rate">×${BOOST_RATE}</b><span class="boost-time" id="boost-time">${left ? formatDuration(left) : "Inactive"}</span><button id="boost-claim" class="boost-claim" ${full ? "disabled" : ""} aria-label="Watch an ad: training goes twice as fast for an hour more, up to four" title="${full ? "Four hours is the most" : "Training goes twice as fast for an hour more"}">${adIcon()}<span>+1h</span></button></div>`;
+    return `<div class="training-boost${left ? " active" : ""}" id="training-boost"><b class="boost-rate">×${BOOST_RATE}</b><span class="boost-time" id="boost-time">${left ? formatDuration(left) : "Inactive"}</span><button id="boost-claim" class="boost-claim" ${full ? "disabled" : ""} aria-label="Watch an ad: training goes twice as fast for an hour more, up to four" title="${full ? `Can be claimed once under ${formatDuration(BOOST_MAX_MS - BOOST_CLAIM_MARGIN_MS)} is stored` : "Training goes twice as fast for an hour more"}">${adIcon()}<span>+1h</span></button></div>`;
+  }
+
+  /** The Shop's permanent training speed, glowing on the trainers' row:
+   * ×2 for the Special Coin Pack's boost, ×3 for the Premium Coin Pack's,
+   * ×6 for both; nothing without either. */
+  private speedHtml() {
+    const save = this.ctx.game.save, speed = (permanentBoost(save) ? BOOST_RATE : 1) * trainingRate(save);
+    if (speed === 1) return "";
+    const label = `Training goes ×${speed} as fast for good`;
+    return `<span class="training-speed" id="training-speed" role="img" aria-label="${label}" title="${label}">×${speed}</span>`;
   }
 
   /** The Gem button that finishes a rank in training at once: one Gem per

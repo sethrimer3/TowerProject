@@ -107,9 +107,13 @@ test("a row reaches no higher in a run than its most on the Training tab, or the
   assert.equal(g.trainInRun("findPotion"), false, "72 is Find Potion's most");
   assert.equal(g.run.percentPotions, 2000, "the run's potions at once");
   assert.equal((g.world as RoomWorld).percentPotions, 2000, "on the floor stood on too");
-  g.save.training.hp = RUN_TRAINING_CAP - 1;
+  g.save.training.hp = 5999;
   assert.ok(g.trainInRun("hp"));
-  assert.equal(g.trainInRun("hp"), false, `${RUN_TRAINING_CAP} without a most of its own`);
+  assert.equal(g.trainInRun("hp"), false, "6,000 is Max HP's most");
+  g.save.upgrades.shroud = 1;
+  g.save.training.shroud = RUN_TRAINING_CAP - 1;
+  assert.ok(g.trainInRun("shroud"));
+  assert.equal(g.trainInRun("shroud"), false, `${RUN_TRAINING_CAP} without a most of its own`);
 });
 
 test("the hero's own ranks raise where a run starts, at the same Silver prices", () => {

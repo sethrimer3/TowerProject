@@ -48,6 +48,35 @@ test("Gold found while the boost lasts is multiplied by 1.5", () => {
   assert.equal(kill(), plain, "the boost has run out");
 });
 
+test("a run keeps the Gold it found while boosted, before the boost, for its end dialog", () => {
+  const g = new Game(defaults());
+  let now = 5_000_000;
+  g.clock = () => now;
+  g.newRun({ outside: true });
+  g.enterRun();
+  assert.equal(g.save.tower.runBoostGold, null, "the boost hasn't run");
+  let x = 0;
+  const kill = () => {
+    (g.world as RoomWorld).cells = new Map([[`${x},0`, { kind: "floor" }], [`${x + 1},0`, { kind: "enemy", enemy: { name: "Rat", hp: 1, attack: 0, defense: 0, strength: "normal" } }]]);
+    Object.assign(g.run.player, { x, y: 0, attack: 100 });
+    x += 2;
+    const before = g.save.gold;
+    assert.ok(g.move(1, 0));
+    return g.save.gold - before;
+  };
+  const plain = kill();
+  assert.ok(g.gemFinder.claimGoldAd());
+  assert.equal(g.save.tower.runBoostGold, 0, "claimed inside a run: the boost ran, with no Gold found yet");
+  assert.equal(kill() + kill(), 3 * plain);
+  assert.equal(g.save.tower.runBoostGold, 2 * plain, "before the boost");
+  assert.equal(g.save.tower.runGold, 4 * plain);
+  assert.equal(decode(JSON.stringify(g.save)).tower.runBoostGold, 2 * plain, "saved");
+  g.newRun({ outside: true });
+  assert.equal(g.save.tower.runBoostGold, null, "a new run starts without");
+  g.enterRun();
+  assert.equal(g.save.tower.runBoostGold, 0, "entering while the boost lasts counts it");
+});
+
 test("the Gold boost's end is saved, and a bad value starts with none", () => {
   const save = defaults();
   save.goldBoostUntil = 123_456;

@@ -3,6 +3,7 @@ import { chooseStep } from "./automation.ts";
 import { CARDS, KEY_TO_HP_PERCENT, SIPHONS, TRADER_YELLOW_KEYS, cardText, isSiphon, planHand, planTarget, type CardId, type CardPlan, type CardRules, type SiphonCard } from "./cards.ts";
 import { BADGE_IDS, BADGES, MAX_COPIES, badgeValue, runBadges, type BadgeId, type RunBadge } from "./badges.ts";
 import { BOOST_FOREVER, permanentBoost } from "./shop/entitlements.ts";
+import { noteGoldBoost } from "./gold-boost.ts";
 import { offer, type OfferId } from "./shop/offers.ts";
 import { purchase, type Refusal } from "./shop/transactions.ts";
 import { confirmServerTime } from "./shop/clock.ts";
@@ -1020,6 +1021,7 @@ export class Game {
    * gets its Focus uses and its Pocket Money Silver, and fixes its chance
    * of percent potions. */
   private dealHand() {
+    noteGoldBoost(this.save, this.slice, this.clock());
     this.run.hand = [...this.save.hand];
     const badges = this.save.upgrades.cardBadges ? runBadges(this.save.badges, this.run.hand) : {};
     if (Object.keys(badges).length) this.run.badges = badges;
@@ -1253,6 +1255,7 @@ export class Game {
     this.slice.fall = null;
     this.slice.history = [];
     this.slice.runGold = 0;
+    this.slice.runBoostGold = null;
     this.slice.runCurrency = 0;
     this.slice.runRecord = false;
     this.route = [];
@@ -1842,11 +1845,11 @@ export class Game {
     if (!o) return "locked";
     confirmServerTime(this.save.shop.clock, serverNow, this.clock());
     this.training.settle();
-    const boosted = permanentBoost(this.save);
+    const pace = this.training.pace;
     const t = purchase(this.save, o, serverNow, this.payment(paid));
     if (typeof t === "string") return t;
-    // A Premium Pass's boost runs for good from now.
-    if (!boosted && permanentBoost(this.save)) this.training.boostForever();
+    // A Coin Pack's training speed starts from now.
+    this.training.repace(pace);
     this.message = o.item?.kind === "entitlement" ? `${t.item}: yours for good` : `+${t.item}`;
     return null;
   }
