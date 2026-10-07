@@ -3219,6 +3219,8 @@ select.buy-quantity { min-height: 30px; padding: 2px 6px; font-family: Cinzel, G
 .shop-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
 /* The Gem offers: two columns, filled top to bottom. */
 .shop-columns .shop-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(3, auto); grid-auto-flow: column; }
+/* The limited offers: two columns, filled across. */
+.shop-limited .shop-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .shop-card {
   display: flex;
   flex-direction: column;
