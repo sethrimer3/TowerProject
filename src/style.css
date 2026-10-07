@@ -470,14 +470,23 @@ h1 span {
   white-space: nowrap;
 }
 .purse .ui-sprite,
-.purse .gem-icon {
+.purse .gem-icon,
+.purse .shard-icon {
   width: 18px;
   height: 18px;
   flex: none;
 }
+/* In the forest the Ascension Shards join the purse: its lines close up. */
+.purse.forest {
+  justify-content: center;
+  gap: 0;
+}
+.purse.forest > span { line-height: 0.95; }
 .gem-stat b { color: #8fe3ff; }
+.shard-stat b { color: #8dffb8; }
 .gold-stat b { color: #ffd86b; }
-.gem-icon {
+.gem-icon,
+.shard-icon {
   width: 1em;
   height: 1em;
   vertical-align: -0.15em;
@@ -1307,7 +1316,8 @@ dialog p {
     gap: 3px;
   }
   .purse .ui-sprite,
-  .purse .gem-icon {
+  .purse .gem-icon,
+  .purse .shard-icon {
     width: 15px;
     height: 15px;
   }
@@ -1962,7 +1972,7 @@ dialog.eq-result #eq-ok { flex: 0 1 220px; padding: 14px; font-size: 20px; }
 .goal-reward.standard { justify-self: end; flex-direction: row-reverse; text-align: right; }
 .goal-reward.premium { justify-self: start; border-color: #6d5a2c; background: linear-gradient(#2a2212e6, #17130be6); }
 .goal-art { position: relative; flex-shrink: 0; width: 26px; height: 26px; }
-.goal-art > .goal-icon, .goal-art > .gem-icon, .goal-art > .ui-sprite.gold-icon { width: 26px; height: 26px; vertical-align: 0; }
+.goal-art > .goal-icon, .goal-art > .gem-icon, .goal-art > .shard-icon, .goal-art > .ui-sprite.gold-icon { width: 26px; height: 26px; vertical-align: 0; }
 .goal-badge { position: absolute; right: -5px; bottom: -5px; width: 15px; height: 15px; }
 .goal-text { display: flex; flex-direction: column; min-width: 0; }
 .goal-text b { font-size: 10px; color: #e5d5b8; overflow-wrap: anywhere; }
@@ -1978,7 +1988,7 @@ dialog.eq-result #eq-ok { flex: 0 1 220px; padding: 14px; font-size: 20px; }
 .goals-towers b { min-width: 90px; text-align: center; font-size: 13px; color: #e5d5b8; }
 .pass-totals { display: flex; justify-content: center; gap: 12px; margin: 14px 0 6px; }
 .pass-total { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 16px; border-radius: 8px; border: 1px solid #36404f; background: #121822; }
-.pass-total .gem-icon, .pass-total .ui-sprite.gold-icon { width: 30px; height: 30px; }
+.pass-total .gem-icon, .pass-total .shard-icon, .pass-total .ui-sprite.gold-icon { width: 30px; height: 30px; }
 .pass-total b { font-size: 18px; color: #e5d5b8; }
 .pass-total small { font-size: 7px; letter-spacing: 1px; color: #8e9aab; }
 .pass-total.gems { border-color: #2fa9e0; box-shadow: 0 0 12px #2fa9e055; }
@@ -2425,7 +2435,7 @@ div.training-points select.buy-quantity { float: none; margin-left: auto; }
 .training-bank b { color: #e9e1c8; font-size: 13px; }
 /* Every currency's icon the size and baseline of the sprites, so all the
    amounts and labels sit on one line. */
-.currency > .gem-icon, .currency > .points-icon { width: 1.45em; height: 1.45em; vertical-align: -0.32em; }
+.currency > .gem-icon, .currency > .shard-icon, .currency > .points-icon { width: 1.45em; height: 1.45em; vertical-align: -0.32em; }
 /* The training boost: ×2, its time left, and the ad button. */
 .training-boost { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; padding: 5px 6px 5px 10px; border: 1px solid #4a5566; border-radius: 9px; background: #111925; }
 .training-boost .boost-rate { font-size: 17px; color: #7c8898; }
@@ -2782,7 +2792,7 @@ dialog.dismiss-anywhere { cursor: pointer; }
   box-shadow: 0 0 0 2px #f5dc9c55, 0 0 28px 8px #e9b84a66, 0 14px 30px #000c;
   animation: card-rise 0.9s cubic-bezier(0.2, 0.9, 0.3, 1.08) backwards;
 }
-.reward-reveal-prize .gem-icon, .reward-reveal-prize .ui-sprite { width: 72px; height: 72px; }
+.reward-reveal-prize .gem-icon, .reward-reveal-prize .shard-icon, .reward-reveal-prize .ui-sprite { width: 72px; height: 72px; }
 .reward-reveal-star { font-size: 64px; line-height: 1; color: #ffd76a; text-shadow: 0 0 18px #ffbf3c; }
 .reward-reveal-amount { font-size: 28px; font-weight: 500; color: #ffe7a6; letter-spacing: 1px; }
 .reward-reveal .card-reveal-text small { color: #e9c77e; }
@@ -2942,6 +2952,7 @@ dialog.dismiss-anywhere { cursor: pointer; }
 .research-toast b { display: block; color: #e9d4ac; font-size: 15px; letter-spacing: 1px; }
 .research-toast span { display: block; margin-top: 4px; font-size: 12px; color: #99a8bd; }
 .currency.gem-currency { color: #8fe3ff; }
+.currency.shard-currency { color: #8dffb8; }
 .currency.silver-currency { color: #d6dde6; }
 
 /* --- Training for this run, with Silver --- */
@@ -3115,7 +3126,7 @@ select.buy-quantity { min-height: 30px; padding: 2px 6px; font-family: Cinzel, G
   font-size: 13px;
 }
 .shop-currency small { font-size: 8px; letter-spacing: 1px; color: var(--muted); }
-.shop-currency .gem-icon, .shop-currency .gold-icon { width: 18px; height: 18px; }
+.shop-currency .gem-icon, .shop-currency .shard-icon, .shop-currency .gold-icon { width: 18px; height: 18px; }
 .shop-message { min-height: 1.4em; font-size: 12px; color: #ecd19d; margin-bottom: 6px; }
 .shop-section { margin-bottom: 20px; }
 .shop-section h3 { font-size: 13px; letter-spacing: 2px; color: var(--gold); margin-bottom: 8px; }
@@ -3151,7 +3162,7 @@ select.buy-quantity { min-height: 30px; padding: 2px 6px; font-family: Cinzel, G
 .shop-effects { font-size: 11px; line-height: 1.5; color: #99a8bd; }
 .shop-expires { font-size: 10px; color: #ff9a6a; }
 .shop-buy { min-height: 34px; padding: 6px 8px; font-size: 13px; color: #ecd19d; }
-.shop-buy .gem-icon, .shop-buy .gold-icon { width: 14px; height: 14px; vertical-align: -2px; }
+.shop-buy .gem-icon, .shop-buy .shard-icon, .shop-buy .gold-icon { width: 14px; height: 14px; vertical-align: -2px; }
 .shop-why { font-size: 10px; color: #ff9a6a; text-align: center; }
 .shop-owned .shop-card { opacity: 0.75; }
 .shop-section.locked h3 { color: var(--muted); }

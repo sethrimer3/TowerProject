@@ -8,8 +8,9 @@ import { workLeft } from "../src/training-jobs.ts";
 import { DAY_MS, confirmServerTime, estimatedServerTime, gmtDay, untilNextDay } from "../src/shop/clock.ts";
 import { BOOST_FOREVER, goldFactor, permanentBoost, trainingRate } from "../src/shop/entitlements.ts";
 import { HISTORY_KEPT } from "../src/shop/ledger.ts";
-import { OFFERS, offer, type ShopOffer } from "../src/shop/offers.ts";
-import { purchase, refusal, soldOut, timesBought } from "../src/shop/transactions.ts";
+import { OFFERS, SHARD_PACK_DAYS, offer, type ShopOffer } from "../src/shop/offers.ts";
+import { stubConfirms } from "../src/shop/server.ts";
+import { availableAgain, purchase, refusal, soldOut, timesBought } from "../src/shop/transactions.ts";
 
 /** Noon GMT on some day, a real timestamp. */
 const NOON = 20_500 * DAY_MS + DAY_MS / 2;
@@ -18,10 +19,10 @@ const gemOffer = (amount: number): ShopOffer => ({
   price: { kind: "currency", currency: "gold", amount }, rarity: "common", purchaseLimit: 2, effects: [], tags: [],
 });
 
-test("the catalog: one-time packs, the daily Gems, the Gem packs and the Premium Passes at their default prices", () => {
+test("the catalog: the Ascension Shard packs, one-time packs, the daily Gems, the Gem packs and the Premium Passes at their default prices", () => {
   const shown = OFFERS.map((o) => [o.id, o.price.kind === "money" ? o.price.label : o.price.kind]);
   assert.deepEqual(shown, [
-    ["shardPack", "store"], ["adFree", "$9.95"], ["coins2", "$9.95"], ["coins3", "$29.95"], ["dailyGems", "free"],
+    ["shards300", "$29.99"], ["shards750", "$59.99"], ["adFree", "$9.95"], ["coins2", "$9.95"], ["coins3", "$29.95"], ["dailyGems", "free"],
     ["gems250", "$4.99"], ["gems550", "$9.99"], ["gems1150", "$19.99"], ["gems2500", "$39.99"], ["gems7500", "$99.99"],
     ["pass1", "$9.99"], ["pass2", "$19.99"], ["pass3", "$29.99"],
   ]);
@@ -73,7 +74,7 @@ test("purchase limits, start and end times, requirements and store links refuse 
   assert.equal(refusal(save, { ...gemOffer(1), startTime: NOON + 1 }, NOON), "notStarted");
   assert.equal(refusal(save, { ...gemOffer(1), endTime: NOON }, NOON), "expired", "never buyable once over, whatever the page shows");
   assert.equal(refusal(save, { ...gemOffer(1), requires: [{ kind: "tier", mode: "tower", tier: 8 }] }, NOON), "locked");
-  assert.equal(refusal(save, offer("shardPack")!, NOON), "storeLink");
+  assert.equal(refusal(save, { ...gemOffer(1), item: undefined, price: { kind: "store", url: "" } }, NOON), "storeLink");
   assert.equal(refusal(save, { ...gemOffer(1), purchaseLimit: null }, NOON), null);
 });
 
@@ -87,6 +88,27 @@ test("a real-money offer is granted only once the store confirms payment, or fre
   assert.equal(g.buyOffer("gems7500", NOON), null);
   assert.equal(g.save.gems, 8050);
   assert.deepEqual(g.save.shop.history.map((t) => t.price), ["$9.99", "Dev: free"]);
+});
+
+test("each Ascension Shard pack grants Shards and Gems, once every two weeks of Shop days", () => {
+  const g = new Game(defaults());
+  assert.equal(g.buyOffer("shards300", NOON, true), null);
+  assert.equal(g.buyOffer("shards750", NOON, true), null, "each pack has its own limit");
+  assert.deepEqual([g.save.ascensionShards, g.save.gems], [1050, 850]);
+  const again = (gmtDay(NOON) + SHARD_PACK_DAYS) * DAY_MS;
+  assert.equal(g.buyOffer("shards300", again - 1, true), "limit", "the last moment of the two weeks");
+  assert.equal(availableAgain(g.save, offer("shards300")!), again);
+  assert.equal(g.buyOffer("shards300", again, true), null);
+  assert.equal(g.save.ascensionShards, 1350);
+  assert.equal(g.save.shop.history[0].item, "300 Ascension Shards + 250 Gems");
+  assert.ok(stubConfirms("shards_300") && stubConfirms("gems_250") && !stubConfirms("coins_x2"), "the stub store confirms only the Gem and shard packs");
+});
+
+test("Ascension Shards are saved, and a bad count decodes to none", () => {
+  const save = defaults();
+  save.ascensionShards = 42;
+  assert.equal(decode(JSON.stringify(save)).ascensionShards, 42);
+  assert.equal(decode(JSON.stringify({ ...save, ascensionShards: -3 })).ascensionShards, 0);
 });
 
 test("one-time packs are bought once, kept by an erase, and multiply every Gold banked", () => {

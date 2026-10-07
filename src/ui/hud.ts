@@ -54,12 +54,15 @@ function purse(game: Game, id: string, held: number, name: string, shown = held)
 /** Gold and Silver count up to each rise. */
 const goldShown = new CountUp(), silverShown = new CountUp();
 
-/** The purse: Gems, then Gold and, inside a run, the run's Silver,
- * counting up to what they rose to. In the forest Silver shows what the
- * next run starts with, once that is any. */
+/** The purse: Gems, Ascension Shards in the forest, then Gold and, inside a
+ * run, the run's Silver, counting up to what they rose to. In the forest
+ * Silver shows what the next run starts with, once that is any. */
 function renderPurse(game: Game) {
   const now = performance.now(), instant = game.save.settings.reduceMotion;
   purse(game, "gems", game.save.gems, "Gems, kept between runs");
+  purse(game, "shards", game.save.ascensionShards, "Ascension Shards, kept between runs");
+  el("shards").parentElement!.hidden = !game.run.outside;
+  el("shards").closest(".purse")!.classList.toggle("forest", !!game.run.outside);
   purse(game, "gold", game.save.gold, "Gold, kept between runs", goldShown.show(game.save.gold, now, instant));
   if (game.run.outside) {
     const start = game.startingSilver;
@@ -94,6 +97,7 @@ export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay)
   renderProgress(game);
   renderModeActions(game);
   text("gems-held", devAmount(game, game.save.gems));
+  text("shards-held", devAmount(game, game.save.ascensionShards));
   text("gold-held", devAmount(game, game.save.gold));
   renderSilverHeld(game);
   text("courage", devAmount(game, game.save.delve.courage));
@@ -131,7 +135,7 @@ export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay)
  * the server's time as estimated (the claim itself asks the server). */
 export const shopWaiting = (game: Game) => {
   const now = estimatedServerTime(game.save.shop.clock, game.clock());
-  return OFFERS.some((o) => o.daily && !refusal(game.save, o, now));
+  return OFFERS.some((o) => o.period === 1 && !refusal(game.save, o, now));
 };
 /** Puts the dot on the Shop tab while `shopWaiting`. */
 export const renderShopDot = (game: Game) => {

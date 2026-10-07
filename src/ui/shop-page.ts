@@ -1,17 +1,17 @@
 import { whole } from "../whole.ts";
 import { CURRENCIES, type CurrencyId } from "../shop/currency.ts";
-import { estimatedServerTime, untilNextDay } from "../shop/clock.ts";
+import { estimatedServerTime } from "../shop/clock.ts";
 import { CATEGORIES, OFFERS, offer, requirementText, unmet, type CategoryId, type ShopOffer } from "../shop/offers.ts";
 import { RARITIES } from "../shop/rarity.ts";
 import { stubServer, type ShopServer } from "../shop/server.ts";
-import { priceText, refusal, soldOut, timesBought, type Refusal } from "../shop/transactions.ts";
+import { availableAgain, priceText, refusal, soldOut, timesBought, type Refusal } from "../shop/transactions.ts";
 import type { AppContext } from "./app.ts";
-import { el, gemIcon, goldIcon } from "./dom.ts";
+import { el, gemIcon, goldIcon, shardIcon } from "./dom.ts";
 import { offerShown, revealReward } from "./reward-reveal.ts";
 
 /** Gem prices from this up ask the player to confirm first. */
 export const CONFIRM_GEMS = 200;
-const CURRENCY_ICONS: Record<CurrencyId, () => string> = { gems: () => gemIcon(), gold: goldIcon };
+const CURRENCY_ICONS: Record<CurrencyId, () => string> = { gems: () => gemIcon(), shards: () => shardIcon(), gold: goldIcon };
 
 /** What the player is told when an offer can't be bought. */
 const REFUSALS: Record<Refusal, string> = {
@@ -25,10 +25,11 @@ const REFUSALS: Record<Refusal, string> = {
   short: "Not enough to buy it.",
 };
 
-/** `ms` as a countdown, "03:42:18". */
+/** `ms` as a countdown, "03:42:18", with the days before it from a day on
+ * ("13d 03:42:18"). */
 export function countdown(ms: number) {
-  const s = Math.max(0, Math.ceil(ms / 1000)), two = (n: number) => String(n).padStart(2, "0");
-  return `${two(Math.floor(s / 3600))}:${two(Math.floor(s / 60) % 60)}:${two(s % 60)}`;
+  const s = Math.max(0, Math.ceil(ms / 1000)), two = (n: number) => String(n).padStart(2, "0"), days = Math.floor(s / 86_400);
+  return `${days ? `${days}d ` : ""}${two(Math.floor(s / 3600) % 24)}:${two(Math.floor(s / 60) % 60)}:${two(s % 60)}`;
 }
 
 /** An offer's button: its label, whether it is closed, and the line under it. */
@@ -118,10 +119,12 @@ export class ShopPage {
   }
 
   /** A refused offer's button, closed, and the line under it saying why:
-   * when a daily one comes back, how many were bought, or the currency held. */
+   * when one bought for its period comes back, how many were bought, or the
+   * currency held. */
   private refused(o: ShopOffer, why: Refusal): OfferAction {
     const save = this.ctx.game.save, now = this.now;
-    if (why === "limit" && o.daily) return { label: "Claimed", disabled: true, why: `Next in <span data-countdown="day">${countdown(untilNextDay(now))}</span>` };
+    if (why === "limit" && o.period)
+      return { label: o.price.kind === "free" ? "Claimed" : "Purchased", disabled: true, why: `Next in <span data-countdown="again:${o.id}">${countdown(availableAgain(save, o) - now)}</span>` };
     if (why === "limit" || why === "owned") return { label: o.purchaseLimit === 1 ? "Owned" : `Purchased ${timesBought(save, o, now)}/${o.purchaseLimit}`, disabled: true, why: "" };
     // Short of Gems, the offer stays pressable: a press points to the Gem packs.
     if (why === "short" && o.price.kind === "currency")
@@ -152,15 +155,15 @@ export class ShopPage {
   }
 
   /** Once a second while the page shows: the countdowns, or the whole page
-   * once a day turns or an offer ends. */
+   * once an offer's period turns or an offer ends. */
   tick() {
-    const now = this.now, daily = OFFERS.filter((o) => o.daily);
-    const turned = daily.some((o) => soldOut(this.ctx.game.save, o, now) !== !!document.querySelector(`[data-countdown="day"]`));
+    const save = this.ctx.game.save, now = this.now, periodic = OFFERS.filter((o) => o.period);
+    const turned = periodic.some((o) => soldOut(save, o, now) !== !!document.querySelector(`[data-countdown="again:${o.id}"]`));
     const ended = OFFERS.some((o) => o.endTime !== undefined && o.endTime <= now && document.querySelector(`[data-countdown="${o.id}"]`));
     if (turned || ended) return this.render();
     document.querySelectorAll<HTMLElement>("[data-countdown]").forEach((span) => {
       const id = span.dataset.countdown!;
-      span.textContent = countdown(id === "day" ? untilNextDay(now) : offer(id)!.endTime! - now);
+      span.textContent = countdown(id.startsWith("again:") ? availableAgain(save, offer(id.slice(6))!) - now : offer(id)!.endTime! - now);
     });
   }
 
@@ -180,7 +183,7 @@ export class ShopPage {
       const c = CURRENCIES[o.price.currency];
       lines.push(`After: ${whole(c.balance(save) - o.price.amount).toLocaleString("en-US")} ${c.name}`);
     }
-    if (o.purchaseLimit !== null) lines.push(`Purchased ${timesBought(save, o, this.now)}/${o.purchaseLimit}${o.daily ? " today" : ""}`);
+    if (o.purchaseLimit !== null) lines.push(`Purchased ${timesBought(save, o, this.now)}/${o.purchaseLimit}${o.period === 1 ? " today" : o.period ? `, one every ${o.period} days` : ""}`);
     modal.innerHTML = `<small style="color: ${r.color}">${r.displayName.toUpperCase()}</small><h2>${o.name}</h2><p class="shop-guaranteed"><b>Guaranteed</b><br>${o.effects.join("<br>")}</p><p>${lines.join("<br>")}</p>${a.why ? `<p class="shop-why">${a.why}</p>` : ""}<div class="dialog-actions"><button id="cancel">Cancel</button><button id="confirm" ${a.disabled ? "disabled" : ""}>${a.label}</button></div>`;
     modal.showModal();
     el("cancel").onclick = () => modal.close();

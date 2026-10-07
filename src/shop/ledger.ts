@@ -7,7 +7,7 @@ import { time, whole, wholeIn } from "../decode.ts";
 // was bought lives with its owner, never here.
 
 /** Purchases of one offer: how many, and the GMT day of the latest (a
- * daily offer's count starts again on a later day). */
+ * count of an offer with a period starts again that many days later). */
 export type PurchaseCount = { n: number; day: number };
 /** One purchase, for debugging and player support. */
 export type Transaction = { at: number; offer: OfferId; item: string; price: string };

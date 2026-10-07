@@ -31,7 +31,7 @@ export const CATEGORIES: Record<CategoryId, Category> = {
   passes: { name: "Premium Passes" },
 };
 
-export type OfferId = "shardPack" | "adFree" | "coins2" | "coins3" | "dailyGems" | "gems250" | "gems550" | "gems1150" | "gems2500" | "gems7500" | "pass1" | "pass2" | "pass3";
+export type OfferId = "shards300" | "shards750" | "adFree" | "coins2" | "coins3" | "dailyGems" | "gems250" | "gems550" | "gems1150" | "gems2500" | "gems7500" | "pass1" | "pass2" | "pass3";
 export type ShopOffer = {
   id: OfferId;
   name: string;
@@ -43,8 +43,9 @@ export type ShopOffer = {
   rarity: RarityId;
   /** How many times it can be bought; null for no limit. */
   purchaseLimit: number | null;
-  /** The limit counts afresh each day (the day turning at 00:00 GMT). */
-  daily?: true;
+  /** The limit counts afresh this many Shop days after the last purchase
+   * (each day turning at 00:00 GMT): 1 for a daily offer. */
+  period?: number;
   /** When it can first and last be bought (server time, ms). */
   startTime?: number;
   endTime?: number;
@@ -57,6 +58,15 @@ export type ShopOffer = {
   tags: string[];
 };
 
+/** A limited pack of Ascension Shards with Gems beside them, once a fortnight. */
+const shardPack = (id: OfferId, shards: number, gems: number, sku: string, label: string, rarity: RarityId): ShopOffer => ({
+  id, name: `${shards} Ascension Shard Pack`, category: "limited", item: { kind: "bundle", amounts: { shards, gems } }, quantity: 1,
+  price: { kind: "money", sku, label }, rarity, purchaseLimit: 1, period: SHARD_PACK_DAYS,
+  effects: [`+${shards} Ascension Shards`, `+${gems} Gems`, "One every two weeks"], tags: ["limited"],
+});
+/** Shop days between purchases of each Ascension Shard pack. */
+export const SHARD_PACK_DAYS = 14;
+
 const gemPack = (id: OfferId, gems: number, sku: string, label: string, rarity: RarityId, badge?: string): ShopOffer => ({
   id, name: `${gems.toLocaleString("en-US")} Gem Pack`, category: "gems", item: { kind: "currency", currency: "gems", amount: gems }, quantity: 1,
   price: { kind: "money", sku, label }, rarity, purchaseLimit: null, effects: [`+${gems.toLocaleString("en-US")} Gems`], badge, tags: [],
@@ -64,11 +74,8 @@ const gemPack = (id: OfferId, gems: number, sku: string, label: string, rarity: 
 
 /** Every offer, in the order the page shows each category's. */
 export const OFFERS: readonly ShopOffer[] = [
-  {
-    // TODO: limited offers will come from the server, with their end times.
-    id: "shardPack", name: "Exclusive Shard Pack", category: "limited", quantity: 1, price: { kind: "store", url: "" },
-    rarity: "mythic", purchaseLimit: null, effects: ["A bundle of rare shards, for a limited time"], tags: ["limited"],
-  },
+  shardPack("shards300", 300, 250, "shards_300", "$29.99", "legendary"),
+  shardPack("shards750", 750, 600, "shards_750", "$59.99", "mythic"),
   {
     id: "adFree", name: "Permanent Ad-Disable", category: "special", item: { kind: "entitlement", id: "adFree" }, quantity: 1,
     price: { kind: "money", sku: "ad_free", label: "$9.95" }, rarity: "epic", purchaseLimit: 1,
@@ -86,7 +93,7 @@ export const OFFERS: readonly ShopOffer[] = [
   },
   {
     id: "dailyGems", name: "Daily Free Gems", category: "gems", item: { kind: "currency", currency: "gems", amount: 25 }, quantity: 1,
-    price: { kind: "free" }, rarity: "common", purchaseLimit: 1, daily: true, effects: ["+25 Gems", "Once a day: resets at 00:00 GMT"], tags: ["free"],
+    price: { kind: "free" }, rarity: "common", purchaseLimit: 1, period: 1, effects: ["+25 Gems", "Once a day: resets at 00:00 GMT"], tags: ["free"],
   },
   gemPack("gems250", 250, "gems_250", "$4.99", "common"),
   gemPack("gems550", 550, "gems_550", "$9.99", "uncommon", "10% bonus!"),

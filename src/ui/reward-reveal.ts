@@ -1,15 +1,16 @@
 import type { GoalReward } from "../goals.ts";
 import { CURRENCIES, type CurrencyId } from "../shop/currency.ts";
 import { ENTITLEMENTS } from "../shop/entitlements.ts";
+import { bundleAmounts } from "../shop/items.ts";
 import type { ShopOffer } from "../shop/offers.ts";
-import { gemIcon, goldIcon } from "./dom.ts";
+import { gemIcon, goldIcon, shardIcon } from "./dom.ts";
 
 /** A reward to celebrate: its icon, the amount beside it (a currency's
  * "+250"), the line over its name, and what it does. A `permanent` one, an
  * unlock bought for good, turns golden rays behind it; currency doesn't. */
 export type RewardShown = { icon: string; amount?: string; kicker: string; name: string; text?: string; permanent: boolean };
 
-const CURRENCY_ICONS: Record<CurrencyId, () => string> = { gems: () => gemIcon(), gold: goldIcon };
+const CURRENCY_ICONS: Record<CurrencyId, () => string> = { gems: () => gemIcon(), shards: () => shardIcon(), gold: goldIcon };
 
 /** Celebrates a reward the way a new card is: it rises from below the screen
  * to its middle, with what it is written underneath, and a press claims it
@@ -38,12 +39,18 @@ function currencyShown(currency: CurrencyId, amount: number, kicker: string): Re
 }
 
 /** What a Shop offer just bought or claimed shows, or null for one that
- * grants nothing. A permanent unlock wears its Gold multiplier on the coin,
- * or a star when it has none. */
+ * grants nothing. A bundle shows its first currency, the rest written under
+ * its name. A permanent unlock wears its Gold multiplier on the coin, or a
+ * star when it has none. */
 export function offerShown(o: ShopOffer): RewardShown | null {
   const item = o.item, kicker = o.price.kind === "free" ? "CLAIMED" : "PURCHASED";
   if (!item) return null;
   if (item.kind === "currency") return currencyShown(item.currency, item.amount * o.quantity, kicker);
+  if (item.kind === "bundle") {
+    const [[first, n], ...rest] = bundleAmounts(item.amounts);
+    const more = rest.map(([c, m]) => `+${(m * o.quantity).toLocaleString("en-US")} ${CURRENCIES[c].name}`).join(" · ");
+    return { ...currencyShown(first, n * o.quantity, kicker), name: CURRENCIES[first].name, text: more || undefined };
+  }
   const factor = ENTITLEMENTS[item.id].goldFactor;
   const icon = factor > 1 ? goldIcon() : `<span class="reward-reveal-star" aria-hidden="true">★</span>`;
   return { icon, amount: factor > 1 ? `×${factor}` : undefined, kicker: "UNLOCKED FOR GOOD", name: o.name, text: o.effects.join(" · "), permanent: true };

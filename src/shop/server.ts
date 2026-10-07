@@ -16,14 +16,20 @@ export interface ShopServer {
   openStore(url: string): void;
 }
 
+/** Whether the stub store confirms `sku` unpaid: for now, the Gem packs
+ * and the Ascension Shard packs, so they can be tried out. */
+export const stubConfirms = (sku: string) => sku.startsWith("gems_") || sku.startsWith("shards_");
+
 /** The stand-in until the server exists.
  * TODO: ask the server for the time and prices, and the store to take
  * payment, once both are set up. Until then the device's clock stands in
- * for the server's, the default prices show, and nothing can be bought
- * with real money except through Dev mode's free purchases. */
+ * for the server's (so the shard packs' two weeks count on it), the
+ * default prices show, and the store confirms the Gem and shard packs
+ * without payment (`stubConfirms`); nothing else can be bought with real
+ * money except through Dev mode's free purchases. */
 export const stubServer: ShopServer = {
   time: async () => Date.now(),
   prices: async () => ({}),
-  purchase: async () => false,
+  purchase: async (sku) => stubConfirms(sku),
   openStore: () => {},
 };

@@ -1,6 +1,6 @@
 import type { Save } from "../entities.ts";
 import { CURRENCIES } from "./currency.ts";
-import { gmtDay } from "./clock.ts";
+import { DAY_MS, gmtDay } from "./clock.ts";
 import { grant, grantRefusal, itemName } from "./items.ts";
 import { HISTORY_KEPT, type Transaction } from "./ledger.ts";
 import { CATEGORIES, unmet, type Price, type ShopOffer } from "./offers.ts";
@@ -18,11 +18,16 @@ export type Payment = "price" | "store" | "free";
 /** Why an offer can't be bought. */
 export type Refusal = "locked" | "notStarted" | "expired" | "storeLink" | "limit" | "owned" | "unpaid" | "short";
 
-/** Times `offer` has been bought this period: ever, or today for a daily one. */
+/** Times `offer` has been bought this period: ever, or for one with a
+ * `period`, since its last purchase's Shop day until `period` days on. */
 export function timesBought(save: Save, offer: ShopOffer, now: number) {
   const c = save.shop.counts[offer.id];
-  return !c || (offer.daily && c.day !== gmtDay(now)) ? 0 : c.n;
+  return !c || (offer.period && gmtDay(now) >= c.day + offer.period) ? 0 : c.n;
 }
+
+/** The server time `offer`'s period starts again, once bought this period. */
+export const availableAgain = (save: Save, offer: ShopOffer) =>
+  ((save.shop.counts[offer.id]?.day ?? 0) + (offer.period ?? 0)) * DAY_MS;
 
 /** Whether `offer` has been bought as often as it can be this period. */
 export const soldOut = (save: Save, offer: ShopOffer, now: number) =>

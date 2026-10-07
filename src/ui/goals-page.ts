@@ -6,7 +6,7 @@ import { offer } from "../shop/offers.ts";
 import { CLEARED_INSPIRATION } from "../tower/area-ledger.ts";
 import { tierNumeral, tierRewardText, tierStats } from "../tiers.ts";
 import type { AppContext } from "./app.ts";
-import { el, gemIcon, goldIcon } from "./dom.ts";
+import { el, gemIcon, goldIcon, shardIcon } from "./dom.ts";
 import { goalRewardShown, offerShown, revealReward } from "./reward-reveal.ts";
 
 // The Goals screen: each tower drawn as a stone column rising from the
@@ -22,7 +22,7 @@ const FLOOR_PX = 14;
 const GROUND_PX = 96;
 const TOP_PX = 160;
 
-const CURRENCY_ICONS: Record<CurrencyId, () => string> = { gems: () => gemIcon("gem-icon goal-icon"), gold: goldIcon };
+const CURRENCY_ICONS: Record<CurrencyId, () => string> = { gems: () => gemIcon("gem-icon goal-icon"), shards: () => shardIcon("shard-icon goal-icon"), gold: goldIcon };
 /** Each unlock's icon: Damage Prediction a cracked heart, Combat Forecast an eye over crossed blades, Attack
  * Lore an open book with a rising arrow, Warp a portal's swirl, Damage Visual a monster's tile with a red
  * number in its corner, Relative Damage Color that tile over a green-to-red bar, Equipment an anvil

@@ -324,6 +324,10 @@ All the player's cards: those in the hand and those waiting outside it. Also the
 The premium currency, kept between runs like Gold. Also the one lying on a run's floor now and then, collected by touching or tapping it.
 _Avoid_: diamond, crystal, premium
 
+**Ascension Shard**:
+A limited currency, kept between runs, bought in the Shop's limited packs (each at most once every two weeks). Shown as a green crystal.
+_Avoid_: shard (alone: an ATK or DEF shard is a pickup)
+
 **Focus**:
 Putting one card of the hand ahead of the others inside a run, until the hero reaches its target or the card has no path to one. A run has a limited number of Focus uses.
 _Avoid_: priority, override

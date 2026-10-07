@@ -235,6 +235,9 @@ export type Save = {
   delve: ModeSave<DelveRun> & { courage: number; memory: AutomoveMemory };
   /** The premium currency, kept between runs like Gold (gems.ts). */
   gems: number;
+  /** Ascension Shards: a limited currency, kept between runs, bought only
+   * in the Shop's limited packs for now. */
+  ascensionShards: number;
   /** Where the Gems found on floors and the ad button's stand: never part
    * of a run, so undo can't touch them. */
   gemDrop: GemDrop;

@@ -44,6 +44,9 @@ export const goldIcon = () => uiSprite("gold", "ui-sprite gold-icon");
 /** A cut cyan gem, the Gems currency's icon (drawn like the board's). */
 export const gemIcon = (className = "gem-icon") =>
   `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 5h9L20 9.5 12 20.5 4 9.5z" fill="#2fa9e0"/><path d="M7.5 5h9L20 9.5H4z" fill="#8fe6ff"/><path d="M7.5 5L10 9.5 12 20.5 14 9.5 16.5 5M10 9.5L12 5 14 9.5" fill="none" stroke="#e1faff" stroke-width="0.8" stroke-linejoin="round"/><path d="M7.5 5h9L20 9.5 12 20.5 4 9.5z" fill="none" stroke="#0d3a5c" stroke-width="1.3" stroke-linejoin="round"/></svg>`;
+/** An Ascension Shard: a tall green crystal, worn wherever Shards are shown. */
+export const shardIcon = (className = "shard-icon") =>
+  `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l5 6-1.5 11L12 22l-3.5-3L7 8z" fill="#2fbf6a"/><path d="M12 2l5 6-5 2-5-2z" fill="#9dffc4"/><path d="M12 10v12M7 8l5 2 5-2" fill="none" stroke="#dcffe9" stroke-width="0.8" stroke-linejoin="round"/><path d="M12 2l5 6-1.5 11L12 22l-3.5-3L7 8z" fill="none" stroke="#0b4a26" stroke-width="1.3" stroke-linejoin="round"/></svg>`;
 /** "1 Gem", "5 Gems". */
 export const gemCount = (n: number) => `${n} ${n === 1 ? "Gem" : "Gems"}`;
 export const itemSprite = (name: keyof typeof AREA1_ITEM_URLS, className = "ui-sprite") =>
