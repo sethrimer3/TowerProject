@@ -3469,3 +3469,21 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
   0% { box-shadow: 0 0 0 2px #ffe27a, 0 0 18px 6px rgba(255, 210, 90, 0.85); filter: brightness(1.6); }
   100% { box-shadow: 0 0 0 0 transparent, 0 0 0 0 transparent; filter: none; }
 }
+/* A piece's detail card: a close X pinned to its top right, and its actions
+ * in rows that wrap instead of running off the side on a phone. */
+#modal:has(> .equip-detail) { padding: 18px 16px 20px; }
+.equip-detail .dialog-x { position: sticky; top: 0; z-index: 3; float: right; width: 36px; height: 36px; margin: -6px -6px 0 8px; padding: 0; border: 1px solid #8d794e; border-radius: 50%; background: #101823; color: #e9d4ac; font-size: 16px; line-height: 1; }
+.equip-detail .dialog-x:hover, .equip-detail .dialog-x:focus-visible { background: #2a3546; color: #fff; }
+.equip-detail > small { display: block; padding: 0 44px; }
+.equip-detail .equip-title { justify-content: center; margin: 10px 0 6px; font-size: 22px; line-height: 1.2; }
+.equip-detail .item-meta { justify-content: center; font-size: 11px; }
+.equip-detail .hint, .equip-detail .item-identity { margin: 6px 0; line-height: 1.5; }
+.equip-detail .equip-heading { margin: 14px 0 4px; padding-bottom: 3px; border-bottom: 1px solid #36414f; }
+.equip-detail .dialog-actions { margin-top: 10px; gap: 8px; }
+.equip-detail .dialog-actions button { min-height: 44px; padding: 8px 6px; white-space: nowrap; }
+.equip-actions { display: grid; gap: 8px; margin-top: 16px; padding-top: 14px; border-top: 1px solid #36414f; }
+.equip-actions-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.equip-actions-row:empty { display: none; }
+.equip-actions-row button { flex: 1 1 0; min-width: 0; min-height: 44px; padding: 8px 6px; font-size: 12px; line-height: 1.25; }
+.equip-detail button:disabled { opacity: 0.6; border-style: dashed; color: #8b98aa; }
+.equip-actions .danger { border-color: #8a3a34; }

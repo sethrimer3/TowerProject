@@ -405,12 +405,14 @@ export class EquipmentPanel {
     const mergeButton = next ? `<button id="eq-merge"${fodder.length >= RARITY_TIERS[item.rarity].merge - 1 ? "" : " disabled"} title="Needs ${RARITY_TIERS[item.rarity].merge - 1} more unlocked, unworn copies">${ACTION_ICONS.merge} Assemble (${fodder.length}/${RARITY_TIERS[item.rarity].merge - 1})</button>` : "";
     const protectedNote = isProtected(this.e, item) ? `<p class="hint">${item.locked ? "Locked" : "Worn"}: it can't be dismantled or used up in a merge until you ${item.locked ? "unlock it" : "take it off"}.</p>` : "";
     const invested = item.spent ? `<p class="hint">Invested: ${currencyAmount(item.spent.gold)} Gold and ${item.spent.material} ${EQUIP_MATERIALS[mat].name}.</p>` : "";
-    modal.innerHTML = `<small>${CATEGORIES[category].name.toUpperCase()} · ${def.class === "unique" ? "UNIQUE" : "STANDARD"}</small>
+    const actions = `${mergeButton}${isProtected(this.e, item) ? "" : `<button id="eq-dismantle" class="danger">${ACTION_ICONS.dismantle} Dismantle</button>`}`;
+    modal.innerHTML = `<div class="equip-detail"><button id="eq-close" class="dialog-x" aria-label="Close" title="Close">✕</button>
+      <small>${CATEGORIES[category].name.toUpperCase()} · ${def.class === "unique" ? "UNIQUE" : "STANDARD"}</small>
       <h2 class="equip-title"><span class="equip-icon-frame rar-${item.rarity}">${itemIcon(def.id)}</span>${def.name}</h2>
       <p class="item-meta">${rarityTag(item.rarity)} Level ${item.level}/${maxLevel(item)}</p>${this.progressHtml(item)}<p class="item-identity">${def.identity}.</p>
       <h3 class="equip-heading">Intrinsic</h3><ul class="effect-list">${lines}</ul>
       <h3 class="equip-heading">Effect slots</h3>${this.slotsHtml(item)}${this.compareWorn(item)}${level}${invested}${protectedNote}
-      <div class="dialog-actions">${equipButtons}<button id="eq-lock">${ACTION_ICONS.lock} ${item.locked ? "Unlock" : "Lock"}</button>${mergeButton}${isProtected(this.e, item) ? "" : `<button id="eq-dismantle" class="danger">${ACTION_ICONS.dismantle} Dismantle</button>`}<button id="eq-close">Close</button></div>`;
+      <div class="equip-actions"><div class="equip-actions-row">${equipButtons}</div><div class="equip-actions-row"><button id="eq-lock">${ACTION_ICONS.lock} ${item.locked ? "Unlock" : "Lock"}</button>${actions}</div></div></div>`;
     modal.showModal();
     const on = (sel: string, fn: () => void) => { const b = document.querySelector<HTMLButtonElement>(sel); if (b) b.onclick = fn; };
     on("#eq-close", () => modal.close());
