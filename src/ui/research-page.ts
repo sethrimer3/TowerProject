@@ -233,10 +233,10 @@ export class ResearchPage {
     // the value they reach.
     const q = game.buyQuantity, bulk = trainingBulk(save, t.id, q), count = step.maxed ? 1 : Math.max(1, bulk.count);
     const { now, unit } = step, next = count === 1 ? step.next : trainingStep(save, t.id, count).next;
-    // A row with a most ranks says so, and once there offers no next one: a
-    // stat's worth grows with the hero's level, so its level shows its most
+    // A row says what its most ranks are worth, and once there offers no
+    // next one: a stat's worth grows with the hero's level, so its level shows its most
     // ranks instead.
-    const most = "max" in t && !isStatRow(t) ? `up to ${trainingStep({ ...save, training: { ...save.training, [t.id]: t.max }, trainingJobs: [] }, t.id).now}${unit}` : "";
+    const most = !isStatRow(t) ? `up to ${trainingStep({ ...save, training: { ...save.training, [t.id]: t.max }, trainingJobs: [] }, t.id).now}${unit}` : "";
     const shown = (v: number) => trainingText(v, unit);
     const time = step.maxed || !hired ? "" : `<span class="training-left" title="Training time to the next rank">${clockIcon()}<span data-training-left="${t.id}">${formatDuration(game.training.toNextRank(t.id))}</span></span>`;
     const notes = [time, most].filter(Boolean).join(" · ");
@@ -248,11 +248,10 @@ export class ResearchPage {
   }
 
   /** A row's level, its ranks, and while a trainer trains the next, the
-   * level it reaches: "Lv 5", or "Lv 5 → 6"; a row with a most ranks adds
-   * it: "Lv 5 / 6,000". */
+   * level it reaches, out of its most: "Lv 5 / 6,000", or "Lv 5 → 6 / 6,000". */
   private levelText(id: TrainingId, training: boolean) {
     const ranks = this.ctx.game.save.training[id], row = TRAINING.find((t) => t.id === id)!;
-    const most = "max" in row ? ` / ${row.max.toLocaleString("en-US")}` : "";
+    const most = ` / ${row.max.toLocaleString("en-US")}`;
     return `<span class="training-level">Lv ${ranks}${training ? ` → ${ranks + 1}` : ""}${most}</span>`;
   }
 

@@ -206,7 +206,7 @@ export const trainingSpeed = (save: Pick<Save, "archives">) => researched(save.a
  * trainer is training. */
 export const trainingMaxed = (save: Pick<Save, "training"> & Partial<Pick<Save, "trainingJobs">>, id: TrainingId) => {
   const row = TRAINING.find((t) => t.id === id)!;
-  return "max" in row && save.training[id] + (save.trainingJobs?.some((j) => j.id === id) ? 1 : 0) >= row.max;
+  return save.training[id] + (save.trainingJobs?.some((j) => j.id === id) ? 1 : 0) >= row.max;
 };
 
 /** What one more rank of `id` costs (in training points, or a trainer's
@@ -227,7 +227,7 @@ export function trainingStep(save: Save, id: TrainingId, count = 1) {
  * the points held pay for them. */
 export function trainingBulk(save: Save, id: TrainingId, q: BuyQuantity) {
   const row = TRAINING.find((t) => t.id === id)!;
-  const room = "max" in row ? row.max - save.training[id] - (save.trainingJobs?.some((j) => j.id === id) ? 1 : 0) : Infinity;
+  const room = row.max - save.training[id] - (save.trainingJobs?.some((j) => j.id === id) ? 1 : 0);
   return bulkBuy(q, Math.max(0, room), () => row.cost, save.settings.freePurchases ? Infinity : trainingPoints(save).left);
 }
 

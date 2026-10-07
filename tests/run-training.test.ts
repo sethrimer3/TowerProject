@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { decode, defaults } from "../src/save.ts";
-import { RUN_TRAINING_CAP, RUN_TRAINING_PRICES, TRAINING, trained, xpForLevel, levelForXp } from "../src/config.ts";
+import { RUN_TRAINING_PRICES, TRAINING, trained, xpForLevel, levelForXp } from "../src/config.ts";
 import { reviveChance } from "../src/loadout.ts";
 import { ranksInRun, runTrainingOffer, runTrainingValue, silverPrice } from "../src/run-training.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
@@ -111,9 +111,10 @@ test("a row reaches no higher in a run than its most on the Training tab, or the
   assert.ok(g.trainInRun("hp"));
   assert.equal(g.trainInRun("hp"), false, "6,000 is Max HP's most");
   g.save.upgrades.shroud = 1;
-  g.save.training.shroud = RUN_TRAINING_CAP - 1;
+  g.save.training.shroud = 999;
   assert.ok(g.trainInRun("shroud"));
-  assert.equal(g.trainInRun("shroud"), false, `${RUN_TRAINING_CAP} without a most of its own`);
+  assert.equal(g.trainInRun("shroud"), false, "1,000 is Shroud's most");
+  assert.ok(TRAINING.every((t) => Number.isInteger(t.max) && t.max > 0), "every row has its most");
 });
 
 test("the hero's own ranks raise where a run starts, at the same Silver prices", () => {

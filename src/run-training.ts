@@ -1,4 +1,4 @@
-import { RUN_TRAINING_CAP, RUN_TRAINING_PRICES, schedulePrice, TRAINING, isStatRow, trainingOpen, type TrainingId, type TrainingRow } from "./config.ts";
+import { RUN_TRAINING_PRICES, schedulePrice, TRAINING, isStatRow, trainingOpen, type TrainingId, type TrainingRow } from "./config.ts";
 import type { RunCore, Save } from "./entities.ts";
 import { bulkBuy, type BuyQuantity } from "./buy-quantity.ts";
 import { floorGold, floorSilver, killGold, percentPotionChance, silverBonus, potionPercent, reviveChance, shownStat } from "./loadout.ts";
@@ -12,8 +12,8 @@ import { floorGold, floorSilver, killGold, percentPotionChance, silverBonus, pot
  * one before, `step` rising by `growth` every five, summed here at once. */
 export const silverPrice = (id: TrainingId, bought: number) => schedulePrice(RUN_TRAINING_PRICES[id], bought);
 
-/** The highest level `row` reaches in a run: its own `max`, or the cap. */
-export const runTrainingMax = (row: TrainingRow) => ("max" in row ? row.max : RUN_TRAINING_CAP);
+/** The highest level `row` reaches in a run: its `max`, as on the Training tab. */
+export const runTrainingMax = (row: TrainingRow) => row.max;
 
 /** Ranks of `id` bought with Silver in `run`. */
 export const boughtInRun = (run: Pick<RunCore, "training">, id: TrainingId) => run.training?.[id] ?? 0;

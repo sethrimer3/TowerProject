@@ -265,7 +265,7 @@ function decodeProgress(s: any, d: Save, undoCapacity: number) {
  * finished (their own schedule), the trainers and
  * their jobs, each stat's time credit, the time bank and the boost. */
 function decodeTraining(s: any, d: Save) {
-  for (const t of TRAINING) d.training[t.id] = count(s.training?.[t.id], d.training[t.id], "max" in t ? t.max : 1e6);
+  for (const t of TRAINING) d.training[t.id] = count(s.training?.[t.id], d.training[t.id], t.max);
   for (const t of TRAINING) d.trainingPaid[t.id] = decodePaid(s.trainingPaid?.[t.id], t.cost * d.training[t.id]);
   for (const t of TRAINING) d.trainerRanks[t.id] = count(s.trainerRanks?.[t.id], 0, d.training[t.id]);
   d.trainers = count(s.trainers, d.trainers, TRAINER_GEMS.length);
