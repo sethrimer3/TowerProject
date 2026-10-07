@@ -19,6 +19,7 @@ import { refusal } from "../shop/transactions.ts";
 import { equipmentWaiting } from "../equipment/inventory.ts";
 import { GOLD_BOOST_FACTOR, GOLD_BOOST_MS } from "../gold-boost.ts";
 import { adsOff } from "../shop/entitlements.ts";
+import { renderRunMenu } from "./run-menu.ts";
 
 /** The stats cluster, action buttons and status line around the board. */
 
@@ -116,6 +117,7 @@ export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay)
   (document.querySelector(".dpad") as HTMLElement).hidden = !game.save.settings.showArrows;
   renderModeTab(game);
   renderForestSign(game);
+  renderRunMenu(game);
   el("run-research").hidden = !!game.run.outside;
   el("run-research").classList.toggle("notify", !game.run.outside && researchWaiting(game));
   renderAdButton(game);
@@ -326,7 +328,6 @@ function renderHand(game: Game) {
     // resting for the floor (Deprioritize with every mark made).
     card.classList.toggle("unable", !game.run.outside && ((IN_PLACE.has(hand[i]) && !game.canAct(hand[i])) || game.cardResting(hand[i])));
   });
-  el("end-run").classList.toggle("deadlocked", game.handStuck && !game.run.outside);
 }
 
 /** True when the heading still shows the other side of the forest entrance. */
@@ -492,12 +493,10 @@ function renderRunEarned(game: Game) {
 /** The ad buttons stand under the purse: the Gems' in the forest and
  * inside a run, in both modes, showing its Gems when they can be claimed,
  * an empty space while it waits; and inside a run beside it the Gold
- * ad's, with the boost time stored. End Run takes Goals' place inside. */
+ * ad's, with the boost time stored. Goals shows only in the forest. */
 export function renderAdButton(game: Game) {
   const inside = !game.run.outside, button = el("gem-ad") as HTMLButtonElement;
   el("section-pick").hidden = inside;
-  // Only a run inside can be ended.
-  el("end-run").hidden = !inside;
   button.classList.toggle("waiting", !game.gemFinder.adReady);
   button.disabled = !game.gemFinder.adReady;
   renderGoldAd(game, inside);

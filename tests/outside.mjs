@@ -1,4 +1,5 @@
 import { chromium, expect } from "@playwright/test";
+import { openMenu } from "./run-menu.mjs";
 const browser = await chromium.launch({ headless: true, channel: process.env.PLAYWRIGHT_CHANNEL || "msedge" });
 try {
   const page = await browser.newPage({ viewport: { width: 1280, height: 710 }, deviceScaleFactor: 1 });
@@ -21,10 +22,10 @@ try {
   await page.locator("#forest-sign").click();
   await expect(page.locator("#board-title")).toHaveText("THE MOUNTAIN HOLLOW");
   await expect(page.locator("#board")).not.toHaveClass(/mode-tower/);
-  await page.locator("#auto-settings").click();
+  await openMenu(page); await page.locator("#auto-settings").click();
   await page.locator("#weather-sound").uncheck();
   await page.reload();
-  await page.locator("#auto-settings").click();
+  await openMenu(page); await page.locator("#auto-settings").click();
   await expect(page.locator("#weather-sound")).not.toBeChecked();
   // A reload opens on the Tower, whose forest the board button shows.
   await page.locator('[data-tab="board"]').click();

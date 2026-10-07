@@ -1,5 +1,6 @@
 import { chromium } from "@playwright/test";
 import assert from "node:assert/strict";
+import { openMenu } from "./run-menu.mjs";
 
 const browser = await chromium.launch({
   headless: true,
@@ -27,7 +28,7 @@ await page.goto(url);
 // keep their row; ending the run returns to the forest and shows them.
 assert.equal(await page.locator('[data-tab="board"]').isVisible(), false, "Tabs should be hidden inside a run");
 assert.ok((await page.locator("nav").boundingBox()).height > 40, "The tab row should keep its space inside a run");
-await page.locator("#end-run").click();
+await openMenu(page); await page.locator("#end-run").click();
 await page.locator("#confirm").click();
 
 // 1. Fresh start: one board button (the Tower's), no Delve sign, and the

@@ -1,4 +1,5 @@
 import { chromium, expect } from "@playwright/test";
+import { openMenu } from "./run-menu.mjs";
 const browser = await chromium.launch({
   headless: true,
   channel: process.env.PLAYWRIGHT_CHANNEL || "msedge",
@@ -15,7 +16,7 @@ await page.addInitScript(() => {
 });
 await page.goto(process.env.TEST_URL || "http://127.0.0.1:5173/");
 // Inside a run the tabs are hidden: end the first Tower run to reach the forest.
-await page.locator("#end-run").click();
+await openMenu(page); await page.locator("#end-run").click();
 await page.locator("#confirm").click();
 await expect(page.locator(".dpad")).toBeHidden();
 

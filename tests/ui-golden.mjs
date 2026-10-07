@@ -12,6 +12,7 @@ import { chromium } from "@playwright/test";
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { bounded, startPreview } from "./snapshot-preview.mjs";
+import { openMenu } from "./run-menu.mjs";
 
 const UPDATE = process.env.UPDATE_GOLDEN === "1";
 const GOLDEN = new URL("./fixtures/ui.golden.json", import.meta.url);
@@ -219,6 +220,11 @@ try {
     await page.evaluate(() => document.fonts.ready);
   }
   const click = (selector) => page.locator(selector).first().click();
+  /** Clicks a button in the run's menu, opening the menu first inside a run. */
+  const menuClick = async (selector) => {
+    await openMenu(page);
+    await click(selector);
+  };
   const tab = (id) => click(`[data-tab="${id}"]`);
   /** Taps Tower tile (x, y): the Tower view is fixed on the 17 × 17 room. */
   async function tapTile(x, y) {
@@ -227,7 +233,7 @@ try {
   }
   /** Ends the current run and returns to the forest, where the tabs show. */
   async function leaveRun() {
-    await click("#end-run");
+    await menuClick("#end-run");
     await click("#confirm");
   }
   async function closeModal() {
@@ -354,7 +360,12 @@ try {
     // Inside a run the ad's Gems stand under the purse, beside the Gold ad.
     await click("#gem-ad");
     await shot(`${prefix}.adGems`);
-    await click("#auto-settings");
+    // The hamburger opens the run's menu over the stats, and closes it.
+    await click("#run-menu-toggle");
+    await shot(`${prefix}.runMenu`);
+    await click("#run-menu-toggle");
+    await shot(`${prefix}.runMenu.closed`);
+    await menuClick("#auto-settings");
     await shot(`${prefix}.autoSettings`);
     await click("#settings-back");
     // Research opens over the run, paused; its Back plays on. A Gem reset
@@ -363,7 +374,7 @@ try {
     await shot(`${prefix}.runResearch`);
     await click("#research-back");
     await shot(`${prefix}.runResearch.back`);
-    await click("#end-run");
+    await menuClick("#end-run");
     await shot(`${prefix}.endRun`);
     await click("#cancel");
     await shot(`${prefix}.endRun.cancelled`);
@@ -449,18 +460,18 @@ try {
   }
   /** Settings from inside a run: opened from the HUD, left by its Back button. */
   async function settingsTour(prefix) {
-    await click("#auto-settings");
+    await menuClick("#auto-settings");
     await shot(`${prefix}.settings`);
     await page.locator("#info-display").selectOption("status");
     await click("#settings-back");
     await tapTile(8, 3);
     await shot(`${prefix}.statusInfo`);
-    await click("#auto-settings");
+    await menuClick("#auto-settings");
     await page.locator("#info-display").selectOption("popup");
     await page.locator("#arrows").setChecked(true);
     await click("#settings-back");
     await shot(`${prefix}.popupArrows`);
-    await click("#auto-settings");
+    await menuClick("#auto-settings");
     await page.locator("#dev-mode").setChecked(true);
     await shot(`${prefix}.settings.dev`);
     await click("#retire");
@@ -477,7 +488,7 @@ try {
   // Inside a run the button plays and pauses the hand.
   await click("#auto");
   await shot("fresh.handToggled");
-  await click("#auto-settings");
+  await menuClick("#auto-settings");
   await shot("fresh.settings");
   await click("#settings-back");
   await leaveRun();

@@ -1,11 +1,12 @@
 import { chromium, expect } from '@playwright/test';
+import { openMenu } from "./run-menu.mjs";
 const browser = await chromium.launch({headless:true,channel:'msedge'});
 const page = await browser.newPage({viewport:{width:390,height:844}});
 const errors=[];page.on('pageerror',e=>errors.push(e.message));
 await page.addInitScript(() => { const fixture = sessionStorage.getItem("__treeFixture"); if (fixture) { localStorage.setItem("towerdelve.v1", fixture); sessionStorage.removeItem("__treeFixture"); } });
 await page.goto(process.env.TEST_URL || 'http://127.0.0.1:5173/');
 // Inside a run the tabs are hidden: end the first Tower run to reach the forest.
-await page.locator("#end-run").click();
+await openMenu(page); await page.locator("#end-run").click();
 await page.locator("#confirm").click();
 await expect(page.locator('#forest-sign')).toBeHidden();
 await page.locator('[data-tab="upgrades"]').click();
@@ -30,7 +31,7 @@ await page.locator('[data-tab="board"]').click();await expect(page.locator('#aut
 for(const mode of ['tower','delve']) {
   if(mode==='delve') await page.locator('#forest-sign').click();
   await page.locator('#enter-run').click();await expect(page.locator('#auto-state')).toHaveText('PLAYING');await page.locator('#auto').click();await expect(page.locator('#auto-state')).toHaveText('PAUSED');
-  await page.locator('#end-run').click();await page.locator('#confirm').click();
+  await openMenu(page); await page.locator('#end-run').click();await page.locator('#confirm').click();
 }
 await page.reload();await page.locator('[data-tab="upgrades"]').click();
 await page.screenshot({path:'test-results/inspiration-tree.png',fullPage:true});

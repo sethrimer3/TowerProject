@@ -684,6 +684,66 @@ canvas {
 .mini-action[hidden] {
   display: none;
 }
+/* Inside a run, the menu: the hamburger and Research under it, and the
+   buttons the hamburger opens (run-menu.ts). Its frame, a thin white
+   outline round the two, slides left over the stats to fit them, with a
+   bounce, as they fade in; closing, they fade out first and the frame
+   slides back in. Its cells, two rows of them, fill right to left, End Run
+   taking both rows of the leftmost column. */
+.run-menu {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  --cell: 47px;
+}
+.run-menu > .mini-action { z-index: 1; }
+.run-menu-frame {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  right: -3px;
+  width: calc(100% + 6px);
+  border: 1px solid #f2f4f8;
+  border-radius: 6px;
+  background: linear-gradient(140deg, #1c2430, #10151e);
+  box-shadow: 0 4px 14px #000a;
+  visibility: hidden;
+  transition: width .22s ease-in .1s, visibility 0s .32s;
+}
+.run-menu.open .run-menu-frame {
+  width: var(--open-width);
+  visibility: visible;
+  transition: width .36s cubic-bezier(.34, 1.45, .64, 1), visibility 0s;
+}
+.run-menu-items {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  bottom: 0;
+  right: calc(100% + 4px);
+  display: grid;
+  direction: rtl;
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  grid-auto-flow: column;
+  grid-auto-columns: var(--cell);
+  gap: 4px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .1s ease-in, visibility 0s .1s;
+}
+.run-menu-items > * { direction: ltr; }
+.run-menu.open .run-menu-items {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity .24s ease-out .08s, visibility 0s;
+}
+.run-menu.instant .run-menu-frame,
+.run-menu.instant .run-menu-items { transition: none; }
+.run-menu-end { grid-row: span 2; height: auto; }
+.run-menu-end small { font-size: 9px; letter-spacing: 1px; }
+.menu-icon { display: block; width: 16px; height: 16px; fill: currentColor; }
 /* Under play/pause inside a run: the hero's movement speed, steps a second,
    between the arrows that slow and speed it. Each arrow fills its side of
    the row, so a press near it counts. */
@@ -1027,8 +1087,11 @@ nav:not(.in-run) .hand {
   filter: grayscale(1) brightness(0.55);
 }
 /* No card can act: the run waits for the player to end it. */
-#end-run.deadlocked {
+#end-run.deadlocked,
+#stuck-end-run.deadlocked {
   border-color: #e29898;
+  background: linear-gradient(180deg, #8a2a24, #5c1915);
+  color: #ffe4e0 !important;
   box-shadow: 0 0 10px 2px #c8453c;
 }
 nav button > span {
@@ -1378,6 +1441,9 @@ dialog p {
   .mini-action small {
     font-size: 5.5px;
     letter-spacing: 0;
+  }
+  .run-menu-end small {
+    font-size: 7px;
   }
   .auto-speed {
     font-size: 7px;

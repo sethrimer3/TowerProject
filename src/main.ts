@@ -19,6 +19,7 @@ import { BoardOverlay } from "./ui/board-overlay.ts";
 import { boardHeadingStale, flashRed, renderAdButton, renderShopDot, renderBoardHeading, renderHud, renderVitals, purseFrame, gearWaiting, upgradesWaiting, dismissResearch } from "./ui/hud.ts";
 import { ResearchPage } from "./ui/research-page.ts";
 import { confirmAction, RunEndDialog } from "./ui/dialogs.ts";
+import { closeRunMenu, toggleRunMenu } from "./ui/run-menu.ts";
 import { GoalsPage } from "./ui/goals-page.ts";
 import { SkillTreePage } from "./ui/skill-tree-page.ts";
 import { ResearchToasts, researchToast, trainingToast } from "./ui/research-toast.ts";
@@ -251,14 +252,27 @@ el("gold-ad").onclick = () => {
   save();
   update();
 };
-el("end-run").onclick = () => runEnd.ask();
+el("end-run").onclick = () => {
+  closeRunMenu();
+  runEnd.ask();
+};
+// Shown at the foot of the height column while no card can act.
+el("stuck-end-run").onclick = () => runEnd.ask();
+// Inside a run, the hamburger opens and closes the menu over the stats.
+el("run-menu-toggle").onclick = () => toggleRunMenu(game.save.settings.reduceMotion);
 modal.addEventListener("cancel", (e) => {
   // The defeat dialog waits for an answer.
   if (game.fallen) e.preventDefault();
 });
-el("auto-settings").onclick = () => navigate("settings");
+el("auto-settings").onclick = () => {
+  closeRunMenu();
+  navigate("settings");
+};
 // Inside a run, Research opens Training and the Archives with the run paused.
-el("run-research").onclick = () => navigate("research");
+el("run-research").onclick = () => {
+  closeRunMenu();
+  navigate("research");
+};
 // The forest's sign: down the path to the other mode's forest.
 el("forest-sign").onclick = () => {
   overlay.hide();
