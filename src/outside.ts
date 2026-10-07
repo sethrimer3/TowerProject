@@ -67,13 +67,21 @@ const within = (r: { dx: number; width: number; y: number; height: number }, cen
   x >= center + r.dx && x < center + r.dx + r.width && y >= r.y && y < r.y + r.height;
 /** Whether (x, y) is one of the Blacksmith's tiles, by the entrance column. */
 export const onBlacksmith = (center: number, x: number, y: number) => within(BLACKSMITH, center, x, y);
+/** Where the Tournament Hall stands once the Tournament is open: the
+ * Blacksmith's mirror across the path, up and to the right, in a yard of
+ * its own (`HALL_YARD`). */
+export const TOURNAMENT_HALL = { dx: 4, width: 3, y: 8, height: 3 } as const;
+const HALL_YARD = { dx: TOURNAMENT_HALL.dx - 1, width: TOURNAMENT_HALL.width + 2, y: TOURNAMENT_HALL.y - 1, height: TOURNAMENT_HALL.height + 1 };
+/** Whether (x, y) is one of the Tournament Hall's tiles, by the entrance column. */
+export const onTournamentHall = (center: number, x: number, y: number) => within(TOURNAMENT_HALL, center, x, y);
 
 export class OutsideWorld implements Board {
   width: number;
   floor = 0;
   entranceX: number;
-  /** `blacksmith`: Equipment is open, so its Blacksmith stands in the clearing. */
-  constructor(public seed: number, public mode: Mode, public blacksmith = false) {
+  /** `blacksmith`: Equipment is open, so its Blacksmith stands in the
+   * clearing; `hall`: the Tournament is, so its Hall does. */
+  constructor(public seed: number, public mode: Mode, public blacksmith = false, public hall = false) {
     this.width = MODES[mode].width;
     this.entranceX = MODES[mode].entranceX;
   }
@@ -81,11 +89,16 @@ export class OutsideWorld implements Board {
     if (!this.inside(x, y)) return { kind: "wall" };
     if (x === this.entranceX && y === ENTRANCE_Y) return { kind: "stairs" };
     if (this.blacksmith && within(YARD, this.entranceX, x, y)) return { kind: onBlacksmith(this.entranceX, x, y) ? "wall" : "floor" };
+    if (this.hall && within(HALL_YARD, this.entranceX, x, y)) return { kind: onTournamentHall(this.entranceX, x, y) ? "wall" : "floor" };
     return this.wooded(x, y) ? { kind: "wall" } : { kind: "floor" };
   }
   /** Whether (x, y) is the Blacksmith, which a tap opens. */
   isBlacksmith(x: number, y: number) {
     return this.blacksmith && onBlacksmith(this.entranceX, x, y);
+  }
+  /** Whether (x, y) is the Tournament Hall, which a tap opens. */
+  isTournamentHall(x: number, y: number) {
+    return this.hall && onTournamentHall(this.entranceX, x, y);
   }
   /** Whether (x, y) is the foot of the path, under the sign to the other
    * mode's forest: stepping onto it goes there (`Game.swapForest`). */
@@ -249,6 +262,62 @@ export function drawBlacksmith(c: CanvasRenderingContext2D, center: number) {
   // The banner on the gable: a breastplate on red cloth.
   drawBreastplateBanner(c, left + w / 2, top - 2);
   c.restore();
+}
+
+/** The Tournament Hall, in the same world space as the entrance: a pale
+ * stone hall under a blue roof with gilded edges, columns either side of
+ * its open doorway, toward the path, lit from inside, and on the gable a
+ * blue pennant bearing a golden trophy. */
+export function drawTournamentHall(c: CanvasRenderingContext2D, center: number) {
+  const left = (center + TOURNAMENT_HALL.dx) * 24, w = TOURNAMENT_HALL.width * 24;
+  const top = (OUTSIDE_SIZE - TOURNAMENT_HALL.y - TOURNAMENT_HALL.height) * 24, base = (OUTSIDE_SIZE - TOURNAMENT_HALL.y) * 24;
+  const wallTop = top + 26;
+  c.save();
+  // Shadow on the grass, then the pale stone walls.
+  c.fillStyle = "#16291f88"; c.fillRect(left - 4, base - 4, w + 6, 7);
+  c.fillStyle = "#8f8a7c"; c.fillRect(left + 3, wallTop, w - 6, base - wallTop);
+  for (let row = 0; row < 4; row++) for (let col = 0; col < 5; col++) {
+    c.fillStyle = (row + col) % 3 ? "#b4ad9a" : "#c2bba6";
+    c.fillRect(left + 4 + col * 13 + (row % 2) * 6, wallTop + 2 + row * 11, 12, 10);
+  }
+  c.fillStyle = "#6c6758"; c.fillRect(left + 3, base - 3, w - 6, 3);
+  // The open doorway, toward the path (left), lit from inside, between columns.
+  const door = left + w / 2 - 4;
+  c.fillStyle = "#3a2a14"; c.fillRect(door - 9, base - 26, 18, 26);
+  c.fillStyle = "#ffcf6a"; c.fillRect(door - 7, base - 24, 14, 24);
+  c.fillStyle = "#fff0b8"; c.fillRect(door - 3, base - 18, 6, 18);
+  for (const x of [door - 13, door + 9]) {
+    c.fillStyle = "#e4dfcf"; c.fillRect(x, base - 30, 4, 30);
+    c.fillStyle = "#9c9686"; c.fillRect(x + 3, base - 30, 1, 30);
+  }
+  c.fillStyle = "#e4dfcf"; c.fillRect(door - 14, base - 33, 28, 4);
+  // A lit window on the right.
+  c.fillStyle = "#3a2a14"; c.fillRect(left + w - 21, wallTop + 9, 12, 12);
+  c.fillStyle = "#ffcf6a"; c.fillRect(left + w - 19, wallTop + 11, 8, 8);
+  // The blue roof, gilded along its eaves.
+  c.fillStyle = "#24407a";
+  c.beginPath(); c.moveTo(left - 3, wallTop + 2); c.lineTo(left + 10, top + 2); c.lineTo(left + w - 10, top + 2); c.lineTo(left + w + 3, wallTop + 2); c.closePath(); c.fill();
+  c.fillStyle = "#3a5ca0";
+  for (let i = 0; i < 3; i++) c.fillRect(left + 4 + i * 3, top + 7 + i * 6, w - 8 - i * 6, 2);
+  c.fillStyle = "#d9a632"; c.fillRect(left - 3, wallTop + 1, w + 6, 3);
+  // The pennant on the gable: a golden trophy on blue cloth.
+  drawTrophyBanner(c, left + w / 2, top - 2);
+  c.restore();
+}
+
+/** A hanging blue pennant, 18 wide, with a golden trophy on it, its top
+ * centred on (x, y). */
+function drawTrophyBanner(c: CanvasRenderingContext2D, x: number, y: number) {
+  c.fillStyle = "#3a2414"; c.fillRect(x - 11, y, 22, 3);
+  c.fillStyle = "#1f3f8e";
+  c.beginPath(); c.moveTo(x - 9, y + 3); c.lineTo(x + 9, y + 3); c.lineTo(x + 9, y + 24); c.lineTo(x, y + 20); c.lineTo(x - 9, y + 24); c.closePath(); c.fill();
+  c.fillStyle = "#3a62c0"; c.fillRect(x - 9, y + 3, 18, 2);
+  // The trophy: a cup with handles on a stem and base.
+  c.fillStyle = "#ffd34d";
+  c.beginPath(); c.moveTo(x - 5, y + 6); c.lineTo(x + 5, y + 6); c.lineTo(x + 4, y + 11); c.lineTo(x + 1, y + 13); c.lineTo(x - 1, y + 13); c.lineTo(x - 4, y + 11); c.closePath(); c.fill();
+  c.fillRect(x - 7, y + 7, 2, 3); c.fillRect(x + 5, y + 7, 2, 3);
+  c.fillRect(x - 1, y + 13, 2, 3); c.fillRect(x - 4, y + 16, 8, 2);
+  c.fillStyle = "#a8781a"; c.fillRect(x + 2, y + 7, 1, 4);
 }
 
 /** A hanging red banner, 18 wide, with a pale breastplate on it, its top

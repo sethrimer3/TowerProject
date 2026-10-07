@@ -3,19 +3,19 @@ import type { ConfirmPrompt } from "./dialogs.ts";
 
 /** Every page. Tower and Delve both show the board (the tab bar's one
  * mode button, `board`, opens the active mode's). */
-export type Tab = "tower" | "delve" | "deck" | "defend" | "gear" | "upgrades" | "research" | "settings" | "shop" | "goals";
+export type Tab = "tower" | "delve" | "deck" | "defend" | "gear" | "upgrades" | "research" | "settings" | "shop" | "goals" | "tournament";
 export const isBoard = (id: string): id is "tower" | "delve" => id === "tower" || id === "delve";
 
 /** The game as pages see it: its state to read (a page may change a setting
  * or a purchase in the save, never swap the save, run or mode), and the
  * commands that change the rest: its own, and those of its desks (Training,
  * the Archives, the Deck, Gear and Equipment). */
-export type PageGame = Readonly<Pick<Game, "mode" | "run" | "save" | "fallen" | "handStuck" | "stepRules" | "free" | "maxSpeed" | "stepsPerSecond" | "treeWaiting" | "buyQuantity" | "buyQuantities">> &
+export type PageGame = Readonly<Pick<Game, "mode" | "run" | "save" | "fallen" | "handStuck" | "stepRules" | "free" | "maxSpeed" | "stepsPerSecond" | "treeWaiting" | "buyQuantity" | "buyQuantities" | "canBeginTournament">> &
   Pick<
     Game,
     | "undo" | "acceptDefeat" | "eraseAll" | "finish" | "setDevMode"
     | "claimGoal" | "warp" | "buy" | "setBuyQuantity" | "clock" | "buyOffer"
-    | "training" | "research" | "deck" | "badges" | "gear" | "equipment"
+    | "training" | "research" | "deck" | "badges" | "gear" | "equipment" | "tournament"
   >;
 
 /** What pages and dialogs need from the app around them. */

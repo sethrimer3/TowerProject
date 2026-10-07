@@ -13,10 +13,10 @@ import { drawGameSprite } from "./game-sprites.ts";
 import { FrameLoop } from "./frame-loop.ts";
 import { installDebugHooks } from "./debug-hooks.ts";
 import { isBoard, type AppContext, type Tab } from "./ui/app.ts";
-import { el } from "./ui/dom.ts";
+import { el, ticketIcon } from "./ui/dom.ts";
 import { buildShell } from "./ui/shell.ts";
 import { BoardOverlay } from "./ui/board-overlay.ts";
-import { boardHeadingStale, flashRed, renderAdButton, renderShopDot, renderBoardHeading, renderHud, renderVitals, purseFrame, gearWaiting, upgradesWaiting, dismissResearch } from "./ui/hud.ts";
+import { boardHeadingStale, flashRed, renderAdButton, renderShopDot, renderTournamentButton, renderBoardHeading, renderHud, renderVitals, purseFrame, gearWaiting, upgradesWaiting, dismissResearch } from "./ui/hud.ts";
 import { ResearchPage } from "./ui/research-page.ts";
 import { confirmAction, RunEndDialog } from "./ui/dialogs.ts";
 import { closeRunMenu, toggleRunMenu } from "./ui/run-menu.ts";
@@ -35,6 +35,8 @@ import { applyMedievalTheme, bindMedievalFeedback } from "./ui/medieval.ts";
 import { gemSparkle, goldSparkle } from "./ui/flourish.ts";
 import { TournamentClient } from "./tournament/client.ts";
 import { stubTournament } from "./tournament/server.ts";
+import { TournamentPage } from "./ui/tournament-page.ts";
+import { revealReward } from "./ui/reward-reveal.ts";
 
 // Wires the pages together: builds the shell, creates the game and renderer,
 // and routes navigation, HUD refreshes and input between the ui/ modules.
@@ -66,8 +68,9 @@ const ctx: AppContext = {
 // The Tournament's server (a stand-in until it exists), and what waits on it.
 const tournament = new TournamentClient(game, stubTournament(() => game.save.tournament, () => game.clock()));
 const runEnd = new RunEndDialog(ctx, tournament);
-// Tapping the forest's Blacksmith opens the Equipment screen.
-const overlay = new BoardOverlay(game, renderer, openBlacksmith);
+const tournamentPage = new TournamentPage(ctx, tournament, refreshTournament);
+// Tapping the forest's Blacksmith opens the Equipment screen, its Tournament Hall the Tournament page.
+const overlay = new BoardOverlay(game, renderer, openBlacksmith, () => navigate("tournament"));
 const skillTree = new SkillTreePage(ctx);
 const research = new ResearchPage(ctx);
 const gear = new GearPage(ctx);
@@ -131,6 +134,7 @@ function renderPage() {
   if (tab === "settings") renderSettingsPage(ctx, overlay);
   if (tab === "shop") shop.render();
   if (tab === "goals") goals.render();
+  if (tab === "tournament") tournamentPage.render();
 }
 /** Locked tabs point at the upgrade that unlocks them instead. */
 function unlockTarget(id: string): string {
@@ -165,6 +169,8 @@ function navigate(requested: string) {
   deck.shown(id === "deck");
   // The Shop's Back returns to the page that opened it.
   if (id === "shop" && from !== "shop") shop.open(from);
+  // So does the Tournament page's.
+  if (id === "tournament" && from !== "tournament") tournamentPage.open(from);
   // A newly opened Equipment screen greets the first visit to the Gear page.
   if (id === "gear" && from !== "gear" && equipmentWaiting(game.save)) gear.openEquipment();
   renderer.weather.silence();
@@ -277,6 +283,12 @@ el("run-shop").onclick = () => {
   closeRunMenu();
   navigate("shop");
 };
+// The Tournament button: at the top of the forest's actions column, and in
+// the run's menu once the player has entered.
+el("tournament-button").onclick = () => {
+  closeRunMenu();
+  navigate("tournament");
+};
 // Inside a run, Research opens Training and the Archives with the run paused.
 el("run-research").onclick = () => {
   closeRunMenu();
@@ -340,10 +352,32 @@ function archivesTick() {
   else {
     renderAdButton(game);
     renderShopDot(game);
+    renderTournamentButton(game);
   }
   tournament.tick();
+  // A tournament opening (or ending, or the Tournament unlocked) asks the
+  // server again, for the free Ticket and the results.
+  const stage = `${game.tournament.unlocked}|${game.tournament.phase}`;
+  if (stage !== tournamentStage) {
+    tournamentStage = stage;
+    void refreshTournament();
+  }
+  if (tab === "tournament") tournamentPage.rerender();
   if (tab === "research") research.archivesTick(done);
   if (tab === "shop") shop.tick();
+}
+/** The Tournament's stage the tick last saw (unlocked, and its phase). */
+let tournamentStage = `${game.tournament.unlocked}|${game.tournament.phase}`;
+/** Asks the Tournament's server for the live tournament, and celebrates the
+ * free Ticket a newly opened one grants. */
+async function refreshTournament() {
+  const granted = await tournament.refresh();
+  if (granted)
+    revealReward(
+      { icon: ticketIcon("ticket-icon reward-ticket"), amount: "+1", kicker: "A NEW TOURNAMENT HAS BEGUN!", name: "Ticket", text: "Enter it at the forest's Tournament Hall, or with the trophy button.", permanent: true },
+      game.save.settings.reduceMotion,
+    );
+  update();
 }
 const loop = new FrameLoop({
   game,
@@ -380,4 +414,4 @@ renderBoardHeading(game, overlay);
 update();
 loop.start();
 // The live tournament: its free Ticket, and any score still to send.
-void tournament.refresh().then(() => update());
+void refreshTournament();

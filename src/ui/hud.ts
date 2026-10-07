@@ -17,6 +17,7 @@ import { estimatedServerTime } from "../shop/clock.ts";
 import { OFFERS } from "../shop/offers.ts";
 import { refusal } from "../shop/transactions.ts";
 import { caveLabel } from "../tournament/leagues.ts";
+import { shortCountdown } from "../tournament/schedule.ts";
 import { equipmentWaiting } from "../equipment/inventory.ts";
 import { GOLD_BOOST_FACTOR, GOLD_BOOST_MS } from "../gold-boost.ts";
 import { adsOff } from "../shop/entitlements.ts";
@@ -119,6 +120,7 @@ export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay)
   renderModeTab(game);
   renderForestSign(game);
   renderRunMenu(game);
+  renderTournamentButton(game);
   el("run-research").hidden = !!game.run.outside;
   el("run-research").classList.toggle("notify", !game.run.outside && researchWaiting(game));
   renderAdButton(game);
@@ -145,9 +147,30 @@ export const renderShopDot = (game: Game) => {
   const waiting = shopWaiting(game);
   document.querySelector(`[data-tab="shop"]`)?.classList.toggle("notify", waiting);
   el("run-shop").classList.toggle("notify", waiting);
-  // Inside a run the menu's Shop is folded away, so the hamburger wears it too.
-  el("run-menu-toggle").classList.toggle("notify", waiting);
+  // Inside a run the menu's Shop is folded away, so the hamburger wears it
+  // too, and the Tournament's prize waiting there.
+  el("run-menu-toggle").classList.toggle("notify", waiting || (!game.run.outside && tournamentWaiting(game)));
 };
+/** Whether the Tournament button wears its dot: a final prize waits to be
+ * claimed. */
+const tournamentWaiting = (game: Game) => game.tournament.unlocked && game.tournament.phase === "results" && game.tournament.claimable;
+/** The Tournament button, once the Tournament is open to the player: its
+ * trophy over the phase, `2d5h` until the next opens, `OPEN`, `ENDING`, or
+ * `CLAIM` with a dot while a final prize waits. At the top of the forest's
+ * actions column; inside a run, in the run's menu once the player has
+ * entered the tournament, else gone. Refreshed every second too (main's
+ * tick), so the countdown runs. */
+export function renderTournamentButton(game: Game) {
+  const button = el("tournament-button"), desk = game.tournament, inside = !game.run.outside;
+  button.hidden = !desk.unlocked || (inside && !desk.entered);
+  if (button.hidden) return;
+  const home = inside ? el("run-menu-items") : el("run-menu").parentElement!, before = inside ? el("end-run") : el("run-menu");
+  if (button.nextElementSibling !== before) home.insertBefore(button, before);
+  const phase = desk.phase, claim = tournamentWaiting(game);
+  text("tournament-state", phase === "open" ? "OPEN" : phase === "ending" ? "ENDING" : claim ? "CLAIM" : shortCountdown(desk.nextOpensAt - desk.now));
+  button.classList.toggle("notify", claim);
+  button.classList.toggle("live", phase === "open");
+}
 /** Whether the Upgrades button shows its dot: the first Inspiration has
  * been earned (so the run that paid it has ended by the time the tabs show)
  * and the page hasn't been opened since. */

@@ -3,7 +3,7 @@ import { confirmServerTime, estimatedServerTime } from "../shop/clock.ts";
 import { CURRENCIES } from "../shop/currency.ts";
 import type { Prize } from "../tournament/prizes.ts";
 import { CLAIMS_KEPT, ENTRIES_KEPT, type TournamentSave } from "../tournament/progress.ts";
-import { CLAIM_MS, latestTournament, phaseOf, type Phase } from "../tournament/schedule.ts";
+import { CLAIM_MS, latestTournament, nextTournament, phaseOf, type Phase } from "../tournament/schedule.ts";
 import type { Standing, TournamentInfo } from "../tournament/server.ts";
 import { addGemTicket, gemTicketPrice, grantFreeTicket, nextTicket, spendTicket, takeAdTicket } from "../tournament/tickets.ts";
 import { affordsGems, type DeskHost } from "./desk.ts";
@@ -51,9 +51,24 @@ export class TournamentDesk {
     return this.info ?? latestTournament(this.now);
   }
 
-  /** Where the tournament stands now (estimated). */
+  /** Where the tournament stands now (estimated). Until the server has
+   * answered, a tournament past its grace counts as over, its results
+   * unknown, rather than ending for good. */
   get phase(): Phase {
-    return phaseOf(this.tournament, this.now, this.info?.finalizedAt ?? null);
+    const t = this.tournament, now = this.now, phase = phaseOf(t, now, this.info?.finalizedAt ?? null);
+    return !this.info && phase === "ending" && now >= t.graceEndsAt ? "upcoming" : phase;
+  }
+
+  /** When the next tournament opens: the latest's opening while it is
+   * still to come, else the one after it. */
+  get nextOpensAt() {
+    const t = this.tournament, now = this.now;
+    return now < t.opensAt ? t.opensAt : nextTournament(now).opensAt;
+  }
+
+  /** Whether the player has entered the latest tournament. */
+  get entered() {
+    return !!this.t.entries[this.tournament.id];
   }
 
   /** The tournament open for entry now, by id, or null. Tickets can only be

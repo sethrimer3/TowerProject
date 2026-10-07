@@ -1,6 +1,7 @@
 import type { Game } from "../state.ts";
 import { latestTournament } from "./schedule.ts";
 import { tournamentScore } from "./run.ts";
+import type { Prize } from "./prizes.ts";
 import type { Standing, TournamentServer } from "./server.ts";
 
 // Between the game and the Tournament's server: the game's commands never
@@ -47,6 +48,16 @@ export class TournamentClient {
     const info = desk.info, entry = await this.server.enter(info.id, info.league).catch(() => null);
     if (!entry) return "closed";
     return game.beginTournament(info, entry) ? null : "busy";
+  }
+
+  /** Collects the final prize of the tournament the server last reported,
+   * once its results are final; returns it, or null when there is none to
+   * collect or the server can't be reached. */
+  async claim(): Promise<Prize | null> {
+    const desk = this.game.tournament, info = desk.info;
+    if (!info || !desk.claimable) return null;
+    const prize = await this.server.claim(info.id).catch(() => null);
+    return prize && desk.claim(info.id, prize) ? prize : null;
   }
 
   /** Sends the score of the tournament run inside now (as the run's end

@@ -48,6 +48,13 @@ export const gemIcon = (className = "gem-icon") =>
 export const shardIcon = (className = "shard-icon") =>
   `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l5 6-1.5 11L12 22l-3.5-3L7 8z" fill="#2fbf6a"/><path d="M12 2l5 6-5 2-5-2z" fill="#9dffc4"/><path d="M12 10v12M7 8l5 2 5-2" fill="none" stroke="#dcffe9" stroke-width="0.8" stroke-linejoin="round"/><path d="M12 2l5 6-1.5 11L12 22l-3.5-3L7 8z" fill="none" stroke="#0b4a26" stroke-width="1.3" stroke-linejoin="round"/></svg>`;
 /** "1 Gem", "5 Gems". */
+/** A trophy: a cup with handles on a stem and base, outlined in `stroke`
+ * over `fill` (gold by default; each league's cup its own metal). */
+export const trophyIcon = (className = "trophy-icon", stroke = "#ffd34d", fill = "#5a4210") =>
+  `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.5h10v5a5 5 0 0 1-10 0z" fill="${fill}" stroke="${stroke}" stroke-width="1.4" stroke-linejoin="round"/><path d="M7 5H4v1.5A3.5 3.5 0 0 0 7.5 10M17 5h3v1.5A3.5 3.5 0 0 1 16.5 10" fill="none" stroke="${stroke}" stroke-width="1.3"/><path d="M12 13.5v3.5M8.5 20.5h7l-1-3.5h-5z" fill="${fill}" stroke="${stroke}" stroke-width="1.3" stroke-linejoin="round"/></svg>`;
+/** A Tournament Ticket: a gold stub with notched ends and a perforation. */
+export const ticketIcon = (className = "ticket-icon") =>
+  `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 7h19v3a2 2 0 0 0 0 4v3h-19v-3a2 2 0 0 0 0-4z" fill="#6a4a12" stroke="#ffd34d" stroke-width="1.4" stroke-linejoin="round"/><path d="M15.5 7.5v9" stroke="#ffd34d" stroke-width="1" stroke-dasharray="1.4 1.2"/><path d="M6 10.5h6.5M6 13.5h4.5" stroke="#ffe9a8" stroke-width="1.2" stroke-linecap="round"/></svg>`;
 export const gemCount = (n: number) => `${n} ${n === 1 ? "Gem" : "Gems"}`;
 export const itemSprite = (name: keyof typeof AREA1_ITEM_URLS, className = "ui-sprite") =>
   `<img class="${className}" src="${AREA1_ITEM_URLS[name]}" alt="" aria-hidden="true">`;

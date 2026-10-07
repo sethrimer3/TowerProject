@@ -56,6 +56,11 @@ try {
    * the load event, which also waits on every image. */
   const ready = () => page.locator("#hp").waitFor();
 
+  // A fixed clock (a Monday noon, GMT), so the Tournament button's countdown
+  // and anything else that reads the time shows the same every run; timers
+  // still run.
+  await page.clock.setFixedTime(new Date("2026-10-05T12:00:00Z"));
+
   // --- Fixture saves, built in the page from the real defaults ---
   await page.goto(server.url, { waitUntil: "domcontentloaded" });
   await ready();

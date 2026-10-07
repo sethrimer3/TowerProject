@@ -3603,3 +3603,51 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
 .equip-actions-row button { flex: 1 1 0; min-width: 0; min-height: 44px; padding: 8px 6px; font-size: 12px; line-height: 1.25; }
 .equip-detail button:disabled { opacity: 0.6; border-style: dashed; color: #8b98aa; }
 .equip-actions .danger { border-color: #8a3a34; }
+
+/* The Tournament button (hud.ts): its trophy over the phase, green while
+   entry is open; at the top of the forest's actions column, or in the run's
+   menu. */
+.tournament-button .trophy-icon { display: block; width: 16px; height: 16px; }
+.tournament-button small { font-variant-numeric: tabular-nums; }
+.tournament-button.live small { color: #8ff0a4; }
+/* The Tournament page (tournament-page.ts). */
+.page#tournament { text-align: center; }
+.tournament-league { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 6px 0 10px; }
+.tournament-league > div { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
+.tournament-league b { font-size: 16px; letter-spacing: 1px; color: #f3e6c4; }
+.tournament-league small { font-size: 10px; letter-spacing: 1px; color: var(--muted); }
+.league-trophy { width: 44px; height: 44px; flex-shrink: 0; }
+.league-trophy.small { width: 18px; height: 18px; }
+.tournament-phase { margin: 0 0 12px; font-size: 12px; color: #c9d2de; }
+.tournament-phase b { color: #f3e6c4; font-variant-numeric: tabular-nums; }
+.tournament-phase b.live { color: #8ff0a4; }
+.tournament-tickets { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 12px; padding: 4px 12px; border: 1px solid #5a4a22; border-radius: 6px; background: #1a160d; }
+.tournament-tickets b { font-size: 16px; color: #ffe27a; }
+.tournament-tickets small { font-size: 9px; letter-spacing: 1px; color: var(--muted); }
+.ticket-icon { width: 20px; height: 20px; flex-shrink: 0; }
+.reward-ticket { width: 96px; height: 96px; }
+.tournament-begin { display: flex; align-items: center; justify-content: center; gap: 8px; width: min(100%, 280px); margin: 0 auto; padding: 10px 14px; font-size: 14px; letter-spacing: 1px; color: #fff3cf; border-color: #d9a632; background: linear-gradient(180deg, #4a3712, #2a1f0a); }
+.tournament-begin .ad-icon { width: 20px; height: 20px; }
+.tournament-price { display: inline-flex; align-items: center; gap: 2px; margin-left: 4px; }
+.tournament-begin.short .tournament-price { color: #ffb0a4; }
+.tournament-hint { margin: 6px 0 0; font-size: 10px; }
+.tournament-message { min-height: 14px; margin: 8px 0; font-size: 11px; color: #ffd27a; }
+.tournament-standing { display: flex; flex-direction: column; align-items: center; gap: 6px; margin: 0 auto 14px; padding: 10px; max-width: 320px; border: 1px solid var(--line); border-radius: 8px; background: #0f151e; }
+.tournament-standing p { margin: 0; font-size: 12px; color: #c9d2de; }
+.tournament-standing b { color: #f3e6c4; }
+.tournament-standing .tournament-begin { margin-top: 4px; }
+.tournament-prize { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+.tournament-prize b { margin-right: 6px; color: #f3e6c4; }
+.tournament-prize :is(.gem-icon, .shard-icon) { width: 14px; height: 14px; }
+.tournament-all { padding: 6px 16px; font-size: 11px; letter-spacing: 1px; }
+/* All prizes: each league's ten levels, the zones coloured. */
+.prize-leagues { display: flex; flex-direction: column; gap: 12px; max-height: 60vh; overflow-y: auto; }
+.prize-league h3 { display: flex; align-items: center; gap: 6px; margin: 0 0 4px; font-size: 12px; letter-spacing: 1px; color: var(--gold); }
+.prize-league h3 small { margin-left: auto; font-size: 9px; color: var(--muted); }
+.prize-league.mine h3 { color: #ffe27a; }
+.prize-table { width: 100%; border-collapse: collapse; font-size: 10px; }
+.prize-table td { padding: 2px 4px; border-top: 1px solid #1d2632; text-align: left; }
+.prize-table td:first-child { width: 18px; color: var(--muted); }
+.prize-table td:last-child { text-align: right; }
+.prize-table tr.promote td:nth-child(2), .zone.promote { color: #8ff0a4; }
+.prize-table tr.demote td:nth-child(2), .zone.demote { color: #ff8a7a; }

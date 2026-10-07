@@ -7,7 +7,7 @@ import { noteGoldBoost } from "./gold-boost.ts";
 import { offer, type OfferId } from "./shop/offers.ts";
 import { purchase, type Refusal } from "./shop/transactions.ts";
 import { confirmServerTime } from "./shop/clock.ts";
-import { canWarp, claimGoal } from "./goals.ts";
+import { canWarp, claimGoal, goalUnlocked } from "./goals.ts";
 import { missGem } from "./gems.ts";
 import { DelvePlan } from "./delve/automove.ts";
 import { defaults } from "./save.ts";
@@ -364,7 +364,7 @@ export class Game {
   /** The live run's board, regenerated from its seed and changes. */
   private buildWorld(): Board {
     const r = this.run;
-    return r.outside ? new OutsideWorld(r.seed, this.mode, this.save.equipment.unlocked) : this.rules.board(r);
+    return r.outside ? new OutsideWorld(r.seed, this.mode, this.save.equipment.unlocked, goalUnlocked(this.save, "tournament")) : this.rules.board(r);
   }
   /** Map edits saved under an older layout can't be applied to the new one:
    * they are dropped, and progress, stats and inventory are kept. */
@@ -1295,7 +1295,7 @@ export class Game {
     if (outside) {
       this.run.outside = true;
       this.toForestStart();
-      this.world = new OutsideWorld(seed, this.mode, this.save.equipment.unlocked);
+      this.world = new OutsideWorld(seed, this.mode, this.save.equipment.unlocked, goalUnlocked(this.save, "tournament"));
       this.message = "Follow the forest path to the entrance.";
     } else {
       this.forgetLabyrinth();
@@ -1335,8 +1335,8 @@ export class Game {
   claimGoal(tower: number, floor: number, premium: boolean) {
     const reward = claimGoal(this.save, tower, floor, premium);
     if (reward) readyForestRuns(this.save);
-    // Equipment's Blacksmith opens in the forest at once.
-    if (reward?.kind === "unlock" && reward.unlock === "equipment" && this.run.outside) this.world = this.buildWorld();
+    // Equipment's Blacksmith, and the Tournament's Hall, open in the forest at once.
+    if (reward?.kind === "unlock" && (reward.unlock === "equipment" || reward.unlock === "tournament") && this.run.outside) this.world = this.buildWorld();
     return reward;
   }
   /** Whether a Tower run in the forest may warp to the checkpoint at `floor`. */
@@ -1803,6 +1803,11 @@ export class Game {
    * Equipment screen when tapped. */
   atBlacksmith(x: number, y: number) {
     return this.run.outside && this.world instanceof OutsideWorld && this.world.isBlacksmith(x, y);
+  }
+  /** Whether (x, y) is the forest's Tournament Hall, which opens the
+   * Tournament page when tapped. */
+  atTournamentHall(x: number, y: number) {
+    return this.run.outside && this.world instanceof OutsideWorld && this.world.isTournamentHall(x, y);
   }
   /** Equipment's heal on a floor reached for the first time in the run (a
    * share of max HP, by `floorHeal`), shown like a potion's. */
