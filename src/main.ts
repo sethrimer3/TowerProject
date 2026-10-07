@@ -33,6 +33,8 @@ import { ShopPage } from "./ui/shop-page.ts";
 import { play } from "./sound.ts";
 import { applyMedievalTheme, bindMedievalFeedback } from "./ui/medieval.ts";
 import { gemSparkle, goldSparkle } from "./ui/flourish.ts";
+import { TournamentClient } from "./tournament/client.ts";
+import { stubTournament } from "./tournament/server.ts";
 
 // Wires the pages together: builds the shell, creates the game and renderer,
 // and routes navigation, HUD refreshes and input between the ui/ modules.
@@ -61,7 +63,9 @@ const ctx: AppContext = {
   navigate,
   confirm: (prompt, action) => confirmAction(ctx, prompt, action),
 };
-const runEnd = new RunEndDialog(ctx);
+// The Tournament's server (a stand-in until it exists), and what waits on it.
+const tournament = new TournamentClient(game, stubTournament(() => game.save.tournament, () => game.clock()));
+const runEnd = new RunEndDialog(ctx, tournament);
 // Tapping the forest's Blacksmith opens the Equipment screen.
 const overlay = new BoardOverlay(game, renderer, openBlacksmith);
 const skillTree = new SkillTreePage(ctx);
@@ -337,6 +341,7 @@ function archivesTick() {
     renderAdButton(game);
     renderShopDot(game);
   }
+  tournament.tick();
   if (tab === "research") research.archivesTick(done);
   if (tab === "shop") shop.tick();
 }
@@ -363,10 +368,16 @@ document.addEventListener("visibilitychange", () => {
   save();
 });
 window.addEventListener("pagehide", save);
-installDebugHooks(game, defendPage);
+installDebugHooks(game, defendPage, async () => {
+  const refused = await tournament.begin();
+  update();
+  return refused;
+});
 // Start on the Tower board: stats showing, currencies (for the Upgrades, Deck and Gear pages) hidden.
 el("stats").toggleAttribute("hidden", false);
 el("currencies").toggleAttribute("hidden", true);
 renderBoardHeading(game, overlay);
 update();
 loop.start();
+// The live tournament: its free Ticket, and any score still to send.
+void tournament.refresh().then(() => update());

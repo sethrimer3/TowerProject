@@ -7,9 +7,10 @@ import { isLeague, type League } from "./leagues.ts";
 // real standings and prizes; this is what the client last heard.
 
 /** A tournament the player entered: the best score sent or kept, the place
- * and entrant count the server last reported (0 while unknown), and a
- * score not yet sent (null when none waits). */
-export type TournamentEntry = { best: number; place: number; entrants: number; pending: number | null };
+ * and entrant count the server last reported (0 while unknown), a score
+ * not yet sent (null when none waits), and the server's id for the entry
+ * it is sent under. */
+export type TournamentEntry = { best: number; place: number; entrants: number; pending: number | null; entry: string };
 
 export type TournamentSave = {
   tickets: number;
@@ -53,7 +54,7 @@ export function decodeTournament(raw: unknown): TournamentSave {
       if (isRecord(e) && whole(e.best))
         d.entries[key] = {
           best: e.best, place: count(e.place, 0), entrants: count(e.entrants, 0),
-          pending: whole(e.pending) ? e.pending : null,
+          pending: whole(e.pending) ? e.pending : null, entry: typeof e.entry === "string" ? e.entry : "",
         };
   if (Array.isArray(raw.claimed)) d.claimed = [...new Set(raw.claimed.filter(isId))].slice(-CLAIMS_KEPT);
   return d;

@@ -13,6 +13,7 @@ import type { EntitlementId } from "./shop/entitlements.ts";
 import type { ShopSave } from "./shop/ledger.ts";
 import type { GoalsSave } from "./goals.ts";
 import type { TournamentSave } from "./tournament/progress.ts";
+import type { TournamentRun } from "./tournament/run.ts";
 export type Kind =
   | "wall"
   | "floor"
@@ -179,6 +180,9 @@ export type DelveRun = RunCore & {
   /** The highest row the hero has stood on this run (absent: the row it
    * stands on). The STAIRS card climbs only to rows above it. */
   top?: number;
+  /** A tournament run's tournament, seeds and chance streams
+   * (tournament/run.ts); absent for every other run. */
+  tournament?: TournamentRun;
 };
 /** What Delve Automove has seen of the descent in the labyrinth, and how
  * often the player has stood on each tile. It is kept beside the run, not

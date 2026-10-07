@@ -37,6 +37,9 @@ export class RunPurse {
     private readonly rng: () => number,
     /** The wall clock now (ms), for the Gold ad's boost. */
     private readonly now = 0,
+    /** What Equipment's drops (materials, boss pieces) draw from: `rng`,
+     * unless a tournament run gives them a stream of their own. */
+    private readonly equipmentRng: () => number = rng,
   ) {}
 
   private get rules(): ModeProfile {
@@ -132,9 +135,9 @@ export class RunPurse {
     const e = this.save.equipment;
     if (!e.unlocked) return null;
     const floor = this.rules.equivalentFloor(this.rules.progressAt(this.run, y)), worn = this.worn;
-    const materials = rollMaterials(enemy.strength, floor, worn.materialFind, this.rng);
+    const materials = rollMaterials(enemy.strength, floor, worn.materialFind, this.equipmentRng);
     if (materials) e.materials[materials.id] += materials.quantity;
-    const drop = rollBossDrop(enemy.strength, worn.bossDrops, this.rng);
+    const drop = rollBossDrop(enemy.strength, worn.bossDrops, this.equipmentRng);
     const kept = drop && keepDrop(e, drop);
     return {
       materials,

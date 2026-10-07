@@ -5,6 +5,11 @@ import { loadout } from "../loadout.ts";
 import type { AppContext } from "./app.ts";
 import { capitalized, CURRENCY_SPRITES, displayedProgress, el, uiSprite } from "./dom.ts";
 import { boardTitle } from "./hud.ts";
+import type { DelveRun } from "../entities.ts";
+import type { TournamentClient } from "../tournament/client.ts";
+import { LEAGUE_INFO } from "../tournament/leagues.ts";
+import { placeText } from "../tournament/prizes.ts";
+import { tournamentScore } from "../tournament/run.ts";
 
 /** The modal dialogs opened from the HUD, all sharing `ctx.modal`. */
 
@@ -58,7 +63,11 @@ type RunEndCause = "fallen" | "stuck" | "chosen";
 export class RunEndDialog {
   private fadeOverlay = document.createElement("div");
 
-  constructor(private ctx: AppContext) {
+  constructor(
+    private ctx: AppContext,
+    /** Sends a tournament run's score as the dialog opens. */
+    private tournament: TournamentClient | null = null,
+  ) {
     this.fadeOverlay.className = "fade-overlay";
     document.body.appendChild(this.fadeOverlay);
   }
@@ -96,7 +105,21 @@ export class RunEndDialog {
       stat(run.xp ?? 0, "XP"),
     ].join("");
     const cheer = record ? `<p class="summary-record">Highest ${rules.words.progress.toLowerCase()} reached!</p>` : "";
-    return `${cheer}<div class="summary-stats compact">${stats}</div>${this.boostLine()}`;
+    return `${cheer}<div class="summary-stats compact">${stats}</div>${this.boostLine()}${this.tournamentBlock()}`;
+  }
+
+  /** A tournament run's score, sent as the dialog opens (the best of the
+   * tournament's runs counts), and its place once the server answers. */
+  private tournamentBlock() {
+    const { game } = this.ctx, t = game.mode === "delve" ? (game.run as DelveRun).tournament : undefined;
+    if (!t || game.run.outside) return "";
+    const client = this.tournament;
+    void client?.sendRun().then((s) => {
+      const line = document.getElementById("summary-tournament-place");
+      if (line) line.textContent = s ? `Place: ${placeText(s.place, s.entrants)}` : "Offline — your score will be sent later";
+    });
+    return `<div class="summary-tournament"><small>TOURNAMENT · ${LEAGUE_INFO[t.league].name.toUpperCase()} LEAGUE</small>` +
+      `<p>Score: <b>${tournamentScore(game.run)}</b></p><p id="summary-tournament-place">${client ? "Checking your place…" : ""}</p></div>`;
   }
 
   /** While the Gold ad's boost ran during the run, the Gold it found then

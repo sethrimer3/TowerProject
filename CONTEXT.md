@@ -404,6 +404,10 @@ _Avoid_: pass (a Premium Pass is the Goals screen's), token
 **Entry**:
 One tournament run, paid for with a Ticket. A player may enter as often as they have Tickets; their best score counts.
 
+**Tournament run**:
+The Delve run an Entry plays: in the league's cave, from the layout and chances every entrant of the league shares, among enemies 1.1 times as strong. It pays and counts toward the cave's records like any run, and when it ends the player returns to the forest they began from.
+_Avoid_: tournament mode
+
 **Score**:
 The deepest depth a tournament run reached. Players with the same score share the lowest place among them.
 

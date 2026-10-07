@@ -58,3 +58,14 @@ export function oscillationFailures(prizes: Record<League, readonly Prize[]>, de
   }
   return failures;
 }
+
+/** `n` as an ordinal: 1st, 2nd, 3rd, 4th … 11th, 12th, 13th, 21st. */
+export function ordinal(n: number) {
+  const teen = n % 100 >= 11 && n % 100 <= 13, last = n % 10;
+  return `${n.toLocaleString("en-US")}${teen ? "th" : last === 1 ? "st" : last === 2 ? "nd" : last === 3 ? "rd" : "th"}`;
+}
+
+/** A place as the game shows it: *12th of 1,480 · top 1%* (the share of
+ * entrants at or above it, rounded up, never under 1%). */
+export const placeText = (place: number, entrants: number) =>
+  `${ordinal(place)} of ${entrants.toLocaleString("en-US")} · top ${Math.max(1, Math.ceil((place * 100) / entrants))}%`;

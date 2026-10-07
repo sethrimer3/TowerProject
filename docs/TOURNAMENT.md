@@ -1,6 +1,6 @@
 # The Tournament (plan)
 
-Status: **step 1 of the build order built** (the rules, save and stub server, `src/tournament/`); the run and the screens are not. This is the design and the build order for the Tournament, a twice-weekly global competition in the Delve.
+Status: **steps 1 and 2 of the build order built** (the rules, save and stub server, and the tournament run, `src/tournament/`); the screens are not, so until they are a run begins from the browser console, `tournamentDebug()`. This is the design and the build order for the Tournament, a twice-weekly global competition in the Delve.
 
 ## Summary
 
@@ -101,21 +101,24 @@ Each entry spends one Ticket. A player may enter as often as they have Tickets; 
 
 ## The tournament run
 
-*Begin Tournament* (spending a Ticket) starts a run at once, inside, from the forest, like Warp:
+*Begin Tournament* starts a run at once, inside, from either forest, like Warp. `TournamentClient.begin` (`tournament/client.ts`, which does everything that waits on the server, so the game's commands never do) asks the server for the live tournament, registers the entry (`enter`), and then `Game.beginTournament(info, entry)` spends the Ticket and goes in; it refuses, spending nothing, unless the Tournament is unlocked and neither mode's run is inside.
 
-- **Mode:** the Delve. A Tower forest switches to the Delve first (`switchMode`).
-- **Tier:** the league's cave. **Depth:** the start. **Hero:** the player's own loadout, at full HP, as any run.
+- **Mode:** the Delve, whether or not the player has opened it (`Game.enterMode`, which `switchMode` gates on Into the depths).
+- **Tier:** the league's cave: the Delve's selected tier switches to it (`switchTier`), so the run's records are the cave's. **Depth:** the start. **Hero:** the player's own loadout, at full HP, as any run.
 - **The same run for everyone:** the server sends the tournament's seeds, by name, and every chance in the run draws from them:
   - `layout`: the run seed (the labyrinth, torches, decor, percent potions, Skip and Revive rolls, which all derive from the run seed already);
-  - `game`: the stream the `Game` draws a run's other chances from (enemy drops, treasure loot); a tournament run gets a stream of its own seeded from it rather than the shared `game` stream;
-  - `equipment`: Equipment's material and boss drops, which today continue the save's own stream (`save.equipment`), so a tournament run draws them from a run stream seeded from this instead and leaves the saved one untouched.
+  - `game`: the run's other chances (treasure loot, and every other draw `RunPurse` makes), in place of the game's shared `game` stream;
+  - `equipment`: Equipment's material and boss drops (`RunPurse`'s `equipmentRng`).
+
+  Each is a stream of its own (`runStream` in `tournament/run.ts`): draw *n* is the *n*th number of the stream the seed starts, and the run counts the draws it has taken (`tournament.drawn`), so undo takes draws back and a reload carries on where it stopped.
 
   Any other chance a run gains later takes a named seed too. Players still differ in their loadout, training, hand and badges, and that difference is the competition.
-- **Harder enemies:** every enemy's HP, ATK and DEF ×1.1 (`TOURNAMENT_STATS`, 11/10), applied after the tier's factor as the Delve `World` passes its cells through `tierCells`, `snap`ped, so it is exact in every engine. Bosses included. Rewards that follow enemy stats (XP by `tierXp`) stay as for the tier.
+- **Harder enemies:** every enemy's HP, ATK and DEF ×1.1 (`TOURNAMENT_STAT_TENTHS`, 11/10, `tournamentCells`), applied after the tier's factor as the Delve `World` builds each chunk, `snap`ped, so it is exact in every engine. Bosses included. Rewards that follow enemy stats (XP by `tierXp`) stay as for the tier.
 - **Rewards:** it plays and pays as a normal Delve run of that tier: Gold, Silver, Courage, XP, milestones and records.
-- The run carries `tournament: { id, league, seeds, entry }` (`DelveRun`, decoded by `decodeDelveRun`), so a reload mid-run is still a tournament run, and the HUD's height column reads *Tournament · Delve 3+* over the depth.
-- **Undo** works as usual; the score is the deepest depth reached, which undo can't raise.
-- The forest sign can't be reached from inside, so a tournament run can't be swapped out. Ending it, by defeat or End Run, goes through `finalizeRun` as every run does, which submits the score first.
+- The run carries `tournament: { id, league, entry, seeds, drawn, back }` (`TournamentRun` on the `DelveRun`, checked by `isTournamentRun` in `decodeDelveRun`), so a reload mid-run is still a tournament run (and opens in the Delve, opened or not), and the HUD's height column reads *Delve 3+* over the depth.
+- **Undo** works as usual; the score is the deepest depth reached, as the HUD counts it (`tournamentScore`), which undo can't raise.
+- The forest sign can't be reached from inside, so a tournament run can't be swapped out. Ending it, by defeat or End Run, goes through `finalizeRun` as every run does, which keeps the score to send (`TournamentDesk.recordScore`: the entry's best, and `pending` until the server takes it), then returns the Delve to the tier the player had selected and the player to the forest they began from (`back`).
+- **Sending the score:** the run's end dialog sends it as it opens (`TournamentClient.sendRun`) and shows the place once the server answers; a score the server already holds isn't kept to send again. One that couldn't be sent waits in `pending` and is tried again every 30 seconds (`TournamentClient.tick`, from the once-a-second tick) until the server takes it or its tournament's grace is over.
 
 ## Screens and controls
 
@@ -191,6 +194,8 @@ The confirmed server time is the Shop's (`save.shop`'s clock), shared, so there'
 | `src/tournament/tickets.ts` | the free, ad and Gem Tickets, and the Gem price |
 | `src/tournament/progress.ts` | `save.tournament`, its decoder |
 | `src/tournament/server.ts` | `TournamentServer`, `stubTournament` |
+| `src/tournament/run.ts` | `TournamentRun`, the ×1.1 enemies, the run's chance streams, its score |
+| `src/tournament/client.ts` | `TournamentClient`: what waits on the server (refreshing, entering, sending scores) |
 | `src/game/tournament-desk.ts` | `TournamentDesk` (the game's `tournament`): grant, buy and spend Tickets, begin a run, submit, refresh standing, claim |
 | `src/state.ts` | `atTournamentHall`; `newRun` taking `tier` and `tournament`; the run's seeded streams; `finalizeRun` submitting the score |
 | `src/tiers.ts` / `src/delve/world.ts` | the ×1.1 tournament stats on the run's cells |
@@ -206,7 +211,7 @@ The confirmed server time is the Shop's (`save.shop`'s clock), shared, so there'
 ## Build order
 
 1. **Rules without screens** (built): the Goal, schedule, leagues, prizes (with the oscillation test), Tickets, save and stub server, all in Node tests.
-2. **The run:** begin a tournament run (league cave, server seeds and the run's own streams, ×1.1 enemies, the flag), its score, submission on `finalizeRun`, the end dialog's block.
+2. **The run** (built): begin a tournament run (league cave, server seeds and the run's own streams, ×1.1 enemies, the flag), its score, submission on `finalizeRun`, the end dialog's block.
 3. **Screens:** the forest hall, the HUD button and its phases, the Tournament page, All prizes, the free Ticket's celebration, the ad and Gem Ticket offers, the run-menu button.
 4. **Ending and claims:** the Ending and Results phases, *Claim rewards*, expiry.
 5. **Goldens:** `ui.golden.json` (the Goals page's floor 70 text, plus new UI-suite steps for the page and button), `save-decode` (the new save field), and a forest-with-hall scene added to `LATER_BOARD_SCENES` (`render-calls`, `render.golden.json`). Tournament runs are new, so no gameplay golden changes; one golden of a seeded tournament run (`step-trace` style) pins its seeds and stats.

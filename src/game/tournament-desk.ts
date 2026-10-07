@@ -5,7 +5,7 @@ import type { Prize } from "../tournament/prizes.ts";
 import { CLAIMS_KEPT, ENTRIES_KEPT, type TournamentSave } from "../tournament/progress.ts";
 import { CLAIM_MS, latestTournament, phaseOf, type Phase } from "../tournament/schedule.ts";
 import type { Standing, TournamentInfo } from "../tournament/server.ts";
-import { addGemTicket, gemTicketPrice, grantFreeTicket, nextTicket, takeAdTicket } from "../tournament/tickets.ts";
+import { addGemTicket, gemTicketPrice, grantFreeTicket, nextTicket, spendTicket, takeAdTicket } from "../tournament/tickets.ts";
 import { affordsGems, type DeskHost } from "./desk.ts";
 
 /** The Tournament's commands (the game's `tournament`): taking in what the
@@ -98,10 +98,42 @@ export class TournamentDesk {
     return true;
   }
 
+  /** Spends a Ticket on an entry into tournament `id`, which the server
+   * registered as `entry`; false when no Ticket is held. */
+  enter(id: string, entry: string) {
+    if (!spendTicket(this.t)) return false;
+    const e = this.t.entries[id];
+    this.t.entries[id] = e ? { ...e, entry } : { best: 0, place: 0, entrants: 0, pending: null, entry };
+    this.trim();
+    return true;
+  }
+
+  /** Keeps a tournament run's `score` in tournament `id` as the entry's
+   * best, waiting to be sent (`pending`) until the server takes it. */
+  recordScore(id: string, score: number) {
+    const e = this.t.entries[id];
+    // A score no better than one the server has already taken waits for nothing.
+    if (!e || (e.pending === null && score <= e.best)) return;
+    this.t.entries[id] = { ...e, best: Math.max(e.best, score), pending: Math.max(e.pending ?? 0, score) };
+  }
+
+  /** The server took `score` in tournament `id` (or can no longer): it
+   * waits no more, unless a higher one has come since. */
+  sent(id: string, score: number) {
+    const e = this.t.entries[id];
+    if (e && e.pending !== null && e.pending <= score) this.t.entries[id] = { ...e, pending: null };
+  }
+
   /** Records the standing the server reported in a tournament. */
   recordStanding(s: Standing) {
     const entries = this.t.entries, e = entries[s.id];
-    entries[s.id] = { best: Math.max(s.best, e?.best ?? 0), place: s.place, entrants: s.entrants, pending: e?.pending ?? null };
+    entries[s.id] = { best: Math.max(s.best, e?.best ?? 0), place: s.place, entrants: s.entrants, pending: e?.pending ?? null, entry: e?.entry ?? "" };
+    this.trim();
+  }
+
+  /** Keeps only the latest tournaments' entries. */
+  private trim() {
+    const entries = this.t.entries;
     for (const old of Object.keys(entries).sort().slice(0, -ENTRIES_KEPT)) delete entries[old];
   }
 

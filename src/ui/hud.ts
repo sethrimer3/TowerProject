@@ -16,6 +16,7 @@ import { CountUp } from "./count-up.ts";
 import { estimatedServerTime } from "../shop/clock.ts";
 import { OFFERS } from "../shop/offers.ts";
 import { refusal } from "../shop/transactions.ts";
+import { caveLabel } from "../tournament/leagues.ts";
 import { equipmentWaiting } from "../equipment/inventory.ts";
 import { GOLD_BOOST_FACTOR, GOLD_BOOST_MS } from "../gold-boost.ts";
 import { adsOff } from "../shop/entitlements.ts";
@@ -449,15 +450,17 @@ export function sparkRed(target: HTMLElement, reduceMotion: boolean) {
   }
 }
 
-/** Current floor/depth under the tier climbed ("Tower 2"; in the forest,
- * just the tier the entrance leads to), and the reward the run's new best
+/** Current floor/depth under the tier climbed ("Tower 2", or a tournament
+ * run's "Delve 3+"; in the forest, just the tier the entrance leads to), and the reward the run's new best
  * would pay. */
 function renderProgress(game: Game) {
   const outside = !!game.run.outside,
     rules = MODES[game.mode];
   const tier = el("height-tier");
   tier.hidden = outside;
-  text("height-tier", `${rules.words.tierName} ${game.save[game.mode].tier}`.toUpperCase());
+  // A tournament run's cave wears its +, for the stronger enemies.
+  const t = game.mode === "delve" ? game.delveRun.tournament : undefined;
+  text("height-tier", (t ? caveLabel(t.league) : `${rules.words.tierName} ${game.save[game.mode].tier}`).toUpperCase());
   text("height-label", (outside ? rules.words.tierName : rules.words.progress).toUpperCase());
   const rawRunBest = game.run.maxHeight ?? game.run.height;
   const rawAllBest = game.save[game.mode].best;

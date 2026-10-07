@@ -1340,6 +1340,26 @@ dialog p {
   vertical-align: -2px;
   image-rendering: pixelated;
 }
+/* Under the run's totals in a tournament run: its score and place. */
+.summary-tournament {
+  margin: -6px 0 16px;
+  padding: 8px 10px;
+  border: 1px solid #6b5520;
+  border-radius: 6px;
+  background: #1d1709;
+  color: #d8c79a;
+}
+.summary-tournament small {
+  color: #ffd34d;
+  letter-spacing: 1px;
+}
+.summary-tournament p {
+  margin: 4px 0 0;
+  font-size: 13px;
+}
+.summary-tournament b {
+  color: #ffe27a;
+}
 /* Five figures to a row (the defeat dialog) fit a phone's width. */
 .summary-stats.compact {
   gap: 6px;

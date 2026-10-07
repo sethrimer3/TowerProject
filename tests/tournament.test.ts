@@ -205,7 +205,7 @@ test("the stand-in: entering, standings with ties, finalizing, claiming once wit
   const s = (await server.submit(entry, top))!;
   assert.deepEqual(s, { id: "2026-10-07", best: top, place: 1, entrants: 1000, final: false });
   g.tournament.recordStanding(s);
-  assert.deepEqual(g.save.tournament.entries["2026-10-07"], { best: top, place: 1, entrants: 1000, pending: null });
+  assert.deepEqual(g.save.tournament.entries["2026-10-07"], { best: top, place: 1, entrants: 1000, pending: null, entry: "" });
   // A worse run never lowers the best.
   assert.equal((await server.submit(entry, 0))!.best, top);
   // Not claimable before the results are final.
@@ -243,7 +243,7 @@ test("the save keeps Tickets, the league, Tickets taken, entries and claims, and
   const save = defaults();
   Object.assign(save.tournament, {
     tickets: 3, league: "gold", granted: "2026-10-07", adTicket: "2026-10-07", gemTickets: { id: "2026-10-07", bought: 2 },
-    entries: { "2026-10-07": { best: 41, place: 12, entrants: 1480, pending: null }, "2026-10-03": { best: 9, place: 0, entrants: 0, pending: 9 } },
+    entries: { "2026-10-07": { best: 41, place: 12, entrants: 1480, pending: null, entry: "2026-10-07#3" }, "2026-10-03": { best: 9, place: 0, entrants: 0, pending: 9, entry: "" } },
     claimed: ["2026-10-03"],
   });
   assert.deepEqual(decode(JSON.stringify(save)).tournament, save.tournament);
@@ -254,6 +254,6 @@ test("the save keeps Tickets, the league, Tickets taken, entries and claims, and
       entries: { nope: { best: 1 }, "2026-10-07": { best: -1 }, "2026-10-10": { best: 5, place: "1", pending: 2.5 } },
       claimed: ["2026-10-07", "2026-10-07", 3],
     }),
-    { ...defaultTournament(), entries: { "2026-10-10": { best: 5, place: 0, entrants: 0, pending: null } }, claimed: ["2026-10-07"] },
+    { ...defaultTournament(), entries: { "2026-10-10": { best: 5, place: 0, entrants: 0, pending: null, entry: "" } }, claimed: ["2026-10-07"] },
   );
 });

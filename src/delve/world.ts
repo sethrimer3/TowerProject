@@ -4,6 +4,7 @@ import { point, type DelveRun, type Tile, type Torch } from "../entities.ts";
 import { withPotions, type Board } from "../board.ts";
 import { breakTorch, placeTorches } from "../torches.ts";
 import { tierCells } from "../tiers.ts";
+import { tournamentCells } from "../tournament/run.ts";
 
 // v8 turns some pocket throats into forks: two parallel lanes of costs.
 // v9 adds yellow-or-blue and blue-or-red door forks.
@@ -39,7 +40,7 @@ const upward = (dx: number, dy: number) => dx === 0 && dy === 1;
 
 /** What of a run the Delve board keeps: its map edits, the floor below
  * which the labyrinth is sealed, and the milestones crossed. */
-type WorldRun = Pick<DelveRun, "seed" | "changes" | "floor" | "milestone" | "percentPotions" | "tier">;
+type WorldRun = Pick<DelveRun, "seed" | "changes" | "floor" | "milestone" | "percentPotions" | "tier" | "tournament">;
 
 /** The endless Delve labyrinth of a run, generated chunk by chunk around
  * the player. It reads and writes the run's own changes, floor and
@@ -66,8 +67,11 @@ export class World implements Board {
   tile(x: number, y: number): Tile {
     if (!this.inside(x, y)) return { kind: "wall" };
     const index = Math.floor(y / CHUNK);
-    if (!this.chunks.has(index))
-      this.chunks.set(index, tierCells(generate(this.seed, index, this.tier), this.tier));
+    if (!this.chunks.has(index)) {
+      const cells = tierCells(generate(this.seed, index, this.tier), this.tier);
+      // A tournament run's enemies stand stronger than the cave's own.
+      this.chunks.set(index, this.run.tournament ? tournamentCells(cells) : cells);
+    }
     return (
       this.changes[point(x, y)] ??
       withPotions(this.chunks.get(index)!.get(point(x, y)) ?? { kind: "wall" }, x, y, this.seed, this.run.percentPotions ?? 0)

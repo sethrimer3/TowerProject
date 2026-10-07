@@ -77,6 +77,9 @@ import { BadgeDesk } from "./game/badge-desk.ts";
 import { RunPurse, type EquipmentLoot } from "./game/run-purse.ts";
 import { EquipmentDesk } from "./game/equipment-desk.ts";
 import { TournamentDesk } from "./game/tournament-desk.ts";
+import { LEAGUE_INFO } from "./tournament/leagues.ts";
+import { runStream, tournamentScore, type TournamentRun } from "./tournament/run.ts";
+import type { TournamentInfo } from "./tournament/server.ts";
 import { raised, wornEffects } from "./equipment/effects.ts";
 import { RARITY_TIERS } from "./equipment/balance.ts";
 import { EQUIP_MATERIALS, EQUIP_MATERIAL_IDS, itemDef } from "./equipment/catalog.ts";
@@ -233,7 +236,8 @@ export class Game {
     // A Delve run left inside (the page reloaded mid-run) opens where it
     // was: no tab leads to the Delve, only the forest's sign.
     const inside = (run: Run | null) => !!run && !run.outside;
-    if (save.upgrades.delve && inside(save.delve.run) && !inside(save.tower.run)) this.mode = "delve";
+    // A tournament run plays in the Delve whether or not it is open.
+    if ((save.upgrades.delve || save.delve.run?.tournament) && inside(save.delve.run) && !inside(save.tower.run)) this.mode = "delve";
     this.loadMode();
   }
   /** Dev: whether every purchase is allowed and costs nothing (and research
@@ -273,12 +277,17 @@ export class Game {
   /** Makes `next` the active mode. A mode with no run yet starts one inside
    * (a new game's first), or in its forest when `outside`. */
   switchMode(next: Mode, outside = false) {
-    if (next === this.mode) return;
     if (next === "delve" && !this.save.upgrades.delve) return;
+    this.enterMode(next, outside);
+  }
+  /** Makes `next` the active mode, the Delve's even before it opens (a
+   * tournament run plays there). */
+  private enterMode(next: Mode, outside: boolean) {
+    if (next === this.mode) return;
     this.finishEncounter();
     this.armed = null;
     this.mode = next;
-    if (next === "delve") this.save.tutorials.delve = true;
+    if (next === "delve" && this.save.upgrades.delve) this.save.tutorials.delve = true;
     this.loadMode(outside);
   }
   /** Whether the forest's sign leads to the other mode's forest: in the
@@ -1298,6 +1307,29 @@ export class Game {
     this.dropHandPlan();
     this.paused = false;
   }
+  /** Whether a tournament run can begin now: the Tournament open to the
+   * player, in a forest, and no run of either mode inside. */
+  get canBeginTournament() {
+    const inside = (run: Run | null) => !!run && !run.outside;
+    return this.tournament.unlocked && !!this.run.outside && !inside(this.save.tower.run) && !inside(this.save.delve.run);
+  }
+  /** Begins a run in tournament `info`, entered on the server as `entry`:
+   * spends a Ticket, and goes straight into the league's Delve cave, its
+   * records the cave's, its layout and chances from the league's shared
+   * seeds, its enemies ×1.1. False (nothing spent) when it can't begin or
+   * no Ticket is held. */
+  beginTournament(info: TournamentInfo, entry: string) {
+    if (!this.canBeginTournament || !this.tournament.enter(info.id, entry)) return false;
+    const back = { mode: this.mode, tier: this.save.delve.tier }, cave = LEAGUE_INFO[info.league].cave;
+    this.enterMode("delve", true);
+    if (this.slice.tier !== cave) switchTier(this.slice, cave);
+    this.newRun({ outside: true, seed: info.seeds.layout });
+    const run: TournamentRun = { id: info.id, league: info.league, entry, seeds: { ...info.seeds }, drawn: { game: 0, equipment: 0 }, back };
+    this.delveRun.tournament = run;
+    this.enterFromOutside();
+    this.message = `Tournament · ${LEAGUE_INFO[info.league].name} League`;
+    return true;
+  }
   /** Claims a Goals checkpoint's reward (or its premium one) in `tower`
    * once reached; returns it, or null when it isn't ready. */
   claimGoal(tower: number, floor: number, premium: boolean) {
@@ -1364,7 +1396,12 @@ export class Game {
     if (this.slice.runCurrency > 0) this.save.treeNotices[this.rules === MODES.tower ? "inspiration" : "courage"] = true;
     this.slice.history = [];
     this.route = [];
+    const tournament = this.mode === "delve" ? this.delveRun.tournament : undefined;
+    if (tournament) this.tournament.recordScore(tournament.id, tournamentScore(this.run));
+    // A tournament run's cave gives way to the tier the player had selected.
+    if (tournament && tournament.back.tier !== this.slice.tier) switchTier(this.slice, tournament.back.tier);
     this.newRun({ outside: true });
+    if (tournament) this.enterMode(tournament.back.mode, true);
     this.auto = false;
     this.dropHandPlan();
     this.message = `${reason}${record ? " · a new record" : ""}${whole(gold) ? ` · ${whole(gold)} Gold kept` : ""}. Follow the forest path to begin again.`;
@@ -1592,7 +1629,11 @@ export class Game {
   }
   /** What the run finds is paid through its purse. */
   private get purse() {
-    return new RunPurse(this.save, this.mode, this.run, this.rng, this.clock());
+    // A tournament run's chances come from the seeds its league shares.
+    const t = this.mode === "delve" ? this.delveRun.tournament : undefined;
+    return t
+      ? new RunPurse(this.save, this.mode, this.run, runStream(t, "game"), this.clock(), runStream(t, "equipment"))
+      : new RunPurse(this.save, this.mode, this.run, this.rng, this.clock());
   }
   /** The numbered tower (or delve) the run climbs. */
   get tier() {

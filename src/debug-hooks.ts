@@ -12,15 +12,19 @@ import type { Game } from "./state.ts";
  *   no generation hints ever go to Automove).
  * - `defendDebug(seconds, { rain }?)` fast-forwards a running Defend battle,
  *   optionally forcing its weather.
+ * - `tournamentDebug()` begins a tournament run now, until the Tournament
+ *   page does (a Ticket spent, from a forest); it resolves to why it
+ *   couldn't, or null once inside.
  * - `boardBusy()` is true while the board is still moving on its own (a
  *   route being walked, a fight playing out), so the UI snapshot suite
  *   knows when a step has finished without waiting a fixed time. */
-export function installDebugHooks(game: Game, defendPage: DefendPage) {
+export function installDebugHooks(game: Game, defendPage: DefendPage, beginTournament: () => Promise<string | null>) {
   const w = window as unknown as {
     towerDebug: () => void;
     delveDebug: () => unknown;
     defendDebug: typeof defendPage.fastForward;
     boardBusy: () => boolean;
+    tournamentDebug: () => Promise<string | null>;
   };
   w.towerDebug = () => {
     const text = towerFloorReport(game.save.tower.run?.seed ?? game.run.seed, game.save.tower.run?.height ?? 0).text;
@@ -33,6 +37,7 @@ export function installDebugHooks(game: Game, defendPage: DefendPage) {
     return report;
   };
   w.defendDebug = (s, weather) => defendPage.fastForward(s, weather);
+  w.tournamentDebug = beginTournament;
   w.boardBusy = () => game.route.length > 0 || !!game.encounter;
 }
 

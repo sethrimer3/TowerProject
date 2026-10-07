@@ -15,6 +15,7 @@ import { adsOff, BOOST_FOREVER, decodeEntitlements, permanentBoost } from "./sho
 import { decodeShop, defaultShop } from "./shop/ledger.ts";
 import { decodeGoals, defaultGoals } from "./goals.ts";
 import { decodeTournament, defaultTournament } from "./tournament/progress.ts";
+import { isTournamentRun } from "./tournament/run.ts";
 import { decodeBadges, defaultBadges, validRunBadges } from "./badges.ts";
 import { runTrainingMax } from "./run-training.ts";
 export function defaults(): Save {
@@ -104,7 +105,7 @@ const validCore = (r: any, width: number) =>
   !!r && validOutside(r) && validCounters(r) && validPlayer(r.player, width) && validChanges(r.changes);
 const validDelveState = (r: any) => Number.isInteger(r.milestone) && finite(r.milestone);
 const TOWER_FIELDS = ["damaged", "floors", "summoned"];
-const DELVE_FIELDS = ["milestone"];
+const DELVE_FIELDS = ["milestone", "tournament"];
 /** Training ranks bought in a run: known rows, each a whole number of
  * ranks, no more than the row reaches in a run. */
 const validRunTraining = (t: any) =>
@@ -164,7 +165,7 @@ function decodeTowerRun(r: any): TowerRun | null {
  * DelveRun needs. */
 function decodeDelveRun(r: any): DelveRun | null {
   if (!validCore(r, WIDTH) || !validDelveState(r)) return null;
-  dropInvalid(r, { top: Number.isInteger });
+  dropInvalid(r, { top: Number.isInteger, tournament: isTournamentRun });
   return without(r, TOWER_FIELDS);
 }
 
