@@ -1,11 +1,14 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { reachable } from "../src/board.ts";
-import { TOWER_START_X, WIDTH } from "../src/config.ts";
+import { TOWER_START_X, WIDTH, xpForLevel } from "../src/config.ts";
 import { point, type Tile } from "../src/entities.ts";
 import { region } from "../src/delve/labyrinth.ts";
 import { generateTowerFloor, isBossFloor } from "../src/tower/index.ts";
 import { getTowerGateEnemy } from "../src/scaling.ts";
+import { defaults } from "../src/save.ts";
+import { loadout } from "../src/loadout.ts";
+import { predict } from "../src/combat.ts";
 
 // A boss guards the way up at the end of every ten floors: beside the stairs
 // on each Tower section's last floor, and at each Delve milestone gate.
@@ -30,23 +33,31 @@ test("a boss stands on the only way to each boss floor's stairs, and on no other
     }
 });
 
-test("a Tower boss has twice a strong enemy's HP and ATK, on any floor", () => {
+test("a Tower boss has four times a normal enemy's HP, 1.75 times its ATK and 1.3 times its DEF, on any floor", () => {
   for (const room of [0, 4, 9, 19, 49, 333]) {
-    const strong = getTowerGateEnemy(room, "strong", "balanced"), boss = getTowerGateEnemy(room, "boss", "balanced");
+    const normal = getTowerGateEnemy(room, "normal", "balanced"), boss = getTowerGateEnemy(room, "boss", "balanced");
+    const strong = getTowerGateEnemy(room, "strong", "balanced"), elite = getTowerGateEnemy(room, "elite", "balanced");
     // Each is rounded to hundredths on its own.
-    assert.ok(Math.abs(boss.hp - strong.hp * 2) <= 0.02 && Math.abs(boss.attack - strong.attack * 2) <= 0.02);
-    assert.ok(boss.defense > strong.defense);
-    assert.equal(boss.name, strong.name);
+    for (const [stat, k] of [["hp", 4], ["attack", 1.75], ["defense", 1.3]] as const)
+      assert.ok(Math.abs(boss[stat] - normal[stat] * k) <= 0.02, `floor ${room + 1} ${stat}`);
+    assert.ok(boss.attack > strong.attack && boss.attack > elite.attack, `floor ${room + 1}: the boss hits hardest`);
+    assert.equal(boss.name, normal.name);
   }
 });
 
-test("tenth-floor bosses below floor 50 stand about where they stood before the enemy curves", () => {
-  // Floors 10 to 40's bosses as the old zone rosters made them: HP, ATK, DEF.
-  const before = [[80, 30, 3], [120, 46, 4], [180, 70, 7], [280, 106, 11]];
+test("tenth-floor bosses below floor 50 cost an evenly trained hero no more than before the enemy curves", () => {
+  // Floors 10 to 40's bosses as the old zone rosters made them (HP, ATK, DEF),
+  // against the hero's level by each floor (docs/PROGRESSION_AND_DIFFICULTY.md).
+  const before = [[80, 30, 3], [120, 46, 4], [180, 70, 7], [280, 106, 11]], levels = [7, 13, 18, 23];
   before.forEach(([hp, attack, defense], i) => {
-    const boss = getTowerGateEnemy(i * 10 + 9, "boss", "balanced");
-    assert.ok(boss.hp <= hp * 1.02 && boss.attack <= attack * 1.02 && boss.defense <= defense * 1.07, `floor ${i * 10 + 10}: ${JSON.stringify(boss)}`);
-    assert.ok(boss.hp >= hp * 0.95 && boss.attack >= attack * 0.9, `floor ${i * 10 + 10}: ${JSON.stringify(boss)}`);
+    const s = defaults(), points = levels[i] * 3;
+    s.xp = xpForLevel(levels[i]);
+    Object.assign(s.training, { hp: points / 3, attack: points / 3, defense: points / 3 });
+    const l = loadout(s), hero = { x: 0, y: 0, hp: l.maxHp, maxHp: l.maxHp, attack: l.attack, defense: l.defense, keys: l.keys };
+    const enemy = (stats: { hp: number; attack: number; defense: number }) => ({ name: "Boss", tier: 4, strength: "boss" as const, ...stats });
+    const now = predict(hero, enemy(getTowerGateEnemy(i * 10 + 9, "boss", "balanced"))).damage;
+    const old = predict(hero, enemy({ hp, attack, defense })).damage;
+    assert.ok(now <= old, `floor ${i * 10 + 10}: ${now} against ${old}`);
   });
 });
 

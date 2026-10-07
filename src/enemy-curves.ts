@@ -41,15 +41,16 @@ const SAME: EnemyStats = { hp: 1, attack: 1, defense: 1 };
 const all = (k: number): EnemyStats => ({ hp: k, attack: k, defense: k });
 
 /** The Tower's: strong is a hardened local, elite the next zone's enemy, and
- * a boss twice a strong one's HP and ATK. Profiles keep the old zone
- * rosters' ratios. */
+ * a boss an endurance fight: four times a normal one's HP but only 1.75
+ * times its ATK, so DEF beats it more than burst does. Profiles keep the
+ * old zone rosters' ratios. */
 const TOWER_SHAPES = {
   strength: {
     weak: all(0.75),
     normal: SAME,
     strong: all(1.25),
     elite: { ...SAME, ahead: 10 },
-    boss: { hp: 2.5, attack: 2.5, defense: 1.4 },
+    boss: { hp: 4, attack: 1.75, defense: 1.3 },
   },
   profile: {
     attackHeavy: { hp: 15 / 16, attack: 4 / 3, defense: 1 / 2 },

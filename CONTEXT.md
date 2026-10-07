@@ -216,7 +216,7 @@ The Tower's currency: one for each floor completed beyond the highest completed 
 _Avoid_: shards
 
 **Boss**:
-The monster guarding the way up at the end of every ten floors: in front of the stairs on the Tower's 10th, 20th, … floors, and below each Delve milestone gate. It has twice a strong monster's HP and ATK, and must be beaten to climb on.
+The monster guarding the way up at the end of every ten floors: in front of the stairs on the Tower's 10th, 20th, … floors, and below each Delve milestone gate. It has several times a normal monster's HP and hits harder than any other monster on its floor, and must be beaten to climb on.
 _Avoid_: area boss, guardian
 
 **Greater Boss**:

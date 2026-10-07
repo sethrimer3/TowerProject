@@ -83,8 +83,8 @@ test("DEF stays at most half of ATK for every enemy, and the balanced share rise
 });
 
 test("bosses are a multiplier on their own floor's curve, and a Greater Boss twice a boss", () => {
-  // Floor 10's Tower boss stands where the old one did: 80 HP / 30 ATK / 3 DEF.
-  assert.deepEqual(enemyStats("tower", 1, 9, "boss", "balanced"), { hp: 80, attack: 30, defense: 2.86 });
+  // Floor 10's Tower boss: four times the normal enemy's 32 HP, 1.75 times its 12 ATK.
+  assert.deepEqual(enemyStats("tower", 1, 9, "boss", "balanced"), { hp: 128, attack: 21, defense: 2.66 });
   for (const mode of MODES)
     for (const floor of [1, 7, 10, 55, 300]) {
       const step = stepOf(mode, floor), boss = enemyStats(mode, 1, step, "boss", "balanced");
