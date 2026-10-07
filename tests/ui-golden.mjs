@@ -383,8 +383,8 @@ try {
     await shot(`${prefix}.runMenu`);
     await click("#run-menu-toggle");
     await shot(`${prefix}.runMenu.closed`);
-    // The menu's Shop opens the Shop over the run; its Back returns to it.
-    await menuClick("#run-shop");
+    // The Shop, under the hamburger, opens over the run; its Back returns to it.
+    await click("#run-shop");
     await shot(`${prefix}.runShop`);
     await click("#shop-back");
     await shot(`${prefix}.runShop.back`);
@@ -393,7 +393,7 @@ try {
     await click("#settings-back");
     // Research opens over the run, paused; its Back plays on. A Gem reset
     // waits for the forest.
-    await click("#run-research");
+    await menuClick("#run-research");
     await shot(`${prefix}.runResearch`);
     await click("#research-back");
     await shot(`${prefix}.runResearch.back`);

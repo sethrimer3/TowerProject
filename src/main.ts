@@ -278,7 +278,7 @@ el("auto-settings").onclick = () => {
   closeRunMenu();
   navigate("settings");
 };
-// Inside a run, the menu's Shop opens the Shop, whose Back returns to the run.
+// Inside a run, the Shop under the hamburger opens the Shop, whose Back returns to the run.
 el("run-shop").onclick = () => {
   closeRunMenu();
   navigate("shop");

@@ -3,9 +3,9 @@ import { el } from "./dom.ts";
 
 /** Inside a run, the HUD's menu: the hamburger at the top of the actions
  * column, in Settings' place. Pressed, a thin white frame appears round it
- * and Research under it and slides left over the stats, settling with a
+ * and the Shop under it and slides left over the stats, settling with a
  * bounce, as the buttons it holds fade in, two rows of them: Settings
- * beside the hamburger with the Shop under it, End Run filling both rows at
+ * beside the hamburger with Research under it, End Run filling both rows at
  * the far left, and more to come, each new column widening it leftward
  * (`.run-menu-items` lays them out right to left). Pressed again, they fade
  * out, the frame slides back in and goes (the timing is all in the CSS).

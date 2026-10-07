@@ -121,7 +121,7 @@ export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay)
   renderForestSign(game);
   renderRunMenu(game);
   renderTournamentButton(game);
-  el("run-research").hidden = !!game.run.outside;
+  el("run-shop").hidden = !!game.run.outside;
   el("run-research").classList.toggle("notify", !game.run.outside && researchWaiting(game));
   renderAdButton(game);
   renderLockedTab("deck", !!game.save.upgrades.combatStance, "Deck", "Unlock Combat Stance in the Inspiration tree");
@@ -142,14 +142,15 @@ export const shopWaiting = (game: Game) => {
   const now = estimatedServerTime(game.save.shop.clock, game.clock());
   return OFFERS.some((o) => o.period === 1 && !refusal(game.save, o, now));
 };
-/** Puts the dot on the Shop tab, and the run menu's Shop and hamburger, while `shopWaiting`. */
+/** Puts the dot on the Shop tab and the run's Shop while `shopWaiting`,
+ * and on the run's hamburger while a button folded in its menu wears one. */
 export const renderShopDot = (game: Game) => {
   const waiting = shopWaiting(game);
   document.querySelector(`[data-tab="shop"]`)?.classList.toggle("notify", waiting);
   el("run-shop").classList.toggle("notify", waiting);
-  // Inside a run the menu's Shop is folded away, so the hamburger wears it
-  // too, and the Tournament's prize waiting there.
-  el("run-menu-toggle").classList.toggle("notify", waiting || (!game.run.outside && tournamentWaiting(game)));
+  // Inside a run Research and the Tournament are folded away in the menu, so
+  // the hamburger wears their dots too.
+  el("run-menu-toggle").classList.toggle("notify", !game.run.outside && (researchWaiting(game) || tournamentWaiting(game)));
 };
 /** Whether the Tournament button wears its dot: a final prize waits to be
  * claimed. */

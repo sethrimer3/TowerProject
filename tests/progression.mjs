@@ -11,8 +11,8 @@ const shown = (selector) => page.locator(selector).isVisible();
 // purse: Gems, Gold, then Silver.
 assert.equal(await page.locator('.tower-heading').isVisible(), false);
 assert.deepEqual(await page.locator('.hud-controls .purse > span:visible').evaluateAll((s) => s.map((e) => e.className)), ['gem-stat', 'gold-stat', 'silver-stat']);
-// Inside a run the hamburger stands in Settings' place, Research under it;
-// Settings and End Run wait in its menu (End Run shows in the height
+// Inside a run the hamburger stands in Settings' place, the Shop under it;
+// Settings, Research and End Run wait in its menu (End Run shows in the height
 // column too only while no card can act).
 assert.equal(await shown('#run-menu-toggle'), true);
 assert.equal(await shown('#auto-settings'), false);
@@ -20,10 +20,12 @@ assert.equal(await shown('#end-run'), false);
 assert.equal(await shown('#stuck-end-run'), false);
 assert.equal(await shown('#section-pick'), false);
 assert.equal(await shown('#enter-run'), false);
-assert.equal(await shown('#run-research'), true);
+assert.equal(await shown('#run-research'), false);
+assert.equal(await shown('#run-shop'), true);
 assert.equal(await page.getByRole('button', { name: 'Claim 7 Gems', exact: true }).innerText(), '7\nCLAIM');
 await page.locator('#run-menu-toggle').click();
 assert.equal(await shown('#auto-settings'), true);
+assert.equal(await shown('#run-research'), true);
 await page.getByRole('button', { name: 'End current run', exact: true }).click();
 assert.match(await page.locator('#modal').innerText(), /End this ascent\?/);
 await page.locator('#confirm').click();
@@ -36,6 +38,7 @@ assert.equal(await shown('#auto-settings'), true);
 assert.equal(await page.getByRole('button', { name: 'Goals', exact: true }).isVisible(), true);
 assert.equal(await shown('#enter-run'), true);
 assert.equal(await shown('#run-research'), false);
+assert.equal(await shown('#run-shop'), false);
 
 // With the Delve open, the sign leads to its forest, whose second button is
 // still a placeholder, and a Delve run's End Run names it.

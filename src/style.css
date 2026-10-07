@@ -684,12 +684,12 @@ canvas {
 .mini-action[hidden] {
   display: none;
 }
-/* Inside a run, the menu: the hamburger and Research under it, and the
+/* Inside a run, the menu: the hamburger and the Shop under it, and the
    buttons the hamburger opens (run-menu.ts). Its frame, a thin white
    outline round the two, slides left over the stats to fit them, with a
    bounce, as they fade in; closing, they fade out first and the frame
    slides back in. Its cells, two rows of them, fill right to left (Settings
-   over the Shop beside the hamburger), End Run
+   over Research beside the hamburger), End Run
    taking both rows of the leftmost column. */
 .run-menu {
   position: relative;
