@@ -13,6 +13,7 @@ import type { EntitlementId } from "./shop/entitlements.ts";
 import type { ShopSave } from "./shop/ledger.ts";
 import type { GoalsSave } from "./goals.ts";
 import type { TournamentSave } from "./tournament/progress.ts";
+import type { MailSave } from "./mail/progress.ts";
 import type { TournamentRun } from "./tournament/run.ts";
 export type Kind =
   | "wall"
@@ -339,5 +340,8 @@ export type Save = {
   /** The Tournament's Tickets, league, and what the player last heard of
    * each tournament entered (tournament/progress.ts). */
   tournament: TournamentSave;
+  /** Mail the server pushed: the inbox it last reported, what was read,
+   * removed and claimed here (mail/progress.ts). */
+  mail: MailSave;
 };
 export const point = (x: number, y: number) => `${x},${y}`;

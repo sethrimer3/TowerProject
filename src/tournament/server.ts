@@ -74,12 +74,11 @@ export function stubField(id: string, league: League) {
   return Array.from({ length: STUB_ENTRANTS }, () => Math.floor(rng() * rng() * reach * 2));
 }
 
-/** The stand-in until the server exists. It keeps the schedule on `now`
- * (the device clock) and makes up each league's other entrants, and since
- * it keeps nothing itself it reads the player's own record (`save()`):
- * their scores, and from them the league they would be in, starting in
- * Copper and moved by each finalized tournament they entered. */
-export function stubTournament(save: () => TournamentSave, now: () => number = Date.now): TournamentServer {
+/** How the stand-in works out results from the player's own record: when
+ * a tournament's results are final (null before), the league the player
+ * plays tournament `id` in, and their standing in it. The mail stub reads
+ * it too, for a prize left unclaimed. */
+export function stubResults(save: () => TournamentSave, now: () => number) {
   const finalizedAt = (t: Tournament) => (now() >= t.graceEndsAt + STUB_TABULATE_MS ? t.graceEndsAt + STUB_TABULATE_MS : null);
   /** The league the player plays tournament `id` in, and their standing in each finalized one before it. */
   const leagueFor = (id: string) => {
@@ -95,6 +94,16 @@ export function stubTournament(save: () => TournamentSave, now: () => number = D
     const scores = [...stubField(id, leagueFor(id)), best];
     return { id, best, place: placeOf(scores, best), entrants: scores.length, final: finalizedAt(latestTournament(Date.parse(id))) !== null };
   };
+  return { finalizedAt, leagueFor, standing };
+}
+
+/** The stand-in until the server exists. It keeps the schedule on `now`
+ * (the device clock) and makes up each league's other entrants, and since
+ * it keeps nothing itself it reads the player's own record (`save()`):
+ * their scores, and from them the league they would be in, starting in
+ * Copper and moved by each finalized tournament they entered. */
+export function stubTournament(save: () => TournamentSave, now: () => number = Date.now): TournamentServer {
+  const { finalizedAt, leagueFor, standing } = stubResults(save, now);
   let entries = 0;
   return {
     time: async () => now(),

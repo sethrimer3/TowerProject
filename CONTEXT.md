@@ -415,6 +415,16 @@ The deepest depth a tournament run reached. Players with the same score share th
 One of the ten bands a league's prizes are paid by, from the top 3% of entrants to the bottom 20%.
 _Avoid_: tier, rank
 
+### Mail
+
+**Mail**:
+Messages the game server sends a player: an outage notice, or a Tournament prize left unclaimed. The server keeps them; the game shows what it last heard.
+_Avoid_: inbox (the list itself), notification, news
+
+**Message**:
+One piece of Mail: a subject line, body text, and possibly items to claim. It shows for 7 days, or while its items wait to be claimed, up to 90. A message with items waiting can't be removed.
+_Avoid_: letter, post
+
 ### The Delve
 
 **Forest sign**:

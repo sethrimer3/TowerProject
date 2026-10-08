@@ -99,6 +99,7 @@ const scope: Record<string, (p: string[]) => boolean> = {
   outside: under("tower.run"),
   preSkillTrees: under("upgrades", "delve.run", "delve.best", "delve.courage"),
   tournament: under("tournament", "delve.run.tournament"),
+  mail: under("mail"),
 };
 /** The Tournament's save, with a tournament run inside the Delve (a v3 save
  * besides, so its other fields decode as v3's do). */
@@ -107,6 +108,14 @@ const tournamentSave = {
   tickets: 2, league: "gold", granted: "2026-10-07", adTicket: "2026-10-07", gemTickets: { id: "2026-10-07", bought: 3 },
   entries: { "2026-10-03": { best: 41, place: 12, entrants: 980, pending: null, entry: "2026-10-03#1" }, "2026-10-07": { best: 9, place: 0, entrants: 0, pending: 9, entry: "2026-10-07#3" } },
   claimed: ["2026-09-30", "2026-10-03"],
+};
+/** Mail: an inbox the server reported, ids not yet synced, and the
+ * stand-in's mailbox. */
+const mailMessage = { id: "dev:1", sentAt: 1_791_000_000_000, subject: "Sorry", body: "Down an hour.\n\nGems.", items: [{ kind: "currency", currency: "gems", amount: 20 }, { kind: "tickets", amount: 1 }], read: true, claimed: false };
+const mailSave = {
+  inbox: [mailMessage, { ...mailMessage, id: "new", items: [{ kind: "unknown" }], read: false }],
+  unsynced: { read: ["dev:1"], hidden: ["old"] }, claimed: ["tournament:2026-09-30"],
+  stub: [{ ...mailMessage, hidden: false }, { ...mailMessage, id: "old", items: [], hidden: true }],
 };
 const bases: Record<string, () => any> = {
   v3,
@@ -122,6 +131,7 @@ const bases: Record<string, () => any> = {
     const s = v3();
     return { ...s, tournament: structuredClone(tournamentSave), delve: { ...s.delve, run: delveRun({ tier: 5, tournament: structuredClone(tournamentRun) }) } };
   },
+  mail: () => ({ ...v3(), mail: structuredClone(mailSave) }),
 };
 const HOSTILE: [string, unknown][] = [
   ["delete", undefined], ["null", null], ["neg", -1], ["frac", 2.5], ["huge", 2e9],
@@ -183,6 +193,14 @@ const EDGES: [string, unknown[]][] = [
   ["tournament:delve.run.tournament.back.tier", [0, 9]],
   ["tournament:delve.run.tournament.back.mode", ["defend"]],
   ["tournament:delve.run.tournament.id", ["2026-10-07x"]],
+  ["mail:mail.inbox.0.id", ["", "x".repeat(101)]],
+  ["mail:mail.inbox.0.items.0.currency", ["rubies"]],
+  ["mail:mail.inbox.0.items.0.kind", ["card"]],
+  ["mail:mail.inbox.0.items.1.amount", [1e10]],
+  ["mail:mail.inbox.0.subject", ["x".repeat(300)]],
+  ["mail:mail.inbox.1.id", ["dev:1"]],
+  ["mail:mail.unsynced.read", [["a", "a", 3]]],
+  ["mail:mail.stub.1.hidden", ["yes"]],
 ];
 
 function paths(value: any, prefix: string[] = []): string[][] {
@@ -267,6 +285,10 @@ test("decode keeps the Tournament's save and a tournament run inside a cave not 
   assert.deepEqual(d.tournament, tournamentSave);
   assert.deepEqual((d.delve.run as any)?.tournament, tournamentRun);
   assert.equal(d.delve.run?.tier, 5);
+});
+
+test("decode keeps Mail: the inbox, what waits to sync, what was claimed, and the stand-in's mailbox", () => {
+  assert.deepEqual(decode(JSON.stringify(bases.mail())).mail, mailSave);
 });
 
 test("decode migrates v1 saves into the Delve slice and legacy settings", () => {

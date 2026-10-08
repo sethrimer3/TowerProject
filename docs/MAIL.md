@@ -1,6 +1,6 @@
 # Mail (plan)
 
-Status: **planned; step 1 (the Tournament change) built.** This is the design and build order for **Mail**: messages the game server pushes to a player, each with a subject line, body text, and possibly items to claim.
+Status: **steps 1 and 2 built** (the Tournament change; the rules, save, stub server and client, `src/mail/`, `game/mail-desk.ts`, `tests/mail.test.ts`); the screens are next. This is the design and build order for **Mail**: messages the game server pushes to a player, each with a subject line, body text, and possibly items to claim.
 
 Examples:
 
@@ -20,7 +20,8 @@ Examples:
 ```ts
 type MailItem =
   | { kind: "currency"; currency: CurrencyId; amount: number }  // Gems, Ascension Shards, Gold
-  | { kind: "tickets"; amount: number };                         // Tournament Tickets
+  | { kind: "tickets"; amount: number }                          // Tournament Tickets
+  | { kind: "unknown" };                                         // a kind this client doesn't know
 
 type MailMessage = {
   id: string;          // the server's, unique; a missed Tournament prize is `tournament:2026-10-07`
@@ -35,7 +36,8 @@ type MailMessage = {
 
 - **Text is plain:** the client escapes it, so a message can't inject markup into the page.
 - **Item kinds:** a new kind of item (materials, Equipment, a card) is one more case in `MailItem` and in its grant.
-- **Unknown kinds:** an item of a kind this client doesn't know still lists, as *Update the game to claim this reward*. While it waits, *Claim* is refused for the whole message, so nothing is half-claimed. The server keeps the message, so the player can claim it after updating.
+- **Unknown kinds:** an item of a kind this client doesn't know decodes as `{ kind: "unknown" }` and still lists, as *Update the game to claim this reward*. While it waits, *Claim* is refused for the whole message without asking the server, so nothing is half-claimed, and it can't be removed either. The server keeps the message, so the player can claim it after updating.
+- **Malformed messages:** the server's answers are decoded like the save (`decodeMessage`): a message with a malformed field or item is dropped whole, and subject and body are cut to 200 and 4,000 characters.
 
 ## Behaviour
 
@@ -47,7 +49,7 @@ type MailMessage = {
 - The Mail button wears a dot while any recent message is unread. In the list, each unread row wears its own.
 - Claiming isn't needed to clear a dot. A row still holding items shows a gift box icon (`giftIcon()`) beside its subject, whether read or not, so a reward waiting is plain to see.
 
-**Claiming** (`MailClient.claim(id)`):
+**Claiming** (`MailClient.claim(id)`; a second press while one is under way asks nothing):
 
 1. The client asks the server to claim the message.
 2. The server answers with the items it granted, or nothing: offline, already claimed, or expired.
@@ -98,21 +100,23 @@ The server sends it only once the window has closed, and refuses the Tournament 
 
 ```ts
 interface MailServer {
-  /** The player's messages (recent and not removed), or null when unreachable. */
-  inbox(): Promise<MailMessage[] | null>;
+  /** The server's time and the player's messages (kept and not removed), or null when unreachable. */
+  inbox(): Promise<{ time: number; messages: unknown[] } | null>;
   /** Grants message `id`'s items once; returns them, or null when refused or unreachable. */
-  claim(id: string): Promise<MailItem[] | null>;
+  claim(id: string): Promise<unknown[] | null>;
   /** Records messages as read, or one as removed, on the player's profile. */
   markRead(ids: string[]): Promise<boolean>;
   hide(id: string): Promise<boolean>;
 }
 ```
 
-`stubMail(save, tournament)` stands in until the server exists, and like `stubTournament` it keeps nothing itself:
+The inbox carries the server's time, which the desk confirms as the Shop's clock, so the 7 and 90 days are counted on the server's clock.
 
-- **Tournament mail:** for each tournament entered whose claim window has closed unclaimed, it makes the missed-prize message. It works out the final place from `stubField`, as the Tournament stub does.
-- **Dev mail:** messages written into the save by the `mailDebug.send({ subject, body, items })` console helper (`debug-hooks.ts`), so the screens can be tried end to end, the outage message included.
-- **Read, claimed and removed:** taken from the player's own record.
+`stubMail(save, now)` stands in until the server exists. Its mailbox is kept in the player's save (`save.mail.stub`), so what it has sent stays sent:
+
+- **Tournament mail:** each tournament entered whose claim window has closed unclaimed is posted once, as the window closes. The final place comes from `stubResults` in `tournament/server.ts`, which the Tournament stand-in uses too.
+- **Dev mail:** `postStubMail(save, { subject, body, items }, now)`, which the `mailDebug.send` console helper (`debug-hooks.ts`, step 3) calls, so the screens can be tried end to end, the outage message included.
+- **Read, claimed and removed:** recorded on each message in its mailbox; mail past its time is dropped from it, as the server will.
 
 ## Save
 
@@ -120,13 +124,12 @@ interface MailServer {
 
 | Field | Holds |
 |---|---|
-| `inbox` | the messages the server last reported (each decoded field by field; unknown item kinds kept as `{ kind: "unknown" }`) |
-| `read` | ids opened, until the server reports them read |
-| `claimed` | ids claimed: no grant is ever made for one twice |
-| `hidden` | ids removed |
-| `dev` | Dev mail the stub reports (empty outside Dev use) |
+| `inbox` | the messages the server last reported (each decoded field by field; unknown item kinds kept as `{ kind: "unknown" }`), read and claimed as known here |
+| `unsynced` | `{ read, hidden }`: ids opened and removed here that the server hasn't confirmed; each is kept only while the server still reports it otherwise, and sent again on the next refresh |
+| `claimed` | ids granted here: no grant is ever made for one twice, whatever the server says |
+| `stub` | the stand-in's mailbox (empty once a real server answers) |
 
-Messages and ids older than `MAIL_KEEP_DAYS` (90) are dropped as the save loads, so what is stored stays bounded; a message past `MAIL_DAYS` with nothing left to claim is dropped too.
+Mail past its time (`kept`) is dropped from the inbox as the server's next answer comes in, and no list keeps more than 200 ids (`MAIL_IDS_KEPT`), so what is stored stays bounded. Erasing progress (`eraseAll`) keeps `save.mail`, since Mail is the server's.
 
 ## Screens
 
@@ -157,10 +160,10 @@ Messages and ids older than `MAIL_KEEP_DAYS` (90) are dropped as the save loads,
 ## Build order
 
 1. **Tournament: no *Rewards expired*** (built). The page shows only the next opening once the claim window closes.
-2. **Rules without screens:** the message and item types, `save.mail` and its decoder, `MailDesk`, `MailServer` and `stubMail` (with the Tournament's missed prize), `MailClient`, and `tests/mail.test.ts`.
+2. **Rules without screens** (built): the message and item types, `save.mail` and its decoder, `MailDesk`, `MailServer` and `stubMail` (with the Tournament's missed prize), `MailClient`, and `tests/mail.test.ts`.
 3. **Screens:** the button and its dot, the popup's list and message view, claiming with its reveal, removing with its confirmation, `refreshMail`'s timing, and `mailDebug`.
 4. **Goldens and docs:**
-   - **Goldens:** `ui.golden.json` gets a `mail` fixture (a forest with an unread outage message: the button and dot, the list with its gift box, the message, the claim, the reveal, the X appearing, both messages removed, the button gone). `save-decode` gets a `mail` base with its hostile values.
+   - **Goldens:** `ui.golden.json` gets a `mail` fixture (a forest with an unread outage message: the button and dot, the list with its gift box, the message, the claim, the reveal, the X appearing, both messages removed, the button gone). (`save-decode`'s `mail` base, with its hostile values, came with step 2.)
    - **Docs:** AGENTS.md, the README, CONTEXT.md and `docs/TOURNAMENT.md`.
 
 ## Decisions

@@ -77,6 +77,7 @@ import { BadgeDesk } from "./game/badge-desk.ts";
 import { RunPurse, type EquipmentLoot } from "./game/run-purse.ts";
 import { EquipmentDesk } from "./game/equipment-desk.ts";
 import { TournamentDesk } from "./game/tournament-desk.ts";
+import { MailDesk } from "./game/mail-desk.ts";
 import { LEAGUE_INFO } from "./tournament/leagues.ts";
 import { runStream, tournamentScore, type TournamentRun } from "./tournament/run.ts";
 import type { TournamentInfo } from "./tournament/server.ts";
@@ -226,6 +227,8 @@ export class Game {
   /** The Tournament's commands: the server's reports, Tickets, standings
    * and prizes. */
   readonly tournament = new TournamentDesk(this);
+  /** Mail the server pushed: the inbox, reading, removing and claiming. */
+  readonly mail = new MailDesk(this);
   /** The Deck page's card badges: drawing them with Gems and attaching
    * them to cards. */
   readonly badges = new BadgeDesk(this);
@@ -1244,9 +1247,10 @@ export class Game {
   }
   /** Erases all progress and starts again outside the Tower. */
   eraseAll() {
-    // What was bought in the Shop, and its record, outlast the progress.
-    const { entitlements, shop } = this.save;
-    this.save = { ...defaults(), entitlements, shop };
+    // What was bought in the Shop, and its record, outlast the progress, as
+    // does Mail, which is the server's (and so what was claimed from it).
+    const { entitlements, shop, mail } = this.save;
+    this.save = { ...defaults(), entitlements, shop, mail };
     if (permanentBoost(this.save)) this.save.trainingBoostUntil = BOOST_FOREVER;
     this.mode = "tower";
     this.newRun({ outside: true });
