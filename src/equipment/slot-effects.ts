@@ -50,7 +50,7 @@ export const SLOT_EFFECTS: readonly SlotEffectDef[] = [
   fx("bulwark", "Bulwark", "guard", "defense", 1, 0.2),
   fx("fortitude", "Fortitude", "guard", "defensePct", 1, 0.04),
   fx("warding", "Warding", "guard", "shroud", 3, 0.5),
-  fx("vigor", "Vigor", "vitality", "maxHp", 10, 2),
+  fx("vigor", "Vigor", "vitality", "maxHp", 50, 10),
   fx("constitution", "Constitution", "vitality", "maxHpPct", 1, 0.04),
   fx("mending", "Mending", "vitality", "regen", 0.2, 0.02),
   fx("secondWind", "Second Wind", "recovery", "victoryHeal", 0.3, 0.01),

@@ -279,7 +279,7 @@ Each effect (`SLOT_EFFECTS` in `equipment/slot-effects.ts`) has an id, a name, a
 | Bulwark | Guard | +1 DEF | 0.2 | +20.48 DEF |
 | Fortitude | Guard | +1% DEF | 0.04 | +5.38% DEF |
 | Warding | Guard | +3 shroud (damage blocked each fight) | 0.5 | +52 shroud (damage blocked each fight) |
-| Vigor | Vitality | +10 max HP | 2 | +204.8 max HP |
+| Vigor | Vitality | +50 max HP | 10 | +1024 max HP |
 | Constitution | Vitality | +1% max HP | 0.04 | +5.38% max HP |
 | Mending | Vitality | +0.2 HP regained each step | 0.02 | +2.21 HP regained each step |
 | Second Wind | Recovery | 0.3% of max HP healed after each victory | 0.01 | 1.42% of max HP healed after each victory |
