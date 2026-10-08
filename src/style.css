@@ -2756,6 +2756,7 @@ nav button.notify::after, .tree-tabs button.notify::after {
   box-shadow: 0 2px 6px #000a;
 }
 .deck-add { cursor: grab; touch-action: none; }
+.deck-entry-art { cursor: pointer; }
 .deck-add:not(:disabled):hover { box-shadow: 0 0 0 2px #ebc77f, 0 0 10px 2px #e0b25a88; }
 /* With the hand full, a deck card goes in only by dragging it onto one. */
 .deck-add.full { filter: brightness(0.75); }
@@ -2844,6 +2845,29 @@ dialog.dismiss-anywhere { cursor: pointer; }
 .card-reveal.still .card-reveal-rays,
 .card-reveal.still .card-reveal-card,
 .card-reveal.still .card-reveal-text { animation: none; }
+/* A card's details on the Deck page: the reveal, popped up rather than
+   risen, closed by a press anywhere. */
+.card-reveal.details { cursor: pointer; }
+.card-reveal.details .card-reveal-rays { animation: card-rays-in 0.3s ease-out backwards, card-rays-turn 16s linear infinite; }
+.card-reveal.details .card-reveal-card { animation: card-pop 0.25s cubic-bezier(0.2, 0.9, 0.3, 1.2) backwards; }
+.card-reveal.details .card-reveal-text { animation: card-text-in 0.25s 0.1s ease-out backwards; }
+.card-reveal-note { display: block; margin-top: 8px; font-size: 11px; font-style: normal; color: #8fa596; }
+.card-reveal-action {
+  margin-top: 14px;
+  padding: 8px 18px;
+  border: 1px solid #8fdc9f;
+  border-radius: 4px;
+  background: #16301e;
+  color: #e9f7d8;
+  font: inherit;
+  font-size: 12px;
+  letter-spacing: 1px;
+  cursor: pointer;
+}
+.card-reveal-action:hover { background: #21482d; }
+@keyframes card-pop {
+  from { transform: scale(0.6); opacity: 0; }
+}
 @keyframes card-rise {
   from { transform: translateY(75vh) scale(0.8); }
   to { transform: none; }

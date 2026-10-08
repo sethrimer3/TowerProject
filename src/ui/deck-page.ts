@@ -6,6 +6,7 @@ import { DRAW_GEMS, type DrawCount } from "../game/badge-desk.ts";
 import { cardWith, BADGE_IDS, BADGES, badgeLevel, badgeValue, type BadgeId } from "../badges.ts";
 import { RARITIES } from "../shop/rarity.ts";
 import { revealDraws } from "./badge-reveal.ts";
+import { showCard } from "./card-reveal.ts";
 import { badgeLevelsHtml, cardBadgeHtml, badgeText, progressText, tokenHtml } from "./badge-token.ts";
 
 /** Where a hand card dropped on the deck goes: back to the deck. */
@@ -194,14 +195,14 @@ export class DeckPage {
         const check = stays
           ? `disabled title="STAIRS always stays in your hand" aria-label="${name} is in your hand and always stays there"`
           : `title="Return ${name} to the deck" aria-label="${name} is in your hand: return it to the deck"`;
-        return `<div class="deck-entry in-hand" role="listitem"${this.badgeTarget(id)}<div class="deck-entry-art" title="${name}: in your hand">${cardArt(id, name)}</div><button type="button" class="deck-check" data-return="${id}" ${check}>${CHECK_SVG}</button></div>`;
+        return `<div class="deck-entry in-hand" role="listitem"${this.badgeTarget(id)}<button type="button" class="deck-entry-art" data-info="${id}" title="${name}: in your hand. Press for details" aria-label="${name}: in your hand. Press for details">${cardArt(id, name)}</button><button type="button" class="deck-check" data-return="${id}" ${check}>${CHECK_SVG}</button></div>`;
       }
       // A full hand takes a card only by dragging it onto one to swap out.
-      return `<div class="deck-entry" role="listitem"${this.badgeTarget(id)}<button type="button" class="deck-add${full ? " full" : ""}" data-add="${id}" title="${full ? `Your hand is full: drag ${name} onto a card to swap it` : `Add ${name} to your hand, or drag it to a slot`}" aria-label="${full ? `Your hand is full: drag ${name} onto a card to swap it` : `Add ${name} to your hand`}">${cardArt(id, name)}</button></div>`;
+      return `<div class="deck-entry" role="listitem"${this.badgeTarget(id)}<button type="button" class="deck-add${full ? " full" : ""}" data-add="${id}" title="${full ? `${name}: press for details. Your hand is full: drag it onto a card to swap it` : `${name}: press for details, or drag it to a slot`}" aria-label="${full ? `${name}: press for details. Your hand is full: drag it onto a card to swap it` : `${name}: press for details or to add it to your hand`}">${cardArt(id, name)}</button></div>`;
     }).join("");
     return `<section class="deck-reserve open" aria-labelledby="deck-label">
         <h3 id="deck-label" class="deck-label">Deck</h3>
-        ${note ? `<button type="button" class="deck-tip deck-note" id="deck-add-note"><b>Add cards from your deck</b><p>Press a card to add it to your hand. Cards already in your hand are greyed out: press their check to return them to the deck.</p><small>Press to dismiss</small></button>` : ""}
+        ${note ? `<button type="button" class="deck-tip deck-note" id="deck-add-note"><b>Add cards from your deck</b><p>Press a card to see what it does and add it to your hand, or drag it to a hand slot. Cards already in your hand are greyed out: press their check to return them to the deck.</p><small>Press to dismiss</small></button>` : ""}
         <div class="deck-grid" role="list" aria-label="Your deck">${cards}</div>
       </section>`;
   }
@@ -276,6 +277,9 @@ export class DeckPage {
       const x = (e.target as HTMLElement).closest<HTMLButtonElement>(".deck-remove");
       if (x) this.remove(x.dataset.remove as CardId);
       if ((e.target as HTMLElement).closest(".deck-buy-slot")) this.buySlot();
+      // From the keyboard (a pointer's press shows it on release).
+      const card = (e.target as HTMLElement).closest<HTMLButtonElement>(".deck-card");
+      if (card && e.detail === 0) this.showHandCard(this.ctx.game.save.hand[Number(card.dataset.slot)]);
     };
     row.onpointerdown = (e) => this.pressHandCard(row, e);
     row.onpointermove = (e) => this.dragHandCard(e);
@@ -283,7 +287,7 @@ export class DeckPage {
       const d = this.drag;
       if (!d || e.pointerId !== d.pointer) return;
       this.cancelDrag();
-      if (!d.lifted) return;
+      if (!d.lifted) return this.showHandCard(this.ctx.game.save.hand[d.from]);
       if (d.to === TO_DECK) this.remove(this.ctx.game.save.hand[d.from]);
       else this.drop(d.from, d.to);
     };
@@ -331,7 +335,11 @@ export class DeckPage {
   }
 
   private bindDeck() {
-    document.querySelectorAll<HTMLButtonElement>("[data-add]").forEach((b) => (b.onclick = () => this.change(this.ctx.game.deck.add(b.dataset.add as CardId))));
+    // From the keyboard (a pointer's press shows it on release).
+    document.querySelectorAll<HTMLButtonElement>("[data-add]").forEach((b) => (b.onclick = (e) => {
+      if (e.detail === 0) this.showDeckCard(b.dataset.add as CardId);
+    }));
+    document.querySelectorAll<HTMLButtonElement>("[data-info]").forEach((b) => (b.onclick = () => this.showHandCard(b.dataset.info as CardId)));
     this.bindDeckDrag();
     document.querySelectorAll<HTMLButtonElement>("[data-return]").forEach((b) => (b.onclick = () => this.change(this.ctx.game.deck.remove(b.dataset.return as CardId))));
     const note = document.getElementById("deck-add-note");
@@ -392,8 +400,8 @@ export class DeckPage {
   }
 
   /** Dragging a deck card onto a hand slot puts it there (`placeInHand`);
-   * a press that never lifts it adds it, as its click does from the
-   * keyboard (the captured pointer's click lands on the grid). */
+   * a press that never lifts it shows its details, as its click does from
+   * the keyboard (the captured pointer's click lands on the grid). */
   private bindDeckDrag() {
     const grid = document.querySelector<HTMLElement>(".deck-grid");
     if (!grid) return;
@@ -403,7 +411,7 @@ export class DeckPage {
       const d = this.deckDrag;
       if (!d || e.pointerId !== d.pointer) return;
       this.cancelDrag();
-      if (!d.lifted) return this.change(this.ctx.game.deck.add(d.card));
+      if (!d.lifted) return this.showDeckCard(d.card);
       if (d.to === null) return this.render();
       this.change(this.ctx.game.deck.place(d.card, d.to));
     };
@@ -562,6 +570,22 @@ export class DeckPage {
   private thresholdText(id: BadgeId, pick: number) {
     const v = badgeValue(id, BADGES[id].values.length, pick);
     return id === "hpGate" ? `HP < ${v}%` : `${BADGES[id].name.replace(" <", "")} < ${v}`;
+  }
+
+  /** A hand card's details, with the offer to return it to the deck when
+   * its X would. */
+  private showHandCard(id: CardId) {
+    const { save } = this.ctx.game;
+    const action = this.removable(id) ? { label: "Return to deck", run: () => this.remove(id) } : undefined;
+    showCard(id, save.upgrades, save.settings.reduceMotion, "IN YOUR HAND", action, id === "stairs" ? "STAIRS always stays in your hand." : undefined);
+  }
+
+  /** A deck card's details, with the offer to add it to the hand while
+   * there is room. */
+  private showDeckCard(id: CardId) {
+    const { save, deck } = this.ctx.game, full = save.hand.length >= handSlots(save);
+    const action = full ? undefined : { label: "Add to hand", run: () => this.change(deck.add(id)) };
+    showCard(id, save.upgrades, save.settings.reduceMotion, "IN YOUR DECK", action, full ? "Your hand is full: drag this card onto one in your hand to swap it." : undefined);
   }
 
   /** Asks before spending Gems on the next hand slot. */
