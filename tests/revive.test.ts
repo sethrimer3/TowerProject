@@ -46,12 +46,12 @@ test("Revive's chance: 0.5%, and 0.5% more a training rank, up to 50% at 99 rank
   assert.deepEqual([trainingStep(s, "revive").now, trainingStep(s, "revive").next, trainingStep(s, "revive").worth], [0.5, 1, 0.5]);
 });
 
-test("Revive is a 10 Inspiration skill below Shroud, and the Courage tree no longer has it", () => {
+test("Revive is a 10 Inspiration skill below Regen Research, and the Courage tree no longer has it", () => {
   const row = UPGRADES.find((u) => u.id === "revive")!;
   assert.deepEqual([row.currency, row.base, row.max], ["inspiration", 10, 1]);
   const where = TREES.filter((t) => t.nodes.some((n) => n.id === "revive")).map((t) => t.id);
   assert.deepEqual(where, ["inspiration"]);
-  assert.deepEqual(TREES.find((t) => t.id === "inspiration")!.nodes.find((n) => n.id === "revive")!.requires, ["shroud"]);
+  assert.deepEqual(TREES.find((t) => t.id === "inspiration")!.nodes.find((n) => n.id === "revive")!.requires, ["regenResearch"]);
 });
 
 /** A Delve run on `seed` with the hero two tiles below a Brute in a walled

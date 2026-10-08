@@ -84,13 +84,12 @@ test("Shroud blocks 1 damage a fight and opens Shroud training, each rank worth 
   g.save.xp = xpForLevel(10);
   assert.equal(trainNow(g, "shroud"), false, "not before Shroud");
   assert.equal(g.run.player.shroud, undefined, "no shroud yet");
-  g.save.tower.inspiration = 10;
-  assert.equal(g.buy("shroud"), false, "not before Greater Heal and Regen Research");
+  g.save.tower.inspiration = 2;
+  assert.equal(g.buy("shroud"), false, "not before Greater Heal");
   g.save.upgrades.greaterHeal = 1;
-  g.save.upgrades.regenResearch = 1;
   assert.ok(g.buy("shroud"));
   assert.equal(loadout(g.save).shroud, 1);
-  assert.equal(g.save.tower.inspiration, 0, "10 Inspiration");
+  assert.equal(g.save.tower.inspiration, 0, "2 Inspiration");
   assert.equal(g.run.player.shroud, 1, "the run in the forest takes it at once");
   assert.ok(trainNow(g, "shroud") && trainNow(g, "shroud"));
   // At level 10 a rank is worth 1 × (1 + 10 / 10) = 2.

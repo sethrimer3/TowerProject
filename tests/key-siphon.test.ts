@@ -11,7 +11,7 @@ import type { Save } from "../src/entities.ts";
 
 const hpRow = TRAINING.find((t) => t.id === "hp")! as StatTrainingRow;
 
-test("Rehearsed steps costs 5; Key Siphon (5) follows Into the depths, Buy Quantity (5) Key Siphon, Regen Research (2) Greater Heal", () => {
+test("Rehearsed steps costs 5; Key Siphon (5) follows Into the depths, Buy Quantity (5) Key Siphon, Regen Research (10) Shroud", () => {
   assert.equal(cost("inspirationUndos", 0), 5);
   const g = new Game(defaults());
   g.save.tower.inspiration = 1000;
@@ -19,7 +19,7 @@ test("Rehearsed steps costs 5; Key Siphon (5) follows Into the depths, Buy Quant
   assert.equal(g.buy("keySiphon"), false, "waits for Into the depths");
   assert.ok(g.buy("delve"));
   assert.equal(g.buy("buyQuantity"), false, "waits for Key Siphon");
-  assert.equal(g.buy("regenResearch"), false, "waits for Greater Heal");
+  assert.equal(g.buy("regenResearch"), false, "waits for Greater Heal and Shroud");
   const before = g.save.tower.inspiration;
   assert.ok(g.buy("keySiphon"));
   assert.equal(before - g.save.tower.inspiration, 5);
@@ -27,8 +27,10 @@ test("Rehearsed steps costs 5; Key Siphon (5) follows Into the depths, Buy Quant
   assert.ok(g.buy("buyQuantity"));
   assert.equal(before - g.save.tower.inspiration, 5 + 5);
   assert.ok(g.buy("greaterHeal"));
+  assert.equal(g.buy("regenResearch"), false, "waits for Shroud");
+  assert.ok(g.buy("shroud"));
   assert.ok(g.buy("regenResearch"));
-  assert.equal(before - g.save.tower.inspiration, 5 + 5 + 3 + 2);
+  assert.equal(before - g.save.tower.inspiration, 5 + 5 + 3 + 2 + 10);
 });
 
 test("Regen research: +3% Regen a level, priced and timed like Potion HP, needing Regen Research", () => {
