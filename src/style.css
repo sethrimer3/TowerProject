@@ -3649,6 +3649,30 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
 .tournament-button .trophy-icon { display: block; width: 16px; height: 16px; }
 .tournament-button small { font-variant-numeric: tabular-nums; }
 .tournament-button.live small { color: #8ff0a4; }
+/* The Mail button (hud.ts): an envelope under Settings in the forest. */
+.mail-button .mail-icon { display: block; width: 18px; height: 18px; }
+/* The Mail popup (mail-dialog.ts): the list of recent mail, and a message. */
+.mail-list { list-style: none; margin: 4px 0 0; padding: 0; text-align: left; }
+.mail-row { display: flex; align-items: stretch; gap: 6px; margin-bottom: 6px; }
+.mail-open { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; padding: 10px; text-align: left; }
+.mail-dot { flex: 0 0 8px; width: 8px; height: 8px; border-radius: 50%; }
+.mail-row.unread .mail-dot { background: #d8352b; box-shadow: 0 0 0 2px #0008; }
+.mail-subject { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; color: #c9d2de; }
+.mail-row.unread .mail-subject { color: #f3e6c4; font-weight: 700; }
+.mail-gift { flex: 0 0 18px; width: 18px; height: 18px; }
+.mail-age { flex: 0 0 auto; font-size: 10px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.mail-remove { flex: 0 0 40px; padding: 0; font-size: 14px; }
+.mail-message .mail-body { text-align: left; }
+.mail-message .mail-body p { margin: 0 0 10px; color: #c9d2de; overflow-wrap: anywhere; }
+.mail-items { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 6px 0 10px; }
+.mail-item { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 72px; padding: 8px 6px; border: 1px solid #8d794e66; border-radius: 6px; background: #0006; }
+.mail-item svg, .mail-item .ui-sprite { width: 26px; height: 26px; }
+.mail-item b { font-size: 15px; color: #f3e6c4; }
+.mail-item small { font-size: 10px; color: var(--muted); }
+.mail-item.unknown { max-width: 160px; }
+.mail-item-unknown { font-size: 22px; line-height: 26px; color: #f3e6c4; }
+.mail-item-check { position: absolute; top: 2px; right: 5px; color: #8ff0a4; font-size: 13px; }
+.mail-claimed { margin: 0 0 6px; color: #8ff0a4; }
 /* The Tournament page (tournament-page.ts). */
 .page#tournament { text-align: center; }
 .tournament-league { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 6px 0 10px; }

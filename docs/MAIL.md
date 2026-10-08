@@ -1,6 +1,6 @@
 # Mail (plan)
 
-Status: **steps 1 and 2 built** (the Tournament change; the rules, save, stub server and client, `src/mail/`, `game/mail-desk.ts`, `tests/mail.test.ts`); the screens are next. This is the design and build order for **Mail**: messages the game server pushes to a player, each with a subject line, body text, and possibly items to claim.
+Status: **steps 1 to 3 built** (the Tournament change; the rules, save, stub server and client, `src/mail/`, `game/mail-desk.ts`, `tests/mail.test.ts`; the button and popup, `ui/mail-dialog.ts`); the UI golden's `mail` fixture is next. This is the design and build order for **Mail**: messages the game server pushes to a player, each with a subject line, body text, and possibly items to claim.
 
 Examples:
 
@@ -72,8 +72,8 @@ type MailMessage = {
 - as the app starts;
 - as the player arrives in the forest (a run ends, or a page returns to the board);
 - as the Mail popup opens;
-- every 5 minutes while in the forest (`MAIL_POLL_MS`);
-- when the Tournament's Results phase ends for a tournament the player entered and didn't claim, since the server pushes the missed prize then.
+- every 5 minutes while in the forest (`MailClient.POLL_MS`);
+- whenever the Tournament's phase changes, since a missed prize is pushed as its Results end.
 
 A failed fetch keeps the last inbox (saved), so the list still reads offline. Only claiming needs the server.
 
@@ -115,7 +115,7 @@ The inbox carries the server's time, which the desk confirms as the Shop's clock
 `stubMail(save, now)` stands in until the server exists. Its mailbox is kept in the player's save (`save.mail.stub`), so what it has sent stays sent:
 
 - **Tournament mail:** each tournament entered whose claim window has closed unclaimed is posted once, as the window closes. The final place comes from `stubResults` in `tournament/server.ts`, which the Tournament stand-in uses too.
-- **Dev mail:** `postStubMail(save, { subject, body, items }, now)`, which the `mailDebug.send` console helper (`debug-hooks.ts`, step 3) calls, so the screens can be tried end to end, the outage message included.
+- **Dev mail:** `postStubMail(save, { subject, body, items }, now)`, which the `mailDebug.send({ subject, body, items }?)` console helper (`debug-hooks.ts`; with nothing given, `OUTAGE_MAIL`) calls, so the screens can be tried end to end, the outage message included.
 - **Read, claimed and removed:** recorded on each message in its mailbox; mail past its time is dropped from it, as the server will.
 
 ## Save
@@ -135,9 +135,11 @@ Mail past its time (`kept`) is dropped from the inbox as the server's next answe
 
 - **Mail button:** `#mail-button`, the envelope (`mailIcon()` in `ui/dom.ts`) over *MAIL*, inserted after Settings (`#run-menu`) in the forest's actions column. Its state comes from `renderMailButton` in `ui/hud.ts`: hidden inside a run or with no recent mail, with a dot (`notify`) while any is unread. Check that the column still fits at phone height (360×640) with the Tournament button, Settings and Mail.
 - **Mail popup** (`ui/mail-dialog.ts`, `MailDialog`, in the shared dialog):
-  - **List:** *Mail* with a close X. One row a message: the unread dot, the subject (ellipsized), the gift box while items wait, and how long ago it came (*2h*, *3d*). A row with nothing to claim has its own X button; one with unclaimed items has none.
-  - **Message:** a Back arrow to the list, the subject, the date, and the body as paragraphs. Then the items row, each item's icon (`gemIcon`, `shardIcon`, `goldIcon`, `ticketIcon`) and amount. Then *Claim*, or *Claimed*.
+  - **List:** *INBOX* over *Mail*, and *Close* at the foot. One row a message: the unread dot, the subject (ellipsized), the gift box while items wait, and how long ago it came (*now*, *5m*, *2h*, *3d*). A row with nothing to claim has its own X button; one with unclaimed items has none.
+  - **Message:** *MAIL* and the date it was sent (*5 October 2026 at 12:00 GMT*), the subject, and the body as paragraphs. Then the items, each item's icon (`gemIcon`, `shardIcon`, `goldIcon`, `ticketIcon`), amount and name, with a check once claimed. Then *Back* to the list and *Claim*, or *Claimed*. While claiming, *Claiming…*; if it fails, *Couldn't reach the server. Try again later.*
+  - Claiming closes the dialog for the reward's reveal, and pressing the reveal away opens it again on the message, now claimed.
   - The phone's Back closes the message view, then the popup.
+  - Every word from the server is escaped (`escapeHtml` in `ui/dom.ts`).
 
 ## Modules
 
@@ -161,7 +163,7 @@ Mail past its time (`kept`) is dropped from the inbox as the server's next answe
 
 1. **Tournament: no *Rewards expired*** (built). The page shows only the next opening once the claim window closes.
 2. **Rules without screens** (built): the message and item types, `save.mail` and its decoder, `MailDesk`, `MailServer` and `stubMail` (with the Tournament's missed prize), `MailClient`, and `tests/mail.test.ts`.
-3. **Screens:** the button and its dot, the popup's list and message view, claiming with its reveal, removing with its confirmation, `refreshMail`'s timing, and `mailDebug`.
+3. **Screens** (built): the button and its dot, the popup's list and message view, claiming with its reveal, removing with its confirmation, `refreshMail`'s timing, and `mailDebug`.
 4. **Goldens and docs:**
    - **Goldens:** `ui.golden.json` gets a `mail` fixture (a forest with an unread outage message: the button and dot, the list with its gift box, the message, the claim, the reveal, the X appearing, both messages removed, the button gone). (`save-decode`'s `mail` base, with its hostile values, came with step 2.)
    - **Docs:** AGENTS.md, the README, CONTEXT.md and `docs/TOURNAMENT.md`.

@@ -55,6 +55,15 @@ export const trophyIcon = (className = "trophy-icon", stroke = "#ffd34d", fill =
 /** A Tournament Ticket: a gold stub with notched ends and a perforation. */
 export const ticketIcon = (className = "ticket-icon") =>
   `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 7h19v3a2 2 0 0 0 0 4v3h-19v-3a2 2 0 0 0 0-4z" fill="#6a4a12" stroke="#ffd34d" stroke-width="1.4" stroke-linejoin="round"/><path d="M15.5 7.5v9" stroke="#ffd34d" stroke-width="1" stroke-dasharray="1.4 1.2"/><path d="M6 10.5h6.5M6 13.5h4.5" stroke="#ffe9a8" stroke-width="1.2" stroke-linecap="round"/></svg>`;
+/** An envelope: Mail. */
+export const mailIcon = (className = "mail-icon") =>
+  `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5.5" width="18" height="13" rx="1.5" fill="#3b4a60" stroke="#e9e1c8" stroke-width="1.5"/><path d="M3.8 6.5l8.2 6.5 8.2-6.5" fill="none" stroke="#e9e1c8" stroke-width="1.5" stroke-linejoin="round"/></svg>`;
+/** A gift box: a reward waiting to be claimed. */
+export const giftIcon = (className = "gift-icon") =>
+  `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 11h15v9.5h-15z" fill="#c0392b" stroke="#ffd34d" stroke-width="1.2" stroke-linejoin="round"/><path d="M3 7.5h18V11H3z" fill="#e2533f" stroke="#ffd34d" stroke-width="1.2" stroke-linejoin="round"/><path d="M12 7.5v13" stroke="#ffd34d" stroke-width="2"/><path d="M12 7.3C10.5 4 7 3.6 7 5.6S10.2 7.4 12 7.3c1.8.1 5 0 5-1.7s-3.5-1.6-5 1.7z" fill="none" stroke="#ffd34d" stroke-width="1.3" stroke-linejoin="round"/></svg>`;
+/** `text` made safe to put in HTML: for text from outside, such as Mail. */
+export const escapeHtml = (text: string) =>
+  text.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 export const gemCount = (n: number) => `${n} ${n === 1 ? "Gem" : "Gems"}`;
 export const itemSprite = (name: keyof typeof AREA1_ITEM_URLS, className = "ui-sprite") =>
   `<img class="${className}" src="${AREA1_ITEM_URLS[name]}" alt="" aria-hidden="true">`;

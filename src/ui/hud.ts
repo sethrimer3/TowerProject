@@ -121,6 +121,7 @@ export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay)
   renderForestSign(game);
   renderRunMenu(game);
   renderTournamentButton(game);
+  renderMailButton(game);
   el("run-shop").hidden = !!game.run.outside;
   el("run-research").classList.toggle("notify", !game.run.outside && researchWaiting(game));
   renderAdButton(game);
@@ -171,6 +172,15 @@ export function renderTournamentButton(game: Game) {
   text("tournament-state", phase === "open" ? "OPEN" : phase === "ending" ? "ENDING" : claim ? "CLAIM" : shortCountdown(desk.nextOpensAt - desk.now));
   button.classList.toggle("notify", claim);
   button.classList.toggle("live", phase === "open");
+}
+/** The Mail button: in the forest's actions column under Settings, only
+ * while there is mail to show (`game.mail.recent`), with a dot while any of
+ * it is unread. Never inside a run. Refreshed every second too (main's
+ * tick), so mail past its time leaves on its own. */
+export function renderMailButton(game: Game) {
+  const button = el("mail-button"), mail = game.mail;
+  button.hidden = !game.run.outside || mail.recent.length === 0;
+  button.classList.toggle("notify", !button.hidden && mail.unread);
 }
 /** Whether the Upgrades button shows its dot: the first Inspiration has
  * been earned (so the run that paid it has ended by the time the tabs show)

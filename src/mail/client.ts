@@ -8,6 +8,9 @@ import type { MailServer } from "./server.ts";
 // answers are decoded here, since nothing from the network is trusted.
 
 export class MailClient {
+  /** How often the inbox is asked for again while the player is in the forest. */
+  static readonly POLL_MS = 5 * 60_000;
+
   constructor(
     private desk: MailDesk,
     private server: MailServer,

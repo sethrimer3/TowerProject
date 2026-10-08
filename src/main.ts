@@ -16,7 +16,7 @@ import { isBoard, type AppContext, type Tab } from "./ui/app.ts";
 import { el, ticketIcon } from "./ui/dom.ts";
 import { buildShell } from "./ui/shell.ts";
 import { BoardOverlay } from "./ui/board-overlay.ts";
-import { boardHeadingStale, flashRed, renderAdButton, renderShopDot, renderTournamentButton, renderBoardHeading, renderHud, renderVitals, purseFrame, gearWaiting, upgradesWaiting, dismissResearch } from "./ui/hud.ts";
+import { boardHeadingStale, flashRed, renderAdButton, renderMailButton, renderShopDot, renderTournamentButton, renderBoardHeading, renderHud, renderVitals, purseFrame, gearWaiting, upgradesWaiting, dismissResearch } from "./ui/hud.ts";
 import { ResearchPage } from "./ui/research-page.ts";
 import { confirmAction, RunEndDialog } from "./ui/dialogs.ts";
 import { closeRunMenu, toggleRunMenu } from "./ui/run-menu.ts";
@@ -37,6 +37,9 @@ import { TournamentClient } from "./tournament/client.ts";
 import { stubTournament } from "./tournament/server.ts";
 import { TournamentPage } from "./ui/tournament-page.ts";
 import { revealReward } from "./ui/reward-reveal.ts";
+import { MailClient } from "./mail/client.ts";
+import { postStubMail, stubMail } from "./mail/server.ts";
+import { MailDialog } from "./ui/mail-dialog.ts";
 
 // Wires the pages together: builds the shell, creates the game and renderer,
 // and routes navigation, HUD refreshes and input between the ui/ modules.
@@ -69,6 +72,9 @@ const ctx: AppContext = {
 const tournament = new TournamentClient(game, stubTournament(() => game.save.tournament, () => game.clock()));
 const runEnd = new RunEndDialog(ctx, tournament);
 const tournamentPage = new TournamentPage(ctx, tournament, refreshTournament);
+// Mail's server (a stand-in until it exists), and the popup the forest's Mail button opens.
+const mail = new MailClient(game.mail, stubMail(() => game.save, () => game.clock()));
+const mailDialog = new MailDialog(ctx, mail, refreshMail);
 // Tapping the forest's Blacksmith opens the Equipment screen, its Tournament Hall the Tournament page.
 const overlay = new BoardOverlay(game, renderer, openBlacksmith, () => navigate("tournament"));
 const skillTree = new SkillTreePage(ctx);
@@ -289,6 +295,8 @@ el("tournament-button").onclick = () => {
   closeRunMenu();
   navigate("tournament");
 };
+// The Mail button, under Settings in the forest: the list of recent mail.
+el("mail-button").onclick = () => mailDialog.show();
 // Inside a run, Research opens Training and the Archives with the run paused.
 el("run-research").onclick = () => {
   closeRunMenu();
@@ -353,6 +361,7 @@ function archivesTick() {
     renderAdButton(game);
     renderShopDot(game);
     renderTournamentButton(game);
+    renderMailButton(game);
   }
   tournament.tick();
   // A tournament opening (or ending, or the Tournament unlocked) asks the
@@ -361,12 +370,28 @@ function archivesTick() {
   if (stage !== tournamentStage) {
     tournamentStage = stage;
     void refreshTournament();
+    // A prize left unclaimed comes as Mail as its Results end.
+    void refreshMail();
   }
   // Past the grace, it is asked again each minute until the results are final.
   else if (game.tournament.awaitingResults && game.clock() - tournamentAskedAt >= 60_000) void refreshTournament();
+  // Mail is asked for on arriving in the forest, and every few minutes there.
+  const inForest = game.run.outside;
+  if (inForest && (!wasInForest || game.clock() - mailAskedAt >= MailClient.POLL_MS)) void refreshMail();
+  wasInForest = inForest;
   if (tab === "tournament") tournamentPage.rerender();
   if (tab === "research") research.archivesTick(done);
   if (tab === "shop") shop.tick();
+}
+/** Whether the tick last saw the player in the forest, and when Mail's
+ * server was last asked (the game's clock). */
+let wasInForest = game.run.outside, mailAskedAt = -Infinity;
+/** Asks Mail's server for the inbox, and redraws what shows it. */
+async function refreshMail() {
+  mailAskedAt = game.clock();
+  await mail.refresh();
+  update();
+  mailDialog.rerender();
 }
 /** The Tournament's stage the tick last saw (unlocked, and its phase). */
 let tournamentStage = `${game.tournament.unlocked}|${game.tournament.phase}`;
@@ -408,11 +433,19 @@ document.addEventListener("visibilitychange", () => {
   save();
 });
 window.addEventListener("pagehide", save);
-installDebugHooks(game, defendPage, async () => {
-  const refused = await tournament.begin();
-  update();
-  return refused;
-});
+installDebugHooks(
+  game,
+  defendPage,
+  async () => {
+    const refused = await tournament.begin();
+    update();
+    return refused;
+  },
+  async (draft) => {
+    postStubMail(game.save, draft, game.clock());
+    await refreshMail();
+  },
+);
 // Start on the Tower board: stats showing, currencies (for the Upgrades, Deck and Gear pages) hidden.
 el("stats").toggleAttribute("hidden", false);
 el("currencies").toggleAttribute("hidden", true);
@@ -421,3 +454,4 @@ update();
 loop.start();
 // The live tournament: its free Ticket, and any score still to send.
 void refreshTournament();
+void refreshMail();
