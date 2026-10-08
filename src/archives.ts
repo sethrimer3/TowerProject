@@ -153,16 +153,18 @@ const countLevels = (target: ResearchTarget, length = 9, value = 1) => Array.fro
  * Silver Bonus and Gold / Kill take `STEEP_INCOME` (Q 200, B 100: 7,608
  * Gold at level 10, 1.83 million at 100, 57.4 million in all), Key
  * Efficiency `STEEP_KEYS` (Q 400, B 50: 13,673 at 10, 2.16 million at 100,
- * 72.5 million in all). Their time is unchanged. */
+ * 72.5 million in all). Their time is unchanged. Each also sets its own
+ * first four prices, an even ratio from 10 Gold up to its level 5 (A: 25,
+ * 55, 130 before 299; B: 25, 70, 185 before 493), so no step stands out. */
 const POTION_HP_START: [gold: number, seconds: number][] = [[10, 15], [25, 60], [50, 300], [75, 600]];
-type Steep = { q: number; bend: number };
-const STEEP_INCOME: Steep = { q: 200, bend: 100 };
-const STEEP_KEYS: Steep = { q: 400, bend: 50 };
+type Steep = { q: number; bend: number; start: readonly number[] };
+const STEEP_INCOME: Steep = { q: 200, bend: 100, start: [10, 25, 55, 130] };
+const STEEP_KEYS: Steep = { q: 400, bend: 50, start: [10, 25, 70, 185] };
 const hundredLevels = (target: ResearchTarget, value: number, steep?: Steep) => Array.from({ length: 100 }, (_, i): ResearchLevel => {
   const m = i + 1 - POTION_HP_START.length;
   const quadratic = steep ? Math.round((steep.q * steep.bend * m * m) / (m + steep.bend)) : 0;
   const [gold, seconds] = POTION_HP_START[i] ?? [100 * m + quadratic + m * m * m, 900 * m + 36 * m * m];
-  return { gold, hours: seconds / 3600, effect: { target, op: "add", value } };
+  return { gold: steep?.start[i] ?? gold, hours: seconds / 3600, effect: { target, op: "add", value } };
 });
 
 /** Faster Trainers (+2% training speed a level), for 100 levels. The n-th

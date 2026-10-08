@@ -38,20 +38,19 @@ test("Spare Change opens Gold / Floor training (3, and 1 a rank) and its researc
   assert.deepEqual([trainingStep(save, "floorGold").now, trainingStep(save, "floorGold").next], [7, 8]);
   assert.deepEqual(RESEARCH.floorGold.requires, [{ upgrade: "spareChange" }]);
   assert.equal(RESEARCH.floorGold.levels.length, 100);
-  // Timed like Potion HP, and dearer from level 5 on (its steeper Gold:
+  // Timed like Potion HP, and dearer from level 3 on (its steeper Gold:
   // docs/RESEARCH_CURVES.md), shared with the other income multipliers.
   const ours = RESEARCH.floorGold.levels, potion = RESEARCH.potionHp.levels;
   assert.deepEqual(ours.map((l) => l.hours), potion.map((l) => l.hours));
-  assert.deepEqual(ours.slice(0, 4).map((l) => l.gold), potion.slice(0, 4).map((l) => l.gold));
-  assert.ok(ours.slice(4).every((l, i) => l.gold > potion[i + 4]!.gold));
+  assert.ok(ours.slice(2).every((l, i) => l.gold > potion[i + 2]!.gold));
   assert.ok(ours.every((l, i) => i === 0 || l.gold > ours[i - 1]!.gold), "every level dearer than the last");
-  assert.deepEqual([5, 10, 100].map((n) => ours[n - 1]!.gold), [299, 7608, 1834744]);
+  assert.deepEqual([1, 2, 3, 4, 5, 10, 100].map((n) => ours[n - 1]!.gold), [10, 25, 55, 130, 299, 7608, 1834744]);
   for (const id of ["floorSilver", "silverBonus", "killGold"] as const) assert.deepEqual(RESEARCH[id].levels.map((l) => [l.gold, l.hours]), ours.map((l) => [l.gold, l.hours]));
   // Key Efficiency is steeper still.
   const keys = RESEARCH.keyEfficiency.levels;
   assert.deepEqual(keys.map((l) => l.hours), potion.map((l) => l.hours));
   assert.ok(keys.every((l, i) => i === 0 || l.gold > keys[i - 1]!.gold));
-  assert.deepEqual([5, 10, 100].map((n) => keys[n - 1]!.gold), [493, 13673, 2156802]);
+  assert.deepEqual([1, 2, 3, 4, 5, 10, 100].map((n) => keys[n - 1]!.gold), [10, 25, 70, 185, 493, 13673, 2156802]);
   save.archives.levels.floorGold = 3;
   assert.equal(researched(save.archives, "floorGold", 100), 115);
 });
