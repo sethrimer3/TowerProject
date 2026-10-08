@@ -539,15 +539,17 @@ export class DeckPage {
 
   /** A badge's details: what it does at its level, its copies toward the
    * next, the card it is on, and for a gate the threshold it checks, chosen
-   * on a slider among those its level opened. */
+   * on a slider among those its level opened (no slider while level 1
+   * opens only one). */
   private showBadge(id: BadgeId) {
     const { game } = this.ctx, owned = game.save.badges.owned[id];
     if (!owned) return;
     const def = BADGES[id], level = badgeLevel(owned.copies), on = cardWith(game.save.badges, id);
     const rarity = RARITIES[def.rarity], progress = progressText(owned.copies);
-    const gate = def.kind === "gate"
-      ? `<label class="badge-slider">Threshold<input type="range" id="badge-pick" min="0" max="${level - 1}" step="1" value="${owned.pick}" ${level > 1 ? "" : "disabled"}><output id="badge-pick-value">${this.thresholdText(id, owned.pick)}</output></label><small class="badge-slider-note">${level > 1 ? "Each level opens a tighter threshold." : "Level up to open tighter thresholds."}</small>`
-      : "";
+    const gate = def.kind !== "gate" ? ""
+      : level > 1
+        ? `<label class="badge-slider">Threshold<input type="range" id="badge-pick" min="0" max="${level - 1}" step="1" value="${owned.pick}"><output id="badge-pick-value">${this.thresholdText(id, owned.pick)}</output></label><small class="badge-slider-note">Each level opens a tighter threshold.</small>`
+        : `<small class="badge-slider-note">Level up to open tighter thresholds.</small>`;
     const modal = this.ctx.modal;
     modal.innerHTML = `<small><span style="color:${rarity.color}">${rarity.displayName.toUpperCase()}</span> · LEVEL ${level}</small><h2>${def.name}</h2><div class="badge-detail">${tokenHtml(id, level, "big")}</div><p id="badge-detail-text">${badgeText(id, level, owned.pick)}</p>${gate}<p id="badge-detail-levels">${badgeLevelsHtml(id, level, owned.pick)}</p><p class="badge-detail-meta">${progress === "MAX" ? "Top level reached." : `${progress} copies toward level ${level + 1}.`}${on ? ` On ${CARDS[on].name}.` : " On no card: drag it onto one."}</p><button class="wide" id="badge-detail-ok">Done</button>`;
     const slider = modal.querySelector<HTMLInputElement>("#badge-pick");
