@@ -83,12 +83,12 @@ export const OFFERS: readonly ShopOffer[] = [
     effects: ["No ads", "×1.5 Gold forever"], tags: ["oneTime"],
   },
   {
-    id: "coins2", name: "Special Coin Pack", category: "special", item: { kind: "entitlement", id: "coins2" }, quantity: 1,
+    id: "coins2", name: "Special Coin Pack", category: "special", item: { kind: "entitlement", id: "coins2", amounts: { gems: 150 } }, quantity: 1,
     price: { kind: "money", sku: "coins_x2", label: "$9.95" }, rarity: "epic", purchaseLimit: 1,
     effects: ["×2 Gold forever", "×2 training speed forever"], tags: ["oneTime"],
   },
   {
-    id: "coins3", name: "Premium Coin Pack", category: "special", item: { kind: "entitlement", id: "coins3" }, quantity: 1,
+    id: "coins3", name: "Premium Coin Pack", category: "special", item: { kind: "entitlement", id: "coins3", amounts: { gems: 750 } }, quantity: 1,
     price: { kind: "money", sku: "coins_x3", label: "$29.95" }, rarity: "legendary", purchaseLimit: 1,
     effects: ["×3 Gold forever", "×3 training speed forever", "Stacks with ×2"], tags: ["oneTime"],
   },

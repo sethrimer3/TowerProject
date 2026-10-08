@@ -9,12 +9,19 @@ import { ENTITLEMENTS, owns, type EntitlementId } from "./entitlements.ts";
 
 export type ShopItem =
   | { kind: "currency"; currency: CurrencyId; amount: number }
-  | { kind: "entitlement"; id: EntitlementId }
+  /** A permanent perk, with any currencies granted beside it. */
+  | { kind: "entitlement"; id: EntitlementId; amounts?: Partial<Record<CurrencyId, number>> }
   /** Several currencies at once, such as a pack of Ascension Shards and Gems. */
   | { kind: "bundle"; amounts: Partial<Record<CurrencyId, number>> };
 
 /** A bundle's currencies and amounts, in its order. */
-export const bundleAmounts = (amounts: Partial<Record<CurrencyId, number>>) => Object.entries(amounts) as [CurrencyId, number][];
+export const bundleAmounts = (amounts: Partial<Record<CurrencyId, number>> = {}) => Object.entries(amounts) as [CurrencyId, number][];
+
+/** Every currency `item` grants, in its order: none for a perk alone. */
+export function itemCurrencies(item: ShopItem | undefined): [CurrencyId, number][] {
+  if (item?.kind === "currency") return [[item.currency, item.amount]];
+  return item ? bundleAmounts(item.amounts) : [];
+}
 
 /** Why `item` can't be granted to `save` now, or null when it can. Checked
  * before anything is paid, so a grant that follows never fails. */
@@ -24,9 +31,8 @@ export function grantRefusal(save: Save, item: ShopItem): "owned" | null {
 
 /** Hands `quantity` of `item` to its owner. */
 export function grant(save: Save, item: ShopItem, quantity: number) {
-  if (item.kind === "currency") CURRENCIES[item.currency].credit(save, item.amount * quantity);
-  else if (item.kind === "bundle") for (const [c, n] of bundleAmounts(item.amounts)) CURRENCIES[c].credit(save, n * quantity);
-  else save.entitlements.push(item.id);
+  for (const [c, n] of itemCurrencies(item)) CURRENCIES[c].credit(save, n * quantity);
+  if (item.kind === "entitlement") save.entitlements.push(item.id);
 }
 
 /** The item in a few words, for confirmations and the history. */
@@ -34,5 +40,5 @@ export function itemName(item: ShopItem): string {
   const amount = (c: CurrencyId, n: number) => `${n.toLocaleString("en-US")} ${CURRENCIES[c].name}`;
   if (item.kind === "currency") return amount(item.currency, item.amount);
   if (item.kind === "bundle") return bundleAmounts(item.amounts).map(([c, n]) => amount(c, n)).join(" + ");
-  return ENTITLEMENTS[item.id].name;
+  return [ENTITLEMENTS[item.id].name, ...bundleAmounts(item.amounts).map(([c, n]) => amount(c, n))].join(" + ");
 }

@@ -2,7 +2,7 @@ import { whole } from "../whole.ts";
 import { CURRENCIES, type CurrencyId } from "../shop/currency.ts";
 import { estimatedServerTime } from "../shop/clock.ts";
 import { CATEGORIES, OFFERS, offer, requirementText, unmet, type CategoryId, type ShopOffer } from "../shop/offers.ts";
-import { bundleAmounts } from "../shop/items.ts";
+import { itemCurrencies } from "../shop/items.ts";
 import { RARITIES } from "../shop/rarity.ts";
 import { stubServer, type ShopServer } from "../shop/server.ts";
 import { availableAgain, priceText, refusal, soldOut, timesBought, type Refusal } from "../shop/transactions.ts";
@@ -17,7 +17,7 @@ const CURRENCY_ICONS: Record<CurrencyId, () => string> = { gems: () => gemIcon()
 /** The currencies `o` grants, each a large icon over its amount: what a
  * card shows in place of writing them out. */
 function rewards(o: ShopOffer) {
-  const item = o.item, list = item?.kind === "currency" ? [[item.currency, item.amount] as const] : item?.kind === "bundle" ? bundleAmounts(item.amounts) : [];
+  const list = itemCurrencies(o.item);
   return list.length
     ? `<span class="shop-rewards">${list.map(([c, n]) => `<span class="shop-reward" aria-label="${n.toLocaleString("en-US")} ${CURRENCIES[c].name}">${CURRENCY_ICONS[c]()}<b>${n.toLocaleString("en-US")}</b></span>`).join("")}</span>`
     : "";

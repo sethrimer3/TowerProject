@@ -53,7 +53,8 @@ export function offerShown(o: ShopOffer): RewardShown | null {
   }
   const factor = ENTITLEMENTS[item.id].goldFactor;
   const icon = factor > 1 ? goldIcon() : `<span class="reward-reveal-star" aria-hidden="true">★</span>`;
-  return { icon, amount: factor > 1 ? `×${factor}` : undefined, kicker: "UNLOCKED FOR GOOD", name: o.name, text: o.effects.join(" · "), permanent: true };
+  const gained = bundleAmounts(item.amounts).map(([c, n]) => `+${(n * o.quantity).toLocaleString("en-US")} ${CURRENCIES[c].name}`);
+  return { icon, amount: factor > 1 ? `×${factor}` : undefined, kicker: "UNLOCKED FOR GOOD", name: o.name, text: [...o.effects, ...gained].join(" · "), permanent: true };
 }
 
 /** What a Goals reward just claimed shows: only currency, since unlocks and

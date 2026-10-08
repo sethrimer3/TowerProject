@@ -22,8 +22,8 @@ This document is the reference for the Shop's design: what Version 1 does, how i
    | Offer | Does | Default price |
    |---|---|---|
    | Permanent Ad-Disable | No ads (the ad Gem button just pays, and the in-run Gold ad goes, with any boost time it stored, the Gem button taking its place); ×1.5 Gold | $9.95 |
-   | Special Coin Pack | ×2 Gold, on all Gold earned; the trainers' ×2 boost runs for good (a glowing "x2" stands in place of its ad button) | $9.95 |
-   | Premium Coin Pack | ×3 Gold, multiplying with ×2 and every other bonus; training ×3 for good, multiplying with the boost (×6 with both) | $29.95 |
+   | Special Coin Pack | 150 Gems; ×2 Gold, on all Gold earned; the trainers' ×2 boost runs for good (a glowing "x2" stands in place of its ad button) | $9.95 |
+   | Premium Coin Pack | 750 Gems; ×3 Gold, multiplying with ×2 and every other bonus; training ×3 for good, multiplying with the boost (×6 with both) | $29.95 |
 
    The Gold bonuses multiply each other: all three make ×9. They apply to every Gold the hero banks in the Tower and the Delve (kills, treasure, Spare Change, the end of a run), but not to Defend.
 4. **Gems**, in two columns:

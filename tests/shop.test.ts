@@ -111,10 +111,12 @@ test("Ascension Shards are saved, and a bad count decodes to none", () => {
   assert.equal(decode(JSON.stringify({ ...save, ascensionShards: -3 })).ascensionShards, 0);
 });
 
-test("one-time packs are bought once, kept by an erase, and multiply every Gold banked", () => {
+test("one-time packs are bought once, kept by an erase, grant their Gems and multiply every Gold banked", () => {
   const g = new Game(defaults());
+  const gems = g.save.gems;
   for (const id of ["coins2", "coins3", "adFree"] as const) assert.equal(g.buyOffer(id, NOON, true), null, id);
   assert.equal(g.buyOffer("coins2", NOON, true), "limit");
+  assert.equal(g.save.gems - gems, 150 + 750, "the Coin Packs' Gems, once each");
   assert.equal(goldFactor(g.save), 9, "1.5 × 2 × 3");
   g.eraseAll();
   assert.deepEqual(g.save.entitlements, ["coins2", "coins3", "adFree"]);
