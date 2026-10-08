@@ -3,7 +3,7 @@ import { CARDS, cardText, deckCards, handSlots, moveCard, nextHandSlotGems, plac
 import type { AppContext } from "./app.ts";
 import { cardArt, el, gemIcon, POINTER_SVG } from "./dom.ts";
 import { DRAW_GEMS, type DrawCount } from "../game/badge-desk.ts";
-import { cardWith, BADGE_IDS, BADGES, badgeLevel, badgeValue, type BadgeId } from "../badges.ts";
+import { cardWith, fitsCard, BADGE_IDS, BADGES, badgeLevel, badgeValue, type BadgeId } from "../badges.ts";
 import { RARITIES } from "../shop/rarity.ts";
 import { revealDraws } from "./badge-reveal.ts";
 import { showCard } from "./card-reveal.ts";
@@ -517,7 +517,9 @@ export class DeckPage {
     }
     follow(d.ghost!, e);
     const over = document.elementFromPoint(e.clientX, e.clientY)?.closest<HTMLElement>("[data-badge-card]") ?? null;
-    const card = (over?.dataset.badgeCard as CardId | undefined) ?? null;
+    const under = (over?.dataset.badgeCard as CardId | undefined) ?? null;
+    // Only a card the badge can sit on lights up (More Enemies: monster cards).
+    const card = under && fitsCard(d.badge, under) ? under : null;
     if (card === d.card) return;
     d.card = card;
     document.querySelectorAll(".badge-target").forEach((t) => t.classList.remove("badge-target"));

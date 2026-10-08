@@ -4,6 +4,8 @@ import { withPotions, type Board } from "../board.ts";
 import { breakTorch, placeTorches } from "../torches.ts";
 import { generateTowerFloor } from "./index.ts";
 import { tierCells } from "../tiers.ts";
+import { addEnemies, extrasSeed, hasExtras, type ExtraEnemies } from "../more-enemies.ts";
+import { ENTRY } from "./embedder.ts";
 
 // v3 adds declarative multi-key/condition doors and places their prerequisite
 // keys differently; old per-room coordinate mutations must not overlay it.
@@ -54,6 +56,24 @@ function torchesForRoom(seed: number, room: number, tier: number, cells: Map<str
   }
   return t;
 }
+/** `cells` with More Enemies' extras added (more-enemies.ts): the way in is
+ * the tile just inside, the target the stairs; neither the tiles round the
+ * way in, those beside the stairs, nor a torch's take one. */
+export function withExtraEnemies(cells: Map<string, Tile>, seed: number, room: number, torches: readonly Torch[], extras: ExtraEnemies) {
+  const band: { x: number; y: number }[] = [];
+  for (let y = 0; y < TOWER_HEIGHT; y++) for (let x = 0; x < TOWER_WIDTH; x++) band.push({ x, y });
+  const stairs = band.find((p) => cells.get(point(p.x, p.y))?.kind === "stairs") ?? null;
+  const [ex, ey] = ENTRY;
+  const avoid = new Set([[ex, ey], [ex, ey + 1], [ex - 1, ey], [ex + 1, ey]].map(([x, y]) => point(x!, y!)));
+  if (stairs) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) avoid.add(point(stairs.x + dx!, stairs.y + dy!));
+  for (const t of torches) avoid.add(point(t.x, t.y));
+  const placed = new Map<string, Tile>();
+  addEnemies({ cells, width: TOWER_WIDTH, wraps: false, root: { x: ex, y: ey }, target: stairs, band, avoid }, extras, extrasSeed(seed, room), placed);
+  if (!placed.size) return cells;
+  const out = new Map(cells);
+  for (const [k, t] of placed) out.set(k, t);
+  return out;
+}
 export class RoomWorld implements Board {
   width = TOWER_WIDTH;
   height = TOWER_HEIGHT;
@@ -69,9 +89,12 @@ export class RoomWorld implements Board {
     public percentPotions = 0,
     /** The numbered tower the floor stands in, whose enemies it scales. */
     public tier = 1,
+    /** The run's More Enemies badges' extras (more-enemies.ts); none without. */
+    extras?: ExtraEnemies,
   ) {
-    const cells = generateTowerRoom(seed, room, tier);
+    let cells = generateTowerRoom(seed, room, tier);
     this.torches = torchesForRoom(seed, room, tier, cells);
+    if (hasExtras(extras)) cells = withExtraEnemies(cells, seed, room, this.torches, extras);
     this.cells = tierCells(cells, tier);
   }
   breakTorchAt(x: number, y: number): boolean {

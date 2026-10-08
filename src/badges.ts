@@ -2,6 +2,7 @@ import { CARD_IDS, deckCards, type CardId } from "./cards.ts";
 import type { UpgradeId } from "./config.ts";
 import { isRecord, wholeIn } from "./decode.ts";
 import { random } from "./random.ts";
+import { MORE_ENEMIES_CARDS, MORE_ENEMIES_PERCENTS } from "./more-enemies.ts";
 
 // Card badges: tokens bought with Gems and attached to cards, each
 // changing what its card does when it activates (reaches its target, or
@@ -17,9 +18,10 @@ export const RARITY_WEIGHTS: Record<BadgeRarity, number> = { common: 70, rare: 2
 /** What a badge does: `reward`s pay on activation, `gate`s let the card
  * act only while their condition holds (a Focus overrides them), `aim`s
  * change which target the card picks, `scale`s make the target's effect
- * stronger or weaker when the card activates on it, and `chance`s may
- * make the target vanish instead. */
-export type BadgeKind = "reward" | "gate" | "aim" | "scale" | "chance";
+ * stronger or weaker when the card activates on it, `chance`s may
+ * make the target vanish instead, and `floor`s change the floors the run
+ * climbs (More Enemies: more of the enemies the card targets). */
+export type BadgeKind = "reward" | "gate" | "aim" | "scale" | "chance" | "floor";
 
 type BadgeDef = {
   name: string;
@@ -39,6 +41,8 @@ type BadgeDef = {
   lead?: string;
   /** The upgrade that adds it to the draw pool; absent for the stock ones. */
   unlock?: UpgradeId;
+  /** The only cards it can sit on; absent for any card. */
+  cards?: readonly CardId[];
 };
 
 const LEVELS = [1, 2, 3, 4, 5, 6, 7];
@@ -63,6 +67,7 @@ export const BADGES = {
   blueGate: { name: "BK <", rarity: "rare", kind: "gate", glyph: "⚿", color: "#5aa9ff", values: KEY_LIMITS, unit: "blue keys", text: (v) => `The card acts only while you hold fewer than ${v} blue keys.` },
   deprioritize: { name: "Deprioritize", rarity: "rare", kind: "aim", glyph: "?", color: "#ffb347", values: LEVELS, unit: "marks a floor", text: (v) => `Passes over the first ${v} target${v === 1 ? "" : "s"} the card picks on each floor, marking each with a ?, then rests for the floor. Every card's path goes round a ? while it can. When no card can move, the nearest ? becomes ! and the card heads for it.` },
   skip: { name: "Skip", rarity: "rare", kind: "chance", glyph: "↷", color: "#c0f0ff", values: [7, 9, 11, 13, 15, 17, 19], unit: "%", text: (v) => `${v}% chance, when the card activates, that its target vanishes without effect (never a boss on MONSTER). On STAIRS in the Tower, you climb two floors instead of one.` },
+  moreEnemies: { name: "More Enemies", rarity: "rare", kind: "floor", glyph: "✚", color: "#d8604a", values: MORE_ENEMIES_PERCENTS, unit: "%", cards: Object.keys(MORE_ENEMIES_CARDS) as CardId[], text: (v) => `Each floor holds ${v}% more of the enemies this card targets, counted from those generated there; a fraction is a chance of one more. In the Delve, each 10 depths is a floor. Only on a monster card.` },
   redGate: { name: "RK <", rarity: "epic", kind: "gate", glyph: "⚿", color: "#ff5a5a", values: KEY_LIMITS, unit: "red keys", text: (v) => `The card acts only while you hold fewer than ${v} red keys.` },
   stairward: { name: "Stairward", rarity: "epic", kind: "aim", glyph: "⇡", color: "#7fe0ff", values: COOLDOWNS, unit: "floors", lead: "every", text: (v) => `Picks the target nearest the stairs (in the Delve, the highest) rather than the nearest to you; works ${every(v)}.` },
   skipOpen: { name: "Skip Open Nodes", rarity: "epic", kind: "aim", glyph: "⤳", color: "#c08bff", values: COOLDOWNS, unit: "floors", lead: "every", text: (v) => `Skips, and marks, any door or monster that opens no new ground, for the rest of the floor; works ${every(v)}.` },
@@ -171,20 +176,27 @@ export function drawBadges(m: BadgesSave, upgrades: Record<UpgradeId, number>, c
   return draws;
 }
 
+/** Whether badge `id` can sit on `card` (More Enemies only on a monster card). */
+export const fitsCard = (id: BadgeId, card: CardId) => {
+  const cards = badgeDef(id).cards;
+  return !cards || cards.includes(card);
+};
+
 /** The card holding badge `id`, if any. */
 export const cardWith = (m: BadgesSave, id: BadgeId) =>
   (Object.keys(m.cards) as CardId[]).find((card) => m.cards[card] === id);
 
-/** Attaches `id` to `card`. The token leaves any card it was on; a token
- * already on `card` swaps over to that card, or comes off when `id` was
- * on none. */
+/** Attaches `id` to `card`, when it fits there (`fitsCard`). The token
+ * leaves any card it was on; a token already on `card` swaps over to that
+ * card, or comes off when `id` was on none or it doesn't fit there. */
 export function attachBadge(m: BadgesSave, id: BadgeId, card: CardId) {
   const from = cardWith(m, id), there = m.cards[card];
-  if (from === card) return;
+  if (from === card || !fitsCard(id, card)) return false;
   m.cards[card] = id;
-  if (!from) return;
-  if (there) m.cards[from] = there;
+  if (!from) return true;
+  if (there && fitsCard(there, from)) m.cards[from] = there;
   else delete m.cards[from];
+  return true;
 }
 /** Takes badge `id` off its card. */
 export function detachBadge(m: BadgesSave, id: BadgeId) {
@@ -211,7 +223,7 @@ export function runBadges(m: BadgesSave, hand: readonly CardId[]): Partial<Recor
  * level it can have. */
 export const validRunBadges = (v: unknown) =>
   isRecord(v) && Object.entries(v).every(([card, r]) =>
-    CARD_IDS.includes(card as CardId) && isRecord(r) && BADGE_IDS.includes(r.id) &&
+    CARD_IDS.includes(card as CardId) && isRecord(r) && BADGE_IDS.includes(r.id) && fitsCard(r.id, card as CardId) &&
     wholeIn(r.level, 1, MAX_BADGE_LEVEL) && wholeIn(r.pick, 0, MAX_BADGE_LEVEL - 1));
 
 /** The saved badges: known ones with a whole count of copies (at most the
@@ -229,7 +241,7 @@ export function decodeBadges(raw: unknown, upgrades: Record<UpgradeId, number>):
   const owned = deckCards(upgrades);
   if (isRecord(raw.cards)) for (const card of owned) {
     const id = raw.cards[card];
-    if (BADGE_IDS.includes(id) && m.owned[id as BadgeId] && !cardWith(m, id)) m.cards[card] = id;
+    if (BADGE_IDS.includes(id) && m.owned[id as BadgeId] && !cardWith(m, id) && fitsCard(id, card)) m.cards[card] = id;
   }
   if (wholeIn(raw.rng, 0, 4294967295)) m.rng = raw.rng;
   return m;

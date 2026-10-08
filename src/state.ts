@@ -1304,6 +1304,8 @@ export class Game {
     } else {
       this.forgetLabyrinth();
       this.dealHand();
+      // The hand's badges may add enemies to its floors (More Enemies).
+      this.world = this.rules.board(this.run);
     }
     this.slice.run = this.run;
     if (!outside && this.handStartsPlaying) this.playHand();

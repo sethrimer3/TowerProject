@@ -21,6 +21,7 @@ import { createHash } from "node:crypto";
 import { readFileSync, readdirSync } from "node:fs";
 import { generateTowerFloor } from "../src/tower/index.ts";
 import { region } from "../src/delve/labyrinth.ts";
+import { withExtraEnemies } from "../src/tower/room-world.ts";
 import { generate as delveChunk } from "../src/delve/world.ts";
 import { chooseTorchSpots } from "../src/torches.ts";
 import { getTowerGateEnemy, type TowerEnemyProfile, type TowerEnemyStrength } from "../src/scaling.ts";
@@ -39,6 +40,7 @@ function outputs(): Record<string, string> {
     for (const room of [0, 3, 7, 12, 25, 48, 95, 130]) {
       const f = generateTowerFloor(seed * 7919, room);
       out[`tower ${seed}/${room}`] = digest({ cells: f.cells, rects: f.embedding.rects, doorways: f.embedding.doorways, stairs: f.embedding.stairs });
+      out[`tower extras ${seed}/${room}`] = digest(withExtraEnemies(f.cells, seed, room, [], { weak: 90, normal: 90, strong: 90, elite: 90, boss: 90 }));
       out[`tower torches ${seed}/${room}`] = digest(chooseTorchSpots(f.cells, { xMin: 1, xMax: 15, yMin: 1, yMax: 15, seed: seed + room }));
     }
   for (const seed of [11, 12])
@@ -115,7 +117,7 @@ test("saved and played-by generation calls no inexact Math function", () => {
 /** The modules Tower, Delve and Defend generation run through. */
 const GENERATION = [
   ...readdirSync(new URL("../src/tower/", import.meta.url)).map((f) => `tower/${f}`),
-  "delve/labyrinth.ts", "delve/patterns.ts", "delve/world.ts", "torches.ts", "board.ts", "random.ts", "exact.ts",
+  "delve/labyrinth.ts", "delve/patterns.ts", "delve/world.ts", "more-enemies.ts", "torches.ts", "board.ts", "random.ts", "exact.ts",
   "scaling.ts", "enemy-curves.ts", "config.ts", "defend/citygen.ts", "defend/layout.ts", "defend/grid.ts",
 ];
 

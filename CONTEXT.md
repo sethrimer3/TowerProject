@@ -345,8 +345,11 @@ Sending the hero inside a run to a tile the player taps, ahead of the hand, unti
 _Avoid_: waypoint, goto
 
 **Card badge**:
-A token bought with Gems (drawn by rarity: common, rare or epic) and attached to one card, changing what the card does when it activates: paying something (HP, Silver, Gold, XP), gating it (it acts only while a condition holds), changing its target (Stairward, Skip Open Nodes, Charge, Deprioritize), scaling its target's effect (Effective, Dampen) or making it vanish (Skip). A card holds one, and a badge sits on one card at a time. More copies of a badge raise its level, up to 7.
+A token bought with Gems (drawn by rarity: common, rare or epic) and attached to one card, changing what the card does when it activates: paying something (HP, Silver, Gold, XP), gating it (it acts only while a condition holds), changing its target (Stairward, Skip Open Nodes, Charge, Deprioritize), scaling its target's effect (Effective, Dampen), making it vanish (Skip), or adding enemies to the floors (More Enemies, only on a monster card). A card holds one, and a badge sits on one card at a time. More copies of a badge raise its level, up to 7.
 _Avoid_: rune, gem, charm, enchantment
+
+**Extra enemy**:
+An enemy the More Enemies badge adds to a floor after it is generated: a copy of one of that floor's own enemies of the strength its card targets, standing out of the way (a corner of a room behind a gate first) and never cutting anything off while another tile is free. It fights and pays like any other.
 
 **Deprioritize mark**:
 A ? on a tile the Deprioritize badge passed over on this floor: no card's path crosses it while another way exists. When the hand is stuck, the nearest becomes a !, which the badge's card heads for. Stepping on the tile clears its mark.

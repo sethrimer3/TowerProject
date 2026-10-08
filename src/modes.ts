@@ -8,6 +8,7 @@ import type { DelveRun, Mode, Run, Save, TowerRun } from "./entities.ts";
 import { LAYOUT_VERSION, World } from "./delve/world.ts";
 import { RoomWorld, TOWER_LAYOUT_VERSION } from "./tower/room-world.ts";
 import type { Board } from "./board.ts";
+import { extraEnemies } from "./more-enemies.ts";
 
 export type ModeProfile<R extends Run = Run> = {
   /** The balance of the currency this mode pays, and paying it. */
@@ -93,7 +94,7 @@ export const MODES: { tower: ModeProfile<TowerRun>; delve: ModeProfile<DelveRun>
     width: TOWER_WIDTH,
     entranceX: TOWER_START_X,
     layoutVersion: TOWER_LAYOUT_VERSION,
-    board: (run) => new RoomWorld(run.seed, run.height, run.changes, run.percentPotions, run.tier),
+    board: (run) => new RoomWorld(run.seed, run.height, run.changes, run.percentPotions, run.tier, extraEnemies(run.badges)),
     endGold: () => 0,
     // Tower floors reuse the same x/y space, so the floor is part of the key.
     lootKey: (run, x, y) => `${run.seed}:${run.height}:${x},${y}`,
@@ -121,7 +122,7 @@ export const MODES: { tower: ModeProfile<TowerRun>; delve: ModeProfile<DelveRun>
     width: WIDTH,
     entranceX: START_X,
     layoutVersion: LAYOUT_VERSION,
-    board: (run) => new World(run),
+    board: (run) => new World(run, extraEnemies(run.badges)),
     endGold: (run) => goldReward(run.treasures),
     lootKey: (run, x, y) => `${run.seed}:${x},${y}`,
     words: {

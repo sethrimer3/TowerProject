@@ -1,6 +1,7 @@
 import type { TowerRun, Tile } from "../entities.ts";
 import { TOWER_SECTION, TOWER_START_X } from "../config.ts";
 import { RoomWorld } from "./room-world.ts";
+import { extraEnemies } from "../more-enemies.ts";
 
 type Changes = Record<string, Tile>;
 
@@ -27,7 +28,7 @@ export class TowerClimb {
 
   /** Floor `h` as it stands now; a floor never visited is freshly generated. */
   board(h: number) {
-    return new RoomWorld(this.run.seed, h, this.changesOn(h) ?? {}, this.run.percentPotions, this.run.tier);
+    return new RoomWorld(this.run.seed, h, this.changesOn(h) ?? {}, this.run.percentPotions, this.run.tier, extraEnemies(this.run.badges));
   }
 
   /** A section's first floor is sealed below. */

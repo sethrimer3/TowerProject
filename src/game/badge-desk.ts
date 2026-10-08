@@ -47,8 +47,7 @@ export class BadgeDesk {
   /** Attaches owned badge `id` to deck card `card` (`attachBadge`). */
   attach(id: BadgeId, card: CardId) {
     if (!this.canArrange || !ownedLevel(this.save.badges, id) || !deckCards(this.save.upgrades).includes(card)) return false;
-    attachBadge(this.save.badges, id, card);
-    return true;
+    return attachBadge(this.save.badges, id, card);
   }
 
   /** Takes badge `id` off its card. */

@@ -5,6 +5,7 @@ import { withPotions, type Board } from "../board.ts";
 import { breakTorch, placeTorches } from "../torches.ts";
 import { tierCells } from "../tiers.ts";
 import { tournamentCells } from "../tournament/run.ts";
+import { addEnemies, extrasKey, extrasSeed, hasExtras, type ExtraEnemies } from "../more-enemies.ts";
 
 // v8 turns some pocket throats into forks: two parallel lanes of costs.
 // v9 adds yellow-or-blue and blue-or-red door forks.
@@ -35,6 +36,50 @@ export function generate(seed: number, index: number, tier = 1): Map<string, Til
   return cells;
 }
 
+/** Area `area`'s torches: wall checks see the neighbouring areas too, so a
+ * torch never lands on a foreign area's floor; each torch belongs to the
+ * area owning its spot. */
+function areaTorches(seed: number, area: number, tier: number) {
+  const r = region(seed, area, tier), cells = new Map(r.cells);
+  for (const b of [area - 1, area + 1]) if (b >= 0) for (const [k, t] of region(seed, b, tier).cells) cells.set(k, t);
+  return placeTorches(cells, { xMin: 1, xMax: WIDTH - 2, yMin: r.minY - 2, yMax: r.maxY + 2, seed: seed ^ area })
+    .filter((t) => ownerAt(seed, t.x, t.y) === area);
+}
+
+const extraCache = new Map<string, Map<string, Tile>>();
+/** More Enemies' extras in area `area` (more-enemies.ts), by tile: each of
+ * its ten equivalent floors (ten depths each) counts its own enemies and
+ * takes its extras among its own tiles, bottom one first, those placed
+ * below already standing. The way in is the area's shallowest tile, the
+ * target its boss; neither the tiles round the way in, those near the
+ * milestone gate and its boss, nor a torch's take one. */
+export function delveExtras(seed: number, area: number, tier: number, extras: ExtraEnemies) {
+  const key = `${seed}:${area}:${tier}:${extrasKey(extras)}`;
+  const known = extraCache.get(key);
+  if (known) return known;
+  const r = region(seed, area, tier), base = area * 100;
+  const tiles = [...r.cells.keys()].map((k) => { const [x, y] = k.split(",").map(Number); return { x: x!, y: y!, depth: r.metadata.get(k)?.depth ?? base }; })
+    .sort((a, b) => a.y - b.y || a.x - b.x);
+  const open = tiles.filter((p) => r.cells.get(point(p.x, p.y))!.kind !== "wall");
+  const root = open.reduce<(typeof open)[number] | undefined>((best, p) => (!best || p.depth < best.depth ? p : best), undefined);
+  const placed = new Map<string, Tile>();
+  if (root) {
+    const boss = { x: r.gate.x, y: r.gate.y - 2 };
+    const avoid = new Set<string>();
+    for (const c of [r.gate, boss]) for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) avoid.add(point(c.x + dx, c.y + dy));
+    for (const [dx, dy] of [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]]) avoid.add(point(root.x + dx!, root.y + dy!));
+    for (const t of areaTorches(seed, area, tier)) avoid.add(point(t.x, t.y));
+    const target = r.cells.get(point(boss.x, boss.y))?.kind === "enemy" ? boss : null;
+    for (let floor = 0; floor < 10; floor++) {
+      const band = tiles.filter((p) => p.depth >= base + floor * 10 && p.depth < base + floor * 10 + 10);
+      addEnemies({ cells: r.cells, width: WIDTH, wraps: true, root, target, band, avoid }, extras, extrasSeed(seed, area * 10 + floor), placed);
+    }
+  }
+  extraCache.set(key, placed);
+  if (extraCache.size > 8) extraCache.delete(extraCache.keys().next().value!);
+  return placed;
+}
+
 /** A one-way gate only lets the player step up through it. */
 const upward = (dx: number, dy: number) => dx === 0 && dy === 1;
 
@@ -48,7 +93,11 @@ type WorldRun = Pick<DelveRun, "seed" | "changes" | "floor" | "milestone" | "per
 export class World implements Board {
   width = WIDTH;
   chunks = new Map<number, Map<string, Tile>>();
-  constructor(private run: WorldRun) {}
+  constructor(
+    private run: WorldRun,
+    /** The run's More Enemies badges' extras (more-enemies.ts); none without. */
+    private extras?: ExtraEnemies,
+  ) {}
   get seed() {
     return this.run.seed;
   }
@@ -68,7 +117,7 @@ export class World implements Board {
     if (!this.inside(x, y)) return { kind: "wall" };
     const index = Math.floor(y / CHUNK);
     if (!this.chunks.has(index)) {
-      const cells = tierCells(generate(this.seed, index, this.tier), this.tier);
+      const cells = tierCells(this.generated(index), this.tier);
       // A tournament run's enemies stand stronger than the cave's own.
       this.chunks.set(index, this.run.tournament ? tournamentCells(cells) : cells);
     }
@@ -76,6 +125,18 @@ export class World implements Board {
       this.changes[point(x, y)] ??
       withPotions(this.chunks.get(index)!.get(point(x, y)) ?? { kind: "wall" }, x, y, this.seed, this.run.percentPotions ?? 0)
     );
+  }
+  /** Chunk `index` as generated, with More Enemies' extras. */
+  private generated(index: number) {
+    const cells = generate(this.seed, index, this.tier);
+    if (!hasExtras(this.extras)) return cells;
+    const min = index * CHUNK, max = min + CHUNK;
+    for (const a of areasBetween(min, max))
+      for (const [k, t] of delveExtras(this.seed, a, this.tier, this.extras)) {
+        const y = Number(k.split(",")[1]);
+        if (y >= min && y < max) cells.set(k, t);
+      }
+    return cells;
   }
   /** On the board and at or above the floor. */
   private inside(x: number, y: number) {
@@ -117,13 +178,8 @@ export class World implements Board {
     for (const a of this.torchAreas.keys()) if (a < this.milestone) this.torchAreas.delete(a);
     return [...this.torchAreas.values()].flat();
   }
-  /** Wall checks see neighbouring areas too, so a torch never lands on a
-   * foreign area's floor; each torch belongs to the area owning its spot. */
   private areaTorches(a: number) {
-    const r = region(this.seed, a, this.tier), cells = new Map(r.cells);
-    for (const b of [a - 1, a + 1]) if (b >= 0) for (const [k, t] of region(this.seed, b, this.tier).cells) cells.set(k, t);
-    return placeTorches(cells, { xMin: 1, xMax: WIDTH - 2, yMin: r.minY - 2, yMax: r.maxY + 2, seed: this.seed ^ a })
-      .filter((t) => ownerAt(this.seed, t.x, t.y) === a);
+    return areaTorches(this.seed, a, this.tier);
   }
   breakTorchAt(x: number, y: number): boolean {
     return breakTorch(this.torches, x, y);
