@@ -1,10 +1,10 @@
 import type { Mode } from "../entities.ts";
 import { stream } from "../random.ts";
 import { EQUIP_RARITIES, pullGems, type PullCount } from "../equipment/balance.ts";
-import type { CategoryId } from "../equipment/catalog.ts";
+import { materialOf, type CategoryId, type EquipMaterialId } from "../equipment/catalog.ts";
 import { pull } from "../equipment/acquire.ts";
 import {
-  dismantle, equip, findItem, levelUp, merge, roomLeft, setLocked, unequip,
+  categoryOf, dismantle, equip, findItem, levelUp, merge, roomLeft, salvageOf, setLocked, unequip,
   type EquipItem,
 } from "../equipment/inventory.ts";
 import { firstRoll, improve, keepCurrent, refine, spendChoice, takeCandidate } from "../equipment/slots.ts";
@@ -13,6 +13,9 @@ import { affordsGems, type DeskHost } from "./desk.ts";
 
 /** Why a Gem pull was refused. */
 export type PullRefusal = "locked" | "gems" | "room";
+/** One piece a Gem pull brought: whether pity made it, and, when
+ * Auto-salvage dismantled it once pulled, the material it returned. */
+export type Pulled = { item: EquipItem; pity: boolean; salvaged?: { id: EquipMaterialId; quantity: number } };
 
 /** The Equipment screen's commands (the Gear page's Equipment tab, and the
  * forest's Blacksmith): leveling, merging, dismantling, locking, the two
@@ -143,12 +146,18 @@ export class EquipmentDesk {
   }
   /** `count` Gem pulls of `category`'s Unique pieces, or of every
    * category's at a discount (`"all"`), paid in Gems and resolved one by
-   * one (pity counting through them). */
-  pull(category: CategoryId | "all", count: PullCount): { item: EquipItem; pity: boolean }[] | PullRefusal {
+   * one (pity counting through them). With Auto-salvage on, each Common
+   * piece pulled is then dismantled into its material. */
+  pull(category: CategoryId | "all", count: PullCount): Pulled[] | PullRefusal {
     const all = category === "all", refusal = this.pullRefusal(count, all);
     if (refusal) return refusal;
     if (!this.host.free) this.save.gems -= pullGems(count, all);
-    return pull(this.e, category, count, stream("equipment"));
+    const pulled: Pulled[] = pull(this.e, category, count, stream("equipment"));
+    if (!this.e.autoSalvage) return pulled;
+    const commons = pulled.filter((p) => p.item.rarity === "common");
+    for (const p of commons) p.salvaged = { id: materialOf(categoryOf(p.item)), quantity: salvageOf(p.item) };
+    if (commons.length) dismantle(this.e, commons.map((p) => p.item.id));
+    return pulled;
   }
 
   item(id: string) {

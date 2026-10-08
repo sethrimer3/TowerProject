@@ -192,7 +192,7 @@ export class EquipmentPanel {
     }).join("");
     const auto = this.e.autoSalvage;
     const toggle = `<button class="eq-auto-salvage" data-eq-auto-salvage="1" aria-pressed="${auto}"><span class="eq-check" aria-hidden="true">${auto ? "✓" : ""}</span>Auto-salvage common drops</button>`;
-    return `<details class="eq-salvage"${this.salvageOpen ? " open" : ""}><summary>${ACTION_ICONS.dismantle} Salvage</summary><div class="equip-quick">${quick}</div>${toggle}<p class="hint">While on, a ${RARITY_TIERS.common.name} piece a boss drops in a run is dismantled at once into its material instead of joining the inventory.</p></details>`;
+    return `<details class="eq-salvage"${this.salvageOpen ? " open" : ""}><summary>${ACTION_ICONS.dismantle} Salvage</summary><div class="equip-quick">${quick}</div>${toggle}<p class="hint">While on, a ${RARITY_TIERS.common.name} piece a boss drops in a run, or a Gem pull brings, is dismantled at once into its material instead of joining the inventory.</p></details>`;
   }
 
   // --- Assemble: three alike into the next rarity ---
@@ -308,15 +308,22 @@ export class EquipmentPanel {
     this.rerender();
     const rares = result.filter((r) => r.item.rarity === "rare").length;
     const c = this.pullCategory;
+    const salvaged = new Map(result.filter((r) => r.salvaged).map((r) => [r.item.id, r.salvaged!]));
+    const notes = [...(c === "all" ? [] : [`Pity now ${this.e.pity[c]}/${PITY}.`]), ...(salvaged.size ? [`Auto-salvage dismantled ${salvaged.size} Common piece${salvaged.size === 1 ? "" : "s"}.`] : [])];
     this.showResult(rares ? `${rares} Rare!` : "Pull Complete!", result.map((r) => r.item), result.filter((r) => r.pity).map((r) => r.item.id),
-      c === "all" ? "" : `Pity now ${this.e.pity[c]}/${PITY}.`);
+      notes.join(" "), salvaged);
   }
 
   /** The full screen shown after an assemble or a pull: what came of it,
-   * each piece with its name and rarity, and OK. */
-  private showResult(title: string, items: EquipItem[], pity: string[] = [], note = "") {
+   * each piece with its name and rarity (and, for one Auto-salvage
+   * dismantled, the material it returned), and OK. */
+  private showResult(title: string, items: EquipItem[], pity: string[] = [], note = "", salvaged = new Map<string, { id: EquipMaterialId; quantity: number }>()) {
     const { modal } = this.ctx;
-    const cards = items.map((item) => `<div class="eq-result-item">${this.tile(item, "eq-shown")}<strong>${nameOf(item)}</strong>${rarityTag(item.rarity)}${pity.includes(item.id) ? `<small>Pity</small>` : ""}</div>`).join("");
+    const salvage = (id: string) => {
+      const s = salvaged.get(id);
+      return s ? `<span class="eq-result-salvaged">${materialIcon(s.id)} Salvaged +${s.quantity} ${EQUIP_MATERIALS[s.id].name}</span>` : "";
+    };
+    const cards = items.map((item) => `<div class="eq-result-item${salvaged.has(item.id) ? " salvaged" : ""}">${this.tile(item, "eq-shown")}<strong>${nameOf(item)}</strong>${rarityTag(item.rarity)}${pity.includes(item.id) ? `<small>Pity</small>` : ""}${salvage(item.id)}</div>`).join("");
     modal.classList.add("eq-result");
     modal.innerHTML = `<h2 class="eq-result-title">${title}</h2><div class="eq-result-items">${cards}</div>${note ? `<p class="hint">${note}</p>` : ""}<div class="dialog-actions"><button id="eq-ok" class="eq-go">OK</button></div>`;
     modal.addEventListener("close", () => modal.classList.remove("eq-result"), { once: true });
@@ -387,7 +394,7 @@ export class EquipmentPanel {
     showHelp(this.ctx, "GEAR", "Equipment", `<p><b>Wearing.</b> Each hero wears one piece of each kind; the Tower and the Delve keep separate loadouts. Tap a piece to equip, level or lock it. Bosses may drop Standard pieces; Gem pulls bring Unique ones.</p>
       <p><b>Assemble.</b> Three copies of a piece at the same rarity make one of the next rarity, with a higher level cap. The piece kept keeps its level, effect slots and Refinement; what was put into the others is lost. Locked and worn copies don't count.</p>
       <p><b>Acquire.</b> Each pull brings a Unique piece at a rolled rarity, of the chosen category, or of a random one for ${PULL_ALL_DISCOUNT}% less. The ${PITY}th pull in a row without a Rare in a category is a Rare.</p>
-      <p><b>Salvage.</b> Dismantling turns a piece into its category's material (${salvage}; Unique twice that), not returning upgrades. Locked and worn pieces are never included; press Select to choose pieces one by one. With Auto-salvage on, Common pieces bosses drop are dismantled as they drop.</p>`);
+      <p><b>Salvage.</b> Dismantling turns a piece into its category's material (${salvage}; Unique twice that), not returning upgrades. Locked and worn pieces are never included; press Select to choose pieces one by one. With Auto-salvage on, Common pieces bosses drop are dismantled as they drop, and those Gem pulls bring once pulled.</p>`);
   }
 
   private rerender() {

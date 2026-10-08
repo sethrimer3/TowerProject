@@ -249,6 +249,26 @@ test("pulls cost 20 and 200 Gems, need room, and bring only the category's Uniqu
   assert.equal(g.save.gems, 1000, "a refused pull takes nothing");
 });
 
+test("with Auto-salvage on, a pull's Common pieces are dismantled once pulled", () => {
+  const g = new Game(defaults());
+  const e = g.save.equipment;
+  e.unlocked = true;
+  e.autoSalvage = true;
+  g.save.gems = 10_000;
+  const pulled = [];
+  for (let i = 0; i < 5; i++) {
+    const r = g.equipment.pull("weapon", 10);
+    assert.ok(Array.isArray(r));
+    pulled.push(...r);
+  }
+  const commons = pulled.filter((p) => p.item.rarity === "common");
+  assert.ok(commons.length && commons.length < pulled.length, "the pulls brought Common pieces and others");
+  for (const p of pulled) assert.equal(!!p.salvaged, p.item.rarity === "common");
+  assert.deepEqual(e.items.map((i) => i.id), pulled.filter((p) => p.item.rarity !== "common").map((p) => p.item.id));
+  assert.equal(e.materials.whetstone, commons.reduce((n, p) => n + p.salvaged!.quantity, 0));
+  assert.equal(commons[0].salvaged!.quantity, RARITY_TIERS.common.salvage * 2, "a Unique salvages for twice a Standard's");
+});
+
 test("pulls of all types cost 10% less and bring Uniques of every category", () => {
   assert.equal(pullGems(1, true), 18);
   assert.equal(pullGems(10, true), 180);
