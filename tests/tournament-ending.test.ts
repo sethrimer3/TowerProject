@@ -73,7 +73,8 @@ test("a tournament from entry to the next: depth counts until the grace ends, th
   assert.deepEqual(await client.claim(), prize);
   assert.equal(g.save.gems, gems + prize.gems);
   assert.equal(await client.claim(), null, "once");
-  // A day after finalization the Results are over, but the final standing still shows.
+  assert.equal(desk.phase, "upcoming", "claimed: nothing more of it shows, only the next one's opening");
+  // A day after finalization the Results are over, but the final standing is still known.
   clock.now = FINAL + CLAIM_MS + MINUTE;
   assert.equal(desk.phase, "upcoming");
   assert.equal(desk.claimable, false);
@@ -110,8 +111,24 @@ test("a final prize left unclaimed expires a day after the results", async () =>
   assert.deepEqual(g.save.tournament.claimed, []);
 });
 
+test("a tournament the player never entered shows only the next one's opening once entry closes", async () => {
+  const { g, client, clock } = setup(), desk = g.tournament;
+  await client.refresh();
+  assert.equal(desk.phase, "open");
+  for (const now of [T.closesAt + HOUR, T.graceEndsAt + MINUTE, FINAL + MINUTE]) {
+    clock.now = now;
+    await client.refresh();
+    assert.equal(desk.phase, "upcoming");
+    assert.equal(desk.claimable, false);
+    assert.equal(desk.final, null);
+  }
+  assert.equal(desk.live?.finalizedAt, FINAL, "the server's results are in, but none are the player's");
+  assert.equal(desk.nextOpensAt, tournamentById("2026-10-10").opensAt);
+});
+
 test("without the server's answer, a closed tournament reads as over once its grace ends, and never as final", () => {
   const { g, clock } = setup(), desk = g.tournament;
+  g.save.tournament.entries[ID] = { best: 5, place: 0, entrants: 0, pending: null, entry: `${ID}#1` };
   clock.now = T.graceEndsAt - MINUTE;
   assert.equal(desk.phase, "ending");
   clock.now = T.graceEndsAt;

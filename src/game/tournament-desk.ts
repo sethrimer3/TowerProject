@@ -60,11 +60,15 @@ export class TournamentDesk {
     return this.live ?? latestTournament(this.now);
   }
 
-  /** Where the tournament stands now (estimated). Until the server has
-   * answered, a tournament past its grace counts as over, its results
-   * unknown, rather than ending for good. */
+  /** Where the tournament stands now (estimated), as the player sees it.
+   * Until the server has answered, a tournament past its grace counts as
+   * over, its results unknown, rather than ending for good. Once entry has
+   * closed, a tournament the player never entered, or whose prize they have
+   * claimed, holds nothing more for them: only the next one's opening. */
   get phase(): Phase {
     const live = this.live, t = this.tournament, now = this.now, phase = phaseOf(t, now, live?.finalizedAt ?? null);
+    if (phase === "upcoming" || phase === "open") return phase;
+    if (!this.t.entries[t.id] || this.t.claimed.includes(t.id)) return "upcoming";
     return !live && phase === "ending" && now >= t.graceEndsAt ? "upcoming" : phase;
   }
 

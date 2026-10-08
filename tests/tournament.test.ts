@@ -176,7 +176,7 @@ test("the desk grants the free Ticket once the server reports a tournament open,
   now = WED + DAY_MS + HOUR;
   g.clock = () => now;
   assert.equal(g.tournament.observe((await server.current())!, now), false);
-  assert.equal(g.tournament.phase, "ending");
+  assert.equal(g.tournament.phase, "upcoming", "never entered: only the next one's opening shows");
   assert.equal(g.tournament.nextTicket, null);
   assert.equal(g.tournament.buyGemTicket(), false);
 });

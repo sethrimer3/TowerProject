@@ -137,7 +137,8 @@ Each entry spends one Ticket. A player may enter as often as they have Tickets; 
 3. Tickets held, with the ticket icon.
 4. While Open: **Begin Tournament**, or the ad / Gem Ticket offer when out of Tickets.
 5. The player's best score this tournament, their place and percentile in the league (*12th of 1,480 · top 1%*), and the anticipated prize level; or the league's top prize when they haven't entered.
-6. In Results: the final place and prize, **Claim rewards** (gone once claimed, or after 24 hours: *Rewards expired*), and the league the results move the player to (*Promoted to Silver League*, *Moved down to …*, *Staying in the …*; `TournamentDesk.final`). After the Results, until the next opens, the same under *Last tournament*, over the next tournament's top prize.
+6. In Results: the final place and prize, **Claim rewards** (or after 24 hours: *Rewards expired*), and the league the results move the player to (*Promoted to Silver League*, *Moved down to …*, *Staying in the …*; `TournamentDesk.final`). After the Results, until the next opens, the same under *Last tournament*, over the next tournament's top prize.
+   A tournament the player never entered, or whose prize they have claimed, shows nothing of itself once entry closes: no Ending, results or *Last tournament*, only *Opens in …* and the next tournament's top prize, and the HUD button its countdown (`TournamentDesk.phase` reports it as upcoming).
 7. **All prizes**: a dialog with every league's ten levels, the player's league first, the promotion and demotion zones marked.
 8. A version that is too old sees only *Update the game to take part in the Tournament* (TODO, below).
 
