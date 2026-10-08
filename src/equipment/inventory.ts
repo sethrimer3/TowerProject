@@ -57,12 +57,15 @@ export type EquipmentSave = {
   nextId: number;
   /** Where the Gem pulls' stream stands (null until the first pull). */
   rng: number | null;
+  /** The player's choice to salvage Common boss drops into their material
+   * as they drop, instead of keeping them (the Salvage section's toggle). */
+  autoSalvage: boolean;
 };
 
 const zeroes = <K extends string>(keys: readonly K[]) => Object.fromEntries(keys.map((k) => [k, 0])) as Record<K, number>;
 export const defaultEquipment = (): EquipmentSave => ({
   unlocked: false, seen: false, items: [], equipped: { tower: {}, delve: {} },
-  materials: zeroes(EQUIP_MATERIAL_IDS), pity: zeroes(CATEGORY_IDS), nextId: 1, rng: null,
+  materials: zeroes(EQUIP_MATERIAL_IDS), pity: zeroes(CATEGORY_IDS), nextId: 1, rng: null, autoSalvage: false,
 });
 
 // --- Reading ---
@@ -288,6 +291,7 @@ export function decodeEquipment(raw: unknown): EquipmentSave {
   const highest = e.items.reduce((n, i) => Math.max(n, Number(i.id.slice(1))), 0);
   e.nextId = Math.max(highest + 1, wholeIn(raw.nextId, 1, 1e9) ? raw.nextId : 1);
   if (wholeIn(raw.rng, 0, 4294967295)) e.rng = raw.rng;
+  e.autoSalvage = raw.autoSalvage === true;
   return e;
 }
 

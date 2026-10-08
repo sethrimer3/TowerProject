@@ -21,7 +21,8 @@ import { CATEGORIES, type EquipMaterialId } from "../equipment/catalog.ts";
 export type EquipmentLoot = {
   materials: { id: EquipMaterialId; quantity: number } | null;
   item: EquipItem | null;
-  salvaged: { id: EquipMaterialId; quantity: number } | null;
+  /** A drop salvaged at once: by Auto-salvage (`auto`), or for want of room. */
+  salvaged: { id: EquipMaterialId; quantity: number; auto: boolean } | null;
 };
 
 /** What a run finds: Gold, banked in the save as it is found, and Silver,
@@ -142,7 +143,7 @@ export class RunPurse {
     return {
       materials,
       item: kept?.item ?? null,
-      salvaged: kept && !kept.item ? { id: CATEGORIES[drop!.category].material, quantity: kept.salvaged } : null,
+      salvaged: kept && !kept.item ? { id: CATEGORIES[drop!.category].material, quantity: kept.salvaged, auto: kept.auto } : null,
     };
   }
 

@@ -1962,6 +1962,10 @@ button.eq-mode:hover { border-color: #e8b84a; }
 .eq-grid .eq-tile:hover { transform: translateY(-2px); }
 .eq-salvage { margin: 10px 0; padding: 6px 8px; border: 1px solid #36414f; border-radius: 5px; font-size: 11px; }
 .eq-salvage summary { cursor: pointer; color: #dbcaad; }
+.eq-auto-salvage { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 11px; }
+.eq-check { display: inline-grid; place-items: center; width: 13px; height: 13px; border: 1px solid #8b98aa; border-radius: 2px; color: #4ee05a; font-size: 11px; line-height: 1; }
+.eq-auto-salvage[aria-pressed="true"] .eq-check { border-color: #4ee05a; }
+.eq-salvage .hint { margin: 4px 0 0; }
 .eq-assemble { padding: 12px 8px 8px; border: 2px solid #2b2f55; border-radius: 6px; background: #1a1c3e; }
 .eq-recipe { display: flex; align-items: center; justify-content: center; gap: 8px; }
 .eq-formula { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 5px; margin: 0 0 12px; color: #e6dcc6; font-size: 13px; }

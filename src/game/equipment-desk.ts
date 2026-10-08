@@ -61,6 +61,13 @@ export class EquipmentDesk {
     return this.open ? dismantle(this.e, ids) : ("missing" as const);
   }
 
+  /** Turns Auto-salvage of Common boss drops on or off (`keepDrop`). */
+  setAutoSalvage(on: boolean) {
+    if (!this.open) return false;
+    this.e.autoSalvage = on;
+    return true;
+  }
+
   setLocked(id: string, locked: boolean) {
     return this.open && setLocked(this.e, id, locked);
   }

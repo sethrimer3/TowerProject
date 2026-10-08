@@ -2082,7 +2082,7 @@ function equipmentTexts(loot: EquipmentLoot | null) {
   const texts: string[] = [];
   if (loot.materials) texts.push(`+${loot.materials.quantity} ${EQUIP_MATERIALS[loot.materials.id].name}`);
   if (loot.item) texts.push(`${RARITY_TIERS[loot.item.rarity].name} ${itemDef(loot.item.def)!.name}!`);
-  if (loot.salvaged) texts.push(`Inventory full · +${loot.salvaged.quantity} ${EQUIP_MATERIALS[loot.salvaged.id].name}`);
+  if (loot.salvaged) texts.push(`${loot.salvaged.auto ? "Auto-salvaged" : "Inventory full"} · +${loot.salvaged.quantity} ${EQUIP_MATERIALS[loot.salvaged.id].name}`);
   return texts;
 }
 /** A kill's Gold (when it paid any) and Silver, as the status line names them. */

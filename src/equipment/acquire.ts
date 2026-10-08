@@ -68,14 +68,16 @@ export function rollBossDrop(strength: EnemyStrength, bonus: number, rng: () => 
   return { def: standardOf(category).id, rarity, category };
 }
 
-/** Takes a boss drop into the inventory, or, when it is full, salvages it
- * at once into its material. */
+/** Takes a boss drop into the inventory, or salvages it at once into its
+ * material: a Common one while the player has Auto-salvage on (`auto`),
+ * any one when the inventory is full. */
 export function keepDrop(e: EquipmentSave, drop: { def: string; rarity: EquipRarity; category: CategoryId }) {
-  const item = addItem(e, drop.def, drop.rarity);
-  if (item) return { item, salvaged: 0 };
+  const auto = e.autoSalvage && drop.rarity === "common";
+  const item = auto ? null : addItem(e, drop.def, drop.rarity);
+  if (item) return { item, salvaged: 0, auto };
   const salvaged = salvageOf(drop);
   e.materials[materialOf(drop.category)] += salvaged;
-  return { item: null, salvaged };
+  return { item: null, salvaged, auto };
 }
 
 /** The upgrade materials a kill drops on equivalent floor `floor`: its

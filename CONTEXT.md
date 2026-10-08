@@ -54,7 +54,7 @@ _Avoid_: fuse, combine
 
 **Dismantle**:
 Breaking pieces into their upgrade material.
-_Avoid_: salvage (used only for the amount returned), destroy
+_Avoid_: salvage (used only for the amount returned, and in **Auto-salvage**: the player's toggle that dismantles Common boss drops as they drop), destroy
 
 **Pity**:
 The count, per category, of Gem pulls since the last Rare; the 100th without one is a Rare.

@@ -193,6 +193,19 @@ test("a full inventory salvages a boss drop at once", () => {
   assert.deepEqual([kept.item, kept.salvaged, e.materials.whetstone], [null, RARITY_TIERS.uncommon.salvage, RARITY_TIERS.uncommon.salvage]);
 });
 
+test("Auto-salvage dismantles Common boss drops and keeps the rest, and is saved", () => {
+  const e = open();
+  e.autoSalvage = true;
+  const common = keepDrop(e, { def: "knightsSword", rarity: "common", category: "weapon" });
+  assert.deepEqual([common.item, common.salvaged, common.auto, e.items.length, e.materials.whetstone], [null, RARITY_TIERS.common.salvage, true, 0, RARITY_TIERS.common.salvage]);
+  const uncommon = keepDrop(e, { def: "knightsSword", rarity: "uncommon", category: "weapon" });
+  assert.deepEqual([uncommon.item?.rarity, uncommon.auto, e.items.length], ["uncommon", false, 1]);
+  assert.equal(decodeEquipment(JSON.parse(JSON.stringify(e))).autoSalvage, true);
+  assert.equal(decodeEquipment({ ...e, autoSalvage: "yes" }).autoSalvage, false);
+  e.autoSalvage = false;
+  assert.equal(keepDrop(e, { def: "knightsSword", rarity: "common", category: "weapon" }).item?.rarity, "common");
+});
+
 test("material drops scale with the enemy and the floor, raised by Material Find", () => {
   assert.equal(rollMaterials("weak", 0, 0, seq([0.99])), null);
   assert.deepEqual(rollMaterials("boss", 0, 0, seq([0, 0]))?.quantity, MATERIAL_DROPS.boss.amount);
