@@ -70,7 +70,10 @@ function ordinal(n: number) {
 /** The stand-in until the server exists. Its mailbox is kept in the
  * player's save (`save.mail.stub`), with Dev mail posted there by
  * `mailDebug` and each tournament prize left unclaimed posted as its claim
- * window closes. It answers on `now` (the device clock). */
+ * window closes. It answers on `now` (the device clock).
+ * TODO: call the game server instead, once it keeps each player's mailbox,
+ * posts unclaimed Tournament prizes and refuses the Tournament's claim
+ * after (docs/MAIL.md, Future). */
 export function stubMail(save: () => Save, now: () => number = Date.now): MailServer {
   /** The mailbox, with mail past its time dropped, as the server will. */
   const box = () => {

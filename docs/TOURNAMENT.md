@@ -221,8 +221,8 @@ The confirmed server time is the Shop's (`save.shop`'s clock), shared, so there'
 
 ## Future (TODO)
 
-- **App version gate:** the build stamps `package.json`'s version (Vite `define`); the page compares it with `minVersion()` and, below it, shows only the update message.
+- **App version gate:** the build stamps `package.json`'s version (Vite `define`); the page compares it with `minVersion()` and, below it, shows only the update message. Mail can send the same version to its server (`docs/MAIL.md`, Future).
 - **Live standing:** while a tournament run is inside, report the depth as it rises and refresh the place in the background, so the run menu's button and the page are current.
-- **Server-pushed prizes:** a prize not claimed within its 24 hours comes as Mail instead (planned: `docs/MAIL.md`); the page already shows only the next opening then.
+- **Server-pushed prizes:** a prize not claimed within its 24 hours comes as Mail instead (`docs/MAIL.md`; the client and stand-in are built, the page shows only the next opening then). The real server must post it as the claim window closes and refuse `claim(id)` from then on: see `docs/MAIL.md`, Future.
 - **Score validation:** the client's score can be forged. Since generation and `resolveStep` are deterministic and engine-independent, and every entrant plays from the same seeds, the server could receive a run's starting loadout and steps and replay them with the same code (it runs in Node as is) to confirm the depth.
 - **Real server and ads.**

@@ -1,6 +1,6 @@
 # Mail (plan)
 
-Status: **built** (the Tournament change; the rules, save, stub server and client, `src/mail/`, `game/mail-desk.ts`, `tests/mail.test.ts`; the button and popup, `ui/mail-dialog.ts`; the goldens). Left are the real server, below. This is the design and build order for **Mail**: messages the game server pushes to a player, each with a subject line, body text, and possibly items to claim.
+Status: **the client is built** (the Tournament change; the rules, save, stub server and client, `src/mail/`, `game/mail-desk.ts`, `tests/mail.test.ts`; the button and popup, `ui/mail-dialog.ts`; the goldens). What is left is on the server, and a few choices before launch: see Future, below. This is the design and build order for **Mail**: messages the game server pushes to a player, each with a subject line, body text, and possibly items to claim.
 
 Examples:
 
@@ -170,8 +170,26 @@ Mail past its time (`kept`) is dropped from the inbox as the server's next answe
 
 ## Future (TODO)
 
-- **The real server:** `MailServer` against the game server, in place of `stubMail` (and `save.mail.stub` then stays empty). It keeps each player's mailbox, pushes a Tournament prize left unclaimed as its window closes, and refuses the Tournament's claim from then on.
-- **Sending mail:** the server's own tool for writing a message to every player or some, such as the outage notice.
+**Needed before Mail works for real players** (all on the server; the client changes only `src/mail/server.ts`):
+
+- **Connect the client:** a `MailServer` that calls the game server, in place of `stubMail`. `save.mail.stub` then stays empty; `postStubMail` and `mailDebug` stay for Dev use or go.
+- **The mailbox:** each player's messages with their read, claimed and removed state, as the interface describes:
+  - send only what is kept (`kept`: under 90 days, and under 7 unless items wait), and drop the rest, so storage stays bounded;
+  - grant a message's items once, atomically, even for two claims at once (the client guards too, `save.mail.claimed`, but only the server's grant counts);
+  - refuse to remove a message whose items wait;
+  - take read and removed ids again without harm, since the client resends what it hasn't heard confirmed (`unsynced`).
+- **Missed Tournament prizes:** as a tournament's claim window closes (`CLAIM_MS` after finalization), post each entrant's unclaimed prize as the message `tournament:<id>` (subject, body and items as `postMissedPrizes` in `stubMail` writes them), and refuse the Tournament's own claim from then on, so a prize is claimable in exactly one place. `tests/mail.test.ts` pins this behaviour against the stand-in.
+- **Sending mail:** an admin tool to write a message to every player or a chosen group (by league, app version, or a list of players), such as the outage notice with its Gems.
+
+**To decide before launch:**
+
+- **Version gate:** an item of a kind the client doesn't know shows *Update the game to claim this reward* and holds its message back until the update. If the client sends its app version with `inbox()`, the server could hold such messages back instead, or send a note to update. This goes with the Tournament's version gate (`docs/TOURNAMENT.md`, Future), which stamps the build's version.
+- **Push rather than poll:** the client asks for the inbox at start-up, on arriving in the forest, every 5 minutes there (`MailClient.POLL_MS`), as the popup opens and as the Tournament's phase changes. A push from the server (a socket, or a store notification) would bring mail at once; the poll is enough for outage notices and missed prizes.
+
+**Later, if wanted:**
+
+- **More item kinds:** materials, Equipment pieces or cards. Each is a case in `MailItem` and `decodeItem` (`mail/message.ts`), its grant in `MailDesk.grant`, its icon in `ui/mail-dialog.ts` and its reveal in `mailShown`.
+- **Mail inside a run:** none for now (decided below); the button could join the run's menu, as the Tournament button does.
 
 ## Decisions
 
