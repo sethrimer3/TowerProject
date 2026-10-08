@@ -51,7 +51,7 @@ export type ShopOffer = {
   endTime?: number;
   requires?: Requirement[];
   /** What it does, guaranteed, in a few words each, beyond the currencies
-   * its item grants (the page shows those as icons). Randomized items will
+   * its item grants and its Gold multiplier (the page shows those as icons). Randomized items will
    * list their possible effects apart from these. */
   effects: string[];
   /** A highlight on its card ("10% bonus!"). */
@@ -80,17 +80,17 @@ export const OFFERS: readonly ShopOffer[] = [
   {
     id: "adFree", name: "Permanent Ad-Disable", category: "special", item: { kind: "entitlement", id: "adFree" }, quantity: 1,
     price: { kind: "money", sku: "ad_free", label: "$9.95" }, rarity: "epic", purchaseLimit: 1,
-    effects: ["No ads", "×1.5 Gold forever"], tags: ["oneTime"],
+    effects: ["No ads"], tags: ["oneTime"],
   },
   {
     id: "coins2", name: "Special Coin Pack", category: "special", item: { kind: "entitlement", id: "coins2", amounts: { gems: 150 } }, quantity: 1,
     price: { kind: "money", sku: "coins_x2", label: "$9.95" }, rarity: "epic", purchaseLimit: 1,
-    effects: ["×2 Gold forever", "×2 training speed forever"], tags: ["oneTime"],
+    effects: ["×2 training speed forever"], tags: ["oneTime"],
   },
   {
     id: "coins3", name: "Premium Coin Pack", category: "special", item: { kind: "entitlement", id: "coins3", amounts: { gems: 750 } }, quantity: 1,
     price: { kind: "money", sku: "coins_x3", label: "$29.95" }, rarity: "legendary", purchaseLimit: 1,
-    effects: ["×3 Gold forever", "×3 training speed forever", "Stacks with ×2"], tags: ["oneTime"],
+    effects: ["×3 training speed forever", "Stacks with ×2"], tags: ["oneTime"],
   },
   {
     id: "dailyGems", name: "Daily Free Gems", category: "gems", item: { kind: "currency", currency: "gems", amount: 25 }, quantity: 1,

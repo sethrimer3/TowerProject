@@ -2,6 +2,7 @@ import { whole } from "../whole.ts";
 import { CURRENCIES, type CurrencyId } from "../shop/currency.ts";
 import { estimatedServerTime } from "../shop/clock.ts";
 import { CATEGORIES, OFFERS, offer, requirementText, unmet, type CategoryId, type ShopOffer } from "../shop/offers.ts";
+import { ENTITLEMENTS } from "../shop/entitlements.ts";
 import { itemCurrencies } from "../shop/items.ts";
 import { RARITIES } from "../shop/rarity.ts";
 import { stubServer, type ShopServer } from "../shop/server.ts";
@@ -14,13 +15,17 @@ import { offerShown, revealReward } from "./reward-reveal.ts";
 export const CONFIRM_GEMS = 200;
 const CURRENCY_ICONS: Record<CurrencyId, () => string> = { gems: () => gemIcon(), shards: () => shardIcon(), gold: goldIcon };
 
-/** The currencies `o` grants, each a large icon over its amount: what a
- * card shows in place of writing them out. */
+/** What `o` grants, each a large icon over its amount: a perk's Gold
+ * multiplier on the coin, then the currencies. What a card shows in place
+ * of writing them out. */
 function rewards(o: ShopOffer) {
-  const list = itemCurrencies(o.item);
-  return list.length
-    ? `<span class="shop-rewards">${list.map(([c, n]) => `<span class="shop-reward" aria-label="${n.toLocaleString("en-US")} ${CURRENCIES[c].name}">${CURRENCY_ICONS[c]()}<b>${n.toLocaleString("en-US")}</b></span>`).join("")}</span>`
-    : "";
+  const tile = (icon: string, amount: string, label: string) => `<span class="shop-reward" aria-label="${label}">${icon}<b>${amount}</b></span>`;
+  const factor = o.item?.kind === "entitlement" ? ENTITLEMENTS[o.item.id].goldFactor : 1;
+  const tiles = [
+    ...(factor > 1 ? [tile(goldIcon(), `×${factor}`, `×${factor} Gold forever`)] : []),
+    ...itemCurrencies(o.item).map(([c, n]) => tile(CURRENCY_ICONS[c](), n.toLocaleString("en-US"), `${n.toLocaleString("en-US")} ${CURRENCIES[c].name}`)),
+  ];
+  return tiles.length ? `<span class="shop-rewards">${tiles.join("")}</span>` : "";
 }
 
 /** What the player is told when an offer can't be bought. */
