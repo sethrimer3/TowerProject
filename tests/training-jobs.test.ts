@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { defaults, decode } from "../src/save.ts";
-import { xpForLevel } from "../src/config.ts";
+import { TRAINING, xpForLevel } from "../src/config.ts";
 import { loadout, trainingPoints, trainingStep } from "../src/loadout.ts";
 import { BOOST_MAX_MS, claimBoost, doneAt, finishGems, trainingGold, trainingMs, trainingSeconds, workLeft } from "../src/training-jobs.ts";
 import { RESEARCH } from "../src/archives.ts";
@@ -25,7 +25,11 @@ test("a stat's first ranks are quick, then each takes a quarter hour more", () =
 });
 
 test("a trainer's Gold: 20 a point, times the rank's number", () => {
-  assert.deepEqual([trainingGold(1, 0), trainingGold(1, 9), trainingGold(3, 0), trainingGold(2, 4)], [20, 200, 60, 200]);
+  assert.deepEqual([trainingGold({ cost: 1 }, 0), trainingGold({ cost: 1 }, 9), trainingGold({ cost: 3 }, 0), trainingGold({ cost: 2 }, 4)], [20, 200, 60, 200]);
+  const potion = TRAINING.find((t) => t.id === "potion")!;
+  assert.deepEqual([0, 1, 2, 3, 4, 9].map((r) => trainingGold(potion, r)), [20, 44, 72, 104, 140, 380], "Potion %'s trainers rise faster");
+  const others = TRAINING.filter((t) => t.id !== "potion");
+  assert.deepEqual(others.map((t) => trainingGold(t, 9)), others.map(() => 200), "every other row keeps 20 a rank number");
   const { g } = game();
   assert.equal(trainingStep(g.save, "attack").gold, 20, "ATK costs 1 point a rank");
 });
@@ -253,7 +257,7 @@ test("auto-continue starts the next rank the moment one is done, while the Gold 
   const { g, wait } = game();
   g.training.setAutoContinue("attack", true);
   assert.ok(g.training.autoContinues("attack"));
-  g.save.gold = trainingGold(1, 0) + trainingGold(1, 1) + trainingGold(1, 2) - 1;
+  g.save.gold = trainingGold({ cost: 1 }, 0) + trainingGold({ cost: 1 }, 1) + trainingGold({ cost: 1 }, 2) - 1;
   assert.ok(g.training.trainWithGold("attack"));
   wait(15);
   assert.equal(g.training.settle(), 1);
@@ -261,7 +265,7 @@ test("auto-continue starts the next rank the moment one is done, while the Gold 
   const [job] = g.save.trainingJobs;
   assert.equal(job.id, "attack", "the next rank started");
   assert.equal(job.startedAt, g.clock());
-  assert.equal(g.save.gold, trainingGold(1, 2) - 1, "and was paid for");
+  assert.equal(g.save.gold, trainingGold({ cost: 1 }, 2) - 1, "and was paid for");
   // Ranks the clock passed while the game was closed count in turn, each
   // starting when the last was done; the third can't be paid for.
   wait(3600);

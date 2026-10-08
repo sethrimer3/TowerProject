@@ -69,7 +69,7 @@ export class TrainingDesk {
     const save = this.save;
     if (!this.hired || !this.canTrain(id) || trainingJob(save.trainingJobs, id)) return false;
     if (this.host.free) return changeLoadout(save, () => { save.training[id]++; save.trainerRanks[id]++; });
-    const gold = trainingGold(rowOf(id).cost, save.trainerRanks[id]);
+    const gold = trainingGold(rowOf(id), save.trainerRanks[id]);
     if (save.trainingJobs.length >= trainingSlots(save) || save.gold < gold) return false;
     this.start(id, gold, this.host.clock());
     // Time credit can cover the whole rank.
@@ -108,7 +108,7 @@ export class TrainingDesk {
   private continueAfter(after: TrainingJob) {
     const save = this.save, id = after.id;
     if (!this.autoContinues(id) || !this.canTrain(id) || trainingJob(save.trainingJobs, id)) return;
-    const gold = this.host.free ? 0 : trainingGold(rowOf(id).cost, save.trainerRanks[id]);
+    const gold = this.host.free ? 0 : trainingGold(rowOf(id), save.trainerRanks[id]);
     if (save.trainingJobs.length < trainingSlots(save) && save.gold >= gold) this.start(id, gold, after.completesAt);
   }
 

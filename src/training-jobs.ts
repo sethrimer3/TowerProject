@@ -47,9 +47,14 @@ export const trainingSeconds = (ranks: number) =>
 /** The training time (ms) of the next rank of a stat with `ranks` ranks,
  * at `speed` (Faster Trainers: 0.02 a level). */
 export const trainingMs = (ranks: number, speed: number) => Math.round((trainingSeconds(ranks) * 1000) / (1 + speed));
-/** The Gold a trainer asks for the next rank of a row costing `cost`
- * points, with `ranks` ranks. */
-export const trainingGold = (cost: number, ranks: number) => TRAINING_GOLD_PER_POINT * cost * (ranks + 1);
+/** The Gold a trainer asks for the next rank of `row`, with `ranks`
+ * ranks: `TRAINING_GOLD_PER_POINT` a point of its cost times the rank's
+ * number, and for a row with `trainerGrowth` times 1 + ranks /
+ * `trainerGrowth` too (Potion %: 20, 44, 72, 104 …). */
+export const trainingGold = (row: { cost: number; trainerGrowth?: number }, ranks: number) => {
+  const gold = TRAINING_GOLD_PER_POINT * row.cost * (ranks + 1);
+  return row.trainerGrowth ? (gold * (row.trainerGrowth + ranks)) / row.trainerGrowth : gold;
+};
 
 /** How many stats can be in training at once: the first slot, and one for
  * each trainer bought. */

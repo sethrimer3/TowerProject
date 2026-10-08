@@ -235,7 +235,7 @@ export function trainingBulk(save: Save, id: TrainingId, q: BuyQuantity) {
  * (`affordable`) or Gold (`goldAffordable`), whether there is one, and a
  * trainer's Gold price for it. */
 function trainingPrices(save: Save, row: TrainingRow, maxed: boolean) {
-  const free = save.settings.freePurchases, gold = trainingGold(row.cost, save.trainerRanks[row.id]);
+  const free = save.settings.freePurchases, gold = trainingGold(row, save.trainerRanks[row.id]);
   return {
     affordable: !maxed && (free || trainingPoints(save).left >= row.cost),
     maxed,

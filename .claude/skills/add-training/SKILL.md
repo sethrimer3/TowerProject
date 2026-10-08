@@ -12,7 +12,7 @@ A Training row is one entry in `TRAINING` (`src/config.ts`) plus every place tha
 Read these as they are now; the numbers here are examples of the conventions, and the files win where they differ.
 
 - `src/config.ts`: `TRAINING` (each row's `id`, `name`, `group`, `stat`/`base`/`growth` for a stat row, `cost`, `max`, `requires`, `description`), `TRAINING_GROUPS`, `TRAINING_PER_LEVEL`, `trainingWorth`, the per-rank constants (`FLOOR_GOLD_RANK`, `SILVER_BONUS_RANK` …), `RUN_TRAINING_PRICES` and its named schedules (`vital`, `cheap`, `opened`, `deep`), `schedulePrice`.
-- `src/training-jobs.ts`: the trainer's Gold (`trainingGold`, shared by every row: `TRAINING_GOLD_PER_POINT` × `cost` × (ranks + 1)) and time (`trainingSeconds`, shared: 15 s, 1 min, 5 min, 10 min, then a quarter hour more a rank).
+- `src/training-jobs.ts`: the trainer's Gold (`trainingGold(row, ranks)`: `TRAINING_GOLD_PER_POINT` × `cost` × (ranks + 1), and × (1 + ranks / `trainerGrowth`) for a row with that optional field, as Potion % has) and time (`trainingSeconds`, shared: 15 s, 1 min, 5 min, 10 min, then a quarter hour more a rank).
 - `src/loadout.ts`: `Stat`/`Loadout` and `loadout()` (stat rows), `trainingStep`, `valueStep`, `percentRow`, `MULTIPLIER_ROWS`, `trainingText`, the value functions (`floorGold`, `potionPercent`, `reviveChance` …), `trainingMaxed`, `trainingBulk`.
 - `src/run-training.ts`: `runTrainingOffer`, `runTrainingValue`, `ranksInRun`, `silverPrice`; `Game.trainingNow` and `Game.trainInRun` in `src/state.ts`.
 - Neighbouring rows in the same group: the defaults below are judged against them.
@@ -66,7 +66,7 @@ Work in an isolated worktree, cherry-pick onto `main`, push and clean up, per th
 
 **Read it when it's used.** Undo and Revive restore copies of the run, so read the value at the moment it applies (as `game.stepRules` does for Potion %), not copied into the run when bought. A value fixed as the run goes inside (Find Potion's `run.percentPotions`) also needs `trainInRun` to update it when a Silver rank is bought mid-run.
 
-**Its own Gold or time curve.** Today every row shares `trainingGold` and `trainingSeconds`. A row with its own curve adds an optional per-row field (a `PriceSchedule` for Gold, a seconds schedule for time) and makes `trainingGold`/`trainingMs` take the row, updating their callers (`trainingPrices` in `loadout.ts`; `start`, `continueAfter` and `toNextRank` in `game/training-desk.ts`). A refund returns what the job recorded as paid, so cancel and reset need no change.
+**Its own Gold or time curve.** Every row shares `trainingSeconds`, and `trainingGold` but for its optional `trainerGrowth` (a steeper Gold curve, which takes no other change). A row with a different Gold or time curve adds another optional per-row field (a `PriceSchedule` for Gold, a seconds schedule for time) read by `trainingGold`, or makes `trainingMs` take the row, updating its callers (`trainingPrices` in `loadout.ts`; `start`, `continueAfter` and `toNextRank` in `game/training-desk.ts`). A refund returns what the job recorded as paid, so cancel and reset need no change.
 
 **Silver.** Add the row's schedule to `RUN_TRAINING_PRICES` (the `Record<TrainingId, …>` type fails the build without one).
 
