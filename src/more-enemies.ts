@@ -67,158 +67,213 @@ function extraCounts(floor: ExtraFloor, extras: ExtraEnemies, rng: () => number)
   return out;
 }
 
-/** Where the next enemy stands on `floor`, with `placed` already standing
- * (each a wall to the search, since the hero must never have to fight one):
- * corners of reward rooms behind a gate, then of other rooms behind a gate,
- * then corners and then edges of the core (what the way in reaches without
- * passing a gate), then any tile that cuts nothing off, and only then one
- * that does; tiles off the shortest walk from the way in to the target
- * first, ties broken on `rng`. Null when no tile is free. */
-function nextSpot(floor: ExtraFloor, placed: ReadonlyMap<string, Tile>, onPath: ReadonlySet<string>, rng: () => number): Point | null {
+/** A floor's ground as a grid of tile indices (`(y - minY) * width + x`),
+ * worked out once: what each tile is, its neighbours, which of its sides
+ * are walls, and the tiles on the shortest walk from the way in to the
+ * target. The searches below run on it, so placing each extra never parses
+ * a tile's key. */
+export type ExtraGround = {
+  width: number;
+  minY: number;
+  size: number;
+  /** Each tile's flags (`OPEN`, `GATE`, `REWARD`, `FLOOR`, `AVOID`). */
+  flags: Uint8Array;
+  /** Each tile's four neighbours (right, left, below, above), -1 for none:
+   * off the board, or past a row's edge that doesn't wrap. */
+  near: Int32Array;
+  /** Whether a wall (or the board's edge) stands below or above the tile,
+   * and right or left of it, as generated. */
+  walledNs: Uint8Array;
+  walledEw: Uint8Array;
+  /** The way in's index (-1: off the board). */
+  root: number;
+  onPath: Uint8Array;
+};
+const OPEN = 1, GATE = 2, REWARD = 4, FLOOR = 8, AVOID = 16;
+
+/** `floor`'s ground for `addEnemies` (its band aside): the Delve works it
+ * out once for all ten of an area's floors. */
+export function extraGround(floor: Omit<ExtraFloor, "band">): ExtraGround {
   const { cells, width, wraps } = floor;
-  const open = (x: number, y: number) => walkable(cells.get(point(x, y)));
-  const neighbours = (x: number, y: number): Point[] => {
-    const out: Point[] = [];
-    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
-      let nx = x + dx;
-      const ny = y + dy;
-      if (nx < 0 || nx >= width) {
-        if (!wraps || !open(0, y) || !open(width - 1, y)) continue;
-        nx = (nx + width) % width;
-      }
-      out.push({ x: nx, y: ny });
-    }
-    return out;
-  };
-  const passable = (k: string) => walkable(cells.get(k)) && !placed.has(k);
-  const rootKey = point(floor.root.x, floor.root.y);
-  const cuts = cutTiles(rootKey, passable, neighbours);
-  // The core: reached from the way in without passing a gate.
-  const plain = (k: string) => passable(k) && !GATES.has(cells.get(k)!.kind);
-  const core = flood([rootKey], plain, neighbours);
-  // Each room behind a gate, and whether it holds a reward.
-  const room = new Map<string, boolean>();
-  for (const p of floor.band) {
-    const k = point(p.x, p.y);
-    if (room.has(k) || core.has(k) || !plain(k)) continue;
-    const tiles = flood([k], (j) => plain(j) && !core.has(j), neighbours);
-    const reward = [...tiles].some((j) => REWARDS.has(cells.get(j)!.kind));
-    for (const j of tiles) room.set(j, reward);
+  let minY = Infinity, maxY = -Infinity;
+  for (const k of cells.keys()) {
+    const y = Number(k.slice(k.indexOf(",") + 1));
+    if (y < minY) minY = y;
+    if (y > maxY) maxY = y;
   }
-  let best: Point | null = null, bestRank = Infinity, bestRoll = Infinity;
-  for (const p of floor.band) {
-    const k = point(p.x, p.y);
-    if (cells.get(k)?.kind !== "floor" || placed.has(k) || floor.avoid.has(k) || !cuts.reached.has(k)) continue;
-    const wall = (dx: number, dy: number) => {
-      let nx = p.x + dx;
-      if (nx < 0 || nx >= width) {
-        if (!wraps || !open(0, p.y) || !open(width - 1, p.y)) return true;
-        nx = (nx + width) % width;
-      }
-      return !open(nx, p.y + dy);
-    };
-    const ns = wall(0, 1) || wall(0, -1), ew = wall(1, 0) || wall(-1, 0);
+  if (minY > maxY) minY = maxY = 0;
+  const size = width * (maxY - minY + 1), flags = new Uint8Array(size);
+  const at = (x: number, y: number) => (x < 0 || x >= width || y < minY || y > maxY ? -1 : (y - minY) * width + x);
+  const keyAt = (k: string) => {
+    const comma = k.indexOf(",");
+    return at(Number(k.slice(0, comma)), Number(k.slice(comma + 1)));
+  };
+  for (const [k, t] of cells) {
+    const i = keyAt(k);
+    if (i < 0 || !walkable(t)) continue;
+    flags[i] = OPEN | (GATES.has(t.kind) ? GATE : 0) | (REWARDS.has(t.kind) ? REWARD : 0) | (t.kind === "floor" ? FLOOR : 0);
+  }
+  for (const k of floor.avoid) {
+    const i = keyAt(k);
+    if (i >= 0) flags[i]! |= AVOID;
+  }
+  const open = (x: number, y: number) => {
+    const i = at(x, y);
+    return i >= 0 && (flags[i]! & OPEN) !== 0;
+  };
+  // A step off a row's edge comes back on the other only where both edges are open.
+  const across = (x: number, y: number) => (x >= 0 && x < width ? x : wraps && open(0, y) && open(width - 1, y) ? (x + width) % width : -1);
+  const near = new Int32Array(size * 4), walledNs = new Uint8Array(size), walledEw = new Uint8Array(size);
+  for (let i = 0; i < size; i++) {
+    const x = i % width, y = minY + (i - x) / width;
+    DIRS.forEach(([dx, dy], d) => {
+      const nx = across(x + dx, y);
+      near[i * 4 + d] = nx < 0 ? -1 : at(nx, y + dy);
+    });
+    const wall = (d: number) => near[i * 4 + d]! < 0 || !(flags[near[i * 4 + d]!]! & OPEN);
+    walledEw[i] = wall(0) || wall(1) ? 1 : 0;
+    walledNs[i] = wall(2) || wall(3) ? 1 : 0;
+  }
+  const root = at(floor.root.x, floor.root.y);
+  // The shortest walk from the way in to the target, as generated.
+  const onPath = new Uint8Array(size), target = floor.target ? at(floor.target.x, floor.target.y) : -1;
+  if (root >= 0 && target >= 0) {
+    const pass = (i: number) => (flags[i]! & OPEN) !== 0;
+    const from = distances(root, pass, near, size), to = distances(target, pass, near, size), length = from[target]!;
+    if (length >= 0) for (let i = 0; i < size; i++) if (from[i]! >= 0 && to[i]! >= 0 && from[i]! + to[i]! === length) onPath[i] = 1;
+  }
+  return { width, minY, size, flags, near, walledNs, walledEw, root, onPath };
+}
+const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]] as const;
+
+/** Where the next enemy stands on `ground`, among `band`'s tiles, with
+ * those `placed` already standing (each a wall to the search, since the
+ * hero must never have to fight one): corners of reward rooms behind a
+ * gate, then of other rooms behind a gate, then corners and then edges of
+ * the core (what the way in reaches without passing a gate), then any tile
+ * that cuts nothing off, and only then one that does; tiles off the
+ * shortest walk from the way in to the target first, ties broken on `rng`.
+ * -1 when no tile is free. */
+function nextSpot(ground: ExtraGround, band: Int32Array, placed: Uint8Array, rng: () => number): number {
+  const { flags, near, size, root } = ground;
+  const passable = (i: number) => (flags[i]! & OPEN) !== 0 && !placed[i];
+  const cuts = cutTiles(root, passable, near, size);
+  // The core: reached from the way in without passing a gate.
+  const plain = (i: number) => passable(i) && !(flags[i]! & GATE);
+  const core = new Uint8Array(size);
+  for (const i of flood(root, plain, near, size)) core[i] = 1;
+  // Each room behind a gate (holding a band tile): 1 if it holds a reward, 0 if not.
+  const room = new Int8Array(size).fill(-1);
+  for (const i of band) {
+    if (room[i]! >= 0 || core[i] || !plain(i)) continue;
+    const tiles = flood(i, (j) => plain(j) && !core[j], near, size);
+    const reward = tiles.some((j) => (flags[j]! & REWARD) !== 0) ? 1 : 0;
+    for (const j of tiles) room[j] = reward;
+  }
+  let best = -1, bestRank = Infinity, bestRoll = Infinity;
+  for (const i of band) {
+    if (!(flags[i]! & FLOOR) || flags[i]! & AVOID || placed[i] || cuts.order[i]! < 0) continue;
+    const ns = ground.walledNs[i] === 1, ew = ground.walledEw[i] === 1;
     const corner = ns && ew, edge = ns || ew;
-    const tier = cuts.cut.has(k) ? 5
-      : corner && room.get(k) === true ? 0
-      : corner && room.has(k) ? 1
-      : corner && core.has(k) ? 2
-      : edge && core.has(k) ? 3
+    const tier = cuts.cut[i] ? 5
+      : corner && room[i] === 1 ? 0
+      : corner && room[i]! >= 0 ? 1
+      : corner && core[i] ? 2
+      : edge && core[i] ? 3
       : 4;
-    const rank = tier * 2 + (onPath.has(k) ? 1 : 0), roll = rng();
-    if (rank < bestRank || (rank === bestRank && roll < bestRoll)) [best, bestRank, bestRoll] = [p, rank, roll];
+    const rank = tier * 2 + ground.onPath[i]!, roll = rng();
+    if (rank < bestRank || (rank === bestRank && roll < bestRoll)) [best, bestRank, bestRoll] = [i, rank, roll];
   }
   return best;
 }
 
-/** Every tile reached from `from` through tiles `pass` lets through. */
-function flood(from: string[], pass: (k: string) => boolean, neighbours: (x: number, y: number) => Point[]) {
-  const seen = new Set(from.filter(pass)), queue = [...seen];
-  for (let i = 0; i < queue.length; i++) {
-    const [x, y] = queue[i]!.split(",").map(Number);
-    for (const n of neighbours(x!, y!)) {
-      const k = point(n.x, n.y);
-      if (!seen.has(k) && pass(k)) (seen.add(k), queue.push(k));
+/** Every tile reached from `from` through tiles `pass` lets through (none
+ * unless it lets `from` through). */
+function flood(from: number, pass: (i: number) => boolean, near: Int32Array, size: number) {
+  const out: number[] = [];
+  if (from < 0 || !pass(from)) return out;
+  const seen = new Uint8Array(size);
+  seen[from] = 1;
+  out.push(from);
+  for (let q = 0; q < out.length; q++)
+    for (let d = 0; d < 4; d++) {
+      const n = near[out[q]! * 4 + d]!;
+      if (n >= 0 && !seen[n] && pass(n)) (seen[n] = 1), out.push(n);
     }
-  }
-  return seen;
+  return out;
 }
 
-/** Steps from `from` to every tile `pass` lets through. */
-function distances(from: string, pass: (k: string) => boolean, neighbours: (x: number, y: number) => Point[]) {
-  const dist = new Map<string, number>([[from, 0]]), queue = [from];
-  for (let i = 0; i < queue.length; i++) {
-    const [x, y] = queue[i]!.split(",").map(Number), d = dist.get(queue[i]!)! + 1;
-    for (const n of neighbours(x!, y!)) {
-      const k = point(n.x, n.y);
-      if (!dist.has(k) && pass(k)) (dist.set(k, d), queue.push(k));
+/** Steps from `from` to every tile `pass` lets through (-1: not reached). */
+function distances(from: number, pass: (i: number) => boolean, near: Int32Array, size: number) {
+  const dist = new Int32Array(size).fill(-1), queue = [from];
+  dist[from] = 0;
+  for (let q = 0; q < queue.length; q++) {
+    const at = queue[q]!, d = dist[at]! + 1;
+    for (let k = 0; k < 4; k++) {
+      const n = near[at * 4 + k]!;
+      if (n >= 0 && dist[n]! < 0 && pass(n)) (dist[n] = d), queue.push(n);
     }
   }
   return dist;
 }
 
-/** The tiles reached from `root`, and those among them whose loss would cut
- * some other tile off from it (Tarjan's articulation points, iteratively). */
-function cutTiles(root: string, pass: (k: string) => boolean, neighbours: (x: number, y: number) => Point[]) {
-  const order = new Map<string, number>(), low = new Map<string, number>(), cut = new Set<string>();
-  if (!pass(root)) return { reached: order, cut };
-  const next = (k: string) => {
-    const [x, y] = k.split(",").map(Number);
-    return neighbours(x!, y!).map((n) => point(n.x, n.y)).filter(pass);
-  };
-  order.set(root, 0), low.set(root, 0);
-  const stack: { k: string; parent: string | null; ns: string[]; i: number }[] = [{ k: root, parent: null, ns: next(root), i: 0 }];
+/** The tiles reached from `root` (`order` 0 or more), and those among them
+ * whose loss would cut some other tile off from it (`cut`: Tarjan's
+ * articulation points, iteratively). */
+function cutTiles(root: number, pass: (i: number) => boolean, near: Int32Array, size: number) {
+  const order = new Int32Array(size).fill(-1), cut = new Uint8Array(size);
+  if (root < 0 || !pass(root)) return { order, cut };
+  const low = new Int32Array(size), parent = new Int32Array(size).fill(-1), tried = new Uint8Array(size);
+  const stack = [root];
+  order[root] = 0;
   let time = 1, rootChildren = 0;
   while (stack.length) {
     const top = stack[stack.length - 1]!;
-    if (top.i < top.ns.length) {
-      const n = top.ns[top.i++]!;
-      if (!order.has(n)) {
-        order.set(n, time), low.set(n, time++);
-        if (top.k === root) rootChildren++;
-        stack.push({ k: n, parent: top.k, ns: next(n), i: 0 });
-      } else if (n !== top.parent) low.set(top.k, Math.min(low.get(top.k)!, order.get(n)!));
+    if (tried[top]! < 4) {
+      const n = near[top * 4 + tried[top]!++]!;
+      if (n < 0 || !pass(n)) continue;
+      if (order[n]! < 0) {
+        order[n] = low[n] = time++;
+        parent[n] = top;
+        if (top === root) rootChildren++;
+        stack.push(n);
+      } else if (n !== parent[top]) low[top] = Math.min(low[top]!, order[n]!);
       continue;
     }
     stack.pop();
-    if (top.parent === null) continue;
-    low.set(top.parent, Math.min(low.get(top.parent)!, low.get(top.k)!));
-    if (top.parent !== root && low.get(top.k)! >= order.get(top.parent)!) cut.add(top.parent);
+    const up = parent[top]!;
+    if (up < 0) continue;
+    low[up] = Math.min(low[up]!, low[top]!);
+    if (up !== root && low[top]! >= order[up]!) cut[up] = 1;
   }
-  if (rootChildren > 1) cut.add(root);
-  return { reached: order, cut };
+  if (rootChildren > 1) cut[root] = 1;
+  return { order, cut };
 }
 
 /** Adds `floor`'s extra enemies to `placed` (by tile), each a copy of one of
  * the floor's generated enemies of its strength, drawing everything from
- * a stream seeded by `seed`. */
-export function addEnemies(floor: ExtraFloor, extras: ExtraEnemies, seed: number, placed: Map<string, Tile>) {
+ * a stream seeded by `seed`. `ground` is `extraGround(floor)`, worked out
+ * here unless given. */
+export function addEnemies(floor: ExtraFloor, extras: ExtraEnemies, seed: number, placed: Map<string, Tile>, ground?: ExtraGround) {
   const rng = random(seed);
   const counts = extraCounts(floor, extras, rng);
   if (!counts.length) return;
-  const { cells, width, wraps } = floor;
-  // The shortest walk from the way in to the target, as generated.
-  const open = (k: string) => walkable(cells.get(k));
-  const near = (x: number, y: number) => [[1, 0], [-1, 0], [0, 1], [0, -1]].flatMap(([dx, dy]) => {
-    let nx = x + dx!;
-    if (nx < 0 || nx >= width) {
-      if (!wraps || !open(point(0, y)) || !open(point(width - 1, y))) return [];
-      nx = (nx + width) % width;
-    }
-    return [{ x: nx, y: y + dy! }];
-  });
-  const onPath = new Set<string>();
-  if (floor.target) {
-    const from = distances(point(floor.root.x, floor.root.y), open, near), to = distances(point(floor.target.x, floor.target.y), open, near);
-    const length = from.get(point(floor.target.x, floor.target.y));
-    if (length !== undefined) for (const [k, d] of from) if (d + (to.get(k) ?? Infinity) === length) onPath.add(k);
+  const g = ground ?? extraGround(floor);
+  const rows = g.size / g.width;
+  const index = (x: number, y: number) => (x < 0 || x >= g.width || y < g.minY || y >= g.minY + rows ? -1 : (y - g.minY) * g.width + x);
+  const band = Int32Array.from(floor.band.map((p) => index(p.x, p.y)).filter((i) => i >= 0));
+  const taken = new Uint8Array(g.size);
+  for (const k of placed.keys()) {
+    const comma = k.indexOf(","), i = index(Number(k.slice(0, comma)), Number(k.slice(comma + 1)));
+    if (i >= 0) taken[i] = 1;
   }
   for (const { sources, count } of counts)
-    for (let i = 0; i < count; i++) {
+    for (let n = 0; n < count; n++) {
       const enemy = sources[Math.min(sources.length - 1, Math.floor(rng() * sources.length))]!;
-      const spot = nextSpot(floor, placed, onPath, rng);
-      if (!spot) return;
-      placed.set(point(spot.x, spot.y), { kind: "enemy", enemy: { ...enemy } });
+      const spot = nextSpot(g, band, taken, rng);
+      if (spot < 0) return;
+      taken[spot] = 1;
+      placed.set(point(spot % g.width, g.minY + (spot - (spot % g.width)) / g.width), { kind: "enemy", enemy: { ...enemy } });
     }
 }
 

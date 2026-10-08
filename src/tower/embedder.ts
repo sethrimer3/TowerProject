@@ -138,16 +138,18 @@ function doorwayCandidates(rects: Rect[]) {
     (pairs.get(pairKey(a, b)) ?? []).map((c) =>
       c.a === a ? c : { ...c, a: c.b, b: c.a, inA: c.inB, inB: c.inA });
   const neighbours = rects.map((_, i) =>
-    rects.map((_, j) => j).filter((j) => j !== i && between(i, j).length > 0));
+    rects.map((_, j) => j).filter((j) => j !== i && pairs.has(pairKey(i, j))));
   return { grid, between, neighbours };
 }
 
 /** The chamber index of every tile, or -1 for wall. */
 function chamberGrid(rects: Rect[]) {
-  const grid: number[][] = [];
-  for (let y = 0; y < TOWER_HEIGHT; y++) {
-    grid.push([]);
-    for (let x = 0; x < TOWER_WIDTH; x++) grid[y].push(rects.findIndex((r) => inRect(r, x, y)));
+  const grid: number[][] = Array.from({ length: TOWER_HEIGHT }, () => new Array<number>(TOWER_WIDTH).fill(-1));
+  // Last to first, so where chambers overlap the first holds the tile.
+  for (let i = rects.length - 1; i >= 0; i--) {
+    const r = rects[i];
+    for (let y = Math.max(0, r.y1); y <= Math.min(TOWER_HEIGHT - 1, r.y2); y++)
+      for (let x = Math.max(0, r.x1); x <= Math.min(TOWER_WIDTH - 1, r.x2); x++) grid[y][x] = i;
   }
   return grid;
 }
@@ -235,7 +237,11 @@ function assign(graph: StrategicGraph, rects: Rect[], { neighbours, between }: P
     const options = node.parent === null
       ? [startLeaf]
       : neighbours[leafOf[node.parent]].filter((j) => !used.has(j));
-    const ranked = options.filter((j) => fits(node, j)).sort((a, b) => score(node, b) - score(node, a));
+    const fitting = options.filter((j) => fits(node, j));
+    // Scored once each, not in the comparator; a lone option (the start
+    // hall's) needs no score.
+    const scores = fitting.length > 1 ? new Map(fitting.map((j) => [j, score(node, j)])) : null;
+    const ranked = scores ? fitting.sort((a, b) => scores.get(b)! - scores.get(a)!) : fitting;
     for (const leaf of ranked) {
       leafOf[node.id] = leaf;
       used.add(leaf);

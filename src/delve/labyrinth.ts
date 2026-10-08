@@ -433,7 +433,8 @@ function tryFork(lab: Lab, board: Board, n: Node, path: Point[]) {
  * side-stepped. A pocket whose throat is too short for its costs takes a
  * pattern that fits instead. */
 function placeCosts(lab: Lab, board: Board, n: Node, path: Point[]) {
-  const cuts = path.filter(p => !board.roomTiles.has(point(p.x, p.y)) && separates(board.cells, path[0], p, n));
+  const separates = separators(board.cells, path[0], n);
+  const cuts = path.filter(p => !board.roomTiles.has(point(p.x, p.y)) && separates(p));
   if (cuts.length < n.pattern!.gates.length) n.pattern = choosePattern(lab.rng, { area: lab.area, branch: 0, maxGates: cuts.length }, colorsAt(lab, n));
   const pattern = n.pattern!, middle = Math.min(cuts.length - 1, Math.floor(cuts.length / 2) + pattern.gates.length - 1);
   pattern.gates.forEach((g, i) => board.put(cuts[middle - i], gateTile(lab, g, n), n.depth));
@@ -557,16 +558,52 @@ function rowSpan(cells: Map<string, Tile>) {
   for (const k of cells.keys()) { const y = Number(k.split(',')[1]); minY = Math.min(minY, y); maxY = Math.max(maxY, y); }
   return { minY, maxY };
 }
-/** True when blocking `cut` disconnects `from` from the pocket at `to`. */
-function separates(cells: Map<string, Tile>, from: Point, cut: Point, to: Point) {
-  const blocked = point(cut.x, cut.y), goal = point(to.x, to.y), seen = new Set([point(from.x, from.y), blocked]), queue = [from];
-  for (let i = 0; i < queue.length; i++) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-    const k = point(queue[i].x + dx, queue[i].y + dy);
-    if (seen.has(k) || !cells.has(k)) continue;
-    if (k === goal) return false;
-    seen.add(k); queue.push({ x: queue[i].x + dx, y: queue[i].y + dy });
+/** Whether blocking a tile disconnects `from` from the pocket at `to`,
+ * walking only tiles in `cells` (and `from`), for any tile asked: one
+ * depth-first search (Tarjan's low links) answers for every tile, where a
+ * flood per tile would walk the area each time. A tile separates them when
+ * it is `to` itself, when `to` can't be reached at all, or when `to` lies
+ * below one of its children in the search tree that has no way round it. */
+function separators(cells: Map<string, Tile>, from: Point, to: Point): (cut: Point) => boolean {
+  const start = point(from.x, from.y), goal = point(to.x, to.y);
+  const order = new Map<string, number>([[start, 0]]), low = new Map<string, number>([[start, 0]]), parent = new Map<string, string>();
+  const near = (x: number, y: number) => {
+    const out: { k: string; x: number; y: number }[] = [];
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const k = point(x + dx, y + dy);
+      if (k === start || cells.has(k)) out.push({ k, x: x + dx, y: y + dy });
+    }
+    return out;
+  };
+  const stack = [{ k: start, ns: near(from.x, from.y), i: 0 }];
+  let time = 1;
+  while (stack.length) {
+    const top = stack[stack.length - 1];
+    if (top.i < top.ns.length) {
+      const n = top.ns[top.i++];
+      if (!order.has(n.k)) {
+        order.set(n.k, time), low.set(n.k, time++), parent.set(n.k, top.k);
+        stack.push({ k: n.k, ns: near(n.x, n.y), i: 0 });
+      } else if (n.k !== parent.get(top.k)) low.set(top.k, Math.min(low.get(top.k)!, order.get(n.k)!));
+      continue;
+    }
+    stack.pop();
+    const up = parent.get(top.k);
+    if (up !== undefined) low.set(up, Math.min(low.get(up)!, low.get(top.k)!));
   }
-  return true;
+  return (cut: Point) => {
+    const k = point(cut.x, cut.y);
+    if (k === goal || goal === start || !order.has(goal)) return true;
+    if (k === start || !order.has(k)) return false;
+    // The child of the cut on the way down to the goal, if the cut is above it.
+    let child = goal;
+    while (parent.get(child) !== k) {
+      const up = parent.get(child);
+      if (up === undefined) return false;
+      child = up;
+    }
+    return low.get(child)! >= order.get(k)!;
+  };
 }
 /** Length (in lattice hops) of the dead-end chain ending at a pocket. */
 function branchLength(nodes: Node[], leaf: number) {

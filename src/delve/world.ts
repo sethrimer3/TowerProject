@@ -1,11 +1,11 @@
-import { region, depthAt, areasBetween, floorFor, ownerAt } from "./labyrinth.ts";
+import { region, depthAt, areasBetween, floorFor, ownerAt, type Region } from "./labyrinth.ts";
 import { CHUNK, WIDTH, START_X } from "../config.ts";
 import { point, type DelveRun, type Tile, type Torch } from "../entities.ts";
 import { withPotions, type Board } from "../board.ts";
 import { breakTorch, placeTorches } from "../torches.ts";
 import { tierCells } from "../tiers.ts";
 import { tournamentCells } from "../tournament/run.ts";
-import { addEnemies, extrasKey, extrasSeed, hasExtras, type ExtraEnemies } from "../more-enemies.ts";
+import { addEnemies, extraGround, extrasKey, extrasSeed, hasExtras, type ExtraEnemies } from "../more-enemies.ts";
 
 // v8 turns some pocket throats into forks: two parallel lanes of costs.
 // v9 adds yellow-or-blue and blue-or-red door forks.
@@ -29,22 +29,46 @@ export function generate(seed: number, index: number, tier = 1): Map<string, Til
   const cells = new Map<string, Tile>();
   const min = index * CHUNK, max = min + CHUNK;
   for (const a of areasBetween(min, max))
-    for (const [k, t] of region(seed, a, tier).cells) {
-      const y = Number(k.split(',')[1]);
-      if (y >= min && y < max) cells.set(k, t);
-    }
+    for (const [k, t] of chunksOf(region(seed, a, tier)).get(index) ?? []) cells.set(k, t);
   return cells;
+}
+
+const regionChunks = new WeakMap<Region, Map<number, [string, Tile][]>>();
+/** A region's cells by the chunk holding their row, each chunk's in the
+ * region's own order, sorted out once per region rather than once per chunk. */
+function chunksOf(r: Region) {
+  let chunks = regionChunks.get(r);
+  if (!chunks) {
+    chunks = new Map();
+    for (const [k, t] of r.cells) {
+      const index = Math.floor(Number(k.slice(k.indexOf(",") + 1)) / CHUNK);
+      (chunks.get(index) ?? chunks.set(index, []).get(index)!).push([k, t]);
+    }
+    regionChunks.set(r, chunks);
+  }
+  return chunks;
 }
 
 /** Area `area`'s torches: wall checks see the neighbouring areas too, so a
  * torch never lands on a foreign area's floor; each torch belongs to the
  * area owning its spot. */
-function areaTorches(seed: number, area: number, tier: number) {
-  const r = region(seed, area, tier), cells = new Map(r.cells);
-  for (const b of [area - 1, area + 1]) if (b >= 0) for (const [k, t] of region(seed, b, tier).cells) cells.set(k, t);
-  return placeTorches(cells, { xMin: 1, xMax: WIDTH - 2, yMin: r.minY - 2, yMax: r.maxY + 2, seed: seed ^ area })
-    .filter((t) => ownerAt(seed, t.x, t.y) === area);
+function areaTorches(seed: number, area: number, tier: number): Torch[] {
+  const key = `${seed}:${area}:${tier}`;
+  let placed = torchCache.get(key);
+  if (!placed) {
+    const r = region(seed, area, tier), cells = new Map(r.cells);
+    for (const b of [area - 1, area + 1]) if (b >= 0) for (const [k, t] of region(seed, b, tier).cells) cells.set(k, t);
+    placed = placeTorches(cells, { xMin: 1, xMax: WIDTH - 2, yMin: r.minY - 2, yMax: r.maxY + 2, seed: seed ^ area })
+      .filter((t) => ownerAt(seed, t.x, t.y) === area);
+    torchCache.set(key, placed);
+    if (torchCache.size > 8) torchCache.delete(torchCache.keys().next().value!);
+  }
+  // Fresh torches each time: a board puts its own out (`breakTorch`).
+  return placed.map((t) => ({ ...t }));
 }
+/** Each area's torches as placed, all lit: the World and More Enemies both
+ * ask for them, and placing them (with every light's polygon) is slow. */
+const torchCache = new Map<string, Torch[]>();
 
 const extraCache = new Map<string, Map<string, Tile>>();
 /** More Enemies' extras in area `area` (more-enemies.ts), by tile: each of
@@ -70,9 +94,10 @@ export function delveExtras(seed: number, area: number, tier: number, extras: Ex
     for (const [dx, dy] of [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]]) avoid.add(point(root.x + dx!, root.y + dy!));
     for (const t of areaTorches(seed, area, tier)) avoid.add(point(t.x, t.y));
     const target = r.cells.get(point(boss.x, boss.y))?.kind === "enemy" ? boss : null;
-    for (let floor = 0; floor < 10; floor++) {
-      const band = tiles.filter((p) => p.depth >= base + floor * 10 && p.depth < base + floor * 10 + 10);
-      addEnemies({ cells: r.cells, width: WIDTH, wraps: true, root, target, band, avoid }, extras, extrasSeed(seed, area * 10 + floor), placed);
+    const floor = { cells: r.cells, width: WIDTH, wraps: true, root, target, avoid }, ground = extraGround(floor);
+    for (let f = 0; f < 10; f++) {
+      const band = tiles.filter((p) => p.depth >= base + f * 10 && p.depth < base + f * 10 + 10);
+      addEnemies({ ...floor, band }, extras, extrasSeed(seed, area * 10 + f), placed, ground);
     }
   }
   extraCache.set(key, placed);
@@ -116,15 +141,15 @@ export class World implements Board {
   tile(x: number, y: number): Tile {
     if (!this.inside(x, y)) return { kind: "wall" };
     const index = Math.floor(y / CHUNK);
-    if (!this.chunks.has(index)) {
+    let chunk = this.chunks.get(index);
+    if (!chunk) {
       const cells = tierCells(this.generated(index), this.tier);
       // A tournament run's enemies stand stronger than the cave's own.
-      this.chunks.set(index, this.run.tournament ? tournamentCells(cells) : cells);
+      chunk = this.run.tournament ? tournamentCells(cells) : cells;
+      this.chunks.set(index, chunk);
     }
-    return (
-      this.changes[point(x, y)] ??
-      withPotions(this.chunks.get(index)!.get(point(x, y)) ?? { kind: "wall" }, x, y, this.seed, this.run.percentPotions ?? 0)
-    );
+    const k = point(x, y);
+    return this.changes[k] ?? withPotions(chunk.get(k) ?? { kind: "wall" }, x, y, this.seed, this.run.percentPotions ?? 0);
   }
   /** Chunk `index` as generated, with More Enemies' extras. */
   private generated(index: number) {

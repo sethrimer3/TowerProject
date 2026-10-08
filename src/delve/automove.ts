@@ -1,5 +1,5 @@
 import { point, type AutomoveMemory, type Player, type Run, type Save, type Tile } from '../entities.ts';
-import type { Position } from '../board.ts';
+import type { Board, Position } from '../board.ts';
 import type { KeyColor } from '../config.ts';
 import { BASE_RULES, isLethal, resolveStep, type StepEffect, type StepRules } from '../step-effects.ts';
 
@@ -48,13 +48,40 @@ export function chooseDelveStep(at: Position, { memory, plan, capabilities: c, r
   const followed = current && !discovered ? follow(at, plan, current, c, rules) : undefined;
   if (followed) return followed;
   plan.commitment = undefined;
-  const scan: Scan = { at, c, rules, canKnow, hpPrice: hpPrice(at.run.player), visits: memory.visited, previousTarget: current?.target ?? '', bestAt: new Map(), report: [], best: null, bestValue: -Infinity };
+  const scan: Scan = { at: { ...at, world: remembering(at.world) }, c, rules, canKnow: rememberingKnown(canKnow), hpPrice: hpPrice(at.run.player), visits: memory.visited, previousTarget: current?.target ?? '', bestAt: new Map(), report: [], best: null, bestValue: -Infinity };
   explore(scan);
   plan.decisions = scan.report.sort((a, b) => b.utility - a.utility).slice(0, 12);
   const { best } = scan, p = at.run.player;
   if (!best) return null;
-  plan.commitment = { run: at.run, from: point(p.x, p.y), route: [...best.path].slice(1), target: point(best.x, best.y) };
+  plan.commitment = { run: at.run, from: point(p.x, p.y), route: routeOf(best).slice(1), target: point(best.x, best.y) };
   return { dx: best.first[0], dy: best.first[1], label: `Exploring Delve · ${c.lookahead}-tile scouting` };
+}
+
+/** A tile's number in the memos below: the search never strays 512 tiles
+ * sideways (the Delve is 30 wide). */
+const memoKey = (x: number, y: number) => y * 1024 + x + 512;
+/** `world` with each tile read from it once: the search reads the same tiles
+ * many times over, and nothing changes while it runs. Its own `step` (and
+ * whatever else it reads tiles through) reads them from here too. */
+function remembering(world: Board): Board {
+  const tiles = new Map<number, Tile>();
+  const tile = (x: number, y: number) => {
+    const k = memoKey(x, y);
+    let t = tiles.get(k);
+    if (!t) tiles.set(k, (t = world.tile(x, y)));
+    return t;
+  };
+  return Object.assign(Object.create(world) as Board, { tile });
+}
+/** `canKnow`, each tile asked once. */
+function rememberingKnown(canKnow: (x: number, y: number) => boolean) {
+  const known = new Map<number, boolean>();
+  return (x: number, y: number) => {
+    const k = memoKey(x, y);
+    let v = known.get(k);
+    if (v === undefined) known.set(k, (v = !!canKnow(x, y)));
+    return v;
+  };
 }
 
 /** Marks what Automove can see now as known. Scouting upgrades expand
@@ -99,7 +126,33 @@ function nextOnRoute(route: Commitment, here: string): string | undefined {
 }
 
 /** One partial route in the search, with what walking it would cost and earn. */
-type Search = { x: number; y: number; first: number[]; d: number; player: Player; damage: number; keyCost: number; reward: number; interactions: number; path: Set<string> };
+type Search = { x: number; y: number; first: number[]; d: number; player: Player; damage: number; keyCost: number; reward: number; interactions: number;
+  /** The route one tile shorter: walking back through it gives every tile this route steps on. */
+  prev: Search | null;
+  /** A 128-bit summary of the tiles it steps on (`bitOf`), in four words:
+   * a tile whose bit is clear is surely not among them. */
+  m0: number; m1: number; m2: number; m3: number };
+/** A tile's bit in a route's summary (`Search.m0` to `m3`). */
+const bitOf = (x: number, y: number) => (y * 31 + x) & 127;
+/** `n`'s summary with (x, y)'s bit set too. */
+function withBit(n: Search, x: number, y: number) {
+  const b = bitOf(x, y), bit = 1 << (b & 31), m = { m0: n.m0, m1: n.m1, m2: n.m2, m3: n.m3 };
+  if (b < 32) m.m0 |= bit; else if (b < 64) m.m1 |= bit; else if (b < 96) m.m2 |= bit; else m.m3 |= bit;
+  return m;
+}
+/** Whether route `n` steps on (x, y) (its start included). */
+function steppedOn(n: Search, x: number, y: number) {
+  const b = bitOf(x, y), word = b < 32 ? n.m0 : b < 64 ? n.m1 : b < 96 ? n.m2 : n.m3;
+  if (!(word & (1 << (b & 31)))) return false;
+  for (let at: Search | null = n; at; at = at.prev) if (at.x === x && at.y === y) return true;
+  return false;
+}
+/** Every tile route `n` steps on, from its start. */
+function routeOf(n: Search) {
+  const out: string[] = [];
+  for (let at: Search | null = n; at; at = at.prev) out.push(point(at.x, at.y));
+  return out.reverse();
+}
 /** The search's inputs and its running results. */
 type Scan = {
   at: Position; c: Capabilities; rules: StepRules;
@@ -118,7 +171,8 @@ type Scan = {
  * decision point it reaches. */
 function explore(scan: Scan) {
   const p = scan.at.run.player;
-  const q: Search[] = [{ x: p.x, y: p.y, first: [0, 0], d: 0, player: { ...p, keys: { ...p.keys } }, damage: 0, keyCost: 0, reward: 0, interactions: 0, path: new Set([point(p.x, p.y)]) }];
+  const q: Search[] = [{ x: p.x, y: p.y, first: [0, 0], d: 0, player: { ...p, keys: { ...p.keys } }, damage: 0, keyCost: 0, reward: 0, interactions: 0, prev: null, m0: 0, m1: 0, m2: 0, m3: 0 }];
+  Object.assign(q[0], withBit(q[0], p.x, p.y));
   for (let i = 0; i < q.length && i < MAX_EXPANSIONS; i++) q.push(...successors(scan, q[i]));
 }
 
@@ -132,10 +186,10 @@ function successors(scan: Scan, n: Search) {
 function advance(scan: Scan, n: Search, [dx, dy]: number[]): Search | undefined {
   const { at: { world }, c, hpPrice, rules } = scan;
   const dest = world.step(n.x, n.y, dx, dy); if (!dest || !scan.canKnow(dest.x, dest.y)) return undefined;
-  const k = point(dest.x, dest.y); if (n.path.has(k)) return undefined;
+  if (steppedOn(n, dest.x, dest.y)) return undefined;
+  const k = point(dest.x, dest.y);
   const tile = world.tile(dest.x, dest.y); if (tile.kind === 'wall') return undefined;
-  const next: Search = { ...n, ...dest, d: n.d + 1, first: n.d ? n.first : [dx, dy], player: { ...n.player, keys: { ...n.player.keys } }, path: new Set(n.path) };
-  next.path.add(k);
+  const next: Search = { ...n, ...dest, d: n.d + 1, first: n.d ? n.first : [dx, dy], player: { ...n.player, keys: { ...n.player.keys } }, prev: n, ...withBit(n, dest.x, dest.y) };
   const interaction = !TRAVERSAL.includes(tile.kind);
   if (interaction && next.interactions++ >= c.interactions) return undefined;
   if (!apply(tile, next, c, hpPrice, rules)) return undefined;

@@ -23,6 +23,9 @@ export function defenseAgainst(player: Player, enemy: Enemy) {
 }
 /** What each of the hero's strikes takes off `enemy`'s HP (0 or less: none). */
 const heroHit = (player: Player, enemy: Enemy) => snap(attackAgainst(player, enemy) - defenseAgainst(player, enemy));
+/** Whether the hero's strikes can't hurt `enemy` at all (`predict`'s
+ * `impervious`), without working out the rest of the fight. */
+export const impervious = (player: Player, enemy: Enemy) => heroHit(player, enemy) <= 0;
 
 export function predict(player: Player, enemy: Enemy): CombatPrediction {
   const hit = heroHit(player, enemy);

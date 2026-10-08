@@ -2,7 +2,7 @@ import { point, type Tile } from "./entities.ts";
 import { litTorches, takesSomething, type Position } from "./board.ts";
 import type { Step } from "./pathfinding.ts";
 import { doorCost, doorId, doorRule } from "./doors.ts";
-import { predict } from "./combat.ts";
+import { impervious } from "./combat.ts";
 import { snap } from "./exact.ts";
 import { UPGRADES, VIEWPORT_TILES, type KeyColor, type TrainingId, type UpgradeId } from "./config.ts";
 import type { DelveRun, EnemyStrength, Mode } from "./entities.ts";
@@ -192,7 +192,7 @@ function wants(card: CardId, r: Reached, at: HandAt, rules?: CardRules): boolean
 /** A monster that can be fought, of one of `strengths` (any, without): an
  * impervious monster can't be fought at all, so it is never a target. */
 const fightable = (strengths?: readonly EnemyStrength[]) => (t: Tile, at: Position) =>
-  t.kind === "enemy" && (!strengths || strengths.includes(t.enemy!.strength)) && !predict(at.run.player, t.enemy!).impervious;
+  t.kind === "enemy" && (!strengths || strengths.includes(t.enemy!.strength)) && !impervious(at.run.player, t.enemy!);
 const never = () => false;
 const WANTS: Record<CardId, (t: Tile, at: HandAt, rules: CardRules | undefined, r: Reached) => boolean> = {
   stairs: (t) => t.kind === "stairs",
@@ -284,19 +284,28 @@ function targetOf(at: HandAt, id: CardId, mode: Mode, pool: Reached[], reached: 
   if (id === "stairs" && mode === "delve") return climb(at, pool);
   if (!rules?.stairward && !rules?.skipOpen) return pool.find((r) => wants(id, r, at, rules));
   let targets = pool.filter((r) => wants(id, r, at, rules));
-  if (rules.skipOpen) targets = targets.filter((r) => !passesOver(at, r, reached, rules.skipOpen!));
+  if (rules.skipOpen) {
+    const open = openGround(at, reached);
+    targets = targets.filter((r) => !passesOver(at, r, open, rules.skipOpen!));
+  }
   if (!rules.stairward || targets.length < 2) return targets[0];
   return mode === "delve" ? highest(targets) : nearestStairs(at, targets);
 }
 
-/** Skip Open Nodes: whether the door or monster at `r` is passed over:
- * one skipped before on this floor, or one that opens no new ground (every
- * open tile beside it the hero can already reach), which it reports. */
-function passesOver(at: Position, r: Reached, reached: Reached[], skip: NonNullable<CardRules["skipOpen"]>) {
-  if (r.tile.kind !== "door" && r.tile.kind !== "enemy") return false;
-  if (skip.skipped.has(point(r.x, r.y))) return true;
+/** The ground the hero can already reach: every tile the plain search
+ * `reached`, and where the hero stands. */
+function openGround(at: Position, reached: Reached[]) {
   const open = new Set(reached.map((t) => point(t.x, t.y)));
   open.add(point(at.run.player.x, at.run.player.y));
+  return open;
+}
+
+/** Skip Open Nodes: whether the door or monster at `r` is passed over:
+ * one skipped before on this floor, or one that opens no new ground (every
+ * open tile beside it is in `open`, from `openGround`), which it reports. */
+function passesOver(at: Position, r: Reached, open: ReadonlySet<string>, skip: NonNullable<CardRules["skipOpen"]>) {
+  if (r.tile.kind !== "door" && r.tile.kind !== "enemy") return false;
+  if (skip.skipped.has(point(r.x, r.y))) return true;
   for (const [dx, dy] of [[0, 1], [1, 0], [0, -1], [-1, 0]] as const) {
     const next = at.world.step(r.x, r.y, dx, dy);
     if (next && at.world.tile(next.x, next.y).kind !== "wall" && !open.has(point(next.x, next.y))) return false;
@@ -396,7 +405,7 @@ function search(at: Position, marked: ReadonlySet<string>): Reached[] {
 /** Whether Charge's path may go through `t`: a monster that can be fought
  * (lethal or not) or a door the hero holds the keys for. */
 function chargeable(t: Tile, at: HandAt) {
-  if (t.kind === "enemy") return !predict(at.run.player, t.enemy!).impervious;
+  if (t.kind === "enemy") return !impervious(at.run.player, t.enemy!);
   return t.kind === "door" && doorCost(t, at.run.player, keyScale(at)) !== null;
 }
 
