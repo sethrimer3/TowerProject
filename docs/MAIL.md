@@ -1,6 +1,6 @@
 # Mail (plan)
 
-Status: **steps 1 to 3 built** (the Tournament change; the rules, save, stub server and client, `src/mail/`, `game/mail-desk.ts`, `tests/mail.test.ts`; the button and popup, `ui/mail-dialog.ts`); the UI golden's `mail` fixture is next. This is the design and build order for **Mail**: messages the game server pushes to a player, each with a subject line, body text, and possibly items to claim.
+Status: **built** (the Tournament change; the rules, save, stub server and client, `src/mail/`, `game/mail-desk.ts`, `tests/mail.test.ts`; the button and popup, `ui/mail-dialog.ts`; the goldens). Left are the real server, below. This is the design and build order for **Mail**: messages the game server pushes to a player, each with a subject line, body text, and possibly items to claim.
 
 Examples:
 
@@ -164,9 +164,14 @@ Mail past its time (`kept`) is dropped from the inbox as the server's next answe
 1. **Tournament: no *Rewards expired*** (built). The page shows only the next opening once the claim window closes.
 2. **Rules without screens** (built): the message and item types, `save.mail` and its decoder, `MailDesk`, `MailServer` and `stubMail` (with the Tournament's missed prize), `MailClient`, and `tests/mail.test.ts`.
 3. **Screens** (built): the button and its dot, the popup's list and message view, claiming with its reveal, removing with its confirmation, `refreshMail`'s timing, and `mailDebug`.
-4. **Goldens and docs:**
-   - **Goldens:** `ui.golden.json` gets a `mail` fixture (a forest with an unread outage message: the button and dot, the list with its gift box, the message, the claim, the reveal, the X appearing, both messages removed, the button gone). (`save-decode`'s `mail` base, with its hostile values, came with step 2.)
+4. **Goldens and docs** (built):
+   - **Goldens:** `ui.golden.json`'s `mail` fixture: a forest whose stand-in mailbox holds an unread outage notice with 20 Gems and yesterday's notice, read, with nothing to claim; the button and dot (`mail.forest`), the list with the gift box and the notice's X (`mail.list`), the message (`mail.message`), the reveal (`mail.reveal`), the message claimed (`mail.claimed`), the list with an X on each (`mail.listAfter`), one removed (`mail.removed`), and both, the button gone (`mail.forestAfter`). (`save-decode`'s `mail` base, with its hostile values, came with step 2.)
    - **Docs:** AGENTS.md, the README, CONTEXT.md and `docs/TOURNAMENT.md`.
+
+## Future (TODO)
+
+- **The real server:** `MailServer` against the game server, in place of `stubMail` (and `save.mail.stub` then stays empty). It keeps each player's mailbox, pushes a Tournament prize left unclaimed as its window closes, and refuses the Tournament's claim from then on.
+- **Sending mail:** the server's own tool for writing a message to every player or some, such as the outage notice.
 
 ## Decisions
 

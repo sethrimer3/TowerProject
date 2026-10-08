@@ -192,6 +192,20 @@ try {
           "2026-10-07": { best: 70, place: 0, entrants: 0, pending: null, entry: "2026-10-07#1" },
         };
       }),
+      // In the forest with Mail in the stand-in server's mailbox: an unread
+      // outage notice with 20 Gems this morning, and yesterday's notice,
+      // read, with nothing to claim. Built after the Tournament's, for the
+      // same reason.
+      mail: forest((s) => {
+        quiet(s);
+        Object.assign(s.tutorials, { enter: true, upgrades: true });
+        s.gems = 50;
+        const at = (iso) => Date.parse(iso);
+        s.mail.stub = [
+          { id: "notice", sentAt: at("2026-10-04T09:00:00Z"), subject: "Maintenance on Friday", body: "A short break at 02:00 GMT.\nAbout ten minutes.", items: [], read: true, claimed: false, hidden: false },
+          { id: "outage", sentAt: at("2026-10-05T09:30:00Z"), subject: "Sorry about the outage", body: "The servers were down for about an hour this morning.\n\nHere are 20 Gems for the trouble.", items: [{ kind: "currency", currency: "gems", amount: 20 }], read: false, claimed: false, hidden: false },
+        ];
+      }),
     };
   });
 
@@ -675,6 +689,29 @@ try {
   await click('[data-eq-pull="10"]');
   await shot("equipment.pulled");
   await click("#eq-ok");
+
+  // Mail: the forest's button with its dot; the list (the outage notice's
+  // gift box, the notice's X); the notice opened, claimed, its reward
+  // revealed and the message claimed; back to the list, now an X on each;
+  // both removed, and the button gone.
+  await load("mail");
+  await shot("mail.forest");
+  await click("#mail-button");
+  await shot("mail.list");
+  await click('[data-mail-open="outage"]');
+  await shot("mail.message");
+  await click("#mail-claim");
+  await page.locator(".reward-reveal").waitFor();
+  await shot("mail.reveal");
+  await click(".reward-reveal");
+  await page.locator(".mail-claimed").waitFor();
+  await shot("mail.claimed");
+  await click("#mail-back");
+  await shot("mail.listAfter");
+  await click('[data-mail-hide="outage"]');
+  await shot("mail.removed");
+  await click('[data-mail-hide="notice"]');
+  await shot("mail.forestAfter");
 
   // The Tournament: on Monday, the button's countdown and the page, which
   // shows nothing of Saturday's results once they're over; All prizes. Then the clock moves on
