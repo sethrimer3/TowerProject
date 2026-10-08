@@ -1,6 +1,6 @@
 # Mail (plan)
 
-Status: **planned, nothing built.** This is the design and build order for **Mail**: messages the game server pushes to a player, each with a subject line, body text, and possibly items to claim.
+Status: **planned; step 1 (the Tournament change) built.** This is the design and build order for **Mail**: messages the game server pushes to a player, each with a subject line, body text, and possibly items to claim.
 
 Examples:
 
@@ -10,9 +10,9 @@ Examples:
 ## Summary
 
 - The server owns a player's Mail. The client fetches the inbox, shows it, and claims items through the server, which grants each message's items once. Like Tournament prizes, a forged save can change what the game shows, but not what the server grants.
-- **Recent mail** is any message sent in the last **7 days** (`MAIL_DAYS`) that the player hasn't removed. Time is the server's, from the Shop's confirmed clock.
+- **Recent mail** is any message that the player hasn't removed and that was either sent in the last **7 days** (`MAIL_DAYS`) or still holds unclaimed items. A message with unclaimed items stays until they are claimed, or until **90 days** after it was sent (`MAIL_KEEP_DAYS`), the upper bound on how long any message is kept, by the server and the save alike. Time is the server's, from the Shop's confirmed clock.
 - **Mail button:** an envelope in the forest's actions column, under Settings. It shows only while the player has recent mail, and wears a dot while any of it is unread.
-- **Mail list:** a popup listing the recent messages, newest first. Each row shows its subject, with a dot while unread and an X to remove it.
+- **Mail list:** a popup listing the recent messages, newest first. Each row shows its subject, with a dot while unread, a gift box while its items wait to be claimed, and an X to remove it once nothing waits.
 - **Message view:** the subject, the body, and each item's icon and amount. While items wait, the view shows *Claim*. Opening a message marks it read.
 
 ## What a message holds
@@ -39,13 +39,13 @@ type MailMessage = {
 
 ## Behaviour
 
-**Which messages show** (`MailDesk.recent`): sent within `MAIL_DAYS` of the server's time now, and not removed. The list is newest first. Once nothing is recent, the Mail button is gone.
+**Which messages show** (`MailDesk.recent`): not removed, and either sent within `MAIL_DAYS` of the server's time now, or holding unclaimed items and sent within `MAIL_KEEP_DAYS`. Past 90 days a message is gone, claimed or not. The list is newest first. Once nothing is recent, the Mail button is gone.
 
 **Unread and the dots:**
 
 - A message is unread until its view has been opened.
 - The Mail button wears a dot while any recent message is unread. In the list, each unread row wears its own.
-- Claiming isn't needed to clear a dot. A row still holding items shows a small gift marker beside its subject, without a dot.
+- Claiming isn't needed to clear a dot. A row still holding items shows a gift box icon (`giftIcon()`) beside its subject, whether read or not, so a reward waiting is plain to see.
 
 **Claiming** (`MailClient.claim(id)`):
 
@@ -60,7 +60,7 @@ type MailMessage = {
 **Removing** (the row's X):
 
 - The message is hidden from the list at once (`save.mail.hidden`), and the client tells the server (`hide(id)`) so it stays hidden on the player's other devices.
-- A message whose items are unclaimed asks first: *This message's rewards haven't been claimed. Remove it anyway?* The rewards are then lost.
+- A message with unclaimed items has no X: it can only be claimed, so no reward is ever thrown away. `MailDesk.hide` refuses one too, and so does the server.
 - Removing the last recent message closes the popup, and the button disappears.
 
 **Where:** only the forest, since the button stands in its actions column, so Mail never opens inside a run. A claim credits the save directly, so a claim made in the forest needs nothing from a run.
@@ -126,13 +126,13 @@ interface MailServer {
 | `hidden` | ids removed |
 | `dev` | Dev mail the stub reports (empty outside Dev use) |
 
-Ids older than `MAIL_DAYS` are dropped as the save loads, so the lists stay short.
+Messages and ids older than `MAIL_KEEP_DAYS` (90) are dropped as the save loads, so what is stored stays bounded; a message past `MAIL_DAYS` with nothing left to claim is dropped too.
 
 ## Screens
 
 - **Mail button:** `#mail-button`, the envelope (`mailIcon()` in `ui/dom.ts`) over *MAIL*, inserted after Settings (`#run-menu`) in the forest's actions column. Its state comes from `renderMailButton` in `ui/hud.ts`: hidden inside a run or with no recent mail, with a dot (`notify`) while any is unread. Check that the column still fits at phone height (360×640) with the Tournament button, Settings and Mail.
 - **Mail popup** (`ui/mail-dialog.ts`, `MailDialog`, in the shared dialog):
-  - **List:** *Mail* with a close X. One row a message: the unread dot, the subject (ellipsized), the gift marker, and how long ago it came (*2h*, *3d*). Each row has its own X button.
+  - **List:** *Mail* with a close X. One row a message: the unread dot, the subject (ellipsized), the gift box while items wait, and how long ago it came (*2h*, *3d*). A row with nothing to claim has its own X button; one with unclaimed items has none.
   - **Message:** a Back arrow to the list, the subject, the date, and the body as paragraphs. Then the items row, each item's icon (`gemIcon`, `shardIcon`, `goldIcon`, `ticketIcon`) and amount. Then *Claim*, or *Claimed*.
   - The phone's Back closes the message view, then the popup.
 
@@ -140,32 +140,32 @@ Ids older than `MAIL_DAYS` are dropped as the save loads, so the lists stay shor
 
 | Where | What |
 |---|---|
-| `src/mail/message.ts` | `MailMessage`, `MailItem`, `MAIL_DAYS`, `recent`, item grants |
+| `src/mail/message.ts` | `MailMessage`, `MailItem`, `MAIL_DAYS`, `MAIL_KEEP_DAYS`, `recent`, item grants |
 | `src/mail/progress.ts` | `save.mail`, `decodeMail` |
 | `src/mail/server.ts` | `MailServer`, `stubMail` |
 | `src/mail/client.ts` | `MailClient`: fetching, claiming, syncing read and removed |
 | `src/game/mail-desk.ts` | `MailDesk` (the game's `mail`): recent, unread, open, grant, hide |
 | `src/tournament/*`, `ui/tournament-page.ts` | no *Rewards expired*; the missed prize's message |
-| `src/ui/hud.ts`, `ui/shell.ts`, `ui/dom.ts` | the button, its dot, the envelope icon |
+| `src/ui/hud.ts`, `ui/shell.ts`, `ui/dom.ts` | the button, its dot, the envelope and gift box icons |
 | `src/ui/mail-dialog.ts` | the list and the message view |
 | `src/ui/reward-reveal.ts` | `mailShown` |
 | `src/main.ts`, `ui/debug-hooks.ts` | `refreshMail`; `mailDebug` |
-| `tests/mail.test.ts` | decode; the 7-day window; unread and dots; claim once (retried, replayed, offline); unknown kinds refused; removing, with unclaimed items; the Tournament's missed-prize message appearing exactly when its claim window closes and never beside a Tournament claim |
+| `tests/mail.test.ts` | decode; the 7-day window, unclaimed items kept to 90 days and dropped after; unread and dots; claim once (retried, replayed, offline); unknown kinds refused; removing, refused with unclaimed items; the Tournament's missed-prize message appearing exactly when its claim window closes and never beside a Tournament claim |
 
 `CONTEXT.md` gains *Mail* and *Message*; `AGENTS.md` and the README's overview gain Mail.
 
 ## Build order
 
-1. **Tournament: no *Rewards expired*.** The page shows only the next opening once the claim window closes. Its tests and the UI golden's affected keys are updated. This is independent of the rest and could ship first.
+1. **Tournament: no *Rewards expired*** (built). The page shows only the next opening once the claim window closes.
 2. **Rules without screens:** the message and item types, `save.mail` and its decoder, `MailDesk`, `MailServer` and `stubMail` (with the Tournament's missed prize), `MailClient`, and `tests/mail.test.ts`.
 3. **Screens:** the button and its dot, the popup's list and message view, claiming with its reveal, removing with its confirmation, `refreshMail`'s timing, and `mailDebug`.
 4. **Goldens and docs:**
-   - **Goldens:** `ui.golden.json` gets a `mail` fixture (a forest with an unread outage message: the button and dot, the list, the message, the claim, the reveal, a second message removed, the button gone). `save-decode` gets a `mail` base with its hostile values.
+   - **Goldens:** `ui.golden.json` gets a `mail` fixture (a forest with an unread outage message: the button and dot, the list with its gift box, the message, the claim, the reveal, the X appearing, both messages removed, the button gone). `save-decode` gets a `mail` base with its hostile values.
    - **Docs:** AGENTS.md, the README, CONTEXT.md and `docs/TOURNAMENT.md`.
 
-## Open questions (defaults chosen above)
+## Decisions
 
-- **Button dot:** it shows while any message is **unread**. Alternatively, it could clear as soon as the list is opened, leaving only the rows' dots.
-- **Unclaimed rewards after 7 days:** the message disappears with them. Alternatively, a message with unclaimed items could stay until claimed.
-- **Removing a message with unclaimed items:** it asks first. Alternatively, X could be refused until the items are claimed.
-- **Mail inside a run:** none, since the button is the forest's. It could join the run's menu like the Tournament button.
+- **Button dot:** shows while any recent message is unread.
+- **Unclaimed rewards:** the message stays until they are claimed, or 90 days after it was sent, the bound on stored mail.
+- **Removing:** only a message with nothing left to claim has an X; unclaimed ones wear a gift box instead.
+- **Mail inside a run:** none; the button is the forest's.

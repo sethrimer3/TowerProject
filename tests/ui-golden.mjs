@@ -676,8 +676,8 @@ try {
   await shot("equipment.pulled");
   await click("#eq-ok");
 
-  // The Tournament: on Monday, the button's countdown and the page with
-  // Saturday's final results, expired; All prizes. Then the clock moves on
+  // The Tournament: on Monday, the button's countdown and the page, which
+  // shows nothing of Saturday's results once they're over; All prizes. Then the clock moves on
   // (last, so no other snapshot sees it): Wednesday's opens, granting its
   // Ticket with a celebration; its Results come, and the prize is claimed.
   await load("tournament");

@@ -131,24 +131,23 @@ export class TournamentPage {
 
   /** The player's best score and place, with the prize it pays; the
    * league's top prize while they haven't entered. Once the results are
-   * final, the final place, prize and league, and *Claim rewards* (or that
-   * they expired); after the Results, the last tournament's over the next
-   * one's top prize. A tournament not entered, or its prize claimed, shows
-   * nothing of it: only the top prize. */
+   * final, the final place, prize and league, and *Claim rewards*. Once the
+   * Results are over, or for a tournament not entered or its prize
+   * claimed, nothing of it: only the next one's top prize. A prize left
+   * unclaimed comes as Mail instead (docs/MAIL.md). */
   private standing() {
     const game = this.ctx.game, desk = game.tournament, t = desk.tournament, league = game.save.tournament.league;
     const table = desk.live?.prizes ?? PRIZES, prizes = table[league], e = game.save.tournament.entries[t.id], phase = desk.phase;
     const final = desk.final, next = phase === "upcoming" && final ? final.league : league;
     const top = `<div class="tournament-standing"><p>Top prize</p>${prizeHtml(table[next][0]!)}</div>`;
-    if (!e || game.save.tournament.claimed.includes(t.id)) return top;
-    const over = phase === "results" || phase === "upcoming", rows: string[] = [];
-    if (phase === "upcoming") rows.push(`<small class="tournament-last">LAST TOURNAMENT</small>`);
+    if (!e || phase === "upcoming" || game.save.tournament.claimed.includes(t.id)) return top;
+    const over = phase === "results", rows: string[] = [];
     rows.push(`<p>Best score: <b>${e.best}</b>${e.pending !== null && !over ? ` <small>(waiting to be sent)</small>` : ""}</p>`);
     if (final) {
       rows.push(
         `<p>Final place: <b>${placeText(final.place, final.entrants)}</b></p>`,
         `<p>Prize (level ${final.level})</p>${prizeHtml(prizes[final.level - 1]!)}`,
-        desk.claimable ? `<button class="tournament-begin" id="tournament-claim"${this.busy ? " disabled" : ""}>Claim rewards</button>` : `<p class="hint">Rewards expired.</p>`,
+        desk.claimable ? `<button class="tournament-begin" id="tournament-claim"${this.busy ? " disabled" : ""}>Claim rewards</button>` : "",
         this.leagueMove(league, final.league),
       );
     } else if (over) rows.push(`<p class="hint">The final results show once the server answers.</p>`);
@@ -156,7 +155,7 @@ export class TournamentPage {
       const level = prizeLevel(e.place, e.entrants);
       rows.push(`<p>Place: <b>${placeText(e.place, e.entrants)}</b></p>`, `<p>Prize if it ends now (level ${level})</p>${prizeHtml(prizes[level - 1]!)}`);
     } else rows.push(`<p class="hint">Your place shows once the server has your score.</p>`);
-    return `<div class="tournament-standing">${rows.join("")}</div>${phase === "upcoming" ? top : ""}`;
+    return `<div class="tournament-standing">${rows.join("")}</div>`;
   }
 
   /** Where the final results move the player: up, down, or staying. */

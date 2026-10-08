@@ -137,8 +137,8 @@ Each entry spends one Ticket. A player may enter as often as they have Tickets; 
 3. Tickets held, with the ticket icon.
 4. While Open: **Begin Tournament**, or the ad / Gem Ticket offer when out of Tickets.
 5. The player's best score this tournament, their place and percentile in the league (*12th of 1,480 · top 1%*), and the anticipated prize level; or the league's top prize when they haven't entered.
-6. In Results: the final place and prize, **Claim rewards** (or after 24 hours: *Rewards expired*), and the league the results move the player to (*Promoted to Silver League*, *Moved down to …*, *Staying in the …*; `TournamentDesk.final`). After the Results, until the next opens, the same under *Last tournament*, over the next tournament's top prize.
-   A tournament the player never entered, or whose prize they have claimed, shows nothing of itself once entry closes: no Ending, results or *Last tournament*, only *Opens in …* and the next tournament's top prize, and the HUD button its countdown (`TournamentDesk.phase` reports it as upcoming).
+6. In Results: the final place and prize, **Claim rewards**, and the league the results move the player to (*Promoted to Silver League*, *Moved down to …*, *Staying in the …*; `TournamentDesk.final`).
+   Once the Results are over (24 hours, claimed or not), the page shows only *Opens in …* and the next tournament's top prize (in the league the results moved the player to); a prize left unclaimed comes as Mail instead (`docs/MAIL.md`), never *Rewards expired*. A tournament the player never entered, or whose prize they have claimed, shows nothing of itself once entry closes: no Ending or results, only the same, and the HUD button its countdown (`TournamentDesk.phase` reports it as upcoming).
 7. **All prizes**: a dialog with every league's ten levels, the player's league first, the promotion and demotion zones marked.
 8. A version that is too old sees only *Update the game to take part in the Tournament* (TODO, below).
 
@@ -223,6 +223,6 @@ The confirmed server time is the Shop's (`save.shop`'s clock), shared, so there'
 
 - **App version gate:** the build stamps `package.json`'s version (Vite `define`); the page compares it with `minVersion()` and, below it, shows only the update message.
 - **Live standing:** while a tournament run is inside, report the depth as it rises and refresh the place in the background, so the run menu's button and the page are current.
-- **Server-pushed prizes:** a prize not claimed within its 24 hours comes as Mail instead, and the page then shows only the next opening, never *Rewards expired* (planned: `docs/MAIL.md`).
+- **Server-pushed prizes:** a prize not claimed within its 24 hours comes as Mail instead (planned: `docs/MAIL.md`); the page already shows only the next opening then.
 - **Score validation:** the client's score can be forged. Since generation and `resolveStep` are deterministic and engine-independent, and every entrant plays from the same seeds, the server could receive a run's starting loadout and steps and replay them with the same code (it runs in Node as is) to confirm the depth.
 - **Real server and ads.**
