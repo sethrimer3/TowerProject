@@ -92,7 +92,7 @@ export class ShopPage {
     const section = (id: CategoryId, offers: ShopOffer[], extra = "") => {
       const c = CATEGORIES[id], locked = unmet(save, c.requires);
       if (locked) return `<section class="shop-section locked"><h3>🔒 ${c.name}</h3><p class="hint">${requirementText(locked)}</p></section>`;
-      return offers.length ? `<section class="shop-section shop-${id} ${extra}"><h3>${c.name}</h3><div class="shop-grid">${offers.map((o) => this.card(o)).join("")}</div></section>` : "";
+      return offers.length ? `<section class="shop-section shop-${id} ${extra}"><h3>${c.name}</h3><div class="shop-grid">${offers.map((o) => this.card(o)).join("")}</div>${c.note ? `<p class="shop-note">${c.note}</p>` : ""}</section>` : "";
     };
     const of = (id: CategoryId) => OFFERS.filter((o) => o.category === id);
     const ownedOffers = OFFERS.filter(owned);

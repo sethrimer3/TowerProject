@@ -22,10 +22,11 @@ export type Price =
 export type Requirement = { kind: "tier"; mode: Mode; tier: number };
 
 export type CategoryId = "limited" | "special" | "gems" | "passes";
-export type Category = { name: string; requires?: Requirement[] };
+/** A category: its heading, what opens it, and a line under its offers. */
+export type Category = { name: string; requires?: Requirement[]; note?: string };
 export const CATEGORIES: Record<CategoryId, Category> = {
   limited: { name: "Limited Offers" },
-  special: { name: "One-Time Offers" },
+  special: { name: "One-Time Offers", note: "All coin bonuses are multiplicative and apply forever." },
   gems: { name: "Gems" },
   // Sold from the Goals screen, not the Shop page.
   passes: { name: "Premium Passes" },
@@ -90,7 +91,7 @@ export const OFFERS: readonly ShopOffer[] = [
   {
     id: "coins3", name: "Premium Coin Pack", category: "special", item: { kind: "entitlement", id: "coins3", amounts: { gems: 750 } }, quantity: 1,
     price: { kind: "money", sku: "coins_x3", label: "$29.95" }, rarity: "legendary", purchaseLimit: 1,
-    effects: ["×3 training speed forever", "Stacks with ×2"], tags: ["oneTime"],
+    effects: ["×3 training speed forever"], tags: ["oneTime"],
   },
   {
     id: "dailyGems", name: "Daily Free Gems", category: "gems", item: { kind: "currency", currency: "gems", amount: 25 }, quantity: 1,

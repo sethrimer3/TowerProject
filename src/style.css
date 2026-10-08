@@ -3260,6 +3260,7 @@ dialog .shop-rewards { justify-content: center; margin: 4px 0 10px; }
 .shop-why { font-size: 10px; color: #ff9a6a; text-align: center; }
 .shop-owned .shop-card { opacity: 0.75; }
 .shop-section.locked h3 { color: var(--muted); }
+.shop-note { margin-top: 8px; font-size: 11px; color: #99a8bd; text-align: center; }
 .shop-guaranteed b { color: #ecd19d; }
 .shop-history { margin-top: 10px; font-size: 11px; color: var(--muted); }
 .shop-history ul { padding-left: 18px; line-height: 1.7; }
