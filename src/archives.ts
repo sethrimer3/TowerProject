@@ -145,10 +145,23 @@ const countLevels = (target: ResearchTarget, length = 9, value = 1) => Array.fro
  * m² / 100 hours and costs 100 × m + m³ Gold, a linear start that grows
  * quadratic in time and cubic in Gold (docs/RESEARCH_CURVES.md): 15.6 min
  * and 101 Gold at level 5, about 4.8 days and 894,000 Gold at 100; about
- * 174 days and 22.2 million Gold in all. */
+ * 174 days and 22.2 million Gold in all.
+ *
+ * With `steep`, the Gold gains a quadratic term whose coefficient falls by
+ * level, q(m) = Q × B / (m + B), rounded to whole Gold: much dearer early
+ * and mid levels, the late ones less so. Gold / Floor, Silver / Floor,
+ * Silver Bonus and Gold / Kill take `STEEP_INCOME` (Q 200, B 100: 7,608
+ * Gold at level 10, 1.83 million at 100, 57.4 million in all), Key
+ * Efficiency `STEEP_KEYS` (Q 400, B 50: 13,673 at 10, 2.16 million at 100,
+ * 72.5 million in all). Their time is unchanged. */
 const POTION_HP_START: [gold: number, seconds: number][] = [[10, 15], [25, 60], [50, 300], [75, 600]];
-const hundredLevels = (target: ResearchTarget, value: number) => Array.from({ length: 100 }, (_, i): ResearchLevel => {
-  const m = i + 1 - POTION_HP_START.length, [gold, seconds] = POTION_HP_START[i] ?? [100 * m + m * m * m, 900 * m + 36 * m * m];
+type Steep = { q: number; bend: number };
+const STEEP_INCOME: Steep = { q: 200, bend: 100 };
+const STEEP_KEYS: Steep = { q: 400, bend: 50 };
+const hundredLevels = (target: ResearchTarget, value: number, steep?: Steep) => Array.from({ length: 100 }, (_, i): ResearchLevel => {
+  const m = i + 1 - POTION_HP_START.length;
+  const quadratic = steep ? Math.round((steep.q * steep.bend * m * m) / (m + steep.bend)) : 0;
+  const [gold, seconds] = POTION_HP_START[i] ?? [100 * m + quadratic + m * m * m, 900 * m + 36 * m * m];
   return { gold, hours: seconds / 3600, effect: { target, op: "add", value } };
 });
 
@@ -329,28 +342,28 @@ export const RESEARCH = {
     description: "Count the coins in the cracks: every new floor of a run pays more Gold.",
     categories: ["economy"],
     requires: [{ upgrade: "spareChange" }],
-    levels: hundredLevels("floorGold", 5),
+    levels: hundredLevels("floorGold", 5, STEEP_INCOME),
   },
   floorSilver: {
     name: "Silver / Floor",
     description: "Toss a coin in the well: every new floor of a run pays more Silver.",
     categories: ["economy"],
     requires: [{ upgrade: "wishingWell" }],
-    levels: hundredLevels("floorSilver", 5),
+    levels: hundredLevels("floorSilver", 5, STEEP_INCOME),
   },
   silverBonus: {
     name: "Silver Bonus",
     description: "Learn the moneychangers' tricks: all Silver found in a run is worth more.",
     categories: ["economy"],
     requires: [{ upgrade: "wealthy" }],
-    levels: hundredLevels("silverBonus", 3),
+    levels: hundredLevels("silverBonus", 3, STEEP_INCOME),
   },
   killGold: {
     name: "Gold / Kill",
     description: "Search the fallen more thoroughly: every kill pays more Gold.",
     categories: ["economy"],
     requires: [{ upgrade: "loot" }],
-    levels: hundredLevels("killGold", 3),
+    levels: hundredLevels("killGold", 3, STEEP_INCOME),
   },
   heartDoorResilience: {
     name: "Heart Door Resilience",
@@ -378,7 +391,7 @@ export const RESEARCH = {
     description: "Work the locks gently: every door takes less of each key.",
     categories: ["economy"],
     requires: [{ upgrade: "keyEfficiency" }],
-    levels: hundredLevels("keyCost", -5),
+    levels: hundredLevels("keyCost", -5, STEEP_KEYS),
   },
   interest: {
     name: "Interest %",
