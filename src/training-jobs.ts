@@ -1,4 +1,4 @@
-import type { TrainingId } from "./config.ts";
+import { TRAINER_GOLD_CURVES, type TrainingId } from "./config.ts";
 
 // A Training rank is bought one of two ways: with training points, which
 // count at once, or with Gold paid to a trainer, which takes time on the
@@ -48,12 +48,12 @@ export const trainingSeconds = (ranks: number) =>
  * at `speed` (Faster Trainers: 0.02 a level). */
 export const trainingMs = (ranks: number, speed: number) => Math.round((trainingSeconds(ranks) * 1000) / (1 + speed));
 /** The Gold a trainer asks for the next rank of `row`, with `ranks`
- * ranks: `TRAINING_GOLD_PER_POINT` a point of its cost times the rank's
- * number, and for a row with `trainerGrowth` times 1 + ranks /
- * `trainerGrowth` too (Potion %: 20, 44, 72, 104 …). */
-export const trainingGold = (row: { cost: number; trainerGrowth?: number }, ranks: number) => {
-  const gold = TRAINING_GOLD_PER_POINT * row.cost * (ranks + 1);
-  return row.trainerGrowth ? (gold * (row.trainerGrowth + ranks)) / row.trainerGrowth : gold;
+ * ranks, on the row's curve (`TRAINER_GOLD_CURVES`):
+ * `TRAINING_GOLD_PER_POINT` a point of its cost times the rank's number,
+ * times 1 + ranks / `growth`, rounded up. */
+export const trainingGold = (row: { id: TrainingId; cost: number }, ranks: number) => {
+  const { growth } = TRAINER_GOLD_CURVES[row.id];
+  return Math.ceil((TRAINING_GOLD_PER_POINT * row.cost * (ranks + 1) * (growth + ranks)) / growth);
 };
 
 /** How many stats can be in training at once: the first slot, and one for

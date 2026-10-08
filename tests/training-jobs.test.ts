@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { defaults, decode } from "../src/save.ts";
-import { TRAINING, xpForLevel } from "../src/config.ts";
+import { RUN_TRAINING_PRICES, TRAINER_GOLD_CURVES, TRAINING, xpForLevel } from "../src/config.ts";
 import { loadout, trainingPoints, trainingStep } from "../src/loadout.ts";
 import { BOOST_MAX_MS, claimBoost, doneAt, finishGems, trainingGold, trainingMs, trainingSeconds, workLeft } from "../src/training-jobs.ts";
 import { RESEARCH } from "../src/archives.ts";
@@ -24,12 +24,21 @@ test("a stat's first ranks are quick, then each takes a quarter hour more", () =
   assert.deepEqual([0, 1, 2, 3, 4, 5, 6, 99].map(trainingSeconds), [15, 60, 300, 600, 900, 1800, 2700, 86400]);
 });
 
-test("a trainer's Gold: 20 a point, times the rank's number", () => {
-  assert.deepEqual([trainingGold({ cost: 1 }, 0), trainingGold({ cost: 1 }, 9), trainingGold({ cost: 3 }, 0), trainingGold({ cost: 2 }, 4)], [20, 200, 60, 200]);
-  const potion = TRAINING.find((t) => t.id === "potion")!;
-  assert.deepEqual([0, 1, 2, 3, 4, 9].map((r) => trainingGold(potion, r)), [20, 44, 72, 104, 140, 380], "Potion %'s trainers rise faster");
-  const others = TRAINING.filter((t) => t.id !== "potion");
-  assert.deepEqual(others.map((t) => trainingGold(t, 9)), others.map(() => 200), "every other row keeps 20 a rank number");
+test("a trainer's Gold: 20 a point, times the rank's number, times 1 + ranks / the row's growth", () => {
+  const at = (id: (typeof TRAINING)[number]["id"], ranks: number[], cost = 1) => ranks.map((r) => trainingGold({ id, cost }, r));
+  assert.deepEqual(at("potion", [0, 1, 2, 3, 4, 9]), [20, 44, 72, 104, 140, 380], "20 Silver rows: growth 10");
+  assert.deepEqual(at("shroud", [0, 1, 2, 3, 9]), [20, 42, 66, 92, 290], "10 Silver rows: growth 20");
+  assert.deepEqual(at("attack", [0, 1, 2, 3, 9]), [20, 41, 63, 86, 245], "5 Silver rows: growth 40");
+  assert.deepEqual(at("hp", [0, 1, 2, 3, 9]), [20, 41, 62, 84, 230], "Max HP, 3 Silver: growth 60");
+  assert.deepEqual(at("attack", [0], 3), [60], "times the row's point cost");
+  // The dearer a row's first Silver rank, the steeper its trainers, and rows
+  // that start alike in Silver share a trainer curve.
+  const silverBase = (id: keyof typeof RUN_TRAINING_PRICES) => RUN_TRAINING_PRICES[id].base;
+  for (const a of TRAINING) for (const b of TRAINING) {
+    const [ga, gb] = [TRAINER_GOLD_CURVES[a.id].growth, TRAINER_GOLD_CURVES[b.id].growth];
+    if (silverBase(a.id) < silverBase(b.id)) assert.ok(ga > gb, `${a.id} softer than ${b.id}`);
+    if (silverBase(a.id) === silverBase(b.id)) assert.equal(ga, gb, `${a.id} and ${b.id} alike`);
+  }
   const { g } = game();
   assert.equal(trainingStep(g.save, "attack").gold, 20, "ATK costs 1 point a rank");
 });
@@ -59,10 +68,10 @@ test("points and trainers keep separate schedules: points never make a trainer d
   wait(15);
   g.training.settle();
   assert.deepEqual([g.save.training.attack, g.save.trainerRanks.attack], [6, 1]);
-  assert.equal(trainingStep(g.save, "attack").gold, 40, "the trainer's second rank");
+  assert.equal(trainingStep(g.save, "attack").gold, 41, "the trainer's second rank");
   assert.equal(g.training.toNextRank("attack"), 60_000);
   assert.ok(g.training.train("attack"));
-  assert.equal(trainingStep(g.save, "attack").gold, 40, "points left the trainer's schedule alone");
+  assert.equal(trainingStep(g.save, "attack").gold, 41, "points left the trainer's schedule alone");
   assert.deepEqual(decode(JSON.stringify(g.save)).trainerRanks, g.save.trainerRanks, "saved");
   g.save.gems = 2;
   assert.ok(g.training.reset("attack"));
@@ -257,7 +266,8 @@ test("auto-continue starts the next rank the moment one is done, while the Gold 
   const { g, wait } = game();
   g.training.setAutoContinue("attack", true);
   assert.ok(g.training.autoContinues("attack"));
-  g.save.gold = trainingGold({ cost: 1 }, 0) + trainingGold({ cost: 1 }, 1) + trainingGold({ cost: 1 }, 2) - 1;
+  const atk = TRAINING.find((t) => t.id === "attack")!;
+  g.save.gold = trainingGold(atk, 0) + trainingGold(atk, 1) + trainingGold(atk, 2) - 1;
   assert.ok(g.training.trainWithGold("attack"));
   wait(15);
   assert.equal(g.training.settle(), 1);
@@ -265,7 +275,7 @@ test("auto-continue starts the next rank the moment one is done, while the Gold 
   const [job] = g.save.trainingJobs;
   assert.equal(job.id, "attack", "the next rank started");
   assert.equal(job.startedAt, g.clock());
-  assert.equal(g.save.gold, trainingGold({ cost: 1 }, 2) - 1, "and was paid for");
+  assert.equal(g.save.gold, trainingGold(atk, 2) - 1, "and was paid for");
   // Ranks the clock passed while the game was closed count in turn, each
   // starting when the last was done; the third can't be paid for.
   wait(3600);
