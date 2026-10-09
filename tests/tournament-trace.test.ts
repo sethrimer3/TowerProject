@@ -79,7 +79,7 @@ const LEAGUES_TRACED: League[] = ["copper", "silver", "champion"];
 test("seeded tournament runs match the recorded trace", () => {
   const actual = Object.fromEntries(LEAGUES_TRACED.map((l) => [l, trace(l, 1)]));
   if (process.env.UPDATE_GOLDEN || !existsSync(GOLDEN)) {
-    writeFileSync(GOLDEN, JSON.stringify(actual) + "\n");
+    writeFileSync(GOLDEN, JSON.stringify(actual, null, 1) + "\n");
     return;
   }
   const expected = JSON.parse(readFileSync(GOLDEN, "utf8"));

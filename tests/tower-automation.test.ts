@@ -118,7 +118,7 @@ const SCENARIOS: [Mode, number, boolean][] = [
 test("Tower automation's steps and deadlock calls match the recorded trace", () => {
   const actual = Object.fromEntries(SCENARIOS.map(([m, s, o]) => [`${m}:${s}${o ? ":outside" : ""}`, trace(m, s, o)]));
   if (process.env.UPDATE_GOLDEN || !existsSync(GOLDEN)) {
-    writeFileSync(GOLDEN, JSON.stringify(actual) + "\n");
+    writeFileSync(GOLDEN, JSON.stringify(actual, null, 1) + "\n");
     return;
   }
   const expected = JSON.parse(readFileSync(GOLDEN, "utf8"));

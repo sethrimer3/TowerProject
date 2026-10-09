@@ -173,7 +173,7 @@ const SCENARIOS: [Mode, number][] = [
 test("undo, revive, reloads and room clears match the recorded trace", () => {
   const actual = Object.fromEntries(SCENARIOS.map(([m, s]) => [`${m}:${s}`, trace(m, s)]));
   if (process.env.UPDATE_GOLDEN || !existsSync(GOLDEN)) {
-    writeFileSync(GOLDEN, JSON.stringify(actual) + "\n");
+    writeFileSync(GOLDEN, JSON.stringify(actual, null, 1) + "\n");
     return;
   }
   const expected = JSON.parse(readFileSync(GOLDEN, "utf8"));

@@ -118,7 +118,7 @@ const SCENARIOS: [Mode, number, boolean][] = [
 test("stepping, previews and Automove match the recorded trace", () => {
   const actual = Object.fromEntries(SCENARIOS.map(([m, s, ai]) => [`${m}:${s}:${ai ? "smart" : "basic"}`, trace(m, s, ai)]));
   if (process.env.UPDATE_GOLDEN || !existsSync(GOLDEN)) {
-    writeFileSync(GOLDEN, JSON.stringify(actual) + "\n");
+    writeFileSync(GOLDEN, JSON.stringify(actual, null, 1) + "\n");
     return;
   }
   const expected = JSON.parse(readFileSync(GOLDEN, "utf8"));
