@@ -3584,7 +3584,8 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
 .badge-reveal-more { display: inline-flex; align-items: center; gap: 6px; min-height: 0; padding: 7px 16px; font-size: 13px; letter-spacing: 2px; border: 1px solid #5fc4ee; background: radial-gradient(circle at 50% 40%, #1d4a63, #0d1f2b 75%); color: #bff2ff; }
 .badge-reveal-more b { color: #fff; font-weight: 500; }
 .badge-reveal-more .gem-icon { width: 16px; height: 16px; }
-.badge-reveal-more:disabled { opacity: 0.45; filter: grayscale(1); cursor: default; }
+.badge-reveal-more.short { border-color: #4a6572; background: radial-gradient(circle at 50% 40%, #1a2a33, #0d1519 75%); color: #8fa6b0; }
+.badge-reveal-more.short b { color: #ffb0a4; }
 .badge-reveal-summary { display: flex; flex-direction: column; align-items: center; gap: 16px; }
 .badge-reveal-kicker { font-size: 11px; letter-spacing: 3px; color: #e9d4ac; }
 .badge-sum-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 22px 12px; max-width: 420px; }

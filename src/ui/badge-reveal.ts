@@ -54,19 +54,19 @@ export function revealDraws(draws: readonly BadgeDraw[], reduceMotion: boolean, 
     layer.prepend(againEl());
     focusContinue();
   };
-  /** The "x1 more" button: nothing without an offer; greyed out while the Gems held fall short. */
+  /** The "x1 more" button: nothing without an offer; its price turns red (`short`) while the Gems held fall short, and pressing it then asks for Gems. */
   const againEl = () => {
     const holder = document.createElement("div");
     if (!again) return holder;
     holder.className = "badge-reveal-again";
-    holder.innerHTML = `<button type="button" class="badge-reveal-more" ${again.affordable() ? "" : "disabled"} aria-label="Draw x${again.count} more for ${again.gems} Gems">x${again.count} more · ${gemIcon()} <b>${again.gems}</b></button>`;
+    holder.innerHTML = `<button type="button" class="badge-reveal-more${again.affordable() ? "" : " short"}" aria-label="Draw x${again.count} more for ${again.gems} Gems">x${again.count} more · ${gemIcon()} <b>${again.gems}</b></button>`;
     return holder;
   };
   const focusContinue = () => layer.querySelector<HTMLButtonElement>(".badge-reveal-go")?.focus({ preventScroll: true });
   layer.onclick = (e) => {
     const target = e.target as HTMLElement;
     if (target.closest(".badge-reveal-more")) {
-      if (!again || !again.affordable()) return;
+      if (!again) return;
       close();
       return again.buy();
     }

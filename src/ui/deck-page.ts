@@ -536,7 +536,7 @@ export class DeckPage {
     this.ctx.save();
     this.ctx.update();
     this.render();
-    // The same purchase once more, from the last screen.
+    // The same purchase once more, from the last screen (which asks for Gems when short).
     const again = { count, gems: DRAW_GEMS[count], affordable: () => game.free || game.save.gems >= DRAW_GEMS[count], buy: () => this.draw(count) };
     revealDraws(draws, game.save.settings.reduceMotion, (id) => game.save.badges.owned[id]?.pick ?? 0, again);
   }
