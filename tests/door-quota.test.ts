@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { QUOTA_DOORS, towerDoorFirstFloor, towerDoorRate, type QuotaDoor } from "../src/key-schedule.ts";
+import { QUOTA_DOORS, doorKeys, towerDoorFirstFloor, towerDoorRate, type QuotaDoor } from "../src/key-schedule.ts";
 import { rollQuota } from "../src/tower/door-quota.ts";
 import { generateTowerFloor } from "../src/tower/index.ts";
 import { generateStrategicGraph } from "../src/tower/strategic-graph.ts";
@@ -16,17 +16,18 @@ test("each quota door's first floor comes earlier each tower", () => {
   assert.deepEqual([1, 5, 9].map((t) => towerDoorFirstFloor("heart", t)), [201, 161, 121]);
 });
 
-test("quota doors grow a hundredth a floor every ten floors: blue and red to floor 1,000, hearts to one a floor", () => {
+test("each quota door starts at a tenth a floor; blue grows a hundredth every five floors and red every ten to floor 1,000, hearts every ten to one a floor", () => {
   // In QUOTA_DOORS order: red, blue, heart (docs/DOOR_AND_KEY_SCHEDULE.md's table).
   assert.deepEqual(rates(1, 50), [0, 0, 0]);
-  assert.deepEqual(rates(1, 51), [0, 0.01, 0]);
-  assert.deepEqual(rates(1, 101), [0.01, 0.06, 0]);
-  assert.deepEqual(rates(1, 201), [0.11, 0.16, 0.01]);
-  assert.deepEqual(rates(1, 1000), [0.9, 0.95, 0.8]);
-  assert.deepEqual(rates(1, 5000), [0.9, 0.95, 1], "blue and red stop at floor 1,000; hearts at one a floor");
-  assert.deepEqual(rates(1, 1191), [0.9, 0.95, 1]);
-  assert.deepEqual(rates(5, 501), [0.45, 0.48, 0.35]);
-  assert.deepEqual(rates(9, 1000), [0.98, 0.99, 0.88]);
+  assert.deepEqual(rates(1, 51), [0, 0.1, 0]);
+  assert.deepEqual(rates(1, 101), [0.1, 0.2, 0]);
+  assert.deepEqual(rates(1, 201), [0.2, 0.4, 0.1]);
+  assert.deepEqual(rates(1, 501), [0.5, 1, 0.4]);
+  assert.deepEqual(rates(1, 1000), [0.99, 1.99, 0.89]);
+  assert.deepEqual(rates(1, 5000), [0.99, 1.99, 1], "blue and red stop at floor 1,000; hearts at one a floor");
+  assert.deepEqual(rates(1, 1100), [0.99, 1.99, 0.99]);
+  assert.deepEqual(rates(1, 1101), [0.99, 1.99, 1]);
+  assert.deepEqual(rates(9, 1000), [1.07, 2.07, 0.97]);
 });
 
 test("a quota is the rate's whole doors, and one more with the rest as its chance", () => {
@@ -61,6 +62,6 @@ test("in the first tower the stage keeps blue and red doors off the way to the s
   for (let seed = 1; seed <= 30; seed++) {
     const graph = generateStrategicGraph(seed * 7919, 900, 0, 1);
     for (const n of graph.nodes)
-      if (n.route === "main" && !n.forks) assert.ok(n.gate.kind !== "door" || n.gate.color === "yellow", `seed ${seed}: ${n.id}`);
+      if (n.route === "main" && !n.forks) assert.ok(n.gate.kind !== "door" || doorKeys(n.gate).every((c) => c === "yellow"), `seed ${seed}: ${n.id}`);
   }
 });

@@ -25,6 +25,9 @@ export const YELLOW_ONLY: KeyColors = { yellow: true, blue: false, red: false };
  * first tower a hero meeting them may not have the key yet; from the
  * second on, upgrades carry it past such a bottleneck. */
 export const bypassesRareKeys = (tier: number) => tier <= 1;
+/** Every key colour a door gate takes: its `color`, and on a combined door
+ * each colour in `also`. */
+export const doorKeys = (g: { color: KeyColor; also?: KeyColor[] }): KeyColor[] => [g.color, ...(g.also ?? [])];
 /** Whether `thing` (a gate, reward, pattern step or fork, however deeply
  * nested) holds no key or door of a closed colour. A potion's colour names
  * its kind, not a key, so only keys and doors count. */
@@ -33,6 +36,7 @@ export function onlyOpenKeys(thing: unknown, colors: KeyColors): boolean {
   if (!thing || typeof thing !== "object") return true;
   const o = thing as Record<string, unknown>;
   if ((o.kind === "key" || o.kind === "door") && typeof o.color === "string" && !colors[o.color as KeyColor]) return false;
+  if (o.kind === "door" && Array.isArray(o.also) && o.also.some((c) => !colors[c as KeyColor])) return false;
   return Object.values(o).every((v) => onlyOpenKeys(v, colors));
 }
 
@@ -63,11 +67,14 @@ export const TOWER_DOOR_SCHEDULE = {
   /** The first floor (counting from 1) in tower 1, and how many floors
    * earlier it comes in each later tower. */
   first: { blue: [51, 5], red: [101, 10], heart: [201, 10] } as Record<QuotaDoor, readonly [floor: number, earlierEachTower: number]>,
-  /** Doors per floor, in hundredths: this many on the first floor, and this
-   * many more every `everyFloors` floors after. */
-  startHundredths: 1,
-  stepHundredths: 1,
-  everyFloors: 10,
+  /** Doors per floor, in hundredths: `start` on the first floor, and `step`
+   * more every `every` floors after. Blue grows twice as fast as red, so red
+   * stays the rarer key and door. */
+  growth: {
+    blue: { start: 10, step: 1, every: 5 },
+    red: { start: 10, step: 1, every: 10 },
+    heart: { start: 10, step: 1, every: 10 },
+  } as Record<QuotaDoor, { start: number; step: number; every: number }>,
   /** Blue and red doors stop growing at this floor; Heart Doors at
    * `heartMaxHundredths` a floor, however high. */
   colorsGrowUntil: 1000,
@@ -88,7 +95,8 @@ export function towerDoorHundredths(door: QuotaDoor, depth: number, tower: numbe
   let floor = depth + 1;
   if (floor < first) return 0;
   if (door !== "heart") floor = Math.min(floor, s.colorsGrowUntil);
-  const h = s.startHundredths + s.stepHundredths * Math.floor((floor - first) / s.everyFloors);
+  const g = s.growth[door];
+  const h = g.start + g.step * Math.floor((floor - first) / g.every);
   return door === "heart" ? Math.min(h, s.heartMaxHundredths) : h;
 }
 
@@ -110,7 +118,7 @@ export function withoutQuotaDoors(thing: unknown): boolean {
   if (Array.isArray(thing)) return thing.every(withoutQuotaDoors);
   if (!thing || typeof thing !== "object") return true;
   const o = thing as Record<string, unknown>;
-  if (o.kind === "heart" || (o.kind === "door" && o.color !== "yellow")) return false;
+  if (o.kind === "heart" || (o.kind === "door" && doorKeys(o as { color: KeyColor; also?: KeyColor[] }).some((c) => c !== "yellow"))) return false;
   return Object.values(o).every(withoutQuotaDoors);
 }
 
@@ -120,8 +128,9 @@ export function quotaDoorsIn(thing: unknown, out: Record<QuotaDoor, number> = { 
   else if (thing && typeof thing === "object") {
     const o = thing as Record<string, unknown>;
     if (o.kind === "heart") out.heart++;
-    else if (o.kind === "door" && (o.color === "blue" || o.color === "red")) out[o.color]++;
-    else for (const v of Object.values(o)) quotaDoorsIn(v, out);
+    else if (o.kind === "door") {
+      for (const c of doorKeys(o as { color: KeyColor; also?: KeyColor[] })) if (c === "blue" || c === "red") out[c]++;
+    } else for (const v of Object.values(o)) quotaDoorsIn(v, out);
   }
   return out;
 }

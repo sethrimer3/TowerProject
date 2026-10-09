@@ -1,5 +1,6 @@
 import { TOWER_HEIGHT, TOWER_START_X, TOWER_WIDTH, type KeyColor } from "../config.ts";
 import { doorCost } from "../doors.ts";
+import { doorKeys } from "../key-schedule.ts";
 import { point, type Tile } from "../entities.ts";
 import type { Embedding } from "./embedder.ts";
 import type { Gate, LaneStep, Reward, StrategicNode } from "./types.ts";
@@ -39,7 +40,7 @@ function gateLabel(g: Gate): string {
   if (g.kind === "open" || g.kind === "potion") return g.kind;
   if (g.kind === "enemy" && g.profile) return `${g.strength} ${g.profile} enemy`;
   if (g.kind === "enemy") return `${g.strength} enemy`;
-  if (g.kind === "door") return `${g.color} door`;
+  if (g.kind === "door") return `${doorKeys(g).join(" + ")} door`;
   return `${g.kind} door`;
 }
 
@@ -187,7 +188,7 @@ export function analyzeFloor(emb: Embedding): FloorAnalysis {
 /** Doors on the floor by kind: heart, steel, or their key colour. */
 function doorCounts(cells: Map<string, Tile>) {
   const doors: Record<string, number> = {};
-  for (const [, t] of cells) if (t.kind === "door") tally(doors, specialLock(t) ?? t.color ?? "yellow");
+  for (const [, t] of cells) if (t.kind === "door") tally(doors, specialLock(t) ?? (t.door?.type === "keys" ? t.door.keys.join(" + ") : t.color ?? "yellow"));
   return doors;
 }
 

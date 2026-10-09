@@ -1,5 +1,6 @@
 import type { KeyColor } from "../config.ts";
 import { forkKeyDemand } from "./forks.ts";
+import { doorKeys } from "../key-schedule.ts";
 import { keyedFloor, pick, type Weighted } from "./patterns.ts";
 import type { GraphBuilder } from "./strategic-graph.ts";
 import type { Gate, Reward, StrategicGraph, StrategicNode, Strength } from "./types.ts";
@@ -70,7 +71,7 @@ function keysIn(node: StrategicNode, color: KeyColor): number {
  * a lane that needs no key demands none. */
 function lockColors(n: StrategicNode): KeyColor[] {
   if (n.forks?.length) return forkKeyDemand(n.forks[0]);
-  return n.gate.kind === "door" ? [n.gate.color] : n.gate.kind === "steel" ? ["yellow"] : [];
+  return n.gate.kind === "door" ? doorKeys(n.gate) : n.gate.kind === "steel" ? ["yellow"] : [];
 }
 
 function ancestors(nodes: StrategicNode[], id: number): number[] {
@@ -160,7 +161,7 @@ function supply(nodes: StrategicNode[], door: Door) {
 const lockedBy = (nodes: StrategicNode[], door: Door) =>
   door.lockedNode === null ? new Set<number>() : subtreeOf(nodes, door.lockedNode);
 const lockedWith = (n: StrategicNode, color: KeyColor) =>
-  n.forks?.length ? lockColors(n).includes(color) : n.gate.kind === "door" && n.gate.color === color;
+  n.forks?.length ? lockColors(n).includes(color) : n.gate.kind === "door" && doorKeys(n.gate).includes(color);
 
 function sweeten(node: StrategicNode, rng: () => number) {
   node.rewards.push(rng() < 0.5 ? { kind: "treasure" } : rng() < 0.5 ? { kind: "attack" } : { kind: "defense" });

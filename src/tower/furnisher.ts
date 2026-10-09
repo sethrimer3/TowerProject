@@ -1,4 +1,5 @@
 import { point, type Tile } from "../entities.ts";
+import { doorKeys } from "../key-schedule.ts";
 import { getTowerGateEnemy, strengthOnFloor, type TowerEnemyProfile } from "../scaling.ts";
 import type { Gate, LaneStep, Reward, StrategicNode, Strength } from "./types.ts";
 import { centre, DIRS, inRect, type Rect, type XY } from "./grid.ts";
@@ -49,7 +50,7 @@ export function gateTile(gate: Gate, depth: number, rng: () => number, tower = 1
   switch (gate.kind) {
     case "open": return { kind: "floor" };
     case "enemy": return enemyTile(gate.strength, depth, rng, gate.profile, tower);
-    case "door": return { kind: "door", color: gate.color, door: { type: "keys", keys: [gate.color], mode: "all" } };
+    case "door": return { kind: "door", color: gate.color, door: { type: "keys", keys: doorKeys(gate), mode: "all" } };
     case "steel": return { kind: "door", door: { type: "keys", keys: ["yellow", "blue", "red"], mode: "any" } };
     case "heart": return { kind: "door", door: { type: "fullHp" } };
     case "potion": return rewardTile({ kind: "potion" }, rng);

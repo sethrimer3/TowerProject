@@ -1,4 +1,4 @@
-import { QUOTA_DOORS, quotaDoorsIn, towerDoorHundredths, withoutQuotaDoors, type QuotaDoor } from "../key-schedule.ts";
+import { QUOTA_DOORS, doorKeys, quotaDoorsIn, towerDoorHundredths, withoutQuotaDoors, type QuotaDoor } from "../key-schedule.ts";
 import { forkFits, forksWorth, mayFork, stepValue } from "./forks.ts";
 import { TOWER_PATTERNS, patternWeight, pick, type TowerPattern, type Weighted } from "./patterns.ts";
 import { MAX_REGIONS } from "./resource-planner.ts";
@@ -7,11 +7,13 @@ import type { Archetype, Fork, Gate, StrategicGraph, StrategicNode } from "./typ
 
 /** The door stage (docs/DOOR_AND_KEY_SCHEDULE.md): each floor rolls how many
  * blue, red and Heart Doors it holds from the schedule (`towerDoorHundredths`)
- * and places each one by one of three ways, chosen at random among those
+ * and places each one by one of four ways, chosen at random among those
  * that fit:
  *
  *   upgrade   an existing gate: a yellow door turns blue or red, any paid
  *             gate a Heart Door;
+ *   combine   a door takes the colour as well: yellow becomes yellow + blue,
+ *             blue becomes blue + red …, one tile dearer than either;
  *   pattern   a branch pattern built round that door (blue door → yellow
  *             keys, key chain, temptation…);
  *   fork      a fork pattern holding it and no other quota door, in place
@@ -70,6 +72,7 @@ const routeAllows = (b: GraphBuilder, n: StrategicNode, door: QuotaDoor) => door
 function placeOne(b: GraphBuilder, door: QuotaDoor, archetype: Archetype, left: Tally): Tally | null {
   const ways = [
     () => upgrade(b, door),
+    () => combine(b, door),
     () => addPattern(b, door, archetype, left),
     () => addFork(b, door, archetype, left),
   ];
@@ -81,14 +84,29 @@ function placeOne(b: GraphBuilder, door: QuotaDoor, archetype: Archetype, left: 
   return null;
 }
 
+/** A plain yellow door: one key, no other colour. */
+const plainYellow = (g: Gate) => g.kind === "door" && g.color === "yellow" && !g.also?.length;
 /** A gate that costs something to cross, and holds no quota door yet. */
-const paidGate = (g: Gate) => g.kind === "enemy" || g.kind === "steel" || (g.kind === "door" && g.color === "yellow");
+const paidGate = (g: Gate) => g.kind === "enemy" || g.kind === "steel" || plainYellow(g);
 
 function upgrade(b: GraphBuilder, door: QuotaDoor): Tally | null {
   const options = b.nodes.filter((n) => n.parent !== null && !n.forks && routeAllows(b, n, door) &&
-    (door === "heart" ? paidGate(n.gate) : n.gate.kind === "door" && n.gate.color === "yellow"));
+    (door === "heart" ? paidGate(n.gate) : plainYellow(n.gate)));
   if (!options.length) return null;
   options[Math.floor(b.rng() * options.length)].gate = { ...DOOR[door] };
+  return quotaDoorsIn(DOOR[door]);
+}
+
+/** A door that doesn't take `door`'s colour yet takes it as well. A Heart
+ * Door with a colour waits for its own door rule. */
+function combine(b: GraphBuilder, door: QuotaDoor): Tally | null {
+  if (door === "heart") return null;
+  const options = b.nodes.filter((n) => n.parent !== null && !n.forks && routeAllows(b, n, door) &&
+    n.gate.kind === "door" && !doorKeys(n.gate).includes(door));
+  if (!options.length) return null;
+  const node = options[Math.floor(b.rng() * options.length)];
+  if (node.gate.kind !== "door") return null;
+  node.gate = { ...node.gate, also: [...(node.gate.also ?? []), door] };
   return quotaDoorsIn(DOOR[door]);
 }
 

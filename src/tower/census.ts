@@ -9,7 +9,8 @@ import type { LaneStep } from "./types.ts";
  * band of floors, for tuning the door and key schedule
  * (docs/DOOR_AND_KEY_SCHEDULE.md). `npm run tower:report -- --census`. */
 
-/** One floor's counts, keyed `door:<kind>`, `forked:<kind>` (the doors of
+/** One floor's counts, keyed `door:<kind>` (a combined door counting once
+ * for each colour it takes, and once as `door:combined`), `forked:<kind>` (the doors of
  * that kind standing in a built fork's lanes), `key:<colour>`,
  * `enemy:<strength>`, an item's kind, or `dropped:<door>` (quota doors the
  * door stage found no place for); the census adds `target:<door>`, the
@@ -18,11 +19,13 @@ export type Counts = Record<string, number>;
 
 const ITEMS = new Set(["potion", "attack", "defense", "treasure"]);
 
-/** A door tile's kind: its key colour, `steel` or `heart`. */
-function doorKind(t: Tile): string {
+/** A door tile's kinds: `steel`, `heart`, or each key colour it takes, and
+ * `combined` when it takes more than one. */
+function doorKinds(t: Tile): string[] {
   const rule = doorRule(t);
-  if (rule.type === "fullHp") return "heart";
-  return rule.mode === "any" ? "steel" : rule.keys.join("+");
+  if (rule.type === "fullHp") return ["heart"];
+  if (rule.mode === "any") return ["steel"];
+  return rule.keys.length > 1 ? [...rule.keys, "combined"] : rule.keys;
 }
 
 function laneDoorKind(s: LaneStep): string | null {
@@ -37,7 +40,7 @@ const add = (c: Counts, k: string, n = 1) => { c[k] = (c[k] ?? 0) + n; };
 export function floorCounts({ cells, embedding }: TowerFloor): Counts {
   const c: Counts = {};
   for (const t of cells.values()) {
-    if (t.kind === "door") add(c, `door:${doorKind(t)}`);
+    if (t.kind === "door") for (const kind of doorKinds(t)) add(c, `door:${kind}`);
     else if (t.kind === "key") add(c, `key:${t.color ?? "yellow"}`);
     else if (t.kind === "enemy") add(c, `enemy:${t.enemy?.strength ?? "normal"}`);
     else if (ITEMS.has(t.kind)) add(c, t.kind);
@@ -115,7 +118,7 @@ const count = (k: string): Column[1] => (c) => c[k] ?? 0;
 const alone = (kind: string): Column[1] => (c) => (c[`door:${kind}`] ?? 0) - (c[`forked:${kind}`] ?? 0);
 
 const DOOR_COLUMNS: Column[] = [
-  ["Y door", count("door:yellow")], ["steel", count("door:steel")], ["steel%", (c) => steelShare(c) * 100, 0],
+  ["Y door", count("door:yellow")], ["steel", count("door:steel")], ["steel%", (c) => steelShare(c) * 100, 0], ["combined", count("door:combined")],
   ["B want", count("target:blue")], ["B alone", alone("blue")], ["B fork", count("forked:blue")],
   ["R want", count("target:red")], ["R alone", alone("red")], ["R fork", count("forked:red")],
   ["H want", count("target:heart")], ["H alone", alone("heart")], ["H fork", count("forked:heart")],

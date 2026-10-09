@@ -1,4 +1,4 @@
-# Door and key schedule (spec, for approval)
+# Door and key schedule
 
 How often each kind of door, and the keys to open them, appear on a Tower floor, by tower and floor. The goal is one steady difficulty ramp: every floor a little harder than the one below, every tower a little harder than the one before, so the player needs to keep investing in progress upgrades (Key Efficiency, the Find Key research, Key Siphon, badges) to keep up.
 
@@ -11,17 +11,19 @@ Notation: `t` is the tower number (1–9), `f` the floor counted from 1, and `�
 | Door | First floor | How often | Limit |
 |---|---|---|---|
 | **Wooden** (replaces Steel) | 1 | Share of yellow locks made wooden: `100% − 10%·(t−1) − 1%·⌊(f−1)/10⌋`, never below 0 | Gone from floor 1001 in Tower I, 901 in II, … 201 in IX |
-| **Blue** | `51 − 5(t−1)`: 51 in Tower I … 11 in IX | Expected doors per floor: `0.01·(1 + ⌊(min(f, 1000) − first)/10⌋)` | Stops rising at floor 1000 |
-| **Red** | `101 − 10(t−1)`: 101 … 21 | The same formula | Stops rising at floor 1000 |
-| **Heart** | `201 − 10(t−1)`: 201 … 121 | `0.01·(1 + ⌊(f − first)/10⌋)` | Stops rising at 1 per floor (floor 1191 in Tower I, 1111 in IX) |
+| **Blue** | `51 − 5(t−1)`: 51 in Tower I … 11 in IX | Expected doors per floor: `0.10 + 0.01·⌊(min(f, 1000) − first)/5⌋` | Stops rising at floor 1000 (1.99 in Tower I) |
+| **Red** | `101 − 10(t−1)`: 101 … 21 | `0.10 + 0.01·⌊(min(f, 1000) − first)/10⌋`: half blue's growth, so red stays the rarer door and guards greater rewards | Stops rising at floor 1000 (0.99 in Tower I) |
+| **Heart** | `201 − 10(t−1)`: 201 … 121 | `0.10 + 0.01·⌊(f − first)/10⌋` | Stops rising at 1 per floor (floor 1101 in Tower I, 1021 in IX) |
 
 Example values:
 
 | | Floor 101 | Floor 201 | Floor 501 | Floor 1000 |
 |---|---|---|---|---|
-| Tower I: wooden / blue / red / heart | 90% / 0.06 / 0.01 / 0 | 80% / 0.16 / 0.11 / 0.01 | 50% / 0.46 / 0.41 / 0.31 | 1% / 0.95 / 0.90 / 0.80 |
-| Tower V | 50% / 0.08 / 0.05 / 0 | 40% / 0.18 / 0.15 / 0.05 | 10% / 0.48 / 0.45 / 0.35 | 0 / 0.97 / 0.94 / 0.84 |
-| Tower IX | 10% / 0.10 / 0.09 / 0 | 0 / 0.20 / 0.19 / 0.09 | 0 / 0.50 / 0.49 / 0.39 | 0 / 0.99 / 0.98 / 0.88 |
+| Tower I: wooden / blue / red / heart | 90% / 0.20 / 0.10 / 0 | 80% / 0.40 / 0.20 / 0.10 | 50% / 1.00 / 0.50 / 0.40 | 1% / 1.99 / 0.99 / 0.89 |
+| Tower V | 50% / 0.24 / 0.14 / 0 | 40% / 0.44 / 0.24 / 0.14 | 10% / 1.04 / 0.54 / 0.44 | 0 / 2.03 / 1.03 / 0.93 |
+| Tower IX | 10% / 0.28 / 0.18 / 0 | 0 / 0.48 / 0.28 / 0.18 | 0 / 1.08 / 0.58 / 0.48 | 0 / 2.07 / 1.07 / 0.97 |
+
+Starting at 0.10 a floor, about two times in three a colour's first ten floors hold at least one of its doors (1 − 0.9¹⁰). Once a rate reaches 1, every floor holds at least that many: blue from floor 501 in Tower I. Tower I's red tops out at 0.99, so about one floor in a hundred past floor 1000 has no red door.
 
 Key colours follow their doors: a blue or red key appears only from that colour's first floor (`keyColorsOn` takes the new first floors). A key of a colour not yet open still comes as a yellow key, as now.
 
@@ -48,7 +50,8 @@ Today blue, red and Heart Doors come from about six weighted tables (main gate, 
    The same goes for fork patterns with a blue, red or Heart lane: ordinary fork planning no longer picks them, and only the door stage places them (step 3c).
 2. **The stage rolls a quota per colour.** It runs after the branches, shortcuts and ordinary forks are planned, before the resource planner. For each of blue, red and heart it places the whole part of the rate, plus one more with the leftover fraction as a chance, drawn from the floor's own random stream. Generation stays the same for a seed in every engine.
 3. **Each quota door is placed by one of these, with a seeded choice among the ones that fit:**
-   - a. **Upgrade a gate:** an existing yellow-door gate becomes blue or red, or any paid gate becomes a Heart Door.
+   - a. **Upgrade a gate:** an existing plain yellow-door gate becomes blue or red, or any paid gate (an enemy, a steel door or a plain yellow door) becomes a Heart Door.
+   - a2. **Combine:** a door that doesn't take the colour yet takes it as well, in the same tile: yellow becomes *Amber + Azure* (yellow + blue), blue becomes *Azure + Crimson*, and so on up to the *Triune Door*. A combined door counts toward the quota of each colour it adds and costs every key it lists. The door rules, names and art already exist (`door_ab.png` … `door_abc.png`). A Heart Door with a colour (keys *and* the drain to 1 HP) needs a new door rule, so it comes with the wooden door's rule work in phase 3.
    - b. **Add a pattern** built around that door, if the region budget has room.
    - c. **Place a fork built around it.** A gate with no fork yet takes a fork pattern holding that door, priced near the gate it replaces like any fork:
      - *blueDoorOrStrongMonster*
@@ -88,6 +91,10 @@ A wooden door opens with any one key: the cheapest held, yellow before blue befo
 
 Possible later change (to decide after the census): `HP cost = max(0, durability − ATK)`, so a strong hero breaks it for free, with DEF still not helping.
 
+### Heart Door with a colour
+
+Also in phase 3: a door that takes its keys **and** drains the hero to 1 HP, as a Heart Door does (Heart Door Resilience applies to the drain). The door stage places it as a fifth way for the heart quota: an existing blue, red or combined door also takes the heart, counting toward the heart quota. The door rule gains a heart flag (`{ type: "keys", …, heart: true }`), `resolveStep` applies both costs, and the art draws the heart over the coloured door (a placeholder made from the existing sprites until there is real art).
+
 What changes in the code:
 - **Door rule** (`entities.ts`, `doors.ts`): a new `{ type: "wood"; durability: number }` replaces the steel rule (`keys: all three, mode: "any"`). `doorCost` returns the key, or none and the HP cost. `resolveStep` (`step-effects.ts`) applies it. Every other caller reads it from there.
 - **Planning** (`tower/types.ts`, furnisher, forks, analyzer): the gate `steel` becomes `wood`. The analyzer's map shows `W`.
@@ -114,15 +121,46 @@ What helps the player keep up:
 
 ## 5. Census tool
 
-`npm run tower:report -- --census [--towers 1,2,9] [--floors 1-1200] [--seeds 60]` prints, by tower and by band of floors:
-- doors per floor by kind;
-- keys per floor by colour;
-- keys per lock, by colour and overall;
-- the share of wooden doors;
-- blue, red and Heart Doors split into those in a fork and those standing alone;
-- quota doors dropped (section 2, step 3).
+The census measures what Tower floors actually hold, averaged over many seeds, by tower and band of floors. Use it to check a schedule change, see a change's side effects (fewer yellow doors, more keys asked for), and tune numbers before and after a phase. The code is `src/tower/census.ts`, run from `tools/tower-report.ts`.
 
-Each schedule's number is printed beside what was measured, so a mismatch shows. A test checks the census on a small sample against the formulas in section 1, within a tolerance.
+```sh
+npm run tower:report -- --census                                   # Tower I, floors 1-200 in bands of 10, 20 seeds
+npm run tower:report -- --census --towers 1,5,9 --floors 1-1200 --band 100 --seeds 8 --stride 3   # a quick wide look (~1 minute)
+npm run tower:report -- --census --towers 1,2,5,9 --floors 1-1200 --band 100 --seeds 20          # a full baseline (~6 minutes)
+```
+
+| Option | Default | Meaning |
+|---|---|---|
+| `--towers` | `1` | Towers to measure, comma separated |
+| `--floors` | `1-200` | Floors counted from 1, inclusive |
+| `--band` | `10` | Floors per printed row |
+| `--seeds` | `20` | Run seeds per floor (the report's usual seeds, `censusSeed`) |
+| `--stride` | `1` | Measure every Nth floor of the range. Pick an odd stride, so a band's boss floors (10, 20 …) are measured too |
+
+Every figure is an average per floor over the band's floors and seeds. Two tables are printed per tower.
+
+**Doors and keys:**
+
+| Column | Meaning |
+|---|---|
+| Y door | Doors taking a yellow key (combined ones too) |
+| steel, steel% | Steel doors, and their share of yellow locks (`steel ÷ (Y door + steel)`): the wooden share once phase 3 lands |
+| combined | Doors taking more than one colour. Each also counts in the column of every colour it takes |
+| B / R / H want | The schedule's rate for that door on those floors (section 1) |
+| B / R / H alone | That door standing on its own, not in a fork lane |
+| B / R / H fork | That door in a fork lane the floor built |
+| dropped | Quota doors the door stage found no place for, all kinds together. *want ≈ alone + fork + dropped*; a gap there means doors are lost after placement (a bug) |
+| Y / B / R key | Keys lying on the floor, by colour |
+| Y/lock, B/lock, R/lock, all/lock | Keys found per lock of that colour (a steel door counts as a yellow lock). Below 1, the floor doesn't hold enough keys for all its doors of that colour; `-` when there are no such doors |
+
+**Enemies and items:** enemies by strength (weak, normal, strong, elite, boss) and potions, ATK and DEF shards and treasure chests.
+
+What to watch:
+- **Schedule:** *alone + fork + dropped* should match *want* in each band. A test checks the stage keeps every door it places, and the quota's average against the schedule (`tests/door-quota.test.ts`).
+- **Keys per lock:** the key economy as floors and towers rise, the figure phase 4's key-supply curve tunes.
+- **Side effects:** a change to one table moves others, such as yellow doors as more become blue, or enemies as Heart Doors replace them.
+
+To compare against an older generator, run the same command in a worktree checked out at the older commit (`git worktree add --detach <dir> <commit>`) and compare the two outputs. The baseline before the door stage: Tower I had about 1.05 blue doors, 0.25 red doors and 0.18 Heart Doors a floor at every height from floor 21 (101 for hearts) up, Tower II from floor 1.
 
 ## 6. Build order
 
@@ -131,6 +169,7 @@ Each schedule's number is printed beside what was measured, so a mismatch shows.
 3. **Wooden doors:** the rule, art, card and skill, and the wooden share.
 4. **Key supply curve.**
 5. **The Delve** adopts the same schedules by equivalent floor, after the Tower is checked.
+6. **Door runs (later):** two or three doors of the same colour in a row in a single gate, to make one gate dearer than a combined door can. A gate is one tile today. Fork lanes already run one to three tiles deep (the embedder carves a band of rows for them), so a door run would be a one-lane crossing built the same way, counting each door toward the quota. Left until the rest has been checked, since it needs embedder work.
 
 After each phase: re-run the census and bump `TOWER_LAYOUT_VERSION`. Phase 3 also bumps the Delve's `LAYOUT_VERSION`, because its steel doors become wooden.
 

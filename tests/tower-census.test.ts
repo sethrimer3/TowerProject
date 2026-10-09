@@ -4,16 +4,21 @@ import { census, censusSeed, floorCounts, keysPerLock, steelShare } from "../src
 import { generateTowerFloor } from "../src/tower/index.ts";
 
 test("a floor's counts match its tiles, and forked doors are among its doors", () => {
-  for (const [floor, tower] of [[0, 1], [24, 1], [61, 2], [130, 9]]) {
+  let combined = 0;
+  for (const [floor, tower] of [[0, 1], [24, 1], [61, 2], [130, 9], [900, 1], [950, 5]]) {
     const generated = generateTowerFloor(censusSeed(3), floor, tower);
     const c = floorCounts(generated);
     const tiles = [...generated.cells.values()];
-    const doors = Object.entries(c).filter(([k]) => k.startsWith("door:")).reduce((s, [, n]) => s + n, 0);
-    assert.equal(doors, tiles.filter((t) => t.kind === "door").length);
+    const keyed = (color: string) => tiles.filter((t) => t.door?.type === "keys" && t.door.mode === "all" && t.door.keys.includes(color as "red")).length;
+    for (const color of ["yellow", "blue", "red"]) assert.equal(c[`door:${color}`] ?? 0, keyed(color), `${color} doors on floor ${floor + 1}`);
+    const many = tiles.filter((t) => t.door?.type === "keys" && t.door.keys.length > 1 && t.door.mode === "all").length;
+    assert.equal(c["door:combined"] ?? 0, many);
+    combined += many;
     assert.equal(c.potion ?? 0, tiles.filter((t) => t.kind === "potion").length);
     for (const [k, n] of Object.entries(c))
       if (k.startsWith("forked:")) assert.ok(n <= (c[`door:${k.slice(7)}`] ?? 0), `${k} at floor ${floor + 1}`);
   }
+  assert.ok(combined > 0, "high floors hold combined doors");
 });
 
 test("keys per lock count a steel door as a yellow lock", () => {

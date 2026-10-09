@@ -3,7 +3,7 @@ import type { TowerEnemyProfile } from "../scaling.ts";
 import { ARCHETYPES, keyedFloor, pick, type Weighted } from "./patterns.ts";
 import type { GraphBuilder } from "./strategic-graph.ts";
 import type { Archetype, Fork, Gate, Lane, LaneStep, Reward, StrategicNode, StrategicTag, Strength } from "./types.ts";
-import { YELLOW_ONLY, onlyOpenKeys, withoutQuotaDoors } from "../key-schedule.ts";
+import { YELLOW_ONLY, doorKeys, onlyOpenKeys, withoutQuotaDoors } from "../key-schedule.ts";
 
 /** Forks: two or three parallel lanes from one region into the next, each
  * paying a different resource, so entering asks *what* to spend.
@@ -40,7 +40,7 @@ export const FORK_TUNING = {
 export function stepValue(step: LaneStep): number {
   switch (step.kind) {
     case "open": return 0;
-    case "door": return GATE_VALUE.door[step.color];
+    case "door": return doorKeys(step).reduce((s, c) => s + GATE_VALUE.door[c], 0);
     case "steel": return GATE_VALUE.steel;
     case "heart": return GATE_VALUE.heart;
     case "potion": return -GATE_VALUE.reward.potion;

@@ -23,7 +23,9 @@ export type Strength = TowerEnemyStrength;
 export type Gate =
   | { kind: "open" }
   | { kind: "enemy"; strength: Strength; profile?: TowerEnemyProfile }
-  | { kind: "door"; color: KeyColor }
+  /** A door taking a key of `color`, and of each colour in `also` (a
+   * combined door, which the door stage makes: `doorKeys`). */
+  | { kind: "door"; color: KeyColor; also?: KeyColor[] }
   /** Special locks from the door vocabulary: steel takes any one key
    * (cheapest first), heart always opens but drains HP to 1. */
   | { kind: "steel" }
