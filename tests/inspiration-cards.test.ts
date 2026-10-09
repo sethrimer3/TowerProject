@@ -34,7 +34,7 @@ const NODES: [UpgradeId, number, UpgradeId, CardId | null][] = [
 test("each card node costs its price, waits for the node above it and adds its card to the deck", () => {
   const g = new Game(defaults());
   g.save.tower.inspiration = 10_000;
-  for (const id of ["combatStance", "buildout", "trainers", "largerHand", "archives", "delve", "keySiphon", "buyQuantity"] as const) assert.ok(g.buy(id));
+  for (const id of ["combatStance", "buildout", "trainers", "critical", "archives", "delve", "keySiphon", "buyQuantity"] as const) assert.ok(g.buy(id));
   const nodes = TREES.find((t) => t.id === "inspiration")!.nodes;
   for (const [id, price, requires, card] of NODES) {
     assert.deepEqual(nodes.find((n) => n.id === id)!.requires, [requires], id);

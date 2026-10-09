@@ -4,6 +4,7 @@ import { enemyTitle } from "../scaling.ts";
 import type { Game, RouteEffects } from "../state.ts";
 import { resolveStep, shardGain } from "../step-effects.ts";
 import { attackForFewerHits, predict, type CombatPrediction } from "../combat.ts";
+import { forecast as critForecast, type CritForecast } from "../crit-forecast.ts";
 import { goalUnlocked } from "../goals.ts";
 import { chestReward, CLEARED_INSPIRATION } from "../tower/area-ledger.ts";
 import { doorColor, doorDescription, doorName, doorRule, drainsHp, KEY_NAMES } from "../doors.ts";
@@ -39,11 +40,30 @@ const stairs: Describe = (t, _p, g) => {
 /** Damage Prediction's line, once unlocked: what the fight costs and
  * whether the hero survives it; a fight one strike wins (the hero strikes
  * first) is an Instakill, and one that costs no HP (as shown) Harmless. */
-function prediction(r: CombatPrediction, g: Board) {
+function prediction(r: CombatPrediction, g: Board, c: CritForecast | null) {
   if (!goalUnlocked(g.save, "damagePrediction")) return "";
+  if (c) return critPrediction(c);
   const damage = Number.isFinite(r.damage) ? wholeChange(r.damage) : "∞";
   const verdict = r.turns === 1 ? "Instakill" : !r.survivable ? "LETHAL" : damage === 0 ? "Harmless" : "Survivable";
   return `<br><strong class="${r.survivable ? "safe" : "danger"}">${damage} damage · ${verdict}</strong>`;
+}
+
+/** The prediction line for a hero with critical strikes: the damage to
+ * expect (~), then a verdict that is certain where the odds are: Survivable
+ * when even the guaranteed crits alone survive it, LETHAL when even every
+ * crit landing doesn't, and otherwise the chance to live; with the range
+ * the damage lands in nine fights of ten. */
+function critPrediction(c: CritForecast) {
+  const percent = (n: number) => `${Math.min(99, Math.max(1, Math.round(n * 100)))}%`;
+  const expected = wholeChange(c.expected), range = `${wholeChange(c.p10)}–${wholeChange(c.p90)}`;
+  let verdict: string;
+  if (c.worst.turns === 1) verdict = "Instakill";
+  else if (!c.worst.survivable && !c.best.survivable) verdict = "LETHAL";
+  else if (!c.worst.survivable) verdict = `Risky · ${percent(c.survive)} to survive`;
+  else verdict = expected === 0 && c.p90 === 0 ? "Harmless" : "Survivable";
+  const chance = c.worst.turns > 1 && c.instakill > 0 ? ` · ${percent(c.instakill)} Instakill` : "";
+  const spread = c.p10 === c.p90 ? "" : `<br><small>Usually ${range} damage</small>`;
+  return `<br><strong class="${c.worst.survivable ? "safe" : c.best.survivable ? "risky" : "danger"}">~${expected} damage · ${verdict}${chance}</strong>${spread}`;
 }
 
 const hits = (n: number) => (n === 1 ? "Instakill" : `${n.toLocaleString("en-US")} hits to defeat`);
@@ -52,11 +72,11 @@ const hits = (n: number) => (n === 1 ? "Instakill" : `${n.toLocaleString("en-US"
  * Forecast's hits to defeat the enemy (an Instakill only when Damage
  * Prediction hasn't said so already), and Attack Lore's ATK more that
  * takes one hit fewer. */
-function forecast(p: Player, e: Enemy, turns: number, g: Board) {
+function forecast(p: Player, e: Enemy, turns: number, g: Board, crits = false) {
   if (!turns || g.run.outside) return "";
   let lines = "";
   const said = turns === 1 && goalUnlocked(g.save, "damagePrediction");
-  if (goalUnlocked(g.save, "combatForecast") && !said) lines += `<br><span class="forecast">${hits(turns)}</span>`;
+  if (goalUnlocked(g.save, "combatForecast") && !said) lines += `<br><span class="forecast">${hits(turns)}${crits ? " without crits" : ""}</span>`;
   const more = goalUnlocked(g.save, "attackLore") ? attackForFewerHits(p, e) : null;
   if (more) lines += `<br><span class="forecast lore">+${more.toLocaleString("en-US")} ATK: ${turns === 2 ? "Instakill" : `${(turns - 1).toLocaleString("en-US")} hits`}</span>`;
   return lines;
@@ -64,10 +84,10 @@ function forecast(p: Player, e: Enemy, turns: number, g: Board) {
 
 const DESCRIBE: Partial<Record<Kind, Describe>> = {
   enemy: (t, p, g) => {
-    const e = t.enemy!, r = predict(p, e);
+    const e = t.enemy!, r = predict(p, e), crit = g.stepRules.crit, c = crit && !r.impervious ? critForecast(p, e, crit) : null;
     return {
       title: enemyTitle(e),
-      body: `<span>HP ${enemyStat(e.hp)} · ATK ${enemyStat(e.attack)} · DEF ${enemyStat(e.defense)}</span>` + prediction(r, g) + forecast(p, e, r.impervious ? 0 : r.turns, g),
+      body: `<span>HP ${enemyStat(e.hp)} · ATK ${enemyStat(e.attack)} · DEF ${enemyStat(e.defense)}</span>` + prediction(r, g, c) + forecast(p, e, r.impervious ? 0 : r.turns, g, !!c),
     };
   },
   wall: () => ({ title: "Wall", body: "Ancient stone. Find a passage around it." }),

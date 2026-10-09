@@ -18,6 +18,9 @@ const REWARD_COLOR = "#f3d69a";
 /** Damage the hero deals, the darker damage it takes, and HP it heals. */
 const DAMAGE_COLOR = "#ff4040";
 const HERO_DAMAGE_COLOR = "#b3121f";
+/** A critical strike's number: a little brighter, in a glow. */
+const CRIT_COLOR = "#ff7a6a";
+const CRIT_GLOW = "#ffb04a";
 const HEAL_COLOR = "#5fdc6a";
 /** Damage the shroud blocked, and how far apart it and the damage that got
  * through rise when a strike has both, in tiles. */
@@ -88,7 +91,7 @@ const LUNGE = 0.3;
 
 type Popup = { x: number; y: number; start: number };
 /** A rising number's colour, how far it rises (tiles) and its size (of a tile). */
-type TextStyle = { color: string; rise: number; size: number };
+type TextStyle = { color: string; rise: number; size: number; glow?: string };
 /** A reward without a sprite, written in gold. */
 const REWARD_TEXT: TextStyle = { color: REWARD_COLOR, rise: REWARD_RISE, size: 0.42 };
 /** A mark's colour, size (px in tile space) and alignment. */
@@ -103,7 +106,7 @@ const STILL: Offset = { dx: 0, dy: 0 };
 export class BoardPopups {
   private rewards: (Popup & { gain: Gain })[] = [];
   /** Damage and heal numbers. */
-  private numbers: (Popup & { text: string; color: string })[] = [];
+  private numbers: (Popup & { text: string; color: string; glow?: string })[] = [];
   /** The last heal raised. */
   private healed = 0;
   private fight: ShownFight | null = null;
@@ -155,7 +158,7 @@ export class BoardPopups {
     const both = !!s.shrouded && s.damage > 0, y = on.y + DAMAGE_START;
     if (s.shrouded) this.numbers.push({ x: on.x - (both ? SHROUD_SPLIT : 0), y, start, text: String(wholeChange(s.shrouded)), color: SHROUD_COLOR });
     if (s.shrouded && !s.damage) return;
-    this.numbers.push({ x: on.x + (both ? SHROUD_SPLIT : 0), y, start, text: String(wholeChange(s.damage)), color: s.by === "hero" ? DAMAGE_COLOR : HERO_DAMAGE_COLOR });
+    this.numbers.push({ x: on.x + (both ? SHROUD_SPLIT : 0), y, start, text: String(wholeChange(s.damage)), ...(s.crit ? { color: CRIT_COLOR, glow: CRIT_GLOW } : { color: s.by === "hero" ? DAMAGE_COLOR : HERO_DAMAGE_COLOR }) });
   }
   /** Nothing is rising or waiting to, and the enemy's HP bar is still. */
   idle(now: number) {
@@ -167,7 +170,7 @@ export class BoardPopups {
   draw(f: FrameContext) {
     if (this.fight) drawEnemyBar(f, this.fight);
     const shown = [
-      ...this.numbers.map((p) => ({ start: p.start, draw: () => this.drawText(f, p, p.text, { color: p.color, rise: DAMAGE_RISE, size: 0.55 }) })),
+      ...this.numbers.map((p) => ({ start: p.start, draw: () => this.drawText(f, p, p.text, { color: p.color, rise: DAMAGE_RISE, size: 0.55, ...(p.glow ? { glow: p.glow } : {}) }) })),
       ...this.rewards.map((p) => ({
         start: p.start,
         draw: () => { if (!this.drawSprite(f, p)) this.drawText(f, p, p.gain.text, REWARD_TEXT); },
@@ -183,7 +186,7 @@ export class BoardPopups {
       rise: f.look.reduceMotion ? 0 : (rise * age) / POPUP_MS,
     };
   }
-  private drawText(f: FrameContext, p: Popup, text: string, { color, rise, size }: TextStyle) {
+  private drawText(f: FrameContext, p: Popup, text: string, { color, rise, size, glow }: TextStyle) {
     const c = f.c, { alpha, rise: up } = this.phase(f, p, rise), at = tileCenter(f, p.x, p.y + up);
     c.save();
     c.globalAlpha = alpha;
@@ -193,6 +196,10 @@ export class BoardPopups {
     c.lineWidth = Math.max(2, f.s * 0.1);
     c.strokeStyle = "#000";
     c.strokeText(text, at.x, at.y);
+    if (glow) {
+      c.shadowColor = glow;
+      c.shadowBlur = Math.max(6, f.s * 0.35);
+    }
     c.fillStyle = color;
     c.fillText(text, at.x, at.y);
     c.restore();

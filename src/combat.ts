@@ -21,8 +21,30 @@ export function attackAgainst(player: Player, enemy: Enemy) {
 export function defenseAgainst(player: Player, enemy: Enemy) {
   return player.pierce ? snap((enemy.defense * (100 - player.pierce)) / 100) : enemy.defense;
 }
-/** What each of the hero's strikes takes off `enemy`'s HP (0 or less: none). */
-const heroHit = (player: Player, enemy: Enemy) => snap(attackAgainst(player, enemy) - defenseAgainst(player, enemy));
+/** The hero's critical strikes: each strike is critical with `chance` percent
+ * (100 or more: that many applications are certain, and the rest rolls for
+ * one more), and every application adds `factor` − 1 times the hero's ATK to
+ * the strike, so one application multiplies it by `factor`. */
+export type CritRule = { chance: number; factor: number };
+/** What a strike with `applications` critical applications multiplies ATK by. */
+export const critMultiplier = (factor: number, applications: number) => (applications ? snap(1 + applications * (factor - 1)) : 1);
+/** The hero's critical rolls in one fight: the `factor` and how many
+ * applications strike number `strike` (from 0, the hero's own) has. */
+export type Crits = { factor: number; applications: (strike: number) => number };
+/** How many applications of its critical factor `chance` percent always lands. */
+export const guaranteedCrits = (chance: number) => Math.floor(chance / 100);
+/** `player` striking with the applications `crit` is certain to land: its
+ * own when it has none. The worst a fight can go for the hero. */
+export function atWorst(player: Player, crit?: CritRule): Player {
+  const k = crit ? guaranteedCrits(crit.chance) : 0;
+  return k ? { ...player, attack: snap(player.attack * critMultiplier(crit!.factor, k)) } : player;
+}
+/** What each of the hero's strikes takes off `enemy`'s HP (0 or less: none),
+ * its ATK multiplied by `multiplier` (a critical strike's). */
+const heroHit = (player: Player, enemy: Enemy, multiplier = 1) => {
+  const attack = attackAgainst(player, enemy);
+  return snap((multiplier === 1 ? attack : snap(attack * multiplier)) - defenseAgainst(player, enemy));
+};
 /** Whether the hero's strikes can't hurt `enemy` at all (`predict`'s
  * `impervious`), without working out the rest of the fight. */
 export const impervious = (player: Player, enemy: Enemy) => heroHit(player, enemy) <= 0;
@@ -78,7 +100,7 @@ export function raisedAttack(attack: number) {
 /** What the enemy's strikes back cost the hero over `strikes` rounds, starting
  * at `attack` and rising each round. Past what any HP could survive it is
  * Infinity, so a fight with a million rounds is summed in a few thousand. */
-function damageTaken(attack: number, defense: number, strikes: number) {
+export function damageTaken(attack: number, defense: number, strikes: number) {
   let damage = 0;
   for (let i = 0; i < strikes && damage <= Number.MAX_SAFE_INTEGER; i++, attack = raisedAttack(attack)) {
     damage = snap(damage + Math.max(0, attack - defense));
@@ -102,8 +124,9 @@ export const REVIVE_MS = 1400;
  * struck side has left. Of an enemy's strike, the shroud takes what it can
  * (`shrouded`), and `damage` is what gets through to the hero. A strike
  * that would have felled the hero but revived it (`revived`) leaves it at
- * full HP. */
-export type Strike = { by: "hero" | "enemy"; damage: number; shrouded?: number; revived?: true; start: number; at: number; end: number; hp: number };
+ * full HP. A critical hero strike carries the applications of the
+ * critical factor it landed (`crit`). */
+export type Strike = { by: "hero" | "enemy"; damage: number; crit?: number; shrouded?: number; revived?: true; start: number; at: number; end: number; hp: number };
 export type Bout = { strikes: Strike[]; duration: number };
 /** Whether the enemy's strike numbered `strike` (from 0) in a fight, which
  * would fell the hero, revives it instead (the Revive skill). */
@@ -115,25 +138,25 @@ export type Revival = (strike: number) => boolean;
  * as the prediction (or at 0 in a fight the hero loses), unless `revives`
  * raises the hero at full HP from a strike that would fell it: the fight
  * then goes on from the next round, the enemy as it was. */
-export function bout(player: Player, enemy: Enemy, revives?: Revival): Bout {
+export function bout(player: Player, enemy: Enemy, revives?: Revival, crits?: Crits): Bout {
   if (heroHit(player, enemy) <= 0) return { strikes: [], duration: 0 };
-  return play([], { player, enemy, revives }, { enemyHp: enemy.hp, heroHp: player.hp, shroud: player.shroud ?? 0, attack: enemy.attack, t: 0, ms: FIRST_STRIKE_MS, enemyStrikes: 0, enemyNext: false });
+  return play([], { player, enemy, revives, crits }, { enemyHp: enemy.hp, heroHp: player.hp, shroud: player.shroud ?? 0, attack: enemy.attack, t: 0, ms: FIRST_STRIKE_MS, enemyStrikes: 0, heroStrikes: 0, enemyNext: false });
 }
 
 /** Where a fight stands before its next strike: each side's HP, what is
  * left of the shroud, the enemy's ATK, when the strike swings and how long
  * it takes, the enemy's strikes so far, and whose strike it is. */
-type BoutState = { enemyHp: number; heroHp: number; shroud: number; attack: number; t: number; ms: number; enemyStrikes: number; enemyNext: boolean };
+type BoutState = { enemyHp: number; heroHp: number; shroud: number; attack: number; t: number; ms: number; enemyStrikes: number; heroStrikes: number; enemyNext: boolean };
 
 /** A strike before it is timed. */
 type Blow = Omit<Strike, "start" | "at" | "end">;
 
 /** The two sides of a fight, and whether a strike that would fell the
- * hero revives it instead. */
-export type Fighters = { player: Player; enemy: Enemy; revives?: Revival };
+ * hero revives it instead, and the hero's critical strikes. */
+export type Fighters = { player: Player; enemy: Enemy; revives?: Revival; crits?: Crits };
 
 /** Plays a fight on from `state`, after the strikes already in `strikes`. */
-function play(strikes: Strike[], { player, enemy, revives }: Fighters, state: BoutState): Bout {
+function play(strikes: Strike[], { player, enemy, revives, crits }: Fighters, state: BoutState): Bout {
   const hit = heroHit(player, enemy), s = { ...state };
   // Each strike keeps its fields in the same order: its blow, its timing, then the HP left.
   const strike = ({ hp, ...blow }: Blow) => {
@@ -142,8 +165,10 @@ function play(strikes: Strike[], { player, enemy, revives }: Fighters, state: Bo
   };
   for (;;) {
     if (!s.enemyNext) {
-      s.enemyHp = snap(Math.max(0, s.enemyHp - hit));
-      strike({ by: "hero", damage: hit, hp: s.enemyHp });
+      const applications = crits?.applications(s.heroStrikes) ?? 0, struck = applications ? heroHit(player, enemy, critMultiplier(crits!.factor, applications)) : hit;
+      s.heroStrikes++;
+      s.enemyHp = snap(Math.max(0, s.enemyHp - struck));
+      strike({ by: "hero", damage: struck, ...(applications ? { crit: applications } : {}), hp: s.enemyHp });
       if (!s.enemyHp) break;
     }
     s.enemyNext = false;
@@ -176,17 +201,18 @@ export function resume(fight: Bout, from: number, fighters: Fighters): Bout {
   const { player, enemy } = fighters;
   const kept = fight.strikes.slice(0, from), next = fight.strikes[from];
   if (!next) return { strikes: kept, duration: fight.duration };
-  let enemyHp = enemy.hp, attack = enemy.attack, ms = FIRST_STRIKE_MS, enemyStrikes = 0;
+  let enemyHp = enemy.hp, attack = enemy.attack, ms = FIRST_STRIKE_MS, enemyStrikes = 0, heroStrikes = 0;
   for (const s of kept) {
     if (s.by === "hero") {
       enemyHp = s.hp;
+      heroStrikes++;
       continue;
     }
     enemyStrikes++;
     attack = raisedAttack(attack);
     ms = Math.max(FASTEST_STRIKE_MS, ms * STRIKE_SPEEDUP);
   }
-  const state = { enemyHp, heroHp: player.hp, shroud: player.shroud ?? 0, attack, t: next.start, ms, enemyStrikes, enemyNext: next.by === "enemy" };
+  const state = { enemyHp, heroHp: player.hp, shroud: player.shroud ?? 0, attack, t: next.start, ms, enemyStrikes, heroStrikes, enemyNext: next.by === "enemy" };
   return play(kept, fighters, state);
 }
 
@@ -215,7 +241,10 @@ const roundStrikes = ({ hero, enemy }: Round) => [hero, enemy].filter((s): s is 
 /** `round` with strike `s` added to its side's, landing at `t`. */
 function withStrike(round: Round, s: Strike, t: number): Round {
   const at = { start: t, at: t, end: t };
-  if (s.by === "hero") return { ...round, hero: { by: "hero", damage: snap((round.hero?.damage ?? 0) + s.damage), hp: s.hp, ...at } };
+  if (s.by === "hero") {
+    const crit = (round.hero?.crit ?? 0) + (s.crit ?? 0);
+    return { ...round, hero: { by: "hero", damage: snap((round.hero?.damage ?? 0) + s.damage), ...(crit ? { crit } : {}), hp: s.hp, ...at } };
+  }
   const prev = round.enemy, shrouded = snap((prev?.shrouded ?? 0) + (s.shrouded ?? 0));
   return { ...round, enemy: { by: "enemy", damage: snap((prev?.damage ?? 0) + s.damage), ...(shrouded ? { shrouded } : {}), ...(s.revived ? { revived: true as const } : {}), hp: s.hp, ...at } };
 }

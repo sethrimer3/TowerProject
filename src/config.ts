@@ -162,6 +162,14 @@ export const UPGRADES = [
     currency: "inspiration",
   },
   {
+    id: "critical",
+    name: "Critical",
+    description: "Your strikes can land critical hits: unlock Crit % and Crit x training and their research",
+    base: 2,
+    max: 1,
+    currency: "inspiration",
+  },
+  {
     id: "cardHeal",
     name: "Heal",
     description: "Add the HEAL card to your deck: it moves you toward the closest healing potion",
@@ -505,6 +513,8 @@ export const TRAINING_GROUPS = { offense: "Offense", defense: "Defense", utility
 export const TRAINING = [
   { id: "hp", name: "Max HP", group: "defense", stat: "maxHp", curve: { per: 10, square: 1 }, cost: 1, max: 6000, description: "Raises maximum HP." },
   { id: "attack", name: "ATK", group: "offense", stat: "attack", curve: { per: 1, square: 0.2 }, cost: 1, max: 6000, description: "Raises ATK, the damage each strike deals before the enemy's DEF." },
+  { id: "critChance", name: "Crit %", group: "offense", requires: "critical", cost: 1, max: 80, description: "Raises the chance each of your strikes is a critical hit." },
+  { id: "critFactor", name: "Crit x", group: "offense", requires: "critical", cost: 1, max: 150, description: "Raises how much a critical hit multiplies your ATK." },
   { id: "defense", name: "DEF", group: "defense", stat: "defense", curve: { per: 0, square: 1 / 12 }, cost: 1, max: 6000, description: "Raises DEF, taken off the damage of every enemy strike." },
   { id: "regen", name: "Regen", group: "defense", stat: "regen", curve: { per: 0.1, square: 1 / 120 }, cost: 1, max: 6000, requires: "regen", description: "Raises the HP regained with every step taken in a run." },
   { id: "shroud", name: "Shroud", group: "defense", stat: "shroud", curve: { per: 1, cube: 0.00062, fourth: 0.0000033 }, cost: 1, max: 5000, requires: "shroud", description: "Raises the damage the shroud blocks at the start of every fight." },
@@ -535,6 +545,11 @@ export const FIND_POTION_BASE = 200, FIND_POTION_RANK = 25, FIND_POTION_MAX = 20
  * hundredths of a percent: 0.5% with Revive, and 0.5% more for each Revive
  * rank, up to 50% (99 ranks). */
 export const REVIVE_BASE = 50, REVIVE_RANK = 50, REVIVE_MAX = 5000;
+/** The chance each of the hero's strikes is critical, in hundredths of a
+ * percent: 1% a Crit % rank. A critical strike multiplies the hero's ATK by
+ * the critical factor, in hundredths: ×1.2 with Critical, and ×0.1 more a
+ * Crit x rank. */
+export const CRIT_CHANCE_RANK = 100, CRIT_FACTOR_BASE = 120, CRIT_FACTOR_RANK = 10;
 /** The Gold each floor climbed for the first time in a run pays, before
  * the tier's bonus and Gold / Floor research: 3 with Spare Change, and 1
  * more for each Gold / Floor rank. */
@@ -580,6 +595,8 @@ const deep: PriceSchedule = { base: 20, step: 4, growth: 4 };
 export const RUN_TRAINING_PRICES: Record<TrainingId, PriceSchedule> = {
   hp: vital,
   attack: cheap,
+  critChance: opened,
+  critFactor: { base: 12, step: 2, growth: 3 },
   defense: cheap,
   regen: cheap,
   shroud: vital,
@@ -594,7 +611,7 @@ export const RUN_TRAINING_PRICES: Record<TrainingId, PriceSchedule> = {
 /** A trainer's Gold curve: each rank asks `TRAINING_GOLD_PER_POINT` Gold
  * a point of the row's cost times the rank's number, times 1 + ranks /
  * `growth` (see `trainingGold`), so a smaller `growth` pulls away faster. */
-export type TrainerCurve = { growth: number };
+export type TrainerCurve = { growth: number; start?: number };
 /** The trainer curves, set by where each row's Silver schedule starts:
  * the dearer a row in a run, the steeper its trainers. Rows starting at 20
  * Silver: 20, 44, 72, 104 … 380 for the tenth rank. */
@@ -610,6 +627,9 @@ const gentleTrainers: TrainerCurve = { growth: 60 };
 export const TRAINER_GOLD_CURVES: Record<TrainingId, TrainerCurve> = {
   hp: gentleTrainers,
   attack: mildTrainers,
+  /** Crit % starts at 10 Gold a first rank, Crit x at 12 (the others at 20). */
+  critChance: { growth: 20, start: 10 },
+  critFactor: { growth: 16, start: 12 },
   defense: mildTrainers,
   regen: mildTrainers,
   shroud: gentleTrainers,

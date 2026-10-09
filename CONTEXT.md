@@ -176,7 +176,7 @@ How much XP the character has gathered from kills over every run. A kill pays mo
 _Avoid_: rank
 
 **Training point**:
-The currency each level earns (three a level), spent to buy ranks of training at once (a trainer can train them for Gold instead) in the character's stats (max HP, ATK, DEF, and the shroud once the Shroud skill is owned) and, with Recovery, Find Potion, Revive, Spare Change, Wishing Well, Wealthy and Loot, in Potion %, Find Potion, Revive, Gold / Floor, Silver / Floor, Silver Bonus and Gold / Kill on the Training tab. A stat's ranks add up on its **rank curve**: each rank is worth more than the one before, whatever the character's level.
+The currency each level earns (three a level), spent to buy ranks of training at once (a trainer can train them for Gold instead) in the character's stats (max HP, ATK, DEF, and the shroud once the Shroud skill is owned; Crit % and Crit x once Critical is) and, with Recovery, Find Potion, Revive, Spare Change, Wishing Well, Wealthy and Loot, in Potion %, Find Potion, Revive, Gold / Floor, Silver / Floor, Silver Bonus and Gold / Kill on the Training tab. A stat's ranks add up on its **rank curve**: each rank is worth more than the one before, whatever the character's level.
 _Avoid_: skill point, stat point
 
 **Trainer**:
@@ -282,6 +282,10 @@ _Avoid_: damage numbers, damage overlay
 **Relative Damage Color**:
 Tower II's floor 10 checkpoint unlock: Damage Visual's numbers coloured by the share of the hero's current HP each fight would cost, sliding from bright green below 1% through yellow at 10% and orange at 25% to red at 50% or more (an Instakill stays gray, a lethal fight red).
 _Avoid_: damage gradient
+
+**Critical hit**:
+A hero strike that lands with its ATK multiplied by the **critical factor** (Crit x training and research, ×1.2 to start) before the enemy's DEF comes off. Each strike is critical with the **critical chance** (Crit % training and research, Critical skill): a fixed roll per run, floor, tile and strike, so taking a fight back and fighting it again lands the same crits. At 100% or more that many applications are certain and the rest rolls for one more; applications add to the strike's ATK (ATK × (1 + n × (factor − 1))). Fights are forecast by expected damage: the damage line shows the mean and, in the inspect panel, the range 90% of fights fall in and the chance to survive; Survivable and LETHAL stay certain (worst and best case).
+_Avoid_: crit strike, lucky hit
 
 **Instakill**:
 A fight the hero's first strike wins, so the monster never strikes back.

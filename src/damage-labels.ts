@@ -1,4 +1,5 @@
-import { predict } from "./combat.ts";
+import { predict, type CritRule } from "./combat.ts";
+import { forecast } from "./crit-forecast.ts";
 import type { Enemy, Player } from "./entities.ts";
 import { forEachViewTile, type FrameContext } from "./render-frame.ts";
 import { compactAmount, wholeChange } from "./whole.ts";
@@ -18,8 +19,8 @@ import { compactAmount, wholeChange } from "./whole.ts";
  * Instakill, the enemy never striking back). */
 type Cost = { damage: number; turns: number };
 
-/** Predictions by enemy stats, kept while the hero's ATK, DEF and shroud
- * stay the same (HP only colours a label, read as it is drawn), so a board
+/** Predictions by enemy stats, kept while the hero's ATK, DEF, shroud and
+ * critical strikes stay the same (HP only colours a label, read as it is drawn), so a board
  * full of enemies is predicted once per kind of enemy, not every frame. */
 export class DamagePredictions {
   private hero = "";
@@ -28,15 +29,18 @@ export class DamagePredictions {
   /** How many predictions have been worked out, for tests. */
   computed = 0;
 
-  cost(player: Player, enemy: Enemy): Cost {
-    const hero = `${player.attack}|${player.defense}|${player.shroud ?? 0}`;
+  cost(player: Player, enemy: Enemy, crit?: CritRule): Cost {
+    const hero = `${player.attack}|${player.defense}|${player.shroud ?? 0}|${crit ? `${crit.chance}|${crit.factor}` : ""}`;
     if (hero !== this.hero) [this.hero, this.costs] = [hero, new Map()];
     const key = `${enemy.hp}|${enemy.attack}|${enemy.defense}`;
     let cost = this.costs.get(key);
     if (!cost) {
       const r = predict(player, enemy);
       this.computed++;
-      cost = { damage: r.impervious ? Infinity : r.damage, turns: r.turns };
+      // With critical strikes the label shows the damage to expect, and only
+      // an Instakill that is certain is gray.
+      const f = crit && !r.impervious ? forecast(player, enemy, crit) : null;
+      cost = f ? { damage: f.worst.impervious ? Infinity : f.expected, turns: f.worst.turns } : { damage: r.impervious ? Infinity : r.damage, turns: r.turns };
       this.costs.set(key, cost);
     }
     return cost;
@@ -84,7 +88,7 @@ const holdsKey = (player: Player) => player.keys.yellow > 0 || player.keys.blue 
 
 /** Draws each enemy's label in view, and each Wooden Door's while the hero
  * holds no key, over the darkness so it always reads. */
-export function drawDamageLabels(f: FrameContext, predictions: DamagePredictions, player: Player, fight: Fighting, relative = false) {
+export function drawDamageLabels(f: FrameContext, predictions: DamagePredictions, player: Player, fight: Fighting, relative = false, crit?: CritRule) {
   const c = f.c, s = f.s, pad = s * 0.06;
   c.save();
   c.font = `bold ${Math.max(8, Math.round(s * 0.3))}px Cinzel, serif`;
@@ -97,7 +101,7 @@ export function drawDamageLabels(f: FrameContext, predictions: DamagePredictions
     const t = f.world.tile(x, y);
     const wood = t.kind === "door" && t.door?.type === "wood" && !holdsKey(player) ? t.door.durability : null;
     if (wood === null && (t.kind !== "enemy" || !t.enemy || (fight && fight.to.x === x && fight.to.y === y))) return;
-    const cost = wood !== null ? breakCost(wood) : predictions.cost(player, t.enemy!);
+    const cost = wood !== null ? breakCost(wood) : predictions.cost(player, t.enemy!, crit);
     const { text, color } = damageLabel(cost, player.hp, relative);
     const left = (x - f.left) * s + pad, bottom = (f.n - (y - f.bottom)) * s - pad;
     c.strokeText(text, left, bottom);

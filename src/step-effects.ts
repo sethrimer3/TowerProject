@@ -1,5 +1,5 @@
 import { snap } from "./exact.ts";
-import { predict, type CombatPrediction } from "./combat.ts";
+import { atWorst, predict, type CombatPrediction, type CritRule } from "./combat.ts";
 import { doorCost, doorRule, drainsHp, woodToll } from "./doors.ts";
 import type { KeyColor } from "./config.ts";
 import type { Player, Tile } from "./entities.ts";
@@ -65,6 +65,10 @@ export type StepRules = {
   /** How much of a key each key colour a door takes costs, in tenths of a
    * percent (Key Efficiency research), 1,000 when absent. */
   keyCost?: number;
+  /** The hero's critical strikes (Critical): resolving a fight counts only
+   * the applications it is certain to land (chance of 100% or more), the
+   * worst it can go; `Game` plays the real rolls out over it. */
+  crit?: CritRule;
 };
 export const BASE_RULES: StepRules = { potionHeal: 100, percentPotion: 0, regen: 0 };
 /** The HP a potion of `amount` restores under `rules`, rounded. */
@@ -80,7 +84,7 @@ export function resolveStep(player: Player, tile: Tile, rules: StepRules = BASE_
   const effect: StepEffect = { player: next, combat: null, keysSpent: [], healed: 0 };
   switch (tile.kind) {
     case "enemy": {
-      const combat = predict(player, tile.enemy!);
+      const combat = predict(atWorst(player, rules.crit), tile.enemy!);
       if (combat.impervious) return { blocked: "impervious", combat };
       // The fight plays out as predicted; a scale adds to (or gives back)
       // its damage once it is over, which can fell the hero.

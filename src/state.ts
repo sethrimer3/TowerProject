@@ -50,7 +50,7 @@ import {
 import { World, LAYOUT_VERSION } from "./delve/world.ts";
 import { RoomWorld, TOWER_LAYOUT_VERSION } from "./tower/room-world.ts";
 import type { Board } from "./board.ts";
-import { bout, heroHpAfter, heroHpDuring, resume, REVIVE_MS, revivals, summarize, type Bout, type Revival } from "./combat.ts";
+import { bout, guaranteedCrits, heroHpAfter, heroHpDuring, resume, REVIVE_MS, revivals, summarize, type Bout, type CritRule, type Crits, type Revival } from "./combat.ts";
 import { HEART_DOOR_HP, healAfterVictory, isLethal, regenerate, resolveStep, type StepBlocked, type StepEffect, type StepRules, shardGain } from "./step-effects.ts";
 import { OUTSIDE_START_Y, OutsideWorld } from "./outside.ts";
 import { AREA_BURST_MS, AreaLedger, chestReward, CLEARED_INSPIRATION, type AreaReward } from "./tower/area-ledger.ts";
@@ -64,7 +64,7 @@ import { enemyStat, keyCount, whole, wholeChange } from "./whole.ts";
 import { MODES, milestones, type ModeProfile } from "./modes.ts";
 import { boughtInRun, ranksInRun, runTrainingBulk, runTrainingOffer, type RunTrainingOffer } from "./run-training.ts";
 import { openQuantities, type BuyQuantity } from "./buy-quantity.ts";
-import { keepUndos, loadout, percentPotionChance, potionPercent, reviveChance, statFactor } from "./loadout.ts";
+import { critRule, keepUndos, loadout, percentPotionChance, potionPercent, reviveChance, statFactor } from "./loadout.ts";
 import { researched } from "./archives.ts";
 import { chargesLeft, chargesPerRun, climbFloor, spendCharge, type Charge } from "./run-charges.ts";
 import type { MaterialId, MaterialStack } from "./materials.ts";
@@ -119,6 +119,8 @@ const FOREST_SPEED = 3;
 const LESSON_SPEED = 3;
 /** Salts the run seed for Revive's rolls, apart from the world's own. */
 const REVIVE_SALT = 0x7e51e;
+/** Seeds the critical rolls apart from the revival rolls. */
+const CRIT_SALT = 0x3c71c;
 /** Salts the run seed for Find Yellow Key's roll on each new floor. */
 const YELLOW_KEY_SALT = 0x6e11a;
 /** Mixed into the run seed to start Skip's stream of rolls. */
@@ -1082,8 +1084,15 @@ export class Game {
     const regen = this.run.outside || !this.run.player.regen ? 0
       : snap((this.run.player.regen * researched(this.save.archives, "regenPercent", 100)) / 100);
     const worn = this.worn, potionHeal = raised(researched(this.save.archives, "potionHeal", 100), worn.potionHeal);
+    const crit = this.crit;
     return { potionHeal, percentPotion: potionPercent(this.trainingNow), regen,
-      heartToll: researched(this.save.archives, "heartToll", 100), keyCost: this.keyCost, ...(worn.victoryHeal ? { victoryHeal: worn.victoryHeal } : {}) };
+      heartToll: researched(this.save.archives, "heartToll", 100), keyCost: this.keyCost, ...(worn.victoryHeal ? { victoryHeal: worn.victoryHeal } : {}), ...(crit ? { crit } : {}) };
+  }
+  /** The hero's critical strikes now (Critical, Crit % and Crit x training
+   * and research, the run's Silver ranks counting), read when a fight is
+   * taken or shown; none in the forest. */
+  get crit(): CritRule | undefined {
+    return this.run.outside ? undefined : critRule({ ...this.trainingNow, archives: this.save.archives });
   }
   /** How much of a key each key a door takes costs, in tenths of a percent
    * (Key Efficiency research): what steps pay and the door cards plan by. */
@@ -1465,10 +1474,12 @@ export class Game {
    * how it ends; a game that plays fights shows it on the board. */
   private fightStep(step: TakenStep, enemy: Enemy) {
     const p = this.run.player, outcome = step.outcome;
-    const revive = isLethal(outcome) ? this.revival(step.dest) : undefined;
-    if (!this.playsFights && !revive) return this.take(step);
-    const fight = bout(p, enemy, revive), start = performance.now(), rose = revivals(fight).length;
-    if (rose) {
+    const revive = isLethal(outcome) ? this.revival(step.dest) : undefined, crits = this.critRolls(step.dest);
+    if (!this.playsFights && !revive && !crits) return this.take(step);
+    const fight = bout(p, enemy, revive, crits), start = performance.now(), rose = revivals(fight).length;
+    // Critical strikes change how long the fight lasts, so it ends as it was played.
+    if (crits) this.restate(outcome, fight);
+    else if (rose) {
       const rules = this.stepRules;
       outcome.player.hp = regenerate(healAfterVictory(afterExtra(heroHpAfter(fight, p.hp), outcome.extraDamage, p.maxHp), p.maxHp, rules), p.maxHp, rules);
       outcome.combat = { ...outcome.combat!, survivable: outcome.player.hp > 0 };
@@ -1501,6 +1512,18 @@ export class Game {
     const floor = this.mode === "tower" ? this.run.height + 1 : 0,
       seed = this.run.seed ^ REVIVE_SALT ^ Math.imul(floor, 0x9e3779b1);
     return (strike) => tileRandom(at.x, at.y, (seed ^ Math.imul(strike + 1, 0x85ebca6b)) | 0) * 10000 < chance;
+  }
+  /** The hero's critical rolls for the fight at (x, y): a fixed number per
+   * run, floor, tile and strike, so taking the fight back and fighting it
+   * again lands the same crits, and more Crit % only ever adds some. Chance
+   * of 100% or more lands that many applications of the factor for certain,
+   * and the rest rolls for one more. */
+  private critRolls(at: { x: number; y: number }): Crits | undefined {
+    const rule = this.crit;
+    if (!rule) return undefined;
+    const floor = this.mode === "tower" ? this.run.height + 1 : 0, seed = this.run.seed ^ CRIT_SALT ^ Math.imul(floor, 0x9e3779b1);
+    const sure = guaranteedCrits(rule.chance), rest = snap(rule.chance - 100 * sure);
+    return { factor: rule.factor, applications: (strike) => sure + (tileRandom(at.x, at.y, (seed ^ Math.imul(strike + 1, 0x85ebca6b)) | 0) * 100 < rest ? 1 : 0) };
   }
   /** Takes a resolved step: in through its door or fight, then onto the tile. */
   private take(step: TakenStep, revived = 0) {
@@ -2010,15 +2033,21 @@ export class Game {
       hp = s.hp;
       shroud = snap(Math.max(0, shroud - (s.shrouded ?? 0)));
     }
-    fight.bout = resume(fight.bout, from, { player: { ...p, hp, shroud }, enemy: fight.enemy, revives: this.revival(fight.to) });
+    fight.bout = resume(fight.bout, from, { player: { ...p, hp, shroud }, enemy: fight.enemy, revives: this.revival(fight.to), crits: this.critRolls(fight.to) });
     this.revivedAt = fight.bout.strikes.filter((s) => s.revived).map((s) => fight.start + s.at);
-    const o = fight.outcome, damage = snap(fight.bout.strikes.reduce((sum, s) => (s.by === "enemy" ? sum + s.damage : sum), 0));
+    this.restate(fight.outcome, fight.bout);
+    Object.assign(fight.outcome.player, { attack: p.attack, defense: p.defense, maxHp: p.maxHp });
+  }
+  /** Makes `o`, a fight's resolved step, end as the fight `played` does: the
+   * damage taken, the HP left and whether the hero lives, and whether the
+   * first strike won. */
+  private restate(o: StepEffect, played: Bout) {
+    const p = this.run.player, damage = snap(played.strikes.reduce((sum, s) => (s.by === "enemy" ? sum + s.damage : sum), 0));
     // A badge's scale adds to (or gives back) the new fight's damage.
     if (o.scale) o.extraDamage = snap(damage * o.scale - damage);
-    const rules = this.stepRules, fought = afterExtra(heroHpAfter(fight.bout, p.hp), o.extraDamage, p.maxHp);
-    const end = regenerate(healAfterVictory(fought, p.maxHp, rules), p.maxHp, rules);
-    Object.assign(o.player, { hp: end, attack: p.attack, defense: p.defense, maxHp: p.maxHp });
-    o.combat = { ...o.combat!, damage, survivable: fought > 0 };
+    const rules = this.stepRules, fought = afterExtra(heroHpAfter(played, p.hp), o.extraDamage, p.maxHp);
+    o.player.hp = regenerate(healAfterVictory(fought, p.maxHp, rules), p.maxHp, rules);
+    o.combat = { ...o.combat!, turns: played.strikes.filter((s) => s.by === "hero").length, damage, survivable: fought > 0 };
   }
   /** Whether skill `id` can be bought now: open, below its last rank, and
    * paid for by the currency held (anything, with Dev free purchases). */

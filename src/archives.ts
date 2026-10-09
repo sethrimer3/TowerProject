@@ -61,6 +61,10 @@ export const RESEARCH_TARGETS = {
   attackPercent: { name: "ATK", base: 100, shown: percent },
   /** The percent of the DEF a run starts with that the hero has, from 100. */
   defensePercent: { name: "DEF", base: 100, shown: percent },
+  /** The percent of the Crit % training's chance that the hero has, from 100. */
+  critChancePercent: { name: "Crit %", base: 100, shown: percent },
+  /** The percent of the Crit x training's factor that the hero has, from 100. */
+  critFactorPercent: { name: "Crit x", base: 100, shown: percent },
   /** The percent of the max HP a run starts with that the hero has, from 100. */
   maxHpPercent: { name: "Max HP", base: 100, shown: percent },
   /** The percent of the shroud a run starts with that the hero has, from 100. */
@@ -304,6 +308,20 @@ export const RESEARCH = {
     categories: ["offense"],
     requires: [{ upgrade: "archives" }],
     levels: hundredLevels("attackPercent", 2),
+  },
+  critChance: {
+    name: "Crit %",
+    description: "Study the weak points the old climbers found: every strike is more likely to be a critical hit.",
+    categories: ["offense"],
+    requires: [{ upgrade: "critical" }],
+    levels: hundredLevels("critChancePercent", 2, STEEP_INCOME),
+  },
+  critFactor: {
+    name: "Crit x",
+    description: "Study how the old climbers struck true: a critical hit multiplies your ATK by more.",
+    categories: ["offense"],
+    requires: [{ upgrade: "critical" }],
+    levels: hundredLevels("critFactorPercent", 2, STEEP_INCOME),
   },
   defense: {
     name: "DEF",

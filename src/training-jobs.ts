@@ -52,10 +52,11 @@ export const trainingMs = (ranks: number, speed: number) => Math.round((training
 /** The Gold a trainer asks for the next rank of `row`, with `ranks`
  * ranks, on the row's curve (`TRAINER_GOLD_CURVES`):
  * `TRAINING_GOLD_PER_POINT` a point of its cost times the rank's number,
- * times 1 + ranks / `growth`, rounded up. */
+ * times 1 + ranks / `growth`, rounded up. A row with a `start` asks that
+ * much for a point of its first rank instead. */
 export const trainingGold = (row: { id: TrainingId; cost: number }, ranks: number) => {
-  const { growth } = TRAINER_GOLD_CURVES[row.id];
-  return Math.ceil((TRAINING_GOLD_PER_POINT * row.cost * (ranks + 1) * (growth + ranks)) / growth);
+  const { growth, start } = TRAINER_GOLD_CURVES[row.id];
+  return Math.ceil(((start ?? TRAINING_GOLD_PER_POINT) * row.cost * (ranks + 1) * (growth + ranks)) / growth);
 };
 
 /** The Gold and base training time (ms, one rank after another, before the

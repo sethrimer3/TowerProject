@@ -1,8 +1,9 @@
 import { whole } from "./whole.ts";
 import { bulkBuy, type BuyQuantity } from "./buy-quantity.ts";
 import { snap } from "./exact.ts";
+import type { CritRule } from "./combat.ts";
 import type { Mode, Save } from "./entities.ts";
-import { FIND_POTION_BASE, FIND_POTION_MAX, FLOOR_GOLD_BASE, FLOOR_GOLD_RANK, FLOOR_SILVER_BASE, FLOOR_SILVER_RANK, FIND_POTION_RANK, REVIVE_BASE, REVIVE_MAX, REVIVE_RANK, GOLD_SHOP, KILL_GOLD_RANK, SILVER_BONUS_RANK, schedulePrice, POTION_PERCENT_BASE, POTION_PERCENT_RANK, TRAINING, TRAINING_PER_LEVEL, UPGRADES, isStatRow, levelForXp, trained, trainingOpen, trainingWorth, type GoldItemId, type StatTrainingRow, type TrainingId, type TrainingRow, type UpgradeId } from "./config.ts";
+import { CRIT_CHANCE_RANK, CRIT_FACTOR_BASE, CRIT_FACTOR_RANK, FIND_POTION_BASE, FIND_POTION_MAX, FLOOR_GOLD_BASE, FLOOR_GOLD_RANK, FLOOR_SILVER_BASE, FLOOR_SILVER_RANK, FIND_POTION_RANK, REVIVE_BASE, REVIVE_MAX, REVIVE_RANK, GOLD_SHOP, KILL_GOLD_RANK, SILVER_BONUS_RANK, schedulePrice, POTION_PERCENT_BASE, POTION_PERCENT_RANK, TRAINING, TRAINING_PER_LEVEL, UPGRADES, isStatRow, levelForXp, trained, trainingOpen, trainingWorth, type GoldItemId, type StatTrainingRow, type TrainingId, type TrainingRow, type UpgradeId } from "./config.ts";
 import { wornEffects } from "./equipment/effects.ts";
 import { PIERCE_CAP } from "./equipment/balance.ts";
 import { RESEARCH, researched } from "./archives.ts";
@@ -180,6 +181,23 @@ export const reviveChance = (save: Pick<Save, "upgrades" | "training">) =>
   save.upgrades.revive ? reviveChanceAt(save.training.revive) : 0;
 const reviveChanceAt = (ranks: number) => Math.min(REVIVE_MAX, REVIVE_BASE + REVIVE_RANK * ranks);
 
+/** The chance each of the hero's strikes is critical, in percent, before
+ * research: none without Critical. */
+export const critChance = (save: Pick<Save, "upgrades" | "training">) =>
+  save.upgrades.critical ? critChanceAt(save.training.critChance) / 100 : 0;
+const critChanceAt = (ranks: number) => CRIT_CHANCE_RANK * ranks;
+/** What a critical strike multiplies the hero's ATK by, before research:
+ * ×1.2 with Critical, and ×0.1 more a Crit x rank. */
+export const critFactor = (save: Pick<Save, "upgrades" | "training">) =>
+  save.upgrades.critical ? critFactorAt(save.training.critFactor) / 100 : 1;
+const critFactorAt = (ranks: number) => CRIT_FACTOR_BASE + CRIT_FACTOR_RANK * ranks;
+/** A hero's critical strikes: what `save` gives (research included), or none. */
+export function critRule(save: Pick<Save, "upgrades" | "training" | "archives">): CritRule | undefined {
+  const chance = snap(critChance(save) * researched(save.archives, "critChancePercent", 100) / 100);
+  if (chance <= 0) return undefined;
+  return { chance, factor: snap(critFactor(save) * researched(save.archives, "critFactorPercent", 100) / 100) };
+}
+
 /** The Gold each floor climbed for the first time in a run pays, before
  * the tier's bonus and research: none without Spare Change. */
 export const floorGold = (save: Pick<Save, "upgrades" | "training">) =>
@@ -273,6 +291,8 @@ export const shownStat = (stat: StatTrainingRow["stat"], value: number) =>
 /** Any other row at `ranks`: the Gold or Silver a new floor pays, a
  * multiplier (a rank reads as the percent it adds), or a percentage. */
 function valueStep(id: TrainingId, ranks: number, maxed: boolean, count = 1) {
+  if (id === "critChance") return { unit: "%", now: critChanceAt(ranks) / 100, next: critChanceAt(maxed ? ranks : ranks + count) / 100, worth: CRIT_CHANCE_RANK / 100 };
+  if (id === "critFactor") return { unit: "×", now: critFactorAt(ranks) / 100, next: critFactorAt(maxed ? ranks : ranks + count) / 100, worth: CRIT_FACTOR_RANK };
   if (id === "floorGold") return { unit: "", now: floorGoldAt(ranks), next: floorGoldAt(ranks + count), worth: FLOOR_GOLD_RANK };
   if (id === "floorSilver") return { unit: "", now: floorSilverAt(ranks), next: floorSilverAt(ranks + count), worth: FLOOR_SILVER_RANK };
   const bonus = MULTIPLIER_ROWS.get(id);

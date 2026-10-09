@@ -946,6 +946,9 @@ canvas {
 .inspect-box .safe {
   color: #8fab79;
 }
+.inspect-box .risky {
+  color: #ffb04a;
+}
 .inspect-box .danger {
   color: #e29898 !important;
 }
