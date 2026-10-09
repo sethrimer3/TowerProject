@@ -14,12 +14,11 @@ import {
 import { planForks } from "./forks.ts";
 import { placeQuotaDoors, placeWoodenDoors } from "./door-quota.ts";
 import { MAX_REGIONS, planResources } from "./resource-planner.ts";
-import { bypassesRareKeys, keepsKey, onlyOpenKeys, towerKeyColorsOn, withoutQuotaDoors, type KeyColors } from "../key-schedule.ts";
+import { bypassesRareKeys, onlyOpenKeys, towerDoorFirstFloor, towerKeyColorsOn, withoutQuotaDoors, type KeyColors } from "../key-schedule.ts";
 import type {
   Archetype,
   Footprint,
   Gate,
-  Reward,
   StrategicGraph,
   StrategicNode,
   Strength,
@@ -110,8 +109,8 @@ export class GraphBuilder {
   /** Whether the main route's gates may be potions in place of enemies
    * (`earlyPotions`). */
   potions = false;
-  /** The tower the floor stands in, whose key supply thins pattern keys
-   * (`keepsKey`). */
+  /** The tower the floor stands in, whose key ratios the resource planner
+   * aims for (`towerKeyRatio`). */
   tower = 1;
   /** `colors`: the key colours the floor's keys and doors may take
    * (`towerKeyColorsOn`). `bypass`: a blue or red door on the way to the
@@ -129,13 +128,6 @@ export class GraphBuilder {
     if (node.parent !== null) this.nodes[node.parent].children.push(node.id);
     return node;
   }
-  /** A pattern's open rewards with each key kept by the key supply
-   * (`keepsKey`), never down to an empty package. */
-  thinKeys(rewards: Reward[]): Reward[] {
-    for (let i = rewards.length - 1; i >= 0; i--)
-      if (rewards[i]!.kind === "key" && rewards.length > 1 && !keepsKey(this.depth, this.tower, this.rng)) rewards.splice(i, 1);
-    return rewards;
-  }
   freeSlots(id: number) {
     const n = this.nodes[id];
     return MAX_CHILDREN[n.footprint] - n.children.length;
@@ -148,7 +140,7 @@ export class GraphBuilder {
       patternId: pattern.id,
       parent,
       gate: pick(open(step.gate), rng),
-      rewards: step.rewards ? this.thinKeys([...pick(open(step.rewards), rng)]) : [],
+      rewards: step.rewards ? [...pick(open(step.rewards), rng)] : [],
       guarded: step.guarded ? pick(open(step.guarded), rng).map((g) => ({ ...g })) : [],
       ringGuard: step.ringGuard,
       formation: step.formation ?? "row",
@@ -216,6 +208,10 @@ export function generateStrategicGraph(seed: number, depth: number, budgetCut = 
   const budget = Math.max(3, Math.min(MAX_REGIONS,
     GRAPH_TUNING.regionBudget(depth) + profile.extraBranches + (rng() < 0.5 ? 1 : 0) - budgetCut));
   const { mainIds, stairs } = addMainRoute(b, profile, budget);
+  // The first floor a blue or red key can appear on in this tower lays one
+  // in the start hall: a first key of the new colour.
+  for (const color of ["blue", "red"] as const)
+    if (depth + 1 === towerDoorFirstFloor(color, tier)) b.nodes[0].rewards.push({ kind: "key", color });
   addBranches(b, archetype, mainIds, budget);
   const shortcuts = planShortcuts(b, profile, mainIds, stairs);
   planForks(b, archetype);

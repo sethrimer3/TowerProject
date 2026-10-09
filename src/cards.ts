@@ -11,7 +11,7 @@ import type { DelveRun, EnemyStrength, Mode } from "./entities.ts";
 export const CARDS = {
   stairs: { name: "Stairs", text: "Move toward the stairs up (in the Delve, the highest open tile in view, above any row reached this run)." },
   heal: { name: "Heal", text: "Move toward the closest healing potion." },
-  door: { name: "Door", text: "Move toward the closest door you hold the keys for." },
+  door: { name: "Door", text: "Move toward the closest door you hold the keys for, or a Wooden Door you can break down." },
   yellowKey: { name: "Yellow Key", text: "Move toward the closest yellow key." },
   blueKey: { name: "Blue Key", text: "Move toward the closest blue key." },
   monster: { name: "Monster", text: "Move toward the closest monster." },
@@ -197,13 +197,9 @@ const never = () => false;
 const WANTS: Record<CardId, (t: Tile, at: HandAt, rules: CardRules | undefined, r: Reached) => boolean> = {
   stairs: (t) => t.kind === "stairs",
   heal: (t) => t.kind === "potion",
-  // A door that opens: the keys held pay for it (a Wooden Door with a key,
-  // never broken down), or a Heart Door.
-  door: (t, at, rules) => {
-    if (t.kind !== "door") return false;
-    const cost = doorCost(t, at.run.player, keyScale(at, rules));
-    return cost !== null && (doorRule(t).type !== "wood" || cost.length > 0);
-  },
+  // A door that opens: the keys held pay for it, a Heart Door, or a Wooden
+  // Door the hero can break down and survive.
+  door: (t, at, rules) => t.kind === "door" && doorCost(t, at.run.player, keyScale(at, rules), rules?.scale ?? 1) !== null,
   yellowKey: (t) => t.kind === "key" && t.color === "yellow",
   blueKey: (t) => t.kind === "key" && t.color === "blue",
   monster: fightable(),

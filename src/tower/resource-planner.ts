@@ -1,6 +1,6 @@
 import type { KeyColor } from "../config.ts";
 import { forkKeyDemand } from "./forks.ts";
-import { doorKeys, towerKeyKeep } from "../key-schedule.ts";
+import { doorKeys, towerDoorRate, towerKeyRatio } from "../key-schedule.ts";
 import { keyedFloor, pick, type Weighted } from "./patterns.ts";
 import type { GraphBuilder } from "./strategic-graph.ts";
 import type { Gate, Reward, StrategicGraph, StrategicNode, Strength } from "./types.ts";
@@ -20,14 +20,6 @@ import type { Gate, Reward, StrategicGraph, StrategicNode, Strength } from "./ty
 export const MAX_REGIONS = 13;
 
 export const COHERENCE_TUNING = {
-  /** Chance to add a missing key source for a door on the main route. */
-  main: {
-    yellow: (d: number) => Math.max(0.6, 0.93 - d * 0.012),
-    blue: (d: number) => Math.max(0.5, 0.8 - d * 0.01),
-    red: (d: number) => Math.max(0.4, 0.65 - d * 0.005),
-  } as Record<KeyColor, (d: number) => number>,
-  /** Chance for an optional (branch/shortcut) door. */
-  optional: { yellow: 0.55, blue: 0.4, red: 0.3 } as Record<KeyColor, number>,
   /** When no key is added for an optional door, chance to make what it
    * protects more valuable instead ("worth saving a key for"). */
   sweetenChance: 0.6,
@@ -102,6 +94,7 @@ type Plan = { graph: StrategicGraph; b: GraphBuilder; rng: () => number };
 
 export function planResources(graph: StrategicGraph, b: GraphBuilder, rng: () => number) {
   const plan: Plan = { graph, b, rng };
+  thinToAim(plan);
   // Rarest first: adding a blue key "behind a yellow door" creates new
   // yellow demand that the yellow pass then sees.
   for (const color of ["red", "blue", "yellow"] as KeyColor[]) {
@@ -125,15 +118,47 @@ function keyEveryDoor(nodes: StrategicNode[]) {
 const thinRedVault = (n: StrategicNode) =>
   lockedWith(n, "red") && n.route === "optional" && n.rewards.length + n.guarded.length < 3;
 
-/** When the keys reachable without `door` fall short of the `demand` for
- * its colour so far, rolls to add a source, else sweetens or notes it. */
+/** The most key sources one door rolls for. */
+const MOST_SOURCES = 3;
+
+/** Thins the floor's pattern keys of each colour toward its key ratio
+ * (`towerKeyRatio`): each is kept at the chance that leaves the ratio's
+ * worth for the floor's locks of that colour (for blue and red, at least
+ * the scheduled doors' worth, so keys stock up on floors without their
+ * doors). The start hall's keys stay, and a room whose only item is a key
+ * thinned away holds a potion instead, so no room is left empty. */
+function thinToAim({ graph, b, rng }: Plan) {
+  const doors = collectDoors(graph);
+  for (const color of ["red", "blue", "yellow"] as KeyColor[]) {
+    const locks = doors.filter((d) => d.color === color).length;
+    const expected = color === "yellow" ? locks : Math.max(locks, towerDoorRate(color, graph.depth, b.tower));
+    const rooms = graph.nodes.slice(1);
+    const keys = rooms.reduce((s, n) => s + keysIn({ ...n, guarded: [] }, color), 0);
+    const keep = keys ? (expected * towerKeyRatio(color, graph.depth, b.tower)) / 10000 / keys : 1;
+    if (keep >= 1) continue;
+    for (const n of rooms)
+      for (let i = n.rewards.length - 1; i >= 0; i--) {
+        const r = n.rewards[i]!;
+        if (r.kind !== "key" || r.color !== color || rng() < keep) continue;
+        if (n.rewards.length + n.guarded.length > 1) n.rewards.splice(i, 1);
+        else n.rewards[i] = { kind: "potion" };
+      }
+  }
+}
+
+/** Rolls to add key sources while the keys reachable without `door` fall
+ * short of the key ratio's worth for the `demand` of its colour so far
+ * (`towerKeyRatio`, half as fast to fall on the way to the stairs), each
+ * at the chance of how short they are (a surplus above 1 rolled for at its
+ * fraction); if still short of the demand itself, sweetens or notes it. */
 function coverDoor(plan: Plan, door: Door, demand: number) {
   const { graph, rng } = plan;
+  const ratio = towerKeyRatio(door.color, graph.depth, plan.b.tower, door.route === "main") / 10000;
+  for (let tries = 0; tries < MOST_SOURCES; tries++) {
+    const missing = demand * ratio - supply(graph.nodes, door);
+    if (missing <= 0 || !(rng() < Math.min(1, missing) && addKeySource(plan, door))) break;
+  }
   if (supply(graph.nodes, door) >= demand) return;
-  // The key supply thins the chance: on the way to the stairs half as fast.
-  const chance = (door.route === "main" ? COHERENCE_TUNING.main[door.color](graph.depth) : COHERENCE_TUNING.optional[door.color])
-    * towerKeyKeep(graph.depth, plan.b.tower, door.route === "main");
-  if (rng() < chance && addKeySource(plan, door)) return;
   // Floors 2 to 5 always pay for the main route's doors.
   if (door.route === "main" && keyedFloor(graph.depth)) {
     keyInOpen(graph.nodes, keySite(graph.nodes, plan.b, door), rng);

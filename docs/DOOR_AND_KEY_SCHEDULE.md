@@ -66,7 +66,7 @@ Today blue, red and Heart Doors come from about six weighted tables (main gate, 
 
      The region's fallback single gate becomes the quota door itself, so a fork that doesn't fit the floor still leaves the door standing. In Tower I a lone blue or red gate may not stand on the way to the stairs, so there this way is used only on branches.
 
-     A quota fork holds only one quota door, so the fallback gate keeps the count whether or not the fork fits. *blueOrRedDoor* and *twoBlueDoorsOrRedDoor* hold both a blue and a red door, so they're no longer built. About one quota fork in five fits the floor; the rest stand as their single door.
+     On the way to the stairs, a quota fork holds only one quota door, so the core path stays on schedule whether or not the fork fits. On a branch, a fork may hold others too (*blueOrRedDoor*, *twoBlueDoorsOrRedDoor*): only the door it places counts, and the others are extra doors, a chance for a well-prepared hero. *redDoorOrElite* (a red door, or an elite enemy) is a fork built around a red door alone; the Delve doesn't build it yet. About one quota fork in five fits the floor; the rest stand as their single door.
 
    A door that fits nowhere is dropped, and the census counts it (section 5). A door in a fork counts fully toward the quota. The census reports forked and unforked doors separately, so we can see whether forks take too much of the quota, given that a forked door can be walked around.
 4. **Wooden doors:** every yellow lock left (gates, the stairs door, shortcuts, fork lanes, and a fork lane that offers a Wooden Door of its own) rolls the wooden share (`placeWoodenDoors`), so the share decides every Wooden Door in the Tower.
@@ -88,7 +88,7 @@ A wooden door opens with any one key: the cheapest held, yellow before blue befo
 | Effective / Dampen badges | Scale the HP cost as they scale a fight's damage, and the key cost as now. |
 | Undo | One step, as for any door. |
 | Shown | Inspect: *Wooden Door*, *Durability 38*, and without a key *Break: HP 100 → 62* (or that the hero is too weak to break it). Damage Visual shows the HP cost on the door while the hero holds no key, red when it would fell the hero. Breaking it raises the HP lost as a heart, as a Heart Door's toll does, with no fight animation; like that toll, it never costs an area's mastery. |
-| Cards | WOODEN DOOR (was STEEL DOOR) heads for a Wooden Door the hero holds a key for or can break down and survive. DOOR heads for one only with a key: it never breaks one down. |
+| Cards | DOOR and WOODEN DOOR (was STEEL DOOR) head for a Wooden Door the hero holds a key for or can break down and survive, so the starting hand breaks one down when no key is held. |
 
 Possible later change (to decide after the census): `HP cost = max(0, durability − ATK)`, so a strong hero breaks it for free, with DEF still not helping.
 
@@ -105,22 +105,36 @@ What changes in the code:
 
 ## 4. Key supply
 
-Keys get scarcer per door as the floors and towers rise. Progress upgrades are meant to close the gap.
+Keys get scarcer per door as the floors and towers rise, each colour on its own curve. Progress upgrades are meant to close the gap.
 
-`supply(t, f) = max(S_min, S₀ − a·(t−1) − b·⌊(f−1)/10⌋)` with S₀ = 1.5, a = 0.1, b = 0.005, S_min = 0.4 to start.
+Each colour aims for a number of **keys per lock**, counted from its own first floor (yellow's floor 1; blue's and red's are their doors' first floors), so each colour arrives with a surplus and tightens from there (`TOWER_KEY_RATIO` and `towerKeyRatio` in `src/key-schedule.ts`, in ten-thousandths so every engine rolls alike):
 
-It is applied as a share kept, `keep = supply / S₀` (1 on Tower I's first ten floors, down to 0.27 at the lowest: floor 2201 in Tower I, 601 in Tower IX), at three points (`TOWER_KEY_SUPPLY`, `keepsKey` and `towerKeyKeep` in `src/key-schedule.ts`, in ten-thousandths so every engine rolls alike):
-- **Pattern key rewards:** each key in a pattern's package stays with chance `keep`. Packages thin out rather than vanish: a package's last item is never removed.
-- **Resource planner:** its chance to add a key for a door with none is multiplied by `keep` on branches. On the way to the stairs it uses a gentler curve, half the slopes (`a/2`, `b/2`), so the main route is the last place to run short.
-- **Unguarded loot:** its keys are kept with chance `keep`. When one isn't kept, the roll gives nothing.
+| Colour | On its first floor | Falls | Lowest |
+|---|---|---|---|
+| Yellow | 1.6 | 0.005 every 10 floors, 0.1 each later tower | 0.5 |
+| Blue | 1.5 | the same | 0.4 |
+| Red | 1.3 | the same | 0.3 |
 
-Floors 2–5's keys behind every door aren't thinned, nor are the keys the planner adds as sources (their chance is what it thins). Because the curve scales today's generator, S₀ isn't an actual ratio of keys to locks. The census reports the real ratio, and the four numbers get tuned from it.
+On the way to the stairs, each falls half as fast, so the main route is the last place to run short.
 
-First measurement (`--towers 1,5,9 --floors 1-1000 --band 200`, keys per lock, all colours): Tower I falls from 1.50 (floors 1–200) to 0.92 (801–1000), Tower V from 1.30 to 0.72, Tower IX from 1.02 to 0.63. By colour, at floors 801–1000 of Tower I: yellow 1.40, blue 0.49, red 0.19. Two things the single curve doesn't address:
-- **Blue keys outnumber blue doors early** (2.75 keys per lock on Tower I's floors 1–200), because ordinary patterns give blue keys freely while blue doors come only by quota.
-- **Red keys are scarce everywhere** (0.1–0.3 per lock), since red keys come almost only from the planner's sources and red trade rooms.
+Nothing places keys by count. The resource planner works toward each aim by chance:
+- **Thinning** (`thinToAim`): each pattern key of a colour is kept at the chance that leaves the aim's worth of keys for the floor's locks of that colour. For blue and red, it plans for at least the schedule's doors a floor, so keys stock up on floors without their doors. The start hall's keys stay. A room whose only item is a thinned key holds a potion instead, so no room is left empty.
+- **Coverage** (`coverDoor`): for each door, while the keys reachable without it fall short of the aim's worth for the doors of its colour so far, the planner rolls to add a key source, at the chance of how short it is. Below 1 key per lock, that leaves some doors without a key on purpose. Above 1, the surplus is rolled for at its fraction: at 1.3, a 30% chance of a second key.
+- **Unguarded loot:** a key there is kept at the colour's aim while it is below 1.
 
-Both could be handled by a supply per colour, or by placing blue and red keys by quota alongside their doors.
+**A key at the entrance:** the first floor a blue or red key can appear on in a tower lays one in the start hall: blue on Tower I's floor 51 (Tower IX's 11), red on floor 101 (IX's 21).
+
+Floors 2–5's keys behind every door aren't thinned. The census prints each colour's aim beside its measured keys per lock (`Y aim`, `B aim`, `R aim`).
+
+First measurement (`--towers 1,5,9 --floors 1-1200 --band 200 --seeds 10 --stride 3`), measured against aim:
+
+| Floors | Tower I: yellow, blue, red | Tower V | Tower IX |
+|---|---|---|---|
+| 1–200 | 1.67/1.55, 1.55/1.46, 1.15/1.28 | 1.33/1.15, 1.19/1.06, 0.91/0.87 | 0.97/0.75, 0.80/0.65, 0.39/0.46 |
+| 401–600 | 1.56/1.35, 1.11/1.28, 0.86/1.10 | 1.16/0.95, 0.82/0.87, 0.55/0.68 | 0.74/0.55, 0.52/0.46, 0.29/0.30 |
+| 801–1000 | 1.42/1.15, 0.81/1.08, 0.67/0.90 | 1.02/0.75, 0.61/0.67, 0.45/0.48 | 0.72/0.50, 0.42/0.40, 0.30/0.30 |
+
+Yellow runs 0.1–0.3 above its aim: keys in guarded niches and keyed floors' keys aren't thinned. Blue and red fall up to 0.25 under theirs at depth, where the planner can't always find room for a key source. Thinned keys made potions commoner: about 6 a floor, from 5.
 
 What helps the player keep up:
 - **Already in the game:** Key Efficiency, Find Yellow Key, Key Siphon, the Effective badge, breaking wooden doors.

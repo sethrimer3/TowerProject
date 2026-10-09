@@ -110,6 +110,9 @@ export type ForkPattern = {
   /** A door with a dearer door beside it for a player who lacks the
    * cheaper key: priced by its cheapest lane, not by all of them. */
   fallback?: boolean;
+  /** Only the Tower builds it (the Delve keeps its forks until it adopts
+   * the Tower's door schedule). */
+  towerOnly?: true;
 };
 
 const Y: Gate = { kind: "door", color: "yellow" };
@@ -205,6 +208,11 @@ export const FORK_PATTERNS: ForkPattern[] = [
     id: "keysBlueOrStrong", weight: 2, minimumDepth: 3, tags: ["doorGate", "combatGate", "resourceExchange"],
     lanes: [one([Y, Y]), one([B]), one([foe("strong")])],
   },
+  // A red key, or the hardest fight on the floor.
+  {
+    id: "redDoorOrElite", weight: 1.5, minimumDepth: 10, tags: ["doorGate", "combatGate"], towerOnly: true,
+    lanes: [one([R]), one([foe("elite")])],
+  },
 ];
 
 /** The deepest lane decides how deep a fork's crossing must be. */
@@ -290,8 +298,8 @@ const withoutLocks = (f: Fork) => !f.lanes.some((lane) => lane.some(isLock));
  * equivalent floor), best first, the rest shallower and narrower first.
  * `fits` limits them to what the caller has room for and allows there,
  * Heart Doors included (`heartDoorsOn`). */
-export function forksWorth(v: number, depth: number, archetype: Archetype, rng: () => number, fits: (f: Fork) => boolean = () => true): Fork[] {
-  let options = FORK_PATTERNS.map((p) => ({ p, w: forkWeight(p, depth, archetype) }))
+export function forksWorth(v: number, depth: number, archetype: Archetype, rng: () => number, fits: (f: Fork) => boolean = () => true, tower = true): Fork[] {
+  let options = FORK_PATTERNS.filter((p) => tower || !p.towerOnly).map((p) => ({ p, w: forkWeight(p, depth, archetype) }))
     .filter(({ w }) => w > 0)
     .map(({ p, w }) => ({ w, v: build(p, rng) }))
     .filter(({ v: fork }) => fits(fork) && forkValue(fork) <= v * FORK_TUNING.valueBand && forkValue(fork) * FORK_TUNING.valueBand >= v);

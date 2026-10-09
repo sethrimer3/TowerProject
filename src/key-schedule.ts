@@ -120,26 +120,39 @@ export function towerWoodPercent(depth: number, tower: number) {
   return Math.max(0, s.start - s.lessEachTower * (tower - 1) - Math.floor(depth / s.everyFloors));
 }
 
-/** The Tower's key supply (docs/DOOR_AND_KEY_SCHEDULE.md, section 4), in
- * ten-thousandths, so every engine rolls the same: `start` on Tower I's
- * first floors, `lessEachTower` less each later tower and `lessEvery10` less
- * every ten floors, never below `min`. Keys on the way to the stairs fall
- * half as fast (`towerKeySupply`'s `main`). Keys are kept by supply over
- * `start` (`towerKeyKeep`): all of them on Tower I's first floors. */
-export const TOWER_KEY_SUPPLY = { start: 15000, lessEachTower: 1000, lessEvery10: 50, min: 4000 };
-export function towerKeySupply(depth: number, tower: number, main = false) {
-  const s = TOWER_KEY_SUPPLY, fall = s.lessEachTower * (tower - 1) + s.lessEvery10 * Math.floor(depth / 10);
-  return Math.max(s.min, s.start - (main ? fall / 2 : fall));
+/** The Tower's key supply (docs/DOOR_AND_KEY_SCHEDULE.md, section 4): for
+ * each key colour, the keys per lock a floor aims for, in ten-thousandths so
+ * every engine rolls the same. Each colour starts at `start` on its first
+ * floor (yellow on floor 1, blue and red with their doors), with a surplus,
+ * and falls `lessEachTower` each later tower and `lessEvery10` every ten
+ * floors after its first, never below `min`; on the way to the stairs it
+ * falls half as fast. The resource planner works toward it by chance
+ * (`thinToAim`, `coverDoor` in tower/resource-planner.ts): each floor keeps
+ * its pattern keys of a colour at the chance that leaves the ratio's worth
+ * for its doors, and rolls to add keys while short, at the chance of how
+ * short it is. */
+export const TOWER_KEY_RATIO = {
+  start: { yellow: 16000, blue: 15000, red: 13000 } as Record<KeyColor, number>,
+  min: { yellow: 5000, blue: 4000, red: 3000 } as Record<KeyColor, number>,
+  lessEachTower: 1000,
+  lessEvery10: 50,
+};
+/** The first floor (counting from 1) keys of `color` appear on in tower `tower`. */
+export const keyFirstFloor = (color: KeyColor, tower: number) => (color === "yellow" ? 1 : towerDoorFirstFloor(color, tower));
+/** The keys per lock of `color` floor `depth` (0 is the first) of tower
+ * `tower` aims for, in ten-thousandths. */
+export function towerKeyRatio(color: KeyColor, depth: number, tower: number, main = false) {
+  const s = TOWER_KEY_RATIO, since = Math.max(0, depth + 1 - keyFirstFloor(color, tower));
+  const fall = s.lessEachTower * (tower - 1) + s.lessEvery10 * Math.floor(since / 10);
+  return Math.max(s.min[color], s.start[color] - (main ? fall / 2 : fall));
 }
-/** Whether to keep one key on floor `depth` of tower `tower`, drawing from
- * `rng` only when the supply has fallen (no draw while every key is kept). */
-export function keepsKey(depth: number, tower: number, rng: () => number, main = false) {
-  const supply = towerKeySupply(depth, tower, main);
-  return supply >= TOWER_KEY_SUPPLY.start || rng() * TOWER_KEY_SUPPLY.start < supply;
+/** Whether to keep one unguarded key of `color` on floor `depth` of tower
+ * `tower`: always while the colour's ratio is 1 or more, else at the
+ * ratio's chance, drawing from `rng` only then. */
+export function keepsKey(color: KeyColor, depth: number, tower: number, rng: () => number) {
+  const ratio = towerKeyRatio(color, depth, tower);
+  return ratio >= 10000 || rng() * 10000 < ratio;
 }
-/** The share of keys kept on floor `depth` of tower `tower`, 1 at most. */
-export const towerKeyKeep = (depth: number, tower: number, main = false) =>
-  Math.min(1, towerKeySupply(depth, tower, main) / TOWER_KEY_SUPPLY.start);
 
 /** Whether `thing` (a gate, pattern step, lane or fork, however deeply
  * nested) holds no blue, red or Heart Door: what every Tower table but the

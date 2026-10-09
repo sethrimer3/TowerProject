@@ -11,7 +11,8 @@ test("a floor's counts match its tiles, and forked doors are among its doors", (
     const tiles = [...generated.cells.values()];
     const keyed = (color: string) => tiles.filter((t) => t.door?.type === "keys" && t.door.mode === "all" && t.door.keys.includes(color as "red")).length;
     for (const color of ["yellow", "blue", "red"]) assert.equal(c[`door:${color}`] ?? 0, keyed(color), `${color} doors on floor ${floor + 1}`);
-    const many = tiles.filter((t) => t.door?.type === "keys" && t.door.keys.length > 1 && t.door.mode === "all").length;
+    // Combined: more than one key, or a key and a Heart Door's drain.
+    const many = tiles.filter((t) => t.door?.type === "keys" && t.door.mode === "all" && t.door.keys.length + (t.door.heart ? 1 : 0) > 1).length;
     assert.equal(c["door:combined"] ?? 0, many);
     combined += many;
     assert.equal(c.potion ?? 0, tiles.filter((t) => t.kind === "potion").length);

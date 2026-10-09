@@ -114,7 +114,7 @@ test("YELLOW DOOR heads for a single yellow door, while a yellow key is held", (
   assert.deepEqual(target(g, "heartDoor"), [3, 1]);
 });
 
-test("WOODEN DOOR heads for a Wooden Door a key opens or the hero can break down; DOOR only with a key", () => {
+test("WOODEN DOOR heads for a Wooden Door a key opens or the hero can break down, and so does DOOR", () => {
   const wood: Tile = { kind: "door", door: { type: "wood", durability: 30 } };
   const g = floor({ 4: { kind: "door", color: "yellow" }, 9: wood, 3: { kind: "door", door: { type: "fullHp" } } });
   g.run.player.keys.yellow = 0;
@@ -122,7 +122,12 @@ test("WOODEN DOOR heads for a Wooden Door a key opens or the hero can break down
   assert.equal(target(g, "woodenDoor"), null, "no key, and breaking it would fell the hero");
   g.run.player.hp = 31;
   assert.deepEqual(target(g, "woodenDoor"), [9, 1], "it can be broken down; not the yellow door or the Heart Door");
-  assert.deepEqual(target(g, "door"), [3, 1], "DOOR never breaks one down");
+  const wooden = floor({ 9: wood });
+  wooden.run.player.keys.yellow = 0;
+  wooden.run.player.hp = 31;
+  assert.deepEqual(target(wooden, "door"), [9, 1], "DOOR breaks a Wooden Door down when no key is held");
+  wooden.run.player.hp = 30;
+  assert.equal(target(wooden, "door"), null, "but never one that would fell the hero");
   g.run.player.hp = 5;
   g.run.player.keys.red = 1;
   assert.deepEqual(target(g, "woodenDoor"), [9, 1], "any one key opens it");

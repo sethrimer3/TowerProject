@@ -1,5 +1,5 @@
 import type { KeyColor } from "../config.ts";
-import { QUOTA_DOORS, towerDoorRate, towerWoodPercent } from "../key-schedule.ts";
+import { QUOTA_DOORS, keyFirstFloor, towerDoorRate, towerKeyRatio, towerWoodPercent } from "../key-schedule.ts";
 import { doorRule } from "../doors.ts";
 import type { Tile } from "../entities.ts";
 import { generateTowerFloor, type TowerFloor } from "./index.ts";
@@ -73,6 +73,8 @@ export type CensusOptions = {
 /** One tower's band of floors: the floors counted and their average counts. */
 export type CensusBand = { tower: number; from: number; to: number; floors: number; avg: Counts };
 
+const COLORS: KeyColor[] = ["yellow", "blue", "red"];
+
 /** The seeds the census (and the rest of the report) samples. */
 export const censusSeed = (i: number) => i * 7919 + 13;
 
@@ -90,15 +92,21 @@ export function census(o: CensusOptions): CensusBand[] {
           for (const [k, n] of Object.entries(floorCounts(generateTowerFloor(censusSeed(s), f - 1, tower)))) add(sum, k, n);
           for (const door of QUOTA_DOORS) add(sum, `target:${door}`, towerDoorRate(door, f - 1, tower));
           add(sum, "target:wood", towerWoodPercent(f - 1, tower));
+          // Each open key colour's aimed keys per lock (off the way to the
+          // stairs), averaged over the floors it is open on.
+          for (const color of COLORS)
+            if (f >= keyFirstFloor(color, tower)) {
+              add(sum, `aim:${color}`, towerKeyRatio(color, f - 1, tower) / 10000);
+              add(sum, `open:${color}`);
+            }
         }
       const avg: Counts = {};
       for (const [k, n] of Object.entries(sum)) avg[k] = n / floors;
+      for (const color of COLORS) if (sum[`open:${color}`]) avg[`aim:${color}`] = sum[`aim:${color}`]! / sum[`open:${color}`]!;
       bands.push({ tower, from, to, floors, avg });
     }
   return bands;
 }
-
-const COLORS: KeyColor[] = ["yellow", "blue", "red"];
 
 /** Keys found per lock of each colour, and overall. A wooden or steel door
  * counts as a yellow lock, since it eats the cheapest key first. */
@@ -119,6 +127,8 @@ export const woodShare = (c: Counts) => {
 
 type Column = [heading: string, value: (c: Counts) => number, digits?: number];
 const count = (k: string): Column[1] => (c) => c[k] ?? 0;
+/** A colour's aimed keys per lock, or `-` while it isn't open. */
+const aim = (color: KeyColor): Column[1] => (c) => c[`aim:${color}`] ?? NaN;
 const alone = (kind: string): Column[1] => (c) => (c[`door:${kind}`] ?? 0) - (c[`forked:${kind}`] ?? 0);
 
 const DOOR_COLUMNS: Column[] = [
@@ -128,8 +138,8 @@ const DOOR_COLUMNS: Column[] = [
   ["H want", count("target:heart")], ["H alone", alone("heart")], ["H fork", count("forked:heart")],
   ["dropped", (c) => QUOTA_DOORS.reduce((s, d) => s + (c[`dropped:${d}`] ?? 0), 0)],
   ["Y key", count("key:yellow")], ["B key", count("key:blue")], ["R key", count("key:red")],
-  ["Y/lock", (c) => keysPerLock(c).yellow], ["B/lock", (c) => keysPerLock(c).blue],
-  ["R/lock", (c) => keysPerLock(c).red], ["all/lock", (c) => keysPerLock(c).all],
+  ["Y/lock", (c) => keysPerLock(c).yellow], ["Y aim", aim("yellow")], ["B/lock", (c) => keysPerLock(c).blue], ["B aim", aim("blue")],
+  ["R/lock", (c) => keysPerLock(c).red], ["R aim", aim("red")], ["all/lock", (c) => keysPerLock(c).all],
 ];
 const CONTENT_COLUMNS: Column[] = [
   ["weak", count("enemy:weak")], ["normal", count("enemy:normal")], ["strong", count("enemy:strong")],

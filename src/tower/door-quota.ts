@@ -17,9 +17,11 @@ import type { Archetype, Fork, Gate, StrategicGraph, StrategicNode } from "./typ
  *             Heart Door, a blue, red or combined door drains HP to 1 too;
  *   pattern   a branch pattern built round that door (blue door → yellow
  *             keys, key chain, temptation…);
- *   fork      a fork pattern holding it and no other quota door, in place
- *             of a single gate, whose fallback gate is the door itself, so
- *             it stands even when the fork doesn't fit the floor.
+ *   fork      a fork pattern holding it, in place of a single gate, whose
+ *             fallback gate is the door itself, so it stands even when the
+ *             fork doesn't fit the floor; on the way to the stairs a fork
+ *             holding no other quota door, on a branch any (the others are
+ *             extra doors, not counted).
  *
  * No other table offers these doors (`withoutQuotaDoors`). A door that fits
  * nowhere is dropped and recorded. In the first tower (`bypass`) a blue or
@@ -166,12 +168,15 @@ function addFork(b: GraphBuilder, door: QuotaDoor, archetype: Archetype, left: T
   const options = b.nodes.filter((n) => !n.forks && paidGate(n.gate) && mayFork(b, n) && routeAllows(b, n, door));
   if (!options.length) return null;
   const node = options[Math.floor(b.rng() * options.length)];
-  const fits = forkFits(b, node);
+  const fits = forkFits(b, node), branch = node.route !== "main";
+  // On a branch, off the way to the stairs, a fork may hold more quota
+  // doors than the one it places, extra doors for a hero ready for them;
+  // only the one counts, as the fallback gate leaves only it standing.
   const [fork] = forksWorth(stepValue(node.gate), b.depth, archetype, b.rng,
-    (f: Fork) => fits(f) && onlyOne(quotaDoorsIn(f.lanes), door));
+    (f: Fork) => fits(f) && (branch ? quotaDoorsIn(f.lanes)[door] > 0 : onlyOne(quotaDoorsIn(f.lanes), door)));
   if (!fork) return null;
   node.forks = [fork];
   // The embedder falls back to the single gate: the door itself.
   node.gate = { ...DOOR[door] };
-  return quotaDoorsIn(fork.lanes);
+  return quotaDoorsIn(DOOR[door]);
 }

@@ -110,8 +110,8 @@ test("built forks lead into their region by every lane, and never into a region 
   assert.ok(lanesSeen > 0);
   // A quota fork holds one quota door, so its fallback gate keeps the count:
   // the forks holding two kinds are never built.
-  // The door stage plans the forks holding a quota door, and only one kind
-  // (so its fallback gate keeps the count); fewer of them fit the floor.
-  const kinds = (p: (typeof FORK_PATTERNS)[number]) => Object.values(quotaDoorsIn(p.lanes)).filter(Boolean).length;
-  for (const p of FORK_PATTERNS) assert.equal((kinds(p) ? planned : built).has(p.id), kinds(p) <= 1, `pattern ${p.id}`);
+  // The door stage plans the forks holding a quota door (on a branch, ones
+  // holding two kinds too); fewer of them fit the floor.
+  const quota = (p: (typeof FORK_PATTERNS)[number]) => Object.values(quotaDoorsIn(p.lanes)).some(Boolean);
+  for (const p of FORK_PATTERNS) assert.ok((quota(p) ? planned : built).has(p.id), `pattern ${p.id}`);
 });

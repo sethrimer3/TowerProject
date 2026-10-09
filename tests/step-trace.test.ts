@@ -109,9 +109,9 @@ function trace(mode: Mode, seed: number, smartAi: boolean): string[] {
   return out;
 }
 
-// Tower 5 and 6 reach the stairs; few seeded walks do, so keep two.
+// Tower 9 and 16 reach the stairs; few seeded walks do, so keep two.
 const SCENARIOS: [Mode, number, boolean][] = [
-  ["tower", 1, false], ["tower", 2, true], ["tower", 7, false], ["tower", 4, true], ["tower", 5, false], ["tower", 6, true],
+  ["tower", 1, false], ["tower", 2, true], ["tower", 7, false], ["tower", 4, true], ["tower", 9, false], ["tower", 16, true],
   ["delve", 5, false], ["delve", 6, true], ["delve", 7, false], ["delve", 8, true],
 ];
 

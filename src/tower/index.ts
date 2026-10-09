@@ -1,4 +1,5 @@
 import { TOWER_SECTION, TOWER_START_X, UNGUARDED_LOOT_CHANCE } from "../config.ts";
+import type { KeyColor } from "../config.ts";
 import { point, type Tile } from "../entities.ts";
 import { random } from "../random.ts";
 import { reachable } from "../board.ts";
@@ -97,7 +98,7 @@ export function generateTowerFloor(seed: number, room: number, tier = 1): TowerF
     const blockers = new Set([...cells].filter(([, t]) => t.kind === "enemy").map(([k]) => k));
     for (const k of reachable(cells, point(TOWER_START_X, 0), blockers))
       if (cells.get(k)?.kind === "floor" && k !== point(...ENTRY)) {
-        const loot = rollUnguardedLoot(rng, colors, (r) => keepsKey(room, tier, r));
+        const loot = rollUnguardedLoot(rng, colors, (color, r) => keepsKey(color, room, tier, r));
         if (loot) cells.set(k, loot);
       }
     if (geometryProblems(cells).length) continue;
@@ -110,13 +111,13 @@ export function generateTowerFloor(seed: number, room: number, tier = 1): TowerF
 /** The rare loot on one unguarded floor tile, or null (most rolls). */
 /** A key of a colour `colors` closes comes as a yellow key; a key the key
  * supply doesn't keep (`keep`, drawing from `rng`) leaves nothing. */
-export function rollUnguardedLoot(rng: () => number, colors: KeyColors = ALL_KEY_COLORS, keep: (rng: () => number) => boolean = () => true): Tile | null {
+export function rollUnguardedLoot(rng: () => number, colors: KeyColors = ALL_KEY_COLORS, keep: (color: KeyColor, rng: () => number) => boolean = () => true): Tile | null {
   if (rng() >= UNGUARDED_LOOT_CHANCE) return null;
   const choice = Math.floor(rng() * 6);
   if (choice < 3) {
-    if (!keep(rng)) return null;
-    const color = (["yellow", "blue", "red"] as const)[choice];
-    return { kind: "key", color: colors[color] ? color : "yellow" };
+    const rolled = (["yellow", "blue", "red"] as const)[choice];
+    const color = colors[rolled] ? rolled : "yellow";
+    return keep(color, rng) ? { kind: "key", color } : null;
   }
   return { kind: (["attack", "defense", "treasure"] as const)[choice - 3] };
 }

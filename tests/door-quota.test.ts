@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { QUOTA_DOORS, doorKeys, towerDoorFirstFloor, towerWoodPercent, towerDoorRate, type QuotaDoor } from "../src/key-schedule.ts";
+import { QUOTA_DOORS, doorKeys, quotaDoorsIn, towerDoorFirstFloor, towerWoodPercent, towerDoorRate, type QuotaDoor } from "../src/key-schedule.ts";
 import { rollQuota } from "../src/tower/door-quota.ts";
 import { generateTowerFloor } from "../src/tower/index.ts";
 import { generateStrategicGraph } from "../src/tower/strategic-graph.ts";
@@ -44,9 +44,17 @@ test("every quota door the stage places stands on the floor, and the quota track
     for (let seed = 1; seed <= seeds; seed++) {
       const { cells, embedding } = generateTowerFloor(seed * 7919, room, tower);
       const counts = floorCounts({ cells, embedding });
+      // A fork the stage built on a branch may hold extra quota doors beside
+      // the one it placed (its fallback gate, the door it counts).
+      const extra = { blue: 0, red: 0, heart: 0 };
+      for (const n of embedding.graph.nodes)
+        if (n.forks && n.route !== "main") {
+          const lanes = quotaDoorsIn(n.forks[0].lanes), gate = quotaDoorsIn(n.gate);
+          for (const door of QUOTA_DOORS) extra[door] += lanes[door] - gate[door];
+        }
       for (const door of QUOTA_DOORS) {
         const q = embedding.graph.doorQuota?.[door];
-        assert.equal(counts[`door:${door}`] ?? 0, q ? q.rolled - q.dropped : 0, `Tower ${tower} seed ${seed}: ${door} doors`);
+        assert.equal(counts[`door:${door}`] ?? 0, (q ? q.rolled - q.dropped : 0) + extra[door], `Tower ${tower} seed ${seed}: ${door} doors`);
       }
       const plan = generateStrategicGraph(seed * 7919, room, 0, tower).doorQuota ?? {};
       for (const door of QUOTA_DOORS) rolled[door] += plan[door]?.rolled ?? 0;
