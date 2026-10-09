@@ -1,11 +1,29 @@
 /** Tower generation report: prints annotated floors plus aggregate quality
  * metrics across many seeds/depths.
  *   npm run tower:report                 → aggregate over 300 floors + 3 samples
- *   npm run tower:report -- 42 7         → one floor (seed 42, depth 7) in full */
+ *   npm run tower:report -- 42 7         → one floor (seed 42, depth 7) in full
+ *   npm run tower:report -- --census [--towers 1,2,9] [--floors 1-200] [--band 10] [--seeds 20] [--stride 1]
+ *                                        → doors, keys, enemies and items per floor by tower and band */
 import { towerFloorReport } from "../src/tower/index.ts";
+import { census, formatCensus } from "../src/tower/census.ts";
 
-const [seedArg, depthArg] = process.argv.slice(2).map(Number);
-if (Number.isFinite(seedArg) && Number.isFinite(depthArg)) {
+const args = process.argv.slice(2);
+/** The value after `--name`, or `fallback`. */
+const option = (name: string, fallback: string) => {
+  const i = args.indexOf(`--${name}`);
+  return i >= 0 && args[i + 1] !== undefined ? args[i + 1] : fallback;
+};
+const [seedArg, depthArg] = args.map(Number);
+if (args.includes("--census")) {
+  const [from, to] = option("floors", "1-200").split("-").map(Number);
+  console.log(formatCensus(census({
+    towers: option("towers", "1").split(",").map(Number),
+    from, to: to ?? from,
+    band: Number(option("band", "10")),
+    seeds: Number(option("seeds", "20")),
+    stride: Number(option("stride", "1")),
+  })));
+} else if (Number.isFinite(seedArg) && Number.isFinite(depthArg)) {
   console.log(towerFloorReport(seedArg, depthArg).text);
 } else {
   const depths = [0, 1, 3, 6, 10, 15, 25, 40, 60, 90];
