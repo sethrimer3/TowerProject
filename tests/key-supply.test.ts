@@ -8,10 +8,10 @@ import { floorCounts, keysPerLock } from "../src/tower/census.ts";
 const ratio = (color: "yellow" | "blue" | "red", floor: number, tower: number, main = false) => towerKeyRatio(color, floor - 1, tower, main) / 10000;
 
 test("each key colour aims for its own keys per lock: a surplus on its first floor, 0.005 less every ten floors after and 0.1 less a tower, never below its least", () => {
-  assert.deepEqual([ratio("yellow", 1, 1), ratio("yellow", 11, 1), ratio("yellow", 1001, 1), ratio("yellow", 9999, 1)], [1.6, 1.595, 1.1, 0.5]);
-  assert.deepEqual([ratio("blue", 51, 1), ratio("blue", 61, 1), ratio("blue", 11, 9), ratio("blue", 9999, 9)], [1.5, 1.495, 0.7, 0.4]);
+  assert.deepEqual([ratio("yellow", 1, 1), ratio("yellow", 11, 1), ratio("yellow", 1001, 1), ratio("yellow", 9999, 1)], [1.5, 1.495, 1, 0.5]);
+  assert.deepEqual([ratio("blue", 51, 1), ratio("blue", 61, 1), ratio("blue", 11, 9), ratio("blue", 9999, 9)], [1.4, 1.395, 0.6, 0.4]);
   assert.deepEqual([ratio("red", 101, 1), ratio("red", 21, 9), ratio("red", 9999, 1)], [1.3, 0.5, 0.3]);
-  assert.equal(ratio("yellow", 1001, 1, true), 1.35, "half as fast on the way to the stairs");
+  assert.equal(ratio("yellow", 1001, 1, true), 1.25, "half as fast on the way to the stairs");
   // Tower I's first floors keep every yellow key without drawing.
   assert.equal(keepsKey("yellow", 0, 1, () => { throw new Error("no draw"); }), true);
 });
