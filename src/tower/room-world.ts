@@ -31,7 +31,9 @@ import { ENTRY } from "./embedder.ts";
 // v20 adds door runs (two or three of the same door in a row), counts a
 // fork's lane doors 1/k toward the door quota and keys, and caps key
 // coverage at the floor's aim.
-export const TOWER_LAYOUT_VERSION = 22;
+// v23 deals every enemy a profile by the enemy schedule, any strength any
+// profile, and starts each tower's zone rosters one zone further along.
+export const TOWER_LAYOUT_VERSION = 23;
 
 /** A self-contained 17x17 Tower floor. Generation is strategy-first (see
  * src/tower/index.ts): an abstract graph of gates, keys and rewards is

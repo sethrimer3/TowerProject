@@ -1,6 +1,6 @@
 import type { KeyColor } from "../config.ts";
 import { QUOTA_DOORS, keyFirstFloor, towerDoorRate, towerKeyRatio, towerWoodPercent } from "../key-schedule.ts";
-import { RANKED_STRENGTHS, enemyCountPercent, enemyShare } from "../enemy-schedule.ts";
+import { PROFILES, RANKED_STRENGTHS, enemyCountPercent, enemyShare, isRanked, profileShare } from "../enemy-schedule.ts";
 import { GATE_VALUE } from "./forks.ts";
 import { doorRule } from "../doors.ts";
 import type { Tile } from "../entities.ts";
@@ -17,11 +17,13 @@ import type { LaneStep } from "./types.ts";
  * (the doors of that kind standing in a built fork's lanes) and
  * `forked:<kind>` (the same counting 1/k in a fork of k lanes, as the hero
  * opens one lane), `key:<colour>`,
- * `enemy:<strength>`, an item's kind, or `dropped:<door>` (quota doors the
+ * `enemy:<strength>`, `profile:<profile>` (those the schedule shares out),
+ * an item's kind, or `dropped:<door>` (quota doors the
  * door stage found no place for), `enemies:baseline` and `enemies:dropped`
  * (the enemies the enemy stage found, and those it found no tile for); the
  * census adds `target:<door>`, the
- * schedule's rate, `share:<strength>`, the enemy schedule's share, and
+ * schedule's rate, `share:<strength>` and `pshare:<profile>`, the enemy
+ * schedule's shares, and
  * `target:count`, its count in percent of the baseline. */
 export type Counts = Record<string, number>;
 
@@ -65,7 +67,10 @@ export function tileCounts(tiles: Iterable<Tile>, forks: LaneStep[][][], quota: 
   for (const t of tiles) {
     if (t.kind === "door") for (const kind of doorKinds(t)) add(c, `door:${kind}`);
     else if (t.kind === "key") add(c, `key:${t.color ?? "yellow"}`);
-    else if (t.kind === "enemy") add(c, `enemy:${t.enemy?.strength ?? "normal"}`);
+    else if (t.kind === "enemy") {
+      add(c, `enemy:${t.enemy?.strength ?? "normal"}`);
+      if (t.enemy && isRanked(t.enemy.strength)) add(c, `profile:${t.enemy.profile ?? "balanced"}`);
+    }
     else if (ITEMS.has(t.kind)) add(c, t.kind);
   }
   for (const lanes of forks)
@@ -125,6 +130,7 @@ export function census(o: CensusOptions): CensusBand[] {
  * schedule's shares and count. */
 export function addSchedule(sum: Counts, depth: number, tower: number) {
   for (const strength of RANKED_STRENGTHS) add(sum, `share:${strength}`, enemyShare(strength, depth, tower));
+  for (const profile of PROFILES) add(sum, `pshare:${profile}`, profileShare(profile, depth, tower));
   add(sum, "target:count", enemyCountPercent(depth));
   for (const door of QUOTA_DOORS) add(sum, `target:${door}`, towerDoorRate(door, depth, tower));
   add(sum, "target:wood", towerWoodPercent(depth, tower));
@@ -169,6 +175,12 @@ export const strengthShare = (c: Counts, strength: string) => {
   const all = rankedEnemies(c);
   return all ? ((c[`enemy:${strength}`] ?? 0) / all) * 100 : NaN;
 };
+/** The percent of the shared-out enemies that wear `profile`. */
+export const profileShareFound = (c: Counts, profile: string) => {
+  const all = rankedEnemies(c);
+  return all ? ((c[`profile:${profile}`] ?? 0) / all) * 100 : NaN;
+};
+const PROFILE_SHORT: Record<string, string> = { attackHeavy: "atk", balanced: "bal", defenseHeavy: "def" };
 /** The enemies' weight: each priced on the forks' scale (`GATE_VALUE`:
  * weak 0.75, normal 1.5, strong 2.5, elite 4, boss 6), a rough measure of
  * the fighting a floor holds. */
@@ -195,6 +207,7 @@ const ENEMY_COLUMNS: Column[] = [
   ["enemies", rankedEnemies], ["baseline", count("enemies:baseline")], ["count want%", count("target:count"), 0], ["dropped", count("enemies:dropped")],
   ...RANKED_STRENGTHS.flatMap((k): Column[] => [[k, count(`enemy:${k}`)], [`${k}%`, (c) => strengthShare(c, k), 0], [`${k} want%`, count(`share:${k}`), 0]]),
   ["boss", count("enemy:boss")], ["weight", enemyWeight],
+  ...PROFILES.flatMap((p): Column[] => [[`${PROFILE_SHORT[p]}%`, (c) => profileShareFound(c, p), 0], [`${PROFILE_SHORT[p]} want%`, count(`pshare:${p}`), 0]]),
 ];
 const ITEM_COLUMNS: Column[] = [
   ["potion", count("potion")], ["ATK", count("attack")], ["DEF", count("defense")], ["treasure", count("treasure")],

@@ -29,7 +29,8 @@ import { addEnemies, extraGround, extrasKey, extrasSeed, hasExtras, type ExtraEn
 // quota and keys.
 // v25 adds the enemy stage: each equivalent floor's enemy count and
 // strength shares from the enemy schedule.
-export const LAYOUT_VERSION = 25;
+// v26 deals every enemy a profile by the enemy schedule.
+export const LAYOUT_VERSION = 26;
 
 /** The one 20-row chunk `index` of tier `tier`'s labyrinth, as generated. */
 export function generate(seed: number, index: number, tier = 1): Map<string, Tile> {

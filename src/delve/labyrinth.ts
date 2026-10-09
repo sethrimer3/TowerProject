@@ -1,7 +1,7 @@
 import { point, type Point, type Tile } from '../entities.ts';
 import type { Fork, Gate, LaneStep } from '../tower/types.ts';
 import { isRanked, type RankedStrength } from '../enemy-schedule.ts';
-import { drawStrength, extraEnemies, rankStrengths, sharesOn } from '../enemy-stage.ts';
+import { dealProfiles, drawStrength, extraEnemies, profilesOn, rankStrengths, sharesOn } from '../enemy-stage.ts';
 import { strengthOnFloor, DELVE_ENEMY_NAMES, enemyTier, type TowerEnemyProfile } from '../scaling.ts';
 import { enemyStats, woodDurability } from '../enemy-curves.ts';
 import { FORK_TUNING, forkDepth, forksWorth, stepValue } from '../tower/forks.ts';
@@ -405,13 +405,13 @@ function gateTile({ rng, tier }: Lab, g: LaneStep, n: Node): Tile {
   if (g.kind !== 'enemy') return { kind: 'floor' };
   // Strong and elite enemies wait for their equivalent floors, as in the
   // tower of the same number.
-  const strength = strengthOnFloor(g.strength, Math.floor(n.depth / 10), tier);
+  const strength = strengthOnFloor(g.strength, Math.floor(n.depth / 10), tier), profile = g.profile ?? 'balanced';
   // Populations mix around transitions: influence is fractional there.
   const population = Math.max(0, Math.round(n.influence + (rng() - 0.5) * 0.8));
   return { kind: 'enemy', enemy: {
-    name: DELVE_ENEMY_NAMES[population % DELVE_ENEMY_NAMES.length], tier: enemyTier(strength), strength,
+    name: DELVE_ENEMY_NAMES[population % DELVE_ENEMY_NAMES.length], tier: enemyTier(strength), strength, profile,
     // The delve's own enemy curve, read at this depth.
-    ...enemyStats('delve', tier, n.depth, strength, g.profile ?? 'balanced'),
+    ...enemyStats('delve', tier, n.depth, strength, profile),
   } };
 }
 
@@ -891,7 +891,8 @@ function entranceKey(lab: Lab, board: Board, color: KeyColor) {
  * anywhere (never the way in or beside it, near the milestone gate and its
  * boss, or in a fork's lane), then deals its enemies but bosses and those in
  * fork lanes the strengths of its shares in the tower of the same number,
- * weakest asked weakest (`rankStrengths`). */
+ * weakest asked weakest (`rankStrengths`), and the profiles of its profile
+ * shares (`dealProfiles`). */
 function placeEnemies(lab: Lab, board: Board): Region['enemyCount'] {
   let n = 0;
   const salt = lab.seed ^ Math.imul(lab.area + 1, 0x45d9f3b), rng = () => tileRandom(n++, 92, salt);
@@ -920,11 +921,14 @@ function placeEnemies(lab: Lab, board: Board): Region['enemyCount'] {
     count.added += added;
     count.dropped += wanted - added;
     const dealt = rankStrengths(enemies.map(e => e.asked), shares, rng);
+    const profiles = dealProfiles(enemies.length, profilesOn(depth, lab.tier), rng);
     enemies.forEach(({ key }, k) => {
-      const now = board.cells.get(key)!;
-      if (now.kind === 'enemy' && now.enemy?.strength === dealt[k]) return;
-      const [x, y] = key.split(',').map(Number), at = cellAt(lab.seed, x, y), d = board.metadata.get(key)!.depth;
-      const gate: Gate = { kind: 'enemy', strength: dealt[k], profile: GUARD_PROFILES[Math.floor(rng() * GUARD_PROFILES.length)] };
+      const now = board.cells.get(key)!, strength = dealt[k], profile = profiles[k];
+      const [x, y] = key.split(',').map(Number), d = board.metadata.get(key)!.depth;
+      // One whose strength holds keeps its population, wearing its new profile.
+      if (now.kind === 'enemy' && now.enemy?.strength === strength)
+        return board.put({ x, y }, { kind: 'enemy', enemy: { ...now.enemy, profile, ...enemyStats('delve', lab.tier, d, strength, profile) } }, d);
+      const at = cellAt(lab.seed, x, y), gate: Gate = { kind: 'enemy', strength, profile };
       board.put({ x, y }, gateTile(stage, gate, { ...(lab.nodeAt(at.col, at.row) ?? lab.nodes[lab.start]), depth: d }), d);
     });
   });

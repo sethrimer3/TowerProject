@@ -5,11 +5,14 @@
  * of its number by equivalent floor. Stats themselves come from the enemy
  * curves (`enemy-curves.ts`); this decides only who stands on a floor. */
 import type { EnemyStrength } from "./entities.ts";
+import type { EnemyProfile } from "./enemy-curves.ts";
 
 /** The strengths the schedule shares out: every enemy but the bosses, which
  * stand where their floors put them. */
 export type RankedStrength = "weak" | "normal" | "strong" | "elite";
 export const RANKED_STRENGTHS: readonly RankedStrength[] = ["weak", "normal", "strong", "elite"];
+/** The profiles the schedule shares out, in the order their shares list. */
+export const PROFILES: readonly EnemyProfile[] = ["attackHeavy", "balanced", "defenseHeavy"];
 
 export const ENEMY_SCHEDULE = {
   /** The first floor (counting from 1) strong and elite enemies stand on in
@@ -27,6 +30,11 @@ export const ENEMY_SCHEDULE = {
    * baseline): one point more every `every` floors, up to `max` (three
    * times the baseline from floor 6,000). The same in every tower. */
   count: { every: 30, max: 300 },
+  /** Each profile's share of a floor's enemies, in percent, whatever their
+   * strength: balanced starts at `start` and falls by `lessEachTower` each
+   * later tower and `less` every `every` floors, down to `min`; attack-heavy
+   * and defense-heavy split the rest evenly (attack-heavy rounded down). */
+  balanced: { start: 60, lessEachTower: 3, less: 2, every: 100, min: 20 },
 };
 
 /** The first floor (counting from 1) enemies of `strength` stand on in tower
@@ -48,6 +56,16 @@ export function enemyShare(strength: RankedStrength, depth: number, tower: numbe
   if (floor < first) return 0;
   const g = s[strength];
   return Math.min(g.max, g.start + g.step * Math.floor((floor - first) / g.every));
+}
+
+/** The percent of floor `depth`'s (0 is the first) enemies of tower `tower`
+ * that wear `profile`, bosses left out. The three add up to 100. */
+export function profileShare(profile: EnemyProfile, depth: number, tower: number): number {
+  const b = ENEMY_SCHEDULE.balanced;
+  const balanced = Math.max(b.min, b.start - b.lessEachTower * (tower - 1) - b.less * Math.floor(depth / b.every));
+  if (profile === "balanced") return balanced;
+  const attack = Math.floor((100 - balanced) / 2);
+  return profile === "attackHeavy" ? attack : 100 - balanced - attack;
 }
 
 /** Floor `depth`'s (0 is the first) enemy count in percent of its baseline,

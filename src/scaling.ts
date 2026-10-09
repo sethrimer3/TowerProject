@@ -15,7 +15,8 @@ export const TOWER_ZONE_FLOORS = 10;
 
 /** Ten-room Tower zones: who stands on a floor, by profile. Their stats come
  * from the Tower's enemy curve (enemy-curves.ts); the roster repeats every
- * `TOWER_CYCLE_FLOORS` rooms. */
+ * `TOWER_CYCLE_FLOORS` rooms, each tower starting one zone further along
+ * (`towerZoneIndex`). */
 export const TOWER_ZONE_ENEMIES: readonly (readonly TowerEnemyDefinition[])[] = [
   [
     { name: "Goblin", profile: "attackHeavy" },
@@ -72,13 +73,15 @@ export const TOWER_ZONE_ENEMIES: readonly (readonly TowerEnemyDefinition[])[] = 
 /** How many floors pass before the roster repeats: one of every zone. */
 export const TOWER_CYCLE_FLOORS = TOWER_ZONE_FLOORS * TOWER_ZONE_ENEMIES.length;
 
-export function towerZoneIndex(room: number) {
-  return Math.floor(Math.max(0, room) / TOWER_ZONE_FLOORS) % TOWER_ZONE_ENEMIES.length;
+/** The roster floor `room` of tower `tower` draws from: tower `t` starts its
+ * cycle `t − 1` zones along, so each tower's first floors meet others. */
+export function towerZoneIndex(room: number, tower = 1) {
+  return (Math.floor(Math.max(0, room) / TOWER_ZONE_FLOORS) + tower - 1) % TOWER_ZONE_ENEMIES.length;
 }
 
-/** The name of floor `room`'s enemy of `profile`. */
-export const towerEnemyName = (room: number, profile: TowerEnemyProfile) =>
-  TOWER_ZONE_ENEMIES[towerZoneIndex(room)].find((enemy) => enemy.profile === profile)!.name;
+/** The name of floor `room`'s enemy of `profile` in tower `tower`. */
+export const towerEnemyName = (room: number, profile: TowerEnemyProfile, tower = 1) =>
+  TOWER_ZONE_ENEMIES[towerZoneIndex(room, tower)].find((enemy) => enemy.profile === profile)!.name;
 
 /** How hard a Tower floor's generator asks an enemy to be. */
 export type TowerEnemyStrength = EnemyStrength;
@@ -120,9 +123,10 @@ export const DELVE_ENEMY_NAMES = ["Cinder slime", "Bone sentinel", "Dusk wing", 
  * (`tierTile`). An elite is named from the zone it visits from. */
 export function getTowerGateEnemy(room: number, strength: TowerEnemyStrength, profile: TowerEnemyProfile, tower = 1) {
   return {
-    name: towerEnemyName(room + floorsAhead("tower", tower, strength), profile),
+    name: towerEnemyName(room + floorsAhead("tower", tower, strength), profile, tower),
     ...enemyStats("tower", tower, room, strength, profile),
     tier: enemyTier(strength),
     strength,
+    profile,
   };
 }

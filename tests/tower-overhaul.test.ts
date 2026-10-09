@@ -248,6 +248,10 @@ test("each ten-room Tower zone has one fixed enemy per combat profile", () => {
     assert.deepEqual(new Set(roster.map((enemy) => enemy.profile)), new Set(["attackHeavy", "balanced", "defenseHeavy"]));
   }
   for (let room = 0; room < 100; room++) assert.equal(towerZoneIndex(room), Math.floor(room / 10));
+  // Each later tower starts one zone further along: Tower II opens with the Bat.
+  for (let tower = 1; tower <= 9; tower++) assert.equal(towerZoneIndex(5, tower), tower - 1);
+  assert.equal(towerZoneIndex(95, 2), 0);
+  assert.equal(getTowerGateEnemy(0, "normal", "attackHeavy", 2).name, "Bat");
 });
 
 test("an enemy type keeps its name through its zone and grows floor by floor", () => {
@@ -278,7 +282,7 @@ test("Tower gate enemies take their stats from the Tower's enemy curve; elites c
     for (const profile of ["attackHeavy", "balanced", "defenseHeavy"] as const) {
       for (const strength of ["weak", "normal", "strong", "boss"] as const) {
         const e = getTowerGateEnemy(room, strength, profile);
-        assert.deepEqual(e, { name: getTowerGateEnemy(room, "normal", profile).name, ...enemyStats("tower", 1, room, strength, profile), tier: enemyTier(strength), strength });
+        assert.deepEqual(e, { name: getTowerGateEnemy(room, "normal", profile).name, ...enemyStats("tower", 1, room, strength, profile), tier: enemyTier(strength), strength, profile });
       }
       const elite = getTowerGateEnemy(room, "elite", profile), visitor = getTowerGateEnemy(room + 10, "normal", profile);
       assert.deepEqual(elite, { ...visitor, tier: 3, strength: "elite" });

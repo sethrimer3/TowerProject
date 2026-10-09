@@ -8,6 +8,7 @@ import type { MaterialId } from "./materials.ts";
 import type { EquipmentSave } from "./equipment/inventory.ts";
 import type { DefendSave } from "./defend/progress.ts";
 import type { GemDrop } from "./gems.ts";
+import type { EnemyProfile } from "./enemy-curves.ts";
 import type { Settings } from "./settings.ts";
 import type { EntitlementId } from "./shop/entitlements.ts";
 import type { ShopSave } from "./shop/ledger.ts";
@@ -43,6 +44,9 @@ export type Enemy = {
   defense: number;
   tier: number;
   strength: EnemyStrength;
+  /** Which of its stats lead (`enemy-curves.ts`), as generation made it;
+   * absent on enemies made outside generation. */
+  profile?: EnemyProfile;
 };
 /** An area reward chest's metal: gold for an area mastered, silver for one
  * cleared (tower/area-ledger.ts). */

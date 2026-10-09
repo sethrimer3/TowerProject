@@ -47,7 +47,7 @@ test("ATK and DEF shards give 1 in the first tier, ×2.75 compounding each tier 
   }
 });
 
-test("past the first, a tier's boards are the one before's with every enemy's stats multiplied", () => {
+test("past the first, a tier's boards are the one before's with each matching enemy's stats multiplied", () => {
   for (const mode of ["tower", "delve"] as Mode[]) {
     const g = new Game(defaults());
     g.save.upgrades.delve = 1;
@@ -71,8 +71,14 @@ test("past the first, a tier's boards are the one before's with every enemy's st
           continue;
         }
         if (a.kind !== "enemy") { assert.deepEqual(b, a); continue; }
+        // Each tier deals its own profile shares and starts its rosters a
+        // zone further along, so an enemy stays an enemy, and one of the
+        // same strength and profile has three times the stats.
+        assert.equal(b.kind, "enemy");
+        if (a.enemy!.strength !== b.enemy!.strength || a.enemy!.profile !== b.enemy!.profile) continue;
         enemies++;
-        assert.deepEqual(b, tierTile(a, 2), "three times the second tier's");
+        const { hp, attack, defense } = tierTile(a, 2).enemy!;
+        assert.deepEqual([b.enemy!.hp, b.enemy!.attack, b.enemy!.defense], [hp, attack, defense], "three times the second tier's");
       }
     assert.ok(enemies > 0, `${mode} has enemies to compare`);
   }

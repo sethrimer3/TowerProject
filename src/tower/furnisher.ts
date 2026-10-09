@@ -1,6 +1,7 @@
 import { point, type Tile } from "../entities.ts";
 import { doorKeys } from "../key-schedule.ts";
 import { woodDurability } from "../enemy-curves.ts";
+import { PROFILES, isRanked } from "../enemy-schedule.ts";
 import { getTowerGateEnemy, strengthOnFloor, type TowerEnemyProfile } from "../scaling.ts";
 import type { Gate, LaneStep, Reward, StrategicNode, Strength } from "./types.ts";
 import { centre, DIRS, inRect, type Rect, type XY } from "./grid.ts";
@@ -28,14 +29,6 @@ export type Dropped = { node: number; reward: Reward }[];
 
 // ---------------------------------------------------------------- tiles
 
-const PROFILES_FOR: Record<Strength, TowerEnemyProfile[]> = {
-  weak: ["balanced"],
-  normal: ["attackHeavy", "balanced", "defenseHeavy"],
-  strong: ["attackHeavy", "defenseHeavy"],
-  elite: ["defenseHeavy"],
-  boss: ["balanced"],
-  greaterBoss: ["balanced"],
-};
 
 /** An enemy for floor `depth` of tower `tower`, at the strength that floor
  * allows (`strengthOnFloor`: in the first tower no strong enemy below
@@ -43,8 +36,9 @@ const PROFILES_FOR: Record<Strength, TowerEnemyProfile[]> = {
  * a new hero in a single fight; earlier in each later tower). */
 export function enemyTile(asked: Strength, depth: number, rng: () => number, named?: TowerEnemyProfile, tower = 1): Tile {
   const strength = strengthOnFloor(asked, depth, tower);
-  const profiles = PROFILES_FOR[strength];
-  const profile = named ?? profiles[Math.floor(rng() * profiles.length)];
+  // Any strength the schedule shares out may wear any profile; bosses are
+  // balanced.
+  const profile = named ?? (isRanked(strength) ? PROFILES[Math.floor(rng() * PROFILES.length)] : "balanced");
   return { kind: "enemy", enemy: getTowerGateEnemy(depth, strength, profile, tower) };
 }
 
