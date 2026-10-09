@@ -11,7 +11,7 @@ A Training row is one entry in `TRAINING` (`src/config.ts`) plus every place tha
 
 Read these as they are now; the numbers here are examples of the conventions, and the files win where they differ.
 
-- `src/config.ts`: `TRAINING` (each row's `id`, `name`, `group`, `stat`/`base`/`growth` for a stat row, `cost`, `max`, `requires`, `description`), `TRAINING_GROUPS`, `TRAINING_PER_LEVEL`, `trainingWorth`, the per-rank constants (`FLOOR_GOLD_RANK`, `SILVER_BONUS_RANK` …), `RUN_TRAINING_PRICES` and its named schedules (`vital`, `cheap`, `opened`, `deep`), `schedulePrice`, and `TRAINER_GOLD_CURVES` with its named trainer curves (`gentleTrainers`, `mildTrainers`, `firmTrainers`, `steepTrainers`).
+- `src/config.ts`: `TRAINING` (each row's `id`, `name`, `group`, `stat`/`curve` for a stat row (its rank curve, `TrainingCurve`), `cost`, `max`, `requires`, `description`), `TRAINING_GROUPS`, `TRAINING_PER_LEVEL`, `trained`, `trainingWorth`, the per-rank constants (`FLOOR_GOLD_RANK`, `SILVER_BONUS_RANK` …), `RUN_TRAINING_PRICES` and its named schedules (`vital`, `cheap`, `opened`, `deep`), `schedulePrice`, and `TRAINER_GOLD_CURVES` with its named trainer curves (`gentleTrainers`, `mildTrainers`, `firmTrainers`, `steepTrainers`).
 - `src/training-jobs.ts`: the trainer's Gold (`trainingGold(row, ranks)`: `TRAINING_GOLD_PER_POINT` × `cost` × (ranks + 1) × (1 + ranks / `growth`), rounded up, `growth` from the row's `TRAINER_GOLD_CURVES` entry) and time (`trainingSeconds`, shared: 15 s, 1 min, 5 min, 10 min, then a quarter hour more a rank).
 - `src/loadout.ts`: `Stat`/`Loadout` and `loadout()` (stat rows), `trainingStep`, `valueStep`, `percentRow`, `MULTIPLIER_ROWS`, `trainingText`, the value functions (`floorGold`, `potionPercent`, `reviveChance` …), `trainingMaxed`, `trainingBulk`.
 - `src/run-training.ts`: `runTrainingOffer`, `runTrainingValue`, `ranksInRun`, `silverPrice`; `Game.trainingNow` and `Game.trainInRun` in `src/state.ts`.
@@ -26,7 +26,7 @@ Fill this for the row. Mark every value you chose rather than the user with *(pr
 ### <Name> (`<camelCaseId>`)
 - **Group:** Offense | Defense | Utility (a new group adds a `TRAINING_GROUPS` key)
 - **What it does:** <the row's `description`, player-facing; the run's training card shows it too>
-- **Kind:** stat row (`stat`: <loadout stat, new or existing>, `base`, `growth`: a rank worth base × (1 + level / growth)) | value row (<flat amount / multiplier ×1.xx / percent>, <constant> a rank)
+- **Kind:** stat row (`stat`: <loadout stat, new or existing>, `curve`: n ranks give `per` × n + `square` × n² + `cube` × (n − 1)³ + `fourth` × (n − 1)⁴, super-linear, never on the hero's level) | value row (<flat amount / multiplier ×1.xx / percent>, <constant> a rank)
 - **Shown as:** <unit and format on the Training tab and the run card: whole, two decimals, ×, %>; the value at 0, 1, 10 and max ranks
 - **Level cap (`max`):** <ranks>, the same on the Training tab and in a run (hero ranks and Silver ranks together)
 - **Training points a rank (`cost`):** <points>

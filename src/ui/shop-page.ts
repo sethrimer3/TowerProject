@@ -147,11 +147,17 @@ export class ShopPage {
     return { label: this.priceLabel(o), disabled: true, why: REFUSALS[why] };
   }
 
+  /** Whether `o` is a daily offer free to claim now: its button wears the
+   * dot the Shop button does (`shopWaiting`). */
+  private waiting(o: ShopOffer) {
+    return o.period === 1 && o.price.kind === "free" && !refusal(this.ctx.game.save, o, this.now);
+  }
+
   private card(o: ShopOffer) {
     const r = RARITIES[o.rarity], a = this.action(o), ends = o.endTime !== undefined && o.endTime > this.now;
     return `<article class="shop-card${o.category === "limited" ? " shop-banner" : ""}" style="--rarity: ${r.color}">
       <button class="shop-card-face" data-detail="${o.id}" aria-label="${o.name}: details"><small class="shop-rarity">${r.displayName}</small><b class="shop-name">${o.name}</b>${o.badge ? `<span class="shop-badge">${o.badge}</span>` : ""}${rewards(o)}${o.effects.length ? `<span class="shop-effects">${o.effects.join(" · ")}</span>` : ""}${ends ? `<small class="shop-expires">Expires in <span data-countdown="${o.id}">${countdown(o.endTime! - this.now)}</span></small>` : ""}</button>
-      <button class="shop-buy" data-buy="${o.id}" ${a.disabled ? "disabled" : ""}>${a.label}</button>${a.why ? `<small class="shop-why">${a.why}</small>` : ""}</article>`;
+      <button class="shop-buy${this.waiting(o) ? " notify" : ""}" data-buy="${o.id}" ${a.disabled ? "disabled" : ""}>${a.label}</button>${a.why ? `<small class="shop-why">${a.why}</small>` : ""}</article>`;
   }
 
   /** The transactions made, newest first: shown in Dev mode only. */

@@ -69,26 +69,38 @@ function add(total: Record<Stat, number>, rows: readonly (Granting & { id: strin
       total[stat] += n * (ranks[row.id] ?? 0);
 }
 
+/** The stats the Archives' ATK, DEF, Max HP and Shroud research multiply,
+ * and the research target each reads. */
+const STAT_RESEARCH = { attack: "attackPercent", defense: "defensePercent", maxHp: "maxHpPercent", shroud: "shroudPercent" } as const;
+/** What `stat` is multiplied by, the whole of it a run starts with and
+ * each rank a run trains or siphons: its research's percent (1 without). */
+export const statFactor = (save: Pick<Save, "archives">, stat: Stat) =>
+  stat in STAT_RESEARCH ? researched(save.archives, STAT_RESEARCH[stat as keyof typeof STAT_RESEARCH], 100) / 100 : 1;
+
 /** The character a run in `mode` would start with now: the baseline,
  * permanent upgrades and training, then the equipment that mode's hero
  * wears (flat bonuses, then percentages of the total, fractions kept),
- * then the provisions bought, which last for good. */
+ * then the provisions bought, which last for good, the whole of ATK, DEF,
+ * max HP and shroud then multiplied by their research (`statFactor`). */
 export function loadout(save: Save, mode: Mode = "tower"): Loadout {
   const own = { ...BASE, yellow: 0, blue: 0, red: 0 };
   add(own, UPGRADES, save.upgrades);
-  const level = levelForXp(save.xp);
-  for (const row of TRAINING) if (isStatRow(row)) own[row.stat] += trained(row, save.training[row.id], level);
+  for (const row of TRAINING) if (isStatRow(row)) own[row.stat] += trained(row, save.training[row.id]);
   const prov = { attack: 0, defense: 0, maxHp: 0, shroud: 0, regen: 0, yellow: 0, blue: 0, red: 0, undos: 0 };
   add(prov, GOLD_SHOP, save.provisions);
   const eq = wornEffects(save, mode);
   // A drawback (Bloodprice Blade's max HP) never takes a stat below zero, or max HP below 1.
   const percent = (base: number, pct: number) => (pct ? snap(Math.max(0, (base * (100 + pct)) / 100)) : base);
   const plus = (base: number, more: number) => (more ? snap(base + more) : base);
+  const researchedStat = (stat: Stat, value: number) => {
+    const factor = statFactor(save, stat);
+    return factor === 1 ? value : snap(value * factor);
+  };
   return {
-    attack: snap(percent(plus(own.attack, eq.attack), eq.attackPct) + prov.attack),
-    defense: snap(percent(plus(own.defense, eq.defense), eq.defensePct) + prov.defense),
-    maxHp: Math.max(1, snap(percent(plus(own.maxHp, eq.maxHp), eq.maxHpPct) + prov.maxHp)),
-    shroud: plus(own.shroud, eq.shroud),
+    attack: researchedStat("attack", snap(percent(plus(own.attack, eq.attack), eq.attackPct) + prov.attack)),
+    defense: researchedStat("defense", snap(percent(plus(own.defense, eq.defense), eq.defensePct) + prov.defense)),
+    maxHp: Math.max(1, researchedStat("maxHp", snap(percent(plus(own.maxHp, eq.maxHp), eq.maxHpPct) + prov.maxHp))),
+    shroud: researchedStat("shroud", plus(own.shroud, eq.shroud)),
     regen: plus(own.regen, eq.regen),
     bossAttack: eq.bossAttack,
     pierce: Math.min(eq.pierce, PIERCE_CAP),
@@ -245,12 +257,12 @@ function trainingPrices(save: Save, row: TrainingRow, maxed: boolean) {
 }
 
 /** A stat row: the hero's stat now and with one more rank, as the page
- * shows it (whole, its fraction kept in play), and what a rank adds at the
- * hero's level. */
+ * shows it (whole, its fraction kept in play), and what the next rank adds
+ * on the row's curve. */
 function statStep(save: Save, row: StatTrainingRow, count = 1) {
   const stat = row.stat, id = row.id;
   const now = loadout(save)[stat], next = loadout({ ...save, training: { ...save.training, [id]: save.training[id] + count } })[stat];
-  return { unit: "", now: shownStat(stat, now), next: shownStat(stat, next), worth: trainingWorth(row, levelForXp(save.xp)) };
+  return { unit: "", now: shownStat(stat, now), next: shownStat(stat, next), worth: trainingWorth(row, save.training[id]) };
 }
 
 /** A stat as the Training rows show it: whole, but Regen, a fraction of an

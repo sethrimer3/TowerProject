@@ -1,8 +1,9 @@
 import { test } from "node:test";
+import { snap } from "../src/exact.ts";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { defaults } from "../src/save.ts";
-import { GOLD_SHOP, RUN_TRAINING_PRICES, TRAINING, cost, levelForXp, schedulePrice, trainingWorth, type StatTrainingRow } from "../src/config.ts";
+import { GOLD_SHOP, RUN_TRAINING_PRICES, TRAINING, cost, levelForXp, schedulePrice, trained, trainingWorth, type StatTrainingRow } from "../src/config.ts";
 import { loadout, provisionPrice, trainingStep } from "../src/loadout.ts";
 import { resolveStep, BASE_RULES } from "../src/step-effects.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
@@ -24,15 +25,17 @@ test("Regen costs 1 Inspiration between On the Job and Heal, and opens a Defense
   assert.equal(regen.group, "defense");
   assert.equal(regen.cost, def.cost, "a rank costs DEF's points, and so a trainer DEF's Gold and time");
   assert.equal(RUN_TRAINING_PRICES.regen, RUN_TRAINING_PRICES.defense, "and DEF's Silver in a run");
-  assert.equal(trainingWorth(regen, 0), 0.1);
-  assert.equal(trainingWorth(regen, 12), trainingWorth(def, 12) / 10, "growing with the hero's level like DEF");
+  // 0.1n + n²/120: the first rank 0.108333, each after it a 60th more.
+  assert.equal(trainingWorth(regen, 0), 0.108333);
+  assert.equal(trainingWorth(regen, 12), 0.308333);
+  assert.equal(trainingWorth(regen, 12), snap(trainingWorth(def, 12) / 10 + 0.1), "DEF's curve on a tenth, and 0.1 a rank");
 });
 
 test("Regen training gives the hero HP per step, shown to the hundredth", () => {
   const save = defaults();
   save.upgrades.regen = 1;
   save.training.regen = 3;
-  const per = 3 * trainingWorth(row("regen"), levelForXp(save.xp));
+  const per = trained(row("regen"), 3);
   assert.equal(loadout(save).regen, Math.round(per * 1e6) / 1e6);
   const g = new Game(save);
   g.newRun({ seed: 5 });

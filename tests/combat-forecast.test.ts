@@ -61,3 +61,28 @@ test("an enemy's title puts its strength before its name, unless it is a normal 
   assert.equal(enemyTitle(e("elite")), "Elite Slime");
   assert.equal(enemyTitle(e("boss")), "Boss Slime");
 });
+
+test("the door panel shows what opening it takes under Key Efficiency and Heart Door Resilience", () => {
+  const g = new Game(defaults());
+  const w = g.world as RoomWorld;
+  w.cells = new Map([
+    ["1,0", { kind: "door", door: { type: "wood", durability: 30 } }],
+    ["2,0", { kind: "door", door: { type: "keys", keys: ["yellow"], mode: "all" } }],
+    ["3,0", { kind: "door", door: { type: "fullHp" } }],
+  ]);
+  Object.assign(g.run.player, { hp: 100, maxHp: 100, keys: { yellow: 2, blue: 0, red: 0 } });
+  const body = (x: number) => tileInfo(g, x, 0).body;
+  assert.match(body(1), /Amber key: 2 → 1/);
+  assert.match(body(2), /Amber key: 2 → 1/);
+  assert.match(body(3), /HP 100 → 1/);
+  // Key Efficiency's two levels: each key costs 99% of one.
+  g.save.archives.levels.keyEfficiency = 2;
+  assert.match(body(1), /Amber key: 2 → 1\.01/, "a Wooden Door's key too");
+  assert.match(body(2), /Amber key: 2 → 1\.01/);
+  // Heart Door Resilience's two levels: 10% less of the toll.
+  g.save.archives.levels.heartDoorResilience = 2;
+  assert.match(body(3), /HP 100 → 10\b/);
+  // With no key, a Wooden Door is broken for its durability.
+  g.run.player.keys.yellow = 0;
+  assert.match(body(1), /Break: HP 100 → 70/);
+});

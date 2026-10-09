@@ -26,12 +26,13 @@ function arena(silver: number, edit?: (g: Game) => void) {
 
 test("Silver prices start at the row's base and rise by a step plus the ranks bought, the step growing every five", () => {
   const prices = (id: Parameters<typeof silverPrice>[0], n: number) => Array.from({ length: n }, (_, k) => silverPrice(id, k));
-  // Max HP from 3: +1+N for five ranks, then +3+N, then +5+N.
+  // Max HP and Shroud from 3: +1+N for five ranks, then +3+N, then +5+N.
   assert.deepEqual(prices("hp", 12), [3, 5, 8, 12, 17, 23, 32, 42, 53, 65, 78, 94]);
+  assert.deepEqual(prices("shroud", 12), prices("hp", 12));
   // +1+N for five ranks, then +4+N, then +7+N.
   assert.deepEqual(prices("attack", 17), [5, 7, 10, 14, 19, 25, 35, 46, 58, 71, 85, 103, 122, 142, 163, 185, 211]);
   // +2+N, then +5+N, then +8+N.
-  assert.deepEqual(prices("shroud", 12), [10, 13, 17, 22, 28, 35, 46, 58, 71, 85, 100, 119]);
+  assert.deepEqual(prices("floorGold", 12), [10, 13, 17, 22, 28, 35, 46, 58, 71, 85, 100, 119]);
   // +4+N, then +8+N, then +12+N.
   assert.deepEqual(prices("revive", 12), [20, 25, 31, 38, 46, 55, 69, 84, 100, 117, 135, 158]);
   for (const row of TRAINING) {
@@ -44,7 +45,7 @@ test("Silver prices start at the row's base and rise by a step plus the ranks bo
       last = price;
     }
   }
-  assert.ok(RUN_TRAINING_PRICES.hp.base < RUN_TRAINING_PRICES.shroud.base, "rows open from the start cost least");
+  assert.ok(RUN_TRAINING_PRICES.hp.base < RUN_TRAINING_PRICES.floorGold.base, "Max HP costs least");
 });
 
 test("training for the run spends Silver and raises the stat at once; undo takes it back", () => {
@@ -71,7 +72,7 @@ test("maximum HP bought for the run comes with the HP to fill it", () => {
   const gain = g.run.player.maxHp - max;
   assert.ok(gain > 0);
   assert.equal(g.run.player.hp, 50 + gain);
-  assert.equal(runTrainingValue(g.save, g.run, "hp").value, g.run.player.maxHp);
+  assert.equal(runTrainingValue(g.save, g.run, "hp").value, Math.floor(g.run.player.maxHp), "shown whole");
 });
 
 test("training for the run is refused without On the Job", () => {
@@ -111,9 +112,9 @@ test("a row reaches no higher in a run than its most on the Training tab, or the
   assert.ok(g.trainInRun("hp"));
   assert.equal(g.trainInRun("hp"), false, "6,000 is Max HP's most");
   g.save.upgrades.shroud = 1;
-  g.save.training.shroud = 999;
+  g.save.training.shroud = 4999;
   assert.ok(g.trainInRun("shroud"));
-  assert.equal(g.trainInRun("shroud"), false, "1,000 is Shroud's most");
+  assert.equal(g.trainInRun("shroud"), false, "5,000 is Shroud's most");
   assert.ok(TRAINING.every((t) => Number.isInteger(t.max) && t.max > 0), "every row has its most");
 });
 

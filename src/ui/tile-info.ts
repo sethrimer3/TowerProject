@@ -1,12 +1,12 @@
-import { enemyStat, whole, wholeChange, wholeHp } from "../whole.ts";
+import { enemyStat, keyCount, whole, wholeChange, wholeHp } from "../whole.ts";
 import type { Enemy, Kind, Player, Tile } from "../entities.ts";
 import { enemyTitle } from "../scaling.ts";
 import type { Game, RouteEffects } from "../state.ts";
-import { HEART_DOOR_HP, resolveStep, shardGain } from "../step-effects.ts";
+import { resolveStep, shardGain } from "../step-effects.ts";
 import { attackForFewerHits, predict, type CombatPrediction } from "../combat.ts";
 import { goalUnlocked } from "../goals.ts";
 import { chestReward, CLEARED_INSPIRATION } from "../tower/area-ledger.ts";
-import { doorColor, doorCost, doorDescription, doorName, doorRule, drainsHp, KEY_NAMES, woodToll } from "../doors.ts";
+import { doorColor, doorDescription, doorName, doorRule, drainsHp, KEY_NAMES } from "../doors.ts";
 import { MODES } from "../modes.ts";
 
 /** What the inspect panel says about one board tile. */
@@ -71,16 +71,19 @@ const DESCRIBE: Partial<Record<Kind, Describe>> = {
     };
   },
   wall: () => ({ title: "Wall", body: "Ancient stone. Find a passage around it." }),
-  door: (t, p) => {
-    const cost = doorCost(t, p), rule = doorRule(t);
-    const hpLine = `<br>HP: ${wholeHp(p.hp)} → ${wholeHp(Math.min(p.hp, HEART_DOOR_HP))}`;
+  door: (t, p, g) => {
+    // The step's own rules decide what opening it takes, so Key Efficiency
+    // and Heart Door Resilience show as they will be paid.
+    const rule = doorRule(t), after = resolveStep(p, t, g.stepRules);
+    const opened = after.blocked ? null : after;
+    const hp = opened ? opened.player.hp : p.hp, hpChange = `HP ${wholeHp(p.hp)} → ${wholeHp(hp)}`;
+    const keys = (spent: readonly (keyof Player["keys"])[]) =>
+      spent.map((color) => `${KEY_NAMES[color]} key: ${keyCount(p.keys[color])} → ${keyCount(opened!.player.keys[color])}`).join(", ");
     let keyLine: string;
-    if (rule.type === "fullHp") keyLine = hpLine;
-    else if (rule.type === "wood" && cost && !cost.length) keyLine = `<br>Break: HP ${wholeHp(p.hp)} → ${wholeHp(p.hp - woodToll(rule))}`;
-    else if (rule.type === "wood" && !cost) keyLine = `<br>No key, and too weak to break it down`;
-    else keyLine = `<br>${cost
-      ? cost.map((color) => `${KEY_NAMES[color]} key: ${p.keys[color]} → ${p.keys[color] - 1}`).join(", ")
-      : "Locked — insufficient keys"}${cost && drainsHp(rule) ? hpLine : ""}`;
+    if (rule.type === "fullHp") keyLine = `<br>${hpChange}`;
+    else if (rule.type === "wood" && opened && !opened.keysSpent.length) keyLine = `<br>Break: ${hpChange}`;
+    else if (rule.type === "wood" && !opened) keyLine = `<br>No key, and too weak to break it down`;
+    else keyLine = `<br>${opened ? keys(opened.keysSpent) : "Locked — insufficient keys"}${opened && drainsHp(rule) ? `<br>${hpChange}` : ""}`;
     const durability = rule.type === "wood" ? `<br><small>Durability ${wholeChange(rule.durability)}</small>` : "";
     return { title: doorName(t), body: `<span>${doorDescription(t)}</span>${keyLine}${durability}` };
   },

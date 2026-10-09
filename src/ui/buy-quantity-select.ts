@@ -15,3 +15,7 @@ export const readQuantity = (value: string): BuyQuantity =>
 
 /** "x12" over a Max press's price: the ranks it buys. */
 export const maxCount = (q: BuyQuantity, count: number) => (q === "max" ? `<small class="buy-count">x${count}</small>` : "");
+/** "x5" in the bottom-left corner of a run training card's price, for any
+ * quantity past x1: the ranks the next press buys (fewer than a fixed
+ * quantity near the row's most). */
+export const runCount = (q: BuyQuantity, count: number) => (q !== 1 ? `<small class="drill-count">x${count}</small>` : "");

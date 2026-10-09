@@ -1,7 +1,7 @@
 import type { Game } from "../state.ts";
 import { TRAINING, TRAINING_GROUPS, trainingOpen, type TrainingId } from "../config.ts";
 import { runTrainingBulk, runTrainingOffer, runTrainingValue } from "../run-training.ts";
-import { buyQuantityHtml, maxCount, readQuantity } from "./buy-quantity-select.ts";
+import { buyQuantityHtml, readQuantity, runCount } from "./buy-quantity-select.ts";
 import { trainingText } from "../loadout.ts";
 import { el, itemSprite, POINTER_SVG, uiSprite } from "./dom.ts";
 import { sparkRed } from "./hud.ts";
@@ -211,8 +211,8 @@ export class RunTrainingBar {
     return TRAINING.filter((t) => t.group === group && trainingOpen(t, this.game.save.upgrades)).map((t) => t.id);
   }
 
-  /** One card's value and price (for the ranks the Buy Quantity buys, a
-   * Max press's count over it), its button faded while the Silver isn't
+  /** One card's value and price (for the ranks the Buy Quantity buys, past
+   * x1 their count in the button's corner), its button faded while the Silver isn't
    * there, and the whole card greyed at its highest. */
   private fill(id: TrainingId) {
     const game = this.game, card = document.querySelector<HTMLElement>(`[data-drill="${id}"]`)!;
@@ -223,7 +223,7 @@ export class RunTrainingBar {
     card.classList.toggle("maxed", offer.maxed);
     card.querySelector(".drill-value")!.textContent = trainingText(value, unit);
     const buy = card.querySelector<HTMLButtonElement>(".drill-buy")!;
-    const label = offer.maxed ? "Max" : `${maxCount(q, bulk.count)}${silverIcon()}<b>${bulk.cost.toLocaleString("en-US")}</b>`;
+    const label = offer.maxed ? "Max" : `${runCount(q, bulk.count)}${silverIcon()}<b>${bulk.cost.toLocaleString("en-US")}</b>`;
     if (buy.dataset.label !== label) {
       buy.dataset.label = label;
       buy.innerHTML = label;

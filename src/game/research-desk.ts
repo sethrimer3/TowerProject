@@ -1,6 +1,6 @@
 import { RESEARCH, RESEARCH_IDS, cancelResearch, status, hastenResearch, hireArchivist, settleArchives, startResearch, switchResearch, type ResearchId, type ResearchRecord } from "../archives.ts";
 import { finishGems } from "../training-jobs.ts";
-import { readyForestRuns } from "./hero-sync.ts";
+import { changeLoadout } from "./hero-sync.ts";
 import { affordsGems, type DeskHost } from "./desk.ts";
 
 /** The Archives' commands: research run by archivists on the wall clock.
@@ -96,10 +96,11 @@ export class ResearchDesk {
   }
 
   /** Completes the research that the clock has reached, saying so in the
-   * status line and queuing it in `done`. */
+   * status line and queuing it in `done`. Research that raises a stat
+   * reaches a run inside at once, as training does (`changeLoadout`). */
   settle(): ResearchRecord[] {
-    const done = settleArchives(this.save, this.host.clock());
-    if (done.length) readyForestRuns(this.save);
+    let done: ResearchRecord[] = [];
+    changeLoadout(this.save, () => (done = settleArchives(this.save, this.host.clock())).length > 0);
     this.done.push(...done);
     const last = done.at(-1);
     if (last) this.host.message = `Archives · ${RESEARCH[last.research].name} level ${last.level} complete.`;

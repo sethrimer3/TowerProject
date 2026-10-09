@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import type { GoldItemId } from "../src/config.ts";
 import { loadout, trainingPoints, trainingStep, upgradeText, provisionPrice, provisionText } from "../src/loadout.ts";
 import { defaults } from "../src/save.ts";
-import { GOLD_SHOP, UPGRADES, levelForXp, xpForLevel } from "../src/config.ts";
+import { GOLD_SHOP, TRAINING, UPGRADES, isStatRow, levelForXp, trained, trainingWorth, xpForLevel } from "../src/config.ts";
 import { addItem } from "../src/equipment/inventory.ts";
 import { Game } from "../src/state.ts";
 import { ENTRANCE_Y } from "../src/outside.ts";
@@ -57,45 +57,59 @@ test("each level earns two training points and nothing else", () => {
   assert.deepEqual(loadout(s), loadout(defaults()));
 });
 
-test("each training rank is worth more as the hero levels up", () => {
+test("each training rank is worth more than the one before, whatever the hero's level", () => {
   const s = defaults();
   s.xp = xpForLevel(5);
   Object.assign(s.training, { hp: 3, defense: 2, attack: 1 });
   for (const [id, points] of [["hp", 3], ["defense", 2], ["attack", 0]] as const) s.trainingPaid[id].points = points;
-  // At level 5 a rank is worth 15 HP (10 + L), 1.42 DEF (1 + L/12) and 2 ATK (1 + L/5),
-  // fractions kept (the page shows the stats whole).
+  // Rank curves: max HP 10n + n², DEF n²/12, ATK n + n²/5, fractions kept
+  // (the page shows the stats whole).
   const l = loadout(s);
-  assert.deepEqual([l.attack, l.defense, l.maxHp], [12 + 2, 2.833333, 100 + 45]);
+  assert.deepEqual([l.attack, l.defense, l.maxHp], [12 + 1.2, 0.333333, 100 + 39]);
   assert.deepEqual(trainingPoints(s), { earned: 10, spent: 3 + 2, left: 5 });
+  // The next rank: the 4th max HP rank adds 10 + 7 = 17, the 2nd ATK 1 + 3 / 5 = 1.6.
   assert.deepEqual(
     [trainingStep(s, "hp"), trainingStep(s, "attack")].map(({ now, next, worth, affordable }) => [now, next, worth, affordable]),
-    [[145, 160, 15, true], [14, 16, 2, true]],
+    [[139, 156, 17, true], [13, 14, 1.6, true]],
   );
   assert.equal(trainingStep({ ...s, trainingPaid: { ...s.trainingPaid, hp: { points: 8, gold: 0, ms: 0 } } }, "attack").affordable, false, "1 point a rank, none left");
-  // Levelling up raises every rank already bought.
+  // Levelling up only earns points: ranks bought are worth what they were.
   s.xp = xpForLevel(20);
-  const later = loadout(s);
-  assert.deepEqual([later.attack, later.defense, later.maxHp], [12 + 5, 5.333333, 100 + 90]);
+  assert.deepEqual(loadout(s), l);
+  // Each rank adds more than the one before.
+  for (const row of TRAINING.filter(isStatRow))
+    for (let n = 1; n < 400; n++) assert.ok(trainingWorth(row, n) > trainingWorth(row, n - 1), `${row.id} rank ${n + 1}`);
 });
 
-test("Shroud blocks 1 damage a fight and opens Shroud training, each rank worth more as the hero levels", () => {
+test("Shroud's ranks: 1 at the first, over 1,000 at 100, about 10,000 at 200 and 40,000 at 300, to 5,000 ranks", () => {
+  const row = TRAINING.find((t) => t.id === "shroud")!;
+  assert.equal(row.max, 5000);
+  const at = (n: number) => trained(row, n);
+  assert.equal(at(1), 1);
+  assert.ok(at(100) > 1000 && at(100) < 1100, `${at(100)}`);
+  assert.ok(at(200) > 9500 && at(200) < 10500, `${at(200)}`);
+  assert.ok(at(300) > 38000 && at(300) < 45000, `${at(300)}`);
+  assert.ok(Number.isFinite(at(5000)) && at(5000) > at(4999));
+});
+
+test("Shroud blocks 1 damage a fight and opens Shroud training", () => {
   const g = new Game(defaults());
   g.newRun({ outside: true });
   g.save.xp = xpForLevel(10);
   assert.equal(trainNow(g, "shroud"), false, "not before Shroud");
   assert.equal(g.run.player.shroud, undefined, "no shroud yet");
   g.save.tower.inspiration = 2;
-  assert.equal(g.buy("shroud"), false, "not before Greater Heal");
-  g.save.upgrades.greaterHeal = 1;
+  assert.equal(g.buy("shroud"), false, "not before Into the depths");
+  g.save.upgrades.delve = 1;
   assert.ok(g.buy("shroud"));
   assert.equal(loadout(g.save).shroud, 1);
   assert.equal(g.save.tower.inspiration, 0, "2 Inspiration");
   assert.equal(g.run.player.shroud, 1, "the run in the forest takes it at once");
   assert.ok(trainNow(g, "shroud") && trainNow(g, "shroud"));
-  // At level 10 a rank is worth 1 × (1 + 10 / 10) = 2.
-  assert.equal(loadout(g.save).shroud, 1 + 2 * 2);
-  assert.equal(g.run.player.shroud, 1 + 2 * 2, "training reaches a run still outside");
-  assert.deepEqual([trainingStep(g.save, "shroud").now, trainingStep(g.save, "shroud").next], [5, 7]);
+  // Two ranks: 2 + 0.00062 × 1³ + 0.0000033 × 1⁴.
+  assert.equal(loadout(g.save).shroud, 1 + 2.000623);
+  assert.equal(g.run.player.shroud, 1 + 2.000623, "training reaches a run still outside");
+  assert.deepEqual([trainingStep(g.save, "shroud").now, trainingStep(g.save, "shroud").next], [3, 4]);
   assert.equal(trainingPoints(g.save).spent, 2, "a point a rank");
 });
 
@@ -260,7 +274,7 @@ test("provisions last for good: every run takes them, and one bought mid-run cou
   g.newRun({ outside: true, seed: 5 });
   s.tower.inspiration = 100;
   s.gold = 100;
-  s.upgrades.greaterHeal = 1;
+  s.upgrades.delve = 1;
   s.upgrades.regenResearch = 1;
   assert.ok(g.buy("shroud"));
   assert.ok(g.gear.buyProvision("edge") && g.gear.buyProvision("heal"));

@@ -27,9 +27,10 @@ test("a stat's first ranks are quick, then each takes a quarter hour more", () =
 test("a trainer's Gold: 20 a point, times the rank's number, times 1 + ranks / the row's growth", () => {
   const at = (id: (typeof TRAINING)[number]["id"], ranks: number[], cost = 1) => ranks.map((r) => trainingGold({ id, cost }, r));
   assert.deepEqual(at("potion", [0, 1, 2, 3, 4, 9]), [20, 44, 72, 104, 140, 380], "20 Silver rows: growth 10");
-  assert.deepEqual(at("shroud", [0, 1, 2, 3, 9]), [20, 42, 66, 92, 290], "10 Silver rows: growth 20");
+  assert.deepEqual(at("floorGold", [0, 1, 2, 3, 9]), [20, 42, 66, 92, 290], "10 Silver rows: growth 20");
   assert.deepEqual(at("attack", [0, 1, 2, 3, 9]), [20, 41, 63, 86, 245], "5 Silver rows: growth 40");
-  assert.deepEqual(at("hp", [0, 1, 2, 3, 9]), [20, 41, 62, 84, 230], "Max HP, 3 Silver: growth 60");
+  assert.deepEqual(at("hp", [0, 1, 2, 3, 9]), [20, 41, 62, 84, 230], "Max HP and Shroud, 3 Silver: growth 60");
+  assert.deepEqual(at("shroud", [0, 1, 2, 3, 9]), at("hp", [0, 1, 2, 3, 9]));
   assert.deepEqual(at("attack", [0], 3), [60], "times the row's point cost");
   // The dearer a row's first Silver rank, the steeper its trainers, and rows
   // that start alike in Silver share a trainer curve.

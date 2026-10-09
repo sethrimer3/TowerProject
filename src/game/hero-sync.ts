@@ -64,7 +64,8 @@ function shiftRun(run: Run, before: Loadout, after: Loadout) {
   shiftStats(run.player, before, after);
   if (run.loadout) shiftStats(run.loadout, before, after);
   const p = run.player;
-  p.hp = Math.max(1, Math.min(p.hp, p.maxHp));
+  // A hero lying fallen (0 HP) stays down.
+  if (p.hp > 0) p.hp = Math.max(1, Math.min(p.hp, p.maxHp));
   // Keys a provision adds come into the hand at once.
   for (const color of KEY_COLORS) p.keys[color] = Math.max(0, p.keys[color] + after.keys[color] - before.keys[color]);
 }

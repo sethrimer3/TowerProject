@@ -64,7 +64,7 @@ import { enemyStat, keyCount, whole, wholeChange } from "./whole.ts";
 import { MODES, milestones, type ModeProfile } from "./modes.ts";
 import { boughtInRun, ranksInRun, runTrainingBulk, runTrainingOffer, type RunTrainingOffer } from "./run-training.ts";
 import { openQuantities, type BuyQuantity } from "./buy-quantity.ts";
-import { keepUndos, loadout, percentPotionChance, potionPercent, reviveChance } from "./loadout.ts";
+import { keepUndos, loadout, percentPotionChance, potionPercent, reviveChance, statFactor } from "./loadout.ts";
 import { researched } from "./archives.ts";
 import { chargesLeft, chargesPerRun, climbFloor, spendCharge, type Charge } from "./run-charges.ts";
 import type { MaterialId, MaterialStack } from "./materials.ts";
@@ -952,14 +952,14 @@ export class Game {
   }
   /** A siphon's turn: the run's top levels of its training row (its
    * `siphonCost`) traded for a key of its colour. The hero and the run's
-   * loadout lose what those levels add at the hero's level, for the rest of
+   * loadout lose what those levels add (times the stat's research), for the rest of
    * the run only (max HP: HP falls only as far as the new max). */
   private siphon(card: SiphonCard, scale: number) {
     const { row: id, color } = SIPHONS[card], level = this.siphonLevel(card), levels = this.siphonCost(card);
-    const p = this.run.player, heroLevel = levelForXp(this.save.xp);
+    const p = this.run.player;
     const row = TRAINING.find((t) => t.id === id) as StatTrainingRow;
     const stat = row.stat as "maxHp" | "attack" | "defense";
-    const loss = snap(trained(row, level, heroLevel) - trained(row, level - levels, heroLevel));
+    const loss = snap((trained(row, level) - trained(row, level - levels)) * statFactor(this.save, stat));
     p[stat] = snap(p[stat] - loss);
     if (stat === "maxHp") p.hp = Math.min(p.hp, p.maxHp);
     if (this.run.loadout) this.run.loadout[stat] = snap(this.run.loadout[stat] - loss);
@@ -1975,11 +1975,11 @@ export class Game {
     return this.trainsOnTheJob && this.playing && !this.encounter?.summary;
   }
   /** A stat row's rank bought for the run: the hero and the run's loadout
-   * gain what the rank from `level` adds at the hero's level. Returns the
+   * gain what the rank from `level` adds, times the stat's research. Returns the
    * max HP it added. */
   private raiseRunStat(row: StatTrainingRow, level: number) {
-    const heroLevel = levelForXp(this.save.xp), stat = row.stat, p = this.run.player,
-      gain = snap(trained(row, level + 1, heroLevel) - trained(row, level, heroLevel));
+    const stat = row.stat, p = this.run.player,
+      gain = snap((trained(row, level + 1) - trained(row, level)) * statFactor(this.save, stat));
     p[stat] = snap((p[stat] ?? 0) + gain);
     const kept = this.run.loadout;
     if (kept) kept[stat] = snap((kept[stat] ?? 0) + gain);

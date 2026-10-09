@@ -22,10 +22,15 @@ export function noteGoldBoost(save: Pick<Save, "goldBoostUntil">, slice: Pick<Mo
   if (now < save.goldBoostUntil) slice.runBoostGold ??= 0;
 }
 
-/** Whether another ad can add time: the store isn't full. */
-export const canClaimGoldBoost = (save: Pick<Save, "goldBoostUntil">, now: number) => goldBoostLeft(save, now) < GOLD_BOOST_MAX_MS;
+/** How near the cap the store may be and still take another ad. */
+export const GOLD_BOOST_CLAIM_MARGIN_MS = 10 * 60 * 1000;
 
-/** Adds one ad's time to what is stored, up to the cap; false when it is full. */
+/** Whether another ad can add time: the store is more than
+ * `GOLD_BOOST_CLAIM_MARGIN_MS` short of full. */
+export const canClaimGoldBoost = (save: Pick<Save, "goldBoostUntil">, now: number) => goldBoostLeft(save, now) < GOLD_BOOST_MAX_MS - GOLD_BOOST_CLAIM_MARGIN_MS;
+
+/** Adds one ad's time to what is stored, up to the cap; false when it is
+ * within the margin of full. */
 export function claimGoldBoost(save: Pick<Save, "goldBoostUntil">, now: number) {
   if (!canClaimGoldBoost(save, now)) return false;
   save.goldBoostUntil = now + Math.min(goldBoostLeft(save, now) + GOLD_BOOST_MS, GOLD_BOOST_MAX_MS);

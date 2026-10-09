@@ -3,7 +3,9 @@ import assert from "node:assert/strict";
 import {
   ARCHIVISTS, HISTORY_LIMIT, RESEARCH, RESEARCH_CATEGORIES, RESEARCH_IDS, RESEARCH_TARGETS, cancelResearch, cannotStart, decodeArchives,
   cannotSwitch, defaultArchives, duration, price, hireArchivist, jobProgress, maxLevel, researchLevel, researched, settleArchives, startResearch, status, switchResearch, withNextLevel,
+  type ResearchId,
 } from "../src/archives.ts";
+import { loadout } from "../src/loadout.ts";
 import { UPGRADES } from "../src/config.ts";
 import { decode, defaults } from "../src/save.ts";
 import { Game } from "../src/state.ts";
@@ -259,7 +261,7 @@ test("Potion HP: +3% a level for 100 levels; quick first levels, then 100m + m³
   assert.equal(levels.reduce((sum, l) => sum + l.gold, 0), 22_144_096);
   assert.deepEqual(levels.slice(0, 4).map((l) => duration(defaultArchives(), l)), [15_000, 60_000, 300_000, 600_000]);
   assert.ok(levels.every((l) => l.effect.target === "potionHeal" && l.effect.op === "add" && l.effect.value === 3));
-  assert.deepEqual(RESEARCH_IDS.slice(0, 5), ["researchSpeed", "researchCostDiscount", "potionHp", "regen", "focusCount"], "after the Archives' own two, Regen beside it, before Focus Count");
+  assert.deepEqual(RESEARCH_IDS.slice(0, 9), ["researchSpeed", "researchCostDiscount", "potionHp", "regen", "attack", "defense", "maxHp", "shroud", "focusCount"], "after the Archives' own two, Regen beside it, then the stats', before Focus Count");
   assert.deepEqual(RESEARCH.potionHp.categories, ["defense"]);
 });
 
@@ -383,4 +385,37 @@ test("a busy archivist switches research: its Gold back, its time kept, the new 
   assert.ok(cannotSwitch(save, 0, "focusCount"));
   assert.equal(switchResearch(save, 0, "focusCount", T0 + 3 * HOUR), false);
   assert.equal(save.archives.slots[0].job?.research, "rush");
+});
+
+test("ATK (+2%), DEF and Max HP (+3%), open with the Archives, and Shroud (+4%, to ×5) multiply the whole stat, on Pocket Money's schedule", () => {
+  for (const [id, target, value, upgrade] of [["attack", "attackPercent", 2, "archives"], ["defense", "defensePercent", 3, "archives"], ["maxHp", "maxHpPercent", 3, "archives"], ["shroud", "shroudPercent", 4, "shroud"]] as const) {
+    const def = RESEARCH[id];
+    assert.deepEqual(def.requires, [{ upgrade }], id);
+    assert.deepEqual(def.levels.map((l) => [l.gold, l.hours]), RESEARCH.pocketMoney.levels.map((l) => [l.gold, l.hours]), `${id}: Pocket Money's Gold and time`);
+    assert.ok(def.levels.every((l) => l.effect.target === target && l.effect.op === "add" && l.effect.value === value), id);
+  }
+  const done = (id: ResearchId, level: number) => ({ ...defaultArchives(), levels: { [id]: level } }) as ReturnType<typeof defaultArchives>;
+  assert.equal(researched(done("shroud", 100), "shroudPercent", 100), 500, "Shroud ×5 at level 100");
+  // The loadout's whole stat is multiplied, and a run inside gains it as the level completes.
+  const save = owner();
+  save.upgrades.shroud = 1;
+  const g = new Game(save);
+  g.clock = () => T0;
+  g.newRun({ seed: 5 });
+  const before = loadout(save);
+  save.archives.levels.attack = 10;
+  save.archives.levels.defense = 10;
+  save.archives.levels.maxHp = 10;
+  save.archives.levels.shroud = 25;
+  const after = loadout(save);
+  assert.equal(after.attack, Math.round(before.attack * 1.2 * 1e6) / 1e6);
+  assert.equal(after.maxHp, Math.round(before.maxHp * 1.3 * 1e6) / 1e6);
+  assert.equal(after.shroud, Math.round(before.shroud * 2 * 1e6) / 1e6);
+  save.archives.levels = {};
+  const attack = g.run.player.attack;
+  assert.ok(g.research.start(0, "attack"));
+  g.clock = () => T0 + HOUR;
+  g.research.settle();
+  assert.equal(save.archives.levels.attack, 1);
+  assert.equal(g.run.player.attack, Math.round(attack * 1.02 * 1e6) / 1e6, "inside the run already");
 });

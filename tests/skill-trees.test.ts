@@ -37,23 +37,23 @@ test("fresh progression gates Delve, currencies, Courage root, and Legacy", () =
   assert.deepEqual(TREES.map(tree => tree.id), ["inspiration", "courage", "wayfinding", "legacy", "wisdom", "renown"]);
   assert.ok(TREES.slice(3).every(tree => tree.nodes.length >= 3));
 });
-test("Greater Heal, then Shroud, then Recovery, Regen Research and Find Potion, come after Into the depths, past the Archives, whose research they open", () => {
+test("Shroud, then Greater Heal, then Recovery, Regen Research and Find Potion, come after Into the depths, past the Archives, whose research they open", () => {
   const g = new Game(defaults());
   g.save.tower.inspiration = 1000;
   for (const id of ["combatStance", "buildout", "trainers", "largerHand"] as const) assert.ok(g.buy(id));
-  assert.equal(g.buy("greaterHeal"), false, "the Archives come first");
+  assert.equal(g.buy("shroud"), false, "the Archives come first");
   assert.ok(g.buy("archives"));
-  assert.equal(g.buy("greaterHeal"), false, "then Into the depths");
+  assert.equal(g.buy("shroud"), false, "then Into the depths");
   assert.ok(g.buy("delve"));
-  assert.equal(g.buy("recovery"), false, "Greater Heal comes first");
+  assert.equal(g.buy("greaterHeal"), false, "Shroud comes first");
   let before = g.save.tower.inspiration;
-  assert.ok(g.buy("greaterHeal"));
-  assert.equal(before - g.save.tower.inspiration, 3);
-  assert.equal(g.buy("recovery"), false, "then Shroud");
-  assert.equal(g.buy("regenResearch"), false, "Shroud comes first");
-  before = g.save.tower.inspiration;
   assert.ok(g.buy("shroud"));
   assert.equal(before - g.save.tower.inspiration, 2);
+  assert.equal(g.buy("recovery"), false, "then Greater Heal");
+  assert.equal(g.buy("regenResearch"), false, "Greater Heal comes first");
+  before = g.save.tower.inspiration;
+  assert.ok(g.buy("greaterHeal"));
+  assert.equal(before - g.save.tower.inspiration, 3);
   before = g.save.tower.inspiration;
   assert.ok(g.buy("regenResearch"));
   assert.equal(before - g.save.tower.inspiration, 10);
@@ -65,10 +65,10 @@ test("Greater Heal, then Shroud, then Recovery, Regen Research and Find Potion, 
   assert.ok(g.buy("findPotion"));
   assert.equal(before - g.save.tower.inspiration, 10);
   const at = (id: string) => TREES[0].nodes.find((n) => n.id === id)!;
-  assert.deepEqual([at("greaterHeal").x, at("greaterHeal").y, at("greaterHeal").requires], [74, 124, ["delve"]]);
-  assert.deepEqual([at("shroud").x, at("shroud").y, at("shroud").requires], [80, 142, ["greaterHeal"]], "Shroud sits between Greater Heal and Recovery and Regen Research");
-  assert.deepEqual([at("recovery").x, at("recovery").y, at("recovery").requires], [70, 160, ["shroud"]]);
-  assert.deepEqual([at("regenResearch").x, at("regenResearch").y, at("regenResearch").requires], [90, 160, ["shroud"]], "Regen Research sits beside Recovery");
+  assert.deepEqual([at("shroud").x, at("shroud").y, at("shroud").requires], [74, 124, ["delve"]]);
+  assert.deepEqual([at("greaterHeal").x, at("greaterHeal").y, at("greaterHeal").requires], [80, 142, ["shroud"]], "Greater Heal sits between Shroud and Recovery and Regen Research");
+  assert.deepEqual([at("recovery").x, at("recovery").y, at("recovery").requires], [70, 160, ["greaterHeal"]]);
+  assert.deepEqual([at("regenResearch").x, at("regenResearch").y, at("regenResearch").requires], [90, 160, ["greaterHeal"]], "Regen Research sits beside Recovery");
   assert.deepEqual([at("revive").x, at("revive").y, at("revive").requires], [90, 178, ["regenResearch"]], "Revive sits below Regen Research");
   assert.deepEqual([at("findPotion").x, at("findPotion").y, at("findPotion").requires], [70, 178, ["recovery"]], "Find Potion sits below Recovery");
   assert.deepEqual([at("buyQuantity").x, at("buyQuantity").y, at("buyQuantity").requires], [50, 142, ["keySiphon"]], "Buy Quantity sits under Key Siphon");

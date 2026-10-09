@@ -487,11 +487,12 @@ export const TRAINING_PER_LEVEL = 2;
 /** The groups the Training tab, and a run's training bar, show the rows
  * in, in order. */
 export const TRAINING_GROUPS = { offense: "Offense", defense: "Defense", utility: "Utility" } as const;
-/** What training raises, each rank costing `cost` points. A stat row is
- * worth `base` × (1 + level / `growth`) of `stat` at the hero's level (see
- * `trainingWorth`), so every rank already bought grows as the hero levels
- * up and saving points up never pays. Regen adds to the HP regained each
- * step in a run, Shroud to the damage the shroud blocks each fight. Potion % adds `POTION_PERCENT_RANK`
+/** What training raises, each rank costing `cost` points. A stat row's
+ * ranks add up on its own rank curve (`curve`, see `trained`), never on the
+ * hero's level: levels only earn the points that buy ranks. Each curve is
+ * super-linear, every rank worth more than the one before. Regen adds to
+ * the HP regained each step in a run, Shroud to the damage the shroud
+ * blocks each fight. Potion % adds `POTION_PERCENT_RANK`
  * to what a percent potion restores, Find Potion `FIND_POTION_RANK` to
  * the chance a potion is a percent potion, Gold / Floor
  * `FLOOR_GOLD_RANK` to the Gold a new floor pays and Silver / Floor
@@ -502,11 +503,11 @@ export const TRAINING_GROUPS = { offense: "Offense", defense: "Defense", utility
  * trains no further than `max` ranks, its ranks and those bought for a run
  * with Silver together. */
 export const TRAINING = [
-  { id: "hp", name: "Max HP", group: "defense", stat: "maxHp", base: 10, growth: 10, cost: 1, max: 6000, description: "Raises maximum HP." },
-  { id: "attack", name: "ATK", group: "offense", stat: "attack", base: 1, growth: 5, cost: 1, max: 6000, description: "Raises ATK, the damage each strike deals before the enemy's DEF." },
-  { id: "defense", name: "DEF", group: "defense", stat: "defense", base: 1, growth: 12, cost: 1, max: 6000, description: "Raises DEF, taken off the damage of every enemy strike." },
-  { id: "regen", name: "Regen", group: "defense", stat: "regen", base: 0.1, growth: 12, cost: 1, max: 6000, requires: "regen", description: "Raises the HP regained with every step taken in a run." },
-  { id: "shroud", name: "Shroud", group: "defense", stat: "shroud", base: 1, growth: 10, cost: 1, max: 1000, requires: "shroud", description: "Raises the damage the shroud blocks at the start of every fight." },
+  { id: "hp", name: "Max HP", group: "defense", stat: "maxHp", curve: { per: 10, square: 1 }, cost: 1, max: 6000, description: "Raises maximum HP." },
+  { id: "attack", name: "ATK", group: "offense", stat: "attack", curve: { per: 1, square: 0.2 }, cost: 1, max: 6000, description: "Raises ATK, the damage each strike deals before the enemy's DEF." },
+  { id: "defense", name: "DEF", group: "defense", stat: "defense", curve: { per: 0, square: 1 / 12 }, cost: 1, max: 6000, description: "Raises DEF, taken off the damage of every enemy strike." },
+  { id: "regen", name: "Regen", group: "defense", stat: "regen", curve: { per: 0.1, square: 1 / 120 }, cost: 1, max: 6000, requires: "regen", description: "Raises the HP regained with every step taken in a run." },
+  { id: "shroud", name: "Shroud", group: "defense", stat: "shroud", curve: { per: 1, cube: 0.00062, fourth: 0.0000033 }, cost: 1, max: 5000, requires: "shroud", description: "Raises the damage the shroud blocks at the start of every fight." },
   { id: "potion", name: "Potion %", group: "defense", requires: "recovery", cost: 1, max: 300, description: "Percent potions restore more of your maximum HP." },
   { id: "findPotion", name: "Find Potion", group: "defense", requires: "findPotion", cost: 1, max: 72, description: "More of the potions found are percent potions." },
   { id: "revive", name: "Revive", group: "defense", requires: "revive", cost: 1, max: 99, description: "Raises the chance a strike that would fell you revives you at full HP instead." },
@@ -566,7 +567,7 @@ export function schedulePrice(schedule: PriceSchedule, bought: number) {
 }
 /** Rows open from the start. */
 const cheap: PriceSchedule = { base: 5, step: 1, growth: 3 };
-/** Max HP: the cheapest, rising a little more slowly. */
+/** Max HP and Shroud: the cheapest, rising a little more slowly. */
 const vital: PriceSchedule = { base: 3, step: 1, growth: 2 };
 /** Rows a skill opens: steeper, so ranks from Inspiration's Training points
  * stay worth more than Silver's. */
@@ -581,7 +582,7 @@ export const RUN_TRAINING_PRICES: Record<TrainingId, PriceSchedule> = {
   attack: cheap,
   defense: cheap,
   regen: cheap,
-  shroud: opened,
+  shroud: vital,
   potion: deep,
   findPotion: deep,
   revive: deep,
@@ -602,7 +603,7 @@ const steepTrainers: TrainerCurve = { growth: 10 };
 const firmTrainers: TrainerCurve = { growth: 20 };
 /** Rows starting at 5 Silver: 20, 41, 63, 86 … 245 for the tenth. */
 const mildTrainers: TrainerCurve = { growth: 40 };
-/** Max HP, starting at 3 Silver: 20, 41, 62, 84 … 230 for the tenth. */
+/** Max HP and Shroud, starting at 3 Silver: 20, 41, 62, 84 … 230 for the tenth. */
 const gentleTrainers: TrainerCurve = { growth: 60 };
 /** Each row's trainer Gold curve, kept apart from its Silver schedule
  * (`RUN_TRAINING_PRICES`) so either can change alone. */
@@ -611,7 +612,7 @@ export const TRAINER_GOLD_CURVES: Record<TrainingId, TrainerCurve> = {
   attack: mildTrainers,
   defense: mildTrainers,
   regen: mildTrainers,
-  shroud: firmTrainers,
+  shroud: gentleTrainers,
   potion: steepTrainers,
   findPotion: steepTrainers,
   revive: steepTrainers,
@@ -620,11 +621,24 @@ export const TRAINER_GOLD_CURVES: Record<TrainingId, TrainerCurve> = {
   silverBonus: firmTrainers,
   killGold: firmTrainers,
 };
-/** What one rank of `row` is worth at `level`, unrounded. */
-export const trainingWorth = (row: StatTrainingRow, level: number) => row.base * (1 + level / row.growth);
-/** What `ranks` ranks of `row` add to the character at `level`, rounded
- * once. */
-export const trained = (row: StatTrainingRow, ranks: number, level: number) => snap(ranks * trainingWorth(row, level));
+/** A stat row's rank curve: what `n` ranks add up to is `per` × n +
+ * `square` × n² + `cube` × (n − 1)³ + `fourth` × (n − 1)⁴, the cubic and
+ * quartic terms counted from the second rank so the first is worth exactly
+ * `per` + `square`. Rows that grew with the hero's level give a hero
+ * with a rank a level in each what they gave at that level: ATK n + n²/5,
+ * max HP 10n + n², Regen 0.1n + n²/120, and DEF n²/12, without the whole
+ * point a rank its old curve began from. Shroud is 1 at rank 1, about 1,020 at 100,
+ * 10,300 at 200 and 43,300 at 300, about two billion at its 5,000. */
+export type TrainingCurve = { per: number; square?: number; cube?: number; fourth?: number };
+/** What `ranks` ranks of `row` add to the character, rounded once. Only
+ * `+` and `*`, so it is the same in every engine. */
+export function trained(row: StatTrainingRow, ranks: number) {
+  if (ranks <= 0) return 0;
+  const c: TrainingCurve = row.curve, m = ranks - 1;
+  return snap(c.per * ranks + (c.square ?? 0) * ranks * ranks + (c.cube ?? 0) * m * m * m + (c.fourth ?? 0) * m * m * m * m);
+}
+/** What the rank after `ranks` adds to `row`'s stat. */
+export const trainingWorth = (row: StatTrainingRow, ranks: number) => snap(trained(row, ranks + 1) - trained(row, ranks));
 /** Provisions, bought with Gold on the Gear page and kept for good: each
  * one bought adds its grants to every run. Each is priced by a schedule
  * like run training's (`schedulePrice`), from its `price.base` Gold; the

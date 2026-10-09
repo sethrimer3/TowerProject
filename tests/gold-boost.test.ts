@@ -16,11 +16,18 @@ test("each Gold ad stores 20 minutes more, up to two hours", () => {
   // Time passing runs it down; a claim adds to what is left.
   assert.ok(claimGoldBoost(save, now + 5 * MIN));
   assert.equal(goldBoostLeft(save, now + 5 * MIN), 35 * MIN);
-  for (let i = 0; i < 5; i++) assert.ok(claimGoldBoost(save, now + 5 * MIN));
-  assert.equal(goldBoostLeft(save, now + 5 * MIN), GOLD_BOOST_MAX_MS, "capped at two hours");
-  assert.equal(claimGoldBoost(save, now + 5 * MIN), false, "a full store refuses another ad");
+  for (let i = 0; i < 3; i++) assert.ok(claimGoldBoost(save, now + 5 * MIN));
+  assert.equal(goldBoostLeft(save, now + 5 * MIN), 95 * MIN);
+  assert.ok(claimGoldBoost(save, now + 5 * MIN));
+  assert.equal(goldBoostLeft(save, now + 5 * MIN), 115 * MIN);
+  // Within ten minutes of the cap, another ad is refused.
+  assert.equal(claimGoldBoost(save, now + 5 * MIN), false, "a store within ten minutes of full refuses another ad");
+  // Over ten minutes short, a claim fills it to the cap and no further.
+  assert.ok(claimGoldBoost(save, now + 11 * MIN));
+  assert.equal(goldBoostLeft(save, now + 11 * MIN), GOLD_BOOST_MAX_MS, "capped at two hours");
+  assert.equal(claimGoldBoost(save, now + 11 * MIN), false, "a full store refuses another ad");
   // Once it runs out, Gold is paid as before.
-  assert.equal(goldBoostFactor(save, now + 5 * MIN + GOLD_BOOST_MAX_MS), 1);
+  assert.equal(goldBoostFactor(save, now + 11 * MIN + GOLD_BOOST_MAX_MS), 1);
 });
 
 test("Gold found while the boost lasts is multiplied by 1.5", () => {
