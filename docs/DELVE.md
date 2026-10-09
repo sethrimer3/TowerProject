@@ -52,6 +52,6 @@ The evaluator never reads generator labels. It follows a committed route and rep
 
 ## Tuning
 
-`DELVE_TUNING` in `labyrinth.ts`: `boundaryWander`, `tongue`, `loopChance`, `shaftBreakChance`, `sidewaysBias`, `straightPenalty`, `chamberChance`, `wideChamberChance`, `themeBand`, `junctionKeyChance`, `forksPerArea`. Fork chances and pricing are in `FORK_TUNING` and `GATE_VALUE` (`src/tower/forks.ts`). Pattern weights are in `choosePattern`.
+`DELVE_TUNING` in `labyrinth.ts`: `boundaryWander`, `tongue`, `loopChance`, `shaftBreakChance`, `sidewaysBias`, `straightPenalty`, `chamberChance`, `wideChamberChance`, `themeBand`, `forksPerArea`. Fork chances and pricing are in `FORK_TUNING` and `GATE_VALUE` (`src/tower/forks.ts`). Pattern weights are in `choosePattern`. Blue, red and Heart Doors, Wooden Doors and keys follow the Tower's schedules by equivalent floor (`placeQuotaDoors`, `placeWoodenDoors`, `supplyKeys`; `docs/DOOR_AND_KEY_SCHEDULE.md` section 6), measured with `npm run delve:report -- --census`.
 
 Debug: in dev mode, run `delveDebug()` in the console.

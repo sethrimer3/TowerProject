@@ -62,8 +62,14 @@ test("past the first, a tier's boards are the one before's with every enemy's st
       for (let x = 0; x < one.width; x++) {
         const a = one.tile(x, y), b = three.tile(x, y);
         if (a.kind === "attack" || a.kind === "defense") { assert.deepEqual([a.amount, b], [tierShard(2), { ...a, amount: tierShard(3) }]); continue; }
-        // A Wooden Door's durability grows with the enemies' stats.
-        if (a.kind === "door" && a.door?.type === "wood") { assert.deepEqual(b, tierTile(a, 2)); continue; }
+        // Each tier has its own wooden share (`towerWoodPercent`), so a door
+        // stays a door, Wooden or yellow; a Wooden Door's durability grows
+        // with the enemies' stats.
+        if (a.kind === "door") {
+          if (a.door?.type === "wood" && b.kind === "door" && b.door?.type === "wood") assert.deepEqual(b, tierTile(a, 2));
+          else assert.equal(b.kind, "door");
+          continue;
+        }
         if (a.kind !== "enemy") { assert.deepEqual(b, a); continue; }
         enemies++;
         assert.deepEqual(b, tierTile(a, 2), "three times the second tier's");

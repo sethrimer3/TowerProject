@@ -3,9 +3,15 @@ import type { Fork, Gate, LaneStep, Strength } from '../tower/types.ts';
 import { strengthOnFloor, DELVE_ENEMY_NAMES, enemyTier, type TowerEnemyProfile } from '../scaling.ts';
 import { enemyStats, woodDurability } from '../enemy-curves.ts';
 import { FORK_TUNING, forkDepth, forksWorth, stepValue } from '../tower/forks.ts';
-import { choosePattern, FALSE_ASCENTS, type Pattern } from './patterns.ts';
+import { pick } from '../tower/patterns.ts';
+import { rollQuota } from '../tower/door-quota.ts';
+import { choosePattern, FALSE_ASCENTS, quotaPatterns, type Pattern } from './patterns.ts';
 import { tileRandom } from '../random.ts';
-import { heartDoorsOn, keyColorsOn, onlyOpenKeys, withoutHeart } from '../key-schedule.ts';
+import type { KeyColor } from '../config.ts';
+import {
+  QUOTA_DOORS, doorKeys, onlyOpenKeys, quotaDoorsIn, towerDoorFirstFloor, towerDoorHundredths, towerDoorRate, towerKeyColorsOn,
+  towerKeyRatio, towerWoodPercent, withoutQuotaDoors, type QuotaDoor,
+} from '../key-schedule.ts';
 
 /** Delve is one continuous lattice of chambers (COLUMNS wide, endless rows).
  * Every lattice cell belongs to exactly one AREA. Area ownership is decided
@@ -23,7 +29,7 @@ export const DELVE_TUNING = {
   loopChance: 0.12, shaftBreakChance: 0.4, sidewaysBias: 2.2, straightPenalty: 0.35, chamberChance: 0.46, wideChamberChance: 0.18,
   /** Graph/physical distance (tiles) over which two area themes blend. */
   themeBand: 26,
-  junctionKeyChance: 0.32, cacheAreas: 16,
+  cacheAreas: 16,
   /** Most pockets per area whose throat becomes a fork. */
   forksPerArea: 6,
   /** Chance that a corridor not leading into a pocket gets a guard, and the
@@ -113,6 +119,9 @@ export type Region = {
   area: number; nodes: Node[]; edges: Edge[]; cells: Map<string, Tile>; metadata: Map<string, { depth: number; area: number }>;
   gate: Point; entry: Point; exit: number; start: number; minY: number; maxY: number;
   nodeAt: (col: number, row: number) => Node | undefined;
+  /** The quota doors the door stage rolled for the area's ten floors and
+   * how many found no place, by door (only those it rolled any of). */
+  doorQuota?: Partial<Record<QuotaDoor, { rolled: number; dropped: number }>>;
 };
 const cache = new Map<string, Region>();
 
@@ -134,12 +143,14 @@ export function region(seed: number, area: number, tier = 1): Region {
   const board = carve(lab);
   placePatternCosts(lab, board);
   placeGuards(lab, board);
+  const doorQuota = placeQuotaDoors(lab, board);
   // Every milestone gate, ten equivalent floors up, is held by a boss, so
   // character power stays necessary even when every optional tax is avoided.
   board.put({ x: board.gate.x, y: board.gate.y - 2 }, gateTile(lab, { kind: 'enemy', strength: 'boss' }, lab.nodes[lab.exit]), area * 100 + 99);
-  placeJunctionKeys(lab, board);
+  placeWoodenDoors(lab, board);
+  supplyKeys(lab, board);
   const { nodes, edges, exit, start, nodeAt } = lab, { cells, metadata, gate } = board;
-  const result: Region = { area, nodes, edges, cells, metadata, gate, entry: entrance(seed, area), exit, start, ...rowSpan(cells), nodeAt };
+  const result: Region = { area, nodes, edges, cells, metadata, gate, entry: entrance(seed, area), exit, start, ...rowSpan(cells), nodeAt, ...(doorQuota ? { doorQuota } : {}) };
   cache.set(key, result);
   if (cache.size > DELVE_TUNING.cacheAreas) cache.delete(cache.keys().next().value!);
   return result;
@@ -148,9 +159,13 @@ export function region(seed: number, area: number, tier = 1): Region {
 /** One area's lattice graph while it is being built. */
 type Lab = {
   seed: number; area: number; rng: () => number;
-  /** The numbered delve: the first keeps blue and red keys for its deeper floors (`keyColorsOn`). */
+  /** The numbered delve, which follows the numbered tower's door and key
+   * schedules by equivalent floor (`towerKeyColorsOn`, `towerDoorHundredths`). */
   tier: number;
   nodes: Node[]; edges: Edge[];
+  /** Every gate placed on a single tile so far: pockets' throat costs,
+   * corridor guards and the door stage's corridor doors (not fork lanes). */
+  slots: Slot[];
   nodeAt: (col: number, row: number) => Node | undefined;
   /** Ids of the area's own cells beside `id`. */
   neighbors: (id: number) => number[];
@@ -173,7 +188,7 @@ function lattice(seed: number, area: number, tier: number): Lab {
   const up = boundary(seed, area + 1);
   const entryCol = area ? boundary(seed, area).gateCol : 2;
   return {
-    seed, area, tier, rng: rngFor(seed ^ Math.imul(area + 1, 0x45d9f3b)), nodes, edges: [], nodeAt, neighbors, up,
+    seed, area, tier, rng: rngFor(seed ^ Math.imul(area + 1, 0x45d9f3b)), nodes, edges: [], slots: [], nodeAt, neighbors, up,
     start: idAt(entryCol, lower(seed, area, entryCol))!,
     exit: idAt(up.gateCol, up.rows[up.gateCol] - 1)!,
   };
@@ -318,8 +333,9 @@ function assignPatterns(lab: Lab) {
   for (const n of nodes) if (!n.pattern && isPocket(lab, n)) n.pattern = choosePattern(rng, { area: lab.area, branch: branchLength(nodes, n.id) }, colorsAt(lab, n));
 }
 
-/** The key colours cell `n` may use, by its equivalent floor. */
-const colorsAt = (lab: Lab, n: Node) => keyColorsOn(Math.floor(n.depth / 10), lab.tier);
+/** The key colours cell `n` may use, by its equivalent floor: the tower of
+ * the same number's (`towerKeyColorsOn`). */
+const colorsAt = (lab: Lab, n: Node) => towerKeyColorsOn(Math.floor(n.depth / 10), lab.tier);
 
 /** A dead end other than the area's entrance or exit. */
 const isPocket = ({ start, exit }: Lab, n: Node) => n.links.length === 1 && n.id !== start && n.id !== exit;
@@ -378,7 +394,7 @@ const widens = (n: Node, rng: () => number) => !n.pattern && n.col < COLS - 1 &&
 /** The tile standing in for one pattern cost or fork lane step at cell `n`. */
 function gateTile({ rng, tier }: Lab, g: LaneStep, n: Node): Tile {
   if (g.kind === 'reward') return { ...g.reward };
-  if (g.kind === 'door') return { kind: 'door', color: g.color };
+  if (g.kind === 'door') return { kind: 'door', color: g.color, door: { type: 'keys', keys: doorKeys(g), mode: 'all', ...(g.heart ? { heart: true as const } : {}) } };
   if (g.kind === 'wood') return { kind: 'door', door: { type: 'wood', durability: woodDurability('delve', tier, n.depth) } };
   if (g.kind === 'heart') return { kind: 'door', door: { type: 'fullHp' } };
   if (g.kind !== 'enemy') return { kind: 'floor' };
@@ -420,12 +436,16 @@ function tryFork(lab: Lab, board: Board, n: Node, path: Point[]) {
   const lanes = forkLanes(board, n, path);
   if (!lanes || lab.rng() >= FORK_TUNING.chance(n.depth / 10)) return false;
   const value = n.pattern!.gates.reduce((sum, g) => sum + stepValue(g), 0);
-  const colors = colorsAt(lab, n), hearts = heartDoorsOn(n.depth / 10, lab.tier);
-  const [fork] = forksWorth(value, n.depth / 10, 'mixed', lab.rng, f => f.lanes.length === 2 && forkDepth(f) <= lanes[0].length && onlyOpenKeys(f, colors) && (hearts || withoutHeart(f)), false);
+  const [fork] = forksWorth(value, n.depth / 10, 'mixed', lab.rng, f => fitsThroat(lab, n, f, lanes) && withoutQuotaDoors(f.lanes), false);
   if (!fork) return false;
   carveFork(lab, board, n, { fork, lanes, path });
   return true;
 }
+
+/** Whether fork `f` can stand in pocket `n`'s throat: two lanes no deeper
+ * than the throat, its keys open there. */
+const fitsThroat = (lab: Lab, n: Node, f: Fork, lanes: Point[][]) =>
+  f.lanes.length === 2 && forkDepth(f) <= lanes[0].length && onlyOpenKeys(f, colorsAt(lab, n));
 
 /** Costs sit in the single-width throat, outside either chamber, so each
  * one is a cut tile between the pocket and the rest of the labyrinth. Only
@@ -437,12 +457,20 @@ function placeCosts(lab: Lab, board: Board, n: Node, path: Point[]) {
   const cuts = path.filter(p => !board.roomTiles.has(point(p.x, p.y)) && separates(p));
   if (cuts.length < n.pattern!.gates.length) n.pattern = choosePattern(lab.rng, { area: lab.area, branch: 0, maxGates: cuts.length }, colorsAt(lab, n));
   const pattern = n.pattern!, middle = Math.min(cuts.length - 1, Math.floor(cuts.length / 2) + pattern.gates.length - 1);
-  pattern.gates.forEach((g, i) => board.put(cuts[middle - i], gateTile(lab, g, n), n.depth));
+  pattern.gates.forEach((g, i) => {
+    board.put(cuts[middle - i], gateTile(lab, g, n), n.depth);
+    lab.slots.push({ at: cuts[middle - i], gate: g, n, depth: n.depth, main: false, pocket: n });
+  });
 }
 
+/** Where a pocket's rewards lie: its centre, then either side. */
+const rewardSpots = (lab: Lab, n: Node) => [{ x: n.x, y: n.y }, physical(n.x - 1, rowY(n.row), lab.seed), physical(n.x + 1, rowY(n.row), lab.seed)];
+/** The tile kinds a pocket's rewards may be. */
+const REWARDS = new Set<Tile['kind']>(['key', 'potion', 'attack', 'defense', 'treasure']);
+
 function placeRewards(lab: Lab, board: Board, n: Node) {
-  const rewards = [{ x: n.x, y: n.y }, physical(n.x - 1, rowY(n.row), lab.seed), physical(n.x + 1, rowY(n.row), lab.seed)];
-  n.pattern!.rewards.forEach((r, i) => board.put(rewards[i], { ...r }, n.depth));
+  const spots = rewardSpots(lab, n);
+  n.pattern!.rewards.forEach((r, i) => board.put(spots[i], { ...r }, n.depth));
 }
 
 const shift = (p: Point, d: Point, k = 1): Point => ({ x: p.x + d.x * k, y: p.y + d.y * k });
@@ -521,7 +549,7 @@ function placeGuards(lab: Lab, board: Board) {
     // Rolled before looking for room, so every guarded corridor draws alike.
     const guard = rollGuard(rng);
     const open = e.path.filter(p => !board.roomTiles.has(point(p.x, p.y)) && board.cells.get(point(p.x, p.y))?.kind === 'floor');
-    if (open.length) placeGuard(lab, board, open, guard, nodes[e.a]);
+    if (open.length) placeGuard(lab, board, open, guard, nodes[e.a], e);
   }
 }
 
@@ -535,22 +563,268 @@ function rollGuard(rng: () => number): GuardRoll {
 /** The guard on the middle of the corridor's `open` tiles, and its reward
  * on the tile after it. A guard's potion may be a percent potion, as the
  * run decides (`withPotions`). */
-function placeGuard(lab: Lab, board: Board, open: Point[], { strength, profile, reward }: GuardRoll, from: Node) {
+function placeGuard(lab: Lab, board: Board, open: Point[], { strength, profile, reward }: GuardRoll, from: Node, edge: Edge) {
   const middle = Math.floor(open.length / 2), at = open[middle], depth = board.metadata.get(point(at.x, at.y))!.depth;
-  board.put(at, gateTile(lab, { kind: 'enemy', strength, profile }, { ...from, depth }), depth);
+  const gate: Gate = { kind: 'enemy', strength, profile };
+  board.put(at, gateTile(lab, gate, { ...from, depth }), depth);
+  lab.slots.push({ at, gate, n: from, depth, main: onMain(lab, edge), edge });
   const beside = open[middle + 1];
   if (!reward || !beside) return;
   const tile: Tile = reward === 'potion' ? { kind: 'potion', color: 'blue' } : { kind: reward };
   board.put(beside, tile, board.metadata.get(point(beside.x, beside.y))!.depth);
 }
 
-/** Coherent key sources at strategic junctions; no blanket key-solvability
- * fixup. Where blue keys don't appear yet, a junction's blue key is yellow. */
-function placeJunctionKeys(lab: Lab, board: Board) {
-  const { nodes, start, rng } = lab;
-  const junctions = nodes.filter(n => !n.pattern && n.id !== start && n.links.length >= 3);
-  for (const n of junctions) if (rng() < DELVE_TUNING.junctionKeyChance)
-    board.put(n, { kind: 'key', color: rng() < 0.8 || !colorsAt(lab, n).blue ? 'yellow' : 'blue' }, n.depth);
+/** One gate standing on a single tile: where, what, the cell it was placed
+ * for and its depth, whether its corridor joins two cells of the way to the
+ * milestone gate, the pocket whose throat it is and the corridor it stands
+ * in, if any. */
+type Slot = { at: Point; gate: Gate; n: Node; depth: number; main: boolean; pocket?: Node; edge?: Edge };
+
+/** Whether corridor `e` joins two cells of the way to the milestone gate. */
+const onMain = (lab: Lab, e: Edge) => lab.nodes[e.a].main && lab.nodes[e.b].main;
+/** The equivalent floor (0 is the first) of a depth. */
+const floorOf = (depth: number) => Math.floor(depth / 10);
+
+/** Gives slot `s` a door (never an enemy) and redraws its tile. */
+function setGate(lab: Lab, board: Board, s: Slot, gate: Gate) {
+  s.gate = gate;
+  board.put(s.at, gateTile(lab, gate, { ...s.n, depth: s.depth }), s.depth);
+}
+
+const QUOTA_GATE: Record<QuotaDoor, Gate> = { blue: { kind: 'door', color: 'blue' }, red: { kind: 'door', color: 'red' }, heart: { kind: 'heart' } };
+/** A plain yellow door: one key, no other colour, no heart. */
+const plainYellow = (g: Gate) => g.kind === 'door' && g.color === 'yellow' && !g.also?.length && !g.heart;
+/** A gate that costs something to cross and holds no quota door yet. */
+const paidGate = (g: Gate) => (g.kind === 'enemy' && g.strength !== 'boss') || g.kind === 'wood' || plainYellow(g);
+
+/** One place a quota door could go: the equivalent floor it stands on, and
+ * placing it there (false when it turns out not to fit). */
+type Placing = { floor: number; place: () => boolean };
+
+/** The door stage, the Tower's (tower/door-quota.ts) by equivalent floor:
+ * each of the area's ten floors rolls how many blue, red and Heart Doors it
+ * holds from the schedule of the tower of the same number
+ * (`towerDoorHundredths`), and each is placed one of these ways, chosen at
+ * random among those that fit, on its own floor if it can, else on any of
+ * the area's from the door's first floor:
+ *
+ *   upgrade   a yellow door in a pocket's throat turns blue or red; any paid
+ *             gate (an enemy, a yellow or Wooden Door), corridor guards on
+ *             the way to the milestone gate among them, a Heart Door;
+ *   combine   a door takes the colour as well, or for a Heart Door, a door
+ *             taking a blue or red key drains HP to 1 too;
+ *   corridor  a door on a corridor off the way to the milestone gate that
+ *             no other way round passes, holding no gate yet;
+ *   pattern   (blue) a pocket with one cost takes a pattern built round a
+ *             blue door (`quotaPatterns`);
+ *   fork      a pocket's throat becomes a fork holding the door, and any
+ *             other quota doors open there as extra doors, not counted.
+ *
+ * Blue and red doors never stand on the way to the milestone gate, as no
+ * key is planned to be reachable before them. Returns what it rolled and
+ * how many found no place. */
+function placeQuotaDoors(lab: Lab, board: Board): Region['doorQuota'] {
+  const tally: NonNullable<Region['doorQuota']> = {}, bridges = bridgeEdges(lab);
+  for (let floor = lab.area * 10; floor < lab.area * 10 + 10; floor++)
+    for (const door of QUOTA_DOORS) {
+      const count = rollQuota(towerDoorHundredths(door, floor, lab.tier), lab.rng);
+      if (!count) continue;
+      const t = tally[door] ??= { rolled: 0, dropped: 0 };
+      t.rolled += count;
+      for (let i = 0; i < count; i++) if (!placeOne(lab, board, door, floor, bridges)) t.dropped++;
+    }
+  return Object.keys(tally).length ? tally : undefined;
+}
+
+function placeOne(lab: Lab, board: Board, door: QuotaDoor, floor: number, bridges: Edge[]): boolean {
+  const first = towerDoorFirstFloor(door, lab.tier) - 1;
+  const ways = [upgrades(lab, board, door), combines(lab, board, door), corridorDoors(lab, board, door, bridges),
+    door === 'blue' ? patternSwaps(lab, board) : [], forkDoors(lab, board, door)];
+  for (const near of [(p: Placing) => p.floor === floor, (p: Placing) => p.floor >= first]) {
+    const open = ways.map(w => w.filter(near)).filter(w => w.length);
+    while (open.length) {
+      const at = Math.floor(lab.rng() * open.length), way = open[at];
+      const [p] = way.splice(Math.floor(lab.rng() * way.length), 1);
+      if (!way.length) open.splice(at, 1);
+      if (p.place()) return true;
+    }
+  }
+  return false;
+}
+
+const upgrades = (lab: Lab, board: Board, door: QuotaDoor): Placing[] => lab.slots
+  .filter(s => door === 'heart' ? paidGate(s.gate) : plainYellow(s.gate) && !s.main)
+  .map(s => ({ floor: floorOf(s.depth), place: () => { setGate(lab, board, s, { ...QUOTA_GATE[door] }); return true; } }));
+
+const combines = (lab: Lab, board: Board, door: QuotaDoor): Placing[] => lab.slots
+  .filter(s => s.gate.kind === 'door' && (door === 'heart' ? !s.gate.heart && doorKeys(s.gate).some(c => c !== 'yellow') : !s.main && !doorKeys(s.gate).includes(door)))
+  .map(s => ({ floor: floorOf(s.depth), place: () => {
+    const g = s.gate as Extract<Gate, { kind: 'door' }>;
+    setGate(lab, board, s, door === 'heart' ? { ...g, heart: true } : { ...g, also: [...(g.also ?? []), door] });
+    return true;
+  } }));
+
+/** The middle open tile of each corridor off the way to the milestone gate
+ * that no other way round passes (`bridges`), leading into no pocket (whose
+ * throat holds its own costs) and holding no gate yet. */
+function corridorDoors(lab: Lab, board: Board, door: QuotaDoor, bridges: Edge[]): Placing[] {
+  const taken = new Set(lab.slots.map(s => s.edge));
+  return bridges.filter(e => !taken.has(e) && !onMain(lab, e) && !lab.nodes[e.a].pattern && !lab.nodes[e.b].pattern).flatMap(e => {
+    const open = e.path.filter(p => !board.roomTiles.has(point(p.x, p.y)) && board.cells.get(point(p.x, p.y))?.kind === 'floor');
+    if (!open.length) return [];
+    const at = open[Math.floor(open.length / 2)], depth = board.metadata.get(point(at.x, at.y))!.depth;
+    return [{ floor: floorOf(depth), place: () => {
+      const s: Slot = { at, gate: QUOTA_GATE[door], n: lab.nodes[e.a], depth, main: false, edge: e };
+      lab.slots.push(s);
+      setGate(lab, board, s, { ...QUOTA_GATE[door] });
+      return true;
+    } }];
+  });
+}
+
+/** A pocket whose throat holds one paid cost takes a pattern built round a
+ * blue door in place of its own, rewards and all. */
+const patternSwaps = (lab: Lab, board: Board): Placing[] => lab.nodes.filter(n => n.pattern && !n.fork && !n.falseAscent).flatMap(n => {
+  const throat = lab.slots.filter(s => s.pocket === n), options = quotaPatterns(lab.area, colorsAt(lab, n));
+  if (throat.length !== 1 || !paidGate(throat[0].gate) || !options.length) return [];
+  return [{ floor: floorOf(n.depth), place: () => {
+    for (const p of rewardSpots(lab, n)) if (REWARDS.has(board.cells.get(point(p.x, p.y))?.kind ?? 'wall')) board.put(p, { kind: 'floor' }, n.depth);
+    n.pattern = pick(options, lab.rng);
+    setGate(lab, board, throat[0], n.pattern.gates[0]);
+    placeRewards(lab, board, n);
+    return true;
+  } }];
+});
+
+/** A pocket's throat becomes a fork holding the door, worth about its
+ * pattern's costs; other quota doors in it stand as extra doors, uncounted,
+ * once their own first floor has come. */
+const forkDoors = (lab: Lab, board: Board, door: QuotaDoor): Placing[] => lab.nodes.filter(n => n.pattern && !n.fork).flatMap(n => {
+  const path = throatPath(lab, n), lanes = forkLanes(board, n, path), floor = floorOf(n.depth);
+  if (!lanes) return [];
+  const opens = (f: Fork) => {
+    const held = quotaDoorsIn(f.lanes);
+    return held[door] > 0 && QUOTA_DOORS.every(d => !held[d] || towerDoorHundredths(d, floor, lab.tier) > 0);
+  };
+  return [{ floor, place: () => {
+    const value = n.pattern!.gates.reduce((sum, g) => sum + stepValue(g), 0);
+    const [fork] = forksWorth(value, n.depth / 10, 'mixed', lab.rng, f => fitsThroat(lab, n, f, lanes) && opens(f), false);
+    if (!fork) return false;
+    carveFork(lab, board, n, { fork, lanes, path });
+    lab.slots = lab.slots.filter(s => s.pocket !== n);
+    return true;
+  } }];
+});
+
+/** The corridors no other way round passes: closing one cuts the area in two. */
+function bridgeEdges({ nodes, edges }: Lab): Edge[] {
+  return edges.filter(({ a, b }) => {
+    const seen = new Set([a]), queue = [a];
+    for (let i = 0; i < queue.length; i++) for (const o of nodes[queue[i]].links)
+      if (!seen.has(o) && !(queue[i] === a && o === b) && !(queue[i] === b && o === a)) { seen.add(o); queue.push(o); }
+    return !seen.has(b);
+  });
+}
+
+/** Makes `towerWoodPercent` of the area's yellow locks Wooden Doors, each
+ * by its own equivalent floor: throats', corridors' and fork lanes' (a lane
+ * offering a Wooden Door of its own rolls too, so the share decides every
+ * one), rolled one by one (no roll when all or none are). */
+function placeWoodenDoors(lab: Lab, board: Board) {
+  const wooden = (depth: number) => {
+    const share = towerWoodPercent(floorOf(depth), lab.tier);
+    return share >= 100 || (share > 0 && lab.rng() * 100 < share);
+  };
+  const wood = (g: LaneStep, depth: number): Gate | null =>
+    g.kind !== 'reward' && (plainYellow(g) || g.kind === 'wood') ? (wooden(depth) ? { kind: 'wood' } : { kind: 'door', color: 'yellow' }) : null;
+  for (const s of lab.slots) {
+    const g = wood(s.gate, s.depth);
+    if (g) setGate(lab, board, s, g);
+  }
+  for (const n of lab.nodes) if (n.fork && n.lanes)
+    n.fork.lanes = n.fork.lanes.map((lane, i) => lane.map((step, k) => {
+      const g = wood(step, n.depth);
+      if (!g) return step;
+      board.put(n.lanes![i][k], gateTile(lab, g, n), n.depth);
+      return g;
+    }));
+}
+
+/** The Tower's key supply by equivalent floor (`towerKeyRatio`): for each
+ * colour, rarest first, the area aims for the ratio's worth of keys for its
+ * locks (for blue and red, at least the scheduled doors' worth, so keys
+ * stock up in areas short of their doors). Keys in pockets are kept at the
+ * chance that leaves the aim (a pocket left with no reward holds a potion),
+ * or, while short, junctions roll for one at the chance of how short. On
+ * the equivalent floor a blue or red key first appears, the cell nearest the
+ * entrance from that floor holds one. */
+function supplyKeys(lab: Lab, board: Board) {
+  const locks = lockFloors(lab);
+  for (const color of ['red', 'blue', 'yellow'] as KeyColor[]) {
+    entranceKey(lab, board, color);
+    const aim = keyAim(lab, color, locks[color]);
+    const found = [...board.cells.values()].filter(t => t.kind === 'key' && t.color === color).length;
+    if (found > aim) thinKeys(lab, board, color, aim / found);
+    else addKeys(lab, board, color, aim - found);
+  }
+}
+
+/** The equivalent floor of each lock of each colour: every door's keys, a
+ * Wooden Door as yellow, in single gates and fork lanes alike (a lane
+ * beside an open one counts too, as the census does, since forks are a
+ * larger share of the Delve's doors than of the Tower's). */
+function lockFloors(lab: Lab): Record<KeyColor, number[]> {
+  const out: Record<KeyColor, number[]> = { yellow: [], blue: [], red: [] };
+  const lock = (g: LaneStep, depth: number) => {
+    const colors: KeyColor[] = g.kind === 'door' ? doorKeys(g) : g.kind === 'wood' ? ['yellow'] : [];
+    for (const c of colors) out[c].push(floorOf(depth));
+  };
+  for (const s of lab.slots) lock(s.gate, s.depth);
+  for (const n of lab.nodes) for (const step of n.fork?.lanes.flat() ?? []) lock(step, n.depth);
+  return out;
+}
+
+/** The keys of `color` the area aims for. */
+function keyAim(lab: Lab, color: KeyColor, locks: number[]) {
+  const ratio = (floor: number) => towerKeyRatio(color, floor, lab.tier) / 10000;
+  const aim = locks.reduce((s, f) => s + ratio(f), 0);
+  if (color === 'yellow') return aim;
+  let scheduled = 0;
+  for (let f = lab.area * 10; f < lab.area * 10 + 10; f++) scheduled += towerDoorRate(color, f, lab.tier) * ratio(f);
+  return Math.max(aim, scheduled);
+}
+
+function thinKeys(lab: Lab, board: Board, color: KeyColor, keep: number) {
+  for (const n of lab.nodes) if (n.pattern) {
+    const spots = rewardSpots(lab, n);
+    for (const p of spots) {
+      const t = board.cells.get(point(p.x, p.y));
+      if (t?.kind !== 'key' || t.color !== color || lab.rng() < keep) continue;
+      const others = spots.some(q => q !== p && REWARDS.has(board.cells.get(point(q.x, q.y))?.kind ?? 'wall'));
+      board.put(p, others ? { kind: 'floor' } : { kind: 'potion', color: 'blue' }, n.depth);
+    }
+  }
+}
+
+function addKeys(lab: Lab, board: Board, color: KeyColor, missing: number) {
+  const spots = lab.nodes.filter(n => !n.pattern && n.id !== lab.start && n.links.length >= 3 && colorsAt(lab, n)[color] && board.cells.get(point(n.x, n.y))?.kind === 'floor');
+  while (missing > 0 && spots.length && lab.rng() < Math.min(1, missing)) {
+    const [n] = spots.splice(Math.floor(lab.rng() * spots.length), 1);
+    board.put(n, { kind: 'key', color }, n.depth);
+    missing--;
+  }
+}
+
+/** On the equivalent floor a blue or red key first appears on, one on the
+ * cell nearest the entrance from that floor (never the entrance itself,
+ * where a hero may already stand). */
+function entranceKey(lab: Lab, board: Board, color: KeyColor) {
+  if (color === 'yellow') return;
+  const first = towerDoorFirstFloor(color, lab.tier) - 1;
+  if (first < lab.area * 10 || first >= lab.area * 10 + 10) return;
+  const [n] = lab.nodes.filter(n => !n.pattern && n.id !== lab.start && floorOf(n.depth) >= first && board.cells.get(point(n.x, n.y))?.kind === 'floor')
+    .sort((a, b) => a.depth - b.depth || a.id - b.id);
+  if (n) board.put(n, { kind: 'key', color }, n.depth);
 }
 
 function rowSpan(cells: Map<string, Tile>) {

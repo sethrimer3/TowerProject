@@ -36,25 +36,29 @@ function laneDoorKind(s: LaneStep): string | null {
   return s.kind === "wood" || s.kind === "heart" ? s.kind : null;
 }
 
-const add = (c: Counts, k: string, n = 1) => { c[k] = (c[k] ?? 0) + n; };
+export const add = (c: Counts, k: string, n = 1) => { c[k] = (c[k] ?? 0) + n; };
 
 /** What floor `floor` holds: every tile counted, and the doors in the forks
  * the embedder built. */
-export function floorCounts({ cells, embedding }: TowerFloor): Counts {
+export const floorCounts = ({ cells, embedding }: TowerFloor): Counts =>
+  tileCounts(cells.values(), embedding.graph.nodes.flatMap((n) => n.forks?.[0]?.lanes ?? []), embedding.graph.doorQuota);
+
+/** What `tiles` hold, the doors standing in built forks' `lanes`, and the
+ * quota doors the door stage dropped (`quota`). */
+export function tileCounts(tiles: Iterable<Tile>, lanes: LaneStep[][], quota: Partial<Record<string, { dropped: number }>> = {}): Counts {
   const c: Counts = {};
-  for (const t of cells.values()) {
+  for (const t of tiles) {
     if (t.kind === "door") for (const kind of doorKinds(t)) add(c, `door:${kind}`);
     else if (t.kind === "key") add(c, `key:${t.color ?? "yellow"}`);
     else if (t.kind === "enemy") add(c, `enemy:${t.enemy?.strength ?? "normal"}`);
     else if (ITEMS.has(t.kind)) add(c, t.kind);
   }
-  for (const node of embedding.graph.nodes)
-    for (const lane of node.forks?.[0]?.lanes ?? [])
-      for (const step of lane) {
-        const kind = laneDoorKind(step);
-        if (kind) add(c, `forked:${kind}`);
-      }
-  for (const [door, q] of Object.entries(embedding.graph.doorQuota ?? {})) add(c, `dropped:${door}`, q.dropped);
+  for (const lane of lanes)
+    for (const step of lane) {
+      const kind = laneDoorKind(step);
+      if (kind) add(c, `forked:${kind}`);
+    }
+  for (const [door, q] of Object.entries(quota)) add(c, `dropped:${door}`, q?.dropped ?? 0);
   return c;
 }
 
@@ -90,22 +94,33 @@ export function census(o: CensusOptions): CensusBand[] {
         for (let s = 0; s < o.seeds; s++) {
           floors++;
           for (const [k, n] of Object.entries(floorCounts(generateTowerFloor(censusSeed(s), f - 1, tower)))) add(sum, k, n);
-          for (const door of QUOTA_DOORS) add(sum, `target:${door}`, towerDoorRate(door, f - 1, tower));
-          add(sum, "target:wood", towerWoodPercent(f - 1, tower));
-          // Each open key colour's aimed keys per lock (off the way to the
-          // stairs), averaged over the floors it is open on.
-          for (const color of COLORS)
-            if (f >= keyFirstFloor(color, tower)) {
-              add(sum, `aim:${color}`, towerKeyRatio(color, f - 1, tower) / 10000);
-              add(sum, `open:${color}`);
-            }
+          addSchedule(sum, f - 1, tower);
         }
-      const avg: Counts = {};
-      for (const [k, n] of Object.entries(sum)) avg[k] = n / floors;
-      for (const color of COLORS) if (sum[`open:${color}`]) avg[`aim:${color}`] = sum[`aim:${color}`]! / sum[`open:${color}`]!;
-      bands.push({ tower, from, to, floors, avg });
+      bands.push({ tower, from, to, floors, avg: averaged(sum, floors) });
     }
   return bands;
+}
+
+/** Adds to `sum` what the schedules want on floor `depth` (0 is the first)
+ * of tower `tower`: each quota door's rate, the wooden share, and each open
+ * key colour's aimed keys per lock (off the way to the stairs), which
+ * `averaged` averages over the floors it is open on. */
+export function addSchedule(sum: Counts, depth: number, tower: number) {
+  for (const door of QUOTA_DOORS) add(sum, `target:${door}`, towerDoorRate(door, depth, tower));
+  add(sum, "target:wood", towerWoodPercent(depth, tower));
+  for (const color of COLORS)
+    if (depth + 1 >= keyFirstFloor(color, tower)) {
+      add(sum, `aim:${color}`, towerKeyRatio(color, depth, tower) / 10000);
+      add(sum, `open:${color}`);
+    }
+}
+
+/** `sum` per floor, over `floors` floors. */
+export function averaged(sum: Counts, floors: number): Counts {
+  const avg: Counts = {};
+  for (const [k, n] of Object.entries(sum)) avg[k] = n / floors;
+  for (const color of COLORS) if (sum[`open:${color}`]) avg[`aim:${color}`] = sum[`aim:${color}`]! / sum[`open:${color}`]!;
+  return avg;
 }
 
 /** Keys found per lock of each colour, and overall. A wooden or steel door
@@ -158,14 +173,14 @@ function table(bands: CensusBand[], columns: Column[]) {
   return rows.map((r) => r.map((cell, i) => cell.padStart(widths[i])).join("  ")).join("\n");
 }
 
-/** The census as text: per tower, doors and keys, then enemies and items,
- * each an average per floor by band. */
-export function formatCensus(bands: CensusBand[]): string {
+/** The census as text: per tower (or delve, `place`), doors and keys, then
+ * enemies and items, each an average per floor by band. */
+export function formatCensus(bands: CensusBand[], place = "Tower"): string {
   const out: string[] = [];
   for (const tower of [...new Set(bands.map((b) => b.tower))]) {
     const mine = bands.filter((b) => b.tower === tower);
     const floors = mine.reduce((s, b) => s + b.floors, 0);
-    out.push(`=== Tower ${tower} · ${floors} floors · average per floor ===`, "Doors and keys", table(mine, DOOR_COLUMNS),
+    out.push(`=== ${place} ${tower} · ${floors} floors · average per floor ===`, "Doors and keys", table(mine, DOOR_COLUMNS),
       "", "Enemies and items", table(mine, CONTENT_COLUMNS), "");
   }
   return out.join("\n");

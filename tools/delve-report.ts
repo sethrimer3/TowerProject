@@ -1,7 +1,27 @@
 import { analyzeDelve, worldCells } from '../src/delve/analyzer.ts';
 import { region, ownerAt } from '../src/delve/labyrinth.ts';
+import { delveCensus } from '../src/delve/census.ts';
+import { formatCensus } from '../src/tower/census.ts';
 // usage: npm run delve:report -- [seed] [area] [--map]
-const args = process.argv.slice(2), [seed = 42, area = 0] = args.filter(a => !a.startsWith('--')).map(Number);
+//        npm run delve:report -- --census [--tiers 1,2,9] [--floors 1-200] [--band 50] [--seeds 20]
+//          → doors, keys, enemies and items per equivalent floor by delve and band
+const args = process.argv.slice(2);
+/** The value after `--name`, or `fallback`. */
+const option = (name: string, fallback: string) => {
+  const i = args.indexOf(`--${name}`);
+  return i >= 0 && args[i + 1] !== undefined ? args[i + 1] : fallback;
+};
+if (args.includes('--census')) {
+  const [from, to] = option('floors', '1-200').split('-').map(Number);
+  console.log(formatCensus(delveCensus({
+    towers: option('tiers', '1').split(',').map(Number),
+    from, to: to ?? from,
+    band: Number(option('band', '50')),
+    seeds: Number(option('seeds', '20')),
+  }), 'Delve'));
+  process.exit(0);
+}
+const [seed = 42, area = 0] = args.filter(a => !a.startsWith('--')).map(Number);
 const { patterns, ...summary } = analyzeDelve(seed, area);
 console.log(JSON.stringify(summary, null, 2));
 console.log(patterns.map(p => p.fork ? `${p.pattern} (fork ${p.fork})` : p.pattern).join(', '));

@@ -1,21 +1,11 @@
 import type { KeyColor } from "./config.ts";
 
 /** The key colours a floor's generation may use: no door or key of a
- * closed colour appears on it. */
+ * closed colour appears on it. The Tower's come from its door schedule
+ * (`towerKeyColorsOn`, below), and the Delve follows the tower of the same
+ * number by equivalent floor. */
 export type KeyColors = Readonly<Record<KeyColor, boolean>>;
 export const ALL_KEY_COLORS: KeyColors = { yellow: true, blue: true, red: true };
-/** In the first delve, the equivalent floor (counting from 1) each key
- * colour first appears on: the first floor of a section, past the boss
- * before it. Later delves use every colour from their first floor. The
- * Tower follows its own door schedule (`towerKeyColorsOn`, below); the
- * Delve is to adopt it once it has been checked in the Tower. */
-export const FIRST_TIER_KEY_FLOORS: Record<KeyColor, number> = { yellow: 1, blue: 21, red: 51 };
-/** The colours open on the Delve's equivalent floor `floor` (0 is the first) of tier `tier`. */
-export function keyColorsOn(floor: number, tier = 1): KeyColors {
-  if (tier > 1) return ALL_KEY_COLORS;
-  const open = (c: KeyColor) => floor + 1 >= FIRST_TIER_KEY_FLOORS[c];
-  return { yellow: open("yellow"), blue: open("blue"), red: open("red") };
-}
 /** Only yellow keys: what a first-tower floor's way to the stairs may ask
  * for without another way round (`bypassesRareKeys`). */
 export const YELLOW_ONLY: KeyColors = { yellow: true, blue: false, red: false };
@@ -40,25 +30,13 @@ export function onlyOpenKeys(thing: unknown, colors: KeyColors): boolean {
   return Object.values(o).every((v) => onlyOpenKeys(v, colors));
 }
 
-/** The equivalent floor (counting from 1) the Delve's Heart Doors first
- * appear on from the second tier on (the Tower's: `towerDoorFirstFloor`). */
-export const HEART_DOOR_FLOOR = 31;
-/** The same in the first delve: past floor 100, so a new hero has time to
- * prepare for them. */
-export const FIRST_TIER_HEART_DOOR_FLOOR = 101;
-/** Whether equivalent floor `floor` (0 is the first; the Delve's may be
- * fractional) of tier `tier` may hold a Heart Door. */
-export const heartDoorsOn = (floor: number, tier = 1) =>
-  Math.floor(floor) + 1 >= (tier > 1 ? HEART_DOOR_FLOOR : FIRST_TIER_HEART_DOOR_FLOOR);
-/** Whether a fork holds no Heart Door. */
-export const withoutHeart = (f: { lanes: { kind: string }[][] }) => !f.lanes.some((lane) => lane.some((s) => s.kind === "heart"));
-
 // ---------------------------------------------------------------- the Tower's door schedule
 
 /** The doors the Tower places by quota (docs/DOOR_AND_KEY_SCHEDULE.md):
  * each floor rolls how many of each it holds (`towerDoorRate`), and only
- * the door stage (`tower/door-quota.ts`) places them; every other table
- * offers only yellow doors (`withoutQuotaDoors`). */
+ * the door stage (`tower/door-quota.ts`; the Delve's, by equivalent floor,
+ * in `delve/labyrinth.ts`) places them; every other table offers only
+ * yellow doors (`withoutQuotaDoors`). */
 export type QuotaDoor = "blue" | "red" | "heart";
 export const QUOTA_DOORS: readonly QuotaDoor[] = ["red", "blue", "heart"];
 

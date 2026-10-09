@@ -2,7 +2,7 @@
 
 How often each kind of door, and the keys to open them, appear on a Tower floor, by tower and floor. The goal is one steady difficulty ramp: every floor a little harder than the one below, every tower a little harder than the one before, so the player needs to keep investing in progress upgrades (Key Efficiency, the Find Key research, Key Siphon, badges) to keep up.
 
-The Delve keeps its current doors and keys until the Tower schedules have been checked. Then it is meant to adopt the same schedules by equivalent floor (phase 5).
+The Delve follows the same schedules by equivalent floor, each delve the tower of its number's (section 6).
 
 Notation: `t` is the tower number (1–9), `f` the floor counted from 1, and `⌊x⌋` rounds down. The code counts floors from 0 (`depth = f − 1`).
 
@@ -25,7 +25,7 @@ Example values:
 
 Starting at 0.10 a floor, about two times in three a colour's first ten floors hold at least one of its doors (1 − 0.9¹⁰). Once a rate reaches 1, every floor holds at least that many: blue from floor 501 in Tower I. Tower I's red tops out at 0.99, so about one floor in a hundred past floor 1000 has no red door.
 
-Key colours follow their doors: a blue or red key appears only from that colour's first floor (`keyColorsOn` takes the new first floors). A key of a colour not yet open still comes as a yellow key, as now.
+Key colours follow their doors: a blue or red key appears only from that colour's first floor (`towerKeyColorsOn`). A key of a colour not yet open still comes as a yellow key, as now.
 
 These rules stay as they are:
 - Floor 1's way to the stairs stands open.
@@ -66,7 +66,7 @@ Today blue, red and Heart Doors come from about six weighted tables (main gate, 
 
      The region's fallback single gate becomes the quota door itself, so a fork that doesn't fit the floor still leaves the door standing. In Tower I a lone blue or red gate may not stand on the way to the stairs, so there this way is used only on branches.
 
-     On the way to the stairs, a quota fork holds only one quota door, so the core path stays on schedule whether or not the fork fits. On a branch, a fork may hold others too (*blueOrRedDoor*, *twoBlueDoorsOrRedDoor*): only the door it places counts, and the others are extra doors, a chance for a well-prepared hero. *redDoorOrElite* (a red door, or an elite enemy) is a fork built around a red door alone; the Delve doesn't build it yet. About one quota fork in five fits the floor; the rest stand as their single door.
+     On the way to the stairs, a quota fork holds only one quota door, so the core path stays on schedule whether or not the fork fits. On a branch, a fork may hold others too (*blueOrRedDoor*, *twoBlueDoorsOrRedDoor*): only the door it places counts, and the others are extra doors, a chance for a well-prepared hero. *redDoorOrElite* (a red door, or an elite enemy) is a fork built around a red door alone; the Delve leaves it out (`towerOnly`). About one quota fork in five fits the floor; the rest stand as their single door.
 
    A door that fits nowhere is dropped, and the census counts it (section 5). A door in a fork counts fully toward the quota. The census reports forked and unforked doors separately, so we can see whether forks take too much of the quota, given that a forked door can be walked around.
 4. **Wooden doors:** every yellow lock left (gates, the stairs door, shortcuts, fork lanes, and a fork lane that offers a Wooden Door of its own) rolls the wooden share (`placeWoodenDoors`), so the share decides every Wooden Door in the Tower.
@@ -101,7 +101,7 @@ What changes in the code:
 - **Planning** (`tower/types.ts`, furnisher, forks, analyzer): the gate `steel` becomes `wood`. The analyzer's map shows `W`.
 - **Card and skill**: the STEEL DOOR card and its skill (`cardSteelDoor` in `config.ts`) become WOODEN DOOR. It heads for a wooden door the hero holds a key for or can break without dying. The renamed ids drop the old card from saved hands. During the prototype phase old saves don't need to convert.
 - **Art**: a new wooden-door sprite (`public/assets/doors/door_wood.png`, replacing `door_steel.png`), a wooden painter in `tile-painters.ts`, and a neon look.
-- **The Delve**: its steel gates become wooden doors with durability from the Delve's own enemy curve. How often they appear doesn't change yet.
+- **The Delve**: its steel gates become wooden doors with durability from the Delve's own enemy curve. Since phase 5 the wooden share decides how many (section 6).
 
 ## 4. Key supply
 
@@ -154,7 +154,7 @@ What helps the player keep up:
 
 ## 5. Census tool
 
-The census measures what Tower floors actually hold, averaged over many seeds, by tower and band of floors. Use it to check a schedule change, see a change's side effects (fewer yellow doors, more keys asked for), and tune numbers before and after a phase. The code is `src/tower/census.ts`, run from `tools/tower-report.ts`.
+The census measures what Tower floors actually hold, averaged over many seeds, by tower and band of floors. Use it to check a schedule change, see a change's side effects (fewer yellow doors, more keys asked for), and tune numbers before and after a phase. The code is `src/tower/census.ts`, run from `tools/tower-report.ts`; the Delve's is `src/delve/census.ts`, run from `tools/delve-report.ts` (section 6).
 
 ```sh
 npm run tower:report -- --census                                   # Tower I, floors 1-200 in bands of 10, 20 seeds
@@ -177,14 +177,16 @@ Every figure is an average per floor over the band's floors and seeds. Two table
 | Column | Meaning |
 |---|---|
 | Y door | Doors taking a yellow key (combined ones too) |
-| steel, steel% | Steel doors, and their share of yellow locks (`steel ÷ (Y door + steel)`): the wooden share once phase 3 lands |
+| wood, wood% | Wooden Doors, and their share of yellow locks (`wood ÷ (Y door + wood)`) |
+| W want | The wooden share the schedule asks for (section 1) |
 | combined | Doors taking more than one colour. Each also counts in the column of every colour it takes |
 | B / R / H want | The schedule's rate for that door on those floors (section 1) |
 | B / R / H alone | That door standing on its own, not in a fork lane |
 | B / R / H fork | That door in a fork lane the floor built |
 | dropped | Quota doors the door stage found no place for, all kinds together. *want ≈ alone + fork + dropped*; a gap there means doors are lost after placement (a bug) |
 | Y / B / R key | Keys lying on the floor, by colour |
-| Y/lock, B/lock, R/lock, all/lock | Keys found per lock of that colour (a steel door counts as a yellow lock). Below 1, the floor doesn't hold enough keys for all its doors of that colour; `-` when there are no such doors |
+| Y/lock, B/lock, R/lock, all/lock | Keys found per lock of that colour (a Wooden Door counts as a yellow lock). Below 1, the floor doesn't hold enough keys for all its doors of that colour; `-` when there are no such doors |
+| Y / B / R aim | The keys per lock that colour aims for (section 4), averaged over the floors it is open on |
 
 **Enemies and items:** enemies by strength (weak, normal, strong, elite, boss) and potions, ATK and DEF shards and treasure chests.
 
@@ -195,13 +197,48 @@ What to watch:
 
 To compare against an older generator, run the same command in a worktree checked out at the older commit (`git worktree add --detach <dir> <commit>`) and compare the two outputs. The baseline before the door stage: Tower I had about 1.05 blue doors, 0.25 red doors and 0.18 Heart Doors a floor at every height from floor 21 (101 for hearts) up, Tower II from floor 1.
 
-## 6. Build order
+## 6. The Delve
+
+Each delve follows the schedules of the tower of the same number, by equivalent floor (an area is ten floors). The Delve has no strategic graph, so its labyrinth (`src/delve/labyrinth.ts`) runs its own versions of the stages, after its pockets, forks and corridor guards are placed:
+
+- **Key colours** open on the same floors (`towerKeyColorsOn`): blue from floor 51 of the first delve, red from 101. No ordinary pattern or fork offers a blue, red or Heart Door (`withoutQuotaDoors`).
+- **The door stage** (`placeQuotaDoors`): each of an area's ten floors rolls its quota from `towerDoorHundredths`, and each door goes on its own floor if it can, else on any of the area's floors from its first. The ways, chosen at random among those that fit:
+  - **upgrade**: a yellow door in a pocket's throat turns blue or red. A Heart Door can replace any paid gate, including a corridor guard.
+  - **combine**: a door takes the colour as well, or a coloured door takes the heart.
+  - **corridor**: a door on a corridor off the way to the milestone gate, one that no other way round passes.
+  - **pattern** (blue only): a pocket takes *RareKeyCommonReward* or *RareKeyCommonBundle*.
+  - **fork**: a pocket's throat becomes a fork holding the door. Other quota doors in it are extra doors, if their first floor has come.
+
+  Blue and red doors never stand on the way to the milestone gate, in any delve, since the Delve plans no key to be reachable before a door. A region records what it rolled and dropped in `doorQuota`.
+- **Wooden Doors** (`placeWoodenDoors`): every yellow lock left (throats, corridors, fork lanes) rolls the wooden share for its floor.
+- **Keys** (`supplyKeys`): for each colour the area aims for the keys-per-lock ratio's worth for its locks. Every door in a fork lane counts as a lock, as the census counts it, since forks hold about two of an area's five yellow locks. For blue and red, the aim is at least the scheduled doors' worth. Keys in pockets are kept at the chance that leaves the aim (a pocket left empty gets a potion); while short, junctions roll for keys at the chance of how short. This replaces the old 32% junction key. On the floor a blue or red key first appears, the cell nearest the entrance from that floor holds one.
+
+At shallow depths this matches the Delve's old mix, about 1–2 blue doors an area. The schedule then grows as in the Tower. Areas hold far fewer yellow keys than before: about 7 in the first areas, from about 14.
+
+```sh
+npm run delve:report -- --census                                       # the first delve, floors 1-200 in bands of 50, 20 seeds
+npm run delve:report -- --census --tiers 1,5,9 --floors 1-1000 --band 100 --seeds 10   # about 15 seconds a delve
+```
+
+The options and columns are the Tower census's (section 5), with `--tiers` for `--towers` and no `--stride`. Each band covers every area holding one of its floors, and every figure is per equivalent floor.
+
+First measurement (`--tiers 1,5,9 --floors 1-1000 --band 100 --seeds 10`), measured against wanted or aimed:
+
+| Floors | Delve 1: blue doors, red, heart · yellow, blue keys per lock | Delve 5 | Delve 9 |
+|---|---|---|---|
+| 1–100 | 0.05/0.07, 0/0, 0/0 · 1.30/1.28, 2.00/1.19 | 0.12/0.12, 0.05/0.05, 0/0 · 0.89/0.88, 1.07/0.78 | 0.20/0.17, 0.11/0.11, 0/0 · 0.50/0.50, 0.51/0.40 |
+| 401–500 | 0.94/0.90, 0.43/0.45, 0.34/0.34 · 1.15/1.08, 1.04/1.00 | 0.97/0.94, 0.47/0.48, 0.39/0.39 · 0.73/0.68, 0.60/0.59 | 0.99/0.97, 0.51/0.53, 0.41/0.42 · 0.51/0.50, 0.41/0.40 |
+| 901–1000 | 1.73/1.90, 0.93/0.95, 0.84/0.84 · 0.89/0.83, 0.79/0.75 | 1.75/1.93, 0.96/0.98, 0.88/0.88 · 0.56/0.50, 0.44/0.40 | 1.76/1.97, 1.00/1.02, 0.92/0.93 · 0.59/0.50, 0.45/0.40 |
+
+Doors placed (alone plus in forks) track the schedule. About 0.2 a floor is dropped past floor 900, where an area runs out of places. Blue keys per lock on floors 1–100 include floor 51's entrance key, set against few blue doors.
+
+## 7. Build order
 
 1. **Census tool** on today's generator, to record a baseline.
 2. **Door stage:** blue, red and heart quotas, and the new first floors.
 3. **Wooden doors:** the rule, art, card and skill, and the wooden share.
 4. **Key supply curve.**
-5. **The Delve** adopts the same schedules by equivalent floor, after the Tower is checked.
+5. **The Delve** adopts the same schedules by equivalent floor (section 6; done).
 6. **Door runs (later):** two or three doors of the same colour in a row in a single gate, to make one gate dearer than a combined door can. A gate is one tile today. Fork lanes already run one to three tiles deep (the embedder carves a band of rows for them), so a door run would be a one-lane crossing built the same way, counting each door toward the quota. Left until the rest has been checked, since it needs embedder work.
 
 After each phase: re-run the census and bump `TOWER_LAYOUT_VERSION`. Phase 3 also bumps the Delve's `LAYOUT_VERSION`, because its steel doors become wooden.

@@ -197,7 +197,7 @@ function addChain(b: GraphBuilder, pattern: TowerPattern, host: number) {
 }
 
 /** The floor's plan; `tier` decides which key colours it may use
- * (`keyColorsOn`) and the enemy curve its enemies come from. */
+ * (`towerKeyColorsOn`) and the enemy curve its enemies come from. */
 export function generateStrategicGraph(seed: number, depth: number, budgetCut = 0, tier = 1): StrategicGraph {
   const rng = random(seed);
   const b = new GraphBuilder(depth, rng, towerKeyColorsOn(depth, tier), bypassesRareKeys(tier));

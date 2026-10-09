@@ -113,7 +113,7 @@ One way through a fork: one to three tiles of gates walked in order, sometimes w
 _Avoid_: corridor, path
 
 **Door quota**:
-How many blue, red and Heart Doors a Tower floor holds, rolled from the door schedule for its tower and floor: none before each door's first floor, then a little more every ten floors. Only the door stage places them, so the schedule sets their number on every floor.
+How many blue, red and Heart Doors a Tower floor holds, rolled from the door schedule for its tower and floor: none before each door's first floor, then a little more every ten floors. Only the door stage places them, so the schedule sets their number on every floor. A Delve area rolls one for each of its ten equivalent floors, from the schedule of the tower of its number.
 _Avoid_: door rate (the rate is what the quota is rolled from), door budget
 
 **Wooden Door**:

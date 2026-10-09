@@ -1,6 +1,6 @@
 import type { Gate, Reward } from '../tower/types.ts';
 import { pick } from '../tower/patterns.ts';
-import { ALL_KEY_COLORS, onlyOpenKeys, type KeyColors } from '../key-schedule.ts';
+import { ALL_KEY_COLORS, onlyOpenKeys, withoutQuotaDoors, type KeyColors } from '../key-schedule.ts';
 
 /** Strategic situations placed on labyrinth pockets. Quality is the
  * generator's own label for tuning/diagnostics only; Automove never reads
@@ -43,11 +43,17 @@ export const FALSE_ASCENTS: Pattern[] = [
  * most gates its throat holds. */
 export type PatternPlace = { area: number; branch?: number; maxGates?: number };
 /** Trap frequency rises with depth; long detours only go on long branches;
- * a pattern with a key colour `colors` closes never goes. */
+ * a pattern with a key colour `colors` closes never goes, nor one holding a
+ * blue, red or Heart Door: only the door stage places those
+ * (`quotaPatterns`). */
 export function choosePattern(rng: () => number, { area, branch = 1, maxGates = Infinity }: PatternPlace, colors: KeyColors = ALL_KEY_COLORS): Pattern {
-  const options = DELVE_PATTERNS.filter(p => (p.minBranch ?? 0) <= branch && p.gates.length <= maxGates && onlyOpenKeys(p, colors));
+  const options = DELVE_PATTERNS.filter(p => (p.minBranch ?? 0) <= branch && p.gates.length <= maxGates && onlyOpenKeys(p, colors) && withoutQuotaDoors(p.gates));
   return pick(options.map(v => ({ v, w: patternWeight(v, area) })), rng);
 }
+/** The one-gate patterns built round a blue door, which the door stage may
+ * give a pocket for its quota, with the weights they are drawn by. */
+export const quotaPatterns = (area: number, colors: KeyColors) =>
+  DELVE_PATTERNS.filter(p => p.gates.length === 1 && !withoutQuotaDoors(p.gates) && onlyOpenKeys(p, colors)).map(v => ({ v, w: patternWeight(v, area) }));
 /** How often a pattern is drawn: good ones most, poor ones more with each area. */
 function patternWeight(v: Pattern, area: number) {
   if (v.quality === 'good') return 3;

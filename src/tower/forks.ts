@@ -297,7 +297,7 @@ const withoutLocks = (f: Fork) => !f.lanes.some((lane) => lane.some(isLock));
 /** Forks priced near `v` for a floor `depth` deep (Delve passes its
  * equivalent floor), best first, the rest shallower and narrower first.
  * `fits` limits them to what the caller has room for and allows there,
- * Heart Doors included (`heartDoorsOn`). */
+ * Heart Doors included. */
 export function forksWorth(v: number, depth: number, archetype: Archetype, rng: () => number, fits: (f: Fork) => boolean = () => true, tower = true): Fork[] {
   let options = FORK_PATTERNS.filter((p) => tower || !p.towerOnly).map((p) => ({ p, w: forkWeight(p, depth, archetype) }))
     .filter(({ w }) => w > 0)

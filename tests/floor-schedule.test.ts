@@ -5,22 +5,18 @@ import { generateStrategicGraph } from "../src/tower/strategic-graph.ts";
 import { gateTile } from "../src/tower/furnisher.ts";
 import { region } from "../src/delve/labyrinth.ts";
 import { STRENGTH_FROM_FLOOR, strengthOnFloor } from "../src/scaling.ts";
-import { FIRST_TIER_HEART_DOOR_FLOOR, HEART_DOOR_FLOOR, heartDoorsOn, towerDoorFirstFloor } from "../src/key-schedule.ts";
+import { towerDoorFirstFloor } from "../src/key-schedule.ts";
 import type { Tile } from "../src/entities.ts";
 
 const seeds = [7919, 15838, 23757];
 const isHeart = (t: Tile) => t.kind === "door" && t.door?.type === "fullHp";
 
-test("strong enemies wait for floor 11 and elites for floor 41; the Delve's Heart Doors for floor 101 in the first tier and 31 after", () => {
+test("strong enemies wait for floor 11 and elites for floor 41", () => {
   assert.deepEqual(STRENGTH_FROM_FLOOR, { strong: 11, elite: 41 });
-  assert.equal(HEART_DOOR_FLOOR, 31);
-  assert.equal(FIRST_TIER_HEART_DOOR_FLOOR, 101);
   // Floors count from 0 here: floor 11 is 10.
   assert.deepEqual([9, 10, 39, 40].map((f) => strengthOnFloor("elite", f)), ["normal", "strong", "strong", "elite"]);
   assert.deepEqual([9, 10].map((f) => strengthOnFloor("strong", f)), ["normal", "strong"]);
   assert.deepEqual(["weak", "normal", "boss"].map((s) => strengthOnFloor(s as "weak", 0)), ["weak", "normal", "boss"]);
-  assert.deepEqual([29, 29.9, 30].map((f) => heartDoorsOn(f, 2)), [false, false, true]);
-  assert.deepEqual([30, 99, 99.9, 100].map((f) => heartDoorsOn(f)), [false, false, false, true]);
 });
 
 test("Tower floors place no strong enemy below floor 11, no elite below 41 and no Heart Door below 201", () => {
@@ -55,7 +51,7 @@ test("Tower IX places Heart Doors from floor 121, ten floors earlier a tower tha
   assert.ok(heart, "they appear once floor 121 comes");
 });
 
-test("the Delve's first areas hold no strong or elite enemy below equivalent floor 11, nor a Heart Door below 101", () => {
+test("the Delve's first areas hold no strong or elite enemy below equivalent floor 11", () => {
   for (const seed of seeds)
     for (let area = 0; area < 3; area++) {
       const r = region(seed, area);
@@ -63,9 +59,24 @@ test("the Delve's first areas hold no strong or elite enemy below equivalent flo
         const floor = Math.floor(r.metadata.get(key)!.depth / 10);
         if (t.kind === "enemy" && t.enemy!.strength !== "boss") assert.equal(strengthOnFloor(t.enemy!.strength, floor), t.enemy!.strength, `${key} at floor ${floor + 1}`);
         if (t.kind === "enemy" && (t.enemy!.strength === "strong" || t.enemy!.strength === "elite")) assert.ok(floor >= 10, `a ${t.enemy!.strength} enemy on floor ${floor + 1}`);
-        if (isHeart(t)) assert.ok(floor >= 100, `a Heart Door on floor ${floor + 1}`);
       }
     }
+});
+
+test("the ninth delve places Heart Doors from equivalent floor 121, as Tower IX does", () => {
+  const drains = (t: Tile) => isHeart(t) || (t.kind === "door" && t.door?.type === "keys" && !!t.door.heart);
+  let heart = false;
+  for (const seed of seeds)
+    for (let area = 10; area < 14; area++) {
+      const r = region(seed, area, 9);
+      for (const [key, t] of r.cells)
+        if (drains(t)) {
+          const floor = Math.floor(r.metadata.get(key)!.depth / 10);
+          assert.ok(floor + 1 >= towerDoorFirstFloor("heart", 9), `seed ${seed}: a Heart Door on floor ${floor + 1}`);
+          heart = true;
+        }
+    }
+  assert.ok(heart, "they appear once floor 121 comes");
 });
 
 test("Tower I's first ten floors lay a potion in about 35% of the doorways on the way to the stairs, in place of enemies", () => {
