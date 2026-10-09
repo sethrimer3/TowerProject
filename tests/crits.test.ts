@@ -58,7 +58,7 @@ test("Crit %: 1% a rank to 80%; Crit x: x1.2, and 0.1 more a rank to x16.2", () 
   assert.deepEqual(critRule(s), { chance: 240, factor: 2.4 });
 });
 
-test("a Silver rank counts at once in the run's card, and the rows' first prices are 10 and 12 in Silver and Gold", () => {
+test("a Silver rank counts at once in the run's card, and the rows' first prices are 10 and 12 in Silver and 30 and 35 in Gold", () => {
   const s = defaults();
   s.upgrades.critical = 1;
   s.training.critChance = 5;
@@ -66,7 +66,7 @@ test("a Silver rank counts at once in the run's card, and the rows' first prices
   assert.deepEqual(runTrainingValue(s, { training: { critFactor: 2 }, player: hero() } as never, "critFactor"), { value: 1.4, unit: "×" });
   assert.deepEqual([silverPrice("critChance", 0), silverPrice("critFactor", 0)], [10, 12]);
   const rows = (id: "critChance" | "critFactor") => TRAINING.find((r) => r.id === id)!;
-  assert.deepEqual([trainingGold(rows("critChance"), 0), trainingGold(rows("critFactor"), 0)], [10, 12]);
+  assert.deepEqual([trainingGold(rows("critChance"), 0), trainingGold(rows("critFactor"), 0)], [30, 35]);
   assert.ok(trainingGold(rows("critFactor"), 9) > trainingGold(rows("critChance"), 9), "dearer in Silver, dearer in Gold");
   assert.ok(TRAINER_GOLD_CURVES.critFactor.growth < TRAINER_GOLD_CURVES.critChance.growth, "and steeper");
 });

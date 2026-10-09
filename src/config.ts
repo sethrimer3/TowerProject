@@ -627,9 +627,9 @@ const gentleTrainers: TrainerCurve = { growth: 60 };
 export const TRAINER_GOLD_CURVES: Record<TrainingId, TrainerCurve> = {
   hp: gentleTrainers,
   attack: mildTrainers,
-  /** Crit % starts at 10 Gold a first rank, Crit x at 12 (the others at 20). */
-  critChance: { growth: 20, start: 10 },
-  critFactor: { growth: 16, start: 12 },
+  /** Crit % starts at 30 Gold a first rank, Crit x at 35 (the others at 20). */
+  critChance: { growth: 20, start: 30 },
+  critFactor: { growth: 16, start: 35 },
   defense: mildTrainers,
   regen: mildTrainers,
   shroud: gentleTrainers,
