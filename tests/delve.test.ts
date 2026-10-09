@@ -61,7 +61,7 @@ test('a forked pocket is reached by either lane and by nothing else', () => {
       assert.ok(!flood(cells, from).has(pocket), `seed ${seed} area ${area}: forked pocket has a bypass`);
       // Its lanes hold what the fork asked for, from the neighbour's side.
       n.fork!.lanes.forEach((lane, i) => lane.forEach((step, k) => {
-        const want = step.kind === 'reward' ? step.reward.kind : ['steel', 'heart'].includes(step.kind) ? 'door' : step.kind;
+        const want = step.kind === 'reward' ? step.reward.kind : ['wood', 'heart'].includes(step.kind) ? 'door' : step.kind;
         assert.equal(r.cells.get([a, b][i][k])?.kind, want);
       }));
     }

@@ -12,7 +12,7 @@ import { missGem } from "./gems.ts";
 import { DelvePlan } from "./delve/automove.ts";
 import { defaults } from "./save.ts";
 import { random, stream, tileRandom } from "./random.ts";
-import { doorBlockedMessage, doorName, KEY_ORDER } from "./doors.ts";
+import { doorBlockedMessage, doorName, doorRule, drainsHp, KEY_ORDER } from "./doors.ts";
 import { TREES, skillAvailable } from "./skill-trees.ts";
 import { routeTo, type Step } from "./pathfinding.ts";
 import {
@@ -1596,15 +1596,17 @@ export class Game {
   private markDamaged() {
     if (this.mode === "tower") this.towerRun.damaged = true;
   }
-  /** Each key the door took rises from it with a minus sign; a Heart Door,
-   * which takes the hero's HP down to 1 instead, raises a heart (a toll,
-   * not damage: it never costs an area's mastery). */
+  /** Each key the door took rises from it with a minus sign; a door that
+   * takes HP (a Heart Door, down to 1, or a Wooden Door broken without a
+   * key) raises a heart with the HP it took (a toll, not damage: it never
+   * costs an area's mastery). */
   private openDoor(t: Tile, keysSpent: KeyColor[], drained: number, at: { x: number; y: number }, amount = 1) {
-    const n = keysSpent.length;
+    const n = keysSpent.length, rule = doorRule(t);
     for (const color of keysSpent) this.gain(at.x, at.y, `−${keyCount(amount)} ${color} key`, { tile: { kind: "key", color }, spent: true });
-    if (!n) this.gain(at.x, at.y, `−${wholeChange(drained)} HP`, { heart: true });
+    if (!n || (drainsHp(rule) && drained > 0)) this.gain(at.x, at.y, `−${wholeChange(drained)} HP`, { heart: true });
     const spent = amount === 1 ? `${n} key${n === 1 ? "" : "s"} spent` : `${keyCount(snap(n * amount))} keys spent`;
-    this.message = `${doorName(t)} opened${n ? ` · ${spent}` : this.run.player.hp > HEART_DOOR_HP ? " · HP drained" : " · HP drained to 1"}`;
+    if (rule.type === "wood" && !n) this.message = `${doorName(t)} broken down · −${wholeChange(drained)} HP`;
+    else this.message = `${doorName(t)} opened${n ? ` · ${spent}` : ""}${drainsHp(rule) ? (this.run.player.hp > HEART_DOOR_HP ? " · HP drained" : " · HP drained to 1") : ""}`;
   }
   /** Settles a fight whose damage is already applied. Returns false when
    * the player fell. */

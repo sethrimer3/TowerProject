@@ -21,7 +21,7 @@ import { YELLOW_ONLY, doorKeys, onlyOpenKeys, withoutQuotaDoors } from "../key-s
  * blue key is worth two yellow, a red about two and a half blue. */
 export const GATE_VALUE = {
   door: { yellow: 1, blue: 2, red: 5 } as Record<KeyColor, number>,
-  steel: 1,
+  wood: 1,
   heart: 1,
   enemy: { weak: 0.75, normal: 1.5, strong: 2.5, elite: 4, boss: 6 } as Record<Strength, number>,
   reward: { potion: 1, attack: 2, defense: 2, treasure: 1 },
@@ -40,8 +40,8 @@ export const FORK_TUNING = {
 export function stepValue(step: LaneStep): number {
   switch (step.kind) {
     case "open": return 0;
-    case "door": return doorKeys(step).reduce((s, c) => s + GATE_VALUE.door[c], 0);
-    case "steel": return GATE_VALUE.steel;
+    case "door": return doorKeys(step).reduce((s, c) => s + GATE_VALUE.door[c], 0) + (step.heart ? GATE_VALUE.heart : 0);
+    case "wood": return GATE_VALUE.wood;
     case "heart": return GATE_VALUE.heart;
     case "potion": return -GATE_VALUE.reward.potion;
     case "enemy": return GATE_VALUE.enemy[step.strength];
@@ -61,12 +61,12 @@ const noKeys = (): Keys => ({ yellow: 0, blue: 0, red: 0 });
 
 /** The keys a lane needs held on the way in (the deepest it runs short at
  * any point, since a key found inside pays only for doors after it) and
- * what it costs overall. A steel lock is counted as the yellow key it eats
+ * what it costs overall. A wooden lock is counted as the yellow key it eats
  * first. */
 export function laneKeys(lane: Lane): { upfront: Keys; net: Keys } {
   const held = noKeys(), upfront = noKeys();
   for (const step of lane) {
-    const color = step.kind === "door" ? step.color : step.kind === "steel" ? "yellow" : null;
+    const color = step.kind === "door" ? step.color : step.kind === "wood" ? "yellow" : null;
     if (color) upfront[color] = Math.max(upfront[color], -(--held[color]));
     if (step.kind === "reward" && step.reward.kind === "key") held[step.reward.color]++;
   }
@@ -81,7 +81,7 @@ export function laneSpends(lane: Lane): Set<string> {
   const out = new Set<string>();
   for (const step of lane) {
     if (step.kind === "door") out.add(`key:${step.color}`);
-    if (step.kind === "steel") out.add("key:any");
+    if (step.kind === "wood") out.add("key:any");
     if (step.kind === "heart") out.add("fullHp");
     if (step.kind === "enemy") out.add(`fight:${step.profile ?? "any"}`);
   }
@@ -115,7 +115,7 @@ export type ForkPattern = {
 const Y: Gate = { kind: "door", color: "yellow" };
 const B: Gate = { kind: "door", color: "blue" };
 const R: Gate = { kind: "door", color: "red" };
-const STEEL: Gate = { kind: "steel" };
+const WOOD: Gate = { kind: "wood" };
 const HEART: Gate = { kind: "heart" };
 const foe = (strength: Strength, profile?: TowerEnemyProfile): Gate => ({ kind: "enemy", strength, profile });
 const item = (reward: Reward): LaneStep => ({ kind: "reward", reward });
@@ -137,7 +137,7 @@ export const FORK_PATTERNS: ForkPattern[] = [
   // A key, or wait until HP is full.
   {
     id: "doorTypes", weight: 2, minimumDepth: 2, tags: ["doorGate"],
-    lanes: [[{ w: 2, v: [Y] }, { w: 1, v: [STEEL] }], one([HEART])],
+    lanes: [[{ w: 2, v: [Y] }, { w: 1, v: [WOOD] }], one([HEART])],
   },
   // Keys or HP, at about the same price.
   {
@@ -277,7 +277,7 @@ export function forkFits(b: GraphBuilder, node: StrategicNode) {
 }
 
 /** A door that takes keys. */
-const isLock = (s: { kind: string }) => s.kind === "door" || s.kind === "steel";
+const isLock = (s: { kind: string }) => s.kind === "door" || s.kind === "wood";
 
 /** Whether some lane of the fork needs no blue or red key, so a hero
  * without one still gets through. */

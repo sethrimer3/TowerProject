@@ -1,7 +1,7 @@
 import { point, type Tile } from "./entities.ts";
 import { litTorches, takesSomething, type Position } from "./board.ts";
 import type { Step } from "./pathfinding.ts";
-import { doorCost, doorId, doorRule } from "./doors.ts";
+import { doorCost, doorId, doorRule, drainsHp } from "./doors.ts";
 import { impervious } from "./combat.ts";
 import { snap } from "./exact.ts";
 import { UPGRADES, VIEWPORT_TILES, type KeyColor, type TrainingId, type UpgradeId } from "./config.ts";
@@ -32,7 +32,7 @@ export const CARDS = {
   redKey: { name: "Red Key", text: "Move toward the closest red key." },
   redSiphon: { name: "RK Siphon", text: "Trade ATK training levels for a red key, without moving, for the rest of the run. The first use takes 1 level and each use after takes 1 more (2, then 3…). Skipped without enough levels left." },
   torch: { name: "Torch", text: "Move toward the closest lit torch, putting it out." },
-  steelDoor: { name: "Steel Door", text: "Move toward the closest Steel Door, while you hold a key it takes." },
+  woodenDoor: { name: "Wooden Door", text: "Move toward the closest Wooden Door you hold a key for, or can break down and survive." },
 } as const;
 export type CardId = keyof typeof CARDS;
 export const CARD_IDS = Object.keys(CARDS) as CardId[];
@@ -197,21 +197,28 @@ const never = () => false;
 const WANTS: Record<CardId, (t: Tile, at: HandAt, rules: CardRules | undefined, r: Reached) => boolean> = {
   stairs: (t) => t.kind === "stairs",
   heal: (t) => t.kind === "potion",
-  door: (t, at, rules) => t.kind === "door" && doorCost(t, at.run.player, keyScale(at, rules)) !== null,
+  // A door that opens: the keys held pay for it (a Wooden Door with a key,
+  // never broken down), or a Heart Door.
+  door: (t, at, rules) => {
+    if (t.kind !== "door") return false;
+    const cost = doorCost(t, at.run.player, keyScale(at, rules));
+    return cost !== null && (doorRule(t).type !== "wood" || cost.length > 0);
+  },
   yellowKey: (t) => t.kind === "key" && t.color === "yellow",
   blueKey: (t) => t.kind === "key" && t.color === "blue",
   monster: fightable(),
   atkUp: (t) => t.kind === "attack",
   defUp: (t) => t.kind === "defense",
   keySiphon: never,
-  // A single yellow door only (a Steel Door is DOOR's), one the yellow keys
+  // A single yellow door only (a Wooden Door is DOOR's), one the yellow keys
   // held pay for.
   yellowDoor: (t, at, rules) => {
     if (t.kind !== "door") return false;
     const rule = doorRule(t);
     return rule.type === "keys" && rule.mode === "all" && rule.keys.length === 1 && rule.keys[0] === "yellow" && doorCost(t, at.run.player, keyScale(at, rules)) !== null;
   },
-  heartDoor: (t) => t.kind === "door" && doorRule(t).type === "fullHp",
+  // A Heart Door, or a keyed door that drains HP too while its keys are held.
+  heartDoor: (t, at, rules) => t.kind === "door" && drainsHp(doorRule(t)) && doorCost(t, at.run.player, keyScale(at, rules)) !== null,
   weakEnemy: fightable(["weak"]),
   baseEnemy: fightable(["normal"]),
   strongEnemy: fightable(["strong"]),
@@ -224,8 +231,8 @@ const WANTS: Record<CardId, (t: Tile, at: HandAt, rules: CardRules | undefined, 
   redKey: (t) => t.kind === "key" && t.color === "red",
   redSiphon: never,
   torch: (_t, at, _rules, r) => !!at.world.torches?.some((torch) => torch.active && torch.x === r.x && torch.y === r.y),
-  // A Steel Door (any one key opens it), one the keys held pay for.
-  steelDoor: (t, at, rules) => t.kind === "door" && doorId(t) === "steel" && doorCost(t, at.run.player, keyScale(at, rules)) !== null,
+  // A Wooden Door the keys held pay for, or one the hero can break down and survive.
+  woodenDoor: (t, at, rules) => t.kind === "door" && doorId(t) === "wood" && doorCost(t, at.run.player, keyScale(at, rules), rules?.scale ?? 1) !== null,
 };
 
 const NONE: ReadonlySet<string> = new Set();

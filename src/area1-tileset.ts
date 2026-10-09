@@ -11,7 +11,7 @@ const ASSET_BASE = (import.meta as ImportMeta & { env?: { BASE_URL?: string } })
 const assetUrl = (path: string) => `${ASSET_BASE}assets/tilesets/area1/${path}`;
 export const AREA1_FLOOR_URLS = [1, 2, 3, 4].map((n) => assetUrl(`floor_0${n}.png`));
 export const AREA1_DOOR_URLS = Object.fromEntries(
-  ["a", "b", "c", "ab", "ac", "bc", "abc", "steel", "heart"].map((id) => [id, assetUrl(`doors/door_${id}.png`)]),
+  ["a", "b", "c", "ab", "ac", "bc", "abc", "ah", "bh", "ch", "abh", "ach", "bch", "abch", "steel", "heart", "wood"].map((id) => [id, assetUrl(`doors/door_${id}.png`)]),
 ) as Record<ReturnType<typeof doorId>, string>;
 export const AREA1_ITEM_URLS = {
   key_yellow: assetUrl("items/key_yellow.png"), key_blue: assetUrl("items/key_blue.png"), key_red: assetUrl("items/key_red.png"),

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { census, censusSeed, floorCounts, keysPerLock, steelShare } from "../src/tower/census.ts";
+import { census, censusSeed, floorCounts, keysPerLock, woodShare } from "../src/tower/census.ts";
 import { generateTowerFloor } from "../src/tower/index.ts";
 
 test("a floor's counts match its tiles, and forked doors are among its doors", () => {
@@ -21,10 +21,10 @@ test("a floor's counts match its tiles, and forked doors are among its doors", (
   assert.ok(combined > 0, "high floors hold combined doors");
 });
 
-test("keys per lock count a steel door as a yellow lock", () => {
-  const c = { "door:yellow": 3, "door:steel": 1, "door:blue": 2, "key:yellow": 6, "key:blue": 1 };
+test("keys per lock count a wooden door as a yellow lock", () => {
+  const c = { "door:yellow": 3, "door:wood": 1, "door:blue": 2, "key:yellow": 6, "key:blue": 1 };
   assert.deepEqual(keysPerLock(c), { yellow: 1.5, blue: 0.5, red: NaN, all: 7 / 6 });
-  assert.equal(steelShare(c), 0.25);
+  assert.equal(woodShare(c), 0.25);
 });
 
 test("the census averages each tower's bands of floors", () => {

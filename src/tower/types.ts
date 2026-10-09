@@ -24,11 +24,13 @@ export type Gate =
   | { kind: "open" }
   | { kind: "enemy"; strength: Strength; profile?: TowerEnemyProfile }
   /** A door taking a key of `color`, and of each colour in `also` (a
-   * combined door, which the door stage makes: `doorKeys`). */
-  | { kind: "door"; color: KeyColor; also?: KeyColor[] }
-  /** Special locks from the door vocabulary: steel takes any one key
-   * (cheapest first), heart always opens but drains HP to 1. */
-  | { kind: "steel" }
+   * combined door, which the door stage makes: `doorKeys`); with `heart`
+   * it also drains HP to 1. */
+  | { kind: "door"; color: KeyColor; also?: KeyColor[]; heart?: true }
+  /** Special locks from the door vocabulary: wood takes any one key
+   * (cheapest first) or, with none, HP to break it; heart always opens but
+   * drains HP to 1. */
+  | { kind: "wood" }
   | { kind: "heart" }
   /** No cost at all: a potion lies in the doorway, in an enemy's place on
    * the way to the stairs of the first tower's first floors. */
@@ -113,7 +115,7 @@ export type StrategicNode = {
   tags: StrategicTag[];
   /** Stairs region only: what stands directly in front of the stairs, an
    * enemy of this strength or a yellow door. */
-  stairsGuard?: Strength | "door";
+  stairsGuard?: Strength | "door" | "wood";
 };
 
 /** An extra connection that turns the tree into a loop: typically a locked

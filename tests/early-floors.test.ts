@@ -42,12 +42,16 @@ test("floor 1's stairs are the STAIRS card's target from the entrance, with no f
   }
 });
 
-test("floors 2 to 5 have a yellow door before the stairs and a yellow key reachable from the entrance without a fight or a door", () => {
+/** A door a yellow key opens: a yellow door, or a Wooden Door. */
+const yellowLock = (t: { kind: string; color?: string; door?: { type: string } }) =>
+  t.kind === "door" && (t.door?.type === "wood" || t.color === "yellow");
+
+test("floors 2 to 5 have a yellow lock before the stairs and a yellow key reachable from the entrance without a fight or a door", () => {
   for (let room = 1; room <= 4; room++)
     for (const seed of seeds) {
       const floor = generateTowerFloor(seed, room), { cells } = floor;
       const t = beforeStairs(floor);
-      assert.ok(t.kind === "door" && t.color === "yellow", `floor ${room + 1}, seed ${seed}: ${t.kind}`);
+      assert.ok(yellowLock(t), `floor ${room + 1}, seed ${seed}: ${t.kind}`);
       const blockers = new Set([...cells].filter(([, t]) => t.kind === "enemy" || t.kind === "door").map(([k]) => k));
       const free = [...reachable(cells, point(TOWER_START_X, 0), blockers)].filter((k) => {
         const t = cells.get(k)!;
@@ -108,13 +112,13 @@ test("no enemy on floors 1 to 10 beats a new hero in one fight, but floor 10's b
   assert.ok(worst >= 30, `the hardest still hurts: ${worst}`);
 });
 
-test("past floor 5, unguarded stairs sometimes have a yellow door in front instead", () => {
+test("past floor 5, unguarded stairs sometimes have a yellow lock in front instead", () => {
   const seen: Record<string, number> = {};
   for (let room = 5; room < 30; room++) {
     if (isBossFloor(room)) continue;
     for (const seed of seeds.slice(0, 40)) {
       const t = beforeStairs(generateTowerFloor(seed, room));
-      const kind = t.kind === "door" ? `door:${t.color}` : t.kind;
+      const kind = yellowLock(t) ? "door:yellow" : t.kind === "door" ? `door:${t.color}` : t.kind;
       seen[kind] = (seen[kind] ?? 0) + 1;
     }
   }

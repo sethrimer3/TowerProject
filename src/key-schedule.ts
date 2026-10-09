@@ -111,6 +111,15 @@ export function towerKeyColorsOn(depth: number, tower: number): KeyColors {
   return { yellow: true, blue: open("blue"), red: open("red") };
 }
 
+/** The share of a Tower floor's yellow locks made Wooden Doors, in
+ * percent: all of them on Tower I's first floor, 10 points fewer each later
+ * tower and one fewer every `everyFloors` floors, down to none. */
+export const TOWER_WOOD_SCHEDULE = { start: 100, lessEachTower: 10, everyFloors: 10 };
+export function towerWoodPercent(depth: number, tower: number) {
+  const s = TOWER_WOOD_SCHEDULE;
+  return Math.max(0, s.start - s.lessEachTower * (tower - 1) - Math.floor(depth / s.everyFloors));
+}
+
 /** Whether `thing` (a gate, pattern step, lane or fork, however deeply
  * nested) holds no blue, red or Heart Door: what every Tower table but the
  * door stage may offer. */
@@ -118,7 +127,7 @@ export function withoutQuotaDoors(thing: unknown): boolean {
   if (Array.isArray(thing)) return thing.every(withoutQuotaDoors);
   if (!thing || typeof thing !== "object") return true;
   const o = thing as Record<string, unknown>;
-  if (o.kind === "heart" || (o.kind === "door" && doorKeys(o as { color: KeyColor; also?: KeyColor[] }).some((c) => c !== "yellow"))) return false;
+  if (o.kind === "heart" || (o.kind === "door" && (o.heart || doorKeys(o as { color: KeyColor; also?: KeyColor[] }).some((c) => c !== "yellow")))) return false;
   return Object.values(o).every(withoutQuotaDoors);
 }
 
@@ -130,6 +139,7 @@ export function quotaDoorsIn(thing: unknown, out: Record<QuotaDoor, number> = { 
     if (o.kind === "heart") out.heart++;
     else if (o.kind === "door") {
       for (const c of doorKeys(o as { color: KeyColor; also?: KeyColor[] })) if (c === "blue" || c === "red") out[c]++;
+      if (o.heart) out.heart++;
     } else for (const v of Object.values(o)) quotaDoorsIn(v, out);
   }
   return out;

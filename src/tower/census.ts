@@ -1,5 +1,5 @@
 import type { KeyColor } from "../config.ts";
-import { QUOTA_DOORS, towerDoorRate } from "../key-schedule.ts";
+import { QUOTA_DOORS, towerDoorRate, towerWoodPercent } from "../key-schedule.ts";
 import { doorRule } from "../doors.ts";
 import type { Tile } from "../entities.ts";
 import { generateTowerFloor, type TowerFloor } from "./index.ts";
@@ -19,18 +19,21 @@ export type Counts = Record<string, number>;
 
 const ITEMS = new Set(["potion", "attack", "defense", "treasure"]);
 
-/** A door tile's kinds: `steel`, `heart`, or each key colour it takes, and
- * `combined` when it takes more than one. */
+/** A door tile's kinds: `wood`, `steel`, `heart`, or each key colour it
+ * takes, and `combined` when it takes more than one thing (colours, or a
+ * colour and the heart's drain, which counts as `heart` too). */
 function doorKinds(t: Tile): string[] {
   const rule = doorRule(t);
   if (rule.type === "fullHp") return ["heart"];
+  if (rule.type === "wood") return ["wood"];
   if (rule.mode === "any") return ["steel"];
-  return rule.keys.length > 1 ? [...rule.keys, "combined"] : rule.keys;
+  const kinds: string[] = [...rule.keys, ...(rule.heart ? ["heart"] : [])];
+  return kinds.length > 1 ? [...kinds, "combined"] : kinds;
 }
 
 function laneDoorKind(s: LaneStep): string | null {
   if (s.kind === "door") return s.color;
-  return s.kind === "steel" || s.kind === "heart" ? s.kind : null;
+  return s.kind === "wood" || s.kind === "heart" ? s.kind : null;
 }
 
 const add = (c: Counts, k: string, n = 1) => { c[k] = (c[k] ?? 0) + n; };
@@ -86,6 +89,7 @@ export function census(o: CensusOptions): CensusBand[] {
           floors++;
           for (const [k, n] of Object.entries(floorCounts(generateTowerFloor(censusSeed(s), f - 1, tower)))) add(sum, k, n);
           for (const door of QUOTA_DOORS) add(sum, `target:${door}`, towerDoorRate(door, f - 1, tower));
+          add(sum, "target:wood", towerWoodPercent(f - 1, tower));
         }
       const avg: Counts = {};
       for (const [k, n] of Object.entries(sum)) avg[k] = n / floors;
@@ -96,10 +100,10 @@ export function census(o: CensusOptions): CensusBand[] {
 
 const COLORS: KeyColor[] = ["yellow", "blue", "red"];
 
-/** Keys found per lock of each colour, and overall. A steel door counts as
- * a yellow lock, since it eats the cheapest key first. */
+/** Keys found per lock of each colour, and overall. A wooden or steel door
+ * counts as a yellow lock, since it eats the cheapest key first. */
 export function keysPerLock(c: Counts): Record<KeyColor | "all", number> {
-  const locks = (color: KeyColor) => (c[`door:${color}`] ?? 0) + (color === "yellow" ? c["door:steel"] ?? 0 : 0);
+  const locks = (color: KeyColor) => (c[`door:${color}`] ?? 0) + (color === "yellow" ? (c["door:wood"] ?? 0) + (c["door:steel"] ?? 0) : 0);
   const ratio = (keys: number, n: number) => (n ? keys / n : NaN);
   const out = {} as Record<KeyColor | "all", number>;
   for (const color of COLORS) out[color] = ratio(c[`key:${color}`] ?? 0, locks(color));
@@ -107,10 +111,10 @@ export function keysPerLock(c: Counts): Record<KeyColor | "all", number> {
   return out;
 }
 
-/** The share of yellow locks that are steel. */
-export const steelShare = (c: Counts) => {
-  const steel = c["door:steel"] ?? 0, locks = steel + (c["door:yellow"] ?? 0);
-  return locks ? steel / locks : NaN;
+/** The share of yellow locks that are wooden. */
+export const woodShare = (c: Counts) => {
+  const wood = c["door:wood"] ?? 0, locks = wood + (c["door:yellow"] ?? 0);
+  return locks ? wood / locks : NaN;
 };
 
 type Column = [heading: string, value: (c: Counts) => number, digits?: number];
@@ -118,7 +122,7 @@ const count = (k: string): Column[1] => (c) => c[k] ?? 0;
 const alone = (kind: string): Column[1] => (c) => (c[`door:${kind}`] ?? 0) - (c[`forked:${kind}`] ?? 0);
 
 const DOOR_COLUMNS: Column[] = [
-  ["Y door", count("door:yellow")], ["steel", count("door:steel")], ["steel%", (c) => steelShare(c) * 100, 0], ["combined", count("door:combined")],
+  ["Y door", count("door:yellow")], ["wood", count("door:wood")], ["wood%", (c) => woodShare(c) * 100, 0], ["W want", count("target:wood"), 0], ["combined", count("door:combined")],
   ["B want", count("target:blue")], ["B alone", alone("blue")], ["B fork", count("forked:blue")],
   ["R want", count("target:red")], ["R alone", alone("red")], ["R fork", count("forked:red")],
   ["H want", count("target:heart")], ["H alone", alone("heart")], ["H fork", count("forked:heart")],

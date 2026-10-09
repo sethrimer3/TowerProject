@@ -378,7 +378,7 @@ export const UPGRADES = [
   { id: "redSiphon", name: "RK Siphon", description: "Add the RK SIPHON card to your deck: it trades ATK training levels, for the rest of the run, for a red key, each use costing one level more than the last", card: "redSiphon", base: 10, max: 1, currency: "inspiration" },
   { id: "floorSkipReward", name: "Floor Skip Reward", description: "Open Floor Skip Reward research in the Archives: each level pays a share of the Gold a skipped floor's chests and battles held", base: 10, max: 1, currency: "inspiration" },
   { id: "cardTorch", name: "Torch", description: "Add the TORCH card to your deck: it moves you toward the closest lit torch, putting it out", card: "torch", base: 10, max: 1, currency: "inspiration" },
-  { id: "cardSteelDoor", name: "Steel Door", description: "Add the STEEL DOOR card to your deck: it moves you toward the closest Steel Door you hold a key for", card: "steelDoor", base: 10, max: 1, currency: "inspiration" },
+  { id: "cardWoodenDoor", name: "Wooden Door", description: "Add the WOODEN DOOR card to your deck: it moves you toward the closest Wooden Door you hold a key for, or can break down and survive", card: "woodenDoor", base: 10, max: 1, currency: "inspiration" },
   {
     id: "inspirationUndos",
     name: "Rehearsed steps",

@@ -39,11 +39,14 @@ export const tierNumeral = (tier: number) => ["I", "II", "III", "IV", "V", "VI",
  * compounding each tier (1, 2.75, 7.5625, …), its fraction kept. */
 export const tierShard = (tier: number) => snap(intPow(11, tier - 1) / intPow(4, tier - 1));
 
-/** `tile` as it stands in `tier`: an enemy with its stats multiplied, or
- * an ATK or DEF shard raising its stat by `tierShard`. */
+/** `tile` as it stands in `tier`: an enemy with its stats multiplied, a
+ * Wooden Door's durability with them, or an ATK or DEF shard raising its
+ * stat by `tierShard`. */
 export function tierTile(tile: Tile, tier: number): Tile {
   if (tier <= 1) return tile;
   if (tile.kind === "attack" || tile.kind === "defense") return { ...tile, amount: tierShard(tier) };
+  // A Wooden Door's durability grows with the enemies' stats.
+  if (tile.door?.type === "wood") return { ...tile, door: { ...tile.door, durability: snap(tile.door.durability * tierStats(tier)) } };
   if (tile.kind !== "enemy" || !tile.enemy) return tile;
   const f = tierStats(tier), e: Enemy = tile.enemy;
   // Stats keep their fractions, snapped like every other (exact.ts).

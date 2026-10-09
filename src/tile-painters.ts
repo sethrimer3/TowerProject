@@ -6,7 +6,7 @@ import { drawForestTile } from "./outside.ts";
 import { getTorchFlicker, getTorchSway } from "./lighting.ts";
 import { drawArea1Door, drawArea1Item, drawArea1Quoins, wallAdjacencyMask } from "./area1-tileset.ts";
 import { drawThemedTile } from "./themed-tilesets.ts";
-import { doorColor, doorRule } from "./doors.ts";
+import { doorColor, doorRule, drainsHp } from "./doors.ts";
 import { drawEnemySprite, enemySpriteReady } from "./enemy-sprites.ts";
 import { DELVE_ENEMY_NAMES } from "./scaling.ts";
 import { drawGameSprite, drawGameSpriteFrame, gameSprite, torchAnimationFrame, TORCH_FRAME_COUNT } from "./game-sprites.ts";
@@ -204,15 +204,29 @@ function paintDoor(c: CanvasRenderingContext2D, t: Tile, art: TileArt) {
   c.fillRect(4, 2, 16, 22);
   c.fillStyle = doorColor(t);
   c.fillRect(5, 4, 14, 19);
+  const rule = doorRule(t);
+  if (rule.type === "wood") return paintDoorPlanks(c);
   c.fillStyle = "#101b28bb";
   c.fillRect(7, 5, 10, 17);
-  if (doorRule(t).type === "fullHp") return paintDoorHeart(c);
+  if (drainsHp(rule)) return paintDoorHeart(c);
   c.fillStyle = doorColor(t);
   c.fillRect(11, 10, 3, 7);
   c.fillRect(10, 9, 5, 4);
 }
 
-/** A Heart Door's panel bears a heart in place of the keyhole. */
+/** A Wooden Door: planks with dark seams and a crossbar, no keyhole. */
+function paintDoorPlanks(c: CanvasRenderingContext2D) {
+  c.fillStyle = "#5b3b20";
+  for (const x of [9, 13]) c.fillRect(x, 4, 1, 19);
+  c.fillRect(5, 12, 14, 2);
+  c.fillStyle = "#c08a55";
+  c.fillRect(6, 5, 2, 1);
+  c.fillRect(10, 5, 2, 1);
+  c.fillRect(14, 5, 2, 1);
+}
+
+/** A Heart Door's panel bears a heart in place of the keyhole (on a keyed
+ * door that also drains HP, the door keeps its colour). */
 function paintDoorHeart(c: CanvasRenderingContext2D) {
   c.fillStyle = "#e0445a";
   c.beginPath();

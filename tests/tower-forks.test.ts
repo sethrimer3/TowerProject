@@ -51,7 +51,7 @@ test("a key found in a lane pays only for the doors after it", () => {
   assert.deepEqual(laneKeys([yKey, Y]), { upfront: keys(0), net: keys(0) });
   assert.deepEqual(laneKeys([B, yKey, yKey]), { upfront: keys(0, 1), net: keys(-2, 1) });
   assert.deepEqual(laneKeys([Y, Y]), { upfront: keys(2), net: keys(2) });
-  assert.deepEqual(laneKeys([{ kind: "steel" }]), { upfront: keys(1), net: keys(1) });
+  assert.deepEqual(laneKeys([{ kind: "wood" }]), { upfront: keys(1), net: keys(1) });
 });
 
 test("a fork asks for keys only when every lane needs one, and then for its cheapest lane's", () => {
@@ -97,7 +97,7 @@ test("built forks lead into their region by every lane, and never into a region 
           // The lane's steps stand on its tiles in order from the parent's side.
           fork.lanes[i].forEach((step, k) => {
             const t = cells.get(tiles[k])!;
-            const want = step.kind === "reward" ? step.reward.kind : step.kind === "open" ? "floor" : step.kind === "steel" || step.kind === "heart" ? "door" : step.kind;
+            const want = step.kind === "reward" ? step.reward.kind : step.kind === "open" ? "floor" : step.kind === "wood" || step.kind === "heart" ? "door" : step.kind;
             assert.equal(t.kind, want, `seed ${seed} room ${room} lane ${i} step ${k}`);
           });
           const others = lanes.filter((_, j) => j !== i).flat();

@@ -147,6 +147,14 @@ export function enemyStats(mode: CurveMode, tier: number, step: number, strength
   };
 }
 
+/** How many of the floor's normal, balanced enemy's ATK a Wooden Door's
+ * durability is. */
+export const WOOD_DURABILITY_ATTACKS = 2;
+/** A Wooden Door's durability at `step` of `mode`'s tier `tier`, before the
+ * tier's factor (which `tierTile` applies, as to enemies). */
+export const woodDurability = (mode: CurveMode, tier: number, step: number) =>
+  hundredths(WOOD_DURABILITY_ATTACKS * enemyStats(mode, tier, step, "normal", "balanced").attack);
+
 /** How many floors further along the curve `strength` reads its stats. */
 export const floorsAhead = (mode: CurveMode, tier: number, strength: EnemyStrength) =>
   strength === "greaterBoss" ? 0 : (enemyCurve(mode, tier).strength[strength].ahead ?? 0);

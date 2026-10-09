@@ -1,5 +1,6 @@
 import { point, type Tile } from "../entities.ts";
 import { doorKeys } from "../key-schedule.ts";
+import { woodDurability } from "../enemy-curves.ts";
 import { getTowerGateEnemy, strengthOnFloor, type TowerEnemyProfile } from "../scaling.ts";
 import type { Gate, LaneStep, Reward, StrategicNode, Strength } from "./types.ts";
 import { centre, DIRS, inRect, type Rect, type XY } from "./grid.ts";
@@ -50,8 +51,8 @@ export function gateTile(gate: Gate, depth: number, rng: () => number, tower = 1
   switch (gate.kind) {
     case "open": return { kind: "floor" };
     case "enemy": return enemyTile(gate.strength, depth, rng, gate.profile, tower);
-    case "door": return { kind: "door", color: gate.color, door: { type: "keys", keys: doorKeys(gate), mode: "all" } };
-    case "steel": return { kind: "door", door: { type: "keys", keys: ["yellow", "blue", "red"], mode: "any" } };
+    case "door": return { kind: "door", color: gate.color, door: { type: "keys", keys: doorKeys(gate), mode: "all", ...(gate.heart ? { heart: true as const } : {}) } };
+    case "wood": return { kind: "door", door: { type: "wood", durability: woodDurability("tower", tower, depth) } };
     case "heart": return { kind: "door", door: { type: "fullHp" } };
     case "potion": return rewardTile({ kind: "potion" }, rng);
   }
@@ -315,7 +316,9 @@ export class Furnisher {
     this.reserveLanes(room);
     if (node.stairsGuard && room.exits.length) {
       const s = room.exits[room.exits.length - 1];
-      const guard = node.stairsGuard === "door" ? gateTile({ kind: "door", color: "yellow" }, this.depth, this.rng) : enemyTile(node.stairsGuard, this.depth, this.rng, undefined, this.tower);
+      const guard = node.stairsGuard === "door" || node.stairsGuard === "wood"
+        ? gateTile(node.stairsGuard === "wood" ? { kind: "wood" } : { kind: "door", color: "yellow" }, this.depth, this.rng, this.tower)
+        : enemyTile(node.stairsGuard, this.depth, this.rng, undefined, this.tower);
       this.put(room, ...s, guard, "stairsGuard");
     }
     this.ring(room);

@@ -9,6 +9,9 @@ import { compactAmount, wholeChange } from "./whole.ts";
 // Dampen) are left out, as the inspect panel leaves them: which card meets
 // an enemy isn't known until it does. Relative Damage Color (Tower II's
 // floor 10 goal) colours each label by the share of the hero's HP it costs.
+// A Wooden Door wears the HP breaking it down takes while the hero holds no
+// key (with one, it costs a key, not HP): red when it would fell the hero,
+// so it stays shut.
 
 /** What a fight against one enemy would cost: `predict`'s damage (Infinity
  * when the hero can't hurt it) and the hero's strikes it takes (1: an
@@ -75,7 +78,12 @@ export function damageLabel(cost: Cost, hp: number, relative = false) {
 /** The fight on the board (its enemy's tile), whose HP bar tells its story. */
 type Fighting = { to: { x: number; y: number } } | null;
 
-/** Draws each enemy's label in view, over the darkness so it always reads. */
+/** What breaking a Wooden Door costs, as a fight's cost: never an Instakill. */
+const breakCost = (durability: number): Cost => ({ damage: durability, turns: 2 });
+const holdsKey = (player: Player) => player.keys.yellow > 0 || player.keys.blue > 0 || player.keys.red > 0;
+
+/** Draws each enemy's label in view, and each Wooden Door's while the hero
+ * holds no key, over the darkness so it always reads. */
 export function drawDamageLabels(f: FrameContext, predictions: DamagePredictions, player: Player, fight: Fighting, relative = false) {
   const c = f.c, s = f.s, pad = s * 0.06;
   c.save();
@@ -87,8 +95,10 @@ export function drawDamageLabels(f: FrameContext, predictions: DamagePredictions
   c.strokeStyle = "#000d";
   forEachViewTile(f, (x, y) => {
     const t = f.world.tile(x, y);
-    if (t.kind !== "enemy" || !t.enemy || (fight && fight.to.x === x && fight.to.y === y)) return;
-    const { text, color } = damageLabel(predictions.cost(player, t.enemy), player.hp, relative);
+    const wood = t.kind === "door" && t.door?.type === "wood" && !holdsKey(player) ? t.door.durability : null;
+    if (wood === null && (t.kind !== "enemy" || !t.enemy || (fight && fight.to.x === x && fight.to.y === y))) return;
+    const cost = wood !== null ? breakCost(wood) : predictions.cost(player, t.enemy!);
+    const { text, color } = damageLabel(cost, player.hp, relative);
     const left = (x - f.left) * s + pad, bottom = (f.n - (y - f.bottom)) * s - pad;
     c.strokeText(text, left, bottom);
     c.fillStyle = color;

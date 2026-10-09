@@ -40,7 +40,7 @@ function gateLabel(g: Gate): string {
   if (g.kind === "open" || g.kind === "potion") return g.kind;
   if (g.kind === "enemy" && g.profile) return `${g.strength} ${g.profile} enemy`;
   if (g.kind === "enemy") return `${g.strength} enemy`;
-  if (g.kind === "door") return `${doorKeys(g).join(" + ")} door`;
+  if (g.kind === "door") return `${doorKeys(g).join(" + ")}${g.heart ? " heart" : ""} door`;
   return `${g.kind} door`;
 }
 
@@ -69,9 +69,10 @@ function* unseenSteps(cells: Map<string, Tile>, k: string, seen: { has(k: string
 
 const open = (t: Tile | undefined): t is Tile => t !== undefined && t.kind !== "wall";
 
-/** Heart and steel locks by name, else null for a plain key door. */
-function specialLock(t: Tile): "heart" | "steel" | null {
+/** Heart, wooden and steel locks by name, else null for a key door. */
+function specialLock(t: Tile): "heart" | "wood" | "steel" | null {
   if (t.door?.type === "fullHp") return "heart";
+  if (t.door?.type === "wood") return "wood";
   return t.door?.type === "keys" && t.door.mode === "any" ? "steel" : null;
 }
 
@@ -185,10 +186,11 @@ export function analyzeFloor(emb: Embedding): FloorAnalysis {
   };
 }
 
-/** Doors on the floor by kind: heart, steel, or their key colour. */
+/** Doors on the floor by kind: heart, wood, steel, or their key colours. */
 function doorCounts(cells: Map<string, Tile>) {
   const doors: Record<string, number> = {};
-  for (const [, t] of cells) if (t.kind === "door") tally(doors, specialLock(t) ?? (t.door?.type === "keys" ? t.door.keys.join(" + ") : t.color ?? "yellow"));
+  for (const [, t] of cells)
+    if (t.kind === "door") tally(doors, specialLock(t) ?? (t.door?.type === "keys" ? t.door.keys.join(" + ") + (t.door.heart ? " + heart" : "") : t.color ?? "yellow"));
   return doors;
 }
 
@@ -243,7 +245,7 @@ const GLYPH: Record<string, string> = {
   wall: "#", floor: ".", enemy: "E", potion: "p", attack: "a", defense: "d",
   treasure: "T", stairs: ">", stairsDown: "<", reward: "C", oneway: "v",
 };
-const LOCK_GLYPH = { heart: "H", steel: "S" };
+const LOCK_GLYPH = { heart: "H", wood: "W", steel: "S" };
 
 export function asciiMap(cells: Map<string, Tile>): string {
   const rows: string[] = [];
@@ -278,6 +280,6 @@ export function formatFloorSummary(a: FloorAnalysis, cells?: Map<string, Tile>):
     `Key economy: ${a.keyEconomyComplete ? "every door affordable" : "some doors unaffordable"} · stairs ${a.stairsKeyReachable ? "reachable" : "NOT reachable"} without starting keys`,
     ...(a.notes.length ? ["Notes:", ...a.notes.map((n) => `  - ${n}`)] : []),
   ];
-  if (cells) lines.push("", asciiMap(cells), "Legend: # wall · E enemy · y/b/r key · Y/B/R door · S steel · H heart · p potion · a atk · d def · T treasure · > stairs · < down");
+  if (cells) lines.push("", asciiMap(cells), "Legend: # wall · E enemy · y/b/r key · Y/B/R door · W wood · S steel · H heart · p potion · a atk · d def · T treasure · > stairs · < down");
   return lines.join("\n");
 }

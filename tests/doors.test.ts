@@ -1,6 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { area1DoorRule, doorCost, doorId } from "../src/doors.ts";
+import { area1DoorRule, doorCost, doorId, doorName } from "../src/doors.ts";
+import { resolveStep } from "../src/step-effects.ts";
+import { tierTile } from "../src/tiers.ts";
 import type { Player, Tile } from "../src/entities.ts";
 
 const player = (yellow = 0, blue = 0, red = 0, hp = 10, maxHp = 10): Player => ({
@@ -11,6 +13,9 @@ const door = (room: number): Tile => ({ kind: "door", door: area1DoorRule(room) 
 test("area-one door sequence covers every sprite/rule identity", () => {
   assert.deepEqual(Array.from({ length: 9 }, (_, room) => doorId(door(room))),
     ["a", "b", "c", "ab", "ac", "bc", "abc", "steel", "heart"]);
+  assert.equal(doorId({ kind: "door", door: { type: "wood", durability: 20 } }), "wood");
+  assert.equal(doorId({ kind: "door", door: { type: "keys", keys: ["blue", "yellow"], mode: "all", heart: true } }), "abh");
+  assert.equal(doorName({ kind: "door", door: { type: "keys", keys: ["blue"], mode: "all", heart: true } }), "Azure Heart Door");
 });
 
 test("single and combination locks require and consume their exact key sets", () => {
@@ -56,4 +61,32 @@ test("Heart Door Resilience research shrinks a Heart Door's toll 5% a level, for
   g.save.archives.levels.heartDoorResilience = 10;
   assert.equal(researched(g.save.archives, "heartToll", 100), 50);
   assert.equal(g.stepRules.heartToll, 50, "read at the moment of the step");
+});
+
+const opener = (hp: number, keys: Partial<Player["keys"]> = {}, defense = 0) =>
+  ({ hp, maxHp: 100, attack: 10, defense, keys: { yellow: 0, blue: 0, red: 0, ...keys } }) as Player;
+
+test("a Wooden Door takes the cheapest key held, or with none its durability in HP, which DEF doesn't reduce", () => {
+  const wood: Tile = { kind: "door", door: { type: "wood", durability: 30 } };
+  const keyed = resolveStep(opener(50, { blue: 1, red: 1 }), wood, { regen: 0 } as never);
+  assert.ok(!keyed.blocked);
+  assert.deepEqual([keyed.keysSpent, keyed.player.hp, keyed.player.keys.blue], [["blue"], 50, 0]);
+  const broken = resolveStep(opener(50, {}, 999), wood, { regen: 0 } as never);
+  assert.ok(!broken.blocked);
+  assert.deepEqual([broken.keysSpent, broken.player.hp], [[], 20]);
+  assert.equal(resolveStep(opener(30), wood, { regen: 0 } as never).blocked, "locked", "breaking it never fells the hero");
+  assert.deepEqual(doorCost(wood, { keys: { yellow: 0, blue: 0, red: 0 } }), [], "without HP to judge by, it can be broken");
+  // Effective's scale makes it harder to break.
+  const scaled = resolveStep(opener(50), wood, { regen: 0, scale: 1.2 } as never);
+  assert.ok(!scaled.blocked);
+  assert.equal(scaled.player.hp, 14);
+  assert.deepEqual(tierTile(wood, 3), { kind: "door", door: { type: "wood", durability: 270 } }, "tier 3: nine times tier 1's");
+});
+
+test("a keyed door that drains HP takes its keys and leaves the hero at 1 HP", () => {
+  const door: Tile = { kind: "door", color: "blue", door: { type: "keys", keys: ["blue"], mode: "all", heart: true } };
+  assert.equal(resolveStep(opener(80), door, { regen: 0 } as never).blocked, "locked");
+  const opened = resolveStep(opener(80, { blue: 1 }), door, { regen: 0 } as never);
+  assert.ok(!opened.blocked);
+  assert.deepEqual([opened.keysSpent, opened.player.hp, opened.player.keys.blue], [["blue"], 1, 0]);
 });

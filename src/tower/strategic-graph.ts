@@ -12,7 +12,7 @@ import {
   type Weighted,
 } from "./patterns.ts";
 import { planForks } from "./forks.ts";
-import { placeQuotaDoors } from "./door-quota.ts";
+import { placeQuotaDoors, placeWoodenDoors } from "./door-quota.ts";
 import { MAX_REGIONS, planResources } from "./resource-planner.ts";
 import { bypassesRareKeys, onlyOpenKeys, towerKeyColorsOn, withoutQuotaDoors, type KeyColors } from "../key-schedule.ts";
 import type {
@@ -90,7 +90,6 @@ function mainGateTable(depth: number, doorBias: number): Weighted<Gate> {
     { w: 5, v: { kind: "enemy", strength: "normal" } },
     { w: 1.5 + Math.min(2, depth * 0.1), v: { kind: "enemy", strength: "strong" } },
     { w: 3 * doorBias, v: { kind: "door", color: "yellow" } },
-    { w: depth >= 1 ? 0.5 * doorBias : 0, v: { kind: "steel" } },
   ];
 }
 
@@ -209,6 +208,7 @@ export function generateStrategicGraph(seed: number, depth: number, budgetCut = 
   const shortcuts = planShortcuts(b, profile, mainIds, stairs);
   planForks(b, archetype);
   const doorQuota = placeQuotaDoors(b, archetype, tier);
+  placeWoodenDoors(b, shortcuts, tier);
   const graph: StrategicGraph = { archetype, depth, ...(tier > 1 ? { tower: tier } : {}), nodes: b.nodes, shortcuts, notes: [], ...(doorQuota ? { doorQuota } : {}) };
   planResources(graph, b, rng);
   return graph;

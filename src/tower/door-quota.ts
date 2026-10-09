@@ -1,4 +1,4 @@
-import { QUOTA_DOORS, doorKeys, quotaDoorsIn, towerDoorHundredths, withoutQuotaDoors, type QuotaDoor } from "../key-schedule.ts";
+import { QUOTA_DOORS, doorKeys, quotaDoorsIn, towerDoorHundredths, towerWoodPercent, withoutQuotaDoors, type QuotaDoor } from "../key-schedule.ts";
 import { forkFits, forksWorth, mayFork, stepValue } from "./forks.ts";
 import { TOWER_PATTERNS, patternWeight, pick, type TowerPattern, type Weighted } from "./patterns.ts";
 import { MAX_REGIONS } from "./resource-planner.ts";
@@ -13,7 +13,8 @@ import type { Archetype, Fork, Gate, StrategicGraph, StrategicNode } from "./typ
  *   upgrade   an existing gate: a yellow door turns blue or red, any paid
  *             gate a Heart Door;
  *   combine   a door takes the colour as well: yellow becomes yellow + blue,
- *             blue becomes blue + red …, one tile dearer than either;
+ *             blue becomes blue + red …, one tile dearer than either; for a
+ *             Heart Door, a blue, red or combined door drains HP to 1 too;
  *   pattern   a branch pattern built round that door (blue door → yellow
  *             keys, key chain, temptation…);
  *   fork      a fork pattern holding it and no other quota door, in place
@@ -84,10 +85,10 @@ function placeOne(b: GraphBuilder, door: QuotaDoor, archetype: Archetype, left: 
   return null;
 }
 
-/** A plain yellow door: one key, no other colour. */
-const plainYellow = (g: Gate) => g.kind === "door" && g.color === "yellow" && !g.also?.length;
+/** A plain yellow door: one key, no other colour, no heart. */
+const plainYellow = (g: Gate) => g.kind === "door" && g.color === "yellow" && !g.also?.length && !g.heart;
 /** A gate that costs something to cross, and holds no quota door yet. */
-const paidGate = (g: Gate) => g.kind === "enemy" || g.kind === "steel" || plainYellow(g);
+const paidGate = (g: Gate) => g.kind === "enemy" || g.kind === "wood" || plainYellow(g);
 
 function upgrade(b: GraphBuilder, door: QuotaDoor): Tally | null {
   const options = b.nodes.filter((n) => n.parent !== null && !n.forks && routeAllows(b, n, door) &&
@@ -97,17 +98,34 @@ function upgrade(b: GraphBuilder, door: QuotaDoor): Tally | null {
   return quotaDoorsIn(DOOR[door]);
 }
 
-/** A door that doesn't take `door`'s colour yet takes it as well. A Heart
- * Door with a colour waits for its own door rule. */
+/** A door that doesn't take `door`'s colour yet takes it as well; for a
+ * Heart Door, a door taking a blue or red key drains HP to 1 too. */
 function combine(b: GraphBuilder, door: QuotaDoor): Tally | null {
-  if (door === "heart") return null;
-  const options = b.nodes.filter((n) => n.parent !== null && !n.forks && routeAllows(b, n, door) &&
-    n.gate.kind === "door" && !doorKeys(n.gate).includes(door));
+  const fits = (g: Gate) => g.kind === "door" && (door === "heart"
+    ? !g.heart && doorKeys(g).some((c) => c !== "yellow")
+    : !doorKeys(g).includes(door));
+  const options = b.nodes.filter((n) => n.parent !== null && !n.forks && routeAllows(b, n, door) && fits(n.gate));
   if (!options.length) return null;
   const node = options[Math.floor(b.rng() * options.length)];
   if (node.gate.kind !== "door") return null;
-  node.gate = { ...node.gate, also: [...(node.gate.also ?? []), door] };
+  node.gate = door === "heart" ? { ...node.gate, heart: true } : { ...node.gate, also: [...(node.gate.also ?? []), door] };
   return quotaDoorsIn(DOOR[door]);
+}
+
+/** Turns `towerWoodPercent` of the floor's yellow locks into Wooden Doors:
+ * region gates, fork lanes, shortcuts and the stairs guard's door, each
+ * rolled on its own (no roll when all or none are). A fork lane offering a
+ * Wooden Door of its own rolls too, so the share decides every one. */
+export function placeWoodenDoors(b: GraphBuilder, shortcuts: StrategicGraph["shortcuts"], tower: number) {
+  const share = towerWoodPercent(b.depth, tower);
+  const wooden = () => share >= 100 || (share > 0 && b.rng() * 100 < share);
+  const wood = (g: Gate): Gate => (plainYellow(g) || g.kind === "wood" ? (wooden() ? { kind: "wood" } : { kind: "door", color: "yellow" }) : g);
+  for (const n of b.nodes) {
+    n.gate = wood(n.gate);
+    for (const fork of n.forks ?? []) fork.lanes = fork.lanes.map((lane) => lane.map((step) => (step.kind === "reward" ? step : wood(step))));
+    if (n.stairsGuard === "door" && wooden()) n.stairsGuard = "wood";
+  }
+  for (const s of shortcuts) s.gate = wood(s.gate);
 }
 
 /** The most of each door `pattern` can hold, whichever options it takes. */

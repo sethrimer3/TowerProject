@@ -28,7 +28,7 @@ const NODES: [UpgradeId, number, UpgradeId, CardId | null][] = [
   ["redSiphon", 10, "cardRedKey", "redSiphon"],
   ["floorSkipReward", 10, "blueSiphon", null],
   ["cardTorch", 10, "floorSkipReward", "torch"],
-  ["cardSteelDoor", 10, "floorSkipReward", "steelDoor"],
+  ["cardWoodenDoor", 10, "floorSkipReward", "woodenDoor"],
 ];
 
 test("each card node costs its price, waits for the node above it and adds its card to the deck", () => {
@@ -103,24 +103,38 @@ test("an enemy card passes over one it can't hurt", () => {
 });
 
 test("YELLOW DOOR heads for a single yellow door, while a yellow key is held", () => {
-  const steel: Tile = { kind: "door", door: { type: "keys", keys: ["yellow", "blue", "red"], mode: "any" } };
+  const wood: Tile = { kind: "door", door: { type: "wood", durability: 30 } };
   const yellow: Tile = { kind: "door", color: "yellow" };
-  const g = floor({ 5: steel, 4: { kind: "door", color: "blue" }, 9: yellow, 3: { kind: "door", door: { type: "fullHp" } } });
+  const g = floor({ 5: wood, 4: { kind: "door", color: "blue" }, 9: yellow, 3: { kind: "door", door: { type: "fullHp" } } });
   g.run.player.keys.yellow = 0;
   assert.equal(target(g, "yellowDoor"), null, "no key, no target");
   g.run.player.keys.yellow = 1;
   g.run.player.keys.blue = 1;
-  assert.deepEqual(target(g, "yellowDoor"), [9, 1], "not the Steel Door or the blue one");
+  assert.deepEqual(target(g, "yellowDoor"), [9, 1], "not the Wooden Door or the blue one");
   assert.deepEqual(target(g, "heartDoor"), [3, 1]);
 });
 
-test("STEEL DOOR heads for a Steel Door, while a key it takes is held", () => {
-  const steel: Tile = { kind: "door", door: { type: "keys", keys: ["yellow", "blue", "red"], mode: "any" } };
-  const g = floor({ 4: { kind: "door", color: "yellow" }, 9: steel, 3: { kind: "door", door: { type: "fullHp" } } });
+test("WOODEN DOOR heads for a Wooden Door a key opens or the hero can break down; DOOR only with a key", () => {
+  const wood: Tile = { kind: "door", door: { type: "wood", durability: 30 } };
+  const g = floor({ 4: { kind: "door", color: "yellow" }, 9: wood, 3: { kind: "door", door: { type: "fullHp" } } });
   g.run.player.keys.yellow = 0;
-  assert.equal(target(g, "steelDoor"), null, "no key, no target");
+  g.run.player.hp = 30;
+  assert.equal(target(g, "woodenDoor"), null, "no key, and breaking it would fell the hero");
+  g.run.player.hp = 31;
+  assert.deepEqual(target(g, "woodenDoor"), [9, 1], "it can be broken down; not the yellow door or the Heart Door");
+  assert.deepEqual(target(g, "door"), [3, 1], "DOOR never breaks one down");
+  g.run.player.hp = 5;
   g.run.player.keys.red = 1;
-  assert.deepEqual(target(g, "steelDoor"), [9, 1], "any one key opens it; not the yellow door or the Heart Door");
+  assert.deepEqual(target(g, "woodenDoor"), [9, 1], "any one key opens it");
+});
+
+test("HEART DOOR heads for a keyed door that drains HP too, while its keys are held", () => {
+  const blueHeart: Tile = { kind: "door", color: "blue", door: { type: "keys", keys: ["blue"], mode: "all", heart: true } };
+  const g = floor({ 9: blueHeart });
+  g.run.player.keys.blue = 0;
+  assert.equal(target(g, "heartDoor"), null);
+  g.run.player.keys.blue = 1;
+  assert.deepEqual(target(g, "heartDoor"), [9, 1]);
 });
 
 test("CHEST heads for a treasure chest or an area reward chest, never an opened one", () => {

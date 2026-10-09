@@ -69,7 +69,7 @@ Today blue, red and Heart Doors come from about six weighted tables (main gate, 
      A quota fork holds only one quota door, so the fallback gate keeps the count whether or not the fork fits. *blueOrRedDoor* and *twoBlueDoorsOrRedDoor* hold both a blue and a red door, so they're no longer built. About one quota fork in five fits the floor; the rest stand as their single door.
 
    A door that fits nowhere is dropped, and the census counts it (section 5). A door in a fork counts fully toward the quota. The census reports forked and unforked doors separately, so we can see whether forks take too much of the quota, given that a forked door can be walked around.
-4. **Wooden doors:** every yellow lock left (gates, the stairs door, shortcuts, fork lanes) rolls the wooden share.
+4. **Wooden doors:** every yellow lock left (gates, the stairs door, shortcuts, fork lanes, and a fork lane that offers a Wooden Door of its own) rolls the wooden share (`placeWoodenDoors`), so the share decides every Wooden Door in the Tower.
 5. **Keys:** the resource planner then plans keys for whatever doors the floor has, as now, under the key-supply curve (section 4).
 
 In Tower I, a blue or red quota door goes only on a branch or in a fork beside a lane that needs no blue or red key. From Tower II on, the way to the stairs is open to them too.
@@ -87,16 +87,17 @@ A wooden door opens with any one key: the cheapest held, yellow before blue befo
 | Revive | Doesn't apply (not a fight). |
 | Effective / Dampen badges | Scale the HP cost as they scale a fight's damage, and the key cost as now. |
 | Undo | One step, as for any door. |
-| Shown | Inspect: *Wooden Door*, *Durability 38*, and without a key *Break: −38 HP*. Damage Visual shows the HP cost on the door. Breaking it shows the damage number on the hero, with no fight animation. |
+| Shown | Inspect: *Wooden Door*, *Durability 38*, and without a key *Break: HP 100 → 62* (or that the hero is too weak to break it). Damage Visual shows the HP cost on the door while the hero holds no key, red when it would fell the hero. Breaking it raises the HP lost as a heart, as a Heart Door's toll does, with no fight animation; like that toll, it never costs an area's mastery. |
+| Cards | WOODEN DOOR (was STEEL DOOR) heads for a Wooden Door the hero holds a key for or can break down and survive. DOOR heads for one only with a key: it never breaks one down. |
 
 Possible later change (to decide after the census): `HP cost = max(0, durability − ATK)`, so a strong hero breaks it for free, with DEF still not helping.
 
 ### Heart Door with a colour
 
-Also in phase 3: a door that takes its keys **and** drains the hero to 1 HP, as a Heart Door does (Heart Door Resilience applies to the drain). The door stage places it as a fifth way for the heart quota: an existing blue, red or combined door also takes the heart, counting toward the heart quota. The door rule gains a heart flag (`{ type: "keys", …, heart: true }`), `resolveStep` applies both costs, and the art draws the heart over the coloured door (a placeholder made from the existing sprites until there is real art).
+A door that takes its keys **and** drains the hero to 1 HP, as a Heart Door does (Heart Door Resilience applies to the drain). For the heart quota, the door stage's combine way gives an existing blue, red or combined door the heart (a gate's `heart`), counting toward the heart quota. The door rule has a heart flag (`{ type: "keys", …, heart: true }`, `drainsHp`), `resolveStep` applies both costs, and it is named after its keys (*Azure Heart Door*). The hand-drawn art is a placeholder: the keys' door with a heart crest above (`door_bh.png`, `door_abch.png` …, from `npm run tiles:area1`); the procedural and neon doors draw the heart over the coloured door. HEART DOOR heads for one while its keys are held.
 
 What changes in the code:
-- **Door rule** (`entities.ts`, `doors.ts`): a new `{ type: "wood"; durability: number }` replaces the steel rule (`keys: all three, mode: "any"`). `doorCost` returns the key, or none and the HP cost. `resolveStep` (`step-effects.ts`) applies it. Every other caller reads it from there.
+- **Door rule** (`entities.ts`, `doors.ts`): a new `{ type: "wood"; durability: number }` takes the steel rule's place in generation (the steel rule, `keys: all three, mode: "any"`, still works but nothing places it). `doorCost` returns the key, or none when the hero would survive breaking it (a caller passing no HP, like the floor analyzer, counts it as breakable). `resolveStep` (`step-effects.ts`) takes the HP. Every other caller reads it from there.
 - **Planning** (`tower/types.ts`, furnisher, forks, analyzer): the gate `steel` becomes `wood`. The analyzer's map shows `W`.
 - **Card and skill**: the STEEL DOOR card and its skill (`cardSteelDoor` in `config.ts`) become WOODEN DOOR. It heads for a wooden door the hero holds a key for or can break without dying. The renamed ids drop the old card from saved hands. During the prototype phase old saves don't need to convert.
 - **Art**: a new wooden-door sprite (`public/assets/doors/door_wood.png`, replacing `door_steel.png`), a wooden painter in `tile-painters.ts`, and a neon look.

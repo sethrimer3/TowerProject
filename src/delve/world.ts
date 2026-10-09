@@ -22,7 +22,8 @@ import { addEnemies, extraGround, extrasKey, extrasSeed, hasExtras, type ExtraEn
 // v19 opens blue keys on equivalent floor 21 and red on 51.
 // v20 places no Heart Door below equivalent floor 101 in the first delve.
 // v21 takes every enemy's stats from the delve's enemy curve (enemy-curves.ts).
-export const LAYOUT_VERSION = 21;
+// v22 makes steel doors Wooden Doors, which a hero without a key breaks down.
+export const LAYOUT_VERSION = 22;
 
 /** The one 20-row chunk `index` of tier `tier`'s labyrinth, as generated. */
 export function generate(seed: number, index: number, tier = 1): Map<string, Tile> {

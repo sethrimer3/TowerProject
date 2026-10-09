@@ -65,13 +65,13 @@ function keysIn(node: StrategicNode, color: KeyColor): number {
   return node.rewards.reduce((s, r) => s + count(r), 0) + node.guarded.reduce((s, g) => s + count(g.reward), 0);
 }
 
-/** The keys a region's way in asks the player to hold. A steel lock eats
+/** The keys a region's way in asks the player to hold. A wooden lock eats
  * the cheapest key available, so it is yellow demand. A forked region is
  * planned for its first fork, the one the embedder tries first; a fork with
  * a lane that needs no key demands none. */
 function lockColors(n: StrategicNode): KeyColor[] {
   if (n.forks?.length) return forkKeyDemand(n.forks[0]);
-  return n.gate.kind === "door" ? doorKeys(n.gate) : n.gate.kind === "steel" ? ["yellow"] : [];
+  return n.gate.kind === "door" ? doorKeys(n.gate) : n.gate.kind === "wood" ? ["yellow"] : [];
 }
 
 function ancestors(nodes: StrategicNode[], id: number): number[] {
@@ -90,7 +90,7 @@ function collectDoors(graph: StrategicGraph): Door[] {
       doors.push({ color, route: n.route, lockedNode: n.id, order: (n.route === "main" ? 0 : 100) + depthOf(n.id) });
   // A yellow door in front of the stairs is the last door on the main route.
   for (const n of graph.nodes)
-    if (n.stairsGuard === "door") doors.push({ color: "yellow", route: "main", lockedNode: null, order: 999 });
+    if (n.stairsGuard === "door" || n.stairsGuard === "wood") doors.push({ color: "yellow", route: "main", lockedNode: null, order: 999 });
   for (const s of graph.shortcuts)
     if (s.gate.kind === "door") doors.push({ color: s.gate.color, route: "optional", lockedNode: null, order: 1000 });
   return doors.sort((a, b) => a.order - b.order);

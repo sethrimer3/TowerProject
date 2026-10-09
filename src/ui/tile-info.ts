@@ -6,7 +6,7 @@ import { HEART_DOOR_HP, resolveStep, shardGain } from "../step-effects.ts";
 import { attackForFewerHits, predict, type CombatPrediction } from "../combat.ts";
 import { goalUnlocked } from "../goals.ts";
 import { chestReward, CLEARED_INSPIRATION } from "../tower/area-ledger.ts";
-import { doorColor, doorCost, doorDescription, doorName, doorRule, KEY_NAMES } from "../doors.ts";
+import { doorColor, doorCost, doorDescription, doorName, doorRule, drainsHp, KEY_NAMES, woodToll } from "../doors.ts";
 import { MODES } from "../modes.ts";
 
 /** What the inspect panel says about one board tile. */
@@ -72,14 +72,17 @@ const DESCRIBE: Partial<Record<Kind, Describe>> = {
   },
   wall: () => ({ title: "Wall", body: "Ancient stone. Find a passage around it." }),
   door: (t, p) => {
-    const cost = doorCost(t, p);
-    const keyLine =
-      doorRule(t).type === "fullHp"
-        ? `<br>HP: ${wholeHp(p.hp)} → ${wholeHp(Math.min(p.hp, HEART_DOOR_HP))}`
-        : `<br>${cost
-            ? cost.map((color) => `${KEY_NAMES[color]} key: ${p.keys[color]} → ${p.keys[color] - 1}`).join(", ")
-            : "Locked — insufficient keys"}`;
-    return { title: doorName(t), body: `<span>${doorDescription(t)}</span>${keyLine}` };
+    const cost = doorCost(t, p), rule = doorRule(t);
+    const hpLine = `<br>HP: ${wholeHp(p.hp)} → ${wholeHp(Math.min(p.hp, HEART_DOOR_HP))}`;
+    let keyLine: string;
+    if (rule.type === "fullHp") keyLine = hpLine;
+    else if (rule.type === "wood" && cost && !cost.length) keyLine = `<br>Break: HP ${wholeHp(p.hp)} → ${wholeHp(p.hp - woodToll(rule))}`;
+    else if (rule.type === "wood" && !cost) keyLine = `<br>No key, and too weak to break it down`;
+    else keyLine = `<br>${cost
+      ? cost.map((color) => `${KEY_NAMES[color]} key: ${p.keys[color]} → ${p.keys[color] - 1}`).join(", ")
+      : "Locked — insufficient keys"}${cost && drainsHp(rule) ? hpLine : ""}`;
+    const durability = rule.type === "wood" ? `<br><small>Durability ${wholeChange(rule.durability)}</small>` : "";
+    return { title: doorName(t), body: `<span>${doorDescription(t)}</span>${keyLine}${durability}` };
   },
   key: (t, p) => {
     const color = t.color!, name = KEY_NAMES[color];

@@ -43,7 +43,7 @@ const hexRgb = (hex: string) => {
   const full = h.length === 3 ? [...h].map((c) => c + c).join("") : h.slice(0, 6);
   return [0, 2, 4].map((i) => parseInt(full.slice(i, i + 2), 16));
 };
-/** A door's glow color: its lock color, magenta for heart doors, grey for steel. */
+/** A door's glow color: its lock color (a Wooden Door's timber), magenta for heart doors, grey for steel. */
 function doorGlow(t: Tile) {
   const id = doorId(t), door = LIGHTING_CONFIG.objectGlow.door;
   if (id === "heart") return door.heart;

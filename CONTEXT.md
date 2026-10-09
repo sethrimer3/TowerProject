@@ -116,6 +116,18 @@ _Avoid_: corridor, path
 How many blue, red and Heart Doors a Tower floor holds, rolled from the door schedule for its tower and floor: none before each door's first floor, then a little more every ten floors. Only the door stage places them, so the schedule sets their number on every floor.
 _Avoid_: door rate (the rate is what the quota is rolled from), door budget
 
+**Wooden Door**:
+A door any one key opens (the cheapest held), or that a hero with no key breaks down by losing HP equal to its durability. DEF doesn't reduce that loss, and a hero who would fall can't break it. Common on early floors, fading as floors and towers rise.
+_Avoid_: steel door (the door it replaced), breakable door
+
+**Durability**:
+The HP breaking a Wooden Door down takes: twice the ATK of the floor's normal enemy, so it grows with the floor and the tower.
+_Avoid_: door HP, door strength
+
+**Combined door**:
+One door tile taking more than one thing: a key of each of two or three colours (Amber + Azure, Azure + Crimson, Triune), or a coloured door's keys and a Heart Door's drain to 1 HP (an Azure Heart Door). It counts toward the door quota of each colour, and of hearts, it takes.
+_Avoid_: double door, multi-lock
+
 **Enemy curve**:
 How strong a normal, balanced enemy is on each floor of a tower or delve: HP and ATK set at a few anchor floors and grown smoothly between them, and DEF a share of ATK. Every enemy is that floor's curve times its strength and profile, so a boss placed on any floor takes that floor's value.
 _Avoid_: power budget, enemy table, zone stats

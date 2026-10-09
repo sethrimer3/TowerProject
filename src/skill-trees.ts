@@ -68,7 +68,7 @@ export const TREES: SkillTree[] = [
     { id: "redSiphon", icon: "⚿", x: 90, y: 250, requires: ["cardRedKey"] },
     { id: "floorSkipReward", icon: "↷", x: 50, y: 268, requires: ["blueSiphon"] },
     { id: "cardTorch", icon: "☼", x: 30, y: 268, requires: ["floorSkipReward"] },
-    { id: "cardSteelDoor", icon: "⚿", x: 70, y: 268, requires: ["floorSkipReward"] },
+    { id: "cardWoodenDoor", icon: "⚿", x: 70, y: 268, requires: ["floorSkipReward"] },
   ] },
   { id: "courage", name: "Courage", currency: "courage", gate: "delve", description: "Earn Courage by beating your best Delve depth.", height: 198, nodes: [
     { id: "moveSpeed", icon: "»", x: 50, y: 10, requires: ["delve"] },

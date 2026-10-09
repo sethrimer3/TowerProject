@@ -142,8 +142,18 @@ function doorTile(id) {
   rect(p, 1, 0, 22, 3, PALETTE.wallLight); rect(p, 1, 3, 4, 21, PALETTE.wallMid);
   rect(p, 19, 3, 4, 21, PALETTE.shadow); rect(p, 5, 7, 14, 3, PALETTE.seam);
   rect(p, 5, 19, 14, 3, PALETTE.seam); px(p, [[7,8],[16,8],[7,20],[16,20]], PALETTE.wallLight);
-  const ids = id === "abc" ? ["a", "b", "c"] : id.length === 2 ? id.split("") : [id];
-  if (id === "steel") {
+  // A keyed door that also drains HP ends in "h": its keys' symbols, with
+  // a small heart crest above them.
+  const heart = id.length > 1 && id.endsWith("h") && id !== "heart";
+  const keys = heart ? id.slice(0, -1) : id;
+  const ids = keys === "abc" ? ["a", "b", "c"] : keys.length === 2 ? keys.split("") : [keys];
+  if (id === "wood") {
+    // Planks with dark seams and a crossbar: breakable, no keyhole.
+    rect(p, 5, 3, 14, 21, "#7a5230"); rect(p, 6, 4, 12, 1, "#b07c4a");
+    for (const x of [9, 13]) rect(p, x, 3, 1, 21, "#4a301b");
+    rect(p, 5, 12, 14, 2, "#5b3b20"); rect(p, 5, 12, 14, 1, "#9a6a3c");
+    px(p, [[7,6],[11,8],[15,6],[7,17],[16,18]], "#4a301b");
+  } else if (id === "steel") {
     rect(p, 5, 3, 14, 16, PALETTE.wallMid); rect(p, 6, 4, 12, 1, PALETTE.wallLight);
     symbol(p, "steel", 12, 13, "#c5ced8");
   } else if (id === "heart") {
@@ -154,6 +164,10 @@ function doorTile(id) {
     const positions = ids.length === 2 ? [[8, 14], [16, 14]] : [[7, 14], [12, 14], [17, 14]];
     ids.forEach((lock, i) => symbol(p, lock, positions[i][0], positions[i][1], DOOR_COLORS[lock]));
     if (ids.length === 3) rect(p, 5, 4, 14, 2, PALETTE.wallLight);
+  }
+  if (heart) {
+    rect(p, 8, 3, 3, 2, "#d97882"); rect(p, 13, 3, 3, 2, "#d97882");
+    rect(p, 9, 5, 6, 1, "#d97882"); rect(p, 10, 6, 4, 1, "#d97882"); rect(p, 11, 7, 2, 1, "#d97882");
   }
   return p;
 }
@@ -288,7 +302,7 @@ const roles = [
 for (let mask = 0; mask < 16; mask++) save(`wall_${roles[mask]}.png`, wallTile(mask, mask % 3));
 for (let i = 0; i < 3; i++) save(`wall_center_0${i + 1}.png`, wallTile(15, i));
 mkdirSync(join(OUT, "doors"), { recursive: true });
-const doorIds = ["a", "b", "c", "ab", "ac", "bc", "abc", "steel", "heart"];
+const doorIds = ["a", "b", "c", "ab", "ac", "bc", "abc", "ah", "bh", "ch", "abh", "ach", "bch", "abch", "steel", "heart", "wood"];
 for (const id of doorIds) {
   const pixels = doorTile(id);
   // save() targets the tileset root; move the completed bytes into doors/.
@@ -312,7 +326,7 @@ writeFileSync(join(OUT, "tileset.json"), JSON.stringify({
   walls: Object.fromEntries(roles.map((role, mask) => [mask, `wall_${role}.png`])),
   centerVariants: ["wall_center_01.png", "wall_center_02.png", "wall_center_03.png"],
   doors: Object.fromEntries(doorIds.map((id) => [id, `doors/door_${id}.png`])),
-  doorSymbols: { a: "circle", b: "diamond", c: "triangle", steel: "four-point universal", heart: "heart crest" },
+  doorSymbols: { a: "circle", b: "diamond", c: "triangle", steel: "four-point universal", heart: "heart crest", wood: "planks, no keyhole", h: "heart crest over the keys' symbols" },
   items: Object.fromEntries(Object.keys(itemTiles).map((id) => [id, `items/${id}.png`])),
 }, null, 2) + "\n");
 console.log(`Generated 47 deterministic 24x24 PNG sprites in ${OUT}`);

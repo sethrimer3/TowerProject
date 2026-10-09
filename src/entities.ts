@@ -50,8 +50,12 @@ export type ChestTier = "silver" | "gold";
  * doors and keys; new doors use this rule so every gameplay system shares
  * the same requirements and consumption behavior. */
 export type DoorRule =
-  | { type: "keys"; keys: KeyColor[]; mode: "all" | "any" }
-  | { type: "fullHp" };
+  /** `heart`: it also drains the hero's HP to 1, as a Heart Door does. */
+  | { type: "keys"; keys: KeyColor[]; mode: "all" | "any"; heart?: true }
+  | { type: "fullHp" }
+  /** A Wooden Door: any one key opens it; a hero with none breaks it down
+   * for `durability` HP, which DEF doesn't reduce (doors.ts). */
+  | { type: "wood"; durability: number };
 export type Tile = { kind: Kind; amount?: number; color?: KeyColor; door?: DoorRule; enemy?: Enemy; tier?: ChestTier };
 export type Point = { x: number; y: number };
 /** A stationary wall-mounted light source, anchored to a walkable floor

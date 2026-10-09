@@ -1,7 +1,7 @@
 import { point, type Point, type Tile } from '../entities.ts';
 import type { Fork, Gate, LaneStep, Strength } from '../tower/types.ts';
 import { strengthOnFloor, DELVE_ENEMY_NAMES, enemyTier, type TowerEnemyProfile } from '../scaling.ts';
-import { enemyStats } from '../enemy-curves.ts';
+import { enemyStats, woodDurability } from '../enemy-curves.ts';
 import { FORK_TUNING, forkDepth, forksWorth, stepValue } from '../tower/forks.ts';
 import { choosePattern, FALSE_ASCENTS, type Pattern } from './patterns.ts';
 import { tileRandom } from '../random.ts';
@@ -379,7 +379,7 @@ const widens = (n: Node, rng: () => number) => !n.pattern && n.col < COLS - 1 &&
 function gateTile({ rng, tier }: Lab, g: LaneStep, n: Node): Tile {
   if (g.kind === 'reward') return { ...g.reward };
   if (g.kind === 'door') return { kind: 'door', color: g.color };
-  if (g.kind === 'steel') return { kind: 'door', door: { type: 'keys', keys: ['yellow', 'blue', 'red'], mode: 'any' } };
+  if (g.kind === 'wood') return { kind: 'door', door: { type: 'wood', durability: woodDurability('delve', tier, n.depth) } };
   if (g.kind === 'heart') return { kind: 'door', door: { type: 'fullHp' } };
   if (g.kind !== 'enemy') return { kind: 'floor' };
   // Strong and elite enemies wait for their equivalent floors, as in the Tower.

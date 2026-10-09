@@ -54,15 +54,25 @@
     "ac": "doors/door_ac.png",
     "bc": "doors/door_bc.png",
     "abc": "doors/door_abc.png",
+    "ah": "doors/door_ah.png",
+    "bh": "doors/door_bh.png",
+    "ch": "doors/door_ch.png",
+    "abh": "doors/door_abh.png",
+    "ach": "doors/door_ach.png",
+    "bch": "doors/door_bch.png",
+    "abch": "doors/door_abch.png",
     "steel": "doors/door_steel.png",
-    "heart": "doors/door_heart.png"
+    "heart": "doors/door_heart.png",
+    "wood": "doors/door_wood.png"
   },
   "doorSymbols": {
     "a": "circle",
     "b": "diamond",
     "c": "triangle",
     "steel": "four-point universal",
-    "heart": "heart crest"
+    "heart": "heart crest",
+    "wood": "planks, no keyhole",
+    "h": "heart crest over the keys' symbols"
   },
   "items": {
     "key_yellow": "items/key_yellow.png",

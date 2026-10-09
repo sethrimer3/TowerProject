@@ -1,5 +1,6 @@
 import { COLORS, type KeyColor } from "./config.ts";
 import type { Tile, Torch } from "./entities.ts";
+import { WOOD_COLOR } from "./doors.ts";
 import { forEachViewTile, toTileSpace, type FrameContext } from "./render-frame.ts";
 
 /** The Neon theme's dungeon board: every wall, tile content, torch and the
@@ -112,6 +113,13 @@ export function paintNeonContents(c: CanvasRenderingContext2D, t: Tile) {
         path(c, () => heart(c), NEON.heart, 1.4);
         return;
       }
+      if (rule?.type === "wood") {
+        // Planks: a frame and a crossbar in the timber's colour.
+        frame(c, WOOD_COLOR);
+        path(c, () => { c.moveTo(4, 13); c.lineTo(20, 13); c.moveTo(10, 6); c.lineTo(10, 20); c.moveTo(14, 6); c.lineTo(14, 20); }, WOOD_COLOR, 1.2);
+        return;
+      }
+      if (rule?.type === "keys" && rule.heart) path(c, () => heart(c), NEON.heart, 1);
       const keys = rule?.type === "keys" ? rule.keys : t.color ? [t.color] : [];
       const color = keyColor(keys[0]);
       frame(c, color);

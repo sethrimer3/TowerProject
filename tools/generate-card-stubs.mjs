@@ -239,9 +239,10 @@ const ICONS = {
     sword(p);
     smallKey(p, C.red, C.red2);
   },
-  steelDoor(p) {
-    // Any one key opens it: a steel door with a pip of each key colour.
-    door(p, C.steel, C.steel2, C.dark);
+  woodenDoor(p) {
+    // Any one key opens it, or a hero breaks it down: a plank door with a
+    // pip of each key colour.
+    door(p);
     rect(p, 17, 17, 2, 2, C.gold);
     rect(p, 23, 17, 2, 2, C.sky);
     rect(p, 29, 17, 2, 2, C.red);
@@ -260,7 +261,7 @@ const ICONS = {
 const CARDS = [["stairs", "STAIRS"], ["heal", "HEAL"], ["door", "DOOR"], ["yellowKey", "YELLOW KEY"], ["blueKey", "BLUE KEY"], ["monster", "MONSTER"], ["atkUp", "ATK UP"], ["defUp", "DEF UP"], ["keySiphon", "KEY SIPHON"],
   ["yellowDoor", "YELLOW DOOR"], ["heartDoor", "HEART DOOR"], ["weakEnemy", "WEAK ENEMY"], ["baseEnemy", "BASE ENEMY"], ["strongEnemy", "STRONG ENEMY"],
   ["eliteEnemy", "ELITE ENEMY"], ["bossEnemy", "BOSS ENEMY"], ["chest", "CHEST"], ["blueSiphon", "BK SIPHON"], ["blueTrader", "BK TRADER"], ["keyToHp", "YK TO HP"],
-  ["redKey", "RED KEY"], ["redSiphon", "RK SIPHON"], ["torch", "TORCH"], ["steelDoor", "STEEL DOOR"]];
+  ["redKey", "RED KEY"], ["redSiphon", "RK SIPHON"], ["torch", "TORCH"], ["woodenDoor", "WOODEN DOOR"]];
 mkdirSync(OUT, { recursive: true });
 for (const [id, name] of CARDS) {
   const p = canvas();
