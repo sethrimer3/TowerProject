@@ -4,7 +4,7 @@
  * research opens the next quantity: x5, x10, x100, then Max, as many as
  * what is held pays for. */
 
-export const BUY_QUANTITIES = [1, 5, 10, 100, "max"] as const;
+export const BUY_QUANTITIES = [1, 5, 10, 25, 100, "max"] as const;
 export type BuyQuantity = (typeof BUY_QUANTITIES)[number];
 
 /** "x5", or "Max". */
@@ -17,6 +17,12 @@ export const openQuantities = (levels: number) => BUY_QUANTITIES.slice(0, 1 + Ma
 /** The most ranks Max buys at once when nothing limits it (free purchases
  * on a row with no most). */
 export const MAX_BULK = 1000;
+
+/** The trainers' speedup for a batch of `count` ranks trained at once:
+ * ×2 from 5 ranks, ×3 from 10, ×5 from 25 and ×10 from 100, on top of
+ * every other multiplier. Fewer than 5 ranks train at the plain pace. */
+export const BATCH_SPEEDUPS = [[100, 10], [25, 5], [10, 3], [5, 2]] as const;
+export const batchSpeedup = (count: number) => BATCH_SPEEDUPS.find(([from]) => count >= from)?.[1] ?? 1;
 
 /** What one press buys: `count` ranks for `cost` in all, and whether what
  * is held pays for them. */

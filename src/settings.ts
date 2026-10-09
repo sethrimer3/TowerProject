@@ -63,7 +63,7 @@ export const SETTINGS = {
    * on the Training tab or the run's training bar once Buy Quantity is
    * owned, not on the Settings page. */
   buyQuantity: {
-    kind: "choice", default: 1, choices: [[1, "x1"], [5, "x5"], [10, "x10"], [100, "x100"], ["max", "Max"]],
+    kind: "choice", default: 1, choices: [[1, "x1"], [5, "x5"], [10, "x10"], [25, "x25"], [100, "x100"], ["max", "Max"]],
   },
   /** Draw on each enemy the HP its fight would cost (`damage-labels.ts`).
    * Only Damage Visual, Tower I's floor 50 goal, shows it. */

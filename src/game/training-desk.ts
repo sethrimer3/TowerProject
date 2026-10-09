@@ -1,14 +1,16 @@
 import { TRAINING, trainingOpen, type TrainingId } from "../config.ts";
 import { snap } from "../exact.ts";
 import { TRAINING_RESET_GEMS } from "../gems.ts";
-import type { BuyQuantity } from "../buy-quantity.ts";
+import { batchSpeedup, bulkBuy, type BuyQuantity } from "../buy-quantity.ts";
 import { trainingBulk, trainingMaxed, trainingSpeed } from "../loadout.ts";
 import { BOOST_FOREVER, permanentBoost, trainingRate } from "../shop/entitlements.ts";
-import { claimBoost, doneAt, finishGems, nextTrainerGems, trainingGold, trainingJob, trainingMs, workLeft, trainingSlots, type TrainingJob } from "../training-jobs.ts";
+import { batchWork, claimBoost, doneAt, finishGems, jobInvested, nextTrainerGems, ranksInTraining, trainerBatch, trainingGold, trainingJob, workLeft, trainingSlots, type TrainingJob } from "../training-jobs.ts";
 import { affordsGems, type DeskHost } from "./desk.ts";
 import { changeLoadout } from "./hero-sync.ts";
 
 const rowOf = (id: TrainingId) => TRAINING.find((t) => t.id === id)!;
+/** The fixed quantities, largest first: a batch continues at the largest one its ranks reach. */
+const BATCH_QUANTITIES = [100, 25, 10, 5, 1] as const;
 
 /** The Training tab's commands: ranks bought with training points, or
  * trained by a trainer paid in Gold over the wall clock, the trainers and
@@ -57,36 +59,50 @@ export class TrainingDesk {
     });
   }
 
-  /** Pays a trainer `trainingGold` to train one more rank of `id`: it
-   * takes `trainingMs` of the wall clock (less the stat's time credit,
-   * used up first) and counts once that has passed (`settle`). Both go by
+  /** What a press of `id`'s trainer button buys at Buy Quantity `q`: the
+   * ranks (up to the stat's most, and with Max as many as the Gold pays
+   * for), their Gold and base training time one after another, and the
+   * batch's speedup (`batchSpeedup`: x2 from 5 ranks, x3 from 10, x5 from
+   * 25, x10 from 100). `affordable` says whether the Gold held pays. */
+  batch(id: TrainingId, q: BuyQuantity = 1) {
+    const save = this.save, row = rowOf(id), ranks = save.trainerRanks[id], speed = trainingSpeed(save);
+    const room = Math.max(0, row.max - save.training[id] - ranksInTraining(save.trainingJobs, id));
+    const bulk = bulkBuy(q, room, (k) => trainingGold(row, ranks + k), this.host.free ? Infinity : save.gold);
+    const { gold, ms } = trainerBatch(row, ranks, bulk.count, speed);
+    return { count: bulk.count, gold: this.host.free ? 0 : gold, ms, speedup: batchSpeedup(bulk.count), affordable: bulk.affordable };
+  }
+
+  /** Pays trainers the batch's Gold to train as many ranks of `id` as Buy
+   * Quantity `quantity` buys: they take the batch's base time divided by its
+   * speedup of the wall clock (less the stat's time credit and the time bank,
+   * used up first) and count once that has passed (`settle`). Both go by
    * the ranks trainers finished, not those bought with points. Refused
    * without the Trainers skill, for a stat already in training or at its most, with
    * every trainer busy, or without the Gold. With Dev free purchases it
    * costs nothing and counts at once. */
-  trainWithGold(id: TrainingId) {
+  trainWithGold(id: TrainingId, quantity: BuyQuantity = 1) {
     this.settle();
     const save = this.save;
     if (!this.hired || !this.canTrain(id) || trainingJob(save.trainingJobs, id)) return false;
-    if (this.host.free) return changeLoadout(save, () => { save.training[id]++; save.trainerRanks[id]++; });
-    const gold = trainingGold(rowOf(id), save.trainerRanks[id]);
-    if (save.trainingJobs.length >= trainingSlots(save) || save.gold < gold) return false;
-    this.start(id, gold, this.host.clock());
-    // Time credit can cover the whole rank.
+    const { count, gold, ms, speedup, affordable } = this.batch(id, quantity);
+    if (!affordable) return false;
+    if (this.host.free) return changeLoadout(save, () => { save.training[id] += count; save.trainerRanks[id] += count; });
+    if (save.trainingJobs.length >= trainingSlots(save)) return false;
+    this.start(id, count, gold, ms, speedup, this.host.clock());
+    // Time credit can cover the whole batch.
     this.settle();
     return true;
   }
 
-  /** Pays `gold` and starts a trainer on the next rank of `id` at `now`,
-   * its time less the stat's time credit, then the time bank (each used
-   * up first). */
-  private start(id: TrainingId, gold: number, now: number) {
-    const save = this.save, ms = trainingMs(save.trainerRanks[id], trainingSpeed(save)),
-      credit = Math.min(ms, save.trainingCredit[id]), bank = Math.min(ms - credit, save.trainingBank);
+  /** Pays `gold` and starts a trainer on the next `ranks` ranks of `id` at
+   * `now`: their base time `ms` less the stat's time credit, then the time
+   * bank (each used up first), divided by the batch's `speed`. */
+  private start(id: TrainingId, ranks: number, gold: number, ms: number, speed: number, now: number) {
+    const save = this.save, { fromCredit, fromBank, used, work } = batchWork(ms, speed, save.trainingCredit[id], save.trainingBank);
     save.gold = snap(save.gold - gold);
-    save.trainingCredit[id] -= credit;
-    save.trainingBank -= bank;
-    save.trainingJobs.push({ id, startedAt: now, completesAt: doneAt(ms - credit - bank, save.trainingBoostUntil, now, trainingRate(save)), gold, ms });
+    save.trainingCredit[id] -= fromCredit;
+    save.trainingBank -= fromBank;
+    save.trainingJobs.push({ id, startedAt: now, completesAt: doneAt(work, save.trainingBoostUntil, now, trainingRate(save)), gold, ms, ranks, speed, used });
   }
 
   /** Whether `id`'s trainer starts its next rank as soon as one is done. */
@@ -101,15 +117,16 @@ export class TrainingDesk {
     this.save.trainingAuto = on ? [...auto, id] : auto;
   }
 
-  /** Starts the next rank of `id` the moment `after` finished, if its
-   * auto-continue is on, it can train further and the trainer's Gold is
-   * held (none with Dev free purchases, though the rank still takes its
-   * time). */
+  /** Starts the next batch of `id`, as many ranks as the last (fewer near
+   * the stat's most), the moment `after` finished, if its auto-continue is
+   * on, it can train further and the trainer's Gold is held (none with Dev
+   * free purchases, though the ranks still take their time). */
   private continueAfter(after: TrainingJob) {
     const save = this.save, id = after.id;
     if (!this.autoContinues(id) || !this.canTrain(id) || trainingJob(save.trainingJobs, id)) return;
-    const gold = this.host.free ? 0 : trainingGold(rowOf(id), save.trainerRanks[id]);
-    if (save.trainingJobs.length < trainingSlots(save) && save.gold >= gold) this.start(id, gold, after.completesAt);
+    const { count, gold, ms, speedup, affordable } = this.batch(id, BATCH_QUANTITIES.find((q) => q <= after.ranks) ?? 1);
+    if (!affordable || save.trainingJobs.length >= trainingSlots(save)) return;
+    this.start(id, count, gold, ms, speedup, after.completesAt);
   }
 
   /** The training time (ms, at the normal rate) the rank of `id` in
@@ -122,9 +139,18 @@ export class TrainingDesk {
   /** The training time (ms, at the normal rate) the next rank of `id`
    * still needs: what is left of the rank in training, or else the next
    * rank's whole time less the stat's time credit and the time bank. */
-  toNextRank(id: TrainingId) {
+  toNextRank(id: TrainingId, q: BuyQuantity = 1) {
     if (trainingJob(this.save.trainingJobs, id)) return this.left(id);
-    return Math.max(0, trainingMs(this.save.trainerRanks[id], trainingSpeed(this.save)) - this.save.trainingCredit[id] - this.save.trainingBank);
+    return this.nextWork(id, q).work;
+  }
+
+  /** What the next batch of `id` at Buy Quantity `q` needs: its base time
+   * less the time credit and bank (`remaining`), the same divided by the
+   * batch's speedup (`work`), and whether any time is banked toward it. */
+  nextWork(id: TrainingId, q: BuyQuantity = 1) {
+    const { ms, speedup } = this.batch(id, q), save = this.save;
+    const { used, work } = batchWork(ms, speedup, save.trainingCredit[id], save.trainingBank);
+    return { remaining: ms - used, work, speedup, banked: used > 0 };
   }
 
   /** Stops the training of `id`, giving its Gold back and the time already
@@ -139,7 +165,13 @@ export class TrainingDesk {
 
   private refund(job: TrainingJob) {
     this.save.gold = snap(this.save.gold + job.gold);
-    this.save.trainingCredit[job.id] += Math.max(0, Math.round(job.ms - this.left(job.id)));
+    this.save.trainingCredit[job.id] += this.invested(job);
+  }
+
+  /** The training time (ms) actually spent on `job` so far: what a stop or
+   * reset gives back, never counting its batch speedup as extra time. */
+  invested(job: TrainingJob) {
+    return jobInvested(job, this.left(job.id));
   }
 
   /** Finishes the rank of `id` in training now, for `finishGems` of the
@@ -239,10 +271,10 @@ export class TrainingDesk {
   /** Counts a rank a trainer finished and records what it was paid with. */
   private complete(job: TrainingJob) {
     const save = this.save, paid = save.trainingPaid[job.id];
-    save.training[job.id]++;
-    save.trainerRanks[job.id]++;
+    save.training[job.id] += job.ranks;
+    save.trainerRanks[job.id] += job.ranks;
     paid.gold = snap(paid.gold + job.gold);
-    paid.ms += job.ms;
+    paid.ms += jobInvested(job, 0);
     this.done.push({ id: job.id, level: save.training[job.id] });
   }
 

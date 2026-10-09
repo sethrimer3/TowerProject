@@ -312,6 +312,7 @@ const validJob = (j: any) =>
 const decodeJob = (j: any): TrainingJob => ({
   id: j.id, startedAt: j.startedAt, completesAt: j.completesAt,
   gold: count(j.gold, 0, Number.MAX_SAFE_INTEGER), ms: count(j.ms, j.completesAt - j.startedAt, Number.MAX_SAFE_INTEGER),
+  ranks: Math.max(1, count(j.ranks, 1, 1000)), speed: Math.max(1, count(j.speed, 1, 10)), used: count(j.used, 0, Number.MAX_SAFE_INTEGER),
 });
 /** Version 1 had a single run (the endless climb); it becomes the Delve slice. */
 function migrateV1(s: any, d: Save, undoCapacity: number) {

@@ -210,9 +210,9 @@ const maxInterestLevels = () => INTEREST_CAPS.map((value, i): ResearchLevel => (
   effect: { target: "interestCap", op: "set", value },
 }));
 
-/** Buy Quantity: one level for each quantity past x1 (x5, x10, x100,
- * Max), 1,000 to 100,000 Gold and 4 to 48 hours. */
-const BUY_QUANTITY_LEVELS: [gold: number, hours: number][] = [[1000, 4], [5000, 12], [25000, 24], [100000, 48]];
+/** Buy Quantity: one level for each quantity past x1 (x5, x10, x25,
+ * x100, Max), 1,000 to 100,000 Gold and 4 to 48 hours. */
+const BUY_QUANTITY_LEVELS: [gold: number, hours: number][] = [[1000, 4], [5000, 12], [25000, 24], [50000, 36], [100000, 48]];
 
 /** Refocus, Ignore More and Target More: one floor fewer to regain a use
  * a level, for 90 levels (100 floors down to 10). Focus Count's Gold (500 ×
@@ -364,7 +364,7 @@ export const RESEARCH = {
   },
   buyQuantity: {
     name: "Buy Quantity",
-    description: "Drill the trainers in batches: each level opens a larger Buy Quantity for Training (x5, x10, x100, then Max).",
+    description: "Drill the trainers in batches: each level opens a larger Buy Quantity for Training (x5, x10, x25, x100, then Max), and training many ranks at once speeds the trainers up: ×2 at 5 ranks, ×3 at 10, ×5 at 25 and ×10 at 100.",
     categories: ["qualityOfLife"],
     requires: [{ upgrade: "buyQuantity" }],
     levels: BUY_QUANTITY_LEVELS.map(([gold, hours]): ResearchLevel => ({ gold, hours, effect: { target: "buyQuantity", op: "add", value: 1 } })),

@@ -6,7 +6,7 @@ import { FIND_POTION_BASE, FIND_POTION_MAX, FLOOR_GOLD_BASE, FLOOR_GOLD_RANK, FL
 import { wornEffects } from "./equipment/effects.ts";
 import { PIERCE_CAP } from "./equipment/balance.ts";
 import { RESEARCH, researched } from "./archives.ts";
-import { trainingGold } from "./training-jobs.ts";
+import { ranksInTraining, trainingGold } from "./training-jobs.ts";
 
 /** What one rank of an upgrade, or one provision, adds to a character. */
 export type Grants = Partial<Record<Stat, number>>;
@@ -218,7 +218,7 @@ export const trainingSpeed = (save: Pick<Save, "archives">) => researched(save.a
  * trainer is training. */
 export const trainingMaxed = (save: Pick<Save, "training"> & Partial<Pick<Save, "trainingJobs">>, id: TrainingId) => {
   const row = TRAINING.find((t) => t.id === id)!;
-  return save.training[id] + (save.trainingJobs?.some((j) => j.id === id) ? 1 : 0) >= row.max;
+  return save.training[id] + ranksInTraining(save.trainingJobs, id) >= row.max;
 };
 
 /** What one more rank of `id` costs (in training points, or a trainer's
@@ -239,7 +239,7 @@ export function trainingStep(save: Save, id: TrainingId, count = 1) {
  * the points held pay for them. */
 export function trainingBulk(save: Save, id: TrainingId, q: BuyQuantity) {
   const row = TRAINING.find((t) => t.id === id)!;
-  const room = row.max - save.training[id] - (save.trainingJobs?.some((j) => j.id === id) ? 1 : 0);
+  const room = row.max - save.training[id] - ranksInTraining(save.trainingJobs, id);
   return bulkBuy(q, Math.max(0, room), () => row.cost, save.settings.freePurchases ? Infinity : trainingPoints(save).left);
 }
 

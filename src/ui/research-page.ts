@@ -4,9 +4,10 @@ import { permanentBoost, trainingRate } from "../shop/entitlements.ts";
 import { TRAINING, TRAINING_GROUPS, TRAINING_PER_LEVEL, isStatRow, levelForXp, trainingOpen, type TrainingId } from "../config.ts";
 import { trainingBulk, trainingPoints, trainingStep, trainingText, trainingWaiting } from "../loadout.ts";
 import { whole } from "../whole.ts";
+import type { BuyQuantity } from "../buy-quantity.ts";
 import { buyQuantityHtml, maxCount, readQuantity } from "./buy-quantity-select.ts";
 import { TrainingParticles } from "../training-particles.ts";
-import { BOOST_CLAIM_MARGIN_MS, BOOST_MAX_MS, BOOST_RATE, boostLeft, claimBoost, finishGems, nextTrainerGems, trainingJob, trainingSlots } from "../training-jobs.ts";
+import { BOOST_CLAIM_MARGIN_MS, BOOST_MAX_MS, BOOST_RATE, boostLeft, claimBoost, finishGems, nextTrainerGems, ranksInTraining, trainingJob, trainingSlots } from "../training-jobs.ts";
 import type { AppContext } from "./app.ts";
 import { adIcon, clockIcon, el, gemCount, gemIcon, goldIcon, pointsIcon, redoIcon, riseFrom, uiSprite } from "./dom.ts";
 import { TRAINING_RESET_GEMS } from "../gems.ts";
@@ -99,7 +100,7 @@ export class ResearchPage {
       this.render();
     };
     this.onEach("data-train-gold", (id) => {
-      if (training.trainWithGold(id)) {
+      if (training.trainWithGold(id, this.ctx.game.buyQuantity)) {
         this.ctx.update();
         play("coin");
       }
@@ -187,7 +188,7 @@ export class ResearchPage {
    * them. */
   private resetReturns(id: TrainingId) {
     const game = this.ctx.game, paid = game.save.trainingPaid[id], job = trainingJob(game.save.trainingJobs, id);
-    const gold = paid.gold + (job?.gold ?? 0), time = paid.ms + game.save.trainingCredit[id] + (job ? Math.max(0, job.ms - game.training.left(id)) : 0);
+    const gold = paid.gold + (job?.gold ?? 0), time = paid.ms + game.save.trainingCredit[id] + (job ? game.training.invested(job) : 0);
     return [
       paid.points ? `${pointsIcon()} <b>${paid.points}</b>` : "",
       gold ? `${goldIcon()} <b>${whole(gold)}</b>` : "",
@@ -242,21 +243,34 @@ export class ResearchPage {
     // ranks instead.
     const most = !isStatRow(t) ? `up to ${trainingStep({ ...save, training: { ...save.training, [t.id]: t.max }, trainingJobs: [] }, t.id).now}${unit}` : "";
     const shown = (v: number) => trainingText(v, unit);
-    const time = step.maxed || !hired ? "" : `<span class="training-left" title="Training time to the next rank">${clockIcon()}<span data-training-left="${t.id}">${formatDuration(game.training.toNextRank(t.id))}</span></span>`;
+    const time = step.maxed || !hired ? "" : this.timeNote(t.id, q);
     const notes = [time, most].filter(Boolean).join(" · ");
     const job = trainingJob(save.trainingJobs, t.id);
     const nowButton = step.maxed
       ? ""
       : `<button class="training-box training-cost training-now" data-train="${t.id}" ${bulk.affordable ? "" : "disabled"} aria-label="Spend ${bulk.cost} training ${bulk.cost === 1 ? "point" : "points"} to train ${t.name} ${count === 1 ? "one rank" : `${count} ranks`} now" title="Train now">${maxCount(q, count)}${pointsIcon()}<span>${bulk.cost}</span></button>`;
-    return `<div class="training-row${job ? " active" : ""}" role="listitem" data-training-row="${t.id}"><span class="training-label">${job ? this.autoBox(t) : ""}${t.name} - ${this.levelText(t.id, !!job)}${notes ? `<small>${notes}</small>` : ""}</span><span class="training-box">${shown(now)}</span><span class="training-arrow" aria-hidden="true">→</span><span class="training-box next">${shown(next)}</span>${hired ? this.trainerHtml(t, step) : ""}${nowButton}${this.resetButton(t, !!job)}</div>`;
+    return `<div class="training-row${job ? " active" : ""}" role="listitem" data-training-row="${t.id}"${job && job.speed > 1 ? ` data-speed="${job.speed}"` : ""}><span class="training-label">${job ? this.autoBox(t) : ""}${t.name} - ${this.levelText(t.id, !!job)}${notes ? `<small>${notes}</small>` : ""}</span><span class="training-box">${shown(now)}</span><span class="training-arrow" aria-hidden="true">→</span><span class="training-box next">${shown(next)}</span>${hired ? this.trainerHtml(t, step) : ""}${nowButton}${this.resetButton(t, !!job)}</div>`;
+  }
+
+  /** The training time to a row's next rank or ranks (at Buy Quantity
+   * `q`): a rank in training shows its timer; else the time left once the
+   * stat's credit and the time bank are taken off, and for a batch with a
+   * speedup, "30m × 2x → 15m". Light green once any time is banked toward
+   * it (and "0s" when that covers it all). */
+  private timeNote(id: TrainingId, q: BuyQuantity) {
+    const training = this.ctx.game.training, job = trainingJob(this.ctx.game.save.trainingJobs, id);
+    if (job) return `<span class="training-left" title="Training time to the next ${job.ranks === 1 ? "rank" : `${job.ranks} ranks`}">${clockIcon()}${job.speed > 1 ? `<span class="training-speedup">×${job.speed}x →</span>` : ""}<span data-training-left="${id}">${formatDuration(training.left(id))}</span></span>`;
+    const { remaining, work, speedup, banked } = training.nextWork(id, q);
+    const title = speedup > 1 ? `Training ${speedup}x faster for training several ranks at once` : "Training time to the next rank";
+    return `<span class="training-left" title="${title}">${clockIcon()}${speedup > 1 ? `<span class="training-speedup">${formatDuration(remaining)} ×${speedup}x →</span>` : ""}<span data-training-left="${id}"${banked ? ' class="banked"' : ""}>${formatDuration(work)}</span></span>`;
   }
 
   /** A row's level, its ranks, and while a trainer trains the next, the
    * level it reaches, out of its most: "Lv 5 / 6,000", or "Lv 5 → 6 / 6,000". */
   private levelText(id: TrainingId, training: boolean) {
-    const ranks = this.ctx.game.save.training[id], row = TRAINING.find((t) => t.id === id)!;
+    const save = this.ctx.game.save, ranks = save.training[id], row = TRAINING.find((t) => t.id === id)!;
     const most = ` / ${row.max.toLocaleString("en-US")}`;
-    return `<span class="training-level">Lv ${ranks}${training ? ` → ${ranks + 1}` : ""}${most}</span>`;
+    return `<span class="training-level">Lv ${ranks}${training ? ` → ${ranks + ranksInTraining(save.trainingJobs, id)}` : ""}${most}</span>`;
   }
 
   /** A row in training's auto-continue box, with its loop icon: while
@@ -274,9 +288,9 @@ export class ResearchPage {
     if (trainingJob(save.trainingJobs, t.id))
       return `<span class="training-job"><button class="training-box training-timer" data-cancel="${t.id}" aria-label="Training ${t.name}: tap to stop and get the Gold back" title="Tap to stop and get the Gold back"><span data-training-timer="${t.id}">${formatDuration(game.training.left(t.id))}</span></button>${this.finishButton(t.id, t.name)}</span>`;
     if (step.maxed) return `<button class="training-box training-cost" disabled aria-label="${t.name} is fully trained">Max</button>`;
-    const full = save.trainingJobs.length >= trainingSlots(save), gold = whole(step.gold);
-    const takes = formatDuration(game.training.toNextRank(t.id));
-    return `<button class="training-box training-cost training-gold" data-train-gold="${t.id}" ${step.goldAffordable && !full ? "" : "disabled"} aria-label="Pay ${gold} Gold to a trainer to train ${t.name} to ${trainingText(step.next, step.unit)}, taking ${takes}" title="${full ? "Every trainer is busy" : `Takes ${takes}`}">${goldIcon()}<span>${gold}</span></button>`;
+    const q = game.buyQuantity, batch = game.training.batch(t.id, q), full = save.trainingJobs.length >= trainingSlots(save), gold = whole(batch.gold);
+    const takes = formatDuration(game.training.toNextRank(t.id, q)), ranks = batch.count === 1 ? `to ${trainingText(step.next, step.unit)}` : `${batch.count} ranks`;
+    return `<button class="training-box training-cost training-gold" data-train-gold="${t.id}" ${batch.affordable && !full ? "" : "disabled"} aria-label="Pay ${gold} Gold to a trainer to train ${t.name} ${ranks}, taking ${takes}" title="${full ? "Every trainer is busy" : `${batch.count === 1 ? "" : `${ranks}: `}Takes ${takes}`}">${maxCount(q, batch.count)}${goldIcon()}<span>${gold}</span></button>`;
   }
 
   /** A row's Gem reset: closed inside a run, where a hero is only ever
@@ -380,11 +394,13 @@ export class ResearchPage {
     const canvas = document.querySelector<HTMLCanvasElement>(".training-particles");
     if (!canvas) return;
     const top = canvas.getBoundingClientRect().top;
-    const lanes = Array.from(document.querySelectorAll<HTMLElement>(".training-row.active")).map(row => {
+    const rows = Array.from(document.querySelectorAll<HTMLElement>(".training-row.active"));
+    const lanes = rows.map(row => {
       const r = row.getBoundingClientRect();
       return r.top + r.height / 2 - top;
     });
-    this.trainingParticles.draw(canvas, time, { lanes, reduced: this.ctx.game.save.settings.reduceMotion });
+    const speeds = rows.map(row => Number(row.dataset.speed) || 1);
+    this.trainingParticles.draw(canvas, time, { lanes, speeds, reduced: this.ctx.game.save.settings.reduceMotion });
   }
 }
 

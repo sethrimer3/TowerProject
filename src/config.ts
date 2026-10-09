@@ -314,7 +314,7 @@ export const UPGRADES = [
   {
     id: "buyQuantity",
     name: "Buy Quantity",
-    description: "Choose how many Training ranks one press buys, with training points or with Silver in a run (x1 at first): Buy Quantity research in the Archives opens x5, x10, x100 and Max",
+    description: "Choose how many Training ranks one press buys, with training points or with Silver in a run (x1 at first): Buy Quantity research in the Archives opens x5, x10, x25, x100 and Max, and a trainer that trains 5 or more ranks at once works faster (×2 at 5, ×3 at 10, ×5 at 25, ×10 at 100)",
     base: 5,
     max: 1,
     currency: "inspiration",

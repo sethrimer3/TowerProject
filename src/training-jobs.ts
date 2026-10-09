@@ -31,11 +31,13 @@ export const TRAINING_GOLD_PER_POINT = 20;
  * `BOOST_CLAIM_MARGIN_MS` of that. */
 export const BOOST_RATE = 2, BOOST_STEP_MS = 3_600_000, BOOST_MAX_MS = 4 * BOOST_STEP_MS, BOOST_CLAIM_MARGIN_MS = 10 * 60_000;
 
-/** One rank being trained: it counts when `completesAt` (ms) is reached.
- * `gold` is what was paid for it and `ms` the whole training time it
- * takes, both returned (as Gold and time credit) if it is stopped or the
- * stat reset. */
-export type TrainingJob = { id: TrainingId; startedAt: number; completesAt: number; gold: number; ms: number };
+/** One batch being trained, a rank or several at once (`ranks`): it counts
+ * when `completesAt` (ms) is reached. `gold` is what was paid for it and
+ * `ms` the whole training time its ranks take one by one, both returned (as
+ * Gold and time credit) if it is stopped or the stat reset. `used` is the
+ * part of `ms` the stat's time credit and the time bank paid at the start,
+ * and `speed` the batch's speedup (`batchSpeedup`), which divides the rest. */
+export type TrainingJob = { id: TrainingId; startedAt: number; completesAt: number; gold: number; ms: number; ranks: number; speed: number; used: number };
 /** What a stat's ranks were paid with: training points, Gold, and the
  * training time the trainers' ranks took (ms), all returned by a reset. */
 export type TrainingPaid = { points: number; gold: number; ms: number };
@@ -56,6 +58,29 @@ export const trainingGold = (row: { id: TrainingId; cost: number }, ranks: numbe
   return Math.ceil((TRAINING_GOLD_PER_POINT * row.cost * (ranks + 1) * (growth + ranks)) / growth);
 };
 
+/** The Gold and base training time (ms, one rank after another, before the
+ * batch's speedup) of `count` ranks more of `row` trained by trainers who
+ * have finished `ranks`, at Faster Trainers `speed`. */
+export function trainerBatch(row: { id: TrainingId; cost: number }, ranks: number, count: number, speed: number) {
+  let gold = 0, ms = 0;
+  for (let k = 0; k < count; k++) {
+    gold += trainingGold(row, ranks + k);
+    ms += trainingMs(ranks + k, speed);
+  }
+  return { gold, ms };
+}
+/** The training time (ms, at the normal rate) a batch of base time `ms` and
+ * speedup `speed` still needs once `credit` of time credit and `bank` of
+ * the time bank are taken off (the credit first); and how much each gave. */
+export function batchWork(ms: number, speed: number, credit: number, bank: number) {
+  const fromCredit = Math.min(ms, credit), fromBank = Math.min(ms - fromCredit, bank), used = fromCredit + fromBank;
+  return { fromCredit, fromBank, used, work: Math.round((ms - used) / speed) };
+}
+/** The training time actually spent on a job when `left` of its work is
+ * still to do (its timer): the time credit and bank it used, and the work
+ * done at its own pace, the speedup not counted as extra time. */
+export const jobInvested = (job: TrainingJob, left: number) => Math.round(job.used + Math.max(0, (job.ms - job.used) / job.speed - left));
+
 /** How many stats can be in training at once: the first slot, and one for
  * each trainer bought. */
 export const trainingSlots = (save: { trainers: number }) => TRAINING_SLOTS + save.trainers;
@@ -67,6 +92,8 @@ export const finishGems = (ms: number) => Math.max(0, Math.ceil(ms / (FINISH_GEM
 
 /** The job training `id`, if any. */
 export const trainingJob = (jobs: readonly TrainingJob[], id: TrainingId) => jobs.find((j) => j.id === id);
+/** The ranks of `id` in training now. */
+export const ranksInTraining = (jobs: readonly TrainingJob[] | undefined, id: TrainingId) => trainingJob(jobs ?? [], id)?.ranks ?? 0;
 
 /** The boost still banked at `now` (ms), none once it has run out. */
 export const boostLeft = (boostUntil: number, now: number) => Math.max(0, boostUntil - now);
