@@ -120,6 +120,27 @@ export function towerWoodPercent(depth: number, tower: number) {
   return Math.max(0, s.start - s.lessEachTower * (tower - 1) - Math.floor(depth / s.everyFloors));
 }
 
+/** The Tower's key supply (docs/DOOR_AND_KEY_SCHEDULE.md, section 4), in
+ * ten-thousandths, so every engine rolls the same: `start` on Tower I's
+ * first floors, `lessEachTower` less each later tower and `lessEvery10` less
+ * every ten floors, never below `min`. Keys on the way to the stairs fall
+ * half as fast (`towerKeySupply`'s `main`). Keys are kept by supply over
+ * `start` (`towerKeyKeep`): all of them on Tower I's first floors. */
+export const TOWER_KEY_SUPPLY = { start: 15000, lessEachTower: 1000, lessEvery10: 50, min: 4000 };
+export function towerKeySupply(depth: number, tower: number, main = false) {
+  const s = TOWER_KEY_SUPPLY, fall = s.lessEachTower * (tower - 1) + s.lessEvery10 * Math.floor(depth / 10);
+  return Math.max(s.min, s.start - (main ? fall / 2 : fall));
+}
+/** Whether to keep one key on floor `depth` of tower `tower`, drawing from
+ * `rng` only when the supply has fallen (no draw while every key is kept). */
+export function keepsKey(depth: number, tower: number, rng: () => number, main = false) {
+  const supply = towerKeySupply(depth, tower, main);
+  return supply >= TOWER_KEY_SUPPLY.start || rng() * TOWER_KEY_SUPPLY.start < supply;
+}
+/** The share of keys kept on floor `depth` of tower `tower`, 1 at most. */
+export const towerKeyKeep = (depth: number, tower: number, main = false) =>
+  Math.min(1, towerKeySupply(depth, tower, main) / TOWER_KEY_SUPPLY.start);
+
 /** Whether `thing` (a gate, pattern step, lane or fork, however deeply
  * nested) holds no blue, red or Heart Door: what every Tower table but the
  * door stage may offer. */

@@ -1,6 +1,6 @@
 import type { KeyColor } from "../config.ts";
 import { forkKeyDemand } from "./forks.ts";
-import { doorKeys } from "../key-schedule.ts";
+import { doorKeys, towerKeyKeep } from "../key-schedule.ts";
 import { keyedFloor, pick, type Weighted } from "./patterns.ts";
 import type { GraphBuilder } from "./strategic-graph.ts";
 import type { Gate, Reward, StrategicGraph, StrategicNode, Strength } from "./types.ts";
@@ -130,7 +130,9 @@ const thinRedVault = (n: StrategicNode) =>
 function coverDoor(plan: Plan, door: Door, demand: number) {
   const { graph, rng } = plan;
   if (supply(graph.nodes, door) >= demand) return;
-  const chance = door.route === "main" ? COHERENCE_TUNING.main[door.color](graph.depth) : COHERENCE_TUNING.optional[door.color];
+  // The key supply thins the chance: on the way to the stairs half as fast.
+  const chance = (door.route === "main" ? COHERENCE_TUNING.main[door.color](graph.depth) : COHERENCE_TUNING.optional[door.color])
+    * towerKeyKeep(graph.depth, plan.b.tower, door.route === "main");
   if (rng() < chance && addKeySource(plan, door)) return;
   // Floors 2 to 5 always pay for the main route's doors.
   if (door.route === "main" && keyedFloor(graph.depth)) {

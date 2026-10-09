@@ -109,12 +109,18 @@ Keys get scarcer per door as the floors and towers rise. Progress upgrades are m
 
 `supply(t, f) = max(S_min, S₀ − a·(t−1) − b·⌊(f−1)/10⌋)` with S₀ = 1.5, a = 0.1, b = 0.005, S_min = 0.4 to start.
 
-It is applied as a share kept, `keep = supply / S₀` (1 on Tower I's floor 1, down to 0.27 at the lowest), at three points:
+It is applied as a share kept, `keep = supply / S₀` (1 on Tower I's first ten floors, down to 0.27 at the lowest: floor 2201 in Tower I, 601 in Tower IX), at three points (`TOWER_KEY_SUPPLY`, `keepsKey` and `towerKeyKeep` in `src/key-schedule.ts`, in ten-thousandths so every engine rolls alike):
 - **Pattern key rewards:** each key in a pattern's package stays with chance `keep`. Packages thin out rather than vanish: a package's last item is never removed.
 - **Resource planner:** its chance to add a key for a door with none is multiplied by `keep` on branches. On the way to the stairs it uses a gentler curve, half the slopes (`a/2`, `b/2`), so the main route is the last place to run short.
 - **Unguarded loot:** its keys are kept with chance `keep`. When one isn't kept, the roll gives nothing.
 
-Floors 2–5's keys behind every door aren't thinned. Because the curve scales today's generator, S₀ isn't yet an actual ratio of keys to locks. The census reports the real ratio, and the four numbers get tuned from it.
+Floors 2–5's keys behind every door aren't thinned, nor are the keys the planner adds as sources (their chance is what it thins). Because the curve scales today's generator, S₀ isn't an actual ratio of keys to locks. The census reports the real ratio, and the four numbers get tuned from it.
+
+First measurement (`--towers 1,5,9 --floors 1-1000 --band 200`, keys per lock, all colours): Tower I falls from 1.50 (floors 1–200) to 0.92 (801–1000), Tower V from 1.30 to 0.72, Tower IX from 1.02 to 0.63. By colour, at floors 801–1000 of Tower I: yellow 1.40, blue 0.49, red 0.19. Two things the single curve doesn't address:
+- **Blue keys outnumber blue doors early** (2.75 keys per lock on Tower I's floors 1–200), because ordinary patterns give blue keys freely while blue doors come only by quota.
+- **Red keys are scarce everywhere** (0.1–0.3 per lock), since red keys come almost only from the planner's sources and red trade rooms.
+
+Both could be handled by a supply per colour, or by placing blue and red keys by quota alongside their doors.
 
 What helps the player keep up:
 - **Already in the game:** Key Efficiency, Find Yellow Key, Key Siphon, the Effective badge, breaking wooden doors.

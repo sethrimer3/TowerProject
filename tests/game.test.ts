@@ -210,8 +210,9 @@ test("the key economy is coherent on early floors but never force-balanced", () 
       if (room <= 1) { early++; if (a.stairsKeyReachable) earlyOk++; } else deep++;
       if (!a.keyEconomyComplete) anyUnaffordable++;
       // Higher-tier door -> several lower-tier keys (resource conversion).
-      // A combined door taking a blue or red key counts too ("yellow + blue door").
-      if (a.regions.some((r) => /(blue|red) door$/.test(r.gate) && (r.contents.match(/key/g) ?? []).length >= 3)) exchanges++;
+      // A combined door taking a blue or red key counts too ("yellow + blue door");
+      // the key supply thins packages, so two keys make a trade.
+      if (a.regions.some((r) => /(blue|red)( heart)? door$/.test(r.gate) && (r.contents.match(/key/g) ?? []).length >= 2)) exchanges++;
       assert.equal(a.emptyDeadEnds, 0, `Seed ${seed} room ${room}: empty dead end`);
     }
   assert.ok(earlyOk / early > 0.9, `early floors key-reachable ${earlyOk}/${early}`);

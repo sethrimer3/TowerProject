@@ -9,7 +9,7 @@ import { embed, ENTRY, type Embedding } from "./embedder.ts";
 import { GraphBuilder, generateStrategicGraph } from "./strategic-graph.ts";
 import { keyedFloor, openFirstFloor } from "./patterns.ts";
 import type { StrategicGraph } from "./types.ts";
-import { ALL_KEY_COLORS, towerKeyColorsOn, type KeyColors } from "../key-schedule.ts";
+import { ALL_KEY_COLORS, keepsKey, towerKeyColorsOn, type KeyColors } from "../key-schedule.ts";
 
 /** Tower floor generation pipeline:
  *
@@ -97,7 +97,7 @@ export function generateTowerFloor(seed: number, room: number, tier = 1): TowerF
     const blockers = new Set([...cells].filter(([, t]) => t.kind === "enemy").map(([k]) => k));
     for (const k of reachable(cells, point(TOWER_START_X, 0), blockers))
       if (cells.get(k)?.kind === "floor" && k !== point(...ENTRY)) {
-        const loot = rollUnguardedLoot(rng, colors);
+        const loot = rollUnguardedLoot(rng, colors, (r) => keepsKey(room, tier, r));
         if (loot) cells.set(k, loot);
       }
     if (geometryProblems(cells).length) continue;
@@ -108,11 +108,13 @@ export function generateTowerFloor(seed: number, room: number, tier = 1): TowerF
 
 /** Human-readable generation report for one floor (debugging/tuning). */
 /** The rare loot on one unguarded floor tile, or null (most rolls). */
-/** A key of a colour `colors` closes comes as a yellow key. */
-export function rollUnguardedLoot(rng: () => number, colors: KeyColors = ALL_KEY_COLORS): Tile | null {
+/** A key of a colour `colors` closes comes as a yellow key; a key the key
+ * supply doesn't keep (`keep`, drawing from `rng`) leaves nothing. */
+export function rollUnguardedLoot(rng: () => number, colors: KeyColors = ALL_KEY_COLORS, keep: (rng: () => number) => boolean = () => true): Tile | null {
   if (rng() >= UNGUARDED_LOOT_CHANCE) return null;
   const choice = Math.floor(rng() * 6);
   if (choice < 3) {
+    if (!keep(rng)) return null;
     const color = (["yellow", "blue", "red"] as const)[choice];
     return { kind: "key", color: colors[color] ? color : "yellow" };
   }
