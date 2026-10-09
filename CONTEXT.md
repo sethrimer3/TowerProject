@@ -137,7 +137,7 @@ How strong a normal, balanced enemy is on each floor of a tower or delve: HP and
 _Avoid_: power budget, enemy table, zone stats
 
 **Enemy strength**:
-How hard the floor asked an enemy to be: weak, normal, strong or elite. Each strength multiplies its floor's enemy curve: strong enemies are the floor's own made tougher, elite ones come from the next zone (the Tower's curve ten floors on). The board shows it round the enemy (a dark red rim for normal, bright red with one chevron for strong, bright red inside a gold rim with two chevrons for elite) and the inspect title and fight messages name weak, strong and elite (and a boss or Greater Boss) before the enemy's name.
+How hard the floor asked an enemy to be: weak, normal, strong or elite. Each strength multiplies its floor's enemy curve: strong enemies are the floor's own made tougher, elite ones come from the next zone (the Tower's curve ten floors on). The board shows it round the enemy (a dark red rim for normal, the same with one chevron pointing down for weak, bright red with one chevron for strong, bright red inside a gold rim with two chevrons for elite) and the inspect title and fight messages name weak, strong and elite (and a boss or Greater Boss) before the enemy's name.
 _Avoid_: tier, rank, level
 
 **Enemy schedule**:

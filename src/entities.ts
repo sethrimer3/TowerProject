@@ -31,7 +31,8 @@ export type Kind =
   | "stairsDown"
   | "oneway";
 /** How hard a generator asked an enemy to be. Strong and elite enemies wear
- * a brighter glow and rank chevrons, so the player can tell them apart. A
+ * a brighter glow and rank chevrons, and weak ones a chevron pointing down,
+ * so the player can tell them apart. A
  * boss guards the way up at the end of every ten floors, and a Greater
  * Boss appears on a Tower floor whose every torch is put out. */
 export type EnemyStrength = "weak" | "normal" | "strong" | "elite" | "boss" | "greaterBoss";

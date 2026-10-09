@@ -407,13 +407,14 @@ type Ring = { r: number; color: string; alpha: number };
 const RED = "#9c1f2e", BRIGHT_RED = "#ff3b2b", GOLD_RIM = "#f4c64e", VIOLET_RIM = "#b45cff", CHEVRON = "#ffe6a8";
 /** How an enemy's strength shows: bands outside its black outline (the
  * outermost first), and rank chevrons over the sprite. Normal is a dark red
- * rim fading out, strong a bright red one with one chevron, elite a bright
+ * rim fading out, weak the same with one chevron pointing down (`down`),
+ * strong a bright red one with one chevron, elite a bright
  * red band inside a gold rim with two, a boss the elite's bands with
  * three, and a Greater Boss a gold band inside a violet rim with four. Only opaque bands cast torch shadows
  * (see toShadow in entity-lighting.ts), so the faint outer glow never
  * fattens one. */
-const ENEMY_LOOK: Record<EnemyStrength, { rings: Ring[]; chevrons: number }> = {
-  weak: { rings: [{ r: 3, color: RED, alpha: 0.3 }, { r: 2, color: RED, alpha: 1 }], chevrons: 0 },
+const ENEMY_LOOK: Record<EnemyStrength, { rings: Ring[]; chevrons: number; down?: true }> = {
+  weak: { rings: [{ r: 3, color: RED, alpha: 0.3 }, { r: 2, color: RED, alpha: 1 }], chevrons: 1, down: true },
   normal: { rings: [{ r: 3, color: RED, alpha: 0.3 }, { r: 2, color: RED, alpha: 1 }], chevrons: 0 },
   strong: { rings: [{ r: 3, color: BRIGHT_RED, alpha: 0.45 }, { r: 2, color: BRIGHT_RED, alpha: 1 }], chevrons: 1 },
   elite: { rings: [{ r: 3, color: GOLD_RIM, alpha: 1 }, { r: 2, color: BRIGHT_RED, alpha: 1 }], chevrons: 2 },
@@ -458,7 +459,7 @@ function bakeEnemy(e: Enemy, sprite: boolean) {
   }
   oc.globalAlpha = 1;
   oc.drawImage(body, m, m);
-  for (let i = 0; i < look.chevrons; i++) chevron(oc, m + 1, m + 1 + i * 4);
+  for (let i = 0; i < look.chevrons; i++) chevron(oc, m + 1, m + 1 + i * 4, look.down);
   return out;
 }
 
@@ -474,9 +475,11 @@ function dilated(body: HTMLCanvasElement, ring: Ring, m: number) {
   return band;
 }
 
-/** One rank chevron: a small upward wedge, 5x3, on a black backing. */
-function chevron(c: CanvasRenderingContext2D, x: number, y: number) {
-  const rows = [[2, 1], [1, 3], [0, 5]] as const;
+/** One rank chevron: a small upward wedge, 5x3, on a black backing, or a
+ * downward one (`down`, a weak enemy's). */
+function chevron(c: CanvasRenderingContext2D, x: number, y: number, down = false) {
+  const up = [[2, 1], [1, 3], [0, 5]] as const;
+  const rows = down ? [...up].reverse() : up;
   c.fillStyle = "#0b0a0e";
   rows.forEach(([dx, w], i) => c.fillRect(x + dx - 1, y + i - 1, w + 2, 3));
   c.fillStyle = CHEVRON;
