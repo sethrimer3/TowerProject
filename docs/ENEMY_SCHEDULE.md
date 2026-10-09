@@ -10,9 +10,9 @@ Notation: `t` is the tower number (1–9), `f` the floor counted from 1, and `�
 
 ## 1. Where things stand
 
-Today no single number decides the enemies. Strengths come from many tables: the main and stairs gate tables, patterns' guards and rings, forks, the furnisher's niches, and the Delve's corridor guards (`guardStrengths`). The only floor rule is `STRENGTH_FROM_FLOOR`: no strong enemy below floor 11 and no elite below 41, the same in every tower.
+Before the schedule, no single number decided the enemies. Strengths came from many tables: the main and stairs gate tables, patterns' guards and rings, forks, the furnisher's niches, and the Delve's corridor guards (a fixed mix, `guardStrengths`, now gone). The only floor rule was `STRENGTH_FROM_FLOOR`: no strong enemy below floor 11 and no elite below 41, the same in every tower.
 
-The census (section 5) shows the result is flat. From floor 1 to floor 1,200, in every tower, a Tower floor holds about 9.5 enemies: about 33% weak, 40% normal, 25% strong and 3–4% elite, plus a boss on every tenth floor. A Delve area holds about 6.3 enemies per equivalent floor in much the same mix. Floors get harder only through the stat curves and the tier's ×3.
+The census (section 5) showed the result was flat. From floor 1 to floor 1,200, in every tower, a Tower floor holds about 9.5 enemies: about 33% weak, 40% normal, 25% strong and 3–4% elite, plus a boss on every tenth floor. A Delve area holds about 6.3 enemies per equivalent floor in much the same mix. Floors get harder only through the stat curves and the tier's ×3.
 
 ## 2. The schedules
 
@@ -66,7 +66,7 @@ Strong and elite enemies stand only from each tower's own first floors (`strengt
 
 The More Enemies badge adds its percent of the floor's generated enemies, the extras among them.
 
-The Delve will run the same stage per equivalent floor of an area (phase 3).
+**The Delve** runs the same stage as its area's last (`placeEnemies` in `src/delve/labyrinth.ts`), after the door, wood and key stages, on its own stream, so none of them draws differently. Each of the area's ten equivalent floors, by tile depth, counts its own baseline and extras and is dealt its own shares from the tower of the delve's number. Extras never stand on the way in or beside it, within two tiles of the milestone gate or its boss, or in a fork's lane. Corridor guards now ask for "normal" (pockets' gates still ask their own strengths), so the ranking alone decides theirs. The region records the area's sums as `enemyCount`. `gateTile` passes the tier to `strengthOnFloor`, so fork lanes and the tables' asks wait for each delve's own first floors too.
 
 ## 4. What pays for it
 
@@ -94,6 +94,8 @@ Two more columns show the stage's work: *baseline*, the enemies it found (fork l
 
 With the stage, Tower I (`--towers 1 --floors 1-6000 --band 1000 --seeds 3 --stride 41`): no extra is ever dropped, and at floors 5,001–6,000 a floor holds about 21.8 enemies (a baseline of 7.2 at 283%, and the fork lanes'), 1 / 37 / 43 / 19% against 0 / 35 / 45 / 20%, weighing 52 against about 15 today.
 
+With the stage, Delve I and IX (`delve:report -- --census --tiers 1,9 --floors 1-1000 --band 200 --seeds 10`): every found share is within a point of its want but the fork lanes' weak enemies (about 1% in Delve IX), nothing is dropped, and a floor holds about 6.5 enemies at floors 1–200 (a baseline of 6.0) and 6.8 at 801–1,000 (5.0 at 130%; the door stage turns more guards into doors as its quotas rise). At floors 5,001–6,000 of Delve I (`--seeds 6`): 14.5 enemies a floor (a baseline of 4.9 at 291%), 1 / 35 / 45 / 20%, weighing 36, with nothing dropped.
+
 First measurement, before the stage (`--towers 1,9 --floors 1-1200 --band 200 --seeds 4 --stride 7`):
 
 | Floors | Tower I: enemies, weak% / normal% / strong% / elite%, weight | wanted | Tower IX: found | wanted |
@@ -117,6 +119,6 @@ Each would go through `combat.ts` and `resolveStep`, so previews, the planners, 
 
 1. **Schedule and census** (done): `src/enemy-schedule.ts`, this document, the census's Enemies table. No floor changes.
 2. **The enemy stage, Tower** (done): count, then re-rank, and strong and elite first floors by tower. `TOWER_LAYOUT_VERSION` 22.
-3. **The enemy stage, Delve,** by equivalent floor, replacing `guardStrengths`' fixed mix. A layout version bump.
+3. **The enemy stage, Delve** (done), by equivalent floor, replacing `guardStrengths`' fixed mix. `LAYOUT_VERSION` 25.
 4. **Profiles:** every strength may wear every profile, with scheduled shares, and rosters by tower.
 5. **Traits** (section 6), one at a time.

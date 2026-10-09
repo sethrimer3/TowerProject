@@ -1,5 +1,7 @@
 import { point, type Point, type Tile } from '../entities.ts';
-import type { Fork, Gate, LaneStep, Strength } from '../tower/types.ts';
+import type { Fork, Gate, LaneStep } from '../tower/types.ts';
+import { isRanked, type RankedStrength } from '../enemy-schedule.ts';
+import { drawStrength, extraEnemies, rankStrengths, sharesOn } from '../enemy-stage.ts';
 import { strengthOnFloor, DELVE_ENEMY_NAMES, enemyTier, type TowerEnemyProfile } from '../scaling.ts';
 import { enemyStats, woodDurability } from '../enemy-curves.ts';
 import { FORK_TUNING, forkDepth, forksWorth, stepValue } from '../tower/forks.ts';
@@ -32,11 +34,10 @@ export const DELVE_TUNING = {
   cacheAreas: 16,
   /** Most pockets per area whose throat becomes a fork. */
   forksPerArea: 6,
-  /** Chance that a corridor not leading into a pocket gets a guard, and the
-   * odds of each guard's strength (about the Tower's mix per floor), so an
-   * area holds about as many enemies as ten Tower floors. */
+  /** Chance that a corridor not leading into a pocket gets a guard, so an
+   * area holds about as many enemies as ten Tower floors; the enemy stage
+   * decides each guard's strength. */
   guardChance: 0.65,
-  guardStrengths: { weak: 0.31, normal: 0.4, strong: 0.26, elite: 0.03 },
   /** The odds of the reward left beside a guard (none otherwise), so an area
    * also holds about the potions and shards of ten Tower floors. */
   guardRewards: { potion: 0.55, attack: 0.15, defense: 0.1 },
@@ -122,6 +123,9 @@ export type Region = {
   /** The quota doors the door stage rolled for the area's ten floors and
    * how many found no place, by door (only those it rolled any of). */
   doorQuota?: Partial<Record<QuotaDoor, { rolled: number; dropped: number }>>;
+  /** What the enemy stage found on the area's ten floors (bosses and fork
+   * lanes' enemies left out), added and found no tile for. */
+  enemyCount: { baseline: number; added: number; dropped: number };
 };
 const cache = new Map<string, Region>();
 
@@ -149,8 +153,9 @@ export function region(seed: number, area: number, tier = 1): Region {
   board.put({ x: board.gate.x, y: board.gate.y - 2 }, gateTile(lab, { kind: 'enemy', strength: 'boss' }, lab.nodes[lab.exit]), area * 100 + 99);
   placeWoodenDoors(lab, board);
   supplyKeys(lab, board);
+  const enemyCount = placeEnemies(lab, board);
   const { nodes, edges, exit, start, nodeAt } = lab, { cells, metadata, gate } = board;
-  const result: Region = { area, nodes, edges, cells, metadata, gate, entry: entrance(seed, area), exit, start, ...rowSpan(cells), nodeAt, ...(doorQuota ? { doorQuota } : {}) };
+  const result: Region = { area, nodes, edges, cells, metadata, gate, entry: entrance(seed, area), exit, start, ...rowSpan(cells), nodeAt, enemyCount, ...(doorQuota ? { doorQuota } : {}) };
   cache.set(key, result);
   if (cache.size > DELVE_TUNING.cacheAreas) cache.delete(cache.keys().next().value!);
   return result;
@@ -398,8 +403,9 @@ function gateTile({ rng, tier }: Lab, g: LaneStep, n: Node): Tile {
   if (g.kind === 'wood') return { kind: 'door', door: { type: 'wood', durability: woodDurability('delve', tier, n.depth) } };
   if (g.kind === 'heart') return { kind: 'door', door: { type: 'fullHp' } };
   if (g.kind !== 'enemy') return { kind: 'floor' };
-  // Strong and elite enemies wait for their equivalent floors, as in the Tower.
-  const strength = strengthOnFloor(g.strength, Math.floor(n.depth / 10));
+  // Strong and elite enemies wait for their equivalent floors, as in the
+  // tower of the same number.
+  const strength = strengthOnFloor(g.strength, Math.floor(n.depth / 10), tier);
   // Populations mix around transitions: influence is fractional there.
   const population = Math.max(0, Math.round(n.influence + (rng() - 0.5) * 0.8));
   return { kind: 'enemy', enemy: {
@@ -531,16 +537,15 @@ function carveFork(lab: Lab, board: Board, n: Node, { fork, lanes, path }: ForkP
   n.lanes = lanes;
 }
 
-/** A corridor guard's rolls: its strength, profile, and the reward beside it, if any. */
-type GuardRoll = { strength: Strength; profile: TowerEnemyProfile; reward?: 'potion' | 'attack' | 'defense' };
-const GUARD_STRENGTHS = Object.entries(DELVE_TUNING.guardStrengths) as [Strength, number][];
+/** A corridor guard's rolls: its profile, and the reward beside it, if any. */
+type GuardRoll = { profile: TowerEnemyProfile; reward?: 'potion' | 'attack' | 'defense' };
 const GUARD_PROFILES: TowerEnemyProfile[] = ['attackHeavy', 'balanced', 'defenseHeavy'];
 const GUARD_REWARDS = Object.entries(DELVE_TUNING.guardRewards) as ['potion' | 'attack' | 'defense', number][];
 
 /** Guards the labyrinth's corridors: each corridor that doesn't lead into a
  * pocket may get one enemy on its middle corridor tile, outside any chamber,
- * with a random strength and profile, and often a potion or shard on the
- * corridor tile beside it. */
+ * asked as normal (the enemy stage deals its strength) with a random
+ * profile, and often a potion or shard on the corridor tile beside it. */
 function placeGuards(lab: Lab, board: Board) {
   const { nodes, rng } = lab, pockets = new Set(nodes.filter(n => n.pattern).map(n => n.id));
   const intoPocket = (e: Lab['edges'][number]) => pockets.has(e.a) || pockets.has(e.b);
@@ -554,18 +559,17 @@ function placeGuards(lab: Lab, board: Board) {
 }
 
 function rollGuard(rng: () => number): GuardRoll {
-  const strength = GUARD_STRENGTHS[pickWeighted(rng, GUARD_STRENGTHS.map(([, w]) => w))][0];
   const profile = GUARD_PROFILES[Math.floor(rng() * GUARD_PROFILES.length)];
   let roll = rng();
-  return { strength, profile, reward: GUARD_REWARDS.find(([, chance]) => (roll -= chance) < 0)?.[0] };
+  return { profile, reward: GUARD_REWARDS.find(([, chance]) => (roll -= chance) < 0)?.[0] };
 }
 
 /** The guard on the middle of the corridor's `open` tiles, and its reward
  * on the tile after it. A guard's potion may be a percent potion, as the
  * run decides (`withPotions`). */
-function placeGuard(lab: Lab, board: Board, open: Point[], { strength, profile, reward }: GuardRoll, from: Node, edge: Edge) {
+function placeGuard(lab: Lab, board: Board, open: Point[], { profile, reward }: GuardRoll, from: Node, edge: Edge) {
   const middle = Math.floor(open.length / 2), at = open[middle], depth = board.metadata.get(point(at.x, at.y))!.depth;
-  const gate: Gate = { kind: 'enemy', strength, profile };
+  const gate: Gate = { kind: 'enemy', strength: 'normal', profile };
   board.put(at, gateTile(lab, gate, { ...from, depth }), depth);
   lab.slots.push({ at, run: [], path: open, gate, n: from, depth, main: onMain(lab, edge), edge });
   const beside = open[middle + 1];
@@ -879,6 +883,52 @@ function entranceKey(lab: Lab, board: Board, color: KeyColor) {
   const [n] = lab.nodes.filter(n => !n.pattern && n.id !== lab.start && floorOf(n.depth) >= first && board.cells.get(point(n.x, n.y))?.kind === 'floor')
     .sort((a, b) => a.depth - b.depth || a.id - b.id);
   if (n) board.put(n, { kind: 'key', color }, n.depth);
+}
+
+/** The enemy stage (docs/ENEMY_SCHEDULE.md section 3), the area's last, on
+ * its own stream: each of its ten equivalent floors, by tile depth, adds
+ * enemies for its count (`extraEnemies`) on its own plain floor tiles
+ * anywhere (never the way in or beside it, near the milestone gate and its
+ * boss, or in a fork's lane), then deals its enemies but bosses and those in
+ * fork lanes the strengths of its shares in the tower of the same number,
+ * weakest asked weakest (`rankStrengths`). */
+function placeEnemies(lab: Lab, board: Board): Region['enemyCount'] {
+  let n = 0;
+  const salt = lab.seed ^ Math.imul(lab.area + 1, 0x45d9f3b), rng = () => tileRandom(n++, 92, salt);
+  const stage: Lab = { ...lab, rng };
+  const off = new Set<string>(), entry = entrance(lab.seed, lab.area), boss = { x: board.gate.x, y: board.gate.y - 2 };
+  for (const [dx, dy] of [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]]) off.add(point(entry.x + dx, entry.y + dy));
+  for (const c of [board.gate, boss]) for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) off.add(point(c.x + dx, c.y + dy));
+  const lanes = new Set(lab.nodes.flatMap(node => (node.lanes ?? []).flat().map(p => point(p.x, p.y))));
+  // Each tile by its equivalent floor, in the board's order.
+  const floors = Array.from({ length: 10 }, () => ({ enemies: [] as { key: string; asked: RankedStrength }[], open: [] as string[] }));
+  for (const [key, t] of board.cells) {
+    const floor = floors[floorOf(board.metadata.get(key)!.depth) - lab.area * 10];
+    if (!floor) continue;
+    if (t.kind === 'enemy' && t.enemy && isRanked(t.enemy.strength) && !lanes.has(key)) floor.enemies.push({ key, asked: t.enemy.strength });
+    else if (t.kind === 'floor' && !off.has(key) && !lanes.has(key)) floor.open.push(key);
+  }
+  const count = { baseline: 0, added: 0, dropped: 0 };
+  floors.forEach(({ enemies, open }, i) => {
+    const depth = lab.area * 10 + i, shares = sharesOn(depth, lab.tier), wanted = extraEnemies(enemies.length, depth, rng);
+    count.baseline += enemies.length;
+    let added = 0;
+    for (; added < wanted && open.length; added++) {
+      const [key] = open.splice(Math.floor(rng() * open.length), 1);
+      enemies.push({ key, asked: drawStrength(shares, rng) });
+    }
+    count.added += added;
+    count.dropped += wanted - added;
+    const dealt = rankStrengths(enemies.map(e => e.asked), shares, rng);
+    enemies.forEach(({ key }, k) => {
+      const now = board.cells.get(key)!;
+      if (now.kind === 'enemy' && now.enemy?.strength === dealt[k]) return;
+      const [x, y] = key.split(',').map(Number), at = cellAt(lab.seed, x, y), d = board.metadata.get(key)!.depth;
+      const gate: Gate = { kind: 'enemy', strength: dealt[k], profile: GUARD_PROFILES[Math.floor(rng() * GUARD_PROFILES.length)] };
+      board.put({ x, y }, gateTile(stage, gate, { ...(lab.nodeAt(at.col, at.row) ?? lab.nodes[lab.start]), depth: d }), d);
+    });
+  });
+  return count;
 }
 
 function rowSpan(cells: Map<string, Tile>) {

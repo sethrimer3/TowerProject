@@ -5,6 +5,7 @@ import { point } from "../src/entities.ts";
 import { RANKED_STRENGTHS, enemyCountPercent, enemyShare, type RankedStrength } from "../src/enemy-schedule.ts";
 import { extraEnemies, rankStrengths } from "../src/enemy-stage.ts";
 import { random } from "../src/random.ts";
+import { entrance, region } from "../src/delve/labyrinth.ts";
 import { ENTRY } from "../src/tower/embedder.ts";
 import { generateTowerFloor } from "../src/tower/index.ts";
 import { FULL } from "./test-size.ts";
@@ -59,6 +60,31 @@ test("Tower floors hold the schedule's count and shares, and keep the way in cle
     for (const k of RANKED_STRENGTHS) {
       const share = (dealt[k] / total) * 100, wanted = enemyShare(k, room, tower);
       assert.ok(Math.abs(share - wanted) < 3, `Tower ${tower} floor ${room + 1}: ${k} ${share.toFixed(1)}% against ${wanted}%`);
+    }
+  }
+});
+
+test("Delve areas hold the schedule's count and shares by equivalent floor, and keep the way in clear", () => {
+  const seeds = FULL ? 30 : 10;
+  for (const [tier, area] of [[1, 3], [1, 99], [5, 40], [9, 299]]) {
+    const dealt = Object.fromEntries(RANKED_STRENGTHS.map((k) => [k, 0])) as Record<RankedStrength, number>;
+    let baseline = 0, total = 0, want = 0;
+    for (let seed = 1; seed <= seeds; seed++) {
+      const r = region(seed * 7919, area, tier), count = r.enemyCount;
+      assert.equal(count.dropped, 0, `Delve ${tier} area ${area} seed ${seed}`);
+      assert.notEqual(r.cells.get(point(entrance(seed * 7919, area).x, entrance(seed * 7919, area).y))?.kind, "enemy");
+      const lanes = new Set(r.nodes.flatMap((n) => (n.lanes ?? []).flat().map((p) => point(p.x, p.y))));
+      for (const [k, t] of r.cells)
+        if (t.kind === "enemy" && !lanes.has(k) && t.enemy!.strength in dealt) dealt[t.enemy!.strength as RankedStrength]++;
+      baseline += count.baseline;
+      total += count.baseline + count.added;
+    }
+    // The area's ten floors each count their own; their percents differ by a point at most.
+    want = (baseline * enemyCountPercent(area * 10 + 5)) / 100;
+    assert.ok(Math.abs(total - want) <= 2 + want * 0.03, `Delve ${tier} area ${area}: ${total} enemies for ${want}`);
+    for (const k of RANKED_STRENGTHS) {
+      const share = (dealt[k] / total) * 100, wanted = enemyShare(k, area * 10 + 5, tier);
+      assert.ok(Math.abs(share - wanted) < 3, `Delve ${tier} area ${area}: ${k} ${share.toFixed(1)}% against ${wanted}%`);
     }
   }
 });
