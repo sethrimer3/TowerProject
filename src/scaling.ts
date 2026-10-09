@@ -1,5 +1,6 @@
 import type { EnemyStrength } from "./entities.ts";
 import { enemyStats, floorsAhead, type EnemyProfile } from "./enemy-curves.ts";
+import { enemyFirstFloor } from "./enemy-schedule.ts";
 
 export { GREATER_BOSS_OVER_BOSS } from "./enemy-curves.ts";
 export type TowerEnemyProfile = EnemyProfile;
@@ -87,8 +88,9 @@ const STRENGTH_TIER: Record<EnemyStrength, number> = { weak: 1, normal: 1, stron
 
 /** The first floor (1-based, the Delve's equivalent floor) where the
  * generators place strong and elite enemies, in both modes. Below it, one
- * asked for stands one strength lower, or as a normal enemy. */
-export const STRENGTH_FROM_FLOOR = { strong: 11, elite: 41 };
+ * asked for stands one strength lower, or as a normal enemy. The first
+ * tower's first floors from the enemy schedule (`enemyFirstFloor`). */
+export const STRENGTH_FROM_FLOOR = { strong: enemyFirstFloor("strong", 1), elite: enemyFirstFloor("elite", 1) };
 /** The strength an enemy asked as `asked` stands at on floor `floor`
  * (0-based): an elite below `STRENGTH_FROM_FLOOR.elite` is strong, and a
  * strong (or demoted elite) one below `STRENGTH_FROM_FLOOR.strong` normal. */

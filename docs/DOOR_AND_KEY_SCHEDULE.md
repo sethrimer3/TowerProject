@@ -173,7 +173,7 @@ npm run tower:report -- --census --towers 1,2,5,9 --floors 1-1200 --band 100 --s
 | `--seeds` | `20` | Run seeds per floor (the report's usual seeds, `censusSeed`) |
 | `--stride` | `1` | Measure every Nth floor of the range. Pick an odd stride, so a band's boss floors (10, 20 …) are measured too |
 
-Every figure is an average per floor over the band's floors and seeds. Two tables are printed per tower.
+Every figure is an average per floor over the band's floors and seeds. Three tables are printed per tower.
 
 **Doors and keys:**
 
@@ -191,7 +191,9 @@ Every figure is an average per floor over the band's floors and seeds. Two table
 | Y/lock, B/lock, R/lock, all/lock | Keys found per lock of that colour (a Wooden Door counts as a yellow lock, a fork's lane doors 1/k). Each door of a yellow run counts, so yellow runs, the key sink, read below the aim. Below 1, the floor doesn't hold enough keys for all its doors of that colour; `-` when there are no such doors |
 | Y / B / R aim | The keys per lock that colour aims for (section 4), averaged over the floors it is open on |
 
-**Enemies and items:** enemies by strength (weak, normal, strong, elite, boss) and potions, ATK and DEF shards and treasure chests.
+**Enemies:** enemies by strength against the enemy schedule's shares and count, and their weight (`docs/ENEMY_SCHEDULE.md` section 5).
+
+**Items:** potions, ATK and DEF shards and treasure chests.
 
 What to watch:
 - **Schedule:** *alone + fork + dropped* should match *want* in each band. A test checks the stage keeps every door it places, and the quota's average against the schedule (`tests/door-quota.test.ts`).

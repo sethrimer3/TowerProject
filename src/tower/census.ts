@@ -1,13 +1,16 @@
 import type { KeyColor } from "../config.ts";
 import { QUOTA_DOORS, keyFirstFloor, towerDoorRate, towerKeyRatio, towerWoodPercent } from "../key-schedule.ts";
+import { RANKED_STRENGTHS, enemyCountPercent, enemyShare } from "../enemy-schedule.ts";
+import { GATE_VALUE } from "./forks.ts";
 import { doorRule } from "../doors.ts";
 import type { Tile } from "../entities.ts";
 import { generateTowerFloor, type TowerFloor } from "./index.ts";
 import type { LaneStep } from "./types.ts";
 
-/** The door and key census: what Tower floors hold on average, by tower and
- * band of floors, for tuning the door and key schedule
- * (docs/DOOR_AND_KEY_SCHEDULE.md). `npm run tower:report -- --census`. */
+/** The census: what Tower floors hold on average, by tower and band of
+ * floors, for tuning the door and key schedule (docs/DOOR_AND_KEY_SCHEDULE.md)
+ * and the enemy schedule (docs/ENEMY_SCHEDULE.md). `npm run tower:report --
+ * --census`. */
 
 /** One floor's counts, keyed `door:<kind>` (a combined door counting once
  * for each colour it takes, and once as `door:combined`), `forkTile:<kind>`
@@ -16,7 +19,8 @@ import type { LaneStep } from "./types.ts";
  * opens one lane), `key:<colour>`,
  * `enemy:<strength>`, an item's kind, or `dropped:<door>` (quota doors the
  * door stage found no place for); the census adds `target:<door>`, the
- * schedule's rate. */
+ * schedule's rate, `share:<strength>`, the enemy schedule's share, and
+ * `target:count`, its count in percent of the baseline. */
 export type Counts = Record<string, number>;
 
 const ITEMS = new Set(["potion", "attack", "defense", "treasure"]);
@@ -106,10 +110,13 @@ export function census(o: CensusOptions): CensusBand[] {
 }
 
 /** Adds to `sum` what the schedules want on floor `depth` (0 is the first)
- * of tower `tower`: each quota door's rate, the wooden share, and each open
+ * of tower `tower`: each quota door's rate, the wooden share, each open
  * key colour's aimed keys per lock (off the way to the stairs), which
- * `averaged` averages over the floors it is open on. */
+ * `averaged` averages over the floors it is open on, and the enemy
+ * schedule's shares and count. */
 export function addSchedule(sum: Counts, depth: number, tower: number) {
+  for (const strength of RANKED_STRENGTHS) add(sum, `share:${strength}`, enemyShare(strength, depth, tower));
+  add(sum, "target:count", enemyCountPercent(depth));
   for (const door of QUOTA_DOORS) add(sum, `target:${door}`, towerDoorRate(door, depth, tower));
   add(sum, "target:wood", towerWoodPercent(depth, tower));
   for (const color of COLORS)
@@ -146,6 +153,19 @@ export const woodShare = (c: Counts) => {
   return locks ? wood / locks : NaN;
 };
 
+/** The enemies the schedule shares out: all but the bosses. */
+export const rankedEnemies = (c: Counts) => RANKED_STRENGTHS.reduce((s, k) => s + (c[`enemy:${k}`] ?? 0), 0);
+/** The percent of those enemies that are of `strength`. */
+export const strengthShare = (c: Counts, strength: string) => {
+  const all = rankedEnemies(c);
+  return all ? ((c[`enemy:${strength}`] ?? 0) / all) * 100 : NaN;
+};
+/** The enemies' weight: each priced on the forks' scale (`GATE_VALUE`:
+ * weak 0.75, normal 1.5, strong 2.5, elite 4, boss 6), a rough measure of
+ * the fighting a floor holds. */
+export const enemyWeight = (c: Counts) =>
+  Object.entries(GATE_VALUE.enemy).reduce((s, [k, w]) => s + w * (c[`enemy:${k}`] ?? 0), 0);
+
 type Column = [heading: string, value: (c: Counts) => number, digits?: number];
 const count = (k: string): Column[1] => (c) => c[k] ?? 0;
 /** A colour's aimed keys per lock, or `-` while it isn't open. */
@@ -162,9 +182,12 @@ const DOOR_COLUMNS: Column[] = [
   ["Y/lock", (c) => keysPerLock(c).yellow], ["Y aim", aim("yellow")], ["B/lock", (c) => keysPerLock(c).blue], ["B aim", aim("blue")],
   ["R/lock", (c) => keysPerLock(c).red], ["R aim", aim("red")], ["all/lock", (c) => keysPerLock(c).all],
 ];
-const CONTENT_COLUMNS: Column[] = [
-  ["weak", count("enemy:weak")], ["normal", count("enemy:normal")], ["strong", count("enemy:strong")],
-  ["elite", count("enemy:elite")], ["boss", count("enemy:boss")],
+const ENEMY_COLUMNS: Column[] = [
+  ["enemies", rankedEnemies], ["count want%", count("target:count"), 0],
+  ...RANKED_STRENGTHS.flatMap((k): Column[] => [[k, count(`enemy:${k}`)], [`${k}%`, (c) => strengthShare(c, k), 0], [`${k} want%`, count(`share:${k}`), 0]]),
+  ["boss", count("enemy:boss")], ["weight", enemyWeight],
+];
+const ITEM_COLUMNS: Column[] = [
   ["potion", count("potion")], ["ATK", count("attack")], ["DEF", count("defense")], ["treasure", count("treasure")],
 ];
 
@@ -179,15 +202,15 @@ function table(bands: CensusBand[], columns: Column[]) {
   return rows.map((r) => r.map((cell, i) => cell.padStart(widths[i])).join("  ")).join("\n");
 }
 
-/** The census as text: per tower (or delve, `place`), doors and keys, then
- * enemies and items, each an average per floor by band. */
+/** The census as text: per tower (or delve, `place`), doors and keys,
+ * enemies, then items, each an average per floor by band. */
 export function formatCensus(bands: CensusBand[], place = "Tower"): string {
   const out: string[] = [];
   for (const tower of [...new Set(bands.map((b) => b.tower))]) {
     const mine = bands.filter((b) => b.tower === tower);
     const floors = mine.reduce((s, b) => s + b.floors, 0);
     out.push(`=== ${place} ${tower} · ${floors} floors · average per floor ===`, "Doors and keys", table(mine, DOOR_COLUMNS),
-      "", "Enemies and items", table(mine, CONTENT_COLUMNS), "");
+      "", "Enemies", table(mine, ENEMY_COLUMNS), "", "Items", table(mine, ITEM_COLUMNS), "");
   }
   return out.join("\n");
 }

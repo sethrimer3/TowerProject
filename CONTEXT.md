@@ -140,6 +140,14 @@ _Avoid_: power budget, enemy table, zone stats
 How hard the floor asked an enemy to be: weak, normal, strong or elite. Each strength multiplies its floor's enemy curve: strong enemies are the floor's own made tougher, elite ones come from the next zone (the Tower's curve ten floors on). The board shows it round the enemy (a dark red rim for normal, bright red with one chevron for strong, bright red inside a gold rim with two chevrons for elite) and the inspect title and fight messages name weak, strong and elite (and a boss or Greater Boss) before the enemy's name.
 _Avoid_: tier, rank, level
 
+**Enemy schedule**:
+How many enemies a floor should hold and the share of each strength, by tower and floor: weak enemies fading, strong and elite ones coming earlier each tower and growing, and the count growing from the floor's **baseline** (what its patterns, gates and rooms place) to three times it by floor 6,000. Bosses stand outside it. The Delve follows the tower of its number by equivalent floor. It decides who stands on a floor; the enemy curve decides how strong each is.
+_Avoid_: enemy budget, spawn rate, enemy quota
+
+**Enemy trait**:
+An ability an enemy may carry beyond its stats (Armored, Piercing, Swift, Enraged: each a hero power turned against the hero). Planned for Tournament leagues and future towers; none exists yet.
+_Avoid_: modifier, affix, enemy type (the profile and name already are)
+
 ### Fights
 
 **Fight**:
