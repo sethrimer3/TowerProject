@@ -9,7 +9,7 @@ import { critChance, critFactor, critRule, trainingStep } from "../src/loadout.t
 import { trainingGold } from "../src/training-jobs.ts";
 import { runTrainingValue, silverPrice } from "../src/run-training.ts";
 import { RESEARCH } from "../src/archives.ts";
-import { TRAINING, TRAINER_GOLD_CURVES, UPGRADES } from "../src/config.ts";
+import { TRAINING, UPGRADES } from "../src/config.ts";
 import { TREES } from "../src/skill-trees.ts";
 import { DamagePredictions, damageLabel } from "../src/damage-labels.ts";
 
@@ -30,7 +30,11 @@ test("Critical is a 2 Inspiration skill under Trainers that opens Crit % and Cri
   assert.equal(RESEARCH.critChance.levels.length, 100);
   assert.equal(RESEARCH.critFactor.levels.length, 100);
   assert.ok(RESEARCH.critChance.levels.every((l) => l.effect.target === "critChancePercent" && l.effect.value === 2));
-  assert.deepEqual(RESEARCH.critFactor.levels.slice(0, 4).map((l) => l.gold), [10, 25, 55, 130], "the Silver Bonus curve");
+  const gold = (id: "critChance" | "critFactor", level: number) => RESEARCH[id].levels[level - 1].gold;
+  for (const id of ["critChance", "critFactor"] as const) {
+    assert.equal(gold(id, 1), 30);
+    assert.ok(gold(id, 12) > 10_000 && gold(id, 27) > 100_000 && gold(id, 60) > 1_000_000, id);
+  }
 });
 
 test("Crit %: 1% a rank to 80%; Crit x: x1.2, and 0.1 more a rank to x16.2", () => {
@@ -58,7 +62,7 @@ test("Crit %: 1% a rank to 80%; Crit x: x1.2, and 0.1 more a rank to x16.2", () 
   assert.deepEqual(critRule(s), { chance: 240, factor: 2.4 });
 });
 
-test("a Silver rank counts at once in the run's card, and the rows' first prices are 10 and 12 in Silver and 30 and 35 in Gold", () => {
+test("a Silver rank counts at once in the run's card, and the rows' first prices are 10 and 12 in Silver and 30 in Gold", () => {
   const s = defaults();
   s.upgrades.critical = 1;
   s.training.critChance = 5;
@@ -66,9 +70,13 @@ test("a Silver rank counts at once in the run's card, and the rows' first prices
   assert.deepEqual(runTrainingValue(s, { training: { critFactor: 2 }, player: hero() } as never, "critFactor"), { value: 1.4, unit: "×" });
   assert.deepEqual([silverPrice("critChance", 0), silverPrice("critFactor", 0)], [10, 12]);
   const rows = (id: "critChance" | "critFactor") => TRAINING.find((r) => r.id === id)!;
-  assert.deepEqual([trainingGold(rows("critChance"), 0), trainingGold(rows("critFactor"), 0)], [30, 35]);
-  assert.ok(trainingGold(rows("critFactor"), 9) > trainingGold(rows("critChance"), 9), "dearer in Silver, dearer in Gold");
-  assert.ok(TRAINER_GOLD_CURVES.critFactor.growth < TRAINER_GOLD_CURVES.critChance.growth, "and steeper");
+  for (const id of ["critChance", "critFactor"] as const) {
+    // The n-th rank's trainer asks for the rank's Gold with n - 1 ranks done.
+    const asks = (n: number) => trainingGold(rows(id), n - 1);
+    assert.equal(asks(1), 30);
+    assert.ok(asks(13) >= 1_000 && asks(35) >= 100_000 && asks(72) >= 1_000_000, `${id}: ${asks(13)}, ${asks(35)}, ${asks(72)}`);
+    for (let n = 2; n <= 150; n++) assert.ok(asks(n) > asks(n - 1));
+  }
 });
 
 test("a strike that crits multiplies ATK before DEF, and carries its applications", () => {

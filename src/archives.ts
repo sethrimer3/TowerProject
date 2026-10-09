@@ -180,6 +180,15 @@ const hundredLevels = (target: ResearchTarget, value: number, steep?: Steep) => 
   return { gold: steep?.start[i] ?? gold, hours: seconds / 3600, effect: { target, op: "add", value } };
 });
 
+/** Crit % and Crit x research (+2% of the trained value a level, for 100
+ * levels): level n costs 30 + 8 × (n − 1)³ Gold (30, 38, 94 … 10,700 at
+ * level 12, 140,000 at 27, 1.6 million at 60, 7.8 million at 100; about 196
+ * million in all), on Potion HP's hours. */
+const critLevels = (target: ResearchTarget) => Array.from({ length: 100 }, (_, i): ResearchLevel => {
+  const m = i + 1 - POTION_HP_START.length, seconds = POTION_HP_START[i]?.[1] ?? 900 * m + 36 * m * m;
+  return { gold: 30 + 8 * i * i * i, hours: seconds / 3600, effect: { target, op: "add", value: 2 } };
+});
+
 /** Faster Trainers (+2% training speed a level), for 100 levels. The n-th
  * level costs 250 × n + 2 × n³ Gold and takes 1.75 × n + n² / 20 hours: a
  * linear start that grows cubic and quadratic (2.03 million Gold and 28
@@ -314,14 +323,14 @@ export const RESEARCH = {
     description: "Study the weak points the old climbers found: every strike is more likely to be a critical hit.",
     categories: ["offense"],
     requires: [{ upgrade: "critical" }],
-    levels: hundredLevels("critChancePercent", 2, STEEP_INCOME),
+    levels: critLevels("critChancePercent"),
   },
   critFactor: {
     name: "Crit x",
     description: "Study how the old climbers struck true: a critical hit multiplies your ATK by more.",
     categories: ["offense"],
     requires: [{ upgrade: "critical" }],
-    levels: hundredLevels("critFactorPercent", 2, STEEP_INCOME),
+    levels: critLevels("critFactorPercent"),
   },
   defense: {
     name: "DEF",

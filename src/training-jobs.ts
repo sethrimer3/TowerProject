@@ -1,4 +1,5 @@
 import { TRAINER_GOLD_CURVES, type TrainingId } from "./config.ts";
+import { intPow } from "./exact.ts";
 
 // A Training rank is bought one of two ways: with training points, which
 // count at once, or with Gold paid to a trainer, which takes time on the
@@ -53,9 +54,12 @@ export const trainingMs = (ranks: number, speed: number) => Math.round((training
  * ranks, on the row's curve (`TRAINER_GOLD_CURVES`):
  * `TRAINING_GOLD_PER_POINT` a point of its cost times the rank's number,
  * times 1 + ranks / `growth`, rounded up. A row with a `start` asks that
- * much for a point of its first rank instead. */
+ * much for a point of its first rank instead, and one with a `power` asks
+ * start × the rank's number × (1 + (ranks / growth)^power). */
 export const trainingGold = (row: { id: TrainingId; cost: number }, ranks: number) => {
-  const { growth, start } = TRAINER_GOLD_CURVES[row.id];
+  const { growth, start, power } = TRAINER_GOLD_CURVES[row.id];
+  // A row with a `power` rises with ranks / growth to that power, not linearly.
+  if (power) return Math.ceil((start ?? TRAINING_GOLD_PER_POINT) * row.cost * (ranks + 1) * (1 + intPow(ranks / growth, power)));
   return Math.ceil(((start ?? TRAINING_GOLD_PER_POINT) * row.cost * (ranks + 1) * (growth + ranks)) / growth);
 };
 

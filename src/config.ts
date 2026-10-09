@@ -611,7 +611,7 @@ export const RUN_TRAINING_PRICES: Record<TrainingId, PriceSchedule> = {
 /** A trainer's Gold curve: each rank asks `TRAINING_GOLD_PER_POINT` Gold
  * a point of the row's cost times the rank's number, times 1 + ranks /
  * `growth` (see `trainingGold`), so a smaller `growth` pulls away faster. */
-export type TrainerCurve = { growth: number; start?: number };
+export type TrainerCurve = { growth: number; start?: number; power?: number };
 /** The trainer curves, set by where each row's Silver schedule starts:
  * the dearer a row in a run, the steeper its trainers. Rows starting at 20
  * Silver: 20, 44, 72, 104 … 380 for the tenth rank. */
@@ -622,14 +622,17 @@ const firmTrainers: TrainerCurve = { growth: 20 };
 const mildTrainers: TrainerCurve = { growth: 40 };
 /** Max HP and Shroud, starting at 3 Silver: 20, 41, 62, 84 … 230 for the tenth. */
 const gentleTrainers: TrainerCurve = { growth: 60 };
+/** The Offense crit rows: from 30 Gold, rising with the cube of the ranks done
+ * (`power`), so the 13th rank costs 2,356, the 35th 121,000 and the 72nd 2.26 million. */
+const critTrainers: TrainerCurve = { growth: 7, start: 30, power: 3 };
 /** Each row's trainer Gold curve, kept apart from its Silver schedule
  * (`RUN_TRAINING_PRICES`) so either can change alone. */
 export const TRAINER_GOLD_CURVES: Record<TrainingId, TrainerCurve> = {
   hp: gentleTrainers,
   attack: mildTrainers,
-  /** Crit % starts at 30 Gold a first rank, Crit x at 35 (the others at 20). */
-  critChance: { growth: 20, start: 30 },
-  critFactor: { growth: 16, start: 35 },
+  /** Crit % and Crit x: 30 Gold for the first rank, then 30 × n × (1 + ((n − 1) / 7)³) for the n-th (1,000+ by the 13th, 100,000+ by the 35th, a million by the 72nd). */
+  critChance: critTrainers,
+  critFactor: critTrainers,
   defense: mildTrainers,
   regen: mildTrainers,
   shroud: gentleTrainers,

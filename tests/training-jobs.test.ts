@@ -35,7 +35,9 @@ test("a trainer's Gold: 20 a point, times the rank's number, times 1 + ranks / t
   // The dearer a row's first Silver rank, the steeper its trainers, and rows
   // that start alike in Silver share a trainer curve.
   const silverBase = (id: keyof typeof RUN_TRAINING_PRICES) => RUN_TRAINING_PRICES[id].base;
-  for (const a of TRAINING) for (const b of TRAINING) {
+  // (The crit rows' growth is on a cubic curve of its own and doesn't compare.)
+  const linear = TRAINING.filter((t) => !TRAINER_GOLD_CURVES[t.id].power);
+  for (const a of linear) for (const b of linear) {
     const [ga, gb] = [TRAINER_GOLD_CURVES[a.id].growth, TRAINER_GOLD_CURVES[b.id].growth];
     if (silverBase(a.id) < silverBase(b.id)) assert.ok(ga > gb, `${a.id} softer than ${b.id}`);
     if (silverBase(a.id) === silverBase(b.id)) assert.equal(ga, gb, `${a.id} and ${b.id} alike`);
