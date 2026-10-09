@@ -19,12 +19,14 @@ import { TIERS } from "./tiers.ts";
  * fight would cost), Relative Damage Color (Tower II: that cost coloured
  * by its share of the hero's HP) and Equipment (the Blacksmith, equipment
  * and its materials) and the Tournament (twice-weekly global competition
- * in the Delve, docs/TOURNAMENT.md). */
+ * in the Delve, docs/TOURNAMENT.md) and Research Speed (the Archives'
+ * project that shortens every research). */
 export type GoalUnlock =
-  | "damagePrediction" | "combatForecast" | "attackLore" | "warp" | "damageVisual" | "relativeDamageColor" | "equipment" | "tournament";
+  | "damagePrediction" | "combatForecast" | "attackLore" | "warp" | "damageVisual" | "relativeDamageColor" | "equipment" | "tournament" | "researchSpeed";
 export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   damagePrediction: "Damage Prediction", combatForecast: "Combat Forecast", attackLore: "Attack Lore", warp: "Warp", damageVisual: "Damage Visual",
   relativeDamageColor: "Relative Damage Color", equipment: "Equipment", tournament: "Tournament",
+  researchSpeed: "Research Speed",
 };
 /** What a checkpoint pays: an unlock, the next tower opened, or an amount of a currency. */
 export type GoalReward =
@@ -35,38 +37,42 @@ export type Checkpoint = { floor: number; reward: GoalReward; premium: GoalRewar
 
 /** Floors between checkpoints. */
 export const CHECKPOINT_EVERY = 10;
-/** Checkpoints each tower has, for now. */
-export const CHECKPOINTS_PER_TOWER = 10;
+/** The floors of every tower's checkpoints: every ten to 100, then 150 and 200. */
+export const CHECKPOINT_FLOORS: readonly number[] = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 150, 200];
 
 const gold = (amount: number): GoalReward => ({ kind: "currency", currency: "gold", amount });
 const gems = (amount: number): GoalReward => ({ kind: "currency", currency: "gems", amount });
 
 const unlock = (unlock: GoalUnlock): GoalReward => ({ kind: "unlock", unlock });
-/** Tower I's first seven checkpoints: an unlock each, and Gems. */
+/** Tower I's checkpoints that differ from the stub: an unlock each, and Gems. */
 const TOWER_ONE: Record<number, Omit<Checkpoint, "floor">> = {
   10: { reward: unlock("damagePrediction"), premium: gems(10) },
   20: { reward: unlock("combatForecast"), premium: gems(15) },
   30: { reward: unlock("attackLore"), premium: gems(25) },
-  40: { reward: unlock("warp"), premium: gems(35) },
+  40: { reward: gems(20), premium: gems(35) },
   50: { reward: unlock("damageVisual"), premium: gems(50) },
   60: { reward: unlock("equipment"), premium: gems(60) },
   70: { reward: unlock("tournament"), premium: gems(70) },
+  90: { reward: gold(2000), premium: gold(10000) },
+  150: { reward: unlock("researchSpeed"), premium: gems(110) },
+  200: { reward: gems(40), premium: gems(120) },
 };
 
-/** Tower II's first checkpoint: an unlock. */
+/** Tower II's checkpoints that differ from the stub: an unlock each. */
 const TOWER_TWO: Record<number, Omit<Checkpoint, "floor">> = {
   10: { reward: unlock("relativeDamageColor"), premium: gems(10) },
+  40: { reward: unlock("warp"), premium: gems(40) },
 };
 /** The checkpoint floor whose reward opens the next tower. */
 export const TOWER_UNLOCK_FLOOR = 100;
 
 /** A tower's checkpoints, lowest first.
- * TODO: the stub rewards (100 Gold × checkpoint × tower, 10 Gems × checkpoint)
+ * TODO: the stub rewards (100 Gold × checkpoint number × tower, 10 Gems × checkpoint number)
  * are placeholders, to be tuned. */
 function towerCheckpoints(tower: number): Checkpoint[] {
   const sets: Record<number, Record<number, Omit<Checkpoint, "floor">>> = { 1: TOWER_ONE, 2: TOWER_TWO };
-  return Array.from({ length: CHECKPOINTS_PER_TOWER }, (_, i) => {
-    const n = i + 1, floor = n * CHECKPOINT_EVERY, set = sets[tower]?.[floor];
+  return CHECKPOINT_FLOORS.map((floor, i) => {
+    const n = i + 1, set = sets[tower]?.[floor];
     const opens = floor === TOWER_UNLOCK_FLOOR && tower < TIERS ? { kind: "tower" as const, tower: tower + 1 } : null;
     return { floor, ...(set ?? { reward: opens ?? gold(100 * n * tower), premium: gems(10 * n) }) };
   });
@@ -155,9 +161,9 @@ function openTower(save: Save, tower: number) {
 }
 
 /** Whether `what` is owned: the checkpoint that unlocks it claimed. */
-export const goalUnlocked = (save: Save, what: GoalUnlock) => {
+export const goalUnlocked = (save: Pick<Save, "goals">, what: GoalUnlock) => {
   const at = unlockAt(what);
-  return goalState(save, at.tower, at.floor, false) === "claimed";
+  return !!save.goals.claimed[at.tower]?.includes(at.floor);
 };
 /** The tower and checkpoint floor whose reward unlocks `what`. */
 export function unlockAt(what: GoalUnlock) {

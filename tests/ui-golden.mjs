@@ -110,6 +110,7 @@ try {
       s.delve.best = 57;
       s.goals.mastered = { 1: [10, 30] };
       s.goals.cleared = { 1: [10, 20] };
+      s.goals.claimed = { 2: [40] }; // Warp, unlocked at Tower II's floor 40
       s.provisions.heal = 2;
     };
     /** A Tower run whose hero, down to 1 HP, has just fallen to the first
@@ -570,7 +571,7 @@ try {
   }
   await leaveRun();
   // In the forest, Goals shows the Tower's checkpoints: claiming an unlock
-  // (Damage Prediction, then Warp) explains it, a premium reward offers the
+  // (Damage Prediction) explains it, a premium reward offers the
   // pass, an unlock already claimed explains it again, a mastered checkpoint
   // asks to warp there, and one completed but not mastered says what
   // warping takes.
@@ -578,9 +579,6 @@ try {
   await shot("rich.goals");
   await click('[data-goal="1:10:0"]');
   await shot("rich.goals.predictionUnlocked");
-  await click("#unlock-ok");
-  await click('[data-goal="1:40:0"]');
-  await shot("rich.goals.warpUnlocked");
   await click("#unlock-ok");
   await shot("rich.goals.claimed");
   await click('[data-goal="1:10:0"]');

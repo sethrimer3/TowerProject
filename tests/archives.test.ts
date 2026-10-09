@@ -20,6 +20,7 @@ function owner(gold = 100_000) {
   const save = defaults();
   save.upgrades.archives = 1;
   save.upgrades.focus = 1;
+  save.goals.claimed[1] = [150]; // Tower I's floor 150 Goal opens Research Speed
   save.gold = gold;
   return save;
 }
@@ -119,7 +120,7 @@ test("research speed shortens the time a level takes, not the definition", () =>
 test("Research Speed and Research Cost Discount: open with the Archives, linear benefit, quadratic time, cubic Gold", () => {
   for (const id of ["researchSpeed", "researchCostDiscount"] as const) {
     const levels = RESEARCH[id].levels;
-    assert.deepEqual(RESEARCH[id].requires, [{ upgrade: "archives" }]);
+    assert.deepEqual(RESEARCH[id].requires, id === "researchSpeed" ? [{ upgrade: "archives" }, { goalUnlock: "researchSpeed" }] : [{ upgrade: "archives" }]);
     assert.equal(levels.length, 100);
     assert.deepEqual(levels.slice(0, 10).map((l) => l.gold), [40, 83, 211, 522, 1120, 2100, 3580, 5670, 8470, 12120]);
     assert.deepEqual(levels.slice(0, 10).map((l) => Math.round(l.hours * 60)), [1, 9, 23, 44, 73, 112, 162, 225, 301, 391]);

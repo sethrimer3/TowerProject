@@ -1,5 +1,7 @@
 import { FOCUS_PER_RUN, IGNORE_PER_RUN, REGAIN_FLOORS, TARGET_PER_RUN, levelForXp, type UpgradeId } from "./config.ts";
 import type { Settings } from "./settings.ts";
+import type { Save } from "./entities.ts";
+import { goalUnlocked, type GoalUnlock } from "./goals.ts";
 import { finite as finiteIn, isRecord, wholeIn } from "./decode.ts";
 import { intPow } from "./exact.ts";
 import { BUY_QUANTITIES, quantityLabel } from "./buy-quantity.ts";
@@ -123,7 +125,8 @@ export type ResearchRequirement =
   | { upgrade: UpgradeId }
   | { anyUpgrade: UpgradeId[] }
   | { research: string; level: number }
-  | { playerLevel: number };
+  | { playerLevel: number }
+  | { goalUnlock: GoalUnlock };
 export type ResearchDefinition = {
   name: string;
   description: string;
@@ -287,7 +290,7 @@ export const RESEARCH = {
     name: "Research Speed",
     description: "Train the archivists to read faster: every research takes less time, research under way included.",
     categories: ["progression"],
-    requires: [{ upgrade: "archives" }],
+    requires: [{ upgrade: "archives" }, { goalUnlock: "researchSpeed" }],
     levels: archiveLevels({ target: "researchSpeed", op: "add", value: 0.02 }),
   },
   researchCostDiscount: {
@@ -557,6 +560,8 @@ export type ArchivesOwner = {
   /** Gems, which hire archivists. */
   gems: number;
   upgrades: Record<UpgradeId, number>;
+  /** Goals claimed, for the unlocks they hold. */
+  goals: Save["goals"];
   /** Lifetime XP, for the hero's level. */
   xp: number;
   /** Dev free purchases: research costs no Gold and takes no time, and
@@ -611,6 +616,7 @@ const met = (o: ArchivesOwner, r: ResearchRequirement) =>
   "upgrade" in r ? o.upgrades[r.upgrade] > 0
   : "anyUpgrade" in r ? r.anyUpgrade.some((u) => o.upgrades[u] > 0)
   : "research" in r ? researchLevel(o.archives, r.research as ResearchId) >= r.level
+  : "goalUnlock" in r ? goalUnlocked(o, r.goalUnlock)
   : levelForXp(o.xp) >= r.playerLevel;
 /** The requirements `id` still waits on. */
 export const missing = (o: ArchivesOwner, id: ResearchId) => research(id).requires.filter((r) => !met(o, r));

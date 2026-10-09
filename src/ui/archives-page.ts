@@ -6,6 +6,8 @@ import {
 import { UPGRADES } from "../config.ts";
 import type { Save } from "../entities.ts";
 import { loadout } from "../loadout.ts";
+import { unlockAt } from "../goals.ts";
+import { tierNumeral } from "../tiers.ts";
 import type { AppContext } from "./app.ts";
 import { currencyAmount } from "./hud.ts";
 import { el, gemCount, gemIcon, uiSprite } from "./dom.ts";
@@ -32,6 +34,7 @@ const requirementText =(r: ResearchRequirement) =>
   "upgrade" in r ? UPGRADES.find((u) => u.id === r.upgrade)!.name
   : "anyUpgrade" in r ? r.anyUpgrade.map((id) => UPGRADES.find((u) => u.id === id)!.name).join(" or ")
   : "research" in r ? `${RESEARCH[r.research as ResearchId].name} level ${r.level}`
+  : "goalUnlock" in r ? `Tower ${tierNumeral(unlockAt(r.goalUnlock).tower)}'s floor ${unlockAt(r.goalUnlock).floor} Goal`
   : `Hero level ${r.playerLevel}`;
 
 /** The Upgrades page's Archives tab: the archivists, one a row, each busy

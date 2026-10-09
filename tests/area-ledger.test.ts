@@ -77,12 +77,12 @@ test("an area past the last checkpoint can be cleared but not mastered", () => {
 
 test("warping to a checkpoint takes Warp and its area mastered", () => {
   const save = defaults();
-  save.goals.claimed[1] = [40];
+  save.goals.claimed[2] = [40]; // Warp is Tower II's floor 40
   save.tower.reached = 45;
   assert.ok(!canWarp(save, 1, 20), "completed but not mastered");
   save.goals.mastered[1] = [20];
   assert.ok(canWarp(save, 1, 20));
-  save.goals.claimed[1] = [];
+  save.goals.claimed[2] = [];
   assert.ok(!canWarp(save, 1, 20), "mastered, but Warp not claimed");
 });
 

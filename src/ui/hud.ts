@@ -586,13 +586,13 @@ function renderStatus(game: Game, overlay: BoardOverlay) {
   text("message", game.paused ? "Paused · take a breath." : overlay.statusLine() ?? game.message);
 }
 
-/** The undo button and how many undos are left. */
+/** The undo item in the run's limited-use list and how many undos are stored. */
 function renderUndo(game: Game) {
   const slice = game.save[game.mode],
     undo = el("undo") as HTMLButtonElement,
-    count = `${slice.history.length}/${game.undoCapacity}`;
-  text("undo-state", count);
-  undo.setAttribute("aria-label", `Undo (${count})`);
+    left = slice.history.length;
+  text("undo-state", left);
+  undo.setAttribute("aria-label", `Undo (${left}/${game.undoCapacity})`);
   undo.disabled = !slice.history.length;
   // Undo needs Rehearsed steps, or Echoes of time and Undo Count research.
   undo.hidden = !game.undoCapacity;
