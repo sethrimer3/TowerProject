@@ -152,4 +152,7 @@ export type StrategicGraph = {
   /** The door stage's quota by door, when it rolled any: how many it
    * rolled, and how many found no place (door-quota.ts). */
   doorQuota?: Partial<Record<QuotaDoor, { rolled: number; dropped: number }>>;
+  /** What the enemy stage did (tower/enemy-stage.ts): the enemies it found,
+   * those it added for the floor's count, and those that found no tile. */
+  enemyCount?: { baseline: number; added: number; dropped: number };
 };

@@ -18,7 +18,9 @@ import type { LaneStep } from "./types.ts";
  * `forked:<kind>` (the same counting 1/k in a fork of k lanes, as the hero
  * opens one lane), `key:<colour>`,
  * `enemy:<strength>`, an item's kind, or `dropped:<door>` (quota doors the
- * door stage found no place for); the census adds `target:<door>`, the
+ * door stage found no place for), `enemies:baseline` and `enemies:dropped`
+ * (the enemies the enemy stage found, and those it found no tile for); the
+ * census adds `target:<door>`, the
  * schedule's rate, `share:<strength>`, the enemy schedule's share, and
  * `target:count`, its count in percent of the baseline. */
 export type Counts = Record<string, number>;
@@ -46,8 +48,15 @@ export const add = (c: Counts, k: string, n = 1) => { c[k] = (c[k] ?? 0) + n; };
 
 /** What floor `floor` holds: every tile counted, and the doors in the forks
  * the embedder built. */
-export const floorCounts = ({ cells, embedding }: TowerFloor): Counts =>
-  tileCounts(cells.values(), embedding.graph.nodes.flatMap((n) => (n.forks?.[0] ? [n.forks[0].lanes] : [])), embedding.graph.doorQuota);
+export function floorCounts({ cells, embedding }: TowerFloor): Counts {
+  const c = tileCounts(cells.values(), embedding.graph.nodes.flatMap((n) => (n.forks?.[0] ? [n.forks[0].lanes] : [])), embedding.graph.doorQuota);
+  const count = embedding.graph.enemyCount;
+  if (count) {
+    add(c, "enemies:baseline", count.baseline);
+    add(c, "enemies:dropped", count.dropped);
+  }
+  return c;
+}
 
 /** What `tiles` hold, the doors standing in built forks (each its lanes),
  * and the quota doors still owed (`quota`'s `dropped`). */
@@ -183,7 +192,7 @@ const DOOR_COLUMNS: Column[] = [
   ["R/lock", (c) => keysPerLock(c).red], ["R aim", aim("red")], ["all/lock", (c) => keysPerLock(c).all],
 ];
 const ENEMY_COLUMNS: Column[] = [
-  ["enemies", rankedEnemies], ["count want%", count("target:count"), 0],
+  ["enemies", rankedEnemies], ["baseline", count("enemies:baseline")], ["count want%", count("target:count"), 0], ["dropped", count("enemies:dropped")],
   ...RANKED_STRENGTHS.flatMap((k): Column[] => [[k, count(`enemy:${k}`)], [`${k}%`, (c) => strengthShare(c, k), 0], [`${k} want%`, count(`share:${k}`), 0]]),
   ["boss", count("enemy:boss")], ["weight", enemyWeight],
 ];

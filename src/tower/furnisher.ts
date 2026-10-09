@@ -37,11 +37,12 @@ const PROFILES_FOR: Record<Strength, TowerEnemyProfile[]> = {
   greaterBoss: ["balanced"],
 };
 
-/** An enemy for floor `depth`, at the strength that floor allows
- * (`strengthOnFloor`: no strong enemy below floor 11, no elite below 41),
- * so no enemy below the floor 10 boss can beat a new hero in a single fight. */
-function enemyTile(asked: Strength, depth: number, rng: () => number, named?: TowerEnemyProfile, tower = 1): Tile {
-  const strength = strengthOnFloor(asked, depth);
+/** An enemy for floor `depth` of tower `tower`, at the strength that floor
+ * allows (`strengthOnFloor`: in the first tower no strong enemy below
+ * floor 11, no elite below 41, so no enemy below the floor 10 boss can beat
+ * a new hero in a single fight; earlier in each later tower). */
+export function enemyTile(asked: Strength, depth: number, rng: () => number, named?: TowerEnemyProfile, tower = 1): Tile {
+  const strength = strengthOnFloor(asked, depth, tower);
   const profiles = PROFILES_FOR[strength];
   const profile = named ?? profiles[Math.floor(rng() * profiles.length)];
   return { kind: "enemy", enemy: getTowerGateEnemy(depth, strength, profile, tower) };

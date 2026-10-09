@@ -92,12 +92,13 @@ const STRENGTH_TIER: Record<EnemyStrength, number> = { weak: 1, normal: 1, stron
  * tower's first floors from the enemy schedule (`enemyFirstFloor`). */
 export const STRENGTH_FROM_FLOOR = { strong: enemyFirstFloor("strong", 1), elite: enemyFirstFloor("elite", 1) };
 /** The strength an enemy asked as `asked` stands at on floor `floor`
- * (0-based): an elite below `STRENGTH_FROM_FLOOR.elite` is strong, and a
- * strong (or demoted elite) one below `STRENGTH_FROM_FLOOR.strong` normal. */
-export function strengthOnFloor(asked: EnemyStrength, floor: number): EnemyStrength {
+ * (0-based) of tower `tower`: an elite below the tower's first elite floor
+ * (`enemyFirstFloor`; `STRENGTH_FROM_FLOOR` in the first) is strong, and a
+ * strong (or demoted elite) one below its first strong floor normal. */
+export function strengthOnFloor(asked: EnemyStrength, floor: number, tower = 1): EnemyStrength {
   let strength = asked;
-  if (strength === "elite" && floor + 1 < STRENGTH_FROM_FLOOR.elite) strength = "strong";
-  if (strength === "strong" && floor + 1 < STRENGTH_FROM_FLOOR.strong) strength = "normal";
+  if (strength === "elite" && floor + 1 < enemyFirstFloor("elite", tower)) strength = "strong";
+  if (strength === "strong" && floor + 1 < enemyFirstFloor("strong", tower)) strength = "normal";
   return strength;
 }
 
