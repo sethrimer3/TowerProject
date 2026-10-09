@@ -111,9 +111,9 @@ Each colour aims for a number of **keys per lock**, counted from its own first f
 
 | Colour | On its first floor | Falls | Lowest |
 |---|---|---|---|
-| Yellow | 1.5 | 0.005 every 10 floors, 0.1 each later tower | 0.5 |
-| Blue | 1.4 | the same | 0.4 |
-| Red | 1.3 | the same | 0.3 |
+| Yellow | 1.3 | 0.005 every 10 floors, 0.1 each later tower | 0.5 |
+| Blue | 1.2 | the same | 0.4 |
+| Red | 1.1 | the same | 0.3 |
 
 On the way to the stairs, each falls half as fast, so the main route is the last place to run short.
 
@@ -134,15 +134,15 @@ First measurement (`--towers 1,5,9 --floors 1-1200 --band 200 --seeds 10 --strid
 | 401–600 | 1.56/1.35, 1.11/1.28, 0.86/1.10 | 1.16/0.95, 0.82/0.87, 0.55/0.68 | 0.74/0.55, 0.52/0.46, 0.29/0.30 |
 | 801–1000 | 1.42/1.15, 0.81/1.08, 0.67/0.90 | 1.02/0.75, 0.61/0.67, 0.45/0.48 | 0.72/0.50, 0.42/0.40, 0.30/0.30 |
 
-Yellow runs 0.1–0.3 above its aim: keys in guarded niches and keyed floors' keys aren't thinned. (Measured with yellow at 1.6 and blue at 1.5; since lowered to 1.5 and 1.4.)
+Yellow runs 0.1–0.3 above its aim: keys in guarded niches and keyed floors' keys aren't thinned. (Measured with yellow at 1.6, blue at 1.5 and red at 1.3; since lowered to 1.3, 1.2 and 1.1.)
 
 **Spare keys build up while a ratio is above 1:** each lock leaves the ratio less one key spare, and Tower I has about three yellow locks a floor. A player who opens every door and takes every key in Tower I ends with about this many spare yellow keys (40 seeds; floors 2–5's key behind every door adds about 24 over floors 1–10 whatever the ratio):
 
 | Yellow start | After floor 20 | After floor 40 | After floor 100 |
 |---|---|---|---|
 | 1.6 (before) | 37 | 78 | 207 |
-| 1.5 (now) | 36 | 72 | 186 |
-| 1.3 | 26 | 52 | 126 |
+| 1.5 | 36 | 72 | 186 |
+| 1.3 (now) | 26 | 52 | 126 |
 | 1.2 | 21 | 42 | 100 |
 | 1.1 | 18 | 33 | 71 |
 

@@ -132,7 +132,7 @@ export function towerWoodPercent(depth: number, tower: number) {
  * for its doors, and rolls to add keys while short, at the chance of how
  * short it is. */
 export const TOWER_KEY_RATIO = {
-  start: { yellow: 15000, blue: 14000, red: 13000 } as Record<KeyColor, number>,
+  start: { yellow: 13000, blue: 12000, red: 11000 } as Record<KeyColor, number>,
   min: { yellow: 5000, blue: 4000, red: 3000 } as Record<KeyColor, number>,
   lessEachTower: 1000,
   lessEvery10: 50,
