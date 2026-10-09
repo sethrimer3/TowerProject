@@ -1,11 +1,17 @@
 import { levelProgress, badgeDef, badgeLevel, type BadgeDraw, type BadgeId } from "../badges.ts";
 import { RARITIES } from "../shop/rarity.ts";
+import { gemIcon } from "./dom.ts";
 import { badgeLevelsHtml, badgeStyle, badgeText, tokenHtml } from "./badge-token.ts";
 
 /** When a repeat draw's coin lands on its token, and when a level reached
  * flashes onto the star (ms). */
 const COIN_LANDS_MS = 650;
 const LEVEL_UP_MS = 1250;
+
+/** The same purchase again, offered at the top of the last screen: its
+ * count (x1 or x10), its Gem price, whether the Gems held pay for it now,
+ * and what buying it does (it shows its own draws). */
+export type DrawAgain = { count: number; gems: number; affordable: () => boolean; buy: () => void };
 
 /** Shows the badges a purchase drew, one at a time. A badge drawn
  * for the first time rises with rays behind it; a repeat drops a coin onto
@@ -14,8 +20,9 @@ const LEVEL_UP_MS = 1250;
  * drawn at once show which of the ten is up, with a Skip button, and end on
  * all ten together, each one that levelled up (or is new) marked. A press
  * anywhere goes on. With Reduce motion on, everything appears still. A
- * gate's text names the threshold the player picked (`pickOf`). */
-export function revealDraws(draws: readonly BadgeDraw[], reduceMotion: boolean, pickOf: (id: BadgeId) => number = () => 0) {
+ * gate's text names the threshold the player picked (`pickOf`). The last
+ * screen offers `again`, the same purchase once more. */
+export function revealDraws(draws: readonly BadgeDraw[], reduceMotion: boolean, pickOf: (id: BadgeId) => number = () => 0, again?: DrawAgain) {
   if (!draws.length) return;
   const layer = document.createElement("div");
   layer.className = `badge-reveal${reduceMotion ? " still" : ""}`;
@@ -37,17 +44,33 @@ export function revealDraws(draws: readonly BadgeDraw[], reduceMotion: boolean, 
     if (shown >= draws.length) return showSummary();
     const draw = draws[shown++];
     layer.innerHTML = (draws.length > 1 ? header(shown, draws.length) : "") + (draw.before ? repeatHtml(draw, pickOf(draw.id)) : firstHtml(draw, pickOf(draw.id))) + continueHtml(shown < draws.length);
+    if (draws.length === 1) layer.prepend(againEl());
     if (draw.before) playRepeat(layer, draw, pickOf(draw.id), later);
     focusContinue();
   };
   const showSummary = () => {
     summary = true;
     layer.innerHTML = summaryHtml(draws) + continueHtml(false);
+    layer.prepend(againEl());
     focusContinue();
+  };
+  /** The "x1 more" button: nothing without an offer; greyed out while the Gems held fall short. */
+  const againEl = () => {
+    const holder = document.createElement("div");
+    if (!again) return holder;
+    holder.className = "badge-reveal-again";
+    holder.innerHTML = `<button type="button" class="badge-reveal-more" ${again.affordable() ? "" : "disabled"} aria-label="Draw x${again.count} more for ${again.gems} Gems">x${again.count} more · ${gemIcon()} <b>${again.gems}</b></button>`;
+    return holder;
   };
   const focusContinue = () => layer.querySelector<HTMLButtonElement>(".badge-reveal-go")?.focus({ preventScroll: true });
   layer.onclick = (e) => {
-    if ((e.target as HTMLElement).closest(".badge-reveal-skip")) return showSummary();
+    const target = e.target as HTMLElement;
+    if (target.closest(".badge-reveal-more")) {
+      if (!again || !again.affordable()) return;
+      close();
+      return again.buy();
+    }
+    if (target.closest(".badge-reveal-skip")) return showSummary();
     next();
   };
   next();

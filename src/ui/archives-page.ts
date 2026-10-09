@@ -228,11 +228,20 @@ export class ArchivesPanel {
       if (!job) return `<article class="archivist idle" role="listitem" data-pick="${i}">${title}<button class="archivist-pick" aria-label="Select research for archivist ${i + 1}">Idle · Select research</button>${auto}</article>`;
       const def = RESEARCH[job.research], done = jobProgress(job, now);
       const finish = game.save.settings.devMode ? `<button data-finish="${i}">Finish now</button>` : "";
-      return `<article class="archivist busy" role="listitem" data-pick="${i}" title="Select research: switch this archivist to other research">${title}<b>${def.name} · level ${job.level}</b>
+      return `<article class="archivist busy" role="listitem" data-pick="${i}" title="Select research: switch this archivist to other research">${title}<div class="archivist-line"><b>${def.name} · level ${job.level}</b>${this.changeHtml(job.research)}</div>
         <div class="research-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.floor(done * 100)}"><i data-progress="${i}" style="width:${(done * 100).toFixed(2)}%"></i></div>
         <p><span data-countdown="${i}">${formatDuration(job.completesAt - now)} left</span></p>
         <div class="archivist-actions">${auto}<button data-stop="${i}" title="Stop: the Gold comes back, and the time spent is kept for later">Stop</button>${this.rushHtml(i)}${finish}</div></article>`;
     }).join("");
+  }
+
+  /** What the level being researched changes, as before → after, to sit
+   * on its archivist's name line; nothing once the project is complete. */
+  private changeHtml(id: ResearchId) {
+    const save = this.ctx.game.save, a = save.archives, next = nextLevel(a, id, save.upgrades);
+    if (!next) return "";
+    const target = next.effect.target, shown = (archives: ArchivesSave) => RESEARCH_TARGETS[target].shown(targetValue(save, target, archives));
+    return `<span class="archivist-change"><span class="training-box">${shown(a)}</span><span class="training-arrow" aria-hidden="true">→</span><span class="training-box next">${shown(withNextLevel(a, id))}</span></span>`;
   }
 
   /** Whether project `id` is listed: one an archivist can start (Dev mode

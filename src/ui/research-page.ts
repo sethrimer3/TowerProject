@@ -93,7 +93,7 @@ export class ResearchPage {
       this.withRefund(() => (spent = training.train(id, this.ctx.game.buyQuantity)));
       if (spent) glow(document.querySelector<HTMLElement>(`[data-train="${id}"]`));
     });
-    const quantity = document.querySelector<HTMLSelectElement>("[data-buy-quantity]");
+    const quantity = el("research").querySelector<HTMLSelectElement>("[data-buy-quantity]");
     if (quantity) quantity.onchange = () => {
       this.ctx.game.setBuyQuantity(readQuantity(quantity.value));
       this.ctx.save();

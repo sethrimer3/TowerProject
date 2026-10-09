@@ -146,6 +146,13 @@ export function provisionOpen(save: Pick<Save, "upgrades">, id: GoldItemId) {
 export const provisionPrice = (save: Pick<Save, "provisions">, id: GoldItemId) =>
   schedulePrice(GOLD_SHOP.find((g) => g.id === id)!.price, save.provisions[id]);
 
+/** What a press of provision `id`'s button buys at quantity `q` out of
+ * `gold`: the ranks, each dearer than the last, and their summed price. */
+export function provisionBulk(save: Pick<Save, "provisions">, id: GoldItemId, q: BuyQuantity, gold: number) {
+  const price = GOLD_SHOP.find((g) => g.id === id)!.price, owned = save.provisions[id];
+  return bulkBuy(q, Infinity, (k) => schedulePrice(price, owned + k), gold);
+}
+
 /** Training points: earned per level, spent on ranks of training bought
  * with them (`trainingPaid`; trainers' ranks cost Gold instead). `left`
  * never goes below zero, even if undo takes back a level already spent. */

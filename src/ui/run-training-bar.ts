@@ -46,7 +46,7 @@ export class RunTrainingBar {
     bar.onchange = (e) => {
       const select = (e.target as HTMLElement).closest<HTMLSelectElement>("[data-buy-quantity]");
       if (!select) return;
-      this.game.setBuyQuantity(readQuantity(select.value));
+      this.game.setBuyQuantity(readQuantity(select.value), "run");
       this.changed();
     };
     bar.onclick = (e) => {
@@ -97,7 +97,7 @@ export class RunTrainingBar {
   }
 
   private buy(button: HTMLButtonElement) {
-    if (!this.game.trainInRun(button.dataset.runTrain as TrainingId, this.game.buyQuantity)) sparkRed(button, this.game.save.settings.reduceMotion);
+    if (!this.game.trainInRun(button.dataset.runTrain as TrainingId, this.game.buyQuantityFor("run"))) sparkRed(button, this.game.save.settings.reduceMotion);
     this.changed();
     this.refreshTip();
   }
@@ -130,7 +130,7 @@ export class RunTrainingBar {
   /** The Buy Quantity dropdown, built again only when its choices change. */
   private renderQuantity() {
     const slot = el("training-bar").querySelector<HTMLElement>(".run-buy-quantity")!;
-    const html = buyQuantityHtml(this.game.buyQuantities, this.game.buyQuantity);
+    const html = buyQuantityHtml(this.game.buyQuantities, this.game.buyQuantityFor("run"));
     if (slot.dataset.html !== html) {
       slot.dataset.html = html;
       slot.innerHTML = html;
@@ -145,7 +145,7 @@ export class RunTrainingBar {
       this.hideTip();
       el("run-drills").innerHTML = rows.map((id) => {
         const row = TRAINING.find((t) => t.id === id)!;
-        return `<div class="drill-card" role="listitem" data-drill="${id}"><b class="drill-name">${row.name}</b><span class="drill-value"></span><button type="button" class="drill-buy" data-run-train="${id}"></button></div>`;
+        return `<div class="drill-card" role="listitem" data-drill="${id}"><b class="drill-name">${"short" in row ? row.short : row.name}</b><span class="drill-value"></span><button type="button" class="drill-buy" data-run-train="${id}"></button></div>`;
       }).join("");
     }
     for (const id of rows) this.fill(id);
@@ -217,7 +217,7 @@ export class RunTrainingBar {
   private fill(id: TrainingId) {
     const game = this.game, card = document.querySelector<HTMLElement>(`[data-drill="${id}"]`)!;
     const offer = runTrainingOffer(game.save, game.run, id), { value, unit } = runTrainingValue(game.save, game.run, id);
-    const q = game.buyQuantity, bulk = runTrainingBulk(game.save, game.run, id, q, game.free ? Infinity : game.silver);
+    const q = game.buyQuantityFor("run"), bulk = runTrainingBulk(game.save, game.run, id, q, game.free ? Infinity : game.silver);
     const short = !offer.maxed && !bulk.affordable;
     card.classList.toggle("short", short);
     card.classList.toggle("maxed", offer.maxed);

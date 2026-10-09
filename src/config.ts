@@ -513,8 +513,8 @@ export const TRAINING_GROUPS = { offense: "Offense", defense: "Defense", utility
 export const TRAINING = [
   { id: "hp", name: "Max HP", group: "defense", stat: "maxHp", curve: { per: 10, square: 1 }, cost: 1, max: 6000, description: "Raises maximum HP." },
   { id: "attack", name: "ATK", group: "offense", stat: "attack", curve: { per: 1, square: 0.2 }, cost: 1, max: 6000, description: "Raises ATK, the damage each strike deals before the enemy's DEF." },
-  { id: "critChance", name: "Crit %", group: "offense", requires: "critical", cost: 1, max: 80, description: "Raises the chance each of your strikes is a critical hit." },
-  { id: "critFactor", name: "Crit x", group: "offense", requires: "critical", cost: 1, max: 150, description: "Raises how much a critical hit multiplies your ATK." },
+  { id: "critChance", name: "Critical Chance", short: "Crit %", group: "offense", requires: "critical", cost: 1, max: 80, description: "Raises the chance each of your strikes is a critical hit." },
+  { id: "critFactor", name: "Critical Factor", short: "Crit x", group: "offense", requires: "critical", cost: 1, max: 150, description: "Raises how much a critical hit multiplies your ATK." },
   { id: "defense", name: "DEF", group: "defense", stat: "defense", curve: { per: 0, square: 1 / 12 }, cost: 1, max: 6000, description: "Raises DEF, taken off the damage of every enemy strike." },
   { id: "regen", name: "Regen", group: "defense", stat: "regen", curve: { per: 0.1, square: 1 / 120 }, cost: 1, max: 6000, requires: "regen", description: "Raises the HP regained with every step taken in a run." },
   { id: "shroud", name: "Shroud", group: "defense", stat: "shroud", curve: { per: 1, cube: 0.00062, fourth: 0.0000033 }, cost: 1, max: 5000, requires: "shroud", description: "Raises the damage the shroud blocks at the start of every fight." },

@@ -10,7 +10,7 @@ export const isBoard = (id: string): id is "tower" | "delve" => id === "tower" |
  * or a purchase in the save, never swap the save, run or mode), and the
  * commands that change the rest: its own, and those of its desks (Training,
  * the Archives, the Deck, Gear and Equipment). */
-export type PageGame = Readonly<Pick<Game, "mode" | "run" | "save" | "fallen" | "handStuck" | "stepRules" | "free" | "maxSpeed" | "stepsPerSecond" | "treeWaiting" | "buyQuantity" | "buyQuantities" | "canBeginTournament">> &
+export type PageGame = Readonly<Pick<Game, "mode" | "run" | "save" | "fallen" | "handStuck" | "stepRules" | "free" | "maxSpeed" | "stepsPerSecond" | "treeWaiting" | "buyQuantity" | "buyQuantityFor" | "buyQuantities" | "canBeginTournament">> &
   Pick<
     Game,
     | "undo" | "acceptDefeat" | "eraseAll" | "finish" | "setDevMode"

@@ -169,6 +169,10 @@ export type RunCore = {
   /** How many of Skip's rolls this run has drawn from its stream, which
    * starts from the run seed. */
   skipRolls?: number;
+  /** Goldback's combo: the multiplier its activations have tallied for the
+   * next Gold the run finds (each adds its value), used up by that Gold;
+   * absent with none. */
+  goldCombo?: number;
 };
 /** A Tower ascent. */
 export type TowerRun = RunCore & {

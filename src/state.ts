@@ -875,19 +875,32 @@ export class Game {
     if (!badge || !this.playing) return;
     const v = badgeValue(badge.id, badge.level, badge.pick), p = this.run.player;
     switch (badge.id) {
-      case "hp": return this.badgeHeal(v, badge.id);
+      case "hp": return this.raiseMaxHp(v, badge.id);
       case "hpPercent": return this.badgeHeal(snap((p.maxHp * v) / 100), badge.id);
       case "silverTouch": return this.gainCoins(p, 0, this.purse.silver(v));
       case "goldTouch": return this.gainCoins(p, this.purse.badgeGold(`badge:${id}:${key}`, v), 0, false);
       case "goldback":
-        if (card === this.hand.length - 1) this.gainCoins(p, this.purse.badgeGold(`badge:${id}:${key}`, v), 0, false);
-        return;
+        if (card !== this.hand.length - 1) return;
+        // The combo is the run's, so undo takes an activation back; the
+        // next Gold found spends it (RunPurse).
+        this.run.goldCombo = (this.run.goldCombo ?? 0) + v;
+        return this.gain(p.x, p.y, `Goldback · next Gold ×${this.run.goldCombo}`);
       case "xp": {
         const xp = Math.round((v * xpBase(this.badgeFloor)) / xpBase(0));
         this.addXp(xp);
         return this.gain(p.x, p.y, `+${xp} XP`);
       }
     }
+  }
+  /** Max HP's badge: the hero's max HP (and the run's loadout, as a rank
+   * of training bought for the run) rises by `n`, with the HP to fill it. */
+  private raiseMaxHp(n: number, id: BadgeId) {
+    const p = this.run.player, kept = this.run.loadout;
+    p.maxHp = snap(p.maxHp + n);
+    p.hp = snap(p.hp + n);
+    if (kept) kept.maxHp = snap(kept.maxHp + n);
+    this.gain(p.x, p.y, `+${wholeChange(n)} max HP`, { heart: true });
+    this.message = `${BADGES[id].name} · +${wholeChange(n)} max HP`;
   }
   /** Heals up to `n` HP for badge `id`, as a potion's heal shows. */
   private badgeHeal(n: number, id: BadgeId) {
@@ -1974,15 +1987,21 @@ export class Game {
   get buyQuantities(): readonly BuyQuantity[] {
     return this.save.upgrades.buyQuantity || this.save.settings.devMode ? openQuantities(researched(this.save.archives, "buyQuantity", 0)) : [];
   }
-  /** How many ranks a Training press buys: the quantity chosen, while it is open, else one. */
-  get buyQuantity(): BuyQuantity {
-    const chosen = this.save.settings.buyQuantity;
+  /** How many ranks a press buys on `scope`'s screen (the Training tab,
+   * the run's training bar, or the Gear page's provisions, each its own
+   * saved choice): the quantity chosen, while it is open, else one. */
+  buyQuantityFor(scope: QuantityScope): BuyQuantity {
+    const chosen = this.save.settings[QUANTITY_SETTINGS[scope]];
     return this.buyQuantities.includes(chosen) ? chosen : 1;
   }
-  /** Chooses the Buy Quantity, if it is open. */
-  setBuyQuantity(q: BuyQuantity) {
+  /** How many ranks a Training tab press buys. */
+  get buyQuantity(): BuyQuantity {
+    return this.buyQuantityFor("training");
+  }
+  /** Chooses `scope`'s Buy Quantity (the Training tab's by default), if it is open. */
+  setBuyQuantity(q: BuyQuantity, scope: QuantityScope = "training") {
     if (!this.buyQuantities.includes(q)) return false;
-    this.save.settings.buyQuantity = q;
+    this.save.settings[QUANTITY_SETTINGS[scope]] = q;
     return true;
   }
   /** What a rank bought for the run changes now: a stat, or the chance of
@@ -2103,6 +2122,9 @@ type FightEnd = { enemy: Enemy; damage: number; at: { x: number; y: number }; re
  * added `extra` (or, below 0, given it back, up to `maxHp`). */
 const afterExtra = (hp: number, extra = 0, maxHp = Infinity) => (extra ? snap(Math.min(maxHp, Math.max(0, hp - extra))) : hp);
 /** How Skip's message names what vanished, by tile kind. */
+/** The screens that keep their own Buy Quantity, and the setting each saves it in. */
+export type QuantityScope = "training" | "run" | "provisions";
+const QUANTITY_SETTINGS = { training: "buyQuantity", run: "runBuyQuantity", provisions: "provisionBuyQuantity" } as const;
 const SKIPPED_NAMES: Partial<Record<Tile["kind"], string>> = { door: "The door", key: "The key", potion: "The potion", attack: "The ATK shard", defense: "The DEF shard", treasure: "The chest", reward: "The chest" };
 /** How many rows from the hero the walk to the nearest ? looks. */
 const MARK_REACH = 40;

@@ -65,6 +65,15 @@ export const SETTINGS = {
   buyQuantity: {
     kind: "choice", default: 1, choices: [[1, "x1"], [5, "x5"], [10, "x10"], [25, "x25"], [100, "x100"], ["max", "Max"]],
   },
+  /** The same choice for the run's Silver training bar and for the Gear
+   * page's provisions: each screen keeps its own, so none shares a value
+   * with another. */
+  runBuyQuantity: {
+    kind: "choice", default: 1, choices: [[1, "x1"], [5, "x5"], [10, "x10"], [25, "x25"], [100, "x100"], ["max", "Max"]],
+  },
+  provisionBuyQuantity: {
+    kind: "choice", default: 1, choices: [[1, "x1"], [5, "x5"], [10, "x10"], [25, "x25"], [100, "x100"], ["max", "Max"]],
+  },
   /** Draw on each enemy the HP its fight would cost (`damage-labels.ts`).
    * Only Damage Visual, Tower I's floor 50 goal, shows it. */
   damageVisual: { kind: "toggle", default: true, page: { id: "damage-visual", label: "Show damage on enemies" } },

@@ -536,7 +536,9 @@ export class DeckPage {
     this.ctx.save();
     this.ctx.update();
     this.render();
-    revealDraws(draws, game.save.settings.reduceMotion, (id) => game.save.badges.owned[id]?.pick ?? 0);
+    // The same purchase once more, from the last screen.
+    const again = { count, gems: DRAW_GEMS[count], affordable: () => game.free || game.save.gems >= DRAW_GEMS[count], buy: () => this.draw(count) };
+    revealDraws(draws, game.save.settings.reduceMotion, (id) => game.save.badges.owned[id]?.pick ?? 0, again);
   }
 
   /** A badge's details: what it does at its level, its copies toward the

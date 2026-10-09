@@ -125,7 +125,7 @@ export class RunPurse {
     if (!this.loot(this.lootKey(x, y))) return { gold: 0, equipment: null };
     // Then the tier's bonus; Effective or Dampen on the card that took the
     // fight scales it too.
-    const base = this.killGold(enemy, instakill), raised = scale === 1 ? base : snap(base * scale);
+    const base = this.withCombo(this.killGold(enemy, instakill)), raised = scale === 1 ? base : snap(base * scale);
     const gold = this.gold(tierGold(this.tier, raised));
     return { gold, equipment: this.equipmentLoot(enemy, y) };
   }
@@ -153,7 +153,7 @@ export class RunPurse {
     if (!this.loot(this.lootKey(x, y))) return null;
     const rules = this.rules;
     const loot = rollTreasureLoot(rules.equivalentFloor(rules.progressAt(this.run, y)), this.rng);
-    const gold = this.gold(tierGold(this.tier, loot.gold));
+    const gold = this.gold(tierGold(this.tier, this.withCombo(loot.gold)));
     for (const m of loot.materials) this.save.materials[m.id] += m.quantity;
     return { gold, materials: loot.materials };
   }
@@ -188,7 +188,18 @@ export class RunPurse {
     return found ? this.gold(tierGold(this.tier, snap((found * percent) / 100))) : 0;
   }
 
-  /** A card badge's Gold (Gold Touch, Goldback) for a card reaching its
+  /** Goldback's combo: `amount` times the multiplier its activations
+   * tallied since the last Gold the run found, which is then used up. Only
+   * a kill's or a chest's Gold, once paid (undo can't pay it again),
+   * spends it. */
+  private withCombo(amount: number) {
+    const combo = this.run.goldCombo;
+    if (!combo) return amount;
+    delete this.run.goldCombo;
+    return snap(amount * combo);
+  }
+
+  /** A card badge's Gold (Gold Touch) for a card reaching its
    * target, with the tier's bonus: once per target (`key`, in lootedTiles),
    * since undo can't take Gold back. Returns what it paid. */
   badgeGold(key: string, amount: number) {

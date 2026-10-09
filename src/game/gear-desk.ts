@@ -1,5 +1,6 @@
 import type { GoldItemId } from "../config.ts";
-import { provisionOpen, provisionPrice } from "../loadout.ts";
+import type { BuyQuantity } from "../buy-quantity.ts";
+import { provisionBulk, provisionOpen } from "../loadout.ts";
 import { changeLoadout } from "./hero-sync.ts";
 import type { DeskHost } from "./desk.ts";
 
@@ -13,14 +14,17 @@ export class GearDesk {
     return this.host.save;
   }
 
-  /** Buys one more `id` provision. Provisions last for good, so like
-   * training it reaches a run already inside at once. */
-  buyProvision(id: GoldItemId) {
-    const save = this.save, free = this.host.free, price = provisionPrice(save, id);
-    if (!provisionOpen(save, id) || (!free && save.gold < price)) return false;
+  /** Buys `quantity` more `id` provisions (one at a time, each dearer),
+   * all or none. Provisions last for good, so like training they reach a
+   * run already inside at once. */
+  buyProvision(id: GoldItemId, quantity: BuyQuantity = 1) {
+    const save = this.save, free = this.host.free;
+    if (!provisionOpen(save, id)) return false;
+    const bulk = provisionBulk(save, id, quantity, free ? Infinity : save.gold);
+    if (!bulk.affordable) return false;
     return changeLoadout(save, () => {
-      if (!free) save.gold -= price;
-      save.provisions[id]++;
+      if (!free) save.gold -= bulk.cost;
+      save.provisions[id] += bulk.count;
     });
   }
 }

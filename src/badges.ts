@@ -50,18 +50,19 @@ const SQUARES = [1, 4, 9, 16, 25, 36, 49];
 const PERCENTS = [5, 10, 15, 20, 25, 30, 35];
 const KEY_LIMITS = [10, 8, 6, 4, 3, 2, 1];
 const COOLDOWNS = [7, 6, 5, 4, 3, 2, 1];
+const COMBOS = [2, 3, 4, 5, 6, 7, 8];
 const every = (n: number) => (n === 1 ? "every floor" : `once every ${n} floors`);
 
 /** Every card badge, in the order the Badges box lists them. */
 export const BADGES = {
-  hp: { name: "HP", rarity: "common", kind: "reward", glyph: "♥", color: "#ff6b6b", values: SQUARES, unit: "HP", text: (v) => `Gain ${v} HP each time the card activates.` },
+  hp: { name: "Max HP", rarity: "common", kind: "reward", glyph: "♥", color: "#ff6b6b", values: SQUARES, unit: "Max HP", text: (v) => `Raise max HP by ${v} for the rest of the run each time the card activates, with the HP to fill it.` },
   silverTouch: { name: "Silver Touch", rarity: "common", kind: "reward", glyph: "◉", color: "#d6dde6", values: LEVELS, unit: "Silver", text: (v) => `Gain ${v} Silver each time the card activates (Silver bonuses apply).` },
-  goldback: { name: "Goldback", rarity: "common", kind: "reward", glyph: "⇥", color: "#f5c542", values: LEVELS, unit: "Gold", text: (v) => `On the last card in the hand, gain ${v} Gold each time it activates (Gold bonuses apply).` },
+  goldback: { name: "Goldback", rarity: "common", kind: "reward", glyph: "⇥", color: "#f5c542", values: COMBOS, unit: "× Gold", text: (v) => `On the last card in the hand, multiply the next Gold pickup by ${v}× each time it activates, stacking: the combo adds up until a Gold pickup uses it, then starts over.` },
   xp: { name: "XP", rarity: "common", kind: "reward", glyph: "✧", color: "#9be86f", values: SQUARES, unit: "XP", text: (v) => `Gain ${v} XP each time the card activates, rising with the floor like a kill's XP.` },
   hpGate: { name: "HP <", rarity: "common", kind: "gate", glyph: "♡", color: "#ff9b8a", values: [100, 90, 75, 50, 35, 20, 5], unit: "% of max HP", text: (v) => `The card acts only while HP is below ${v}% of max HP.` },
   effective: { name: "Effective", rarity: "common", kind: "scale", glyph: "▲", color: "#7be07b", values: PERCENTS, unit: "%", text: (v) => `When the card activates, its target's effect is ${v}% stronger: a potion heals more, a key or shard gives more, a door takes more of each key, and a monster deals ${v}% more damage in all, which can fell you, and pays ${v}% more Silver, Gold and XP. A Heart Door can't take more.` },
   dampen: { name: "Dampen", rarity: "common", kind: "scale", glyph: "▼", color: "#8ab4ff", values: PERCENTS, unit: "%", text: (v) => `When the card activates, its target's effect is ${v}% weaker: a potion heals less, a key or shard gives less, a door takes less of each key, a Heart Door takes ${v}% less HP, and a monster deals ${v}% less damage in all and pays ${v}% less Silver, Gold and XP.` },
-  hpPercent: { name: "HP %", rarity: "rare", kind: "reward", glyph: "♥", color: "#ff4fa3", values: LEVELS, unit: "% of max HP", text: (v) => `Gain ${v}% of max HP each time the card activates.` },
+  hpPercent: { name: "HP %", rarity: "rare", kind: "reward", glyph: "♥", color: "#ff4fa3", values: LEVELS, unit: "% of max HP", text: (v) => `Regain ${v}% of max HP each time the card activates.` },
   goldTouch: { name: "Gold Touch", rarity: "rare", kind: "reward", glyph: "◉", color: "#ffc93c", values: LEVELS, unit: "Gold", text: (v) => `Gain ${v} Gold each time the card activates (Gold bonuses apply).` },
   yellowGate: { name: "YK <", rarity: "rare", kind: "gate", glyph: "⚿", color: "#f2d24b", values: KEY_LIMITS, unit: "yellow keys", text: (v) => `The card acts only while you hold fewer than ${v} yellow keys.` },
   blueGate: { name: "BK <", rarity: "rare", kind: "gate", glyph: "⚿", color: "#5aa9ff", values: KEY_LIMITS, unit: "blue keys", text: (v) => `The card acts only while you hold fewer than ${v} blue keys.` },

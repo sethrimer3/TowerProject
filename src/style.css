@@ -2991,6 +2991,9 @@ dialog.dismiss-anywhere { cursor: pointer; }
 .archivist b { color: #e3d2ad; font-weight: 500; }
 .archivist p { margin: 0; color: #b7c0cc; }
 .archivist.busy { border-color: #6e9a70; }
+.archivist-line { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 8px; }
+.archivist-change { display: inline-flex; align-items: center; gap: 4px; }
+.archivist-change .training-box { min-height: 22px; padding: 2px 6px; font-size: 11px; }
 .archivist button { min-height: 30px; padding: 4px 8px; font-size: 10px; }
 .archivist.idle, .archivist.busy { cursor: pointer; }
 .archivist.idle:hover, .archivist.busy:hover { border-color: #d8b572; }
@@ -3577,6 +3580,11 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
   animation: badge-sparkle 0.8s ease-out;
 }
 .badge-reveal-go { min-width: 160px; letter-spacing: 2px; }
+.badge-reveal-again { position: absolute; top: 16px; left: 0; right: 0; display: flex; justify-content: center; }
+.badge-reveal-more { display: inline-flex; align-items: center; gap: 6px; min-height: 0; padding: 7px 16px; font-size: 13px; letter-spacing: 2px; border: 1px solid #5fc4ee; background: radial-gradient(circle at 50% 40%, #1d4a63, #0d1f2b 75%); color: #bff2ff; }
+.badge-reveal-more b { color: #fff; font-weight: 500; }
+.badge-reveal-more .gem-icon { width: 16px; height: 16px; }
+.badge-reveal-more:disabled { opacity: 0.45; filter: grayscale(1); cursor: default; }
 .badge-reveal-summary { display: flex; flex-direction: column; align-items: center; gap: 16px; }
 .badge-reveal-kicker { font-size: 11px; letter-spacing: 3px; color: #e9d4ac; }
 .badge-sum-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 22px 12px; max-width: 420px; }

@@ -22,10 +22,21 @@ export const OUTSIDE_SPRITE_URLS = {
 
 /** A tile of the forest clearing: its cell, the run seed, and the entrance
  * column the dirt path runs along. */
-export type ForestSpot = { x: number; y: number; seed: number; center: number };
+export type ForestSpot = { x: number; y: number; seed: number; center: number; roads?: Roads };
 
-/** The dirt path up to the entrance, widening every fifth row. */
-const onPath = ({ x, y, center }: ForestSpot) => Math.abs(x - center) <= (y % 5 === 2 ? 1 : 0);
+/** The buildings in the clearing whose road is laid: each is built once
+ * what opens it is (Equipment's Blacksmith, the Tournament's Hall). */
+export type Roads = { blacksmith: boolean; hall: boolean };
+
+/** The dirt path up to the entrance, widening every fifth row; its
+ * crossroads (the row the hero starts on) goes on to a building's door
+ * once the building stands (`roads`). */
+const onPath = ({ x, y, center, roads }: ForestSpot) => {
+  if (Math.abs(x - center) <= (y % 5 === 2 ? 1 : 0)) return true;
+  if (!roads || y !== OUTSIDE_START_Y) return false;
+  // Each door is in the middle column of its building, on the row in front.
+  return (roads.blacksmith && x < center && x >= center + BLACKSMITH.dx + 1) || (roads.hall && x > center && x <= center + TOURNAMENT_HALL.dx + 1);
+};
 
 export function outsideSpriteKind(t: Tile, s: ForestSpot) {
   const { x, y, seed } = s;
@@ -74,6 +85,10 @@ export const TOURNAMENT_HALL = { dx: 4, width: 3, y: 8, height: 3 } as const;
 const HALL_YARD = { dx: TOURNAMENT_HALL.dx - 1, width: TOURNAMENT_HALL.width + 2, y: TOURNAMENT_HALL.y - 1, height: TOURNAMENT_HALL.height + 1 };
 /** Whether (x, y) is one of the Tournament Hall's tiles, by the entrance column. */
 export const onTournamentHall = (center: number, x: number, y: number) => within(TOURNAMENT_HALL, center, x, y);
+
+/** The roads `world` has laid (none unless it is the clearing). */
+export const roadsOf = (world: unknown): Roads | undefined =>
+  world instanceof OutsideWorld ? { blacksmith: world.blacksmith, hall: world.hall } : undefined;
 
 export class OutsideWorld implements Board {
   width: number;

@@ -184,9 +184,10 @@ test("activation pays when the card reaches its target: HP, HP %, Silver, XP sca
   g.run.player.hp = 50;
   badge(g, "heal", "hp", 4);
   badge(g, "atkUp", "silverTouch", 3);
-  const hpBefore = g.run.player.hp;
+  const hpBefore = g.run.player.hp, maxBefore = g.run.player.maxHp;
   turns(g, 2);
-  assert.ok(g.run.player.hp > hpBefore + 16 - 0.001 && g.run.player.hp >= hpBefore + 16, "the potion and HP's 16 both heal");
+  assert.equal(g.run.player.maxHp, maxBefore + 16, "Max HP at level 4 raises max HP by 16");
+  assert.ok(g.run.player.hp >= hpBefore + 16, "the potion heals and the 16 come with the HP to fill them");
   const silver = g.silver;
   turns(g, 2);
   assert.equal(g.silver, silver + 3, "Silver Touch at level 3 pays 3 (no Silver bonus owned)");
@@ -207,7 +208,7 @@ test("activation pays when the card reaches its target: HP, HP %, Silver, XP sca
   assert.equal(p.run.player.hp, 10 + p.run.player.maxHp * 0.05);
 });
 
-test("Gold Touch pays once a target, even after undo; Goldback only on the hand's last card", () => {
+test("Gold Touch pays once a target, even after undo", () => {
   const g = floor(["@.A.K"]);
   g.run.hand = ["atkUp", "yellowKey"];
   badge(g, "atkUp", "goldTouch", 5);
@@ -217,15 +218,39 @@ test("Gold Touch pays once a target, even after undo; Goldback only on the hand'
   assert.ok(g.undo());
   turns(g, 1);
   assert.equal(g.save.gold, gold + 5, "taking the step again pays nothing more");
+});
+
+test("Goldback tallies a linear combo on the hand's last card, which the next Gold found uses up", () => {
   const back = floor(["@.A.K"]);
   back.run.hand = ["atkUp", "yellowKey"];
-  badge(back, "atkUp", "goldback", 4);
-  badge(back, "yellowKey", "goldback", 4);
+  badge(back, "atkUp", "goldback", 3);
+  badge(back, "yellowKey", "goldback", 3);
   const before = back.save.gold;
   turns(back, 2);
-  assert.equal(back.save.gold, before, "ATK UP is not the last card");
+  assert.equal(back.run.goldCombo, undefined, "ATK UP is not the last card");
   turns(back, 2);
-  assert.equal(back.save.gold, before + 4, "YELLOW KEY is");
+  assert.equal(back.run.goldCombo, 4, "YELLOW KEY is: level 3 adds x4");
+  assert.equal(back.save.gold, before, "the badge itself pays no Gold");
+  assert.ok(back.undo());
+  assert.equal(back.run.goldCombo, undefined, "undo takes the activation back");
+});
+
+test("Goldback's combo multiplies the next kill's Gold once, and is then spent", () => {
+  const kill = (combo?: number) => {
+    const g = floor(["@MM"]);
+    g.run.hand = ["monster"];
+    if (combo) g.run.goldCombo = combo;
+    const gold = g.save.gold;
+    turns(g, 1);
+    const first = g.save.gold - gold;
+    turns(g, 1);
+    return { first, second: g.save.gold - gold - first, left: g.run.goldCombo };
+  };
+  const plain = kill(), boosted = kill(5);
+  assert.ok(plain.first > 0);
+  assert.ok(Math.abs(boosted.first - plain.first * 5) < 1e-6, "the first Gold is x5");
+  assert.equal(boosted.second, plain.second, "the next is not");
+  assert.equal(boosted.left, undefined);
 });
 
 test("undo takes back the HP, Silver and XP an activation paid", () => {

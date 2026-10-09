@@ -2,7 +2,7 @@ import { CHUNK, TOWER_HEIGHT, VIEWPORT_TILES } from "./config.ts";
 import type { Game } from "./state.ts";
 import type { Tile, Torch } from "./entities.ts";
 import { tierNumeral } from "./tiers.ts";
-import { drawBlacksmith, drawEntrance, drawTournamentHall, OutsideWorld, OUTSIDE_SIZE, outsideWeather } from "./outside.ts";
+import { drawBlacksmith, drawEntrance, drawTournamentHall, OutsideWorld, OUTSIDE_SIZE, outsideWeather, roadsOf } from "./outside.ts";
 import { DecorLayer, type DecorFrame, type MirroredSprites } from "./decor-render.ts";
 import { OutsideGrass } from "./outside-grass.ts";
 import { TileLayerCache } from "./tile-cache.ts";
@@ -534,6 +534,7 @@ export class Renderer {
     const g = this.game;
     return {
       mode: g.mode, height: g.run.height, seed: g.run.seed, outside: !!g.run.outside, entranceX: Math.floor(g.world.width / 2),
+      roads: g.run.outside ? roadsOf(g.world) : undefined,
       spritesOff: g.save.settings.spritesOff, reduceMotion: g.save.settings.reduceMotion, area1: !g.save.settings.spritesOff && isArea1(g.mode, g.run.height),
     };
   }

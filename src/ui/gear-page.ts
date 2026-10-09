@@ -1,11 +1,12 @@
 import { GOLD_SHOP, type GoldItemId } from "../config.ts";
-import { loadout, provisionOpen, provisionPrice, provisionText, type Stat } from "../loadout.ts";
+import { loadout, provisionBulk, provisionOpen, provisionText, type Stat } from "../loadout.ts";
 import { keyCount, whole } from "../whole.ts";
 import { unlockFloor } from "../goals.ts";
 import type { AppContext } from "./app.ts";
 import { helpButton } from "./dialogs.ts";
 import { el, itemSprite, uiSprite } from "./dom.ts";
 import { devAmount } from "./hud.ts";
+import { buyQuantityHtml, readQuantity } from "./buy-quantity-select.ts";
 import { EquipmentPanel } from "./equipment-panel.ts";
 
 /** Each provision's picture. */
@@ -86,7 +87,13 @@ export class GearPage {
         this.tab = v as GearTab;
         this.rerender();
       },
-      gold: (v) => { if (game.gear.buyProvision(v as GoldItemId)) this.bought = v as GoldItemId; this.changed(); },
+      gold: (v) => { if (game.gear.buyProvision(v as GoldItemId, game.buyQuantityFor("provisions"))) this.bought = v as GoldItemId; this.changed(); },
+    };
+    // Buy Quantity, kept for this page alone.
+    const quantity = document.querySelector<HTMLSelectElement>("#gear [data-buy-quantity]");
+    if (quantity) quantity.onchange = () => {
+      game.setBuyQuantity(readQuantity(quantity.value), "provisions");
+      this.changed();
     };
     for (const [key, handle] of Object.entries(handlers)) {
       const attr = key.replace(/[A-Z]/g, c => `-${c.toLowerCase()}`);
@@ -123,15 +130,15 @@ export class GearPage {
   private provisionsHtml(): string {
     const game = this.ctx.game;
     const provisionSprite = (id: GoldItemId) => itemSprite(PROVISION_SPRITES[id]);
-    const bought = this.bought;
+    const bought = this.bought, q = game.buyQuantityFor("provisions");
     this.bought = null;
     const open = GOLD_SHOP.filter((item) => provisionOpen(game.save, item.id));
     // What all the copies owned add, for provisions giving more than one.
     const total = (item: (typeof GOLD_SHOP)[number], owned: number) =>
       (Object.entries(item.grants) as [Stat, number][]).filter(([, n]) => n > 1).map(([stat, n]) => ` · +${n * owned} ${TOTAL_WORDS[stat]}`).join("");
-    return `<div class="provision-head"><div class="purse-big" title="Gold">${uiSprite("gold")}<b>${devAmount(game, game.save.gold)}</b></div>${this.startingStatsHtml(open, bought)}</div>${open.map((item) => {
-      const owned = game.save.provisions[item.id], price = provisionPrice(game.save, item.id);
-      return `<article class="card"><div class="item-icon${item.id === bought ? " bought" : ""}">${provisionSprite(item.id)}</div><div><small>${owned ? `OWNED × ${owned}${total(item, owned)}` : "NOT YET OWNED"}</small><h3>${item.name}</h3><p>${provisionText(item.id)}</p></div><button data-gold="${item.id}" ${game.save.gold < price && !game.free ? "disabled" : ""}>Buy · ${uiSprite("gold", "stat-sprite")} ${price}</button></article>`;
+    return `<div class="provision-head"><div class="purse-big" title="Gold">${uiSprite("gold")}<b>${devAmount(game, game.save.gold)}</b></div>${this.startingStatsHtml(open, bought)}${buyQuantityHtml(game.buyQuantities, q)}</div>${open.map((item) => {
+      const owned = game.save.provisions[item.id], bulk = provisionBulk(game.save, item.id, q, game.free ? Infinity : game.save.gold), price = whole(bulk.cost);
+      return `<article class="card"><div class="item-icon${item.id === bought ? " bought" : ""}">${provisionSprite(item.id)}</div><div><small>${owned ? `OWNED × ${owned}${total(item, owned)}` : "NOT YET OWNED"}</small><h3>${item.name}</h3><p>${provisionText(item.id)}</p></div><button data-gold="${item.id}" ${!bulk.affordable && !game.free ? "disabled" : ""}>Buy · ${uiSprite("gold", "stat-sprite")} ${price}${q !== 1 ? `<small class="buy-count">x${bulk.count}</small>` : ""}</button></article>`;
     }).join("")}`;
   }
 }

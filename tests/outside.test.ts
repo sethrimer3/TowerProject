@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { defaults, decode } from "../src/save.ts";
-import { OutsideWorld, ENTRANCE_Y, OUTSIDE_START_Y, weatherForRoll, outsideWeather } from "../src/outside.ts";
+import { OutsideWorld, ENTRANCE_Y, OUTSIDE_START_Y, weatherForRoll, outsideWeather, outsideSpriteKind, BLACKSMITH, TOURNAMENT_HALL } from "../src/outside.ts";
 import { lightningOpacity } from "../src/weather.ts";
 import { chooseStep } from "../src/automation.ts";
 
@@ -77,4 +77,20 @@ test("weather uses exact 40/30/20/10 intervals; lightning is slow and faint", ()
     assert.ok(lightningOpacity(t) <= 0.015);
     assert.ok(Math.abs(lightningOpacity(t + 0.01) - lightningOpacity(t)) < 0.00012);
   }
+});
+
+test("the crossroads' road goes on to each building's door once that building stands", () => {
+  const world = new OutsideWorld(7, "tower", true, true), center = world.entranceX, row = OUTSIDE_START_Y;
+  const roadAt = (x: number, roads?: { blacksmith: boolean; hall: boolean }) =>
+    outsideSpriteKind({ kind: "floor" }, { x, y: row, seed: 7, center, roads }).family === "path";
+  const door = { blacksmith: center + BLACKSMITH.dx + 1, hall: center + TOURNAMENT_HALL.dx + 1 };
+  for (let x = door.blacksmith; x <= door.hall; x++) {
+    const near = Math.abs(x - center) <= 1;
+    assert.equal(roadAt(x), near, "no road past the crossroads before a building stands");
+    assert.equal(roadAt(x, { blacksmith: true, hall: false }), near || x < center, "the Blacksmith's side");
+    assert.equal(roadAt(x, { blacksmith: false, hall: true }), near || x > center, "the Hall's side");
+    assert.ok(roadAt(x, { blacksmith: true, hall: true }), "both roads form one row from door to door");
+  }
+  assert.ok(!roadAt(door.blacksmith - 1, { blacksmith: true, hall: true }) && !roadAt(door.hall + 1, { blacksmith: true, hall: true }), "and stop at the doors");
+  for (let x = door.blacksmith; x <= door.hall; x++) assert.equal(world.tile(x, row).kind, "floor", "the road is walkable");
 });

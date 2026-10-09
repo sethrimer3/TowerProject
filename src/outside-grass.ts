@@ -1,6 +1,6 @@
 import type { Board } from "./board.ts";
 import type { BoardView } from "./render-frame.ts";
-import { outsideSpriteKind, type Weather } from "./outside.ts";
+import { outsideSpriteKind, roadsOf, type Weather } from "./outside.ts";
 import { tileRandom } from "./random.ts";
 
 /** Wind-blown grass for the forest outside the Tower and Delve. Each grass
@@ -41,7 +41,7 @@ export class OutsideGrass {
     if (b) return b;
     b = [];
     const t = world.tile(x, y);
-    if (t.kind === "floor" && outsideSpriteKind(t, { x, y, seed, center }).family === "grass") {
+    if (t.kind === "floor" && outsideSpriteKind(t, { x, y, seed, center, roads: roadsOf(world) }).family === "grass") {
       const r = (k: number) => tileRandom(x * 41 + k * 7, y * 29 - k * 13, seed ^ 0x6a55);
       // Clumps of two to four blades fanning out from one root.
       const clumps = 6 + Math.floor(r(0) * 4);
@@ -101,7 +101,8 @@ export class OutsideGrass {
   draw(c: CanvasRenderingContext2D, view: BoardView, world: Board,
     seed: number, center: number, weather: Weather, now: number, dt: number, hx: number, hy: number, reduceMotion: boolean,
     layer: "back" | "front" = "back") {
-    const key = `${seed}:${center}`;
+    // A road laid to a new building takes the grass off its tiles.
+    const roads = roadsOf(world), key = `${seed}:${center}:${roads?.blacksmith ? 1 : 0}${roads?.hall ? 1 : 0}`;
     if (key !== this.planKey) { this.plans.clear(); this.stir.clear(); this.planKey = key; }
     const t = now / 1000;
     const back = layer === "back";

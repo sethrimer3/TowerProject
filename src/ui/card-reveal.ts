@@ -10,12 +10,14 @@ type Words = { kicker: string; hint: string; label: string };
  * does written underneath. Pressing the card closes it. */
 function cardLayer(id: CardId, upgrades: Record<UpgradeId, number>, classes: string, words: Words, extra = "") {
   const card = CARDS[id];
+  // Rays celebrate a card just obtained; its details, reviewed later, show none.
+  const rays = classes.includes(" details") ? "" : `<div class="card-reveal-rays" aria-hidden="true"></div>`;
   const layer = document.createElement("div");
   layer.className = `card-reveal${classes}`;
   layer.setAttribute("role", "dialog");
   layer.setAttribute("aria-modal", "true");
   layer.setAttribute("aria-label", words.label);
-  layer.innerHTML = `<div class="card-reveal-stage"><div class="card-reveal-rays" aria-hidden="true"></div><button type="button" class="card-reveal-card" id="card-reveal-card" aria-label="${card.name}: ${words.hint.toLowerCase()}">${cardArt(id, card.name)}</button></div><div class="card-reveal-text"><small>${words.kicker}</small><b>${card.name}</b><p>${cardText(id, upgrades)}</p>${extra}<span>${words.hint}</span></div>`;
+  layer.innerHTML = `<div class="card-reveal-stage">${rays}<button type="button" class="card-reveal-card" id="card-reveal-card" aria-label="${card.name}: ${words.hint.toLowerCase()}">${cardArt(id, card.name)}</button></div><div class="card-reveal-text"><small>${words.kicker}</small><b>${card.name}</b><p>${cardText(id, upgrades)}</p>${extra}<span>${words.hint}</span></div>`;
   (document.querySelector("#app") ?? document.body).append(layer);
   const button = layer.querySelector<HTMLButtonElement>("#card-reveal-card")!;
   button.onclick = () => layer.remove();

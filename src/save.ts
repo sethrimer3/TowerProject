@@ -141,6 +141,7 @@ const RUN_FIELD_CHECKS = {
   badges: (v: unknown, r: any) => validRunBadges(v) && Object.keys(v as object).every((card) => r.hand?.includes(card)),
   badgeFloors: (v: unknown) => isRecord(v) && Object.entries(v).every(([k, n]) => (k === "stairward" || k === "skipOpen") && wholeIn(n, 0, 1e6)),
   skipRolls: (v: unknown) => wholeIn(v, 1, 1e9),
+  goldCombo: (v: unknown) => wholeIn(v, 1, 1e9),
   marks: (v: any) => isRecord(v) && wholeIn(v.floor, 0, 1e6) && wholeIn(v.made, 0, 1e6) &&
     [v.tiles, v.bangs].every((list) => Array.isArray(list) && list.every((t: unknown) => typeof t === "string" && POINT_KEY.test(t))),
   skipped: (v: any) => isRecord(v) && wholeIn(v.floor, 0, 1e6) && Array.isArray(v.tiles) && v.tiles.every((t: unknown) => typeof t === "string" && POINT_KEY.test(t)),

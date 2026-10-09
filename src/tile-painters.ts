@@ -2,7 +2,7 @@ import { CHUNK, COLORS } from "./config.ts";
 import { drawCornerBricks, drawTerrain, themeAt, type Corner } from "./themes.ts";
 import { tileRandom } from "./random.ts";
 import type { Enemy, EnemyStrength, Mode, Tile, Torch } from "./entities.ts";
-import { drawForestTile } from "./outside.ts";
+import { drawForestTile, type Roads } from "./outside.ts";
 import { getTorchFlicker, getTorchSway } from "./lighting.ts";
 import { drawArea1Door, drawArea1Item, drawArea1Quoins, wallAdjacencyMask } from "./area1-tileset.ts";
 import { drawThemedTile } from "./themed-tilesets.ts";
@@ -32,6 +32,8 @@ export type BoardLook = {
   outside: boolean;
   /** The forest entrance column (outside only). */
   entranceX: number;
+  /** The roads laid to the clearing's buildings (outside only). */
+  roads?: Roads;
   spritesOff: boolean;
   reduceMotion: boolean;
   /** Whether the first Tower section's hand-drawn art is showing: its own
@@ -53,7 +55,7 @@ export const isArea1 = (mode: Mode, height: number) => mode === "tower" && heigh
  * on it (items, doors, enemies...). Returns false while ground art is still
  * loading, so cached layers know to repaint it. */
 export function paintTile(c: CanvasRenderingContext2D, world: TileWorld, t: Tile, x: number, y: number, time: number, layer: 0 | 1, look: BoardLook) {
-  if (look.outside) return layer !== 0 || drawForestTile(c, t, { x, y, seed: look.seed, center: look.entranceX }, !look.spritesOff);
+  if (look.outside) return layer !== 0 || drawForestTile(c, t, { x, y, seed: look.seed, center: look.entranceX, roads: look.roads }, !look.spritesOff);
   if (layer === 0) return paintGround(c, world, t, x, y, look);
   if (t.kind === "wall" || t.kind === "floor") return true;
   paintContents(c, t, { x, y, time, spritesOff: look.spritesOff, reduceMotion: look.reduceMotion, area1: look.area1 });
