@@ -123,10 +123,11 @@ function lengthenRun(b: GraphBuilder, door: QuotaDoor): Tally | null {
   return hundredths(quotaDoorsIn(DOOR[door]));
 }
 
-/** A door that doesn't take `door`'s colour yet takes it as well; for a
- * Heart Door, a door taking a blue or red key drains HP to 1 too. */
+/** A single door that doesn't take `door`'s colour yet takes it as well;
+ * for a Heart Door, one taking a blue or red key drains HP to 1 too. Never
+ * a run, whose every door would take it while it counts for one. */
 function combine(b: GraphBuilder, door: QuotaDoor): Tally | null {
-  const fits = (g: Gate) => g.kind === "door" && (door === "heart"
+  const fits = (g: Gate) => g.kind === "door" && !g.run && (door === "heart"
     ? !g.heart && doorKeys(g).some((c) => c !== "yellow")
     : !doorKeys(g).includes(door));
   const options = b.nodes.filter((n) => n.parent !== null && !n.forks && routeAllows(b, n, door) && fits(n.gate));

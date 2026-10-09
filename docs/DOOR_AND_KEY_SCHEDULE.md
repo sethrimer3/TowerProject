@@ -51,7 +51,7 @@ Today blue, red and Heart Doors come from about six weighted tables (main gate, 
 2. **The stage rolls a quota per colour.** It runs after the branches, shortcuts and ordinary forks are planned, before the resource planner. For each of blue, red and heart it places the whole part of the rate, plus one more with the leftover fraction as a chance, drawn from the floor's own random stream. Generation stays the same for a seed in every engine.
 3. **Each quota door is placed by one of these, with a seeded choice among the ones that fit:**
    - a. **Upgrade a gate:** an existing plain yellow-door gate becomes blue or red, or any paid gate (an enemy, a steel door or a plain yellow door) becomes a Heart Door.
-   - a2. **Combine:** a door that doesn't take the colour yet takes it as well, in the same tile: yellow becomes *Amber + Azure* (yellow + blue), blue becomes *Azure + Crimson*, and so on up to the *Triune Door*. A combined door counts toward the quota of each colour it adds and costs every key it lists. The door rules, names and art already exist (`door_ab.png` … `door_abc.png`). A Heart Door with a colour (keys *and* the drain to 1 HP) needs a new door rule, so it comes with the wooden door's rule work in phase 3.
+   - a2. **Combine:** a door that doesn't take the colour yet takes it as well, in the same tile: yellow becomes *Amber + Azure* (yellow + blue), blue becomes *Azure + Crimson*, and so on up to the *Triune Door*. A combined door counts toward the quota of each colour it adds and costs every key it lists. A door run is never combined: each of its doors would take the colour while it counted for one. The door rules, names and art already exist (`door_ab.png` … `door_abc.png`). A Heart Door with a colour (keys *and* the drain to 1 HP) needs a new door rule, so it comes with the wooden door's rule work in phase 3.
    - b. **Add a pattern** built around that door, if the region budget has room.
    - c. **Place a fork built around it.** A gate with no fork yet takes a fork pattern holding that door, priced near the gate it replaces like any fork:
      - *blueDoorOrStrongMonster*
@@ -207,7 +207,7 @@ Each delve follows the schedules of the tower of the same number, by equivalent 
 - **Key colours** open on the same floors (`towerKeyColorsOn`): blue from floor 51 of the first delve, red from 101. No ordinary pattern or fork offers a blue, red or Heart Door (`withoutQuotaDoors`).
 - **The door stage** (`placeQuotaDoors`): each of an area's ten floors rolls its quota from `towerDoorHundredths`, and each door goes on its own floor if it can, else on any of the area's floors from its first. The ways, chosen at random among those that fit:
   - **upgrade**: a yellow door in a pocket's throat turns blue or red. A Heart Door can replace any paid gate, including a corridor guard.
-  - **combine**: a door takes the colour as well, or a coloured door takes the heart.
+  - **combine**: a door takes the colour as well, or a coloured door takes the heart (never a run's).
   - **corridor**: a door on a corridor off the way to the milestone gate, one that no other way round passes.
   - **pattern** (blue only): a pocket takes *RareKeyCommonReward* or *RareKeyCommonBundle*.
   - **fork**: a pocket's throat becomes a fork holding the door. Other quota doors in it are extra doors, if their first floor has come. Delve forks always fit, so the lane doors count 1/k from the start.
