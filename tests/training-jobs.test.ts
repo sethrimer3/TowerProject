@@ -27,7 +27,7 @@ test("a stat's first ranks are quick, then each takes a quarter hour more", () =
 test("a trainer's Gold: 20 a point, times the rank's number, times 1 + ranks / the row's growth", () => {
   const at = (id: (typeof TRAINING)[number]["id"], ranks: number[], cost = 1) => ranks.map((r) => trainingGold({ id, cost }, r));
   assert.deepEqual(at("potion", [0, 1, 2, 3, 4, 9]), [20, 44, 72, 104, 140, 380], "20 Silver rows: growth 10");
-  assert.deepEqual(at("floorGold", [0, 1, 2, 3, 9]), [20, 42, 66, 92, 290], "10 Silver rows: growth 20");
+  assert.deepEqual(at("floorGold", [0, 1, 2, 3, 9]), [20, 42, 66, 92, 291], "10 Silver rows: growth 20");
   assert.deepEqual(at("attack", [0, 1, 2, 3, 9]), [20, 41, 63, 86, 245], "5 Silver rows: growth 40");
   assert.deepEqual(at("hp", [0, 1, 2, 3, 9]), [20, 41, 62, 84, 230], "Max HP and Shroud, 3 Silver: growth 60");
   assert.deepEqual(at("shroud", [0, 1, 2, 3, 9]), at("hp", [0, 1, 2, 3, 9]));
@@ -329,4 +329,15 @@ test("the time bank serves any stat, after that stat's own time credit", () => {
   // Max HP's own credit covers its rank, leaving the bank alone.
   assert.ok(g.training.trainWithGold("hp"));
   assert.equal(g.save.trainingBank, 2 * 60_000);
+});
+
+test("a cubic scale adds (ranks / cubic)^3 to a trainer's Gold: never below the linear price, far above it at the cap", () => {
+  for (const t of TRAINING) {
+    const c = TRAINER_GOLD_CURVES[t.id];
+    if (c.power) continue;
+    assert.ok(c.cubic, `${t.id} has a cubic scale`);
+    const linear = (r: number) => Math.ceil(20 * t.cost * (r + 1) * (c.growth + r) / c.growth);
+    for (const r of [0, 1, 10, Math.floor(t.max / 2), t.max - 1]) assert.ok(trainingGold(t, r) >= linear(r), `${t.id} rank ${r}`);
+    assert.ok(trainingGold(t, t.max - 1) > 3 * linear(t.max - 1), `${t.id} much dearer at its cap`);
+  }
 });

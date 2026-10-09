@@ -610,18 +610,20 @@ export const RUN_TRAINING_PRICES: Record<TrainingId, PriceSchedule> = {
 };
 /** A trainer's Gold curve: each rank asks `TRAINING_GOLD_PER_POINT` Gold
  * a point of the row's cost times the rank's number, times 1 + ranks /
- * `growth` (see `trainingGold`), so a smaller `growth` pulls away faster. */
-export type TrainerCurve = { growth: number; start?: number; power?: number };
+ * `growth` (see `trainingGold`), so a smaller `growth` pulls away faster. A
+ * `cubic` scale adds (ranks / cubic)³ to that multiplier: a gentle start and
+ * a steep last stretch. */
+export type TrainerCurve = { growth: number; start?: number; power?: number; cubic?: number };
 /** The trainer curves, set by where each row's Silver schedule starts:
  * the dearer a row in a run, the steeper its trainers. Rows starting at 20
  * Silver: 20, 44, 72, 104 … 380 for the tenth rank. */
-const steepTrainers: TrainerCurve = { growth: 10 };
+const steepTrainers: TrainerCurve = { growth: 10, cubic: 60 };
 /** Rows starting at 10 Silver: 20, 42, 66, 92 … 290 for the tenth. */
-const firmTrainers: TrainerCurve = { growth: 20 };
+const firmTrainers: TrainerCurve = { growth: 20, cubic: 45 };
 /** Rows starting at 5 Silver: 20, 41, 63, 86 … 245 for the tenth. */
-const mildTrainers: TrainerCurve = { growth: 40 };
+const mildTrainers: TrainerCurve = { growth: 40, cubic: 700 };
 /** Max HP and Shroud, starting at 3 Silver: 20, 41, 62, 84 … 230 for the tenth. */
-const gentleTrainers: TrainerCurve = { growth: 60 };
+const gentleTrainers: TrainerCurve = { growth: 60, cubic: 800 };
 /** The Offense crit rows: from 30 Gold, rising with the cube of the ranks done
  * (`power`), so the 13th rank costs 2,356, the 35th 121,000 and the 72nd 2.26 million. */
 const critTrainers: TrainerCurve = { growth: 7, start: 30, power: 3 };
@@ -635,10 +637,10 @@ export const TRAINER_GOLD_CURVES: Record<TrainingId, TrainerCurve> = {
   critFactor: critTrainers,
   defense: mildTrainers,
   regen: mildTrainers,
-  shroud: gentleTrainers,
+  shroud: { ...gentleTrainers, cubic: 700 },
   potion: steepTrainers,
-  findPotion: steepTrainers,
-  revive: steepTrainers,
+  findPotion: { ...steepTrainers, cubic: 25 },
+  revive: { ...steepTrainers, cubic: 30 },
   floorGold: firmTrainers,
   floorSilver: firmTrainers,
   silverBonus: firmTrainers,

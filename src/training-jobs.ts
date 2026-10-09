@@ -57,10 +57,12 @@ export const trainingMs = (ranks: number, speed: number) => Math.round((training
  * much for a point of its first rank instead, and one with a `power` asks
  * start × the rank's number × (1 + (ranks / growth)^power). */
 export const trainingGold = (row: { id: TrainingId; cost: number }, ranks: number) => {
-  const { growth, start, power } = TRAINER_GOLD_CURVES[row.id];
+  const { growth, start, power, cubic } = TRAINER_GOLD_CURVES[row.id];
   // A row with a `power` rises with ranks / growth to that power, not linearly.
   if (power) return Math.ceil((start ?? TRAINING_GOLD_PER_POINT) * row.cost * (ranks + 1) * (1 + intPow(ranks / growth, power)));
-  return Math.ceil(((start ?? TRAINING_GOLD_PER_POINT) * row.cost * (ranks + 1) * (growth + ranks)) / growth);
+  const base = (start ?? TRAINING_GOLD_PER_POINT) * row.cost * (ranks + 1);
+  // A row with a `cubic` scale adds (ranks / cubic)^3 to the multiplier, so deep ranks climb faster.
+  return Math.ceil((base * (growth + ranks)) / growth) + (cubic ? Math.floor(base * intPow(ranks / cubic, 3)) : 0);
 };
 
 /** The Gold and base training time (ms, one rank after another, before the
