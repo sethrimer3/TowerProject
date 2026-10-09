@@ -1,7 +1,7 @@
 import { point, type Tile } from "./entities.ts";
 import { litTorches, takesSomething, type Position } from "./board.ts";
 import type { Step } from "./pathfinding.ts";
-import { doorCost, doorId, doorRule, drainsHp } from "./doors.ts";
+import { doorCost, doorId, doorRule, drainsHp, woodToll } from "./doors.ts";
 import { impervious } from "./combat.ts";
 import { snap } from "./exact.ts";
 import { UPGRADES, VIEWPORT_TILES, type KeyColor, type TrainingId, type UpgradeId } from "./config.ts";
@@ -194,12 +194,37 @@ function wants(card: CardId, r: Reached, at: HandAt, rules?: CardRules): boolean
 const fightable = (strengths?: readonly EnemyStrength[]) => (t: Tile, at: Position) =>
   t.kind === "enemy" && (!strengths || strengths.includes(t.enemy!.strength)) && !impervious(at.run.player, t.enemy!);
 const never = () => false;
+
+/** Whether the hero can pay for the whole door run that the door at `r`
+ * begins: it and each door of the same kind beside the one before, in
+ * turn, each key spent at `scale` of a key and a Wooden Door broken down
+ * for its toll (`tollScale`) as it goes. A door alone is a run of one. So a
+ * card heads for a run only when it can open every door of it, never
+ * spending keys on a run it would stop partway through. */
+function paysRun(at: HandAt, r: Reached, scale: number, tollScale = scale): boolean {
+  const id = doorId(r.tile), seen = new Set([point(r.x, r.y)]);
+  const player = { ...at.run.player, keys: { ...at.run.player.keys } };
+  const need = scale === 1 ? 1 : snap(scale);
+  for (let x = r.x, y = r.y, tile = r.tile; ;) {
+    const cost = doorCost(tile, player, scale, tollScale);
+    if (cost === null) return false;
+    for (const c of cost) player.keys[c] = snap(player.keys[c] - need);
+    const rule = doorRule(tile);
+    if (rule.type === "wood" && !cost.length && player.hp !== undefined) player.hp = snap(player.hp - woodToll(rule, tollScale));
+    const next = DIRECTIONS.map(([dx, dy]) => at.world.step(x, y, dx, dy))
+      .find((p) => p && !seen.has(point(p.x, p.y)) && at.world.tile(p.x, p.y).kind === "door" && doorId(at.world.tile(p.x, p.y)) === id);
+    if (!next) return true;
+    seen.add(point(next.x, next.y));
+    x = next.x, y = next.y, tile = at.world.tile(x, y);
+  }
+}
+const DIRECTIONS = [[1, 0], [-1, 0], [0, 1], [0, -1]] as const;
 const WANTS: Record<CardId, (t: Tile, at: HandAt, rules: CardRules | undefined, r: Reached) => boolean> = {
   stairs: (t) => t.kind === "stairs",
   heal: (t) => t.kind === "potion",
   // A door that opens: the keys held pay for it, a Heart Door, or a Wooden
   // Door the hero can break down and survive.
-  door: (t, at, rules) => t.kind === "door" && doorCost(t, at.run.player, keyScale(at, rules), rules?.scale ?? 1) !== null,
+  door: (t, at, rules, r) => t.kind === "door" && paysRun(at, r, keyScale(at, rules), rules?.scale ?? 1),
   yellowKey: (t) => t.kind === "key" && t.color === "yellow",
   blueKey: (t) => t.kind === "key" && t.color === "blue",
   monster: fightable(),
@@ -208,13 +233,13 @@ const WANTS: Record<CardId, (t: Tile, at: HandAt, rules: CardRules | undefined, 
   keySiphon: never,
   // A single yellow door only (a Wooden Door is DOOR's), one the yellow keys
   // held pay for.
-  yellowDoor: (t, at, rules) => {
+  yellowDoor: (t, at, rules, r) => {
     if (t.kind !== "door") return false;
     const rule = doorRule(t);
-    return rule.type === "keys" && rule.mode === "all" && rule.keys.length === 1 && rule.keys[0] === "yellow" && doorCost(t, at.run.player, keyScale(at, rules)) !== null;
+    return rule.type === "keys" && rule.mode === "all" && rule.keys.length === 1 && rule.keys[0] === "yellow" && paysRun(at, r, keyScale(at, rules));
   },
   // A Heart Door, or a keyed door that drains HP too while its keys are held.
-  heartDoor: (t, at, rules) => t.kind === "door" && drainsHp(doorRule(t)) && doorCost(t, at.run.player, keyScale(at, rules)) !== null,
+  heartDoor: (t, at, rules, r) => t.kind === "door" && drainsHp(doorRule(t)) && paysRun(at, r, keyScale(at, rules)),
   weakEnemy: fightable(["weak"]),
   baseEnemy: fightable(["normal"]),
   strongEnemy: fightable(["strong"]),
@@ -228,7 +253,7 @@ const WANTS: Record<CardId, (t: Tile, at: HandAt, rules: CardRules | undefined, 
   redSiphon: never,
   torch: (_t, at, _rules, r) => !!at.world.torches?.some((torch) => torch.active && torch.x === r.x && torch.y === r.y),
   // A Wooden Door the keys held pay for, or one the hero can break down and survive.
-  woodenDoor: (t, at, rules) => t.kind === "door" && doorId(t) === "wood" && doorCost(t, at.run.player, keyScale(at, rules), rules?.scale ?? 1) !== null,
+  woodenDoor: (t, at, rules, r) => t.kind === "door" && doorId(t) === "wood" && paysRun(at, r, keyScale(at, rules), rules?.scale ?? 1),
 };
 
 const NONE: ReadonlySet<string> = new Set();

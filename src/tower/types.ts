@@ -26,15 +26,19 @@ export type Gate =
   /** A door taking a key of `color`, and of each colour in `also` (a
    * combined door, which the door stage makes: `doorKeys`); with `heart`
    * it also drains HP to 1. */
-  | { kind: "door"; color: KeyColor; also?: KeyColor[]; heart?: true }
+  | { kind: "door"; color: KeyColor; also?: KeyColor[]; heart?: true; run?: DoorRun }
   /** Special locks from the door vocabulary: wood takes any one key
    * (cheapest first) or, with none, HP to break it; heart always opens but
    * drains HP to 1. */
-  | { kind: "wood" }
-  | { kind: "heart" }
+  | { kind: "wood"; run?: DoorRun }
+  | { kind: "heart"; run?: DoorRun }
   /** No cost at all: a potion lies in the doorway, in an enemy's place on
    * the way to the stairs of the first tower's first floors. */
   | { kind: "potion" };
+
+/** A door run: a gate of two or three of the same door in a row, each paid
+ * in turn (docs/DOOR_AND_KEY_SCHEDULE.md section 7). Absent, one door. */
+export type DoorRun = 2 | 3;
 
 export type Reward =
   | { kind: "key"; color: KeyColor }
@@ -105,6 +109,12 @@ export type StrategicNode = {
   /** Forks to try for the way in, best first. The embedder builds the first
    * that fits and falls back to the single `gate` when none does. */
   forks?: Fork[];
+  /** Set by the door stage on a region it forked round a quota door: the
+   * door. The stage counts the region as its single gate, the door itself,
+   * which stands whenever the fork doesn't fit (about three times in four);
+   * should the fork fit, the embedder settles the difference
+   * (`settleQuota`). */
+  quotaFork?: QuotaDoor;
   rewards: Reward[];
   guarded: GuardedReward[];
   /** Ring formation: `rewards[0]` is the centrepiece, surrounded by these. */

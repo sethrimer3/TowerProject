@@ -1,7 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { QUOTA_DOORS, doorKeys, quotaDoorsIn, towerDoorFirstFloor, towerWoodPercent, towerDoorRate, type QuotaDoor } from "../src/key-schedule.ts";
-import { rollQuota } from "../src/tower/door-quota.ts";
+import { QUOTA_DOORS, doorKeys, forkCredit, owesDoor, quotaDoorsIn, towerDoorFirstFloor, towerWoodPercent, towerDoorRate, type QuotaDoor } from "../src/key-schedule.ts";
 import { generateTowerFloor } from "../src/tower/index.ts";
 import { generateStrategicGraph } from "../src/tower/strategic-graph.ts";
 import { floorCounts } from "../src/tower/census.ts";
@@ -30,11 +29,21 @@ test("each quota door starts at a tenth a floor; blue grows a hundredth every fi
   assert.deepEqual(rates(9, 1000), [1.07, 2.07, 0.97]);
 });
 
-test("a quota is the rate's whole doors, and one more with the rest as its chance", () => {
-  assert.equal(rollQuota(0, () => 0), 0);
-  assert.equal(rollQuota(200, () => { throw new Error("no draw for a whole number"); }), 2);
-  assert.equal(rollQuota(250, () => 0.49), 3);
-  assert.equal(rollQuota(250, () => 0.5), 2);
+test("a floor owes a door while a whole one is owed, and a fraction at its chance", () => {
+  const never = () => { throw new Error("no draw"); };
+  assert.equal(owesDoor(0, never), false);
+  assert.equal(owesDoor(-30, never), false);
+  assert.equal(owesDoor(100, never), true);
+  assert.equal(owesDoor(50, () => 0.49), true);
+  assert.equal(owesDoor(50, () => 0.5), false);
+});
+
+test("a fork's lane doors count 1/k toward the quota, a run each of its doors", () => {
+  const B = { kind: "door", color: "blue" } as const, E = { kind: "enemy", strength: "normal" } as const;
+  assert.deepEqual(forkCredit([[B], [E]]), { blue: 50, red: 0, heart: 0 });
+  assert.deepEqual(forkCredit([[B], [B, B], [E]]), { blue: 100, red: 0, heart: 0 });
+  assert.deepEqual(quotaDoorsIn({ ...B, run: 3 }), { blue: 3, red: 0, heart: 0 });
+  assert.deepEqual(quotaDoorsIn({ kind: "heart", run: 2 }), { blue: 0, red: 0, heart: 2 });
 });
 
 test("every quota door the stage places stands on the floor, and the quota tracks the schedule", () => {
@@ -43,18 +52,14 @@ test("every quota door the stage places stands on the floor, and the quota track
     const rolled = { blue: 0, red: 0, heart: 0 };
     for (let seed = 1; seed <= seeds; seed++) {
       const { cells, embedding } = generateTowerFloor(seed * 7919, room, tower);
-      const counts = floorCounts({ cells, embedding });
-      // A fork the stage built on a branch may hold extra quota doors beside
-      // the one it placed (its fallback gate, the door it counts).
-      const extra = { blue: 0, red: 0, heart: 0 };
-      for (const n of embedding.graph.nodes)
-        if (n.forks && n.route !== "main") {
-          const lanes = quotaDoorsIn(n.forks[0].lanes), gate = quotaDoorsIn(n.gate);
-          for (const door of QUOTA_DOORS) extra[door] += lanes[door] - gate[door];
-        }
+      const c = floorCounts({ cells, embedding });
+      // Doors standing alone (runs each of theirs) count whole, those in a
+      // fork's lanes 1/k (as the hero opens one lane of k), and with what
+      // is still owed they make the schedule's rate.
       for (const door of QUOTA_DOORS) {
         const q = embedding.graph.doorQuota?.[door];
-        assert.equal(counts[`door:${door}`] ?? 0, (q ? q.rolled - q.dropped : 0) + extra[door], `Tower ${tower} seed ${seed}: ${door} doors`);
+        const counted = (c[`door:${door}`] ?? 0) - (c[`forkTile:${door}`] ?? 0) + (c[`forked:${door}`] ?? 0);
+        assert.ok(Math.abs(counted - (q ? q.rolled - q.dropped : 0)) < 0.02, `Tower ${tower} seed ${seed}: ${counted} ${door} doors for ${q?.rolled} less ${q?.dropped} owed`);
       }
       const plan = generateStrategicGraph(seed * 7919, room, 0, tower).doorQuota ?? {};
       for (const door of QUOTA_DOORS) rolled[door] += plan[door]?.rolled ?? 0;

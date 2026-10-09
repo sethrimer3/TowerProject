@@ -28,7 +28,10 @@ import { ENTRY } from "./embedder.ts";
 // v18 takes every enemy's stats from the tower's enemy curve (enemy-curves.ts).
 // v19 places blue, red and Heart Doors by the door stage's quota (door-quota.ts),
 // combines colours in one door, and makes a share of yellow locks Wooden Doors.
-export const TOWER_LAYOUT_VERSION = 19;
+// v20 adds door runs (two or three of the same door in a row), counts a
+// fork's lane doors 1/k toward the door quota and keys, and caps key
+// coverage at the floor's aim.
+export const TOWER_LAYOUT_VERSION = 20;
 
 /** A self-contained 17x17 Tower floor. Generation is strategy-first (see
  * src/tower/index.ts): an abstract graph of gates, keys and rewards is

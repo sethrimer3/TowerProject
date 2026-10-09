@@ -4,6 +4,12 @@ import type { Fork, Gate, ShortcutRequest, StrategicGraph, StrategicNode } from 
 import { area, inRect, minSide, centre, type Rect, type XY } from "./grid.ts";
 import { Furnisher, gateTile, laneTile, type Dropped, type Placement } from "./furnisher.ts";
 import { forkDepth } from "./forks.ts";
+import { QUOTA_DOORS, forkCredit, owesDoor, towerKeyRatio, type QuotaDoor } from "../key-schedule.ts";
+import type { KeyColor } from "../config.ts";
+import { runsWith } from "./door-quota.ts";
+import { lockColors } from "./resource-planner.ts";
+import { keyedFloor } from "./patterns.ts";
+import { random } from "../random.ts";
 
 /** Layer B: express a StrategicGraph on the 17x17 grid.
  *
@@ -342,6 +348,12 @@ class FloorBuilder {
   private rects: Rect[];
   private leafOf: number[];
   private between: Layout["between"];
+  /** Each door run's region and doorway, laid once the chambers are furnished. */
+  private runs: { node: StrategicNode; c: Candidate }[] = [];
+  /** Settling's own stream, seeded by one draw, so the rest of the layout
+   * draws the same however many settling takes (the key ratio, and so the
+   * draws, differ by tower). */
+  private settling: () => number = () => 0;
 
   constructor(graph: StrategicGraph, { rects, leafOf, between }: Layout, private rng: () => number) {
     this.rects = rects.map((r) => ({ ...r }));
@@ -358,12 +370,16 @@ class FloorBuilder {
 
   build(): Embedding | null {
     this.carveForks();
+    this.settling = random(Math.floor(this.rng() * 0x100000000));
+    this.settleQuota();
+    this.settleKeys();
     if (!this.connectRegions()) return null;
     const shortcutsPlaced = this.placeShortcuts();
     const stairs = this.placeStairs();
     if (!stairs) return null;
     this.trimChambers();
     const f = this.furnish();
+    this.layRuns();
     const { graph, cells, rects, leafOf, doorways } = this;
     return {
       graph, cells, rects, leafOf, doorways, stairs,
@@ -378,6 +394,7 @@ class FloorBuilder {
       const c = this.chooseDoorway(node.parent, node.id);
       if (!c) return false;
       this.cut(c, node.gate);
+      if (runOf(node.gate) > 1) this.runs.push({ node, c });
       this.doorways.push({ parent: node.parent, child: node.id, x: c.x, y: c.y, shortcut: false });
       this.exitsOf.get(node.parent)!.push(c.inA);
       this.entryOf.set(node.id, { entry: c.inB, inward: [c.inB[0] - c.x, c.inB[1] - c.y] });
@@ -415,6 +432,133 @@ class FloorBuilder {
     const ra = this.rects[this.leafOf[a]], rb = this.rects[this.leafOf[b]];
     return this.between(this.leafOf[a], this.leafOf[b])
       .filter((c) => inRect(ra, ...c.inA) && inRect(rb, ...c.inB) && !this.nearDoor(c, 1));
+  }
+
+  // ---------------------------------------------------------------- door runs
+
+  /** The door stage counted each quota fork as the door it falls back to.
+   * One that fits counts 1/k of each door its lanes hold instead, as the
+   * hero opens one lane of k (`forkCredit`): its door counts less, and any
+   * extra doors in it more. Runs settle the difference, a door a time, a
+   * fraction at its chance (`owesDoor`): a door owed lengthens a single
+   * door or run of two of that door into a run, a door over shortens a
+   * run. What is left moves the quota's `dropped` (owed; below 0, over). */
+  private settleQuota() {
+    const owed: Record<QuotaDoor, number> = { blue: 0, red: 0, heart: 0 };
+    for (const n of this.graph.nodes) {
+      if (!n.quotaFork || !n.forks) continue;
+      const credit = forkCredit(n.forks[0].lanes);
+      for (const d of QUOTA_DOORS) owed[d] += (d === n.quotaFork ? 100 : 0) - credit[d];
+    }
+    for (const d of QUOTA_DOORS) {
+      while (owesDoor(owed[d], this.settling) && this.changeRun(d, 1)) owed[d] -= 100;
+      while (owesDoor(-owed[d], this.settling) && this.changeRun(d, -1)) owed[d] += 100;
+      const q = this.graph.doorQuota?.[d];
+      if (q && owed[d]) q.dropped += owed[d] / 100;
+    }
+  }
+
+  /** The key supply planned each forked region for its single gate, which
+   * stands whenever the fork doesn't fit. One that fits asks instead for
+   * 1/k of the keys of each of its lanes, as the hero opens one lane of k:
+   * the difference, at the keys per lock its colour aims for
+   * (`towerKeyRatio`), adds keys to the floor's rooms or takes them away, a
+   * key a time, a fraction at its chance (`owesDoor`); a room left empty
+   * holds a potion. Floors 2 to 5 keep their key behind every door. */
+  private settleKeys() {
+    const { depth } = this.graph, tower = this.graph.tower ?? 1;
+    if (keyedFloor(depth)) return;
+    const owed: Record<KeyColor, number> = { yellow: 0, blue: 0, red: 0 };
+    for (const n of this.graph.nodes) {
+      if (!n.forks || n.parent === null) continue;
+      const ratio = (c: KeyColor) => towerKeyRatio(c, depth, tower, n.route === "main") / 10000;
+      const lanes = n.forks[0].lanes;
+      for (const step of lanes.flat())
+        if (step.kind !== "reward") for (const c of lockColors({ ...n, gate: step })) owed[c] += ratio(c) / lanes.length;
+      for (const c of lockColors(n)) owed[c] -= ratio(c);
+    }
+    const rooms = this.graph.nodes.filter((n) => n.parent !== null && n.purpose !== "stairs");
+    for (const color of ["red", "blue", "yellow"] as KeyColor[]) {
+      while (owesDoor(owed[color] * 100, this.settling) && rooms.length) {
+        rooms[Math.floor(this.settling() * rooms.length)].rewards.push({ kind: "key", color });
+        owed[color]--;
+      }
+      while (owesDoor(-owed[color] * 100, this.settling)) {
+        const holding = rooms.filter((n) => n.rewards.some((r) => r.kind === "key" && r.color === color));
+        if (!holding.length) break;
+        const room = holding[Math.floor(this.settling() * holding.length)];
+        const i = room.rewards.findIndex((r) => r.kind === "key" && r.color === color);
+        if (room.rewards.length + room.guarded.length > 1) room.rewards.splice(i, 1);
+        else room.rewards[i] = { kind: "potion" };
+        owed[color]++;
+      }
+    }
+  }
+
+  /** Lengthens (`by` 1) a single door or run of two of `door` standing
+   * alone, or shortens (`by` -1) a run of it, chosen at random; false when
+   * the floor has none. */
+  private changeRun(door: QuotaDoor, by: 1 | -1) {
+    const options = this.graph.nodes.filter((n) => n.parent !== null && !n.forks &&
+      (by > 0 ? runsWith(n.gate, door) : runOf(n.gate) > 1 && quotaKind(n.gate) === door));
+    if (!options.length) return false;
+    const node = options[Math.floor(this.settling() * options.length)], run = runOf(node.gate) + by;
+    const gate = { ...node.gate } as Gate & { run?: number };
+    if (run > 1) gate.run = run;
+    else delete gate.run;
+    node.gate = gate;
+    return true;
+  }
+
+  /** Lays each door run's other doors once the chambers are furnished: the
+   * tile just inside the region it opens, then (a run of three) the tile
+   * just outside in the parent's chamber. The doorway is the only way
+   * between them, so neither can be walked round; each must still be open
+   * floor, keep its chamber in one piece and stand by no other doorway, the
+   * entrance or the stairs. A door that finds no place shortens the run,
+   * recorded as owed in the quota. */
+  private layRuns() {
+    for (const { node, c } of this.runs) {
+      const run = runOf(node.gate), tile = gateTile(node.gate, this.graph.depth, this.settling, this.graph.tower);
+      const spots: [XY, number][] = [[c.inB, node.id], [c.inA, node.parent!]];
+      let laid = 1;
+      for (const [p, region] of spots.slice(0, run - 1))
+        if (this.runSpot(p, c, region)) {
+          this.cells.set(point(...p), { ...tile });
+          this.doorTiles.push(p);
+          laid++;
+        }
+      const kind = quotaKind(node.gate), q = kind && this.graph.doorQuota?.[kind];
+      if (q && laid < run) q.dropped += run - laid;
+    }
+  }
+
+  /** Whether a run's door may stand on `p`, beside doorway `c`, in
+   * `region`'s chamber. */
+  private runSpot([x, y]: XY, c: Candidate, region: number) {
+    if (this.cells.get(point(x, y))?.kind !== "floor" || (x === ENTRY[0] && y === ENTRY[1])) return false;
+    const near = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => this.cells.get(point(x + dx, y + dy))?.kind);
+    if (near.some((k) => k === "stairs" || k === "stairsDown")) return false;
+    if (this.doorTiles.some(([dx, dy]) => (dx !== c.x || dy !== c.y) && Math.abs(dx - x) + Math.abs(dy - y) <= 1)) return false;
+    return this.staysWhole(this.rects[this.leafOf[region]], [x, y]);
+  }
+
+  /** Whether `rect`'s open tiles stay joined without `gone`. */
+  private staysWhole(rect: Rect, gone: XY) {
+    const open: string[] = [];
+    for (let y = rect.y1; y <= rect.y2; y++)
+      for (let x = rect.x1; x <= rect.x2; x++)
+        if ((x !== gone[0] || y !== gone[1]) && this.cells.get(point(x, y))?.kind !== "wall") open.push(point(x, y));
+    if (!open.length) return true;
+    const seen = new Set([open[0]]), queue = [open[0]], inside = new Set(open);
+    for (let i = 0; i < queue.length; i++) {
+      const [x, y] = queue[i].split(",").map(Number);
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const k = point(x + dx, y + dy);
+        if (inside.has(k) && !seen.has(k)) { seen.add(k); queue.push(k); }
+      }
+    }
+    return seen.size === open.length;
   }
 
   // ---------------------------------------------------------------- forks
@@ -641,3 +785,9 @@ function shortcutPairs(graph: StrategicGraph, req: ShortcutRequest) {
   for (const u of main) for (const v of main) if (u.id < v.id) pairs.push([u.id, v.id]);
   return pairs;
 }
+
+/** How many doors a gate's run holds (1 for a single gate). */
+const runOf = (g: Gate) => (g.kind === "door" || g.kind === "wood" || g.kind === "heart" ? g.run ?? 1 : 1);
+/** The quota door a run is made of, if any. */
+const quotaKind = (g: Gate): QuotaDoor | null =>
+  g.kind === "heart" ? "heart" : g.kind === "door" && (g.color === "blue" || g.color === "red") ? g.color : null;

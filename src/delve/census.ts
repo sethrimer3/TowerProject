@@ -16,8 +16,8 @@ export function delveCensus(o: CensusOptions): CensusBand[] {
       for (let area = Math.floor((from - 1) / 10); area <= Math.floor((to - 1) / 10); area++)
         for (let s = 0; s < o.seeds; s++) {
           const r = region(censusSeed(s), area, tier);
-          const lanes = r.nodes.flatMap(n => n.fork?.lanes ?? []);
-          for (const [k, n] of Object.entries(tileCounts(r.cells.values(), lanes, r.doorQuota))) add(sum, k, n);
+          const forks = r.nodes.flatMap(n => (n.fork ? [n.fork.lanes] : []));
+          for (const [k, n] of Object.entries(tileCounts(r.cells.values(), forks, r.doorQuota))) add(sum, k, n);
           for (let f = area * 10; f < area * 10 + 10; f++) addSchedule(sum, f, tier);
           floors += 10;
         }

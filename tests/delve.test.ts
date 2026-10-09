@@ -34,7 +34,8 @@ test('costs on terminal branches really separate rewards from the main labyrinth
       const e = r.edges.find(e => e.a === n.id || e.b === n.id)!;
       const route = e.b === n.id ? e.path : [...e.path].reverse();
       const gates = route.filter(p => ['enemy', 'door'].includes(r.cells.get(point(p.x, p.y))?.kind ?? ''));
-      assert.equal(gates.length, n.pattern!.gates.length);
+      // A door run stands on more tiles than its pattern's one gate.
+      assert.ok(gates.length >= n.pattern!.gates.length, `${n.pattern!.id} seed ${seed}: ${gates.length} cost tiles`);
       for (const gate of gates) {
         const visited = flood(r.cells, point(r.entry.x, r.entry.y), point(gate.x, gate.y));
         assert.ok(!visited.has(point(n.x, n.y)), `bypassed ${n.pattern!.id} seed ${seed}`);

@@ -12,7 +12,7 @@ import {
   type Weighted,
 } from "./patterns.ts";
 import { planForks } from "./forks.ts";
-import { placeQuotaDoors, placeWoodenDoors } from "./door-quota.ts";
+import { placeQuotaDoors, placeWoodenDoors, placeYellowRuns } from "./door-quota.ts";
 import { MAX_REGIONS, planResources } from "./resource-planner.ts";
 import { bypassesRareKeys, onlyOpenKeys, towerDoorFirstFloor, towerKeyColorsOn, withoutQuotaDoors, type KeyColors } from "../key-schedule.ts";
 import type {
@@ -216,6 +216,7 @@ export function generateStrategicGraph(seed: number, depth: number, budgetCut = 
   const shortcuts = planShortcuts(b, profile, mainIds, stairs);
   planForks(b, archetype);
   const doorQuota = placeQuotaDoors(b, archetype, tier);
+  placeYellowRuns(b);
   placeWoodenDoors(b, shortcuts, tier);
   const graph: StrategicGraph = { archetype, depth, ...(tier > 1 ? { tower: tier } : {}), nodes: b.nodes, shortcuts, notes: [], ...(doorQuota ? { doorQuota } : {}) };
   planResources(graph, b, rng);

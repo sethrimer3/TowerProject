@@ -101,6 +101,14 @@ test("the closest target is the one fewest steps away, not the nearest as the cr
   assert.deepEqual(play(board(rows)), { card: "heal", to: [0, 0], steps: 3 });
 });
 
+test("a door run is a target only while the keys held pay for every door of it", () => {
+  const keys = (yellow: number) => ({ keys: { yellow, blue: 0, red: 0 } });
+  assert.equal(play(board(["@.DD."], keys(1)), ["door"]), null, "one key for two doors");
+  assert.equal(play(board(["@.DD."], keys(2)), ["door"])?.card, "door");
+  assert.equal(play(board(["@.DD."], keys(1)), ["yellowDoor"]), null);
+  assert.equal(play(board(["@.HH."]), ["door"])?.card, "door", "a Heart Door run always opens");
+});
+
 test("a path crosses items, taking them, but not doors, monsters or other stairs", () => {
   assert.deepEqual(play(board(["@KPTS"])), { card: "stairs", to: [4, 0], steps: 4 });
   assert.equal(play(board(["@MS"]), ["stairs"]), null, "a monster in the way blocks the path");

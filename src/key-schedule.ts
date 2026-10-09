@@ -143,16 +143,43 @@ export function withoutQuotaDoors(thing: unknown): boolean {
   return Object.values(o).every(withoutQuotaDoors);
 }
 
-/** How many of each quota door `thing` holds. */
+/** How many of each quota door `thing` holds, a door run counting each of
+ * its doors. */
 export function quotaDoorsIn(thing: unknown, out: Record<QuotaDoor, number> = { blue: 0, red: 0, heart: 0 }) {
   if (Array.isArray(thing)) for (const v of thing) quotaDoorsIn(v, out);
   else if (thing && typeof thing === "object") {
-    const o = thing as Record<string, unknown>;
-    if (o.kind === "heart") out.heart++;
+    const o = thing as Record<string, unknown>, doors = typeof o.run === "number" ? o.run : 1;
+    if (o.kind === "heart") out.heart += doors;
     else if (o.kind === "door") {
-      for (const c of doorKeys(o as { color: KeyColor; also?: KeyColor[] })) if (c === "blue" || c === "red") out[c]++;
-      if (o.heart) out.heart++;
+      for (const c of doorKeys(o as { color: KeyColor; also?: KeyColor[] })) if (c === "blue" || c === "red") out[c] += doors;
+      if (o.heart) out.heart += doors;
     } else for (const v of Object.values(o)) quotaDoorsIn(v, out);
   }
   return out;
+}
+
+/** What a fork's lanes count toward the door quota, in hundredths of a
+ * door: the hero opens one lane of `k`, so each lane's doors count 1/k. */
+export function forkCredit(lanes: unknown[]): Record<QuotaDoor, number> {
+  const held = quotaDoorsIn(lanes), share = (n: number) => Math.round((n * 100) / Math.max(1, lanes.length));
+  return { blue: share(held.blue), red: share(held.red), heart: share(held.heart) };
+}
+
+/** Whether a floor still owes a quota door, `owed` hundredths of one: yes
+ * while a whole door or more is owed, and for a fraction at its chance,
+ * drawing from `rng` only then. */
+export const owesDoor = (owed: number, rng: () => number) => owed >= 100 || (owed > 0 && rng() * 100 < owed);
+
+/** Yellow door runs (docs/DOOR_AND_KEY_SCHEDULE.md section 7): a key sink.
+ * From floor `fromFloor` (counting from 1), each plain yellow door off the
+ * way to the stairs (in the Delve, in a pocket's throat) becomes a run at
+ * `chance` percent, of three doors at `threeShare` percent of those, else
+ * two. The key supply plans one key for a whole yellow run, so each one
+ * spends keys the surplus would otherwise keep. */
+export const YELLOW_RUNS = { fromFloor: 6, chance: 15, threeShare: 30 };
+/** The run a plain yellow door on floor `depth` (0 is the first) rolls:
+ * none, or two or three doors. */
+export function yellowRun(depth: number, rng: () => number): 2 | 3 | undefined {
+  if (depth + 1 < YELLOW_RUNS.fromFloor || rng() * 100 >= YELLOW_RUNS.chance) return undefined;
+  return rng() * 100 < YELLOW_RUNS.threeShare ? 3 : 2;
 }

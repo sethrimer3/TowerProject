@@ -1,6 +1,6 @@
 import type { KeyColor } from "../config.ts";
-import { forkKeyDemand } from "./forks.ts";
 import { doorKeys, towerDoorRate, towerKeyRatio } from "../key-schedule.ts";
+import { forkKeyDemand } from "./forks.ts";
 import { keyedFloor, pick, type Weighted } from "./patterns.ts";
 import type { GraphBuilder } from "./strategic-graph.ts";
 import type { Gate, Reward, StrategicGraph, StrategicNode, Strength } from "./types.ts";
@@ -58,13 +58,24 @@ function keysIn(node: StrategicNode, color: KeyColor): number {
 }
 
 /** The keys a region's way in asks the player to hold. A wooden lock eats
- * the cheapest key available, so it is yellow demand. A forked region is
- * planned for its first fork, the one the embedder tries first; a fork with
- * a lane that needs no key demands none. */
-function lockColors(n: StrategicNode): KeyColor[] {
-  if (n.forks?.length) return forkKeyDemand(n.forks[0]);
-  return n.gate.kind === "door" ? doorKeys(n.gate) : n.gate.kind === "wood" ? ["yellow"] : [];
+ * the cheapest key available, so it is yellow demand. A door run asks for
+ * each of its doors, but a yellow run (Wooden or yellow) for one key: a key
+ * sink, spending the surplus. A forked region is planned for its single
+ * gate, which stands whenever the fork doesn't fit, about three times in
+ * four. */
+export function lockColors(n: StrategicNode): KeyColor[] {
+  const g = n.gate;
+  const colors: KeyColor[] = g.kind === "door" ? doorKeys(g) : g.kind === "wood" ? ["yellow"] : [];
+  const run = g.kind === "door" || g.kind === "wood" || g.kind === "heart" ? g.run ?? 1 : 1;
+  const yellowRun = g.kind === "wood" || (g.kind === "door" && colors.length === 1 && colors[0] === "yellow");
+  return yellowRun ? colors : Array.from({ length: run }, () => colors).flat();
 }
+
+/** The keys a hero must hold to reach a region's keys from its parent:
+ * its lock's (`lockColors`), but through a fork only when every lane is
+ * locked (`forkKeyDemand`), since a hero may take the open lane. What a
+ * key behind it pays for (`supply`) goes by this. */
+const passColors = (n: StrategicNode): KeyColor[] => (n.forks?.length ? forkKeyDemand(n.forks[0]) : lockColors(n));
 
 function ancestors(nodes: StrategicNode[], id: number): number[] {
   const out: number[] = [];
@@ -99,7 +110,8 @@ export function planResources(graph: StrategicGraph, b: GraphBuilder, rng: () =>
   // yellow demand that the yellow pass then sees.
   for (const color of ["red", "blue", "yellow"] as KeyColor[]) {
     let demand = 0;
-    for (const door of collectDoors(graph).filter((d) => d.color === color)) coverDoor(plan, door, ++demand);
+    const doors = collectDoors(graph).filter((d) => d.color === color), aim = floorAim(plan, color, doors.length);
+    for (const door of doors) coverDoor(plan, door, ++demand, aim);
   }
   // A red door should always feel important.
   for (const n of graph.nodes) if (thinRedVault(n)) sweeten(n, rng);
@@ -151,11 +163,16 @@ function thinToAim({ graph, b, rng }: Plan) {
  * (`towerKeyRatio`, half as fast to fall on the way to the stairs), each
  * at the chance of how short they are (a surplus above 1 rolled for at its
  * fraction); if still short of the demand itself, sweetens or notes it. */
-function coverDoor(plan: Plan, door: Door, demand: number) {
+function coverDoor(plan: Plan, door: Door, demand: number, aim: number) {
   const { graph, rng } = plan;
   const ratio = towerKeyRatio(door.color, graph.depth, plan.b.tower, door.route === "main") / 10000;
   for (let tries = 0; tries < MOST_SOURCES; tries++) {
-    const missing = demand * ratio - supply(graph.nodes, door);
+    // Short of this door's share, but never past the floor's aim for the
+    // colour: most rooms stand behind a yellow lock, so a door's own supply
+    // (keys not behind one) is small, and covering each alone would heap up
+    // keys far past the aim.
+    const floorKeys = graph.nodes.reduce((s, n) => s + keysIn(n, door.color), 0);
+    const missing = Math.min(demand * ratio - supply(graph.nodes, door), aim - floorKeys);
     if (missing <= 0 || !(rng() < Math.min(1, missing) && addKeySource(plan, door))) break;
   }
   if (supply(graph.nodes, door) >= demand) return;
@@ -173,6 +190,14 @@ function coverDoor(plan: Plan, door: Door, demand: number) {
   }
 }
 
+/** The keys of `color` the floor aims for: the key ratio's worth for its
+ * `locks` of that colour (for blue and red, at least the schedule's doors'
+ * worth, as `thinToAim` plans). */
+function floorAim({ graph, b }: Plan, color: KeyColor, locks: number) {
+  const expected = color === "yellow" ? locks : Math.max(locks, towerDoorRate(color, graph.depth, b.tower));
+  return (expected * towerKeyRatio(color, graph.depth, b.tower)) / 10000;
+}
+
 /** An optional door left without a key may guard something better instead. */
 const sweetens = (door: Door, rng: () => number) => door.route === "optional" && rng() < COHERENCE_TUNING.sweetenChance;
 
@@ -181,14 +206,14 @@ const sweetens = (door: Door, rng: () => number) => door.route === "optional" &&
 function supply(nodes: StrategicNode[], door: Door) {
   const locked = lockedBy(nodes, door);
   return nodes
-    .filter((n) => !locked.has(n.id) && ![n.id, ...ancestors(nodes, n.id)].some((a) => lockColors(nodes[a]).includes(door.color)))
+    .filter((n) => !locked.has(n.id) && ![n.id, ...ancestors(nodes, n.id)].some((a) => passColors(nodes[a]).includes(door.color)))
     .reduce((s, n) => s + keysIn(n, door.color), 0);
 }
 
 const lockedBy = (nodes: StrategicNode[], door: Door) =>
   door.lockedNode === null ? new Set<number>() : subtreeOf(nodes, door.lockedNode);
 const lockedWith = (n: StrategicNode, color: KeyColor) =>
-  n.forks?.length ? lockColors(n).includes(color) : n.gate.kind === "door" && doorKeys(n.gate).includes(color);
+  n.forks?.length ? passColors(n).includes(color) : n.gate.kind === "door" && doorKeys(n.gate).includes(color);
 
 function sweeten(node: StrategicNode, rng: () => number) {
   node.rewards.push(rng() < 0.5 ? { kind: "treasure" } : rng() < 0.5 ? { kind: "attack" } : { kind: "defense" });

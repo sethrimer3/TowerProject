@@ -1,4 +1,4 @@
-import { QUOTA_DOORS, doorKeys, quotaDoorsIn, towerDoorHundredths, towerWoodPercent, withoutQuotaDoors, type QuotaDoor } from "../key-schedule.ts";
+import { QUOTA_DOORS, doorKeys, owesDoor, quotaDoorsIn, towerDoorHundredths, towerWoodPercent, withoutQuotaDoors, yellowRun, type QuotaDoor } from "../key-schedule.ts";
 import { forkFits, forksWorth, mayFork, stepValue } from "./forks.ts";
 import { TOWER_PATTERNS, patternWeight, pick, type TowerPattern, type Weighted } from "./patterns.ts";
 import { MAX_REGIONS } from "./resource-planner.ts";
@@ -7,8 +7,9 @@ import type { Archetype, Fork, Gate, StrategicGraph, StrategicNode } from "./typ
 
 /** The door stage (docs/DOOR_AND_KEY_SCHEDULE.md): each floor rolls how many
  * blue, red and Heart Doors it holds from the schedule (`towerDoorHundredths`)
- * and places each one by one of four ways, chosen at random among those
- * that fit:
+ * and places them, each by one of five ways, chosen at random among those
+ * that fit, until what they count for meets it (in hundredths of a door; a
+ * fraction left owed placed at its chance, `owesDoor`):
  *
  *   upgrade   an existing gate: a yellow door turns blue or red, any paid
  *             gate a Heart Door;
@@ -20,13 +21,20 @@ import type { Archetype, Fork, Gate, StrategicGraph, StrategicNode } from "./typ
  *   fork      a fork pattern holding it, in place of a single gate, whose
  *             fallback gate is the door itself, so it stands even when the
  *             fork doesn't fit the floor; on the way to the stairs a fork
- *             holding no other quota door, on a branch any (the others are
- *             extra doors, not counted).
+ *             holding no other quota door, on a branch any (extra doors).
+ *             It counts as the door it falls back to; a fork that fits
+ *             counts 1/k of each door its lanes hold, as the hero opens one
+ *             lane of k (`forkCredit`), and the embedder settles the
+ *             difference with runs (`settleQuota`);
+ *   lengthen  a single blue, red or Heart Door becomes a door run of two,
+ *             or a run of two one of three, every door counting. A Heart
+ *             Door run compounds its drain with Heart Door Resilience.
  *
  * No other table offers these doors (`withoutQuotaDoors`). A door that fits
  * nowhere is dropped and recorded. In the first tower (`bypass`) a blue or
  * red door goes only on a branch, so the way to the stairs never needs one. */
 
+/** Doors by kind, in hundredths of a door. */
 type Tally = Record<QuotaDoor, number>;
 
 const DOOR: Record<QuotaDoor, Gate> = {
@@ -35,32 +43,31 @@ const DOOR: Record<QuotaDoor, Gate> = {
   heart: { kind: "heart" },
 };
 
-/** The whole doors of `hundredths`, and one more with the rest as its
- * chance (drawn only when there is a rest). */
-export function rollQuota(hundredths: number, rng: () => number) {
-  const whole = Math.floor(hundredths / 100), rest = hundredths % 100;
-  return whole + (rest && rng() * 100 < rest ? 1 : 0);
-}
 
 /** Places floor `b.depth`'s quota in tower `tower`: rarest first, each
  * door's placements spending the quota of every door they hold. Returns
  * what it rolled and dropped, or nothing when it rolled none. */
 export function placeQuotaDoors(b: GraphBuilder, archetype: Archetype, tower: number): StrategicGraph["doorQuota"] {
   const left = {} as Tally;
-  for (const door of QUOTA_DOORS) left[door] = rollQuota(towerDoorHundredths(door, b.depth, tower), b.rng);
+  for (const door of QUOTA_DOORS) left[door] = towerDoorHundredths(door, b.depth, tower);
   if (QUOTA_DOORS.every((d) => !left[d])) return undefined;
-  const rolled = { ...left };
+  const wanted = { ...left };
   for (const door of QUOTA_DOORS)
-    while (left[door] > 0) {
+    while (owesDoor(left[door], b.rng)) {
       const added = placeOne(b, door, archetype, left);
       if (!added) break;
       for (const d of QUOTA_DOORS) left[d] -= added[d];
     }
-  return Object.fromEntries(QUOTA_DOORS.filter((d) => rolled[d]).map((d) => [d, { rolled: rolled[d], dropped: left[d] }]));
+  // Doors, not hundredths: what the schedule wanted and what is still owed
+  // (below 0 when the floor holds more).
+  return Object.fromEntries(QUOTA_DOORS.filter((d) => wanted[d]).map((d) => [d, { rolled: wanted[d] / 100, dropped: left[d] / 100 }]));
 }
 
-/** Whether `added` holds `door` and no more of any door than is left. */
-const spends = (added: Tally, door: QuotaDoor, left: Tally) => added[door] > 0 && QUOTA_DOORS.every((d) => added[d] <= left[d]);
+/** Whether `added` (whole doors) holds `door` and no more of any door than
+ * is left (hundredths), a fraction left counting as a door. */
+const spends = (added: Tally, door: QuotaDoor, left: Tally) => added[door] > 0 && QUOTA_DOORS.every((d) => added[d] * 100 < left[d] + 100);
+/** Whole doors as hundredths. */
+const hundredths = (t: Tally): Tally => ({ blue: t.blue * 100, red: t.red * 100, heart: t.heart * 100 });
 
 /** Whether a fork's lanes hold just one quota door, `door`: what its
  * fallback gate leaves standing when the fork doesn't fit, so the count
@@ -71,13 +78,14 @@ const onlyOne = (added: Tally, door: QuotaDoor) => QUOTA_DOORS.every((d) => adde
 const routeAllows = (b: GraphBuilder, n: StrategicNode, door: QuotaDoor) => door === "heart" || !b.bypass || n.route !== "main";
 
 /** One door of `door`, placed one of the ways that fit, tried in a random
- * order; what it added, or null when none fit. */
+ * order; what it counts for in hundredths, or null when none fit. */
 function placeOne(b: GraphBuilder, door: QuotaDoor, archetype: Archetype, left: Tally): Tally | null {
   const ways = [
     () => upgrade(b, door),
     () => combine(b, door),
     () => addPattern(b, door, archetype, left),
     () => addFork(b, door, archetype, left),
+    () => lengthenRun(b, door),
   ];
   while (ways.length) {
     const [way] = ways.splice(Math.floor(b.rng() * ways.length), 1);
@@ -87,8 +95,8 @@ function placeOne(b: GraphBuilder, door: QuotaDoor, archetype: Archetype, left: 
   return null;
 }
 
-/** A plain yellow door: one key, no other colour, no heart. */
-const plainYellow = (g: Gate) => g.kind === "door" && g.color === "yellow" && !g.also?.length && !g.heart;
+/** A plain yellow door: one key, no other colour, no heart, no run. */
+const plainYellow = (g: Gate) => g.kind === "door" && g.color === "yellow" && !g.also?.length && !g.heart && !g.run;
 /** A gate that costs something to cross, and holds no quota door yet. */
 const paidGate = (g: Gate) => g.kind === "enemy" || g.kind === "wood" || plainYellow(g);
 
@@ -97,7 +105,22 @@ function upgrade(b: GraphBuilder, door: QuotaDoor): Tally | null {
     (door === "heart" ? paidGate(n.gate) : plainYellow(n.gate)));
   if (!options.length) return null;
   options[Math.floor(b.rng() * options.length)].gate = { ...DOOR[door] };
-  return quotaDoorsIn(DOOR[door]);
+  return hundredths(quotaDoorsIn(DOOR[door]));
+}
+
+/** A gate `door` may lengthen into a run: a single door of its own kind
+ * alone (no other colour, no heart on a keyed door), shorter than three. */
+export const runsWith = (g: Gate, door: QuotaDoor) => (g.kind === "door" || g.kind === "heart") && (g.run ?? 1) < 3 &&
+  (door === "heart" ? g.kind === "heart" : g.kind === "door" && g.color === door && !g.also?.length && !g.heart);
+
+/** A single blue, red or Heart Door becomes a run of two, or a run of two
+ * one of three. */
+function lengthenRun(b: GraphBuilder, door: QuotaDoor): Tally | null {
+  const options = b.nodes.filter((n) => n.parent !== null && !n.forks && routeAllows(b, n, door) && runsWith(n.gate, door));
+  if (!options.length) return null;
+  const node = options[Math.floor(b.rng() * options.length)];
+  node.gate = { ...node.gate, run: (node.gate as { run?: number }).run === 2 ? 3 : 2 } as Gate;
+  return hundredths(quotaDoorsIn(DOOR[door]));
 }
 
 /** A door that doesn't take `door`'s colour yet takes it as well; for a
@@ -111,7 +134,18 @@ function combine(b: GraphBuilder, door: QuotaDoor): Tally | null {
   const node = options[Math.floor(b.rng() * options.length)];
   if (node.gate.kind !== "door") return null;
   node.gate = door === "heart" ? { ...node.gate, heart: true } : { ...node.gate, also: [...(node.gate.also ?? []), door] };
-  return quotaDoorsIn(DOOR[door]);
+  return hundredths(quotaDoorsIn(DOOR[door]));
+}
+
+/** Makes some plain yellow doors off the way to the stairs yellow door
+ * runs (`yellowRun`): a key sink, since the key supply plans one key for a
+ * whole yellow run. Before the wooden share, which a run rolls once. */
+export function placeYellowRuns(b: GraphBuilder) {
+  for (const n of b.nodes) {
+    if (n.parent === null || n.forks || n.route === "main" || !plainYellow(n.gate)) continue;
+    const run = yellowRun(b.depth, b.rng);
+    if (run) n.gate = { ...n.gate, run } as Gate;
+  }
 }
 
 /** Turns `towerWoodPercent` of the floor's yellow locks into Wooden Doors:
@@ -121,7 +155,10 @@ function combine(b: GraphBuilder, door: QuotaDoor): Tally | null {
 export function placeWoodenDoors(b: GraphBuilder, shortcuts: StrategicGraph["shortcuts"], tower: number) {
   const share = towerWoodPercent(b.depth, tower);
   const wooden = () => share >= 100 || (share > 0 && b.rng() * 100 < share);
-  const wood = (g: Gate): Gate => (plainYellow(g) || g.kind === "wood" ? (wooden() ? { kind: "wood" } : { kind: "door", color: "yellow" }) : g);
+  // A yellow run rolls once, so its doors are all Wooden or all yellow.
+  const yellowLock = (g: Gate) => g.kind === "wood" || (g.kind === "door" && g.color === "yellow" && !g.also?.length && !g.heart);
+  const run = (g: Gate) => ("run" in g && g.run ? { run: g.run } : {});
+  const wood = (g: Gate): Gate => (yellowLock(g) ? (wooden() ? { kind: "wood", ...run(g) } : { kind: "door", color: "yellow", ...run(g) }) : g);
   for (const n of b.nodes) {
     n.gate = wood(n.gate);
     for (const fork of n.forks ?? []) fork.lanes = fork.lanes.map((lane) => lane.map((step) => (step.kind === "reward" ? step : wood(step))));
@@ -161,7 +198,7 @@ function addPattern(b: GraphBuilder, door: QuotaDoor, archetype: Archetype, left
   const before = b.nodes.length;
   const mainIds = b.nodes.filter((n) => n.route === "main").map((n) => n.id);
   if (!placePattern(b, pick(options, b.rng), mainIds, MAX_REGIONS)) return null;
-  return quotaDoorsIn(b.nodes.slice(before).map((n) => n.gate));
+  return hundredths(quotaDoorsIn(b.nodes.slice(before).map((n) => n.gate)));
 }
 
 function addFork(b: GraphBuilder, door: QuotaDoor, archetype: Archetype, left: Tally): Tally | null {
@@ -178,5 +215,6 @@ function addFork(b: GraphBuilder, door: QuotaDoor, archetype: Archetype, left: T
   node.forks = [fork];
   // The embedder falls back to the single gate: the door itself.
   node.gate = { ...DOOR[door] };
-  return quotaDoorsIn(DOOR[door]);
+  node.quotaFork = door;
+  return hundredths(quotaDoorsIn(DOOR[door]));
 }

@@ -112,8 +112,12 @@ _Avoid_: stairs gate (the gate is the stairs room's way in)
 One way through a fork: one to three tiles of gates walked in order, sometimes with an item between them (a treasure, or a key that pays for the door after it).
 _Avoid_: corridor, path
 
+**Door run**:
+Two or three of the same door in a row in one gate, each paid in turn: blue, red or Heart Doors placed by the door quota, or yellow ones (Wooden or not) as a key sink, which the key supply plans one key for.
+_Avoid_: double door, door chain
+
 **Door quota**:
-How many blue, red and Heart Doors a Tower floor holds, rolled from the door schedule for its tower and floor: none before each door's first floor, then a little more every ten floors. Only the door stage places them, so the schedule sets their number on every floor. A Delve area rolls one for each of its ten equivalent floors, from the schedule of the tower of its number.
+How many blue, red and Heart Doors a Tower floor holds, rolled from the door schedule for its tower and floor: none before each door's first floor, then a little more every ten floors. Only the door stage places them, so the schedule sets their number on every floor. A Delve area rolls one for each of its ten equivalent floors, from the schedule of the tower of its number. A door in a fork of k lanes counts 1/k toward it, since the hero opens one lane; each door of a door run counts.
 _Avoid_: door rate (the rate is what the quota is rolled from), door budget
 
 **Wooden Door**:

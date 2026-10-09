@@ -10,8 +10,10 @@ import type { LaneStep } from "./types.ts";
  * (docs/DOOR_AND_KEY_SCHEDULE.md). `npm run tower:report -- --census`. */
 
 /** One floor's counts, keyed `door:<kind>` (a combined door counting once
- * for each colour it takes, and once as `door:combined`), `forked:<kind>` (the doors of
- * that kind standing in a built fork's lanes), `key:<colour>`,
+ * for each colour it takes, and once as `door:combined`), `forkTile:<kind>`
+ * (the doors of that kind standing in a built fork's lanes) and
+ * `forked:<kind>` (the same counting 1/k in a fork of k lanes, as the hero
+ * opens one lane), `key:<colour>`,
  * `enemy:<strength>`, an item's kind, or `dropped:<door>` (quota doors the
  * door stage found no place for); the census adds `target:<door>`, the
  * schedule's rate. */
@@ -41,11 +43,11 @@ export const add = (c: Counts, k: string, n = 1) => { c[k] = (c[k] ?? 0) + n; };
 /** What floor `floor` holds: every tile counted, and the doors in the forks
  * the embedder built. */
 export const floorCounts = ({ cells, embedding }: TowerFloor): Counts =>
-  tileCounts(cells.values(), embedding.graph.nodes.flatMap((n) => n.forks?.[0]?.lanes ?? []), embedding.graph.doorQuota);
+  tileCounts(cells.values(), embedding.graph.nodes.flatMap((n) => (n.forks?.[0] ? [n.forks[0].lanes] : [])), embedding.graph.doorQuota);
 
-/** What `tiles` hold, the doors standing in built forks' `lanes`, and the
- * quota doors the door stage dropped (`quota`). */
-export function tileCounts(tiles: Iterable<Tile>, lanes: LaneStep[][], quota: Partial<Record<string, { dropped: number }>> = {}): Counts {
+/** What `tiles` hold, the doors standing in built forks (each its lanes),
+ * and the quota doors still owed (`quota`'s `dropped`). */
+export function tileCounts(tiles: Iterable<Tile>, forks: LaneStep[][][], quota: Partial<Record<string, { dropped: number }>> = {}): Counts {
   const c: Counts = {};
   for (const t of tiles) {
     if (t.kind === "door") for (const kind of doorKinds(t)) add(c, `door:${kind}`);
@@ -53,10 +55,12 @@ export function tileCounts(tiles: Iterable<Tile>, lanes: LaneStep[][], quota: Pa
     else if (t.kind === "enemy") add(c, `enemy:${t.enemy?.strength ?? "normal"}`);
     else if (ITEMS.has(t.kind)) add(c, t.kind);
   }
-  for (const lane of lanes)
-    for (const step of lane) {
+  for (const lanes of forks)
+    for (const step of lanes.flat()) {
       const kind = laneDoorKind(step);
-      if (kind) add(c, `forked:${kind}`);
+      if (!kind) continue;
+      add(c, `forkTile:${kind}`);
+      add(c, `forked:${kind}`, 1 / lanes.length);
     }
   for (const [door, q] of Object.entries(quota)) add(c, `dropped:${door}`, q?.dropped ?? 0);
   return c;
@@ -126,7 +130,9 @@ export function averaged(sum: Counts, floors: number): Counts {
 /** Keys found per lock of each colour, and overall. A wooden or steel door
  * counts as a yellow lock, since it eats the cheapest key first. */
 export function keysPerLock(c: Counts): Record<KeyColor | "all", number> {
-  const locks = (color: KeyColor) => (c[`door:${color}`] ?? 0) + (color === "yellow" ? (c["door:wood"] ?? 0) + (c["door:steel"] ?? 0) : 0);
+  // A fork's lane doors count 1/k, as the hero opens one lane of k.
+  const doors = (kind: string) => (c[`door:${kind}`] ?? 0) - (c[`forkTile:${kind}`] ?? 0) + (c[`forked:${kind}`] ?? 0);
+  const locks = (color: KeyColor) => doors(color) + (color === "yellow" ? doors("wood") + doors("steel") : 0);
   const ratio = (keys: number, n: number) => (n ? keys / n : NaN);
   const out = {} as Record<KeyColor | "all", number>;
   for (const color of COLORS) out[color] = ratio(c[`key:${color}`] ?? 0, locks(color));
@@ -144,7 +150,7 @@ type Column = [heading: string, value: (c: Counts) => number, digits?: number];
 const count = (k: string): Column[1] => (c) => c[k] ?? 0;
 /** A colour's aimed keys per lock, or `-` while it isn't open. */
 const aim = (color: KeyColor): Column[1] => (c) => c[`aim:${color}`] ?? NaN;
-const alone = (kind: string): Column[1] => (c) => (c[`door:${kind}`] ?? 0) - (c[`forked:${kind}`] ?? 0);
+const alone = (kind: string): Column[1] => (c) => (c[`door:${kind}`] ?? 0) - (c[`forkTile:${kind}`] ?? 0);
 
 const DOOR_COLUMNS: Column[] = [
   ["Y door", count("door:yellow")], ["wood", count("door:wood")], ["wood%", (c) => woodShare(c) * 100, 0], ["W want", count("target:wood"), 0], ["combined", count("door:combined")],

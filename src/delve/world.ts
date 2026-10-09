@@ -25,7 +25,9 @@ import { addEnemies, extraGround, extrasKey, extrasSeed, hasExtras, type ExtraEn
 // v22 makes steel doors Wooden Doors, which a hero without a key breaks down.
 // v23 follows the Tower's door and key schedules by equivalent floor: blue,
 // red and Heart Door quotas, the wooden share and keys per lock.
-export const LAYOUT_VERSION = 23;
+// v24 adds door runs, and counts a fork's lane doors 1/k toward the door
+// quota and keys.
+export const LAYOUT_VERSION = 24;
 
 /** The one 20-row chunk `index` of tier `tier`'s labyrinth, as generated. */
 export function generate(seed: number, index: number, tier = 1): Map<string, Tile> {
