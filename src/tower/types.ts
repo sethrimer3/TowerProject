@@ -1,3 +1,4 @@
+import type { QuotaDoor } from "../key-schedule.ts";
 import type { KeyColor } from "../config.ts";
 import type { TowerEnemyProfile, TowerEnemyStrength } from "../scaling.ts";
 
@@ -134,4 +135,7 @@ export type StrategicGraph = {
   shortcuts: ShortcutRequest[];
   /** Notes from the resource planner, e.g. "blue door left without key". */
   notes: string[];
+  /** The door stage's quota by door, when it rolled any: how many it
+   * rolled, and how many found no place (door-quota.ts). */
+  doorQuota?: Partial<Record<QuotaDoor, { rolled: number; dropped: number }>>;
 };

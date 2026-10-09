@@ -9,7 +9,7 @@ import { embed, ENTRY, type Embedding } from "./embedder.ts";
 import { GraphBuilder, generateStrategicGraph } from "./strategic-graph.ts";
 import { keyedFloor, openFirstFloor } from "./patterns.ts";
 import type { StrategicGraph } from "./types.ts";
-import { ALL_KEY_COLORS, keyColorsOn, type KeyColors } from "../key-schedule.ts";
+import { ALL_KEY_COLORS, towerKeyColorsOn, type KeyColors } from "../key-schedule.ts";
 
 /** Tower floor generation pipeline:
  *
@@ -61,7 +61,7 @@ function insideStairs([x, y]: XY): XY {
  * keeps the first floors' rules: floor 1's stairs stand open, and floors 2
  * to 5 have a yellow door before them and its key in the start hall. */
 function minimalGraph(depth: number, rng: () => number, tier: number): StrategicGraph {
-  const b = new GraphBuilder(depth, rng);
+  const b = new GraphBuilder(depth, rng, towerKeyColorsOn(depth, tier));
   const keyed = keyedFloor(depth);
   b.add({ purpose: "start", patternId: "main", parent: null, gate: { kind: "open" }, route: "main", footprint: "hall",
     rewards: [{ kind: "potion" }, ...(keyed ? [{ kind: "key", color: "yellow" } as const] : [])] });
@@ -72,9 +72,9 @@ function minimalGraph(depth: number, rng: () => number, tier: number): Strategic
 }
 
 /** Floor `room` of a run seeded `seed`, in tower `tier`, which decides
- * the key colours it may use (`keyColorsOn`) and its enemy curve. */
+ * the key colours it may use (`towerKeyColorsOn`) and its enemy curve. */
 export function generateTowerFloor(seed: number, room: number, tier = 1): TowerFloor {
-  const colors = keyColorsOn(room, tier);
+  const colors = towerKeyColorsOn(room, tier);
   const MAX_ATTEMPTS = 12;
   for (let attempt = 0; attempt <= MAX_ATTEMPTS; attempt++) {
     const derived = (seed ^ Math.imul(room + 1, 2654435761) ^ Math.imul(attempt + 1, 40503)) >>> 0;

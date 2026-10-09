@@ -26,7 +26,8 @@ import { ENTRY } from "./embedder.ts";
 // the first tower's first ten floors, in place of enemies.
 // v17 places no Heart Door below floor 101 in the first tower.
 // v18 takes every enemy's stats from the tower's enemy curve (enemy-curves.ts).
-export const TOWER_LAYOUT_VERSION = 18;
+// v19 places blue, red and Heart Doors by the door stage's quota (door-quota.ts).
+export const TOWER_LAYOUT_VERSION = 19;
 
 /** A self-contained 17x17 Tower floor. Generation is strategy-first (see
  * src/tower/index.ts): an abstract graph of gates, keys and rewards is

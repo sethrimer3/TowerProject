@@ -4,8 +4,10 @@ import { TOWER_START_X } from "../src/config.ts";
 import { point } from "../src/entities.ts";
 import { reachable } from "../src/board.ts";
 import { generateTowerFloor } from "../src/tower/index.ts";
+import { generateStrategicGraph } from "../src/tower/strategic-graph.ts";
 import { FORK_PATTERNS, forkKeyDemand, laneKeys, laneSpends, laneValue } from "../src/tower/forks.ts";
 import type { Fork, Lane, LaneStep, StrategicNode } from "../src/tower/types.ts";
+import { quotaDoorsIn } from "../src/key-schedule.ts";
 
 const Y: LaneStep = { kind: "door", color: "yellow" };
 const B: LaneStep = { kind: "door", color: "blue" };
@@ -68,13 +70,14 @@ function worthReaching(nodes: StrategicNode[], id: number): boolean {
 }
 
 test("built forks lead into their region by every lane, and never into a region with nothing in it", () => {
-  const built = new Set<string>();
+  const built = new Set<string>(), planned = new Set<string>();
   let lanesSeen = 0;
   for (let seed = 0; seed < 120; seed++)
-    // Blue and red doors open on floors 21 and 51 of the first tower, and
-    // Heart Doors on 101.
-    for (const room of [0, 2, 5, 25, 55, 105]) {
+    // The door stage places blue, red and Heart Doors, a few a floor by
+    // floor 1,000 of the first tower.
+    for (const room of [0, 2, 5, 25, 55, 105, 1105]) {
       const { cells, embedding } = generateTowerFloor(seed, room);
+      for (const n of generateStrategicGraph(seed, room).nodes) if (n.forks) planned.add(n.forks[0].patternId);
       const start = point(TOWER_START_X, 0);
       const shortcuts = embedding.doorways.filter((d) => d.shortcut).map((d) => point(d.x, d.y));
       for (const node of embedding.graph.nodes.filter((n) => n.forks)) {
@@ -105,5 +108,10 @@ test("built forks lead into their region by every lane, and never into a region 
       }
     }
   assert.ok(lanesSeen > 0);
-  for (const p of FORK_PATTERNS) assert.ok(built.has(p.id), `pattern ${p.id} never built`);
+  // A quota fork holds one quota door, so its fallback gate keeps the count:
+  // the forks holding two kinds are never built.
+  // The door stage plans the forks holding a quota door, and only one kind
+  // (so its fallback gate keeps the count); fewer of them fit the floor.
+  const kinds = (p: (typeof FORK_PATTERNS)[number]) => Object.values(quotaDoorsIn(p.lanes)).filter(Boolean).length;
+  for (const p of FORK_PATTERNS) assert.equal((kinds(p) ? planned : built).has(p.id), kinds(p) <= 1, `pattern ${p.id}`);
 });

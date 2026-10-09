@@ -12,8 +12,9 @@ import {
   type Weighted,
 } from "./patterns.ts";
 import { planForks } from "./forks.ts";
+import { placeQuotaDoors } from "./door-quota.ts";
 import { MAX_REGIONS, planResources } from "./resource-planner.ts";
-import { YELLOW_ONLY, bypassesRareKeys, heartDoorsOn, keyColorsOn, onlyOpenKeys, type KeyColors } from "../key-schedule.ts";
+import { bypassesRareKeys, onlyOpenKeys, towerKeyColorsOn, withoutQuotaDoors, type KeyColors } from "../key-schedule.ts";
 import type {
   Archetype,
   Footprint,
@@ -32,8 +33,10 @@ import type {
  *
  * The main route is the spine that moves towards the staircase; branches are
  * pattern instances (see patterns.ts) that hang off main-route regions.
- * Some gated edges then become forks of parallel lanes (forks.ts), and the
- * resource planner applies soft key/door coherence. */
+ * Some gated edges then become forks of parallel lanes (forks.ts), the door
+ * stage places the floor's quota of blue, red and Heart Doors
+ * (door-quota.ts), and the resource planner applies soft key/door
+ * coherence. Every table but the door stage's offers only yellow doors. */
 
 /** How many child doorways a region can comfortably host. */
 const MAX_CHILDREN: Record<Footprint, number> = { hall: 4, room: 2, pocket: 1 };
@@ -62,6 +65,15 @@ export const earlyPotions = (depth: number, tier: number) => tier === 1 && depth
 export const openOptions = <T>(table: Weighted<T>, colors: KeyColors): Weighted<T> =>
   table.filter((o) => onlyOpenKeys(o.v, colors));
 
+/** `pattern` as ordinary branch planning places it: each gate table without
+ * the options holding a quota door, or null when a step keeps none. Only
+ * the door stage places the rest. */
+function ordinaryPattern(pattern: TowerPattern): TowerPattern | null {
+  const steps = pattern.steps.map((s) => ({ ...s, gate: s.gate.filter((o) => withoutQuotaDoors(o.v)) }));
+  return steps.every((s) => s.gate.length) ? { ...pattern, steps } : null;
+}
+const ORDINARY_PATTERNS = TOWER_PATTERNS.map(ordinaryPattern).filter((p): p is TowerPattern => p !== null);
+
 /** `table` with a potion taking `earlyPotionShare` of its weight, all of it
  * from the enemies (as much as they have). */
 function withPotionGates(table: Weighted<Gate>): Weighted<Gate> {
@@ -73,15 +85,12 @@ function withPotionGates(table: Weighted<Gate>): Weighted<Gate> {
   return [...table.map((o) => (o.v.kind === "enemy" ? { w: o.w * left, v: o.v } : o)), { w: potion, v: { kind: "potion" } }];
 }
 
-function mainGateTable(depth: number, doorBias: number, hearts: boolean): Weighted<Gate> {
+function mainGateTable(depth: number, doorBias: number): Weighted<Gate> {
   return [
     { w: 5, v: { kind: "enemy", strength: "normal" } },
     { w: 1.5 + Math.min(2, depth * 0.1), v: { kind: "enemy", strength: "strong" } },
     { w: 3 * doorBias, v: { kind: "door", color: "yellow" } },
-    { w: depth >= 3 ? 1 * doorBias : 0, v: { kind: "door", color: "blue" } },
-    { w: depth >= 10 ? 0.5 * doorBias : 0, v: { kind: "door", color: "red" } },
     { w: depth >= 1 ? 0.5 * doorBias : 0, v: { kind: "steel" } },
-    { w: hearts ? 0.5 : 0, v: { kind: "heart" } },
   ];
 }
 
@@ -93,25 +102,18 @@ function stairsGateTable(depth: number, doorBias: number): Weighted<Gate> {
     { w: 2.5, v: { kind: "enemy", strength: "strong" } },
     { w: depth >= 5 ? 1 : 0, v: { kind: "enemy", strength: "elite" } },
     { w: 2 * doorBias, v: { kind: "door", color: "yellow" } },
-    { w: depth >= 4 ? 0.8 * doorBias : 0, v: { kind: "door", color: "blue" } },
   ];
 }
 
 export class GraphBuilder {
   nodes: StrategicNode[] = [];
-  /** The key colours a gate on the way to the stairs may take on its own;
-   * with `bypass`, only yellow (`bypassesRareKeys`). */
-  mainColors: KeyColors;
   /** Whether the main route's gates may be potions in place of enemies
    * (`earlyPotions`). */
   potions = false;
-  /** Whether the floor may hold a Heart Door (`heartDoorsOn`). */
-  hearts = false;
-  /** `bypass`: a blue or red door on the way to the stairs only ever
-   * stands in a fork beside a lane without one. */
-  constructor(public depth: number, public rng: () => number, public colors: KeyColors = keyColorsOn(depth), public bypass = false) {
-    this.mainColors = bypass ? YELLOW_ONLY : colors;
-  }
+  /** `colors`: the key colours the floor's keys and doors may take
+   * (`towerKeyColorsOn`). `bypass`: a blue or red door on the way to the
+   * stairs only ever stands in a fork beside a lane without one. */
+  constructor(public depth: number, public rng: () => number, public colors: KeyColors = towerKeyColorsOn(depth, 1), public bypass = false) {}
   add(partial: Omit<StrategicNode, "id" | "children" | "rewards" | "guarded" | "formation" | "tags"> &
     Partial<Pick<StrategicNode, "rewards" | "guarded" | "formation" | "tags">>): StrategicNode {
     const node: StrategicNode = {
@@ -154,7 +156,7 @@ function pickArchetype(depth: number, rng: () => number): Archetype {
 
 /** Try to place one pattern instance. Returns false (leaving the graph
  * untouched) when no main-route region has room for it. */
-function placePattern(b: GraphBuilder, pattern: TowerPattern, mainIds: number[], budget: number): boolean {
+export function placePattern(b: GraphBuilder, pattern: TowerPattern, mainIds: number[], budget: number): boolean {
   if (b.nodes.length + pattern.steps.length > budget) return false;
   const hosts = patternHosts(b, pattern, mainIds);
   if (!hosts.length) return false;
@@ -196,9 +198,8 @@ function addChain(b: GraphBuilder, pattern: TowerPattern, host: number) {
  * (`keyColorsOn`) and the enemy curve its enemies come from. */
 export function generateStrategicGraph(seed: number, depth: number, budgetCut = 0, tier = 1): StrategicGraph {
   const rng = random(seed);
-  const b = new GraphBuilder(depth, rng, keyColorsOn(depth, tier), bypassesRareKeys(tier));
+  const b = new GraphBuilder(depth, rng, towerKeyColorsOn(depth, tier), bypassesRareKeys(tier));
   b.potions = earlyPotions(depth, tier);
-  b.hearts = heartDoorsOn(depth, tier);
   const archetype = pickArchetype(depth, rng);
   const profile = ARCHETYPES[archetype];
   const budget = Math.max(3, Math.min(MAX_REGIONS,
@@ -207,7 +208,8 @@ export function generateStrategicGraph(seed: number, depth: number, budgetCut = 
   addBranches(b, archetype, mainIds, budget);
   const shortcuts = planShortcuts(b, profile, mainIds, stairs);
   planForks(b, archetype);
-  const graph: StrategicGraph = { archetype, depth, ...(tier > 1 ? { tower: tier } : {}), nodes: b.nodes, shortcuts, notes: [] };
+  const doorQuota = placeQuotaDoors(b, archetype, tier);
+  const graph: StrategicGraph = { archetype, depth, ...(tier > 1 ? { tower: tier } : {}), nodes: b.nodes, shortcuts, notes: [], ...(doorQuota ? { doorQuota } : {}) };
   planResources(graph, b, rng);
   return graph;
 }
@@ -229,11 +231,11 @@ function addMainRoute(b: GraphBuilder, profile: ArchetypeProfile, budget: number
   return { mainIds, stairs };
 }
 
-/** The options for a gate on the way to the stairs: only the key colours it
- * may take there, and on the first tower's first floors potions in some
+/** The options for a gate on the way to the stairs (the tables hold only
+ * yellow doors), and on the first tower's first floors potions in some
  * enemies' place. */
 function mainGates(b: GraphBuilder, table: Weighted<Gate>) {
-  const open = openOptions(table, b.mainColors);
+  const open = openOptions(table, b.colors);
   return b.potions ? withPotionGates(open) : open;
 }
 
@@ -250,7 +252,7 @@ function addHub(b: GraphBuilder, profile: ArchetypeProfile, parent: number, last
   const hub = b.add({
     purpose: last || rng() < 0.6 ? "hub" : "transition",
     patternId: "main", parent,
-    gate: openFirstFloor(depth) ? freeGate(b) : pick(mainGates(b, mainGateTable(depth, profile.doorBias, b.hearts)), rng),
+    gate: openFirstFloor(depth) ? freeGate(b) : pick(mainGates(b, mainGateTable(depth, profile.doorBias)), rng),
     rewards: rng() < GRAPH_TUNING.hubPotionChance ? [{ kind: "potion" }] : [],
     formation: "cluster", route: "main", footprint: "hall", tags: ["progressionRoute"],
   });
@@ -284,7 +286,7 @@ function addStairs(b: GraphBuilder, profile: ArchetypeProfile, parent: number) {
 function addBranches(b: GraphBuilder, archetype: Archetype, mainIds: number[], budget: number) {
   let failures = 0;
   while (b.nodes.length < budget && failures < 12) {
-    const options = TOWER_PATTERNS
+    const options = ORDINARY_PATTERNS
       .filter((p) => b.nodes.length + p.steps.length <= budget)
       .map((p) => ({ w: patternFits(p, b.colors) ? patternWeight(p, b.depth, archetype) : 0, v: p }))
       .filter((o) => o.w > 0);
@@ -302,6 +304,6 @@ function planShortcuts(b: GraphBuilder, profile: ArchetypeProfile, mainIds: numb
   return [{
     from: mainIds[0],
     to: rng() < 0.5 ? stairs.id : mainIds[mainIds.length - 1],
-    gate: { kind: "door", color: depth >= 6 && b.colors.blue && rng() < 0.3 ? "blue" : "yellow" },
+    gate: { kind: "door", color: "yellow" },
   }];
 }

@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import type { Tile } from "../src/entities.ts";
-import { ALL_KEY_COLORS, keyColorsOn, onlyOpenKeys } from "../src/key-schedule.ts";
+import { ALL_KEY_COLORS, keyColorsOn, onlyOpenKeys, towerKeyColorsOn } from "../src/key-schedule.ts";
 import { generateTowerFloor } from "../src/tower/index.ts";
 import { generate } from "../src/delve/world.ts";
 import { depthAt, ownerAt } from "../src/delve/labyrinth.ts";
@@ -14,7 +14,7 @@ import { FULL } from "./test-size.ts";
 const colorsOf = (t: Tile) =>
   t.kind === "key" ? [t.color] : t.kind === "door" ? (t.door?.type === "keys" && t.door.mode === "all" ? t.door.keys : t.color ? [t.color] : []) : [];
 
-test("the first tier opens blue keys on floor 21 and red on floor 51; later tiers open every colour", () => {
+test("the first delve opens blue keys on floor 21 and red on floor 51; later delves open every colour", () => {
   assert.deepEqual(keyColorsOn(0), { yellow: true, blue: false, red: false });
   assert.deepEqual(keyColorsOn(19), { yellow: true, blue: false, red: false }, "floor 20, a boss floor");
   assert.deepEqual(keyColorsOn(20), { yellow: true, blue: true, red: false }, "floor 21");
@@ -25,20 +25,24 @@ test("the first tier opens blue keys on floor 21 and red on floor 51; later tier
   assert.equal(onlyOpenKeys({ lanes: [[{ kind: "door", color: "blue" }]] }, keyColorsOn(0)), false);
 });
 
-test("first-tower floors hold no blue key or door below floor 21, nor red below 51", () => {
-  const seen = { tier1: new Set<string>(), tier2: new Set<string>() };
+test("the Tower opens blue keys and doors on floor 51 less 5 a tower, and red on 101 less 10", () => {
+  assert.deepEqual(towerKeyColorsOn(49, 1), { yellow: true, blue: false, red: false }, "floor 50");
+  assert.deepEqual(towerKeyColorsOn(50, 1), { yellow: true, blue: true, red: false }, "floor 51");
+  assert.deepEqual(towerKeyColorsOn(100, 1), ALL_KEY_COLORS, "floor 101");
+  assert.deepEqual(towerKeyColorsOn(9, 9), { yellow: true, blue: false, red: false }, "Tower IX's floor 10");
+  assert.deepEqual(towerKeyColorsOn(10, 9), { yellow: true, blue: true, red: false }, "its floor 11");
+  assert.deepEqual(towerKeyColorsOn(20, 9), ALL_KEY_COLORS, "its floor 21");
+  const seen = new Set<string>();
   const seeds = FULL ? 40 : 12;
-  for (let seed = 1; seed <= seeds; seed++)
-    for (let room = 0; room < 60; room += seed % 3 + 1) {
-      for (const [, t] of generateTowerFloor(seed, room).cells)
-        for (const c of colorsOf(t)) {
-          assert.ok(keyColorsOn(room)[c], `seed ${seed} floor ${room + 1}: a ${c} ${t.kind}`);
-          seen.tier1.add(`${c}:${room < 20 ? "early" : room < 50 ? "middle" : "late"}`);
-        }
-      if (room < 19) for (const [, t] of generateTowerFloor(seed, room, 2).cells) for (const c of colorsOf(t)) seen.tier2.add(c);
-    }
-  assert.ok(seen.tier1.has("blue:middle") && seen.tier1.has("red:late"), "they appear once open");
-  assert.ok(seen.tier2.has("blue") && seen.tier2.has("red"), "the second tower has them from its first floors");
+  for (const tower of [1, 9])
+    for (let seed = 1; seed <= seeds; seed++)
+      for (let room = 0; room < 160; room += seed % 3 + 2)
+        for (const [, t] of generateTowerFloor(seed, room, tower).cells)
+          for (const c of colorsOf(t)) {
+            assert.ok(towerKeyColorsOn(room, tower)[c], `Tower ${tower} seed ${seed} floor ${room + 1}: a ${c} ${t.kind}`);
+            seen.add(`${tower}:${c}`);
+          }
+  for (const k of ["1:blue", "1:red", "9:blue", "9:red"]) assert.ok(seen.has(k), `${k} appears once open`);
 });
 
 test("the first delve holds no blue key or door below equivalent floor 21, nor red below 51", () => {
@@ -72,7 +76,7 @@ test("in the first tower a blue or red door never stands alone on the way to the
   let rareDoors = 0, bottlenecks = 0;
   const seeds = FULL ? 30 : 10;
   for (let seed = 1; seed <= seeds; seed++)
-    for (let room = 20; room < 100; room += seed % 4 + 1) {
+    for (let room = 600; room < 700; room += seed % 4 + 1) {
       const { cells } = generateTowerFloor(seed, room);
       rareDoors += [...cells].filter(([, t]) => t.kind === "door" && colorsOf(t).some((c) => c !== "yellow")).length;
       assert.ok(stairsWithoutRareKeys(cells), `seed ${seed} floor ${room + 1}: the stairs need a blue or red key`);

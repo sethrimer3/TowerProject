@@ -195,9 +195,11 @@ function addKeySource(plan: Plan, door: Door): boolean {
   return false;
 }
 
-/** Open and package keys need no new region; the rest need room for one. */
+/** Open and package keys need no new region; the rest need room for one.
+ * A key behind a lower door only ever stands behind a yellow one: blue and
+ * red doors come only from the door stage's quota (door-quota.ts). */
 const sourceFits = (kind: SourceKind, color: KeyColor, roomForNode: boolean) =>
-  kind === "open" || kind === "package" || (roomForNode && (kind !== "lowerDoor" || LOWER[color] !== null));
+  kind === "open" || kind === "package" || (roomForNode && (kind !== "lowerDoor" || LOWER[color] === "yellow"));
 
 /** Places the key as `kind` says; only a package can fail, when no room
  * takes it. */

@@ -1,4 +1,5 @@
 import type { KeyColor } from "../config.ts";
+import { QUOTA_DOORS, towerDoorRate } from "../key-schedule.ts";
 import { doorRule } from "../doors.ts";
 import type { Tile } from "../entities.ts";
 import { generateTowerFloor, type TowerFloor } from "./index.ts";
@@ -10,7 +11,9 @@ import type { LaneStep } from "./types.ts";
 
 /** One floor's counts, keyed `door:<kind>`, `forked:<kind>` (the doors of
  * that kind standing in a built fork's lanes), `key:<colour>`,
- * `enemy:<strength>` or an item's kind. */
+ * `enemy:<strength>`, an item's kind, or `dropped:<door>` (quota doors the
+ * door stage found no place for); the census adds `target:<door>`, the
+ * schedule's rate. */
 export type Counts = Record<string, number>;
 
 const ITEMS = new Set(["potion", "attack", "defense", "treasure"]);
@@ -45,6 +48,7 @@ export function floorCounts({ cells, embedding }: TowerFloor): Counts {
         const kind = laneDoorKind(step);
         if (kind) add(c, `forked:${kind}`);
       }
+  for (const [door, q] of Object.entries(embedding.graph.doorQuota ?? {})) add(c, `dropped:${door}`, q.dropped);
   return c;
 }
 
@@ -78,6 +82,7 @@ export function census(o: CensusOptions): CensusBand[] {
         for (let s = 0; s < o.seeds; s++) {
           floors++;
           for (const [k, n] of Object.entries(floorCounts(generateTowerFloor(censusSeed(s), f - 1, tower)))) add(sum, k, n);
+          for (const door of QUOTA_DOORS) add(sum, `target:${door}`, towerDoorRate(door, f - 1, tower));
         }
       const avg: Counts = {};
       for (const [k, n] of Object.entries(sum)) avg[k] = n / floors;
@@ -111,9 +116,10 @@ const alone = (kind: string): Column[1] => (c) => (c[`door:${kind}`] ?? 0) - (c[
 
 const DOOR_COLUMNS: Column[] = [
   ["Y door", count("door:yellow")], ["steel", count("door:steel")], ["steel%", (c) => steelShare(c) * 100, 0],
-  ["B alone", alone("blue")], ["B fork", count("forked:blue")],
-  ["R alone", alone("red")], ["R fork", count("forked:red")],
-  ["H alone", alone("heart")], ["H fork", count("forked:heart")],
+  ["B want", count("target:blue")], ["B alone", alone("blue")], ["B fork", count("forked:blue")],
+  ["R want", count("target:red")], ["R alone", alone("red")], ["R fork", count("forked:red")],
+  ["H want", count("target:heart")], ["H alone", alone("heart")], ["H fork", count("forked:heart")],
+  ["dropped", (c) => QUOTA_DOORS.reduce((s, d) => s + (c[`dropped:${d}`] ?? 0), 0)],
   ["Y key", count("key:yellow")], ["B key", count("key:blue")], ["R key", count("key:red")],
   ["Y/lock", (c) => keysPerLock(c).yellow], ["B/lock", (c) => keysPerLock(c).blue],
   ["R/lock", (c) => keysPerLock(c).red], ["all/lock", (c) => keysPerLock(c).all],

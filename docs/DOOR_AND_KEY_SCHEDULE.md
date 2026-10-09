@@ -63,6 +63,8 @@ Today blue, red and Heart Doors come from about six weighted tables (main gate, 
 
      The region's fallback single gate becomes the quota door itself, so a fork that doesn't fit the floor still leaves the door standing. In Tower I a lone blue or red gate may not stand on the way to the stairs, so there this way is used only on branches.
 
+     A quota fork holds only one quota door, so the fallback gate keeps the count whether or not the fork fits. *blueOrRedDoor* and *twoBlueDoorsOrRedDoor* hold both a blue and a red door, so they're no longer built. About one quota fork in five fits the floor; the rest stand as their single door.
+
    A door that fits nowhere is dropped, and the census counts it (section 5). A door in a fork counts fully toward the quota. The census reports forked and unforked doors separately, so we can see whether forks take too much of the quota, given that a forked door can be walked around.
 4. **Wooden doors:** every yellow lock left (gates, the stairs door, shortcuts, fork lanes) rolls the wooden share.
 5. **Keys:** the resource planner then plans keys for whatever doors the floor has, as now, under the key-supply curve (section 4).

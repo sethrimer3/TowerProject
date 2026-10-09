@@ -3,7 +3,7 @@ import type { TowerEnemyProfile } from "../scaling.ts";
 import { ARCHETYPES, keyedFloor, pick, type Weighted } from "./patterns.ts";
 import type { GraphBuilder } from "./strategic-graph.ts";
 import type { Archetype, Fork, Gate, Lane, LaneStep, Reward, StrategicNode, StrategicTag, Strength } from "./types.ts";
-import { YELLOW_ONLY, onlyOpenKeys, withoutHeart } from "../key-schedule.ts";
+import { YELLOW_ONLY, onlyOpenKeys, withoutQuotaDoors } from "../key-schedule.ts";
 
 /** Forks: two or three parallel lanes from one region into the next, each
  * paying a different resource, so entering asks *what* to spend.
@@ -246,7 +246,8 @@ export function planForks(b: GraphBuilder, archetype: Archetype) {
   for (const node of b.nodes) {
     if (placed >= FORK_TUNING.maxPerFloor) break;
     if (!mayFork(b, node) || rng() >= FORK_TUNING.chance(depth)) continue;
-    const forks = forksWorth(stepValue(node.gate), depth, archetype, rng, forkFits(b, node));
+    const fits = forkFits(b, node);
+    const forks = forksWorth(stepValue(node.gate), depth, archetype, rng, (f) => fits(f) && withoutQuotaDoors(f));
     if (!forks.length) continue;
     node.forks = forks;
     placed++;
@@ -261,17 +262,18 @@ const paid = (gate: Gate) => gate.kind !== "open" && gate.kind !== "potion";
  * reaching. Floors 2 to 5 lay a key behind every door, planned from its
  * gate: a fork there never replaces a lock (the embedder may fall back to
  * it). */
-function mayFork(b: GraphBuilder, node: StrategicNode) {
+export function mayFork(b: GraphBuilder, node: StrategicNode) {
   if (node.parent === null || !paid(node.gate) || !worthReaching(b.nodes, node.id)) return false;
   return !keyedFloor(b.depth) || !isLock(node.gate);
 }
 
-/** The forks `node` may take: only keys open on this floor, no Heart Door
- * before `heartDoorsOn`, no lock on floors 2 to 5, and in the first tower a
- * lane past blue and red on the main route. */
-function forkFits(b: GraphBuilder, node: StrategicNode) {
+/** The forks `node` may take: only keys open on this floor, no lock on
+ * floors 2 to 5, and in the first tower a lane past blue and red on the main
+ * route. Ordinary fork planning also leaves out every fork holding a quota
+ * door, which only the door stage places (door-quota.ts). */
+export function forkFits(b: GraphBuilder, node: StrategicNode) {
   const colors = b.colors, keyed = keyedFloor(b.depth), bypass = b.bypass && node.route === "main";
-  return (f: Fork) => onlyOpenKeys(f, colors) && (b.hearts || withoutHeart(f)) && (!keyed || withoutLocks(f)) && (!bypass || bypassesRareKeys(f));
+  return (f: Fork) => onlyOpenKeys(f, colors) && (!keyed || withoutLocks(f)) && (!bypass || bypassesRareKeys(f));
 }
 
 /** A door that takes keys. */

@@ -112,6 +112,10 @@ _Avoid_: stairs gate (the gate is the stairs room's way in)
 One way through a fork: one to three tiles of gates walked in order, sometimes with an item between them (a treasure, or a key that pays for the door after it).
 _Avoid_: corridor, path
 
+**Door quota**:
+How many blue, red and Heart Doors a Tower floor holds, rolled from the door schedule for its tower and floor: none before each door's first floor, then a little more every ten floors. Only the door stage places them, so the schedule sets their number on every floor.
+_Avoid_: door rate (the rate is what the quota is rolled from), door budget
+
 **Enemy curve**:
 How strong a normal, balanced enemy is on each floor of a tower or delve: HP and ATK set at a few anchor floors and grown smoothly between them, and DEF a share of ATK. Every enemy is that floor's curve times its strength and profile, so a boss placed on any floor takes that floor's value.
 _Avoid_: power budget, enemy table, zone stats
