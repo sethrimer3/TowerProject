@@ -24,6 +24,7 @@ import { equipmentWaiting } from "../equipment/inventory.ts";
 import { GOLD_BOOST_FACTOR, GOLD_BOOST_MS } from "../gold-boost.ts";
 import { adsOff } from "../shop/entitlements.ts";
 import { renderRunMenu } from "./run-menu.ts";
+import { factorText, goldBonuses, goldBonusTotal } from "../gold-bonuses.ts";
 
 /** The stats cluster, action buttons and status line around the board. */
 
@@ -503,6 +504,7 @@ function renderProgress(game: Game) {
   const rawAllBest = game.save[game.mode].best;
   text("height", outside ? game.save[game.mode].tier : displayedProgress(game.run.height));
   renderRunEarned(game);
+  renderGoldBonus(game);
   renderBaseEnemy(game);
   const rewardEl = el("best-reward");
   rewardEl.hidden = rawRunBest <= rawAllBest;
@@ -510,6 +512,15 @@ function renderProgress(game: Game) {
   text("best-reward-val", milestones(rules, rawAllBest, rawRunBest));
   text("best-reward-type", rules.words.currency.toUpperCase());
   rewardEl.title = rules.words.newBest;
+}
+
+/** Inside a run, between lines under the floor: every Gold bonus applied,
+ * multiplied together; pressed, it lists them (`toggleGoldBonusBox`). */
+function renderGoldBonus(game: Game) {
+  const button = el("gold-bonus"), inside = !game.run.outside;
+  button.hidden = el("gold-bonus-divider").hidden = !inside;
+  if (!inside) return;
+  text("gold-bonus-val", factorText(goldBonusTotal(goldBonuses(game.save, game.tier, game.clock()))));
 }
 
 /** A stat in a few characters: two decimals below 1,000 when not whole,

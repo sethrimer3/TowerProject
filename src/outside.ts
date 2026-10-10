@@ -186,13 +186,32 @@ function paintPebbles(c: CanvasRenderingContext2D) {
 // World-space landmark: its doorway meets the actual interactive stairs tile.
 // `numeral` (once a second tier is open) glows over the doorway: the tier
 // the path leads into.
-export function drawEntrance(c: CanvasRenderingContext2D, mode: Mode, center: number, numeral = "") {
+// `bonus` (the tier's Gold multiplier, "×3.1", and the Gold coin once loaded)
+// stands in a line under the numeral, which rises to make room for it.
+export function drawEntrance(c: CanvasRenderingContext2D, mode: Mode, center: number, numeral = "", bonus?: { text: string; coin: CanvasImageSource | null }) {
   const x = center * 24 + 12, base = (OUTSIDE_SIZE - 1 - ENTRANCE_Y) * 24;
   c.save();
   if (mode === "tower") drawTowerGate(c, x, base);
   else drawCaveMouth(c, x, base);
-  if (numeral) drawTierNumeral(c, numeral, x, base - (mode === "tower" ? 66 : 76));
+  const y = base - (mode === "tower" ? 66 : 76);
+  if (numeral) {
+    drawTierNumeral(c, numeral, x, bonus ? y - 24 : y);
+    if (bonus) drawGoldBonus(c, bonus.text, bonus.coin, x, y);
+  }
   c.restore();
+}
+
+/** The Gold coin, ×, and the multiplier, centred on (x, y), in gold. */
+function drawGoldBonus(c: CanvasRenderingContext2D, text: string, coin: CanvasImageSource | null, x: number, y: number) {
+  const size = 14, gap = 3, width = size + gap + text.length * 8, left = x - width / 2;
+  if (coin) { c.save(); c.imageSmoothingEnabled = false; c.drawImage(coin, left, y - size / 2, size, size); c.restore(); }
+  c.font = "700 14px Cinzel";
+  c.textAlign = "left";
+  c.textBaseline = "middle";
+  c.shadowColor = "#ffc94a";
+  c.shadowBlur = 8;
+  c.fillStyle = "#ffe9a8";
+  c.fillText(text, left + size + gap, y + 1);
 }
 
 /** The tier's number, glowing gold. */

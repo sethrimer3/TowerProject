@@ -50,6 +50,8 @@ export function sprite(url: string) {
   return image.complete && image.naturalWidth ? image : null;
 }
 const heart = () => sprite(HEART_URL);
+/** The Gold coin, or null while it loads. */
+export const goldCoin = () => sprite(GOLD_URL);
 let silverCoin: HTMLCanvasElement | null = null;
 /** The coin for `coin`, or null while it loads. There is no Silver art yet,
  * so Silver is the Gold coin drained of colour and brightened, as the

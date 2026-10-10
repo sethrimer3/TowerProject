@@ -1,7 +1,8 @@
 import { CHUNK, TOWER_HEIGHT, VIEWPORT_TILES } from "./config.ts";
 import type { Game } from "./state.ts";
 import type { Tile, Torch } from "./entities.ts";
-import { tierNumeral } from "./tiers.ts";
+import { TIER_BONUS_TENTHS, tierNumeral } from "./tiers.ts";
+import { factorText } from "./gold-bonuses.ts";
 import { drawBlacksmith, drawEntrance, drawTournamentHall, OutsideWorld, OUTSIDE_SIZE, outsideWeather, roadsOf } from "./outside.ts";
 import { DecorLayer, type DecorFrame, type MirroredSprites } from "./decor-render.ts";
 import { OutsideGrass } from "./outside-grass.ts";
@@ -13,7 +14,7 @@ import type { AtmosphereConfig } from "./lighting-pass.ts";
 import { DungeonLight, type LitBoard } from "./dungeon-light.ts";
 import { drawNeonContents, drawNeonGround, drawNeonTorch, paintNeonHero } from "./neon-board.ts";
 import { RoutePath } from "./route-path.ts";
-import { BoardPopups, lunges } from "./board-popups.ts";
+import { BoardPopups, goldCoin, lunges } from "./board-popups.ts";
 import { DamagePredictions, drawDamageLabels } from "./damage-labels.ts";
 import { BossFlash } from "./boss-flash.ts";
 import { goalUnlocked } from "./goals.ts";
@@ -344,7 +345,9 @@ export class Renderer {
     c.translate(-f.left * f.s, (f.n - OUTSIDE_SIZE + f.bottom) * f.s);
     c.scale(f.s / 24, f.s / 24);
     const slice = g.save[g.mode];
-    drawEntrance(c, g.mode, Math.floor(g.world.width / 2), slice.tiersOpen > 1 ? tierNumeral(slice.tier) : "");
+    const tiers = slice.tiersOpen > 1;
+    drawEntrance(c, g.mode, Math.floor(g.world.width / 2), tiers ? tierNumeral(slice.tier) : "",
+      tiers ? { text: factorText(TIER_BONUS_TENTHS[slice.tier - 1]! / 10), coin: goldCoin() } : undefined);
     if (g.world instanceof OutsideWorld && g.world.blacksmith) drawBlacksmith(c, g.world.entranceX);
     if (g.world instanceof OutsideWorld && g.world.hall) drawTournamentHall(c, g.world.entranceX);
     c.restore();

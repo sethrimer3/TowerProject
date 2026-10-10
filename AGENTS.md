@@ -340,6 +340,11 @@ Nothing else is locked meanwhile; tests that play the hand from a new game start
 It sets `globalThis.__handStartsPaused` and `__handHeld` (read by `frame-loop.ts`: the frame loop never runs the hand's turns), so pressing play or a card's Focus changes the HUD but no step can land between a snapshot's checks.
 As with the render golden, regenerate it with `UPDATE_GOLDEN=1` on the unchanged code before a UI change (HTML goes to `test-results/ui*/`).
 
+**Gold bonuses** (`gold-bonuses.ts`, `goldBonuses`) list every multiplier on the Gold banked, as the player sees it: the tower's (`TIER_BONUS_TENTHS`), the ads' ×1.5 on one line (*Ad Boost* while the Gold ad's boost runs, else *Disable ads* for Ad-Disable, since only one can be active), and each Coin Pack, a bonus not applied having a null factor, shown as *Inactive*.
+`goldBonusTotal` multiplies those applied.
+Inside a run the HUD's height column shows the total on a line of its own between two dividers, under the floor and above the base enemy's stats (`#gold-bonus`, `renderGoldBonus` in `ui/hud.ts`); pressed, it opens the *All Gold Bonuses* box (`ui/gold-bonus-box.ts`), a plain layer rather than the shared dialog, so the game plays on behind it, and a press anywhere closes it.
+In the forest, once a second tower is open, `drawEntrance` draws the tier's Gold coin, × and multiplier in a line under the numeral over the arch.
+
 **Medieval theme** (setting `medievalTheme`, "Render Medieval Theme", off by default) is ported from the TowerDefense repo: `src/medieval.css` is its `theme.css` with every selector scoped under `html.medieval` (regenerate by re-scoping, never hand-edit selectors unscoped), loaded after `style.css`, with textures in `assets/theme/`.
 `ui/medieval.ts` toggles the `medieval` and `reduce-motion` root classes (at start-up and from the Settings page) and, only while the theme is on, plays `src/sound.ts`'s synthesized cues (Web Audio, no files) and `ui/flourish.ts`'s sparks on button presses; the Defend page, skill trees and `main.ts` call `play(...)`, which stays silent otherwise.
 Nothing in the theme changes layout while it is off.

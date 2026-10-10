@@ -37,6 +37,7 @@ import { TournamentClient } from "./tournament/client.ts";
 import { stubTournament } from "./tournament/server.ts";
 import { TournamentPage } from "./ui/tournament-page.ts";
 import { revealReward } from "./ui/reward-reveal.ts";
+import { toggleGoldBonusBox } from "./ui/gold-bonus-box.ts";
 import { MailClient } from "./mail/client.ts";
 import { postStubMail, stubMail } from "./mail/server.ts";
 import { MailDialog } from "./ui/mail-dialog.ts";
@@ -268,6 +269,7 @@ el("gold-ad").onclick = () => {
   save();
   update();
 };
+el("gold-bonus").onclick = () => toggleGoldBonusBox(game);
 el("end-run").onclick = () => {
   closeRunMenu();
   runEnd.ask();
