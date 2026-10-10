@@ -56,14 +56,19 @@ export function forecast(player: Player, enemy: Enemy, crit: CritRule): CritFore
  * that is more than it can take), summed once up to `most` strikes. */
 function damageByTurns(player: Player, enemy: Enemy, most: number) {
   const taken: number[] = [0], shroud = player.shroud ?? 0, fatal = player.hp + shroud;
+  // Lifesteal: a fight of t strikes deals the enemy's whole HP, so restores
+  // that share of it, taken as t equal parts as the strikes land (the cap at
+  // max HP is left out).
+  const healed = player.lifesteal ? snap((enemy.hp * player.lifesteal) / 100) : 0;
   let attack = enemy.attack, sum = 0;
   for (let t = 1; t <= most; t++) {
     if (t > 1) {
       sum = snap(sum + Math.max(0, attack - player.defense));
       attack = raisedAttack(attack);
     }
-    taken.push(sum >= fatal ? Infinity : snap(Math.max(0, sum - shroud)));
-    if (sum >= fatal) break;
+    const felled = healed ? snap(sum - shroud - (healed * (t - 1)) / t) >= player.hp : sum >= fatal;
+    taken.push(felled ? Infinity : snap(Math.max(0, sum - shroud - healed)));
+    if (healed ? sum >= fatal + healed : sum >= fatal) break;
   }
   return (t: number) => taken[Math.min(t, taken.length - 1)]!;
 }

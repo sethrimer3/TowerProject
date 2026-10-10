@@ -8,6 +8,10 @@ export type CombatPrediction = {
   damage: number;
   survivable: boolean;
   requiredAttack: number;
+  /** The hero's HP once the fight is over, when Lifesteal is in play (its
+   * heals counted as the fight goes, up to max HP): `damage` is then the
+   * HP lost net of them, and this the exact ending a step resolves to. */
+  hpAfter?: number;
 };
 
 /** The ATK the hero strikes `enemy` with: its own, raised against a boss
@@ -63,6 +67,10 @@ export function predict(player: Player, enemy: Enemy): CombatPrediction {
   }
   // Snapped, so 10.2 HP against strikes of 1.02 takes 10, as it does played out.
   const turns = Math.ceil(snap(enemy.hp / hit));
+  if (player.lifesteal) {
+    const hpAfter = lifestealEnding(player, enemy, hit);
+    if (hpAfter !== null) return { impervious: false, hit, turns, damage: snap(Math.max(0, player.hp - hpAfter)), survivable: true, requiredAttack: 0, hpAfter };
+  }
   // The shroud takes the first of it, whichever strikes that falls on.
   const damage = snap(Math.max(0, damageTaken(enemy.attack, player.defense, turns - 1) - (player.shroud ?? 0)));
   return {
@@ -70,9 +78,32 @@ export function predict(player: Player, enemy: Enemy): CombatPrediction {
     hit,
     turns,
     damage,
-    survivable: player.hp > damage,
+    survivable: player.hp > damage && !player.lifesteal,
     requiredAttack: 0,
   };
+}
+
+/** What each strike's damage restores of the hero's HP (Lifesteal), the
+ * share of it in percent. */
+const lifestealHeal = (player: Player, dealt: number) => snap((dealt * (player.lifesteal ?? 0)) / 100);
+
+/** The hero's HP when a fight against `enemy` ends, the hero's strikes each
+ * dealing `hit` and healing by its Lifesteal as they land (before the
+ * enemy's reply, up to max HP), or null when the enemy fells it first. It
+ * plays the rounds as `bout` does, so the two end alike. */
+function lifestealEnding(player: Player, enemy: Enemy, hit: number) {
+  let hp = player.hp, enemyHp = enemy.hp, attack = enemy.attack, shroud = player.shroud ?? 0;
+  for (;;) {
+    const dealt = Math.min(hit, enemyHp);
+    enemyHp = snap(Math.max(0, enemyHp - hit));
+    hp = snap(Math.min(player.maxHp, hp + lifestealHeal(player, dealt)));
+    if (!enemyHp) return hp;
+    const struck = snap(Math.max(0, attack - player.defense)), shrouded = Math.min(shroud, struck);
+    shroud = snap(shroud - shrouded);
+    hp = snap(Math.max(0, hp - snap(struck - shrouded)));
+    if (!hp) return null;
+    attack = raisedAttack(attack);
+  }
 }
 
 /** Attack Lore: the fewest whole points of ATK more that defeat `enemy` in
@@ -125,8 +156,9 @@ export const REVIVE_MS = 1400;
  * (`shrouded`), and `damage` is what gets through to the hero. A strike
  * that would have felled the hero but revived it (`revived`) leaves it at
  * full HP. A critical hero strike carries the applications of the
- * critical factor it landed (`crit`). */
-export type Strike = { by: "hero" | "enemy"; damage: number; crit?: number; shrouded?: number; revived?: true; start: number; at: number; end: number; hp: number };
+ * critical factor it landed (`crit`), and one that heals the hero
+ * (Lifesteal) the hero's HP after it (`heroHp`). */
+export type Strike = { by: "hero" | "enemy"; damage: number; crit?: number; heroHp?: number; shrouded?: number; revived?: true; start: number; at: number; end: number; hp: number };
 export type Bout = { strikes: Strike[]; duration: number };
 /** Whether the enemy's strike numbered `strike` (from 0) in a fight, which
  * would fell the hero, revives it instead (the Revive skill). */
@@ -167,8 +199,11 @@ function play(strikes: Strike[], { player, enemy, revives, crits }: Fighters, st
     if (!s.enemyNext) {
       const applications = crits?.applications(s.heroStrikes) ?? 0, struck = applications ? heroHit(player, enemy, critMultiplier(crits!.factor, applications)) : hit;
       s.heroStrikes++;
+      const dealt = Math.min(struck, s.enemyHp), healed = player.lifesteal ? snap(Math.min(player.maxHp, s.heroHp + lifestealHeal(player, dealt))) : s.heroHp;
+      const heals = healed !== s.heroHp;
+      s.heroHp = healed;
       s.enemyHp = snap(Math.max(0, s.enemyHp - struck));
-      strike({ by: "hero", damage: struck, ...(applications ? { crit: applications } : {}), hp: s.enemyHp });
+      strike({ by: "hero", damage: struck, ...(applications ? { crit: applications } : {}), ...(heals ? { heroHp: healed } : {}), hp: s.enemyHp });
       if (!s.enemyHp) break;
     }
     s.enemyNext = false;
@@ -243,7 +278,9 @@ function withStrike(round: Round, s: Strike, t: number): Round {
   const at = { start: t, at: t, end: t };
   if (s.by === "hero") {
     const crit = (round.hero?.crit ?? 0) + (s.crit ?? 0);
-    return { ...round, hero: { by: "hero", damage: snap((round.hero?.damage ?? 0) + s.damage), ...(crit ? { crit } : {}), hp: s.hp, ...at } };
+    // A heal comes after the enemy's strikes already in the round, so the HP the round ends on is the healed one.
+    const heroHp = s.heroHp ?? round.hero?.heroHp, enemy = s.heroHp !== undefined && round.enemy ? { ...round.enemy, hp: s.heroHp } : round.enemy;
+    return { ...round, ...(enemy ? { enemy } : {}), hero: { by: "hero", damage: snap((round.hero?.damage ?? 0) + s.damage), ...(crit ? { crit } : {}), ...(heroHp !== undefined ? { heroHp } : {}), hp: s.hp, ...at } };
   }
   const prev = round.enemy, shrouded = snap((prev?.shrouded ?? 0) + (s.shrouded ?? 0));
   return { ...round, enemy: { by: "enemy", damage: snap((prev?.damage ?? 0) + s.damage), ...(shrouded ? { shrouded } : {}), ...(s.revived ? { revived: true as const } : {}), hp: s.hp, ...at } };
@@ -256,6 +293,10 @@ export const revivals = (fight: Bout) => fight.strikes.filter((s) => s.revived).
 
 /** The hero's HP `elapsed` ms into a fight that began at `hp`. */
 export function heroHpDuring(fight: Bout, hp: number, elapsed: number) {
-  for (const s of fight.strikes) if (s.by === "enemy" && s.at <= elapsed) hp = s.hp;
+  for (const s of fight.strikes) {
+    if (s.at > elapsed) continue;
+    if (s.by === "enemy") hp = s.hp;
+    else if (s.heroHp !== undefined) hp = s.heroHp;
+  }
   return hp;
 }

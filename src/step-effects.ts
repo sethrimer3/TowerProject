@@ -89,7 +89,10 @@ export function resolveStep(player: Player, tile: Tile, rules: StepRules = BASE_
       // The fight plays out as predicted; a scale adds to (or gives back)
       // its damage once it is over, which can fell the hero.
       const damage = scaled(combat.damage);
-      next.hp = healAfterVictory(snap(Math.max(0, next.hp - damage)), next.maxHp, rules);
+      // With Lifesteal the fight ends on the HP `predict` worked out, heals
+      // counted; a scale's extra damage comes off that.
+      const left = combat.hpAfter === undefined ? snap(next.hp - damage) : snap(combat.hpAfter - (damage - combat.damage));
+      next.hp = healAfterVictory(snap(Math.max(0, left)), next.maxHp, rules);
       effect.combat = scale === 1 ? combat : { ...combat, survivable: next.hp > 0 };
       if (scale !== 1) Object.assign(effect, { extraDamage: snap(damage - combat.damage), scale });
       break;

@@ -303,6 +303,14 @@ export const UPGRADES = [
     currency: "inspiration",
   },
   {
+    id: "lifesteal",
+    name: "Lifesteal",
+    description: "Open Lifesteal training: each of your strikes restores a share of the damage it deals as HP",
+    base: 10,
+    max: 1,
+    currency: "inspiration",
+  },
+  {
     id: "keySiphon",
     name: "Key Siphon",
     description: "Add the KEY SIPHON card to your deck: it trades Max HP training levels, for the rest of the run, for a yellow key, each use costing one level more than the last",
@@ -500,7 +508,9 @@ export const TRAINING_GROUPS = { offense: "Offense", defense: "Defense", utility
  * hero's level: levels only earn the points that buy ranks. Each curve is
  * super-linear, every rank worth more than the one before. Regen adds to
  * the HP regained each step in a run, Shroud to the damage the shroud
- * blocks each fight. Potion % adds `POTION_PERCENT_RANK`
+ * blocks each fight, Lifesteal (0.1% of the damage a strike deals for the
+ * first rank, each later rank adding 0.001% less, 0.021% for the 80th, 4.84%
+ * in all) to the share of it restored as HP. Potion % adds `POTION_PERCENT_RANK`
  * to what a percent potion restores, Find Potion `FIND_POTION_RANK` to
  * the chance a potion is a percent potion, Gold / Floor
  * `FLOOR_GOLD_RANK` to the Gold a new floor pays and Silver / Floor
@@ -520,6 +530,7 @@ export const TRAINING = [
   { id: "shroud", name: "Shroud", group: "defense", stat: "shroud", curve: { per: 1, cube: 0.00062, fourth: 0.0000033 }, cost: 1, max: 5000, requires: "shroud", description: "Raises the damage the shroud blocks at the start of every fight." },
   { id: "potion", name: "Potion %", group: "defense", requires: "recovery", cost: 1, max: 300, description: "Percent potions restore more of your maximum HP." },
   { id: "findPotion", name: "Find Potion", group: "defense", requires: "findPotion", cost: 1, max: 72, description: "More of the potions found are percent potions." },
+  { id: "lifesteal", name: "Lifesteal", group: "defense", stat: "lifesteal", curve: { per: 0.1005, square: -0.0005 }, cost: 1, max: 80, requires: "lifesteal", description: "Raises the share of the damage each of your strikes deals that is restored to you as HP." },
   { id: "revive", name: "Revive", group: "defense", requires: "revive", cost: 1, max: 99, description: "Raises the chance a strike that would fell you revives you at full HP instead." },
   { id: "floorGold", name: "Gold / Floor", group: "utility", requires: "spareChange", cost: 1, max: 150, description: "Raises the Gold paid for each floor climbed for the first time in a run." },
   { id: "floorSilver", name: "Silver / Floor", group: "utility", requires: "wishingWell", cost: 1, max: 150, description: "Raises the Silver paid for each floor climbed for the first time in a run." },
@@ -567,14 +578,17 @@ export const SILVER_BONUS_RANK = 1, KILL_GOLD_RANK = 3;
  * `step` growing by `growth` every five (see `schedulePrice`). Base 5: +1+N
  * for the next five, then +4+N, +7+N … With `compound`, that price is
  * then multiplied by `compound` for each one already bought, rounded up.
- * Or, with `ratio`, each costs `ratio` times the one before. */
-export type PriceSchedule = { base: number; step: number; growth: number; compound?: number } | { base: number; ratio: number };
+ * Or, with `ratio`, each costs `ratio` times the one before; or, with
+ * `power`, the n-th costs `base` × n × (1 + ((n − 1) / `growth`)^`power`). */
+export type PriceSchedule = { base: number; step: number; growth: number; compound?: number } | { base: number; ratio: number } | { base: number; growth: number; power: number };
 /** What the purchase after `bought` costs on `schedule`: its base, and for
  * the k-th after it `step + k` more than the one before, `step` rising by
  * `growth` every five, summed here at once, then compounded (or `ratio`
  * times the one before). */
 export function schedulePrice(schedule: PriceSchedule, bought: number) {
   if ("ratio" in schedule) return schedule.base * intPow(schedule.ratio, bought);
+  // The n-th rank (bought + 1) costs base × n × (1 + ((n − 1) / growth)^power), as a trainer's Gold does.
+  if ("power" in schedule) return Math.ceil(schedule.base * (bought + 1) * (1 + intPow(bought / schedule.growth, schedule.power)));
   const { base, step, growth, compound } = schedule;
   const fives = Math.floor(bought / 5), rest = bought % 5;
   const price = base + bought * step + bought * (bought + 1) / 2 + growth * (5 * fives * (fives - 1) / 2 + rest * fives);
@@ -603,6 +617,7 @@ export const RUN_TRAINING_PRICES: Record<TrainingId, PriceSchedule> = {
   potion: deep,
   findPotion: deep,
   revive: deep,
+  lifesteal: { base: 60, growth: 20.5, power: 2 },
   floorGold: opened,
   floorSilver: opened,
   silverBonus: opened,
@@ -641,6 +656,8 @@ export const TRAINER_GOLD_CURVES: Record<TrainingId, TrainerCurve> = {
   potion: steepTrainers,
   findPotion: { ...steepTrainers, cubic: 25 },
   revive: { ...steepTrainers, cubic: 30 },
+  /** Lifesteal: 60 Gold for the first rank, then 60 × n × (1 + ((n − 1) / 20.5)²) for the n-th: about 1,000 for the 13th, 9,000 for the 37th and 70,000 for the 80th. */
+  lifesteal: { growth: 20.5, start: 60, power: 2 },
   floorGold: firmTrainers,
   floorSilver: firmTrainers,
   silverBonus: firmTrainers,

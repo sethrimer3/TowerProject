@@ -86,6 +86,9 @@ export type Player = {
   shroud?: number;
   /** The HP regained with every step in a run (Regen; none when absent). */
   regen?: number;
+  /** The percent of the damage each of the hero's strikes deals that is
+   * restored to it as HP (Lifesteal; none when absent). */
+  lifesteal?: number;
   /** The percent more ATK the hero strikes bosses with (equipment; none
    * when absent). */
   bossAttack?: number;
@@ -111,7 +114,7 @@ export type RunCore = {
   floor: number;
   /** The ATK/DEF/max HP the run started with (its loadout), shifted by any
    * gear change since. */
-  loadout?: { attack: number; defense: number; maxHp: number; shroud?: number; regen?: number; bossAttack?: number; pierce?: number };
+  loadout?: { attack: number; defense: number; maxHp: number; shroud?: number; regen?: number; lifesteal?: number; bossAttack?: number; pierce?: number };
   /** The hand as it was ordered when the run went inside: the cards that
    * move the hero for the rest of the run. */
   hand?: CardId[];

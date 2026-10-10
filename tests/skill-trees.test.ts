@@ -71,7 +71,10 @@ test("Shroud, then Greater Heal, then Recovery, Regen Research and Find Potion, 
   assert.deepEqual([at("regenResearch").x, at("regenResearch").y, at("regenResearch").requires], [90, 160, ["greaterHeal"]], "Regen Research sits beside Recovery");
   assert.deepEqual([at("revive").x, at("revive").y, at("revive").requires], [90, 178, ["regenResearch"]], "Revive sits below Regen Research");
   assert.deepEqual([at("findPotion").x, at("findPotion").y, at("findPotion").requires], [70, 178, ["recovery"]], "Find Potion sits below Recovery");
-  assert.deepEqual([at("buyQuantity").x, at("buyQuantity").y, at("buyQuantity").requires], [50, 142, ["keySiphon"]], "Buy Quantity sits under Key Siphon");
+  assert.deepEqual([at("buyQuantity").x, at("buyQuantity").y, at("buyQuantity").requires], [50, 142, ["lifesteal"]], "Buy Quantity sits under Lifesteal");
+  assert.deepEqual([at("lifesteal").x, at("lifesteal").y, at("lifesteal").requires], [50, 124, ["delve"]], "Lifesteal sits where Key Siphon did, under Into the depths");
+  assert.deepEqual([at("keySiphon").x, at("keySiphon").y, at("keySiphon").requires], [50, 160, ["buyQuantity"]], "Key Siphon sits under Buy Quantity");
+  assert.deepEqual(at("cardYellowDoor").requires, ["keySiphon"], "the cards hang from Key Siphon");
 });
 test("the hand's skills run Buildout, Trainers, Critical to the Archives, Gear and On the Job off Buildout, ATK Up then DEF Up after Gear, Regen then Heal below On the Job, Larger Hand sits by itself to the Archives' right, and Buildout, Trainers, On the Job and Gear cost 1 (Critical 2)", () => {
   const at = (id: string) => TREES[0].nodes.find((n) => n.id === id)!;
@@ -118,9 +121,9 @@ test("each skill in a tree of unlocks is bought once", () => {
 
 test("a tree taller than its view places its nodes on a taller map", () => {
   const inspiration = TREES[0];
-  assert.equal(treeHeight(inspiration), 280);
+  assert.equal(treeHeight(inspiration), 298);
   assert.ok(inspiration.nodes.every((n) => n.y > 0 && n.y < treeHeight(inspiration)), "every node on the map");
-  assert.equal(mapNodes(inspiration).find((n) => n.id === "recovery")!.y, (160 * 100) / 280);
+  assert.equal(mapNodes(inspiration).find((n) => n.id === "recovery")!.y, (160 * 100) / 298);
   assert.equal(treeHeight(TREES.find((t) => t.id === "courage")!), 198);
   assert.ok(TREES.slice(2).every((t) => treeHeight(t) === 100 && mapNodes(t).every((n, i) => n.y === t.nodes[i].y)), "other trees fit one view");
 });

@@ -1,7 +1,7 @@
 import { trainNow } from "./train-now.ts";
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import type { GoldItemId } from "../src/config.ts";
+import type { GoldItemId, StatTrainingRow } from "../src/config.ts";
 import { loadout, trainingPoints, trainingStep, upgradeText, provisionPrice, provisionText } from "../src/loadout.ts";
 import { defaults } from "../src/save.ts";
 import { GOLD_SHOP, TRAINING, UPGRADES, isStatRow, levelForXp, trained, trainingWorth, xpForLevel } from "../src/config.ts";
@@ -14,7 +14,7 @@ import { enemyStats } from "../src/enemy-curves.ts";
 
 test("a new character starts at 12 ATK, 0 DEF, 100 HP, no shroud, no Regen, no keys and no undo", () => {
   assert.deepEqual(loadout(defaults()), {
-    attack: 12, defense: 0, maxHp: 100, shroud: 0, regen: 0, bossAttack: 0, pierce: 0, keys: { yellow: 0, blue: 0, red: 0 }, startKeys: { yellow: 0, blue: 0 }, undoCapacity: 0,
+    attack: 12, defense: 0, maxHp: 100, shroud: 0, regen: 0, lifesteal: 0, bossAttack: 0, pierce: 0, keys: { yellow: 0, blue: 0, red: 0 }, startKeys: { yellow: 0, blue: 0 }, undoCapacity: 0,
   });
 });
 
@@ -40,6 +40,7 @@ test("each rank of an upgrade adds its grant", () => {
     maxHp: 100,
     shroud: 1,
     regen: 0,
+    lifesteal: 0,
     bossAttack: 0,
     pierce: 0,
     keys: { yellow: 1, blue: 2, red: 3 },
@@ -76,9 +77,11 @@ test("each training rank is worth more than the one before, whatever the hero's 
   // Levelling up only earns points: ranks bought are worth what they were.
   s.xp = xpForLevel(20);
   assert.deepEqual(loadout(s), l);
-  // Each rank adds more than the one before.
-  for (const row of TRAINING.filter(isStatRow))
+  // Each rank adds more than the one before, but Lifesteal's, which each add less.
+  for (const row of TRAINING.filter(isStatRow).filter((r) => r.id !== "lifesteal"))
     for (let n = 1; n < 400; n++) assert.ok(trainingWorth(row, n) > trainingWorth(row, n - 1), `${row.id} rank ${n + 1}`);
+  const steal = TRAINING.find((r) => r.id === "lifesteal")! as StatTrainingRow;
+  for (let n = 1; n < steal.max; n++) assert.ok(trainingWorth(steal, n) < trainingWorth(steal, n - 1) && trainingWorth(steal, n) > 0, `lifesteal rank ${n + 1}`);
 });
 
 test("Shroud's ranks: 1 at the first, over 1,000 at 100, about 10,000 at 200 and 40,000 at 300, to 5,000 ranks", () => {

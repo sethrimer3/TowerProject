@@ -37,7 +37,7 @@ test("Silver prices start at the row's base and rise by a step plus the ranks bo
   assert.deepEqual(prices("revive", 12), [20, 25, 31, 38, 46, 55, 69, 84, 100, 117, 135, 158]);
   for (const row of TRAINING) {
     const { base } = RUN_TRAINING_PRICES[row.id];
-    assert.ok([3, 5, 10, 12, 20].includes(base), `${row.id} starts at 3, 5, 10, 12 or 20`);
+    assert.ok([3, 5, 10, 12, 20, 60].includes(base), `${row.id} starts at 3, 5, 10, 12, 20 or 60`);
     let last = 0;
     for (let k = 0; k < 1000; k++) {
       const price = silverPrice(row.id, k);

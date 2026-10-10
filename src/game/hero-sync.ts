@@ -4,19 +4,19 @@ import { loadout, type Loadout } from "../loadout.ts";
 import { MODES } from "../modes.ts";
 
 /** The stats the loadout carries into a run's hero. */
-type HeroStats = { attack: number; defense: number; maxHp: number; shroud?: number; regen?: number; bossAttack?: number; pierce?: number };
+type HeroStats = { attack: number; defense: number; maxHp: number; shroud?: number; regen?: number; lifesteal?: number; bossAttack?: number; pierce?: number };
 
 const BOTH_MODES = ["tower", "delve"] as const;
-const SHIFTED_STATS = ["attack", "defense", "maxHp", "shroud", "regen", "bossAttack", "pierce"] as const;
+const SHIFTED_STATS = ["attack", "defense", "maxHp", "shroud", "regen", "lifesteal", "bossAttack", "pierce"] as const;
 const KEY_COLORS = ["yellow", "blue", "red"] as const;
 
 /** The hero a run in `mode` gets with everything owned now, at full HP,
  * standing at the entrance's row, and the loadout it keeps. */
 export function startingHero(save: Save, mode: Mode) {
-  const { attack, defense, maxHp, shroud, regen, bossAttack, pierce, keys: owned, startKeys } = loadout(save, mode);
+  const { attack, defense, maxHp, shroud, regen, lifesteal, bossAttack, pierce, keys: owned, startKeys } = loadout(save, mode);
   const keys = { ...owned, yellow: owned.yellow + startKeys.yellow, blue: owned.blue + startKeys.blue };
-  // Only a hero with a shroud, Regen, a boss bonus or Piercing carries one.
-  const extras = { ...(shroud ? { shroud } : {}), ...(regen ? { regen } : {}), ...(bossAttack ? { bossAttack } : {}), ...(pierce ? { pierce } : {}) };
+  // Only a hero with a shroud, Regen, Lifesteal, a boss bonus or Piercing carries one.
+  const extras = { ...(shroud ? { shroud } : {}), ...(regen ? { regen } : {}), ...(lifesteal ? { lifesteal } : {}), ...(bossAttack ? { bossAttack } : {}), ...(pierce ? { pierce } : {}) };
   return {
     player: { x: MODES[mode].entranceX, y: 0, hp: maxHp, maxHp, attack, defense, ...extras, keys } as Player,
     loadout: { attack, defense, maxHp, ...extras },

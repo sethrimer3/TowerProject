@@ -12,14 +12,14 @@ import { EquipmentPanel } from "./equipment-panel.ts";
 /** Each provision's picture. */
 const PROVISION_SPRITES = { heal: "potion_flat", guard: "upgrade_defense", edge: "upgrade_attack", yellowKey: "key_yellow" } as const satisfies Record<GoldItemId, string>;
 /** Short names for a provision's stats, in the total its owned copies give. */
-const TOTAL_WORDS: Record<Stat, string> = { attack: "ATK", defense: "DEF", maxHp: "MAX HP", shroud: "SHROUD", regen: "REGEN", yellow: "YELLOW KEYS", blue: "BLUE KEYS", red: "RED KEYS", undos: "UNDOS" };
+const TOTAL_WORDS: Record<Stat, string> = { attack: "ATK", defense: "DEF", maxHp: "MAX HP", shroud: "SHROUD", regen: "REGEN", lifesteal: "LIFESTEAL", yellow: "YELLOW KEYS", blue: "BLUE KEYS", red: "RED KEYS", undos: "UNDOS" };
 /** Pictures for the starting stats over the provisions; the rest go by their short name. */
 const STAT_SPRITES: Partial<Record<Stat, string>> = {
   maxHp: uiSprite("health"), attack: itemSprite("upgrade_attack"), defense: itemSprite("upgrade_defense"),
   yellow: itemSprite("key_yellow"), blue: itemSprite("key_blue"), red: itemSprite("key_red"),
 };
 /** The order the starting stats show in. */
-const STAT_ORDER: Stat[] = ["maxHp", "attack", "defense", "shroud", "regen", "yellow", "blue", "red", "undos"];
+const STAT_ORDER: Stat[] = ["maxHp", "attack", "defense", "shroud", "regen", "lifesteal", "yellow", "blue", "red", "undos"];
 type GearTab = "provisions" | "equipment";
 const TAB_NAMES: Record<GearTab, string> = { provisions: "Provisions", equipment: "Equipment" };
 
@@ -116,7 +116,7 @@ export class GearPage {
   private startingStatsHtml(open: (typeof GOLD_SHOP)[number][], bought: GoldItemId | null) {
     const game = this.ctx.game, l = loadout(game.save, game.mode);
     const value: Record<Stat, number> = {
-      attack: l.attack, defense: l.defense, maxHp: l.maxHp, shroud: l.shroud, regen: l.regen,
+      attack: l.attack, defense: l.defense, maxHp: l.maxHp, shroud: l.shroud, regen: l.regen, lifesteal: l.lifesteal,
       yellow: l.keys.yellow + l.startKeys.yellow, blue: l.keys.blue + l.startKeys.blue, red: l.keys.red, undos: l.undoCapacity,
     };
     const raised = new Set(Object.keys(GOLD_SHOP.find((item) => item.id === bought)?.grants ?? {}));

@@ -188,7 +188,7 @@ How much XP the character has gathered from kills over every run. A kill pays mo
 _Avoid_: rank
 
 **Training point**:
-The currency each level earns (three a level), spent to buy ranks of training at once (a trainer can train them for Gold instead) in the character's stats (max HP, ATK, DEF, and the shroud once the Shroud skill is owned; Crit % and Crit x once Critical is) and, with Recovery, Find Potion, Revive, Spare Change, Wishing Well, Wealthy and Loot, in Potion %, Find Potion, Revive, Gold / Floor, Silver / Floor, Silver Bonus and Gold / Kill on the Training tab. A stat's ranks add up on its **rank curve**: each rank is worth more than the one before, whatever the character's level.
+The currency each level earns (three a level), spent to buy ranks of training at once (a trainer can train them for Gold instead) in the character's stats (max HP, ATK, DEF, and the shroud once the Shroud skill is owned; Lifesteal once the Lifesteal skill is, Crit % and Crit x once Critical is) and, with Recovery, Find Potion, Revive, Spare Change, Wishing Well, Wealthy and Loot, in Potion %, Find Potion, Revive, Gold / Floor, Silver / Floor, Silver Bonus and Gold / Kill on the Training tab. A stat's ranks add up on its **rank curve**: each rank is worth more than the one before, whatever the character's level.
 _Avoid_: skill point, stat point
 
 **Trainer**:
@@ -213,6 +213,9 @@ _Avoid_: resurrection, second life
 
 **Percent potion**:
 The red, striped potion: it restores a regular potion's HP plus a share of max HP (1% with the Recovery skill, more with Potion % training). With Recovery owned, each potion a run finds may be one, by a chance fixed when the run goes inside (2%, more with Find Potion training, up to 20%); otherwise each is a regular potion.
+
+**Lifesteal**:
+The share of the damage each of the hero's strikes deals to an enemy that is restored to the hero as HP (up to max HP), as the strike lands and before the enemy's reply. It starts at 0% and Lifesteal training raises it by 0.1% for the first rank, each later rank adding 0.001% less, to 4.84% at 80 ranks. Fight forecasts and Damage Visual count it.
 
 **Shroud**:
 The damage a hero's shroud blocks in each fight: the enemy's strikes, after DEF, wear it away before any HP is lost, and it is whole again when the next fight starts. The Shroud skill gives the first point; Shroud training adds more.

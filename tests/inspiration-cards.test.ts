@@ -12,7 +12,7 @@ import type { EnemyStrength, Save, Tile } from "../src/entities.ts";
  * their price, the node each needs and its card (null for a node that opens
  * research instead). */
 const NODES: [UpgradeId, number, UpgradeId, CardId | null][] = [
-  ["cardYellowDoor", 5, "buyQuantity", "yellowDoor"],
+  ["cardYellowDoor", 5, "keySiphon", "yellowDoor"],
   ["heartDoorResilience", 10, "cardYellowDoor", null],
   ["cardHeartDoor", 5, "heartDoorResilience", "heartDoor"],
   ["cardWeakEnemy", 10, "heartDoorResilience", "weakEnemy"],
@@ -34,7 +34,7 @@ const NODES: [UpgradeId, number, UpgradeId, CardId | null][] = [
 test("each card node costs its price, waits for the node above it and adds its card to the deck", () => {
   const g = new Game(defaults());
   g.save.tower.inspiration = 10_000;
-  for (const id of ["combatStance", "buildout", "trainers", "critical", "archives", "delve", "keySiphon", "buyQuantity"] as const) assert.ok(g.buy(id));
+  for (const id of ["combatStance", "buildout", "trainers", "critical", "archives", "delve", "lifesteal", "buyQuantity", "keySiphon"] as const) assert.ok(g.buy(id));
   const nodes = TREES.find((t) => t.id === "inspiration")!.nodes;
   for (const [id, price, requires, card] of NODES) {
     assert.deepEqual(nodes.find((n) => n.id === id)!.requires, [requires], id);
@@ -53,7 +53,7 @@ test("a card node can't be bought before the one above it", () => {
   const g = new Game(defaults());
   g.save.tower.inspiration = 10_000;
   assert.equal(g.buy("cardYellowDoor"), false);
-  g.save.upgrades.buyQuantity = 1;
+  g.save.upgrades.keySiphon = 1;
   assert.equal(g.buy("cardHeartDoor"), false);
   assert.ok(g.buy("cardYellowDoor"));
   assert.equal(g.buy("cardHeartDoor"), false);

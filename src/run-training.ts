@@ -53,7 +53,7 @@ export function runTrainingBulk(save: Pick<Save, "training" | "upgrades">, run: 
  * multiplier (unit "×"), or the percentage for the others. */
 export function runTrainingValue(save: Pick<Save, "training" | "upgrades">, run: Pick<RunCore, "training" | "player">, id: TrainingId) {
   const row = TRAINING.find((t) => t.id === id)!;
-  if (isStatRow(row)) return { value: shownStat(row.stat, run.player[row.stat] ?? 0), unit: "" };
+  if (isStatRow(row)) return { value: shownStat(row.stat, run.player[row.stat] ?? 0), unit: row.stat === "lifesteal" ? "%" : "" };
   const now = { upgrades: save.upgrades, training: ranksInRun(save, run) };
   if (id === "critChance") return { value: critChance(now), unit: "%" };
   if (id === "critFactor") return { value: critFactor(now), unit: "×" };

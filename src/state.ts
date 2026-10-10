@@ -2047,7 +2047,11 @@ export class Game {
     if (from < 0) from = strikes.length;
     let hp = p.hp, shroud = p.shroud ?? 0;
     for (const s of strikes.slice(0, from)) {
-      if (s.by !== "enemy") continue;
+      if (s.by === "hero") {
+        // Lifesteal's heal, and the HP shown with it, rise with the max HP bought.
+        if (s.heroHp !== undefined) hp = s.heroHp = snap(s.heroHp + hpGain);
+        continue;
+      }
       // The HP shown so far rises with the max HP bought.
       if (s.hp) s.hp = snap(s.hp + hpGain);
       hp = s.hp;
