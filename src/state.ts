@@ -743,6 +743,9 @@ export class Game {
       case "yellowGate": return { closed: !(p.keys.yellow < v) };
       case "blueGate": return { closed: !(p.keys.blue < v) };
       case "redGate": return { closed: !(p.keys.red < v) };
+      case "yellowAtLeast": return { closed: !(p.keys.yellow >= v) };
+      case "blueAtLeast": return { closed: !(p.keys.blue >= v) };
+      case "redAtLeast": return { closed: !(p.keys.red >= v) };
       case "stairward": return this.cooled("stairward", v) ? { stairward: true } : undefined;
       case "skipOpen": return this.cooled("skipOpen", v) ? { skipOpen: { skipped: new Set(this.skipMarks), skip: (x, y) => this.skipTile(x, y) } } : undefined;
       case "charge": return { charge: v };

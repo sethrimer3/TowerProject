@@ -76,12 +76,12 @@ test("Shroud, then Greater Heal, then Recovery, Regen Research and Find Potion, 
   assert.deepEqual([at("keySiphon").x, at("keySiphon").y, at("keySiphon").requires], [50, 178, ["buyQuantity"]], "Key Siphon sits under Buy Quantity");
   assert.deepEqual(at("cardYellowDoor").requires, ["keySiphon"], "the cards hang from Key Siphon");
 });
-test("the hand's skills run Buildout, Trainers, Critical to the Archives, Gear and On the Job off Buildout, ATK Up then DEF Up after Gear, Regen then Heal below On the Job, Larger Hand sits by itself to the Archives' right, and Buildout, Trainers, On the Job and Gear cost 1 (Critical 2)", () => {
+test("the hand's skills run Buildout, Trainers, Critical to the Archives, Gear and On the Job off Buildout, ATK Up then DEF Up after Gear, Regen then Heal below On the Job, Larger Hand sits by itself to Critical's right, and Buildout, Trainers, On the Job and Gear cost 1 (Critical 2)", () => {
   const at = (id: string) => TREES[0].nodes.find((n) => n.id === id)!;
   assert.deepEqual(["buildout", "trainers", "critical", "archives", "onTheJob", "regen", "cardHeal", "gear", "cardAtkUp", "cardDefUp"].map((id) => at(id).requires),
     [["combatStance"], ["buildout"], ["trainers"], ["critical"], ["buildout"], ["onTheJob"], ["regen"], ["buildout"], ["gear"], ["cardAtkUp"]]);
   assert.deepEqual(["buildout", "trainers", "critical", "archives"].map((id) => [at(id).x, at(id).y]), [[50, 30], [50, 48], [50, 84], [50, 102]], "down the middle, Critical a row lower for room");
-  assert.deepEqual([at("largerHand").x, at("largerHand").y, at("largerHand").requires], [80, 102, ["trainers"]], "Larger Hand stands right of the Archives, alone");
+  assert.deepEqual([at("largerHand").x, at("largerHand").y, at("largerHand").requires], [80, 84, ["trainers"]], "Larger Hand stands right of Critical, alone");
   assert.deepEqual([at("critPrediction").x, at("critPrediction").y, at("critPrediction").requires], [30, 84, ["critical"]], "Critical Prediction stands left of Critical");
   assert.ok(!TREES[0].nodes.some((n) => n.requires.includes("largerHand")), "nothing waits for Larger Hand");
   assert.ok(at("onTheJob").x > at("buildout").x && at("onTheJob").y === at("buildout").y, "On the Job sits right of Buildout");

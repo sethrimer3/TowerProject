@@ -387,6 +387,8 @@ export const UPGRADES = [
   // chests, Heart Door Resilience, the key trades, Floor Skip Reward, torches
   // and Steel Doors.
   { id: "cardYellowDoor", name: "Yellow Door", description: "Add the YELLOW DOOR card to your deck: it moves you toward the closest yellow door, while you hold a yellow key", card: "yellowDoor", base: 5, max: 1, currency: "inspiration" },
+  { id: "keyLessBadges", name: "Key < Badges", description: "Add the YK <, BK < and RK < badges to the badge draw: each lets its card act only while you hold fewer keys of its colour than it says", base: 50, max: 1, currency: "inspiration" },
+  { id: "keyAtLeastBadges", name: "Key ≥ Badges", description: "Add the YK ≥, BK ≥ and RK ≥ badges to the badge draw: each lets its card act only while you hold at least as many keys of its colour as it says", base: 50, max: 1, currency: "inspiration" },
   { id: "cardHeartDoor", name: "Heart Door", description: "Add the HEART DOOR card to your deck: it moves you toward the closest Heart Door", card: "heartDoor", base: 5, max: 1, currency: "inspiration" },
   { id: "cardWeakEnemy", name: "Weak Enemy", description: "Add the WEAK ENEMY card to your deck: it moves you toward the closest weak enemy", card: "weakEnemy", base: 10, max: 1, currency: "inspiration" },
   { id: "cardBaseEnemy", name: "Base Enemy", description: "Add the BASE ENEMY card to your deck: it moves you toward the closest enemy that is neither weak, strong, elite nor a boss", card: "baseEnemy", base: 10, max: 1, currency: "inspiration" },

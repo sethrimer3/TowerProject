@@ -45,10 +45,11 @@ test("each badge's values by level, and a gate's threshold picked among those it
   assert.equal(badgeValue("hpGate", 3, 2), 75);
   assert.equal(badgeValue("hpGate", 3, 6), 75, "a pick past the level's thresholds stops at the last opened");
   assert.equal(badgeValue("yellowGate", 7, 6), 1);
+  assert.deepEqual([0, 2, 6].map((pick) => badgeValue("redAtLeast", 7, pick)), [1, 3, 7], "a ≥ gate's thresholds tighten upward");
   assert.equal(badgeValue("stairward", 1), 7, "Stairward cools down for 7 floors at level 1");
   assert.equal(badgeValue("charge", 4), 4);
   const byRarity = (r: string) => BADGE_IDS.filter((id) => BADGES[id].rarity === r).length;
-  assert.deepEqual([byRarity("common"), byRarity("rare"), byRarity("epic")], [7, 7, 4]);
+  assert.deepEqual([byRarity("common"), byRarity("rare"), byRarity("epic")], [7, 9, 5]);
   assert.deepEqual(RARITY_WEIGHTS, { common: 70, rare: 27, epic: 3 });
 });
 
@@ -83,9 +84,31 @@ test("a badge at the top level leaves the pool, and an emptied rarity's weight g
   m.owned.charge = { copies: MAX_COPIES, pick: 0 };
   const draws = drawBadges(m, UPGRADES, 30, () => 0.1);
   assert.ok(draws.every((d) => d.id !== "charge" && BADGES[d.id].rarity === "epic"), "only the epics still open are drawn");
-  assert.equal(copiesLeft(m, UPGRADES), 3 * MAX_COPIES - 30);
+  assert.equal(copiesLeft(m, UPGRADES), 2 * MAX_COPIES - 30, "Stairward and Skip Open Nodes: RK < and RK ≥ wait for their skills");
   for (const id of BADGE_IDS) m.owned[id] = { copies: MAX_COPIES, pick: 0 };
   assert.deepEqual(drawBadges(m, UPGRADES, 10, () => 0), [], "nothing left to draw");
+});
+
+test("Key < Badges and Key ≥ Badges each add their three key gates to the draw", () => {
+  const KEY_LESS: BadgeId[] = ["yellowGate", "blueGate", "redGate"], KEY_AT_LEAST: BadgeId[] = ["yellowAtLeast", "blueAtLeast", "redAtLeast"];
+  const drawn = (upgrades: typeof UPGRADES) => new Set(drawBadges(defaultBadges(), upgrades, 2000, () => 0.3).map((d) => d.id));
+  const none = drawn(UPGRADES);
+  assert.ok([...KEY_LESS, ...KEY_AT_LEAST].every((id) => !none.has(id)), "no key gate before its skill");
+  const less = drawn({ ...UPGRADES, keyLessBadges: 1 });
+  assert.ok(KEY_LESS.every((id) => less.has(id)) && KEY_AT_LEAST.every((id) => !less.has(id)));
+  const both = drawn({ ...UPGRADES, keyLessBadges: 1, keyAtLeastBadges: 1 });
+  assert.ok([...KEY_LESS, ...KEY_AT_LEAST].every((id) => both.has(id)));
+});
+
+test("Key < Badges sits beside Yellow Door and Key ≥ Badges beside it, 50 Inspiration each", () => {
+  const g = new Game(defaults());
+  g.save.tower.inspiration = 100;
+  assert.equal(g.buy("keyLessBadges"), false, "waits for Yellow Door");
+  g.save.upgrades.cardYellowDoor = 1;
+  assert.equal(g.buy("keyAtLeastBadges"), false, "waits for Key < Badges");
+  assert.ok(g.buy("keyLessBadges"));
+  assert.ok(g.buy("keyAtLeastBadges"));
+  assert.equal(g.save.tower.inspiration, 0);
 });
 
 test("a badge goes on one card and a card holds one: dropping moves it, swaps, or takes the old one off", () => {
@@ -176,6 +199,16 @@ test("a gate keeps its card from acting while its condition fails; a Focus overr
   assert.equal(g.focus(0), "focused", "a Focus plans the card whatever its gate");
   turns(g, 2);
   assert.equal(g.run.player.keys.yellow, 11);
+});
+
+test("a ≥ key gate lets its card act only while you hold at least its threshold", () => {
+  const g = floor(["@.K", "..."]);
+  g.run.hand = ["yellowKey"];
+  badge(g, "yellowKey", "blueAtLeast", 3, 2);
+  g.run.player.keys.blue = 2;
+  assert.equal(planHand(g, g.run.hand, "tower"), null, "2 blue keys keep BK ≥ 3 closed");
+  g.run.player.keys.blue = 3;
+  assert.equal(planHand(g, g.run.hand, "tower")?.card, 0, "3 open it");
 });
 
 test("activation pays when the card reaches its target: HP, HP %, Silver, XP scaled by floor", () => {

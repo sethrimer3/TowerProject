@@ -1,4 +1,4 @@
-import { levelProgress, MAX_BADGE_LEVEL, badgeDef, badgeLevel, badgeValue, type BadgeId } from "../badges.ts";
+import { levelProgress, MAX_BADGE_LEVEL, badgeDef, badgeLevel, badgeValue, gateSign, type BadgeId } from "../badges.ts";
 import { RARITIES } from "../shop/rarity.ts";
 
 const STAR_SVG = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.8l3.05 6.6 7.2.8-5.36 4.9 1.5 7.1L12 17.6l-6.39 3.6 1.5-7.1L1.75 9.2l7.2-.8z"/></svg>`;
@@ -42,7 +42,7 @@ export function badgeLevelsHtml(id: BadgeId, level: number, pick = 0) {
   const def = badgeDef(id), gate = def.kind === "gate";
   const current = gate ? Math.max(0, Math.min(pick, level - 1)) : level - 1;
   const values = def.values.map((v, i) => {
-    const text = gate ? `&lt;${v}` : String(v);
+    const text = gate ? `${gateSign(id) === "<" ? "&lt;" : "≥"}${v}` : String(v);
     return i === current ? `<b>${text}</b>` : text;
   });
   return `<small class="badge-levels">By level: ${def.lead ? `${def.lead} ` : ""}${values.join(" · ")} ${def.unit}</small>`;

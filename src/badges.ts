@@ -36,9 +36,12 @@ type BadgeDef = {
   /** What it does with value `v`, as the player reads it. */
   text: (v: number) => string;
   /** How its values read in the progression by level: the unit after
-   * them, and what goes before the list (a gate's "<" goes before each). */
+   * them, and what goes before the list (a gate's sign goes before each). */
   unit: string;
   lead?: string;
+  /** A gate's sign: "<" (its condition holds below the threshold, the
+   * default) or "≥" (at or above it). */
+  sign?: "<" | "≥";
   /** The upgrade that adds it to the draw pool; absent for the stock ones. */
   unlock?: UpgradeId;
   /** The only cards it can sit on; absent for any card. */
@@ -64,12 +67,15 @@ export const BADGES = {
   dampen: { name: "Dampen", rarity: "common", kind: "scale", glyph: "▼", color: "#8ab4ff", values: PERCENTS, unit: "%", text: (v) => `When the card activates, its target's effect is ${v}% weaker: a potion heals less, a key or shard gives less, a door takes less of each key, a Heart Door takes ${v}% less HP, and a monster deals ${v}% less damage in all and pays ${v}% less Silver, Gold and XP.` },
   hpPercent: { name: "HP %", rarity: "rare", kind: "reward", glyph: "♥", color: "#ff4fa3", values: LEVELS, unit: "% of max HP", text: (v) => `Regain ${v}% of max HP each time the card activates.` },
   goldTouch: { name: "Gold Touch", rarity: "rare", kind: "reward", glyph: "◉", color: "#ffc93c", values: LEVELS, unit: "Gold", text: (v) => `Gain ${v} Gold each time the card activates (Gold bonuses apply).` },
-  yellowGate: { name: "YK <", rarity: "rare", kind: "gate", glyph: "⚿", color: "#f2d24b", values: KEY_LIMITS, unit: "yellow keys", text: (v) => `The card acts only while you hold fewer than ${v} yellow keys.` },
-  blueGate: { name: "BK <", rarity: "rare", kind: "gate", glyph: "⚿", color: "#5aa9ff", values: KEY_LIMITS, unit: "blue keys", text: (v) => `The card acts only while you hold fewer than ${v} blue keys.` },
+  yellowGate: { name: "YK <", rarity: "rare", kind: "gate", glyph: "⚿", color: "#f2d24b", values: KEY_LIMITS, unit: "yellow keys", unlock: "keyLessBadges", text: (v) => `The card acts only while you hold fewer than ${v} yellow keys.` },
+  blueGate: { name: "BK <", rarity: "rare", kind: "gate", glyph: "⚿", color: "#5aa9ff", values: KEY_LIMITS, unit: "blue keys", unlock: "keyLessBadges", text: (v) => `The card acts only while you hold fewer than ${v} blue keys.` },
+  yellowAtLeast: { name: "YK ≥", rarity: "rare", kind: "gate", sign: "≥", glyph: "⚿", color: "#f2d24b", values: LEVELS, unit: "yellow keys", unlock: "keyAtLeastBadges", text: (v) => `The card acts only while you hold at least ${v} yellow key${v === 1 ? "" : "s"}.` },
+  blueAtLeast: { name: "BK ≥", rarity: "rare", kind: "gate", sign: "≥", glyph: "⚿", color: "#5aa9ff", values: LEVELS, unit: "blue keys", unlock: "keyAtLeastBadges", text: (v) => `The card acts only while you hold at least ${v} blue key${v === 1 ? "" : "s"}.` },
   deprioritize: { name: "Deprioritize", rarity: "rare", kind: "aim", glyph: "?", color: "#ffb347", values: LEVELS, unit: "marks a floor", text: (v) => `Passes over the first ${v} target${v === 1 ? "" : "s"} the card picks on each floor, marking each with a ?, then rests for the floor. Every card's path goes round a ? while it can. When no card can move, the nearest ? becomes ! and the card heads for it.` },
   skip: { name: "Skip", rarity: "rare", kind: "chance", glyph: "↷", color: "#c0f0ff", values: [7, 9, 11, 13, 15, 17, 19], unit: "%", text: (v) => `${v}% chance, when the card activates, that its target vanishes without effect (never a boss on MONSTER). On STAIRS in the Tower, you climb two floors instead of one.` },
   moreEnemies: { name: "More Enemies", rarity: "rare", kind: "floor", glyph: "✚", color: "#d8604a", values: MORE_ENEMIES_PERCENTS, unit: "%", cards: Object.keys(MORE_ENEMIES_CARDS) as CardId[], text: (v) => `Each floor holds ${v}% more of the enemies this card targets, counted from those generated there; a fraction is a chance of one more. In the Delve, each 10 depths is a floor. Only on a monster card.` },
-  redGate: { name: "RK <", rarity: "epic", kind: "gate", glyph: "⚿", color: "#ff5a5a", values: KEY_LIMITS, unit: "red keys", text: (v) => `The card acts only while you hold fewer than ${v} red keys.` },
+  redGate: { name: "RK <", rarity: "epic", kind: "gate", glyph: "⚿", color: "#ff5a5a", values: KEY_LIMITS, unit: "red keys", unlock: "keyLessBadges", text: (v) => `The card acts only while you hold fewer than ${v} red keys.` },
+  redAtLeast: { name: "RK ≥", rarity: "epic", kind: "gate", sign: "≥", glyph: "⚿", color: "#ff5a5a", values: LEVELS, unit: "red keys", unlock: "keyAtLeastBadges", text: (v) => `The card acts only while you hold at least ${v} red key${v === 1 ? "" : "s"}.` },
   stairward: { name: "Stairward", rarity: "epic", kind: "aim", glyph: "⇡", color: "#7fe0ff", values: COOLDOWNS, unit: "floors", lead: "every", text: (v) => `Picks the target nearest the stairs (in the Delve, the highest) rather than the nearest to you; works ${every(v)}.` },
   skipOpen: { name: "Skip Open Nodes", rarity: "epic", kind: "aim", glyph: "⤳", color: "#c08bff", values: COOLDOWNS, unit: "floors", lead: "every", text: (v) => `Skips, and marks, any door or monster that opens no new ground, for the rest of the floor; works ${every(v)}.` },
   charge: { name: "Charge", rarity: "epic", kind: "aim", glyph: "»", color: "#ff9a3c", values: LEVELS, unit: "monsters or doors", text: (v) => `The card's path may charge through up to ${v} monster${v === 1 ? "" : "s"} or door${v === 1 ? "" : "s"} you can open on the way to its target.` },
@@ -77,6 +83,8 @@ export const BADGES = {
 export type BadgeId = keyof typeof BADGES;
 export const BADGE_IDS = Object.keys(BADGES) as BadgeId[];
 export const badgeDef = (id: BadgeId): BadgeDef => BADGES[id];
+/** A gate's sign: "<" unless it says otherwise. */
+export const gateSign = (id: BadgeId) => badgeDef(id).sign ?? "<";
 
 /** The copies each level past the first takes, levels 2 to 7. The copy that
  * opens level 1 counts toward level 2's. */

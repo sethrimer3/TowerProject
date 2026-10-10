@@ -19,7 +19,7 @@ export const TREES: SkillTree[] = [
     { id: "trainers", icon: "⚔", x: 50, y: 48, requires: ["buildout"] },
     { id: "critical", icon: "✸", x: 50, y: 84, requires: ["trainers"] },
     { id: "critPrediction", icon: "✸", x: 30, y: 84, requires: ["critical"] },
-    { id: "largerHand", icon: "▦", x: 80, y: 102, requires: ["trainers"] },
+    { id: "largerHand", icon: "▦", x: 80, y: 84, requires: ["trainers"] },
     { id: "gear", icon: "⚒", x: 20, y: 30, requires: ["buildout"] },
     { id: "onTheJob", icon: "¤", x: 80, y: 30, requires: ["buildout"] },
     { id: "regen", icon: "♥", x: 80, y: 48, requires: ["onTheJob"] },
@@ -50,12 +50,15 @@ export const TREES: SkillTree[] = [
     { id: "findPotion", icon: "⚗", x: 70, y: 196, requires: ["recovery"] },
     { id: "regenResearch", icon: "♥", x: 90, y: 178, requires: ["greaterHeal"] },
     { id: "revive", icon: "☼", x: 90, y: 196, requires: ["regenResearch"] },
-    // The cards down the middle under Key Siphon: Yellow Door, Heart Door
+    // The cards down the middle under Key Siphon: Yellow Door (Key < Badges,
+    // then Key ≥ Badges, to its right), Heart Door
     // Resilience (Heart Door to its left), Weak Enemy (Base, then Strong, to its left; Elite, then Boss, to its
     // right), Chest, BK Siphon (BK Trader, then YK to HP, to its left; Red
     // Key, then RK Siphon, to its right) and Floor Skip Reward (Torch to its
     // left, Steel Door to its right).
     { id: "cardYellowDoor", icon: "⚿", x: 50, y: 214, requires: ["keySiphon"] },
+    { id: "keyLessBadges", icon: "⚿", x: 70, y: 214, requires: ["cardYellowDoor"] },
+    { id: "keyAtLeastBadges", icon: "⚿", x: 90, y: 214, requires: ["keyLessBadges"] },
     { id: "heartDoorResilience", icon: "♥", x: 50, y: 232, requires: ["cardYellowDoor"] },
     { id: "cardHeartDoor", icon: "♥", x: 30, y: 232, requires: ["heartDoorResilience"] },
     { id: "cardWeakEnemy", icon: "☠", x: 50, y: 250, requires: ["heartDoorResilience"] },

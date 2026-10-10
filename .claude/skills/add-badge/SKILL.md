@@ -11,7 +11,7 @@ A badge is one row in `BADGES` (`src/badges.ts`) plus whatever its effect needs 
 
 Read these as they are now. They change often, so trust the files over this list:
 
-- `src/badges.ts`: `BADGES` (rarity, `kind`: `reward` / `gate` / `aim`, glyph, colour, `values` for levels 1–7, `text`, `unit`, `lead`, `unlock`), `RARITY_WEIGHTS`, `COPIES_FOR_LEVEL`, `badgeValue`, `runBadges`, `decodeBadges`.
+- `src/badges.ts`: `BADGES` (rarity, `kind`: `reward` / `gate` / `aim`, glyph, colour, `values` for levels 1–7, `text`, `unit`, `lead`, `unlock`, a gate's `sign`), `RARITY_WEIGHTS`, `COPIES_FOR_LEVEL`, `badgeValue`, `runBadges`, `decodeBadges`.
 - `src/cards.ts`: `CARDS` (each card's target), `CardRules` and how `planHand` reads it, `IN_PLACE` cards.
 - `src/state.ts`: `cardRules(card)` (planning), `activate(card, key)` (rewards when the card reaches its target), `badgeFloor`, `cooled` / `markUsed` (cooldowns by floor, in `run.badgeFloors`), the skipped-tile marks (`run.skipped`), and `setDevMode` (the Dev grant).
 - `src/step-effects.ts` (`resolveStep`, `StepRules`): any badge that changes what a step does to the hero goes here, so previews, the planners and Automove agree.
