@@ -177,7 +177,7 @@ export class ResearchPage {
       <p><b>Training points:</b> the ranks bought with training points are taken back, and the points${back.points ? ` (${back.points})` : ""} return to the pool, to spend on any stat.</p>
       ${gold ? `<p><b>Gold and time:</b> the ranks trainers trained are taken back${ranks.inTraining ? " and the rank in training stops" : ""}${back.gold ? `, returning ${back.gold}` : ""}.</p>${back.gold ? `<p class="hint">The time goes to the time bank, taken off any stat's next ranks trainers train.</p>` : ""}` : ""}
       <p class="hint reset-gems">${gemIcon()} You hold ${game.save.gems} Gems.</p>
-      <div class="dialog-actions"><button id="cancel">Cancel</button><button id="reset-points" ${ranks.points ? "" : "disabled"}>Return ${count(ranks.points, "point")} · ${TRAINING_RESET_GEMS} Gems</button>${gold ? `<button id="reset-gold" ${goldOpen ? "" : "disabled"}>Return ${count(ranks.gold, "Gold")} · ${TRAINING_RESET_GEMS} Gems</button>` : ""}</div>`;
+      <div class="dialog-actions"><button id="cancel">Cancel</button><button id="reset-points" ${ranks.points ? "" : "disabled"} aria-label="Return ${count(ranks.points, "point")} for ${TRAINING_RESET_GEMS} Gems">Return ${count(ranks.points, "point")} · ${gemIcon()} <b>${TRAINING_RESET_GEMS}</b></button>${gold ? `<button id="reset-gold" ${goldOpen ? "" : "disabled"} aria-label="Return ${count(ranks.gold, "Gold")} for ${TRAINING_RESET_GEMS} Gems">Return ${count(ranks.gold, "Gold")} · ${gemIcon()} <b>${TRAINING_RESET_GEMS}</b></button>` : ""}</div>`;
     modal.showModal();
     el("cancel").onclick = () => modal.close();
     const reset = (way: "points" | "gold") => () => {

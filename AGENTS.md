@@ -113,6 +113,7 @@ Read the area's doc before changing code there or answering questions about it; 
 - Gem purchases (anything paid in Gems: hand slots, trainers, archivists, finishing training, resets) always look active and prominent, never `disabled` or greyed out for lack of Gems.
   A button short of Gems gets the `short` class, which turns only its price red, and a press while short opens `askForGems` (`ui/dialogs.ts`), offering the Shop (on the Shop page itself, a Gem-priced offer short of Gems points to the Gem packs instead).
   Only a purchase that can't happen at all (sold out, all hired, locked) may look unavailable.
+- A confirmation that spends a currency shows the price on its button as the currency's icon and the amount (`· ${gemIcon()} <b>2</b>`, likewise `goldIcon()` and the rest), not the currency's name in text; the button's `aria-label` names the currency, for screen readers.
 - All text uses the bundled Cinzel font (`assets/fonts/Cinzel/`); no remote fonts (browser test checks this).
 - Undo has subtle invariants (it can't duplicate rewards; undo cancels queued routes; history persists across refreshes; it never leaves the floor: `advanceTowerRoom` and `descendTowerRoom` empty the history, as `afterDelveStep` does for a step onto another equivalent floor (by `World.depth`, either way) or across a milestone gate, so a snapshot is always of the floor the hero stands on).
   The README's gameplay section is the spec for this player-facing behavior.
