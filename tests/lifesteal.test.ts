@@ -135,3 +135,41 @@ test("Damage Visual's label follows Lifesteal", () => {
   assert.equal(plain, 126);
   assert.equal(steal, 120, "six of it healed back");
 });
+
+// What rises over the board as the fight plays: the green heals.
+import { BoardPopups } from "../src/board-popups.ts";
+const rising = (popups: BoardPopups) =>
+  (popups as unknown as { numbers: { x: number; y: number; text: string; color: string }[] }).numbers.map((n) => `${n.x}:${n.text}:${n.color}`);
+const shownFight = (player: Player, enemy: Enemy, summary: boolean) => {
+  const played = bout(player, enemy);
+  return { from: { x: 0, y: 0 }, to: { x: 1, y: 0 }, bout: summary ? summarize(played, 1400) : played, start: 0, hp: enemy.hp, summary };
+};
+const GREEN = "#5fdc6a";
+const feed = (fight: ReturnType<typeof shownFight>) => {
+  const popups = new BoardPopups(), game = { run: { seed: 1 }, gains: [], fight, lastHeal: null };
+  popups.update(game, fight.bout.strikes.at(-1)!.at);
+  return rising(popups);
+};
+
+test("in an animated fight each strike that heals raises a green number over the hero", () => {
+  // 20 a strike, 50% back: +10 each of the three strikes, 4 then 5 taken between.
+  const fight = shownFight(hero({ hp: 50, maxHp: 100, attack: 20, lifesteal: 50 }), { ...brute, hp: 60, attack: 4 }, false);
+  const numbers = feed(fight);
+  assert.deepEqual(numbers.filter((n) => n.endsWith(GREEN)), ["0:+10:" + GREEN, "0:+10:" + GREEN, "0:+10:" + GREEN]);
+  assert.ok(numbers.some((n) => n.startsWith("0:4:")), "the damage taken still rises over the hero");
+});
+
+test("a fight in summary rounds the hero comes out ahead of shows one green number, where the hero ends", () => {
+  // +30 healed against 9 taken: a net 21 gain.
+  const numbers = feed(shownFight(hero({ hp: 50, maxHp: 100, attack: 20, lifesteal: 50 }), { ...brute, hp: 60, attack: 4 }, true));
+  assert.deepEqual(numbers, ["1:+21:" + GREEN]);
+});
+
+test("a fight in summary rounds the hero comes out behind of folds its heals into the damage it took", () => {
+  // 1 healed a strike (5%) over three strikes against 9 taken: a net loss of 6.
+  const fight = shownFight(hero({ hp: 50, maxHp: 100, attack: 20, lifesteal: 5 }), { ...brute, hp: 60, attack: 4 }, true);
+  const enemy = fight.bout.strikes.find((s) => s.by === "enemy")!;
+  assert.equal(enemy.damage, 6);
+  assert.ok(!feed(fight).some((n) => n.endsWith(GREEN)), "no green number");
+  assert.equal(heroHpAfter(fight.bout, 50), 50 - 6);
+});

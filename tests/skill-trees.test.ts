@@ -193,8 +193,8 @@ test("Faster Trainers sits right of Into the depths off the Archives, costs 2 an
   const node = at("fasterTrainers");
   assert.deepEqual([node.x, node.y, node.requires], [80, 106, ["archives"]]);
   assert.deepEqual([at("cardBlueKey").x, at("cardBlueKey").y], [20, 84], "Blue Key sits below DEF Up");
-  assert.deepEqual([at("pocketMoney").x, at("pocketMoney").y, at("pocketMoney").requires], [26, 124, ["delve"]], "Pocket Money follows Into the depths");
-  assert.deepEqual([at("spareChange").x, at("spareChange").y, at("spareChange").requires], [26, 142, ["pocketMoney"]], "Spare Change follows Pocket Money");
+  assert.deepEqual([at("pocketMoney").x, at("pocketMoney").y, at("pocketMoney").requires], [20, 124, ["delve"]], "Pocket Money follows Into the depths");
+  assert.deepEqual([at("spareChange").x, at("spareChange").y, at("spareChange").requires], [20, 142, ["pocketMoney"]], "Spare Change follows Pocket Money");
   assert.equal(cost("fasterTrainers", 0), 2);
   assert.deepEqual(RESEARCH.fasterTrainers.requires, [{ upgrade: "fasterTrainers" }]);
   // No two nodes of a row overlap.

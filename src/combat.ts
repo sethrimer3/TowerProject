@@ -157,8 +157,10 @@ export const REVIVE_MS = 1400;
  * that would have felled the hero but revived it (`revived`) leaves it at
  * full HP. A critical hero strike carries the applications of the
  * critical factor it landed (`crit`), and one that heals the hero
- * (Lifesteal) the hero's HP after it (`heroHp`). */
-export type Strike = { by: "hero" | "enemy"; damage: number; crit?: number; heroHp?: number; shrouded?: number; revived?: true; start: number; at: number; end: number; hp: number };
+ * (Lifesteal) the hero's HP after it (`heroHp`) and the HP it restored
+ * (`healed`; in a summary round, what the round gave the hero net of the
+ * damage it took, on whichever strike lands last). */
+export type Strike = { by: "hero" | "enemy"; damage: number; crit?: number; heroHp?: number; healed?: number; shrouded?: number; revived?: true; start: number; at: number; end: number; hp: number };
 export type Bout = { strikes: Strike[]; duration: number };
 /** Whether the enemy's strike numbered `strike` (from 0) in a fight, which
  * would fell the hero, revives it instead (the Revive skill). */
@@ -200,10 +202,10 @@ function play(strikes: Strike[], { player, enemy, revives, crits }: Fighters, st
       const applications = crits?.applications(s.heroStrikes) ?? 0, struck = applications ? heroHit(player, enemy, critMultiplier(crits!.factor, applications)) : hit;
       s.heroStrikes++;
       const dealt = Math.min(struck, s.enemyHp), healed = player.lifesteal ? snap(Math.min(player.maxHp, s.heroHp + lifestealHeal(player, dealt))) : s.heroHp;
-      const heals = healed !== s.heroHp;
+      const heals = healed !== s.heroHp, gained = snap(healed - s.heroHp);
       s.heroHp = healed;
       s.enemyHp = snap(Math.max(0, s.enemyHp - struck));
-      strike({ by: "hero", damage: struck, ...(applications ? { crit: applications } : {}), ...(heals ? { heroHp: healed } : {}), hp: s.enemyHp });
+      strike({ by: "hero", damage: struck, ...(applications ? { crit: applications } : {}), ...(heals ? { heroHp: healed, healed: gained } : {}), hp: s.enemyHp });
       if (!s.enemyHp) break;
     }
     s.enemyNext = false;
@@ -271,7 +273,17 @@ export function summarize(fight: Bout, gap: number): Bout {
 
 /** A summary round so far: the hero's strikes as one, the enemy's as another. */
 type Round = { hero?: Strike; enemy?: Strike };
-const roundStrikes = ({ hero, enemy }: Round) => [hero, enemy].filter((s): s is Strike => !!s);
+const roundStrikes = ({ hero, enemy }: Round): Strike[] => {
+  const heal = hero?.healed ?? 0;
+  if (!hero || !heal) return [hero, enemy].filter((s): s is Strike => !!s);
+  // What the hero healed (Lifesteal) folds into what it took, so a round
+  // shows its net: the loss, or, when the heals outdid it, the gain, which
+  // rides on the round's last strike.
+  const taken = enemy?.damage ?? 0, { healed: _, ...plain } = hero;
+  if (heal <= taken) return [plain, { ...enemy!, damage: snap(taken - heal) }];
+  const net = snap(heal - taken);
+  return enemy ? [plain, { ...enemy, damage: 0, healed: net }] : [{ ...hero, healed: net }];
+};
 
 /** `round` with strike `s` added to its side's, landing at `t`. */
 function withStrike(round: Round, s: Strike, t: number): Round {
@@ -279,8 +291,9 @@ function withStrike(round: Round, s: Strike, t: number): Round {
   if (s.by === "hero") {
     const crit = (round.hero?.crit ?? 0) + (s.crit ?? 0);
     // A heal comes after the enemy's strikes already in the round, so the HP the round ends on is the healed one.
+    const healed = snap((round.hero?.healed ?? 0) + (s.healed ?? 0));
     const heroHp = s.heroHp ?? round.hero?.heroHp, enemy = s.heroHp !== undefined && round.enemy ? { ...round.enemy, hp: s.heroHp } : round.enemy;
-    return { ...round, ...(enemy ? { enemy } : {}), hero: { by: "hero", damage: snap((round.hero?.damage ?? 0) + s.damage), ...(crit ? { crit } : {}), ...(heroHp !== undefined ? { heroHp } : {}), hp: s.hp, ...at } };
+    return { ...round, ...(enemy ? { enemy } : {}), hero: { by: "hero", damage: snap((round.hero?.damage ?? 0) + s.damage), ...(crit ? { crit } : {}), ...(heroHp !== undefined ? { heroHp } : {}), ...(healed ? { healed } : {}), hp: s.hp, ...at } };
   }
   const prev = round.enemy, shrouded = snap((prev?.shrouded ?? 0) + (s.shrouded ?? 0));
   return { ...round, enemy: { by: "enemy", damage: snap((prev?.damage ?? 0) + s.damage), ...(shrouded ? { shrouded } : {}), ...(s.revived ? { revived: true as const } : {}), hp: s.hp, ...at } };

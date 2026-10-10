@@ -149,12 +149,21 @@ export class BoardPopups {
       const s = strikes[this.landed++];
       // In summary, an enemy that falls has plainly lost all its HP, so only
       // what the hero took rises, over where the hero stands at the end.
+      if (s.healed) this.heal(s.healed, won && fight.summary ? fight.to : fight.from, fight.start + s.at);
       if (!hiddenInSummary(fight, s)) this.raise(s, struckAt(fight, s, won), fight.start + s.at);
     }
   }
+  /** The HP Lifesteal restored, in green over the hero (nothing when it
+   * rounds to none). */
+  private heal(amount: number, on: { x: number; y: number }, start: number) {
+    const shown = wholeChange(amount);
+    if (shown > 0) this.numbers.push({ x: on.x, y: on.y + DAMAGE_START, start, text: `+${shown}`, color: HEAL_COLOR });
+  }
   /** A strike's numbers over `on` from `start`: the damage that got
-   * through, and what the shroud blocked in silver beside it. */
+   * through, and what the shroud blocked in silver beside it. A round the
+   * hero came out ahead of raises only its green gain. */
   private raise(s: Strike, on: { x: number; y: number }, start: number) {
+    if (s.by === "enemy" && s.healed && !s.damage && !s.shrouded) return;
     const both = !!s.shrouded && s.damage > 0, y = on.y + DAMAGE_START;
     if (s.shrouded) this.numbers.push({ x: on.x - (both ? SHROUD_SPLIT : 0), y, start, text: String(wholeChange(s.shrouded)), color: SHROUD_COLOR });
     if (s.shrouded && !s.damage) return;
