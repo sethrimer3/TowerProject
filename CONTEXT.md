@@ -479,7 +479,7 @@ A small task the player is given, two every 8 hours (from 00:00 GMT), such as *A
 _Avoid_: quest, task, challenge, daily (alone)
 
 **Weekly reward**:
-One of seven prizes for every 5 daily missions completed in the week (Monday 00:00 GMT to the next), up to 35: Gold, Gems, Medals and Ascension Shards. Each can be claimed once a week.
+One of seven prizes for every 5 daily missions claimed in the week (Monday 00:00 GMT to the next), up to 35: Gold, Gems, Medals and Ascension Shards. Each can be claimed once a week.
 _Avoid_: weekly mission (nothing is asked beyond the daily missions), chest
 
 ### The Delve

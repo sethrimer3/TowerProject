@@ -41,7 +41,7 @@ export class MissionDesk {
     return this.m.list.filter((x) => !isComplete(x)).length;
   }
 
-  /** The week's tally of daily missions completed, and the rewards claimed. */
+  /** The week's tally of daily missions claimed, and the rewards claimed. */
   get week() {
     this.rollWeek();
     return this.m.week;
@@ -50,7 +50,7 @@ export class MissionDesk {
   /** Whether weekly reward `i` can be claimed: reached and not yet claimed. */
   weeklyReady(i: number) {
     const w = this.week;
-    return w.completed >= WEEKLY_REWARDS[i]!.missions && !w.claimed.includes(i);
+    return w.missions >= WEEKLY_REWARDS[i]!.missions && !w.claimed.includes(i);
   }
 
   /** Whether anything waits to be claimed (the Missions button's dot). */
@@ -67,7 +67,7 @@ export class MissionDesk {
   /** Starts the week over once it has turned (Monday 00:00 GMT). */
   private rollWeek() {
     const id = missionWeek(this.now);
-    if (this.m.week.id !== id) this.m.week = { id, completed: 0, claimed: [] };
+    if (this.m.week.id !== id) this.m.week = { id, missions: 0, claimed: [] };
   }
 
   /** Brings the missions up to date: a new week's tally, and two new
@@ -124,10 +124,6 @@ export class MissionDesk {
       if (m.counted.length > COUNTED_KEPT) m.counted.splice(0, m.counted.length - COUNTED_KEPT);
     }
     mission.progress = Math.min(MISSIONS[type].target, mission.progress + amount);
-    if (isComplete(mission)) {
-      this.rollWeek();
-      m.week.completed++;
-    }
   }
 
   /** Counts what a run has done in all (`total`: run training ranks bought,
@@ -144,12 +140,15 @@ export class MissionDesk {
   }
 
   /** Claims completed mission `id`: pays its Gems, Gold by the highest
-   * tower open, and its material, and removes it. Null when it can't be. */
+   * tower open, and its material, removes it, and counts it in the week's
+   * tally. Null when it can't be. */
   claim(id: number): MissionPayout | null {
     const m = this.m, mission = m.list.find((x) => x.id === id);
     if (!mission || !isComplete(mission)) return null;
     const save = this.host.save, r = missionReward(save, mission.material);
     m.list = m.list.filter((x) => x !== mission);
+    this.rollWeek();
+    m.week.missions++;
     save.gems += r.gems;
     save.gold = snap(save.gold + r.gold);
     if (r.materials) save.equipment.materials[r.material] += r.materials;

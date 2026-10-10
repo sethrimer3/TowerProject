@@ -51,7 +51,7 @@ Claiming a completed mission removes it and pays (`missionReward`):
 
 ## Weekly rewards
 
-Every 5 daily missions **completed** in the week (counted as each reaches its target, claimed or not) opens a reward, up to 35.
+Every 5 daily missions **claimed** in the week (counted as each is claimed, not when it reaches its target) opens a reward, up to 35.
 The week runs from Monday 00:00 GMT; the tally and rewards claimed start over then, and a reward left unclaimed is gone.
 Gold is the daily mission's Gold for the highest tower open, times the multiplier (`WEEKLY_REWARDS`, `weeklyReward`).
 

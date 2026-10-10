@@ -80,7 +80,7 @@ export function missionReward(save: Save, material: EquipMaterialId) {
   return { gems: MISSION_GEMS, gold: MISSION_GOLD[tower - 1]!, material, materials: MISSION_MATERIALS[tower - 1]! };
 }
 
-/** The weekly rewards, one for every 5 daily missions completed in the
+/** The weekly rewards, one for every 5 daily missions claimed in the
  * week (Monday 00:00 GMT to the next): `gold` multiplies a daily mission's
  * Gold. */
 export const WEEKLY_REWARDS = [
@@ -92,7 +92,7 @@ export const WEEKLY_REWARDS = [
   { missions: 30, gold: 15, gems: 35, medals: 30, shards: 15 },
   { missions: 35, gold: 20, gems: 50, medals: 35, shards: 20 },
 ] as const;
-/** The daily missions completed that the last weekly reward needs. */
+/** The daily missions claimed that the last weekly reward needs. */
 export const WEEKLY_MAX = WEEKLY_REWARDS.at(-1)!.missions;
 
 /** What weekly reward `i` pays now, by the highest tower open. */

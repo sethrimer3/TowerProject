@@ -4,7 +4,7 @@ import { DAY_MS, gmtDay } from "../shop/clock.ts";
 import { MISSION_CAPACITY, MISSION_EVERY_MS, MISSIONS, MISSION_TYPES, WEEKLY_MAX, WEEKLY_REWARDS, type MissionType } from "./catalog.ts";
 
 // The missions' saved state (`save.missions`): the player's list, when
-// missions were last given, the week's tally of missions completed and its
+// missions were last given, the week's tally of missions claimed and its
 // rewards claimed, and what has already counted, so undo can't count it twice.
 
 export type Mission = {
@@ -26,8 +26,8 @@ export type MissionsSave = {
    * once from `stream("missions")`), so reloading can't redraw them. */
   rng: number | null;
   /** The week (`missionWeek`) the tally belongs to, the daily missions
-   * completed in it, and the weekly rewards claimed (by index). */
-  week: { id: number; completed: number; claimed: number[] };
+   * claimed in it, and the weekly rewards claimed (by index). */
+  week: { id: number; missions: number; claimed: number[] };
   /** Kills and pickups already counted (`type:mode:loot key`), the latest
    * `COUNTED_KEPT`: undo brings the tile back but it never counts again. */
   counted: string[];
@@ -43,7 +43,7 @@ export const COUNTED_KEPT = 2000;
 export const MARKS_KEPT = 20;
 
 export const defaultMissions = (): MissionsSave => ({
-  list: [], period: null, nextId: 1, rng: null, week: { id: 0, completed: 0, claimed: [] }, counted: [], marks: {},
+  list: [], period: null, nextId: 1, rng: null, week: { id: 0, missions: 0, claimed: [] }, counted: [], marks: {},
 });
 
 /** The 8-hour period (since 1970, from 00:00 GMT) that `ms` falls in. */
@@ -81,11 +81,11 @@ export function decodeMissions(raw: unknown): MissionsSave {
     const claimed = Array.isArray(w.claimed) ? w.claimed : [];
     d.week = {
       id: w.id,
-      completed: wholeIn(w.completed, 0, 1e6) ? w.completed : 0,
+      missions: wholeIn(w.missions, 0, 1e6) ? w.missions : 0,
       claimed: [...new Set(claimed.filter((i: unknown) => wholeIn(i, 0, WEEKLY_REWARDS.length - 1)) as number[])].sort((a, b) => a - b),
     };
     // A reward claimed is one the tally reached.
-    d.week.claimed = d.week.claimed.filter((i) => WEEKLY_REWARDS[i]!.missions <= Math.min(d.week.completed, WEEKLY_MAX));
+    d.week.claimed = d.week.claimed.filter((i) => WEEKLY_REWARDS[i]!.missions <= Math.min(d.week.missions, WEEKLY_MAX));
   }
   d.counted = Array.isArray(raw.counted) ? raw.counted.filter((k: unknown) => typeof k === "string" && k.length < 120).slice(-COUNTED_KEPT) : [];
   if (isRecord(raw.marks))

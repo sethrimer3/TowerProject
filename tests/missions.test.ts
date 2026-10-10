@@ -215,7 +215,7 @@ test("a completed mission is claimed once for 3 Gems, its tower's Gold and mater
   assert.equal(g.save.equipment.materials.silk, 8);
 });
 
-test("every 5 missions completed in the week opens a weekly reward, claimed once, until the week turns", () => {
+test("every 5 missions claimed in the week opens a weekly reward, claimed once, until the week turns", () => {
   const g = gameAt(MONDAY + 2 * DAY_MS);
   assert.equal(WEEKLY_MAX, 35);
   assert.deepEqual(WEEKLY_REWARDS.map((w) => [w.missions, w.gold, w.gems, w.medals, w.shards]),
@@ -223,8 +223,11 @@ test("every 5 missions completed in the week opens a weekly reward, claimed once
   for (let i = 0; i < 10; i++) {
     withMissions(g, "potions");
     g.missions.record("potions", 20);
+    assert.equal(g.missions.week.missions, i, "not counted while waiting to be claimed");
+    g.missions.claim(g.missions.list[0]!.id);
   }
-  assert.equal(g.missions.week.completed, 10, "counted as each completes, claimed or not");
+  g.save.gold = g.save.gems = 0;
+  assert.equal(g.missions.week.missions, 10, "counted as each is claimed");
   assert.ok(g.missions.weeklyReady(0) && g.missions.weeklyReady(1));
   assert.equal(g.missions.weeklyReady(2), false);
   g.save.tower.tiersOpen = 2;
@@ -237,7 +240,7 @@ test("every 5 missions completed in the week opens a weekly reward, claimed once
   assert.ok(g.missions.waiting, "reward 0 still waits");
   // Monday 00:00 GMT starts the tally over, and the rewards can be earned again.
   g.clock = () => MONDAY + 7 * DAY_MS;
-  assert.equal(g.missions.week.completed, 0);
+  assert.equal(g.missions.week.missions, 0);
   assert.equal(g.missions.weeklyReady(0), false);
   assert.equal(CURRENCIES.medals.balance(g.save), 10);
 });
@@ -265,11 +268,11 @@ test("missions save and load, and malformed state is dropped", () => {
       { id: 6, type: "floors", progress: 10, material: "amber" }, // complete: may share a type
       ...[7, 8, 9, 10, 11, 12, 13].map((id) => ({ id, type: "train", progress: 1, material: "silk" })), // past 8 in all
     ],
-    period: 5, nextId: 2, rng: 12, week: { id: 3, completed: 7, claimed: [0, 1, 1, 9] }, counted: ["a", 3], marks: { x: 2, y: -1 },
+    period: 5, nextId: 2, rng: 12, week: { id: 3, missions: 7, claimed: [0, 1, 1, 9] }, counted: ["a", 3], marks: { x: 2, y: -1 },
   });
   assert.deepEqual(bad.list.map((m) => m.id), [1, 6, 7, 8, 9, 10, 11, 12]);
   assert.equal(bad.nextId, 13);
-  assert.deepEqual(bad.week, { id: 3, completed: 7, claimed: [0] }, "a reward claimed must have been reached");
+  assert.deepEqual(bad.week, { id: 3, missions: 7, claimed: [0] }, "a reward claimed must have been reached");
   assert.deepEqual([bad.counted, bad.marks], [["a"], { x: 2 }]);
 });
 

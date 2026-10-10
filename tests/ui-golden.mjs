@@ -208,7 +208,7 @@ try {
         ];
       }),
       // In the forest with four missions, one complete, given this period,
-      // in Tower II's reach, and 12 completed this week with the first
+      // in Tower II's reach, and 12 claimed this week with the first
       // weekly reward claimed. Built last, so no fixture before it changes.
       missions: forest((s) => {
         quiet(s);
@@ -223,7 +223,7 @@ try {
         ];
         s.missions.nextId = 5;
         s.missions.period = Math.floor(now / (8 * 3_600_000));
-        s.missions.week = { id: Math.floor((Math.floor(now / 86_400_000) + 3) / 7), completed: 12, claimed: [0] };
+        s.missions.week = { id: Math.floor((Math.floor(now / 86_400_000) + 3) / 7), missions: 12, claimed: [0] };
       }),
     };
   });

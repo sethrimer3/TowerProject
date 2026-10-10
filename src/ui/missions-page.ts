@@ -37,7 +37,7 @@ function weeklyShown(p: MissionPayout, missions: number): RewardShown[] {
 }
 
 /** The Missions screen (docs/MISSIONS.md): the week's rewards on a bar
- * filling to 35 daily missions completed, a prize box over every fifth
+ * filling to 35 daily missions claimed, a prize box over every fifth
  * (dim until reached, glowing while it can be claimed, checked once
  * claimed; pressed to claim), and the daily missions, each with its
  * progress, or *Complete!* and a Claim button. Opened by the Missions
@@ -102,7 +102,7 @@ export class MissionsPage {
 
   /** The weekly rewards: the bar, and a box over every fifth mission. */
   private weekly() {
-    const game = this.ctx.game, week = game.missions.week, done = Math.min(week.completed, WEEKLY_MAX);
+    const game = this.ctx.game, week = game.missions.week, done = Math.min(week.missions, WEEKLY_MAX);
     const boxes = WEEKLY_REWARDS.map((w, i) => {
       const claimed = week.claimed.includes(i), ready = game.missions.weeklyReady(i), r = weeklyReward(game.save, i);
       const state = claimed ? "claimed" : ready ? "ready" : "dim";
@@ -113,7 +113,7 @@ export class MissionsPage {
     }).join("");
     return `<section class="weekly" aria-label="Weekly rewards"><div class="weekly-head"><b>Weekly rewards</b><small id="weekly-reset">${this.resetText()}</small></div>` +
       `<div class="weekly-track"><div class="weekly-boxes">${boxes}</div><div class="weekly-bar" role="progressbar" aria-valuemin="0" aria-valuemax="${WEEKLY_MAX}" aria-valuenow="${done}"><i style="width:${(100 * done) / WEEKLY_MAX}%"></i></div></div>` +
-      `<small class="weekly-count">${done}/${WEEKLY_MAX} daily missions completed this week</small></section>`;
+      `<small class="weekly-count">${done}/${WEEKLY_MAX} daily missions claimed this week</small></section>`;
   }
 
   /** A daily mission: what it asks and pays, its progress bar (or
