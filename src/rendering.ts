@@ -15,6 +15,7 @@ import { drawNeonContents, drawNeonGround, drawNeonTorch, paintNeonHero } from "
 import { RoutePath } from "./route-path.ts";
 import { BoardPopups, lunges } from "./board-popups.ts";
 import { DamagePredictions, drawDamageLabels } from "./damage-labels.ts";
+import { BossFlash } from "./boss-flash.ts";
 import { goalUnlocked } from "./goals.ts";
 import { AREA_BURST_MS, drawAreaBurst, preloadAreaBurst, drawLevelUp, drawRevive, LEVEL_UP_MS, POINTS_MS, REVIVE_MS } from "./level-up.ts";
 import { drawPoof, POOF_MS } from "./poof.ts";
@@ -63,6 +64,7 @@ export class Renderer {
   private light = new DungeonLight();
   private routePath = new RoutePath();
   private predictions = new DamagePredictions();
+  private bossFlash = new BossFlash();
   /** Damage numbers and rewards rising off their tiles. */
   popups = new BoardPopups();
   /** The Tower floor the hero was last drawn on (seed and height), and when
@@ -156,6 +158,7 @@ export class Renderer {
   /** Gameplay feedback drawn over every board. */
   private drawOverlays(f: FrameContext) {
     this.drawDamageLabels(f);
+    if (!this.game.run.outside) this.bossFlash.draw(f, this.game.run.seed, this.game.run.height, f.look.reduceMotion);
     this.drawSkipMarks(f);
     this.drawBadgeMarks(f);
     this.drawChargeMarks(f);

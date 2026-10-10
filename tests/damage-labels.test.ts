@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { DamagePredictions, damageLabel, drawDamageLabels, relativeColor } from "../src/damage-labels.ts";
 import { predict } from "../src/combat.ts";
+import { forecast } from "../src/crit-forecast.ts";
 import type { Enemy, Player, Tile } from "../src/entities.ts";
 import type { FrameContext } from "../src/render-frame.ts";
 import { compactAmount } from "../src/whole.ts";
@@ -28,6 +29,15 @@ test("a prediction is worked out once per kind of enemy until the hero's ATK, DE
     assert.equal(p.cost(hero(changed), slime).damage, predict(hero(changed), slime).damage);
     assert.equal(p.computed, before + 1, `recomputed after ${Object.keys(changed)[0]} changes`);
   }
+});
+
+test("with critical strikes a label is the inspect panel's expected damage, which follows the hero's HP", () => {
+  const crit = { chance: 50, factor: 2 }, p = new DamagePredictions(), slime = enemy(60, 20, 1);
+  for (const hp of [100, 12, 100]) {
+    const h = hero({ hp, attack: 8 }), expected = forecast(h, slime, crit).expected;
+    assert.equal(p.cost(h, slime, crit).damage, expected, `at ${hp} HP`);
+  }
+  assert.notEqual(forecast(hero({ hp: 12, attack: 8 }), slime, crit).expected, forecast(hero({ hp: 100, attack: 8 }), slime, crit).expected, "the HP cap matters here");
 });
 
 test("a label is red when lethal or the enemy can't be hurt, gray for an Instakill, white when struck for no HP, gold otherwise", () => {

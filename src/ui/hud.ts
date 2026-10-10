@@ -1,4 +1,6 @@
-import { keyCount, whole, wholeHp } from "../whole.ts";
+import { compactAmount, enemyStat, keyCount, whole, wholeHp } from "../whole.ts";
+import { enemyStats } from "../enemy-curves.ts";
+import { tierStats } from "../tiers.ts";
 import type { Game } from "../state.ts";
 import type { Renderer } from "../rendering.ts";
 import { levelForXp, xpForLevel } from "../config.ts";
@@ -337,10 +339,11 @@ Used ${uses} time${uses === 1 ? "" : "s"} this run; the next use takes ${next} l
   }
   return title;
 }
-/** The level of the badge a hand card holds inside a run, on its top right corner. */
+/** The icon of the badge a hand card holds inside a run, on its top right
+ * corner (its level is in the card's tooltip). */
 function handBadgeHtml(game: Game, id: CardId) {
   const badge = game.run.outside ? undefined : game.run.badges?.[id];
-  return badge ? `<span class="hand-badge-level" style="${badgeStyle(badge.id)}" aria-hidden="true">${badge.level}</span>` : "";
+  return badge ? `<span class="hand-badge-level" style="${badgeStyle(badge.id)}" aria-hidden="true">${BADGES[badge.id].glyph}</span>` : "";
 }
 /** The active hand in the row under the board, the card that made the
  * latest step glowing (paused too); End Run lights up while no card can act. */
@@ -500,12 +503,28 @@ function renderProgress(game: Game) {
   const rawAllBest = game.save[game.mode].best;
   text("height", outside ? game.save[game.mode].tier : displayedProgress(game.run.height));
   renderRunEarned(game);
+  renderBaseEnemy(game);
   const rewardEl = el("best-reward");
   rewardEl.hidden = rawRunBest <= rawAllBest;
   if (rewardEl.hidden) return;
   text("best-reward-val", milestones(rules, rawAllBest, rawRunBest));
   text("best-reward-type", rules.words.currency.toUpperCase());
   rewardEl.title = rules.words.newBest;
+}
+
+/** A stat in a few characters: two decimals below 1,000 when not whole,
+ * then 1.2K, 12M … */
+const shortStat = (n: number) => (n < 1000 ? enemyStat(n) : compactAmount(Math.floor(n)));
+/** Under the floor inside a run, below a dividing line: the ATK, DEF and HP
+ * of a normal, balanced enemy there, as the tier's factor makes them. */
+function renderBaseEnemy(game: Game) {
+  const box = el("base-enemy"), divider = el("base-enemy-divider"), inside = !game.run.outside;
+  box.hidden = divider.hidden = !inside;
+  if (!inside) return;
+  const s = enemyStats(game.mode, game.tier, game.run.height, "normal", "balanced"), f = tierStats(game.tier);
+  text("base-enemy-atk", shortStat(s.attack * f));
+  text("base-enemy-def", shortStat(s.defense * f));
+  text("base-enemy-hp", shortStat(s.hp * f));
 }
 
 /** The run's Inspiration (Courage in the Delve) last shown under the

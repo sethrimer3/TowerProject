@@ -884,7 +884,8 @@ export class Game {
         // The combo is the run's, so undo takes an activation back; the
         // next Gold found spends it (RunPurse).
         this.run.goldCombo = (this.run.goldCombo ?? 0) + v;
-        return this.gain(p.x, p.y, `Goldback · next Gold ×${this.run.goldCombo}`);
+        // Drawn as "×2" and the Gold coin.
+        return this.gain(p.x, p.y, `×${this.run.goldCombo} Gold`, { coin: "gold" });
       case "xp": {
         const xp = Math.round((v * xpBase(this.badgeFloor)) / xpBase(0));
         this.addXp(xp);

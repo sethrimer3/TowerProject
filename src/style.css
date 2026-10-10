@@ -444,6 +444,13 @@ h1 span {
   white-space: nowrap;
   font-weight: 600;
 }
+/* Below a line, a normal enemy's stats at this floor: ATK, DEF and HP. */
+.height .base-enemy-divider { width: 100%; margin: 5px 0 4px; }
+.base-enemy-divider[hidden], .base-enemy[hidden] { display: none; }
+.base-enemy { display: flex; justify-content: center; flex-wrap: wrap; gap: 1px 5px; font-size: 9px; line-height: 1.2; color: #c9cfda; white-space: nowrap; }
+.base-enemy > span { display: inline-flex; align-items: center; gap: 1px; }
+.base-enemy b { font-weight: 700; }
+.base-enemy-hp { color: #df797e; }
 .height-reward[hidden] {
   display: none;
 }
@@ -1061,7 +1068,7 @@ nav:not(.in-run) .hand {
   height: 100%;
   image-rendering: pixelated;
 }
-/* Inside a run, the level of the badge the card holds, in its colours. */
+/* Inside a run, the icon of the badge the card holds, in its colours. */
 .hand-badge-level {
   position: absolute;
   top: 2px;
