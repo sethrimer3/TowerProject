@@ -91,8 +91,8 @@ export class MissionsPage {
   /** When the next missions come, or that the list is full. */
   private nextText() {
     const missions = this.ctx.game.missions;
-    if (missions.full) return `${missions.open}/${MISSION_CAPACITY} missions · ${missions.open < missions.list.length ? "claim" : "complete"} one to make room`;
-    return `${missions.open}/${MISSION_CAPACITY} missions · 2 more in <b>${countdown(nextPeriodAt(missions.now) - missions.now)}</b>`;
+    if (missions.full) return `${missions.list.length}/${MISSION_CAPACITY} missions · ${missions.open < missions.list.length ? "claim" : "complete"} one to make room`;
+    return `${missions.list.length}/${MISSION_CAPACITY} missions · 2 more in <b>${countdown(nextPeriodAt(missions.now) - missions.now)}</b>`;
   }
 
   private resetText() {

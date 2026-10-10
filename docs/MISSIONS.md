@@ -70,12 +70,12 @@ They show in the forest's purse once held (where it has room), and on the curren
 
 ## Screens
 
-- **Missions button:** a check mark over *X/8*, the incomplete missions out of 8, with a dot while a mission or weekly reward waits to be claimed.
+- **Missions button:** a check mark over *X/8*, the missions in the list out of 8, complete or not (at 8 no more come), with a dot while a mission or weekly reward waits to be claimed.
   In the forest it stands in the actions column under Settings; when that column would hold more than three buttons (the Tournament's and Mail's shown too), the hamburger appears in the forest and holds Settings and Mail.
   Inside a run it is in the run's menu, whose hamburger wears its dot.
 - **Missions screen** (`ui/missions-page.ts`): an X at the top right returns to the page that opened it.
   Near the top, the weekly bar fills from 0 to 35 with the week's count, a prize box over each multiple of 5: dim until reached, glowing while it can be claimed, checked once claimed; pressing a glowing box claims it.
-  Below, how many missions are open and when the next two come, then each mission: what it asks, what it pays, its bar, and once complete a Claim button.
+  Below, how many missions the list holds out of 8 and when the next two come (or, at 8, to claim or complete one to make room), then each mission: what it asks, what it pays, its bar, and once complete a Claim button.
   What a claim pays rises to the middle of the screen (`revealReward`): a mission's Gold, with the rest written under it; a weekly reward's currencies one celebration each in turn (Gold, Gems, Medals, Ascension Shards, those it pays), each pressed away to show the next.
 
 ## Future

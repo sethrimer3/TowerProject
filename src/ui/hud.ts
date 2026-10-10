@@ -194,18 +194,18 @@ export function renderMailButton(game: Game) {
   button.hidden = !game.run.outside || mail.recent.length === 0;
   button.classList.toggle("notify", !button.hidden && mail.unread);
 }
-/** The Missions button: a check mark over the missions open out of 8
- * (`3/8`), with a dot while a mission or weekly reward waits to be
- * claimed. In the forest's actions column under Settings (and Mail);
+/** The Missions button: a check mark over the missions in the list out
+ * of 8 (`3/8`), complete or not, since at 8 no more come; a dot shows
+ * while a mission or weekly reward waits to be claimed. In the forest's actions column under Settings (and Mail);
  * inside a run, in the run's menu. Refreshed every second too (main's
  * tick), so new missions show as they come. */
 export function renderMissionsButton(game: Game) {
   const button = el("missions-button"), missions = game.missions, inside = !game.run.outside;
   const home = inside ? el("run-menu-items") : el("run-menu").parentElement!, before = inside ? el("end-run") : el("auto");
   if (button.parentElement !== home || button.nextElementSibling !== before) home.insertBefore(button, before);
-  text("missions-count", `${missions.open}/${MISSION_CAPACITY}`);
+  text("missions-count", `${missions.list.length}/${MISSION_CAPACITY}`);
   button.classList.toggle("notify", missions.waiting);
-  const label = `Missions: ${missions.open} of ${MISSION_CAPACITY} open${missions.waiting ? "; rewards to claim" : ""}`;
+  const label = `Missions: ${missions.list.length} of ${MISSION_CAPACITY}${missions.waiting ? "; rewards to claim" : ""}`;
   button.title = label;
   button.setAttribute("aria-label", label);
 }

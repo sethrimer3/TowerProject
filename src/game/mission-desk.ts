@@ -36,7 +36,7 @@ export class MissionDesk {
     return this.m.list;
   }
 
-  /** The missions not yet complete: the X of the button's X/8. */
+  /** The missions not yet complete. */
   get open() {
     return this.m.list.filter((x) => !isComplete(x)).length;
   }
