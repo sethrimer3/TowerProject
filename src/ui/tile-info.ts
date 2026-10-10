@@ -96,7 +96,9 @@ function forecast(p: Player, e: Enemy, turns: number, g: Board, crits = false) {
 
 const DESCRIBE: Partial<Record<Kind, Describe>> = {
   enemy: (t, p, g) => {
-    const e = t.enemy!, r = predict(p, e), crit = g.stepRules.crit, c = crit && !r.impervious ? critForecast(p, e, crit) : null;
+    // Critical strikes count in the prediction only with Critical Prediction.
+    const crit = g.save.upgrades.critPrediction ? g.stepRules.crit : undefined;
+    const e = t.enemy!, r = predict(p, e), c = crit && !r.impervious ? critForecast(p, e, crit) : null;
     return {
       title: enemyTitle(e),
       body: `<span>HP ${enemyStat(e.hp)} · ATK ${enemyStat(e.attack)} · DEF ${enemyStat(e.defense)}</span>` + prediction(r, p, g, c) + forecast(p, e, r.impervious ? 0 : r.turns, g, !!c),

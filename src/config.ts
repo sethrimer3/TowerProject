@@ -170,6 +170,14 @@ export const UPGRADES = [
     currency: "inspiration",
   },
   {
+    id: "critPrediction",
+    name: "Critical Prediction",
+    description: "Damage predictions count your critical hits: the damage to expect, your chance to survive and the range it usually lands in",
+    base: 2,
+    max: 1,
+    currency: "inspiration",
+  },
+  {
     id: "cardHeal",
     name: "Heal",
     description: "Add the HEAL card to your deck: it moves you toward the closest healing potion",

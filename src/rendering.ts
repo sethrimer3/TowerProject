@@ -400,11 +400,13 @@ export class Renderer {
   }
   /** Damage Visual: what each enemy in view would cost, once its goal is
    * claimed and while its setting is on, coloured by its share of the
-   * hero's HP once Relative Damage Color is claimed too. */
+   * hero's HP once Relative Damage Color is claimed too; critical strikes
+   * count only with Critical Prediction. */
   private drawDamageLabels(f: FrameContext) {
     const g = this.game;
     if (g.run.outside || !g.save.settings.damageVisual || !goalUnlocked(g.save, "damageVisual")) return;
-    drawDamageLabels(f, this.predictions, g.run.player, g.fight, goalUnlocked(g.save, "relativeDamageColor"), g.crit);
+    const crit = g.save.upgrades.critPrediction ? g.crit : undefined;
+    drawDamageLabels(f, this.predictions, g.run.player, g.fight, goalUnlocked(g.save, "relativeDamageColor"), crit);
   }
   /** A fading red cross where a step was refused. */
   /** Skip Open Nodes' marks: a violet X on each door or monster it passed

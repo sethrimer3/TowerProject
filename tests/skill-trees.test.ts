@@ -65,23 +65,24 @@ test("Shroud, then Greater Heal, then Recovery, Regen Research and Find Potion, 
   assert.ok(g.buy("findPotion"));
   assert.equal(before - g.save.tower.inspiration, 10);
   const at = (id: string) => TREES[0].nodes.find((n) => n.id === id)!;
-  assert.deepEqual([at("shroud").x, at("shroud").y, at("shroud").requires], [74, 124, ["delve"]]);
-  assert.deepEqual([at("greaterHeal").x, at("greaterHeal").y, at("greaterHeal").requires], [80, 142, ["shroud"]], "Greater Heal sits between Shroud and Recovery and Regen Research");
-  assert.deepEqual([at("recovery").x, at("recovery").y, at("recovery").requires], [70, 160, ["greaterHeal"]]);
-  assert.deepEqual([at("regenResearch").x, at("regenResearch").y, at("regenResearch").requires], [90, 160, ["greaterHeal"]], "Regen Research sits beside Recovery");
-  assert.deepEqual([at("revive").x, at("revive").y, at("revive").requires], [90, 178, ["regenResearch"]], "Revive sits below Regen Research");
-  assert.deepEqual([at("findPotion").x, at("findPotion").y, at("findPotion").requires], [70, 178, ["recovery"]], "Find Potion sits below Recovery");
-  assert.deepEqual([at("buyQuantity").x, at("buyQuantity").y, at("buyQuantity").requires], [50, 142, ["lifesteal"]], "Buy Quantity sits under Lifesteal");
-  assert.deepEqual([at("lifesteal").x, at("lifesteal").y, at("lifesteal").requires], [50, 124, ["delve"]], "Lifesteal sits where Key Siphon did, under Into the depths");
-  assert.deepEqual([at("keySiphon").x, at("keySiphon").y, at("keySiphon").requires], [50, 160, ["buyQuantity"]], "Key Siphon sits under Buy Quantity");
+  assert.deepEqual([at("shroud").x, at("shroud").y, at("shroud").requires], [74, 142, ["delve"]]);
+  assert.deepEqual([at("greaterHeal").x, at("greaterHeal").y, at("greaterHeal").requires], [80, 160, ["shroud"]], "Greater Heal sits between Shroud and Recovery and Regen Research");
+  assert.deepEqual([at("recovery").x, at("recovery").y, at("recovery").requires], [70, 178, ["greaterHeal"]]);
+  assert.deepEqual([at("regenResearch").x, at("regenResearch").y, at("regenResearch").requires], [90, 178, ["greaterHeal"]], "Regen Research sits beside Recovery");
+  assert.deepEqual([at("revive").x, at("revive").y, at("revive").requires], [90, 196, ["regenResearch"]], "Revive sits below Regen Research");
+  assert.deepEqual([at("findPotion").x, at("findPotion").y, at("findPotion").requires], [70, 196, ["recovery"]], "Find Potion sits below Recovery");
+  assert.deepEqual([at("buyQuantity").x, at("buyQuantity").y, at("buyQuantity").requires], [50, 160, ["lifesteal"]], "Buy Quantity sits under Lifesteal");
+  assert.deepEqual([at("lifesteal").x, at("lifesteal").y, at("lifesteal").requires], [50, 142, ["delve"]], "Lifesteal sits where Key Siphon did, under Into the depths");
+  assert.deepEqual([at("keySiphon").x, at("keySiphon").y, at("keySiphon").requires], [50, 178, ["buyQuantity"]], "Key Siphon sits under Buy Quantity");
   assert.deepEqual(at("cardYellowDoor").requires, ["keySiphon"], "the cards hang from Key Siphon");
 });
 test("the hand's skills run Buildout, Trainers, Critical to the Archives, Gear and On the Job off Buildout, ATK Up then DEF Up after Gear, Regen then Heal below On the Job, Larger Hand sits by itself to the Archives' right, and Buildout, Trainers, On the Job and Gear cost 1 (Critical 2)", () => {
   const at = (id: string) => TREES[0].nodes.find((n) => n.id === id)!;
   assert.deepEqual(["buildout", "trainers", "critical", "archives", "onTheJob", "regen", "cardHeal", "gear", "cardAtkUp", "cardDefUp"].map((id) => at(id).requires),
     [["combatStance"], ["buildout"], ["trainers"], ["critical"], ["buildout"], ["onTheJob"], ["regen"], ["buildout"], ["gear"], ["cardAtkUp"]]);
-  assert.deepEqual(["buildout", "trainers", "critical", "archives"].map((id) => [at(id).x, at(id).y]), [[50, 30], [50, 48], [50, 66], [50, 84]], "down the middle a row apart");
-  assert.deepEqual([at("largerHand").x, at("largerHand").y, at("largerHand").requires], [80, 84, ["trainers"]], "Larger Hand stands right of the Archives, alone");
+  assert.deepEqual(["buildout", "trainers", "critical", "archives"].map((id) => [at(id).x, at(id).y]), [[50, 30], [50, 48], [50, 84], [50, 102]], "down the middle, Critical a row lower for room");
+  assert.deepEqual([at("largerHand").x, at("largerHand").y, at("largerHand").requires], [80, 102, ["trainers"]], "Larger Hand stands right of the Archives, alone");
+  assert.deepEqual([at("critPrediction").x, at("critPrediction").y, at("critPrediction").requires], [30, 84, ["critical"]], "Critical Prediction stands left of Critical");
   assert.ok(!TREES[0].nodes.some((n) => n.requires.includes("largerHand")), "nothing waits for Larger Hand");
   assert.ok(at("onTheJob").x > at("buildout").x && at("onTheJob").y === at("buildout").y, "On the Job sits right of Buildout");
   assert.ok(at("regen").x === at("onTheJob").x && at("regen").y > at("onTheJob").y, "Regen sits below On the Job");
@@ -121,9 +122,9 @@ test("each skill in a tree of unlocks is bought once", () => {
 
 test("a tree taller than its view places its nodes on a taller map", () => {
   const inspiration = TREES[0];
-  assert.equal(treeHeight(inspiration), 298);
+  assert.equal(treeHeight(inspiration), 316);
   assert.ok(inspiration.nodes.every((n) => n.y > 0 && n.y < treeHeight(inspiration)), "every node on the map");
-  assert.equal(mapNodes(inspiration).find((n) => n.id === "recovery")!.y, (160 * 100) / 298);
+  assert.equal(mapNodes(inspiration).find((n) => n.id === "recovery")!.y, (178 * 100) / 316);
   assert.equal(treeHeight(TREES.find((t) => t.id === "courage")!), 198);
   assert.ok(TREES.slice(2).every((t) => treeHeight(t) === 100 && mapNodes(t).every((n, i) => n.y === t.nodes[i].y)), "other trees fit one view");
 });
@@ -155,8 +156,8 @@ test("Movement Speed research lets the run's arrows go one step a second faster 
 test("Inspiration tree: Heal follows Regen, Critical leads to the Archives (5), and Into the Depths follows them", () => {
   const node = (id: UpgradeId) => TREES[0].nodes.find((n) => n.id === id)!;
   assert.deepEqual(node("cardHeal").requires, ["regen"]);
-  assert.deepEqual([node("archives").x, node("archives").y, node("archives").requires], [50, 84, ["critical"]]);
-  assert.deepEqual([node("delve").x, node("delve").y, node("delve").requires], [50, 106, ["archives"]]);
+  assert.deepEqual([node("archives").x, node("archives").y, node("archives").requires], [50, 102, ["critical"]]);
+  assert.deepEqual([node("delve").x, node("delve").y, node("delve").requires], [50, 124, ["archives"]]);
   assert.deepEqual(node("inspirationUndos").requires, ["archives"]);
   assert.equal(cost("archives", 0), 5);
   const g = new Game(defaults());
@@ -191,10 +192,10 @@ test("Echoes of time leads nowhere; the research skills (10 Courage each) take A
 test("Faster Trainers sits right of Into the depths off the Archives, costs 2 and opens its research", () => {
   const at = (id: string) => TREES[0].nodes.find((n) => n.id === id)!;
   const node = at("fasterTrainers");
-  assert.deepEqual([node.x, node.y, node.requires], [80, 106, ["archives"]]);
-  assert.deepEqual([at("cardBlueKey").x, at("cardBlueKey").y], [20, 84], "Blue Key sits below DEF Up");
-  assert.deepEqual([at("pocketMoney").x, at("pocketMoney").y, at("pocketMoney").requires], [20, 124, ["delve"]], "Pocket Money follows Into the depths");
-  assert.deepEqual([at("spareChange").x, at("spareChange").y, at("spareChange").requires], [20, 142, ["pocketMoney"]], "Spare Change follows Pocket Money");
+  assert.deepEqual([node.x, node.y, node.requires], [80, 124, ["archives"]]);
+  assert.deepEqual([at("cardBlueKey").x, at("cardBlueKey").y], [20, 102], "Blue Key sits below DEF Up");
+  assert.deepEqual([at("pocketMoney").x, at("pocketMoney").y, at("pocketMoney").requires], [20, 142, ["delve"]], "Pocket Money follows Into the depths");
+  assert.deepEqual([at("spareChange").x, at("spareChange").y, at("spareChange").requires], [20, 160, ["pocketMoney"]], "Spare Change follows Pocket Money");
   assert.equal(cost("fasterTrainers", 0), 2);
   assert.deepEqual(RESEARCH.fasterTrainers.requires, [{ upgrade: "fasterTrainers" }]);
   // No two nodes of a row overlap.

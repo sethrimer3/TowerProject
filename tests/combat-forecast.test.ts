@@ -64,8 +64,24 @@ test("a fight Lifesteal heals the hero by on balance says Healing in the enemy p
   const r = predict(g.run.player, foe(50, 0));
   assert.match(tileInfo(g, 1, 0).body, new RegExp(`${wholeChange(r.hpAfter! - 50)} Healing · Survivable`));
   const crits = { world: g.world, run: g.run, mode: g.mode, save: g.save, stepRules: { ...g.stepRules, crit: { chance: 50, factor: 2 } } };
+  g.save.upgrades.critPrediction = 1;
   assert.match(tileInfo(crits, 1, 0).body, /~\d+ Healing · Survivable/);
   assert.match(tileInfo(crits, 1, 0).body, /Usually \d+–\d+ Healing/);
+});
+
+test("critical strikes count in the enemy panel's prediction only with Critical Prediction", () => {
+  const g = new Game(defaults());
+  const w = g.world as RoomWorld;
+  w.cells = new Map([["1,0", { kind: "enemy", enemy: foe(50, 5) }]]);
+  Object.assign(g.run.player, { attack: 10, defense: 0, hp: 500, maxHp: 500 });
+  g.save.goals.claimed["1"] = [10, 20];
+  const board = { world: g.world, run: g.run, mode: g.mode, save: g.save, stepRules: { ...g.stepRules, crit: { chance: 50, factor: 2 } } };
+  const body = () => tileInfo(board, 1, 0).body;
+  assert.doesNotMatch(body(), /~|Usually|without crits/, "without it, the plain prediction");
+  assert.match(body(), /\d+ damage · Survivable/);
+  g.save.upgrades.critPrediction = 1;
+  assert.match(body(), /~\d+ damage/);
+  assert.match(body(), /without crits/);
 });
 
 test("an enemy's title puts its strength before its name, unless it is a normal one", () => {

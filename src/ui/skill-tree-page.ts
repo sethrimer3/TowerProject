@@ -5,6 +5,7 @@ import { revealCard } from "./card-reveal.ts";
 import { UPGRADES, cost, type UpgradeId } from "../config.ts";
 import { TREES, columnGap, mapNodes, skillAvailable, treeHeight, treeOpen, type TreeId } from "../skill-trees.ts";
 import { upgradeText } from "../loadout.ts";
+import { goalUnlocked, UNLOCK_NAMES } from "../goals.ts";
 import { TreeParticles } from "../tree-particles.ts";
 import type { AppContext } from "./app.ts";
 import { clamp, el, skillSprite, uiSprite, type UiSprite } from "./dom.ts";
@@ -243,7 +244,9 @@ export class SkillTreePage {
     const hint = tooltipHint({ locked, maxed, available, affordable }, requirements, !!unlocks);
     // Short of the price, the cost line says how much more it takes.
     const short = affordable ? "" : ` (need ${price - balance})`;
-    return `<b style="color:var(--tree-color)">${u.name}</b>${unlocks ? "" : `<div>${level} / ${u.max} ranks</div>`}<div>${upgradeText(u.id)}.</div>${hint ? `<div class="${canBuy ? "safe" : ""}">${hint}</div>` : ""}${!maxed && !locked ? `<div>Cost: ${price} ${currency}${short}</div>` : ""}`;
+    // Critical Prediction shows nothing until the Goals open damage predictions.
+    const goal = id === "critPrediction" && !goalUnlocked(this.ctx.game.save, "damagePrediction") ? `<div>Predictions show once ${UNLOCK_NAMES.damagePrediction} is claimed on the Goals page.</div>` : "";
+    return `<b style="color:var(--tree-color)">${u.name}</b>${unlocks ? "" : `<div>${level} / ${u.max} ranks</div>`}<div>${upgradeText(u.id)}.</div>${goal}${hint ? `<div class="${canBuy ? "safe" : ""}">${hint}</div>` : ""}${!maxed && !locked ? `<div>Cost: ${price} ${currency}${short}</div>` : ""}`;
   }
 
   /** Above the selected node, or below it when there is no room above. */

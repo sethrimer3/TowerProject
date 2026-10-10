@@ -300,6 +300,7 @@ _Avoid_: damage gradient
 
 **Critical hit**:
 A hero strike that lands with its ATK multiplied by the **critical factor** (Crit x training and research, ×1.2 to start) before the enemy's DEF comes off. Each strike is critical with the **critical chance** (Crit % training and research, Critical skill): a fixed roll per run, floor, tile and strike, so taking a fight back and fighting it again lands the same crits. At 100% or more that many applications are certain and the rest rolls for one more; applications add to the strike's ATK (ATK × (1 + n × (factor − 1))). Fights are forecast by expected damage: the damage line shows the mean and, in the inspect panel, the range 90% of fights fall in and the chance to survive; Survivable and LETHAL stay certain (worst and best case).
+Predictions count critical strikes only once the Critical Prediction skill is owned; before it they show the fight without crits.
 _Avoid_: crit strike, lucky hit
 
 **Instakill**:
