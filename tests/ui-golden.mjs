@@ -501,6 +501,10 @@ try {
         // An idle archivist opens Select Research; its X goes back.
         await click("[data-pick]");
         await shot(`${prefix}.research.archives.pick`);
+        // A project's ? opens its description, level and effect.
+        await click("[data-about]");
+        await shot(`${prefix}.research.archives.about`);
+        await click("#tree-help-ok");
         await page.fill("#research-search", "no such research");
         await shot(`${prefix}.research.archives.search`);
         await page.fill("#research-search", "");

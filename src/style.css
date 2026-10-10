@@ -3043,12 +3043,14 @@ dialog.dismiss-anywhere { cursor: pointer; }
 .research.active { border-color: #6e9a70; }
 .research.completed { border-color: #8a7a42; }
 .research.locked { opacity: 0.6; }
-.research p { margin: 2px 0 0; color: #b7c0cc; line-height: 1.3; }
 /* Name, tags and level on one line, the level at the right end. */
 .research-head { display: flex; align-items: center; gap: 6px; }
 .research-head small { margin-left: auto; }
 .research-head b { color: #e3d2ad; font-size: 13px; font-weight: 500; }
 .research-head small { font-size: 9px; letter-spacing: 1px; color: #8793a2; white-space: nowrap; }
+/* The ? that opens the project's description, smaller than a heading's. */
+.research-head .research-about { width: 18px; height: 18px; margin-left: 0; font-size: 11px; vertical-align: 0; }
+.research-about-now { color: #e3d2ad; }
 /* What the next level changes, old → new as on the Training tab, then its
  * price, and the button (or state) at the right end of the same line. */
 .research-next { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin-top: 3px; }

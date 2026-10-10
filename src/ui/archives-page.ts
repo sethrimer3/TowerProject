@@ -161,6 +161,7 @@ export class ArchivesPanel {
       this.ctx.update();
       this.rerender();
     };
+    document.querySelectorAll<HTMLButtonElement>("[data-about]").forEach((b) => (b.onclick = () => this.showAbout(b.dataset.about as ResearchId)));
     document.querySelectorAll<HTMLButtonElement>("[data-research]").forEach((b) => (b.onclick = () => {
       const slot = this.picking, id = b.dataset.research as ResearchId;
       if (slot === null) return;
@@ -211,6 +212,14 @@ export class ArchivesPanel {
       p("Research goes on while you play or are away. Each archivist works on one project at a time; Gems hire more.") +
       p("Auto-continue starts the project's next level as soon as one completes, when the Gold is there. Stop gives the Gold back and keeps the time spent for later; Gems finish a level at once.") +
       p("History lists every level completed."));
+  }
+
+  /** Project `id`'s description, kept off its row, and its level and what
+   * its levels so far give. */
+  private showAbout(id: ResearchId) {
+    const save = this.ctx.game.save, a = save.archives, def = research(id), target = def.levels[0].effect.target;
+    const now = `Level ${researchLevel(a, id)} / ${maxLevel(id, save.upgrades)} · ${RESEARCH_TARGETS[target].name}: ${RESEARCH_TARGETS[target].shown(targetValue(save, target, a))}`;
+    showHelp(this.ctx, "ARCHIVES", def.name, `<p>${def.description}</p><p class="research-about-now">${now}</p>`);
   }
 
   /** Each hired archivist, busy (a bar, the time left, Stop) or idle, then
@@ -266,8 +275,9 @@ export class ArchivesPanel {
     }).join("");
   }
 
-  /** One project, kept short so more fit in view: its name and level on
-   * one line, its description, then what its next level gives, and what it
+  /** One project, kept short so more fit in view: its name, the ? that
+   * opens its description, and its level on one line, then what its next
+   * level gives, and what it
    * takes beside the button to start it: with progress kept, only the time
    * left, in pale green. */
   private researchHtml(id: ResearchId) {
@@ -291,8 +301,8 @@ export class ArchivesPanel {
       const why = this.picking === null ? "Choose an archivist first." : cannotSwitch(save, this.picking, id);
       action = `<button data-research="${id}" ${why ? `disabled title="${why}"` : ""}>Research · ${uiSprite("gold", "stat-sprite")} ${currencyAmount(researchPrice(a, next!))}</button>`;
     }
-    return `<article class="research ${state}" role="listitem"><div class="research-head"><b>${def.name}</b><small>LEVEL ${level} / ${maxLevel(id, save.upgrades)}</small></div>
-      <p>${def.description}</p><div class="research-next">${detail}<span class="research-action">${price}${action}</span></div></article>`;
+    return `<article class="research ${state}" role="listitem"><div class="research-head"><b>${def.name}</b><button class="tree-help research-about" data-about="${id}" aria-label="About ${def.name}" title="About ${def.name}">?</button><small>LEVEL ${level} / ${maxLevel(id, save.upgrades)}</small></div>
+      <div class="research-next">${detail}<span class="research-action">${price}${action}</span></div></article>`;
   }
 
   /** The research completed lately, newest first, in a scrolling dialog. */
