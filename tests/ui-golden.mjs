@@ -484,11 +484,11 @@ try {
           await click(`[data-train="${stat}"]:not([disabled])`);
           await shot(`${prefix}.research.training.${stat}`);
         }
-        // A trained stat resets for Gems, asking first.
+        // A trained stat resets for Gems, asking first: its ranks bought with points.
         if (await page.locator("[data-reset]:not([disabled])").count()) {
           await click("[data-reset]:not([disabled])");
           await shot(`${prefix}.research.training.resetAsk`);
-          await click("#confirm");
+          await click("#reset-points");
           await shot(`${prefix}.research.training.reset`);
         }
       }

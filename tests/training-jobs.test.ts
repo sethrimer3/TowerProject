@@ -77,8 +77,9 @@ test("points and trainers keep separate schedules: points never make a trainer d
   assert.equal(trainingStep(g.save, "attack").gold, 41, "points left the trainer's schedule alone");
   assert.deepEqual(decode(JSON.stringify(g.save)).trainerRanks, g.save.trainerRanks, "saved");
   g.save.gems = 2;
-  assert.ok(g.training.reset("attack"));
+  assert.ok(g.training.reset("attack", "gold"));
   assert.equal(g.save.trainerRanks.attack, 0, "a reset starts the trainer's schedule over");
+  assert.equal(g.save.training.attack, 6, "the ranks bought with points stay");
 });
 
 test("training points buy a rank at once, without Gold, time or a trainer", () => {
@@ -203,9 +204,9 @@ test("stopping a rank gives its Gold back and its time spent as credit, which th
   assert.deepEqual(bad.trainingJobs, []);
 });
 
-test("a Gem reset returns the points, the Gold, and all the stat's training time to the time bank", () => {
+test("a Gem reset returns either the points or the Gold and all the stat's training time to the time bank", () => {
   const { g, wait } = game();
-  g.save.gems = 2;
+  g.save.gems = 4;
   assert.ok(g.training.train("hp"));
   assert.ok(g.training.trainWithGold("hp")); // a trainer's first rank: 15 s
   wait(15);
@@ -213,16 +214,23 @@ test("a Gem reset returns the points, the Gold, and all the stat's training time
   assert.ok(g.training.trainWithGold("hp")); // its second: a minute
   wait(40);
   const points = trainingPoints(g.save).left;
-  assert.ok(g.training.reset("hp"));
-  assert.equal(g.save.training.hp, 0);
+  assert.deepEqual(g.training.resettable("hp"), { points: 1, gold: 1, inTraining: true });
+  assert.ok(g.training.reset("hp", "gold"));
+  assert.equal(g.save.training.hp, 1, "the rank bought with points stays");
   assert.deepEqual(g.save.trainingJobs, [], "the rank in training stops");
-  assert.equal(trainingPoints(g.save).left, points + 1);
+  assert.equal(trainingPoints(g.save).left, points, "no points back");
   assert.equal(g.save.gold, 10_000);
   assert.equal(g.save.trainingBank, 15_000 + 40_000, "the 15 s trained, and the 40 s of the stopped rank");
   assert.equal(g.save.trainingCredit.hp, 0, "none left as the stat's own credit");
+  assert.equal(g.training.reset("hp", "gold"), false, "nothing more trained with Gold");
   assert.equal(decode(JSON.stringify(g.save)).trainingBank, g.save.trainingBank, "saved");
   assert.deepEqual(decode(JSON.stringify(g.save)).trainingCredit, g.save.trainingCredit);
   assert.equal(decode(JSON.stringify({ ...g.save, trainingCredit: 5 })).trainingCredit.hp, 0, "an old single credit is dropped");
+  assert.ok(g.training.reset("hp", "points"));
+  assert.equal(g.save.training.hp, 0);
+  assert.equal(trainingPoints(g.save).left, points + 1, "the point back, to spend on any stat");
+  assert.equal(g.save.gems, 0, "each reset two Gems");
+  assert.equal(g.save.trainingBank, 15_000 + 40_000, "the time bank untouched");
 });
 
 test("the boost doubles training for up to four hours, banked an hour a claim, refused within ten minutes of that", () => {
@@ -314,7 +322,7 @@ test("the time bank serves any stat, after that stat's own time credit", () => {
   g.save.trainingCredit.hp = 60 * 60_000;
   assert.ok(g.training.trainWithGold("attack"));
   wait(60);
-  assert.ok(g.training.reset("attack"), "its credit and the minute spent go to the bank");
+  assert.ok(g.training.reset("attack", "gold"), "its credit and the minute spent go to the bank");
   assert.equal(g.save.trainingBank, 6 * 60_000);
   assert.equal(g.save.trainingCredit.attack, 0);
   // DEF has no credit of its own: the bank pays its first two ranks

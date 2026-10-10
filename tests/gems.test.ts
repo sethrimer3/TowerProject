@@ -193,7 +193,7 @@ test("the ad's Gems: seven, then ten minutes before the next", () => {
   assert.equal(AD_COOLDOWN_MS, 10 * MINUTE);
 });
 
-test("resetting a Training stat costs two Gems and returns every point spent on it, only between runs", () => {
+test("resetting a Training stat's point ranks costs two Gems and returns every point spent on them, only between runs", () => {
   const g = arena((g) => { g.save.xp = xpForLevel(10); });
   const left = trainingPoints(g.save).left;
   for (let i = 0; i < 3; i++) assert.ok(trainNow(g, "attack"));
@@ -201,16 +201,17 @@ test("resetting a Training stat costs two Gems and returns every point spent on 
   assert.equal(trainingPoints(g.save).left, left - 4);
   g.save.gems = TRAINING_RESET_GEMS;
   assert.ok(!g.training.canReset);
-  assert.equal(g.training.reset("attack"), false, "no reset inside a run");
+  assert.equal(g.training.reset("attack", "points"), false, "no reset inside a run");
   assert.equal(g.save.gems, TRAINING_RESET_GEMS, "nothing paid");
   g.finish("again");
   assert.ok(g.run.outside && g.training.canReset);
   const attack = g.run.player.attack;
   g.save.gems = 0;
-  assert.equal(g.training.reset("attack"), false, "no Gems");
+  assert.equal(g.training.reset("attack", "points"), false, "no Gems");
   g.save.gems = TRAINING_RESET_GEMS;
-  assert.equal(g.training.reset("defense"), false, "no ranks to reset");
-  assert.ok(g.training.reset("attack"));
+  assert.equal(g.training.reset("defense", "points"), false, "no ranks to reset");
+  assert.equal(g.training.reset("attack", "gold"), false, "no ranks trainers trained");
+  assert.ok(g.training.reset("attack", "points"));
   assert.equal(g.save.gems, 0);
   assert.equal(g.save.training.attack, 0);
   assert.equal(g.save.training.hp, 1, "other stats keep their ranks");
@@ -220,7 +221,7 @@ test("resetting a Training stat costs two Gems and returns every point spent on 
   g.save.settings.freePurchases = true;
   assert.ok(trainNow(g, "attack") && trainNow(g, "attack"));
   assert.deepEqual(g.save.trainingPaid.attack, { points: 0, gold: 0, ms: 0 });
-  assert.ok(g.training.reset("attack"));
+  assert.ok(g.training.reset("attack", "points"));
   assert.equal(trainingPoints(g.save).left, left - 1, "no points made from nothing");
 });
 

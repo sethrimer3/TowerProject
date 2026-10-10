@@ -2572,7 +2572,6 @@ div.training-points select.buy-quantity { float: none; margin-left: auto; }
 .training-speed { margin-left: 6px; padding: 1px 7px; border: 1px solid #5fb4d8; border-radius: 8px; background: #0f2230; color: #bff4ff; font-size: 15px; font-weight: 700; text-shadow: 0 0 6px #8fe6ff, 0 0 12px #5fb4d8; box-shadow: 0 0 8px #5fb4d866, inset 0 0 6px #5fb4d833; animation: training-speed-glow 2.4s ease-in-out infinite; }
 @keyframes training-speed-glow { 50% { box-shadow: 0 0 14px #8fe6ffaa, inset 0 0 8px #5fb4d855; text-shadow: 0 0 9px #bff4ff, 0 0 16px #5fb4d8; } }
 html.reduce-motion .training-speed { animation: none; }
-.reset-back { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 
 /* --- Deck page --- */
 nav button, .tree-tabs button { position: relative; }

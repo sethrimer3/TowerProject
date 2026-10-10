@@ -288,27 +288,44 @@ export class TrainingDesk {
     return !!this.host.run.outside;
   }
 
-  /** Resets a Training stat to no ranks for `TRAINING_RESET_GEMS` Gems
-   * (none with Dev free purchases), returning what its ranks were paid
-   * with: the training points, the Gold, and all the training time spent
-   * on the stat (its trainers' ranks, the rank in training, and its time
-   * credit) into the time bank, which any stat's next ranks use. Never
-   * inside a run: a run's hero is only ever trained up, never reshaped. */
-  reset(id: TrainingId) {
+  /** The ranks of `id` each way of a Gem reset takes back: those bought
+   * with training points, and those trainers finished (`trainerRanks`),
+   * with whether a rank is in training now, which the Gold way stops. */
+  resettable(id: TrainingId) {
+    const save = this.save, gold = save.trainerRanks[id];
+    return { points: save.training[id] - gold, gold, inTraining: !!trainingJob(save.trainingJobs, id) };
+  }
+
+  /** Resets one way of training a Training stat for `TRAINING_RESET_GEMS`
+   * Gems (none with Dev free purchases), leaving the other's ranks alone.
+   * `"points"` takes back the ranks bought with training points and
+   * returns those points, free to spend on any stat. `"gold"` takes back
+   * the ranks trainers finished and stops the rank in training, returning
+   * their Gold and all the training time spent on the stat (its trainers'
+   * ranks, the rank in training, and its time credit) into the time bank,
+   * which any stat's next ranks use; the trainer's schedule starts over.
+   * Refused with no ranks that way. Never inside a run: a run's hero is
+   * only ever trained up, never reshaped. */
+  reset(id: TrainingId, way: "points" | "gold") {
     if (!this.canReset) return false;
     this.settle();
-    const save = this.save, job = trainingJob(save.trainingJobs, id);
-    const trained = save.training[id] > 0 || !!job;
+    const save = this.save, job = trainingJob(save.trainingJobs, id), ranks = this.resettable(id);
+    const trained = way === "points" ? ranks.points > 0 : ranks.gold > 0 || !!job;
     if (!trained || !this.affords(TRAINING_RESET_GEMS)) return false;
     return changeLoadout(save, () => {
       const paid = save.trainingPaid[id];
       if (!this.host.free) save.gems -= TRAINING_RESET_GEMS;
+      if (way === "points") {
+        save.training[id] -= ranks.points;
+        paid.points = 0;
+        return;
+      }
       if (job) this.refund(job);
       save.gold = snap(save.gold + paid.gold);
       save.trainingBank += paid.ms + save.trainingCredit[id];
       save.trainingCredit[id] = 0;
-      save.trainingPaid[id] = { points: 0, gold: 0, ms: 0 };
-      save.training[id] = 0;
+      save.trainingPaid[id] = { points: paid.points, gold: 0, ms: 0 };
+      save.training[id] -= ranks.gold;
       save.trainerRanks[id] = 0;
       save.trainingJobs = save.trainingJobs.filter((j) => j.id !== id);
     });

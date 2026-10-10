@@ -161,39 +161,47 @@ export class ResearchPage {
     showHelp(this.ctx, "RESEARCH", "Training", body);
   }
 
-  /** Asks before resetting a stat for Gems: what it costs, what it
-   * returns (training points, Gold and time credit), and the Gems held;
-   * Reset only when they cover it. */
+  /** Asks before resetting a stat for Gems, one way or the other: the
+   * ranks bought with training points, returning the points to spend on
+   * any stat, or the ranks trainers trained, returning their Gold and time.
+   * Each button names its ranks; a way with none is closed, and the Gold
+   * way shows only once trainers are hired or have trained some. */
   private confirmReset(id: TrainingId) {
-    const { game, modal } = this.ctx, row = TRAINING.find(t => t.id === id)!,
-      ranks = game.save.training[id], job = trainingJob(game.save.trainingJobs, id);
+    const { game, modal } = this.ctx, row = TRAINING.find(t => t.id === id)!, ranks = game.training.resettable(id);
     if (game.save.gems < TRAINING_RESET_GEMS && !game.free) return askForGems(this.ctx);
-    const back = this.resetReturns(id);
+    const count = (n: number, kind: string) => `${n} ${kind} ${n === 1 ? "rank" : "ranks"}`, back = this.resetReturns(id);
+    // Without trainers, and none of their ranks, only the points way shows.
+    const goldOpen = ranks.gold > 0 || ranks.inTraining, gold = game.training.hired || goldOpen;
     modal.innerHTML = `<small>TRAINING</small><h2>Reset ${row.name}?</h2>
-      <p>Spend ${TRAINING_RESET_GEMS} Gems to reset ${row.name} to no ranks${job ? " and stop the rank in training" : ""}, from ${ranks} ${ranks === 1 ? "rank" : "ranks"}.</p>
-      ${back ? `<p class="reset-back">Returns ${back}</p><p class="hint">The time goes to the time bank, taken off any stat's next ranks trainers train.</p>` : ""}
+      <p>Spend ${TRAINING_RESET_GEMS} Gems to take back one kind of ${row.name}'s ranks; the other kind stays.</p>
+      <p><b>Training points:</b> the ranks bought with training points are taken back, and the points${back.points ? ` (${back.points})` : ""} return to the pool, to spend on any stat.</p>
+      ${gold ? `<p><b>Gold and time:</b> the ranks trainers trained are taken back${ranks.inTraining ? " and the rank in training stops" : ""}${back.gold ? `, returning ${back.gold}` : ""}.</p>${back.gold ? `<p class="hint">The time goes to the time bank, taken off any stat's next ranks trainers train.</p>` : ""}` : ""}
       <p class="hint reset-gems">${gemIcon()} You hold ${game.save.gems} Gems.</p>
-      <div class="dialog-actions"><button id="cancel">Cancel</button><button id="confirm">Reset · ${TRAINING_RESET_GEMS} Gems</button></div>`;
+      <div class="dialog-actions"><button id="cancel">Cancel</button><button id="reset-points" ${ranks.points ? "" : "disabled"}>Return ${count(ranks.points, "point")} · ${TRAINING_RESET_GEMS} Gems</button>${gold ? `<button id="reset-gold" ${goldOpen ? "" : "disabled"}>Return ${count(ranks.gold, "Gold")} · ${TRAINING_RESET_GEMS} Gems</button>` : ""}</div>`;
     modal.showModal();
     el("cancel").onclick = () => modal.close();
-    el("confirm").onclick = () => {
+    const reset = (way: "points" | "gold") => () => {
       modal.close();
-      this.saveAfter(game.training.reset(id));
+      this.saveAfter(game.training.reset(id, way));
     };
+    el("reset-points").onclick = reset("points");
+    if (gold) el("reset-gold").onclick = reset("gold");
   }
 
-  /** What resetting `id` gives back: the training points, the Gold (a rank
-   * in training's too) and all the training time spent on it (its trainers'
-   * ranks, the rank in training and its time credit), as the dialog shows
-   * them. */
+  /** What each way of resetting `id` gives back, as the dialog shows them:
+   * the training points, or the Gold (a rank in training's too) and all the
+   * training time spent on it (its trainers' ranks, the rank in training
+   * and its time credit). */
   private resetReturns(id: TrainingId) {
     const game = this.ctx.game, paid = game.save.trainingPaid[id], job = trainingJob(game.save.trainingJobs, id);
     const gold = paid.gold + (job?.gold ?? 0), time = paid.ms + game.save.trainingCredit[id] + (job ? game.training.invested(job) : 0);
-    return [
-      paid.points ? `${pointsIcon()} <b>${paid.points}</b>` : "",
-      gold ? `${goldIcon()} <b>${whole(gold)}</b>` : "",
-      time ? `${clockIcon()} <b>${formatDuration(time)}</b>` : "",
-    ].filter(Boolean).join(" ");
+    return {
+      points: paid.points ? `${pointsIcon()} <b>${paid.points}</b>` : "",
+      gold: [
+        gold ? `${goldIcon()} <b>${whole(gold)}</b>` : "",
+        time ? `${clockIcon()} <b>${formatDuration(time)}</b>` : "",
+      ].filter(Boolean).join(" "),
+    };
   }
 
   /** The hero's stats, each with what a rank is worth at the hero's level
