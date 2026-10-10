@@ -19,6 +19,18 @@
 * {
   box-sizing: border-box;
 }
+/* Text can't be selected by dragging or long-press; typing fields still can. */
+:root {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+input,
+textarea,
+[contenteditable] {
+  user-select: text;
+  -webkit-user-select: text;
+}
 /* A thin rune-like handle — a dot flanked by two elongated diamond spikes,
    one pointing up and one down — replaces the default scrollbar everywhere. */
 * {
@@ -2359,7 +2371,6 @@ nav button > span :is(img, svg) { display: block; width: 42px; height: 42px; max
   background: #18202b;
   cursor: grab;
   touch-action: pan-y;
-  user-select: none;
 }
 .defend-item canvas {
   width: 40px;

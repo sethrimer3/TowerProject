@@ -50,6 +50,28 @@ if (!fontCheck.loaded || fontCheck.wrong.length || fontCheck.remote)
   throw Error(
     "Local Cinzel font verification failed: " + JSON.stringify(fontCheck),
   );
+// Text can't be selected by cursor, except in typing fields.
+const selectCheck = await page.evaluate(() => {
+  const field = document.createElement("input");
+  document.body.append(field);
+  const fieldSelect = getComputedStyle(field).userSelect;
+  field.remove();
+  return {
+    selectable: [...document.querySelectorAll("#app *")]
+      .filter((e) => getComputedStyle(e).userSelect !== "none")
+      .map((e) => e.tagName),
+    fieldSelect,
+  };
+});
+if (selectCheck.selectable.length || selectCheck.fieldSelect !== "text")
+  throw Error("Text selection check failed: " + JSON.stringify(selectCheck));
+const box = await page.locator("#stats").boundingBox();
+await page.mouse.move(box.x + 2, box.y + 2);
+await page.mouse.down();
+await page.mouse.move(box.x + box.width - 2, box.y + box.height - 2, { steps: 5 });
+await page.mouse.up();
+if (await page.evaluate(() => getSelection().toString()))
+  throw Error("Dragging across the HUD selected text");
 if (await page.locator(".dpad").isVisible())
   throw Error("Arrows should be hidden by default");
 // Inside a run the tabs give way to an empty row; Settings opens from the HUD.
