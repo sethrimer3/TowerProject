@@ -4,7 +4,7 @@ import { MISSION_CAPACITY, MISSIONS, missionReward, WEEKLY_MAX, WEEKLY_REWARDS, 
 import { isComplete, nextPeriodAt, weekEndsAt, type Mission } from "../missions/progress.ts";
 import { shortCountdown } from "../tournament/schedule.ts";
 import type { AppContext } from "./app.ts";
-import { checkIcon, el, gemIcon, giftIcon, goldIcon } from "./dom.ts";
+import { checkIcon, el, gemIcon, giftIcon, goldIcon, medalIcon, shardIcon } from "./dom.ts";
 import { materialIcon } from "./equipment-icons.ts";
 import { currencyAmount } from "./hud.ts";
 import { revealReward, type RewardShown } from "./reward-reveal.ts";
@@ -24,6 +24,16 @@ function payoutShown(p: MissionPayout, kicker: string): RewardShown {
     p.material && `+${p.material.amount} ${EQUIP_MATERIALS[p.material.id as keyof typeof EQUIP_MATERIALS].name}`,
   ].filter(Boolean);
   return { icon: goldIcon(), amount: `+${p.gold.toLocaleString("en-US")}`, kicker, name: "Gold", text: rest.join(" · ") || undefined, permanent: false };
+}
+
+/** What a weekly reward paid, one celebration a currency in turn: Gold,
+ * Gems, Medals and Ascension Shards, each it paid any of. */
+function weeklyShown(p: MissionPayout, missions: number): RewardShown[] {
+  const kicker = "WEEKLY REWARD", text = `For ${missions} daily missions this week`;
+  const each: [number, string, string][] = [
+    [p.gold, goldIcon(), "Gold"], [p.gems, gemIcon(), "Gems"], [p.medals, medalIcon(), "Medals"], [p.shards, shardIcon(), "Ascension Shards"],
+  ];
+  return each.filter(([n]) => n > 0).map(([n, icon, name]) => ({ icon, amount: `+${n.toLocaleString("en-US")}`, kicker, name, text, permanent: false }));
 }
 
 /** The Missions screen (docs/MISSIONS.md): the week's rewards on a bar
@@ -81,7 +91,7 @@ export class MissionsPage {
   /** When the next missions come, or that the list is full. */
   private nextText() {
     const missions = this.ctx.game.missions;
-    if (missions.open >= MISSION_CAPACITY) return `${missions.open}/${MISSION_CAPACITY} missions · complete one to make room`;
+    if (missions.full) return `${missions.open}/${MISSION_CAPACITY} missions · ${missions.open < missions.list.length ? "claim" : "complete"} one to make room`;
     return `${missions.open}/${MISSION_CAPACITY} missions · 2 more in <b>${countdown(nextPeriodAt(missions.now) - missions.now)}</b>`;
   }
 
@@ -125,15 +135,19 @@ export class MissionsPage {
       if (paid) this.claimed(payoutShown(paid, "MISSION COMPLETE"));
     }));
     el("missions").querySelectorAll<HTMLButtonElement>("[data-weekly]").forEach((b) => (b.onclick = () => {
-      const paid = game.missions.claimWeekly(Number(b.dataset.weekly));
-      if (paid) this.claimed(payoutShown(paid, "WEEKLY REWARD"));
+      const i = Number(b.dataset.weekly), paid = game.missions.claimWeekly(i);
+      if (paid) this.claimed(...weeklyShown(paid, WEEKLY_REWARDS[i]!.missions));
     }));
   }
 
-  /** A reward claimed: saved, redrawn, and risen to the middle of the screen. */
-  private claimed(shown: RewardShown) {
+  /** A reward claimed: saved, redrawn, and risen to the middle of the
+   * screen, each of `shown` after the one before is pressed away. */
+  private claimed(...shown: RewardShown[]) {
     this.ctx.update();
     this.render();
-    revealReward(shown, this.ctx.game.save.settings.reduceMotion);
+    const next = (i: number) => {
+      if (shown[i]) revealReward(shown[i]!, this.ctx.game.save.settings.reduceMotion, () => next(i + 1));
+    };
+    next(0);
   }
 }

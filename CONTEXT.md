@@ -474,7 +474,7 @@ _Avoid_: letter, post
 ### Missions
 
 **Daily mission**:
-A small task the player is given, two every 8 hours (from 00:00 GMT), such as *Advance 10 floors*. Up to eight are open at once, never two of a kind, and never one asking for something not yet unlocked. They never expire, and progress counts across runs. A completed one is claimed for Gems, Gold and an equipment material.
+A small task the player is given, two every 8 hours (from 00:00 GMT), such as *Advance 10 floors*. The list holds up to eight, those completed and waiting to be claimed included, never two incomplete of a kind, and never one asking for something not yet unlocked. They never expire, and progress counts across runs. A completed one is claimed for Gems, Gold and an equipment material.
 _Avoid_: quest, task, challenge, daily (alone)
 
 **Weekly reward**:

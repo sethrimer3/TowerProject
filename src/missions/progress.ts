@@ -68,7 +68,7 @@ export function decodeMissions(raw: unknown): MissionsSave {
     const target = MISSIONS[m.type as MissionType].target;
     if (!wholeIn(m.progress, 0, target)) continue;
     // Never two incomplete missions of one type, nor more than the list holds.
-    if (m.progress < target && (open.has(m.type) || open.size >= MISSION_CAPACITY)) continue;
+    if ((m.progress < target && open.has(m.type)) || d.list.length >= MISSION_CAPACITY) continue;
     if (m.progress < target) open.add(m.type);
     ids.add(m.id);
     d.list.push({ id: m.id, type: m.type, progress: m.progress, material: m.material });

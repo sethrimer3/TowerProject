@@ -8,8 +8,8 @@ Missions are small tasks the game gives the player, each paying a reward when cl
 - **Given:** two every 8 hours, on 8-hour periods from 00:00 GMT (00:00, 08:00, 16:00), the first two at once.
   The clock is the server's GMT time as estimated from the Shop's last confirmed time (`estimatedServerTime`), as the Shop's day is.
   Periods missed while away each give two, up to the room left.
-- **Room:** at most **8 incomplete** missions (`MISSION_CAPACITY`).
-  A completed mission waiting to be claimed takes no room; no new mission comes while 8 are incomplete.
+- **Room:** at most **8** missions in the list (`MISSION_CAPACITY`), complete ones waiting to be claimed counting too.
+  No new mission comes while the list is full, so claiming makes room.
 - **Never expire.** Progress is a running tally across runs, and shows as *X/Y* on a bar until it reaches the target, then *Complete!*.
 - **Kinds:** each new mission is drawn evenly among the kinds the player can work on now and has no incomplete mission of.
   The draw continues a saved stream (`save.missions.rng`, seeded once from `stream("missions")`), so reloading can't redraw it.
@@ -76,7 +76,7 @@ They show in the forest's purse once held (where it has room), and on the curren
 - **Missions screen** (`ui/missions-page.ts`): an X at the top right returns to the page that opened it.
   Near the top, the weekly bar fills from 0 to 35 with the week's count, a prize box over each multiple of 5: dim until reached, glowing while it can be claimed, checked once claimed; pressing a glowing box claims it.
   Below, how many missions are open and when the next two come, then each mission: what it asks, what it pays, its bar, and once complete a Claim button.
-  What a claim pays rises to the middle of the screen (`revealReward`).
+  What a claim pays rises to the middle of the screen (`revealReward`): a mission's Gold, with the rest written under it; a weekly reward's currencies one celebration each in turn (Gold, Gems, Medals, Ascension Shards, those it pays), each pressed away to show the next.
 
 ## Future
 

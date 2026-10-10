@@ -57,8 +57,8 @@ export const MISSIONS: Record<MissionType, MissionDef> = {
 export const MISSION_TYPES = Object.keys(MISSIONS) as MissionType[];
 
 /** New daily missions come every `MISSION_EVERY_MS` (8 hours, from 00:00
- * GMT), `MISSIONS_PER_GRANT` at a time, while fewer than `MISSION_CAPACITY`
- * are incomplete. */
+ * GMT), `MISSIONS_PER_GRANT` at a time, while the list holds fewer than
+ * `MISSION_CAPACITY`, complete ones waiting to be claimed counting too. */
 export const MISSION_EVERY_MS = 8 * 3_600_000;
 export const MISSIONS_PER_GRANT = 2;
 export const MISSION_CAPACITY = 8;

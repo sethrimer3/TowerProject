@@ -58,6 +58,12 @@ export class MissionDesk {
     return this.m.list.some(isComplete) || WEEKLY_REWARDS.some((_, i) => this.weeklyReady(i));
   }
 
+  /** Whether the list is full: 8 missions, complete ones waiting to be
+   * claimed counting too. */
+  get full() {
+    return this.m.list.length >= MISSION_CAPACITY;
+  }
+
   /** Starts the week over once it has turned (Monday 00:00 GMT). */
   private rollWeek() {
     const id = missionWeek(this.now);
@@ -66,7 +72,8 @@ export class MissionDesk {
 
   /** Brings the missions up to date: a new week's tally, and two new
    * missions for each 8-hour period begun since the last were given (the
-   * first time, two at once), while fewer than 8 are incomplete. Returns
+   * first time, two at once), while the list holds fewer than 8 (complete
+   * ones waiting to be claimed counting too). Returns
    * whether any came. */
   refresh() {
     this.rollWeek();
@@ -85,7 +92,7 @@ export class MissionDesk {
    * incomplete mission of, while there is room; false when there is none. */
   private give(rng: () => number) {
     const m = this.m, open = m.list.filter((x) => !isComplete(x));
-    if (open.length >= MISSION_CAPACITY) return false;
+    if (this.full) return false;
     const taken = new Set(open.map((x) => x.type));
     const types = MISSION_TYPES.filter((t) => !taken.has(t) && MISSIONS[t].offered(this.host.save));
     if (!types.length) return false;

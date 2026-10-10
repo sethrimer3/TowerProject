@@ -67,13 +67,18 @@ test("two missions come at once, then two every 8 hours, up to 8 incomplete", ()
   g.clock = () => MONDAY + 32 * HOUR;
   g.missions.refresh();
   assert.equal(g.missions.open, MISSION_CAPACITY);
-  // Missions never expire; a completed one doesn't count against the room.
+  // Missions never expire; a completed one waiting to be claimed still
+  // takes its room, until it is claimed.
   const first = g.missions.list[0]!;
   first.progress = MISSIONS[first.type].target;
   g.clock = () => MONDAY + 40 * HOUR;
+  assert.equal(g.missions.refresh(), false);
+  assert.ok(g.missions.full);
+  assert.deepEqual([g.missions.open, g.missions.list.length], [MISSION_CAPACITY - 1, MISSION_CAPACITY]);
+  assert.ok(g.missions.claim(first.id));
+  g.clock = () => MONDAY + 48 * HOUR;
   g.missions.refresh();
-  assert.equal(g.missions.open, MISSION_CAPACITY);
-  assert.equal(g.missions.list.length, MISSION_CAPACITY + 1);
+  assert.deepEqual([g.missions.open, g.missions.list.length], [MISSION_CAPACITY, MISSION_CAPACITY]);
 });
 
 test("no two incomplete missions share a type, and none asks for what isn't unlocked", () => {
@@ -258,11 +263,12 @@ test("missions save and load, and malformed state is dropped", () => {
       { id: 4, type: "bosses", progress: 9, material: "silk" }, // past the target
       { id: 5, type: "bosses", progress: 3, material: "gravel" },
       { id: 6, type: "floors", progress: 10, material: "amber" }, // complete: may share a type
+      ...[7, 8, 9, 10, 11, 12, 13].map((id) => ({ id, type: "train", progress: 1, material: "silk" })), // past 8 in all
     ],
     period: 5, nextId: 2, rng: 12, week: { id: 3, completed: 7, claimed: [0, 1, 1, 9] }, counted: ["a", 3], marks: { x: 2, y: -1 },
   });
-  assert.deepEqual(bad.list.map((m) => m.id), [1, 6]);
-  assert.equal(bad.nextId, 7);
+  assert.deepEqual(bad.list.map((m) => m.id), [1, 6, 7, 8, 9, 10, 11, 12]);
+  assert.equal(bad.nextId, 13);
   assert.deepEqual(bad.week, { id: 3, completed: 7, claimed: [0] }, "a reward claimed must have been reached");
   assert.deepEqual([bad.counted, bad.marks], [["a"], { x: 2 }]);
 });
