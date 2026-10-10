@@ -1,4 +1,4 @@
-import { atWorst, critMultiplier, guaranteedCrits, netDamage, predict, raisedAttack, type CombatPrediction, type CritRule } from "./combat.ts";
+import { atWorst, critMultiplier, estimatedDamage, guaranteedCrits, netDamage, predict, raisedAttack, type CombatPrediction, type CritRule } from "./combat.ts";
 import { snap } from "./exact.ts";
 import type { Enemy, Player } from "./entities.ts";
 
@@ -31,18 +31,20 @@ const EXACT_TURNS = 400;
 /** The strikes of a longer fight the approximation lists, around the mean. */
 const SPREAD_TURNS = 400;
 
-export function forecast(player: Player, enemy: Enemy, crit: CritRule): CritForecast {
+/** Past `played` strikes (all of them unless given) a fight is estimated,
+ * not played out (`predict`'s), and its odds are approximated. */
+export function forecast(player: Player, enemy: Enemy, crit: CritRule, played = Infinity): CritForecast {
   const k = guaranteedCrits(crit.chance), extra = snap((crit.chance - 100 * k) / 100);
-  const worst = predict(atWorst(player, crit), enemy);
+  const worst = predict(atWorst(player, crit), enemy, played);
   const topMultiplier = critMultiplier(crit.factor, k + (extra > 0 ? 1 : 0));
-  const best = predict({ ...player, attack: snap(player.attack * topMultiplier) }, enemy);
+  const best = predict({ ...player, attack: snap(player.attack * topMultiplier) }, enemy, played);
   if (worst.impervious || worst.turns === best.turns) {
     const net = worst.impervious ? worst.damage : netDamage(player, worst);
     return { worst, best, expected: net, p10: net, p90: net, turns: worst.turns, survive: worst.survivable ? 1 : 0, instakill: worst.turns === 1 ? 1 : 0 };
   }
   const low = worst.hit, step = snap(best.hit - worst.hit);
-  const odds = turnOdds(enemy.hp, low, step, extra, worst.turns, best.turns);
-  const { cost, felled } = damageByTurns(player, enemy, worst.turns);
+  const odds = turnOdds(enemy.hp, low, step, extra, worst.turns, best.turns, Math.min(EXACT_TURNS, played));
+  const { cost, felled } = damageByTurns(player, enemy, worst.turns, played);
   // A fight heals at most up to max HP; its damage is never capped by the HP
   // the hero has, so regenerating HP never moves the forecast.
   const capped = (t: number) => Math.max(snap(player.hp - player.maxHp), cost(t));
@@ -61,8 +63,8 @@ export function forecast(player: Player, enemy: Enemy, crit: CritRule): CritFore
 
 /** The damage the hero takes when the fight lasts `t` strikes, as though it
  * fought on whatever its HP, and whether that fight fells it, summed once up
- * to `most` strikes. */
-function damageByTurns(player: Player, enemy: Enemy, most: number) {
+ * to `most` strikes, or up to `played` and estimated past them. */
+function damageByTurns(player: Player, enemy: Enemy, most: number, played = Infinity) {
   const taken: number[] = [0], fells: boolean[] = [false], shroud = player.shroud ?? 0, fatal = player.hp + shroud;
   // Lifesteal: a fight of t strikes deals the enemy's whole HP, so restores
   // that share of it, taken as t equal parts as the strikes land (the cap at
@@ -70,13 +72,23 @@ function damageByTurns(player: Player, enemy: Enemy, most: number) {
   // balance: its damage below 0.
   const healed = player.lifesteal ? snap((enemy.hp * player.lifesteal) / 100) : 0;
   let attack = enemy.attack, sum = 0;
+  const judge = (t: number, sum: number) => ({
+    fells: healed ? snap(sum - shroud - (healed * (t - 1)) / t) >= player.hp : sum >= fatal,
+    taken: healed ? snap(Math.max(0, sum - shroud) - healed) : snap(Math.max(0, sum - shroud)),
+  });
   for (let t = 1; t <= most; t++) {
+    if (t > played) {
+      const known = taken.length - 1, from = attack, before = sum;
+      const at = (t: number) => (t <= known ? { fells: fells[t]!, taken: taken[t]! } : judge(t, before + estimatedDamage(from, player.defense, t - known)));
+      return { cost: (t: number) => at(t).taken, felled: (t: number) => at(t).fells };
+    }
     if (t > 1) {
       sum = snap(sum + Math.max(0, attack - player.defense));
       attack = raisedAttack(attack);
     }
-    fells.push(healed ? snap(sum - shroud - (healed * (t - 1)) / t) >= player.hp : sum >= fatal);
-    taken.push(healed ? snap(Math.max(0, sum - shroud) - healed) : snap(Math.max(0, sum - shroud)));
+    const { fells: fell, taken: took } = judge(t, sum);
+    fells.push(fell);
+    taken.push(took);
     if (sum > Number.MAX_SAFE_INTEGER) break;
   }
   const at = (t: number) => Math.min(t, taken.length - 1);
@@ -85,11 +97,12 @@ function damageByTurns(player: Player, enemy: Enemy, most: number) {
 
 /** The odds that a fight lasts exactly `t` strikes, for each `t` from `first`
  * to `last` that has any: every strike deals `low`, or `low + step` with
- * probability `chance`, and the fight ends once the enemy's `hp` is gone. */
-function turnOdds(hp: number, low: number, step: number, chance: number, last: number, first: number): [number, number][] {
+ * probability `chance`, and the fight ends once the enemy's `hp` is gone,
+ * exactly when it lasts at most `exact` strikes. */
+function turnOdds(hp: number, low: number, step: number, chance: number, last: number, first: number, exact: number): [number, number][] {
   const done = (t: number, rolls: number) => snap(t * low + rolls * step) >= hp;
   const out: [number, number][] = [];
-  if (last <= EXACT_TURNS) {
+  if (last <= exact) {
     // pmf[j]: the odds j of the strikes so far rolled the higher hit and the fight is still on.
     let pmf = [1];
     for (let t = 1; t <= last; t++) {

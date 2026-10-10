@@ -107,7 +107,7 @@ const STILL: Offset = { dx: 0, dy: 0 };
 /** What rises off the board over its tiles: the damage number of each strike
  * in a fight as it lands, the HP each potion heals, and each reward picked
  * up. Each starts the moment it happens, over whatever is still rising, and
- * later ones draw on top. */
+ * later ones draw on top, every number over every reward sprite. */
 export class BoardPopups {
   private rewards: (Popup & { gain: Gain })[] = [];
   /** Damage and heal numbers. */
@@ -179,18 +179,15 @@ export class BoardPopups {
     return !this.rewards.length && !this.numbers.length && !barMoving(this.fight, now);
   }
 
-  /** The enemy's HP bar, then every popup that has started, oldest first,
-   * so newer ones draw on top. */
+  /** The enemy's HP bar, then every reward that has started, then every
+   * number, each oldest first so newer ones draw on top. Numbers draw over
+   * the rewards, so a potion's heal or a strike's damage is never hidden
+   * behind a sprite rising from the same tile. */
   draw(f: FrameContext) {
     if (this.fight) drawEnemyBar(f, this.fight);
-    const shown = [
-      ...this.numbers.map((p) => ({ start: p.start, draw: () => this.drawText(f, p, p.text, { color: p.color, rise: DAMAGE_RISE, size: 0.55, ...(p.glow ? { glow: p.glow } : {}) }) })),
-      ...this.rewards.map((p) => ({
-        start: p.start,
-        draw: () => { if (!this.drawSprite(f, p)) this.drawText(f, p, p.gain.text, REWARD_TEXT); },
-      })),
-    ].filter((p) => p.start <= f.now).sort((a, b) => a.start - b.start);
-    for (const p of shown) p.draw();
+    const started = <T extends Popup>(popups: T[]) => popups.filter((p) => p.start <= f.now).sort((a, b) => a.start - b.start);
+    for (const p of started(this.rewards)) if (!this.drawSprite(f, p)) this.drawText(f, p, p.gain.text, REWARD_TEXT);
+    for (const p of started(this.numbers)) this.drawText(f, p, p.text, { color: p.color, rise: DAMAGE_RISE, size: 0.55, ...(p.glow ? { glow: p.glow } : {}) });
   }
   /** The popup's opacity and how far it has risen (in tiles) at `now`. */
   private phase(f: FrameContext, p: Popup, rise: number) {

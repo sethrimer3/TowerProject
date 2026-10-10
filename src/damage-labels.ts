@@ -1,4 +1,4 @@
-import { netDamage, predict, type CritRule } from "./combat.ts";
+import { netDamage, PLAYED_ROUNDS, predict, type CritRule } from "./combat.ts";
 import { forecast } from "./crit-forecast.ts";
 import type { Enemy, Player } from "./entities.ts";
 import { forEachViewTile, type FrameContext } from "./render-frame.ts";
@@ -13,6 +13,9 @@ import { compactAmount, wholeChange } from "./whole.ts";
 // A Wooden Door wears the HP breaking it down takes while the hero holds no
 // key (with one, it costs a key, not HP): red when it would fell the hero,
 // so it stays shut.
+// Labels are worked out on the frame they first show, so a fight longer than
+// `PLAYED_ROUNDS` rounds is estimated past them rather than played out (the
+// inspect panel's line, worked out on a tap, plays every round).
 
 /** What a fight against one enemy would cost: `predict`'s damage net of
  * Lifesteal's heals (below 0 when it heals on balance; Infinity when the
@@ -39,11 +42,13 @@ export class DamagePredictions {
     const key = `${enemy.hp}|${enemy.attack}|${enemy.defense}`;
     let cost = this.costs.get(key);
     if (!cost) {
-      const r = predict(player, enemy);
+      // A fight of more than PLAYED_ROUNDS rounds is estimated past them, so
+      // no label costs more than that many rounds to work out.
+      const r = predict(player, enemy, PLAYED_ROUNDS);
       this.computed++;
       // With critical strikes the label shows the damage to expect, and only
       // an Instakill that is certain is gray.
-      const f = crit && !r.impervious ? forecast(player, enemy, crit) : null;
+      const f = crit && !r.impervious ? forecast(player, enemy, crit, PLAYED_ROUNDS) : null;
       cost = f ? { damage: f.worst.impervious ? Infinity : f.expected, turns: f.worst.turns } : { damage: r.impervious ? Infinity : netDamage(player, r), turns: r.turns };
       this.costs.set(key, cost);
     }

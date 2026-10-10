@@ -53,7 +53,15 @@ const heroHit = (player: Player, enemy: Enemy, multiplier = 1) => {
  * `impervious`), without working out the rest of the fight. */
 export const impervious = (player: Player, enemy: Enemy) => heroHit(player, enemy) <= 0;
 
-export function predict(player: Player, enemy: Enemy): CombatPrediction {
+/** Rounds a prediction plays out one by one before estimating the rest
+ * (`predict`'s `played`): the Damage Visual labels, drawn every frame, play
+ * this many and extrapolate longer fights. */
+export const PLAYED_ROUNDS = 50;
+
+/** What a fight against `enemy` costs `player`. Past `played` rounds (all of
+ * them unless given) the rest of the fight is estimated, not played out:
+ * close, but not the exact ending a step resolves to. */
+export function predict(player: Player, enemy: Enemy, played = Infinity): CombatPrediction {
   const hit = heroHit(player, enemy);
   if (hit <= 0) {
     return {
@@ -68,11 +76,11 @@ export function predict(player: Player, enemy: Enemy): CombatPrediction {
   // Snapped, so 10.2 HP against strikes of 1.02 takes 10, as it does played out.
   const turns = Math.ceil(snap(enemy.hp / hit));
   if (player.lifesteal) {
-    const hpAfter = lifestealEnding(player, enemy, hit);
+    const hpAfter = lifestealEnding(player, enemy, hit, played);
     if (hpAfter !== null) return { impervious: false, hit, turns, damage: snap(Math.max(0, player.hp - hpAfter)), survivable: true, requiredAttack: 0, hpAfter };
   }
   // The shroud takes the first of it, whichever strikes that falls on.
-  const damage = snap(Math.max(0, damageTaken(enemy.attack, player.defense, turns - 1) - (player.shroud ?? 0)));
+  const damage = snap(Math.max(0, damageTaken(enemy.attack, player.defense, turns - 1, played) - (player.shroud ?? 0)));
   return {
     impervious: false,
     hit,
@@ -94,10 +102,12 @@ const lifestealHeal = (player: Player, dealt: number) => snap((dealt * (player.l
 /** The hero's HP when a fight against `enemy` ends, the hero's strikes each
  * dealing `hit` and healing by its Lifesteal as they land (before the
  * enemy's reply, up to max HP), or null when the enemy fells it first. It
- * plays the rounds as `bout` does, so the two end alike. */
-function lifestealEnding(player: Player, enemy: Enemy, hit: number) {
+ * plays the rounds as `bout` does, so the two end alike, and past `played`
+ * rounds estimates the rest (`lifestealEstimate`). */
+function lifestealEnding(player: Player, enemy: Enemy, hit: number, played = Infinity) {
   let hp = player.hp, enemyHp = enemy.hp, attack = enemy.attack, shroud = player.shroud ?? 0;
-  for (;;) {
+  for (let round = 0; ; round++) {
+    if (round >= played && enemyHp > hit) return lifestealEstimate(player, { hp, enemyHp, attack, shroud }, hit);
     const dealt = Math.min(hit, enemyHp);
     enemyHp = snap(Math.max(0, enemyHp - hit));
     hp = snap(Math.min(player.maxHp, hp + lifestealHeal(player, dealt)));
@@ -134,13 +144,72 @@ export function raisedAttack(attack: number) {
 
 /** What the enemy's strikes back cost the hero over `strikes` rounds, starting
  * at `attack` and rising each round. Past what any HP could survive it is
- * Infinity, so a fight with a million rounds is summed in a few thousand. */
-export function damageTaken(attack: number, defense: number, strikes: number) {
-  let damage = 0;
-  for (let i = 0; i < strikes && damage <= Number.MAX_SAFE_INTEGER; i++, attack = raisedAttack(attack)) {
+ * Infinity, so a fight with a million rounds is summed in a few thousand.
+ * Past `played` strikes the rest are estimated (`estimatedDamage`). */
+export function damageTaken(attack: number, defense: number, strikes: number, played = Infinity) {
+  let damage = 0, i = 0;
+  for (; i < strikes && i < played && damage <= Number.MAX_SAFE_INTEGER; i++, attack = raisedAttack(attack)) {
     damage = snap(damage + Math.max(0, attack - defense));
   }
+  if (i < strikes && damage <= Number.MAX_SAFE_INTEGER) damage += estimatedDamage(attack, defense, strikes - i);
   return damage > Number.MAX_SAFE_INTEGER ? Infinity : damage;
+}
+
+// Estimating a long fight. `raisedAttack` adds exactly 1 a round below 200
+// ATK; from there it adds 1% rounded down, on average half a point short of
+// 1%, so ATK − 50 grows about 1% a round. Each sum below is then a closed
+// form, however long the fight. Only predictions shown (the Damage Visual
+// labels) estimate; drawing may use Math freely, so these use ** and log.
+const STEADY_FROM = 200;
+const GROWTH = 1.01;
+const ANCHOR = 50;
+/** Of `n` rounds from `attack`, how many are spent below `STEADY_FROM`. */
+const linearRounds = (attack: number, n: number) => Math.min(n, Math.max(0, Math.ceil(STEADY_FROM - attack)));
+/** The enemy's ATK `n` rounds on from `attack`, estimated. */
+export function attackAfter(attack: number, n: number) {
+  const linear = linearRounds(attack, n);
+  attack += linear;
+  return n > linear ? (attack - ANCHOR) * GROWTH ** (n - linear) + ANCHOR : attack;
+}
+/** The rounds from `attack` before the enemy's ATK first exceeds `above`, estimated. */
+export function roundsUntilAbove(attack: number, above: number) {
+  if (attack > above) return 0;
+  if (above < STEADY_FROM) return Math.floor(above - attack) + 1;
+  const linear = linearRounds(attack, Infinity);
+  return linear + Math.max(0, Math.ceil(Math.log((above - ANCHOR) / (attack + linear - ANCHOR)) / Math.log(GROWTH)));
+}
+/** The enemy's ATK summed over `n` rounds from `attack`, estimated. */
+function attackSum(attack: number, n: number) {
+  const linear = linearRounds(attack, n), rest = n - linear;
+  const sum = linear * attack + (linear * (linear - 1)) / 2;
+  return rest ? sum + ((attack + linear - ANCHOR) * (GROWTH ** rest - 1)) / (GROWTH - 1) + ANCHOR * rest : sum;
+}
+/** What `n` enemy strikes from `attack` cost the hero against `defense`, estimated. */
+export function estimatedDamage(attack: number, defense: number, n: number) {
+  const idle = roundsUntilAbove(attack, defense);
+  return idle >= n ? 0 : attackSum(attackAfter(attack, idle), n - idle) - (n - idle) * defense;
+}
+
+/** A Lifesteal fight's ending estimated from part way through it (`at`:
+ * the hero's HP, the enemy's, its ATK and the shroud left, the hero to
+ * strike next): while the enemy's strikes take less than a heal restores,
+ * the hero's HP climbs toward max HP less the latest strike; after that it
+ * only falls. Null when it falls to 0 before the enemy does. */
+function lifestealEstimate(player: Player, at: { hp: number; enemyHp: number; attack: number; shroud: number }, hit: number) {
+  const strikes = Math.ceil(at.enemyHp / hit), replies = strikes - 1, defense = player.defense;
+  const heal = lifestealHeal(player, hit), last = lifestealHeal(player, at.enemyHp - replies * hit);
+  const climbing = Math.min(replies, roundsUntilAbove(at.attack, defense + heal));
+  let shroud = at.shroud;
+  const absorb = (damage: number) => {
+    const taken = Math.min(shroud, damage);
+    shroud -= taken;
+    return damage - taken;
+  };
+  const early = absorb(estimatedDamage(at.attack, defense, climbing));
+  const ceiling = player.maxHp - Math.max(0, attackAfter(at.attack, climbing - 1) - defense);
+  let hp = climbing ? Math.min(Math.max(at.hp, ceiling), at.hp + climbing * heal - early) : at.hp;
+  hp -= absorb(estimatedDamage(attackAfter(at.attack, climbing), defense, replies - climbing)) - (replies - climbing) * heal;
+  return hp <= 0 ? null : snap(Math.min(player.maxHp, hp + last));
 }
 
 /** How long each strike of a fight played out round by round takes: the first
