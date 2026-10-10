@@ -2,7 +2,7 @@
  * tier: a normal, balanced enemy's HP, ATK and DEF on each floor, which each
  * strength and profile then multiply (see docs/PROGRESSION_AND_DIFFICULTY.md).
  * Tune difficulty here: the anchors, the strength and profile tables, or a
- * tier's own curve in `ENEMY_CURVES`. The tier's ×3 factor (`tierStats`)
+ * tier's own curve in `ENEMY_CURVES`. The tier's factor (`tierStats`: ×5 in Tower II, ×4 more in III, ×3 after)
  * still applies on top, as the boards pass their cells through `tierCells`. */
 import type { EnemyStrength } from "./entities.ts";
 import { intPow, root } from "./exact.ts";

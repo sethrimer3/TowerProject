@@ -243,7 +243,7 @@ The one scale both modes' progress maps onto: a Tower floor counts as itself, an
 _Avoid_: effective floor, tier
 
 **Tier**:
-One of the numbered towers (Tower I to IX), or of the delves' caves (Delve I to IX), that a run climbs. Claiming floor 100's checkpoint in a tower (once its boss is beaten) opens the next tower and the cave of the same number. Each has the same floors as the first with monsters three times as strong as the one before, pays more Gold, pays XP times the same factor as its monsters' stats, and keeps its own records, milestones and area rewards. Not to be confused with a monster's rank.
+One of the numbered towers (Tower I to IX), or of the delves' caves (Delve I to IX), that a run climbs. Claiming floor 100's checkpoint in a tower (once its boss is beaten) opens the next tower and the cave of the same number. Each has the same floors as the first with monsters stronger than the one before (×5 in Tower II, ×4 in III, ×3 after), pays more Gold, pays XP times the same factor as its monsters' stats, and keeps its own records, milestones and area rewards. Not to be confused with a monster's rank.
 _Avoid_: new tower, prestige, world
 
 **Inspiration**:

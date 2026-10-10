@@ -4,7 +4,8 @@ import { Game } from "../src/state.ts";
 import { decode, defaults } from "../src/save.ts";
 import { ENEMY_GOLD, xpForKill } from "../src/config.ts";
 import { MODES } from "../src/modes.ts";
-import { TIERS, TIER_BONUS_TENTHS, tierXp, tierBonusText, tierGold, tierNumeral, tierShard, tierStats, tierTile } from "../src/tiers.ts";
+import { snap } from "../src/exact.ts";
+import { TIERS, TIER_BONUS_TENTHS, TIER_STEP_FACTORS, tierXp, tierBonusText, tierGold, tierNumeral, tierShard, tierStats, tierTile } from "../src/tiers.ts";
 import { resolveStep, type StepEffect } from "../src/step-effects.ts";
 import type { Enemy, Mode, Tile } from "../src/entities.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
@@ -26,15 +27,15 @@ function arena(tier: number, foe: Enemy, height = 3) {
   return g;
 }
 
-test("each tier triples the last's enemy stats and XP, and pays more Gold: ×2, ×3.1, ×4.3, … ×11.8", () => {
-  assert.deepEqual(Array.from({ length: TIERS }, (_, i) => tierStats(i + 1)), [1, 3, 9, 27, 81, 243, 729, 2187, 6561]);
+test("each tier multiplies the last's enemy stats and XP (×5, ×4, then ×3), and pays more Gold: ×2, ×3.1, ×4.3, … ×11.8", () => {
+  assert.deepEqual(Array.from({ length: TIERS }, (_, i) => tierStats(i + 1)), [1, 5, 20, 60, 180, 540, 1620, 4860, 14580]);
   assert.deepEqual(TIER_BONUS_TENTHS, [10, 20, 31, 43, 56, 70, 85, 101, 118]);
   assert.deepEqual([1, 2, 3, 9].map(tierBonusText), ["×1", "×2", "×3.1", "×11.8"]);
-  assert.deepEqual([tierXp(1, 7), tierXp(2, 7), tierXp(3, 10), tierXp(4, 1)], [7, 21, 90, 27]);
+  assert.deepEqual([tierXp(1, 7), tierXp(2, 7), tierXp(3, 10), tierXp(4, 1)], [7, 35, 200, 60]);
   assert.deepEqual([1, 4, 9].map(tierNumeral), ["I", "IV", "IX"]);
   const tile: Tile = { kind: "enemy", enemy: enemy("normal") };
   assert.equal(tierTile(tile, 1), tile);
-  assert.deepEqual(tierTile(tile, 3), { kind: "enemy", enemy: { ...enemy("normal"), hp: 90, attack: 45, defense: 18 } });
+  assert.deepEqual(tierTile(tile, 3), { kind: "enemy", enemy: { ...enemy("normal"), hp: 200, attack: 100, defense: 40 } });
   assert.deepEqual(tierTile({ kind: "potion", amount: 35 } as Tile, 3), { kind: "potion", amount: 35 });
 });
 
@@ -58,6 +59,7 @@ test("past the first, a tier's boards are the one before's with each matching en
     // The first tier keeps blue and red keys for later floors (key-schedule.test.ts).
     const one = profile.board({ ...run, tier: 2 } as never), three = profile.board({ ...run, tier: 3 } as never);
     let enemies = 0;
+    const up = TIER_STEP_FACTORS[2]!; // tier 2 to tier 3
     for (let y = 0; y < 17; y++)
       for (let x = 0; x < one.width; x++) {
         const a = one.tile(x, y), b = three.tile(x, y);
@@ -66,19 +68,19 @@ test("past the first, a tier's boards are the one before's with each matching en
         // stays a door, Wooden or yellow; a Wooden Door's durability grows
         // with the enemies' stats.
         if (a.kind === "door") {
-          if (a.door?.type === "wood" && b.kind === "door" && b.door?.type === "wood") assert.deepEqual(b, tierTile(a, 2));
+          if (a.door?.type === "wood" && b.kind === "door" && b.door?.type === "wood") assert.deepEqual(b, { ...a, door: { ...a.door, durability: snap(a.door.durability * up) } });
           else assert.equal(b.kind, "door");
           continue;
         }
         if (a.kind !== "enemy") { assert.deepEqual(b, a); continue; }
         // Each tier deals its own profile shares and starts its rosters a
         // zone further along, so an enemy stays an enemy, and one of the
-        // same strength and profile has three times the stats.
+        // same strength and profile has the step's factor times the stats.
         assert.equal(b.kind, "enemy");
         if (a.enemy!.strength !== b.enemy!.strength || a.enemy!.profile !== b.enemy!.profile) continue;
         enemies++;
-        const { hp, attack, defense } = tierTile(a, 2).enemy!;
-        assert.deepEqual([b.enemy!.hp, b.enemy!.attack, b.enemy!.defense], [hp, attack, defense], "three times the second tier's");
+        const { hp, attack, defense } = { hp: snap(a.enemy!.hp * up), attack: snap(a.enemy!.attack * up), defense: snap(a.enemy!.defense * up) };
+        assert.deepEqual([b.enemy!.hp, b.enemy!.attack, b.enemy!.defense], [hp, attack, defense], "the step's factor times the second tier's");
       }
     assert.ok(enemies > 0, `${mode} has enemies to compare`);
   }
@@ -124,7 +126,7 @@ test("choosing a tier in the forest swaps in its own records; inside, or a close
   assert.equal(g.run.tier, 2);
   assert.equal(g.run.outside, true);
   assert.deepEqual([slice.best, slice.reached], [0, 0]);
-  assert.match(g.message, /Tower II · ×2 Gold · ×3 XP/);
+  assert.match(g.message, /Tower II · ×2 Gold · ×5 XP/);
   slice.reached = 4;
   assert.ok(g.selectTier(1));
   assert.equal(g.run.tier, undefined);

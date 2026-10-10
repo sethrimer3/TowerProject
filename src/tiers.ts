@@ -1,7 +1,8 @@
 /** The numbered towers (and delves) a run can climb: claiming floor 100's
  * goal in one opens the next, up to `TIERS` (goals.ts). Each tier's enemies have
- * `TIER_STAT_FACTOR` times the stats of the tier below, so a hero needs
- * about that many times its ATK, DEF and HP to go as far; each pays more
+ * `TIER_STEP_FACTORS[tier]` times the stats of the tier below (×5 in Tower II,
+ * ×4 in III, ×3 after), so a hero needs about that many times its ATK, DEF and
+ * HP to go as far; each pays more
  * Gold (`tierGold`), and XP by the same factor as the stats (`tierXp`);
  * Silver stays the same. The layouts are
  * the same in every tier: only the enemies differ. */
@@ -9,10 +10,17 @@ import type { Enemy, ModeSave, Save, Tile } from "./entities.ts";
 import { intPow, snap } from "./exact.ts";
 
 export const TIERS = 9;
-export const TIER_STAT_FACTOR = 3;
 
-/** How many times tier 1's stats an enemy of `tier` has: 1, 3, 9, … */
-export const tierStats = (tier: number) => intPow(TIER_STAT_FACTOR, tier - 1);
+/** How many times the tier below's stats each tier's enemies have, by tier
+ * number (tier 1 has no tier below). */
+export const TIER_STEP_FACTORS: readonly number[] = [1, 5, 4, 3, 3, 3, 3, 3, 3];
+
+/** How many times tier 1's stats an enemy of `tier` has: 1, 5, 20, 60, … */
+export const tierStats = (tier: number) => {
+  let f = 1;
+  for (let t = 2; t <= tier; t++) f *= TIER_STEP_FACTORS[t - 1]!;
+  return f;
+};
 
 /** Each tier's Gold bonus in tenths: ×1, then each tier adds one
  * more than the last added, plus a tenth more every tier after the second
@@ -29,7 +37,7 @@ export const tierGold = (tier: number, amount: number) => snap((amount * TIER_BO
 
 /** The Gold bonus as the player sees it: "×3.1". */
 export const tierBonusText = (tier: number) => `×${TIER_BONUS_TENTHS[tier - 1]! / 10}`;
-/** Both bonuses as the player sees them: "×3.1 Gold · ×9 XP". */
+/** Both bonuses as the player sees them: "×3.1 Gold · ×20 XP". */
 export const tierRewardText = (tier: number) => `${tierBonusText(tier)} Gold · ×${tierStats(tier)} XP`;
 
 /** A tier's number as the tower shows it: I, II, … IX. */

@@ -80,7 +80,7 @@ test("a Wooden Door takes the cheapest key held, or with none its durability in 
   const scaled = resolveStep(opener(50), wood, { regen: 0, scale: 1.2 } as never);
   assert.ok(!scaled.blocked);
   assert.equal(scaled.player.hp, 14);
-  assert.deepEqual(tierTile(wood, 3), { kind: "door", door: { type: "wood", durability: 270 } }, "tier 3: nine times tier 1's");
+  assert.deepEqual(tierTile(wood, 3), { kind: "door", door: { type: "wood", durability: 600 } }, "tier 3: twenty times tier 1's");
 });
 
 test("a keyed door that drains HP takes its keys and leaves the hero at 1 HP", () => {
