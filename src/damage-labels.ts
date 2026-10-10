@@ -31,10 +31,10 @@ export class DamagePredictions {
   computed = 0;
 
   cost(player: Player, enemy: Enemy, crit?: CritRule): Cost {
-    // The expected damage of a critical fight is capped by the HP the hero has,
-    // as the inspect panel's is, so HP is part of its key.
+    // Damage is never capped by the HP the hero has, so HP is part of the key
+    // only with Lifesteal, whose heals stop at max HP.
     const steal = player.lifesteal ? `${player.lifesteal}|${player.hp}|${player.maxHp}` : "";
-    const hero = `${player.attack}|${player.defense}|${player.shroud ?? 0}|${steal}|${crit ? `${crit.chance}|${crit.factor}|${player.hp}` : ""}`;
+    const hero = `${player.attack}|${player.defense}|${player.shroud ?? 0}|${steal}|${crit ? `${crit.chance}|${crit.factor}` : ""}`;
     if (hero !== this.hero) [this.hero, this.costs] = [hero, new Map()];
     const key = `${enemy.hp}|${enemy.attack}|${enemy.defense}`;
     let cost = this.costs.get(key);
