@@ -18,3 +18,5 @@ The city itself comes from `layout.ts` (the player's tiles and structures; `fitL
 `tests/defend-city.test.ts` hashes seeded random walks of layout edits, their fits and failure reasons, and the cities generated along the way against `tests/fixtures/defend-city.golden.json`; regenerate it with `UPDATE_GOLDEN=1` only for an intended change to city building.
 `fences.ts` lays decorative fences along the street sides of parks and snaps them into splinters under walking enemies and blasts, and `progress.ts` holds the saved Defend state, its purchases, and `decodeDefendSave`, which rebuilds the saved layout piece by piece and drops it unless it is well formed, owned and still fits.
 `tests/defend-fences-save.test.ts` hashes fence sections, seeded fence runs (trampling, blasts and drawing on a recording canvas), and `decodeDefendSave` over a corpus of real and mutated saves against `tests/fixtures/defend-fences-save.golden.json`; regenerate it with `UPDATE_GOLDEN=1` only for an intended fence or decode change.
+
+The `add-upgrade` skill's `references/panels.md` describes the Armory's upgrades: update it when they change.

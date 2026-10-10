@@ -42,3 +42,5 @@ The player can't step or walk inside a run unless Dev mode is on (`game.manualMo
 `tests/cards.test.ts` drives `planHand` on hand-built boards, `tests/key-siphon.test.ts` and `tests/inspiration-cards.test.ts` the cards that act in place and the cards below Key Siphon, and `tests/game-commands.test.ts` the hand's turns.
 `isDeadlocked` (`analysis.ts`), which searches every visited Tower floor, reading each from the climb, through their stairs, for anything the player could still do, no longer ends runs; `tests/tower-automation.test.ts` still records it.
 `tests/tower-automation.test.ts` records the step Automove picks and the deadlock call on every step of seeded runs against `tests/fixtures/tower-automation.golden.json` (regenerate with `UPDATE_GOLDEN=1` only for an intended automation change), and `tests/tower-overhaul.test.ts` pins the deadlock rules on hand-built floors.
+
+The `add-badge` skill lists the files of the badge mechanism: update it when they move.

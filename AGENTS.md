@@ -21,11 +21,6 @@ npm run test:render    # board screenshot hashes vs tests/fixtures/render.golden
 npm run test:ui        # page/HUD/dialog HTML hashes vs tests/fixtures/ui.golden.json (builds and serves its own copy; no dev server)
 npm run test:snapshots # both of the above side by side on one build (tests/snapshot-suites.mjs): the wall time of the slower one
 npm run test:pointer   # Defend board pointer gestures vs tests/fixtures/defend-pointer.golden.json (also needs `npm run dev`)
-npm run tower:report -- [seed depth]    # Tower floor generation audit (no args = aggregate over many floors)
-npm run tower:report -- --census [--towers 1,2,9] [--floors 1-200] [--band 10] [--seeds 20] [--stride 1]   # doors, keys, enemies and items per floor by tower and band of floors
-npm run delve:report -- [seed] [area] [--map]
-npm run delve:report -- --census [--tiers 1,2,9] [--floors 1-200] [--band 50] [--seeds 20]   # the same census for the Delve, per equivalent floor
-node --experimental-transform-types tools/delve-ai-sim.ts   # headless Automove comparison
 npm run tiles:area1 / tiles:outside     # regenerate tile PNGs
 npm run cards:stubs                     # regenerate the placeholder card faces in public/assets/cards/
 ```
@@ -67,10 +62,8 @@ Each seeds itself once at start-up from `Math.random` and its name (unless a tes
 Tests swap one in with `withStream` / `withDefendStream`.
 `tests/random-streams.test.ts` checks that drawing from one stream leaves the others alone and that only the start-up seeds call `Math.random`.
 Every board (Tower floor, Delve labyrinth, the forest outside) implements `Board` (`src/board.ts`, which also holds the `reachable` flood fill; it wraps round only when given a width).
-Dungeon boards place their torches with `src/torches.ts`, which also works out each torch's visibility polygon once, so generation never reaches into the lighting code.
 Player edits (consumed pickups, opened doors) are stored as diffs (`run.changes`) against regenerated terrain rather than saving the map.
 Changing generation output breaks existing saves' map state, so bump the mode's layout version (`LAYOUT_VERSION` in `delve/world.ts`, `TOWER_LAYOUT_VERSION` in `tower/room-world.ts`); migration keeps progression, stats, and inventory, clears map edits, and relocates the player to their section entrance.
-- `tests/world-boards.test.ts` hashes flood fills (`reachable`, wrapping at the Delve width, with blocked tiles) on seeded synthetic and real chunks, torch spots (`chooseTorchSpots` takes a `TorchArea`: window and seed) and torches, the Delve `World` and Tower `RoomWorld` boards (tiles, steps, wrap, one-way gates, crossings, upkeep, chests, torch breaking) and `rollUnguardedLoot`, against `tests/fixtures/world-boards.golden.json`; regenerate it with `UPDATE_GOLDEN=1` only for an intended change to them.
 
 **Generation invariants** (break these and tests or saves break):
 - Tower geometry is always validated, and the economy never is.
@@ -104,6 +97,7 @@ Read the area's doc before changing code there or answering questions about it; 
 - `ui.md`: `main.ts`, pages, the HUD, dialogs, the desks and `Game`'s UI commands, board lessons, the frame loop, the UI golden.
 - `saves.md`: loading and decoding the save, adding save state, settings rows.
 - `defend.md`: Defend (`src/defend/`).
+- `goldens.md`: which goldens a change moves, the browser goldens, recording them.
 - `testing.md`: browser test setup.
 
 ## Conventions
@@ -124,20 +118,11 @@ Read the area's doc before changing code there or answering questions about it; 
   The README's gameplay section is the spec for this player-facing behavior.
 - `test-gen.ts` at the root is a scratch experiment, not part of the build or tests.
 
-### Golden tests: re-record them when visuals or content change on purpose
+### Tests and goldens
 
-Most tests here are characterization goldens (`tests/fixtures/*.golden.json`): they pin current output, so an *intended* change to art, assets or content fails them until they are re-recorded. Treat re-recording as part of that change, never a separate cleanup.
-
-| When you change… | Re-record |
-|---|---|
-| Pixels of a PNG in `public/assets/` (edited art, `npm run tiles:area1` / `tiles:outside`) | `render.golden.json` (`npm run test:render`) |
-| A PNG's name, path or size, or add/remove one the game loads | the above, plus `render-calls` (it reads real PNG sizes; sprite-sheet frames depend on width), and `art-modules` / `lighting-passes` if the renamed file is one they draw |
-| Board drawing code (`rendering.ts`, `tile-painters.ts`, lighting, decor, route line, Defend render/art) | `render-calls`, `render.golden.json`, and the module's own golden (`lighting-passes`, `art-modules`, `terrain-paint`, `outdoor-art`, `defend-fences-save`) |
-| Procedural terrain art (`themes.ts`) | `terrain-paint`, `render-calls`, `render.golden.json` |
-| World or content generation (Tower floors, Delve labyrinth, decor plans, Defend cities) | the generation golden (`tower-layout`, `tower-planning`, `delve-labyrinth`, `decor-plan`, `world-boards`, `defend-city`), then every golden that plays on those boards (`step-trace`, `undo-clear-trace`, `tower-automation`, `delve-automove`, `defend-replay`, `render-calls`, `render.golden.json`); saved maps change, so also bump `LAYOUT_VERSION` |
-| Gameplay rules or balance (`config.ts`, `step-effects.ts`, enemies, pickups, Defend units) | `step-trace`, `undo-clear-trace`, `tower-automation`, `delve-automove`, `tournament-trace`, `defend-replay` as they fail |
-| UI text, pages, HUD or dialogs | `ui.golden.json` (`npm run test:ui`), and `defend-pointer.golden.json` for the Defend page |
-| Save format | `save-decode` |
+Most tests are characterization goldens (`tests/fixtures/*.golden.json`) that pin current output.
+A refactor leaves every golden matching; an intended change to art, content, rules, UI or the save re-records the goldens it moves, in the same commit, naming them and why in the message.
+Read `docs/agents/goldens.md` before re-recording or when a golden fails: which goldens each kind of change moves, when to run the browser goldens, and how to record them.
 
 While iterating, run only the tests for the area you touched, then `npm test` once before committing (after pushing, don't wait on CI):
 
@@ -153,45 +138,8 @@ While iterating, run only the tests for the area you touched, then `npm test` on
 | Outside and weather | `tests/outside*.test.ts tests/outdoor-art.test.ts tests/torch-light.test.ts` |
 | Defend (`src/defend/`) | `tests/defend*.test.ts` |
 
-Run a browser golden only when the change reaches what it captures: `test:ui` for pages, HUD and dialogs; `test:render` for board drawing, art, or anything that changes the render scenes' boards (`test:snapshots` for both at once); `test:pointer` for the Defend page.
+## Agent docs
 
-How:
-1.
-**Refactor (no visible change intended):** re-record nothing.
-Every golden must still match after the change.
-The browser goldens' hashes are machine-specific, so if one fails, record it on the unchanged code (`git stash`, then `UPDATE_GOLDEN=1`), restore the change, and compare again; only a failure then is yours.
-2.
-**Intended change:** make it, run `npm test` (and the browser goldens if visuals or UI changed) and check that only the keys the change should touch fail; for pixels, look at the PNGs in `test-results/render*/`.
-Then re-record those goldens with `UPDATE_GOLDEN=1` (one file: `UPDATE_GOLDEN=1 node --experimental-transform-types --import ./tests/pin-random.ts --test tests/<name>.test.ts`), commit the fixtures in the same commit, and say in the message which goldens were re-recorded and why.
-3.
-The browser goldens build and serve their own copy of the app (no dev server needed) and aren't run by CI; when visuals or UI change, run them yourself.
-The Node goldens run in CI on Linux, so they must hash the same on every OS: one whose hashes depend on `Math.pow` imports `tests/portable-math.ts` first.
-
-## Agent skills
-
-### Adding an upgrade
-
-`.claude/skills/add-upgrade/` defines a new skill-tree node, Archives research or Defend Armory upgrade: it writes a spec (panel, name, cost, levels, placement, research hours, unlocks) for approval, then builds it.
-Its `references/panels.md` describes each panel's rows, prices, effects and unlocks; keep it current when those mechanisms change.
-
-### Adding a Training row
-
-`.claude/skills/add-training/` adds a Training row or changes one's cap or prices: it writes a spec (group, effect, level cap, point cost, trainer Gold and time curves, the run's Silver schedule, unlock, where the effect is read) for approval, then builds it.
-Keep its file list current when Training's pricing or value functions move.
-
-### Adding a card badge
-
-`.claude/skills/add-badge/` adds a new card badge: it reads the badge system, asks the questions the request leaves open (each badge's effect on every card, triggers, fractions, lethality, bosses, undo, the Dev grant) with proposed defaults, writes a spec for approval, then builds it.
-Keep its file list current when the badge mechanism moves.
-
-### Issue tracker
-
-Issues live in GitHub Issues on `sethrimer3/TowerProject`, managed with the `gh` CLI. See `docs/agents/issue-tracker.md`.
-
-### Triage labels
-
-Uses the five default labels: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
-
-### Domain docs
-
-Single-context: one `CONTEXT.md` and `docs/adr/` at the repo root, both created only when needed. See `docs/agents/domain.md`.
+- Issues live in GitHub Issues on `sethrimer3/TowerProject`, managed with the `gh` CLI; see `docs/agents/issue-tracker.md`.
+- Triage uses the five default labels (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`); see `docs/agents/triage-labels.md`.
+- Domain docs are single-context: one `CONTEXT.md` and `docs/adr/` at the repo root, both created only when needed; see `docs/agents/domain.md`.

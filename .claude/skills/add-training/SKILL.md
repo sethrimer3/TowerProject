@@ -76,6 +76,6 @@ Work in an isolated worktree, cherry-pick onto `main`, push and clean up, per th
 
 **Docs.** `README.md` (the Training tab paragraph and the run training caps sentence), `docs/PROGRESSION_AND_DIFFICULTY.md` (training and run training prices), `CONTEXT.md` (the Training point entry lists the rows), `docs/agents/progression.md` (the caps list, and any mechanism added).
 
-**Goldens.** The Training tab shows the row, so `ui.golden.json` changes (record it on the unchanged code first, per `AGENTS.md`); a new row changes the saved records, so `save-decode` changes. A combat or currency effect can move `step-trace`, `undo-clear-trace`, `tower-automation` and `delve-automove`. Check only the expected keys changed before re-recording, and name them in the commit message.
+**Goldens.** The Training tab shows the row, so `ui.golden.json` changes (record it on the unchanged code first, per `docs/agents/goldens.md`); a new row changes the saved records, so `save-decode` changes. A combat or currency effect can move `step-trace`, `undo-clear-trace`, `tower-automation` and `delve-automove`. Check only the expected keys changed before re-recording, and name them in the commit message.
 
 Run the area's tests, then `CI=1 npm test` and `npm run build`. Finish with a short report: the final spec values, what was verified, and which goldens were re-recorded and why.

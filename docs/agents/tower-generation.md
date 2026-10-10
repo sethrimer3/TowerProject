@@ -34,3 +34,15 @@ It has `GREATER_BOSS_OVER_BOSS` (2) times a boss's HP, ATK and DEF, twice a boss
 A change there changes saved maps, so it also needs a `LAYOUT_VERSION` bump; regenerate with `UPDATE_GOLDEN=1` only when the layout change is intended.
 `tests/tower-planning.test.ts` hashes strategic graphs (the main route, branches, shortcuts, and the resource planner's key sources and notes) over many more seeds, depths and budget cuts, `analyzeFloor` and its summary text for real floors, and `keyEconomy` and `asciiMap` on seeded synthetic boards against `tests/fixtures/tower-planning.golden.json`; regenerate it with `UPDATE_GOLDEN=1` only for an intended planning or analysis change.
 `tests/tower-forks.test.ts` checks that every fork pattern's lanes cost about the same with none cheaper in every way, how keys found in a lane pay for later doors, and that built forks lead in by every lane and never into an empty dead end.
+
+## Reports
+
+```sh
+npm run tower:report -- [seed depth]    # Tower floor generation audit (no args = aggregate over many floors)
+npm run tower:report -- --census [--towers 1,2,9] [--floors 1-200] [--band 10] [--seeds 20] [--stride 1]   # doors, keys, enemies and items per floor by tower and band of floors
+```
+
+## Boards shared with the Delve
+
+Dungeon boards place their torches with `src/torches.ts`, which also works out each torch's visibility polygon once, so generation never reaches into the lighting code.
+`tests/world-boards.test.ts` hashes flood fills (`reachable`, wrapping at the Delve width, with blocked tiles) on seeded synthetic and real chunks, torch spots (`chooseTorchSpots` takes a `TorchArea`: window and seed) and torches, the Delve `World` and Tower `RoomWorld` boards (tiles, steps, wrap, one-way gates, crossings, upkeep, chests, torch breaking) and `rollUnguardedLoot`, against `tests/fixtures/world-boards.golden.json`; regenerate it with `UPDATE_GOLDEN=1` only for an intended change to them.

@@ -51,3 +51,8 @@ an assemble first plays `ui/slag-merge.ts`'s melt (`playSlagMerge`: the pieces f
 `tests/equipment.test.ts` and `tests/equipment-slots.test.ts` cover it.
 `docs/EQUIPMENT.md`, `docs/CRAFTING_AND_EQUIPMENT.md` (only its chest Gold and metal bars still apply) and `docs/PROGRESSION_AND_DIFFICULTY.md` are the design source of truth.
 Tests (e.g. `tests/progression.test.ts`) assert numbers taken from them, so keep code and docs in agreement.
+
+## Skills to keep current
+
+The `add-upgrade` skill's `references/panels.md` describes each panel's rows, prices, effects and unlocks (skill trees, the Archives, the Defend Armory): update it when those mechanisms change.
+The `add-training` skill lists the files behind Training's pricing and value functions: update it when they move.

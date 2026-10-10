@@ -11,3 +11,13 @@ Its Automove (`automove.ts`) is observation-limited and upgradeable, distinct fr
 What it has seen is its saved memory (`save.delve.memory`, which `Game` clears when a run enters the labyrinth, a milestone gate seals or the layout changes); the route it committed to and the decisions it last weighed are its `DelvePlan` (`game.delvePlan`), which is never saved.
 `tests/delve-automove.test.ts` runs Automove alone at several AI upgrade levels with strong and fragile characters and hashes its choices and reported decisions against `tests/fixtures/delve-automove.golden.json` (checkpoints every 50 steps); regenerate it with `UPDATE_GOLDEN=1` only for an intended Automove change.
 See `docs/DELVE.md`.
+
+## Reports and tools
+
+```sh
+npm run delve:report -- [seed] [area] [--map]
+npm run delve:report -- --census [--tiers 1,2,9] [--floors 1-200] [--band 50] [--seeds 20]   # the same census for the Delve, per equivalent floor
+node --experimental-transform-types tools/delve-ai-sim.ts   # headless Automove comparison
+```
+
+Torch placement and `tests/world-boards.test.ts`, which covers the Delve `World` too, are in `tower-generation.md`.
