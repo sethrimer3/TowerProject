@@ -17,7 +17,7 @@ Read these as they are now. They change often, so trust the files over this list
 - `src/step-effects.ts` (`resolveStep`, `StepRules`): any badge that changes what a step does to the hero goes here, so previews, the planners and Automove agree.
 - `src/ui/badge-token.ts`, `src/ui/deck-page.ts`, `src/ui/hud.ts` (the `unable` greying), and the renderer, if the badge marks tiles.
 - `tests/badges.test.ts`: one test per behaviour; copy its style.
-- `AGENTS.md`: the "Card badges" passage, which you'll update.
+- `docs/agents/hand-and-automation.md`: the "Card badges" passage, which you'll update.
 
 The step is done when you can say, for **every** card in `CARDS`, which tile or action the card activates on.
 
@@ -68,5 +68,5 @@ Follow `AGENTS.md`. The points that matter most for badges:
 - Runs with no badge must play exactly as before. `step-trace`, `undo-clear-trace`, `tower-automation` and `delve-automove` must still match. If one fails, the badge leaked into the plain path.
 - Add one test per behaviour to `tests/badges.test.ts`, covering the card matrix's interesting cells, undo, the per-floor limits and the Dev grant.
 - Re-record only what the change should move: `ui.golden.json` if the Deck page or HUD shows it (`npm run test:ui`, recorded on the unchanged code first), `render-calls` / `render.golden.json` for new board marks or animations, and `save-decode` if `BadgesSave` or the run's saved fields change.
-- Update the "Card badges" passage in `AGENTS.md`, and add any new domain term to `CONTEXT.md`.
+- Update the "Card badges" passage in `docs/agents/hand-and-automation.md`, and add any new domain term to `CONTEXT.md`.
 - Run `npm test` and `npm run build`, then commit with the re-recorded goldens and the reason for each.

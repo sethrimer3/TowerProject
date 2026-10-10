@@ -74,7 +74,7 @@ Work in an isolated worktree, cherry-pick onto `main`, push and clean up, per th
 
 **Tests.** Extend `tests/loadout.test.ts` (its value at several ranks; the evenly spread hero still wins at floors 10 and 50 and loses at 75 if it's a combat stat), `tests/run-training.test.ts` (bought with Silver, it counts in the run and stops at `max`) and `tests/training-jobs.test.ts` if it has its own Gold or time curve. Every row is checked to have a positive whole `max`.
 
-**Docs.** `README.md` (the Training tab paragraph and the run training caps sentence), `docs/PROGRESSION_AND_DIFFICULTY.md` (training and run training prices), `CONTEXT.md` (the Training point entry lists the rows), `AGENTS.md` (the caps list under Progression/economy, and any mechanism added).
+**Docs.** `README.md` (the Training tab paragraph and the run training caps sentence), `docs/PROGRESSION_AND_DIFFICULTY.md` (training and run training prices), `CONTEXT.md` (the Training point entry lists the rows), `docs/agents/progression.md` (the caps list, and any mechanism added).
 
 **Goldens.** The Training tab shows the row, so `ui.golden.json` changes (record it on the unchanged code first, per `AGENTS.md`); a new row changes the saved records, so `save-decode` changes. A combat or currency effect can move `step-trace`, `undo-clear-trace`, `tower-automation` and `delve-automove`. Check only the expected keys changed before re-recording, and name them in the commit message.
 
