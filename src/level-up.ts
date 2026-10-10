@@ -119,9 +119,92 @@ function drawPoints(f: FrameContext, age: number, points: number) {
 }
 
 /** The hero rising from a strike that would have felled it: a smaller,
- * golden fire than the level-up's, with "REVIVED", `age` ms after it. */
+ * golden fire than the level-up's, with "REVIVED", under a beam of light
+ * that angel wings flutter down, `age` ms after it. */
 export function drawRevive(f: FrameContext, age: number) {
+  if (age < 0 || age >= REVIVE_MS) return;
+  drawBeam(f, age);
   drawBlaze(f, age, REVIVAL);
+  drawWings(f, age);
+}
+
+/** How tall the revival's beam is, in tile units (24 a tile), and how wide. */
+const BEAM_HEIGHT = 110;
+const BEAM_WIDTH = 26;
+/** Each wing's fall and fade, its start (ms after the revival), its column
+ * across the beam (tile units) and its flutter's phase. */
+const WING_MS = 1000;
+const WINGS = [
+  { at: 0, x: 12, phase: 0 },
+  { at: 130, x: 5, phase: 2 },
+  { at: 260, x: 19, phase: 4 },
+  { at: 400, x: 11, phase: 1 },
+];
+
+/** A column of white and golden light shining down on the hero, rising
+ * quickly and fading with the blaze. */
+function drawBeam(f: FrameContext, age: number) {
+  const c = f.c, rise = Math.min(1, age / 120), fade = Math.min(1, (REVIVE_MS - age) / 500),
+    alpha = rise * fade, pulse = f.look.reduceMotion ? 1 : 0.9 + 0.1 * Math.sin(age / 70);
+  c.save();
+  c.setTransform(tileTransform(f, f.playerX, f.playerY));
+  c.globalCompositeOperation = "lighter";
+  // Soft golden edges around a white core, each fading toward the top.
+  for (const [width, color, strength] of [
+    [BEAM_WIDTH * pulse, "255, 214, 110", 0.5],
+    [BEAM_WIDTH * 0.6 * pulse, "255, 244, 200", 0.7],
+    [BEAM_WIDTH * 0.28 * pulse, "255, 255, 255", 0.9],
+  ] as const) {
+    const column = c.createLinearGradient(0, 24, 0, 24 - BEAM_HEIGHT);
+    column.addColorStop(0, `rgba(${color}, ${strength * alpha})`);
+    column.addColorStop(0.6, `rgba(${color}, ${strength * alpha * 0.45})`);
+    column.addColorStop(1, `rgba(${color}, 0)`);
+    c.fillStyle = column;
+    c.fillRect(12 - width / 2, 24 - BEAM_HEIGHT, width, BEAM_HEIGHT);
+  }
+  c.restore();
+}
+
+/** Small white angel wings fluttering down from the top of the beam to the
+ * hero, each fading over a second. */
+function drawWings(f: FrameContext, age: number) {
+  const c = f.c, still = f.look.reduceMotion;
+  c.save();
+  c.setTransform(tileTransform(f, f.playerX, f.playerY));
+  c.lineJoin = "round";
+  c.lineWidth = 0.8;
+  c.shadowColor = "rgba(255, 220, 120, 0.9)";
+  c.shadowBlur = 5;
+  for (const w of WINGS) {
+    const t = (age - w.at) / WING_MS;
+    if (t < 0 || t >= 1) continue;
+    const y = 24 - BEAM_HEIGHT + 10 + (still ? 0.45 : t) * (BEAM_HEIGHT - 30),
+      x = w.x + (still ? 0 : 3 * Math.sin(t * 7 + w.phase)),
+      beat = still ? 1 : 0.55 + 0.45 * Math.abs(Math.sin(t * 22 + w.phase));
+    c.globalAlpha = Math.min(1, t / 0.12, (1 - t) / 0.5);
+    c.save();
+    c.translate(x, y);
+    c.scale(beat, 1);
+    c.fillStyle = "#ffffff";
+    c.strokeStyle = "rgba(255, 214, 110, 0.9)";
+    for (const side of [-1, 1]) {
+      // A wing: a rising arch out to its tip, then back along three feathers.
+      c.beginPath();
+      c.moveTo(0, 0);
+      c.quadraticCurveTo(side * 5, -7, side * 11, -4);
+      c.lineTo(side * 9, -1);
+      c.lineTo(side * 8.5, 1.4);
+      c.lineTo(side * 6, 1);
+      c.lineTo(side * 5.5, 3);
+      c.lineTo(side * 2.5, 2);
+      c.quadraticCurveTo(side * 1, 1.5, 0, 0);
+      c.closePath();
+      c.fill();
+      c.stroke();
+    }
+    c.restore();
+  }
+  c.restore();
 }
 
 /** Draws the blaze `age` ms in; false once it is over (or not begun). */
