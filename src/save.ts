@@ -107,7 +107,7 @@ const validPlayer = (p: any, width: number) =>
 const validCore = (r: any, width: number) =>
   !!r && validOutside(r) && validCounters(r) && validPlayer(r.player, width) && validChanges(r.changes);
 const validDelveState = (r: any) => Number.isInteger(r.milestone) && finite(r.milestone);
-const TOWER_FIELDS = ["damaged", "floors", "summoned"];
+const TOWER_FIELDS = ["damaged", "floors", "summoned", "start"];
 const DELVE_FIELDS = ["milestone", "tournament"];
 /** Training ranks bought in a run: known rows, each a whole number of
  * ranks, no more than the row reaches in a run. */
@@ -162,7 +162,7 @@ function decodeTowerRun(r: any): TowerRun | null {
   if (!validCore(r, TOWER_WIDTH) || !validFloors(r.floors)) return null;
   // Older runs have no damage history; do not assume a perfect attempt.
   r.damaged = r.damaged !== false;
-  dropInvalid(r, { summoned: (v: unknown) => Array.isArray(v) && v.every(Number.isInteger) });
+  dropInvalid(r, { summoned: (v: unknown) => Array.isArray(v) && v.every(Number.isInteger), start: (v: unknown) => Number.isInteger(v) && (v as number) > 0 });
   return without(r, [...DELVE_FIELDS, "keysSpent"]);
 }
 /** Validate an untrusted Delve run; null unless it has the shape a

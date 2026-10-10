@@ -13,7 +13,7 @@ export const isBoard = (id: string): id is "tower" | "delve" => id === "tower" |
 export type PageGame = Readonly<Pick<Game, "mode" | "run" | "save" | "fallen" | "handStuck" | "stepRules" | "free" | "maxSpeed" | "stepsPerSecond" | "treeWaiting" | "buyQuantity" | "buyQuantityFor" | "buyQuantities" | "canBeginTournament">> &
   Pick<
     Game,
-    | "undo" | "acceptDefeat" | "eraseAll" | "finish" | "setDevMode"
+    | "undo" | "acceptDefeat" | "retry" | "retryHeight" | "eraseAll" | "finish" | "setDevMode"
     | "claimGoal" | "warp" | "buy" | "setBuyQuantity" | "clock" | "buyOffer"
     | "training" | "research" | "deck" | "badges" | "gear" | "equipment" | "tournament" | "mail"
   >;

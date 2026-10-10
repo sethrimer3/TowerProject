@@ -460,6 +460,23 @@ export class Game {
     this.finalizeRun("Fallen in combat");
     return true;
   }
+  /** The height Retry starts a new run on: the one this Tower run began on
+   * (above floor 1 after a Warp). Null where Retry isn't offered: outside
+   * a run, in the Delve, and in a tournament. */
+  get retryHeight() {
+    return this.mode === "tower" && !this.run.outside ? this.towerRun.start ?? 0 : null;
+  }
+  /** Ends the run (accepting defeat when fallen), then at once starts a new
+   * one, with a new seed, on the floor this one began on. */
+  retry(reason: string) {
+    const height = this.retryHeight;
+    if (height === null) return false;
+    this.finish(reason);
+    this.newRun({ outside: true, height });
+    this.enterFromOutside();
+    this.message = height ? `Retrying from floor ${height + 1}` : "Retrying from floor 1";
+    return true;
+  }
   private reject(x: number, y: number, message: string) {
     this.route = [];
     this.blocked = { x, y, until: performance.now() + 1000 };
@@ -1315,7 +1332,7 @@ export class Game {
       ...(this.slice.tier > 1 ? { tier: this.slice.tier } : {}),
     };
     this.run = this.mode === "tower"
-      ? { damaged: false, ...core }
+      ? { damaged: false, ...core, ...(height > 0 ? { start: height } : {}) }
       : { ...core, milestone: 0 };
     this.run.loadout = loadout;
     this.world = this.rules.board(this.run);
@@ -1421,6 +1438,7 @@ export class Game {
    * in the forest. */
   private finalizeRun(reason: string) {
     const record = this.payout(), gold = this.slice.runGold;
+    this.forestSeeds.clear();
     // A run that earned its currency sends the player to spend it.
     if (this.slice.runCurrency > 0) this.save.treeNotices[this.rules === MODES.tower ? "inspiration" : "courage"] = true;
     this.slice.history = [];
@@ -1688,8 +1706,10 @@ export class Game {
    * mode's records become that tier's and a fresh run waits outside it. */
   selectTier(tier: number) {
     if (!this.canSelectTier(tier)) return false;
+    // Each tower's forest keeps its seed, and so its weather, until a run begins.
+    this.forestSeeds.set(this.forestKey(this.slice.tier), this.run.seed);
     switchTier(this.slice, tier);
-    this.newRun({ outside: true });
+    this.newRun({ outside: true, seed: this.forestSeeds.get(this.forestKey(tier)) });
     this.message = `${this.rules.words.tierName} ${tierNumeral(tier)} · ${tierRewardText(tier)}`;
     return true;
   }
@@ -1698,7 +1718,13 @@ export class Game {
     const slice = this.slice;
     return !!this.run.outside && tier !== slice.tier && tier >= 1 && tier <= slice.tiersOpen;
   }
+  /** The forests' seeds, by mode and tier, kept while the player looks
+   * between them: the weather comes from the seed, so each stays as it was
+   * until a run begins or ends. */
+  private forestSeeds = new Map<string, number>();
+  private forestKey = (tier: number) => `${this.mode}:${tier}`;
   private enterFromOutside() {
+    this.forestSeeds.clear();
     const p = this.run.player;
     this.run.outside = false;
     this.save.tutorials.enter = true;

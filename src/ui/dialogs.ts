@@ -134,6 +134,14 @@ export class RunEndDialog {
     return `<p class="summary-boost">${gold}${wholeChange(found)} Gold × ${GOLD_BOOST_FACTOR} boost = ${gold}<b>${wholeChange(found * GOLD_BOOST_FACTOR)} Gold</b></p>`;
   }
 
+  /** The Retry button, when a new run on this run's starting floor can
+   * begin: it says which floor when a Warp started the run above floor 1. */
+  private retryButton(id: string) {
+    const height = this.ctx.game.retryHeight;
+    if (height === null) return "";
+    return `<button id="${id}">${height ? `Retry from floor ${displayedProgress(height)}` : "Retry"}</button>`;
+  }
+
   private show(cause: RunEndCause) {
     const ctx = this.ctx, { game, modal } = ctx;
     const words = MODES[game.mode].words, slice = game.save[game.mode];
@@ -149,19 +157,23 @@ export class RunEndDialog {
       const button = undos ? `<button id="defeat-undo">Undo (${undos} left)</button>` : "";
       // Encourages another run: the next one is a new layout, and what this one earned can make the hero stronger.
       const again = `<p>Look over what this ${words.run} earned, spend it to grow stronger, and try again: the ${words.tierName} will shift to a new layout for your next ${words.run}.</p>`;
-      modal.innerHTML = `<span class="summary-icon">${uiSprite("revive")}</span><small>FALLEN IN COMBAT</small><h2>Regroup and try again.</h2><p>${by ? `Felled by ${by}` : "Felled"} at ${where}. ${kept}</p>${stats}${again}${takeBack}<div class="dialog-actions">${button}<button id="defeat-accept">Return to entrance</button></div>`;
+      modal.innerHTML = `<span class="summary-icon">${uiSprite("revive")}</span><small>FALLEN IN COMBAT</small><h2>Regroup and try again.</h2><p>${by ? `Felled by ${by}` : "Felled"} at ${where}. ${kept}</p>${stats}${again}${takeBack}<div class="dialog-actions">${button}<button id="defeat-accept">Return to entrance</button>${this.retryButton("defeat-retry")}</div>`;
       modal.showModal();
       // Undo, or else return to the entrance: however the dialog closes,
       // even dismissed by the browser itself (a phone's Back, or coming back
       // to the tab, can close it past the cancel guard), the hero never stays
       // fallen on the floor with no dialog to answer.
-      let undoing = false;
+      let undoing = false, retrying = false;
       const undo = document.querySelector<HTMLButtonElement>("#defeat-undo");
       if (undo) undo.onclick = () => ((undoing = true), modal.close());
       el("defeat-accept").onclick = () => modal.close();
+      const retry = document.querySelector<HTMLButtonElement>("#defeat-retry");
+      if (retry) retry.onclick = () => ((retrying = true), modal.close());
       modal.addEventListener("close", () => {
         if (undoing) game.undo();
-        else if (game.acceptDefeat()) this.fadeInFromBlack();
+        else if (retrying) {
+          if (game.retry("Fallen in combat")) this.fadeInFromBlack();
+        } else if (game.acceptDefeat()) this.fadeInFromBlack();
         ctx.navigate(game.mode);
       }, { once: true });
       return;
@@ -169,12 +181,18 @@ export class RunEndDialog {
     const [label, title, why] = cause === "stuck"
       ? ["NO CARD CAN ACT", `End this ${words.run}?`, `Nothing in your hand can act at ${where}. `]
       : ["END RUN", `End this ${words.run}?`, `End the current ${words.run} at ${where}. `];
-    modal.innerHTML = `<small>${label}</small><h2>${title}</h2><p>${why}${kept}</p>${stats}<div class="dialog-actions"><button id="cancel">${words.keepGoing}</button><button id="confirm">End run</button></div>`;
+    modal.innerHTML = `<small>${label}</small><h2>${title}</h2><p>${why}${kept}</p>${stats}<div class="dialog-actions"><button id="cancel">${words.keepGoing}</button><button id="confirm">End run</button>${this.retryButton("retry")}</div>`;
     modal.showModal();
     el("cancel").onclick = () => modal.close();
     el("confirm").onclick = () => {
       modal.close();
       game.finish(`${capitalized(words.run)} ended`);
+      ctx.navigate(game.mode);
+    };
+    const retry = document.querySelector<HTMLButtonElement>("#retry");
+    if (retry) retry.onclick = () => {
+      modal.close();
+      game.retry(`${capitalized(words.run)} ended`);
       ctx.navigate(game.mode);
     };
   }

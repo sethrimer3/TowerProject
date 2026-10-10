@@ -189,6 +189,9 @@ export type TowerRun = RunCore & {
   /** The heights of the floors where a Greater Boss has appeared this run
    * (tower/greater-boss.ts), each once. */
   summoned?: number[];
+  /** The height the run began on, when a Warp began it above the first
+   * floor (absent: floor 1); Retry starts the next run there. */
+  start?: number;
 };
 /** A Delve descent. */
 export type DelveRun = RunCore & {

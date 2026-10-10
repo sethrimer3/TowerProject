@@ -1,4 +1,4 @@
-import { CHECKPOINTS, UNLOCK_NAMES, areaCleared, checkpoint, areaMastered, canWarp, floorsCompleted, goalState, passFor, passTotals, unlockAt, unlockFloor, warpUnlocked, type Checkpoint, type GoalReward, type GoalState, type GoalUnlock, type Pass } from "../goals.ts";
+import { CHECKPOINT_EVERY, CHECKPOINT_FLOORS, CHECKPOINTS, UNLOCK_NAMES, areaCleared, checkpoint, areaMastered, canWarp, floorsCompleted, goalState, passFor, passTotals, unlockAt, unlockFloor, warpUnlocked, type Checkpoint, type GoalReward, type GoalState, type GoalUnlock, type Pass } from "../goals.ts";
 import { CURRENCIES, type CurrencyId } from "../shop/currency.ts";
 import { owns } from "../shop/entitlements.ts";
 import { stubServer, type ShopServer } from "../shop/server.ts";
@@ -70,8 +70,25 @@ const rewardText = (r: GoalReward) =>
   r.kind === "unlock" ? `Unlock ${r.unlock === "tournament" ? "the " : ""}${UNLOCK_NAMES[r.unlock]}`
   : r.kind === "tower" ? `Unlock Tower ${tierNumeral(r.tower)}`
   : `${r.amount.toLocaleString("en-US")} ${CURRENCIES[r.currency].name}`;
+/** Pixels between neighbouring checkpoints, whatever floors they stand on:
+ * the column spaces its checkpoints evenly (ten floors' worth), so a
+ * checkpoint added between two makes room and the rest keep the same
+ * interval, and the gap from floor 100 to 150 is no wider than any other. */
+const CHECKPOINT_PX = CHECKPOINT_EVERY * FLOOR_PX;
+/** How far above the ground floor `f` stands in a column holding checkpoints
+ * at `floors` (lowest first): between two checkpoints it is placed in
+ * proportion to the floors between them, and past the last at a floor's
+ * height each. */
+function risePx(f: number, floors: readonly number[]) {
+  let below = 0;
+  for (const [i, at] of floors.entries()) {
+    if (f <= at) return i * CHECKPOINT_PX + (CHECKPOINT_PX * (f - below)) / (at - below);
+    below = at;
+  }
+  return floors.length * CHECKPOINT_PX + (f - below) * FLOOR_PX;
+}
 /** Where floor `f` stands, from the bottom of the tower. */
-const floorY = (f: number) => GROUND_PX + f * FLOOR_PX;
+const floorY = (f: number, floors: readonly number[]) => GROUND_PX + risePx(f, floors);
 
 export class GoalsPage {
   /** The tower in view. */
@@ -114,7 +131,7 @@ export class GoalsPage {
     document.querySelectorAll<HTMLElement>("#goals [data-scroll]").forEach((s) => {
       const t = Number(s.dataset.scroll);
       // First shown: the highest floor completed sits a little below the middle.
-      s.scrollTop = this.scrolled[t] ?? s.scrollHeight - s.clientHeight - Math.max(0, floorY(floorsCompleted(save, t)) - s.clientHeight * 0.4);
+      s.scrollTop = this.scrolled[t] ?? s.scrollHeight - s.clientHeight - Math.max(0, floorY(floorsCompleted(save, t), CHECKPOINT_FLOORS) - s.clientHeight * 0.4);
     });
   }
 
@@ -123,22 +140,23 @@ export class GoalsPage {
     const save = this.ctx.game.save,
       high = floorsCompleted(save, tower),
       checkpoints = CHECKPOINTS[tower]!,
-      top = checkpoints[checkpoints.length - 1]!.floor,
+      floors = checkpoints.map((c) => c.floor),
+      top = floors[floors.length - 1]!,
       warp = warpUnlocked(save);
     const row = (c: Checkpoint) => {
       const done = high >= c.floor, warpable = canWarp(save, tower, c.floor);
       const mastered = warp && areaMastered(save, tower, c.floor), cleared = areaCleared(save, tower, c.floor);
       const marks = (cleared ? `<span title="Enemies cleared: floors ${c.floor - 9}–${c.floor}">${CLEARED_MARK}</span>` : "") +
         (mastered ? `<span title="Area mastered: warp here">${SWIRL_MARK}</span>` : "");
-      return `<div class="goal-row" style="bottom:${floorY(c.floor)}px">` +
+      return `<div class="goal-row" style="bottom:${floorY(c.floor, floors)}px">` +
         `<div class="goal-left">${this.reward(tower, c, false)}${marks ? `<span class="goal-marks">${marks}</span>` : ""}</div>` +
         `<button class="goal-floor${done ? " completed" : ""}${warpable ? " warpable" : ""}" data-warp="${tower}:${c.floor}" aria-label="Floor ${c.floor}${warpable ? ": warp" : ""}">${c.floor}</button>` +
         this.reward(tower, c, true) +
         `</div>`;
     };
-    return `<div class="goals-scroll" data-scroll="${tower}"><div class="goals-tower" style="height:${floorY(top) + TOP_PX}px">` +
+    return `<div class="goals-scroll" data-scroll="${tower}"><div class="goals-tower" style="height:${floorY(top, floors) + TOP_PX}px">` +
       `<div class="goals-ground"></div><div class="goals-line" style="bottom:${GROUND_PX}px"></div>` +
-      `<div class="goals-line lit" style="bottom:${GROUND_PX}px;height:${Math.min(high, top + TOP_PX / FLOOR_PX) * FLOOR_PX}px"></div>` +
+      `<div class="goals-line lit" style="bottom:${GROUND_PX}px;height:${Math.min(risePx(high, floors), risePx(top, floors) + TOP_PX)}px"></div>` +
       checkpoints.map(row).join("") +
       `</div></div>`;
   }
