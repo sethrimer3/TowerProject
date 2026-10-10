@@ -78,6 +78,8 @@ import { RunPurse, type EquipmentLoot } from "./game/run-purse.ts";
 import { EquipmentDesk } from "./game/equipment-desk.ts";
 import { TournamentDesk } from "./game/tournament-desk.ts";
 import { MailDesk } from "./game/mail-desk.ts";
+import { MissionDesk } from "./game/mission-desk.ts";
+import type { MissionType } from "./missions/catalog.ts";
 import { LEAGUE_INFO } from "./tournament/leagues.ts";
 import { runStream, tournamentScore, type TournamentRun } from "./tournament/run.ts";
 import type { TournamentInfo } from "./tournament/server.ts";
@@ -231,6 +233,9 @@ export class Game {
   readonly tournament = new TournamentDesk(this);
   /** Mail the server pushed: the inbox, reading, removing and claiming. */
   readonly mail = new MailDesk(this);
+  /** The daily and weekly missions: giving them, counting toward them and
+   * paying them. */
+  readonly missions = new MissionDesk(this);
   /** The Deck page's card badges: drawing them with Gems and attaching
    * them to cards. */
   readonly badges = new BadgeDesk(this);
@@ -1254,6 +1259,7 @@ export class Game {
     const plan = planHand(this, this.hand, this.mode, card);
     if (!plan) return "noPath";
     this.run.focusUsed = (this.run.focusUsed ?? 0) + 1;
+    this.missions.mark("focus", this.mode, this.run.seed, this.run.focusUsed);
     this.run.focused = id;
     this.route = [];
     // During a fight, the path is found again once the hero has stepped in.
@@ -1673,6 +1679,7 @@ export class Game {
       return false;
     }
     this.run.kills++;
+    this.countKill(enemy, at);
     const floor = this.rules.equivalentFloor(this.rules.progressAt(this.run, at.y)), scale = fight.scale ?? 1;
     this.gainXp(enemy, floor, scale);
     // Silver belongs to the run, so it isn't gated like Gold: undo takes it back.
@@ -1683,6 +1690,21 @@ export class Game {
     for (const text of found) this.gain(at.x, at.y, text);
     this.message = [fightText(fight), ...coinsText(gold, silver), ...found].join(" · ");
     return true;
+  }
+  /** A kill counts toward the missions for its strength, once a tile. */
+  private countKill(enemy: Enemy, at: { x: number; y: number }) {
+    const s = enemy.strength;
+    const type: MissionType = s === "boss" || s === "greaterBoss" ? "bosses" : s === "strong" ? "strong" : s === "elite" ? "elite" : "basic";
+    this.missions.record(type, 1, this.missionKey(at));
+  }
+  /** What a kill or pickup at `at` counts as for the missions: the mode
+   * and its loot key, so undo bringing the tile back can't count it again. */
+  private missionKey(at: { x: number; y: number }) {
+    return `${this.mode}:${this.rules.lootKey(this.run, at.x, at.y)}`;
+  }
+  /** A desk's command counted toward the missions (Training, badges). */
+  missionDone(type: MissionType, amount: number) {
+    this.missions.record(type, amount);
   }
   /** Raises the Gold and Silver just found from `at`, each only when some
    * was; a kill always shows its Silver. */
@@ -1782,6 +1804,7 @@ export class Game {
    * (x = -1) so it pays once a run. */
   private payDelveFloors(floorBefore: number, at: { x: number; y: number }) {
     const purse = this.purse, last = this.rules.equivalentFloor(this.run.maxHeight ?? 0);
+    this.missions.record("floors", last - floorBefore);
     let gold = 0, silver = 0;
     for (let f = floorBefore + 1; f <= last; f++) {
       gold += purse.floorGold(purse.floorKey(-1, f));
@@ -1825,6 +1848,7 @@ export class Game {
       // Each floor new to the run counts toward a charge's regain, a floor
       // climbed past by Skip too.
       for (let f = highest; f < this.run.height; f++) this.regainCharges(p);
+      this.missions.record("floors", this.run.height - highest);
       this.run.maxHeight = this.run.height;
       silver = purse.floorSilver();
       silver += purse.interest();
@@ -1921,6 +1945,8 @@ export class Game {
     if (text) {
       this.gain(x, y, text, { tile: { ...t } });
       if (t.kind === "potion") this.recordHeal(outcome.healed);
+      if (t.kind === "potion") this.missions.record("potions", 1, this.missionKey({ x, y }));
+      if (t.kind === "key" && t.color !== "yellow") this.missions.record(t.color === "blue" ? "blueKeys" : "redKeys", 1, this.missionKey({ x, y }));
       this.message = text;
     }
     if (t.kind === "treasure") this.openTreasure(x, y);
@@ -2006,6 +2032,9 @@ export class Game {
     // A fight playing out goes on with the stats (or Revive) bought.
     if (this.encounter && (isStatRow(first.row) || id === "revive")) this.retrainFight(this.encounter, hpGain);
     this.message = `${first.row.name} trained for this run · level ${first.level + bulk.count}`;
+    // Undo takes the ranks back, so only the run's most bought counts.
+    const bought = Object.values(this.run.training ?? {}).reduce((n, k) => n + (k ?? 0), 0);
+    this.missions.mark("runTraining", this.mode, this.run.seed, bought);
     this.afterPlayerAction();
     return true;
   }

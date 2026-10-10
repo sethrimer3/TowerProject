@@ -47,6 +47,15 @@ export const gemIcon = (className = "gem-icon") =>
 /** An Ascension Shard: a tall green crystal, worn wherever Shards are shown. */
 export const shardIcon = (className = "shard-icon") =>
   `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l5 6-1.5 11L12 22l-3.5-3L7 8z" fill="#2fbf6a"/><path d="M12 2l5 6-5 2-5-2z" fill="#9dffc4"/><path d="M12 10v12M7 8l5 2 5-2" fill="none" stroke="#dcffe9" stroke-width="0.8" stroke-linejoin="round"/><path d="M12 2l5 6-1.5 11L12 22l-3.5-3L7 8z" fill="none" stroke="#0b4a26" stroke-width="1.3" stroke-linejoin="round"/></svg>`;
+/** A Medal: a gold disc with a star, hung from a red ribbon. */
+export const medalIcon = (className = "medal-icon") =>
+  `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h4l2 7H9zM13 2h4l-2 7h-4z" fill="#c0392b" stroke="#5a1410" stroke-width="1" stroke-linejoin="round"/><circle cx="12" cy="15.5" r="6.2" fill="#e0a526" stroke="#5a3d08" stroke-width="1.3"/><path d="M12 11.6l1.15 2.35 2.6.38-1.88 1.83.44 2.58L12 17.53l-2.31 1.21.44-2.58-1.88-1.83 2.6-.38z" fill="#fff1b8"/></svg>`;
+/** A check mark in a rounded box: Missions. */
+export const missionIcon = (className = "mission-icon") =>
+  `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="3" fill="#24402c" stroke="#e9e1c8" stroke-width="1.5"/><path d="M7.5 12.3l3.1 3.1 6-6.6" fill="none" stroke="#8ff0a4" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+/** A plain check mark: a weekly reward claimed. */
+export const checkIcon = (className = "check-icon") =>
+  `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" fill="none" stroke="#8ff0a4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 /** "1 Gem", "5 Gems". */
 /** A trophy: a cup with handles on a stem and base, outlined in `stroke`
  * over `fill` (gold by default; each league's cup its own metal). */

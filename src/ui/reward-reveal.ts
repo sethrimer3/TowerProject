@@ -4,14 +4,14 @@ import { ENTITLEMENTS } from "../shop/entitlements.ts";
 import { bundleAmounts } from "../shop/items.ts";
 import type { ShopOffer } from "../shop/offers.ts";
 import type { MailItem } from "../mail/message.ts";
-import { gemIcon, goldIcon, shardIcon, ticketIcon } from "./dom.ts";
+import { gemIcon, goldIcon, medalIcon, shardIcon, ticketIcon } from "./dom.ts";
 
 /** A reward to celebrate: its icon, the amount beside it (a currency's
  * "+250"), the line over its name, and what it does. A `permanent` one, an
  * unlock bought for good, turns golden rays behind it; currency doesn't. */
 export type RewardShown = { icon: string; amount?: string; kicker: string; name: string; text?: string; permanent: boolean };
 
-const CURRENCY_ICONS: Record<CurrencyId, () => string> = { gems: () => gemIcon(), shards: () => shardIcon(), gold: goldIcon };
+const CURRENCY_ICONS: Record<CurrencyId, () => string> = { gems: () => gemIcon(), shards: () => shardIcon(), gold: goldIcon, medals: () => medalIcon() };
 
 /** Celebrates a reward the way a new card is: it rises from below the screen
  * to its middle, with what it is written underneath, and a press claims it

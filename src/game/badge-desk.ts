@@ -36,7 +36,9 @@ export class BadgeDesk {
     const price = DRAW_GEMS[count];
     if (!this.canDraw(count) || !affordsGems(this.host, price)) return null;
     if (!this.host.free) this.save.gems -= price;
-    return drawBadges(this.save.badges, this.save.upgrades, count, stream("badges"));
+    const draws = drawBadges(this.save.badges, this.save.upgrades, count, stream("badges"));
+    this.host.missionDone?.("badge", draws.length);
+    return draws;
   }
 
   /** Whether tokens can move between cards now: the skill owned, in the forest. */

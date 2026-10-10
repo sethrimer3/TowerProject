@@ -16,6 +16,7 @@ import { decodeShop, defaultShop } from "./shop/ledger.ts";
 import { decodeGoals, defaultGoals } from "./goals.ts";
 import { decodeTournament, defaultTournament } from "./tournament/progress.ts";
 import { decodeMail, defaultMail } from "./mail/progress.ts";
+import { decodeMissions, defaultMissions } from "./missions/progress.ts";
 import { isTournamentRun } from "./tournament/run.ts";
 import { decodeBadges, defaultBadges, validRunBadges } from "./badges.ts";
 import { runTrainingMax } from "./run-training.ts";
@@ -26,6 +27,7 @@ export function defaults(): Save {
     delve: { run: null, history: [], fall: null, best: 0, reached: 0, courage: 0, lootedTiles: {}, runGold: 0, runBoostGold: null, runCurrency: 0, runRecord: false, memory: { known: {}, visited: {} }, tier: 1, tiersOpen: 1, tierRecords: {} },
     gems: 0,
     ascensionShards: 0,
+    medals: 0,
     gemDrop: defaultGemDrop(),
     goldBoostUntil: 0,
     gold: 0,
@@ -61,6 +63,7 @@ export function defaults(): Save {
     goals: defaultGoals(),
     tournament: defaultTournament(),
     mail: defaultMail(),
+    missions: defaultMissions(),
   };
 }
 const CHEST_TIERS = ["silver", "gold"] as const;
@@ -260,6 +263,7 @@ function decodeProgress(s: any, d: Save, undoCapacity: number) {
   d.gold = fraction(s.gold, d.gold);
   d.gems = count(s.gems, d.gems);
   d.ascensionShards = count(s.ascensionShards, d.ascensionShards);
+  d.medals = count(s.medals, d.medals);
   d.gemDrop = decodeGemDrop(s.gemDrop);
   d.goldBoostUntil = count(s.goldBoostUntil, 0, Number.MAX_SAFE_INTEGER);
   for (const g of GOLD_SHOP) d.provisions[g.id] = count(s.provisions?.[g.id], d.provisions[g.id], 999);
@@ -400,6 +404,7 @@ export function decode(raw: string | null): Save {
     d.goals = decodeGoals(s.goals);
     d.tournament = decodeTournament(s.tournament);
     d.mail = decodeMail(s.mail);
+    d.missions = decodeMissions(s.missions);
     // The boost runs for good only while a pack that grants it is owned.
     if (permanentBoost(d)) d.trainingBoostUntil = BOOST_FOREVER;
     else if (d.trainingBoostUntil === BOOST_FOREVER) d.trainingBoostUntil = 0;

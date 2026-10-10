@@ -8,12 +8,12 @@ import { RARITIES } from "../shop/rarity.ts";
 import { stubServer, type ShopServer } from "../shop/server.ts";
 import { availableAgain, priceText, refusal, soldOut, timesBought, type Refusal } from "../shop/transactions.ts";
 import type { AppContext } from "./app.ts";
-import { el, gemIcon, goldIcon, shardIcon } from "./dom.ts";
+import { el, gemIcon, goldIcon, medalIcon, shardIcon } from "./dom.ts";
 import { offerShown, revealReward } from "./reward-reveal.ts";
 
 /** Gem prices from this up ask the player to confirm first. */
 export const CONFIRM_GEMS = 200;
-const CURRENCY_ICONS: Record<CurrencyId, () => string> = { gems: () => gemIcon(), shards: () => shardIcon(), gold: goldIcon };
+const CURRENCY_ICONS: Record<CurrencyId, () => string> = { gems: () => gemIcon(), shards: () => shardIcon(), gold: goldIcon, medals: () => medalIcon() };
 
 /** What `o` grants, each a large icon over its amount: a perk's Gold
  * multiplier on the coin, then the currencies. What a card shows in place
@@ -111,7 +111,9 @@ export class ShopPage {
   /** Every currency the Shop prices in, held now; each opens its information. */
   private purse() {
     const save = this.ctx.game.save;
+    // Medals aren't sold here: they show once held.
     return `<div class="shop-purse" aria-label="Currencies">${(Object.keys(CURRENCIES) as CurrencyId[])
+      .filter((id) => id !== "medals" || save.medals > 0)
       .map((id) => `<button class="shop-currency" data-currency="${id}" aria-label="${CURRENCIES[id].name}: ${whole(CURRENCIES[id].balance(save)).toLocaleString("en-US")}">${CURRENCY_ICONS[id]()}<b>${whole(CURRENCIES[id].balance(save)).toLocaleString("en-US")}</b><small>${CURRENCIES[id].name.toUpperCase()}</small></button>`)
       .join("")}</div>`;
   }

@@ -15,6 +15,7 @@ import type { ShopSave } from "./shop/ledger.ts";
 import type { GoalsSave } from "./goals.ts";
 import type { TournamentSave } from "./tournament/progress.ts";
 import type { MailSave } from "./mail/progress.ts";
+import type { MissionsSave } from "./missions/progress.ts";
 import type { TournamentRun } from "./tournament/run.ts";
 export type Kind =
   | "wall"
@@ -263,6 +264,9 @@ export type Save = {
   /** Ascension Shards: a limited currency, kept between runs, bought only
    * in the Shop's limited packs for now. */
   ascensionShards: number;
+  /** Medals: a limited currency, kept between runs, paid by the weekly
+   * mission rewards (missions/catalog.ts); nothing spends them yet. */
+  medals: number;
   /** Where the Gems found on floors and the ad button's stand: never part
    * of a run, so undo can't touch them. */
   gemDrop: GemDrop;
@@ -362,5 +366,8 @@ export type Save = {
   /** Mail the server pushed: the inbox it last reported, what was read,
    * removed and claimed here (mail/progress.ts). */
   mail: MailSave;
+  /** The daily missions given, the week's tally and rewards claimed, and
+   * what has counted toward them (missions/progress.ts). */
+  missions: MissionsSave;
 };
 export const point = (x: number, y: number) => `${x},${y}`;

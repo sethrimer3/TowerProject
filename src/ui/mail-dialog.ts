@@ -2,7 +2,7 @@ import type { MailClient } from "../mail/client.ts";
 import { waiting, type MailItem, type MailMessage } from "../mail/message.ts";
 import { CURRENCIES } from "../shop/currency.ts";
 import type { AppContext } from "./app.ts";
-import { escapeHtml, gemIcon, giftIcon, goldIcon, shardIcon, ticketIcon } from "./dom.ts";
+import { escapeHtml, gemIcon, giftIcon, goldIcon, medalIcon, shardIcon, ticketIcon } from "./dom.ts";
 import { mailShown, revealReward } from "./reward-reveal.ts";
 
 // The Mail popup, in the shared dialog, opened by the forest's Mail button
@@ -10,7 +10,7 @@ import { mailShown, revealReward } from "./reward-reveal.ts";
 // opened from it, with its items and Claim. Its text comes from the server,
 // so every word of it is escaped.
 
-const CURRENCY_ICONS = { gems: () => gemIcon(), shards: () => shardIcon(), gold: goldIcon } as const;
+const CURRENCY_ICONS = { gems: () => gemIcon(), shards: () => shardIcon(), gold: goldIcon, medals: () => medalIcon() } as const;
 
 /** How long ago `sentAt` was, as the list shows it: `now`, `5m`, `2h`, `3d`. */
 function age(now: number, sentAt: number) {

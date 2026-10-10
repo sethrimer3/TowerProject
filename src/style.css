@@ -765,6 +765,9 @@ canvas {
 .run-menu.instant .run-menu-frame,
 .run-menu.instant .run-menu-items { transition: none; }
 .run-menu-end { grid-row: span 2; height: auto; }
+/* In a crowded forest the hamburger stands alone: its cells (Settings,
+   Mail) in one row. */
+.run-menu.forest .run-menu-items { grid-template-rows: minmax(0, 1fr); }
 .run-menu-end small { font-size: 9px; letter-spacing: 1px; }
 .menu-icon { display: block; width: 16px; height: 16px; fill: currentColor; }
 /* Under play/pause inside a run: the hero's movement speed, steps a second,
@@ -3770,3 +3773,62 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
 .prize-table td:last-child { text-align: right; }
 .prize-table tr.promote td:nth-child(2), .zone.promote { color: #8ff0a4; }
 .prize-table tr.demote td:nth-child(2), .zone.demote { color: #ff8a7a; }
+
+/* --- Missions --- */
+/* Medals (a limited currency): in the forest's purse once held, the
+   currencies bar, and wherever a reward pays them. */
+.medal-icon { width: 1em; height: 1em; vertical-align: -0.15em; }
+.purse .medal-icon { width: 18px; height: 18px; flex: none; }
+.medal-stat b { color: #ffd27a; }
+.currency.medal-currency { color: #ffd27a; }
+.currency > .medal-icon { width: 1.45em; height: 1.45em; vertical-align: -0.32em; }
+.reward-reveal-prize .medal-icon, .goal-art > .medal-icon { width: 72px; height: 72px; }
+@media (max-width: 420px) {
+  .purse .medal-icon { width: 15px; height: 15px; }
+}
+/* The Missions button (hud.ts): a check mark over the missions open out of
+   8, in the forest's actions column or the run's menu. */
+.missions-button .mission-icon { display: block; width: 18px; height: 18px; }
+.missions-button small { font-variant-numeric: tabular-nums; }
+/* The Missions screen (missions-page.ts). */
+.page#missions { position: relative; }
+.missions-close { position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; padding: 0; font-size: 18px; line-height: 1; }
+#missions .page-title { margin: 18px 44px 14px; text-align: center; }
+.weekly { margin: 0 0 14px; padding: 12px 12px 10px; border: 1px solid var(--line); border-radius: 8px; background: linear-gradient(180deg, #1a212c, #121822); }
+.weekly-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.weekly-head b { font-size: 14px; font-weight: 500; color: #e5d5b8; }
+.weekly-head small, .weekly-count { font-size: 10px; letter-spacing: 0.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.weekly-count { display: block; margin-top: 6px; text-align: center; }
+/* The boxes stand over the bar, each at its count's place along it. */
+.weekly-track { position: relative; padding: 0 16px; }
+.weekly-boxes { position: relative; height: 52px; }
+.weekly-box { position: absolute; bottom: 0; left: var(--at); transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 1px; width: 34px; padding: 0; border: 0; background: none; }
+.weekly-prize { position: relative; display: block; width: 30px; height: 30px; border-radius: 6px; }
+.weekly-prize .gift-icon { display: block; width: 30px; height: 30px; }
+.weekly-prize .check-icon { position: absolute; right: -4px; bottom: -4px; width: 18px; height: 18px; border-radius: 50%; background: #10161f; box-shadow: 0 0 0 1px #8ff0a4; }
+.weekly-box small { font-size: 10px; color: #b9c2cf; font-variant-numeric: tabular-nums; }
+.weekly-box.dim .weekly-prize { opacity: 0.35; filter: grayscale(0.7); }
+.weekly-box.dim small { color: #5d6878; }
+.weekly-box.ready .weekly-prize { box-shadow: 0 0 10px 3px #ffd34d99; animation: weekly-glow 1.4s ease-in-out infinite alternate; }
+.weekly-box.ready small { color: #ffe9a8; }
+.weekly-box.claimed small { color: #8ff0a4; }
+.weekly-box:not(.ready) { cursor: default; }
+@keyframes weekly-glow { from { box-shadow: 0 0 6px 1px #ffd34d66; } to { box-shadow: 0 0 14px 4px #ffd34dcc; } }
+.reduce-motion .weekly-box.ready .weekly-prize { animation: none; }
+.weekly-bar { height: 10px; margin-top: 4px; border: 1px solid #3c4552; border-radius: 5px; background: #0b0f15; overflow: hidden; }
+.weekly-bar i { display: block; height: 100%; background: linear-gradient(90deg, #b8862b, #ffd34d); }
+.missions-next { margin: 0 0 8px; font-size: 11px; color: #8e9aab; text-align: center; }
+.missions-next b { color: #e5d5b8; font-weight: 500; }
+.mission-list { list-style: none; margin: 0; padding: 0; }
+.mission { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: #151b24; }
+.mission.complete { border-color: #4f8a5c; background: linear-gradient(180deg, #17261c, #121a15); }
+.mission-body { flex: 1; min-width: 0; }
+.mission-text { display: block; font-size: 13px; font-weight: 500; color: #e5d5b8; }
+.mission-rewards { display: flex; flex-wrap: wrap; gap: 10px; margin: 4px 0 6px; }
+.mission-reward { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; color: #c9d1dc; }
+.mission-reward .gem-icon, .mission-reward .ui-sprite, .mission-reward .mat-icon { width: 14px; height: 14px; }
+.mission-bar { position: relative; height: 16px; border: 1px solid #3c4552; border-radius: 4px; background: #0b0f15; overflow: hidden; }
+.mission-bar i { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, #2c6a8a, #47a7d8); }
+.mission.complete .mission-bar i { background: linear-gradient(90deg, #2f7a43, #5ed27c); }
+.mission-bar span { position: relative; display: block; font-size: 10px; line-height: 14px; text-align: center; color: #f2f4f8; font-variant-numeric: tabular-nums; text-shadow: 0 1px 2px #000; }
+.mission-claim { flex: none; padding: 8px 14px; font-size: 12px; color: #fff3cf; border-color: #d9a632; background: linear-gradient(180deg, #4a3712, #2a1f0a); }

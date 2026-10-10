@@ -367,6 +367,10 @@ _Avoid_: diamond, crystal, premium
 A limited currency, kept between runs, bought in the Shop's limited packs (each at most once every two weeks). Shown as a green crystal.
 _Avoid_: shard (alone: an ATK or DEF shard is a pickup)
 
+**Medal**:
+A limited currency, kept between runs, earned from the weekly mission rewards. Nothing spends Medals yet. Shown as a gold disc on a red ribbon.
+_Avoid_: badge (a card's token), trophy (the Tournament's)
+
 **Focus**:
 Putting one card of the hand ahead of the others inside a run, until the hero reaches its target or the card has no path to one. A run has a limited number of Focus uses.
 _Avoid_: priority, override
@@ -466,6 +470,16 @@ _Avoid_: inbox (the list itself), notification, news
 **Message**:
 One piece of Mail: a subject line, body text, and possibly items to claim. It shows for 7 days, or while its items wait to be claimed, up to 90. A message with items waiting can't be removed.
 _Avoid_: letter, post
+
+### Missions
+
+**Daily mission**:
+A small task the player is given, two every 8 hours (from 00:00 GMT), such as *Advance 10 floors*. Up to eight are open at once, never two of a kind, and never one asking for something not yet unlocked. They never expire, and progress counts across runs. A completed one is claimed for Gems, Gold and an equipment material.
+_Avoid_: quest, task, challenge, daily (alone)
+
+**Weekly reward**:
+One of seven prizes for every 5 daily missions completed in the week (Monday 00:00 GMT to the next), up to 35: Gold, Gems, Medals and Ascension Shards. Each can be claimed once a week.
+_Avoid_: weekly mission (nothing is asked beyond the daily missions), chest
 
 ### The Delve
 

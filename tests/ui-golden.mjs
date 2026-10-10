@@ -207,6 +207,24 @@ try {
           { id: "outage", sentAt: at("2026-10-05T09:30:00Z"), subject: "Sorry about the outage", body: "The servers were down for about an hour this morning.\n\nHere are 20 Gems for the trouble.", items: [{ kind: "currency", currency: "gems", amount: 20 }], read: false, claimed: false, hidden: false },
         ];
       }),
+      // In the forest with four missions, one complete, given this period,
+      // in Tower II's reach, and 12 completed this week with the first
+      // weekly reward claimed. Built last, so no fixture before it changes.
+      missions: forest((s) => {
+        quiet(s);
+        Object.assign(s.tutorials, { enter: true, upgrades: true });
+        s.tower.tiersOpen = 2;
+        const now = Date.parse("2026-10-05T12:00:00Z");
+        s.missions.list = [
+          { id: 1, type: "bosses", progress: 3, material: "silk" },
+          { id: 2, type: "floors", progress: 4, material: "amber" },
+          { id: 3, type: "basic", progress: 31, material: "rivets" },
+          { id: 4, type: "potions", progress: 0, material: "whetstone" },
+        ];
+        s.missions.nextId = 5;
+        s.missions.period = Math.floor(now / (8 * 3_600_000));
+        s.missions.week = { id: Math.floor((Math.floor(now / 86_400_000) + 3) / 7), completed: 12, claimed: [0] };
+      }),
     };
   });
 
@@ -710,6 +728,25 @@ try {
   await shot("mail.removed");
   await click('[data-mail-hide="notice"]');
   await shot("mail.forestAfter");
+
+  // Missions: the forest's button (3/8, with its dot); the screen, the
+  // weekly bar with the 10's box glowing; a mission claimed, its reward
+  // revealed; the weekly reward claimed; and the X back to the board.
+  await load("missions");
+  await shot("missions.forest");
+  await click("#missions-button");
+  await shot("missions.page");
+  await click('[data-claim="1"]');
+  await page.locator(".reward-reveal").waitFor();
+  await shot("missions.reveal");
+  await click(".reward-reveal");
+  await shot("missions.claimed");
+  await click('[data-weekly="1"]');
+  await page.locator(".reward-reveal").waitFor();
+  await click(".reward-reveal");
+  await shot("missions.weekly");
+  await click("#missions-close");
+  await shot("missions.closed");
 
   // The Tournament: on Monday, the button's countdown and the page, which
   // shows nothing of Saturday's results once they're over; All prizes. Then the clock moves on

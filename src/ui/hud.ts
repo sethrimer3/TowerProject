@@ -23,8 +23,9 @@ import { shortCountdown } from "../tournament/schedule.ts";
 import { equipmentWaiting } from "../equipment/inventory.ts";
 import { GOLD_BOOST_FACTOR, GOLD_BOOST_MS } from "../gold-boost.ts";
 import { adsOff } from "../shop/entitlements.ts";
-import { renderRunMenu } from "./run-menu.ts";
+import { forestMenu, renderRunMenu } from "./run-menu.ts";
 import { factorText, goldBonuses, goldBonusTotal } from "../gold-bonuses.ts";
+import { MISSION_CAPACITY } from "../missions/catalog.ts";
 
 /** The stats cluster, action buttons and status line around the board. */
 
@@ -68,6 +69,9 @@ function renderPurse(game: Game) {
   purse(game, "gems", game.save.gems, "Gems, kept between runs");
   purse(game, "shards", game.save.ascensionShards, "Ascension Shards, kept between runs");
   el("shards").parentElement!.hidden = !game.run.outside;
+  // Medals show only in the forest, once held, where the purse has room.
+  purse(game, "medals", game.save.medals, "Medals, kept between runs");
+  el("medals").parentElement!.hidden = !game.run.outside || game.save.medals <= 0;
   el("shards").closest(".purse")!.classList.toggle("forest", !!game.run.outside);
   purse(game, "gold", game.save.gold, "Gold, kept between runs", goldShown.show(game.save.gold, now, instant));
   if (game.run.outside) {
@@ -104,6 +108,8 @@ export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay)
   renderModeActions(game);
   text("gems-held", devAmount(game, game.save.gems));
   text("shards-held", devAmount(game, game.save.ascensionShards));
+  text("medals-held", devAmount(game, game.save.medals));
+  el("medals-held").parentElement!.hidden = game.save.medals <= 0 && !game.save.settings.devMode;
   text("gold-held", devAmount(game, game.save.gold));
   renderSilverHeld(game);
   text("courage", devAmount(game, game.save.delve.courage));
@@ -125,6 +131,7 @@ export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay)
   renderRunMenu(game);
   renderTournamentButton(game);
   renderMailButton(game);
+  renderMissionsButton(game);
   el("run-shop").hidden = !!game.run.outside;
   el("run-research").classList.toggle("notify", !game.run.outside && researchWaiting(game));
   renderAdButton(game);
@@ -152,9 +159,11 @@ export const renderShopDot = (game: Game) => {
   const waiting = shopWaiting(game);
   document.querySelector(`[data-tab="shop"]`)?.classList.toggle("notify", waiting);
   el("run-shop").classList.toggle("notify", waiting);
-  // Inside a run Research and the Tournament are folded away in the menu, so
-  // the hamburger wears their dots too.
-  el("run-menu-toggle").classList.toggle("notify", !game.run.outside && (researchWaiting(game) || tournamentWaiting(game)));
+  // Inside a run Research, the Tournament and Missions are folded away in
+  // the menu, and in a crowded forest Mail, so the hamburger wears their dots too.
+  el("run-menu-toggle").classList.toggle("notify", game.run.outside
+    ? forestMenu(game) && game.mail.unread
+    : researchWaiting(game) || tournamentWaiting(game) || game.missions.waiting);
 };
 /** Whether the Tournament button wears its dot: a final prize waits to be
  * claimed. */
@@ -184,6 +193,21 @@ export function renderMailButton(game: Game) {
   const button = el("mail-button"), mail = game.mail;
   button.hidden = !game.run.outside || mail.recent.length === 0;
   button.classList.toggle("notify", !button.hidden && mail.unread);
+}
+/** The Missions button: a check mark over the missions open out of 8
+ * (`3/8`), with a dot while a mission or weekly reward waits to be
+ * claimed. In the forest's actions column under Settings (and Mail);
+ * inside a run, in the run's menu. Refreshed every second too (main's
+ * tick), so new missions show as they come. */
+export function renderMissionsButton(game: Game) {
+  const button = el("missions-button"), missions = game.missions, inside = !game.run.outside;
+  const home = inside ? el("run-menu-items") : el("run-menu").parentElement!, before = inside ? el("end-run") : el("auto");
+  if (button.parentElement !== home || button.nextElementSibling !== before) home.insertBefore(button, before);
+  text("missions-count", `${missions.open}/${MISSION_CAPACITY}`);
+  button.classList.toggle("notify", missions.waiting);
+  const label = `Missions: ${missions.open} of ${MISSION_CAPACITY} open${missions.waiting ? "; rewards to claim" : ""}`;
+  button.title = label;
+  button.setAttribute("aria-label", label);
 }
 /** Whether the Upgrades button shows its dot: the first Inspiration has
  * been earned (so the run that paid it has ended by the time the tabs show)

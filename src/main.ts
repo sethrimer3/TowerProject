@@ -16,7 +16,7 @@ import { isBoard, type AppContext, type Tab } from "./ui/app.ts";
 import { el, ticketIcon } from "./ui/dom.ts";
 import { buildShell } from "./ui/shell.ts";
 import { BoardOverlay } from "./ui/board-overlay.ts";
-import { boardHeadingStale, flashRed, renderAdButton, renderMailButton, renderShopDot, renderTournamentButton, renderBoardHeading, renderHud, renderVitals, purseFrame, gearWaiting, upgradesWaiting, dismissResearch } from "./ui/hud.ts";
+import { boardHeadingStale, flashRed, renderAdButton, renderMailButton, renderMissionsButton, renderShopDot, renderTournamentButton, renderBoardHeading, renderHud, renderVitals, purseFrame, gearWaiting, upgradesWaiting, dismissResearch } from "./ui/hud.ts";
 import { ResearchPage } from "./ui/research-page.ts";
 import { confirmAction, RunEndDialog } from "./ui/dialogs.ts";
 import { closeRunMenu, toggleRunMenu } from "./ui/run-menu.ts";
@@ -41,6 +41,7 @@ import { toggleGoldBonusBox } from "./ui/gold-bonus-box.ts";
 import { MailClient } from "./mail/client.ts";
 import { postStubMail, stubMail } from "./mail/server.ts";
 import { MailDialog } from "./ui/mail-dialog.ts";
+import { MissionsPage } from "./ui/missions-page.ts";
 
 // Wires the pages together: builds the shell, creates the game and renderer,
 // and routes navigation, HUD refreshes and input between the ui/ modules.
@@ -84,6 +85,7 @@ const gear = new GearPage(ctx);
 const deck = new DeckPage(ctx);
 const shop = new ShopPage(ctx);
 const goals = new GoalsPage(ctx);
+const missions = new MissionsPage(ctx);
 // A run training purchase changes the hero, so the highlighted enemy's forecast too.
 const runTraining = new RunTrainingBar(game, () => {
   overlay.refresh(true);
@@ -142,6 +144,7 @@ function renderPage() {
   if (tab === "shop") shop.render();
   if (tab === "goals") goals.render();
   if (tab === "tournament") tournamentPage.render();
+  if (tab === "missions") missions.render();
 }
 /** Locked tabs point at the upgrade that unlocks them instead. */
 function unlockTarget(id: string): string {
@@ -178,6 +181,8 @@ function navigate(requested: string) {
   if (id === "shop" && from !== "shop") shop.open(from);
   // So does the Tournament page's.
   if (id === "tournament" && from !== "tournament") tournamentPage.open(from);
+  // And the Missions screen's X.
+  if (id === "missions" && from !== "missions") missions.open(from);
   // A newly opened Equipment screen greets the first visit to the Gear page.
   if (id === "gear" && from !== "gear" && equipmentWaiting(game.save)) gear.openEquipment();
   renderer.weather.silence();
@@ -297,8 +302,16 @@ el("tournament-button").onclick = () => {
   closeRunMenu();
   navigate("tournament");
 };
+// The Missions button, in the forest's actions column and the run's menu.
+el("missions-button").onclick = () => {
+  closeRunMenu();
+  navigate("missions");
+};
 // The Mail button, under Settings in the forest: the list of recent mail.
-el("mail-button").onclick = () => mailDialog.show();
+el("mail-button").onclick = () => {
+  closeRunMenu();
+  mailDialog.show();
+};
 // Inside a run, Research opens Training and the Archives with the run paused.
 el("run-research").onclick = () => {
   closeRunMenu();
@@ -353,7 +366,9 @@ bindInput(
 /** Research completes on the wall clock, whatever page shows. */
 function archivesTick() {
   const researched = game.research.settle().length > 0, trained = game.training.settle() > 0;
-  const done = researched || trained;
+  // New missions come every 8 hours on the clock.
+  const given = game.missions.refresh();
+  const done = researched || trained || given;
   // Saved before anything is drawn, so what completed is kept even if the
   // page fails to show it.
   if (done) save();
@@ -364,6 +379,7 @@ function archivesTick() {
     renderShopDot(game);
     renderTournamentButton(game);
     renderMailButton(game);
+    renderMissionsButton(game);
   }
   tournament.tick();
   // A tournament opening (or ending, or the Tournament unlocked) asks the
@@ -382,6 +398,7 @@ function archivesTick() {
   if (inForest && (!wasInForest || game.clock() - mailAskedAt >= MailClient.POLL_MS)) void refreshMail();
   wasInForest = inForest;
   if (tab === "tournament") tournamentPage.rerender();
+  if (tab === "missions") missions.rerender();
   if (tab === "research") research.archivesTick(done);
   if (tab === "shop") shop.tick();
 }
@@ -452,6 +469,7 @@ installDebugHooks(
 el("stats").toggleAttribute("hidden", false);
 el("currencies").toggleAttribute("hidden", true);
 renderBoardHeading(game, overlay);
+game.missions.refresh();
 update();
 loop.start();
 // The live tournament: its free Ticket, and any score still to send.

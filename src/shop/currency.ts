@@ -5,7 +5,7 @@ import type { Save } from "../entities.ts";
 // own system (Gems in gems.ts, Gold banked by Game); this table only reads,
 // spends and credits them, so an offer never knows where a currency lives.
 
-export type CurrencyId = "gems" | "shards" | "gold";
+export type CurrencyId = "gems" | "shards" | "gold" | "medals";
 export type Currency = {
   name: string;
   /** What the currency is, for its information panel. */
@@ -36,5 +36,12 @@ export const CURRENCIES: Record<CurrencyId, Currency> = {
     balance: (save) => save.gold,
     spend: (save, n) => void (save.gold = snap(save.gold - n)),
     credit: (save, n) => void (save.gold = snap(save.gold + n)),
+  },
+  medals: {
+    name: "Medals",
+    info: "A limited currency, kept between runs. Earned from the weekly mission rewards.",
+    balance: (save) => save.medals,
+    spend: (save, n) => void (save.medals -= n),
+    credit: (save, n) => void (save.medals += n),
   },
 };

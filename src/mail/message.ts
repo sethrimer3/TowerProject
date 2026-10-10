@@ -46,7 +46,7 @@ export function kept(m: MailMessage, now: number) {
 /** Whether every item in `m` is of a kind this client can grant. */
 export const known = (m: MailMessage) => m.items.every((i) => i.kind !== "unknown");
 
-const CURRENCY_IDS: readonly CurrencyId[] = ["gems", "shards", "gold"];
+const CURRENCY_IDS: readonly CurrencyId[] = ["gems", "shards", "gold", "medals"];
 /** The longest subject and body kept, so a message can't swell the save. */
 const SUBJECT_MAX = 200, BODY_MAX = 4000, ITEMS_MAX = 20, ID_MAX = 100;
 
