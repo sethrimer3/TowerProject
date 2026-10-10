@@ -1,4 +1,4 @@
-import { predict, type CritRule } from "./combat.ts";
+import { netDamage, predict, type CritRule } from "./combat.ts";
 import { forecast } from "./crit-forecast.ts";
 import type { Enemy, Player } from "./entities.ts";
 import { forEachViewTile, type FrameContext } from "./render-frame.ts";
@@ -14,8 +14,9 @@ import { compactAmount, wholeChange } from "./whole.ts";
 // key (with one, it costs a key, not HP): red when it would fell the hero,
 // so it stays shut.
 
-/** What a fight against one enemy would cost: `predict`'s damage (Infinity
- * when the hero can't hurt it) and the hero's strikes it takes (1: an
+/** What a fight against one enemy would cost: `predict`'s damage net of
+ * Lifesteal's heals (below 0 when it heals on balance; Infinity when the
+ * hero can't hurt it) and the hero's strikes it takes (1: an
  * Instakill, the enemy never striking back). */
 type Cost = { damage: number; turns: number };
 
@@ -43,7 +44,7 @@ export class DamagePredictions {
       // With critical strikes the label shows the damage to expect, and only
       // an Instakill that is certain is gray.
       const f = crit && !r.impervious ? forecast(player, enemy, crit) : null;
-      cost = f ? { damage: f.worst.impervious ? Infinity : f.expected, turns: f.worst.turns } : { damage: r.impervious ? Infinity : r.damage, turns: r.turns };
+      cost = f ? { damage: f.worst.impervious ? Infinity : f.expected, turns: f.worst.turns } : { damage: r.impervious ? Infinity : netDamage(player, r), turns: r.turns };
       this.costs.set(key, cost);
     }
     return cost;
@@ -70,15 +71,21 @@ export function relativeColor(share: number) {
 }
 const hex = (rgb: readonly number[]) => `#${rgb.map((v) => Math.round(v).toString(16).padStart(2, "0")).join("")}`;
 
+/** The blue of HP the hero gains, kept for healing alone: the damage
+ * colours never use it. */
+export const HEAL_COLOR = "#4da6ff";
+
 /** A label's text and colour: red when the fight is lethal (∞ when the
- * hero can't hurt the enemy), a gray 0 for an Instakill; otherwise, with
- * Relative Damage Color, its share of `hp` on the spectrum, else a white 0
- * when the enemy strikes but costs no HP and gold for any more. */
+ * hero can't hurt the enemy), a blue +N when Lifesteal heals the hero more
+ * than the fight hurts, a gray 0 for an Instakill and a white 0 when the
+ * enemy strikes but costs no HP; otherwise, with Relative Damage Color, its
+ * share of `hp` on the spectrum, else gold. */
 export function damageLabel(cost: Cost, hp: number, relative = false) {
   if (!Number.isFinite(cost.damage)) return { text: "∞", color: "#ff5a5a" };
   const shown = wholeChange(cost.damage);
+  if (shown < 0) return { text: `+${compactAmount(-shown)}`, color: HEAL_COLOR };
   const color = hp <= cost.damage ? "#ff5a5a" : cost.turns === 1 ? "#9aa3b2"
-    : relative ? relativeColor(cost.damage / hp) : shown === 0 ? "#ffffff" : "#ffe08a";
+    : shown === 0 ? "#ffffff" : relative ? relativeColor(cost.damage / hp) : "#ffe08a";
   return { text: compactAmount(shown), color };
 }
 

@@ -1,4 +1,4 @@
-import { atWorst, critMultiplier, guaranteedCrits, predict, raisedAttack, type CombatPrediction, type CritRule } from "./combat.ts";
+import { atWorst, critMultiplier, guaranteedCrits, netDamage, predict, raisedAttack, type CombatPrediction, type CritRule } from "./combat.ts";
 import { snap } from "./exact.ts";
 import type { Enemy, Player } from "./entities.ts";
 
@@ -11,7 +11,8 @@ import type { Enemy, Player } from "./entities.ts";
 export type CritForecast = {
   worst: CombatPrediction;
   best: CombatPrediction;
-  /** The mean damage taken, a fight that fells the hero counting the HP it had. */
+  /** The mean damage taken, a fight that fells the hero counting the HP it had;
+   * below 0 when Lifesteal heals the hero more than the fight hurts it. */
   expected: number;
   /** The damage the hero takes in 10% of fights at most, and in 90% of fights at most. */
   p10: number;
@@ -34,11 +35,15 @@ export function forecast(player: Player, enemy: Enemy, crit: CritRule): CritFore
   const worst = predict(atWorst(player, crit), enemy);
   const topMultiplier = critMultiplier(crit.factor, k + (extra > 0 ? 1 : 0));
   const best = predict({ ...player, attack: snap(player.attack * topMultiplier) }, enemy);
-  if (worst.impervious || worst.turns === best.turns) return { worst, best, expected: worst.damage, p10: worst.damage, p90: worst.damage, turns: worst.turns, survive: worst.survivable ? 1 : 0, instakill: worst.turns === 1 ? 1 : 0 };
+  if (worst.impervious || worst.turns === best.turns) {
+    const net = worst.impervious ? worst.damage : netDamage(player, worst);
+    return { worst, best, expected: net, p10: net, p90: net, turns: worst.turns, survive: worst.survivable ? 1 : 0, instakill: worst.turns === 1 ? 1 : 0 };
+  }
   const low = worst.hit, step = snap(best.hit - worst.hit);
   const odds = turnOdds(enemy.hp, low, step, extra, worst.turns, best.turns);
   const cost = damageByTurns(player, enemy, worst.turns);
-  const capped = (t: number) => Math.min(player.hp, cost(t));
+  // A fight costs at most the HP the hero has, and heals at most up to max HP.
+  const capped = (t: number) => Math.max(snap(player.hp - player.maxHp), Math.min(player.hp, cost(t)));
   let expected = 0, turns = 0, survive = 0, instakill = 0, p10: number | null = null, p90: number | null = null, sum = 0;
   for (const [t, chance] of odds) {
     expected += chance * capped(t);
@@ -58,7 +63,8 @@ function damageByTurns(player: Player, enemy: Enemy, most: number) {
   const taken: number[] = [0], shroud = player.shroud ?? 0, fatal = player.hp + shroud;
   // Lifesteal: a fight of t strikes deals the enemy's whole HP, so restores
   // that share of it, taken as t equal parts as the strikes land (the cap at
-  // max HP is left out).
+  // max HP is left out here, and taken by the caller), so a fight may heal on
+  // balance: its damage below 0.
   const healed = player.lifesteal ? snap((enemy.hp * player.lifesteal) / 100) : 0;
   let attack = enemy.attack, sum = 0;
   for (let t = 1; t <= most; t++) {
@@ -67,7 +73,7 @@ function damageByTurns(player: Player, enemy: Enemy, most: number) {
       attack = raisedAttack(attack);
     }
     const felled = healed ? snap(sum - shroud - (healed * (t - 1)) / t) >= player.hp : sum >= fatal;
-    taken.push(felled ? Infinity : snap(Math.max(0, sum - shroud - healed)));
+    taken.push(felled ? Infinity : healed ? snap(Math.max(0, sum - shroud) - healed) : snap(Math.max(0, sum - shroud)));
     if (healed ? sum >= fatal + healed : sum >= fatal) break;
   }
   return (t: number) => taken[Math.min(t, taken.length - 1)]!;

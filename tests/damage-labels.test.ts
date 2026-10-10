@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { DamagePredictions, damageLabel, drawDamageLabels, relativeColor } from "../src/damage-labels.ts";
+import { DamagePredictions, damageLabel, drawDamageLabels, HEAL_COLOR, relativeColor } from "../src/damage-labels.ts";
 import { predict } from "../src/combat.ts";
 import { forecast } from "../src/crit-forecast.ts";
 import type { Enemy, Player, Tile } from "../src/entities.ts";
@@ -59,11 +59,26 @@ test("with Relative Damage Color, a label slides from green below 1% of the hero
   assert.deepEqual([0, 0.005, 0.01, 0.1, 0.25, 0.5, 0.9].map(relativeColor), ["#4dff6a", "#4dff6a", "#4dff6a", "#ffe14d", "#ff9a3d", "#ff5a5a", "#ff5a5a"]);
   assert.equal(relativeColor(0.055), "#a6f05c", "halfway from green to yellow");
   const label = (damage: number, hp: number, turns = 3) => damageLabel({ damage, turns }, hp, true).color;
-  assert.deepEqual([label(0, 100), label(10, 100), label(25, 1000), label(60, 100)], ["#4dff6a", "#ffe14d", relativeColor(0.025), "#ff5a5a"]);
+  assert.deepEqual([label(0.4, 100), label(10, 100), label(25, 1000), label(60, 100)], ["#ffffff", "#ffe14d", relativeColor(0.025), "#ff5a5a"], "a fight costing no HP as shown stays a white 0");
+  assert.equal(label(1, 100), "#4dff6a");
   assert.deepEqual([label(50, 200), label(50, 100)], ["#ff9a3d", "#ff5a5a"], "the same fight is redder the less HP is left");
   assert.equal(label(0, 100, 1), "#9aa3b2", "an Instakill stays gray");
   assert.equal(label(100, 100), "#ff5a5a", "a lethal fight stays red");
   assert.equal(damageLabel({ damage: 10, turns: 3 }, 100).color, "#ffe08a", "gold without it");
+});
+
+test("a fight Lifesteal heals the hero by on balance wears a blue +N, with or without Relative Damage Color", () => {
+  assert.deepEqual(damageLabel({ damage: -12, turns: 3 }, 100), { text: "+12", color: HEAL_COLOR });
+  assert.deepEqual(damageLabel({ damage: -12, turns: 1 }, 100, true), { text: "+12", color: HEAL_COLOR }, "an Instakill that heals too");
+  assert.deepEqual(damageLabel({ damage: -0.4, turns: 3 }, 100, true), { text: "0", color: "#ffffff" }, "a heal that rounds to none is a white 0");
+  // From a real fight: three strikes of 10 heal 50% each, 15 in all, against 2 struck once.
+  const hurt = hero({ hp: 50, attack: 10, lifesteal: 50 }), slime = enemy(30, 4, 0);
+  const cost = new DamagePredictions().cost(hurt, slime);
+  assert.equal(cost.damage, 50 - predict(hurt, slime).hpAfter!);
+  assert.ok(cost.damage < 0);
+  assert.deepEqual(damageLabel(cost, hurt.hp, true), { text: `+${-cost.damage}`, color: HEAL_COLOR });
+  const crit = new DamagePredictions().cost(hurt, slime, { chance: 50, factor: 2 });
+  assert.ok(crit.damage < 0, "the expected damage with crits heals too");
 });
 
 test("each enemy in view is labelled at its lower-left corner, but not the one being fought", () => {

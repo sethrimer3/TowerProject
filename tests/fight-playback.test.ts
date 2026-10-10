@@ -5,6 +5,7 @@ import { defaults } from "../src/save.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import { bout, heroHpDuring, predict, raisedAttack, REVIVE_MS, summarize } from "../src/combat.ts";
 import { BoardPopups, enemyBar, lunges } from "../src/board-popups.ts";
+import { HEAL_COLOR } from "../src/damage-labels.ts";
 import type { Enemy, Player, Tile } from "../src/entities.ts";
 
 /** The damage and heal numbers rising off the board. */
@@ -205,12 +206,12 @@ test("a potion records the HP it healed from and to, for the HP bar to fill up",
   assert.equal(full.lastHeal, null, "a potion at full HP heals nothing to show");
 });
 
-test("each heal raises its HP healed in green over the hero, once", () => {
+test("each heal raises its HP healed in blue over the hero, once", () => {
   const popups = new BoardPopups();
   const game = { run: { seed: 1 }, gains: [], fight: null, lastHeal: { from: 40, to: 75, x: 3, y: 2, id: 1 } };
   popups.update(game, 1000);
   popups.update(game, 1100);
-  assert.deepEqual(numbers(popups).map((n) => [n.x, n.text, n.color]), [[3, "+35", "#5fdc6a"]]);
+  assert.deepEqual(numbers(popups).map((n) => [n.x, n.text, n.color]), [[3, "+35", HEAL_COLOR]]);
   popups.update(game, 2000);
   assert.ok(popups.idle(2000));
 });

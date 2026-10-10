@@ -83,6 +83,10 @@ export function predict(player: Player, enemy: Enemy): CombatPrediction {
   };
 }
 
+/** The HP a predicted fight costs `player`, net of Lifesteal's heals:
+ * below 0 when the fight heals the hero more than it hurts. */
+export const netDamage = (player: Player, r: CombatPrediction) => (r.hpAfter !== undefined ? snap(player.hp - r.hpAfter) : r.damage);
+
 /** What each strike's damage restores of the hero's HP (Lifesteal), the
  * share of it in percent. */
 const lifestealHeal = (player: Player, dealt: number) => snap((dealt * (player.lifesteal ?? 0)) / 100);

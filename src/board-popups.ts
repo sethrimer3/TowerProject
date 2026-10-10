@@ -1,4 +1,5 @@
 import { wholeChange } from "./whole.ts";
+import { HEAL_COLOR } from "./damage-labels.ts";
 import type { Coin, Encounter, Gain, GainArt, Heal, ShownFight } from "./state.ts";
 import { paintContents } from "./tile-painters.ts";
 import { materialImage } from "./material-sprites.ts";
@@ -15,13 +16,15 @@ const DAMAGE_RISE = 0.9;
 const DAMAGE_START = 0.35;
 /** Rewards without a sprite are written in the feedback text's gold. */
 const REWARD_COLOR = "#f3d69a";
-/** Damage the hero deals, the darker damage it takes, and HP it heals. */
+/** Damage the hero deals and the darker damage it takes; HP it heals rises
+ * in the labels' blue, `HEAL_COLOR`. */
 const DAMAGE_COLOR = "#ff4040";
 const HERO_DAMAGE_COLOR = "#b3121f";
 /** A critical strike's number: a little brighter, in a glow. */
 const CRIT_COLOR = "#ff7a6a";
 const CRIT_GLOW = "#ffb04a";
-const HEAL_COLOR = "#5fdc6a";
+/** The check on a Heart Door's heart. */
+const CHECK_COLOR = "#5fdc6a";
 /** Damage the shroud blocked, and how far apart it and the damage that got
  * through rise when a strike has both, in tiles. */
 const SHROUD_COLOR = "#c9d3e0";
@@ -155,7 +158,7 @@ export class BoardPopups {
       if (!hiddenInSummary(fight, s)) this.raise(s, struckAt(fight, s, won), fight.start + s.at);
     }
   }
-  /** The HP Lifesteal restored, in green over the hero (nothing when it
+  /** The HP Lifesteal restored, as a blue +N over the hero (nothing when it
    * rounds to none). */
   private heal(amount: number, on: { x: number; y: number }, start: number) {
     const shown = wholeChange(amount);
@@ -163,7 +166,7 @@ export class BoardPopups {
   }
   /** A strike's numbers over `on` from `start`: the damage that got
    * through, and what the shroud blocked in silver beside it. A round the
-   * hero came out ahead of raises only its green gain. */
+   * hero came out ahead of raises only its blue gain. */
   private raise(s: Strike, on: { x: number; y: number }, start: number) {
     if (s.by === "enemy" && s.healed && !s.damage && !s.shrouded) return;
     const both = !!s.shrouded && s.damage > 0, y = on.y + DAMAGE_START;
@@ -383,7 +386,7 @@ function check(c: CanvasRenderingContext2D, x: number, y: number) {
   c.strokeStyle = "#000";
   c.lineWidth = 4;
   c.stroke();
-  c.strokeStyle = HEAL_COLOR;
+  c.strokeStyle = CHECK_COLOR;
   c.lineWidth = 2;
   c.stroke();
 }

@@ -3,7 +3,7 @@ import type { Enemy, Kind, Player, Tile } from "../entities.ts";
 import { enemyTitle } from "../scaling.ts";
 import type { Game, RouteEffects } from "../state.ts";
 import { resolveStep, shardGain } from "../step-effects.ts";
-import { attackForFewerHits, predict, type CombatPrediction } from "../combat.ts";
+import { attackForFewerHits, netDamage, predict, type CombatPrediction } from "../combat.ts";
 import { forecast as critForecast, type CritForecast } from "../crit-forecast.ts";
 import { goalUnlocked } from "../goals.ts";
 import { chestReward, CLEARED_INSPIRATION } from "../tower/area-ledger.ts";
@@ -37,15 +37,27 @@ const stairs: Describe = (t, _p, g) => {
   return { title: t.kind === "stairs" ? "Stairs Up" : "Stairs Down", body: `Leads to Floor ${target}` };
 };
 
+/** A fight's net cost as words: "N damage", or "N Healing" when Lifesteal
+ * heals the hero more than the fight hurts it. */
+const cost = (net: number | string) => (typeof net === "number" && net < 0 ? `${-net} Healing` : `${net} damage`);
+
 /** Damage Prediction's line, once unlocked: what the fight costs and
  * whether the hero survives it; a fight one strike wins (the hero strikes
  * first) is an Instakill, and one that costs no HP (as shown) Harmless. */
-function prediction(r: CombatPrediction, g: Board, c: CritForecast | null) {
+function prediction(r: CombatPrediction, p: Player, g: Board, c: CritForecast | null) {
   if (!goalUnlocked(g.save, "damagePrediction")) return "";
   if (c) return critPrediction(c);
-  const damage = Number.isFinite(r.damage) ? wholeChange(r.damage) : "∞";
+  const damage = Number.isFinite(r.damage) ? wholeChange(netDamage(p, r)) : "∞";
   const verdict = r.turns === 1 ? "Instakill" : !r.survivable ? "LETHAL" : damage === 0 ? "Harmless" : "Survivable";
-  return `<br><strong class="${r.survivable ? "safe" : "danger"}">${damage} damage · ${verdict}</strong>`;
+  return `<br><strong class="${r.survivable ? "safe" : "danger"}">${cost(damage)} · ${verdict}</strong>`;
+}
+
+/** The range a fight's net cost lands in nine fights of ten, from `low` to
+ * `high` (below 0 healing). */
+function costRange(low: number, high: number) {
+  if (high <= 0) return `${-high}–${-low} Healing`;
+  if (low >= 0) return `${low}–${high} damage`;
+  return `${-low} Healing to ${high} damage`;
 }
 
 /** The prediction line for a hero with critical strikes: the damage to
@@ -55,15 +67,15 @@ function prediction(r: CombatPrediction, g: Board, c: CritForecast | null) {
  * the damage lands in nine fights of ten. */
 function critPrediction(c: CritForecast) {
   const percent = (n: number) => `${Math.min(99, Math.max(1, Math.round(n * 100)))}%`;
-  const expected = wholeChange(c.expected), range = `${wholeChange(c.p10)}–${wholeChange(c.p90)}`;
+  const expected = wholeChange(c.expected), range = costRange(wholeChange(c.p10), wholeChange(c.p90));
   let verdict: string;
   if (c.worst.turns === 1) verdict = "Instakill";
   else if (!c.worst.survivable && !c.best.survivable) verdict = "LETHAL";
   else if (!c.worst.survivable) verdict = `Risky · ${percent(c.survive)} to survive`;
   else verdict = expected === 0 && c.p90 === 0 ? "Harmless" : "Survivable";
   const chance = c.worst.turns > 1 && c.instakill > 0 ? ` · ${percent(c.instakill)} Instakill` : "";
-  const spread = c.p10 === c.p90 ? "" : `<br><small>Usually ${range} damage</small>`;
-  return `<br><strong class="${c.worst.survivable ? "safe" : c.best.survivable ? "risky" : "danger"}">~${expected} damage · ${verdict}${chance}</strong>${spread}`;
+  const spread = c.p10 === c.p90 ? "" : `<br><small>Usually ${range}</small>`;
+  return `<br><strong class="${c.worst.survivable ? "safe" : c.best.survivable ? "risky" : "danger"}">~${cost(expected)} · ${verdict}${chance}</strong>${spread}`;
 }
 
 const hits = (n: number) => (n === 1 ? "Instakill" : `${n.toLocaleString("en-US")} hits to defeat`);
@@ -87,7 +99,7 @@ const DESCRIBE: Partial<Record<Kind, Describe>> = {
     const e = t.enemy!, r = predict(p, e), crit = g.stepRules.crit, c = crit && !r.impervious ? critForecast(p, e, crit) : null;
     return {
       title: enemyTitle(e),
-      body: `<span>HP ${enemyStat(e.hp)} · ATK ${enemyStat(e.attack)} · DEF ${enemyStat(e.defense)}</span>` + prediction(r, g, c) + forecast(p, e, r.impervious ? 0 : r.turns, g, !!c),
+      body: `<span>HP ${enemyStat(e.hp)} · ATK ${enemyStat(e.attack)} · DEF ${enemyStat(e.defense)}</span>` + prediction(r, p, g, c) + forecast(p, e, r.impervious ? 0 : r.turns, g, !!c),
     };
   },
   wall: () => ({ title: "Wall", body: "Ancient stone. Find a passage around it." }),

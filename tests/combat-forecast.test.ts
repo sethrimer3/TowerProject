@@ -7,6 +7,7 @@ import { tileInfo } from "../src/ui/tile-info.ts";
 import type { Enemy, Player } from "../src/entities.ts";
 import { enemyTitle } from "../src/scaling.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
+import { wholeChange } from "../src/whole.ts";
 
 const hero = (attack: number): Player => ({ x: 0, y: 0, hp: 100, maxHp: 100, attack, defense: 0, keys: { yellow: 0, blue: 0, red: 0 } });
 const foe = (hp: number, defense: number): Enemy => ({ name: "Slime", hp, attack: 5, defense, tier: 0, strength: "normal" });
@@ -51,6 +52,20 @@ test("the enemy panel adds Damage Prediction, Combat Forecast's hits and Attack 
   g.save.goals.claimed["1"] = [30];
   assert.match(body(1), /\+3 ATK: 4 hits/);
   assert.doesNotMatch(body(2), /ATK:/, "nothing fewer than one hit");
+});
+
+test("a fight Lifesteal heals the hero by on balance says Healing in the enemy panel", () => {
+  const g = new Game(defaults());
+  const w = g.world as RoomWorld;
+  // Five strikes of 10 heal 50 in all; the slime strikes back 5, 6, 7 and 8.
+  w.cells = new Map([["1,0", { kind: "enemy", enemy: foe(50, 0) }]]);
+  Object.assign(g.run.player, { attack: 10, defense: 0, hp: 50, lifesteal: 100 });
+  g.save.goals.claimed["1"] = [10];
+  const r = predict(g.run.player, foe(50, 0));
+  assert.match(tileInfo(g, 1, 0).body, new RegExp(`${wholeChange(r.hpAfter! - 50)} Healing · Survivable`));
+  const crits = { world: g.world, run: g.run, mode: g.mode, save: g.save, stepRules: { ...g.stepRules, crit: { chance: 50, factor: 2 } } };
+  assert.match(tileInfo(crits, 1, 0).body, /~\d+ Healing · Survivable/);
+  assert.match(tileInfo(crits, 1, 0).body, /Usually \d+–\d+ Healing/);
 });
 
 test("an enemy's title puts its strength before its name, unless it is a normal one", () => {
