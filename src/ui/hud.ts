@@ -16,6 +16,7 @@ import { goalsWaiting } from "../goals.ts";
 import { shrinesOpen } from "../shrines.ts";
 import type { BoardOverlay } from "./board-overlay.ts";
 import { CountUp } from "./count-up.ts";
+import { RateTally } from "./purse-rate.ts";
 import { estimatedServerTime } from "../shop/clock.ts";
 import { OFFERS } from "../shop/offers.ts";
 import { refusal } from "../shop/transactions.ts";
@@ -62,6 +63,41 @@ function purse(game: Game, id: string, held: number, name: string, shown = held)
 /** Gold and Silver count up to each rise. */
 const goldShown = new CountUp(), silverShown = new CountUp();
 
+/** Gold and Silver found a minute, over the last minute of real time,
+ * which a tap on either shows in their place inside a run. `run` is the
+ * run they were sampled in, so a new one starts them over. */
+const rates = { gold: new RateTally(), silver: new RateTally(), run: "", shown: false };
+
+/** Switches the purse's Gold and Silver between the amounts held and the
+ * rates they are found at (inside a run only). */
+export function togglePurseRates(game: Game) {
+  if (game.run.outside) return;
+  rates.shown = !rates.shown;
+  renderPurse(game);
+}
+
+/** Samples the run's Gold found (`runGold`) and Silver found (held and
+ * spent) every `RATE_SAMPLE_MS`; true when it took a sample. */
+function sampleRates(game: Game, now: number) {
+  if (game.run.outside) return false;
+  const run = `${game.mode}:${game.run.seed}`;
+  if (run !== rates.run) {
+    rates.run = run;
+    rates.gold.reset();
+    rates.silver.reset();
+  }
+  const gold = rates.gold.sample(game.save[game.mode].runGold, now);
+  return rates.silver.sample(game.silver + game.silverSpent, now) || gold;
+}
+
+/** Shows the rate `perMinute` in the purse's `id`, a dash before it is
+ * known, with a small /min after it. */
+function purseRate(game: Game, id: string, perMinute: number | null, name: string) {
+  const dev = game.save.settings.devMode, rate = perMinute === null ? null : whole(perMinute);
+  el(id).innerHTML = `${dev ? "∞" : rate === null ? "—" : shortAmount(rate)}<small class="per-minute">/min</small>`;
+  el(id).parentElement!.title = `${name} found a minute, over the last minute: ${dev ? "∞" : rate === null ? "—" : rate.toLocaleString("en-US")} (tap for ${name} held)`;
+}
+
 /** The purse: Gems, Ascension Shards in the forest, then Gold and, inside a
  * run, the run's Silver, counting up to what they rose to. In the forest
  * Silver shows what the next run starts with, once that is any. */
@@ -75,7 +111,14 @@ function renderPurse(game: Game) {
   el("medals").parentElement!.hidden = !game.run.outside || game.save.medals <= 0;
   el("shards").closest(".purse")!.classList.toggle("forest", !!game.run.outside);
   purse(game, "gold", game.save.gold, "Gold, kept between runs", goldShown.show(game.save.gold, now, instant));
-  if (game.run.outside) {
+  const showRates = rates.shown && !game.run.outside;
+  el("gold").closest(".purse")!.classList.toggle("rates", showRates);
+  if (showRates) {
+    silverShown.show(game.silver, now, instant);
+    el("run-silver").parentElement!.hidden = false;
+    purseRate(game, "gold", rates.gold.perMinute, "Gold");
+    purseRate(game, "run-silver", rates.silver.perMinute, "Silver");
+  } else if (game.run.outside) {
     const start = game.startingSilver;
     purse(game, "run-silver", start, "Silver each run starts with");
     el("run-silver").parentElement!.hidden = start <= 0;
@@ -95,9 +138,11 @@ function renderSilverHeld(game: Game) {
   text("silver-held", currencyAmount(whole(silver)));
 }
 
-/** Each display frame: moves on the Gold and Silver still counting up. */
+/** Each display frame: moves on the Gold and Silver still counting up, and
+ * samples their rates, showing each new one while they are shown. */
 export function purseFrame(game: Game, now: number) {
-  if (goldShown.counting(now) || silverShown.counting(now)) renderPurse(game);
+  const sampled = sampleRates(game, now);
+  if ((sampled && rates.shown) || goldShown.counting(now) || silverShown.counting(now)) renderPurse(game);
 }
 
 /** Refreshes every HUD readout from game state. */
