@@ -250,6 +250,18 @@ _Avoid_: consumable, buff
 
 ### Progress
 
+**Shrine**:
+What grants a Tower run its boons, once Unlock Shrines is researched: one every so many floors reached (200 for the first twenty, then 250, 300 and 350, less research and boons). Not in the Delve.
+_Avoid_: altar, perk shrine
+
+**Boon**:
+A bonus a Tower run picks at a shrine, lasting the rest of the run: a standard boon (several copies a run, strengthened by Standard Boon Bonus) or a trade-off (once a run, a benefit at a cost).
+_Avoid_: perk, blessing
+
+**Offer**:
+The boons a shrine lets the player choose one from: two, up to four with research; Auto Pick can choose instead.
+_Avoid_: choice set, draft
+
 **Equivalent floor**:
 The one scale both modes' progress maps onto: a Tower floor counts as itself, and every ten Delve depth count as one. Loot tables are gated on it, and each new equivalent floor reached pays one of the mode's currency, up to 100; past that one every 10 to 1,000, one every 100 to 10,000, and none after.
 _Avoid_: effective floor, tier

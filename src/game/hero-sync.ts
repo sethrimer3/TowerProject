@@ -2,6 +2,7 @@ import type { Mode, Player, Run, Save } from "../entities.ts";
 import { snap } from "../exact.ts";
 import { loadout, type Loadout } from "../loadout.ts";
 import { MODES } from "../modes.ts";
+import { boonFactor } from "../shrines.ts";
 
 /** The stats the loadout carries into a run's hero. */
 type HeroStats = { attack: number; defense: number; maxHp: number; shroud?: number; regen?: number; lifesteal?: number; thorns?: number; parryChance?: number; parry?: number; bossAttack?: number; pierce?: number };
@@ -61,8 +62,8 @@ export function changeLoadout(save: Save, change: () => boolean | void) {
 
 /** Shifts a run inside by what the loadout gained or lost. */
 function shiftRun(run: Run, before: Loadout, after: Loadout) {
-  shiftStats(run.player, before, after);
-  if (run.loadout) shiftStats(run.loadout, before, after);
+  shiftStats(run, run.player, before, after);
+  if (run.loadout) shiftStats(run, run.loadout, before, after);
   const p = run.player;
   // A hero lying fallen (0 HP) stays down.
   if (p.hp > 0) p.hp = Math.max(1, Math.min(p.hp, p.maxHp));
@@ -70,9 +71,11 @@ function shiftRun(run: Run, before: Loadout, after: Loadout) {
   for (const color of KEY_COLORS) p.keys[color] = Math.max(0, p.keys[color] + after.keys[color] - before.keys[color]);
 }
 
-function shiftStats(stats: HeroStats, before: Loadout, after: Loadout) {
+/** Shifts `stats` by the loadout's change, times what the run's boons
+ * multiply each stat by. */
+function shiftStats(run: Run, stats: HeroStats, before: Loadout, after: Loadout) {
   for (const stat of SHIFTED_STATS) {
-    const change = snap(after[stat] - before[stat]);
+    const change = snap((after[stat] - before[stat]) * boonFactor(run, stat));
     if (change) stats[stat] = snap((stats[stat] ?? 0) + change);
   }
 }

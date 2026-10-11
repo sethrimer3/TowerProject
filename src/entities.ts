@@ -1,6 +1,7 @@
 import type { TrainingJob, TrainingPaid } from "./training-jobs.ts";
 import type { TierRecord } from "./tiers.ts";
 import type { ArchivesSave } from "./archives.ts";
+import type { ShrineRun, ShrinesSave } from "./shrines.ts";
 import type { CardId } from "./cards.ts";
 import type { BadgesSave, RunBadge } from "./badges.ts";
 import type { GoldItemId, KeyColor, TrainingId, UpgradeId } from "./config.ts";
@@ -206,6 +207,9 @@ export type TowerRun = RunCore & {
   /** The height the run began on, when a Warp began it above the first
    * floor (absent: floor 1); Retry starts the next run there. */
   start?: number;
+  /** The run's boons (shrines.ts): absent until Shrines are researched and
+   * the first is earned. */
+  shrine?: ShrineRun;
 };
 /** A Delve descent. */
 export type DelveRun = RunCore & {
@@ -389,5 +393,7 @@ export type Save = {
   events: EventsSave;
   /** The relics owned, by id (relics.ts), each once, kept between runs. */
   relics: string[];
+  /** The Shrine Boons page's choices, kept between runs (shrines.ts). */
+  shrines: ShrinesSave;
 };
 export const point = (x: number, y: number) => `${x},${y}`;

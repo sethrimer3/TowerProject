@@ -94,7 +94,7 @@ export const MODES: { tower: ModeProfile<TowerRun>; delve: ModeProfile<DelveRun>
     width: TOWER_WIDTH,
     entranceX: TOWER_START_X,
     layoutVersion: TOWER_LAYOUT_VERSION,
-    board: (run) => new RoomWorld(run.seed, run.height, run.changes, run.percentPotions, run.tier, extraEnemies(run.badges)),
+    board: (run) => new RoomWorld(run.seed, run.height, run.changes, run.percentPotions, run.tier, extraEnemies(run.badges), (run as TowerRun).shrine?.applied?.foes),
     endGold: () => 0,
     // Tower floors reuse the same x/y space, so the floor is part of the key.
     lootKey: (run, x, y) => `${run.seed}:${run.height}:${x},${y}`,

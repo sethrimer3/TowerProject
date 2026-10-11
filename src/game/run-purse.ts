@@ -15,6 +15,7 @@ import { raised, wornEffects } from "../equipment/effects.ts";
 import { keepDrop, rollBossDrop, rollMaterials } from "../equipment/acquire.ts";
 import type { EquipItem } from "../equipment/inventory.ts";
 import { CATEGORIES, type EquipMaterialId } from "../equipment/catalog.ts";
+import { runBoons } from "../shrines.ts";
 
 /** What a kill gave toward Equipment, once it is open: upgrade materials,
  * and a boss's Standard piece (or, the inventory full, its salvage). */
@@ -55,6 +56,11 @@ export class RunPurse {
     return this.run.tier ?? 1;
   }
 
+  /** What the run's boons change (a Tower run's only), or null. */
+  private get boons() {
+    return this.mode === "tower" ? runBoons(this.run, this.save) : null;
+  }
+
   /** The upgrades owned and the Training ranks that count now. */
   private get trainingNow() {
     return { upgrades: this.save.upgrades, training: ranksInRun(this.save, this.run) };
@@ -85,9 +91,10 @@ export class RunPurse {
   /** Banks Gold found in the run, fractions and all (`snap`), times the
    * Shop's coin packs owned and the Gold ad's boost while it lasts (what
    * it found while boosted kept in `runBoostGold`), and raised by
-   * equipment's Gold found; returns what it banked. */
+   * equipment's Gold found, and by the run's Gold boons; returns what it
+   * banked. */
   gold(found: number) {
-    const before = raised(found, this.worn.goldFind) * goldFactor(this.save), boost = goldBoostFactor(this.save, this.now);
+    const before = raised(found, this.worn.goldFind) * goldFactor(this.save) * (this.boons?.gold ?? 1), boost = goldBoostFactor(this.save, this.now);
     const gold = snap(before * boost);
     if (boost !== 1) this.slice.runBoostGold = snap((this.slice.runBoostGold ?? 0) + before);
     this.save.gold = snap(this.save.gold + gold);
@@ -96,18 +103,19 @@ export class RunPurse {
   }
 
   /** Adds Silver found in the run, raised by Silver Bonus training and
-   * research (the two multiplied), fractions and all; returns what it
-   * added. */
+   * research and the run's Silver Bonus boons (all multiplied), fractions
+   * and all; returns what it added. */
   silver(base: number) {
-    const bonus = snap((base * silverBonus(this.trainingNow) * researched(this.save.archives, "silverBonus", 100)) / 10_000);
+    const bonus = snap((base * silverBonus(this.trainingNow) * researched(this.save.archives, "silverBonus", 100) * (this.boons?.silverFound ?? 1)) / 10_000);
     const silver = raised(bonus, this.worn.silverFind);
     this.run.silver = snap((this.run.silver ?? 0) + silver);
     return silver;
   }
 
-  /** A kill's Silver, by the enemy's strength and the equivalent floor. */
+  /** A kill's Silver, by the enemy's strength and the equivalent floor
+   * (none under the boon that trades it for Silver / Floor). */
   killSilver(enemy: Enemy, floor: number, scale = 1) {
-    const base = silverForKill(enemy.strength, floor);
+    const base = snap(silverForKill(enemy.strength, floor) * (this.boons?.killSilver ?? 1));
     return this.silver(scale === 1 ? base : snap(base * scale));
   }
 
@@ -215,19 +223,19 @@ export class RunPurse {
   }
 
   /** Wishing Well: Silver for a floor climbed for the first time in the
-   * run, its Silver / Floor raised by research, then by Silver Bonus.
-   * Returns what it paid. */
+   * run, its Silver / Floor raised by research and the run's boons, then by
+   * Silver Bonus. Returns what it paid. */
   floorSilver() {
     const base = floorSilver(this.trainingNow);
-    return base ? this.silver(this.researched(base, "floorSilver")) : 0;
+    return base ? this.silver(snap(this.researched(base, "floorSilver") * (this.boons?.floorSilver ?? 1))) : 0;
   }
 
   /** Interest: for a floor climbed for the first time in the run, after
    * its Wishing Well Silver, Interest % research's share of the Silver
-   * held, up to Max Interest. Silver Bonus doesn't raise it. Returns what
-   * it added. */
+   * held (the run's Interest boons raising the share), up to Max
+   * Interest. Silver Bonus doesn't raise it. Returns what it added. */
   interest() {
-    const rate = researched(this.save.archives, "interestRate", 0);
+    const rate = researched(this.save.archives, "interestRate", 0) * (this.boons?.interest ?? 1);
     if (!rate) return 0;
     const held = this.run.silver ?? 0;
     const paid = Math.min(this.interestCap, snap((held * rate) / 1000));

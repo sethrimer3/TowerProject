@@ -10,8 +10,9 @@ export type GoldBonus = { name: string; factor: number | null };
 
 /** Every Gold bonus there is, in the order the breakdown lists them: the
  * tower's, the ads' one line (the Gold ad's boost while it runs, else
- * Ad-Disable), then each Coin Pack (the Shop's `goldFactor`s). */
-export function goldBonuses(save: Pick<Save, "goldBoostUntil" | "entitlements">, tier: number, now: number): GoldBonus[] {
+ * Ad-Disable), then each Coin Pack (the Shop's `goldFactor`s), and, once
+ * Shrines are open in a Tower run, its boons' (`shrine`, 1 with none). */
+export function goldBonuses(save: Pick<Save, "goldBoostUntil" | "entitlements">, tier: number, now: number, shrine?: number): GoldBonus[] {
   const packs = ENTITLEMENT_IDS.filter((id) => id !== "adFree" && ENTITLEMENTS[id].goldFactor !== 1)
     .map((id) => ({ name: ENTITLEMENTS[id].name, factor: owns(save, id) ? ENTITLEMENTS[id].goldFactor : null }));
   // The ad's boost and Ad-Disable are one ×1.5 slot, temporary or for good:
@@ -19,7 +20,8 @@ export function goldBonuses(save: Pick<Save, "goldBoostUntil" | "entitlements">,
   const boosted = goldBoostFactor(save, now) > 1;
   const ads = boosted ? { name: "Ad Boost", factor: GOLD_BOOST_FACTOR }
     : { name: "Disable ads", factor: owns(save, "adFree") ? ENTITLEMENTS.adFree.goldFactor : null };
-  return [{ name: "Tower Multiplier", factor: TIER_BONUS_TENTHS[tier - 1]! / 10 }, ads, ...packs];
+  const boons = shrine === undefined ? [] : [{ name: "Shrine Boons", factor: shrine === 1 ? null : shrine }];
+  return [{ name: "Tower Multiplier", factor: TIER_BONUS_TENTHS[tier - 1]! / 10 }, ads, ...packs, ...boons];
 }
 
 /** All the bonuses applied, multiplied together. */

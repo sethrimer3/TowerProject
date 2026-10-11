@@ -15,6 +15,8 @@ export interface DeskHost {
   missionDone?(type: MissionType, amount: number): void;
   /** Counts what a desk's command did toward the Event's missions. */
   eventDone?(type: EventMissionType, amount: number): void;
+  /** Research completed: the game applies what it changes at once. */
+  researchDone?(): void;
 }
 
 /** Whether `gems` can be paid now (always, with Dev free purchases). */

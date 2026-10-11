@@ -70,6 +70,9 @@ export const checkIcon = (className = "check-icon") =>
  * over `fill` (gold by default; each league's cup its own metal). */
 export const trophyIcon = (className = "trophy-icon", stroke = "#ffd34d", fill = "#5a4210") =>
   `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.5h10v5a5 5 0 0 1-10 0z" fill="${fill}" stroke="${stroke}" stroke-width="1.4" stroke-linejoin="round"/><path d="M7 5H4v1.5A3.5 3.5 0 0 0 7.5 10M17 5h3v1.5A3.5 3.5 0 0 1 16.5 10" fill="none" stroke="${stroke}" stroke-width="1.3"/><path d="M12 13.5v3.5M8.5 20.5h7l-1-3.5h-5z" fill="${fill}" stroke="${stroke}" stroke-width="1.3" stroke-linejoin="round"/></svg>`;
+/** A shrine: a red gate's two posts under its curved lintel, a golden flame between. */
+export const shrineIcon = (className = "shrine-icon") =>
+  `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 5c3 1 16 1 19 0l-.8 2.6H3.3z" fill="#b8322a" stroke="#ff9a8a" stroke-width="1.1" stroke-linejoin="round"/><path d="M4.5 10.2h15" stroke="#ff9a8a" stroke-width="1.5"/><path d="M6.5 7.6v14M17.5 7.6v14" stroke="#d8483c" stroke-width="2.2" stroke-linecap="round"/><path d="M12 12.2c1.6 1.8 2.1 3.2 2.1 4.4a2.1 2.1 0 0 1-4.2 0c0-1.2.5-2.6 2.1-4.4z" fill="#ffd34d" stroke="#fff1b0" stroke-width=".8"/></svg>`;
 /** A Tournament Ticket: a gold stub with notched ends and a perforation. */
 export const ticketIcon = (className = "ticket-icon") =>
   `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 7h19v3a2 2 0 0 0 0 4v3h-19v-3a2 2 0 0 0 0-4z" fill="#6a4a12" stroke="#ffd34d" stroke-width="1.4" stroke-linejoin="round"/><path d="M15.5 7.5v9" stroke="#ffd34d" stroke-width="1" stroke-dasharray="1.4 1.2"/><path d="M6 10.5h6.5M6 13.5h4.5" stroke="#ffe9a8" stroke-width="1.2" stroke-linecap="round"/></svg>`;

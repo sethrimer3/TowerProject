@@ -43,11 +43,12 @@ function candidates(save: Pick<Save, "training" | "upgrades">, run: Pick<RunCore
  * in order; `run.freeRolls` moves on, and applying the levels is the
  * caller's (`Game`). The chances are read before any level is applied, so
  * Free Utility raising a Free Upgrade row counts from the next floor. */
-export function rollFreeTraining(save: Pick<Save, "training" | "upgrades">, run: Pick<RunCore, "seed" | "freeRolls" | "training">): TrainingId[] {
+export function rollFreeTraining(save: Pick<Save, "training" | "upgrades">, run: Pick<RunCore, "seed" | "freeRolls" | "training">, boonChance = 0): TrainingId[] {
   const now = { upgrades: save.upgrades, training: ranksInRun(save, run) };
   const picked: TrainingId[] = [];
   for (const group of FREE_GROUPS) {
-    const chance = freeTrainingChance(now, group);
+    // A run's Free Up Chance boons add to every group's chance, in hundredths of a percent.
+    const chance = freeTrainingChance(now, group) + boonChance;
     if (!chance || draw(run, group) * 10_000 >= chance) continue;
     const rows = candidates(save, run, group);
     if (!rows.length) continue;

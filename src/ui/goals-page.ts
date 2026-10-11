@@ -6,7 +6,7 @@ import { offer } from "../shop/offers.ts";
 import { CLEARED_INSPIRATION } from "../tower/area-ledger.ts";
 import { tierNumeral, tierRewardText, tierStats } from "../tiers.ts";
 import type { AppContext } from "./app.ts";
-import { el, eventIcon, gemIcon, goldIcon, medalIcon, shardIcon, trophyIcon } from "./dom.ts";
+import { el, eventIcon, gemIcon, goldIcon, medalIcon, shardIcon, shrineIcon, trophyIcon } from "./dom.ts";
 import { goalRewardShown, offerShown, revealReward } from "./reward-reveal.ts";
 
 // The Goals screen: each tower drawn as a stone column rising from the
@@ -27,8 +27,11 @@ const CURRENCY_ICONS: Record<CurrencyId, () => string> = { gems: () => gemIcon("
  * Lore an open book with a rising arrow, Warp a portal's swirl, Damage Visual a monster's tile with a red
  * number in its corner, Relative Damage Color that tile over a green-to-red bar, Equipment an anvil
  * under a hammer, the Tournament a trophy, Events a pennant, Research Speed an hourglass, Shard ATK and Shard DEF a red or
- * blue shard under a rising arrow, Evade Prediction a shield turning an enemy's strike aside. */
+ * blue shard under a rising arrow, Evade Prediction a shield turning an enemy's strike aside, and
+ * every Shrine research a shrine's gate (`shrineIcon`). */
 const UNLOCK_ICONS: Record<GoalUnlock, string> = {
+  shrines: shrineIcon("goal-icon"), firstBoonChoice: shrineIcon("goal-icon"), improveTradeoffs: shrineIcon("goal-icon"), autoPickBoons: shrineIcon("goal-icon"),
+  boonOptions: shrineIcon("goal-icon"), banBoons: shrineIcon("goal-icon"), autoPickRanking: shrineIcon("goal-icon"),
   shardAttack: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.5l4.5 5-4.5 8-4.5-8z" fill="#a8323a" stroke="#ff9aa0" stroke-width="1.3" stroke-linejoin="round"/><path d="M12 8.5v13" stroke="#ff9aa0" stroke-width=".9"/><path d="M12 6V1.8M9 4.6l3-3 3 3" fill="none" stroke="#ffd34d" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
   shardDefense: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.5l4.5 5-4.5 8-4.5-8z" fill="#2f5fa8" stroke="#9cc4ff" stroke-width="1.3" stroke-linejoin="round"/><path d="M12 8.5v13" stroke="#9cc4ff" stroke-width=".9"/><path d="M12 6V1.8M9 4.6l3-3 3 3" fill="none" stroke="#ffd34d" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
   tournament: trophyIcon("goal-icon"),
@@ -73,6 +76,15 @@ const UNLOCK_TUTORIALS: Record<GoalUnlock, string> = {
   parryPercent: `<p>Parry % opens in the Archives once Evade is yours: research it, and every strike you parry is cut by more, at once, in the Tower and the Delve alike.</p>` +
     `<p class="hint">However it is raised, a parry cuts a strike's ATK by at most 98%.</p>`,
   shardDefense: `<p>Shard DEF opens in the Archives: research it, and every DEF shard a run picks up raises DEF by more, from the next one on, in the Tower and the Delve alike.</p>`,
+  shrines: `<p>Unlock Shrines opens in the Archives: research it, and every so many floors climbed in the Tower grants a boon, a bonus that lasts the rest of the run, chosen from a few offered.</p>` +
+    `<p class="hint">Its research also opens Floors Required and Standard Boon Bonus. Boons are the Tower's alone, not the Delve's.</p>`,
+  firstBoonChoice: `<p>First Boon Choice opens in the Archives once Shrines are yours: research it, and pick on the forest's Shrine Boons page a standard boon to head every run's first offer.</p>`,
+  improveTradeoffs: `<p>Improve Trade-off Boons opens in the Archives once Shrines are yours: research it, and the benefit of every trade-off boon grows, its cost unchanged.</p>`,
+  autoPickBoons: `<p>Auto Pick Boons opens in the Archives once Shrines are yours: research it, and a run can pick its boons itself, the top one offered, as soon as each is earned.</p>` +
+    `<p class="hint">Turn it on or off from the Shrine button in a run.</p>`,
+  boonOptions: `<p>Boon Option Quantity opens in the Archives once Shrines are yours: research it, and each boon offered gives one more to choose from, up to four.</p>`,
+  banBoons: `<p>Ban Boons opens in the Archives once Shrines are yours: research it, and ban boons from ever being offered, on the forest's Shrine Boons page.</p>`,
+  autoPickRanking: `<p>Auto Pick Ranking opens in the Archives once Auto Pick Boons is yours: research it, and rank the boons Auto Pick takes first, on the forest's Shrine Boons page.</p>`,
 };
 const LOCK_ICON = `<svg class="goal-badge" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7.5" rx="1.5" fill="#3a3f4b" stroke="#c9ced8" stroke-width="1.1"/><path d="M5.2 7V5.2a2.8 2.8 0 0 1 5.6 0V7" fill="none" stroke="#c9ced8" stroke-width="1.4"/></svg>`;
 /** Beside a checkpoint's floor: its area mastered (a golden swirl, shown once Warp is owned) and cleared (a green check). */

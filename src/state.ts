@@ -81,6 +81,8 @@ import { TournamentDesk } from "./game/tournament-desk.ts";
 import { MailDesk } from "./game/mail-desk.ts";
 import { MissionDesk } from "./game/mission-desk.ts";
 import { EventDesk } from "./game/event-desk.ts";
+import { ShrineDesk } from "./game/shrine-desk.ts";
+import { boonFactor, runBoons } from "./shrines.ts";
 import type { MissionType } from "./missions/catalog.ts";
 import type { EventMissionType } from "./events/catalog.ts";
 import { LEAGUE_INFO } from "./tournament/leagues.ts";
@@ -254,6 +256,9 @@ export class Game {
   /** The Deck page's card badges: drawing them with Gems and attaching
    * them to cards. */
   readonly badges = new BadgeDesk(this);
+  /** The Shrines' commands: a Tower run's boons and the Shrine Boons page's
+   * choices. */
+  readonly shrine = new ShrineDesk(this);
   /** `rng` is the game's randomness: new run seeds, enemy drops and
    * treasure loot all draw from it (the `game` stream unless given), so a
    * seeded stream replays a game and no visual effect can shift it. */
@@ -945,6 +950,7 @@ export class Game {
    * of training bought for the run) rises by `n`, with the HP to fill it. */
   private raiseMaxHp(n: number, id: BadgeId) {
     const p = this.run.player, kept = this.run.loadout;
+    n = snap(n * boonFactor(this.run, "maxHp"));
     p.maxHp = snap(p.maxHp + n);
     p.hp = snap(p.hp + n);
     if (kept) kept.maxHp = snap(kept.maxHp + n);
@@ -1023,7 +1029,7 @@ export class Game {
     const p = this.run.player;
     const row = TRAINING.find((t) => t.id === id) as StatTrainingRow;
     const stat = row.stat as "maxHp" | "attack" | "defense";
-    const loss = snap((trained(row, level) - trained(row, level - levels)) * statFactor(this.save, stat));
+    const loss = snap((trained(row, level) - trained(row, level - levels)) * statFactor(this.save, stat) * boonFactor(this.run, stat));
     p[stat] = snap(p[stat] - loss);
     if (stat === "maxHp") p.hp = Math.min(p.hp, p.maxHp);
     if (this.run.loadout) this.run.loadout[stat] = snap(this.run.loadout[stat] - loss);
@@ -1116,7 +1122,29 @@ export class Game {
   /** The fastest speed the run's arrows reach: 3 steps a second, and one
    * more a Movement Speed research level. */
   get maxSpeed() {
-    return 3 + researched(this.save.archives, "moveSpeed", 0);
+    return 3 + researched(this.save.archives, "moveSpeed", 0) + (this.boons?.playSpeed ?? 0);
+  }
+  /** What the Tower run's boons change now, or null (none picked, or the
+   * Delve). */
+  get boons() {
+    return this.mode === "tower" && !this.run.outside ? runBoons(this.run as TowerRun, this.save) : null;
+  }
+  /** The Gold bonus breakdown's Shrine Boons line: the boons' Gold factor
+   * inside a Tower run once Shrines are open (1 with none), else none. */
+  get shrineGold() {
+    return this.shrine.open ? this.boons?.gold ?? 1 : undefined;
+  }
+  /** The run's boons changed its hero or enemies (`ShrineDesk.sync`): the
+   * floor's enemies are read afresh and the hand plans again. */
+  boonsChanged() {
+    if (this.world instanceof RoomWorld) this.world.foes = (this.run as TowerRun).shrine?.applied?.foes;
+    this.dropHandPlan();
+  }
+  /** Research completed: what it changes about the run's boons applies at
+   * once, and Auto Pick takes any boons it earned. */
+  researchDone() {
+    this.shrine.sync();
+    this.shrine.autoPick();
   }
   /** Whether fights play out strike by strike: always, until Instant
    * Combat opens the Animate fights setting to turn it off. */
@@ -1149,7 +1177,7 @@ export class Game {
     const crit = this.crit;
     return { potionHeal, percentPotion: potionPercent(this.trainingNow), regen,
       heartToll: researched(this.save.archives, "heartToll", 100), keyCost: this.keyCost,
-      shardAttack: researched(this.save.archives, "shardAttackPercent", 100), shardDefense: researched(this.save.archives, "shardDefensePercent", 100),
+      shardAttack: researched(this.save.archives, "shardAttackPercent", 100) * boonFactor(this.run, "attack"), shardDefense: researched(this.save.archives, "shardDefensePercent", 100),
       ...(worn.victoryHeal ? { victoryHeal: worn.victoryHeal } : {}), ...(crit ? { crit } : {}) };
   }
   /** The hero's critical strikes now (Critical, Crit % and Crit x training
@@ -1901,7 +1929,7 @@ export class Game {
   private freeTrain(floors: number) {
     const given: TrainingId[] = [];
     for (let f = 0; f < floors; f++)
-      for (const id of rollFreeTraining(this.save, this.run)) {
+      for (const id of rollFreeTraining(this.save, this.run, this.boons?.freeUp ?? 0)) {
         const offer = runTrainingOffer(this.save, this.run, id);
         this.run.training = { ...this.run.training, [id]: offer.bought + 1 };
         this.applyRunTraining(offer);
@@ -1955,6 +1983,8 @@ export class Game {
       this.freeTrain(this.run.height - highest);
     }
     this.enterTowerFloor(board);
+    // A new floor may earn a boon, which Auto Pick takes at once.
+    this.shrine.autoPick();
     // A new section's first floor is sealed below; the hero keeps every stat.
     const earned = sectionStart ? new AreaLedger(this.save).enter(this.towerRun, board) : [];
     if (skipped) this.feedback(passed.length ? `Floor Skipped · floors ${this.run.height - TOWER_SECTION}–${this.run.height - 1} ${passed.join(" and ")}` : "Floor Skipped", 1000);
@@ -2181,7 +2211,7 @@ export class Game {
    * max HP it added. */
   private raiseRunStat(row: StatTrainingRow, level: number) {
     const stat = row.stat, p = this.run.player,
-      gain = snap((trained(row, level + 1) - trained(row, level)) * statFactor(this.save, stat));
+      gain = snap((trained(row, level + 1) - trained(row, level)) * statFactor(this.save, stat) * boonFactor(this.run, stat));
     p[stat] = snap((p[stat] ?? 0) + gain);
     const kept = this.run.loadout;
     if (kept) kept[stat] = snap((kept[stat] ?? 0) + gain);

@@ -3960,3 +3960,45 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
 @media (prefers-reduced-motion: reduce) {
   .relic-pop-rays, .relic-pop-icon, .relic-pop-sparkles i, .relic-pop .card-reveal-text { animation: none; }
 }
+
+/* --- Shrines --- */
+.shrines-button .shrine-icon { display: block; width: 18px; height: 18px; }
+.shrine-stat svg { width: 16px; height: 16px; }
+.shrine-stat.notify { border-color: #ffd34d; box-shadow: 0 0 6px #ffd34d; }
+.shrine-next { display: inline-flex; align-items: center; gap: 2px; color: #ffcf9a; font-size: 11px; font-weight: 700; }
+.shrine-next[hidden] { display: none; }
+.shrine-next svg { width: 11px; height: 11px; }
+.shrine-title-icon { width: 20px; height: 20px; vertical-align: -3px; }
+.boon-offer { display: grid; gap: 8px; margin: 10px 0; }
+.boon-choice { display: grid; gap: 2px; padding: 10px 12px; text-align: left; font: inherit; border: 1px solid #5d5230; border-radius: 4px; background: #1d1a12; color: #f1e6c8; cursor: pointer; }
+.boon-choice small { font-size: 9px; letter-spacing: 1px; color: #c9b27a; }
+.boon-choice b { font-size: 13px; }
+.boon-choice.tradeoff { border-color: #7a3a52; background: #22131b; }
+.boon-choice.tradeoff small { color: #e79ab6; }
+.boon-choice:hover, .boon-choice:focus-visible { border-color: #ffd34d; }
+.boon-table-scroll { max-height: 50vh; overflow-y: auto; margin: 8px 0; }
+.boon-table { width: 100%; border-collapse: collapse; font-size: 12px; text-align: left; }
+.boon-table th { position: sticky; top: 0; background: var(--panel, #161a20); color: #c9b27a; font-size: 10px; letter-spacing: 1px; padding: 4px; }
+.boon-table td { padding: 5px 4px; border-top: 1px solid #303742; }
+.boon-table td:last-child, .boon-table th:last-child { text-align: right; width: 3em; }
+.boon-table tr.tradeoff td:first-child { color: #e79ab6; }
+.boon-autopick { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 8px 0 0; font-size: 12px; }
+.page#shrines { position: relative; }
+#shrines .page-title { margin: 18px 44px 14px; text-align: center; }
+.shrine-part { margin: 0 0 18px; }
+.shrine-part h3 { margin: 0 0 2px; font-size: 14px; color: var(--gold); }
+.shrine-part h3 small { margin-left: 6px; font-size: 11px; color: #b7c0cc; }
+.shrine-part .hint { margin: 0 0 8px; }
+#first-boon { width: 100%; padding: 6px; font: inherit; }
+.boon-bans { display: grid; gap: 4px; }
+.boon-ban { display: flex; align-items: center; gap: 6px; padding: 5px 8px; border: 1px solid #303742; border-radius: 3px; font-size: 12px; }
+.boon-ban.banned { border-color: #8a3030; background: #2a1414; }
+.boon-ranking { display: grid; gap: 3px; margin: 0; padding: 0; list-style: none; counter-reset: rank; }
+.boon-rank { display: flex; align-items: center; gap: 6px; padding: 4px 6px; border: 1px solid #303742; border-radius: 3px; background: #14171c; font-size: 12px; touch-action: none; }
+.boon-rank.ranked { border-color: #6b5a2a; background: #2a2412; }
+.boon-rank.banned { border-color: #8a3030; background: #3a1616; color: #f0b0b0; }
+.boon-rank.dragging { position: relative; z-index: 2; box-shadow: 0 4px 12px #000a; }
+.boon-rank.drop-here { outline: 1px dashed #ffd34d; }
+.rank-grip { width: 16px; cursor: grab; color: #8793a2; text-align: center; user-select: none; }
+.boon-rank .rank-name { flex: 1; min-width: 0; }
+.rank-move { width: 24px; height: 22px; padding: 0; font-size: 10px; }

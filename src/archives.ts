@@ -25,6 +25,7 @@ export const RESEARCH_CATEGORIES = {
   defense: "Defense",
   economy: "Economy",
   equipment: "Equipment",
+  shrines: "Shrines",
   special: "Special",
 } as const;
 export type ResearchCategory = keyof typeof RESEARCH_CATEGORIES;
@@ -35,6 +36,8 @@ const percent = (n: number) => `${n}%`;
 const tenths = (n: number) => `${n / 10}%`;
 /** A speed (0 = as fast as without research) as a percent of the base. */
 const speed = (n: number) => `${Math.round(100 + n * 100)}%`;
+/** A one-level unlock: open or not. */
+const opened = (n: number) => (n ? "Open" : "Locked");
 /** The numbers research can change, each with its name, the base the game
  * reads it from (before any research) and how a total of it reads. */
 export const RESEARCH_TARGETS = {
@@ -116,6 +119,24 @@ export const RESEARCH_TARGETS = {
   /** The percent of its Gold a research level costs, in tenths of a
    * percent, from 1,000 (the full price). */
   researchCost: { name: "Research Cost", base: 1000, shown: tenths },
+  /** Whether Shrines grant boons in the Tower (shrines.ts). */
+  shrines: { name: "Shrines", base: 0, shown: opened },
+  /** Floors taken off each boon's base floors required. */
+  shrineFloors: { name: "Floors Required", base: 0, shown: (n: number) => `${n ? "−" : ""}${-n}` },
+  /** The percent standard boons are strengthened by. */
+  standardBoonBonus: { name: "Standard Boon Bonus", base: 0, shown: percent },
+  /** Whether a standard boon can be chosen to head a run's first offer. */
+  firstBoonChoice: { name: "First Boon Choice", base: 0, shown: opened },
+  /** The percent trade-off boons' benefits are strengthened by. */
+  tradeoffBonus: { name: "Trade-off Boon Bonus", base: 0, shown: percent },
+  /** Whether Auto Pick Boons can be turned on. */
+  autoPickBoons: { name: "Auto Pick Boons", base: 0, shown: opened },
+  /** Boons each offer gives to choose from. */
+  boonOptions: { name: "Boon Choices", base: 2, shown: count },
+  /** Boons that can be banned. */
+  boonBans: { name: "Boons Banned", base: 0, shown: count },
+  /** Boons Auto Pick can rank. */
+  boonRanks: { name: "Boons Ranked", base: 0, shown: count },
 } as const;
 export type ResearchTarget = keyof typeof RESEARCH_TARGETS;
 
@@ -277,6 +298,53 @@ const ignoreCountLevels = () => Array.from({ length: 9 }, (_, i): ResearchLevel 
 /** Target Count: +1 Target use a level, for four levels (1 use up to 5),
  * ten times the Gold and twice the time each level. */
 const TARGET_COUNT_LEVELS: [gold: number, hours: number][] = [[10_000_000, 24], [100_000_000, 48], [1_000_000_000, 96], [10_000_000_000, 192]];
+
+/** Shrine research. Floors Required: −1 floor a level for 100 levels;
+ * level n costs 100,000 + 120,000 × (n − 1) + 10,000 × (n − 1)(n − 2) Gold
+ * (100k, 220k, 360k … 109 million at 100, about 3.84 billion in all) and
+ * takes 99 + 102 × (n − 1) + 1.5 × (n − 1)(n − 2) minutes (99, 201, 306 …
+ * 24,750 at 100, about 694 days in all). */
+const shrineFloorLevels = () => Array.from({ length: 100 }, (_, i): ResearchLevel => ({
+  gold: 100_000 + 120_000 * i + 10_000 * i * (i - 1),
+  hours: (99 + 102 * i + (3 * i * (i - 1)) / 2) / 60,
+  effect: { target: "shrineFloors", op: "add", value: -1 },
+}));
+/** Standard Boon Bonus: +1% a level for 25 levels. Its Gold climbs
+ * steeply, then eases (about 1 billion at level 9, 10 billion at 14, 100
+ * billion at 21; 1.08 trillion in all); its minutes are 99, 334, 579, 864,
+ * then each step 40 longer than the last (16,089 at 25, 109 days in all). */
+const STANDARD_BOON_GOLD = [
+  100e3, 314e3, 987e3, 3.1e6, 9.75e6, 30.6e6, 96.2e6, 302e6, 950e6, 1.52e9, 2.44e9, 3.9e9, 6.25e9,
+  10e9, 13.8e9, 19e9, 26.2e9, 36.2e9, 49.9e9, 68.9e9, 95e9, 122e9, 157e9, 202e9, 260e9,
+];
+/** `first` minutes, then each step `more` longer than the step before. */
+function steps(first: readonly number[], length: number, more: number) {
+  const out = [...first];
+  while (out.length < length) out.push(2 * out.at(-1)! - out.at(-2)! + more);
+  return out;
+}
+const STANDARD_BOON_MINUTES = steps([99, 334, 579, 864], 25, 40);
+/** Improve Trade-off Boons: +1% a level for 10 levels, 600 million to 4.9
+ * billion Gold, 1,499 minutes then 840 more a level. */
+const TRADEOFF_GOLD = [600e6, 700e6, 800e6, 900e6, 1e9, 1.25e9, 1.6e9, 2.2e9, 3.2e9, 4.9e9];
+/** Ban Boons: one ban more a level, for eight levels. */
+const BAN_LEVELS: [gold: number, minutes: number][] = [
+  [10e6, 3333], [100e6, 6666], [1e9, 13333], [10e9, 29999], [100e9, 59999], [1e12, 119999], [100e12, 239999], [1e15, 479999],
+];
+/** Auto Pick Ranking: one boon ranked more a level, for 32 levels. Its
+ * Gold steepens fast, then eases (about 1 billion at level 11, 10 billion
+ * at 18, 100 billion at 30; 837 billion in all); its minutes are 2,866,
+ * then each step 22 longer than the last, from 335 (23,481 at 32, 255 days
+ * in all). */
+const RANKING_GOLD = [
+  100e3, 180e3, 875e3, 4.46e6, 15.7e6, 31.1e6, 61.7e6, 123e6, 243e6, 483e6, 960e6, 1.35e9, 1.9e9, 2.68e9, 3.77e9, 5.3e9,
+  7.46e9, 10.5e9, 12.7e9, 15.4e9, 18.7e9, 22.6e9, 27.4e9, 33.2e9, 40.2e9, 48.7e9, 59e9, 71.5e9, 86.7e9, 105e9, 121e9, 140e9,
+];
+const RANKING_MINUTES = steps([2866, 3201], 32, 22);
+/** One level adding `value` to `target`, for `gold` and `minutes`. */
+const levelOf = (target: ResearchTarget, value: number, gold: number, minutes: number): ResearchLevel =>
+  ({ gold, hours: minutes / 60, effect: { target, op: "add", value } });
+const SHRINES = { research: "unlockShrines", level: 1 } as const;
 
 /** `n` rounded to three significant figures, so long schedules read neatly. */
 function neat(n: number) {
@@ -561,6 +629,69 @@ export const RESEARCH = {
     categories: ["abilities"],
     requires: [{ upgrade: "targetMore" }],
     levels: regainLevels("targetFloors", 1.1),
+  },
+  unlockShrines: {
+    name: "Unlock Shrines",
+    description: "Find the old climbers' shrines: every so many floors climbed in the Tower grants a boon for the rest of the run.",
+    categories: ["shrines"],
+    requires: [{ upgrade: "archives" }, { goalUnlock: "shrines" }],
+    levels: [levelOf("shrines", 1, 1.5e6, 4999)],
+  },
+  shrineFloors: {
+    name: "Floors Required",
+    description: "Learn the shrines' paths: each boon takes one floor fewer to reach, before any Boon Floor Requirement boon.",
+    categories: ["shrines"],
+    requires: [SHRINES],
+    levels: shrineFloorLevels(),
+  },
+  standardBoonBonus: {
+    name: "Standard Boon Bonus",
+    description: "Pray more deeply: every standard boon is stronger.",
+    categories: ["shrines"],
+    requires: [SHRINES],
+    levels: STANDARD_BOON_GOLD.map((gold, i) => levelOf("standardBoonBonus", 1, gold, STANDARD_BOON_MINUTES[i]!)),
+  },
+  firstBoonChoice: {
+    name: "First Boon Choice",
+    description: "Choose your first prayer: a standard boon picked on the forest's Shrine Boons page heads every run's first offer.",
+    categories: ["shrines"],
+    requires: [SHRINES, { goalUnlock: "firstBoonChoice" }],
+    levels: [levelOf("firstBoonChoice", 1, 1e9, 6667)],
+  },
+  improveTradeoffs: {
+    name: "Improve Trade-off Boons",
+    description: "Strike better bargains: the benefit of every trade-off boon is greater, its cost unchanged.",
+    categories: ["shrines"],
+    requires: [SHRINES, { goalUnlock: "improveTradeoffs" }],
+    levels: TRADEOFF_GOLD.map((gold, i) => levelOf("tradeoffBonus", 1, gold, 1499 + 840 * i)),
+  },
+  autoPickBoons: {
+    name: "Auto Pick Boons",
+    description: "Let the shrines choose: a run can take the top boon offered by itself, turned on from the Shrine button.",
+    categories: ["shrines"],
+    requires: [SHRINES, { goalUnlock: "autoPickBoons" }],
+    levels: [levelOf("autoPickBoons", 1, 100e6, 7166)],
+  },
+  boonOptions: {
+    name: "Boon Option Quantity",
+    description: "Hear more voices: each boon offered gives one more to choose from.",
+    categories: ["shrines"],
+    requires: [SHRINES, { goalUnlock: "boonOptions" }],
+    levels: [levelOf("boonOptions", 1, 200e6, 7167), levelOf("boonOptions", 1, 2e9, 14667)],
+  },
+  banBoons: {
+    name: "Ban Boons",
+    description: "Turn from a shrine: one boon more can be banned from ever being offered, on the forest's Shrine Boons page.",
+    categories: ["shrines"],
+    requires: [SHRINES, { goalUnlock: "banBoons" }],
+    levels: BAN_LEVELS.map(([gold, minutes]) => levelOf("boonBans", 1, gold, minutes)),
+  },
+  autoPickRanking: {
+    name: "Auto Pick Ranking",
+    description: "Order your prayers: Auto Pick takes the boons you rank first, one boon more ranked a level, on the forest's Shrine Boons page.",
+    categories: ["shrines"],
+    requires: [{ research: "autoPickBoons", level: 1 }, { goalUnlock: "autoPickRanking" }],
+    levels: RANKING_GOLD.map((gold, i) => levelOf("boonRanks", 1, gold, RANKING_MINUTES[i]!)),
   },
 } satisfies Record<string, ResearchDefinition>;
 export type ResearchId = keyof typeof RESEARCH;

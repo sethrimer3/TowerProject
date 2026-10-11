@@ -5,9 +5,9 @@ import { Game } from "../src/state.ts";
 import { CHECKPOINTS, PASSES, canWarp, decodeGoals, floorsCompleted, goalState, goalsWaiting, goalUnlocked, passFor, passTotals, unlockFloor, warpUnlocked } from "../src/goals.ts";
 import { TIERS } from "../src/tiers.ts";
 
-test("every tower has a checkpoint each ten floors to 100, then 150 and 200; Tower I's first eight pay Damage Prediction, Combat Forecast, Attack Lore, 20 Gems, Damage Visual, the Tournament, Events and 30 Gems", () => {
+test("every tower has a checkpoint each ten floors to 100, then every 50 to 400; Tower I's first eight pay Damage Prediction, Combat Forecast, Attack Lore, 20 Gems, Damage Visual, the Tournament, Events and 30 Gems", () => {
   for (let tower = 1; tower <= TIERS; tower++) {
-    assert.deepEqual(CHECKPOINTS[tower]!.map((c) => c.floor), [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 150, 200]);
+    assert.deepEqual(CHECKPOINTS[tower]!.map((c) => c.floor), [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 150, 200, 250, 300, 350, 400]);
   }
   const gems = (amount: number) => ({ kind: "currency", currency: "gems", amount });
   assert.deepEqual(CHECKPOINTS[1]!.slice(0, 8), [
@@ -67,9 +67,9 @@ test("Relative Damage Color is owned once Tower II's floor 10 is claimed", () =>
 test("each pass covers three towers and totals its premium rewards", () => {
   assert.deepEqual(PASSES.map((p) => [p.towers, p.label]), [[[1, 2, 3], "$9.99"], [[4, 5, 6], "$19.99"], [[7, 8, 9], "$29.99"]]);
   assert.equal(passFor(5).n, 2);
-  // Twelve checkpoints a tower, 10 Gems × n each; Tower I's first four pay 10, 15, 25 and 35, and its floor 90 pays 10,000 Gold.
-  assert.deepEqual(passTotals(PASSES[0]!), { gems: 675 + 2 * 780, gold: 10000 });
-  assert.deepEqual(passTotals(PASSES[2]!), { gems: 3 * 780 });
+  // Sixteen checkpoints a tower, 10 Gems × n each; Tower I's first four pay 10, 15, 25 and 35, and its floor 90 pays 10,000 Gold.
+  assert.deepEqual(passTotals(PASSES[0]!), { gems: 1255 + 2 * 1360, gold: 10000 });
+  assert.deepEqual(passTotals(PASSES[2]!), { gems: 3 * 1360 });
 });
 
 test("a reward is claimed once, after its floor is completed; a premium one needs the pass", () => {

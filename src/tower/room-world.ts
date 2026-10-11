@@ -4,6 +4,7 @@ import { withPotions, type Board } from "../board.ts";
 import { breakTorch, placeTorches } from "../torches.ts";
 import { generateTowerFloor } from "./index.ts";
 import { tierCells } from "../tiers.ts";
+import { foeTile, type FoeRule } from "../shrines.ts";
 import { fastCells } from "../fast-enemies.ts";
 import { addEnemies, extrasSeed, hasExtras, type ExtraEnemies } from "../more-enemies.ts";
 import { ENTRY } from "./embedder.ts";
@@ -99,6 +100,10 @@ export class RoomWorld implements Board {
     public tier = 1,
     /** The run's More Enemies badges' extras (more-enemies.ts); none without. */
     extras?: ExtraEnemies,
+    /** What the run's boons change about its enemies (shrines.ts), every
+     * enemy tile read through it, a Greater Boss summoned too; none without.
+     * `Game` sets it afresh when a boon changes it. */
+    public foes?: FoeRule,
   ) {
     let cells = generateTowerRoom(seed, room, tier);
     this.torches = torchesForRoom(seed, room, tier, cells);
@@ -115,8 +120,8 @@ export class RoomWorld implements Board {
   tile(x: number, y: number): Tile {
     if (!this.inside(x, y)) return { kind: "wall" };
     const changed = this.changes[point(x, y)];
-    if (changed) return changed;
-    return withPotions(this.cells.get(point(x, y)) ?? { kind: "wall" }, x, y, this.seed ^ Math.imul(this.room + 1, 0x9e3779b1), this.percentPotions);
+    if (changed) return foeTile(changed, this.foes);
+    return foeTile(withPotions(this.cells.get(point(x, y)) ?? { kind: "wall" }, x, y, this.seed ^ Math.imul(this.room + 1, 0x9e3779b1), this.percentPotions), this.foes);
   }
   step(x: number, y: number, dx: number, dy: number) {
     const nx = x + dx,

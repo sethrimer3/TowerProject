@@ -13,6 +13,7 @@ import { BADGES } from "../badges.ts";
 import { badgeStyle } from "./badge-token.ts";
 import { trainingPoints, trainingWaiting } from "../loadout.ts";
 import { goalsWaiting } from "../goals.ts";
+import { shrinesOpen } from "../shrines.ts";
 import type { BoardOverlay } from "./board-overlay.ts";
 import { CountUp } from "./count-up.ts";
 import { estimatedServerTime } from "../shop/clock.ts";
@@ -217,6 +218,7 @@ export function renderEventsButtons(game: Game) {
   const button = el("events-button"), events = game.events;
   button.hidden = !events.unlocked;
   el("relics-button").hidden = !game.run.outside || (!events.unlocked && game.save.relics.length === 0);
+  el("shrines-button").hidden = !game.run.outside || !shrinesOpen(game.save);
   if (button.hidden) return;
   text("events-state", shortCountdown(events.info.endsAt - events.now));
   button.classList.toggle("notify", events.waiting);
@@ -487,8 +489,23 @@ function renderHealthLoss(lost: number, maxHp: number) {
   }
 }
 
+/** Once Shrines are researched, inside a Tower run: the Shrine button,
+ * its count the boons waiting (lit while any wait), and under the floor
+ * the floors left to the next boon. */
+function renderShrine(game: Game) {
+  const shrine = game.shrine, open = shrine.open, waiting = shrine.unspent, next = shrine.floorsToNext;
+  const button = el("shrine-stat");
+  button.hidden = !open;
+  button.classList.toggle("notify", waiting > 0);
+  text("shrine-left", waiting);
+  button.setAttribute("aria-label", waiting ? `Shrine: ${waiting} boon${waiting === 1 ? "" : "s"} to pick` : "Shrine: boons taken");
+  el("shrine-next").hidden = !open || next === null;
+  text("shrine-next-val", next ?? 0);
+}
+
 /** Focus uses left, once the Focus skill is owned. */
 function renderFocus(game: Game) {
+  renderShrine(game);
   const stat = el("focus-stat");
   stat.hidden = !game.save.upgrades.focus;
   text("focus-left", game.focusLeft);
@@ -559,7 +576,7 @@ function renderGoldBonus(game: Game) {
   const button = el("gold-bonus"), inside = !game.run.outside;
   button.hidden = el("gold-bonus-divider").hidden = !inside;
   if (!inside) return;
-  text("gold-bonus-val", factorText(goldBonusTotal(goldBonuses(game.save, game.tier, game.clock()))));
+  text("gold-bonus-val", factorText(goldBonusTotal(goldBonuses(game.save, game.tier, game.clock(), game.shrineGold))));
 }
 
 /** A stat in a few characters: two decimals below 1,000 when not whole,

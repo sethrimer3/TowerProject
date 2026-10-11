@@ -19,6 +19,7 @@ import { decodeMail, defaultMail } from "./mail/progress.ts";
 import { decodeMissions, defaultMissions } from "./missions/progress.ts";
 import { decodeEvents, defaultEvents } from "./events/progress.ts";
 import { decodeRelics } from "./relics.ts";
+import { decodeShrines, defaultShrines, validShrineRun } from "./shrines.ts";
 import { isTournamentRun } from "./tournament/run.ts";
 import { decodeBadges, defaultBadges, validRunBadges } from "./badges.ts";
 import { runTrainingMax } from "./run-training.ts";
@@ -68,6 +69,7 @@ export function defaults(): Save {
     missions: defaultMissions(),
     events: defaultEvents(),
     relics: [],
+    shrines: defaultShrines(),
   };
 }
 const CHEST_TIERS = ["silver", "gold"] as const;
@@ -117,7 +119,7 @@ const validPlayer = (p: any, width: number) =>
 const validCore = (r: any, width: number) =>
   !!r && validOutside(r) && validCounters(r) && validPlayer(r.player, width) && validChanges(r.changes);
 const validDelveState = (r: any) => Number.isInteger(r.milestone) && finite(r.milestone);
-const TOWER_FIELDS = ["damaged", "floors", "summoned", "start"];
+const TOWER_FIELDS = ["damaged", "floors", "summoned", "start", "shrine"];
 const DELVE_FIELDS = ["milestone", "tournament"];
 /** Training ranks bought in a run: known rows, each a whole number of
  * ranks, no more than the row reaches in a run. */
@@ -173,7 +175,7 @@ function decodeTowerRun(r: any): TowerRun | null {
   if (!validCore(r, TOWER_WIDTH) || !validFloors(r.floors)) return null;
   // Older runs have no damage history; do not assume a perfect attempt.
   r.damaged = r.damaged !== false;
-  dropInvalid(r, { summoned: (v: unknown) => Array.isArray(v) && v.every(Number.isInteger), start: (v: unknown) => Number.isInteger(v) && (v as number) > 0 });
+  dropInvalid(r, { summoned: (v: unknown) => Array.isArray(v) && v.every(Number.isInteger), start: (v: unknown) => Number.isInteger(v) && (v as number) > 0, shrine: validShrineRun });
   return without(r, [...DELVE_FIELDS, "keysSpent"]);
 }
 /** Validate an untrusted Delve run; null unless it has the shape a
@@ -415,6 +417,7 @@ export function decode(raw: string | null): Save {
     d.missions = decodeMissions(s.missions);
     d.events = decodeEvents(s.events);
     d.relics = decodeRelics(s.relics);
+    d.shrines = decodeShrines(s.shrines);
     // The boost runs for good only while a pack that grants it is owned.
     if (permanentBoost(d)) d.trainingBoostUntil = BOOST_FOREVER;
     else if (d.trainingBoostUntil === BOOST_FOREVER) d.trainingBoostUntil = 0;
