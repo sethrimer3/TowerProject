@@ -89,16 +89,16 @@ test("each training rank is worth more than the one before, whatever the hero's 
   for (let n = 1; n < steal.max; n++) assert.ok(trainingWorth(steal, n) < trainingWorth(steal, n - 1) && trainingWorth(steal, n) > 0, `lifesteal rank ${n + 1}`);
 });
 
-test("Shroud's ranks: 10.5 at the first, 150 at 10, about 6,600 at 100, 32,000 at 200, 99,000 at 300 and four billion at 5,000", () => {
+test("Shroud's ranks: 5.1 at the first, 60 at 10, about 2,100 at 100, 15,000 at 200, 62,000 at 300 and four billion at 5,000", () => {
   const row = TRAINING.find((t) => t.id === "shroud")!;
   assert.equal(row.max, 5000);
   const at = (n: number) => trained(row, n);
-  assert.equal(at(1), 10.5);
-  assert.ok(at(2) - at(1) > 10, "each rank over 10 from the start");
-  assert.ok(at(10) > 149 && at(10) < 151, `${at(10)}`);
-  assert.ok(at(100) > 6500 && at(100) < 6700, `${at(100)}`);
-  assert.ok(at(200) > 31000 && at(200) < 33000, `${at(200)}`);
-  assert.ok(at(300) > 98000 && at(300) < 100000, `${at(300)}`);
+  assert.equal(at(1), 5.1);
+  assert.ok(at(2) - at(1) > 5 && at(2) - at(1) < 6, "about 5 a rank at the start");
+  assert.ok(at(10) > 59 && at(10) < 61, `${at(10)}`);
+  assert.ok(at(100) > 2050 && at(100) < 2200, `${at(100)}`);
+  assert.ok(at(200) > 14500 && at(200) < 15500, `${at(200)}`);
+  assert.ok(at(300) > 61000 && at(300) < 62500, `${at(300)}`);
   assert.ok(at(5000) > 3.9e9 && at(5000) < 4.1e9 && at(5000) > at(4999), `${at(5000)}`);
 });
 
@@ -117,12 +117,12 @@ test("Shroud blocks 1 damage a fight and opens Shroud training", () => {
   assert.equal(g.save.tower.inspiration, 0, "2 Inspiration");
   assert.equal(g.run.player.shroud, 1, "the run in the forest takes it at once");
   assert.ok(trainNow(g, "shroud") && trainNow(g, "shroud"));
-  // Two ranks: 10 × 2 + 0.5 × 2² + 0.0000064 × 1⁴.
+  // Two ranks: 5 × 2 + 0.1 × 2² + 0.0000064 × 1⁴.
   const two = trained(TRAINING.find((t) => t.id === "shroud")!, 2);
-  assert.ok(Math.abs(two - 22.0000064) < 1e-6, `${two}`);
+  assert.ok(Math.abs(two - 10.4000064) < 1e-6, `${two}`);
   assert.equal(loadout(g.save).shroud, 1 + two);
   assert.equal(g.run.player.shroud, 1 + two, "training reaches a run still outside");
-  assert.deepEqual([trainingStep(g.save, "shroud").now, trainingStep(g.save, "shroud").next], [23, 35]);
+  assert.deepEqual([trainingStep(g.save, "shroud").now, trainingStep(g.save, "shroud").next], [11, 16]);
   assert.equal(trainingPoints(g.save).spent, 2, "a point a rank");
 });
 

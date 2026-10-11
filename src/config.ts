@@ -575,7 +575,7 @@ export const TRAINING = [
   { id: "critFactor", name: "Critical Factor", short: "Crit x", group: "offense", requires: "critical", cost: 1, max: 150, description: "Raises how much a critical hit multiplies your ATK." },
   { id: "defense", name: "DEF", group: "defense", stat: "defense", curve: { per: 0, square: 1 / 12 }, cost: 1, max: 6000, description: "Raises DEF, taken off the damage of every enemy strike." },
   { id: "regen", name: "Regen", group: "defense", stat: "regen", curve: { per: 0.1, square: 1 / 120 }, cost: 1, max: 6000, requires: "regen", description: "Raises the HP regained with every step taken in a run." },
-  { id: "shroud", name: "Shroud", group: "defense", stat: "shroud", curve: { per: 10, square: 0.5, fourth: 0.0000064 }, cost: 1, max: 5000, requires: "shroud", description: "Raises the damage the shroud blocks at the start of every fight." },
+  { id: "shroud", name: "Shroud", group: "defense", stat: "shroud", curve: { per: 5, square: 0.1, fourth: 0.0000064 }, cost: 1, max: 5000, requires: "shroud", description: "Raises the damage the shroud blocks at the start of every fight." },
   { id: "potion", name: "Potion %", group: "defense", requires: "recovery", cost: 1, max: 300, description: "Percent potions restore more of your maximum HP." },
   { id: "findPotion", name: "Find Potion", group: "defense", requires: "findPotion", cost: 1, max: 72, description: "More of the potions found are percent potions." },
   { id: "lifesteal", name: "Lifesteal", group: "defense", stat: "lifesteal", curve: { per: 0.1005, square: -0.0005 }, cost: 1, max: 80, requires: "lifesteal", description: "Raises the share of the damage each of your strikes deals that is restored to you as HP." },
@@ -765,8 +765,8 @@ export const TRAINER_GOLD_CURVES: Record<TrainingId, TrainerCurve> = {
  * `per` + `square`. Rows that grew with the hero's level give a hero
  * with a rank a level in each what they gave at that level: ATK n + n²/5,
  * max HP 10n + n², Regen 0.1n + n²/120, and DEF n²/12, without the whole
- * point a rank its old curve began from. Shroud is 10.5 at rank 1, 150 at 10,
- * about 6,600 at 100, 32,000 at 200 and 99,000 at 300, about four billion at
+ * point a rank its old curve began from. Shroud is 5.1 at rank 1, 60 at 10,
+ * about 2,100 at 100, 15,000 at 200 and 62,000 at 300, about four billion at
  * its 5,000. */
 export type TrainingCurve = { per: number; square?: number; cube?: number; fourth?: number };
 /** What `ranks` ranks of `row` add to the character, rounded once. Only
