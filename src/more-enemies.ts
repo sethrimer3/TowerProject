@@ -292,6 +292,7 @@ export const MORE_ENEMIES_CARDS = {
   strongEnemy: ["strong"],
   eliteEnemy: ["elite"],
   bossEnemy: ["boss"],
+  nonBossEnemy: ["weak", "normal", "strong", "elite"],
 } as const satisfies Partial<Record<CardId, readonly ExtraStrength[]>>;
 
 /** What a run's More Enemies badges add to each floor: each strength's

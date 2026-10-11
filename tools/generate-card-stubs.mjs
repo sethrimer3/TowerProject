@@ -62,7 +62,7 @@ const FONT = {
   R: ["110", "101", "110", "101", "101"], S: ["011", "100", "010", "001", "110"], T: ["111", "010", "010", "010", "010"],
   U: ["101", "101", "101", "101", "111"], Y: ["101", "101", "010", "010", "010"],
   B: ["110", "101", "110", "101", "110"], C: ["011", "100", "100", "100", "011"], F: ["111", "100", "110", "100", "100"], W:["101", "101", "111", "111", "101"], " ": ["000", "000", "000", "000", "000"],
-  G: ["011", "100", "101", "101", "011"],
+  G: ["011", "100", "101", "101", "011"], "-": ["000", "000", "111", "000", "000"],
 };
 /** The card's name under its icon: on two lines when one is too wide. */
 function nameLabel(p, text) {
@@ -208,6 +208,13 @@ const ICONS = {
     px(p, [[16, 7], [16, 8], [23, 6], [24, 6], [23, 7], [24, 7], [23, 8], [24, 8], [31, 7], [31, 8]], C.gold);
     rect(p, 16, 12, 16, 1, C.gold2);
   },
+  nonBossEnemy(p) {
+    monster(p);
+    // A boss's crown, struck through.
+    rect(p, 16, 9, 16, 4, C.stone2);
+    px(p, [[16, 7], [16, 8], [23, 6], [24, 6], [23, 7], [24, 7], [23, 8], [24, 8], [31, 7], [31, 8]], C.stone2);
+    for (let i = 0; i < 12; i++) rect(p, 18 + i, 4 + Math.floor(i * 10 / 12), 2, 2, C.red);
+  },
   chest(p) {
     rect(p, 10, 18, 28, 18, C.wood2);
     rect(p, 11, 19, 26, 16, C.wood);
@@ -260,7 +267,7 @@ const ICONS = {
 
 const CARDS = [["stairs", "STAIRS"], ["heal", "HEAL"], ["door", "DOOR"], ["yellowKey", "YELLOW KEY"], ["blueKey", "BLUE KEY"], ["monster", "MONSTER"], ["atkUp", "ATK UP"], ["defUp", "DEF UP"], ["keySiphon", "KEY SIPHON"],
   ["yellowDoor", "YELLOW DOOR"], ["heartDoor", "HEART DOOR"], ["weakEnemy", "WEAK ENEMY"], ["baseEnemy", "BASE ENEMY"], ["strongEnemy", "STRONG ENEMY"],
-  ["eliteEnemy", "ELITE ENEMY"], ["bossEnemy", "BOSS ENEMY"], ["chest", "CHEST"], ["blueSiphon", "BK SIPHON"], ["blueTrader", "BK TRADER"], ["keyToHp", "YK TO HP"],
+  ["eliteEnemy", "ELITE ENEMY"], ["bossEnemy", "BOSS ENEMY"], ["nonBossEnemy", "NON-BOSS ENEMY"], ["chest", "CHEST"], ["blueSiphon", "BK SIPHON"], ["blueTrader", "BK TRADER"], ["keyToHp", "YK TO HP"],
   ["redKey", "RED KEY"], ["redSiphon", "RK SIPHON"], ["torch", "TORCH"], ["woodenDoor", "WOODEN DOOR"]];
 mkdirSync(OUT, { recursive: true });
 for (const [id, name] of CARDS) {

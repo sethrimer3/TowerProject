@@ -1,4 +1,4 @@
-import { EQUIP_MATERIALS } from "../equipment/catalog.ts";
+import { EQUIP_MATERIALS, type EquipMaterialId } from "../equipment/catalog.ts";
 import type { MissionPayout } from "../game/mission-desk.ts";
 import { MISSION_CAPACITY, MISSIONS, missionReward, WEEKLY_MAX, WEEKLY_REWARDS, weeklyReward } from "../missions/catalog.ts";
 import { isComplete, nextPeriodAt, weekEndsAt, type Mission } from "../missions/progress.ts";
@@ -14,16 +14,21 @@ const countdown = (ms: number) => shortCountdown(ms).replace(/([dh])(?=\d)/g, "$
 const amount = (icon: string, n: number, title: string) =>
   `<span class="mission-reward" title="${title}">${icon}<b>${currencyAmount(n)}</b></span>`;
 
+/** One currency a claim paid, under its Gold: its icon and the amount. */
+const paid = (icon: string, n: number, title: string) =>
+  `<i class="reveal-pay" title="${title}" aria-label="+${n} ${title}">${icon}+${n.toLocaleString("en-US")}</i>`;
+
 /** What a claim paid, risen to the middle of the screen: its Gold, the rest
- * written under it. */
+ * under it, each by its icon. */
 function payoutShown(p: MissionPayout, kicker: string): RewardShown {
+  const m = p.material, material = m?.id as EquipMaterialId | undefined;
   const rest = [
-    p.gems && `+${p.gems} Gems`,
-    p.medals && `+${p.medals} Medals`,
-    p.shards && `+${p.shards} Ascension Shards`,
-    p.material && `+${p.material.amount} ${EQUIP_MATERIALS[p.material.id as keyof typeof EQUIP_MATERIALS].name}`,
+    p.gems && paid(gemIcon(), p.gems, "Gems"),
+    p.medals && paid(medalIcon(), p.medals, "Medals"),
+    p.shards && paid(shardIcon(), p.shards, "Ascension Shards"),
+    m && material && paid(materialIcon(material), m.amount, EQUIP_MATERIALS[material].name),
   ].filter(Boolean);
-  return { icon: goldIcon(), amount: `+${p.gold.toLocaleString("en-US")}`, kicker, name: "Gold", text: rest.join(" · ") || undefined, permanent: false };
+  return { icon: goldIcon(), amount: `+${p.gold.toLocaleString("en-US")}`, kicker, name: "Gold", text: rest.join(" ") || undefined, permanent: false };
 }
 
 /** What a weekly reward paid, one celebration a currency in turn: Gold,

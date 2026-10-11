@@ -16,10 +16,10 @@ import { DamagePredictions, damageLabel } from "../src/damage-labels.ts";
 const hero = (over: Partial<Player> = {}): Player => ({ hp: 100, maxHp: 100, attack: 12, defense: 0, keys: { yellow: 0, blue: 0, red: 0 }, ...over }) as Player;
 const brute: Enemy = { name: "Brute", hp: 60, attack: 30, defense: 0, tier: 0, strength: "normal" };
 
-test("Critical is a 2 Inspiration skill under Trainers that opens Crit % and Crit x, training and research", () => {
+test("Critical is a 2 Inspiration skill under Shroud that opens Crit % and Crit x, training and research", () => {
   const row = UPGRADES.find((u) => u.id === "critical")!;
   assert.deepEqual([row.currency, row.base, row.max], ["inspiration", 2, 1]);
-  assert.deepEqual(TREES[0].nodes.find((n) => n.id === "critical")!.requires, ["trainers"]);
+  assert.deepEqual(TREES[0].nodes.find((n) => n.id === "critical")!.requires, ["shroud"]);
   for (const id of ["critChance", "critFactor"] as const) {
     const t = TRAINING.find((r) => r.id === id)!;
     assert.deepEqual([t.group, "requires" in t && t.requires], ["offense", "critical"]);

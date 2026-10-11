@@ -13,28 +13,29 @@ import type { EnemyStrength, Save, Tile } from "../src/entities.ts";
  * research instead). */
 const NODES: [UpgradeId, number, UpgradeId, CardId | null][] = [
   ["cardYellowDoor", 5, "keySiphon", "yellowDoor"],
-  ["heartDoorResilience", 10, "cardYellowDoor", null],
-  ["cardHeartDoor", 5, "heartDoorResilience", "heartDoor"],
-  ["cardWeakEnemy", 10, "heartDoorResilience", "weakEnemy"],
-  ["cardBaseEnemy", 10, "cardWeakEnemy", "baseEnemy"],
-  ["cardStrongEnemy", 10, "cardBaseEnemy", "strongEnemy"],
-  ["cardEliteEnemy", 10, "cardWeakEnemy", "eliteEnemy"],
-  ["cardBossEnemy", 10, "cardEliteEnemy", "bossEnemy"],
-  ["cardChest", 10, "cardWeakEnemy", "chest"],
-  ["blueSiphon", 10, "cardChest", "blueSiphon"],
-  ["blueTrader", 10, "blueSiphon", "blueTrader"],
-  ["keyToHp", 10, "blueTrader", "keyToHp"],
-  ["cardRedKey", 10, "blueSiphon", "redKey"],
-  ["redSiphon", 10, "cardRedKey", "redSiphon"],
-  ["floorSkipReward", 10, "blueSiphon", null],
-  ["cardTorch", 10, "floorSkipReward", "torch"],
-  ["cardWoodenDoor", 10, "floorSkipReward", "woodenDoor"],
+  ["heartDoorResilience", 20, "cardYellowDoor", null],
+  ["cardHeartDoor", 10, "heartDoorResilience", "heartDoor"],
+  ["cardWeakEnemy", 20, "heartDoorResilience", "weakEnemy"],
+  ["cardBaseEnemy", 20, "cardWeakEnemy", "baseEnemy"],
+  ["cardStrongEnemy", 20, "cardBaseEnemy", "strongEnemy"],
+  ["cardEliteEnemy", 20, "cardWeakEnemy", "eliteEnemy"],
+  ["cardBossEnemy", 20, "cardEliteEnemy", "bossEnemy"],
+  ["cardNonBossEnemy", 40, "cardBossEnemy", "nonBossEnemy"],
+  ["cardChest", 20, "cardWeakEnemy", "chest"],
+  ["blueSiphon", 20, "cardChest", "blueSiphon"],
+  ["blueTrader", 20, "blueSiphon", "blueTrader"],
+  ["keyToHp", 20, "blueTrader", "keyToHp"],
+  ["cardRedKey", 20, "blueSiphon", "redKey"],
+  ["redSiphon", 20, "cardRedKey", "redSiphon"],
+  ["floorSkipReward", 20, "blueSiphon", null],
+  ["cardTorch", 20, "floorSkipReward", "torch"],
+  ["cardWoodenDoor", 20, "floorSkipReward", "woodenDoor"],
 ];
 
 test("each card node costs its price, waits for the node above it and adds its card to the deck", () => {
   const g = new Game(defaults());
   g.save.tower.inspiration = 10_000;
-  for (const id of ["combatStance", "buildout", "trainers", "critical", "archives", "delve", "lifesteal", "buyQuantity", "thorns", "keySiphon"] as const) assert.ok(g.buy(id));
+  for (const id of ["combatStance", "buildout", "trainers", "shroud", "critical", "archives", "delve", "lifesteal", "buyQuantity", "thorns", "keySiphon"] as const) assert.ok(g.buy(id));
   const nodes = TREES.find((t) => t.id === "inspiration")!.nodes;
   for (const [id, price, requires, card] of NODES) {
     assert.deepEqual(nodes.find((n) => n.id === id)!.requires, [requires], id);
@@ -95,6 +96,12 @@ test("each enemy card heads for its own strength, the boss card for a Greater Bo
   assert.deepEqual(target(g, "bossEnemy"), [10, 1]);
   const boss = floor({ 9: enemy("boss"), 11: enemy("greaterBoss") });
   assert.deepEqual(target(boss, "bossEnemy"), [9, 1], "the closest");
+});
+
+test("the non-boss card heads for the closest enemy of any strength but a boss or Greater Boss", () => {
+  assert.deepEqual(target(floor({ 2: enemy("boss"), 3: enemy("greaterBoss"), 6: enemy("strong") }), "nonBossEnemy"), [6, 1]);
+  for (const strength of ["weak", "normal", "strong", "elite"] as const) assert.deepEqual(target(floor({ 7: enemy(strength) }), "nonBossEnemy"), [7, 1], strength);
+  assert.equal(target(floor({ 4: enemy("boss"), 9: enemy("greaterBoss") }), "nonBossEnemy"), null);
 });
 
 test("an enemy card passes over one it can't hurt", () => {

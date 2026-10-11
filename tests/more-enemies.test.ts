@@ -42,7 +42,7 @@ test("More Enemies is a rare floor badge of 30% to 90%", () => {
 });
 
 test("it sits only on a monster card, and a swap that would put it elsewhere takes it off", () => {
-  assert.deepEqual(BADGES.moreEnemies.cards, ["monster", "weakEnemy", "baseEnemy", "strongEnemy", "eliteEnemy", "bossEnemy"]);
+  assert.deepEqual(BADGES.moreEnemies.cards, ["monster", "weakEnemy", "baseEnemy", "strongEnemy", "eliteEnemy", "bossEnemy", "nonBossEnemy"]);
   assert.equal(fitsCard("moreEnemies", "door"), false);
   assert.ok(fitsCard("moreEnemies", "bossEnemy"));
   assert.ok(fitsCard("hp", "door"), "other badges sit anywhere");
@@ -65,6 +65,7 @@ test("a run's badges add each strength's percents, MONSTER covering every one", 
   assert.equal(extraEnemies(undefined), undefined);
   assert.equal(extraEnemies({ monster: { id: "hp", level: 7, pick: 0 } }), undefined);
   assert.deepEqual(extraEnemies({ bossEnemy: { id: "moreEnemies", level: 1, pick: 0 } }), { boss: 30 });
+  assert.deepEqual(extraEnemies({ nonBossEnemy: { id: "moreEnemies", level: 2, pick: 0 } }), { weak: 40, normal: 40, strong: 40, elite: 40 }, "NON-BOSS every strength but the boss");
   assert.deepEqual(
     extraEnemies({ monster: { id: "moreEnemies", level: 1, pick: 0 }, bossEnemy: { id: "moreEnemies", level: 7, pick: 0 } }),
     { weak: 30, normal: 30, strong: 30, elite: 30, boss: 120 },

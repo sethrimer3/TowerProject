@@ -2973,6 +2973,9 @@ dialog.dismiss-anywhere { cursor: pointer; }
 .reward-reveal-amount { font-size: 28px; font-weight: 500; color: #ffe7a6; letter-spacing: 1px; }
 .reward-reveal .card-reveal-text small { color: #e9c77e; }
 .reward-reveal .card-reveal-text b { color: #fbf0d4; }
+/* What else a mission paid, under its Gold: each currency's icon and amount. */
+.reward-reveal .card-reveal-text .reveal-pay { display: inline-flex; align-items: center; gap: 3px; margin: 0 6px; font-style: normal; color: #fbf0d4; }
+.reveal-pay .gem-icon, .reveal-pay .medal-icon, .reveal-pay .shard-icon, .reveal-pay .mat-icon { width: 18px; height: 18px; vertical-align: 0; }
 .reward-reveal .card-reveal-text span { color: #8d794e; }
 .reward-reveal.permanent .card-reveal-rays {
   background:

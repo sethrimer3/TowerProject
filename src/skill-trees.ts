@@ -10,45 +10,45 @@ export type SkillNode = { id: UpgradeId; icon: string; x: number; y: number; req
  * only Dev mode shows it, and its skills can't be bought). */
 export type SkillTree = { id: TreeId; name: string; currency: Currency; gate?: UpgradeId | null; description: string; height?: number; unlocks?: boolean; nodes: SkillNode[] };
 export const TREES: SkillTree[] = [
-  { id: "inspiration", name: "Inspiration", currency: "inspiration", description: "Earn Inspiration by beating your best Tower climb.", height: 352, unlocks: true, nodes: [
+  { id: "inspiration", name: "Inspiration", currency: "inspiration", description: "Earn Inspiration by beating your best Tower climb.", height: 370, unlocks: true, nodes: [
     // The hand's skills, down to the Archives: Buildout, Trainers (two rows
-    // lower), Critical (with Critical Prediction to its left). Gear and On the Job branch off
+    // lower), Shroud, Critical (with Critical Prediction to its left). Gear and On the Job branch off
     // Buildout, ATK Up and DEF Up under Gear, and Regen, then Heal, below On the Job.
     { id: "combatStance", icon: "▤", x: 50, y: 12, requires: [] },
     { id: "buildout", icon: "⚔", x: 50, y: 30, requires: ["combatStance"] },
     { id: "trainers", icon: "⚔", x: 50, y: 66, requires: ["buildout"] },
-    { id: "critical", icon: "✸", x: 50, y: 84, requires: ["trainers"] },
-    { id: "critPrediction", icon: "✸", x: 30, y: 84, requires: ["critical"] },
+    { id: "shroud", icon: "◈", x: 50, y: 84, requires: ["trainers"] },
+    { id: "critical", icon: "✸", x: 50, y: 102, requires: ["shroud"] },
+    { id: "critPrediction", icon: "✸", x: 30, y: 102, requires: ["critical"] },
     { id: "largerHand", icon: "▦", x: 80, y: 84, requires: ["trainers"] },
     { id: "gear", icon: "⚒", x: 20, y: 30, requires: ["buildout"] },
     { id: "onTheJob", icon: "¤", x: 80, y: 30, requires: ["buildout"] },
     { id: "regen", icon: "♥", x: 80, y: 48, requires: ["onTheJob"] },
     { id: "cardHeal", icon: "♥", x: 80, y: 66, requires: ["regen"] },
-    { id: "archives", icon: "▥", x: 50, y: 102, requires: ["critical"] },
+    { id: "archives", icon: "▥", x: 50, y: 120, requires: ["critical"] },
     { id: "cardAtkUp", icon: "⚔", x: 20, y: 48, requires: ["gear"] },
     { id: "cardDefUp", icon: "⛨", x: 20, y: 66, requires: ["cardAtkUp"] },
     // Research needs the Archives, so the skills that open it come after them:
     // Blue Key and Faster Trainers either side of the Archives, Rehearsed steps
     // left of Into the depths, and Pocket Money (then Spare Change, Wishing
-    // Well and Free Training below it) and Shroud after it,
-    // either side of the core path down the middle (Lifesteal, Buy Quantity, Thorns, then Key Siphon). Greater
-    // Heal stands under Shroud, Recovery and Regen Research (then Evade, then Revive) under it.
-    { id: "cardBlueKey", icon: "⚿", x: 20, y: 102, requires: ["archives"] },
-    { id: "inspirationUndos", icon: "↺", x: 20, y: 124, requires: ["archives"] },
-    { id: "delve", icon: "▼", x: 50, y: 124, requires: ["archives"] },
-    { id: "fasterTrainers", icon: "»", x: 80, y: 102, requires: ["archives"] },
-    { id: "pocketMoney", icon: "¤", x: 20, y: 142, requires: ["delve"] },
-    { id: "shroud", icon: "◈", x: 74, y: 142, requires: ["delve"] },
-    { id: "lifesteal", icon: "♥", x: 50, y: 142, requires: ["delve"] },
-    { id: "buyQuantity", icon: "×", x: 50, y: 160, requires: ["lifesteal"] },
-    { id: "thorns", icon: "✥", x: 50, y: 178, requires: ["buyQuantity"] },
-    { id: "keySiphon", icon: "⚿", x: 50, y: 196, requires: ["thorns"] },
-    { id: "spareChange", icon: "¤", x: 20, y: 160, requires: ["pocketMoney"] },
-    { id: "wealthy", icon: "¤", x: 10, y: 178, requires: ["spareChange"] },
-    { id: "loot", icon: "☠", x: 30, y: 178, requires: ["spareChange"] },
-    { id: "wishingWell", icon: "◎", x: 20, y: 196, requires: ["spareChange"] },
-    { id: "freeTraining", icon: "↑", x: 20, y: 214, requires: ["wishingWell"] },
-    { id: "greaterHeal", icon: "✚", x: 80, y: 160, requires: ["shroud"] },
+    // Well and Free Training below it) and Greater Heal after it,
+    // either side of the core path down the middle (Lifesteal, Buy Quantity, Thorns, then Key Siphon).
+    // Recovery and Regen Research (then Evade, then Revive) stand under Greater Heal.
+    { id: "cardBlueKey", icon: "⚿", x: 20, y: 120, requires: ["archives"] },
+    { id: "inspirationUndos", icon: "↺", x: 20, y: 142, requires: ["archives"] },
+    { id: "delve", icon: "▼", x: 50, y: 142, requires: ["archives"] },
+    { id: "fasterTrainers", icon: "»", x: 80, y: 120, requires: ["archives"] },
+    { id: "pocketMoney", icon: "¤", x: 20, y: 160, requires: ["delve"] },
+    { id: "lifesteal", icon: "♥", x: 50, y: 160, requires: ["delve"] },
+    { id: "buyQuantity", icon: "×", x: 50, y: 178, requires: ["lifesteal"] },
+    { id: "thorns", icon: "✥", x: 50, y: 196, requires: ["buyQuantity"] },
+    { id: "keySiphon", icon: "⚿", x: 50, y: 214, requires: ["thorns"] },
+    { id: "spareChange", icon: "¤", x: 20, y: 178, requires: ["pocketMoney"] },
+    { id: "wealthy", icon: "¤", x: 10, y: 196, requires: ["spareChange"] },
+    { id: "loot", icon: "☠", x: 30, y: 196, requires: ["spareChange"] },
+    { id: "wishingWell", icon: "◎", x: 20, y: 214, requires: ["spareChange"] },
+    { id: "freeTraining", icon: "↑", x: 20, y: 232, requires: ["wishingWell"] },
+    { id: "greaterHeal", icon: "✚", x: 80, y: 160, requires: ["delve"] },
     { id: "recovery", icon: "✦", x: 70, y: 178, requires: ["greaterHeal"] },
     { id: "findPotion", icon: "⚗", x: 70, y: 196, requires: ["recovery"] },
     { id: "regenResearch", icon: "♥", x: 90, y: 178, requires: ["greaterHeal"] },
@@ -57,28 +57,29 @@ export const TREES: SkillTree[] = [
     // The cards down the middle, a row clear of Key Siphon: Yellow Door (Key < Badges,
     // then Key ≥ Badges, to its right), Heart Door
     // Resilience (Heart Door to its left), Weak Enemy (Base, then Strong, to its left; Elite, then Boss, to its
-    // right), Chest, BK Siphon (BK Trader, then YK to HP, to its left; Red
+    // right, Non-Boss under Boss), Chest, BK Siphon (BK Trader, then YK to HP, to its left; Red
     // Key, then RK Siphon, to its right) and Floor Skip Reward (Torch to its
     // left, Steel Door to its right).
-    { id: "cardYellowDoor", icon: "⚿", x: 50, y: 250, requires: ["keySiphon"] },
-    { id: "keyLessBadges", icon: "⚿", x: 70, y: 250, requires: ["cardYellowDoor"] },
-    { id: "keyAtLeastBadges", icon: "⚿", x: 90, y: 250, requires: ["keyLessBadges"] },
-    { id: "heartDoorResilience", icon: "♥", x: 50, y: 268, requires: ["cardYellowDoor"] },
-    { id: "cardHeartDoor", icon: "♥", x: 30, y: 268, requires: ["heartDoorResilience"] },
-    { id: "cardWeakEnemy", icon: "☠", x: 50, y: 286, requires: ["heartDoorResilience"] },
-    { id: "cardBaseEnemy", icon: "☠", x: 30, y: 286, requires: ["cardWeakEnemy"] },
-    { id: "cardStrongEnemy", icon: "☠", x: 10, y: 286, requires: ["cardBaseEnemy"] },
-    { id: "cardEliteEnemy", icon: "☠", x: 70, y: 286, requires: ["cardWeakEnemy"] },
-    { id: "cardBossEnemy", icon: "☠", x: 90, y: 286, requires: ["cardEliteEnemy"] },
-    { id: "cardChest", icon: "▣", x: 50, y: 304, requires: ["cardWeakEnemy"] },
-    { id: "blueSiphon", icon: "⚿", x: 50, y: 322, requires: ["cardChest"] },
-    { id: "blueTrader", icon: "⚿", x: 30, y: 322, requires: ["blueSiphon"] },
-    { id: "keyToHp", icon: "♥", x: 10, y: 322, requires: ["blueTrader"] },
-    { id: "cardRedKey", icon: "⚿", x: 70, y: 322, requires: ["blueSiphon"] },
-    { id: "redSiphon", icon: "⚿", x: 90, y: 322, requires: ["cardRedKey"] },
-    { id: "floorSkipReward", icon: "↷", x: 50, y: 340, requires: ["blueSiphon"] },
-    { id: "cardTorch", icon: "☼", x: 30, y: 340, requires: ["floorSkipReward"] },
-    { id: "cardWoodenDoor", icon: "⚿", x: 70, y: 340, requires: ["floorSkipReward"] },
+    { id: "cardYellowDoor", icon: "⚿", x: 50, y: 268, requires: ["keySiphon"] },
+    { id: "keyLessBadges", icon: "⚿", x: 70, y: 268, requires: ["cardYellowDoor"] },
+    { id: "keyAtLeastBadges", icon: "⚿", x: 90, y: 268, requires: ["keyLessBadges"] },
+    { id: "heartDoorResilience", icon: "♥", x: 50, y: 286, requires: ["cardYellowDoor"] },
+    { id: "cardHeartDoor", icon: "♥", x: 30, y: 286, requires: ["heartDoorResilience"] },
+    { id: "cardWeakEnemy", icon: "☠", x: 50, y: 304, requires: ["heartDoorResilience"] },
+    { id: "cardBaseEnemy", icon: "☠", x: 30, y: 304, requires: ["cardWeakEnemy"] },
+    { id: "cardStrongEnemy", icon: "☠", x: 10, y: 304, requires: ["cardBaseEnemy"] },
+    { id: "cardEliteEnemy", icon: "☠", x: 70, y: 304, requires: ["cardWeakEnemy"] },
+    { id: "cardBossEnemy", icon: "☠", x: 90, y: 304, requires: ["cardEliteEnemy"] },
+    { id: "cardNonBossEnemy", icon: "☠", x: 90, y: 322, requires: ["cardBossEnemy"] },
+    { id: "cardChest", icon: "▣", x: 50, y: 322, requires: ["cardWeakEnemy"] },
+    { id: "blueSiphon", icon: "⚿", x: 50, y: 340, requires: ["cardChest"] },
+    { id: "blueTrader", icon: "⚿", x: 30, y: 340, requires: ["blueSiphon"] },
+    { id: "keyToHp", icon: "♥", x: 10, y: 340, requires: ["blueTrader"] },
+    { id: "cardRedKey", icon: "⚿", x: 70, y: 340, requires: ["blueSiphon"] },
+    { id: "redSiphon", icon: "⚿", x: 90, y: 340, requires: ["cardRedKey"] },
+    { id: "floorSkipReward", icon: "↷", x: 50, y: 358, requires: ["blueSiphon"] },
+    { id: "cardTorch", icon: "☼", x: 30, y: 358, requires: ["floorSkipReward"] },
+    { id: "cardWoodenDoor", icon: "⚿", x: 70, y: 358, requires: ["floorSkipReward"] },
   ] },
   { id: "courage", name: "Courage", currency: "courage", gate: "delve", description: "Earn Courage by beating your best Delve depth.", height: 198, nodes: [
     { id: "moveSpeed", icon: "»", x: 50, y: 10, requires: ["delve"] },

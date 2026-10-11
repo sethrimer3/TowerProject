@@ -15,13 +15,13 @@ test("Rehearsed steps costs 5; Lifesteal (10) follows Into the depths, Buy Quant
   assert.equal(cost("inspirationUndos", 0), 5);
   const g = new Game(defaults());
   g.save.tower.inspiration = 1000;
-  for (const id of ["combatStance", "buildout", "trainers", "critical", "archives"] as const) assert.ok(g.buy(id));
+  for (const id of ["combatStance", "buildout", "trainers", "shroud", "critical", "archives"] as const) assert.ok(g.buy(id));
   assert.equal(g.buy("lifesteal"), false, "waits for Into the depths");
   assert.ok(g.buy("delve"));
   assert.equal(g.buy("buyQuantity"), false, "waits for Lifesteal");
   assert.equal(g.buy("thorns"), false, "waits for Buy Quantity");
   assert.equal(g.buy("keySiphon"), false, "waits for Thorns");
-  assert.equal(g.buy("regenResearch"), false, "waits for Shroud and Greater Heal");
+  assert.equal(g.buy("regenResearch"), false, "waits for Greater Heal");
   const before = g.save.tower.inspiration;
   assert.ok(g.buy("lifesteal"));
   assert.equal(before - g.save.tower.inspiration, 10);
@@ -33,11 +33,10 @@ test("Rehearsed steps costs 5; Lifesteal (10) follows Into the depths, Buy Quant
   assert.ok(g.buy("keySiphon"));
   assert.equal(before - g.save.tower.inspiration, 10 + 5 + 10 + 5);
   assert.ok(deckCards(g.save.upgrades).includes("keySiphon"), "its card joins the deck");
-  assert.ok(g.buy("shroud"));
   assert.equal(g.buy("regenResearch"), false, "waits for Greater Heal");
   assert.ok(g.buy("greaterHeal"));
   assert.ok(g.buy("regenResearch"));
-  assert.equal(before - g.save.tower.inspiration, 10 + 5 + 10 + 5 + 3 + 2 + 10);
+  assert.equal(before - g.save.tower.inspiration, 10 + 5 + 10 + 5 + 3 + 10);
 });
 
 test("Regen research: +3% Regen a level, priced and timed like Potion HP, needing Regen Research", () => {

@@ -29,7 +29,7 @@ test("Thorns sits between Buy Quantity and Key Siphon, Evade between Regen Resea
   assert.deepEqual([node("evade").requires, node("revive").requires], [["regenResearch"], ["evade"]]);
   const g = new Game(defaults());
   g.save.tower.inspiration = 1000;
-  for (const id of ["combatStance", "buildout", "trainers", "critical", "archives", "delve", "shroud", "greaterHeal"] as const) assert.ok(g.buy(id));
+  for (const id of ["combatStance", "buildout", "trainers", "shroud", "critical", "archives", "delve", "greaterHeal"] as const) assert.ok(g.buy(id));
   assert.equal(g.buy("evade"), false, "waits for Regen Research");
   assert.ok(g.buy("regenResearch"));
   assert.equal(g.buy("revive"), false, "waits for Evade");
