@@ -174,7 +174,7 @@ try {
         Object.assign(s.equipment, {
           items: [
             item("e1", "knightsSword", "uncommon", 12, { spent: { gold: 3300, material: 70 }, slots: [{ effect: "keenEdge", rarity: "common", refinement: 7 }] }),
-            item("e2", "knightsSword", "common", 1), item("e3", "knightsSword", "common", 4), item("e4", "knightsSword", "common", 1),
+            item("e2", "knightsSword", "uncommon", 1), item("e3", "knightsSword", "uncommon", 4), item("e4", "knightsSword", "uncommon", 1),
             item("e5", "ringOfFury", "rare", 1, { locked: true }), item("e6", "steelCuirass", "common", 3), item("e7", "bastionPlate", "uncommon", 1),
           ],
           equipped: { tower: { weapon: "e1", ring: "e5" }, delve: {} },
@@ -708,7 +708,7 @@ try {
   await click("#eq-back");
   await click("#eq-close");
   await click('[data-eq-cat="weapon"]');
-  await click('[data-eq-rar="common"]');
+  await click('[data-eq-rar="uncommon"]');
   await shot("equipment.filtered");
   await click('[data-eq-select="toggle"]');
   await click('.eq-grid [data-eq-item="e2"]');

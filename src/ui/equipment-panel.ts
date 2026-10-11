@@ -392,7 +392,7 @@ export class EquipmentPanel {
   showHelp() {
     const salvage = EQUIP_RARITIES.map((r) => `${RARITY_TIERS[r].name} ${RARITY_TIERS[r].salvage}`).join(" · ");
     showHelp(this.ctx, "GEAR", "Equipment", `<p><b>Wearing.</b> Each hero wears one piece of each kind; the Tower and the Delve keep separate loadouts. Tap a piece to equip, level or lock it. Bosses may drop Standard pieces; Gem pulls bring Unique ones.</p>
-      <p><b>Assemble.</b> Three copies of a piece at the same rarity make one of the next rarity, with a higher level cap. The piece kept keeps its level, effect slots and Refinement; what was put into the others is lost. Locked and worn copies don't count.</p>
+      <p><b>Assemble.</b> Three copies of a piece at the same rarity (Uncommon or above; Common pieces never merge) make one of the next rarity, with a higher level cap. The piece kept keeps its level, effect slots and Refinement; what was put into the others is lost. Locked and worn copies don't count.</p>
       <p><b>Acquire.</b> Each pull brings a Unique piece at a rolled rarity, of the chosen category, or of a random one for ${PULL_ALL_DISCOUNT}% less. The ${PITY}th pull in a row without a Rare in a category is a Rare.</p>
       <p><b>Salvage.</b> Dismantling turns a piece into its category's material (${salvage}; Unique twice that), not returning upgrades. Locked and worn pieces are never included; press Select to choose pieces one by one. With Auto-salvage on, Common pieces bosses drop are dismantled as they drop, and those Gem pulls bring once pulled.</p>`);
   }
@@ -456,6 +456,7 @@ export class EquipmentPanel {
    * rarity opens (a higher cap and another effect slot). */
   private progressHtml(item: EquipItem) {
     const next = RARITY_TIERS[item.rarity].next;
+    if (!next && item.rarity === "common") return `<p class="hint">${RARITY_TIERS.common.name} pieces can't be merged: wear them as they are, or salvage them.</p>`;
     if (!next) return `<p class="hint">Top rarity: every effect slot opens by leveling.</p>`;
     const t = RARITY_TIERS[next];
     return `<p class="hint">Next rarity: ${rarityTag(next)} raises the level cap to ${t.maxLevel}; Level ${t.slotLevel} then opens effect slot ${rarityRank(next) + 1}.</p>`;

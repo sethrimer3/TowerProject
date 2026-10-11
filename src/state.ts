@@ -89,8 +89,8 @@ import { LEAGUE_INFO } from "./tournament/leagues.ts";
 import { runStream, tournamentScore, type TournamentRun } from "./tournament/run.ts";
 import type { TournamentInfo } from "./tournament/server.ts";
 import { raised, wornEffects } from "./equipment/effects.ts";
-import { RARITY_TIERS } from "./equipment/balance.ts";
-import { EQUIP_MATERIALS, EQUIP_MATERIAL_IDS, itemDef } from "./equipment/catalog.ts";
+import { RARITY_TIERS, type EquipRarity } from "./equipment/balance.ts";
+import { EQUIP_MATERIALS, EQUIP_MATERIAL_IDS, itemDef, type EquipMaterialId } from "./equipment/catalog.ts";
 import { readyForestRuns, startingHero } from "./game/hero-sync.ts";
 /** How a new run starts: out in the forest or at the entrance, and from
  * which seed (rolled from the game's randomness when left out). */
@@ -109,7 +109,8 @@ export type RouteEffects = {
  * a plus, `raised`, the max HP Max HP's badge added), or as `text` where it
  * has none. */
 export type Gain = { x: number; y: number; text: string; art: GainArt | null };
-export type GainArt = { tile: Tile; spent?: true } | { material: MaterialId; quantity: number } | { heart: true; raised?: true } | { gem: true } | { coin: Coin };
+export type GainArt = { tile: Tile; spent?: true } | { material: MaterialId; quantity: number } | { heart: true; raised?: true } | { gem: true } | { coin: Coin }
+  | { equipMaterial: EquipMaterialId; quantity: number } | { equipPiece: string; rarity: EquipRarity };
 /** The coin a Gold or Silver gain raises. */
 export type Coin = "gold" | "silver";
 /** A potion's heal: the HP from and to, where the hero stood, and its number. */
@@ -1780,9 +1781,9 @@ export class Game {
     this.gainCoins(at, gold, silver);
     if (equipment?.item || equipment?.salvaged) this.events.record("equipment", 1, this.missionKey(at));
     if (fight.crits) this.events.record("crits", fight.crits, this.missionKey(at));
-    const found = equipmentTexts(equipment);
-    for (const text of found) this.gain(at.x, at.y, text);
-    this.message = [fightText(fight), ...coinsText(gold, silver), ...found].join(" · ");
+    const found = equipmentGains(equipment);
+    for (const { text, art } of found) this.gain(at.x, at.y, text, art);
+    this.message = [fightText(fight), ...coinsText(gold, silver), ...found.map((g) => g.text)].join(" · ");
     return true;
   }
   /** A kill counts toward the missions and the Event for its strength, once a tile. */
@@ -2332,14 +2333,16 @@ function fightText({ enemy, damage, revived }: FightEnd) {
   return damage ? `−${wholeChange(damage)} HP · ${enemyTitle(enemy)} defeated` : "Unscathed victory";
 }
 
-/** What a kill gave toward Equipment, as the status line and the board name it. */
-function equipmentTexts(loot: EquipmentLoot | null) {
+/** What a kill gave toward Equipment: the status line's words for each, and
+ * the icon that rises off the board for it (a material with its count, or
+ * the piece itself). */
+function equipmentGains(loot: EquipmentLoot | null): { text: string; art: GainArt }[] {
   if (!loot) return [];
-  const texts: string[] = [];
-  if (loot.materials) texts.push(`+${loot.materials.quantity} ${EQUIP_MATERIALS[loot.materials.id].name}`);
-  if (loot.item) texts.push(`${RARITY_TIERS[loot.item.rarity].name} ${itemDef(loot.item.def)!.name}!`);
-  if (loot.salvaged) texts.push(`${loot.salvaged.auto ? "Auto-salvaged" : "Inventory full"} · +${loot.salvaged.quantity} ${EQUIP_MATERIALS[loot.salvaged.id].name}`);
-  return texts;
+  const gains: { text: string; art: GainArt }[] = [];
+  if (loot.materials) gains.push({ text: `+${loot.materials.quantity} ${EQUIP_MATERIALS[loot.materials.id].name}`, art: { equipMaterial: loot.materials.id, quantity: loot.materials.quantity } });
+  if (loot.item) gains.push({ text: `${RARITY_TIERS[loot.item.rarity].name} ${itemDef(loot.item.def)!.name}!`, art: { equipPiece: loot.item.def, rarity: loot.item.rarity } });
+  if (loot.salvaged) gains.push({ text: `${loot.salvaged.auto ? "Auto-salvaged" : "Inventory full"} · +${loot.salvaged.quantity} ${EQUIP_MATERIALS[loot.salvaged.id].name}`, art: { equipMaterial: loot.salvaged.id, quantity: loot.salvaged.quantity } });
+  return gains;
 }
 /** A kill's Gold (when it paid any) and Silver, as the status line names them. */
 const coinsText = (gold: number, silver: number) => [...(gold ? [`+${wholeChange(gold)} Gold`] : []), `+${wholeChange(silver)} Silver`];

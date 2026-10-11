@@ -4,6 +4,8 @@ import type { Coin, Encounter, Gain, GainArt, Heal, ShownFight } from "./state.t
 import { paintContents } from "./tile-painters.ts";
 import { materialImage } from "./material-sprites.ts";
 import { paintGem } from "./gem-art.ts";
+import { RARITY_TIERS } from "./equipment/balance.ts";
+import { iconPixels, materialPixels } from "./ui/equipment-icons.ts";
 import { tileCenter, toTileSpace, type FrameContext } from "./render-frame.ts";
 
 /** How long each popup shows, and the fade that ends it (ms). */
@@ -288,12 +290,14 @@ function struckAt(fight: ShownFight, s: Strike, won: boolean) {
   return fight.summary && won && s.at === fight.bout.duration ? fight.to : fight.from;
 }
 
-/** Art drawn without an image: a tile's contents, or the Gem. */
-const paintsItself = (art: GainArt) => "tile" in art || "gem" in art;
+/** Art drawn without an image: a tile's contents, the Gem, or Equipment's
+ * pixel icons. */
+const paintsItself = (art: GainArt) => "tile" in art || "gem" in art || "equipMaterial" in art || "equipPiece" in art;
 
 /** The image a gain's art draws from, or null where it has none or it is
  * still loading. */
 function artImage(art: GainArt): CanvasImageSource | null {
+  if ("equipMaterial" in art || "equipPiece" in art) return null;
   if ("material" in art) return materialImage(art.material);
   if ("heart" in art) return heart();
   return "coin" in art ? coinImage(art.coin) : null;
@@ -301,12 +305,23 @@ function artImage(art: GainArt): CanvasImageSource | null {
 
 /** A gain's art in tile space: a tile's contents (a key a door took with
  * its minus sign), the Gem, a coin after its amount, the Heart Door's heart
- * with a check (with a plus for max HP raised), or a material with its
- * count. */
+ * with a check (with a plus for max HP raised), a material with its count,
+ * or an Equipment piece with its rarity's mark. */
 function paintArt(c: CanvasRenderingContext2D, f: FrameContext, p: Popup & { gain: Gain }, image: CanvasImageSource | null) {
   const art = p.gain.art!;
   if ("tile" in art) return paintSpentTile(c, f, p, art);
   if ("gem" in art) return paintGem(c, f.now, true);
+  if ("equipMaterial" in art) {
+    paintPixels(c, materialPixels(art.equipMaterial));
+    if (art.quantity > 1) mark(c, `×${art.quantity}`, { x: 18, y: 21 }, { color: REWARD_COLOR, size: 8, align: "left" });
+    return;
+  }
+  if ("equipPiece" in art) {
+    const tier = RARITY_TIERS[art.rarity];
+    paintPixels(c, iconPixels(art.equipPiece));
+    mark(c, tier.mark, { x: 19, y: 21 }, { color: tier.color, size: 8, align: "left" });
+    return;
+  }
   c.imageSmoothingEnabled = false;
   if ("coin" in art) {
     // The amount, then the coin: "+5 ●" in place of "+5 Gold".
@@ -319,6 +334,15 @@ function paintArt(c: CanvasRenderingContext2D, f: FrameContext, p: Popup & { gai
   } else {
     c.drawImage(image!, 3, 3, 18, 18);
     if (art.quantity > 1) mark(c, `×${art.quantity}`, { x: 18, y: 21 }, { color: REWARD_COLOR, size: 8, align: "left" });
+  }
+}
+
+/** A 12×12 pixel icon (Equipment's) filling the same 18 px square as a
+ * material's sprite. */
+function paintPixels(c: CanvasRenderingContext2D, pixels: { x: number; y: number; color: string }[]) {
+  for (const px of pixels) {
+    c.fillStyle = px.color;
+    c.fillRect(3 + px.x * 1.5, 3 + px.y * 1.5, 1.5, 1.5);
   }
 }
 

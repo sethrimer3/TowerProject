@@ -224,10 +224,14 @@ function pixelSvg(rows: string[], className: string) {
 
 /** A piece's rows, by definition id: its own, or its category's. */
 export const pieceRows = (def: string) => ITEM_ROWS[def] ?? CATEGORY_ROWS[itemDef(def)?.category ?? "weapon"];
-/** A piece's icon as coloured pixels on its 12×12 grid, for drawing on a
- * canvas (the slag of an assemble). */
-export const iconPixels = (def: string) =>
-  pieceRows(def).flatMap((row, y) => [...row].flatMap((ch, x) => (PALETTE[ch] ? [{ x, y, color: PALETTE[ch] }] : [])));
+/** Icon rows as coloured pixels on their 12×12 grid, for drawing on a canvas. */
+const pixels = (rows: string[]) => rows.flatMap((row, y) => [...row].flatMap((ch, x) => (PALETTE[ch] ? [{ x, y, color: PALETTE[ch] }] : [])));
+/** A piece's icon as coloured pixels (the slag of an assemble, a boss's
+ * drop rising off the board). */
+export const iconPixels = (def: string) => pixels(pieceRows(def));
+/** An upgrade material's icon as coloured pixels (a kill's materials rising
+ * off the board). */
+export const materialPixels = (id: EquipMaterialId) => pixels(MATERIAL_ROWS[id]);
 /** A category's icon (the shape of its piece), for filters and empty places. */
 export const categoryIcon = (id: CategoryId, className = "equip-icon") => pixelSvg(CATEGORY_ROWS[id], className);
 /** A piece's own icon, by its definition id. */

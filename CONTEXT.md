@@ -49,7 +49,7 @@ A category's leveling currency (Whetstone, Iron Rivets …), dropped by enemies 
 _Avoid_: crafting material, monster part
 
 **Merge**:
-Three copies of a piece at one rarity becoming one of the next rarity; the chosen target keeps its level. The Equipment screen calls it **Assemble**.
+Three copies of a piece at one rarity (Uncommon or above; Common pieces never merge) becoming one of the next rarity; the chosen target keeps its level. The Equipment screen calls it **Assemble**.
 _Avoid_: fuse, combine
 
 **Dismantle**:

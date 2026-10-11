@@ -80,7 +80,7 @@ test("leveling past the old cap opens the next slot", () => {
 test("merging keeps effects, Refinement and the lock; leveling past the old cap then opens a slot", () => {
   const e = open();
   stock(e);
-  const target = piece(e, "travelersBoots", "common", 20);
+  const target = piece(e, "travelersBoots", "uncommon", 40);
   settle(e, target, 0);
   for (let i = 0; i < 3; i++) {
     refine(e, rich(), target.id, 0, false, seed);
@@ -88,16 +88,16 @@ test("merging keeps effects, Refinement and the lock; leveling past the old cap 
   }
   setLocked(e, target.id, true);
   const before = structuredClone(target.slots);
-  const copies = [addItem(e, "travelersBoots", "common")!, addItem(e, "travelersBoots", "common")!];
+  const copies = [addItem(e, "travelersBoots", "uncommon")!, addItem(e, "travelersBoots", "uncommon")!];
   copies.forEach((c) => settle(e, c, 0));
   merge(e, target.id, copies.map((c) => c.id));
-  assert.equal(target.rarity, "uncommon");
-  assert.equal(target.level, 20);
+  assert.equal(target.rarity, "rare");
+  assert.equal(target.level, 40);
   assert.equal(target.locked, true);
   assert.deepEqual(target.slots, before, "effects and Refinement untouched by the merge");
   assert.equal(target.slots[0].refinement, 3);
   levelUp(e, rich(), target.id, 1, false);
-  assert.equal(target.slots.length, 2);
+  assert.equal(target.slots.length, 3);
   assert.deepEqual(target.slots[0], before[0]);
 });
 
