@@ -12,6 +12,13 @@ export function random(seed: number) {
   };
 }
 
+/** How far mulberry32's state moves each draw: the stream's `n`th number
+ * is the first of the stream started `n` steps on. */
+const STREAM_STEP = 0x6d2b79f5;
+/** The number after the first `n` of the stream `random(seed)`, drawn
+ * without the ones before it, so a run can keep just a count of its draws. */
+export const drawAt = (seed: number, n: number) => random((seed + Math.imul(n, STREAM_STEP)) >>> 0)();
+
 /** A fixed number in [0, 1) for tile (x, y) under `seed`, with no stream
  * to consume. */
 export function tileRandom(x: number, y: number, seed: number) {

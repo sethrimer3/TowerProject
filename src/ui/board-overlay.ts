@@ -5,6 +5,10 @@ import type { Renderer } from "../rendering.ts";
 import { el } from "./dom.ts";
 import { routeTotalLines, tileInfo, tileInfoLine } from "./tile-info.ts";
 
+/** How long the free levels' box shows; its fade over the last half second
+ * is in `style.css` (`free-training-fade`). */
+const FREE_TRAINING_MS = 2000;
+
 /** The board's tap feedback: a highlighted tile, its inspect box, and the
  * route totals box. A first tap on a tile previews it (and the route there);
  * tapping it again, or any tap with "Move with one tap" on, walks there. */
@@ -20,6 +24,9 @@ export class BoardOverlay {
   private route: Step[] | null = null;
   /** Where the highlight was last placed (`track`), and whether on screen. */
   private placed = "";
+  /** The free levels last announced, and the timer that hides them. */
+  private freeShown: Game["freeTrained"] = null;
+  private freeTimer: ReturnType<typeof setTimeout> | undefined;
 
   /** `blacksmith` opens the Equipment screen (the forest's Blacksmith
    * tapped), `hall` the Tournament page (its Hall tapped). */
@@ -160,6 +167,35 @@ export class BoardOverlay {
   private shows(where: "popup" | "status") {
     const infoDisplay = this.game.save.settings.infoDisplay;
     return infoDisplay === where || infoDisplay === "both";
+  }
+
+  /** Announces the free levels Free Training gave (`game.freeTrained`):
+   * a box at the bottom left of the board, a line for each stat ("+1 ATK"),
+   * shown for `FREE_TRAINING_MS` and fading out over the last half second
+   * (its animation in `style.css`). Newer levels
+   * replace it. Run each board frame. */
+  showFreeTraining() {
+    const given = this.game.freeTrained;
+    if (!given || given === this.freeShown) return;
+    this.freeShown = given;
+    const elapsed = performance.now() - given.at;
+    if (elapsed >= FREE_TRAINING_MS) return;
+    const box = el("free-training-box"), r = this.renderer,
+      frameRect = el("board-frame").getBoundingClientRect(),
+      canvasRect = r.canvas.getBoundingClientRect(),
+      status = el("status-row").getBoundingClientRect();
+    // Just above the status line where it lies over the board's foot.
+    const foot = status.top < canvasRect.bottom && status.bottom > canvasRect.top ? status.top : canvasRect.bottom;
+    box.innerHTML = given.lines.map((line) => `<div>${line}</div>`).join("");
+    box.style.left = `${canvasRect.left - frameRect.left + 6}px`;
+    box.style.bottom = `${frameRect.bottom - foot + 4}px`;
+    // Restarts the fade, already `elapsed` into it.
+    box.hidden = true;
+    box.style.animationDelay = `${-elapsed}ms`;
+    void box.offsetWidth;
+    box.hidden = false;
+    clearTimeout(this.freeTimer);
+    this.freeTimer = setTimeout(() => (box.hidden = true), FREE_TRAINING_MS - elapsed);
   }
 
   /** Where tile (x, y) sits inside the board frame, in CSS pixels. */

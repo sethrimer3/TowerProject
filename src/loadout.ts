@@ -3,7 +3,7 @@ import { bulkBuy, type BuyQuantity } from "./buy-quantity.ts";
 import { snap } from "./exact.ts";
 import type { CritRule } from "./combat.ts";
 import type { Mode, Save } from "./entities.ts";
-import { CRIT_CHANCE_RANK, CRIT_FACTOR_BASE, CRIT_FACTOR_RANK, FIND_POTION_BASE, FIND_POTION_MAX, FLOOR_GOLD_BASE, FLOOR_GOLD_RANK, FLOOR_SILVER_BASE, FLOOR_SILVER_RANK, FIND_POTION_RANK, REVIVE_BASE, REVIVE_MAX, REVIVE_RANK, GOLD_SHOP, KILL_GOLD_RANK, SILVER_BONUS_RANK, schedulePrice, POTION_PERCENT_BASE, POTION_PERCENT_RANK, TRAINING, TRAINING_PER_LEVEL, UPGRADES, isStatRow, levelForXp, trained, trainingOpen, trainingWorth, type GoldItemId, type StatTrainingRow, type TrainingId, type TrainingRow, type UpgradeId } from "./config.ts";
+import { CRIT_CHANCE_RANK, CRIT_FACTOR_BASE, CRIT_FACTOR_RANK, FIND_POTION_BASE, FIND_POTION_MAX, FLOOR_GOLD_BASE, FLOOR_GOLD_RANK, FLOOR_SILVER_BASE, FLOOR_SILVER_RANK, FIND_POTION_RANK, FREE_TRAINING_RANK, TRAINING_GROUPS, REVIVE_BASE, REVIVE_MAX, REVIVE_RANK, GOLD_SHOP, KILL_GOLD_RANK, SILVER_BONUS_RANK, schedulePrice, POTION_PERCENT_BASE, POTION_PERCENT_RANK, TRAINING, TRAINING_PER_LEVEL, UPGRADES, isStatRow, levelForXp, trained, trainingOpen, trainingWorth, type GoldItemId, type StatTrainingRow, type TrainingId, type TrainingRow, type UpgradeId } from "./config.ts";
 import { wornEffects } from "./equipment/effects.ts";
 import { PIERCE_CAP } from "./equipment/balance.ts";
 import { RESEARCH, researched } from "./archives.ts";
@@ -230,6 +230,14 @@ export const silverBonus = (save: Pick<Save, "upgrades" | "training">) =>
 export const killGold = (save: Pick<Save, "upgrades" | "training">) =>
   bonusAt(save.upgrades.loot ? save.training.killGold : 0, KILL_GOLD_RANK);
 const bonusAt = (ranks: number, rank: number) => 100 + rank * ranks;
+/** The Free Upgrade row training each group's free levels. */
+export const FREE_TRAINING_ROWS = { offense: "freeOffense", defense: "freeDefense", utility: "freeUtility" } as const satisfies Record<keyof typeof TRAINING_GROUPS, TrainingId>;
+const FREE_ROWS: ReadonlySet<TrainingId> = new Set(Object.values(FREE_TRAINING_ROWS));
+/** The chance each floor passed in a run trains a stat of `group` a level
+ * for free, in hundredths of a percent: none without Free Training. */
+export const freeTrainingChance = (save: Pick<Save, "upgrades" | "training">, group: keyof typeof TRAINING_GROUPS) =>
+  save.upgrades.freeTraining ? freeTrainingAt(save.training[FREE_TRAINING_ROWS[group]]) : 0;
+const freeTrainingAt = (ranks: number) => FREE_TRAINING_RANK * ranks;
 /** The training rows shown as a multiplier (×1.30), their value in percent,
  * and what a rank adds. */
 const MULTIPLIER_ROWS: ReadonlyMap<TrainingId, number> = new Map([["silverBonus", SILVER_BONUS_RANK], ["killGold", KILL_GOLD_RANK]]);
@@ -317,5 +325,6 @@ function valueStep(id: TrainingId, ranks: number, maxed: boolean, count = 1) {
 function percentRow(id: TrainingId): [(ranks: number) => number, number] {
   if (id === "findPotion") return [findPotionChance, FIND_POTION_RANK];
   if (id === "revive") return [reviveChanceAt, REVIVE_RANK];
+  if (FREE_ROWS.has(id)) return [freeTrainingAt, FREE_TRAINING_RANK];
   return [(r: number) => POTION_PERCENT_BASE + POTION_PERCENT_RANK * r, POTION_PERCENT_RANK];
 }

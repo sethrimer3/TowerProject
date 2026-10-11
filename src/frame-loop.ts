@@ -21,7 +21,8 @@ export type FrameLoopHost = {
   vitals(): void;
   /** Moves on the purse's Gold and Silver while they count up. */
   purse(time: number): void;
-  /** Keeps the tile highlight on its tile as the camera moves. */
+  /** Keeps the tile highlight on its tile as the camera moves, and shows
+   * Free Training's levels as they are given. */
   highlight(): void;
   save(): void;
 };

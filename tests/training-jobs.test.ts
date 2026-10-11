@@ -6,6 +6,7 @@ import { RUN_TRAINING_PRICES, TRAINER_GOLD_CURVES, TRAINING, xpForLevel } from "
 import { loadout, trainingPoints, trainingStep } from "../src/loadout.ts";
 import { BOOST_MAX_MS, claimBoost, doneAt, finishGems, trainingGold, trainingMs, trainingSeconds, workLeft } from "../src/training-jobs.ts";
 import { RESEARCH } from "../src/archives.ts";
+import { silverPrice } from "../src/run-training.ts";
 
 const HOUR = 3_600_000;
 const game = (level = 10) => {
@@ -35,8 +36,9 @@ test("a trainer's Gold: 20 a point, times the rank's number, times 1 + ranks / t
   // The dearer a row's first Silver rank, the steeper its trainers, and rows
   // that start alike in Silver share a trainer curve.
   const silverBase = (id: keyof typeof RUN_TRAINING_PRICES) => RUN_TRAINING_PRICES[id].base;
-  // (The crit rows' growth is on a cubic curve of its own and doesn't compare.)
-  const linear = TRAINING.filter((t) => !TRAINER_GOLD_CURVES[t.id].power);
+  // (The crit rows' growth is on a cubic curve of its own, and the Free
+  // Upgrade rows start from their own price, so neither compares.)
+  const linear = TRAINING.filter((t) => !TRAINER_GOLD_CURVES[t.id].power && !TRAINER_GOLD_CURVES[t.id].start);
   for (const a of linear) for (const b of linear) {
     const [ga, gb] = [TRAINER_GOLD_CURVES[a.id].growth, TRAINER_GOLD_CURVES[b.id].growth];
     if (silverBase(a.id) < silverBase(b.id)) assert.ok(ga > gb, `${a.id} softer than ${b.id}`);
@@ -344,8 +346,18 @@ test("a cubic scale adds (ranks / cubic)^3 to a trainer's Gold: never below the 
     const c = TRAINER_GOLD_CURVES[t.id];
     if (c.power) continue;
     assert.ok(c.cubic, `${t.id} has a cubic scale`);
-    const linear = (r: number) => Math.ceil(20 * t.cost * (r + 1) * (c.growth + r) / c.growth);
+    const linear = (r: number) => Math.ceil((c.start ?? 20) * t.cost * (r + 1) * (c.growth + r) / c.growth);
     for (const r of [0, 1, 10, Math.floor(t.max / 2), t.max - 1]) assert.ok(trainingGold(t, r) >= linear(r), `${t.id} rank ${r}`);
-    assert.ok(trainingGold(t, t.max - 1) > 3 * linear(t.max - 1), `${t.id} much dearer at its cap`);
+    // The Free Upgrade rows' 100 ranks end at less than twice their linear price.
+    if (!c.start) assert.ok(trainingGold(t, t.max - 1) > 3 * linear(t.max - 1), `${t.id} much dearer at its cap`);
+  }
+});
+
+test("the Free Upgrade rows: 75 Gold for the first rank, 1,582 for the 11th, 9,771 for the 32nd, 92,815 for the 87th, 136,855 for the 100th, the same in Silver", () => {
+  for (const id of ["freeOffense", "freeDefense", "freeUtility"] as const) {
+    const gold = (n: number) => trainingGold({ id, cost: 1 }, n - 1);
+    assert.deepEqual([1, 10, 11, 32, 87, 100].map(gold), [75, 1368, 1582, 9771, 92815, 136855]);
+    for (let n = 1; n <= 100; n++) assert.equal(silverPrice(id, n - 1), gold(n), `${id} rank ${n} costs as much Silver as Gold`);
+    assert.equal(TRAINING.find((t) => t.id === id)!.max, 100);
   }
 });

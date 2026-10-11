@@ -383,6 +383,14 @@ export const UPGRADES = [
     max: 1,
     currency: "inspiration",
   },
+  {
+    id: "freeTraining",
+    name: "Free Training",
+    description: "Opens Free Offense, Defense and Utility Upgrade training: each floor passed in a run may train a stat for free",
+    base: 20,
+    max: 1,
+    currency: "inspiration",
+  },
   // The cards below Buy Quantity: the doors, the enemies by strength, then
   // chests, Heart Door Resilience, the key trades, Floor Skip Reward, torches
   // and Steel Doors.
@@ -555,6 +563,9 @@ export const TRAINING = [
   { id: "floorSilver", name: "Silver / Floor", group: "utility", requires: "wishingWell", cost: 1, max: 150, description: "Raises the Silver paid for each floor climbed for the first time in a run." },
   { id: "silverBonus", name: "Silver Bonus", group: "utility", requires: "wealthy", cost: 1, max: 150, description: "Multiplies all Silver found in a run." },
   { id: "killGold", name: "Gold / Kill", group: "utility", requires: "loot", cost: 1, max: 150, description: "Multiplies the Gold each kill pays." },
+  { id: "freeOffense", name: "Free Offense Upgrade", group: "utility", requires: "freeTraining", cost: 1, max: 100, description: "Each floor passed in a run has a chance to train a random Offense stat one level for free, for the run." },
+  { id: "freeDefense", name: "Free Defense Upgrade", group: "utility", requires: "freeTraining", cost: 1, max: 100, description: "Each floor passed in a run has a chance to train a random Defense stat one level for free, for the run." },
+  { id: "freeUtility", name: "Free Utility Upgrade", group: "utility", requires: "freeTraining", cost: 1, max: 100, description: "Each floor passed in a run has a chance to train a random Utility stat one level for free, for the run." },
 ] as const;
 export type TrainingId = (typeof TRAINING)[number]["id"];
 export type TrainingRow = (typeof TRAINING)[number];
@@ -591,6 +602,10 @@ export const FLOOR_SILVER_BASE = 3, FLOOR_SILVER_RANK = 3;
 /** What each Silver Bonus or Gold / Kill rank adds to its multiplier, in
  * percent (×1 with no ranks). */
 export const SILVER_BONUS_RANK = 1, KILL_GOLD_RANK = 3;
+/** The chance each floor passed in a run trains a stat of a Free Upgrade
+ * row's group a level for free, in hundredths of a percent: 0.5% a rank,
+ * 50% at its 100. */
+export const FREE_TRAINING_RANK = 50;
 /** A price that rises with each purchase (a Training row's Silver inside a
  * run, a provision's Gold): the first costs `base`, and each one after
  * costs more than the last by `step` plus the number already bought, the
@@ -598,8 +613,18 @@ export const SILVER_BONUS_RANK = 1, KILL_GOLD_RANK = 3;
  * for the next five, then +4+N, +7+N … With `compound`, that price is
  * then multiplied by `compound` for each one already bought, rounded up.
  * Or, with `ratio`, each costs `ratio` times the one before; or, with
- * `power`, the n-th costs `base` × n × (1 + ((n − 1) / `growth`)^`power`). */
-export type PriceSchedule = { base: number; step: number; growth: number; compound?: number } | { base: number; ratio: number } | { base: number; growth: number; power: number };
+ * `power`, the n-th costs `base` × n × (1 + ((n − 1) / `growth`)^`power`); or,
+ * with `cubic`, it costs what a trainer's Gold curve of that shape asks
+ * (`curvePrice`). */
+export type PriceSchedule = { base: number; step: number; growth: number; compound?: number } | { base: number; ratio: number } | { base: number; growth: number; power: number } | { base: number; growth: number; cubic: number };
+/** The n-th rank (after `ranks`) on a linear-and-cubic curve from `start`:
+ * start × n × (1 + ranks / `growth`), rounded up, plus start × n × (ranks /
+ * `cubic`)³, rounded down. A trainer's Gold (`trainingGold`) and a
+ * `cubic` Silver schedule both price by it. */
+export function curvePrice(start: number, ranks: number, growth: number, cubic?: number) {
+  const base = start * (ranks + 1);
+  return Math.ceil((base * (growth + ranks)) / growth) + (cubic ? Math.floor(base * intPow(ranks / cubic, 3)) : 0);
+}
 /** What the purchase after `bought` costs on `schedule`: its base, and for
  * the k-th after it `step + k` more than the one before, `step` rising by
  * `growth` every five, summed here at once, then compounded (or `ratio`
@@ -608,6 +633,7 @@ export function schedulePrice(schedule: PriceSchedule, bought: number) {
   if ("ratio" in schedule) return schedule.base * intPow(schedule.ratio, bought);
   // The n-th rank (bought + 1) costs base × n × (1 + ((n − 1) / growth)^power), as a trainer's Gold does.
   if ("power" in schedule) return Math.ceil(schedule.base * (bought + 1) * (1 + intPow(bought / schedule.growth, schedule.power)));
+  if ("cubic" in schedule) return curvePrice(schedule.base, bought, schedule.growth, schedule.cubic);
   const { base, step, growth, compound } = schedule;
   const fives = Math.floor(bought / 5), rest = bought % 5;
   const price = base + bought * step + bought * (bought + 1) / 2 + growth * (5 * fives * (fives - 1) / 2 + rest * fives);
@@ -622,6 +648,11 @@ const vital: PriceSchedule = { base: 3, step: 1, growth: 2 };
 const opened: PriceSchedule = { base: 10, step: 2, growth: 3 };
 /** Rows a deeper skill opens. */
 const deep: PriceSchedule = { base: 20, step: 4, growth: 4 };
+/** The Free Upgrade rows: 75 for the first rank, then 75 × n × (1 + (n − 1) /
+ * 11 + ((n − 1) / 49)³) for the n-th (1,582 for the 11th, 9,771 for the
+ * 32nd, 92,815 for the 87th, 136,855 for the 100th), the same in Silver
+ * and a trainer's Gold. */
+const freeUpgrades = { base: 75, growth: 11, cubic: 49 };
 /** Training bought with Silver inside a run, lasting only for that run:
  * each row's price schedule. The rows open from the start cost least, the
  * ones later skills open more. */
@@ -641,6 +672,9 @@ export const RUN_TRAINING_PRICES: Record<TrainingId, PriceSchedule> = {
   floorSilver: opened,
   silverBonus: opened,
   killGold: opened,
+  freeOffense: freeUpgrades,
+  freeDefense: freeUpgrades,
+  freeUtility: freeUpgrades,
 };
 /** A trainer's Gold curve: each rank asks `TRAINING_GOLD_PER_POINT` Gold
  * a point of the row's cost times the rank's number, times 1 + ranks /
@@ -681,6 +715,10 @@ export const TRAINER_GOLD_CURVES: Record<TrainingId, TrainerCurve> = {
   floorSilver: firmTrainers,
   silverBonus: firmTrainers,
   killGold: firmTrainers,
+  /** The Free Upgrade rows: the same curve as their Silver (`freeUpgrades`). */
+  freeOffense: { growth: freeUpgrades.growth, start: freeUpgrades.base, cubic: freeUpgrades.cubic },
+  freeDefense: { growth: freeUpgrades.growth, start: freeUpgrades.base, cubic: freeUpgrades.cubic },
+  freeUtility: { growth: freeUpgrades.growth, start: freeUpgrades.base, cubic: freeUpgrades.cubic },
 };
 /** A stat row's rank curve: what `n` ranks add up to is `per` × n +
  * `square` × n² + `cube` × (n − 1)³ + `fourth` × (n − 1)⁴, the cubic and

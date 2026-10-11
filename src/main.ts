@@ -444,6 +444,7 @@ const loop = new FrameLoop({
   highlight: () => {
     overlay.track();
     overlay.placeSign();
+    overlay.showFreeTraining();
   },
   save,
 });

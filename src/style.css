@@ -1002,6 +1002,26 @@ canvas {
 .route-box b {
   color: #aeb8c4;
 }
+/* Free Training's levels, at the bottom left of the board (placed by
+   BoardOverlay.showFreeTraining): shown 2s, fading over the last 0.5s. */
+.free-training-box {
+  position: absolute;
+  z-index: 4;
+  padding: 4px 8px;
+  background: #10151fd0;
+  border: 1px solid #5a6580;
+  border-radius: 4px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #b7e39a;
+  pointer-events: none;
+  animation: free-training-fade 2s linear both;
+}
+.free-training-box[hidden] { display: none; }
+@keyframes free-training-fade {
+  75% { opacity: 1; }
+  100% { opacity: 0; }
+}
 .inspection {
   margin: 12px 0 14px;
   color: #7f8a9d;

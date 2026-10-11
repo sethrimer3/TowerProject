@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { defaults, decode } from "../src/save.ts";
 import { Game } from "../src/state.ts";
 import { TREES, columnGap, mapNodes, treeHeight } from "../src/skill-trees.ts";
-import { UPGRADES, cost, type UpgradeId } from "../src/config.ts";
+import { TRAINING, UPGRADES, cost, type UpgradeId } from "../src/config.ts";
 import { RESEARCH } from "../src/archives.ts";
 test("fresh progression gates Delve, currencies, Courage root, and Legacy", () => {
   const g = new Game(defaults());
@@ -80,7 +80,7 @@ test("the hand's skills run Buildout, Trainers, Critical to the Archives, Gear a
   const at = (id: string) => TREES[0].nodes.find((n) => n.id === id)!;
   assert.deepEqual(["buildout", "trainers", "critical", "archives", "onTheJob", "regen", "cardHeal", "gear", "cardAtkUp", "cardDefUp"].map((id) => at(id).requires),
     [["combatStance"], ["buildout"], ["trainers"], ["critical"], ["buildout"], ["onTheJob"], ["regen"], ["buildout"], ["gear"], ["cardAtkUp"]]);
-  assert.deepEqual(["buildout", "trainers", "critical", "archives"].map((id) => [at(id).x, at(id).y]), [[50, 30], [50, 48], [50, 84], [50, 102]], "down the middle, Critical a row lower for room");
+  assert.deepEqual(["buildout", "trainers", "critical", "archives"].map((id) => [at(id).x, at(id).y]), [[50, 30], [50, 66], [50, 84], [50, 102]], "down the middle, Trainers just above Critical");
   assert.deepEqual([at("largerHand").x, at("largerHand").y, at("largerHand").requires], [80, 84, ["trainers"]], "Larger Hand stands right of Critical, alone");
   assert.deepEqual([at("critPrediction").x, at("critPrediction").y, at("critPrediction").requires], [30, 84, ["critical"]], "Critical Prediction stands left of Critical");
   assert.ok(!TREES[0].nodes.some((n) => n.requires.includes("largerHand")), "nothing waits for Larger Hand");
@@ -189,10 +189,10 @@ test("Echoes of time leads nowhere; the research skills (10 Courage each) take A
   }
   assert.deepEqual([UPGRADES.find((u) => u.id === "undos")!.max, cost("undos", 0)], [1, 5]);
 });
-test("Faster Trainers sits right of Into the depths off the Archives, costs 2 and opens its research", () => {
+test("Faster Trainers sits right of the Archives, off them, costs 2 and opens its research", () => {
   const at = (id: string) => TREES[0].nodes.find((n) => n.id === id)!;
   const node = at("fasterTrainers");
-  assert.deepEqual([node.x, node.y, node.requires], [80, 124, ["archives"]]);
+  assert.deepEqual([node.x, node.y, node.requires], [80, 102, ["archives"]]);
   assert.deepEqual([at("cardBlueKey").x, at("cardBlueKey").y], [20, 102], "Blue Key sits below DEF Up");
   assert.deepEqual([at("pocketMoney").x, at("pocketMoney").y, at("pocketMoney").requires], [20, 142, ["delve"]], "Pocket Money follows Into the depths");
   assert.deepEqual([at("spareChange").x, at("spareChange").y, at("spareChange").requires], [20, 160, ["pocketMoney"]], "Spare Change follows Pocket Money");
@@ -202,6 +202,13 @@ test("Faster Trainers sits right of Into the depths off the Archives, costs 2 an
   const rows = new Map<number, number[]>();
   for (const n of TREES[0].nodes) rows.set(n.y, [...(rows.get(n.y) ?? []), n.x]);
   for (const [y, xs] of rows) assert.equal(new Set(xs).size, xs.length, `row ${y}`);
+});
+test("Free Training sits under Wishing Well, costs 20 and opens the three Free Upgrade rows", () => {
+  const node = TREES[0].nodes.find((n) => n.id === "freeTraining")!;
+  assert.deepEqual([node.x, node.y, node.requires], [20, 214, ["wishingWell"]]);
+  assert.equal(cost("freeTraining", 0), 20);
+  const rows = TRAINING.filter((t) => "requires" in t && t.requires === "freeTraining");
+  assert.deepEqual(rows.map((t) => [t.name, t.group]), [["Free Offense Upgrade", "utility"], ["Free Defense Upgrade", "utility"], ["Free Utility Upgrade", "utility"]]);
 });
 test("a run that earned Inspiration puts a dot on the Inspiration tab in the forest while a skill there can be bought", () => {
   const g = new Game(defaults());

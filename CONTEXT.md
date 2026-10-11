@@ -188,7 +188,7 @@ How much XP the character has gathered from kills over every run. A kill pays mo
 _Avoid_: rank
 
 **Training point**:
-The currency each level earns (three a level), spent to buy ranks of training at once (a trainer can train them for Gold instead) in the character's stats (max HP, ATK, DEF, and the shroud once the Shroud skill is owned; Lifesteal once the Lifesteal skill is, Crit % and Crit x once Critical is) and, with Recovery, Find Potion, Revive, Spare Change, Wishing Well, Wealthy and Loot, in Potion %, Find Potion, Revive, Gold / Floor, Silver / Floor, Silver Bonus and Gold / Kill on the Training tab. A stat's ranks add up on its **rank curve**: each rank is worth more than the one before, whatever the character's level.
+The currency each level earns (three a level), spent to buy ranks of training at once (a trainer can train them for Gold instead) in the character's stats (max HP, ATK, DEF, and the shroud once the Shroud skill is owned; Lifesteal once the Lifesteal skill is, Crit % and Crit x once Critical is) and, with Recovery, Find Potion, Revive, Spare Change, Wishing Well, Wealthy, Loot and Free Training, in Potion %, Find Potion, Revive, Gold / Floor, Silver / Floor, Silver Bonus, Gold / Kill and the Free Offense, Defense and Utility Upgrade rows on the Training tab. A stat's ranks add up on its **rank curve**: each rank is worth more than the one before, whatever the character's level.
 _Avoid_: skill point, stat point
 
 **Trainer**:
@@ -265,6 +265,10 @@ _Avoid_: coins, run gold
 **Run training**:
 Training levels bought with Silver inside a run, on top of the hero's own, lasting only for that run. Opened by the Inspiration skill On the Job.
 _Avoid_: drills, run upgrades, temporary training
+
+**Free level**:
+A level of run training given for nothing on a floor passed, by a Free Upgrade row (opened by the Inspiration skill Free Training): it costs no Silver but counts as bought, so the row's next Silver level costs a step more.
+_Avoid_: bonus level, free upgrade
 
 **Buy Quantity**:
 How many Training ranks one press buys, with training points or with Silver in a run: x1, then x5, x10, x100 and Max (as many as what is held pays for) as its research opens them.

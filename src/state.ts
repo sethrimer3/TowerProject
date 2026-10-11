@@ -11,7 +11,8 @@ import { canWarp, claimGoal, goalUnlocked } from "./goals.ts";
 import { missGem } from "./gems.ts";
 import { DelvePlan } from "./delve/automove.ts";
 import { defaults } from "./save.ts";
-import { random, stream, tileRandom } from "./random.ts";
+import { drawAt, stream, tileRandom } from "./random.ts";
+import { freeTrainingLines, rollFreeTraining } from "./free-training.ts";
 import { doorBlockedMessage, doorName, doorRule, drainsHp, KEY_ORDER } from "./doors.ts";
 import { TREES, skillAvailable } from "./skill-trees.ts";
 import { routeTo, type Step } from "./pathfinding.ts";
@@ -127,9 +128,6 @@ const CRIT_SALT = 0x3c71c;
 const YELLOW_KEY_SALT = 0x6e11a;
 /** Mixed into the run seed to start Skip's stream of rolls. */
 const SKIP_SALT = 0x5c1b7;
-/** How far mulberry32's state moves each draw: the stream's `n`th number
- * is the first of the stream started `n` steps on. */
-const STREAM_STEP = 0x6d2b79f5;
 /** A step resolved and about to be taken: the tile stepped onto, what it
  * does, where it is, and whether it goes in the undo history. */
 type TakenStep = { tile: Tile; outcome: StepEffect; dest: { x: number; y: number }; track: boolean };
@@ -170,6 +168,9 @@ export class Game {
   effect = { text: "", x: 0, y: 0, until: 0 };
   /** Rewards picked up since the board last took them, oldest first. */
   gains: Gain[] = [];
+  /** The free levels Free Training gave last, as the board announces them
+   * ("+1 ATK"), and when (`performance.now()`). */
+  freeTrained: { lines: string[]; at: number } | null = null;
   /** Whether something settles fights played out (the app's frame loop).
    * A game without one (tests, tools) settles every fight at once, whatever
    * the Animate fights setting says. */
@@ -786,7 +787,7 @@ export class Game {
    * way skips the same targets. `run.skipRolls` counts those drawn. */
   private skipRoll() {
     const n = this.run.skipRolls ?? 0;
-    return random(((this.run.seed ^ SKIP_SALT) + Math.imul(n, STREAM_STEP)) >>> 0)();
+    return drawAt(this.run.seed ^ SKIP_SALT, n);
   }
   /** Skip's roll is spent: the stream moves on. */
   private skipRolled() {
@@ -1819,7 +1820,23 @@ export class Game {
       this.regainCharges(at);
       this.floorHeal();
     }
+    this.freeTrain(last - floorBefore);
     this.gainCoins(at, gold, silver, false);
+  }
+  /** Free Training for `floors` floors passed, one after another: the
+   * levels each floor's rolls give (`rollFreeTraining`) join the run's
+   * training as Silver ranks would, costing nothing, and are announced
+   * together (`freeTrained`). */
+  private freeTrain(floors: number) {
+    const given: TrainingId[] = [];
+    for (let f = 0; f < floors; f++)
+      for (const id of rollFreeTraining(this.save, this.run)) {
+        const offer = runTrainingOffer(this.save, this.run, id);
+        this.run.training = { ...this.run.training, [id]: offer.bought + 1 };
+        this.applyRunTraining(offer);
+        given.push(id);
+      }
+    if (given.length) this.freeTrained = { lines: freeTrainingLines(given), at: performance.now() };
   }
   /** Find Yellow Key: on floor `floor` climbed for the first time in the
    * run, a yellow key under the research's chance. The roll is a fixed
@@ -1859,6 +1876,7 @@ export class Game {
       silver += purse.interest();
       this.findYellowKey(this.run.height, p);
       this.floorHeal();
+      this.freeTrain(this.run.height - highest);
     }
     this.enterTowerFloor(board);
     // A new section's first floor is sealed below; the hero keeps every stat.

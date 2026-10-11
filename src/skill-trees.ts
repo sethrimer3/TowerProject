@@ -11,12 +11,12 @@ export type SkillNode = { id: UpgradeId; icon: string; x: number; y: number; req
 export type SkillTree = { id: TreeId; name: string; currency: Currency; gate?: UpgradeId | null; description: string; height?: number; unlocks?: boolean; nodes: SkillNode[] };
 export const TREES: SkillTree[] = [
   { id: "inspiration", name: "Inspiration", currency: "inspiration", description: "Earn Inspiration by beating your best Tower climb.", height: 316, unlocks: true, nodes: [
-    // The hand's skills, down to the Archives: Buildout, Training, Critical (a row
-    // lower, with Critical Prediction to its left). Gear and On the Job branch off
+    // The hand's skills, down to the Archives: Buildout, Trainers (two rows
+    // lower), Critical (with Critical Prediction to its left). Gear and On the Job branch off
     // Buildout, ATK Up and DEF Up under Gear, and Regen, then Heal, below On the Job.
     { id: "combatStance", icon: "▤", x: 50, y: 12, requires: [] },
     { id: "buildout", icon: "⚔", x: 50, y: 30, requires: ["combatStance"] },
-    { id: "trainers", icon: "⚔", x: 50, y: 48, requires: ["buildout"] },
+    { id: "trainers", icon: "⚔", x: 50, y: 66, requires: ["buildout"] },
     { id: "critical", icon: "✸", x: 50, y: 84, requires: ["trainers"] },
     { id: "critPrediction", icon: "✸", x: 30, y: 84, requires: ["critical"] },
     { id: "largerHand", icon: "▦", x: 80, y: 84, requires: ["trainers"] },
@@ -28,14 +28,15 @@ export const TREES: SkillTree[] = [
     { id: "cardAtkUp", icon: "⚔", x: 20, y: 48, requires: ["gear"] },
     { id: "cardDefUp", icon: "⛨", x: 20, y: 66, requires: ["cardAtkUp"] },
     // Research needs the Archives, so the skills that open it come after them:
-    // Blue Key below DEF Up, Rehearsed steps and Faster Trainers either side of
-    // Into the depths, and Pocket Money (then Spare Change) and Shroud after it,
+    // Blue Key and Faster Trainers either side of the Archives, Rehearsed steps
+    // left of Into the depths, and Pocket Money (then Spare Change, Wishing
+    // Well and Free Training below it) and Shroud after it,
     // either side of the core path down the middle (Lifesteal, Buy Quantity, then Key Siphon). Greater
     // Heal stands under Shroud, Recovery and Regen Research (then Revive) under it.
     { id: "cardBlueKey", icon: "⚿", x: 20, y: 102, requires: ["archives"] },
     { id: "inspirationUndos", icon: "↺", x: 20, y: 124, requires: ["archives"] },
     { id: "delve", icon: "▼", x: 50, y: 124, requires: ["archives"] },
-    { id: "fasterTrainers", icon: "»", x: 80, y: 124, requires: ["archives"] },
+    { id: "fasterTrainers", icon: "»", x: 80, y: 102, requires: ["archives"] },
     { id: "pocketMoney", icon: "¤", x: 20, y: 142, requires: ["delve"] },
     { id: "shroud", icon: "◈", x: 74, y: 142, requires: ["delve"] },
     { id: "lifesteal", icon: "♥", x: 50, y: 142, requires: ["delve"] },
@@ -45,6 +46,7 @@ export const TREES: SkillTree[] = [
     { id: "wealthy", icon: "¤", x: 10, y: 178, requires: ["spareChange"] },
     { id: "loot", icon: "☠", x: 30, y: 178, requires: ["spareChange"] },
     { id: "wishingWell", icon: "◎", x: 20, y: 196, requires: ["spareChange"] },
+    { id: "freeTraining", icon: "↑", x: 20, y: 214, requires: ["wishingWell"] },
     { id: "greaterHeal", icon: "✚", x: 80, y: 160, requires: ["shroud"] },
     { id: "recovery", icon: "✦", x: 70, y: 178, requires: ["greaterHeal"] },
     { id: "findPotion", icon: "⚗", x: 70, y: 196, requires: ["recovery"] },

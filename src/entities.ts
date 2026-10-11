@@ -173,6 +173,9 @@ export type RunCore = {
   /** How many of Skip's rolls this run has drawn from its stream, which
    * starts from the run seed. */
   skipRolls?: number;
+  /** How many of each Free Upgrade group's rolls this run has drawn from
+   * its stream, which starts from the run seed (free-training.ts). */
+  freeRolls?: Partial<Record<"offense" | "defense" | "utility", number>>;
   /** Goldback's combo: the multiplier its activations have tallied for the
    * next Gold the run finds (each adds its value), used up by that Gold;
    * absent with none. */
