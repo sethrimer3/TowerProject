@@ -249,6 +249,8 @@ test("the desk fills the slots Badge Slots opens and refuses a conflict", () => 
  * Badges is owned and undo open. */
 function floor(rows: string[]) {
   const g = new Game(defaults());
+  // No theme's Gold, so these figures are the mechanic's alone (theme-collection.test.ts covers it).
+  g.save.themes = [];
   g.save.upgrades.inspirationUndos = 1;
   g.save.upgrades.cardBadges = 1;
   const w = g.world as RoomWorld, height = rows.length;

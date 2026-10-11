@@ -14,6 +14,8 @@ import type { RoomWorld } from "../src/tower/room-world.ts";
 /** A Tower run inside, the hero at (0, 0) beside the stairs at (1, 0). */
 function stairs(seed?: number) {
   const save = defaults();
+  // No theme's Gold, so these figures are the mechanic's alone (theme-collection.test.ts covers it).
+  save.themes = [];
   save.upgrades.inspirationUndos = 1;
   const g = new Game(save);
   if (seed !== undefined) g.newRun({ seed });

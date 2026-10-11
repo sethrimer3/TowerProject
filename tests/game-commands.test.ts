@@ -19,6 +19,8 @@ function taught() {
  * the corner and (when it fits) the stairs opposite. */
 function arena(size = 5) {
   const g = new Game(taught());
+  // No theme's Gold, so these figures are the mechanic's alone (theme-collection.test.ts covers it).
+  g.save.themes = [];
   g.save.upgrades.inspirationUndos = 1; // undo needs Rehearsed steps
   const w = g.world as RoomWorld;
   w.cells = new Map();

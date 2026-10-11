@@ -456,6 +456,20 @@ _Avoid_: trigger, proc
 No card in the hand can act. The hand pauses and End Run lights up, and the run ends only when the player ends it; each thing the player does (an item used, a skill) checks the hand again, and it plays on once a card can act.
 _Avoid_: deadlock
 
+### Themes
+
+**UI theme**:
+A look for the page around the board: its panels, buttons and sounds. Classic is always available; Medieval is owned from the start and Neon is earned.
+_Avoid_: skin, style
+
+**Game theme**:
+A look for the board itself: its tiles, the hero, enemies and torches. Classic is always available; Neon is earned.
+_Avoid_: tileset, board skin
+
+**Owned theme**:
+A UI or Game theme the player has earned, kept for good; each adds 2.5% to all Gold banked, worn or not.
+_Avoid_: skin, unlocked theme
+
 ### The Shop
 
 **Shop**:

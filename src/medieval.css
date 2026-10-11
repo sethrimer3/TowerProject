@@ -59,8 +59,12 @@ html.medieval .shell {
 }
 
 /* ── Buttons: oak boards nailed at the corners ── */
-html.medieval button {
+/* Kept as weak as a bare element selector, so a button the page places
+   itself (the forest sign, absolutely positioned) keeps its own position. */
+:where(html.medieval) button {
   position: relative;
+}
+html.medieval button {
   color: #e6d2a6;
   border: 2px solid #150f0a;
   border-radius: 3px;
@@ -89,8 +93,11 @@ html.medieval button:hover {
     inset 0 0 14px #ffae5530,
     0 2px 0 #000000b0;
 }
+/* The press uses `translate` and `scale`, not `transform`, so a button that
+   places itself with a transform (the forest sign) stays put under the
+   pointer while pressed. */
 html.medieval button:active:not(:disabled) {
-  transform: translateY(1px);
+  translate: 0 1px;
   box-shadow:
     inset 0 2px 4px #000000a0,
     0 1px 0 #000000b0;
@@ -797,15 +804,19 @@ html.medieval .td-currencies::after {
 @media (prefers-reduced-motion: no-preference) {
   /* A pressed board sinks into its frame and springs back. */
   html.medieval:not(.reduce-motion) button:active:not(:disabled) {
-    transform: translateY(1px) scale(0.97);
-    transition: transform 0.04s;
+    translate: 0 1px;
+    scale: 0.97;
+    transition:
+      translate 0.04s,
+      scale 0.04s;
   }
   html.medieval:not(.reduce-motion) button {
     transition:
       border-color 0.15s,
       box-shadow 0.15s,
       color 0.15s,
-      transform 0.22s cubic-bezier(0.3, 1.8, 0.5, 1);
+      translate 0.22s cubic-bezier(0.3, 1.8, 0.5, 1),
+      scale 0.22s cubic-bezier(0.3, 1.8, 0.5, 1);
   }
 
   /* A page comes up like a lamp being lit. */

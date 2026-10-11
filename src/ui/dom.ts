@@ -19,7 +19,7 @@ export const displayedProgress = (value: number, outside = false) => outside ? 0
 export const capitalized = (word: string) => word[0].toUpperCase() + word.slice(1);
 
 export type UiSprite = "tower" | "delve" | "defend" | "gear" | "upgrades" | "settings" | "health" | "attack" | "defense" | "undo" | "automove" | "revive" | "log" | "arrow-up" | "arrow-down" | "arrow-left" | "arrow-right" | "gold";
-const UI_ASSET_BASE = (import.meta as ImportMeta & { env?: { BASE_URL?: string } }).env?.BASE_URL ?? "/";
+export const UI_ASSET_BASE = (import.meta as ImportMeta & { env?: { BASE_URL?: string } }).env?.BASE_URL ?? "/";
 /** A card's face, from public/assets/cards/. */
 export const cardArt = (id: CardId, alt: string) =>
   `<img class="card-art" src="${UI_ASSET_BASE}assets/cards/${id}.png" alt="${alt}">`;

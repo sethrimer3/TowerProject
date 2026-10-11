@@ -157,6 +157,8 @@ test("Fast enemies say so before their strength and name", () => {
 /** A Tower run inside on an open 5×5 floor, the hero at (0, 0) and `foe` beside it. */
 function arena(foe: Enemy, over: Partial<Player>) {
   const g = new Game(defaults());
+  // No theme's Gold, so these figures are the mechanic's alone (theme-collection.test.ts covers it).
+  g.save.themes = [];
   const w = g.world as RoomWorld;
   w.cells = new Map();
   for (let y = 0; y < 5; y++) for (let x = 0; x < 5; x++) w.cells.set(`${x},${y}`, { kind: "floor" });

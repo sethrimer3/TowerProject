@@ -13,6 +13,8 @@ import type { World } from "../src/delve/world.ts";
 /** A Tower run inside in `tier`, the hero at (0, 0) beside the stairs at (1, 0). */
 function stairs(tier = 1) {
   const save = defaults();
+  // No theme's Gold, so these figures are the mechanic's alone (theme-collection.test.ts covers it).
+  save.themes = [];
   save.tower.tiersOpen = save.tower.tier = tier;
   save.upgrades.spareChange = 1;
   save.upgrades.inspirationUndos = 1;
@@ -83,7 +85,7 @@ test("without Spare Change a new floor pays nothing; Silver training raises it f
 });
 
 test("the Delve pays Gold / Floor for each new equivalent floor (ten depth) once", () => {
-  const g = new Game(defaults());
+  const g = new Game({ ...defaults(), themes: [] });
   g.save.upgrades.delve = g.save.upgrades.spareChange = 1;
   g.switchMode("delve");
   g.newRun({ seed: 5 });

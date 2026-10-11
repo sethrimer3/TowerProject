@@ -1,5 +1,6 @@
 import type { TrainingJob, TrainingPaid } from "./training-jobs.ts";
 import type { TierRecord } from "./tiers.ts";
+import type { ThemeId } from "./theme-collection.ts";
 import type { ArchivesSave } from "./archives.ts";
 import type { ShrineRun, ShrinesSave } from "./shrines.ts";
 import type { CardId } from "./cards.ts";
@@ -399,5 +400,9 @@ export type Save = {
   relics: string[];
   /** The Shrine Boons page's choices, kept between runs (shrines.ts). */
   shrines: ShrinesSave;
+  /** The UI and Game themes owned (theme-collection.ts), each once, in
+   * catalog order: Medieval from the start, the rest earned. Each pays
+   * Gold for good. */
+  themes: ThemeId[];
 };
 export const point = (x: number, y: number) => `${x},${y}`;

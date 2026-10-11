@@ -1284,6 +1284,100 @@ dialog > small {
   border-bottom: 1px solid #2c3746;
   font-size: 12px;
 }
+/* The Settings page's buttons into the UI and Game theme menus. */
+.theme-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.setting.theme-open {
+  flex-direction: column;
+  justify-content: center;
+  min-height: 56px;
+  border-bottom: 1px solid #36404f;
+  gap: 4px;
+}
+.theme-open b {
+  color: #e5d5b8;
+  font-size: 13px;
+}
+#themes-back {
+  margin-top: 12px;
+}
+#themes-back + .page-title {
+  margin-top: 16px;
+}
+.theme-gold .gold-icon {
+  width: 12px;
+  height: 12px;
+  vertical-align: -2px;
+}
+/* A card per theme: its preview, name, Gold and Equip (or how to earn it). */
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+  padding-bottom: 24px;
+}
+.theme-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid #36404f;
+  border-radius: 6px;
+  background: #151c26;
+  text-align: center;
+}
+.theme-card.worn {
+  border-color: var(--gold);
+}
+.theme-preview {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 4px;
+  background: #0b0f15;
+}
+.theme-card.locked .theme-preview {
+  filter: grayscale(0.6) brightness(0.75);
+}
+.theme-card h3 {
+  margin: 2px 0 0;
+  font-size: 14px;
+  color: #e5d5b8;
+}
+.theme-perk {
+  font-size: 9px;
+  color: #b29769;
+}
+.theme-perk .gold-icon {
+  width: 10px;
+  height: 10px;
+  vertical-align: -1px;
+  margin-right: 2px;
+}
+.theme-worn {
+  min-height: 34px;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  color: var(--gold);
+}
+.theme-wear {
+  min-height: 34px;
+  padding: 6px 10px;
+  font-size: 11px;
+}
+.theme-lock {
+  min-height: 34px;
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+  color: #8792a3;
+}
 select {
   padding: 8px;
   border: 1px solid #445062;
