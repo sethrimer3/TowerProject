@@ -141,7 +141,8 @@ function thornRounds(hp: number, hit: number, thorn: number, fast = false) {
 export const netDamage = (player: Player, r: CombatPrediction) => (r.hpAfter !== undefined ? snap(player.hp - r.hpAfter) : r.damage);
 
 /** What each strike's damage restores of the hero's HP (Lifesteal), the
- * share of it in percent. */
+ * share of it in percent: the strike's whole damage, however little HP the
+ * enemy had left. */
 const lifestealHeal = (player: Player, dealt: number) => snap((dealt * (player.lifesteal ?? 0)) / 100);
 
 /** The hero's HP when a fight against `enemy` ends, the hero's strikes each
@@ -165,9 +166,8 @@ function lifestealEnding(player: Player, enemy: Enemy, hit: number, played = Inf
   if (enemy.fast && !reply()) return null;
   for (let round = 0; ; round++) {
     if (round >= played && enemyHp > hit) return lifestealEstimate(player, { hp, enemyHp, attack, shroud }, hit, cut);
-    const dealt = Math.min(hit, enemyHp);
     enemyHp = snap(Math.max(0, enemyHp - hit));
-    hp = snap(Math.min(player.maxHp, hp + lifestealHeal(player, dealt)));
+    hp = snap(Math.min(player.maxHp, hp + lifestealHeal(player, hit)));
     if (!enemyHp) return hp;
     if (!reply()) return null;
     if (!enemyHp) return hp;
@@ -261,7 +261,7 @@ export function parriedEstimate(attack: number, defense: number, n: number, cut 
 function lifestealEstimate(player: Player, at: { hp: number; enemyHp: number; attack: number; shroud: number }, hit: number, cut = 0) {
   // A strike cut by a certain parry takes f × (ATK − DEF / f), f the share of ATK left.
   const f = (100 - cut) / 100, strikes = Math.ceil(at.enemyHp / hit), replies = strikes - 1, defense = player.defense / f;
-  const heal = lifestealHeal(player, hit), last = lifestealHeal(player, at.enemyHp - replies * hit);
+  const heal = lifestealHeal(player, hit);
   const climbing = Math.min(replies, roundsUntilAbove(at.attack, defense + heal / f));
   let shroud = at.shroud;
   const absorb = (damage: number) => {
@@ -273,7 +273,7 @@ function lifestealEstimate(player: Player, at: { hp: number; enemyHp: number; at
   const ceiling = player.maxHp - Math.max(0, f * (attackAfter(at.attack, climbing - 1) - defense));
   let hp = climbing ? Math.min(Math.max(at.hp, ceiling), at.hp + climbing * heal - early) : at.hp;
   hp -= absorb(f * estimatedDamage(attackAfter(at.attack, climbing), defense, replies - climbing)) - (replies - climbing) * heal;
-  return hp <= 0 ? null : snap(Math.min(player.maxHp, hp + last));
+  return hp <= 0 ? null : snap(Math.min(player.maxHp, hp + heal));
 }
 
 /** How long each strike of a fight played out round by round takes: the first
@@ -353,7 +353,7 @@ function play(strikes: Strike[], { player, enemy, revives, crits, parries }: Fig
     if (!s.enemyNext) {
       const applications = crits?.applications(s.heroStrikes) ?? 0, struck = applications ? heroHit(player, enemy, critMultiplier(crits!.factor, applications)) : hit;
       s.heroStrikes++;
-      const dealt = Math.min(struck, s.enemyHp), healed = player.lifesteal ? snap(Math.min(player.maxHp, s.heroHp + lifestealHeal(player, dealt))) : s.heroHp;
+      const healed = player.lifesteal ? snap(Math.min(player.maxHp, s.heroHp + lifestealHeal(player, struck))) : s.heroHp;
       const heals = healed !== s.heroHp, gained = snap(healed - s.heroHp);
       s.heroHp = healed;
       s.enemyHp = snap(Math.max(0, s.enemyHp - struck));

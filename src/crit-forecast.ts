@@ -60,7 +60,7 @@ export function forecast(player: Player, enemy: Enemy, crit: CritRule | undefine
   }
   const thorn = thornDamage(player, enemy), low = worst.hit, step = snap(best.hit - worst.hit);
   const odds: Ending[] = sameLength ? [[worst.turns, replies(worst), 1]] : turnOdds(enemy.hp, low, step, extra, worst.turns, best.turns, thorn ? Infinity : Math.min(EXACT_TURNS, played), thorn, enemy.fast ? 1 : 0);
-  const { cost, felled, spread } = damageByStrikes(player, enemy, replies(worst), thorn ? Infinity : played, thorn, parry);
+  const { cost, felled, spread } = damageByStrikes(player, enemy, replies(worst), thorn ? Infinity : played, thorn, parry, { low, step, extra });
   // A fight heals at most up to max HP; its damage is never capped by the HP
   // the hero has, so regenerating HP never moves the forecast.
   const floor = snap(player.hp - player.maxHp), capped = (t: number, r: number) => Math.max(floor, cost(t, r));
@@ -109,14 +109,21 @@ function parried(worst: CombatPrediction, best: CombatPrediction, odds: Ending[]
  * that fight fells it (with parries, the chance it does), summed once up to
  * `most` enemy strikes, or up to `played` and estimated past them. With
  * parries, `spread` is the standard deviation of `r` strikes' damage. */
-function damageByStrikes(player: Player, enemy: Enemy, most: number, played: number, thorn: number, parry: ParryOdds | null) {
+function damageByStrikes(player: Player, enemy: Enemy, most: number, played: number, thorn: number, parry: ParryOdds | null, hits: { low: number; step: number; extra: number }) {
   const sums: number[] = [0], spreads: number[] = [0], shroud = player.shroud ?? 0, fatal = player.hp + shroud, defense = player.defense;
   const sure = certainParry(player) ? parryCut(player) : 0;
-  // Lifesteal: a fight's strikes deal the enemy's whole HP (less what its
-  // thorns took), so restore that share of it, taken as equal parts as the
-  // strikes land (the cap at max HP is left out here, and taken by the
-  // caller), so a fight may heal on balance: its damage below 0.
-  const healedAt = (r: number) => (!player.lifesteal ? 0 : thorn ? snap((Math.max(0, enemy.hp - r * thorn) * player.lifesteal) / 100) : snap((enemy.hp * player.lifesteal) / 100));
+  // Lifesteal: each of the hero's `t` strikes restores that share of its
+  // whole damage, overkill and all: on average `low` plus `extra` of a crit's
+  // `step`, but at least the enemy's HP its thorns left and at most every
+  // strike a crit. Taken as equal parts as the strikes land (the cap at max
+  // HP is left out here, and taken by the caller), so a fight may heal on
+  // balance: its damage below 0.
+  const healedAt = (t: number, r: number) => {
+    if (!player.lifesteal) return 0;
+    const left = Math.max(0, enemy.hp - r * thorn), mean = hits.low + hits.extra * hits.step;
+    const dealt = Math.min(t * (hits.low + hits.step), Math.max(left, t * mean));
+    return snap((dealt * player.lifesteal) / 100);
+  };
   let attack = enemy.attack, sum = 0, variance = 0;
   const known = Math.min(most, played - 1);
   for (let r = 1; r <= known && sum <= Number.MAX_SAFE_INTEGER; r++) {
@@ -138,15 +145,15 @@ function damageByStrikes(player: Player, enemy: Enemy, most: number, played: num
     const plain = parriedEstimate(from, defense, r - counted, sure);
     return before + (parry ? plain + parry.chance * (parriedEstimate(from, defense, r - counted, parry.cut) - plain) : plain);
   };
-  const healsBefore = (t: number, r: number) => (healedAt(r) * Math.min(r, t)) / t;
+  const healsBefore = (t: number, r: number) => (healedAt(t, r) * Math.min(r, t)) / t;
   const spread = (r: number) => spreads[Math.min(r, counted)]!;
   return {
     cost: (t: number, r: number) => {
-      const s = sumAt(r), healed = healedAt(r);
+      const s = sumAt(r), healed = healedAt(t, r);
       return healed ? snap(Math.max(0, s - shroud) - healed) : snap(Math.max(0, s - shroud));
     },
     felled: (t: number, r: number) => {
-      const s = sumAt(r), healed = healedAt(r);
+      const s = sumAt(r), healed = healedAt(t, r);
       const over = healed ? player.hp + shroud + healsBefore(t, r) : fatal, sd = spread(r);
       if (!parry || !sd) return (healed ? snap(s - shroud - healsBefore(t, r)) >= player.hp : s >= fatal) ? 1 : 0;
       return 1 - normalCdf((over - s) / sd);
