@@ -698,6 +698,7 @@ export class Game {
   private handTurn() {
     const target = this.targetTurn();
     if (target === true) return;
+    this.dropGatedPlan();
     const fresh = !this.cardPlan;
     const next = this.nextHandPlan(), lost = next.lost;
     let plan = next.plan;
@@ -1070,6 +1071,16 @@ export class Game {
     const gem = this.gemFinder.gem;
     return this.world.tile(x, y).kind === "floor" && !(gem && gem.x === x && gem.y === y) &&
       !this.world.torches?.some((t) => t.active && t.x === x && t.y === y);
+  }
+  /** Drops the committed path when its card's gate badge (HP <, YK ≥, …)
+   * no longer holds, so the hand chooses a card again: walking on, Regen
+   * may have lifted HP past an HP < limit. A focused card ignores its gate. */
+  private dropGatedPlan() {
+    const plan = this.cardPlan;
+    if (!plan) return;
+    const id = this.hand[plan.card], badge = this.run.badges?.[id];
+    if (!badge || BADGES[badge.id].kind !== "gate" || id === this.run.focused) return;
+    if (this.cardRules(id)?.closed) this.cardPlan = null;
   }
   /** The path the hand follows this turn: the one committed, else the
    * focused card's while it has a path to a target (`lost` once it has

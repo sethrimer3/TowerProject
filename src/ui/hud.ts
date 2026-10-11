@@ -9,7 +9,7 @@ import { tierNumeral, tierRewardText } from "../tiers.ts";
 import { MODES, milestones } from "../modes.ts";
 import { capitalized, cardArt, CURRENCY_SPRITES, displayedProgress, el, POINTER_SVG, text, uiSprite } from "./dom.ts";
 import { CARDS, IN_PLACE, cardText, deckCards, isSiphon, type CardId } from "../cards.ts";
-import { BADGES } from "../badges.ts";
+import { BADGES, badgeDef, badgeValue, type RunBadge } from "../badges.ts";
 import { badgeStyle } from "./badge-token.ts";
 import { trainingPoints, trainingWaiting } from "../loadout.ts";
 import { goalsWaiting } from "../goals.ts";
@@ -367,6 +367,16 @@ function renderSpeed(game: Game, inside: boolean) {
 
 /** The hand (and its badges) the cards were last drawn for. */
 let shownHand = "";
+/** A badge's tooltip line with its value in effect, not its level: a gate
+ * reads "HP < 100%", the rest "Skip 7%" (a unit already in the name is not
+ * repeated). */
+function badgeTitle(badge: RunBadge) {
+  const def = badgeDef(badge.id), v = badgeValue(badge.id, badge.level, badge.pick);
+  const percent = def.unit.startsWith("%");
+  if (def.kind === "gate") return `${def.name} ${v}${percent ? "%" : ""}`;
+  const unit = percent ? "%" : def.unit === def.name ? "" : ` ${def.unit}`;
+  return `${def.name}: ${def.lead ? `${def.lead} ` : ""}${v}${unit}`;
+}
 /** A hand card's tooltip: its name and text, inside a run the badge it
  * holds, and a siphon's uses so far this run. */
 function handCardTitle(game: Game, id: CardId) {
@@ -374,7 +384,7 @@ function handCardTitle(game: Game, id: CardId) {
   if (game.run.outside) return title;
   const badge = game.run.badges?.[id];
   if (badge) title += `
-Badge: ${BADGES[badge.id].name}, level ${badge.level}`;
+Badge: ${badgeTitle(badge)}`;
   if (isSiphon(id)) {
     const uses = game.cardUses(id), next = game.siphonCost(id);
     title += `

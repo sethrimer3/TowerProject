@@ -201,6 +201,19 @@ test("a gate keeps its card from acting while its condition fails; a Focus overr
   assert.equal(g.run.player.keys.yellow, 11);
 });
 
+test("a gate re-checks mid-path: HP rising past HP < drops the plan and the hand chooses again", () => {
+  const g = floor(["@...K.", "......"]);
+  g.run.hand = ["yellowKey"];
+  badge(g, "yellowKey", "hpGate", 3, 2);
+  g.run.player.hp = 10;
+  g.autoTurn();
+  assert.ok(g.cardPlan, "below the limit, the card commits to a path");
+  g.run.player.hp = g.run.player.maxHp;
+  g.autoTurn();
+  assert.equal(g.cardPlan, null, "healed past HP < 75%, the plan is dropped");
+  assert.ok(g.handStuck, "and no card can act");
+});
+
 test("a ≥ key gate lets its card act only while you hold at least its threshold", () => {
   const g = floor(["@.K", "..."]);
   g.run.hand = ["yellowKey"];
