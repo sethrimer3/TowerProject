@@ -24,18 +24,21 @@ export const OUTSIDE_SPRITE_URLS = {
  * column the dirt path runs along. */
 export type ForestSpot = { x: number; y: number; seed: number; center: number; roads?: Roads };
 
-/** The buildings in the clearing whose road is laid: each is built once
- * what opens it is (Equipment's Blacksmith, the Tournament's Hall). */
-export type Roads = { blacksmith: boolean; hall: boolean };
+/** The roads the clearing's crossroads has laid: to the buildings in it,
+ * each built once what opens it is (Equipment's Blacksmith, the
+ * Tournament's Hall), and out to the forest's edge toward the previous and
+ * next opened tier (`prev`, `next`), the way the forest's tier arrows lead. */
+export type Roads = { blacksmith: boolean; hall: boolean; prev: boolean; next: boolean };
 
 /** The dirt path up to the entrance, widening every fifth row; its
  * crossroads (the row the hero starts on) goes on to a building's door
- * once the building stands (`roads`). */
+ * once the building stands, or on out of the clearing (`roads`). */
 const onPath = ({ x, y, center, roads }: ForestSpot) => {
   if (Math.abs(x - center) <= (y % 5 === 2 ? 1 : 0)) return true;
   if (!roads || y !== OUTSIDE_START_Y) return false;
   // Each door is in the middle column of its building, on the row in front.
-  return (roads.blacksmith && x < center && x >= center + BLACKSMITH.dx + 1) || (roads.hall && x > center && x <= center + TOURNAMENT_HALL.dx + 1);
+  if (x < center) return roads.prev || (roads.blacksmith && x >= center + BLACKSMITH.dx + 1);
+  return roads.next || (roads.hall && x <= center + TOURNAMENT_HALL.dx + 1);
 };
 
 export function outsideSpriteKind(t: Tile, s: ForestSpot) {
@@ -88,15 +91,17 @@ export const onTournamentHall = (center: number, x: number, y: number) => within
 
 /** The roads `world` has laid (none unless it is the clearing). */
 export const roadsOf = (world: unknown): Roads | undefined =>
-  world instanceof OutsideWorld ? { blacksmith: world.blacksmith, hall: world.hall } : undefined;
+  world instanceof OutsideWorld ? { blacksmith: world.blacksmith, hall: world.hall, prev: world.prevRoad, next: world.nextRoad } : undefined;
 
 export class OutsideWorld implements Board {
   width: number;
   floor = 0;
   entranceX: number;
   /** `blacksmith`: Equipment is open, so its Blacksmith stands in the
-   * clearing; `hall`: the Tournament is, so its Hall does. */
-  constructor(public seed: number, public mode: Mode, public blacksmith = false, public hall = false) {
+   * clearing; `hall`: the Tournament is, so its Hall does; `prevRoad`,
+   * `nextRoad`: a tier before or after this one is open, so the crossroads
+   * runs on through the trees to the left or right edge. */
+  constructor(public seed: number, public mode: Mode, public blacksmith = false, public hall = false, public prevRoad = false, public nextRoad = false) {
     this.width = MODES[mode].width;
     this.entranceX = MODES[mode].entranceX;
   }
@@ -105,6 +110,7 @@ export class OutsideWorld implements Board {
     if (x === this.entranceX && y === ENTRANCE_Y) return { kind: "stairs" };
     if (this.blacksmith && within(YARD, this.entranceX, x, y)) return { kind: onBlacksmith(this.entranceX, x, y) ? "wall" : "floor" };
     if (this.hall && within(HALL_YARD, this.entranceX, x, y)) return { kind: onTournamentHall(this.entranceX, x, y) ? "wall" : "floor" };
+    if (y === OUTSIDE_START_Y && (x < this.entranceX ? this.prevRoad : this.nextRoad)) return { kind: "floor" };
     return this.wooded(x, y) ? { kind: "wall" } : { kind: "floor" };
   }
   /** Whether (x, y) is the Blacksmith, which a tap opens. */

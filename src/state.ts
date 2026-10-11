@@ -410,7 +410,14 @@ export class Game {
   /** The live run's board, regenerated from its seed and changes. */
   private buildWorld(): Board {
     const r = this.run;
-    return r.outside ? new OutsideWorld(r.seed, this.mode, this.save.equipment.unlocked, goalUnlocked(this.save, "tournament")) : this.rules.board(r);
+    return r.outside ? this.forestWorld(r.seed) : this.rules.board(r);
+  }
+  /** The forest clearing for `seed`: its buildings stand once they are
+   * open, and its roads lead off toward the tiers on either side once
+   * those are (as the tier arrows do). */
+  private forestWorld(seed: number) {
+    const { tier, tiersOpen } = this.slice;
+    return new OutsideWorld(seed, this.mode, this.save.equipment.unlocked, goalUnlocked(this.save, "tournament"), tier > 1, tier < tiersOpen);
   }
   /** Map edits saved under an older layout can't be applied to the new one:
    * they are dropped, and progress, stats and inventory are kept. */
@@ -1451,7 +1458,7 @@ export class Game {
     if (outside) {
       this.run.outside = true;
       this.toForestStart();
-      this.world = new OutsideWorld(seed, this.mode, this.save.equipment.unlocked, goalUnlocked(this.save, "tournament"));
+      this.world = this.forestWorld(seed);
       this.message = "Follow the forest path to the entrance.";
     } else {
       this.forgetLabyrinth();
