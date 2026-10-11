@@ -60,6 +60,25 @@ test("research done within a Speed Up completes at the faster rate, and the next
   assert.deepEqual(settleArchives(save, T0 + 12 * HOUR).map((r) => r.level), [2]);
 });
 
+test("a Speed Up waits while its archivist is idle, and carries on with the next research", () => {
+  const save = researching();
+  const slot = save.archives.slots[0];
+  assert.ok(startSpeedUp(save, slot, 2, 1, true, T0));
+  // Stopped 20 minutes in: 40 minutes of it are kept however long the archivist stands idle.
+  settleArchives(save, T0 + 20 * 60_000);
+  cancelResearch(save, 0, T0 + 20 * 60_000);
+  settleArchives(save, T0 + 10 * HOUR);
+  assert.equal(slot.speedUp!.endsAt - slot.speedUp!.appliedUntil, 40 * 60_000);
+  assert.equal(save.cells, 10_000 - 75, "a queued one never rebuys while idle");
+  // Started again: the 40 minutes run at 2x, then the queued one is bought.
+  assert.ok(startResearch(save, 0, "focusCount", T0 + 10 * HOUR));
+  const left = slot.job!.completesAt - (T0 + 10 * HOUR);
+  settleArchives(save, T0 + 10 * HOUR + 40 * 60_000);
+  assert.equal(slot.job!.completesAt - (T0 + 10 * HOUR + 40 * 60_000), left - 80 * 60_000);
+  assert.equal(save.cells, 10_000 - 150);
+  assert.equal(slot.speedUp!.endsAt, T0 + 11 * HOUR + 40 * 60_000);
+});
+
 test("one Speed Up at a time, only on a busy archivist, and only with the Cells", () => {
   const save = researching(100);
   const slot = save.archives.slots[0];

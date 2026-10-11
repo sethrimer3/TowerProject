@@ -941,7 +941,7 @@ export function settleArchives(o: ArchivesOwner, now: number): ResearchRecord[] 
 }
 
 /** The earliest thing due by `now`: a job completing (`completes`) or a
- * Speed Up ending, in archivist `i`; a completion goes first at a tie,
+ * busy archivist's Speed Up ending, in archivist `i`; a completion goes first at a tie,
  * then the lower archivist. */
 function nextEvent(a: ArchivesSave, now: number) {
   let next: { i: number; at: number; completes: boolean } | undefined;
@@ -951,7 +951,8 @@ function nextEvent(a: ArchivesSave, now: number) {
   };
   a.slots.forEach((s, i) => {
     if (s.job) consider(i, completionAt(s), true);
-    if (s.speedUp) consider(i, s.speedUp.endsAt, false);
+    // An idle archivist's Speed Up is paused: it can't end.
+    if (s.job && s.speedUp) consider(i, s.speedUp.endsAt, false);
   });
   return next;
 }

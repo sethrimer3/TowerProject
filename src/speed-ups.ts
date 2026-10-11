@@ -15,7 +15,9 @@ const HOUR = 3_600_000;
 /** A Speed Up on one archivist: its research goes `factor` times as fast
  * until `endsAt` (wall clock, ms). The boost is carried into the job's
  * times up to `appliedUntil`, so a job's times always read as they would
- * with no boost from then on. `queued` buys the same Speed Up again as it
+ * with no boost from then on; while the archivist is idle it is paused,
+ * `endsAt` moving on with the clock, so only time spent researching uses
+ * it up. `queued` buys the same Speed Up again as it
  * ends, while the Cells are there. */
 export type SpeedUp = { factor: SpeedUpFactor; hours: SpeedUpHours; endsAt: number; appliedUntil: number; queued: boolean };
 
@@ -61,11 +63,17 @@ function hastened(job: ResearchJob, speedUp: SpeedUp, from: number, to: number) 
   return { ...job, startedAt: job.startedAt - gained, completesAt: job.completesAt - gained };
 }
 
-/** Carries `slot`'s boost into its job up to `to`. */
+/** Carries `slot`'s boost into its job up to `to`; an idle archivist's
+ * Speed Up waits, its end moved on by the time idle. */
 export function carrySpeedUp(slot: ArchivistSlot, to: number) {
   const s = slot.speedUp;
   if (!s || !(to > s.appliedUntil)) return;
-  if (slot.job) slot.job = hastened(slot.job, s, s.appliedUntil, to);
+  if (!slot.job) {
+    s.endsAt += to - s.appliedUntil;
+    s.appliedUntil = to;
+    return;
+  }
+  slot.job = hastened(slot.job, s, s.appliedUntil, to);
   s.appliedUntil = Math.min(to, s.endsAt);
 }
 
@@ -85,12 +93,13 @@ export function completionAt(slot: ArchivistSlot) {
   return boosted <= s.endsAt ? boosted : done - (s.factor - 1) * (s.endsAt - s.appliedUntil);
 }
 
-/** `slot`'s Speed Up ends at `at`: a queued one is bought again from there
- * while the archivist is busy and the Cells are there; otherwise it is gone. */
+/** `slot`'s Speed Up ends at `at` (only ever while the archivist is busy):
+ * a queued one is bought again from there while the Cells are there;
+ * otherwise it is gone. */
 export function endSpeedUp(o: CellPurse, slot: ArchivistSlot, at: number) {
   const s = slot.speedUp!;
   delete slot.speedUp;
-  if (s.queued && slot.job) startSpeedUp(o, slot, s.factor, s.hours, true, at);
+  if (s.queued) startSpeedUp(o, slot, s.factor, s.hours, true, at);
 }
 
 /** A saved Speed Up, or undefined when it isn't one. */

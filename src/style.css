@@ -3062,7 +3062,7 @@ dialog.dismiss-anywhere { cursor: pointer; }
 /* --- Archives --- */
 .archives { display: flex; flex: 1; min-height: 0; flex-direction: column; gap: 10px; overflow-y: auto; border: 1px solid #4d5a44; background: radial-gradient(ellipse at 50% 20%, #3d552e22, transparent 65%), #0a1016; padding: 8px 10px 12px; border-radius: 9px; }
 /* One archivist a row; an idle one opens Select Research when pressed. */
-.archivists { display: grid; grid-template-columns: 1fr; gap: 6px; margin-top: 14px; }
+.archivists { display: grid; grid-template-columns: 1fr; gap: 6px; }
 .archivist { display: flex; flex-direction: column; gap: 5px; min-width: 0; padding: 7px 8px; border: 1px solid #3d4858; border-radius: 7px; background: #111925; font-size: 11px; }
 .archivist small { font-size: 9px; letter-spacing: 2px; color: #8793a2; }
 .archivist b { color: #e3d2ad; font-weight: 500; }
@@ -3138,6 +3138,7 @@ dialog.dismiss-anywhere { cursor: pointer; }
  * Speed Up button. */
 .archivist .archivist-time { display: flex; align-items: center; gap: 6px; }
 .archivist-speed { color: #7be07b; font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.archivist-speed.paused { color: #5f9a62; font-weight: 500; }
 .archivist .archivist-speed-up { display: inline-flex; align-items: center; gap: 4px; min-height: 26px; padding: 2px 8px; border-color: #c9a227; color: #ffe680; background: #2b2610; }
 /* The Speed Up dialog: two rows of options, the choice, the Cells held over
  * its cost, and the Queue box. */
