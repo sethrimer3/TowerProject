@@ -2,7 +2,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { reachable } from "../src/board.ts";
 import { TOWER_START_X, WIDTH, xpForLevel } from "../src/config.ts";
-import { point, type Tile } from "../src/entities.ts";
+import { point, type EnemyStrength, type Tile } from "../src/entities.ts";
+import type { EnemyProfile } from "../src/enemy-curves.ts";
 import { region } from "../src/delve/labyrinth.ts";
 import { generateTowerFloor, isBossFloor } from "../src/tower/index.ts";
 import { getTowerGateEnemy } from "../src/scaling.ts";
@@ -33,16 +34,37 @@ test("a boss stands on the only way to each boss floor's stairs, and on no other
     }
 });
 
-test("a Tower boss has four times a normal enemy's HP, 1.75 times its ATK and 1.3 times its DEF, on any floor", () => {
+test("a Tower boss has 2.75 times a normal enemy's HP, 1.6 times its ATK and 1.2 times its DEF, on any floor", () => {
   for (const room of [0, 4, 9, 19, 49, 333]) {
     const normal = getTowerGateEnemy(room, "normal", "balanced"), boss = getTowerGateEnemy(room, "boss", "balanced");
     const strong = getTowerGateEnemy(room, "strong", "balanced"), elite = getTowerGateEnemy(room, "elite", "balanced");
     // Each is rounded to hundredths on its own.
-    for (const [stat, k] of [["hp", 4], ["attack", 1.75], ["defense", 1.3]] as const)
+    for (const [stat, k] of [["hp", 2.75], ["attack", 1.6], ["defense", 1.2]] as const)
       assert.ok(Math.abs(boss[stat] - normal[stat] * k) <= 0.02, `floor ${room + 1} ${stat}`);
     assert.ok(boss.attack > strong.attack && boss.attack > elite.attack, `floor ${room + 1}: the boss hits hardest`);
     assert.equal(boss.name, normal.name);
   }
+});
+
+test("a Tower boss is its floor's hardest fight, but costs at most 3 times the worst other enemy there", () => {
+  // Heroes sized to the floor's normal, balanced enemy: three strikes fell
+  // it, and DEF holds off 60% or all of its ATK. With the boss at four times
+  // the HP, 1.75 times the ATK and 1.3 times the DEF, its fight cost such a
+  // hero three to five times the worst other enemy's (51% of max HP against
+  // 10% from floor 100 on).
+  const sized = (room: number, guard: number) => {
+    const n = getTowerGateEnemy(room, "normal", "balanced"), maxHp = n.attack * 20;
+    return { x: 0, y: 0, hp: maxHp, maxHp, attack: n.hp / 3 + n.defense, defense: n.attack * guard, keys: { yellow: 0, blue: 0, red: 0 } };
+  };
+  const cost = (hero: ReturnType<typeof sized>, room: number, strength: EnemyStrength, profile: EnemyProfile) =>
+    predict(hero, { ...getTowerGateEnemy(room, strength, profile), strength }).damage / hero.maxHp;
+  for (const room of [9, 29, 49, 99, 149, 199, 299])
+    for (const guard of [0.6, 1]) {
+      const hero = sized(room, guard), boss = cost(hero, room, "boss", "balanced");
+      const worst = Math.max(...(["weak", "normal", "strong", "elite"] as const).flatMap((s) =>
+        (["attackHeavy", "balanced", "defenseHeavy"] as const).map((p) => cost(hero, room, s, p))));
+      assert.ok(boss > worst && boss <= 3 * worst, `floor ${room + 1}, DEF ${guard}: boss ${boss.toFixed(3)} against ${worst.toFixed(3)}`);
+    }
 });
 
 test("tenth-floor bosses below floor 50 cost an evenly trained hero no more than before the enemy curves", () => {
