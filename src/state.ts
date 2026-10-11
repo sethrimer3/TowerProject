@@ -1208,6 +1208,9 @@ export class Game {
   private get trainingNow() {
     return { upgrades: this.save.upgrades, training: ranksInRun(this.save, this.run) };
   }
+  /** Silver spent on run training since the page loaded, so the purse's
+   * Silver rate counts only what was found (not saved). */
+  silverSpent = 0;
   /** Silver held this run. */
   get silver() {
     return this.run.silver ?? 0;
@@ -2168,7 +2171,10 @@ export class Game {
     const bulk = runTrainingBulk(this.save, this.run, id, quantity, this.free ? Infinity : this.silver);
     if (!bulk.affordable) return false;
     this.remember(this.snapshot());
-    if (!this.free) this.run.silver = snap(this.silver - bulk.cost);
+    if (!this.free) {
+      this.run.silver = snap(this.silver - bulk.cost);
+      this.silverSpent = snap(this.silverSpent + bulk.cost);
+    }
     let hpGain = 0;
     for (let i = 0; i < bulk.count; i++) {
       const offer = runTrainingOffer(this.save, this.run, id);

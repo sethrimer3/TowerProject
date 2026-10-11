@@ -16,7 +16,7 @@ import { isBoard, type AppContext, type Tab } from "./ui/app.ts";
 import { el, ticketIcon } from "./ui/dom.ts";
 import { buildShell } from "./ui/shell.ts";
 import { BoardOverlay } from "./ui/board-overlay.ts";
-import { boardHeadingStale, flashRed, renderAdButton, renderEventsButtons, renderMailButton, renderMissionsButton, renderShopDot, renderTournamentButton, renderBoardHeading, renderHud, renderVitals, purseFrame, gearWaiting, upgradesWaiting, dismissResearch } from "./ui/hud.ts";
+import { boardHeadingStale, flashRed, renderAdButton, renderEventsButtons, renderMailButton, renderMissionsButton, renderShopDot, renderTournamentButton, renderBoardHeading, renderHud, renderVitals, purseFrame, togglePurseRates, gearWaiting, upgradesWaiting, dismissResearch } from "./ui/hud.ts";
 import { ResearchPage } from "./ui/research-page.ts";
 import { confirmAction, RunEndDialog } from "./ui/dialogs.ts";
 import { closeRunMenu, toggleRunMenu } from "./ui/run-menu.ts";
@@ -269,6 +269,8 @@ function boardTap(x: number, y: number) {
   update();
 }
 // Goals: the Tower's checkpoints (the Delve's button is a placeholder).
+// The purse's Gold and Silver: tapped inside a run, the rates they are found at.
+for (const id of ["gold", "run-silver"]) el(id).parentElement!.onclick = () => togglePurseRates(game);
 el("section-pick").onclick = () => {
   if (game.mode === "tower") navigate("goals");
 };
