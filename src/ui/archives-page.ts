@@ -239,8 +239,7 @@ export class ArchivesPanel {
       const finish = game.save.settings.devMode ? `<button data-finish="${i}">Finish now</button>` : "";
       return `<article class="archivist busy" role="listitem" data-pick="${i}" title="Select research: switch this archivist to other research"><div class="archivist-head"><div class="archivist-who">${title}<b>${def.name} · level ${job.level}</b></div><div class="archivist-actions">${auto}<button data-stop="${i}" title="Stop: the Gold comes back, and the time spent is kept for later">Stop</button>${this.rushHtml(i)}${finish}</div></div>
         <div class="research-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.floor(done * 100)}"><i data-progress="${i}" style="width:${(done * 100).toFixed(2)}%"></i></div>
-        <div class="archivist-line">${this.changeHtml(job.research)}</div>
-        <p><span data-countdown="${i}">${formatDuration(job.completesAt - now)} left</span></p></article>`;
+        <div class="archivist-line">${this.changeHtml(job.research)}<p><span data-countdown="${i}">${formatDuration(job.completesAt - now)} left</span></p></div></article>`;
     }).join("");
   }
 

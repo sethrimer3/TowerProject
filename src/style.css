@@ -3062,6 +3062,7 @@ dialog.dismiss-anywhere { cursor: pointer; }
 .archivist p { margin: 0; color: #b7c0cc; }
 .archivist.busy { border-color: #6e9a70; }
 .archivist-line { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 8px; }
+.archivist-line p { margin-left: auto; }
 .archivist-change { display: inline-flex; align-items: center; gap: 4px; }
 .archivist-change .training-box { min-height: 22px; padding: 2px 6px; font-size: 11px; }
 .archivist button { min-height: 30px; padding: 4px 8px; font-size: 10px; }
