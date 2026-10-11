@@ -1,5 +1,6 @@
 import { RESEARCH, RESEARCH_IDS, cancelResearch, status, hastenResearch, hireArchivist, settleArchives, startResearch, switchResearch, type ResearchId, type ResearchRecord } from "../archives.ts";
 import { finishGems } from "../training-jobs.ts";
+import { speedUpCells, startSpeedUp, type SpeedUpFactor, type SpeedUpHours } from "../speed-ups.ts";
 import { changeLoadout } from "./hero-sync.ts";
 import { affordsGems, type DeskHost } from "./desk.ts";
 
@@ -56,6 +57,7 @@ export class ResearchDesk {
   /** Stops archivist `slot`'s research, refunding its Gold and keeping the
    * time already spent on it for when it starts again. */
   cancel(slot: number) {
+    this.settle();
     return cancelResearch(this.save, slot, this.host.clock());
   }
 
@@ -76,6 +78,7 @@ export class ResearchDesk {
   /** Rushes archivist `slot`'s research: pays `rushGems` and completes it
    * now. Returns what completed. */
   rush(slot: number) {
+    this.settle();
     const job = this.save.archives.slots[slot]?.job, gems = this.rushGems(slot);
     if (!job || !affordsGems(this.host, gems)) return [];
     this.save.gems -= gems;
@@ -89,6 +92,26 @@ export class ResearchDesk {
     if (!this.save.settings.devMode || !job) return [];
     hastenResearch(this.save.archives, slot, Math.max(0, job.completesAt - this.host.clock()));
     return this.settle();
+  }
+
+  /** The Cells a Speed Up of `factor` for `hours` costs (none with Dev
+   * free purchases). */
+  speedUpCells(factor: SpeedUpFactor, hours: SpeedUpHours) {
+    return this.host.free ? 0 : speedUpCells(factor, hours);
+  }
+
+  /** Speeds busy archivist `slot`'s research up by `factor` for `hours`,
+   * paying its Cells; `queued` buys it again each time it ends while the
+   * Cells are there. False while one is in progress or the Cells fall short. */
+  speedUp(slot: number, factor: SpeedUpFactor, hours: SpeedUpHours, queued: boolean) {
+    this.settle();
+    return this.open && startSpeedUp(this.save, this.save.archives.slots[slot], factor, hours, queued, this.host.clock());
+  }
+
+  /** Whether archivist `slot`'s Speed Up in progress is bought again as it ends. */
+  setSpeedUpQueued(slot: number, on: boolean) {
+    const s = this.save.archives.slots[slot]?.speedUp;
+    if (s) s.queued = on;
   }
 
   hire() {

@@ -3127,7 +3127,37 @@ dialog.dismiss-anywhere { cursor: pointer; }
 .research-state { font-size: 10px; letter-spacing: 1px; color: #9aa6b5; }
 .research-empty { margin: 0; font-size: 11px; color: #7c8898; }
 .archives .tree-heading { position: relative; }
-.research-history-open { position: absolute; right: 0; top: 0; padding: 4px 10px; font-size: 11px; }
+/* The Cells held and History share the heading's top-right corner. */
+.research-corner { position: absolute; right: 0; top: 0; display: flex; align-items: center; gap: 8px; }
+.research-cells { display: inline-flex; align-items: center; gap: 3px; font-size: 12px; }
+.research-cells b { color: #ffe680; font-weight: 600; }
+.research-history-open { min-height: 0; padding: 2px 10px; font-size: 11px; line-height: 1.4; }
+.cell-icon { width: 14px; height: 14px; flex-shrink: 0; vertical-align: -2px; }
+.help-cell { width: 13px; height: 13px; }
+/* A busy archivist's time left, its Speed Up in progress in green, and the
+ * Speed Up button. */
+.archivist .archivist-time { display: flex; align-items: center; gap: 6px; }
+.archivist-speed { color: #7be07b; font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.archivist .archivist-speed-up { display: inline-flex; align-items: center; gap: 4px; min-height: 26px; padding: 2px 8px; border-color: #c9a227; color: #ffe680; background: #2b2610; }
+/* The Speed Up dialog: two rows of options, the choice, the Cells held over
+ * its cost, and the Queue box. */
+.speed-up .dialog-x { float: right; width: 32px; height: 32px; min-height: 0; margin: -18px -18px 0 0; padding: 0; border-radius: 50%; font-size: 15px; line-height: 1; }
+.speed-up h2 { margin-top: 0; }
+.speed-up p { margin: 4px 0; }
+.speed-up-what { color: #e3d2ad; }
+.speed-up-options { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 10px; }
+.speed-up-option { min-height: 36px; padding: 4px; font-size: 13px; }
+.speed-up-option.chosen { border-color: #c9a227; color: #ffe680; background: #2b2610; }
+.speed-up-option:disabled.chosen { opacity: 0.7; }
+.speed-up .speed-up-choice { margin-top: 12px; color: #e9d4ac; font-size: 16px; }
+.speed-up .speed-up-cells { display: flex; align-items: center; justify-content: center; gap: 4px; color: #ffe680; font-size: 15px; font-variant-numeric: tabular-nums; }
+.speed-up .speed-up-cells.short { color: #ffb0a4; }
+.speed-up-cells .cell-icon { width: 18px; height: 18px; }
+.speed-up-queue { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 13px; cursor: pointer; }
+.speed-up-queue input { width: 16px; height: 16px; }
+.speed-up .dialog-actions { margin-top: 14px; }
+.speed-up .dialog-actions button { display: inline-flex; align-items: center; justify-content: center; gap: 4px; }
+.speed-up .speed-up-busy { margin-top: 10px; color: #7be07b; font-size: 12px; letter-spacing: 2px; }
 /* Select Research: the archivist it chooses for under the heading, and the
  * X that goes back at the top right. */
 .research-pick-for { display: block; font-size: 9px; letter-spacing: 2px; color: #8793a2; }

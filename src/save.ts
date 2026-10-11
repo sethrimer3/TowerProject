@@ -31,6 +31,7 @@ export function defaults(): Save {
     gems: 0,
     ascensionShards: 0,
     medals: 0,
+    cells: 0,
     gemDrop: defaultGemDrop(),
     goldBoostUntil: 0,
     gold: 0,
@@ -274,6 +275,7 @@ function decodeProgress(s: any, d: Save, undoCapacity: number) {
   d.gems = count(s.gems, d.gems);
   d.ascensionShards = count(s.ascensionShards, d.ascensionShards);
   d.medals = count(s.medals, d.medals);
+  d.cells = fraction(s.cells, d.cells);
   d.gemDrop = decodeGemDrop(s.gemDrop);
   d.goldBoostUntil = count(s.goldBoostUntil, 0, Number.MAX_SAFE_INTEGER);
   for (const g of GOLD_SHOP) d.provisions[g.id] = count(s.provisions?.[g.id], d.provisions[g.id], 999);

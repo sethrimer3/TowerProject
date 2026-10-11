@@ -363,6 +363,14 @@ _Avoid_: tech, study
 One research slot: it works on one research level at a time, and optionally auto-continues to the next. Its research can be rushed: completed at once for Gems (not the hand's Rush).
 _Avoid_: lab slot, researcher
 
+**Cell**:
+A lasting currency, shown as a yellow triangle, that only Greater Bosses drop (more on later towers); it buys Speed Ups.
+_Avoid_: energy, research points
+
+**Speed Up**:
+A while, bought with Cells, during which one archivist researches 1.5 to 4 times as fast; queued, it is bought again each time it ends while the Cells last. Not to be confused with Rush, which completes research at once for Gems.
+_Avoid_: boost (the training boost), haste
+
 **Research page**:
 The page holding what grows with time: Training and, once that skill is owned, the Archives, a tab each. Inside a run it opens from the HUD with the run paused. Not to be confused with a single research project.
 _Avoid_: lab page, training screen

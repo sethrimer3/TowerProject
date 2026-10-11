@@ -286,6 +286,10 @@ export type Save = {
    * mission rewards (missions/catalog.ts) and Events' missions
    * (events/catalog.ts); nothing spends them yet. */
   medals: number;
+  /** Cells: dropped by Greater Bosses, kept between runs with their
+   * fractions (a badge's scale can change a drop), spent on the Archives'
+   * Speed Ups (speed-ups.ts). */
+  cells: number;
   /** Where the Gems found on floors and the ad button's stand: never part
    * of a run, so undo can't touch them. */
   gemDrop: GemDrop;

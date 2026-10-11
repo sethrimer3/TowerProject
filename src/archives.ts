@@ -5,6 +5,7 @@ import { goalUnlocked, type GoalUnlock } from "./goals.ts";
 import { finite as finiteIn, isRecord, wholeIn } from "./decode.ts";
 import { intPow } from "./exact.ts";
 import { BUY_QUANTITIES, quantityLabel } from "./buy-quantity.ts";
+import { carrySpeedUp, completionAt, decodeSpeedUp, endSpeedUp, type SpeedUp } from "./speed-ups.ts";
 
 // The Archives: research that lasts between runs. An archivist takes one
 // research project at a time; each level costs Gold and real time, and once
@@ -717,9 +718,10 @@ export const HISTORY_LIMIT = 200;
 /** A research level being worked on: paid for, started at `startedAt`
  * (moved back by any progress kept from before), done at `completesAt`. */
 export type ResearchJob = { research: ResearchId; level: number; startedAt: number; completesAt: number; paid: number };
-/** One archivist: its job, if any, and whether it starts the project's next
- * level on its own when this one completes. */
-export type ArchivistSlot = { job?: ResearchJob; autoContinue: boolean };
+/** One archivist: its job, if any, whether it starts the project's next
+ * level on its own when this one completes, and its Speed Up, if one is
+ * in progress (speed-ups.ts). */
+export type ArchivistSlot = { job?: ResearchJob; autoContinue: boolean; speedUp?: SpeedUp };
 export type ResearchRecord = { at: number; research: ResearchId; level: number };
 export type ArchivesSave = {
   /** The hired archivists. */
@@ -744,6 +746,8 @@ export type ArchivesOwner = {
   gold: number;
   /** Gems, which hire archivists. */
   gems: number;
+  /** Cells, which buy Speed Ups. */
+  cells: number;
   upgrades: Record<UpgradeId, number>;
   /** Goals claimed, for the unlocks they hold. */
   goals: Save["goals"];
@@ -904,32 +908,52 @@ function hastenAll(a: ArchivesSave, ratio: number, at: number) {
   }
 }
 
-/** Completes every job due by `now`, oldest first, recording each. An
- * archivist set to auto-continue starts the project's next level the
- * moment the last completed, paying for it, so research done while the game
- * was closed carries on; without the Gold (or with nothing left to
- * research), it waits idle. Returns what completed. */
+/** Completes every job due by `now`, oldest first, recording each, and
+ * ends (or, queued, buys again) each Speed Up that ran out, all in the
+ * order they happened, each Speed Up's boost carried into its job's times
+ * as it goes. An archivist set to auto-continue starts the project's next
+ * level the moment the last completed, paying for it, so research done
+ * while the game was closed carries on; without the Gold (or with nothing
+ * left to research), it waits idle. Returns what completed. */
 export function settleArchives(o: ArchivesOwner, now: number): ResearchRecord[] {
   const a = o.archives, done: ResearchRecord[] = [];
-  for (;;) {
-    const due = a.slots
-      .map((s, i) => ({ i, job: s.job }))
-      .filter((s): s is { i: number; job: ResearchJob } => !!s.job && s.job.completesAt <= now)
-      .sort((x, y) => x.job.completesAt - y.job.completesAt || x.i - y.i)[0];
-    if (!due) break;
-    const { i, job } = due;
+  for (let event = nextEvent(a, now); event; event = nextEvent(a, now)) {
+    const { i, at } = event;
+    for (const s of a.slots) carrySpeedUp(s, at);
+    if (!event.completes) {
+      endSpeedUp(o, a.slots[i], at);
+      continue;
+    }
+    const job = a.slots[i].job!;
     a.slots[i].job = undefined;
     const before = speedFactor(a);
     a.levels[job.research] = job.level;
     const after = speedFactor(a);
-    if (after !== before) hastenAll(a, before / after, job.completesAt);
-    const record = { at: job.completesAt, research: job.research, level: job.level };
+    if (after !== before) hastenAll(a, before / after, at);
+    const record = { at, research: job.research, level: job.level };
     a.history.push(record);
     done.push(record);
-    if (a.slots[i].autoContinue && !cannotStart(o, i, job.research)) begin(o, i, job.research, job.completesAt);
+    if (a.slots[i].autoContinue && !cannotStart(o, i, job.research)) begin(o, i, job.research, at);
   }
+  for (const s of a.slots) carrySpeedUp(s, now);
   if (a.history.length > HISTORY_LIMIT) a.history.splice(0, a.history.length - HISTORY_LIMIT);
   return done;
+}
+
+/** The earliest thing due by `now`: a job completing (`completes`) or a
+ * Speed Up ending, in archivist `i`; a completion goes first at a tie,
+ * then the lower archivist. */
+function nextEvent(a: ArchivesSave, now: number) {
+  let next: { i: number; at: number; completes: boolean } | undefined;
+  const consider = (i: number, at: number, completes: boolean) => {
+    if (at > now) return;
+    if (!next || at < next.at || (at === next.at && completes && !next.completes)) next = { i, at, completes };
+  };
+  a.slots.forEach((s, i) => {
+    if (s.job) consider(i, completionAt(s), true);
+    if (s.speedUp) consider(i, s.speedUp.endsAt, false);
+  });
+  return next;
 }
 
 /** The Gems the next archivist costs, or undefined when all are hired. */
@@ -991,6 +1015,8 @@ function decodeSlots(raw: any[], a: ArchivesSave): ArchivistSlot[] {
   const busy = new Set<ResearchId>();
   return raw.map((s: any): ArchivistSlot => {
     const slot: ArchivistSlot = { autoContinue: s?.autoContinue === true };
+    const speedUp = decodeSpeedUp(s?.speedUp);
+    if (speedUp) slot.speedUp = speedUp;
     const j = s?.job;
     if (validJob(j, a) && !busy.has(j.research)) {
       busy.add(j.research);

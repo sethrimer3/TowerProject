@@ -18,6 +18,8 @@ const DAMAGE_RISE = 0.9;
 const DAMAGE_START = 0.35;
 /** Rewards without a sprite are written in the feedback text's gold. */
 const REWARD_COLOR = "#f3d69a";
+/** A Cell's yellow, its triangle and its amount alike. */
+const CELL_COLOR = "#ffd83a";
 /** Damage the hero deals and the darker damage it takes; HP it heals rises
  * in the labels' blue, `HEAL_COLOR`. */
 const DAMAGE_COLOR = "#ff4040";
@@ -292,7 +294,7 @@ function struckAt(fight: ShownFight, s: Strike, won: boolean) {
 
 /** Art drawn without an image: a tile's contents, the Gem, or Equipment's
  * pixel icons. */
-const paintsItself = (art: GainArt) => "tile" in art || "gem" in art || "equipMaterial" in art || "equipPiece" in art;
+const paintsItself = (art: GainArt) => "tile" in art || "gem" in art || "cell" in art || "equipMaterial" in art || "equipPiece" in art;
 
 /** The image a gain's art draws from, or null where it has none or it is
  * still loading. */
@@ -311,6 +313,12 @@ function paintArt(c: CanvasRenderingContext2D, f: FrameContext, p: Popup & { gai
   const art = p.gain.art!;
   if ("tile" in art) return paintSpentTile(c, f, p, art);
   if ("gem" in art) return paintGem(c, f.now, true);
+  if ("cell" in art) {
+    // The amount, then the Cell: "+3 ▲" in place of "+3 Cells".
+    paintCell(c);
+    mark(c, p.gain.text.split(" ")[0], { x: 10, y: 12 }, { color: CELL_COLOR, size: 10, align: "right" });
+    return;
+  }
   if ("equipMaterial" in art) {
     paintPixels(c, materialPixels(art.equipMaterial));
     if (art.quantity > 1) mark(c, `×${art.quantity}`, { x: 18, y: 21 }, { color: REWARD_COLOR, size: 8, align: "left" });
@@ -335,6 +343,20 @@ function paintArt(c: CanvasRenderingContext2D, f: FrameContext, p: Popup & { gai
     c.drawImage(image!, 3, 3, 18, 18);
     if (art.quantity > 1) mark(c, `×${art.quantity}`, { x: 18, y: 21 }, { color: REWARD_COLOR, size: 8, align: "left" });
   }
+}
+
+/** A Cell's yellow triangle, filling the same 18 px square as a coin. */
+function paintCell(c: CanvasRenderingContext2D) {
+  c.beginPath();
+  c.moveTo(20, 4);
+  c.lineTo(28.5, 19);
+  c.lineTo(11.5, 19);
+  c.closePath();
+  c.fillStyle = CELL_COLOR;
+  c.fill();
+  c.lineWidth = 1.2;
+  c.strokeStyle = "#5a4200";
+  c.stroke();
 }
 
 /** A 12×12 pixel icon (Equipment's) filling the same 18 px square as a

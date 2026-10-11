@@ -109,7 +109,7 @@ export type RouteEffects = {
  * a plus, `raised`, the max HP Max HP's badge added), or as `text` where it
  * has none. */
 export type Gain = { x: number; y: number; text: string; art: GainArt | null };
-export type GainArt = { tile: Tile; spent?: true } | { material: MaterialId; quantity: number } | { heart: true; raised?: true } | { gem: true } | { coin: Coin }
+export type GainArt = { tile: Tile; spent?: true } | { material: MaterialId; quantity: number } | { heart: true; raised?: true } | { gem: true } | { coin: Coin } | { cell: true }
   | { equipMaterial: EquipMaterialId; quantity: number } | { equipPiece: string; rarity: EquipRarity };
 /** The coin a Gold or Silver gain raises. */
 export type Coin = "gold" | "silver";
@@ -1806,13 +1806,15 @@ export class Game {
     this.gainXp(enemy, floor, scale);
     // Silver belongs to the run, so it isn't gated like Gold: undo takes it back.
     const purse = this.purse, silver = purse.killSilver(enemy, floor, scale);
-    const { gold, equipment } = purse.enemyLoot(enemy, at.x, at.y, scale, fight.instakill);
+    const { gold, cells, equipment } = purse.enemyLoot(enemy, at.x, at.y, scale, fight.instakill);
     this.gainCoins(at, gold, silver);
+    const cellsFound = cells ? [cellsText(cells)] : [];
+    for (const text of cellsFound) this.gain(at.x, at.y, text, { cell: true });
     if (equipment?.item || equipment?.salvaged) this.events.record("equipment", 1, this.missionKey(at));
     if (fight.crits) this.events.record("crits", fight.crits, this.missionKey(at));
     const found = equipmentGains(equipment);
     for (const { text, art } of found) this.gain(at.x, at.y, text, art);
-    this.message = [fightText(fight), ...coinsText(gold, silver), ...found.map((g) => g.text)].join(" · ");
+    this.message = [fightText(fight), ...coinsText(gold, silver), ...cellsFound, ...found.map((g) => g.text)].join(" · ");
     return true;
   }
   /** A kill counts toward the missions and the Event for its strength, once a tile. */
@@ -2360,6 +2362,9 @@ const SKIPPED_NAMES: Partial<Record<Tile["kind"], string>> = { door: "The door",
 const MARK_REACH = 40;
 
 /** How the status line opens on a fight won. */
+/** Cells found, as "+3 Cells" (to two decimals when a badge's scale left
+ * a fraction). */
+const cellsText = (cells: number) => `+${keyCount(cells)} ${keyCount(cells) === "1" ? "Cell" : "Cells"}`;
 function fightText({ enemy, damage, revived }: FightEnd) {
   if (revived) return `Revived · ${enemyTitle(enemy)} defeated`;
   return damage ? `−${wholeChange(damage)} HP · ${enemyTitle(enemy)} defeated` : "Unscathed victory";

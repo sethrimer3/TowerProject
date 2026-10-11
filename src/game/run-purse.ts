@@ -128,15 +128,27 @@ export class RunPurse {
     return instakill ? snap((gold * researched(this.save.archives, "instakillGold", 100)) / 100) : gold;
   }
 
-  /** An enemy's Gold (by its strength) and, once Equipment is open, its
-   * upgrade materials and a boss's equipment, once per physical kill. */
-  enemyLoot(enemy: Enemy, x: number, y: number, scale = 1, instakill = false): { gold: number; equipment: EquipmentLoot | null } {
-    if (!this.loot(this.lootKey(x, y))) return { gold: 0, equipment: null };
+  /** An enemy's Gold (by its strength), a Greater Boss's Cells and, once
+   * Equipment is open, its upgrade materials and a boss's equipment, once
+   * per physical kill. */
+  enemyLoot(enemy: Enemy, x: number, y: number, scale = 1, instakill = false): { gold: number; cells: number; equipment: EquipmentLoot | null } {
+    if (!this.loot(this.lootKey(x, y))) return { gold: 0, cells: 0, equipment: null };
     // Then the tier's bonus; Effective or Dampen on the card that took the
     // fight scales it too.
     const base = this.withCombo(this.killGold(enemy, instakill)), raised = scale === 1 ? base : snap(base * scale);
     const gold = this.gold(tierGold(this.tier, raised));
-    return { gold, equipment: this.equipmentLoot(enemy, y) };
+    const cells = enemy.strength === "greaterBoss" ? this.cells(scale) : 0;
+    return { gold, cells, equipment: this.equipmentLoot(enemy, y) };
+  }
+
+  /** A Greater Boss's Cells, banked in the save: a whole number from 1 to
+   * the tower's number, evenly (tower I's always 1, drawing nothing), then
+   * the scale of Effective or Dampen on the card that took the fight. */
+  private cells(scale: number) {
+    const found = this.tier > 1 ? 1 + Math.floor(this.rng() * this.tier) : 1;
+    const cells = scale === 1 ? found : snap(found * scale);
+    this.save.cells = snap(this.save.cells + cells);
+    return cells;
   }
 
   /** A kill's upgrade materials and a boss's equipment, on the equivalent
