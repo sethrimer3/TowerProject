@@ -456,6 +456,10 @@ _Avoid_: trigger, proc
 No card in the hand can act. The hand pauses and End Run lights up, and the run ends only when the player ends it; each thing the player does (an item used, a skill) checks the hand again, and it plays on once a card can act.
 _Avoid_: deadlock
 
+**Blocker**:
+What a stuck hand can't get past: a door, monster, stairs up or ignored tile at the edge of the ground the hero can walk, with more ground beyond it. The run's end dialog names each, where it stands and why no card gets past it.
+_Avoid_: obstacle, deadlock cause
+
 ### Themes
 
 **UI theme**:

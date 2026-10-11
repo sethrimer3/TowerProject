@@ -136,7 +136,9 @@ test("automation climbs purposefully, never takes lethal fights, bounds chunk me
   }
   assert.ok(g.run.height > 30, `reached ${g.run.height}`);
   g.world.maintain(10000);
-  assert.ok(g.world.chunks.size < 8);
+  // The current area's chunks (an area is at most 170 rows: 9 chunks), which
+  // the hand searches whole, and those within three of the hero's.
+  assert.ok(g.world.chunks.size <= 9 + 7, `${g.world.chunks.size} chunks`);
 });
 test("save roundtrip, malformed values and old versions are safe", () => {
   const g = new Game(defaults());

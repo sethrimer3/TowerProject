@@ -220,14 +220,15 @@ export class World implements Board {
   breakTorchAt(x: number, y: number): boolean {
     return breakTorch(this.torches, x, y);
   }
-  /** Keeps the chunks near row `y`, raises the floor to the current
+  /** Keeps the chunks near row `y` and every chunk of the current area
+   * (which the hand searches whole), raises the floor to the current
    * milestone's, and forgets edits below it. */
   maintain(y: number) {
-    const index = Math.floor(y / CHUNK);
+    const index = Math.floor(y / CHUNK), top = Math.floor(region(this.seed, this.milestone, this.tier).maxY / CHUNK);
     this.tile(START_X, (index + 2) * CHUNK);
     this.run.floor = Math.max(this.floor, floorFor(this.seed, this.milestone));
     for (const i of this.chunks.keys())
-      if ((i + 1) * CHUNK <= this.floor || Math.abs(i - index) > 3) this.chunks.delete(i);
+      if ((i + 1) * CHUNK <= this.floor || (Math.abs(i - index) > 3 && i > top)) this.chunks.delete(i);
     for (const k of Object.keys(this.changes))
       if (Number(k.split(",")[1]) < this.floor) delete this.changes[k];
   }

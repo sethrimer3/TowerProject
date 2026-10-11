@@ -1,7 +1,7 @@
 import { entrance, floorFor } from "./delve/labyrinth.ts";
 import { canWear, claimThemes, type GameLook, type ThemeId, type ThemeKind, type UiLook } from "./theme-collection.ts";
 import { chooseStep } from "./automation.ts";
-import { CARDS, KEY_TO_HP_PERCENT, SIPHONS, TRADER_YELLOW_KEYS, cardText, isSiphon, planHand, planTarget, type CardId, type CardPlan, type CardRules, type SiphonCard } from "./cards.ts";
+import { CARDS, KEY_TO_HP_PERCENT, SIPHONS, TRADER_YELLOW_KEYS, cardText, explainStuck, isSiphon, planHand, planTarget, walkAll, type CardId, type CardPlan, type CardRules, type SiphonCard, type StuckReport } from "./cards.ts";
 import { BADGE_IDS, BADGES, MAX_COPIES, badgeOn, badgesOn, badgeValue, runBadges, type BadgeId, type RunBadge } from "./badges.ts";
 import { adsOff, BOOST_FOREVER, permanentBoost } from "./shop/entitlements.ts";
 import { noteGoldBoost } from "./gold-boost.ts";
@@ -881,16 +881,7 @@ export class Game {
   private raiseBang() {
     const m = this.floorMarks;
     if (!m.tiles.length) return false;
-    const p = this.run.player, away = new Map([[`${p.x},${p.y}`, 0]]), walk = [{ x: p.x, y: p.y }];
-    for (let i = 0; i < walk.length; i++) {
-      const at = walk[i], d = away.get(`${at.x},${at.y}`)!;
-      for (const [dx, dy] of [[0, 1], [1, 0], [0, -1], [-1, 0]] as const) {
-        const next = this.world.step(at.x, at.y, dx, dy);
-        if (!next || away.has(`${next.x},${next.y}`) || Math.abs(next.y - p.y) > MARK_REACH || this.world.tile(next.x, next.y).kind === "wall") continue;
-        away.set(`${next.x},${next.y}`, d + 1);
-        walk.push(next);
-      }
-    }
+    const away = walkAll(this, this.run.player, m.tiles);
     const far = (t: string) => away.get(t) ?? Infinity;
     const k = m.tiles.reduce((best, t) => (far(t) < far(best) ? t : best));
     this.run.marks = { ...m, tiles: m.tiles.filter((t) => t !== k), bangs: [...m.bangs, k] };
@@ -1137,6 +1128,11 @@ export class Game {
     this.activeCard = null;
     this.auto = false;
     this.message = "No card can move · end the run, or use an item or skill.";
+  }
+  /** What stops the hand while no card can act (`explainStuck`): the run's
+   * end dialog shows it. */
+  stuckReport(): StuckReport {
+    return explainStuck(this, this.hand, this.mode);
   }
   /** The status line for card `id` leading the hand. */
   private cardMessage(id: CardId) {
@@ -2380,8 +2376,6 @@ const afterExtra = (hp: number, extra = 0, maxHp = Infinity) => (extra ? snap(Ma
 export type QuantityScope = "training" | "run" | "provisions";
 const QUANTITY_SETTINGS = { training: "buyQuantity", run: "runBuyQuantity", provisions: "provisionBuyQuantity" } as const;
 const SKIPPED_NAMES: Partial<Record<Tile["kind"], string>> = { door: "The door", key: "The key", potion: "The potion", attack: "The ATK shard", defense: "The DEF shard", treasure: "The chest", reward: "The chest" };
-/** How many rows from the hero the walk to the nearest ? looks. */
-const MARK_REACH = 40;
 
 /** How the status line opens on a fight won. */
 /** Cells found, as "+3 Cells" (to two decimals when a badge's scale left

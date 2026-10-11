@@ -1489,6 +1489,50 @@ dialog p {
   color: #ffd76a;
   text-shadow: 0 0 10px rgba(255, 190, 70, 0.55);
 }
+/* While no card can act: what blocks the way, closest first, and why. */
+.stuck-blockers {
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  text-align: left;
+}
+.stuck-blockers > small {
+  display: block;
+  margin-bottom: 6px;
+  color: #ff8a8a;
+  letter-spacing: 1px;
+}
+.stuck-blockers ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.stuck-blockers li {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin: 6px 0;
+}
+.stuck-blockers li small {
+  color: var(--muted);
+}
+.stuck-blockers p {
+  margin: 2px 0 0;
+  font-size: 13px;
+}
+.stuck-swatch {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  margin-top: 3px;
+  border: 1px solid #000a;
+  border-radius: 2px;
+}
+.stuck-blockers .stuck-more {
+  color: var(--muted);
+  font-size: 13px;
+}
 /* Under the run's totals while the Gold ad's boost ran during it. */
 .summary-boost {
   margin: -12px 0 18px;

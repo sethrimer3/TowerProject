@@ -1,8 +1,12 @@
-import { whole, wholeChange } from "../whole.ts";
+import { compactAmount, keyCount, whole, wholeChange, wholeHp } from "../whole.ts";
 import { GOLD_BOOST_FACTOR } from "../gold-boost.ts";
 import { MODES } from "../modes.ts";
 import { loadout } from "../loadout.ts";
-import type { AppContext } from "./app.ts";
+import { CARDS, type Blocker } from "../cards.ts";
+import { attackAgainst, defenseAgainst } from "../combat.ts";
+import { doorBlockedMessage, doorRule, KEY_NAMES, KEY_ORDER } from "../doors.ts";
+import { tileInfo } from "./tile-info.ts";
+import type { AppContext, PageGame } from "./app.ts";
 import { capitalized, CURRENCY_SPRITES, displayedProgress, el, uiSprite } from "./dom.ts";
 import { boardTitle } from "./hud.ts";
 import type { DelveRun } from "../entities.ts";
@@ -49,7 +53,59 @@ export function askForGems(ctx: AppContext) {
   confirmAction(ctx, { title: "Not enough Gems", body: "Not enough gems. Go to the store?", label: "Go to Shop", cancel: "Cancel" }, () => ctx.navigate("shop"));
 }
 
-/** Why the run's end dialog opened: the hero fell, the End Run button was
+/** How many kinds of blocker the stuck dialog lists before counting the rest. */
+const BLOCKERS_SHOWN = 4;
+
+/** What stops a hand that can't act, for the run's end dialog: each door,
+ * monster or tile in the way (`Game.stuckReport`), closest first, alike
+ * ones counted together at the closest, with where it stands from the hero
+ * and why no card in the hand gets past it, naming what the hero holds that
+ * falls short; then, in the Delve, how far below its highest row the hero
+ * stands, past where STAIRS climbs. */
+function stuckBlock(game: PageGame) {
+  const report = game.stuckReport(), p = game.run.player, groups = new Map<string, { b: Blocker; count: number }>();
+  for (const b of report.blockers) {
+    const key = `${tileInfo(game, b.x, b.y).title}|${blockWhy(game, b)}`, group = groups.get(key);
+    if (group) group.count++;
+    else groups.set(key, { b, count: 1 });
+  }
+  const items = [...groups.values()].slice(0, BLOCKERS_SHOWN).map(({ b, count }) => {
+    const info = tileInfo(game, b.x, b.y), rows = b.y - p.y;
+    const where = [rows ? `${Math.abs(rows)} ${rows === 1 || rows === -1 ? "row" : "rows"} ${rows > 0 ? "up" : "down"}` : "on your row", `${b.steps} ${b.steps === 1 ? "step" : "steps"} away`].join(" · ");
+    return `<li><span class="stuck-swatch" style="background:${info.color}"></span><div><b>${info.title}</b>${count > 1 ? ` ×${count}` : ""} <small>${where}</small><p>${blockWhy(game, b)}</p></div></li>`;
+  });
+  const more = groups.size - BLOCKERS_SHOWN;
+  if (more > 0) items.push(`<li class="stuck-more">and ${more} more</li>`);
+  const notes = [
+    report.belowTop ? `You stand ${report.belowTop} rows below the highest row reached this run: Stairs climbs only above it, within view, so it has nowhere to climb from here.` : "",
+  ].filter(Boolean).map((note) => `<p>${note}</p>`).join("");
+  const list = items.length ? `<ul>${items.join("")}</ul>` : notes ? "" : `<p>No door or enemy stands at the edge of the ground you can reach.</p>`;
+  return `<div class="stuck-blockers"><small>WHAT BLOCKS THE WAY</small>${list}${notes}</div>`;
+}
+
+/** Why no card in the hand gets past blocker `b`. */
+function blockWhy(game: PageGame, b: Blocker) {
+  const p = game.run.player, t = b.tile;
+  switch (b.why) {
+    case "ignored": return "You marked it with Ignore: no card goes there.";
+    case "held": return `${CARDS[b.card!].name} would take it, but its badge holds the card back.`;
+    case "passed": return `${CARDS[b.card!].name} passes it over, as its badge directs.`;
+    case "keys": {
+      const rule = doorRule(t), colors = rule.type === "keys" && rule.mode === "all" ? rule.keys : KEY_ORDER;
+      const held = colors.map((c) => `${keyCount(p.keys[c])} ${KEY_NAMES[c].toLowerCase()}`).join(", ");
+      return `${doorBlockedMessage(t)} You hold ${held}${rule.type === "wood" ? ` and ${wholeHp(p.hp)} HP` : ""}.`;
+    }
+    case "doorRun": return "It begins a run of doors, and the keys you hold run out partway through.";
+    case "impervious": return `Your ATK ${compactAmount(attackAgainst(p, t.enemy!))} can't get past its DEF ${compactAmount(defenseAgainst(p, t.enemy!))}.`;
+    case "noCard":
+      if (t.kind === "door") return "You can open it, but no card in your hand heads for this door.";
+      if (t.kind === "enemy") return "No card in your hand fights this enemy.";
+      if (t.kind === "stairs") return "No card in your hand takes the stairs.";
+      return "No card in your hand heads for it.";
+  }
+}
+
+/** Why the run's end dialog opened:the hero fell, the End Run button was
  * pressed while no card in the hand can act, or it was pressed by choice. */
 type RunEndCause = "fallen" | "stuck" | "chosen";
 
@@ -189,7 +245,8 @@ export class RunEndDialog {
     const [label, title, why] = cause === "stuck"
       ? ["NO CARD CAN ACT", `End this ${words.run}?`, `Nothing in your hand can act at ${where}. `]
       : ["END RUN", `End this ${words.run}?`, `End the current ${words.run} at ${where}. `];
-    modal.innerHTML = `<small>${label}</small><h2>${title}</h2><p>${why}${kept}</p>${stats}<div class="dialog-actions"><button id="cancel">${words.keepGoing}</button><button id="confirm">End run</button>${this.retryButton("retry")}</div>`;
+    const blocked = cause === "stuck" ? stuckBlock(game) : "";
+    modal.innerHTML = `<small>${label}</small><h2>${title}</h2><p>${why}${kept}</p>${blocked}${stats}<div class="dialog-actions"><button id="cancel">${words.keepGoing}</button><button id="confirm">End run</button>${this.retryButton("retry")}</div>`;
     modal.showModal();
     el("cancel").onclick = () => modal.close();
     el("confirm").onclick = () => {

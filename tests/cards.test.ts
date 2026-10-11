@@ -1,8 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { BASE_HAND, BASE_HAND_SLOTS, CARDS, CARD_IDS, cardText, HAND_SLOT_GEMS, MAX_HAND_SLOTS, deckCards, handSlots, nextHandSlotGems, moveCard, placeCard, planHand, upgradeCard, type CardId } from "../src/cards.ts";
+import { BASE_HAND, BASE_HAND_SLOTS, CARDS, CARD_IDS, cardText, explainStuck, HAND_SLOT_GEMS, MAX_HAND_SLOTS, deckCards, handSlots, nextHandSlotGems, moveCard, placeCard, planHand, upgradeCard, type CardId } from "../src/cards.ts";
 import { defaults } from "../src/save.ts";
-import { UPGRADES } from "../src/config.ts";
+import { UPGRADES, VIEWPORT_TILES } from "../src/config.ts";
 import type { Board, Position } from "../src/board.ts";
 import type { DelveRun, Enemy, Run, Tile } from "../src/entities.ts";
 
@@ -17,7 +17,8 @@ const LEGEND: Record<string, Tile> = {
   P: { kind: "potion" }, D: { kind: "door", color: "yellow" }, H: { kind: "door", door: { type: "fullHp" } },
   K: { kind: "key", color: "yellow" }, M: { kind: "enemy", enemy: WEAK }, L: { kind: "enemy", enemy: LETHAL },
   I: { kind: "enemy", enemy: IMPERVIOUS }, A: { kind: "attack" }, F: { kind: "defense" }, T: { kind: "treasure" }, O: { kind: "oneway" },
-  V: { kind: "stairsDown" }, B: { kind: "key", color: "blue" },
+  V: { kind: "stairsDown" }, B: { kind: "key", color: "blue" }, Z: { kind: "door", color: "blue" },
+  W: { kind: "door", door: { type: "wood", durability: 500 } },
 };
 
 /** A board drawn row by row, the first row highest; `@` is the hero. The
@@ -257,4 +258,51 @@ test("the door cards plan by Key Efficiency: less than a whole key opens a door 
   // A card's Dampen multiplies with it: 94% of 95% is under 0.9.
   assert.equal(planHand(at(940), ["door"], "tower"), null);
   assert.ok(planHand({ ...at(940), cardRules: () => ({ scale: 0.95 }) }, ["door"], "tower"));
+});
+
+/** What `explainStuck` finds blocking `hand`: each blocker's tile, place,
+ * walk and reason. */
+function blockers(at: Position & { ignored?: ReadonlySet<string> }, hand: readonly CardId[], mode: "tower" | "delve" = "tower") {
+  return explainStuck(at, hand, mode).blockers.map((b) => ({ at: [b.x, b.y], steps: b.steps, why: b.why, ...(b.card ? { card: b.card } : {}) }));
+}
+
+test("a stuck hand reports the doors and monsters with ground beyond them, and why none of its cards gets past", () => {
+  const rows = [
+    ".....",
+    "#Z###",
+    "#@.M#",
+    "#####",
+  ];
+  // The monster stands in a dead end, so only the door holds the way.
+  assert.equal(play(board(rows), ["stairs", "door"]), null);
+  assert.deepEqual(blockers(board(rows), ["stairs", "door"]), [{ at: [1, 2], steps: 1, why: "keys" }]);
+  // With its key held but no door card, the hand lacks the card.
+  assert.deepEqual(blockers(board(rows, { keys: { yellow: 0, blue: 1, red: 0 } }), ["stairs"]), [{ at: [1, 2], steps: 1, why: "noCard" }]);
+  // A door between two stretches already open blocks nothing.
+  assert.deepEqual(blockers(board(["@Z.", ".#.", "..."]), ["stairs"]), []);
+});
+
+test("a stuck hand reports an impervious monster, a Wooden Door it can't survive, and a run of doors it can't finish", () => {
+  assert.deepEqual(blockers(board(["@I."]), ["monster"]), [{ at: [1, 0], steps: 1, why: "impervious" }]);
+  assert.deepEqual(blockers(board(["@W."]), ["door"]), [{ at: [1, 0], steps: 1, why: "keys" }]);
+  assert.deepEqual(blockers(board(["@DD."], { keys: { yellow: 1, blue: 0, red: 0 } }), ["door"]), [{ at: [1, 0], steps: 1, why: "doorRun" }]);
+});
+
+test("a stuck hand reports a tile Ignore marked, and the stairs up when no card takes them", () => {
+  const ignored = { ...board(["@.."]), ignored: new Set(["1,0"]) };
+  assert.deepEqual(blockers(ignored, ["stairs"]), [{ at: [1, 0], steps: 1, why: "ignored" }]);
+  assert.deepEqual(blockers(board(["@.S"]), ["heal"]), [{ at: [2, 0], steps: 2, why: "noCard" }]);
+});
+
+test("the hand searches the whole area, however many rows away a target lies", () => {
+  const tall = board(["P", ...Array(100).fill("."), "@"]);
+  assert.deepEqual(play(tall, ["heal"]), { card: "heal", to: [0, 101], steps: 101 });
+});
+
+test("in the Delve, a stuck hand reports how far below its highest row the hero stands, past where STAIRS climbs", () => {
+  // The hero stepped back down further than STAIRS looks above it.
+  const view = Math.floor(VIEWPORT_TILES / 2), below = board([...Array(view + 4).fill("."), "@"]);
+  (below.run as DelveRun).top = view + 2;
+  assert.equal(play(below, ["stairs"], "delve"), null);
+  assert.deepEqual(explainStuck(below, ["stairs"], "delve"), { blockers: [], belowTop: view + 2 });
 });

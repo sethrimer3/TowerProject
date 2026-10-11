@@ -171,8 +171,10 @@ const keyScale = (at: HandAt, rules?: CardRules) => snap(((rules?.scale ?? 1) * 
  * lies there: open floor and every item. Walls, doors, monsters and stairs
  * block it, though any of them can be the target itself. */
 const CROSSABLE = new Set<Tile["kind"]>(["floor", "openedChest", "oneway", "key", "potion", "attack", "defense", "treasure", "reward"]);
-/** How many rows above and below the hero the search looks. */
-const REACH = 40;
+/** The most tiles a search walks: far more than a Tower floor or a Delve
+ * area (at most 30 by 170) holds, so it only ever stops a search that
+ * would otherwise run on up an endless board. */
+const MOST_WALKED = 20_000;
 /** The highest row the Delve's STAIRS card may climb to: the top of the view. */
 const VIEW_ABOVE = Math.floor(VIEWPORT_TILES / 2);
 
@@ -351,30 +353,35 @@ const highest = (targets: Reached[]) => targets.reduce((best, r) => (r.y > best.
 
 /** Of `targets`, the one with the shortest walk on to the stairs up over
  * every tile but walls, the closest to the hero of those tied; the closest
- * when the floor has no stairs in reach. */
+ * when the floor has no stairs. */
 function nearestStairs(at: Position, targets: Reached[]) {
-  const stairs = stairsIn(at);
+  const stairs = [...walkAll(at, at.run.player).keys()].find((k) => {
+    const [x, y] = k.split(",").map(Number);
+    return at.world.tile(x, y).kind === "stairs";
+  });
   if (!stairs) return targets[0];
-  const away = new Map([[point(stairs.x, stairs.y), 0]]), walk = [stairs];
-  for (let i = 0; i < walk.length; i++) {
-    const from = walk[i], d = away.get(point(from.x, from.y))!;
-    for (const [dx, dy] of [[0, 1], [1, 0], [0, -1], [-1, 0]] as const) {
-      const next = at.world.step(from.x, from.y, dx, dy);
-      if (!next || !inReach(at, next.y) || away.has(point(next.x, next.y)) || at.world.tile(next.x, next.y).kind === "wall") continue;
-      away.set(point(next.x, next.y), d + 1);
-      walk.push(next);
-    }
-  }
+  const [x, y] = stairs.split(",").map(Number), away = walkAll(at, { x, y });
   const left = (r: Reached) => away.get(point(r.x, r.y)) ?? Infinity;
   return targets.reduce((best, r) => (left(r) < left(best) ? r : best));
 }
 
-/** The stairs up within the hand's reach, if any. */
-function stairsIn(at: Position) {
-  const p = at.run.player;
-  for (let y = Math.max(at.world.floor, p.y - REACH); y <= p.y + REACH; y++)
-    for (let x = 0; x < at.world.width; x++) if (at.world.tile(x, y).kind === "stairs") return { x, y };
-  return null;
+/** How many steps each tile but walls lies from `start`, walking over them
+ * all (doors and monsters too), by `point`. With `until`, it stops once
+ * every tile there is reached, since in the Delve the walk would otherwise
+ * carry on through each milestone gate into the areas above. */
+export function walkAll(at: Position, start: { x: number; y: number }, until?: readonly string[]) {
+  const away = new Map([[point(start.x, start.y), 0]]), walk = [start];
+  for (let i = 0; i < walk.length && i < MOST_WALKED; i++) {
+    if (until?.every((k) => away.has(k))) break;
+    const from = walk[i], d = away.get(point(from.x, from.y))!;
+    for (const [dx, dy] of DIRECTIONS) {
+      const next = at.world.step(from.x, from.y, dx, dy);
+      if (!next || next.y < at.world.floor || away.has(point(next.x, next.y)) || at.world.tile(next.x, next.y).kind === "wall") continue;
+      away.set(point(next.x, next.y), d + 1);
+      walk.push(next);
+    }
+  }
+  return away;
 }
 
 /** The Delve's STAIRS target: the highest crossable tile in view above
@@ -386,13 +393,6 @@ function climb(at: Position, reached: Reached[]): Reached | undefined {
   for (const r of reached)
     if (CROSSABLE.has(r.tile.kind) && r.y > top && r.y <= p.y + VIEW_ABOVE && (!best || r.y > best.y)) best = r;
   return best;
-}
-
-/** Whether row `y` is within the hand's reach of the hero, and not below
- * the board's floor. */
-function inReach({ world, run }: Position, y: number) {
-  const p = run.player;
-  return y >= Math.max(world.floor, p.y - REACH) && y <= p.y + REACH;
 }
 
 /** Breadth-first search from the hero over crossable tiles. Returns every
@@ -409,11 +409,11 @@ function search(at: Position, marked: ReadonlySet<string>): Reached[] {
   const seen = new Map([[point(p.x, p.y), first]]);
   const walk: Walked[] = [first];
   const reached: Reached[] = [];
-  for (let i = 0; i < walk.length; i++) {
+  for (let i = 0; i < walk.length && i < MOST_WALKED; i++) {
     const { r: from, depth, items } = walk[i];
     for (const [dx, dy] of [[0, 1], [1, 0], [0, -1], [-1, 0]] as const) {
       const dest = world.step(from.x, from.y, dx, dy);
-      if (!dest || !inReach(at, dest.y)) continue;
+      if (!dest || dest.y < world.floor) continue;
       const tile = world.tile(dest.x, dest.y);
       if (tile.kind === "wall") continue;
       const k = point(dest.x, dest.y), taken = items + (takesSomething(tile, dest.x, dest.y, lit) ? 1 : 0);
@@ -451,11 +451,11 @@ function chargeSearch(at: HandAt, charge: number, marked: ReadonlySet<string>): 
   const walked = new Set([`0|${point(p.x, p.y)}`]), seen = new Set([point(p.x, p.y)]);
   const walk: { r: Reached; spent: number }[] = [{ r: { x: p.x, y: p.y, tile: world.tile(p.x, p.y), dx: 0, dy: 0, from: null }, spent: 0 }];
   const reached: Reached[] = [];
-  for (let i = 0; i < walk.length; i++) {
+  for (let i = 0; i < walk.length && i < MOST_WALKED; i++) {
     const { r: from, spent } = walk[i];
     for (const [dx, dy] of [[0, 1], [1, 0], [0, -1], [-1, 0]] as const) {
       const dest = world.step(from.x, from.y, dx, dy);
-      if (!dest || !inReach(at, dest.y)) continue;
+      if (!dest || dest.y < world.floor) continue;
       const tile = world.tile(dest.x, dest.y);
       if (tile.kind === "wall") continue;
       const k = point(dest.x, dest.y), next = { ...dest, tile, dx, dy, from };
@@ -471,4 +471,69 @@ function chargeSearch(at: HandAt, charge: number, marked: ReadonlySet<string>): 
     }
   }
   return reached;
+}
+
+
+/** Why a tile stops the hand: Ignore marked it; a card that would take it
+ * is held back by its badge (a gate, or Deprioritize resting), or passes
+ * it over by its badge's rule; the keys held don't open the door (or run
+ * out partway through its door run); the hero's strikes can't hurt the
+ * monster; or no card in the hand takes it at all. */
+export type BlockReason = "ignored" | "held" | "passed" | "keys" | "doorRun" | "impervious" | "noCard";
+/** Something the hand doesn't get past: where it stands, the walk to it,
+ * and why, with the card concerned for `held` and `passed`. */
+export type Blocker = { x: number; y: number; tile: Tile; steps: number; why: BlockReason; card?: CardId };
+/** What stops a hand that can't act (`explainStuck`): the blockers, closest
+ * first, and, in the Delve, how many rows the hero stands below the highest
+ * row it reached this run once that is out of STAIRS's view (0 otherwise),
+ * since STAIRS climbs only above it. */
+export type StuckReport = { blockers: Blocker[]; belowTop: number };
+
+/** Why `hand` can't act, walking the ground the hand's search walks: each
+ * door, monster, stairs up and ignored tile at its edge that has more
+ * ground beyond it (the stairs always count; stairs down never), with the
+ * reason no card in the hand gets past it. */
+export function explainStuck(at: HandAt, hand: readonly CardId[], mode: Mode): StuckReport {
+  const { world, run } = at, p = run.player, ignored = at.ignored ?? NONE;
+  const steps = new Map([[point(p.x, p.y), 0]]), walk = [{ x: p.x, y: p.y }];
+  const edge: Omit<Blocker, "why">[] = [];
+  for (let i = 0; i < walk.length && i < MOST_WALKED; i++) {
+    const from = walk[i], d = steps.get(point(from.x, from.y))!;
+    for (const [dx, dy] of DIRECTIONS) {
+      const dest = world.step(from.x, from.y, dx, dy);
+      if (!dest || dest.y < world.floor) continue;
+      const k = point(dest.x, dest.y), tile = world.tile(dest.x, dest.y);
+      if (steps.has(k) || tile.kind === "wall") continue;
+      steps.set(k, d + 1);
+      if (CROSSABLE.has(tile.kind) && !ignored.has(k)) walk.push(dest);
+      else if (tile.kind !== "stairsDown") edge.push({ x: dest.x, y: dest.y, tile, steps: d + 1 });
+    }
+  }
+  // Only what has ground beyond it blocks the way: a door between two
+  // stretches already open, or a monster in a dead end, holds nothing back.
+  const beyond = (e: Omit<Blocker, "why">) => e.tile.kind === "stairs" || DIRECTIONS.some(([dx, dy]) => {
+    const next = world.step(e.x, e.y, dx, dy);
+    return !!next && !steps.has(point(next.x, next.y)) && world.tile(next.x, next.y).kind !== "wall";
+  });
+  const blockers = edge.filter(beyond).map((e) => ({ ...e, ...blockReason(at, e, hand, ignored) }));
+  let belowTop = 0;
+  if (mode === "delve" && hand.includes("stairs") && !at.cardRules?.("stairs")?.closed) {
+    const top = Math.max(p.y, (run as DelveRun).top ?? p.y);
+    if (top >= p.y + VIEW_ABOVE) belowTop = top - p.y;
+  }
+  return { blockers, belowTop };
+}
+
+/** Why no card in `hand` gets past the tile `e`. */
+function blockReason(at: HandAt, e: Omit<Blocker, "why">, hand: readonly CardId[], ignored: ReadonlySet<string>): Pick<Blocker, "why" | "card"> {
+  if (ignored.has(point(e.x, e.y))) return { why: "ignored" };
+  const r: Reached = { ...e, dx: 0, dy: 0, from: null }, player = at.run.player;
+  const card = hand.find((id) => !IN_PLACE.has(id) && wants(id, r, at, at.cardRules?.(id)));
+  if (card) return { why: at.cardRules?.(card)?.closed ? "held" : "passed", card };
+  if (e.tile.kind === "door") {
+    if (doorCost(e.tile, player, keyScale(at)) === null) return { why: "keys" };
+    if (!paysRun(at, r, keyScale(at))) return { why: "doorRun" };
+  }
+  if (e.tile.kind === "enemy" && impervious(player, e.tile.enemy!)) return { why: "impervious" };
+  return { why: "noCard" };
 }
