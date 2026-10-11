@@ -49,6 +49,8 @@ export type Enemy = {
   /** Which of its stats lead (`enemy-curves.ts`), as generation made it;
    * absent on enemies made outside generation. */
   profile?: EnemyProfile;
+  /** A Fast enemy (fast-enemies.ts) strikes first in every fight. */
+  fast?: true;
 };
 /** An area reward chest's metal: gold for an area mastered, silver for one
  * cleared (tower/area-ledger.ts). */

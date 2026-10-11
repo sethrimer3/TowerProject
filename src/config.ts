@@ -495,6 +495,8 @@ export const cost = (id: UpgradeId, level: number) =>
  * pays some, beside its Silver. A Greater Boss pays twice a boss's Gold,
  * Silver and XP. */
 export const ENEMY_GOLD: Record<EnemyStrength, number> = { weak: 1, normal: 1, strong: 2, elite: 4, boss: 5, greaterBoss: 10 };
+/** The Gold a Fast enemy pays more than its strength's (fast-enemies.ts). */
+export const FAST_GOLD = 1;
 /** Silver, the currency spent inside a run, that a beaten enemy pays per
  * base amount, by its strength. */
 export const SILVER_MULTIPLIER: Record<EnemyStrength, number> = { weak: 1, normal: 2, strong: 3, elite: 4, boss: 5, greaterBoss: 10 };

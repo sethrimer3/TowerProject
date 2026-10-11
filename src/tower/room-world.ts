@@ -4,6 +4,7 @@ import { withPotions, type Board } from "../board.ts";
 import { breakTorch, placeTorches } from "../torches.ts";
 import { generateTowerFloor } from "./index.ts";
 import { tierCells } from "../tiers.ts";
+import { fastCells } from "../fast-enemies.ts";
 import { addEnemies, extrasSeed, hasExtras, type ExtraEnemies } from "../more-enemies.ts";
 import { ENTRY } from "./embedder.ts";
 
@@ -102,7 +103,7 @@ export class RoomWorld implements Board {
     let cells = generateTowerRoom(seed, room, tier);
     this.torches = torchesForRoom(seed, room, tier, cells);
     if (hasExtras(extras)) cells = withExtraEnemies(cells, seed, room, this.torches, extras);
-    this.cells = tierCells(cells, tier);
+    this.cells = fastCells(tierCells(cells, tier), "tower", tier, seed, () => room + 1);
   }
   breakTorchAt(x: number, y: number): boolean {
     return breakTorch(this.torches, x, y);

@@ -1,5 +1,5 @@
 import { researched } from "../archives.ts";
-import { ENEMY_GOLD, silverForKill } from "../config.ts";
+import { ENEMY_GOLD, FAST_GOLD, silverForKill } from "../config.ts";
 import type { RoomWorld } from "../tower/room-world.ts";
 import type { Enemy, Mode, Run, Save } from "../entities.ts";
 import { snap } from "../exact.ts";
@@ -112,10 +112,11 @@ export class RunPurse {
   }
 
   /** A kill's Gold before the tier's bonus: by the enemy's strength, raised
-   * by Gold / Kill training and research, multiplied, and for an
+   * by Gold / Kill training and research, multiplied (a Fast enemy paying
+   * `FAST_GOLD` more first), and for an
    * `instakill` (the hero's first strike ended it) by Mug research too. */
   private killGold(enemy: Enemy, instakill = false) {
-    const gold = snap((ENEMY_GOLD[enemy.strength] * killGold(this.trainingNow) * researched(this.save.archives, "killGold", 100)) / 10_000);
+    const gold = snap(((ENEMY_GOLD[enemy.strength] + (enemy.fast ? FAST_GOLD : 0)) * killGold(this.trainingNow) * researched(this.save.archives, "killGold", 100)) / 10_000);
     return instakill ? snap((gold * researched(this.save.archives, "instakillGold", 100)) / 100) : gold;
   }
 

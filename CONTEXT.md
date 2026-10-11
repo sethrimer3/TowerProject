@@ -140,6 +140,10 @@ _Avoid_: power budget, enemy table, zone stats
 How hard the floor asked an enemy to be: weak, normal, strong or elite. Each strength multiplies its floor's enemy curve: strong enemies are the floor's own made tougher, elite ones come from the next zone (the Tower's curve ten floors on). The board shows it round the enemy (a dark red rim for normal, the same with one chevron pointing down for weak, bright red with one chevron for strong, bright red inside a gold rim with two chevrons for elite) and the inspect title and fight messages name weak, strong and elite (and a boss or Greater Boss) before the enemy's name.
 _Avoid_: tier, rank, level
 
+**Fast enemy**:
+An enemy that strikes first in every fight, so it lands a blow even when the hero fells it in one strike. From the second tower and delve up, a share of the non-boss enemies are Fast (4% at first, growing with the floor and the tower), each striking with at least a share of the last tower's floor-100 enemy's ATK and paying 1 Gold more. Its name starts with "Fast" and its tile wears a fast-forward mark.
+_Avoid_: swift, quick, first strike enemy
+
 **Enemy profile**:
 Which of an enemy's stats lead: attack-heavy (more ATK, less DEF), balanced, or defense-heavy (more DEF, less ATK). Any strength may wear any profile; bosses are balanced. In the Tower a profile also names the enemy: each zone's **roster** has one enemy per profile (Goblin, Thief, Armored Knight on the first zone's floors), each tower starting its rosters one zone further along.
 _Avoid_: enemy type, class, archetype
@@ -155,7 +159,7 @@ _Avoid_: modifier, affix, enemy type (the profile and name already are)
 ### Fights
 
 **Fight**:
-What stepping into an enemy costs: rounds in which the hero strikes first and the enemy strikes back, until one of them falls. After every round the enemy's ATK rises by 1% (at least 1), so no DEF holds it off forever. How it ends is known before it starts, as the inspect panel shows.
+What stepping into an enemy costs: rounds in which the hero strikes first and the enemy strikes back (a Fast enemy strikes once before the hero), until one of them falls. After every round the enemy's ATK rises by 1% (at least 1), so no DEF holds it off forever. How it ends is known before it starts, as the inspect panel shows.
 _Avoid_: battle, combat round
 
 **Strike**:

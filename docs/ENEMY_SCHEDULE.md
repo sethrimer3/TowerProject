@@ -126,10 +126,26 @@ Abilities an enemy may carry beyond its stats, the enemies' counterpart of blue,
 
 - **Armored:** a shroud that blocks the fight's first damage.
 - **Piercing:** ignores a share of the hero's DEF.
-- **Swift:** strikes first.
 - **Enraged:** its ATK climbs faster than the usual 1% a round.
 
 Each would go through `combat.ts` and `resolveStep`, so previews, the planners, Automove and `crit-forecast.ts` agree with the fight played, and would wear a mark on its art. They are not scheduled yet.
+
+### Fast (built)
+
+The first trait, the old candidate **Swift**, built to give a hero fresh from a tower's floor-100 boss something to feel on the next tower's first floors (`src/fast-enemies.ts`).
+A hero strong enough for that boss fells the next tower's first enemies in one strike, before they swing, so their ATK doesn't matter; past them, until about floor 60, their ATK stays below the hero's DEF.
+Raising every early enemy's ATK would not reach the first of those, and raising their HP too would make the whole early tower harder; a Fast enemy strikes first, so it lands a blow even when the hero fells it in one strike, and it alone carries a raised ATK.
+
+- **Who:** from Tower II and Delve II up, any enemy but a boss or Greater Boss, More Enemies' extras among them.
+- **Share** (`fastShare`, thousandths of a percent): 4% on Tower II's floor 1, growing 1% every 200 floors (a little each floor) to 20% on floor 3,201; each tower after starts and stops half a point higher (4.5% to 20.5% in Tower III, 7.5% to 23.5% in Tower IX). The Delve counts its equivalent floor.
+- **Roll:** one `tileRandom` number per run seed, floor and tile (`FAST_SALT`), drawn after the tier's factor (`fastCells`, beside `tierCells` in `RoomWorld` and the Delve's `World`), so nothing else in generation draws differently.
+- **ATK:** at least the **carry** (`fastCarry`): `FAST_CARRY` (1.75) times the tier below's floor-100 normal, balanced enemy's ATK, in the tier's own units: 700 in Tower II (the Tower I floor-100 boss's ATK), 3,500 in Tower III. Every Fast enemy below it strikes with it, whatever its strength or profile; past the floor where the curve outgrows it (about 73 in Tower II), Fast changes no stats. HP and DEF are untouched.
+- **Fights:** it strikes first, then the fight goes on as ever; its ATK rises after its own strikes. Thorns answer its opening strike, the shroud takes it first, Revive may catch it, and Lifesteal heals only from the hero's strikes. A fight against it is never an Instakill, so Mug pays nothing more.
+- **Pay:** 1 Gold more than its strength's (`FAST_GOLD`), before Gold / Kill and the tier's bonus.
+- **Look:** "Fast" before its strength and name (*Fast Elite Goblin*), and a fast-forward mark at the tile's top right.
+
+Tune it with `FAST_CARRY` and `fastShare`.
+`tests/fast-enemies.test.ts` covers it.
 
 ## 7. Build order
 
@@ -137,4 +153,4 @@ Each would go through `combat.ts` and `resolveStep`, so previews, the planners, 
 2. **The enemy stage, Tower** (done): count, then re-rank, and strong and elite first floors by tower. `TOWER_LAYOUT_VERSION` 22.
 3. **The enemy stage, Delve** (done), by equivalent floor, replacing `guardStrengths`' fixed mix. `LAYOUT_VERSION` 25.
 4. **Profiles** (done): every strength may wear every profile, with scheduled shares, and rosters by tower. `TOWER_LAYOUT_VERSION` 23, `LAYOUT_VERSION` 26.
-5. **Traits** (section 6), one at a time.
+5. **Traits** (section 6), one at a time. Fast (done): no layout bump, since nothing moves.

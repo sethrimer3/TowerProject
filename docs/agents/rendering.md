@@ -10,7 +10,7 @@ Outside, it then draws the tile contents, entrance, route line, hero in its gras
 Blocked-step and feedback text, then the skull over a hero struck down (`struck-down.ts`), the revival's fire and the level-up burst (`level-up.ts`), go last.
 The passes live in their own modules.
 `tile-painters.ts` holds the tile art (one painter per tile kind, plus the hero and torch sprites), and every painter draws onto the context it's given.
-Items, the torch and the hero wear a coloured outline (`withOutline`); an enemy is baked once per name, tier and `strength` (`bakeEnemy`: a one-pixel black outline, then `ENEMY_LOOK`'s bands outside it and rank chevrons over it, a weak enemy's one pointing down), and its dark-room glow in `lighting.ts` is keyed by strength too.
+Items, the torch and the hero wear a coloured outline (`withOutline`); an enemy is baked once per name, tier, `strength` and whether it is Fast (`bakeEnemy`: a one-pixel black outline, then `ENEMY_LOOK`'s bands outside it and rank chevrons over it, a weak enemy's one pointing down, and a Fast enemy's cyan fast-forward mark at the top right, `fastMark`; the Neon enemy draws one too), and its dark-room glow in `lighting.ts` is keyed by strength too.
 Only opaque bands cast torch shadows.
 Ground uses the PNG tilesets (`themed-tilesets.ts`) and falls back to `drawTerrain` in `themes.ts`, the procedural art (wall faces per theme, floor contact shadows, and a small library of details) shown when sprites are off or still loading.
 `tests/terrain-paint.test.ts` runs `drawTerrain` on a recording canvas over every Tower theme and several Delve areas and hashes the calls against `tests/fixtures/terrain-paint.golden.json`; regenerate it with `UPDATE_GOLDEN=1` only for an intended art change.

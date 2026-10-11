@@ -108,8 +108,8 @@ export function strengthOnFloor(asked: EnemyStrength, floor: number, tower = 1):
 /** Weak, strong and elite enemies and bosses say so before their name. */
 const RANK: Record<EnemyStrength, string> = { weak: "Weak ", normal: "", strong: "Strong ", elite: "Elite ", boss: "Boss ", greaterBoss: "Greater Boss " };
 /** What the game calls an enemy: its name, after its strength unless it
- * is a normal one. */
-export const enemyTitle = (e: { name: string; strength?: EnemyStrength }) => (e.strength ? RANK[e.strength] : "") + e.name;
+ * is a normal one, and after "Fast" when it is Fast. */
+export const enemyTitle = (e: { name: string; strength?: EnemyStrength; fast?: true }) => (e.fast ? "Fast " : "") + (e.strength ? RANK[e.strength] : "") + e.name;
 
 /** The tier an enemy of each strength carries, in both modes. */
 export const enemyTier = (strength: EnemyStrength) => STRENGTH_TIER[strength];

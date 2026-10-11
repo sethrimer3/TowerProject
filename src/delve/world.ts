@@ -4,6 +4,7 @@ import { point, type DelveRun, type Tile, type Torch } from "../entities.ts";
 import { withPotions, type Board } from "../board.ts";
 import { breakTorch, placeTorches } from "../torches.ts";
 import { tierCells } from "../tiers.ts";
+import { fastCells } from "../fast-enemies.ts";
 import { tournamentCells } from "../tournament/run.ts";
 import { addEnemies, extraGround, extrasKey, extrasSeed, hasExtras, type ExtraEnemies } from "../more-enemies.ts";
 
@@ -151,7 +152,9 @@ export class World implements Board {
     const index = Math.floor(y / CHUNK);
     let chunk = this.chunks.get(index);
     if (!chunk) {
-      const cells = tierCells(this.generated(index), this.tier);
+      // Each enemy rolls Fast by its own equivalent floor.
+      const floorAt = (x: number, y: number) => Math.floor(depthAt(this.seed, x, y, ownerAt(this.seed, x, y), this.tier) / 10) + 1;
+      const cells = fastCells(tierCells(this.generated(index), this.tier), "delve", this.tier, this.seed, floorAt);
       // A tournament run's enemies stand stronger than the cave's own.
       chunk = this.run.tournament ? tournamentCells(cells) : cells;
       this.chunks.set(index, chunk);
