@@ -299,7 +299,7 @@ export class ArchivesPanel {
     else if (state === "locked") action = `<span class="research-state">Requires ${missing(save, id).map(requirementText).join(" + ")}</span>`;
     else {
       const why = this.picking === null ? "Choose an archivist first." : cannotSwitch(save, this.picking, id);
-      action = `<button data-research="${id}" ${why ? `disabled title="${why}"` : ""}>Research · ${uiSprite("gold", "stat-sprite")} ${currencyAmount(researchPrice(a, next!))}</button>`;
+      action = `<button data-research="${id}" ${why ? `disabled title="${why}"` : ""}>Research · <span class="research-gold">${uiSprite("gold", "stat-sprite")} ${currencyAmount(researchPrice(a, next!))}</span></button>`;
     }
     return `<article class="research ${state}" role="listitem"><div class="research-head"><b>${def.name}</b><button class="tree-help research-about" data-about="${id}" aria-label="About ${def.name}" title="About ${def.name}">?</button><small>LEVEL ${level} / ${maxLevel(id, save.upgrades)}</small></div>
       <div class="research-next">${detail}<span class="research-action">${price}${action}</span></div></article>`;

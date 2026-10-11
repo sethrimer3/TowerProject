@@ -15,9 +15,10 @@ const NODES: [UpgradeId, number, UpgradeId, CardId | null][] = [
   ["cardYellowDoor", 5, "keySiphon", "yellowDoor"],
   ["heartDoorResilience", 20, "cardYellowDoor", null],
   ["cardHeartDoor", 10, "heartDoorResilience", "heartDoor"],
-  ["cardWeakEnemy", 20, "heartDoorResilience", "weakEnemy"],
+  ["cardWeakEnemy", 20, "cardYellowDoor", "weakEnemy"],
   ["cardBaseEnemy", 20, "cardWeakEnemy", "baseEnemy"],
   ["cardStrongEnemy", 20, "cardBaseEnemy", "strongEnemy"],
+  ["cardFastEnemy", 20, "cardBaseEnemy", "fastEnemy"],
   ["cardEliteEnemy", 20, "cardWeakEnemy", "eliteEnemy"],
   ["cardBossEnemy", 20, "cardEliteEnemy", "bossEnemy"],
   ["cardNonBossEnemy", 40, "cardBossEnemy", "nonBossEnemy"],
@@ -60,6 +61,7 @@ test("a card node can't be bought before the one above it", () => {
   assert.equal(g.buy("cardHeartDoor"), false);
   assert.ok(g.buy("heartDoorResilience"));
   assert.ok(g.buy("cardHeartDoor"));
+  assert.ok(g.buy("cardWeakEnemy"), "Weak Enemy hangs straight off Yellow Door");
 });
 
 const enemy = (strength: EnemyStrength): Tile => ({ kind: "enemy", enemy: { name: "rat", hp: 1, attack: 0, defense: 0, tier: 0, strength } });
@@ -102,6 +104,15 @@ test("the non-boss card heads for the closest enemy of any strength but a boss o
   assert.deepEqual(target(floor({ 2: enemy("boss"), 3: enemy("greaterBoss"), 6: enemy("strong") }), "nonBossEnemy"), [6, 1]);
   for (const strength of ["weak", "normal", "strong", "elite"] as const) assert.deepEqual(target(floor({ 7: enemy(strength) }), "nonBossEnemy"), [7, 1], strength);
   assert.equal(target(floor({ 4: enemy("boss"), 9: enemy("greaterBoss") }), "nonBossEnemy"), null);
+});
+
+test("FAST ENEMY heads for the closest Fast enemy, of any strength but never a boss", () => {
+  const fast = (strength: EnemyStrength): Tile => ({ kind: "enemy", enemy: { ...enemy(strength).enemy!, fast: true } });
+  assert.deepEqual(target(floor({ 5: enemy("weak"), 4: enemy("normal"), 9: fast("strong") }), "fastEnemy"), [9, 1]);
+  for (const strength of ["weak", "normal", "strong", "elite"] as const) assert.deepEqual(target(floor({ 7: fast(strength) }), "fastEnemy"), [7, 1], strength);
+  assert.equal(target(floor({ 5: enemy("weak"), 8: enemy("elite") }), "fastEnemy"), null, "no Fast enemy, no target");
+  const golem: Tile = { kind: "enemy", enemy: { name: "golem", hp: 9, attack: 0, defense: 999, tier: 0, strength: "weak", fast: true } };
+  assert.deepEqual(target(floor({ 5: golem, 9: fast("weak") }), "fastEnemy"), [9, 1], "not one it can't hurt");
 });
 
 test("an enemy card passes over one it can't hurt", () => {

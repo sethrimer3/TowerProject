@@ -1,4 +1,4 @@
-import { CHECKPOINT_EVERY, CHECKPOINT_FLOORS, CHECKPOINTS, UNLOCK_NAMES, areaCleared, checkpoint, areaMastered, canWarp, floorsCompleted, goalState, passFor, passTotals, unlockAt, unlockFloor, warpUnlocked, type Checkpoint, type GoalReward, type GoalState, type GoalUnlock, type Pass } from "../goals.ts";
+import { CHECKPOINT_EVERY, CHECKPOINT_FLOORS, CHECKPOINTS, UNLOCK_NAMES, areaCleared, checkpoint, areaMastered, canWarp, floorsCompleted, goalState, unmasteredBelow, passFor, passTotals, unlockAt, unlockFloor, warpUnlocked, type Checkpoint, type GoalReward, type GoalState, type GoalUnlock, type Pass } from "../goals.ts";
 import { CURRENCIES, type CurrencyId } from "../shop/currency.ts";
 import { owns } from "../shop/entitlements.ts";
 import { stubServer, type ShopServer } from "../shop/server.ts";
@@ -159,7 +159,8 @@ export class GoalsPage {
       const done = high >= c.floor, warpable = canWarp(save, tower, c.floor);
       const mastered = warp && areaMastered(save, tower, c.floor), cleared = areaCleared(save, tower, c.floor);
       const marks = (cleared ? `<span title="Enemies cleared: floors ${c.floor - 9}–${c.floor}">${CLEARED_MARK}</span>` : "") +
-        (mastered ? `<span title="Area mastered: warp here">${SWIRL_MARK}</span>` : "");
+        // A mastered area's warp point stays greyed out until every one below it is mastered too.
+        (mastered ? `<span${warpable ? "" : ` class="inactive"`} title="Area mastered: ${warpable ? "warp here" : "warp here once every area below it is mastered"}">${SWIRL_MARK}</span>` : "");
       return `<div class="goal-row" style="bottom:${floorY(c.floor, floors)}px">` +
         `<div class="goal-left">${this.reward(tower, c, false)}${marks ? `<span class="goal-marks">${marks}</span>` : ""}</div>` +
         `<button class="goal-floor${done ? " completed" : ""}${warpable ? " warpable" : ""}" data-warp="${tower}:${c.floor}" aria-label="Floor ${c.floor}${warpable ? ": warp" : ""}">${c.floor}</button>` +
@@ -238,6 +239,8 @@ export class GoalsPage {
     const save = this.ctx.game.save, from = floor - 9;
     const cleared = areaCleared(save, tower, floor) ? ` Floors ${from}–${floor} cleared of enemies: +${CLEARED_INSPIRATION} Inspiration paid.` : "";
     if (!areaMastered(save, tower, floor)) return `Master floors ${from}–${floor}, climbing them without taking damage, to warp here.${cleared}`;
+    const below = unmasteredBelow(save, tower, floor);
+    if (below !== null && warpUnlocked(save)) return `Floors ${from}–${floor} mastered. Master floors ${below - 9}–${below} too: a warp point opens once every one below it is mastered.${cleared}`;
     return `Floors ${from}–${floor} mastered. Claim Unlock Warp at Tower ${tierNumeral(unlockAt("warp").tower)}'s floor ${unlockFloor("warp")} to start runs here.${cleared}`;
   }
 

@@ -10,7 +10,7 @@ export type SkillNode = { id: UpgradeId; icon: string; x: number; y: number; req
  * only Dev mode shows it, and its skills can't be bought). */
 export type SkillTree = { id: TreeId; name: string; currency: Currency; gate?: UpgradeId | null; description: string; height?: number; unlocks?: boolean; nodes: SkillNode[] };
 export const TREES: SkillTree[] = [
-  { id: "inspiration", name: "Inspiration", currency: "inspiration", description: "Earn Inspiration by beating your best Tower climb.", height: 370, unlocks: true, nodes: [
+  { id: "inspiration", name: "Inspiration", currency: "inspiration", description: "Earn Inspiration by beating your best Tower climb.", height: 352, unlocks: true, nodes: [
     // The hand's skills, down to the Archives: Buildout, Trainers (two rows
     // lower), Shroud, Critical (with Critical Prediction to its left). Gear and On the Job branch off
     // Buildout, ATK Up and DEF Up under Gear, and Regen, then Heal, below On the Job.
@@ -55,31 +55,32 @@ export const TREES: SkillTree[] = [
     { id: "evade", icon: "⇋", x: 90, y: 196, requires: ["regenResearch"] },
     { id: "revive", icon: "☼", x: 90, y: 214, requires: ["evade"] },
     // The cards down the middle, a row clear of Key Siphon: Yellow Door (Key < Badges,
-    // then Key ≥ Badges, to its right), Heart Door
-    // Resilience (Heart Door to its left), Weak Enemy (Base, then Strong, to its left; Elite, then Boss, to its
+    // then Key ≥ Badges, to its right; Heart Door Resilience, then Heart Door, to its
+    // left), Weak Enemy (Base, then Strong, to its left, Fast under Base; Elite, then Boss, to its
     // right, Non-Boss under Boss), Chest, BK Siphon (BK Trader, then YK to HP, to its left; Red
     // Key, then RK Siphon, to its right) and Floor Skip Reward (Torch to its
     // left, Steel Door to its right).
     { id: "cardYellowDoor", icon: "⚿", x: 50, y: 268, requires: ["keySiphon"] },
     { id: "keyLessBadges", icon: "⚿", x: 70, y: 268, requires: ["cardYellowDoor"] },
     { id: "keyAtLeastBadges", icon: "⚿", x: 90, y: 268, requires: ["keyLessBadges"] },
-    { id: "heartDoorResilience", icon: "♥", x: 50, y: 286, requires: ["cardYellowDoor"] },
-    { id: "cardHeartDoor", icon: "♥", x: 30, y: 286, requires: ["heartDoorResilience"] },
-    { id: "cardWeakEnemy", icon: "☠", x: 50, y: 304, requires: ["heartDoorResilience"] },
-    { id: "cardBaseEnemy", icon: "☠", x: 30, y: 304, requires: ["cardWeakEnemy"] },
-    { id: "cardStrongEnemy", icon: "☠", x: 10, y: 304, requires: ["cardBaseEnemy"] },
-    { id: "cardEliteEnemy", icon: "☠", x: 70, y: 304, requires: ["cardWeakEnemy"] },
-    { id: "cardBossEnemy", icon: "☠", x: 90, y: 304, requires: ["cardEliteEnemy"] },
-    { id: "cardNonBossEnemy", icon: "☠", x: 90, y: 322, requires: ["cardBossEnemy"] },
-    { id: "cardChest", icon: "▣", x: 50, y: 322, requires: ["cardWeakEnemy"] },
-    { id: "blueSiphon", icon: "⚿", x: 50, y: 340, requires: ["cardChest"] },
-    { id: "blueTrader", icon: "⚿", x: 30, y: 340, requires: ["blueSiphon"] },
-    { id: "keyToHp", icon: "♥", x: 10, y: 340, requires: ["blueTrader"] },
-    { id: "cardRedKey", icon: "⚿", x: 70, y: 340, requires: ["blueSiphon"] },
-    { id: "redSiphon", icon: "⚿", x: 90, y: 340, requires: ["cardRedKey"] },
-    { id: "floorSkipReward", icon: "↷", x: 50, y: 358, requires: ["blueSiphon"] },
-    { id: "cardTorch", icon: "☼", x: 30, y: 358, requires: ["floorSkipReward"] },
-    { id: "cardWoodenDoor", icon: "⚿", x: 70, y: 358, requires: ["floorSkipReward"] },
+    { id: "heartDoorResilience", icon: "♥", x: 30, y: 268, requires: ["cardYellowDoor"] },
+    { id: "cardHeartDoor", icon: "♥", x: 10, y: 268, requires: ["heartDoorResilience"] },
+    { id: "cardWeakEnemy", icon: "☠", x: 50, y: 286, requires: ["cardYellowDoor"] },
+    { id: "cardBaseEnemy", icon: "☠", x: 30, y: 286, requires: ["cardWeakEnemy"] },
+    { id: "cardStrongEnemy", icon: "☠", x: 10, y: 286, requires: ["cardBaseEnemy"] },
+    { id: "cardEliteEnemy", icon: "☠", x: 70, y: 286, requires: ["cardWeakEnemy"] },
+    { id: "cardBossEnemy", icon: "☠", x: 90, y: 286, requires: ["cardEliteEnemy"] },
+    { id: "cardNonBossEnemy", icon: "☠", x: 90, y: 304, requires: ["cardBossEnemy"] },
+    { id: "cardFastEnemy", icon: "☠", x: 30, y: 304, requires: ["cardBaseEnemy"] },
+    { id: "cardChest", icon: "▣", x: 50, y: 304, requires: ["cardWeakEnemy"] },
+    { id: "blueSiphon", icon: "⚿", x: 50, y: 322, requires: ["cardChest"] },
+    { id: "blueTrader", icon: "⚿", x: 30, y: 322, requires: ["blueSiphon"] },
+    { id: "keyToHp", icon: "♥", x: 10, y: 322, requires: ["blueTrader"] },
+    { id: "cardRedKey", icon: "⚿", x: 70, y: 322, requires: ["blueSiphon"] },
+    { id: "redSiphon", icon: "⚿", x: 90, y: 322, requires: ["cardRedKey"] },
+    { id: "floorSkipReward", icon: "↷", x: 50, y: 340, requires: ["blueSiphon"] },
+    { id: "cardTorch", icon: "☼", x: 30, y: 340, requires: ["floorSkipReward"] },
+    { id: "cardWoodenDoor", icon: "⚿", x: 70, y: 340, requires: ["floorSkipReward"] },
   ] },
   { id: "courage", name: "Courage", currency: "courage", gate: "delve", description: "Earn Courage by beating your best Delve depth.", height: 198, nodes: [
     { id: "moveSpeed", icon: "»", x: 50, y: 10, requires: ["delve"] },

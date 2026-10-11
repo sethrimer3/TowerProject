@@ -295,7 +295,7 @@ A Tower floor whose stairs the hero has climbed, reaching the floor above. A tow
 _Avoid_: floor reached (for progress), height
 
 **Warp**:
-Beginning a new Tower run at once on the floor just above a checkpoint already completed, from the Goals screen. Unlocked by claiming Tower I's floor 40 checkpoint; entering the tower from the forest always starts on floor 1.
+Beginning a new Tower run at once on the floor just above a checkpoint already completed, from the Goals screen, once that checkpoint's area and every one below it in the tower are mastered. Unlocked by claiming Tower I's floor 40 checkpoint; entering the tower from the forest always starts on floor 1.
 _Avoid_: teleport, starting floor
 
 **Route preview**:

@@ -614,9 +614,10 @@ try {
   await leaveRun();
   // In the forest, Goals shows the Tower's checkpoints: claiming an unlock
   // (Damage Prediction) explains it, a premium reward offers the
-  // pass, an unlock already claimed explains it again, a mastered checkpoint
-  // asks to warp there, and one completed but not mastered says what
-  // warping takes.
+  // pass, an unlock already claimed explains it again, one completed but not
+  // mastered says what warping takes, a mastered checkpoint above one that
+  // isn't (30, over 20) is greyed out and says so, and one whose areas are
+  // all mastered (10) asks to warp there.
   await click("#section-pick");
   await shot("rich.goals");
   await click('[data-goal="1:10:0"]');
@@ -632,6 +633,8 @@ try {
   await click('[data-warp="1:20"]');
   await shot("rich.goals.unmastered");
   await click('[data-warp="1:30"]');
+  await shot("rich.goals.inactiveWarp");
+  await click('[data-warp="1:10"]');
   await shot("rich.goals.warp");
   await click("#cancel");
   await click("#goals-back");

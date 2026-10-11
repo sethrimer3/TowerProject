@@ -193,10 +193,17 @@ export const warpUnlocked = (save: Save) => goalUnlocked(save, "warp");
  * and Evade owned. */
 export const countsParries = (save: Pick<Save, "goals" | "upgrades">) => goalUnlocked(save, "evadePrediction") && save.upgrades.evade > 0;
 
+/** The lowest checkpoint in `tower`, up to `floor`, whose area isn't
+ * mastered: what keeps the warp point at `floor` inactive. Null once every
+ * one is mastered. */
+export const unmasteredBelow = (save: Save, tower: number, floor: number) =>
+  CHECKPOINTS[tower]?.find((c) => c.floor <= floor && !areaMastered(save, tower, c.floor))?.floor ?? null;
+
 /** Whether a run can warp past `floor` in `tower`: Warp owned and the area
- * ending at that checkpoint mastered. */
+ * ending at that checkpoint mastered, with every one below it in the tower's
+ * Goals, so a warp point is active only once each under it is unlocked. */
 export const canWarp = (save: Save, tower: number, floor: number) =>
-  warpUnlocked(save) && tower <= save.tower.tiersOpen && !!checkpoint(tower, floor) && areaMastered(save, tower, floor);
+  warpUnlocked(save) && tower <= save.tower.tiersOpen && !!checkpoint(tower, floor) && unmasteredBelow(save, tower, floor) === null;
 
 /** The premium rewards a pass opens, each currency's total. */
 export function passTotals(pass: Pass): Partial<Record<CurrencyId, number>> {
