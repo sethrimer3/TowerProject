@@ -23,16 +23,17 @@ import { TIERS } from "./tiers.ts";
  * (the Archives' project that shortens every research), Shard ATK and Shard
  * DEF (Tower II: the Archives' projects that raise what each ATK or DEF
  * shard gives), Evade Prediction (Tower II: predictions count the hero's
- * parries, once Evade is owned) and Equipment (Tower II: the Blacksmith,
- * equipment and its materials). */
+ * parries, once Evade is owned), Equipment (Tower II: the Blacksmith,
+ * equipment and its materials) and Parry % (Tower V: the Archives' project
+ * that raises Parry %). */
 export type GoalUnlock =
   | "damagePrediction" | "combatForecast" | "attackLore" | "warp" | "damageVisual" | "relativeDamageColor" | "equipment" | "tournament" | "events" | "researchSpeed"
-  | "shardAttack" | "shardDefense" | "evadePrediction";
+  | "shardAttack" | "shardDefense" | "evadePrediction" | "parryPercent";
 export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   damagePrediction: "Damage Prediction", combatForecast: "Combat Forecast", attackLore: "Attack Lore", warp: "Warp", damageVisual: "Damage Visual",
   relativeDamageColor: "Relative Damage Color", equipment: "Equipment", tournament: "Tournament", events: "Events",
   researchSpeed: "Research Speed", shardAttack: "Shard ATK", shardDefense: "Shard DEF",
-  evadePrediction: "Evade Prediction",
+  evadePrediction: "Evade Prediction", parryPercent: "Parry %",
 };
 /** What a checkpoint pays: an unlock, the next tower opened, or an amount of a currency. */
 export type GoalReward =
@@ -75,6 +76,10 @@ const TOWER_TWO: Record<number, Omit<Checkpoint, "floor">> = {
   60: { reward: unlock("equipment"), premium: gems(60) },
   70: { reward: gold(10000), premium: gems(70) },
 };
+/** Tower V's checkpoints that differ from the stub. */
+const TOWER_FIVE: Record<number, Omit<Checkpoint, "floor">> = {
+  30: { reward: unlock("parryPercent"), premium: gems(30) },
+};
 /** The checkpoint floor whose reward opens the next tower. */
 export const TOWER_UNLOCK_FLOOR = 100;
 
@@ -82,7 +87,7 @@ export const TOWER_UNLOCK_FLOOR = 100;
  * TODO: the stub rewards (100 Gold × checkpoint number × tower, 10 Gems × checkpoint number)
  * are placeholders, to be tuned. */
 function towerCheckpoints(tower: number): Checkpoint[] {
-  const sets: Record<number, Record<number, Omit<Checkpoint, "floor">>> = { 1: TOWER_ONE, 2: TOWER_TWO };
+  const sets: Record<number, Record<number, Omit<Checkpoint, "floor">>> = { 1: TOWER_ONE, 2: TOWER_TWO, 5: TOWER_FIVE };
   return CHECKPOINT_FLOORS.map((floor, i) => {
     const n = i + 1, set = sets[tower]?.[floor];
     const opens = floor === TOWER_UNLOCK_FLOOR && tower < TIERS ? { kind: "tower" as const, tower: tower + 1 } : null;

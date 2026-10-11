@@ -36,8 +36,11 @@ export function thornDamage(player: Player, enemy: Enemy) {
   const thorns = player.thorns ?? 0;
   return thorns ? snap((enemy.hp * thorns) / (isBoss(enemy) ? 200 : 100)) : 0;
 }
-/** Parry: the percent a parried strike's ATK is cut by (Parry %). */
-export const parryCut = (player: Player) => player.parry ?? 0;
+/** The most a parry can cut a strike's ATK, in percent, whatever trains or
+ * researches Parry %. */
+export const PARRY_CAP = 98;
+/** Parry: the percent a parried strike's ATK is cut by (Parry %), at most `PARRY_CAP`. */
+export const parryCut = (player: Player) => Math.min(player.parry ?? 0, PARRY_CAP);
 /** Whether every enemy strike is parried (Parry Chance 100%) and cut, so
  * the cut is no chance: every prediction counts it. */
 export const certainParry = (player: Player) => (player.parryChance ?? 0) >= 100 && parryCut(player) > 0;

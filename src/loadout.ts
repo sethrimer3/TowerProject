@@ -1,7 +1,7 @@
 import { whole } from "./whole.ts";
 import { bulkBuy, type BuyQuantity } from "./buy-quantity.ts";
 import { snap } from "./exact.ts";
-import type { CritRule } from "./combat.ts";
+import { PARRY_CAP, type CritRule } from "./combat.ts";
 import type { Mode, Save } from "./entities.ts";
 import { CRIT_CHANCE_RANK, CRIT_FACTOR_BASE, CRIT_FACTOR_RANK, FIND_POTION_BASE, FIND_POTION_MAX, FLOOR_GOLD_BASE, FLOOR_GOLD_RANK, FLOOR_SILVER_BASE, FLOOR_SILVER_RANK, FIND_POTION_RANK, FREE_TRAINING_RANK, TRAINING_GROUPS, REVIVE_BASE, REVIVE_MAX, REVIVE_RANK, GOLD_SHOP, KILL_GOLD_RANK, SILVER_BONUS_RANK, schedulePrice, POTION_PERCENT_BASE, POTION_PERCENT_RANK, TRAINING, TRAINING_PER_LEVEL, UPGRADES, isStatRow, levelForXp, trained, trainingOpen, trainingWorth, type GoldItemId, type StatTrainingRow, type TrainingId, type TrainingRow, type UpgradeId } from "./config.ts";
 import { wornEffects } from "./equipment/effects.ts";
@@ -118,7 +118,8 @@ export function loadout(save: Save, mode: Mode = "tower"): Loadout {
     lifesteal: own.lifesteal,
     thorns: own.thorns,
     parryChance: own.parryChance,
-    parry: own.parry,
+    // Parry % research is kept in tenths of a percent.
+    parry: Math.min(PARRY_CAP, snap(own.parry + researched(save.archives, "parryPercent", 0) / 10)),
     bossAttack: eq.bossAttack,
     pierce: Math.min(eq.pierce, PIERCE_CAP),
     keys: { yellow: own.yellow + prov.yellow, blue: own.blue + prov.blue, red: own.red + prov.red },

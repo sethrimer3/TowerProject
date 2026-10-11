@@ -67,6 +67,8 @@ export const RESEARCH_TARGETS = {
   shardAttackPercent: { name: "Shard ATK", base: 100, shown: percent },
   /** The percent of its DEF a DEF shard gives, from 100. */
   shardDefensePercent: { name: "Shard DEF", base: 100, shown: percent },
+  /** Parry % added to the trained Parry %, in tenths of a percent. */
+  parryPercent: { name: "Parry %", base: 0, shown: tenths },
   /** The percent of the Crit % training's chance that the hero has, from 100. */
   critChancePercent: { name: "Critical Chance", base: 100, shown: percent },
   /** The percent of the Crit x training's factor that the hero has, from 100. */
@@ -196,6 +198,21 @@ const hundredLevels = (target: ResearchTarget, value: number, steep?: Steep) => 
 const critLevels = (target: ResearchTarget) => Array.from({ length: 100 }, (_, i): ResearchLevel => {
   const m = i + 1 - POTION_HP_START.length, seconds = POTION_HP_START[i]?.[1] ?? 900 * m + 36 * m * m;
   return { gold: 30 + 8 * i * i * i, hours: seconds / 3600, effect: { target, op: "add", value: 2 } };
+});
+
+/** Parry % research: +0.2% Parry % a level (2 tenths), for 50 levels.
+ * Level n costs 5,000 + 610 × (n⁴ − 1) + 7 × (n⁵ − 1) Gold, three
+ * significant figures (5,000 at level 1, 10.1 million at 11, 96.8 million
+ * at 19, 997 million at 33, 6 billion at 50; about 59.4 billion in all), and
+ * takes n² + 55 × n − 3 minutes (53 at level 1, 111 at 2, 87.5 hours at 50;
+ * about 78 days in all). */
+const parryLevels = () => Array.from({ length: 50 }, (_, i): ResearchLevel => {
+  const n = i + 1;
+  return {
+    gold: neat(5000 + 610 * (intPow(n, 4) - 1) + 7 * (intPow(n, 5) - 1)),
+    hours: (n * n + 55 * n - 3) / 60,
+    effect: { target: "parryPercent", op: "add", value: 2 },
+  };
 });
 
 /** Faster Trainers (+2% training speed a level), for 100 levels. The n-th
@@ -361,6 +378,13 @@ export const RESEARCH = {
     categories: ["defense"],
     requires: [{ upgrade: "archives" }, { goalUnlock: "shardDefense" }],
     levels: hundredLevels("shardDefensePercent", 3),
+  },
+  parry: {
+    name: "Parry %",
+    description: "Study the old climbers' footwork: a parried strike's ATK is cut by more.",
+    categories: ["defense"],
+    requires: [{ upgrade: "evade" }, { goalUnlock: "parryPercent" }],
+    levels: parryLevels(),
   },
   maxHp: {
     name: "Max HP",

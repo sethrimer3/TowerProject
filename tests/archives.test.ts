@@ -357,6 +357,44 @@ test("Shard ATK and Shard DEF open with Tower II's floor 20 and 30 Goals, cost w
   assert.deepEqual([g.stepRules.shardAttack, g.stepRules.shardDefense], [300, 130]);
 });
 
+test("Parry % opens with Evade and Tower V's floor 30 Goal, adds 0.2% Parry % a level, and reaches a run inside at once", () => {
+  const def = RESEARCH.parry;
+  assert.deepEqual(def.requires, [{ upgrade: "evade" }, { goalUnlock: "parryPercent" }]);
+  assert.deepEqual(def.categories, ["defense"]);
+  assert.equal(def.levels.length, 50);
+  assert.ok(def.levels.every((l) => l.effect.target === "parryPercent" && l.effect.op === "add" && l.effect.value === 2));
+  // The curve the spec fits: 5k, ~10m at 11, ~100m at 19, ~1b at 33; n² + 55n − 3 minutes.
+  assert.deepEqual([1, 2, 11, 19, 33, 50].map((n) => def.levels[n - 1]!.gold), [5000, 14_400, 10_100_000, 96_800_000, 997_000_000, 6_000_000_000]);
+  assert.deepEqual([1, 2, 3, 4, 5, 50].map((n) => Math.round(def.levels[n - 1]!.hours * 60)), [53, 111, 171, 233, 297, 5247]);
+  const save = owner(1e12);
+  assert.equal(status(save, "parry"), "locked");
+  save.goals.claimed[5] = [30];
+  assert.equal(status(save, "parry"), "locked", "Evade first");
+  save.upgrades.evade = 1;
+  assert.equal(status(save, "parry"), "available");
+  save.training.parry = 100;
+  const trainedCut = loadout(save).parry;
+  assert.equal(trainedCut, 50);
+  save.archives.levels.parry = 50;
+  assert.equal(loadout(save).parry, 60, "+10% at level 50");
+  save.archives.levels.parry = 3;
+  assert.equal(loadout(save).parry, 50.6, "tenths keep the sum exact");
+  // A level completed mid-run reaches the hero at once, and undo keeps it.
+  save.archives.levels = {};
+  save.upgrades.inspirationUndos = 1;
+  const g = new Game(save);
+  g.clock = () => T0;
+  g.newRun({ seed: 5 });
+  assert.ok(g.move(0, 1));
+  assert.ok(g.research.start(0, "parry"));
+  g.clock = () => T0 + HOUR;
+  g.research.settle();
+  assert.equal(save.archives.levels.parry, 1);
+  assert.equal(g.run.player.parry, 50.2, "inside the run already");
+  assert.ok(g.undo());
+  assert.equal(g.run.player.parry, 50.2, "undo takes back the step, not the research");
+});
+
 test("the Game's research commands need the Archives skill", () => {
   const save = owner();
   save.upgrades.archives = 0;

@@ -25,6 +25,7 @@ test("every tower has a checkpoint each ten floors to 100, then 150 and 200; Tow
   assert.deepEqual(CHECKPOINTS[2]![2], { floor: 30, reward: { kind: "unlock", unlock: "shardDefense" }, premium: gems(30) });
   assert.deepEqual(CHECKPOINTS[2]![3]!.reward, { kind: "unlock", unlock: "warp" }, "Warp is Tower II's floor 40");
   assert.deepEqual(CHECKPOINTS[2]![5]!.reward, { kind: "unlock", unlock: "equipment" }, "Equipment is Tower II's floor 60");
+  assert.deepEqual(CHECKPOINTS[5]![2], { floor: 30, reward: { kind: "unlock", unlock: "parryPercent" }, premium: gems(30) }, "Parry % is Tower V's floor 30");
   assert.deepEqual(CHECKPOINTS[2]![6]!.reward, { kind: "currency", currency: "gold", amount: 10_000 });
   assert.deepEqual(CHECKPOINTS[1]![8], { floor: 90, reward: { kind: "currency", currency: "gold", amount: 2000 }, premium: { kind: "currency", currency: "gold", amount: 10000 } });
   assert.deepEqual(CHECKPOINTS[1]![10]!.reward, { kind: "unlock", unlock: "researchSpeed" });

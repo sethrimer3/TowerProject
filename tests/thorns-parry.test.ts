@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { defaults } from "../src/save.ts";
 import { point, type Enemy, type Player, type Tile } from "../src/entities.ts";
-import { bout, heroHpAfter, instakill, predict, summarize, thornDamage } from "../src/combat.ts";
+import { PARRY_CAP, bout, heroHpAfter, instakill, parryCut, predict, summarize, thornDamage } from "../src/combat.ts";
 import { forecast } from "../src/crit-forecast.ts";
 import { loadout, trainingStep } from "../src/loadout.ts";
 import { startingHero } from "../src/game/hero-sync.ts";
@@ -139,6 +139,21 @@ test("a forecast that counts parries expects less damage than the worst case, an
   assert.equal(cache.cost(p, e).damage, worst.damage);
   const thorned = cache.cost(hero({ attack: 30, thorns: 50 }), brute);
   assert.notEqual(damageLabel(thorned, 100).color, "#9aa3b2", "a thorn kill's label isn't an Instakill's gray");
+});
+
+test("a parry cuts a strike's ATK by at most 98%, however Parry % is raised", () => {
+  assert.equal(PARRY_CAP, 98);
+  assert.equal(parryCut(hero({ parry: 120 })), 98);
+  assert.equal(parryCut(hero({ parry: 60 })), 60);
+  const s = defaults();
+  s.upgrades.evade = 1;
+  s.training.parry = 100;
+  s.archives.levels.parry = 50;
+  // Training's 50% and research's 10% stay under the cap; a run's own Parry % past it still cuts by 98%.
+  assert.equal(loadout(s).parry, 60);
+  const e = { ...brute, attack: 100 };
+  assert.equal(predict(hero({ parry: 99, parryChance: 100 }), e).damage, predict(hero({ parry: 98, parryChance: 100 }), e).damage);
+  assert.ok(predict(hero({ parry: 98, parryChance: 100 }), e).damage < predict(hero({ parry: 97, parryChance: 100 }), e).damage);
 });
 
 test("Evade Prediction is Tower II's floor 50 Goal, and counts parries once Evade is owned", () => {

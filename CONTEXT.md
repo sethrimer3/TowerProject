@@ -226,7 +226,7 @@ What each enemy strike the hero lives through costs the enemy: a share of its ma
 _Avoid_: reflect, recoil
 
 **Parry**:
-An enemy strike turned partly aside: by the hero's Parry Chance, the strike's ATK is cut by its Parry % before DEF. Predictions count parries only when every strike is parried, or by their odds with Evade Prediction.
+An enemy strike turned partly aside: by the hero's Parry Chance, the strike's ATK is cut by its Parry % (trained and researched, at most 98%) before DEF. Predictions count parries only when every strike is parried, or by their odds with Evade Prediction.
 _Avoid_: dodge, block (the shroud blocks)
 
 **Shroud**:
