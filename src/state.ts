@@ -1139,7 +1139,7 @@ export class Game {
   /** What stops the hand while no card can act (`explainStuck`): the run's
    * end dialog shows it. */
   stuckReport(): StuckReport {
-    return explainStuck(this, this.hand, this.mode);
+    return explainStuck(this, this.hand);
   }
   /** The status line for card `id` leading the hand. */
   private cardMessage(id: CardId) {

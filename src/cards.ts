@@ -4,12 +4,12 @@ import type { Step } from "./pathfinding.ts";
 import { doorCost, doorId, doorRule, drainsHp, woodToll } from "./doors.ts";
 import { impervious } from "./combat.ts";
 import { snap } from "./exact.ts";
-import { UPGRADES, VIEWPORT_TILES, type KeyColor, type TrainingId, type UpgradeId } from "./config.ts";
+import { UPGRADES, type KeyColor, type TrainingId, type UpgradeId } from "./config.ts";
 import type { DelveRun, EnemyStrength, Mode } from "./entities.ts";
 
 /** Every card a hand can hold: its name and what it moves the hero toward. */
 export const CARDS = {
-  stairs: { name: "Stairs", text: "Move toward the stairs up (in the Delve, the highest open tile in view, above any row reached this run)." },
+  stairs: { name: "Stairs", text: "Move toward the stairs up (in the Delve, the highest open tile it can reach, above any row reached this run)." },
   heal: { name: "Heal", text: "Move toward the closest healing potion." },
   door: { name: "Door", text: "Move toward the closest door you hold the keys for, or a Wooden Door you can break down." },
   yellowKey: { name: "Yellow Key", text: "Move toward the closest yellow key." },
@@ -175,8 +175,6 @@ const CROSSABLE = new Set<Tile["kind"]>(["floor", "openedChest", "oneway", "key"
  * area (at most 30 by 170) holds, so it only ever stops a search that
  * would otherwise run on up an endless board. */
 const MOST_WALKED = 20_000;
-/** The highest row the Delve's STAIRS card may climb to: the top of the view. */
-const VIEW_ABOVE = Math.floor(VIEWPORT_TILES / 2);
 
 /** A tile the search reached, and the step onto it from the tile before. */
 type Reached = { x: number; y: number; tile: Tile; dx: number; dy: number; from: Reached | null };
@@ -384,14 +382,15 @@ export function walkAll(at: Position, start: { x: number; y: number }, until?: r
   return away;
 }
 
-/** The Delve's STAIRS target: the highest crossable tile in view above
- * every row the hero has reached this run, the closest of those tied for
- * highest. A row it has stood on before is no climb. */
+/** The Delve's STAIRS target: the highest crossable tile the hero can
+ * reach above every row it has reached this run, the closest of those tied
+ * for highest, however far from the view. A row it has stood on before is
+ * no climb. */
 function climb(at: Position, reached: Reached[]): Reached | undefined {
   const p = at.run.player, top = Math.max(p.y, (at.run as DelveRun).top ?? p.y);
   let best: Reached | undefined;
   for (const r of reached)
-    if (CROSSABLE.has(r.tile.kind) && r.y > top && r.y <= p.y + VIEW_ABOVE && (!best || r.y > best.y)) best = r;
+    if (CROSSABLE.has(r.tile.kind) && r.y > top && (!best || r.y > best.y)) best = r;
   return best;
 }
 
@@ -484,16 +483,14 @@ export type BlockReason = "ignored" | "held" | "passed" | "keys" | "doorRun" | "
  * and why, with the card concerned for `held` and `passed`. */
 export type Blocker = { x: number; y: number; tile: Tile; steps: number; why: BlockReason; card?: CardId };
 /** What stops a hand that can't act (`explainStuck`): the blockers, closest
- * first, and, in the Delve, how many rows the hero stands below the highest
- * row it reached this run once that is out of STAIRS's view (0 otherwise),
- * since STAIRS climbs only above it. */
-export type StuckReport = { blockers: Blocker[]; belowTop: number };
+ * first. */
+export type StuckReport = { blockers: Blocker[] };
 
 /** Why `hand` can't act, walking the ground the hand's search walks: each
  * door, monster, stairs up and ignored tile at its edge that has more
  * ground beyond it (the stairs always count; stairs down never), with the
  * reason no card in the hand gets past it. */
-export function explainStuck(at: HandAt, hand: readonly CardId[], mode: Mode): StuckReport {
+export function explainStuck(at: HandAt, hand: readonly CardId[]): StuckReport {
   const { world, run } = at, p = run.player, ignored = at.ignored ?? NONE;
   const steps = new Map([[point(p.x, p.y), 0]]), walk = [{ x: p.x, y: p.y }];
   const edge: Omit<Blocker, "why">[] = [];
@@ -515,13 +512,7 @@ export function explainStuck(at: HandAt, hand: readonly CardId[], mode: Mode): S
     const next = world.step(e.x, e.y, dx, dy);
     return !!next && !steps.has(point(next.x, next.y)) && world.tile(next.x, next.y).kind !== "wall";
   });
-  const blockers = edge.filter(beyond).map((e) => ({ ...e, ...blockReason(at, e, hand, ignored) }));
-  let belowTop = 0;
-  if (mode === "delve" && hand.includes("stairs") && !at.cardRules?.("stairs")?.closed) {
-    const top = Math.max(p.y, (run as DelveRun).top ?? p.y);
-    if (top >= p.y + VIEW_ABOVE) belowTop = top - p.y;
-  }
-  return { blockers, belowTop };
+  return { blockers: edge.filter(beyond).map((e) => ({ ...e, ...blockReason(at, e, hand, ignored) })) };
 }
 
 /** Why no card in `hand` gets past the tile `e`. */

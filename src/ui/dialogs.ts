@@ -60,8 +60,7 @@ const BLOCKERS_SHOWN = 4;
  * monster or tile in the way (`Game.stuckReport`), closest first, alike
  * ones counted together at the closest, with where it stands from the hero
  * and why no card in the hand gets past it, naming what the hero holds that
- * falls short; then, in the Delve, how far below its highest row the hero
- * stands, past where STAIRS climbs. */
+ * falls short. */
 function stuckBlock(game: PageGame) {
   const report = game.stuckReport(), p = game.run.player, groups = new Map<string, { b: Blocker; count: number }>();
   for (const b of report.blockers) {
@@ -76,11 +75,8 @@ function stuckBlock(game: PageGame) {
   });
   const more = groups.size - BLOCKERS_SHOWN;
   if (more > 0) items.push(`<li class="stuck-more">and ${more} more</li>`);
-  const notes = [
-    report.belowTop ? `You stand ${report.belowTop} rows below the highest row reached this run: Stairs climbs only above it, within view, so it has nowhere to climb from here.` : "",
-  ].filter(Boolean).map((note) => `<p>${note}</p>`).join("");
-  const list = items.length ? `<ul>${items.join("")}</ul>` : notes ? "" : `<p>No door or enemy stands at the edge of the ground you can reach.</p>`;
-  return `<div class="stuck-blockers"><small>WHAT BLOCKS THE WAY</small>${list}${notes}</div>`;
+  const list = items.length ? `<ul>${items.join("")}</ul>` : `<p>No door or enemy stands at the edge of the ground you can reach.</p>`;
+  return `<div class="stuck-blockers"><small>WHAT BLOCKS THE WAY</small>${list}</div>`;
 }
 
 /** Why no card in the hand gets past blocker `b`. */

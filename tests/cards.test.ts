@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { BASE_HAND, BASE_HAND_SLOTS, CARDS, CARD_IDS, cardText, explainStuck, HAND_SLOT_GEMS, MAX_HAND_SLOTS, deckCards, handSlots, nextHandSlotGems, moveCard, placeCard, planHand, upgradeCard, type CardId } from "../src/cards.ts";
 import { defaults } from "../src/save.ts";
-import { UPGRADES, VIEWPORT_TILES } from "../src/config.ts";
+import { UPGRADES } from "../src/config.ts";
 import type { Board, Position } from "../src/board.ts";
 import type { DelveRun, Enemy, Run, Tile } from "../src/entities.ts";
 
@@ -123,7 +123,7 @@ test("the hand only looks at the floor the hero stands on: it never heads down o
   assert.deepEqual(play(board(["@SP"])), { card: "stairs", to: [1, 0], steps: 1 }, "the stairs up end a path");
 });
 
-test("in the Delve, STAIRS climbs to the highest open tile in view above the hero", () => {
+test("in the Delve, STAIRS climbs to the highest open tile it can reach above the hero", () => {
   const rows = [
     ".##",
     "...",
@@ -262,8 +262,8 @@ test("the door cards plan by Key Efficiency: less than a whole key opens a door 
 
 /** What `explainStuck` finds blocking `hand`: each blocker's tile, place,
  * walk and reason. */
-function blockers(at: Position & { ignored?: ReadonlySet<string> }, hand: readonly CardId[], mode: "tower" | "delve" = "tower") {
-  return explainStuck(at, hand, mode).blockers.map((b) => ({ at: [b.x, b.y], steps: b.steps, why: b.why, ...(b.card ? { card: b.card } : {}) }));
+function blockers(at: Position & { ignored?: ReadonlySet<string> }, hand: readonly CardId[]) {
+  return explainStuck(at, hand).blockers.map((b) => ({ at: [b.x, b.y], steps: b.steps, why: b.why, ...(b.card ? { card: b.card } : {}) }));
 }
 
 test("a stuck hand reports the doors and monsters with ground beyond them, and why none of its cards gets past", () => {
@@ -299,10 +299,11 @@ test("the hand searches the whole area, however many rows away a target lies", (
   assert.deepEqual(play(tall, ["heal"]), { card: "heal", to: [0, 101], steps: 101 });
 });
 
-test("in the Delve, a stuck hand reports how far below its highest row the hero stands, past where STAIRS climbs", () => {
-  // The hero stepped back down further than STAIRS looks above it.
-  const view = Math.floor(VIEWPORT_TILES / 2), below = board([...Array(view + 4).fill("."), "@"]);
-  (below.run as DelveRun).top = view + 2;
-  assert.equal(play(below, ["stairs"], "delve"), null);
-  assert.deepEqual(explainStuck(below, ["stairs"], "delve"), { blockers: [], belowTop: view + 2 });
+test("in the Delve, STAIRS climbs above the highest row reached however far below it the hero stands", () => {
+  // The hero stepped back down 30 rows, far past the view.
+  const below = board([".", ...Array(40).fill("."), "@"]);
+  (below.run as DelveRun).top = 31;
+  assert.deepEqual(play(below, ["stairs"], "delve"), { card: "stairs", to: [0, 41], steps: 41 });
+  (below.run as DelveRun).top = 41;
+  assert.equal(play(below, ["stairs"], "delve"), null, "nothing above the highest row reached: no climb");
 });
