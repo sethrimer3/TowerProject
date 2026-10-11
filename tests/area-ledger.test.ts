@@ -6,7 +6,7 @@ import { RoomWorld } from "../src/tower/room-world.ts";
 import { ENTRY } from "../src/tower/embedder.ts";
 import { defaults } from "../src/save.ts";
 import { Game } from "../src/state.ts";
-import { areaCleared, areaMastered, canWarp, decodeGoals } from "../src/goals.ts";
+import { areaCleared, areaMastered, canWarp, decodeGoals, unmasteredBelow } from "../src/goals.ts";
 import { TOWER_START_X } from "../src/config.ts";
 import type { Tile, TowerRun } from "../src/entities.ts";
 
@@ -75,13 +75,20 @@ test("an area past the last checkpoint can be cleared but not mastered", () => {
   assert.equal(save.goals.mastered[1], undefined);
 });
 
-test("warping to a checkpoint takes Warp and its area mastered", () => {
+test("warping to a checkpoint takes Warp and its area mastered, with every one below it", () => {
   const save = defaults();
   save.goals.claimed[2] = [40]; // Warp is Tower II's floor 40
   save.tower.reached = 45;
   assert.ok(!canWarp(save, 1, 20), "completed but not mastered");
   save.goals.mastered[1] = [20];
+  assert.ok(!canWarp(save, 1, 20), "floors 1–10 aren't mastered");
+  assert.equal(unmasteredBelow(save, 1, 20), 10);
+  save.goals.mastered[1] = [10, 20, 40];
+  assert.ok(canWarp(save, 1, 10));
   assert.ok(canWarp(save, 1, 20));
+  assert.ok(!canWarp(save, 1, 40), "floors 21–30 aren't mastered");
+  assert.equal(unmasteredBelow(save, 1, 40), 30);
+  assert.equal(unmasteredBelow(save, 1, 20), null);
   save.goals.claimed[2] = [];
   assert.ok(!canWarp(save, 1, 20), "mastered, but Warp not claimed");
 });

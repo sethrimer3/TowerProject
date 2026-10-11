@@ -63,6 +63,8 @@ export const UPGRADES = [
     max: 1,
     currency: "courage",
   },
+  { id: "endRush", name: "End Rush", description: "Open End Rush research in the Archives: STAIRS's rush toward the stairs crosses more empty tiles", base: 1, max: 1, currency: "courage" },
+  { id: "rushBadge", name: "Rush Badge", description: "Add the Rush badge to the badge draw: its card's rush toward its target crosses more empty tiles", base: 1, max: 1, currency: "courage" },
   {
     id: "yellow",
     name: "Gilded passage",
@@ -420,6 +422,7 @@ export const UPGRADES = [
   { id: "cardEliteEnemy", name: "Elite Enemy", description: "Add the ELITE ENEMY card to your deck: it moves you toward the closest elite enemy", card: "eliteEnemy", base: 20, max: 1, currency: "inspiration" },
   { id: "cardBossEnemy", name: "Boss Enemy", description: "Add the BOSS ENEMY card to your deck: it moves you toward the closest boss or Greater Boss", card: "bossEnemy", base: 20, max: 1, currency: "inspiration" },
   { id: "cardNonBossEnemy", name: "Non-Boss Enemy", description: "Add the NON-BOSS ENEMY card to your deck: it moves you toward the closest enemy that is not a boss or Greater Boss", card: "nonBossEnemy", base: 40, max: 1, currency: "inspiration" },
+  { id: "cardFastEnemy", name: "Fast Enemy", description: "Add the FAST ENEMY card to your deck: it moves you toward the closest Fast enemy", card: "fastEnemy", base: 20, max: 1, currency: "inspiration" },
   { id: "cardChest", name: "Chest", description: "Add the CHEST card to your deck: it moves you toward the closest closed chest, treasure or area reward", card: "chest", base: 20, max: 1, currency: "inspiration" },
   { id: "heartDoorResilience", name: "Heart Door Resilience", description: "Open Heart Door Resilience research in the Archives: each level makes a Heart Door drain less HP", base: 20, max: 1, currency: "inspiration" },
   { id: "blueSiphon", name: "BK Siphon", description: "Add the BK SIPHON card to your deck: it trades DEF training levels, for the rest of the run, for a blue key, each use costing one level more than the last", card: "blueSiphon", base: 20, max: 1, currency: "inspiration" },
@@ -495,6 +498,8 @@ export const cost = (id: UpgradeId, level: number) =>
  * pays some, beside its Silver. A Greater Boss pays twice a boss's Gold,
  * Silver and XP. */
 export const ENEMY_GOLD: Record<EnemyStrength, number> = { weak: 1, normal: 1, strong: 2, elite: 4, boss: 5, greaterBoss: 10 };
+/** The Gold a Fast enemy pays more than its strength's (fast-enemies.ts). */
+export const FAST_GOLD = 1;
 /** Silver, the currency spent inside a run, that a beaten enemy pays per
  * base amount, by its strength. */
 export const SILVER_MULTIPLIER: Record<EnemyStrength, number> = { weak: 1, normal: 2, strong: 3, elite: 4, boss: 5, greaterBoss: 10 };
@@ -573,9 +578,7 @@ export const TRAINING = [
   { id: "critFactor", name: "Critical Factor", short: "Crit x", group: "offense", requires: "critical", cost: 1, max: 150, description: "Raises how much a critical hit multiplies your ATK." },
   { id: "defense", name: "DEF", group: "defense", stat: "defense", curve: { per: 0, square: 1 / 12 }, cost: 1, max: 6000, description: "Raises DEF, taken off the damage of every enemy strike." },
   { id: "regen", name: "Regen", group: "defense", stat: "regen", curve: { per: 0.1, square: 1 / 120 }, cost: 1, max: 6000, requires: "regen", description: "Raises the HP regained with every step taken in a run." },
-  { id: "shroud", name: "Shroud", group: "defense", stat: "shroud", curve: { per: 10, square: 0.5, fourth: 0.0000064 }, cost: 1, max: 5000, requires: "shroud", description: "Raises the damage the shroud blocks at the start of every fight." },
-  { id: "potion", name: "Potion %", group: "defense", requires: "recovery", cost: 1, max: 300, description: "Percent potions restore more of your maximum HP." },
-  { id: "findPotion", name: "Find Potion", group: "defense", requires: "findPotion", cost: 1, max: 72, description: "More of the potions found are percent potions." },
+  { id: "shroud", name: "Shroud", group: "defense", stat: "shroud", curve: { per: 5, square: 0.1, fourth: 0.0000064 }, cost: 1, max: 5000, requires: "shroud", description: "Raises the damage the shroud blocks at the start of every fight." },
   { id: "lifesteal", name: "Lifesteal", group: "defense", stat: "lifesteal", curve: { per: 0.1005, square: -0.0005 }, cost: 1, max: 80, requires: "lifesteal", description: "Raises the share of the damage each of your strikes deals that is restored to you as HP." },
   { id: "thorns", name: "Thorn Damage", short: "Thorns", group: "defense", stat: "thorns", curve: { per: 1 }, cost: 1, max: 99, requires: "thorns", description: "Each enemy strike costs the enemy this share of its max HP, half against bosses and Greater Bosses." },
   { id: "parryChance", name: "Parry Chance", group: "defense", stat: "parryChance", curve: { per: 1 }, cost: 1, max: 100, requires: "evade", description: "Raises the chance each enemy strike is parried." },
@@ -588,6 +591,8 @@ export const TRAINING = [
   { id: "freeOffense", name: "Free Offense Up", group: "utility", requires: "freeTraining", cost: 1, max: 100, description: "Each floor passed in a run has a chance to train a random Offense stat one level for free, for the run." },
   { id: "freeDefense", name: "Free Defense Up", group: "utility", requires: "freeTraining", cost: 1, max: 100, description: "Each floor passed in a run has a chance to train a random Defense stat one level for free, for the run." },
   { id: "freeUtility", name: "Free Utility Up", group: "utility", requires: "freeTraining", cost: 1, max: 100, description: "Each floor passed in a run has a chance to train a random Utility stat one level for free, for the run." },
+  { id: "potion", name: "Potion %", group: "utility", requires: "recovery", cost: 1, max: 300, description: "Percent potions restore more of your maximum HP." },
+  { id: "findPotion", name: "Find Potion", group: "utility", requires: "findPotion", cost: 1, max: 72, description: "More of the potions found are percent potions." },
 ] as const;
 export type TrainingId = (typeof TRAINING)[number]["id"];
 export type TrainingRow = (typeof TRAINING)[number];
@@ -679,10 +684,14 @@ const freeUpgrades = { base: 75, growth: 11, cubic: 49 };
  * for the n-th (993 for the 13th, 9,901 for the 41st, 113,781 for the
  * 99th), the same in Silver and a trainer's Gold. */
 const thornPrices = { base: 60, growth: 23, power: 2 };
-/** Parry Chance and Parry %: 80 for the first rank, then 80 × n × (1 + ((n −
- * 1) / 23)²) for the n-th (1,180 for the 12th, 9,550 for the 36th, 81,906
+/** Parry Chance and Parry %: 40 for the first rank, then 40 × n × (1 + ((n −
+ * 1) / 23)²) for the n-th (590 for the 12th, 4,775 for the 36th, 40,953
  * for the 80th), the same in Silver and a trainer's Gold. */
-const parryPrices = { base: 80, growth: 23, power: 2 };
+const parryPrices = { base: 40, growth: 23, power: 2 };
+/** Revive: 100 for the first rank, then 100 × n × (1 + ((n − 1) / 6.4)³) for
+ * the n-th (1,277 for the 7th, 9,870 for the 13th, 95,724 for the 23rd,
+ * 1,005,077 for the 41st, 35,554,490 for the 99th), the same in Silver and a trainer's Gold. */
+const revivePrices = { base: 100, growth: 6.4, power: 3 };
 /** Training bought with Silver inside a run, lasting only for that run:
  * each row's price schedule. The rows open from the start cost least, the
  * ones later skills open more. */
@@ -696,7 +705,7 @@ export const RUN_TRAINING_PRICES: Record<TrainingId, PriceSchedule> = {
   shroud: vital,
   potion: deep,
   findPotion: deep,
-  revive: deep,
+  revive: revivePrices,
   lifesteal: { base: 60, growth: 20.5, power: 2 },
   thorns: thornPrices,
   parryChance: parryPrices,
@@ -741,7 +750,8 @@ export const TRAINER_GOLD_CURVES: Record<TrainingId, TrainerCurve> = {
   shroud: { ...gentleTrainers, cubic: 700 },
   potion: steepTrainers,
   findPotion: { ...steepTrainers, cubic: 25 },
-  revive: { ...steepTrainers, cubic: 30 },
+  /** Revive: the same curve as its Silver (`revivePrices`). */
+  revive: { growth: revivePrices.growth, start: revivePrices.base, power: revivePrices.power },
   /** Lifesteal: 60 Gold for the first rank, then 60 × n × (1 + ((n − 1) / 20.5)²) for the n-th: about 1,000 for the 13th, 9,000 for the 37th and 70,000 for the 80th. */
   lifesteal: { growth: 20.5, start: 60, power: 2 },
   /** Thorn Damage and the parry rows: the same curves as their Silver. */
@@ -763,8 +773,8 @@ export const TRAINER_GOLD_CURVES: Record<TrainingId, TrainerCurve> = {
  * `per` + `square`. Rows that grew with the hero's level give a hero
  * with a rank a level in each what they gave at that level: ATK n + n²/5,
  * max HP 10n + n², Regen 0.1n + n²/120, and DEF n²/12, without the whole
- * point a rank its old curve began from. Shroud is 10.5 at rank 1, 150 at 10,
- * about 6,600 at 100, 32,000 at 200 and 99,000 at 300, about four billion at
+ * point a rank its old curve began from. Shroud is 5.1 at rank 1, 60 at 10,
+ * about 2,100 at 100, 15,000 at 200 and 62,000 at 300, about four billion at
  * its 5,000. */
 export type TrainingCurve = { per: number; square?: number; cube?: number; fourth?: number };
 /** What `ranks` ranks of `row` add to the character, rounded once. Only

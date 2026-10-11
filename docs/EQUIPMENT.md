@@ -42,9 +42,11 @@ Rarity always shows as a word and a letter mark (C, U, R) beside its colour, and
 
 | Rarity | Mark | Power (every scaling line ×) | Max level | Merge | Dismantle returns |
 |---|---|---:|---:|---|---:|
-| Common | C | 1 | 20 | 3 → 1 Uncommon | 5 |
+| Common | C | 1 | 20 | never (worn as is or salvaged) | 5 |
 | Uncommon | U | 1.25 | 40 | 3 → 1 Rare | 20 |
 | Rare | R | 1.6 | 60 | top (for now) | 75 |
+
+Common pieces never merge (`next` is null, so `mergeFodder` offers none and `merge` refuses them as `unmergeable`): they are only worn as they are or salvaged, and Uncommon comes only from drops and pulls.
 
 A Unique piece dismantles for twice its rarity's amount (`UNIQUE_SALVAGE`), since it was bought with Gems.
 
@@ -198,7 +200,7 @@ Three pieces of the **same definition and rarity** make one of the next rarity. 
 
 Dismantling breaks pieces into their category's material (section 4 amounts). From the List view's Select mode (any number of pieces, across categories) or its Salvage quick buttons (every unprotected piece of a rarity). The confirmation shows the count, the rarities, the materials returned, and a warning for valuable pieces (Rare, Unique or leveled). Locked and worn pieces can't be selected or dismantled; unlock or take them off first. The materials gained rise from their balances (*+20*).
 
-The Salvage section also holds the **Auto-salvage common drops** toggle (`save.equipment.autoSalvage`, off by default, kept between sessions): while it is on, a Common piece a boss drops in a run is dismantled at once into its material (`keepDrop`) instead of joining the inventory, and the status line says *Auto-salvaged · +5 …*. A Gem pull's Common pieces are dismantled the same way once pulled (`EquipmentDesk.pull`): the result screen still shows each, dimmed, with the material it returned. Uncommon and Rare pieces are always kept.
+The Salvage section also holds the **Auto-salvage common drops** toggle (`save.equipment.autoSalvage`, off by default, kept between sessions): while it is on, a Common piece a boss drops in a run is dismantled at once into its material (`keepDrop`) instead of joining the inventory, and the status line says *Auto-salvaged · +5 …* (on the board, the material rises as its icon with its count). A Gem pull's Common pieces are dismantled the same way once pulled (`EquipmentDesk.pull`): the result screen still shows each, dimmed, with the material it returned. Uncommon and Rare pieces are always kept.
 
 ## 10. Inventory
 
@@ -266,7 +268,7 @@ No catalogue data (names, effects) is saved. Decoding drops unknown definitions 
 
 An item has two layers. Its **intrinsic** lines (sections 5 and 6) are fixed by its definition: its base stats and, for a Unique, its signature ability. Its **effect slots** are its own: secondary bonuses opened by rarity and level and chosen by the player, so two copies of the same piece share an identity but can grow different bonuses. Slot effects are kept to about half an intrinsic line's strength, so a Unique's specialization always leads.
 
-**The loop.** Obtain a piece, level it, reach its rarity's cap, merge three copies into the next rarity, level past the old cap, open another slot, refine it, and repeat.
+**The loop.** Obtain a piece, level it, reach its rarity's cap, merge three copies into the next rarity (from Uncommon up), level past the old cap, open another slot, refine it, and repeat.
 
 ### Effects and pools
 

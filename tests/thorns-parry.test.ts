@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { defaults } from "../src/save.ts";
 import { point, type Enemy, type Player, type Tile } from "../src/entities.ts";
-import { bout, heroHpAfter, instakill, predict, summarize, thornDamage } from "../src/combat.ts";
+import { PARRY_CAP, bout, heroHpAfter, instakill, parryCut, predict, summarize, thornDamage } from "../src/combat.ts";
 import { forecast } from "../src/crit-forecast.ts";
 import { loadout, trainingStep } from "../src/loadout.ts";
 import { startingHero } from "../src/game/hero-sync.ts";
@@ -11,7 +11,7 @@ import { trainingGold } from "../src/training-jobs.ts";
 import { silverPrice } from "../src/run-training.ts";
 import { TRAINING, UPGRADES, isStatRow, trained, type TrainingId } from "../src/config.ts";
 import { TREES } from "../src/skill-trees.ts";
-import { BoardPopups, lunges } from "../src/board-popups.ts";
+import { BoardPopups, enemyBar, lunges } from "../src/board-popups.ts";
 import { countsParries, unlockAt } from "../src/goals.ts";
 import { DamagePredictions, damageLabel } from "../src/damage-labels.ts";
 
@@ -56,14 +56,14 @@ test("Thorn Damage adds 1% a rank to 99; Parry Chance 1% and Parry % 0.5% a rank
   assert.deepEqual([step.unit, step.now, step.next], ["%", 20.5, 21]);
 });
 
-test("a rank of Thorn Damage costs 60, about 1k at the 13th, 10k at the 41st and over 75k at the 99th; a parry rank 80, about 1k at the 12th, 10k at the 36th and over 66k at the 80th", () => {
+test("a rank of Thorn Damage costs 60, about 1k at the 13th, 10k at the 41st and over 75k at the 99th; a parry rank 40, under 600 at the 12th, under 5k at the 36th and over 40k at the 80th", () => {
   const price = (id: TrainingId, n: number) => {
     const gold = trainingGold(row(id), n - 1);
     assert.equal(silverPrice(id, n - 1), gold, `${id} rank ${n}: the same in Silver and Gold`);
     return gold;
   };
   assert.deepEqual([1, 13, 41, 99].map((n) => price("thorns", n)), [60, 993, 9901, 113781]);
-  for (const id of ["parryChance", "parry"] as const) assert.deepEqual([1, 12, 36, 80].map((n) => price(id, n)), [80, 1180, 9550, 81906]);
+  for (const id of ["parryChance", "parry"] as const) assert.deepEqual([1, 12, 36, 80].map((n) => price(id, n)), [40, 590, 4775, 40953]);
 });
 
 test("thorns take a share of the enemy's max HP each strike it lands, half from a boss, whatever its HP", () => {
@@ -141,6 +141,21 @@ test("a forecast that counts parries expects less damage than the worst case, an
   assert.notEqual(damageLabel(thorned, 100).color, "#9aa3b2", "a thorn kill's label isn't an Instakill's gray");
 });
 
+test("a parry cuts a strike's ATK by at most 98%, however Parry % is raised", () => {
+  assert.equal(PARRY_CAP, 98);
+  assert.equal(parryCut(hero({ parry: 120 })), 98);
+  assert.equal(parryCut(hero({ parry: 60 })), 60);
+  const s = defaults();
+  s.upgrades.evade = 1;
+  s.training.parry = 100;
+  s.archives.levels.parry = 50;
+  // Training's 50% and research's 10% stay under the cap; a run's own Parry % past it still cuts by 98%.
+  assert.equal(loadout(s).parry, 60);
+  const e = { ...brute, attack: 100 };
+  assert.equal(predict(hero({ parry: 99, parryChance: 100 }), e).damage, predict(hero({ parry: 98, parryChance: 100 }), e).damage);
+  assert.ok(predict(hero({ parry: 98, parryChance: 100 }), e).damage < predict(hero({ parry: 97, parryChance: 100 }), e).damage);
+});
+
 test("Evade Prediction is Tower II's floor 50 Goal, and counts parries once Evade is owned", () => {
   assert.deepEqual(unlockAt("evadePrediction"), { tower: 2, floor: 50 });
   const s = defaults();
@@ -175,6 +190,13 @@ test("in summary rounds the thorns rise beside the hero's damage, and none when 
   assert.ok(rising(fight, fight.bout.duration).some((n) => n.endsWith(`:${YELLOW}`)) === false, "thorns felled it: nothing rises for them");
   const lasting = shown(hero({ thorns: 10, attack: 50 }), { ...brute, hp: 100, attack: 20 }, true);
   assert.deepEqual(rising(lasting, lasting.bout.duration).filter((n) => n.endsWith(YELLOW)), [`1.22@0:10:${YELLOW}`]);
+});
+
+test("in summary rounds the bar of an enemy thorns struck but the hero felled drains to nothing and fades", () => {
+  const lasting = shown(hero({ thorns: 10, attack: 50 }), { ...brute, hp: 100, attack: 20 }, true);
+  assert.ok(lasting.bout.strikes.some((s) => (s.thornHp ?? 0) > 0), "the thorns left it HP before the hero felled it");
+  assert.equal(enemyBar(lasting, 400)!.hp, 0, "drained to nothing");
+  assert.equal(enemyBar(lasting, 60_000), null, "and gone");
 });
 
 test("the hero gives way from a strike it parries in an animated fight; summary rounds show no parry", () => {

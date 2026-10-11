@@ -34,7 +34,8 @@ const EXACT_TURNS = 400;
 const SPREAD_TURNS = 400;
 
 /** One way a fight may end: after the hero's `t` strikes and the enemy's
- * `r` (`t` − 1, or `t` when its thorns fell it), with odds `chance`. */
+ * `r` (`t` − 1, or `t` when its thorns fell it, one more against a Fast
+ * enemy), with odds `chance`. */
 type Ending = [t: number, r: number, chance: number];
 
 /** The parries a forecast counts: each enemy strike's chance (0 to 1) and
@@ -58,8 +59,8 @@ export function forecast(player: Player, enemy: Enemy, crit: CritRule | undefine
     return { worst, best, expected: net, p10: net, p90: net, turns: worst.turns, survive: worst.survivable ? 1 : 0, instakill: instakills(worst) ? 1 : 0 };
   }
   const thorn = thornDamage(player, enemy), low = worst.hit, step = snap(best.hit - worst.hit);
-  const odds: Ending[] = sameLength ? [[worst.turns, replies(worst), 1]] : turnOdds(enemy.hp, low, step, extra, worst.turns, best.turns, thorn ? Infinity : Math.min(EXACT_TURNS, played), thorn);
-  const { cost, felled, spread } = damageByStrikes(player, enemy, replies(worst), thorn ? Infinity : played, thorn, parry);
+  const odds: Ending[] = sameLength ? [[worst.turns, replies(worst), 1]] : turnOdds(enemy.hp, low, step, extra, worst.turns, best.turns, thorn ? Infinity : Math.min(EXACT_TURNS, played), thorn, enemy.fast ? 1 : 0);
+  const { cost, felled, spread } = damageByStrikes(player, enemy, replies(worst), thorn ? Infinity : played, thorn, parry, { low, step, extra });
   // A fight heals at most up to max HP; its damage is never capped by the HP
   // the hero has, so regenerating HP never moves the forecast.
   const floor = snap(player.hp - player.maxHp), capped = (t: number, r: number) => Math.max(floor, cost(t, r));
@@ -108,14 +109,21 @@ function parried(worst: CombatPrediction, best: CombatPrediction, odds: Ending[]
  * that fight fells it (with parries, the chance it does), summed once up to
  * `most` enemy strikes, or up to `played` and estimated past them. With
  * parries, `spread` is the standard deviation of `r` strikes' damage. */
-function damageByStrikes(player: Player, enemy: Enemy, most: number, played: number, thorn: number, parry: ParryOdds | null) {
+function damageByStrikes(player: Player, enemy: Enemy, most: number, played: number, thorn: number, parry: ParryOdds | null, hits: { low: number; step: number; extra: number }) {
   const sums: number[] = [0], spreads: number[] = [0], shroud = player.shroud ?? 0, fatal = player.hp + shroud, defense = player.defense;
   const sure = certainParry(player) ? parryCut(player) : 0;
-  // Lifesteal: a fight's strikes deal the enemy's whole HP (less what its
-  // thorns took), so restore that share of it, taken as equal parts as the
-  // strikes land (the cap at max HP is left out here, and taken by the
-  // caller), so a fight may heal on balance: its damage below 0.
-  const healedAt = (r: number) => (!player.lifesteal ? 0 : thorn ? snap((Math.max(0, enemy.hp - r * thorn) * player.lifesteal) / 100) : snap((enemy.hp * player.lifesteal) / 100));
+  // Lifesteal: each of the hero's `t` strikes restores that share of its
+  // whole damage, overkill and all: on average `low` plus `extra` of a crit's
+  // `step`, but at least the enemy's HP its thorns left and at most every
+  // strike a crit. Taken as equal parts as the strikes land (the cap at max
+  // HP is left out here, and taken by the caller), so a fight may heal on
+  // balance: its damage below 0.
+  const healedAt = (t: number, r: number) => {
+    if (!player.lifesteal) return 0;
+    const left = Math.max(0, enemy.hp - r * thorn), mean = hits.low + hits.extra * hits.step;
+    const dealt = Math.min(t * (hits.low + hits.step), Math.max(left, t * mean));
+    return snap((dealt * player.lifesteal) / 100);
+  };
   let attack = enemy.attack, sum = 0, variance = 0;
   const known = Math.min(most, played - 1);
   for (let r = 1; r <= known && sum <= Number.MAX_SAFE_INTEGER; r++) {
@@ -137,15 +145,15 @@ function damageByStrikes(player: Player, enemy: Enemy, most: number, played: num
     const plain = parriedEstimate(from, defense, r - counted, sure);
     return before + (parry ? plain + parry.chance * (parriedEstimate(from, defense, r - counted, parry.cut) - plain) : plain);
   };
-  const healsBefore = (t: number, r: number) => (healedAt(r) * Math.min(r, t)) / t;
+  const healsBefore = (t: number, r: number) => (healedAt(t, r) * Math.min(r, t)) / t;
   const spread = (r: number) => spreads[Math.min(r, counted)]!;
   return {
     cost: (t: number, r: number) => {
-      const s = sumAt(r), healed = healedAt(r);
+      const s = sumAt(r), healed = healedAt(t, r);
       return healed ? snap(Math.max(0, s - shroud) - healed) : snap(Math.max(0, s - shroud));
     },
     felled: (t: number, r: number) => {
-      const s = sumAt(r), healed = healedAt(r);
+      const s = sumAt(r), healed = healedAt(t, r);
       const over = healed ? player.hp + shroud + healsBefore(t, r) : fatal, sd = spread(r);
       if (!parry || !sd) return (healed ? snap(s - shroud - healsBefore(t, r)) >= player.hp : s >= fatal) ? 1 : 0;
       return 1 - normalCdf((over - s) / sd);
@@ -157,9 +165,10 @@ function damageByStrikes(player: Player, enemy: Enemy, most: number, played: num
 /** The odds of each way a fight may end, for each length from `first` to
  * `last` strikes of the hero's that has any: every strike deals `low`, or
  * `low + step` with probability `chance`, each enemy strike costs it
- * `thorn`, and the fight ends once the enemy's `hp` is gone, exactly when
- * it lasts at most `exact` strikes. */
-function turnOdds(hp: number, low: number, step: number, chance: number, last: number, first: number, exact: number, thorn = 0): Ending[] {
+ * `thorn`, the enemy striking `opening` times (a Fast enemy's once) before
+ * the hero's first, and the fight ends once the enemy's `hp` is gone,
+ * exactly when it lasts at most `exact` strikes. */
+function turnOdds(hp: number, low: number, step: number, chance: number, last: number, first: number, exact: number, thorn = 0, opening = 0): Ending[] {
   const done = (t: number, rolls: number, thorns: number) => snap(thorn && thorns ? t * low + rolls * step + thorns * thorn : t * low + rolls * step) >= hp;
   const out: Ending[] = [];
   if (last <= exact) {
@@ -174,17 +183,17 @@ function turnOdds(hp: number, low: number, step: number, chance: number, last: n
       // The hero's strike ends it, or else the thorns of the enemy's reply.
       let ended = 0, thorned = 0;
       for (let j = 0; j <= t; j++) {
-        if (done(t, j, t - 1)) {
+        if (done(t, j, t - 1 + opening)) {
           ended += next[j]!;
           next[j] = 0;
-        } else if (thorn && done(t, j, t)) {
+        } else if (thorn && done(t, j, t + opening)) {
           thorned += next[j]!;
           next[j] = 0;
         }
       }
       pmf = next;
-      if (t >= first && ended > 0) out.push([t, t - 1, ended]);
-      if (thorned > 0) out.push([t, t, thorned]);
+      if (t >= first && ended > 0) out.push([t, t - 1 + opening, ended]);
+      if (thorned > 0) out.push([t, t + opening, thorned]);
     }
     return out;
   }
@@ -196,7 +205,7 @@ function turnOdds(hp: number, low: number, step: number, chance: number, last: n
   let before = normalCdf((from - 1 - centre) / spread);
   for (let t = from; t <= to; t++) {
     const upTo = t === last ? 1 : normalCdf((t - centre) / spread);
-    out.push([t, t - 1, Math.max(0, upTo - before)]);
+    out.push([t, t - 1 + opening, Math.max(0, upTo - before)]);
     before = upTo;
   }
   return out;

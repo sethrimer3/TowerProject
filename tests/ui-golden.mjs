@@ -165,7 +165,7 @@ try {
         rich(s);
         s.upgrades.cardBadges = 1;
         Object.assign(s.tutorials, { deck: true, removeCard: true, addCard: true, upgrades: true });
-        s.badges = { owned: { hp: { copies: 4, pick: 0 }, xp: { copies: 1, pick: 0 }, hpGate: { copies: 3, pick: 1 }, charge: { copies: 2, pick: 0 } }, cards: { stairs: "hp", monster: "charge" }, rng: 99 };
+        s.badges = { owned: { hp: { copies: 4, pick: 0 }, xp: { copies: 1, pick: 0 }, hpGate: { copies: 3, pick: 1 }, charge: { copies: 2, pick: 0 } }, cards: { stairs: ["hp"], monster: ["charge"] }, rng: 99 };
       }),
       // In the forest of Tower II with its floor 60 completed: its Goal,
       // still to claim, opens Equipment; a few pieces owned, two worn.
@@ -181,7 +181,7 @@ try {
         Object.assign(s.equipment, {
           items: [
             item("e1", "knightsSword", "uncommon", 12, { spent: { gold: 3300, material: 70 }, slots: [{ effect: "keenEdge", rarity: "common", refinement: 7 }] }),
-            item("e2", "knightsSword", "common", 1), item("e3", "knightsSword", "common", 4), item("e4", "knightsSword", "common", 1),
+            item("e2", "knightsSword", "uncommon", 1), item("e3", "knightsSword", "uncommon", 4), item("e4", "knightsSword", "uncommon", 1),
             item("e5", "ringOfFury", "rare", 1, { locked: true }), item("e6", "steelCuirass", "common", 3), item("e7", "bastionPlate", "uncommon", 1),
           ],
           equipped: { tower: { weapon: "e1", ring: "e5" }, delve: {} },
@@ -251,6 +251,22 @@ try {
           boosted: [], seen: [1, 2, 3, 4, 5, 6, 7], moved: [2], loginDay: day, counted: [], streaks: { run: "", floors: 0, hurt: false, interest: 0 },
         };
         s.medals = 75;
+      }),
+      // Badge Slots researched once: STAIRS holds YK < over Max HP, with
+      // YK ≥ (in conflict with YK <) and Effective in the box, in the forest
+      // and in a run inside. Built after the rest, so none of theirs changes.
+      badgeSlots: forest((s) => {
+        rich(s);
+        s.upgrades.cardBadges = 1;
+        Object.assign(s.tutorials, { deck: true, removeCard: true, addCard: true, upgrades: true });
+        s.archives.levels.badgeSlots = 1;
+        s.badges = { owned: { hp: { copies: 4, pick: 0 }, yellowGate: { copies: 1, pick: 0 }, yellowAtLeast: { copies: 1, pick: 0 }, effective: { copies: 3, pick: 0 } }, cards: { stairs: ["yellowGate", "hp"] }, rng: 99 };
+      }),
+      badgeSlotsRun: inside((s) => {
+        quiet(s);
+        s.upgrades.cardBadges = 1;
+        s.archives.levels.badgeSlots = 1;
+        s.badges = { owned: { hp: { copies: 4, pick: 0 }, hpGate: { copies: 1, pick: 0 } }, cards: { stairs: ["hpGate", "hp"] }, rng: 99 };
       }),
     };
   });
@@ -634,9 +650,10 @@ try {
   await leaveRun();
   // In the forest, Goals shows the Tower's checkpoints: claiming an unlock
   // (Damage Prediction) explains it, a premium reward offers the
-  // pass, an unlock already claimed explains it again, a mastered checkpoint
-  // asks to warp there, and one completed but not mastered says what
-  // warping takes.
+  // pass, an unlock already claimed explains it again, one completed but not
+  // mastered says what warping takes, a mastered checkpoint above one that
+  // isn't (30, over 20) is greyed out and says so, and one whose areas are
+  // all mastered (10) asks to warp there.
   await click("#section-pick");
   await shot("rich.goals");
   await click('[data-goal="1:10:0"]');
@@ -652,6 +669,8 @@ try {
   await click('[data-warp="1:20"]');
   await shot("rich.goals.unmastered");
   await click('[data-warp="1:30"]');
+  await shot("rich.goals.inactiveWarp");
+  await click('[data-warp="1:10"]');
   await shot("rich.goals.warp");
   await click("#cancel");
   await click("#goals-back");
@@ -695,6 +714,23 @@ try {
   await load("badges");
   await badgesTour("badges");
 
+  // Badge Slots: a card's two badges stacked, a badge in conflict refused
+  // with a box naming both, and the two on the card in a run.
+  await load("badgeSlots");
+  await tab("deck");
+  await shot("badgeSlots.deck");
+  {
+    const a = await page.locator('.badge-pick[data-badge="yellowAtLeast"]').boundingBox();
+    const b = await page.locator('.deck-slot[data-badge-card="stairs"]').boundingBox();
+    await page.mouse.move(a.x + a.width / 2, a.y + a.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2, { steps: 8 });
+    await page.mouse.up();
+    await shot("badgeSlots.conflict");
+  }
+  await load("badgeSlotsRun");
+  await shot("badgeSlots.run");
+
   // Equipment: claimed from Tower I's floor 60 Goal, opened through the
   // claim's Visit the Blacksmith, then each view, an item, a merge, a
   // dismantle and a ×10 pull.
@@ -725,7 +761,7 @@ try {
   await click("#eq-back");
   await click("#eq-close");
   await click('[data-eq-cat="weapon"]');
-  await click('[data-eq-rar="common"]');
+  await click('[data-eq-rar="uncommon"]');
   await shot("equipment.filtered");
   await click('[data-eq-select="toggle"]');
   await click('.eq-grid [data-eq-item="e2"]');

@@ -22,8 +22,8 @@ import { compactAmount, wholeChange } from "./whole.ts";
  * at full HP too; Infinity when the
  * hero can't hurt it) and the hero's strikes it takes (1: an
  * Instakill, the enemy never striking back, unless its thorns felled it,
- * `thornKill`). */
-type Cost = { damage: number; turns: number; thornKill?: true };
+ * `thornKill`, or it is Fast and struck first, `fast`). */
+type Cost = { damage: number; turns: number; thornKill?: true; fast?: true };
 
 /** Predictions by enemy stats, kept while the hero's ATK, DEF, shroud,
  * thorns, parries and critical strikes stay the same (HP only colours a
@@ -45,8 +45,8 @@ export class DamagePredictions {
     const evade = `${player.thorns ?? 0}|${player.parryChance ?? 0}|${player.parry ?? 0}|${parries}`;
     const hero = `${player.attack}|${player.defense}|${player.shroud ?? 0}|${steal}|${crit ? `${crit.chance}|${crit.factor}` : ""}|${evade}`;
     if (hero !== this.hero) [this.hero, this.costs] = [hero, new Map()];
-    // A boss's strength sets its thorns and the hero's boss ATK.
-    const key = `${enemy.hp}|${enemy.attack}|${enemy.defense}|${enemy.strength}`;
+    // A boss's strength sets its thorns and the hero's boss ATK; a Fast enemy strikes first.
+    const key = `${enemy.hp}|${enemy.attack}|${enemy.defense}|${enemy.strength}|${enemy.fast ? "fast" : ""}`;
     let cost = this.costs.get(key);
     if (!cost) {
       // A fight of more than PLAYED_ROUNDS rounds is estimated past them, so
@@ -57,7 +57,7 @@ export class DamagePredictions {
       // With critical strikes or parries counted the label shows the damage
       // to expect, and only an Instakill that is certain is gray.
       const f = (crit || parries) && !r.impervious ? forecast(uncapped, enemy, crit, parries, PLAYED_ROUNDS) : null;
-      const ended = f ? f.worst : r, thorned = ended.thornKill ? { thornKill: true as const } : {};
+      const ended = f ? f.worst : r, thorned = { ...(ended.thornKill ? { thornKill: true as const } : {}), ...(ended.fast ? { fast: true as const } : {}) };
       cost = f ? { damage: f.worst.impervious ? Infinity : f.expected, turns: f.worst.turns, ...thorned } : { damage: r.impervious ? Infinity : netDamage(uncapped, r), turns: r.turns, ...thorned };
       this.costs.set(key, cost);
     }
@@ -98,7 +98,7 @@ export function damageLabel(cost: Cost, hp: number, relative = false) {
   if (!Number.isFinite(cost.damage)) return { text: "∞", color: "#ff5a5a" };
   const shown = wholeChange(cost.damage);
   if (shown < 0) return { text: `+${compactAmount(-shown)}`, color: HEAL_COLOR };
-  const color = hp <= cost.damage ? "#ff5a5a" : cost.turns === 1 && !cost.thornKill ? "#9aa3b2"
+  const color = hp <= cost.damage ? "#ff5a5a" : cost.turns === 1 && !cost.thornKill && !cost.fast ? "#9aa3b2"
     : shown === 0 ? "#ffffff" : relative ? relativeColor(cost.damage / hp) : "#ffe08a";
   return { text: compactAmount(shown), color };
 }

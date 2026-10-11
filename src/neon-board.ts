@@ -13,6 +13,7 @@ export const NEON = {
   floor: "#ff4fc022",
   hero: "#9dff6a",
   enemy: "#ff5a3d",
+  fast: "#7fe3ff",
   torch: "#ffb347",
   stairs: "#ffe866",
   potion: "#ff5a7a",
@@ -99,6 +100,8 @@ export function paintNeonContents(c: CanvasRenderingContext2D, t: Tile) {
         c.lineTo(19, 15); c.lineTo(15, 21); c.lineTo(9, 21); c.lineTo(5, 15); c.closePath();
       }, color);
       path(c, () => { c.moveTo(8.5, 12); c.lineTo(11, 13.5); c.moveTo(15.5, 12); c.lineTo(13, 13.5); c.moveTo(10, 17.5); c.lineTo(14, 17.5); }, color, 1.3);
+      // A Fast enemy's fast-forward sign, at the top right.
+      if (t.enemy?.fast) path(c, () => { c.moveTo(16, 1); c.lineTo(19, 3); c.lineTo(16, 5); c.closePath(); c.moveTo(19, 1); c.lineTo(22, 3); c.lineTo(19, 5); c.closePath(); }, NEON.fast, 1);
       return;
     }
     case "key": {

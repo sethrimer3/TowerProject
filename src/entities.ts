@@ -2,8 +2,9 @@ import type { TrainingJob, TrainingPaid } from "./training-jobs.ts";
 import type { TierRecord } from "./tiers.ts";
 import type { ThemeId } from "./theme-collection.ts";
 import type { ArchivesSave } from "./archives.ts";
+import type { ShrineRun, ShrinesSave } from "./shrines.ts";
 import type { CardId } from "./cards.ts";
-import type { BadgesSave, RunBadge } from "./badges.ts";
+import type { BadgesSave, RunBadges } from "./badges.ts";
 import type { GoldItemId, KeyColor, TrainingId, UpgradeId } from "./config.ts";
 import type { MaterialId } from "./materials.ts";
 import type { EquipmentSave } from "./equipment/inventory.ts";
@@ -50,6 +51,8 @@ export type Enemy = {
   /** Which of its stats lead (`enemy-curves.ts`), as generation made it;
    * absent on enemies made outside generation. */
   profile?: EnemyProfile;
+  /** A Fast enemy (fast-enemies.ts) strikes first in every fight. */
+  fast?: true;
 };
 /** An area reward chest's metal: gold for an area mastered, silver for one
  * cleared (tower/area-ledger.ts). */
@@ -167,8 +170,8 @@ export type RunCore = {
    * absent for the first. */
   tier?: number;
   /** The card badges on the hand's cards as the run went inside
-   * (badges.ts), fixed for the run. */
-  badges?: Partial<Record<CardId, RunBadge>>;
+   * (badges.ts), each card's top slot first, fixed for the run. */
+  badges?: RunBadges;
   /** The floor each cooling-down badge (Stairward, Skip Open Nodes) last
    * worked on: it works again on that floor, or once enough floors pass. */
   badgeFloors?: Partial<Record<"stairward" | "skipOpen", number>>;
@@ -205,6 +208,9 @@ export type TowerRun = RunCore & {
   /** The height the run began on, when a Warp began it above the first
    * floor (absent: floor 1); Retry starts the next run there. */
   start?: number;
+  /** The run's boons (shrines.ts): absent until Shrines are researched and
+   * the first is earned. */
+  shrine?: ShrineRun;
 };
 /** A Delve descent. */
 export type DelveRun = RunCore & {
@@ -281,6 +287,10 @@ export type Save = {
    * mission rewards (missions/catalog.ts) and Events' missions
    * (events/catalog.ts); nothing spends them yet. */
   medals: number;
+  /** Cells: dropped by Greater Bosses, kept between runs with their
+   * fractions (a badge's scale can change a drop), spent on the Archives'
+   * Speed Ups (speed-ups.ts). */
+  cells: number;
   /** Where the Gems found on floors and the ad button's stand: never part
    * of a run, so undo can't touch them. */
   gemDrop: GemDrop;
@@ -388,6 +398,8 @@ export type Save = {
   events: EventsSave;
   /** The relics owned, by id (relics.ts), each once, kept between runs. */
   relics: string[];
+  /** The Shrine Boons page's choices, kept between runs (shrines.ts). */
+  shrines: ShrinesSave;
   /** The UI and Game themes owned (theme-collection.ts), each once, in
    * catalog order: Medieval from the start, the rest earned. Each pays
    * Gold for good. */

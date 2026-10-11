@@ -9,12 +9,14 @@ import { tierNumeral, tierRewardText } from "../tiers.ts";
 import { MODES, milestones } from "../modes.ts";
 import { capitalized, cardArt, CURRENCY_SPRITES, displayedProgress, el, POINTER_SVG, text, uiSprite } from "./dom.ts";
 import { CARDS, IN_PLACE, cardText, deckCards, isSiphon, type CardId } from "../cards.ts";
-import { BADGES } from "../badges.ts";
+import { BADGES, badgeDef, badgesOn, badgeValue, type RunBadge } from "../badges.ts";
 import { badgeStyle } from "./badge-token.ts";
 import { trainingPoints, trainingWaiting } from "../loadout.ts";
 import { goalsWaiting } from "../goals.ts";
+import { shrinesOpen } from "../shrines.ts";
 import type { BoardOverlay } from "./board-overlay.ts";
 import { CountUp } from "./count-up.ts";
+import { RateTally } from "./purse-rate.ts";
 import { estimatedServerTime } from "../shop/clock.ts";
 import { OFFERS } from "../shop/offers.ts";
 import { refusal } from "../shop/transactions.ts";
@@ -42,10 +44,11 @@ export function currencyAmount(n: number) {
   // Whole hundredths of the unit, so no rounding creeps in (1,150,000 is 1.15M).
   return `${(Math.floor(n / (size / 100)) / 100).toFixed(2)}${UNITS[unit]}`;
 }
-/** An amount short enough for the HUD's narrow purse: in full below 10,000,
- * then to three figures in thousands, millions or billions (12.3K, 456M). */
-export function shortAmount(n: number) {
-  if (n < 10_000) return String(n);
+/** An amount short enough for the HUD's narrow purse: in full below `from`
+ * (10,000), then to three figures in thousands, millions or billions
+ * (12.3K, 456M). */
+export function shortAmount(n: number, from = 10_000) {
+  if (n < from) return String(n);
   const [size, unit] = n < 1e6 ? [1e3, "K"] : n < 1e9 ? [1e6, "M"] : [1e9, "B"];
   // Whole steps of the last figure shown, so no rounding creeps in.
   const v = n / size, digits = v < 10 ? 2 : v < 100 ? 1 : 0, step = size / 10 ** digits;
@@ -61,6 +64,41 @@ function purse(game: Game, id: string, held: number, name: string, shown = held)
 /** Gold and Silver count up to each rise. */
 const goldShown = new CountUp(), silverShown = new CountUp();
 
+/** Gold and Silver found a minute, over the last minute of real time,
+ * which a tap on either shows in their place inside a run. `run` is the
+ * run they were sampled in, so a new one starts them over. */
+const rates = { gold: new RateTally(), silver: new RateTally(), run: "", shown: false };
+
+/** Switches the purse's Gold and Silver between the amounts held and the
+ * rates they are found at (inside a run only). */
+export function togglePurseRates(game: Game) {
+  if (game.run.outside) return;
+  rates.shown = !rates.shown;
+  renderPurse(game);
+}
+
+/** Samples the run's Gold found (`runGold`) and Silver found (held and
+ * spent) every `RATE_SAMPLE_MS`; true when it took a sample. */
+function sampleRates(game: Game, now: number) {
+  if (game.run.outside) return false;
+  const run = `${game.mode}:${game.run.seed}`;
+  if (run !== rates.run) {
+    rates.run = run;
+    rates.gold.reset();
+    rates.silver.reset();
+  }
+  const gold = rates.gold.sample(game.save[game.mode].runGold, now);
+  return rates.silver.sample(game.silver + game.silverSpent, now) || gold;
+}
+
+/** Shows the rate `perMinute` in the purse's `id`, abbreviated from 1,000
+ * (1.42K), a dash before it is known, with a small /min after it. */
+function purseRate(game: Game, id: string, perMinute: number | null, name: string) {
+  const dev = game.save.settings.devMode, rate = perMinute === null ? null : whole(perMinute);
+  el(id).innerHTML = `${dev ? "∞" : rate === null ? "—" : shortAmount(rate, 1000)}<small class="per-minute">/min</small>`;
+  el(id).parentElement!.title = `${name} found a minute, over the last minute: ${dev ? "∞" : rate === null ? "—" : rate.toLocaleString("en-US")} (tap for ${name} held)`;
+}
+
 /** The purse: Gems, Ascension Shards in the forest, then Gold and, inside a
  * run, the run's Silver, counting up to what they rose to. In the forest
  * Silver shows what the next run starts with, once that is any. */
@@ -74,7 +112,14 @@ function renderPurse(game: Game) {
   el("medals").parentElement!.hidden = !game.run.outside || game.save.medals <= 0;
   el("shards").closest(".purse")!.classList.toggle("forest", !!game.run.outside);
   purse(game, "gold", game.save.gold, "Gold, kept between runs", goldShown.show(game.save.gold, now, instant));
-  if (game.run.outside) {
+  const showRates = rates.shown && !game.run.outside;
+  el("gold").closest(".purse")!.classList.toggle("rates", showRates);
+  if (showRates) {
+    silverShown.show(game.silver, now, instant);
+    el("run-silver").parentElement!.hidden = false;
+    purseRate(game, "gold", rates.gold.perMinute, "Gold");
+    purseRate(game, "run-silver", rates.silver.perMinute, "Silver");
+  } else if (game.run.outside) {
     const start = game.startingSilver;
     purse(game, "run-silver", start, "Silver each run starts with");
     el("run-silver").parentElement!.hidden = start <= 0;
@@ -94,14 +139,17 @@ function renderSilverHeld(game: Game) {
   text("silver-held", currencyAmount(whole(silver)));
 }
 
-/** Each display frame: moves on the Gold and Silver still counting up. */
+/** Each display frame: moves on the Gold and Silver still counting up, and
+ * samples their rates, showing each new one while they are shown. */
 export function purseFrame(game: Game, now: number) {
-  if (goldShown.counting(now) || silverShown.counting(now)) renderPurse(game);
+  const sampled = sampleRates(game, now);
+  if ((sampled && rates.shown) || goldShown.counting(now) || silverShown.counting(now)) renderPurse(game);
 }
 
 /** Refreshes every HUD readout from game state. */
 export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay) {
   overlay.clearIfAt(game.run.player);
+  overlay.followHero();
   renderVitals(game);
   renderFocus(game);
   renderProgress(game);
@@ -217,6 +265,7 @@ export function renderEventsButtons(game: Game) {
   const button = el("events-button"), events = game.events;
   button.hidden = !events.unlocked;
   el("relics-button").hidden = !game.run.outside || (!events.unlocked && game.save.relics.length === 0);
+  el("shrines-button").hidden = !game.run.outside || !shrinesOpen(game.save);
   if (button.hidden) return;
   text("events-state", shortCountdown(events.info.endsAt - events.now));
   button.classList.toggle("notify", events.waiting);
@@ -364,14 +413,23 @@ function renderSpeed(game: Game, inside: boolean) {
 
 /** The hand (and its badges) the cards were last drawn for. */
 let shownHand = "";
-/** A hand card's tooltip: its name and text, inside a run the badge it
- * holds, and a siphon's uses so far this run. */
+/** A badge's tooltip line with its value in effect, not its level: a gate
+ * reads "HP < 100%", the rest "Skip 7%" (a unit already in the name is not
+ * repeated). */
+function badgeTitle(badge: RunBadge) {
+  const def = badgeDef(badge.id), v = badgeValue(badge.id, badge.level, badge.pick);
+  const percent = def.unit.startsWith("%");
+  if (def.kind === "gate") return `${def.name} ${v}${percent ? "%" : ""}`;
+  const unit = percent ? "%" : def.unit === def.name ? "" : ` ${def.unit}`;
+  return `${def.name}: ${def.lead ? `${def.lead} ` : ""}${v}${unit}`;
+}
+/** A hand card's tooltip: its name and text, inside a run a line for each
+ * badge it holds, top slot first, and a siphon's uses so far this run. */
 function handCardTitle(game: Game, id: CardId) {
   let title = `${CARDS[id].name}: ${cardText(id, game.save.upgrades)}`;
   if (game.run.outside) return title;
-  const badge = game.run.badges?.[id];
-  if (badge) title += `
-Badge: ${BADGES[badge.id].name}, level ${badge.level}`;
+  for (const badge of badgesOn(game.run.badges, id)) title += `
+Badge: ${badgeTitle(badge)}`;
   if (isSiphon(id)) {
     const uses = game.cardUses(id), next = game.siphonCost(id);
     title += `
@@ -379,11 +437,12 @@ Used ${uses} time${uses === 1 ? "" : "s"} this run; the next use takes ${next} l
   }
   return title;
 }
-/** The icon of the badge a hand card holds inside a run, on its top right
- * corner (its level is in the card's tooltip). */
+/** The icons of the badges a hand card holds inside a run, down its top
+ * right corner, top slot first (their levels are in the card's tooltip). */
 function handBadgeHtml(game: Game, id: CardId) {
-  const badge = game.run.outside ? undefined : game.run.badges?.[id];
-  return badge ? `<span class="hand-badge-level" style="${badgeStyle(badge.id)}" aria-hidden="true">${BADGES[badge.id].glyph}</span>` : "";
+  const badges = game.run.outside ? [] : badgesOn(game.run.badges, id);
+  if (!badges.length) return "";
+  return `<span class="hand-badges" aria-hidden="true">${badges.map((b) => `<span class="hand-badge-level" style="${badgeStyle(b.id)}">${BADGES[b.id].glyph}</span>`).join("")}</span>`;
 }
 /** The active hand in the row under the board, the card that made the
  * latest step glowing (paused too); End Run lights up while no card can act. */
@@ -487,8 +546,23 @@ function renderHealthLoss(lost: number, maxHp: number) {
   }
 }
 
+/** Once Shrines are researched, inside a Tower run: the Shrine button,
+ * its count the boons waiting (lit while any wait), and under the floor
+ * the floors left to the next boon. */
+function renderShrine(game: Game) {
+  const shrine = game.shrine, open = shrine.open, waiting = shrine.unspent, next = shrine.floorsToNext;
+  const button = el("shrine-stat");
+  button.hidden = !open;
+  button.classList.toggle("notify", waiting > 0);
+  text("shrine-left", waiting);
+  button.setAttribute("aria-label", waiting ? `Shrine: ${waiting} boon${waiting === 1 ? "" : "s"} to pick` : "Shrine: boons taken");
+  el("shrine-next").hidden = !open || next === null;
+  text("shrine-next-val", next ?? 0);
+}
+
 /** Focus uses left, once the Focus skill is owned. */
 function renderFocus(game: Game) {
+  renderShrine(game);
   const stat = el("focus-stat");
   stat.hidden = !game.save.upgrades.focus;
   text("focus-left", game.focusLeft);
@@ -559,7 +633,7 @@ function renderGoldBonus(game: Game) {
   const button = el("gold-bonus"), inside = !game.run.outside;
   button.hidden = el("gold-bonus-divider").hidden = !inside;
   if (!inside) return;
-  text("gold-bonus-val", factorText(goldBonusTotal(goldBonuses(game.save, game.tier, game.clock()))));
+  text("gold-bonus-val", factorText(goldBonusTotal(goldBonuses(game.save, game.tier, game.clock(), game.shrineGold))));
 }
 
 /** A stat in a few characters: two decimals below 1,000 when not whole,

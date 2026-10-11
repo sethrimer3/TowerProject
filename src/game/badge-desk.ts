@@ -1,5 +1,6 @@
 import { deckCards, type CardId } from "../cards.ts";
-import { attachBadge, copiesLeft, detachBadge, drawBadges, BADGES, ownedLevel, type BadgeDraw, type BadgeId } from "../badges.ts";
+import { attachBadge, attachConflict, copiesLeft, detachBadge, drawBadges, BADGES, ownedLevel, type BadgeDraw, type BadgeId } from "../badges.ts";
+import { researched } from "../archives.ts";
 import { stream } from "../random.ts";
 import { affordsGems } from "./desk.ts";
 import type { DeckHost } from "./deck-editor.ts";
@@ -41,15 +42,27 @@ export class BadgeDesk {
     return draws;
   }
 
+  /** The badges each card can hold: one, and one more for each Badge
+   * Slots level researched. */
+  get slots() {
+    return researched(this.save.archives, "badgeSlots", 1);
+  }
+
   /** Whether tokens can move between cards now: the skill owned, in the forest. */
   private get canArrange() {
     return this.open && !!this.host.run.outside;
   }
 
+  /** The badge on `card` that `id` would conflict with if attached there
+   * (`attachConflict`), so the Deck page can say why it won't go. */
+  conflict(id: BadgeId, card: CardId) {
+    return attachConflict(this.save.badges, id, card, this.slots);
+  }
+
   /** Attaches owned badge `id` to deck card `card` (`attachBadge`). */
   attach(id: BadgeId, card: CardId) {
     if (!this.canArrange || !ownedLevel(this.save.badges, id) || !deckCards(this.save.upgrades).includes(card)) return false;
-    return attachBadge(this.save.badges, id, card);
+    return attachBadge(this.save.badges, id, card, this.slots);
   }
 
   /** Takes badge `id` off its card. */

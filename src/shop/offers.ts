@@ -81,7 +81,7 @@ export const OFFERS: readonly ShopOffer[] = [
   {
     id: "adFree", name: "Permanent Ad-Disable", category: "special", item: { kind: "entitlement", id: "adFree" }, quantity: 1,
     price: { kind: "money", sku: "ad_free", label: "$9.95" }, rarity: "epic", purchaseLimit: 1,
-    effects: ["No ads"], tags: ["oneTime"],
+    effects: ["No ads", "×2 training speed forever"], tags: ["oneTime"],
   },
   {
     id: "coins2", name: "Special Coin Pack", category: "special", item: { kind: "entitlement", id: "coins2", amounts: { gems: 150 } }, quantity: 1,

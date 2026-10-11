@@ -406,7 +406,7 @@ const ENEMY_BODIES: ((c: CanvasRenderingContext2D) => void)[] = [
 /** A band round an enemy's silhouette: every pixel within `r` sprite pixels
  * of it, in `color` at `alpha`. */
 type Ring = { r: number; color: string; alpha: number };
-const RED = "#9c1f2e", BRIGHT_RED = "#ff3b2b", GOLD_RIM = "#f4c64e", VIOLET_RIM = "#b45cff", CHEVRON = "#ffe6a8";
+const RED = "#9c1f2e", BRIGHT_RED = "#ff3b2b", GOLD_RIM = "#f4c64e", VIOLET_RIM = "#b45cff", CHEVRON = "#ffe6a8", FAST_MARK = "#7fe3ff";
 /** How an enemy's strength shows: bands outside its black outline (the
  * outermost first), and rank chevrons over the sprite. Normal is a dark red
  * rim fading out, weak the same with one chevron pointing down (`down`),
@@ -428,20 +428,20 @@ const ENEMY_LOOK: Record<EnemyStrength, { rings: Ring[]; chevrons: number; down?
 const ENEMY_OUTLINE: Ring = { r: 1, color: "#0b0a0e", alpha: 1 };
 /** Room round a baked enemy for its outermost ring. */
 const ENEMY_MARGIN = 3;
-/** Baked enemies by name, tier, strength, and whether the sprite art drew. */
+/** Baked enemies by name, tier, strength, whether it is Fast, and whether the sprite art drew. */
 const bakedEnemies = new Map<string, HTMLCanvasElement>();
 
 function paintEnemy(c: CanvasRenderingContext2D, t: Tile, art: TileArt) {
   const e = t.enemy!;
   groundShadow(c, 12, 21, 8, 2.6, 0.4);
   const sprite = !art.spritesOff && enemySpriteReady(e.name);
-  const key = `${e.name}|${e.tier}|${e.strength}|${sprite}`;
+  const key = `${e.name}|${e.tier}|${e.strength}|${e.fast ? "fast" : ""}|${sprite}`;
   let baked = bakedEnemies.get(key);
   if (!baked) bakedEnemies.set(key, (baked = bakeEnemy(e, sprite)));
   c.drawImage(baked, -ENEMY_MARGIN, -ENEMY_MARGIN);
 }
 
-/** An enemy with its glow, outline, and chevrons, on a canvas ENEMY_MARGIN
+/** An enemy with its glow, outline, chevrons and a Fast enemy's mark, on a canvas ENEMY_MARGIN
  * wider than the tile on every side. The rings go on from the outside in,
  * each cutting out what lies inside it first, so every band keeps exactly
  * its own opacity; the sprite goes on last. */
@@ -462,7 +462,18 @@ function bakeEnemy(e: Enemy, sprite: boolean) {
   oc.globalAlpha = 1;
   oc.drawImage(body, m, m);
   for (let i = 0; i < look.chevrons; i++) chevron(oc, m + 1, m + 1 + i * 4, look.down);
+  if (e.fast) fastMark(oc, m + 16, m + 1);
   return out;
+}
+
+/** A Fast enemy's mark at the tile's top right, opposite the chevrons: a
+ * fast-forward sign, two rightward wedges 3x5 a pixel apart, on a black backing. */
+function fastMark(c: CanvasRenderingContext2D, x: number, y: number) {
+  const columns = [[0, 5], [1, 3], [2, 1]] as const;
+  for (const [fill, grow] of [["#0b0a0e", 1], [FAST_MARK, 0]] as const) {
+    c.fillStyle = fill;
+    for (const left of [x, x + 4]) for (const [dx, h] of columns) c.fillRect(left + dx - grow, y + (5 - h) / 2 - grow, 1 + 2 * grow, h + 2 * grow);
+  }
 }
 
 /** `body`'s silhouette grown by `ring.r` pixels (a round disc of shifts, or

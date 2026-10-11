@@ -16,7 +16,7 @@ import { isBoard, type AppContext, type Tab } from "./ui/app.ts";
 import { el, ticketIcon } from "./ui/dom.ts";
 import { buildShell } from "./ui/shell.ts";
 import { BoardOverlay } from "./ui/board-overlay.ts";
-import { boardHeadingStale, flashRed, renderAdButton, renderEventsButtons, renderMailButton, renderMissionsButton, renderShopDot, renderTournamentButton, renderBoardHeading, renderHud, renderVitals, purseFrame, gearWaiting, upgradesWaiting, dismissResearch } from "./ui/hud.ts";
+import { boardHeadingStale, flashRed, renderAdButton, renderEventsButtons, renderMailButton, renderMissionsButton, renderShopDot, renderTournamentButton, renderBoardHeading, renderHud, renderVitals, purseFrame, togglePurseRates, gearWaiting, upgradesWaiting, dismissResearch } from "./ui/hud.ts";
 import { ResearchPage } from "./ui/research-page.ts";
 import { confirmAction, RunEndDialog } from "./ui/dialogs.ts";
 import { closeRunMenu, toggleRunMenu } from "./ui/run-menu.ts";
@@ -44,6 +44,8 @@ import { MailDialog } from "./ui/mail-dialog.ts";
 import { MissionsPage } from "./ui/missions-page.ts";
 import { EventsPage } from "./ui/events-page.ts";
 import { RelicsPage } from "./ui/relics-page.ts";
+import { ShrinesPage } from "./ui/shrines-page.ts";
+import { showShrine } from "./ui/shrine-dialog.ts";
 import { uiLook } from "./theme-collection.ts";
 import { themeToast } from "./ui/theme-menu.ts";
 
@@ -92,6 +94,7 @@ const goals = new GoalsPage(ctx);
 const missions = new MissionsPage(ctx);
 const events = new EventsPage(ctx);
 const relics = new RelicsPage(ctx);
+const shrines = new ShrinesPage(ctx);
 // A run training purchase changes the hero, so the highlighted enemy's forecast too.
 const runTraining = new RunTrainingBar(game, () => {
   overlay.refresh(true);
@@ -156,6 +159,7 @@ function renderPage() {
   if (tab === "missions") missions.render();
   if (tab === "events") events.render();
   if (tab === "relics") relics.render();
+  if (tab === "shrines") shrines.render();
 }
 /** Locked tabs point at the upgrade that unlocks them instead. */
 function unlockTarget(id: string): string {
@@ -213,6 +217,7 @@ function navigate(requested: string) {
   if (id === "goals" && from !== "goals") goals.open();
   else if (id === "events" && from !== "events") events.open(from);
   else if (id === "relics" && from !== "relics") relics.open(from);
+  else if (id === "shrines" && from !== "shrines") shrines.open(from);
   else renderPage();
   update();
 }
@@ -269,6 +274,8 @@ function boardTap(x: number, y: number) {
   update();
 }
 // Goals: the Tower's checkpoints (the Delve's button is a placeholder).
+// The purse's Gold and Silver: tapped inside a run, the rates they are found at.
+for (const id of ["gold", "run-silver"]) el(id).parentElement!.onclick = () => togglePurseRates(game);
 el("section-pick").onclick = () => {
   if (game.mode === "tower") navigate("goals");
 };
@@ -332,6 +339,16 @@ el("events-button").onclick = () => {
 el("relics-button").onclick = () => {
   closeRunMenu();
   navigate("relics");
+};
+// The Shrine Boons button, in the forest's menu once Shrines are researched.
+el("shrines-button").onclick = () => {
+  closeRunMenu();
+  navigate("shrines");
+};
+// The run's Shrine button: the boons waiting to be picked, or those taken.
+el("shrine-stat").onclick = () => {
+  overlay.hide();
+  showShrine(ctx);
 };
 // The Mail button, in the forest's menu: the list of recent mail.
 el("mail-button").onclick = () => {

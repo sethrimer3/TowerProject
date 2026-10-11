@@ -4,7 +4,7 @@ import { decode, defaults } from "../src/save.ts";
 import { Game } from "../src/state.ts";
 import { outsideWeather } from "../src/outside.ts";
 
-/** A game with Warp claimed and `floor`'s area mastered in Tower I. */
+/** A game with Warp claimed and Tower I's areas mastered up to `floor`. */
 function warpable(floor: number) {
   const g = new Game(defaults());
   g.newRun({ outside: true });
@@ -13,7 +13,7 @@ function warpable(floor: number) {
   g.save.tower.tierRecords["2"] = { best: 44, reached: 44 };
   g.claimGoal(1, 40, false);
   g.claimGoal(2, 40, false);
-  g.save.goals.mastered[1] = [floor];
+  g.save.goals.mastered[1] = Array.from({ length: floor / 10 }, (_, i) => (i + 1) * 10);
   return g;
 }
 

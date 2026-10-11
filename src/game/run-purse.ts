@@ -1,5 +1,5 @@
 import { researched } from "../archives.ts";
-import { ENEMY_GOLD, silverForKill } from "../config.ts";
+import { ENEMY_GOLD, FAST_GOLD, silverForKill } from "../config.ts";
 import type { RoomWorld } from "../tower/room-world.ts";
 import type { Enemy, Mode, Run, Save } from "../entities.ts";
 import { snap } from "../exact.ts";
@@ -16,6 +16,7 @@ import { raised, wornEffects } from "../equipment/effects.ts";
 import { keepDrop, rollBossDrop, rollMaterials } from "../equipment/acquire.ts";
 import type { EquipItem } from "../equipment/inventory.ts";
 import { CATEGORIES, type EquipMaterialId } from "../equipment/catalog.ts";
+import { runBoons } from "../shrines.ts";
 
 /** What a kill gave toward Equipment, once it is open: upgrade materials,
  * and a boss's Standard piece (or, the inventory full, its salvage). */
@@ -56,6 +57,11 @@ export class RunPurse {
     return this.run.tier ?? 1;
   }
 
+  /** What the run's boons change (a Tower run's only), or null. */
+  private get boons() {
+    return this.mode === "tower" ? runBoons(this.run, this.save) : null;
+  }
+
   /** The upgrades owned and the Training ranks that count now. */
   private get trainingNow() {
     return { upgrades: this.save.upgrades, training: ranksInRun(this.save, this.run) };
@@ -86,9 +92,10 @@ export class RunPurse {
   /** Banks Gold found in the run, fractions and all (`snap`), times the
    * Shop's coin packs and the themes owned, and the Gold ad's boost while
    * it lasts (what it found while boosted kept in `runBoostGold`), and raised by
-   * equipment's Gold found; returns what it banked. */
+   * equipment's Gold found, and by the run's Gold boons; returns what it
+   * banked. */
   gold(found: number) {
-    const before = raised(found, this.worn.goldFind) * goldFactor(this.save) * themeGoldFactor(this.save), boost = goldBoostFactor(this.save, this.now);
+    const before = raised(found, this.worn.goldFind) * goldFactor(this.save) * themeGoldFactor(this.save) * (this.boons?.gold ?? 1), boost = goldBoostFactor(this.save, this.now);
     const gold = snap(before * boost);
     if (boost !== 1) this.slice.runBoostGold = snap((this.slice.runBoostGold ?? 0) + before);
     this.save.gold = snap(this.save.gold + gold);
@@ -97,38 +104,52 @@ export class RunPurse {
   }
 
   /** Adds Silver found in the run, raised by Silver Bonus training and
-   * research (the two multiplied), fractions and all; returns what it
-   * added. */
+   * research and the run's Silver Bonus boons (all multiplied), fractions
+   * and all; returns what it added. */
   silver(base: number) {
-    const bonus = snap((base * silverBonus(this.trainingNow) * researched(this.save.archives, "silverBonus", 100)) / 10_000);
+    const bonus = snap((base * silverBonus(this.trainingNow) * researched(this.save.archives, "silverBonus", 100) * (this.boons?.silverFound ?? 1)) / 10_000);
     const silver = raised(bonus, this.worn.silverFind);
     this.run.silver = snap((this.run.silver ?? 0) + silver);
     return silver;
   }
 
-  /** A kill's Silver, by the enemy's strength and the equivalent floor. */
+  /** A kill's Silver, by the enemy's strength and the equivalent floor
+   * (none under the boon that trades it for Silver / Floor). */
   killSilver(enemy: Enemy, floor: number, scale = 1) {
-    const base = silverForKill(enemy.strength, floor);
+    const base = snap(silverForKill(enemy.strength, floor) * (this.boons?.killSilver ?? 1));
     return this.silver(scale === 1 ? base : snap(base * scale));
   }
 
   /** A kill's Gold before the tier's bonus: by the enemy's strength, raised
-   * by Gold / Kill training and research, multiplied, and for an
+   * by Gold / Kill training and research, multiplied (a Fast enemy paying
+   * `FAST_GOLD` more first), and for an
    * `instakill` (the hero's first strike ended it) by Mug research too. */
   private killGold(enemy: Enemy, instakill = false) {
-    const gold = snap((ENEMY_GOLD[enemy.strength] * killGold(this.trainingNow) * researched(this.save.archives, "killGold", 100)) / 10_000);
+    const gold = snap(((ENEMY_GOLD[enemy.strength] + (enemy.fast ? FAST_GOLD : 0)) * killGold(this.trainingNow) * researched(this.save.archives, "killGold", 100)) / 10_000);
     return instakill ? snap((gold * researched(this.save.archives, "instakillGold", 100)) / 100) : gold;
   }
 
-  /** An enemy's Gold (by its strength) and, once Equipment is open, its
-   * upgrade materials and a boss's equipment, once per physical kill. */
-  enemyLoot(enemy: Enemy, x: number, y: number, scale = 1, instakill = false): { gold: number; equipment: EquipmentLoot | null } {
-    if (!this.loot(this.lootKey(x, y))) return { gold: 0, equipment: null };
+  /** An enemy's Gold (by its strength), a Greater Boss's Cells and, once
+   * Equipment is open, its upgrade materials and a boss's equipment, once
+   * per physical kill. */
+  enemyLoot(enemy: Enemy, x: number, y: number, scale = 1, instakill = false): { gold: number; cells: number; equipment: EquipmentLoot | null } {
+    if (!this.loot(this.lootKey(x, y))) return { gold: 0, cells: 0, equipment: null };
     // Then the tier's bonus; Effective or Dampen on the card that took the
     // fight scales it too.
     const base = this.withCombo(this.killGold(enemy, instakill)), raised = scale === 1 ? base : snap(base * scale);
     const gold = this.gold(tierGold(this.tier, raised));
-    return { gold, equipment: this.equipmentLoot(enemy, y) };
+    const cells = enemy.strength === "greaterBoss" ? this.cells(scale) : 0;
+    return { gold, cells, equipment: this.equipmentLoot(enemy, y) };
+  }
+
+  /** A Greater Boss's Cells, banked in the save: a whole number from 1 to
+   * the tower's number, evenly (tower I's always 1, drawing nothing), then
+   * the scale of Effective or Dampen on the card that took the fight. */
+  private cells(scale: number) {
+    const found = this.tier > 1 ? 1 + Math.floor(this.rng() * this.tier) : 1;
+    const cells = scale === 1 ? found : snap(found * scale);
+    this.save.cells = snap(this.save.cells + cells);
+    return cells;
   }
 
   /** A kill's upgrade materials and a boss's equipment, on the equivalent
@@ -215,19 +236,19 @@ export class RunPurse {
   }
 
   /** Wishing Well: Silver for a floor climbed for the first time in the
-   * run, its Silver / Floor raised by research, then by Silver Bonus.
-   * Returns what it paid. */
+   * run, its Silver / Floor raised by research and the run's boons, then by
+   * Silver Bonus. Returns what it paid. */
   floorSilver() {
     const base = floorSilver(this.trainingNow);
-    return base ? this.silver(this.researched(base, "floorSilver")) : 0;
+    return base ? this.silver(snap(this.researched(base, "floorSilver") * (this.boons?.floorSilver ?? 1))) : 0;
   }
 
   /** Interest: for a floor climbed for the first time in the run, after
    * its Wishing Well Silver, Interest % research's share of the Silver
-   * held, up to Max Interest. Silver Bonus doesn't raise it. Returns what
-   * it added. */
+   * held (the run's Interest boons raising the share), up to Max
+   * Interest. Silver Bonus doesn't raise it. Returns what it added. */
   interest() {
-    const rate = researched(this.save.archives, "interestRate", 0);
+    const rate = researched(this.save.archives, "interestRate", 0) * (this.boons?.interest ?? 1);
     if (!rate) return 0;
     const held = this.run.silver ?? 0;
     const paid = Math.min(this.interestCap, snap((held * rate) / 1000));

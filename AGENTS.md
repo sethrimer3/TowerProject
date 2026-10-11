@@ -96,6 +96,7 @@ Read the area's doc before changing code there or answering questions about it; 
 - `rendering.md`: board drawing, lighting, decor, popups, the forest and weather, the render goldens, the Medieval and Neon themes.
 - `ui.md`: `main.ts`, pages, the HUD, dialogs, the desks and `Game`'s UI commands, board lessons, the frame loop, the UI golden.
 - `saves.md`: loading and decoding the save, adding save state, settings rows.
+- `shrines.md`: Shrines and boons (`src/shrines.ts`): the schedule, offers, boon math, where effects apply, their research and UI.
 - `defend.md`: Defend (`src/defend/`).
 - `goldens.md`: which goldens a change moves, the browser goldens, recording them.
 - `testing.md`: browser test setup.
@@ -135,6 +136,7 @@ While iterating, run only the tests for the area you touched, then `npm test` on
 | Movement, steps, run lifecycle (`state.ts`, `step-effects.ts`, `tower/climb.ts`, `tower/area-ledger.ts`) | `tests/step-*.test.ts tests/undo-clear-trace.test.ts tests/game*.test.ts tests/movement.test.ts tests/doors.test.ts tests/tower-climb.test.ts tests/area-ledger.test.ts tests/fight-playback.test.ts tests/thorns-parry.test.ts` |
 | Economy (`config.ts`, `loadout.ts`, gear, skill trees, `archives.ts`, `modes.ts`) | `tests/archives.test.ts tests/loadout.test.ts tests/progression.test.ts tests/loot.test.ts tests/skill-trees.test.ts tests/modes.test.ts tests/step-trace.test.ts` |
 | Goals, Missions and Events (`goals.ts`, `src/missions/`, `src/events/`) | `tests/goals.test.ts tests/missions.test.ts tests/events.test.ts tests/shop.test.ts` |
+| Shrines (`shrines.ts`, `game/shrine-desk.ts`) | `tests/shrines.test.ts tests/goals.test.ts tests/archives.test.ts tests/save.test.ts` |
 | Saves and settings | `tests/save.test.ts tests/settings.test.ts` |
 | Board drawing, lighting, decor art | `tests/render-calls.test.ts tests/lighting-passes.test.ts tests/art-modules.test.ts tests/terrain-paint.test.ts tests/decor.test.ts` |
 | Outside and weather | `tests/outside*.test.ts tests/outdoor-art.test.ts tests/torch-light.test.ts` |

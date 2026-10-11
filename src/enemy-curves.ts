@@ -41,16 +41,18 @@ const SAME: EnemyStats = { hp: 1, attack: 1, defense: 1 };
 const all = (k: number): EnemyStats => ({ hp: k, attack: k, defense: k });
 
 /** The Tower's: strong is a hardened local, elite the next zone's enemy, and
- * a boss an endurance fight: four times a normal one's HP but only 1.75
- * times its ATK, so DEF beats it more than burst does. Profiles keep the
- * old zone rosters' ratios. */
+ * a boss the toughest fight on its floor without dwarfing the rest: 2.75
+ * times a normal one's HP, 1.6 times its ATK and 1.2 times its DEF, so it
+ * costs about 1.5 to 2.5 times what the floor's worst other enemy does,
+ * not three to six times. Profiles keep the old zone
+ * rosters' ratios. */
 const TOWER_SHAPES = {
   strength: {
     weak: all(0.75),
     normal: SAME,
     strong: all(1.25),
     elite: { ...SAME, ahead: 10 },
-    boss: { hp: 4, attack: 1.75, defense: 1.3 },
+    boss: { hp: 2.75, attack: 1.6, defense: 1.2 },
   },
   profile: {
     attackHeavy: { hp: 15 / 16, attack: 4 / 3, defense: 1 / 2 },

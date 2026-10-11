@@ -72,6 +72,15 @@ test("a hero with Lifesteal heals by its share of each strike's damage before th
   assert.equal(predict(hero({ hp: 130, maxHp: 150 }), brute).hpAfter, undefined, "no Lifesteal, no ending to carry");
 });
 
+test("a strike heals by its whole damage, however little HP the enemy had left", () => {
+  // 12 per strike against 30 HP: the third strike deals 12 though only 6 were left, and heals 6 for it at 50%.
+  const r = predict(hero({ hp: 50, lifesteal: 50 }), { ...brute, hp: 30, attack: 4 });
+  assert.equal(r.hpAfter, snap(50 + 6 - 4 + 6 - 5 + 6));
+  const fight = bout(hero({ hp: 50, lifesteal: 50 }), { ...brute, hp: 30, attack: 4 });
+  assert.equal(fight.strikes.at(-1)!.healed, 6);
+  assert.equal(heroHpAfter(fight, 50), r.hpAfter);
+});
+
 test("healing stops at max HP", () => {
   const p = hero({ hp: 98, maxHp: 100, lifesteal: 50 });
   const r = predict(p, { ...brute, hp: 12 });

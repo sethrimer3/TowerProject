@@ -354,13 +354,13 @@ test("leveling costs the curve's Gold and material, stops at the cap, and record
 
 test("merging takes exactly two other copies, raises the chosen target's rarity and keeps its level", () => {
   const e = open();
-  const [a, b, c, d] = [0, 1, 2, 3].map(() => addItem(e, "ringOfWarding", "common")!);
-  a.level = 9;
+  const [a, b, c, d] = [0, 1, 2, 3].map(() => addItem(e, "ringOfWarding", "uncommon")!);
+  a.level = 29;
   equip(e, "tower", a.id);
   setLocked(e, a.id, true);
   b.level = 4;
-  addItem(e, "ringOfWarding", "uncommon");
-  addItem(e, "silverBand", "common");
+  addItem(e, "ringOfWarding", "rare");
+  addItem(e, "silverBand", "uncommon");
   assert.deepEqual(mergeFodder(e, a).map((i) => i.id), [c.id, d.id, b.id], "same piece and rarity, lowest level first");
   assert.equal(merge(e, a.id, [b.id]), "count");
   assert.equal(merge(e, a.id, [b.id, b.id]), "count");
@@ -370,11 +370,19 @@ test("merging takes exactly two other copies, raises the chosen target's rarity 
   const before = e.items.length;
   const merged = merge(e, a.id, [b.id, d.id]);
   assert.ok(typeof merged !== "string");
-  assert.deepEqual([merged.id, merged.rarity, merged.level, merged.locked, e.equipped.tower.ring], [a.id, "uncommon", 9, true, a.id]);
+  assert.deepEqual([merged.id, merged.rarity, merged.level, merged.locked, e.equipped.tower.ring], [a.id, "rare", 29, true, a.id]);
   assert.equal(e.items.length, before - 2);
   assert.ok(!e.items.some((i) => i.id === b.id || i.id === d.id));
   const r = addItem(e, "ringOfWarding", "rare")!;
-  assert.equal(merge(e, r.id, []), "top", "Rare is the top for now");
+  assert.equal(merge(e, r.id, []), "unmergeable", "Rare is the top for now");
+});
+
+test("Common pieces never merge: they are only worn as they are or salvaged", () => {
+  const e = open();
+  const [a, b, c] = [0, 1, 2].map(() => addItem(e, "ringOfWarding", "common")!);
+  assert.deepEqual(mergeFodder(e, a), [], "no Common piece is a merge candidate");
+  assert.equal(merge(e, a.id, [b.id, c.id]), "unmergeable");
+  assert.deepEqual(e.items.map((i) => i.rarity), ["common", "common", "common"]);
 });
 
 test("dismantling returns the rarity's salvage (Uniques twice), never the investment, and never takes protected pieces", () => {

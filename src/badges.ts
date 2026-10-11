@@ -74,6 +74,7 @@ export const BADGES = {
   deprioritize: { name: "Deprioritize", rarity: "rare", kind: "aim", glyph: "?", color: "#ffb347", values: LEVELS, unit: "marks a floor", text: (v) => `Passes over the first ${v} target${v === 1 ? "" : "s"} the card picks on each floor, marking each with a ?, then rests for the floor. Every card's path goes round a ? while it can. When no card can move, the nearest ? becomes ! and the card heads for it.` },
   skip: { name: "Skip", rarity: "rare", kind: "chance", glyph: "↷", color: "#c0f0ff", values: [7, 9, 11, 13, 15, 17, 19], unit: "%", text: (v) => `${v}% chance, when the card activates, that its target vanishes without effect (never a boss on MONSTER). On STAIRS in the Tower, you climb two floors instead of one.` },
   moreEnemies: { name: "More Enemies", rarity: "rare", kind: "floor", glyph: "✚", color: "#d8604a", values: MORE_ENEMIES_PERCENTS, unit: "%", cards: Object.keys(MORE_ENEMIES_CARDS) as CardId[], text: (v) => `Each floor holds ${v}% more of the enemies this card targets, counted from those generated there; a fraction is a chance of one more. In the Delve, each 10 depths is a floor. Only on a monster card.` },
+  rush: { name: "Rush", rarity: "rare", kind: "aim", glyph: "⇶", color: "#ffd27f", values: LEVELS, unit: "tiles", unlock: "rushBadge", text: (v) => `The card's first step toward a new target rushes across up to ${v} more empty tile${v === 1 ? "" : "s"}, on top of Rush and End Rush.` },
   redGate: { name: "RK <", rarity: "epic", kind: "gate", glyph: "⚿", color: "#ff5a5a", values: KEY_LIMITS, unit: "red keys", unlock: "keyLessBadges", text: (v) => `The card acts only while you hold fewer than ${v} red keys.` },
   redAtLeast: { name: "RK ≥", rarity: "epic", kind: "gate", sign: "≥", glyph: "⚿", color: "#ff5a5a", values: LEVELS, unit: "red keys", unlock: "keyAtLeastBadges", text: (v) => `The card acts only while you hold at least ${v} red key${v === 1 ? "" : "s"}.` },
   stairward: { name: "Stairward", rarity: "epic", kind: "aim", glyph: "⇡", color: "#7fe0ff", values: COOLDOWNS, unit: "floors", lead: "every", text: (v) => `Picks the target nearest the stairs (in the Delve, the highest) rather than the nearest to you; works ${every(v)}.` },
@@ -115,9 +116,10 @@ export type OwnedBadge = { copies: number; pick: number };
 /** What the profile keeps of card badges. */
 export type BadgesSave = {
   owned: Partial<Record<BadgeId, OwnedBadge>>;
-  /** Which badge each card holds: one each, and each badge on one
-   * card at most. */
-  cards: Partial<Record<CardId, BadgeId>>;
+  /** The badges each card holds, top slot first: as many as its slots
+   * (one, and one more for each Badge Slots level), no two in conflict
+   * (`badgeConflict`), and each badge on one card at most. */
+  cards: Partial<Record<CardId, BadgeId[]>>;
   /** Where the draws' stream stands, so every purchase carries on the same
    * sequence (a reload can't draw again); null until the first draw seeds it. */
   rng: number | null;
@@ -191,54 +193,98 @@ export const fitsCard = (id: BadgeId, card: CardId) => {
   return !cards || cards.includes(card);
 };
 
+/** The pairs of badges that can't share a card, since they wouldn't work
+ * together: a key colour's < and ≥ gates, and Effective and Dampen. Other
+ * gates check different things (HP <, YK ≥), so they can. */
+const CONFLICTS: readonly (readonly [BadgeId, BadgeId])[] = [
+  ["yellowGate", "yellowAtLeast"], ["blueGate", "blueAtLeast"], ["redGate", "redAtLeast"], ["effective", "dampen"],
+];
+/** Whether badges `a` and `b` can't share a card (`CONFLICTS`). */
+export const badgeConflict = (a: BadgeId, b: BadgeId) =>
+  CONFLICTS.some(([x, y]) => (a === x && b === y) || (a === y && b === x));
+
 /** The card holding badge `id`, if any. */
 export const cardWith = (m: BadgesSave, id: BadgeId) =>
-  (Object.keys(m.cards) as CardId[]).find((card) => m.cards[card] === id);
+  (Object.keys(m.cards) as CardId[]).find((card) => m.cards[card]!.includes(id));
 
-/** Attaches `id` to `card`, when it fits there (`fitsCard`). The token
- * leaves any card it was on; a token already on `card` swaps over to that
- * card, or comes off when `id` was on none or it doesn't fit there. */
-export function attachBadge(m: BadgesSave, id: BadgeId, card: CardId) {
-  const from = cardWith(m, id), there = m.cards[card];
-  if (from === card || !fitsCard(id, card)) return false;
-  m.cards[card] = id;
+/** What attaching `id` to `card`, with `slots` slots a card, leaves there:
+ * the badges kept, and the one `id` replaces, the bottom one when every
+ * slot is full. */
+function placing(m: BadgesSave, id: BadgeId, card: CardId, slots: number) {
+  const on = (m.cards[card] ?? []).filter((b) => b !== id);
+  const full = on.length >= slots;
+  return { kept: on.slice(0, full ? slots - 1 : on.length), replaced: full ? on[slots - 1] : undefined };
+}
+/** The badge on `card` that `id` would conflict with there
+ * (`badgeConflict`), if attaching it would keep one. */
+export function attachConflict(m: BadgesSave, id: BadgeId, card: CardId, slots = 1) {
+  return placing(m, id, card, slots).kept.find((b) => badgeConflict(b, id));
+}
+
+/** Attaches `id` to `card`, with `slots` slots a card, when it fits there
+ * (`fitsCard`) and conflicts with none it keeps (`attachConflict`): into
+ * the next free slot or, every slot full, in place of the bottom one. The
+ * token leaves any card it was on; a token it replaces swaps over to that
+ * card's slot, or comes off when `id` was on none or it can't sit there. */
+export function attachBadge(m: BadgesSave, id: BadgeId, card: CardId, slots = 1) {
+  const from = cardWith(m, id);
+  if (from === card || !fitsCard(id, card) || attachConflict(m, id, card, slots)) return false;
+  const { kept, replaced } = placing(m, id, card, slots);
+  m.cards[card] = [...kept, id];
   if (!from) return true;
-  if (there && fitsCard(there, from)) m.cards[from] = there;
-  else delete m.cards[from];
+  const left = m.cards[from]!, at = left.indexOf(id);
+  if (replaced && fitsCard(replaced, from) && !left.some((b) => b !== id && badgeConflict(b, replaced))) left[at] = replaced;
+  else left.splice(at, 1);
+  if (!left.length) delete m.cards[from];
   return true;
 }
 /** Takes badge `id` off its card. */
 export function detachBadge(m: BadgesSave, id: BadgeId) {
   const card = cardWith(m, id);
   if (!card) return false;
-  delete m.cards[card];
+  const left = m.cards[card]!.filter((b) => b !== id);
+  if (left.length) m.cards[card] = left;
+  else delete m.cards[card];
   return true;
 }
 
 /** A badge on a card in a run: which, its level, and a gate's pick,
  * fixed as the run goes inside. */
 export type RunBadge = { id: BadgeId; level: number; pick: number };
-/** The badges on the hand's cards, as a run going inside takes them. */
-export function runBadges(m: BadgesSave, hand: readonly CardId[]): Partial<Record<CardId, RunBadge>> {
-  const out: Partial<Record<CardId, RunBadge>> = {};
+/** A run's badges by card, each card's top slot first. */
+export type RunBadges = Partial<Record<CardId, RunBadge[]>>;
+/** The badges on the hand's cards, as a run going inside takes them: at
+ * most `slots` a card. */
+export function runBadges(m: BadgesSave, hand: readonly CardId[], slots = Infinity): RunBadges {
+  const out: RunBadges = {};
   for (const card of hand) {
-    const id = m.cards[card], owned = id && m.owned[id];
-    if (id && owned) out[card] = { id, level: badgeLevel(owned.copies), pick: owned.pick };
+    const on = (m.cards[card] ?? []).slice(0, slots).flatMap((id) => {
+      const owned = m.owned[id];
+      return owned ? [{ id, level: badgeLevel(owned.copies), pick: owned.pick }] : [];
+    });
+    if (on.length) out[card] = on;
   }
   return out;
 }
+/** The badges card `card` holds in a run, top slot first. */
+export const badgesOn = (badges: RunBadges | undefined, card: CardId): readonly RunBadge[] => badges?.[card] ?? [];
+/** Badge `id` on card `card` in a run, if the card holds it. */
+export const badgeOn = (badges: RunBadges | undefined, card: CardId, id: BadgeId) => badgesOn(badges, card).find((b) => b.id === id);
 
-/** A run's badges: known cards, each holding a known badge at a
- * level it can have. */
+/** A run's badges: known cards, each holding known badges at levels they
+ * can have, no two the same or in conflict. */
 export const validRunBadges = (v: unknown) =>
-  isRecord(v) && Object.entries(v).every(([card, r]) =>
-    CARD_IDS.includes(card as CardId) && isRecord(r) && BADGE_IDS.includes(r.id) && fitsCard(r.id, card as CardId) &&
-    wholeIn(r.level, 1, MAX_BADGE_LEVEL) && wholeIn(r.pick, 0, MAX_BADGE_LEVEL - 1));
+  isRecord(v) && Object.entries(v).every(([card, list]) =>
+    CARD_IDS.includes(card as CardId) && Array.isArray(list) && list.length > 0 && list.every((r, i) =>
+      isRecord(r) && BADGE_IDS.includes(r.id) && fitsCard(r.id, card as CardId) &&
+      wholeIn(r.level, 1, MAX_BADGE_LEVEL) && wholeIn(r.pick, 0, MAX_BADGE_LEVEL - 1) &&
+      list.slice(0, i).every((b) => b.id !== r.id && !badgeConflict(b.id, r.id))));
 
 /** The saved badges: known ones with a whole count of copies (at most the
  * top level's) and a pick their level has opened; cards holding owned
- * badges, each on one card, among the cards the player owns. */
-export function decodeBadges(raw: unknown, upgrades: Record<UpgradeId, number>): BadgesSave {
+ * badges, each on one card, among the cards the player owns, at most
+ * `slots` on a card and none in conflict. */
+export function decodeBadges(raw: unknown, upgrades: Record<UpgradeId, number>, slots = 1): BadgesSave {
   const m = defaultBadges();
   if (!isRecord(raw)) return m;
   if (isRecord(raw.owned)) for (const id of BADGE_IDS) {
@@ -249,8 +295,12 @@ export function decodeBadges(raw: unknown, upgrades: Record<UpgradeId, number>):
   }
   const owned = deckCards(upgrades);
   if (isRecord(raw.cards)) for (const card of owned) {
-    const id = raw.cards[card];
-    if (BADGE_IDS.includes(id) && m.owned[id as BadgeId] && !cardWith(m, id) && fitsCard(id, card)) m.cards[card] = id;
+    const saved: unknown = raw.cards[card], on: BadgeId[] = [];
+    for (const id of Array.isArray(saved) ? saved : []) {
+      if (on.length < slots && BADGE_IDS.includes(id) && m.owned[id as BadgeId] && !cardWith(m, id) && !on.includes(id) &&
+        fitsCard(id, card) && !on.some((b) => badgeConflict(b, id))) on.push(id);
+    }
+    if (on.length) m.cards[card] = on;
   }
   if (wholeIn(raw.rng, 0, 4294967295)) m.rng = raw.rng;
   return m;

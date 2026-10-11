@@ -79,7 +79,8 @@ test("past the first, a tier's boards are the one before's with each matching en
         // zone further along, so an enemy stays an enemy, and one of the
         // same strength and profile has the step's factor times the stats.
         assert.equal(b.kind, "enemy");
-        if (a.enemy!.strength !== b.enemy!.strength || a.enemy!.profile !== b.enemy!.profile) continue;
+        // Each tier rolls its own Fast enemies (fast-enemies.test.ts), whose ATK has a floor.
+        if (a.enemy!.strength !== b.enemy!.strength || a.enemy!.profile !== b.enemy!.profile || a.enemy!.fast || b.enemy!.fast) continue;
         enemies++;
         const { hp, attack, defense } = { hp: snap(a.enemy!.hp * up), attack: snap(a.enemy!.attack * up), defense: snap(a.enemy!.defense * up) };
         assert.deepEqual([b.enemy!.hp, b.enemy!.attack, b.enemy!.defense], [hp, attack, defense], "the step's factor times the second tier's");

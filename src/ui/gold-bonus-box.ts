@@ -8,7 +8,7 @@ import { goldIcon } from "./dom.ts";
 export function toggleGoldBonusBox(game: Game) {
   const open = document.querySelector(".gold-bonus-layer");
   if (open) return open.remove();
-  const bonuses = goldBonuses(game.save, game.tier, game.clock());
+  const bonuses = goldBonuses(game.save, game.tier, game.clock(), game.shrineGold);
   const rows = bonuses.map((b) =>
     `<li class="${b.factor === null ? "inactive" : ""}"><span>${b.name}</span><b>${b.factor === null ? "Inactive" : factorText(b.factor)}</b></li>`).join("");
   const layer = document.createElement("div");

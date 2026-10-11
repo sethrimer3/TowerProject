@@ -516,6 +516,10 @@ h1 span {
   gap: 0;
 }
 .purse.forest > span { line-height: 0.95; }
+/* Inside a run a tap on Gold or Silver shows the rates they are found at. */
+.purse:not(.forest) .gold-stat,
+.purse:not(.forest) .silver-stat { cursor: pointer; }
+.purse .per-minute { margin-left: 1px; font-size: 0.6em; font-weight: 500; opacity: 0.8; }
 .gem-stat b { color: #8fe3ff; }
 .shard-stat b { color: #8dffb8; }
 .gold-stat b { color: #ffd86b; }
@@ -1118,11 +1122,18 @@ nav:not(.in-run) .hand {
   height: 100%;
   image-rendering: pixelated;
 }
-/* Inside a run, the icon of the badge the card holds, in its colours. */
-.hand-badge-level {
+/* Inside a run, the icons of the badges the card holds, in their colours,
+   down its top right, top slot first. */
+.hand-badges {
   position: absolute;
   top: 2px;
   right: 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  pointer-events: none;
+}
+.hand-badge-level {
   min-width: 14px;
   height: 14px;
   padding: 0 2px;
@@ -2211,6 +2222,8 @@ dialog.eq-result #eq-ok { flex: 0 1 220px; padding: 14px; font-size: 20px; }
 .goal-marks { display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; }
 .goal-marks > span { display: block; line-height: 0; }
 .goal-mark { width: 16px; height: 16px; filter: drop-shadow(0 0 3px #000c); }
+/* A warp point that can't be used yet: every area below it isn't mastered. */
+.goal-marks > .inactive .goal-mark { filter: grayscale(1) brightness(0.7) drop-shadow(0 0 3px #000c); opacity: 0.6; }
 .goal-floor { justify-self: center; z-index: 1; min-height: 0; width: 46px; height: 28px; padding: 0; border-radius: 14px; font-size: 13px; font-weight: 700; color: #7e899b; border: 1px solid #3c434f; background: #14181f; }
 .goal-floor.completed { color: #ffe9b0; border-color: #d8b572; background: linear-gradient(#4a3a1c, #2b2214); box-shadow: 0 0 8px #d8b57266; }
 .goal-floor.warpable { box-shadow: 0 0 6px #d8b572aa, 0 0 14px #b48cff88; border-color: #e2c8ff; }
@@ -2663,6 +2676,12 @@ button.training-cost:disabled { border-color: #4a5566; color: #7c8898; backgroun
 button.training-gold, button.training-now { display: inline-flex; justify-content: center; align-items: center; gap: 3px; padding: 0 5px; font-size: 11px; }
 button.training-now { border-color: #e0a63a; color: #ffe68a; background: #2e2410; }
 button.training-cost:disabled .gold-icon, button.training-cost:disabled .points-icon { opacity: 0.5; }
+/* A trainer's Gold price stays readable while its button can't be pressed:
+ * the button dims through its colours instead of its opacity, which would
+ * dim the price with it, and only the price keeps its brightness. */
+button.training-gold:disabled { opacity: 1; border-color: #2a323e; color: #4c5664; background: #0c121b; }
+button.training-gold:disabled .gold-icon { opacity: 1; }
+button.training-gold:disabled > span { color: #f0d79c; }
 .points-icon, .clock-icon, .ad-icon { width: 14px; height: 14px; vertical-align: -2px; flex-shrink: 0; }
 .ui-sprite.gold-icon { width: 14px; height: 14px; vertical-align: -2px; image-rendering: pixelated; flex-shrink: 0; }
 .training-points small .points-icon, .training-points small .gold-icon { width: 11px; height: 11px; }
@@ -3135,15 +3154,18 @@ dialog.dismiss-anywhere { cursor: pointer; }
 }
 
 /* --- Archives --- */
-.archives { display: flex; flex: 1; min-height: 0; flex-direction: column; gap: 10px; overflow-y: auto; border: 1px solid #4d5a44; background: radial-gradient(ellipse at 50% 20%, #3d552e22, transparent 65%), #0a1016; padding: 8px 10px 12px; border-radius: 9px; }
+.archives { display: flex; flex: 1; min-height: 0; flex-direction: column; gap: 10px; overflow-y: auto; border: 1px solid #4d5a44; background: radial-gradient(ellipse at 50% 20%, #3d552e22, transparent 65%), #0a1016; padding: 8px 10px 12px; border-radius: 9px; position: relative; isolation: isolate; }
+/* Dust and sunrays behind everything in the pane (z-index -1 within the pane's own stacking context). */
+.archives-ambient { position: absolute; inset: 0; z-index: -1; width: 100%; height: 100%; border-radius: inherit; pointer-events: none; }
 /* One archivist a row; an idle one opens Select Research when pressed. */
-.archivists { display: grid; grid-template-columns: 1fr; gap: 6px; margin-top: 14px; }
+.archivists { display: grid; grid-template-columns: 1fr; gap: 6px; }
 .archivist { display: flex; flex-direction: column; gap: 5px; min-width: 0; padding: 7px 8px; border: 1px solid #3d4858; border-radius: 7px; background: #111925; font-size: 11px; }
 .archivist small { font-size: 9px; letter-spacing: 2px; color: #8793a2; }
 .archivist b { color: #e3d2ad; font-weight: 500; }
 .archivist p { margin: 0; color: #b7c0cc; }
 .archivist.busy { border-color: #6e9a70; }
 .archivist-line { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 8px; }
+.archivist-line p { margin-left: auto; }
 .archivist-change { display: inline-flex; align-items: center; gap: 4px; }
 .archivist-change .training-box { min-height: 22px; padding: 2px 6px; font-size: 11px; }
 .archivist button { min-height: 30px; padding: 4px 8px; font-size: 10px; }
@@ -3157,8 +3179,13 @@ dialog.dismiss-anywhere { cursor: pointer; }
 .archivist .archivist-rush { display: inline-flex; align-items: center; justify-content: center; gap: 4px; border: 1px solid #5fc4ee; background: radial-gradient(circle at 50% 40%, #1d4a63, #0d1f2b 75%); color: #bff2ff; text-shadow: 0 1px 2px #000; }
 .archivist-rush .gem-icon { width: 14px; height: 14px; filter: drop-shadow(0 0 3px #8fe6ff99); }
 .archivist-rush b { color: #fff; }
-.archivist-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-.archivist-auto { display: flex; align-items: center; gap: 5px; font-size: 10px; color: #b7c0cc; cursor: pointer; }
+.archivist-who { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.archivist-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.archivist-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; }
+.archivist-auto { display: flex; align-items: center; gap: 3px; cursor: pointer; }
+.archivist-auto .redo-icon { width: 16px; height: 16px; flex-shrink: 0; }
+/* The loop icon named in the Archives' help, the size of its text. */
+.help-redo { width: 1em; height: 1em; vertical-align: -.15em; }
 .archivist-auto input { width: 16px; height: 16px; }
 .research-bar { height: 7px; border: 1px solid #3d4858; border-radius: 4px; background: #0a0f16; overflow: hidden; }
 .research-bar i { display: block; height: 100%; background: linear-gradient(90deg, #4f8a55, #a6e39a); }
@@ -3190,10 +3217,44 @@ dialog.dismiss-anywhere { cursor: pointer; }
 .research-action { display: flex; align-items: center; justify-content: flex-end; gap: 6px; margin-left: auto; }
 .research-action button { min-height: 26px; padding: 3px 10px; font-size: 10px; border-color: #d8b572; color: #ffe1a1; background: #2b2718; }
 .research-action button:disabled { border-color: #4a5566; color: #7c8898; background: #111925; }
+/* Its Gold price stays readable while it can't be pressed, as a trainer's does. */
+.research-action button:disabled:has(.research-gold) { opacity: 1; border-color: #2a323e; color: #4c5664; background: #0c121b; }
+.research-action button:disabled .research-gold { color: #f0d79c; }
 .research-state { font-size: 10px; letter-spacing: 1px; color: #9aa6b5; }
 .research-empty { margin: 0; font-size: 11px; color: #7c8898; }
 .archives .tree-heading { position: relative; }
-.research-history-open { position: absolute; right: 0; top: 0; padding: 4px 10px; font-size: 11px; }
+/* The Cells held and History share the heading's top-right corner. */
+.research-corner { position: absolute; right: 0; top: 0; display: flex; align-items: center; gap: 8px; }
+.research-cells { display: inline-flex; align-items: center; gap: 3px; font-size: 12px; }
+.research-cells b { color: #ffe680; font-weight: 600; }
+.research-history-open { min-height: 0; padding: 2px 10px; font-size: 11px; line-height: 1.4; }
+.cell-icon { width: 14px; height: 14px; flex-shrink: 0; vertical-align: -2px; }
+.help-cell { width: 13px; height: 13px; }
+/* A busy archivist's time left, its Speed Up in progress in green, and the
+ * Speed Up button. */
+.archivist .archivist-time { display: flex; align-items: center; gap: 6px; }
+.archivist-speed { color: #7be07b; font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.archivist-speed.paused { color: #5f9a62; font-weight: 500; }
+.archivist .archivist-speed-up { display: inline-flex; align-items: center; gap: 4px; min-height: 26px; padding: 2px 8px; border-color: #c9a227; color: #ffe680; background: #2b2610; }
+/* The Speed Up dialog: two rows of options, the choice, the Cells held over
+ * its cost, and the Queue box. */
+.speed-up .dialog-x { float: right; width: 32px; height: 32px; min-height: 0; margin: -18px -18px 0 0; padding: 0; border-radius: 50%; font-size: 15px; line-height: 1; }
+.speed-up h2 { margin-top: 0; }
+.speed-up p { margin: 4px 0; }
+.speed-up-what { color: #e3d2ad; }
+.speed-up-options { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 10px; }
+.speed-up-option { min-height: 36px; padding: 4px; font-size: 13px; }
+.speed-up-option.chosen { border-color: #c9a227; color: #ffe680; background: #2b2610; }
+.speed-up-option:disabled.chosen { opacity: 0.7; }
+.speed-up .speed-up-choice { margin-top: 12px; color: #e9d4ac; font-size: 16px; }
+.speed-up .speed-up-cells { display: flex; align-items: center; justify-content: center; gap: 4px; color: #ffe680; font-size: 15px; font-variant-numeric: tabular-nums; }
+.speed-up .speed-up-cells.short { color: #ffb0a4; }
+.speed-up-cells .cell-icon { width: 18px; height: 18px; }
+.speed-up-queue { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 13px; cursor: pointer; }
+.speed-up-queue input { width: 16px; height: 16px; }
+.speed-up .dialog-actions { margin-top: 14px; }
+.speed-up .dialog-actions button { display: inline-flex; align-items: center; justify-content: center; gap: 4px; }
+.speed-up .speed-up-busy { margin-top: 10px; color: #7be07b; font-size: 12px; letter-spacing: 2px; }
 /* Select Research: the archivist it chooses for under the heading, and the
  * X that goes back at the top right. */
 .research-pick-for { display: block; font-size: 9px; letter-spacing: 2px; color: #8793a2; }
@@ -3573,8 +3634,12 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
   background: #0a0e14;
 }
 .badge-empty { font-size: 11px; line-height: 1.6; color: #7f8a9d; }
-.badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); gap: 14px 6px; padding-top: 6px; }
-.badge-entry { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+/* Each entry wide enough for its badge's name in two lines at most. */
+.badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 14px 6px; padding-top: 6px; }
+.badge-entry { position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.badge-grid .badge-token { width: 46px; height: 46px; }
+.badge-grid .badge-glyph { font-size: 24px; }
+.badge-name { max-width: 100%; margin-top: 2px; font-size: 9px; font-weight: 700; line-height: 1.2; letter-spacing: 0.5px; text-align: center; overflow-wrap: anywhere; color: #e2e8f0; }
 .badge-pick { display: block; min-height: 0; padding: 0; border: 0; background: none; cursor: grab; touch-action: none; }
 .badge-pick:hover { border: 0; }
 .badge-count { font-size: 10px; letter-spacing: 1px; color: #a9b6c8; }
@@ -3582,7 +3647,8 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
 .badge-detach {
   position: absolute;
   top: -7px;
-  left: -2px;
+  /* At the token's top left, whatever the entry's width. */
+  left: calc(50% - 32px);
   z-index: 2;
   display: grid;
   place-items: center;
@@ -3620,13 +3686,19 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
 .badge-token.big .badge-glyph { font-size: 52px; }
 .badge-token.big .badge-level { top: -16px; right: -16px; width: 42px; height: 42px; }
 .badge-token.big .badge-level b { font-size: 17px; }
-/* The mark a card wears for the badge it holds, at its top left, clear of
-   the X (top right) and the check (bottom right). */
-.badge-mark {
+/* The marks a card wears for the badges it holds, down its top left, top
+   slot first, clear of the X (top right) and the check (bottom right). */
+.badge-marks {
   position: absolute;
   top: 3px;
   left: 3px;
   z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  pointer-events: none;
+}
+.badge-mark {
   display: grid;
   place-items: center;
   width: 18px;
@@ -4043,3 +4115,45 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
 @media (prefers-reduced-motion: reduce) {
   .relic-pop-rays, .relic-pop-icon, .relic-pop-sparkles i, .relic-pop .card-reveal-text { animation: none; }
 }
+
+/* --- Shrines --- */
+.shrines-button .shrine-icon { display: block; width: 18px; height: 18px; }
+.shrine-stat svg { width: 16px; height: 16px; }
+.shrine-stat.notify { border-color: #ffd34d; box-shadow: 0 0 6px #ffd34d; }
+.shrine-next { display: inline-flex; align-items: center; gap: 2px; color: #ffcf9a; font-size: 11px; font-weight: 700; }
+.shrine-next[hidden] { display: none; }
+.shrine-next svg { width: 11px; height: 11px; }
+.shrine-title-icon { width: 20px; height: 20px; vertical-align: -3px; }
+.boon-offer { display: grid; gap: 8px; margin: 10px 0; }
+.boon-choice { display: grid; gap: 2px; padding: 10px 12px; text-align: left; font: inherit; border: 1px solid #5d5230; border-radius: 4px; background: #1d1a12; color: #f1e6c8; cursor: pointer; }
+.boon-choice small { font-size: 9px; letter-spacing: 1px; color: #c9b27a; }
+.boon-choice b { font-size: 13px; }
+.boon-choice.tradeoff { border-color: #7a3a52; background: #22131b; }
+.boon-choice.tradeoff small { color: #e79ab6; }
+.boon-choice:hover, .boon-choice:focus-visible { border-color: #ffd34d; }
+.boon-table-scroll { max-height: 50vh; overflow-y: auto; margin: 8px 0; }
+.boon-table { width: 100%; border-collapse: collapse; font-size: 12px; text-align: left; }
+.boon-table th { position: sticky; top: 0; background: var(--panel, #161a20); color: #c9b27a; font-size: 10px; letter-spacing: 1px; padding: 4px; }
+.boon-table td { padding: 5px 4px; border-top: 1px solid #303742; }
+.boon-table td:last-child, .boon-table th:last-child { text-align: right; width: 3em; }
+.boon-table tr.tradeoff td:first-child { color: #e79ab6; }
+.boon-autopick { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 8px 0 0; font-size: 12px; }
+.page#shrines { position: relative; }
+#shrines .page-title { margin: 18px 44px 14px; text-align: center; }
+.shrine-part { margin: 0 0 18px; }
+.shrine-part h3 { margin: 0 0 2px; font-size: 14px; color: var(--gold); }
+.shrine-part h3 small { margin-left: 6px; font-size: 11px; color: #b7c0cc; }
+.shrine-part .hint { margin: 0 0 8px; }
+#first-boon { width: 100%; padding: 6px; font: inherit; }
+.boon-bans { display: grid; gap: 4px; }
+.boon-ban { display: flex; align-items: center; gap: 6px; padding: 5px 8px; border: 1px solid #303742; border-radius: 3px; font-size: 12px; }
+.boon-ban.banned { border-color: #8a3030; background: #2a1414; }
+.boon-ranking { display: grid; gap: 3px; margin: 0; padding: 0; list-style: none; counter-reset: rank; }
+.boon-rank { display: flex; align-items: center; gap: 6px; padding: 4px 6px; border: 1px solid #303742; border-radius: 3px; background: #14171c; font-size: 12px; touch-action: none; }
+.boon-rank.ranked { border-color: #6b5a2a; background: #2a2412; }
+.boon-rank.banned { border-color: #8a3030; background: #3a1616; color: #f0b0b0; }
+.boon-rank.dragging { position: relative; z-index: 2; box-shadow: 0 4px 12px #000a; }
+.boon-rank.drop-here { outline: 1px dashed #ffd34d; }
+.rank-grip { width: 16px; cursor: grab; color: #8793a2; text-align: center; user-select: none; }
+.boon-rank .rank-name { flex: 1; min-width: 0; }
+.rank-move { width: 24px; height: 22px; padding: 0; font-size: 10px; }

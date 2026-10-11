@@ -1,4 +1,4 @@
-import { CHECKPOINT_EVERY, CHECKPOINT_FLOORS, CHECKPOINTS, UNLOCK_NAMES, areaCleared, checkpoint, areaMastered, canWarp, floorsCompleted, goalState, passFor, passTotals, unlockAt, unlockFloor, warpUnlocked, type Checkpoint, type GoalReward, type GoalState, type GoalUnlock, type Pass } from "../goals.ts";
+import { CHECKPOINT_EVERY, CHECKPOINT_FLOORS, CHECKPOINTS, UNLOCK_NAMES, areaCleared, checkpoint, areaMastered, canWarp, floorsCompleted, goalState, unmasteredBelow, passFor, passTotals, unlockAt, unlockFloor, warpUnlocked, type Checkpoint, type GoalReward, type GoalState, type GoalUnlock, type Pass } from "../goals.ts";
 import { CURRENCIES, type CurrencyId } from "../shop/currency.ts";
 import { owns } from "../shop/entitlements.ts";
 import { stubServer, type ShopServer } from "../shop/server.ts";
@@ -6,7 +6,7 @@ import { offer } from "../shop/offers.ts";
 import { CLEARED_INSPIRATION } from "../tower/area-ledger.ts";
 import { tierNumeral, tierRewardText, tierStats } from "../tiers.ts";
 import type { AppContext } from "./app.ts";
-import { el, eventIcon, gemIcon, goldIcon, medalIcon, shardIcon, trophyIcon } from "./dom.ts";
+import { el, eventIcon, gemIcon, goldIcon, medalIcon, shardIcon, shrineIcon, trophyIcon } from "./dom.ts";
 import { goalRewardShown, offerShown, revealReward } from "./reward-reveal.ts";
 
 // The Goals screen: each tower drawn as a stone column rising from the
@@ -27,8 +27,13 @@ const CURRENCY_ICONS: Record<CurrencyId, () => string> = { gems: () => gemIcon("
  * Lore an open book with a rising arrow, Warp a portal's swirl, Damage Visual a monster's tile with a red
  * number in its corner, Relative Damage Color that tile over a green-to-red bar, Equipment an anvil
  * under a hammer, the Tournament a trophy, Events a pennant, Research Speed an hourglass, Shard ATK and Shard DEF a red or
- * blue shard under a rising arrow, Evade Prediction a shield turning an enemy's strike aside. */
+ * blue shard under a rising arrow, Evade Prediction a shield turning an enemy's strike aside, Badge
+ * Slots a card wearing two badges, one above the other, and every Shrine research a shrine's gate
+ * (`shrineIcon`). */
 const UNLOCK_ICONS: Record<GoalUnlock, string> = {
+  shrines: shrineIcon("goal-icon"), firstBoonChoice: shrineIcon("goal-icon"), improveTradeoffs: shrineIcon("goal-icon"), autoPickBoons: shrineIcon("goal-icon"),
+  boonOptions: shrineIcon("goal-icon"), banBoons: shrineIcon("goal-icon"), autoPickRanking: shrineIcon("goal-icon"),
+  badgeSlots: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="2.5" width="14" height="19" rx="2" fill="#2a2234" stroke="#c9a6ff" stroke-width="1.4"/><rect x="13" y="3.5" width="7.5" height="7.5" rx="1.8" fill="#0c1018" stroke="#ffd34d" stroke-width="1.3"/><path d="M16.75 5.4l1.5 2.6h-3z" fill="#7be07b"/><rect x="13" y="12" width="7.5" height="7.5" rx="1.8" fill="#0c1018" stroke="#ffd34d" stroke-width="1.3"/><path d="M16.75 17.6l1.5-2.6h-3z" fill="#ff6b6b"/></svg>`,
   shardAttack: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.5l4.5 5-4.5 8-4.5-8z" fill="#a8323a" stroke="#ff9aa0" stroke-width="1.3" stroke-linejoin="round"/><path d="M12 8.5v13" stroke="#ff9aa0" stroke-width=".9"/><path d="M12 6V1.8M9 4.6l3-3 3 3" fill="none" stroke="#ffd34d" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
   shardDefense: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.5l4.5 5-4.5 8-4.5-8z" fill="#2f5fa8" stroke="#9cc4ff" stroke-width="1.3" stroke-linejoin="round"/><path d="M12 8.5v13" stroke="#9cc4ff" stroke-width=".9"/><path d="M12 6V1.8M9 4.6l3-3 3 3" fill="none" stroke="#ffd34d" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
   tournament: trophyIcon("goal-icon"),
@@ -39,6 +44,7 @@ const UNLOCK_ICONS: Record<GoalUnlock, string> = {
   combatForecast: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19L17 7M19 19L7 7" stroke="#c9ced8" stroke-width="2" stroke-linecap="round"/><path d="M3.5 9.5C6 5.5 9 4 12 4s6 1.5 8.5 5.5C18 13.5 15 15 12 15s-6-1.5-8.5-5.5z" fill="#1c2a44" stroke="#8fc4ff" stroke-width="1.5"/><circle cx="12" cy="9.5" r="2.6" fill="#8fc4ff"/></svg>`,
   attackLore: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7.5C9.5 5.5 6.5 5 3 5.5v12c3.5-.5 6.5 0 9 2 2.5-2 5.5-2.5 9-2v-12c-3.5-.5-6.5 0-9 2z" fill="#3a2a1a" stroke="#e2a15c" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 7.5v12" stroke="#e2a15c" stroke-width="1.2"/><path d="M16.5 15V9.5M14.3 11.6l2.2-2.3 2.2 2.3" fill="none" stroke="#ffd59a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
   warp: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="12" rx="8" ry="10" fill="#2a1d4a" stroke="#c9a6ff" stroke-width="1.6"/><path d="M12 6.5c3 0 4.6 2.4 4 4.8-.6 2.3-3.4 3.3-5.2 2-1.5-1-1.2-3.2.4-3.6 1.1-.3 2 .6 1.6 1.5" fill="none" stroke="#f0e2ff" stroke-width="1.5" stroke-linecap="round"/></svg>`,
+  parryPercent: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3.5l6 2.2v4.9c0 4-2.6 7-6 8.6-3.4-1.6-6-4.6-6-8.6V5.7z" fill="#1c2a44" stroke="#8fc4ff" stroke-width="1.5" stroke-linejoin="round"/><path d="M21.5 3l-6 5.5c-.9.8-.9 2 0 2.8l2 1.7" fill="none" stroke="#ffd34d" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 22V17M13.8 19.2l2.2-2.3 2.2 2.3" fill="none" stroke="#ffd34d" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
   equipment: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h13.5c2 0 3.5-1 4-2.5v3c-.5 1.8-2 3-4 3H15l1.5 4h-9L9 15.5H6.5C4.5 15.5 3 14 3 12z" fill="#3a3f4b" stroke="#c9ced8" stroke-width="1.4" stroke-linejoin="round"/><path d="M13 9.5L18.5 4" stroke="#b07a42" stroke-width="2" stroke-linecap="round"/><rect x="15.6" y="1.6" width="6" height="3.2" rx=".8" transform="rotate(45 18.6 3.2)" fill="#8d97a8" stroke="#e6ebf2" stroke-width="1"/></svg>`,
   damageVisual: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="2.5" fill="#1d2230" stroke="#8d97a8" stroke-width="1.3"/><path d="M8 15.5c0-4.5 1.8-8 4.5-8s4.5 3.5 4.5 8l-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1z" fill="#6b3a44" stroke="#df797e" stroke-width="1.2" stroke-linejoin="round"/><circle cx="11" cy="11" r="0.9" fill="#ffd0d5"/><circle cx="14" cy="11" r="0.9" fill="#ffd0d5"/><path d="M4.5 20.5v-5h2.6a1.6 1.6 0 0 1 0 3.2H4.5" fill="none" stroke="#000" stroke-width="2.6" stroke-linejoin="round"/><path d="M4.5 20.5v-5h2.6a1.6 1.6 0 0 1 0 3.2H4.5" fill="none" stroke="#ff5a5a" stroke-width="1.4" stroke-linejoin="round"/></svg>`,
   relativeDamageColor: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="goal-spectrum"><stop offset="0" stop-color="#4dff6a"/><stop offset=".35" stop-color="#ffe14d"/><stop offset=".65" stop-color="#ff9a3d"/><stop offset="1" stop-color="#ff5a5a"/></linearGradient></defs><rect x="2.5" y="2.5" width="19" height="14" rx="2.5" fill="#1d2230" stroke="#8d97a8" stroke-width="1.3"/><path d="M8.5 13.5c0-3.6 1.5-6.5 3.5-6.5s3.5 2.9 3.5 6.5l-1.2-.8-1.2.8-1.1-.8-1.1.8-1.2-.8z" fill="#6b3a44" stroke="#df797e" stroke-width="1.1" stroke-linejoin="round"/><rect x="2.5" y="18" width="19" height="3.5" rx="1.75" fill="url(#goal-spectrum)" stroke="#000" stroke-width=".8"/></svg>`,
@@ -66,10 +72,23 @@ const UNLOCK_TUTORIALS: Record<GoalUnlock, string> = {
   equipment: `<p>A Blacksmith opens in the forest: tap it, or the Gear tab, to wear weapons, armour and trinkets, level them up with Gold and materials, and merge them.</p>` +
     `<p class="hint">Every boss now has a chance to drop equipment, on any floor, and every enemy drops upgrade materials.</p>`,
   researchSpeed: `<p>Research Speed opens in the Archives: train the archivists to read faster, and every research, those under way included, takes less time.</p>`,
+  badgeSlots: `<p>Badge Slots opens in the Archives: research it, and each card holds one more badge a level. Drag a badge onto a card on the Deck page to fill its next slot; on a card with every slot full, it takes the bottom slot's place.</p>` +
+    `<p class="hint">Badges that can't work together can't share a card: a key colour's &lt; gate with its ≥ gate (YK &lt; with YK ≥), or Effective with Dampen.</p>`,
   shardAttack: `<p>Shard ATK opens in the Archives: research it, and every ATK shard a run picks up raises ATK by more, from the next one on, in the Tower and the Delve alike.</p>`,
   evadePrediction: `<p>Once Evade is yours, an enemy's inspect panel and its damage number count your parries: the damage to expect, the range it usually falls in, and your chance to survive.</p>` +
     `<p class="hint">Automove and the hand still plan as though no strike is parried, unless every strike is.</p>`,
+  parryPercent: `<p>Parry % opens in the Archives once Evade is yours: research it, and every strike you parry is cut by more, at once, in the Tower and the Delve alike.</p>` +
+    `<p class="hint">However it is raised, a parry cuts a strike's ATK by at most 98%.</p>`,
   shardDefense: `<p>Shard DEF opens in the Archives: research it, and every DEF shard a run picks up raises DEF by more, from the next one on, in the Tower and the Delve alike.</p>`,
+  shrines: `<p>Unlock Shrines opens in the Archives: research it, and every so many floors climbed in the Tower grants a boon, a bonus that lasts the rest of the run, chosen from a few offered.</p>` +
+    `<p class="hint">Its research also opens Floors Required and Standard Boon Bonus. Boons are the Tower's alone, not the Delve's.</p>`,
+  firstBoonChoice: `<p>First Boon Choice opens in the Archives once Shrines are yours: research it, and pick on the forest's Shrine Boons page a standard boon to head every run's first offer.</p>`,
+  improveTradeoffs: `<p>Improve Trade-off Boons opens in the Archives once Shrines are yours: research it, and the benefit of every trade-off boon grows, its cost unchanged.</p>`,
+  autoPickBoons: `<p>Auto Pick Boons opens in the Archives once Shrines are yours: research it, and a run can pick its boons itself, the top one offered, as soon as each is earned.</p>` +
+    `<p class="hint">Turn it on or off from the Shrine button in a run.</p>`,
+  boonOptions: `<p>Boon Option Quantity opens in the Archives once Shrines are yours: research it, and each boon offered gives one more to choose from, up to four.</p>`,
+  banBoons: `<p>Ban Boons opens in the Archives once Shrines are yours: research it, and ban boons from ever being offered, on the forest's Shrine Boons page.</p>`,
+  autoPickRanking: `<p>Auto Pick Ranking opens in the Archives once Auto Pick Boons is yours: research it, and rank the boons Auto Pick takes first, on the forest's Shrine Boons page.</p>`,
 };
 const LOCK_ICON = `<svg class="goal-badge" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7.5" rx="1.5" fill="#3a3f4b" stroke="#c9ced8" stroke-width="1.1"/><path d="M5.2 7V5.2a2.8 2.8 0 0 1 5.6 0V7" fill="none" stroke="#c9ced8" stroke-width="1.4"/></svg>`;
 /** Beside a checkpoint's floor: its area mastered (a golden swirl, shown once Warp is owned) and cleared (a green check). */
@@ -159,7 +178,8 @@ export class GoalsPage {
       const done = high >= c.floor, warpable = canWarp(save, tower, c.floor);
       const mastered = warp && areaMastered(save, tower, c.floor), cleared = areaCleared(save, tower, c.floor);
       const marks = (cleared ? `<span title="Enemies cleared: floors ${c.floor - 9}–${c.floor}">${CLEARED_MARK}</span>` : "") +
-        (mastered ? `<span title="Area mastered: warp here">${SWIRL_MARK}</span>` : "");
+        // A mastered area's warp point stays greyed out until every one below it is mastered too.
+        (mastered ? `<span${warpable ? "" : ` class="inactive"`} title="Area mastered: ${warpable ? "warp here" : "warp here once every area below it is mastered"}">${SWIRL_MARK}</span>` : "");
       return `<div class="goal-row" style="bottom:${floorY(c.floor, floors)}px">` +
         `<div class="goal-left">${this.reward(tower, c, false)}${marks ? `<span class="goal-marks">${marks}</span>` : ""}</div>` +
         `<button class="goal-floor${done ? " completed" : ""}${warpable ? " warpable" : ""}" data-warp="${tower}:${c.floor}" aria-label="Floor ${c.floor}${warpable ? ": warp" : ""}">${c.floor}</button>` +
@@ -238,6 +258,8 @@ export class GoalsPage {
     const save = this.ctx.game.save, from = floor - 9;
     const cleared = areaCleared(save, tower, floor) ? ` Floors ${from}–${floor} cleared of enemies: +${CLEARED_INSPIRATION} Inspiration paid.` : "";
     if (!areaMastered(save, tower, floor)) return `Master floors ${from}–${floor}, climbing them without taking damage, to warp here.${cleared}`;
+    const below = unmasteredBelow(save, tower, floor);
+    if (below !== null && warpUnlocked(save)) return `Floors ${from}–${floor} mastered. Master floors ${below - 9}–${below} too: a warp point opens once every one below it is mastered.${cleared}`;
     return `Floors ${from}–${floor} mastered. Claim Unlock Warp at Tower ${tierNumeral(unlockAt("warp").tower)}'s floor ${unlockFloor("warp")} to start runs here.${cleared}`;
   }
 

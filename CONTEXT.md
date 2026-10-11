@@ -49,7 +49,7 @@ A category's leveling currency (Whetstone, Iron Rivets …), dropped by enemies 
 _Avoid_: crafting material, monster part
 
 **Merge**:
-Three copies of a piece at one rarity becoming one of the next rarity; the chosen target keeps its level. The Equipment screen calls it **Assemble**.
+Three copies of a piece at one rarity (Uncommon or above; Common pieces never merge) becoming one of the next rarity; the chosen target keeps its level. The Equipment screen calls it **Assemble**.
 _Avoid_: fuse, combine
 
 **Dismantle**:
@@ -140,6 +140,10 @@ _Avoid_: power budget, enemy table, zone stats
 How hard the floor asked an enemy to be: weak, normal, strong or elite. Each strength multiplies its floor's enemy curve: strong enemies are the floor's own made tougher, elite ones come from the next zone (the Tower's curve ten floors on). The board shows it round the enemy (a dark red rim for normal, the same with one chevron pointing down for weak, bright red with one chevron for strong, bright red inside a gold rim with two chevrons for elite) and the inspect title and fight messages name weak, strong and elite (and a boss or Greater Boss) before the enemy's name.
 _Avoid_: tier, rank, level
 
+**Fast enemy**:
+An enemy that strikes first in every fight, so it lands a blow even when the hero fells it in one strike. From the second tower and delve up, a share of the non-boss enemies are Fast (8% at first, growing with the floor and the tower), each striking with at least a share of the last tower's floor-100 enemy's ATK and paying 1 Gold more. Its name starts with "Fast" and its tile wears a fast-forward mark.
+_Avoid_: swift, quick, first strike enemy
+
 **Enemy profile**:
 Which of an enemy's stats lead: attack-heavy (more ATK, less DEF), balanced, or defense-heavy (more DEF, less ATK). Any strength may wear any profile; bosses are balanced. In the Tower a profile also names the enemy: each zone's **roster** has one enemy per profile (Goblin, Thief, Armored Knight on the first zone's floors), each tower starting its rosters one zone further along.
 _Avoid_: enemy type, class, archetype
@@ -155,7 +159,7 @@ _Avoid_: modifier, affix, enemy type (the profile and name already are)
 ### Fights
 
 **Fight**:
-What stepping into an enemy costs: rounds in which the hero strikes first and the enemy strikes back, until one of them falls. After every round the enemy's ATK rises by 1% (at least 1), so no DEF holds it off forever. How it ends is known before it starts, as the inspect panel shows.
+What stepping into an enemy costs: rounds in which the hero strikes first and the enemy strikes back (a Fast enemy strikes once before the hero), until one of them falls. After every round the enemy's ATK rises by 1% (at least 1), so no DEF holds it off forever. How it ends is known before it starts, as the inspect panel shows.
 _Avoid_: battle, combat round
 
 **Strike**:
@@ -222,7 +226,7 @@ What each enemy strike the hero lives through costs the enemy: a share of its ma
 _Avoid_: reflect, recoil
 
 **Parry**:
-An enemy strike turned partly aside: by the hero's Parry Chance, the strike's ATK is cut by its Parry % before DEF. Predictions count parries only when every strike is parried, or by their odds with Evade Prediction.
+An enemy strike turned partly aside: by the hero's Parry Chance, the strike's ATK is cut by its Parry % (trained and researched, at most 98%) before DEF. Predictions count parries only when every strike is parried, or by their odds with Evade Prediction.
 _Avoid_: dodge, block (the shroud blocks)
 
 **Shroud**:
@@ -245,6 +249,18 @@ A lasting boost bought with Gold on the Gear page: each one bought adds to the l
 _Avoid_: consumable, buff
 
 ### Progress
+
+**Shrine**:
+What grants a Tower run its boons, once Unlock Shrines is researched: one every so many floors reached (200 for the first twenty, then 250, 300 and 350, less research and boons). Not in the Delve.
+_Avoid_: altar, perk shrine
+
+**Boon**:
+A bonus a Tower run picks at a shrine, lasting the rest of the run: a standard boon (several copies a run, strengthened by Standard Boon Bonus) or a trade-off (once a run, a benefit at a cost).
+_Avoid_: perk, blessing
+
+**Offer**:
+The boons a shrine lets the player choose one from: two, up to four with research; Auto Pick can choose instead.
+_Avoid_: choice set, draft
 
 **Equivalent floor**:
 The one scale both modes' progress maps onto: a Tower floor counts as itself, and every ten Delve depth count as one. Loot tables are gated on it, and each new equivalent floor reached pays one of the mode's currency, up to 100; past that one every 10 to 1,000, one every 100 to 10,000, and none after.
@@ -291,7 +307,7 @@ A Tower floor whose stairs the hero has climbed, reaching the floor above. A tow
 _Avoid_: floor reached (for progress), height
 
 **Warp**:
-Beginning a new Tower run at once on the floor just above a checkpoint already completed, from the Goals screen. Unlocked by claiming Tower I's floor 40 checkpoint; entering the tower from the forest always starts on floor 1.
+Beginning a new Tower run at once on the floor just above a checkpoint already completed, from the Goals screen, once that checkpoint's area and every one below it in the tower are mastered. Unlocked by claiming Tower I's floor 40 checkpoint; entering the tower from the forest always starts on floor 1.
 _Avoid_: teleport, starting floor
 
 **Route preview**:
@@ -347,6 +363,14 @@ _Avoid_: tech, study
 One research slot: it works on one research level at a time, and optionally auto-continues to the next. Its research can be rushed: completed at once for Gems (not the hand's Rush).
 _Avoid_: lab slot, researcher
 
+**Cell**:
+A lasting currency, shown as a yellow triangle, that only Greater Bosses drop (more on later towers); it buys Speed Ups.
+_Avoid_: energy, research points
+
+**Speed Up**:
+A while, bought with Cells, during which one archivist researches 1.5 to 4 times as fast; queued, it is bought again each time it ends while the Cells last. Not to be confused with Rush, which completes research at once for Gems.
+_Avoid_: boost (the training boost), haste
+
 **Research page**:
 The page holding what grows with time: Training and, once that skill is owned, the Archives, a tab each. Inside a run it opens from the HUD with the run paused. Not to be confused with a single research project.
 _Avoid_: lab page, training screen
@@ -366,7 +390,7 @@ How many steps a second the hand (and Automove in the forest) takes. The player 
 _Avoid_: Automove speed
 
 **Rush**:
-The hand's first step toward a new target carrying on along the path across empty floor in the same step, stopping on the tile before anything else. How many tiles it may cross comes from Rush research, once the Rush skill is owned.
+The hand's first step toward a new target carrying on along the path across empty floor in the same step, stopping on the tile before anything else. How many tiles it may cross comes from Rush research, once the Rush skill is owned, and adds up with End Rush research (on STAIRS only) and a Rush badge on the card.
 _Avoid_: dash, sprint, leap
 
 **Deck**:
@@ -401,8 +425,12 @@ Sending the hero inside a run to a tile the player taps, ahead of the hand, unti
 _Avoid_: waypoint, goto
 
 **Card badge**:
-A token bought with Gems (drawn by rarity: common, rare or epic) and attached to one card, changing what the card does when it activates: paying something (HP, Silver, Gold, XP), gating it (it acts only while a condition holds), changing its target (Stairward, Skip Open Nodes, Charge, Deprioritize), scaling its target's effect (Effective, Dampen), making it vanish (Skip), or adding enemies to the floors (More Enemies, only on a monster card). A card holds one, and a badge sits on one card at a time. More copies of a badge raise its level, up to 7.
+A token bought with Gems (drawn by rarity: common, rare or epic) and attached to one card, changing what the card does when it activates: paying something (HP, Silver, Gold, XP), gating it (it acts only while a condition holds), changing its target (Stairward, Skip Open Nodes, Charge, Deprioritize), scaling its target's effect (Effective, Dampen), making it vanish (Skip), or adding enemies to the floors (More Enemies, only on a monster card). A card holds one in each of its badge slots, and a badge sits on one card at a time. More copies of a badge raise its level, up to 7.
 _Avoid_: rune, gem, charm, enchantment
+
+**Badge slot**:
+A place on a card for one card badge. Every card has one, and one more for each level of Badge Slots research. Badges that can't work together (a key colour's < and ≥ gates, such as YK < with YK ≥, or Effective with Dampen) can't share a card.
+_Avoid_: socket
 
 **Extra enemy**:
 An enemy the More Enemies badge adds to a floor after it is generated: a copy of one of that floor's own enemies of the strength its card targets, standing out of the way (a corner of a room behind a gate first) and never cutting anything off while another tile is free. It fights and pays like any other.

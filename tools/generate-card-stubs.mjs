@@ -215,6 +215,11 @@ const ICONS = {
     px(p, [[16, 7], [16, 8], [23, 6], [24, 6], [23, 7], [24, 7], [23, 8], [24, 8], [31, 7], [31, 8]], C.stone2);
     for (let i = 0; i < 12; i++) rect(p, 18 + i, 4 + Math.floor(i * 10 / 12), 2, 2, C.red);
   },
+  fastEnemy(p) {
+    monster(p);
+    // A fast-forward mark over it, as a Fast enemy's tile wears.
+    for (const x0 of [15, 25]) for (let i = 0; i < 4; i++) rect(p, x0 + i * 2, 4 + i, 2, 9 - i * 2, C.gold);
+  },
   chest(p) {
     rect(p, 10, 18, 28, 18, C.wood2);
     rect(p, 11, 19, 26, 16, C.wood);
@@ -265,9 +270,9 @@ const ICONS = {
   },
 };
 
-const CARDS = [["stairs", "STAIRS"], ["heal", "HEAL"], ["door", "DOOR"], ["yellowKey", "YELLOW KEY"], ["blueKey", "BLUE KEY"], ["monster", "MONSTER"], ["atkUp", "ATK UP"], ["defUp", "DEF UP"], ["keySiphon", "KEY SIPHON"],
+const CARDS = [["stairs", "STAIRS"], ["heal", "HEAL"], ["door", "DOOR"], ["yellowKey", "YELLOW KEY"], ["blueKey", "BLUE KEY"], ["monster", "ENEMY"], ["atkUp", "ATK UP"], ["defUp", "DEF UP"], ["keySiphon", "KEY SIPHON"],
   ["yellowDoor", "YELLOW DOOR"], ["heartDoor", "HEART DOOR"], ["weakEnemy", "WEAK ENEMY"], ["baseEnemy", "BASE ENEMY"], ["strongEnemy", "STRONG ENEMY"],
-  ["eliteEnemy", "ELITE ENEMY"], ["bossEnemy", "BOSS ENEMY"], ["nonBossEnemy", "NON-BOSS ENEMY"], ["chest", "CHEST"], ["blueSiphon", "BK SIPHON"], ["blueTrader", "BK TRADER"], ["keyToHp", "YK TO HP"],
+  ["eliteEnemy", "ELITE ENEMY"], ["bossEnemy", "BOSS ENEMY"], ["nonBossEnemy", "NON-BOSS ENEMY"], ["fastEnemy", "FAST ENEMY"], ["chest", "CHEST"], ["blueSiphon", "BK SIPHON"], ["blueTrader", "BK TRADER"], ["keyToHp", "YK TO HP"],
   ["redKey", "RED KEY"], ["redSiphon", "RK SIPHON"], ["torch", "TORCH"], ["woodenDoor", "WOODEN DOOR"]];
 mkdirSync(OUT, { recursive: true });
 for (const [id, name] of CARDS) {

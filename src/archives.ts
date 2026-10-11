@@ -5,6 +5,7 @@ import { goalUnlocked, type GoalUnlock } from "./goals.ts";
 import { finite as finiteIn, isRecord, wholeIn } from "./decode.ts";
 import { intPow } from "./exact.ts";
 import { BUY_QUANTITIES, quantityLabel } from "./buy-quantity.ts";
+import { carrySpeedUp, completionAt, decodeSpeedUp, endSpeedUp, type SpeedUp } from "./speed-ups.ts";
 
 // The Archives: research that lasts between runs. An archivist takes one
 // research project at a time; each level costs Gold and real time, and once
@@ -25,6 +26,7 @@ export const RESEARCH_CATEGORIES = {
   defense: "Defense",
   economy: "Economy",
   equipment: "Equipment",
+  shrines: "Shrines",
   special: "Special",
 } as const;
 export type ResearchCategory = keyof typeof RESEARCH_CATEGORIES;
@@ -35,6 +37,8 @@ const percent = (n: number) => `${n}%`;
 const tenths = (n: number) => `${n / 10}%`;
 /** A speed (0 = as fast as without research) as a percent of the base. */
 const speed = (n: number) => `${Math.round(100 + n * 100)}%`;
+/** A one-level unlock: open or not. */
+const opened = (n: number) => (n ? "Open" : "Locked");
 /** The numbers research can change, each with its name, the base the game
  * reads it from (before any research) and how a total of it reads. */
 export const RESEARCH_TARGETS = {
@@ -67,6 +71,8 @@ export const RESEARCH_TARGETS = {
   shardAttackPercent: { name: "Shard ATK", base: 100, shown: percent },
   /** The percent of its DEF a DEF shard gives, from 100. */
   shardDefensePercent: { name: "Shard DEF", base: 100, shown: percent },
+  /** Parry % added to the trained Parry %, in tenths of a percent. */
+  parryPercent: { name: "Parry %", base: 0, shown: tenths },
   /** The percent of the Crit % training's chance that the hero has, from 100. */
   critChancePercent: { name: "Critical Chance", base: 100, shown: percent },
   /** The percent of the Crit x training's factor that the hero has, from 100. */
@@ -107,6 +113,8 @@ export const RESEARCH_TARGETS = {
   trainingSpeed: { name: "Training Speed", base: 0, shown: speed },
   /** Tiles the hand's first step toward a new target may rush across, once Rush is owned. */
   rushTiles: { name: "Tiles Rushed", base: 0, shown: count },
+  /** Tiles more STAIRS's rush toward the stairs may cross, once End Rush is owned. */
+  endRushTiles: { name: "Tiles Rushed to the Stairs", base: 0, shown: count },
   /** Buy quantities opened past x1: x5, x10, x100, then Max. */
   buyQuantity: { name: "Buy Quantity", base: 0, shown: (n: number) => quantityLabel(BUY_QUANTITIES[Math.min(n, BUY_QUANTITIES.length - 1)]!) },
   /** How fast archivists work: a level of `d` hours takes d / (1 + speed). */
@@ -114,6 +122,26 @@ export const RESEARCH_TARGETS = {
   /** The percent of its Gold a research level costs, in tenths of a
    * percent, from 1,000 (the full price). */
   researchCost: { name: "Research Cost", base: 1000, shown: tenths },
+  /** Whether Shrines grant boons in the Tower (shrines.ts). */
+  shrines: { name: "Shrines", base: 0, shown: opened },
+  /** Floors taken off each boon's base floors required. */
+  shrineFloors: { name: "Floors Required", base: 0, shown: (n: number) => `${n ? "−" : ""}${-n}` },
+  /** The percent standard boons are strengthened by. */
+  standardBoonBonus: { name: "Standard Boon Bonus", base: 0, shown: percent },
+  /** Whether a standard boon can be chosen to head a run's first offer. */
+  firstBoonChoice: { name: "First Boon Choice", base: 0, shown: opened },
+  /** The percent trade-off boons' benefits are strengthened by. */
+  tradeoffBonus: { name: "Trade-off Boon Bonus", base: 0, shown: percent },
+  /** Whether Auto Pick Boons can be turned on. */
+  autoPickBoons: { name: "Auto Pick Boons", base: 0, shown: opened },
+  /** Boons each offer gives to choose from. */
+  boonOptions: { name: "Boon Choices", base: 2, shown: count },
+  /** Boons that can be banned. */
+  boonBans: { name: "Boons Banned", base: 0, shown: count },
+  /** Boons Auto Pick can rank. */
+  boonRanks: { name: "Boons Ranked", base: 0, shown: count },
+  /** Badges each card can hold. */
+  badgeSlots: { name: "Badge Slots", base: 1, shown: count },
 } as const;
 export type ResearchTarget = keyof typeof RESEARCH_TARGETS;
 
@@ -198,6 +226,21 @@ const critLevels = (target: ResearchTarget) => Array.from({ length: 100 }, (_, i
   return { gold: 30 + 8 * i * i * i, hours: seconds / 3600, effect: { target, op: "add", value: 2 } };
 });
 
+/** Parry % research: +0.2% Parry % a level (2 tenths), for 50 levels.
+ * Level n costs 5,000 + 610 × (n⁴ − 1) + 7 × (n⁵ − 1) Gold, three
+ * significant figures (5,000 at level 1, 10.1 million at 11, 96.8 million
+ * at 19, 997 million at 33, 6 billion at 50; about 59.4 billion in all), and
+ * takes n² + 55 × n − 3 minutes (53 at level 1, 111 at 2, 87.5 hours at 50;
+ * about 78 days in all). */
+const parryLevels = () => Array.from({ length: 50 }, (_, i): ResearchLevel => {
+  const n = i + 1;
+  return {
+    gold: neat(5000 + 610 * (intPow(n, 4) - 1) + 7 * (intPow(n, 5) - 1)),
+    hours: (n * n + 55 * n - 3) / 60,
+    effect: { target: "parryPercent", op: "add", value: 2 },
+  };
+});
+
 /** Faster Trainers (+2% training speed a level), for 100 levels. The n-th
  * level costs 250 × n + 2 × n³ Gold and takes 1.75 × n + n² / 20 hours: a
  * linear start that grows cubic and quadratic (2.03 million Gold and 28
@@ -212,11 +255,12 @@ const fasterTrainersLevels = () => Array.from({ length: 100 }, (_, i): ResearchL
  * 250 × n Gold and 1.75 × n hours (Faster Trainers' first levels) and grows steeper: Gold
  * doubles each level and time grows 20% (250 Gold and 1.75 hours at level
  * 1, about 105 billion Gold and 145 days at 25; 201 billion and 697 days in
- * all), since a faster pace of play is worth the most. */
-const rushLevels = () => Array.from({ length: 25 }, (_, i): ResearchLevel => ({
+ * all), since a faster pace of play is worth the most. End Rush follows the
+ * same schedule. */
+const rushLevels = (target: ResearchTarget) => Array.from({ length: 25 }, (_, i): ResearchLevel => ({
   gold: 250 * (i + 1) * intPow(2, i),
   hours: 1.75 * (i + 1) * intPow(1.2, i),
-  effect: { target: "rushTiles", op: "add", value: 1 },
+  effect: { target, op: "add", value: 1 },
 }));
 
 /** Max Interest's limits by level, up from 50 Silver a floor. */
@@ -260,6 +304,53 @@ const ignoreCountLevels = () => Array.from({ length: 9 }, (_, i): ResearchLevel 
 /** Target Count: +1 Target use a level, for four levels (1 use up to 5),
  * ten times the Gold and twice the time each level. */
 const TARGET_COUNT_LEVELS: [gold: number, hours: number][] = [[10_000_000, 24], [100_000_000, 48], [1_000_000_000, 96], [10_000_000_000, 192]];
+
+/** Shrine research. Floors Required: −1 floor a level for 100 levels;
+ * level n costs 100,000 + 120,000 × (n − 1) + 10,000 × (n − 1)(n − 2) Gold
+ * (100k, 220k, 360k … 109 million at 100, about 3.84 billion in all) and
+ * takes 99 + 102 × (n − 1) + 1.5 × (n − 1)(n − 2) minutes (99, 201, 306 …
+ * 24,750 at 100, about 694 days in all). */
+const shrineFloorLevels = () => Array.from({ length: 100 }, (_, i): ResearchLevel => ({
+  gold: 100_000 + 120_000 * i + 10_000 * i * (i - 1),
+  hours: (99 + 102 * i + (3 * i * (i - 1)) / 2) / 60,
+  effect: { target: "shrineFloors", op: "add", value: -1 },
+}));
+/** Standard Boon Bonus: +1% a level for 25 levels. Its Gold climbs
+ * steeply, then eases (about 1 billion at level 9, 10 billion at 14, 100
+ * billion at 21; 1.08 trillion in all); its minutes are 99, 334, 579, 864,
+ * then each step 40 longer than the last (16,089 at 25, 109 days in all). */
+const STANDARD_BOON_GOLD = [
+  100e3, 314e3, 987e3, 3.1e6, 9.75e6, 30.6e6, 96.2e6, 302e6, 950e6, 1.52e9, 2.44e9, 3.9e9, 6.25e9,
+  10e9, 13.8e9, 19e9, 26.2e9, 36.2e9, 49.9e9, 68.9e9, 95e9, 122e9, 157e9, 202e9, 260e9,
+];
+/** `first` minutes, then each step `more` longer than the step before. */
+function steps(first: readonly number[], length: number, more: number) {
+  const out = [...first];
+  while (out.length < length) out.push(2 * out.at(-1)! - out.at(-2)! + more);
+  return out;
+}
+const STANDARD_BOON_MINUTES = steps([99, 334, 579, 864], 25, 40);
+/** Improve Trade-off Boons: +1% a level for 10 levels, 600 million to 4.9
+ * billion Gold, 1,499 minutes then 840 more a level. */
+const TRADEOFF_GOLD = [600e6, 700e6, 800e6, 900e6, 1e9, 1.25e9, 1.6e9, 2.2e9, 3.2e9, 4.9e9];
+/** Ban Boons: one ban more a level, for eight levels. */
+const BAN_LEVELS: [gold: number, minutes: number][] = [
+  [10e6, 3333], [100e6, 6666], [1e9, 13333], [10e9, 29999], [100e9, 59999], [1e12, 119999], [100e12, 239999], [1e15, 479999],
+];
+/** Auto Pick Ranking: one boon ranked more a level, for 32 levels. Its
+ * Gold steepens fast, then eases (about 1 billion at level 11, 10 billion
+ * at 18, 100 billion at 30; 837 billion in all); its minutes are 2,866,
+ * then each step 22 longer than the last, from 335 (23,481 at 32, 255 days
+ * in all). */
+const RANKING_GOLD = [
+  100e3, 180e3, 875e3, 4.46e6, 15.7e6, 31.1e6, 61.7e6, 123e6, 243e6, 483e6, 960e6, 1.35e9, 1.9e9, 2.68e9, 3.77e9, 5.3e9,
+  7.46e9, 10.5e9, 12.7e9, 15.4e9, 18.7e9, 22.6e9, 27.4e9, 33.2e9, 40.2e9, 48.7e9, 59e9, 71.5e9, 86.7e9, 105e9, 121e9, 140e9,
+];
+const RANKING_MINUTES = steps([2866, 3201], 32, 22);
+/** One level adding `value` to `target`, for `gold` and `minutes`. */
+const levelOf = (target: ResearchTarget, value: number, gold: number, minutes: number): ResearchLevel =>
+  ({ gold, hours: minutes / 60, effect: { target, op: "add", value } });
+const SHRINES = { research: "unlockShrines", level: 1 } as const;
 
 /** `n` rounded to three significant figures, so long schedules read neatly. */
 function neat(n: number) {
@@ -362,6 +453,13 @@ export const RESEARCH = {
     requires: [{ upgrade: "archives" }, { goalUnlock: "shardDefense" }],
     levels: hundredLevels("shardDefensePercent", 3),
   },
+  parry: {
+    name: "Parry %",
+    description: "Study the old climbers' footwork: a parried strike's ATK is cut by more.",
+    categories: ["defense"],
+    requires: [{ upgrade: "evade" }, { goalUnlock: "parryPercent" }],
+    levels: parryLevels(),
+  },
   maxHp: {
     name: "Max HP",
     description: "Study the old climbers' endurance: the hero starts every run with more max HP.",
@@ -395,7 +493,14 @@ export const RESEARCH = {
     description: "Learn the old climbers' dash: the hand's first step toward a new target rushes across more empty tiles at once.",
     categories: ["abilities"],
     requires: [{ upgrade: "rush" }],
-    levels: rushLevels(),
+    levels: rushLevels("rushTiles"),
+  },
+  endRush: {
+    name: "End Rush",
+    description: "Learn the last dash of the climb: STAIRS's rush toward the stairs crosses more empty tiles at once.",
+    categories: ["abilities"],
+    requires: [{ upgrade: "endRush" }],
+    levels: rushLevels("endRushTiles"),
   },
   undoCount: {
     name: "Undo Count",
@@ -538,6 +643,77 @@ export const RESEARCH = {
     requires: [{ upgrade: "targetMore" }],
     levels: regainLevels("targetFloors", 1.1),
   },
+  unlockShrines: {
+    name: "Unlock Shrines",
+    description: "Find the old climbers' shrines: every so many floors climbed in the Tower grants a boon for the rest of the run.",
+    categories: ["shrines"],
+    requires: [{ upgrade: "archives" }, { goalUnlock: "shrines" }],
+    levels: [levelOf("shrines", 1, 1.5e6, 4999)],
+  },
+  shrineFloors: {
+    name: "Floors Required",
+    description: "Learn the shrines' paths: each boon takes one floor fewer to reach, before any Boon Floor Requirement boon.",
+    categories: ["shrines"],
+    requires: [SHRINES],
+    levels: shrineFloorLevels(),
+  },
+  standardBoonBonus: {
+    name: "Standard Boon Bonus",
+    description: "Pray more deeply: every standard boon is stronger.",
+    categories: ["shrines"],
+    requires: [SHRINES],
+    levels: STANDARD_BOON_GOLD.map((gold, i) => levelOf("standardBoonBonus", 1, gold, STANDARD_BOON_MINUTES[i]!)),
+  },
+  firstBoonChoice: {
+    name: "First Boon Choice",
+    description: "Choose your first prayer: a standard boon picked on the forest's Shrine Boons page heads every run's first offer.",
+    categories: ["shrines"],
+    requires: [SHRINES, { goalUnlock: "firstBoonChoice" }],
+    levels: [levelOf("firstBoonChoice", 1, 1e9, 6667)],
+  },
+  improveTradeoffs: {
+    name: "Improve Trade-off Boons",
+    description: "Strike better bargains: the benefit of every trade-off boon is greater, its cost unchanged.",
+    categories: ["shrines"],
+    requires: [SHRINES, { goalUnlock: "improveTradeoffs" }],
+    levels: TRADEOFF_GOLD.map((gold, i) => levelOf("tradeoffBonus", 1, gold, 1499 + 840 * i)),
+  },
+  autoPickBoons: {
+    name: "Auto Pick Boons",
+    description: "Let the shrines choose: a run can take the top boon offered by itself, turned on from the Shrine button.",
+    categories: ["shrines"],
+    requires: [SHRINES, { goalUnlock: "autoPickBoons" }],
+    levels: [levelOf("autoPickBoons", 1, 100e6, 7166)],
+  },
+  boonOptions: {
+    name: "Boon Option Quantity",
+    description: "Hear more voices: each boon offered gives one more to choose from.",
+    categories: ["shrines"],
+    requires: [SHRINES, { goalUnlock: "boonOptions" }],
+    levels: [levelOf("boonOptions", 1, 200e6, 7167), levelOf("boonOptions", 1, 2e9, 14667)],
+  },
+  banBoons: {
+    name: "Ban Boons",
+    description: "Turn from a shrine: one boon more can be banned from ever being offered, on the forest's Shrine Boons page.",
+    categories: ["shrines"],
+    requires: [SHRINES, { goalUnlock: "banBoons" }],
+    levels: BAN_LEVELS.map(([gold, minutes]) => levelOf("boonBans", 1, gold, minutes)),
+  },
+  autoPickRanking: {
+    name: "Auto Pick Ranking",
+    description: "Order your prayers: Auto Pick takes the boons you rank first, one boon more ranked a level, on the forest's Shrine Boons page.",
+    categories: ["shrines"],
+    requires: [{ research: "autoPickBoons", level: 1 }, { goalUnlock: "autoPickRanking" }],
+    levels: RANKING_GOLD.map((gold, i) => levelOf("boonRanks", 1, gold, RANKING_MINUTES[i]!)),
+  },
+  badgeSlots: {
+    name: "Badge Slots",
+    description: "Each card holds one more badge a level, arranged on the Deck page. A card's badges must not conflict: a key colour's < and ≥ gates (YK < and YK ≥), or Effective and Dampen, can't share one.",
+    categories: ["abilities"],
+    requires: [{ upgrade: "archives" }, { upgrade: "cardBadges" }, { goalUnlock: "badgeSlots" }],
+    // 1 billion Gold and 4 days, then 100 billion and 20 days.
+    levels: [levelOf("badgeSlots", 1, 1e9, 4 * 24 * 60), levelOf("badgeSlots", 1, 100e9, 20 * 24 * 60)],
+  },
 } satisfies Record<string, ResearchDefinition>;
 export type ResearchId = keyof typeof RESEARCH;
 export const RESEARCH_IDS = Object.keys(RESEARCH) as ResearchId[];
@@ -552,9 +728,10 @@ export const HISTORY_LIMIT = 200;
 /** A research level being worked on: paid for, started at `startedAt`
  * (moved back by any progress kept from before), done at `completesAt`. */
 export type ResearchJob = { research: ResearchId; level: number; startedAt: number; completesAt: number; paid: number };
-/** One archivist: its job, if any, and whether it starts the project's next
- * level on its own when this one completes. */
-export type ArchivistSlot = { job?: ResearchJob; autoContinue: boolean };
+/** One archivist: its job, if any, whether it starts the project's next
+ * level on its own when this one completes, and its Speed Up, if one is
+ * in progress (speed-ups.ts). */
+export type ArchivistSlot = { job?: ResearchJob; autoContinue: boolean; speedUp?: SpeedUp };
 export type ResearchRecord = { at: number; research: ResearchId; level: number };
 export type ArchivesSave = {
   /** The hired archivists. */
@@ -579,6 +756,8 @@ export type ArchivesOwner = {
   gold: number;
   /** Gems, which hire archivists. */
   gems: number;
+  /** Cells, which buy Speed Ups. */
+  cells: number;
   upgrades: Record<UpgradeId, number>;
   /** Goals claimed, for the unlocks they hold. */
   goals: Save["goals"];
@@ -739,32 +918,53 @@ function hastenAll(a: ArchivesSave, ratio: number, at: number) {
   }
 }
 
-/** Completes every job due by `now`, oldest first, recording each. An
- * archivist set to auto-continue starts the project's next level the
- * moment the last completed, paying for it, so research done while the game
- * was closed carries on; without the Gold (or with nothing left to
- * research), it waits idle. Returns what completed. */
+/** Completes every job due by `now`, oldest first, recording each, and
+ * ends (or, queued, buys again) each Speed Up that ran out, all in the
+ * order they happened, each Speed Up's boost carried into its job's times
+ * as it goes. An archivist set to auto-continue starts the project's next
+ * level the moment the last completed, paying for it, so research done
+ * while the game was closed carries on; without the Gold (or with nothing
+ * left to research), it waits idle. Returns what completed. */
 export function settleArchives(o: ArchivesOwner, now: number): ResearchRecord[] {
   const a = o.archives, done: ResearchRecord[] = [];
-  for (;;) {
-    const due = a.slots
-      .map((s, i) => ({ i, job: s.job }))
-      .filter((s): s is { i: number; job: ResearchJob } => !!s.job && s.job.completesAt <= now)
-      .sort((x, y) => x.job.completesAt - y.job.completesAt || x.i - y.i)[0];
-    if (!due) break;
-    const { i, job } = due;
+  for (let event = nextEvent(a, now); event; event = nextEvent(a, now)) {
+    const { i, at } = event;
+    for (const s of a.slots) carrySpeedUp(s, at);
+    if (!event.completes) {
+      endSpeedUp(o, a.slots[i], at);
+      continue;
+    }
+    const job = a.slots[i].job!;
     a.slots[i].job = undefined;
     const before = speedFactor(a);
     a.levels[job.research] = job.level;
     const after = speedFactor(a);
-    if (after !== before) hastenAll(a, before / after, job.completesAt);
-    const record = { at: job.completesAt, research: job.research, level: job.level };
+    if (after !== before) hastenAll(a, before / after, at);
+    const record = { at, research: job.research, level: job.level };
     a.history.push(record);
     done.push(record);
-    if (a.slots[i].autoContinue && !cannotStart(o, i, job.research)) begin(o, i, job.research, job.completesAt);
+    if (a.slots[i].autoContinue && !cannotStart(o, i, job.research)) begin(o, i, job.research, at);
   }
+  for (const s of a.slots) carrySpeedUp(s, now);
   if (a.history.length > HISTORY_LIMIT) a.history.splice(0, a.history.length - HISTORY_LIMIT);
   return done;
+}
+
+/** The earliest thing due by `now`: a job completing (`completes`) or a
+ * busy archivist's Speed Up ending, in archivist `i`; a completion goes first at a tie,
+ * then the lower archivist. */
+function nextEvent(a: ArchivesSave, now: number) {
+  let next: { i: number; at: number; completes: boolean } | undefined;
+  const consider = (i: number, at: number, completes: boolean) => {
+    if (at > now) return;
+    if (!next || at < next.at || (at === next.at && completes && !next.completes)) next = { i, at, completes };
+  };
+  a.slots.forEach((s, i) => {
+    if (s.job) consider(i, completionAt(s), true);
+    // An idle archivist's Speed Up is paused: it can't end.
+    if (s.job && s.speedUp) consider(i, s.speedUp.endsAt, false);
+  });
+  return next;
 }
 
 /** The Gems the next archivist costs, or undefined when all are hired. */
@@ -826,6 +1026,8 @@ function decodeSlots(raw: any[], a: ArchivesSave): ArchivistSlot[] {
   const busy = new Set<ResearchId>();
   return raw.map((s: any): ArchivistSlot => {
     const slot: ArchivistSlot = { autoContinue: s?.autoContinue === true };
+    const speedUp = decodeSpeedUp(s?.speedUp);
+    if (speedUp) slot.speedUp = speedUp;
     const j = s?.job;
     if (validJob(j, a) && !busy.has(j.research)) {
       busy.add(j.research);

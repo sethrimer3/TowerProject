@@ -144,7 +144,8 @@ export function levelUp(e: EquipmentSave, purse: { gold: number }, id: string, l
 }
 
 /** The pieces that can join `target` in a merge: the same definition and
- * rarity, below the top rarity, not protected, lowest level first. */
+ * rarity, of a rarity that merges (not Common or the top), not protected,
+ * lowest level first. */
 export function mergeFodder(e: EquipmentSave, target: EquipItem) {
   if (!RARITY_TIERS[target.rarity].next) return [];
   return e.items
@@ -152,9 +153,9 @@ export function mergeFodder(e: EquipmentSave, target: EquipItem) {
     .sort((a, b) => a.level - b.level || a.id.localeCompare(b.id, "en", { numeric: true }));
 }
 /** Why a merge was refused. */
-export type MergeRefusal = "missing" | "top" | "count" | "mismatch" | "protected";
+export type MergeRefusal = "missing" | "unmergeable" | "count" | "mismatch" | "protected";
 /** Merges `fodder` into `targetId`: exactly `merge − 1` other copies of the
- * same definition and rarity, none locked or worn. The target moves up one
+ * same definition and a rarity that merges (`next`), none locked or worn. The target moves up one
  * rarity keeping its level, lock, loadouts, investment and effect slots
  * (their effects and Refinement untouched: the new rarity only lets them
  * rise higher, and opens the next slot once leveled past the old cap); the
@@ -163,7 +164,7 @@ export function merge(e: EquipmentSave, targetId: string, fodder: string[]): Equ
   const target = findItem(e, targetId);
   if (!target) return "missing";
   const t = RARITY_TIERS[target.rarity];
-  if (!t.next) return "top";
+  if (!t.next) return "unmergeable";
   const unique = new Set(fodder);
   if (unique.size !== fodder.length || fodder.length !== t.merge - 1 || unique.has(targetId)) return "count";
   const copies = fodder.map((id) => findItem(e, id));

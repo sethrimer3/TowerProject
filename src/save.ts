@@ -10,7 +10,7 @@ import { decodeSettings, defaultSettings } from "./settings.ts";
 import { keepUndos, loadout } from "./loadout.ts";
 import { BASE_HAND, CARD_IDS, HAND_SLOT_GEMS, IN_PLACE, MAX_HAND_SLOTS, deckCards, handSlots, type CardId } from "./cards.ts";
 import { decodeGemDrop, defaultGemDrop } from "./gems.ts";
-import { decodeArchives, defaultArchives } from "./archives.ts";
+import { decodeArchives, defaultArchives, researched } from "./archives.ts";
 import { adsOff, BOOST_FOREVER, decodeEntitlements, permanentBoost } from "./shop/entitlements.ts";
 import { decodeShop, defaultShop } from "./shop/ledger.ts";
 import { decodeGoals, defaultGoals } from "./goals.ts";
@@ -19,6 +19,7 @@ import { decodeMail, defaultMail } from "./mail/progress.ts";
 import { decodeMissions, defaultMissions } from "./missions/progress.ts";
 import { decodeEvents, defaultEvents } from "./events/progress.ts";
 import { decodeRelics } from "./relics.ts";
+import { decodeShrines, defaultShrines, validShrineRun } from "./shrines.ts";
 import { decodeThemes, defaultThemes } from "./theme-collection.ts";
 import { isTournamentRun } from "./tournament/run.ts";
 import { decodeBadges, defaultBadges, validRunBadges } from "./badges.ts";
@@ -31,6 +32,7 @@ export function defaults(): Save {
     gems: 0,
     ascensionShards: 0,
     medals: 0,
+    cells: 0,
     gemDrop: defaultGemDrop(),
     goldBoostUntil: 0,
     gold: 0,
@@ -69,6 +71,7 @@ export function defaults(): Save {
     missions: defaultMissions(),
     events: defaultEvents(),
     relics: [],
+    shrines: defaultShrines(),
     themes: defaultThemes(),
   };
 }
@@ -119,7 +122,7 @@ const validPlayer = (p: any, width: number) =>
 const validCore = (r: any, width: number) =>
   !!r && validOutside(r) && validCounters(r) && validPlayer(r.player, width) && validChanges(r.changes);
 const validDelveState = (r: any) => Number.isInteger(r.milestone) && finite(r.milestone);
-const TOWER_FIELDS = ["damaged", "floors", "summoned", "start"];
+const TOWER_FIELDS = ["damaged", "floors", "summoned", "start", "shrine"];
 const DELVE_FIELDS = ["milestone", "tournament"];
 /** Training ranks bought in a run: known rows, each a whole number of
  * ranks, no more than the row reaches in a run. */
@@ -175,7 +178,7 @@ function decodeTowerRun(r: any): TowerRun | null {
   if (!validCore(r, TOWER_WIDTH) || !validFloors(r.floors)) return null;
   // Older runs have no damage history; do not assume a perfect attempt.
   r.damaged = r.damaged !== false;
-  dropInvalid(r, { summoned: (v: unknown) => Array.isArray(v) && v.every(Number.isInteger), start: (v: unknown) => Number.isInteger(v) && (v as number) > 0 });
+  dropInvalid(r, { summoned: (v: unknown) => Array.isArray(v) && v.every(Number.isInteger), start: (v: unknown) => Number.isInteger(v) && (v as number) > 0, shrine: validShrineRun });
   return without(r, [...DELVE_FIELDS, "keysSpent"]);
 }
 /** Validate an untrusted Delve run; null unless it has the shape a
@@ -274,6 +277,7 @@ function decodeProgress(s: any, d: Save, undoCapacity: number) {
   d.gems = count(s.gems, d.gems);
   d.ascensionShards = count(s.ascensionShards, d.ascensionShards);
   d.medals = count(s.medals, d.medals);
+  d.cells = fraction(s.cells, d.cells);
   d.gemDrop = decodeGemDrop(s.gemDrop);
   d.goldBoostUntil = count(s.goldBoostUntil, 0, Number.MAX_SAFE_INTEGER);
   for (const g of GOLD_SHOP) d.provisions[g.id] = count(s.provisions?.[g.id], d.provisions[g.id], 999);
@@ -417,6 +421,7 @@ export function decode(raw: string | null): Save {
     d.missions = decodeMissions(s.missions);
     d.events = decodeEvents(s.events);
     d.relics = decodeRelics(s.relics);
+    d.shrines = decodeShrines(s.shrines);
     d.themes = decodeThemes(s.themes);
     // The boost runs for good only while a pack that grants it is owned.
     if (permanentBoost(d)) d.trainingBoostUntil = BOOST_FOREVER;
@@ -430,7 +435,7 @@ export function decode(raw: string | null): Save {
     // Slots bought with Gems count only with Larger Hand, which opens them.
     if (d.upgrades.largerHand) d.handSlots = count(s.handSlots, 0, HAND_SLOT_GEMS.length);
     d.hand = decodeHand(s.hand, deckCards(d.upgrades), handSlots(d));
-    d.badges = decodeBadges(s.badges, d.upgrades);
+    d.badges = decodeBadges(s.badges, d.upgrades, researched(d.archives, "badgeSlots", 1));
     for (const k of ["deck", "removeCard", "addCard", "upgrades", "gear", "onTheJob", "speed", "climb", "enter", "delve"] as const) d.tutorials[k] = s.tutorials?.[k] === true;
     for (const k of ["inspiration", "courage"] as const) d.treeNotices[k] = s.treeNotices?.[k] === true;
     d.seen = decodeSeen(s.seen, d);

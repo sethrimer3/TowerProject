@@ -8,7 +8,7 @@ import type { EnemyStrength } from "../entities.ts";
 import { RARITIES as SHOP_RARITIES } from "../shop/rarity.ts";
 
 /** The rarities equipment comes in, lowest first. Adding one is a row here
- * (and its `next` on the one below). */
+ * (and its `next` on the one below, if that one merges). */
 export type EquipRarity = "common" | "uncommon" | "rare";
 export const EQUIP_RARITIES: readonly EquipRarity[] = ["common", "uncommon", "rare"];
 
@@ -28,7 +28,8 @@ export type RarityTier = {
   slotLevel: number;
   /** The rarest effect a slot on an item of this rarity can hold. */
   maxEffect: EquipRarity;
-  /** What merging `merge` copies of this rarity makes; null at the top. */
+  /** What merging `merge` copies of this rarity makes; null where pieces
+   * never merge: Common (only worn as they are or salvaged) and the top. */
   next: EquipRarity | null;
   merge: number;
   /** Upgrade material a dismantled piece of this rarity returns. */
@@ -39,7 +40,7 @@ const tier = (id: EquipRarity, mark: string, maxLevel: number, slotLevel: number
   maxLevel, slotLevel, maxEffect: id, next, merge: 3, salvage,
 });
 export const RARITY_TIERS: Record<EquipRarity, RarityTier> = {
-  common: tier("common", "C", 20, 1, "uncommon", 5),
+  common: tier("common", "C", 20, 1, null, 5),
   uncommon: tier("uncommon", "U", 40, 21, "rare", 20),
   rare: tier("rare", "R", 60, 41, null, 75),
 };

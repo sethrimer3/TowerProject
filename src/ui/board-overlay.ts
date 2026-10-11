@@ -18,6 +18,8 @@ export class BoardOverlay {
   private highlightedOn = "";
   private fadeTimer: ReturnType<typeof setTimeout> | undefined;
   private inspectVisible = false;
+  /** What the inspect box shows, to tell when its forecast has changed. */
+  private inspectShown = "";
   private routeVisible = false;
   private routeEffects: RouteEffects | null = null;
   /** The previewed route's tiles, to total again when the hero changes. */
@@ -95,6 +97,15 @@ export class BoardOverlay {
    * means nothing. */
   clearIfAt(p: { x: number; y: number }) {
     if (this.isHighlighted(p) || (this.highlighted && this.highlightedOn !== this.boardKey())) this.hide();
+  }
+
+  /** Shows the inspect box again when what it says has changed, as an
+   * enemy's forecast does when the hero's stats move (a shard picked up, a
+   * potion drunk, a level gained); run on each HUD refresh. */
+  followHero() {
+    if (!this.highlighted || !this.inspectVisible) return;
+    const { x, y } = this.highlighted;
+    if (this.inspectHtml(x, y) !== this.inspectShown) this.showInspect(x, y);
   }
 
   /** Names the board the hero stands on: the mode, the run, outside or in,
@@ -248,10 +259,15 @@ export class BoardOverlay {
     glow.style.height = `${s}px`;
   }
 
+  private inspectHtml(x: number, y: number) {
+    const d = tileInfo(this.game, x, y);
+    return `<b style="color:${d.color}">${d.title}</b><div>${d.body}</div>`;
+  }
+
   private showInspect(x: number, y: number) {
-    const d = tileInfo(this.game, x, y),
-      box = el("inspect-box");
-    box.innerHTML = `<b style="color:${d.color}">${d.title}</b><div>${d.body}</div>`;
+    const box = el("inspect-box");
+    this.inspectShown = this.inspectHtml(x, y);
+    box.innerHTML = this.inspectShown;
     box.hidden = false;
     this.inspectVisible = true;
     this.placeInspect(x, y);
