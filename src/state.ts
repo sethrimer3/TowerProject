@@ -298,6 +298,8 @@ export class Game {
     this.save.tower.best = Math.max(this.save.tower.best, this.save.tower.reached);
     this.save.delve.reached = Math.max(this.save.delve.reached, maxSection * TOWER_SECTION);
     this.save.delve.best = Math.max(this.save.delve.best, this.save.delve.reached);
+    // Events open with Dev mode: the running Event's first missions come at once.
+    this.events.refresh();
   }
   /** Makes `next` the active mode. A mode with no run yet starts one inside
    * (a new game's first), or in its forest when `outside`. */
