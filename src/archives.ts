@@ -137,6 +137,8 @@ export const RESEARCH_TARGETS = {
   boonBans: { name: "Boons Banned", base: 0, shown: count },
   /** Boons Auto Pick can rank. */
   boonRanks: { name: "Boons Ranked", base: 0, shown: count },
+  /** Badges each card can hold. */
+  badgeSlots: { name: "Badge Slots", base: 1, shown: count },
 } as const;
 export type ResearchTarget = keyof typeof RESEARCH_TARGETS;
 
@@ -692,6 +694,14 @@ export const RESEARCH = {
     categories: ["shrines"],
     requires: [{ research: "autoPickBoons", level: 1 }, { goalUnlock: "autoPickRanking" }],
     levels: RANKING_GOLD.map((gold, i) => levelOf("boonRanks", 1, gold, RANKING_MINUTES[i]!)),
+  },
+  badgeSlots: {
+    name: "Badge Slots",
+    description: "Each card holds one more badge a level, arranged on the Deck page. A card's badges must not conflict: a < gate and a ≥ gate, or Effective and Dampen, can't share one.",
+    categories: ["abilities"],
+    requires: [{ upgrade: "archives" }, { upgrade: "cardBadges" }, { goalUnlock: "badgeSlots" }],
+    // 1 billion Gold and 4 days, then 100 billion and 20 days.
+    levels: [levelOf("badgeSlots", 1, 1e9, 4 * 24 * 60), levelOf("badgeSlots", 1, 100e9, 20 * 24 * 60)],
   },
 } satisfies Record<string, ResearchDefinition>;
 export type ResearchId = keyof typeof RESEARCH;

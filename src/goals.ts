@@ -28,11 +28,14 @@ import { TIERS } from "./tiers.ts";
  * that raises Parry %), and the Shrines' research: Unlock Shrines (Tower II
  * floor 150), First Boon Choice (floor 250), Improve Trade-off Boons (floor
  * 400), Auto Pick Boons and Boon Option Quantity (Tower IV floors 50 and 80),
- * Ban Boons (Tower V floor 40) and Auto Pick Ranking (Tower VI floor 10). */
+ * Ban Boons (Tower V floor 40) and Auto Pick Ranking (Tower VI floor 10),
+ * and Badge Slots (Tower VI floor 50: the Archives' project that lets each
+ * card hold more badges). */
 export type GoalUnlock =
   | "damagePrediction" | "combatForecast" | "attackLore" | "warp" | "damageVisual" | "relativeDamageColor" | "equipment" | "tournament" | "events" | "researchSpeed"
   | "shardAttack" | "shardDefense" | "evadePrediction" | "parryPercent"
-  | "shrines" | "firstBoonChoice" | "improveTradeoffs" | "autoPickBoons" | "boonOptions" | "banBoons" | "autoPickRanking";
+  | "shrines" | "firstBoonChoice" | "improveTradeoffs" | "autoPickBoons" | "boonOptions" | "banBoons" | "autoPickRanking"
+  | "badgeSlots";
 export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   damagePrediction: "Damage Prediction", combatForecast: "Combat Forecast", attackLore: "Attack Lore", warp: "Warp", damageVisual: "Damage Visual",
   relativeDamageColor: "Relative Damage Color", equipment: "Equipment", tournament: "Tournament", events: "Events",
@@ -40,6 +43,7 @@ export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   evadePrediction: "Evade Prediction", parryPercent: "Parry %",
   shrines: "Unlock Shrines", firstBoonChoice: "First Boon Choice", improveTradeoffs: "Improve Trade-off Boons",
   autoPickBoons: "Auto Pick Boons", boonOptions: "Boon Option Quantity", banBoons: "Ban Boons", autoPickRanking: "Auto Pick Ranking",
+  badgeSlots: "Badge Slots",
 };
 /** What a checkpoint pays: an unlock, the next tower opened, or an amount of a currency. */
 export type GoalReward =
@@ -98,6 +102,7 @@ const TOWER_FIVE: Record<number, Omit<Checkpoint, "floor">> = {
 /** Tower VI's checkpoints that differ from the stub. */
 const TOWER_SIX: Record<number, Omit<Checkpoint, "floor">> = {
   10: { reward: unlock("autoPickRanking"), premium: gems(10) },
+  50: { reward: unlock("badgeSlots"), premium: gems(50) },
 };
 /** The checkpoint floor whose reward opens the next tower. */
 export const TOWER_UNLOCK_FLOOR = 100;

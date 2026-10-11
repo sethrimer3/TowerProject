@@ -9,7 +9,7 @@ import { tierNumeral, tierRewardText } from "../tiers.ts";
 import { MODES, milestones } from "../modes.ts";
 import { capitalized, cardArt, CURRENCY_SPRITES, displayedProgress, el, POINTER_SVG, text, uiSprite } from "./dom.ts";
 import { CARDS, IN_PLACE, cardText, deckCards, isSiphon, type CardId } from "../cards.ts";
-import { BADGES, badgeDef, badgeValue, type RunBadge } from "../badges.ts";
+import { BADGES, badgeDef, badgesOn, badgeValue, type RunBadge } from "../badges.ts";
 import { badgeStyle } from "./badge-token.ts";
 import { trainingPoints, trainingWaiting } from "../loadout.ts";
 import { goalsWaiting } from "../goals.ts";
@@ -423,13 +423,12 @@ function badgeTitle(badge: RunBadge) {
   const unit = percent ? "%" : def.unit === def.name ? "" : ` ${def.unit}`;
   return `${def.name}: ${def.lead ? `${def.lead} ` : ""}${v}${unit}`;
 }
-/** A hand card's tooltip: its name and text, inside a run the badge it
- * holds, and a siphon's uses so far this run. */
+/** A hand card's tooltip: its name and text, inside a run a line for each
+ * badge it holds, top slot first, and a siphon's uses so far this run. */
 function handCardTitle(game: Game, id: CardId) {
   let title = `${CARDS[id].name}: ${cardText(id, game.save.upgrades)}`;
   if (game.run.outside) return title;
-  const badge = game.run.badges?.[id];
-  if (badge) title += `
+  for (const badge of badgesOn(game.run.badges, id)) title += `
 Badge: ${badgeTitle(badge)}`;
   if (isSiphon(id)) {
     const uses = game.cardUses(id), next = game.siphonCost(id);
@@ -438,11 +437,12 @@ Used ${uses} time${uses === 1 ? "" : "s"} this run; the next use takes ${next} l
   }
   return title;
 }
-/** The icon of the badge a hand card holds inside a run, on its top right
- * corner (its level is in the card's tooltip). */
+/** The icons of the badges a hand card holds inside a run, down its top
+ * right corner, top slot first (their levels are in the card's tooltip). */
 function handBadgeHtml(game: Game, id: CardId) {
-  const badge = game.run.outside ? undefined : game.run.badges?.[id];
-  return badge ? `<span class="hand-badge-level" style="${badgeStyle(badge.id)}" aria-hidden="true">${BADGES[badge.id].glyph}</span>` : "";
+  const badges = game.run.outside ? [] : badgesOn(game.run.badges, id);
+  if (!badges.length) return "";
+  return `<span class="hand-badges" aria-hidden="true">${badges.map((b) => `<span class="hand-badge-level" style="${badgeStyle(b.id)}">${BADGES[b.id].glyph}</span>`).join("")}</span>`;
 }
 /** The active hand in the row under the board, the card that made the
  * latest step glowing (paused too); End Run lights up while no card can act. */

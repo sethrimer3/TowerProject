@@ -1,7 +1,7 @@
-import { askForGems } from "./dialogs.ts";
+import { askForGems, showHelp } from "./dialogs.ts";
 import { CARDS, cardText, deckCards, handSlots, moveCard, nextHandSlotGems, placeCard, type CardId } from "../cards.ts";
 import type { AppContext } from "./app.ts";
-import { cardArt, el, gemIcon, POINTER_SVG } from "./dom.ts";
+import { cardArt, el, escapeHtml, gemIcon, POINTER_SVG } from "./dom.ts";
 import { DRAW_GEMS, type DrawCount } from "../game/badge-desk.ts";
 import { cardWith, fitsCard, BADGE_IDS, BADGES, badgeLevel, badgeValue, type BadgeId } from "../badges.ts";
 import { RARITIES } from "../shop/rarity.ts";
@@ -249,11 +249,11 @@ export class DeckPage {
 
   /** The end of card `id`'s opening tag and what follows it, with the
    * Badges box showing: a mark that a token can be dropped on the card,
-   * and the mark of the badge it holds. */
+   * and the marks of the badges it holds, top slot first. */
   private badgeTarget(id: CardId) {
     if (!this.showsBadges) return ">";
-    const badge = this.ctx.game.save.badges.cards[id];
-    return ` data-badge-card="${id}">${badge ? cardBadgeHtml(badge) : ""}`;
+    const badges = this.ctx.game.save.badges.cards[id] ?? [];
+    return ` data-badge-card="${id}">${badges.length ? `<span class="badge-marks">${badges.map(cardBadgeHtml).join("")}</span>` : ""}`;
   }
 
   /** Whether a hand card wears an X: any but STAIRS once Buildout is owned,
@@ -484,7 +484,7 @@ export class DeckPage {
       if (!d || e.pointerId !== d.pointer) return;
       this.cancelDrag();
       if (!d.lifted) return this.showBadge(d.badge);
-      if (d.card) this.change(this.ctx.game.badges.attach(d.badge, d.card));
+      if (d.card) this.attachToken(d.badge, d.card);
     };
     grid.onpointercancel = () => this.cancelDrag();
     // From the keyboard, Enter or Space on a token shows what it does.
@@ -494,6 +494,18 @@ export class DeckPage {
       e.preventDefault();
       this.showBadge(token.dataset.badge as BadgeId);
     };
+  }
+
+  /** Attaches badge `id` to `card`, or, when a badge there conflicts with
+   * it, says which and why instead. */
+  private attachToken(id: BadgeId, card: CardId) {
+    const clash = this.ctx.game.badges.conflict(id, card);
+    if (!clash) return this.change(this.ctx.game.badges.attach(id, card));
+    const name = (b: BadgeId) => `<b>${escapeHtml(BADGES[b].name)}</b>`;
+    const why = BADGES[id].kind === "gate"
+      ? "A &lt; gate lets its card act only below its threshold, and a ≥ gate only at or above its own, so they can't work together."
+      : "Effective makes its card's target stronger and Dampen makes it weaker, so they can't work together.";
+    showHelp(this.ctx, "BADGES", "Badges in conflict", `<p>${name(id)} and ${name(clash)} on ${CARDS[card].name} can't be used together.</p><p class="hint">${why}</p>`);
   }
 
   /** A press on a token starts a drag (not yet lifted). */

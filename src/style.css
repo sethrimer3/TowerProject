@@ -1122,11 +1122,18 @@ nav:not(.in-run) .hand {
   height: 100%;
   image-rendering: pixelated;
 }
-/* Inside a run, the icon of the badge the card holds, in its colours. */
-.hand-badge-level {
+/* Inside a run, the icons of the badges the card holds, in their colours,
+   down its top right, top slot first. */
+.hand-badges {
   position: absolute;
   top: 2px;
   right: 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  pointer-events: none;
+}
+.hand-badge-level {
   min-width: 14px;
   height: 14px;
   padding: 0 2px;
@@ -3551,13 +3558,19 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
 .badge-token.big .badge-glyph { font-size: 52px; }
 .badge-token.big .badge-level { top: -16px; right: -16px; width: 42px; height: 42px; }
 .badge-token.big .badge-level b { font-size: 17px; }
-/* The mark a card wears for the badge it holds, at its top left, clear of
-   the X (top right) and the check (bottom right). */
-.badge-mark {
+/* The marks a card wears for the badges it holds, down its top left, top
+   slot first, clear of the X (top right) and the check (bottom right). */
+.badge-marks {
   position: absolute;
   top: 3px;
   left: 3px;
   z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  pointer-events: none;
+}
+.badge-mark {
   display: grid;
   place-items: center;
   width: 18px;

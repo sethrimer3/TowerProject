@@ -27,11 +27,13 @@ const CURRENCY_ICONS: Record<CurrencyId, () => string> = { gems: () => gemIcon("
  * Lore an open book with a rising arrow, Warp a portal's swirl, Damage Visual a monster's tile with a red
  * number in its corner, Relative Damage Color that tile over a green-to-red bar, Equipment an anvil
  * under a hammer, the Tournament a trophy, Events a pennant, Research Speed an hourglass, Shard ATK and Shard DEF a red or
- * blue shard under a rising arrow, Evade Prediction a shield turning an enemy's strike aside, and
- * every Shrine research a shrine's gate (`shrineIcon`). */
+ * blue shard under a rising arrow, Evade Prediction a shield turning an enemy's strike aside, Badge
+ * Slots a card wearing two badges, one above the other, and every Shrine research a shrine's gate
+ * (`shrineIcon`). */
 const UNLOCK_ICONS: Record<GoalUnlock, string> = {
   shrines: shrineIcon("goal-icon"), firstBoonChoice: shrineIcon("goal-icon"), improveTradeoffs: shrineIcon("goal-icon"), autoPickBoons: shrineIcon("goal-icon"),
   boonOptions: shrineIcon("goal-icon"), banBoons: shrineIcon("goal-icon"), autoPickRanking: shrineIcon("goal-icon"),
+  badgeSlots: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="2.5" width="14" height="19" rx="2" fill="#2a2234" stroke="#c9a6ff" stroke-width="1.4"/><rect x="13" y="3.5" width="7.5" height="7.5" rx="1.8" fill="#0c1018" stroke="#ffd34d" stroke-width="1.3"/><path d="M16.75 5.4l1.5 2.6h-3z" fill="#7be07b"/><rect x="13" y="12" width="7.5" height="7.5" rx="1.8" fill="#0c1018" stroke="#ffd34d" stroke-width="1.3"/><path d="M16.75 17.6l1.5-2.6h-3z" fill="#ff6b6b"/></svg>`,
   shardAttack: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.5l4.5 5-4.5 8-4.5-8z" fill="#a8323a" stroke="#ff9aa0" stroke-width="1.3" stroke-linejoin="round"/><path d="M12 8.5v13" stroke="#ff9aa0" stroke-width=".9"/><path d="M12 6V1.8M9 4.6l3-3 3 3" fill="none" stroke="#ffd34d" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
   shardDefense: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.5l4.5 5-4.5 8-4.5-8z" fill="#2f5fa8" stroke="#9cc4ff" stroke-width="1.3" stroke-linejoin="round"/><path d="M12 8.5v13" stroke="#9cc4ff" stroke-width=".9"/><path d="M12 6V1.8M9 4.6l3-3 3 3" fill="none" stroke="#ffd34d" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
   tournament: trophyIcon("goal-icon"),
@@ -70,6 +72,8 @@ const UNLOCK_TUTORIALS: Record<GoalUnlock, string> = {
   equipment: `<p>A Blacksmith opens in the forest: tap it, or the Gear tab, to wear weapons, armour and trinkets, level them up with Gold and materials, and merge them.</p>` +
     `<p class="hint">Every boss now has a chance to drop equipment, on any floor, and every enemy drops upgrade materials.</p>`,
   researchSpeed: `<p>Research Speed opens in the Archives: train the archivists to read faster, and every research, those under way included, takes less time.</p>`,
+  badgeSlots: `<p>Badge Slots opens in the Archives: research it, and each card holds one more badge a level. Drag a badge onto a card on the Deck page to fill its next slot; on a card with every slot full, it takes the bottom slot's place.</p>` +
+    `<p class="hint">Badges that can't work together can't share a card: a &lt; gate with a ≥ gate, or Effective with Dampen.</p>`,
   shardAttack: `<p>Shard ATK opens in the Archives: research it, and every ATK shard a run picks up raises ATK by more, from the next one on, in the Tower and the Delve alike.</p>`,
   evadePrediction: `<p>Once Evade is yours, an enemy's inspect panel and its damage number count your parries: the damage to expect, the range it usually falls in, and your chance to survive.</p>` +
     `<p class="hint">Automove and the hand still plan as though no strike is parried, unless every strike is.</p>`,

@@ -10,7 +10,7 @@ import { decodeSettings, defaultSettings } from "./settings.ts";
 import { keepUndos, loadout } from "./loadout.ts";
 import { BASE_HAND, CARD_IDS, HAND_SLOT_GEMS, IN_PLACE, MAX_HAND_SLOTS, deckCards, handSlots, type CardId } from "./cards.ts";
 import { decodeGemDrop, defaultGemDrop } from "./gems.ts";
-import { decodeArchives, defaultArchives } from "./archives.ts";
+import { decodeArchives, defaultArchives, researched } from "./archives.ts";
 import { adsOff, BOOST_FOREVER, decodeEntitlements, permanentBoost } from "./shop/entitlements.ts";
 import { decodeShop, defaultShop } from "./shop/ledger.ts";
 import { decodeGoals, defaultGoals } from "./goals.ts";
@@ -430,7 +430,7 @@ export function decode(raw: string | null): Save {
     // Slots bought with Gems count only with Larger Hand, which opens them.
     if (d.upgrades.largerHand) d.handSlots = count(s.handSlots, 0, HAND_SLOT_GEMS.length);
     d.hand = decodeHand(s.hand, deckCards(d.upgrades), handSlots(d));
-    d.badges = decodeBadges(s.badges, d.upgrades);
+    d.badges = decodeBadges(s.badges, d.upgrades, researched(d.archives, "badgeSlots", 1));
     for (const k of ["deck", "removeCard", "addCard", "upgrades", "gear", "onTheJob", "speed", "climb", "enter", "delve"] as const) d.tutorials[k] = s.tutorials?.[k] === true;
     for (const k of ["inspiration", "courage"] as const) d.treeNotices[k] = s.treeNotices?.[k] === true;
     d.seen = decodeSeen(s.seen, d);

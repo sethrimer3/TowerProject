@@ -3,7 +3,7 @@ import type { TierRecord } from "./tiers.ts";
 import type { ArchivesSave } from "./archives.ts";
 import type { ShrineRun, ShrinesSave } from "./shrines.ts";
 import type { CardId } from "./cards.ts";
-import type { BadgesSave, RunBadge } from "./badges.ts";
+import type { BadgesSave, RunBadges } from "./badges.ts";
 import type { GoldItemId, KeyColor, TrainingId, UpgradeId } from "./config.ts";
 import type { MaterialId } from "./materials.ts";
 import type { EquipmentSave } from "./equipment/inventory.ts";
@@ -169,8 +169,8 @@ export type RunCore = {
    * absent for the first. */
   tier?: number;
   /** The card badges on the hand's cards as the run went inside
-   * (badges.ts), fixed for the run. */
-  badges?: Partial<Record<CardId, RunBadge>>;
+   * (badges.ts), each card's top slot first, fixed for the run. */
+  badges?: RunBadges;
   /** The floor each cooling-down badge (Stairward, Skip Open Nodes) last
    * worked on: it works again on that floor, or once enough floors pass. */
   badgeFloors?: Partial<Record<"stairward" | "skipOpen", number>>;
