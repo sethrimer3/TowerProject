@@ -682,10 +682,10 @@ const freeUpgrades = { base: 75, growth: 11, cubic: 49 };
  * for the n-th (993 for the 13th, 9,901 for the 41st, 113,781 for the
  * 99th), the same in Silver and a trainer's Gold. */
 const thornPrices = { base: 60, growth: 23, power: 2 };
-/** Parry Chance and Parry %: 80 for the first rank, then 80 × n × (1 + ((n −
- * 1) / 23)²) for the n-th (1,180 for the 12th, 9,550 for the 36th, 81,906
+/** Parry Chance and Parry %: 40 for the first rank, then 40 × n × (1 + ((n −
+ * 1) / 23)²) for the n-th (590 for the 12th, 4,775 for the 36th, 40,953
  * for the 80th), the same in Silver and a trainer's Gold. */
-const parryPrices = { base: 80, growth: 23, power: 2 };
+const parryPrices = { base: 40, growth: 23, power: 2 };
 /** Training bought with Silver inside a run, lasting only for that run:
  * each row's price schedule. The rows open from the start cost least, the
  * ones later skills open more. */

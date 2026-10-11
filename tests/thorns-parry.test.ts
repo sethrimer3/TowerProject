@@ -56,14 +56,14 @@ test("Thorn Damage adds 1% a rank to 99; Parry Chance 1% and Parry % 0.5% a rank
   assert.deepEqual([step.unit, step.now, step.next], ["%", 20.5, 21]);
 });
 
-test("a rank of Thorn Damage costs 60, about 1k at the 13th, 10k at the 41st and over 75k at the 99th; a parry rank 80, about 1k at the 12th, 10k at the 36th and over 66k at the 80th", () => {
+test("a rank of Thorn Damage costs 60, about 1k at the 13th, 10k at the 41st and over 75k at the 99th; a parry rank 40, under 600 at the 12th, under 5k at the 36th and over 40k at the 80th", () => {
   const price = (id: TrainingId, n: number) => {
     const gold = trainingGold(row(id), n - 1);
     assert.equal(silverPrice(id, n - 1), gold, `${id} rank ${n}: the same in Silver and Gold`);
     return gold;
   };
   assert.deepEqual([1, 13, 41, 99].map((n) => price("thorns", n)), [60, 993, 9901, 113781]);
-  for (const id of ["parryChance", "parry"] as const) assert.deepEqual([1, 12, 36, 80].map((n) => price(id, n)), [80, 1180, 9550, 81906]);
+  for (const id of ["parryChance", "parry"] as const) assert.deepEqual([1, 12, 36, 80].map((n) => price(id, n)), [40, 590, 4775, 40953]);
 });
 
 test("thorns take a share of the enemy's max HP each strike it lands, half from a boss, whatever its HP", () => {
