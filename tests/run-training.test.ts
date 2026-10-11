@@ -34,10 +34,13 @@ test("Silver prices start at the row's base and rise by a step plus the ranks bo
   // +2+N, then +5+N, then +8+N.
   assert.deepEqual(prices("floorGold", 12), [10, 13, 17, 22, 28, 35, 46, 58, 71, 85, 100, 119]);
   // +4+N, then +8+N, then +12+N.
-  assert.deepEqual(prices("revive", 12), [20, 25, 31, 38, 46, 55, 69, 84, 100, 117, 135, 158]);
+  assert.deepEqual(prices("potion", 12), [20, 25, 31, 38, 46, 55, 69, 84, 100, 117, 135, 158]);
+  // Revive: 100 × n × (1 + ((n − 1) / 6.4)³), about tenfold every few ranks early on.
+  assert.deepEqual(prices("revive", 13), [100, 201, 310, 442, 623, 887, 1277, 1847, 2658, 3781, 5297, 7293, 9870]);
+  assert.deepEqual([23, 41].map((n) => silverPrice("revive", n - 1)), [95724, 1005077]);
   for (const row of TRAINING) {
     const { base } = RUN_TRAINING_PRICES[row.id];
-    assert.ok([3, 5, 10, 12, 20, 40, 60, 75].includes(base), `${row.id} starts at 3, 5, 10, 12, 20, 40, 60 or 75`);
+    assert.ok([3, 5, 10, 12, 20, 40, 60, 75, 100].includes(base), `${row.id} starts at 3, 5, 10, 12, 20, 40, 60, 75 or 100`);
     let last = 0;
     for (let k = 0; k < 1000; k++) {
       const price = silverPrice(row.id, k);

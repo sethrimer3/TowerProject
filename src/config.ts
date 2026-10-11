@@ -686,6 +686,10 @@ const thornPrices = { base: 60, growth: 23, power: 2 };
  * 1) / 23)²) for the n-th (590 for the 12th, 4,775 for the 36th, 40,953
  * for the 80th), the same in Silver and a trainer's Gold. */
 const parryPrices = { base: 40, growth: 23, power: 2 };
+/** Revive: 100 for the first rank, then 100 × n × (1 + ((n − 1) / 6.4)³) for
+ * the n-th (1,277 for the 7th, 9,870 for the 13th, 95,724 for the 23rd,
+ * 1,005,077 for the 41st, 35,554,490 for the 99th), the same in Silver and a trainer's Gold. */
+const revivePrices = { base: 100, growth: 6.4, power: 3 };
 /** Training bought with Silver inside a run, lasting only for that run:
  * each row's price schedule. The rows open from the start cost least, the
  * ones later skills open more. */
@@ -699,7 +703,7 @@ export const RUN_TRAINING_PRICES: Record<TrainingId, PriceSchedule> = {
   shroud: vital,
   potion: deep,
   findPotion: deep,
-  revive: deep,
+  revive: revivePrices,
   lifesteal: { base: 60, growth: 20.5, power: 2 },
   thorns: thornPrices,
   parryChance: parryPrices,
@@ -744,7 +748,8 @@ export const TRAINER_GOLD_CURVES: Record<TrainingId, TrainerCurve> = {
   shroud: { ...gentleTrainers, cubic: 700 },
   potion: steepTrainers,
   findPotion: { ...steepTrainers, cubic: 25 },
-  revive: { ...steepTrainers, cubic: 30 },
+  /** Revive: the same curve as its Silver (`revivePrices`). */
+  revive: { growth: revivePrices.growth, start: revivePrices.base, power: revivePrices.power },
   /** Lifesteal: 60 Gold for the first rank, then 60 × n × (1 + ((n − 1) / 20.5)²) for the n-th: about 1,000 for the 13th, 9,000 for the 37th and 70,000 for the 80th. */
   lifesteal: { growth: 20.5, start: 60, power: 2 },
   /** Thorn Damage and the parry rows: the same curves as their Silver. */
