@@ -723,7 +723,7 @@ export class Game {
     const goal = plan.path[plan.path.length - 1], key = this.rules.lootKey(this.run, goal.x, goal.y);
     const step = plan.path.shift()!, p = this.run.player, from = { x: p.x, y: p.y };
     this.cardPlan = plan.path.length ? plan : null;
-    const rushes = fresh && this.rushTiles > 0 && this.emptyAt(step.x, step.y);
+    const rush = this.rushFor(id), rushes = fresh && rush > 0 && this.emptyAt(step.x, step.y);
     // The card's last step onto its target: Skip may make it vanish (or, on
     // the Tower's stairs, climb two floors), and Effective or Dampen scale it.
     const last = !this.cardPlan, rolls = last && this.rollsSkip(id, step.x, step.y), skips = rolls && this.skipRoll() < this.skipChance(id);
@@ -740,7 +740,7 @@ export class Game {
     this.stepScale = 1;
     this.floorSkip = false;
     if (!moved) return void (this.cardPlan = null);
-    if (rushes && !this.rushOn(plan, from)) return;
+    if (rushes && !this.rushOn(plan, from, rush)) return;
     if (this.cardPlan) return;
     // The card's last step reaches its target: a focus on it is spent, and
     // it activates (once a fight into its target has played out).
@@ -1056,13 +1056,14 @@ export class Game {
     this.gain(p.x, p.y, `+${keyCount(scale)} ${color} key`, { tile: { kind: "key", color } });
   }
   /** Rush: the first step toward a new target, onto an empty tile, goes on
-   * along the path in the same step across up to `rushTiles` more empty
-   * tiles, stopping on the tile before anything else. One turn and one undo.
-   * Returns false when a step was refused, leaving the target unreached. */
-  private rushOn(plan: CardPlan, from: { x: number; y: number }) {
+   * along the path in the same step across up to `tiles` more empty tiles
+   * (`rushFor` the card), stopping on the tile before anything else. One
+   * turn and one undo. Returns false when a step was refused, leaving the
+   * target unreached. */
+  private rushOn(plan: CardPlan, from: { x: number; y: number }, rush: number) {
     const p = this.run.player, tiles = [from];
     let moved = true;
-    for (let left = this.rushTiles; left > 0 && plan.path.length && this.emptyAt(plan.path[0].x, plan.path[0].y); left--) {
+    for (let left = rush; left > 0 && plan.path.length && this.emptyAt(plan.path[0].x, plan.path[0].y); left--) {
       const at = { x: p.x, y: p.y }, next = plan.path.shift()!;
       if (!this.move(next.dx, next.dy, true, false, false)) {
         plan.path = [];
@@ -1079,6 +1080,14 @@ export class Game {
    * without the Rush skill, and one more a Rush research level. */
   get rushTiles() {
     return (this.save.upgrades.rush ? researched(this.save.archives, "rushTiles", 0) : 0) + this.worn.rushTiles;
+  }
+  /** Tiles card `id`'s first step toward a new target may rush across:
+   * `rushTiles`, End Rush's research on STAIRS (toward the stairs, or the
+   * Delve's climb), and its Rush badge's value. They add up. */
+  rushFor(id: CardId) {
+    const end = id === "stairs" && this.save.upgrades.endRush ? researched(this.save.archives, "endRushTiles", 0) : 0;
+    const badge = badgeOn(this.run.badges, id, "rush");
+    return this.rushTiles + end + (badge ? badgeValue("rush", badge.level) : 0);
   }
   /** Whether (x, y) is empty floor a rush may cross: nothing on it, no torch
    * and no Gem. */

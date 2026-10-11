@@ -63,6 +63,8 @@ export const UPGRADES = [
     max: 1,
     currency: "courage",
   },
+  { id: "endRush", name: "End Rush", description: "Open End Rush research in the Archives: STAIRS's rush toward the stairs crosses more empty tiles", base: 1, max: 1, currency: "courage" },
+  { id: "rushBadge", name: "Rush Badge", description: "Add the Rush badge to the badge draw: its card's rush toward its target crosses more empty tiles", base: 1, max: 1, currency: "courage" },
   {
     id: "yellow",
     name: "Gilded passage",

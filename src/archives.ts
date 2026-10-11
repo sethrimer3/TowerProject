@@ -113,6 +113,8 @@ export const RESEARCH_TARGETS = {
   trainingSpeed: { name: "Training Speed", base: 0, shown: speed },
   /** Tiles the hand's first step toward a new target may rush across, once Rush is owned. */
   rushTiles: { name: "Tiles Rushed", base: 0, shown: count },
+  /** Tiles more STAIRS's rush toward the stairs may cross, once End Rush is owned. */
+  endRushTiles: { name: "Tiles Rushed to the Stairs", base: 0, shown: count },
   /** Buy quantities opened past x1: x5, x10, x100, then Max. */
   buyQuantity: { name: "Buy Quantity", base: 0, shown: (n: number) => quantityLabel(BUY_QUANTITIES[Math.min(n, BUY_QUANTITIES.length - 1)]!) },
   /** How fast archivists work: a level of `d` hours takes d / (1 + speed). */
@@ -253,11 +255,12 @@ const fasterTrainersLevels = () => Array.from({ length: 100 }, (_, i): ResearchL
  * 250 × n Gold and 1.75 × n hours (Faster Trainers' first levels) and grows steeper: Gold
  * doubles each level and time grows 20% (250 Gold and 1.75 hours at level
  * 1, about 105 billion Gold and 145 days at 25; 201 billion and 697 days in
- * all), since a faster pace of play is worth the most. */
-const rushLevels = () => Array.from({ length: 25 }, (_, i): ResearchLevel => ({
+ * all), since a faster pace of play is worth the most. End Rush follows the
+ * same schedule. */
+const rushLevels = (target: ResearchTarget) => Array.from({ length: 25 }, (_, i): ResearchLevel => ({
   gold: 250 * (i + 1) * intPow(2, i),
   hours: 1.75 * (i + 1) * intPow(1.2, i),
-  effect: { target: "rushTiles", op: "add", value: 1 },
+  effect: { target, op: "add", value: 1 },
 }));
 
 /** Max Interest's limits by level, up from 50 Silver a floor. */
@@ -490,7 +493,14 @@ export const RESEARCH = {
     description: "Learn the old climbers' dash: the hand's first step toward a new target rushes across more empty tiles at once.",
     categories: ["abilities"],
     requires: [{ upgrade: "rush" }],
-    levels: rushLevels(),
+    levels: rushLevels("rushTiles"),
+  },
+  endRush: {
+    name: "End Rush",
+    description: "Learn the last dash of the climb: STAIRS's rush toward the stairs crosses more empty tiles at once.",
+    categories: ["abilities"],
+    requires: [{ upgrade: "endRush" }],
+    levels: rushLevels("endRushTiles"),
   },
   undoCount: {
     name: "Undo Count",

@@ -4,6 +4,7 @@ import { Game } from "../src/state.ts";
 import { defaults } from "../src/save.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import { RESEARCH, missing, research } from "../src/archives.ts";
+import { BADGES, drawable, defaultBadges } from "../src/badges.ts";
 
 /** A Tower corridor along the bottom row: the hero at its west end, a
  * yellow key on x = 5 and the stairs at x = 7, with the Rush skill owned (or
@@ -90,4 +91,88 @@ test("a first step onto something other than empty floor doesn't rush", () => {
   g.autoTurn();
   assert.deepEqual(at(g), [1, 0]);
   assert.equal(g.rush, null);
+});
+
+/** The corridor with the key gone, so STAIRS leads to the stairs at x = 7,
+ * with `end` End Rush research levels done (and the skill owned). */
+function toStairs(levels: number, end: number) {
+  const g = corridor(levels);
+  (g.world as RoomWorld).cells.set("5,0", { kind: "floor" });
+  if (end) {
+    g.save.upgrades.endRush = 1;
+    g.save.archives.levels.endRush = end;
+  }
+  return g;
+}
+
+/** The corridor with the stairs gone, so YELLOW KEY leads to the key. */
+function toKey(levels: number) {
+  const g = corridor(levels);
+  (g.world as RoomWorld).cells.set("7,0", { kind: "floor" });
+  return g;
+}
+
+test("End Rush research needs the End Rush skill and follows Rush's schedule", () => {
+  const save = defaults();
+  save.upgrades.rush = 1;
+  assert.equal(missing(save, "endRush").length, 1);
+  save.upgrades.endRush = 1;
+  assert.equal(missing(save, "endRush").length, 0);
+  const rush = research("rush").levels, end = research("endRush").levels;
+  assert.deepEqual(end.map((l) => [l.gold, l.hours]), rush.map((l) => [l.gold, l.hours]));
+  assert.ok(end.every((l) => l.effect.target === "endRushTiles" && l.effect.value === 1));
+  assert.equal(Object.keys(RESEARCH).indexOf("endRush"), Object.keys(RESEARCH).indexOf("rush") + 1, "listed right after Rush");
+});
+
+test("End Rush adds its levels to STAIRS's rush toward the stairs", () => {
+  const g = toStairs(2, 3);
+  assert.equal(g.rushFor("stairs"), 5);
+  g.autoTurn();
+  assert.deepEqual(at(g), [6, 0], "2 + 3 tiles after the step's own, stopping before the stairs");
+  assert.equal(g.save.tower.history.length, 1, "still one undo");
+  assert.ok(g.undo());
+  assert.deepEqual(at(g), [0, 0]);
+});
+
+test("End Rush works without Rush research, and only on STAIRS", () => {
+  const g = toStairs(0, 2);
+  g.autoTurn();
+  assert.deepEqual(at(g), [3, 0]);
+  const key = toKey(0);
+  key.save.upgrades.endRush = 1;
+  key.save.archives.levels.endRush = 5;
+  assert.equal(key.rushFor("yellowKey"), 0);
+  key.autoTurn();
+  assert.deepEqual(at(key), [1, 0], "the key card doesn't rush");
+});
+
+test("End Rush counts for STAIRS's climb in the Delve too", () => {
+  const g = toStairs(1, 4);
+  g.save.upgrades.delve = 1;
+  g.switchMode("delve");
+  assert.equal(g.mode, "delve");
+  assert.equal(g.rushFor("stairs"), 5);
+});
+
+test("the Rush badge adds its value to its card's rush, stacking with Rush and End Rush", () => {
+  const key = toKey(1);
+  key.run.badges = { yellowKey: [{ id: "rush", level: 2, pick: 0 }] };
+  assert.equal(key.rushFor("yellowKey"), 3);
+  key.autoTurn();
+  assert.deepEqual(at(key), [4, 0], "1 + 2 tiles, stopping before the key");
+  const bare = toKey(0);
+  bare.run.badges = { yellowKey: [{ id: "rush", level: 1, pick: 0 }] };
+  bare.autoTurn();
+  assert.deepEqual(at(bare), [2, 0], "the badge rushes with no Rush research");
+  const stairs = toStairs(1, 2);
+  stairs.run.badges = { stairs: [{ id: "rush", level: 7, pick: 0 }] };
+  assert.equal(stairs.rushFor("stairs"), 10);
+});
+
+test("the Rush badge joins the draw once the Rush Badge skill is owned", () => {
+  const save = defaults();
+  assert.equal(BADGES.rush.rarity, "rare");
+  assert.ok(!drawable(defaultBadges(), "rush", save.upgrades));
+  save.upgrades.rushBadge = 1;
+  assert.ok(drawable(defaultBadges(), "rush", save.upgrades));
 });

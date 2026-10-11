@@ -51,7 +51,7 @@ test("each badge's values by level, and a gate's threshold picked among those it
   assert.equal(badgeValue("stairward", 1), 7, "Stairward cools down for 7 floors at level 1");
   assert.equal(badgeValue("charge", 4), 4);
   const byRarity = (r: string) => BADGE_IDS.filter((id) => BADGES[id].rarity === r).length;
-  assert.deepEqual([byRarity("common"), byRarity("rare"), byRarity("epic")], [7, 9, 5]);
+  assert.deepEqual([byRarity("common"), byRarity("rare"), byRarity("epic")], [7, 10, 5]);
   assert.deepEqual(RARITY_WEIGHTS, { common: 70, rare: 27, epic: 3 });
 });
 

@@ -89,8 +89,11 @@ export const TREES: SkillTree[] = [
     { id: "pathfinder", icon: "⌖", x: 18, y: 34, requires: ["moveSpeed"] },
     { id: "focus", icon: "ϟ", x: 50, y: 34, requires: ["moveSpeed"] },
     { id: "rush", icon: "⇶", x: 82, y: 34, requires: ["moveSpeed"] },
+    // Rush's own skills down the right edge: End Rush, then Rush Badge.
+    { id: "endRush", icon: "⇶", x: 90, y: 61, requires: ["rush"] },
+    { id: "rushBadge", icon: "◪", x: 90, y: 87, requires: ["endRush", "cardBadges"] },
     { id: "undos", icon: "↺", x: 23, y: 61, requires: ["pathfinder"] },
-    { id: "cardBadges", icon: "◪", x: 70, y: 61, requires: ["focus"] },
+    { id: "cardBadges", icon: "◪", x: 56, y: 61, requires: ["focus"] },
     // The research skills down the middle under Focus: Find Yellow Key, Key
     // Efficiency, then Interest, with Max Interest to its left and Mug to its right.
     { id: "findYellowKey", icon: "⚿", x: 50, y: 87, requires: ["focus"] },

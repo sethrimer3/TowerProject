@@ -390,7 +390,7 @@ How many steps a second the hand (and Automove in the forest) takes. The player 
 _Avoid_: Automove speed
 
 **Rush**:
-The hand's first step toward a new target carrying on along the path across empty floor in the same step, stopping on the tile before anything else. How many tiles it may cross comes from Rush research, once the Rush skill is owned.
+The hand's first step toward a new target carrying on along the path across empty floor in the same step, stopping on the tile before anything else. How many tiles it may cross comes from Rush research, once the Rush skill is owned, and adds up with End Rush research (on STAIRS only) and a Rush badge on the card.
 _Avoid_: dash, sprint, leap
 
 **Deck**:
