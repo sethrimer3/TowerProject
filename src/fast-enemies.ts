@@ -19,13 +19,13 @@ export const FAST_CARRY = 1.75;
 const FAST_SALT = 0xfa57e;
 
 /** The share of enemies that are Fast on equivalent floor `floor` (from 1)
- * of tier `tier`, in thousandths of a percent: 4% on the second tier's floor
+ * of tier `tier`, in thousandths of a percent: 8% on the second tier's floor
  * 1, growing 1% every 200 floors (a little each floor) to 20%, and each
  * tier after starting and stopping half a point higher. None in the first. */
 export function fastShare(tier: number, floor: number) {
   if (tier < 2) return 0;
   const later = 500 * (tier - 2);
-  return Math.min(20_000 + later, 4_000 + later + 5 * Math.max(0, floor - 1));
+  return Math.min(20_000 + later, 8_000 + later + 5 * Math.max(0, floor - 1));
 }
 
 /** The least ATK a Fast enemy of `mode`'s tier `tier` strikes with: `FAST_CARRY`

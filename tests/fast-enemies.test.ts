@@ -18,11 +18,11 @@ const hero = (over: Partial<Player> = {}): Player => ({ x: 0, y: 0, hp: 100, max
 const brute: Enemy = { name: "Brute", hp: 60, attack: 30, defense: 0, tier: 0, strength: "normal" };
 const fast = (e: Enemy): Enemy => ({ ...e, fast: true });
 
-test("Fast enemies start at 4% in the second tier, grow 1% every 200 floors to 20%, half a point more each tier after; none in the first", () => {
+test("Fast enemies start at 8% in the second tier, grow 1% every 200 floors to 20%, half a point more each tier after; none in the first", () => {
   assert.deepEqual([1, 100, 5000].map((f) => fastShare(1, f)), [0, 0, 0]);
-  assert.deepEqual([1, 2, 101, 201, 3201, 9000].map((f) => fastShare(2, f)), [4000, 4005, 4500, 5000, 20_000, 20_000]);
-  assert.deepEqual([1, 201, 3201, 9000].map((f) => fastShare(3, f)), [4500, 5500, 20_500, 20_500]);
-  assert.deepEqual([fastShare(9, 1), fastShare(9, 9000)], [7500, 23_500]);
+  assert.deepEqual([1, 2, 101, 201, 2401, 9000].map((f) => fastShare(2, f)), [8000, 8005, 8500, 9000, 20_000, 20_000]);
+  assert.deepEqual([1, 201, 2401, 9000].map((f) => fastShare(3, f)), [8500, 9500, 20_500, 20_500]);
+  assert.deepEqual([fastShare(9, 1), fastShare(9, 9000)], [11_500, 23_500]);
 });
 
 test("a Fast enemy strikes with at least 1.75 times the tier below's floor-100 enemy: 700 in the second tier, 3,500 in the third", () => {
@@ -32,7 +32,7 @@ test("a Fast enemy strikes with at least 1.75 times the tier below's floor-100 e
   assert.deepEqual([fastCarry("delve", 2), fastCarry("delve", 3)], [700, 3500]);
 });
 
-test("Tower floors make about 4% of their non-boss enemies Fast from the second tier, raising only their ATK, and none in the first", () => {
+test("Tower floors make about 8% of their non-boss enemies Fast from the second tier, raising only their ATK, and none in the first", () => {
   let enemies = 0, fasts = 0, raised = 0;
   for (const seed of [3, 41, 977])
     for (let room = 0; room < 60; room++) {
@@ -49,7 +49,7 @@ test("Tower floors make about 4% of their non-boss enemies Fast from the second 
       enemies += [...cells.values()].filter((t) => t.enemy && t.enemy.strength !== "boss").length;
     }
   const share = fasts / enemies;
-  assert.ok(share > 0.025 && share < 0.06, `about 4% Fast: ${share}`);
+  assert.ok(share > 0.06 && share < 0.1, `about 8% Fast: ${share}`);
   assert.ok(raised > 0, "the early floors' Fast enemies strike with the carry");
   // The same run, floor and tile always roll the same.
   assert.deepEqual(new RoomWorld(41, 7, {}, 0, 2).cells, new RoomWorld(41, 7, {}, 0, 2).cells);
@@ -60,7 +60,7 @@ test("past the floor the curve outgrows the carry, Fast changes no stats", () =>
   // A floor every tile rolls Fast on: shares are capped at 20%, so search for tiles that do.
   const all = fastCells(new Map([...Array(400).keys()].map((i) => [`${i % 20},${Math.floor(i / 20)}`, { kind: "enemy", enemy: brute } as Tile])), "tower", 2, 5, () => 1);
   const rolled = [...all].filter(([, t]) => t.enemy?.fast).map(([k]) => k);
-  assert.ok(rolled.length > 5 && rolled.length < 30, "about 4% of 400");
+  assert.ok(rolled.length > 15 && rolled.length < 50, "about 8% of 400");
   const [k1, k2] = rolled as [string, string];
   const out = fastCells(new Map([[k1, cells.get("1,1")!], [k2, cells.get("2,1")!]]), "tower", 2, 5, () => 1);
   assert.deepEqual([out.get(k1)!.enemy, out.get(k2)!.enemy], [{ ...brute, attack: 900, fast: true }, { ...brute, attack: 700, fast: true }]);

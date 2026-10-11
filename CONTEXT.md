@@ -141,7 +141,7 @@ How hard the floor asked an enemy to be: weak, normal, strong or elite. Each str
 _Avoid_: tier, rank, level
 
 **Fast enemy**:
-An enemy that strikes first in every fight, so it lands a blow even when the hero fells it in one strike. From the second tower and delve up, a share of the non-boss enemies are Fast (4% at first, growing with the floor and the tower), each striking with at least a share of the last tower's floor-100 enemy's ATK and paying 1 Gold more. Its name starts with "Fast" and its tile wears a fast-forward mark.
+An enemy that strikes first in every fight, so it lands a blow even when the hero fells it in one strike. From the second tower and delve up, a share of the non-boss enemies are Fast (8% at first, growing with the floor and the tower), each striking with at least a share of the last tower's floor-100 enemy's ATK and paying 1 Gold more. Its name starts with "Fast" and its tile wears a fast-forward mark.
 _Avoid_: swift, quick, first strike enemy
 
 **Enemy profile**:
