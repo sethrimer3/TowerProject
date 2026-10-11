@@ -120,9 +120,11 @@ export class BoardPopups {
   private numbers: (Popup & { text: string; color: string; glow?: string })[] = [];
   /** The last heal raised. */
   private healed = 0;
-  private fight: ShownFight | null = null;
-  /** How many of the fight's strikes have landed. */
-  private landed = 0;
+  /** The fights still showing, oldest first, the game's latest last, each
+   * with how many of its strikes have landed: an earlier one stays until
+   * its strikes have landed and its HP bar has drained and faded, so a
+   * fight that begins before the last one's bar is gone leaves it to finish. */
+  private fights: { fight: ShownFight; landed: number }[] = [];
   private seed = NaN;
 
   /** Takes the game's new rewards, starting now (those that came together,
@@ -150,14 +152,17 @@ export class BoardPopups {
     this.numbers = this.numbers.filter((p) => now < p.start + POPUP_MS);
   }
   private strike(fight: ShownFight | null, now: number) {
-    if (fight !== this.fight) {
-      this.fight = fight;
-      this.landed = 0;
-    }
-    if (!fight) return;
-    const strikes = fight.bout.strikes, won = defeated(fight);
-    while (this.landed < strikes.length && fight.start + strikes[this.landed].at <= now) {
-      const s = strikes[this.landed++];
+    // No fight (a new run, undo) clears every bar.
+    if (!fight) this.fights = [];
+    else if (fight !== this.fights.at(-1)?.fight) this.fights.push({ fight, landed: 0 });
+    for (const shown of this.fights) this.land(shown, now);
+    this.fights = this.fights.filter((shown) => shown.fight === fight || shown.landed < shown.fight.bout.strikes.length || barMoving(shown.fight, now));
+  }
+  /** Raises the numbers of `shown`'s strikes that have landed by `now`. */
+  private land(shown: { fight: ShownFight; landed: number }, now: number) {
+    const fight = shown.fight, strikes = fight.bout.strikes, won = defeated(fight);
+    while (shown.landed < strikes.length && fight.start + strikes[shown.landed].at <= now) {
+      const s = strikes[shown.landed++];
       // In summary, an enemy that falls has plainly lost all its HP, so only
       // what the hero took rises, over where the hero stands at the end.
       if (s.healed) this.heal(s.healed, won && fight.summary ? fight.to : fight.from, fight.start + s.at);
@@ -191,15 +196,15 @@ export class BoardPopups {
   }
   /** Nothing is rising or waiting to, and the enemy's HP bar is still. */
   idle(now: number) {
-    return !this.rewards.length && !this.numbers.length && !barMoving(this.fight, now);
+    return !this.rewards.length && !this.numbers.length && !this.fights.some((shown) => barMoving(shown.fight, now));
   }
 
-  /** The enemy's HP bar, then every reward that has started, then every
+  /** Each enemy's HP bar, then every reward that has started, then every
    * number, each oldest first so newer ones draw on top. Numbers draw over
    * the rewards, so a potion's heal or a strike's damage is never hidden
    * behind a sprite rising from the same tile. */
   draw(f: FrameContext) {
-    if (this.fight) drawEnemyBar(f, this.fight);
+    for (const shown of this.fights) drawEnemyBar(f, shown.fight);
     const started = <T extends Popup>(popups: T[]) => popups.filter((p) => p.start <= f.now).sort((a, b) => a.start - b.start);
     for (const p of started(this.rewards)) if (!this.drawSprite(f, p)) this.drawText(f, p, p.gain.text, REWARD_TEXT);
     for (const p of started(this.numbers)) this.drawText(f, p, p.text, { color: p.color, rise: DAMAGE_RISE, size: 0.55, ...(p.glow ? { glow: p.glow } : {}) });
@@ -249,10 +254,20 @@ export class BoardPopups {
 type Strike = ShownFight["bout"]["strikes"][number];
 
 /** What takes the enemy's HP, in order: the hero's strikes and the
- * thorns of the enemy's own, each landing at `at` and leaving it `hp`. */
+ * thorns of the enemy's own, each landing at `at` and leaving it `hp`.
+ * The enemy's HP only falls, so each hit leaves no more than the one
+ * before: a summary round lands the hero's strikes, felling one and all,
+ * before the enemy's, whose thorns left it the HP of an earlier strike. */
 type Hit = { at: number; hp: number };
-const enemyHits = (fight: ShownFight): Hit[] =>
-  fight.bout.strikes.flatMap((s) => (s.by === "hero" ? [{ at: s.at, hp: s.hp }] : s.thornHp !== undefined ? [{ at: s.at, hp: s.thornHp }] : []));
+function enemyHits(fight: ShownFight): Hit[] {
+  let left = fight.hp;
+  return fight.bout.strikes.flatMap((s) => {
+    const hp = s.by === "hero" ? s.hp : s.thornHp;
+    if (hp === undefined) return [];
+    left = Math.min(left, hp);
+    return [{ at: s.at, hp: left }];
+  });
+}
 
 /** How many of `hits`, in order, have landed by `t`. */
 function landedBy(hits: Hit[], t: number) {
@@ -343,8 +358,7 @@ function drainMs(hits: Hit[], i: number) {
   return next ? Math.min(BAR_DRAIN_MS, next.at - hits[i].at) : BAR_DRAIN_MS;
 }
 /** The bar is draining or fading, or waits for the hero's first strike. */
-function barMoving(fight: ShownFight | null, now: number) {
-  if (!fight) return false;
+function barMoving(fight: ShownFight, now: number) {
   const last = enemyHits(fight).at(-1);
   return !!last && now - fight.start < last.at + BAR_DRAIN_MS + (last.hp ? 0 : BAR_FADE_MS);
 }

@@ -3490,8 +3490,12 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
   background: #0a0e14;
 }
 .badge-empty { font-size: 11px; line-height: 1.6; color: #7f8a9d; }
-.badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); gap: 14px 6px; padding-top: 6px; }
-.badge-entry { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+/* Each entry wide enough for its badge's name in two lines at most. */
+.badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 14px 6px; padding-top: 6px; }
+.badge-entry { position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.badge-grid .badge-token { width: 46px; height: 46px; }
+.badge-grid .badge-glyph { font-size: 24px; }
+.badge-name { max-width: 100%; margin-top: 2px; font-size: 9px; font-weight: 700; line-height: 1.2; letter-spacing: 0.5px; text-align: center; overflow-wrap: anywhere; color: #e2e8f0; }
 .badge-pick { display: block; min-height: 0; padding: 0; border: 0; background: none; cursor: grab; touch-action: none; }
 .badge-pick:hover { border: 0; }
 .badge-count { font-size: 10px; letter-spacing: 1px; color: #a9b6c8; }
@@ -3499,7 +3503,8 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
 .badge-detach {
   position: absolute;
   top: -7px;
-  left: -2px;
+  /* At the token's top left, whatever the entry's width. */
+  left: calc(50% - 32px);
   z-index: 2;
   display: grid;
   place-items: center;

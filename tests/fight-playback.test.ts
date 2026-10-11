@@ -249,6 +249,26 @@ test("the enemy's HP bar shows from the hero's first strike, drains with each, a
   assert.deepEqual(enemyBar(standing, 60_000), { hp: 42, alpha: 1 }, "an enemy that wins keeps showing what HP it has left");
 });
 
+test("a fight begun before the last one's bar is gone leaves that bar to drain and fade on its own", () => {
+  const popups = new BoardPopups(), bars = () => (popups as unknown as { fights: { fight: { to: { x: number } } }[] }).fights.map((s) => s.fight.to.x);
+  const first = { from: { x: 0, y: 0 }, to: { x: 1, y: 0 }, bout: bout(hero(), foe()), start: 0, hp: 30, summary: false };
+  const felled = first.bout.strikes.filter((s) => s.by === "hero").at(-1)!.at;
+  const second = { ...first, from: { x: 1, y: 0 }, to: { x: 2, y: 0 }, bout: bout(hero(), foe()), start: felled + 100 };
+  const game = { run: { seed: 1 }, gains: [], fight: first as typeof first | null, lastHeal: null };
+  popups.update(game, felled);
+  game.fight = second;
+  popups.update(game, second.start);
+  assert.deepEqual(bars(), [1, 2], "both bars show");
+  assert.ok(enemyBar(first, second.start)!.alpha > 0, "the first still draining");
+  popups.update(game, felled + 1000);
+  assert.deepEqual(bars(), [2], "the first is gone once it has faded");
+  popups.update(game, second.start + 60_000);
+  assert.equal(popups.idle(second.start + 60_000), true, "and nothing keeps the board busy once both are gone");
+  game.fight = null;
+  popups.update(game, second.start + 60_000);
+  assert.deepEqual(bars(), [], "no fight clears them");
+});
+
 test("summary rounds sum a fight's strikes, a revival starting the next once its fire is out", () => {
   // Hits of 6 against 60 HP; the enemy strikes 5, 6, 7… and every strike
   // that would fell the hero (12, then 30 HP) revives it.

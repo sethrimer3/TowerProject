@@ -157,15 +157,15 @@ export class DeckPage {
 
   /** The draw buttons over the Badges box, which lists each badge
    * owned: its token (pressed for what it does, dragged onto a card to
-   * attach it), the copies toward its next level, and, once it is on a
-   * card, the X that takes it off. */
+   * attach it), its name, the copies toward its next level, and, once it
+   * is on a card, the X that takes it off. */
   private badgesHtml() {
     const { save } = this.ctx.game, badges = save.badges;
     const owned = BADGE_IDS.filter((id) => badges.owned[id]);
     const entries = owned.map((id) => {
       const copies = badges.owned[id]!.copies, on = cardWith(badges, id), name = BADGES[id].name;
       const x = on ? `<button type="button" class="badge-detach" data-detach="${id}" title="Take ${name} off ${CARDS[on].name}" aria-label="Take ${name} off ${CARDS[on].name}">${X_SVG}</button>` : "";
-      return `<div class="badge-entry${on ? " attached" : ""}" role="listitem"><button type="button" class="badge-pick" data-badge="${id}" title="${name}${on ? ` · on ${CARDS[on].name}` : ""}: press for details, or drag it onto a card" aria-label="${name}, level ${badgeLevel(copies)}${on ? `, on ${CARDS[on].name}` : ""}">${tokenHtml(id, badgeLevel(copies))}</button>${x}<small class="badge-count">${progressText(copies)}</small></div>`;
+      return `<div class="badge-entry${on ? " attached" : ""}" role="listitem"><button type="button" class="badge-pick" data-badge="${id}" title="${name}${on ? ` · on ${CARDS[on].name}` : ""}: press for details, or drag it onto a card" aria-label="${name}, level ${badgeLevel(copies)}${on ? `, on ${CARDS[on].name}` : ""}">${tokenHtml(id, badgeLevel(copies))}</button>${x}<span class="badge-name" aria-hidden="true">${name}</span><small class="badge-count">${progressText(copies)}</small></div>`;
     }).join("");
     return `<section class="deck-badges" aria-labelledby="badges-label">
         <div class="badge-draws">${this.drawButton(1)}${this.drawButton(10)}</div>

@@ -11,7 +11,7 @@ import { trainingGold } from "../src/training-jobs.ts";
 import { silverPrice } from "../src/run-training.ts";
 import { TRAINING, UPGRADES, isStatRow, trained, type TrainingId } from "../src/config.ts";
 import { TREES } from "../src/skill-trees.ts";
-import { BoardPopups, lunges } from "../src/board-popups.ts";
+import { BoardPopups, enemyBar, lunges } from "../src/board-popups.ts";
 import { countsParries, unlockAt } from "../src/goals.ts";
 import { DamagePredictions, damageLabel } from "../src/damage-labels.ts";
 
@@ -190,6 +190,13 @@ test("in summary rounds the thorns rise beside the hero's damage, and none when 
   assert.ok(rising(fight, fight.bout.duration).some((n) => n.endsWith(`:${YELLOW}`)) === false, "thorns felled it: nothing rises for them");
   const lasting = shown(hero({ thorns: 10, attack: 50 }), { ...brute, hp: 100, attack: 20 }, true);
   assert.deepEqual(rising(lasting, lasting.bout.duration).filter((n) => n.endsWith(YELLOW)), [`1.22@0:10:${YELLOW}`]);
+});
+
+test("in summary rounds the bar of an enemy thorns struck but the hero felled drains to nothing and fades", () => {
+  const lasting = shown(hero({ thorns: 10, attack: 50 }), { ...brute, hp: 100, attack: 20 }, true);
+  assert.ok(lasting.bout.strikes.some((s) => (s.thornHp ?? 0) > 0), "the thorns left it HP before the hero felled it");
+  assert.equal(enemyBar(lasting, 400)!.hp, 0, "drained to nothing");
+  assert.equal(enemyBar(lasting, 60_000), null, "and gone");
 });
 
 test("the hero gives way from a strike it parries in an animated fight; summary rounds show no parry", () => {

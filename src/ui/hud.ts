@@ -103,6 +103,7 @@ export function purseFrame(game: Game, now: number) {
 /** Refreshes every HUD readout from game state. */
 export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay) {
   overlay.clearIfAt(game.run.player);
+  overlay.followHero();
   renderVitals(game);
   renderFocus(game);
   renderProgress(game);
