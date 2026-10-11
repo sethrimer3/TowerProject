@@ -234,13 +234,12 @@ export class ArchivesPanel {
         return `<article class="archivist hire" role="listitem">${title}<button class="archivist-hire${this.hireShort() ? " short" : ""}" data-hire aria-label="Hire an archivist for ${price} Gems" title="${this.hireShort() ? `Needs ${price} Gems` : "One more research runs at once"}">Hire · ${gemIcon()} <b>${price}</b></button></article>`;
       const auto = `<label class="archivist-auto" title="Auto-continue: start the project's next level as soon as one completes"><input type="checkbox" data-auto="${i}" ${slot.autoContinue ? "checked" : ""} aria-label="Auto-continue archivist ${i + 1}: start the project's next level as soon as one completes">${redoIcon()}</label>`;
       const job = slot.job;
-      if (!job) return `<article class="archivist idle" role="listitem" data-pick="${i}">${title}<button class="archivist-pick" aria-label="Select research for archivist ${i + 1}">Idle · Select research</button>${auto}</article>`;
+      if (!job) return `<article class="archivist idle" role="listitem" data-pick="${i}"><div class="archivist-head">${title}<div class="archivist-actions">${auto}</div></div><button class="archivist-pick" aria-label="Select research for archivist ${i + 1}">Idle · Select research</button></article>`;
       const def = RESEARCH[job.research], done = jobProgress(job, now);
       const finish = game.save.settings.devMode ? `<button data-finish="${i}">Finish now</button>` : "";
-      return `<article class="archivist busy" role="listitem" data-pick="${i}" title="Select research: switch this archivist to other research">${title}<div class="archivist-line"><b>${def.name} · level ${job.level}</b>${this.changeHtml(job.research)}</div>
+      return `<article class="archivist busy" role="listitem" data-pick="${i}" title="Select research: switch this archivist to other research"><div class="archivist-head">${title}<div class="archivist-actions">${auto}<button data-stop="${i}" title="Stop: the Gold comes back, and the time spent is kept for later">Stop</button>${this.rushHtml(i)}${finish}</div></div><div class="archivist-line"><b>${def.name} · level ${job.level}</b>${this.changeHtml(job.research)}</div>
         <div class="research-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.floor(done * 100)}"><i data-progress="${i}" style="width:${(done * 100).toFixed(2)}%"></i></div>
-        <p><span data-countdown="${i}">${formatDuration(job.completesAt - now)} left</span></p>
-        <div class="archivist-actions">${auto}<button data-stop="${i}" title="Stop: the Gold comes back, and the time spent is kept for later">Stop</button>${this.rushHtml(i)}${finish}</div></article>`;
+        <p><span data-countdown="${i}">${formatDuration(job.completesAt - now)} left</span></p></article>`;
     }).join("");
   }
 
