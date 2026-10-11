@@ -3,6 +3,7 @@ import { MAIL_IDS_KEPT, type MailSave } from "../mail/progress.ts";
 import { confirmServerTime, estimatedServerTime } from "../shop/clock.ts";
 import { CURRENCIES } from "../shop/currency.ts";
 import type { DeskHost } from "./desk.ts";
+import { earn } from "../profile.ts";
 
 /** Mail's commands (the game's `mail`): taking in the inbox the server
  * reports, reading, removing, and granting what a claim brought. The
@@ -82,7 +83,7 @@ export class MailDesk {
     const save = this.host.save, gained: string[] = [];
     for (const i of items) {
       if (i.kind === "currency") CURRENCIES[i.currency].credit(save, i.amount), gained.push(`+${i.amount} ${CURRENCIES[i.currency].name}`);
-      else if (i.kind === "tickets") (save.tournament.tickets += i.amount), gained.push(`+${i.amount} Ticket${i.amount === 1 ? "" : "s"}`);
+      else if (i.kind === "tickets") (save.tournament.tickets += i.amount), earn(save, "tickets", i.amount), gained.push(`+${i.amount} Ticket${i.amount === 1 ? "" : "s"}`);
     }
     x.claimed = true;
     this.m.claimed = [...this.m.claimed, id].slice(-MAIL_IDS_KEPT);

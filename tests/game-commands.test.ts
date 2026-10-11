@@ -174,10 +174,13 @@ test("erasing everything leaves a fresh save with a new run outside the Tower", 
   g.eraseAll();
   assert.equal(g.mode, "tower");
   assert.ok(g.run.outside && g.save.tower.run === g.run);
-  // Everything but the new run and the Defend city's random seed.
+  // Everything but the new run, the Defend city's random seed and the new
+  // profile's creation, stamped now.
   const fresh = defaults();
   fresh.tower.run = g.run;
   fresh.defend.seed = g.save.defend.seed;
+  assert.ok(g.save.profile.createdAt > 0, "the new profile is stamped");
+  fresh.profile.createdAt = g.save.profile.createdAt;
   assert.deepEqual(g.save, fresh);
 });
 

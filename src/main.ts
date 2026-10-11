@@ -5,6 +5,7 @@ import "./style.css";
 import "./medieval.css";
 import "./neon.css";
 import { load, persist } from "./save.ts";
+import { stampProfile } from "./profile.ts";
 import { Game } from "./state.ts";
 import { Renderer } from "./rendering.ts";
 import { bindInput } from "./input.ts";
@@ -54,6 +55,8 @@ import { themeToast } from "./ui/theme-menu.ts";
 
 buildShell(document.querySelector<HTMLDivElement>("#app")!);
 const game = new Game(load());
+// A new profile (or one from before profiles kept the date) is made now.
+stampProfile(game.save, game.clock());
 applyUiTheme(game.save);
 bindMedievalFeedback(() => uiLook(game.save) === "medieval", () => game.save.settings.reduceMotion);
 // The frame loop settles fights as they finish playing out.

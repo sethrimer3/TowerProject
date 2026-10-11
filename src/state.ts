@@ -12,6 +12,7 @@ import { canWarp, claimGoal, goalUnlocked } from "./goals.ts";
 import { missGem } from "./gems.ts";
 import { DelvePlan } from "./delve/automove.ts";
 import { defaults } from "./save.ts";
+import { stampProfile } from "./profile.ts";
 import { drawAt, stream, tileRandom } from "./random.ts";
 import { freeTrainingLines, rollFreeTraining } from "./free-training.ts";
 import { doorBlockedMessage, doorName, doorRule, drainsHp, KEY_ORDER } from "./doors.ts";
@@ -455,7 +456,7 @@ export class Game {
     return record;
   }
   snapshot(): MoveSnapshot {
-    return { run: structuredClone(this.run), best: this.slice.best, xp: this.save.xp };
+    return { run: structuredClone(this.run), best: this.slice.best, xp: this.save.xp, silver: this.save.profile.earned.silver };
   }
   restore(snapshot: MoveSnapshot) {
     // The snapshot's board brings back any chest it had; area rewards are
@@ -471,6 +472,8 @@ export class Game {
     this.summoned = null;
     this.vanished = null;
     this.save.xp = snapshot.xp;
+    // The Silver found since is taken back with the run, so it was never earned.
+    if (snapshot.silver !== undefined) this.save.profile.earned.silver = Math.min(this.save.profile.earned.silver, snapshot.silver);
     this.route = [];
     // Undo pauses the hand, so the player can act before it carries on.
     this.auto = false;
@@ -1411,6 +1414,7 @@ export class Game {
     this.save = { ...defaults(), entitlements, shop, mail };
     this.save.events.boosted = events.boosted;
     if (permanentBoost(this.save)) this.save.trainingBoostUntil = BOOST_FOREVER;
+    stampProfile(this.save, this.clock());
     this.mode = "tower";
     this.newRun({ outside: true });
   }

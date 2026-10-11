@@ -8,6 +8,7 @@ import { random } from "../random.ts";
 import { adsOff } from "../shop/entitlements.ts";
 import type { GainArt } from "../state.ts";
 import type { DeskHost } from "./desk.ts";
+import { earn } from "../profile.ts";
 
 /** What the Gem finder reads from the game: the board the hero stands on
  * and the gains queue the board raises a collected Gem from. */
@@ -67,6 +68,7 @@ export class GemFinder {
   private take(gem: GemSpot) {
     const save = this.host.save;
     save.gems++;
+    earn(save, "gems", 1);
     collectedGem(save.gemDrop, this.host.clock());
     this.host.eventDone?.("floatingGems", 1);
     this.sparkle = { x: gem.x, y: gem.y, at: performance.now() };
@@ -95,6 +97,7 @@ export class GemFinder {
     if (!this.adReady) return false;
     const save = this.host.save;
     save.gems += AD_GEMS;
+    earn(save, "gems", AD_GEMS);
     save.gemDrop.adReadyAt = this.host.clock() + AD_COOLDOWN_MS;
     this.host.eventDone?.("adGems", 1);
     this.host.message = `+${AD_GEMS} Gems`;

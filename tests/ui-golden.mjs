@@ -571,6 +571,10 @@ try {
   async function settingsTour(prefix) {
     await menuClick("#auto-settings");
     await shot(`${prefix}.settings`);
+    // The Stats dialog, closed by its X.
+    await click("#stats-open");
+    await shot(`${prefix}.stats`);
+    await click("#stats-close");
     // The theme menus: Classic and the themes, Neon still to be earned.
     await click("#ui-themes");
     await shot(`${prefix}.themes.ui`);

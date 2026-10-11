@@ -7,6 +7,7 @@ import { BOOST_FOREVER, permanentBoost, trainingRate } from "../shop/entitlement
 import { batchWork, claimBoost, doneAt, finishGems, jobInvested, nextTrainerGems, ranksInTraining, trainerBatch, trainingGold, trainingJob, workLeft, trainingSlots, type TrainingJob } from "../training-jobs.ts";
 import { affordsGems, type DeskHost } from "./desk.ts";
 import { changeLoadout } from "./hero-sync.ts";
+import { tally } from "../profile.ts";
 
 const rowOf = (id: TrainingId) => TRAINING.find((t) => t.id === id)!;
 /** The fixed quantities, largest first: a batch continues at the largest one its ranks reach. */
@@ -57,6 +58,7 @@ export class TrainingDesk {
     return changeLoadout(this.save, () => {
       if (!free) this.save.trainingPaid[id].points += cost;
       this.save.training[id] += count;
+      tally(this.save, "trainingLevels", count);
     });
   }
 
@@ -89,7 +91,11 @@ export class TrainingDesk {
     if (!affordable) return false;
     if (this.host.free) {
       this.host.missionDone?.("train", count);
-      return changeLoadout(save, () => { save.training[id] += count; save.trainerRanks[id] += count; });
+      return changeLoadout(save, () => {
+        save.training[id] += count;
+        save.trainerRanks[id] += count;
+        tally(save, "trainingLevels", count);
+      });
     }
     if (save.trainingJobs.length >= trainingSlots(save)) return false;
     this.start(id, count, gold, ms, speedup, this.host.clock());
@@ -104,6 +110,7 @@ export class TrainingDesk {
   private start(id: TrainingId, ranks: number, gold: number, ms: number, speed: number, now: number) {
     const save = this.save, { fromCredit, fromBank, used, work } = batchWork(ms, speed, save.trainingCredit[id], save.trainingBank);
     save.gold = snap(save.gold - gold);
+    tally(save, "trainingGold", gold);
     save.trainingCredit[id] -= fromCredit;
     save.trainingBank -= fromBank;
     save.trainingJobs.push({ id, startedAt: now, completesAt: doneAt(work, save.trainingBoostUntil, now, trainingRate(save)), gold, ms, ranks, speed, used });
@@ -169,6 +176,7 @@ export class TrainingDesk {
 
   private refund(job: TrainingJob) {
     this.save.gold = snap(this.save.gold + job.gold);
+    tally(this.save, "trainingGold", -job.gold);
     this.save.trainingCredit[job.id] += this.invested(job);
   }
 
@@ -277,6 +285,7 @@ export class TrainingDesk {
     const save = this.save, paid = save.trainingPaid[job.id];
     save.training[job.id] += job.ranks;
     save.trainerRanks[job.id] += job.ranks;
+    tally(save, "trainingLevels", job.ranks);
     paid.gold = snap(paid.gold + job.gold);
     paid.ms += jobInvested(job, 0);
     this.done.push({ id: job.id, level: save.training[job.id] });
@@ -322,6 +331,7 @@ export class TrainingDesk {
       }
       if (job) this.refund(job);
       save.gold = snap(save.gold + paid.gold);
+      tally(save, "trainingGold", -paid.gold);
       save.trainingBank += paid.ms + save.trainingCredit[id];
       save.trainingCredit[id] = 0;
       save.trainingPaid[id] = { points: paid.points, gold: 0, ms: 0 };

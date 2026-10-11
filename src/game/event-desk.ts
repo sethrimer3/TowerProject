@@ -12,6 +12,7 @@ import {
   type EventMission, type EventsSave,
 } from "../events/progress.ts";
 import type { DeskHost } from "./desk.ts";
+import { earn } from "../profile.ts";
 
 /** mulberry32's step: each draw moves the state on by this much. */
 const STEP = 0x6d2b79f5;
@@ -187,6 +188,7 @@ export class EventDesk {
     if (after > before) {
       const medals = TIER_MEDALS.slice(before, after).reduce((a, b) => a + b, 0) * (isBoosted(e) ? 2 : 1);
       this.host.save.medals += medals;
+      earn(this.host.save, "medals", medals);
       grantRelics(this.host.save);
     }
     return true;

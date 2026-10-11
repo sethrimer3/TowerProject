@@ -24,6 +24,7 @@ import { decodeThemes, defaultThemes } from "./theme-collection.ts";
 import { isTournamentRun } from "./tournament/run.ts";
 import { decodeBadges, defaultBadges, validRunBadges } from "./badges.ts";
 import { runTrainingMax } from "./run-training.ts";
+import { backfillProfile, decodeProfile, defaultProfile } from "./profile.ts";
 export function defaults(): Save {
   return {
     version: 3,
@@ -73,6 +74,7 @@ export function defaults(): Save {
     relics: [],
     shrines: defaultShrines(),
     themes: defaultThemes(),
+    profile: defaultProfile(),
   };
 }
 const CHEST_TIERS = ["silver", "gold"] as const;
@@ -196,7 +198,7 @@ const validSnapshot = (value: any) => !!value && finite(value.best) && finite(va
 function snapshot<R extends Run>(value: any, decodeRun: RunDecoder<R>): MoveSnapshot<R> | null {
   if (!validSnapshot(value)) return null;
   const run = decodeRun(value.run);
-  return run ? { run, best: value.best, xp: Math.floor(value.xp), ...(value.quiet === true ? { quiet: true as const } : {}) } : null;
+  return run ? { run, best: value.best, xp: Math.floor(value.xp), ...(finite(value.silver) ? { silver: fraction(value.silver, 0) } : {}), ...(value.quiet === true ? { quiet: true as const } : {}) } : null;
 }
 /** Whether an undo snapshot belongs to `run`: its seed and layout. */
 const sameRun = <R extends Run>(item: MoveSnapshot<R> | null, run: Run): item is MoveSnapshot<R> =>
@@ -439,6 +441,8 @@ export function decode(raw: string | null): Save {
     for (const k of ["deck", "removeCard", "addCard", "upgrades", "gear", "onTheJob", "speed", "climb", "enter", "delve"] as const) d.tutorials[k] = s.tutorials?.[k] === true;
     for (const k of ["inspiration", "courage"] as const) d.treeNotices[k] = s.treeNotices?.[k] === true;
     d.seen = decodeSeen(s.seen, d);
+    d.profile = decodeProfile(s.profile);
+    backfillProfile(d);
   } catch {}
   return d;
 }

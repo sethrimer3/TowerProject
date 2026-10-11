@@ -17,6 +17,7 @@ import { keepDrop, rollBossDrop, rollMaterials } from "../equipment/acquire.ts";
 import type { EquipItem } from "../equipment/inventory.ts";
 import { CATEGORIES, type EquipMaterialId } from "../equipment/catalog.ts";
 import { runBoons } from "../shrines.ts";
+import { earn } from "../profile.ts";
 
 /** What a kill gave toward Equipment, once it is open: upgrade materials,
  * and a boss's Standard piece (or, the inventory full, its salvage). */
@@ -99,6 +100,7 @@ export class RunPurse {
     const gold = snap(before * boost);
     if (boost !== 1) this.slice.runBoostGold = snap((this.slice.runBoostGold ?? 0) + before);
     this.save.gold = snap(this.save.gold + gold);
+    earn(this.save, "gold", gold);
     this.slice.runGold = snap(this.slice.runGold + gold);
     return gold;
   }
@@ -110,6 +112,7 @@ export class RunPurse {
     const bonus = snap((base * silverBonus(this.trainingNow) * researched(this.save.archives, "silverBonus", 100) * (this.boons?.silverFound ?? 1)) / 10_000);
     const silver = raised(bonus, this.worn.silverFind);
     this.run.silver = snap((this.run.silver ?? 0) + silver);
+    earn(this.save, "silver", silver);
     return silver;
   }
 
@@ -149,6 +152,7 @@ export class RunPurse {
     const found = this.tier > 1 ? 1 + Math.floor(this.rng() * this.tier) : 1;
     const cells = scale === 1 ? found : snap(found * scale);
     this.save.cells = snap(this.save.cells + cells);
+    earn(this.save, "cells", cells);
     return cells;
   }
 
@@ -253,6 +257,7 @@ export class RunPurse {
     const held = this.run.silver ?? 0;
     const paid = Math.min(this.interestCap, snap((held * rate) / 1000));
     if (paid > 0) this.run.silver = snap(held + paid);
+    earn(this.save, "silver", paid);
     return paid > 0 ? paid : 0;
   }
 

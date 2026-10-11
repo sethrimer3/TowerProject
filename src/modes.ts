@@ -9,6 +9,7 @@ import { LAYOUT_VERSION, World } from "./delve/world.ts";
 import { RoomWorld, TOWER_LAYOUT_VERSION } from "./tower/room-world.ts";
 import type { Board } from "./board.ts";
 import { extraEnemies } from "./more-enemies.ts";
+import { earn } from "./profile.ts";
 
 export type ModeProfile<R extends Run = Run> = {
   /** The balance of the currency this mode pays, and paying it. */
@@ -88,7 +89,7 @@ export function milestones(profile: ModeProfile, from: number, to: number) {
 export const MODES: { tower: ModeProfile<TowerRun>; delve: ModeProfile<DelveRun> } = {
   tower: {
     balance: (save) => save.tower.inspiration,
-    credit: (save, amount) => { save.tower.inspiration += amount; },
+    credit: (save, amount) => { save.tower.inspiration += amount; earn(save, "inspiration", amount); },
     equivalentFloor: (height) => height,
     progressAt: (run) => run.height,
     width: TOWER_WIDTH,
@@ -116,7 +117,7 @@ export const MODES: { tower: ModeProfile<TowerRun>; delve: ModeProfile<DelveRun>
   },
   delve: {
     balance: (save) => save.delve.courage,
-    credit: (save, amount) => { save.delve.courage += amount; },
+    credit: (save, amount) => { save.delve.courage += amount; earn(save, "courage", amount); },
     equivalentFloor: (depth) => Math.floor(depth / 10),
     progressAt: (_run, y) => y,
     width: WIDTH,

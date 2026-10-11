@@ -8,6 +8,7 @@ import {
 } from "../missions/catalog.ts";
 import { COUNTED_KEPT, MARKS_KEPT, isComplete, missionPeriod, missionWeek, type Mission, type MissionsSave } from "../missions/progress.ts";
 import type { DeskHost } from "./desk.ts";
+import { earn } from "../profile.ts";
 
 /** mulberry32's step: each draw moves the state on by this much. */
 const STEP = 0x6d2b79f5;
@@ -151,6 +152,8 @@ export class MissionDesk {
     m.week.missions++;
     save.gems += r.gems;
     save.gold = snap(save.gold + r.gold);
+    earn(save, "gems", r.gems);
+    earn(save, "gold", r.gold);
     if (r.materials) save.equipment.materials[r.material] += r.materials;
     this.host.message = `Mission complete · +${r.gems} Gems · +${r.gold.toLocaleString("en-US")} Gold`;
     return { gold: r.gold, gems: r.gems, medals: 0, shards: 0, material: r.materials ? { id: r.material, amount: r.materials } : undefined };
@@ -166,6 +169,10 @@ export class MissionDesk {
     save.gems += r.gems;
     save.medals += r.medals;
     save.ascensionShards += r.shards;
+    earn(save, "gold", r.gold);
+    earn(save, "gems", r.gems);
+    earn(save, "medals", r.medals);
+    earn(save, "ascensionShards", r.shards);
     this.host.message = `Weekly reward · ${WEEKLY_REWARDS[i]!.missions} missions`;
     return { ...r };
   }

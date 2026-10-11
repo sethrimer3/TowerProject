@@ -8,6 +8,7 @@ import type { BoardOverlay } from "./board-overlay.ts";
 import { capitalized, displayedProgress, el } from "./dom.ts";
 import { MODES } from "../modes.ts";
 import { goalUnlocked } from "../goals.ts";
+import { showStats } from "./stats-dialog.ts";
 
 /** The settings on the page, in order; each control comes from its row in
  * SETTINGS. */
@@ -71,8 +72,8 @@ const themeButtons = (game: PageGame) =>
   `<div class="theme-buttons">${(["ui", "game"] as const).map((kind) =>
     `<button class="setting theme-open" id="${kind}-themes" data-kind="${kind}">${themeMenuTitle(kind)}<b>${wornName(game.save, kind)} ›</b></button>`).join("")}</div>`;
 
-/** The Settings page: a way back to the board, the theme menus, display
- * and control options, retire, and erase. */
+/** The Settings page: a way back to the board, the Stats dialog, the theme
+ * menus, display and control options, retire, and erase. */
 export function renderSettingsPage(ctx: AppContext, overlay: BoardOverlay) {
   const { game } = ctx;
   if (menu) {
@@ -89,7 +90,7 @@ export function renderSettingsPage(ctx: AppContext, overlay: BoardOverlay) {
   }
   const words = MODES[game.mode].words;
   el("settings").innerHTML =
-    `<button class="back" id="settings-back">← Back</button><div class="page-title"><small>MAKE THE ASCENT YOUR OWN</small><h2>Settings</h2></div>` +
+    `<button class="back" id="settings-back">← Back</button><div class="page-title"><small>MAKE THE ASCENT YOUR OWN</small><h2>Settings</h2></div><button class="wide" id="stats-open">Stats</button>` +
     themeButtons(game) +
     onPage(game.save).map((key) => control(key, game)).join("") +
     `<p class="hint">Automation pauses outside the board tabs and while the browser is hidden. Progress saves after each action.</p><button class="wide" id="retire">Retire this ${words.run}</button><p class="hint">Keep your milestone rewards and enter a freshly generated ${words.fresh}.</p><button class="wide danger" id="erase">Erase all progress</button><p class="seed">RUN SEED · ${game.run.seed}</p>`;
@@ -101,6 +102,7 @@ function bindSettings(ctx: AppContext, overlay: BoardOverlay) {
   // Read live: erasing progress replaces the whole save.
   const s = () => game.save.settings;
   el("settings-back").onclick = () => ctx.navigate(game.mode);
+  el("stats-open").onclick = () => showStats(ctx);
   document.querySelectorAll<HTMLButtonElement>(".theme-open").forEach((b) => {
     b.onclick = () => {
       menu = b.dataset.kind as ThemeKind;

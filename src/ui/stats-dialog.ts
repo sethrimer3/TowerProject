@@ -1,0 +1,41 @@
+import type { LifetimeCurrency, Profile } from "../profile.ts";
+import type { AppContext } from "./app.ts";
+import { el } from "./dom.ts";
+
+/** Each currency's line in the table, in the order shown. */
+const EARNED: [LifetimeCurrency, string][] = [
+  ["gold", "Gold earned"],
+  ["silver", "Silver earned"],
+  ["gems", "Gems earned"],
+  ["ascensionShards", "Ascension Shards earned"],
+  ["cells", "Cells earned"],
+  ["medals", "Medals earned"],
+  ["inspiration", "Inspiration earned"],
+  ["courage", "Courage earned"],
+  ["tickets", "Tickets earned"],
+];
+
+const amount = (n: number) => Math.floor(n).toLocaleString("en-US");
+const created = (at: number) => (at ? new Date(at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) : "Unknown");
+
+/** The Stats table's rows, label then value. */
+export function statsRows(p: Profile): [string, string][] {
+  return [
+    ["Profile created", created(p.createdAt)],
+    ...EARNED.map(([c, label]): [string, string] => [label, amount(p.earned[c])]),
+    ["Training levels gained", amount(p.trainingLevels)],
+    ["Research levels completed", amount(p.researchLevels)],
+    ["Gold spent on Training", amount(p.trainingGold)],
+    ["Gold spent on Research", amount(p.researchGold)],
+  ];
+}
+
+/** The Settings page's Stats dialog: the player profile's lifetime tallies,
+ * closed by the X at its top right. */
+export function showStats(ctx: AppContext) {
+  const modal = ctx.modal, rows = statsRows(ctx.game.save.profile);
+  modal.innerHTML = `<div class="stats-dialog"><button id="stats-close" class="dialog-x" aria-label="Close" title="Close">✕</button><small>PLAYER PROFILE</small><h2>Stats</h2>
+    <table class="stats-table"><tbody>${rows.map(([label, value]) => `<tr><th scope="row">${label}</th><td>${value}</td></tr>`).join("")}</tbody></table></div>`;
+  el("stats-close").onclick = () => modal.close();
+  modal.showModal();
+}

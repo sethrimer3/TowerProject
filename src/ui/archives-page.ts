@@ -199,17 +199,25 @@ export class ArchivesPanel {
     return `<button class="archivist-rush${short ? " short" : ""}" data-rush="${slot}" aria-label="Rush: complete this research now for ${gemCount(gems)}" title="${short ? `Needs ${gemCount(gems)}` : `Complete now for ${gemCount(gems)}`}">Rush · ${gemIcon()} <b data-rush-gems="${slot}">${gems}</b></button>`;
   }
 
-  /** The Cells held, beside the History button. */
+  /** Whether the Cells and Speed Ups show: once any Cells have been found. */
+  private get cellsShown() {
+    return this.ctx.game.save.profile.earned.cells > 0;
+  }
+
+  /** The Cells held, beside the History button, once any have been found. */
   private cellsHtml() {
+    if (!this.cellsShown) return "";
     const cells = whole(this.ctx.game.save.cells);
     return `<span class="research-cells" title="Cells: ${cells.toLocaleString("en-US")}" aria-label="${cells.toLocaleString("en-US")} Cells">${cellIcon()}<b>${shortAmount(cells)}</b></span>`;
   }
 
   /** Archivist `slot`'s Speed Up in progress, its factor and time left in
-   * green, then the button opening the Speed Up dialog. */
+   * green, then the button opening the Speed Up dialog (once any Cells
+   * have been found). */
   private speedUpHtml(slot: number) {
     const s = this.ctx.game.save.archives.slots[slot]?.speedUp, now = this.ctx.game.clock();
     const active = s ? `<span class="archivist-speed" title="Speed Up in progress">${s.factor}x <span data-speed-left="${slot}">${formatDuration(s.endsAt - now)}</span></span>` : "";
+    if (!this.cellsShown) return active;
     return `${active}<button class="archivist-speed-up" data-speed-up="${slot}" aria-label="Speed Up: use Cells to speed up this research" title="Use Cells to speed up research">Speed Up ${cellIcon()}</button>`;
   }
 
@@ -288,7 +296,7 @@ export class ArchivesPanel {
       p("Archivists research projects whose effects last between runs. Pick an idle archivist to choose its research; each level costs Gold and takes time.") +
       p("Research goes on while you play or are away. Each archivist works on one project at a time; Gems hire more.") +
       p(`Auto-continue (${redoIcon("redo-icon help-redo")}) starts the project's next level as soon as one completes, when the Gold is there. Stop gives the Gold back and keeps the time spent for later; Gems finish a level at once.`) +
-      p(`Speed Up (${cellIcon("cell-icon help-cell")}) spends Cells, which Greater Bosses drop (more on later towers), to make an archivist research faster for a while; Queue buys it again as it ends, while the Cells are there.`) +
+      (this.cellsShown ? p(`Speed Up (${cellIcon("cell-icon help-cell")}) spends Cells, which Greater Bosses drop (more on later towers), to make an archivist research faster for a while; Queue buys it again as it ends, while the Cells are there.`) : "") +
       p("History lists every level completed."));
   }
 

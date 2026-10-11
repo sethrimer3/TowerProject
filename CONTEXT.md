@@ -26,6 +26,12 @@ _Avoid_: clear chest, reward chest
 The lifetime record, by tower, of the areas mastered and cleared, so each pays exactly once however the run is undone, revived, reloaded or replaced.
 _Avoid_: tower log, reward log
 
+### The player
+
+**Player profile**:
+The player's lifetime record, shown in the Settings page's Stats: when the profile was made, each currency ever earned (spending never lowers it), the Training levels gained, the research levels completed, and the Gold spent on each (less what came back). Erasing all progress starts a new one.
+_Avoid_: account, statistics save
+
 ### Equipment
 
 **Equipment**:
@@ -364,7 +370,7 @@ One research slot: it works on one research level at a time, and optionally auto
 _Avoid_: lab slot, researcher
 
 **Cell**:
-A lasting currency, shown as a yellow triangle, that only Greater Bosses drop (more on later towers); it buys Speed Ups.
+A lasting currency, shown as a yellow triangle, that only Greater Bosses drop (more on later towers); it buys Speed Ups. The Archives show it, and their Speed Up buttons, only once the player profile has earned some.
 _Avoid_: energy, research points
 
 **Speed Up**:

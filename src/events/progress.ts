@@ -1,5 +1,6 @@
 import { isRecord, whole, wholeIn } from "../decode.ts";
 import type { Save } from "../entities.ts";
+import { earn } from "../profile.ts";
 import { RELICS } from "../relics.ts";
 import { EVENT_MISSION_COUNT, EVENT_MISSION_TYPES, EVENT_MISSIONS, TIERS, stubEvent, tierMedals, type EventMissionType, type RelicMilestone } from "./catalog.ts";
 
@@ -87,6 +88,7 @@ export function boostEvent(save: Save) {
   if (boostRefusal(save)) return;
   e.boosted = [...e.boosted, e.id!].slice(-BOOSTED_KEPT);
   save.medals += baseMedals(e);
+  earn(save, "medals", baseMedals(e));
   grantRelics(save);
 }
 

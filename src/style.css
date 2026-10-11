@@ -4201,3 +4201,12 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
 .rank-grip { width: 16px; cursor: grab; color: #8793a2; text-align: center; user-select: none; }
 .boon-rank .rank-name { flex: 1; min-width: 0; }
 .rank-move { width: 24px; height: 22px; padding: 0; font-size: 10px; }
+/* The Settings page's Stats dialog: the X at the top right over a table of
+ * the player profile's lifetime tallies, labels left and amounts right. */
+.stats-dialog .dialog-x { float: right; width: 32px; height: 32px; min-height: 0; margin: -18px -18px 0 0; padding: 0; border-radius: 50%; font-size: 15px; line-height: 1; }
+.stats-dialog h2 { margin-top: 0; }
+.stats-table { width: 100%; margin-top: 8px; border-collapse: collapse; font-size: 12px; text-align: left; }
+.stats-table th, .stats-table td { padding: 6px 4px; border-bottom: 1px solid #2c3746; }
+.stats-table th { font-weight: 500; color: #b7c0cc; }
+.stats-table td { text-align: right; color: #e9d4ac; font-variant-numeric: tabular-nums; white-space: nowrap; }
+#stats-open { margin-bottom: 8px; }

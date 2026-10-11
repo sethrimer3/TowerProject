@@ -1,10 +1,12 @@
 import { FOCUS_PER_RUN, IGNORE_PER_RUN, REGAIN_FLOORS, TARGET_PER_RUN, levelForXp, type UpgradeId } from "./config.ts";
 import type { Settings } from "./settings.ts";
 import type { Save } from "./entities.ts";
+import type { Profile } from "./profile.ts";
 import { goalUnlocked, type GoalUnlock } from "./goals.ts";
 import { finite as finiteIn, isRecord, wholeIn } from "./decode.ts";
 import { intPow } from "./exact.ts";
 import { BUY_QUANTITIES, quantityLabel } from "./buy-quantity.ts";
+import { tally } from "./profile.ts";
 import { carrySpeedUp, completionAt, decodeSpeedUp, endSpeedUp, type SpeedUp } from "./speed-ups.ts";
 
 // The Archives: research that lasts between runs. An archivist takes one
@@ -758,6 +760,9 @@ export type ArchivesOwner = {
   gems: number;
   /** Cells, which buy Speed Ups. */
   cells: number;
+  /** The lifetime tallies, which count research completed and the Gold
+   * paid for it. */
+  profile?: Profile;
   upgrades: Record<UpgradeId, number>;
   /** Goals claimed, for the unlocks they hold. */
   goals: Save["goals"];
@@ -858,6 +863,7 @@ function begin(o: ArchivesOwner, slot: number, id: ResearchId, now: number) {
   const done = a.progress[id] ?? 0;
   delete a.progress[id];
   o.gold -= paid;
+  tally(o, "researchGold", paid);
   const startedAt = now - Math.round(done * ms);
   a.slots[slot].job = { research: id, level: researchLevel(a, id) + 1, startedAt, completesAt: startedAt + ms, paid };
 }
@@ -871,6 +877,7 @@ export function cancelResearch(o: ArchivesOwner, slot: number, now: number) {
   const done = jobProgress(job, now);
   if (done > 0 && done < 1) o.archives.progress[job.research] = done;
   o.gold += job.paid;
+  tally(o, "researchGold", -job.paid);
   o.archives.slots[slot].job = undefined;
   return true;
 }
@@ -942,6 +949,7 @@ export function settleArchives(o: ArchivesOwner, now: number): ResearchRecord[] 
     if (after !== before) hastenAll(a, before / after, at);
     const record = { at, research: job.research, level: job.level };
     a.history.push(record);
+    tally(o, "researchLevels", 1);
     done.push(record);
     if (a.slots[i].autoContinue && !cannotStart(o, i, job.research)) begin(o, i, job.research, at);
   }

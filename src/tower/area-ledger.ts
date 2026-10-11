@@ -11,6 +11,7 @@
 import type { ChestTier, Save, Tile, TowerRun } from "../entities.ts";
 import { TOWER_SECTION } from "../config.ts";
 import { checkpoint } from "../goals.ts";
+import { earn } from "../profile.ts";
 import { ENTRY } from "./embedder.ts";
 import { TowerClimb } from "./climb.ts";
 import type { RoomWorld } from "./room-world.ts";
@@ -87,6 +88,7 @@ export class AreaLedger {
     list.sort((a, b) => a - b);
     if (reward === "cleared") {
       this.save.tower.inspiration += CLEARED_INSPIRATION;
+      earn(this.save, "inspiration", CLEARED_INSPIRATION);
       this.save.tower.runCurrency += CLEARED_INSPIRATION;
     }
   }

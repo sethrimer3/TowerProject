@@ -8,6 +8,7 @@ import { CLAIM_MS, latestTournament, nextTournament, phaseOf, scoreCounts, tourn
 import type { Standing, TournamentInfo } from "../tournament/server.ts";
 import { addGemTicket, gemTicketPrice, grantFreeTicket, nextTicket, spendTicket, takeAdTicket } from "../tournament/tickets.ts";
 import { affordsGems, type DeskHost } from "./desk.ts";
+import { earn } from "../profile.ts";
 
 /** The Tournament's commands (the game's `tournament`): taking in what the
  * server reports, Tickets, standings and claiming prizes. The server's
@@ -43,7 +44,9 @@ export class TournamentDesk {
     confirmServerTime(this.host.save.shop.clock, serverNow, this.host.clock());
     this.info = info;
     this.t.league = info.league;
-    return this.unlocked && phaseOf(info, serverNow, info.finalizedAt) === "open" && grantFreeTicket(this.t, info.id);
+    const granted = this.unlocked && phaseOf(info, serverNow, info.finalizedAt) === "open" && grantFreeTicket(this.t, info.id);
+    if (granted) earn(this.host.save, "tickets", 1);
+    return granted;
   }
 
   /** The server's report, while it is of the latest tournament to have
@@ -130,6 +133,7 @@ export class TournamentDesk {
   takeAdTicket() {
     const id = this.openId;
     if (!id || !takeAdTicket(this.t, id)) return false;
+    earn(this.host.save, "tickets", 1);
     this.host.message = "+1 Ticket";
     return true;
   }
@@ -145,6 +149,7 @@ export class TournamentDesk {
     }
     if (!this.host.free) CURRENCIES.gems.spend(this.host.save, price);
     addGemTicket(this.t, id);
+    earn(this.host.save, "tickets", 1);
     this.host.message = "+1 Ticket";
     return true;
   }

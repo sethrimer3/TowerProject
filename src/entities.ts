@@ -20,6 +20,7 @@ import type { MailSave } from "./mail/progress.ts";
 import type { MissionsSave } from "./missions/progress.ts";
 import type { EventsSave } from "./events/progress.ts";
 import type { TournamentRun } from "./tournament/run.ts";
+import type { Profile } from "./profile.ts";
 export type Kind =
   | "wall"
   | "floor"
@@ -231,7 +232,10 @@ export type Run = TowerRun | DelveRun;
 /** The run and lifetime XP just before a move, so undo takes back the XP
  * (and any level) a kill paid; `quiet` when the move was a step onto empty
  * floor, which undo goes on back past. */
-export type MoveSnapshot<R extends Run = Run> = { run: R; best: number; xp: number; quiet?: true };
+/** An undo point: the run, the best and XP then, and the lifetime Silver
+ * then (`silver`, absent in a snapshot older than the profile), since undo
+ * takes back the Silver found after it. */
+export type MoveSnapshot<R extends Run = Run> = { run: R; best: number; xp: number; silver?: number; quiet?: true };
 /** A hero fallen in a fight, waiting for the player to undo it or accept
  * defeat: the run just before that fight, and the enemy that won it. */
 export type Fall<R extends Run = Run> = { snapshot: MoveSnapshot<R>; by: string };
@@ -404,5 +408,8 @@ export type Save = {
    * catalog order: Medieval from the start, the rest earned. Each pays
    * Gold for good. */
   themes: ThemeId[];
+  /** The player profile: when it was made and its lifetime tallies, the
+   * currencies earned and Training and research done (profile.ts). */
+  profile: Profile;
 };
 export const point = (x: number, y: number) => `${x},${y}`;
