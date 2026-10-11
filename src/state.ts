@@ -1,7 +1,7 @@
 import { entrance, floorFor } from "./delve/labyrinth.ts";
 import { chooseStep } from "./automation.ts";
 import { CARDS, KEY_TO_HP_PERCENT, SIPHONS, TRADER_YELLOW_KEYS, cardText, isSiphon, planHand, planTarget, type CardId, type CardPlan, type CardRules, type SiphonCard } from "./cards.ts";
-import { BADGE_IDS, BADGES, MAX_COPIES, badgeValue, runBadges, type BadgeId, type RunBadge } from "./badges.ts";
+import { BADGE_IDS, BADGES, MAX_COPIES, badgeOn, badgesOn, badgeValue, runBadges, type BadgeId, type RunBadge } from "./badges.ts";
 import { adsOff, BOOST_FOREVER, permanentBoost } from "./shop/entitlements.ts";
 import { noteGoldBoost } from "./gold-boost.ts";
 import { offer, type OfferId } from "./shop/offers.ts";
@@ -759,12 +759,24 @@ export class Game {
       this.activate(plan.card, key);
     };
   }
-  /** What card `card`'s badge changes about planning it (`planHand`
-   * asks): a gate closes it while its condition fails, and Stairward and
-   * Skip Open Nodes count only on floors they aren't cooling down on. */
+  /** What card `card`'s badges change about planning it (`planHand`
+   * asks), each badge's rules together: a gate closes it while its
+   * condition fails (any one closed closes it), and Stairward and Skip Open
+   * Nodes count only on floors they aren't cooling down on. */
   cardRules(card: CardId): CardRules | undefined {
-    const badge = this.run.badges?.[card];
-    if (!badge || this.run.outside) return undefined;
+    if (this.run.outside) return undefined;
+    let rules: CardRules | undefined;
+    for (const badge of badgesOn(this.run.badges, card)) {
+      const r = this.badgeRules(card, badge);
+      if (!r) continue;
+      const closed = rules?.closed || r.closed;
+      rules = { ...rules, ...r };
+      if (closed) rules.closed = true;
+    }
+    return rules;
+  }
+  /** What one of card `card`'s badges changes about planning it. */
+  private badgeRules(card: CardId, badge: RunBadge): CardRules | undefined {
     const v = badgeValue(badge.id, badge.level, badge.pick), p = this.run.player;
     switch (badge.id) {
       case "hpGate": return { closed: !(p.hp < snap((p.maxHp * v) / 100)) };
@@ -789,8 +801,8 @@ export class Game {
   /** What card `card`'s Effective or Dampen multiplies its target's effect
    * by when it activates: 1 with neither. */
   private scaleOf(card: CardId) {
-    const badge = this.run.badges?.[card];
-    if (!badge || this.run.outside || BADGES[badge.id].kind !== "scale") return 1;
+    const badge = badgesOn(this.run.badges, card).find((b) => BADGES[b.id].kind === "scale");
+    if (!badge || this.run.outside) return 1;
     const v = badgeValue(badge.id, badge.level, badge.pick);
     return (100 + (badge.id === "effective" ? v : -v)) / 100;
   }
@@ -798,15 +810,14 @@ export class Game {
    * a boss, the Delve's STAIRS card's climb (no stairs), or a torch (no tile
    * to vanish). */
   private rollsSkip(card: CardId, x: number, y: number) {
-    const badge: RunBadge | undefined = this.run.badges?.[card];
-    if (badge?.id !== "skip" || this.run.outside || card === "torch") return false;
+    if (!badgeOn(this.run.badges, card, "skip") || this.run.outside || card === "torch") return false;
     const t = this.world.tile(x, y);
     if (t.kind === "enemy" && (t.enemy!.strength === "boss" || t.enemy!.strength === "greaterBoss")) return false;
     return card !== "stairs" || t.kind === "stairs";
   }
   /** Skip's chance on card `card`, as a fraction. */
   private skipChance(card: CardId) {
-    const badge = this.run.badges![card]!;
+    const badge = badgeOn(this.run.badges, card, "skip")!;
     return badgeValue(badge.id, badge.level, badge.pick) / 100;
   }
   /** Skip's next roll: the next number of its own stream, started from the
@@ -881,8 +892,8 @@ export class Game {
   /** Whether card `id` rests greyed out for the rest of the floor:
    * Deprioritize with every mark made and no ! to head for. */
   cardResting(id: CardId) {
-    const badge = this.run.badges?.[id];
-    if (badge?.id !== "deprioritize" || this.run.outside) return false;
+    const badge = badgeOn(this.run.badges, id, "deprioritize");
+    if (!badge || this.run.outside) return false;
     const m = this.floorMarks;
     return !m.bangs.length && m.made >= badgeValue(badge.id, badge.level, badge.pick);
   }
@@ -903,7 +914,7 @@ export class Game {
   }
   /** A new plan for card `id` under Stairward counts as its use. */
   private coolDown(id: CardId) {
-    if (this.run.badges?.[id]?.id === "stairward" && this.cardRules(id)?.stairward) this.markUsed("stairward");
+    if (badgeOn(this.run.badges, id, "stairward") && this.cardRules(id)?.stairward) this.markUsed("stairward");
   }
   /** The doors and monsters Skip Open Nodes passed over on this floor, as
    * points, for the planner and the board's marks. */
@@ -919,16 +930,20 @@ export class Game {
     if (!this.run.skipped.tiles.includes(k)) this.run.skipped.tiles.push(k);
     this.markUsed("skipOpen");
   }
-  /** Card `card` of the hand activates: its badge pays what it gives.
-   * Gold is paid once per target (`key`, gated by lootedTiles like a kill's),
-   * since undo can't take it back; HP, Silver and XP are the run's or in
-   * its undo snapshot. */
+  /** Card `card` of the hand activates: each of its badges pays what it
+   * gives, top slot first. Gold is paid once per target (`key`, gated by
+   * lootedTiles like a kill's), since undo can't take it back; HP, Silver
+   * and XP are the run's or in its undo snapshot. */
   private activate(card: number, key: string) {
-    const id = this.hand[card], badge = id && this.run.badges?.[id];
-    if (!badge || !this.playing) return;
+    const id = this.hand[card], badges = id ? badgesOn(this.run.badges, id) : [];
+    if (!badges.length || !this.playing) return;
     // Paying out makes the step it ends a turn undo stops at.
     delete this.slice.history.at(-1)?.quiet;
-    const v = badgeValue(badge.id, badge.level, badge.pick), p = this.run.player;
+    for (const badge of badges) this.payBadge(card, key, badge);
+  }
+  /** One of hand card `card`'s badges pays what it gives on activation. */
+  private payBadge(card: number, key: string, badge: RunBadge) {
+    const id = this.hand[card], v = badgeValue(badge.id, badge.level, badge.pick), p = this.run.player;
     switch (badge.id) {
       case "hp": return this.raiseMaxHp(v, badge.id);
       case "hpPercent": return this.badgeHeal(snap((p.maxHp * v) / 100), badge.id);
@@ -1078,8 +1093,8 @@ export class Game {
   private dropGatedPlan() {
     const plan = this.cardPlan;
     if (!plan) return;
-    const id = this.hand[plan.card], badge = this.run.badges?.[id];
-    if (!badge || BADGES[badge.id].kind !== "gate" || id === this.run.focused) return;
+    const id = this.hand[plan.card];
+    if (!badgesOn(this.run.badges, id).some((b) => BADGES[b.id].kind === "gate") || id === this.run.focused) return;
     if (this.cardRules(id)?.closed) this.cardPlan = null;
   }
   /** The path the hand follows this turn: the one committed, else the
@@ -1121,7 +1136,7 @@ export class Game {
   private dealHand() {
     noteGoldBoost(this.save, this.slice, this.clock());
     this.run.hand = [...this.save.hand];
-    const badges = this.save.upgrades.cardBadges ? runBadges(this.save.badges, this.run.hand) : {};
+    const badges = this.save.upgrades.cardBadges ? runBadges(this.save.badges, this.run.hand, this.badges.slots) : {};
     if (Object.keys(badges).length) this.run.badges = badges;
     const pocket = this.startingSilver;
     if (pocket) this.run.silver = pocket;

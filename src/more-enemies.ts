@@ -1,6 +1,6 @@
 import { point, type Enemy, type EnemyStrength, type Kind, type Point, type Tile } from "./entities.ts";
 import type { CardId } from "./cards.ts";
-import type { RunBadge } from "./badges.ts";
+import type { RunBadges } from "./badges.ts";
 import { random } from "./random.ts";
 
 // More Enemies (a card badge, badges.ts): a last stage after a floor is
@@ -297,11 +297,12 @@ export const MORE_ENEMIES_CARDS = {
 
 /** What a run's More Enemies badges add to each floor: each strength's
  * percents, summed over the cards that cover it. None without the badge. */
-export function extraEnemies(badges: Partial<Record<CardId, RunBadge>> | undefined): ExtraEnemies | undefined {
+export function extraEnemies(badges: RunBadges | undefined): ExtraEnemies | undefined {
   const out: ExtraEnemies = {};
-  for (const [card, badge] of Object.entries(badges ?? {})) {
+  for (const card of Object.keys(badges ?? {}) as CardId[]) {
     const strengths = (MORE_ENEMIES_CARDS as Partial<Record<string, readonly ExtraStrength[]>>)[card];
-    if (badge?.id !== "moreEnemies" || !strengths) continue;
+    const badge = badges?.[card]?.find((b) => b.id === "moreEnemies");
+    if (!badge || !strengths) continue;
     const percent = MORE_ENEMIES_PERCENTS[Math.max(1, Math.min(badge.level, MORE_ENEMIES_PERCENTS.length)) - 1]!;
     for (const s of strengths) out[s] = (out[s] ?? 0) + percent;
   }

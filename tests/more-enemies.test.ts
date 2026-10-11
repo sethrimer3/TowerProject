@@ -52,22 +52,22 @@ test("it sits only on a monster card, and a swap that would put it elsewhere tak
   assert.ok(attachBadge(m, "moreEnemies", "monster"));
   assert.ok(attachBadge(m, "hp", "door"));
   assert.ok(attachBadge(m, "hp", "monster"));
-  assert.deepEqual(m.cards, { monster: "hp" }, "More Enemies can't swap onto DOOR, so it comes off");
+  assert.deepEqual(m.cards, { monster: ["hp"] }, "More Enemies can't swap onto DOOR, so it comes off");
   assert.ok(attachBadge(m, "moreEnemies", "weakEnemy"));
   assert.ok(attachBadge(m, "moreEnemies", "monster"));
-  assert.deepEqual(m.cards, { monster: "moreEnemies", weakEnemy: "hp" }, "between monster cards it swaps");
-  const saved = decodeBadges({ owned: m.owned, cards: { door: "moreEnemies", monster: "hp" } }, UPGRADES);
-  assert.deepEqual(saved.cards, { monster: "hp" }, "a save with it on DOOR drops it");
-  assert.equal(validRunBadges({ door: { id: "moreEnemies", level: 1, pick: 0 } }), false);
+  assert.deepEqual(m.cards, { monster: ["moreEnemies"], weakEnemy: ["hp"] }, "between monster cards it swaps");
+  const saved = decodeBadges({ owned: m.owned, cards: { door: ["moreEnemies"], monster: ["hp"] } }, UPGRADES);
+  assert.deepEqual(saved.cards, { monster: ["hp"] }, "a save with it on DOOR drops it");
+  assert.equal(validRunBadges({ door: [{ id: "moreEnemies", level: 1, pick: 0 }] }), false);
 });
 
 test("a run's badges add each strength's percents, MONSTER covering every one", () => {
   assert.equal(extraEnemies(undefined), undefined);
-  assert.equal(extraEnemies({ monster: { id: "hp", level: 7, pick: 0 } }), undefined);
-  assert.deepEqual(extraEnemies({ bossEnemy: { id: "moreEnemies", level: 1, pick: 0 } }), { boss: 30 });
-  assert.deepEqual(extraEnemies({ nonBossEnemy: { id: "moreEnemies", level: 2, pick: 0 } }), { weak: 40, normal: 40, strong: 40, elite: 40 }, "NON-BOSS every strength but the boss");
+  assert.equal(extraEnemies({ monster: [{ id: "hp", level: 7, pick: 0 }] }), undefined);
+  assert.deepEqual(extraEnemies({ bossEnemy: [{ id: "moreEnemies", level: 1, pick: 0 }] }), { boss: 30 });
+  assert.deepEqual(extraEnemies({ nonBossEnemy: [{ id: "moreEnemies", level: 2, pick: 0 }] }), { weak: 40, normal: 40, strong: 40, elite: 40 }, "NON-BOSS every strength but the boss");
   assert.deepEqual(
-    extraEnemies({ monster: { id: "moreEnemies", level: 1, pick: 0 }, bossEnemy: { id: "moreEnemies", level: 7, pick: 0 } }),
+    extraEnemies({ monster: [{ id: "moreEnemies", level: 1, pick: 0 }], bossEnemy: [{ id: "moreEnemies", level: 7, pick: 0 }] }),
     { weak: 30, normal: 30, strong: 30, elite: 30, boss: 120 },
   );
 });
@@ -164,10 +164,10 @@ test("a run with the badge on MONSTER climbs floors holding more enemies, kept t
   save.upgrades.cardBadges = 1;
   save.hand = ["stairs", "monster", "heal", "door"];
   save.badges.owned.moreEnemies = { copies: MAX_COPIES, pick: 0 };
-  save.badges.cards.monster = "moreEnemies";
+  save.badges.cards.monster = ["moreEnemies"];
   const g = new Game(save);
   g.newRun();
-  assert.deepEqual(g.run.badges?.monster, { id: "moreEnemies", level: 7, pick: 0 });
+  assert.deepEqual(g.run.badges?.monster, [{ id: "moreEnemies", level: 7, pick: 0 }]);
   const count = (w: { tile(x: number, y: number): Tile }) => {
     let n = 0;
     for (let y = 0; y < 17; y++) for (let x = 0; x < 17; x++) if (w.tile(x, y).kind === "enemy") n++;

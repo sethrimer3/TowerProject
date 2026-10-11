@@ -8,9 +8,11 @@ import { planHand, type CardId } from "../src/cards.ts";
 import type { Board, Position } from "../src/board.ts";
 import type { Enemy, Run, Tile } from "../src/entities.ts";
 import {
-  attachBadge, COPIES_FOR_LEVEL, copiesLeft, decodeBadges, defaultBadges, drawBadges, levelProgress, MAX_COPIES,
-  BADGE_IDS, BADGES, badgeLevel, badgeValue, RARITY_WEIGHTS, runBadges, type BadgeId, type BadgesSave,
+  attachBadge, attachConflict, badgeConflict, COPIES_FOR_LEVEL, copiesLeft, decodeBadges, defaultBadges, detachBadge, drawBadges, levelProgress, MAX_COPIES,
+  BADGE_IDS, BADGES, badgeLevel, badgeValue, RARITY_WEIGHTS, runBadges, validRunBadges, type BadgeId, type BadgesSave,
 } from "../src/badges.ts";
+import { RESEARCH, status } from "../src/archives.ts";
+import { checkpoint } from "../src/goals.ts";
 import { DRAW_GEMS } from "../src/game/badge-desk.ts";
 import { doorCost } from "../src/doors.ts";
 import { keyCount } from "../src/whole.ts";
@@ -115,14 +117,14 @@ test("a badge goes on one card and a card holds one: dropping moves it, swaps, o
   const m: BadgesSave = { ...defaultBadges(), owned: { hp: { copies: 1, pick: 0 }, xp: { copies: 1, pick: 0 }, charge: { copies: 1, pick: 0 } } };
   attachBadge(m, "hp", "door");
   attachBadge(m, "xp", "stairs");
-  assert.deepEqual(m.cards, { door: "hp", stairs: "xp" });
+  assert.deepEqual(m.cards, { door: ["hp"], stairs: ["xp"] });
   attachBadge(m, "hp", "stairs");
-  assert.deepEqual(m.cards, { door: "xp", stairs: "hp" }, "two attached tokens swap cards");
+  assert.deepEqual(m.cards, { door: ["xp"], stairs: ["hp"] }, "two attached tokens swap cards");
   attachBadge(m, "charge", "door");
-  assert.deepEqual(m.cards, { door: "charge", stairs: "hp" }, "a token from the box takes the card's old one off");
+  assert.deepEqual(m.cards, { door: ["charge"], stairs: ["hp"] }, "a token from the box takes the card's old one off");
   attachBadge(m, "charge", "monster");
-  assert.deepEqual(m.cards, { stairs: "hp", monster: "charge" }, "a token moved to a bare card leaves its old one bare");
-  assert.deepEqual(runBadges(m, ["stairs", "door"]), { stairs: { id: "hp", level: 1, pick: 0 } }, "a run takes only its hand's");
+  assert.deepEqual(m.cards, { stairs: ["hp"], monster: ["charge"] }, "a token moved to a bare card leaves its old one bare");
+  assert.deepEqual(runBadges(m, ["stairs", "door"]), { stairs: [{ id: "hp", level: 1, pick: 0 }] }, "a run takes only its hand's");
 });
 
 test("the desk draws for Gems (red-priced, never refused for show), attaches in the forest only, and picks thresholds", () => {
@@ -148,10 +150,93 @@ test("the desk draws for Gems (red-priced, never refused for show), attaches in 
 
 test("the save keeps badges, their cards and the stream, dropping what doesn't fit", () => {
   const save = defaults();
-  save.badges = { owned: { hp: { copies: 4, pick: 0 }, hpGate: { copies: 3, pick: 1 } }, cards: { stairs: "hp", door: "hpGate" }, rng: 12345 };
+  save.badges = { owned: { hp: { copies: 4, pick: 0 }, hpGate: { copies: 3, pick: 1 } }, cards: { stairs: ["hp"], door: ["hpGate"] }, rng: 12345 };
   assert.deepEqual(decode(JSON.stringify(save)).badges, save.badges);
-  const bad = { owned: { hp: { copies: 81 }, xp: { copies: 2, pick: 5 }, nope: { copies: 1 } }, cards: { stairs: "xp", door: "xp", heal: "xp", monster: "hp" }, rng: -1 };
-  assert.deepEqual(decodeBadges(bad, UPGRADES), { owned: { xp: { copies: 2, pick: 0 } }, cards: { stairs: "xp" }, rng: null });
+  const bad = { owned: { hp: { copies: 81 }, xp: { copies: 2, pick: 5 }, nope: { copies: 1 } }, cards: { stairs: ["xp"], door: ["xp"], heal: ["xp"], monster: ["hp"] }, rng: -1 };
+  assert.deepEqual(decodeBadges(bad, UPGRADES), { owned: { xp: { copies: 2, pick: 0 } }, cards: { stairs: ["xp"] }, rng: null });
+});
+
+test("Badge Slots opens with Badges and Tower VI's floor 50 Goal: two levels, 1 and 100 billion Gold, 4 and 20 days", () => {
+  const def = RESEARCH.badgeSlots;
+  assert.deepEqual(checkpoint(6, 50)?.reward, { kind: "unlock", unlock: "badgeSlots" });
+  assert.deepEqual(def.requires, [{ upgrade: "archives" }, { upgrade: "cardBadges" }, { goalUnlock: "badgeSlots" }]);
+  assert.deepEqual(def.levels.map((l) => [l.gold, l.hours]), [[1e9, 96], [100e9, 480]]);
+  assert.ok(def.levels.every((l) => l.effect.target === "badgeSlots" && l.effect.op === "add" && l.effect.value === 1));
+  const save = defaults();
+  save.upgrades.archives = 1;
+  save.gold = 1e12;
+  save.goals.claimed[6] = [50];
+  assert.equal(status(save, "badgeSlots"), "locked", "Badges first");
+  save.upgrades.cardBadges = 1;
+  assert.equal(status(save, "badgeSlots"), "available");
+  // Each level completed gives every card one more slot.
+  const g = new Game(save);
+  assert.equal(g.badges.slots, 1);
+  save.archives.levels.badgeSlots = 2;
+  assert.equal(g.badges.slots, 3);
+});
+
+test("with more slots, a card holds badges top slot first; a full card's bottom one gives way, swapping to the card the new one left", () => {
+  const owned = Object.fromEntries((["hp", "xp", "charge", "skip", "stairward"] as const).map((id) => [id, { copies: 1, pick: 0 }]));
+  const m: BadgesSave = { ...defaultBadges(), owned };
+  assert.ok(attachBadge(m, "hp", "door", 2));
+  assert.ok(attachBadge(m, "xp", "door", 2));
+  assert.deepEqual(m.cards, { door: ["hp", "xp"] }, "the second goes in the next slot");
+  assert.ok(attachBadge(m, "charge", "stairs", 2));
+  assert.ok(attachBadge(m, "skip", "stairs", 2));
+  assert.ok(attachBadge(m, "charge", "door", 2));
+  assert.deepEqual(m.cards, { door: ["hp", "charge"], stairs: ["xp", "skip"] }, "the bottom one, XP, swaps into Charge's old slot");
+  assert.ok(attachBadge(m, "stairward", "door", 2));
+  assert.deepEqual(m.cards, { door: ["hp", "stairward"], stairs: ["xp", "skip"] }, "from the box, the bottom one comes off");
+  assert.equal(attachBadge(m, "hp", "door", 2), false, "already there");
+  assert.ok(detachBadge(m, "hp"));
+  assert.deepEqual(m.cards, { door: ["stairward"], stairs: ["xp", "skip"] }, "taking one off closes the gap");
+  assert.deepEqual(runBadges(m, ["stairs"], 1), { stairs: [{ id: "xp", level: 1, pick: 0 }] }, "a run takes no more than the slots");
+});
+
+test("badges that can't work together can't share a card: a < gate and a ≥ gate, or Effective and Dampen", () => {
+  assert.ok(badgeConflict("yellowGate", "yellowAtLeast"));
+  assert.ok(badgeConflict("hpGate", "redAtLeast"));
+  assert.ok(badgeConflict("dampen", "effective"));
+  assert.equal(badgeConflict("yellowGate", "blueGate"), false, "two < gates both hold");
+  assert.equal(badgeConflict("effective", "skip"), false);
+  const owned = Object.fromEntries((["yellowGate", "blueAtLeast", "effective", "dampen", "hp"] as const).map((id) => [id, { copies: 1, pick: 0 }]));
+  const m: BadgesSave = { ...defaultBadges(), owned };
+  attachBadge(m, "yellowGate", "door", 3);
+  attachBadge(m, "effective", "door", 3);
+  assert.equal(attachConflict(m, "blueAtLeast", "door", 3), "yellowGate");
+  assert.equal(attachBadge(m, "blueAtLeast", "door", 3), false);
+  assert.equal(attachConflict(m, "dampen", "door", 3), "effective");
+  assert.equal(attachBadge(m, "dampen", "door", 3), false);
+  assert.deepEqual(m.cards, { door: ["yellowGate", "effective"] }, "a refused badge changes nothing");
+  attachBadge(m, "hp", "door", 3);
+  assert.equal(attachConflict(m, "blueAtLeast", "door", 3), "yellowGate", "a full card's bottom one gives way, but the gate above stays");
+  assert.equal(attachConflict(m, "dampen", "door", 2), undefined, "with two slots Effective is the bottom one, so Dampen replaces it");
+  // A save or run holding a conflicting pair keeps only the first.
+  const raw = { owned, cards: { door: ["yellowGate", "blueAtLeast", "hp"], stairs: ["effective", "dampen"] } };
+  assert.deepEqual(decodeBadges(raw, UPGRADES, 2).cards, { door: ["yellowGate", "hp"], stairs: ["effective"] });
+  assert.deepEqual(decodeBadges(raw, UPGRADES, 1).cards, { door: ["yellowGate"], stairs: ["effective"] }, "no more than the slots");
+  assert.equal(validRunBadges({ door: [{ id: "effective", level: 1, pick: 0 }, { id: "dampen", level: 1, pick: 0 }] }), false);
+  assert.ok(validRunBadges({ door: [{ id: "effective", level: 1, pick: 0 }, { id: "hp", level: 1, pick: 0 }] }));
+});
+
+test("the desk fills the slots Badge Slots opens and refuses a conflict", () => {
+  const g = new Game(defaults());
+  g.newRun({ outside: true });
+  g.save.upgrades.cardBadges = 1;
+  for (const id of ["hp", "xp", "hpGate", "yellowAtLeast"] as const) g.save.badges.owned[id] = { copies: 1, pick: 0 };
+  assert.ok(g.badges.attach("hp", "stairs"));
+  assert.ok(g.badges.attach("xp", "stairs"));
+  assert.deepEqual(g.save.badges.cards.stairs, ["xp"], "one slot: XP takes HP's place");
+  g.save.archives.levels.badgeSlots = 1;
+  assert.ok(g.badges.attach("hpGate", "stairs"));
+  assert.deepEqual(g.save.badges.cards.stairs, ["xp", "hpGate"]);
+  g.save.archives.levels.badgeSlots = 2;
+  assert.equal(g.badges.conflict("yellowAtLeast", "stairs"), "hpGate");
+  assert.equal(g.badges.attach("yellowAtLeast", "stairs"), false);
+  g.save.hand = ["stairs"];
+  g.newRun();
+  assert.deepEqual(g.run.badges?.stairs?.map((b) => b.id), ["xp", "hpGate"], "the run takes both");
 });
 
 // --- In a run ---
@@ -176,9 +261,10 @@ const TILES: Record<string, Tile> = {
   "#": { kind: "wall" }, S: { kind: "stairs" }, P: { kind: "potion" }, K: { kind: "key", color: "yellow" },
   M: { kind: "enemy", enemy: WEAK }, D: { kind: "door", color: "yellow" }, A: { kind: "attack" },
 };
-/** Gives card `card` badge `id` at `level` (a gate's threshold `pick`). */
+/** Gives card `card` badge `id` at `level` (a gate's threshold `pick`),
+ * in its next slot. */
 function badge(g: Game, card: CardId, id: BadgeId, level = 1, pick = 0) {
-  g.run.badges = { ...g.run.badges, [card]: { id, level, pick } };
+  g.run.badges = { ...g.run.badges, [card]: [...(g.run.badges?.[card] ?? []), { id, level, pick }] };
 }
 const at = (g: Game) => [g.run.player.x, g.run.player.y];
 const turns = (g: Game, n: number) => { for (let i = 0; i < n; i++) g.autoTurn(); };
@@ -253,6 +339,24 @@ test("activation pays when the card reaches its target: HP, HP %, Silver, XP sca
   badge(p, "atkUp", "hpPercent", 5);
   turns(p, 2);
   assert.equal(p.run.player.hp, 10 + p.run.player.maxHp * 0.05);
+});
+
+test("a card's badges work together: every reward pays, and any gate closes it", () => {
+  const g = floor(["@.A"]);
+  g.run.hand = ["atkUp"];
+  badge(g, "atkUp", "silverTouch", 3);
+  badge(g, "atkUp", "hp", 2);
+  const silver = g.silver, maxHp = g.run.player.maxHp;
+  turns(g, 2);
+  assert.equal(g.silver, silver + 3, "Silver Touch pays");
+  assert.equal(g.run.player.maxHp, maxHp + 4, "and Max HP too");
+  const h = floor(["@.A"]);
+  h.run.hand = ["atkUp"];
+  badge(h, "atkUp", "stairward");
+  badge(h, "atkUp", "hpGate");
+  assert.deepEqual(h.cardRules("atkUp"), { stairward: true, closed: true }, "full HP isn't below 100%: closed, whatever else it does");
+  h.run.player.hp = 1;
+  assert.deepEqual(h.cardRules("atkUp"), { stairward: true, closed: false });
 });
 
 test("Gold Touch pays once a target, even after undo", () => {
