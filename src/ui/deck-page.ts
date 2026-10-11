@@ -602,8 +602,8 @@ export class DeckPage {
     this.ctx.confirm(
       {
         title: "Buy a hand slot?",
-        body: `Spend ${price} Gems on one more hand slot: your hand will hold ${handSlots(game.save) + 1} cards.`,
-        label: `Buy · ${price} Gems`,
+        body: `Spend ${gemIcon()} <b>${price}</b> on one more hand slot: your hand will hold ${handSlots(game.save) + 1} cards.`,
+        label: `Buy · ${gemIcon()} <b>${price}</b>`,
         cancel: "Cancel",
       },
       () => {
