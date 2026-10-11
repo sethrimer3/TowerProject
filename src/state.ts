@@ -51,7 +51,7 @@ import { World, LAYOUT_VERSION } from "./delve/world.ts";
 import { RoomWorld, TOWER_LAYOUT_VERSION } from "./tower/room-world.ts";
 import type { Board } from "./board.ts";
 import { bout, guaranteedCrits, heroHpAfter, heroHpDuring, resume, REVIVE_MS, revivals, summarize, type Bout, type CritRule, type Crits, type Revival } from "./combat.ts";
-import { HEART_DOOR_HP, healAfterVictory, isLethal, regenerate, resolveStep, type StepBlocked, type StepEffect, type StepRules, shardGain } from "./step-effects.ts";
+import { HEART_DOOR_HP, healAfterVictory, isLethal, regenerate, resolveStep, type StepBlocked, type StepEffect, type StepRules, shardStat } from "./step-effects.ts";
 import { OUTSIDE_START_Y, OutsideWorld } from "./outside.ts";
 import { AREA_BURST_MS, AreaLedger, chestReward, CLEARED_INSPIRATION, type AreaReward } from "./tower/area-ledger.ts";
 import { TowerClimb } from "./tower/climb.ts";
@@ -1125,7 +1125,9 @@ export class Game {
     const worn = this.worn, potionHeal = raised(researched(this.save.archives, "potionHeal", 100), worn.potionHeal);
     const crit = this.crit;
     return { potionHeal, percentPotion: potionPercent(this.trainingNow), regen,
-      heartToll: researched(this.save.archives, "heartToll", 100), keyCost: this.keyCost, ...(worn.victoryHeal ? { victoryHeal: worn.victoryHeal } : {}), ...(crit ? { crit } : {}) };
+      heartToll: researched(this.save.archives, "heartToll", 100), keyCost: this.keyCost,
+      shardAttack: researched(this.save.archives, "shardAttackPercent", 100), shardDefense: researched(this.save.archives, "shardDefensePercent", 100),
+      ...(worn.victoryHeal ? { victoryHeal: worn.victoryHeal } : {}), ...(crit ? { crit } : {}) };
   }
   /** The hero's critical strikes now (Critical, Crit % and Crit x training
    * and research, the run's Silver ranks counting), read when a fight is
@@ -1944,7 +1946,7 @@ export class Game {
   }
   /** Pickup rewards and treasure payouts; stats were already applied. */
   private collect(t: Tile, x: number, y: number, outcome: StepEffect) {
-    const text = pickupText(t, outcome);
+    const text = pickupText(t, outcome, this.stepRules);
     if (text) {
       this.gain(x, y, text, { tile: { ...t } });
       if (t.kind === "potion") this.recordHeal(outcome.healed);
@@ -2211,13 +2213,13 @@ function equipmentTexts(loot: EquipmentLoot | null) {
 const coinsText = (gold: number, silver: number) => [...(gold ? [`+${wholeChange(gold)} Gold`] : []), `+${wholeChange(silver)} Silver`];
 
 /** What picking up `t` shows: the key, the HP a potion healed, or the
- * shard's stat; null for anything else. */
-function pickupText(t: Tile, outcome: StepEffect) {
+ * shard's stat under `rules`; null for anything else. */
+function pickupText(t: Tile, outcome: StepEffect, rules: StepRules) {
   switch (t.kind) {
     case "key": return `+${keyCount(outcome.keyAmount ?? 1)} ${t.color} key`;
     case "potion": return `+${wholeChange(outcome.healed)} HP`;
-    case "attack": return `+${enemyStat(shardGain(t))} attack`;
-    case "defense": return `+${enemyStat(shardGain(t))} defense`;
+    case "attack": return `+${enemyStat(shardStat(t, rules))} attack`;
+    case "defense": return `+${enemyStat(shardStat(t, rules))} defense`;
     default: return null;
   }
 }

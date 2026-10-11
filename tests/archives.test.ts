@@ -262,7 +262,7 @@ test("Potion HP: +3% a level for 100 levels; quick first levels, then 100m + m³
   assert.equal(levels.reduce((sum, l) => sum + l.gold, 0), 22_144_096);
   assert.deepEqual(levels.slice(0, 4).map((l) => duration(defaultArchives(), l)), [15_000, 60_000, 300_000, 600_000]);
   assert.ok(levels.every((l) => l.effect.target === "potionHeal" && l.effect.op === "add" && l.effect.value === 3));
-  assert.deepEqual(RESEARCH_IDS.slice(0, 9), ["researchSpeed", "researchCostDiscount", "potionHp", "regen", "attack", "critChance", "critFactor", "defense", "maxHp"], "after the Archives' own two, Regen beside it, then the stats' (the crits beside ATK)");
+  assert.deepEqual(RESEARCH_IDS.slice(0, 9), ["researchSpeed", "researchCostDiscount", "potionHp", "regen", "attack", "critChance", "critFactor", "shardAttack", "defense"], "after the Archives' own two, Regen beside it, then the stats' (the crits and Shard ATK beside ATK)");
   assert.deepEqual(RESEARCH.potionHp.categories, ["defense"]);
 });
 
@@ -326,6 +326,35 @@ test("Potion HP needs Greater Heal, and every level strengthens potions at once,
   save.archives.levels.potionHp = 100;
   assert.equal(g.stepRules.potionHeal, 400);
   assert.equal(researched(save.archives, "potionHeal", 100), 400);
+});
+
+test("Shard ATK and Shard DEF open with Tower II's floor 20 and 30 Goals, cost what Potion HP does, and raise every shard picked up at once", () => {
+  const save = owner();
+  save.upgrades.delve = 1;
+  const g = new Game(save);
+  g.switchMode("delve");
+  for (const [id, target, value] of [["shardAttack", "shardAttackPercent", 2], ["shardDefense", "shardDefensePercent", 3]] as const) {
+    assert.deepEqual(RESEARCH[id].levels.map(({ gold, hours }) => [gold, hours]), RESEARCH.potionHp.levels.map(({ gold, hours }) => [gold, hours]));
+    assert.ok(RESEARCH[id].levels.every((l) => l.effect.target === target && l.effect.op === "add" && l.effect.value === value));
+    assert.equal(status(save, id), "locked");
+  }
+  save.goals.claimed[2] = [20];
+  assert.deepEqual([status(save, "shardAttack"), status(save, "shardDefense")], ["available", "locked"]);
+  save.goals.claimed[2] = [20, 30];
+  assert.equal(status(save, "shardDefense"), "available");
+  assert.deepEqual(RESEARCH.shardDefense.categories, ["defense"]);
+  // Read at the step, so a level completed mid-run counts on the next shard.
+  const p = g.run.player, { attack, defense } = p;
+  save.archives.levels.shardAttack = 50;
+  g.world.changes["15,1"] = { kind: "attack" };
+  assert.ok(g.move(0, 1));
+  assert.equal(g.run.player.attack, attack + 2, "+100% at level 50");
+  save.archives.levels.shardDefense = 10;
+  g.world.changes["15,2"] = { kind: "defense", amount: 10 };
+  assert.ok(g.move(0, 1));
+  assert.equal(g.run.player.defense, defense + 13, "+30% at level 10, on a later tier's shard");
+  save.archives.levels.shardAttack = 100;
+  assert.deepEqual([g.stepRules.shardAttack, g.stepRules.shardDefense], [300, 130]);
 });
 
 test("the Game's research commands need the Archives skill", () => {

@@ -2,7 +2,7 @@ import { enemyStat, keyCount, whole, wholeChange, wholeHp } from "../whole.ts";
 import type { Enemy, Kind, Player, Tile } from "../entities.ts";
 import { enemyTitle } from "../scaling.ts";
 import type { Game, RouteEffects } from "../state.ts";
-import { resolveStep, shardGain } from "../step-effects.ts";
+import { resolveStep, shardStat } from "../step-effects.ts";
 import { attackForFewerHits, netDamage, predict, type CombatPrediction } from "../combat.ts";
 import { forecast as critForecast, type CritForecast } from "../crit-forecast.ts";
 import { goalUnlocked } from "../goals.ts";
@@ -135,8 +135,8 @@ const DESCRIBE: Partial<Record<Kind, Describe>> = {
   stairs,
   stairsDown: stairs,
   floor: (_t, _p, g) => ({ title: "Floor", body: MODES[g.mode].words.floor }),
-  attack: (t) => ({ title: "Attack Shard", body: `Raises ATK by ${enemyStat(shardGain(t))} for this run.` }),
-  defense: (t) => ({ title: "Defense Shard", body: `Raises DEF by ${enemyStat(shardGain(t))} for this run.` }),
+  attack: (t, _p, g) => ({ title: "Attack Shard", body: `Raises ATK by ${enemyStat(shardStat(t, g.stepRules))} for this run.` }),
+  defense: (t, _p, g) => ({ title: "Defense Shard", body: `Raises DEF by ${enemyStat(shardStat(t, g.stepRules))} for this run.` }),
   treasure: () => ({ title: "Treasure", body: "Contains gold and crafting materials." }),
   reward: (t) => chestReward(t.tier) === "mastered"
     ? { title: "Mastery Chest", body: "The area below was climbed without taking damage: the next checkpoint can be warped to." }

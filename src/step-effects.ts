@@ -65,12 +65,19 @@ export type StepRules = {
   /** How much of a key each key colour a door takes costs, in tenths of a
    * percent (Key Efficiency research), 1,000 when absent. */
   keyCost?: number;
+  /** The percent of its stat an ATK or DEF shard gives (Shard ATK and
+   * Shard DEF research), 100 when absent. */
+  shardAttack?: number;
+  shardDefense?: number;
   /** The hero's critical strikes (Critical): resolving a fight counts only
    * the applications it is certain to land (chance of 100% or more), the
    * worst it can go; `Game` plays the real rolls out over it. */
   crit?: CritRule;
 };
 export const BASE_RULES: StepRules = { potionHeal: 100, percentPotion: 0, regen: 0 };
+/** What the ATK or DEF shard `tile` raises its stat by under `rules`, rounded. */
+export const shardStat = (tile: Tile, rules: StepRules) =>
+  snap((shardGain(tile) * ((tile.kind === "attack" ? rules.shardAttack : rules.shardDefense) ?? 100)) / 100);
 /** The HP a potion of `amount` restores under `rules`, rounded. */
 export const potionHeal = (amount: number, rules: StepRules) => snap((amount * rules.potionHeal) / 100);
 
@@ -132,10 +139,10 @@ export function resolveStep(player: Player, tile: Tile, rules: StepRules = BASE_
       break;
     }
     case "attack":
-      next.attack = snap(next.attack + scaled(shardGain(tile)));
+      next.attack = snap(next.attack + scaled(shardStat(tile, rules)));
       break;
     case "defense":
-      next.defense = snap(next.defense + scaled(shardGain(tile)));
+      next.defense = snap(next.defense + scaled(shardStat(tile, rules)));
       break;
   }
   // Regen comes after the step's fight, door or pickup.

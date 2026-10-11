@@ -20,13 +20,15 @@ import { TIERS } from "./tiers.ts";
  * by its share of the hero's HP) and Equipment (the Blacksmith, equipment
  * and its materials) and the Tournament (twice-weekly global competition
  * in the Delve, docs/TOURNAMENT.md) and Research Speed (the Archives'
- * project that shortens every research). */
+ * project that shortens every research), Shard ATK and Shard DEF (Tower II:
+ * the Archives' projects that raise what each ATK or DEF shard gives). */
 export type GoalUnlock =
-  | "damagePrediction" | "combatForecast" | "attackLore" | "warp" | "damageVisual" | "relativeDamageColor" | "equipment" | "tournament" | "researchSpeed";
+  | "damagePrediction" | "combatForecast" | "attackLore" | "warp" | "damageVisual" | "relativeDamageColor" | "equipment" | "tournament" | "researchSpeed"
+  | "shardAttack" | "shardDefense";
 export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   damagePrediction: "Damage Prediction", combatForecast: "Combat Forecast", attackLore: "Attack Lore", warp: "Warp", damageVisual: "Damage Visual",
   relativeDamageColor: "Relative Damage Color", equipment: "Equipment", tournament: "Tournament",
-  researchSpeed: "Research Speed",
+  researchSpeed: "Research Speed", shardAttack: "Shard ATK", shardDefense: "Shard DEF",
 };
 /** What a checkpoint pays: an unlock, the next tower opened, or an amount of a currency. */
 export type GoalReward =
@@ -61,6 +63,8 @@ const TOWER_ONE: Record<number, Omit<Checkpoint, "floor">> = {
 /** Tower II's checkpoints that differ from the stub: an unlock each. */
 const TOWER_TWO: Record<number, Omit<Checkpoint, "floor">> = {
   10: { reward: unlock("relativeDamageColor"), premium: gems(10) },
+  20: { reward: unlock("shardAttack"), premium: gems(20) },
+  30: { reward: unlock("shardDefense"), premium: gems(30) },
   40: { reward: unlock("warp"), premium: gems(40) },
 };
 /** The checkpoint floor whose reward opens the next tower. */

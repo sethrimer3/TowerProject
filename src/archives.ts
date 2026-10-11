@@ -63,6 +63,10 @@ export const RESEARCH_TARGETS = {
   attackPercent: { name: "ATK", base: 100, shown: percent },
   /** The percent of the DEF a run starts with that the hero has, from 100. */
   defensePercent: { name: "DEF", base: 100, shown: percent },
+  /** The percent of its ATK an ATK shard gives, from 100. */
+  shardAttackPercent: { name: "Shard ATK", base: 100, shown: percent },
+  /** The percent of its DEF a DEF shard gives, from 100. */
+  shardDefensePercent: { name: "Shard DEF", base: 100, shown: percent },
   /** The percent of the Crit % training's chance that the hero has, from 100. */
   critChancePercent: { name: "Critical Chance", base: 100, shown: percent },
   /** The percent of the Crit x training's factor that the hero has, from 100. */
@@ -152,7 +156,9 @@ const countLevels = (target: ResearchTarget, length = 9, value = 1) => Array.fro
 
 /** Potion HP (+3% potion healing a level), Regen (+3% of the HP Regen
  * training gives a step, a level), ATK (+2% a level), DEF and Max HP (+3%
- * a level), Shroud (+4% a level, to ×5), Gold / Floor (+5% of the Gold a new
+ * a level), Shard ATK (+2% of what each ATK shard gives, a level), Shard DEF
+ * (+3% of what each DEF shard gives, a level), Shroud (+4% a level, to
+ * ×5), Gold / Floor (+5% of the Gold a new
  * floor pays a level) and Pocket Money (+5 starting Silver a level), for
  * 100 levels each. The first four
  * are quick, to draw players in (15 s for 10 Gold, 1 min for 25, 5 min for
@@ -335,12 +341,26 @@ export const RESEARCH = {
     requires: [{ upgrade: "critical" }],
     levels: critLevels("critFactorPercent"),
   },
+  shardAttack: {
+    name: "Shard ATK",
+    description: "Learn to draw more from every ATK shard: each one a run picks up raises ATK by more.",
+    categories: ["offense"],
+    requires: [{ upgrade: "archives" }, { goalUnlock: "shardAttack" }],
+    levels: hundredLevels("shardAttackPercent", 2),
+  },
   defense: {
     name: "DEF",
     description: "Study the old climbers' guard: the hero starts every run with more DEF.",
     categories: ["defense"],
     requires: [{ upgrade: "archives" }],
     levels: hundredLevels("defensePercent", 3),
+  },
+  shardDefense: {
+    name: "Shard DEF",
+    description: "Learn to draw more from every DEF shard: each one a run picks up raises DEF by more.",
+    categories: ["defense"],
+    requires: [{ upgrade: "archives" }, { goalUnlock: "shardDefense" }],
+    levels: hundredLevels("shardDefensePercent", 3),
   },
   maxHp: {
     name: "Max HP",
