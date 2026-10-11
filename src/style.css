@@ -3075,6 +3075,7 @@ dialog.dismiss-anywhere { cursor: pointer; }
 .archivist .archivist-rush { display: inline-flex; align-items: center; justify-content: center; gap: 4px; border: 1px solid #5fc4ee; background: radial-gradient(circle at 50% 40%, #1d4a63, #0d1f2b 75%); color: #bff2ff; text-shadow: 0 1px 2px #000; }
 .archivist-rush .gem-icon { width: 14px; height: 14px; filter: drop-shadow(0 0 3px #8fe6ff99); }
 .archivist-rush b { color: #fff; }
+.archivist-who { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .archivist-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
 .archivist-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; }
 .archivist-auto { display: flex; align-items: center; gap: 3px; cursor: pointer; }
