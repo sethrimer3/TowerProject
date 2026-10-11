@@ -20,4 +20,4 @@ Nothing else is locked meanwhile; tests that play the hand from a new game start
 It sets `globalThis.__handStartsPaused` and `__handHeld` (read by `frame-loop.ts`: the frame loop never runs the hand's turns), so pressing play or a card's Focus changes the HUD but no step can land between a snapshot's checks.
 As with the render golden, regenerate it with `UPDATE_GOLDEN=1` on the unchanged code before a UI change (HTML goes to `test-results/ui*/`).
 `archives-ambient.ts` paints the Archives tab's backdrop on a canvas behind the archivists (`startArchivesAmbient`, started by `ArchivesPanel.bind`): dim dust motes, and, while an archivist is researching, parallel slanted sunrays fading toward the bottom that swell and dim like passing clouds, the motes twinkling as they cross one; it draws from the `effects` stream, stops when the canvas leaves the page, and keeps one still frame under reduced motion.
-Potion % and Find Potion training sit in the Utility group (`TRAINING` in `config.ts`).
+Potion % and Find Potion training sit in the Utility group, last, after the Free Up rows (`TRAINING` in `config.ts`), on the Training tab and the run's Utility cards alike.

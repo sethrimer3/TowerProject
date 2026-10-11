@@ -579,8 +579,6 @@ export const TRAINING = [
   { id: "defense", name: "DEF", group: "defense", stat: "defense", curve: { per: 0, square: 1 / 12 }, cost: 1, max: 6000, description: "Raises DEF, taken off the damage of every enemy strike." },
   { id: "regen", name: "Regen", group: "defense", stat: "regen", curve: { per: 0.1, square: 1 / 120 }, cost: 1, max: 6000, requires: "regen", description: "Raises the HP regained with every step taken in a run." },
   { id: "shroud", name: "Shroud", group: "defense", stat: "shroud", curve: { per: 5, square: 0.1, fourth: 0.0000064 }, cost: 1, max: 5000, requires: "shroud", description: "Raises the damage the shroud blocks at the start of every fight." },
-  { id: "potion", name: "Potion %", group: "utility", requires: "recovery", cost: 1, max: 300, description: "Percent potions restore more of your maximum HP." },
-  { id: "findPotion", name: "Find Potion", group: "utility", requires: "findPotion", cost: 1, max: 72, description: "More of the potions found are percent potions." },
   { id: "lifesteal", name: "Lifesteal", group: "defense", stat: "lifesteal", curve: { per: 0.1005, square: -0.0005 }, cost: 1, max: 80, requires: "lifesteal", description: "Raises the share of the damage each of your strikes deals that is restored to you as HP." },
   { id: "thorns", name: "Thorn Damage", short: "Thorns", group: "defense", stat: "thorns", curve: { per: 1 }, cost: 1, max: 99, requires: "thorns", description: "Each enemy strike costs the enemy this share of its max HP, half against bosses and Greater Bosses." },
   { id: "parryChance", name: "Parry Chance", group: "defense", stat: "parryChance", curve: { per: 1 }, cost: 1, max: 100, requires: "evade", description: "Raises the chance each enemy strike is parried." },
@@ -593,6 +591,8 @@ export const TRAINING = [
   { id: "freeOffense", name: "Free Offense Up", group: "utility", requires: "freeTraining", cost: 1, max: 100, description: "Each floor passed in a run has a chance to train a random Offense stat one level for free, for the run." },
   { id: "freeDefense", name: "Free Defense Up", group: "utility", requires: "freeTraining", cost: 1, max: 100, description: "Each floor passed in a run has a chance to train a random Defense stat one level for free, for the run." },
   { id: "freeUtility", name: "Free Utility Up", group: "utility", requires: "freeTraining", cost: 1, max: 100, description: "Each floor passed in a run has a chance to train a random Utility stat one level for free, for the run." },
+  { id: "potion", name: "Potion %", group: "utility", requires: "recovery", cost: 1, max: 300, description: "Percent potions restore more of your maximum HP." },
+  { id: "findPotion", name: "Find Potion", group: "utility", requires: "findPotion", cost: 1, max: 72, description: "More of the potions found are percent potions." },
 ] as const;
 export type TrainingId = (typeof TRAINING)[number]["id"];
 export type TrainingRow = (typeof TRAINING)[number];
