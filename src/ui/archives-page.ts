@@ -199,7 +199,7 @@ export class ArchivesPanel {
     if (price === undefined) return;
     if (this.hireShort()) return askForGems(this.ctx);
     this.ctx.confirm(
-      { title: "Hire an archivist?", body: `Spend ${price} Gems on one more archivist: one more research runs at once.`, label: `Hire · ${price} Gems`, cancel: "Cancel" },
+      { title: "Hire an archivist?", body: `Spend ${gemIcon()} <b>${price}</b> on one more archivist: one more research runs at once.`, label: `Hire · ${gemIcon()} <b>${price}</b>`, cancel: "Cancel" },
       () => act(game.research.hire()),
     );
   }
