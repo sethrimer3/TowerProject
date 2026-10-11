@@ -328,7 +328,7 @@ export class ResearchPage {
 
   /** The training boost: ×2, its time left or "Inactive", and the button
    * that claims an hour more, up to four (closed while what is stored is
-   * within ten minutes of that); none once the Special Coin Pack runs it
+   * within ten minutes of that); none once Ad-Disable or the Special Coin Pack runs it
    * for good, `speedHtml` saying so instead. */
   private boostHtml() {
     const game = this.ctx.game;
@@ -339,7 +339,7 @@ export class ResearchPage {
   }
 
   /** The Shop's permanent training speed, glowing on the trainers' row:
-   * ×2 for the Special Coin Pack's boost, ×3 for the Premium Coin Pack's,
+   * ×2 for Ad-Disable's or the Special Coin Pack's boost, ×3 for the Premium Coin Pack's,
    * ×6 for both; nothing without either. */
   private speedHtml() {
     const save = this.ctx.game.save, speed = (permanentBoost(save) ? BOOST_RATE : 1) * trainingRate(save);

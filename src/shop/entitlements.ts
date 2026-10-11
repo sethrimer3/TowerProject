@@ -10,7 +10,8 @@ export type Entitlement = {
   name: string;
   /** Multiplies every Gold the hero banks; all of them multiply together. */
   goldFactor: number;
-  /** No ads: whatever an ad would pay for is given straight away. */
+  /** No ads: whatever an ad would pay for is given straight away (the
+   * trainers' boost among them: see `permanentBoost`). */
   adsOff?: true;
   /** The trainers' ×2 boost runs for good. */
   permanentBoost?: true;
@@ -20,7 +21,7 @@ export type Entitlement = {
 };
 
 export const ENTITLEMENTS: Record<EntitlementId, Entitlement> = {
-  adFree: { name: "Permanent Ad-Disable", goldFactor: 1.5, adsOff: true },
+  adFree: { name: "Permanent Ad-Disable", goldFactor: 1.5, adsOff: true, permanentBoost: true },
   coins2: { name: "Special Coin Pack", goldFactor: 2, permanentBoost: true },
   coins3: { name: "Premium Coin Pack", goldFactor: 3, trainingRate: 3 },
   // The Premium Passes open the Goals screen's premium rewards (goals.ts),

@@ -2129,7 +2129,7 @@ export class Game {
     const pace = this.training.pace;
     const t = purchase(this.save, o, serverNow, this.payment(paid));
     if (typeof t === "string") return t;
-    // A Coin Pack's training speed starts from now.
+    // A pack's training speed starts from now.
     this.training.repace(pace);
     // Ad-Disable's ×1.5 Gold is for good: the Gold ad's stored time goes.
     if (adsOff(this.save)) this.save.goldBoostUntil = 0;

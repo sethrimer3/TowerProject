@@ -10,7 +10,7 @@ import { unlockAt } from "../goals.ts";
 import { tierNumeral } from "../tiers.ts";
 import type { AppContext } from "./app.ts";
 import { currencyAmount } from "./hud.ts";
-import { el, gemCount, gemIcon, uiSprite } from "./dom.ts";
+import { el, gemCount, gemIcon, redoIcon, uiSprite } from "./dom.ts";
 import { askForGems, helpButton, showHelp } from "./dialogs.ts";
 
 /** `ms` as the largest two units: "2d 4h", "7h 41m", "12m 5s", "3s". */
@@ -210,7 +210,7 @@ export class ArchivesPanel {
     showHelp(this.ctx, "UPGRADES", "Archives",
       p("Archivists research projects whose effects last between runs. Pick an idle archivist to choose its research; each level costs Gold and takes time.") +
       p("Research goes on while you play or are away. Each archivist works on one project at a time; Gems hire more.") +
-      p("Auto-continue starts the project's next level as soon as one completes, when the Gold is there. Stop gives the Gold back and keeps the time spent for later; Gems finish a level at once.") +
+      p(`Auto-continue (${redoIcon("redo-icon help-redo")}) starts the project's next level as soon as one completes, when the Gold is there. Stop gives the Gold back and keeps the time spent for later; Gems finish a level at once.`) +
       p("History lists every level completed."));
   }
 
@@ -232,7 +232,7 @@ export class ArchivesPanel {
       const slot = a.slots[i], title = `<small>ARCHIVIST ${i + 1}</small>`;
       if (!slot)
         return `<article class="archivist hire" role="listitem">${title}<button class="archivist-hire${this.hireShort() ? " short" : ""}" data-hire aria-label="Hire an archivist for ${price} Gems" title="${this.hireShort() ? `Needs ${price} Gems` : "One more research runs at once"}">Hire · ${gemIcon()} <b>${price}</b></button></article>`;
-      const auto = `<label class="archivist-auto"><input type="checkbox" data-auto="${i}" ${slot.autoContinue ? "checked" : ""}> Auto-continue</label>`;
+      const auto = `<label class="archivist-auto" title="Auto-continue: start the project's next level as soon as one completes"><input type="checkbox" data-auto="${i}" ${slot.autoContinue ? "checked" : ""} aria-label="Auto-continue archivist ${i + 1}: start the project's next level as soon as one completes">${redoIcon()}</label>`;
       const job = slot.job;
       if (!job) return `<article class="archivist idle" role="listitem" data-pick="${i}">${title}<button class="archivist-pick" aria-label="Select research for archivist ${i + 1}">Idle · Select research</button>${auto}</article>`;
       const def = RESEARCH[job.research], done = jobProgress(job, now);

@@ -222,7 +222,7 @@ export class TrainingDesk {
     return { until: this.save.trainingBoostUntil, rate: trainingRate(this.save) };
   }
 
-  /** After a Shop purchase that went at `before`: the Special Coin Pack's
+  /** After a Shop purchase that went at `before`: Ad-Disable's or the Special Coin Pack's
    * ×2 boost runs for good from now, and each rank in training is due when
    * its training left is done at the new pace (the Premium Coin Pack's ×3). */
   repace(before: { until: number; rate: number }) {

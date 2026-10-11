@@ -133,7 +133,8 @@ test("one-time packs are bought once, kept by an erase, grant their Gems and mul
   assert.ok(h.gains.some((gain) => gain.text === "+18 Gold"));
 });
 
-test("the Special Coin Pack runs the trainers' ×2 boost for good, ranks already training included", () => {
+for (const [id, name] of [["adFree", "Ad-Disable"], ["coins2", "the Special Coin Pack"]] as const)
+test(`${name} runs the trainers' ×2 boost for good, ranks already training included`, () => {
   const g = new Game(defaults());
   g.save.upgrades.trainers = 1;
   g.newRun({ outside: true });
@@ -145,10 +146,7 @@ test("the Special Coin Pack runs the trainers' ×2 boost for good, ranks already
   assert.ok(g.training.trainWithGold("hp"));
   now += 5000;
   const left = g.training.left("hp");
-  assert.equal(g.buyOffer("adFree", NOON, true), null);
-  assert.ok(!permanentBoost(g.save), "Ad-Disable doesn't");
-  assert.equal(g.training.left("hp"), left);
-  assert.equal(g.buyOffer("coins2", NOON, true), null);
+  assert.equal(g.buyOffer(id, NOON, true), null);
   assert.ok(permanentBoost(g.save));
   assert.equal(g.save.trainingBoostUntil, BOOST_FOREVER);
   assert.equal(g.save.trainingJobs[0].completesAt, now + left / 2, "what was left goes twice as fast");
