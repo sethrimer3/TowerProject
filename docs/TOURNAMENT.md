@@ -4,7 +4,7 @@ Status: **the build order is built** (the rules, save and stub server, the tourn
 
 ## Summary
 
-- Tower I's floor 70 Goal becomes **Unlock the Tournament** (a new `GoalUnlock`, `tournament`).
+- Tower I's floor 60 Goal (moved there from floor 70) is **Unlock the Tournament** (a new `GoalUnlock`, `tournament`).
 - Once it is claimed, a **Tournament Hall** stands at the top right of the forest clearing (both forests, every tier), with a trophy banner on its roof, and a **Tournament button** (trophy) stands under Settings in the forest.
 - A tournament opens every **Wednesday and Saturday, 00:00 to 24:00 GMT**, on the server's clock. Entries close at the end of the day; runs already inside get **4 more hours**; then the server tabulates the final results.
 - Each player belongs to one **league**: Copper, Silver, Gold, Platinum, Champion. A tournament run is a **Delve run in cave 1, 3, 5, 7 or 9** by league (shown as *Delve 1+*, *3+* …), with every enemy's stats ×1.1. Every entrant plays from the **same server seeds**. The **score is the depth reached**, ranked against the league worldwide.
@@ -122,11 +122,11 @@ Each entry spends one Ticket. A player may enter as often as they have Tickets; 
 
 ## Screens and controls
 
-**Goals:** Tower I floor 70 reads *Unlock the Tournament*. Claiming it shows what it does (the hall, the button, Tickets) and offers to open the Tournament page, as Equipment's claim offers the Blacksmith.
+**Goals:** Tower I floor 60 reads *Unlock the Tournament*. Claiming it shows what it does (the hall, the button, Tickets) and offers to open the Tournament page, as Equipment's claim offers the Blacksmith.
 
-**Forest — Tournament Hall:** `TOURNAMENT_HALL` in `outside.ts`, mirroring `BLACKSMITH` across the path (`{ dx: 4, width: 3, y: 8, height: 3 }`) with a yard cleared round it; `OutsideWorld` takes a `hall` flag beside `blacksmith` (Tower I's floor 70 Goal claimed; Dev mode alone doesn't raise it), `isTournamentHall(x, y)`, and `drawTournamentHall` paints a pale stone hall under a blue roof, its lit doorway toward the path, with a pennant bearing a trophy on its gable. `Game.atTournamentHall`, from `BoardOverlay.tap`, opens the Tournament page. Claiming the Goal in the forest raises it at once.
+**Forest — Tournament Hall:** `TOURNAMENT_HALL` in `outside.ts`, mirroring `BLACKSMITH` across the path (`{ dx: 4, width: 3, y: 8, height: 3 }`) with a yard cleared round it; `OutsideWorld` takes a `hall` flag beside `blacksmith` (Tower I's floor 60 Goal claimed; Dev mode alone doesn't raise it), `isTournamentHall(x, y)`, and `drawTournamentHall` paints a pale stone hall under a blue roof, its lit doorway toward the path, with a pennant bearing a trophy on its gable. `Game.atTournamentHall`, from `BoardOverlay.tap`, opens the Tournament page. Claiming the Goal in the forest raises it at once.
 
-**HUD — Tournament button:** `#tournament-button` (trophy icon), at the top of the forest's actions column, over Settings, labelled with the phase (`2d5h` until the next opens, `OPEN`, `ENDING`, `CLAIM`), refreshed by the once-a-second tick (`renderTournamentButton` in `ui/hud.ts`). A dot while a final prize waits to be claimed (worn by the run menu's hamburger too). Inside a run, it goes into the run menu (`.run-menu-items`, before End Run) once the player has entered the current tournament, and is gone otherwise.
+**HUD — Tournament button:** `#tournament-button` (trophy icon), in the forest's actions column under the hamburger, always in sight, labelled with the phase (`2d5h` until the next opens, `OPEN`, `ENDING`, `CLAIM`), refreshed by the once-a-second tick (`renderTournamentButton` in `ui/hud.ts`). A dot while a final prize waits to be claimed (worn by the run menu's hamburger too). Inside a run, it goes into the run menu (`.run-menu-items`, before Missions; `renderRunMenu` moves it) once the player has entered the current tournament, and is gone otherwise.
 
 **Talking to the server:** the app asks for the live tournament as it starts, as the Tournament page opens, and whenever the tick sees the Tournament unlocked or its phase change (`refreshTournament` in `main.ts`), so a tournament opening while the game is open grants its Ticket, with its celebration; past the grace it asks again each minute until the results are final (`TournamentDesk.awaitingResults`). The server's report counts only while it is of the latest tournament to have opened (`TournamentDesk.live`): once the next opens on the clock, the desk reads the schedule until the server is asked again, so the next shows open even before it answers. Until the server has answered, a tournament past its grace counts as over (`upcoming`), not ending for good.
 
@@ -190,7 +190,7 @@ The confirmed server time is the Shop's (`save.shop`'s clock), shared, so there'
 
 | Where | What |
 |---|---|
-| `src/goals.ts` | `tournament` `GoalUnlock`; Tower I floor 70's reward |
+| `src/goals.ts` | `tournament` `GoalUnlock`; Tower I floor 60's reward |
 | `src/tournament/schedule.ts` | phases, ids and countdowns from a server time |
 | `src/tournament/leagues.ts` | the leagues, their caves, labels and trophies; promotion and demotion zones and the floors no demotion passes |
 | `src/tournament/prizes.ts` | the prize levels and the fallback table, `prizeLevel(percentile)`, `prizeFor(league, level)` |
@@ -217,7 +217,7 @@ The confirmed server time is the Shop's (`save.shop`'s clock), shared, so there'
 2. **The run** (built): begin a tournament run (league cave, server seeds and the run's own streams, ×1.1 enemies, the flag), its score, submission on `finalizeRun`, the end dialog's block.
 3. **Screens** (built, but for Tickets in the purse): the forest hall, the HUD button and its phases, the Tournament page, All prizes, the free Ticket's celebration, the ad and Gem Ticket offers, the run-menu button.
 4. **Ending and claims** (built): the Ending and Results phases (depth counted until the grace ends, the results asked for each minute after it, the final place and league move), *Claim rewards* (`TournamentClient.claim`), expiry, and the next tournament opening over an old report; `tests/tournament-ending.test.ts`.
-5. **Goldens** (built): `ui.golden.json` (the Goals page's floor 70 text, and the UI suite's `tournament` fixture: the button, the page after a tournament's Results, All prizes, then the clock moved on to a new tournament's free Ticket, its Open page, its Results and the claim), `save-decode` (a `tournament` base: the save and a tournament run inside, with its hostile values and edges), a forest with the Blacksmith and the Hall in `LATER_BOARD_SCENES` (`forestHall`: `render-calls`, `render.golden.json`), and `tests/tournament-trace.test.ts` (`tournament-trace.golden.json`: seeded Copper, Silver and Champion runs played by the hand from the stand-in's seeds, pinning the seeds, the ×1.1 enemies and the run's own streams, and two players on different game streams playing the same run).
+5. **Goldens** (built): `ui.golden.json` (the Goals page's floor 60 text, and the UI suite's `tournament` fixture: the button, the page after a tournament's Results, All prizes, then the clock moved on to a new tournament's free Ticket, its Open page, its Results and the claim), `save-decode` (a `tournament` base: the save and a tournament run inside, with its hostile values and edges), a forest with the Blacksmith and the Hall in `LATER_BOARD_SCENES` (`forestHall`: `render-calls`, `render.golden.json`), and `tests/tournament-trace.test.ts` (`tournament-trace.golden.json`: seeded Copper, Silver and Champion runs played by the hand from the stand-in's seeds, pinning the seeds, the ×1.1 enemies and the run's own streams, and two players on different game streams playing the same run).
 
 ## Future (TODO)
 

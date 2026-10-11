@@ -28,11 +28,11 @@ export const CATEGORIES: Record<CategoryId, Category> = {
   limited: { name: "Limited Offers" },
   special: { name: "One-Time Offers", note: "All coin bonuses are multiplicative and apply forever." },
   gems: { name: "Gems" },
-  // Sold from the Goals screen, not the Shop page.
+  // Sold from the Goals and Events screens, not the Shop page.
   passes: { name: "Premium Passes" },
 };
 
-export type OfferId = "shards300" | "shards750" | "adFree" | "coins2" | "coins3" | "dailyGems" | "gems250" | "gems550" | "gems1150" | "gems2500" | "gems7500" | "pass1" | "pass2" | "pass3";
+export type OfferId = "shards300" | "shards750" | "adFree" | "coins2" | "coins3" | "dailyGems" | "gems250" | "gems550" | "gems1150" | "gems2500" | "gems7500" | "pass1" | "pass2" | "pass3" | "eventBoost";
 export type ShopOffer = {
   id: OfferId;
   name: string;
@@ -107,6 +107,12 @@ export const OFFERS: readonly ShopOffer[] = [
     price: { kind: "money", sku: p.sku, label: p.label }, rarity: "legendary", purchaseLimit: 1,
     effects: [`Premium rewards in Towers ${p.towers.map(tierNumeral).join(", ")}`], tags: ["oneTime"],
   })),
+  // Once each event, sold on the Events page.
+  {
+    id: "eventBoost", name: "Event Booster", category: "passes", item: { kind: "eventBoost" }, quantity: 1,
+    price: { kind: "money", sku: "event_booster", label: "$9.99" }, rarity: "epic", purchaseLimit: null,
+    effects: ["Double this event's Medals", "Opens its premium relics"], tags: ["event"],
+  },
 ];
 
 export const offer = (id: string) => OFFERS.find((o) => o.id === id);

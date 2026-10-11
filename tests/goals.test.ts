@@ -5,23 +5,27 @@ import { Game } from "../src/state.ts";
 import { CHECKPOINTS, PASSES, canWarp, decodeGoals, floorsCompleted, goalState, goalsWaiting, goalUnlocked, passFor, passTotals, unlockFloor, warpUnlocked } from "../src/goals.ts";
 import { TIERS } from "../src/tiers.ts";
 
-test("every tower has a checkpoint each ten floors to 100, then 150 and 200; Tower I's first six pay Damage Prediction, Combat Forecast, Attack Lore, 20 Gems, Damage Visual and Equipment", () => {
+test("every tower has a checkpoint each ten floors to 100, then 150 and 200; Tower I's first eight pay Damage Prediction, Combat Forecast, Attack Lore, 20 Gems, Damage Visual, the Tournament, Events and 30 Gems", () => {
   for (let tower = 1; tower <= TIERS; tower++) {
     assert.deepEqual(CHECKPOINTS[tower]!.map((c) => c.floor), [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 150, 200]);
   }
   const gems = (amount: number) => ({ kind: "currency", currency: "gems", amount });
-  assert.deepEqual(CHECKPOINTS[1]!.slice(0, 6), [
+  assert.deepEqual(CHECKPOINTS[1]!.slice(0, 8), [
     { floor: 10, reward: { kind: "unlock", unlock: "damagePrediction" }, premium: gems(10) },
     { floor: 20, reward: { kind: "unlock", unlock: "combatForecast" }, premium: gems(15) },
     { floor: 30, reward: { kind: "unlock", unlock: "attackLore" }, premium: gems(25) },
     { floor: 40, reward: gems(20), premium: gems(35) },
     { floor: 50, reward: { kind: "unlock", unlock: "damageVisual" }, premium: gems(50) },
-    { floor: 60, reward: { kind: "unlock", unlock: "equipment" }, premium: gems(60) },
+    { floor: 60, reward: { kind: "unlock", unlock: "tournament" }, premium: gems(60) },
+    { floor: 70, reward: { kind: "unlock", unlock: "events" }, premium: gems(70) },
+    { floor: 80, reward: gems(30), premium: gems(80) },
   ]);
   assert.deepEqual(CHECKPOINTS[2]![0], { floor: 10, reward: { kind: "unlock", unlock: "relativeDamageColor" }, premium: gems(10) });
   assert.deepEqual(CHECKPOINTS[2]![1], { floor: 20, reward: { kind: "unlock", unlock: "shardAttack" }, premium: gems(20) });
   assert.deepEqual(CHECKPOINTS[2]![2], { floor: 30, reward: { kind: "unlock", unlock: "shardDefense" }, premium: gems(30) });
   assert.deepEqual(CHECKPOINTS[2]![3]!.reward, { kind: "unlock", unlock: "warp" }, "Warp is Tower II's floor 40");
+  assert.deepEqual(CHECKPOINTS[2]![5]!.reward, { kind: "unlock", unlock: "equipment" }, "Equipment is Tower II's floor 60");
+  assert.deepEqual(CHECKPOINTS[2]![6]!.reward, { kind: "currency", currency: "gold", amount: 10_000 });
   assert.deepEqual(CHECKPOINTS[1]![8], { floor: 90, reward: { kind: "currency", currency: "gold", amount: 2000 }, premium: { kind: "currency", currency: "gold", amount: 10000 } });
   assert.deepEqual(CHECKPOINTS[1]![10]!.reward, { kind: "unlock", unlock: "researchSpeed" });
   assert.deepEqual(CHECKPOINTS[1]![11]!.reward, gems(40));
@@ -79,9 +83,9 @@ test("a reward is claimed once, after its floor is completed; a premium one need
   save.tower.reached = 84; // floor 85 reached: floors 1 to 84 completed
   assert.equal(floorsCompleted(save, 1), 84);
   assert.equal(goalState(save, 1, 80, false), "ready");
-  const gold = save.gold;
-  assert.deepEqual(g.claimGoal(1, 80, false), { kind: "currency", currency: "gold", amount: 800 });
-  assert.equal(save.gold, gold + 800);
+  const gems = save.gems;
+  assert.deepEqual(g.claimGoal(1, 80, false), { kind: "currency", currency: "gems", amount: 30 });
+  assert.equal(save.gems, gems + 30);
   assert.equal(goalState(save, 1, 80, false), "claimed");
   assert.equal(g.claimGoal(1, 80, false), null, "never twice");
   assert.equal(goalState(save, 1, 80, true), "needsPass");
@@ -89,9 +93,9 @@ test("a reward is claimed once, after its floor is completed; a premium one need
   assert.equal(g.buyOffer("pass1", 0, true), null);
   assert.equal(goalState(save, 1, 80, true), "ready");
   assert.equal(goalState(save, 4, 80, true), "needsPass", "the first pass opens only Towers I to III");
-  const gems = save.gems;
+  const before = save.gems;
   g.claimGoal(1, 80, true);
-  assert.equal(save.gems, gems + 80);
+  assert.equal(save.gems, before + 80);
   assert.equal(goalState(save, 1, 90, true), "locked");
   // Claims and the pass survive a reload; erasing progress keeps only the pass.
   const loaded = decode(JSON.stringify(save));

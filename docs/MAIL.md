@@ -11,7 +11,7 @@ Examples:
 
 - The server owns a player's Mail. The client fetches the inbox, shows it, and claims items through the server, which grants each message's items once. Like Tournament prizes, a forged save can change what the game shows, but not what the server grants.
 - **Recent mail** is any message that the player hasn't removed and that was either sent in the last **7 days** (`MAIL_DAYS`) or still holds unclaimed items. A message with unclaimed items stays until they are claimed, or until **90 days** after it was sent (`MAIL_KEEP_DAYS`), the upper bound on how long any message is kept, by the server and the save alike. Time is the server's, from the Shop's confirmed clock.
-- **Mail button:** an envelope in the forest's actions column, under Settings. It shows only while the player has recent mail, and wears a dot while any of it is unread.
+- **Mail button:** an envelope in the forest's menu, beside Settings (the hamburger wears its dot). It shows only while the player has recent mail, and wears a dot while any of it is unread.
 - **Mail list:** a popup listing the recent messages, newest first. Each row shows its subject, with a dot while unread, a gift box while its items wait to be claimed, and an X to remove it once nothing waits.
 - **Message view:** the subject, the body, and each item's icon and amount. While items wait, the view shows *Claim*. Opening a message marks it read.
 
@@ -65,7 +65,7 @@ type MailMessage = {
 - A message with unclaimed items has no X: it can only be claimed, so no reward is ever thrown away. `MailDesk.hide` refuses one too, and so does the server.
 - Removing the last recent message closes the popup, and the button disappears.
 
-**Where:** only the forest, since the button stands in its actions column, so Mail never opens inside a run. A claim credits the save directly, so a claim made in the forest needs nothing from a run.
+**Where:** only the forest, since the button stands in its menu, so Mail never opens inside a run. A claim credits the save directly, so a claim made in the forest needs nothing from a run.
 
 **When the client asks the server** (`refreshMail` in `main.ts`, beside `refreshTournament`):
 
@@ -133,7 +133,7 @@ Mail past its time (`kept`) is dropped from the inbox as the server's next answe
 
 ## Screens
 
-- **Mail button:** `#mail-button`, the envelope (`mailIcon()` in `ui/dom.ts`) over *MAIL*, inserted after Settings (`#run-menu`) in the forest's actions column. Its state comes from `renderMailButton` in `ui/hud.ts`: hidden inside a run or with no recent mail, with a dot (`notify`) while any is unread. Check that the column still fits at phone height (360×640) with the Tournament button, Settings and Mail.
+- **Mail button:** `#mail-button`, the envelope (`mailIcon()` in `ui/dom.ts`) over *MAIL*, in the forest's menu (`.run-menu-items`) after Relics. Its state comes from `renderMailButton` in `ui/hud.ts`: hidden inside a run or with no recent mail, with a dot (`notify`) while any is unread. Check that the column still fits at phone height (360×640) with the Tournament button, Settings and Mail.
 - **Mail popup** (`ui/mail-dialog.ts`, `MailDialog`, in the shared dialog):
   - **List:** *INBOX* over *Mail*, and *Close* at the foot. One row a message: the unread dot, the subject (ellipsized), the gift box while items wait, and how long ago it came (*now*, *5m*, *2h*, *3d*). A row with nothing to claim has its own X button; one with unclaimed items has none.
   - **Message:** *MAIL* and the date it was sent (*5 October 2026 at 12:00 GMT*), the subject, and the body as paragraphs. Then the items, each item's icon (`gemIcon`, `shardIcon`, `goldIcon`, `ticketIcon`), amount and name, with a check once claimed. Then *Back* to the list and *Claim*, or *Claimed*. While claiming, *Claiming…*; if it fails, *Couldn't reach the server. Try again later.*

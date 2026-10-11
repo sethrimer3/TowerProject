@@ -53,6 +53,15 @@ export const medalIcon = (className = "medal-icon") =>
 /** A check mark in a rounded box: Missions. */
 export const missionIcon = (className = "mission-icon") =>
   `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="3" fill="#24402c" stroke="#e9e1c8" stroke-width="1.5"/><path d="M7.5 12.3l3.1 3.1 6-6.6" fill="none" stroke="#8ff0a4" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+/** A pennant on a pole bearing a star: Events. */
+export const eventIcon = (className = "event-icon") =>
+  `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 2.5v19" stroke="#c9ced8" stroke-width="1.6" stroke-linecap="round"/><path d="M5.8 3.5h13.5l-3.2 4.8 3.2 4.8H5.8z" fill="#7a2a8c" stroke="#ffd34d" stroke-width="1.3" stroke-linejoin="round"/><path d="M11.5 5.3l.9 1.8 2 .3-1.45 1.4.35 2-1.8-.95-1.8.95.35-2L8.6 7.4l2-.3z" fill="#ffe9a8"/></svg>`;
+/** A relic: a jewel in a gold setting on a chain, its stone the rarity's
+ * colour (rare blue, epic purple). A stand-in until each relic has its sprite. */
+export const relicIcon = (rarity: "rare" | "epic", className = "relic-icon") => {
+  const [stone, glint] = rarity === "epic" ? ["#9b4dff", "#e6c8ff"] : ["#3d8bff", "#c8e2ff"];
+  return `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2.5c0 3 2 4.5 5 4.5s5-1.5 5-4.5" fill="none" stroke="#ffd34d" stroke-width="1.2" stroke-dasharray="1.6 1"/><path d="M12 6.5l7 4.5-2.6 9H7.6L5 11z" fill="#6a4a12" stroke="#ffd34d" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 9l4.3 2.8-1.6 5.7H9.3l-1.6-5.7z" fill="${stone}" stroke="${glint}" stroke-width=".9" stroke-linejoin="round"/><path d="M10.2 11.6l1.8-1.2" stroke="#fff" stroke-width="1.1" stroke-linecap="round"/></svg>`;
+};
 /** A plain check mark: a weekly reward claimed. */
 export const checkIcon = (className = "check-icon") =>
   `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" fill="none" stroke="#8ff0a4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`;

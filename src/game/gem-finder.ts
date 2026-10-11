@@ -68,6 +68,7 @@ export class GemFinder {
     const save = this.host.save;
     save.gems++;
     collectedGem(save.gemDrop, this.host.clock());
+    this.host.eventDone?.("floatingGems", 1);
     this.sparkle = { x: gem.x, y: gem.y, at: performance.now() };
     this.host.gain(gem.x, gem.y, "+1 Gem", { gem: true });
   }
@@ -95,6 +96,7 @@ export class GemFinder {
     const save = this.host.save;
     save.gems += AD_GEMS;
     save.gemDrop.adReadyAt = this.host.clock() + AD_COOLDOWN_MS;
+    this.host.eventDone?.("adGems", 1);
     this.host.message = `+${AD_GEMS} Gems`;
     return true;
   }

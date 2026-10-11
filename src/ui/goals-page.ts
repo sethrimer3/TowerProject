@@ -6,7 +6,7 @@ import { offer } from "../shop/offers.ts";
 import { CLEARED_INSPIRATION } from "../tower/area-ledger.ts";
 import { tierNumeral, tierRewardText, tierStats } from "../tiers.ts";
 import type { AppContext } from "./app.ts";
-import { el, gemIcon, goldIcon, medalIcon, shardIcon, trophyIcon } from "./dom.ts";
+import { el, eventIcon, gemIcon, goldIcon, medalIcon, shardIcon, trophyIcon } from "./dom.ts";
 import { goalRewardShown, offerShown, revealReward } from "./reward-reveal.ts";
 
 // The Goals screen: each tower drawn as a stone column rising from the
@@ -26,12 +26,13 @@ const CURRENCY_ICONS: Record<CurrencyId, () => string> = { gems: () => gemIcon("
 /** Each unlock's icon: Damage Prediction a cracked heart, Combat Forecast an eye over crossed blades, Attack
  * Lore an open book with a rising arrow, Warp a portal's swirl, Damage Visual a monster's tile with a red
  * number in its corner, Relative Damage Color that tile over a green-to-red bar, Equipment an anvil
- * under a hammer, the Tournament a trophy, Research Speed an hourglass, Shard ATK and Shard DEF a red or
+ * under a hammer, the Tournament a trophy, Events a pennant, Research Speed an hourglass, Shard ATK and Shard DEF a red or
  * blue shard under a rising arrow, Evade Prediction a shield turning an enemy's strike aside. */
 const UNLOCK_ICONS: Record<GoalUnlock, string> = {
   shardAttack: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.5l4.5 5-4.5 8-4.5-8z" fill="#a8323a" stroke="#ff9aa0" stroke-width="1.3" stroke-linejoin="round"/><path d="M12 8.5v13" stroke="#ff9aa0" stroke-width=".9"/><path d="M12 6V1.8M9 4.6l3-3 3 3" fill="none" stroke="#ffd34d" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
   shardDefense: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.5l4.5 5-4.5 8-4.5-8z" fill="#2f5fa8" stroke="#9cc4ff" stroke-width="1.3" stroke-linejoin="round"/><path d="M12 8.5v13" stroke="#9cc4ff" stroke-width=".9"/><path d="M12 6V1.8M9 4.6l3-3 3 3" fill="none" stroke="#ffd34d" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
   tournament: trophyIcon("goal-icon"),
+  events: eventIcon("goal-icon"),
   evadePrediction: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 3.5l6.5 2.4v5.3c0 4.4-2.8 7.6-6.5 9.3-3.7-1.7-6.5-4.9-6.5-9.3V5.9z" fill="#1c2a44" stroke="#8fc4ff" stroke-width="1.5" stroke-linejoin="round"/><path d="M22 4.5l-7.5 6.5c-1 .9-1 2.3 0 3.2L17 16.5" fill="none" stroke="#ffd34d" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.2 17.7l2.6-.6-.6-2.6" fill="none" stroke="#ffd34d" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
   researchSpeed: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12M6 21h12M7 3c0 5 5 6 5 9s-5 4-5 9M17 3c0 5-5 6-5 9s5 4 5 9" fill="none" stroke="#8fc4ff" stroke-width="1.6" stroke-linecap="round"/><path d="M9 19c1-2 2-2.5 3-2.5s2 .5 3 2.5z" fill="#ffd59a"/></svg>`,
   damagePrediction: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5S3.5 15 3.5 9A4.5 4.5 0 0 1 12 6.6 4.5 4.5 0 0 1 20.5 9c0 6-8.5 11.5-8.5 11.5z" fill="#4a1a22" stroke="#e86d7a" stroke-width="1.6" stroke-linejoin="round"/><path d="M12.5 7.5l-2 4 3 1.5-2 4" fill="none" stroke="#ffd0d5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
@@ -47,8 +48,11 @@ const TOWER_ICON = `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true
 /** What each unlock does, shown once it is claimed and again whenever its claimed reward is pressed. */
 const UNLOCK_TUTORIALS: Record<GoalUnlock, string> = {
   tournament: `<p>Twice a week, on Wednesday and Saturday (GMT), the Tournament opens: one Delve run from seeds every player in your league shares, among stronger enemies, scored by the depth you reach and ranked worldwide.</p>` +
-    `<p>Its Hall now stands in the forest, right of the path: tap it, or the trophy at the top right, to see when the next one opens.</p>` +
+    `<p>Its Hall now stands in the forest, right of the path: tap it, or the trophy at the right, to see when the next one opens.</p>` +
     `<p class="hint">Each new tournament gives you a Ticket to enter. Place high to win Gems and Ascension Shards, and climb from Copper through Silver, Gold and Platinum to Champion.</p>`,
+  events: `<p>Every two weeks an Event begins: missions released over its first eight days, each with three tiers paying Medals as you complete them.</p>` +
+    `<p>The Medals an event pays count toward its relics, unique keepsakes that each give a permanent bonus. The Event Booster doubles them, and opens two premium relics.</p>` +
+    `<p class="hint">Tap the pennant at the right to see the running event. The relics you own wait on the Relics screen, in the menu.</p>`,
   damagePrediction: `<p>Inspect an enemy in a run and its panel now says how much HP the fight would cost you, and whether you survive it: Survivable, Harmless when it costs no HP, LETHAL, or Instakill when your first strike defeats it.</p>`,
   combatForecast: `<p>Inspect an enemy in a run and its panel now also says how many of your hits defeat it, or Instakill when one does.</p>`,
   attackLore: `<p>Inspect an enemy in a run and its panel now also says how much more ATK would defeat it in one hit fewer.</p>` +
@@ -273,9 +277,10 @@ export class GoalsPage {
   /** What an unlock does, shown once it is claimed, and `again` when its claimed reward is pressed. */
   private unlockTutorial(what: GoalUnlock, again = false) {
     const modal = this.ctx.modal;
-    // Equipment, newly claimed, offers its Blacksmith at once, and the Tournament its page.
-    const visit = (what === "equipment" || what === "tournament") && !again;
-    const where = what === "equipment" ? { label: "Visit the Blacksmith", page: "gear" } : { label: "Open the Tournament", page: "tournament" };
+    // Equipment, newly claimed, offers its Blacksmith at once, and the Tournament and Events their pages.
+    const visit = (what === "equipment" || what === "tournament" || what === "events") && !again;
+    const where = what === "equipment" ? { label: "Visit the Blacksmith", page: "gear" }
+      : what === "events" ? { label: "Open Events", page: "events" } : { label: "Open the Tournament", page: "tournament" };
     modal.innerHTML = `<small>GOALS</small><h2>${UNLOCK_NAMES[what]}${again ? "" : " unlocked"}</h2>` + UNLOCK_TUTORIALS[what] +
       `<div class="dialog-actions"><button id="unlock-ok">${visit ? "Later" : "Got it"}</button>${visit ? `<button id="unlock-visit">${where.label}</button>` : ""}</div>`;
     modal.showModal();

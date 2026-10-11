@@ -32,11 +32,16 @@ await page.getByRole('button', { name: 'End current run', exact: true }).click()
 assert.match(await page.locator('#modal').innerText(), /End this ascent\?/);
 await page.locator('#confirm').click();
 
-// In the forest Goals and Enter take End Run's place; Settings is back in
-// the column, and Research is a tab.
+// In the forest Goals and Enter take End Run's place; Settings and
+// Missions wait in the hamburger's menu, and Research is a tab.
 assert.equal(await shown('#end-run'), false);
-assert.equal(await shown('#run-menu-toggle'), false);
+assert.equal(await shown('#run-menu-toggle'), true);
+assert.equal(await shown('#auto-settings'), false);
+await page.locator('#run-menu-toggle').click();
 assert.equal(await shown('#auto-settings'), true);
+assert.equal(await shown('#missions-button'), true);
+assert.equal(await shown('#end-run'), false);
+await page.locator('#run-menu-toggle').click();
 assert.equal(await page.getByRole('button', { name: 'Goals', exact: true }).isVisible(), true);
 assert.equal(await shown('#enter-run'), true);
 assert.equal(await shown('#run-research'), false);

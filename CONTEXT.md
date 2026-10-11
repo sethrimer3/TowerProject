@@ -29,7 +29,7 @@ _Avoid_: tower log, reward log
 ### Equipment
 
 **Equipment**:
-The pieces a hero wears, one per category (Weapon, Chestplate, Helmet, Gloves, Boots, Cape, Belt, Ring, Amulet), opened by claiming Tower I's floor 60 Goal. Kept in one shared inventory between runs.
+The pieces a hero wears, one per category (Weapon, Chestplate, Helmet, Gloves, Boots, Cape, Belt, Ring, Amulet), opened by claiming Tower II's floor 60 Goal. Kept in one shared inventory between runs.
 _Avoid_: gear (the Gear page and its provisions), items (pickups on the board)
 
 **Loadout** (equipment):
@@ -381,7 +381,7 @@ A limited currency, kept between runs, bought in the Shop's limited packs (each 
 _Avoid_: shard (alone: an ATK or DEF shard is a pickup)
 
 **Medal**:
-A limited currency, kept between runs, earned from the weekly mission rewards. Nothing spends Medals yet. Shown as a gold disc on a red ribbon.
+A limited currency, kept between runs, earned from the weekly mission rewards and Events' missions. Nothing spends Medals yet. Shown as a gold disc on a red ribbon.
 _Avoid_: badge (a card's token), trophy (the Tournament's)
 
 **Focus**:
@@ -449,7 +449,7 @@ _Avoid_: daily reset, local day
 ### The Tournament
 
 **Tournament**:
-A global competition, opened by Tower I's floor 70 Goal: entry is open all of each Wednesday and Saturday (GMT), and each entry is one Delve run whose depth is ranked against every other player in the same league.
+A global competition, opened by Tower I's floor 60 Goal: entry is open all of each Wednesday and Saturday (GMT), and each entry is one Delve run whose depth is ranked against every other player in the same league.
 _Avoid_: event, contest, season
 
 **League**:
@@ -493,6 +493,24 @@ _Avoid_: quest, task, challenge, daily (alone)
 **Weekly reward**:
 One of seven prizes for every 5 daily missions claimed in the week (Monday 00:00 GMT to the next), up to 35: Gold, Gems, Medals and Ascension Shards. Each can be claimed once a week.
 _Avoid_: weekly mission (nothing is asked beyond the daily missions), chest
+
+### Events
+
+**Event**:
+A fortnight of missions, from a Monday 00:00 GMT to the next but one, the next beginning as it ends, opened by Tower I's floor 70 Goal. Its missions are released over its first eight days (seven, then two a day) and stay until it ends.
+_Avoid_: season, campaign, challenge (alone)
+
+**Event mission**:
+One of an event's missions, such as *Defeat 5,000 base enemies*, in three tiers of rising targets, each paying Medals (10, 15, 20) the moment it is done, with nothing to claim.
+_Avoid_: daily mission (the 8-hourly ones), quest
+
+**Event Booster**:
+A purchase for one event that doubles every Medal it pays, those already paid too, and opens its two premium relics.
+_Avoid_: event pass, Premium Pass (the Goals' passes)
+
+**Relic**:
+A unique keepsake won by reaching an event's Medal milestone (premium relics only with the Event Booster), each giving a permanent bonus, each owned at most once and kept for good. Spending Medals is never needed to win one.
+_Avoid_: trophy (the Tournament's), artifact, badge
 
 ### The Delve
 

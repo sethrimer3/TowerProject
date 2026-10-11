@@ -80,7 +80,9 @@ import { EquipmentDesk } from "./game/equipment-desk.ts";
 import { TournamentDesk } from "./game/tournament-desk.ts";
 import { MailDesk } from "./game/mail-desk.ts";
 import { MissionDesk } from "./game/mission-desk.ts";
+import { EventDesk } from "./game/event-desk.ts";
 import type { MissionType } from "./missions/catalog.ts";
+import type { EventMissionType } from "./events/catalog.ts";
 import { LEAGUE_INFO } from "./tournament/leagues.ts";
 import { runStream, tournamentScore, type TournamentRun } from "./tournament/run.ts";
 import type { TournamentInfo } from "./tournament/server.ts";
@@ -131,8 +133,9 @@ const YELLOW_KEY_SALT = 0x6e11a;
 /** Mixed into the run seed to start Skip's stream of rolls. */
 const SKIP_SALT = 0x5c1b7;
 /** A step resolved and about to be taken: the tile stepped onto, what it
- * does, where it is, and whether it goes in the undo history. */
-type TakenStep = { tile: Tile; outcome: StepEffect; dest: { x: number; y: number }; track: boolean };
+ * does, where it is, whether it goes in the undo history, and for a fight
+ * the hero's critical strikes in it as played (`crits`). */
+type TakenStep = { tile: Tile; outcome: StepEffect; dest: { x: number; y: number }; track: boolean; crits?: number };
 /** The latest fight as the board shows it: the hero struck from `from`,
  * the enemy (`hp` at the start) stood at `to`, and its strikes land from
  * `start` (performance time). Played out, they are the fight's own; settled
@@ -200,7 +203,7 @@ export class Game {
    * burst starts (performance.now()): a chest opened while another's burst
    * plays waits for it to end. Emptied by undo. */
   areaBursts: { reward: AreaReward; at: number }[] = [];
-  /** When Equipment opened on floor 60 (performance.now()), for the
+  /** When Equipment opened (performance.now()), for the
    * board's burst. */
   /** Where a Greater Boss last appeared, and when (performance.now()), for
    * the board's poof; cleared by undo. */
@@ -239,6 +242,9 @@ export class Game {
   /** The daily and weekly missions: giving them, counting toward them and
    * paying them. */
   readonly missions = new MissionDesk(this);
+  /** Events: the fortnight's missions, counting toward them and paying
+   * their Medals. */
+  readonly events = new EventDesk(this);
   /** The Deck page's card badges: drawing them with Gems and attaching
    * them to cards. */
   readonly badges = new BadgeDesk(this);
@@ -1302,9 +1308,11 @@ export class Game {
   /** Erases all progress and starts again outside the Tower. */
   eraseAll() {
     // What was bought in the Shop, and its record, outlast the progress, as
-    // does Mail, which is the server's (and so what was claimed from it).
-    const { entitlements, shop, mail } = this.save;
+    // does Mail, which is the server's (and so what was claimed from it),
+    // and the Event Boosters bought.
+    const { entitlements, shop, mail, events } = this.save;
     this.save = { ...defaults(), entitlements, shop, mail };
+    this.save.events.boosted = events.boosted;
     if (permanentBoost(this.save)) this.save.trainingBoostUntil = BOOST_FOREVER;
     this.mode = "tower";
     this.newRun({ outside: true });
@@ -1386,6 +1394,7 @@ export class Game {
     this.newRun({ outside: true, seed: info.seeds.layout });
     const run: TournamentRun = { id: info.id, league: info.league, entry, seeds: { ...info.seeds }, drawn: { game: 0, equipment: 0 }, back };
     this.delveRun.tournament = run;
+    this.events.record("tournaments", 1, String(info.id));
     this.enterFromOutside();
     this.message = `Tournament · ${LEAGUE_INFO[info.league].name} League`;
     return true;
@@ -1397,6 +1406,8 @@ export class Game {
     if (reward) readyForestRuns(this.save);
     // Equipment's Blacksmith, and the Tournament's Hall, open in the forest at once.
     if (reward?.kind === "unlock" && (reward.unlock === "equipment" || reward.unlock === "tournament") && this.run.outside) this.world = this.buildWorld();
+    // The running Event's first missions come at once.
+    if (reward?.kind === "unlock" && reward.unlock === "events") this.events.refresh();
     return reward;
   }
   /** Whether a Tower run in the forest may warp to the checkpoint at `floor`. */
@@ -1524,6 +1535,7 @@ export class Game {
     const revive = isLethal(outcome) ? this.revival(step.dest) : undefined, crits = this.critRolls(step.dest), parries = this.parryRolls(step.dest);
     if (!this.playsFights && !revive && !crits && !parries) return this.take(step);
     const fight = bout(p, enemy, revive, crits, parries), start = performance.now(), rose = revivals(fight).length;
+    step.crits = critHits(fight);
     // Critical strikes change how long the fight lasts, and parries what it
     // costs, so it ends as it was played.
     if (crits || parries) this.restate(outcome, fight);
@@ -1546,7 +1558,11 @@ export class Game {
     this.revivedAt = shown.strikes.filter((s) => s.revived).map((s) => start + s.at);
     if (!animate && !rose) return this.take(step, rose);
     // The same fight, so the board shows it as it plays out.
-    const encounter: Encounter = Object.assign(this.fight, { enemy, outcome: step.outcome, settle: () => this.take(step, revivals(encounter.bout).length) });
+    const encounter: Encounter = Object.assign(this.fight, { enemy, outcome: step.outcome, settle: () => {
+      // Training bought as it plays out replays the rest: count the crits as played.
+      if (!encounter.summary) step.crits = critHits(encounter.bout);
+      this.take(step, revivals(encounter.bout).length);
+    } });
     this.encounter = encounter;
     return true;
   }
@@ -1593,7 +1609,7 @@ export class Game {
   }
   /** Commits a resolved step: undo history, stats, and the door or fight on
    * the way in. Returns false when the player fell. */
-  private enter({ tile: t, outcome, dest, track }: TakenStep, revived: number) {
+  private enter({ tile: t, outcome, dest, track, crits }: TakenStep, revived: number) {
     const before = this.snapshot();
     if (track) this.remember(before);
     const drained = snap(this.run.player.hp - outcome.player.hp);
@@ -1604,7 +1620,7 @@ export class Game {
     // Effective's added damage rises off the hero; Dampen's given back heals.
     if (extra > 0 && p.hp > 0) this.gain(p.x, p.y, `−${wholeChange(extra)} HP`, { heart: true });
     else if (extra < 0) this.recordHeal(-extra);
-    return this.winFight({ enemy: t.enemy!, damage: snap(outcome.combat!.damage + extra), at: dest, revived, scale: outcome.scale, instakill: instakill(outcome.combat!) }, before);
+    return this.winFight({ enemy: t.enemy!, damage: snap(outcome.combat!.damage + extra), at: dest, revived, scale: outcome.scale, instakill: instakill(outcome.combat!), crits }, before);
   }
   /** Moves the player onto the tile and applies what standing there does. */
   private land(t: Tile, x: number, y: number, outcome: StepEffect) {
@@ -1695,6 +1711,7 @@ export class Game {
   private winFight(fight: FightEnd, before: MoveSnapshot) {
     const { enemy, at } = fight;
     if (fight.damage > 0) this.markDamaged();
+    if (fight.damage > 0) this.events.hurt(this.mode, this.run.seed);
     if (this.run.player.hp <= 0) {
       this.fallIn(before, enemy);
       return false;
@@ -1707,25 +1724,36 @@ export class Game {
     const purse = this.purse, silver = purse.killSilver(enemy, floor, scale);
     const { gold, equipment } = purse.enemyLoot(enemy, at.x, at.y, scale, fight.instakill);
     this.gainCoins(at, gold, silver);
+    if (equipment?.item || equipment?.salvaged) this.events.record("equipment", 1, this.missionKey(at));
+    if (fight.crits) this.events.record("crits", fight.crits, this.missionKey(at));
     const found = equipmentTexts(equipment);
     for (const text of found) this.gain(at.x, at.y, text);
     this.message = [fightText(fight), ...coinsText(gold, silver), ...found].join(" · ");
     return true;
   }
-  /** A kill counts toward the missions for its strength, once a tile. */
+  /** A kill counts toward the missions and the Event for its strength, once a tile. */
   private countKill(enemy: Enemy, at: { x: number; y: number }) {
     const s = enemy.strength;
-    const type: MissionType = s === "boss" || s === "greaterBoss" ? "bosses" : s === "strong" ? "strong" : s === "elite" ? "elite" : "basic";
+    const type: MissionType & EventMissionType = s === "boss" || s === "greaterBoss" ? "bosses" : s === "strong" ? "strong" : s === "elite" ? "elite" : "basic";
     this.missions.record(type, 1, this.missionKey(at));
+    this.events.record(type, 1, this.missionKey(at));
   }
   /** What a kill or pickup at `at` counts as for the missions: the mode
    * and its loot key, so undo bringing the tile back can't count it again. */
   private missionKey(at: { x: number; y: number }) {
     return `${this.mode}:${this.rules.lootKey(this.run, at.x, at.y)}`;
   }
-  /** A desk's command counted toward the missions (Training, badges). */
+  /** A desk's command counted toward the missions (Training, badges), and
+   * the Event's alike. */
   missionDone(type: MissionType, amount: number) {
     this.missions.record(type, amount);
+    if (type === "train") this.events.record("training", amount);
+    if (type === "badge") this.events.record("badges", amount);
+  }
+  /** A desk's command counted toward the Event's missions alone (Gems,
+   * Equipment pulls and merges). */
+  eventDone(type: EventMissionType, amount: number) {
+    this.events.record(type, amount);
   }
   /** Raises the Gold and Silver just found from `at`, each only when some
    * was; a kill always shows its Silver. */
@@ -1830,7 +1858,9 @@ export class Game {
     for (let f = floorBefore + 1; f <= last; f++) {
       gold += purse.floorGold(purse.floorKey(-1, f));
       silver += purse.floorSilver();
-      silver += purse.interest();
+      const interest = purse.interest();
+      silver += interest;
+      this.events.climbed(this.mode, this.run.seed, interest > 0 && interest >= purse.interestCap);
       this.findYellowKey(f, at);
       this.regainCharges(at);
       this.floorHeal();
@@ -1852,6 +1882,7 @@ export class Game {
         given.push(id);
       }
     if (given.length) this.freeTrained = { lines: freeTrainingLines(given), at: performance.now() };
+    this.events.record("freeUpgrades", given.length);
   }
   /** Find Yellow Key: on floor `floor` climbed for the first time in the
    * run, a yellow key under the research's chance. The roll is a fixed
@@ -1888,7 +1919,11 @@ export class Game {
       this.missions.record("floors", this.run.height - highest);
       this.run.maxHeight = this.run.height;
       silver = purse.floorSilver();
-      silver += purse.interest();
+      const interest = purse.interest();
+      silver += interest;
+      // A floor Skip climbs past counts toward the streaks too, on the climb's Interest.
+      for (let f = highest; f < this.run.height; f++) this.events.climbed(this.mode, this.run.seed, interest > 0 && interest >= purse.interestCap);
+      this.events.best("floor", this.run.height + 1);
       this.findYellowKey(this.run.height, p);
       this.floorHeal();
       this.freeTrain(this.run.height - highest);
@@ -1984,6 +2019,7 @@ export class Game {
       this.gain(x, y, text, { tile: { ...t } });
       if (t.kind === "potion") this.recordHeal(outcome.healed);
       if (t.kind === "potion") this.missions.record("potions", 1, this.missionKey({ x, y }));
+      if (t.kind === "potion") this.events.record("potions", 1, this.missionKey({ x, y }));
       if (t.kind === "key" && t.color !== "yellow") this.missions.record(t.color === "blue" ? "blueKeys" : "redKeys", 1, this.missionKey({ x, y }));
       this.message = text;
     }
@@ -1993,6 +2029,7 @@ export class Game {
    * reopening can't pay it again). */
   private openTreasure(x: number, y: number) {
     this.run.treasures++;
+    this.events.record("chests", 1, this.missionKey({ x, y }));
     const loot = this.purse.treasure(x, y);
     if (!loot) return;
     this.gain(x, y, `+${wholeChange(loot.gold)} Gold`, { coin: "gold" });
@@ -2029,6 +2066,8 @@ export class Game {
     const o = offer(id);
     if (!o) return "locked";
     confirmServerTime(this.save.shop.clock, serverNow, this.clock());
+    // The Event Booster is the running event's.
+    if (o.item?.kind === "eventBoost") this.events.refresh();
     this.training.settle();
     const pace = this.training.pace;
     const t = purchase(this.save, o, serverNow, this.payment(paid));
@@ -2037,6 +2076,7 @@ export class Game {
     this.training.repace(pace);
     // Ad-Disable's ×1.5 Gold is for good: the Gold ad's stored time goes.
     if (adsOff(this.save)) this.save.goldBoostUntil = 0;
+    if (id === "dailyGems") this.events.record("freeGems");
     this.message = o.item?.kind === "entitlement" ? `${t.item}: yours for good` : `+${t.item}`;
     return null;
   }
@@ -2215,7 +2255,9 @@ export class Game {
 /** A fight the hero won: the enemy beaten at `at`, the HP it cost, and
  * how many times the hero revived in it. */
 /** A fight won: `instakill` when the hero's first strike ended it (Mug). */
-type FightEnd = { enemy: Enemy; damage: number; at: { x: number; y: number }; revived: number; scale?: number; instakill?: boolean };
+type FightEnd = { enemy: Enemy; damage: number; at: { x: number; y: number }; revived: number; scale?: number; instakill?: boolean; crits?: number };
+/** How many of a fight's strikes were the hero's critical ones. */
+const critHits = (fight: Bout) => fight.strikes.filter((s) => s.by === "hero" && s.crit).length;
 
 /** HP left after a fight's own damage, `hp`, once a badge's scale has
  * added `extra` (or, below 0, given it back, up to `maxHp`). */

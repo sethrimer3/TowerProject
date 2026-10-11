@@ -16,7 +16,7 @@ import { isBoard, type AppContext, type Tab } from "./ui/app.ts";
 import { el, ticketIcon } from "./ui/dom.ts";
 import { buildShell } from "./ui/shell.ts";
 import { BoardOverlay } from "./ui/board-overlay.ts";
-import { boardHeadingStale, flashRed, renderAdButton, renderMailButton, renderMissionsButton, renderShopDot, renderTournamentButton, renderBoardHeading, renderHud, renderVitals, purseFrame, gearWaiting, upgradesWaiting, dismissResearch } from "./ui/hud.ts";
+import { boardHeadingStale, flashRed, renderAdButton, renderEventsButtons, renderMailButton, renderMissionsButton, renderShopDot, renderTournamentButton, renderBoardHeading, renderHud, renderVitals, purseFrame, gearWaiting, upgradesWaiting, dismissResearch } from "./ui/hud.ts";
 import { ResearchPage } from "./ui/research-page.ts";
 import { confirmAction, RunEndDialog } from "./ui/dialogs.ts";
 import { closeRunMenu, toggleRunMenu } from "./ui/run-menu.ts";
@@ -42,6 +42,8 @@ import { MailClient } from "./mail/client.ts";
 import { postStubMail, stubMail } from "./mail/server.ts";
 import { MailDialog } from "./ui/mail-dialog.ts";
 import { MissionsPage } from "./ui/missions-page.ts";
+import { EventsPage } from "./ui/events-page.ts";
+import { RelicsPage } from "./ui/relics-page.ts";
 
 // Wires the pages together: builds the shell, creates the game and renderer,
 // and routes navigation, HUD refreshes and input between the ui/ modules.
@@ -86,6 +88,8 @@ const deck = new DeckPage(ctx);
 const shop = new ShopPage(ctx);
 const goals = new GoalsPage(ctx);
 const missions = new MissionsPage(ctx);
+const events = new EventsPage(ctx);
+const relics = new RelicsPage(ctx);
 // A run training purchase changes the hero, so the highlighted enemy's forecast too.
 const runTraining = new RunTrainingBar(game, () => {
   overlay.refresh(true);
@@ -145,6 +149,8 @@ function renderPage() {
   if (tab === "goals") goals.render();
   if (tab === "tournament") tournamentPage.render();
   if (tab === "missions") missions.render();
+  if (tab === "events") events.render();
+  if (tab === "relics") relics.render();
 }
 /** Locked tabs point at the upgrade that unlocks them instead. */
 function unlockTarget(id: string): string {
@@ -183,6 +189,8 @@ function navigate(requested: string) {
   if (id === "tournament" && from !== "tournament") tournamentPage.open(from);
   // And the Missions screen's X.
   if (id === "missions" && from !== "missions") missions.open(from);
+  // And the Events and Relics screens'. A relic shown at full size goes with its screen.
+  document.querySelector(".relic-pop")?.remove();
   // A newly opened Equipment screen greets the first visit to the Gear page.
   if (id === "gear" && from !== "gear" && equipmentWaiting(game.save)) gear.openEquipment();
   renderer.weather.silence();
@@ -195,8 +203,11 @@ function navigate(requested: string) {
     game.cancelRoute();
   }
   showPage(id);
-  // The Goals screen opens afresh, on the tower the forest leads to.
+  // The Goals screen opens afresh, on the tower the forest leads to; the
+  // Events and Relics screens too, once they show.
   if (id === "goals" && from !== "goals") goals.open();
+  else if (id === "events" && from !== "events") events.open(from);
+  else if (id === "relics" && from !== "relics") relics.open(from);
   else renderPage();
   update();
 }
@@ -307,7 +318,17 @@ el("missions-button").onclick = () => {
   closeRunMenu();
   navigate("missions");
 };
-// The Mail button, under Settings in the forest: the list of recent mail.
+// The Events button, in the forest's actions column and the run's menu.
+el("events-button").onclick = () => {
+  closeRunMenu();
+  navigate("events");
+};
+// The Relics button, in the forest's menu.
+el("relics-button").onclick = () => {
+  closeRunMenu();
+  navigate("relics");
+};
+// The Mail button, in the forest's menu: the list of recent mail.
 el("mail-button").onclick = () => {
   closeRunMenu();
   mailDialog.show();
@@ -366,9 +387,9 @@ bindInput(
 /** Research completes on the wall clock, whatever page shows. */
 function archivesTick() {
   const researched = game.research.settle().length > 0, trained = game.training.settle() > 0;
-  // New missions come every 8 hours on the clock.
-  const given = game.missions.refresh();
-  const done = researched || trained || given;
+  // New missions come every 8 hours on the clock, and the Event's daily.
+  const given = game.missions.refresh(), released = game.events.refresh();
+  const done = researched || trained || given || released;
   // Saved before anything is drawn, so what completed is kept even if the
   // page fails to show it.
   if (done) save();
@@ -380,6 +401,7 @@ function archivesTick() {
     renderTournamentButton(game);
     renderMailButton(game);
     renderMissionsButton(game);
+    renderEventsButtons(game);
   }
   tournament.tick();
   // A tournament opening (or ending, or the Tournament unlocked) asks the
@@ -399,6 +421,7 @@ function archivesTick() {
   wasInForest = inForest;
   if (tab === "tournament") tournamentPage.rerender();
   if (tab === "missions") missions.rerender();
+  if (tab === "events") events.rerender();
   if (tab === "research") research.archivesTick(done);
   if (tab === "shop") shop.tick();
 }
@@ -471,6 +494,7 @@ el("stats").toggleAttribute("hidden", false);
 el("currencies").toggleAttribute("hidden", true);
 renderBoardHeading(game, overlay);
 game.missions.refresh();
+game.events.refresh();
 update();
 loop.start();
 // The live tournament: its free Ticket, and any score still to send.

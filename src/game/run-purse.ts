@@ -229,8 +229,13 @@ export class RunPurse {
     const rate = researched(this.save.archives, "interestRate", 0);
     if (!rate) return 0;
     const held = this.run.silver ?? 0;
-    const paid = Math.min(researched(this.save.archives, "interestCap", 50), snap((held * rate) / 1000));
+    const paid = Math.min(this.interestCap, snap((held * rate) / 1000));
     if (paid > 0) this.run.silver = snap(held + paid);
     return paid > 0 ? paid : 0;
+  }
+
+  /** The most Interest a floor pays (Max Interest research). */
+  get interestCap() {
+    return researched(this.save.archives, "interestCap", 50);
   }
 }

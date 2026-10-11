@@ -29,7 +29,7 @@ function walkable(forest: OutsideWorld, x: number, y: number) {
   return seen;
 }
 
-test("claiming floor 70's Goal raises the Tournament Hall in the forest at once, in both forests", () => {
+test("claiming floor 60's Goal raises the Tournament Hall in the forest at once, in both forests", () => {
   for (const mode of ["tower", "delve"] as const) {
     const center = MODES[mode].entranceX, x = center + TOURNAMENT_HALL.dx + 1, y = TOURNAMENT_HALL.y + 1;
     const forest = new OutsideWorld(7, mode, true, true);
@@ -48,14 +48,14 @@ test("claiming floor 70's Goal raises the Tournament Hall in the forest at once,
   g.newRun({ outside: true, seed: 7 });
   const x = MODES.tower.entranceX + TOURNAMENT_HALL.dx + 1, y = TOURNAMENT_HALL.y + 1;
   assert.equal(g.atTournamentHall(x, y), false);
-  g.save.tower.reached = 70;
-  assert.ok(g.claimGoal(1, 70, false));
+  g.save.tower.reached = 60;
+  assert.ok(g.claimGoal(1, 60, false));
   assert.equal(g.atTournamentHall(x, y), true, "standing at once in the forest the claim was made from");
 });
 
 test("the desk says when the next tournament opens and whether the player has entered", () => {
   const save = defaults();
-  save.goals.claimed[1] = [70];
+  save.goals.claimed[1] = [60];
   save.tournament.tickets = 1;
   const g = new Game(save);
   g.clock = () => MONDAY;
@@ -71,7 +71,7 @@ test("the desk says when the next tournament opens and whether the player has en
 
 test("the client claims the final prize once, after the results are final", async () => {
   const save = defaults();
-  save.goals.claimed[1] = [70];
+  save.goals.claimed[1] = [60];
   const id = "2026-10-07";
   save.tournament.entries[id] = { best: 40, place: 0, entrants: 0, pending: null, entry: `${id}#1` };
   const g = new Game(save);

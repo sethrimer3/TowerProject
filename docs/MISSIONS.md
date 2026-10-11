@@ -65,14 +65,13 @@ Gold is the daily mission's Gold for the highest tower open, times the multiplie
 | 30 | ×15 | 35 | 30 | 15 |
 | 35 | ×20 | 50 | 35 | 20 |
 
-**Medals** (`save.medals`) are a new limited currency, kept between runs; nothing spends them yet.
+**Medals** (`save.medals`) are a new limited currency, kept between runs; Events' missions pay them too (docs/EVENTS.md); nothing spends them yet.
 They show in the forest's purse once held (where it has room), and on the currencies bar.
 
 ## Screens
 
 - **Missions button:** a check mark over *X/8*, the missions in the list out of 8, complete or not (at 8 no more come), with a dot while a mission or weekly reward waits to be claimed.
-  In the forest it stands in the actions column under Settings; when that column would hold more than three buttons (the Tournament's and Mail's shown too), the hamburger appears in the forest and holds Settings and Mail.
-  Inside a run it is in the run's menu, whose hamburger wears its dot.
+  It waits in the HUD's menu beside Settings, in the forest and inside a run, and the hamburger wears its dot.
 - **Missions screen** (`ui/missions-page.ts`): an X at the top right returns to the page that opened it.
   Near the top, the weekly bar fills from 0 to 35 with the week's count, a prize box over each multiple of 5: dim until reached, glowing while it can be claimed, checked once claimed; pressing a glowing box claims it.
   Below, how many missions the list holds out of 8 and when the next two come (or, at 8, to claim or complete one to make room), then each mission: what it asks, what it pays, its bar, and once complete a Claim button.

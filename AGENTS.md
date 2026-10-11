@@ -57,7 +57,7 @@ Defend is a separate self-contained system in `src/defend/` with its own save su
 **World generation is deterministic from the run seed** (`random(seed)` in `src/random.ts`, a seeded stream, beside `tileRandom`, a fixed number per tile; decor and themes use the same two).
 A run starts from `Game.newRun({ outside, seed })`, which rolls the seed when none is given.
 Everything else `Game` leaves to chance (new run seeds, enemy drops, treasure loot) draws from the `rng` passed to its constructor (the `game` stream by default), so a test or tool replays a game by passing a seeded stream instead of patching globals.
-Randomness outside the world comes from named streams, one per purpose, so drawing from one never shifts another: `stream("game")`, `stream("effects")` (visual effects such as the Upgrades page's particles), and `stream("badges")`, `stream("equipment")` and `stream("missions")` (each seeding, once, the saved stream badge draws, Equipment's Gem pulls and the daily missions given carry on) in `src/random.ts`, and Defend's own `defendRandom("rolls")` (city, battle and weather rolls) and `defendRandom("effects")` (splinters, rain) in `defend/grid.ts`.
+Randomness outside the world comes from named streams, one per purpose, so drawing from one never shifts another: `stream("game")`, `stream("effects")` (visual effects such as the Upgrades page's particles), and `stream("badges")`, `stream("equipment")`, `stream("missions")` and `stream("events")` (each seeding, once, the saved stream badge draws, Equipment's Gem pulls, the daily missions given and the Events' stand-in missions carry on) in `src/random.ts`, and Defend's own `defendRandom("rolls")` (city, battle and weather rolls) and `defendRandom("effects")` (splinters, rain) in `defend/grid.ts`.
 Each seeds itself once at start-up from `Math.random` and its name (unless a test pinned that start-up seed: `globalThis.__pinnedSeeds`); nothing else calls `Math.random`, and a new purpose (a minigame, a chance-based effect) gets its own stream.
 Tests swap one in with `withStream` / `withDefendStream`.
 `tests/random-streams.test.ts` checks that drawing from one stream leaves the others alone and that only the start-up seeds call `Math.random`.
@@ -92,7 +92,7 @@ Read the area's doc before changing code there or answering questions about it; 
 - `hand-and-automation.md`: the planners, Tower automation, the hand and cards, card badges, Focus, Ignore and Target, Rush, play/pause, deadlock.
 - `tiers-goals-areas.md`: tiers, Goals and Warp, Tower floor transitions, undo's `restore`, area rewards.
 - `progression.md`: enemy curves and stats, the loadout, fractions, XP and Training, the Archives, free purchases, skill trees, Equipment.
-- `economy-and-online.md`: Gems, the Shop, Gold bonuses, Spare Change and Wishing Well, the Tournament, Mail, Missions.
+- `economy-and-online.md`: Gems, the Shop, Gold bonuses, Spare Change and Wishing Well, the Tournament, Mail, Missions, Events and relics.
 - `rendering.md`: board drawing, lighting, decor, popups, the forest and weather, the render goldens, the Medieval and Neon themes.
 - `ui.md`: `main.ts`, pages, the HUD, dialogs, the desks and `Game`'s UI commands, board lessons, the frame loop, the UI golden.
 - `saves.md`: loading and decoding the save, adding save state, settings rows.
@@ -134,6 +134,7 @@ While iterating, run only the tests for the area you touched, then `npm test` on
 | Automove and the hand (`automation.ts`, `delve/automove.ts`, `pathfinding.ts`, `cards.ts`) | `tests/cards.test.ts tests/game-commands.test.ts tests/planners.test.ts tests/tower-automation.test.ts tests/tower-overhaul.test.ts tests/delve-automove.test.ts` (and `CI=1 … tests/delve-ai-tiers.test.ts`) |
 | Movement, steps, run lifecycle (`state.ts`, `step-effects.ts`, `tower/climb.ts`, `tower/area-ledger.ts`) | `tests/step-*.test.ts tests/undo-clear-trace.test.ts tests/game*.test.ts tests/movement.test.ts tests/doors.test.ts tests/tower-climb.test.ts tests/area-ledger.test.ts tests/fight-playback.test.ts tests/thorns-parry.test.ts` |
 | Economy (`config.ts`, `loadout.ts`, gear, skill trees, `archives.ts`, `modes.ts`) | `tests/archives.test.ts tests/loadout.test.ts tests/progression.test.ts tests/loot.test.ts tests/skill-trees.test.ts tests/modes.test.ts tests/step-trace.test.ts` |
+| Goals, Missions and Events (`goals.ts`, `src/missions/`, `src/events/`) | `tests/goals.test.ts tests/missions.test.ts tests/events.test.ts tests/shop.test.ts` |
 | Saves and settings | `tests/save.test.ts tests/settings.test.ts` |
 | Board drawing, lighting, decor art | `tests/render-calls.test.ts tests/lighting-passes.test.ts tests/art-modules.test.ts tests/terrain-paint.test.ts tests/decor.test.ts` |
 | Outside and weather | `tests/outside*.test.ts tests/outdoor-art.test.ts tests/torch-light.test.ts` |

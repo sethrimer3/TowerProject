@@ -57,7 +57,7 @@ Offers, items, currencies, entitlements, the ledger and the Shop's clock are sep
 |---|---|
 | `currency.ts` | The currencies offers can be priced in or grant (`CURRENCIES`: Gems, Ascension Shards, Gold): how each is read, spent and credited. |
 | `rarity.ts` | `RARITIES`, from Common to Ancestral: display name, colour, power multiplier and drop weight, as data. |
-| `items.ts` | What an offer grants (`ShopItem`: an amount of a currency, a `bundle` of several currencies, or an entitlement), checking it can be granted before anything is paid, and granting it to its owner. |
+| `items.ts` | What an offer grants (`ShopItem`: an amount of a currency, a `bundle` of several currencies, an entitlement, or the running Event's booster, `eventBoost`, bought once an event and sold on the Events page in the `passes` category: docs/EVENTS.md), checking it can be granted before anything is paid, and granting it to its owner. |
 | `entitlements.ts` | The permanent perks (`ENTITLEMENTS`), saved in `save.entitlements`, and what the game reads from them: `goldFactor` (read by `RunPurse.gold` in `game/run-purse.ts`), `permanentBoost` (the training boost's end is set to never) and `adsOff`. The Premium Passes (`pass1` to `pass3`) are entitlements too, read by the Goals screen (`goals.ts`) and sold from it as the `passes` category, which the Shop page doesn't list. Erasing progress keeps them. |
 | `offers.ts` | The `ShopOffer` model and the catalog (`OFFERS`), the categories and their requirements. |
 | `ledger.ts` | The Shop's saved state, `save.shop`: purchase counts per offer (with the Shop day of the last, so the count of an offer with a period starts again), the transaction history (the last 100) and the last confirmed server time. |

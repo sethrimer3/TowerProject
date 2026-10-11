@@ -56,6 +56,8 @@ export function offerShown(o: ShopOffer): RewardShown | null {
     const more = rest.map(([c, m]) => `+${(m * o.quantity).toLocaleString("en-US")} ${CURRENCIES[c].name}`).join(" · ");
     return { ...currencyShown(first, n * o.quantity, kicker), name: CURRENCIES[first].name, text: more || undefined };
   }
+  if (item.kind === "eventBoost")
+    return { icon: medalIcon(), amount: "×2", kicker: "PURCHASED", name: o.name, text: o.effects.join(" · "), permanent: true };
   const factor = ENTITLEMENTS[item.id].goldFactor;
   const icon = factor > 1 ? goldIcon() : `<span class="reward-reveal-star" aria-hidden="true">★</span>`;
   const gained = bundleAmounts(item.amounts).map(([c, n]) => `+${(n * o.quantity).toLocaleString("en-US")} ${CURRENCIES[c].name}`);

@@ -207,7 +207,7 @@ test("a Tournament prize left unclaimed comes as Mail as its claim window closes
   const ID = "2026-10-07", T = tournamentById(ID), FINAL = T.graceEndsAt + STUB_TABULATE_MS;
   const play = async (claimInTime: boolean) => {
     const { g, clock, client } = setup();
-    g.save.goals.claimed[1] = [70];
+    g.save.goals.claimed[1] = [60];
     clock.now = T.opensAt + HOUR;
     const tournament = new TournamentClient(g, stubTournament(() => g.save.tournament, () => clock.now));
     await tournament.refresh();

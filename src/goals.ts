@@ -17,19 +17,20 @@ import { TIERS } from "./tiers.ts";
  * ATK would take one hit fewer), Warp (starting a run past a completed
  * checkpoint), Damage Visual (each enemy on the board wears what its
  * fight would cost), Relative Damage Color (Tower II: that cost coloured
- * by its share of the hero's HP) and Equipment (the Blacksmith, equipment
- * and its materials) and the Tournament (twice-weekly global competition
- * in the Delve, docs/TOURNAMENT.md) and Research Speed (the Archives'
- * project that shortens every research), Shard ATK and Shard DEF (Tower II:
- * the Archives' projects that raise what each ATK or DEF shard gives) and
- * Evade Prediction (Tower II: predictions count the hero's parries, once
- * Evade is owned). */
+ * by its share of the hero's HP), the Tournament (twice-weekly global
+ * competition in the Delve, docs/TOURNAMENT.md), Events (fortnightly
+ * missions paying Medals toward relics, docs/EVENTS.md) and Research Speed
+ * (the Archives' project that shortens every research), Shard ATK and Shard
+ * DEF (Tower II: the Archives' projects that raise what each ATK or DEF
+ * shard gives), Evade Prediction (Tower II: predictions count the hero's
+ * parries, once Evade is owned) and Equipment (Tower II: the Blacksmith,
+ * equipment and its materials). */
 export type GoalUnlock =
-  | "damagePrediction" | "combatForecast" | "attackLore" | "warp" | "damageVisual" | "relativeDamageColor" | "equipment" | "tournament" | "researchSpeed"
+  | "damagePrediction" | "combatForecast" | "attackLore" | "warp" | "damageVisual" | "relativeDamageColor" | "equipment" | "tournament" | "events" | "researchSpeed"
   | "shardAttack" | "shardDefense" | "evadePrediction";
 export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   damagePrediction: "Damage Prediction", combatForecast: "Combat Forecast", attackLore: "Attack Lore", warp: "Warp", damageVisual: "Damage Visual",
-  relativeDamageColor: "Relative Damage Color", equipment: "Equipment", tournament: "Tournament",
+  relativeDamageColor: "Relative Damage Color", equipment: "Equipment", tournament: "Tournament", events: "Events",
   researchSpeed: "Research Speed", shardAttack: "Shard ATK", shardDefense: "Shard DEF",
   evadePrediction: "Evade Prediction",
 };
@@ -56,20 +57,23 @@ const TOWER_ONE: Record<number, Omit<Checkpoint, "floor">> = {
   30: { reward: unlock("attackLore"), premium: gems(25) },
   40: { reward: gems(20), premium: gems(35) },
   50: { reward: unlock("damageVisual"), premium: gems(50) },
-  60: { reward: unlock("equipment"), premium: gems(60) },
-  70: { reward: unlock("tournament"), premium: gems(70) },
+  60: { reward: unlock("tournament"), premium: gems(60) },
+  70: { reward: unlock("events"), premium: gems(70) },
+  80: { reward: gems(30), premium: gems(80) },
   90: { reward: gold(2000), premium: gold(10000) },
   150: { reward: unlock("researchSpeed"), premium: gems(110) },
   200: { reward: gems(40), premium: gems(120) },
 };
 
-/** Tower II's checkpoints that differ from the stub: an unlock each. */
+/** Tower II's checkpoints that differ from the stub: an unlock each, and Gold. */
 const TOWER_TWO: Record<number, Omit<Checkpoint, "floor">> = {
   10: { reward: unlock("relativeDamageColor"), premium: gems(10) },
   20: { reward: unlock("shardAttack"), premium: gems(20) },
   30: { reward: unlock("shardDefense"), premium: gems(30) },
   40: { reward: unlock("warp"), premium: gems(40) },
   50: { reward: unlock("evadePrediction"), premium: gems(50) },
+  60: { reward: unlock("equipment"), premium: gems(60) },
+  70: { reward: gold(10000), premium: gems(70) },
 };
 /** The checkpoint floor whose reward opens the next tower. */
 export const TOWER_UNLOCK_FLOOR = 100;
@@ -154,8 +158,8 @@ export function claimGoal(save: Save, tower: number, floor: number, premium: boo
   const reward = premium ? c.premium : c.reward;
   if (reward.kind === "currency") CURRENCIES[reward.currency].credit(save, reward.amount);
   if (reward.kind === "tower") openTower(save, reward.tower);
-  // Equipment keeps its own flag, which a save past floor 60 before this
-  // checkpoint paid it may already hold.
+  // Equipment keeps its own flag, which a save that claimed it before it
+  // moved to Tower II may already hold.
   if (reward.kind === "unlock" && reward.unlock === "equipment") save.equipment.unlocked = true;
   ((premium ? save.goals.premium : save.goals.claimed)[tower] ??= []).push(floor);
   return reward;

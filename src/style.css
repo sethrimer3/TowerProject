@@ -718,7 +718,7 @@ canvas {
 .mini-action[hidden] {
   display: none;
 }
-/* Inside a run, the menu: the hamburger and the Shop under it, and the
+/* The menu: the hamburger (inside a run with the Shop under it), and the
    buttons the hamburger opens (run-menu.ts). Its frame, a thin white
    outline round the two, slides left over the stats to fit them, with a
    bounce, as they fade in; closing, they fade out first and the frame
@@ -777,8 +777,8 @@ canvas {
 .run-menu.instant .run-menu-frame,
 .run-menu.instant .run-menu-items { transition: none; }
 .run-menu-end { grid-row: span 2; height: auto; }
-/* In a crowded forest the hamburger stands alone: its cells (Settings,
-   Mail) in one row. */
+/* In the forest the hamburger stands alone, the Tournament's and Events'
+   buttons under it: its cells (Settings, Missions, Relics, Mail) in one row. */
 .run-menu.forest .run-menu-items { grid-template-rows: minmax(0, 1fr); }
 .run-menu-end small { font-size: 9px; letter-spacing: 1px; }
 .menu-icon { display: block; width: 16px; height: 16px; fill: currentColor; }
@@ -3864,3 +3864,85 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
 .mission.complete .mission-bar i { background: linear-gradient(90deg, #2f7a43, #5ed27c); }
 .mission-bar span { position: relative; display: block; font-size: 10px; line-height: 14px; text-align: center; color: #f2f4f8; font-variant-numeric: tabular-nums; text-shadow: 0 1px 2px #000; }
 .mission-claim { flex: none; padding: 8px 14px; font-size: 12px; color: #fff3cf; border-color: #d9a632; background: linear-gradient(180deg, #4a3712, #2a1f0a); }
+
+/* The Events button (hud.ts): a pennant over the time the event has left;
+   the Relics button, a relic. */
+.events-button .event-icon, .relics-button .relic-icon { display: block; width: 18px; height: 18px; }
+.events-button small { font-variant-numeric: tabular-nums; }
+/* The Events screen (events-page.ts): the banner, the relic track, the
+   booster's offer and the missions. */
+.page#events, .page#relics { position: relative; }
+.event-banner { position: relative; display: grid; justify-items: center; margin: 4px 40px 12px; padding: 14px 12px 10px; border: 1px solid #6b4a8a; border-radius: 10px; background: radial-gradient(circle at 50% 0%, #4a2a5e, #1a1424 70%); overflow: hidden; }
+.event-banner-art { position: absolute; inset: 0; display: grid; place-items: center; opacity: 0.16; pointer-events: none; }
+.event-banner-icon { width: 120px; height: 120px; }
+.event-banner .page-title { position: relative; margin: 0; text-align: center; }
+.event-banner .page-title h2 { font-size: 20px; }
+.event-ends { position: relative; margin: 4px 0 0; font-size: 11px; color: #c7b6d6; font-variant-numeric: tabular-nums; }
+.event-ends b { color: #ffe9a8; font-weight: 500; }
+.event-track .weekly-head small { display: inline-flex; align-items: center; gap: 3px; }
+.event-track .weekly-head small b { font-size: 12px; color: #ffe9a8; }
+.event-track .medal-icon { width: 14px; height: 14px; }
+.event-track-body { position: relative; padding: 0 18px; }
+.event-relics { position: relative; height: 46px; }
+.event-relic { position: absolute; left: var(--at); transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 1px; width: 36px; }
+.event-relics.standard .event-relic { bottom: 0; }
+.event-relics.premium .event-relic { top: 0; flex-direction: column-reverse; }
+.event-relic-art { position: relative; display: block; width: 30px; height: 30px; border-radius: 50%; }
+.event-relic-art .relic-icon { display: block; width: 30px; height: 30px; }
+.event-relic-art .check-icon, .event-relic-art .relic-lock { position: absolute; right: -4px; bottom: -4px; width: 15px; height: 15px; border-radius: 50%; background: #10161f; }
+.event-relic-art .check-icon { box-shadow: 0 0 0 1px #8ff0a4; }
+.event-relic small { font-size: 9px; color: #b9c2cf; font-variant-numeric: tabular-nums; }
+.event-relic:not(.reached) .event-relic-art .relic-icon { opacity: 0.45; filter: grayscale(0.6); }
+.event-relic.reached .event-relic-art { box-shadow: 0 0 10px 3px #ffd34d88; }
+.event-relic.reached small { color: #ffe9a8; }
+.event-relics.premium .event-relic small { color: #d6b8ff; }
+.event-bar i { background: linear-gradient(90deg, #7a3fae, #ffd34d); }
+.event-boost { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; padding: 10px 12px; border: 1px solid #d9a632; border-radius: 8px; background: linear-gradient(135deg, #3a2a10, #1a1408); }
+.event-boost > div { flex: 1; min-width: 0; }
+.event-boost b { display: block; font-size: 13px; font-weight: 500; color: #ffe9a8; }
+.event-boost p { margin: 2px 0 0; font-size: 11px; line-height: 1.4; color: #d8c9a8; }
+.event-boost-art { flex: none; display: flex; align-items: center; gap: 2px; }
+.event-boost-art .medal-icon { width: 28px; height: 28px; }
+.event-boost-art b { font-size: 15px; color: #ffd34d; }
+.event-boost-buy { flex: none; padding: 8px 12px; font-size: 13px; color: #fff3cf; border-color: #d9a632; background: linear-gradient(180deg, #6a4a12, #3a2a0a); }
+.event-boost p.event-boost-message { color: #ff9a8a; }
+.event-boost-message:empty { display: none; }
+.event-boost.active { border-color: #4f8a5c; background: linear-gradient(135deg, #1c2e20, #121a15); }
+.event-boost.active > .check-icon { flex: none; width: 22px; height: 22px; }
+.event-mission-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.event-mission-head .mission-text { min-width: 0; }
+.event-tier { flex: none; display: inline-flex; align-items: center; gap: 8px; font-size: 11px; color: #b9c2cf; font-variant-numeric: tabular-nums; }
+.event-tier .medal-icon { width: 14px; height: 14px; }
+.event-tier .check-icon { width: 16px; height: 16px; }
+.event-new { display: inline-block; margin-right: 6px; padding: 1px 4px; border-radius: 3px; font-size: 8px; letter-spacing: 1px; color: #10161f; background: #ffd34d; vertical-align: 2px; }
+/* The Relics screen (relics-page.ts): a grid of the relics owned, and one
+   raised to full size with rays and sparkles when pressed or hovered. */
+#relics .page-title { margin: 18px 44px 14px; text-align: center; }
+.relic-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 8px; }
+.relic-cell { display: flex; flex-direction: column; align-items: center; gap: 4px; min-height: 0; padding: 8px 4px; border: 1px solid var(--line); border-radius: 8px; background: #151b24; }
+.relic-cell .relic-icon { width: 36px; height: 36px; }
+.relic-cell small { font-size: 9px; color: #c9d1dc; text-align: center; }
+.relic-cell.rare { border-color: #3d6fb3; }
+.relic-cell.epic { border-color: #7a4dbf; }
+.relic-pop { position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; padding: 16px; background: #04070bd9; overflow: hidden; cursor: pointer; }
+.relic-pop.hover { pointer-events: none; }
+.relic-pop-stage { position: relative; display: grid; place-items: center; }
+.relic-pop-rays { position: absolute; left: 50%; top: 50%; width: 560px; height: 560px; border-radius: 50%; background: radial-gradient(circle, #ffe7a6aa 0 12%, #e9b84a55 22%, transparent 48%), repeating-conic-gradient(from 0deg, #ffd76a 0deg 5deg, transparent 5deg 15deg); -webkit-mask-image: radial-gradient(circle, #000 18%, transparent 68%); mask-image: radial-gradient(circle, #000 18%, transparent 68%); opacity: 0.8; pointer-events: none; transform: translate(-50%, -50%); animation: card-rays-in 0.4s ease-out backwards, card-rays-turn 16s linear infinite; }
+.relic-pop-icon { position: relative; width: 160px; height: 160px; filter: drop-shadow(0 0 18px #ffd76a99); animation: relic-pop-in 0.55s cubic-bezier(0.2, 0.9, 0.3, 1.3) backwards; }
+.relic-pop-sparkles { position: absolute; inset: 0; pointer-events: none; }
+.relic-pop-sparkles i { position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; margin: -3px; border-radius: 50%; background: #fff6cf; box-shadow: 0 0 8px 2px #ffd76a; opacity: 0; animation: relic-sparkle 1.6s calc(var(--i) * 0.2s) ease-out infinite; transform: rotate(calc(var(--i) * 45deg)); }
+.relic-pop .card-reveal-text { animation: card-text-in 0.3s 0.15s ease-out backwards; }
+.relic-pop .card-reveal-text small { color: #e9c77e; }
+.relic-pop .card-reveal-text b { color: #fbf0d4; }
+.relic-pop .card-reveal-text span { color: #8d794e; }
+.relic-pop.epic .card-reveal-text small { color: #d6b8ff; }
+.relic-pop.still .relic-pop-rays, .relic-pop.still .relic-pop-icon, .relic-pop.still .relic-pop-sparkles i, .relic-pop.still .card-reveal-text { animation: none; }
+@keyframes relic-pop-in { from { transform: scale(0.2) rotate(-12deg); opacity: 0; } }
+@keyframes relic-sparkle {
+  0% { opacity: 0; transform: rotate(calc(var(--i) * 45deg)) translateY(0); }
+  30% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(calc(var(--i) * 45deg)) translateY(-110px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .relic-pop-rays, .relic-pop-icon, .relic-pop-sparkles i, .relic-pop .card-reveal-text { animation: none; }
+}

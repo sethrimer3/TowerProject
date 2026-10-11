@@ -34,7 +34,7 @@ const hash = (value: unknown) => createHash("sha256").update(canonical(value)).d
  * run of the tournament. */
 function entered(league: League, gameSeed: number) {
   const save = defaults();
-  save.goals.claimed = { 1: [70] };
+  save.goals.claimed = { 1: [60] };
   save.equipment.unlocked = true;
   save.tournament.tickets = 1;
   Object.assign(save.tutorials, { climb: true, speed: true });

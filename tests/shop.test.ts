@@ -19,12 +19,12 @@ const gemOffer = (amount: number): ShopOffer => ({
   price: { kind: "currency", currency: "gold", amount }, rarity: "common", purchaseLimit: 2, effects: [], tags: [],
 });
 
-test("the catalog: the Ascension Shard packs, one-time packs, the daily Gems, the Gem packs and the Premium Passes at their default prices", () => {
+test("the catalog: the Ascension Shard packs, one-time packs, the daily Gems, the Gem packs, the Premium Passes and the Event Booster at their default prices", () => {
   const shown = OFFERS.map((o) => [o.id, o.price.kind === "money" ? o.price.label : o.price.kind]);
   assert.deepEqual(shown, [
     ["shards300", "$29.99"], ["shards750", "$59.99"], ["adFree", "$9.95"], ["coins2", "$9.95"], ["coins3", "$29.95"], ["dailyGems", "free"],
     ["gems250", "$4.99"], ["gems550", "$9.99"], ["gems1150", "$19.99"], ["gems2500", "$39.99"], ["gems7500", "$99.99"],
-    ["pass1", "$9.99"], ["pass2", "$19.99"], ["pass3", "$29.99"],
+    ["pass1", "$9.99"], ["pass2", "$19.99"], ["pass3", "$29.99"], ["eventBoost", "$9.99"],
   ]);
   for (const id of ["adFree", "coins2", "coins3", "pass1", "pass2", "pass3"]) assert.equal(offer(id)!.purchaseLimit, 1, id);
 });

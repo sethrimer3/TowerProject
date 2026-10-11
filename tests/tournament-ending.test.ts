@@ -13,11 +13,11 @@ const ID = "2026-10-07", T = tournamentById(ID);
 /** When the stub finalizes Wednesday's results. */
 const FINAL = T.graceEndsAt + STUB_TABULATE_MS;
 
-/** A game in the forest whose player claimed floor 70's Goal, on a clock
+/** A game in the forest whose player claimed floor 60's Goal, on a clock
  * the test moves, with a client of the stub server on the same clock. */
 function setup() {
   const save = defaults();
-  save.goals.claimed[1] = [70];
+  save.goals.claimed[1] = [60];
   const clock = { now: T.opensAt + HOUR };
   const g = new Game(save);
   g.clock = () => clock.now;

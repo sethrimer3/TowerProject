@@ -46,7 +46,7 @@ function unavailable(save: Save, offer: ShopOffer, now: number): Refusal | null 
   if (now >= (offer.endTime ?? Infinity)) return "expired";
   if (!offer.item) return "storeLink";
   if (soldOut(save, offer, now)) return "limit";
-  return grantRefusal(save, offer.item) ? "owned" : null;
+  return grantRefusal(save, offer.item);
 }
 
 /** Why `payment` doesn't pay for `offer`: real money the store hasn't

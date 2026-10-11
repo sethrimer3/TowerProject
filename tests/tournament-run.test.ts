@@ -19,10 +19,10 @@ const HOUR = 3_600_000;
 /** Wednesday 2026-10-07, 01:00 GMT: a tournament is open. */
 const OPEN = Date.UTC(2026, 9, 7) + HOUR;
 
-/** A game in the Tower's forest whose player claimed floor 70's Goal, at `now`, with `tickets`. */
+/** A game in the Tower's forest whose player claimed floor 60's Goal, at `now`, with `tickets`. */
 function unlockedGame(now: number, tickets = 1, rng?: () => number) {
   const save = defaults();
-  save.goals.claimed[1] = [70];
+  save.goals.claimed[1] = [60];
   save.tournament.tickets = tickets;
   const g = new Game(save, rng);
   g.clock = () => now;

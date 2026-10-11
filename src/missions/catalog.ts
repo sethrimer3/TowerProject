@@ -25,7 +25,7 @@ export type MissionDef = {
 /** Whether the hero has reached floor `first(tower)` (counting from 1) of
  * some open tower, or the Delve's equivalent floor in the delve of the same
  * number (each delve follows the tower of its number). */
-function reached(save: Save, first: (tower: number) => number) {
+export function reached(save: Save, first: (tower: number) => number) {
   return (["tower", "delve"] as Mode[]).some((mode) => {
     const slice = save[mode];
     for (let tier = 1; tier <= slice.tiersOpen; tier++) {

@@ -16,6 +16,7 @@ import type { GoalsSave } from "./goals.ts";
 import type { TournamentSave } from "./tournament/progress.ts";
 import type { MailSave } from "./mail/progress.ts";
 import type { MissionsSave } from "./missions/progress.ts";
+import type { EventsSave } from "./events/progress.ts";
 import type { TournamentRun } from "./tournament/run.ts";
 export type Kind =
   | "wall"
@@ -275,7 +276,8 @@ export type Save = {
    * in the Shop's limited packs for now. */
   ascensionShards: number;
   /** Medals: a limited currency, kept between runs, paid by the weekly
-   * mission rewards (missions/catalog.ts); nothing spends them yet. */
+   * mission rewards (missions/catalog.ts) and Events' missions
+   * (events/catalog.ts); nothing spends them yet. */
   medals: number;
   /** Where the Gems found on floors and the ad button's stand: never part
    * of a run, so undo can't touch them. */
@@ -319,7 +321,7 @@ export type Save = {
   /** Persistent crafting-material inventory. Never part of `Run` — must
    * survive movement undo, death, and new runs. */
   materials: Record<MaterialId, number>;
-  /** Equipment, opened on floor 60: the pieces owned, what each mode's
+  /** Equipment, opened by Tower II's floor 60 Goal: the pieces owned, what each mode's
    * hero wears, the upgrade materials, and the Gem pulls' pity
    * (equipment/inventory.ts). */
   equipment: EquipmentSave;
@@ -379,5 +381,10 @@ export type Save = {
   /** The daily missions given, the week's tally and rewards claimed, and
    * what has counted toward them (missions/progress.ts). */
   missions: MissionsSave;
+  /** The running Event's missions and what has counted toward them, and
+   * the events boosted (events/progress.ts). */
+  events: EventsSave;
+  /** The relics owned, by id (relics.ts), each once, kept between runs. */
+  relics: string[];
 };
 export const point = (x: number, y: number) => `${x},${y}`;

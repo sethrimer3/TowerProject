@@ -160,11 +160,14 @@ try {
         Object.assign(s.tutorials, { deck: true, removeCard: true, addCard: true, upgrades: true });
         s.badges = { owned: { hp: { copies: 4, pick: 0 }, xp: { copies: 1, pick: 0 }, hpGate: { copies: 3, pick: 1 }, charge: { copies: 2, pick: 0 } }, cards: { stairs: "hp", monster: "charge" }, rng: 99 };
       }),
-      // In the forest with Tower I's floor 60 completed: its Goal, still to
-      // claim, opens Equipment; a few pieces owned, two worn.
+      // In the forest of Tower II with its floor 60 completed: its Goal,
+      // still to claim, opens Equipment; a few pieces owned, two worn.
       equipment: forest((s) => {
         rich(s);
         s.gold = 20000;
+        s.tower.tiersOpen = s.delve.tiersOpen = 2;
+        s.tower.tierRecords = { 1: { best: 100, reached: 100 } };
+        s.tower.tier = 2;
         s.tower.best = s.tower.reached = 60;
         Object.assign(s.tutorials, { gear: true, upgrades: true });
         const item = (id, def, rarity, level, extra) => ({ id, def, rarity, level, slots: [], ...extra });
@@ -180,12 +183,12 @@ try {
           nextId: 8,
         });
       }),
-      // In the forest with the Tournament open (Tower I's floor 70 claimed):
+      // In the forest with the Tournament open (Tower I's floor 60 claimed):
       // Saturday's tournament entered and its Results over, and a score kept
       // for Wednesday's. Built last, so the fixtures above keep their seeds.
       tournament: forest((s) => {
         rich(s);
-        s.goals.claimed = { 1: [70] };
+        s.goals.claimed = { 1: [60] };
         Object.assign(s.tutorials, { upgrades: true });
         s.tournament.tickets = 1;
         s.tournament.entries = {
@@ -224,6 +227,23 @@ try {
         s.missions.nextId = 5;
         s.missions.period = Math.floor(now / (8 * 3_600_000));
         s.missions.week = { id: Math.floor((Math.floor(now / 86_400_000) + 3) / 7), missions: 12, claimed: [0] };
+      }),
+      // In the forest with the Tournament and Events open (Tower I's floors
+      // 60 and 70 claimed), on the first day of the event of 5 October:
+      // its seven missions, two with tiers done and one complete (already
+      // moved under the rest), none new. Built last, so no fixture before it changes.
+      events: forest((s) => {
+        quiet(s);
+        Object.assign(s.tutorials, { enter: true, upgrades: true });
+        s.goals.claimed = { 1: [60, 70] };
+        const now = Date.parse("2026-10-05T12:00:00Z"), day = Math.floor(now / 86_400_000);
+        const types = ["login", "freeGems", "tournaments", "badges", "basic", "bosses", "potions"];
+        const progress = [1, 13, 1, 25, 6000, 10, 100];
+        s.events = {
+          id: Math.floor((day + 3) / 14), missions: types.map((type, i) => ({ id: i + 1, type, progress: progress[i] })), nextId: 8, rng: 12345,
+          boosted: [], seen: [1, 2, 3, 4, 5, 6, 7], moved: [2], loginDay: day, counted: [], streaks: { run: "", floors: 0, hurt: false, interest: 0 },
+        };
+        s.medals = 75;
       }),
     };
   });
@@ -660,7 +680,7 @@ try {
   // dismantle and a ×10 pull.
   await load("equipment");
   await click("#section-pick");
-  await click('[data-goal="1:60:0"]');
+  await click('[data-goal="2:60:0"]');
   await shot("equipment.claimed");
   await click("#unlock-visit");
   await shot("equipment.loadout");
@@ -716,7 +736,7 @@ try {
   // both removed, and the button gone.
   await load("mail");
   await shot("mail.forest");
-  await click("#mail-button");
+  await menuClick("#mail-button");
   await shot("mail.list");
   await click('[data-mail-open="outage"]');
   await shot("mail.message");
@@ -739,7 +759,7 @@ try {
   // celebrated in turn; and the X back to the board.
   await load("missions");
   await shot("missions.forest");
-  await click("#missions-button");
+  await menuClick("#missions-button");
   await shot("missions.page");
   await click('[data-claim="1"]');
   await page.locator(".reward-reveal").waitFor();
@@ -755,6 +775,27 @@ try {
   await shot("missions.weekly");
   await click("#missions-close");
   await shot("missions.closed");
+
+  // Events: the forest's column (the hamburger, the Tournament's and Events'
+  // buttons) and its menu (Settings, Missions, Relics); the Events screen
+  // (the banner, the relic track, the booster's offer, the missions, the
+  // completed one last); the booster refused while the store is closed;
+  // and the Relics screen, empty.
+  await load("events");
+  await shot("events.forest");
+  await click("#run-menu-toggle");
+  await shot("events.menu");
+  await click("#run-menu-toggle");
+  await click("#events-button");
+  await shot("events.page");
+  await click("#event-boost-buy");
+  await page.locator("#event-boost-message:not(:empty)").waitFor();
+  await shot("events.boostRefused");
+  await click("#events-close");
+  await menuClick("#relics-button");
+  await shot("relics.empty");
+  await click("#relics-close");
+  await shot("events.closed");
 
   // The Tournament: on Monday, the button's countdown and the page, which
   // shows nothing of Saturday's results once they're over; All prizes. Then the clock moves on

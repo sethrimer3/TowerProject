@@ -4,7 +4,7 @@ import { defaults, decode } from "../src/save.ts";
 import { Game } from "../src/state.ts";
 import { OutsideWorld, BLACKSMITH } from "../src/outside.ts";
 import { MODES } from "../src/modes.ts";
-import { unlockFloor } from "../src/goals.ts";
+import { unlockAt } from "../src/goals.ts";
 import { random } from "../src/random.ts";
 import { loadout } from "../src/loadout.ts";
 import { predict } from "../src/combat.ts";
@@ -136,16 +136,17 @@ test("decoding drops unknown pieces, clamps levels to the cap, and keeps loadout
 
 // --- Unlock and the Blacksmith ---
 
-test("Equipment opens by claiming Tower I's floor 60 Goal, not by reaching a floor", () => {
-  const floor = unlockFloor("equipment");
-  assert.equal(floor, 60);
+test("Equipment opens by claiming Tower II's floor 60 Goal, not by reaching a floor", () => {
+  assert.deepEqual(unlockAt("equipment"), { tower: 2, floor: 60 });
   const s = defaults();
   s.tower.best = s.tower.reached = 200;
+  s.tower.tiersOpen = 2;
+  s.tower.tierRecords[2] = { best: 200, reached: 200 };
   s.delve.best = 2000;
   const g = new Game(s);
   assert.equal(g.save.equipment.unlocked, false, "reaching floors opens nothing");
   g.newRun({ outside: true, seed: 7 });
-  assert.equal(g.claimGoal(1, floor, false)?.kind, "unlock");
+  assert.equal(g.claimGoal(2, 60, false)?.kind, "unlock");
   assert.equal(g.save.equipment.unlocked, true);
   assert.equal(new Game(decode(JSON.stringify(g.save))).save.equipment.unlocked, true, "kept by the save");
 });
@@ -157,8 +158,9 @@ test("the Blacksmith stands in the forest only once Equipment is open, beside th
   assert.equal(before.atBlacksmith(x, y), false);
   const g = new Game(defaults());
   g.newRun({ outside: true, seed: 7 });
-  g.save.tower.reached = 60;
-  g.claimGoal(1, 60, false);
+  g.save.tower.tiersOpen = 2;
+  g.save.tower.tierRecords[2] = { best: 60, reached: 60 };
+  g.claimGoal(2, 60, false);
   assert.equal(g.atBlacksmith(x, y), true, "standing at once in the forest the claim was made from");
   assert.equal(g.world.tile(x, y).kind, "wall", "its walls block the way");
   const forest = new OutsideWorld(7, "tower", true);

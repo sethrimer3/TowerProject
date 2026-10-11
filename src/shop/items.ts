@@ -1,6 +1,7 @@
 import type { Save } from "../entities.ts";
 import { CURRENCIES, type CurrencyId } from "./currency.ts";
 import { ENTITLEMENTS, owns, type EntitlementId } from "./entitlements.ts";
+import { boostEvent, boostRefusal } from "../events/progress.ts";
 
 // What an offer grants. Granting hands the item to the system that owns it
 // (a currency's balance, the save's entitlements); the Shop keeps no copy.
@@ -12,7 +13,10 @@ export type ShopItem =
   /** A permanent perk, with any currencies granted beside it. */
   | { kind: "entitlement"; id: EntitlementId; amounts?: Partial<Record<CurrencyId, number>> }
   /** Several currencies at once, such as a pack of Ascension Shards and Gems. */
-  | { kind: "bundle"; amounts: Partial<Record<CurrencyId, number>> };
+  | { kind: "bundle"; amounts: Partial<Record<CurrencyId, number>> }
+  /** The running Event's booster: its Medals doubled, retroactively, and its
+   * premium relics opened (events/progress.ts). */
+  | { kind: "eventBoost" };
 
 /** A bundle's currencies and amounts, in its order. */
 export const bundleAmounts = (amounts: Partial<Record<CurrencyId, number>> = {}) => Object.entries(amounts) as [CurrencyId, number][];
@@ -20,12 +24,13 @@ export const bundleAmounts = (amounts: Partial<Record<CurrencyId, number>> = {})
 /** Every currency `item` grants, in its order: none for a perk alone. */
 export function itemCurrencies(item: ShopItem | undefined): [CurrencyId, number][] {
   if (item?.kind === "currency") return [[item.currency, item.amount]];
-  return item ? bundleAmounts(item.amounts) : [];
+  return item && item.kind !== "eventBoost" ? bundleAmounts(item.amounts) : [];
 }
 
 /** Why `item` can't be granted to `save` now, or null when it can. Checked
  * before anything is paid, so a grant that follows never fails. */
-export function grantRefusal(save: Save, item: ShopItem): "owned" | null {
+export function grantRefusal(save: Save, item: ShopItem): "owned" | "locked" | null {
+  if (item.kind === "eventBoost") return boostRefusal(save);
   return item.kind === "entitlement" && owns(save, item.id) ? "owned" : null;
 }
 
@@ -33,12 +38,14 @@ export function grantRefusal(save: Save, item: ShopItem): "owned" | null {
 export function grant(save: Save, item: ShopItem, quantity: number) {
   for (const [c, n] of itemCurrencies(item)) CURRENCIES[c].credit(save, n * quantity);
   if (item.kind === "entitlement") save.entitlements.push(item.id);
+  if (item.kind === "eventBoost") boostEvent(save);
 }
 
 /** The item in a few words, for confirmations and the history. */
 export function itemName(item: ShopItem): string {
   const amount = (c: CurrencyId, n: number) => `${n.toLocaleString("en-US")} ${CURRENCIES[c].name}`;
   if (item.kind === "currency") return amount(item.currency, item.amount);
+  if (item.kind === "eventBoost") return "Event Booster";
   if (item.kind === "bundle") return bundleAmounts(item.amounts).map(([c, n]) => amount(c, n)).join(" + ");
   return [ENTITLEMENTS[item.id].name, ...bundleAmounts(item.amounts).map(([c, n]) => amount(c, n))].join(" + ");
 }

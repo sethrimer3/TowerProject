@@ -17,6 +17,8 @@ import { decodeGoals, defaultGoals } from "./goals.ts";
 import { decodeTournament, defaultTournament } from "./tournament/progress.ts";
 import { decodeMail, defaultMail } from "./mail/progress.ts";
 import { decodeMissions, defaultMissions } from "./missions/progress.ts";
+import { decodeEvents, defaultEvents } from "./events/progress.ts";
+import { decodeRelics } from "./relics.ts";
 import { isTournamentRun } from "./tournament/run.ts";
 import { decodeBadges, defaultBadges, validRunBadges } from "./badges.ts";
 import { runTrainingMax } from "./run-training.ts";
@@ -64,6 +66,8 @@ export function defaults(): Save {
     tournament: defaultTournament(),
     mail: defaultMail(),
     missions: defaultMissions(),
+    events: defaultEvents(),
+    relics: [],
   };
 }
 const CHEST_TIERS = ["silver", "gold"] as const;
@@ -409,6 +413,8 @@ export function decode(raw: string | null): Save {
     d.tournament = decodeTournament(s.tournament);
     d.mail = decodeMail(s.mail);
     d.missions = decodeMissions(s.missions);
+    d.events = decodeEvents(s.events);
+    d.relics = decodeRelics(s.relics);
     // The boost runs for good only while a pack that grants it is owned.
     if (permanentBoost(d)) d.trainingBoostUntil = BOOST_FOREVER;
     else if (d.trainingBoostUntil === BOOST_FOREVER) d.trainingBoostUntil = 0;

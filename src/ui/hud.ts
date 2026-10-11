@@ -23,7 +23,7 @@ import { shortCountdown } from "../tournament/schedule.ts";
 import { equipmentWaiting } from "../equipment/inventory.ts";
 import { GOLD_BOOST_FACTOR, GOLD_BOOST_MS } from "../gold-boost.ts";
 import { adsOff } from "../shop/entitlements.ts";
-import { forestMenu, renderRunMenu } from "./run-menu.ts";
+import { renderRunMenu } from "./run-menu.ts";
 import { factorText, goldBonuses, goldBonusTotal } from "../gold-bonuses.ts";
 import { MISSION_CAPACITY } from "../missions/catalog.ts";
 
@@ -132,6 +132,7 @@ export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay)
   renderTournamentButton(game);
   renderMailButton(game);
   renderMissionsButton(game);
+  renderEventsButtons(game);
   el("run-shop").hidden = !!game.run.outside;
   el("run-research").classList.toggle("notify", !game.run.outside && researchWaiting(game));
   renderAdButton(game);
@@ -159,35 +160,33 @@ export const renderShopDot = (game: Game) => {
   const waiting = shopWaiting(game);
   document.querySelector(`[data-tab="shop"]`)?.classList.toggle("notify", waiting);
   el("run-shop").classList.toggle("notify", waiting);
-  // Inside a run Research, the Tournament and Missions are folded away in
-  // the menu, and in a crowded forest Mail, so the hamburger wears their dots too.
-  el("run-menu-toggle").classList.toggle("notify", game.run.outside
-    ? forestMenu(game) && game.mail.unread
-    : researchWaiting(game) || tournamentWaiting(game) || game.missions.waiting);
+  // The hamburger wears the dots of the buttons folded away in its menu:
+  // Missions always; inside a run Research, the Tournament's and Events';
+  // in the forest Mail.
+  el("run-menu-toggle").classList.toggle("notify", game.missions.waiting || (game.run.outside
+    ? game.mail.recent.length > 0 && game.mail.unread
+    : researchWaiting(game) || tournamentWaiting(game) || game.events.waiting));
 };
 /** Whether the Tournament button wears its dot: a final prize waits to be
  * claimed. */
 const tournamentWaiting = (game: Game) => game.tournament.unlocked && game.tournament.phase === "results" && game.tournament.claimable;
 /** The Tournament button, once the Tournament is open to the player: its
  * trophy over the phase, `2d5h` until the next opens, `OPEN`, `ENDING`, or
- * `CLAIM` with a dot while a final prize waits. At the top of the forest's
- * actions column; inside a run, in the run's menu once the player has
- * entered the tournament, else gone. Refreshed every second too (main's
- * tick), so the countdown runs. */
+ * `CLAIM` with a dot while a final prize waits. In the forest's actions
+ * column under the hamburger; inside a run, in the run's menu once the
+ * player has entered the tournament, else gone (`renderRunMenu` places it).
+ * Refreshed every second too (main's tick), so the countdown runs. */
 export function renderTournamentButton(game: Game) {
   const button = el("tournament-button"), desk = game.tournament, inside = !game.run.outside;
   button.hidden = !desk.unlocked || (inside && !desk.entered);
   if (button.hidden) return;
-  const home = inside ? el("run-menu-items") : el("run-menu").parentElement!, before = inside ? el("end-run") : el("run-menu");
-  if (button.nextElementSibling !== before) home.insertBefore(button, before);
   const phase = desk.phase, claim = tournamentWaiting(game);
   text("tournament-state", phase === "open" ? "OPEN" : phase === "ending" ? "ENDING" : claim ? "CLAIM" : shortCountdown(desk.nextOpensAt - desk.now));
   button.classList.toggle("notify", claim);
   button.classList.toggle("live", phase === "open");
 }
-/** The Mail button: in the forest's actions column under Settings, only
- * while there is mail to show (`game.mail.recent`), with a dot while any of
- * it is unread. Never inside a run. Refreshed every second too (main's
+/** The Mail button: in the forest's menu, only while there is mail to show
+ * (`game.mail.recent`), with a dot while any of it is unread. Never inside a run. Refreshed every second too (main's
  * tick), so mail past its time leaves on its own. */
 export function renderMailButton(game: Game) {
   const button = el("mail-button"), mail = game.mail;
@@ -196,16 +195,32 @@ export function renderMailButton(game: Game) {
 }
 /** The Missions button: a check mark over the missions in the list out
  * of 8 (`3/8`), complete or not, since at 8 no more come; a dot shows
- * while a mission or weekly reward waits to be claimed. In the forest's actions column under Settings (and Mail);
- * inside a run, in the run's menu. Refreshed every second too (main's
- * tick), so new missions show as they come. */
+ * while a mission or weekly reward waits to be claimed. In the menu, in the
+ * forest and inside a run. Refreshed every second too (main's tick), so new
+ * missions show as they come. */
 export function renderMissionsButton(game: Game) {
-  const button = el("missions-button"), missions = game.missions, inside = !game.run.outside;
-  const home = inside ? el("run-menu-items") : el("run-menu").parentElement!, before = inside ? el("end-run") : el("auto");
-  if (button.parentElement !== home || button.nextElementSibling !== before) home.insertBefore(button, before);
+  const button = el("missions-button"), missions = game.missions;
   text("missions-count", `${missions.list.length}/${MISSION_CAPACITY}`);
   button.classList.toggle("notify", missions.waiting);
   const label = `Missions: ${missions.list.length} of ${MISSION_CAPACITY}${missions.waiting ? "; rewards to claim" : ""}`;
+  button.title = label;
+  button.setAttribute("aria-label", label);
+}
+/** The Events button, once Events are open: a pennant over the time left
+ * in the running event (`9d 4h`), with a dot while a new mission or a
+ * completed one waits to be seen. In the forest's actions column under the
+ * Tournament's; inside a run, in the run's menu (`renderRunMenu` places
+ * it). And the Relics button beside Mail in the forest's menu, once Events
+ * are open or a relic is owned. Refreshed every second too (main's tick),
+ * so the countdown runs. */
+export function renderEventsButtons(game: Game) {
+  const button = el("events-button"), events = game.events;
+  button.hidden = !events.unlocked;
+  el("relics-button").hidden = !game.run.outside || (!events.unlocked && game.save.relics.length === 0);
+  if (button.hidden) return;
+  text("events-state", shortCountdown(events.info.endsAt - events.now));
+  button.classList.toggle("notify", events.waiting);
+  const label = `Events: ${events.info.name}${events.waiting ? "; something new" : ""}`;
   button.title = label;
   button.setAttribute("aria-label", label);
 }

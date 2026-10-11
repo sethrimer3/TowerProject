@@ -24,7 +24,7 @@ export class TournamentDesk {
     return this.host.save.tournament;
   }
 
-  /** Whether the Tournament is open to the player: Tower I floor 70's
+  /** Whether the Tournament is open to the player: Tower I floor 60's
    * Goal claimed, or Dev mode. */
   get unlocked() {
     return goalUnlocked(this.host.save, "tournament") || this.host.save.settings.devMode;

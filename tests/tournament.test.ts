@@ -18,11 +18,11 @@ const HOUR = 3_600_000;
 const WED = Date.UTC(2026, 9, 7);
 const SAT = Date.UTC(2026, 9, 10);
 
-test("Tower I's floor 70 Goal unlocks the Tournament", () => {
-  assert.deepEqual(checkpoint(1, 70)?.reward, { kind: "unlock", unlock: "tournament" });
+test("Tower I's floor 60 Goal unlocks the Tournament", () => {
+  assert.deepEqual(checkpoint(1, 60)?.reward, { kind: "unlock", unlock: "tournament" });
   const save = defaults();
   assert.equal(goalUnlocked(save, "tournament"), false);
-  save.goals.claimed[1] = [70];
+  save.goals.claimed[1] = [60];
   assert.equal(goalUnlocked(save, "tournament"), true);
 });
 
@@ -141,7 +141,7 @@ test("Tickets: one free a tournament, then one for an ad, then 10, 20, 30 … Ge
 /** A Game with the Tournament unlocked, its clock at `now`. */
 function unlockedGame(now: number) {
   const save = defaults();
-  save.goals.claimed[1] = [70];
+  save.goals.claimed[1] = [60];
   const g = new Game(save);
   g.clock = () => now;
   return g;

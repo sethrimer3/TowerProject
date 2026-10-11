@@ -1,7 +1,8 @@
 import { GOLD_SHOP, type GoldItemId } from "../config.ts";
 import { loadout, provisionBulk, provisionOpen, provisionText, type Stat } from "../loadout.ts";
 import { keyCount, whole } from "../whole.ts";
-import { unlockFloor } from "../goals.ts";
+import { unlockAt } from "../goals.ts";
+import { tierNumeral } from "../tiers.ts";
 import type { AppContext } from "./app.ts";
 import { helpButton } from "./dialogs.ts";
 import { el, itemSprite, uiSprite } from "./dom.ts";
@@ -24,7 +25,7 @@ type GearTab = "provisions" | "equipment";
 const TAB_NAMES: Record<GearTab, string> = { provisions: "Provisions", equipment: "Equipment" };
 
 /** The Gear page: provisions (the Gear skill) and Equipment (opened by
- * Tower I's floor 60 Goal). */
+ * Tower II's floor 60 Goal). */
 export class GearPage {
   private tab: GearTab = "provisions";
   /** The provision just bought, whose icon glows on the next render. */
@@ -54,7 +55,7 @@ export class GearPage {
     if (this.tab === "equipment") save.equipment.seen = true;
     const body = this.tab === "equipment" ? this.equipment.html() : this.provisionsHtml();
     const tabs = (["provisions", "equipment"] as const).filter((t) => t === "equipment" || save.upgrades.gear);
-    const lockHint = (t: GearTab) => t === "equipment" ? `Claim Tower I's floor ${unlockFloor("equipment")} Goal to open Equipment` : "Locked";
+    const lockHint = (t: GearTab) => t === "equipment" ? `Claim Tower ${tierNumeral(unlockAt("equipment").tower)}'s floor ${unlockAt("equipment").floor} Goal to open Equipment` : "Locked";
     const intro = this.tab === "equipment"
       ? `<h2>Equipment${helpButton("How Equipment works", "equip-help")}</h2>`
       : `<h2>Traveler’s gear<button class="tree-help" id="gear-help" aria-label="About provisions" title="About provisions">?</button></h2>`;
