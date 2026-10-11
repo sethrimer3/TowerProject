@@ -192,13 +192,15 @@ export const fitsCard = (id: BadgeId, card: CardId) => {
   return !cards || cards.includes(card);
 };
 
-/** Whether badges `a` and `b` can't share a card, since they wouldn't
- * work together: a gate that holds below its threshold (<) and one that
- * holds at or above its own (≥), or Effective and Dampen. */
-export function badgeConflict(a: BadgeId, b: BadgeId) {
-  if (BADGES[a].kind === "gate" && BADGES[b].kind === "gate") return gateSign(a) !== gateSign(b);
-  return (a === "effective" && b === "dampen") || (a === "dampen" && b === "effective");
-}
+/** The pairs of badges that can't share a card, since they wouldn't work
+ * together: a key colour's < and ≥ gates, and Effective and Dampen. Other
+ * gates check different things (HP <, YK ≥), so they can. */
+const CONFLICTS: readonly (readonly [BadgeId, BadgeId])[] = [
+  ["yellowGate", "yellowAtLeast"], ["blueGate", "blueAtLeast"], ["redGate", "redAtLeast"], ["effective", "dampen"],
+];
+/** Whether badges `a` and `b` can't share a card (`CONFLICTS`). */
+export const badgeConflict = (a: BadgeId, b: BadgeId) =>
+  CONFLICTS.some(([x, y]) => (a === x && b === y) || (a === y && b === x));
 
 /** The card holding badge `id`, if any. */
 export const cardWith = (m: BadgesSave, id: BadgeId) =>

@@ -73,7 +73,7 @@ const UNLOCK_TUTORIALS: Record<GoalUnlock, string> = {
     `<p class="hint">Every boss now has a chance to drop equipment, on any floor, and every enemy drops upgrade materials.</p>`,
   researchSpeed: `<p>Research Speed opens in the Archives: train the archivists to read faster, and every research, those under way included, takes less time.</p>`,
   badgeSlots: `<p>Badge Slots opens in the Archives: research it, and each card holds one more badge a level. Drag a badge onto a card on the Deck page to fill its next slot; on a card with every slot full, it takes the bottom slot's place.</p>` +
-    `<p class="hint">Badges that can't work together can't share a card: a &lt; gate with a ≥ gate, or Effective with Dampen.</p>`,
+    `<p class="hint">Badges that can't work together can't share a card: a key colour's &lt; gate with its ≥ gate (YK &lt; with YK ≥), or Effective with Dampen.</p>`,
   shardAttack: `<p>Shard ATK opens in the Archives: research it, and every ATK shard a run picks up raises ATK by more, from the next one on, in the Tower and the Delve alike.</p>`,
   evadePrediction: `<p>Once Evade is yours, an enemy's inspect panel and its damage number count your parries: the damage to expect, the range it usually falls in, and your chance to survive.</p>` +
     `<p class="hint">Automove and the hand still plan as though no strike is parried, unless every strike is.</p>`,

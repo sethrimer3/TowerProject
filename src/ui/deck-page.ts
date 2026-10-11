@@ -503,7 +503,7 @@ export class DeckPage {
     if (!clash) return this.change(this.ctx.game.badges.attach(id, card));
     const name = (b: BadgeId) => `<b>${escapeHtml(BADGES[b].name)}</b>`;
     const why = BADGES[id].kind === "gate"
-      ? "A &lt; gate lets its card act only below its threshold, and a ≥ gate only at or above its own, so they can't work together."
+      ? "One lets its card act only while you hold fewer keys of that colour than it says, the other only while you hold at least as many as it says, so they can't work together."
       : "Effective makes its card's target stronger and Dampen makes it weaker, so they can't work together.";
     showHelp(this.ctx, "BADGES", "Badges in conflict", `<p>${name(id)} and ${name(clash)} on ${CARDS[card].name} can't be used together.</p><p class="hint">${why}</p>`);
   }

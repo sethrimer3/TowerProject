@@ -697,7 +697,7 @@ export const RESEARCH = {
   },
   badgeSlots: {
     name: "Badge Slots",
-    description: "Each card holds one more badge a level, arranged on the Deck page. A card's badges must not conflict: a < gate and a ≥ gate, or Effective and Dampen, can't share one.",
+    description: "Each card holds one more badge a level, arranged on the Deck page. A card's badges must not conflict: a key colour's < and ≥ gates (YK < and YK ≥), or Effective and Dampen, can't share one.",
     categories: ["abilities"],
     requires: [{ upgrade: "archives" }, { upgrade: "cardBadges" }, { goalUnlock: "badgeSlots" }],
     // 1 billion Gold and 4 days, then 100 billion and 20 days.

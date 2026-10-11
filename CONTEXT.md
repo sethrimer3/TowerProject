@@ -421,7 +421,7 @@ A token bought with Gems (drawn by rarity: common, rare or epic) and attached to
 _Avoid_: rune, gem, charm, enchantment
 
 **Badge slot**:
-A place on a card for one card badge. Every card has one, and one more for each level of Badge Slots research. Badges that can't work together (a < gate with a ≥ gate, Effective with Dampen) can't share a card.
+A place on a card for one card badge. Every card has one, and one more for each level of Badge Slots research. Badges that can't work together (a key colour's < and ≥ gates, such as YK < with YK ≥, or Effective with Dampen) can't share a card.
 _Avoid_: socket
 
 **Extra enemy**:

@@ -194,26 +194,28 @@ test("with more slots, a card holds badges top slot first; a full card's bottom 
   assert.deepEqual(runBadges(m, ["stairs"], 1), { stairs: [{ id: "xp", level: 1, pick: 0 }] }, "a run takes no more than the slots");
 });
 
-test("badges that can't work together can't share a card: a < gate and a ≥ gate, or Effective and Dampen", () => {
+test("badges that can't work together can't share a card: a key colour's < and ≥ gates, or Effective and Dampen", () => {
   assert.ok(badgeConflict("yellowGate", "yellowAtLeast"));
-  assert.ok(badgeConflict("hpGate", "redAtLeast"));
+  assert.ok(badgeConflict("redAtLeast", "redGate"));
   assert.ok(badgeConflict("dampen", "effective"));
+  assert.equal(badgeConflict("hpGate", "yellowAtLeast"), false, "HP and keys are checked apart");
+  assert.equal(badgeConflict("yellowGate", "blueAtLeast"), false, "so are two colours");
   assert.equal(badgeConflict("yellowGate", "blueGate"), false, "two < gates both hold");
   assert.equal(badgeConflict("effective", "skip"), false);
-  const owned = Object.fromEntries((["yellowGate", "blueAtLeast", "effective", "dampen", "hp"] as const).map((id) => [id, { copies: 1, pick: 0 }]));
+  const owned = Object.fromEntries((["yellowGate", "yellowAtLeast", "effective", "dampen", "hp"] as const).map((id) => [id, { copies: 1, pick: 0 }]));
   const m: BadgesSave = { ...defaultBadges(), owned };
   attachBadge(m, "yellowGate", "door", 3);
   attachBadge(m, "effective", "door", 3);
-  assert.equal(attachConflict(m, "blueAtLeast", "door", 3), "yellowGate");
-  assert.equal(attachBadge(m, "blueAtLeast", "door", 3), false);
+  assert.equal(attachConflict(m, "yellowAtLeast", "door", 3), "yellowGate");
+  assert.equal(attachBadge(m, "yellowAtLeast", "door", 3), false);
   assert.equal(attachConflict(m, "dampen", "door", 3), "effective");
   assert.equal(attachBadge(m, "dampen", "door", 3), false);
   assert.deepEqual(m.cards, { door: ["yellowGate", "effective"] }, "a refused badge changes nothing");
   attachBadge(m, "hp", "door", 3);
-  assert.equal(attachConflict(m, "blueAtLeast", "door", 3), "yellowGate", "a full card's bottom one gives way, but the gate above stays");
+  assert.equal(attachConflict(m, "yellowAtLeast", "door", 3), "yellowGate", "a full card's bottom one gives way, but the gate above stays");
   assert.equal(attachConflict(m, "dampen", "door", 2), undefined, "with two slots Effective is the bottom one, so Dampen replaces it");
   // A save or run holding a conflicting pair keeps only the first.
-  const raw = { owned, cards: { door: ["yellowGate", "blueAtLeast", "hp"], stairs: ["effective", "dampen"] } };
+  const raw = { owned, cards: { door: ["yellowGate", "yellowAtLeast", "hp"], stairs: ["effective", "dampen"] } };
   assert.deepEqual(decodeBadges(raw, UPGRADES, 2).cards, { door: ["yellowGate", "hp"], stairs: ["effective"] });
   assert.deepEqual(decodeBadges(raw, UPGRADES, 1).cards, { door: ["yellowGate"], stairs: ["effective"] }, "no more than the slots");
   assert.equal(validRunBadges({ door: [{ id: "effective", level: 1, pick: 0 }, { id: "dampen", level: 1, pick: 0 }] }), false);
@@ -224,19 +226,21 @@ test("the desk fills the slots Badge Slots opens and refuses a conflict", () => 
   const g = new Game(defaults());
   g.newRun({ outside: true });
   g.save.upgrades.cardBadges = 1;
-  for (const id of ["hp", "xp", "hpGate", "yellowAtLeast"] as const) g.save.badges.owned[id] = { copies: 1, pick: 0 };
+  for (const id of ["hp", "xp", "yellowGate", "yellowAtLeast", "hpGate"] as const) g.save.badges.owned[id] = { copies: 1, pick: 0 };
   assert.ok(g.badges.attach("hp", "stairs"));
   assert.ok(g.badges.attach("xp", "stairs"));
   assert.deepEqual(g.save.badges.cards.stairs, ["xp"], "one slot: XP takes HP's place");
   g.save.archives.levels.badgeSlots = 1;
-  assert.ok(g.badges.attach("hpGate", "stairs"));
-  assert.deepEqual(g.save.badges.cards.stairs, ["xp", "hpGate"]);
+  assert.ok(g.badges.attach("yellowGate", "stairs"));
+  assert.deepEqual(g.save.badges.cards.stairs, ["xp", "yellowGate"]);
   g.save.archives.levels.badgeSlots = 2;
-  assert.equal(g.badges.conflict("yellowAtLeast", "stairs"), "hpGate");
+  assert.equal(g.badges.conflict("yellowAtLeast", "stairs"), "yellowGate");
   assert.equal(g.badges.attach("yellowAtLeast", "stairs"), false);
+  assert.ok(g.badges.attach("hpGate", "stairs"), "HP < sits beside YK <");
+  assert.deepEqual(g.save.badges.cards.stairs, ["xp", "yellowGate", "hpGate"]);
   g.save.hand = ["stairs"];
   g.newRun();
-  assert.deepEqual(g.run.badges?.stairs?.map((b) => b.id), ["xp", "hpGate"], "the run takes both");
+  assert.deepEqual(g.run.badges?.stairs?.map((b) => b.id), ["xp", "yellowGate", "hpGate"], "the run takes them all");
 });
 
 // --- In a run ---

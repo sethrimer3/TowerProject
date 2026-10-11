@@ -245,15 +245,15 @@ try {
         };
         s.medals = 75;
       }),
-      // Badge Slots researched once: STAIRS holds HP < over Max HP, with
-      // YK ≥ (in conflict with HP <) and Effective in the box, in the forest
+      // Badge Slots researched once: STAIRS holds YK < over Max HP, with
+      // YK ≥ (in conflict with YK <) and Effective in the box, in the forest
       // and in a run inside. Built after the rest, so none of theirs changes.
       badgeSlots: forest((s) => {
         rich(s);
         s.upgrades.cardBadges = 1;
         Object.assign(s.tutorials, { deck: true, removeCard: true, addCard: true, upgrades: true });
         s.archives.levels.badgeSlots = 1;
-        s.badges = { owned: { hp: { copies: 4, pick: 0 }, hpGate: { copies: 1, pick: 0 }, yellowAtLeast: { copies: 1, pick: 0 }, effective: { copies: 3, pick: 0 } }, cards: { stairs: ["hpGate", "hp"] }, rng: 99 };
+        s.badges = { owned: { hp: { copies: 4, pick: 0 }, yellowGate: { copies: 1, pick: 0 }, yellowAtLeast: { copies: 1, pick: 0 }, effective: { copies: 3, pick: 0 } }, cards: { stairs: ["yellowGate", "hp"] }, rng: 99 };
       }),
       badgeSlotsRun: inside((s) => {
         quiet(s);
