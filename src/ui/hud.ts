@@ -44,10 +44,11 @@ export function currencyAmount(n: number) {
   // Whole hundredths of the unit, so no rounding creeps in (1,150,000 is 1.15M).
   return `${(Math.floor(n / (size / 100)) / 100).toFixed(2)}${UNITS[unit]}`;
 }
-/** An amount short enough for the HUD's narrow purse: in full below 10,000,
- * then to three figures in thousands, millions or billions (12.3K, 456M). */
-export function shortAmount(n: number) {
-  if (n < 10_000) return String(n);
+/** An amount short enough for the HUD's narrow purse: in full below `from`
+ * (10,000), then to three figures in thousands, millions or billions
+ * (12.3K, 456M). */
+export function shortAmount(n: number, from = 10_000) {
+  if (n < from) return String(n);
   const [size, unit] = n < 1e6 ? [1e3, "K"] : n < 1e9 ? [1e6, "M"] : [1e9, "B"];
   // Whole steps of the last figure shown, so no rounding creeps in.
   const v = n / size, digits = v < 10 ? 2 : v < 100 ? 1 : 0, step = size / 10 ** digits;
@@ -90,11 +91,11 @@ function sampleRates(game: Game, now: number) {
   return rates.silver.sample(game.silver + game.silverSpent, now) || gold;
 }
 
-/** Shows the rate `perMinute` in the purse's `id`, a dash before it is
- * known, with a small /min after it. */
+/** Shows the rate `perMinute` in the purse's `id`, abbreviated from 1,000
+ * (1.42K), a dash before it is known, with a small /min after it. */
 function purseRate(game: Game, id: string, perMinute: number | null, name: string) {
   const dev = game.save.settings.devMode, rate = perMinute === null ? null : whole(perMinute);
-  el(id).innerHTML = `${dev ? "∞" : rate === null ? "—" : shortAmount(rate)}<small class="per-minute">/min</small>`;
+  el(id).innerHTML = `${dev ? "∞" : rate === null ? "—" : shortAmount(rate, 1000)}<small class="per-minute">/min</small>`;
   el(id).parentElement!.title = `${name} found a minute, over the last minute: ${dev ? "∞" : rate === null ? "—" : rate.toLocaleString("en-US")} (tap for ${name} held)`;
 }
 
