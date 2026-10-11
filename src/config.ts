@@ -386,7 +386,7 @@ export const UPGRADES = [
   {
     id: "freeTraining",
     name: "Free Training",
-    description: "Opens Free Offense, Defense and Utility Upgrade training: each floor passed in a run may train a stat for free",
+    description: "Opens Free Offense, Defense and Utility Up training: each floor passed in a run may train a stat for free",
     base: 20,
     max: 1,
     currency: "inspiration",
@@ -585,9 +585,9 @@ export const TRAINING = [
   { id: "floorSilver", name: "Silver / Floor", group: "utility", requires: "wishingWell", cost: 1, max: 150, description: "Raises the Silver paid for each floor climbed for the first time in a run." },
   { id: "silverBonus", name: "Silver Bonus", group: "utility", requires: "wealthy", cost: 1, max: 150, description: "Multiplies all Silver found in a run." },
   { id: "killGold", name: "Gold / Kill", group: "utility", requires: "loot", cost: 1, max: 150, description: "Multiplies the Gold each kill pays." },
-  { id: "freeOffense", name: "Free Offense Upgrade", group: "utility", requires: "freeTraining", cost: 1, max: 100, description: "Each floor passed in a run has a chance to train a random Offense stat one level for free, for the run." },
-  { id: "freeDefense", name: "Free Defense Upgrade", group: "utility", requires: "freeTraining", cost: 1, max: 100, description: "Each floor passed in a run has a chance to train a random Defense stat one level for free, for the run." },
-  { id: "freeUtility", name: "Free Utility Upgrade", group: "utility", requires: "freeTraining", cost: 1, max: 100, description: "Each floor passed in a run has a chance to train a random Utility stat one level for free, for the run." },
+  { id: "freeOffense", name: "Free Offense Up", group: "utility", requires: "freeTraining", cost: 1, max: 100, description: "Each floor passed in a run has a chance to train a random Offense stat one level for free, for the run." },
+  { id: "freeDefense", name: "Free Defense Up", group: "utility", requires: "freeTraining", cost: 1, max: 100, description: "Each floor passed in a run has a chance to train a random Defense stat one level for free, for the run." },
+  { id: "freeUtility", name: "Free Utility Up", group: "utility", requires: "freeTraining", cost: 1, max: 100, description: "Each floor passed in a run has a chance to train a random Utility stat one level for free, for the run." },
 ] as const;
 export type TrainingId = (typeof TRAINING)[number]["id"];
 export type TrainingRow = (typeof TRAINING)[number];

@@ -273,9 +273,14 @@ export const FIRST_STRIKE_MS = 250;
 export const STRIKE_SPEEDUP = 0.9;
 export const FASTEST_STRIKE_MS = 50;
 
-/** How long a revival's golden fire and its "REVIVED" text last; a fight
- * shown in summary rounds begins its next round once it is over. */
+/** How long a revival's golden fire and its "REVIVED" text last. */
 export const REVIVE_MS = 1400;
+/** How long the skull over a hero struck down burns: the defeat dialog
+ * opens once it is over, and a revival's fire begins then. */
+export const DEFEAT_MS = 2500;
+/** How long a fight waits after a strike that revives the hero: the skull,
+ * then the revival's fire, before its next strike (or summary round). */
+export const REVIVE_PAUSE_MS = DEFEAT_MS + REVIVE_MS;
 
 /** One strike of a fight: who struck, for how much, when it swings (`start`
  * to `end`, in ms from the fight's start) and lands (`at`), and the HP the
@@ -305,7 +310,8 @@ export type Parries = (strike: number) => boolean;
  * hero lives through), until one of them falls. Ends with the same HP as
  * the prediction (or at 0 in a fight the hero loses), unless `revives`
  * raises the hero at full HP from a strike that would fell it: the fight
- * then goes on from the next round, the enemy as it was. `parries` (or,
+ * then goes on from the next round, the enemy as it was, once the skull
+ * and the revival's fire are over (`REVIVE_PAUSE_MS`). `parries` (or,
  * without it, a certain parry) cuts the strikes it parries. */
 export function bout(player: Player, enemy: Enemy, revives?: Revival, crits?: Crits, parries?: Parries): Bout {
   if (heroHit(player, enemy) <= 0) return { strikes: [], duration: 0 };
@@ -344,7 +350,9 @@ function play(strikes: Strike[], { player, enemy, revives, crits, parries }: Fig
       if (!s.enemyHp) break;
     }
     s.enemyNext = false;
-    strike(enemyBlow(s, player, thorn, revives, parries));
+    const blow = enemyBlow(s, player, thorn, revives, parries);
+    strike(blow);
+    if (blow.revived) s.t += REVIVE_PAUSE_MS;
     if (!s.heroHp || !s.enemyHp) break;
     s.attack = raisedAttack(s.attack);
     s.ms = Math.max(FASTEST_STRIKE_MS, s.ms * STRIKE_SPEEDUP);
@@ -396,7 +404,7 @@ export function resume(fight: Bout, from: number, fighters: Fighters): Bout {
 /** A fight settled at once (Animate fights off), shown as summary rounds:
  * each holds the hero's strikes as one strike and the enemy's as another,
  * landing together. A revival ends a round, and the next begins `gap` ms
- * later, once its fire has burned out. */
+ * later, once its skull and fire are over. */
 export function summarize(fight: Bout, gap: number): Bout {
   const strikes: Strike[] = [];
   let t = 0, round: Round = {};
@@ -442,14 +450,16 @@ function withStrike(round: Round, s: Strike, t: number): Round {
 
 /** The hero's HP once the fight is over, from `hp` at its start. */
 export const heroHpAfter = (fight: Bout, hp: number) => heroHpDuring(fight, hp, Infinity);
-/** When each of the fight's revivals lands, in ms from its start. */
+/** When each of the fight's revivals lands (its skull rising, its fire
+ * following `DEFEAT_MS` later), in ms from its start. */
 export const revivals = (fight: Bout) => fight.strikes.filter((s) => s.revived).map((s) => s.at);
 
-/** The hero's HP `elapsed` ms into a fight that began at `hp`. */
+/** The hero's HP `elapsed` ms into a fight that began at `hp`: none while
+ * the skull of a strike that revives it burns. */
 export function heroHpDuring(fight: Bout, hp: number, elapsed: number) {
   for (const s of fight.strikes) {
     if (s.at > elapsed) continue;
-    if (s.by === "enemy") hp = s.hp;
+    if (s.by === "enemy") hp = s.revived && elapsed < s.at + DEFEAT_MS ? 0 : s.hp;
     else if (s.heroHp !== undefined) hp = s.heroHp;
   }
   return hp;

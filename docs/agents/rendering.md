@@ -7,7 +7,7 @@ Each `draw()` builds one `FrameContext` (`render-frame.ts`: the camera's `BoardV
 `BoardView` (`left`, `bottom`, `n`, `s`) is the one view shape: the tile caches, decor and the forest grass all take the frame itself as their view.
 `BoardLook` holds the art set (mode, height, seed, outside) and the player's settings (sprites off, reduced motion), and decides once per frame whether the board is area one (`area1`, the first Tower section's hand-drawn art and floor relief); passes read these from `f.look`, never from the game and draws the ground over it.
 Outside, it then draws the tile contents, entrance, route line, hero in its grass, and weather; in the dungeon, `DungeonLight` (`dungeon-light.ts`) runs the rest of the frame in its fixed order (torch relief, decor, cast shadows, darkness and glows, tile contents, torches and lightmap, route line, hero and what stands in front of it, frame edge, vignette), calling back into a `LitBoard` the renderer builds for what it draws between the light's steps.
-Blocked-step and feedback text, then the level-up burst (`level-up.ts`), go last.
+Blocked-step and feedback text, then the skull over a hero struck down (`struck-down.ts`), the revival's fire and the level-up burst (`level-up.ts`), go last.
 The passes live in their own modules.
 `tile-painters.ts` holds the tile art (one painter per tile kind, plus the hero and torch sprites), and every painter draws onto the context it's given.
 Items, the torch and the hero wear a coloured outline (`withOutline`); an enemy is baked once per name, tier and `strength` (`bakeEnemy`: a one-pixel black outline, then `ENEMY_LOOK`'s bands outside it and rank chevrons over it, a weak enemy's one pointing down), and its dark-room glow in `lighting.ts` is keyed by strength too.

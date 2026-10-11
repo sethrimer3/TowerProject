@@ -82,6 +82,23 @@ test("undo restores combat, health, drops, equipment, door keys and score; histo
   for (let i = 0; i < 6; i++) g.move(0, 1);
   assert.equal(g.save.delve.history.length, 5);
 });
+test("undo goes on back past steps onto empty floor, to before the last move that did something", () => {
+  const g = corridor();
+  g.save.archives.levels.undoCount = 4;
+  g.run.changes["15,2"] = { kind: "potion" };
+  assert.ok(g.move(0, 1)); // onto empty floor
+  const beforePotion = structuredClone(g.run);
+  for (let i = 0; i < 4; i++) assert.ok(g.move(0, 1)); // the potion, then three empty steps
+  assert.ok(g.undo());
+  assert.deepEqual(g.run, beforePotion, "the three empty steps and the potion's step taken back at once");
+  assert.ok(g.undo());
+  assert.equal(g.run.player.y, 0, "an empty step with nothing before it is taken back alone");
+  assert.equal(g.undo(), false);
+  assert.ok(g.move(0, 1));
+  assert.ok(g.move(0, 1));
+  assert.ok(g.undo());
+  assert.equal(g.run.player.y, 1, "the potion's step alone, when it was the last");
+});
 test("a fatal fight stops a walked route; accepting defeat starts the next run, with nothing to undo", () => {
   const g = corridor();
   g.run.changes["15,2"] = doom;

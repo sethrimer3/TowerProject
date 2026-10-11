@@ -226,6 +226,10 @@ function playBoard(name: string, seed: number, canvas: HTMLCanvasElement, grab: 
       g.save.settings.fightAnimation = true;
       g.move(to.x - from.x, to.y - from.y);
       g.encounter!.start = 1400;
+      // The skull over a hero struck down, as a revival's strike raises it,
+      // and the heart with a plus of Max HP's badge.
+      g.struckDown = [1400];
+      g.gains.push({ ...from, text: "+16 max HP", art: { heart: true, raised: true } });
     } else {
       g.run.player.x = to.x;
       g.run.player.y = to.y;

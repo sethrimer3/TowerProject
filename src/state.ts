@@ -51,7 +51,7 @@ import {
 import { World, LAYOUT_VERSION } from "./delve/world.ts";
 import { RoomWorld, TOWER_LAYOUT_VERSION } from "./tower/room-world.ts";
 import type { Board } from "./board.ts";
-import { bout, guaranteedCrits, heroHpAfter, heroHpDuring, instakill, parryCut, resume, REVIVE_MS, revivals, summarize, type Bout, type CritRule, type Crits, type Parries, type Revival } from "./combat.ts";
+import { bout, DEFEAT_MS, guaranteedCrits, heroHpAfter, heroHpDuring, instakill, parryCut, resume, REVIVE_PAUSE_MS, revivals, summarize, type Bout, type CritRule, type Crits, type Parries, type Revival } from "./combat.ts";
 import { HEART_DOOR_HP, healAfterVictory, isLethal, regenerate, resolveStep, type StepBlocked, type StepEffect, type StepRules, shardStat } from "./step-effects.ts";
 import { OUTSIDE_START_Y, OutsideWorld } from "./outside.ts";
 import { AREA_BURST_MS, AreaLedger, chestReward, CLEARED_INSPIRATION, type AreaReward } from "./tower/area-ledger.ts";
@@ -103,10 +103,11 @@ export type RouteEffects = {
 };
 /** A reward just picked up, or what a door took, to rise from the tile it
  * came from: drawn as its sprite (a tile's contents, marked `spent` for a
- * key a door used, a material, or the heart a Heart Door checked), or as
- * `text` where it has none. */
+ * key a door used, a material, or the heart a Heart Door checked, or with
+ * a plus, `raised`, the max HP Max HP's badge added), or as `text` where it
+ * has none. */
 export type Gain = { x: number; y: number; text: string; art: GainArt | null };
-export type GainArt = { tile: Tile; spent?: true } | { material: MaterialId; quantity: number } | { heart: true } | { gem: true } | { coin: Coin };
+export type GainArt = { tile: Tile; spent?: true } | { material: MaterialId; quantity: number } | { heart: true; raised?: true } | { gem: true } | { coin: Coin };
 /** The coin a Gold or Silver gain raises. */
 export type Coin = "gold" | "silver";
 /** A potion's heal: the HP from and to, where the hero stood, and its number. */
@@ -135,7 +136,7 @@ const SKIP_SALT = 0x5c1b7;
 /** A step resolved and about to be taken: the tile stepped onto, what it
  * does, where it is, whether it goes in the undo history, and for a fight
  * the hero's critical strikes in it as played (`crits`). */
-type TakenStep = { tile: Tile; outcome: StepEffect; dest: { x: number; y: number }; track: boolean; crits?: number };
+type TakenStep = { tile: Tile; outcome: StepEffect; dest: { x: number; y: number }; track: boolean; quiet?: boolean; crits?: number };
 /** The latest fight as the board shows it: the hero struck from `from`,
  * the enemy (`hp` at the start) stood at `to`, and its strikes land from
  * `start` (performance time). Played out, they are the fight's own; settled
@@ -196,9 +197,14 @@ export class Game {
   /** The training points the latest level-up earned, which the board
    * raises over the hero once its burst is over. */
   levelUpPoints = 0;
-  /** When each of the latest fight's revivals lands (performance.now()),
-   * for the board's golden fire; emptied by undo. */
+  /** When each of the latest fight's revivals begins (performance.now()),
+   * for the board's golden fire, once its skull is over; emptied by undo. */
   revivedAt: number[] = [];
+  /** When the hero was last struck down (performance.now()): each strike
+   * of the latest fight that revived it, and the fall that ended a run,
+   * for the board's skull; emptied by undo. The defeat dialog waits for
+   * it (`defeatShownUntil`). */
+  struckDown: number[] = [];
   /** The area rewards whose chests were opened, each with when its golden
    * burst starts (performance.now()): a chest opened while another's burst
    * plays waits for it to end. Emptied by undo. */
@@ -432,6 +438,7 @@ export class Game {
     this.recordProgress();
     if (levelForXp(snapshot.xp) < levelForXp(this.save.xp)) this.levelUpAt = -Infinity;
     this.revivedAt = [];
+    this.struckDown = [];
     this.areaBursts = [];
     this.summoned = null;
     this.vanished = null;
@@ -460,8 +467,11 @@ export class Game {
     const slice = this.slice;
     // Fallen, undo spends one and takes back the fight the hero fell in.
     const fall = this.fallen ? slice.fall : null;
-    const snapshot = slice.history.pop();
+    let snapshot = slice.history.pop();
     if (!snapshot) return false;
+    // A step onto empty floor is seldom worth resuming at: undo goes on
+    // back past a run of them to before the last turn that did something.
+    while (!fall && snapshot.quiet && slice.history.length) snapshot = slice.history.pop()!;
     slice.fall = null;
     this.restore(fall?.snapshot ?? snapshot);
     this.feedback(fall ? "Fatal fight undone · the hand waits" : "Move undone");
@@ -907,6 +917,8 @@ export class Game {
   private activate(card: number, key: string) {
     const id = this.hand[card], badge = id && this.run.badges?.[id];
     if (!badge || !this.playing) return;
+    // Paying out makes the step it ends a turn undo stops at.
+    delete this.slice.history.at(-1)?.quiet;
     const v = badgeValue(badge.id, badge.level, badge.pick), p = this.run.player;
     switch (badge.id) {
       case "hp": return this.raiseMaxHp(v, badge.id);
@@ -934,7 +946,7 @@ export class Game {
     p.maxHp = snap(p.maxHp + n);
     p.hp = snap(p.hp + n);
     if (kept) kept.maxHp = snap(kept.maxHp + n);
-    this.gain(p.x, p.y, `+${wholeChange(n)} max HP`, { heart: true });
+    this.gain(p.x, p.y, `+${wholeChange(n)} max HP`, { heart: true, raised: true });
     this.message = `${BADGES[id].name} · +${wholeChange(n)} max HP`;
   }
   /** Heals up to `n` HP for badge `id`, as a potion's heal shows. */
@@ -1482,6 +1494,7 @@ export class Game {
    * the player to undo the fight or accept defeat. */
   private fallIn(before: MoveSnapshot, enemy: Enemy) {
     this.run.player.hp = 0;
+    this.struckDown = [...this.struckDown, performance.now()];
     this.slice.fall = { snapshot: before, by: enemyTitle(enemy) };
     this.route = [];
     this.auto = false;
@@ -1523,7 +1536,7 @@ export class Game {
       this.feedback("Lethal encounter. Inspect the enemy before proceeding.");
       return false;
     }
-    const step: TakenStep = { tile: t, outcome, dest, track };
+    const step: TakenStep = { tile: t, outcome, dest, track, quiet: this.emptyAt(dest.x, dest.y) };
     return t.kind === "enemy" ? this.fightStep(step, t.enemy!) : this.take(step);
   }
   /** Steps into `enemy`. A strike that would fell the hero may revive it
@@ -1545,7 +1558,7 @@ export class Game {
       outcome.combat = { ...outcome.combat!, survivable: outcome.player.hp > 0 };
     }
     if (this.playsFights) return this.showFight(step, enemy, fight, start);
-    if (rose) this.revivedAt = [start];
+    if (rose) this.showRevivals(start, revivals(fight));
     return this.take(step, rose);
   }
   /** Shows `fight` on the board. Animate fights plays it out strike by
@@ -1553,9 +1566,9 @@ export class Game {
    * one with a revival waits, for each round after the revival's fire. */
   private showFight(step: TakenStep, enemy: Enemy, fight: Bout, start: number) {
     const p = this.run.player, animate = this.animatesFights, rose = revivals(fight).length;
-    const shown = animate ? fight : summarize(fight, REVIVE_MS);
+    const shown = animate ? fight : summarize(fight, REVIVE_PAUSE_MS);
     this.fight = { from: { x: p.x, y: p.y }, to: step.dest, bout: shown, start, hp: enemy.hp, summary: !animate };
-    this.revivedAt = shown.strikes.filter((s) => s.revived).map((s) => start + s.at);
+    this.showRevivals(start, revivals(shown));
     if (!animate && !rose) return this.take(step, rose);
     // The same fight, so the board shows it as it plays out.
     const encounter: Encounter = Object.assign(this.fight, { enemy, outcome: step.outcome, settle: () => {
@@ -1565,6 +1578,17 @@ export class Game {
     } });
     this.encounter = encounter;
     return true;
+  }
+  /** The board shows each revival (`at`, ms into a fight that began at
+   * `start`): the skull as the strike lands, then, once it is over, the fire. */
+  private showRevivals(start: number, at: number[]) {
+    this.struckDown = at.map((t) => start + t);
+    this.revivedAt = this.struckDown.map((t) => t + DEFEAT_MS);
+  }
+  /** When the skull over the hero last struck down is over, so the defeat
+   * dialog may open (performance time; -Infinity when there was none). */
+  get defeatShownUntil() {
+    return Math.max(-Infinity, ...this.struckDown) + DEFEAT_MS;
   }
   /** Whether each strike at (x, y) that would fell the hero revives it: a
    * fixed number per run, floor, tile and strike, under the Revive chance,
@@ -1609,9 +1633,9 @@ export class Game {
   }
   /** Commits a resolved step: undo history, stats, and the door or fight on
    * the way in. Returns false when the player fell. */
-  private enter({ tile: t, outcome, dest, track, crits }: TakenStep, revived: number) {
+  private enter({ tile: t, outcome, dest, track, quiet, crits }: TakenStep, revived: number) {
     const before = this.snapshot();
-    if (track) this.remember(before);
+    if (track) this.remember(quiet ? { ...before, quiet: true } : before);
     const drained = snap(this.run.player.hp - outcome.player.hp);
     this.applyStats(outcome.player);
     if (t.kind === "door") this.openDoor(t, outcome.keysSpent, drained, dest, outcome.keyAmount);
@@ -2191,7 +2215,7 @@ export class Game {
       shroud = snap(Math.max(0, shroud - (s.shrouded ?? 0)));
     }
     fight.bout = resume(fight.bout, from, { player: { ...p, hp, shroud }, enemy: fight.enemy, revives: this.revival(fight.to), crits: this.critRolls(fight.to), parries: this.parryRolls(fight.to) });
-    this.revivedAt = fight.bout.strikes.filter((s) => s.revived).map((s) => fight.start + s.at);
+    this.showRevivals(fight.start, revivals(fight.bout));
     this.restate(fight.outcome, fight.bout);
     Object.assign(fight.outcome.player, { attack: p.attack, defense: p.defense, maxHp: p.maxHp });
   }

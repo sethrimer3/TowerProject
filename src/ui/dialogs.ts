@@ -72,9 +72,17 @@ export class RunEndDialog {
     document.body.appendChild(this.fadeOverlay);
   }
 
-  /** Opens the dialog for a fallen hero, unless it is already open. */
+  /** The wait for the skull over a fallen hero to be over. */
+  private waiting: ReturnType<typeof setTimeout> | null = null;
+
+  /** Opens the dialog for a fallen hero, unless it is already open, once
+   * the skull over it is over (looking again then). */
   check() {
-    if (this.ctx.game.fallen && !this.ctx.modal.open) this.show("fallen");
+    const game = this.ctx.game;
+    if (!game.fallen || this.ctx.modal.open || this.waiting) return;
+    const wait = game.defeatShownUntil - performance.now();
+    if (wait > 0) this.waiting = setTimeout(() => ((this.waiting = null), this.check()), wait);
+    else this.show("fallen");
   }
 
   /** The End Run button: a fallen hero's dialog, or the prompt to end. */

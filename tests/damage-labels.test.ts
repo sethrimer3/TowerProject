@@ -87,6 +87,15 @@ test("a fight Lifesteal heals the hero by on balance wears a blue +N, with or wi
   assert.ok(crit.damage < 0, "the expected damage with crits heals too");
 });
 
+test("a label shows what Lifesteal would heal even at full HP: its heals aren't capped at max HP", () => {
+  const slime = enemy(30, 4, 0), hurt = hero({ hp: 50, attack: 10, lifesteal: 50 }), whole = hero({ hp: 100, attack: 10, lifesteal: 50 });
+  const p = new DamagePredictions(), atFull = p.cost(whole, slime);
+  assert.equal(atFull.damage, p.cost(hurt, slime).damage, "the same heal at full HP as half way down");
+  assert.deepEqual(damageLabel(atFull, whole.hp, true), { text: `+${-atFull.damage}`, color: HEAL_COLOR });
+  assert.ok(p.cost(whole, slime, { chance: 50, factor: 2 }).damage < 0, "with crits counted too");
+  assert.ok(predict(whole, slime).damage >= 0, "the step itself still heals nothing past max HP");
+});
+
 test("each enemy in view is labelled at its lower-left corner, but not the one being fought", () => {
   const texts: [string, number, number][] = [];
   const c = new Proxy({} as CanvasRenderingContext2D, {

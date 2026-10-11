@@ -222,8 +222,9 @@ export type DelveRun = RunCore & {
 export type AutomoveMemory = { known: Record<string, true>; visited: Record<string, number> };
 export type Run = TowerRun | DelveRun;
 /** The run and lifetime XP just before a move, so undo takes back the XP
- * (and any level) a kill paid. */
-export type MoveSnapshot<R extends Run = Run> = { run: R; best: number; xp: number };
+ * (and any level) a kill paid; `quiet` when the move was a step onto empty
+ * floor, which undo goes on back past. */
+export type MoveSnapshot<R extends Run = Run> = { run: R; best: number; xp: number; quiet?: true };
 /** A hero fallen in a fight, waiting for the player to undo it or accept
  * defeat: the run just before that fight, and the enemy that won it. */
 export type Fall<R extends Run = Run> = { snapshot: MoveSnapshot<R>; by: string };

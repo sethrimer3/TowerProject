@@ -26,7 +26,7 @@ const CRIT_GLOW = "#ffb04a";
 /** What the enemy's thorns cost it: yellow, never mistaken for a heal's blue
  * or green. */
 const THORN_COLOR = "#ffd83d";
-/** The check on a Heart Door's heart. */
+/** The check on a Heart Door's heart, and the plus on max HP raised. */
 const CHECK_COLOR = "#5fdc6a";
 /** Damage the shroud blocked, and how far apart it and the damage that got
  * through rise when a strike has both, in tiles. */
@@ -286,7 +286,8 @@ function artImage(art: GainArt): CanvasImageSource | null {
 
 /** A gain's art in tile space: a tile's contents (a key a door took with
  * its minus sign), the Gem, a coin after its amount, the Heart Door's heart
- * with a check, or a material with its count. */
+ * with a check (with a plus for max HP raised), or a material with its
+ * count. */
 function paintArt(c: CanvasRenderingContext2D, f: FrameContext, p: Popup & { gain: Gain }, image: CanvasImageSource | null) {
   const art = p.gain.art!;
   if ("tile" in art) return paintSpentTile(c, f, p, art);
@@ -298,7 +299,8 @@ function paintArt(c: CanvasRenderingContext2D, f: FrameContext, p: Popup & { gai
     mark(c, p.gain.text.split(" ")[0], { x: 10, y: 12 }, { color: art.coin === "gold" ? REWARD_COLOR : SILVER_COLOR, size: 10, align: "right" });
   } else if ("heart" in art) {
     c.drawImage(image!, 2, 2, 18, 18);
-    check(c, 13, 13);
+    if (art.raised) plus(c, 17, 17);
+    else check(c, 13, 13);
   } else {
     c.drawImage(image!, 3, 3, 18, 18);
     if (art.quantity > 1) mark(c, `×${art.quantity}`, { x: 18, y: 21 }, { color: REWARD_COLOR, size: 8, align: "left" });
@@ -393,6 +395,22 @@ function mark(c: CanvasRenderingContext2D, text: string, { x, y }: { x: number; 
   c.strokeText(text, x, y);
   c.fillStyle = color;
   c.fillText(text, x, y);
+}
+
+/** A green plus centred on (x, y), in tile space. */
+function plus(c: CanvasRenderingContext2D, x: number, y: number) {
+  c.lineCap = "round";
+  c.beginPath();
+  c.moveTo(x - 4, y);
+  c.lineTo(x + 4, y);
+  c.moveTo(x, y - 4);
+  c.lineTo(x, y + 4);
+  c.strokeStyle = "#000";
+  c.lineWidth = 4;
+  c.stroke();
+  c.strokeStyle = CHECK_COLOR;
+  c.lineWidth = 2;
+  c.stroke();
 }
 
 /** A green checkmark with its lower-left corner near (x, y), in tile space. */

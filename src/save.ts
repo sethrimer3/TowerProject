@@ -191,7 +191,7 @@ const validSnapshot = (value: any) => !!value && finite(value.best) && finite(va
 function snapshot<R extends Run>(value: any, decodeRun: RunDecoder<R>): MoveSnapshot<R> | null {
   if (!validSnapshot(value)) return null;
   const run = decodeRun(value.run);
-  return run ? { run, best: value.best, xp: Math.floor(value.xp) } : null;
+  return run ? { run, best: value.best, xp: Math.floor(value.xp), ...(value.quiet === true ? { quiet: true as const } : {}) } : null;
 }
 /** Whether an undo snapshot belongs to `run`: its seed and layout. */
 const sameRun = <R extends Run>(item: MoveSnapshot<R> | null, run: Run): item is MoveSnapshot<R> =>

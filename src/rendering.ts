@@ -18,6 +18,7 @@ import { BoardPopups, goldCoin, lunges } from "./board-popups.ts";
 import { DamagePredictions, drawDamageLabels } from "./damage-labels.ts";
 import { BossFlash } from "./boss-flash.ts";
 import { countsParries, goalUnlocked } from "./goals.ts";
+import { DEFEAT_MS, drawStruckDown } from "./struck-down.ts";
 import { AREA_BURST_MS, drawAreaBurst, preloadAreaBurst, drawLevelUp, drawRevive, LEVEL_UP_MS, POINTS_MS, REVIVE_MS } from "./level-up.ts";
 import { drawPoof, POOF_MS } from "./poof.ts";
 import { drawGem, drawGemSparkle, GEM_SPARKLE_MS } from "./gem-art.ts";
@@ -170,6 +171,7 @@ export class Renderer {
     if (sparkle) drawGemSparkle(f, sparkle.x, sparkle.y, f.now - sparkle.at);
     this.popups.draw(f);
     this.drawEffectText(f);
+    for (const at of this.game.struckDown) drawStruckDown(f, f.now - at);
     for (const at of this.game.revivedAt) drawRevive(f, f.now - at);
     drawLevelUp(f, f.now - this.game.levelUpAt, this.game.levelUpPoints);
     for (const area of this.game.areaBursts) if (f.now >= area.at) drawAreaBurst(f, f.now - area.at, area.reward);
@@ -572,12 +574,12 @@ export class Renderer {
     return near(this.playerX, p.x) && near(this.playerY, p.y) && near(this.left, t.left) && near(this.bottom, t.bottom);
   }
   /** Every timed effect has played out: the arrival glow, a rush's echoes,
-   * a blocked step, the feedback text, the level-up, revivals, an area
+   * a blocked step, the feedback text, the level-up, skulls, revivals, an area
    * reward's burst, a Greater Boss's poof and a Gem's sparkle. */
   private effectsOver(now: number) {
     const g = this.game, sparkle = g.gemFinder.sparkle;
     return now - this.arrived > ARRIVAL_GLOW_MS && (!g.rush || now - g.rush.at >= RUSH_ECHO_MS) && g.blocked.until <= now && g.effect.until <= now &&
-      now - g.levelUpAt >= LEVEL_UP_MS + POINTS_MS && g.revivedAt.every((at) => now - at >= REVIVE_MS) &&
+      now - g.levelUpAt >= LEVEL_UP_MS + POINTS_MS && g.revivedAt.every((at) => now - at >= REVIVE_MS) && g.struckDown.every((at) => now - at >= DEFEAT_MS) &&
       g.areaBursts.every((b) => now - b.at >= AREA_BURST_MS) &&
       (!g.summoned || now - g.summoned.at >= POOF_MS) && (!g.vanished || now - g.vanished.at >= POOF_MS) &&
       (!sparkle || now - sparkle.at >= GEM_SPARKLE_MS);

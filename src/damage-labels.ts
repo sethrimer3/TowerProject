@@ -18,7 +18,8 @@ import { compactAmount, wholeChange } from "./whole.ts";
 // inspect panel's line, worked out on a tap, plays every round).
 
 /** What a fight against one enemy would cost: `predict`'s damage net of
- * Lifesteal's heals (below 0 when it heals on balance; Infinity when the
+ * Lifesteal's heals, uncapped by max HP (below 0 when it heals on balance,
+ * at full HP too; Infinity when the
  * hero can't hurt it) and the hero's strikes it takes (1: an
  * Instakill, the enemy never striking back, unless its thorns felled it,
  * `thornKill`). */
@@ -36,9 +37,11 @@ export class DamagePredictions {
   computed = 0;
 
   cost(player: Player, enemy: Enemy, crit?: CritRule, parries = false): Cost {
-    // Damage is never capped by the HP the hero has, so HP is part of the key
-    // only with Lifesteal, whose heals stop at max HP.
-    const steal = player.lifesteal ? `${player.lifesteal}|${player.hp}|${player.maxHp}` : "";
+    // Damage is never capped by the HP the hero has, and a label counts
+    // Lifesteal's heals past max HP, so it shows what a fight would heal
+    // even at full HP; HP is part of the key only with Lifesteal, since a
+    // fight that fells the hero first heals nothing.
+    const steal = player.lifesteal ? `${player.lifesteal}|${player.hp}` : "";
     const evade = `${player.thorns ?? 0}|${player.parryChance ?? 0}|${player.parry ?? 0}|${parries}`;
     const hero = `${player.attack}|${player.defense}|${player.shroud ?? 0}|${steal}|${crit ? `${crit.chance}|${crit.factor}` : ""}|${evade}`;
     if (hero !== this.hero) [this.hero, this.costs] = [hero, new Map()];
@@ -48,13 +51,14 @@ export class DamagePredictions {
     if (!cost) {
       // A fight of more than PLAYED_ROUNDS rounds is estimated past them, so
       // no label costs more than that many rounds to work out.
-      const r = predict(player, enemy, PLAYED_ROUNDS);
+      const uncapped = player.lifesteal ? { ...player, maxHp: Infinity } : player;
+      const r = predict(uncapped, enemy, PLAYED_ROUNDS);
       this.computed++;
       // With critical strikes or parries counted the label shows the damage
       // to expect, and only an Instakill that is certain is gray.
-      const f = (crit || parries) && !r.impervious ? forecast(player, enemy, crit, parries, PLAYED_ROUNDS) : null;
+      const f = (crit || parries) && !r.impervious ? forecast(uncapped, enemy, crit, parries, PLAYED_ROUNDS) : null;
       const ended = f ? f.worst : r, thorned = ended.thornKill ? { thornKill: true as const } : {};
-      cost = f ? { damage: f.worst.impervious ? Infinity : f.expected, turns: f.worst.turns, ...thorned } : { damage: r.impervious ? Infinity : netDamage(player, r), turns: r.turns, ...thorned };
+      cost = f ? { damage: f.worst.impervious ? Infinity : f.expected, turns: f.worst.turns, ...thorned } : { damage: r.impervious ? Infinity : netDamage(uncapped, r), turns: r.turns, ...thorned };
       this.costs.set(key, cost);
     }
     return cost;

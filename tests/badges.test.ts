@@ -221,6 +221,7 @@ test("activation pays when the card reaches its target: HP, HP %, Silver, XP sca
   turns(g, 2);
   assert.equal(g.run.player.maxHp, maxBefore + 16, "Max HP at level 4 raises max HP by 16");
   assert.ok(g.run.player.hp >= hpBefore + 16, "the potion heals and the 16 come with the HP to fill them");
+  assert.ok(g.gains.some((gain) => gain.text === "+16 max HP" && gain.art && "heart" in gain.art && gain.art.raised), "it rises as a heart with a plus");
   const silver = g.silver;
   turns(g, 2);
   assert.equal(g.silver, silver + 3, "Silver Touch at level 3 pays 3 (no Silver bonus owned)");

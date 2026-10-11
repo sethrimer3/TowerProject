@@ -212,7 +212,7 @@ test("Free Training sits under Wishing Well, costs 20 and opens the three Free U
   assert.deepEqual([node.x, node.y, node.requires], [20, 232, ["wishingWell"]]);
   assert.equal(cost("freeTraining", 0), 20);
   const rows = TRAINING.filter((t) => "requires" in t && t.requires === "freeTraining");
-  assert.deepEqual(rows.map((t) => [t.name, t.group]), [["Free Offense Upgrade", "utility"], ["Free Defense Upgrade", "utility"], ["Free Utility Upgrade", "utility"]]);
+  assert.deepEqual(rows.map((t) => [t.name, t.group]), [["Free Offense Up", "utility"], ["Free Defense Up", "utility"], ["Free Utility Up", "utility"]]);
 });
 test("a run that earned Inspiration puts a dot on the Inspiration tab in the forest while a skill there can be bought", () => {
   const g = new Game(defaults());

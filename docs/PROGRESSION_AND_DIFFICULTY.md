@@ -319,7 +319,7 @@ Below Spare Change stand three skills of 2 Inspiration each (17 down the path), 
 
 Training and research multiply: 30% from each makes ×1.3 × 1.3 = ×1.69 (Gold / Kill at 10 ranks and 10 levels; Silver Bonus needs 30 ranks for its 30%). Silver therefore keeps its fractions, like Gold (`snap`), shown rounded down.
 
-Free Training (20 Inspiration, under Wishing Well) opens three Utility rows with no research: Free Offense Upgrade, Free Defense Upgrade and Free Utility Upgrade, 100 ranks each.
+Free Training (20 Inspiration, under Wishing Well) opens three Utility rows with no research: Free Offense Up, Free Defense Up and Free Utility Up, 100 ranks each.
 Each rank adds 0.5% (50% at 100) to the chance that each floor passed in a run, on the same floors as Wishing Well (one Skip climbs past included), trains a random stat of its group, open and below its most, one level for free, for the run; Free Utility can pick the Free rows too.
 Each group rolls its own stream, seeded from the run seed (Defense's seed one above Offense's, Utility's two), so a run replays the same free levels.
 A free level joins the run's Silver ranks, costing nothing, so the row's next Silver rank is priced as if it had been bought: buying before a free level comes is cheaper than after.
