@@ -133,8 +133,7 @@ test("one-time packs are bought once, kept by an erase, grant their Gems and mul
   assert.ok(h.gains.some((gain) => gain.text === "+18 Gold"));
 });
 
-for (const [id, name] of [["adFree", "Ad-Disable"], ["coins2", "the Special Coin Pack"]] as const)
-test(`${name} runs the trainers' ×2 boost for good, ranks already training included`, () => {
+test("Ad-Disable runs the trainers' ×2 boost for good, ranks already training included", () => {
   const g = new Game(defaults());
   g.save.upgrades.trainers = 1;
   g.newRun({ outside: true });
@@ -146,7 +145,7 @@ test(`${name} runs the trainers' ×2 boost for good, ranks already training incl
   assert.ok(g.training.trainWithGold("hp"));
   now += 5000;
   const left = g.training.left("hp");
-  assert.equal(g.buyOffer(id, NOON, true), null);
+  assert.equal(g.buyOffer("adFree", NOON, true), null);
   assert.ok(permanentBoost(g.save));
   assert.equal(g.save.trainingBoostUntil, BOOST_FOREVER);
   assert.equal(g.save.trainingJobs[0].completesAt, now + left / 2, "what was left goes twice as fast");
@@ -158,7 +157,7 @@ test(`${name} runs the trainers' ×2 boost for good, ranks already training incl
   assert.equal(decode(JSON.stringify(back)).trainingBoostUntil, BOOST_FOREVER, "the entitlement keeps it on");
 });
 
-test("the Premium Coin Pack makes training ×3 as fast, ×6 with the Special Coin Pack's boost", () => {
+test("the Coin Packs make training ×2 and ×3 as fast, stacking with Ad-Disable's boost to ×12", () => {
   const g = new Game(defaults());
   g.save.upgrades.trainers = 1;
   g.newRun({ outside: true });
@@ -174,10 +173,14 @@ test("the Premium Coin Pack makes training ×3 as fast, ×6 with the Special Coi
   assert.equal(g.training.left("hp"), 12_000, "the training left is kept");
   assert.equal(g.save.trainingJobs[0].completesAt, now + 4000, "and goes three times as fast");
   assert.equal(g.buyOffer("coins2", NOON, true), null);
+  assert.equal(trainingRate(g.save), 6);
+  assert.ok(!permanentBoost(g.save), "the Special Coin Pack leaves the boost to the ad");
   assert.equal(g.save.trainingJobs[0].completesAt, now + 2000, "six times with both");
-  now += 1000;
+  assert.equal(g.buyOffer("adFree", NOON, true), null);
+  assert.equal(g.save.trainingJobs[0].completesAt, now + 1000, "twelve with Ad-Disable's boost too");
+  now += 500;
   assert.equal(g.training.left("hp"), 6000);
-  now += 1000;
+  now += 500;
   assert.equal(g.training.settle(), 1);
 });
 
