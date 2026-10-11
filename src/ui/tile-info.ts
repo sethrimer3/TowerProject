@@ -3,9 +3,9 @@ import type { Enemy, Kind, Player, Tile } from "../entities.ts";
 import { enemyTitle } from "../scaling.ts";
 import type { Game, RouteEffects } from "../state.ts";
 import { resolveStep, shardStat } from "../step-effects.ts";
-import { attackForFewerHits, netDamage, predict, type CombatPrediction } from "../combat.ts";
+import { attackForFewerHits, instakill, netDamage, predict, type CombatPrediction } from "../combat.ts";
 import { forecast as critForecast, type CritForecast } from "../crit-forecast.ts";
-import { goalUnlocked } from "../goals.ts";
+import { countsParries, goalUnlocked } from "../goals.ts";
 import { chestReward, CLEARED_INSPIRATION } from "../tower/area-ledger.ts";
 import { doorColor, doorDescription, doorName, doorRule, drainsHp, KEY_NAMES } from "../doors.ts";
 import { MODES } from "../modes.ts";
@@ -48,7 +48,7 @@ function prediction(r: CombatPrediction, p: Player, g: Board, c: CritForecast | 
   if (!goalUnlocked(g.save, "damagePrediction")) return "";
   if (c) return critPrediction(c);
   const damage = Number.isFinite(r.damage) ? wholeChange(netDamage(p, r)) : "∞";
-  const verdict = r.turns === 1 ? "Instakill" : !r.survivable ? "LETHAL" : damage === 0 ? "Harmless" : "Survivable";
+  const verdict = instakill(r) ? "Instakill" : !r.survivable ? "LETHAL" : damage === 0 ? "Harmless" : "Survivable";
   return `<br><strong class="${r.survivable ? "safe" : "danger"}">${cost(damage)} · ${verdict}</strong>`;
 }
 
@@ -69,11 +69,11 @@ function critPrediction(c: CritForecast) {
   const percent = (n: number) => `${Math.min(99, Math.max(1, Math.round(n * 100)))}%`;
   const expected = wholeChange(c.expected), range = costRange(wholeChange(c.p10), wholeChange(c.p90));
   let verdict: string;
-  if (c.worst.turns === 1) verdict = "Instakill";
+  if (instakill(c.worst)) verdict = "Instakill";
   else if (!c.worst.survivable && !c.best.survivable) verdict = "LETHAL";
   else if (!c.worst.survivable) verdict = `Risky · ${percent(c.survive)} to survive`;
   else verdict = expected === 0 && c.p90 === 0 ? "Harmless" : "Survivable";
-  const chance = c.worst.turns > 1 && c.instakill > 0 ? ` · ${percent(c.instakill)} Instakill` : "";
+  const chance = !instakill(c.worst) && c.instakill > 0 ? ` · ${percent(c.instakill)} Instakill` : "";
   const spread = c.p10 === c.p90 ? "" : `<br><small>Usually ${range}</small>`;
   return `<br><strong class="${c.worst.survivable ? "safe" : c.best.survivable ? "risky" : "danger"}">~${cost(expected)} · ${verdict}${chance}</strong>${spread}`;
 }
@@ -96,12 +96,12 @@ function forecast(p: Player, e: Enemy, turns: number, g: Board, crits = false) {
 
 const DESCRIBE: Partial<Record<Kind, Describe>> = {
   enemy: (t, p, g) => {
-    // Critical strikes count in the prediction only with Critical Prediction.
-    const crit = g.save.upgrades.critPrediction ? g.stepRules.crit : undefined;
-    const e = t.enemy!, r = predict(p, e), c = crit && !r.impervious ? critForecast(p, e, crit) : null;
+    // Critical strikes count in the prediction only with Critical Prediction, and parries with Evade Prediction.
+    const crit = g.save.upgrades.critPrediction ? g.stepRules.crit : undefined, parries = countsParries(g.save);
+    const e = t.enemy!, r = predict(p, e), c = (crit || parries) && !r.impervious ? critForecast(p, e, crit, parries) : null;
     return {
       title: enemyTitle(e),
-      body: `<span>HP ${enemyStat(e.hp)} · ATK ${enemyStat(e.attack)} · DEF ${enemyStat(e.defense)}</span>` + prediction(r, p, g, c) + forecast(p, e, r.impervious ? 0 : r.turns, g, !!c),
+      body: `<span>HP ${enemyStat(e.hp)} · ATK ${enemyStat(e.attack)} · DEF ${enemyStat(e.defense)}</span>` + prediction(r, p, g, c) + forecast(p, e, r.impervious ? 0 : r.turns, g, !!crit),
     };
   },
   wall: () => ({ title: "Wall", body: "Ancient stone. Find a passage around it." }),

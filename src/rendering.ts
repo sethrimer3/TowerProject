@@ -17,7 +17,7 @@ import { RoutePath } from "./route-path.ts";
 import { BoardPopups, goldCoin, lunges } from "./board-popups.ts";
 import { DamagePredictions, drawDamageLabels } from "./damage-labels.ts";
 import { BossFlash } from "./boss-flash.ts";
-import { goalUnlocked } from "./goals.ts";
+import { countsParries, goalUnlocked } from "./goals.ts";
 import { AREA_BURST_MS, drawAreaBurst, preloadAreaBurst, drawLevelUp, drawRevive, LEVEL_UP_MS, POINTS_MS, REVIVE_MS } from "./level-up.ts";
 import { drawPoof, POOF_MS } from "./poof.ts";
 import { drawGem, drawGemSparkle, GEM_SPARKLE_MS } from "./gem-art.ts";
@@ -401,12 +401,12 @@ export class Renderer {
   /** Damage Visual: what each enemy in view would cost, once its goal is
    * claimed and while its setting is on, coloured by its share of the
    * hero's HP once Relative Damage Color is claimed too; critical strikes
-   * count only with Critical Prediction. */
+   * count only with Critical Prediction, and parries with Evade Prediction. */
   private drawDamageLabels(f: FrameContext) {
     const g = this.game;
     if (g.run.outside || !g.save.settings.damageVisual || !goalUnlocked(g.save, "damageVisual")) return;
     const crit = g.save.upgrades.critPrediction ? g.crit : undefined;
-    drawDamageLabels(f, this.predictions, g.run.player, g.fight, goalUnlocked(g.save, "relativeDamageColor"), crit);
+    drawDamageLabels(f, this.predictions, g.run.player, g.fight, goalUnlocked(g.save, "relativeDamageColor"), crit, countsParries(g.save));
   }
   /** A fading red cross where a step was refused. */
   /** Skip Open Nodes' marks: a violet X on each door or monster it passed

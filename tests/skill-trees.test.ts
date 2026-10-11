@@ -69,12 +69,14 @@ test("Shroud, then Greater Heal, then Recovery, Regen Research and Find Potion, 
   assert.deepEqual([at("greaterHeal").x, at("greaterHeal").y, at("greaterHeal").requires], [80, 160, ["shroud"]], "Greater Heal sits between Shroud and Recovery and Regen Research");
   assert.deepEqual([at("recovery").x, at("recovery").y, at("recovery").requires], [70, 178, ["greaterHeal"]]);
   assert.deepEqual([at("regenResearch").x, at("regenResearch").y, at("regenResearch").requires], [90, 178, ["greaterHeal"]], "Regen Research sits beside Recovery");
-  assert.deepEqual([at("revive").x, at("revive").y, at("revive").requires], [90, 196, ["regenResearch"]], "Revive sits below Regen Research");
+  assert.deepEqual([at("evade").x, at("evade").y, at("evade").requires], [90, 196, ["regenResearch"]], "Evade sits below Regen Research");
+  assert.deepEqual([at("revive").x, at("revive").y, at("revive").requires], [90, 214, ["evade"]], "Revive sits below Evade");
   assert.deepEqual([at("findPotion").x, at("findPotion").y, at("findPotion").requires], [70, 196, ["recovery"]], "Find Potion sits below Recovery");
   assert.deepEqual([at("buyQuantity").x, at("buyQuantity").y, at("buyQuantity").requires], [50, 160, ["lifesteal"]], "Buy Quantity sits under Lifesteal");
   assert.deepEqual([at("lifesteal").x, at("lifesteal").y, at("lifesteal").requires], [50, 142, ["delve"]], "Lifesteal sits where Key Siphon did, under Into the depths");
-  assert.deepEqual([at("keySiphon").x, at("keySiphon").y, at("keySiphon").requires], [50, 178, ["buyQuantity"]], "Key Siphon sits under Buy Quantity");
-  assert.deepEqual(at("cardYellowDoor").requires, ["keySiphon"], "the cards hang from Key Siphon");
+  assert.deepEqual([at("thorns").x, at("thorns").y, at("thorns").requires], [50, 178, ["buyQuantity"]], "Thorns sits under Buy Quantity");
+  assert.deepEqual([at("keySiphon").x, at("keySiphon").y, at("keySiphon").requires], [50, 196, ["thorns"]], "Key Siphon sits under Thorns");
+  assert.deepEqual([at("cardYellowDoor").y, at("cardYellowDoor").requires], [250, ["keySiphon"]], "the cards hang from Key Siphon, a row clear of it and Revive");
 });
 test("the hand's skills run Buildout, Trainers, Critical to the Archives, Gear and On the Job off Buildout, ATK Up then DEF Up after Gear, Regen then Heal below On the Job, Larger Hand sits by itself to Critical's right, and Buildout, Trainers, On the Job and Gear cost 1 (Critical 2)", () => {
   const at = (id: string) => TREES[0].nodes.find((n) => n.id === id)!;
@@ -122,9 +124,9 @@ test("each skill in a tree of unlocks is bought once", () => {
 
 test("a tree taller than its view places its nodes on a taller map", () => {
   const inspiration = TREES[0];
-  assert.equal(treeHeight(inspiration), 316);
+  assert.equal(treeHeight(inspiration), 352);
   assert.ok(inspiration.nodes.every((n) => n.y > 0 && n.y < treeHeight(inspiration)), "every node on the map");
-  assert.equal(mapNodes(inspiration).find((n) => n.id === "recovery")!.y, (178 * 100) / 316);
+  assert.equal(mapNodes(inspiration).find((n) => n.id === "recovery")!.y, (178 * 100) / 352);
   assert.equal(treeHeight(TREES.find((t) => t.id === "courage")!), 198);
   assert.ok(TREES.slice(2).every((t) => treeHeight(t) === 100 && mapNodes(t).every((n, i) => n.y === t.nodes[i].y)), "other trees fit one view");
 });

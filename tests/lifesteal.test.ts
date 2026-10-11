@@ -19,14 +19,15 @@ const brute: Enemy = { name: "Brute", hp: 60, attack: 30, defense: 0, tier: 0, s
 const row = TRAINING.find((t) => t.id === "lifesteal")!;
 if (!isStatRow(row)) throw new Error("Lifesteal is a stat row");
 
-test("Lifesteal is a 10 Inspiration skill under Into the depths, and Buy Quantity and Key Siphon follow it", () => {
+test("Lifesteal is a 10 Inspiration skill under Into the depths, and Buy Quantity, Thorns and Key Siphon follow it", () => {
   const u = UPGRADES.find((u) => u.id === "lifesteal")!;
   assert.deepEqual([u.currency, u.base, u.max], ["inspiration", 10, 1]);
   const node = (id: string) => TREES[0].nodes.find((n) => n.id === id)!;
   assert.deepEqual(node("lifesteal").requires, ["delve"]);
   assert.deepEqual(node("buyQuantity").requires, ["lifesteal"]);
-  assert.deepEqual(node("keySiphon").requires, ["buyQuantity"]);
-  assert.ok(node("lifesteal").y < node("buyQuantity").y && node("buyQuantity").y < node("keySiphon").y);
+  assert.deepEqual(node("thorns").requires, ["buyQuantity"]);
+  assert.deepEqual(node("keySiphon").requires, ["thorns"]);
+  assert.ok(node("lifesteal").y < node("buyQuantity").y && node("buyQuantity").y < node("thorns").y && node("thorns").y < node("keySiphon").y);
 });
 
 test("Lifesteal training adds 0.1% for the first rank, each rank 0.001% less, 80 ranks in all", () => {

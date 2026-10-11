@@ -103,6 +103,9 @@ const validPlayer = (p: any, width: number) =>
   finite(p.attack) && finite(p.defense) && (p.shroud === undefined || (finite(p.shroud) && p.shroud >= 0)) &&
   (p.regen === undefined || (finite(p.regen) && p.regen >= 0)) &&
   (p.lifesteal === undefined || (finite(p.lifesteal) && p.lifesteal >= 0)) &&
+  (p.thorns === undefined || (finite(p.thorns) && p.thorns >= 0)) &&
+  (p.parryChance === undefined || (finite(p.parryChance) && p.parryChance >= 0)) &&
+  (p.parry === undefined || (finite(p.parry) && p.parry >= 0 && p.parry <= 100)) &&
   (p.bossAttack === undefined || (finite(p.bossAttack) && p.bossAttack >= 0)) &&
   (p.pierce === undefined || (finite(p.pierce) && p.pierce >= 0 && p.pierce <= 100)) &&
   KEY_COLORS.every((k) => finite(p.keys?.[k]));

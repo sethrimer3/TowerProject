@@ -11,7 +11,7 @@ import type { Save } from "../src/entities.ts";
 
 const hpRow = TRAINING.find((t) => t.id === "hp")! as StatTrainingRow;
 
-test("Rehearsed steps costs 5; Lifesteal (10) follows Into the depths, Buy Quantity (5) Lifesteal, Key Siphon (5) Buy Quantity, Regen Research (10) Shroud", () => {
+test("Rehearsed steps costs 5; Lifesteal (10) follows Into the depths, Buy Quantity (5) Lifesteal, Thorns (10) Buy Quantity, Key Siphon (5) Thorns, Regen Research (10) Shroud", () => {
   assert.equal(cost("inspirationUndos", 0), 5);
   const g = new Game(defaults());
   g.save.tower.inspiration = 1000;
@@ -19,21 +19,25 @@ test("Rehearsed steps costs 5; Lifesteal (10) follows Into the depths, Buy Quant
   assert.equal(g.buy("lifesteal"), false, "waits for Into the depths");
   assert.ok(g.buy("delve"));
   assert.equal(g.buy("buyQuantity"), false, "waits for Lifesteal");
-  assert.equal(g.buy("keySiphon"), false, "waits for Buy Quantity");
+  assert.equal(g.buy("thorns"), false, "waits for Buy Quantity");
+  assert.equal(g.buy("keySiphon"), false, "waits for Thorns");
   assert.equal(g.buy("regenResearch"), false, "waits for Shroud and Greater Heal");
   const before = g.save.tower.inspiration;
   assert.ok(g.buy("lifesteal"));
   assert.equal(before - g.save.tower.inspiration, 10);
   assert.ok(g.buy("buyQuantity"));
   assert.equal(before - g.save.tower.inspiration, 10 + 5);
+  assert.equal(g.buy("keySiphon"), false, "waits for Thorns");
+  assert.ok(g.buy("thorns"));
+  assert.equal(before - g.save.tower.inspiration, 10 + 5 + 10);
   assert.ok(g.buy("keySiphon"));
-  assert.equal(before - g.save.tower.inspiration, 10 + 5 + 5);
+  assert.equal(before - g.save.tower.inspiration, 10 + 5 + 10 + 5);
   assert.ok(deckCards(g.save.upgrades).includes("keySiphon"), "its card joins the deck");
   assert.ok(g.buy("shroud"));
   assert.equal(g.buy("regenResearch"), false, "waits for Greater Heal");
   assert.ok(g.buy("greaterHeal"));
   assert.ok(g.buy("regenResearch"));
-  assert.equal(before - g.save.tower.inspiration, 10 + 5 + 5 + 3 + 2 + 10);
+  assert.equal(before - g.save.tower.inspiration, 10 + 5 + 10 + 5 + 3 + 2 + 10);
 });
 
 test("Regen research: +3% Regen a level, priced and timed like Potion HP, needing Regen Research", () => {

@@ -245,7 +245,8 @@ export class SkillTreePage {
     // Short of the price, the cost line says how much more it takes.
     const short = affordable ? "" : ` (need ${price - balance})`;
     // Critical Prediction shows nothing until the Goals open damage predictions.
-    const goal = id === "critPrediction" && !goalUnlocked(this.ctx.game.save, "damagePrediction") ? `<div>Predictions show once ${UNLOCK_NAMES.damagePrediction} is claimed on the Goals page.</div>` : "";
+    const goal = id === "critPrediction" && !goalUnlocked(this.ctx.game.save, "damagePrediction") ? `<div>Predictions show once ${UNLOCK_NAMES.damagePrediction} is claimed on the Goals page.</div>`
+      : id === "evade" && !goalUnlocked(this.ctx.game.save, "evadePrediction") ? `<div>Predictions count parries once ${UNLOCK_NAMES.evadePrediction} is claimed on the Goals page.</div>` : "";
     return `<b style="color:var(--tree-color)">${u.name}</b>${unlocks ? "" : `<div>${level} / ${u.max} ranks</div>`}<div>${upgradeText(u.id)}.</div>${goal}${hint ? `<div class="${canBuy ? "safe" : ""}">${hint}</div>` : ""}${!maxed && !locked ? `<div>Cost: ${price} ${currency}${short}</div>` : ""}`;
   }
 

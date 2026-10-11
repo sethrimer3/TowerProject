@@ -51,7 +51,7 @@ import {
 import { World, LAYOUT_VERSION } from "./delve/world.ts";
 import { RoomWorld, TOWER_LAYOUT_VERSION } from "./tower/room-world.ts";
 import type { Board } from "./board.ts";
-import { bout, guaranteedCrits, heroHpAfter, heroHpDuring, resume, REVIVE_MS, revivals, summarize, type Bout, type CritRule, type Crits, type Revival } from "./combat.ts";
+import { bout, guaranteedCrits, heroHpAfter, heroHpDuring, instakill, parryCut, resume, REVIVE_MS, revivals, summarize, type Bout, type CritRule, type Crits, type Parries, type Revival } from "./combat.ts";
 import { HEART_DOOR_HP, healAfterVictory, isLethal, regenerate, resolveStep, type StepBlocked, type StepEffect, type StepRules, shardStat } from "./step-effects.ts";
 import { OUTSIDE_START_Y, OutsideWorld } from "./outside.ts";
 import { AREA_BURST_MS, AreaLedger, chestReward, CLEARED_INSPIRATION, type AreaReward } from "./tower/area-ledger.ts";
@@ -124,6 +124,8 @@ const LESSON_SPEED = 3;
 const REVIVE_SALT = 0x7e51e;
 /** Seeds the critical rolls apart from the revival rolls. */
 const CRIT_SALT = 0x3c71c;
+/** Seeds the parry rolls apart from the critical and revival rolls. */
+const PARRY_SALT = 0x9a77e;
 /** Salts the run seed for Find Yellow Key's roll on each new floor. */
 const YELLOW_KEY_SALT = 0x6e11a;
 /** Mixed into the run seed to start Skip's stream of rolls. */
@@ -1515,14 +1517,16 @@ export class Game {
   }
   /** Steps into `enemy`. A strike that would fell the hero may revive it
    * instead (Revive), so a lost fight is played out strike by strike to see
-   * how it ends; a game that plays fights shows it on the board. */
+   * how it ends, as is one with critical strikes or parries that may land;
+   * a game that plays fights shows it on the board. */
   private fightStep(step: TakenStep, enemy: Enemy) {
     const p = this.run.player, outcome = step.outcome;
-    const revive = isLethal(outcome) ? this.revival(step.dest) : undefined, crits = this.critRolls(step.dest);
-    if (!this.playsFights && !revive && !crits) return this.take(step);
-    const fight = bout(p, enemy, revive, crits), start = performance.now(), rose = revivals(fight).length;
-    // Critical strikes change how long the fight lasts, so it ends as it was played.
-    if (crits) this.restate(outcome, fight);
+    const revive = isLethal(outcome) ? this.revival(step.dest) : undefined, crits = this.critRolls(step.dest), parries = this.parryRolls(step.dest);
+    if (!this.playsFights && !revive && !crits && !parries) return this.take(step);
+    const fight = bout(p, enemy, revive, crits, parries), start = performance.now(), rose = revivals(fight).length;
+    // Critical strikes change how long the fight lasts, and parries what it
+    // costs, so it ends as it was played.
+    if (crits || parries) this.restate(outcome, fight);
     else if (rose) {
       const rules = this.stepRules;
       outcome.player.hp = regenerate(healAfterVictory(afterExtra(heroHpAfter(fight, p.hp), outcome.extraDamage, p.maxHp), p.maxHp, rules), p.maxHp, rules);
@@ -1569,6 +1573,17 @@ export class Game {
     const sure = guaranteedCrits(rule.chance), rest = snap(rule.chance - 100 * sure);
     return { factor: rule.factor, applications: (strike) => sure + (tileRandom(at.x, at.y, (seed ^ Math.imul(strike + 1, 0x85ebca6b)) | 0) * 100 < rest ? 1 : 0) };
   }
+  /** The hero's parry rolls for the fight at (x, y): a fixed number per
+   * run, floor, tile and enemy strike, so taking the fight back and fighting
+   * it again parries the same strikes, and more Parry Chance only ever adds
+   * parries. None when nothing is to roll: no chance or no cut, or a chance
+   * of 100%, which parries every strike (`bout` and `predict` count it). */
+  private parryRolls(at: { x: number; y: number }): Parries | undefined {
+    const p = this.run.player, chance = p.parryChance ?? 0;
+    if (!chance || chance >= 100 || !parryCut(p) || this.run.outside) return undefined;
+    const floor = this.mode === "tower" ? this.run.height + 1 : 0, seed = this.run.seed ^ PARRY_SALT ^ Math.imul(floor, 0x9e3779b1);
+    return (strike) => tileRandom(at.x, at.y, (seed ^ Math.imul(strike + 1, 0x85ebca6b)) | 0) * 100 < chance;
+  }
   /** Takes a resolved step: in through its door or fight, then onto the tile. */
   private take(step: TakenStep, revived = 0) {
     if (!this.enter(step, revived)) return false;
@@ -1589,7 +1604,7 @@ export class Game {
     // Effective's added damage rises off the hero; Dampen's given back heals.
     if (extra > 0 && p.hp > 0) this.gain(p.x, p.y, `−${wholeChange(extra)} HP`, { heart: true });
     else if (extra < 0) this.recordHeal(-extra);
-    return this.winFight({ enemy: t.enemy!, damage: snap(outcome.combat!.damage + extra), at: dest, revived, scale: outcome.scale, instakill: outcome.combat!.turns === 1 }, before);
+    return this.winFight({ enemy: t.enemy!, damage: snap(outcome.combat!.damage + extra), at: dest, revived, scale: outcome.scale, instakill: instakill(outcome.combat!) }, before);
   }
   /** Moves the player onto the tile and applies what standing there does. */
   private land(t: Tile, x: number, y: number, outcome: StepEffect) {
@@ -2135,21 +2150,22 @@ export class Game {
       hp = s.hp;
       shroud = snap(Math.max(0, shroud - (s.shrouded ?? 0)));
     }
-    fight.bout = resume(fight.bout, from, { player: { ...p, hp, shroud }, enemy: fight.enemy, revives: this.revival(fight.to), crits: this.critRolls(fight.to) });
+    fight.bout = resume(fight.bout, from, { player: { ...p, hp, shroud }, enemy: fight.enemy, revives: this.revival(fight.to), crits: this.critRolls(fight.to), parries: this.parryRolls(fight.to) });
     this.revivedAt = fight.bout.strikes.filter((s) => s.revived).map((s) => fight.start + s.at);
     this.restate(fight.outcome, fight.bout);
     Object.assign(fight.outcome.player, { attack: p.attack, defense: p.defense, maxHp: p.maxHp });
   }
   /** Makes `o`, a fight's resolved step, end as the fight `played` does: the
    * damage taken, the HP left and whether the hero lives, and whether the
-   * first strike won. */
+   * first strike won (or the enemy's thorns felled it). */
   private restate(o: StepEffect, played: Bout) {
     const p = this.run.player, damage = snap(played.strikes.reduce((sum, s) => (s.by === "enemy" ? sum + s.damage : sum), 0));
     // A badge's scale adds to (or gives back) the new fight's damage.
     if (o.scale) o.extraDamage = snap(damage * o.scale - damage);
     const rules = this.stepRules, fought = afterExtra(heroHpAfter(played, p.hp), o.extraDamage, p.maxHp);
     o.player.hp = regenerate(healAfterVictory(fought, p.maxHp, rules), p.maxHp, rules);
-    o.combat = { ...o.combat!, turns: played.strikes.filter((s) => s.by === "hero").length, damage, survivable: fought > 0 };
+    const { thornKill: _, ...combat } = o.combat!, last = played.strikes.at(-1);
+    o.combat = { ...combat, turns: played.strikes.filter((s) => s.by === "hero").length, damage, survivable: fought > 0, ...(last?.thornHp === 0 && fought > 0 ? { thornKill: true as const } : {}) };
   }
   /** Whether skill `id` can be bought now: open, below its last rank, and
    * paid for by the currency held (anything, with Dev free purchases). */

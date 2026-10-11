@@ -188,7 +188,7 @@ How much XP the character has gathered from kills over every run. A kill pays mo
 _Avoid_: rank
 
 **Training point**:
-The currency each level earns (three a level), spent to buy ranks of training at once (a trainer can train them for Gold instead) in the character's stats (max HP, ATK, DEF, and the shroud once the Shroud skill is owned; Lifesteal once the Lifesteal skill is, Crit % and Crit x once Critical is) and, with Recovery, Find Potion, Revive, Spare Change, Wishing Well, Wealthy, Loot and Free Training, in Potion %, Find Potion, Revive, Gold / Floor, Silver / Floor, Silver Bonus, Gold / Kill and the Free Offense, Defense and Utility Upgrade rows on the Training tab. A stat's ranks add up on its **rank curve**: each rank is worth more than the one before, whatever the character's level.
+The currency each level earns (three a level), spent to buy ranks of training at once (a trainer can train them for Gold instead) in the character's stats (max HP, ATK, DEF, and the shroud once the Shroud skill is owned; Lifesteal once the Lifesteal skill is, Thorn Damage once Thorns is, Parry Chance and Parry % once Evade is, Crit % and Crit x once Critical is) and, with Recovery, Find Potion, Revive, Spare Change, Wishing Well, Wealthy, Loot and Free Training, in Potion %, Find Potion, Revive, Gold / Floor, Silver / Floor, Silver Bonus, Gold / Kill and the Free Offense, Defense and Utility Upgrade rows on the Training tab. A stat's ranks add up on its **rank curve**: each rank is worth more than the one before, whatever the character's level.
 _Avoid_: skill point, stat point
 
 **Trainer**:
@@ -216,6 +216,14 @@ The red, striped potion: it restores a regular potion's HP plus a share of max H
 
 **Lifesteal**:
 The share of the damage each of the hero's strikes deals to an enemy that is restored to the hero as HP (up to max HP), as the strike lands and before the enemy's reply. It starts at 0% and Lifesteal training raises it by 0.1% for the first rank, each later rank adding 0.001% less, to 4.84% at 80 ranks. Fight forecasts and Damage Visual count it.
+
+**Thorns**:
+What each enemy strike the hero lives through costs the enemy: a share of its max HP (1% a Thorn Damage rank, half against a boss or Greater Boss), which DEF doesn't reduce. A fight thorns end is no Instakill.
+_Avoid_: reflect, recoil
+
+**Parry**:
+An enemy strike turned partly aside: by the hero's Parry Chance, the strike's ATK is cut by its Parry % before DEF. Predictions count parries only when every strike is parried, or by their odds with Evade Prediction.
+_Avoid_: dodge, block (the shroud blocks)
 
 **Shroud**:
 The damage a hero's shroud blocks in each fight: the enemy's strikes, after DEF, wear it away before any HP is lost, and it is whole again when the next fight starts. The Shroud skill gives the first point; Shroud training adds more.

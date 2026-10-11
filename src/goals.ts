@@ -21,14 +21,17 @@ import { TIERS } from "./tiers.ts";
  * and its materials) and the Tournament (twice-weekly global competition
  * in the Delve, docs/TOURNAMENT.md) and Research Speed (the Archives'
  * project that shortens every research), Shard ATK and Shard DEF (Tower II:
- * the Archives' projects that raise what each ATK or DEF shard gives). */
+ * the Archives' projects that raise what each ATK or DEF shard gives) and
+ * Evade Prediction (Tower II: predictions count the hero's parries, once
+ * Evade is owned). */
 export type GoalUnlock =
   | "damagePrediction" | "combatForecast" | "attackLore" | "warp" | "damageVisual" | "relativeDamageColor" | "equipment" | "tournament" | "researchSpeed"
-  | "shardAttack" | "shardDefense";
+  | "shardAttack" | "shardDefense" | "evadePrediction";
 export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   damagePrediction: "Damage Prediction", combatForecast: "Combat Forecast", attackLore: "Attack Lore", warp: "Warp", damageVisual: "Damage Visual",
   relativeDamageColor: "Relative Damage Color", equipment: "Equipment", tournament: "Tournament",
   researchSpeed: "Research Speed", shardAttack: "Shard ATK", shardDefense: "Shard DEF",
+  evadePrediction: "Evade Prediction",
 };
 /** What a checkpoint pays: an unlock, the next tower opened, or an amount of a currency. */
 export type GoalReward =
@@ -66,6 +69,7 @@ const TOWER_TWO: Record<number, Omit<Checkpoint, "floor">> = {
   20: { reward: unlock("shardAttack"), premium: gems(20) },
   30: { reward: unlock("shardDefense"), premium: gems(30) },
   40: { reward: unlock("warp"), premium: gems(40) },
+  50: { reward: unlock("evadePrediction"), premium: gems(50) },
 };
 /** The checkpoint floor whose reward opens the next tower. */
 export const TOWER_UNLOCK_FLOOR = 100;
@@ -181,6 +185,9 @@ export function unlockAt(what: GoalUnlock) {
 export const unlockFloor = (what: GoalUnlock) => unlockAt(what).floor;
 /** Whether Warp is owned. */
 export const warpUnlocked = (save: Save) => goalUnlocked(save, "warp");
+/** Whether predictions count the hero's parries: Evade Prediction claimed
+ * and Evade owned. */
+export const countsParries = (save: Pick<Save, "goals" | "upgrades">) => goalUnlocked(save, "evadePrediction") && save.upgrades.evade > 0;
 
 /** Whether a run can warp past `floor` in `tower`: Warp owned and the area
  * ending at that checkpoint mastered. */

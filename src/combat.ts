@@ -12,14 +12,35 @@ export type CombatPrediction = {
    * heals counted as the fight goes, up to max HP): `damage` is then the
    * HP lost net of them, and this the exact ending a step resolves to. */
   hpAfter?: number;
+  /** The fight ends on an enemy strike, its thorns felling the enemy: the
+   * hero takes `turns` strikes, not `turns` − 1. */
+  thornKill?: true;
 };
+/** The enemy strikes a predicted fight's hero takes. */
+export const replies = (r: CombatPrediction) => (r.thornKill ? r.turns : r.turns - 1);
+/** Whether the hero's first strike wins the fight, the enemy never striking. */
+export const instakill = (r: CombatPrediction) => r.turns === 1 && !r.thornKill;
 
 /** The ATK the hero strikes `enemy` with: its own, raised against a boss
  * or Greater Boss by the percent its equipment gives (`bossAttack`). */
 export function attackAgainst(player: Player, enemy: Enemy) {
-  const boss = enemy.strength === "boss" || enemy.strength === "greaterBoss";
-  return boss && player.bossAttack ? snap((player.attack * (100 + player.bossAttack)) / 100) : player.attack;
+  return isBoss(enemy) && player.bossAttack ? snap((player.attack * (100 + player.bossAttack)) / 100) : player.attack;
 }
+const isBoss = (enemy: Enemy) => enemy.strength === "boss" || enemy.strength === "greaterBoss";
+/** Thorns: what each of `enemy`'s strikes costs it, the hero's Thorn Damage
+ * percent of its max HP (its HP as the fight starts), half against a boss
+ * or Greater Boss. DEF takes nothing off it. */
+export function thornDamage(player: Player, enemy: Enemy) {
+  const thorns = player.thorns ?? 0;
+  return thorns ? snap((enemy.hp * thorns) / (isBoss(enemy) ? 200 : 100)) : 0;
+}
+/** Parry: the percent a parried strike's ATK is cut by (Parry %). */
+export const parryCut = (player: Player) => player.parry ?? 0;
+/** Whether every enemy strike is parried (Parry Chance 100%) and cut, so
+ * the cut is no chance: every prediction counts it. */
+export const certainParry = (player: Player) => (player.parryChance ?? 0) >= 100 && parryCut(player) > 0;
+/** An enemy strike's ATK, cut by `cut` percent when it is parried. */
+export const parriedAttack = (attack: number, cut: number) => (cut ? snap((attack * (100 - cut)) / 100) : attack);
 /** The DEF `enemy` holds against the hero: its own, less the percent the
  * hero's equipment pierces (`pierce`). */
 export function defenseAgainst(player: Player, enemy: Enemy) {
@@ -73,14 +94,19 @@ export function predict(player: Player, enemy: Enemy, played = Infinity): Combat
       requiredAttack: snap(defenseAgainst(player, enemy) - attackAgainst(player, enemy) + 1),
     };
   }
+  // Thorns end a fight within 200 rounds, so it is always played out; a
+  // certain parry cuts every strike.
+  const thorn = thornDamage(player, enemy), cut = certainParry(player) ? parryCut(player) : 0;
+  if (thorn) played = Infinity;
   // Snapped, so 10.2 HP against strikes of 1.02 takes 10, as it does played out.
-  const turns = Math.ceil(snap(enemy.hp / hit));
+  const { turns, strikes, thornKill } = thorn ? thornRounds(enemy.hp, hit, thorn) : { turns: Math.ceil(snap(enemy.hp / hit)), strikes: NaN, thornKill: false };
+  const ended = thornKill ? { thornKill: true as const } : {};
   if (player.lifesteal) {
-    const hpAfter = lifestealEnding(player, enemy, hit, played);
-    if (hpAfter !== null) return { impervious: false, hit, turns, damage: snap(Math.max(0, player.hp - hpAfter)), survivable: true, requiredAttack: 0, hpAfter };
+    const hpAfter = lifestealEnding(player, enemy, hit, played, thorn, cut);
+    if (hpAfter !== null) return { impervious: false, hit, turns, damage: snap(Math.max(0, player.hp - hpAfter)), survivable: true, requiredAttack: 0, hpAfter, ...ended };
   }
   // The shroud takes the first of it, whichever strikes that falls on.
-  const damage = snap(Math.max(0, damageTaken(enemy.attack, player.defense, turns - 1, played) - (player.shroud ?? 0)));
+  const damage = snap(Math.max(0, damageTaken(enemy.attack, player.defense, thorn ? strikes : turns - 1, played, cut) - (player.shroud ?? 0)));
   return {
     impervious: false,
     hit,
@@ -88,7 +114,21 @@ export function predict(player: Player, enemy: Enemy, played = Infinity): Combat
     damage,
     survivable: player.hp > damage && !player.lifesteal,
     requiredAttack: 0,
+    ...ended,
   };
+}
+
+/** How a fight with thorns ends, the hero's strikes each dealing `hit` and
+ * each of the enemy's costing it `thorn`, played as `bout` plays them: the
+ * hero's strikes (`turns`), the enemy's (`strikes`), and whether the
+ * enemy's thorns felled it. */
+function thornRounds(hp: number, hit: number, thorn: number) {
+  for (let turns = 1; ; turns++) {
+    hp = snap(Math.max(0, hp - hit));
+    if (!hp) return { turns, strikes: turns - 1, thornKill: false };
+    hp = snap(Math.max(0, hp - thorn));
+    if (!hp) return { turns, strikes: turns, thornKill: true };
+  }
 }
 
 /** The HP a predicted fight costs `player`, net of Lifesteal's heals:
@@ -104,18 +144,22 @@ const lifestealHeal = (player: Player, dealt: number) => snap((dealt * (player.l
  * enemy's reply, up to max HP), or null when the enemy fells it first. It
  * plays the rounds as `bout` does, so the two end alike, and past `played`
  * rounds estimates the rest (`lifestealEstimate`). */
-function lifestealEnding(player: Player, enemy: Enemy, hit: number, played = Infinity) {
+function lifestealEnding(player: Player, enemy: Enemy, hit: number, played = Infinity, thorn = 0, cut = 0) {
   let hp = player.hp, enemyHp = enemy.hp, attack = enemy.attack, shroud = player.shroud ?? 0;
   for (let round = 0; ; round++) {
-    if (round >= played && enemyHp > hit) return lifestealEstimate(player, { hp, enemyHp, attack, shroud }, hit);
+    if (round >= played && enemyHp > hit) return lifestealEstimate(player, { hp, enemyHp, attack, shroud }, hit, cut);
     const dealt = Math.min(hit, enemyHp);
     enemyHp = snap(Math.max(0, enemyHp - hit));
     hp = snap(Math.min(player.maxHp, hp + lifestealHeal(player, dealt)));
     if (!enemyHp) return hp;
-    const struck = snap(Math.max(0, attack - player.defense)), shrouded = Math.min(shroud, struck);
+    const struck = snap(Math.max(0, parriedAttack(attack, cut) - player.defense)), shrouded = Math.min(shroud, struck);
     shroud = snap(shroud - shrouded);
     hp = snap(Math.max(0, hp - snap(struck - shrouded)));
     if (!hp) return null;
+    if (thorn) {
+      enemyHp = snap(Math.max(0, enemyHp - thorn));
+      if (!enemyHp) return hp;
+    }
     attack = raisedAttack(attack);
   }
 }
@@ -143,15 +187,16 @@ export function raisedAttack(attack: number) {
 }
 
 /** What the enemy's strikes back cost the hero over `strikes` rounds, starting
- * at `attack` and rising each round. Past what any HP could survive it is
+ * at `attack` and rising each round, each cut by `cut` percent (a certain
+ * parry). Past what any HP could survive it is
  * Infinity, so a fight with a million rounds is summed in a few thousand.
  * Past `played` strikes the rest are estimated (`estimatedDamage`). */
-export function damageTaken(attack: number, defense: number, strikes: number, played = Infinity) {
+export function damageTaken(attack: number, defense: number, strikes: number, played = Infinity, cut = 0) {
   let damage = 0, i = 0;
   for (; i < strikes && i < played && damage <= Number.MAX_SAFE_INTEGER; i++, attack = raisedAttack(attack)) {
-    damage = snap(damage + Math.max(0, attack - defense));
+    damage = snap(damage + Math.max(0, parriedAttack(attack, cut) - defense));
   }
-  if (i < strikes && damage <= Number.MAX_SAFE_INTEGER) damage += estimatedDamage(attack, defense, strikes - i);
+  if (i < strikes && damage <= Number.MAX_SAFE_INTEGER) damage += parriedEstimate(attack, defense, strikes - i, cut);
   return damage > Number.MAX_SAFE_INTEGER ? Infinity : damage;
 }
 
@@ -190,25 +235,34 @@ export function estimatedDamage(attack: number, defense: number, n: number) {
   return idle >= n ? 0 : attackSum(attackAfter(attack, idle), n - idle) - (n - idle) * defense;
 }
 
+/** `estimatedDamage` with every strike's ATK cut by `cut` percent: a strike
+ * of ATK A then takes f × (A − DEF / f), f the share of ATK left. */
+export function parriedEstimate(attack: number, defense: number, n: number, cut = 0) {
+  if (!cut) return estimatedDamage(attack, defense, n);
+  const f = (100 - cut) / 100;
+  return f * estimatedDamage(attack, defense / f, n);
+}
+
 /** A Lifesteal fight's ending estimated from part way through it (`at`:
  * the hero's HP, the enemy's, its ATK and the shroud left, the hero to
  * strike next): while the enemy's strikes take less than a heal restores,
  * the hero's HP climbs toward max HP less the latest strike; after that it
  * only falls. Null when it falls to 0 before the enemy does. */
-function lifestealEstimate(player: Player, at: { hp: number; enemyHp: number; attack: number; shroud: number }, hit: number) {
-  const strikes = Math.ceil(at.enemyHp / hit), replies = strikes - 1, defense = player.defense;
+function lifestealEstimate(player: Player, at: { hp: number; enemyHp: number; attack: number; shroud: number }, hit: number, cut = 0) {
+  // A strike cut by a certain parry takes f × (ATK − DEF / f), f the share of ATK left.
+  const f = (100 - cut) / 100, strikes = Math.ceil(at.enemyHp / hit), replies = strikes - 1, defense = player.defense / f;
   const heal = lifestealHeal(player, hit), last = lifestealHeal(player, at.enemyHp - replies * hit);
-  const climbing = Math.min(replies, roundsUntilAbove(at.attack, defense + heal));
+  const climbing = Math.min(replies, roundsUntilAbove(at.attack, defense + heal / f));
   let shroud = at.shroud;
   const absorb = (damage: number) => {
     const taken = Math.min(shroud, damage);
     shroud -= taken;
     return damage - taken;
   };
-  const early = absorb(estimatedDamage(at.attack, defense, climbing));
-  const ceiling = player.maxHp - Math.max(0, attackAfter(at.attack, climbing - 1) - defense);
+  const early = absorb(f * estimatedDamage(at.attack, defense, climbing));
+  const ceiling = player.maxHp - Math.max(0, f * (attackAfter(at.attack, climbing - 1) - defense));
   let hp = climbing ? Math.min(Math.max(at.hp, ceiling), at.hp + climbing * heal - early) : at.hp;
-  hp -= absorb(estimatedDamage(attackAfter(at.attack, climbing), defense, replies - climbing)) - (replies - climbing) * heal;
+  hp -= absorb(f * estimatedDamage(attackAfter(at.attack, climbing), defense, replies - climbing)) - (replies - climbing) * heal;
   return hp <= 0 ? null : snap(Math.min(player.maxHp, hp + last));
 }
 
@@ -232,22 +286,30 @@ export const REVIVE_MS = 1400;
  * critical factor it landed (`crit`), and one that heals the hero
  * (Lifesteal) the hero's HP after it (`heroHp`) and the HP it restored
  * (`healed`; in a summary round, what the round gave the hero net of the
- * damage it took, on whichever strike lands last). */
-export type Strike = { by: "hero" | "enemy"; damage: number; crit?: number; heroHp?: number; healed?: number; shrouded?: number; revived?: true; start: number; at: number; end: number; hp: number };
+ * damage it took, on whichever strike lands last). An enemy strike the hero
+ * parried (`parried`, its ATK cut) makes the hero give way a little as it
+ * lands, and one the hero lives through costs the enemy its thorns
+ * (`thorns`), leaving it `thornHp`. */
+export type Strike = { by: "hero" | "enemy"; damage: number; crit?: number; heroHp?: number; healed?: number; shrouded?: number; revived?: true; parried?: true; thorns?: number; thornHp?: number; start: number; at: number; end: number; hp: number };
 export type Bout = { strikes: Strike[]; duration: number };
 /** Whether the enemy's strike numbered `strike` (from 0) in a fight, which
  * would fell the hero, revives it instead (the Revive skill). */
 export type Revival = (strike: number) => boolean;
+/** Whether the enemy's strike numbered `strike` (from 0) in a fight is
+ * parried, its ATK cut by the hero's Parry %. */
+export type Parries = (strike: number) => boolean;
 
 /** The rounds `predict` sums up, one strike at a time: the hero strikes first,
  * then the enemy (its ATK rising after each round, the shroud taking its
- * strikes until it is spent), until one of them falls. Ends with the same HP
- * as the prediction (or at 0 in a fight the hero loses), unless `revives`
+ * strikes until it is spent, its thorns costing it after each strike the
+ * hero lives through), until one of them falls. Ends with the same HP as
+ * the prediction (or at 0 in a fight the hero loses), unless `revives`
  * raises the hero at full HP from a strike that would fell it: the fight
- * then goes on from the next round, the enemy as it was. */
-export function bout(player: Player, enemy: Enemy, revives?: Revival, crits?: Crits): Bout {
+ * then goes on from the next round, the enemy as it was. `parries` (or,
+ * without it, a certain parry) cuts the strikes it parries. */
+export function bout(player: Player, enemy: Enemy, revives?: Revival, crits?: Crits, parries?: Parries): Bout {
   if (heroHit(player, enemy) <= 0) return { strikes: [], duration: 0 };
-  return play([], { player, enemy, revives, crits }, { enemyHp: enemy.hp, heroHp: player.hp, shroud: player.shroud ?? 0, attack: enemy.attack, t: 0, ms: FIRST_STRIKE_MS, enemyStrikes: 0, heroStrikes: 0, enemyNext: false });
+  return play([], { player, enemy, revives, crits, parries }, { enemyHp: enemy.hp, heroHp: player.hp, shroud: player.shroud ?? 0, attack: enemy.attack, t: 0, ms: FIRST_STRIKE_MS, enemyStrikes: 0, heroStrikes: 0, enemyNext: false });
 }
 
 /** Where a fight stands before its next strike: each side's HP, what is
@@ -259,12 +321,12 @@ type BoutState = { enemyHp: number; heroHp: number; shroud: number; attack: numb
 type Blow = Omit<Strike, "start" | "at" | "end">;
 
 /** The two sides of a fight, and whether a strike that would fell the
- * hero revives it instead, and the hero's critical strikes. */
-export type Fighters = { player: Player; enemy: Enemy; revives?: Revival; crits?: Crits };
+ * hero revives it instead, the hero's critical strikes and its parries. */
+export type Fighters = { player: Player; enemy: Enemy; revives?: Revival; crits?: Crits; parries?: Parries };
 
 /** Plays a fight on from `state`, after the strikes already in `strikes`. */
-function play(strikes: Strike[], { player, enemy, revives, crits }: Fighters, state: BoutState): Bout {
-  const hit = heroHit(player, enemy), s = { ...state };
+function play(strikes: Strike[], { player, enemy, revives, crits, parries }: Fighters, state: BoutState): Bout {
+  const hit = heroHit(player, enemy), thorn = thornDamage(player, enemy), s = { ...state };
   // Each strike keeps its fields in the same order: its blow, its timing, then the HP left.
   const strike = ({ hp, ...blow }: Blow) => {
     strikes.push({ ...blow, start: s.t, at: s.t + s.ms / 2, end: s.t + s.ms, hp });
@@ -282,25 +344,29 @@ function play(strikes: Strike[], { player, enemy, revives, crits }: Fighters, st
       if (!s.enemyHp) break;
     }
     s.enemyNext = false;
-    strike(enemyBlow(s, player, revives));
-    if (!s.heroHp) break;
+    strike(enemyBlow(s, player, thorn, revives, parries));
+    if (!s.heroHp || !s.enemyHp) break;
     s.attack = raisedAttack(s.attack);
     s.ms = Math.max(FASTEST_STRIKE_MS, s.ms * STRIKE_SPEEDUP);
   }
   return { strikes, duration: s.t };
 }
 
-/** The enemy strikes the hero in `s`: the shroud takes what it can, the
- * rest comes off the hero's HP, and a strike that would fell the hero may
- * revive it at full HP. */
-function enemyBlow(s: BoutState, player: Player, revives?: Revival): Blow {
-  const struck = snap(Math.max(0, s.attack - player.defense)), shrouded = Math.min(s.shroud, struck), taken = snap(struck - shrouded);
+/** The enemy strikes the hero in `s`: a parried strike's ATK is cut, the
+ * shroud takes what it can, the rest comes off the hero's HP, and a strike
+ * that would fell the hero may revive it at full HP. A strike the hero
+ * lives through costs the enemy `thorn` HP. */
+function enemyBlow(s: BoutState, player: Player, thorn: number, revives?: Revival, parries?: Parries): Blow {
+  const cut = parryCut(player), parried = cut > 0 && (parries ? parries(s.enemyStrikes) : certainParry(player));
+  const struck = snap(Math.max(0, parriedAttack(s.attack, parried ? cut : 0) - player.defense)), shrouded = Math.min(s.shroud, struck), taken = snap(struck - shrouded);
   s.shroud = snap(s.shroud - shrouded);
   s.heroHp = snap(Math.max(0, s.heroHp - taken));
   const revived = !s.heroHp && !!revives?.(s.enemyStrikes);
   if (revived) s.heroHp = player.maxHp;
   s.enemyStrikes++;
-  return { by: "enemy", damage: taken, ...(shrouded ? { shrouded } : {}), ...(revived ? { revived: true as const } : {}), hp: s.heroHp };
+  const thorns = thorn && s.heroHp ? thorn : 0;
+  if (thorns) s.enemyHp = snap(Math.max(0, s.enemyHp - thorns));
+  return { by: "enemy", damage: taken, ...(shrouded ? { shrouded } : {}), ...(revived ? { revived: true as const } : {}), ...(parried ? { parried: true as const } : {}), ...(thorns ? { thorns, thornHp: s.enemyHp } : {}), hp: s.heroHp };
 }
 
 /** The fight played on with the hero's stats changed mid-fight (training
@@ -319,6 +385,7 @@ export function resume(fight: Bout, from: number, fighters: Fighters): Bout {
       continue;
     }
     enemyStrikes++;
+    if (s.thornHp !== undefined) enemyHp = s.thornHp;
     attack = raisedAttack(attack);
     ms = Math.max(FASTEST_STRIKE_MS, ms * STRIKE_SPEEDUP);
   }
@@ -368,8 +435,9 @@ function withStrike(round: Round, s: Strike, t: number): Round {
     const heroHp = s.heroHp ?? round.hero?.heroHp, enemy = s.heroHp !== undefined && round.enemy ? { ...round.enemy, hp: s.heroHp } : round.enemy;
     return { ...round, ...(enemy ? { enemy } : {}), hero: { by: "hero", damage: snap((round.hero?.damage ?? 0) + s.damage), ...(crit ? { crit } : {}), ...(heroHp !== undefined ? { heroHp } : {}), ...(healed ? { healed } : {}), hp: s.hp, ...at } };
   }
-  const prev = round.enemy, shrouded = snap((prev?.shrouded ?? 0) + (s.shrouded ?? 0));
-  return { ...round, enemy: { by: "enemy", damage: snap((prev?.damage ?? 0) + s.damage), ...(shrouded ? { shrouded } : {}), ...(s.revived ? { revived: true as const } : {}), hp: s.hp, ...at } };
+  // A summary round shows no parries, only the damage they left.
+  const prev = round.enemy, shrouded = snap((prev?.shrouded ?? 0) + (s.shrouded ?? 0)), thorns = snap((prev?.thorns ?? 0) + (s.thorns ?? 0)), thornHp = s.thornHp ?? prev?.thornHp;
+  return { ...round, enemy: { by: "enemy", damage: snap((prev?.damage ?? 0) + s.damage), ...(shrouded ? { shrouded } : {}), ...(s.revived ? { revived: true as const } : {}), ...(thorns ? { thorns, thornHp } : {}), hp: s.hp, ...at } };
 }
 
 /** The hero's HP once the fight is over, from `hp` at its start. */

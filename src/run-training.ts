@@ -1,7 +1,7 @@
 import { RUN_TRAINING_PRICES, schedulePrice, TRAINING, isStatRow, trainingOpen, type TrainingId, type TrainingRow } from "./config.ts";
 import type { RunCore, Save } from "./entities.ts";
 import { bulkBuy, type BuyQuantity } from "./buy-quantity.ts";
-import { critChance, critFactor, floorGold, freeTrainingChance, FREE_TRAINING_ROWS, floorSilver, killGold, percentPotionChance, silverBonus, potionPercent, reviveChance, shownStat } from "./loadout.ts";
+import { critChance, critFactor, floorGold, freeTrainingChance, FREE_TRAINING_ROWS, floorSilver, killGold, percentPotionChance, silverBonus, potionPercent, reviveChance, shownStat, statUnit } from "./loadout.ts";
 
 /** Run training: Training ranks bought with Silver inside a run, on top of
  * the hero's own, lasting only for that run (`run.training`, so undo takes
@@ -53,7 +53,7 @@ export function runTrainingBulk(save: Pick<Save, "training" | "upgrades">, run: 
  * multiplier (unit "×"), or the percentage for the others. */
 export function runTrainingValue(save: Pick<Save, "training" | "upgrades">, run: Pick<RunCore, "training" | "player">, id: TrainingId) {
   const row = TRAINING.find((t) => t.id === id)!;
-  if (isStatRow(row)) return { value: shownStat(row.stat, run.player[row.stat] ?? 0), unit: row.stat === "lifesteal" ? "%" : "" };
+  if (isStatRow(row)) return { value: shownStat(row.stat, run.player[row.stat] ?? 0), unit: statUnit(row.stat) };
   const now = { upgrades: save.upgrades, training: ranksInRun(save, run) };
   if (id === "critChance") return { value: critChance(now), unit: "%" };
   if (id === "critFactor") return { value: critFactor(now), unit: "×" };

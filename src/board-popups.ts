@@ -23,6 +23,9 @@ const HERO_DAMAGE_COLOR = "#b3121f";
 /** A critical strike's number: a little brighter, in a glow. */
 const CRIT_COLOR = "#ff7a6a";
 const CRIT_GLOW = "#ffb04a";
+/** What the enemy's thorns cost it: yellow, never mistaken for a heal's blue
+ * or green. */
+const THORN_COLOR = "#ffd83d";
 /** The check on a Heart Door's heart. */
 const CHECK_COLOR = "#5fdc6a";
 /** Damage the shroud blocked, and how far apart it and the damage that got
@@ -93,6 +96,9 @@ const BAR_FILL = "#d8323a";
 const BAR_EMPTY = "#2a0d10";
 /** How far a strike leans into its target at the moment it lands, in tiles. */
 const LUNGE = 0.3;
+/** How far the hero gives way from a strike it parries, as a share of the
+ * enemy's lunge. */
+const PARRY_GIVE = 0.4;
 
 type Popup = { x: number; y: number; start: number };
 /** A rising number's colour, how far it rises (tiles) and its size (of a tile). */
@@ -156,7 +162,16 @@ export class BoardPopups {
       // what the hero took rises, over where the hero stands at the end.
       if (s.healed) this.heal(s.healed, won && fight.summary ? fight.to : fight.from, fight.start + s.at);
       if (!hiddenInSummary(fight, s)) this.raise(s, struckAt(fight, s, won), fight.start + s.at);
+      if (s.thorns && !(fight.summary && !s.thornHp)) this.thorns(s.thorns, fight, fight.start + s.at);
     }
+  }
+  /** What the enemy's thorns cost it, in yellow over the enemy, as the
+   * strike's damage rises over the hero. In summary rounds, where the
+   * hero's damage rises over the enemy too, it stands aside; thorns that
+   * fell the enemy there raise nothing, as the hero's felling strike doesn't. */
+  private thorns(amount: number, fight: ShownFight, start: number) {
+    const shift = fight.summary ? SHROUD_SPLIT : 0;
+    this.numbers.push({ x: fight.to.x + shift, y: fight.to.y + DAMAGE_START, start, text: String(wholeChange(amount)), color: THORN_COLOR });
   }
   /** The HP Lifesteal restored, as a blue +N over the hero (nothing when it
    * rounds to none). */
@@ -233,8 +248,14 @@ export class BoardPopups {
 
 type Strike = ShownFight["bout"]["strikes"][number];
 
+/** What takes the enemy's HP, in order: the hero's strikes and the
+ * thorns of the enemy's own, each landing at `at` and leaving it `hp`. */
+type Hit = { at: number; hp: number };
+const enemyHits = (fight: ShownFight): Hit[] =>
+  fight.bout.strikes.flatMap((s) => (s.by === "hero" ? [{ at: s.at, hp: s.hp }] : s.thornHp !== undefined ? [{ at: s.at, hp: s.thornHp }] : []));
+
 /** How many of `hits`, in order, have landed by `t`. */
-function landedBy(hits: Strike[], t: number) {
+function landedBy(hits: Hit[], t: number) {
   let n = 0;
   while (n < hits.length && hits[n].at <= t) n++;
   return n;
@@ -295,15 +316,16 @@ function paintSpentTile(c: CanvasRenderingContext2D, f: FrameContext, p: Popup, 
   mark(c, "−", { x: 3, y: 12 }, { color: SPENT_COLOR, size: 14 });
 }
 
-/** Whether the fight ends with the enemy felled. */
-const defeated = (fight: ShownFight) => fight.bout.strikes.some((s) => s.by === "hero" && !s.hp);
+/** Whether the fight ends with the enemy felled, by a strike or its thorns. */
+const defeated = (fight: ShownFight) => fight.bout.strikes.some((s) => (s.by === "hero" && !s.hp) || s.thornHp === 0);
 
 /** The enemy's HP the bar shows at `now` and how visible it is: hidden
  * until the hero's first strike lands, draining steadily to each strike's
- * HP as it lands, then, once the enemy has fallen, fading away. A fight the
- * hero lost leaves it standing, showing what HP the enemy has left. */
+ * HP (or its thorns') as it lands, then, once the enemy has fallen, fading
+ * away. A fight the hero lost leaves it standing, showing what HP the enemy
+ * has left. */
 export function enemyBar(fight: ShownFight, now: number): { hp: number; alpha: number } | null {
-  const t = now - fight.start, hits = fight.bout.strikes.filter((s) => s.by === "hero");
+  const t = now - fight.start, hits = enemyHits(fight);
   const i = landedBy(hits, t) - 1;
   if (i < 0) return null;
   const s = hits[i], from = i ? hits[i - 1].hp : fight.hp, drain = drainMs(hits, i),
@@ -314,14 +336,14 @@ export function enemyBar(fight: ShownFight, now: number): { hp: number; alpha: n
   return fade > 0 ? { hp, alpha: fade } : null;
 }
 /** How long the bar drains after hit `i`: no longer than until the next. */
-function drainMs(hits: Strike[], i: number) {
+function drainMs(hits: Hit[], i: number) {
   const next = hits[i + 1];
   return next ? Math.min(BAR_DRAIN_MS, next.at - hits[i].at) : BAR_DRAIN_MS;
 }
 /** The bar is draining or fading, or waits for the hero's first strike. */
 function barMoving(fight: ShownFight | null, now: number) {
   if (!fight) return false;
-  const hits = fight.bout.strikes.filter((s) => s.by === "hero"), last = hits.at(-1);
+  const last = enemyHits(fight).at(-1);
   return !!last && now - fight.start < last.at + BAR_DRAIN_MS + (last.hp ? 0 : BAR_FADE_MS);
 }
 function drawEnemyBar(f: FrameContext, fight: ShownFight) {
@@ -341,7 +363,8 @@ function drawEnemyBar(f: FrameContext, fight: ShownFight) {
 }
 
 /** How far the hero and the enemy lean into their strikes at `now`: whoever
- * is striking reaches toward the other, furthest as the strike lands. */
+ * is striking reaches toward the other, furthest as the strike lands, and
+ * the hero gives way a little from a strike it parries. */
 export function lunges(fight: Encounter | null, now: number, reduceMotion: boolean): { hero: Offset; enemy: Offset } {
   const t = fight ? now - fight.start : 0;
   const s = fight && !reduceMotion ? fight.bout.strikes.find((s) => s.start <= t && t < s.end) : undefined;
@@ -350,7 +373,7 @@ export function lunges(fight: Encounter | null, now: number, reduceMotion: boole
   const { dx, dy } = facing(fight);
   return s.by === "hero"
     ? { hero: { dx: dx * reach, dy: dy * reach }, enemy: STILL }
-    : { hero: STILL, enemy: { dx: -dx * reach, dy: -dy * reach } };
+    : { hero: s.parried ? { dx: -dx * reach * PARRY_GIVE, dy: -dy * reach * PARRY_GIVE } : STILL, enemy: { dx: -dx * reach, dy: -dy * reach } };
 }
 
 /** The step from the hero to the enemy: one tile apart, though the

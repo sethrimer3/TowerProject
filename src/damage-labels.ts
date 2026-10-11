@@ -20,12 +20,14 @@ import { compactAmount, wholeChange } from "./whole.ts";
 /** What a fight against one enemy would cost: `predict`'s damage net of
  * Lifesteal's heals (below 0 when it heals on balance; Infinity when the
  * hero can't hurt it) and the hero's strikes it takes (1: an
- * Instakill, the enemy never striking back). */
-type Cost = { damage: number; turns: number };
+ * Instakill, the enemy never striking back, unless its thorns felled it,
+ * `thornKill`). */
+type Cost = { damage: number; turns: number; thornKill?: true };
 
-/** Predictions by enemy stats, kept while the hero's ATK, DEF, shroud and
- * critical strikes stay the same (HP only colours a label, read as it is drawn), so a board
- * full of enemies is predicted once per kind of enemy, not every frame. */
+/** Predictions by enemy stats, kept while the hero's ATK, DEF, shroud,
+ * thorns, parries and critical strikes stay the same (HP only colours a
+ * label, read as it is drawn), so a board full of enemies is predicted
+ * once per kind of enemy, not every frame. */
 export class DamagePredictions {
   private hero = "";
   private costs = new Map<string, Cost>();
@@ -33,23 +35,26 @@ export class DamagePredictions {
   /** How many predictions have been worked out, for tests. */
   computed = 0;
 
-  cost(player: Player, enemy: Enemy, crit?: CritRule): Cost {
+  cost(player: Player, enemy: Enemy, crit?: CritRule, parries = false): Cost {
     // Damage is never capped by the HP the hero has, so HP is part of the key
     // only with Lifesteal, whose heals stop at max HP.
     const steal = player.lifesteal ? `${player.lifesteal}|${player.hp}|${player.maxHp}` : "";
-    const hero = `${player.attack}|${player.defense}|${player.shroud ?? 0}|${steal}|${crit ? `${crit.chance}|${crit.factor}` : ""}`;
+    const evade = `${player.thorns ?? 0}|${player.parryChance ?? 0}|${player.parry ?? 0}|${parries}`;
+    const hero = `${player.attack}|${player.defense}|${player.shroud ?? 0}|${steal}|${crit ? `${crit.chance}|${crit.factor}` : ""}|${evade}`;
     if (hero !== this.hero) [this.hero, this.costs] = [hero, new Map()];
-    const key = `${enemy.hp}|${enemy.attack}|${enemy.defense}`;
+    // A boss's strength sets its thorns and the hero's boss ATK.
+    const key = `${enemy.hp}|${enemy.attack}|${enemy.defense}|${enemy.strength}`;
     let cost = this.costs.get(key);
     if (!cost) {
       // A fight of more than PLAYED_ROUNDS rounds is estimated past them, so
       // no label costs more than that many rounds to work out.
       const r = predict(player, enemy, PLAYED_ROUNDS);
       this.computed++;
-      // With critical strikes the label shows the damage to expect, and only
-      // an Instakill that is certain is gray.
-      const f = crit && !r.impervious ? forecast(player, enemy, crit, PLAYED_ROUNDS) : null;
-      cost = f ? { damage: f.worst.impervious ? Infinity : f.expected, turns: f.worst.turns } : { damage: r.impervious ? Infinity : netDamage(player, r), turns: r.turns };
+      // With critical strikes or parries counted the label shows the damage
+      // to expect, and only an Instakill that is certain is gray.
+      const f = (crit || parries) && !r.impervious ? forecast(player, enemy, crit, parries, PLAYED_ROUNDS) : null;
+      const ended = f ? f.worst : r, thorned = ended.thornKill ? { thornKill: true as const } : {};
+      cost = f ? { damage: f.worst.impervious ? Infinity : f.expected, turns: f.worst.turns, ...thorned } : { damage: r.impervious ? Infinity : netDamage(player, r), turns: r.turns, ...thorned };
       this.costs.set(key, cost);
     }
     return cost;
@@ -89,7 +94,7 @@ export function damageLabel(cost: Cost, hp: number, relative = false) {
   if (!Number.isFinite(cost.damage)) return { text: "∞", color: "#ff5a5a" };
   const shown = wholeChange(cost.damage);
   if (shown < 0) return { text: `+${compactAmount(-shown)}`, color: HEAL_COLOR };
-  const color = hp <= cost.damage ? "#ff5a5a" : cost.turns === 1 ? "#9aa3b2"
+  const color = hp <= cost.damage ? "#ff5a5a" : cost.turns === 1 && !cost.thornKill ? "#9aa3b2"
     : shown === 0 ? "#ffffff" : relative ? relativeColor(cost.damage / hp) : "#ffe08a";
   return { text: compactAmount(shown), color };
 }
@@ -103,7 +108,7 @@ const holdsKey = (player: Player) => player.keys.yellow > 0 || player.keys.blue 
 
 /** Draws each enemy's label in view, and each Wooden Door's while the hero
  * holds no key, over the darkness so it always reads. */
-export function drawDamageLabels(f: FrameContext, predictions: DamagePredictions, player: Player, fight: Fighting, relative = false, crit?: CritRule) {
+export function drawDamageLabels(f: FrameContext, predictions: DamagePredictions, player: Player, fight: Fighting, relative = false, crit?: CritRule, parries = false) {
   const c = f.c, s = f.s, pad = s * 0.06;
   c.save();
   c.font = `bold ${Math.max(8, Math.round(s * 0.3))}px Cinzel, serif`;
@@ -116,7 +121,7 @@ export function drawDamageLabels(f: FrameContext, predictions: DamagePredictions
     const t = f.world.tile(x, y);
     const wood = t.kind === "door" && t.door?.type === "wood" && !holdsKey(player) ? t.door.durability : null;
     if (wood === null && (t.kind !== "enemy" || !t.enemy || (fight && fight.to.x === x && fight.to.y === y))) return;
-    const cost = wood !== null ? breakCost(wood) : predictions.cost(player, t.enemy!, crit);
+    const cost = wood !== null ? breakCost(wood) : predictions.cost(player, t.enemy!, crit, parries);
     const { text, color } = damageLabel(cost, player.hp, relative);
     const left = (x - f.left) * s + pad, bottom = (f.n - (y - f.bottom)) * s - pad;
     c.strokeText(text, left, bottom);
