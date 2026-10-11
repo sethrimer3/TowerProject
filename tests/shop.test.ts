@@ -121,8 +121,8 @@ test("one-time packs are bought once, kept by an erase, grant their Gems and mul
   g.eraseAll();
   assert.deepEqual(g.save.entitlements, ["coins2", "coins3", "adFree"]);
   assert.equal(g.save.trainingBoostUntil, BOOST_FOREVER);
-  // A kill's 2 Gold, ×9, in a run inside.
-  const h = new Game({ ...defaults(), entitlements: g.save.entitlements });
+  // A kill's 2 Gold, ×9, in a run inside (no theme's Gold).
+  const h = new Game({ ...defaults(), entitlements: g.save.entitlements, themes: [] });
   h.save.settings.devMode = true;
   h.run.height = 10;
   (h.world as RoomWorld).cells = new Map<string, any>([["0,0", { kind: "floor" }],

@@ -43,12 +43,15 @@ export const SETTINGS = {
     kind: "choice", default: "both", choices: [["both", "Popup + status line"], ["popup", "Popup only"], ["status", "Status line only"], ["none", "Off"]],
     page: { id: "info-display", label: "Tile info display" },
   },
-  /** Dress the page in the keep's look (stone, oak, brass, parchment) and
-   * play its synthesized sounds. */
-  medievalTheme: { kind: "toggle", default: false, page: { id: "medieval-theme", label: "Render Medieval Theme" } },
-  /** Draw the page out of warm, glowing laser lines on black. Turning it on
-   * turns the Medieval theme off, and the other way round. */
-  neonTheme: { kind: "toggle", default: false, page: { id: "neon-theme", label: "Render Neon Theme" } },
+  /** The UI theme worn round the board (theme-collection.ts): Classic, or
+   * Medieval (the keep's stone, oak, brass and parchment, with its
+   * synthesized sounds) or Neon (warm glowing laser lines on black) once
+   * owned. Chosen on the Settings page's UI Themes menu, not a row of its
+   * own; a new hero starts in Medieval. */
+  uiTheme: { kind: "choice", default: "medieval", choices: [["classic", "Classic"], ["medieval", "Medieval"], ["neon", "Neon"]] },
+  /** The Game theme the dungeon is drawn in: Classic, or Neon once owned.
+   * Chosen on the Game Themes menu. */
+  gameTheme: { kind: "choice", default: "classic", choices: [["classic", "Classic"], ["neon", "Neon"]] },
   /** Unlimited currency, every floor section and game mode unlocked. */
   devMode: { kind: "toggle", default: false, page: { id: "dev-mode", label: "Dev mode (unlimited currency, all floors &amp; modes unlocked)" } },
   /** Play each fight out strike by strike, damage rising off whoever was
@@ -106,5 +109,10 @@ export function decodeSettings(raw: any): Settings {
   for (const k of KEYS) out[k] = settingValue(SETTINGS[k], s[k]) ?? out[k];
   // Older saves had a single showInfoBoxes toggle.
   if (settingValue(SETTINGS.infoDisplay, s.infoDisplay) === undefined && s.showInfoBoxes === false) out.infoDisplay = "none";
+  // Older saves had a Medieval and a Neon toggle, Neon drawing both the page
+  // and the board; a hero who never turned Medieval on keeps the Classic page.
+  if (typeof s.medievalTheme === "boolean" && settingValue(SETTINGS.uiTheme, s.uiTheme) === undefined)
+    out.uiTheme = s.neonTheme === true ? "neon" : s.medievalTheme ? "medieval" : "classic";
+  if (s.neonTheme === true && settingValue(SETTINGS.gameTheme, s.gameTheme) === undefined) out.gameTheme = "neon";
   return out as Settings;
 }

@@ -1,4 +1,5 @@
 import { entrance, floorFor } from "./delve/labyrinth.ts";
+import { canWear, claimThemes, type GameLook, type ThemeId, type ThemeKind, type UiLook } from "./theme-collection.ts";
 import { chooseStep } from "./automation.ts";
 import { CARDS, KEY_TO_HP_PERCENT, SIPHONS, TRADER_YELLOW_KEYS, cardText, isSiphon, planHand, planTarget, type CardId, type CardPlan, type CardRules, type SiphonCard } from "./cards.ts";
 import { BADGE_IDS, BADGES, MAX_COPIES, badgeValue, runBadges, type BadgeId, type RunBadge } from "./badges.ts";
@@ -298,6 +299,18 @@ export class Game {
     this.save.tower.best = Math.max(this.save.tower.best, this.save.tower.reached);
     this.save.delve.reached = Math.max(this.save.delve.reached, maxSection * TOWER_SECTION);
     this.save.delve.best = Math.max(this.save.delve.best, this.save.delve.reached);
+  }
+  /** Adds the themes the save has earned (Dev mode's floors earn them all)
+   * and returns them, for the player to hear about. */
+  claimThemes(): ThemeId[] {
+    return claimThemes(this.save);
+  }
+  /** Equips an owned theme's look, or Classic; false while it isn't owned. */
+  wearTheme(kind: ThemeKind, look: string) {
+    if (!canWear(this.save, kind, look)) return false;
+    if (kind === "ui") this.save.settings.uiTheme = look as UiLook;
+    else this.save.settings.gameTheme = look as GameLook;
+    return true;
   }
   /** Makes `next` the active mode. A mode with no run yet starts one inside
    * (a new game's first), or in its forest when `outside`. */

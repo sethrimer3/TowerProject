@@ -65,8 +65,15 @@ try {
   await page.goto(server.url, { waitUntil: "domcontentloaded" });
   await ready();
   const FIXTURES = await page.evaluate(async () => {
-    const { defaults } = await import("/snapshot/save.js");
+    const { defaults: newSave } = await import("/snapshot/save.js");
     const { Game } = await import("/snapshot/state.js");
+    // Every fixture wears the Classic UI theme: the Medieval frame a new hero
+    // starts in resizes the board, and the theme menus have their own steps.
+    const defaults = () => {
+      const s = newSave();
+      s.settings.uiTheme = "classic";
+      return s;
+    };
     const make = (edit) => {
       const s = defaults();
       edit?.(s);
@@ -548,6 +555,13 @@ try {
   async function settingsTour(prefix) {
     await menuClick("#auto-settings");
     await shot(`${prefix}.settings`);
+    // The theme menus: Classic and the themes, Neon still to be earned.
+    await click("#ui-themes");
+    await shot(`${prefix}.themes.ui`);
+    await click("#themes-back");
+    await click("#game-themes");
+    await shot(`${prefix}.themes.game`);
+    await click("#themes-back");
     await page.locator("#info-display").selectOption("status");
     await click("#settings-back");
     await tapTile(8, 3);
@@ -560,6 +574,12 @@ try {
     await menuClick("#auto-settings");
     await page.locator("#dev-mode").setChecked(true);
     await shot(`${prefix}.settings.dev`);
+    // Dev mode's floors earn every theme; one is worn from its menu.
+    await click("#game-themes");
+    await shot(`${prefix}.themes.game.owned`);
+    await click('.theme-wear[data-look="neon"]');
+    await shot(`${prefix}.themes.game.worn`);
+    await click("#themes-back");
     await click("#retire");
     await shot(`${prefix}.retire.confirm`);
     await click("#confirm");

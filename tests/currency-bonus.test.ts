@@ -62,6 +62,8 @@ test("Silver Bonus starts at ×1 and adds 1% a rank, Gold / Kill 3%; Silver / Fl
 /** A Tower run inside on floor 11, the hero at (0, 0) facing a strong enemy at (1, 0). */
 function facingEnemy() {
   const g = new Game(defaults());
+  // No theme's Gold, so these figures are the mechanic's alone (theme-collection.test.ts covers it).
+  g.save.themes = [];
   g.save.settings.devMode = true;
   g.save.upgrades.inspirationUndos = 1;
   g.run.height = 10;
@@ -87,6 +89,8 @@ test("a kill's Silver takes Silver Bonus and its Gold takes Gold / Kill, trainin
 /** A Tower run inside on floor 4, the hero at (0, 0) beside the stairs at (1, 0). */
 function stairs(tier = 1) {
   const save = defaults();
+  // No theme's Gold, so these figures are the mechanic's alone (theme-collection.test.ts covers it).
+  save.themes = [];
   save.tower.tiersOpen = save.tower.tier = tier;
   save.upgrades.wishingWell = 1;
   save.upgrades.inspirationUndos = 1;

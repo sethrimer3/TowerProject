@@ -15,6 +15,8 @@ const enemy = (strength: Enemy["strength"]): Enemy => ({ name: "Test", hp: 10, a
 /** A Tower run inside in `tier` on an open 5×5 floor, a strong hero at (0, 0) and `foe` beside it. */
 function arena(tier: number, foe: Enemy, height = 3) {
   const save = defaults();
+  // No theme's Gold, so these figures are the mechanic's alone (theme-collection.test.ts covers it).
+  save.themes = [];
   save.tower.tiersOpen = tier;
   save.tower.tier = tier;
   const g = new Game(save);

@@ -31,7 +31,7 @@ import { renderBoardLesson } from "./ui/board-lesson.ts";
 import { renderSettingsPage } from "./ui/settings-page.ts";
 import { ShopPage } from "./ui/shop-page.ts";
 import { play } from "./sound.ts";
-import { applyMedievalTheme, bindMedievalFeedback } from "./ui/medieval.ts";
+import { applyUiTheme, bindMedievalFeedback } from "./ui/medieval.ts";
 import { gemSparkle, goldSparkle } from "./ui/flourish.ts";
 import { TournamentClient } from "./tournament/client.ts";
 import { stubTournament } from "./tournament/server.ts";
@@ -44,14 +44,16 @@ import { MailDialog } from "./ui/mail-dialog.ts";
 import { MissionsPage } from "./ui/missions-page.ts";
 import { EventsPage } from "./ui/events-page.ts";
 import { RelicsPage } from "./ui/relics-page.ts";
+import { uiLook } from "./theme-collection.ts";
+import { themeToast } from "./ui/theme-menu.ts";
 
 // Wires the pages together: builds the shell, creates the game and renderer,
 // and routes navigation, HUD refreshes and input between the ui/ modules.
 
 buildShell(document.querySelector<HTMLDivElement>("#app")!);
 const game = new Game(load());
-applyMedievalTheme(game.save.settings);
-bindMedievalFeedback(() => game.save.settings.medievalTheme, () => game.save.settings.reduceMotion);
+applyUiTheme(game.save);
+bindMedievalFeedback(() => uiLook(game.save) === "medieval", () => game.save.settings.reduceMotion);
 // The frame loop settles fights as they finish playing out.
 game.playsFights = true;
 const renderer = new Renderer(document.querySelector("#world")!, game);
@@ -124,7 +126,10 @@ function update() {
   renderHud(game, renderer, overlay);
   runTraining.render();
   renderBoardLesson(game, tab === "tower", update);
-  const finished = [...game.research.done.splice(0).map(researchToast), ...game.training.done.splice(0).map(trainingToast)];
+  const themes = game.claimThemes();
+  // A theme earned while its look was chosen (an old save's) shows at once.
+  if (themes.length) applyUiTheme(game.save);
+  const finished = [...game.research.done.splice(0).map(researchToast), ...game.training.done.splice(0).map(trainingToast), ...themes.map(themeToast)];
   if (finished.length) play("trained");
   researchToasts.add(finished);
   save();

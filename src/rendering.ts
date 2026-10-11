@@ -25,6 +25,7 @@ import { drawGem, drawGemSparkle, GEM_SPARKLE_MS } from "./gem-art.ts";
 import { drawRushEchoes, RUSH_ECHO_MS } from "./rush-echoes.ts";
 import type { Rush } from "./state.ts";
 import { darknessOf, forEachViewTile, tileTransform, toTileSpace, type FrameContext } from "./render-frame.ts";
+import { gameLook } from "./theme-collection.ts";
 
 export { ATMOSPHERE_CONFIG, type AtmosphereConfig } from "./lighting-pass.ts";
 
@@ -530,9 +531,9 @@ export class Renderer {
   }
 
   private get neon() {
-    return this.game.save.settings.neonTheme;
+    return gameLook(this.game.save) === "neon";
   }
-  /** Decor waits for neon versions of its own, so the Neon theme turns it off. */
+  /** Decor waits for neon versions of its own, so the Neon Game theme turns it off. */
   private get decorOn() {
     return !this.game.save.settings.decorOff && !this.neon;
   }

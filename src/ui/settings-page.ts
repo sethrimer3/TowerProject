@@ -1,4 +1,6 @@
-import { applyMedievalTheme } from "./medieval.ts";
+import { applyUiTheme } from "./medieval.ts";
+import { renderThemeMenu, themeMenuTitle, wornName } from "./theme-menu.ts";
+import type { ThemeKind } from "../theme-collection.ts";
 import { SETTINGS, type SettingKey, type Settings } from "../settings.ts";
 import type { Save } from "../entities.ts";
 import type { AppContext, PageGame } from "./app.ts";
@@ -11,7 +13,7 @@ import { goalUnlocked } from "../goals.ts";
  * SETTINGS. */
 const PAGE = [
   "transition", "fightAnimation", "damageVisual", "brightness", "spritesOff", "decorOff", "batterySaver", "showArrows", "reduceMotion", "weatherSound",
-  "infoDisplay", "oneTapMove", "medievalTheme", "neonTheme", "devMode", "freePurchases",
+  "infoDisplay", "oneTapMove", "devMode", "freePurchases",
 ] as const satisfies readonly SettingKey[];
 type PageKey = (typeof PAGE)[number];
 
@@ -25,27 +27,13 @@ const onPage = (save: Save) => PAGE.filter((key) => SHOWN[key]?.(save) ?? true);
 /** What a change does once written, beyond saving. */
 const AFTER: Partial<Record<PageKey, (ctx: AppContext, overlay: BoardOverlay, s: Settings) => void>> = {
   showArrows: (ctx) => ctx.update(),
-  reduceMotion: (_ctx, _o, s) => applyMedievalTheme(s),
+  reduceMotion: (ctx) => applyUiTheme(ctx.game.save),
   // The board silences the weather itself once sound is off.
   weatherSound: (ctx) => ctx.update(),
   infoDisplay: (ctx, overlay, s) => {
     if (s.infoDisplay === "status" || s.infoDisplay === "none") overlay.hideInspect();
     ctx.save();
     ctx.update();
-  },
-  medievalTheme: (ctx, _, s) => {
-    const other = s.neonTheme && s.medievalTheme;
-    if (other) s.neonTheme = false;
-    applyMedievalTheme(s);
-    ctx.save();
-    if (other) ctx.renderPage();
-  },
-  neonTheme: (ctx, _, s) => {
-    const other = s.neonTheme && s.medievalTheme;
-    if (other) s.medievalTheme = false;
-    applyMedievalTheme(s);
-    ctx.save();
-    if (other) ctx.renderPage();
   },
   // Turning it on also grants everything it unlocks.
   devMode: (ctx, _, s) => {
@@ -74,13 +62,35 @@ function control(key: PageKey, game: PageGame): string {
   }
 }
 
-/** The Settings page: a way back to the board, display and control
- * options, retire, and erase. */
+/** The theme menu open over the Settings page, if any: kept while the page
+ * redraws, closed by its Back. */
+let menu: ThemeKind | null = null;
+
+/** The buttons that open each kind's theme menu, naming the look worn. */
+const themeButtons = (game: PageGame) =>
+  `<div class="theme-buttons">${(["ui", "game"] as const).map((kind) =>
+    `<button class="setting theme-open" id="${kind}-themes" data-kind="${kind}">${themeMenuTitle(kind)}<b>${wornName(game.save, kind)} ›</b></button>`).join("")}</div>`;
+
+/** The Settings page: a way back to the board, the theme menus, display
+ * and control options, retire, and erase. */
 export function renderSettingsPage(ctx: AppContext, overlay: BoardOverlay) {
   const { game } = ctx;
+  if (menu) {
+    renderThemeMenu(el("settings"), game, menu, () => {
+      menu = null;
+      ctx.renderPage();
+    }, () => {
+      applyUiTheme(game.save);
+      ctx.save();
+      ctx.update();
+      ctx.renderPage();
+    });
+    return;
+  }
   const words = MODES[game.mode].words;
   el("settings").innerHTML =
     `<button class="back" id="settings-back">← Back</button><div class="page-title"><small>MAKE THE ASCENT YOUR OWN</small><h2>Settings</h2></div>` +
+    themeButtons(game) +
     onPage(game.save).map((key) => control(key, game)).join("") +
     `<p class="hint">Automation pauses outside the board tabs and while the browser is hidden. Progress saves after each action.</p><button class="wide" id="retire">Retire this ${words.run}</button><p class="hint">Keep your milestone rewards and enter a freshly generated ${words.fresh}.</p><button class="wide danger" id="erase">Erase all progress</button><p class="seed">RUN SEED · ${game.run.seed}</p>`;
   bindSettings(ctx, overlay);
@@ -91,6 +101,12 @@ function bindSettings(ctx: AppContext, overlay: BoardOverlay) {
   // Read live: erasing progress replaces the whole save.
   const s = () => game.save.settings;
   el("settings-back").onclick = () => ctx.navigate(game.mode);
+  document.querySelectorAll<HTMLButtonElement>(".theme-open").forEach((b) => {
+    b.onclick = () => {
+      menu = b.dataset.kind as ThemeKind;
+      ctx.renderPage();
+    };
+  });
   for (const key of onPage(game.save)) {
     const row = SETTINGS[key], input = el(row.page.id) as HTMLInputElement & HTMLSelectElement;
     const changed = () => (AFTER[key] ?? (() => ctx.save()))(ctx, overlay, s());
