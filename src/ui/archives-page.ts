@@ -14,6 +14,7 @@ import { cellIcon, el, gemCount, gemIcon, redoIcon, uiSprite } from "./dom.ts";
 import { whole } from "../whole.ts";
 import { SPEED_UP_FACTORS, SPEED_UP_HOURS, jobAt, type SpeedUpFactor, type SpeedUpHours } from "../speed-ups.ts";
 import { askForGems, helpButton, showHelp } from "./dialogs.ts";
+import { startArchivesAmbient } from "./archives-ambient.ts";
 
 /** `ms` as the largest two units: "2d 4h", "7h 41m", "12m 5s", "3s". */
 export function formatDuration(ms: number) {
@@ -71,7 +72,7 @@ export class ArchivesPanel {
     if (job && job.research !== this.pickedFrom) this.picking = null;
     // The currencies bar above shows the Gold research costs.
     if (this.picking !== null) return this.pickHtml(this.picking);
-    return `<section class="archives"><header class="tree-heading"><h3>Archives${helpButton("How the Archives work", "research-help")}</h3><div class="research-corner">${this.cellsHtml()}<button id="research-history-open" class="research-history-open">History</button></div></header>
+    return `<section class="archives"><canvas class="archives-ambient" aria-hidden="true"></canvas><header class="tree-heading"><h3>Archives${helpButton("How the Archives work", "research-help")}</h3><div class="research-corner">${this.cellsHtml()}<button id="research-history-open" class="research-history-open">History</button></div></header>
       <div class="archivists" role="list" aria-label="Archivists">${this.archivistsHtml()}</div></section>`;
   }
 
@@ -97,6 +98,8 @@ export class ArchivesPanel {
       this.rerender();
     };
     if (this.picking !== null) return this.bindPick();
+    const ambient = document.querySelector<HTMLCanvasElement>(".archives-ambient");
+    if (ambient) startArchivesAmbient(ambient, () => game.save.archives.slots.some((s) => s.job));
     el("research-help").onclick = () => this.showHelp();
     document.querySelectorAll<HTMLElement>("[data-pick]").forEach((a) => (a.onclick = (e) => {
       // The auto-continue box and a busy archivist's buttons keep their own presses.
