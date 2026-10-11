@@ -473,11 +473,20 @@ export const ENEMY_GOLD: Record<EnemyStrength, number> = { weak: 1, normal: 1, s
 /** Silver, the currency spent inside a run, that a beaten enemy pays per
  * base amount, by its strength. */
 export const SILVER_MULTIPLIER: Record<EnemyStrength, number> = { weak: 1, normal: 2, strong: 3, elite: 4, boss: 5, greaterBoss: 10 };
-/** Silver a beaten enemy pays on equivalent floor `floor` (0 is the first):
- * a weak enemy's 1, plus 1 every ten floors (2 from floor 11), times its
- * strength's multiplier. */
+/** The floor index (0 is the first) from which a kill's Silver rises half
+ * as fast: floor 201. */
+export const SILVER_SLOWDOWN_FLOOR = 200;
+/** Silver a beaten weak enemy pays on equivalent floor `floor` (0 is the
+ * first), rising smoothly with fractions kept: 1 on floor 1, 0.1 more a
+ * floor (2 on floor 11, 21 on floor 201), then 0.05 more a floor. */
+export const silverBase = (floor: number) => {
+  const f = Math.max(0, floor), slow = SILVER_SLOWDOWN_FLOOR;
+  return f <= slow ? 1 + f / TOWER_SECTION : 1 + slow / TOWER_SECTION + (f - slow) / (2 * TOWER_SECTION);
+};
+/** Silver a beaten enemy pays on equivalent floor `floor`: the base,
+ * times its strength's multiplier. */
 export const silverForKill = (strength: EnemyStrength, floor: number) =>
-  (1 + Math.floor(Math.max(0, floor) / TOWER_SECTION)) * SILVER_MULTIPLIER[strength];
+  snap(silverBase(floor) * SILVER_MULTIPLIER[strength]);
 /** Gold the Delve pays at a run's end: one for each treasure opened. */
 export const goldReward = (treasures: number) => treasures;
 /** XP a beaten enemy pays per base amount, by its strength (the same

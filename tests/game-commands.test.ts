@@ -314,11 +314,15 @@ test("a beaten enemy pays Gold by its strength, once, whatever undo does", () =>
   }
 });
 
-test("silver: 1 for a weak enemy, 1 more every ten floors, times 2–5 by strength", () => {
+test("silver: 1 for a weak enemy, rising 0.1 a floor to floor 201 and 0.05 a floor after, times 2–5 by strength", () => {
   assert.deepEqual((["weak", "normal", "strong", "elite", "boss"] as const).map((s) => silverForKill(s, 0)), [1, 2, 3, 4, 5]);
-  assert.equal(silverForKill("weak", 9), 1, "floor 10");
+  assert.equal(silverForKill("weak", 9), 1.9, "floor 10");
   assert.equal(silverForKill("weak", 10), 2, "floor 11");
-  assert.equal(silverForKill("elite", 25), 12, "floor 26: 3 × 4");
+  assert.equal(silverForKill("elite", 25), 14, "floor 26: 3.5 × 4");
+  assert.equal(silverForKill("weak", 200), 21, "floor 201");
+  assert.equal(silverForKill("weak", 220), 22, "floor 221: 1 more in twenty floors");
+  assert.equal(silverForKill("normal", 1000), 122, "floor 1001: 61 × 2");
+  for (let f = 1; f < 400; f++) assert.ok(silverForKill("weak", f) > silverForKill("weak", f - 1), `rises every floor (${f})`);
 });
 
 test("a beaten enemy pays silver into the run, and undo takes it back", () => {
