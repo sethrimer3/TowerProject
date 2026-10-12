@@ -44,16 +44,54 @@ test("Rush research needs the Rush skill: 25 levels, Gold doubling and time grow
 });
 
 test("the first step toward a new target rushes across empty tiles, stopping before anything else", () => {
-  const g = corridor(10);
-  assert.equal(g.rushTiles, 10);
+  const g = corridor(3);
+  assert.equal(g.rushTiles, 3);
   g.autoTurn();
-  assert.deepEqual(at(g), [4, 0], "it stops on the tile before the key");
+  assert.deepEqual(at(g), [4, 0], "with no tile left it stops on the tile before the key");
   assert.equal(g.save.tower.history.length, 1, "the rush is one undo");
   assert.deepEqual(g.rush?.tiles, [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 2, y: 0 }, { x: 3, y: 0 }], "the tiles it rushed off, in order");
   g.autoTurn();
   assert.deepEqual(at(g), [5, 0], "the key is a step of its own");
   g.autoTurn();
   assert.deepEqual(at(g), [6, 0], "the path to the same target goes on a step at a time");
+});
+
+test("a rush with a tile left ends on its target item, taking it", () => {
+  const g = toKey(10), keys = g.run.player.keys.yellow;
+  g.autoTurn();
+  assert.deepEqual(at(g), [5, 0], "onto the key");
+  assert.equal(g.run.player.keys.yellow, keys + 1, "the key is taken");
+  assert.equal((g.world as RoomWorld).tile(5, 0).kind, "floor");
+  assert.deepEqual(g.rush?.tiles.map((t) => t.x), [0, 1, 2, 3, 4]);
+  assert.equal(g.save.tower.history.length, 1, "still one undo");
+  assert.ok(g.undo());
+  assert.deepEqual(at(g), [0, 0], "undo takes the rush and the key back whole");
+  assert.equal(g.run.player.keys.yellow, keys);
+});
+
+test("a rush ending on its item scales it with Effective, and stops before it with Skip", () => {
+  const g = toKey(10);
+  g.run.badges = { yellowKey: [{ id: "effective", level: 1, pick: 0 }] };
+  const keys = g.run.player.keys.yellow;
+  g.autoTurn();
+  assert.deepEqual(at(g), [5, 0]);
+  assert.ok(g.run.player.keys.yellow > keys + 1, "Effective scales the key taken");
+  const skip = toKey(10);
+  skip.run.badges = { yellowKey: [{ id: "skip", level: 1, pick: 0 }] };
+  skip.autoTurn();
+  assert.deepEqual(at(skip), [4, 0], "the item's own step rolls Skip");
+});
+
+test("a rush crosses an opened chest, and stops before a monster", () => {
+  const g = toKey(10);
+  (g.world as RoomWorld).cells.set("2,0", { kind: "openedChest" });
+  g.autoTurn();
+  assert.deepEqual(at(g), [5, 0], "the opened chest doesn't stop it");
+  const m = toKey(10);
+  (m.world as RoomWorld).cells.set("5,0", { kind: "enemy", enemy: { name: "rat", hp: 1, attack: 0, defense: 0, tier: 0, strength: "normal" } });
+  m.run.hand = ["monster"];
+  m.autoTurn();
+  assert.deepEqual(at(m), [4, 0], "a fight is a step of its own");
 });
 
 test("undo takes a rush back whole", () => {
@@ -160,6 +198,10 @@ test("the Rush badge adds its value to its card's rush, stacking with Rush and E
   assert.equal(key.rushFor("yellowKey"), 3);
   key.autoTurn();
   assert.deepEqual(at(key), [4, 0], "1 + 2 tiles, stopping before the key");
+  const onto = toKey(1);
+  onto.run.badges = { yellowKey: [{ id: "rush", level: 3, pick: 0 }] };
+  onto.autoTurn();
+  assert.deepEqual(at(onto), [5, 0], "1 + 3 tiles: a tile left, onto the key");
   const bare = toKey(0);
   bare.run.badges = { yellowKey: [{ id: "rush", level: 1, pick: 0 }] };
   bare.autoTurn();

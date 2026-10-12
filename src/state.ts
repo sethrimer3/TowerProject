@@ -176,6 +176,8 @@ export type Shot = { by: "hero" | "enemy"; from: { x: number; y: number }; to: {
 export type Volley = { at: number; flight: number; shots: Shot[] };
 /** Tiles that stay on the board after being stepped on. */
 const PERMANENT_TILES = new Set<Tile["kind"]>(["floor", "stairs", "stairsDown", "oneway", "openedChest"]);
+/** The targets a Rush may end on, a tile of it left: items to take. */
+const RUSH_ONTO = new Set<Tile["kind"]>(["key", "potion", "attack", "defense", "treasure", "reward"]);
 export class Game {
   mode: Mode = "tower";
   world!: Board;
@@ -781,7 +783,7 @@ export class Game {
     const goal = plan.path[plan.path.length - 1], key = this.rules.lootKey(this.run, goal.x, goal.y);
     const step = plan.path.shift()!, p = this.run.player, from = { x: p.x, y: p.y };
     this.cardPlan = plan.path.length ? plan : null;
-    const rush = this.rushFor(id), rushes = fresh && rush > 0 && this.emptyAt(step.x, step.y);
+    const rush = this.rushFor(id), rushes = fresh && rush > 0 && this.rushable(step.x, step.y);
     // The card's last step onto its target: Skip may make it vanish (or, on
     // the Tower's stairs, climb two floors), and Effective or Dampen scale it.
     const last = !this.cardPlan, rolls = last && this.rollsSkip(id, step.x, step.y), skips = rolls && this.skipRoll() < this.skipChance(id);
@@ -804,7 +806,7 @@ export class Game {
       this.turnBefore = null;
       return void (this.cardPlan = null);
     }
-    const rushed = rushes ? this.rushOn(plan, from, rush) : true;
+    const rushed = rushes ? this.rushOn(plan, id, from, rush) : true;
     if (rushes) {
       this.holdTurn = false;
       this.endTurn();
@@ -1119,13 +1121,16 @@ export class Game {
   }
   /** Rush: the first step toward a new target, onto an empty tile, goes on
    * along the path in the same step across up to `tiles` more empty tiles
-   * (`rushFor` the card), stopping on the tile before anything else. One
-   * turn and one undo. Returns false when a step was refused, leaving the
-   * target unreached. */
-  private rushOn(plan: CardPlan, from: { x: number; y: number }, rush: number) {
+   * (`rushFor` the card `id`), stopping on the tile before anything else,
+   * unless that is the card's target item and a tile of the rush is left:
+   * then it ends on the item, taking it (Effective or Dampen scaling it as
+   * on any card's last step; with Skip, which may make it vanish, it stops
+   * before it, so the item's own step rolls). One turn and one undo.
+   * Returns false when a step was refused, leaving the target unreached. */
+  private rushOn(plan: CardPlan, id: CardId, from: { x: number; y: number }, rush: number) {
     const p = this.run.player, tiles = [from];
-    let moved = true;
-    for (let left = rush; left > 0 && plan.path.length && this.emptyAt(plan.path[0].x, plan.path[0].y); left--) {
+    let moved = true, left = rush;
+    for (; left > 0 && plan.path.length && this.rushable(plan.path[0].x, plan.path[0].y); left--) {
       const at = { x: p.x, y: p.y }, next = plan.path.shift()!;
       if (!this.move(next.dx, next.dy, true, false, false)) {
         plan.path = [];
@@ -1133,6 +1138,19 @@ export class Game {
         break;
       }
       tiles.push(at);
+    }
+    const target = plan.path.length === 1 ? plan.path[0] : null;
+    if (moved && left > 0 && target && RUSH_ONTO.has(this.world.tile(target.x, target.y).kind) && !this.rollsSkip(id, target.x, target.y)) {
+      const at = { x: p.x, y: p.y };
+      plan.path.shift();
+      this.stepScale = this.scaleOf(id);
+      moved = this.move(target.dx, target.dy, true, false, false);
+      this.stepScale = 1;
+      if (moved) {
+        tiles.push(at);
+        // Taking the item makes the rush a turn undo stops at.
+        delete this.slice.history.at(-1)?.quiet;
+      }
     }
     this.cardPlan = plan.path.length ? plan : null;
     if (tiles.length > 1) this.rush = { tiles, at: performance.now() };
@@ -1151,11 +1169,16 @@ export class Game {
     const badge = badgeOn(this.run.badges, id, "rush");
     return this.rushTiles + end + (badge ? badgeValue("rush", badge.level) : 0);
   }
+  /** Whether a rush may cross (x, y): empty floor (`emptyAt`), or a chest
+   * already opened. */
+  private rushable(x: number, y: number) {
+    return this.emptyAt(x, y) || (this.world.tile(x, y).kind === "openedChest" && this.emptyAt(x, y, true));
+  }
   /** Whether (x, y) is empty floor a rush may cross: nothing on it, no torch
-   * and no Gem. */
-  private emptyAt(x: number, y: number) {
+   * and no Gem (with `anyKind`, only those last two). */
+  private emptyAt(x: number, y: number, anyKind = false) {
     const gem = this.gemFinder.gem;
-    return this.world.tile(x, y).kind === "floor" && !(gem && gem.x === x && gem.y === y) &&
+    return (anyKind || this.world.tile(x, y).kind === "floor") && !(gem && gem.x === x && gem.y === y) &&
       !this.world.torches?.some((t) => t.active && t.x === x && t.y === y);
   }
   /** Drops the committed path when its card's gate badge (HP <, YK ≥, …)
