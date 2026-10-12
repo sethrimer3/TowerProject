@@ -80,11 +80,11 @@ test("a kill's Silver takes Silver Bonus and its Gold takes Gold / Kill, trainin
   s.training.silverBonus = s.training.killGold = 10;
   s.archives.levels.silverBonus = s.archives.levels.killGold = 10;
   assert.ok(g.stepManually(1, 0));
-  // 6 Silver × 1.1 × 1.3 and 2 Gold × 1.3 × 1.3.
-  assert.equal(g.silver, 8.58);
+  // 12 Silver × 1.1 × 1.3 and 2 Gold × 1.3 × 1.3.
+  assert.equal(g.silver, 17.16);
   assert.equal(s.gold, 3.38);
-  assert.ok(g.gains.some((gain) => gain.text === "+9 Silver"));
-  assert.equal(new Game(decode(JSON.stringify(s))).silver, 8.58, "Silver keeps its fraction in the save");
+  assert.ok(g.gains.some((gain) => gain.text === "+17 Silver"));
+  assert.equal(new Game(decode(JSON.stringify(s))).silver, 17.16, "Silver keeps its fraction in the save");
 });
 
 /** A Tower run inside on floor 4, the hero at (0, 0) beside the stairs at (1, 0). */

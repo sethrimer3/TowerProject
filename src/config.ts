@@ -509,11 +509,11 @@ export const SILVER_MULTIPLIER: Record<EnemyStrength, number> = { weak: 1, norma
  * as fast: floor 201. */
 export const SILVER_SLOWDOWN_FLOOR = 200;
 /** Silver a beaten weak enemy pays on equivalent floor `floor` (0 is the
- * first), rising smoothly with fractions kept: 1 on floor 1, 0.1 more a
- * floor (2 on floor 11, 21 on floor 201), then 0.05 more a floor. */
+ * first), rising smoothly with fractions kept: 2 on floor 1, 0.2 more a
+ * floor (4 on floor 11, 42 on floor 201), then 0.1 more a floor. */
 export const silverBase = (floor: number) => {
   const f = Math.max(0, floor), slow = SILVER_SLOWDOWN_FLOOR;
-  return f <= slow ? 1 + f / TOWER_SECTION : 1 + slow / TOWER_SECTION + (f - slow) / (2 * TOWER_SECTION);
+  return 2 * (f <= slow ? 1 + f / TOWER_SECTION : 1 + slow / TOWER_SECTION + (f - slow) / (2 * TOWER_SECTION));
 };
 /** Silver a beaten enemy pays on equivalent floor `floor`: the base,
  * times its strength's multiplier. */

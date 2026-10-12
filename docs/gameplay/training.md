@@ -3,7 +3,7 @@
 ## Silver
 
 Every monster beaten also pays **Silver**, a currency that lasts only for the run, spent on training for that run.
-A weak monster pays 1 Silver on floor 1 and 0.1 more every floor (2 on floor 11, 21 on floor 201), then 0.05 more every floor (the Delve counts every ten depth as a floor); a normal monster pays twice that, a strong one three times, an elite four times, and a boss five times.
+A weak monster pays 2 Silver on floor 1 and 0.2 more every floor (4 on floor 11, 42 on floor 201), then 0.1 more every floor (the Delve counts every ten depth as a floor); a normal monster pays twice that, a strong one three times, an elite four times, and a boss five times.
 The stats show it beside the Gold.
 Undo takes back the Silver of the kills it undoes, and a new run starts with none.
 
