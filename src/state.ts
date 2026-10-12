@@ -1,7 +1,7 @@
 import { entrance, floorFor } from "./delve/labyrinth.ts";
 import { canWear, claimThemes, type GameLook, type ThemeId, type ThemeKind, type UiLook } from "./theme-collection.ts";
 import { chooseStep } from "./automation.ts";
-import { CARDS, KEY_TO_HP_PERCENT, SIPHONS, TRADER_YELLOW_KEYS, cardText, explainStuck, isSiphon, planHand, planTarget, walkAll, type CardId, type CardPlan, type CardRules, type SiphonCard, type StuckReport } from "./cards.ts";
+import { CARDS, KEY_TO_HP_PERCENT, SIPHONS, TRADER_YELLOW_KEYS, cardText, explainStuck, isSiphon, planHand, planTarget, stillOpen, walkAll, type CardId, type CardPlan, type CardRules, type SiphonCard, type StuckReport } from "./cards.ts";
 import { BADGE_IDS, BADGES, MAX_COPIES, badgeOn, badgesOn, badgeValue, runBadges, type BadgeId, type RunBadge } from "./badges.ts";
 import { adsOff, BOOST_FOREVER, permanentBoost } from "./shop/entitlements.ts";
 import { noteGoldBoost } from "./gold-boost.ts";
@@ -165,6 +165,9 @@ export class Game {
   /** The card moving the hero and the path it committed to, until the
    * hero reaches its target. */
   cardPlan: CardPlan | null = null;
+  /** The rest of the path Target committed to, until the hero arrives or
+   * the path can't be followed (`stillOpen`); never saved. */
+  private targetPath: Step[] | null = null;
   /** The hand's card that made the latest step, to show it glowing. */
   activeCard: number | null = null;
   /** No card in the hand can act: the hand pauses, and the run ends only
@@ -1317,12 +1320,15 @@ export class Game {
     this.armed = null;
     // The hand plans again, round the tile, and a stuck hand looks again.
     this.cardPlan = null;
+    this.targetPath = null;
     this.message = "Ignore · the hero won't step there on this floor.";
     this.afterPlayerAction();
     return "used";
   }
   private targetTile(x: number, y: number): "used" | "noPath" {
-    if (!planTarget(this, x, y)) return "noPath";
+    const path = planTarget(this, x, y);
+    if (!path) return "noPath";
+    this.targetPath = path;
     spendCharge(this.run, "target");
     this.armed = null;
     this.run.targeted = `${x},${y}`;
@@ -1334,13 +1340,16 @@ export class Game {
     this.message = "Target · the hero heads for the tile.";
     return "used";
   }
-  /** Target's turn: one step along the way to its tile, the last onto it.
-   * "lost" when the tile is out of reach now (Target is lost, and the hand
-   * leads this turn), false when there is none. */
+  /** Target's turn: one step along the way to its tile, the last onto it,
+   * following the path it committed to and planning again only when that
+   * can't be followed. "lost" when the tile is out of reach now (Target is
+   * lost, and the hand leads this turn), false when there is none. */
   private targetTurn(): boolean | "lost" {
     const k = this.run.targeted;
     if (!k) return false;
-    const [x, y] = k.split(",").map(Number), path = planTarget(this, x, y);
+    const [x, y] = k.split(",").map(Number);
+    const path = this.targetPath?.length && stillOpen(this, this.targetPath) ? this.targetPath : planTarget(this, x, y);
+    this.targetPath = null;
     if (!path) {
       this.run.targeted = undefined;
       this.message = "Target lost · no path to the tile.";
@@ -1350,6 +1359,7 @@ export class Game {
     this.activeCard = null;
     const step = path[0], last = path.length === 1;
     const moved = this.move(step.dx, step.dy, true);
+    if (moved && !last) this.targetPath = path.slice(1);
     if (last || !moved) {
       this.run.targeted = undefined;
       if (!moved) this.message = "Target · the way is barred · the hand leads.";
@@ -1387,6 +1397,7 @@ export class Game {
   /** Forgets the hand's committed path and which card glows. */
   private dropHandPlan() {
     this.cardPlan = null;
+    this.targetPath = null;
     this.activeCard = null;
     this.handStuck = false;
   }

@@ -255,7 +255,7 @@ const WANTS: Record<CardId, (t: Tile, at: HandAt, rules: CardRules | undefined, 
   keyToHp: never,
   redKey: (t) => t.kind === "key" && t.color === "red",
   redSiphon: never,
-  torch: (_t, at, _rules, r) => !!at.world.torches?.some((torch) => torch.active && torch.x === r.x && torch.y === r.y),
+  torch: (_t, at, _rules, r) => litTorches(at.world).has(point(r.x, r.y)),
   // A Wooden Door the keys held pay for, or one the hero can break down and survive.
   woodenDoor: (t, at, rules, r) => t.kind === "door" && doorId(t) === "wood" && paysRun(at, r, keyScale(at, rules), rules?.scale ?? 1),
 };
@@ -307,6 +307,24 @@ export function planHand(at: HandAt, hand: readonly CardId[], mode: Mode, only?:
 export function planTarget(at: HandAt, x: number, y: number): Step[] | null {
   const target = search(at, at.ignored ?? NONE).find((r) => r.x === x && r.y === y);
   return target ? pathTo(target) : null;
+}
+
+/** Whether Target can follow the rest of the path it committed to: it
+ * starts where the hero stands, every step but the last still lands on a
+ * crossable tile not ignored (a monster can appear on the way, as a
+ * Greater Boss does), and the tile at its end is no wall. Far cheaper than
+ * a search, so Target plans again only when the board has changed under
+ * its path. */
+export function stillOpen(at: HandAt, path: readonly Step[]): boolean {
+  const { world, run } = at, ignored = at.ignored ?? NONE, first = path[0];
+  const to = first && world.step(run.player.x, run.player.y, first.dx, first.dy);
+  if (!to || to.x !== first.x || to.y !== first.y) return false;
+  for (let i = 0; i < path.length - 1; i++) {
+    const { x, y } = path[i];
+    if (!CROSSABLE.has(world.tile(x, y).kind) || ignored.has(point(x, y))) return false;
+  }
+  const end = path[path.length - 1];
+  return world.tile(end.x, end.y).kind !== "wall";
 }
 
 /** Card `id`'s target among the tiles `pool` reached (closest first): the

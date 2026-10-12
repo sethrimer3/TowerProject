@@ -20,6 +20,9 @@ export type Board = {
   /** Deactivates the torch standing on (x, y), if any, and reports whether
    * one was destroyed. Used for player-torch collision. */
   breakTorchAt?(x: number, y: number): boolean;
+  /** The tiles holding a lit torch, by `point`, on boards that keep them
+   * (`litTorches` works them out otherwise). */
+  litTorches?(): ReadonlySet<string>;
 };
 
 /** Tiles the hero takes something from by stepping on them: every pickup
@@ -27,8 +30,8 @@ export type Board = {
  * opened on the way past. */
 const OBTAINABLE = new Set<Kind>(["key", "potion", "attack", "defense", "treasure"]);
 /** The tiles of `board` holding a lit torch, which a step onto puts out. */
-export const litTorches = (board: Board) =>
-  new Set((board.torches ?? []).filter((t) => t.active).map((t) => point(t.x, t.y)));
+export const litTorches = (board: Board): ReadonlySet<string> =>
+  board.litTorches?.() ?? new Set((board.torches ?? []).filter((t) => t.active).map((t) => point(t.x, t.y)));
 /** Whether a step onto `tile` at (x, y) takes something: an item, a chest
  * or a lit torch (`lit`, from `litTorches`). Paths go round such tiles
  * whenever an equally short way avoids them, leaving them to the cards that

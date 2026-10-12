@@ -132,6 +132,33 @@ test("Target loses a tile it can no longer reach and the hand leads that turn", 
   assert.match(g.message, /^Target lost/);
 });
 
+test("Target follows the path it committed to, and goes round a monster that appears on it", () => {
+  const g = arena(5, "target");
+  g.arm("target");
+  g.useArmed(0, 4);
+  g.autoTurn();
+  assert.deepEqual([g.run.player.x, g.run.player.y], [0, 1], "straight up the column");
+  const hp = g.run.player.hp;
+  (g.world as RoomWorld).cells.set("0,2", { kind: "enemy", enemy: { name: "Rat", hp: 1, attack: 1, defense: 0, tier: 0, strength: "normal" } });
+  g.autoTurn();
+  assert.deepEqual([g.run.player.x, g.run.player.y], [1, 1], "the path is planned again, round the monster");
+  assert.equal(g.run.player.hp, hp, "no fight");
+  for (let i = 0; i < 4; i++) g.autoTurn();
+  assert.deepEqual([g.run.player.x, g.run.player.y], [0, 4]);
+  assert.equal(g.run.targeted, undefined);
+});
+
+test("Target goes round a tile ignored on the path it committed to", () => {
+  const g = arena(5, "target", "ignore");
+  g.arm("target");
+  g.useArmed(0, 4);
+  g.autoTurn();
+  g.arm("ignore");
+  assert.equal(g.useArmed(0, 2), "used");
+  g.autoTurn();
+  assert.deepEqual([g.run.player.x, g.run.player.y], [1, 1]);
+});
+
 test("climbing a new floor counts toward Refocus once a Focus use is spent", () => {
   const g = arena(3, "focus", "refocus");
   g.run.focusUsed = 1;

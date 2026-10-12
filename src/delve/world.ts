@@ -207,18 +207,29 @@ export class World implements Board {
     this.changes[point(x, y)] = { kind: "floor" };
   }
   private torchAreas = new Map<number, Torch[]>();
+  /** The torch list and lit tiles last worked out: the list until the areas
+   * it holds change, the lit tiles until a torch goes out too. */
+  private torchList: Torch[] | null = null;
+  private lit: Set<string> | null = null;
   /** The torches of the current area and the next, placed once each. */
   get torches(): Torch[] {
     for (let a = this.milestone; a <= this.milestone + 1; a++)
-      if (!this.torchAreas.has(a)) this.torchAreas.set(a, this.areaTorches(a));
-    for (const a of this.torchAreas.keys()) if (a < this.milestone) this.torchAreas.delete(a);
-    return [...this.torchAreas.values()].flat();
+      if (!this.torchAreas.has(a)) this.torchAreas.set(a, this.areaTorches(a)), (this.torchList = null);
+    for (const a of this.torchAreas.keys()) if (a < this.milestone) this.torchAreas.delete(a), (this.torchList = null);
+    if (!this.torchList) this.lit = null;
+    return (this.torchList ??= [...this.torchAreas.values()].flat());
+  }
+  litTorches(): ReadonlySet<string> {
+    const torches = this.torches;
+    return (this.lit ??= new Set(torches.filter((t) => t.active).map((t) => point(t.x, t.y))));
   }
   private areaTorches(a: number) {
     return areaTorches(this.seed, a, this.tier);
   }
   breakTorchAt(x: number, y: number): boolean {
-    return breakTorch(this.torches, x, y);
+    const broke = breakTorch(this.torches, x, y);
+    if (broke) this.lit = null;
+    return broke;
   }
   /** Keeps the chunks near row `y` and every chunk of the current area
    * (which the hand searches whole), raises the floor to the current
