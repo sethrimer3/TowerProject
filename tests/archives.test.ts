@@ -357,9 +357,9 @@ test("Shard ATK and Shard DEF open with Tower II's floor 20 and 30 Goals, cost w
   assert.deepEqual([g.stepRules.shardAttack, g.stepRules.shardDefense], [300, 130]);
 });
 
-test("Parry % opens with Evade and Tower V's floor 30 Goal, adds 0.2% Parry % a level, and reaches a run inside at once", () => {
+test("Parry % opens with Parry and Tower V's floor 30 Goal, adds 0.2% Parry % a level, and reaches a run inside at once", () => {
   const def = RESEARCH.parry;
-  assert.deepEqual(def.requires, [{ upgrade: "evade" }, { goalUnlock: "parryPercent" }]);
+  assert.deepEqual(def.requires, [{ upgrade: "parry" }, { goalUnlock: "parryPercent" }]);
   assert.deepEqual(def.categories, ["defense"]);
   assert.equal(def.levels.length, 50);
   assert.ok(def.levels.every((l) => l.effect.target === "parryPercent" && l.effect.op === "add" && l.effect.value === 2));
@@ -369,8 +369,8 @@ test("Parry % opens with Evade and Tower V's floor 30 Goal, adds 0.2% Parry % a 
   const save = owner(1e12);
   assert.equal(status(save, "parry"), "locked");
   save.goals.claimed[5] = [30];
-  assert.equal(status(save, "parry"), "locked", "Evade first");
-  save.upgrades.evade = 1;
+  assert.equal(status(save, "parry"), "locked", "Parry first");
+  save.upgrades.parry = 1;
   assert.equal(status(save, "parry"), "available");
   save.training.parry = 100;
   const trainedCut = loadout(save).parry;

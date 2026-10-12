@@ -17,7 +17,7 @@ export const trainingOpen = (row: TrainingRow, save: Pick<Save, "upgrades" | "go
 
 /** What one rank of an upgrade, or one provision, adds to a character. */
 export type Grants = Partial<Record<Stat, number>>;
-export type Stat = "attack" | "defense" | "maxHp" | "shroud" | "regen" | "lifesteal" | "thorns" | "parryChance" | "parry" | "yellow" | "blue" | "red" | "undos";
+export type Stat = "attack" | "defense" | "maxHp" | "shroud" | "regen" | "lifesteal" | "thorns" | "parry" | "yellow" | "blue" | "red" | "undos";
 
 /** The character a run starts with. */
 export type Loadout = {
@@ -32,9 +32,7 @@ export type Loadout = {
   lifesteal: number;
   /** The percent of an enemy's max HP each of its strikes costs it (Thorn Damage). */
   thorns: number;
-  /** The percent chance each enemy strike is parried (Parry Chance), and the
-   * percent a parried strike's ATK is cut by (Parry %). */
-  parryChance: number;
+  /** The percent every enemy strike's ATK is cut by, parried (Parry %). */
   parry: number;
   /** The percent more ATK struck against bosses (equipment). */
   bossAttack: number;
@@ -50,7 +48,7 @@ export type Loadout = {
 /** Every character's baseline: 10 ATK plus the starter weapon (+2), which
  * Heirloom steel improves; no DEF; 100 HP; no shroud (Shroud gives the
  * first point); no Regen; no undo (Rehearsed steps gives the first). */
-const BASE = { attack: 12, defense: 0, maxHp: 100, shroud: 0, regen: 0, lifesteal: 0, thorns: 0, parryChance: 0, parry: 0, undos: 0 };
+const BASE = { attack: 12, defense: 0, maxHp: 100, shroud: 0, regen: 0, lifesteal: 0, thorns: 0, parry: 0, undos: 0 };
 
 const WORDS: Record<Stat, string> = {
   attack: "starting attack",
@@ -60,8 +58,7 @@ const WORDS: Record<Stat, string> = {
   regen: "HP regained each step",
   lifesteal: "% of strike damage restored as HP",
   thorns: "% of an enemy's max HP each of its strikes costs it",
-  parryChance: "% chance to parry each enemy strike",
-  parry: "% less ATK in a parried strike",
+  parry: "% less ATK in every enemy strike",
   yellow: "starting gold key",
   blue: "starting azure key",
   red: "starting crimson key",
@@ -105,7 +102,7 @@ export function loadout(save: Save, mode: Mode = "tower"): Loadout {
   const own = { ...BASE, yellow: 0, blue: 0, red: 0 };
   add(own, UPGRADES, save.upgrades);
   for (const row of TRAINING) if (isStatRow(row)) own[row.stat] += trained(row, save.training[row.id]);
-  const prov = { attack: 0, defense: 0, maxHp: 0, shroud: 0, regen: 0, lifesteal: 0, thorns: 0, parryChance: 0, parry: 0, yellow: 0, blue: 0, red: 0, undos: 0 };
+  const prov = { attack: 0, defense: 0, maxHp: 0, shroud: 0, regen: 0, lifesteal: 0, thorns: 0, parry: 0, yellow: 0, blue: 0, red: 0, undos: 0 };
   add(prov, GOLD_SHOP, save.provisions);
   const eq = wornEffects(save, mode);
   // A drawback (Bloodprice Blade's max HP) never takes a stat below zero, or max HP below 1.
@@ -123,7 +120,6 @@ export function loadout(save: Save, mode: Mode = "tower"): Loadout {
     regen: plus(own.regen, eq.regen),
     lifesteal: own.lifesteal,
     thorns: own.thorns,
-    parryChance: own.parryChance,
     // Parry % research is kept in tenths of a percent.
     parry: Math.min(PARRY_CAP, snap(own.parry + researched(save.archives, "parryPercent", 0) / 10)),
     bossAttack: eq.bossAttack,
@@ -356,7 +352,7 @@ function statStep(save: Save, row: StatTrainingRow, count = 1) {
 }
 
 /** The stats kept in percent: Lifesteal, Thorn Damage and the parry rows. */
-const PERCENT_STATS: ReadonlySet<Stat> = new Set(["lifesteal", "thorns", "parryChance", "parry"]);
+const PERCENT_STATS: ReadonlySet<Stat> = new Set(["lifesteal", "thorns", "parry"]);
 /** The unit a stat row's value shows with. */
 export const statUnit = (stat: Stat) => (PERCENT_STATS.has(stat) ? "%" : "");
 /** A stat as the Training rows show it: whole, but Regen, a fraction of an

@@ -6,7 +6,7 @@ import { RESEARCH, missing, type ResearchId } from "../src/archives.ts";
 import { checkpoint } from "../src/goals.ts";
 import type { Save, TowerRun } from "../src/entities.ts";
 import {
-  BOONS, BOON_IDS, autoChoice, boonEffects, boonsEarned, floorsFor, foeTile, nextBoonFloor, rollOffer, standardTotal, type BoonId,
+  BOONS, BOON_IDS, appliedOf, autoChoice, boonEffects, rescaleHero, boonsEarned, floorsFor, foeTile, nextBoonFloor, rollOffer, standardTotal, type BoonId,
 } from "../src/shrines.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 
@@ -107,6 +107,23 @@ test("trade-off boons' benefits grow with Improve Trade-off Boons, their costs d
   assert.equal(e.gold, 1 + 0.8 * 1.1);
   assert.equal(e.maxHp, 0.3);
   assert.equal(e.foes.fastAttack, 2.5);
+});
+
+test("Lifesteal's trade-off cuts the hero's own Parry % by 70%, and the Parry % boon adds on top", () => {
+  const s = open();
+  const none = appliedOf(boonEffects([], s)), cut = appliedOf(boonEffects(["lifesteal"], s)), both = appliedOf(boonEffects(["lifesteal", "parry"], s));
+  assert.equal(BOONS.lifesteal.label(1), "Lifesteal ×2.5, but Parry % −70%");
+  assert.deepEqual([cut.parry, cut.parryBonus, both.parryBonus], [0.3, 0, 4]);
+  const hero = { attack: 10, maxHp: 100, parry: 40 };
+  rescaleHero(hero, none, cut);
+  assert.equal(hero.parry, 12);
+  rescaleHero(hero, cut, both);
+  assert.equal(hero.parry, 16);
+  rescaleHero(hero, both, none);
+  assert.equal(hero.parry, 40, "and back");
+  const bare: { attack: number; maxHp: number; parry?: number } = { attack: 10, maxHp: 100 };
+  rescaleHero(bare, none, cut);
+  assert.equal(bare.parry, undefined, "a hero without Parry % gains none");
 });
 
 test("enemies under the boons: HP, ATK, bosses striking first and Fast ones second", () => {

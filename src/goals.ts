@@ -22,8 +22,7 @@ import { TIERS } from "./tiers.ts";
  * missions paying Medals toward relics, docs/EVENTS.md) and Research Speed
  * (the Archives' project that shortens every research), Shard ATK and Shard
  * DEF (Tower II: the Archives' projects that raise what each ATK or DEF
- * shard gives), Evade Prediction (Tower II: predictions count the hero's
- * parries, once Evade is owned), Equipment (Tower II: the Blacksmith,
+ * shard gives), Equipment (Tower II: the Blacksmith,
  * equipment and its materials), Parry % (Tower V: the Archives' project
  * that raises Parry %), and the Shrines' research: Unlock Shrines (Tower II
  * floor 150), First Boon Choice (floor 250), Improve Trade-off Boons (floor
@@ -43,7 +42,7 @@ import { TIERS } from "./tiers.ts";
  * whose cards share one priority, cards.ts). */
 export type GoalUnlock =
   | "damagePrediction" | "combatForecast" | "attackLore" | "warp" | "damageVisual" | "relativeDamageColor" | "equipment" | "tournament" | "events" | "researchSpeed"
-  | "shardAttack" | "shardDefense" | "evadePrediction" | "parryPercent"
+  | "shardAttack" | "shardDefense" | "parryPercent"
   | "shrines" | "firstBoonChoice" | "improveTradeoffs" | "autoPickBoons" | "boonOptions" | "banBoons" | "autoPickRanking"
   | "badgeSlots" | "noteTaking" | "archer" | "attackRange" | "attackSpeed" | "attackPerTile" | "chargedShot" | "multishot"
   | "trainingDiscount" | "cardGroups";
@@ -51,7 +50,7 @@ export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   damagePrediction: "Damage Prediction", combatForecast: "Combat Forecast", attackLore: "Attack Lore", warp: "Warp", damageVisual: "Damage Visual",
   relativeDamageColor: "Relative Damage Color", equipment: "Equipment", tournament: "Tournament", events: "Events",
   researchSpeed: "Research Speed", shardAttack: "Shard ATK", shardDefense: "Shard DEF",
-  evadePrediction: "Evade Prediction", parryPercent: "Parry %",
+  parryPercent: "Parry %",
   shrines: "Unlock Shrines", firstBoonChoice: "First Boon Choice", improveTradeoffs: "Improve Trade-off Boons",
   autoPickBoons: "Auto Pick Boons", boonOptions: "Boon Option Quantity", banBoons: "Ban Boons", autoPickRanking: "Auto Pick Ranking",
   badgeSlots: "Badge Slots", noteTaking: "Note Taking",
@@ -96,7 +95,7 @@ const TOWER_TWO: Record<number, Omit<Checkpoint, "floor">> = {
   20: { reward: unlock("shardAttack"), premium: gems(20) },
   30: { reward: unlock("shardDefense"), premium: gems(30) },
   40: { reward: unlock("warp"), premium: gems(40) },
-  50: { reward: unlock("evadePrediction"), premium: gems(50) },
+  50: { reward: gems(25), premium: gems(50) },
   60: { reward: unlock("equipment"), premium: gems(60) },
   70: { reward: gold(10000), premium: gems(70) },
   80: { reward: unlock("trainingDiscount"), premium: gems(80) },
@@ -250,9 +249,6 @@ export const heroClass = (save: Pick<Save, "goals" | "tower">) =>
   isArcher(save) ? "Archer" : save.tower.tiersOpen >= 2 ? "Pathfinder" : "Wayfarer";
 /** Whether Warp is owned. */
 export const warpUnlocked = (save: Save) => goalUnlocked(save, "warp");
-/** Whether predictions count the hero's parries: Evade Prediction claimed
- * and Evade owned. */
-export const countsParries = (save: Pick<Save, "goals" | "upgrades">) => goalUnlocked(save, "evadePrediction") && save.upgrades.evade > 0;
 
 /** The lowest checkpoint in `tower`, up to `floor`, whose area isn't
  * mastered: what keeps the warp point at `floor` inactive. Null once every

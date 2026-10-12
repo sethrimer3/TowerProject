@@ -403,9 +403,9 @@ export const UPGRADES = [
     currency: "inspiration",
   },
   {
-    id: "evade",
-    name: "Evade",
-    description: "Opens Parry Chance and Parry % training: an enemy strike may be parried, striking with less ATK",
+    id: "parry",
+    name: "Parry",
+    description: "Opens Parry % training: every enemy strike is parried, striking with less ATK",
     base: 10,
     max: 1,
     currency: "inspiration",
@@ -567,8 +567,7 @@ export const TRAINING_GROUPS = { offense: "Offense", defense: "Defense", utility
  * ranks add up on its own rank curve (`curve`, see `trained`), never on the
  * hero's level: levels only earn the points that buy ranks. Each curve is
  * super-linear, every rank worth more than the one before, but Thorn
- * Damage's, Parry Chance's and Parry %'s, a flat percent a rank (1, 1 and
- * 0.5). Regen adds to
+ * Damage's and Parry %'s, a flat percent a rank (1 and 0.5). Regen adds to
  * the HP regained each step in a run, Shroud to the damage the shroud
  * blocks each fight, Lifesteal (0.1% of the damage a strike deals for the
  * first rank, each later rank adding 0.001% less, 0.021% for the 80th, 4.84%
@@ -597,8 +596,7 @@ export const TRAINING = [
   { id: "shroud", name: "Shroud", group: "defense", stat: "shroud", curve: { per: 5, square: 0.1, fourth: 0.0000064 }, cost: 1, max: 5000, requires: "shroud", description: "Raises the damage the shroud blocks at the start of every fight." },
   { id: "lifesteal", name: "Lifesteal", group: "defense", stat: "lifesteal", curve: { per: 0.1005, square: -0.0005 }, cost: 1, max: 80, requires: "lifesteal", description: "Raises the share of the damage each of your strikes deals that is restored to you as HP." },
   { id: "thorns", name: "Thorn Damage", short: "Thorns", group: "defense", stat: "thorns", curve: { per: 1 }, cost: 1, max: 99, requires: "thorns", description: "Each enemy strike costs the enemy this share of its max HP, half against bosses and Greater Bosses." },
-  { id: "parryChance", name: "Parry Chance", group: "defense", stat: "parryChance", curve: { per: 1 }, cost: 1, max: 100, requires: "evade", description: "Raises the chance each enemy strike is parried." },
-  { id: "parry", name: "Parry %", group: "defense", stat: "parry", curve: { per: 0.5 }, cost: 1, max: 100, requires: "evade", description: "Raises how much a parried strike's ATK is cut." },
+  { id: "parry", name: "Parry %", group: "defense", stat: "parry", curve: { per: 0.5 }, cost: 1, max: 100, requires: "parry", description: "Raises how much every enemy strike's ATK is cut." },
   { id: "revive", name: "Revive", group: "defense", requires: "revive", cost: 1, max: 99, description: "Raises the chance a strike that would fell you revives you at full HP instead." },
   { id: "floorGold", name: "Gold / Floor", group: "utility", requires: "spareChange", cost: 1, max: 150, description: "Raises the Gold paid for each floor climbed for the first time in a run." },
   { id: "floorSilver", name: "Silver / Floor", group: "utility", requires: "wishingWell", cost: 1, max: 150, description: "Raises the Silver paid for each floor climbed for the first time in a run." },
@@ -727,7 +725,7 @@ const freeUpgrades = { base: 75, growth: 11, cubic: 49 };
  * for the n-th (993 for the 13th, 9,901 for the 41st, 113,781 for the
  * 99th), the same in Silver and a trainer's Gold. */
 const thornPrices = { base: 60, growth: 23, power: 2 };
-/** Parry Chance and Parry %: 40 for the first rank, then 40 × n × (1 + ((n −
+/** Parry %: 40 for the first rank, then 40 × n × (1 + ((n −
  * 1) / 23)²) for the n-th (590 for the 12th, 4,775 for the 36th, 40,953
  * for the 80th), the same in Silver and a trainer's Gold. */
 const parryPrices = { base: 40, growth: 23, power: 2 };
@@ -777,7 +775,6 @@ export const RUN_TRAINING_PRICES: Record<TrainingId, PriceSchedule> = {
   revive: revivePrices,
   lifesteal: { base: 60, growth: 20.5, power: 2 },
   thorns: thornPrices,
-  parryChance: parryPrices,
   parry: parryPrices,
   floorGold: opened,
   floorSilver: opened,
@@ -833,9 +830,8 @@ export const TRAINER_GOLD_CURVES: Record<TrainingId, TrainerCurve> = {
   revive: { growth: revivePrices.growth, start: revivePrices.base, power: revivePrices.power },
   /** Lifesteal: 60 Gold for the first rank, then 60 × n × (1 + ((n − 1) / 20.5)²) for the n-th: about 1,000 for the 13th, 9,000 for the 37th and 70,000 for the 80th. */
   lifesteal: { growth: 20.5, start: 60, power: 2 },
-  /** Thorn Damage and the parry rows: the same curves as their Silver. */
+  /** Thorn Damage and Parry %: the same curves as their Silver. */
   thorns: { growth: thornPrices.growth, start: thornPrices.base, power: thornPrices.power },
-  parryChance: { growth: parryPrices.growth, start: parryPrices.base, power: parryPrices.power },
   parry: { growth: parryPrices.growth, start: parryPrices.base, power: parryPrices.power },
   floorGold: firmTrainers,
   floorSilver: firmTrainers,

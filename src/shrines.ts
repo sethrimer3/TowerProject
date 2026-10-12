@@ -55,7 +55,7 @@ export const BOONS = {
   floorSilver: tradeoff("Silver / Floor, no Kill Silver", (t) => `${times(1 + 11 * t)} Silver Per Floor, but Enemy Kills Don't Give Silver`),
   regenMaxHp: tradeoff("Regen, Max HP −60%", (t) => `Regen ${times(1 + 7 * t)}, but Max HP −60%`),
   bossHp: tradeoff("Boss HP, Boss Strikes First", (t) => `Boss Health ${minus(0.7 * t)}, but Boss Strikes First`),
-  lifesteal: tradeoff("Lifesteal, Parry Chance −70%", (t) => `Lifesteal ${times(1 + 1.5 * t)}, but Parry Chance −70%`),
+  lifesteal: tradeoff("Lifesteal, Parry % −70%", (t) => `Lifesteal ${times(1 + 1.5 * t)}, but Parry % −70%`),
   fastSecond: tradeoff("Fast Enemies Strike Second", () => `Fast Enemies Strike Second, but Their ATK ×2.5`, true),
 } satisfies Record<string, BoonDef>;
 export type BoonId = keyof typeof BOONS;
@@ -72,16 +72,16 @@ const ALL_COPIES = BOON_IDS.reduce((n, id) => n + boon(id).max, 0);
 export type FoeRule = { hp: number; attack: number; bossHp: number; bossFirst: boolean; fastSecond: boolean; fastAttack: number };
 export const NO_FOES: FoeRule = { hp: 1, attack: 1, bossHp: 1, bossFirst: false, fastSecond: false, fastAttack: 1 };
 
-/** The hero's stats boons multiply, and the one (Parry %) they add to. */
-export const HERO_FACTORS = ["attack", "maxHp", "shroud", "regen", "lifesteal", "parryChance"] as const;
+/** The hero's stats boons multiply; they add to Parry % as well. */
+export const HERO_FACTORS = ["attack", "maxHp", "shroud", "regen", "lifesteal", "parry"] as const;
 export type HeroFactor = (typeof HERO_FACTORS)[number];
 
-/** Everything a run's boons change. Factors multiply (1 is none); `parry`
- * adds percent, `freeUp` hundredths of a percent to each group's Free
+/** Everything a run's boons change. Factors multiply (1 is none);
+ * `parryBonus` adds percent to Parry % (after its factor), `freeUp` hundredths of a percent to each group's Free
  * Upgrade chance, `floorReq` hundredths of a percent off each boon's floors,
  * `playSpeed` steps a second to the most the arrows reach. */
 export type BoonEffects = Record<HeroFactor, number> & {
-  parry: number;
+  parryBonus: number;
   gold: number;
   silverFound: number;
   floorSilver: number;
@@ -144,8 +144,8 @@ export function boonEffects(picked: readonly BoonId[], o: ShrineOwner): BoonEffe
   const has = (id: BoonId) => !!n[id];
   const foes: FoeRule = { ...NO_FOES };
   const e: BoonEffects = {
-    attack: total("attack"), maxHp: total("maxHp"), shroud: total("shroud"), regen: total("regen"), lifesteal: 1, parryChance: 1,
-    parry: total("parry"), gold: total("gold"), silverFound: total("silver"), floorSilver: 1, killSilver: 1, interest: total("interest"),
+    attack: total("attack"), maxHp: total("maxHp"), shroud: total("shroud"), regen: total("regen"), lifesteal: 1, parry: 1,
+    parryBonus: total("parry"), gold: total("gold"), silverFound: total("silver"), floorSilver: 1, killSilver: 1, interest: total("interest"),
     freeUp: Math.round(total("freeUp") * 100), floorReq: Math.min(9500, Math.round(total("floorReq") * 100)), playSpeed: total("playSpeed"), foes,
   };
   if (has("attackBossHp")) { e.attack *= 1 + 0.5 * t; foes.bossHp *= 8; }
@@ -155,7 +155,7 @@ export function boonEffects(picked: readonly BoonId[], o: ShrineOwner): BoonEffe
   if (has("floorSilver")) { e.floorSilver *= 1 + 11 * t; e.killSilver = 0; }
   if (has("regenMaxHp")) { e.regen *= 1 + 7 * t; e.maxHp *= 0.4; }
   if (has("bossHp")) { foes.bossHp *= Math.max(0.05, 1 - 0.7 * t); foes.bossFirst = true; }
-  if (has("lifesteal")) { e.lifesteal *= 1 + 1.5 * t; e.parryChance *= 0.3; }
+  if (has("lifesteal")) { e.lifesteal *= 1 + 1.5 * t; e.parry *= 0.3; }
   if (has("fastSecond")) { foes.fastSecond = true; foes.fastAttack *= 2.5; }
   return e;
 }
@@ -240,7 +240,7 @@ export const defaultShrines = (): ShrinesSave => ({ autoPick: false, banned: [],
 /** What a Tower run keeps of its boons: those picked, in order; the draws
  * its offers have made; the offer waiting, if any; and the boons' effects
  * last applied to the hero and the enemies (`syncBoons`). */
-export type ShrineRun = { picked: BoonId[]; rolls: number; offer?: BoonId[]; applied?: Pick<BoonEffects, HeroFactor | "parry" | "foes"> };
+export type ShrineRun = { picked: BoonId[]; rolls: number; offer?: BoonId[]; applied?: Pick<BoonEffects, HeroFactor | "parryBonus" | "foes"> };
 
 /** The profile as offers read it. */
 export type OfferOwner = ShrineOwner & { shrines: ShrinesSave };
@@ -301,11 +301,11 @@ export function autoChoice(offer: readonly BoonId[], o: OfferOwner) {
 // --- The hero ---
 
 /** The stats a run's hero keeps that boons change. */
-type HeroStats = { hp?: number; attack: number; maxHp: number; shroud?: number; regen?: number; lifesteal?: number; parryChance?: number; parry?: number };
+type HeroStats = { hp?: number; attack: number; maxHp: number; shroud?: number; regen?: number; lifesteal?: number; parry?: number };
 
 /** What `effects` applies to the hero and the enemies, as `applied` keeps it. */
 export const appliedOf = (e: BoonEffects): NonNullable<ShrineRun["applied"]> => ({
-  attack: e.attack, maxHp: e.maxHp, shroud: e.shroud, regen: e.regen, lifesteal: e.lifesteal, parryChance: e.parryChance, parry: e.parry, foes: e.foes,
+  attack: e.attack, maxHp: e.maxHp, shroud: e.shroud, regen: e.regen, lifesteal: e.lifesteal, parry: e.parry, parryBonus: e.parryBonus, foes: e.foes,
 });
 const NOTHING_APPLIED = appliedOf(boonEffects([], { archives: { slots: [], levels: {}, progress: {}, history: [] } }));
 /** What a run's boons applied last: nothing before its first. */
@@ -321,15 +321,19 @@ export const boonFactor = (run: object, stat: string) =>
 
 /** Moves `stats` from the boons `before` applied to those `after` does:
  * each multiplied stat by the ratio of its factors (HP with max HP, so its
- * share holds), Parry % by the difference, up to its cap. */
+ * share holds), Parry % its own share by its factor plus its bonus, up to
+ * its cap. */
 export function rescaleHero(stats: HeroStats, before: ShrineRun["applied"] & object, after: ShrineRun["applied"] & object) {
   for (const stat of HERO_FACTORS) {
     const from = before[stat], to = after[stat];
-    if (from === to || stats[stat] === undefined) continue;
+    if (stat === "parry" || from === to || stats[stat] === undefined) continue;
     stats[stat] = snap((stats[stat]! * to) / from);
     if (stat === "maxHp" && stats.hp !== undefined && stats.hp > 0) stats.hp = Math.max(1, Math.min(stats.maxHp, snap((stats.hp * to) / from)));
   }
-  if (after.parry !== before.parry) stats.parry = Math.min(PARRY_CAP, snap((stats.parry ?? 0) + after.parry - before.parry));
+  if (after.parry !== before.parry || after.parryBonus !== before.parryBonus) {
+    const own = Math.max(0, (stats.parry ?? 0) - before.parryBonus) / before.parry, parry = Math.min(PARRY_CAP, snap(own * after.parry + after.parryBonus));
+    if (parry || stats.parry !== undefined) stats.parry = parry;
+  }
 }
 
 // --- Saves ---
@@ -337,7 +341,7 @@ export function rescaleHero(stats: HeroStats, before: ShrineRun["applied"] & obj
 const positive = (n: unknown): n is number => typeof n === "number" && Number.isFinite(n) && n > 0;
 const validFoes = (f: any): f is FoeRule => isRecord(f) && [f.hp, f.attack, f.bossHp, f.fastAttack].every(positive)
   && typeof f.bossFirst === "boolean" && typeof f.fastSecond === "boolean";
-const validApplied = (a: any) => isRecord(a) && HERO_FACTORS.every((k) => positive(a[k])) && Number.isFinite(a.parry) && a.parry >= 0 && validFoes(a.foes);
+const validApplied = (a: any) => isRecord(a) && HERO_FACTORS.every((k) => positive(a[k])) && Number.isFinite(a.parryBonus) && a.parryBonus >= 0 && validFoes(a.foes);
 /** Boons that a run could have picked: known, none more often than it may be. */
 const validPicks = (p: unknown): p is BoonId[] => Array.isArray(p) && p.every(isBoon) && Object.entries(copies(p)).every(([id, n]) => n! <= boon(id as BoonId).max);
 

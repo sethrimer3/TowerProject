@@ -2,7 +2,7 @@
 
 ## Below the Archives
 
-Below the Archives in the Inspiration tree, which grows taller than the screen and scrolls (drag it, or turn the mouse wheel; Ctrl and the wheel, or a pinch, zooms), **Greater Heal** (3 Inspiration, after Into the depths) opens the Archives' **Potion HP** research,, **Recovery** (10 Inspiration, after Greater Heal) brings **percent potions** onto the floors (2% of potions), **Find Potion** (10 Inspiration, below Recovery) opens **Find Potion** training, which makes more of them percent potions, and **Shroud** (2 Inspiration, after Trainers, above Critical) wraps the hero in a **shroud** that blocks the first 1 damage of every fight and opens **Shroud** training and the Archives' **Shroud** research (+4% of the shroud a level, for 100 levels, up to ×5, priced and timed like Pocket Money), **Evade** (10 Inspiration, below Regen Research) lets the hero parry, **Revive** (10 Inspiration, below Evade) may raise a felled hero at full HP, and **Thorns** (10 Inspiration, on the middle path between Buy Quantity and Key Siphon) makes every monster pay for striking (see below).
+Below the Archives in the Inspiration tree, which grows taller than the screen and scrolls (drag it, or turn the mouse wheel; Ctrl and the wheel, or a pinch, zooms), **Greater Heal** (3 Inspiration, after Into the depths) opens the Archives' **Potion HP** research,, **Recovery** (10 Inspiration, after Greater Heal) brings **percent potions** onto the floors (2% of potions), **Find Potion** (10 Inspiration, below Recovery) opens **Find Potion** training, which makes more of them percent potions, and **Shroud** (2 Inspiration, after Trainers, above Critical) wraps the hero in a **shroud** that blocks the first 1 damage of every fight and opens **Shroud** training and the Archives' **Shroud** research (+4% of the shroud a level, for 100 levels, up to ×5, priced and timed like Pocket Money), **Parry** (10 Inspiration, below Regen Research) lets the hero parry, **Revive** (10 Inspiration, below Parry) may raise a felled hero at full HP, and **Thorns** (10 Inspiration, on the middle path between Buy Quantity and Key Siphon) makes every monster pay for striking (see below).
 
 ## Silver and Gold
 
@@ -40,7 +40,7 @@ The first four levels are quick (15 seconds for 10 Gold, 1 minute for 25, 5 minu
 
 ## Revive
 
-**Revive** (10 Inspiration, below Evade) gives each monster's strike that would fell the hero a 0.5% chance to raise it at full HP instead: the skull of a defeat burns over the hero first (its HP shown at 0), then it rises in a smaller golden blaze like a level-up's, under a beam of white and golden light that a few small white angel wings flutter down and fade from, and once that is over the fight goes on from the next round, the monster as hurt and as fierce as it was, and a later strike that would fell the hero again rolls again.
+**Revive** (10 Inspiration, below Parry) gives each monster's strike that would fell the hero a 0.5% chance to raise it at full HP instead: the skull of a defeat burns over the hero first (its HP shown at 0), then it rises in a smaller golden blaze like a level-up's, under a beam of white and golden light that a few small white angel wings flutter down and fade from, and once that is over the fight goes on from the next round, the monster as hurt and as fierce as it was, and a later strike that would fell the hero again rolls again.
 It opens Revive training, 1 training point a rank, each adding 0.5%, up to 50% at 99 ranks.
 Each strike's roll is fixed for that run, floor and tile, so undoing a fight and fighting it again ends the same way.
 Forecasts, Automove and the hand still treat such a fight as lost.
@@ -51,9 +51,9 @@ Forecasts, Automove and the hand still treat such a fight as lost.
 The amount rises in yellow over the monster as the strike's damage rises over the hero, and a monster felled this way counts as any other kill (though never as an Instakill).
 Thorns are certain, so every forecast, Automove and the hand count them.
 
-## Evade
+## Parry
 
-**Evade** (10 Inspiration, between Regen Research and Revive) opens Parry Chance (1% a rank) and Parry % (0.5% a rank), 100 ranks each: each monster strike may be parried, its ATK cut by Parry % before DEF (the monster's ATK still rises after the round as usual).
+**Parry** (10 Inspiration, between Regen Research and Revive) opens Parry % training (0.5% a rank, 100 ranks): once the hero has any Parry %, every monster strike is parried, its ATK cut by Parry % before DEF (the monster's ATK still rises after the round as usual).
+A Ranged monster's shots are parried the same way.
 In an animated fight the hero gives way a little from a strike it parries; in a summary only the damage shows it.
-Each strike's parry roll is fixed for that run, floor and tile, like Revive's, so undo can't fish for parries and more Parry Chance only adds them.
-Forecasts, Automove and the hand count no parry until Parry Chance reaches 100%, when every strike is parried; Tower II's floor 50 Goal, **Evade Prediction**, makes the inspect panel and the monster's damage number count them once Evade is owned: the damage to expect, the range it usually lands in, and the chance to survive.
+Parries are certain, so forecasts, the inspect panel, the monster's damage number, Automove and the hand all count them.

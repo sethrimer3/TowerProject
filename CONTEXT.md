@@ -218,7 +218,7 @@ How much XP the character has gathered from kills over every run. A kill pays mo
 _Avoid_: rank
 
 **Training point**:
-The currency each level earns (three a level), spent to buy ranks of training at once (a trainer can train them for Gold instead) in the character's stats (max HP, ATK, DEF, and the shroud once the Shroud skill is owned; Lifesteal once the Lifesteal skill is, Thorn Damage once Thorns is, Parry Chance and Parry % once Evade is, Crit % and Crit x once Critical is, Attack Range, Attack Speed and ATK / Tile once Tower III's floor 20, 30 and 50 Goals are claimed, Multishot Chance and Multishot Targets once its floor 90 Goal is) and, with Recovery, Find Potion, Revive, Spare Change, Wishing Well, Wealthy, Loot and Free Training, in Potion %, Find Potion, Revive, Gold / Floor, Silver / Floor, Silver Bonus, Gold Bonus and the Free Offense, Defense and Utility Up rows on the Training tab. A stat's ranks add up on its **rank curve**: each rank is worth more than the one before, whatever the character's level.
+The currency each level earns (three a level), spent to buy ranks of training at once (a trainer can train them for Gold instead) in the character's stats (max HP, ATK, DEF, and the shroud once the Shroud skill is owned; Lifesteal once the Lifesteal skill is, Thorn Damage once Thorns is, Parry % once Parry is, Crit % and Crit x once Critical is, Attack Range, Attack Speed and ATK / Tile once Tower III's floor 20, 30 and 50 Goals are claimed, Multishot Chance and Multishot Targets once its floor 90 Goal is) and, with Recovery, Find Potion, Revive, Spare Change, Wishing Well, Wealthy, Loot and Free Training, in Potion %, Find Potion, Revive, Gold / Floor, Silver / Floor, Silver Bonus, Gold Bonus and the Free Offense, Defense and Utility Up rows on the Training tab. A stat's ranks add up on its **rank curve**: each rank is worth more than the one before, whatever the character's level.
 _Avoid_: skill point, stat point
 
 **Trainer**:
@@ -252,7 +252,7 @@ What each enemy strike the hero lives through costs the enemy: a share of its ma
 _Avoid_: reflect, recoil
 
 **Parry**:
-An enemy strike turned partly aside: by the hero's Parry Chance, the strike's ATK is cut by its Parry % (trained and researched, at most 98%) before DEF. Predictions count parries only when every strike is parried, or by their odds with Evade Prediction.
+An enemy strike turned partly aside: once the hero has any Parry %, every enemy strike is parried, its ATK cut by Parry % (trained and researched, at most 98%) before DEF. Parries are certain, so every prediction counts them.
 _Avoid_: dodge, block (the shroud blocks)
 
 **Shroud**:

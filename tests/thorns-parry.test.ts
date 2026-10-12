@@ -4,7 +4,6 @@ import { Game } from "../src/state.ts";
 import { defaults } from "../src/save.ts";
 import { point, type Enemy, type Player, type Tile } from "../src/entities.ts";
 import { PARRY_CAP, bout, heroHpAfter, instakill, parryCut, predict, summarize, thornDamage } from "../src/combat.ts";
-import { forecast } from "../src/crit-forecast.ts";
 import { loadout, trainingStep } from "../src/loadout.ts";
 import { startingHero } from "../src/game/hero-sync.ts";
 import { trainingGold } from "../src/training-jobs.ts";
@@ -12,7 +11,7 @@ import { silverPrice } from "../src/run-training.ts";
 import { TRAINING, UPGRADES, isStatRow, trained, type TrainingId } from "../src/config.ts";
 import { TREES } from "../src/skill-trees.ts";
 import { BoardPopups, enemyBar, lunges } from "../src/board-popups.ts";
-import { countsParries, unlockAt } from "../src/goals.ts";
+import { checkpoint, UNLOCK_NAMES } from "../src/goals.ts";
 import { DamagePredictions, damageLabel } from "../src/damage-labels.ts";
 
 const hero = (over: Partial<Player> = {}): Player => ({ x: 0, y: 0, hp: 100, maxHp: 100, attack: 12, defense: 0, keys: { yellow: 0, blue: 0, red: 0 }, ...over }) as Player;
@@ -20,50 +19,51 @@ const brute: Enemy = { name: "Brute", hp: 60, attack: 30, defense: 0, tier: 0, s
 const row = (id: TrainingId) => TRAINING.find((t) => t.id === id)!;
 const node = (id: string) => TREES[0].nodes.find((n) => n.id === id)!;
 
-test("Thorns sits between Buy Quantity and Key Siphon, Evade between Regen Research and Revive, 10 Inspiration each", () => {
-  for (const id of ["thorns", "evade"] as const) {
+test("Thorns sits between Buy Quantity and Key Siphon, Parry between Regen Research and Revive, 10 Inspiration each", () => {
+  for (const id of ["thorns", "parry"] as const) {
     const u = UPGRADES.find((u) => u.id === id)!;
     assert.deepEqual([u.currency, u.base, u.max], ["inspiration", 10, 1], id);
   }
   assert.deepEqual([node("thorns").requires, node("keySiphon").requires], [["buyQuantity"], ["thorns"]]);
-  assert.deepEqual([node("evade").requires, node("revive").requires], [["regenResearch"], ["evade"]]);
+  assert.deepEqual([node("parry").requires, node("revive").requires], [["regenResearch"], ["parry"]]);
   const g = new Game(defaults());
   g.save.tower.inspiration = 1000;
   for (const id of ["combatStance", "buildout", "trainers", "shroud", "critical", "archives", "delve", "greaterHeal"] as const) assert.ok(g.buy(id));
-  assert.equal(g.buy("evade"), false, "waits for Regen Research");
+  assert.equal(g.buy("parry"), false, "waits for Regen Research");
   assert.ok(g.buy("regenResearch"));
-  assert.equal(g.buy("revive"), false, "waits for Evade");
-  assert.ok(g.buy("evade"));
+  assert.equal(g.buy("revive"), false, "waits for Parry");
+  assert.ok(g.buy("parry"));
   assert.ok(g.buy("revive"));
 });
 
-test("Thorn Damage adds 1% a rank to 99; Parry Chance 1% and Parry % 0.5% a rank to 100; all Defense rows the skills open", () => {
-  for (const [id, requires, max, per] of [["thorns", "thorns", 99, 1], ["parryChance", "evade", 100, 1], ["parry", "evade", 100, 0.5]] as const) {
+test("Thorn Damage adds 1% a rank to 99 and Parry % 0.5% a rank to 100, Defense rows the skills open; no Parry Chance row", () => {
+  assert.equal(TRAINING.some((t) => (t.id as string) === "parryChance"), false);
+  for (const [id, requires, max, per] of [["thorns", "thorns", 99, 1], ["parry", "parry", 100, 0.5]] as const) {
     const r = row(id);
     if (!isStatRow(r)) throw new Error(`${id} is a stat row`);
     assert.deepEqual([r.group, r.max, r.cost, r.requires], ["defense", max, 1, requires], id);
     assert.deepEqual([trained(r, 0), trained(r, 1), trained(r, 10), trained(r, max)], [0, per, 10 * per, max * per], id);
   }
   const s = defaults();
-  Object.assign(s.upgrades, { thorns: 1, evade: 1 });
-  Object.assign(s.training, { thorns: 50, parryChance: 30, parry: 41 });
+  Object.assign(s.upgrades, { thorns: 1, parry: 1 });
+  Object.assign(s.training, { thorns: 50, parry: 41 });
   const l = loadout(s);
-  assert.deepEqual([l.thorns, l.parryChance, l.parry], [50, 30, 20.5]);
+  assert.deepEqual([l.thorns, l.parry], [50, 20.5]);
   const p = startingHero(s, "tower").player;
-  assert.deepEqual([p.thorns, p.parryChance, p.parry], [50, 30, 20.5], "the hero carries them into a run");
+  assert.deepEqual([p.thorns, p.parry], [50, 20.5], "the hero carries them into a run");
   assert.equal(startingHero(defaults(), "tower").player.thorns, undefined, "a hero without them carries none");
   const step = trainingStep(s, "parry");
   assert.deepEqual([step.unit, step.now, step.next], ["%", 20.5, 21]);
 });
 
-test("a rank of Thorn Damage costs 60, about 1k at the 13th, 10k at the 41st and over 75k at the 99th; a parry rank 40, under 600 at the 12th, under 5k at the 36th and over 40k at the 80th", () => {
+test("a rank of Thorn Damage costs 60, about 1k at the 13th, 10k at the 41st and over 75k at the 99th; a Parry % rank 40, under 600 at the 12th, under 5k at the 36th and over 40k at the 80th", () => {
   const price = (id: TrainingId, n: number) => {
     const gold = trainingGold(row(id), n - 1);
     assert.equal(silverPrice(id, n - 1), gold, `${id} rank ${n}: the same in Silver and Gold`);
     return gold;
   };
   assert.deepEqual([1, 13, 41, 99].map((n) => price("thorns", n)), [60, 993, 9901, 113781]);
-  for (const id of ["parryChance", "parry"] as const) assert.deepEqual([1, 12, 36, 80].map((n) => price(id, n)), [40, 590, 4775, 40953]);
+  assert.deepEqual([1, 12, 36, 80].map((n) => price("parry", n)), [40, 590, 4775, 40953]);
 });
 
 test("thorns take a share of the enemy's max HP each strike it lands, half from a boss, whatever its HP", () => {
@@ -79,10 +79,10 @@ test("thorns take a share of the enemy's max HP each strike it lands, half from 
   assert.equal(thornDamage(hero(), brute), 0, "none without Thorn Damage");
 });
 
-test("the played fight and the prediction end the same with thorns and certain parries, whatever the stats", () => {
+test("the played fight and the prediction end the same with thorns and parries, whatever the stats", () => {
   let checked = 0, thorned = 0, lethal = 0;
   for (const thorns of [0, 1, 7, 50]) for (const parry of [0, 25]) for (const lifesteal of [0, 5]) for (const enemyAttack of [4, 20, 55]) for (const enemyHp of [30, 700]) for (const strength of ["normal", "boss"] as const) {
-    const p = hero({ attack: 12, hp: 80, maxHp: 100, defense: 2, shroud: 3, ...(thorns ? { thorns } : {}), ...(parry ? { parryChance: 100, parry } : {}), ...(lifesteal ? { lifesteal } : {}) });
+    const p = hero({ attack: 12, hp: 80, maxHp: 100, defense: 2, shroud: 3, ...(thorns ? { thorns } : {}), ...(parry ? { parry } : {}), ...(lifesteal ? { lifesteal } : {}) });
     const e: Enemy = { ...brute, hp: enemyHp, attack: enemyAttack, defense: 1, strength };
     const r = predict(p, e), fight = bout(p, e), after = heroHpAfter(fight, p.hp), taken = fight.strikes.filter((s) => s.by === "enemy");
     const what = JSON.stringify({ thorns, parry, lifesteal, enemyAttack, enemyHp, strength });
@@ -94,7 +94,7 @@ test("the played fight and the prediction end the same with thorns and certain p
     if (r.survivable) assert.equal(fight.strikes.filter((s) => s.by === "hero").length, r.turns, `as many strikes ${what}`);
     if (r.thornKill) thorned++;
     assert.equal(!!r.thornKill && r.survivable, after > 0 && fight.strikes.at(-1)!.thornHp === 0, `felled by thorns ${what}`);
-    assert.ok(taken.every((s) => !!s.parried === !!parry), "a certain parry parries every strike");
+    assert.ok(taken.every((s) => !!s.parried === !!parry), "Parry % parries every strike");
     assert.equal(heroHpAfter(summarize(fight, 1400), p.hp), after, "summary rounds end the same");
   }
   assert.ok(checked > 100 && thorned > 10 && lethal > 10, "the sweep covers thorn kills and losses");
@@ -110,33 +110,24 @@ test("a strike that fells the hero costs the enemy no thorns; a revived one does
   assert.equal(revived.thorns, 6);
 });
 
-test("a parried strike's ATK is cut by Parry % before DEF; a thorn kill is no Instakill", () => {
-  const p = hero({ hp: 1000, maxHp: 1000, defense: 10, parryChance: 50, parry: 40 });
+test("every strike's ATK is cut by Parry % before DEF, and predictions count it; a thorn kill is no Instakill", () => {
+  const p = hero({ hp: 1000, maxHp: 1000, defense: 10, parry: 40 });
   const e = { ...brute, hp: 1000, attack: 50 };
-  const fight = bout(p, e, undefined, undefined, (strike) => strike === 0);
+  const fight = bout(p, e);
   const [first, second] = fight.strikes.filter((s) => s.by === "enemy");
   assert.deepEqual([first!.parried, first!.damage], [true, 50 * 0.6 - 10]);
-  assert.deepEqual([second!.parried, second!.damage], [undefined, 51 - 10], "the enemy's ATK rises from its own");
-  assert.equal(predict(p, e).damage > predict({ ...p, parryChance: 100 }, e).damage, true, "only a certain parry counts in a prediction");
+  assert.deepEqual([second!.parried, second!.damage], [true, 20.6], "the enemy's ATK rises from its own");
+  assert.equal(predict(p, e).damage < predict({ ...p, parry: 0 }, e).damage, true, "a prediction counts every parry");
+  assert.ok(bout(hero(), e).strikes.every((s) => !s.parried), "no Parry %, no parry");
   const r = predict(hero({ attack: 30, thorns: 50 }), brute);
   assert.deepEqual([r.turns, r.thornKill, instakill(r)], [1, true, false]);
 });
 
-test("a forecast that counts parries expects less damage than the worst case, and a certain parry needs no forecast", () => {
-  const p = hero({ hp: 1000, maxHp: 1000, defense: 5, parryChance: 50, parry: 50 }), e = { ...brute, hp: 200 };
-  const worst = predict(p, e), sure = predict({ ...p, parryChance: 100 }, e), f = forecast(p, e, undefined, true);
-  assert.equal(f.worst.damage, worst.damage);
-  assert.ok(f.expected < worst.damage && f.expected > sure.damage, "between no parries and every parry");
-  assert.ok(f.p10 <= f.expected && f.expected <= f.p90 && f.p10 < f.p90);
-  assert.equal(f.survive, 1);
-  const risky = forecast({ ...p, hp: Math.round(f.expected) }, e, undefined, true);
-  assert.ok(risky.survive > 0.2 && risky.survive < 0.8, "about even odds at the HP the fight is expected to cost");
-  assert.equal(forecast(p, e, undefined, false).expected, worst.damage, "without Evade Prediction, no parry counts");
-  const certain = { ...p, parryChance: 100 };
-  assert.equal(forecast(certain, e, undefined, true).expected, sure.damage);
+test("Damage Visual's label counts every parry", () => {
+  const p = hero({ hp: 1000, maxHp: 1000, defense: 5, parry: 50 }), e = { ...brute, hp: 200 };
   const cache = new DamagePredictions();
-  assert.equal(cache.cost(p, e, undefined, true).damage, f.expected, "Damage Visual's label expects the same");
-  assert.equal(cache.cost(p, e).damage, worst.damage);
+  assert.equal(cache.cost(p, e).damage, predict(p, e).damage);
+  assert.ok(cache.cost(p, e).damage < cache.cost({ ...p, parry: 0 }, e).damage);
   const thorned = cache.cost(hero({ attack: 30, thorns: 50 }), brute);
   assert.notEqual(damageLabel(thorned, 100).color, "#9aa3b2", "a thorn kill's label isn't an Instakill's gray");
 });
@@ -146,30 +137,25 @@ test("a parry cuts a strike's ATK by at most 98%, however Parry % is raised", ()
   assert.equal(parryCut(hero({ parry: 120 })), 98);
   assert.equal(parryCut(hero({ parry: 60 })), 60);
   const s = defaults();
-  s.upgrades.evade = 1;
+  s.upgrades.parry = 1;
   s.training.parry = 100;
   s.archives.levels.parry = 50;
   // Training's 50% and research's 10% stay under the cap; a run's own Parry % past it still cuts by 98%.
   assert.equal(loadout(s).parry, 60);
   const e = { ...brute, attack: 100 };
-  assert.equal(predict(hero({ parry: 99, parryChance: 100 }), e).damage, predict(hero({ parry: 98, parryChance: 100 }), e).damage);
-  assert.ok(predict(hero({ parry: 98, parryChance: 100 }), e).damage < predict(hero({ parry: 97, parryChance: 100 }), e).damage);
+  assert.equal(predict(hero({ parry: 99 }), e).damage, predict(hero({ parry: 98 }), e).damage);
+  assert.ok(predict(hero({ parry: 98 }), e).damage < predict(hero({ parry: 97 }), e).damage);
 });
 
-test("Evade Prediction is Tower II's floor 50 Goal, and counts parries once Evade is owned", () => {
-  assert.deepEqual(unlockAt("evadePrediction"), { tower: 2, floor: 50 });
-  const s = defaults();
-  assert.equal(countsParries(s), false);
-  s.goals.claimed[2] = [50];
-  assert.equal(countsParries(s), false, "Evade first");
-  s.upgrades.evade = 1;
-  assert.equal(countsParries(s), true);
+test("Tower II's floor 50 Goal pays Gems, and no Goal unlocks a parry prediction", () => {
+  assert.deepEqual(checkpoint(2, 50)!.reward, { kind: "currency", currency: "gems", amount: 25 });
+  assert.equal("evadePrediction" in UNLOCK_NAMES, false);
 });
 
 // On the board: thorns rise in yellow over the enemy with the strike's
 // damage over the hero, and the hero gives way from a strike it parries.
-const shown = (player: Player, enemy: Enemy, summary: boolean, parries?: (strike: number) => boolean) => {
-  const played = bout(player, enemy, undefined, undefined, parries);
+const shown = (player: Player, enemy: Enemy, summary: boolean) => {
+  const played = bout(player, enemy);
   return { from: { x: 0, y: 0 }, to: { x: 1, y: 0 }, bout: summary ? summarize(played, 1400) : played, start: 0, hp: enemy.hp, summary };
 };
 const rising = (fight: ReturnType<typeof shown>, until: number) => {
@@ -214,55 +200,42 @@ test("in summary rounds the bar of an enemy thorns struck but the hero felled dr
 });
 
 test("the hero gives way from a strike it parries in an animated fight; summary rounds show no parry", () => {
-  const p = hero({ hp: 1000, maxHp: 1000, parryChance: 50, parry: 40 });
-  const fight = shown(p, brute, false, (strike) => strike === 0);
-  const [parried, plain] = fight.bout.strikes.filter((s) => s.by === "enemy");
+  const p = hero({ hp: 1000, maxHp: 1000, parry: 40 });
+  const fight = shown(p, brute, false), unparried = shown({ ...p, parry: 0 }, brute, false);
+  const [parried] = fight.bout.strikes.filter((s) => s.by === "enemy"), [plain] = unparried.bout.strikes.filter((s) => s.by === "enemy");
   const mid = (s: typeof parried) => (s!.start + s!.end) / 2;
   const encounter = fight as unknown as Parameters<typeof lunges>[0];
-  const atParry = lunges(encounter, mid(parried), false), atPlain = lunges(encounter, mid(plain), false);
+  const atParry = lunges(encounter, mid(parried), false), atPlain = lunges(unparried as unknown as Parameters<typeof lunges>[0], mid(plain), false);
   assert.ok(atParry.hero.dx < 0 && atParry.hero.dx > -0.3, "a little back, away from the enemy");
   assert.deepEqual(atPlain.hero, { dx: 0, dy: 0 });
   assert.ok(atParry.enemy.dx < 0, "the enemy still lunges");
   assert.deepEqual(lunges(encounter, mid(parried), true).hero, { dx: 0, dy: 0 }, "still with Reduce Motion");
-  assert.ok(shown(p, brute, true, (strike) => strike === 0).bout.strikes.every((s) => !s.parried));
+  assert.ok(shown(p, brute, true).bout.strikes.every((s) => !s.parried));
 });
 
 /** A Delve run with the hero two tiles below a Brute in a walled corridor,
- * parrying `chance`% of strikes by 40%. */
-function arena(seed: number, chance: number) {
+ * parrying every strike by `parry`%. */
+function arena(parry: number) {
   const g = new Game(defaults());
-  g.save.upgrades.inspirationUndos = 1;
   g.save.upgrades.delve = 1;
   g.switchMode("delve");
-  g.newRun({ seed });
+  g.newRun({ seed: 1 });
   for (let y = 0; y < 20; y++)
     for (let x = 0; x < 30; x++) g.run.changes[point(x, y)] = { kind: x === 15 && y < 10 ? "floor" : "wall" };
-  Object.assign(g.run.player, { ...hero({ hp: 500, maxHp: 500, parryChance: chance, parry: 40 }), x: 15, y: 0 });
-  guard(g);
-  g.move(0, 1);
-  return g;
-}
-function guard(g: Game) {
+  Object.assign(g.run.player, { ...hero({ hp: 500, maxHp: 500, ...(parry ? { parry } : {}) }), x: 15, y: 0 });
   const tile = g.world.tile.bind(g.world);
   const foe: Tile = { kind: "enemy", enemy: { ...brute, hp: 120 } };
   g.world.tile = (x, y) => (x === 15 && y === 2 && g.run.kills === 0 ? foe : tile(x, y));
+  g.move(0, 1);
+  return g;
 }
 
-test("in play, parries roll a fixed number per run, tile and strike: undo can't fish for them, and more Parry Chance only adds some", () => {
-  let helped = 0;
-  for (let seed = 1; seed <= 12; seed++) {
-    const hp = [0, 30, 70].map((chance) => {
-      const g = arena(seed, chance);
-      g.move(0, 1);
-      const after = g.run.player.hp;
-      assert.ok(g.undo());
-      guard(g);
-      g.move(0, 1);
-      assert.equal(g.run.player.hp, after, `seed ${seed}: the same parries again`);
-      return after;
-    });
-    assert.ok(hp[0]! <= hp[1]! && hp[1]! <= hp[2]!, `seed ${seed}: more chance, no less HP`);
-    if (hp[2]! > hp[0]!) helped++;
-  }
-  assert.ok(helped > 6, "parries save HP");
+test("in play, Parry % cuts every strike, costing what the prediction says", () => {
+  const hp = [0, 40].map((parry) => {
+    const g = arena(parry), p = { ...g.run.player };
+    g.move(0, 1);
+    assert.equal(g.run.player.hp, p.hp - predict(p, { ...brute, hp: 120 }).damage, `Parry % ${parry}`);
+    return g.run.player.hp;
+  });
+  assert.ok(hp[1]! > hp[0]!, "parries save HP");
 });

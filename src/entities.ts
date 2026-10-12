@@ -105,9 +105,8 @@ export type Player = {
   /** The percent of an enemy's max HP each of its strikes costs it (Thorn
    * Damage; none when absent), half against a boss or Greater Boss. */
   thorns?: number;
-  /** The percent chance each enemy strike is parried (Parry Chance), and the
-   * percent a parried strike's ATK is cut by (Parry %); none when absent. */
-  parryChance?: number;
+  /** The percent every enemy strike's ATK is cut by, parried (Parry %);
+   * none when absent. */
   parry?: number;
   /** The percent more ATK the hero strikes bosses with (equipment; none
    * when absent). */
@@ -134,7 +133,7 @@ export type RunCore = {
   floor: number;
   /** The ATK/DEF/max HP the run started with (its loadout), shifted by any
    * gear change since. */
-  loadout?: { attack: number; defense: number; maxHp: number; shroud?: number; regen?: number; lifesteal?: number; thorns?: number; parryChance?: number; parry?: number; bossAttack?: number; pierce?: number };
+  loadout?: { attack: number; defense: number; maxHp: number; shroud?: number; regen?: number; lifesteal?: number; thorns?: number; parry?: number; bossAttack?: number; pierce?: number };
   /** The hand as it was ordered when the run went inside: the cards that
    * move the hero for the rest of the run. */
   hand?: CardId[];

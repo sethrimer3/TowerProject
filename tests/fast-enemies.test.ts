@@ -115,7 +115,7 @@ test("thorns answer a Fast enemy's opening strike; Lifesteal heals only from the
 test("the played fight and the prediction end the same against a Fast enemy, whatever the stats", () => {
   let checked = 0, thorned = 0, lethal = 0;
   for (const thorns of [0, 7, 50]) for (const parry of [0, 25]) for (const lifesteal of [0, 5]) for (const shroud of [0, 40]) for (const enemyAttack of [4, 20, 55]) for (const enemyHp of [10, 30, 700]) for (const hp of [30, 80]) {
-    const p = hero({ attack: 12, hp, maxHp: 100, defense: 2, shroud, ...(thorns ? { thorns } : {}), ...(parry ? { parryChance: 100, parry } : {}), ...(lifesteal ? { lifesteal } : {}) });
+    const p = hero({ attack: 12, hp, maxHp: 100, defense: 2, shroud, ...(thorns ? { thorns } : {}), ...(parry ? { parry } : {}), ...(lifesteal ? { lifesteal } : {}) });
     const e = fast({ ...brute, hp: enemyHp, attack: enemyAttack, defense: 1 });
     const r = predict(p, e), fight = bout(p, e), after = heroHpAfter(fight, p.hp);
     const what = JSON.stringify({ thorns, parry, lifesteal, shroud, enemyAttack, enemyHp, hp });

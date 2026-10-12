@@ -90,10 +90,10 @@ export const within = (dx: number, dy: number, range: number) => (dx * dx + dy *
 export const foeRange = (range: number) => (range * 5) / 6;
 
 /** What a Ranged enemy's shot does to `player`: its ATK, cut by Parry %
- * when `parried`, less DEF, and the shroud (whole for every shot) taking
- * what it can of the rest. */
-export function shotDamage(player: Player, enemy: Enemy, parried: boolean) {
-  const struck = snap(Math.max(0, parriedAttack(enemy.attack, parried ? parryCut(player) : 0) - player.defense));
+ * (every shot is parried), less DEF, and the shroud (whole for every
+ * shot) taking what it can of the rest. */
+export function shotDamage(player: Player, enemy: Enemy) {
+  const struck = snap(Math.max(0, parriedAttack(enemy.attack, parryCut(player)) - player.defense));
   const shrouded = Math.min(player.shroud ?? 0, struck);
   return { damage: snap(struck - shrouded), shrouded };
 }

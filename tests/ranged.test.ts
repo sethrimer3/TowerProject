@@ -85,11 +85,11 @@ test("reach is Euclidean: a knight's move is within a Ranged enemy's 2.5 tiles, 
   assert.deepEqual(enemiesWithin(board, { x: 9, y: 2 }, 250, 10).map((e) => [e.x, e.y]), [[1, 2]]);
 });
 
-test("a shot takes DEF then the shroud, cut by Parry % when parried; an arrow is one strike less DEF, crits counted", () => {
+test("a shot takes DEF then the shroud, cut by Parry %; an arrow is one strike less DEF, crits counted", () => {
   const archer = { ...brute, ranged: true as const };
-  assert.deepEqual(shotDamage(hero({ defense: 10, shroud: 5 }), archer, false), { damage: 15, shrouded: 5 });
-  assert.deepEqual(shotDamage(hero({ defense: 10, shroud: 50 }), archer, false), { damage: 0, shrouded: 20 });
-  assert.deepEqual(shotDamage(hero({ parry: 50 }), archer, true), { damage: 15, shrouded: 0 });
+  assert.deepEqual(shotDamage(hero({ defense: 10, shroud: 5 }), archer), { damage: 15, shrouded: 5 });
+  assert.deepEqual(shotDamage(hero({ defense: 10, shroud: 50 }), archer), { damage: 0, shrouded: 20 });
+  assert.deepEqual(shotDamage(hero({ parry: 50 }), archer), { damage: 15, shrouded: 0 });
   assert.equal(arrowDamage(hero({ attack: 40 }), { ...brute, defense: 15 }), 25);
   assert.equal(arrowDamage(hero({ attack: 40 }), { ...brute, defense: 15 }, 1, 1.5), 45);
   assert.equal(wounded({ kind: "enemy", enemy: brute, wound: 25 }).enemy!.hp, 35);

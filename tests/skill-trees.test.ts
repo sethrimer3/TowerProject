@@ -71,8 +71,8 @@ test("Shroud follows Trainers, ahead of Critical; Greater Heal, then Recovery, R
   assert.deepEqual([at("greaterHeal").x, at("greaterHeal").y, at("greaterHeal").requires], [80, 160, ["delve"]], "Greater Heal sits a row under Into the depths, above Recovery and Regen Research");
   assert.deepEqual([at("recovery").x, at("recovery").y, at("recovery").requires], [70, 178, ["greaterHeal"]]);
   assert.deepEqual([at("regenResearch").x, at("regenResearch").y, at("regenResearch").requires], [90, 178, ["greaterHeal"]], "Regen Research sits beside Recovery");
-  assert.deepEqual([at("evade").x, at("evade").y, at("evade").requires], [90, 196, ["regenResearch"]], "Evade sits below Regen Research");
-  assert.deepEqual([at("revive").x, at("revive").y, at("revive").requires], [90, 214, ["evade"]], "Revive sits below Evade");
+  assert.deepEqual([at("parry").x, at("parry").y, at("parry").requires], [90, 196, ["regenResearch"]], "Parry sits below Regen Research");
+  assert.deepEqual([at("revive").x, at("revive").y, at("revive").requires], [90, 214, ["parry"]], "Revive sits below Parry");
   assert.deepEqual([at("findPotion").x, at("findPotion").y, at("findPotion").requires], [70, 196, ["recovery"]], "Find Potion sits below Recovery");
   assert.deepEqual([at("buyQuantity").x, at("buyQuantity").y, at("buyQuantity").requires], [50, 178, ["lifesteal"]], "Buy Quantity sits under Lifesteal");
   assert.deepEqual([at("lifesteal").x, at("lifesteal").y, at("lifesteal").requires], [50, 160, ["delve"]], "Lifesteal sits where Key Siphon did, under Into the depths");

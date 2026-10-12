@@ -1,15 +1,13 @@
-import { atWorst, certainParry, critMultiplier, guaranteedCrits, instakill as instakills, netDamage, parriedAttack, parriedEstimate, parryCut, predict, raisedAttack, replies, thornDamage, type CombatPrediction, type CritRule } from "./combat.ts";
+import { atWorst, critMultiplier, guaranteedCrits, instakill as instakills, netDamage, parriedAttack, parriedEstimate, parryCut, predict, raisedAttack, replies, thornDamage, type CombatPrediction, type CritRule } from "./combat.ts";
 import { snap } from "./exact.ts";
 import type { Enemy, Player } from "./entities.ts";
 
-/** What a fight against `enemy` may cost a hero with critical strikes, or
- * whose parries Evade Prediction counts. The damage the hero takes depends
- * on how many strikes the enemy lands, so the forecast works out the odds
- * of each fight length (every strike an independent roll) and reads
- * everything from them; parries then spread each length's damage about
- * its mean. Crits and parries only help, so `worst` (the guaranteed
- * applications and no more, no parry that isn't certain) bounds the fight
- * from above and `best` (every roll lands) from below. */
+/** What a fight against `enemy` may cost a hero with critical strikes. The
+ * damage the hero takes depends on how many strikes the enemy lands, so the
+ * forecast works out the odds of each fight length (every strike an
+ * independent roll) and reads everything from them. Crits only help, so
+ * `worst` (the guaranteed applications and no more) bounds the fight from
+ * above and `best` (every roll lands) from below. */
 export type CritForecast = {
   worst: CombatPrediction;
   best: CombatPrediction;
@@ -38,33 +36,23 @@ const SPREAD_TURNS = 400;
  * enemy), with odds `chance`. */
 type Ending = [t: number, r: number, chance: number];
 
-/** The parries a forecast counts: each enemy strike's chance (0 to 1) and
- * the percent it cuts ATK by. */
-type ParryOdds = { chance: number; cut: number };
-
 /** Past `played` strikes (all of them unless given) a fight is estimated,
- * not played out (`predict`'s), and its odds are approximated. `parries`
- * counts the hero's parries (Evade Prediction), when they are a chance:
- * a certain parry is in every prediction already. */
-export function forecast(player: Player, enemy: Enemy, crit: CritRule | undefined, parries = false, played = Infinity): CritForecast {
-  const rule = crit ?? { chance: 0, factor: 1 };
-  const k = guaranteedCrits(rule.chance), extra = snap((rule.chance - 100 * k) / 100);
-  const parry: ParryOdds | null = parries && (player.parryChance ?? 0) > 0 && parryCut(player) > 0 && !certainParry(player) ? { chance: player.parryChance! / 100, cut: parryCut(player) } : null;
+ * not played out (`predict`'s), and its odds are approximated. */
+export function forecast(player: Player, enemy: Enemy, crit: CritRule, played = Infinity): CritForecast {
+  const k = guaranteedCrits(crit.chance), extra = snap((crit.chance - 100 * k) / 100);
   const worst = predict(atWorst(player, crit), enemy, played);
-  const topMultiplier = critMultiplier(rule.factor, k + (extra > 0 ? 1 : 0));
-  const best = predict({ ...player, attack: snap(player.attack * topMultiplier), ...(parry ? { parryChance: 100 } : {}) }, enemy, played);
-  const sameLength = worst.turns === best.turns && !worst.thornKill === !best.thornKill;
-  if (worst.impervious || (sameLength && !parry)) {
+  const topMultiplier = critMultiplier(crit.factor, k + (extra > 0 ? 1 : 0));
+  const best = predict({ ...player, attack: snap(player.attack * topMultiplier) }, enemy, played);
+  if (worst.impervious || (worst.turns === best.turns && !worst.thornKill === !best.thornKill)) {
     const net = worst.impervious ? worst.damage : netDamage(player, worst);
     return { worst, best, expected: net, p10: net, p90: net, turns: worst.turns, survive: worst.survivable ? 1 : 0, instakill: instakills(worst) ? 1 : 0 };
   }
   const thorn = thornDamage(player, enemy), low = worst.hit, step = snap(best.hit - worst.hit);
-  const odds: Ending[] = sameLength ? [[worst.turns, replies(worst), 1]] : turnOdds(enemy.hp, low, step, extra, worst.turns, best.turns, thorn ? Infinity : Math.min(EXACT_TURNS, played), thorn, enemy.fast ? 1 : 0);
-  const { cost, felled, spread } = damageByStrikes(player, enemy, replies(worst), thorn ? Infinity : played, thorn, parry, { low, step, extra });
+  const odds = turnOdds(enemy.hp, low, step, extra, worst.turns, best.turns, thorn ? Infinity : Math.min(EXACT_TURNS, played), thorn, enemy.fast ? 1 : 0);
+  const { cost, felled } = damageByStrikes(player, enemy, replies(worst), thorn ? Infinity : played, thorn, { low, step, extra });
   // A fight heals at most up to max HP; its damage is never capped by the HP
   // the hero has, so regenerating HP never moves the forecast.
   const floor = snap(player.hp - player.maxHp), capped = (t: number, r: number) => Math.max(floor, cost(t, r));
-  if (parry) return parried(worst, best, odds, { cost: capped, felled, spread, floor: player.lifesteal ? floor : 0 });
   let expected = 0, turns = 0, survive = 0, instakill = 0, p10: number | null = null, p90: number | null = null, sum = 0;
   for (const [t, r, chance] of odds) {
     expected += chance * capped(t, r);
@@ -78,40 +66,12 @@ export function forecast(player: Player, enemy: Enemy, crit: CritRule | undefine
   return { worst, best, expected: snap(expected), p10: p10 ?? capped(best.turns, replies(best)), p90: p90 ?? capped(worst.turns, replies(worst)), turns, survive: Math.abs(1 - survive) < 1e-9 ? 1 : Math.min(1, survive), instakill };
 }
 
-/** The forecast once parries spread each fight length's damage: nearly
- * normal about its mean (`cost`, a mean `felled` judges by its spread), so
- * the chance to survive and the range sum each length's normal curve. */
-function parried(worst: CombatPrediction, best: CombatPrediction, odds: Ending[], d: { cost: (t: number, r: number) => number; felled: (t: number, r: number) => number; spread: (r: number) => number; floor: number }): CritForecast {
-  let expected = 0, turns = 0, survive = 0, instakill = 0;
-  const curves = odds.map(([t, r, chance]) => ({ chance, mean: d.cost(t, r), sd: d.spread(r) }));
-  for (const [t, r, chance] of odds) {
-    expected += chance * d.cost(t, r);
-    turns += chance * t;
-    survive += chance * (1 - d.felled(t, r));
-    if (t === 1 && !r) instakill = chance;
-  }
-  // The damage below which `share` of fights fall, found by halving.
-  const below = (x: number) => curves.reduce((sum, c) => sum + c.chance * (c.sd ? normalCdf((x - c.mean) / c.sd) : c.mean <= x ? 1 : 0), 0);
-  const quantile = (share: number) => {
-    let lo = Math.min(...curves.map((c) => c.mean - 6 * c.sd)), hi = Math.max(...curves.map((c) => c.mean + 6 * c.sd));
-    for (let i = 0; i < 60; i++) {
-      const mid = (lo + hi) / 2;
-      if (below(mid) >= share) hi = mid;
-      else lo = mid;
-    }
-    return snap(Math.max(d.floor, hi));
-  };
-  return { worst, best, expected: snap(expected), p10: quantile(0.1), p90: quantile(0.9), turns, survive: Math.abs(1 - survive) < 1e-9 ? 1 : Math.min(1, Math.max(0, survive)), instakill };
-}
-
 /** The damage the hero takes when the fight lasts `t` of its strikes and
  * `r` of the enemy's, as though it fought on whatever its HP, and whether
- * that fight fells it (with parries, the chance it does), summed once up to
- * `most` enemy strikes, or up to `played` and estimated past them. With
- * parries, `spread` is the standard deviation of `r` strikes' damage. */
-function damageByStrikes(player: Player, enemy: Enemy, most: number, played: number, thorn: number, parry: ParryOdds | null, hits: { low: number; step: number; extra: number }) {
-  const sums: number[] = [0], spreads: number[] = [0], shroud = player.shroud ?? 0, fatal = player.hp + shroud, defense = player.defense;
-  const sure = certainParry(player) ? parryCut(player) : 0;
+ * that fight fells it, summed once up to `most` enemy strikes, or up to
+ * `played` and estimated past them. */
+function damageByStrikes(player: Player, enemy: Enemy, most: number, played: number, thorn: number, hits: { low: number; step: number; extra: number }) {
+  const sums: number[] = [0], shroud = player.shroud ?? 0, fatal = player.hp + shroud, defense = player.defense, cut = parryCut(player);
   // Lifesteal: each of the hero's `t` strikes restores that share of its
   // whole damage, overkill and all: on average `low` plus `extra` of a crit's
   // `step`, but at least the enemy's HP its thorns left and at most every
@@ -124,29 +84,17 @@ function damageByStrikes(player: Player, enemy: Enemy, most: number, played: num
     const dealt = Math.min(t * (hits.low + hits.step), Math.max(left, t * mean));
     return snap((dealt * player.lifesteal) / 100);
   };
-  let attack = enemy.attack, sum = 0, variance = 0;
+  let attack = enemy.attack, sum = 0;
   const known = Math.min(most, played - 1);
   for (let r = 1; r <= known && sum <= Number.MAX_SAFE_INTEGER; r++) {
-    const plain = Math.max(0, parriedAttack(attack, sure) - defense);
-    if (!parry) sum = snap(sum + plain);
-    else {
-      const cut = Math.max(0, parriedAttack(attack, parry.cut) - defense);
-      sum = snap(sum + plain + parry.chance * (cut - plain));
-      variance += parry.chance * (1 - parry.chance) * (plain - cut) * (plain - cut);
-    }
+    sum = snap(sum + Math.max(0, parriedAttack(attack, cut) - defense));
     sums.push(sum);
-    spreads.push(Math.sqrt(variance));
     attack = raisedAttack(attack);
   }
   const counted = sums.length - 1, from = attack, before = sum;
-  // Past `played`, each strike's damage is estimated, parried or not.
-  const sumAt = (r: number) => {
-    if (r <= counted || counted < known) return sums[Math.min(r, counted)]!;
-    const plain = parriedEstimate(from, defense, r - counted, sure);
-    return before + (parry ? plain + parry.chance * (parriedEstimate(from, defense, r - counted, parry.cut) - plain) : plain);
-  };
+  // Past `played`, each strike's damage is estimated.
+  const sumAt = (r: number) => (r <= counted || counted < known ? sums[Math.min(r, counted)]! : before + parriedEstimate(from, defense, r - counted, cut));
   const healsBefore = (t: number, r: number) => (healedAt(t, r) * Math.min(r, t)) / t;
-  const spread = (r: number) => spreads[Math.min(r, counted)]!;
   return {
     cost: (t: number, r: number) => {
       const s = sumAt(r), healed = healedAt(t, r);
@@ -154,11 +102,8 @@ function damageByStrikes(player: Player, enemy: Enemy, most: number, played: num
     },
     felled: (t: number, r: number) => {
       const s = sumAt(r), healed = healedAt(t, r);
-      const over = healed ? player.hp + shroud + healsBefore(t, r) : fatal, sd = spread(r);
-      if (!parry || !sd) return (healed ? snap(s - shroud - healsBefore(t, r)) >= player.hp : s >= fatal) ? 1 : 0;
-      return 1 - normalCdf((over - s) / sd);
+      return healed ? snap(s - shroud - healsBefore(t, r)) >= player.hp : s >= fatal;
     },
-    spread,
   };
 }
 

@@ -27,7 +27,7 @@ const CURRENCY_ICONS: Record<CurrencyId, () => string> = { gems: () => gemIcon("
  * Lore an open book with a rising arrow, Warp a portal's swirl, Damage Visual a monster's tile with a red
  * number in its corner, Relative Damage Color that tile over a green-to-red bar, Equipment an anvil
  * under a hammer, the Tournament a trophy, Events a pennant, Research Speed an hourglass, Shard ATK and Shard DEF a red or
- * blue shard under a rising arrow, Evade Prediction a shield turning an enemy's strike aside, Badge
+ * blue shard under a rising arrow, Badge
  * Slots a card wearing two badges, one above the other, Note Taking an open notebook under a quill,
  * the Archer Class a drawn bow and arrow, Attack Range an arrow flying past
  * a range ring, Attack Speed two arrows in a row, Training Discount a Gold
@@ -50,7 +50,6 @@ const UNLOCK_ICONS: Record<GoalUnlock, string> = {
   noteTaking: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 9C9.5 7 6.5 6.5 3 7v12c3.5-.5 6.5 0 9 2 2.5-2 5.5-2.5 9-2V7c-3.5-.5-6.5 0-9 2z" fill="#3a2a1a" stroke="#e2a15c" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 9v12" stroke="#e2a15c" stroke-width="1.2"/><path d="M5.5 11h4M5.5 14h4M14.5 14h4" stroke="#ffd59a" stroke-width="1.1" stroke-linecap="round"/><path d="M21.5 1.5c-3 1-5.5 3.5-6.5 7l1.2.4c1.6-2.7 3.4-4.8 5.3-7.4z" fill="#f0e2ff" stroke="#c9a6ff" stroke-width=".9" stroke-linejoin="round"/></svg>`,
   tournament: trophyIcon("goal-icon"),
   events: eventIcon("goal-icon"),
-  evadePrediction: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 3.5l6.5 2.4v5.3c0 4.4-2.8 7.6-6.5 9.3-3.7-1.7-6.5-4.9-6.5-9.3V5.9z" fill="#1c2a44" stroke="#8fc4ff" stroke-width="1.5" stroke-linejoin="round"/><path d="M22 4.5l-7.5 6.5c-1 .9-1 2.3 0 3.2L17 16.5" fill="none" stroke="#ffd34d" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.2 17.7l2.6-.6-.6-2.6" fill="none" stroke="#ffd34d" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
   researchSpeed: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12M6 21h12M7 3c0 5 5 6 5 9s-5 4-5 9M17 3c0 5-5 6-5 9s5 4 5 9" fill="none" stroke="#8fc4ff" stroke-width="1.6" stroke-linecap="round"/><path d="M9 19c1-2 2-2.5 3-2.5s2 .5 3 2.5z" fill="#ffd59a"/></svg>`,
   damagePrediction: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5S3.5 15 3.5 9A4.5 4.5 0 0 1 12 6.6 4.5 4.5 0 0 1 20.5 9c0 6-8.5 11.5-8.5 11.5z" fill="#4a1a22" stroke="#e86d7a" stroke-width="1.6" stroke-linejoin="round"/><path d="M12.5 7.5l-2 4 3 1.5-2 4" fill="none" stroke="#ffd0d5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
   combatForecast: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19L17 7M19 19L7 7" stroke="#c9ced8" stroke-width="2" stroke-linecap="round"/><path d="M3.5 9.5C6 5.5 9 4 12 4s6 1.5 8.5 5.5C18 13.5 15 15 12 15s-6-1.5-8.5-5.5z" fill="#1c2a44" stroke="#8fc4ff" stroke-width="1.5"/><circle cx="12" cy="9.5" r="2.6" fill="#8fc4ff"/></svg>`,
@@ -106,9 +105,7 @@ const UNLOCK_TUTORIALS: Record<GoalUnlock, string> = {
   badgeSlots: `<p>Badge Slots opens in the Archives: research it, and each card holds one more badge a level. Drag a badge onto a card on the Deck page to fill its next slot; on a card with every slot full, it takes the bottom slot's place.</p>` +
     `<p class="hint">Badges that can't work together can't share a card: a key colour's &lt; gate with its ≥ gate (YK &lt; with YK ≥), or Effective with Dampen.</p>`,
   shardAttack: `<p>Shard ATK opens in the Archives: research it, and every ATK shard a run picks up raises ATK by more, from the next one on, in the Tower and the Delve alike.</p>`,
-  evadePrediction: `<p>Once Evade is yours, an enemy's inspect panel and its damage number count your parries: the damage to expect, the range it usually falls in, and your chance to survive.</p>` +
-    `<p class="hint">Automove and the hand still plan as though no strike is parried, unless every strike is.</p>`,
-  parryPercent: `<p>Parry % opens in the Archives once Evade is yours: research it, and every strike you parry is cut by more, at once, in the Tower and the Delve alike.</p>` +
+  parryPercent: `<p>Parry % opens in the Archives once Parry is yours: research it, and every strike you parry is cut by more, at once, in the Tower and the Delve alike.</p>` +
     `<p class="hint">However it is raised, a parry cuts a strike's ATK by at most 98%.</p>`,
   shardDefense: `<p>Shard DEF opens in the Archives: research it, and every DEF shard a run picks up raises DEF by more, from the next one on, in the Tower and the Delve alike.</p>`,
   shrines: `<p>Unlock Shrines opens in the Archives: research it, and every so many floors climbed in the Tower grants a boon, a bonus that lasts the rest of the run, chosen from a few offered.</p>` +

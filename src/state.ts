@@ -56,7 +56,7 @@ import {
 import { World, LAYOUT_VERSION } from "./delve/world.ts";
 import { RoomWorld, TOWER_LAYOUT_VERSION } from "./tower/room-world.ts";
 import type { Board } from "./board.ts";
-import { bout, DEFEAT_MS, guaranteedCrits, heroHpAfter, heroHpDuring, instakill, parryCut, resume, REVIVE_PAUSE_MS, revivals, summarize, type Bout, type CritRule, type Crits, type Parries, type Revival } from "./combat.ts";
+import { bout, DEFEAT_MS, guaranteedCrits, heroHpAfter, heroHpDuring, instakill, resume, REVIVE_PAUSE_MS, revivals, summarize, type Bout, type CritRule, type Crits, type Revival } from "./combat.ts";
 import { HEART_DOOR_HP, healAfterVictory, isLethal, regenerate, resolveStep, type StepBlocked, type StepEffect, type StepRules, shardStat } from "./step-effects.ts";
 import { OUTSIDE_START_Y, OutsideWorld } from "./outside.ts";
 import { AREA_BURST_MS, AreaLedger, chestReward, CLEARED_INSPIRATION, type AreaReward } from "./tower/area-ledger.ts";
@@ -145,12 +145,8 @@ const LESSON_SPEED = 3;
 const REVIVE_SALT = 0x7e51e;
 /** Seeds the critical rolls apart from the revival rolls. */
 const CRIT_SALT = 0x3c71c;
-/** Seeds the parry rolls apart from the critical and revival rolls. */
-const PARRY_SALT = 0x9a77e;
-/** Salts the run seed for the Archer's critical rolls, and for the parry
- * rolls against a Ranged enemy's shots, apart from a fight's. */
+/** Salts the run seed for the Archer's critical rolls apart from a fight's. */
 const ARROW_SALT = 0xa770e;
-const SHOT_SALT = 0x5407e;
 const MULTISHOT_SALT = 0x3a17c;
 /** How long a shot or arrow flies, at most (ms): it lands as the hero's
  * step ends, sooner at higher speeds. */
@@ -1775,17 +1771,16 @@ export class Game {
   }
   /** Steps into `enemy`. A strike that would fell the hero may revive it
    * instead (Revive), so a lost fight is played out strike by strike to see
-   * how it ends, as is one with critical strikes or parries that may land;
+   * how it ends, as is one with critical strikes that may land;
    * a game that plays fights shows it on the board. */
   private fightStep(step: TakenStep, enemy: Enemy) {
     const p = this.run.player, outcome = step.outcome;
-    const revive = isLethal(outcome) ? this.revival(step.dest) : undefined, crits = this.critRolls(step.dest), parries = this.parryRolls(step.dest);
-    if (!this.playsFights && !revive && !crits && !parries) return this.take(step);
-    const fight = bout(p, enemy, revive, crits, parries), start = performance.now(), rose = revivals(fight).length;
+    const revive = isLethal(outcome) ? this.revival(step.dest) : undefined, crits = this.critRolls(step.dest);
+    if (!this.playsFights && !revive && !crits) return this.take(step);
+    const fight = bout(p, enemy, revive, crits), start = performance.now(), rose = revivals(fight).length;
     step.crits = critHits(fight);
-    // Critical strikes change how long the fight lasts, and parries what it
-    // costs, so it ends as it was played.
-    if (crits || parries) this.restate(outcome, fight);
+    // Critical strikes change how long the fight lasts, so it ends as it was played.
+    if (crits) this.restate(outcome, fight);
     else if (rose) {
       const rules = this.stepRules;
       outcome.player.hp = regenerate(healAfterVictory(afterExtra(heroHpAfter(fight, p.hp), outcome.extraDamage, p.maxHp), p.maxHp, rules), p.maxHp, rules);
@@ -1846,17 +1841,6 @@ export class Game {
     const floor = this.mode === "tower" ? this.run.height + 1 : 0, seed = this.run.seed ^ CRIT_SALT ^ Math.imul(floor, 0x9e3779b1);
     const sure = guaranteedCrits(rule.chance), rest = snap(rule.chance - 100 * sure);
     return { factor: rule.factor, applications: (strike) => sure + (tileRandom(at.x, at.y, (seed ^ Math.imul(strike + 1, 0x85ebca6b)) | 0) * 100 < rest ? 1 : 0) };
-  }
-  /** The hero's parry rolls for the fight at (x, y): a fixed number per
-   * run, floor, tile and enemy strike, so taking the fight back and fighting
-   * it again parries the same strikes, and more Parry Chance only ever adds
-   * parries. None when nothing is to roll: no chance or no cut, or a chance
-   * of 100%, which parries every strike (`bout` and `predict` count it). */
-  private parryRolls(at: { x: number; y: number }): Parries | undefined {
-    const p = this.run.player, chance = p.parryChance ?? 0;
-    if (!chance || chance >= 100 || !parryCut(p) || this.run.outside) return undefined;
-    const floor = this.mode === "tower" ? this.run.height + 1 : 0, seed = this.run.seed ^ PARRY_SALT ^ Math.imul(floor, 0x9e3779b1);
-    return (strike) => tileRandom(at.x, at.y, (seed ^ Math.imul(strike + 1, 0x85ebca6b)) | 0) * 100 < chance;
   }
   /** Takes a resolved step: in through its door or fight, then onto the tile. */
   private take(step: TakenStep, revived = 0) {
@@ -2061,7 +2045,7 @@ export class Game {
       const k = `${x},${y}`, cost = foeShotCost(this.floorOf(x, y));
       costs.set(k, cost);
       if (!ready(foes[k], cost)) continue;
-      const { damage, shrouded } = shotDamage(p, tile.enemy, this.shotParried(x, y, v.turn));
+      const { damage, shrouded } = shotDamage(p, tile.enemy);
       foes[k] = spent(foes[k], cost);
       p.hp = snap(Math.max(0, p.hp - damage));
       shots.push({ by: "enemy", from: { x, y }, to: { x: p.x, y: p.y }, damage, ...(shrouded ? { shrouded } : {}) });
@@ -2087,13 +2071,6 @@ export class Game {
       if (!fell) this.message = `Shot · −${wholeChange(taken)} HP`;
     }
     return fell;
-  }
-  /** Whether the hero parries the shot from (x, y) on turn `turn`: a fixed
-   * number per run, tile and turn under Parry Chance, as a fight's are. */
-  private shotParried(x: number, y: number, turn: number) {
-    const p = this.run.player, chance = p.parryChance ?? 0;
-    if (!chance || !parryCut(p)) return false;
-    return chance >= 100 || tileRandom(x, y, (this.run.seed ^ SHOT_SALT ^ Math.imul(turn, 0x85ebca6b)) | 0) * 100 < chance;
   }
   /** The Archer's cooldown runs a turn, and once ready it shoots the
    * closest enemy within its range that an arrow can hurt, its ATK raised by
@@ -2657,7 +2634,7 @@ export class Game {
       hp = s.hp;
       shroud = snap(Math.max(0, shroud - (s.shrouded ?? 0)));
     }
-    fight.bout = resume(fight.bout, from, { player: { ...p, hp, shroud }, enemy: fight.enemy, revives: this.revival(fight.to), crits: this.critRolls(fight.to), parries: this.parryRolls(fight.to) });
+    fight.bout = resume(fight.bout, from, { player: { ...p, hp, shroud }, enemy: fight.enemy, revives: this.revival(fight.to), crits: this.critRolls(fight.to) });
     this.showRevivals(fight.start, revivals(fight.bout));
     this.restate(fight.outcome, fight.bout);
     Object.assign(fight.outcome.player, { attack: p.attack, defense: p.defense, maxHp: p.maxHp });

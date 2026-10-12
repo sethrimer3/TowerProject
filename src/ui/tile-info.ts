@@ -5,7 +5,7 @@ import type { Game, RouteEffects } from "../state.ts";
 import { POTION_HEAL, potionRestores, resolveStep, shardStat } from "../step-effects.ts";
 import { attackForFewerHits, instakill, netDamage, predict, type CombatPrediction } from "../combat.ts";
 import { forecast as critForecast, type CritForecast } from "../crit-forecast.ts";
-import { countsParries, goalUnlocked } from "../goals.ts";
+import { goalUnlocked } from "../goals.ts";
 import { chestReward, CLEARED_INSPIRATION } from "../tower/area-ledger.ts";
 import { doorColor, doorDescription, doorName, doorRule, drainsHp, KEY_NAMES } from "../doors.ts";
 import { MODES } from "../modes.ts";
@@ -113,9 +113,9 @@ function shardGain(t: Tile, p: Player, g: Board, stat: "attack" | "defense") {
 
 const DESCRIBE: Partial<Record<Kind, Describe>> = {
   enemy: (t, p, g) => {
-    // Critical strikes count in the prediction only with Critical Prediction, and parries with Evade Prediction.
-    const crit = g.save.upgrades.critPrediction ? g.stepRules.crit : undefined, parries = countsParries(g.save);
-    const e = t.enemy!, r = predict(p, e), c = (crit || parries) && !r.impervious ? critForecast(p, e, crit, parries) : null;
+    // Critical strikes count in the prediction only with Critical Prediction.
+    const crit = g.save.upgrades.critPrediction ? g.stepRules.crit : undefined;
+    const e = t.enemy!, r = predict(p, e), c = crit && !r.impervious ? critForecast(p, e, crit) : null;
     return {
       title: enemyTitle(e),
       body: `<span>HP ${enemyStat(e.hp)} · ATK ${enemyStat(e.attack)} · DEF ${enemyStat(e.defense)}</span>` + prediction(r, p, g, c) + forecast(p, e, r.impervious ? 0 : r.turns, g, !!crit),

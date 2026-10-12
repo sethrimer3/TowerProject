@@ -122,7 +122,7 @@ export class ShrineDesk {
   sync() {
     if (this.host.mode !== "tower" || this.host.run.outside || !this.run.shrine) return;
     const before = appliedNow(this.run), after = appliedOf(boonEffects(this.run.shrine.picked, this.save));
-    const changed = !sameFoes(before.foes, after.foes) || (["attack", "maxHp", "shroud", "regen", "lifesteal", "parryChance", "parry"] as const).some((k) => before[k] !== after[k]);
+    const changed = !sameFoes(before.foes, after.foes) || (["attack", "maxHp", "shroud", "regen", "lifesteal", "parry", "parryBonus"] as const).some((k) => before[k] !== after[k]);
     if (!changed) return;
     for (const run of this.runs()) {
       if (!run.shrine) continue;
