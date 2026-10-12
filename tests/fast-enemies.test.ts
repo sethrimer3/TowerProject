@@ -25,11 +25,11 @@ test("Fast enemies start at 8% in the second tier, grow 1% every 200 floors to 2
   assert.deepEqual([fastShare(9, 1), fastShare(9, 9000)], [11_500, 23_500]);
 });
 
-test("a Fast enemy strikes with at least 1.75 times the tier below's floor-100 enemy: 700 in the second tier, 3,500 in the third", () => {
+test("a Fast enemy strikes with at least 1.75 times the tier below's floor-100 enemy (half in the third): 700 in the second tier, 1,000 in the third, 14,000 in the fourth", () => {
   assert.equal(FAST_CARRY, 1.75);
   assert.equal(enemyStats("tower", 1, 99, "normal", "balanced").attack, 400);
-  assert.deepEqual([fastCarry("tower", 1), fastCarry("tower", 2), fastCarry("tower", 3)], [0, 700, 3500]);
-  assert.deepEqual([fastCarry("delve", 2), fastCarry("delve", 3)], [700, 3500]);
+  assert.deepEqual([1, 2, 3, 4].map(t => fastCarry("tower", t)), [0, 700, 1000, 14000]);
+  assert.deepEqual([2, 3, 4].map(t => fastCarry("delve", t)), [700, 1000, 14000]);
 });
 
 test("Tower floors make about 8% of their non-boss enemies Fast from the second tier, raising only their ATK, and none in the first", () => {
