@@ -53,6 +53,8 @@ Attack Range and Attack Speed join Offense training from Tower III's floors 20 a
 **ATK / Tile** joins it from floor 50: each arrow's ATK is multiplied by 1 plus its value for every tile to its target, counted straight across (diagonals included), so a monster too well armored for an arrow up close may still be hurt, and shot, from further off.
 **Charged Shot** opens in the Archives from floor 80: each turn a ready arrow waits without firing adds its percent (1% a level) to the next arrow's ATK, and that arrow flies in a blue glow and its number rises with a gold outline; the charge starts over once it fires.
 ATK / Tile, Charged Shot and a critical hit multiply one another.
+**Multishot Chance** and **Multishot Targets** join Offense training from floor 90: each shot has a chance (0.5% a rank, up to 49.5%) to be a multishot, firing at once at the closest enemies an arrow can hurt, 2 of them and one more a Targets rank (up to 9), or one at each when fewer are in range.
+Every arrow of a multishot carries the first's Charged Shot, rolls its own critical hit, and has its own ATK / Tile for its own distance.
 
 ## Fractions
 

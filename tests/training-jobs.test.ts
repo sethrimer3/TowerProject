@@ -38,7 +38,7 @@ test("a trainer's Gold: 20 a point, times the rank's number, times 1 + ranks / t
   const silverBase = (id: keyof typeof RUN_TRAINING_PRICES) => RUN_TRAINING_PRICES[id].base;
   // (The crit rows' growth is on a cubic curve of its own, and the Free
   // Upgrade rows start from their own price, so neither compares.)
-  const linear = TRAINING.filter((t) => !TRAINER_GOLD_CURVES[t.id].power && !TRAINER_GOLD_CURVES[t.id].start);
+  const linear = TRAINING.filter((t) => !("prices" in TRAINER_GOLD_CURVES[t.id]) && !TRAINER_GOLD_CURVES[t.id].power && !TRAINER_GOLD_CURVES[t.id].start);
   for (const a of linear) for (const b of linear) {
     const [ga, gb] = [TRAINER_GOLD_CURVES[a.id].growth, TRAINER_GOLD_CURVES[b.id].growth];
     if (silverBase(a.id) < silverBase(b.id)) assert.ok(ga > gb, `${a.id} softer than ${b.id}`);
@@ -344,8 +344,8 @@ test("the time bank serves any stat, after that stat's own time credit", () => {
 test("a cubic scale adds (ranks / cubic)^3 to a trainer's Gold: never below the linear price, far above it at the cap", () => {
   for (const t of TRAINING) {
     const c = TRAINER_GOLD_CURVES[t.id];
-    // (ATK / Tile's trainers ask a rising ratio more each rank instead.)
-    if ("ratio" in c || c.power) continue;
+    // (ATK / Tile's trainers ask a rising ratio more each rank instead, and Multishot Targets' a price a rank.)
+    if ("ratio" in c || "prices" in c || c.power) continue;
     assert.ok(c.cubic, `${t.id} has a cubic scale`);
     const linear = (r: number) => Math.ceil((c.start ?? 20) * t.cost * (r + 1) * (c.growth + r) / c.growth);
     for (const r of [0, 1, 10, Math.floor(t.max / 2), t.max - 1]) assert.ok(trainingGold(t, r) >= linear(r), `${t.id} rank ${r}`);

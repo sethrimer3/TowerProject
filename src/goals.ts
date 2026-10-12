@@ -35,13 +35,14 @@ import { TIERS } from "./tiers.ts";
  * the hero fires at the nearest enemy in range, ranged.ts), Attack Range
  * and Attack Speed (floors 20 and 30: the Training rows that improve it),
  * ATK / Tile (floor 50: the Training row that strikes harder from further
- * off) and Charged Shot (floor 80: the Archives' project that strengthens
- * an arrow that waits). */
+ * off), Charged Shot (floor 80: the Archives' project that strengthens
+ * an arrow that waits) and Multishot (floor 90: the Training rows that let
+ * a shot fire at several enemies). */
 export type GoalUnlock =
   | "damagePrediction" | "combatForecast" | "attackLore" | "warp" | "damageVisual" | "relativeDamageColor" | "equipment" | "tournament" | "events" | "researchSpeed"
   | "shardAttack" | "shardDefense" | "evadePrediction" | "parryPercent"
   | "shrines" | "firstBoonChoice" | "improveTradeoffs" | "autoPickBoons" | "boonOptions" | "banBoons" | "autoPickRanking"
-  | "badgeSlots" | "noteTaking" | "archer" | "attackRange" | "attackSpeed" | "attackPerTile" | "chargedShot";
+  | "badgeSlots" | "noteTaking" | "archer" | "attackRange" | "attackSpeed" | "attackPerTile" | "chargedShot" | "multishot";
 export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   damagePrediction: "Damage Prediction", combatForecast: "Combat Forecast", attackLore: "Attack Lore", warp: "Warp", damageVisual: "Damage Visual",
   relativeDamageColor: "Relative Damage Color", equipment: "Equipment", tournament: "Tournament", events: "Events",
@@ -50,7 +51,7 @@ export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   shrines: "Unlock Shrines", firstBoonChoice: "First Boon Choice", improveTradeoffs: "Improve Trade-off Boons",
   autoPickBoons: "Auto Pick Boons", boonOptions: "Boon Option Quantity", banBoons: "Ban Boons", autoPickRanking: "Auto Pick Ranking",
   badgeSlots: "Badge Slots", noteTaking: "Note Taking",
-  archer: "Archer Class", attackRange: "Attack Range", attackSpeed: "Attack Speed", attackPerTile: "ATK / Tile", chargedShot: "Charged Shot",
+  archer: "Archer Class", attackRange: "Attack Range", attackSpeed: "Attack Speed", attackPerTile: "ATK / Tile", chargedShot: "Charged Shot", multishot: "Multishot",
 };
 /** What a checkpoint pays: an unlock, the next tower opened, or an amount of a currency. */
 export type GoalReward =
@@ -104,6 +105,7 @@ const TOWER_THREE: Record<number, Omit<Checkpoint, "floor">> = {
   30: { reward: unlock("attackSpeed"), premium: gems(30) },
   50: { reward: unlock("attackPerTile"), premium: gems(50) },
   80: { reward: unlock("chargedShot"), premium: gems(80) },
+  90: { reward: unlock("multishot"), premium: gems(90) },
 };
 /** Tower IV's checkpoints that differ from the stub. */
 const TOWER_FOUR: Record<number, Omit<Checkpoint, "floor">> = {

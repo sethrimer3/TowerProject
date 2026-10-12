@@ -14,6 +14,10 @@ export function intPow(base: number, n: number) {
   return result;
 }
 
+/** `base` (≥ 0) to the power `p`, a whole number or a half: a half power
+ * multiplies in one `Math.sqrt`, exact everywhere. */
+export const halfPow = (base: number, p: number) => intPow(base, Math.floor(p)) * (p % 1 ? Math.sqrt(base) : 1);
+
 /** The `n`-th root of `x` (> 0; `n` a whole number ≥ 1), halving the gap
  * between two bounds until they meet: the same bits everywhere. */
 export function root(x: number, n: number) {

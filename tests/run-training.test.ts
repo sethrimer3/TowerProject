@@ -42,10 +42,10 @@ test("Silver prices start at the row's base and rise by a step plus the ranks bo
   assert.deepEqual([1, 12, 36, 78].map((n) => silverPrice("attackRange", n - 1)), [50, 1165, 8573, 64075]);
   assert.deepEqual([1, 12, 34, 92].map((n) => silverPrice("attackSpeed", n - 1)), [30, 1166, 8870, 116464]);
   for (const row of TRAINING) {
-    const { base } = RUN_TRAINING_PRICES[row.id];
-    assert.ok([3, 5, 10, 12, 20, 30, 40, 50, 60, 75, 100].includes(base), `${row.id} starts at 3, 5, 10, 12, 20, 30, 40, 50, 60, 75 or 100`);
+    const schedule = RUN_TRAINING_PRICES[row.id], base = "prices" in schedule ? schedule.prices[0] : schedule.base;
+    assert.ok([3, 5, 10, 12, 20, 30, 40, 50, 60, 75, 100, 450].includes(base), `${row.id} starts at 3, 5, 10, 12, 20, 30, 40, 50, 60, 75, 100 or 450`);
     let last = 0;
-    for (let k = 0; k < 1000; k++) {
+    for (let k = 0; k < Math.min(1000, row.max); k++) {
       const price = silverPrice(row.id, k);
       assert.ok(Number.isInteger(price) && price > last, "each rank dearer than the last, in whole Silver");
       last = price;

@@ -69,7 +69,7 @@ import { enemyStat, keyCount, whole, wholeChange } from "./whole.ts";
 import { MODES, milestones, type ModeProfile } from "./modes.ts";
 import { boughtInRun, ranksInRun, runTrainingBulk, runTrainingOffer, type RunTrainingOffer } from "./run-training.ts";
 import { openQuantities, type BuyQuantity } from "./buy-quantity.ts";
-import { attackPerTile, attackRange, attackSpeed, critRule, keepUndos, loadout, percentPotionChance, potionPercent, reviveChance, statFactor } from "./loadout.ts";
+import { attackPerTile, attackRange, attackSpeed, multishotChance, multishotTargets, critRule, keepUndos, loadout, percentPotionChance, potionPercent, reviveChance, statFactor } from "./loadout.ts";
 import { researched } from "./archives.ts";
 import { chargesLeft, chargesPerRun, climbFloor, spendCharge, type Charge } from "./run-charges.ts";
 import type { MaterialId, MaterialStack } from "./materials.ts";
@@ -140,6 +140,7 @@ const PARRY_SALT = 0x9a77e;
  * rolls against a Ranged enemy's shots, apart from a fight's. */
 const ARROW_SALT = 0xa770e;
 const SHOT_SALT = 0x5407e;
+const MULTISHOT_SALT = 0x3a17c;
 /** How long a shot or arrow flies, at most (ms): it lands as the hero's
  * step ends, sooner at higher speeds. */
 const FLIGHT_MS = 220;
@@ -2003,22 +2004,34 @@ export class Game {
   /** The Archer's cooldown runs a turn, and once ready it shoots the
    * closest enemy within its range that an arrow can hurt, its ATK raised by
    * ATK / Tile for the distance and by Charged Shot for the turns it waited
-   * (`arrowBoost`). A ready arrow with no target waits for one, counting
-   * the turn toward Charged Shot once that is researched. */
+   * (`arrowBoost`). A multishot (`multishot`) fires the same charge at up
+   * to Multishot Targets of the closest enemies it can hurt, each arrow with
+   * the first's Charged Shot, its own ATK / Tile and its own critical roll.
+   * A ready arrow with no target waits for one, counting the turn toward
+   * Charged Shot once that is researched. */
   private loose(v: Volleys, shots: Shot[], range: number) {
     const p = this.run.player, perTile = attackPerTile(this.trainingNow), percent = researched(this.save.archives, "chargedShotPercent", 0);
     const boost = (d2: number) => arrowBoost(perTile, d2, percent, v.waited ?? 0);
+    const hurts = (e: InReach) => arrowDamage(p, e.tile.enemy, 0, 1, boost(e.d2)) > 0;
     let hero = charged(v.hero, attackSpeed(this.trainingNow));
-    const target = ready(hero, ARROW_COST) ? enemiesWithin(this.world, p, range, this.wrap).find((e) => arrowDamage(p, e.tile.enemy, 0, 1, boost(e.d2)) > 0) : undefined;
+    const inReach = ready(hero, ARROW_COST) ? enemiesWithin(this.world, p, range, this.wrap) : [];
+    const target = inReach.find(hurts);
     if (target) {
       hero = spent(hero, ARROW_COST);
-      this.shoot(target, v.turn, shots, boost(target.d2), !!(percent && v.waited));
+      const targets = this.multishot(v.turn) ? inReach.filter(hurts).slice(0, multishotTargets(this.trainingNow)) : [target];
+      for (const t of targets) this.shoot(t, v.turn, shots, boost(t.d2), !!(percent && v.waited));
       delete v.waited;
     }
     hero = held(hero, ARROW_COST);
     if (hero === undefined) delete v.hero;
     else v.hero = hero;
     if (!target && hero === undefined && percent > 0) v.waited = (v.waited ?? 0) + 1;
+  }
+  /** Whether the Archer's shot on turn `turn` is a multishot: a fixed
+   * number per run, turn and the hero's tile under Multishot Chance. */
+  private multishot(turn: number) {
+    const chance = multishotChance(this.trainingNow), p = this.run.player;
+    return chance > 0 && tileRandom(p.x, p.y, (this.run.seed ^ MULTISHOT_SALT ^ Math.imul(turn, 0x85ebca6b)) | 0) * 10_000 < chance;
   }
   /** The Archer's arrow lands on `target`: one strike's damage, its ATK
    * multiplied by `boost` and critical rolls counted, healing by

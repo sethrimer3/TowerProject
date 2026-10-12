@@ -3,7 +3,7 @@ import { bulkBuy, type BuyQuantity } from "./buy-quantity.ts";
 import { snap } from "./exact.ts";
 import { PARRY_CAP, type CritRule } from "./combat.ts";
 import type { Mode, Save } from "./entities.ts";
-import { CRIT_CHANCE_RANK, CRIT_FACTOR_BASE, CRIT_FACTOR_RANK, FIND_POTION_BASE, FIND_POTION_MAX, FLOOR_GOLD_BASE, FLOOR_GOLD_RANK, FLOOR_SILVER_BASE, FLOOR_SILVER_RANK, FIND_POTION_RANK, FREE_TRAINING_RANK, TRAINING_GROUPS, REVIVE_BASE, REVIVE_MAX, REVIVE_RANK, GOLD_SHOP, KILL_GOLD_RANK, SILVER_BONUS_RANK, schedulePrice, POTION_PERCENT_BASE, POTION_PERCENT_RANK, TRAINING, TRAINING_PER_LEVEL, UPGRADES, isStatRow, levelForXp, trained, trainingWorth, ATTACK_RANGE_BASE, ATTACK_RANGE_RANK, ATTACK_SPEED_BASE, ATTACK_SPEED_RANK, ATK_PER_TILE_FIRST, ATK_PER_TILE_FALL, type GoldItemId, type StatTrainingRow, type TrainingId, type TrainingRow, type UpgradeId } from "./config.ts";
+import { CRIT_CHANCE_RANK, CRIT_FACTOR_BASE, CRIT_FACTOR_RANK, FIND_POTION_BASE, FIND_POTION_MAX, FLOOR_GOLD_BASE, FLOOR_GOLD_RANK, FLOOR_SILVER_BASE, FLOOR_SILVER_RANK, FIND_POTION_RANK, FREE_TRAINING_RANK, TRAINING_GROUPS, REVIVE_BASE, REVIVE_MAX, REVIVE_RANK, GOLD_SHOP, KILL_GOLD_RANK, SILVER_BONUS_RANK, schedulePrice, POTION_PERCENT_BASE, POTION_PERCENT_RANK, TRAINING, TRAINING_PER_LEVEL, UPGRADES, isStatRow, levelForXp, trained, trainingWorth, ATTACK_RANGE_BASE, ATTACK_RANGE_RANK, ATTACK_SPEED_BASE, ATTACK_SPEED_RANK, ATK_PER_TILE_FIRST, ATK_PER_TILE_FALL, MULTISHOT_CHANCE_RANK, MULTISHOT_TARGETS_BASE, MULTISHOT_TARGETS_RANK, type GoldItemId, type StatTrainingRow, type TrainingId, type TrainingRow, type UpgradeId } from "./config.ts";
 import { wornEffects } from "./equipment/effects.ts";
 import { PIERCE_CAP } from "./equipment/balance.ts";
 import { RESEARCH, researched } from "./archives.ts";
@@ -240,6 +240,13 @@ const attackSpeedAt = (ranks: number) => ATTACK_SPEED_BASE + ATTACK_SPEED_RANK *
  * `trainingNow`): 0.01 for the first rank, each later one 0.00004 less. */
 export const attackPerTile = (save: Pick<Save, "training">) => attackPerTileAt(save.training.attackPerTile);
 const attackPerTileAt = (ranks: number) => ATK_PER_TILE_FIRST * ranks - (ATK_PER_TILE_FALL * ranks * (ranks - 1)) / 2;
+/** The chance each of the Archer's shots is a multishot, in hundredths of
+ * a percent (Multishot Chance), and how many enemies a multishot fires at
+ * (Multishot Targets), from the ranks `save` holds (a run's `trainingNow`). */
+export const multishotChance = (save: Pick<Save, "training">) => multishotChanceAt(save.training.multishotChance);
+const multishotChanceAt = (ranks: number) => MULTISHOT_CHANCE_RANK * ranks;
+export const multishotTargets = (save: Pick<Save, "training">) => multishotTargetsAt(save.training.multishotTargets);
+const multishotTargetsAt = (ranks: number) => MULTISHOT_TARGETS_BASE + MULTISHOT_TARGETS_RANK * ranks;
 
 /** The Gold each floor climbed for the first time in a run pays, before
  * the tier's bonus and research: none without Spare Change. */
@@ -276,10 +283,11 @@ const MULTIPLIER_ROWS: ReadonlyMap<TrainingId, number> = new Map([["silverBonus"
 
 /** How a Training row's value reads: a multiplier as ×1.30, Attack Range
  * as 3.00 tiles, Attack Speed as 1.00/10 turns, ATK / Tile as
- * +0.010×/tile, the others with their unit after. */
+ * +0.010×/tile, Multishot Targets as 2 targets, the others with their unit
+ * after. */
 export const trainingText = (value: number, unit: string) =>
   unit === "×" ? `×${value.toFixed(2)}` : unit === "tiles" ? `${value.toFixed(2)} tiles` : unit === "shots" ? `${value.toFixed(2)}/10 turns`
-    : unit === "perTile" ? `+${value.toFixed(3)}×/tile` : `${value}${unit}`;
+    : unit === "perTile" ? `+${value.toFixed(3)}×/tile` : unit === "targets" ? `${value} targets` : `${value}${unit}`;
 
 /** Whether `id` has as many ranks as it can take. */
 /** How much faster trainers train than at first (Faster Trainers research:
@@ -357,6 +365,7 @@ function valueStep(id: TrainingId, ranks: number, maxed: boolean, count = 1) {
   if (id === "attackRange") return { unit: "tiles", now: attackRangeAt(ranks) / 100, next: attackRangeAt(maxed ? ranks : ranks + count) / 100, worth: ATTACK_RANGE_RANK / 100 };
   if (id === "attackSpeed") return { unit: "shots", now: attackSpeedAt(ranks) / 20, next: attackSpeedAt(maxed ? ranks : ranks + count) / 20, worth: ATTACK_SPEED_RANK / 20 };
   if (id === "attackPerTile") return { unit: "perTile", now: attackPerTileAt(ranks) / 100_000, next: attackPerTileAt(maxed ? ranks : ranks + count) / 100_000, worth: (ATK_PER_TILE_FIRST - ATK_PER_TILE_FALL * ranks) / 100_000 };
+  if (id === "multishotTargets") return { unit: "targets", now: multishotTargetsAt(ranks), next: multishotTargetsAt(maxed ? ranks : ranks + count), worth: MULTISHOT_TARGETS_RANK };
   if (id === "floorGold") return { unit: "", now: floorGoldAt(ranks), next: floorGoldAt(ranks + count), worth: FLOOR_GOLD_RANK };
   if (id === "floorSilver") return { unit: "", now: floorSilverAt(ranks), next: floorSilverAt(ranks + count), worth: FLOOR_SILVER_RANK };
   const bonus = MULTIPLIER_ROWS.get(id);
@@ -369,6 +378,7 @@ function valueStep(id: TrainingId, ranks: number, maxed: boolean, count = 1) {
 function percentRow(id: TrainingId): [(ranks: number) => number, number] {
   if (id === "findPotion") return [findPotionChance, FIND_POTION_RANK];
   if (id === "revive") return [reviveChanceAt, REVIVE_RANK];
+  if (id === "multishotChance") return [multishotChanceAt, MULTISHOT_CHANCE_RANK];
   if (FREE_ROWS.has(id)) return [freeTrainingAt, FREE_TRAINING_RANK];
   return [(r: number) => POTION_PERCENT_BASE + POTION_PERCENT_RANK * r, POTION_PERCENT_RANK];
 }
