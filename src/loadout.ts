@@ -3,11 +3,17 @@ import { bulkBuy, type BuyQuantity } from "./buy-quantity.ts";
 import { snap } from "./exact.ts";
 import { PARRY_CAP, type CritRule } from "./combat.ts";
 import type { Mode, Save } from "./entities.ts";
-import { CRIT_CHANCE_RANK, CRIT_FACTOR_BASE, CRIT_FACTOR_RANK, FIND_POTION_BASE, FIND_POTION_MAX, FLOOR_GOLD_BASE, FLOOR_GOLD_RANK, FLOOR_SILVER_BASE, FLOOR_SILVER_RANK, FIND_POTION_RANK, FREE_TRAINING_RANK, TRAINING_GROUPS, REVIVE_BASE, REVIVE_MAX, REVIVE_RANK, GOLD_SHOP, KILL_GOLD_RANK, SILVER_BONUS_RANK, schedulePrice, POTION_PERCENT_BASE, POTION_PERCENT_RANK, TRAINING, TRAINING_PER_LEVEL, UPGRADES, isStatRow, levelForXp, trained, trainingOpen, trainingWorth, type GoldItemId, type StatTrainingRow, type TrainingId, type TrainingRow, type UpgradeId } from "./config.ts";
+import { CRIT_CHANCE_RANK, CRIT_FACTOR_BASE, CRIT_FACTOR_RANK, FIND_POTION_BASE, FIND_POTION_MAX, FLOOR_GOLD_BASE, FLOOR_GOLD_RANK, FLOOR_SILVER_BASE, FLOOR_SILVER_RANK, FIND_POTION_RANK, FREE_TRAINING_RANK, TRAINING_GROUPS, REVIVE_BASE, REVIVE_MAX, REVIVE_RANK, GOLD_SHOP, KILL_GOLD_RANK, SILVER_BONUS_RANK, schedulePrice, POTION_PERCENT_BASE, POTION_PERCENT_RANK, TRAINING, TRAINING_PER_LEVEL, UPGRADES, isStatRow, levelForXp, trained, trainingWorth, ATTACK_RANGE_BASE, ATTACK_RANGE_RANK, ATTACK_SPEED_BASE, ATTACK_SPEED_RANK, type GoldItemId, type StatTrainingRow, type TrainingId, type TrainingRow, type UpgradeId } from "./config.ts";
 import { wornEffects } from "./equipment/effects.ts";
 import { PIERCE_CAP } from "./equipment/balance.ts";
 import { RESEARCH, researched } from "./archives.ts";
 import { ranksInTraining, trainingGold } from "./training-jobs.ts";
+import { goalUnlocked } from "./goals.ts";
+
+/** Whether `row` can be seen and trained: its upgrade owned, or the Goals
+ * checkpoint that unlocks it claimed (Attack Range, Attack Speed). */
+export const trainingOpen = (row: TrainingRow, save: Pick<Save, "upgrades" | "goals">) =>
+  ("requires" in row ? save.upgrades[row.requires] > 0 : true) && ("goal" in row ? goalUnlocked(save, row.goal) : true);
 
 /** What one rank of an upgrade, or one provision, adds to a character. */
 export type Grants = Partial<Record<Stat, number>>;
@@ -183,7 +189,7 @@ export function trainingPoints(save: Pick<Save, "xp" | "trainingPaid">) {
  * take a rank they pay for (the Upgrades and Training tabs' dot). */
 export function trainingWaiting(save: Save) {
   const left = trainingPoints(save).left;
-  return left > 0 && TRAINING.some((t) => t.cost <= left && trainingOpen(t, save.upgrades) && !trainingMaxed(save, t.id));
+  return left > 0 && TRAINING.some((t) => t.cost <= left && trainingOpen(t, save) && !trainingMaxed(save, t.id));
 }
 
 /** What a percent potion restores beyond its HP, in hundredths of a
@@ -222,6 +228,14 @@ export function critRule(save: Pick<Save, "upgrades" | "training" | "archives">)
   return { chance, factor: snap(critFactor(save) * researched(save.archives, "critFactorPercent", 100) / 100) };
 }
 
+/** The Archer's reach, in hundredths of a tile (Attack Range), and its
+ * rate of fire, in twentieths of a shot every 10 turns (Attack Speed),
+ * from the ranks `save` holds (a run's `trainingNow`). */
+export const attackRange = (save: Pick<Save, "training">) => attackRangeAt(save.training.attackRange);
+const attackRangeAt = (ranks: number) => ATTACK_RANGE_BASE + ATTACK_RANGE_RANK * ranks;
+export const attackSpeed = (save: Pick<Save, "training">) => attackSpeedAt(save.training.attackSpeed);
+const attackSpeedAt = (ranks: number) => ATTACK_SPEED_BASE + ATTACK_SPEED_RANK * ranks;
+
 /** The Gold each floor climbed for the first time in a run pays, before
  * the tier's bonus and research: none without Spare Change. */
 export const floorGold = (save: Pick<Save, "upgrades" | "training">) =>
@@ -255,9 +269,11 @@ const freeTrainingAt = (ranks: number) => FREE_TRAINING_RANK * ranks;
  * and what a rank adds. */
 const MULTIPLIER_ROWS: ReadonlyMap<TrainingId, number> = new Map([["silverBonus", SILVER_BONUS_RANK], ["killGold", KILL_GOLD_RANK]]);
 
-/** How a Training row's value reads: a multiplier as ×1.30, the others
- * with their unit after. */
-export const trainingText = (value: number, unit: string) => unit === "×" ? `×${value.toFixed(2)}` : `${value}${unit}`;
+/** How a Training row's value reads: a multiplier as ×1.30, Attack Range
+ * as 3.00 tiles, Attack Speed as 1.00/10 turns, the others with their unit
+ * after. */
+export const trainingText = (value: number, unit: string) =>
+  unit === "×" ? `×${value.toFixed(2)}` : unit === "tiles" ? `${value.toFixed(2)} tiles` : unit === "shots" ? `${value.toFixed(2)}/10 turns` : `${value}${unit}`;
 
 /** Whether `id` has as many ranks as it can take. */
 /** How much faster trainers train than at first (Faster Trainers research:
@@ -332,6 +348,8 @@ export const shownStat = (stat: StatTrainingRow["stat"], value: number) =>
 function valueStep(id: TrainingId, ranks: number, maxed: boolean, count = 1) {
   if (id === "critChance") return { unit: "%", now: critChanceAt(ranks) / 100, next: critChanceAt(maxed ? ranks : ranks + count) / 100, worth: CRIT_CHANCE_RANK / 100 };
   if (id === "critFactor") return { unit: "×", now: critFactorAt(ranks) / 100, next: critFactorAt(maxed ? ranks : ranks + count) / 100, worth: CRIT_FACTOR_RANK };
+  if (id === "attackRange") return { unit: "tiles", now: attackRangeAt(ranks) / 100, next: attackRangeAt(maxed ? ranks : ranks + count) / 100, worth: ATTACK_RANGE_RANK / 100 };
+  if (id === "attackSpeed") return { unit: "shots", now: attackSpeedAt(ranks) / 20, next: attackSpeedAt(maxed ? ranks : ranks + count) / 20, worth: ATTACK_SPEED_RANK / 20 };
   if (id === "floorGold") return { unit: "", now: floorGoldAt(ranks), next: floorGoldAt(ranks + count), worth: FLOOR_GOLD_RANK };
   if (id === "floorSilver") return { unit: "", now: floorSilverAt(ranks), next: floorSilverAt(ranks + count), worth: FLOOR_SILVER_RANK };
   const bonus = MULTIPLIER_ROWS.get(id);

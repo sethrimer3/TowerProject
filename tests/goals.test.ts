@@ -30,8 +30,10 @@ test("every tower has a checkpoint each ten floors to 100, then every 50 to 400;
   assert.deepEqual(CHECKPOINTS[1]![8], { floor: 90, reward: { kind: "currency", currency: "gold", amount: 2000 }, premium: { kind: "currency", currency: "gold", amount: 10000 } });
   assert.deepEqual(CHECKPOINTS[1]![10]!.reward, { kind: "unlock", unlock: "researchSpeed" });
   assert.deepEqual(CHECKPOINTS[1]![11]!.reward, gems(40));
+  // Tower III's first three make the hero an Archer, then open Attack Range and Attack Speed.
+  assert.deepEqual(CHECKPOINTS[3]!.slice(0, 3).map((c) => c.reward), ["archer", "attackRange", "attackSpeed"].map((unlock) => ({ kind: "unlock", unlock })));
   // The stubs: 100 Gold × checkpoint × tower, 10 Gems × checkpoint.
-  assert.deepEqual(CHECKPOINTS[3]![1], { floor: 20, reward: { kind: "currency", currency: "gold", amount: 600 }, premium: { kind: "currency", currency: "gems", amount: 20 } });
+  assert.deepEqual(CHECKPOINTS[3]![3], { floor: 40, reward: { kind: "currency", currency: "gold", amount: 1200 }, premium: { kind: "currency", currency: "gems", amount: 40 } });
   // Floor 100 opens the next tower, in every tower but the last.
   for (let tower = 1; tower < TIERS; tower++)
     assert.deepEqual(CHECKPOINTS[tower]![9], { floor: 100, reward: { kind: "tower", tower: tower + 1 }, premium: gems(100) });

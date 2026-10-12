@@ -22,6 +22,7 @@ import type { MissionsSave } from "./missions/progress.ts";
 import type { EventsSave } from "./events/progress.ts";
 import type { TournamentRun } from "./tournament/run.ts";
 import type { Profile } from "./profile.ts";
+import type { Volleys } from "./ranged.ts";
 export type Kind =
   | "wall"
   | "floor"
@@ -55,6 +56,8 @@ export type Enemy = {
   profile?: EnemyProfile;
   /** A Fast enemy (fast-enemies.ts) strikes first in every fight. */
   fast?: true;
+  /** A Ranged enemy (ranged.ts) shoots the hero from a distance. */
+  ranged?: true;
 };
 /** An area reward chest's metal: gold for an area mastered, silver for one
  * cleared (tower/area-ledger.ts). */
@@ -69,7 +72,9 @@ export type DoorRule =
   /** A Wooden Door: any one key opens it; a hero with none breaks it down
    * for `durability` HP, which DEF doesn't reduce (doors.ts). */
   | { type: "wood"; durability: number };
-export type Tile = { kind: Kind; amount?: number; color?: KeyColor; door?: DoorRule; enemy?: Enemy; tier?: ChestTier };
+/** `wound`: the HP the hero's arrows have taken off the enemy standing
+ * here (ranged.ts); the board reads its HP that much lower. */
+export type Tile = { kind: Kind; amount?: number; color?: KeyColor; door?: DoorRule; enemy?: Enemy; tier?: ChestTier; wound?: number };
 export type Point = { x: number; y: number };
 /** A stationary wall-mounted light source, anchored to a walkable floor
  * tile adjacent to a wall. Its visibility polygon is computed once (on
@@ -174,6 +179,9 @@ export type RunCore = {
   /** Which numbered tower (or delve) the run climbs, from 2 up (tiers.ts);
    * absent for the first. */
   tier?: number;
+  /** Ranged enemies' and the Archer's cooldowns, and the turns taken
+   * inside (ranged.ts); absent until the first shot is due. */
+  volleys?: Volleys;
   /** The card badges on the hand's cards as the run went inside
    * (badges.ts), each card's top slot first, fixed for the run. */
   badges?: RunBadges;

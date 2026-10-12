@@ -1,8 +1,8 @@
 import { askForGems, helpButton, showHelp } from "./dialogs.ts";
 import { play } from "../sound.ts";
 import { permanentBoost, trainingRate } from "../shop/entitlements.ts";
-import { TRAINING, TRAINING_GROUPS, TRAINING_PER_LEVEL, isStatRow, levelForXp, trainingOpen, type TrainingId } from "../config.ts";
-import { trainingBulk, trainingPoints, trainingStep, trainingText, trainingWaiting } from "../loadout.ts";
+import { TRAINING, TRAINING_GROUPS, TRAINING_PER_LEVEL, isStatRow, levelForXp, type TrainingId } from "../config.ts";
+import { trainingBulk, trainingPoints, trainingStep, trainingText, trainingWaiting, trainingOpen } from "../loadout.ts";
 import { whole } from "../whole.ts";
 import type { BuyQuantity } from "../buy-quantity.ts";
 import { buyQuantityHtml, maxCount, readQuantity } from "./buy-quantity-select.ts";
@@ -216,10 +216,10 @@ export class ResearchPage {
     // A stat a trainer is training moves up under the trainers, in the
     // order they started, until its training ends.
     const training = (t: TrainingRow) => !!trainingJob(save.trainingJobs, t.id);
-    const inTraining = save.trainingJobs.map(j => TRAINING.find(t => t.id === j.id)!).filter(t => trainingOpen(t, save.upgrades));
+    const inTraining = save.trainingJobs.map(j => TRAINING.find(t => t.id === j.id)!).filter(t => trainingOpen(t, save));
     // Each group's other rows, leaving out any whose upgrade isn't owned yet.
     const rows = (Object.entries(TRAINING_GROUPS) as [keyof typeof TRAINING_GROUPS, string][]).map(([group, name]) => {
-      const open = TRAINING.filter(t => t.group === group && trainingOpen(t, save.upgrades) && !training(t));
+      const open = TRAINING.filter(t => t.group === group && trainingOpen(t, save) && !training(t));
       return open.length ? `<h4 class="training-group">${name}</h4>${open.map(row).join("")}` : "";
     }).join("");
     const bank = save.trainingBank > 0
@@ -249,7 +249,8 @@ export class ResearchPage {
     // A row says what its most ranks are worth, and once there offers no
     // next one: a stat's worth grows with the hero's level, so its level shows its most
     // ranks instead.
-    const most = !isStatRow(t) ? `up to ${trainingStep({ ...save, training: { ...save.training, [t.id]: t.max }, trainingJobs: [] }, t.id).now}${unit}` : "";
+    const top = trainingStep({ ...save, training: { ...save.training, [t.id]: t.max }, trainingJobs: [] }, t.id).now;
+    const most = !isStatRow(t) ? `up to ${unit === "tiles" || unit === "shots" ? trainingText(top, unit) : `${top}${unit}`}` : "";
     const shown = (v: number) => trainingText(v, unit);
     const time = step.maxed || !hired ? "" : this.timeNote(t.id, q);
     const notes = [time, most].filter(Boolean).join(" · ");

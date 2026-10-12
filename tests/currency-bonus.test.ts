@@ -2,7 +2,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { decode, defaults } from "../src/save.ts";
-import { TRAINING, cost, trainingOpen, type TrainingId, type UpgradeId } from "../src/config.ts";
+import { trainingOpen } from "../src/loadout.ts";
+import { TRAINING, cost, type TrainingId, type UpgradeId } from "../src/config.ts";
 import { TREES } from "../src/skill-trees.ts";
 import { RESEARCH, researched, type ResearchId } from "../src/archives.ts";
 import { floorSilver, killGold, silverBonus, trainingStep, trainingText } from "../src/loadout.ts";
@@ -32,9 +33,9 @@ test("Wealthy, Loot and Wishing Well each open their Training row and research",
     const row = TRAINING.find((t) => t.id === id)!;
     assert.equal(row.group, "utility");
     assert.equal(row.cost, 1);
-    assert.equal(trainingOpen(row, save.upgrades), false, id);
+    assert.equal(trainingOpen(row, save), false, id);
     save.upgrades[skill] = 1;
-    assert.ok(trainingOpen(row, save.upgrades), id);
+    assert.ok(trainingOpen(row, save), id);
     assert.deepEqual(RESEARCH[id].requires, [{ upgrade: skill }]);
     assert.equal(RESEARCH[id].levels.length, 100);
     // Priced and timed like Spare Change's Gold / Floor, level for level.

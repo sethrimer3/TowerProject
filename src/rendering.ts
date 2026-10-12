@@ -23,6 +23,7 @@ import { AREA_BURST_MS, drawAreaBurst, preloadAreaBurst, drawLevelUp, drawRevive
 import { drawPoof, POOF_MS } from "./poof.ts";
 import { drawGem, drawGemSparkle, GEM_SPARKLE_MS } from "./gem-art.ts";
 import { drawRushEchoes, RUSH_ECHO_MS } from "./rush-echoes.ts";
+import { drawVolley } from "./volley-art.ts";
 import type { Rush } from "./state.ts";
 import { darknessOf, forEachViewTile, tileTransform, toTileSpace, type FrameContext } from "./render-frame.ts";
 import { gameLook } from "./theme-collection.ts";
@@ -170,6 +171,7 @@ export class Renderer {
     const gem = this.game.gemFinder.gem, sparkle = this.game.gemFinder.sparkle;
     if (gem) drawGem(f, gem.x, gem.y);
     if (sparkle) drawGemSparkle(f, sparkle.x, sparkle.y, f.now - sparkle.at);
+    drawVolley(f, this.game.volley, this.game.mode === "delve" ? this.game.world.width : 0);
     this.popups.draw(f);
     this.drawEffectText(f);
     for (const at of this.game.struckDown) drawStruckDown(f, f.now - at);
@@ -577,14 +579,15 @@ export class Renderer {
   }
   /** Every timed effect has played out: the arrival glow, a rush's echoes,
    * a blocked step, the feedback text, the level-up, skulls, revivals, an area
-   * reward's burst, a Greater Boss's poof and a Gem's sparkle. */
+   * reward's burst, a Greater Boss's poof, a Gem's sparkle and the turn's
+   * shots in flight. */
   private effectsOver(now: number) {
     const g = this.game, sparkle = g.gemFinder.sparkle;
     return now - this.arrived > ARRIVAL_GLOW_MS && (!g.rush || now - g.rush.at >= RUSH_ECHO_MS) && g.blocked.until <= now && g.effect.until <= now &&
       now - g.levelUpAt >= LEVEL_UP_MS + POINTS_MS && g.revivedAt.every((at) => now - at >= REVIVE_MS) && g.struckDown.every((at) => now - at >= DEFEAT_MS) &&
       g.areaBursts.every((b) => now - b.at >= AREA_BURST_MS) &&
       (!g.summoned || now - g.summoned.at >= POOF_MS) && (!g.vanished || now - g.vanished.at >= POOF_MS) &&
-      (!sparkle || now - sparkle.at >= GEM_SPARKLE_MS);
+      (!sparkle || now - sparkle.at >= GEM_SPARKLE_MS) && (!g.volley || now - g.volley.at >= g.volley.flight);
   }
   /** Active torches roughly within the camera viewport, padded so a torch
    * whose center is just offscreen can still light visible ground. Cheap

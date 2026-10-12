@@ -6,6 +6,7 @@ import { generateTowerFloor } from "./index.ts";
 import { tierCells } from "../tiers.ts";
 import { foeTile, type FoeRule } from "../shrines.ts";
 import { fastCells } from "../fast-enemies.ts";
+import { rangedCells, wounded, woundMore } from "../ranged.ts";
 import { addEnemies, extrasSeed, hasExtras, type ExtraEnemies } from "../more-enemies.ts";
 import { ENTRY } from "./embedder.ts";
 
@@ -108,7 +109,7 @@ export class RoomWorld implements Board {
     let cells = generateTowerRoom(seed, room, tier);
     this.torches = torchesForRoom(seed, room, tier, cells);
     if (hasExtras(extras)) cells = withExtraEnemies(cells, seed, room, this.torches, extras);
-    this.cells = fastCells(tierCells(cells, tier), "tower", tier, seed, () => room + 1);
+    this.cells = rangedCells(fastCells(tierCells(cells, tier), "tower", tier, seed, () => room + 1), tier, seed, () => room + 1);
   }
   breakTorchAt(x: number, y: number): boolean {
     return breakTorch(this.torches, x, y);
@@ -120,7 +121,7 @@ export class RoomWorld implements Board {
   tile(x: number, y: number): Tile {
     if (!this.inside(x, y)) return { kind: "wall" };
     const changed = this.changes[point(x, y)];
-    if (changed) return foeTile(changed, this.foes);
+    if (changed) return wounded(foeTile(changed, this.foes));
     return foeTile(withPotions(this.cells.get(point(x, y)) ?? { kind: "wall" }, x, y, this.seed ^ Math.imul(this.room + 1, 0x9e3779b1), this.percentPotions), this.foes);
   }
   step(x: number, y: number, dx: number, dy: number) {
@@ -130,5 +131,11 @@ export class RoomWorld implements Board {
   }
   clear(x: number, y: number) {
     this.changes[point(x, y)] = { kind: "floor" };
+  }
+  /** The enemy as generated (or summoned), before the run's boons, keeps
+   * its wound in the changes; `tile` scales it, then takes the wound off. */
+  wound(x: number, y: number, damage: number) {
+    const k = point(x, y), raw = this.changes[k] ?? this.cells.get(k);
+    if (raw?.kind === "enemy") this.changes[k] = woundMore(raw, damage);
   }
 }

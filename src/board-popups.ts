@@ -1,6 +1,6 @@
 import { wholeChange } from "./whole.ts";
 import { HEAL_COLOR } from "./damage-labels.ts";
-import type { Coin, Encounter, Gain, GainArt, Heal, ShownFight } from "./state.ts";
+import type { Coin, Encounter, Gain, GainArt, Heal, ShownFight, Volley } from "./state.ts";
 import { paintContents } from "./tile-painters.ts";
 import { materialImage } from "./material-sprites.ts";
 import { paintGem } from "./gem-art.ts";
@@ -99,6 +99,8 @@ const BAR_HEIGHT = 0.1;
 const BAR_RISE = 0.6;
 const BAR_FILL = "#d8323a";
 const BAR_EMPTY = "#2a0d10";
+/** How long an arrow's HP bar stays drained before it fades (ms). */
+const ARROW_BAR_HOLD_MS = 1000;
 /** How far a strike leans into its target at the moment it lands, in tiles. */
 const LUNGE = 0.3;
 /** How far the hero gives way from a strike it parries, as a share of the
@@ -131,16 +133,22 @@ export class BoardPopups {
    * fight that begins before the last one's bar is gone leaves it to finish. */
   private fights: { fight: ShownFight; landed: number }[] = [];
   private seed = NaN;
+  /** The last turn's shots taken (ranged.ts), and the enemies' HP bars the
+   * Archer's arrows raised: drained from `from` to `hp` out of `full` as
+   * the arrow lands at `start`, held a while, then faded. */
+  private volley: Volley | null = null;
+  private arrowBars: { x: number; y: number; from: number; hp: number; full: number; start: number }[] = [];
 
   /** Takes the game's new rewards, starting now (those that came together,
    * like a chest's Gold and materials, one after another), the latest
    * fight's strikes that have landed by `now`, and a new heal. A new run
    * clears whatever was still showing. */
-  update(game: { run: { seed: number }; gains: Gain[]; fight: ShownFight | null; lastHeal: Heal | null }, now: number) {
+  update(game: { run: { seed: number }; gains: Gain[]; fight: ShownFight | null; lastHeal: Heal | null; volley?: Volley | null }, now: number) {
     if (game.run.seed !== this.seed) {
       this.seed = game.run.seed;
       this.rewards = [];
       this.numbers = [];
+      this.arrowBars = [];
     }
     const heal = game.lastHeal;
     if (heal && heal.id !== this.healed) {
@@ -153,6 +161,8 @@ export class BoardPopups {
       start += POPUP_MS;
     }
     this.strike(game.fight, now);
+    this.shots(game.volley ?? null);
+    this.arrowBars = this.arrowBars.filter((b) => now < b.start + arrowBarMs(b));
     this.rewards = this.rewards.filter((p) => now < p.start + POPUP_MS);
     this.numbers = this.numbers.filter((p) => now < p.start + POPUP_MS);
   }
@@ -173,6 +183,28 @@ export class BoardPopups {
       if (s.healed) this.heal(s.healed, won && fight.summary ? fight.to : fight.from, fight.start + s.at);
       if (!hiddenInSummary(fight, s)) this.raise(s, struckAt(fight, s, won), fight.start + s.at);
       if (s.thorns && !(fight.summary && !s.thornHp)) this.thorns(s.thorns, fight, fight.start + s.at);
+    }
+  }
+  /** A new turn's shots raise their numbers as they land: what a Ranged
+   * enemy's shot cost the hero (with the shroud's share beside it), when it
+   * cost any, over the hero; an arrow's damage over the enemy, with its HP
+   * bar, and its Lifesteal over the hero. Undo (no volley) clears the bars. */
+  private shots(volley: Volley | null) {
+    if (volley === this.volley) return;
+    this.volley = volley;
+    if (!volley) {
+      this.arrowBars = [];
+      return;
+    }
+    const start = volley.at + volley.flight;
+    for (const s of volley.shots) {
+      if (s.by === "enemy") {
+        if (s.damage > 0) this.raise({ by: "enemy", damage: s.damage, ...(s.shrouded ? { shrouded: s.shrouded } : {}), start: 0, at: 0, end: 0, hp: 0 }, s.to, start);
+        continue;
+      }
+      this.raise({ by: "hero", damage: s.damage, ...(s.crit ? { crit: s.crit } : {}), start: 0, at: 0, end: 0, hp: s.hp ?? 0 }, s.to, start);
+      if (s.healed) this.heal(s.healed, s.from, start);
+      if (s.full) this.arrowBars.push({ x: s.to.x, y: s.to.y, from: s.before ?? s.full, hp: s.hp ?? 0, full: s.full, start });
     }
   }
   /** What the enemy's thorns cost it, in yellow over the enemy, as the
@@ -201,7 +233,7 @@ export class BoardPopups {
   }
   /** Nothing is rising or waiting to, and the enemy's HP bar is still. */
   idle(now: number) {
-    return !this.rewards.length && !this.numbers.length && !this.fights.some((shown) => barMoving(shown.fight, now));
+    return !this.rewards.length && !this.numbers.length && !this.arrowBars.length && !this.fights.some((shown) => barMoving(shown.fight, now));
   }
 
   /** Each enemy's HP bar, then every reward that has started, then every
@@ -210,6 +242,7 @@ export class BoardPopups {
    * behind a sprite rising from the same tile. */
   draw(f: FrameContext) {
     for (const shown of this.fights) drawEnemyBar(f, shown.fight);
+    for (const bar of this.arrowBars) drawArrowBar(f, bar);
     const started = <T extends Popup>(popups: T[]) => popups.filter((p) => p.start <= f.now).sort((a, b) => a.start - b.start);
     for (const p of started(this.rewards)) if (!this.drawSprite(f, p)) this.drawText(f, p, p.gain.text, REWARD_TEXT);
     for (const p of started(this.numbers)) this.drawText(f, p, p.text, { color: p.color, rise: DAMAGE_RISE, size: 0.55, ...(p.glow ? { glow: p.glow } : {}) });
@@ -415,16 +448,32 @@ function barMoving(fight: ShownFight, now: number) {
 function drawEnemyBar(f: FrameContext, fight: ShownFight) {
   const bar = enemyBar(fight, f.now);
   if (!bar || !fight.hp) return;
-  const c = f.c, at = tileCenter(f, fight.to.x, fight.to.y + BAR_RISE),
+  paintBar(f, fight.to, bar.hp / fight.hp, bar.alpha);
+}
+/** How long an arrow's bar shows: drained, held, then faded (a felled
+ * enemy's at once). */
+const arrowBarMs = (b: { hp: number }) => BAR_DRAIN_MS + (b.hp ? ARROW_BAR_HOLD_MS : 0) + BAR_FADE_MS;
+/** An arrow's HP bar over the enemy it struck: hidden until it lands, then
+ * draining from what the enemy had to what it has left of its full HP. */
+function drawArrowBar(f: FrameContext, b: { x: number; y: number; from: number; hp: number; full: number; start: number }) {
+  const t = f.now - b.start;
+  if (t < 0) return;
+  const k = Math.min(1, t / BAR_DRAIN_MS), hp = b.from + (b.hp - b.from) * k;
+  const fading = t - BAR_DRAIN_MS - (b.hp ? ARROW_BAR_HOLD_MS : 0);
+  paintBar(f, b, hp / b.full, fading > 0 ? Math.max(0, 1 - fading / BAR_FADE_MS) : 1);
+}
+/** An HP bar over the tile at `on`, filled to `share`. */
+function paintBar(f: FrameContext, on: { x: number; y: number }, share: number, alpha: number) {
+  const c = f.c, at = tileCenter(f, on.x, on.y + BAR_RISE),
     w = f.s * BAR_WIDTH, h = Math.max(3, f.s * BAR_HEIGHT), x = at.x - w / 2, y = at.y - h / 2;
   c.save();
-  c.globalAlpha = bar.alpha;
+  c.globalAlpha = alpha;
   c.fillStyle = "#000";
   c.fillRect(x - 1, y - 1, w + 2, h + 2);
   c.fillStyle = BAR_EMPTY;
   c.fillRect(x, y, w, h);
   c.fillStyle = BAR_FILL;
-  c.fillRect(x, y, w * Math.max(0, Math.min(1, bar.hp / fight.hp)), h);
+  c.fillRect(x, y, w * Math.max(0, Math.min(1, share)), h);
   c.restore();
 }
 

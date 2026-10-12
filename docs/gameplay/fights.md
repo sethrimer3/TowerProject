@@ -30,8 +30,26 @@ Undo during a fight takes back the whole fight.
 
 A monster's inspect panel, and the messages about its fight, put its strength before its name (Weak, Strong, Elite or Boss), unless it is a normal one.
 From Tower II and Delve II on, some monsters are **Fast** (8% at first, more further up and in each tower after): named *Fast …* with a fast-forward mark at the top right of their tile, they strike before the hero, so even one the hero fells in a strike lands a blow, they hit at least 1.75 times as hard as the last tower's floor 100 monster (700 ATK in Tower II), and they pay 1 Gold more.
+From Tower III and Delve III on, some monsters are **Ranged** (a point fewer than Fast: 7.5% at first, growing as Fast does): named *Ranged …* with an arrow at the top right of their tile (the Fast mark moving below it on a monster that is both), they shoot the hero from a distance, walls and doors no obstacle, without beginning a fight.
+A Ranged monster shoots once the hero ends a turn within its reach, five sixths of the hero's own Attack Range (2.5 tiles to the hero's 3), measured straight across, so a knight's move away is in reach, then waits 10 turns before it can shoot again (a 500th of a turn less each floor, a whole turn less every 500 floors; a fraction carries to the next shot, so 9.5 turns fire 10, then 9, apart).
+Its shot lands where the hero's step ends: its ATK less DEF, the shroud (whole for every shot) taking what it can of the rest, cut by Parry % when parried; the damage rises over the hero.
+A shot that costs HP costs the area's mastery, and one that leaves the hero no HP fells it, as a lost fight does (one undo takes the step back).
+The hand and Automove don't plan around shots.
+A rush is one turn: its shots come once it stops.
+A Ranged monster pays 1 Gold more, and one both Fast and Ranged 2 more.
 Every monster beaten pays Gold by its strength: none for a weak one, 1 for a normal one, 2 for a strong one, 4 for an elite one and 5 for a boss.
 The stats show the Gold found so far this run beside ATK and DEF; undo never takes Gold back, so it never lowers the count.
+
+## The Archer
+
+Claiming Tower III's floor 10 Goal makes the hero an **Archer** (the name under its portrait says so), in the Tower and the Delve alike.
+At the end of each turn its arrow is ready, it shoots the closest monster within its Attack Range (3 tiles to begin with, walls and doors no obstacle) that an arrow can hurt; the arrow flies from the hero and lands as the step ends.
+An arrow deals one of the hero's strikes: ATK (raised against bosses, critical hits rolled) less the monster's DEF, Piercing counted, healing by Lifesteal; its damage rises over the monster, whose HP bar shows what it has left.
+A wounded monster keeps its wound, so the fight that follows is shorter, and the wound counts in its inspect panel and damage number; undo takes an arrow back with the step.
+An arrow that fells a monster pays the kill as a fight would; one that fells an unwounded monster with a single arrow is an instakill, as Mug pays it.
+Only Ranged monsters shoot back: the rest strike only when the hero fights them.
+The arrow is ready every 10 turns (Attack Speed: 1 shot every 10 turns, more with training), a fraction of a turn carrying to the next; a ready arrow with no monster in reach waits, and fires the turn one comes in reach.
+Attack Range and Attack Speed join Offense training from Tower III's floors 20 and 30 ([Training](training.md)).
 
 ## Fractions
 

@@ -14,6 +14,7 @@ export const NEON = {
   hero: "#9dff6a",
   enemy: "#ff5a3d",
   fast: "#7fe3ff",
+  ranged: "#ffcf6e",
   torch: "#ffb347",
   stairs: "#ffe866",
   potion: "#ff5a7a",
@@ -100,8 +101,11 @@ export function paintNeonContents(c: CanvasRenderingContext2D, t: Tile) {
         c.lineTo(19, 15); c.lineTo(15, 21); c.lineTo(9, 21); c.lineTo(5, 15); c.closePath();
       }, color);
       path(c, () => { c.moveTo(8.5, 12); c.lineTo(11, 13.5); c.moveTo(15.5, 12); c.lineTo(13, 13.5); c.moveTo(10, 17.5); c.lineTo(14, 17.5); }, color, 1.3);
-      // A Fast enemy's fast-forward sign, at the top right.
-      if (t.enemy?.fast) path(c, () => { c.moveTo(16, 1); c.lineTo(19, 3); c.lineTo(16, 5); c.closePath(); c.moveTo(19, 1); c.lineTo(22, 3); c.lineTo(19, 5); c.closePath(); }, NEON.fast, 1);
+      // A Ranged enemy's arrow at the top right, and a Fast enemy's
+      // fast-forward sign there, or below the arrow when it has both.
+      if (t.enemy?.ranged) path(c, () => { c.moveTo(16, 7); c.lineTo(22, 1); c.moveTo(18.5, 1); c.lineTo(22, 1); c.lineTo(22, 4.5); }, NEON.ranged, 1);
+      const fy = t.enemy?.ranged ? 7 : 0;
+      if (t.enemy?.fast) path(c, () => { c.moveTo(16, 1 + fy); c.lineTo(19, 3 + fy); c.lineTo(16, 5 + fy); c.closePath(); c.moveTo(19, 1 + fy); c.lineTo(22, 3 + fy); c.lineTo(19, 5 + fy); c.closePath(); }, NEON.fast, 1);
       return;
     }
     case "key": {

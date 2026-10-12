@@ -29,8 +29,13 @@ const CURRENCY_ICONS: Record<CurrencyId, () => string> = { gems: () => gemIcon("
  * under a hammer, the Tournament a trophy, Events a pennant, Research Speed an hourglass, Shard ATK and Shard DEF a red or
  * blue shard under a rising arrow, Evade Prediction a shield turning an enemy's strike aside, Badge
  * Slots a card wearing two badges, one above the other, Note Taking an open notebook under a quill,
- * and every Shrine research a shrine's gate (`shrineIcon`). */
+ * the Archer Class a drawn bow and arrow, Attack Range an arrow flying past
+ * a range ring, Attack Speed two arrows in a row, and every Shrine research a
+ * shrine's gate (`shrineIcon`). */
 const UNLOCK_ICONS: Record<GoalUnlock, string> = {
+  archer: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2.5c6 2.5 6 16.5 0 19" fill="none" stroke="#b07a42" stroke-width="2" stroke-linecap="round"/><path d="M7 2.5v19" stroke="#e6ebf2" stroke-width=".9"/><path d="M4 12h16" stroke="#c9ced8" stroke-width="1.5" stroke-linecap="round"/><path d="M17.5 9.5L21 12l-3.5 2.5z" fill="#ffd34d"/><path d="M4 12l-1.5-2M4 12l-1.5 2" stroke="#e86d7a" stroke-width="1.2" stroke-linecap="round"/></svg>`,
+  attackRange: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="14" r="7.5" fill="#1c2a44" stroke="#8fc4ff" stroke-width="1.3" stroke-dasharray="2.4 1.6"/><circle cx="9" cy="14" r="1.6" fill="#8fc4ff"/><path d="M9 14L20 3" stroke="#c9ced8" stroke-width="1.5" stroke-linecap="round"/><path d="M21.5 1.5l-1.2 4.4-3.2-3.2z" fill="#ffd34d"/></svg>`,
+  attackSpeed: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 8h14M2.5 16h14" stroke="#c9ced8" stroke-width="1.5" stroke-linecap="round"/><path d="M15.5 5.2L20.5 8l-5 2.8zM15.5 13.2L20.5 16l-5 2.8z" fill="#ffd34d"/><path d="M2.5 8L1 6.4M2.5 8L1 9.6M2.5 16L1 14.4M2.5 16L1 17.6" stroke="#e86d7a" stroke-width="1.1" stroke-linecap="round"/></svg>`,
   shrines: shrineIcon("goal-icon"), firstBoonChoice: shrineIcon("goal-icon"), improveTradeoffs: shrineIcon("goal-icon"), autoPickBoons: shrineIcon("goal-icon"),
   boonOptions: shrineIcon("goal-icon"), banBoons: shrineIcon("goal-icon"), autoPickRanking: shrineIcon("goal-icon"),
   badgeSlots: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="2.5" width="14" height="19" rx="2" fill="#2a2234" stroke="#c9a6ff" stroke-width="1.4"/><rect x="13" y="3.5" width="7.5" height="7.5" rx="1.8" fill="#0c1018" stroke="#ffd34d" stroke-width="1.3"/><path d="M16.75 5.4l1.5 2.6h-3z" fill="#7be07b"/><rect x="13" y="12" width="7.5" height="7.5" rx="1.8" fill="#0c1018" stroke="#ffd34d" stroke-width="1.3"/><path d="M16.75 17.6l1.5-2.6h-3z" fill="#ff6b6b"/></svg>`,
@@ -54,6 +59,13 @@ const UNLOCK_ICONS: Record<GoalUnlock, string> = {
 const TOWER_ICON = `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21.5V8.5H4.5v-5h3v2h2.2v-2h4.6v2h2.2v-2h3v5H18v13z" fill="#3a3f4b" stroke="#c9ced8" stroke-width="1.3" stroke-linejoin="round"/><path d="M10 21.5v-4a2 2 0 0 1 4 0v4z" fill="#ffd34d"/><rect x="11" y="10" width="2" height="3" rx=".5" fill="#ffd34d"/></svg>`;
 /** What each unlock does, shown once it is claimed and again whenever its claimed reward is pressed. */
 const UNLOCK_TUTORIALS: Record<GoalUnlock, string> = {
+  archer: `<p>Your hero is now an Archer: every 10 turns it fires an arrow at the closest enemy within 3 tiles, walls and doors no obstacle, dealing one strike's damage (critical hits and the enemy's DEF counted) before you ever touch it.</p>` +
+    `<p>A ready shot waits for an enemy to come in range, and fires the turn one does. Only Ranged enemies can shoot back; the rest strike only when you fight them.</p>` +
+    `<p class="hint">Ranged enemies reach five sixths as far as your arrows: strike first, then close in.</p>`,
+  attackRange: `<p>Attack Range joins Offense training: each rank lets your arrows reach 0.05 tiles further, from 3 tiles up to 7.</p>` +
+    `<p class="hint">Ranged enemies always reach five sixths as far as you do.</p>`,
+  attackSpeed: `<p>Attack Speed joins Offense training: each rank adds 0.05 shots every 10 turns, from 1 up to 6.</p>` +
+    `<p class="hint">A fraction of a turn left over carries to the next shot: 3 shots in 10 turns fire 4, 3 and 3 turns apart.</p>`,
   tournament: `<p>Twice a week, on Wednesday and Saturday (GMT), the Tournament opens: one Delve run from seeds every player in your league shares, among stronger enemies, scored by the depth you reach and ranked worldwide.</p>` +
     `<p>Its Hall now stands in the forest, right of the path: tap it, or the trophy at the right, to see when the next one opens.</p>` +
     `<p class="hint">Each new tournament gives you a Ticket to enter. Place high to win Gems and Ascension Shards, and climb from Copper through Silver, Gold and Platinum to Champion.</p>`,

@@ -154,6 +154,18 @@ _Avoid_: tier, rank, level
 An enemy that strikes first in every fight, so it lands a blow even when the hero fells it in one strike. From the second tower and delve up, a share of the non-boss enemies are Fast (8% at first, growing with the floor and the tower), each striking with at least a share of the last tower's floor-100 enemy's ATK and paying 1 Gold more. Its name starts with "Fast" and its tile wears a fast-forward mark.
 _Avoid_: swift, quick, first strike enemy
 
+**Ranged enemy**:
+An enemy that shoots the hero from a distance, walls and doors no obstacle, without beginning a fight: once the hero ends a turn within its reach (five sixths of the hero's Attack Range), then again each time its cooldown (10 turns, shorter further up) is ready. From the third tower and delve up, a share of the non-boss enemies are Ranged (a point under the Fast share), rolled apart from Fast, paying 1 Gold more. Its name starts with "Ranged" and its tile wears an arrow.
+_Avoid_: archer enemy, shooter, sniper
+
+**Archer**:
+The hero's class once Tower III's floor 10 Goal is claimed: at the end of each turn its arrow is ready, it shoots the closest enemy within its **Attack Range** (3 tiles, more with training) for one strike's damage, wounding it before any fight. **Attack Speed** sets how often (1 shot every 10 turns, more with training). The class's name, shown under the portrait, is cosmetic before it (Wayfarer, then Pathfinder once Tower II is open).
+_Avoid_: ranger, bowman
+
+**Wound**:
+The HP the Archer's arrows have taken off an enemy that still stands; the enemy keeps it, so its fight starts that much shorter.
+_Avoid_: damage taken, injury
+
 **Enemy profile**:
 Which of an enemy's stats lead: attack-heavy (more ATK, less DEF), balanced, or defense-heavy (more DEF, less ATK). Any strength may wear any profile; bosses are balanced. In the Tower a profile also names the enemy: each zone's **roster** has one enemy per profile (Goblin, Thief, Armored Knight on the first zone's floors), each tower starting its rosters one zone further along.
 _Avoid_: enemy type, class, archetype
@@ -202,7 +214,7 @@ How much XP the character has gathered from kills over every run. A kill pays mo
 _Avoid_: rank
 
 **Training point**:
-The currency each level earns (three a level), spent to buy ranks of training at once (a trainer can train them for Gold instead) in the character's stats (max HP, ATK, DEF, and the shroud once the Shroud skill is owned; Lifesteal once the Lifesteal skill is, Thorn Damage once Thorns is, Parry Chance and Parry % once Evade is, Crit % and Crit x once Critical is) and, with Recovery, Find Potion, Revive, Spare Change, Wishing Well, Wealthy, Loot and Free Training, in Potion %, Find Potion, Revive, Gold / Floor, Silver / Floor, Silver Bonus, Gold / Kill and the Free Offense, Defense and Utility Up rows on the Training tab. A stat's ranks add up on its **rank curve**: each rank is worth more than the one before, whatever the character's level.
+The currency each level earns (three a level), spent to buy ranks of training at once (a trainer can train them for Gold instead) in the character's stats (max HP, ATK, DEF, and the shroud once the Shroud skill is owned; Lifesteal once the Lifesteal skill is, Thorn Damage once Thorns is, Parry Chance and Parry % once Evade is, Crit % and Crit x once Critical is, Attack Range and Attack Speed once Tower III's floor 20 and 30 Goals are claimed) and, with Recovery, Find Potion, Revive, Spare Change, Wishing Well, Wealthy, Loot and Free Training, in Potion %, Find Potion, Revive, Gold / Floor, Silver / Floor, Silver Bonus, Gold / Kill and the Free Offense, Defense and Utility Up rows on the Training tab. A stat's ranks add up on its **rank curve**: each rank is worth more than the one before, whatever the character's level.
 _Avoid_: skill point, stat point
 
 **Trainer**:

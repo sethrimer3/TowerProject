@@ -5,6 +5,7 @@ import { withPotions, type Board } from "../board.ts";
 import { breakTorch, placeTorches } from "../torches.ts";
 import { tierCells } from "../tiers.ts";
 import { fastCells } from "../fast-enemies.ts";
+import { rangedCells, wounded, woundMore } from "../ranged.ts";
 import { tournamentCells } from "../tournament/run.ts";
 import { addEnemies, extraGround, extrasKey, extrasSeed, hasExtras, type ExtraEnemies } from "../more-enemies.ts";
 
@@ -154,13 +155,13 @@ export class World implements Board {
     if (!chunk) {
       // Each enemy rolls Fast by its own equivalent floor.
       const floorAt = (x: number, y: number) => Math.floor(depthAt(this.seed, x, y, ownerAt(this.seed, x, y), this.tier) / 10) + 1;
-      const cells = fastCells(tierCells(this.generated(index), this.tier), "delve", this.tier, this.seed, floorAt);
+      const cells = rangedCells(fastCells(tierCells(this.generated(index), this.tier), "delve", this.tier, this.seed, floorAt), this.tier, this.seed, floorAt);
       // A tournament run's enemies stand stronger than the cave's own.
       chunk = this.run.tournament ? tournamentCells(cells) : cells;
       this.chunks.set(index, chunk);
     }
-    const k = point(x, y);
-    return this.changes[k] ?? withPotions(chunk.get(k) ?? { kind: "wall" }, x, y, this.seed, this.run.percentPotions ?? 0);
+    const k = point(x, y), changed = this.changes[k];
+    return changed ? wounded(changed) : withPotions(chunk.get(k) ?? { kind: "wall" }, x, y, this.seed, this.run.percentPotions ?? 0);
   }
   /** Chunk `index` as generated, with More Enemies' extras. */
   private generated(index: number) {
@@ -205,6 +206,12 @@ export class World implements Board {
   depth(x: number, y: number) { return depthAt(this.seed, x, y, this.milestone, this.tier); }
   clear(x: number, y: number) {
     this.changes[point(x, y)] = { kind: "floor" };
+  }
+  /** The enemy as generated keeps its wound in the changes. */
+  wound(x: number, y: number, damage: number) {
+    if (this.tile(x, y).kind !== "enemy") return;
+    const k = point(x, y), raw = this.changes[k] ?? this.chunks.get(Math.floor(y / CHUNK))?.get(k);
+    if (raw?.kind === "enemy") this.changes[k] = woundMore(raw, damage);
   }
   private torchAreas = new Map<number, Torch[]>();
   /** The torch list and lit tiles last worked out: the list until the areas

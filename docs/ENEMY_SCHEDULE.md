@@ -147,10 +147,23 @@ Raising every early enemy's ATK would not reach the first of those, and raising 
 Tune it with `FAST_CARRY` and `fastShare`.
 `tests/fast-enemies.test.ts` covers it.
 
+### Ranged (built)
+
+A Ranged enemy (`src/ranged.ts`) shoots the hero from a distance, so a hero who outclasses its fight still pays to walk past it, and the Archer (Tower III's floor 10 Goal) gets to shoot first.
+
+- **Who:** any enemy but a boss or Greater Boss, from Tower III and Delve III up, on its own roll, so an enemy may be both Fast and Ranged.
+- **Share** (`rangedShare`): a point under Fast's, growing as it does: 7.5% on Tower III's floor 1, 19.5% from floor 2,401.
+- **Roll:** one `tileRandom` number per run seed, floor and tile (`RANGED_SALT`), after the Fast roll (`rangedCells`); it changes no stats.
+- **Shots:** from five sixths of the hero's Attack Range (2.5 tiles to its 3), Euclidean, walls and doors no obstacle, every 10 turns (`foeShotCost`: a turn less every 500 floors, at least 1), its ATK less DEF and the whole shroud, parries counted.
+- **Pay:** 1 Gold more (`RANGED_GOLD`), 2 more for one both Fast and Ranged.
+- **Look:** "Ranged" after "Fast" and before its strength (*Fast Ranged Elite Goblin*), and an arrow at the tile's top right, the Fast mark moving below it.
+
+`tests/ranged.test.ts` covers it.
+
 ## 7. Build order
 
 1. **Schedule and census** (done): `src/enemy-schedule.ts`, this document, the census's Enemies table. No floor changes.
 2. **The enemy stage, Tower** (done): count, then re-rank, and strong and elite first floors by tower. `TOWER_LAYOUT_VERSION` 22.
 3. **The enemy stage, Delve** (done), by equivalent floor, replacing `guardStrengths`' fixed mix. `LAYOUT_VERSION` 25.
 4. **Profiles** (done): every strength may wear every profile, with scheduled shares, and rosters by tower. `TOWER_LAYOUT_VERSION` 23, `LAYOUT_VERSION` 26.
-5. **Traits** (section 6), one at a time. Fast (done): no layout bump, since nothing moves.
+5. **Traits** (section 6), one at a time. Fast (done): no layout bump, since nothing moves. Ranged (done): the same.

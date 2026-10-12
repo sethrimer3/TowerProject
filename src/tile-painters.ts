@@ -409,7 +409,7 @@ const ENEMY_BODIES: ((c: CanvasRenderingContext2D) => void)[] = [
 /** A band round an enemy's silhouette: every pixel within `r` sprite pixels
  * of it, in `color` at `alpha`. */
 type Ring = { r: number; color: string; alpha: number };
-const RED = "#9c1f2e", BRIGHT_RED = "#ff3b2b", GOLD_RIM = "#f4c64e", VIOLET_RIM = "#b45cff", CHEVRON = "#ffe6a8", FAST_MARK = "#7fe3ff";
+const RED = "#9c1f2e", BRIGHT_RED = "#ff3b2b", GOLD_RIM = "#f4c64e", VIOLET_RIM = "#b45cff", CHEVRON = "#ffe6a8", FAST_MARK = "#7fe3ff", RANGED_MARK = "#ffcf6e";
 /** How an enemy's strength shows: bands outside its black outline (the
  * outermost first), and rank chevrons over the sprite. Normal is a dark red
  * rim fading out, weak the same with one chevron pointing down (`down`),
@@ -431,14 +431,14 @@ const ENEMY_LOOK: Record<EnemyStrength, { rings: Ring[]; chevrons: number; down?
 const ENEMY_OUTLINE: Ring = { r: 1, color: "#0b0a0e", alpha: 1 };
 /** Room round a baked enemy for its outermost ring. */
 const ENEMY_MARGIN = 3;
-/** Baked enemies by name, tier, strength, whether it is Fast, and whether the sprite art drew. */
+/** Baked enemies by name, tier, strength, whether it is Fast or Ranged, and whether the sprite art drew. */
 const bakedEnemies = new Map<string, HTMLCanvasElement>();
 
 function paintEnemy(c: CanvasRenderingContext2D, t: Tile, art: TileArt) {
   const e = t.enemy!;
   groundShadow(c, 12, 21, 8, 2.6, 0.4);
   const sprite = !art.spritesOff && enemySpriteReady(e.name);
-  const key = `${e.name}|${e.tier}|${e.strength}|${e.fast ? "fast" : ""}|${sprite}`;
+  const key = `${e.name}|${e.tier}|${e.strength}|${e.fast ? "fast" : ""}|${sprite}${e.ranged ? "|ranged" : ""}`;
   let baked = bakedEnemies.get(key);
   if (!baked) bakedEnemies.set(key, (baked = bakeEnemy(e, sprite)));
   c.drawImage(baked, -ENEMY_MARGIN, -ENEMY_MARGIN);
@@ -465,8 +465,20 @@ function bakeEnemy(e: Enemy, sprite: boolean) {
   oc.globalAlpha = 1;
   oc.drawImage(body, m, m);
   for (let i = 0; i < look.chevrons; i++) chevron(oc, m + 1, m + 1 + i * 4, look.down);
-  if (e.fast) fastMark(oc, m + 16, m + 1);
+  // A Ranged enemy's arrow takes the top right, the Fast mark moving below it.
+  if (e.ranged) rangedMark(oc, m + 16, m + 1);
+  if (e.fast) fastMark(oc, m + 16, m + (e.ranged ? 8 : 1));
   return out;
+}
+
+/** A Ranged enemy's mark at the tile's top right: a small arrow pointing
+ * up and right, 7x6, on a black backing. */
+function rangedMark(c: CanvasRenderingContext2D, x: number, y: number) {
+  const pixels = [[4, 0], [5, 0], [6, 0], [5, 1], [6, 1], [4, 2], [6, 2], [3, 3], [2, 4], [1, 5], [0, 5], [0, 4], [1, 4]] as const;
+  for (const [fill, grow] of [["#0b0a0e", 1], [RANGED_MARK, 0]] as const) {
+    c.fillStyle = fill;
+    for (const [dx, dy] of pixels) c.fillRect(x + dx - grow, y + dy - grow, 1 + 2 * grow, 1 + 2 * grow);
+  }
 }
 
 /** A Fast enemy's mark at the tile's top right, opposite the chevrons: a

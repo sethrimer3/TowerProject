@@ -8,7 +8,8 @@ import { noteGoldBoost } from "./gold-boost.ts";
 import { offer, type OfferId } from "./shop/offers.ts";
 import { purchase, type Refusal } from "./shop/transactions.ts";
 import { confirmServerTime } from "./shop/clock.ts";
-import { canWarp, claimGoal, goalUnlocked } from "./goals.ts";
+import { canWarp, claimGoal, goalUnlocked, isArcher } from "./goals.ts";
+import { ARROW_COST, arrowDamage, charged, enemiesWithin, FOE_GAIN, foeRange, foeShotCost, held, ready, shotDamage, spent, type InReach, type Volleys } from "./ranged.ts";
 import { missGem } from "./gems.ts";
 import { DelvePlan } from "./delve/automove.ts";
 import { defaults } from "./save.ts";
@@ -68,7 +69,7 @@ import { enemyStat, keyCount, whole, wholeChange } from "./whole.ts";
 import { MODES, milestones, type ModeProfile } from "./modes.ts";
 import { boughtInRun, ranksInRun, runTrainingBulk, runTrainingOffer, type RunTrainingOffer } from "./run-training.ts";
 import { openQuantities, type BuyQuantity } from "./buy-quantity.ts";
-import { critRule, keepUndos, loadout, percentPotionChance, potionPercent, reviveChance, statFactor } from "./loadout.ts";
+import { attackRange, attackSpeed, critRule, keepUndos, loadout, percentPotionChance, potionPercent, reviveChance, statFactor } from "./loadout.ts";
 import { researched } from "./archives.ts";
 import { chargesLeft, chargesPerRun, climbFloor, spendCharge, type Charge } from "./run-charges.ts";
 import type { MaterialId, MaterialStack } from "./materials.ts";
@@ -135,6 +136,13 @@ const REVIVE_SALT = 0x7e51e;
 const CRIT_SALT = 0x3c71c;
 /** Seeds the parry rolls apart from the critical and revival rolls. */
 const PARRY_SALT = 0x9a77e;
+/** Salts the run seed for the Archer's critical rolls, and for the parry
+ * rolls against a Ranged enemy's shots, apart from a fight's. */
+const ARROW_SALT = 0xa770e;
+const SHOT_SALT = 0x5407e;
+/** How long a shot or arrow flies, at most (ms): it lands as the hero's
+ * step ends, sooner at higher speeds. */
+const FLIGHT_MS = 220;
 /** Salts the run seed for Find Yellow Key's roll on each new floor. */
 const YELLOW_KEY_SALT = 0x6e11a;
 /** Mixed into the run seed to start Skip's stream of rolls. */
@@ -152,6 +160,15 @@ export type ShownFight = { from: { x: number; y: number }; to: { x: number; y: n
  * enemy stands at `to`, and nothing changes until `finishEncounter` settles
  * it (at `start + bout.duration`). */
 export type Encounter = ShownFight & { enemy: Enemy; outcome: StepEffect; settle: () => void };
+/** One shot of a turn's volley (ranged.ts), as the board shows it: a
+ * Ranged enemy's at the hero, or the Archer's arrow at an enemy, flying
+ * `from` → `to`, and what it did when it landed: the damage that got through
+ * (and the shroud's share, a critical arrow's applications, the HP an
+ * arrow's Lifesteal restored), and for an arrow the enemy's HP before and
+ * after it out of its full HP. */
+export type Shot = { by: "hero" | "enemy"; from: { x: number; y: number }; to: { x: number; y: number }; damage: number; shrouded?: number; crit?: number; healed?: number; before?: number; hp?: number; full?: number };
+/** A turn's shots, flying from `at` (performance time) for `flight` ms. */
+export type Volley = { at: number; flight: number; shots: Shot[] };
 /** Tiles that stay on the board after being stepped on. */
 const PERMANENT_TILES = new Set<Tile["kind"]>(["floor", "stairs", "stairsDown", "oneway", "openedChest"]);
 export class Game {
@@ -196,6 +213,13 @@ export class Game {
    * bar; cleared by undo and when the run or mode changes. Only a game that
    * plays fights (`playsFights`) shows them. */
   fight: ShownFight | null = null;
+  /** The latest turn's shots (ranged.ts), for the board to fly and land;
+   * undo, a new run or a mode switch clears it. */
+  volley: Volley | null = null;
+  /** The snapshot from before the turn being taken, for a shot that fells
+   * the hero, and whether a Rush holds the turn open across its tiles. */
+  private turnBefore: MoveSnapshot | null = null;
+  private holdTurn = false;
   /** The last potion that healed, picked up or crafted: the HP it healed
    * from and to, where the hero stood, and a number that grows with each, so
    * the HP bar can fill up to it and the board raise the HP healed. */
@@ -404,6 +428,7 @@ export class Game {
     this.dropHandPlan();
     this.encounter = null;
     this.fight = null;
+    this.volley = null;
     this.blocked = { x: 0, y: 0, until: 0 };
   }
   /** Makes `run` the live run of this mode and rebuilds its board. */
@@ -484,6 +509,7 @@ export class Game {
     this.dropHandPlan();
     this.encounter = null;
     this.fight = null;
+    this.volley = null;
     this.paused = false;
     this.blocked.until = 0;
   }
@@ -763,11 +789,22 @@ export class Game {
     this.stepScale = last ? this.scaleOf(id) : 1;
     // The board changes only as the hero moves, so a refused step means the
     // plan is stale: drop it and let the next turn choose again.
+    // A rush is one turn: its shots come once it stops.
+    this.holdTurn = rushes;
     const moved = this.move(step.dx, step.dy, true);
     this.stepScale = 1;
     this.floorSkip = false;
-    if (!moved) return void (this.cardPlan = null);
-    if (rushes && !this.rushOn(plan, from, rush)) return;
+    if (!moved) {
+      this.holdTurn = false;
+      this.turnBefore = null;
+      return void (this.cardPlan = null);
+    }
+    const rushed = rushes ? this.rushOn(plan, from, rush) : true;
+    if (rushes) {
+      this.holdTurn = false;
+      this.endTurn();
+    }
+    if (!rushed) return;
     if (this.cardPlan) return;
     // The card's last step reaches its target: a focus on it is spent, and
     // it activates (once a fight into its target has played out).
@@ -1456,6 +1493,7 @@ export class Game {
     this.route = [];
     this.encounter = null;
     this.fight = null;
+    this.volley = null;
     const { player, loadout } = startingHero(this.save, this.mode);
     const core: RunCore = {
       layoutVersion: this.rules.layoutVersion,
@@ -1733,17 +1771,22 @@ export class Game {
   }
   /** Takes a resolved step: in through its door or fight, then onto the tile. */
   private take(step: TakenStep, revived = 0) {
-    if (!this.enter(step, revived)) return false;
+    if (!this.enter(step, revived)) {
+      this.turnBefore = null;
+      return false;
+    }
     const notes = notesOf(this.run);
     if (notes) notes.steps++;
     this.land(step.tile, step.dest.x, step.dest.y, step.outcome);
     this.gemFinder.step();
+    if (!this.holdTurn) this.endTurn();
     return true;
   }
   /** Commits a resolved step: undo history, stats, and the door or fight on
    * the way in. Returns false when the player fell. */
   private enter({ tile: t, outcome, dest, track, quiet, crits }: TakenStep, revived: number) {
     const before = this.snapshot();
+    this.turnBefore ??= before;
     if (track) this.remember(quiet ? { ...before, quiet: true } : before);
     const drained = snap(this.run.player.hp - outcome.player.hp);
     this.applyStats(outcome.player);
@@ -1850,23 +1893,155 @@ export class Game {
       this.fallIn(before, enemy);
       return false;
     }
+    this.message = [fightText(fight), ...this.payKill(enemy, at, fight.scale ?? 1, !!fight.instakill, fight.crits)].join(" · ");
+    return true;
+  }
+  /** Pays a kill at `at` (a fight won, or an arrow's): counted, its XP,
+   * Silver, Gold and loot. Returns what it found, as the status line names it. */
+  private payKill(enemy: Enemy, at: { x: number; y: number }, scale: number, instakill: boolean, crits?: number) {
     this.run.kills++;
     this.countKill(enemy, at);
-    const floor = this.rules.equivalentFloor(this.rules.progressAt(this.run, at.y)), scale = fight.scale ?? 1;
+    const floor = this.rules.equivalentFloor(this.rules.progressAt(this.run, at.y));
     this.gainXp(enemy, floor, scale);
     // Silver belongs to the run, so it isn't gated like Gold: undo takes it back.
     const purse = this.purse, silver = purse.killSilver(enemy, floor, scale);
-    const { gold, cells, equipment } = purse.enemyLoot(enemy, at.x, at.y, scale, fight.instakill);
+    const { gold, cells, equipment } = purse.enemyLoot(enemy, at.x, at.y, scale, instakill);
     this.gainCoins(at, gold, silver);
     const cellsFound = cells ? [cellsText(cells)] : [];
     for (const text of cellsFound) this.gain(at.x, at.y, text, { cell: true });
     if (equipment?.item || equipment?.salvaged) this.events.record("equipment", 1, this.missionKey(at));
     if (equipment?.item) this.slice.runFinds.equipment++;
-    if (fight.crits) this.events.record("crits", fight.crits, this.missionKey(at));
+    if (crits) this.events.record("crits", crits, this.missionKey(at));
     const found = equipmentGains(equipment);
     for (const { text, art } of found) this.gain(at.x, at.y, text, art);
-    this.message = [fightText(fight), ...coinsText(gold, silver), ...cellsFound, ...found.map((g) => g.text)].join(" · ");
-    return true;
+    return [...coinsText(gold, silver), ...cellsFound, ...found.map((g) => g.text)];
+  }
+  /** The end of a turn inside a run (a step, or a whole rush): each Ranged
+   * enemy within reach whose cooldown is ready shoots the hero where it now
+   * stands, then the Archer, its arrow ready, shoots the closest enemy in
+   * its range (ranged.ts). Nothing before the third tier unless the hero is
+   * an Archer; a turn that climbs to another floor leaves its shooters behind. */
+  private endTurn() {
+    const before = this.turnBefore;
+    this.turnBefore = null;
+    const archer = isArcher(this.save);
+    if (!before || this.run.outside || this.fallen || (this.tier < 3 && !archer)) return;
+    if (this.mode === "tower" && before.run.height !== this.run.height) return;
+    const v: Volleys = { ...(this.run.volleys ?? { turn: 0 }) };
+    v.turn++;
+    const shots: Shot[] = [], range = attackRange(this.trainingNow);
+    const fell = this.foesShoot(v, shots, range);
+    if (fell) {
+      this.run.volleys = v;
+      this.showVolley(shots);
+      this.fallIn(before, fell);
+      this.message = `Shot down by ${enemyTitle(fell)}.`;
+      return;
+    }
+    if (archer) this.loose(v, shots, range);
+    this.run.volleys = v;
+    this.showVolley(shots);
+  }
+  /** Board columns wrap in the Delve. */
+  private get wrap() {
+    return this.mode === "delve" ? this.world.width : 0;
+  }
+  /** The equivalent floor (from 1) an enemy at (x, y) stands on, as its rolls read it. */
+  private floorOf(x: number, y: number) {
+    const world = this.world;
+    return world instanceof World ? Math.floor(world.depth(x, y) / 10) + 1 : this.run.height + 1;
+  }
+  /** Each Ranged enemy's cooldown runs a turn, and those within reach that
+   * are ready shoot the hero. Returns the enemy whose shot felled it, if one did. */
+  private foesShoot(v: Volleys, shots: Shot[], range: number): Enemy | null {
+    const p = this.run.player, foes = { ...v.foes }, costs = new Map<string, number>();
+    for (const k of Object.keys(foes)) {
+      const [x, y] = k.split(",").map(Number) as [number, number];
+      if (this.world.tile(x, y).enemy?.ranged) foes[k] = charged(foes[k], FOE_GAIN)!;
+      else delete foes[k];
+    }
+    let fell: Enemy | null = null, hurt = false;
+    for (const { x, y, tile } of enemiesWithin(this.world, p, foeRange(range), this.wrap)) {
+      if (!tile.enemy.ranged) continue;
+      const k = `${x},${y}`, cost = foeShotCost(this.floorOf(x, y));
+      costs.set(k, cost);
+      if (!ready(foes[k], cost)) continue;
+      const { damage, shrouded } = shotDamage(p, tile.enemy, this.shotParried(x, y, v.turn));
+      foes[k] = spent(foes[k], cost);
+      p.hp = snap(Math.max(0, p.hp - damage));
+      shots.push({ by: "enemy", from: { x, y }, to: { x: p.x, y: p.y }, damage, ...(shrouded ? { shrouded } : {}) });
+      if (damage > 0) hurt = true;
+      if (!p.hp) {
+        fell = tile.enemy;
+        break;
+      }
+    }
+    // A shooter that didn't shoot waits full once it is ready.
+    for (const k of Object.keys(foes)) {
+      const [x, y] = k.split(",").map(Number) as [number, number];
+      const kept = held(foes[k], costs.get(k) ?? foeShotCost(this.floorOf(x, y)));
+      if (kept === undefined) delete foes[k];
+      else foes[k] = kept;
+    }
+    if (Object.keys(foes).length) v.foes = foes;
+    else delete v.foes;
+    if (hurt) {
+      this.markDamaged();
+      this.events.hurt(this.mode, this.run.seed);
+      const taken = shots.reduce((sum, s) => snap(sum + s.damage), 0);
+      if (!fell) this.message = `Shot · −${wholeChange(taken)} HP`;
+    }
+    return fell;
+  }
+  /** Whether the hero parries the shot from (x, y) on turn `turn`: a fixed
+   * number per run, tile and turn under Parry Chance, as a fight's are. */
+  private shotParried(x: number, y: number, turn: number) {
+    const p = this.run.player, chance = p.parryChance ?? 0;
+    if (!chance || !parryCut(p)) return false;
+    return chance >= 100 || tileRandom(x, y, (this.run.seed ^ SHOT_SALT ^ Math.imul(turn, 0x85ebca6b)) | 0) * 100 < chance;
+  }
+  /** The Archer's cooldown runs a turn, and once ready it shoots the
+   * closest enemy within its range that an arrow can hurt. A ready arrow
+   * with no target waits for one. */
+  private loose(v: Volleys, shots: Shot[], range: number) {
+    const p = this.run.player;
+    let hero = charged(v.hero, attackSpeed(this.trainingNow));
+    const target = ready(hero, ARROW_COST) ? enemiesWithin(this.world, p, range, this.wrap).find((e) => arrowDamage(p, e.tile.enemy) > 0) : undefined;
+    if (target) {
+      hero = spent(hero, ARROW_COST);
+      this.shoot(target, v.turn, shots);
+    }
+    hero = held(hero, ARROW_COST);
+    if (hero === undefined) delete v.hero;
+    else v.hero = hero;
+  }
+  /** The Archer's arrow lands on `target`: one strike's damage, critical
+   * rolls counted, healing by Lifesteal; it wounds the enemy, or fells it
+   * and pays the kill. */
+  private shoot({ x, y, tile }: InReach, turn: number, shots: Shot[]) {
+    const p = this.run.player, enemy = tile.enemy, rule = this.crit;
+    let applications = 0;
+    if (rule) {
+      const sure = guaranteedCrits(rule.chance), rest = snap(rule.chance - 100 * sure);
+      applications = sure + (tileRandom(x, y, (this.run.seed ^ ARROW_SALT ^ Math.imul(turn, 0x85ebca6b)) | 0) * 100 < rest ? 1 : 0);
+    }
+    const damage = arrowDamage(p, enemy, applications, rule?.factor ?? 1), left = snap(Math.max(0, enemy.hp - damage));
+    const healed = p.lifesteal ? snap(Math.min(p.maxHp - p.hp, (damage * p.lifesteal) / 100)) : 0;
+    if (healed > 0) p.hp = snap(p.hp + healed);
+    shots.push({ by: "hero", from: { x: p.x, y: p.y }, to: { x, y }, damage, ...(applications ? { crit: applications } : {}), ...(healed > 0 ? { healed } : {}),
+      before: enemy.hp, hp: left, full: snap(enemy.hp + (tile.wound ?? 0)) });
+    if (left > 0) {
+      this.world.wound?.(x, y, damage);
+      return;
+    }
+    // One arrow felling an unwounded enemy is an instakill, as Mug pays it.
+    this.world.clear(x, y);
+    this.message = [`Arrow · ${enemyTitle(enemy)} defeated`, ...this.payKill(enemy, { x, y }, 1, !tile.wound, applications ? 1 : 0)].join(" · ");
+  }
+  /** The board flies the turn's shots, landing as the step ends. */
+  private showVolley(shots: Shot[]) {
+    if (!shots.length) return;
+    this.volley = { at: performance.now(), flight: Math.min(FLIGHT_MS, 800 / Math.max(1, this.stepsPerSecond)), shots };
   }
   /** A kill counts toward the missions and the Event for its strength, once a tile. */
   private countKill(enemy: Enemy, at: { x: number; y: number }) {

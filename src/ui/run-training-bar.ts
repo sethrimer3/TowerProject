@@ -1,8 +1,8 @@
 import type { Game } from "../state.ts";
-import { TRAINING, TRAINING_GROUPS, trainingOpen, type TrainingId } from "../config.ts";
+import { TRAINING, TRAINING_GROUPS, type TrainingId } from "../config.ts";
 import { runTrainingBulk, runTrainingOffer, runTrainingValue } from "../run-training.ts";
 import { buyQuantityHtml, readQuantity, runCount } from "./buy-quantity-select.ts";
-import { trainingText } from "../loadout.ts";
+import { trainingText, trainingOpen } from "../loadout.ts";
 import { el, itemSprite, POINTER_SVG, uiSprite } from "./dom.ts";
 import { sparkRed } from "./hud.ts";
 
@@ -208,7 +208,7 @@ export class RunTrainingBar {
 
   /** The rows of `group` the hero can train. */
   private rows(group: Group): TrainingId[] {
-    return TRAINING.filter((t) => t.group === group && trainingOpen(t, this.game.save.upgrades)).map((t) => t.id);
+    return TRAINING.filter((t) => t.group === group && trainingOpen(t, this.game.save)).map((t) => t.id);
   }
 
   /** One card's value and price (for the ranks the Buy Quantity buys, past

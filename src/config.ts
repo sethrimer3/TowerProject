@@ -500,6 +500,8 @@ export const cost = (id: UpgradeId, level: number) =>
 export const ENEMY_GOLD: Record<EnemyStrength, number> = { weak: 1, normal: 1, strong: 2, elite: 4, boss: 5, greaterBoss: 10 };
 /** The Gold a Fast enemy pays more than its strength's (fast-enemies.ts). */
 export const FAST_GOLD = 1;
+/** The Gold a Ranged enemy pays more than its strength's (ranged.ts). */
+export const RANGED_GOLD = 1;
 /** Silver, the currency spent inside a run, that a beaten enemy pays per
  * base amount, by its strength. */
 export const SILVER_MULTIPLIER: Record<EnemyStrength, number> = { weak: 1, normal: 2, strong: 3, elite: 4, boss: 5, greaterBoss: 10 };
@@ -576,6 +578,8 @@ export const TRAINING = [
   { id: "attack", name: "ATK", group: "offense", stat: "attack", curve: { per: 1, square: 0.2 }, cost: 1, max: 6000, description: "Raises ATK, the damage each strike deals before the enemy's DEF." },
   { id: "critChance", name: "Critical Chance", short: "Crit %", group: "offense", requires: "critical", cost: 1, max: 80, description: "Raises the chance each of your strikes is a critical hit." },
   { id: "critFactor", name: "Critical Factor", short: "Crit x", group: "offense", requires: "critical", cost: 1, max: 150, description: "Raises how much a critical hit multiplies your ATK." },
+  { id: "attackRange", name: "Attack Range", short: "Range", group: "offense", goal: "attackRange", cost: 1, max: 80, description: "Raises how far the Archer's shots reach, in tiles." },
+  { id: "attackSpeed", name: "Attack Speed", short: "Speed", group: "offense", goal: "attackSpeed", cost: 1, max: 100, description: "Raises how many shots the Archer fires every 10 turns." },
   { id: "defense", name: "DEF", group: "defense", stat: "defense", curve: { per: 0, square: 1 / 12 }, cost: 1, max: 6000, description: "Raises DEF, taken off the damage of every enemy strike." },
   { id: "regen", name: "Regen", group: "defense", stat: "regen", curve: { per: 0.1, square: 1 / 120 }, cost: 1, max: 6000, requires: "regen", description: "Raises the HP regained with every step taken in a run." },
   { id: "shroud", name: "Shroud", group: "defense", stat: "shroud", curve: { per: 5, square: 0.1, fourth: 0.0000064 }, cost: 1, max: 5000, requires: "shroud", description: "Raises the damage the shroud blocks at the start of every fight." },
@@ -599,9 +603,11 @@ export type TrainingRow = (typeof TRAINING)[number];
 /** A row that raises one of the character's stats. */
 export type StatTrainingRow = Extract<TrainingRow, { stat: string }>;
 export const isStatRow = (row: TrainingRow): row is StatTrainingRow => "stat" in row;
-/** Whether `row` can be seen and trained with `upgrades` owned. */
-export const trainingOpen = (row: TrainingRow, upgrades: Record<UpgradeId, number>) =>
-  !("requires" in row) || upgrades[row.requires] > 0;
+/** The Archer's reach (Attack Range), in hundredths of a tile: 3 tiles,
+ * and 0.05 more a rank, 7 at its 80. Its rate of fire (Attack Speed), in
+ * twentieths of a shot every 10 turns: 1 shot, and 0.05 more a rank, 6 at
+ * its 100 (ranged.ts). */
+export const ATTACK_RANGE_BASE = 300, ATTACK_RANGE_RANK = 5, ATTACK_SPEED_BASE = 20, ATTACK_SPEED_RANK = 1;
 /** What a percent potion restores beyond its HP, in hundredths of a percent
  * of max HP: 1% with Recovery, and 0.25% more for each Potion % rank. */
 export const POTION_PERCENT_BASE = 100, POTION_PERCENT_RANK = 25;
@@ -692,6 +698,14 @@ const parryPrices = { base: 40, growth: 23, power: 2 };
  * the n-th (1,277 for the 7th, 9,870 for the 13th, 95,724 for the 23rd,
  * 1,005,077 for the 41st, 35,554,490 for the 99th), the same in Silver and a trainer's Gold. */
 const revivePrices = { base: 100, growth: 6.4, power: 3 };
+/** Attack Range: 50 for the first rank, then 50 × n × (1 + (n − 1) / 12 +
+ * ((n − 1) / 37)³) for the n-th (1,165 for the 12th, 8,573 for the 36th,
+ * 64,075 for the 78th), the same in Silver and a trainer's Gold. */
+const rangePrices = { base: 50, growth: 12, cubic: 37 };
+/** Attack Speed: 30 for the first rank, then 30 × n × (1 + (n − 1) / 5 +
+ * ((n − 1) / 32)³) for the n-th (1,166 for the 12th, 8,870 for the 34th,
+ * 116,464 for the 92nd), the same in Silver and a trainer's Gold. */
+const speedPrices = { base: 30, growth: 5, cubic: 32 };
 /** Training bought with Silver inside a run, lasting only for that run:
  * each row's price schedule. The rows open from the start cost least, the
  * ones later skills open more. */
@@ -700,6 +714,8 @@ export const RUN_TRAINING_PRICES: Record<TrainingId, PriceSchedule> = {
   attack: cheap,
   critChance: opened,
   critFactor: { base: 12, step: 2, growth: 3 },
+  attackRange: rangePrices,
+  attackSpeed: speedPrices,
   defense: cheap,
   regen: cheap,
   shroud: vital,
@@ -745,6 +761,9 @@ export const TRAINER_GOLD_CURVES: Record<TrainingId, TrainerCurve> = {
   /** Crit % and Crit x: 30 Gold for the first rank, then 30 × n × (1 + ((n − 1) / 7)³) for the n-th (1,000+ by the 13th, 100,000+ by the 35th, a million by the 72nd). */
   critChance: critTrainers,
   critFactor: critTrainers,
+  /** Attack Range and Attack Speed: the same curves as their Silver. */
+  attackRange: { growth: rangePrices.growth, start: rangePrices.base, cubic: rangePrices.cubic },
+  attackSpeed: { growth: speedPrices.growth, start: speedPrices.base, cubic: speedPrices.cubic },
   defense: mildTrainers,
   regen: mildTrainers,
   shroud: { ...gentleTrainers, cubic: 700 },

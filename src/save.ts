@@ -91,9 +91,15 @@ const pointMap = (m: any, valid: (v: any) => boolean) =>
 const validGreaterBoss = (e: any) =>
   isRecord(e) && e.strength === "greaterBoss" && typeof e.name === "string" &&
   finite(e.hp) && e.hp > 0 && finite(e.attack) && e.attack >= 0 && finite(e.defense) && e.defense >= 0 && finite(e.tier);
+/** An enemy the hero's arrows have wounded (ranged.ts): the generated
+ * enemy, kept with its wound. */
+const ENEMY_STRENGTHS = ["weak", "normal", "strong", "elite", "boss", "greaterBoss"];
+const validWounded = (v: any) =>
+  finite(v.wound) && v.wound > 0 && isRecord(v.enemy) && ENEMY_STRENGTHS.includes(v.enemy.strength) && typeof v.enemy.name === "string" &&
+  finite(v.enemy.hp) && v.enemy.hp > 0 && finite(v.enemy.attack) && finite(v.enemy.defense) && finite(v.enemy.tier);
 const validChange = (v: any) =>
   v?.kind === "floor" || v?.kind === "wall" ||
-  (v?.kind === "enemy" && validGreaterBoss(v.enemy)) ||
+  (v?.kind === "enemy" && (v.wound === undefined ? validGreaterBoss(v.enemy) : validWounded(v))) ||
   (v?.kind === "openedChest" && (v.tier === undefined || CHEST_TIERS.includes(v.tier))) ||
   (v?.kind === "reward" && CHEST_TIERS.includes(v.tier));
 const validChanges = (m: any) => pointMap(m, validChange);
@@ -162,6 +168,8 @@ const RUN_FIELD_CHECKS = {
   skipRolls: (v: unknown) => wholeIn(v, 1, 1e9),
   freeRolls: (v: unknown) => isRecord(v) && Object.entries(v).every(([k, n]) => ["offense", "defense", "utility"].includes(k) && wholeIn(n, 1, 1e9)),
   goldCombo: (v: unknown) => wholeIn(v, 1, 1e9),
+  volleys: (v: any) => isRecord(v) && wholeIn(v.turn, 0, 1e12) && (v.hero === undefined || wholeIn(v.hero, 0, 1e6)) &&
+    (v.foes === undefined || pointMap(v.foes, (n) => wholeIn(n, 0, 1e6))),
   notes: validNotes,
   marks: (v: any) => isRecord(v) && wholeIn(v.floor, 0, 1e6) && wholeIn(v.made, 0, 1e6) &&
     [v.tiles, v.bangs].every((list) => Array.isArray(list) && list.every((t: unknown) => typeof t === "string" && POINT_KEY.test(t))),

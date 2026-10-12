@@ -13,7 +13,7 @@ import { CARDS, IN_PLACE, cardText, deckCards, isSiphon, type CardId } from "../
 import { BADGES, badgeDef, badgesOn, badgeValue, type RunBadge } from "../badges.ts";
 import { badgeStyle } from "./badge-token.ts";
 import { trainingPoints, trainingWaiting } from "../loadout.ts";
-import { goalsWaiting } from "../goals.ts";
+import { goalsWaiting, heroClass } from "../goals.ts";
 import { shrinesOpen } from "../shrines.ts";
 import type { BoardOverlay } from "./board-overlay.ts";
 import { CountUp } from "./count-up.ts";
@@ -303,8 +303,10 @@ export const deckWaiting = (game: Game) =>
   !!game.save.upgrades.combatStance && deckCards(game.save.upgrades).some((id) => !game.save.seen.cards.includes(id));
 
 /** The level at the front of the XP bar, which fills with this level's
- * progress; hovering shows the XP still needed. */
+ * progress; hovering shows the XP still needed. The hero's class names it
+ * above (`heroClass`). */
 function renderXp(game: Game) {
+  text("hero-class", heroClass(game.save).toUpperCase());
   const level = levelForXp(game.save.xp), from = xpForLevel(level),
     into = game.save.xp - from, need = xpForLevel(level + 1) - from;
   text("level", String(level));

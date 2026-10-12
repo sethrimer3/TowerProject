@@ -30,13 +30,15 @@ import { TIERS } from "./tiers.ts";
  * 400), Auto Pick Boons and Boon Option Quantity (Tower IV floors 50 and 80),
  * Ban Boons (Tower V floor 40) and Auto Pick Ranking (Tower VI floor 10),
  * Badge Slots (Tower VI floor 50: the Archives' project that lets each
- * card hold more badges), and Note Taking (Tower I floor 250: the Archives'
- * project that opens the run's notes). */
+ * card hold more badges), Note Taking (Tower I floor 250: the Archives'
+ * project that opens the run's notes), and Tower III's Archer (floor 10:
+ * the hero fires at the nearest enemy in range, ranged.ts), Attack Range
+ * and Attack Speed (floors 20 and 30: the Training rows that improve it). */
 export type GoalUnlock =
   | "damagePrediction" | "combatForecast" | "attackLore" | "warp" | "damageVisual" | "relativeDamageColor" | "equipment" | "tournament" | "events" | "researchSpeed"
   | "shardAttack" | "shardDefense" | "evadePrediction" | "parryPercent"
   | "shrines" | "firstBoonChoice" | "improveTradeoffs" | "autoPickBoons" | "boonOptions" | "banBoons" | "autoPickRanking"
-  | "badgeSlots" | "noteTaking";
+  | "badgeSlots" | "noteTaking" | "archer" | "attackRange" | "attackSpeed";
 export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   damagePrediction: "Damage Prediction", combatForecast: "Combat Forecast", attackLore: "Attack Lore", warp: "Warp", damageVisual: "Damage Visual",
   relativeDamageColor: "Relative Damage Color", equipment: "Equipment", tournament: "Tournament", events: "Events",
@@ -45,6 +47,7 @@ export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   shrines: "Unlock Shrines", firstBoonChoice: "First Boon Choice", improveTradeoffs: "Improve Trade-off Boons",
   autoPickBoons: "Auto Pick Boons", boonOptions: "Boon Option Quantity", banBoons: "Ban Boons", autoPickRanking: "Auto Pick Ranking",
   badgeSlots: "Badge Slots", noteTaking: "Note Taking",
+  archer: "Archer Class", attackRange: "Attack Range", attackSpeed: "Attack Speed",
 };
 /** What a checkpoint pays: an unlock, the next tower opened, or an amount of a currency. */
 export type GoalReward =
@@ -91,6 +94,12 @@ const TOWER_TWO: Record<number, Omit<Checkpoint, "floor">> = {
   250: { reward: unlock("firstBoonChoice"), premium: gems(130) },
   400: { reward: unlock("improveTradeoffs"), premium: gems(160) },
 };
+/** Tower III's checkpoints that differ from the stub. */
+const TOWER_THREE: Record<number, Omit<Checkpoint, "floor">> = {
+  10: { reward: unlock("archer"), premium: gems(10) },
+  20: { reward: unlock("attackRange"), premium: gems(20) },
+  30: { reward: unlock("attackSpeed"), premium: gems(30) },
+};
 /** Tower IV's checkpoints that differ from the stub. */
 const TOWER_FOUR: Record<number, Omit<Checkpoint, "floor">> = {
   50: { reward: unlock("autoPickBoons"), premium: gems(50) },
@@ -113,7 +122,7 @@ export const TOWER_UNLOCK_FLOOR = 100;
  * TODO: the stub rewards (100 Gold × checkpoint number × tower, 10 Gems × checkpoint number)
  * are placeholders, to be tuned. */
 function towerCheckpoints(tower: number): Checkpoint[] {
-  const sets: Record<number, Record<number, Omit<Checkpoint, "floor">>> = { 1: TOWER_ONE, 2: TOWER_TWO, 4: TOWER_FOUR, 5: TOWER_FIVE, 6: TOWER_SIX };
+  const sets: Record<number, Record<number, Omit<Checkpoint, "floor">>> = { 1: TOWER_ONE, 2: TOWER_TWO, 3: TOWER_THREE, 4: TOWER_FOUR, 5: TOWER_FIVE, 6: TOWER_SIX };
   return CHECKPOINT_FLOORS.map((floor, i) => {
     const n = i + 1, set = sets[tower]?.[floor];
     const opens = floor === TOWER_UNLOCK_FLOOR && tower < TIERS ? { kind: "tower" as const, tower: tower + 1 } : null;
@@ -218,6 +227,13 @@ export function unlockAt(what: GoalUnlock) {
 }
 /** The checkpoint floor whose reward unlocks `what`. */
 export const unlockFloor = (what: GoalUnlock) => unlockAt(what).floor;
+/** Whether the hero is an Archer: Tower III's floor 10 Goal claimed. */
+export const isArcher = (save: Pick<Save, "goals">) => goalUnlocked(save, "archer");
+/** The hero's class, as the HUD names it under its portrait: a Wayfarer,
+ * a Pathfinder once Tower II is open, an Archer once Tower III's floor 10
+ * Goal is claimed. Cosmetic. */
+export const heroClass = (save: Pick<Save, "goals" | "tower">) =>
+  isArcher(save) ? "Archer" : save.tower.tiersOpen >= 2 ? "Pathfinder" : "Wayfarer";
 /** Whether Warp is owned. */
 export const warpUnlocked = (save: Save) => goalUnlocked(save, "warp");
 /** Whether predictions count the hero's parries: Evade Prediction claimed

@@ -1,8 +1,8 @@
-import { TRAINING, trainingOpen, type TrainingId } from "../config.ts";
+import { TRAINING, type TrainingId } from "../config.ts";
 import { snap } from "../exact.ts";
 import { TRAINING_RESET_GEMS } from "../gems.ts";
 import { batchSpeedup, bulkBuy, type BuyQuantity } from "../buy-quantity.ts";
-import { trainingBulk, trainingMaxed, trainingSpeed } from "../loadout.ts";
+import { trainingBulk, trainingMaxed, trainingSpeed, trainingOpen } from "../loadout.ts";
 import { BOOST_FOREVER, permanentBoost, trainingRate } from "../shop/entitlements.ts";
 import { batchWork, claimBoost, doneAt, finishGems, jobInvested, nextTrainerGems, ranksInTraining, trainerBatch, trainingGold, trainingJob, workLeft, trainingSlots, type TrainingJob } from "../training-jobs.ts";
 import { affordsGems, type DeskHost } from "./desk.ts";
@@ -38,7 +38,7 @@ export class TrainingDesk {
   /** Whether one more rank of `id` can be trained at all: its row shows,
    * and it isn't at its most. */
   private canTrain(id: TrainingId) {
-    return trainingOpen(rowOf(id), this.save.upgrades) && !trainingMaxed(this.save, id);
+    return trainingOpen(rowOf(id), this.save) && !trainingMaxed(this.save, id);
   }
 
   /** Buys more ranks of `id` with training points, one or as many as

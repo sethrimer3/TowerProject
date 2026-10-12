@@ -2,7 +2,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { defaults } from "../src/save.ts";
-import { TRAINING, trainingOpen } from "../src/config.ts";
+import { trainingOpen } from "../src/loadout.ts";
+import { TRAINING } from "../src/config.ts";
 import { RESEARCH, researched } from "../src/archives.ts";
 import { floorGold, trainingStep } from "../src/loadout.ts";
 import { runTrainingValue } from "../src/run-training.ts";
@@ -31,9 +32,9 @@ function standBeside(g: Game) {
 test("Spare Change opens Gold / Floor training (3, and 1 a rank) and its research", () => {
   const save = defaults(), row = TRAINING.find((t) => t.id === "floorGold")!;
   assert.equal(floorGold(save), 0);
-  assert.equal(trainingOpen(row, save.upgrades), false);
+  assert.equal(trainingOpen(row, save), false);
   save.upgrades.spareChange = 1;
-  assert.ok(trainingOpen(row, save.upgrades));
+  assert.ok(trainingOpen(row, save));
   assert.equal(floorGold(save), 3);
   save.training.floorGold = 4;
   assert.equal(floorGold(save), 7);

@@ -1,6 +1,6 @@
-import { TRAINING, TRAINING_GROUPS, trainingOpen, type TrainingId } from "./config.ts";
+import { TRAINING, TRAINING_GROUPS, type TrainingId } from "./config.ts";
 import type { RunCore, Save } from "./entities.ts";
-import { freeTrainingChance } from "./loadout.ts";
+import { freeTrainingChance, trainingOpen } from "./loadout.ts";
 import { drawAt } from "./random.ts";
 import { ranksInRun, runTrainingMax } from "./run-training.ts";
 
@@ -32,9 +32,9 @@ function draw(run: Pick<RunCore, "seed" | "freeRolls">, group: FreeGroup) {
 
 /** The rows of `group` a free level can go to in `run`: open, and below
  * their most counting the run's ranks. */
-function candidates(save: Pick<Save, "training" | "upgrades">, run: Pick<RunCore, "training">, group: FreeGroup): TrainingId[] {
+function candidates(save: Pick<Save, "training" | "upgrades" | "goals">, run: Pick<RunCore, "training">, group: FreeGroup): TrainingId[] {
   const ranks = ranksInRun(save, run);
-  return TRAINING.filter((row) => row.group === group && trainingOpen(row, save.upgrades) && ranks[row.id] < runTrainingMax(row)).map((row) => row.id);
+  return TRAINING.filter((row) => row.group === group && trainingOpen(row, save) && ranks[row.id] < runTrainingMax(row)).map((row) => row.id);
 }
 
 /** One floor passed: each group, in turn, rolls its Free Upgrade chance on
@@ -43,7 +43,7 @@ function candidates(save: Pick<Save, "training" | "upgrades">, run: Pick<RunCore
  * in order; `run.freeRolls` moves on, and applying the levels is the
  * caller's (`Game`). The chances are read before any level is applied, so
  * Free Utility raising a Free Upgrade row counts from the next floor. */
-export function rollFreeTraining(save: Pick<Save, "training" | "upgrades">, run: Pick<RunCore, "seed" | "freeRolls" | "training">, boonChance = 0): TrainingId[] {
+export function rollFreeTraining(save: Pick<Save, "training" | "upgrades" | "goals">, run: Pick<RunCore, "seed" | "freeRolls" | "training">, boonChance = 0): TrainingId[] {
   const now = { upgrades: save.upgrades, training: ranksInRun(save, run) };
   const picked: TrainingId[] = [];
   for (const group of FREE_GROUPS) {
