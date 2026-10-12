@@ -682,6 +682,19 @@ export class Game {
     if (this.auto) this.handStuck = false;
     this.message = this.auto ? "The hand takes over." : "Paused · the hand waits.";
   }
+  /** Pauses a playing hand while Pathfinder previews a tapped tile's route;
+   * true when it paused it, so `resumeAfterPreview` plays it on. */
+  pauseForPreview() {
+    if (!this.playing || !this.auto) return false;
+    this.toggleAuto();
+    return !this.auto;
+  }
+  /** Plays on a hand `pauseForPreview` paused, once the preview is gone,
+   * unless the run has ended, a page holds it paused, or it plays already. */
+  resumeAfterPreview() {
+    if (!this.playing || this.heldPlay || this.auto) return;
+    this.toggleAuto();
+  }
   /** Pauses the hand while a page covers the board inside a run (the
    * Research page), keeping whether it played and its speed for
    * `resumeFromPage`. */
@@ -1507,6 +1520,12 @@ export class Game {
   shownHp(now: number) {
     const fight = this.encounter, hp = this.run.player.hp;
     return fight ? heroHpDuring(fight.bout, hp, now - fight.start) : hp;
+  }
+  /** The HP the fight being played out leaves the hero with once its last
+   * strike lands (the HP now while there is none). */
+  fightEndHp() {
+    const fight = this.encounter, hp = this.run.player.hp;
+    return fight ? heroHpDuring(fight.bout, hp, Infinity) : hp;
   }
   /** Erases all progress and starts again outside the Tower. */
   eraseAll() {

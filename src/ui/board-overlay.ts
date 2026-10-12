@@ -26,6 +26,9 @@ export class BoardOverlay {
   private route: Step[] | null = null;
   /** Where the highlight was last placed (`track`), and whether on screen. */
   private placed = "";
+  /** Whether the shown preview paused the hand (Pathfinder), to play it on
+   * once the preview is gone. */
+  private pausedHand = false;
   /** The free levels last announced, and the timer that hides them. */
   private freeShown: Game["freeTrained"] = null;
   private freeTimer: ReturnType<typeof setTimeout> | undefined;
@@ -121,8 +124,20 @@ export class BoardOverlay {
     return tileInfoLine(tileInfo(this.game, this.highlighted.x, this.highlighted.y));
   }
 
-  /** Removes the highlight, both boxes and the route preview. */
+  /** Removes the highlight, both boxes and the route preview, playing on
+   * the hand the preview paused. */
   hide() {
+    if (this.pausedHand) {
+      this.pausedHand = false;
+      this.game.resumeAfterPreview();
+    }
+    this.dismiss();
+  }
+
+  /** Removes the highlight, both boxes and the route preview, leaving the
+   * hand as it is: for play pressed while a preview shows. */
+  dismiss() {
+    this.pausedHand = false;
     this.highlighted = null;
     this.renderer.previewRoute = null;
     this.hideInspect();
@@ -153,8 +168,10 @@ export class BoardOverlay {
   }
 
   /** Highlights the tile and shows its info; with Pathfinder, also the
-   * route there, drawn on the board, and its totals. */
+   * route there, drawn on the board, and its totals, pausing the hand while
+   * it shows. */
   private preview(x: number, y: number) {
+    if (this.game.showsRoutes && this.game.pauseForPreview()) this.pausedHand = true;
     this.highlight(x, y);
     const popup = this.shows("popup");
     if (popup) this.showInspect(x, y);

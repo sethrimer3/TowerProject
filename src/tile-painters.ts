@@ -86,9 +86,10 @@ function paintGround(c: CanvasRenderingContext2D, world: TileWorld, t: Tile, x: 
     const decor = themeAt(look.mode, look.height, x, y, look.seed).decor;
     const area1Art = drewSprite && decor === 0;
     // Inner room corners: walls on both sides, the room's corner diagonally
-    // across. The second biome's wall sprites run no mortar strip along their
-    // edges for a corner brick to meet, so they go without.
-    if (!(drewSprite && decor === 1)) drawCornerBricks(c, terrain, openCorners(world, x, y, (side) => side), area1Art);
+    // across. Only the area1 sprites and the procedural walls run a mortar
+    // edge along the tile for a corner brick to meet; every other biome's
+    // wall sprites go without.
+    if (!drewSprite || area1Art) drawCornerBricks(c, terrain, openCorners(world, x, y, (side) => side), area1Art);
     // Outer corners of a wall: open on both sides and diagonally, where two
     // exposed rims meet. Only the area1 art has rims to wrap a quoin round.
     if (area1Art) drawArea1Quoins(c, wallAdjacencyMask(neighbors), openCorners(world, x, y, (side) => !side));

@@ -107,13 +107,12 @@ export class ArchivesPanel {
     el("research-help").onclick = () => this.showHelp();
     document.querySelectorAll<HTMLElement>("[data-pick]").forEach((a) => (a.onclick = (e) => {
       // The auto-continue box and a busy archivist's buttons keep their own presses.
-      if ((e.target as Element).closest("label, input, [data-stop], [data-rush], [data-finish], [data-speed-up]")) return;
+      if ((e.target as Element).closest("label, input, [data-rush], [data-finish], [data-speed-up]")) return;
       this.picking = Number(a.dataset.pick);
       this.pickedFrom = game.save.archives.slots[this.picking]?.job?.research;
       this.rerender();
     }));
     document.querySelectorAll<HTMLButtonElement>("[data-hire]").forEach((b) => (b.onclick = () => this.hire(act)));
-    document.querySelectorAll<HTMLButtonElement>("[data-stop]").forEach((b) => (b.onclick = () => act(game.research.cancel(Number(b.dataset.stop)))));
     document.querySelectorAll<HTMLButtonElement>("[data-finish]").forEach((b) => (b.onclick = () => act(game.research.finishNow(Number(b.dataset.finish)).length > 0)));
     document.querySelectorAll<HTMLButtonElement>("[data-rush]").forEach((b) => (b.onclick = () => {
       const slot = Number(b.dataset.rush);
@@ -304,7 +303,7 @@ export class ArchivesPanel {
     showHelp(this.ctx, "UPGRADES", "Archives",
       p("Archivists research projects whose effects last between runs. Pick an idle archivist to choose its research; each level costs Gold and takes time.") +
       p("Research goes on while you play or are away. Each archivist works on one project at a time; Gems hire more.") +
-      p(`Auto-continue (${redoIcon("redo-icon help-redo")}) starts the project's next level as soon as one completes, when the Gold is there. Stop gives the Gold back and keeps the time spent for later; Gems finish a level at once.`) +
+      p(`Auto-continue (${redoIcon("redo-icon help-redo")}) starts the project's next level as soon as one completes, when the Gold is there. Research once begun can only be switched to another project, which gives its Gold back and keeps the time spent for later; Gems finish a level at once.`) +
       (this.cellsShown ? p(`Speed Up (${cellIcon("cell-icon help-cell")}) spends Cells, which Greater Bosses drop (more on later towers), to make an archivist research faster for a while; Queue buys it again as it ends, while the Cells are there.`) : "") +
       p("History lists every level completed."));
   }
@@ -317,7 +316,7 @@ export class ArchivesPanel {
     showHelp(this.ctx, "ARCHIVES", def.name, `<p>${describe(a, id)}</p><p class="research-about-now">${now}</p>`);
   }
 
-  /** Each hired archivist, busy (a bar, the time left, Stop) or idle, then
+  /** Each hired archivist, busy (a bar, the time left) or idle, then
    * the next one to hire. */
   private archivistsHtml() {
     const game = this.ctx.game, a = game.save.archives, now = game.clock();
@@ -334,7 +333,7 @@ export class ArchivesPanel {
       if (!job) return `<article class="archivist idle" role="listitem" data-pick="${i}"><div class="archivist-head">${title}<div class="archivist-actions">${paused}${auto}</div></div><button class="archivist-pick" aria-label="Select research for archivist ${i + 1}">Idle · Select research</button></article>`;
       const def = RESEARCH[job.research], shown = jobAt(slot, now)!, done = jobProgress(shown, now);
       const finish = game.save.settings.devMode ? `<button data-finish="${i}">Finish now</button>` : "";
-      return `<article class="archivist busy" role="listitem" data-pick="${i}" title="Select research: switch this archivist to other research"><div class="archivist-head"><div class="archivist-who">${title}<b>${def.name} · level ${job.level}</b></div><div class="archivist-actions">${auto}<button data-stop="${i}" title="Stop: the Gold comes back, and the time spent is kept for later">Stop</button>${this.rushHtml(i)}${finish}</div></div>
+      return `<article class="archivist busy" role="listitem" data-pick="${i}" title="Select research: switch this archivist to other research"><div class="archivist-head"><div class="archivist-who">${title}<b>${def.name} · level ${job.level}</b></div><div class="archivist-actions">${auto}${this.rushHtml(i)}${finish}</div></div>
         <div class="research-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.floor(done * 100)}"><i data-progress="${i}" style="width:${(done * 100).toFixed(2)}%"></i></div>
         <div class="archivist-line">${this.changeHtml(job.research)}<p class="archivist-time"><span data-countdown="${i}">${formatDuration(shown.completesAt - now)} left</span>${this.speedUpHtml(i)}</p></div></article>`;
     }).join("");
@@ -403,7 +402,7 @@ export class ArchivesPanel {
     else if (state === "locked") action = `<span class="research-state">Requires ${missing(save, id).map(requirementText).join(" + ")}</span>`;
     else {
       const why = this.picking === null ? "Choose an archivist first." : cannotSwitch(save, this.picking, id);
-      action = `<button data-research="${id}" ${why ? `disabled title="${why}"` : ""}>Research · <span class="research-gold">${uiSprite("gold", "stat-sprite")} ${currencyAmount(researchPrice(a, next!))}</span></button>`;
+      action = `<button data-research="${id}" aria-label="Research ${def.name} for ${currencyAmount(researchPrice(a, next!))} Gold" ${why ? `disabled title="${why}"` : ""}><span class="research-gold">${uiSprite("gold", "stat-sprite")} ${currencyAmount(researchPrice(a, next!))}</span></button>`;
     }
     return `<article class="research ${state}" role="listitem"><div class="research-head"><b>${def.name}</b><button class="tree-help research-about" data-about="${id}" aria-label="About ${def.name}" title="About ${def.name}">?</button><small>LEVEL ${level} / ${maxLevel(id, save.upgrades)}</small></div>
       <div class="research-next">${detail}<span class="research-action">${price}${action}</span></div></article>`;

@@ -52,12 +52,12 @@ test("each rank of an upgrade adds its grant", () => {
   });
 });
 
-test("each level earns two training points and nothing else", () => {
+test("each level earns three training points and nothing else", () => {
   const s = defaults();
   s.xp = xpForLevel(15);
   assert.equal(levelForXp(s.xp), 15);
   assert.equal(levelForXp(s.xp - 1), 14);
-  assert.deepEqual(trainingPoints(s), { earned: 30, spent: 0, left: 30 });
+  assert.deepEqual(trainingPoints(s), { earned: 45, spent: 0, left: 45 });
   assert.deepEqual(loadout(s), loadout(defaults()));
 });
 
@@ -70,13 +70,13 @@ test("each training rank is worth more than the one before, whatever the hero's 
   // (the page shows the stats whole).
   const l = loadout(s);
   assert.deepEqual([l.attack, l.defense, l.maxHp], [12 + 1.2, 0.333333, 100 + 39]);
-  assert.deepEqual(trainingPoints(s), { earned: 10, spent: 3 + 2, left: 5 });
+  assert.deepEqual(trainingPoints(s), { earned: 15, spent: 3 + 2, left: 10 });
   // The next rank: the 4th max HP rank adds 10 + 7 = 17, the 2nd ATK 1 + 3 / 5 = 1.6.
   assert.deepEqual(
     [trainingStep(s, "hp"), trainingStep(s, "attack")].map(({ now, next, worth, affordable }) => [now, next, worth, affordable]),
     [[139, 156, 17, true], [13, 14, 1.6, true]],
   );
-  assert.equal(trainingStep({ ...s, trainingPaid: { ...s.trainingPaid, hp: { points: 8, gold: 0, ms: 0 } } }, "attack").affordable, false, "1 point a rank, none left");
+  assert.equal(trainingStep({ ...s, trainingPaid: { ...s.trainingPaid, hp: { points: 13, gold: 0, ms: 0 } } }, "attack").affordable, false, "1 point a rank, none left");
   // Levelling up only earns points: ranks bought are worth what they were.
   s.xp = xpForLevel(20);
   assert.deepEqual(loadout(s), l);
@@ -140,8 +140,9 @@ test("training spends points and reaches a run still outside", () => {
   assert.equal(trainNow(g, "hp"), false);
   g.save.xp = xpForLevel(1);
   assert.equal(trainNow(g, "hp"), true);
-  assert.deepEqual([g.run.player.maxHp, g.run.player.hp, trainingPoints(g.save).left], [111, 111, 1]);
+  assert.deepEqual([g.run.player.maxHp, g.run.player.hp, trainingPoints(g.save).left], [111, 111, 2]);
   assert.equal(trainNow(g, "attack"), true, "ATK takes 1 point");
+  assert.equal(trainNow(g, "defense"), true, "and DEF the last");
   assert.equal(trainNow(g, "defense"), false, "no points left");
 });
 

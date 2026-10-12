@@ -303,18 +303,18 @@ h1 span {
   background: repeating-linear-gradient(90deg, #974759 0 5px, #b95f6c 5px 10px, #dc8890 10px 15px);
   height: 100%;
 }
-/* The HP a potion just healed, just past the HP before it; the red fill
- * grows over it as it shrinks. */
+/* The HP a potion just healed, in blue just past the HP before it; the red
+ * fill grows over it as it shrinks. */
 #health-gain {
   flex: none;
   width: 0;
-  background: #e8a2a8;
+  background: repeating-linear-gradient(90deg, #3f6fb0 0 5px, #5b8fd4 5px 10px, #84b4ee 10px 15px);
 }
 #health.healing,
 #health-gain.healing {
   transition: width 1s linear;
 }
-/* The HP a fight being played out has cost so far, just past what is left. */
+/* The HP a fight being played out is still to cost, just past what it leaves. */
 #health-loss {
   flex: none;
   width: 0;
@@ -4272,3 +4272,7 @@ dialog.run-notes h2 { margin-top: 0; }
 .notes-table caption { padding: 12px 4px 2px; caption-side: top; text-align: left; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #e2a15c; }
 .summary-notes { margin-top: 10px; }
 .height.takes-notes #height, .height.takes-notes #height-label, .height.takes-notes #height-tier { cursor: pointer; }
+/* A pickup's gain in the tile pop-up: its item's icon and "+N". */
+.inspect-box .tile-gain {
+  white-space: nowrap;
+}

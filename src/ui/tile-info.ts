@@ -9,6 +9,11 @@ import { countsParries, goalUnlocked } from "../goals.ts";
 import { chestReward, CLEARED_INSPIRATION } from "../tower/area-ledger.ts";
 import { doorColor, doorDescription, doorName, doorRule, drainsHp, KEY_NAMES } from "../doors.ts";
 import { MODES } from "../modes.ts";
+import { litTorches } from "../board.ts";
+import { point } from "../entities.ts";
+import { area1ItemId } from "../area1-tileset.ts";
+import { snap } from "../exact.ts";
+import { itemSprite } from "./dom.ts";
 
 /** What the inspect panel says about one board tile. */
 export type TileInfo = { color: string; title: string; body: string };
@@ -78,6 +83,12 @@ function critPrediction(c: CritForecast) {
   return `<br><strong class="${c.worst.survivable ? "safe" : c.best.survivable ? "risky" : "danger"}">~${cost(expected)} · ${verdict}${chance}</strong>${spread}`;
 }
 
+/** What a pickup gives, as its item's icon and "+N" (`label` after it):
+ * the amount a step onto it adds now, with every bonus counted, rather than
+ * the stat before and after, which Regen and the rest soon outdate. */
+const gain = (t: Tile, amount: string, label = "") =>
+  `<span class="tile-gain">${itemSprite(area1ItemId(t)!, "stat-sprite")} +${amount}${label}</span>`;
+
 const hits = (n: number) => (n === 1 ? "Instakill" : `${n.toLocaleString("en-US")} hits to defeat`);
 
 /** The Goals' lines under a fight's prediction, once unlocked: Combat
@@ -92,6 +103,12 @@ function forecast(p: Player, e: Enemy, turns: number, g: Board, crits = false) {
   const more = goalUnlocked(g.save, "attackLore") ? attackForFewerHits(p, e) : null;
   if (more) lines += `<br><span class="forecast lore">+${more.toLocaleString("en-US")} ATK: ${turns === 2 ? "Instakill" : `${(turns - 1).toLocaleString("en-US")} hits`}</span>`;
   return lines;
+}
+
+/** The ATK or DEF a step onto shard `t` adds, research and boons counted. */
+function shardGain(t: Tile, p: Player, g: Board, stat: "attack" | "defense") {
+  const after = resolveStep(p, t, g.stepRules);
+  return enemyStat(after.blocked ? shardStat(t, g.stepRules) : snap(after.player[stat] - p[stat]));
 }
 
 const DESCRIBE: Partial<Record<Kind, Describe>> = {
@@ -121,22 +138,24 @@ const DESCRIBE: Partial<Record<Kind, Describe>> = {
     const durability = rule.type === "wood" ? `<br><small>Durability ${wholeChange(rule.durability)}</small>` : "";
     return { title: doorName(t), body: `<span>${doorDescription(t)}</span>${keyLine}${durability}` };
   },
-  key: (t, p) => {
-    const color = t.color!, name = KEY_NAMES[color];
-    return { title: `${name} Key`, body: `<span>Unlocks ${name} doors</span><br>Keys: ${p.keys[color]} → ${p.keys[color] + 1}` };
+  key: (t, p, g) => {
+    const color = t.color!, name = KEY_NAMES[color], after = resolveStep(p, t, g.stepRules);
+    const added = after.blocked ? 0 : after.player.keys[color] - p.keys[color];
+    return { title: `${name} Key`, body: `<span>Unlocks ${name} doors</span><br>${gain(t, keyCount(snap(added)))}` };
   },
   potion: (t, p, g) => {
-    const after = resolveStep(p, t, g.stepRules), percent = t.color === "red";
+    // What it restores in full: the heal of a hero at 0 HP, up to max HP.
+    const after = resolveStep({ ...p, hp: 0 }, t, g.stepRules), percent = t.color === "red";
     const restores = percent ? `Restores HP and ${g.stepRules.percentPotion / 100}% of max HP` : "Restores HP";
     // A run with percent potions says how many of its potions are.
     const chance = g.run.percentPotions ? `<br><small>${g.run.percentPotions / 100}% of this run's potions are percent potions</small>` : "";
-    return { title: percent ? "Percent Potion" : "Potion", body: `<span>${restores}</span><br>(${wholeHp(p.hp)} → ${wholeHp(after.blocked ? p.hp : after.player.hp)})${chance}` };
+    return { title: percent ? "Percent Potion" : "Potion", body: `<span>${restores}</span><br>${gain(t, String(wholeChange(after.blocked ? 0 : after.healed)), " HP")}${chance}` };
   },
   stairs,
   stairsDown: stairs,
   floor: (_t, _p, g) => ({ title: "Floor", body: MODES[g.mode].words.floor }),
-  attack: (t, _p, g) => ({ title: "Attack Shard", body: `Raises ATK by ${enemyStat(shardStat(t, g.stepRules))} for this run.` }),
-  defense: (t, _p, g) => ({ title: "Defense Shard", body: `Raises DEF by ${enemyStat(shardStat(t, g.stepRules))} for this run.` }),
+  attack: (t, p, g) => ({ title: "Attack Shard", body: `<span>Raises ATK for this run</span><br>${gain(t, shardGain(t, p, g, "attack"), " ATK")}` }),
+  defense: (t, p, g) => ({ title: "Defense Shard", body: `<span>Raises DEF for this run</span><br>${gain(t, shardGain(t, p, g, "defense"), " DEF")}` }),
   treasure: () => ({ title: "Treasure", body: "Contains gold and crafting materials." }),
   reward: (t) => chestReward(t.tier) === "mastered"
     ? { title: "Mastery Chest", body: "The area below was climbed without taking damage: the next checkpoint can be warped to." }
@@ -148,6 +167,9 @@ export function tileInfo(g: Board, x: number, y: number): TileInfo {
   const t = g.world.tile(x, y);
   const describe = DESCRIBE[t.kind];
   if (t.kind === "door") return { color: doorColor(t), ...describe!(t, g.run.player, g) };
+  // A floor tile holding a lit torch is the torch.
+  if (t.kind === "floor" && litTorches(g.world).has(point(x, y)))
+    return { color: "#f2b25c", title: "Torch", body: "A burning torch. Stepping here puts it out." };
   if (describe) return { color: KIND_COLORS[t.kind]!, ...describe(t, g.run.player, g) };
   return {
     color: KIND_COLORS[t.kind] ?? "#c7cedb",

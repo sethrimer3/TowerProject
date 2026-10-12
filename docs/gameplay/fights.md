@@ -14,7 +14,8 @@ From the hero's first strike, the monster's HP shows in a red bar above it, drai
 A monster that falls raises nothing (it plainly lost all its HP), and only the damage the hero took rises off the hero.
 A fight the hero loses raises the damage each way at once, and the monster's HP bar stays, showing what it has left, so you can judge whether to undo.
 A revival shows the fight up to it the same way, and once its golden fire is out the rest of the fight follows as another summary.
-The HP the fight has cost so far shows in purple on the HP bar, just past the HP left, and shrinks away over a second once the fight is over.
+While a fight plays out, the HP bar's red already shows the HP the fight will leave, and the HP still to be lost shows in purple just past it, shrinking as each strike lands.
+A potion's heal shows in blue past the HP before it, and the red fills over the blue in a second.
 A health potion picked up does the opposite: the HP it heals shows in light red past the HP you had, the red bar fills up over it in a second, and the HP actually healed rises as a blue +N over the hero (blue is kept for HP gained, as a fight's Lifesteal heals rise too).
 The first round's strikes take 0.25 s each, and each later round runs at 90% of the one before, down to 0.05 s a strike.
 Once the monster falls the hero steps onto its tile.

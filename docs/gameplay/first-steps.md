@@ -23,6 +23,9 @@ Missing keys stop movement at the necessary door, with a fading red X; unreachab
 Routing prefers an available detour over a door for which no key is held.
 A first tap on a tile highlights it and shows what's there (a monster's stats, an item, a door's keys); once **Pathfinder** (1 Courage, after Movement Speed in the Courage tree, left of Focus) is owned, it also draws the route there on the board and adds a Route totals box of what happens along it (the HP lost, the keys spent, what's picked up).
 A second tap walks there either way.
+A pickup's box shows what it gives with every bonus counted, as its icon and +N (a key's keys, a potion's full heal, a shard's ATK or DEF), and a lit torch's says Torch.
+With Pathfinder, tapping a tile inside a run pauses the hand while the highlight shows; once it goes (and no other tile is highlighted in its place), a hand it paused plays on.
+Pressing play clears the highlight and the route.
 
 ## Tab dots
 

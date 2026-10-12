@@ -417,3 +417,18 @@ test("the forest's lessons: try again until dismissed or a run goes inside, then
   const saved = decode(JSON.stringify(g.save)).tutorials;
   assert.ok(saved.climb && saved.enter && saved.delve);
 });
+
+test("a Pathfinder preview pauses a playing hand and plays it on after, never a hand already paused", () => {
+  const g = arena();
+  g.autoTurn();
+  assert.equal(g.auto, true);
+  assert.equal(g.pauseForPreview(), true);
+  assert.equal(g.auto, false);
+  g.resumeAfterPreview();
+  assert.equal(g.auto, true);
+  g.toggleAuto();
+  assert.equal(g.pauseForPreview(), false, "paused by the player: the preview leaves it");
+  g.pauseForPage();
+  g.resumeAfterPreview();
+  assert.equal(g.auto, false, "a page holding the run paused keeps it so");
+});

@@ -382,9 +382,11 @@ el("forest-sign").onclick = () => {
   if (game.swapForest()) save();
   update();
 };
-// Inside a run the button plays and pauses the hand.
+// Inside a run the button plays and pauses the hand; playing clears a
+// tapped tile's highlight and route.
 el("auto").onclick = () => {
   if (!game.run.outside) game.toggleAuto();
+  if (game.auto) overlay.dismiss();
   update();
 };
 // In the forest, Enter (under Goals) goes straight in, starting the run.

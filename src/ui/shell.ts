@@ -12,7 +12,7 @@ const PURSE = `<div class="purse" aria-label="Currencies"><span class="gem-stat"
  * a run the Shop under the hamburger. */
 const ACTIONS_MENU = `<div id="run-menu" class="run-menu"><div class="run-menu-frame" aria-hidden="true"></div><div id="run-menu-items" class="run-menu-items" inert>` +
   `<button id="auto-settings" class="mini-action" aria-label="Settings" title="Settings"><span class="mini-icon">⚙</span><small>SETTINGS</small></button>` +
-  `<button id="run-research" class="mini-action" aria-label="Research" title="Research: Training and the Archives"><span class="mini-icon"></span><small>RESEARCH</small></button>` +
+  `<button id="run-research" class="mini-action" aria-label="Upgrades" title="Upgrades: Training and the Archives"><span class="mini-icon"></span><small>UPGRADES</small></button>` +
   `<button id="tournament-button" class="mini-action tournament-button" aria-label="Tournament" title="Tournament" hidden><span class="mini-icon">${trophyIcon()}</span><small id="tournament-state"></small></button>` +
   `<button id="missions-button" class="mini-action missions-button" aria-label="Missions" title="Missions"><span class="mini-icon">${missionIcon()}</span><small id="missions-count">0/8</small></button>` +
   `<button id="events-button" class="mini-action events-button" aria-label="Events" title="Events" hidden><span class="mini-icon">${eventIcon()}</span><small id="events-state"></small></button>` +

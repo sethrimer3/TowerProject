@@ -491,13 +491,15 @@ export const boardHeadingStale = (game: Game) => el("board").dataset.heading !==
 let keysSeen: { run: number | null; colors: Set<string> } = { run: null, colors: new Set() };
 
 /** HP, ATK, DEF (and the shroud, once owned), the run's Gold and keys. During a fight being played out, HP counts down
- * strike by strike. */
+ * strike by strike, the bar's red already at the HP the fight leaves and
+ * the HP still to go in purple past it. */
 export function renderVitals(game: Game) {
   const p = game.run.player, hp = game.shownHp(performance.now());
   text("hp", `${wholeHp(hp)} / ${whole(p.maxHp)}`);
   renderHealthGain(game);
-  el("health").style.width = `${(100 * hp) / p.maxHp}%`;
-  renderHealthLoss(game.encounter ? p.hp - hp : 0, p.maxHp);
+  const left = game.encounter ? Math.min(hp, game.fightEndHp()) : hp;
+  el("health").style.width = `${(100 * left) / p.maxHp}%`;
+  renderHealthLoss(hp - left, p.maxHp);
   text("attack", whole(p.attack));
   text("defense", whole(p.defense));
   text("shroud", whole(p.shroud ?? 0));
@@ -520,7 +522,7 @@ export function renderVitals(game: Game) {
 /** The last heal the HP bar has filled up to. */
 let shownHeal = 0;
 /** A potion just picked up or drunk: the red fill starts at the HP before it with the
- * HP it healed in light red beyond, and grows over the light red in a
+ * HP it healed in blue beyond, and grows over the blue in a
  * second. A fight starting, or the next potion, stops it where it is. */
 function renderHealthGain(game: Game) {
   const heal = game.lastHeal, fill = el("health"), gain = el("health-gain");
@@ -546,8 +548,9 @@ function renderHealthGain(game: Game) {
   fill.addEventListener("transitionend", settle, { once: true });
 }
 
-/** The HP the fight being played out has cost so far, shown in purple just
- * past the HP left; once the fight settles it shrinks away over a second. */
+/** The HP the fight being played out is still to cost, shown in purple just
+ * past the HP it leaves, shrinking strike by strike; any left once the
+ * fight settles shrinks away over a second. */
 function renderHealthLoss(lost: number, maxHp: number) {
   const bar = el("health-loss");
   if (lost > 0) {

@@ -320,7 +320,7 @@ html.desktop .refine-bar:not(#_) {
   box-shadow: var(--sunken);
 }
 html.desktop .xp-track i:not(#_),
-html.desktop .health-track i:not(#_),
+html.desktop .health-track i:not(#_):not(#health-gain, #health-loss),
 html.desktop .weekly-bar i:not(#_),
 html.desktop .mission-bar i:not(#_),
 html.desktop .research-bar i:not(#_),

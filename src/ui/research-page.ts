@@ -1,7 +1,7 @@
 import { askForGems, helpButton, showHelp } from "./dialogs.ts";
 import { play } from "../sound.ts";
 import { permanentBoost, trainingRate } from "../shop/entitlements.ts";
-import { TRAINING, TRAINING_GROUPS, TRAINING_PER_LEVEL, isStatRow, levelForXp, type TrainingId } from "../config.ts";
+import { TRAINING, TRAINING_GROUPS, TRAINING_PER_LEVEL, levelForXp, type TrainingId } from "../config.ts";
 import { trainingBulk, trainingPoints, trainingStep, trainingText, trainingWaiting, trainingOpen } from "../loadout.ts";
 import { whole } from "../whole.ts";
 import type { BuyQuantity } from "../buy-quantity.ts";
@@ -52,10 +52,12 @@ export class ResearchPage {
   private tabsHtml() {
     if (!this.archivesOpen) return "";
     const save = this.ctx.game.save, busy = save.archives.slots.filter(s => s.job).length;
+    // Once trainers work, Training's subtitle also counts them at work.
+    const trainers = this.ctx.game.training.hired ? ` · ${save.trainingJobs.length}/${trainingSlots(save)} TRAINING` : "";
     const trainingDot = this.tab !== "training" && trainingWaiting(save) && levelForXp(save.xp) > save.seen.training ? ` class="notify"` : "";
     return `<div class="tree-tabs" role="group" aria-label="Research">` +
-      `<button data-research-tab="training" aria-pressed="${this.tab === "training"}"${trainingDot}><span>${pointsIcon("ui-sprite")}</span>Training<small>${trainingPoints(save).left} POINTS</small></button>` +
-      `<button data-research-tab="archives" aria-pressed="${this.tab === "archives"}"><span>${uiSprite("log")}</span>Archives<small>${busy} RESEARCHING</small></button></div>`;
+      `<button data-research-tab="training" aria-pressed="${this.tab === "training"}"${trainingDot}><span>${pointsIcon("ui-sprite")}</span>Training<small>${trainingPoints(save).left} POINTS${trainers}</small></button>` +
+      `<button data-research-tab="archives" aria-pressed="${this.tab === "archives"}"><span>${uiSprite("log")}</span>Archives<small>${busy}/${save.archives.slots.length} RESEARCHING</small></button></div>`;
   }
 
   private bindTabs() {
@@ -246,14 +248,8 @@ export class ResearchPage {
     // the value they reach.
     const q = game.buyQuantity, bulk = trainingBulk(save, t.id, q), count = step.maxed ? 1 : Math.max(1, bulk.count);
     const { now, unit } = step, next = count === 1 ? step.next : trainingStep(save, t.id, count).next;
-    // A row says what its most ranks are worth, and once there offers no
-    // next one: a stat's worth grows with the hero's level, so its level shows its most
-    // ranks instead.
-    const top = trainingStep({ ...save, training: { ...save.training, [t.id]: t.max }, trainingJobs: [] }, t.id).now;
-    const most = !isStatRow(t) ? `up to ${unit === "tiles" || unit === "shots" || unit === "perTile" || unit === "targets" ? trainingText(top, unit) : `${top}${unit}`}` : "";
     const shown = (v: number) => trainingText(v, unit);
-    const time = step.maxed || !hired ? "" : this.timeNote(t.id, q);
-    const notes = [time, most].filter(Boolean).join(" · ");
+    const notes = step.maxed || !hired ? "" : this.timeNote(t.id, q);
     const job = trainingJob(save.trainingJobs, t.id);
     const nowButton = step.maxed
       ? ""

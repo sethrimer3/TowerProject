@@ -10,6 +10,7 @@ Outside, it then draws the tile contents, entrance, route line, hero in its gras
 Blocked-step and feedback text, then the skull over a hero struck down (`struck-down.ts`), the revival's fire and the level-up burst (`level-up.ts`), go last.
 The passes live in their own modules.
 `tile-painters.ts` holds the tile art (one painter per tile kind, plus the hero and torch sprites), and every painter draws onto the context it's given.
+A wall tile gets a corner brick (`drawCornerBricks`) in each inner room corner only where its art runs a mortar edge for the brick to meet: the area1 sprites and the procedural walls; the other biomes' wall sprites go without, and only the area1 sprites wrap a quoin round their outer corners (`drawArea1Quoins`).
 Items, the torch and the hero wear a coloured outline (`withOutline`); an enemy is baked once per name, tier, `strength` and whether it is Fast or Ranged (`bakeEnemy`, an arrow at the top right for Ranged, the Fast mark below it when both: a one-pixel black outline, then `ENEMY_LOOK`'s bands outside it and rank chevrons over it, a weak enemy's one pointing down, and a Fast enemy's cyan fast-forward mark at the top right, `fastMark`; the Neon enemy draws one too), and its dark-room glow in `lighting.ts` is keyed by strength too.
 Only opaque bands cast torch shadows.
 Ground uses the PNG tilesets (`themed-tilesets.ts`) and falls back to `drawTerrain` in `themes.ts`, the procedural art (wall faces per theme, floor contact shadows, and a small library of details) shown when sprites are off or still loading.
