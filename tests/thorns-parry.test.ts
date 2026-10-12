@@ -185,11 +185,25 @@ test("an animated fight raises each strike's thorns in yellow over the enemy as 
   assert.deepEqual(rising(fight, strike.at), [`1@${fight.bout.strikes[0]!.at}:12:#ff4040`, `0@${strike.at}:20:#b3121f`, `1@${strike.at}:25:${YELLOW}`]);
 });
 
-test("in summary rounds the thorns rise beside the hero's damage, and none when they fell the enemy", () => {
-  const fight = shown(hero({ thorns: 25 }), { ...brute, hp: 100, attack: 20 }, true);
-  assert.ok(rising(fight, fight.bout.duration).some((n) => n.endsWith(`:${YELLOW}`)) === false, "thorns felled it: nothing rises for them");
+test("summary rounds raise no thorns, which would only cover the drops", () => {
+  const felled = shown(hero({ thorns: 25 }), { ...brute, hp: 100, attack: 20 }, true);
   const lasting = shown(hero({ thorns: 10, attack: 50 }), { ...brute, hp: 100, attack: 20 }, true);
-  assert.deepEqual(rising(lasting, lasting.bout.duration).filter((n) => n.endsWith(YELLOW)), [`1.22@0:10:${YELLOW}`]);
+  for (const fight of [felled, lasting]) assert.ok(!rising(fight, fight.bout.duration).some((n) => n.endsWith(YELLOW)));
+});
+
+test("a played-out fight's drops wait until its last numbers fade; summary rounds' rise at once", () => {
+  const drops = (fight: ReturnType<typeof shown>, now: number) => {
+    const popups = new BoardPopups(), gains = [
+      { x: 1, y: 0, text: "+5 Gold", art: null, drop: { row: 1, with: false } },
+      { x: 1, y: 0, text: "+3 Silver", art: null, drop: { row: 0, with: true } },
+    ];
+    popups.update({ run: { seed: 1 }, gains, fight, lastHeal: null }, now);
+    return (popups as unknown as { rewards: { start: number }[] }).rewards.map((r) => r.start);
+  };
+  const played = shown(hero({ attack: 50 }), { ...brute, hp: 100, attack: 20 }, false), last = played.bout.strikes.at(-1)!.at;
+  assert.deepEqual(drops(played, played.bout.duration), [last + 750, last + 750]);
+  const summary = shown(hero({ attack: 50 }), { ...brute, hp: 100, attack: 20 }, true);
+  assert.deepEqual(drops(summary, summary.bout.duration), [summary.bout.duration, summary.bout.duration]);
 });
 
 test("in summary rounds the bar of an enemy thorns struck but the hero felled drains to nothing and fades", () => {

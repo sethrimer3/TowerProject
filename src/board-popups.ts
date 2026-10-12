@@ -17,6 +17,9 @@ const REWARD_RISE = 0.7;
 /** A kill's or a chest's drops rise together, one above another this far apart (tiles),
  * close but clear of each other. */
 const DROP_ROW = 0.7;
+/** A played-out fight's drops wait until its last numbers begin to fade,
+ * so they rise clear of them (ms after the last strike lands). */
+const DROP_HOLD_MS = POPUP_MS - FADE_MS;
 const DAMAGE_RISE = 0.9;
 /** Damage numbers start this far up their tile, clear of the sprite struck. */
 const DAMAGE_START = 0.35;
@@ -146,7 +149,7 @@ export class BoardPopups {
 
   /** Takes the game's new rewards, starting now (those that came together
    * one after another, but a kill's or a chest's drops all at once,
-   * stacked), the latest
+   * stacked, and a played-out fight's once its last numbers fade), the latest
    * fight's strikes that have landed by `now`, and a new heal. A new run
    * clears whatever was still showing. */
   update(game: { run: { seed: number }; gains: Gain[]; fight: ShownFight | null; lastHeal: Heal | null; volley?: Volley | null }, now: number) {
@@ -162,9 +165,11 @@ export class BoardPopups {
       this.numbers.push({ x: heal.x, y: heal.y + DAMAGE_START, start: now, text: `+${wholeChange(heal.to - heal.from)}`, color: HEAL_COLOR });
     }
     let start = now - POPUP_MS;
+    const held = dropsHeld(game.fight, now);
     for (const gain of game.gains.splice(0)) {
+      const from = gain.drop && held && gain.x === held.x && gain.y === held.y ? held.until : now;
       // A kill's or a chest's drops start together, each in its row; anything else after the last.
-      if (!gain.drop?.with || start < now) start = Math.max(now, start + POPUP_MS);
+      if (!gain.drop?.with || start < from) start = Math.max(from, start + POPUP_MS);
       this.rewards.push({ x: gain.x, y: gain.y + (gain.drop?.row ?? 0) * DROP_ROW, start, gain });
     }
     this.strike(game.fight, now);
@@ -189,7 +194,8 @@ export class BoardPopups {
       // what the hero took rises, over where the hero stands at the end.
       if (s.healed) this.heal(s.healed, won && fight.summary ? fight.to : fight.from, fight.start + s.at);
       if (!hiddenInSummary(fight, s)) this.raise(s, struckAt(fight, s, won), fight.start + s.at);
-      if (s.thorns && !(fight.summary && !s.thornHp)) this.thorns(s.thorns, fight, fight.start + s.at);
+      // Summary rounds raise no thorns: they would only cover the drops.
+      if (s.thorns && !fight.summary) this.thorns(s.thorns, fight, fight.start + s.at);
     }
   }
   /** A new turn's shots raise their numbers as they land: what a Ranged
@@ -215,12 +221,9 @@ export class BoardPopups {
     }
   }
   /** What the enemy's thorns cost it, in yellow over the enemy, as the
-   * strike's damage rises over the hero. In summary rounds, where the
-   * hero's damage rises over the enemy too, it stands aside; thorns that
-   * fell the enemy there raise nothing, as the hero's felling strike doesn't. */
+   * strike's damage rises over the hero. */
   private thorns(amount: number, fight: ShownFight, start: number) {
-    const shift = fight.summary ? SHROUD_SPLIT : 0;
-    this.numbers.push({ x: fight.to.x + shift, y: fight.to.y + DAMAGE_START, start, text: String(wholeChange(amount)), color: THORN_COLOR });
+    this.numbers.push({ x: fight.to.x, y: fight.to.y + DAMAGE_START, start, text: String(wholeChange(amount)), color: THORN_COLOR });
   }
   /** The HP Lifesteal restored, as a blue +N over the hero (nothing when it
    * rounds to none). */
@@ -328,6 +331,15 @@ function landedBy(hits: Hit[], t: number) {
   let n = 0;
   while (n < hits.length && hits[n].at <= t) n++;
   return n;
+}
+
+/** Where a played-out fight's drops rise, the enemy's tile, and when they
+ * may (`DROP_HOLD_MS` after its last strike lands), while that is still to
+ * come; null for summary rounds, which hold nothing back. */
+function dropsHeld(fight: ShownFight | null, now: number) {
+  if (!fight || fight.summary) return null;
+  const until = fight.start + (fight.bout.strikes.at(-1)?.at ?? 0) + DROP_HOLD_MS;
+  return now < until ? { ...fight.to, until } : null;
 }
 
 /** The hero's felling strike in summary rounds, which raises no number. */
