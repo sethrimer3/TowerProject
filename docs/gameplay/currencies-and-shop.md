@@ -4,6 +4,7 @@
 
 **Gems** are the premium currency, kept between runs like Gold.
 The stats show the height in their right-hand column (in the forest, the tower or delve the entrance leads to, such as Tower 2), and beside it, once a run has earned any, the Inspiration (Courage in the Delve) it has earned, its icon and number flashing each time it rises; under them the Inspiration or Courage a new best would pay, and below that the currencies held, one a line: Gems, in the forest Ascension Shards, Gold and, inside a run, its Silver (amounts over 9,999 shortened, such as 123K; the exact amount on hover).
+Inside a run a tap on the currencies switches Gold and Silver to the rates the run finds them at, such as *12/min*, over the last minute of play: time the hand waits (paused, or with no card able to act) or a page or dialog covers the board doesn't count, so a pause leaves the rates as they were.
 
 ## Gems on the floors
 

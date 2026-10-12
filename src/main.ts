@@ -501,7 +501,7 @@ const loop = new FrameLoop({
   defendFrame: (time) => defendPage.frame(time),
   update,
   vitals: () => renderVitals(game),
-  purse: (time) => purseFrame(game, time),
+  purse: (time) => purseFrame(game, time, !modal.open),
   highlight: () => {
     overlay.track();
     overlay.placeSign();
