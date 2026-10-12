@@ -30,6 +30,7 @@ Stopping keeps the research done, not the time passed, and Rush prices the resea
 
 Each level completed pops up at the top of the screen, over everything, as "Research Complete!" with the project and level, for four seconds before it slides up out of sight; levels that complete together (such as while the game was closed) follow one another in order.
 The library lists only research whose requirements are met (Dev mode lists it all), and can be searched and filtered by category and status, and its History button opens a list of the levels completed lately.
+Research at its most levels stays in the list in a gold box, marked Complete; once any is, a **Hide Completed** box at the top leaves those out.
 Each project's box is kept short: its name, categories and level on one line, its description, then what its next level changes, how long it takes and its Research button (showing its Gold) on one line.
 
 ## Focus Count

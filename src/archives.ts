@@ -79,6 +79,8 @@ export const RESEARCH_TARGETS = {
   critChancePercent: { name: "Critical Chance", base: 100, shown: percent },
   /** The percent of the Crit x training's factor that the hero has, from 100. */
   critFactorPercent: { name: "Critical Factor", base: 100, shown: percent },
+  /** The percent a turn the Archer's ready arrow waits unfired adds to its next arrow's ATK, from 0. */
+  chargedShotPercent: { name: "Charge / Turn", base: 0, shown: (v: number) => `+${v}%` },
   /** The percent of the max HP a run starts with that the hero has, from 100. */
   maxHpPercent: { name: "Max HP", base: 100, shown: percent },
   /** The percent of the shroud a run starts with that the hero has, from 100. */
@@ -229,6 +231,14 @@ const critLevels = (target: ResearchTarget) => Array.from({ length: 100 }, (_, i
   const m = i + 1 - POTION_HP_START.length, seconds = POTION_HP_START[i]?.[1] ?? 900 * m + 36 * m * m;
   return { gold: 30 + 8 * i * i * i, hours: seconds / 3600, effect: { target, op: "add", value: 2 } };
 });
+
+/** Charged Shot research (+1% of ATK a turn waited, a level, for 100
+ * levels): Critical Factor's hours, at ten times its Gold: level n costs
+ * 300 + 80 × (n − 1)³ (300, 380, 940 … 107,000 at level 12, 1.4 million at
+ * 27, 16 million at 60, 78 million at 100; about 1.96 billion in all). */
+const chargedShotLevels = () => critLevels("chargedShotPercent").map((level): ResearchLevel => ({
+  ...level, gold: 10 * level.gold, effect: { target: "chargedShotPercent", op: "add", value: 1 },
+}));
 
 /** Parry % research: +0.2% Parry % a level (2 tenths), for 50 levels.
  * Level n costs 5,000 + 610 × (n⁴ − 1) + 7 × (n⁵ − 1) Gold, three
@@ -435,6 +445,13 @@ export const RESEARCH = {
     categories: ["offense"],
     requires: [{ upgrade: "critical" }],
     levels: critLevels("critFactorPercent"),
+  },
+  chargedShot: {
+    name: "Charged Shot",
+    description: "Learn to hold a drawn bow: each turn the Archer's ready arrow waits unfired raises the next arrow's ATK.",
+    categories: ["offense"],
+    requires: [{ upgrade: "archives" }, { goalUnlock: "chargedShot" }],
+    levels: chargedShotLevels(),
   },
   shardAttack: {
     name: "Shard ATK",

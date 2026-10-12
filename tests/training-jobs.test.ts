@@ -344,7 +344,8 @@ test("the time bank serves any stat, after that stat's own time credit", () => {
 test("a cubic scale adds (ranks / cubic)^3 to a trainer's Gold: never below the linear price, far above it at the cap", () => {
   for (const t of TRAINING) {
     const c = TRAINER_GOLD_CURVES[t.id];
-    if (c.power) continue;
+    // (ATK / Tile's trainers ask a rising ratio more each rank instead.)
+    if ("ratio" in c || c.power) continue;
     assert.ok(c.cubic, `${t.id} has a cubic scale`);
     const linear = (r: number) => Math.ceil((c.start ?? 20) * t.cost * (r + 1) * (c.growth + r) / c.growth);
     for (const r of [0, 1, 10, Math.floor(t.max / 2), t.max - 1]) assert.ok(trainingGold(t, r) >= linear(r), `${t.id} rank ${r}`);

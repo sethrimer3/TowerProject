@@ -3240,7 +3240,10 @@ dialog.dismiss-anywhere { cursor: pointer; }
 .research-group { margin: 6px 0 0; color: #d8b572; font-size: 10px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; border-bottom: 1px solid #3d4858; padding-bottom: 2px; }
 .research-group:first-child { margin-top: 0; }
 .research.active { border-color: #6e9a70; }
-.research.completed { border-color: #8a7a42; }
+/* Research at its most levels: a gold box. */
+.research.completed { border: 2px solid #e8c25a; padding: 4px 8px; background: #1d1a10; box-shadow: 0 0 6px rgba(232, 194, 90, 0.35); }
+.research-hide-done { grid-column: 1 / -1; display: flex; align-items: center; gap: 6px; color: #d8d6d0; font-size: 11px; letter-spacing: 1px; }
+.research-hide-done input { width: 16px; height: 16px; margin: 0; }
 .research.locked { opacity: 0.6; }
 /* Name, tags and level on one line, the level at the right end. */
 .research-head { display: flex; align-items: center; gap: 6px; }

@@ -250,7 +250,7 @@ export class ResearchPage {
     // next one: a stat's worth grows with the hero's level, so its level shows its most
     // ranks instead.
     const top = trainingStep({ ...save, training: { ...save.training, [t.id]: t.max }, trainingJobs: [] }, t.id).now;
-    const most = !isStatRow(t) ? `up to ${unit === "tiles" || unit === "shots" ? trainingText(top, unit) : `${top}${unit}`}` : "";
+    const most = !isStatRow(t) ? `up to ${unit === "tiles" || unit === "shots" || unit === "perTile" ? trainingText(top, unit) : `${top}${unit}`}` : "";
     const shown = (v: number) => trainingText(v, unit);
     const time = step.maxed || !hired ? "" : this.timeNote(t.id, q);
     const notes = [time, most].filter(Boolean).join(" · ");

@@ -43,13 +43,17 @@ const requirementText =(r: ResearchRequirement) =>
 /** The Upgrades page's Archives tab: the archivists, one a row, each busy
  * one with what it is researching, and a History button opening the
  * research completed. Pressing an archivist opens Select Research for it:
- * the research it can start (searchable, filtered by category), an X to go
+ * the research it can start and the research completed, each in a gold box
+ * (searchable, filtered by category, and once any is completed a Hide
+ * Completed box hiding those), an X to go
  * back without choosing, and each Research button starting that research
  * and going back. For a busy archivist the list shows its research too,
  * and choosing another asks to switch to it. */
 export class ArchivesPanel {
   private category: "all" | ResearchCategory = "all";
   private search = "";
+  /** Whether Select Research leaves out the research completed. */
+  private hideCompleted = false;
   /** The archivist Select Research is choosing for, or null on the
    * archivists' view. */
   private picking: number | null = null;
@@ -85,7 +89,7 @@ export class ArchivesPanel {
     return `<section class="archives picking"><header class="tree-heading"><h3>Select Research</h3><small class="research-pick-for">ARCHIVIST ${slot + 1}</small><button id="research-pick-close" class="research-pick-close" aria-label="Back to the archivists without choosing" title="Back">✕</button></header>
       <div class="research-filters">
         <input type="search" id="research-search" placeholder="Search research" aria-label="Search research" value="${this.search.replace(/"/g, "&quot;")}">
-        <select id="research-category" aria-label="Category">${options(categories, this.category)}</select>
+        <select id="research-category" aria-label="Category">${options(categories, this.category)}</select>${this.anyCompleted() ? `<label class="research-hide-done"><input type="checkbox" id="research-hide-done" ${this.hideCompleted ? "checked" : ""}> Hide Completed</label>` : ""}
       </div>
       <div class="research-list" id="research-list" role="list" aria-label="Research">${this.listHtml()}</div></section>`;
   }
@@ -135,6 +139,11 @@ export class ArchivesPanel {
     };
     el("research-category").onchange = (e) => {
       this.category = (e.target as HTMLSelectElement).value as ResearchCategory;
+      this.refreshList();
+    };
+    const hide = document.getElementById("research-hide-done") as HTMLInputElement | null;
+    if (hide) hide.onchange = () => {
+      this.hideCompleted = hide.checked;
       this.refreshList();
     };
     this.bindList();
@@ -340,13 +349,20 @@ export class ArchivesPanel {
     return `<span class="archivist-change"><span class="training-box">${shown(a)}</span><span class="training-arrow" aria-hidden="true">→</span><span class="training-box next">${shown(withNextLevel(a, id))}</span></span>`;
   }
 
-  /** Whether project `id` is listed: one an archivist can start (Dev mode
-   * lists those still locked too), in the chosen category and the search. */
+  /** Whether any project is at its most levels, shown in a gold box. */
+  private anyCompleted() {
+    const save = this.ctx.game.save;
+    return RESEARCH_IDS.some((id) => status(save, id) === "completed");
+  }
+
+  /** Whether project `id` is listed: one an archivist can start, or one
+   * completed unless Hide Completed is checked (Dev mode lists those still
+   * locked too), in the chosen category and the search. */
   private matches(id: ResearchId) {
     const save = this.ctx.game.save, def = research(id), state = status(save, id), words = this.search.trim().toLowerCase();
     // A busy archivist's own research shows among the choices.
     const own = state === "active" && this.picking !== null && activeSlot(save.archives, id) === this.picking;
-    return (state === "available" || own || (state === "locked" && save.settings.devMode)) &&
+    return (state === "available" || own || (state === "completed" && !this.hideCompleted) || (state === "locked" && save.settings.devMode)) &&
       (this.category === "all" || def.categories.includes(this.category)) &&
       (!words || `${def.name} ${def.description}`.toLowerCase().includes(words));
   }
@@ -383,6 +399,7 @@ export class ArchivesPanel {
       price = `<span class="research-price">${gold}${time}</span>`;
     }
     if (state === "active") action = `<span class="research-state">Researching</span>`;
+    else if (state === "completed") action = `<span class="research-state">Complete</span>`;
     else if (state === "locked") action = `<span class="research-state">Requires ${missing(save, id).map(requirementText).join(" + ")}</span>`;
     else {
       const why = this.picking === null ? "Choose an archivist first." : cannotSwitch(save, this.picking, id);

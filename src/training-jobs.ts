@@ -1,4 +1,4 @@
-import { curvePrice, TRAINER_GOLD_CURVES, type TrainingId } from "./config.ts";
+import { curvePrice, risingPrice, TRAINER_GOLD_CURVES, type TrainingId } from "./config.ts";
 import { intPow } from "./exact.ts";
 
 // A Training rank is bought one of two ways: with training points, which
@@ -59,7 +59,10 @@ export const trainingMs = (ranks: number, speed: number) => Math.round((training
  * much for a point of its first rank instead, and one with a `power` asks
  * start × the rank's number × (1 + (ranks / growth)^power). */
 export const trainingGold = (row: { id: TrainingId; cost: number }, ranks: number) => {
-  const { growth, start, power, cubic } = TRAINER_GOLD_CURVES[row.id];
+  const curve = TRAINER_GOLD_CURVES[row.id];
+  // A row with a `ratio` asks each rank that much more than the last, the ratio rising.
+  if ("ratio" in curve) return risingPrice(curve.start * row.cost, curve.ratio, curve.rise, ranks);
+  const { growth, start, power, cubic } = curve;
   // A row with a `power` rises with ranks / growth to that power, not linearly.
   if (power) return Math.ceil((start ?? TRAINING_GOLD_PER_POINT) * row.cost * (ranks + 1) * (1 + intPow(ranks / growth, power)));
   // A row with a `cubic` scale adds (ranks / cubic)^3 to the multiplier, so deep ranks climb faster.

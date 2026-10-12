@@ -9,7 +9,7 @@ import { offer, type OfferId } from "./shop/offers.ts";
 import { purchase, type Refusal } from "./shop/transactions.ts";
 import { confirmServerTime } from "./shop/clock.ts";
 import { canWarp, claimGoal, goalUnlocked, isArcher } from "./goals.ts";
-import { ARROW_COST, arrowDamage, charged, enemiesWithin, FOE_GAIN, foeRange, foeShotCost, held, ready, shotDamage, spent, type InReach, type Volleys } from "./ranged.ts";
+import { ARROW_COST, arrowBoost, arrowDamage, charged, enemiesWithin, FOE_GAIN, foeRange, foeShotCost, held, ready, shotDamage, spent, type InReach, type Volleys } from "./ranged.ts";
 import { missGem } from "./gems.ts";
 import { DelvePlan } from "./delve/automove.ts";
 import { defaults } from "./save.ts";
@@ -69,7 +69,7 @@ import { enemyStat, keyCount, whole, wholeChange } from "./whole.ts";
 import { MODES, milestones, type ModeProfile } from "./modes.ts";
 import { boughtInRun, ranksInRun, runTrainingBulk, runTrainingOffer, type RunTrainingOffer } from "./run-training.ts";
 import { openQuantities, type BuyQuantity } from "./buy-quantity.ts";
-import { attackRange, attackSpeed, critRule, keepUndos, loadout, percentPotionChance, potionPercent, reviveChance, statFactor } from "./loadout.ts";
+import { attackPerTile, attackRange, attackSpeed, critRule, keepUndos, loadout, percentPotionChance, potionPercent, reviveChance, statFactor } from "./loadout.ts";
 import { researched } from "./archives.ts";
 import { chargesLeft, chargesPerRun, climbFloor, spendCharge, type Charge } from "./run-charges.ts";
 import type { MaterialId, MaterialStack } from "./materials.ts";
@@ -166,7 +166,7 @@ export type Encounter = ShownFight & { enemy: Enemy; outcome: StepEffect; settle
  * (and the shroud's share, a critical arrow's applications, the HP an
  * arrow's Lifesteal restored), and for an arrow the enemy's HP before and
  * after it out of its full HP. */
-export type Shot = { by: "hero" | "enemy"; from: { x: number; y: number }; to: { x: number; y: number }; damage: number; shrouded?: number; crit?: number; healed?: number; before?: number; hp?: number; full?: number };
+export type Shot = { by: "hero" | "enemy"; from: { x: number; y: number }; to: { x: number; y: number }; damage: number; shrouded?: number; crit?: number; charged?: boolean; healed?: number; before?: number; hp?: number; full?: number };
 /** A turn's shots, flying from `at` (performance time) for `flight` ms. */
 export type Volley = { at: number; flight: number; shots: Shot[] };
 /** Tiles that stay on the board after being stepped on. */
@@ -2001,34 +2001,40 @@ export class Game {
     return chance >= 100 || tileRandom(x, y, (this.run.seed ^ SHOT_SALT ^ Math.imul(turn, 0x85ebca6b)) | 0) * 100 < chance;
   }
   /** The Archer's cooldown runs a turn, and once ready it shoots the
-   * closest enemy within its range that an arrow can hurt. A ready arrow
-   * with no target waits for one. */
+   * closest enemy within its range that an arrow can hurt, its ATK raised by
+   * ATK / Tile for the distance and by Charged Shot for the turns it waited
+   * (`arrowBoost`). A ready arrow with no target waits for one, counting
+   * the turn toward Charged Shot once that is researched. */
   private loose(v: Volleys, shots: Shot[], range: number) {
-    const p = this.run.player;
+    const p = this.run.player, perTile = attackPerTile(this.trainingNow), percent = researched(this.save.archives, "chargedShotPercent", 0);
+    const boost = (d2: number) => arrowBoost(perTile, d2, percent, v.waited ?? 0);
     let hero = charged(v.hero, attackSpeed(this.trainingNow));
-    const target = ready(hero, ARROW_COST) ? enemiesWithin(this.world, p, range, this.wrap).find((e) => arrowDamage(p, e.tile.enemy) > 0) : undefined;
+    const target = ready(hero, ARROW_COST) ? enemiesWithin(this.world, p, range, this.wrap).find((e) => arrowDamage(p, e.tile.enemy, 0, 1, boost(e.d2)) > 0) : undefined;
     if (target) {
       hero = spent(hero, ARROW_COST);
-      this.shoot(target, v.turn, shots);
+      this.shoot(target, v.turn, shots, boost(target.d2), !!(percent && v.waited));
+      delete v.waited;
     }
     hero = held(hero, ARROW_COST);
     if (hero === undefined) delete v.hero;
     else v.hero = hero;
+    if (!target && hero === undefined && percent > 0) v.waited = (v.waited ?? 0) + 1;
   }
-  /** The Archer's arrow lands on `target`: one strike's damage, critical
-   * rolls counted, healing by Lifesteal; it wounds the enemy, or fells it
-   * and pays the kill. */
-  private shoot({ x, y, tile }: InReach, turn: number, shots: Shot[]) {
+  /** The Archer's arrow lands on `target`: one strike's damage, its ATK
+   * multiplied by `boost` and critical rolls counted, healing by
+   * Lifesteal; it wounds the enemy, or fells it and pays the kill. A
+   * `charged` arrow's number wears a gold outline. */
+  private shoot({ x, y, tile }: InReach, turn: number, shots: Shot[], boost = 1, chargedShot = false) {
     const p = this.run.player, enemy = tile.enemy, rule = this.crit;
     let applications = 0;
     if (rule) {
       const sure = guaranteedCrits(rule.chance), rest = snap(rule.chance - 100 * sure);
       applications = sure + (tileRandom(x, y, (this.run.seed ^ ARROW_SALT ^ Math.imul(turn, 0x85ebca6b)) | 0) * 100 < rest ? 1 : 0);
     }
-    const damage = arrowDamage(p, enemy, applications, rule?.factor ?? 1), left = snap(Math.max(0, enemy.hp - damage));
+    const damage = arrowDamage(p, enemy, applications, rule?.factor ?? 1, boost), left = snap(Math.max(0, enemy.hp - damage));
     const healed = p.lifesteal ? snap(Math.min(p.maxHp - p.hp, (damage * p.lifesteal) / 100)) : 0;
     if (healed > 0) p.hp = snap(p.hp + healed);
-    shots.push({ by: "hero", from: { x: p.x, y: p.y }, to: { x, y }, damage, ...(applications ? { crit: applications } : {}), ...(healed > 0 ? { healed } : {}),
+    shots.push({ by: "hero", from: { x: p.x, y: p.y }, to: { x, y }, damage, ...(applications ? { crit: applications } : {}), ...(chargedShot ? { charged: true } : {}), ...(healed > 0 ? { healed } : {}),
       before: enemy.hp, hp: left, full: snap(enemy.hp + (tile.wound ?? 0)) });
     if (left > 0) {
       this.world.wound?.(x, y, damage);

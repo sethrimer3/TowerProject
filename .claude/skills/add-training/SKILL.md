@@ -32,7 +32,7 @@ Fill this for the row. Mark every value you chose rather than the user with *(pr
 - **Training points a rank (`cost`):** <points>
 - **Trainer Gold curve:** <`gentleTrainers` / `mildTrainers` / `firmTrainers` / `steepTrainers` / its own `{ growth }`> at this `cost`: rank 1, 10, 100, max cost <…>
 - **Trainer time curve:** shared `trainingSeconds` | its own: <formula> (needs a per-row schedule, as above)
-- **Silver curve in a run:** <`vital` / `cheap` / `opened` / `deep` / its own `{ base, step, growth }` or `{ base, ratio }`>: rank 1, 5, 10, 50 cost <…>
+- **Silver curve in a run:** <`vital` / `cheap` / `opened` / `deep` / its own `{ base, step, growth }`, `{ base, ratio }` or `{ base, ratio, rise }` (each rank `ratio` times the last, the ratio itself rising, `risingPrice`; a trainer curve takes it as `{ start, ratio, rise }`)>: rank 1, 5, 10, 50 cost <…>
 - **Unlock (`requires`):** <the skill that shows and sells it, or "open from the start">
 - **Read where:** <the function and moment the effect applies (see Build), and whether it counts at once mid-run or from the next run>
 - **Interacts with:** <research or equipment that multiplies or adds to the same thing, Dev free purchases, Buy Quantity, anything that should leave it out>

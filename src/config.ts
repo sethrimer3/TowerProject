@@ -580,6 +580,7 @@ export const TRAINING = [
   { id: "critFactor", name: "Critical Factor", short: "Crit x", group: "offense", requires: "critical", cost: 1, max: 150, description: "Raises how much a critical hit multiplies your ATK." },
   { id: "attackRange", name: "Attack Range", short: "Range", group: "offense", goal: "attackRange", cost: 1, max: 80, description: "Raises how far the Archer's shots reach, in tiles." },
   { id: "attackSpeed", name: "Attack Speed", short: "Speed", group: "offense", goal: "attackSpeed", cost: 1, max: 100, description: "Raises how many shots the Archer fires every 10 turns." },
+  { id: "attackPerTile", name: "ATK / Tile", short: "ATK/Tile", group: "offense", goal: "attackPerTile", cost: 1, max: 200, description: "Multiplies the ATK of each of the Archer's shots by more for every tile its target stands away." },
   { id: "defense", name: "DEF", group: "defense", stat: "defense", curve: { per: 0, square: 1 / 12 }, cost: 1, max: 6000, description: "Raises DEF, taken off the damage of every enemy strike." },
   { id: "regen", name: "Regen", group: "defense", stat: "regen", curve: { per: 0.1, square: 1 / 120 }, cost: 1, max: 6000, requires: "regen", description: "Raises the HP regained with every step taken in a run." },
   { id: "shroud", name: "Shroud", group: "defense", stat: "shroud", curve: { per: 5, square: 0.1, fourth: 0.0000064 }, cost: 1, max: 5000, requires: "shroud", description: "Raises the damage the shroud blocks at the start of every fight." },
@@ -608,6 +609,11 @@ export const isStatRow = (row: TrainingRow): row is StatTrainingRow => "stat" in
  * twentieths of a shot every 10 turns: 1 shot, and 0.05 more a rank, 6 at
  * its 100 (ranged.ts). */
 export const ATTACK_RANGE_BASE = 300, ATTACK_RANGE_RANK = 5, ATTACK_SPEED_BASE = 20, ATTACK_SPEED_RANK = 1;
+/** ATK / Tile, in hundred-thousandths of ×1 a tile: the first rank adds
+ * 0.01 a tile, and each later rank 0.00004 less (0.00204 for the 200th),
+ * 1.204 a tile in all. An arrow's ATK is multiplied by 1 + this × the
+ * Euclidean distance to its target (ranged.ts). */
+export const ATK_PER_TILE_FIRST = 1000, ATK_PER_TILE_FALL = 4;
 /** What a percent potion restores beyond its HP, in hundredths of a percent
  * of max HP: 1% with Recovery, and 0.25% more for each Potion % rank. */
 export const POTION_PERCENT_BASE = 100, POTION_PERCENT_RANK = 25;
@@ -645,11 +651,24 @@ export const FREE_TRAINING_RANK = 50;
  * `step` growing by `growth` every five (see `schedulePrice`). Base 5: +1+N
  * for the next five, then +4+N, +7+N … With `compound`, that price is
  * then multiplied by `compound` for each one already bought, rounded up.
- * Or, with `ratio`, each costs `ratio` times the one before; or, with
+ * Or, with `ratio`, each costs `ratio` times the one before (with `rise`,
+ * that ratio itself `rise` times the last one's: `risingPrice`); or, with
  * `power`, the n-th costs `base` × n × (1 + ((n − 1) / `growth`)^`power`); or,
  * with `cubic`, it costs what a trainer's Gold curve of that shape asks
  * (`curvePrice`). */
-export type PriceSchedule = { base: number; step: number; growth: number; compound?: number } | { base: number; ratio: number } | { base: number; growth: number; power: number } | { base: number; growth: number; cubic: number };
+export type PriceSchedule = { base: number; step: number; growth: number; compound?: number } | { base: number; ratio: number; rise?: number } | { base: number; growth: number; power: number } | { base: number; growth: number; cubic: number };
+/** The purchase after `bought` when the first costs `base` and each costs
+ * `ratio` times the one before, that ratio `rise` times the last one's,
+ * rounded up: base × ratio^bought × rise^(bought × (bought − 1) / 2),
+ * multiplied out in order so every engine agrees. */
+export function risingPrice(base: number, ratio: number, rise: number, bought: number) {
+  let price = base, step = ratio;
+  for (let k = 0; k < bought; k++) {
+    price *= step;
+    step *= rise;
+  }
+  return Math.ceil(price);
+}
 /** The n-th rank (after `ranks`) on a linear-and-cubic curve from `start`:
  * start × n × (1 + ranks / `growth`), rounded up, plus start × n × (ranks /
  * `cubic`)³, rounded down. A trainer's Gold (`trainingGold`) and a
@@ -663,7 +682,7 @@ export function curvePrice(start: number, ranks: number, growth: number, cubic?:
  * `growth` every five, summed here at once, then compounded (or `ratio`
  * times the one before). */
 export function schedulePrice(schedule: PriceSchedule, bought: number) {
-  if ("ratio" in schedule) return schedule.base * intPow(schedule.ratio, bought);
+  if ("ratio" in schedule) return schedule.rise ? risingPrice(schedule.base, schedule.ratio, schedule.rise, bought) : schedule.base * intPow(schedule.ratio, bought);
   // The n-th rank (bought + 1) costs base × n × (1 + ((n − 1) / growth)^power), as a trainer's Gold does.
   if ("power" in schedule) return Math.ceil(schedule.base * (bought + 1) * (1 + intPow(bought / schedule.growth, schedule.power)));
   if ("cubic" in schedule) return curvePrice(schedule.base, bought, schedule.growth, schedule.cubic);
@@ -706,6 +725,11 @@ const rangePrices = { base: 50, growth: 12, cubic: 37 };
  * ((n − 1) / 32)³) for the n-th (1,166 for the 12th, 8,870 for the 34th,
  * 116,464 for the 92nd), the same in Silver and a trainer's Gold. */
 const speedPrices = { base: 30, growth: 5, cubic: 32 };
+/** ATK / Tile: 50 for the first rank, each 6.47% dearer than the one
+ * before, that rise itself growing 0.022% a rank (589 for the 38th, 60,929
+ * for the 98th, 1 million for the 130th, 998 million for the 200th; about
+ * 10 billion in all), the same in Silver and a trainer's Gold. */
+const perTilePrices = { base: 50, ratio: 1.0647, rise: 1.00022 };
 /** Training bought with Silver inside a run, lasting only for that run:
  * each row's price schedule. The rows open from the start cost least, the
  * ones later skills open more. */
@@ -716,6 +740,7 @@ export const RUN_TRAINING_PRICES: Record<TrainingId, PriceSchedule> = {
   critFactor: { base: 12, step: 2, growth: 3 },
   attackRange: rangePrices,
   attackSpeed: speedPrices,
+  attackPerTile: perTilePrices,
   defense: cheap,
   regen: cheap,
   shroud: vital,
@@ -738,8 +763,9 @@ export const RUN_TRAINING_PRICES: Record<TrainingId, PriceSchedule> = {
  * a point of the row's cost times the rank's number, times 1 + ranks /
  * `growth` (see `trainingGold`), so a smaller `growth` pulls away faster. A
  * `cubic` scale adds (ranks / cubic)³ to that multiplier: a gentle start and
- * a steep last stretch. */
-export type TrainerCurve = { growth: number; start?: number; power?: number; cubic?: number };
+ * a steep last stretch. A curve with a `ratio` instead asks `start` for
+ * the first rank and prices the rest as a `rise` schedule (`risingPrice`). */
+export type TrainerCurve = { growth: number; start?: number; power?: number; cubic?: number } | { start: number; ratio: number; rise: number };
 /** The trainer curves, set by where each row's Silver schedule starts:
  * the dearer a row in a run, the steeper its trainers. Rows starting at 20
  * Silver: 20, 44, 72, 104 … 380 for the tenth rank. */
@@ -764,6 +790,8 @@ export const TRAINER_GOLD_CURVES: Record<TrainingId, TrainerCurve> = {
   /** Attack Range and Attack Speed: the same curves as their Silver. */
   attackRange: { growth: rangePrices.growth, start: rangePrices.base, cubic: rangePrices.cubic },
   attackSpeed: { growth: speedPrices.growth, start: speedPrices.base, cubic: speedPrices.cubic },
+  /** ATK / Tile: the same curve as its Silver (`perTilePrices`). */
+  attackPerTile: { start: perTilePrices.base, ratio: perTilePrices.ratio, rise: perTilePrices.rise },
   defense: mildTrainers,
   regen: mildTrainers,
   shroud: { ...gentleTrainers, cubic: 700 },

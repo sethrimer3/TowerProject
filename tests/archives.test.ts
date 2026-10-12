@@ -262,7 +262,7 @@ test("Potion HP: +3% a level for 100 levels; quick first levels, then 100m + m³
   assert.equal(levels.reduce((sum, l) => sum + l.gold, 0), 22_144_096);
   assert.deepEqual(levels.slice(0, 4).map((l) => duration(defaultArchives(), l)), [15_000, 60_000, 300_000, 600_000]);
   assert.ok(levels.every((l) => l.effect.target === "potionHeal" && l.effect.op === "add" && l.effect.value === 3));
-  assert.deepEqual(RESEARCH_IDS.slice(0, 9), ["researchSpeed", "researchCostDiscount", "potionHp", "regen", "attack", "critChance", "critFactor", "shardAttack", "defense"], "after the Archives' own two, Regen beside it, then the stats' (the crits and Shard ATK beside ATK)");
+  assert.deepEqual(RESEARCH_IDS.slice(0, 10), ["researchSpeed", "researchCostDiscount", "potionHp", "regen", "attack", "critChance", "critFactor", "chargedShot", "shardAttack", "defense"], "after the Archives' own two, Regen beside it, then the stats' (the crits, Charged Shot and Shard ATK beside ATK)");
   assert.deepEqual(RESEARCH.potionHp.categories, ["defense"]);
 });
 

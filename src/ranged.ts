@@ -99,18 +99,28 @@ export function shotDamage(player: Player, enemy: Enemy, parried: boolean) {
 }
 
 /** What the Archer's arrow takes off `enemy`: one of its strikes, raised
- * against a boss, by `applications` of the critical `factor`, less the
- * enemy's DEF (Piercing ignoring some); 0 or less does nothing. */
-export function arrowDamage(player: Player, enemy: Enemy, applications = 0, factor = 1) {
-  const attack = attackAgainst(player, enemy), raised = applications ? snap(attack * critMultiplier(factor, applications)) : attack;
+ * against a boss, multiplied by its `boost` (`arrowBoost`) and by
+ * `applications` of the critical `factor`, less the enemy's DEF (Piercing
+ * ignoring some); 0 or less does nothing. */
+export function arrowDamage(player: Player, enemy: Enemy, applications = 0, factor = 1, boost = 1) {
+  const attack = boost === 1 ? attackAgainst(player, enemy) : snap(attackAgainst(player, enemy) * boost);
+  const raised = applications ? snap(attack * critMultiplier(factor, applications)) : attack;
   return snap(raised - defenseAgainst(player, enemy));
 }
 
+/** What an arrow's ATK is multiplied by before any critical hit: ATK / Tile
+ * (`perTile`, hundred-thousandths of ×1 a tile) times the Euclidean distance
+ * to its target (`d2`, squared), and Charged Shot (`percent` a turn for the
+ * `waited` turns the ready arrow held), each multiplying the other. */
+export const arrowBoost = (perTile: number, d2: number, percent: number, waited: number) =>
+  snap((1 + (perTile * Math.sqrt(d2)) / 100_000) * (1 + (percent * waited) / 100));
+
 /** The Ranged and Archer state a run keeps, so undo takes it back with the
  * run: the turns taken inside (each shot's rolls are fixed by it), the
- * Archer's charge, and each Ranged enemy's that has shot on this floor, by
- * its tile. Absent charge is full. */
-export type Volleys = { turn: number; hero?: number; foes?: Record<string, number> };
+ * Archer's charge, the turns its ready arrow has waited unfired (`waited`,
+ * counted once Charged Shot is researched), and each Ranged enemy's charge
+ * that has shot on this floor, by its tile. Absent charge is full. */
+export type Volleys = { turn: number; hero?: number; waited?: number; foes?: Record<string, number> };
 
 /** An enemy within reach: where it stands, its tile, and its squared distance. */
 export type InReach = { x: number; y: number; tile: Tile & { enemy: Enemy }; d2: number };
