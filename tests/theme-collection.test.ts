@@ -14,8 +14,8 @@ test("a new hero owns the Medieval UI theme and wears it, on the Classic board",
   assert.equal(gameLook(save), "classic");
 });
 
-test("Neon is a UI theme and a Game theme, each earned on its own", () => {
-  assert.deepEqual(themesOf("ui"), ["medievalUi", "neonUi"]);
+test("Neon is a UI theme and a Game theme, and Terminal a UI theme, each earned on its own", () => {
+  assert.deepEqual(themesOf("ui"), ["medievalUi", "neonUi", "terminalUi"]);
   assert.deepEqual(themesOf("game"), ["neonGame"]);
   const save = defaults();
   assert.deepEqual(claimThemes(save), [], "nothing earned yet");
@@ -24,6 +24,10 @@ test("Neon is a UI theme and a Game theme, each earned on its own", () => {
   save.tower.reached = 50;
   assert.deepEqual(claimThemes(save), ["neonUi"], "floor 50 of Tower I completed");
   assert.deepEqual(claimThemes(save), [], "each is earned once");
+  save.tower.reached = 99;
+  assert.deepEqual(claimThemes(save), []);
+  save.tower.reached = 100;
+  assert.deepEqual(claimThemes(save), ["terminalUi"], "floor 100 of Tower I completed");
   // A Delve depth in another tier's records counts.
   save.delve.tierRecords[2] = { best: 25, reached: 25 };
   assert.deepEqual(claimThemes(save), ["neonGame"]);
@@ -35,6 +39,19 @@ test("Neon is a UI theme and a Game theme, each earned on its own", () => {
   assert.deepEqual(claimThemes(other), [], "Tower II's floors don't count");
   other.tower.tierRecords[1] = { best: 60, reached: 60 };
   assert.deepEqual(claimThemes(other), ["neonUi"]);
+  other.tower.tierRecords[1] = { best: 100, reached: 100 };
+  assert.deepEqual(claimThemes(other), ["terminalUi"]);
+});
+
+test("the Terminal UI theme is worn once owned", () => {
+  const save = defaults();
+  const g = new Game(save);
+  assert.equal(g.wearTheme("ui", "terminal"), false, "not owned yet");
+  assert.equal(uiLook(save), "medieval");
+  save.themes.push("terminalUi");
+  assert.ok(g.wearTheme("ui", "terminal"));
+  assert.equal(uiLook(save), "terminal");
+  assert.equal(decodeSettings({ uiTheme: "terminal" }).uiTheme, "terminal", "the choice is saved");
 });
 
 test("a theme chosen but not owned shows Classic until it is earned", () => {
@@ -55,13 +72,13 @@ test("each theme owned adds 2.5% to all Gold banked", () => {
   const save = defaults();
   assert.equal(themeGoldFactor(save), 1.025);
   save.themes = [...THEME_IDS];
-  assert.equal(themeGoldFactor(save), 1.075);
+  assert.equal(themeGoldFactor(save), 1.1);
   const row = goldBonuses(save, 1, 0).at(-1)!;
-  assert.deepEqual(row, { name: "Themes owned (3)", factor: 1.075 });
-  assert.equal(goldBonusTotal(goldBonuses(save, 1, 0)), 1.075);
+  assert.deepEqual(row, { name: "Themes owned (4)", factor: 1.1 });
+  assert.equal(goldBonusTotal(goldBonuses(save, 1, 0)), 1.1);
   assert.equal(goldBonuses({ ...save, themes: [] }, 1, 0).at(-1)!.factor, null, "none owned: Inactive");
 
-  // Banking: a kill's Gold with one theme and with three.
+  // Banking: a kill's Gold with no theme and with all four.
   const killGold = (themes: typeof save.themes) => {
     const s = defaults();
     s.themes = themes;
@@ -74,7 +91,7 @@ test("each theme owned adds 2.5% to all Gold banked", () => {
   };
   const none = killGold([]), all = killGold([...THEME_IDS]);
   assert.ok(none > 0);
-  assert.ok(Math.abs(all - none * 1.075) < 1e-9, `${all} is ${none} × 1.075`);
+  assert.ok(Math.abs(all - none * 1.1) < 1e-9, `${all} is ${none} × 1.1`);
 });
 
 test("saves keep their themes, always with Medieval", () => {
