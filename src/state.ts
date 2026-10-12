@@ -1140,13 +1140,15 @@ export class Game {
    * then it ends on the item, taking it (Effective or Dampen scaling it as
    * on any card's last step; with Skip, which may make it vanish, it stops
    * before it, so the item's own step rolls). One turn and one undo.
+   * Rushed steps skip Regen but for the first `rushRegenSteps`.
    * Returns false when a step was refused, leaving the target unreached. */
   private rushOn(plan: CardPlan, id: CardId, from: { x: number; y: number }, rush: number) {
     const p = this.run.player, tiles = [from];
     let moved = true, left = rush;
+    const regenerating = this.rushRegenSteps, regen = () => rush - left < regenerating;
     for (; left > 0 && plan.path.length && this.rushable(plan.path[0].x, plan.path[0].y); left--) {
       const at = { x: p.x, y: p.y }, next = plan.path.shift()!;
-      if (!this.move(next.dx, next.dy, true, false, false)) {
+      if (!this.move(next.dx, next.dy, true, false, regen())) {
         plan.path = [];
         moved = false;
         break;
@@ -1158,7 +1160,7 @@ export class Game {
       const at = { x: p.x, y: p.y };
       plan.path.shift();
       this.stepScale = this.scaleOf(id);
-      moved = this.move(target.dx, target.dy, true, false, false);
+      moved = this.move(target.dx, target.dy, true, false, regen());
       this.stepScale = 1;
       if (moved) {
         tiles.push(at);
@@ -1174,6 +1176,11 @@ export class Game {
    * without the Rush skill, and one more a Rush research level. */
   get rushTiles() {
     return (this.save.upgrades.rush ? researched(this.save.archives, "rushTiles", 0) : 0) + this.worn.rushTiles;
+  }
+  /** How many of a Rush's rushed steps regain HP by Regen: none without the
+   * Rush Regen skill, and one more a Rush Regen research level. */
+  get rushRegenSteps() {
+    return this.save.upgrades.rushRegen ? researched(this.save.archives, "rushRegenSteps", 0) : 0;
   }
   /** Tiles card `id`'s first step toward a new target may rush across:
    * `rushTiles`, End Rush's research on STAIRS (toward the stairs, or the
@@ -1714,7 +1721,8 @@ export class Game {
     return !this.busy && Math.abs(dx) + Math.abs(dy) === 1;
   }
   /** One step by (dx, dy); `regen` false for the tiles a Rush crosses after
-   * its first step, so a rushed turn regains HP once. */
+   * its first step (past its first `rushRegenSteps`), so a rushed turn
+   * regains HP once (and once more for each of those). */
   move(dx: number, dy: number, force = true, track = true, regen = true) {
     if (!this.canStep(dx, dy)) return false;
     const p = this.run.player,

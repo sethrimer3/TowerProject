@@ -95,6 +95,21 @@ test("in a run each step regains HP, and a rushed turn counts as one step", () =
   assert.equal(rush.run.player.hp, 51, "the next step regains again");
 });
 
+test("Rush Regen research lets a Rush's first rushed steps regain HP too, once the skill is owned", () => {
+  const rushed = (skill: boolean, levels: number) => {
+    const g = corridor(10);
+    if (skill) g.save.upgrades.rushRegen = 1;
+    g.save.archives.levels.rushRegen = levels;
+    g.autoTurn();
+    assert.deepEqual([g.run.player.x, g.run.player.y], [4, 0], "the step and three rushed tiles");
+    return g.run.player.hp;
+  };
+  assert.equal(rushed(false, 2), 50.5, "research without the skill does nothing");
+  assert.equal(rushed(true, 0), 50.5);
+  assert.equal(rushed(true, 2), 51.5, "the step's own, then the first two rushed");
+  assert.equal(rushed(true, 35), 52, "every rushed step, however many levels");
+});
+
 test("no Regen in the forest", () => {
   const g = new Game(defaults());
   g.newRun({ outside: true, seed: 3 });

@@ -263,7 +263,7 @@ _Avoid_: drain
 A card that moves nowhere and trades keys it holds for something else: **BK Trader** (3 yellow keys for a blue key) and **YK to HP** (a yellow key for 10% of max HP, only while that much HP is missing). Skipped while it can't pay.
 
 **Regen**:
-The HP a hero regains with every step taken in a run, after whatever the step did, up to max HP. A Rush turn counts as one step. The Regen skill opens Regen training, which gives it.
+The HP a hero regains with every step taken in a run, after whatever the step did, up to max HP. A Rush turn counts as one step, but for the first rushed tiles Rush Regen research lets regain HP too. The Regen skill opens Regen training, which gives it.
 _Avoid_: regeneration, healing (a potion's)
 
 **Provision**:

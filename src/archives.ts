@@ -121,6 +121,8 @@ export const RESEARCH_TARGETS = {
   rushTiles: { name: "Tiles Rushed", base: 0, shown: count },
   /** Tiles more STAIRS's rush toward the stairs may cross, once End Rush is owned. */
   endRushTiles: { name: "Tiles Rushed to the Stairs", base: 0, shown: count },
+  /** How many of a Rush's rushed tiles regain HP by Regen, once Rush Regen is owned. */
+  rushRegenSteps: { name: "Rushed Steps with Regen", base: 0, shown: count },
   /** Buy quantities opened past x1: x5, x10, x100, then Max. */
   buyQuantity: { name: "Buy Quantity", base: 0, shown: (n: number) => quantityLabel(BUY_QUANTITIES[Math.min(n, BUY_QUANTITIES.length - 1)]!) },
   /** How fast archivists work: a level of `d` hours takes d / (1 + speed). */
@@ -293,6 +295,24 @@ const rushLevels = (target: ResearchTarget) => Array.from({ length: 25 }, (_, i)
   hours: 1.75 * (i + 1) * intPow(1.2, i),
   effect: { target, op: "add", value: 1 },
 }));
+
+/** Rush Regen: +1 rushed step with Regen a level, for 35 levels, in all
+ * exactly Rush's Gold and time, spread more gently: level n weighs
+ * n × 1.6^(n−1) of the Gold and n × 1.12^(n−1) of the time (about 260 Gold
+ * and 1.4 hours at level 1, 79 billion Gold and 97 days at 35), the Gold's
+ * rounding left on the last level. */
+const rushRegenLevels = (): ResearchLevel[] => {
+  const rush = rushLevels("rushTiles"), n = 35;
+  const share = (total: number, growth: number) => {
+    const weights = Array.from({ length: n }, (_, i) => (i + 1) * intPow(growth, i));
+    const sum = weights.reduce((a, b) => a + b, 0);
+    return weights.map((w) => (total * w) / sum);
+  };
+  const goldTotal = rush.reduce((a, l) => a + l.gold, 0), hoursTotal = rush.reduce((a, l) => a + l.hours, 0);
+  const gold = share(goldTotal, 1.6).map(Math.round), hours = share(hoursTotal, 1.12);
+  gold[n - 1]! += goldTotal - gold.reduce((a, b) => a + b, 0);
+  return gold.map((g, i) => ({ gold: g, hours: hours[i]!, effect: { target: "rushRegenSteps", op: "add", value: 1 } }));
+};
 
 /** Max Interest's limits by level, up from 50 Silver a floor. */
 const INTEREST_CAPS = [100, 200, 350, 500, 750, 1000, 1500, 2000, 2750, 3750, 5000, 6500, 8250, 10000, 12500, 15000, 20000, 25000, 35000, 50000];
@@ -539,6 +559,13 @@ export const RESEARCH = {
     categories: ["abilities"],
     requires: [{ upgrade: "endRush" }],
     levels: rushLevels("endRushTiles"),
+  },
+  rushRegen: {
+    name: "Rush Regen",
+    description: "Learn to catch your breath mid-dash: one more of a Rush's first rushed steps regains HP by Regen.",
+    categories: ["abilities"],
+    requires: [{ upgrade: "rushRegen" }],
+    levels: rushRegenLevels(),
   },
   undoCount: {
     name: "Undo Count",

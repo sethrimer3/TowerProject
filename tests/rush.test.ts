@@ -162,6 +162,23 @@ test("End Rush research needs the End Rush skill and follows Rush's schedule", (
   assert.equal(Object.keys(RESEARCH).indexOf("endRush"), Object.keys(RESEARCH).indexOf("rush") + 1, "listed right after Rush");
 });
 
+test("Rush Regen research needs the Rush Regen skill, after End Rush, and costs Rush's total Gold and time over 35 cheaper levels", () => {
+  const save = defaults();
+  save.upgrades.rush = save.upgrades.endRush = 1;
+  assert.equal(missing(save, "rushRegen").length, 1);
+  save.upgrades.rushRegen = 1;
+  assert.equal(missing(save, "rushRegen").length, 0);
+  const rush = research("rush").levels, regen = research("rushRegen").levels;
+  assert.equal(regen.length, 35);
+  assert.ok(regen.every((l) => l.effect.target === "rushRegenSteps" && l.effect.value === 1 && Number.isInteger(l.gold)));
+  const total = (ls: typeof rush, key: "gold" | "hours") => ls.reduce((a, l) => a + l[key], 0);
+  assert.equal(total(regen, "gold"), total(rush, "gold"), "the same Gold in all");
+  assert.ok(Math.abs(total(regen, "hours") - total(rush, "hours")) < 1e-6, "and the same time");
+  for (let i = 1; i < rush.length; i++) assert.ok(regen[i]!.gold < rush[i]!.gold && regen[i]!.hours < rush[i]!.hours, `level ${i + 1} cheaper and quicker than Rush's`);
+  for (let i = 1; i < regen.length; i++) assert.ok(regen[i]!.gold > regen[i - 1]!.gold && regen[i]!.hours > regen[i - 1]!.hours, "each level dearer and longer than the last");
+  assert.equal(Object.keys(RESEARCH).indexOf("rushRegen"), Object.keys(RESEARCH).indexOf("endRush") + 1, "listed right after End Rush");
+});
+
 test("End Rush adds its levels to STAIRS's rush toward the stairs", () => {
   const g = toStairs(2, 3);
   assert.equal(g.rushFor("stairs"), 5);
