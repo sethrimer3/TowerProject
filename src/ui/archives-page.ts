@@ -1,5 +1,5 @@
 import {
-  RESEARCH, RESEARCH_CATEGORIES, RESEARCH_IDS, RESEARCH_TARGETS, activeSlot, cannotSwitch, duration, jobProgress, price as researchPrice,
+  RESEARCH, RESEARCH_CATEGORIES, RESEARCH_IDS, RESEARCH_TARGETS, activeSlot, cannotSwitch, describe, duration, jobProgress, price as researchPrice,
   maxLevel, missing, nextArchivistPrice, nextLevel, research, researchLevel, researched, status, withNextLevel,
   type ArchivesSave, type ResearchCategory, type ResearchId, type ResearchRequirement, type ResearchTarget,
 } from "../archives.ts";
@@ -314,7 +314,7 @@ export class ArchivesPanel {
   private showAbout(id: ResearchId) {
     const save = this.ctx.game.save, a = save.archives, def = research(id), target = def.levels[0].effect.target;
     const now = `Level ${researchLevel(a, id)} / ${maxLevel(id, save.upgrades)} · ${RESEARCH_TARGETS[target].name}: ${RESEARCH_TARGETS[target].shown(targetValue(save, target, a))}`;
-    showHelp(this.ctx, "ARCHIVES", def.name, `<p>${def.description}</p><p class="research-about-now">${now}</p>`);
+    showHelp(this.ctx, "ARCHIVES", def.name, `<p>${describe(a, id)}</p><p class="research-about-now">${now}</p>`);
   }
 
   /** Each hired archivist, busy (a bar, the time left, Stop) or idle, then
@@ -364,7 +364,7 @@ export class ArchivesPanel {
     const own = state === "active" && this.picking !== null && activeSlot(save.archives, id) === this.picking;
     return (state === "available" || own || (state === "completed" && !this.hideCompleted) || (state === "locked" && save.settings.devMode)) &&
       (this.category === "all" || def.categories.includes(this.category)) &&
-      (!words || `${def.name} ${def.description}`.toLowerCase().includes(words));
+      (!words || `${def.name} ${describe(save.archives, id)}`.toLowerCase().includes(words));
   }
 
   /** The listed projects grouped under a heading per category, each by its

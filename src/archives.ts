@@ -167,7 +167,8 @@ export type ResearchRequirement =
   | { goalUnlock: GoalUnlock };
 export type ResearchDefinition = {
   name: string;
-  description: string;
+  /** Fixed text, or text read from the Archives as they stand (`describe`). */
+  description: string | ((a: ArchivesSave) => string);
   categories: ResearchCategory[];
   requires: ResearchRequirement[];
   /** Level 1 first; the project's maximum level is its length. */
@@ -618,7 +619,7 @@ export const RESEARCH = {
   },
   interest: {
     name: "Interest %",
-    description: "Put your Silver to work: each new floor climbed adds a share of the Silver you hold, after the floor's other Silver, up to Max Interest.",
+    description: (a) => `Put your Silver to work: each new floor climbed adds a share of the Silver you hold, after the floor's other Silver, up to Max Interest (now ${interestCap(a).toLocaleString("en-US")} Silver a floor).`,
     categories: ["economy"],
     requires: [{ upgrade: "interest" }],
     levels: hundredLevels("interestRate", 1),
@@ -747,6 +748,11 @@ export const RESEARCH = {
 export type ResearchId = keyof typeof RESEARCH;
 export const RESEARCH_IDS = Object.keys(RESEARCH) as ResearchId[];
 export const research = (id: ResearchId): ResearchDefinition => RESEARCH[id];
+/** Project `id`'s description with the Archives as `a`. */
+export const describe = (a: ArchivesSave, id: ResearchId) => {
+  const d = research(id).description;
+  return typeof d === "function" ? d(a) : d;
+};
 
 /** Archivist slots: the Archives start with `start`, and each further one,
  * up to `maximum`, is hired for the next price in Gems. */
@@ -813,6 +819,8 @@ export function maxLevel(id: ResearchId, upgrades?: Record<UpgradeId, number>) {
 export const nextLevel = (a: ArchivesSave, id: ResearchId, upgrades?: Record<UpgradeId, number>): ResearchLevel | undefined =>
   researchLevel(a, id) < maxLevel(id, upgrades) ? research(id).levels[researchLevel(a, id)] : undefined;
 
+/** The most Silver Interest pays a floor: Max Interest research, from its target's base. */
+export const interestCap = (a: ArchivesSave) => researched(a, "interestCap", RESEARCH_TARGETS.interestCap.base);
 /** `base` changed by every completed research level aimed at `target`. */
 export function researched(a: ArchivesSave, target: ResearchTarget, base: number) {
   let add = 0, multiply = 1, set: number | undefined;

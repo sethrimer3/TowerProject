@@ -1,4 +1,4 @@
-import { researched } from "../archives.ts";
+import { interestCap, researched } from "../archives.ts";
 import { ENEMY_GOLD, FAST_GOLD, RANGED_GOLD, silverForKill } from "../config.ts";
 import type { RoomWorld } from "../tower/room-world.ts";
 import type { Enemy, Mode, Run, Save } from "../entities.ts";
@@ -276,6 +276,6 @@ export class RunPurse {
 
   /** The most Interest a floor pays (Max Interest research). */
   get interestCap() {
-    return researched(this.save.archives, "interestCap", 50);
+    return interestCap(this.save.archives);
   }
 }
