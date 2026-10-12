@@ -95,16 +95,69 @@ test("training points buy a rank at once, without Gold, time or a trainer", () =
   assert.ok(loadout(g.save).maxHp > before);
   assert.equal(g.run.player.maxHp, loadout(g.save).maxHp, "a run in the forest takes it");
   // Bought with points while a trainer trains it, the rank counts at once
-  // and the trainer stops: its Gold back, the time spent as credit.
+  // and the trainer trains on, untouched.
   wait(10);
+  const job = { ...g.save.trainingJobs[0] };
   assert.ok(g.training.train("defense"));
   assert.equal(g.save.training.defense, 1);
-  assert.deepEqual(g.save.trainingJobs, []);
-  assert.equal(g.save.gold, gold, "the trainer's Gold back");
-  assert.equal(g.save.trainingCredit.defense, 10_000, "the time spent as DEF's credit");
-  assert.equal(g.save.trainingCredit.hp, 0, "no other stat's");
+  assert.deepEqual(g.save.trainingJobs, [job], "the trainer trains on");
+  assert.equal(g.save.gold, gold - 20, "its Gold still paid");
+  assert.equal(g.save.trainingCredit.defense, 0);
   g.save.xp = 0;
   assert.equal(g.training.train("hp"), false, "no points left");
+});
+
+/** A game with DEF 5 ranks short of its most and a trainer on all five
+ * (x2 for the batch of 5: 15 s, 1 min, 5 min, 10 min and 10 min, 26 min 15 s
+ * of base time in 13 min 7.5 s). */
+const nearlyMaxed = () => {
+  const t = game(), { g } = t, row = TRAINING.find((r) => r.id === "defense")!;
+  g.save.training.defense = row.max - 5;
+  assert.ok(g.training.trainWithGold("defense", 5));
+  const gold = g.save.gold, paid = g.save.trainingJobs[0].gold;
+  return { ...t, row, gold, paid, price: (k: number) => trainingGold(row, k) };
+};
+
+test("points past a batch in training take its last ranks: their Gold back, their time off, the training done kept", () => {
+  const { g, wait, row, gold, paid, price } = nearlyMaxed(), started = g.clock();
+  assert.equal(g.save.trainingJobs[0].ms, 1_575_000);
+  wait(100);
+  assert.equal(trainingStep(g.save, "defense").affordable, true, "points can still buy the ranks the trainer has");
+  assert.ok(g.training.train("defense", 1));
+  assert.ok(g.training.train("defense", 1));
+  assert.equal(g.save.training.defense, row.max - 3);
+  const [job] = g.save.trainingJobs;
+  assert.equal(job.ranks, 3, "the trainer trains the three ranks left");
+  assert.equal(job.ms, 375_000, "15 s, 1 min and 5 min of base time");
+  assert.equal(job.gold, paid - price(3) - price(4));
+  assert.equal(g.save.gold, gold + price(3) + price(4), "the two dropped ranks' Gold back");
+  assert.equal(job.completesAt, started + 100_000 + 87_500, "6 min 15 s at x2 less the 100 s done");
+  wait(87.5);
+  g.training.settle();
+  assert.equal(g.save.training.defense, row.max, "at its most");
+  assert.equal(g.save.trainerRanks.defense, 3);
+  assert.equal(g.training.train("defense"), false, "no room left for points");
+});
+
+test("points that leave a batch no room stop it; training done past its new time finishes it at once", () => {
+  {
+    const { g, wait, row, gold, paid } = nearlyMaxed();
+    wait(60);
+    assert.ok(g.training.train("defense", 5));
+    assert.equal(g.save.training.defense, row.max);
+    assert.deepEqual(g.save.trainingJobs, [], "the trainer stops");
+    assert.equal(g.save.gold, gold + paid, "its Gold back");
+    assert.equal(g.save.trainingCredit.defense, 60_000, "the time spent as DEF's credit");
+  }
+  {
+    const { g, wait, row } = nearlyMaxed();
+    wait(200);
+    assert.ok(g.training.train("defense", 1));
+    assert.ok(g.training.train("defense", 1));
+    assert.deepEqual(g.save.trainingJobs, [], "200 s at x2 covers the 6 min 15 s left");
+    assert.equal(g.save.training.defense, row.max);
+    assert.equal(g.save.trainerRanks.defense, 3);
+  }
 });
 
 test("a trainer takes Gold and time, not points, and the rank counts when its time is up", () => {

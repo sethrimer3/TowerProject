@@ -189,7 +189,7 @@ export function trainingPoints(save: Pick<Save, "xp" | "trainingPaid">) {
  * take a rank they pay for (the Upgrades and Training tabs' dot). */
 export function trainingWaiting(save: Save) {
   const left = trainingPoints(save).left;
-  return left > 0 && TRAINING.some((t) => t.cost <= left && trainingOpen(t, save) && !trainingMaxed(save, t.id));
+  return left > 0 && TRAINING.some((t) => t.cost <= left && trainingOpen(t, save) && !trainingFull(save, t.id));
 }
 
 /** What a percent potion restores beyond its HP, in hundredths of a
@@ -301,38 +301,45 @@ export const trainingMaxed = (save: Pick<Save, "training"> & Partial<Pick<Save, 
   return save.training[id] + ranksInTraining(save.trainingJobs, id) >= row.max;
 };
 
+/** Whether `id` can take no more ranks bought with training points: at its
+ * most by the ranks it has. A rank a trainer is training doesn't count, since
+ * points bought past it take its room and the trainer trains fewer
+ * (`TrainingDesk.train`). */
+export const trainingFull = (save: Pick<Save, "training">, id: TrainingId) => save.training[id] >= TRAINING.find((t) => t.id === id)!.max;
+
 /** What one more rank of `id` costs (in training points, or a trainer's
  * Gold) and does: to the next run's character
  * for a stat, in % to what a percent potion restores or the chance a
  * potion is one, to the Gold or Silver a new floor pays, or to a
  * multiplier (its unit "×", what a rank adds in percent). A row at its most
- * ranks has no next rank to buy. */
+ * ranks (`trainingFull`) has no next rank to buy; one whose rank in training
+ * reaches it has none for a trainer. */
 export function trainingStep(save: Save, id: TrainingId, count = 1) {
-  const row = TRAINING.find((t) => t.id === id)!, maxed = trainingMaxed(save, id);
-  const buy = trainingPrices(save, row, maxed);
+  const row = TRAINING.find((t) => t.id === id)!, maxed = trainingFull(save, id);
+  const buy = trainingPrices(save, row, maxed, trainingMaxed(save, id));
   if (isStatRow(row)) return { row, ...statStep(save, row, count), ...buy };
   return { row, ...valueStep(id, save.training[id], maxed, count), ...buy };
 }
 
 /** What one press of `id`'s training-points button buys at Buy Quantity
- * `q`: the ranks (up to its most) and the points they take, and whether
- * the points held pay for them. */
+ * `q`: the ranks (up to its most, a rank in training not counted) and the
+ * points they take, and whether the points held pay for them. */
 export function trainingBulk(save: Save, id: TrainingId, q: BuyQuantity) {
   const row = TRAINING.find((t) => t.id === id)!;
-  const room = row.max - save.training[id] - ranksInTraining(save.trainingJobs, id);
+  const room = row.max - save.training[id];
   return bulkBuy(q, Math.max(0, room), () => row.cost, save.settings.freePurchases ? Infinity : trainingPoints(save).left);
 }
 
 /** Whether the next rank of `row` can be bought now with training points
  * (`affordable`) or Gold (`goldAffordable`), whether there is one, and a
  * trainer's Gold price for it. */
-function trainingPrices(save: Save, row: TrainingRow, maxed: boolean) {
+function trainingPrices(save: Save, row: TrainingRow, maxed: boolean, trainerMaxed: boolean) {
   const free = save.settings.freePurchases, gold = trainingGold(row, save.trainerRanks[row.id]);
   return {
     affordable: !maxed && (free || trainingPoints(save).left >= row.cost),
     maxed,
     gold,
-    goldAffordable: !maxed && (free || save.gold >= gold),
+    goldAffordable: !trainerMaxed && (free || save.gold >= gold),
   };
 }
 

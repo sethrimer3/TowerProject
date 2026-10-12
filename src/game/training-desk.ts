@@ -2,9 +2,9 @@ import { TRAINING, type TrainingId } from "../config.ts";
 import { snap } from "../exact.ts";
 import { TRAINING_RESET_GEMS } from "../gems.ts";
 import { batchSpeedup, bulkBuy, type BuyQuantity } from "../buy-quantity.ts";
-import { trainingBulk, trainingMaxed, trainingSpeed, trainingOpen } from "../loadout.ts";
+import { trainingBulk, trainingFull, trainingMaxed, trainingSpeed, trainingOpen } from "../loadout.ts";
 import { BOOST_FOREVER, permanentBoost, trainingRate } from "../shop/entitlements.ts";
-import { batchWork, claimBoost, doneAt, finishGems, jobInvested, nextTrainerGems, ranksInTraining, trainerBatch, trainingGold, trainingJob, workLeft, trainingSlots, type TrainingJob } from "../training-jobs.ts";
+import { batchWork, claimBoost, doneAt, finishGems, jobInvested, nextTrainerGems, ranksInTraining, trainerBatch, trainingGold, trainingJob, trainingSeconds, workLeft, trainingSlots, type TrainingJob } from "../training-jobs.ts";
 import { affordsGems, type DeskHost } from "./desk.ts";
 import { changeLoadout } from "./hero-sync.ts";
 import { tally } from "../profile.ts";
@@ -43,23 +43,56 @@ export class TrainingDesk {
 
   /** Buys more ranks of `id` with training points, one or as many as
    * Buy Quantity `quantity` takes (`trainingBulk`): they count at once.
-   * A trainer training the stat stops, as `cancel` does: its Gold comes
-   * back and the time spent becomes the stat's time credit. Refused at the
-   * stat's most, or without the points. With Dev
-   * free purchases it costs nothing. */
+   * A trainer training the stat trains on; should the ranks bought leave
+   * its batch no room under the stat's most, it trains fewer (`trimJob`).
+   * Refused at the stat's most, or without the points. With Dev free
+   * purchases it costs nothing. */
   train(id: TrainingId, quantity: BuyQuantity = 1) {
     this.settle();
     const free = this.host.free;
-    if (!this.canTrain(id)) return false;
+    if (!trainingOpen(rowOf(id), this.save) || trainingFull(this.save, id)) return false;
     const { count, cost, affordable } = trainingBulk(this.save, id, quantity);
     if (!affordable) return false;
-    this.cancel(id);
     this.host.missionDone?.("train", count);
-    return changeLoadout(this.save, () => {
+    const bought = changeLoadout(this.save, () => {
       if (!free) this.save.trainingPaid[id].points += cost;
       this.save.training[id] += count;
       tally(this.save, "trainingLevels", count);
     });
+    this.trimJob(id);
+    this.settle();
+    return bought;
+  }
+
+  /** Fits the batch in training of `id` under the stat's most once ranks
+   * bought with points have taken its room: the ranks past it come off the
+   * batch's end, their trainer Gold back and their share of its base time
+   * off, the training already done kept, so it finishes that much sooner
+   * (at once, `settle`, when that covers it). Time credit or bank it used
+   * beyond its new base time goes back as the stat's credit. With no rank
+   * left it stops, as `cancel` does. Its speedup stays. */
+  private trimJob(id: TrainingId) {
+    const save = this.save, job = trainingJob(save.trainingJobs, id), row = rowOf(id);
+    const keep = Math.max(0, row.max - save.training[id]);
+    if (!job || keep >= job.ranks) return;
+    if (keep === 0) return void this.cancel(id);
+    const from = save.trainerRanks[id], done = jobInvested(job, this.left(id)) - job.used;
+    let dropGold = 0, dropSeconds = 0, allSeconds = 0;
+    for (let k = 0; k < job.ranks; k++) {
+      allSeconds += trainingSeconds(from + k);
+      if (k < keep) continue;
+      dropGold += trainingGold(row, from + k);
+      dropSeconds += trainingSeconds(from + k);
+    }
+    const back = Math.min(job.gold, dropGold), ms = job.ms - Math.round((job.ms * dropSeconds) / allSeconds);
+    save.gold = snap(save.gold + back);
+    tally(save, "trainingGold", -back);
+    if (job.used > ms) {
+      save.trainingCredit[id] += job.used - ms;
+      job.used = ms;
+    }
+    const now = this.host.clock(), left = Math.max(0, (ms - job.used) / job.speed - done);
+    Object.assign(job, { ranks: keep, gold: snap(job.gold - back), ms, completesAt: doneAt(left, save.trainingBoostUntil, now, trainingRate(save)) });
   }
 
   /** What a press of `id`'s trainer button buys at Buy Quantity `q`: the
