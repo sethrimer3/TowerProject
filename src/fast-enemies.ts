@@ -17,8 +17,9 @@ import { tierStats } from "./tiers.ts";
  * Fast enemy strikes with at least. */
 export const FAST_CARRY = 1.75;
 /** Tiers whose Fast enemies carry less than `FAST_CARRY`: the third's would
- * strike with 3,500 from its first floor, so it carries half instead (1,000). */
-const FAST_CARRY_IN: Readonly<Record<number, number>> = { 3: 0.5 };
+ * strike with 3,500 from its first floor and the fourth's with 14,000, so
+ * they carry a half (1,000) and a quarter (2,000) instead. */
+const FAST_CARRY_IN: Readonly<Record<number, number>> = { 3: 0.5, 4: 0.25 };
 const FAST_SALT = 0xfa57e;
 
 /** The share of enemies that are Fast on equivalent floor `floor` (from 1)
@@ -34,7 +35,7 @@ export function fastShare(tier: number, floor: number) {
 /** The least ATK a Fast enemy of `mode`'s tier `tier` strikes with: `FAST_CARRY`
  * (`FAST_CARRY_IN` where set) times the tier below's floor-100 normal,
  * balanced enemy's ATK, in this tier's own units (700 in Tower II, 1,000 in
- * III, 14,000 in IV). */
+ * III, 2,000 in IV, 42,000 in V). */
 export const fastCarry = (mode: CurveMode, tier: number) =>
   tier < 2 ? 0 : snap((FAST_CARRY_IN[tier] ?? FAST_CARRY) * enemyStats(mode, tier - 1, 99 * STEPS_PER_FLOOR[mode], "normal", "balanced").attack * tierStats(tier - 1));
 
