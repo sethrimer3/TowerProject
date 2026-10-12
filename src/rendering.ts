@@ -12,7 +12,7 @@ import { torchAnimationFrame } from "./game-sprites.ts";
 import { isArea1, paintHero, paintHeroFallback, paintTile, paintTorch, type BoardLook } from "./tile-painters.ts";
 import type { AtmosphereConfig } from "./lighting-pass.ts";
 import { DungeonLight, type LitBoard } from "./dungeon-light.ts";
-import { drawNeonContents, drawNeonGround, drawNeonTorch, paintNeonHero } from "./neon-board.ts";
+import { drawThemedBoard, themedBoardOf } from "./themed-boards.ts";
 import { RoutePath } from "./route-path.ts";
 import { BoardPopups, goldCoin, lunges } from "./board-popups.ts";
 import { DamagePredictions, drawDamageLabels } from "./damage-labels.ts";
@@ -135,7 +135,8 @@ export class Renderer {
   }
   draw(now: number) {
     const f = this.beginFrame(now);
-    if (f.look.neon) this.drawNeonBoard(f);
+    const themed = f.look.themed;
+    if (themed) drawThemedBoard(f, themed, this.enemyLunge, () => this.drawRoute(f));
     else {
       // Ground first; in the dungeon the light then runs the frame (relief,
       // decor, shadows, contents, torches, route, hero, frame) over it.
@@ -143,21 +144,8 @@ export class Renderer {
       if (f.look.outside) this.drawOutside(f);
       else this.light.draw(f, this.litBoard(f));
     }
-    drawRushEchoes(f, this.game.rush, f.look.neon ? paintNeonHero : (c) => paintHero(c, f.look.spritesOff));
+    drawRushEchoes(f, this.game.rush, themed ? themed.hero : (c) => paintHero(c, f.look.spritesOff));
     this.drawOverlays(f);
-  }
-  /** The Neon theme's dungeon: laser-line walls, contents, torches, route
-   * and hero on black, with no lighting, decor or ambient effects. */
-  private drawNeonBoard(f: FrameContext) {
-    drawNeonGround(f);
-    drawNeonContents(f, this.enemyLunge);
-    for (const t of f.torches) drawNeonTorch(f, t);
-    this.drawRoute(f);
-    const c = f.c;
-    c.save();
-    c.setTransform(tileTransform(f, f.playerX, f.playerY));
-    paintNeonHero(c);
-    c.restore();
   }
   /** Gameplay feedback drawn over every board. */
   private drawOverlays(f: FrameContext) {
@@ -240,7 +228,7 @@ export class Renderer {
     };
     f.torches = outside ? [] : this.visibleTorches();
     f.walls = outside ? [] : this.visibleWallTiles();
-    f.glows = outside || this.neon ? [] : this.light.glows(f);
+    f.glows = outside || this.themed ? [] : this.light.glows(f);
     if (!outside && this.decorOn) {
       this.decor.sync(g.world, g.run.seed);
       this.decor.update({ dt, now, hx: this.playerX, hy: this.playerY, tileAt: this.tileAt, reduceMotion: f.look.reduceMotion });
@@ -532,12 +520,14 @@ export class Renderer {
     c.shadowBlur = 0;
   }
 
-  private get neon() {
-    return gameLook(this.game.save) === "neon";
+  /** How the Game theme worn draws the dungeon, or null for Classic. */
+  private get themed() {
+    return themedBoardOf(gameLook(this.game.save));
   }
-  /** Decor waits for neon versions of its own, so the Neon Game theme turns it off. */
+  /** Decor waits for versions of its own in each Game theme, so a Game theme
+   * other than Classic turns it off. */
   private get decorOn() {
-    return !this.game.save.settings.decorOff && !this.neon;
+    return !this.game.save.settings.decorOff && !this.themed;
   }
   private tileAt = (x: number, y: number) => this.game.world.tile(x, y);
   private decorFrame(f: FrameContext): DecorFrame {
@@ -549,7 +539,7 @@ export class Renderer {
       mode: g.mode, height: g.run.height, seed: g.run.seed, outside: !!g.run.outside, entranceX: Math.floor(g.world.width / 2),
       roads: g.run.outside ? roadsOf(g.world) : undefined,
       spritesOff: g.save.settings.spritesOff, reduceMotion: g.save.settings.reduceMotion, area1: !g.save.settings.spritesOff && isArea1(g.mode, g.run.height),
-      neon: this.neon && !g.run.outside,
+      themed: g.run.outside ? null : this.themed,
     };
   }
   /** Paints one tile in tile space (see paintTile); false while its ground

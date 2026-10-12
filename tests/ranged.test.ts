@@ -293,7 +293,7 @@ test("a charged arrow's number rises in a gold outline drawn under its black one
     get: (t, k) => (k === "strokeText" ? (text: string) => strokes.push(`${text}:${t.strokeStyle}:${t.lineWidth}`) : k in t ? t[k as string] : () => ({ addColorStop() {} })),
     set: (t, k, v) => ((t[k as string] = v), true),
   });
-  popups.draw({ c, s: 40, now: 10, left: 0, bottom: 0, n: 9, look: { reduceMotion: true, neon: false } } as never);
+  popups.draw({ c, s: 40, now: 10, left: 0, bottom: 0, n: 9, look: { reduceMotion: true, themed: null } } as never);
   assert.deepEqual(strokes, ["40:#ffd34d:8.8", "40:#000:4", "40:#000:4"]);
 });
 

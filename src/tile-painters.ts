@@ -1,3 +1,4 @@
+import type { ThemedBoard } from "./themed-boards.ts";
 import { CHUNK, COLORS } from "./config.ts";
 import { drawCornerBricks, drawTerrain, themeAt, type Corner } from "./themes.ts";
 import { tileRandom } from "./random.ts";
@@ -40,9 +41,10 @@ export type BoardLook = {
    * doors, chests, floor, and the torch relief on that floor. Never with
    * sprites off, so shadows and relief always match what is drawn. */
   area1: boolean;
-  /** Whether the board is drawn in the Neon Game theme (the dungeon only:
-   * the forest outside keeps its art), so what rises off it wears neon too. */
-  neon: boolean;
+  /** How the Game theme worn draws the board, or null for the lit
+   * Classic art (always outside: the forest keeps its art), so what rises
+   * off it wears that art too. */
+  themed: ThemedBoard | null;
 };
 type TileWorld = { tile(x: number, y: number): Tile | undefined };
 /** What a contents painter needs besides the tile: its position (for
