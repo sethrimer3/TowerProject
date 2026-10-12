@@ -15,6 +15,10 @@ export const NEON_CLASS = "neon";
  * on the root. */
 export const TERMINAL_CLASS = "terminal";
 
+/** The old windowed desktop computer: `desktop.css` is scoped to this class
+ * on the root. */
+export const DESKTOP_CLASS = "desktop";
+
 /** Dresses the page in the UI theme worn (`uiLook`: Classic wears none of
  * their classes) and mirrors Reduce motion. */
 export function applyUiTheme(save: Pick<Save, "themes" | "settings">) {
@@ -22,6 +26,7 @@ export function applyUiTheme(save: Pick<Save, "themes" | "settings">) {
   root.toggle(MEDIEVAL_CLASS, look === "medieval");
   root.toggle(NEON_CLASS, look === "neon");
   root.toggle(TERMINAL_CLASS, look === "terminal");
+  root.toggle(DESKTOP_CLASS, look === "desktop");
   root.toggle("reduce-motion", save.settings.reduceMotion);
 }
 

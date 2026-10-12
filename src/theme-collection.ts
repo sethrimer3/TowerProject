@@ -10,9 +10,9 @@ import { snap } from "./exact.ts";
 export type ThemeKind = "ui" | "game";
 /** The looks of each kind, as the `uiTheme` and `gameTheme` settings hold
  * them. */
-export type UiLook = "classic" | "medieval" | "neon" | "terminal";
+export type UiLook = "classic" | "medieval" | "neon" | "terminal" | "desktop";
 export type GameLook = "classic" | "neon";
-export type ThemeId = "medievalUi" | "neonUi" | "terminalUi" | "neonGame";
+export type ThemeId = "medievalUi" | "neonUi" | "terminalUi" | "desktopUi" | "neonGame";
 
 export type ThemeDef = {
   kind: ThemeKind;
@@ -37,6 +37,7 @@ export const THEMES: Readonly<Record<ThemeId, ThemeDef>> = {
   medievalUi: { kind: "ui", look: "medieval", name: "Medieval", unlock: "Owned from the start" },
   neonUi: { kind: "ui", look: "neon", name: "Neon", unlock: "Complete floor 50 of Tower I", earned: (save) => towerOne(save) >= 50 },
   terminalUi: { kind: "ui", look: "terminal", name: "Terminal", unlock: "Complete floor 100 of Tower I", earned: (save) => towerOne(save) >= 100 },
+  desktopUi: { kind: "ui", look: "desktop", name: "Desktop", unlock: "Reach depth 50 in the Delve", earned: (save) => highest(save.delve) >= 50 },
   neonGame: { kind: "game", look: "neon", name: "Neon", unlock: "Reach depth 25 in the Delve", earned: (save) => highest(save.delve) >= 25 },
 };
 export const THEME_IDS = Object.keys(THEMES) as ThemeId[];
