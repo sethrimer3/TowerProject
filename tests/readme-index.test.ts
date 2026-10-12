@@ -19,6 +19,13 @@ test("every README link to a gameplay page resolves", () => {
   for (const link of indexed) assert.ok(existsSync(new URL(link, ROOT)), `${link} does not exist`);
 });
 
+test("every relative link in a gameplay page resolves", () => {
+  for (const page of PAGES) {
+    const base = new URL(`docs/gameplay/${page}`, ROOT), text = readFileSync(base, "utf8");
+    for (const [, link] of text.matchAll(/\]\(([^)#:]+)(?:#[^)]*)?\)/g)) assert.ok(existsSync(new URL(link, base)), `${page} links to ${link}, which does not exist`);
+  }
+});
+
 test("the README stays slim", () => {
   const size = Buffer.byteLength(README, "utf8");
   assert.ok(size <= MAX_README, `README.md is ${size} bytes (at most ${MAX_README}): move the detail into a page in docs/gameplay/`);
