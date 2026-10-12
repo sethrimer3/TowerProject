@@ -415,3 +415,19 @@ test("the Free Upgrade rows: 75 Gold for the first rank, 1,582 for the 11th, 9,7
     assert.equal(TRAINING.find((t) => t.id === id)!.max, 100);
   }
 });
+
+test("Training Discount takes its share off every rank a trainer trains, and only the discounted Gold comes back", () => {
+  const { g } = game(), row = TRAINING.find((r) => r.id === "attack")!;
+  const full = g.training.batch("attack", 1).gold;
+  g.save.archives.levels.trainingDiscount = 20; // 10% off
+  assert.equal(trainingStep(g.save, "attack").gold, Math.ceil((trainingGold(row, 0) * 900) / 1000));
+  const off = g.training.batch("attack", 1).gold;
+  assert.equal(off, trainingGold(row, 0, 100));
+  assert.ok(off < full);
+  const gold = g.save.gold;
+  assert.ok(g.training.trainWithGold("attack", 1));
+  assert.equal(g.save.gold, gold - off);
+  g.training.cancel("attack");
+  assert.equal(g.save.gold, gold, "a stop gives back what was paid");
+  assert.equal(trainingGold(row, 30, 495), Math.ceil((trainingGold(row, 30) * 505) / 1000), "49.5% off at level 99, rounded up");
+});

@@ -181,7 +181,8 @@ test("a run picks an offered boon: the hero's stats change, and undo keeps the b
   assert.equal(g.shrine.floorsToNext, 200);
   const offer = g.shrine.offer();
   assert.equal(offer.length, 2);
-  // Take a step so there is something to undo.
+  // Take a step so there is something to undo, with an undo to spend.
+  g.save.upgrades.inspirationUndos = 1;
   g.save.tower.history.push(g.snapshot());
   const attack = g.run.player.attack, maxHp = g.run.player.maxHp;
   const id = offer[0]!;

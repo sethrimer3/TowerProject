@@ -206,7 +206,7 @@ _Avoid_: popup, loot text
 ### The character
 
 **Loadout**:
-What the character starts a run with: ATK, DEF, max HP, shroud, Regen, keys and how many undos it can store. It comes from the baseline, the upgrades bought, the training bought, the equipped gear and the provisions bought.
+What the character starts a run with: ATK, DEF, max HP, shroud, Regen, keys and how many undos each run has. It comes from the baseline, the upgrades bought, the training bought, the equipped gear and the provisions bought.
 _Avoid_: base stats, starting stats
 
 **Level**:
@@ -404,7 +404,7 @@ One way of moving the hero, toward one kind of target: the stairs, a potion, a d
 _Avoid_: skill (a skill is something the player uses), ability
 
 **Hand**:
-The cards the player sets up before a run, in priority order, in four slots (five with Larger Hand, and more bought with Gems); it always holds the STAIRS card. Inside a run the hand moves the hero, and the player can't: the first card that can act picks its closest target, and the hero follows the shortest path there a step at a time before the hand chooses again. The player can pause it, and undo pauses it. Each run keeps the hand as ordered when it went inside.
+The cards the player sets up before a run, in priority order, in four slots (five with Larger Hand, and more bought with Gems); it always holds the STAIRS card. Inside a run the hand moves the hero, and the player can't: the first card that can act (or Card Group, as one) picks its closest target, and the hero follows the shortest path there a step at a time before the hand chooses again. The player can pause it, and undo pauses it. Each run keeps the hand as ordered when it went inside.
 _Avoid_: loadout (what the character starts a run with)
 
 **Movement speed**:
@@ -417,6 +417,10 @@ _Avoid_: dash, sprint, leap
 
 **Deck**:
 All the player's cards: those in the hand and those waiting outside it. Also the page where the hand is ordered (with the Combat Stance skill) and its cards chosen from the deck (with Buildout).
+
+**Card Group**:
+Cards side by side in the hand that the player has linked on the Deck page (once Tower II's floor 90 Goal is claimed), so they share one priority: of the targets any of them would take, the hand heads for the closest. A link breaks when either card moves out of place.
+_Avoid_: set, combo (Goldback's), stack
 
 **Gem**:
 The premium currency, kept between runs like Gold. Also the one lying on a run's floor now and then, collected by touching or tapping it.
@@ -437,6 +441,10 @@ _Avoid_: priority, override
 **Charge**:
 One of a run's limited uses of Focus, Ignore or Target. Each regains a use every so many new floors climbed once its regain skill (Refocus, Ignore More, Target More) is owned.
 _Avoid_: token, mana
+
+**Undo**:
+Taking back the last move on the floor the hero stands on. A run has a limited number of undos (Rehearsed steps, Echoes of time and Undo Count research set how many), and one spent never comes back during that run.
+_Avoid_: rewind, history slot
 
 **Ignore**:
 Marking a tile inside a run so the hero never steps on it for the rest of that floor.

@@ -10,8 +10,10 @@ This controls camera and player interpolation on both axes; Reduce motion overri
 **Undo** restores one move (a tapped route counts as a single move), including combat, pickups, gear, keys, doors, and the XP a kill paid (with any level it reached), but only on the floor you stand on: climbing or going down a Tower floor forgets the history, as does crossing one of the Delve's floor lines (each ten depth, either way) or a milestone gate.
 A step onto empty floor is seldom worth resuming at, so undoing one goes on back past every empty step before it, and the move before them that did something, to just before that move (a fight, a pickup, a door, a card's activation or training bought).
 It cancels any queued route.
-A new profile has no undo, and the button stays hidden until **Rehearsed steps** (5 Inspiration, after the Archives) gives the first history slot (or Echoes of time and a level of Undo Count do); each level of **Undo Count** research in the Archives adds one: Rehearsed steps opens four levels of it and **Echoes of time** (Courage) four more, either opening it first, up to 9 moves.
-Each counts the moment it's bought or completed.
+Undos are a limited resource, like Focus: each run has a number of them to spend, shown on the Undo button, and one spent never comes back, whatever the run does after it.
+The history holds no more moves than the run has undos left.
+A new profile has no undo, and the button stays hidden until **Rehearsed steps** (5 Inspiration, after the Archives) gives the first undo a run (or Echoes of time and a level of Undo Count do); each level of **Undo Count** research in the Archives adds one a run: Rehearsed steps opens four levels of it and **Echoes of time** (Courage) four more, either opening it first, up to 9 a run.
+Each counts the moment it's bought or completed, in a run already under way too; a new run starts with them all.
 History persists across refreshes.
 
 ## How a run ends
@@ -19,7 +21,7 @@ History persists across refreshes.
 Every way a run ends goes through one dialog, which says what brought it up and shows the same totals of what the run obtained: the floor reached, the run's highest floor, and the Gold, the Inspiration (or Courage) and the XP earned in this run, the first two with their icons, not the amounts held (undo takes a kill's XP back from it, as from the hero).
 Pressing End Run asks whether to end the run (or, when no card in the hand can act, says so first), with **End run** and **Keep climbing** (Keep delving).
 When the hero falls in a fight, the run waits at 0 HP with the hand paused, a skull and crossbones burns in a red glow over the hero's head for two and a half seconds, and then the dialog, headed **Fallen in combat**, names the monster.
-It must be answered: **Undo** (once Rehearsed steps has unlocked undo, while undo moves remain; without it the dialog doesn't mention undo) spends one to take the fight back and leaves the hand paused; **Return to entrance** ends the run, pays what it still owes, and returns to the forest for the next run.
+It must be answered: **Undo** (once Rehearsed steps has unlocked undo, while the run has an undo left and a move to take back; without it the dialog doesn't mention undo) spends one to take the fight back and leaves the hand paused; **Return to entrance** ends the run, pays what it still owes, and returns to the forest for the next run.
 Headed **Regroup and try again**, the dialog says the Tower (or Delve) will shift to a new layout for the next run and invites the player to look over and spend what this one earned.
 The dialog comes back after a refresh until it is answered.
 Rewards are credited as they are earned and never rolled back, so taking a fight back cannot duplicate them.

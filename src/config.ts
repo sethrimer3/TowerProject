@@ -436,7 +436,7 @@ export const UPGRADES = [
   {
     id: "inspirationUndos",
     name: "Rehearsed steps",
-    description: "Rewind an action, and open Undo Count research in the Archives, or 4 more levels of it once Echoes of time has opened it",
+    description: "Rewind one action a run, and open Undo Count research in the Archives, or 4 more levels of it once Echoes of time has opened it",
     grants: { undos: 1 },
     base: 5,
     max: 1,

@@ -70,7 +70,7 @@ const WORDS: Record<Stat, string> = {
 
 type Granting = { grants?: Grants };
 
-/** The most undos a character can store, with every upgrade that adds one
+/** The most undos a run can have, with every upgrade that adds one
  * at its highest level and every level of Undo Count. */
 const UNDO_CAP = UPGRADES.reduce(
   (cap, u: Granting & { max: number }) => cap + (u.grants?.undos ?? 0) * u.max,
@@ -142,7 +142,7 @@ export function describeGrants(grants: Grants, words: Partial<Record<Stat, strin
   return (Object.entries(grants) as [Stat, number][])
     .map(([stat, n]) =>
       stat === "undos"
-        ? `Store ${n === 1 ? "one" : n} ${words.undos ?? WORDS.undos}${n === 1 ? "" : "s"} (up to ${UNDO_CAP})`
+        ? `${n === 1 ? "One" : n} ${words.undos ?? WORDS.undos}${n === 1 ? "" : "s"} a run (up to ${UNDO_CAP})`
         : `+${n} ${words[stat] ?? WORDS[stat]}`)
     .join(" and ");
 }
@@ -293,6 +293,8 @@ export const trainingText = (value: number, unit: string) =>
 /** How much faster trainers train than at first (Faster Trainers research:
  * 0.02 a level); a rank takes its time / (1 + this). */
 export const trainingSpeed = (save: Pick<Save, "archives">) => researched(save.archives, "trainingSpeed", 0);
+/** What Training Discount takes off a trainer's Gold, in tenths of a percent. */
+export const trainingDiscount = (save: Pick<Save, "archives">) => researched(save.archives, "trainingDiscount", 0);
 
 /** Whether `id` can take no more ranks: at its most, counting a rank a
  * trainer is training. */
@@ -334,7 +336,7 @@ export function trainingBulk(save: Save, id: TrainingId, q: BuyQuantity) {
  * (`affordable`) or Gold (`goldAffordable`), whether there is one, and a
  * trainer's Gold price for it. */
 function trainingPrices(save: Save, row: TrainingRow, maxed: boolean, trainerMaxed: boolean) {
-  const free = save.settings.freePurchases, gold = trainingGold(row, save.trainerRanks[row.id]);
+  const free = save.settings.freePurchases, gold = trainingGold(row, save.trainerRanks[row.id], trainingDiscount(save));
   return {
     affordable: !maxed && (free || trainingPoints(save).left >= row.cost),
     maxed,

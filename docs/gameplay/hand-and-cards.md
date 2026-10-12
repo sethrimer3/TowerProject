@@ -45,6 +45,16 @@ Every change is saved at once.
 The first visit teaches the drag: a note explains the order and a hand points at STAIRS, the other cards and tabs stay disabled until STAIRS is moved, and a dialog then praises the new order.
 With Buildout, the next lesson shows the X on ENEMY with a hand pointing at it, and again nothing else can be used until it is pressed; a dialog praises that (closed by pressing anywhere on it), and a note over the deck, dismissed by pressing it, explains adding cards.
 
+## Card Groups
+
+Tower II's floor 90 Goal opens **Card Groups** on the Deck page: a thin row under each row of the hand holds a hollow light grey diamond between each card and the next (none after the last).
+Pressing a diamond links the two cards beside it into a group: the diamond turns white, and a thin white square bracket runs under them from one card's middle to the other's, the diamond on top of it (a group split across two rows of the hand carries its bracket from the end of one row to the start of the next).
+Linking more neighbours makes a larger group.
+The cards of a group share one priority: of every target any of them would take, the hand heads for the closest (a card that acts in place, like Key Siphon, first of all; of targets as close, the earlier card's).
+Link Yellow Key and Blue Key, and the hero takes whichever key is nearer.
+A group gives way to the cards after it only when none of its cards can act, and a focused card plans alone, its group aside.
+A link lasts until its diamond is pressed again or either card moves out of place (dragged to another slot, or out of the hand); a run keeps the groups it went in with.
+
 ## Focus
 
 **Focus** (5 Courage, after Movement Speed in the Courage tree, below it) is the player's own say in where the hero goes inside a run.

@@ -2,7 +2,7 @@ import { TRAINING, type TrainingId } from "../config.ts";
 import { snap } from "../exact.ts";
 import { TRAINING_RESET_GEMS } from "../gems.ts";
 import { batchSpeedup, bulkBuy, type BuyQuantity } from "../buy-quantity.ts";
-import { trainingBulk, trainingFull, trainingMaxed, trainingSpeed, trainingOpen } from "../loadout.ts";
+import { trainingBulk, trainingDiscount, trainingFull, trainingMaxed, trainingSpeed, trainingOpen } from "../loadout.ts";
 import { BOOST_FOREVER, permanentBoost, trainingRate } from "../shop/entitlements.ts";
 import { batchWork, claimBoost, doneAt, finishGems, jobInvested, nextTrainerGems, ranksInTraining, trainerBatch, trainingGold, trainingJob, trainingSeconds, workLeft, trainingSlots, type TrainingJob } from "../training-jobs.ts";
 import { affordsGems, type DeskHost } from "./desk.ts";
@@ -81,7 +81,7 @@ export class TrainingDesk {
     for (let k = 0; k < job.ranks; k++) {
       allSeconds += trainingSeconds(from + k);
       if (k < keep) continue;
-      dropGold += trainingGold(row, from + k);
+      dropGold += trainingGold(row, from + k, trainingDiscount(save));
       dropSeconds += trainingSeconds(from + k);
     }
     const back = Math.min(job.gold, dropGold), ms = job.ms - Math.round((job.ms * dropSeconds) / allSeconds);
@@ -101,10 +101,10 @@ export class TrainingDesk {
    * batch's speedup (`batchSpeedup`: x2 from 5 ranks, x3 from 10, x5 from
    * 25, x10 from 100). `affordable` says whether the Gold held pays. */
   batch(id: TrainingId, q: BuyQuantity = 1) {
-    const save = this.save, row = rowOf(id), ranks = save.trainerRanks[id], speed = trainingSpeed(save);
+    const save = this.save, row = rowOf(id), ranks = save.trainerRanks[id], speed = trainingSpeed(save), discount = trainingDiscount(save);
     const room = Math.max(0, row.max - save.training[id] - ranksInTraining(save.trainingJobs, id));
-    const bulk = bulkBuy(q, room, (k) => trainingGold(row, ranks + k), this.host.free ? Infinity : save.gold);
-    const { gold, ms } = trainerBatch(row, ranks, bulk.count, speed);
+    const bulk = bulkBuy(q, room, (k) => trainingGold(row, ranks + k, discount), this.host.free ? Infinity : save.gold);
+    const { gold, ms } = trainerBatch(row, ranks, bulk.count, speed, discount);
     return { count: bulk.count, gold: this.host.free ? 0 : gold, ms, speedup: batchSpeedup(bulk.count), affordable: bulk.affordable };
   }
 

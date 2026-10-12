@@ -2812,6 +2812,52 @@ nav button.notify::after, .tree-tabs button.notify::after {
 .deck-card:not(:disabled):hover { box-shadow: 0 0 0 2px #ebc77f, 0 0 10px 2px #e0b25a88; }
 /* Where the dragged card will land. */
 .deck-slot.held .deck-card { opacity: 0.25; }
+/* Card Groups: a thin row under each row of the hand, a hollow diamond in
+   it between each card and the next (white once they are linked), and
+   under each linked pair a thin white bracket from one card's middle to
+   the other's, drawn as a half under each card so it carries over to the
+   next row when the pair wraps. The gap's middle sits 5px past a slot's
+   padding box (half the 8px gap and its 1px border). */
+.deck-hand.with-links { row-gap: 22px; padding: 0 8px 18px; }
+.deck-link {
+  position: absolute;
+  top: calc(100% + 3px);
+  height: 6px;
+  border-bottom: 1.5px solid #fff;
+  pointer-events: none;
+}
+.deck-link.to-next { left: 50%; right: -5px; border-left: 1.5px solid #fff; }
+.deck-link.from-prev { left: -5px; right: 50%; border-right: 1.5px solid #fff; }
+/* By id, so the themes' button boards and glows stay off it. */
+#deck-hand .deck-link-toggle {
+  position: absolute;
+  z-index: 1;
+  top: calc(100% - 1px);
+  left: calc(100% + 5px);
+  width: 20px;
+  height: 20px;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  translate: none;
+  transform: translateX(-50%);
+  cursor: pointer;
+}
+#deck-hand .deck-link-toggle::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border: 1.5px solid #b9c0cc;
+  background: #10161f;
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+#deck-hand .deck-link-toggle:hover::before, #deck-hand .deck-link-toggle:focus-visible::before { border-color: #fff; box-shadow: 0 0 5px #fff8; }
+#deck-hand .deck-link-toggle.on::before { border-color: #fff; background: #fff; }
 /* The next hand slot, for sale. */
 .deck-buy-slot {
   width: 100%;

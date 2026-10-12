@@ -98,6 +98,24 @@ export function moveCard(hand: readonly CardId[], from: number, to: number): Car
   return next;
 }
 
+/** A link between two cards side by side in the hand (Card Groups): the
+ * left card, then the right. Cards joined by links form a group, whose
+ * cards share one priority. */
+export type CardLink = readonly [CardId, CardId];
+const joins = (links: readonly CardLink[], a: CardId, b: CardId | undefined) => links.some(([l, r]) => l === a && r === b);
+/** For each card of `hand`, whether a link joins it to the card after it. */
+export const linkedToNext = (hand: readonly CardId[], links: readonly CardLink[]) => hand.map((id, i) => joins(links, id, hand[i + 1]));
+/** The links that still join cards side by side in `hand`, left to right:
+ * a link breaks once either card moves out of place. */
+export const keptLinks = (hand: readonly CardId[], links: readonly CardLink[]): CardLink[] =>
+  hand.flatMap((id, i): CardLink[] => (joins(links, id, hand[i + 1]) ? [[id, hand[i + 1]!]] : []));
+/** `links` with the cards in slots `i` and `i + 1` of `hand` linked, or
+ * unlinked when they were. */
+export function toggleLink(hand: readonly CardId[], links: readonly CardLink[], i: number): CardLink[] {
+  const kept = keptLinks(hand, links), a = hand[i]!, b = hand[i + 1]!;
+  return joins(kept, a, b) ? kept.filter(([l, r]) => l !== a || r !== b) : keptLinks(hand, [...kept, [a, b]]);
+}
+
 /** `hand` with deck card `id` dropped on slot `slot` of a hand of `slots`:
  * with room, it goes into that slot (or after the last card, for an empty
  * slot), each card from there sliding one slot later; in a full hand it
@@ -161,6 +179,9 @@ export type HandAt = Position & {
    * percent (Key Efficiency research), 1,000 when absent: the door cards
    * want a door the keys held pay for at that cost. */
   keyCost?: number;
+  /** For each card of the hand, whether it is linked to the next (Card
+   * Groups, `linkedToNext`): the cards of a group share one priority. */
+  links?: readonly boolean[];
 };
 
 /** What each key a door takes costs a card heading for it: Key Efficiency
@@ -268,36 +289,43 @@ const NONE: ReadonlySet<string> = new Set();
  * only at the floor the hero stands on: stairs up end a path, and stairs
  * down are never crossed or a target. A card's badge may close it (a
  * gate) or change its target (`cardRules`). With `only`, it plans that
- * card alone (a Focus), whatever its gate. */
+ * card alone (a Focus), whatever its gate. Linked cards (`links`, Card
+ * Groups) are tried as one: of the targets each card of the group would
+ * take, the hand heads for the closest (a card acting in place the
+ * closest of all), the earlier card's of those tied. */
 export function planHand(at: HandAt, hand: readonly CardId[], mode: Mode, only?: number): CardPlan | null {
   const ignored = at.ignored ?? NONE, marked = new Set([...(at.marked ?? NONE), ...ignored]);
   let reached = search(at, marked);
-  for (let card = 0; card < hand.length; card++) {
-    if (only !== undefined && card !== only) continue;
+  /** Card `card`'s plan alone, or null when it can't act. */
+  const planCard = (card: number): CardPlan | null => {
     const rules = at.cardRules?.(hand[card]);
-    if (only === undefined && rules?.closed) continue;
+    if (only === undefined && rules?.closed) return null;
     if (rules?.bang) {
       // The hand is stuck: the card heads for the closest ! by any way.
       const bang = rules.bang;
       const target = search(at, ignored).find((r) => bang.has(point(r.x, r.y)));
-      if (target) return { card, path: pathTo(target) };
-      continue;
+      return target ? { card, path: pathTo(target) } : null;
     }
-    if (IN_PLACE.has(hand[card])) {
-      if (at.canAct?.(hand[card])) return { card, path: [] };
-      continue;
-    }
+    if (IN_PLACE.has(hand[card])) return at.canAct?.(hand[card]) ? { card, path: [] } : null;
     const target = targetOf(at, hand[card], mode, rules?.charge ? chargeSearch(at, rules.charge, marked) : reached, reached, rules);
     if (target && rules?.deprioritize) {
       // Passed over and marked: the cards after it go round it too.
       rules.deprioritize(target.x, target.y);
       marked.add(point(target.x, target.y));
       reached = search(at, marked);
-      continue;
+      return null;
     }
-    if (target) return { card, path: pathTo(target) };
+    return target ? { card, path: pathTo(target) } : null;
+  };
+  if (only !== undefined) return only < hand.length ? planCard(only) : null;
+  let best: CardPlan | null = null;
+  for (let card = 0; card < hand.length; card++) {
+    const plan = planCard(card);
+    if (plan && (!best || plan.path.length < best.path.length)) best = plan;
+    // A group's last card (or a card on its own) ends the choice.
+    if (best && !at.links?.[card]) return best;
   }
-  return null;
+  return best;
 }
 
 /** Target's path to (x, y): the shortest over crossable tiles, round the

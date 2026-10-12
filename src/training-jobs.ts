@@ -58,8 +58,14 @@ export const trainingMs = (ranks: number, speed: number) => Math.round((training
  * times 1 + ranks / `growth`, rounded up. A row with a `start` asks that
  * much for a point of its first rank instead, and one with a `power` asks
  * start × the rank's number × (1 + (ranks / growth)^power), the power a
- * whole number or a half. */
-export const trainingGold = (row: { id: TrainingId; cost: number }, ranks: number) => {
+ * whole number or a half. Training Discount research takes `discount`
+ * (tenths of a percent) off that, rounded up again. */
+export const trainingGold = (row: { id: TrainingId; cost: number }, ranks: number, discount = 0) => {
+  const price = listGold(row, ranks);
+  return discount ? Math.ceil((price * (1000 - discount)) / 1000) : price;
+};
+/** A trainer's price for the next rank before any discount. */
+const listGold = (row: { id: TrainingId; cost: number }, ranks: number) => {
   const curve = TRAINER_GOLD_CURVES[row.id];
   // A row with `prices` asks each rank's own (for each point of its cost).
   if ("prices" in curve) return curve.prices[Math.min(ranks, curve.prices.length - 1)]! * row.cost;
@@ -74,11 +80,12 @@ export const trainingGold = (row: { id: TrainingId; cost: number }, ranks: numbe
 
 /** The Gold and base training time (ms, one rank after another, before the
  * batch's speedup) of `count` ranks more of `row` trained by trainers who
- * have finished `ranks`, at Faster Trainers `speed`. */
-export function trainerBatch(row: { id: TrainingId; cost: number }, ranks: number, count: number, speed: number) {
+ * have finished `ranks`, at Faster Trainers `speed` and Training Discount
+ * `discount`. */
+export function trainerBatch(row: { id: TrainingId; cost: number }, ranks: number, count: number, speed: number, discount = 0) {
   let gold = 0, ms = 0;
   for (let k = 0; k < count; k++) {
-    gold += trainingGold(row, ranks + k);
+    gold += trainingGold(row, ranks + k, discount);
     ms += trainingMs(ranks + k, speed);
   }
   return { gold, ms };

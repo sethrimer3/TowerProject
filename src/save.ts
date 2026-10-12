@@ -8,7 +8,7 @@ import { decodeEquipment, defaultEquipment } from "./equipment/inventory.ts";
 import { decodeDefendSave, defaultDefendSave } from "./defend/progress.ts";
 import { decodeSettings, defaultSettings } from "./settings.ts";
 import { keepUndos, loadout } from "./loadout.ts";
-import { BASE_HAND, CARD_IDS, HAND_SLOT_GEMS, IN_PLACE, MAX_HAND_SLOTS, deckCards, handSlots, type CardId } from "./cards.ts";
+import { BASE_HAND, CARD_IDS, HAND_SLOT_GEMS, IN_PLACE, MAX_HAND_SLOTS, deckCards, handSlots, keptLinks, type CardId, type CardLink } from "./cards.ts";
 import { decodeGemDrop, defaultGemDrop } from "./gems.ts";
 import { decodeArchives, defaultArchives, researched } from "./archives.ts";
 import { adsOff, BOOST_FOREVER, decodeEntitlements, permanentBoost } from "./shop/entitlements.ts";
@@ -58,6 +58,7 @@ export function defaults(): Save {
     materials: emptyMaterials(),
     equipment: defaultEquipment(),
     hand: [...BASE_HAND],
+    cardLinks: [],
     handSlots: 0,
     badges: defaultBadges(),
     tutorials: { deck: false, removeCard: false, addCard: false, upgrades: false, gear: false, onTheJob: false, speed: false, climb: false, enter: false, delve: false, chamber: false },
@@ -153,6 +154,7 @@ const RUN_FIELD_CHECKS = {
   focusUsed: (v: unknown) => wholeIn(v, 0, 99),
   ignoreUsed: (v: unknown) => wholeIn(v, 0, 99),
   targetUsed: (v: unknown) => wholeIn(v, 0, 99),
+  undosUsed: (v: unknown) => wholeIn(v, 0, 99),
   regain: (v: unknown) => isRecord(v) && Object.entries(v).every(([k, n]) => ["focus", "ignore", "target"].includes(k) && wholeIn(n, 1, 1e6)),
   ignored: (v: any) => isRecord(v) && wholeIn(v.floor, 0, 1e6) && Array.isArray(v.tiles) && v.tiles.every((t: unknown) => typeof t === "string" && POINT_KEY.test(t)),
   targeted: (v: unknown) => typeof v === "string" && POINT_KEY.test(v),
@@ -164,6 +166,8 @@ const RUN_FIELD_CHECKS = {
   percentPotions: (v: unknown) => wholeIn(v, 1, FIND_POTION_MAX),
   // The hand is checked first: every card holding a badge must be in it.
   badges: (v: unknown, r: any) => validRunBadges(v) && Object.keys(v as object).every((card) => r.hand?.includes(card)),
+  // The hand is checked first: each link joins cards side by side in it.
+  links: (v: unknown, r: any) => Array.isArray(v) && v.length > 0 && keptLinks(r.hand ?? [], links(v)).length === v.length,
   badgeFloors: (v: unknown) => isRecord(v) && Object.entries(v).every(([k, n]) => (k === "stairward" || k === "skipOpen") && wholeIn(n, 0, 1e6)),
   skipRolls: (v: unknown) => wholeIn(v, 1, 1e9),
   freeRolls: (v: unknown) => isRecord(v) && Object.entries(v).every(([k, n]) => ["offense", "defense", "utility"].includes(k) && wholeIn(n, 1, 1e9)),
@@ -214,10 +218,11 @@ function snapshot<R extends Run>(value: any, decodeRun: RunDecoder<R>): MoveSnap
 /** Whether an undo snapshot belongs to `run`: its seed and layout. */
 const sameRun = <R extends Run>(item: MoveSnapshot<R> | null, run: Run): item is MoveSnapshot<R> =>
   !!item && item.run.seed === run.seed && item.run.layoutVersion === run.layoutVersion;
-/** Undo history only survives for the same seed and layout as the live run. */
+/** Undo history only survives for the same seed and layout as the live run,
+ * and holds no more moves than the run has undos left. */
 function decodeHistory<R extends Run>(raw: any, run: R, undoCapacity: number, decodeRun: RunDecoder<R>): MoveSnapshot<R>[] {
   if (!Array.isArray(raw)) return [];
-  return keepUndos(raw, undoCapacity)
+  return keepUndos(raw, undoCapacity - (run.undosUsed ?? 0))
     .map((item) => snapshot(item, decodeRun))
     .filter((item): item is MoveSnapshot<R> => sameRun(item, run));
 }
@@ -407,6 +412,11 @@ const VERSION_STEPS = new Map<unknown, VersionStep[]>([
 /** The saved hand's cards the player owns, in order, each once and no
  * more than the hand holds (`slots`), or the base hand when the save has
  * none or lost its STAIRS card, which every hand must hold. */
+/** The well-formed links of `raw`: pairs of card ids. */
+function links(raw: unknown): CardLink[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.filter((l): l is CardLink => Array.isArray(l) && l.length === 2 && l.every((id) => CARD_IDS.includes(id)));
+}
 function decodeHand(raw: any, owned: CardId[], slots: number): CardId[] {
   if (!Array.isArray(raw)) return [...BASE_HAND];
   const hand = [...new Set(raw.filter((id): id is CardId => owned.includes(id)))].slice(0, slots);
@@ -450,6 +460,7 @@ export function decode(raw: string | null): Save {
     // Slots bought with Gems count only with Larger Hand, which opens them.
     if (d.upgrades.largerHand) d.handSlots = count(s.handSlots, 0, HAND_SLOT_GEMS.length);
     d.hand = decodeHand(s.hand, deckCards(d.upgrades), handSlots(d));
+    d.cardLinks = keptLinks(d.hand, links(s.cardLinks));
     d.badges = decodeBadges(s.badges, d.upgrades, researched(d.archives, "badgeSlots", 1));
     for (const k of ["deck", "removeCard", "addCard", "upgrades", "gear", "onTheJob", "speed", "climb", "enter", "delve", "chamber"] as const) d.tutorials[k] = s.tutorials?.[k] === true;
     for (const k of ["inspiration", "courage"] as const) d.treeNotices[k] = s.treeNotices?.[k] === true;

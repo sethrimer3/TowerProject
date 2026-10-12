@@ -30,9 +30,12 @@ const CURRENCY_ICONS: Record<CurrencyId, () => string> = { gems: () => gemIcon("
  * blue shard under a rising arrow, Evade Prediction a shield turning an enemy's strike aside, Badge
  * Slots a card wearing two badges, one above the other, Note Taking an open notebook under a quill,
  * the Archer Class a drawn bow and arrow, Attack Range an arrow flying past
- * a range ring, Attack Speed two arrows in a row, and every Shrine research a
- * shrine's gate (`shrineIcon`). */
+ * a range ring, Attack Speed two arrows in a row, Training Discount a Gold
+ * coin under a falling arrow, Card Groups two cards linked by a bracket and
+ * a diamond, and every Shrine research a shrine's gate (`shrineIcon`). */
 const UNLOCK_ICONS: Record<GoalUnlock, string> = {
+  trainingDiscount: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="13" r="7.5" fill="#6b4a0e" stroke="#ffd34d" stroke-width="1.5"/><circle cx="10" cy="13" r="4.6" fill="none" stroke="#ffe58a" stroke-width="1"/><path d="M19.5 2.5v9M16.6 8.6l2.9 2.9 2.9-2.9" fill="none" stroke="#8ff0a8" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  cardGroups: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="2.5" width="8.5" height="12" rx="1.3" fill="#2a3346" stroke="#c9ced8" stroke-width="1.2"/><rect x="13.5" y="2.5" width="8.5" height="12" rx="1.3" fill="#2a3346" stroke="#c9ced8" stroke-width="1.2"/><path d="M6.25 17v3h11.5v-3" fill="none" stroke="#fff" stroke-width="1.3" stroke-linejoin="round"/><path d="M12 17.2l2.3 2.8-2.3 2.8-2.3-2.8z" fill="#fff" stroke="#1d2230" stroke-width=".8"/></svg>`,
   archer: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2.5c6 2.5 6 16.5 0 19" fill="none" stroke="#b07a42" stroke-width="2" stroke-linecap="round"/><path d="M7 2.5v19" stroke="#e6ebf2" stroke-width=".9"/><path d="M4 12h16" stroke="#c9ced8" stroke-width="1.5" stroke-linecap="round"/><path d="M17.5 9.5L21 12l-3.5 2.5z" fill="#ffd34d"/><path d="M4 12l-1.5-2M4 12l-1.5 2" stroke="#e86d7a" stroke-width="1.2" stroke-linecap="round"/></svg>`,
   attackRange: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="14" r="7.5" fill="#1c2a44" stroke="#8fc4ff" stroke-width="1.3" stroke-dasharray="2.4 1.6"/><circle cx="9" cy="14" r="1.6" fill="#8fc4ff"/><path d="M9 14L20 3" stroke="#c9ced8" stroke-width="1.5" stroke-linecap="round"/><path d="M21.5 1.5l-1.2 4.4-3.2-3.2z" fill="#ffd34d"/></svg>`,
   attackSpeed: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 8h14M2.5 16h14" stroke="#c9ced8" stroke-width="1.5" stroke-linecap="round"/><path d="M15.5 5.2L20.5 8l-5 2.8zM15.5 13.2L20.5 16l-5 2.8z" fill="#ffd34d"/><path d="M2.5 8L1 6.4M2.5 8L1 9.6M2.5 16L1 14.4M2.5 16L1 17.6" stroke="#e86d7a" stroke-width="1.1" stroke-linecap="round"/></svg>`,
@@ -62,6 +65,10 @@ const UNLOCK_ICONS: Record<GoalUnlock, string> = {
 const TOWER_ICON = `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21.5V8.5H4.5v-5h3v2h2.2v-2h4.6v2h2.2v-2h3v5H18v13z" fill="#3a3f4b" stroke="#c9ced8" stroke-width="1.3" stroke-linejoin="round"/><path d="M10 21.5v-4a2 2 0 0 1 4 0v4z" fill="#ffd34d"/><rect x="11" y="10" width="2" height="3" rx=".5" fill="#ffd34d"/></svg>`;
 /** What each unlock does, shown once it is claimed and again whenever its claimed reward is pressed. */
 const UNLOCK_TUTORIALS: Record<GoalUnlock, string> = {
+  trainingDiscount: `<p>Training Discount opens in the Archives: research it, and every rank a trainer trains costs 0.5% less Gold a level, up to 49.5% at level 99.</p>` +
+    `<p class="hint">Training points and a run's Silver cost the same as ever.</p>`,
+  cardGroups: `<p>Card Groups opens on the Deck: tap a diamond under the hand, between two cards, to link them into a group. The cards of a group share one priority: of every target any of them can reach, the hand heads for the closest.</p>` +
+    `<p class="hint">Link Yellow Key and Blue Key, and the hero takes whichever key is nearer. Moving a card out of place breaks its links.</p>`,
   archer: `<p>Your hero is now an Archer: every 10 turns it fires an arrow at the closest enemy within 3 tiles, walls and doors no obstacle, dealing one strike's damage (critical hits and the enemy's DEF counted) before you ever touch it.</p>` +
     `<p>A ready shot waits for an enemy to come in range, and fires the turn one does. Only Ranged enemies can shoot back; the rest strike only when you fight them.</p>` +
     `<p class="hint">Ranged enemies reach five sixths as far as your arrows: strike first, then close in.</p>`,

@@ -58,9 +58,9 @@ export const RESEARCH_TARGETS = {
   targetFloors: { name: "Floors per Target", base: REGAIN_FLOORS, shown: count },
   /** The run's speed arrows' most steps a second, once Movement Speed is owned. */
   moveSpeed: { name: "Steps / Sec", base: 3, shown: count },
-  /** Undos the hero can store, once Rehearsed steps has given the first;
+  /** Undos a run has to spend, once Rehearsed steps has given the first;
    * its base is the loadout's own undos, so the Archives page reads it there. */
-  undoCapacity: { name: "Undos Stored", base: 0, shown: count },
+  undoCapacity: { name: "Undos per Run", base: 0, shown: count },
   /** The percent of its HP a potion restores, from 100 (red potions aside). */
   potionHeal: { name: "Potion Healing", base: 100, shown: percent },
   /** The percent of its Regen training a step regains, from 100. */
@@ -115,6 +115,8 @@ export const RESEARCH_TARGETS = {
   startingSilver: { name: "Starting Silver", base: 0, shown: count },
   /** How fast trainers work: a rank of `d` takes d / (1 + speed). */
   trainingSpeed: { name: "Training Speed", base: 0, shown: speed },
+  /** What a trainer's Gold is cut by, in tenths of a percent. */
+  trainingDiscount: { name: "Training Discount", base: 0, shown: tenths },
   /** Tiles the hand's first step toward a new target may rush across, once Rush is owned. */
   rushTiles: { name: "Tiles Rushed", base: 0, shown: count },
   /** Tiles more STAIRS's rush toward the stairs may cross, once End Rush is owned. */
@@ -265,6 +267,20 @@ const fasterTrainersLevels = () => Array.from({ length: 100 }, (_, i): ResearchL
   hours: 1.75 * (i + 1) + ((i + 1) * (i + 1)) / 20,
   effect: { target: "trainingSpeed", op: "add", value: 0.02 },
 }));
+
+/** Training Discount: 0.5% off a trainer's Gold a level (5 tenths), for 99
+ * levels. Level n costs 30 + 8 × m³ × 120 / (m + 120) Gold, m = n − 1,
+ * rounded (30 at level 1, 9,784 at 12, 103,000 at 26, 1.05 million at 59,
+ * 4.14 million at 99; 114 million in all): cubic, easing toward square.
+ * Level 1 takes 30 seconds; level n after it C(n + 3, 3) − 4 minutes
+ * (6, 16, 31, 52, 80, 116 …), tapered from level 8 on by 55 / (55 + d −
+ * d² / 625), d = n − 7, rounded (13,554 at 50, 49 days at 99; about four
+ * years in all). */
+const trainingDiscountLevels = () => Array.from({ length: 99 }, (_, i): ResearchLevel => {
+  const n = i + 1, m = n - 1, d = Math.max(0, n - 7);
+  const minutes = n === 1 ? 0.5 : Math.round((((n + 1) * (n + 2) * (n + 3)) / 6 - 4) * 55 / (55 + d - (d * d) / 625));
+  return { gold: 30 + Math.round((8 * m * m * m * 120) / (m + 120)), hours: minutes / 60, effect: { target: "trainingDiscount", op: "add", value: 5 } };
+});
 
 /** Rush: +1 tile rushed a level, for 25 levels. Each level starts from
  * 250 × n Gold and 1.75 × n hours (Faster Trainers' first levels) and grows steeper: Gold
@@ -526,7 +542,7 @@ export const RESEARCH = {
   },
   undoCount: {
     name: "Undo Count",
-    description: "Rehearse old climbs to store more undos.",
+    description: "Rehearse old climbs to give each run one more undo.",
     categories: ["abilities"],
     requires: [{ anyUpgrade: ["inspirationUndos", "undos"] }],
     levels: countLevels("undoCapacity", 8),
@@ -538,6 +554,13 @@ export const RESEARCH = {
     categories: ["progression"],
     requires: [{ upgrade: "fasterTrainers" }],
     levels: fasterTrainersLevels(),
+  },
+  trainingDiscount: {
+    name: "Training Discount",
+    description: "Bargain with the trainers: every rank a trainer trains costs less Gold.",
+    categories: ["economy"],
+    requires: [{ upgrade: "archives" }, { goalUnlock: "trainingDiscount" }],
+    levels: trainingDiscountLevels(),
   },
   buyQuantity: {
     name: "Buy Quantity",

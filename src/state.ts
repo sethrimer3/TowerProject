@@ -1,7 +1,7 @@
 import { entrance, floorFor } from "./delve/labyrinth.ts";
 import { canWear, claimThemes, type GameLook, type ThemeId, type ThemeKind, type UiLook } from "./theme-collection.ts";
 import { chooseStep } from "./automation.ts";
-import { CARDS, KEY_TO_HP_PERCENT, SIPHONS, TRADER_YELLOW_KEYS, cardText, explainStuck, isSiphon, planHand, planTarget, stillOpen, walkAll, type CardId, type CardPlan, type CardRules, type SiphonCard, type StuckReport } from "./cards.ts";
+import { CARDS, KEY_TO_HP_PERCENT, SIPHONS, TRADER_YELLOW_KEYS, cardText, explainStuck, isSiphon, keptLinks, linkedToNext, planHand, planTarget, stillOpen, walkAll, type CardId, type CardPlan, type CardRules, type SiphonCard, type StuckReport } from "./cards.ts";
 import { BADGE_IDS, BADGES, MAX_COPIES, badgeOn, badgesOn, badgeValue, runBadges, type BadgeId, type RunBadge } from "./badges.ts";
 import { adsOff, BOOST_FOREVER, permanentBoost } from "./shop/entitlements.ts";
 import { noteGoldBoost } from "./gold-boost.ts";
@@ -313,8 +313,17 @@ export class Game {
   get free() {
     return this.save.settings.freePurchases;
   }
+  /** Undos a run has in all: spent ones never come back. */
   get undoCapacity() {
     return loadout(this.save, this.mode).undoCapacity;
+  }
+  /** Undos the run has left to spend. */
+  get undosLeft() {
+    return Math.max(0, this.undoCapacity - (this.run.undosUsed ?? 0));
+  }
+  /** Whether undo can take a move back: one is left and a move is held. */
+  get canUndo() {
+    return this.undosLeft > 0 && this.slice.history.length > 0;
   }
   /** Grants unlimited currency, the first 250 floors, and every game mode.
    * Reversible: turning Dev Mode back off leaves the grants in place, since
@@ -533,6 +542,7 @@ export class Game {
     this.finishEncounter();
     this.armed = null;
     const slice = this.slice;
+    if (!this.undosLeft) return false;
     // Fallen, undo spends one and takes back the fight the hero fell in.
     const fall = this.fallen ? slice.fall : null;
     let snapshot = slice.history.pop();
@@ -541,7 +551,11 @@ export class Game {
     // back past a run of them to before the last turn that did something.
     while (!fall && snapshot.quiet && slice.history.length) snapshot = slice.history.pop()!;
     slice.fall = null;
+    // An undo spent is gone for the run: the count rides onto the run restored.
+    const used = (this.run.undosUsed ?? 0) + 1;
     this.restore(fall?.snapshot ?? snapshot);
+    this.run.undosUsed = used;
+    slice.history = keepUndos(slice.history, this.undosLeft);
     this.feedback(fall ? "Fatal fight undone · the hand waits" : "Move undone");
     return true;
   }
@@ -1235,6 +1249,9 @@ export class Game {
   private dealHand() {
     noteGoldBoost(this.save, this.slice, this.clock());
     this.run.hand = [...this.save.hand];
+    const links = keptLinks(this.run.hand, this.save.cardLinks);
+    if (links.length) this.run.links = links;
+    else delete this.run.links;
     const badges = this.save.upgrades.cardBadges ? runBadges(this.save.badges, this.run.hand, this.badges.slots) : {};
     if (Object.keys(badges).length) this.run.badges = badges;
     const pocket = this.startingSilver;
@@ -1891,7 +1908,7 @@ export class Game {
   private remember(snapshot: MoveSnapshot) {
     const slice = this.slice;
     slice.history.push(snapshot);
-    slice.history = keepUndos(slice.history, this.undoCapacity);
+    slice.history = keepUndos(slice.history, this.undosLeft);
   }
   /** Copies resolved stats onto the live player, keeping its object identity. */
   private applyStats(next: Player) {
@@ -2441,6 +2458,11 @@ export class Game {
    * next run will take, as the Deck orders it. */
   get hand(): readonly CardId[] {
     return this.run.hand ?? this.save.hand;
+  }
+  /** For each card of the hand, whether it is linked to the next (Card
+   * Groups): the run's links, or in the forest the saved ones. */
+  get links(): readonly boolean[] {
+    return linkedToNext(this.hand, this.run.hand ? this.run.links ?? [] : this.save.cardLinks);
   }
   /** Whether a tapped tile shows the route there and its totals: the
    * Courage skill Pathfinder owned, or Dev mode. */

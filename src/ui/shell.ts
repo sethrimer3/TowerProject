@@ -37,7 +37,7 @@ const TRAINING_BAR = `<div id="training-bar" class="training-bar" role="group" a
 const FOCUS_STAT = `<span id="focus-stat" class="focus-stat" hidden title="Focus: press a card in your hand to put it first"><svg viewBox="0 0 10 14" aria-hidden="true"><path d="M6.2 0.5L1 8h3.6L3.4 13.5 9 5.8H5.4L6.2 0.5z" fill="#ffe27a" stroke="#6b4a10" stroke-width="0.7" stroke-linejoin="round"/></svg><b id="focus-left">0</b></span>`;
 /** Ignore and Target uses left, after Focus: each a button that readies it
  * for the next board tap; then Undo, a button that takes the last turn back,
- * with the undos stored; then, once Shrines are researched, the Tower
+ * with the undos the run has left; then, once Shrines are researched, the Tower
  * run's boons waiting to be picked (`shrine-dialog.ts`). */
 const CHARGE_BUTTONS = `<button type="button" id="ignore-stat" class="focus-stat charge-stat" hidden title="Ignore: press, then tap a tile the hero won't step on this floor"><svg viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="5.3" fill="none" stroke="#ff6a5a" stroke-width="1.6"/><path d="M3.3 10.7L10.7 3.3" stroke="#ff6a5a" stroke-width="1.6"/></svg><b id="ignore-left">0</b></button>` +
   `<button type="button" id="target-stat" class="focus-stat charge-stat" hidden title="Target: press, then tap a tile to send the hero there"><svg viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="4.6" fill="none" stroke="#7ad8ff" stroke-width="1.4"/><circle cx="7" cy="7" r="1.3" fill="#7ad8ff"/><path d="M7 0.5V3.5M7 10.5V13.5M0.5 7H3.5M10.5 7H13.5" stroke="#7ad8ff" stroke-width="1.4"/></svg><b id="target-left">0</b></button>` +

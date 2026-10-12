@@ -49,6 +49,7 @@ Both are taken off the time each row shows.
 ## Trainers
 
 A trainer's rank takes time, on the clock like the Archives' research: a stat's first four ranks take 15 seconds, 1 minute, 5 minutes and 10 minutes, and each after ten minutes more than the last (10 minutes, 20, 30 …, 16 hours by the 100th), less with Faster Trainers research.
+**Training Discount** research (opened by Tower II's floor 80 Goal) takes 0.5% a level off the Gold every rank a trainer trains costs, rounded up, for 99 levels (30 Gold and 30 seconds for the first level, about 10,000 Gold at level 12, 100,000 at 26, a million at 59 and 4.1 million at 99, which takes 49 days); training points and a run's Silver cost the same as ever.
 One stat trains at a time, with one more for each trainer bought with Gems beside the trainer count (100, 250, 450, 700, 1,000 and 1,400 Gems, up to seven at once).
 A rank in training shows its countdown (press it to stop, get the Gold back and keep the time spent as credit) and a Gem button that finishes it at once: 1 Gem for each 10 minutes left, and 1 more for any part of 10 minutes.
 A stat a trainer is training moves up under the trainer count, in the order they started, and goes back to its group once its training ends.

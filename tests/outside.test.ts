@@ -25,8 +25,9 @@ for (const mode of ["tower", "delve"] as const) {
     g.move(0, 1);
     assert.ok(g.fallen);
     assert.ok(g.undo());
-    // The damage stays on the floor's record, as after any undo.
-    assert.deepEqual(g.run, mode === "tower" ? { ...before.run, damaged: true } : before.run);
+    // The damage stays on the floor's record, as after any undo, and the undo is spent.
+    const undone = { ...before.run, undosUsed: 1 };
+    assert.deepEqual(g.run, mode === "tower" ? { ...undone, damaged: true } : undone);
     guard();
     g.move(0, 1);
     assert.ok(g.acceptDefeat());

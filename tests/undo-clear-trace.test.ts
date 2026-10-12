@@ -103,6 +103,9 @@ function trace(mode: Mode, seed: number): string[] {
     save.tutorials.climb = true;
     save.upgrades.delve = 1;
     save.upgrades.inspirationUndos = 1;
+    save.upgrades.undos = 1;
+    // Every Undo Count level, so a run has nine undos to spend.
+    save.archives.levels.undoCount = 8;
     save.upgrades.revive = 1;
     const g = new Game(save, rng);
     g.switchMode(mode);
