@@ -280,6 +280,12 @@ test("decode keeps a valid v3 save's progress and clamps settings", () => {
   assert.equal(d.equipment.pity.ring, 41);
 });
 
+test("decode reads a renamed upgrade under its old id: Evade is Parry", () => {
+  const save = { ...v3(), upgrades: { ...v3().upgrades, evade: 1 } };
+  assert.equal(decode(JSON.stringify(save)).upgrades.parry, 1);
+  assert.equal(decode(JSON.stringify(v3())).upgrades.parry, 0, "none owned, none read");
+});
+
 test("decode keeps the Tournament's save and a tournament run inside a cave not yet opened", () => {
   const d = decode(JSON.stringify(bases.tournament()));
   assert.deepEqual(d.tournament, tournamentSave);

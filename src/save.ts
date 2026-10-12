@@ -1,7 +1,7 @@
 import { TRAINER_GEMS, trainingSlots, type TrainingJob, type TrainingPaid } from "./training-jobs.ts";
 import { count, dropInvalid, finite, fraction, isRecord, wholeIn } from "./decode.ts";
 import { TIERS } from "./tiers.ts";
-import { FIND_POTION_MAX, GOLD_SHOP, OLD_SAVE_KEY, SAVE_KEY, TOWER_WIDTH, TRAINING, UPGRADES, WIDTH } from "./config.ts";
+import { FIND_POTION_MAX, GOLD_SHOP, OLD_SAVE_KEY, SAVE_KEY, TOWER_WIDTH, TRAINING, UPGRADES, WIDTH, type UpgradeId } from "./config.ts";
 import type { AutomoveMemory, DelveRun, ModeSave, Fall, MoveSnapshot, Run, Save, TowerRun } from "./entities.ts";
 import { emptyMaterials, MATERIAL_IDS, type MaterialId } from "./materials.ts";
 import { decodeEquipment, defaultEquipment } from "./equipment/inventory.ts";
@@ -288,8 +288,12 @@ function decodeInventory(s: any, d: Save) {
 }
 
 // --- Settings, currencies and records ---
+/** Upgrades renamed since a save may have been made: each new id's old one,
+ * read when the save has none under the new id.
+ * TODO: remove these conversions in a future save version. */
+const RENAMED_UPGRADES: Partial<Record<UpgradeId, string>> = { parry: "evade" };
 function decodeUpgrades(raw: any, d: Save) {
-  for (const u of UPGRADES) d.upgrades[u.id] = count(raw?.[u.id], d.upgrades[u.id], u.max);
+  for (const u of UPGRADES) d.upgrades[u.id] = count(raw?.[u.id] || raw?.[RENAMED_UPGRADES[u.id] ?? ""], d.upgrades[u.id], u.max);
 }
 function decodeProgress(s: any, d: Save, undoCapacity: number) {
   d.gold = fraction(s.gold, d.gold);
