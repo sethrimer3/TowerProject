@@ -14,7 +14,7 @@ const POPUP_MS = 1000;
 const FADE_MS = 250;
 /** How far a popup rises over its life, in tiles. */
 const REWARD_RISE = 0.7;
-/** A kill's drops rise together, one above another this far apart (tiles),
+/** A kill's or a chest's drops rise together, one above another this far apart (tiles),
  * close but clear of each other. */
 const DROP_ROW = 0.7;
 const DAMAGE_RISE = 0.9;
@@ -144,9 +144,9 @@ export class BoardPopups {
   private volley: Volley | null = null;
   private arrowBars: { x: number; y: number; from: number; hp: number; full: number; start: number }[] = [];
 
-  /** Takes the game's new rewards, starting now (those that came together,
-   * like a chest's Gold and materials, one after another, but a kill's drops
-   * all at once, stacked), the latest
+  /** Takes the game's new rewards, starting now (those that came together
+   * one after another, but a kill's or a chest's drops all at once,
+   * stacked), the latest
    * fight's strikes that have landed by `now`, and a new heal. A new run
    * clears whatever was still showing. */
   update(game: { run: { seed: number }; gains: Gain[]; fight: ShownFight | null; lastHeal: Heal | null; volley?: Volley | null }, now: number) {
@@ -163,7 +163,7 @@ export class BoardPopups {
     }
     let start = now - POPUP_MS;
     for (const gain of game.gains.splice(0)) {
-      // A kill's drops start together, each in its row; anything else after the last.
+      // A kill's or a chest's drops start together, each in its row; anything else after the last.
       if (!gain.drop?.with || start < now) start = Math.max(now, start + POPUP_MS);
       this.rewards.push({ x: gain.x, y: gain.y + (gain.drop?.row ?? 0) * DROP_ROW, start, gain });
     }

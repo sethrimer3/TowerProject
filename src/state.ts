@@ -113,7 +113,7 @@ export type RouteEffects = {
  * a plus, `raised`, the max HP Max HP's badge added), or as `text` where it
  * has none. A kill's drops carry their `drop` place, so they rise together. */
 export type Gain = { x: number; y: number; text: string; art: GainArt | null; drop?: Drop };
-/** Where one of a kill's drops rises: `row` rows above its tile (below,
+/** Where one of a kill's or a chest's drops rises: `row` rows above its tile (below,
  * negative), Gold over Silver over the rest, and whether it starts `with`
  * the drop queued before it rather than after. */
 export type Drop = { row: number; with: boolean };
@@ -1596,6 +1596,11 @@ export class Game {
       until: performance.now() + ms,
     };
   }
+  /** Queues `drops` (a kill's or a chest's) to rise from `at` together,
+   * stacked a row apart from row `top` down. */
+  private gainDrops(at: { x: number; y: number }, drops: { text: string; art: GainArt }[], top = 0) {
+    drops.forEach(({ text, art }, i) => this.gain(at.x, at.y, text, art, { row: top - i, with: i > 0 }));
+  }
   /** Queues a reward to rise from (x, y). */
   gain(x: number, y: number, text: string, art: GainArt | null = null, drop?: Drop) {
     this.gains.push({ x, y, text, art, ...(drop ? { drop } : {}) });
@@ -1915,14 +1920,13 @@ export class Game {
     const { gold, cells, equipment } = purse.enemyLoot(enemy, at.x, at.y, scale, instakill);
     const cellsFound = cells ? [cellsText(cells)] : [];
     const found = equipmentGains(equipment);
-    // The drops rise together, stacked: Gold over Silver, the rest below.
-    const drops: { text: string; art: GainArt }[] = [
+    // Gold over Silver at the tile, the rest below.
+    this.gainDrops(at, [
       ...(gold ? [{ text: `+${wholeChange(gold)} Gold`, art: { coin: "gold" as const } }] : []),
       { text: `+${wholeChange(silver)} Silver`, art: { coin: "silver" } },
       ...cellsFound.map((text) => ({ text, art: { cell: true as const } })),
       ...found,
-    ];
-    drops.forEach(({ text, art }, i) => this.gain(at.x, at.y, text, art, { row: (gold ? 1 : 0) - i, with: i > 0 }));
+    ], gold ? 1 : 0);
     if (equipment?.item || equipment?.salvaged) this.events.record("equipment", 1, this.missionKey(at));
     if (equipment?.item) this.slice.runFinds.equipment++;
     if (crits) this.events.record("crits", crits, this.missionKey(at));
@@ -2397,8 +2401,11 @@ export class Game {
     this.events.record("chests", 1, this.missionKey({ x, y }));
     const loot = this.purse.treasure(x, y);
     if (!loot) return;
-    this.gain(x, y, `+${wholeChange(loot.gold)} Gold`, { coin: "gold" });
-    for (const m of loot.materials) this.gain(x, y, materialText(m), { material: m.id, quantity: m.quantity });
+    // The Gold at the tile, the materials below it, rising together.
+    this.gainDrops({ x, y }, [
+      { text: `+${wholeChange(loot.gold)} Gold`, art: { coin: "gold" } },
+      ...loot.materials.map((m) => ({ text: materialText(m), art: { material: m.id, quantity: m.quantity } })),
+    ]);
     this.message = [`+${wholeChange(loot.gold)} Gold`, ...loot.materials.map(materialText)].join(" · ");
   }
   /** Ends the run (the End Run button), or, fallen, accepts defeat. */
