@@ -138,17 +138,17 @@ test("one stat trains at a time, and each trainer bought with Gems adds one", ()
   assert.equal(g.training.trainWithGold("hp"), false, "already training");
   assert.equal(g.training.trainWithGold("defense"), false, "the one slot is busy");
   assert.equal(g.training.buyTrainer(), false, "no Gems");
-  g.save.gems = 400;
+  g.save.gems = 350;
   assert.ok(g.training.buyTrainer());
-  assert.equal(g.save.gems, 300);
+  assert.equal(g.save.gems, 250);
   assert.ok(g.training.trainWithGold("defense"));
   assert.equal(g.training.trainWithGold("attack"), false, "both slots busy");
-  assert.ok(g.training.buyTrainer(), "the next costs 300");
+  assert.ok(g.training.buyTrainer(), "the next costs 250");
   assert.equal(g.save.gems, 0);
   assert.equal(decode(JSON.stringify(g.save)).trainers, 2, "trainers are saved");
   assert.equal(decode(JSON.stringify({ ...g.save, trainers: 9 })).trainers, 0, "no more than there are");
   g.save.gems = 1e6;
-  for (const price of [700, 1200, 1800]) {
+  for (const price of [450, 700, 1000, 1400]) {
     const before = g.save.gems;
     assert.ok(g.training.buyTrainer());
     assert.equal(before - g.save.gems, price);

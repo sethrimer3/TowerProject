@@ -20,7 +20,7 @@ const TRAINING_LONGEST_SECONDS = 365 * 86400;
 /** How many stats the hero can train at once, to start with. */
 export const TRAINING_SLOTS = 1;
 /** What each trainer bought with Gems costs, in order: each adds a slot. */
-export const TRAINER_GEMS = [100, 300, 700, 1200, 1800] as const;
+export const TRAINER_GEMS = [100, 250, 450, 700, 1000, 1400] as const;
 /** Gems that finish a rank in training at once: one per ten minutes left,
  * and one more for any part of ten minutes. */
 export const FINISH_GEM_SECONDS = 600;

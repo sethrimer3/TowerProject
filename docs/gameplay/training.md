@@ -47,7 +47,7 @@ Both are taken off the time each row shows.
 ## Trainers
 
 A trainer's rank takes time, on the clock like the Archives' research: a stat's first four ranks take 15 seconds, 1 minute, 5 minutes and 10 minutes, and each after ten minutes more than the last (10 minutes, 20, 30 …, 16 hours by the 100th), less with Faster Trainers research.
-One stat trains at a time, with one more for each trainer bought with Gems beside the trainer count (100, 300, 700, 1,200 and 1,800 Gems, up to six at once).
+One stat trains at a time, with one more for each trainer bought with Gems beside the trainer count (100, 250, 450, 700, 1,000 and 1,400 Gems, up to seven at once).
 A rank in training shows its countdown (press it to stop, get the Gold back and keep the time spent as credit) and a Gem button that finishes it at once: 1 Gem for each 10 minutes left, and 1 more for any part of 10 minutes.
 A stat a trainer is training moves up under the trainer count, in the order they started, and goes back to its group once its training ends.
 While it trains, a box with a looping arrow before its name sets it to **auto-continue**: while ticked, each rank its trainer finishes starts the next at once, as long as the Gold is there, ranks finished while the game was closed included.
