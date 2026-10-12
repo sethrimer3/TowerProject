@@ -1,6 +1,5 @@
 import type { Rush } from "./state.ts";
 import { toTileSpace, type FrameContext } from "./render-frame.ts";
-import { paintHero } from "./tile-painters.ts";
 
 /** How long a rush's echoes last, from the rush (ms). */
 export const RUSH_ECHO_MS = 500;
@@ -11,8 +10,10 @@ const ECHO_ALPHA = 0.55;
 
 /** Faint echoes of the hero on each tile it rushed off: they appear one
  * after another, from the first tile left, and fade away in the same order,
- * all gone RUSH_ECHO_MS after the rush. None with motion reduced. */
-export function drawRushEchoes(f: FrameContext, rush: Rush | null) {
+ * all gone RUSH_ECHO_MS after the rush, each painted by `paintHero` (the
+ * board's own hero: the sprite, or the Neon theme's lines). None with motion
+ * reduced. */
+export function drawRushEchoes(f: FrameContext, rush: Rush | null, paintHero: (c: CanvasRenderingContext2D) => void) {
   if (!rush || f.look.reduceMotion) return;
   const age = f.now - rush.at, n = rush.tiles.length;
   if (age < 0 || age >= RUSH_ECHO_MS) return;
@@ -24,7 +25,7 @@ export function drawRushEchoes(f: FrameContext, rush: Rush | null) {
     c.save();
     c.globalAlpha = ECHO_ALPHA * (1 - t);
     toTileSpace(c, f, x, y);
-    paintHero(c, f.look.spritesOff);
+    paintHero(c);
     c.restore();
   });
 }
