@@ -1606,8 +1606,9 @@ export class Game {
   claimGoal(tower: number, floor: number, premium: boolean) {
     const reward = claimGoal(this.save, tower, floor, premium);
     if (reward) readyForestRuns(this.save);
-    // Equipment's Blacksmith, and the Tournament's Hall, open in the forest at once.
-    if (reward?.kind === "unlock" && (reward.unlock === "equipment" || reward.unlock === "tournament") && this.run.outside) this.world = this.buildWorld();
+    // Equipment's Blacksmith, the Tournament's Hall, and the road out to a newly opened tower, open in the forest at once.
+    const reshapes = reward?.kind === "tower" || (reward?.kind === "unlock" && (reward.unlock === "equipment" || reward.unlock === "tournament"));
+    if (reshapes && this.run.outside) this.world = this.buildWorld();
     // The running Event's first missions come at once.
     if (reward?.kind === "unlock" && reward.unlock === "events") this.events.refresh();
     return reward;
