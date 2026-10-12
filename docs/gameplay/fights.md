@@ -51,7 +51,7 @@ Only Ranged monsters shoot back: the rest strike only when the hero fights them.
 The arrow is ready every 10 turns (Attack Speed: 1 shot every 10 turns, more with training), a fraction of a turn carrying to the next; a ready arrow with no monster in reach waits, and fires the turn one comes in reach.
 Attack Range and Attack Speed join Offense training from Tower III's floors 20 and 30 ([Training](training.md)).
 **ATK / Tile** joins it from floor 50: each arrow's ATK is multiplied by 1 plus its value for every tile to its target, counted straight across (diagonals included), so a monster too well armored for an arrow up close may still be hurt, and shot, from further off.
-**Charged Shot** opens in the Archives from floor 80: each turn a ready arrow waits without firing adds its percent (1% a level) to the next arrow's ATK, and that arrow's number rises with a gold outline; the charge starts over once it fires.
+**Charged Shot** opens in the Archives from floor 80: each turn a ready arrow waits without firing adds its percent (1% a level) to the next arrow's ATK, and that arrow flies in a blue glow and its number rises with a gold outline; the charge starts over once it fires.
 ATK / Tile, Charged Shot and a critical hit multiply one another.
 
 ## Fractions

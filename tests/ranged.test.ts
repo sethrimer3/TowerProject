@@ -15,6 +15,7 @@ import { trainingGold } from "../src/training-jobs.ts";
 import { RESEARCH } from "../src/archives.ts";
 import { snap } from "../src/exact.ts";
 import { BoardPopups } from "../src/board-popups.ts";
+import { drawVolley } from "../src/volley-art.ts";
 import type { Enemy, Player, Tile } from "../src/entities.ts";
 
 const hero = (over: Partial<Player> = {}): Player => ({ x: 0, y: 0, hp: 100, maxHp: 100, attack: 12, defense: 0, keys: { yellow: 0, blue: 0, red: 0 }, ...over }) as Player;
@@ -294,4 +295,19 @@ test("a charged arrow's number rises in a gold outline drawn under its black one
   });
   popups.draw({ c, s: 40, now: 10, left: 0, bottom: 0, n: 9, look: { reduceMotion: true, neon: false } } as never);
   assert.deepEqual(strokes, ["40:#ffd34d:8.8", "40:#000:4", "40:#000:4"]);
+});
+
+test("a charged arrow flies in a blue glow; a plain arrow has none", () => {
+  const glows = (charged: boolean) => {
+    const seen = new Set<string>();
+    const c = new Proxy({} as Record<string, unknown>, {
+      get: (t, k) => (k === "stroke" || k === "fill" ? () => seen.add(String(t.shadowColor ?? "")) : k in t ? t[k as string] : () => {}),
+      set: (t, k, v) => ((t[k as string] = v), true),
+    });
+    const shot = { by: "hero" as const, from: { x: 0, y: 0 }, to: { x: 3, y: 0 }, damage: 40, ...(charged ? { charged } : {}) };
+    drawVolley({ c, s: 40, now: 50, left: 0, bottom: 0, n: 9 } as never, { at: 0, flight: 100, shots: [shot] });
+    return [...seen];
+  };
+  assert.deepEqual(glows(true), ["#4da6ff"]);
+  assert.deepEqual(glows(false), [""]);
 });

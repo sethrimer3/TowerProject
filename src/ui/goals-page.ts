@@ -69,7 +69,7 @@ const UNLOCK_TUTORIALS: Record<GoalUnlock, string> = {
   attackPerTile: `<p>ATK / Tile joins Offense training: each arrow's ATK is multiplied by more for every tile its target stands away, counted straight across. The first rank adds ×0.01 a tile, and 200 ranks ×1.204 a tile.</p>` +
     `<p class="hint">A far enemy your arrows can't hurt up close may fall to a shot from further off. Critical hits multiply on top.</p>`,
   chargedShot: `<p>Charged Shot opens in the Archives: once your arrow is ready, every turn it waits without firing adds to the next arrow's ATK, by 1% a turn for each level researched.</p>` +
-    `<p class="hint">A charged arrow's number wears a gold outline. Its bonus multiplies with ATK / Tile and critical hits, and resets once it fires.</p>`,
+    `<p class="hint">A charged arrow flies in a blue glow, and its number wears a gold outline. Its bonus multiplies with ATK / Tile and critical hits, and resets once it fires.</p>`,
   attackSpeed: `<p>Attack Speed joins Offense training: each rank adds 0.05 shots every 10 turns, from 1 up to 6.</p>` +
     `<p class="hint">A fraction of a turn left over carries to the next shot: 3 shots in 10 turns fire 4, 3 and 3 turns apart.</p>`,
   tournament: `<p>Twice a week, on Wednesday and Saturday (GMT), the Tournament opens: one Delve run from seeds every player in your league shares, among stronger enemies, scored by the depth you reach and ranked worldwide.</p>` +

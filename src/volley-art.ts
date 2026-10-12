@@ -10,6 +10,8 @@ const ARROW_COLOR = "#e9edf4";
 const ARROW_HEAD = "#ffd34d";
 const FLETCH_COLOR = "#e86d7a";
 const ARROW_LENGTH = 0.42;
+/** A Charged Shot's arrow flies in a blue glow. */
+const CHARGED_GLOW = "#4da6ff";
 
 /** The turn's shots in flight at `f.now` (ranged.ts): each leaves its
  * shooter as the turn begins and reaches its target as `flight` ends, the
@@ -26,7 +28,7 @@ export function drawVolley(f: FrameContext, volley: Volley | null, wrap = 0) {
     const at = tileCenter(f, shot.from.x + dx * k, shot.from.y + dy * k);
     if (shot.by === "enemy") drawShot(f, at);
     // World y grows upward, the screen's downward.
-    else drawArrow(f, at, Math.atan2(-dy, dx));
+    else drawArrow(f, at, Math.atan2(-dy, dx), !!shot.charged);
   }
 }
 
@@ -42,9 +44,13 @@ function drawShot(f: FrameContext, at: { x: number; y: number }) {
   c.restore();
 }
 
-function drawArrow(f: FrameContext, at: { x: number; y: number }, angle: number) {
+function drawArrow(f: FrameContext, at: { x: number; y: number }, angle: number, charged = false) {
   const c = f.c, len = f.s * ARROW_LENGTH, w = Math.max(1.5, f.s * 0.05);
   c.save();
+  if (charged) {
+    c.shadowColor = CHARGED_GLOW;
+    c.shadowBlur = Math.max(6, f.s * 0.4);
+  }
   c.translate(at.x, at.y);
   c.rotate(angle);
   c.lineCap = "round";
