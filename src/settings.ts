@@ -45,10 +45,10 @@ export const SETTINGS = {
   },
   /** The UI theme worn round the board (theme-collection.ts): Classic, or
    * Medieval (the keep's stone, oak, brass and parchment, with its
-   * synthesized sounds) or Neon (warm glowing laser lines on black) once
-   * owned. Chosen on the Settings page's UI Themes menu, not a row of its
+   * synthesized sounds), Neon (warm glowing laser lines on black) or
+   * Terminal (an old green-phosphor monitor) once owned. Chosen on the Settings page's UI Themes menu, not a row of its
    * own; a new hero starts in Medieval. */
-  uiTheme: { kind: "choice", default: "medieval", choices: [["classic", "Classic"], ["medieval", "Medieval"], ["neon", "Neon"]] },
+  uiTheme: { kind: "choice", default: "medieval", choices: [["classic", "Classic"], ["medieval", "Medieval"], ["neon", "Neon"], ["terminal", "Terminal"]] },
   /** The Game theme the dungeon is drawn in: Classic, or Neon once owned.
    * Chosen on the Game Themes menu. */
   gameTheme: { kind: "choice", default: "classic", choices: [["classic", "Classic"], ["neon", "Neon"]] },

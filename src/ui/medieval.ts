@@ -11,12 +11,17 @@ export const MEDIEVAL_CLASS = "medieval";
 /** The laser-line look: `neon.css` is scoped to this class on the root. */
 export const NEON_CLASS = "neon";
 
-/** Dresses the page in the UI theme worn (`uiLook`: Classic wears neither
- * class) and mirrors Reduce motion. */
+/** The old green-phosphor monitor: `terminal.css` is scoped to this class
+ * on the root. */
+export const TERMINAL_CLASS = "terminal";
+
+/** Dresses the page in the UI theme worn (`uiLook`: Classic wears none of
+ * their classes) and mirrors Reduce motion. */
 export function applyUiTheme(save: Pick<Save, "themes" | "settings">) {
   const root = document.documentElement.classList, look = uiLook(save);
   root.toggle(MEDIEVAL_CLASS, look === "medieval");
   root.toggle(NEON_CLASS, look === "neon");
+  root.toggle(TERMINAL_CLASS, look === "terminal");
   root.toggle("reduce-motion", save.settings.reduceMotion);
 }
 

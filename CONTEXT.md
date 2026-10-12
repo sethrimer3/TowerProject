@@ -493,7 +493,7 @@ _Avoid_: obstacle, deadlock cause
 ### Themes
 
 **UI theme**:
-A look for the page around the board: its panels, buttons and sounds. Classic is always available; Medieval is owned from the start and Neon is earned.
+A look for the page around the board: its panels, buttons and sounds. Classic is always available; Medieval is owned from the start; Neon and Terminal are earned.
 _Avoid_: skin, style
 
 **Game theme**:

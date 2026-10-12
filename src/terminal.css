@@ -1,0 +1,230 @@
+/* Terminal theme: the page as an old green-phosphor monitor shows it.
+   Blocky VT323 type in one green on black, hollow boxes, inverted
+   selections, scanlines over the glass and a faint flicker.
+   Every selector is scoped under `html.terminal` so nothing changes while
+   the theme is off. Loaded after style.css, medieval.css and neon.css. */
+@font-face {
+  font-family: VT323;
+  src: url("../assets/fonts/VT323/VT323-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+html.terminal {
+  --crt: #33ff66;
+  --crt-bright: #b8ffc8;
+  --crt-dim: #1e9e45;
+  --crt-faint: #0f4d22;
+  --crt-black: #010702;
+  --gold: var(--crt-bright);
+  --muted: var(--crt-dim);
+  --line: var(--crt-dim);
+  color: var(--crt);
+  background: var(--crt-black);
+}
+/* One blocky face for every line of text (a badge's symbol keeps the
+   system face that has its glyph). */
+html.terminal,
+html.terminal *:not(.badge-glyph, .badge-mark) {
+  font-family: VT323, "Courier New", monospace;
+  font-size-adjust: 0.62;
+  letter-spacing: 0.04em;
+}
+html.terminal body {
+  background: radial-gradient(ellipse at 50% 40%, #04140a, var(--crt-black) 75%);
+  text-shadow: 0 0 2px #33ff6699, 0 0 6px #33ff6633;
+}
+/* The glass: scanlines and a darkened rim over everything, never in the
+   way of a touch. */
+html.terminal body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(to bottom, transparent 0 2px, #00000038 2px 3px),
+    radial-gradient(ellipse at center, transparent 62%, #000000a0 100%);
+}
+html.terminal * {
+  scrollbar-color: var(--crt-dim) transparent;
+}
+html.terminal ::-webkit-scrollbar-thumb {
+  background-color: var(--crt-faint);
+  background-image: none;
+  border-radius: 0;
+}
+
+/* Pictures in one colour, as the monitor can show no other (a theme's
+   preview keeps its own, to show what it looks like). */
+html.terminal img:not(.theme-preview) {
+  filter: grayscale(1) sepia(1) hue-rotate(75deg) saturate(4) brightness(0.95);
+}
+
+/* Headings: bright, with a prompt before the line over them and a cursor
+   after. */
+html.terminal h1,
+html.terminal h2,
+html.terminal h3,
+html.terminal .page-title,
+html.terminal .section-title,
+html.terminal .tower-heading {
+  color: var(--crt-bright);
+  text-shadow: 0 0 3px var(--crt), 0 0 10px #33ff6666;
+}
+html.terminal .page-title small::before {
+  content: "C:\\> ";
+}
+html.terminal .page-title h2::after {
+  content: "_";
+  margin-left: 0.1em;
+}
+html.terminal .eyebrow,
+html.terminal .hint,
+html.terminal .board-caption {
+  color: var(--crt-dim);
+}
+
+/* Buttons: a hollow box, shown inverted while touched. */
+html.terminal button,
+html.terminal select,
+html.terminal input {
+  color: var(--crt);
+  background: transparent;
+  border: 1px solid var(--crt);
+  border-radius: 0;
+  box-shadow: none;
+}
+html.terminal button:hover,
+html.terminal button:active {
+  color: var(--crt-black);
+  background: var(--crt);
+  text-shadow: none;
+}
+html.terminal button:hover *,
+html.terminal button:active * {
+  color: inherit;
+}
+html.terminal button:focus-visible,
+html.terminal select:focus-visible,
+html.terminal input:focus-visible {
+  outline: 1px dashed var(--crt-bright);
+  outline-offset: 3px;
+}
+html.terminal button:disabled {
+  color: var(--crt-faint);
+  border-color: var(--crt-faint);
+  background: transparent;
+  opacity: 1;
+  text-shadow: none;
+}
+html.terminal option {
+  background: var(--crt-black);
+  color: var(--crt);
+}
+
+/* Panels: a double-ruled box, as text-mode screens drew them. */
+html.terminal .stats,
+html.terminal .card,
+html.terminal .upgrade,
+html.terminal .setting,
+html.terminal .range-setting,
+html.terminal .inspect-box,
+html.terminal .shop,
+html.terminal .skill-tree,
+html.terminal .currencies,
+html.terminal .theme-card {
+  background: var(--crt-black);
+  border: 3px double var(--crt-dim);
+  border-radius: 0;
+  box-shadow: none;
+}
+html.terminal .theme-card.worn {
+  border-color: var(--crt-bright);
+}
+html.terminal .board {
+  border: 3px double var(--crt);
+  border-radius: 0;
+  box-shadow: 0 0 12px #33ff6640;
+}
+html.terminal .rule,
+html.terminal .inventory-divider {
+  background: var(--crt-dim);
+  border-color: var(--crt-dim);
+}
+
+/* The board's notes: a solid box, so the board doesn't show through. */
+html.terminal .board-tip,
+html.terminal .board-tip.dismissable:hover {
+  color: var(--crt-bright);
+  background: var(--crt-black);
+  border: 1px solid var(--crt);
+  border-radius: 0;
+  box-shadow: 0 0 0 3px var(--crt-black), 0 0 12px #33ff6640;
+}
+html.terminal .board-tip p,
+html.terminal .board-tip small {
+  color: var(--crt-dim);
+}
+
+/* Tabs: the selected one inverted. */
+html.terminal nav button {
+  border-radius: 0;
+}
+html.terminal nav button.selected,
+html.terminal nav button.selected > span {
+  color: var(--crt-black);
+  background: var(--crt);
+  text-shadow: none;
+}
+
+/* Bars: a hollow box filled with solid phosphor. */
+html.terminal .xp-track,
+html.terminal .health-track {
+  background: transparent;
+  border: 1px solid var(--crt-dim);
+  border-radius: 0;
+}
+html.terminal .xp-track i,
+html.terminal .health-track i {
+  background: var(--crt);
+  border-radius: 0;
+}
+html.terminal .safe {
+  color: var(--crt-bright);
+}
+html.terminal .danger {
+  color: var(--crt-black);
+  background: var(--crt);
+  text-shadow: none;
+}
+
+/* Dialogs: a boxed window over a darkened screen. */
+html.terminal dialog {
+  color: var(--crt);
+  background: var(--crt-black);
+  border: 3px double var(--crt);
+  border-radius: 0;
+  box-shadow: 0 0 16px #33ff6640;
+}
+html.terminal dialog::backdrop {
+  background: #000000cc;
+}
+
+/* The tube flickers faintly and the cursor blinks, unless motion is
+   reduced. */
+@keyframes terminal-flicker {
+  0%, 100% { opacity: 1; }
+  47% { opacity: 1; }
+  48% { opacity: 0.85; }
+  49% { opacity: 1; }
+}
+@keyframes terminal-blink {
+  50% { opacity: 0; }
+}
+html.terminal:not(.reduce-motion) body::after {
+  animation: terminal-flicker 6s infinite;
+}
+html.terminal:not(.reduce-motion) .page-title h2::after {
+  animation: terminal-blink 1s steps(1) infinite;
+}
