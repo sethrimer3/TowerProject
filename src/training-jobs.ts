@@ -7,12 +7,14 @@ import { intPow } from "./exact.ts";
 // timestamp (ms), passed in, so training runs on while the game is closed
 // and tests set the clock.
 
-/** A trainer's rank takes time on the same schedule as the Archives' long
- * projects: a stat's first four ranks are quick (15 s, 1 min, 5 min,
- * 10 min), then the m-th rank after them takes m quarter hours (15 min,
- * 30 min, 45 min …), before Faster Trainers research. */
+/** A trainer's rank takes time: a stat's first four ranks are quick (15 s,
+ * 1 min, 5 min, 10 min), then the m-th rank after them takes m times
+ * ten minutes (10 min, 20 min, 30 min …), before Faster Trainers research.
+ * With every speedup (Ad-Disable and both Coin Packs ×12, batches of 100
+ * ×10, Faster Trainers researched alongside), a stat's 6,000 ranks take
+ * about 17 months. */
 const TRAINING_START_SECONDS = [15, 60, 300, 600];
-export const TRAINING_STEP_SECONDS = 900;
+export const TRAINING_STEP_SECONDS = 600;
 /** The most one rank can take, so a stat trained very far never overflows. */
 const TRAINING_LONGEST_SECONDS = 365 * 86400;
 /** How many stats the hero can train at once, to start with. */

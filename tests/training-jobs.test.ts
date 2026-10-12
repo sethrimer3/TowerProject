@@ -21,8 +21,8 @@ const game = (level = 10) => {
   return { g, wait: (s: number) => { now += s * 1000; } };
 };
 
-test("a stat's first ranks are quick, then each takes a quarter hour more", () => {
-  assert.deepEqual([0, 1, 2, 3, 4, 5, 6, 99].map(trainingSeconds), [15, 60, 300, 600, 900, 1800, 2700, 86400]);
+test("a stat's first ranks are quick, then each takes ten minutes more", () => {
+  assert.deepEqual([0, 1, 2, 3, 4, 5, 6, 99].map(trainingSeconds), [15, 60, 300, 600, 600, 1200, 1800, 57600]);
 });
 
 test("a trainer's Gold: 20 a point, times the rank's number, times 1 + ranks / the row's growth", () => {
@@ -159,21 +159,21 @@ test("one stat trains at a time, and each trainer bought with Gems adds one", ()
 test("Gems finish a rank at once: one per ten minutes left, rounded up", () => {
   assert.deepEqual([0, -5, 1, 600_000, 600_001, 1_800_000].map(finishGems), [0, 0, 1, 1, 2, 3]);
   const { g, wait } = game();
-  g.save.training.hp = g.save.trainerRanks.hp = 5; // its next rank takes 30 minutes
+  g.save.training.hp = g.save.trainerRanks.hp = 6; // its next rank takes 30 minutes
   assert.ok(g.training.trainWithGold("hp"));
   wait(60);
   assert.equal(g.training.finish("hp"), false, "29 minutes left take 3 Gems");
   g.save.gems = 3;
   assert.ok(g.training.finish("hp"));
   assert.equal(g.save.gems, 0);
-  assert.equal(g.save.training.hp, 6);
+  assert.equal(g.save.training.hp, 7);
   assert.deepEqual(g.save.trainingJobs, []);
   assert.equal(g.training.finish("hp"), false, "nothing in training");
 });
 
 test("stopping a rank gives its Gold back and its time spent as credit, which the next rank uses up", () => {
   const { g, wait } = game();
-  g.save.training.hp = g.save.trainerRanks.hp = 5; // 30 minutes
+  g.save.training.hp = g.save.trainerRanks.hp = 6; // 30 minutes
   assert.ok(g.training.trainWithGold("hp"));
   const loaded = decode(JSON.stringify(g.save));
   assert.deepEqual(loaded.trainingJobs, g.save.trainingJobs, "jobs survive a save");
@@ -192,16 +192,16 @@ test("stopping a rank gives its Gold back and its time spent as credit, which th
   g.training.settle();
   g.save.trainingCredit.attack = 10 * HOUR;
   g.save.trainingCredit.defense = 10 * HOUR;
-  g.save.training.attack = g.save.trainerRanks.attack = 4; // 15 minutes
+  g.save.training.attack = g.save.trainerRanks.attack = 4; // 10 minutes
   assert.equal(g.training.toNextRank("attack"), 0);
   assert.ok(g.training.trainWithGold("attack"));
   assert.equal(g.save.training.attack, 5);
-  assert.equal(g.save.trainingCredit.attack, 10 * HOUR - 15 * 60_000);
+  assert.equal(g.save.trainingCredit.attack, 10 * HOUR - 10 * 60_000);
   assert.equal(g.save.trainingCredit.defense, 10 * HOUR, "another stat's credit is its own");
   // Credit counts only for its own stat.
   g.save.training.hp = g.save.trainerRanks.hp = 4;
   assert.ok(g.training.trainWithGold("hp"));
-  assert.equal(g.training.left("hp"), 15 * 60_000, "DEF's credit leaves Max HP's rank whole");
+  assert.equal(g.training.left("hp"), 10 * 60_000, "DEF's credit leaves Max HP's rank whole");
   const bad = decode(JSON.stringify({ ...g.save, trainingJobs: [{ id: "nope", startedAt: 1, completesAt: 2 }, { id: "hp", startedAt: "x" }] }));
   assert.deepEqual(bad.trainingJobs, []);
 });
@@ -246,7 +246,7 @@ test("the boost doubles training for up to four hours, banked an hour a claim, r
   assert.equal(doneAt(3 * HOUR, now + HOUR, now), now + 2 * HOUR);
   assert.equal(workLeft(now + 2 * HOUR, now + HOUR, now), 3 * HOUR);
   const { g, wait } = game();
-  g.save.training.hp = g.save.trainerRanks.hp = 7; // an hour
+  g.save.training.hp = g.save.trainerRanks.hp = 9; // an hour
   assert.ok(g.training.trainWithGold("hp"));
   wait(600);
   assert.ok(g.training.claimBoost());
@@ -267,12 +267,12 @@ test("Faster Trainers research: +2% training speed a level, for 100 levels, 250n
   const hours = levels.reduce((sum, l) => sum + l.hours, 0);
   assert.ok(hours > 1070 * 24 && hours < 1076 * 24, `${hours} hours`);
   assert.ok(hours > 6 * RESEARCH.potionHp.levels.reduce((sum, l) => sum + l.hours, 0));
-  assert.equal(trainingMs(4, 0.5), 600_000);
+  assert.equal(trainingMs(4, 0.5), 400_000);
   const { g } = game();
   g.save.archives.levels.fasterTrainers = 50;
-  g.save.training.hp = g.save.trainerRanks.hp = 4; // 15 minutes, at double speed
+  g.save.training.hp = g.save.trainerRanks.hp = 4; // 10 minutes, at double speed
   assert.ok(g.training.trainWithGold("hp"));
-  assert.equal(g.training.left("hp"), 450_000);
+  assert.equal(g.training.left("hp"), 300_000);
 });
 
 test("auto-continue starts the next rank the moment one is done, while the Gold lasts", () => {
