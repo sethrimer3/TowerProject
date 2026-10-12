@@ -107,6 +107,8 @@ Read the area's doc before changing code there or answering questions about it; 
   When a change adds, renames, or removes modules, alters architecture or generation invariants, changes commands/scripts or test setup, or changes save rules, update the topic doc for its area in the same change, and this file only for what every task needs (commands, the core architecture, invariants, conventions).
   A new area gets its own topic doc and a line in the list above naming what it covers.
   Keep the README's short "How it's built" overview accurate as well.
+- The player-facing rules live in `docs/gameplay/`, one topic a page, indexed by the README's Gameplay reference; the README itself stays slim (`tests/readme-index.test.ts` caps its size and requires every page in the index).
+  A change to what the player sees or does updates that topic's page in the same change; a new topic gets its own page and a row in the index.
   `CLAUDE.md` only imports this file; don't add content there.
 - Write one sentence per line (a paragraph's lines render joined), and start a new line for each new fact, so diffs and merges stay local; don't re-join lines into long paragraphs.
 - `CONTEXT.md` is the domain glossary (terms only, no implementation). Use its words in code, comments and docs, and add a term there when a change names a new domain concept.
@@ -117,7 +119,7 @@ Read the area's doc before changing code there or answering questions about it; 
 - A confirmation that spends a currency shows the price on its button as the currency's icon and the amount (`· ${gemIcon()} <b>2</b>`, likewise `goldIcon()` and the rest), not the currency's name in text; the button's `aria-label` names the currency, for screen readers.
 - All text uses the bundled Cinzel font (`assets/fonts/Cinzel/`); no remote fonts (browser test checks this).
 - Undo has subtle invariants (it can't duplicate rewards; undo cancels queued routes; history persists across refreshes; it never leaves the floor: `advanceTowerRoom` and `descendTowerRoom` empty the history, as `afterDelveStep` does for a step onto another equivalent floor (by `World.depth`, either way) or across a milestone gate, so a snapshot is always of the floor the hero stands on).
-  The README's gameplay section is the spec for this player-facing behavior.
+  `docs/gameplay/runs.md` is the spec for this player-facing behavior.
 - `test-gen.ts` at the root is a scratch experiment, not part of the build or tests.
 
 ### Tests and goldens
