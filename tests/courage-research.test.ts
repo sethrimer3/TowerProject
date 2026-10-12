@@ -84,6 +84,7 @@ test("Interest adds its share of the Silver held on a new floor, up to Max Inter
   const climb = (interest: number) => {
     const well = stairs();
     well.save.upgrades.wishingWell = 1;
+    well.save.training.floorSilver = 1;
     well.run.silver = 100;
     well.save.archives.levels.interest = interest;
     assert.ok(well.move(1, 0));

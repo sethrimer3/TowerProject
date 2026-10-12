@@ -629,9 +629,9 @@ export const CRIT_CHANCE_RANK = 100, CRIT_FACTOR_BASE = 120, CRIT_FACTOR_RANK = 
  * more for each Gold / Floor rank. */
 export const FLOOR_GOLD_BASE = 3, FLOOR_GOLD_RANK = 1;
 /** The Silver each floor climbed for the first time in a run pays, before
- * Silver / Floor research and Silver Bonus: 3 with Wishing Well, and 3
- * more for each Silver / Floor rank. */
-export const FLOOR_SILVER_BASE = 3, FLOOR_SILVER_RANK = 3;
+ * Silver / Floor research and Silver Bonus: none with Wishing Well alone,
+ * and 4 for each Silver / Floor rank. */
+export const FLOOR_SILVER_BASE = 0, FLOOR_SILVER_RANK = 4;
 /** What each Silver Bonus or Gold / Kill rank adds to its multiplier, in
  * percent (×1 with no ranks). */
 export const SILVER_BONUS_RANK = 1, KILL_GOLD_RANK = 3;

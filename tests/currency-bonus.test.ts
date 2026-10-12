@@ -43,17 +43,17 @@ test("Wealthy, Loot and Wishing Well each open their Training row and research",
   }
 });
 
-test("Silver Bonus starts at ×1 and adds 1% a rank, Gold / Kill 3%; Silver / Floor starts at 3 and adds 3", () => {
+test("Silver Bonus starts at ×1 and adds 1% a rank, Gold / Kill 3%; Silver / Floor starts at 0 and adds 4", () => {
   const save = defaults();
   assert.deepEqual([silverBonus(save), killGold(save), floorSilver(save)], [100, 100, 0], "nothing without the skills");
   save.training.silverBonus = save.training.killGold = save.training.floorSilver = 10;
   assert.deepEqual([silverBonus(save), killGold(save), floorSilver(save)], [100, 100, 0], "ranks count only with the skill");
   save.upgrades.wealthy = save.upgrades.loot = save.upgrades.wishingWell = 1;
-  assert.deepEqual([silverBonus(save), killGold(save), floorSilver(save)], [110, 130, 33]);
+  assert.deepEqual([silverBonus(save), killGold(save), floorSilver(save)], [110, 130, 40]);
   const step = trainingStep(save, "silverBonus");
   assert.deepEqual([step.unit, step.now, step.next, step.worth], ["×", 1.1, 1.11, 1]);
   assert.equal(trainingText(step.now, step.unit), "×1.10");
-  assert.equal(trainingText(33, ""), "33");
+  assert.equal(trainingText(40, ""), "40");
   // Research adds 3% a level (5% for Silver / Floor), simply.
   save.archives.levels.silverBonus = 10;
   save.archives.levels.floorSilver = 10;
@@ -113,9 +113,9 @@ test("a new Tower floor pays Silver / Floor, with research and Silver Bonus but 
   s.archives.levels.floorSilver = 2;
   assert.ok(g.move(1, 0));
   assert.equal(g.run.height, 4);
-  assert.equal(g.silver, 7.26, "6 × 1.1 × 1.1");
+  assert.equal(g.silver, 4.84, "4 × 1.1 × 1.1");
   assert.equal(g.undo(), false, "the climb can't be undone");
-  assert.equal(g.silver, 7.26);
+  assert.equal(g.silver, 4.84);
 });
 
 test("a floor already reached this run pays no Silver; Silver training raises it for the run", () => {
@@ -127,23 +127,24 @@ test("a floor already reached this run pays no Silver; Silver training raises it
   h.run.silver = 1000;
   h.save.upgrades.onTheJob = 1;
   assert.ok(h.trainInRun("floorSilver"));
-  assert.deepEqual(runTrainingValue(h.save, h.run, "floorSilver"), { value: 6, unit: "" });
+  assert.deepEqual(runTrainingValue(h.save, h.run, "floorSilver"), { value: 4, unit: "" });
   h.save.upgrades.wealthy = 1;
   assert.ok(h.trainInRun("silverBonus"));
   assert.deepEqual(runTrainingValue(h.save, h.run, "silverBonus"), { value: 1.01, unit: "×" });
   const before = h.silver;
   assert.ok(h.move(1, 0));
-  assert.equal(Math.round((h.silver - before) * 100) / 100, 6.06, "6 × 1.01");
+  assert.equal(Math.round((h.silver - before) * 100) / 100, 4.04, "4 × 1.01");
 });
 
 test("the Delve pays Silver / Floor for each new equivalent floor (ten depth)", () => {
   const g = new Game(defaults());
   g.save.upgrades.delve = g.save.upgrades.wishingWell = 1;
+  g.save.training.floorSilver = 1;
   g.switchMode("delve");
   g.newRun({ seed: 5 });
   (g as unknown as { enterFromOutside(): void }).enterFromOutside();
   (g.world as World).depth = () => 25;
   g.run.maxHeight = 5;
   (g as unknown as { afterDelveStep(t: unknown, x: number, y: number, from: { x: number; y: number }): void }).afterDelveStep({ kind: "floor" }, g.run.player.x, g.run.player.y, g.run.player);
-  assert.equal(g.silver, 6, "floors 1 and 2");
+  assert.equal(g.silver, 8, "floors 1 and 2");
 });
