@@ -26,6 +26,8 @@ A second tap walks there either way.
 A pickup's box shows what it gives with every bonus counted, as its icon and +N (a key's keys, a potion's full heal, a shard's ATK or DEF), and a lit torch's says Torch.
 With Pathfinder, tapping a tile inside a run pauses the hand while the highlight shows; once it goes (and no other tile is highlighted in its place), a hand it paused plays on.
 Pressing play clears the highlight and the route.
+On a plain floor or wall tile the highlight and its box fade away on their own, shown for 2 seconds and gone over the next.
+A potion's box also says how much HP it restores (a percent potion its share of max HP too).
 
 ## Tab dots
 

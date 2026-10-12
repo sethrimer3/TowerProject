@@ -141,7 +141,7 @@ Raising every early enemy's ATK would not reach the first of those, and raising 
 - **Roll:** one `tileRandom` number per run seed, floor and tile (`FAST_SALT`), drawn after the tier's factor (`fastCells`, beside `tierCells` in `RoomWorld` and the Delve's `World`), so nothing else in generation draws differently.
 - **ATK:** at least the **carry** (`fastCarry`): `FAST_CARRY` (1.75) times the tier below's floor-100 normal, balanced enemy's ATK, in the tier's own units: 700 in Tower II (the Tower I floor-100 boss's ATK); Towers III, IV and V carry set values instead (`FAST_CARRY_AT`): 1,000, 2,000 and 4,000 rather than 3,500, 14,000 and 42,000. The Delve's caves carry the same. Every Fast enemy below it strikes with it, whatever its strength or profile; past the floor where the curve outgrows it (about 73 in Tower II), Fast changes no stats. HP and DEF are untouched.
 - **Fights:** it strikes first, then the fight goes on as ever; its ATK rises after its own strikes. Thorns answer its opening strike, the shroud takes it first, Revive may catch it, and Lifesteal heals only from the hero's strikes. A fight against it is never an Instakill, so Mug pays nothing more.
-- **Pay:** 1 Gold more than its strength's (`FAST_GOLD`), before Gold / Kill and the tier's bonus.
+- **Pay:** 1 Gold more than its strength's (`FAST_GOLD`), before Gold Bonus and the tier's bonus.
 - **Look:** "Fast" before its strength and name (*Fast Elite Goblin*), and a fast-forward mark at the tile's top right.
 
 Tune it with `FAST_CARRY`, `FAST_CARRY_AT` and `fastShare`.

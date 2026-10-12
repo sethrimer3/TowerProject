@@ -1,10 +1,10 @@
 import { snap } from "./exact.ts";
-import { COLORS, type KeyColor } from "./config.ts";
+import { COLORS, KEY_GOLD, PICKUP_GOLD, type KeyColor } from "./config.ts";
 import type { DoorRule, Player, Tile } from "./entities.ts";
 import { wholeChange } from "./whole.ts";
 
 export const KEY_ORDER: KeyColor[] = ["yellow", "blue", "red"];
-export const KEY_NAMES: Record<KeyColor, string> = { yellow: "Amber", blue: "Azure", red: "Crimson" };
+export const KEY_NAMES: Record<KeyColor, string> = { yellow: "Gold", blue: "Azure", red: "Crimson" };
 type KeyId = "a" | "b" | "c" | "ab" | "ac" | "bc" | "abc";
 /** Each door's art: its keys' letters (a yellow, b blue, c red), with `h`
  * after them on a door that also drains HP to 1. */
@@ -16,14 +16,14 @@ type Opener = Pick<Player, "keys"> & { hp?: number };
 export function doorRule(tile: Tile): DoorRule {
   return tile.door ?? { type: "keys", keys: [tile.color ?? "yellow"], mode: "all" };
 }
-/** The cheapest key held, at `need` of a key: amber, then azure, then crimson. */
+/** The cheapest key held, at `need` of a key: gold, then azure, then crimson. */
 const cheapestKey = (keys: KeyColor[], player: Opener, need: number) =>
   KEY_ORDER.find((color) => keys.includes(color) && player.keys[color] >= need);
 /** The HP breaking a Wooden Door takes, under a badge's `scale`. */
 export const woodToll = (rule: { durability: number }, scale = 1) => snap(rule.durability * scale);
 
 /** Returns the exact keys that would be consumed, or null when the door won't
- * open. Any-key steel locks use a stable amber/azure/crimson priority so their
+ * open. Any-key steel locks use a stable gold/azure/crimson priority so their
  * behavior is predictable. A Heart Door takes no keys and always opens: it
  * drains HP instead (`resolveStep`). A Wooden Door takes the cheapest key
  * held, or none when the hero has none and would survive breaking it
@@ -59,7 +59,7 @@ export function doorId(tile: Tile): DoorId {
   return rule.heart ? `${letters}h` : letters;
 }
 const KEY_DOOR_NAMES: Record<KeyId, string> = {
-  a: "Amber Door", b: "Azure Door", c: "Crimson Door", ab: "Amber + Azure Door", ac: "Amber + Crimson Door", bc: "Azure + Crimson Door", abc: "Triune Door",
+  a: "Gold Door", b: "Azure Door", c: "Crimson Door", ab: "Gold + Azure Door", ac: "Gold + Crimson Door", bc: "Azure + Crimson Door", abc: "Triune Door",
 };
 export function doorName(tile: Tile) {
   const id = doorId(tile);
@@ -72,11 +72,25 @@ export function doorName(tile: Tile) {
 export function doorDescription(tile: Tile) {
   const rule = doorRule(tile);
   if (rule.type === "fullHp") return "Opens freely, but drains your HP to 1.";
-  if (rule.type === "wood") return `Consumes one available key (amber, then azure, then crimson). With none, break it down for ${wholeChange(rule.durability)} HP; DEF doesn't help.`;
-  if (rule.mode === "any") return "Consumes one available key (amber, then azure, then crimson).";
+  if (rule.type === "wood") return `Consumes one available key (gold, then azure, then crimson). With none, break it down for ${wholeChange(rule.durability)} HP; DEF doesn't help.`;
+  if (rule.mode === "any") return "Consumes one available key (gold, then azure, then crimson).";
   const names = rule.keys.map((key) => KEY_NAMES[key].toLowerCase());
   const keys = `Requires ${names.join(" + ")} ${names.length === 1 ? "key" : "keys"}`;
   return rule.heart ? `${keys}, and drains your HP to 1.` : `${keys}.`;
+}
+/** The Gold a door opened pays before Gold Bonus: a keyed door its colours'
+ * `KEY_GOLD` summed, any other `PICKUP_GOLD`. */
+export function doorGold(tile: Tile) {
+  const rule = doorRule(tile);
+  return rule.type === "keys" && rule.mode === "all" ? rule.keys.reduce((sum, key) => sum + KEY_GOLD[key], 0) : PICKUP_GOLD;
+}
+/** The Gold an item taken off the floor (`tile`, a torch when null) pays
+ * before Gold Bonus: a key or door by its colours, anything else
+ * `PICKUP_GOLD`. */
+export function pickupGold(tile: Tile | null) {
+  if (tile?.kind === "key") return KEY_GOLD[tile.color ?? "yellow"];
+  if (tile?.kind === "door") return doorGold(tile);
+  return PICKUP_GOLD;
 }
 /** A Wooden Door's timber. */
 export const WOOD_COLOR = "#9a6a3c";

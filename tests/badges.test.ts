@@ -371,10 +371,11 @@ test("Gold Touch pays once a target, even after undo", () => {
   badge(g, "atkUp", "goldTouch", 5);
   const gold = g.save.gold;
   turns(g, 2);
-  assert.equal(g.save.gold, gold + 5);
+  // The ATK shard pays its own 1 Gold as well.
+  assert.equal(g.save.gold, gold + 5 + 1);
   assert.ok(g.undo());
   turns(g, 1);
-  assert.equal(g.save.gold, gold + 5, "taking the step again pays nothing more");
+  assert.equal(g.save.gold, gold + 5 + 1, "taking the step again pays nothing more");
 });
 
 test("Goldback tallies a linear combo on the hand's last card, which the next Gold found uses up", () => {
@@ -387,7 +388,7 @@ test("Goldback tallies a linear combo on the hand's last card, which the next Go
   assert.equal(back.run.goldCombo, undefined, "ATK UP is not the last card");
   turns(back, 2);
   assert.equal(back.run.goldCombo, 4, "YELLOW KEY is: level 3 adds x4");
-  assert.equal(back.save.gold, before, "the badge itself pays no Gold");
+  assert.equal(back.save.gold, before + 2, "the badge itself pays no Gold: only the shard and key picked up, 1 each, which the combo leaves alone");
   assert.ok(back.undo());
   assert.equal(back.run.goldCombo, undefined, "undo takes the activation back");
 });
@@ -706,6 +707,8 @@ test("Floor Skip Reward pays its percent of the Gold the floor skipped held, onc
   const { ENEMY_GOLD } = await import("../src/config.ts");
   const { averageGold } = await import("../src/loot.ts");
   const { RESEARCH } = await import("../src/archives.ts");
+  const { pickupGold } = await import("../src/doors.ts");
+  const { litTorches } = await import("../src/board.ts");
   assert.deepEqual(RESEARCH.floorSkipReward.levels.map((l) => l.effect.value), Array(11).fill(10), "11 levels of 10%");
   assert.deepEqual(RESEARCH.floorSkipReward.levels.slice(0, 9).map((l) => l.gold), RESEARCH.focusCount.levels.map((l) => l.gold), "Focus Count's curve");
   for (let seed = 1; seed < 500; seed++) {
@@ -717,16 +720,21 @@ test("Floor Skip Reward pays its percent of the Gold the floor skipped held, onc
     const gold = g.save.gold;
     turns(g, 2);
     if (g.run.height !== 2) continue;
-    // Floor 1 as Skip passed it: every enemy's kill Gold and every chest's
-    // average Gold, 30% of it.
-    const passed = new RoomWorld(seed, 1, {}, g.run.percentPotions);
-    let held = 0;
+    // Floor 1 as Skip passed it: every enemy's kill Gold, every chest's
+    // average Gold and the 1 Gold for opening it, and every item's, door's
+    // and lit torch's Pickup Gold, 30% of it.
+    const passed = new RoomWorld(seed, 1, {}, g.run.percentPotions), torches = litTorches(passed);
+    let held = 0, items = 0;
     for (let y = 0; y < passed.height; y++)
       for (let x = 0; x < passed.width; x++) {
         const t = passed.tile(x, y);
         if (t.kind === "enemy") held += ENEMY_GOLD[t.enemy!.strength];
-        if (t.kind === "treasure") held += averageGold(1);
+        if (t.kind === "treasure") held += averageGold(1) + 1;
+        if (["key", "potion", "attack", "defense", "door"].includes(t.kind)) items += pickupGold(t);
+        if (t.kind === "floor" && torches.has(`${x},${y}`)) items += pickupGold(null);
       }
+    assert.ok(items > 0, "the floor held items");
+    held += items;
     assert.ok(held > 0);
     assert.ok(Math.abs(g.save.gold - gold - held * 0.3) < 1e-6, `${g.save.gold - gold} of ${held}`);
     assert.ok(g.gains.some((gain) => gain.art && "coin" in gain.art && gain.art.coin === "gold"), "shown as a Gold gain");

@@ -17,7 +17,8 @@ import { stampProfile } from "./profile.ts";
 import { defaultFinds, newNotes, notesOf, tallyIn } from "./run-notes.ts";
 import { drawAt, stream, tileRandom } from "./random.ts";
 import { freeTrainingLines, rollFreeTraining } from "./free-training.ts";
-import { doorBlockedMessage, doorName, doorRule, drainsHp, KEY_ORDER } from "./doors.ts";
+import { doorBlockedMessage, doorName, doorRule, drainsHp, KEY_ORDER, pickupGold } from "./doors.ts";
+import type { SettingKey } from "./settings.ts";
 import { TREES, skillAvailable } from "./skill-trees.ts";
 import { routeTo, type Step } from "./pathfinding.ts";
 import {
@@ -121,6 +122,12 @@ export type GainArt = { tile: Tile; spent?: true } | { material: MaterialId; qua
   | { equipMaterial: EquipMaterialId; quantity: number } | { equipPiece: string; rarity: EquipRarity };
 /** The coin a Gold or Silver gain raises. */
 export type Coin = "gold" | "silver";
+/** The gains a Settings row can turn off: items picked up, what a door
+ * takes, and Gold and Silver found. */
+export type GainKind = "item" | "door" | Coin;
+const GAIN_SETTINGS = { item: "itemGains", door: "doorGains", gold: "goldGains", silver: "silverGains" } as const satisfies Record<GainKind, SettingKey>;
+/** The coin `art` raises, if it is one. */
+const coinOf = (art: GainArt | null): Coin | null => (art && "coin" in art ? art.coin : null);
 /** A potion's heal: the HP from and to, where the hero stood, and its number. */
 export type Heal = { from: number; to: number; x: number; y: number; id: number };
 /** A rush: the tiles the hero rushed off in one step, in order, and when
@@ -1044,7 +1051,7 @@ export class Game {
         // next Gold found spends it (RunPurse).
         this.run.goldCombo = (this.run.goldCombo ?? 0) + v;
         // Drawn as "×2" and the Gold coin.
-        return this.gain(p.x, p.y, `×${this.run.goldCombo} Gold`, { coin: "gold" });
+        return this.gain(p.x, p.y, `×${this.run.goldCombo} Gold`, { coin: "gold" }, undefined, null);
       case "xp": {
         const xp = Math.round((v * xpBase(this.badgeFloor)) / xpBase(0));
         this.addXp(xp);
@@ -1668,8 +1675,10 @@ export class Game {
   private gainDrops(at: { x: number; y: number }, drops: { text: string; art: GainArt }[], top = 0) {
     drops.forEach(({ text, art }, i) => this.gain(at.x, at.y, text, art, { row: top - i, with: i > 0 }));
   }
-  /** Queues a reward to rise from (x, y). */
-  gain(x: number, y: number, text: string, art: GainArt | null = null, drop?: Drop) {
+  /** Queues a reward to rise from (x, y), unless the Settings turn off
+   * gains of its `kind` (by default, a coin's Gold or Silver). */
+  gain(x: number, y: number, text: string, art: GainArt | null = null, drop?: Drop, kind: GainKind | null = coinOf(art)) {
+    if (kind && !this.save.settings[GAIN_SETTINGS[kind]]) return;
     this.gains.push({ x, y, text, art, ...(drop ? { drop } : {}) });
     if (this.gains.length > MAX_GAINS) this.gains.shift();
   }
@@ -1887,12 +1896,13 @@ export class Game {
     // Walking into a torch destroys it immediately: light, collision and
     // sprite all disappear the same frame since rendering only ever draws
     // active torches from this same list.
-    this.world.breakTorchAt?.(x, y);
+    const torch = this.world.breakTorchAt?.(x, y);
     if (this.run.outside) {
       if (t.kind === "stairs") this.enterFromOutside();
       else if (this.world instanceof OutsideWorld && this.world.atExit(x, y)) this.swapForest();
       return;
     }
+    if (torch) this.payPickup(null, { x, y });
     if (t.kind === "reward") {
       this.run.changes[`${x},${y}`] = { kind: "openedChest", tier: t.tier };
       this.openAreaChest(t.tier);
@@ -1957,8 +1967,9 @@ export class Game {
   private openDoor(t: Tile, keysSpent: KeyColor[], drained: number, at: { x: number; y: number }, amount = 1) {
     const n = keysSpent.length, rule = doorRule(t), notes = notesOf(this.run);
     if (notes) tallyIn(notes.doors, doorName(t));
-    for (const color of keysSpent) this.gain(at.x, at.y, `−${keyCount(amount)} ${color} key`, { tile: { kind: "key", color }, spent: true });
-    if (!n || (drainsHp(rule) && drained > 0)) this.gain(at.x, at.y, `−${wholeChange(drained)} HP`, { heart: true });
+    for (const color of keysSpent) this.gain(at.x, at.y, `−${keyCount(amount)} ${color} key`, { tile: { kind: "key", color }, spent: true }, undefined, "door");
+    if (!n || (drainsHp(rule) && drained > 0)) this.gain(at.x, at.y, `−${wholeChange(drained)} HP`, { heart: true }, undefined, "door");
+    this.payPickup(t, at);
     const spent = amount === 1 ? `${n} key${n === 1 ? "" : "s"} spent` : `${keyCount(snap(n * amount))} keys spent`;
     if (rule.type === "wood" && !n) this.message = `${doorName(t)} broken down · −${wholeChange(drained)} HP`;
     else this.message = `${doorName(t)} opened${n ? ` · ${spent}` : ""}${drainsHp(rule) ? (this.run.player.hp > HEART_DOOR_HP ? " · HP drained" : " · HP drained to 1") : ""}`;
@@ -2438,7 +2449,8 @@ export class Game {
     const text = pickupText(t, outcome, this.stepRules);
     this.notePickup(t, outcome);
     if (text) {
-      this.gain(x, y, text, { tile: { ...t } });
+      this.gain(x, y, text, { tile: { ...t } }, undefined, "item");
+      this.payPickup(t, { x, y });
       if (t.kind === "potion") this.recordHeal(outcome.healed);
       if (t.kind === "potion") this.missions.record("potions", 1, this.missionKey({ x, y }));
       if (t.kind === "potion") this.events.record("potions", 1, this.missionKey({ x, y }));
@@ -2446,6 +2458,13 @@ export class Game {
       this.message = text;
     }
     if (t.kind === "treasure") this.openTreasure(x, y);
+  }
+  /** Gold Bonus's Gold for taking `t` (a torch when null) off the floor at
+   * `at`, or opening it (a door), rising a row up at the same time as the
+   * item's own gain (a door's last key or HP) where it has one. */
+  private payPickup(t: Tile | null, at: { x: number; y: number }) {
+    const gold = this.purse.pickupGold(at.x, at.y, pickupGold(t));
+    if (gold) this.gain(at.x, at.y, `+${wholeChange(gold)} Gold`, { coin: "gold" }, { row: 1, with: !!t });
   }
   /** A pickup counted in the run's notes: a key (by colour, under a
    * badge's scale), a potion, or an ATK or DEF shard. */

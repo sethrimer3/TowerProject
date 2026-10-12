@@ -188,7 +188,7 @@ test("descriptions are written from the grants", () => {
       quality: text.quality, undos: text.undos, combatStance: text.combatStance, buildout: text.buildout,
       inspirationUndos: text.inspirationUndos, revive: text.revive },
     {
-      yellow: "+1 starting amber key",
+      yellow: "+1 starting gold key",
       blue: "+1 starting azure key",
       red: "+1 starting crimson key",
       quality: "+2 weapon attack and +1 armor defense",

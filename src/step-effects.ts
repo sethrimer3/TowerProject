@@ -80,6 +80,14 @@ export const shardStat = (tile: Tile, rules: StepRules) =>
   snap((shardGain(tile) * ((tile.kind === "attack" ? rules.shardAttack : rules.shardDefense) ?? 100)) / 100);
 /** The HP a potion of `amount` restores under `rules`, rounded. */
 export const potionHeal = (amount: number, rules: StepRules) => snap((amount * rules.potionHeal) / 100);
+/** The HP the potion `tile` restores to a hero of `maxHp` under `rules`
+ * (before a badge's scale, and before the HP the hero lacks caps it): a
+ * percent (red) potion its HP, which Potion HP leaves alone, and a share of
+ * max HP. */
+export const potionRestores = (tile: Tile, maxHp: number, rules: StepRules) => {
+  const amount = tile.amount ?? POTION_HEAL;
+  return tile.color === "red" ? snap(amount + (maxHp * rules.percentPotion) / 10000) : potionHeal(amount, rules);
+};
 
 /** Resolves stepping onto `tile` with stats `player`: whether the step is
  * possible, and the player's stats afterwards. Pure: movement, previews, and
@@ -130,10 +138,7 @@ export function resolveStep(player: Player, tile: Tile, rules: StepRules = BASE_
       if (scale !== 1) effect.keyAmount = scaled(1);
       break;
     case "potion": {
-      // A percent (red) potion restores its HP, which Potion HP leaves alone,
-      // and a share of max HP.
-      const amount = tile.amount ?? POTION_HEAL;
-      const heal = scaled(tile.color === "red" ? snap(amount + (next.maxHp * rules.percentPotion) / 10000) : potionHeal(amount, rules));
+      const heal = scaled(potionRestores(tile, next.maxHp, rules));
       effect.healed = snap(Math.min(next.maxHp - next.hp, heal));
       next.hp = snap(next.hp + effect.healed);
       break;

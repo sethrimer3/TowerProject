@@ -82,6 +82,14 @@ export const SETTINGS = {
   /** Draw on each enemy the HP its fight would cost (`damage-labels.ts`).
    * Only Damage Visual, Tower I's floor 50 goal, shows it. */
   damageVisual: { kind: "toggle", default: true, page: { id: "damage-visual", label: "Show damage on enemies" } },
+  /** The board's gains, each kind turned off on its own once the player
+   * knows what the floor's items give and take (`Game.gain`): an item's
+   * sprite rising as it is picked up, the keys and HP a door takes, and
+   * the Gold and Silver found. */
+  itemGains: { kind: "toggle", default: true, page: { id: "item-gains", label: "Item pickup animations" } },
+  doorGains: { kind: "toggle", default: true, page: { id: "door-gains", label: "Door payment animations" } },
+  goldGains: { kind: "toggle", default: true, page: { id: "gold-gains", label: "Gold pickup animations" } },
+  silverGains: { kind: "toggle", default: true, page: { id: "silver-gains", label: "Silver pickup animations" } },
 } as const satisfies Record<string, Setting>;
 
 export type SettingKey = keyof typeof SETTINGS;

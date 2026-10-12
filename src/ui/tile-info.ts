@@ -2,7 +2,7 @@ import { enemyStat, keyCount, whole, wholeChange, wholeHp } from "../whole.ts";
 import type { Enemy, Kind, Player, Tile } from "../entities.ts";
 import { enemyTitle } from "../scaling.ts";
 import type { Game, RouteEffects } from "../state.ts";
-import { resolveStep, shardStat } from "../step-effects.ts";
+import { POTION_HEAL, potionRestores, resolveStep, shardStat } from "../step-effects.ts";
 import { attackForFewerHits, instakill, netDamage, predict, type CombatPrediction } from "../combat.ts";
 import { forecast as critForecast, type CritForecast } from "../crit-forecast.ts";
 import { countsParries, goalUnlocked } from "../goals.ts";
@@ -121,7 +121,7 @@ const DESCRIBE: Partial<Record<Kind, Describe>> = {
       body: `<span>HP ${enemyStat(e.hp)} · ATK ${enemyStat(e.attack)} · DEF ${enemyStat(e.defense)}</span>` + prediction(r, p, g, c) + forecast(p, e, r.impervious ? 0 : r.turns, g, !!crit),
     };
   },
-  wall: () => ({ title: "Wall", body: "Ancient stone. Find a passage around it." }),
+  wall: () => ({ title: "Wall", body: "Impassable obstacle." }),
   door: (t, p, g) => {
     // The step's own rules decide what opening it takes, so Key Efficiency
     // and Heart Door Resilience show as they will be paid.
@@ -146,7 +146,11 @@ const DESCRIBE: Partial<Record<Kind, Describe>> = {
   potion: (t, p, g) => {
     // What it restores in full: the heal of a hero at 0 HP, up to max HP.
     const after = resolveStep({ ...p, hp: 0 }, t, g.stepRules), percent = t.color === "red";
-    const restores = percent ? `Restores HP and ${g.stepRules.percentPotion / 100}% of max HP` : "Restores HP";
+    const total = wholeChange(potionRestores(t, p.maxHp, g.stepRules)), share = g.stepRules.percentPotion / 100;
+    // A percent potion names its share of max HP beside its own HP.
+    const restores = percent && share
+      ? `Restores ${wholeChange(t.amount ?? POTION_HEAL).toLocaleString("en-US")} HP + ${share}% of max HP (${total.toLocaleString("en-US")} HP)`
+      : `Restores ${total.toLocaleString("en-US")} HP`;
     // A run with percent potions says how many of its potions are.
     const chance = g.run.percentPotions ? `<br><small>${g.run.percentPotions / 100}% of this run's potions are percent potions</small>` : "";
     return { title: percent ? "Percent Potion" : "Potion", body: `<span>${restores}</span><br>${gain(t, String(wholeChange(after.blocked ? 0 : after.healed)), " HP")}${chance}` };

@@ -3,7 +3,7 @@ import { bulkBuy, type BuyQuantity } from "./buy-quantity.ts";
 import { snap } from "./exact.ts";
 import { PARRY_CAP, type CritRule } from "./combat.ts";
 import type { Mode, Save } from "./entities.ts";
-import { CRIT_CHANCE_RANK, CRIT_FACTOR_BASE, CRIT_FACTOR_RANK, FIND_POTION_BASE, FIND_POTION_MAX, FLOOR_GOLD_BASE, FLOOR_GOLD_RANK, FLOOR_SILVER_BASE, FLOOR_SILVER_RANK, FIND_POTION_RANK, FREE_TRAINING_RANK, TRAINING_GROUPS, REVIVE_BASE, REVIVE_MAX, REVIVE_RANK, GOLD_SHOP, KILL_GOLD_RANK, SILVER_BONUS_RANK, schedulePrice, POTION_PERCENT_BASE, POTION_PERCENT_RANK, TRAINING, TRAINING_PER_LEVEL, UPGRADES, isStatRow, levelForXp, trained, trainingWorth, ATTACK_RANGE_BASE, ATTACK_RANGE_RANK, ATTACK_SPEED_BASE, ATTACK_SPEED_RANK, ATK_PER_TILE_FIRST, ATK_PER_TILE_FALL, MULTISHOT_CHANCE_RANK, MULTISHOT_TARGETS_BASE, MULTISHOT_TARGETS_RANK, type GoldItemId, type StatTrainingRow, type TrainingId, type TrainingRow, type UpgradeId } from "./config.ts";
+import { CRIT_CHANCE_RANK, CRIT_FACTOR_BASE, CRIT_FACTOR_RANK, FIND_POTION_BASE, FIND_POTION_MAX, FLOOR_GOLD_BASE, FLOOR_GOLD_RANK, FLOOR_SILVER_BASE, FLOOR_SILVER_RANK, FIND_POTION_RANK, FREE_TRAINING_RANK, TRAINING_GROUPS, REVIVE_BASE, REVIVE_MAX, REVIVE_RANK, GOLD_SHOP, GOLD_BONUS_RANK, SILVER_BONUS_RANK, schedulePrice, POTION_PERCENT_BASE, POTION_PERCENT_RANK, TRAINING, TRAINING_PER_LEVEL, UPGRADES, isStatRow, levelForXp, trained, trainingWorth, ATTACK_RANGE_BASE, ATTACK_RANGE_RANK, ATTACK_SPEED_BASE, ATTACK_SPEED_RANK, ATK_PER_TILE_FIRST, ATK_PER_TILE_FALL, MULTISHOT_CHANCE_RANK, MULTISHOT_TARGETS_BASE, MULTISHOT_TARGETS_RANK, type GoldItemId, type StatTrainingRow, type TrainingId, type TrainingRow, type UpgradeId } from "./config.ts";
 import { wornEffects } from "./equipment/effects.ts";
 import { PIERCE_CAP } from "./equipment/balance.ts";
 import { RESEARCH, researched } from "./archives.ts";
@@ -62,7 +62,7 @@ const WORDS: Record<Stat, string> = {
   thorns: "% of an enemy's max HP each of its strikes costs it",
   parryChance: "% chance to parry each enemy strike",
   parry: "% less ATK in a parried strike",
-  yellow: "starting amber key",
+  yellow: "starting gold key",
   blue: "starting azure key",
   red: "starting crimson key",
   undos: "additional undo",
@@ -264,10 +264,11 @@ const floorSilverAt = (ranks: number) => FLOOR_SILVER_BASE + FLOOR_SILVER_RANK *
  * percent: 100 without Wealthy. */
 export const silverBonus = (save: Pick<Save, "upgrades" | "training">) =>
   bonusAt(save.upgrades.wealthy ? save.training.silverBonus : 0, SILVER_BONUS_RANK);
-/** Gold / Kill training's multiplier on the Gold a kill pays, in percent:
+/** Gold Bonus training's multiplier on the Gold a kill, or an item picked up
+ * or door opened in a run, pays, in percent:
  * 100 without Loot. */
-export const killGold = (save: Pick<Save, "upgrades" | "training">) =>
-  bonusAt(save.upgrades.loot ? save.training.killGold : 0, KILL_GOLD_RANK);
+export const goldBonus = (save: Pick<Save, "upgrades" | "training">) =>
+  bonusAt(save.upgrades.loot ? save.training.goldBonus : 0, GOLD_BONUS_RANK);
 const bonusAt = (ranks: number, rank: number) => 100 + rank * ranks;
 /** The Free Upgrade row training each group's free levels. */
 export const FREE_TRAINING_ROWS = { offense: "freeOffense", defense: "freeDefense", utility: "freeUtility" } as const satisfies Record<keyof typeof TRAINING_GROUPS, TrainingId>;
@@ -279,7 +280,7 @@ export const freeTrainingChance = (save: Pick<Save, "upgrades" | "training">, gr
 const freeTrainingAt = (ranks: number) => FREE_TRAINING_RANK * ranks;
 /** The training rows shown as a multiplier (×1.30), their value in percent,
  * and what a rank adds. */
-const MULTIPLIER_ROWS: ReadonlyMap<TrainingId, number> = new Map([["silverBonus", SILVER_BONUS_RANK], ["killGold", KILL_GOLD_RANK]]);
+const MULTIPLIER_ROWS: ReadonlyMap<TrainingId, number> = new Map([["silverBonus", SILVER_BONUS_RANK], ["goldBonus", GOLD_BONUS_RANK]]);
 
 /** How a Training row's value reads: a multiplier as ×1.30, Attack Range
  * as 3.00 tiles, Attack Speed as 1.00/10 turns, ATK / Tile as

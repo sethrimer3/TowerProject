@@ -957,6 +957,22 @@ canvas {
   opacity: 0;
   transition: opacity 0.3s ease-out;
 }
+/* A tapped floor or wall's feedback: shown 2s, then fading over 1s
+   (BoardOverlay's PLAIN_TILE_MS hides it at the end). */
+.tile-highlight.active.fading {
+  animation: tile-glow-pulse 1s ease-in-out infinite, tile-info-fade 3s linear forwards;
+}
+.inspect-box.fading {
+  animation: tile-info-fade 3s linear forwards;
+}
+@keyframes tile-info-fade {
+  0%, 66.7% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
 @keyframes tile-glow-pulse {
   0%, 100% {
     box-shadow: 0 0 8px 2px #ffd166a0, inset 0 0 10px 1px #ffd16680;

@@ -1,10 +1,12 @@
 import { interestCap, researched } from "../archives.ts";
-import { ENEMY_GOLD, FAST_GOLD, RANGED_GOLD, silverForKill } from "../config.ts";
+import { ENEMY_GOLD, FAST_GOLD, PICKUP_GOLD, RANGED_GOLD, silverForKill } from "../config.ts";
 import type { RoomWorld } from "../tower/room-world.ts";
-import type { Enemy, Mode, Run, Save } from "../entities.ts";
 import { snap } from "../exact.ts";
-import { floorGold, floorSilver, killGold, silverBonus } from "../loadout.ts";
+import { floorGold, floorSilver, goldBonus, silverBonus } from "../loadout.ts";
 import { averageGold, rollTreasureLoot } from "../loot.ts";
+import { pickupGold } from "../doors.ts";
+import { litTorches } from "../board.ts";
+import { point, type Enemy, type Mode, type Run, type Save, type Tile } from "../entities.ts";
 import type { MaterialStack } from "../materials.ts";
 import { MODES, type ModeProfile } from "../modes.ts";
 import { ranksInRun } from "../run-training.ts";
@@ -19,6 +21,9 @@ import { CATEGORIES, type EquipMaterialId } from "../equipment/catalog.ts";
 import { runBoons } from "../shrines.ts";
 import { earn } from "../profile.ts";
 import { notesOf, tallyIn } from "../run-notes.ts";
+
+/** The tiles whose Pickup Gold a skipped floor counts, beside its lit torches. */
+const ITEMS: ReadonlySet<Tile["kind"]> = new Set(["key", "potion", "attack", "defense", "door"]);
 
 /** What a kill gave toward Equipment, once it is open: upgrade materials,
  * and a boss's Standard piece (or, the inventory full, its salvage). */
@@ -132,12 +137,23 @@ export class RunPurse {
     return this.silver(scale === 1 ? base : snap(base * scale));
   }
 
+  /** Gold Bonus training's and research's multiplier, in hundredths of a
+   * percent (×1 is 10,000). */
+  private get goldBonus() {
+    return goldBonus(this.trainingNow) * researched(this.save.archives, "goldBonus", 100);
+  }
+
+  /** `base` Gold raised by Gold Bonus. */
+  private bonused(base: number) {
+    return snap((base * this.goldBonus) / 10_000);
+  }
+
   /** A kill's Gold before the tier's bonus: by the enemy's strength, raised
-   * by Gold / Kill training and research, multiplied (a Fast enemy paying
+   * by Gold Bonus training and research, multiplied (a Fast enemy paying
    * `FAST_GOLD` more first, a Ranged one `RANGED_GOLD`), and for an
    * `instakill` (the hero's first strike ended it) by Mug research too. */
   private killGold(enemy: Enemy, instakill = false) {
-    const gold = snap(((ENEMY_GOLD[enemy.strength] + (enemy.fast ? FAST_GOLD : 0) + (enemy.ranged ? RANGED_GOLD : 0)) * killGold(this.trainingNow) * researched(this.save.archives, "killGold", 100)) / 10_000);
+    const gold = snap(((ENEMY_GOLD[enemy.strength] + (enemy.fast ? FAST_GOLD : 0) + (enemy.ranged ? RANGED_GOLD : 0)) * this.goldBonus) / 10_000);
     return instakill ? snap((gold * researched(this.save.archives, "instakillGold", 100)) / 100) : gold;
   }
 
@@ -185,13 +201,29 @@ export class RunPurse {
     };
   }
 
+  /** Gold for an item taken off the floor at (x, y), or a door opened
+   * there: `base` (`pickupGold`) raised by Gold Bonus, then the tier's bonus,
+   * once per tile (gated like a kill's Gold, so undo can't pay it twice).
+   * Returns what it paid. */
+  pickupGold(x: number, y: number, base: number) {
+    if (!base || !this.loot(this.pickupKey(x, y))) return 0;
+    return this.gold(tierGold(this.tier, this.bonused(base)));
+  }
+
+  /** What gates an item's Gold at (x, y), apart from a kill's or chest's
+   * on the same tile. */
+  private pickupKey(x: number, y: number) {
+    return `${this.lootKey(x, y)}:pickup`;
+  }
+
   /** A treasure chest's Gold and metal bars, once per physical chest, or
-   * null when it was already paid. */
+   * null when it was already paid; its Gold, the chest's own `PICKUP_GOLD`
+   * counted, is raised by Gold Bonus. */
   treasure(x: number, y: number): { gold: number; materials: MaterialStack[] } | null {
     if (!this.loot(this.lootKey(x, y))) return null;
     const rules = this.rules;
     const loot = rollTreasureLoot(rules.equivalentFloor(rules.progressAt(this.run, y)), this.rng);
-    const gold = this.gold(tierGold(this.tier, this.withCombo(loot.gold)));
+    const gold = this.gold(tierGold(this.tier, this.withCombo(this.bonused(snap(loot.gold + PICKUP_GOLD)))));
     for (const m of loot.materials) this.save.materials[m.id] += m.quantity;
     for (const m of loot.materials) tallyIn(this.slice.runFinds.materials, m.id, m.quantity);
     return { gold, materials: loot.materials };
@@ -207,22 +239,29 @@ export class RunPurse {
   }
 
   /** Floor Skip Reward: when Skip climbs past the floor the run stands on
-   * (`board`), its research percent of the Gold that floor's battles and
-   * chests still hold: each enemy's kill Gold and each closed treasure
-   * chest's average Gold (`averageGold`), with the tier's bonus. Each enemy
-   * and chest counted is marked looted, so one fought or opened later pays
-   * no Gold again, and the floor pays once a run. Returns what it paid. */
+   * (`board`), its research percent of the Gold that floor's battles,
+   * chests and items still hold: each enemy's kill Gold, each closed
+   * treasure chest's average Gold (`averageGold`) and each item's, door's
+   * and lit torch's Pickup Gold (the chests' and items' raised by Gold
+   * Bonus), with the tier's bonus. Each one counted is marked looted, so one
+   * fought, opened or picked up later pays no Gold again, and the floor
+   * pays once a run. Returns what it paid. */
   skippedFloorGold(board: RoomWorld) {
     const percent = researched(this.save.archives, "floorSkipGold", 0);
     if (!percent || !this.loot(`${this.lootKey(-1, -1)}:skipped`)) return 0;
-    const chest = averageGold(this.rules.equivalentFloor(this.rules.progressAt(this.run, 0)));
+    const chest = this.bonused(snap(averageGold(this.rules.equivalentFloor(this.rules.progressAt(this.run, 0))) + PICKUP_GOLD));
+    const torches = litTorches(board);
     let found = 0;
     for (let y = 0; y < board.height; y++)
       for (let x = 0; x < board.width; x++) {
         const t = board.tile(x, y);
-        if (t.kind !== "enemy" && t.kind !== "treasure") continue;
-        if (!this.loot(this.lootKey(x, y))) continue;
-        found = snap(found + (t.kind === "enemy" ? this.killGold(t.enemy!) : chest));
+        let gold = 0;
+        if (t.kind === "enemy" || t.kind === "treasure") {
+          if (this.loot(this.lootKey(x, y))) gold = t.kind === "enemy" ? this.killGold(t.enemy!) : chest;
+        } else if (ITEMS.has(t.kind) || (t.kind === "floor" && torches.has(point(x, y)))) {
+          if (this.loot(this.pickupKey(x, y))) gold = this.bonused(pickupGold(t.kind === "floor" ? null : t));
+        }
+        found = snap(found + gold);
       }
     return found ? this.gold(tierGold(this.tier, snap((found * percent) / 100))) : 0;
   }

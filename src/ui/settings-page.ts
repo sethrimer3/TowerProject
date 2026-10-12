@@ -13,7 +13,7 @@ import { showStats } from "./stats-dialog.ts";
 /** The settings on the page, in order; each control comes from its row in
  * SETTINGS. */
 const PAGE = [
-  "transition", "fightAnimation", "damageVisual", "brightness", "spritesOff", "decorOff", "batterySaver", "showArrows", "reduceMotion", "weatherSound",
+  "transition", "fightAnimation", "damageVisual", "itemGains", "doorGains", "goldGains", "silverGains", "brightness", "spritesOff", "decorOff", "batterySaver", "showArrows", "reduceMotion", "weatherSound",
   "infoDisplay", "oneTapMove", "devMode", "freePurchases",
 ] as const satisfies readonly SettingKey[];
 type PageKey = (typeof PAGE)[number];

@@ -495,7 +495,10 @@ let keysSeen: { run: number | null; colors: Set<string> } = { run: null, colors:
  * the HP still to go in purple past it. */
 export function renderVitals(game: Game) {
   const p = game.run.player, hp = game.shownHp(performance.now());
-  text("hp", `${wholeHp(hp)} / ${whole(p.maxHp)}`);
+  // Shortened from 10,000 like the purse, so the line stays one line on a
+  // phone; the exact HP is in the tooltip.
+  text("hp", `${shortAmount(wholeHp(hp))} / ${shortAmount(whole(p.maxHp))}`);
+  el("hp").parentElement!.title = `HP: ${wholeHp(hp).toLocaleString("en-US")} / ${whole(p.maxHp).toLocaleString("en-US")}`;
   renderHealthGain(game);
   const left = game.encounter ? Math.min(hp, game.fightEndHp()) : hp;
   el("health").style.width = `${(100 * left) / p.maxHp}%`;

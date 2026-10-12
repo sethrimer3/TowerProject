@@ -3,11 +3,18 @@ import type { Game, RouteEffects } from "../state.ts";
 import type { Step } from "../pathfinding.ts";
 import type { Renderer } from "../rendering.ts";
 import { el } from "./dom.ts";
+import { litTorches } from "../board.ts";
+import { point } from "../entities.ts";
 import { routeTotalLines, tileInfo, tileInfoLine } from "./tile-info.ts";
 
 /** How long the free levels' box shows; its fade over the last half second
  * is in `style.css` (`free-training-fade`). */
 const FREE_TRAINING_MS = 2000;
+/** How long a tapped floor or wall tile's highlight and boxes stay: shown
+ * 2s, then fading over 1s (`tile-info-fade` in `style.css`). */
+const PLAIN_TILE_MS = 3000;
+/** What the board's tap feedback is drawn with. */
+const FEEDBACK = ["tile-highlight", "inspect-box", "route-box"];
 
 /** The board's tap feedback: a highlighted tile, its inspect box, and the
  * route totals box. A first tap on a tile previews it (and the route there);
@@ -17,6 +24,8 @@ export class BoardOverlay {
   /** The board the highlighted tile is on (`boardKey`). */
   private highlightedOn = "";
   private fadeTimer: ReturnType<typeof setTimeout> | undefined;
+  /** Hides a plain tile's feedback once it has faded (`PLAIN_TILE_MS`). */
+  private plainTimer: ReturnType<typeof setTimeout> | undefined;
   private inspectVisible = false;
   /** What the inspect box shows, to tell when its forecast has changed. */
   private inspectShown = "";
@@ -138,6 +147,7 @@ export class BoardOverlay {
    * hand as it is: for play pressed while a preview shows. */
   dismiss() {
     this.pausedHand = false;
+    this.fadeAway(false);
     this.highlighted = null;
     this.renderer.previewRoute = null;
     this.hideInspect();
@@ -185,6 +195,23 @@ export class BoardOverlay {
     this.route = route?.length ? route : null;
     this.placed = "";
     this.track();
+    // A floor (but a lit torch's) or wall has little to say, so its feedback fades on its own.
+    const kind = this.game.world.tile(x, y).kind;
+    this.fadeAway(kind === "wall" || (kind === "floor" && !litTorches(this.game.world).has(point(x, y))));
+  }
+
+  /** Starts the feedback fading out (`on`), to be hidden once it has, or
+   * stops it fading. */
+  private fadeAway(on: boolean) {
+    clearTimeout(this.plainTimer);
+    for (const id of FEEDBACK) el(id).classList.remove("fading");
+    if (!on) return;
+    for (const id of FEEDBACK) {
+      const box = el(id);
+      void box.offsetWidth; // Restarts the fade for a tile tapped while one fades.
+      box.classList.add("fading");
+    }
+    this.plainTimer = setTimeout(() => this.hide(), PLAIN_TILE_MS);
   }
 
   private isHighlighted(p: { x: number; y: number }) {

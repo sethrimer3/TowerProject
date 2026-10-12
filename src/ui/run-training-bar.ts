@@ -19,7 +19,7 @@ const silverIcon = () => uiSprite("gold", "ui-sprite silver-sprite");
  * group. Pressing one shows that group's rows in the hand's place, a card
  * each, scrolled sideways, to buy a rank for this run with Silver; pressing
  * it again brings the hand back. Pressing or hovering a card's face shows
- * what it trains and its level. The bar shows once On the Job is owned;
+ * what it trains and its level; pressing it again hides that. The bar shows once On the Job is owned;
  * the first run after it teaches the bar (`lesson`): a note over the hand
  * and a hand pointing at a group button, the hand paused, until the
  * player opens a group and closes it again. */
@@ -30,6 +30,9 @@ export class RunTrainingBar {
   private shown = "";
   /** The card whose details show, if any. */
   private tipFor: HTMLElement | null = null;
+  /** Whether a press (not a mouse passing over) showed the details: the
+   * next press on that card hides them. */
+  private tipPressed = false;
   /** Whether the player opened a group while the lesson showed: closing it
    * then finishes the lesson. */
   private triedGroup = false;
@@ -67,13 +70,16 @@ export class RunTrainingBar {
   }
 
   /** A card's price buys a rank (red sparks when it can't); its face, or a
-   * mouse over it, shows its details. */
+   * mouse over it, shows its details, and a second press on it hides them. */
   private bindCards(cards: HTMLElement) {
     cards.onclick = (e) => {
       const target = e.target as HTMLElement, buy = target.closest<HTMLButtonElement>("[data-run-train]");
       if (buy) return this.buy(buy);
       const card = target.closest<HTMLElement>(".drill-card");
-      if (card) this.showTip(card);
+      if (!card) return;
+      if (card === this.tipFor && this.tipPressed) return this.hideTip();
+      this.showTip(card);
+      this.tipPressed = true;
     };
     cards.addEventListener("pointerover", (e) => {
       if (e.pointerType !== "mouse") return;
@@ -235,6 +241,7 @@ export class RunTrainingBar {
 
   private showTip(card: HTMLElement) {
     this.tipFor = card;
+    this.tipPressed = false;
     this.refreshTip();
   }
   /** The card's name, what it trains, and its level of the most it reaches,

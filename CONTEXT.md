@@ -139,7 +139,7 @@ The HP breaking a Wooden Door down takes: twice the ATK of the floor's normal en
 _Avoid_: door HP, door strength
 
 **Combined door**:
-One door tile taking more than one thing: a key of each of two or three colours (Amber + Azure, Azure + Crimson, Triune), or a coloured door's keys and a Heart Door's drain to 1 HP (an Azure Heart Door). It counts toward the door quota of each colour, and of hearts, it takes.
+One door tile taking more than one thing: a key of each of two or three colours (Gold + Azure, Azure + Crimson, Triune), or a coloured door's keys and a Heart Door's drain to 1 HP (an Azure Heart Door). It counts toward the door quota of each colour, and of hearts, it takes.
 _Avoid_: double door, multi-lock
 
 **Enemy curve**:
@@ -203,6 +203,10 @@ _Avoid_: dead, game over
 A reward just picked up (an item's stats, keys, Gold, materials, a treasure chest's Gold), or what a door took (each key, or the HP a Heart Door drained to 1), shown rising from the tile it came from the moment it happens: as its sprite, or written out where it has none.
 _Avoid_: popup, loot text
 
+**Pickup Gold**:
+The Gold every item a run takes off the floor pays (a potion, a shard, a key, a torch put out, a treasure chest or door opened, but no area reward chest): 1, but a key 1, 2 or 3 by its colour and a keyed door its colours added up; Gold Bonus multiplies it as it does a kill's Gold and a treasure chest's.
+_Avoid_: item Gold, floor Gold (that is Gold / Floor)
+
 ### The character
 
 **Loadout**:
@@ -214,7 +218,7 @@ How much XP the character has gathered from kills over every run. A kill pays mo
 _Avoid_: rank
 
 **Training point**:
-The currency each level earns (three a level), spent to buy ranks of training at once (a trainer can train them for Gold instead) in the character's stats (max HP, ATK, DEF, and the shroud once the Shroud skill is owned; Lifesteal once the Lifesteal skill is, Thorn Damage once Thorns is, Parry Chance and Parry % once Evade is, Crit % and Crit x once Critical is, Attack Range, Attack Speed and ATK / Tile once Tower III's floor 20, 30 and 50 Goals are claimed, Multishot Chance and Multishot Targets once its floor 90 Goal is) and, with Recovery, Find Potion, Revive, Spare Change, Wishing Well, Wealthy, Loot and Free Training, in Potion %, Find Potion, Revive, Gold / Floor, Silver / Floor, Silver Bonus, Gold / Kill and the Free Offense, Defense and Utility Up rows on the Training tab. A stat's ranks add up on its **rank curve**: each rank is worth more than the one before, whatever the character's level.
+The currency each level earns (three a level), spent to buy ranks of training at once (a trainer can train them for Gold instead) in the character's stats (max HP, ATK, DEF, and the shroud once the Shroud skill is owned; Lifesteal once the Lifesteal skill is, Thorn Damage once Thorns is, Parry Chance and Parry % once Evade is, Crit % and Crit x once Critical is, Attack Range, Attack Speed and ATK / Tile once Tower III's floor 20, 30 and 50 Goals are claimed, Multishot Chance and Multishot Targets once its floor 90 Goal is) and, with Recovery, Find Potion, Revive, Spare Change, Wishing Well, Wealthy, Loot and Free Training, in Potion %, Find Potion, Revive, Gold / Floor, Silver / Floor, Silver Bonus, Gold Bonus and the Free Offense, Defense and Utility Up rows on the Training tab. A stat's ranks add up on its **rank curve**: each rank is worth more than the one before, whatever the character's level.
 _Avoid_: skill point, stat point
 
 **Trainer**:
@@ -476,7 +480,7 @@ Silver added on each floor climbed for the first time in a run: Interest % resea
 _Avoid_: dividend
 
 **Floor Skip Reward**:
-Gold paid for a floor skipped: Floor Skip Reward research's percent of the Gold the floor's battles and chests still held (each closed chest counted at its average). What it counts pays no Gold if met later.
+Gold paid for a floor skipped: Floor Skip Reward research's percent of the Gold the floor's battles, chests and items still held (each closed chest counted at its average, each item at its Pickup Gold). What it counts pays no Gold if met later.
 
 **Activation**:
 A card of the hand doing what it is for: its path's last step reaching its target, or a card that acts in place acting. Card badges pay on activation.

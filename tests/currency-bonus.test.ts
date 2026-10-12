@@ -6,14 +6,16 @@ import { trainingOpen } from "../src/loadout.ts";
 import { TRAINING, cost, type TrainingId, type UpgradeId } from "../src/config.ts";
 import { TREES } from "../src/skill-trees.ts";
 import { RESEARCH, researched, type ResearchId } from "../src/archives.ts";
-import { floorSilver, killGold, silverBonus, trainingStep, trainingText } from "../src/loadout.ts";
+import { floorSilver, goldBonus, silverBonus, trainingStep, trainingText } from "../src/loadout.ts";
 import { runTrainingValue } from "../src/run-training.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
 import type { World } from "../src/delve/world.ts";
+import type { Tile } from "../src/entities.ts";
+import { random } from "../src/random.ts";
 
 /** Wealthy, Loot and Wishing Well (under Spare Change): each opens a
  * Utility Training row and Archives research of the same name. */
-const SKILLS: [UpgradeId, TrainingId & ResearchId][] = [["wealthy", "silverBonus"], ["loot", "killGold"], ["wishingWell", "floorSilver"]];
+const SKILLS: [UpgradeId, TrainingId & ResearchId][] = [["wealthy", "silverBonus"], ["loot", "goldBonus"], ["wishingWell", "floorSilver"]];
 
 test("Wealthy, Loot and Wishing Well cost 2 Inspiration each, after Spare Change", () => {
   const g = new Game(defaults());
@@ -43,13 +45,13 @@ test("Wealthy, Loot and Wishing Well each open their Training row and research",
   }
 });
 
-test("Silver Bonus starts at ×1 and adds 1% a rank, Gold / Kill 3%; Silver / Floor starts at 0 and adds 4", () => {
+test("Silver Bonus starts at ×1 and adds 1% a rank, Gold Bonus 3%; Silver / Floor starts at 0 and adds 4", () => {
   const save = defaults();
-  assert.deepEqual([silverBonus(save), killGold(save), floorSilver(save)], [100, 100, 0], "nothing without the skills");
-  save.training.silverBonus = save.training.killGold = save.training.floorSilver = 10;
-  assert.deepEqual([silverBonus(save), killGold(save), floorSilver(save)], [100, 100, 0], "ranks count only with the skill");
+  assert.deepEqual([silverBonus(save), goldBonus(save), floorSilver(save)], [100, 100, 0], "nothing without the skills");
+  save.training.silverBonus = save.training.goldBonus = save.training.floorSilver = 10;
+  assert.deepEqual([silverBonus(save), goldBonus(save), floorSilver(save)], [100, 100, 0], "ranks count only with the skill");
   save.upgrades.wealthy = save.upgrades.loot = save.upgrades.wishingWell = 1;
-  assert.deepEqual([silverBonus(save), killGold(save), floorSilver(save)], [110, 130, 40]);
+  assert.deepEqual([silverBonus(save), goldBonus(save), floorSilver(save)], [110, 130, 40]);
   const step = trainingStep(save, "silverBonus");
   assert.deepEqual([step.unit, step.now, step.next, step.worth], ["×", 1.1, 1.11, 1]);
   assert.equal(trainingText(step.now, step.unit), "×1.10");
@@ -74,17 +76,62 @@ function facingEnemy() {
   return g;
 }
 
-test("a kill's Silver takes Silver Bonus and its Gold takes Gold / Kill, training and research multiplied", () => {
+test("a kill's Silver takes Silver Bonus and its Gold takes Gold Bonus, training and research multiplied", () => {
   const g = facingEnemy(), s = g.save;
   s.upgrades.wealthy = s.upgrades.loot = 1;
-  s.training.silverBonus = s.training.killGold = 10;
-  s.archives.levels.silverBonus = s.archives.levels.killGold = 10;
+  s.training.silverBonus = s.training.goldBonus = 10;
+  s.archives.levels.silverBonus = s.archives.levels.goldBonus = 10;
   assert.ok(g.stepManually(1, 0));
   // 12 Silver × 1.1 × 1.3 and 2 Gold × 1.3 × 1.3.
   assert.equal(g.silver, 17.16);
   assert.equal(s.gold, 3.38);
   assert.ok(g.gains.some((gain) => gain.text === "+17 Silver"));
   assert.equal(new Game(decode(JSON.stringify(s))).silver, 17.16, "Silver keeps its fraction in the save");
+});
+
+test("every item taken off the floor pays Gold, a key or door by its colours, raised by Gold Bonus, once a tile", () => {
+  const g = facingEnemy(), s = g.save, w = g.world as RoomWorld;
+  s.upgrades.loot = 1;
+  s.training.goldBonus = s.archives.levels.goldBonus = 10;
+  const cells = w.cells = new Map<string, any>([["0,0", { kind: "floor" }], ["1,0", { kind: "key", color: "red" }],
+    ["2,0", { kind: "door", door: { type: "keys", keys: ["yellow", "blue", "red"], mode: "all" } }], ["3,0", { kind: "floor" }], ["4,0", { kind: "potion" }]]);
+  w.torches = [{ x: 3, y: 0, active: true }, { x: 0, y: 1, active: true }] as RoomWorld["torches"];
+  Object.assign(g.run.player.keys, { yellow: 1, blue: 1 });
+  // ×1.3 training and ×1.3 research: a crimson key's 3, a Triune Door's
+  // 1 + 2 + 3, a torch's 1 and a potion's 1.
+  const paid = [3, 6, 1, 1].map((base) => base * 1.69);
+  let gold = s.gold;
+  for (let x = 1; x <= 4; x++) {
+    assert.ok(g.stepManually(1, 0));
+    assert.ok(Math.abs(s.gold - gold - paid[x - 1]) < 1e-9, `step ${x}`);
+    gold = s.gold;
+  }
+  assert.ok(g.undo());
+  (g.world as RoomWorld).cells = cells; // Undo builds the floor again from its seed.
+  assert.ok(g.stepManually(1, 0));
+  assert.equal(s.gold, gold, "undo can't pay a potion again");
+});
+
+test("a treasure chest's Gold, its 1 for opening counted, takes Gold Bonus; an area chest pays no Gold", () => {
+  /** The Gold a chest at (1, 0) pays with `ranks` of Gold Bonus, its loot rolled the same each time. */
+  const chest = (ranks: number, tile: Tile = { kind: "treasure" }) => {
+    const save = defaults();
+    save.themes = [];
+    save.settings.devMode = true;
+    save.upgrades.loot = 1;
+    save.training.goldBonus = ranks;
+    const g = new Game(save, random(7));
+    g.run.height = 10;
+    (g.world as RoomWorld).cells = new Map<string, any>([["0,0", { kind: "floor" }], ["1,0", tile]]);
+    Object.assign(g.run.player, { x: 0, y: 0 });
+    const gold = save.gold;
+    assert.ok(g.stepManually(1, 0));
+    return save.gold - gold;
+  };
+  const plain = chest(0);
+  assert.ok(plain > 1);
+  assert.ok(Math.abs(chest(10) - plain * 1.3) < 1e-9, "×1.3 with 10 ranks");
+  assert.equal(chest(10, { kind: "reward", tier: "gold" }), 0);
 });
 
 /** A Tower run inside on floor 4, the hero at (0, 0) beside the stairs at (1, 0). */

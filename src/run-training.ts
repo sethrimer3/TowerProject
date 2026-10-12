@@ -1,7 +1,7 @@
 import { RUN_TRAINING_PRICES, schedulePrice, TRAINING, isStatRow, type TrainingId, type TrainingRow } from "./config.ts";
 import type { RunCore, Save } from "./entities.ts";
 import { bulkBuy, type BuyQuantity } from "./buy-quantity.ts";
-import { attackPerTile, attackRange, multishotChance, multishotTargets, attackSpeed, critChance, critFactor, floorGold, freeTrainingChance, FREE_TRAINING_ROWS, floorSilver, killGold, percentPotionChance, silverBonus, potionPercent, reviveChance, shownStat, statUnit, trainingOpen } from "./loadout.ts";
+import { attackPerTile, attackRange, multishotChance, multishotTargets, attackSpeed, critChance, critFactor, floorGold, freeTrainingChance, FREE_TRAINING_ROWS, floorSilver, goldBonus, percentPotionChance, silverBonus, potionPercent, reviveChance, shownStat, statUnit, trainingOpen } from "./loadout.ts";
 
 /** Run training: Training ranks bought with Silver inside a run, on top of
  * the hero's own, lasting only for that run (`run.training`, so undo takes
@@ -65,7 +65,7 @@ export function runTrainingValue(save: Pick<Save, "training" | "upgrades" | "goa
   if (id === "floorGold") return { value: floorGold(now), unit: "" };
   if (id === "floorSilver") return { value: floorSilver(now), unit: "" };
   if (id === "silverBonus") return { value: silverBonus(now) / 100, unit: "×" };
-  if (id === "killGold") return { value: killGold(now) / 100, unit: "×" };
+  if (id === "goldBonus") return { value: goldBonus(now) / 100, unit: "×" };
   const free = (Object.keys(FREE_TRAINING_ROWS) as (keyof typeof FREE_TRAINING_ROWS)[]).find((g) => FREE_TRAINING_ROWS[g] === id);
   const chance = free ? freeTrainingChance(now, free) : id === "findPotion" ? percentPotionChance(now) : id === "revive" ? reviveChance(now) : potionPercent(now);
   return { value: chance / 100, unit: "%" };

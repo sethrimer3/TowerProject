@@ -26,7 +26,7 @@ test("single and combination locks require and consume their exact key sets", ()
   assert.deepEqual(doorCost(door(6), player(1, 1, 1)), ["yellow", "blue", "red"]);
 });
 
-test("steel consumes one key in explicit amber/azure/crimson priority", () => {
+test("steel consumes one key in explicit gold/azure/crimson priority", () => {
   assert.equal(doorCost(door(7), player()), null);
   assert.deepEqual(doorCost(door(7), player(1, 1, 1)), ["yellow"]);
   assert.deepEqual(doorCost(door(7), player(0, 1, 1)), ["blue"]);

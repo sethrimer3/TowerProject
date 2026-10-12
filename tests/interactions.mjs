@@ -137,7 +137,7 @@ await fixture(place, {
 });
 await tap(door.x, door.y + 2);
 await expect.poll(async () => (await player()).y).toBe(door.y - 1);
-await expect(page.locator("#message")).toContainText("Requires amber key.");
+await expect(page.locator("#message")).toContainText("Requires gold key.");
 await page.screenshot({ path: "test-results/blocked-door.png", fullPage: true });
 
 // A lethal fight leaves the hero fallen: the defeat dialog survives a

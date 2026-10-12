@@ -103,17 +103,30 @@ test("the door panel shows what opening it takes under Key Efficiency and Heart 
   ]);
   Object.assign(g.run.player, { hp: 100, maxHp: 100, keys: { yellow: 2, blue: 0, red: 0 } });
   const body = (x: number) => tileInfo(g, x, 0).body;
-  assert.match(body(1), /Amber key: 2 → 1/);
-  assert.match(body(2), /Amber key: 2 → 1/);
+  assert.match(body(1), /Gold key: 2 → 1/);
+  assert.match(body(2), /Gold key: 2 → 1/);
   assert.match(body(3), /HP 100 → 1/);
   // Key Efficiency's two levels: each key costs 99% of one.
   g.save.archives.levels.keyEfficiency = 2;
-  assert.match(body(1), /Amber key: 2 → 1\.01/, "a Wooden Door's key too");
-  assert.match(body(2), /Amber key: 2 → 1\.01/);
+  assert.match(body(1), /Gold key: 2 → 1\.01/, "a Wooden Door's key too");
+  assert.match(body(2), /Gold key: 2 → 1\.01/);
   // Heart Door Resilience's two levels: 10% less of the toll.
   g.save.archives.levels.heartDoorResilience = 2;
   assert.match(body(3), /HP 100 → 10\b/);
   // With no key, a Wooden Door is broken for its durability.
   g.run.player.keys.yellow = 0;
   assert.match(body(1), /Break: HP 100 → 70/);
+});
+
+test("the potion panel says how much HP it restores, a percent potion its share of max HP too; a wall is an obstacle", () => {
+  const g = new Game(defaults());
+  const w = g.world as RoomWorld;
+  w.cells = new Map([["1,0", { kind: "potion" }], ["2,0", { kind: "potion", color: "red", amount: 20 }], ["3,0", { kind: "wall" }]]);
+  Object.assign(g.run.player, { hp: 50, maxHp: 400 });
+  const body = (x: number) => tileInfo(g, x, 0).body;
+  assert.match(body(1), /^<span>Restores 35 HP<\/span><br>.* \+35 HP</);
+  assert.match(body(2), /Restores 20 HP</, "no share of max HP before Recovery");
+  g.save.upgrades.recovery = 1;
+  assert.match(body(2), /Restores 20 HP \+ 1% of max HP \(24 HP\)/);
+  assert.equal(body(3), "Impassable obstacle.");
 });

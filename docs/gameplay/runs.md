@@ -63,6 +63,7 @@ It costs the same in all as Rush, about 201 billion Gold and 697 days, spread mo
 ## More controls
 
 Instant Combat likewise adds **Animate fights** (see [Fights](fights.md#how-a-fight-plays-out)).
+**Item pickup animations**, **Door payment animations**, **Gold pickup animations** and **Silver pickup animations** each turn off one kind of gain rising off the board: an item's sprite rising as it is picked up, the keys and HP a door takes, and the Gold and Silver found (what each pays is paid all the same).
 Beside Dev mode, **Dev: free purchases** is a lighter tool for testing: it unlocks nothing, but every purchase (skills, Training, provisions, research and archivists, Defend) goes through whatever you have and costs nothing, and research completes the moment it starts.
 In the forest **Enter**, an arrow going into an arch, stands under Goals beside the tower's number: one press goes straight in through the entrance and starts the run.
 Inside a run the button under Settings plays and pauses the hand.

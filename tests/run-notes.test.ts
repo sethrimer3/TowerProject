@@ -100,7 +100,7 @@ test("the notes come grouped under headings, and copy as text", () => {
   assert.ok("Courage" in rows, "the mode's currency");
   const text = notesText("Descent Notes", sections);
   assert.match(text, /^Descent Notes\n\nRUN\nDelve: 1\n/);
-  assert.match(text, /\nKEYS OBTAINED\nAmber keys: 0\nAzure keys: 1\n/);
+  assert.match(text, /\nKEYS OBTAINED\nGold keys: 0\nAzure keys: 1\n/);
   assert.equal(elapsed(3_725_000), "1h 02m 05s");
   assert.equal(elapsed(65_000), "1m 05s");
 });
@@ -108,7 +108,7 @@ test("the notes come grouped under headings, and copy as text", () => {
 test("saved notes and finds come back, and malformed ones are dropped", () => {
   const g = new Game(defaults());
   g.retry("test");
-  Object.assign(g.run.notes!, { steps: 12, keys: { yellow: 2, blue: 0.5 }, doors: { "Amber Door": 2 }, silver: 7.25 });
+  Object.assign(g.run.notes!, { steps: 12, keys: { yellow: 2, blue: 0.5 }, doors: { "Gold Door": 2 }, silver: 7.25 });
   g.save.tower.runFinds.cells = 2;
   const back = decode(JSON.stringify(g.save));
   assert.deepEqual(back.tower.run!.notes, g.run.notes);

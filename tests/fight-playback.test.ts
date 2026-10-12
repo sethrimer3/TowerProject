@@ -151,7 +151,10 @@ test("a fight the hero loses leaves it fallen only once it has played out", () =
 test("pickups and treasure queue their rewards to rise from their tiles", () => {
   const key = arena({ kind: "key", color: "blue" });
   key.move(1, 0);
-  assert.deepEqual(key.gains, [{ x: 1, y: 0, text: "+1 blue key", art: { tile: { kind: "key", color: "blue" } } }]);
+  assert.deepEqual(key.gains, [
+    { x: 1, y: 0, text: "+1 blue key", art: { tile: { kind: "key", color: "blue" } } },
+    { x: 1, y: 0, text: "+2 Gold", art: { coin: "gold" }, drop: { row: 1, with: true } },
+  ], "a blue key's 2 Gold rises with it, a row above");
   assert.equal(key.message, "+1 blue key");
   assert.equal(key.effect.until, 0, "no text flashes over the board");
 
@@ -225,13 +228,33 @@ test("a door raises each key it took, with a minus sign, and a Heart Door a chec
   assert.deepEqual(keys.gains.map((g) => [g.text, g.art]), [
     ["−1 yellow key", { tile: { kind: "key", color: "yellow" }, spent: true }],
     ["−1 blue key", { tile: { kind: "key", color: "blue" }, spent: true }],
-  ]);
+    ["+3 Gold", { coin: "gold" }],
+  ], "a Gold + Azure Door pays its colours' 1 + 2 Gold");
   assert.match(keys.message, /opened · 2 keys spent$/);
   assert.equal(keys.effect.until, 0, "no text flashes over the board");
 
   const heart = arena({ kind: "door", door: { type: "fullHp" } });
   assert.ok(heart.move(1, 0));
-  assert.deepEqual(heart.gains.map((g) => [g.x, g.y, g.art]), [[1, 0, { heart: true }]]);
+  assert.deepEqual(heart.gains.map((g) => [g.x, g.y, g.art]), [[1, 0, { heart: true }], [1, 0, { coin: "gold" }]]);
+});
+
+test("each kind of gain stays off the board while its setting is off, what it pays paid all the same", () => {
+  const shown = (setting: "itemGains" | "doorGains" | "goldGains", east: Tile) => {
+    const g = arena(east);
+    g.save.settings[setting] = false;
+    Object.assign(g.run.player.keys, { yellow: 1 });
+    const gold = g.save.gold;
+    assert.ok(g.move(1, 0));
+    assert.ok(g.save.gold > gold, "the Gold is paid");
+    return g.gains.map((gain) => gain.text);
+  };
+  assert.deepEqual(shown("itemGains", { kind: "attack", amount: 1 }), ["+1 Gold"]);
+  assert.deepEqual(shown("goldGains", { kind: "attack", amount: 1 }), ["+1 attack"]);
+  assert.deepEqual(shown("doorGains", { kind: "door", door: { type: "keys", keys: ["yellow"], mode: "all" } }), ["+1 Gold"]);
+  const kill = arena({ kind: "enemy", enemy: foe({ hp: 1, attack: 0, strength: "weak" }) }, false);
+  kill.save.settings.silverGains = false;
+  assert.ok(kill.move(1, 0));
+  assert.ok(kill.gains.every((gain) => !gain.art || !("coin" in gain.art) || gain.art.coin === "gold"), "no Silver rises");
 });
 
 test("the enemy's HP bar shows from the hero's first strike, drains with each, and fades once the enemy falls", () => {

@@ -373,7 +373,7 @@ export const UPGRADES = [
   {
     id: "loot",
     name: "Loot",
-    description: "Each kill pays more Gold: opens Gold / Kill training, and Gold / Kill research in the Archives",
+    description: "Kills and items picked up pay more Gold: opens Gold Bonus training, and Gold Bonus research in the Archives",
     base: 2,
     max: 1,
     currency: "inspiration",
@@ -503,6 +503,14 @@ export const ENEMY_GOLD: Record<EnemyStrength, number> = { weak: 1, normal: 1, s
 export const FAST_GOLD = 1;
 /** The Gold a Ranged enemy pays more than its strength's (ranged.ts). */
 export const RANGED_GOLD = 1;
+/** Gold every item a run takes off the floor pays, before Gold Bonus and
+ * the tier's bonus: a potion, a shard, a torch put out, a treasure chest
+ * opened (not an area reward chest), a door without a colour (Heart,
+ * Wooden, Steel) opened. */
+export const PICKUP_GOLD = 1;
+/** Gold a key of each colour pays when picked up, and a keyed door opened
+ * the sum of its colours' (a Triune Door 6). */
+export const KEY_GOLD: Record<KeyColor, number> = { yellow: 1, blue: 2, red: 3 };
 /** Silver, the currency spent inside a run, that a beaten enemy pays per
  * base amount, by its strength. */
 export const SILVER_MULTIPLIER: Record<EnemyStrength, number> = { weak: 1, normal: 2, strong: 3, elite: 4, boss: 5, greaterBoss: 10 };
@@ -569,7 +577,7 @@ export const TRAINING_GROUPS = { offense: "Offense", defense: "Defense", utility
  * the chance a potion is a percent potion, Gold / Floor
  * `FLOOR_GOLD_RANK` to the Gold a new floor pays and Silver / Floor
  * `FLOOR_SILVER_RANK` to its Silver, and Silver Bonus `SILVER_BONUS_RANK`
- * and Gold / Kill `KILL_GOLD_RANK` percent to their multiplier, the same at
+ * and Gold Bonus `GOLD_BONUS_RANK` percent to their multiplier, the same at
  * every level. A row
  * with `requires` shows, and trains, only once that upgrade is owned. Each
  * trains no further than `max` ranks, its ranks and those bought for a run
@@ -595,7 +603,7 @@ export const TRAINING = [
   { id: "floorGold", name: "Gold / Floor", group: "utility", requires: "spareChange", cost: 1, max: 150, description: "Raises the Gold paid for each floor climbed for the first time in a run." },
   { id: "floorSilver", name: "Silver / Floor", group: "utility", requires: "wishingWell", cost: 1, max: 150, description: "Raises the Silver paid for each floor climbed for the first time in a run." },
   { id: "silverBonus", name: "Silver Bonus", group: "utility", requires: "wealthy", cost: 1, max: 150, description: "Multiplies all Silver found in a run." },
-  { id: "killGold", name: "Gold / Kill", group: "utility", requires: "loot", cost: 1, max: 150, description: "Multiplies the Gold each kill pays." },
+  { id: "goldBonus", name: "Gold Bonus", group: "utility", requires: "loot", cost: 1, max: 150, description: "Multiplies the Gold each kill pays, and each item picked up or door opened in a run." },
   { id: "freeOffense", name: "Free Offense Up", group: "utility", requires: "freeTraining", cost: 1, max: 100, description: "Each floor passed in a run has a chance to train a random Offense stat one level for free, for the run." },
   { id: "freeDefense", name: "Free Defense Up", group: "utility", requires: "freeTraining", cost: 1, max: 100, description: "Each floor passed in a run has a chance to train a random Defense stat one level for free, for the run." },
   { id: "freeUtility", name: "Free Utility Up", group: "utility", requires: "freeTraining", cost: 1, max: 100, description: "Each floor passed in a run has a chance to train a random Utility stat one level for free, for the run." },
@@ -646,9 +654,9 @@ export const FLOOR_GOLD_BASE = 3, FLOOR_GOLD_RANK = 1;
  * Silver / Floor research and Silver Bonus: none with Wishing Well alone,
  * and 4 for each Silver / Floor rank. */
 export const FLOOR_SILVER_BASE = 0, FLOOR_SILVER_RANK = 4;
-/** What each Silver Bonus or Gold / Kill rank adds to its multiplier, in
+/** What each Silver Bonus or Gold Bonus rank adds to its multiplier, in
  * percent (×1 with no ranks). */
-export const SILVER_BONUS_RANK = 1, KILL_GOLD_RANK = 3;
+export const SILVER_BONUS_RANK = 1, GOLD_BONUS_RANK = 3;
 /** The chance each floor passed in a run trains a stat of a Free Upgrade
  * row's group a level for free, in hundredths of a percent: 0.5% a rank,
  * 50% at its 100. */
@@ -774,7 +782,7 @@ export const RUN_TRAINING_PRICES: Record<TrainingId, PriceSchedule> = {
   floorGold: opened,
   floorSilver: opened,
   silverBonus: opened,
-  killGold: opened,
+  goldBonus: opened,
   freeOffense: freeUpgrades,
   freeDefense: freeUpgrades,
   freeUtility: freeUpgrades,
@@ -832,7 +840,7 @@ export const TRAINER_GOLD_CURVES: Record<TrainingId, TrainerCurve> = {
   floorGold: firmTrainers,
   floorSilver: firmTrainers,
   silverBonus: firmTrainers,
-  killGold: firmTrainers,
+  goldBonus: firmTrainers,
   /** The Free Upgrade rows: the same curve as their Silver (`freeUpgrades`). */
   freeOffense: { growth: freeUpgrades.growth, start: freeUpgrades.base, cubic: freeUpgrades.cubic },
   freeDefense: { growth: freeUpgrades.growth, start: freeUpgrades.base, cubic: freeUpgrades.cubic },

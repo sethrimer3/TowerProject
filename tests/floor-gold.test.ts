@@ -48,7 +48,7 @@ test("Spare Change opens Gold / Floor training (3, and 1 a rank) and its researc
   assert.ok(ours.slice(2).every((l, i) => l.gold > potion[i + 2]!.gold));
   assert.ok(ours.every((l, i) => i === 0 || l.gold > ours[i - 1]!.gold), "every level dearer than the last");
   assert.deepEqual([1, 2, 3, 4, 5, 10, 100].map((n) => ours[n - 1]!.gold), [10, 25, 55, 130, 299, 7608, 1834744]);
-  for (const id of ["floorSilver", "silverBonus", "killGold"] as const) assert.deepEqual(RESEARCH[id].levels.map((l) => [l.gold, l.hours]), ours.map((l) => [l.gold, l.hours]));
+  for (const id of ["floorSilver", "silverBonus", "goldBonus"] as const) assert.deepEqual(RESEARCH[id].levels.map((l) => [l.gold, l.hours]), ours.map((l) => [l.gold, l.hours]));
   // Key Efficiency is steeper still.
   const keys = RESEARCH.keyEfficiency.levels;
   assert.deepEqual(keys.map((l) => l.hours), potion.map((l) => l.hours));

@@ -96,8 +96,9 @@ export const RESEARCH_TARGETS = {
   /** The percent of the Gold a skipped floor's chests and battles held that
    * skipping it pays, from 0. */
   floorSkipGold: { name: "Floor Skip Gold", base: 0, shown: percent },
-  /** The percent of its Gold a kill pays, from 100. */
-  killGold: { name: "Gold per Kill", base: 100, shown: percent },
+  /** The percent of its Gold a kill, or an item picked up or door opened,
+   * pays, from 100. */
+  goldBonus: { name: "Gold Bonus", base: 100, shown: percent },
   /** The chance, in tenths of a percent, that a new floor climbed hands
    * the hero a yellow key. */
   yellowKeyChance: { name: "Yellow Key Chance", base: 0, shown: tenths },
@@ -211,7 +212,7 @@ const countLevels = (target: ResearchTarget, length = 9, value = 1) => Array.fro
  * With `steep`, the Gold gains a quadratic term whose coefficient falls by
  * level, q(m) = Q × B / (m + B), rounded to whole Gold: much dearer early
  * and mid levels, the late ones less so. Gold / Floor, Silver / Floor,
- * Silver Bonus and Gold / Kill take `STEEP_INCOME` (Q 200, B 100: 7,608
+ * Silver Bonus and Gold Bonus take `STEEP_INCOME` (Q 200, B 100: 7,608
  * Gold at level 10, 1.83 million at 100, 57.4 million in all), Key
  * Efficiency `STEEP_KEYS` (Q 400, B 50: 13,673 at 10, 2.16 million at 100,
  * 72.5 million in all). Their time is unchanged. Each also sets its own
@@ -632,12 +633,12 @@ export const RESEARCH = {
     requires: [{ upgrade: "wealthy" }],
     levels: hundredLevels("silverBonus", 3, STEEP_INCOME),
   },
-  killGold: {
-    name: "Gold / Kill",
-    description: "Search the fallen more thoroughly: every kill pays more Gold.",
+  goldBonus: {
+    name: "Gold Bonus",
+    description: "Search more thoroughly: every kill, and every item picked up or door opened in a run, pays more Gold.",
     categories: ["economy"],
     requires: [{ upgrade: "loot" }],
-    levels: hundredLevels("killGold", 3, STEEP_INCOME),
+    levels: hundredLevels("goldBonus", 3, STEEP_INCOME),
   },
   heartDoorResilience: {
     name: "Heart Door Resilience",
