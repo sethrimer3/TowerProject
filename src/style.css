@@ -516,9 +516,9 @@ h1 span {
   gap: 0;
 }
 .purse.forest > span { line-height: 0.95; }
-/* Inside a run a tap on Gold or Silver shows the rates they are found at. */
-.purse:not(.forest) .gold-stat,
-.purse:not(.forest) .silver-stat { cursor: pointer; }
+/* Inside a run a tap anywhere on the left rail shows the rates Gold and
+   Silver are found at. */
+.portrait-actions:has(> .purse:not(.forest)) { cursor: pointer; }
 .purse .per-minute { margin-left: 1px; font-size: 0.6em; font-weight: 500; opacity: 0.8; }
 .gem-stat b { color: #8fe3ff; }
 .shard-stat b { color: #8dffb8; }

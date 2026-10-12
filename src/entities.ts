@@ -374,9 +374,11 @@ export type Save = {
    * closing a Training group under the hand in the first run after On the
    * Job; `speed`, speeding the hand up on the second floor; `climb`, the
    * first run's note, dismissed; and in the forest `enter`, the note to try
-   * again, dismissed (or a run entered), and `delve`, opening the Delve
-   * once Into the depths is owned. */
-  tutorials: { deck: boolean; removeCard: boolean; addCard: boolean; upgrades: boolean; gear: boolean; onTheJob: boolean; speed: boolean; climb: boolean; enter: boolean; delve: boolean };
+   * again, dismissed (or a run entered), `delve`, opening the Delve
+   * once Into the depths is owned, and `chamber`, the first Tower run
+   * ended, after which a new floor's "A new chamber opens." no longer
+   * rises over the board. */
+  tutorials: { deck: boolean; removeCard: boolean; addCard: boolean; upgrades: boolean; gear: boolean; onTheJob: boolean; speed: boolean; climb: boolean; enter: boolean; delve: boolean; chamber: boolean };
   /** Per tree: a run that earned its currency (Inspiration in the Tower,
    * Courage in the Delve) has ended since the tree was last shown, so its
    * tab (and the Upgrades tab) wear a dot in the forest while a skill there

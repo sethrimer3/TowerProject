@@ -21,7 +21,7 @@ Once the monster falls the hero steps onto its tile.
 
 ## Rewards and feedback
 
-Either way, every reward picked up (an item, a chest's Gold and metal bars, a monster's Equipment materials) rises from its tile as its sprite for about a second, starting at once over anything still rising (what comes together, like a chest's Gold and metal bars, one after another); rewards with no sprite rise as "+N" text.
+Either way, every reward picked up (an item, a chest's Gold and metal bars, a monster's Equipment materials) rises from its tile as its sprite for about a second, starting at once over anything still rising (what comes together, like a chest's Gold and metal bars, one after another; but a monster's drops all rise at once, its Gold just above its Silver and anything else it dropped, like a Greater Boss's Cells or Equipment materials, below them); rewards with no sprite rise as "+N" text.
 A door raises each key it took with a minus sign, and a Heart Door, which needs no key but drains the hero's HP to 1, a heart with the HP it took.
 Taking the stairs snaps the hero straight onto the new floor with a brief white glow behind it, and while the hero stands on the board's bottom row the status line over it turns half see-through.
 Undo during a fight takes back the whole fight.

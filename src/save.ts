@@ -60,7 +60,7 @@ export function defaults(): Save {
     hand: [...BASE_HAND],
     handSlots: 0,
     badges: defaultBadges(),
-    tutorials: { deck: false, removeCard: false, addCard: false, upgrades: false, gear: false, onTheJob: false, speed: false, climb: false, enter: false, delve: false },
+    tutorials: { deck: false, removeCard: false, addCard: false, upgrades: false, gear: false, onTheJob: false, speed: false, climb: false, enter: false, delve: false, chamber: false },
     treeNotices: { inspiration: false, courage: false },
     seen: { level: 0, training: 0, archives: 0, cards: [...BASE_HAND] },
     archives: defaultArchives(),
@@ -451,7 +451,7 @@ export function decode(raw: string | null): Save {
     if (d.upgrades.largerHand) d.handSlots = count(s.handSlots, 0, HAND_SLOT_GEMS.length);
     d.hand = decodeHand(s.hand, deckCards(d.upgrades), handSlots(d));
     d.badges = decodeBadges(s.badges, d.upgrades, researched(d.archives, "badgeSlots", 1));
-    for (const k of ["deck", "removeCard", "addCard", "upgrades", "gear", "onTheJob", "speed", "climb", "enter", "delve"] as const) d.tutorials[k] = s.tutorials?.[k] === true;
+    for (const k of ["deck", "removeCard", "addCard", "upgrades", "gear", "onTheJob", "speed", "climb", "enter", "delve", "chamber"] as const) d.tutorials[k] = s.tutorials?.[k] === true;
     for (const k of ["inspiration", "courage"] as const) d.treeNotices[k] = s.treeNotices?.[k] === true;
     d.seen = decodeSeen(s.seen, d);
     d.profile = decodeProfile(s.profile);

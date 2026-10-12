@@ -281,8 +281,11 @@ function boardTap(x: number, y: number) {
   update();
 }
 // Goals: the Tower's checkpoints (the Delve's button is a placeholder).
-// The purse's Gold and Silver: tapped inside a run, the rates they are found at.
-for (const id of ["gold", "run-silver"]) el(id).parentElement!.onclick = () => togglePurseRates(game);
+// The left rail, tapped anywhere but its buttons inside a run: the purse's
+// Gold and Silver show the rates they are found at.
+(document.querySelector(".portrait-actions") as HTMLElement).onclick = (e) => {
+  if (!(e.target as Element).closest("button")) togglePurseRates(game);
+};
 el("section-pick").onclick = () => {
   if (game.mode === "tower") navigate("goals");
 };

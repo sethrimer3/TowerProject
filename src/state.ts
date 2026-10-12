@@ -111,8 +111,12 @@ export type RouteEffects = {
  * came from: drawn as its sprite (a tile's contents, marked `spent` for a
  * key a door used, a material, or the heart a Heart Door checked, or with
  * a plus, `raised`, the max HP Max HP's badge added), or as `text` where it
- * has none. */
-export type Gain = { x: number; y: number; text: string; art: GainArt | null };
+ * has none. A kill's drops carry their `drop` place, so they rise together. */
+export type Gain = { x: number; y: number; text: string; art: GainArt | null; drop?: Drop };
+/** Where one of a kill's drops rises: `row` rows above its tile (below,
+ * negative), Gold over Silver over the rest, and whether it starts `with`
+ * the drop queued before it rather than after. */
+export type Drop = { row: number; with: boolean };
 export type GainArt = { tile: Tile; spent?: true } | { material: MaterialId; quantity: number } | { heart: true; raised?: true } | { gem: true } | { coin: Coin } | { cell: true }
   | { equipMaterial: EquipMaterialId; quantity: number } | { equipPiece: string; rarity: EquipRarity };
 /** The coin a Gold or Silver gain raises. */
@@ -1593,8 +1597,8 @@ export class Game {
     };
   }
   /** Queues a reward to rise from (x, y). */
-  gain(x: number, y: number, text: string, art: GainArt | null = null) {
-    this.gains.push({ x, y, text, art });
+  gain(x: number, y: number, text: string, art: GainArt | null = null, drop?: Drop) {
+    this.gains.push({ x, y, text, art, ...(drop ? { drop } : {}) });
     if (this.gains.length > MAX_GAINS) this.gains.shift();
   }
   /** Pays the XP for beating `enemy` on equivalent floor `floor`, counting
@@ -1621,6 +1625,8 @@ export class Game {
    * in the forest. */
   private finalizeRun(reason: string) {
     const record = this.payout(), gold = this.slice.runGold;
+    // A new floor's "A new chamber opens." teaches only the first Tower run.
+    if (this.mode === "tower") this.save.tutorials.chamber = true;
     this.forestSeeds.clear();
     // A run that earned its currency sends the player to spend it.
     if (this.slice.runCurrency > 0) this.save.treeNotices[this.rules === MODES.tower ? "inspiration" : "courage"] = true;
@@ -1907,14 +1913,19 @@ export class Game {
     // Silver belongs to the run, so it isn't gated like Gold: undo takes it back.
     const purse = this.purse, silver = purse.killSilver(enemy, floor, scale);
     const { gold, cells, equipment } = purse.enemyLoot(enemy, at.x, at.y, scale, instakill);
-    this.gainCoins(at, gold, silver);
     const cellsFound = cells ? [cellsText(cells)] : [];
-    for (const text of cellsFound) this.gain(at.x, at.y, text, { cell: true });
+    const found = equipmentGains(equipment);
+    // The drops rise together, stacked: Gold over Silver, the rest below.
+    const drops: { text: string; art: GainArt }[] = [
+      ...(gold ? [{ text: `+${wholeChange(gold)} Gold`, art: { coin: "gold" as const } }] : []),
+      { text: `+${wholeChange(silver)} Silver`, art: { coin: "silver" } },
+      ...cellsFound.map((text) => ({ text, art: { cell: true as const } })),
+      ...found,
+    ];
+    drops.forEach(({ text, art }, i) => this.gain(at.x, at.y, text, art, { row: (gold ? 1 : 0) - i, with: i > 0 }));
     if (equipment?.item || equipment?.salvaged) this.events.record("equipment", 1, this.missionKey(at));
     if (equipment?.item) this.slice.runFinds.equipment++;
     if (crits) this.events.record("crits", crits, this.missionKey(at));
-    const found = equipmentGains(equipment);
-    for (const { text, art } of found) this.gain(at.x, at.y, text, art);
     return [...coinsText(gold, silver), ...cellsFound, ...found.map((g) => g.text)];
   }
   /** The end of a turn inside a run (a step, or a whole rush): each Ranged
@@ -2267,8 +2278,11 @@ export class Game {
     // A new section's first floor is sealed below; the hero keeps every stat.
     const earned = sectionStart ? new AreaLedger(this.save).enter(this.towerRun, board) : [];
     if (skipped) this.feedback(passed.length ? `Floor Skipped · floors ${this.run.height - TOWER_SECTION}–${this.run.height - 1} ${passed.join(" and ")}` : "Floor Skipped", 1000);
-    else this.feedback(earned.length ? `Floors ${this.run.height - TOWER_SECTION + 1}–${this.run.height} ${earned.join(" and ")} · reward ahead` :
-      sectionStart ? `Floor ${this.run.height + 1} · the way down is sealed` : "A new chamber opens.");
+    else if (earned.length) this.feedback(`Floors ${this.run.height - TOWER_SECTION + 1}–${this.run.height} ${earned.join(" and ")} · reward ahead`);
+    else if (sectionStart) this.feedback(`Floor ${this.run.height + 1} · the way down is sealed`);
+    // After the first Tower run a plain new floor only says so on the status line.
+    else if (this.save.tutorials.chamber) this.message = "A new chamber opens.";
+    else this.feedback("A new chamber opens.");
     this.gainCoins(p, snap(gold + skipGold), silver, false);
   }
   /** Step back onto the stairs at the foot of the current room, returning
