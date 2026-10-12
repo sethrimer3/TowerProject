@@ -11,8 +11,8 @@ export type ThemeKind = "ui" | "game";
 /** The looks of each kind, as the `uiTheme` and `gameTheme` settings hold
  * them. */
 export type UiLook = "classic" | "medieval" | "neon" | "terminal" | "desktop";
-export type GameLook = "classic" | "neon";
-export type ThemeId = "medievalUi" | "neonUi" | "terminalUi" | "desktopUi" | "neonGame";
+export type GameLook = "classic" | "neon" | "terminal" | "desktop";
+export type ThemeId = "medievalUi" | "neonUi" | "terminalUi" | "desktopUi" | "neonGame" | "terminalGame" | "desktopGame";
 
 export type ThemeDef = {
   kind: ThemeKind;
@@ -39,6 +39,8 @@ export const THEMES: Readonly<Record<ThemeId, ThemeDef>> = {
   terminalUi: { kind: "ui", look: "terminal", name: "Terminal", unlock: "Complete floor 100 of Tower I", earned: (save) => towerOne(save) >= 100 },
   desktopUi: { kind: "ui", look: "desktop", name: "Desktop", unlock: "Reach depth 50 in the Delve", earned: (save) => highest(save.delve) >= 50 },
   neonGame: { kind: "game", look: "neon", name: "Neon", unlock: "Reach depth 25 in the Delve", earned: (save) => highest(save.delve) >= 25 },
+  terminalGame: { kind: "game", look: "terminal", name: "Terminal", unlock: "Complete floor 150 of Tower I", earned: (save) => towerOne(save) >= 150 },
+  desktopGame: { kind: "game", look: "desktop", name: "Desktop", unlock: "Reach depth 75 in the Delve", earned: (save) => highest(save.delve) >= 75 },
 };
 export const THEME_IDS = Object.keys(THEMES) as ThemeId[];
 /** The themes every hero owns from the start. */

@@ -50,9 +50,10 @@ export const SETTINGS = {
    * desktop computer: grey bevelled windows on teal) once owned. Chosen on the Settings page's UI Themes menu, not a row of its
    * own; a new hero starts in Medieval. */
   uiTheme: { kind: "choice", default: "medieval", choices: [["classic", "Classic"], ["medieval", "Medieval"], ["neon", "Neon"], ["terminal", "Terminal"], ["desktop", "Desktop"]] },
-  /** The Game theme the dungeon is drawn in: Classic, or Neon once owned.
-   * Chosen on the Game Themes menu. */
-  gameTheme: { kind: "choice", default: "classic", choices: [["classic", "Classic"], ["neon", "Neon"]] },
+  /** The Game theme the dungeon is drawn in: Classic, or Neon, Terminal
+   * (a green-phosphor text dungeon) or Desktop (an old desktop computer's
+   * mine-sweeping field) once owned. Chosen on the Game Themes menu. */
+  gameTheme: { kind: "choice", default: "classic", choices: [["classic", "Classic"], ["neon", "Neon"], ["terminal", "Terminal"], ["desktop", "Desktop"]] },
   /** Unlimited currency, every floor section and game mode unlocked. */
   devMode: { kind: "toggle", default: false, page: { id: "dev-mode", label: "Dev mode (unlimited currency, all floors &amp; modes unlocked)" } },
   /** Play each fight out strike by strike, damage rising off whoever was

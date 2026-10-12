@@ -14,9 +14,9 @@ test("a new hero owns the Medieval UI theme and wears it, on the Classic board",
   assert.equal(gameLook(save), "classic");
 });
 
-test("Neon is a UI theme and a Game theme, and Terminal and Desktop UI themes, each earned on its own", () => {
+test("Neon, Terminal and Desktop are each a UI theme and a Game theme, each earned on its own", () => {
   assert.deepEqual(themesOf("ui"), ["medievalUi", "neonUi", "terminalUi", "desktopUi"]);
-  assert.deepEqual(themesOf("game"), ["neonGame"]);
+  assert.deepEqual(themesOf("game"), ["neonGame", "terminalGame", "desktopGame"]);
   const save = defaults();
   assert.deepEqual(claimThemes(save), [], "nothing earned yet");
   save.tower.reached = 49;
@@ -35,6 +35,14 @@ test("Neon is a UI theme and a Game theme, and Terminal and Desktop UI themes, e
   assert.deepEqual(claimThemes(save), []);
   save.delve.reached = 50;
   assert.deepEqual(claimThemes(save), ["desktopUi"], "depth 50 in the Delve");
+  save.delve.reached = 74;
+  assert.deepEqual(claimThemes(save), []);
+  save.delve.reached = 75;
+  assert.deepEqual(claimThemes(save), ["desktopGame"], "depth 75 in the Delve");
+  save.tower.reached = 149;
+  assert.deepEqual(claimThemes(save), []);
+  save.tower.reached = 150;
+  assert.deepEqual(claimThemes(save), ["terminalGame"], "floor 150 of Tower I completed");
   assert.deepEqual(save.themes, THEME_IDS, "kept in catalog order");
   // Tower I's floors count from its waiting records too, and only Tower I's.
   const other = defaults();
@@ -45,6 +53,8 @@ test("Neon is a UI theme and a Game theme, and Terminal and Desktop UI themes, e
   assert.deepEqual(claimThemes(other), ["neonUi"]);
   other.tower.tierRecords[1] = { best: 100, reached: 100 };
   assert.deepEqual(claimThemes(other), ["terminalUi"]);
+  other.tower.tierRecords[1] = { best: 150, reached: 150 };
+  assert.deepEqual(claimThemes(other), ["terminalGame"]);
 });
 
 test("the Terminal UI theme is worn once owned", () => {
@@ -68,6 +78,18 @@ test("the Desktop UI theme is worn once owned", () => {
   assert.equal(decodeSettings({ uiTheme: "desktop" }).uiTheme, "desktop", "the choice is saved");
 });
 
+test("the Terminal and Desktop Game themes are worn once owned", () => {
+  const save = defaults();
+  const g = new Game(save);
+  for (const [look, id] of [["terminal", "terminalGame"], ["desktop", "desktopGame"]] as const) {
+    assert.equal(g.wearTheme("game", look), false, `${look} not owned yet`);
+    save.themes.push(id);
+    assert.ok(g.wearTheme("game", look));
+    assert.equal(gameLook(save), look);
+    assert.equal(decodeSettings({ gameTheme: look }).gameTheme, look, "the choice is saved");
+  }
+});
+
 test("a theme chosen but not owned shows Classic until it is earned", () => {
   const save = defaults();
   save.settings.uiTheme = "neon";
@@ -86,13 +108,13 @@ test("each theme owned adds 2.5% to all Gold banked", () => {
   const save = defaults();
   assert.equal(themeGoldFactor(save), 1.025);
   save.themes = [...THEME_IDS];
-  assert.equal(themeGoldFactor(save), 1.125);
+  assert.equal(themeGoldFactor(save), 1.175);
   const row = goldBonuses(save, 1, 0).at(-1)!;
-  assert.deepEqual(row, { name: "Themes owned (5)", factor: 1.125 });
-  assert.equal(goldBonusTotal(goldBonuses(save, 1, 0)), 1.125);
+  assert.deepEqual(row, { name: "Themes owned (7)", factor: 1.175 });
+  assert.equal(goldBonusTotal(goldBonuses(save, 1, 0)), 1.175);
   assert.equal(goldBonuses({ ...save, themes: [] }, 1, 0).at(-1)!.factor, null, "none owned: Inactive");
 
-  // Banking: a kill's Gold with no theme and with all five.
+  // Banking: a kill's Gold with no theme and with all seven.
   const killGold = (themes: typeof save.themes) => {
     const s = defaults();
     s.themes = themes;
@@ -105,7 +127,7 @@ test("each theme owned adds 2.5% to all Gold banked", () => {
   };
   const none = killGold([]), all = killGold([...THEME_IDS]);
   assert.ok(none > 0);
-  assert.ok(Math.abs(all - none * 1.125) < 1e-9, `${all} is ${none} × 1.125`);
+  assert.ok(Math.abs(all - none * 1.175) < 1e-9, `${all} is ${none} × 1.175`);
 });
 
 test("saves keep their themes, always with Medieval", () => {

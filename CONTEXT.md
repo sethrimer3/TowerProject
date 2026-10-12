@@ -497,7 +497,7 @@ A look for the page around the board: its panels, buttons and sounds. Classic is
 _Avoid_: skin, style
 
 **Game theme**:
-A look for the board itself: its tiles, the hero, enemies and torches. Classic is always available; Neon is earned.
+A look for the board itself: its tiles, the hero, enemies and torches. Classic is always available; Neon, Terminal and Desktop are earned.
 _Avoid_: tileset, board skin
 
 **Owned theme**:

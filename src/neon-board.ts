@@ -2,6 +2,7 @@ import { COLORS, type KeyColor } from "./config.ts";
 import type { Tile, Torch } from "./entities.ts";
 import { WOOD_COLOR } from "./doors.ts";
 import { forEachViewTile, toTileSpace, type FrameContext } from "./render-frame.ts";
+import type { ThemedBoard } from "./themed-boards.ts";
 
 /** The Neon theme's dungeon board: every wall, tile content, torch and the
  * hero drawn as glowing laser lines on black. It replaces the dungeon's
@@ -71,20 +72,6 @@ export function drawNeonGround(f: FrameContext) {
       if (!isWall(x + 1, y)) { c.moveTo(24 - i, 0); c.lineTo(24 - i, 24); }
       tube(c, NEON.wall, 1.8);
     }
-    c.restore();
-  });
-}
-
-/** Every tile's contents, each in its own neon sprite. */
-export function drawNeonContents(f: FrameContext, lunge: { x: number; y: number; dx: number; dy: number }) {
-  const c = f.c;
-  forEachViewTile(f, (x, y) => {
-    const t = f.world.tile(x, y);
-    if (!t || t.kind === "wall" || t.kind === "floor") return;
-    const leaning = x === lunge.x && y === lunge.y;
-    c.save();
-    toTileSpace(c, f, leaning ? x + lunge.dx : x, leaning ? y + lunge.dy : y);
-    paintNeonContents(c, t);
     c.restore();
   });
 }
@@ -195,15 +182,11 @@ function heart(c: CanvasRenderingContext2D) {
   c.bezierCurveTo(17, 7, 19, 13, 12, 18);
 }
 
-/** A torch: a short post with a flickering flame. */
-export function drawNeonTorch(f: FrameContext, t: Torch) {
-  const c = f.c;
-  c.save();
-  toTileSpace(c, f, t.x, t.y);
+/** A torch, in tile space: a short post with a flickering flame. */
+export function paintNeonTorch(c: CanvasRenderingContext2D, f: FrameContext, t: Torch) {
   const flicker = f.look.reduceMotion ? 0 : Math.sin(f.now / 90 + t.x * 3 + t.y) * 0.8;
   path(c, () => { c.moveTo(12, 21); c.lineTo(12, 13); c.moveTo(9, 13); c.lineTo(15, 13); }, NEON.torch, 1.4);
   path(c, () => { c.moveTo(12, 4 + flicker); c.quadraticCurveTo(16, 9, 12, 11.5); c.quadraticCurveTo(8, 9, 12, 4 + flicker); }, NEON.torch, 1.5);
-  c.restore();
 }
 
 /** The hero: a ring with a visor, like a laser-drawn helmet. */
@@ -211,3 +194,5 @@ export function paintNeonHero(c: CanvasRenderingContext2D) {
   path(c, () => { c.arc(12, 12, 8, 0, Math.PI * 2); }, NEON.hero, 1.8);
   path(c, () => { c.moveTo(8, 11); c.lineTo(16, 11); c.moveTo(12, 11); c.lineTo(12, 16); }, NEON.hero, 1.4);
 }
+
+export const NEON_BOARD: ThemedBoard = { ground: drawNeonGround, contents: paintNeonContents, heart: paintNeonHeart, torch: paintNeonTorch, hero: paintNeonHero };
