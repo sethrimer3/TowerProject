@@ -162,13 +162,13 @@ test("an item of a kind this client doesn't know holds the whole message back", 
 });
 
 test("a message with items waiting can't be removed; one without is removed at once and stays removed", async () => {
-  const { g, client, post, down } = setup();
+  const { g, clock, client, post, down } = setup();
   post(OUTAGE);
   post(NOTICE);
   await client.refresh();
   const notice = g.mail.recent.find((m) => !m.items.length)!.id, outage = g.mail.recent.find((m) => m.items.length)!.id;
   assert.equal(client.hide(outage), false, "rewards waiting: no X");
-  assert.equal(await stubMail(() => g.save).hide(outage), false, "and the server refuses too");
+  assert.equal(await stubMail(() => g.save, () => clock.now).hide(outage), false, "and the server refuses too");
 
   down.now = true;
   assert.equal(client.hide(notice), true);
@@ -176,7 +176,7 @@ test("a message with items waiting can't be removed; one without is removed at o
   await client.sync();
   down.now = false;
   assert.equal(g.save.mail.stub.find((m) => m.id === notice)!.hidden, false, "the server hasn't heard");
-  const inbox = await stubMail(() => g.save).inbox();
+  const inbox = await stubMail(() => g.save, () => clock.now).inbox();
   assert.equal(inbox!.messages.length, 2);
   // The server still reports it until it hears: it stays removed here.
   g.mail.receive(inbox!.messages as never, inbox!.time);
