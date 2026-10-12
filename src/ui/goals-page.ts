@@ -121,8 +121,11 @@ const CLEARED_MARK = `<svg class="goal-mark" viewBox="0 0 24 24" aria-hidden="tr
 const CHECK_ICON = `<svg class="goal-badge" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="#1f5a34" stroke="#9fe0b0" stroke-width="1.1"/><path d="M4.6 8.3l2.3 2.3 4.6-5" fill="none" stroke="#e8fff0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
 const rewardIcon = (r: GoalReward) => (r.kind === "unlock" ? UNLOCK_ICONS[r.unlock] : r.kind === "tower" ? TOWER_ICON : CURRENCY_ICONS[r.currency]());
+/** An unlock's name with "Unlock" before it, once: Unlock Shrines is already named so. */
+const unlockText = (u: GoalUnlock) =>
+  UNLOCK_NAMES[u].startsWith("Unlock ") ? UNLOCK_NAMES[u] : `Unlock ${u === "tournament" ? "the " : ""}${UNLOCK_NAMES[u]}`;
 const rewardText = (r: GoalReward) =>
-  r.kind === "unlock" ? `Unlock ${r.unlock === "tournament" ? "the " : ""}${UNLOCK_NAMES[r.unlock]}`
+  r.kind === "unlock" ? unlockText(r.unlock)
   : r.kind === "tower" ? `Unlock Tower ${tierNumeral(r.tower)}`
   : `${r.amount.toLocaleString("en-US")} ${CURRENCIES[r.currency].name}`;
 /** Pixels between neighbouring checkpoints, whatever floors they stand on:
