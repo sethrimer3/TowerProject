@@ -181,6 +181,10 @@ export function paintNeonContents(c: CanvasRenderingContext2D, t: Tile) {
 function frame(c: CanvasRenderingContext2D, color: string) {
   path(c, () => c.rect(4, 3, 16, 19), color, 1.8);
 }
+/** The Heart Door's heart on its own, as its toll rises off the door. */
+export function paintNeonHeart(c: CanvasRenderingContext2D) {
+  path(c, () => heart(c), NEON.heart, 1.4);
+}
 function heart(c: CanvasRenderingContext2D) {
   c.moveTo(12, 18);
   c.bezierCurveTo(5, 13, 7, 7, 12, 10);

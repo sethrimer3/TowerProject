@@ -4,6 +4,7 @@ import type { Coin, Encounter, Gain, GainArt, Heal, ShownFight } from "./state.t
 import { paintContents } from "./tile-painters.ts";
 import { materialImage } from "./material-sprites.ts";
 import { paintGem } from "./gem-art.ts";
+import { paintNeonContents, paintNeonHeart } from "./neon-board.ts";
 import { RARITY_TIERS } from "./equipment/balance.ts";
 import { iconPixels, materialPixels } from "./ui/equipment-icons.ts";
 import { tileCenter, toTileSpace, type FrameContext } from "./render-frame.ts";
@@ -244,7 +245,7 @@ export class BoardPopups {
     const art = p.gain.art;
     if (!art) return false;
     const image = artImage(art);
-    if (!image && !paintsItself(art)) return false;
+    if (!image && !paintsItself(art, f.look.neon)) return false;
     const c = f.c, { alpha, rise } = this.phase(f, p, REWARD_RISE);
     c.save();
     c.globalAlpha = alpha;
@@ -292,9 +293,10 @@ function struckAt(fight: ShownFight, s: Strike, won: boolean) {
   return fight.summary && won && s.at === fight.bout.duration ? fight.to : fight.from;
 }
 
-/** Art drawn without an image: a tile's contents, the Gem, or Equipment's
- * pixel icons. */
-const paintsItself = (art: GainArt) => "tile" in art || "gem" in art || "cell" in art || "equipMaterial" in art || "equipPiece" in art;
+/** Art drawn without an image: a tile's contents, the Gem, Equipment's
+ * pixel icons, or on a neon board the Heart Door's heart. */
+const paintsItself = (art: GainArt, neon: boolean) =>
+  "tile" in art || "gem" in art || "cell" in art || "equipMaterial" in art || "equipPiece" in art || (neon && "heart" in art);
 
 /** The image a gain's art draws from, or null where it has none or it is
  * still loading. */
@@ -336,7 +338,8 @@ function paintArt(c: CanvasRenderingContext2D, f: FrameContext, p: Popup & { gai
     c.drawImage(image!, 11, 3, 18, 18);
     mark(c, p.gain.text.split(" ")[0], { x: 10, y: 12 }, { color: art.coin === "gold" ? REWARD_COLOR : SILVER_COLOR, size: 10, align: "right" });
   } else if ("heart" in art) {
-    c.drawImage(image!, 2, 2, 18, 18);
+    if (f.look.neon) paintNeonHeart(c);
+    else c.drawImage(image!, 2, 2, 18, 18);
     if (art.raised) plus(c, 17, 17);
     else check(c, 13, 13);
   } else {
@@ -368,12 +371,13 @@ function paintPixels(c: CanvasRenderingContext2D, pixels: { x: number; y: number
   }
 }
 
-/** A tile's contents rising; a key a door took shifts right to make room
- * for its minus sign. */
+/** A tile's contents rising, in the board's own art (neon on a neon board);
+ * a key a door took shifts right to make room for its minus sign. */
 function paintSpentTile(c: CanvasRenderingContext2D, f: FrameContext, p: Popup, art: Extract<GainArt, { tile: unknown }>) {
   const look = f.look;
   if (art.spent) c.translate(4, 0);
-  paintContents(c, art.tile, { x: p.x, y: p.y, time: f.now, spritesOff: look.spritesOff, reduceMotion: look.reduceMotion, area1: look.area1, lifted: true });
+  if (look.neon) paintNeonContents(c, art.tile);
+  else paintContents(c, art.tile, { x: p.x, y: p.y, time: f.now, spritesOff: look.spritesOff, reduceMotion: look.reduceMotion, area1: look.area1, lifted: true });
   if (!art.spent) return;
   c.translate(-4, 0);
   mark(c, "−", { x: 3, y: 12 }, { color: SPENT_COLOR, size: 14 });

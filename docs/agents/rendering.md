@@ -59,4 +59,5 @@ Its buttons' `position: relative` sits under `:where(html.medieval)`, and their 
 **Neon UI theme**: `src/neon.css`, every selector scoped under `html.neon` and loaded after `medieval.css`, draws the UI as warm glowing laser lines (pink, amber and yellow outlines with glow shadows on black).
 `applyUiTheme` in `ui/medieval.ts` toggles its root class too; one UI theme is worn at a time.
 **Neon Game theme**: in the dungeon (not the forest outside), `Renderer.draw` swaps the lit board for `drawNeonBoard`: `neon-board.ts` draws black ground, wall outlines along open sides, one neon sprite per tile kind (one for every enemy; doors show a bar per key colour), torches, and the hero (its rush echoes too), then the route and the usual feedback overlays.
+`BoardLook.neon` says the board is drawn this way, so what rises off it wears neon too: a pickup's tile contents (`paintNeonContents`) and a Heart Door's heart (`paintNeonHeart`); coins, the Gem, materials and Equipment, with no neon art yet, keep theirs (`tests/neon-popups.test.ts`).
 Lighting, glows and decor (`decorOn`) are off while it is worn, until each has a neon version.

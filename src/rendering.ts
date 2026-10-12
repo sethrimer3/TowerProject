@@ -134,8 +134,7 @@ export class Renderer {
   }
   draw(now: number) {
     const f = this.beginFrame(now);
-    const neon = this.neon && !f.look.outside;
-    if (neon) this.drawNeonBoard(f);
+    if (f.look.neon) this.drawNeonBoard(f);
     else {
       // Ground first; in the dungeon the light then runs the frame (relief,
       // decor, shadows, contents, torches, route, hero, frame) over it.
@@ -143,7 +142,7 @@ export class Renderer {
       if (f.look.outside) this.drawOutside(f);
       else this.light.draw(f, this.litBoard(f));
     }
-    drawRushEchoes(f, this.game.rush, neon ? paintNeonHero : (c) => paintHero(c, f.look.spritesOff));
+    drawRushEchoes(f, this.game.rush, f.look.neon ? paintNeonHero : (c) => paintHero(c, f.look.spritesOff));
     this.drawOverlays(f);
   }
   /** The Neon theme's dungeon: laser-line walls, contents, torches, route
@@ -548,6 +547,7 @@ export class Renderer {
       mode: g.mode, height: g.run.height, seed: g.run.seed, outside: !!g.run.outside, entranceX: Math.floor(g.world.width / 2),
       roads: g.run.outside ? roadsOf(g.world) : undefined,
       spritesOff: g.save.settings.spritesOff, reduceMotion: g.save.settings.reduceMotion, area1: !g.save.settings.spritesOff && isArea1(g.mode, g.run.height),
+      neon: this.neon && !g.run.outside,
     };
   }
   /** Paints one tile in tile space (see paintTile); false while its ground
