@@ -1,0 +1,358 @@
+/* Desktop theme: the page as an old windowed desktop computer shows it.
+   Grey bevelled windows and buttons on a teal desktop, navy title bars with
+   white text, black pixel type, white sunken fields and blocky navy
+   progress bars.
+   Every selector is scoped under `html.desktop` so nothing changes while
+   the theme is off. Loaded after style.css, medieval.css, neon.css and
+   terminal.css. */
+@font-face {
+  font-family: W95FA;
+  src: url("../assets/fonts/W95FA/W95FA-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+html.desktop {
+  --face: #c0c0c0;
+  --hilite: #ffffff;
+  --light: #dfdfdf;
+  --shade: #808080;
+  --dark: #0a0a0a;
+  --desk: #008080;
+  --title: #000080;
+  --title-end: #1084d0;
+  --field: #ffffff;
+  --tip: #ffffe1;
+  /* A raised edge (buttons, windows), a pressed one, and a sunken field. */
+  --raised: inset -1px -1px var(--dark), inset 1px 1px var(--hilite), inset -2px -2px var(--shade), inset 2px 2px var(--light);
+  --pressed: inset -1px -1px var(--hilite), inset 1px 1px var(--dark), inset -2px -2px var(--light), inset 2px 2px var(--shade);
+  --sunken: inset -1px -1px var(--hilite), inset 1px 1px var(--shade), inset -2px -2px var(--light), inset 2px 2px var(--dark);
+  --gold: var(--title);
+  --muted: #404040;
+  --line: var(--shade);
+  color: #000;
+  background: var(--desk);
+  color-scheme: light;
+}
+/* One pixel face for every line of text (a badge's symbol keeps the system
+   face that has its glyph). */
+html.desktop,
+html.desktop *:not(.badge-glyph, .badge-mark) {
+  font-family: W95FA, "MS Sans Serif", Tahoma, sans-serif;
+  letter-spacing: 0;
+}
+html.desktop body {
+  background: var(--desk);
+}
+/* The dark page's own colours give way everywhere: black text on light
+   grey, square corners, no glows, mid-grey lines. `:not(#_)` lifts these
+   over the page's class rules (and the ones below over these); a style
+   written on an element (a colour swatch) still wins. Drawings (canvas,
+   images, svg) and the bars' fills (`i`) keep theirs. Pseudo-elements, such
+   as the red dots on what is new, are untouched. */
+html.desktop body *:not(#_, canvas, img, svg, svg *, i) {
+  background-color: transparent;
+  background-image: none;
+  border-radius: 0;
+  box-shadow: none;
+  text-shadow: none;
+  backdrop-filter: none;
+}
+html.desktop body *:not(#_, svg, svg *) {
+  color: #000;
+}
+html.desktop body *:not(#_, svg, svg *, .eq-tile, .badge-token, [class*="rar"]) {
+  border-color: var(--shade);
+}
+/* The app itself is one window on the desktop. */
+html.desktop main.shell:not(#_) {
+  background: var(--face);
+  box-shadow: var(--raised);
+}
+
+/* Scrollbars: a raised grey thumb in a dithered track. */
+html.desktop * {
+  scrollbar-color: var(--face) var(--light);
+}
+html.desktop ::-webkit-scrollbar {
+  width: 16px;
+  height: 16px;
+}
+html.desktop ::-webkit-scrollbar-track {
+  background: repeating-conic-gradient(var(--face) 0 25%, var(--hilite) 0 50%) 0 0 / 2px 2px;
+}
+html.desktop ::-webkit-scrollbar-thumb {
+  min-height: 24px;
+  background: var(--face);
+  border: 0;
+  border-radius: 0;
+  box-shadow: var(--raised);
+}
+
+/* Windows and the boxes inside them: a grey face with a raised edge. */
+html.desktop .stats:not(#_),
+html.desktop .card:not(#_),
+html.desktop .upgrade:not(#_),
+html.desktop .shop:not(#_),
+html.desktop .theme-card:not(#_),
+html.desktop .weekly:not(#_),
+html.desktop .mission:not(#_),
+html.desktop .event-boost:not(#_),
+html.desktop .archivist:not(#_),
+html.desktop .research:not(#_),
+html.desktop .pull-box:not(#_),
+html.desktop .eq-loadout:not(#_),
+html.desktop .equip-materials:not(#_),
+html.desktop .purse-big:not(#_),
+html.desktop .starting-stats:not(#_),
+html.desktop .training-boost:not(#_),
+html.desktop .tournament-standing:not(#_),
+html.desktop .tournament-tickets:not(#_),
+html.desktop .badge-box:not(#_),
+html.desktop .deck-reserve:not(#_),
+html.desktop .defend-palette:not(#_),
+html.desktop .card-reveal:not(#_),
+html.desktop .badge-reveal:not(#_),
+html.desktop .badge-token:not(#_),
+html.desktop .node-icon:not(#_),
+html.desktop dialog:not(#_) {
+  border-color: transparent;
+  background: var(--face);
+  box-shadow: var(--raised);
+}
+/* Wells: white and sunken, for what is entered, shown or filled. */
+html.desktop .portrait-top:not(#_),
+html.desktop .hp-readout:not(#_),
+html.desktop .training-box:not(#_),
+html.desktop .training-held:not(#_),
+html.desktop .eq-tile:not(#_),
+html.desktop .skill-tree:not(#_),
+html.desktop .goals-stage:not(#_),
+html.desktop select:not(#_),
+html.desktop input:not([type="checkbox"]:not(#_),
+[type="radio"]:not(#_),
+[type="range"]):not(#_) {
+  border-color: transparent;
+  background: var(--field);
+  box-shadow: var(--sunken);
+}
+/* The theme worn: a dotted focus line round its card. */
+html.desktop .theme-card.worn:not(#_) {
+  outline: 1px dotted #000;
+  outline-offset: -5px;
+}
+/* What explains or tells: a pale yellow tooltip with a black line. */
+html.desktop .board-tip:not(#_),
+html.desktop .board-tip.dismissable:hover:not(#_),
+html.desktop .research-toast:not(#_),
+html.desktop .deck-tip:not(#_),
+html.desktop .node-name:not(#_),
+html.desktop .goals-floor:not(#_),
+html.desktop .inspection:not(#_),
+html.desktop .inspect-box:not(#_) {
+  background: var(--tip);
+  border: 1px solid #000;
+  box-shadow: 2px 2px 0 #0006;
+}
+html.desktop .inspection:empty:not(#_) {
+  border: 0;
+  box-shadow: none;
+}
+/* The status line under the board: a status bar, a sunken strip. */
+html.desktop .status:not(#_) {
+  background: var(--face);
+  box-shadow: var(--sunken);
+}
+
+/* Title bars: navy fading to blue, white text, with the window's caption
+   buttons drawn at the right. */
+html.desktop .page-title:not(#_),
+html.desktop .event-banner:not(#_),
+html.desktop .eq-loadout-head:not(#_) {
+  position: relative;
+  padding: 3px 58px 4px 6px;
+  text-align: left;
+  background: linear-gradient(90deg, var(--title), var(--title-end));
+}
+html.desktop .eq-loadout-head:not(#_) {
+  padding: 3px 6px;
+}
+html.desktop .page-title:not(#_),
+html.desktop .page-title *:not(#_),
+html.desktop .event-banner:not(#_),
+html.desktop .event-banner *:not(#_),
+html.desktop .eq-loadout-head h3:not(#_),
+html.desktop dialog h2:not(#_) {
+  color: #fff;
+}
+html.desktop .page-title small:not(#_) {
+  display: block;
+  font-size: 10px;
+}
+html.desktop .page-title h2:not(#_) {
+  margin: 2px 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+html.desktop .page-title::after,
+html.desktop .event-banner::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 50px;
+  height: 14px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='50' height='14' shape-rendering='crispEdges'%3E%3Cg id='b'%3E%3Crect width='16' height='14' fill='%230a0a0a'/%3E%3Crect width='15' height='13' fill='%23fff'/%3E%3Crect x='1' y='1' width='14' height='12' fill='%23808080'/%3E%3Crect x='1' y='1' width='13' height='11' fill='%23c0c0c0'/%3E%3C/g%3E%3Cuse href='%23b' x='16'/%3E%3Cuse href='%23b' x='34'/%3E%3Crect x='4' y='9' width='6' height='2'/%3E%3Crect x='19' y='3' width='9' height='8' fill='none' stroke='%23000'/%3E%3Crect x='19' y='3' width='9' height='2'/%3E%3Cpath d='M38 3l8 7M46 3l-8 7' stroke='%23000' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat;
+}
+html.desktop .event-banner:not(#_) {
+  margin-left: 0;
+  margin-right: 0;
+}
+html.desktop dialog:not(#_) {
+  border: 3px solid var(--face);
+}
+html.desktop dialog h2:not(#_) {
+  margin: -30px -30px 18px;
+  padding: 4px 8px;
+  text-align: left;
+  font-size: 15px;
+  font-weight: 700;
+  background: linear-gradient(90deg, var(--title), var(--title-end));
+}
+/* The title bar says it all: the line over a dialog's heading goes. */
+html.desktop dialog > small:not(#_) {
+  display: none;
+}
+html.desktop dialog::backdrop {
+  background: transparent;
+  backdrop-filter: none;
+}
+
+/* Buttons: grey, raised, pressed in while touched or chosen; greyed out
+   with an etched edge when unavailable. */
+html.desktop button:not(#_) {
+  border-color: transparent;
+  background: var(--face);
+  box-shadow: var(--raised);
+}
+html.desktop button:active:not(#_),
+html.desktop button.selected:not(#_),
+html.desktop button[aria-pressed="true"]:not(#_) {
+  box-shadow: var(--pressed);
+}
+html.desktop button:focus-visible:not(#_) {
+  outline: 1px dotted #000;
+  outline-offset: -5px;
+}
+html.desktop button:disabled:not(#_),
+html.desktop button:disabled *:not(#_) {
+  color: var(--shade);
+  text-shadow: 1px 1px var(--hilite);
+  opacity: 1;
+}
+/* Buttons drawn as pictures keep a flat face. */
+html.desktop .skill-node:not(#_),
+html.desktop .hand-card:not(#_),
+html.desktop .dialog-x:not(#_) {
+  box-shadow: none;
+  background: transparent;
+}
+html.desktop .dialog-x:not(#_) {
+  background: var(--face);
+  box-shadow: var(--raised);
+}
+html.desktop select:focus-visible:not(#_),
+html.desktop input:focus-visible:not(#_) {
+  outline: 1px dotted #000;
+  outline-offset: 1px;
+}
+html.desktop input[type="checkbox"]:not(#_),
+html.desktop input[type="radio"]:not(#_),
+html.desktop input[type="range"]:not(#_) {
+  accent-color: var(--title);
+}
+html.desktop option:not(#_) {
+  background: var(--field);
+}
+
+/* The board sits in a sunken well. */
+html.desktop .board:not(#_) {
+  border-color: transparent;
+  background: var(--face);
+  box-shadow: var(--sunken);
+}
+html.desktop .rule:not(#_),
+html.desktop .inventory-divider:not(#_) {
+  background: var(--shade);
+  box-shadow: 0 1px var(--hilite);
+}
+
+/* The tab bar: the taskbar along the bottom, the open page's button
+   pressed in on a dithered face. */
+html.desktop nav:not(#_) {
+  background: var(--face);
+  box-shadow: inset 0 1px var(--light), inset 0 2px var(--hilite);
+  padding-left: 2px;
+  padding-right: 2px;
+  gap: 2px;
+}
+html.desktop nav button:not(#_) {
+  margin-left: 0;
+}
+html.desktop nav button.selected:not(#_),
+html.desktop .training-bar button.selected:not(#_) {
+  background: repeating-conic-gradient(var(--face) 0 25%, var(--hilite) 0 50%) 0 0 / 2px 2px;
+  box-shadow: var(--pressed);
+}
+html.desktop .hand-card.active:not(#_) {
+  box-shadow: 0 0 0 2px var(--title);
+}
+
+/* Bars: a sunken white field filling with navy blocks. */
+html.desktop .xp-track:not(#_),
+html.desktop .health-track:not(#_),
+html.desktop .weekly-bar:not(#_),
+html.desktop .mission-bar:not(#_),
+html.desktop .research-bar:not(#_),
+html.desktop .refine-bar:not(#_) {
+  border-color: transparent;
+  background: var(--field);
+  box-shadow: var(--sunken);
+}
+html.desktop .xp-track i:not(#_),
+html.desktop .health-track i:not(#_),
+html.desktop .weekly-bar i:not(#_),
+html.desktop .mission-bar i:not(#_),
+html.desktop .research-bar i:not(#_),
+html.desktop .refine-bar span:not(#_),
+html.desktop .event-bar i:not(#_) {
+  background: repeating-linear-gradient(90deg, var(--title) 0 7px, transparent 7px 9px);
+  border-radius: 0;
+  box-shadow: none;
+}
+/* A bar's own count sits over the blocks in a white box. */
+html.desktop .mission-bar span:not(#_) {
+  width: fit-content;
+  margin: 1px auto;
+  padding: 0 4px;
+  line-height: 12px;
+  background: var(--field);
+}
+html.desktop .danger:not(#_),
+html.desktop .danger *:not(#_),
+html.desktop .short:not(#_),
+html.desktop .short *:not(#_) {
+  color: #c00000 !important;
+}
+/* No card can act: the button that ends the run turns red. */
+html.desktop #end-run.deadlocked:not(#_),
+html.desktop #stuck-end-run.deadlocked:not(#_) {
+  color: #fff !important;
+  background: #c00000;
+}
+html.desktop .eq-result-title:not(#_) {
+  color: #006000 !important;
+}
+html.desktop .safe:not(#_) {
+  color: #006000 !important;
+}

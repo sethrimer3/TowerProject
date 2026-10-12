@@ -5,6 +5,7 @@ import "./style.css";
 import "./medieval.css";
 import "./neon.css";
 import "./terminal.css";
+import "./desktop.css";
 import { load, persist } from "./save.ts";
 import { stampProfile } from "./profile.ts";
 import { Game } from "./state.ts";
