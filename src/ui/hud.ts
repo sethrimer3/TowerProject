@@ -17,7 +17,7 @@ import { goalsWaiting, heroClass } from "../goals.ts";
 import { shrinesOpen } from "../shrines.ts";
 import type { BoardOverlay } from "./board-overlay.ts";
 import { CountUp } from "./count-up.ts";
-import { RateTally } from "./purse-rate.ts";
+import { PlayClock, RateTally } from "./purse-rate.ts";
 import { estimatedServerTime } from "../shop/clock.ts";
 import { OFFERS } from "../shop/offers.ts";
 import { refusal } from "../shop/transactions.ts";
@@ -65,10 +65,10 @@ function purse(game: Game, id: string, held: number, name: string, shown = held)
 /** Gold and Silver count up to each rise. */
 const goldShown = new CountUp(), silverShown = new CountUp();
 
-/** Gold and Silver found a minute, over the last minute of real time,
- * which a tap on either shows in their place inside a run. `run` is the
- * run they were sampled in, so a new one starts them over. */
-const rates = { gold: new RateTally(), silver: new RateTally(), run: "", shown: false };
+/** Gold and Silver found a minute, over the last minute the run played
+ * (`clock`), which a tap on either shows in their place inside a run. `run`
+ * is the run they were sampled in, so a new one starts them over. */
+const rates = { gold: new RateTally(), silver: new RateTally(), clock: new PlayClock(), run: "", shown: false };
 
 /** Switches the purse's Gold and Silver between the amounts held and the
  * rates they are found at (inside a run only). */
@@ -78,16 +78,25 @@ export function togglePurseRates(game: Game) {
   renderPurse(game);
 }
 
+/** Whether the run plays, so its rates' clock runs: the hand moving the
+ * hero (not paused or stuck) or a fight playing out, with nothing over the
+ * board (`live`) and the tab in view. */
+function runPlays(game: Game, live: boolean) {
+  return live && !document.hidden && game.playing && !game.paused && ((game.auto && !game.handStuck) || !!game.encounter);
+}
+
 /** Samples the run's Gold found (`runGold`) and Silver found (held and
- * spent) every `RATE_SAMPLE_MS`; true when it took a sample. */
-function sampleRates(game: Game, now: number) {
+ * spent) every `RATE_SAMPLE_MS` of play; true when it took a sample. */
+function sampleRates(game: Game, time: number, live: boolean) {
   if (game.run.outside) return false;
   const run = `${game.mode}:${game.run.seed}`;
   if (run !== rates.run) {
     rates.run = run;
     rates.gold.reset();
     rates.silver.reset();
+    rates.clock.reset();
   }
+  const now = rates.clock.tick(time, runPlays(game, live));
   const gold = rates.gold.sample(game.save[game.mode].runGold, now);
   return rates.silver.sample(game.silver + game.silverSpent, now) || gold;
 }
@@ -97,7 +106,7 @@ function sampleRates(game: Game, now: number) {
 function purseRate(game: Game, id: string, perMinute: number | null, name: string) {
   const dev = game.save.settings.devMode, rate = perMinute === null ? null : whole(perMinute);
   el(id).innerHTML = `${dev ? "∞" : rate === null ? "—" : shortAmount(rate, 1000)}<small class="per-minute">/min</small>`;
-  el(id).parentElement!.title = `${name} found a minute, over the last minute: ${dev ? "∞" : rate === null ? "—" : rate.toLocaleString("en-US")} (tap for ${name} held)`;
+  el(id).parentElement!.title = `${name} found a minute, over the last minute of play: ${dev ? "∞" : rate === null ? "—" : rate.toLocaleString("en-US")} (tap for ${name} held)`;
 }
 
 /** The purse: Gems, Ascension Shards in the forest, then Gold and, inside a
@@ -141,9 +150,10 @@ function renderSilverHeld(game: Game) {
 }
 
 /** Each display frame: moves on the Gold and Silver still counting up, and
- * samples their rates, showing each new one while they are shown. */
-export function purseFrame(game: Game, now: number) {
-  const sampled = sampleRates(game, now);
+ * samples their rates, showing each new one while they are shown. `live`
+ * is false while a dialog covers the board, which stops the rates' clock. */
+export function purseFrame(game: Game, now: number, live = true) {
+  const sampled = sampleRates(game, now, live);
   if ((sampled && rates.shown) || goldShown.counting(now) || silverShown.counting(now)) renderPurse(game);
 }
 
@@ -738,14 +748,14 @@ function renderStatus(game: Game, overlay: BoardOverlay) {
   text("message", game.paused ? "Paused · take a breath." : overlay.statusLine() ?? game.message);
 }
 
-/** The undo item in the run's limited-use list and how many undos are stored. */
+/** The undo item in the run's limited-use list and how many undos the run
+ * has left (spent ones never come back). */
 function renderUndo(game: Game) {
-  const slice = game.save[game.mode],
-    undo = el("undo") as HTMLButtonElement,
-    left = slice.history.length;
+  const undo = el("undo") as HTMLButtonElement,
+    left = game.undosLeft;
   text("undo-state", left);
   undo.setAttribute("aria-label", `Undo (${left}/${game.undoCapacity})`);
-  undo.disabled = !slice.history.length;
+  undo.disabled = !game.canUndo;
   // Undo needs Rehearsed steps, or Echoes of time and Undo Count research.
   undo.hidden = !game.undoCapacity;
 }

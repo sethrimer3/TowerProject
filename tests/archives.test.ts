@@ -487,3 +487,22 @@ test("ATK (+2%), DEF and Max HP (+3%), open with the Archives, and Shroud (+4%, 
   assert.equal(save.archives.levels.attack, 1);
   assert.equal(g.run.player.attack, Math.round(attack * 1.02 * 1e6) / 1e6, "inside the run already");
 });
+
+test("Training Discount opens with Tower II's floor 80 Goal: 99 levels of 0.5% off a trainer's Gold", () => {
+  const def = RESEARCH.trainingDiscount, save = owner();
+  assert.deepEqual(def.requires, [{ upgrade: "archives" }, { goalUnlock: "trainingDiscount" }]);
+  assert.deepEqual(def.categories, ["economy"]);
+  assert.equal(status(save, "trainingDiscount"), "locked");
+  save.goals.claimed[2] = [80];
+  assert.equal(status(save, "trainingDiscount"), "available");
+  assert.equal(def.levels.length, 99);
+  assert.ok(def.levels.every((l) => l.effect.target === "trainingDiscount" && l.effect.op === "add" && l.effect.value === 5));
+  const gold = (n: number) => def.levels[n - 1]!.gold, minutes = (n: number) => def.levels[n - 1]!.hours * 60;
+  assert.deepEqual([1, 12, 26, 59, 99].map(gold), [30, 9784, 103478, 1052319, 4144729], "about 10k at 12, 100k at 26, 1M at 59 and 4.2M at 99");
+  assert.deepEqual([1, 2, 3, 4, 5, 6, 7].map((n) => Math.round(minutes(n) * 10) / 10), [0.5, 6, 16, 31, 52, 80, 116]);
+  assert.equal(minutes(50), 13554, "about 13,531 minutes at 50");
+  assert.equal(Math.round(minutes(99) / 1440), 49, "49 days at 99");
+  assert.ok(def.levels.every((l, i) => i === 0 || (l.gold > def.levels[i - 1]!.gold && l.hours > def.levels[i - 1]!.hours)), "each level dearer and longer");
+  save.archives.levels.trainingDiscount = 99;
+  assert.equal(researched(save.archives, "trainingDiscount", 0), 495, "49.5% off, in tenths of a percent");
+});

@@ -44,16 +44,54 @@ test("Rush research needs the Rush skill: 25 levels, Gold doubling and time grow
 });
 
 test("the first step toward a new target rushes across empty tiles, stopping before anything else", () => {
-  const g = corridor(10);
-  assert.equal(g.rushTiles, 10);
+  const g = corridor(3);
+  assert.equal(g.rushTiles, 3);
   g.autoTurn();
-  assert.deepEqual(at(g), [4, 0], "it stops on the tile before the key");
+  assert.deepEqual(at(g), [4, 0], "with no tile left it stops on the tile before the key");
   assert.equal(g.save.tower.history.length, 1, "the rush is one undo");
   assert.deepEqual(g.rush?.tiles, [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 2, y: 0 }, { x: 3, y: 0 }], "the tiles it rushed off, in order");
   g.autoTurn();
   assert.deepEqual(at(g), [5, 0], "the key is a step of its own");
   g.autoTurn();
   assert.deepEqual(at(g), [6, 0], "the path to the same target goes on a step at a time");
+});
+
+test("a rush with a tile left ends on its target item, taking it", () => {
+  const g = toKey(10), keys = g.run.player.keys.yellow;
+  g.autoTurn();
+  assert.deepEqual(at(g), [5, 0], "onto the key");
+  assert.equal(g.run.player.keys.yellow, keys + 1, "the key is taken");
+  assert.equal((g.world as RoomWorld).tile(5, 0).kind, "floor");
+  assert.deepEqual(g.rush?.tiles.map((t) => t.x), [0, 1, 2, 3, 4]);
+  assert.equal(g.save.tower.history.length, 1, "still one undo");
+  assert.ok(g.undo());
+  assert.deepEqual(at(g), [0, 0], "undo takes the rush and the key back whole");
+  assert.equal(g.run.player.keys.yellow, keys);
+});
+
+test("a rush ending on its item scales it with Effective, and stops before it with Skip", () => {
+  const g = toKey(10);
+  g.run.badges = { yellowKey: [{ id: "effective", level: 1, pick: 0 }] };
+  const keys = g.run.player.keys.yellow;
+  g.autoTurn();
+  assert.deepEqual(at(g), [5, 0]);
+  assert.ok(g.run.player.keys.yellow > keys + 1, "Effective scales the key taken");
+  const skip = toKey(10);
+  skip.run.badges = { yellowKey: [{ id: "skip", level: 1, pick: 0 }] };
+  skip.autoTurn();
+  assert.deepEqual(at(skip), [4, 0], "the item's own step rolls Skip");
+});
+
+test("a rush crosses an opened chest, and stops before a monster", () => {
+  const g = toKey(10);
+  (g.world as RoomWorld).cells.set("2,0", { kind: "openedChest" });
+  g.autoTurn();
+  assert.deepEqual(at(g), [5, 0], "the opened chest doesn't stop it");
+  const m = toKey(10);
+  (m.world as RoomWorld).cells.set("5,0", { kind: "enemy", enemy: { name: "rat", hp: 1, attack: 0, defense: 0, tier: 0, strength: "normal" } });
+  m.run.hand = ["monster"];
+  m.autoTurn();
+  assert.deepEqual(at(m), [4, 0], "a fight is a step of its own");
 });
 
 test("undo takes a rush back whole", () => {
@@ -124,6 +162,23 @@ test("End Rush research needs the End Rush skill and follows Rush's schedule", (
   assert.equal(Object.keys(RESEARCH).indexOf("endRush"), Object.keys(RESEARCH).indexOf("rush") + 1, "listed right after Rush");
 });
 
+test("Rush Regen research needs the Rush Regen skill, after End Rush, and costs Rush's total Gold and time over 35 cheaper levels", () => {
+  const save = defaults();
+  save.upgrades.rush = save.upgrades.endRush = 1;
+  assert.equal(missing(save, "rushRegen").length, 1);
+  save.upgrades.rushRegen = 1;
+  assert.equal(missing(save, "rushRegen").length, 0);
+  const rush = research("rush").levels, regen = research("rushRegen").levels;
+  assert.equal(regen.length, 35);
+  assert.ok(regen.every((l) => l.effect.target === "rushRegenSteps" && l.effect.value === 1 && Number.isInteger(l.gold)));
+  const total = (ls: typeof rush, key: "gold" | "hours") => ls.reduce((a, l) => a + l[key], 0);
+  assert.equal(total(regen, "gold"), total(rush, "gold"), "the same Gold in all");
+  assert.ok(Math.abs(total(regen, "hours") - total(rush, "hours")) < 1e-6, "and the same time");
+  for (let i = 1; i < rush.length; i++) assert.ok(regen[i]!.gold < rush[i]!.gold && regen[i]!.hours < rush[i]!.hours, `level ${i + 1} cheaper and quicker than Rush's`);
+  for (let i = 1; i < regen.length; i++) assert.ok(regen[i]!.gold > regen[i - 1]!.gold && regen[i]!.hours > regen[i - 1]!.hours, "each level dearer and longer than the last");
+  assert.equal(Object.keys(RESEARCH).indexOf("rushRegen"), Object.keys(RESEARCH).indexOf("endRush") + 1, "listed right after End Rush");
+});
+
 test("End Rush adds its levels to STAIRS's rush toward the stairs", () => {
   const g = toStairs(2, 3);
   assert.equal(g.rushFor("stairs"), 5);
@@ -160,6 +215,10 @@ test("the Rush badge adds its value to its card's rush, stacking with Rush and E
   assert.equal(key.rushFor("yellowKey"), 3);
   key.autoTurn();
   assert.deepEqual(at(key), [4, 0], "1 + 2 tiles, stopping before the key");
+  const onto = toKey(1);
+  onto.run.badges = { yellowKey: [{ id: "rush", level: 3, pick: 0 }] };
+  onto.autoTurn();
+  assert.deepEqual(at(onto), [5, 0], "1 + 3 tiles: a tile left, onto the key");
   const bare = toKey(0);
   bare.run.badges = { yellowKey: [{ id: "rush", level: 1, pick: 0 }] };
   bare.autoTurn();

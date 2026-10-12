@@ -1,5 +1,5 @@
 import { askForGems, showHelp } from "./dialogs.ts";
-import { CARDS, cardText, deckCards, handSlots, moveCard, nextHandSlotGems, placeCard, type CardId } from "../cards.ts";
+import { CARDS, cardText, deckCards, handSlots, linkedToNext, moveCard, nextHandSlotGems, placeCard, type CardId } from "../cards.ts";
 import type { AppContext } from "./app.ts";
 import { cardArt, el, escapeHtml, gemIcon, POINTER_SVG } from "./dom.ts";
 import { DRAW_GEMS, type DrawCount } from "../game/badge-desk.ts";
@@ -131,7 +131,7 @@ export class DeckPage {
     el("deck").innerHTML = `<div class="deck-page${this.showsBadges ? " with-badges" : ""}">
       <section class="deck-hand-area" aria-labelledby="deck-hand-label">
         <h3 id="deck-hand-label" class="deck-label">Hand</h3>
-        <div class="deck-hand" id="deck-hand" role="list" aria-label="Hand, in the order its cards are tried">${this.slotsHtml(save.hand)}</div>
+        <div class="deck-hand${this.showsLinks ? " with-links" : ""}" id="deck-hand" role="list" aria-label="Hand, in the order its cards are tried">${this.slotsHtml(save.hand)}</div>
         ${tip}
       </section>
       ${this.columnsHtml()}
@@ -139,6 +139,12 @@ export class DeckPage {
     this.bindHand();
     this.bindDeck();
     this.bindBadges();
+  }
+
+  /** Whether the hand shows its Card Groups links: the Goal claimed, and no
+   * lesson waiting on the player. */
+  private get showsLinks() {
+    return this.ctx.game.deck.canLink && !this.waitsOnPlayer;
   }
 
   /** Whether the Badges box shows: Badges owned, and no lesson
@@ -230,21 +236,36 @@ export class DeckPage {
   }
 
   private cardSlotsHtml(hand: readonly CardId[], held: number | null) {
+    const linked = linkedToNext(hand, this.ctx.game.save.cardLinks);
     return Array.from({ length: handSlots(this.ctx.game.save) }, (_, i) => {
       const id = hand[i];
-      return id ? this.cardSlotHtml(id, i, hand.length, i === held) : `<div class="deck-slot empty" role="listitem" aria-label="Empty slot ${i + 1}"></div>`;
+      return id ? this.cardSlotHtml(id, i, hand.length, i === held, this.linksHtml(hand, linked, i)) : `<div class="deck-slot empty" role="listitem" aria-label="Empty slot ${i + 1}"></div>`;
     }).join("");
+  }
+
+  /** Under hand card `i`, with Card Groups: each half of a link's bracket
+   * it holds (from its middle back to the card before, and on to the card
+   * after), and, but for the last card, the diamond after it that links it
+   * to the next card or unlinks them. A link wrapping to the next row
+   * shows a half under each card. */
+  private linksHtml(hand: readonly CardId[], linked: readonly boolean[], i: number) {
+    if (!this.showsLinks) return "";
+    const next = hand[i + 1], on = !!linked[i];
+    const halves = (linked[i - 1] ? `<span class="deck-link from-prev" aria-hidden="true"></span>` : "") + (on ? `<span class="deck-link to-next" aria-hidden="true"></span>` : "");
+    if (!next) return halves;
+    const names = `${CARDS[hand[i]!].name} and ${CARDS[next].name}`;
+    return `${halves}<button type="button" class="deck-link-toggle${on ? " on" : ""}" data-link="${i}" aria-pressed="${on}" aria-label="${on ? "Unlink" : "Link"} ${names}" title="${on ? `${names} share one priority: press to unlink them` : `Link ${names}: they share one priority, the closest target of either taken first`}"></button>`;
   }
 
   /** Hand slot `i` holding card `id`: the card (fixed in place while a
    * lesson points elsewhere), its X, and the lesson's pointing hand. */
-  private cardSlotHtml(id: CardId, i: number, count: number, held: boolean) {
+  private cardSlotHtml(id: CardId, i: number, count: number, held: boolean, links = "") {
     const lesson = this.lesson, card = CARDS[id], upgrades = this.ctx.game.save.upgrades;
     const fixed = lesson === "remove" || (lesson === "order" && id !== "stairs");
     const pointed = lesson === "remove" && id === this.removeTarget;
     const x = this.removable(id) ? `<button type="button" class="deck-remove${pointed ? " shown" : ""}" data-remove="${id}" title="Return ${card.name} to the deck" aria-label="Return ${card.name} to the deck">${X_SVG}</button>` : "";
     const lessonPointer = lesson === "order" && id === "stairs" ? this.pointer("at-card") : pointed ? this.pointer("at-x") : "";
-    return `<div class="deck-slot${held ? " held" : ""}" role="listitem"${this.badgeTarget(id)}<button type="button" class="deck-card" data-slot="${i}" ${fixed ? "disabled" : ""} aria-label="${card.name}, slot ${i + 1} of ${count}. Drag, or press the left and right arrow keys, to move it." title="${card.name}: ${cardText(id, upgrades)}">${cardArt(id, card.name)}</button>${x}${lessonPointer}</div>`;
+    return `<div class="deck-slot${held ? " held" : ""}" role="listitem"${this.badgeTarget(id)}<button type="button" class="deck-card" data-slot="${i}" ${fixed ? "disabled" : ""} aria-label="${card.name}, slot ${i + 1} of ${count}. Drag, or press the left and right arrow keys, to move it." title="${card.name}: ${cardText(id, upgrades)}">${cardArt(id, card.name)}</button>${x}${lessonPointer}${links}</div>`;
   }
 
   /** The end of card `id`'s opening tag and what follows it, with the
@@ -277,6 +298,8 @@ export class DeckPage {
       const x = (e.target as HTMLElement).closest<HTMLButtonElement>(".deck-remove");
       if (x) this.remove(x.dataset.remove as CardId);
       if ((e.target as HTMLElement).closest(".deck-buy-slot")) this.buySlot();
+      const link = (e.target as HTMLElement).closest<HTMLButtonElement>(".deck-link-toggle");
+      if (link) this.change(this.ctx.game.deck.link(Number(link.dataset.link)));
       // From the keyboard (a pointer's press shows it on release).
       const card = (e.target as HTMLElement).closest<HTMLButtonElement>(".deck-card");
       if (card && e.detail === 0) this.showHandCard(this.ctx.game.save.hand[Number(card.dataset.slot)]);

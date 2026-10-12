@@ -194,7 +194,7 @@ test("descriptions are written from the grants", () => {
       undos: "Open Undo Count research in the Archives, or 4 more levels of it once Rehearsed steps has opened it",
       combatStance: "Open the Deck, where you reorder the cards in your hand before a run",
       buildout: "Unlock the Deck: add its cards to your hand, or set them aside, to choose what a run heads for",
-      inspirationUndos: "Rewind an action, and open Undo Count research in the Archives, or 4 more levels of it once Echoes of time has opened it",
+      inspirationUndos: "Rewind one action a run, and open Undo Count research in the Archives, or 4 more levels of it once Echoes of time has opened it",
       revive: "When a strike would fell you, a 0.5% chance to rise at full HP and fight on: opens Revive training",
     },
   );

@@ -3,7 +3,7 @@ import type { TierRecord } from "./tiers.ts";
 import type { ThemeId } from "./theme-collection.ts";
 import type { ArchivesSave } from "./archives.ts";
 import type { ShrineRun, ShrinesSave } from "./shrines.ts";
-import type { CardId } from "./cards.ts";
+import type { CardId, CardLink } from "./cards.ts";
 import type { BadgesSave, RunBadges } from "./badges.ts";
 import type { GoldItemId, KeyColor, TrainingId, UpgradeId } from "./config.ts";
 import type { MaterialId } from "./materials.ts";
@@ -138,6 +138,8 @@ export type RunCore = {
   /** The hand as it was ordered when the run went inside: the cards that
    * move the hero for the rest of the run. */
   hand?: CardId[];
+  /** The hand's links (Card Groups) as they were when the run went inside. */
+  links?: CardLink[];
   /** Silver held: earned from enemies and spent inside this run only, so
    * undo takes it back with the rest of the run. */
   silver?: number;
@@ -153,6 +155,10 @@ export type RunCore = {
   /** Ignore and Target uses spent this run, counted like Focus's. */
   ignoreUsed?: number;
   targetUsed?: number;
+  /** Undos spent this run. A run has as many as the loadout's undo
+   * capacity, and one spent never comes back, so what is left is that
+   * capacity less these (undo carries the count onto the run it restores). */
+  undosUsed?: number;
   /** New floors counted toward each charge's next regained use (Refocus,
    * Ignore More, Target More; run-charges.ts), while it is below full. */
   regain?: Partial<Record<"focus" | "ignore" | "target", number>>;
@@ -361,6 +367,9 @@ export type Save = {
    * priority order. Set up before a run; a new profile starts with the
    * base hand. */
   hand: CardId[];
+  /** The hand's Card Groups: links between cards side by side in it, each
+   * dropped once either card moves out of place (cards.ts). */
+  cardLinks: CardLink[];
   /** Hand slots bought with Gems (after Larger Hand's). */
   handSlots: number;
   /** The card badges owned, which card holds each, and where their
@@ -374,9 +383,11 @@ export type Save = {
    * closing a Training group under the hand in the first run after On the
    * Job; `speed`, speeding the hand up on the second floor; `climb`, the
    * first run's note, dismissed; and in the forest `enter`, the note to try
-   * again, dismissed (or a run entered), and `delve`, opening the Delve
-   * once Into the depths is owned. */
-  tutorials: { deck: boolean; removeCard: boolean; addCard: boolean; upgrades: boolean; gear: boolean; onTheJob: boolean; speed: boolean; climb: boolean; enter: boolean; delve: boolean };
+   * again, dismissed (or a run entered), `delve`, opening the Delve
+   * once Into the depths is owned, and `chamber`, the first Tower run
+   * ended, after which a new floor's "A new chamber opens." no longer
+   * rises over the board. */
+  tutorials: { deck: boolean; removeCard: boolean; addCard: boolean; upgrades: boolean; gear: boolean; onTheJob: boolean; speed: boolean; climb: boolean; enter: boolean; delve: boolean; chamber: boolean };
   /** Per tree: a run that earned its currency (Inspiration in the Tower,
    * Courage in the Delve) has ended since the tree was last shown, so its
    * tab (and the Upgrades tab) wear a dot in the forest while a skill there

@@ -3,7 +3,7 @@ import { bulkBuy, type BuyQuantity } from "./buy-quantity.ts";
 import { snap } from "./exact.ts";
 import { PARRY_CAP, type CritRule } from "./combat.ts";
 import type { Mode, Save } from "./entities.ts";
-import { CRIT_CHANCE_RANK, CRIT_FACTOR_BASE, CRIT_FACTOR_RANK, FIND_POTION_BASE, FIND_POTION_MAX, FLOOR_GOLD_BASE, FLOOR_GOLD_RANK, FLOOR_SILVER_BASE, FLOOR_SILVER_RANK, FIND_POTION_RANK, FREE_TRAINING_RANK, TRAINING_GROUPS, REVIVE_BASE, REVIVE_MAX, REVIVE_RANK, GOLD_SHOP, KILL_GOLD_RANK, SILVER_BONUS_RANK, schedulePrice, POTION_PERCENT_BASE, POTION_PERCENT_RANK, TRAINING, TRAINING_PER_LEVEL, UPGRADES, isStatRow, levelForXp, trained, trainingWorth, ATTACK_RANGE_BASE, ATTACK_RANGE_RANK, ATTACK_SPEED_BASE, ATTACK_SPEED_RANK, ATK_PER_TILE_FIRST, ATK_PER_TILE_FALL, type GoldItemId, type StatTrainingRow, type TrainingId, type TrainingRow, type UpgradeId } from "./config.ts";
+import { CRIT_CHANCE_RANK, CRIT_FACTOR_BASE, CRIT_FACTOR_RANK, FIND_POTION_BASE, FIND_POTION_MAX, FLOOR_GOLD_BASE, FLOOR_GOLD_RANK, FLOOR_SILVER_BASE, FLOOR_SILVER_RANK, FIND_POTION_RANK, FREE_TRAINING_RANK, TRAINING_GROUPS, REVIVE_BASE, REVIVE_MAX, REVIVE_RANK, GOLD_SHOP, KILL_GOLD_RANK, SILVER_BONUS_RANK, schedulePrice, POTION_PERCENT_BASE, POTION_PERCENT_RANK, TRAINING, TRAINING_PER_LEVEL, UPGRADES, isStatRow, levelForXp, trained, trainingWorth, ATTACK_RANGE_BASE, ATTACK_RANGE_RANK, ATTACK_SPEED_BASE, ATTACK_SPEED_RANK, ATK_PER_TILE_FIRST, ATK_PER_TILE_FALL, MULTISHOT_CHANCE_RANK, MULTISHOT_TARGETS_BASE, MULTISHOT_TARGETS_RANK, type GoldItemId, type StatTrainingRow, type TrainingId, type TrainingRow, type UpgradeId } from "./config.ts";
 import { wornEffects } from "./equipment/effects.ts";
 import { PIERCE_CAP } from "./equipment/balance.ts";
 import { RESEARCH, researched } from "./archives.ts";
@@ -70,7 +70,7 @@ const WORDS: Record<Stat, string> = {
 
 type Granting = { grants?: Grants };
 
-/** The most undos a character can store, with every upgrade that adds one
+/** The most undos a run can have, with every upgrade that adds one
  * at its highest level and every level of Undo Count. */
 const UNDO_CAP = UPGRADES.reduce(
   (cap, u: Granting & { max: number }) => cap + (u.grants?.undos ?? 0) * u.max,
@@ -142,7 +142,7 @@ export function describeGrants(grants: Grants, words: Partial<Record<Stat, strin
   return (Object.entries(grants) as [Stat, number][])
     .map(([stat, n]) =>
       stat === "undos"
-        ? `Store ${n === 1 ? "one" : n} ${words.undos ?? WORDS.undos}${n === 1 ? "" : "s"} (up to ${UNDO_CAP})`
+        ? `${n === 1 ? "One" : n} ${words.undos ?? WORDS.undos}${n === 1 ? "" : "s"} a run (up to ${UNDO_CAP})`
         : `+${n} ${words[stat] ?? WORDS[stat]}`)
     .join(" and ");
 }
@@ -189,7 +189,7 @@ export function trainingPoints(save: Pick<Save, "xp" | "trainingPaid">) {
  * take a rank they pay for (the Upgrades and Training tabs' dot). */
 export function trainingWaiting(save: Save) {
   const left = trainingPoints(save).left;
-  return left > 0 && TRAINING.some((t) => t.cost <= left && trainingOpen(t, save) && !trainingMaxed(save, t.id));
+  return left > 0 && TRAINING.some((t) => t.cost <= left && trainingOpen(t, save) && !trainingFull(save, t.id));
 }
 
 /** What a percent potion restores beyond its HP, in hundredths of a
@@ -240,6 +240,13 @@ const attackSpeedAt = (ranks: number) => ATTACK_SPEED_BASE + ATTACK_SPEED_RANK *
  * `trainingNow`): 0.01 for the first rank, each later one 0.00004 less. */
 export const attackPerTile = (save: Pick<Save, "training">) => attackPerTileAt(save.training.attackPerTile);
 const attackPerTileAt = (ranks: number) => ATK_PER_TILE_FIRST * ranks - (ATK_PER_TILE_FALL * ranks * (ranks - 1)) / 2;
+/** The chance each of the Archer's shots is a multishot, in hundredths of
+ * a percent (Multishot Chance), and how many enemies a multishot fires at
+ * (Multishot Targets), from the ranks `save` holds (a run's `trainingNow`). */
+export const multishotChance = (save: Pick<Save, "training">) => multishotChanceAt(save.training.multishotChance);
+const multishotChanceAt = (ranks: number) => MULTISHOT_CHANCE_RANK * ranks;
+export const multishotTargets = (save: Pick<Save, "training">) => multishotTargetsAt(save.training.multishotTargets);
+const multishotTargetsAt = (ranks: number) => MULTISHOT_TARGETS_BASE + MULTISHOT_TARGETS_RANK * ranks;
 
 /** The Gold each floor climbed for the first time in a run pays, before
  * the tier's bonus and research: none without Spare Change. */
@@ -276,15 +283,18 @@ const MULTIPLIER_ROWS: ReadonlyMap<TrainingId, number> = new Map([["silverBonus"
 
 /** How a Training row's value reads: a multiplier as ×1.30, Attack Range
  * as 3.00 tiles, Attack Speed as 1.00/10 turns, ATK / Tile as
- * +0.010×/tile, the others with their unit after. */
+ * +0.010×/tile, Multishot Targets as 2 targets, the others with their unit
+ * after. */
 export const trainingText = (value: number, unit: string) =>
   unit === "×" ? `×${value.toFixed(2)}` : unit === "tiles" ? `${value.toFixed(2)} tiles` : unit === "shots" ? `${value.toFixed(2)}/10 turns`
-    : unit === "perTile" ? `+${value.toFixed(3)}×/tile` : `${value}${unit}`;
+    : unit === "perTile" ? `+${value.toFixed(3)}×/tile` : unit === "targets" ? `${value} targets` : `${value}${unit}`;
 
 /** Whether `id` has as many ranks as it can take. */
 /** How much faster trainers train than at first (Faster Trainers research:
  * 0.02 a level); a rank takes its time / (1 + this). */
 export const trainingSpeed = (save: Pick<Save, "archives">) => researched(save.archives, "trainingSpeed", 0);
+/** What Training Discount takes off a trainer's Gold, in tenths of a percent. */
+export const trainingDiscount = (save: Pick<Save, "archives">) => researched(save.archives, "trainingDiscount", 0);
 
 /** Whether `id` can take no more ranks: at its most, counting a rank a
  * trainer is training. */
@@ -293,38 +303,45 @@ export const trainingMaxed = (save: Pick<Save, "training"> & Partial<Pick<Save, 
   return save.training[id] + ranksInTraining(save.trainingJobs, id) >= row.max;
 };
 
+/** Whether `id` can take no more ranks bought with training points: at its
+ * most by the ranks it has. A rank a trainer is training doesn't count, since
+ * points bought past it take its room and the trainer trains fewer
+ * (`TrainingDesk.train`). */
+export const trainingFull = (save: Pick<Save, "training">, id: TrainingId) => save.training[id] >= TRAINING.find((t) => t.id === id)!.max;
+
 /** What one more rank of `id` costs (in training points, or a trainer's
  * Gold) and does: to the next run's character
  * for a stat, in % to what a percent potion restores or the chance a
  * potion is one, to the Gold or Silver a new floor pays, or to a
  * multiplier (its unit "×", what a rank adds in percent). A row at its most
- * ranks has no next rank to buy. */
+ * ranks (`trainingFull`) has no next rank to buy; one whose rank in training
+ * reaches it has none for a trainer. */
 export function trainingStep(save: Save, id: TrainingId, count = 1) {
-  const row = TRAINING.find((t) => t.id === id)!, maxed = trainingMaxed(save, id);
-  const buy = trainingPrices(save, row, maxed);
+  const row = TRAINING.find((t) => t.id === id)!, maxed = trainingFull(save, id);
+  const buy = trainingPrices(save, row, maxed, trainingMaxed(save, id));
   if (isStatRow(row)) return { row, ...statStep(save, row, count), ...buy };
   return { row, ...valueStep(id, save.training[id], maxed, count), ...buy };
 }
 
 /** What one press of `id`'s training-points button buys at Buy Quantity
- * `q`: the ranks (up to its most) and the points they take, and whether
- * the points held pay for them. */
+ * `q`: the ranks (up to its most, a rank in training not counted) and the
+ * points they take, and whether the points held pay for them. */
 export function trainingBulk(save: Save, id: TrainingId, q: BuyQuantity) {
   const row = TRAINING.find((t) => t.id === id)!;
-  const room = row.max - save.training[id] - ranksInTraining(save.trainingJobs, id);
+  const room = row.max - save.training[id];
   return bulkBuy(q, Math.max(0, room), () => row.cost, save.settings.freePurchases ? Infinity : trainingPoints(save).left);
 }
 
 /** Whether the next rank of `row` can be bought now with training points
  * (`affordable`) or Gold (`goldAffordable`), whether there is one, and a
  * trainer's Gold price for it. */
-function trainingPrices(save: Save, row: TrainingRow, maxed: boolean) {
-  const free = save.settings.freePurchases, gold = trainingGold(row, save.trainerRanks[row.id]);
+function trainingPrices(save: Save, row: TrainingRow, maxed: boolean, trainerMaxed: boolean) {
+  const free = save.settings.freePurchases, gold = trainingGold(row, save.trainerRanks[row.id], trainingDiscount(save));
   return {
     affordable: !maxed && (free || trainingPoints(save).left >= row.cost),
     maxed,
     gold,
-    goldAffordable: !maxed && (free || save.gold >= gold),
+    goldAffordable: !trainerMaxed && (free || save.gold >= gold),
   };
 }
 
@@ -357,6 +374,7 @@ function valueStep(id: TrainingId, ranks: number, maxed: boolean, count = 1) {
   if (id === "attackRange") return { unit: "tiles", now: attackRangeAt(ranks) / 100, next: attackRangeAt(maxed ? ranks : ranks + count) / 100, worth: ATTACK_RANGE_RANK / 100 };
   if (id === "attackSpeed") return { unit: "shots", now: attackSpeedAt(ranks) / 20, next: attackSpeedAt(maxed ? ranks : ranks + count) / 20, worth: ATTACK_SPEED_RANK / 20 };
   if (id === "attackPerTile") return { unit: "perTile", now: attackPerTileAt(ranks) / 100_000, next: attackPerTileAt(maxed ? ranks : ranks + count) / 100_000, worth: (ATK_PER_TILE_FIRST - ATK_PER_TILE_FALL * ranks) / 100_000 };
+  if (id === "multishotTargets") return { unit: "targets", now: multishotTargetsAt(ranks), next: multishotTargetsAt(maxed ? ranks : ranks + count), worth: MULTISHOT_TARGETS_RANK };
   if (id === "floorGold") return { unit: "", now: floorGoldAt(ranks), next: floorGoldAt(ranks + count), worth: FLOOR_GOLD_RANK };
   if (id === "floorSilver") return { unit: "", now: floorSilverAt(ranks), next: floorSilverAt(ranks + count), worth: FLOOR_SILVER_RANK };
   const bonus = MULTIPLIER_ROWS.get(id);
@@ -369,6 +387,7 @@ function valueStep(id: TrainingId, ranks: number, maxed: boolean, count = 1) {
 function percentRow(id: TrainingId): [(ranks: number) => number, number] {
   if (id === "findPotion") return [findPotionChance, FIND_POTION_RANK];
   if (id === "revive") return [reviveChanceAt, REVIVE_RANK];
+  if (id === "multishotChance") return [multishotChanceAt, MULTISHOT_CHANCE_RANK];
   if (FREE_ROWS.has(id)) return [freeTrainingAt, FREE_TRAINING_RANK];
   return [(r: number) => POTION_PERCENT_BASE + POTION_PERCENT_RANK * r, POTION_PERCENT_RANK];
 }

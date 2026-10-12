@@ -9,7 +9,7 @@ import { enemyTitle } from "../src/scaling.ts";
 import { tierCells, tierGold } from "../src/tiers.ts";
 import { generateTowerRoom, RoomWorld } from "../src/tower/room-world.ts";
 import { heroClass, isArcher } from "../src/goals.ts";
-import { attackPerTile, attackRange, attackSpeed, trainingOpen, trainingStep, trainingText } from "../src/loadout.ts";
+import { attackPerTile, attackRange, attackSpeed, multishotChance, multishotTargets, trainingOpen, trainingStep, trainingText } from "../src/loadout.ts";
 import { runTrainingValue, silverPrice } from "../src/run-training.ts";
 import { trainingGold } from "../src/training-jobs.ts";
 import { RESEARCH } from "../src/archives.ts";
@@ -310,4 +310,76 @@ test("a charged arrow flies in a blue glow; a plain arrow has none", () => {
   };
   assert.deepEqual(glows(true), ["#4da6ff"]);
   assert.deepEqual(glows(false), [""]);
+});
+
+test("Multishot Chance and Targets: 0.5% a rank to 49.5% at 99, and 2 targets to 9 at 7, opened by Tower III's floor 90; the same prices in Silver and a trainer's Gold", () => {
+  const save = defaults();
+  const rows = (["multishotChance", "multishotTargets"] as const).map((id) => TRAINING.find((t) => t.id === id)!);
+  assert.deepEqual(rows.map((r) => [r.group, r.max]), [["offense", 99], ["offense", 7]]);
+  assert.deepEqual(rows.map((r) => trainingOpen(r, save)), [false, false]);
+  save.goals.claimed[3] = [90];
+  assert.deepEqual(rows.map((r) => trainingOpen(r, save)), [true, true]);
+  const at = (training: Partial<typeof save.training>) => ({ training: { ...save.training, ...training } });
+  assert.deepEqual([0, 1, 10, 99].map((r) => multishotChance(at({ multishotChance: r }))), [0, 50, 500, 4950]);
+  assert.deepEqual([0, 1, 7].map((r) => multishotTargets(at({ multishotTargets: r }))), [2, 3, 9]);
+  save.training.multishotChance = 98;
+  const chance = trainingStep(save, "multishotChance");
+  assert.deepEqual([chance.unit, chance.now, chance.next], ["%", 49, 49.5]);
+  const targets = trainingStep(save, "multishotTargets");
+  assert.deepEqual([trainingText(targets.now, targets.unit), trainingText(targets.next, targets.unit)], ["2 targets", "3 targets"]);
+  const run = { training: { multishotTargets: 2 }, player: hero() };
+  assert.deepEqual(runTrainingValue(save, run, "multishotTargets"), { value: 4, unit: "targets" }, "Silver ranks count in the run");
+  assert.deepEqual(runTrainingValue(save, run, "multishotChance"), { value: 49, unit: "%" });
+  for (const row of rows) {
+    const prices = Array.from({ length: row.max }, (_, k) => silverPrice(row.id, k));
+    assert.deepEqual(prices, Array.from({ length: row.max }, (_, k) => trainingGold(row, k)), `${row.id}: the same in Silver and Gold`);
+  }
+  // 60 × n × (1 + ((n − 1) / 12)^1.5).
+  assert.deepEqual([1, 11, 32, 85, 99].map((n) => silverPrice("multishotChance", n - 1)), [60, 1163, 9893, 99_554, 144_569]);
+  assert.deepEqual(Array.from({ length: 7 }, (_, k) => silverPrice("multishotTargets", k)), [450, 2000, 5000, 12_500, 40_000, 120_000, 350_000]);
+});
+
+test("a multishot fires one charge at up to Multishot Targets of the closest enemies an arrow can hurt, each with its own ATK / Tile; undo takes them all back", () => {
+  const foes = { "2,1": { ...brute, hp: 3000, defense: 5000 }, "3,0": { ...brute, hp: 3000 }, "1,2": { ...brute, hp: 3000 }, "4,0": { ...brute, hp: 3000 }, "1,3": { ...brute, hp: 3000 } };
+  const shots = (targets: number) => {
+    const g = archer(arena(foes, { attack: 1000 }));
+    g.save.goals.claimed[3] = [10, 90];
+    // Past its 99 ranks, so every shot is a multishot.
+    g.save.training.multishotChance = 200;
+    g.save.training.multishotTargets = targets;
+    g.save.training.attackPerTile = 1;
+    assert.ok(g.move(1, 0));
+    assert.equal(g.run.volleys?.hero, 0, "one arrow's charge spent");
+    return g;
+  };
+  // From (1, 0): the armored (2, 1) can't be hurt; (3, 0) and (1, 2) are 2 away, (4, 0) and (1, 3) 3.
+  assert.deepEqual(shots(0).volley?.shots.map((s) => [s.to, s.damage]), [[{ x: 3, y: 0 }, 1020], [{ x: 1, y: 2 }, 1020]]);
+  const g = shots(7);
+  assert.deepEqual(g.volley?.shots.map((s) => [s.to, s.damage]), [[{ x: 3, y: 0 }, 1020], [{ x: 1, y: 2 }, 1020], [{ x: 4, y: 0 }, 1030], [{ x: 1, y: 3 }, 1030]], "fewer enemies than targets: one arrow each");
+  assert.ok(g.undo());
+  assert.deepEqual([g.run.volleys, g.volley], [undefined, null], "the arrows and their charge taken back");
+  for (const [x, y] of [[3, 0], [1, 2], [4, 0], [1, 3]] as const) assert.equal(g.world.tile(x, y).wound, undefined);
+  const single = archer(arena(foes, { attack: 1000 }));
+  assert.ok(single.move(1, 0));
+  assert.equal(single.volley?.shots.length, 1, "no Multishot Chance: one arrow");
+});
+
+test("every arrow of a multishot carries the first's Charged Shot", () => {
+  const g = archer(arena({ "6,0": { ...brute, hp: 9000 }, "5,2": { ...brute, hp: 9000 } }, { attack: 1000 }));
+  g.save.archives.levels.chargedShot = 10;
+  g.save.training.multishotChance = 200;
+  for (let i = 0; i < 3; i++) assert.ok(g.move(1, 0));
+  assert.deepEqual(g.volley?.shots.map((s) => [s.to, s.damage, s.charged]), [[{ x: 5, y: 2 }, 1200, true], [{ x: 6, y: 0 }, 1200, true]]);
+});
+
+test("Multishot Chance at 99 ranks makes about 49.5% of shots multishots, a fixed roll per run, turn and tile", () => {
+  const g = archer(arena({}));
+  g.save.training.multishotChance = 99;
+  const roll = (turn: number) => (g as unknown as { multishot(turn: number): boolean }).multishot(turn);
+  let hits = 0;
+  for (let turn = 1; turn <= 4000; turn++) hits += roll(turn) ? 1 : 0;
+  assert.ok(Math.abs(hits / 4000 - 0.495) < 0.03, `about 49.5%: ${hits / 4000}`);
+  assert.equal(roll(17), roll(17));
+  g.save.training.multishotChance = 0;
+  assert.ok(Array.from({ length: 200 }, (_, t) => roll(t)).every((m) => !m));
 });

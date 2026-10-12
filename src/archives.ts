@@ -58,9 +58,9 @@ export const RESEARCH_TARGETS = {
   targetFloors: { name: "Floors per Target", base: REGAIN_FLOORS, shown: count },
   /** The run's speed arrows' most steps a second, once Movement Speed is owned. */
   moveSpeed: { name: "Steps / Sec", base: 3, shown: count },
-  /** Undos the hero can store, once Rehearsed steps has given the first;
+  /** Undos a run has to spend, once Rehearsed steps has given the first;
    * its base is the loadout's own undos, so the Archives page reads it there. */
-  undoCapacity: { name: "Undos Stored", base: 0, shown: count },
+  undoCapacity: { name: "Undos per Run", base: 0, shown: count },
   /** The percent of its HP a potion restores, from 100 (red potions aside). */
   potionHeal: { name: "Potion Healing", base: 100, shown: percent },
   /** The percent of its Regen training a step regains, from 100. */
@@ -115,10 +115,14 @@ export const RESEARCH_TARGETS = {
   startingSilver: { name: "Starting Silver", base: 0, shown: count },
   /** How fast trainers work: a rank of `d` takes d / (1 + speed). */
   trainingSpeed: { name: "Training Speed", base: 0, shown: speed },
+  /** What a trainer's Gold is cut by, in tenths of a percent. */
+  trainingDiscount: { name: "Training Discount", base: 0, shown: tenths },
   /** Tiles the hand's first step toward a new target may rush across, once Rush is owned. */
   rushTiles: { name: "Tiles Rushed", base: 0, shown: count },
   /** Tiles more STAIRS's rush toward the stairs may cross, once End Rush is owned. */
   endRushTiles: { name: "Tiles Rushed to the Stairs", base: 0, shown: count },
+  /** How many of a Rush's rushed tiles regain HP by Regen, once Rush Regen is owned. */
+  rushRegenSteps: { name: "Rushed Steps with Regen", base: 0, shown: count },
   /** Buy quantities opened past x1: x5, x10, x100, then Max. */
   buyQuantity: { name: "Buy Quantity", base: 0, shown: (n: number) => quantityLabel(BUY_QUANTITIES[Math.min(n, BUY_QUANTITIES.length - 1)]!) },
   /** How fast archivists work: a level of `d` hours takes d / (1 + speed). */
@@ -167,7 +171,8 @@ export type ResearchRequirement =
   | { goalUnlock: GoalUnlock };
 export type ResearchDefinition = {
   name: string;
-  description: string;
+  /** Fixed text, or text read from the Archives as they stand (`describe`). */
+  description: string | ((a: ArchivesSave) => string);
   categories: ResearchCategory[];
   requires: ResearchRequirement[];
   /** Level 1 first; the project's maximum level is its length. */
@@ -265,6 +270,20 @@ const fasterTrainersLevels = () => Array.from({ length: 100 }, (_, i): ResearchL
   effect: { target: "trainingSpeed", op: "add", value: 0.02 },
 }));
 
+/** Training Discount: 0.5% off a trainer's Gold a level (5 tenths), for 99
+ * levels. Level n costs 30 + 8 × m³ × 120 / (m + 120) Gold, m = n − 1,
+ * rounded (30 at level 1, 9,784 at 12, 103,000 at 26, 1.05 million at 59,
+ * 4.14 million at 99; 114 million in all): cubic, easing toward square.
+ * Level 1 takes 30 seconds; level n after it C(n + 3, 3) − 4 minutes
+ * (6, 16, 31, 52, 80, 116 …), tapered from level 8 on by 55 / (55 + d −
+ * d² / 625), d = n − 7, rounded (13,554 at 50, 49 days at 99; about four
+ * years in all). */
+const trainingDiscountLevels = () => Array.from({ length: 99 }, (_, i): ResearchLevel => {
+  const n = i + 1, m = n - 1, d = Math.max(0, n - 7);
+  const minutes = n === 1 ? 0.5 : Math.round((((n + 1) * (n + 2) * (n + 3)) / 6 - 4) * 55 / (55 + d - (d * d) / 625));
+  return { gold: 30 + Math.round((8 * m * m * m * 120) / (m + 120)), hours: minutes / 60, effect: { target: "trainingDiscount", op: "add", value: 5 } };
+});
+
 /** Rush: +1 tile rushed a level, for 25 levels. Each level starts from
  * 250 × n Gold and 1.75 × n hours (Faster Trainers' first levels) and grows steeper: Gold
  * doubles each level and time grows 20% (250 Gold and 1.75 hours at level
@@ -276,6 +295,24 @@ const rushLevels = (target: ResearchTarget) => Array.from({ length: 25 }, (_, i)
   hours: 1.75 * (i + 1) * intPow(1.2, i),
   effect: { target, op: "add", value: 1 },
 }));
+
+/** Rush Regen: +1 rushed step with Regen a level, for 35 levels, in all
+ * exactly Rush's Gold and time, spread more gently: level n weighs
+ * n × 1.6^(n−1) of the Gold and n × 1.12^(n−1) of the time (about 260 Gold
+ * and 1.4 hours at level 1, 79 billion Gold and 97 days at 35), the Gold's
+ * rounding left on the last level. */
+const rushRegenLevels = (): ResearchLevel[] => {
+  const rush = rushLevels("rushTiles"), n = 35;
+  const share = (total: number, growth: number) => {
+    const weights = Array.from({ length: n }, (_, i) => (i + 1) * intPow(growth, i));
+    const sum = weights.reduce((a, b) => a + b, 0);
+    return weights.map((w) => (total * w) / sum);
+  };
+  const goldTotal = rush.reduce((a, l) => a + l.gold, 0), hoursTotal = rush.reduce((a, l) => a + l.hours, 0);
+  const gold = share(goldTotal, 1.6).map(Math.round), hours = share(hoursTotal, 1.12);
+  gold[n - 1]! += goldTotal - gold.reduce((a, b) => a + b, 0);
+  return gold.map((g, i) => ({ gold: g, hours: hours[i]!, effect: { target: "rushRegenSteps", op: "add", value: 1 } }));
+};
 
 /** Max Interest's limits by level, up from 50 Silver a floor. */
 const INTEREST_CAPS = [100, 200, 350, 500, 750, 1000, 1500, 2000, 2750, 3750, 5000, 6500, 8250, 10000, 12500, 15000, 20000, 25000, 35000, 50000];
@@ -523,9 +560,16 @@ export const RESEARCH = {
     requires: [{ upgrade: "endRush" }],
     levels: rushLevels("endRushTiles"),
   },
+  rushRegen: {
+    name: "Rush Regen",
+    description: "Learn to catch your breath mid-dash: one more of a Rush's first rushed steps regains HP by Regen.",
+    categories: ["abilities"],
+    requires: [{ upgrade: "rushRegen" }],
+    levels: rushRegenLevels(),
+  },
   undoCount: {
     name: "Undo Count",
-    description: "Rehearse old climbs to store more undos.",
+    description: "Rehearse old climbs to give each run one more undo.",
     categories: ["abilities"],
     requires: [{ anyUpgrade: ["inspirationUndos", "undos"] }],
     levels: countLevels("undoCapacity", 8),
@@ -537,6 +581,13 @@ export const RESEARCH = {
     categories: ["progression"],
     requires: [{ upgrade: "fasterTrainers" }],
     levels: fasterTrainersLevels(),
+  },
+  trainingDiscount: {
+    name: "Training Discount",
+    description: "Bargain with the trainers: every rank a trainer trains costs less Gold.",
+    categories: ["economy"],
+    requires: [{ upgrade: "archives" }, { goalUnlock: "trainingDiscount" }],
+    levels: trainingDiscountLevels(),
   },
   buyQuantity: {
     name: "Buy Quantity",
@@ -618,7 +669,7 @@ export const RESEARCH = {
   },
   interest: {
     name: "Interest %",
-    description: "Put your Silver to work: each new floor climbed adds a share of the Silver you hold, after the floor's other Silver, up to Max Interest.",
+    description: (a) => `Put your Silver to work: each new floor climbed adds a share of the Silver you hold, after the floor's other Silver, up to Max Interest (now ${interestCap(a).toLocaleString("en-US")} Silver a floor).`,
     categories: ["economy"],
     requires: [{ upgrade: "interest" }],
     levels: hundredLevels("interestRate", 1),
@@ -747,6 +798,11 @@ export const RESEARCH = {
 export type ResearchId = keyof typeof RESEARCH;
 export const RESEARCH_IDS = Object.keys(RESEARCH) as ResearchId[];
 export const research = (id: ResearchId): ResearchDefinition => RESEARCH[id];
+/** Project `id`'s description with the Archives as `a`. */
+export const describe = (a: ArchivesSave, id: ResearchId) => {
+  const d = research(id).description;
+  return typeof d === "function" ? d(a) : d;
+};
 
 /** Archivist slots: the Archives start with `start`, and each further one,
  * up to `maximum`, is hired for the next price in Gems. */
@@ -813,6 +869,8 @@ export function maxLevel(id: ResearchId, upgrades?: Record<UpgradeId, number>) {
 export const nextLevel = (a: ArchivesSave, id: ResearchId, upgrades?: Record<UpgradeId, number>): ResearchLevel | undefined =>
   researchLevel(a, id) < maxLevel(id, upgrades) ? research(id).levels[researchLevel(a, id)] : undefined;
 
+/** The most Silver Interest pays a floor: Max Interest research, from its target's base. */
+export const interestCap = (a: ArchivesSave) => researched(a, "interestCap", RESEARCH_TARGETS.interestCap.base);
 /** `base` changed by every completed research level aimed at `target`. */
 export function researched(a: ArchivesSave, target: ResearchTarget, base: number) {
   let add = 0, multiply = 1, set: number | undefined;

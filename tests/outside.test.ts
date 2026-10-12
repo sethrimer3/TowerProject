@@ -5,6 +5,7 @@ import { defaults, decode } from "../src/save.ts";
 import { OutsideWorld, ENTRANCE_Y, OUTSIDE_SIZE, OUTSIDE_START_Y, weatherForRoll, outsideWeather, outsideSpriteKind, roadsOf, BLACKSMITH, TOURNAMENT_HALL } from "../src/outside.ts";
 import { lightningOpacity } from "../src/weather.ts";
 import { chooseStep } from "../src/automation.ts";
+import { TOWER_UNLOCK_FLOOR } from "../src/goals.ts";
 
 for (const mode of ["tower", "delve"] as const) {
   test(`${mode}: death, forest persistence, entry and Undo preserve progression`, () => {
@@ -25,8 +26,9 @@ for (const mode of ["tower", "delve"] as const) {
     g.move(0, 1);
     assert.ok(g.fallen);
     assert.ok(g.undo());
-    // The damage stays on the floor's record, as after any undo.
-    assert.deepEqual(g.run, mode === "tower" ? { ...before.run, damaged: true } : before.run);
+    // The damage stays on the floor's record, as after any undo, and the undo is spent.
+    const undone = { ...before.run, undosUsed: 1 };
+    assert.deepEqual(g.run, mode === "tower" ? { ...undone, damaged: true } : undone);
     guard();
     g.move(0, 1);
     assert.ok(g.acceptDefeat());
@@ -119,3 +121,12 @@ for (const mode of ["tower", "delve"] as const)
     assert.ok(g.selectTier(1));
     assert.deepEqual([roadTo(0), roadTo(right)], [false, true], "the first leads only on");
   });
+
+test("claiming the Goal that opens the next tower lays the road out to it in the forest at once", () => {
+  const g = new Game(defaults());
+  g.save.tower.best = g.save.tower.reached = TOWER_UNLOCK_FLOOR;
+  g.newRun({ outside: true, seed: 7 });
+  assert.equal(roadsOf(g.world)?.next, false, "no road out before Tower II opens");
+  assert.equal(g.claimGoal(1, TOWER_UNLOCK_FLOOR, false)?.kind, "tower");
+  assert.equal(roadsOf(g.world)?.next, true, "the forest the claim was made from is redrawn with the road");
+});

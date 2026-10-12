@@ -1,5 +1,5 @@
 import { curvePrice, risingPrice, TRAINER_GOLD_CURVES, type TrainingId } from "./config.ts";
-import { intPow } from "./exact.ts";
+import { halfPow } from "./exact.ts";
 
 // A Training rank is bought one of two ways: with training points, which
 // count at once, or with Gold paid to a trainer, which takes time on the
@@ -57,25 +57,35 @@ export const trainingMs = (ranks: number, speed: number) => Math.round((training
  * `TRAINING_GOLD_PER_POINT` a point of its cost times the rank's number,
  * times 1 + ranks / `growth`, rounded up. A row with a `start` asks that
  * much for a point of its first rank instead, and one with a `power` asks
- * start × the rank's number × (1 + (ranks / growth)^power). */
-export const trainingGold = (row: { id: TrainingId; cost: number }, ranks: number) => {
+ * start × the rank's number × (1 + (ranks / growth)^power), the power a
+ * whole number or a half. Training Discount research takes `discount`
+ * (tenths of a percent) off that, rounded up again. */
+export const trainingGold = (row: { id: TrainingId; cost: number }, ranks: number, discount = 0) => {
+  const price = listGold(row, ranks);
+  return discount ? Math.ceil((price * (1000 - discount)) / 1000) : price;
+};
+/** A trainer's price for the next rank before any discount. */
+const listGold = (row: { id: TrainingId; cost: number }, ranks: number) => {
   const curve = TRAINER_GOLD_CURVES[row.id];
+  // A row with `prices` asks each rank's own (for each point of its cost).
+  if ("prices" in curve) return curve.prices[Math.min(ranks, curve.prices.length - 1)]! * row.cost;
   // A row with a `ratio` asks each rank that much more than the last, the ratio rising.
   if ("ratio" in curve) return risingPrice(curve.start * row.cost, curve.ratio, curve.rise, ranks);
   const { growth, start, power, cubic } = curve;
   // A row with a `power` rises with ranks / growth to that power, not linearly.
-  if (power) return Math.ceil((start ?? TRAINING_GOLD_PER_POINT) * row.cost * (ranks + 1) * (1 + intPow(ranks / growth, power)));
+  if (power) return Math.ceil((start ?? TRAINING_GOLD_PER_POINT) * row.cost * (ranks + 1) * (1 + halfPow(ranks / growth, power)));
   // A row with a `cubic` scale adds (ranks / cubic)^3 to the multiplier, so deep ranks climb faster.
   return curvePrice((start ?? TRAINING_GOLD_PER_POINT) * row.cost, ranks, growth, cubic);
 };
 
 /** The Gold and base training time (ms, one rank after another, before the
  * batch's speedup) of `count` ranks more of `row` trained by trainers who
- * have finished `ranks`, at Faster Trainers `speed`. */
-export function trainerBatch(row: { id: TrainingId; cost: number }, ranks: number, count: number, speed: number) {
+ * have finished `ranks`, at Faster Trainers `speed` and Training Discount
+ * `discount`. */
+export function trainerBatch(row: { id: TrainingId; cost: number }, ranks: number, count: number, speed: number, discount = 0) {
   let gold = 0, ms = 0;
   for (let k = 0; k < count; k++) {
-    gold += trainingGold(row, ranks + k);
+    gold += trainingGold(row, ranks + k, discount);
     ms += trainingMs(ranks + k, speed);
   }
   return { gold, ms };

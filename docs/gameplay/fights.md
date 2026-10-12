@@ -21,7 +21,7 @@ Once the monster falls the hero steps onto its tile.
 
 ## Rewards and feedback
 
-Either way, every reward picked up (an item, a chest's Gold and metal bars, a monster's Equipment materials) rises from its tile as its sprite for about a second, starting at once over anything still rising (what comes together, like a chest's Gold and metal bars, one after another); rewards with no sprite rise as "+N" text.
+Either way, every reward picked up (an item, a chest's Gold and metal bars, a monster's Equipment materials) rises from its tile as its sprite for about a second, starting at once over anything still rising; what a monster or a chest drops all rises at once, stacked (a monster's Gold just above its Silver and anything else it dropped, like a Greater Boss's Cells or Equipment materials, below them; a chest's Gold above its metal bars), and after a fight played out strike by strike, its drops wait until the last damage numbers start to fade; rewards with no sprite rise as "+N" text.
 A door raises each key it took with a minus sign, and a Heart Door, which needs no key but drains the hero's HP to 1, a heart with the HP it took.
 Taking the stairs snaps the hero straight onto the new floor with a brief white glow behind it, and while the hero stands on the board's bottom row the status line over it turns half see-through.
 Undo during a fight takes back the whole fight.
@@ -29,7 +29,7 @@ Undo during a fight takes back the whole fight.
 ## Monsters and their pay
 
 A monster's inspect panel, and the messages about its fight, put its strength before its name (Weak, Strong, Elite or Boss), unless it is a normal one.
-From Tower II and Delve II on, some monsters are **Fast** (8% at first, more further up and in each tower after): named *Fast …* with a fast-forward mark at the top right of their tile, they strike before the hero, so even one the hero fells in a strike lands a blow, they hit at least 1.75 times as hard as the last tower's floor 100 monster (700 ATK in Tower II), and they pay 1 Gold more.
+From Tower II and Delve II on, some monsters are **Fast** (8% at first, more further up and in each tower after): named *Fast …* with a fast-forward mark at the top right of their tile, they strike before the hero, so even one the hero fells in a strike lands a blow, they hit at least 1.75 times as hard as the last tower's floor 100 monster (700 ATK in Tower II; less in Towers III, IV and V: 1,000, 2,000 and 4,000 ATK; the Delve's caves alike), and they pay 1 Gold more.
 From Tower III and Delve III on, some monsters are **Ranged** (a point fewer than Fast: 7.5% at first, growing as Fast does): named *Ranged …* with an arrow at the top right of their tile (the Fast mark moving below it on a monster that is both), they shoot the hero from a distance, walls and doors no obstacle, without beginning a fight.
 A Ranged monster shoots once the hero ends a turn within its reach, five sixths of the hero's own Attack Range (2.5 tiles to the hero's 3), measured straight across, so a knight's move away is in reach, then waits 10 turns before it can shoot again (a 500th of a turn less each floor, a whole turn less every 500 floors; a fraction carries to the next shot, so 9.5 turns fire 10, then 9, apart).
 Its shot lands where the hero's step ends: its ATK less DEF, the shroud (whole for every shot) taking what it can of the rest, cut by Parry % when parried; the damage rises over the hero.
@@ -53,6 +53,8 @@ Attack Range and Attack Speed join Offense training from Tower III's floors 20 a
 **ATK / Tile** joins it from floor 50: each arrow's ATK is multiplied by 1 plus its value for every tile to its target, counted straight across (diagonals included), so a monster too well armored for an arrow up close may still be hurt, and shot, from further off.
 **Charged Shot** opens in the Archives from floor 80: each turn a ready arrow waits without firing adds its percent (1% a level) to the next arrow's ATK, and that arrow flies in a blue glow and its number rises with a gold outline; the charge starts over once it fires.
 ATK / Tile, Charged Shot and a critical hit multiply one another.
+**Multishot Chance** and **Multishot Targets** join Offense training from floor 90: each shot has a chance (0.5% a rank, up to 49.5%) to be a multishot, firing at once at the closest enemies an arrow can hurt, 2 of them and one more a Targets rank (up to 9), or one at each when fewer are in range.
+Every arrow of a multishot carries the first's Charged Shot, rolls its own critical hit, and has its own ATK / Tile for its own distance.
 
 ## Fractions
 

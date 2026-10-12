@@ -1,5 +1,6 @@
-import { deckCards, handSlots, moveCard, nextHandSlotGems, placeCard, type CardId } from "../cards.ts";
+import { deckCards, handSlots, keptLinks, moveCard, nextHandSlotGems, placeCard, toggleLink, type CardId } from "../cards.ts";
 import type { Run } from "../entities.ts";
+import { goalUnlocked } from "../goals.ts";
 import { affordsGems, type DeskHost } from "./desk.ts";
 
 /** What the Deck's commands read beyond the desk's: the live run, since
@@ -9,8 +10,10 @@ export interface DeckHost extends DeskHost {
 }
 
 /** The Deck page's commands over the saved hand, the one the next run
- * takes in: reordering (Combat Stance), choosing cards (Buildout) and
- * buying slots with Gems. A run already inside keeps its own hand. */
+ * takes in: reordering (Combat Stance), choosing cards (Buildout), linking
+ * cards into groups (Card Groups) and buying slots with Gems. A run
+ * already inside keeps its own hand. Every change to the hand breaks the
+ * links of the cards it moves out of place. */
 export class DeckEditor {
   constructor(private readonly host: DeckHost) {}
 
@@ -37,7 +40,27 @@ export class DeckEditor {
    * shifting over one (Combat Stance, in the forest only). */
   arrange(from: number, to: number) {
     if (!this.canArrange(from, to)) return false;
-    this.save.hand = moveCard(this.save.hand, from, to);
+    return this.setHand(moveCard(this.save.hand, from, to));
+  }
+
+  /** Sets the hand, keeping only the links still joining cards side by side. */
+  private setHand(hand: CardId[]) {
+    this.save.hand = hand;
+    this.save.cardLinks = keptLinks(hand, this.save.cardLinks);
+    return true;
+  }
+
+  /** Whether cards can be linked into groups: the Card Groups Goal claimed,
+   * in the forest. */
+  get canLink() {
+    return goalUnlocked(this.save, "cardGroups") && this.inForest;
+  }
+
+  /** Links the hand's cards in slots `i` and `i + 1`, or unlinks them
+   * (Card Groups, in the forest only). */
+  link(i: number) {
+    if (!this.canLink || !inRange(i, this.save.hand.length - 1)) return false;
+    this.save.cardLinks = toggleLink(this.save.hand, this.save.cardLinks, i);
     return true;
   }
 
@@ -64,15 +87,13 @@ export class DeckEditor {
     if (!this.canPlace(id) || !inRange(slot, slots)) return false;
     const next = placeCard(this.save.hand, id, slot, slots);
     if (!next) return false;
-    this.save.hand = next;
-    return true;
+    return this.setHand(next);
   }
 
   /** Takes a card out of the hand, back to the deck; STAIRS always stays. */
   remove(id: CardId) {
     if (!this.canRemove(id)) return false;
-    this.save.hand = this.save.hand.filter((c) => c !== id);
-    return true;
+    return this.setHand(this.save.hand.filter((c) => c !== id));
   }
 
   /** Whether `id` can leave the hand: any card in it but STAIRS. */

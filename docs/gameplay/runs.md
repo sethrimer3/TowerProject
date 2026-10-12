@@ -10,8 +10,10 @@ This controls camera and player interpolation on both axes; Reduce motion overri
 **Undo** restores one move (a tapped route counts as a single move), including combat, pickups, gear, keys, doors, and the XP a kill paid (with any level it reached), but only on the floor you stand on: climbing or going down a Tower floor forgets the history, as does crossing one of the Delve's floor lines (each ten depth, either way) or a milestone gate.
 A step onto empty floor is seldom worth resuming at, so undoing one goes on back past every empty step before it, and the move before them that did something, to just before that move (a fight, a pickup, a door, a card's activation or training bought).
 It cancels any queued route.
-A new profile has no undo, and the button stays hidden until **Rehearsed steps** (5 Inspiration, after the Archives) gives the first history slot (or Echoes of time and a level of Undo Count do); each level of **Undo Count** research in the Archives adds one: Rehearsed steps opens four levels of it and **Echoes of time** (Courage) four more, either opening it first, up to 9 moves.
-Each counts the moment it's bought or completed.
+Undos are a limited resource, like Focus: each run has a number of them to spend, shown on the Undo button, and one spent never comes back, whatever the run does after it.
+The history holds no more moves than the run has undos left.
+A new profile has no undo, and the button stays hidden until **Rehearsed steps** (5 Inspiration, after the Archives) gives the first undo a run (or Echoes of time and a level of Undo Count do); each level of **Undo Count** research in the Archives adds one a run: Rehearsed steps opens four levels of it and **Echoes of time** (Courage) four more, either opening it first, up to 9 a run.
+Each counts the moment it's bought or completed, in a run already under way too; a new run starts with them all.
 History persists across refreshes.
 
 ## How a run ends
@@ -19,7 +21,7 @@ History persists across refreshes.
 Every way a run ends goes through one dialog, which says what brought it up and shows the same totals of what the run obtained: the floor reached, the run's highest floor, and the Gold, the Inspiration (or Courage) and the XP earned in this run, the first two with their icons, not the amounts held (undo takes a kill's XP back from it, as from the hero).
 Pressing End Run asks whether to end the run (or, when no card in the hand can act, says so first), with **End run** and **Keep climbing** (Keep delving).
 When the hero falls in a fight, the run waits at 0 HP with the hand paused, a skull and crossbones burns in a red glow over the hero's head for two and a half seconds, and then the dialog, headed **Fallen in combat**, names the monster.
-It must be answered: **Undo** (once Rehearsed steps has unlocked undo, while undo moves remain; without it the dialog doesn't mention undo) spends one to take the fight back and leaves the hand paused; **Return to entrance** ends the run, pays what it still owes, and returns to the forest for the next run.
+It must be answered: **Undo** (once Rehearsed steps has unlocked undo, while the run has an undo left and a move to take back; without it the dialog doesn't mention undo) spends one to take the fight back and leaves the hand paused; **Return to entrance** ends the run, pays what it still owes, and returns to the forest for the next run.
 Headed **Regroup and try again**, the dialog says the Tower (or Delve) will shift to a new layout for the next run and invites the player to look over and spend what this one earned.
 The dialog comes back after a refresh until it is answered.
 Rewards are credited as they are earned and never rolled back, so taking a fight back cannot duplicate them.
@@ -52,8 +54,11 @@ The Settings button in the stats opens the Settings page at any time, with a Bac
 ## Movement Speed and Rush
 
 **Movement Speed** (the Courage tree's first skill, 1 Courage) opens the Archives' **Movement Speed** research (six levels, priced and timed like Focus Count's first six: 500 Gold and 8 hours, up to 8,000 Gold and 48 hours), each level letting the run's speed arrows go one step a second faster: 4, then 5, up to 9.
-**Rush** (1 Courage, after Movement Speed, right of Focus) opens the Archives' **Rush** research: each of its 25 levels lets the hand's first step toward a new target rush across one more empty tile in the same step (one turn, one undo), stopping on the tile before anything else (an item, a door, a monster, the stairs, a torch or a Gem); faint echoes of the hero appear on each tile it rushed off, one after another, and fade in the same order within half a second.
+**Rush** (1 Courage, after Movement Speed, right of Focus) opens the Archives' **Rush** research: each of its 25 levels lets the hand's first step toward a new target rush across one more empty tile (or chest already opened) in the same step (one turn, one undo), stopping on the tile before anything else (an item, a door, a monster, the stairs, a torch or a Gem), except that a rush with a tile left ends on the item its card is heading for, taking it (scaled by an Effective or Dampen badge as usual; with a Skip badge it stops before the item, which Skip rolls for on its own step); faint echoes of the hero appear on each tile it rushed off, one after another, and fade in the same order within half a second.
 Level n costs 250 × n × 2^(n−1) Gold and takes 1.75 × n × 1.2^(n−1) hours (250 Gold and 1.75 hours first; about 105 billion Gold and 145 days at level 25).
+A rushed turn regains HP by Regen once, on its first step, not on the tiles it rushes across.
+**Rush Regen** (1 Courage, below End Rush, above Rush Badge) opens the Archives' **Rush Regen** research: each of its 35 levels lets one more of a rush's first rushed tiles regain HP by Regen too.
+It costs the same in all as Rush, about 201 billion Gold and 697 days, spread more gently: level n takes n × 1.6^(n−1) shares of the Gold and n × 1.12^(n−1) shares of the time (about 260 Gold and 1.4 hours first, 79 billion Gold and 97 days at level 35), so each level after the first is cheaper and quicker than Rush's.
 
 ## More controls
 

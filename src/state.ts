@@ -1,7 +1,7 @@
 import { entrance, floorFor } from "./delve/labyrinth.ts";
 import { canWear, claimThemes, type GameLook, type ThemeId, type ThemeKind, type UiLook } from "./theme-collection.ts";
 import { chooseStep } from "./automation.ts";
-import { CARDS, KEY_TO_HP_PERCENT, SIPHONS, TRADER_YELLOW_KEYS, cardText, explainStuck, isSiphon, planHand, planTarget, stillOpen, walkAll, type CardId, type CardPlan, type CardRules, type SiphonCard, type StuckReport } from "./cards.ts";
+import { CARDS, KEY_TO_HP_PERCENT, SIPHONS, TRADER_YELLOW_KEYS, cardText, explainStuck, isSiphon, keptLinks, linkedToNext, planHand, planTarget, stillOpen, walkAll, type CardId, type CardPlan, type CardRules, type SiphonCard, type StuckReport } from "./cards.ts";
 import { BADGE_IDS, BADGES, MAX_COPIES, badgeOn, badgesOn, badgeValue, runBadges, type BadgeId, type RunBadge } from "./badges.ts";
 import { adsOff, BOOST_FOREVER, permanentBoost } from "./shop/entitlements.ts";
 import { noteGoldBoost } from "./gold-boost.ts";
@@ -69,7 +69,7 @@ import { enemyStat, keyCount, whole, wholeChange } from "./whole.ts";
 import { MODES, milestones, type ModeProfile } from "./modes.ts";
 import { boughtInRun, ranksInRun, runTrainingBulk, runTrainingOffer, type RunTrainingOffer } from "./run-training.ts";
 import { openQuantities, type BuyQuantity } from "./buy-quantity.ts";
-import { attackPerTile, attackRange, attackSpeed, critRule, keepUndos, loadout, percentPotionChance, potionPercent, reviveChance, statFactor } from "./loadout.ts";
+import { attackPerTile, attackRange, attackSpeed, multishotChance, multishotTargets, critRule, keepUndos, loadout, percentPotionChance, potionPercent, reviveChance, statFactor } from "./loadout.ts";
 import { researched } from "./archives.ts";
 import { chargesLeft, chargesPerRun, climbFloor, spendCharge, type Charge } from "./run-charges.ts";
 import type { MaterialId, MaterialStack } from "./materials.ts";
@@ -111,8 +111,12 @@ export type RouteEffects = {
  * came from: drawn as its sprite (a tile's contents, marked `spent` for a
  * key a door used, a material, or the heart a Heart Door checked, or with
  * a plus, `raised`, the max HP Max HP's badge added), or as `text` where it
- * has none. */
-export type Gain = { x: number; y: number; text: string; art: GainArt | null };
+ * has none. A kill's drops carry their `drop` place, so they rise together. */
+export type Gain = { x: number; y: number; text: string; art: GainArt | null; drop?: Drop };
+/** Where one of a kill's or a chest's drops rises: `row` rows above its tile (below,
+ * negative), Gold over Silver over the rest, and whether it starts `with`
+ * the drop queued before it rather than after. */
+export type Drop = { row: number; with: boolean };
 export type GainArt = { tile: Tile; spent?: true } | { material: MaterialId; quantity: number } | { heart: true; raised?: true } | { gem: true } | { coin: Coin } | { cell: true }
   | { equipMaterial: EquipMaterialId; quantity: number } | { equipPiece: string; rarity: EquipRarity };
 /** The coin a Gold or Silver gain raises. */
@@ -140,6 +144,7 @@ const PARRY_SALT = 0x9a77e;
  * rolls against a Ranged enemy's shots, apart from a fight's. */
 const ARROW_SALT = 0xa770e;
 const SHOT_SALT = 0x5407e;
+const MULTISHOT_SALT = 0x3a17c;
 /** How long a shot or arrow flies, at most (ms): it lands as the hero's
  * step ends, sooner at higher speeds. */
 const FLIGHT_MS = 220;
@@ -171,6 +176,8 @@ export type Shot = { by: "hero" | "enemy"; from: { x: number; y: number }; to: {
 export type Volley = { at: number; flight: number; shots: Shot[] };
 /** Tiles that stay on the board after being stepped on. */
 const PERMANENT_TILES = new Set<Tile["kind"]>(["floor", "stairs", "stairsDown", "oneway", "openedChest"]);
+/** The targets a Rush may end on, a tile of it left: items to take. */
+const RUSH_ONTO = new Set<Tile["kind"]>(["key", "potion", "attack", "defense", "treasure", "reward"]);
 export class Game {
   mode: Mode = "tower";
   world!: Board;
@@ -306,8 +313,17 @@ export class Game {
   get free() {
     return this.save.settings.freePurchases;
   }
+  /** Undos a run has in all: spent ones never come back. */
   get undoCapacity() {
     return loadout(this.save, this.mode).undoCapacity;
+  }
+  /** Undos the run has left to spend. */
+  get undosLeft() {
+    return Math.max(0, this.undoCapacity - (this.run.undosUsed ?? 0));
+  }
+  /** Whether undo can take a move back: one is left and a move is held. */
+  get canUndo() {
+    return this.undosLeft > 0 && this.slice.history.length > 0;
   }
   /** Grants unlimited currency, the first 250 floors, and every game mode.
    * Reversible: turning Dev Mode back off leaves the grants in place, since
@@ -526,6 +542,7 @@ export class Game {
     this.finishEncounter();
     this.armed = null;
     const slice = this.slice;
+    if (!this.undosLeft) return false;
     // Fallen, undo spends one and takes back the fight the hero fell in.
     const fall = this.fallen ? slice.fall : null;
     let snapshot = slice.history.pop();
@@ -534,7 +551,11 @@ export class Game {
     // back past a run of them to before the last turn that did something.
     while (!fall && snapshot.quiet && slice.history.length) snapshot = slice.history.pop()!;
     slice.fall = null;
+    // An undo spent is gone for the run: the count rides onto the run restored.
+    const used = (this.run.undosUsed ?? 0) + 1;
     this.restore(fall?.snapshot ?? snapshot);
+    this.run.undosUsed = used;
+    slice.history = keepUndos(slice.history, this.undosLeft);
     this.feedback(fall ? "Fatal fight undone · the hand waits" : "Move undone");
     return true;
   }
@@ -776,7 +797,7 @@ export class Game {
     const goal = plan.path[plan.path.length - 1], key = this.rules.lootKey(this.run, goal.x, goal.y);
     const step = plan.path.shift()!, p = this.run.player, from = { x: p.x, y: p.y };
     this.cardPlan = plan.path.length ? plan : null;
-    const rush = this.rushFor(id), rushes = fresh && rush > 0 && this.emptyAt(step.x, step.y);
+    const rush = this.rushFor(id), rushes = fresh && rush > 0 && this.rushable(step.x, step.y);
     // The card's last step onto its target: Skip may make it vanish (or, on
     // the Tower's stairs, climb two floors), and Effective or Dampen scale it.
     const last = !this.cardPlan, rolls = last && this.rollsSkip(id, step.x, step.y), skips = rolls && this.skipRoll() < this.skipChance(id);
@@ -799,7 +820,7 @@ export class Game {
       this.turnBefore = null;
       return void (this.cardPlan = null);
     }
-    const rushed = rushes ? this.rushOn(plan, from, rush) : true;
+    const rushed = rushes ? this.rushOn(plan, id, from, rush) : true;
     if (rushes) {
       this.holdTurn = false;
       this.endTurn();
@@ -1114,20 +1135,38 @@ export class Game {
   }
   /** Rush: the first step toward a new target, onto an empty tile, goes on
    * along the path in the same step across up to `tiles` more empty tiles
-   * (`rushFor` the card), stopping on the tile before anything else. One
-   * turn and one undo. Returns false when a step was refused, leaving the
-   * target unreached. */
-  private rushOn(plan: CardPlan, from: { x: number; y: number }, rush: number) {
+   * (`rushFor` the card `id`), stopping on the tile before anything else,
+   * unless that is the card's target item and a tile of the rush is left:
+   * then it ends on the item, taking it (Effective or Dampen scaling it as
+   * on any card's last step; with Skip, which may make it vanish, it stops
+   * before it, so the item's own step rolls). One turn and one undo.
+   * Rushed steps skip Regen but for the first `rushRegenSteps`.
+   * Returns false when a step was refused, leaving the target unreached. */
+  private rushOn(plan: CardPlan, id: CardId, from: { x: number; y: number }, rush: number) {
     const p = this.run.player, tiles = [from];
-    let moved = true;
-    for (let left = rush; left > 0 && plan.path.length && this.emptyAt(plan.path[0].x, plan.path[0].y); left--) {
+    let moved = true, left = rush;
+    const regenerating = this.rushRegenSteps, regen = () => rush - left < regenerating;
+    for (; left > 0 && plan.path.length && this.rushable(plan.path[0].x, plan.path[0].y); left--) {
       const at = { x: p.x, y: p.y }, next = plan.path.shift()!;
-      if (!this.move(next.dx, next.dy, true, false, false)) {
+      if (!this.move(next.dx, next.dy, true, false, regen())) {
         plan.path = [];
         moved = false;
         break;
       }
       tiles.push(at);
+    }
+    const target = plan.path.length === 1 ? plan.path[0] : null;
+    if (moved && left > 0 && target && RUSH_ONTO.has(this.world.tile(target.x, target.y).kind) && !this.rollsSkip(id, target.x, target.y)) {
+      const at = { x: p.x, y: p.y };
+      plan.path.shift();
+      this.stepScale = this.scaleOf(id);
+      moved = this.move(target.dx, target.dy, true, false, regen());
+      this.stepScale = 1;
+      if (moved) {
+        tiles.push(at);
+        // Taking the item makes the rush a turn undo stops at.
+        delete this.slice.history.at(-1)?.quiet;
+      }
     }
     this.cardPlan = plan.path.length ? plan : null;
     if (tiles.length > 1) this.rush = { tiles, at: performance.now() };
@@ -1138,6 +1177,11 @@ export class Game {
   get rushTiles() {
     return (this.save.upgrades.rush ? researched(this.save.archives, "rushTiles", 0) : 0) + this.worn.rushTiles;
   }
+  /** How many of a Rush's rushed steps regain HP by Regen: none without the
+   * Rush Regen skill, and one more a Rush Regen research level. */
+  get rushRegenSteps() {
+    return this.save.upgrades.rushRegen ? researched(this.save.archives, "rushRegenSteps", 0) : 0;
+  }
   /** Tiles card `id`'s first step toward a new target may rush across:
    * `rushTiles`, End Rush's research on STAIRS (toward the stairs, or the
    * Delve's climb), and its Rush badge's value. They add up. */
@@ -1146,11 +1190,16 @@ export class Game {
     const badge = badgeOn(this.run.badges, id, "rush");
     return this.rushTiles + end + (badge ? badgeValue("rush", badge.level) : 0);
   }
+  /** Whether a rush may cross (x, y): empty floor (`emptyAt`), or a chest
+   * already opened. */
+  private rushable(x: number, y: number) {
+    return this.emptyAt(x, y) || (this.world.tile(x, y).kind === "openedChest" && this.emptyAt(x, y, true));
+  }
   /** Whether (x, y) is empty floor a rush may cross: nothing on it, no torch
-   * and no Gem. */
-  private emptyAt(x: number, y: number) {
+   * and no Gem (with `anyKind`, only those last two). */
+  private emptyAt(x: number, y: number, anyKind = false) {
     const gem = this.gemFinder.gem;
-    return this.world.tile(x, y).kind === "floor" && !(gem && gem.x === x && gem.y === y) &&
+    return (anyKind || this.world.tile(x, y).kind === "floor") && !(gem && gem.x === x && gem.y === y) &&
       !this.world.torches?.some((t) => t.active && t.x === x && t.y === y);
   }
   /** Drops the committed path when its card's gate badge (HP <, YK ≥, …)
@@ -1207,6 +1256,9 @@ export class Game {
   private dealHand() {
     noteGoldBoost(this.save, this.slice, this.clock());
     this.run.hand = [...this.save.hand];
+    const links = keptLinks(this.run.hand, this.save.cardLinks);
+    if (links.length) this.run.links = links;
+    else delete this.run.links;
     const badges = this.save.upgrades.cardBadges ? runBadges(this.save.badges, this.run.hand, this.badges.slots) : {};
     if (Object.keys(badges).length) this.run.badges = badges;
     const pocket = this.startingSilver;
@@ -1561,8 +1613,9 @@ export class Game {
   claimGoal(tower: number, floor: number, premium: boolean) {
     const reward = claimGoal(this.save, tower, floor, premium);
     if (reward) readyForestRuns(this.save);
-    // Equipment's Blacksmith, and the Tournament's Hall, open in the forest at once.
-    if (reward?.kind === "unlock" && (reward.unlock === "equipment" || reward.unlock === "tournament") && this.run.outside) this.world = this.buildWorld();
+    // Equipment's Blacksmith, the Tournament's Hall, and the road out to a newly opened tower, open in the forest at once.
+    const reshapes = reward?.kind === "tower" || (reward?.kind === "unlock" && (reward.unlock === "equipment" || reward.unlock === "tournament"));
+    if (reshapes && this.run.outside) this.world = this.buildWorld();
     // The running Event's first missions come at once.
     if (reward?.kind === "unlock" && reward.unlock === "events") this.events.refresh();
     return reward;
@@ -1591,9 +1644,14 @@ export class Game {
       until: performance.now() + ms,
     };
   }
+  /** Queues `drops` (a kill's or a chest's) to rise from `at` together,
+   * stacked a row apart from row `top` down. */
+  private gainDrops(at: { x: number; y: number }, drops: { text: string; art: GainArt }[], top = 0) {
+    drops.forEach(({ text, art }, i) => this.gain(at.x, at.y, text, art, { row: top - i, with: i > 0 }));
+  }
   /** Queues a reward to rise from (x, y). */
-  gain(x: number, y: number, text: string, art: GainArt | null = null) {
-    this.gains.push({ x, y, text, art });
+  gain(x: number, y: number, text: string, art: GainArt | null = null, drop?: Drop) {
+    this.gains.push({ x, y, text, art, ...(drop ? { drop } : {}) });
     if (this.gains.length > MAX_GAINS) this.gains.shift();
   }
   /** Pays the XP for beating `enemy` on equivalent floor `floor`, counting
@@ -1620,6 +1678,8 @@ export class Game {
    * in the forest. */
   private finalizeRun(reason: string) {
     const record = this.payout(), gold = this.slice.runGold;
+    // A new floor's "A new chamber opens." teaches only the first Tower run.
+    if (this.mode === "tower") this.save.tutorials.chamber = true;
     this.forestSeeds.clear();
     // A run that earned its currency sends the player to spend it.
     if (this.slice.runCurrency > 0) this.save.treeNotices[this.rules === MODES.tower ? "inspiration" : "courage"] = true;
@@ -1661,7 +1721,8 @@ export class Game {
     return !this.busy && Math.abs(dx) + Math.abs(dy) === 1;
   }
   /** One step by (dx, dy); `regen` false for the tiles a Rush crosses after
-   * its first step, so a rushed turn regains HP once. */
+   * its first step (past its first `rushRegenSteps`), so a rushed turn
+   * regains HP once (and once more for each of those). */
   move(dx: number, dy: number, force = true, track = true, regen = true) {
     if (!this.canStep(dx, dy)) return false;
     const p = this.run.player,
@@ -1856,7 +1917,7 @@ export class Game {
   private remember(snapshot: MoveSnapshot) {
     const slice = this.slice;
     slice.history.push(snapshot);
-    slice.history = keepUndos(slice.history, this.undoCapacity);
+    slice.history = keepUndos(slice.history, this.undosLeft);
   }
   /** Copies resolved stats onto the live player, keeping its object identity. */
   private applyStats(next: Player) {
@@ -1906,14 +1967,18 @@ export class Game {
     // Silver belongs to the run, so it isn't gated like Gold: undo takes it back.
     const purse = this.purse, silver = purse.killSilver(enemy, floor, scale);
     const { gold, cells, equipment } = purse.enemyLoot(enemy, at.x, at.y, scale, instakill);
-    this.gainCoins(at, gold, silver);
     const cellsFound = cells ? [cellsText(cells)] : [];
-    for (const text of cellsFound) this.gain(at.x, at.y, text, { cell: true });
+    const found = equipmentGains(equipment);
+    // Gold over Silver at the tile, the rest below.
+    this.gainDrops(at, [
+      ...(gold ? [{ text: `+${wholeChange(gold)} Gold`, art: { coin: "gold" as const } }] : []),
+      { text: `+${wholeChange(silver)} Silver`, art: { coin: "silver" } },
+      ...cellsFound.map((text) => ({ text, art: { cell: true as const } })),
+      ...found,
+    ], gold ? 1 : 0);
     if (equipment?.item || equipment?.salvaged) this.events.record("equipment", 1, this.missionKey(at));
     if (equipment?.item) this.slice.runFinds.equipment++;
     if (crits) this.events.record("crits", crits, this.missionKey(at));
-    const found = equipmentGains(equipment);
-    for (const { text, art } of found) this.gain(at.x, at.y, text, art);
     return [...coinsText(gold, silver), ...cellsFound, ...found.map((g) => g.text)];
   }
   /** The end of a turn inside a run (a step, or a whole rush): each Ranged
@@ -2003,22 +2068,34 @@ export class Game {
   /** The Archer's cooldown runs a turn, and once ready it shoots the
    * closest enemy within its range that an arrow can hurt, its ATK raised by
    * ATK / Tile for the distance and by Charged Shot for the turns it waited
-   * (`arrowBoost`). A ready arrow with no target waits for one, counting
-   * the turn toward Charged Shot once that is researched. */
+   * (`arrowBoost`). A multishot (`multishot`) fires the same charge at up
+   * to Multishot Targets of the closest enemies it can hurt, each arrow with
+   * the first's Charged Shot, its own ATK / Tile and its own critical roll.
+   * A ready arrow with no target waits for one, counting the turn toward
+   * Charged Shot once that is researched. */
   private loose(v: Volleys, shots: Shot[], range: number) {
     const p = this.run.player, perTile = attackPerTile(this.trainingNow), percent = researched(this.save.archives, "chargedShotPercent", 0);
     const boost = (d2: number) => arrowBoost(perTile, d2, percent, v.waited ?? 0);
+    const hurts = (e: InReach) => arrowDamage(p, e.tile.enemy, 0, 1, boost(e.d2)) > 0;
     let hero = charged(v.hero, attackSpeed(this.trainingNow));
-    const target = ready(hero, ARROW_COST) ? enemiesWithin(this.world, p, range, this.wrap).find((e) => arrowDamage(p, e.tile.enemy, 0, 1, boost(e.d2)) > 0) : undefined;
+    const inReach = ready(hero, ARROW_COST) ? enemiesWithin(this.world, p, range, this.wrap) : [];
+    const target = inReach.find(hurts);
     if (target) {
       hero = spent(hero, ARROW_COST);
-      this.shoot(target, v.turn, shots, boost(target.d2), !!(percent && v.waited));
+      const targets = this.multishot(v.turn) ? inReach.filter(hurts).slice(0, multishotTargets(this.trainingNow)) : [target];
+      for (const t of targets) this.shoot(t, v.turn, shots, boost(t.d2), !!(percent && v.waited));
       delete v.waited;
     }
     hero = held(hero, ARROW_COST);
     if (hero === undefined) delete v.hero;
     else v.hero = hero;
     if (!target && hero === undefined && percent > 0) v.waited = (v.waited ?? 0) + 1;
+  }
+  /** Whether the Archer's shot on turn `turn` is a multishot: a fixed
+   * number per run, turn and the hero's tile under Multishot Chance. */
+  private multishot(turn: number) {
+    const chance = multishotChance(this.trainingNow), p = this.run.player;
+    return chance > 0 && tileRandom(p.x, p.y, (this.run.seed ^ MULTISHOT_SALT ^ Math.imul(turn, 0x85ebca6b)) | 0) * 10_000 < chance;
   }
   /** The Archer's arrow lands on `target`: one strike's damage, its ATK
    * multiplied by `boost` and critical rolls counted, healing by
@@ -2254,8 +2331,11 @@ export class Game {
     // A new section's first floor is sealed below; the hero keeps every stat.
     const earned = sectionStart ? new AreaLedger(this.save).enter(this.towerRun, board) : [];
     if (skipped) this.feedback(passed.length ? `Floor Skipped · floors ${this.run.height - TOWER_SECTION}–${this.run.height - 1} ${passed.join(" and ")}` : "Floor Skipped", 1000);
-    else this.feedback(earned.length ? `Floors ${this.run.height - TOWER_SECTION + 1}–${this.run.height} ${earned.join(" and ")} · reward ahead` :
-      sectionStart ? `Floor ${this.run.height + 1} · the way down is sealed` : "A new chamber opens.");
+    else if (earned.length) this.feedback(`Floors ${this.run.height - TOWER_SECTION + 1}–${this.run.height} ${earned.join(" and ")} · reward ahead`);
+    else if (sectionStart) this.feedback(`Floor ${this.run.height + 1} · the way down is sealed`);
+    // After the first Tower run a plain new floor only says so on the status line.
+    else if (this.save.tutorials.chamber) this.message = "A new chamber opens.";
+    else this.feedback("A new chamber opens.");
     this.gainCoins(p, snap(gold + skipGold), silver, false);
   }
   /** Step back onto the stairs at the foot of the current room, returning
@@ -2370,8 +2450,11 @@ export class Game {
     this.events.record("chests", 1, this.missionKey({ x, y }));
     const loot = this.purse.treasure(x, y);
     if (!loot) return;
-    this.gain(x, y, `+${wholeChange(loot.gold)} Gold`, { coin: "gold" });
-    for (const m of loot.materials) this.gain(x, y, materialText(m), { material: m.id, quantity: m.quantity });
+    // The Gold at the tile, the materials below it, rising together.
+    this.gainDrops({ x, y }, [
+      { text: `+${wholeChange(loot.gold)} Gold`, art: { coin: "gold" } },
+      ...loot.materials.map((m) => ({ text: materialText(m), art: { material: m.id, quantity: m.quantity } })),
+    ]);
     this.message = [`+${wholeChange(loot.gold)} Gold`, ...loot.materials.map(materialText)].join(" · ");
   }
   /** Ends the run (the End Run button), or, fallen, accepts defeat. */
@@ -2384,6 +2467,11 @@ export class Game {
    * next run will take, as the Deck orders it. */
   get hand(): readonly CardId[] {
     return this.run.hand ?? this.save.hand;
+  }
+  /** For each card of the hand, whether it is linked to the next (Card
+   * Groups): the run's links, or in the forest the saved ones. */
+  get links(): readonly boolean[] {
+    return linkedToNext(this.hand, this.run.hand ? this.run.links ?? [] : this.save.cardLinks);
   }
   /** Whether a tapped tile shows the route there and its totals: the
    * Courage skill Pathfinder owned, or Dev mode. */

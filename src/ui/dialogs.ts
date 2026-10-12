@@ -225,7 +225,7 @@ export class RunEndDialog {
     const kept = "Milestone rewards and the Gold found are already saved.";
     const stats = this.stats();
     if (cause === "fallen") {
-      const undos = slice.history.length, by = slice.fall?.by;
+      const undos = game.canUndo ? game.undosLeft : 0, by = slice.fall?.by;
       // Undo goes unmentioned until Rehearsed steps unlocks it.
       const takeBack = !loadout(game.save).undoCapacity ? ""
         : undos ? `<p>Undo takes back the fight, and the hand waits for you.</p>`

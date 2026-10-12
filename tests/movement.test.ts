@@ -64,7 +64,7 @@ test("unreachable wall target does not move; accessible detour beats missing-key
   assert.equal(g.run.player.y, 5);
   assert.equal(g.world.tile(15, 2).kind, "door");
 });
-test("undo restores combat, health, drops, equipment, door keys and score; history caps at five", () => {
+test("undo restores combat, health, drops, equipment, door keys and score; a run's five undos never come back", () => {
   const g = corridor();
   g.save.archives.levels.undoCount = 4;
   g.run.changes["15,1"] = enemy;
@@ -76,11 +76,34 @@ test("undo restores combat, health, drops, equipment, door keys and score; histo
   for (let i = 0; i < 5; i++) assert.ok(g.move(0, 1));
   assert.equal(g.save.delve.history.length, 5);
   for (let i = 0; i < 5; i++) assert.ok(g.undo());
-  assert.deepEqual(g.run, initial);
+  assert.deepEqual(g.run, { ...initial, undosUsed: 5 }, "everything back but the undos spent");
   assert.equal(g.save.delve.best, (g.world as World).depth(15, 5));
   assert.equal(g.undo(), false);
   for (let i = 0; i < 6; i++) g.move(0, 1);
-  assert.equal(g.save.delve.history.length, 5);
+  assert.equal(g.save.delve.history.length, 0, "turns taken after give no undo back");
+  assert.equal(g.undosLeft, 0);
+  assert.equal(g.undo(), false);
+});
+test("undos spent are the run's: research raises what is left, and a new run starts full", () => {
+  const g = corridor();
+  g.save.archives.levels.undoCount = 1;
+  g.move(0, 1);
+  assert.ok(g.undo());
+  g.move(0, 1);
+  g.move(0, 1);
+  assert.equal(g.undosLeft, 1);
+  assert.equal(g.save.delve.history.length, 1, "the history holds no more moves than undos left");
+  assert.ok(g.undo());
+  assert.equal(g.undo(), false);
+  g.move(0, 1);
+  g.save.archives.levels.undoCount = 2;
+  assert.equal(g.undosLeft, 1, "a level completed mid-run counts at once");
+  g.move(0, 1);
+  assert.ok(g.undo());
+  assert.equal(decode(JSON.stringify(g.save)).delve.run?.undosUsed, 3, "kept across a reload");
+  g.finish("test");
+  g.newRun();
+  assert.equal(g.undosLeft, 3, "a new run has them all");
 });
 test("undo goes on back past steps onto empty floor, to before the last move that did something", () => {
   const g = corridor();
@@ -90,7 +113,7 @@ test("undo goes on back past steps onto empty floor, to before the last move tha
   const beforePotion = structuredClone(g.run);
   for (let i = 0; i < 4; i++) assert.ok(g.move(0, 1)); // the potion, then three empty steps
   assert.ok(g.undo());
-  assert.deepEqual(g.run, beforePotion, "the three empty steps and the potion's step taken back at once");
+  assert.deepEqual(g.run, { ...beforePotion, undosUsed: 1 }, "the three empty steps and the potion's step taken back at once");
   assert.ok(g.undo());
   assert.equal(g.run.player.y, 0, "an empty step with nothing before it is taken back alone");
   assert.equal(g.undo(), false);
@@ -127,8 +150,9 @@ test("a fallen hero waits: undo spends one to take the fight back, and the hand 
   assert.equal(g.move(0, -1), false, "a fallen hero takes no step");
   const undos = g.save.delve.history.length;
   assert.ok(g.undo());
-  assert.deepEqual(g.run, before);
+  assert.deepEqual(g.run, { ...before, undosUsed: 1 });
   assert.equal(g.save.delve.history.length, undos - 1, "one undo spent");
+  assert.equal(g.undosLeft, 0, "and it is gone for the run");
   assert.ok(!g.fallen && !g.auto && g.save.delve.fall === null);
   assert.equal(g.save.delve.courage, 0);
 });
@@ -146,7 +170,7 @@ test("a fallen hero, and the fight to take back, persist safely across refresh",
   loaded.switchMode("delve");
   assert.ok(loaded.fallen && !loaded.auto);
   assert.ok(loaded.undo());
-  assert.deepEqual(loaded.run, before);
+  assert.deepEqual(loaded.run, { ...before, undosUsed: 1 });
   const corrupt = JSON.parse(JSON.stringify(g.save));
   corrupt.delve.fall = { snapshot: null };
   assert.equal(decode(JSON.stringify(corrupt)).delve.fall, null);
