@@ -8,6 +8,7 @@ import { outsideWeather } from "../outside.ts";
 import { tierNumeral, tierRewardText } from "../tiers.ts";
 import { MODES, milestones } from "../modes.ts";
 import { capitalized, cardArt, CURRENCY_SPRITES, displayedProgress, el, POINTER_SVG, text, uiSprite } from "./dom.ts";
+import { notesResearched } from "./run-notes-dialog.ts";
 import { CARDS, IN_PLACE, cardText, deckCards, isSiphon, type CardId } from "../cards.ts";
 import { BADGES, badgeDef, badgesOn, badgeValue, type RunBadge } from "../badges.ts";
 import { badgeStyle } from "./badge-token.ts";
@@ -616,6 +617,12 @@ function renderProgress(game: Game) {
   const rawRunBest = game.run.maxHeight ?? game.run.height;
   const rawAllBest = game.save[game.mode].best;
   text("height", outside ? game.save[game.mode].tier : displayedProgress(game.run.height));
+  // Once Note Taking is researched, the floor number opens the run's notes.
+  const notes = !outside && notesResearched(game.save), height = document.querySelector<HTMLElement>(".height")!;
+  if (height.classList.contains("takes-notes") !== notes) {
+    height.classList.toggle("takes-notes", notes);
+    el("height").title = notes ? `${capitalized(rules.words.run)} Notes` : "";
+  }
   renderRunEarned(game);
   renderGoldBonus(game);
   renderBaseEnemy(game);

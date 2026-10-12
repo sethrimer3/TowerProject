@@ -13,6 +13,7 @@ import { missGem } from "./gems.ts";
 import { DelvePlan } from "./delve/automove.ts";
 import { defaults } from "./save.ts";
 import { stampProfile } from "./profile.ts";
+import { defaultFinds, newNotes, notesOf, tallyIn } from "./run-notes.ts";
 import { drawAt, stream, tileRandom } from "./random.ts";
 import { freeTrainingLines, rollFreeTraining } from "./free-training.ts";
 import { doorBlockedMessage, doorName, doorRule, drainsHp, KEY_ORDER } from "./doors.ts";
@@ -1043,6 +1044,7 @@ export class Game {
     else if (card === "blueTrader") {
       p.keys.yellow = snap(p.keys.yellow - TRADER_YELLOW_KEYS);
       p.keys.blue = snap(p.keys.blue + scale);
+      this.noteKey("blue", scale);
       this.gain(p.x, p.y, `−${TRADER_YELLOW_KEYS} yellow keys`, { tile: { kind: "key", color: "yellow" } });
       this.gain(p.x, p.y, `+${keyCount(scale)} blue key`, { tile: { kind: "key", color: "blue" } });
     } else if (card === "keyToHp") {
@@ -1068,6 +1070,7 @@ export class Game {
     if (stat === "maxHp") p.hp = Math.min(p.hp, p.maxHp);
     if (this.run.loadout) this.run.loadout[stat] = snap(this.run.loadout[stat] - loss);
     p.keys[color] = snap(p.keys[color] + scale);
+    this.noteKey(color, scale);
     const lost = stat === "maxHp" ? `−${wholeChange(loss)} max HP` : `−${wholeChange(loss)} ${stat === "attack" ? "ATK" : "DEF"}`;
     this.gain(p.x, p.y, lost, stat === "maxHp" ? { heart: true } : { tile: { kind: stat } });
     this.gain(p.x, p.y, `+${keyCount(scale)} ${color} key`, { tile: { kind: "key", color } });
@@ -1449,6 +1452,7 @@ export class Game {
     this.slice.runBoostGold = null;
     this.slice.runCurrency = 0;
     this.slice.runRecord = false;
+    this.slice.runFinds = defaultFinds();
     this.route = [];
     this.encounter = null;
     this.fight = null;
@@ -1464,6 +1468,9 @@ export class Game {
       floor: 0,
       player,
       ...(this.slice.tier > 1 ? { tier: this.slice.tier } : {}),
+      // A run begun inside (a mode switched to) starts its notes now; one
+      // in the forest starts them as it goes in.
+      ...(outside ? {} : { notes: newNotes(this.clock()) }),
     };
     this.run = this.mode === "tower"
       ? { damaged: false, ...core, ...(height > 0 ? { start: height } : {}) }
@@ -1727,6 +1734,8 @@ export class Game {
   /** Takes a resolved step: in through its door or fight, then onto the tile. */
   private take(step: TakenStep, revived = 0) {
     if (!this.enter(step, revived)) return false;
+    const notes = notesOf(this.run);
+    if (notes) notes.steps++;
     this.land(step.tile, step.dest.x, step.dest.y, step.outcome);
     this.gemFinder.step();
     return true;
@@ -1823,7 +1832,8 @@ export class Game {
    * key) raises a heart with the HP it took (a toll, not damage: it never
    * costs an area's mastery). */
   private openDoor(t: Tile, keysSpent: KeyColor[], drained: number, at: { x: number; y: number }, amount = 1) {
-    const n = keysSpent.length, rule = doorRule(t);
+    const n = keysSpent.length, rule = doorRule(t), notes = notesOf(this.run);
+    if (notes) tallyIn(notes.doors, doorName(t));
     for (const color of keysSpent) this.gain(at.x, at.y, `−${keyCount(amount)} ${color} key`, { tile: { kind: "key", color }, spent: true });
     if (!n || (drainsHp(rule) && drained > 0)) this.gain(at.x, at.y, `−${wholeChange(drained)} HP`, { heart: true });
     const spent = amount === 1 ? `${n} key${n === 1 ? "" : "s"} spent` : `${keyCount(snap(n * amount))} keys spent`;
@@ -1851,6 +1861,7 @@ export class Game {
     const cellsFound = cells ? [cellsText(cells)] : [];
     for (const text of cellsFound) this.gain(at.x, at.y, text, { cell: true });
     if (equipment?.item || equipment?.salvaged) this.events.record("equipment", 1, this.missionKey(at));
+    if (equipment?.item) this.slice.runFinds.equipment++;
     if (fight.crits) this.events.record("crits", fight.crits, this.missionKey(at));
     const found = equipmentGains(equipment);
     for (const { text, art } of found) this.gain(at.x, at.y, text, art);
@@ -1924,6 +1935,7 @@ export class Game {
     this.forestSeeds.clear();
     const p = this.run.player;
     this.run.outside = false;
+    this.run.notes = newNotes(this.clock());
     this.save.tutorials.enter = true;
     this.dealHand();
     p.x = this.rules.entranceX;
@@ -2019,6 +2031,7 @@ export class Game {
     if (!chance || tileRandom(-1, floor, (this.run.seed ^ YELLOW_KEY_SALT) | 0) * 1000 >= chance) return;
     const keys = this.run.player.keys;
     keys.yellow = snap(keys.yellow + 1);
+    this.noteKey("yellow", 1);
     this.gain(at.x, at.y, "+1 yellow key", { tile: { kind: "key", color: "yellow" } });
   }
   advanceTowerRoom() {
@@ -2143,6 +2156,7 @@ export class Game {
   /** Pickup rewards and treasure payouts; stats were already applied. */
   private collect(t: Tile, x: number, y: number, outcome: StepEffect) {
     const text = pickupText(t, outcome, this.stepRules);
+    this.notePickup(t, outcome);
     if (text) {
       this.gain(x, y, text, { tile: { ...t } });
       if (t.kind === "potion") this.recordHeal(outcome.healed);
@@ -2152,6 +2166,21 @@ export class Game {
       this.message = text;
     }
     if (t.kind === "treasure") this.openTreasure(x, y);
+  }
+  /** A pickup counted in the run's notes: a key (by colour, under a
+   * badge's scale), a potion, or an ATK or DEF shard. */
+  private notePickup(t: Tile, outcome: StepEffect) {
+    const notes = notesOf(this.run);
+    if (!notes) return;
+    if (t.kind === "key") this.noteKey(t.color!, outcome.keyAmount ?? 1);
+    else if (t.kind === "potion") notes.potions++;
+    else if (t.kind === "attack") notes.attackShards++;
+    else if (t.kind === "defense") notes.defenseShards++;
+  }
+  /** A key obtained (picked up, traded or siphoned), counted in the run's notes. */
+  private noteKey(color: KeyColor, amount: number) {
+    const notes = notesOf(this.run);
+    if (notes) tallyIn(notes.keys, color, amount);
   }
   /** A treasure chest: counted, and paid once per physical chest (undo and
    * reopening can't pay it again). */

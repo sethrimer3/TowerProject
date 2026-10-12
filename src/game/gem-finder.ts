@@ -69,6 +69,7 @@ export class GemFinder {
     const save = this.host.save;
     save.gems++;
     earn(save, "gems", 1);
+    save[this.host.mode].runFinds.gems++;
     collectedGem(save.gemDrop, this.host.clock());
     this.host.eventDone?.("floatingGems", 1);
     this.sparkle = { x: gem.x, y: gem.y, at: performance.now() };

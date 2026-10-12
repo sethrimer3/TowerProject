@@ -12,6 +12,11 @@ Every gain calls `earn` where the currency is credited: `RunPurse` (Gold, Silver
 Silver belongs to the run, so each `MoveSnapshot` keeps the lifetime Silver then (`silver`) and `Game.restore` sets it back, as it does XP.
 `decodeProfile` reads it, and `backfillProfile` raises each tally to at least what the save proves (currencies held, Training ranks and their Gold, research levels), so a save from before the profile starts from there.
 `tests/profile.test.ts` covers it.
+**Run Notes** (`src/run-notes.ts`) are counted on every run, researched or not, in two places by what undo does to them.
+What undo takes back with the run is in it, `run.notes` (`RunNotes`: `startedAt`, the wall clock as the run went inside, set by `enterFromOutside`, or by `newRun` for a run begun inside; steps, keys by colour, doors by `doorName`, potions, ATK and DEF shards, Silver found), counted by `Game` (`take`, `openDoor`, `notePickup`, `noteKey`, which also counts the keys Blue Trader, the siphons and Find Yellow Key give) and `RunPurse` (`noteSilver`); `notesOf` gives none in the forest.
+What undo never takes back sits beside the run in the mode's slice, `runFinds` (`RunFinds`: materials by id, chests' bars and Equipment's materials and salvage, Cells, Gems, equipment pieces kept), counted where `RunPurse` and `GemFinder` pay them and reset by `newRun`, like `runGold`.
+The run decoder drops malformed notes (`validNotes`) and `decodeFinds` reads the finds; kills, chests, XP, Gold and the run's currency come from what the run already kept.
+`tests/run-notes.test.ts` covers them.
 Player settings are the exception: each is one row in `SETTINGS` (`src/settings.ts`: its default, the values a save may hold, and its control on the Settings page), from which the `Settings` type, the defaults and the decoder all come, so every setting is always present and readers never re-default it.
 Rows are in saved key order; the page lists its own order.
 `tests/settings.test.ts` checks every row round-trips and defaults bad values.

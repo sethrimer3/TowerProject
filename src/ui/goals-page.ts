@@ -28,14 +28,15 @@ const CURRENCY_ICONS: Record<CurrencyId, () => string> = { gems: () => gemIcon("
  * number in its corner, Relative Damage Color that tile over a green-to-red bar, Equipment an anvil
  * under a hammer, the Tournament a trophy, Events a pennant, Research Speed an hourglass, Shard ATK and Shard DEF a red or
  * blue shard under a rising arrow, Evade Prediction a shield turning an enemy's strike aside, Badge
- * Slots a card wearing two badges, one above the other, and every Shrine research a shrine's gate
- * (`shrineIcon`). */
+ * Slots a card wearing two badges, one above the other, Note Taking an open notebook under a quill,
+ * and every Shrine research a shrine's gate (`shrineIcon`). */
 const UNLOCK_ICONS: Record<GoalUnlock, string> = {
   shrines: shrineIcon("goal-icon"), firstBoonChoice: shrineIcon("goal-icon"), improveTradeoffs: shrineIcon("goal-icon"), autoPickBoons: shrineIcon("goal-icon"),
   boonOptions: shrineIcon("goal-icon"), banBoons: shrineIcon("goal-icon"), autoPickRanking: shrineIcon("goal-icon"),
   badgeSlots: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="2.5" width="14" height="19" rx="2" fill="#2a2234" stroke="#c9a6ff" stroke-width="1.4"/><rect x="13" y="3.5" width="7.5" height="7.5" rx="1.8" fill="#0c1018" stroke="#ffd34d" stroke-width="1.3"/><path d="M16.75 5.4l1.5 2.6h-3z" fill="#7be07b"/><rect x="13" y="12" width="7.5" height="7.5" rx="1.8" fill="#0c1018" stroke="#ffd34d" stroke-width="1.3"/><path d="M16.75 17.6l1.5-2.6h-3z" fill="#ff6b6b"/></svg>`,
   shardAttack: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.5l4.5 5-4.5 8-4.5-8z" fill="#a8323a" stroke="#ff9aa0" stroke-width="1.3" stroke-linejoin="round"/><path d="M12 8.5v13" stroke="#ff9aa0" stroke-width=".9"/><path d="M12 6V1.8M9 4.6l3-3 3 3" fill="none" stroke="#ffd34d" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
   shardDefense: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.5l4.5 5-4.5 8-4.5-8z" fill="#2f5fa8" stroke="#9cc4ff" stroke-width="1.3" stroke-linejoin="round"/><path d="M12 8.5v13" stroke="#9cc4ff" stroke-width=".9"/><path d="M12 6V1.8M9 4.6l3-3 3 3" fill="none" stroke="#ffd34d" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  noteTaking: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 9C9.5 7 6.5 6.5 3 7v12c3.5-.5 6.5 0 9 2 2.5-2 5.5-2.5 9-2V7c-3.5-.5-6.5 0-9 2z" fill="#3a2a1a" stroke="#e2a15c" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 9v12" stroke="#e2a15c" stroke-width="1.2"/><path d="M5.5 11h4M5.5 14h4M14.5 14h4" stroke="#ffd59a" stroke-width="1.1" stroke-linecap="round"/><path d="M21.5 1.5c-3 1-5.5 3.5-6.5 7l1.2.4c1.6-2.7 3.4-4.8 5.3-7.4z" fill="#f0e2ff" stroke="#c9a6ff" stroke-width=".9" stroke-linejoin="round"/></svg>`,
   tournament: trophyIcon("goal-icon"),
   events: eventIcon("goal-icon"),
   evadePrediction: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 3.5l6.5 2.4v5.3c0 4.4-2.8 7.6-6.5 9.3-3.7-1.7-6.5-4.9-6.5-9.3V5.9z" fill="#1c2a44" stroke="#8fc4ff" stroke-width="1.5" stroke-linejoin="round"/><path d="M22 4.5l-7.5 6.5c-1 .9-1 2.3 0 3.2L17 16.5" fill="none" stroke="#ffd34d" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.2 17.7l2.6-.6-.6-2.6" fill="none" stroke="#ffd34d" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
@@ -71,6 +72,8 @@ const UNLOCK_TUTORIALS: Record<GoalUnlock, string> = {
     `<p class="hint">Turn it off in Settings if the board feels crowded.</p>`,
   equipment: `<p>A Blacksmith opens in the forest: tap it, or the Gear tab, to wear weapons, armour and trinkets, level them up with Gold and materials, and merge them.</p>` +
     `<p class="hint">Every boss now has a chance to drop equipment, on any floor, and every enemy drops upgrade materials.</p>`,
+  noteTaking: `<p>Note Taking opens in the Archives: research it, and tap the floor number during a run to read the run's notes, kept as you play: its time, steps, kills, keys, doors, chests and loot.</p>` +
+    `<p class="hint">The notes stay open while the run plays on, and copy to paste elsewhere. The run's summary opens them too.</p>`,
   researchSpeed: `<p>Research Speed opens in the Archives: train the archivists to read faster, and every research, those under way included, takes less time.</p>`,
   badgeSlots: `<p>Badge Slots opens in the Archives: research it, and each card holds one more badge a level. Drag a badge onto a card on the Deck page to fill its next slot; on a card with every slot full, it takes the bottom slot's place.</p>` +
     `<p class="hint">Badges that can't work together can't share a card: a key colour's &lt; gate with its ≥ gate (YK &lt; with YK ≥), or Effective with Dampen.</p>`,

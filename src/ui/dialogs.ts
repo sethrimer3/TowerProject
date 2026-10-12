@@ -14,6 +14,7 @@ import type { TournamentClient } from "../tournament/client.ts";
 import { LEAGUE_INFO } from "../tournament/leagues.ts";
 import { placeText } from "../tournament/prizes.ts";
 import { tournamentScore } from "../tournament/run.ts";
+import { notesResearched, type RunNotesDialog } from "./run-notes-dialog.ts";
 
 /** The modal dialogs opened from the HUD, all sharing `ctx.modal`. */
 
@@ -109,9 +110,9 @@ type RunEndCause = "fallen" | "stuck" | "chosen";
  * it up, shows the same totals of what the run obtained, and asks what next.
  * A fallen hero must answer it (undo the fight, once undo is unlocked and
  * one is left, or return to the entrance), after which the forest fades in from
- * black; otherwise the player ends the run or keeps going.
- * TODO: show the run's totals another way, viewable during the run and
- * when it ends (the victories, among more), in place of this summary. */
+ * black; otherwise the player ends the run or keeps going. Once Note
+ * Taking is researched, a button at the end of its totals opens the run's
+ * notes over it. */
 export class RunEndDialog {
   private fadeOverlay = document.createElement("div");
 
@@ -119,6 +120,8 @@ export class RunEndDialog {
     private ctx: AppContext,
     /** Sends a tournament run's score as the dialog opens. */
     private tournament: TournamentClient | null = null,
+    /** The run's notes, which the summary's Run Notes button opens. */
+    private notes: RunNotesDialog | null = null,
   ) {
     this.fadeOverlay.className = "fade-overlay";
     document.body.appendChild(this.fadeOverlay);
@@ -165,7 +168,20 @@ export class RunEndDialog {
       stat(run.xp ?? 0, "XP"),
     ].join("");
     const cheer = record ? `<p class="summary-record">Highest ${rules.words.progress.toLowerCase()} reached!</p>` : "";
-    return `${cheer}<div class="summary-stats compact">${stats}</div>${this.boostLine()}${this.tournamentBlock()}`;
+    return `${cheer}<div class="summary-stats compact">${stats}</div>${this.boostLine()}${this.tournamentBlock()}${this.notesButton()}`;
+  }
+
+  /** At the end of the run's totals, once Note Taking is researched: the
+   * button that opens the run's notes over the summary. */
+  private notesButton() {
+    const { game } = this.ctx;
+    if (!this.notes || game.run.outside || !notesResearched(game.save)) return "";
+    return `<button id="summary-notes" class="wide summary-notes">${capitalized(MODES[game.mode].words.run)} Notes</button>`;
+  }
+  /** Opens the notes from the summary's button, when it has one. */
+  private bindNotes() {
+    const button = document.querySelector<HTMLButtonElement>("#summary-notes");
+    if (button) button.onclick = () => this.notes?.show();
   }
 
   /** A tournament run's score, sent as the dialog opens (the best of the
@@ -219,6 +235,7 @@ export class RunEndDialog {
       const again = `<p>Look over what this ${words.run} earned, spend it to grow stronger, and try again: the ${words.tierName} will shift to a new layout for your next ${words.run}.</p>`;
       modal.innerHTML = `<span class="summary-icon">${uiSprite("revive")}</span><small>FALLEN IN COMBAT</small><h2>Regroup and try again.</h2><p>${by ? `Felled by ${by}` : "Felled"} at ${where}. ${kept}</p>${stats}${again}${takeBack}<div class="dialog-actions">${button}<button id="defeat-accept">Return to entrance</button>${this.retryButton("defeat-retry")}</div>`;
       modal.showModal();
+      this.bindNotes();
       // Undo, or else return to the entrance: however the dialog closes,
       // even dismissed by the browser itself (a phone's Back, or coming back
       // to the tab, can close it past the cancel guard), the hero never stays
@@ -244,6 +261,7 @@ export class RunEndDialog {
     const blocked = cause === "stuck" ? stuckBlock(game) : "";
     modal.innerHTML = `<small>${label}</small><h2>${title}</h2><p>${why}${kept}</p>${blocked}${stats}<div class="dialog-actions"><button id="cancel">${words.keepGoing}</button><button id="confirm">End run</button>${this.retryButton("retry")}</div>`;
     modal.showModal();
+    this.bindNotes();
     el("cancel").onclick = () => modal.close();
     el("confirm").onclick = () => {
       modal.close();

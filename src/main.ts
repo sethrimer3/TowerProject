@@ -20,6 +20,7 @@ import { BoardOverlay } from "./ui/board-overlay.ts";
 import { boardHeadingStale, flashRed, renderAdButton, renderEventsButtons, renderMailButton, renderMissionsButton, renderShopDot, renderTournamentButton, renderBoardHeading, renderHud, renderVitals, purseFrame, togglePurseRates, gearWaiting, upgradesWaiting, dismissResearch } from "./ui/hud.ts";
 import { ResearchPage } from "./ui/research-page.ts";
 import { confirmAction, RunEndDialog } from "./ui/dialogs.ts";
+import { RunNotesDialog } from "./ui/run-notes-dialog.ts";
 import { closeRunMenu, toggleRunMenu } from "./ui/run-menu.ts";
 import { GoalsPage } from "./ui/goals-page.ts";
 import { SkillTreePage } from "./ui/skill-tree-page.ts";
@@ -79,9 +80,11 @@ const ctx: AppContext = {
   navigate,
   confirm: (prompt, action) => confirmAction(ctx, prompt, action),
 };
+// The run's notes (Note Taking), opened from the floor number or the run's summary.
+const runNotes = new RunNotesDialog(ctx);
 // The Tournament's server (a stand-in until it exists), and what waits on it.
 const tournament = new TournamentClient(game, stubTournament(() => game.save.tournament, () => game.clock()));
-const runEnd = new RunEndDialog(ctx, tournament);
+const runEnd = new RunEndDialog(ctx, tournament, runNotes);
 const tournamentPage = new TournamentPage(ctx, tournament, refreshTournament);
 // Mail's server (a stand-in until it exists), and the popup the forest's Mail button opens.
 const mail = new MailClient(game.mail, stubMail(() => game.save, () => game.clock()));
@@ -130,6 +133,7 @@ function update() {
   // The Deck tutorial keeps the player on its page until they reorder the hand.
   document.querySelectorAll<HTMLButtonElement>("[data-tab]").forEach((b) => (b.disabled = deck.teaching && b.dataset.tab !== "deck"));
   renderHud(game, renderer, overlay);
+  if (runNotes.open) runNotes.refresh();
   runTraining.render();
   renderBoardLesson(game, tab === "tower", update);
   const themes = game.claimThemes();
@@ -301,6 +305,10 @@ el("gold-ad").onclick = () => {
   update();
 };
 el("gold-bonus").onclick = () => toggleGoldBonusBox(game);
+// The floor number (its tower and label with it) opens the run's notes, once Note Taking is researched.
+document.querySelector(".height")!.addEventListener("click", (e) => {
+  if ((e.target as Element).closest("#height, #height-label, #height-tier")) runNotes.show();
+});
 el("end-run").onclick = () => {
   closeRunMenu();
   runEnd.ask();
@@ -449,6 +457,8 @@ function archivesTick() {
   if (tab === "events") events.rerender();
   if (tab === "research") research.archivesTick(done);
   if (tab === "shop") shop.tick();
+  // The run's notes keep their clock running.
+  if (runNotes.open) runNotes.refresh();
 }
 /** Whether the tick last saw the player in the forest, and when Mail's
  * server was last asked (the game's clock). */

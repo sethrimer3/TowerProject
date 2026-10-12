@@ -18,6 +18,7 @@ import type { EquipItem } from "../equipment/inventory.ts";
 import { CATEGORIES, type EquipMaterialId } from "../equipment/catalog.ts";
 import { runBoons } from "../shrines.ts";
 import { earn } from "../profile.ts";
+import { notesOf, tallyIn } from "../run-notes.ts";
 
 /** What a kill gave toward Equipment, once it is open: upgrade materials,
  * and a boss's Standard piece (or, the inventory full, its salvage). */
@@ -112,8 +113,16 @@ export class RunPurse {
     const bonus = snap((base * silverBonus(this.trainingNow) * researched(this.save.archives, "silverBonus", 100) * (this.boons?.silverFound ?? 1)) / 10_000);
     const silver = raised(bonus, this.worn.silverFind);
     this.run.silver = snap((this.run.silver ?? 0) + silver);
-    earn(this.save, "silver", silver);
+    this.noteSilver(silver);
     return silver;
+  }
+
+  /** Silver found counts toward the profile's lifetime Silver and the
+   * run's notes, both taken back by undo. */
+  private noteSilver(silver: number) {
+    earn(this.save, "silver", silver);
+    const notes = notesOf(this.run);
+    if (notes && silver > 0) notes.silver = snap(notes.silver + silver);
   }
 
   /** A kill's Silver, by the enemy's strength and the equivalent floor
@@ -153,6 +162,7 @@ export class RunPurse {
     const cells = scale === 1 ? found : snap(found * scale);
     this.save.cells = snap(this.save.cells + cells);
     earn(this.save, "cells", cells);
+    this.slice.runFinds.cells = snap(this.slice.runFinds.cells + cells);
     return cells;
   }
 
@@ -164,8 +174,10 @@ export class RunPurse {
     const floor = this.rules.equivalentFloor(this.rules.progressAt(this.run, y)), worn = this.worn;
     const materials = rollMaterials(enemy.strength, floor, worn.materialFind, this.equipmentRng);
     if (materials) e.materials[materials.id] += materials.quantity;
+    if (materials) tallyIn(this.slice.runFinds.materials, materials.id, materials.quantity);
     const drop = rollBossDrop(enemy.strength, worn.bossDrops, this.equipmentRng);
     const kept = drop && keepDrop(e, drop);
+    if (kept && !kept.item) tallyIn(this.slice.runFinds.materials, CATEGORIES[drop!.category].material, kept.salvaged);
     return {
       materials,
       item: kept?.item ?? null,
@@ -181,6 +193,7 @@ export class RunPurse {
     const loot = rollTreasureLoot(rules.equivalentFloor(rules.progressAt(this.run, y)), this.rng);
     const gold = this.gold(tierGold(this.tier, this.withCombo(loot.gold)));
     for (const m of loot.materials) this.save.materials[m.id] += m.quantity;
+    for (const m of loot.materials) tallyIn(this.slice.runFinds.materials, m.id, m.quantity);
     return { gold, materials: loot.materials };
   }
 
@@ -257,7 +270,7 @@ export class RunPurse {
     const held = this.run.silver ?? 0;
     const paid = Math.min(this.interestCap, snap((held * rate) / 1000));
     if (paid > 0) this.run.silver = snap(held + paid);
-    earn(this.save, "silver", paid);
+    this.noteSilver(paid);
     return paid > 0 ? paid : 0;
   }
 

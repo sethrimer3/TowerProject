@@ -25,11 +25,12 @@ import { isTournamentRun } from "./tournament/run.ts";
 import { decodeBadges, defaultBadges, validRunBadges } from "./badges.ts";
 import { runTrainingMax } from "./run-training.ts";
 import { backfillProfile, decodeProfile, defaultProfile } from "./profile.ts";
+import { decodeFinds, defaultFinds, validNotes } from "./run-notes.ts";
 export function defaults(): Save {
   return {
     version: 3,
-    tower: { run: null, history: [], fall: null, best: 0, reached: 0, inspiration: 0, lootedTiles: {}, runGold: 0, runBoostGold: null, runCurrency: 0, runRecord: false, tier: 1, tiersOpen: 1, tierRecords: {} },
-    delve: { run: null, history: [], fall: null, best: 0, reached: 0, courage: 0, lootedTiles: {}, runGold: 0, runBoostGold: null, runCurrency: 0, runRecord: false, memory: { known: {}, visited: {} }, tier: 1, tiersOpen: 1, tierRecords: {} },
+    tower: { run: null, history: [], fall: null, best: 0, reached: 0, inspiration: 0, lootedTiles: {}, runGold: 0, runFinds: defaultFinds(), runBoostGold: null, runCurrency: 0, runRecord: false, tier: 1, tiersOpen: 1, tierRecords: {} },
+    delve: { run: null, history: [], fall: null, best: 0, reached: 0, courage: 0, lootedTiles: {}, runGold: 0, runFinds: defaultFinds(), runBoostGold: null, runCurrency: 0, runRecord: false, memory: { known: {}, visited: {} }, tier: 1, tiersOpen: 1, tierRecords: {} },
     gems: 0,
     ascensionShards: 0,
     medals: 0,
@@ -161,6 +162,7 @@ const RUN_FIELD_CHECKS = {
   skipRolls: (v: unknown) => wholeIn(v, 1, 1e9),
   freeRolls: (v: unknown) => isRecord(v) && Object.entries(v).every(([k, n]) => ["offense", "defense", "utility"].includes(k) && wholeIn(n, 1, 1e9)),
   goldCombo: (v: unknown) => wholeIn(v, 1, 1e9),
+  notes: validNotes,
   marks: (v: any) => isRecord(v) && wholeIn(v.floor, 0, 1e6) && wholeIn(v.made, 0, 1e6) &&
     [v.tiles, v.bangs].every((list) => Array.isArray(list) && list.every((t: unknown) => typeof t === "string" && POINT_KEY.test(t))),
   skipped: (v: any) => isRecord(v) && wholeIn(v.floor, 0, 1e6) && Array.isArray(v.tiles) && v.tiles.every((t: unknown) => typeof t === "string" && POINT_KEY.test(t)),
@@ -192,7 +194,7 @@ function decodeDelveRun(r: any): DelveRun | null {
 }
 
 // --- Mode slices ---
-type DecodedMode<R extends Run> = Pick<ModeSave<R>, "run" | "history" | "fall" | "lootedTiles" | "runGold" | "runBoostGold" | "runCurrency" | "runRecord">;
+type DecodedMode<R extends Run> = Pick<ModeSave<R>, "run" | "history" | "fall" | "lootedTiles" | "runGold" | "runBoostGold" | "runCurrency" | "runRecord" | "runFinds">;
 type RunDecoder<R extends Run> = (raw: any) => R | null;
 const validSnapshot = (value: any) => !!value && finite(value.best) && finite(value.xp);
 function snapshot<R extends Run>(value: any, decodeRun: RunDecoder<R>): MoveSnapshot<R> | null {
@@ -243,6 +245,7 @@ function decodeMode<R extends Run>(s: any, undoCapacity: number, decodeRun: RunD
     runBoostGold: run && s.runBoostGold !== null && s.runBoostGold !== undefined ? fraction(s.runBoostGold, 0) : null,
     runCurrency: run ? count(s.runCurrency, 0) : 0,
     runRecord: !!run && s.runRecord === true,
+    runFinds: run ? decodeFinds(s.runFinds) : defaultFinds(),
   };
 }
 function applyMode<R extends Run>(slice: ModeSave<R>, decoded: DecodedMode<R>) {
@@ -254,6 +257,7 @@ function applyMode<R extends Run>(slice: ModeSave<R>, decoded: DecodedMode<R>) {
   slice.runBoostGold = decoded.runBoostGold;
   slice.runCurrency = decoded.runCurrency;
   slice.runRecord = decoded.runRecord;
+  slice.runFinds = decoded.runFinds;
 }
 
 // --- Inventory ---

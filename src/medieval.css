@@ -783,6 +783,20 @@ html.medieval dialog h2 {
 html.medieval dialog p {
   color: #4a3420;
 }
+/* The Stats and Run Notes tables in ink on the parchment. */
+html.medieval .stats-table th {
+  color: #4a3420;
+}
+html.medieval .stats-table td {
+  color: #3a200c;
+}
+html.medieval .stats-table th,
+html.medieval .stats-table td {
+  border-bottom-color: #8d6b4060;
+}
+html.medieval .notes-table caption {
+  color: #8a4a1c;
+}
 html.medieval dialog::backdrop {
   background: radial-gradient(ellipse at 50% 40%, #1a0f06c0, #050302ee);
   backdrop-filter: blur(3px);

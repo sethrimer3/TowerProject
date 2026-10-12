@@ -268,6 +268,13 @@ try {
         s.archives.levels.badgeSlots = 1;
         s.badges = { owned: { hp: { copies: 4, pick: 0 }, hpGate: { copies: 1, pick: 0 } }, cards: { stairs: ["hpGate", "hp"] }, rng: 99 };
       }),
+      // Note Taking researched, in a run inside: the floor number opens the
+      // run's notes, as does the run's end dialog.
+      notes: inside((s) => {
+        quiet(s);
+        s.upgrades.archives = 1;
+        s.archives.levels.noteTaking = 1;
+      }),
     };
   });
 
@@ -734,6 +741,19 @@ try {
   }
   await load("badgeSlotsRun");
   await shot("badgeSlots.run");
+
+  // Run Notes: opened from the floor number over the board, closed by the
+  // X, then from the end dialog's Run Notes button.
+  await load("notes");
+  await click("#height");
+  await shot("notes.open");
+  await click("#run-notes-close");
+  await menuClick("#end-run");
+  await shot("notes.endRun");
+  await click("#summary-notes");
+  await shot("notes.endRun.notes");
+  await click("#run-notes-close");
+  await click("#cancel");
 
   // Equipment: claimed from Tower I's floor 60 Goal, opened through the
   // claim's Visit the Blacksmith, then each view, an item, a merge, a

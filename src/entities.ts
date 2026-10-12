@@ -10,6 +10,7 @@ import type { MaterialId } from "./materials.ts";
 import type { EquipmentSave } from "./equipment/inventory.ts";
 import type { DefendSave } from "./defend/progress.ts";
 import type { GemDrop } from "./gems.ts";
+import type { RunFinds, RunNotes } from "./run-notes.ts";
 import type { EnemyProfile } from "./enemy-curves.ts";
 import type { Settings } from "./settings.ts";
 import type { EntitlementId } from "./shop/entitlements.ts";
@@ -138,6 +139,9 @@ export type RunCore = {
   /** XP earned from kills this run, for the run's end dialog; undo takes
    * it back with the rest of the run, as it does the hero's XP. */
   xp?: number;
+  /** The run's notes (run-notes.ts): its start, steps, keys, doors,
+   * pickups and Silver found; undo takes them back with the run. */
+  notes?: RunNotes;
   /** Focus uses spent this run. What is left is what a run gets now less
    * these, so a Focus Count level completed mid-run counts at once. */
   focusUsed?: number;
@@ -262,6 +266,10 @@ export type ModeSave<R extends Run = Run> = {
   /** The mode's currency (Inspiration or Courage) earned during the current
    * run, from milestones and areas cleared, kept beside `runGold`. */
   runCurrency: number;
+  /** What the current run found that undo never takes back (materials,
+   * Cells, Gems, equipment), for its notes (run-notes.ts), kept beside
+   * `runGold`. */
+  runFinds: RunFinds;
   /** Whether the current run has climbed past the tier's record (`reached`
    * as the run began), for the run's end dialog. */
   runRecord: boolean;

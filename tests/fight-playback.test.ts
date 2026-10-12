@@ -112,6 +112,8 @@ test("a fight played out waits beside the enemy, then counts exactly like one se
   const enemy: Tile = { kind: "enemy", enemy: foe() };
   const played = arena(structuredClone(enemy)), instant = arena(structuredClone(enemy), false);
   played.run.seed = instant.run.seed;
+  // The two runs began a moment apart on the wall clock.
+  played.run.notes = structuredClone(instant.run.notes);
   const hp = played.run.player.hp;
   assert.ok(played.move(1, 0));
   assert.ok(played.encounter, "the fight is playing out");

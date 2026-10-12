@@ -32,6 +32,10 @@ _Avoid_: tower log, reward log
 The player's lifetime record, shown in the Settings page's Stats: when the profile was made, each currency ever earned (spending never lowers it), the Training levels gained, the research levels completed, and the Gold spent on each (less what came back). Erasing all progress starts a new one.
 _Avoid_: account, statistics save
 
+**Run Notes**:
+A run's trivia, kept as it plays: the tower and floor reached, its real time, steps, kills, keys and doors by kind, chests, and what it found (Gold, Silver, Inspiration or Courage, materials and other loot). Note Taking research opens them, from the floor number during a run or the run's end dialog, and they copy as text. Undo takes back what the run itself holds, never what was found for good.
+_Avoid_: run stats, run log
+
 ### Equipment
 
 **Equipment**:

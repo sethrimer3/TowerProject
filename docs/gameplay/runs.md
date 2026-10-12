@@ -26,6 +26,17 @@ Rewards are credited as they are earned and never rolled back, so taking a fight
 Ending a run with End Run (or retiring from Settings) goes straight back to the forest once confirmed.
 Gold is banked the moment it is found and kept however the run ends: the stats show the Gold held, and the run's end dialog and the message after the run say how much the run found.
 
+## Run Notes
+
+Tower I's floor 250 Goal opens the Archives' **Note Taking** (one level, 100,000 Gold and 2 days).
+Once it is researched, tapping the floor number during a run opens the run's notes, and the run plays on beneath them.
+They list the tower, the floor reached and the current floor, the real time since the run went inside, the steps taken, chests opened, enemies defeated and XP earned, the keys obtained by colour and the doors opened by kind, the Gold, Silver and Inspiration (or Courage) found, the materials found, and the potions, ATK and DEF shards, Gems, Cells and equipment picked up, each group under its heading.
+They refresh as the run goes, and the X at their top right closes them.
+The copy button beside the X puts them in the clipboard as text, to paste elsewhere.
+Undo takes back what it takes back from the run (steps, keys, doors, pickups and Silver), never what was found for good (Gold, materials, Cells, Gems and equipment).
+The run's end dialog has a Run Notes button at the end of its totals, which opens them over it.
+The Settings page's Stats dialog has the same copy button.
+
 ## Rewards and purchases
 
 Rewards are credited as you climb (Courage for every 10 Delve height, Inspiration for each Tower floor completed beyond your highest, paid as you climb its stairs, and 10 for each area cleared; past floor 100, or depth 1,000, a point of either takes 10 floors, past floor 1,000 100 floors, and past floor 10,000 they stop), so retiring from Settings simply starts a fresh run.

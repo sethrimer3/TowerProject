@@ -4210,3 +4210,16 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
 .stats-table th { font-weight: 500; color: #b7c0cc; }
 .stats-table td { text-align: right; color: #e9d4ac; font-variant-numeric: tabular-nums; white-space: nowrap; }
 #stats-open { margin-bottom: 8px; }
+/* A copy button beside a dialog's X: two sheets, turning green once copied. */
+.copy-button { float: right; display: grid; place-items: center; width: 32px; height: 32px; min-height: 0; margin: -18px 8px 0 0; padding: 0; border-radius: 50%; line-height: 1; }
+.copy-button .copy-icon { width: 16px; height: 16px; }
+.copy-button.copied { color: #7be07b; border-color: #7be07b; }
+/* The run's notes (Note Taking): a dialog of its own over the board, which
+ * plays on beneath it, each group of lines under its heading. */
+dialog.run-notes { position: fixed; inset: 6dvh 0 auto; z-index: 40; margin: 0 auto; max-height: 86dvh; overflow-y: auto; padding: 24px; }
+dialog.run-notes .dialog-x { float: right; width: 32px; height: 32px; min-height: 0; margin: -12px -12px 0 0; padding: 0; border-radius: 50%; font-size: 15px; line-height: 1; }
+dialog.run-notes .copy-button { margin-top: -12px; }
+dialog.run-notes h2 { margin-top: 0; }
+.notes-table caption { padding: 12px 4px 2px; caption-side: top; text-align: left; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #e2a15c; }
+.summary-notes { margin-top: 10px; }
+.height.takes-notes #height, .height.takes-notes #height-label, .height.takes-notes #height-tier { cursor: pointer; }

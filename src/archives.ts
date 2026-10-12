@@ -142,6 +142,8 @@ export const RESEARCH_TARGETS = {
   boonBans: { name: "Boons Banned", base: 0, shown: count },
   /** Boons Auto Pick can rank. */
   boonRanks: { name: "Boons Ranked", base: 0, shown: count },
+  /** Whether the run's notes can be read (run-notes.ts): tap the floor number. */
+  runNotes: { name: "Run Notes", base: 0, shown: opened },
   /** Badges each card can hold. */
   badgeSlots: { name: "Badge Slots", base: 1, shown: count },
 } as const;
@@ -525,6 +527,14 @@ export const RESEARCH = {
     categories: ["qualityOfLife"],
     requires: [{ upgrade: "buyQuantity" }],
     levels: BUY_QUANTITY_LEVELS.map(([gold, hours]): ResearchLevel => ({ gold, hours, effect: { target: "buyQuantity", op: "add", value: 1 } })),
+  },
+  noteTaking: {
+    name: "Note Taking",
+    description: "Keep a ledger of the climb: tap the floor number during a run to read its notes (time, steps, kills, keys, doors, chests and loot), and copy them.",
+    categories: ["qualityOfLife"],
+    requires: [{ upgrade: "archives" }, { goalUnlock: "noteTaking" }],
+    // 100,000 Gold and 2 days.
+    levels: [levelOf("runNotes", 1, 100_000, 2 * 24 * 60)],
   },
   pocketMoney: {
     name: "Pocket Money",

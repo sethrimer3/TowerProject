@@ -29,13 +29,14 @@ import { TIERS } from "./tiers.ts";
  * floor 150), First Boon Choice (floor 250), Improve Trade-off Boons (floor
  * 400), Auto Pick Boons and Boon Option Quantity (Tower IV floors 50 and 80),
  * Ban Boons (Tower V floor 40) and Auto Pick Ranking (Tower VI floor 10),
- * and Badge Slots (Tower VI floor 50: the Archives' project that lets each
- * card hold more badges). */
+ * Badge Slots (Tower VI floor 50: the Archives' project that lets each
+ * card hold more badges), and Note Taking (Tower I floor 250: the Archives'
+ * project that opens the run's notes). */
 export type GoalUnlock =
   | "damagePrediction" | "combatForecast" | "attackLore" | "warp" | "damageVisual" | "relativeDamageColor" | "equipment" | "tournament" | "events" | "researchSpeed"
   | "shardAttack" | "shardDefense" | "evadePrediction" | "parryPercent"
   | "shrines" | "firstBoonChoice" | "improveTradeoffs" | "autoPickBoons" | "boonOptions" | "banBoons" | "autoPickRanking"
-  | "badgeSlots";
+  | "badgeSlots" | "noteTaking";
 export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   damagePrediction: "Damage Prediction", combatForecast: "Combat Forecast", attackLore: "Attack Lore", warp: "Warp", damageVisual: "Damage Visual",
   relativeDamageColor: "Relative Damage Color", equipment: "Equipment", tournament: "Tournament", events: "Events",
@@ -43,7 +44,7 @@ export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   evadePrediction: "Evade Prediction", parryPercent: "Parry %",
   shrines: "Unlock Shrines", firstBoonChoice: "First Boon Choice", improveTradeoffs: "Improve Trade-off Boons",
   autoPickBoons: "Auto Pick Boons", boonOptions: "Boon Option Quantity", banBoons: "Ban Boons", autoPickRanking: "Auto Pick Ranking",
-  badgeSlots: "Badge Slots",
+  badgeSlots: "Badge Slots", noteTaking: "Note Taking",
 };
 /** What a checkpoint pays: an unlock, the next tower opened, or an amount of a currency. */
 export type GoalReward =
@@ -74,6 +75,7 @@ const TOWER_ONE: Record<number, Omit<Checkpoint, "floor">> = {
   90: { reward: gold(2000), premium: gold(10000) },
   150: { reward: unlock("researchSpeed"), premium: gems(110) },
   200: { reward: gems(40), premium: gems(120) },
+  250: { reward: unlock("noteTaking"), premium: gems(130) },
 };
 
 /** Tower II's checkpoints that differ from the stub: an unlock each, and Gold. */
