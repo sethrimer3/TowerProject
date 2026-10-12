@@ -106,11 +106,13 @@ export class OutsideWorld implements Board {
     this.entranceX = MODES[mode].entranceX;
   }
   tile(x: number, y: number): Tile {
+    // A road out runs on past the board's edge, across the view's spare
+    // columns (the Tower's board is narrower than the forest's view).
+    if (y === OUTSIDE_START_Y && (x < this.entranceX ? this.prevRoad : this.nextRoad)) return { kind: "floor" };
     if (!this.inside(x, y)) return { kind: "wall" };
     if (x === this.entranceX && y === ENTRANCE_Y) return { kind: "stairs" };
     if (this.blacksmith && within(YARD, this.entranceX, x, y)) return { kind: onBlacksmith(this.entranceX, x, y) ? "wall" : "floor" };
     if (this.hall && within(HALL_YARD, this.entranceX, x, y)) return { kind: onTournamentHall(this.entranceX, x, y) ? "wall" : "floor" };
-    if (y === OUTSIDE_START_Y && (x < this.entranceX ? this.prevRoad : this.nextRoad)) return { kind: "floor" };
     return this.wooded(x, y) ? { kind: "wall" } : { kind: "floor" };
   }
   /** Whether (x, y) is the Blacksmith, which a tap opens. */

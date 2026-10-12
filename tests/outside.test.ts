@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { defaults, decode } from "../src/save.ts";
-import { OutsideWorld, ENTRANCE_Y, OUTSIDE_START_Y, weatherForRoll, outsideWeather, outsideSpriteKind, roadsOf, BLACKSMITH, TOURNAMENT_HALL } from "../src/outside.ts";
+import { OutsideWorld, ENTRANCE_Y, OUTSIDE_SIZE, OUTSIDE_START_Y, weatherForRoll, outsideWeather, outsideSpriteKind, roadsOf, BLACKSMITH, TOURNAMENT_HALL } from "../src/outside.ts";
 import { lightningOpacity } from "../src/weather.ts";
 import { chooseStep } from "../src/automation.ts";
 
@@ -103,7 +103,9 @@ for (const mode of ["tower", "delve"] as const)
     const row = OUTSIDE_START_Y;
     const roadTo = (edge: number) => {
       const world = g.world as OutsideWorld, center = world.entranceX, roads = roadsOf(world);
-      const xs = edge < center ? Array.from({ length: center }, (_, x) => x) : Array.from({ length: world.width - center - 1 }, (_, i) => center + 1 + i);
+      // Out to the view's edge: the forest shows OUTSIDE_SIZE columns, past the Tower board's right edge.
+      const last = Math.max(world.width, OUTSIDE_SIZE) - 1;
+      const xs = edge < center ? Array.from({ length: center }, (_, x) => x) : Array.from({ length: last - center }, (_, i) => center + 1 + i);
       return xs.every(x => world.tile(x, row).kind === "floor" && outsideSpriteKind({ kind: "floor" }, { x, y: row, seed: world.seed, center, roads }).family === "path");
     };
     const right = g.world.width - 1;
