@@ -287,8 +287,7 @@ export class GoalsPage {
   /** Why the checkpoint at `floor` can't be warped to yet, and what each of its marks means. */
   private warpRefusal(tower: number, floor: number) {
     const save = this.ctx.game.save, from = floor - 9;
-    const pay = clearedInspiration(floor), paid = pay > 0 ? `: +${pay} Inspiration paid` : "";
-    const cleared = areaCleared(save, tower, floor) ? ` Floors ${from}–${floor} cleared of enemies${paid}.` : "";
+    const cleared = areaCleared(save, tower, floor) ? ` Floors ${from}–${floor} cleared of enemies: +${clearedInspiration(floor)} Inspiration paid.` : "";
     if (!areaMastered(save, tower, floor)) return `Master floors ${from}–${floor}, climbing them without taking damage, to warp here.${cleared}`;
     const below = unmasteredBelow(save, tower, floor);
     if (below !== null && warpUnlocked(save)) return `Floors ${from}–${floor} mastered. Master floors ${below - 9}–${below} too: a warp point opens once every one below it is mastered.${cleared}`;

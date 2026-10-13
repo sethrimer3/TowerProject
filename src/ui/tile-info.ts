@@ -180,11 +180,8 @@ const DESCRIBE: Partial<Record<Kind, Describe>> = {
   treasure: () => ({ title: "Treasure", body: "Contains gold and crafting materials." }),
   reward: (t, _p, g) => chestReward(t.tier) === "mastered"
     ? { title: "Mastery Chest", body: "The area below was climbed without taking damage: the next checkpoint can be warped to." }
-    : { title: "Clearing Chest", body: `Every enemy in the area below was defeated${paid(clearedInspiration(g.run.height))}.` },
+    : { title: "Clearing Chest", body: `Every enemy in the area below was defeated: +${clearedInspiration(g.run.height)} Inspiration, already yours.` },
 };
-
-/** What a Clearing Chest says it paid, after its first words. */
-const paid = (inspiration: number) => (inspiration > 0 ? `: +${inspiration} Inspiration, already yours` : "");
 
 /** Title, colour and HTML body for the tile at (x, y), as seen by the player. */
 export function tileInfo(g: Board, x: number, y: number): TileInfo {

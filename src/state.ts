@@ -2418,8 +2418,7 @@ export class Game {
     const inspiration = reward === "cleared" ? clearedInspiration(this.run.height) : 0;
     const playing = this.areaBursts.filter((b) => now - b.at < AREA_BURST_MS), last = playing.at(-1);
     this.areaBursts = [...playing, { reward, inspiration, at: last ? Math.max(now, last.at + AREA_BURST_MS) : now }];
-    this.message = reward === "mastered" ? "Area mastered · checkpoint warp unlocked"
-      : inspiration > 0 ? `Enemies cleared · +${inspiration} Inspiration` : "Enemies cleared";
+    this.message = reward === "mastered" ? "Area mastered · checkpoint warp unlocked" : `Enemies cleared · +${inspiration} Inspiration`;
   }
   /** Pickup rewards and treasure payouts; stats were already applied. */
   private collect(t: Tile, x: number, y: number, outcome: StepEffect) {

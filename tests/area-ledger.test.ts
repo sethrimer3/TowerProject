@@ -144,3 +144,18 @@ test("fight damage costs the area's mastery; a Heart Door's toll does not", () =
 test("an area cleared pays its floors' Inspiration on the milestone schedule", () => {
   assert.deepEqual([10, 100, 110, 1000, 1010, 1090, 1100, 10000, 10010].map(clearedInspiration), [10, 10, 1, 1, 0, 0, 1, 1, 0]);
 });
+
+test("an area that would pay no Inspiration is never cleared: no reward, chest or record", () => {
+  for (const last of [1010, 10100]) {
+    const save = defaults(), { run, board } = climbed(10);
+    run.height = last;
+    const before = save.tower.inspiration;
+    assert.deepEqual(new AreaLedger(save).enter(run, board), []);
+    assert.equal(save.tower.inspiration, before);
+    assert.ok(!areaCleared(save, 1, last));
+    assert.ok(!Object.values(run.changes).some((t) => t.kind === "reward"));
+  }
+  const save = defaults(), { run, board } = climbed(10);
+  run.height = 1100;
+  assert.deepEqual(new AreaLedger(save).enter(run, board), ["cleared"], "a hundredth floor's area still pays 1");
+});

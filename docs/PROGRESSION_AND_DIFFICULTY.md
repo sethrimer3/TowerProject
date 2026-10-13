@@ -81,7 +81,8 @@ Every ten Tower floors ending at a Goals checkpoint (1–10, 11–20 …) are an
 ### Cleared
 
 No enemy is left on any of the area's floors.
-It pays what reaching its floors pays on the milestone schedule: 10 Inspiration an area to floor 100, 1 an area to floor 1,000, 1 for an area ending at a hundredth floor to floor 10,000, then none.
+It pays what reaching its floors pays on the milestone schedule: 10 Inspiration an area to floor 100, 1 an area to floor 1,000, 1 for an area ending at a hundredth floor to floor 10,000.
+An area that would pay nothing (the rest past floor 1,000, every one past 10,000) is not cleared: no chest, no burst, no record.
 
 Clearing should primarily test **sufficient overall power to fully clear content that could previously be bypassed**.
 

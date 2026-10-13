@@ -4,7 +4,9 @@
  * when the hero took no fight damage anywhere in it (only an area ending at
  * a checkpoint, whose warp it unlocks) and **cleared** when the hero
  * climbed past no enemy on any of its floors (the Inspiration its floors
- * pay on the milestone schedule, `clearedInspiration`; the climb
+ * pay on the milestone schedule, `clearedInspiration`; an area that would
+ * pay none, as most past floor 1,000 and all past 10,000 do, is never
+ * cleared, so it gets no chest and no burst; the climb
  * keeps only that of the floors left behind, `run.enemiesLeft`). Each is paid the moment it
  * is earned and recorded for good, by tower, in `save.goals`, so undo,
  * reloads and later runs never pay it twice. A chest for each then stands
@@ -73,7 +75,7 @@ export class AreaLedger {
     const tower = towerOf(run), last = run.height, goals = this.save.goals;
     const earned: AreaReward[] = [];
     if (!run.damaged && checkpoint(tower, last) && !goals.mastered[tower]?.includes(last)) earned.push("mastered");
-    if (!run.enemiesLeft && !goals.cleared[tower]?.includes(last)) earned.push("cleared");
+    if (!run.enemiesLeft && clearedInspiration(last) > 0 && !goals.cleared[tower]?.includes(last)) earned.push("cleared");
     return earned;
   }
 
@@ -81,8 +83,8 @@ export class AreaLedger {
     const tower = towerOf(run), list = (this.save.goals[reward][tower] ??= []);
     list.push(run.height);
     list.sort((a, b) => a - b);
-    const amount = reward === "cleared" ? clearedInspiration(run.height) : 0;
-    if (amount > 0) {
+    if (reward === "cleared") {
+      const amount = clearedInspiration(run.height);
       this.save.tower.inspiration += amount;
       earn(this.save, "inspiration", amount);
       this.save.tower.runCurrency += amount;
