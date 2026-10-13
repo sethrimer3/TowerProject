@@ -45,7 +45,7 @@ A `Game` built on a save whose Delve run is inside and Tower run isn't opens in 
 `tests/forest-swap.test.ts` covers the sign, the paused run behind a page, and training bought mid-run surviving undo.
 Tower and Delve share one `Game` (`src/state.ts`: movement, pickups, doors, run lifecycle, purchases) and `Renderer` (`src/rendering.ts`).
 `game.mode` selects which `save[mode]` slice (run, undo history, revival, bests, looted tiles) is active.
-Each slice holds its own mode's run type (`entities.ts`), both built on `RunCore`: a `TowerRun` adds whether the hero has taken fight damage in the current area (`damaged`) and the other visited floors (`floors`), and a `DelveRun` adds the milestone gates crossed (`milestone`).
+Each slice holds its own mode's run type (`entities.ts`), both built on `RunCore`: a `TowerRun` adds whether the hero has taken fight damage in the current area (`damaged`) and whether it has climbed past an enemy left in it (`enemiesLeft`), and a `DelveRun` adds the milestone gates crossed (`milestone`).
 Automove's memory (`known`, `visited`) sits beside the Delve run in `save.delve.memory`, so undo snapshots never copy or rewind it.
 `Game.run` is either one; Tower-only and Delve-only code reads `game.towerRun` or `game.delveRun`, which throw in the other mode.
 A run may also be `outside` (`src/outside.ts`), the forest clearing before entering.
@@ -118,7 +118,7 @@ Read the area's doc before changing code there or answering questions about it; 
   Only a purchase that can't happen at all (sold out, all hired, locked) may look unavailable.
 - A confirmation that spends a currency shows the price on its button as the currency's icon and the amount (`· ${gemIcon()} <b>2</b>`, likewise `goldIcon()` and the rest), not the currency's name in text; the button's `aria-label` names the currency, for screen readers.
 - All text uses the bundled Cinzel font (`assets/fonts/Cinzel/`), except under the Terminal UI theme, which uses the bundled VT323 (`assets/fonts/VT323/`), and the Desktop UI theme, which uses the bundled W95FA (`assets/fonts/W95FA/`); no remote fonts (browser test checks this).
-- Undo has subtle invariants (it can't duplicate rewards; undo cancels queued routes; history persists across refreshes; it never leaves the floor: `advanceTowerRoom` and `descendTowerRoom` empty the history, as `afterDelveStep` does for a step onto another equivalent floor (by `World.depth`, either way) or across a milestone gate, so a snapshot is always of the floor the hero stands on).
+- Undo has subtle invariants (it can't duplicate rewards; undo cancels queued routes; history persists across refreshes; it never leaves the floor: `advanceTowerRoom` empties the history (the Tower only climbs, keeping no floor but the current one), as `afterDelveStep` does for a step onto another equivalent floor (by `World.depth`, either way) or across a milestone gate, so a snapshot is always of the floor the hero stands on).
   `docs/gameplay/runs.md` is the spec for this player-facing behavior.
 - `test-gen.ts` at the root is a scratch experiment, not part of the build or tests.
 

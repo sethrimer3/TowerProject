@@ -360,7 +360,7 @@ test("ending a run keeps the Gold found in it and says how much", () => {
   assert.equal(g.save.tower.runGold, 0, "the next run starts finding afresh");
 });
 
-test("undo stays on the floor it was taken on: climbing or going down forgets the history", () => {
+test("undo stays on the floor it was taken on: climbing forgets the history", () => {
   const save = defaults();
   save.upgrades.inspirationUndos = 1;
   save.archives.levels.undoCount = 4;
@@ -376,9 +376,6 @@ test("undo stays on the floor it was taken on: climbing or going down forgets th
   assert.equal(save.tower.history.length, 0);
   assert.equal(g.undo(), false, "the climb can't be undone");
   assert.equal(g.run.height, 4);
-  g.descendTowerRoom();
-  assert.equal(g.run.height, 3);
-  assert.deepEqual([save.tower.history.length, g.undo(), g.run.height], [0, false, 3], "nor the way down");
 });
 
 test("a new game's first run holds the hand paused until its note is dismissed, then plays at 2x", () => {

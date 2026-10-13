@@ -17,7 +17,7 @@ const LEGEND: Record<string, Tile> = {
   P: { kind: "potion" }, D: { kind: "door", color: "yellow" }, H: { kind: "door", door: { type: "fullHp" } },
   K: { kind: "key", color: "yellow" }, M: { kind: "enemy", enemy: WEAK }, L: { kind: "enemy", enemy: LETHAL },
   I: { kind: "enemy", enemy: IMPERVIOUS }, A: { kind: "attack" }, F: { kind: "defense" }, T: { kind: "treasure" }, O: { kind: "oneway" },
-  V: { kind: "stairsDown" }, B: { kind: "key", color: "blue" }, Z: { kind: "door", color: "blue" },
+  B: { kind: "key", color: "blue" }, Z: { kind: "door", color: "blue" },
   W: { kind: "door", door: { type: "wood", durability: 500 } },
 };
 
@@ -117,9 +117,7 @@ test("a path crosses items, taking them, but not doors, monsters or other stairs
   assert.equal(play(board(["@SS"]), ["yellowKey"]), null, "stairs are only ever a target");
 });
 
-test("the hand only looks at the floor the hero stands on: it never heads down or through stairs", () => {
-  assert.equal(play(board(["@.V"])), null, "the stairs down are never a target");
-  assert.equal(play(board(["@VP"])), null, "nor crossed");
+test("the hand only looks at the floor the hero stands on: it never heads through stairs", () => {
   assert.deepEqual(play(board(["@SP"])), { card: "stairs", to: [1, 0], steps: 1 }, "the stairs up end a path");
 });
 

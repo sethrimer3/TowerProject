@@ -538,7 +538,7 @@ class FloorBuilder {
   private runSpot([x, y]: XY, c: Candidate, region: number) {
     if (this.cells.get(point(x, y))?.kind !== "floor" || (x === ENTRY[0] && y === ENTRY[1])) return false;
     const near = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => this.cells.get(point(x + dx, y + dy))?.kind);
-    if (near.some((k) => k === "stairs" || k === "stairsDown")) return false;
+    if (near.includes("stairs")) return false;
     if (this.doorTiles.some(([dx, dy]) => (dx !== c.x || dy !== c.y) && Math.abs(dx - x) + Math.abs(dy - y) <= 1)) return false;
     return this.staysWhole(this.rects[this.leafOf[region]], [x, y]);
   }

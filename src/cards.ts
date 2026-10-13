@@ -534,7 +534,7 @@ export type StuckReport = { blockers: Blocker[] };
 
 /** Why `hand` can't act, walking the ground the hand's search walks: each
  * door, monster, stairs up and ignored tile at its edge that has more
- * ground beyond it (the stairs always count; stairs down never), with the
+ * ground beyond it (the stairs always count), with the
  * reason no card in the hand gets past it. */
 export function explainStuck(at: HandAt, hand: readonly CardId[]): StuckReport {
   const { world, run } = at, p = run.player, ignored = at.ignored ?? NONE;
@@ -549,7 +549,7 @@ export function explainStuck(at: HandAt, hand: readonly CardId[]): StuckReport {
       if (steps.has(k) || tile.kind === "wall") continue;
       steps.set(k, d + 1);
       if (CROSSABLE.has(tile.kind) && !ignored.has(k)) walk.push(dest);
-      else if (tile.kind !== "stairsDown") edge.push({ x: dest.x, y: dest.y, tile, steps: d + 1 });
+      else edge.push({ x: dest.x, y: dest.y, tile, steps: d + 1 });
     }
   }
   // Only what has ground beyond it blocks the way: a door between two

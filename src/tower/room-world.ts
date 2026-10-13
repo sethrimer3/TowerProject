@@ -36,7 +36,8 @@ import { ENTRY } from "./embedder.ts";
 // coverage at the floor's aim.
 // v23 deals every enemy a profile by the enemy schedule, any strength any
 // profile, and starts each tower's zone rosters one zone further along.
-export const TOWER_LAYOUT_VERSION = 23;
+// v24 leaves every floor's entrance open floor: no stairs lead back down.
+export const TOWER_LAYOUT_VERSION = 24;
 
 /** A self-contained 17x17 Tower floor. Generation is strategy-first (see
  * src/tower/index.ts): an abstract graph of gates, keys and rewards is

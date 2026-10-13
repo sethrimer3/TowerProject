@@ -169,7 +169,7 @@ function torchLookup(world: Board): DecorSource["torch"] {
 
 const isWall = (k: Kind) => k === "wall";
 /** Doors, stairs and one-way gates: always drawn clean. */
-const isFixture = (k: Kind) => k === "door" || k === "stairs" || k === "stairsDown" || k === "oneway";
+const isFixture = (k: Kind) => k === "door" || k === "stairs" || k === "oneway";
 /** Tiles decor may cover: open ground, including under items and enemies. */
 const isGround = (k: Kind) => !isWall(k) && !isFixture(k);
 

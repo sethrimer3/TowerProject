@@ -243,7 +243,7 @@ function interactionSpacing(cells: Map<string, Tile>) {
 
 const GLYPH: Record<string, string> = {
   wall: "#", floor: ".", enemy: "E", potion: "p", attack: "a", defense: "d",
-  treasure: "T", stairs: ">", stairsDown: "<", reward: "C", oneway: "v",
+  treasure: "T", stairs: ">", reward: "C", oneway: "v",
 };
 const LOCK_GLYPH = { heart: "H", wood: "W", steel: "S" };
 

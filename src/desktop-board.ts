@@ -203,14 +203,11 @@ function paintDesktopContents(c: CanvasRenderingContext2D, t: Tile) {
       c.fillRect(8.5, 7.5, 2, 1.5);
       return;
     case "stairs":
-    case "stairsDown": {
-      const up = t.kind === "stairs";
       shape(c, () => {
         c.moveTo(3, 21); c.lineTo(3, 16); c.lineTo(8, 16); c.lineTo(8, 11); c.lineTo(13, 11); c.lineTo(13, 6); c.lineTo(21, 6); c.lineTo(21, 21); c.closePath();
-      }, up ? DESKTOP.face : DESKTOP.shadow);
-      shape(c, () => { c.moveTo(4, up ? 9 : 3); c.lineTo(7.5, up ? 3 : 9); c.lineTo(11, up ? 9 : 3); c.closePath(); }, DESKTOP.ink, 0.6);
+      }, DESKTOP.face);
+      shape(c, () => { c.moveTo(4, 9); c.lineTo(7.5, 3); c.lineTo(11, 9); c.closePath(); }, DESKTOP.ink, 0.6);
       return;
-    }
     case "oneway":
       // A scroll bar's arrow button.
       raised(c, 5, 6, 14, 12);

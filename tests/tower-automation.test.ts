@@ -51,20 +51,8 @@ function reroll(g: Game, rng: () => number) {
   p.keys = { yellow: keys, blue: rng() < 0.5 ? 0 : keys, red: rng() < 0.7 ? 0 : 1 };
 }
 
-/** Walks the route to the floor's stairs down, so the floor below has been
- * visited and a later deadlock check can search it. */
-function descend(g: Game) {
-  if (!(g.world instanceof RoomWorld) || g.run.outside) return;
-  for (const k of g.world.cells.keys()) {
-    const [x, y] = k.split(",").map(Number);
-    if (g.world.tile(x, y).kind !== "stairsDown") continue;
-    for (const step of g.previewRoute(x, y) ?? []) if (!g.move(step.dx, step.dy)) return;
-    return;
-  }
-}
-
 /** Leaves the player too weak to fight, with no keys, on a floor with no
- * pickups: whether the run is stuck then depends on the other floors. */
+ * pickups: whether the run is stuck then depends on the floor's doors and stairs. */
 function strand(g: Game) {
   if (g.run.height < 1) return;
   strip(g, PICKUPS);
@@ -93,7 +81,6 @@ function trace(mode: Mode, seed: number, outside: boolean): string[] {
       else if (roll < 0.13) strip(g, [...PICKUPS, "enemy", "door"]);
       else if (roll < 0.15) strip(g, ["reward"]);
       else if (roll < 0.18) strand(g);
-      else if (roll < 0.19) descend(g);
       const step = chooseStep(g);
       const dead = mode === "tower" && !g.run.outside ? isDeadlocked(g.run) : null;
       const record = JSON.stringify({ step, dead, at: g.run.player, h: g.run.height, outside: !!g.run.outside });

@@ -4,7 +4,7 @@ import { GAME_SPRITE_URLS, torchAnimationFrame, TORCH_FRAME_COUNT, TORCH_FRAME_M
 import { decode, defaults } from "../src/save.ts";
 
 test("player, torch, and both stairs use deploy-safe sprite assets", () => {
-  assert.deepEqual(Object.keys(GAME_SPRITE_URLS), ["player", "torch", "torchFrames", "stairsUp", "stairsDown"]);
+  assert.deepEqual(Object.keys(GAME_SPRITE_URLS), ["player", "torch", "torchFrames", "stairsUp"]);
   for (const url of Object.values(GAME_SPRITE_URLS)) assert.match(url, /assets\/sprites\/.+\.png$/);
 });
 

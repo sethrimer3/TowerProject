@@ -140,9 +140,6 @@ function paintTerminalContents(c: CanvasRenderingContext2D, t: Tile) {
     case "stairs":
       glyph(c, "<", g, 26);
       return;
-    case "stairsDown":
-      glyph(c, ">", g, 26);
-      return;
     case "oneway":
       glyph(c, "^", g);
       return;

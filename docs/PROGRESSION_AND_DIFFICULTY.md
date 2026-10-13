@@ -76,7 +76,7 @@ An area should not generally be balanced so that a player is expected to reach i
 
 ## 3. Tower area rewards
 
-Every ten Tower floors ending at a Goals checkpoint (1–10, 11–20 …) are an **area** (a section: its first floor is sealed below). Climbing onto the next area's first floor judges the area left behind (`src/tower/area-ledger.ts`):
+Every ten Tower floors ending at a Goals checkpoint (1–10, 11–20 …) are an **area** (a section). Climbing onto the next area's first floor judges the area left behind (`src/tower/area-ledger.ts`):
 
 ### Cleared
 

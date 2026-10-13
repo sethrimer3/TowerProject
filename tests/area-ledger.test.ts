@@ -12,13 +12,13 @@ import type { Tile, TowerRun } from "../src/entities.ts";
 
 /** Takes every enemy off the run's current floor. */
 function clearFloor(run: TowerRun) {
-  const board = new TowerClimb(run).board(run.height);
+  const board = new TowerClimb(run).board();
   for (const [k, t] of board.cells) if (t.kind === "enemy") run.changes[k] = { kind: "floor" };
 }
 /** A run climbed from floor 1 (height 0) onto `to`, its floors cleared of
  * enemies unless `leave` names one left as generated. */
 function climbed(to: number, { leave = -1, damaged = false, seed = 7, tier }: { leave?: number; damaged?: boolean; seed?: number; tier?: number } = {}) {
-  const run = { seed, height: 0, damaged, changes: {}, floors: {}, player: { x: TOWER_START_X, y: 0 }, ...(tier ? { tier } : {}) } as unknown as TowerRun;
+  const run = { seed, height: 0, damaged, changes: {}, player: { x: TOWER_START_X, y: 0 }, ...(tier ? { tier } : {}) } as unknown as TowerRun;
   const climb = new TowerClimb(run);
   let board!: RoomWorld;
   while (run.height < to) {
@@ -52,6 +52,7 @@ test("damage anywhere in the area costs its mastery, and an enemy left costs its
 
   const left = defaults(), b = climbed(10, { leave: 6 });
   assert.deepEqual(new AreaLedger(left).enter(b.run, b.board), ["mastered"]);
+  assert.equal(b.run.enemiesLeft, undefined, "the next area starts with no enemy left behind");
   assert.equal(left.tower.inspiration, 0);
 });
 

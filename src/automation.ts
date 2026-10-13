@@ -117,9 +117,7 @@ class Search {
 
   /** Whether Automove won't step onto `t`, entered moving down by `dy`. */
   private blocked(t: Tile, dy: number, combat: Combat | null) {
-    // Backtracking down floors is a future automove upgrade; for now
-    // automove only climbs, never steps onto the stairs back down.
-    if (t.kind === "wall" || t.kind === "stairsDown") return true;
+    if (t.kind === "wall") return true;
     if (t.kind === "oneway") return dy !== 1;
     if (t.kind === "door") return doorCost(t, this.at.run.player) === null;
     return t.kind === "enemy" && lethal(combat!);

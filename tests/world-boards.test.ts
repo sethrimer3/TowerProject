@@ -80,7 +80,7 @@ function floodFills(group: number) {
   return digest(out);
 }
 
-const FIXTURES: Tile["kind"][] = ["door", "stairs", "stairsDown", "oneway", "key", "enemy", "potion"];
+const FIXTURES: Tile["kind"][] = ["door", "stairs", "oneway", "key", "enemy", "potion"];
 
 /** A small walled board of rooms with fixtures (doors, stairs, gates, items)
  * scattered through it. */

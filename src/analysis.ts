@@ -2,55 +2,46 @@ import type { TowerRun, Tile } from "./entities.ts";
 import { predict } from "./combat.ts";
 import type { RoomWorld } from "./tower/room-world.ts";
 import { doorCost } from "./doors.ts";
-import { stairsOn, TowerClimb } from "./tower/climb.ts";
+import { TowerClimb } from "./tower/climb.ts";
 
 const DIRS = [[1,0], [-1,0], [0,1], [0,-1]];
 /** Tiles the player can always step onto and take. */
 const PICKUPS = new Set<Tile["kind"]>(["potion", "attack", "defense", "key", "treasure", "reward"]);
 
-type Spot = { h: number; x: number; y: number };
-
-/** Conservative deadlock check across every visited Tower floor plus one
- * step of unexplored space above the highest reached stairs. Each floor is
- * read through the climb, as the same board play shows. */
+/** Conservative deadlock check of the Tower floor the run stands on, read
+ * through the climb, as the same board play shows. The climb never goes
+ * back down, so only this floor counts. */
 export function isDeadlocked(run: TowerRun): boolean {
-  // Every reachable space across all visited floors (and the one step of
-  // unexplored space above) explored with no items, no unlocked doors, no
-  // survivable enemies, and no unexplored stairway found -> deadlocked.
+  // Every reachable space explored with no items, no unlocked doors, no
+  // survivable enemies, and no stairs up found -> deadlocked.
   return !new ActionSearch(run).findsAction();
 }
 
-/** A breadth-first walk over the visited floors' open tiles, through their
- * stairways, looking for anything the player could still do. */
+/** A breadth-first walk over the floor's open tiles, looking for anything
+ * the player could still do. */
 class ActionSearch {
-  private climb: TowerClimb;
-  private boards = new Map<number, RoomWorld>();
-  private queue: Spot[] = [];
+  private board: RoomWorld;
+  private queue: [number, number][] = [];
   private seen = new Set<string>();
 
   constructor(private run: TowerRun) {
-    this.climb = new TowerClimb(run);
+    this.board = new TowerClimb(run).board();
   }
 
   findsAction() {
-    this.enqueue(this.run.height, this.run.player.x, this.run.player.y);
+    this.enqueue(this.run.player.x, this.run.player.y);
     while (this.queue.length > 0) {
-      const { h, x, y } = this.queue.shift()!;
-      // Only floors actually visited (or the one step above a reachable
-      // stairway, handled in `up`) are explored — never an arbitrarily
-      // deep unvisited floor.
-      if (!this.climb.visited(h)) continue;
-      for (const [dx, dy] of DIRS) if (this.offersAction(h, x + dx, y + dy)) return true;
+      const [x, y] = this.queue.shift()!;
+      for (const [dx, dy] of DIRS) if (this.offersAction(x + dx, y + dy)) return true;
     }
     return false;
   }
 
-  /** Looks at tile (x, y) of floor `h`: true when it offers an action, and
-   * otherwise queues whatever it leads on to. */
-  private offersAction(h: number, x: number, y: number): boolean {
-    const key = `${h},${x},${y}`;
-    if (this.seen.has(key)) return false;
-    const t = this.board(h).tile(x, y);
+  /** Looks at tile (x, y): true when it offers an action, and otherwise
+   * queues whatever it leads on to. */
+  private offersAction(x: number, y: number): boolean {
+    if (this.seen.has(`${x},${y}`)) return false;
+    const t = this.board.tile(x, y);
     if (PICKUPS.has(t.kind)) return true;
     switch (t.kind) {
       case "wall":
@@ -62,48 +53,19 @@ class ActionSearch {
         return !pred.impervious && pred.survivable;
       }
       case "stairs":
-        return this.up(h);
-      case "stairsDown":
-        this.down(h);
-        return false;
+        // The floor above is always new: climbing is always an action.
+        return true;
       default:
         // Floor, oneway
-        this.enqueue(h, x, y);
+        this.enqueue(x, y);
         return false;
     }
   }
 
-  /** Stairs up from floor `h`. Unexplored floors above are always
-   * reachable-in-principle: the player can always climb to generate a new
-   * room, so reaching stairs to one means the run is not deadlocked. A
-   * visited floor above is searched from its stairs down. */
-  private up(h: number) {
-    if (!this.climb.visited(h + 1)) return true;
-    const down = stairsOn(this.board(h + 1), "stairsDown");
-    if (down) this.enqueue(h + 1, down.x, down.y);
-    return false;
-  }
-
-  /** Stairs down from floor `h` lead on to its stairs up, if it was visited. */
-  private down(h: number) {
-    if (h <= 0 || !this.climb.visited(h - 1)) return;
-    const up = stairsOn(this.board(h - 1), "stairs");
-    if (up) this.enqueue(h - 1, up.x, up.y);
-  }
-
-  private enqueue(h: number, x: number, y: number) {
-    const key = `${h},${x},${y}`;
+  private enqueue(x: number, y: number) {
+    const key = `${x},${y}`;
     if (this.seen.has(key)) return;
     this.seen.add(key);
-    this.queue.push({ h, x, y });
-  }
-
-  private board(h: number) {
-    let board = this.boards.get(h);
-    if (!board) {
-      board = this.climb.board(h);
-      this.boards.set(h, board);
-    }
-    return board;
+    this.queue.push([x, y]);
   }
 }

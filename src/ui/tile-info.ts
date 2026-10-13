@@ -31,15 +31,13 @@ const KIND_COLORS: Partial<Record<Kind, string>> = {
   reward: "#f0cf7a",
   treasure: "#f0cf7a",
   stairs: "#c7cedb",
-  stairsDown: "#c7cedb",
   oneway: "#c7cedb",
 };
 
-const stairs: Describe = (t, _p, g) => {
+const stairs: Describe = (_t, _p, g) => {
   if (g.run.outside)
     return { title: "Stairs", body: MODES[g.mode].words.entrance };
-  const target = t.kind === "stairs" ? g.run.height + 2 : g.run.height;
-  return { title: t.kind === "stairs" ? "Stairs Up" : "Stairs Down", body: `Leads to Floor ${target}` };
+  return { title: "Stairs Up", body: `Leads to Floor ${g.run.height + 2}` };
 };
 
 /** A fight's net cost as words: "N damage", or "N Healing" when Lifesteal
@@ -156,7 +154,6 @@ const DESCRIBE: Partial<Record<Kind, Describe>> = {
     return { title: percent ? "Percent Potion" : "Potion", body: `<span>${restores}</span><br>${gain(t, String(wholeChange(after.blocked ? 0 : after.healed)), " HP")}${chance}` };
   },
   stairs,
-  stairsDown: stairs,
   floor: (_t, _p, g) => ({ title: "Floor", body: MODES[g.mode].words.floor }),
   attack: (t, p, g) => ({ title: "Attack Shard", body: `<span>Raises ATK for this run</span><br>${gain(t, shardGain(t, p, g, "attack"), " ATK")}` }),
   defense: (t, p, g) => ({ title: "Defense Shard", body: `<span>Raises DEF for this run</span><br>${gain(t, shardGain(t, p, g, "defense"), " DEF")}` }),

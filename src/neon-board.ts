@@ -155,15 +155,11 @@ export function paintNeonContents(c: CanvasRenderingContext2D, t: Tile) {
       path(c, () => { c.moveTo(12, 4); c.lineTo(19, 10); c.lineTo(12, 20); c.lineTo(5, 10); c.closePath(); c.moveTo(5, 10); c.lineTo(19, 10); c.moveTo(9, 10); c.lineTo(12, 20); c.lineTo(15, 10); }, NEON.chest);
       return;
     case "stairs":
-    case "stairsDown": {
-      const color = t.kind === "stairs" ? NEON.stairs : "#c98fb0";
       path(c, () => {
         c.moveTo(4, 20); c.lineTo(4, 16); c.lineTo(9, 16); c.lineTo(9, 11); c.lineTo(14, 11); c.lineTo(14, 6); c.lineTo(20, 6); c.lineTo(20, 20); c.closePath();
-      }, color);
-      const up = t.kind === "stairs";
-      path(c, () => { c.moveTo(7, up ? 9 : 4); c.lineTo(9.5, up ? 4 : 9); c.lineTo(12, up ? 9 : 4); }, color, 1.2);
+      }, NEON.stairs);
+      path(c, () => { c.moveTo(7, 9); c.lineTo(9.5, 4); c.lineTo(12, 9); }, NEON.stairs, 1.2);
       return;
-    }
     case "oneway":
       path(c, () => { c.moveTo(6, 15); c.lineTo(12, 9); c.lineTo(18, 15); }, NEON.wall, 1.8);
       return;

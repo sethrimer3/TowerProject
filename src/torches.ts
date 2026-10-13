@@ -35,7 +35,7 @@ export function chooseTorchSpots(cells: Map<string, Tile>, area: TorchArea): [nu
 export type TorchArea = { xMin: number; xMax: number; yMin: number; yMax: number; seed: number };
 type KindAt = (x: number, y: number) => Tile["kind"];
 type TorchSpot = { x: number; y: number; score: number };
-const BUSY = new Set<Tile["kind"]>(["door", "stairs", "stairsDown", "oneway"]);
+const BUSY = new Set<Tile["kind"]>(["door", "stairs", "oneway"]);
 const directions = [
   [1, 0],
   [-1, 0],

@@ -6,11 +6,10 @@ import { point } from "../src/entities.ts";
 import { TOWER_SECTION, TOWER_START_X } from "../src/config.ts";
 import { generateTowerFloor } from "../src/tower/index.ts";
 
-/** Stands on floor `height` of a fresh copy of the run's floors. */
+/** Stands on a fresh floor `height`. */
 function standOn(g: Game, height: number) {
   g.run.height = height;
   g.run.changes = {};
-  g.run.floors = {};
   g.loadMode();
 }
 function climb(g: Game) {
@@ -18,12 +17,11 @@ function climb(g: Game) {
   g.move(0, 1, true);
 }
 
-test("each section's first room has no way down; other rooms do", () => {
-  for (const room of [10, 20]) assert.notEqual(generateTowerFloor(7, room).cells.get(point(TOWER_START_X, 0))?.kind, "stairsDown");
-  for (const room of [1, 9, 11]) assert.equal(generateTowerFloor(7, room).cells.get(point(TOWER_START_X, 0))?.kind, "stairsDown");
+test("every room's entrance is open floor, with no way down", () => {
+  for (const room of [0, 1, 9, 10, 11, 20]) assert.equal(generateTowerFloor(7, room).cells.get(point(TOWER_START_X, 0))?.kind, "floor");
 });
 
-test("crossing into a new section keeps every stat and blocks descent", () => {
+test("crossing into a new section keeps every stat", () => {
   const g = new Game(defaults());
   standOn(g, TOWER_SECTION - 1);
   g.run.player.attack += 6;
@@ -35,6 +33,4 @@ test("crossing into a new section keeps every stat and blocks descent", () => {
   assert.equal(g.run.player.attack, before.attack);
   assert.equal(g.run.player.defense, before.defense);
   assert.equal(g.run.player.hp, 90);
-  g.descendTowerRoom();
-  assert.equal(g.run.height, TOWER_SECTION);
 });

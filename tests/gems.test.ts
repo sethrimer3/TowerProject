@@ -43,7 +43,7 @@ test("a Gem left behind is missed, and another comes three new floors on until o
   }
   assert.equal(GEM_MISSED_FLOORS, 3);
   assert.deepEqual(found, [3, 6, 9], "every third floor while each is missed");
-  // Going back down a floor leaves it behind too, and counts no new floor.
+  // A lower floor leaves it behind too, and counts no new floor.
   assert.equal(reachFloor(d, { mode: "tower", seed: 7, floor: 8 }, 0), false);
   assert.equal(d.out, null);
   assert.equal(d.wait, GEM_MISSED_FLOORS);

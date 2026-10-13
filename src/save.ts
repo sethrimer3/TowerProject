@@ -104,9 +104,6 @@ const validChange = (v: any) =>
   (v?.kind === "openedChest" && (v.tier === undefined || CHEST_TIERS.includes(v.tier))) ||
   (v?.kind === "reward" && CHEST_TIERS.includes(v.tier));
 const validChanges = (m: any) => pointMap(m, validChange);
-const validFloors = (m: any) =>
-  m === undefined ||
-  (isRecord(m) && Object.entries(m).every(([k, v]) => /^\d+$/.test(k) && validChanges(v)));
 /** Outside runs only exist in the forest clearing below the first floor. */
 const validOutside = (r: any) =>
   (r.outside === undefined || typeof r.outside === "boolean") &&
@@ -131,7 +128,7 @@ const validPlayer = (p: any, width: number) =>
 const validCore = (r: any, width: number) =>
   !!r && validOutside(r) && validCounters(r) && validPlayer(r.player, width) && validChanges(r.changes);
 const validDelveState = (r: any) => Number.isInteger(r.milestone) && finite(r.milestone);
-const TOWER_FIELDS = ["damaged", "floors", "summoned", "start", "shrine"];
+const TOWER_FIELDS = ["damaged", "enemiesLeft", "summoned", "start", "shrine"];
 const DELVE_FIELDS = ["milestone", "tournament"];
 /** Training ranks bought in a run: known rows, each a whole number of
  * ranks, no more than the row reaches in a run. */
@@ -191,11 +188,11 @@ function without<R>(r: any, fields: string[]): R {
 /** Validate an untrusted Tower run; null unless it has the shape a
  * TowerRun needs. */
 function decodeTowerRun(r: any): TowerRun | null {
-  if (!validCore(r, TOWER_WIDTH) || !validFloors(r.floors)) return null;
+  if (!validCore(r, TOWER_WIDTH)) return null;
   // Older runs have no damage history; do not assume a perfect attempt.
   r.damaged = r.damaged !== false;
-  dropInvalid(r, { summoned: (v: unknown) => Array.isArray(v) && v.every(Number.isInteger), start: (v: unknown) => Number.isInteger(v) && (v as number) > 0, shrine: validShrineRun });
-  return without(r, [...DELVE_FIELDS, "keysSpent"]);
+  dropInvalid(r, { summoned: (v: unknown) => Array.isArray(v) && v.every(Number.isInteger), start: (v: unknown) => Number.isInteger(v) && (v as number) > 0, shrine: validShrineRun, enemiesLeft: (v: unknown) => v === true });
+  return without(r, [...DELVE_FIELDS, "keysSpent", "floors"]);
 }
 /** Validate an untrusted Delve run; null unless it has the shape a
  * DelveRun needs. */

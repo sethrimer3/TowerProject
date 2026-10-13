@@ -55,7 +55,7 @@ const PLANTS: Tile[] = [
   { kind: "reward", tier: "silver" }, { kind: "reward", tier: "gold" },
   ...(["weak", "normal", "strong", "elite"] as const).map((strength, tier): Tile => ({ kind: "enemy", enemy: { name: `Planted ${tier}`, hp: 20, attack: 5, defense: 1, tier, strength } })),
   { kind: "enemy", enemy: { name: "Slime", hp: 20, attack: 5, defense: 1, tier: 0, strength: "elite" } },
-  { kind: "stairs" }, { kind: "stairsDown" }, { kind: "oneway" },
+  { kind: "stairs" }, { kind: "oneway" },
 ];
 /** Fills plain floor near the player, nearest first, with every plant. */
 function plantAll(g: Game) {

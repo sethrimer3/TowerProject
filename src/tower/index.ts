@@ -89,9 +89,8 @@ export function generateTowerFloor(seed: number, room: number, tier = 1): TowerF
     const embedding = embed(graph, rng);
     if (!embedding) continue;
     const cells = embedding.cells;
-    // Room 0 opens onto the forest and each section's first room (10, 20, …)
-    // is sealed below; every other room keeps a way back down.
-    cells.set(point(TOWER_START_X, 0), room % TOWER_SECTION ? { kind: "stairsDown" } : { kind: "floor" });
+    // The hero arrives on open floor: the climb never goes back down.
+    cells.set(point(TOWER_START_X, 0), { kind: "floor" });
     // A section's last floor puts its boss on the one tile beside the
     // stairs, in place of any guard there, so it must be beaten to climb.
     if (isBossFloor(room))

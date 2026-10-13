@@ -36,7 +36,6 @@ export type Kind =
   | "treasure"
   | "openedChest"
   | "stairs"
-  | "stairsDown"
   | "oneway";
 /** How hard a generator asked an enemy to be. Strong and elite enemies wear
  * a brighter glow and rank chevrons, and weak ones a chevron pointing down,
@@ -216,10 +215,9 @@ export type TowerRun = RunCore & {
   /** Whether the hero has taken fight damage in this area (the ten floors
    * from the current section's first): whether it can still be mastered. */
   damaged: boolean;
-  /** Each other visited floor's changes, keyed by height, so descending
-   * and re-climbing preserves what was already done there. The current
-   * floor's are `changes`; see TowerClimb. */
-  floors?: Record<number, Record<string, Tile>>;
+  /** Whether the hero has climbed past a floor of this area with an enemy
+   * still on it: whether the area can still be cleared (absent: none). */
+  enemiesLeft?: boolean;
   /** The heights of the floors where a Greater Boss has appeared this run
    * (tower/greater-boss.ts), each once. */
   summoned?: number[];

@@ -7,7 +7,7 @@ An incremental dungeon RPG: the player climbs the Tower's puzzle floors and delv
 ### Tower clears
 
 **Area**:
-The ten floors of a Tower section, from its sealed first floor to the checkpoint floor that ends it (floors 1 to 10, 11 to 20 …). Judged as the hero climbs onto the next area's first floor.
+The ten floors of a Tower section, from its first floor to the checkpoint floor that ends it (floors 1 to 10, 11 to 20 …). Judged as the hero climbs onto the next area's first floor.
 _Avoid_: zone, floor range
 
 **Mastered area**:
@@ -15,7 +15,7 @@ An area climbed in one run without taking fight damage (a Heart Door's toll does
 _Avoid_: gold clear, perfect area
 
 **Cleared area**:
-An area left with no enemy on any of its floors; pays 10 Inspiration.
+An area whose every floor the hero left with no enemy on it; pays 10 Inspiration.
 _Avoid_: silver clear, cleared floor
 
 **Area chest**:
@@ -96,12 +96,12 @@ The forest building, standing once Equipment is open, that opens the Equipment s
 
 ### The climb
 
-**Visited floor**:
-A Tower floor the player has stood on during this run. It stays as it was left, and the stairs lead back to it, unless it lies below a section's first floor.
-_Avoid_: explored room, old floor
+**Climb**:
+A Tower run's way through its floors, only ever up: a floor's stairs lead to the next, and a floor left behind is never returned to in the run.
+_Avoid_: descent, revisit
 
 **Section**:
-A run of ten Tower floors. Its first floor is sealed below; the hero keeps every stat on entering it.
+A run of ten Tower floors; the hero keeps every stat on entering it.
 _Avoid_: stage, chapter
 
 ### Floor layout

@@ -17,7 +17,7 @@ the Tower's **enemy stage** (`tower/enemy-stage.ts`, `placeEnemies`, run by `gen
 the Delve runs it too, last in `region()`, each of an area's ten equivalent floors by the tower of its number (`placeEnemies` in `delve/labyrinth.ts`: never the way in or beside it, near the milestone gate or its boss, or in a fork's lane; `Region.enemyCount`);
 `tests/enemy-schedule.test.ts`, `tests/enemy-stage.test.ts`.
 `towerDebug()` is available in the browser console.
-Floors come in sections of `TOWER_SECTION` (10): a section's first floor is sealed below, and every other floor has stairs down.
+Floors come in sections of `TOWER_SECTION` (10); no floor has stairs down, and every floor's entrance tile is open floor.
 A section's last floor (`isBossFloor`) gets its boss after embedding, on the one tile beside the stairs (replacing any stairs guard), so it must be beaten to climb; the Delve puts one in each milestone gate's shaft.
 Otherwise the stairs pocket's `stairsGuard` (on that same tile) is a normal or strong enemy, a yellow door (half the unguarded stairs; the resource planner covers it like a main-route door), or nothing.
 The first floors follow their own rules (`openFirstFloor` and `keyedFloor` in `patterns.ts`), kept by the minimal fallback floor too: floor 1's main route and stairs stand open, so the starting hand reaches the stairs without a fight; floors 2 to 5 always have the yellow stairs door, a yellow key in the start hall, a key for each key every door takes lying behind it (`keyEveryDoor` in `resource-planner.ts`), their main-route doors always paid for, no shortcuts and no forks over a locked gate or with locked lanes.

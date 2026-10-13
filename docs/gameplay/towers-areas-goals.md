@@ -15,7 +15,7 @@ Each keeps its own records: its highest floor, the Inspiration or Courage its ne
 ## Areas
 
 Each ten Tower floors ending at a checkpoint (1–10, 11–20 …) are an area, judged as the hero climbs onto the next area's first floor.
-An area climbed without taking damage in a fight (a Heart Door's toll doesn't count) is **mastered**, which lets runs warp to the next checkpoint once Warp is owned; one left with no monster on any of its floors is **cleared**, which pays 10 Inspiration (areas past floor 100, which have no checkpoint yet, can be cleared but not mastered).
+An area climbed without taking damage in a fight (a Heart Door's toll doesn't count) is **mastered**, which lets runs warp to the next checkpoint once Warp is owned; one whose every floor you leave with no monster on it is **cleared**, which pays 10 Inspiration (areas past floor 100, which have no checkpoint yet, can be cleared but not mastered).
 Each pays the moment it is earned, once per area in each tower, and a chest for each (gold for mastered, silver for cleared) then stands directly in front of the hero; opening it pays nothing more but bursts into gold with *AREA MASTERED* and *Checkpoint Warp Unlocked*, or *ENEMIES CLEARED* and +10 Inspiration.
 Undo never takes an area's reward back.
 

@@ -178,7 +178,7 @@ export type Shot = { by: "hero" | "enemy"; from: { x: number; y: number }; to: {
 /** A turn's shots, flying from `at` (performance time) for `flight` ms. */
 export type Volley = { at: number; flight: number; shots: Shot[] };
 /** Tiles that stay on the board after being stepped on. */
-const PERMANENT_TILES = new Set<Tile["kind"]>(["floor", "stairs", "stairsDown", "oneway", "openedChest"]);
+const PERMANENT_TILES = new Set<Tile["kind"]>(["floor", "stairs", "oneway", "openedChest"]);
 /** The targets a Rush may end on, a tile of it left: items to take. */
 const RUSH_ONTO = new Set<Tile["kind"]>(["key", "potion", "attack", "defense", "treasure", "reward"]);
 export class Game {
@@ -492,7 +492,6 @@ export class Game {
   private reshapeTower(run: TowerRun) {
     run.layoutVersion = TOWER_LAYOUT_VERSION;
     run.changes = {};
-    run.floors = {};
     run.player.x = TOWER_START_X;
     run.player.y = 0;
   }
@@ -1894,7 +1893,7 @@ export class Game {
     }
     this.collect(t, x, y, outcome);
     this.consumeTile(t, x, y);
-    if (t.kind !== "stairs" && t.kind !== "stairsDown") this.callGreaterBoss();
+    if (t.kind !== "stairs") this.callGreaterBoss();
     this.afterStep(t, x, y, from);
   }
   /** A Tower floor's secret: with every torch on it out, a Greater Boss
@@ -1917,7 +1916,6 @@ export class Game {
   private afterStep(t: Tile, x: number, y: number, from: { x: number; y: number }) {
     if (this.mode === "delve") this.afterDelveStep(t, x, y, from);
     else if (t.kind === "stairs") this.advanceTowerRoom();
-    else if (t.kind === "stairsDown") this.descendTowerRoom();
   }
   private rejectStep(outcome: StepBlocked, t: Tile, x: number, y: number): false {
     if (outcome.blocked === "wall") this.reject(x, y, "A wall blocks the way.");
@@ -2303,7 +2301,7 @@ export class Game {
     // Undo stays on the floor it was taken on: climbing forgets the history.
     this.slice.history = [];
     const purse = this.purse, p = this.run.player;
-    // Keyed by the stairs taken, so a floor climbed again after going down pays nothing.
+    // Keyed by the stairs taken, so it pays once a run.
     const gold = purse.floorGold(purse.floorKey(p.x, p.y));
     const highest = this.run.maxHeight ?? this.run.height;
     // Skip on STAIRS climbs past the next floor, which pays nothing; an area
@@ -2335,27 +2333,16 @@ export class Game {
     this.enterTowerFloor(board);
     // A new floor may earn a boon, which Auto Pick takes at once.
     this.shrine.autoPick();
-    // A new section's first floor is sealed below; the hero keeps every stat.
+    // The hero keeps every stat into a new section.
     const earned = sectionStart ? new AreaLedger(this.save).enter(this.towerRun, board) : [];
     if (skipped) this.feedback(passed.length ? `Floor Skipped · floors ${this.run.height - TOWER_SECTION}–${this.run.height - 1} ${passed.join(" and ")}` : "Floor Skipped", 1000);
     else if (earned.length) this.feedback(`Floors ${this.run.height - TOWER_SECTION + 1}–${this.run.height} ${earned.join(" and ")} · reward ahead`);
-    else if (sectionStart) this.feedback(`Floor ${this.run.height + 1} · the way down is sealed`);
     // After the first Tower run a plain new floor only says so on the status line.
     else if (this.save.tutorials.chamber) this.message = "A new chamber opens.";
     else this.feedback("A new chamber opens.");
     this.gainCoins(p, snap(gold + skipGold), silver, false);
   }
-  /** Step back onto the stairs at the foot of the current room, returning
-   * to the previous room exactly as it was left: cleared tiles stay clear,
-   * surviving enemies and unclaimed loot are still there to finish off. */
-  descendTowerRoom() {
-    if (this.climb.sealedBelow) return;
-    // Undo stays on the floor it was taken on: going down forgets the history.
-    this.slice.history = [];
-    this.enterTowerFloor(this.climb.down()!.board);
-    this.feedback("You descend to the room below.");
-  }
-  /** Stands on the floor the climb just reached, as it was left. */
+  /** Stands on the floor the climb just reached. */
   private enterTowerFloor(board: RoomWorld) {
     this.recordProgress();
     this.world = board;

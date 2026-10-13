@@ -16,7 +16,6 @@ export const GAME_SPRITE_URLS = {
   torch: `${ASSET_BASE}assets/sprites/torch.png`,
   torchFrames: `${ASSET_BASE}assets/sprites/torch-frames.png`,
   stairsUp: `${ASSET_BASE}assets/sprites/stairs-up.png`,
-  stairsDown: `${ASSET_BASE}assets/sprites/stairs-down.png`,
 } as const;
 
 export type GameSpriteId = keyof typeof GAME_SPRITE_URLS;

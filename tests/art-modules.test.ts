@@ -92,7 +92,7 @@ const digest = () => {
 
 // ------------------------------------------------------------------ area one
 
-const KINDS: Tile["kind"][] = ["wall", "floor", "enemy", "key", "door", "potion", "attack", "defense", "reward", "treasure", "openedChest", "stairs", "stairsDown", "oneway"];
+const KINDS: Tile["kind"][] = ["wall", "floor", "enemy", "key", "door", "potion", "attack", "defense", "reward", "treasure", "openedChest", "stairs", "oneway"];
 const COLORS: (KeyColor | undefined)[] = [undefined, "yellow", "blue", "red"];
 const TIERS: Tile["tier"][] = [undefined, "silver", "gold"];
 

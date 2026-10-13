@@ -59,7 +59,7 @@ function tileGlow(t: Tile, breathe: number): Omit<GlowSource, "x" | "y"> | null 
   }
   if (GLOW_ITEMS.has(t.kind)) return { rgb: og.item.color, radius: og.item.radius, strength: og.item.strength * breathe };
   if (t.kind === "door") return { rgb: doorGlow(t), radius: og.door.radius, strength: og.door.strength, door: true };
-  if (t.kind === "stairs" || t.kind === "stairsDown")
+  if (t.kind === "stairs")
     return { rgb: [150, 160, 200], radius: dk.heroHaloRadius * og.stairsRadiusScale, strength: dk.heroHaloAlpha * og.stairsAlphaScale };
   return null;
 }

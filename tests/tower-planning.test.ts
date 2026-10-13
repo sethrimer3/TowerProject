@@ -48,7 +48,7 @@ const DOORS: Tile[] = [
   { kind: "door", color: "blue", door: { type: "fullHp" } },
 ];
 const COLORS: KeyColor[] = ["yellow", "blue", "red"];
-const OTHER: Tile["kind"][] = ["enemy", "potion", "attack", "defense", "treasure", "stairsDown", "oneway", "reward", "chest" as Tile["kind"]];
+const OTHER: Tile["kind"][] = ["enemy", "potion", "attack", "defense", "treasure", "oneway", "reward", "chest" as Tile["kind"]];
 
 /** A seeded board: open floor with walls, keys, other items and `doors`
  * doors, some cells left out entirely. */

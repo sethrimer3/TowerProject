@@ -2,8 +2,9 @@
  * at a Goals checkpoint (floors 1 to 10, 11 to 20 …). Climbing onto the
  * next area's first floor judges the area left behind: it is **mastered**
  * when the hero took no fight damage anywhere in it (only an area ending at
- * a checkpoint, whose warp it unlocks) and **cleared** when no enemy is
- * left on any of its floors (+10 Inspiration). Each is paid the moment it
+ * a checkpoint, whose warp it unlocks) and **cleared** when the hero
+ * climbed past no enemy on any of its floors (+10 Inspiration; the climb
+ * keeps only that of the floors left behind, `run.enemiesLeft`). Each is paid the moment it
  * is earned and recorded for good, by tower, in `save.goals`, so undo,
  * reloads and later runs never pay it twice. A chest for each then stands
  * in front of the hero on the new floor; it is a `reward` tile in the
@@ -13,7 +14,6 @@ import { TOWER_SECTION } from "../config.ts";
 import { checkpoint } from "../goals.ts";
 import { earn } from "../profile.ts";
 import { ENTRY } from "./embedder.ts";
-import { TowerClimb } from "./climb.ts";
 import type { RoomWorld } from "./room-world.ts";
 
 export type AreaReward = "mastered" | "cleared";
@@ -29,21 +29,12 @@ export const chestReward = (tier: ChestTier | undefined): AreaReward => (tier ==
 /** The tower a run climbs. */
 const towerOf = (run: TowerRun) => run.tier ?? 1;
 
-/** Whether a floor has no enemy left. */
-function noEnemies(world: RoomWorld) {
-  for (const k of world.cells.keys()) {
-    const [x, y] = k.split(",").map(Number);
-    if (world.tile(x, y).kind === "enemy") return false;
-  }
-  return true;
-}
-
 /** Where the chests go: the first tile inside, directly in front of the
  * hero (whatever stands there), then, for a second chest, the tile behind
  * it or beside it, plain floor first, never a wall, door or stairs. */
 function chestSpots(board: RoomWorld) {
   const [x, y] = ENTRY;
-  const near = [[x, y + 1], [x - 1, y], [x + 1, y]].filter(([nx, ny]) => !["wall", "door", "stairs", "stairsDown"].includes(board.tile(nx, ny).kind));
+  const near = [[x, y + 1], [x - 1, y], [x + 1, y]].filter(([nx, ny]) => !["wall", "door", "stairs"].includes(board.tile(nx, ny).kind));
   near.sort((a, b) => Number(board.tile(a[0], a[1]).kind !== "floor") - Number(board.tile(b[0], b[1]).kind !== "floor"));
   return [[x, y], ...near];
 }
@@ -59,6 +50,7 @@ export class AreaLedger {
     if (run.height === 0 || run.height % TOWER_SECTION !== 0) return [];
     const earned = this.judge(run);
     run.damaged = false;
+    delete run.enemiesLeft;
     const spots = chestSpots(board);
     for (const reward of earned) {
       this.pay(run, reward);
@@ -72,13 +64,10 @@ export class AreaLedger {
   /** The rewards the area just left earns that its tower hasn't had yet.
    * Its last floor is the new floor's height, since floors count from 1. */
   private judge(run: TowerRun): AreaReward[] {
-    const tower = towerOf(run), last = run.height, goals = this.save.goals, climb = new TowerClimb(run);
-    const floors = Array.from({ length: TOWER_SECTION }, (_, i) => last - TOWER_SECTION + i);
-    // A run that never stood on every floor of the area (none can, today) earns nothing there.
-    if (!floors.every((h) => climb.visited(h))) return [];
+    const tower = towerOf(run), last = run.height, goals = this.save.goals;
     const earned: AreaReward[] = [];
     if (!run.damaged && checkpoint(tower, last) && !goals.mastered[tower]?.includes(last)) earned.push("mastered");
-    if (!goals.cleared[tower]?.includes(last) && floors.every((h) => noEnemies(climb.board(h)))) earned.push("cleared");
+    if (!run.enemiesLeft && !goals.cleared[tower]?.includes(last)) earned.push("cleared");
     return earned;
   }
 
