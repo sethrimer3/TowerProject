@@ -48,16 +48,18 @@ export const SETTINGS = {
    * synthesized sounds), Neon (warm glowing laser lines on black),
    * Terminal (an old green-phosphor monitor), Desktop (an old windowed
    * desktop computer: grey bevelled windows on teal), Glyph (glowing
-   * many-coloured ASCII cards on purple) or Ember (warm glowing ASCII on a
-   * maroon field of dim letters) once owned. Chosen on the Settings page's UI Themes menu, not a row of its
+   * many-coloured ASCII cards on purple), Ember (warm glowing ASCII on a
+   * maroon field of dim letters), Yang (ink on pale rice paper, spare and
+   * still) or Yin (pale ink on a dark stone ground) once owned. Chosen on the Settings page's UI Themes menu, not a row of its
    * own; a new hero starts in Medieval. */
-  uiTheme: { kind: "choice", default: "medieval", choices: [["classic", "Classic"], ["medieval", "Medieval"], ["neon", "Neon"], ["terminal", "Terminal"], ["desktop", "Desktop"], ["glyph", "Glyph"], ["ember", "Ember"]] },
+  uiTheme: { kind: "choice", default: "medieval", choices: [["classic", "Classic"], ["medieval", "Medieval"], ["neon", "Neon"], ["terminal", "Terminal"], ["desktop", "Desktop"], ["glyph", "Glyph"], ["ember", "Ember"], ["yang", "Yang"], ["yin", "Yin"]] },
   /** The Game theme the dungeon is drawn in: Classic, or Neon, Terminal
    * (a green-phosphor text dungeon), Desktop (an old desktop computer's
    * mine-sweeping field), Glyph (a many-coloured neon ASCII dungeon on
-   * purple) or Ember (warm glowing ASCII on maroon, enemies' red eyes) once
-   * owned. Chosen on the Game Themes menu. */
-  gameTheme: { kind: "choice", default: "classic", choices: [["classic", "Classic"], ["neon", "Neon"], ["terminal", "Terminal"], ["desktop", "Desktop"], ["glyph", "Glyph"], ["ember", "Ember"]] },
+   * purple), Ember (warm glowing ASCII on maroon, enemies' red eyes), Yang
+   * (a raked sand garden of ink strokes) or Yin (the same garden by night)
+   * once owned. Chosen on the Game Themes menu. */
+  gameTheme: { kind: "choice", default: "classic", choices: [["classic", "Classic"], ["neon", "Neon"], ["terminal", "Terminal"], ["desktop", "Desktop"], ["glyph", "Glyph"], ["ember", "Ember"], ["yang", "Yang"], ["yin", "Yin"]] },
   /** Unlimited currency, every floor section and game mode unlocked. */
   devMode: { kind: "toggle", default: false, page: { id: "dev-mode", label: "Dev mode (unlimited currency, all floors &amp; modes unlocked)" } },
   /** Play each fight out strike by strike, damage rising off whoever was

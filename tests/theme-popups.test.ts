@@ -7,6 +7,7 @@ import { TERMINAL } from "../src/terminal-board.ts";
 import { DESKTOP } from "../src/desktop-board.ts";
 import { GLYPH } from "../src/glyph-board.ts";
 import { EMBER } from "../src/ember-board.ts";
+import { YANG, YIN } from "../src/zen-board.ts";
 import type { FrameContext } from "../src/render-frame.ts";
 import type { GainArt } from "../src/state.ts";
 
@@ -79,5 +80,12 @@ test("a Heart Door's toll rises as the Glyph and Ember hearts", () => {
   for (const [look, color] of [["glyph", GLYPH.heart], ["ember", EMBER.heart]] as const) {
     const r = drawn({ heart: true }, look);
     assert.ok(r.texts.includes("<3") && r.fills.includes(color), look);
+  }
+});
+
+test("a potion picked up on a Yang or Yin board rises as its tea bowl, a Heart Door's toll as its heart", () => {
+  for (const [look, palette] of [["yang", YANG], ["yin", YIN]] as const) {
+    assert.ok(drawn({ tile: { kind: "potion", hp: 35 } as never }, look).fills.includes(palette.moss), look);
+    assert.ok(drawn({ heart: true }, look).strokes.includes(palette.heart), look);
   }
 });
