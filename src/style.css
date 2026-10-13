@@ -2725,7 +2725,6 @@ nav button > span :is(img, svg) { display: block; width: 42px; height: 42px; max
 /* The Training tab's specks sit behind the rows. */
 .training-particles { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; border-radius: inherit; }
 .training > :not(.training-particles) { position: relative; }
-.training-row.active .training-box.next { border-color: #c0483c; color: #ffb3a6; }
 /* A row a trainer is training: its auto-continue box, name and levels on a
    line above the rest, so the values and buttons fit a phone's width, and
    its batch's speedup, large, at the left of the values. */

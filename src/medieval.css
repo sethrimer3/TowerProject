@@ -735,11 +735,6 @@ html.medieval button.training-cost:disabled {
     var(--wood),
     #2a1c12;
 }
-html.medieval .training-row.active .training-box.next {
-  border-color: #b8442e;
-  color: #ffc0a8;
-  text-shadow: 0 0 6px #ff5a3a60;
-}
 html.medieval button.training-timer {
   color: #ffd6c4;
   border-color: #2a0a08;
