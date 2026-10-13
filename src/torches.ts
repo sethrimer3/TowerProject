@@ -93,11 +93,20 @@ export function placeTorches(cells: Map<string, Tile>, area: TorchArea): Torch[]
   return torches;
 }
 
-/** Puts out the lit torch standing on (x, y); false when there is none. */
-export function breakTorch(torches: Torch[], x: number, y: number) {
+/** A board's own copies of the torches `placed` on it, each lit unless the
+ * run's changes hold its tile: a torch put out leaves its tile in the
+ * changes (`breakTorch`), so undo and a reload bring back just the torches
+ * the run had lit. */
+export const torchesLeft = (placed: readonly Torch[], changes: Record<string, Tile>): Torch[] =>
+  placed.map((t) => ({ ...t, active: !changes[point(t.x, t.y)] }));
+
+/** Puts out the lit torch standing on (x, y), recording its tile in the
+ * run's changes; false when there is none. */
+export function breakTorch(torches: Torch[], changes: Record<string, Tile>, x: number, y: number) {
   const torch = torches.find((t) => t.active && t.x === x && t.y === y);
   if (!torch) return false;
   torch.active = false;
+  changes[point(x, y)] ??= { kind: "floor" };
   return true;
 }
 

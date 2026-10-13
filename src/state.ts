@@ -1903,8 +1903,7 @@ export class Game {
   }
   /** A Tower floor's secret: with every torch on it out, a Greater Boss
    * appears on the open floor nearest the stairs, once a floor a run. It is
-   * checked on every step, since undo brings back the run but not the
-   * torches. */
+   * checked on every step. */
   private callGreaterBoss() {
     const world = this.world;
     if (this.mode !== "tower" || !(world instanceof RoomWorld)) return;

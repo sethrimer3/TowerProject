@@ -7,7 +7,7 @@ This controls camera and player interpolation on both axes; Reduce motion overri
 
 ## Undo
 
-**Undo** restores one move (a tapped route counts as a single move), including combat, pickups, gear, keys, doors, and the XP a kill paid (with any level it reached), but only on the floor you stand on: climbing a Tower floor forgets the history (the Tower's stairs only lead up, and a floor left behind is gone for the run), as does crossing one of the Delve's floor lines (each ten depth, either way) or a milestone gate.
+**Undo** restores one move (a tapped route counts as a single move), including combat, pickups, gear, keys, doors, torches put out, and the XP a kill paid (with any level it reached), but only on the floor you stand on: climbing a Tower floor forgets the history (the Tower's stairs only lead up, and a floor left behind is gone for the run), as does crossing one of the Delve's floor lines (each ten depth, either way) or a milestone gate.
 A step onto empty floor is seldom worth resuming at, so undoing one goes on back past every empty step before it, and the move before them that did something, to just before that move (a fight, a pickup, a door, a card's activation or training bought).
 It cancels any queued route.
 Undos are a limited resource, like Focus: each run has a number of them to spend, shown on the Undo button, and one spent never comes back, whatever the run does after it.

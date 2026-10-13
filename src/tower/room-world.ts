@@ -1,7 +1,7 @@
 import { TOWER_WIDTH, TOWER_HEIGHT } from "../config.ts";
 import { point, type Tile, type Torch } from "../entities.ts";
 import { withPotions, type Board } from "../board.ts";
-import { breakTorch, placeTorches } from "../torches.ts";
+import { breakTorch, placeTorches, torchesLeft } from "../torches.ts";
 import { generateTowerFloor } from "./index.ts";
 import { tierCells } from "../tiers.ts";
 import { foeTile, type FoeRule } from "../shrines.ts";
@@ -55,10 +55,10 @@ export function generateTowerRoom(
   return generateTowerFloor(seed, room, tier).cells;
 }
 const towerTorchCaches = new Map<string, Torch[]>();
-/** Torches for one tower room, computed once when that room is first
- * entered this session and cached by seed, room number and whether it is
- * the first tier's (whose floors may differ in their keys). */
-function torchesForRoom(seed: number, room: number, tier: number, cells: Map<string, Tile>): Torch[] {
+/** Torches for one tower room as placed, all lit, computed once when that
+ * room is first entered this session and cached by seed, room number and
+ * whether it is the first tier's (whose floors may differ in their keys). */
+function torchesForRoom(seed: number, room: number, tier: number, cells: Map<string, Tile>): readonly Torch[] {
   const key = `${seed}:${room}:${tier > 1}`;
   let t = towerTorchCaches.get(key);
   if (!t) {
@@ -108,12 +108,12 @@ export class RoomWorld implements Board {
     public foes?: FoeRule,
   ) {
     let cells = generateTowerRoom(seed, room, tier);
-    this.torches = torchesForRoom(seed, room, tier, cells);
+    this.torches = torchesLeft(torchesForRoom(seed, room, tier, cells), changes);
     if (hasExtras(extras)) cells = withExtraEnemies(cells, seed, room, this.torches, extras);
     this.cells = rangedCells(fastCells(tierCells(cells, tier), "tower", tier, seed, () => room + 1), tier, seed, () => room + 1);
   }
   breakTorchAt(x: number, y: number): boolean {
-    return breakTorch(this.torches, x, y);
+    return breakTorch(this.torches, this.changes, x, y);
   }
   /** On the 17x17 board. */
   private inside(x: number, y: number) {

@@ -20,10 +20,9 @@ function besideLastTorch(seed = 3, undos = false) {
   const world = g.world as RoomWorld;
   assert.ok(world instanceof RoomWorld && world.torches.length > 0);
   const [last, ...rest] = world.torches;
-  for (const t of world.torches) t.active = true;
-  for (const t of rest) t.active = false;
+  for (const t of rest) world.breakTorchAt(t.x, t.y);
   const [dx, dy] = ([[0, 1], [1, 0], [0, -1], [-1, 0]] as const).find(([dx, dy]) => world.tile(last.x - dx, last.y - dy).kind !== "wall")!;
-  for (const [x, y] of [[last.x, last.y], [last.x - dx, last.y - dy]]) g.run.changes[`${x},${y}`] = { kind: "floor" };
+  g.run.changes[`${last.x - dx},${last.y - dy}`] = { kind: "floor" };
   Object.assign(g.run.player, { x: last.x - dx, y: last.y - dy });
   return { g, world, dx, dy };
 }
@@ -71,7 +70,20 @@ test("undo takes the Greater Boss back, and the next step calls it again", () =>
   assert.equal(greaterBosses(g.run.changes).length, 0);
   assert.equal(g.summoned, null);
   g.stepManually(dx, dy);
-  assert.equal(greaterBosses(g.run.changes).length, 1, "the torches stay out, so the floor calls it again");
+  assert.equal(greaterBosses(g.run.changes).length, 1, "undo relights just the last torch, so putting it out calls it again");
+});
+
+test("a torch put out stays out through a reload, and undo lights it again", () => {
+  const { g, dx, dy } = besideLastTorch(6, true);
+  const at = { x: g.run.player.x + dx, y: g.run.player.y + dy };
+  const lit = (game: Game) => (game.world.torches ?? []).filter((t) => t.active).map((t) => `${t.x},${t.y}`);
+  assert.deepEqual(lit(g), [`${at.x},${at.y}`]);
+  g.stepManually(dx, dy);
+  assert.deepEqual(lit(g), []);
+  assert.deepEqual(lit(new Game(decode(JSON.stringify(g.save)))), [], "the save keeps every torch put out");
+  assert.ok(g.undo());
+  assert.deepEqual(lit(g), [`${at.x},${at.y}`], "undo brings back only the torch the step put out");
+  assert.deepEqual(lit(new Game(decode(JSON.stringify(g.save)))), [`${at.x},${at.y}`]);
 });
 
 test("a floor with a torch still lit calls none", () => {

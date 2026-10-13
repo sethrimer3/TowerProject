@@ -2,7 +2,7 @@ import { region, depthAt, areasBetween, floorFor, ownerAt, type Region } from ".
 import { CHUNK, WIDTH, START_X } from "../config.ts";
 import { point, type DelveRun, type Tile, type Torch } from "../entities.ts";
 import { withPotions, type Board } from "../board.ts";
-import { breakTorch, placeTorches } from "../torches.ts";
+import { breakTorch, placeTorches, torchesLeft } from "../torches.ts";
 import { tierCells } from "../tiers.ts";
 import { fastCells } from "../fast-enemies.ts";
 import { rangedCells, wounded, woundMore } from "../ranged.ts";
@@ -62,7 +62,7 @@ function chunksOf(r: Region) {
 /** Area `area`'s torches: wall checks see the neighbouring areas too, so a
  * torch never lands on a foreign area's floor; each torch belongs to the
  * area owning its spot. */
-function areaTorches(seed: number, area: number, tier: number): Torch[] {
+function areaTorches(seed: number, area: number, tier: number): readonly Torch[] {
   const key = `${seed}:${area}:${tier}`;
   let placed = torchCache.get(key);
   if (!placed) {
@@ -73,8 +73,7 @@ function areaTorches(seed: number, area: number, tier: number): Torch[] {
     torchCache.set(key, placed);
     if (torchCache.size > 8) torchCache.delete(torchCache.keys().next().value!);
   }
-  // Fresh torches each time: a board puts its own out (`breakTorch`).
-  return placed.map((t) => ({ ...t }));
+  return placed;
 }
 /** Each area's torches as placed, all lit: the World and More Enemies both
  * ask for them, and placing them (with every light's polygon) is slow. */
@@ -230,11 +229,12 @@ export class World implements Board {
     const torches = this.torches;
     return (this.lit ??= new Set(torches.filter((t) => t.active).map((t) => point(t.x, t.y))));
   }
+  /** Area `a`'s torches: the board's own copies, out where the run put them out. */
   private areaTorches(a: number) {
-    return areaTorches(this.seed, a, this.tier);
+    return torchesLeft(areaTorches(this.seed, a, this.tier), this.changes);
   }
   breakTorchAt(x: number, y: number): boolean {
-    const broke = breakTorch(this.torches, x, y);
+    const broke = breakTorch(this.torches, this.changes, x, y);
     if (broke) this.lit = null;
     return broke;
   }
