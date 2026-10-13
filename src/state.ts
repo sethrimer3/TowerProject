@@ -2166,6 +2166,12 @@ export class Game {
     if (gold) this.gain(at.x, at.y, `+${wholeChange(gold)} Gold`, { coin: "gold" });
     if (silver || alwaysSilver) this.gain(at.x, at.y, `+${wholeChange(silver)} Silver`, { coin: "silver" });
   }
+  /** The Gold killing the enemy at (x, y) would bank now (`instakill`:
+   * the hero's first strike ending it), or 0 once its tile is looted. */
+  enemyGold(x: number, y: number, instakill = false) {
+    const t = this.world.tile(x, y);
+    return t.kind === "enemy" ? this.purse.killGoldPreview(t.enemy!, x, y, instakill) : 0;
+  }
   /** What the run finds is paid through its purse. */
   private get purse() {
     // A tournament run's chances come from the seeds its league shares.

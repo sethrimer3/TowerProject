@@ -102,13 +102,28 @@ export class RunPurse {
    * equipment's Gold found, and by the run's Gold boons; returns what it
    * banked. */
   gold(found: number) {
-    const before = raised(found, this.worn.goldFind) * goldFactor(this.save) * themeGoldFactor(this.save) * (this.boons?.gold ?? 1), boost = goldBoostFactor(this.save, this.now);
+    const before = this.beforeBoost(found), boost = goldBoostFactor(this.save, this.now);
     const gold = snap(before * boost);
     if (boost !== 1) this.slice.runBoostGold = snap((this.slice.runBoostGold ?? 0) + before);
     this.save.gold = snap(this.save.gold + gold);
     earn(this.save, "gold", gold);
     this.slice.runGold = snap(this.slice.runGold + gold);
     return gold;
+  }
+
+  /** Gold found raised by equipment's Gold found, the Shop's coin packs,
+   * the themes owned and the run's Gold boons, before the Gold ad's boost. */
+  private beforeBoost(found: number) {
+    return raised(found, this.worn.goldFind) * goldFactor(this.save) * themeGoldFactor(this.save) * (this.boons?.gold ?? 1);
+  }
+
+  /** The Gold a kill of `enemy` at (x, y) would bank, as `enemyLoot` pays
+   * it (Goldback's combo counted, a card's Effective or Dampen not): none
+   * once its tile is looted. Changes nothing. */
+  killGoldPreview(enemy: Enemy, x: number, y: number, instakill = false) {
+    if (this.slice.lootedTiles[this.lootKey(x, y)]) return 0;
+    const found = tierGold(this.tier, snap(this.killGold(enemy, instakill) * (this.run.goldCombo ?? 1)));
+    return snap(this.beforeBoost(found) * goldBoostFactor(this.save, this.now));
   }
 
   /** Adds Silver found in the run, raised by Silver Bonus training and

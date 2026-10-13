@@ -149,7 +149,7 @@ export const netDamage = (player: Player, r: CombatPrediction) => (r.hpAfter !==
 /** What each strike's damage restores of the hero's HP (Lifesteal), the
  * share of it in percent: the strike's whole damage, however little HP the
  * enemy had left. */
-const lifestealHeal = (player: Player, dealt: number) => snap((dealt * (player.lifesteal ?? 0)) / 100);
+export const lifestealHeal = (player: Player, dealt: number) => snap((dealt * (player.lifesteal ?? 0)) / 100);
 
 /** The hero's HP when a fight against `enemy` ends, the hero's strikes each
  * dealing `hit` and healing by its Lifesteal as they land (before the

@@ -3,7 +3,7 @@ import type { Enemy, Kind, Player, Tile } from "../entities.ts";
 import { enemyTitle } from "../scaling.ts";
 import type { Game, RouteEffects } from "../state.ts";
 import { POTION_HEAL, potionRestores, resolveStep, shardStat } from "../step-effects.ts";
-import { attackForFewerHits, instakill, netDamage, predict, type CombatPrediction } from "../combat.ts";
+import { attackForFewerHits, instakill, lifestealHeal, netDamage, parryCut, predict, struckDamage, type CombatPrediction } from "../combat.ts";
 import { forecast as critForecast, type CritForecast } from "../crit-forecast.ts";
 import { goalUnlocked } from "../goals.ts";
 import { chestReward, CLEARED_INSPIRATION } from "../tower/area-ledger.ts";
@@ -13,12 +13,12 @@ import { litTorches } from "../board.ts";
 import { point } from "../entities.ts";
 import { area1ItemId } from "../area1-tileset.ts";
 import { snap } from "../exact.ts";
-import { itemSprite } from "./dom.ts";
+import { goldIcon, itemSprite, uiSprite } from "./dom.ts";
 
 /** What the inspect panel says about one board tile. */
 export type TileInfo = { color: string; title: string; body: string };
-type Board = Pick<Game, "world" | "run" | "mode" | "stepRules" | "save">;
-type Describe = (t: Tile, p: Player, g: Board) => Omit<TileInfo, "color">;
+type Board = Pick<Game, "world" | "run" | "mode" | "stepRules" | "save" | "enemyGold">;
+type Describe = (t: Tile, p: Player, g: Board, at: { x: number; y: number }) => Omit<TileInfo, "color">;
 
 const KIND_COLORS: Partial<Record<Kind, string>> = {
   wall: "#8d97a8",
@@ -109,14 +109,34 @@ function shardGain(t: Tile, p: Player, g: Board, stat: "attack" | "defense") {
   return enemyStat(after.blocked ? shardStat(t, g.stepRules) : snap(after.player[stat] - p[stat]));
 }
 
+/** A stat's icon and value, kept on one line; the icon's alt names the
+ * stat, so the status row's plain text still does. */
+const stat = (icon: string, label: string, value: string, extra = "") =>
+  `<span class="enemy-stat">${icon.replace('alt=""', `alt="${label}"`)} ${value}${extra}</span>`;
+
+/** The enemy's stat line: its HP, its ATK with what each of its strikes
+ * does to the hero (after DEF and a parry; with Lifesteal, what each of the
+ * hero's strikes heals beside it), its DEF with what each of the hero's
+ * strikes takes off it, and the Gold killing it would bank. */
+function enemyStats(e: Enemy, p: Player, r: CombatPrediction, gold: number) {
+  const taken = struckDamage(e.attack, p.defense, parryCut(p)), healed = p.lifesteal ? lifestealHeal(p, r.hit) : 0;
+  const hurt = `<span class="hit-hurt">-${enemyStat(taken)}</span>`;
+  const heal = healed ? ` <span class="hit-heal">+${enemyStat(healed)}</span>` : "";
+  const coins = gold ? ` · ${stat(goldIcon(), "Gold", `<span class="hit-gold">${enemyStat(gold)}</span>`)}` : "";
+  return `<span>${stat(uiSprite("health", "stat-sprite"), "HP", enemyStat(e.hp))}`
+    + ` · ${stat(itemSprite("upgrade_attack", "stat-sprite"), "ATK", enemyStat(e.attack), ` (${hurt}${heal})`)}`
+    + ` · ${stat(itemSprite("upgrade_defense", "stat-sprite"), "DEF", enemyStat(e.defense), ` (<span class="hit-hurt">-${enemyStat(r.hit)}</span>)`)}${coins}</span>`;
+}
+
 const DESCRIBE: Partial<Record<Kind, Describe>> = {
-  enemy: (t, p, g) => {
+  enemy: (t, p, g, at) => {
     // Critical strikes count in the prediction only with Critical Prediction.
     const crit = g.save.upgrades.critPrediction ? g.stepRules.crit : undefined;
     const e = t.enemy!, r = predict(p, e), c = crit && !r.impervious ? critForecast(p, e, crit) : null;
+    const gold = g.run.outside ? 0 : g.enemyGold(at.x, at.y, !r.impervious && instakill(r));
     return {
       title: enemyTitle(e),
-      body: `<span>HP ${enemyStat(e.hp)} · ATK ${enemyStat(e.attack)} · DEF ${enemyStat(e.defense)}</span>` + prediction(r, p, g, c) + forecast(p, e, r.impervious ? 0 : r.turns, g, !!crit),
+      body: enemyStats(e, p, r, gold) + prediction(r, p, g, c) + forecast(p, e, r.impervious ? 0 : r.turns, g, !!crit),
     };
   },
   wall: () => ({ title: "Wall", body: "Impassable obstacle." }),
@@ -167,11 +187,11 @@ const DESCRIBE: Partial<Record<Kind, Describe>> = {
 export function tileInfo(g: Board, x: number, y: number): TileInfo {
   const t = g.world.tile(x, y);
   const describe = DESCRIBE[t.kind];
-  if (t.kind === "door") return { color: doorColor(t), ...describe!(t, g.run.player, g) };
+  if (t.kind === "door") return { color: doorColor(t), ...describe!(t, g.run.player, g, { x, y }) };
   // A floor tile holding a lit torch is the torch.
   if (t.kind === "floor" && litTorches(g.world).has(point(x, y)))
     return { color: "#f2b25c", title: "Torch", body: "A burning torch. Stepping here puts it out." };
-  if (describe) return { color: KIND_COLORS[t.kind]!, ...describe(t, g.run.player, g) };
+  if (describe) return { color: KIND_COLORS[t.kind]!, ...describe(t, g.run.player, g, { x, y }) };
   return {
     color: KIND_COLORS[t.kind] ?? "#c7cedb",
     title: t.kind[0].toUpperCase() + t.kind.slice(1),
@@ -181,7 +201,7 @@ export function tileInfo(g: Board, x: number, y: number): TileInfo {
 
 /** The tile info as one line of plain text, for the status row. */
 export const tileInfoLine = (d: TileInfo) =>
-  `${d.title} — ${d.body.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()}`;
+  `${d.title} — ${d.body.replace(/<img[^>]*alt="([^"]+)"[^>]*>/g, " $1 ").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()}`;
 
 /** One line per stat or key a previewed route would change. */
 export function routeTotalLines(effects: RouteEffects): string[] {

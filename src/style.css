@@ -1013,6 +1013,27 @@ canvas {
 .inspect-box .forecast {
   color: #a9c4ee;
 }
+/* An enemy's stat line: each stat's icon and value, then per strike what
+   gets through to each side (light red) and what Lifesteal heals (light
+   blue), and its Gold drop. */
+.inspect-box .enemy-stat {
+  white-space: nowrap;
+}
+.inspect-box .enemy-stat .stat-sprite,
+.inspect-box .enemy-stat .gold-icon {
+  width: 1.2em;
+  height: 1.2em;
+  vertical-align: -0.22em;
+}
+.inspect-box .hit-hurt {
+  color: #ff9a9a;
+}
+.inspect-box .hit-heal {
+  color: #9ad4ff;
+}
+.inspect-box .hit-gold {
+  color: #ffd34d;
+}
 .inspect-box .forecast.lore {
   color: #e8b878;
 }

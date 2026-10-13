@@ -2,7 +2,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { defaults } from "../src/save.ts";
-import { tileInfo } from "../src/ui/tile-info.ts";
+import { tileInfo, tileInfoLine } from "../src/ui/tile-info.ts";
+import { MODES } from "../src/modes.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
 
 /** A Tower floor holding just the given tiles in its bottom row. */
@@ -32,4 +33,23 @@ test("a floor tile holding a lit torch is named Torch", () => {
   assert.equal(tileInfo(g, 2, 0).title, "Torch");
   w.torches[0].active = false;
   assert.equal(tileInfo(g, 2, 0).title, "Floor", "a torch put out is floor again");
+});
+
+test("an enemy's box shows its stats as icons, what each strike does each way, and its Gold", () => {
+  const { g } = board([[1, { kind: "enemy", enemy: { name: "Slime", hp: 40, attack: 12, defense: 3, tier: 0, strength: "elite" } }]]);
+  delete (g.run as { outside?: unknown }).outside;
+  Object.assign(g.run.player, { attack: 10, defense: 4, hp: 500, maxHp: 500, parry: 50, lifesteal: 20 });
+  const body = tileInfo(g, 1, 0).body;
+  assert.doesNotMatch(body, /HP \d|ATK \d|DEF \d/, "icons, not words");
+  assert.match(body, /alt="HP"[^>]*> 40</);
+  // 12 ATK less 4 DEF is 8, halved by the parry; each 7-damage strike heals 20% of it.
+  assert.match(body, /alt="ATK"[^>]*> 12 \(<span class="hit-hurt">-4<\/span> <span class="hit-heal">\+1\.4<\/span>\)/);
+  assert.match(body, /alt="DEF"[^>]*> 3 \(<span class="hit-hurt">-7<\/span>\)/);
+  const gold = g.enemyGold(1, 0);
+  assert.ok(gold > 0);
+  assert.match(body, new RegExp(`alt="Gold"[^>]*> <span class="hit-gold">${gold}</span>`));
+  assert.match(tileInfoLine(tileInfo(g, 1, 0)), /HP 40 · ATK 12 \( -4 \+1\.4 \) · DEF 3 \( -7 \) · Gold/, "the status row still names each stat");
+  g.save.tower.lootedTiles[MODES.tower.lootKey(g.run as never, 1, 0)] = true;
+  assert.equal(g.enemyGold(1, 0), 0);
+  assert.doesNotMatch(tileInfo(g, 1, 0).body, /alt="Gold"/, "a looted enemy pays nothing, so shows none");
 });

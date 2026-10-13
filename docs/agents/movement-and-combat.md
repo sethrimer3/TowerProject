@@ -60,6 +60,7 @@ A charged arrow's `Shot` carries `charged`: `drawVolley` flies it in a blue glow
 `tests/ranged.test.ts` covers it.
 Each revival's strike first raises the same skull (`game.struckDown`, the hero's HP shown at 0 meanwhile, `heroHpDuring`), and `bout` holds the fight's next strike back `REVIVE_PAUSE_MS` (the skull's `DEFEAT_MS` and the fire's `REVIVE_MS`), as `summarize` does its next round (`Game.showRevivals` sets both lists).
 Once the skull is over, `game.revivedAt` begins, which the renderer draws as a smaller golden version of the level-up burst under a white and golden beam of light that a few small white angel wings flutter down and fade from over a second (`drawRevive` in `level-up.ts`); `tests/revive.test.ts` covers it.
+The inspect panel's Gold for an enemy is `Game.enemyGold` (`RunPurse.killGoldPreview`: `enemyLoot`'s Gold without paying it, the card's Effective or Dampen left out).
 Each kill pays Gold (`ENEMY_GOLD`, into the save, gated by `lootedTiles`) and Silver (`silverForKill` by strength and equivalent floor, into `run.silver`, so undo takes it back).
 A kill's Silver rises smoothly, fractions kept (`silverBase`: 2 on floor 1, 0.2 a floor to floor 201, `SILVER_SLOWDOWN_FLOOR`, then 0.1).
 Silver buys **run training** (`run-training.ts`): Training ranks for the run alone, kept in `run.training` beside the hero's own (`ranksInRun`), each row's price from its `RUN_TRAINING_PRICES` schedule (`silverPrice`, by ranks bought this run) and its level capped at its `max`.

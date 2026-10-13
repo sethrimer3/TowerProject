@@ -30,6 +30,10 @@ Undo during a fight takes back the whole fight.
 ## Monsters and their pay
 
 A monster's inspect panel, and the messages about its fight, put its strength before its name (Weak, Strong, Elite or Boss), unless it is a normal one.
+Its inspect panel shows its HP, ATK and DEF as icons, each beside its value.
+After its ATK, in brackets, comes what each of its strikes does to the hero, in light red (after DEF and Parry %), and with Lifesteal what each of the hero's strikes heals, in light blue: *(-4 +1.4)*.
+After its DEF, in light red, comes what each of the hero's strikes takes off it (after Pierce and boss ATK, crits not counted).
+Last comes the Gold killing it would bank, in yellow (every Gold bonus counted, and the Mug bonus when the hero's first strike fells it; none once it has paid).
 From Tower II and Delve II on, some monsters are **Fast** (8% at first, more further up and in each tower after): named *Fast …* with a fast-forward mark at the top right of their tile, they strike before the hero, so even one the hero fells in a strike lands a blow, they hit at least 1.75 times as hard as the last tower's floor 100 monster (700 ATK in Tower II; less in Towers III, IV and V: 1,000, 2,000 and 4,000 ATK; the Delve's caves alike), and they pay 1 Gold more.
 From Tower III and Delve III on, some monsters are **Ranged** (a point fewer than Fast: 7.5% at first, growing as Fast does): named *Ranged …* with an arrow at the top right of their tile (the Fast mark moving below it on a monster that is both), they shoot the hero from a distance, walls and doors no obstacle, without beginning a fight.
 A Ranged monster shoots once the hero ends a turn within its reach, five sixths of the hero's own Attack Range (2.5 tiles to the hero's 3), measured straight across, so a knight's move away is in reach, then waits 10 turns before it can shoot again (a 500th of a turn less each floor, a whole turn less every 500 floors; a fraction carries to the next shot, so 9.5 turns fire 10, then 9, apart).
