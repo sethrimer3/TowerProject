@@ -9,6 +9,7 @@ import { GLYPH } from "../src/glyph-board.ts";
 import { EMBER } from "../src/ember-board.ts";
 import { YANG, YIN } from "../src/zen-board.ts";
 import { KURO, SHIRO } from "../src/bare-board.ts";
+import { ARCADE } from "../src/arcade-board.ts";
 import type { FrameContext } from "../src/render-frame.ts";
 import type { GainArt } from "../src/state.ts";
 
@@ -96,4 +97,11 @@ test("a potion picked up on a Shiro or Kuro board rises as its plus, a Heart Doo
     assert.ok(drawn({ tile: { kind: "potion", hp: 35 } as never }, look).fills.includes(palette.heal), look);
     assert.ok(drawn({ heart: true }, look).strokes.includes(palette.heart), look);
   }
+});
+
+test("a potion picked up on an Arcade board rises as its cherries, a Heart Door's toll as its pixel heart", () => {
+  assert.ok(drawn({ tile: { kind: "potion", hp: 35 } as never }, "arcade").fills.includes(ARCADE.red));
+  assert.ok(drawn({ tile: { kind: "potion", hp: 35 } as never }, "arcade").fills.includes(ARCADE.stem), "the cherries' stems");
+  assert.ok(!drawn({ tile: { kind: "potion", hp: 35 } as never }, null).fills.includes(ARCADE.stem), "the classic board keeps its own art");
+  assert.ok(drawn({ heart: true }, "arcade").fills.includes(ARCADE.red));
 });
