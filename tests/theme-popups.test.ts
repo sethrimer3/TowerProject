@@ -5,6 +5,8 @@ import { THEMED_BOARDS, type ThemedLook } from "../src/themed-boards.ts";
 import { NEON } from "../src/neon-board.ts";
 import { TERMINAL } from "../src/terminal-board.ts";
 import { DESKTOP } from "../src/desktop-board.ts";
+import { GLYPH } from "../src/glyph-board.ts";
+import { EMBER } from "../src/ember-board.ts";
 import type { FrameContext } from "../src/render-frame.ts";
 import type { GainArt } from "../src/state.ts";
 
@@ -64,4 +66,18 @@ test("a Heart Door's toll rises as each Game theme's heart", () => {
   const terminal = drawn({ heart: true }, "terminal");
   assert.ok(terminal.texts.includes("<3") && terminal.fills.includes(TERMINAL.heart));
   assert.ok(drawn({ heart: true }, "desktop").fills.includes(DESKTOP.red));
+});
+
+test("a potion picked up on a Glyph or Ember board rises as its glowing !", () => {
+  const potion: GainArt = { tile: { kind: "potion", hp: 35 } as never };
+  const glyph = drawn(potion, "glyph"), ember = drawn(potion, "ember");
+  assert.ok(glyph.texts.includes("!") && glyph.fills.includes(GLYPH.red));
+  assert.ok(ember.texts.includes("!") && ember.fills.includes(EMBER.cream));
+});
+
+test("a Heart Door's toll rises as the Glyph and Ember hearts", () => {
+  for (const [look, color] of [["glyph", GLYPH.heart], ["ember", EMBER.heart]] as const) {
+    const r = drawn({ heart: true }, look);
+    assert.ok(r.texts.includes("<3") && r.fills.includes(color), look);
+  }
 });

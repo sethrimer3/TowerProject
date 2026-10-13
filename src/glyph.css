@@ -1,0 +1,248 @@
+/* Glyph theme: the page as glowing ASCII cards in many neon colours on a
+   purple field of dim symbols. Blocky VT323 type, dotted card frames that
+   each glow in their own colour, and headings ruled like `:=Title==:`.
+   Every selector is scoped under `html.glyph` so nothing changes while the
+   theme is off. Loaded after style.css and the other themes. */
+@font-face {
+  font-family: VT323;
+  src: url("../assets/fonts/VT323/VT323-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+html.glyph {
+  --g-ink: #f3e9ff;
+  --g-dim: #9a7cc0;
+  --g-faint: #4a2a66;
+  --g-black: #07020d;
+  --g-cyan: #3ff0ff;
+  --g-orange: #ff9a2e;
+  --g-yellow: #ffe53d;
+  --g-magenta: #ff4fe0;
+  --g-blue: #4f8bff;
+  --g-green: #5dff7a;
+  --gold: var(--g-yellow);
+  --muted: var(--g-dim);
+  --line: var(--g-faint);
+  color: var(--g-ink);
+  background: var(--g-black);
+}
+html.glyph,
+html.glyph *:not(.badge-glyph, .badge-mark) {
+  font-family: VT323, "Courier New", monospace;
+  font-size-adjust: 0.62;
+  letter-spacing: 0.04em;
+}
+/* The field: dim purple symbols on near-black, a purple haze over it. */
+html.glyph body {
+  background:
+    radial-gradient(ellipse at 70% 30%, #2a0a4a99, transparent 60%),
+    radial-gradient(ellipse at 20% 80%, #1c063699, transparent 55%),
+    url("../assets/theme/glyph-field.svg"),
+    var(--g-black);
+  text-shadow: 0 0 4px #ffffff55;
+}
+html.glyph * {
+  scrollbar-color: var(--g-magenta) transparent;
+}
+html.glyph ::-webkit-scrollbar-thumb {
+  background-color: var(--g-magenta);
+  background-image: none;
+  border-radius: 0;
+}
+
+/* The app's own dark panes give way to the field: every box but the ones
+   this theme dresses (panels, buttons, bars, dialogs) loses its background
+   and takes this theme's line colour. `:not(#_)` lifts this over the page's
+   class rules; a style written on an element (a colour swatch) still wins,
+   and drawings, the bars' fills (`i`), rarity colours and badge tokens keep
+   theirs. */
+html.glyph body *:not(#_, canvas, img, svg, svg *, i, button, select, input, dialog, .stats, .card, .upgrade, .setting, .range-setting, .inspect-box, .shop, .skill-tree, .currencies, .theme-card, .board, .board-tip, .xp-track, .health-track, .badge-token, .eq-tile, [class*="rar"]) {
+  background-color: transparent;
+  background-image: none;
+  border-color: var(--g-faint);
+}
+html.glyph main.shell:not(#_) {
+  background: #0a031499;
+}
+/* Headings: yellow neon, ruled like an ASCII card's title. */
+html.glyph h1,
+html.glyph h2,
+html.glyph h3,
+html.glyph .page-title,
+html.glyph .section-title,
+html.glyph .tower-heading {
+  color: var(--g-yellow);
+  text-shadow: 0 0 4px var(--g-yellow), 0 0 14px #ffe53d88;
+}
+html.glyph .page-title h2::before {
+  content: ":=";
+  margin-right: 0.15em;
+  color: var(--g-orange);
+}
+html.glyph .page-title h2::after {
+  content: "==:";
+  margin-left: 0.15em;
+  color: var(--g-orange);
+}
+html.glyph .eyebrow,
+html.glyph .hint,
+html.glyph .board-caption {
+  color: var(--g-dim);
+}
+
+/* Buttons: a dotted frame and its label glowing in one colour, the colour
+   turning from one button to the next. */
+html.glyph button,
+html.glyph select,
+html.glyph input {
+  --glow: var(--g-cyan);
+  color: var(--glow);
+  background: #0c0418cc;
+  border: 1px dashed var(--glow);
+  border-radius: 0;
+  box-shadow: 0 0 6px color-mix(in srgb, var(--glow) 55%, transparent), inset 0 0 6px color-mix(in srgb, var(--glow) 25%, transparent);
+  text-shadow: 0 0 4px var(--glow), 0 0 10px color-mix(in srgb, var(--glow) 60%, transparent);
+}
+html.glyph :nth-child(6n + 2 of button) { --glow: var(--g-orange); }
+html.glyph :nth-child(6n + 3 of button) { --glow: var(--g-yellow); }
+html.glyph :nth-child(6n + 4 of button) { --glow: var(--g-magenta); }
+html.glyph :nth-child(6n + 5 of button) { --glow: var(--g-green); }
+html.glyph :nth-child(6n of button) { --glow: var(--g-blue); }
+html.glyph button:hover,
+html.glyph button:active {
+  background: color-mix(in srgb, var(--glow) 22%, #0c0418);
+  box-shadow: 0 0 12px var(--glow), inset 0 0 10px color-mix(in srgb, var(--glow) 40%, transparent);
+}
+html.glyph button:focus-visible,
+html.glyph select:focus-visible,
+html.glyph input:focus-visible {
+  outline: 1px dotted var(--g-ink);
+  outline-offset: 3px;
+}
+html.glyph button:disabled {
+  color: var(--g-faint);
+  border-color: var(--g-faint);
+  background: transparent;
+  box-shadow: none;
+  opacity: 1;
+  text-shadow: none;
+}
+html.glyph option {
+  background: var(--g-black);
+  color: var(--g-ink);
+}
+
+/* Panels: ASCII cards, each framed in dots and glowing in its own colour. */
+html.glyph .stats,
+html.glyph .card,
+html.glyph .upgrade,
+html.glyph .setting,
+html.glyph .range-setting,
+html.glyph .inspect-box,
+html.glyph .shop,
+html.glyph .skill-tree,
+html.glyph .currencies,
+html.glyph .theme-card {
+  --glow: var(--g-magenta);
+  background: #0a0314e6;
+  border: 2px dashed var(--glow);
+  border-radius: 0;
+  box-shadow: 0 0 10px color-mix(in srgb, var(--glow) 55%, transparent), inset 0 0 14px color-mix(in srgb, var(--glow) 18%, transparent);
+}
+html.glyph :nth-child(5n + 2 of .card, .upgrade, .setting, .range-setting, .theme-card) { --glow: var(--g-cyan); }
+html.glyph :nth-child(5n + 3 of .card, .upgrade, .setting, .range-setting, .theme-card) { --glow: var(--g-orange); }
+html.glyph :nth-child(5n + 4 of .card, .upgrade, .setting, .range-setting, .theme-card) { --glow: var(--g-yellow); }
+html.glyph :nth-child(5n of .card, .upgrade, .setting, .range-setting, .theme-card) { --glow: var(--g-blue); }
+html.glyph .theme-card.worn {
+  border-style: solid;
+  box-shadow: 0 0 18px var(--glow), inset 0 0 16px color-mix(in srgb, var(--glow) 30%, transparent);
+}
+html.glyph .board {
+  border: 2px dashed var(--g-magenta);
+  border-radius: 0;
+  box-shadow: 0 0 18px #ff4fe088, 0 0 40px #8a2be255;
+}
+html.glyph .rule,
+html.glyph .inventory-divider {
+  background: none;
+  border: 0;
+  border-top: 1px dashed var(--g-dim);
+}
+
+/* The board's notes: a solid card, so the board doesn't show through. */
+html.glyph .board-tip,
+html.glyph .board-tip.dismissable:hover {
+  color: var(--g-ink);
+  background: var(--g-black);
+  border: 1px dashed var(--g-yellow);
+  border-radius: 0;
+  box-shadow: 0 0 0 3px var(--g-black), 0 0 14px #ffe53d66;
+}
+html.glyph .board-tip p,
+html.glyph .board-tip small {
+  color: var(--g-dim);
+}
+
+/* Tabs: each its own colour, the selected one lit solid. */
+html.glyph nav button {
+  border-radius: 0;
+}
+html.glyph nav button.selected {
+  color: var(--g-black);
+  background: var(--glow);
+  box-shadow: 0 0 16px var(--glow);
+  text-shadow: none;
+}
+html.glyph nav button.selected > span {
+  color: var(--g-black);
+  text-shadow: none;
+}
+
+/* Bars: a dotted box filled with glowing # blocks. */
+html.glyph .xp-track,
+html.glyph .health-track {
+  background: transparent;
+  border: 1px dashed var(--g-dim);
+  border-radius: 0;
+}
+html.glyph .xp-track i,
+html.glyph .health-track i {
+  border-radius: 0;
+  background: repeating-linear-gradient(to right, var(--g-blue) 0 5px, transparent 5px 7px);
+  box-shadow: 0 0 8px var(--g-blue);
+}
+html.glyph .health-track i {
+  background: repeating-linear-gradient(to right, var(--g-green) 0 5px, transparent 5px 7px);
+  box-shadow: 0 0 8px var(--g-green);
+}
+html.glyph .safe {
+  color: var(--g-green);
+  text-shadow: 0 0 6px var(--g-green);
+}
+html.glyph .danger {
+  color: #ff4f5e;
+  text-shadow: 0 0 6px #ff4f5e;
+}
+
+/* Dialogs: a yellow card over a darkened field. */
+html.glyph dialog {
+  color: var(--g-ink);
+  background: var(--g-black);
+  border: 2px dashed var(--g-yellow);
+  border-radius: 0;
+  box-shadow: 0 0 22px #ffe53d77, inset 0 0 16px #ffe53d22;
+}
+html.glyph dialog::backdrop {
+  background: #0a0014cc;
+}
+
+/* The neon hums: the title rules pulse faintly, unless motion is reduced. */
+@keyframes glyph-hum {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+html.glyph:not(.reduce-motion) .page-title h2::before,
+html.glyph:not(.reduce-motion) .page-title h2::after {
+  animation: glyph-hum 2.4s ease-in-out infinite;
+}
