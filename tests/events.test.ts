@@ -28,6 +28,12 @@ function gameAt(at: number, save: Save = defaults(), open = true) {
   return g;
 }
 const mission = (g: Game, type: EventMissionType) => g.events.missions.find((m) => m.type === type);
+/** Claims every tier of mission `type` done, a press a tier; returns the Medals paid. */
+function claimAll(g: Game, type: EventMissionType) {
+  let paid = 0;
+  for (let medals; (medals = g.events.claim(mission(g, type)!.id)) !== null;) paid += medals;
+  return paid;
+}
 
 test("Goals: Tower I's floors 60, 70 and 80 pay the Tournament, Events and 30 Gems; Tower II's 60 and 70 Equipment and 10,000 Gold", () => {
   assert.deepEqual(checkpoint(1, 60)!.reward, { kind: "unlock", unlock: "tournament" });
@@ -116,7 +122,9 @@ test("a tier done waits to be claimed, and a claim pays its Medals once; a key c
   g.events.record("tournaments", 1, "101");
   g.events.record("tournaments", 1, "102");
   assert.ok(isComplete(t) && !isFinished(t));
-  assert.equal(g.events.claim(t.id), 15 + 20, "every tier done is claimed at once");
+  assert.equal(g.events.claim(t.id), 15, "one tier a claim");
+  assert.ok(!isFinished(t));
+  assert.equal(g.events.claim(t.id), 20, "then the next");
   assert.ok(isFinished(t));
   g.events.record("tournaments", 1, "103");
   assert.equal(t.progress, 3, "never past the last target");
@@ -124,6 +132,7 @@ test("a tier done waits to be claimed, and a claim pays its Medals once; a key c
   g.events.record("freeGems", 10);
   assert.equal(unclaimedMedals(g.save.events), 25);
   assert.equal(baseMedals(g.save.events), 45, "the Medals paid are those claimed");
+  g.events.claim(mission(g, "freeGems")!.id);
   g.events.claim(mission(g, "freeGems")!.id);
   assert.equal(g.save.medals, 45 + 25);
   assert.equal(baseMedals(g.save.events), 70);
@@ -158,7 +167,7 @@ test("the Event Booster doubles the event's Medals, retroactively, and opens its
   const g = gameAt(START + HOUR);
   g.events.refresh();
   g.events.record("freeGems", 13);
-  g.events.claim(mission(g, "freeGems")!.id);
+  claimAll(g, "freeGems");
   assert.equal(g.save.medals, 45);
   assert.equal(g.buyOffer("eventBoost", START + HOUR), "unpaid", "real money, until the store confirms it");
   assert.equal(g.buyOffer("eventBoost", START + HOUR, true), null);
@@ -217,7 +226,7 @@ test("Buy badges completes once every badge is owned and maxed", () => {
   g.save.badges.owned = Object.fromEntries(BADGE_IDS.map((id) => [id, { copies: MAX_COPIES }])) as typeof g.save.badges.owned;
   g.events.refresh();
   assert.ok(isComplete(mission(g, "badges")!));
-  assert.equal(g.events.claim(mission(g, "badges")!.id), 45);
+  assert.equal(claimAll(g, "badges"), 45);
 });
 
 test("the Events button's dot: missions not yet seen, a tier to claim, or finished and not yet moved", () => {
@@ -231,7 +240,7 @@ test("the Events button's dot: missions not yet seen, a tier to claim, or finish
   g.events.claim(mission(g, "freeGems")!.id);
   assert.ok(!g.events.waiting);
   g.events.record("freeGems", 6);
-  g.events.claim(mission(g, "freeGems")!.id);
+  claimAll(g, "freeGems");
   assert.ok(g.events.waiting, "finished, not yet moved");
   g.events.move(mission(g, "freeGems")!.id);
   assert.ok(!g.events.waiting);

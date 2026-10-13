@@ -16,7 +16,7 @@ Events open by claiming Tower I's floor 70 Goal (the `events` `GoalUnlock`); not
 ## Missions
 
 Every mission has **3 tiers**, each a higher target paying more Medals: **10, 15 and 20** (`TIER_MEDALS`).
-A tier done waits to be claimed: its mission's bar reads *Claim*, and pressing it pays every tier done and not yet claimed into `save.medals` (`EventDesk.claim`; each mission's `claimed` counts its tiers claimed).
+A tier done waits to be claimed: its mission's bar reads *Claim*, and each press pays one tier, the first not yet claimed, into `save.medals` (`EventDesk.claim`; each mission's `claimed` counts its tiers claimed), so a mission past two tiers is claimed twice, the bar showing the next tier ready between them.
 Nothing is claimed for the player, before or on opening the Events screen.
 Medals left unclaimed when the event ends come as Mail (`event:<id>`, sent as it ended, doubled if boosted), and count toward its relics as if claimed; until the event server sends it, the stand-in posts it to `save.mail.stub` as the next event starts (`TODO(server)`).
 A save from before claims counts its tiers done as claimed, as they were paid.
@@ -101,7 +101,7 @@ The events boosted are kept by Erase All (`save.events.boosted`), since they wer
   In the forest it stands in the actions column under the Tournament's; inside a run, in the run's menu.
 - **Events screen** (`ui/events-page.ts`): an X back to the page that opened it; the banner (the event's name over a placeholder pennant) and the days and hours left; the relic track (a bar filling with the Medals toward the relics, to the last milestone, its relics above and its premium relics below, each lit and checked once won, a premium one locked without the booster); the booster's offer, or that it is active; how many missions are out and when the next come; then the missions.
   Each mission shows what its next tier to claim asks, *X/3* (the tiers claimed) and the Medals that tier pays (doubled once boosted) at the right of its name, and its bar; new ones wear *NEW*.
-  Once a tier is done, the mission's border and bar turn gold and the bar reads *Claim* (with the Medals of every tier waiting beside it); pressing it pays them, rising to the middle of the screen (`revealReward`).
+  Once a tier is done, the mission's border and bar turn gold and the bar reads *Claim* (with that tier's Medals beside it); pressing it pays them, rising to the middle of the screen (`revealReward`), and under it the mission already shows its next tier, *Claim* again if that one is done too.
   A mission whose third tier is claimed stays where it is for 2 seconds, then slides under the rest (`save.events.moved`).
 - **Relics button** (`#relics-button`) in the forest's menu, once Events are open, opens the **Relics screen** (`ui/relics-page.ts`): every relic won, small, in a grid.
   Pressing one, or a mouse resting on it, raises it to the middle of the screen at full size with golden rays and sparkles, its rarity and bonus written under it.

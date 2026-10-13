@@ -1,8 +1,7 @@
-import { RUN_TRAINING_PRICES, schedulePrice, TRAINING, isStatRow, type TrainingId, type TrainingRow } from "./config.ts";
-import type { RunCore, Save } from "./entities.ts";
+import { RUN_TRAINING_PRICES, schedulePrice, TRAINING, type TrainingId, type TrainingRow } from "./config.ts";
+import type { Mode, RunCore, Save } from "./entities.ts";
 import { bulkBuy, type BuyQuantity } from "./buy-quantity.ts";
-import { attackPerTile, attackRange, multishotChance, multishotTargets, attackSpeed, critChance, critFactor, floorGold, freeTrainingChance, FREE_TRAINING_ROWS, floorSilver, goldBonus, percentPotionChance, rowResearchFactor, silverBonus, potionPercent, reviveChance, shownAmount, shownStat, statUnit, trainingOpen } from "./loadout.ts";
-import { snap } from "./exact.ts";
+import { rowValue, trainingOpen } from "./loadout.ts";
 
 /** Run training: Training ranks bought with Silver inside a run, on top of
  * the hero's own, lasting only for that run (`run.training`, so undo takes
@@ -49,28 +48,10 @@ export function runTrainingBulk(save: Pick<Save, "training" | "upgrades" | "goal
   return bulkBuy(q, Math.max(0, offer.max - offer.level), (k) => silverPrice(id, offer.bought + k), silver);
 }
 
-/** What row `id` stands at in `run` now, as the run's cards show it, its
- * research included (`rowResearchFactor`): the hero's stat for a stat row,
- * the Gold a new floor pays times every Gold bonus (`goldBonus`, the HUD's
- * total), the Silver it pays times Silver Bonus, a multiplier (unit "×"),
- * or the percentage for the others. */
-export function runTrainingValue(save: Pick<Save, "training" | "upgrades" | "goals" | "archives">, run: Pick<RunCore, "training" | "player">, id: TrainingId, goldBonusTotal = 1) {
-  const row = TRAINING.find((t) => t.id === id)!, f = rowResearchFactor(save, id);
-  if (isStatRow(row)) return { value: shownStat(row.stat, snap((run.player[row.stat] ?? 0) * f)), unit: statUnit(row.stat) };
-  const now = { upgrades: save.upgrades, training: ranksInRun(save, run) };
-  const silverFactor = (silverBonus(now) / 100) * rowResearchFactor(save, "silverBonus");
-  if (id === "critChance") return { value: snap(critChance(now) * f), unit: "%" };
-  if (id === "critFactor") return { value: snap(critFactor(now) * f), unit: "×" };
-  if (id === "attackRange") return { value: attackRange(now) / 100, unit: "tiles" };
-  if (id === "attackSpeed") return { value: attackSpeed(now) / 20, unit: "shots" };
-  if (id === "attackPerTile") return { value: attackPerTile(now) / 100_000, unit: "perTile" };
-  if (id === "multishotChance") return { value: multishotChance(now) / 100, unit: "%" };
-  if (id === "multishotTargets") return { value: multishotTargets(now), unit: "targets" };
-  if (id === "floorGold") return { value: shownAmount(floorGold(now) * f * goldBonusTotal), unit: "" };
-  if (id === "floorSilver") return { value: shownAmount(floorSilver(now) * f * silverFactor), unit: "" };
-  if (id === "silverBonus") return { value: snap(silverFactor), unit: "×" };
-  if (id === "goldBonus") return { value: snap((goldBonus(now) / 100) * f), unit: "×" };
-  const free = (Object.keys(FREE_TRAINING_ROWS) as (keyof typeof FREE_TRAINING_ROWS)[]).find((g) => FREE_TRAINING_ROWS[g] === id);
-  const chance = free ? freeTrainingChance(now, free) : id === "findPotion" ? percentPotionChance(now) : id === "revive" ? reviveChance(now) : potionPercent(now);
-  return { value: chance / 100, unit: "%" };
+/** What row `id` stands at in `run` now, as the run's cards show it: the
+ * Training tab's value (`rowValue`) for the run, so its hero's stats, the
+ * ranks it bought with Silver and its boons count, as do the equipment
+ * worn in `mode` and research. */
+export function runTrainingValue(save: Save, run: Pick<RunCore, "training" | "player">, id: TrainingId, mode: Mode = "tower") {
+  return rowValue(save, id, 0, { mode, run });
 }

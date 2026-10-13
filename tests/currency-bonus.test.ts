@@ -6,7 +6,9 @@ import { trainingOpen } from "../src/loadout.ts";
 import { TRAINING, cost, type TrainingId, type UpgradeId } from "../src/config.ts";
 import { TREES } from "../src/skill-trees.ts";
 import { RESEARCH, researched, type ResearchId } from "../src/archives.ts";
-import { floorSilver, goldBonus, silverBonus, trainingStep, trainingText } from "../src/loadout.ts";
+import { floorSilver, goldBonus, silverBonus, trainingStep, trainingText, type TrainingView } from "../src/loadout.ts";
+import { addItem } from "../src/equipment/inventory.ts";
+import { boonEffects } from "../src/shrines.ts";
 import { runTrainingValue } from "../src/run-training.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
 import type { World } from "../src/delve/world.ts";
@@ -62,30 +64,41 @@ test("Silver Bonus starts at ×1 and adds 1% a rank, Gold Bonus 3%; Silver / Flo
   assert.deepEqual([researched(save.archives, "silverBonus", 100), researched(save.archives, "floorSilver", 100)], [130, 150]);
 });
 
-test("the Training tab's values and the run's cards show research's multipliers; a run's Gold and Silver / Floor its Gold and Silver Bonus", () => {
+test("the Training tab's values count research, equipment and Silver Bonus; a run's cards its own ranks and boons too, never a global Gold multiplier", () => {
   const save = defaults();
-  Object.assign(save.upgrades, { wealthy: 1, loot: 1, wishingWell: 1, spareChange: 1, critical: 1 });
+  Object.assign(save.upgrades, { wealthy: 1, loot: 1, wishingWell: 1, spareChange: 1, critical: 1, freeTraining: 1 });
   save.training.silverBonus = save.training.goldBonus = save.training.floorSilver = save.training.floorGold = 10;
   save.training.critChance = 5;
   Object.assign(save.archives.levels, { silverBonus: 10, goldBonus: 10, floorSilver: 10, floorGold: 10, critChance: 3 });
   const crit = researched(save.archives, "critChancePercent", 100) / 100;
-  const step = (id: TrainingId) => [trainingStep(save, id).now, trainingStep(save, id).next];
+  const step = (id: TrainingId, view?: TrainingView) => [trainingStep(save, id, 1, view).now, trainingStep(save, id, 1, view).next];
   assert.deepEqual(step("silverBonus"), [1.43, 1.443], "×1.10 → ×1.11, times 1.3");
   assert.deepEqual(step("goldBonus"), [1.69, 1.729], "×1.30 → ×1.33, times 1.3");
-  assert.deepEqual(step("floorSilver"), [60, 66], "40 → 44, times 1.5");
-  assert.deepEqual(step("floorGold"), [19.5, 21], "13 → 14, times 1.5");
+  assert.deepEqual(step("floorSilver"), [85.8, 94.38], "40 → 44, times 1.5, times Silver Bonus's ×1.43");
+  assert.deepEqual(step("floorGold"), [19.5, 21], "13 → 14, times 1.5, and no global Gold multiplier");
   assert.deepEqual(step("critChance"), [5 * crit, 6 * crit].map((n) => Math.round(n * 1e6) / 1e6));
   // Regen's research raises the HP a step regains.
   save.training.regen = 50;
   save.archives.levels.regen = 10;
   const plain = trainingStep({ ...save, archives: { ...save.archives, levels: { ...save.archives.levels, regen: 0 } } }, "regen");
   assert.ok(trainingStep(save, "regen").now > plain.now);
-  // In a run: Silver / Floor times Silver Bonus (both with research), Gold / Floor times every Gold bonus.
-  const run = { training: {}, player: { regen: 0 } } as never;
-  assert.deepEqual(runTrainingValue(save, run, "silverBonus"), { value: 1.43, unit: "×" });
-  assert.deepEqual(runTrainingValue(save, run, "floorSilver"), { value: 85.8, unit: "" }, "60 × 1.43");
-  assert.deepEqual(runTrainingValue(save, run, "floorGold", 2), { value: 39, unit: "" }, "19.5 × 2");
-  assert.deepEqual(runTrainingValue(save, run, "goldBonus"), { value: 1.69, unit: "×" });
+  // The equipment the mode's hero wears counts: a sword raises the Tower's ATK row, not the Delve's.
+  save.equipment.unlocked = true;
+  const bare = step("attack", { mode: "tower" });
+  save.equipment.equipped.tower.weapon = addItem(save.equipment, "knightsSword", "common")!.id;
+  assert.ok(step("attack", { mode: "tower" })[0]! > bare[0]!);
+  assert.deepEqual(step("attack", { mode: "delve" }), bare);
+  // Inside a run: the hero's own stat (what it found) moved by a rank, and the ranks bought with Silver.
+  const run = { training: { floorSilver: 2 }, player: { attack: 500 } } as never as TrainingView["run"];
+  const [now, next] = step("attack", { mode: "tower", run });
+  assert.equal(now, 500);
+  assert.ok(next! > 500);
+  assert.deepEqual(runTrainingValue(save, run!, "floorSilver"), { value: 102.96, unit: "" }, "48 × 1.5 × 1.43");
+  assert.deepEqual(runTrainingValue(save, run!, "floorGold"), { value: 19.5, unit: "" });
+  // A Tower run's boons: Silver Bonus's ×1.25 and Free Up Chance's +5%.
+  const boosted = { ...run!, shrine: { picked: ["silver", "freeUp"], rolls: 0 } } as never as TrainingView["run"];
+  assert.deepEqual(runTrainingValue(save, boosted!, "silverBonus"), { value: Math.round(1.43 * boonEffects(["silver"], save).silverFound * 1e6) / 1e6, unit: "×" });
+  assert.equal(runTrainingValue(save, boosted!, "freeOffense").value, runTrainingValue(save, run!, "freeOffense").value + 5);
 });
 
 /** A Tower run inside on floor 11, the hero at (0, 0) facing a strong enemy at (1, 0). */

@@ -241,16 +241,19 @@ export class ResearchPage {
   /** One stat's row: its value now and after a rank, the points that train
    * it now, and reset; once the Trainers skill is owned, also the training
    * time its next rank still needs (its time credit taken off) and the
-   * trainer (its countdown while it trains). */
+   * trainer. A row a trainer is training puts its auto-continue box, name
+   * and levels on a line of their own above the rest, which is its batch's
+   * speedup (when it has one), the values, the countdown that stops it, the
+   * Gems that finish it and the points; it has no reset while training. */
   private trainingRowHtml(t: TrainingRow) {
-    const game = this.ctx.game, save = game.save, step = trainingStep(save, t.id), hired = game.training.hired;
+    const game = this.ctx.game, save = game.save, view = game.trainingView, step = trainingStep(save, t.id, 1, view), hired = game.training.hired;
     // A Buy Quantity above x1 shows its price for the ranks it buys and
     // the value they reach.
     const q = game.buyQuantity, bulk = trainingBulk(save, t.id, q), count = step.maxed ? 1 : Math.max(1, bulk.count);
-    const { now, unit } = step, next = count === 1 ? step.next : trainingStep(save, t.id, count).next;
+    const { now, unit } = step, next = count === 1 ? step.next : trainingStep(save, t.id, count, view).next;
     const shown = (v: number) => trainingText(v, unit);
-    const notes = step.maxed || !hired ? "" : this.timeNote(t.id, q);
     const job = trainingJob(save.trainingJobs, t.id);
+    const notes = step.maxed || !hired || job ? "" : this.timeNote(t.id, q);
     // A row at its most has nothing more to show or buy: its label spans the
     // values' columns, Max stands where the trainer's price does (the points'
     // place without trainers), and the reset keeps the right edge.
@@ -261,17 +264,23 @@ export class ResearchPage {
     const nowButton = step.maxed
       ? ""
       : `<button class="training-box training-cost training-now" data-train="${t.id}" ${bulk.affordable ? "" : "disabled"} aria-label="Spend ${bulk.cost} training ${bulk.cost === 1 ? "point" : "points"} to train ${t.name} ${count === 1 ? "one rank" : `${count} ranks`} now" title="Train now">${maxCount(q, count)}${pointsIcon()}<span>${bulk.cost}</span></button>`;
-    return `<div class="training-row${job ? " active" : ""}" role="listitem" data-training-row="${t.id}"${job && job.speed > 1 ? ` data-speed="${job.speed}"` : ""}><span class="training-label">${job ? this.autoBox(t) : ""}${t.name} - ${this.levelText(t.id, !!job)}${notes ? `<small>${notes}</small>` : ""}</span><span class="training-box">${shown(now)}</span><span class="training-arrow" aria-hidden="true">→</span><span class="training-box next">${shown(next)}</span>${hired ? this.trainerHtml(t, step) : ""}${nowButton}${this.resetButton(t, !!job)}</div>`;
+    const values = `<span class="training-box">${shown(now)}</span><span class="training-arrow" aria-hidden="true">→</span><span class="training-box next">${shown(next)}</span>`;
+    if (job) {
+      const speedup = job.speed > 1
+        ? `<span class="training-speedup" title="Training ${job.speed}x faster for training ${job.ranks} ranks at once">×${job.speed}</span>`
+        : `<span aria-hidden="true"></span>`;
+      return `<div class="training-row active" role="listitem" data-training-row="${t.id}"${job.speed > 1 ? ` data-speed="${job.speed}"` : ""}><span class="training-label training-head">${this.autoBox(t)}${t.name} - ${this.levelText(t.id, true)}</span>${speedup}${values}${this.trainerHtml(t, step)}${nowButton}</div>`;
+    }
+    return `<div class="training-row" role="listitem" data-training-row="${t.id}"><span class="training-label">${t.name} - ${this.levelText(t.id, false)}${notes ? `<small>${notes}</small>` : ""}</span>${values}${hired ? this.trainerHtml(t, step) : ""}${nowButton}${this.resetButton(t, false)}</div>`;
   }
 
   /** The training time to a row's next rank or ranks (at Buy Quantity
-   * `q`): a rank in training shows its timer; else the time left once the
-   * stat's credit and the time bank are taken off, and for a batch with a
-   * speedup, "30m × 2x → 15m". Light green once any time is banked toward
-   * it (and "0s" when that covers it all). */
+   * `q`) while no trainer trains it: the time left once the stat's credit
+   * and the time bank are taken off, and for a batch with a speedup,
+   * "30m × 2x → 15m". Light green once any time is banked toward it (and
+   * "0s" when that covers it all). */
   private timeNote(id: TrainingId, q: BuyQuantity) {
-    const training = this.ctx.game.training, job = trainingJob(this.ctx.game.save.trainingJobs, id);
-    if (job) return `<span class="training-left" title="Training time to the next ${job.ranks === 1 ? "rank" : `${job.ranks} ranks`}">${clockIcon()}${job.speed > 1 ? `<span class="training-speedup">×${job.speed}x →</span>` : ""}<span data-training-left="${id}">${formatDuration(training.left(id))}</span></span>`;
+    const training = this.ctx.game.training;
     const { remaining, work, speedup, banked } = training.nextWork(id, q);
     const title = speedup > 1 ? `Training ${speedup}x faster for training several ranks at once` : "Training time to the next rank";
     return `<span class="training-left" title="${title}">${clockIcon()}${speedup > 1 ? `<span class="training-speedup">${formatDuration(remaining)} ×${speedup}x →</span>` : ""}<span data-training-left="${id}"${banked ? ' class="banked"' : ""}>${formatDuration(work)}</span></span>`;

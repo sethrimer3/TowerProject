@@ -1,5 +1,5 @@
-import { EVENT_MISSION_COUNT, EVENT_MISSIONS, TIER_MEDALS, TIERS, tierMedals, type RelicMilestone } from "../events/catalog.ts";
-import { isFinished, milestoneReached, tiersDone, unclaimedTiers, type EventMission } from "../events/progress.ts";
+import { EVENT_MISSION_COUNT, EVENT_MISSIONS, TIER_MEDALS, TIERS, type RelicMilestone } from "../events/catalog.ts";
+import { isFinished, milestoneReached, unclaimedTiers, type EventMission } from "../events/progress.ts";
 import { offer } from "../shop/offers.ts";
 import { stubServer, type ShopServer } from "../shop/server.ts";
 import { shortCountdown } from "../tournament/schedule.ts";
@@ -135,13 +135,13 @@ export class EventsPage {
       `<button id="event-boost-buy" class="event-boost-buy" aria-label="Buy the Event Booster for ${price}">${price}</button></section>`;
   }
 
-  /** A mission: what its next tier to claim asks, the tiers claimed and the
-   * Medals waiting (or the next tier's), and its bar, which reads Claim and
-   * claims them while a tier is done; finished, its last tier and a check. */
+  /** A mission: what its next tier to claim asks, the tiers claimed and
+   * that tier's Medals, and its bar, which reads Claim and claims that tier
+   * while it is done (a press a tier); finished, its last tier and a check. */
   private missionHtml(m: EventMission) {
     const def = EVENT_MISSIONS[m.type], finished = isFinished(m), ready = unclaimedTiers(m) > 0;
     const tier = Math.min(m.claimed, TIERS - 1), target = def.targets[tier], boost = this.ctx.game.events.boosted ? 2 : 1;
-    const medals = (ready ? tierMedals(tiersDone(m)) - tierMedals(m.claimed) : TIER_MEDALS[tier]) * boost;
+    const medals = TIER_MEDALS[tier] * boost;
     const reward = finished ? checkIcon() : `<span class="mission-reward" title="${medals} Medals">${medalIcon()}<b>${medals}</b></span>`;
     const fill = `<i style="width:${Math.min(100, (100 * m.progress) / target)}%"></i>`;
     const bar = ready
@@ -159,8 +159,9 @@ export class EventsPage {
     el("events").querySelectorAll<HTMLButtonElement>("[data-claim]").forEach((b) => (b.onclick = () => this.claim(Number(b.dataset.claim))));
   }
 
-  /** Claims mission `id`'s Medals: saved, redrawn, and risen to the middle
-   * of the screen. */
+  /** Claims mission `id`'s next tier: saved, redrawn (showing the next
+   * tier, Claim again while it too is done), and its Medals risen to the
+   * middle of the screen. */
   private claim(id: number) {
     const game = this.ctx.game, m = game.events.missions.find((x) => x.id === id), medals = game.events.claim(id);
     if (!m || medals === null) return;

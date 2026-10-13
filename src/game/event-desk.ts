@@ -5,7 +5,7 @@ import { random, stream } from "../random.ts";
 import { estimatedServerTime, gmtDay } from "../shop/clock.ts";
 import {
   DRAWN_MISSIONS, EVENT_MISSIONS, FIXED_MISSIONS, TIERS,
-  eventAt, eventEndsAt, nextReleaseAt, releasedBy, stubEvent, tierMedals, type EventInfo, type EventMissionType,
+  eventAt, eventEndsAt, nextReleaseAt, releasedBy, stubEvent, TIER_MEDALS, type EventInfo, type EventMissionType,
 } from "../events/catalog.ts";
 import {
   COUNTED_KEPT, defaultEvents, grantRelics, isBoosted, isComplete, isFinished, noStreaks, relicMedals, tiersDone, unclaimedMedals, unclaimedTiers,
@@ -73,14 +73,15 @@ export class EventDesk {
     return this.unlocked && e.missions.some((m) => !e.seen.includes(m.id) || unclaimedTiers(m) > 0 || (isFinished(m) && !e.moved.includes(m.id)));
   }
 
-  /** Pays the Medals of mission `id`'s tiers done and not yet claimed
-   * (doubled once boosted), and any relic they reach; returns the Medals
-   * paid, or null with none to claim. */
+  /** Pays the Medals of mission `id`'s first tier done and not yet claimed
+   * (doubled once boosted), and any relic they reach: one tier a claim, so
+   * a mission past two tiers is claimed twice. Returns the Medals paid, or
+   * null with none to claim. */
   claim(id: number) {
     const e = this.e, m = e.missions.find((x) => x.id === id);
     if (!m || unclaimedTiers(m) <= 0) return null;
-    const medals = (tierMedals(tiersDone(m)) - tierMedals(m.claimed)) * (isBoosted(e) ? 2 : 1);
-    m.claimed = tiersDone(m);
+    const medals = TIER_MEDALS[m.claimed]! * (isBoosted(e) ? 2 : 1);
+    m.claimed++;
     this.host.save.medals += medals;
     earn(this.host.save, "medals", medals);
     grantRelics(this.host.save);

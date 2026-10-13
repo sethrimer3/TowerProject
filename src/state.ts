@@ -70,7 +70,7 @@ import { enemyStat, keyCount, whole, wholeChange } from "./whole.ts";
 import { MODES, milestones, type ModeProfile } from "./modes.ts";
 import { boughtInRun, ranksInRun, runTrainingBulk, runTrainingOffer, type RunTrainingOffer } from "./run-training.ts";
 import { openQuantities, type BuyQuantity } from "./buy-quantity.ts";
-import { attackPerTile, attackRange, attackSpeed, multishotChance, multishotTargets, critRule, keepUndos, loadout, percentPotionChance, potionPercent, reviveChance, statFactor } from "./loadout.ts";
+import { attackPerTile, attackRange, attackSpeed, multishotChance, multishotTargets, critRule, keepUndos, loadout, percentPotionChance, potionPercent, reviveChance, statFactor, type TrainingView } from "./loadout.ts";
 import { researched } from "./archives.ts";
 import { chargesLeft, chargesPerRun, climbFloor, spendCharge, type Charge } from "./run-charges.ts";
 import type { MaterialId, MaterialStack } from "./materials.ts";
@@ -1355,6 +1355,11 @@ export class Game {
    * (Key Efficiency research): what steps pay and the door cards plan by. */
   get keyCost() {
     return researched(this.save.archives, "keyCost", 1000);
+  }
+  /** Where the Training tab reads its rows' values: this mode's hero, and
+   * the run while one is inside (`TrainingView`). */
+  get trainingView(): TrainingView {
+    return this.run.outside ? { mode: this.mode } : { mode: this.mode, run: this.run };
   }
   /** The upgrades owned and the Training ranks that count now: the hero's
    * own, and those this run bought with Silver. */
