@@ -1,0 +1,349 @@
+/* Yang and Yin themes: the page as a quiet garden, spare and still.
+   Yang is ink on pale rice paper; Yin the same by night, pale ink on dark
+   stone. Hairline frames, open space, a light serif (the bundled Cormorant
+   Garamond), the seal's red only for what is new or dangerous, and a faint
+   ensō brushed behind it all.
+   Every selector is scoped under `html.yang` or `html.yin` (both through
+   `:is(.yang, .yin)`) so nothing changes while the themes are off. Loaded
+   after style.css and the other themes. */
+@font-face {
+  font-family: "Cormorant Garamond";
+  src: url("../assets/fonts/CormorantGaramond/CormorantGaramond-Medium.woff2") format("woff2");
+  font-weight: 400 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Cormorant Garamond";
+  src: url("../assets/fonts/CormorantGaramond/CormorantGaramond-Bold.woff2") format("woff2");
+  font-weight: 700 900;
+  font-style: normal;
+  font-display: swap;
+}
+html.yang {
+  --z-paper: #f4f1ea;
+  --z-panel: #faf8f3;
+  --z-ink: #2b2a27;
+  --z-soft: #6e6a62;
+  --z-line: #cfc9bc;
+  --z-wash: #e9e4d8;
+  --z-seal: #b5402a;
+  --z-moss: #5f6f42;
+  color-scheme: light;
+}
+html.yin {
+  --z-paper: #151514;
+  --z-panel: #1c1c1a;
+  --z-ink: #e6e0d3;
+  --z-soft: #9a958a;
+  --z-line: #3a3833;
+  --z-wash: #262522;
+  --z-seal: #d0573f;
+  --z-moss: #9aab78;
+  color-scheme: dark;
+}
+html:is(.yang, .yin) {
+  --gold: var(--z-ink);
+  --muted: var(--z-soft);
+  --line: var(--z-line);
+  color: var(--z-ink);
+  background: var(--z-paper);
+}
+/* One light serif for every line of text (a badge's symbol keeps the
+   system face that has its glyph). */
+html:is(.yang, .yin),
+html:is(.yang, .yin) *:not(.badge-glyph, .badge-mark) {
+  font-family: "Cormorant Garamond", Garamond, Georgia, serif;
+  font-size-adjust: 0.5;
+  font-variant-numeric: lining-nums;
+  letter-spacing: 0.02em;
+}
+/* The paper, and a faint ensō brushed in its corner. */
+html.yang body {
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cpath d='M150 52A70 70 0 1 0 166 92' fill='none' stroke='%232b2a27' stroke-width='9' stroke-linecap='round' opacity='.045'/%3E%3C/svg%3E") right -60px bottom -40px / 340px no-repeat fixed,
+    var(--z-paper);
+}
+html.yin body {
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cpath d='M150 52A70 70 0 1 0 166 92' fill='none' stroke='%23e6e0d3' stroke-width='9' stroke-linecap='round' opacity='.045'/%3E%3C/svg%3E") right -60px bottom -40px / 340px no-repeat fixed,
+    var(--z-paper);
+}
+/* The page's own colours give way everywhere: ink on paper, no glows, no
+   gradients, hairline lines. `:not(#_)` lifts these over the page's class
+   rules (and the ones below over these); a style written on an element (a
+   colour swatch) still wins. Drawings (canvas, images, svg) and the bars'
+   fills (`i`) keep theirs. Pseudo-elements, such as the red dots on what is
+   new, are untouched. */
+html:is(.yang, .yin) body *:not(#_, canvas, img, svg, svg *, i, .eq-tile, .badge-token, [class*="rar"]) {
+  background-color: transparent;
+  background-image: none;
+  box-shadow: none;
+  text-shadow: none;
+  backdrop-filter: none;
+}
+html:is(.yang, .yin) body *:not(#_, svg, svg *) {
+  color: var(--z-ink);
+}
+html:is(.yang, .yin) body *:not(#_, svg, svg *, .eq-tile, .badge-token, [class*="rar"]) {
+  border-color: var(--z-line);
+}
+html:is(.yang, .yin) main.shell:not(#_) {
+  background: transparent;
+}
+html:is(.yang, .yin) * {
+  scrollbar-color: var(--z-line) transparent;
+}
+html:is(.yang, .yin) ::-webkit-scrollbar-thumb {
+  background-color: var(--z-line);
+  background-image: none;
+  border-radius: 7px;
+}
+
+/* Panels: a paler sheet with a hairline edge and soft corners. */
+html:is(.yang, .yin) .stats:not(#_),
+html:is(.yang, .yin) .card:not(#_),
+html:is(.yang, .yin) .upgrade:not(#_),
+html:is(.yang, .yin) .shop:not(#_),
+html:is(.yang, .yin) .theme-card:not(#_),
+html:is(.yang, .yin) .weekly:not(#_),
+html:is(.yang, .yin) .mission:not(#_),
+html:is(.yang, .yin) .event-boost:not(#_),
+html:is(.yang, .yin) .archivist:not(#_),
+html:is(.yang, .yin) .research:not(#_),
+html:is(.yang, .yin) .pull-box:not(#_),
+html:is(.yang, .yin) .eq-loadout:not(#_),
+html:is(.yang, .yin) .equip-materials:not(#_),
+html:is(.yang, .yin) .purse-big:not(#_),
+html:is(.yang, .yin) .starting-stats:not(#_),
+html:is(.yang, .yin) .training-boost:not(#_),
+html:is(.yang, .yin) .tournament-standing:not(#_),
+html:is(.yang, .yin) .tournament-tickets:not(#_),
+html:is(.yang, .yin) .badge-box:not(#_),
+html:is(.yang, .yin) .deck-reserve:not(#_),
+html:is(.yang, .yin) .defend-palette:not(#_),
+html:is(.yang, .yin) .card-reveal:not(#_),
+html:is(.yang, .yin) .badge-reveal:not(#_),
+html:is(.yang, .yin) .skill-tree:not(#_),
+html:is(.yang, .yin) .goals-stage:not(#_),
+html:is(.yang, .yin) .training-box:not(#_),
+html:is(.yang, .yin) .setting:not(#_),
+html:is(.yang, .yin) dialog:not(#_) {
+  border: 1px solid var(--z-line);
+  border-radius: 6px;
+  background: var(--z-panel);
+}
+html:is(.yang, .yin) .portrait-top:not(#_),
+html:is(.yang, .yin) .hp-readout:not(#_),
+html:is(.yang, .yin) .training-held:not(#_),
+html:is(.yang, .yin) .node-icon:not(#_),
+html:is(.yang, .yin) select:not(#_),
+html:is(.yang, .yin) input:not([type="checkbox"]:not(#_),
+[type="radio"]:not(#_),
+[type="range"]):not(#_) {
+  border-radius: 4px;
+  background: var(--z-wash);
+}
+/* The theme worn: its sheet edged in ink. */
+html:is(.yang, .yin) .theme-card.worn:not(#_) {
+  border-color: var(--z-ink);
+}
+/* What explains or tells: a paper slip with an ink hairline. */
+html:is(.yang, .yin) .board-tip:not(#_),
+html:is(.yang, .yin) .board-tip.dismissable:hover:not(#_),
+html:is(.yang, .yin) .research-toast:not(#_),
+html:is(.yang, .yin) .deck-tip:not(#_),
+html:is(.yang, .yin) .node-name:not(#_),
+html:is(.yang, .yin) .goals-floor:not(#_),
+html:is(.yang, .yin) .inspection:not(#_),
+html:is(.yang, .yin) .inspect-box:not(#_) {
+  background: var(--z-panel);
+  border: 1px solid var(--z-soft);
+  border-radius: 4px;
+}
+html:is(.yang, .yin) .inspection:empty:not(#_) {
+  border: 0;
+}
+html:is(.yang, .yin) .status:not(#_) {
+  border: 0;
+  border-top: 1px solid var(--z-line);
+  border-radius: 0;
+}
+
+/* Titles: wide-set, quiet, a small red seal before them and a brushed
+   stroke under them. */
+html:is(.yang, .yin) .page-title:not(#_) {
+  border: 0;
+}
+html:is(.yang, .yin) .page-title small:not(#_) {
+  color: var(--z-soft);
+  letter-spacing: 0.3em;
+}
+html:is(.yang, .yin) .page-title h2:not(#_),
+html:is(.yang, .yin) dialog h2:not(#_) {
+  font-weight: 500;
+  letter-spacing: 0.12em;
+}
+html:is(.yang, .yin) .page-title h2::before {
+  content: "";
+  display: inline-block;
+  width: 0.42em;
+  height: 0.42em;
+  margin: 0 0.45em 0.12em 0;
+  vertical-align: middle;
+  background: var(--z-seal);
+  border-radius: 1px;
+}
+html:is(.yang, .yin) .page-title h2::after {
+  content: "";
+  display: block;
+  width: 64px;
+  height: 2px;
+  margin: 8px auto 0;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, var(--z-ink) 20%, var(--z-ink) 70%, transparent);
+  opacity: 0.55;
+}
+html:is(.yang, .yin) .eyebrow:not(#_),
+html:is(.yang, .yin) .hint:not(#_),
+html:is(.yang, .yin) .board-caption:not(#_),
+html:is(.yang, .yin) small:not(#_) {
+  color: var(--z-soft);
+}
+html:is(.yang, .yin) dialog::backdrop {
+  background: color-mix(in srgb, var(--z-paper) 70%, transparent);
+  backdrop-filter: blur(2px);
+}
+
+/* Buttons: a hairline, soft corners, ink fill when chosen. */
+html:is(.yang, .yin) button:not(#_) {
+  border: 1px solid var(--z-line);
+  border-radius: 6px;
+  background: var(--z-panel);
+}
+html:is(.yang, .yin) button:hover:not(#_) {
+  border-color: var(--z-soft);
+}
+html:is(.yang, .yin) button:active:not(#_) {
+  background: var(--z-wash);
+}
+html:is(.yang, .yin) button.selected:not(#_),
+html:is(.yang, .yin) button[aria-pressed="true"]:not(#_) {
+  border-color: var(--z-ink);
+  background: var(--z-ink);
+}
+html:is(.yang, .yin) button.selected:not(#_) *:not(svg, svg *, img, canvas),
+html:is(.yang, .yin) button.selected:not(#_),
+html:is(.yang, .yin) button[aria-pressed="true"]:not(#_),
+html:is(.yang, .yin) button[aria-pressed="true"]:not(#_) *:not(svg, svg *, img, canvas) {
+  color: var(--z-paper);
+}
+html:is(.yang, .yin) button:focus-visible:not(#_),
+html:is(.yang, .yin) select:focus-visible:not(#_),
+html:is(.yang, .yin) input:focus-visible:not(#_) {
+  outline: 1px solid var(--z-ink);
+  outline-offset: 2px;
+}
+html:is(.yang, .yin) button:disabled:not(#_),
+html:is(.yang, .yin) button:disabled *:not(#_) {
+  color: var(--z-soft);
+  opacity: 0.6;
+}
+/* Buttons drawn as pictures keep a bare face. */
+html:is(.yang, .yin) .skill-node:not(#_),
+html:is(.yang, .yin) .hand-card:not(#_) {
+  border-color: transparent;
+  background: transparent;
+}
+html:is(.yang, .yin) input[type="checkbox"]:not(#_),
+html:is(.yang, .yin) input[type="radio"]:not(#_),
+html:is(.yang, .yin) input[type="range"]:not(#_) {
+  accent-color: var(--z-ink);
+}
+html:is(.yang, .yin) option:not(#_) {
+  background: var(--z-panel);
+}
+
+/* The board rests on a plain sheet, edged by a hairline. */
+html:is(.yang, .yin) .board:not(#_) {
+  border: 1px solid var(--z-line);
+  border-radius: 2px;
+}
+html:is(.yang, .yin) .rule:not(#_),
+html:is(.yang, .yin) .inventory-divider:not(#_) {
+  background: var(--z-line);
+}
+
+/* The tab bar: a quiet strip under a hairline, the open page's icon on an
+   ink-washed tile. */
+html:is(.yang, .yin) nav:not(#_) {
+  border-top: 1px solid var(--z-line);
+  background: var(--z-paper);
+}
+html:is(.yang, .yin) nav button:not(#_) {
+  border-color: transparent;
+  background: transparent;
+}
+html:is(.yang, .yin) nav button.selected:not(#_),
+html:is(.yang, .yin) .training-bar button.selected:not(#_) {
+  border-color: var(--z-line);
+  background: var(--z-wash);
+}
+html:is(.yang, .yin) .hand-card.active:not(#_) {
+  box-shadow: 0 0 0 2px var(--z-ink);
+}
+
+/* Bars: a fine groove filling with a stroke of ink, HP the seal's red. */
+html:is(.yang, .yin) .xp-track:not(#_),
+html:is(.yang, .yin) .health-track:not(#_),
+html:is(.yang, .yin) .weekly-bar:not(#_),
+html:is(.yang, .yin) .mission-bar:not(#_),
+html:is(.yang, .yin) .research-bar:not(#_),
+html:is(.yang, .yin) .refine-bar:not(#_) {
+  border: 0;
+  border-radius: 3px;
+  background: var(--z-wash);
+}
+html:is(.yang, .yin) .xp-track i:not(#_),
+html:is(.yang, .yin) .weekly-bar i:not(#_),
+html:is(.yang, .yin) .mission-bar i:not(#_),
+html:is(.yang, .yin) .research-bar i:not(#_),
+html:is(.yang, .yin) .refine-bar span:not(#_),
+html:is(.yang, .yin) .event-bar i:not(#_) {
+  border-radius: 3px;
+  background: var(--z-ink);
+  box-shadow: none;
+}
+html:is(.yang, .yin) .health-track i:not(#_):not(#health-gain, #health-loss) {
+  border-radius: 3px;
+  background: var(--z-seal);
+  box-shadow: none;
+}
+html:is(.yang, .yin) .mission-bar span:not(#_) {
+  color: var(--z-ink);
+  mix-blend-mode: difference;
+}
+html:is(.yang, .yin) .heart:not(#_),
+html:is(.yang, .yin) .danger:not(#_),
+html:is(.yang, .yin) .danger *:not(#_),
+html:is(.yang, .yin) .short:not(#_),
+html:is(.yang, .yin) .short *:not(#_) {
+  color: var(--z-seal) !important;
+}
+/* No card can act: the button that ends the run turns the seal's red. */
+html:is(.yang, .yin) #end-run.deadlocked:not(#_),
+html:is(.yang, .yin) #stuck-end-run.deadlocked:not(#_) {
+  color: var(--z-paper) !important;
+  background: var(--z-seal);
+}
+html:is(.yang, .yin) .safe:not(#_),
+html:is(.yang, .yin) .eq-result-title:not(#_) {
+  color: var(--z-moss) !important;
+}
+/* Keys keep their colour, in quiet tones. */
+html.yang .keys .yellow:not(#_) { color: #a8811c; }
+html.yang .keys .blue:not(#_) { color: #3f6585; }
+html.yang .keys .red:not(#_) { color: #b5402a; }
+html.yin .keys .yellow:not(#_) { color: #d4b04a; }
+html.yin .keys .blue:not(#_) { color: #7ea6c4; }
+html.yin .keys .red:not(#_) { color: #d0573f; }
