@@ -2,7 +2,7 @@
 
 ## Bosses
 
-A boss, glowing red and gold with three chevrons, several times a normal monster's HP and the hardest strikes on its floor, guards the way up every ten floors: it stands in front of the stairs on Tower floors 10, 20, 30 and so on, and in the shaft below each Delve milestone gate, so it must be beaten to climb on.
+A boss, glowing red and gold with three chevrons, several times a normal monster's HP but striking no harder than the toughest monsters around it, guards the way up every ten floors: it stands in front of the stairs on Tower floors 10, 20, 30 and so on, and in the shaft below each Delve milestone gate, so it must be beaten to climb on.
 A Tower floor also hides a secret: put out every torch on it and a **Greater Boss** appears in a puff of smoke on the open floor nearest the stairs (once a floor each run).
 Ringed in violet and gold with four chevrons, it has twice a boss's HP, ATK and DEF and pays twice a boss's Gold, Silver and XP.
 
