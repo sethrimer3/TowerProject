@@ -60,16 +60,10 @@ const TOWER_SHAPES = {
   },
 } satisfies Pick<EnemyCurve, "strength" | "profile">;
 
-/** The Delve's: a strong enemy is half again as tough, an elite three times,
- * and a boss twice a strong one's HP and ATK. */
+/** The Delve's: the Tower's strengths, an elite read ten equivalent floors
+ * ahead, and its own profiles. */
 const DELVE_SHAPES = {
-  strength: {
-    weak: all(0.75),
-    normal: SAME,
-    strong: all(1.5),
-    elite: all(3),
-    boss: { hp: 3, attack: 3, defense: 1.5 },
-  },
+  strength: TOWER_SHAPES.strength,
   profile: {
     attackHeavy: { hp: 0.85, attack: 1.4, defense: 1 },
     balanced: SAME,

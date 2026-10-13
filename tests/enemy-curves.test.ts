@@ -96,12 +96,13 @@ test("bosses are a multiplier on their own floor's curve, and a Greater Boss twi
     }
 });
 
-test("Delve strong, elite and boss DEF scale with the curve, not by a flat bonus", () => {
-  for (const depth of [0, 99, 1000, 5000]) {
-    const normal = enemyStats("delve", 1, depth, "normal", "balanced");
-    for (const [strength, k] of [["strong", 1.5], ["elite", 3], ["boss", 1.5]] as const)
-      assert.ok(near(enemyStats("delve", 1, depth, strength, "balanced").defense, normal.defense * k, 0.01), `${strength} ${depth}`);
-  }
+test("a Delve enemy of each strength matches the Tower's on the same equivalent floor, its elite ten floors ahead", () => {
+  for (const floor of [0, 9, 40, 99, 299])
+    for (const strength of ["weak", "normal", "strong", "elite", "boss"] as const) {
+      const delve = enemyStats("delve", 1, floor * 10, strength, "balanced"), tower = enemyStats("tower", 1, floor, strength, "balanced");
+      for (const stat of ["hp", "attack", "defense"] as const)
+        assert.ok(near(delve[stat], tower[stat], 0.01), `floor ${floor + 1} ${strength} ${stat}: ${delve[stat]} against ${tower[stat]}`);
+    }
 });
 
 test("a tower or delve given its own curve generates its enemies from it", () => {
