@@ -9,6 +9,7 @@ import "./desktop.css";
 import "./glyph.css";
 import "./ember.css";
 import "./zen.css";
+import "./bare.css";
 import { load, persist } from "./save.ts";
 import { stampProfile } from "./profile.ts";
 import { Game } from "./state.ts";

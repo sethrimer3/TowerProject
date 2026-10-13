@@ -1,0 +1,278 @@
+/* Shiro and Kuro themes: the page with nothing left but what it says.
+   Shiro is flat black on white; Kuro flat white on black. One plain sans
+   (the bundled Inter), no lines, no shadows, no gradients: panels and
+   buttons are flat blocks a shade off the page, the chosen one filled
+   solid, and one colour (red) only for what is new or dangerous.
+   Every selector is scoped under `html.shiro` or `html.kuro` (both through
+   `:is(.shiro, .kuro)`) so nothing changes while the themes are off.
+   Loaded after style.css and the other themes. */
+@font-face {
+  font-family: Inter;
+  src: url("../assets/fonts/Inter/Inter-Regular.woff2") format("woff2");
+  font-weight: 400 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: Inter;
+  src: url("../assets/fonts/Inter/Inter-SemiBold.woff2") format("woff2");
+  font-weight: 600 900;
+  font-style: normal;
+  font-display: swap;
+}
+html.shiro {
+  --b-page: #ffffff;
+  --b-block: #f0f0f0;
+  --b-press: #e2e2e2;
+  --b-ink: #1a1a1a;
+  --b-soft: #8a8a8a;
+  --b-red: #d93a3a;
+  --b-green: #2e9e5b;
+  color-scheme: light;
+}
+html.kuro {
+  --b-page: #0d0d0d;
+  --b-block: #1c1c1c;
+  --b-press: #2a2a2a;
+  --b-ink: #ededed;
+  --b-soft: #8a8a8a;
+  --b-red: #ff5a5a;
+  --b-green: #4fcf82;
+  color-scheme: dark;
+}
+html:is(.shiro, .kuro) {
+  --gold: var(--b-ink);
+  --muted: var(--b-soft);
+  --line: var(--b-block);
+  color: var(--b-ink);
+  background: var(--b-page);
+}
+/* One plain sans for every line of text (a badge's symbol keeps the system
+   face that has its glyph). */
+html:is(.shiro, .kuro),
+html:is(.shiro, .kuro) *:not(.badge-glyph, .badge-mark) {
+  font-family: Inter, "Helvetica Neue", Arial, sans-serif;
+  font-size-adjust: 0.5;
+  letter-spacing: 0;
+}
+html:is(.shiro, .kuro) body {
+  background: var(--b-page);
+}
+/* The page's own colours, lines and glows give way everywhere: ink on the
+   page and nothing else. `:not(#_)` lifts these over the page's class rules
+   (and the ones below over these); a style written on an element (a colour
+   swatch) still wins. Drawings (canvas, images, svg) and the bars' fills
+   (`i`) keep theirs. Pseudo-elements, such as the red dots on what is new,
+   are untouched. */
+html:is(.shiro, .kuro) body *:not(#_, canvas, img, svg, svg *, i, .eq-tile, .badge-token, [class*="rar"]) {
+  background-color: transparent;
+  background-image: none;
+  border-color: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  text-shadow: none;
+  backdrop-filter: none;
+  outline-color: transparent;
+}
+html:is(.shiro, .kuro) body *:not(#_, svg, svg *) {
+  color: var(--b-ink);
+}
+html:is(.shiro, .kuro) main.shell:not(#_) {
+  background: transparent;
+}
+html:is(.shiro, .kuro) * {
+  scrollbar-color: var(--b-press) transparent;
+}
+html:is(.shiro, .kuro) ::-webkit-scrollbar-thumb {
+  background-color: var(--b-press);
+  background-image: none;
+  border-radius: 0;
+}
+
+/* Panels: a flat block a shade off the page. */
+html:is(.shiro, .kuro) .stats:not(#_),
+html:is(.shiro, .kuro) .card:not(#_),
+html:is(.shiro, .kuro) .upgrade:not(#_),
+html:is(.shiro, .kuro) .shop:not(#_),
+html:is(.shiro, .kuro) .theme-card:not(#_),
+html:is(.shiro, .kuro) .weekly:not(#_),
+html:is(.shiro, .kuro) .mission:not(#_),
+html:is(.shiro, .kuro) .event-boost:not(#_),
+html:is(.shiro, .kuro) .archivist:not(#_),
+html:is(.shiro, .kuro) .research:not(#_),
+html:is(.shiro, .kuro) .pull-box:not(#_),
+html:is(.shiro, .kuro) .eq-loadout:not(#_),
+html:is(.shiro, .kuro) .equip-materials:not(#_),
+html:is(.shiro, .kuro) .purse-big:not(#_),
+html:is(.shiro, .kuro) .starting-stats:not(#_),
+html:is(.shiro, .kuro) .training-boost:not(#_),
+html:is(.shiro, .kuro) .tournament-standing:not(#_),
+html:is(.shiro, .kuro) .tournament-tickets:not(#_),
+html:is(.shiro, .kuro) .badge-box:not(#_),
+html:is(.shiro, .kuro) .deck-reserve:not(#_),
+html:is(.shiro, .kuro) .defend-palette:not(#_),
+html:is(.shiro, .kuro) .card-reveal:not(#_),
+html:is(.shiro, .kuro) .badge-reveal:not(#_),
+html:is(.shiro, .kuro) .skill-tree:not(#_),
+html:is(.shiro, .kuro) .goals-stage:not(#_),
+html:is(.shiro, .kuro) .training-box:not(#_),
+html:is(.shiro, .kuro) .setting:not(#_),
+html:is(.shiro, .kuro) .board-tip:not(#_),
+html:is(.shiro, .kuro) .board-tip.dismissable:hover:not(#_),
+html:is(.shiro, .kuro) .research-toast:not(#_),
+html:is(.shiro, .kuro) .deck-tip:not(#_),
+html:is(.shiro, .kuro) .node-name:not(#_),
+html:is(.shiro, .kuro) .goals-floor:not(#_),
+html:is(.shiro, .kuro) .inspection:not(#_),
+html:is(.shiro, .kuro) .inspect-box:not(#_),
+html:is(.shiro, .kuro) dialog:not(#_) {
+  background: var(--b-block);
+}
+html:is(.shiro, .kuro) .inspection:empty:not(#_) {
+  background: transparent;
+}
+html:is(.shiro, .kuro) .portrait-top:not(#_),
+html:is(.shiro, .kuro) .hp-readout:not(#_),
+html:is(.shiro, .kuro) .training-held:not(#_),
+html:is(.shiro, .kuro) .node-icon:not(#_),
+html:is(.shiro, .kuro) select:not(#_),
+html:is(.shiro, .kuro) input:not([type="checkbox"]:not(#_),
+[type="radio"]:not(#_),
+[type="range"]):not(#_) {
+  background: var(--b-page);
+}
+/* The theme worn: its block filled a shade deeper. */
+html:is(.shiro, .kuro) .theme-card.worn:not(#_) {
+  background: var(--b-press);
+}
+html:is(.shiro, .kuro) .page-title small:not(#_),
+html:is(.shiro, .kuro) .eyebrow:not(#_),
+html:is(.shiro, .kuro) .hint:not(#_),
+html:is(.shiro, .kuro) .board-caption:not(#_),
+html:is(.shiro, .kuro) small:not(#_) {
+  color: var(--b-soft);
+}
+html:is(.shiro, .kuro) .page-title h2:not(#_),
+html:is(.shiro, .kuro) dialog h2:not(#_) {
+  font-weight: 600;
+}
+html:is(.shiro, .kuro) dialog::backdrop {
+  background: color-mix(in srgb, var(--b-page) 80%, transparent);
+  backdrop-filter: none;
+}
+
+/* Buttons: a flat block, a shade deeper when pressed, filled with ink when
+   chosen. */
+html:is(.shiro, .kuro) button:not(#_) {
+  background: var(--b-block);
+}
+html:is(.shiro, .kuro) :is(.stats, .card, .upgrade, .shop, .theme-card, .mission, .research, .setting, dialog) button:not(#_) {
+  background: var(--b-press);
+}
+html:is(.shiro, .kuro) button:active:not(#_) {
+  background: var(--b-press);
+}
+html:is(.shiro, .kuro) button.selected:not(#_),
+html:is(.shiro, .kuro) button[aria-pressed="true"]:not(#_) {
+  background: var(--b-ink);
+}
+html:is(.shiro, .kuro) button.selected:not(#_) *:not(svg, svg *, img, canvas),
+html:is(.shiro, .kuro) button.selected:not(#_),
+html:is(.shiro, .kuro) button[aria-pressed="true"]:not(#_),
+html:is(.shiro, .kuro) button[aria-pressed="true"]:not(#_) *:not(svg, svg *, img, canvas) {
+  color: var(--b-page);
+}
+html:is(.shiro, .kuro) button:focus-visible:not(#_),
+html:is(.shiro, .kuro) select:focus-visible:not(#_),
+html:is(.shiro, .kuro) input:focus-visible:not(#_) {
+  outline: 2px solid var(--b-ink);
+  outline-offset: 1px;
+}
+html:is(.shiro, .kuro) button:disabled:not(#_),
+html:is(.shiro, .kuro) button:disabled *:not(#_) {
+  color: var(--b-soft);
+  opacity: 0.6;
+}
+/* Buttons drawn as pictures keep a bare face. */
+html:is(.shiro, .kuro) .skill-node:not(#_),
+html:is(.shiro, .kuro) .hand-card:not(#_) {
+  background: transparent;
+}
+html:is(.shiro, .kuro) input[type="checkbox"]:not(#_),
+html:is(.shiro, .kuro) input[type="radio"]:not(#_),
+html:is(.shiro, .kuro) input[type="range"]:not(#_) {
+  accent-color: var(--b-ink);
+}
+html:is(.shiro, .kuro) option:not(#_) {
+  background: var(--b-page);
+}
+html:is(.shiro, .kuro) .rule:not(#_),
+html:is(.shiro, .kuro) .inventory-divider:not(#_) {
+  background: var(--b-block);
+}
+
+/* The tab bar: icons on the page, the open one on a block. */
+html:is(.shiro, .kuro) nav:not(#_),
+html:is(.shiro, .kuro) nav button:not(#_) {
+  background: transparent;
+}
+html:is(.shiro, .kuro) nav button.selected:not(#_),
+html:is(.shiro, .kuro) .training-bar button.selected:not(#_) {
+  background: var(--b-block);
+}
+html:is(.shiro, .kuro) .hand-card.active:not(#_) {
+  box-shadow: 0 0 0 2px var(--b-ink);
+}
+
+/* Bars: a flat track filled with ink, HP red. */
+html:is(.shiro, .kuro) .xp-track:not(#_),
+html:is(.shiro, .kuro) .health-track:not(#_),
+html:is(.shiro, .kuro) .weekly-bar:not(#_),
+html:is(.shiro, .kuro) .mission-bar:not(#_),
+html:is(.shiro, .kuro) .research-bar:not(#_),
+html:is(.shiro, .kuro) .refine-bar:not(#_) {
+  background: var(--b-press);
+}
+html:is(.shiro, .kuro) .xp-track i:not(#_),
+html:is(.shiro, .kuro) .weekly-bar i:not(#_),
+html:is(.shiro, .kuro) .mission-bar i:not(#_),
+html:is(.shiro, .kuro) .research-bar i:not(#_),
+html:is(.shiro, .kuro) .refine-bar span:not(#_),
+html:is(.shiro, .kuro) .event-bar i:not(#_) {
+  border-radius: 0;
+  background: var(--b-ink);
+  box-shadow: none;
+}
+html:is(.shiro, .kuro) .health-track i:not(#_):not(#health-gain, #health-loss) {
+  border-radius: 0;
+  background: var(--b-red);
+  box-shadow: none;
+}
+html:is(.shiro, .kuro) .mission-bar span:not(#_) {
+  color: var(--b-ink);
+  mix-blend-mode: difference;
+}
+html:is(.shiro, .kuro) .heart:not(#_),
+html:is(.shiro, .kuro) .danger:not(#_),
+html:is(.shiro, .kuro) .danger *:not(#_),
+html:is(.shiro, .kuro) .short:not(#_),
+html:is(.shiro, .kuro) .short *:not(#_) {
+  color: var(--b-red) !important;
+}
+/* No card can act: the button that ends the run turns red. */
+html:is(.shiro, .kuro) #end-run.deadlocked:not(#_),
+html:is(.shiro, .kuro) #stuck-end-run.deadlocked:not(#_) {
+  color: var(--b-page) !important;
+  background: var(--b-red);
+}
+html:is(.shiro, .kuro) .safe:not(#_),
+html:is(.shiro, .kuro) .eq-result-title:not(#_) {
+  color: var(--b-green) !important;
+}
+/* Keys keep their colour. */
+html.shiro .keys .yellow:not(#_) { color: #b38c00; }
+html.shiro .keys .blue:not(#_) { color: #3d7bd9; }
+html.shiro .keys .red:not(#_) { color: #d93a3a; }
+html.kuro .keys .yellow:not(#_) { color: #f2cc2a; }
+html.kuro .keys .blue:not(#_) { color: #5d96ef; }
+html.kuro .keys .red:not(#_) { color: #ff5a5a; }

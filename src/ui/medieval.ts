@@ -35,6 +35,13 @@ export const YANG_CLASS = "yang";
  * root. */
 export const YIN_CLASS = "yin";
 
+/** Flat black on white, nothing more: `bare.css` dresses this class on the
+ * root. */
+export const SHIRO_CLASS = "shiro";
+
+/** Flat white on black: `bare.css` dresses this class on the root. */
+export const KURO_CLASS = "kuro";
+
 /** Dresses the page in the UI theme worn (`uiLook`: Classic wears none of
  * their classes) and mirrors Reduce motion. */
 export function applyUiTheme(save: Pick<Save, "themes" | "settings">) {
@@ -47,6 +54,8 @@ export function applyUiTheme(save: Pick<Save, "themes" | "settings">) {
   root.toggle(EMBER_CLASS, look === "ember");
   root.toggle(YANG_CLASS, look === "yang");
   root.toggle(YIN_CLASS, look === "yin");
+  root.toggle(SHIRO_CLASS, look === "shiro");
+  root.toggle(KURO_CLASS, look === "kuro");
   root.toggle("reduce-motion", save.settings.reduceMotion);
 }
 

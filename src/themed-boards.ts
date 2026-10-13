@@ -7,6 +7,7 @@ import { DESKTOP_BOARD } from "./desktop-board.ts";
 import { GLYPH_BOARD } from "./glyph-board.ts";
 import { EMBER_BOARD } from "./ember-board.ts";
 import { YANG_BOARD, YIN_BOARD } from "./zen-board.ts";
+import { KURO_BOARD, SHIRO_BOARD } from "./bare-board.ts";
 
 /** How a Game theme other than Classic draws the dungeon board in place of
  * its lit art: the ground, each tile's contents, torches and the hero, each
@@ -32,6 +33,7 @@ export const THEMED_BOARDS: Readonly<Record<ThemedLook, ThemedBoard>> = {
   neon: NEON_BOARD, terminal: TERMINAL_BOARD, desktop: DESKTOP_BOARD,
   glyph: GLYPH_BOARD, ember: EMBER_BOARD,
   yang: YANG_BOARD, yin: YIN_BOARD,
+  shiro: SHIRO_BOARD, kuro: KURO_BOARD,
 };
 /** How a Game theme look draws the board, or null for Classic's lit art. */
 export const themedBoardOf = (look: GameLook): ThemedBoard | null => (look === "classic" ? null : THEMED_BOARDS[look]);
