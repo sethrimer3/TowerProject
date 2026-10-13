@@ -155,8 +155,8 @@ export class World implements Board {
       // Each enemy rolls Fast by its own equivalent floor.
       const floorAt = (x: number, y: number) => Math.floor(depthAt(this.seed, x, y, ownerAt(this.seed, x, y), this.tier) / 10) + 1;
       const cells = rangedCells(fastCells(tierCells(this.generated(index), this.tier), "delve", this.tier, this.seed, floorAt), this.tier, this.seed, floorAt);
-      // A tournament run's enemies stand stronger than the cave's own.
-      chunk = this.run.tournament ? tournamentCells(cells) : cells;
+      // A tournament run's enemies stand as strong as the next cave's.
+      chunk = this.run.tournament ? tournamentCells(cells, this.run.tournament.league) : cells;
       this.chunks.set(index, chunk);
     }
     const k = point(x, y), changed = this.changes[k];

@@ -1,7 +1,8 @@
 import type { Enemy, Mode, Tile } from "../entities.ts";
 import { snap } from "../exact.ts";
 import { random } from "../random.ts";
-import { isLeague, type League } from "./leagues.ts";
+import { TIER_STEP_FACTORS, TIERS } from "../tiers.ts";
+import { isLeague, LEAGUE_INFO, type League } from "./leagues.ts";
 import type { TournamentSeeds } from "./server.ts";
 
 // A tournament run (docs/TOURNAMENT.md): a Delve run in the league's cave,
@@ -23,21 +24,25 @@ export type TournamentRun = {
   back: { mode: Mode; tier: number };
 };
 
-/** Tournament enemies' HP, ATK and DEF, in tenths of the cave's: ×1.1. */
-export const TOURNAMENT_STAT_TENTHS = 11;
+/** How many times its cave's HP, ATK and DEF a tournament run's enemies
+ * have in `league`: the next cave's step (`TIER_STEP_FACTORS`), so they
+ * stand as strong as the next cave's without its Fast and Ranged enemies.
+ * ×5 in Copper's cave 1, ×3 from Silver's cave 3 up; Champion's cave 9,
+ * the last, takes the last cave's step. */
+export const tournamentStatFactor = (league: League) => TIER_STEP_FACTORS[Math.min(LEAGUE_INFO[league].cave, TIERS - 1)]!;
 
-/** `tile` as it stands in a tournament run: an enemy ×1.1 (after its
- * tier's factor), anything else as it was. */
-export function tournamentTile(tile: Tile): Tile {
+/** `tile` as it stands in a tournament run: an enemy `factor` times as
+ * strong (after its tier's factor), anything else as it was. */
+export function tournamentTile(tile: Tile, factor: number): Tile {
   if (tile.kind !== "enemy" || !tile.enemy) return tile;
-  const e: Enemy = tile.enemy, f = (n: number) => snap((n * TOURNAMENT_STAT_TENTHS) / 10);
+  const e: Enemy = tile.enemy, f = (n: number) => snap(n * factor);
   return { ...tile, enemy: { ...e, hp: f(e.hp), attack: f(e.attack), defense: f(e.defense) } };
 }
 
-/** Every tile of `cells` as it stands in a tournament run. */
-export function tournamentCells(cells: Map<string, Tile>) {
-  const out = new Map<string, Tile>();
-  for (const [k, t] of cells) out.set(k, tournamentTile(t));
+/** Every tile of `cells` as it stands in a tournament run in `league`. */
+export function tournamentCells(cells: Map<string, Tile>, league: League) {
+  const out = new Map<string, Tile>(), factor = tournamentStatFactor(league);
+  for (const [k, t] of cells) out.set(k, tournamentTile(t, factor));
   return out;
 }
 

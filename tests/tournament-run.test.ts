@@ -8,9 +8,10 @@ import { snap } from "../src/exact.ts";
 import { random } from "../src/random.ts";
 import { DAY_MS } from "../src/shop/clock.ts";
 import { TournamentClient } from "../src/tournament/client.ts";
-import { LEAGUE_INFO } from "../src/tournament/leagues.ts";
+import { LEAGUE_INFO, LEAGUES } from "../src/tournament/leagues.ts";
 import { ordinal, placeText } from "../src/tournament/prizes.ts";
-import { runStream, tournamentScore, type TournamentRun } from "../src/tournament/run.ts";
+import { runStream, tournamentScore, tournamentStatFactor, type TournamentRun } from "../src/tournament/run.ts";
+import { TIER_STEP_FACTORS, TIERS, tierStats } from "../src/tiers.ts";
 import { stubSeeds, stubTournament, type TournamentInfo } from "../src/tournament/server.ts";
 import { PRIZES } from "../src/tournament/prizes.ts";
 import { latestTournament } from "../src/tournament/schedule.ts";
@@ -46,7 +47,7 @@ function firstEnemy(world: World) {
   throw new Error("no enemy");
 }
 
-test("a tournament run spends a Ticket and goes into the league's cave from its seeds, enemies ×1.1", () => {
+test("a tournament run spends a Ticket and goes into the league's cave from its seeds, enemies as strong as the next cave's", () => {
   const g = unlockedGame(OPEN, 2), i = info("gold");
   assert.equal(g.mode, "tower");
   assert.ok(!g.save.upgrades.delve, "the Delve need not be open");
@@ -61,14 +62,24 @@ test("a tournament run spends a Ticket and goes into the league's cave from its 
   const t = g.delveRun.tournament!;
   assert.deepEqual({ ...t, drawn: undefined }, { id: "2026-10-07", league: "gold", entry: "2026-10-07#1", seeds: i.seeds, drawn: undefined, back: { mode: "tower", tier: 1 } });
   assert.deepEqual(g.save.tournament.entries["2026-10-07"], { best: 0, place: 0, entrants: 0, pending: null, entry: "2026-10-07#1" });
-  // Each enemy has 1.1 times the cave's stats.
+  // Each enemy has 3 times cave 5's stats, as cave 6's would.
   const plain = firstEnemy(new World({ seed: i.seeds.layout, changes: {}, floor: 0, milestone: 0, tier: 5 })).enemy!;
   const strong = firstEnemy(new World({ seed: i.seeds.layout, changes: {}, floor: 0, milestone: 0, tier: 5, tournament: t })).enemy!;
-  for (const k of ["hp", "attack", "defense"] as const) assert.equal(strong[k], snap((plain[k] * 11) / 10), k);
+  for (const k of ["hp", "attack", "defense"] as const) assert.equal(strong[k], snap(plain[k] * 3), k);
   // Only one run at a time.
   assert.equal(g.canBeginTournament, false);
   assert.equal(g.beginTournament(i, "2026-10-07#2"), false);
   assert.equal(g.save.tournament.tickets, 1, "nothing spent");
+});
+
+test("each league's tournament enemies have the next cave's stats: ×5 in Copper, ×3 above it", () => {
+  assert.deepEqual(LEAGUES.map(tournamentStatFactor), [5, 3, 3, 3, 3]);
+  for (const league of LEAGUES) {
+    const cave = LEAGUE_INFO[league].cave;
+    // Champion's cave 9 is the last: it takes the step every cave past the third does.
+    if (cave < TIERS) assert.equal(tierStats(cave) * tournamentStatFactor(league), tierStats(cave + 1), league);
+    else assert.equal(tournamentStatFactor(league), TIER_STEP_FACTORS[TIERS - 1], league);
+  }
 });
 
 test("no Ticket, no run; locked, no run", () => {

@@ -7,7 +7,7 @@ Status: **the build order is built** (the rules, save and stub server, the tourn
 - Tower I's floor 60 Goal (moved there from floor 70) is **Unlock the Tournament** (a new `GoalUnlock`, `tournament`).
 - Once it is claimed, a **Tournament Hall** stands at the top right of the forest clearing (both forests, every tier), with a trophy banner on its roof, and a **Tournament button** (trophy) stands under Settings in the forest.
 - A tournament opens every **Wednesday and Saturday, 00:00 to 24:00 GMT**, on the server's clock. Entries close at the end of the day; runs already inside get **4 more hours**; then the server tabulates the final results.
-- Each player belongs to one **league**: Copper, Silver, Gold, Platinum, Champion. A tournament run is a **Delve run in cave 1, 3, 5, 7 or 9** by league (shown as *Delve 1+*, *3+* …), with every enemy's stats ×1.1. Every entrant plays from the **same server seeds**. The **score is the depth reached**, ranked against the league worldwide.
+- Each player belongs to one **league**: Copper, Silver, Gold, Platinum, Champion. A tournament run is a **Delve run in cave 1, 3, 5, 7 or 9** by league (shown as *Delve 1+*, *3+* …), with every enemy as strong as the next cave's (×5 in Copper, ×3 above). Every entrant plays from the **same server seeds**. The **score is the depth reached**, ranked against the league worldwide.
 - Entering costs one **Ticket**. Each new tournament grants one, with a celebration. When out of Tickets: one more for an ad (straight away with Ad-Disable), then more for **10, 20, 30 … Gems**, rising by 10 each, starting over each tournament.
 - Placement pays **Gems and Ascension Shards** in ten prize levels by global percentile, once the server finalizes the results, claimed within **24 hours** with *Claim rewards*.
 
@@ -28,15 +28,15 @@ Depth a run reaches after the 4 hours are up never counts (`TournamentDesk.count
 
 ## Leagues
 
-| League | Delve cave | Shown as | Trophy |
-|---|---|---|---|
-| Copper | 1 | Delve 1+ | copper cup |
-| Silver | 3 | Delve 3+ | silver cup |
-| Gold | 5 | Delve 5+ | gold cup |
-| Platinum | 7 | Delve 7+ | platinum cup |
-| Champion | 9 | Delve 9+ | jewelled cup |
+| League | Delve cave | Shown as | Enemies | Trophy |
+|---|---|---|---|---|
+| Copper | 1 | Delve 1+ | ×5, cave 2's | copper cup |
+| Silver | 3 | Delve 3+ | ×3, cave 4's | silver cup |
+| Gold | 5 | Delve 5+ | ×3, cave 6's | gold cup |
+| Platinum | 7 | Delve 7+ | ×3, cave 8's | platinum cup |
+| Champion | 9 | Delve 9+ | ×3, the last cave's step | jewelled cup |
 
-A tournament run plays its league's cave whether or not the player has opened it through Goals. The *+* marks the ×1.1 enemies.
+A tournament run plays its league's cave whether or not the player has opened it through Goals. The *+* marks the stronger enemies.
 
 **Moving between leagues** (decided by the server after each tournament; the client shows the last league it reported, `save.tournament.league`):
 
@@ -113,7 +113,8 @@ Each entry spends one Ticket. A player may enter as often as they have Tickets; 
   Each is a stream of its own (`runStream` in `tournament/run.ts`): draw *n* is the *n*th number of the stream the seed starts, and the run counts the draws it has taken (`tournament.drawn`), so undo takes draws back and a reload carries on where it stopped.
 
   Any other chance a run gains later takes a named seed too. Players still differ in their loadout, training, hand and badges, and that difference is the competition.
-- **Harder enemies:** every enemy's HP, ATK and DEF ×1.1 (`TOURNAMENT_STAT_TENTHS`, 11/10, `tournamentCells`), applied after the tier's factor as the Delve `World` builds each chunk, `snap`ped, so it is exact in every engine. Bosses included. Rewards that follow enemy stats (XP by `tierXp`) stay as for the tier.
+- **Harder enemies:** every enemy's HP, ATK and DEF times the next cave's step (`tournamentStatFactor`: `TIER_STEP_FACTORS` of the cave above, ×5 in Copper and ×3 above it, Champion's cave 9 taking the last cave's ×3; `tournamentCells`), so they stand as strong as the next cave's, without its Fast or Ranged enemies, which go by the cave's own tier.
+  It is applied after the tier's factor as the Delve `World` builds each chunk, a whole-number factor `snap`ped, so it is exact in every engine. Bosses included. It replaced a flat ×1.1, which left a tournament run little harder than the cave itself. Rewards that follow enemy stats (XP by `tierXp`) stay as for the tier.
 - **Rewards:** it plays and pays as a normal Delve run of that tier: Gold, Silver, Courage, XP, milestones and records.
 - The run carries `tournament: { id, league, entry, seeds, drawn, back }` (`TournamentRun` on the `DelveRun`, checked by `isTournamentRun` in `decodeDelveRun`), so a reload mid-run is still a tournament run (and opens in the Delve, opened or not), and the HUD's height column reads *Delve 3+* over the depth.
 - **Undo** works as usual; the score is the deepest depth reached, as the HUD counts it (`tournamentScore`), which undo can't raise.
@@ -197,27 +198,27 @@ The confirmed server time is the Shop's (`save.shop`'s clock), shared, so there'
 | `src/tournament/tickets.ts` | the free, ad and Gem Tickets, and the Gem price |
 | `src/tournament/progress.ts` | `save.tournament`, its decoder |
 | `src/tournament/server.ts` | `TournamentServer`, `stubTournament` |
-| `src/tournament/run.ts` | `TournamentRun`, the ×1.1 enemies, the run's chance streams, its score |
+| `src/tournament/run.ts` | `TournamentRun`, the next cave's enemy stats, the run's chance streams, its score |
 | `src/tournament/client.ts` | `TournamentClient`: what waits on the server (refreshing, entering, sending scores, claiming) |
 | `src/game/tournament-desk.ts` | `TournamentDesk` (the game's `tournament`): grant, buy and spend Tickets, begin a run, submit, refresh standing, claim |
 | `src/state.ts` | `atTournamentHall`; `newRun` taking `tier` and `tournament`; the run's seeded streams; `finalizeRun` submitting the score |
-| `src/tiers.ts` / `src/delve/world.ts` | the ×1.1 tournament stats on the run's cells |
+| `src/tiers.ts` / `src/delve/world.ts` | the step between caves; the tournament stats on the run's cells |
 | `src/outside.ts`, `src/rendering.ts` | the hall's tiles, yard and art |
 | `src/ui/tournament-page.ts` | the page and the All prizes dialog |
 | `src/ui/hud.ts`, `ui/shell.ts`, `ui/run-menu.ts` | the button in the forest and in the run menu |
 | `src/ui/dialogs.ts` | the run end dialog's Tournament block |
 | `src/ui/dom.ts` | trophy and ticket icons |
-| `tests/tournament.test.ts` | schedule (phases across week boundaries), leagues and zones, ties, prize levels and the oscillation rule, Tickets and their prices, entry, scoring, two runs on the same seeds drawing the same chances, the ×1.1 stats, claims and expiry, the save |
+| `tests/tournament.test.ts` | schedule (phases across week boundaries), leagues and zones, ties, prize levels and the oscillation rule, Tickets and their prices, entry, scoring, two runs on the same seeds drawing the same chances, claims and expiry, the save |
 
 `CONTEXT.md` gains *Tournament*, *League*, *Ticket*, *Entry*, *Score* and *Prize level*; `AGENTS.md` and the README's overview gain the Tournament.
 
 ## Build order
 
 1. **Rules without screens** (built): the Goal, schedule, leagues, prizes (with the oscillation test), Tickets, save and stub server, all in Node tests.
-2. **The run** (built): begin a tournament run (league cave, server seeds and the run's own streams, ×1.1 enemies, the flag), its score, submission on `finalizeRun`, the end dialog's block.
+2. **The run** (built): begin a tournament run (league cave, server seeds and the run's own streams, the next cave's enemy stats, the flag), its score, submission on `finalizeRun`, the end dialog's block.
 3. **Screens** (built, but for Tickets in the purse): the forest hall, the HUD button and its phases, the Tournament page, All prizes, the free Ticket's celebration, the ad and Gem Ticket offers, the run-menu button.
 4. **Ending and claims** (built): the Ending and Results phases (depth counted until the grace ends, the results asked for each minute after it, the final place and league move), *Claim rewards* (`TournamentClient.claim`), expiry, and the next tournament opening over an old report; `tests/tournament-ending.test.ts`.
-5. **Goldens** (built): `ui.golden.json` (the Goals page's floor 60 text, and the UI suite's `tournament` fixture: the button, the page after a tournament's Results, All prizes, then the clock moved on to a new tournament's free Ticket, its Open page, its Results and the claim), `save-decode` (a `tournament` base: the save and a tournament run inside, with its hostile values and edges), a forest with the Blacksmith and the Hall in `LATER_BOARD_SCENES` (`forestHall`: `render-calls`, `render.golden.json`), and `tests/tournament-trace.test.ts` (`tournament-trace.golden.json`: seeded Copper, Silver and Champion runs played by the hand from the stand-in's seeds, pinning the seeds, the ×1.1 enemies and the run's own streams, and two players on different game streams playing the same run).
+5. **Goldens** (built): `ui.golden.json` (the Goals page's floor 60 text, and the UI suite's `tournament` fixture: the button, the page after a tournament's Results, All prizes, then the clock moved on to a new tournament's free Ticket, its Open page, its Results and the claim), `save-decode` (a `tournament` base: the save and a tournament run inside, with its hostile values and edges), a forest with the Blacksmith and the Hall in `LATER_BOARD_SCENES` (`forestHall`: `render-calls`, `render.golden.json`), and `tests/tournament-trace.test.ts` (`tournament-trace.golden.json`: seeded Copper, Silver and Champion runs played by the hand from the stand-in's seeds, pinning the seeds, the stronger enemies and the run's own streams, and two players on different game streams playing the same run).
 
 ## Future (TODO)
 

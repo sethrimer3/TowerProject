@@ -1619,7 +1619,7 @@ export class Game {
   /** Begins a run in tournament `info`, entered on the server as `entry`:
    * spends a Ticket, and goes straight into the league's Delve cave, its
    * records the cave's, its layout and chances from the league's shared
-   * seeds, its enemies ×1.1. False (nothing spent) when it can't begin or
+   * seeds, its enemies as strong as the next cave's. False (nothing spent) when it can't begin or
    * no Ticket is held. */
   beginTournament(info: TournamentInfo, entry: string) {
     if (!this.canBeginTournament || !this.tournament.enter(info.id, entry)) return false;

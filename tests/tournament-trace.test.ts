@@ -14,7 +14,7 @@ import { stubSeeds, type TournamentInfo } from "../src/tournament/server.ts";
 // Characterization trace of seeded tournament runs: each league's run, from
 // the stand-in server's seeds for one tournament, played by the hand, every
 // turn's observable state hashed against a golden file. It pins the seeds,
-// the ×1.1 enemies of each cave and the run's own chance streams.
+// each cave's enemies raised to the next cave's and the run's own chance streams.
 // Regenerate (only when a tournament or gameplay change is intended) with
 // UPDATE_GOLDEN=1.
 const GOLDEN = new URL("./fixtures/tournament-trace.golden.json", import.meta.url);
