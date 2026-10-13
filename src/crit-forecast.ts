@@ -1,4 +1,4 @@
-import { atWorst, critMultiplier, guaranteedCrits, instakill as instakills, netDamage, parriedAttack, parriedEstimate, parryCut, predict, raisedAttack, replies, thornDamage, type CombatPrediction, type CritRule } from "./combat.ts";
+import { atWorst, critMultiplier, guaranteedCrits, instakill as instakills, netDamage, parriedEstimate, parryCut, predict, raisedAttack, replies, struckDamage, thornDamage, type CombatPrediction, type CritRule } from "./combat.ts";
 import { snap } from "./exact.ts";
 import type { Enemy, Player } from "./entities.ts";
 
@@ -87,7 +87,7 @@ function damageByStrikes(player: Player, enemy: Enemy, most: number, played: num
   let attack = enemy.attack, sum = 0;
   const known = Math.min(most, played - 1);
   for (let r = 1; r <= known && sum <= Number.MAX_SAFE_INTEGER; r++) {
-    sum = snap(sum + Math.max(0, parriedAttack(attack, cut) - defense));
+    sum = snap(sum + struckDamage(attack, defense, cut));
     sums.push(sum);
     attack = raisedAttack(attack);
   }

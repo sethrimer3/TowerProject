@@ -514,7 +514,7 @@ export const RESEARCH = {
   },
   parry: {
     name: "Parry %",
-    description: "Study the old climbers' footwork: a parried strike's ATK is cut by more.",
+    description: "Study the old climbers' footwork: a parried strike's damage is cut by more.",
     categories: ["defense"],
     requires: [{ upgrade: "parry" }, { goalUnlock: "parryPercent" }],
     levels: parryLevels(),

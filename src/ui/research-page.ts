@@ -251,6 +251,13 @@ export class ResearchPage {
     const shown = (v: number) => trainingText(v, unit);
     const notes = step.maxed || !hired ? "" : this.timeNote(t.id, q);
     const job = trainingJob(save.trainingJobs, t.id);
+    // A row at its most has nothing more to show or buy: its label spans the
+    // values' columns, Max stands where the trainer's price does (the points'
+    // place without trainers), and the reset keeps the right edge.
+    if (step.maxed && !job) {
+      const max = `<button class="training-box training-cost" disabled aria-label="${t.name} is fully trained">Max</button>`;
+      return `<div class="training-row maxed" role="listitem" data-training-row="${t.id}"><span class="training-label">${t.name} - ${this.levelText(t.id, false)}</span>${max}${hired ? `<span aria-hidden="true"></span>` : ""}${this.resetButton(t, false)}</div>`;
+    }
     const nowButton = step.maxed
       ? ""
       : `<button class="training-box training-cost training-now" data-train="${t.id}" ${bulk.affordable ? "" : "disabled"} aria-label="Spend ${bulk.cost} training ${bulk.cost === 1 ? "point" : "points"} to train ${t.name} ${count === 1 ? "one rank" : `${count} ranks`} now" title="Train now">${maxCount(q, count)}${pointsIcon()}<span>${bulk.cost}</span></button>`;
@@ -287,12 +294,11 @@ export class ResearchPage {
   }
 
   /** A rank a trainer is training shows its countdown (tap to stop it and
-   * get the Gold back), else the trainer's price, or Max. */
+   * get the Gold back), else the trainer's price. */
   private trainerHtml(t: TrainingRow, step: ReturnType<typeof trainingStep>) {
     const game = this.ctx.game, save = game.save;
     if (trainingJob(save.trainingJobs, t.id))
       return `<span class="training-job"><button class="training-box training-timer" data-cancel="${t.id}" aria-label="Training ${t.name}: tap to stop and get the Gold back" title="Tap to stop and get the Gold back"><span data-training-timer="${t.id}">${formatDuration(game.training.left(t.id))}</span></button>${this.finishButton(t.id, t.name)}</span>`;
-    if (step.maxed) return `<button class="training-box training-cost" disabled aria-label="${t.name} is fully trained">Max</button>`;
     const q = game.buyQuantity, batch = game.training.batch(t.id, q), full = save.trainingJobs.length >= trainingSlots(save), gold = whole(batch.gold);
     const takes = formatDuration(game.training.toNextRank(t.id, q)), ranks = batch.count === 1 ? `to ${trainingText(step.next, step.unit)}` : `${batch.count} ranks`;
     return `<button class="training-box training-cost training-gold" data-train-gold="${t.id}" ${batch.affordable && !full ? "" : "disabled"} aria-label="Pay ${gold} Gold to a trainer to train ${t.name} ${ranks}, taking ${takes}" title="${full ? "Every trainer is busy" : `${batch.count === 1 ? "" : `${ranks}: `}Takes ${takes}`}">${maxCount(q, batch.count)}${goldIcon()}<span>${gold}</span></button>`;

@@ -110,13 +110,13 @@ test("a strike that fells the hero costs the enemy no thorns; a revived one does
   assert.equal(revived.thorns, 6);
 });
 
-test("every strike's ATK is cut by Parry % before DEF, and predictions count it; a thorn kill is no Instakill", () => {
+test("every strike's damage after DEF is cut by Parry %, and predictions count it; a thorn kill is no Instakill", () => {
   const p = hero({ hp: 1000, maxHp: 1000, defense: 10, parry: 40 });
   const e = { ...brute, hp: 1000, attack: 50 };
   const fight = bout(p, e);
   const [first, second] = fight.strikes.filter((s) => s.by === "enemy");
-  assert.deepEqual([first!.parried, first!.damage], [true, 50 * 0.6 - 10]);
-  assert.deepEqual([second!.parried, second!.damage], [true, 20.6], "the enemy's ATK rises from its own");
+  assert.deepEqual([first!.parried, first!.damage], [true, (50 - 10) * 0.6]);
+  assert.deepEqual([second!.parried, second!.damage], [true, 24.6], "the enemy's ATK rises from its own");
   assert.equal(predict(p, e).damage < predict({ ...p, parry: 0 }, e).damage, true, "a prediction counts every parry");
   assert.ok(bout(hero(), e).strikes.every((s) => !s.parried), "no Parry %, no parry");
   const r = predict(hero({ attack: 30, thorns: 50 }), brute);
@@ -132,7 +132,7 @@ test("Damage Visual's label counts every parry", () => {
   assert.notEqual(damageLabel(thorned, 100).color, "#9aa3b2", "a thorn kill's label isn't an Instakill's gray");
 });
 
-test("a parry cuts a strike's ATK by at most 98%, however Parry % is raised", () => {
+test("a parry cuts a strike's damage by at most 98%, however Parry % is raised", () => {
   assert.equal(PARRY_CAP, 98);
   assert.equal(parryCut(hero({ parry: 120 })), 98);
   assert.equal(parryCut(hero({ parry: 60 })), 60);

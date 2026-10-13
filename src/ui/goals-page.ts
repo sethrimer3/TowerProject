@@ -106,7 +106,7 @@ const UNLOCK_TUTORIALS: Record<GoalUnlock, string> = {
     `<p class="hint">Badges that can't work together can't share a card: a key colour's &lt; gate with its ≥ gate (YK &lt; with YK ≥), or Effective with Dampen.</p>`,
   shardAttack: `<p>Shard ATK opens in the Archives: research it, and every ATK shard a run picks up raises ATK by more, from the next one on, in the Tower and the Delve alike.</p>`,
   parryPercent: `<p>Parry % opens in the Archives once Parry is yours: research it, and every strike you parry is cut by more, at once, in the Tower and the Delve alike.</p>` +
-    `<p class="hint">However it is raised, a parry cuts a strike's ATK by at most 98%.</p>`,
+    `<p class="hint">However it is raised, a parry cuts a strike's damage by at most 98%.</p>`,
   shardDefense: `<p>Shard DEF opens in the Archives: research it, and every DEF shard a run picks up raises DEF by more, from the next one on, in the Tower and the Delve alike.</p>`,
   shrines: `<p>Unlock Shrines opens in the Archives: research it, and every so many floors climbed in the Tower grants a boon, a bonus that lasts the rest of the run, chosen from a few offered.</p>` +
     `<p class="hint">Its research also opens Floors Required and Standard Boon Bonus. Boons are the Tower's alone, not the Delve's.</p>`,

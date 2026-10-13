@@ -104,7 +104,7 @@ export type Player = {
   /** The percent of an enemy's max HP each of its strikes costs it (Thorn
    * Damage; none when absent), half against a boss or Greater Boss. */
   thorns?: number;
-  /** The percent every enemy strike's ATK is cut by, parried (Parry %);
+  /** The percent every enemy strike's damage is cut by, parried (Parry %);
    * none when absent. */
   parry?: number;
   /** The percent more ATK the hero strikes bosses with (equipment; none

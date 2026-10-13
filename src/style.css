@@ -2698,6 +2698,8 @@ nav button > span :is(img, svg) { display: block; width: 42px; height: 42px; max
 .training-group { margin: 6px 0 0; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #9aa6b6; }
 .training-group:first-child { margin-top: 0; }
 .training-row { display: grid; grid-template-columns: minmax(52px, 1fr) minmax(38px, auto) 12px minmax(38px, auto) minmax(56px, auto) minmax(38px, auto) 28px; align-items: center; gap: 5px; }
+/* A row at its most shows no values: its label takes their columns. */
+.training-row.maxed .training-label { grid-column: 1 / 5; }
 /* The Training tab's specks sit behind the rows. */
 .training-particles { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; border-radius: inherit; }
 .training > :not(.training-particles) { position: relative; }

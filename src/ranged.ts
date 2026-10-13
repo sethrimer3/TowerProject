@@ -15,7 +15,7 @@
  * nothing to shoot waits, banking nothing more. Each tile's roll is a fixed
  * number of the run seed, the floor and the tile (`RANGED_SALT`). */
 import type { Enemy, Player, Tile } from "./entities.ts";
-import { attackAgainst, critMultiplier, defenseAgainst, parriedAttack, parryCut } from "./combat.ts";
+import { attackAgainst, critMultiplier, defenseAgainst, parryCut, struckDamage } from "./combat.ts";
 import { fastShare, mayBeFast } from "./fast-enemies.ts";
 import { snap } from "./exact.ts";
 import { tileRandom } from "./random.ts";
@@ -89,11 +89,11 @@ export const within = (dx: number, dy: number, range: number) => (dx * dx + dy *
  * the first shot. */
 export const foeRange = (range: number) => (range * 5) / 6;
 
-/** What a Ranged enemy's shot does to `player`: its ATK, cut by Parry %
- * (every shot is parried), less DEF, and the shroud (whole for every
+/** What a Ranged enemy's shot does to `player`: its ATK less DEF, cut by
+ * Parry % (every shot is parried), and the shroud (whole for every
  * shot) taking what it can of the rest. */
 export function shotDamage(player: Player, enemy: Enemy) {
-  const struck = snap(Math.max(0, parriedAttack(enemy.attack, parryCut(player)) - player.defense));
+  const struck = struckDamage(enemy.attack, player.defense, parryCut(player));
   const shrouded = Math.min(player.shroud ?? 0, struck);
   return { damage: snap(struck - shrouded), shrouded };
 }

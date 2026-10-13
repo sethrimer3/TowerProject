@@ -252,7 +252,7 @@ What each enemy strike the hero lives through costs the enemy: a share of its ma
 _Avoid_: reflect, recoil
 
 **Parry**:
-An enemy strike turned partly aside: once the hero has any Parry %, every enemy strike is parried, its ATK cut by Parry % (trained and researched, at most 98%) before DEF. Parries are certain, so every prediction counts them.
+An enemy strike turned partly aside: once the hero has any Parry %, every enemy strike is parried, the damage it does after DEF cut by Parry % (trained and researched, at most 98%) before the shroud and Lifesteal's heals. Parries are certain, so every prediction counts them.
 _Avoid_: dodge, block (the shroud blocks)
 
 **Shroud**:

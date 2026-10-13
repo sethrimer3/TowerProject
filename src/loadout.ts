@@ -32,7 +32,7 @@ export type Loadout = {
   lifesteal: number;
   /** The percent of an enemy's max HP each of its strikes costs it (Thorn Damage). */
   thorns: number;
-  /** The percent every enemy strike's ATK is cut by, parried (Parry %). */
+  /** The percent every enemy strike's damage is cut by, parried (Parry %). */
   parry: number;
   /** The percent more ATK struck against bosses (equipment). */
   bossAttack: number;
@@ -58,7 +58,7 @@ const WORDS: Record<Stat, string> = {
   regen: "HP regained each step",
   lifesteal: "% of strike damage restored as HP",
   thorns: "% of an enemy's max HP each of its strikes costs it",
-  parry: "% less ATK in every enemy strike",
+  parry: "% less damage from every enemy strike",
   yellow: "starting gold key",
   blue: "starting azure key",
   red: "starting crimson key",

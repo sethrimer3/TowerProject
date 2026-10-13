@@ -36,15 +36,19 @@ export function thornDamage(player: Player, enemy: Enemy) {
   const thorns = player.thorns ?? 0;
   return thorns ? snap((enemy.hp * thorns) / (isBoss(enemy) ? 200 : 100)) : 0;
 }
-/** The most a parry can cut a strike's ATK, in percent, whatever trains or
- * researches Parry %. */
+/** The most a parry can cut a strike's damage, in percent, whatever trains
+ * or researches Parry %. */
 export const PARRY_CAP = 98;
-/** Parry: the percent every enemy strike's ATK is cut by (Parry %), at
+/** Parry: the percent every enemy strike's damage is cut by (Parry %), at
  * most `PARRY_CAP`. A hero with any Parry % parries every strike, so every
  * prediction counts it. */
 export const parryCut = (player: Player) => Math.min(player.parry ?? 0, PARRY_CAP);
-/** An enemy strike's ATK, cut by `cut` percent when it is parried. */
-export const parriedAttack = (attack: number, cut: number) => (cut ? snap((attack * (100 - cut)) / 100) : attack);
+/** What an enemy strike of `attack` ATK does to the hero before the shroud
+ * and Lifesteal: its ATK less DEF, cut by `cut` percent when parried. */
+export function struckDamage(attack: number, defense: number, cut: number) {
+  const damage = snap(Math.max(0, attack - defense));
+  return cut ? snap((damage * (100 - cut)) / 100) : damage;
+}
 /** The DEF `enemy` holds against the hero: its own, less the percent the
  * hero's equipment pierces (`pierce`). */
 export function defenseAgainst(player: Player, enemy: Enemy) {
@@ -157,7 +161,7 @@ function lifestealEnding(player: Player, enemy: Enemy, hit: number, played = Inf
   let hp = player.hp, enemyHp = enemy.hp, attack = enemy.attack, shroud = player.shroud ?? 0;
   // The enemy's strike, then its thorns and its ATK rising: false once the hero falls.
   const reply = () => {
-    const struck = snap(Math.max(0, parriedAttack(attack, cut) - player.defense)), shrouded = Math.min(shroud, struck);
+    const struck = struckDamage(attack, player.defense, cut), shrouded = Math.min(shroud, struck);
     shroud = snap(shroud - shrouded);
     hp = snap(Math.max(0, hp - snap(struck - shrouded)));
     if (!hp) return false;
@@ -206,7 +210,7 @@ export function raisedAttack(attack: number) {
 export function damageTaken(attack: number, defense: number, strikes: number, played = Infinity, cut = 0) {
   let damage = 0, i = 0;
   for (; i < strikes && i < played && damage <= Number.MAX_SAFE_INTEGER; i++, attack = raisedAttack(attack)) {
-    damage = snap(damage + Math.max(0, parriedAttack(attack, cut) - defense));
+    damage = snap(damage + struckDamage(attack, defense, cut));
   }
   if (i < strikes && damage <= Number.MAX_SAFE_INTEGER) damage += parriedEstimate(attack, defense, strikes - i, cut);
   return damage > Number.MAX_SAFE_INTEGER ? Infinity : damage;
@@ -247,12 +251,10 @@ export function estimatedDamage(attack: number, defense: number, n: number) {
   return idle >= n ? 0 : attackSum(attackAfter(attack, idle), n - idle) - (n - idle) * defense;
 }
 
-/** `estimatedDamage` with every strike's ATK cut by `cut` percent: a strike
- * of ATK A then takes f × (A − DEF / f), f the share of ATK left. */
+/** `estimatedDamage` with every strike's damage cut by `cut` percent. */
 export function parriedEstimate(attack: number, defense: number, n: number, cut = 0) {
-  if (!cut) return estimatedDamage(attack, defense, n);
-  const f = (100 - cut) / 100;
-  return f * estimatedDamage(attack, defense / f, n);
+  const damage = estimatedDamage(attack, defense, n);
+  return cut ? (damage * (100 - cut)) / 100 : damage;
 }
 
 /** A Lifesteal fight's ending estimated from part way through it (`at`:
@@ -261,8 +263,8 @@ export function parriedEstimate(attack: number, defense: number, n: number, cut 
  * the hero's HP climbs toward max HP less the latest strike; after that it
  * only falls. Null when it falls to 0 before the enemy does. */
 function lifestealEstimate(player: Player, at: { hp: number; enemyHp: number; attack: number; shroud: number }, hit: number, cut = 0) {
-  // A strike cut by a parry takes f × (ATK − DEF / f), f the share of ATK left.
-  const f = (100 - cut) / 100, strikes = Math.ceil(at.enemyHp / hit), replies = strikes - 1, defense = player.defense / f;
+  // A strike cut by a parry takes f × (ATK − DEF), f the share of its damage left.
+  const f = (100 - cut) / 100, strikes = Math.ceil(at.enemyHp / hit), replies = strikes - 1, defense = player.defense;
   const heal = lifestealHeal(player, hit);
   const climbing = Math.min(replies, roundsUntilAbove(at.attack, defense + heal / f));
   let shroud = at.shroud;
@@ -304,7 +306,7 @@ export const REVIVE_PAUSE_MS = DEFEAT_MS + REVIVE_MS;
  * (Lifesteal) the hero's HP after it (`heroHp`) and the HP it restored
  * (`healed`; in a summary round, what the round gave the hero net of the
  * damage it took, on whichever strike lands last). An enemy strike the hero
- * parried (`parried`, its ATK cut) makes the hero give way a little as it
+ * parried (`parried`, its damage cut) makes the hero give way a little as it
  * lands, and one the hero lives through costs the enemy its thorns
  * (`thorns`), leaving it `thornHp`. */
 export type Strike = { by: "hero" | "enemy"; damage: number; crit?: number; heroHp?: number; healed?: number; shrouded?: number; revived?: true; parried?: true; thorns?: number; thornHp?: number; start: number; at: number; end: number; hp: number };
@@ -370,13 +372,13 @@ function play(strikes: Strike[], { player, enemy, revives, crits }: Fighters, st
   return { strikes, duration: s.t };
 }
 
-/** The enemy strikes the hero in `s`: a parried strike's ATK is cut, the
+/** The enemy strikes the hero in `s`: a parried strike's damage is cut, the
  * shroud takes what it can, the rest comes off the hero's HP, and a strike
  * that would fell the hero may revive it at full HP. A strike the hero
  * lives through costs the enemy `thorn` HP. */
 function enemyBlow(s: BoutState, player: Player, thorn: number, revives?: Revival): Blow {
   const cut = parryCut(player), parried = cut > 0;
-  const struck = snap(Math.max(0, parriedAttack(s.attack, cut) - player.defense)), shrouded = Math.min(s.shroud, struck), taken = snap(struck - shrouded);
+  const struck = struckDamage(s.attack, player.defense, cut), shrouded = Math.min(s.shroud, struck), taken = snap(struck - shrouded);
   s.shroud = snap(s.shroud - shrouded);
   s.heroHp = snap(Math.max(0, s.heroHp - taken));
   const revived = !s.heroHp && !!revives?.(s.enemyStrikes);

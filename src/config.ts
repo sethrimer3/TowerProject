@@ -405,7 +405,7 @@ export const UPGRADES = [
   {
     id: "parry",
     name: "Parry",
-    description: "Opens Parry % training: every enemy strike is parried, striking with less ATK",
+    description: "Opens Parry % training: every enemy strike is parried, doing less damage",
     base: 10,
     max: 1,
     currency: "inspiration",
@@ -596,7 +596,7 @@ export const TRAINING = [
   { id: "shroud", name: "Shroud", group: "defense", stat: "shroud", curve: { per: 5, square: 0.1, fourth: 0.0000064 }, cost: 1, max: 5000, requires: "shroud", description: "Raises the damage the shroud blocks at the start of every fight." },
   { id: "lifesteal", name: "Lifesteal", group: "defense", stat: "lifesteal", curve: { per: 0.1005, square: -0.0005 }, cost: 1, max: 80, requires: "lifesteal", description: "Raises the share of the damage each of your strikes deals that is restored to you as HP." },
   { id: "thorns", name: "Thorn Damage", short: "Thorns", group: "defense", stat: "thorns", curve: { per: 1 }, cost: 1, max: 99, requires: "thorns", description: "Each enemy strike costs the enemy this share of its max HP, half against bosses and Greater Bosses." },
-  { id: "parry", name: "Parry %", group: "defense", stat: "parry", curve: { per: 0.5 }, cost: 1, max: 100, requires: "parry", description: "Raises how much every enemy strike's ATK is cut." },
+  { id: "parry", name: "Parry %", group: "defense", stat: "parry", curve: { per: 0.5 }, cost: 1, max: 100, requires: "parry", description: "Raises how much every enemy strike's damage is cut." },
   { id: "revive", name: "Revive", group: "defense", requires: "revive", cost: 1, max: 99, description: "Raises the chance a strike that would fell you revives you at full HP instead." },
   { id: "floorGold", name: "Gold / Floor", group: "utility", requires: "spareChange", cost: 1, max: 150, description: "Raises the Gold paid for each floor climbed for the first time in a run." },
   { id: "floorSilver", name: "Silver / Floor", group: "utility", requires: "wishingWell", cost: 1, max: 150, description: "Raises the Silver paid for each floor climbed for the first time in a run." },

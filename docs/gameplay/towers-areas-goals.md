@@ -40,7 +40,7 @@ Tower II's floor 90 opens **Card Groups** on the Deck page (see [Card Groups](ha
 Tower III's floor 10 makes the hero an **Archer**, its arrows shooting the closest monster in reach every 10 turns, and floors 20 and 30 open the **Attack Range** and **Attack Speed** Training rows that improve them ([Fights](fights.md#the-archer)).
 Floor 50 opens the **ATK / Tile** Training row (arrows strike harder the further off their target), and floor 80 the Archives' **Charged Shot** research (an arrow that waits ready grows stronger), and floor 90 the **Multishot Chance** and **Multishot Targets** Training rows (a shot may fire at several enemies at once).
 The name under the hero's portrait follows: a Wayfarer, a Pathfinder once Tower II is open, an Archer once Tower III's floor 10 is claimed.
-Tower V's floor 30 opens the Archives' **Parry %** research (once the Parry skill is owned): +0.2% Parry % a level for 50 levels (5,000 Gold and 53 minutes for the first, about 6 billion Gold and 87 hours for the last), taking effect the moment a level completes; however it is raised, a parry cuts a strike's ATK by at most 98%.
+Tower V's floor 30 opens the Archives' **Parry %** research (once the Parry skill is owned): +0.2% Parry % a level for 50 levels (5,000 Gold and 53 minutes for the first, about 6 billion Gold and 87 hours for the last), taking effect the moment a level completes; however it is raised, a parry cuts a strike's damage by at most 98%.
 Floor 100's checkpoint in Towers I to VIII unlocks the next tower (and the Delve's cave of the same number); beating floor 100's boss makes it claimable.
 Tapping a claimed unlock shows what it does again.
 A green check beside a checkpoint marks its area cleared.

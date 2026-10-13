@@ -53,7 +53,7 @@ Thorns are certain, so every forecast, Automove and the hand count them.
 
 ## Parry
 
-**Parry** (10 Inspiration, between Regen Research and Revive) opens Parry % training (0.5% a rank, 100 ranks): once the hero has any Parry %, every monster strike is parried, its ATK cut by Parry % before DEF (the monster's ATK still rises after the round as usual).
+**Parry** (10 Inspiration, between Regen Research and Revive) opens Parry % training (0.5% a rank, 100 ranks): once the hero has any Parry %, every monster strike is parried, the damage it does after DEF cut by Parry %, before the shroud and Lifesteal's heals (the monster's ATK still rises after the round as usual).
 A Ranged monster's shots are parried the same way.
 In an animated fight the hero gives way a little from a strike it parries; in a summary only the damage shows it.
 Parries are certain, so forecasts, the inspect panel, the monster's damage number, Automove and the hand all count them.
