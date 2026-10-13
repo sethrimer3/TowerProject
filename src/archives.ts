@@ -262,12 +262,15 @@ const parryLevels = () => Array.from({ length: 50 }, (_, i): ResearchLevel => {
 });
 
 /** Faster Trainers (+2% training speed a level), for 100 levels. The n-th
- * level costs 250 × n + 2 × n³ Gold and takes 1.75 × n + n² / 20 hours: a
- * linear start that grows cubic and quadratic (2.03 million Gold and 28
- * days at level 100; about 52.3 million Gold and 2.9 years in all). */
+ * level costs 250 × n + 2 × n³ Gold: a linear start that grows cubic (2.03
+ * million Gold at level 100; about 52.3 million in all). It takes Research
+ * Speed's time (`ARCHIVE_MINUTES`) or 1.75 × n + n² / 20 hours, whichever is
+ * shorter: Research Speed's to level 27 (1 minute first, 82 hours at 27),
+ * then the quadratic (88 hours at 28, 28 days at 100; about 2.9 years in
+ * all), since a speed-up research is no slower to learn than Research Speed. */
 const fasterTrainersLevels = () => Array.from({ length: 100 }, (_, i): ResearchLevel => ({
   gold: 250 * (i + 1) + 2 * intPow(i + 1, 3),
-  hours: 1.75 * (i + 1) + ((i + 1) * (i + 1)) / 20,
+  hours: Math.min(ARCHIVE_MINUTES[i]! / 60, 1.75 * (i + 1) + ((i + 1) * (i + 1)) / 20),
   effect: { target: "trainingSpeed", op: "add", value: 0.02 },
 }));
 
@@ -286,7 +289,7 @@ const trainingDiscountLevels = () => Array.from({ length: 99 }, (_, i): Research
 });
 
 /** Rush: +1 tile rushed a level, for 25 levels. Each level starts from
- * 250 × n Gold and 1.75 × n hours (Faster Trainers' first levels) and grows steeper: Gold
+ * 250 × n Gold and 1.75 × n hours and grows steeper: Gold
  * doubles each level and time grows 20% (250 Gold and 1.75 hours at level
  * 1, about 105 billion Gold and 145 days at 25; 201 billion and 697 days in
  * all), since a faster pace of play is worth the most. End Rush follows the

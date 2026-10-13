@@ -36,7 +36,7 @@ test("Rush research needs the Rush skill: 25 levels, Gold doubling and time grow
   assert.equal(missing(save, "rush").length, 0);
   const levels = research("rush").levels;
   assert.equal(levels.length, 25);
-  assert.deepEqual([levels[0].gold, levels[0].hours], [250, 1.75], "level 1 is Faster Trainers' level 1");
+  assert.deepEqual([levels[0].gold, levels[0].hours], [250, 1.75], "level 1: 250 Gold and 1.75 hours");
   assert.deepEqual([levels[1].gold, levels[1].hours], [250 * 2 * 2, 1.75 * 2 * 1.2]);
   assert.equal(levels[24].gold, 250 * 25 * 2 ** 24);
   assert.ok(levels.every((l) => l.effect.target === "rushTiles" && l.effect.value === 1));
