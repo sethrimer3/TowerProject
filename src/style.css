@@ -780,7 +780,8 @@ canvas {
 }
 .run-menu.instant .run-menu-frame,
 .run-menu.instant .run-menu-items { transition: none; }
-.run-menu-end { grid-row: span 2; height: auto; }
+/* Both rows tall even on a phone, where `.mini-action` sets a fixed height. */
+.run-menu .run-menu-end { grid-row: span 2; height: auto; }
 /* In the forest the hamburger stands alone, the Tournament's and Events'
    buttons under it: its cells (Settings, Missions, Relics, Mail) in one row. */
 .run-menu.forest .run-menu-items { grid-template-rows: minmax(0, 1fr); }
