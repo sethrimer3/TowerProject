@@ -15,7 +15,7 @@ An area climbed in one run without taking fight damage (a Heart Door's toll does
 _Avoid_: gold clear, perfect area
 
 **Cleared area**:
-An area whose every floor the hero left with no enemy on it; pays 10 Inspiration.
+An area whose every floor the hero left with no enemy on it; pays its floors' Inspiration again, on the milestone schedule.
 _Avoid_: silver clear, cleared floor
 
 **Area chest**:

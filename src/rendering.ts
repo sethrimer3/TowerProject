@@ -165,7 +165,7 @@ export class Renderer {
     for (const at of this.game.struckDown) drawStruckDown(f, f.now - at);
     for (const at of this.game.revivedAt) drawRevive(f, f.now - at);
     drawLevelUp(f, f.now - this.game.levelUpAt, this.game.levelUpPoints);
-    for (const area of this.game.areaBursts) if (f.now >= area.at) drawAreaBurst(f, f.now - area.at, area.reward);
+    for (const area of this.game.areaBursts) if (f.now >= area.at) drawAreaBurst(f, f.now - area.at, area.reward, area.inspiration);
     const summoned = this.game.summoned;
     if (summoned) drawPoof(f, summoned.x, summoned.y, f.now - summoned.at);
     const vanished = this.game.vanished;

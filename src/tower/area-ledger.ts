@@ -3,7 +3,8 @@
  * next area's first floor judges the area left behind: it is **mastered**
  * when the hero took no fight damage anywhere in it (only an area ending at
  * a checkpoint, whose warp it unlocks) and **cleared** when the hero
- * climbed past no enemy on any of its floors (+10 Inspiration; the climb
+ * climbed past no enemy on any of its floors (the Inspiration its floors
+ * pay on the milestone schedule, `clearedInspiration`; the climb
  * keeps only that of the floors left behind, `run.enemiesLeft`). Each is paid the moment it
  * is earned and recorded for good, by tower, in `save.goals`, so undo,
  * reloads and later runs never pay it twice. A chest for each then stands
@@ -12,13 +13,18 @@
 import type { ChestTier, Save, Tile, TowerRun } from "../entities.ts";
 import { TOWER_SECTION } from "../config.ts";
 import { checkpoint } from "../goals.ts";
+import { milestonePoints } from "../modes.ts";
 import { earn } from "../profile.ts";
 import { ENTRY } from "./embedder.ts";
 import type { RoomWorld } from "./room-world.ts";
 
 export type AreaReward = "mastered" | "cleared";
-/** The Inspiration an area cleared pays: about one a floor. */
-export const CLEARED_INSPIRATION = 10;
+/** The Inspiration clearing the area ending at floor `last` pays: what
+ * reaching its floors pays on the milestone schedule (`milestonePoints`),
+ * so 10 an area to floor 100, 1 an area to 1,000, 1 at each hundredth floor
+ * to 10,000, then none. */
+export const clearedInspiration = (last: number) =>
+  milestonePoints(last) - milestonePoints(Math.max(0, last - TOWER_SECTION));
 /** How long an area reward's burst and its words last on the board. */
 export const AREA_BURST_MS = 3200;
 /** Each reward's chest. */
@@ -75,10 +81,11 @@ export class AreaLedger {
     const tower = towerOf(run), list = (this.save.goals[reward][tower] ??= []);
     list.push(run.height);
     list.sort((a, b) => a - b);
-    if (reward === "cleared") {
-      this.save.tower.inspiration += CLEARED_INSPIRATION;
-      earn(this.save, "inspiration", CLEARED_INSPIRATION);
-      this.save.tower.runCurrency += CLEARED_INSPIRATION;
+    const amount = reward === "cleared" ? clearedInspiration(run.height) : 0;
+    if (amount > 0) {
+      this.save.tower.inspiration += amount;
+      earn(this.save, "inspiration", amount);
+      this.save.tower.runCurrency += amount;
     }
   }
 }

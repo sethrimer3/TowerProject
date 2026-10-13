@@ -1,7 +1,7 @@
 import { tileTransform, type FrameContext } from "./render-frame.ts";
 import { REVIVE_MS } from "./combat.ts";
 import { INSPIRATION_URL, sprite } from "./board-popups.ts";
-import { AREA_BURST_MS, CLEARED_INSPIRATION, type AreaReward } from "./tower/area-ledger.ts";
+import { AREA_BURST_MS, type AreaReward } from "./tower/area-ledger.ts";
 
 /** How long the level-up glow and its "LEVEL UP!" text last. */
 export const LEVEL_UP_MS = 2000;
@@ -68,13 +68,14 @@ const AREA_TITLES: Record<AreaReward, string> = { mastered: "AREA MASTERED", cle
 export const preloadAreaBurst = () => void sprite(INSPIRATION_URL);
 
 /** An area reward's chest opened, `age` ms ago: the blaze, its title, and
- * under it "Checkpoint Warp Unlocked" or the Inspiration it paid. */
-export function drawAreaBurst(f: FrameContext, age: number, reward: AreaReward) {
+ * under it "Checkpoint Warp Unlocked" or the `inspiration` it paid (nothing,
+ * when it paid none). */
+export function drawAreaBurst(f: FrameContext, age: number, reward: AreaReward, inspiration: number) {
   const b: Blaze = { ...AREA, text: AREA_TITLES[reward] };
   if (!drawBlaze(f, age, b)) return;
   const fade = Math.min(1, (b.ms - age) / b.fadeMs);
-  const sub = reward === "mastered" ? "Checkpoint Warp Unlocked" : `+${CLEARED_INSPIRATION}`;
-  drawWords(f, age, fade, b, sub, 0.6, 0.1, reward === "cleared" ? sprite(INSPIRATION_URL) : null);
+  if (reward === "mastered") drawWords(f, age, fade, b, "Checkpoint Warp Unlocked", 0.6, 0.1, null);
+  else if (inspiration > 0) drawWords(f, age, fade, b, `+${inspiration}`, 0.6, 0.1, sprite(INSPIRATION_URL));
 }
 
 /** The hero's level-up, drawn over the board: a fiery flash bursting

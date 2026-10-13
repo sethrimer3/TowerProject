@@ -6,7 +6,7 @@ import { POTION_HEAL, potionRestores, resolveStep, shardStat } from "../step-eff
 import { attackForFewerHits, instakill, lifestealHeal, netDamage, parryCut, predict, struckDamage, type CombatPrediction } from "../combat.ts";
 import { forecast as critForecast, type CritForecast } from "../crit-forecast.ts";
 import { goalUnlocked } from "../goals.ts";
-import { chestReward, CLEARED_INSPIRATION } from "../tower/area-ledger.ts";
+import { chestReward, clearedInspiration } from "../tower/area-ledger.ts";
 import { doorColor, doorDescription, doorName, doorRule, drainsHp, KEY_NAMES } from "../doors.ts";
 import { MODES } from "../modes.ts";
 import { litTorches } from "../board.ts";
@@ -178,10 +178,13 @@ const DESCRIBE: Partial<Record<Kind, Describe>> = {
   attack: (t, p, g) => ({ title: "Attack Shard", body: `<span>Raises ATK for this run</span><br>${gain(t, shardGain(t, p, g, "attack"), " ATK")}` }),
   defense: (t, p, g) => ({ title: "Defense Shard", body: `<span>Raises DEF for this run</span><br>${gain(t, shardGain(t, p, g, "defense"), " DEF")}` }),
   treasure: () => ({ title: "Treasure", body: "Contains gold and crafting materials." }),
-  reward: (t) => chestReward(t.tier) === "mastered"
+  reward: (t, _p, g) => chestReward(t.tier) === "mastered"
     ? { title: "Mastery Chest", body: "The area below was climbed without taking damage: the next checkpoint can be warped to." }
-    : { title: "Clearing Chest", body: `Every enemy in the area below was defeated: +${CLEARED_INSPIRATION} Inspiration, already yours.` },
+    : { title: "Clearing Chest", body: `Every enemy in the area below was defeated${paid(clearedInspiration(g.run.height))}.` },
 };
+
+/** What a Clearing Chest says it paid, after its first words. */
+const paid = (inspiration: number) => (inspiration > 0 ? `: +${inspiration} Inspiration, already yours` : "");
 
 /** Title, colour and HTML body for the tile at (x, y), as seen by the player. */
 export function tileInfo(g: Board, x: number, y: number): TileInfo {

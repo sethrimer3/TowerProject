@@ -59,7 +59,7 @@ import type { Board } from "./board.ts";
 import { bout, DEFEAT_MS, guaranteedCrits, heroHpAfter, heroHpDuring, instakill, resume, REVIVE_PAUSE_MS, revivals, summarize, type Bout, type CritRule, type Crits, type Revival } from "./combat.ts";
 import { HEART_DOOR_HP, healAfterVictory, isLethal, regenerate, resolveStep, type StepBlocked, type StepEffect, type StepRules, shardStat } from "./step-effects.ts";
 import { OUTSIDE_START_Y, OutsideWorld } from "./outside.ts";
-import { AREA_BURST_MS, AreaLedger, chestReward, CLEARED_INSPIRATION, type AreaReward } from "./tower/area-ledger.ts";
+import { AREA_BURST_MS, AreaLedger, chestReward, clearedInspiration, type AreaReward } from "./tower/area-ledger.ts";
 import { TowerClimb } from "./tower/climb.ts";
 import { callsGreaterBoss, greaterBoss, greaterBossSpot } from "./tower/greater-boss.ts";
 import { materialDef, MATERIALS } from "./materials.ts";
@@ -251,7 +251,7 @@ export class Game {
   /** The area rewards whose chests were opened, each with when its golden
    * burst starts (performance.now()): a chest opened while another's burst
    * plays waits for it to end. Emptied by undo. */
-  areaBursts: { reward: AreaReward; at: number }[] = [];
+  areaBursts: { reward: AreaReward; inspiration: number; at: number }[] = [];
   /** When Equipment opened (performance.now()), for the
    * board's burst. */
   /** Where a Greater Boss last appeared, and when (performance.now()), for
@@ -2411,12 +2411,15 @@ export class Game {
     return this.run as DelveRun;
   }
   /** An area reward chest opened: its reward was paid when earned, so it
-   * only shows it, with the board's golden burst. */
+   * only shows it, with the board's golden burst. The chest stands on the
+   * floor after the area's last, whose height is that last floor. */
   private openAreaChest(tier: ChestTier | undefined) {
     const reward = chestReward(tier), now = performance.now();
+    const inspiration = reward === "cleared" ? clearedInspiration(this.run.height) : 0;
     const playing = this.areaBursts.filter((b) => now - b.at < AREA_BURST_MS), last = playing.at(-1);
-    this.areaBursts = [...playing, { reward, at: last ? Math.max(now, last.at + AREA_BURST_MS) : now }];
-    this.message = reward === "mastered" ? "Area mastered · checkpoint warp unlocked" : `Enemies cleared · +${CLEARED_INSPIRATION} Inspiration`;
+    this.areaBursts = [...playing, { reward, inspiration, at: last ? Math.max(now, last.at + AREA_BURST_MS) : now }];
+    this.message = reward === "mastered" ? "Area mastered · checkpoint warp unlocked"
+      : inspiration > 0 ? `Enemies cleared · +${inspiration} Inspiration` : "Enemies cleared";
   }
   /** Pickup rewards and treasure payouts; stats were already applied. */
   private collect(t: Tile, x: number, y: number, outcome: StepEffect) {

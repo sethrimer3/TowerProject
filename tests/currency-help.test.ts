@@ -7,7 +7,7 @@ test("the currency help tells the slower rates only once the player has climbed 
   const save = defaults();
   const lines = (tree: "inspiration" | "courage") => currencyHelp(save, tree).body;
   assert.doesNotMatch(lines("inspiration"), /Past floor/);
-  assert.match(lines("inspiration"), /\+10 more/);
+  assert.match(lines("inspiration"), /earn its floors' Inspiration again/);
   save.tower.tierRecords["2"] = { best: 100, reached: 100 };
   assert.match(lines("inspiration"), /Past floor 100, a point takes 10 new floors/);
   assert.doesNotMatch(lines("inspiration"), /Past floor 1,000/);
