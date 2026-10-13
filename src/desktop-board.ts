@@ -2,6 +2,7 @@ import type { KeyColor } from "./config.ts";
 import type { Tile, Torch } from "./entities.ts";
 import { forEachViewTile, toTileSpace, type FrameContext } from "./render-frame.ts";
 import type { ThemedBoard } from "./themed-boards.ts";
+import { rankChevrons } from "./rank-chevrons.ts";
 
 /** The Desktop Game theme's dungeon board, as an old windowed desktop
  * computer's mine-sweeping game draws its field: flat grey floor cells,
@@ -107,6 +108,7 @@ function paintDesktopContents(c: CanvasRenderingContext2D, t: Tile) {
       c.fill();
       c.fillStyle = DESKTOP.light;
       c.fillRect(12 - r * 0.55, 13 - r * 0.55, r * 0.4, r * 0.4);
+      rankChevrons(c, strength, DESKTOP.yellow, DESKTOP.ink);
       // A Ranged enemy's arrow at the top right, and a Fast enemy's
       // fast-forward sign there, or below the arrow when it has both.
       if (e?.ranged) {

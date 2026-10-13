@@ -2,6 +2,7 @@ import type { KeyColor } from "./config.ts";
 import type { EnemyStrength, Tile, Torch } from "./entities.ts";
 import { forEachViewTile, toTileSpace, type FrameContext } from "./render-frame.ts";
 import type { ThemedBoard } from "./themed-boards.ts";
+import { rankChevrons } from "./rank-chevrons.ts";
 import { askAsciiFont, asciiGlyph as glyph, letterField } from "./ascii-glyphs.ts";
 
 /** The Glyph Game theme's dungeon board: an ASCII dungeon in many neon
@@ -79,6 +80,7 @@ function paintGlyphContents(c: CanvasRenderingContext2D, t: Tile) {
       const big = strength !== "weak" && strength !== "normal";
       if (strength === "boss" || strength === "greaterBoss") cardFrame(c, color, 1);
       glyph(c, big ? letter.toUpperCase() : letter, color, 24, 12, 12.5, 10);
+      rankChevrons(c, strength, color, GLYPH.ground, 1, 1, 4);
       // A Ranged enemy's > at the top right, and a Fast enemy's » there, or
       // below it when it has both.
       if (e?.ranged) glyph(c, ">", GLYPH.yellow, 12, 20, 4, 4);

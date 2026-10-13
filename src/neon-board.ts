@@ -3,6 +3,7 @@ import type { Tile, Torch } from "./entities.ts";
 import { WOOD_COLOR } from "./doors.ts";
 import { forEachViewTile, toTileSpace, type FrameContext } from "./render-frame.ts";
 import type { ThemedBoard } from "./themed-boards.ts";
+import { rankChevrons } from "./rank-chevrons.ts";
 
 /** The Neon theme's dungeon board: every wall, tile content, torch and the
  * hero drawn as glowing laser lines on black. It replaces the dungeon's
@@ -88,6 +89,7 @@ export function paintNeonContents(c: CanvasRenderingContext2D, t: Tile) {
         c.lineTo(19, 15); c.lineTo(15, 21); c.lineTo(9, 21); c.lineTo(5, 15); c.closePath();
       }, color);
       path(c, () => { c.moveTo(8.5, 12); c.lineTo(11, 13.5); c.moveTo(15.5, 12); c.lineTo(13, 13.5); c.moveTo(10, 17.5); c.lineTo(14, 17.5); }, color, 1.3);
+      rankChevrons(c, t.enemy?.strength ?? "normal", NEON.stairs, "#05030a", 1, 1, 4);
       // A Ranged enemy's arrow at the top right, and a Fast enemy's
       // fast-forward sign there, or below the arrow when it has both.
       if (t.enemy?.ranged) path(c, () => { c.moveTo(16, 7); c.lineTo(22, 1); c.moveTo(18.5, 1); c.lineTo(22, 1); c.lineTo(22, 4.5); }, NEON.ranged, 1);

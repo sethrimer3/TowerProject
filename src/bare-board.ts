@@ -2,6 +2,7 @@ import type { KeyColor } from "./config.ts";
 import type { EnemyStrength, Tile, Torch } from "./entities.ts";
 import { forEachViewTile, toTileSpace, type FrameContext } from "./render-frame.ts";
 import type { ThemedBoard } from "./themed-boards.ts";
+import { rankChevrons } from "./rank-chevrons.ts";
 
 /** The Shiro and Kuro Game themes' dungeon board, as bare as it can be while
  * still telling what matters: walls one solid block of colour, the floor
@@ -98,6 +99,7 @@ function contents(p: BarePalette, c: CanvasRenderingContext2D, t: Tile) {
         c.lineWidth = 1.5;
         c.stroke();
       }
+      rankChevrons(c, strength, p.ink, p.floor);
       // A Ranged enemy's dot at the top right, a Fast enemy's at the
       // bottom right.
       if (e?.ranged) circle(c, 1.8, p.ink, 21, 3);

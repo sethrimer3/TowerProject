@@ -2,6 +2,7 @@ import type { KeyColor } from "./config.ts";
 import type { EnemyStrength, Tile, Torch } from "./entities.ts";
 import { forEachViewTile, toTileSpace, type FrameContext } from "./render-frame.ts";
 import type { ThemedBoard } from "./themed-boards.ts";
+import { rankChevrons } from "./rank-chevrons.ts";
 import { tileHash } from "./ascii-glyphs.ts";
 
 /** The Yang and Yin Game themes' dungeon board: a raked sand garden drawn
@@ -215,6 +216,7 @@ function contents(p: ZenPalette, c: CanvasRenderingContext2D, t: Tile) {
         if (strength === "strong" || strength === "elite") enso(c, 9.5, p.ink, 1.6);
         if (strength === "elite") enso(c, 11.5, p.seal, 1);
       }
+      rankChevrons(c, strength, p.ink, p.sand);
       // A Ranged enemy's arrow at the top right, a Fast enemy's two strokes
       // at its bottom right.
       if (e?.ranged) {

@@ -2,6 +2,7 @@ import type { KeyColor } from "./config.ts";
 import type { Tile, Torch } from "./entities.ts";
 import { forEachViewTile, toTileSpace, type FrameContext } from "./render-frame.ts";
 import type { ThemedBoard } from "./themed-boards.ts";
+import { rankChevrons } from "./rank-chevrons.ts";
 
 /** The Terminal Game theme's dungeon board, as an old green-phosphor
  * monitor shows a text dungeon: every wall, tile content, torch and the
@@ -81,6 +82,7 @@ function paintTerminalContents(c: CanvasRenderingContext2D, t: Tile) {
         c.shadowBlur = 0;
         glyph(c, letter.toUpperCase(), TERMINAL.ground, 26, 12, 12.5, 0);
       } else glyph(c, strength === "strong" || strength === "elite" ? letter.toUpperCase() : letter, g, 26);
+      rankChevrons(c, strength, g, TERMINAL.ground, 1, 1, 4);
       // A Ranged enemy's arrow at the top right, and a Fast enemy's » there,
       // or below the arrow when it has both.
       if (e?.ranged) {

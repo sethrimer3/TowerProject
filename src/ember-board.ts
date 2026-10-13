@@ -2,6 +2,7 @@ import type { KeyColor } from "./config.ts";
 import type { EnemyStrength, Tile, Torch } from "./entities.ts";
 import { forEachViewTile, toTileSpace, type FrameContext } from "./render-frame.ts";
 import type { ThemedBoard } from "./themed-boards.ts";
+import { rankChevrons } from "./rank-chevrons.ts";
 import { askAsciiFont, asciiGlyph as glyph, letterField, tileHash } from "./ascii-glyphs.ts";
 
 /** The Ember Game theme's dungeon board: warm cream and amber ASCII glowing
@@ -86,6 +87,8 @@ function paintEmberContents(c: CanvasRenderingContext2D, t: Tile) {
       glyph(c, letters, EMBER.cream, letters.length > 2 ? 9 : 10, 12, 4.5, 5, EMBER.amber);
       eyes(c, EYE_SIZE[strength] ?? 3);
       if (strength === "boss" || strength === "greaterBoss") glyph(c, "^", EMBER.pupil, 10, 12, 20, 4, EMBER.red);
+      // Its rank chevrons down the left edge, under the letters.
+      rankChevrons(c, strength, EMBER.pupil, EMBER.ground, 1, 8, 4);
       // A Ranged enemy's > at the top right, and a Fast enemy's » at its
       // bottom right.
       if (e?.ranged) glyph(c, ">", EMBER.cream, 10, 22, 4, 4, EMBER.amber);
