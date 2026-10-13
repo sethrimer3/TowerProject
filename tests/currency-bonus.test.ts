@@ -62,6 +62,32 @@ test("Silver Bonus starts at ×1 and adds 1% a rank, Gold Bonus 3%; Silver / Flo
   assert.deepEqual([researched(save.archives, "silverBonus", 100), researched(save.archives, "floorSilver", 100)], [130, 150]);
 });
 
+test("the Training tab's values and the run's cards show research's multipliers; a run's Gold and Silver / Floor its Gold and Silver Bonus", () => {
+  const save = defaults();
+  Object.assign(save.upgrades, { wealthy: 1, loot: 1, wishingWell: 1, spareChange: 1, critical: 1 });
+  save.training.silverBonus = save.training.goldBonus = save.training.floorSilver = save.training.floorGold = 10;
+  save.training.critChance = 5;
+  Object.assign(save.archives.levels, { silverBonus: 10, goldBonus: 10, floorSilver: 10, floorGold: 10, critChance: 3 });
+  const crit = researched(save.archives, "critChancePercent", 100) / 100;
+  const step = (id: TrainingId) => [trainingStep(save, id).now, trainingStep(save, id).next];
+  assert.deepEqual(step("silverBonus"), [1.43, 1.443], "×1.10 → ×1.11, times 1.3");
+  assert.deepEqual(step("goldBonus"), [1.69, 1.729], "×1.30 → ×1.33, times 1.3");
+  assert.deepEqual(step("floorSilver"), [60, 66], "40 → 44, times 1.5");
+  assert.deepEqual(step("floorGold"), [19.5, 21], "13 → 14, times 1.5");
+  assert.deepEqual(step("critChance"), [5 * crit, 6 * crit].map((n) => Math.round(n * 1e6) / 1e6));
+  // Regen's research raises the HP a step regains.
+  save.training.regen = 50;
+  save.archives.levels.regen = 10;
+  const plain = trainingStep({ ...save, archives: { ...save.archives, levels: { ...save.archives.levels, regen: 0 } } }, "regen");
+  assert.ok(trainingStep(save, "regen").now > plain.now);
+  // In a run: Silver / Floor times Silver Bonus (both with research), Gold / Floor times every Gold bonus.
+  const run = { training: {}, player: { regen: 0 } } as never;
+  assert.deepEqual(runTrainingValue(save, run, "silverBonus"), { value: 1.43, unit: "×" });
+  assert.deepEqual(runTrainingValue(save, run, "floorSilver"), { value: 85.8, unit: "" }, "60 × 1.43");
+  assert.deepEqual(runTrainingValue(save, run, "floorGold", 2), { value: 39, unit: "" }, "19.5 × 2");
+  assert.deepEqual(runTrainingValue(save, run, "goldBonus"), { value: 1.69, unit: "×" });
+});
+
 /** A Tower run inside on floor 11, the hero at (0, 0) facing a strong enemy at (1, 0). */
 function facingEnemy() {
   const g = new Game(defaults());

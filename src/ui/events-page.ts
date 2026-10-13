@@ -1,5 +1,5 @@
-import { EVENT_MISSION_COUNT, EVENT_MISSIONS, TIER_MEDALS, TIERS, type RelicMilestone } from "../events/catalog.ts";
-import { isComplete, milestoneReached, tiersDone, type EventMission } from "../events/progress.ts";
+import { EVENT_MISSION_COUNT, EVENT_MISSIONS, TIER_MEDALS, TIERS, tierMedals, type RelicMilestone } from "../events/catalog.ts";
+import { isFinished, milestoneReached, tiersDone, unclaimedTiers, type EventMission } from "../events/progress.ts";
 import { offer } from "../shop/offers.ts";
 import { stubServer, type ShopServer } from "../shop/server.ts";
 import { shortCountdown } from "../tournament/schedule.ts";
@@ -7,7 +7,7 @@ import type { AppContext } from "./app.ts";
 import { checkIcon, el, eventIcon, medalIcon, relicIcon } from "./dom.ts";
 import { offerShown, revealReward } from "./reward-reveal.ts";
 
-/** How long a mission whose last tier is done stays where it is before it
+/** How long a mission whose last tier is claimed stays where it is before it
  * moves under the rest (ms). */
 const MOVE_AFTER_MS = 2000;
 /** A countdown on the page: *9d 4h*, *7h 12m*, *12m*. */
@@ -18,8 +18,9 @@ const LOCK = `<svg class="relic-lock" viewBox="0 0 16 16" aria-hidden="true"><re
  * and the time it has left; its relic track, a bar filling with the Medals
  * it has paid, its relics above and its premium relics (the Event
  * Booster's) below; the booster's offer; and its missions, each with its
- * tier (*1/3*), the Medals its next tier pays and a bar, those completed
- * moved under the rest a moment after their last tier is done. Opened by
+ * tier (*1/3*), the Medals its next tier pays and a bar, which reads Claim
+ * and is pressed to claim them once the tier is done, those finished moved
+ * under the rest a moment after their last tier is claimed. Opened by
  * the Events button, in the forest's actions column or the run's menu; its
  * X returns to whichever page opened it. */
 export class EventsPage {
@@ -130,27 +131,42 @@ export class EventsPage {
     const price = o.price.kind === "money" ? o.price.label : "";
     if (events.boosted)
       return `<section class="event-boost active"><span class="event-boost-art">${medalIcon()}<b>×2</b></span><div><b>Event Booster active</b><p>Every Medal this event pays counts double, and its premium relics are open.</p></div>${checkIcon()}</section>`;
-    return `<section class="event-boost"><span class="event-boost-art">${medalIcon()}<b>×2</b></span><div><b>Event Booster</b><p>Doubles every Medal this event pays, those already earned too, and opens its two premium relics.</p><p class="event-boost-message" id="event-boost-message" aria-live="polite"></p></div>` +
+    return `<section class="event-boost"><span class="event-boost-art">${medalIcon()}<b>×2</b></span><div><b>Event Booster</b><p>Doubles every Medal this event pays, those already claimed too, and opens its two premium relics.</p><p class="event-boost-message" id="event-boost-message" aria-live="polite"></p></div>` +
       `<button id="event-boost-buy" class="event-boost-buy" aria-label="Buy the Event Booster for ${price}">${price}</button></section>`;
   }
 
-  /** A mission: what its next tier asks, its tier and that tier's Medals,
-   * and its bar; done, its last tier and a check. */
+  /** A mission: what its next tier to claim asks, the tiers claimed and the
+   * Medals waiting (or the next tier's), and its bar, which reads Claim and
+   * claims them while a tier is done; finished, its last tier and a check. */
   private missionHtml(m: EventMission) {
-    const def = EVENT_MISSIONS[m.type], done = tiersDone(m), complete = isComplete(m);
-    const tier = Math.min(done, TIERS - 1), target = def.targets[tier];
-    const medals = TIER_MEDALS[tier] * (this.ctx.game.events.boosted ? 2 : 1);
-    const reward = complete ? checkIcon() : `<span class="mission-reward" title="${medals} Medals">${medalIcon()}<b>${medals}</b></span>`;
-    const bar = `<div class="mission-bar" role="progressbar" aria-valuemin="0" aria-valuemax="${target}" aria-valuenow="${Math.min(m.progress, target)}"><i style="width:${Math.min(100, (100 * m.progress) / target)}%"></i><span>${complete ? "Complete!" : `${m.progress.toLocaleString("en-US")}/${target.toLocaleString("en-US")}`}</span></div>`;
+    const def = EVENT_MISSIONS[m.type], finished = isFinished(m), ready = unclaimedTiers(m) > 0;
+    const tier = Math.min(m.claimed, TIERS - 1), target = def.targets[tier], boost = this.ctx.game.events.boosted ? 2 : 1;
+    const medals = (ready ? tierMedals(tiersDone(m)) - tierMedals(m.claimed) : TIER_MEDALS[tier]) * boost;
+    const reward = finished ? checkIcon() : `<span class="mission-reward" title="${medals} Medals">${medalIcon()}<b>${medals}</b></span>`;
+    const fill = `<i style="width:${Math.min(100, (100 * m.progress) / target)}%"></i>`;
+    const bar = ready
+      ? `<button type="button" class="mission-bar event-claim" data-claim="${m.id}" aria-label="Claim ${medals} Medals">${fill}<span>Claim</span></button>`
+      : `<div class="mission-bar" role="progressbar" aria-valuemin="0" aria-valuemax="${target}" aria-valuenow="${Math.min(m.progress, target)}">${fill}<span>${finished ? "Complete!" : `${m.progress.toLocaleString("en-US")}/${target.toLocaleString("en-US")}`}</span></div>`;
     const fresh = this.fresh.has(m.id) ? `<small class="event-new">NEW</small>` : "";
-    return `<li class="mission event-mission${complete ? " complete" : ""}" data-mission="${m.id}"><div class="mission-body">` +
-      `<div class="event-mission-head"><b class="mission-text">${fresh}${def.text(target)}</b><span class="event-tier"><small>${done}/${TIERS}</small>${reward}</span></div>${bar}</div></li>`;
+    return `<li class="mission event-mission${finished ? " complete" : ready ? " ready" : ""}" data-mission="${m.id}"><div class="mission-body">` +
+      `<div class="event-mission-head"><b class="mission-text">${fresh}${def.text(target)}</b><span class="event-tier"><small>${m.claimed}/${TIERS}</small>${reward}</span></div>${bar}</div></li>`;
   }
 
   private bind() {
     const ctx = this.ctx;
     el("events-close").onclick = () => ctx.navigate(this.from || "board");
     document.getElementById("event-boost-buy")?.addEventListener("click", () => void this.buyBoost());
+    el("events").querySelectorAll<HTMLButtonElement>("[data-claim]").forEach((b) => (b.onclick = () => this.claim(Number(b.dataset.claim))));
+  }
+
+  /** Claims mission `id`'s Medals: saved, redrawn, and risen to the middle
+   * of the screen. */
+  private claim(id: number) {
+    const game = this.ctx.game, m = game.events.missions.find((x) => x.id === id), medals = game.events.claim(id);
+    if (!m || medals === null) return;
+    this.ctx.update();
+    this.render();
+    revealReward({ icon: medalIcon(), amount: `+${medals.toLocaleString("en-US")}`, kicker: "EVENT MISSION", name: "Medals", text: EVENT_MISSIONS[m.type].text(EVENT_MISSIONS[m.type].targets[m.claimed - 1]!), permanent: false }, game.save.settings.reduceMotion);
   }
 
   /** Each mission's place on the screen, by id. */
@@ -167,11 +183,11 @@ export class EventsPage {
     });
   }
 
-  /** Completed missions not yet moved go under the rest after a moment,
+  /** Finished missions not yet moved go under the rest after a moment,
    * while the screen shows. */
   private scheduleMove() {
     const e = this.ctx.game.save.events;
-    const waiting = this.ctx.game.events.missions.filter((m) => isComplete(m) && !e.moved.includes(m.id));
+    const waiting = this.ctx.game.events.missions.filter((m) => isFinished(m) && !e.moved.includes(m.id));
     if (!waiting.length || this.moving) return;
     this.moving = setTimeout(() => {
       this.moving = null;

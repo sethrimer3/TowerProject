@@ -6,6 +6,7 @@ Examples:
 
 - **Outage notice:** after a brief systemic issue, every player gets *We're sorry about this morning's outage* with 20 Gems as compensation.
 - **Missed Tournament prize:** if a player doesn't claim their Tournament prize within its 24 hours, the server pushes it to them as Mail instead. The Tournament page then shows only when the next tournament opens, never *Rewards expired*.
+- **Unclaimed event Medals:** Medals an event's missions earned and the player didn't claim on the Events screen come as Mail once the event ends (`event:<id>`; the stand-in posts it as the next event starts, `EventDesk.mailUnclaimed`).
 
 ## Summary
 

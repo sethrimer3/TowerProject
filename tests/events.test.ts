@@ -7,7 +7,7 @@ import {
   DRAWN_MISSIONS, EVENT_DAYS, EVENT_MISSION_COUNT, EVENT_MISSIONS, FIXED_MISSIONS, STUB_MILESTONES, TIER_MEDALS,
   eventAt, eventEndsAt, eventStartsAt, nextReleaseAt, releasedBy, stubEvent, type EventMissionType,
 } from "../src/events/catalog.ts";
-import { baseMedals, decodeEvents, defaultEvents, isComplete, milestoneReached, relicMedals } from "../src/events/progress.ts";
+import { baseMedals, decodeEvents, defaultEvents, isComplete, isFinished, milestoneReached, relicMedals, unclaimedMedals } from "../src/events/progress.ts";
 import { decodeRelics } from "../src/relics.ts";
 import { BADGE_IDS, MAX_COPIES } from "../src/badges.ts";
 import { DAY_MS } from "../src/shop/clock.ts";
@@ -102,22 +102,29 @@ test("the stand-in draws only what the player can work on", () => {
   assert.ok(mission(g, "crits"));
 });
 
-test("each tier pays its Medals as it is done, once; a key counts once", () => {
+test("a tier done waits to be claimed, and a claim pays its Medals once; a key counts once", () => {
   const g = gameAt(START + HOUR);
   g.events.refresh();
   const t = g.save.events.missions.find((m) => m.type === "tournaments")!;
   g.events.record("tournaments", 1, "100");
   g.events.record("tournaments", 1, "100");
   assert.equal(t.progress, 1, "the same tournament counts once");
+  assert.equal(g.save.medals, 0, "nothing paid before the claim");
+  assert.equal(g.events.claim(t.id), 10);
+  assert.equal(g.events.claim(t.id), null, "once");
   assert.equal(g.save.medals, 10);
   g.events.record("tournaments", 1, "101");
   g.events.record("tournaments", 1, "102");
-  assert.equal(g.save.medals, 10 + 15 + 20);
-  assert.ok(isComplete(t));
+  assert.ok(isComplete(t) && !isFinished(t));
+  assert.equal(g.events.claim(t.id), 15 + 20, "every tier done is claimed at once");
+  assert.ok(isFinished(t));
   g.events.record("tournaments", 1, "103");
   assert.equal(t.progress, 3, "never past the last target");
-  // A jump past two tiers pays both.
+  // A jump past two tiers pays both, at the claim.
   g.events.record("freeGems", 10);
+  assert.equal(unclaimedMedals(g.save.events), 25);
+  assert.equal(baseMedals(g.save.events), 45, "the Medals paid are those claimed");
+  g.events.claim(mission(g, "freeGems")!.id);
   assert.equal(g.save.medals, 45 + 25);
   assert.equal(baseMedals(g.save.events), 70);
 });
@@ -129,7 +136,7 @@ test("best missions keep the most reached: a floor, and streaks of floors", () =
   // Make sure the streak and floor missions are in play.
   const e = g.save.events;
   for (const type of ["floor", "noDamage", "maxInterest"] as const)
-    if (!e.missions.some((m) => m.type === type)) e.missions.push({ id: e.nextId++, type, progress: 0 });
+    if (!e.missions.some((m) => m.type === type)) e.missions.push({ id: e.nextId++, type, progress: 0, claimed: 0 });
   g.events.best("floor", 600);
   g.events.best("floor", 400);
   assert.equal(mission(g, "floor")!.progress, 600);
@@ -151,12 +158,14 @@ test("the Event Booster doubles the event's Medals, retroactively, and opens its
   const g = gameAt(START + HOUR);
   g.events.refresh();
   g.events.record("freeGems", 13);
+  g.events.claim(mission(g, "freeGems")!.id);
   assert.equal(g.save.medals, 45);
   assert.equal(g.buyOffer("eventBoost", START + HOUR), "unpaid", "real money, until the store confirms it");
   assert.equal(g.buyOffer("eventBoost", START + HOUR, true), null);
   assert.ok(g.events.boosted);
   assert.equal(g.save.medals, 90, "those already earned doubled");
   g.events.record("tournaments", 1, "1");
+  g.events.claim(mission(g, "tournaments")!.id);
   assert.equal(g.save.medals, 110, "and new ones doubled");
   assert.equal(relicMedals(g.save.events), 110);
   assert.equal(g.buyOffer("eventBoost", START + 2 * HOUR, true), "owned", "once an event");
@@ -164,19 +173,21 @@ test("the Event Booster doubles the event's Medals, retroactively, and opens its
   g.save.medals += 1000;
   assert.equal(relicMedals(g.save.events), 110);
   // Premium milestones need the booster.
-  const e = { ...defaultEvents(), id: 1, missions: [{ id: 1, type: "basic" as const, progress: 90_000 }] };
-  for (let i = 2; i <= 13; i++) e.missions.push({ id: i, type: DRAWN_MISSIONS[i]!, progress: EVENT_MISSIONS[DRAWN_MISSIONS[i]!].targets[2] });
+  const e = { ...defaultEvents(), id: 1, missions: [{ id: 1, type: "basic" as const, progress: 90_000, claimed: 3 }] };
+  for (let i = 2; i <= 13; i++) e.missions.push({ id: i, type: DRAWN_MISSIONS[i]!, progress: EVENT_MISSIONS[DRAWN_MISSIONS[i]!].targets[2], claimed: 3 });
   assert.equal(relicMedals(e), 13 * 45);
   assert.deepEqual(STUB_MILESTONES.map((m) => milestoneReached(e, m)), [true, false, false, false]);
   e.boosted = [1];
   assert.deepEqual(STUB_MILESTONES.map((m) => milestoneReached(e, m)), [true, true, true, true]);
 });
 
-test("a new event starts over, keeping the boosters bought", () => {
+test("a new event starts over, keeping the boosters bought and mailing the Medals left unclaimed", () => {
   const g = gameAt(START + HOUR);
   g.events.refresh();
   assert.equal(g.buyOffer("eventBoost", START + HOUR, true), null);
   g.events.record("freeGems", 13);
+  g.events.record("tournaments", 1, "1");
+  g.events.claim(mission(g, "tournaments")!.id);
   const medals = g.save.medals;
   g.clock = () => START + EVENT_DAYS * DAY_MS + HOUR;
   g.events.refresh();
@@ -186,6 +197,13 @@ test("a new event starts over, keeping the boosters bought", () => {
   assert.ok(!g.events.boosted, "each event needs its own booster");
   assert.deepEqual(g.save.events.boosted, [eventAt(START)]);
   assert.equal(g.save.medals, medals, "Medals carry over");
+  // The unclaimed tiers come as Mail, doubled by the booster, sent as the event ended, once.
+  const mail = g.save.mail.stub.filter((m) => m.id === `event:${eventAt(START)}`);
+  assert.equal(mail.length, 1);
+  assert.deepEqual(mail[0]!.items, [{ kind: "currency", currency: "medals", amount: 2 * 45 }]);
+  assert.equal(mail[0]!.sentAt, eventEndsAt(eventAt(START)));
+  g.events.refresh();
+  assert.equal(g.save.mail.stub.length, 1);
   // Erase All keeps the boosters bought.
   g.eraseAll();
   assert.deepEqual(g.save.events.boosted, [eventAt(START)]);
@@ -199,17 +217,22 @@ test("Buy badges completes once every badge is owned and maxed", () => {
   g.save.badges.owned = Object.fromEntries(BADGE_IDS.map((id) => [id, { copies: MAX_COPIES }])) as typeof g.save.badges.owned;
   g.events.refresh();
   assert.ok(isComplete(mission(g, "badges")!));
-  assert.equal(g.save.medals, 45);
+  assert.equal(g.events.claim(mission(g, "badges")!.id), 45);
 });
 
-test("the Events button's dot: missions not yet seen, or completed and not yet moved", () => {
+test("the Events button's dot: missions not yet seen, a tier to claim, or finished and not yet moved", () => {
   const g = gameAt(START + HOUR);
   g.events.refresh();
   assert.ok(g.events.waiting);
   g.events.seenAll();
   assert.ok(!g.events.waiting);
-  g.events.record("freeGems", 13);
-  assert.ok(g.events.waiting);
+  g.events.record("freeGems", 7);
+  assert.ok(g.events.waiting, "a tier to claim");
+  g.events.claim(mission(g, "freeGems")!.id);
+  assert.ok(!g.events.waiting);
+  g.events.record("freeGems", 6);
+  g.events.claim(mission(g, "freeGems")!.id);
+  assert.ok(g.events.waiting, "finished, not yet moved");
   g.events.move(mission(g, "freeGems")!.id);
   assert.ok(!g.events.waiting);
 });
@@ -218,6 +241,9 @@ test("decoding keeps known missions and fields, each once", () => {
   const g = gameAt(START + HOUR);
   g.events.refresh();
   g.events.record("tournaments", 1, "9");
+  g.events.record("freeGems", 10);
+  g.events.claim(mission(g, "freeGems")!.id);
+  g.events.record("freeGems", 1);
   const e = g.save.events;
   assert.deepEqual(decodeEvents(JSON.parse(JSON.stringify(e))), e);
   const raw = {
@@ -229,6 +255,9 @@ test("decoding keeps known missions and fields, each once", () => {
   assert.deepEqual(d.missions, e.missions, "duplicate ids and kinds, unknown kinds and progress past the last target dropped");
   assert.deepEqual([d.seen, d.moved, d.boosted], [[1], [], [3]]);
   assert.deepEqual(d.streaks, defaultEvents().streaks);
+  // Claimed tiers never past those done; a save from before claims counts its tiers done as claimed.
+  const claimed = (c: unknown) => decodeEvents({ id: 1, missions: [{ id: 1, type: "tournaments", progress: 2, claimed: c }] }).missions[0]!.claimed;
+  assert.deepEqual([claimed(1), claimed(3), claimed(-1), claimed(undefined)], [1, 0, 0, 2]);
   assert.deepEqual(decodeEvents(null), defaultEvents());
   assert.deepEqual(decodeRelics(["unknown", 3]), [], "no relic is defined yet");
 });
@@ -245,7 +274,7 @@ test("play counts: kills by strength once a tile, potions, chests and floors cli
   g.save.upgrades.inspirationUndos = 1;
   const e = g.save.events;
   e.id = eventAt(START);
-  e.missions = (["basic", "bosses", "potions", "chests", "floor", "noDamage"] as const).map((type, i) => ({ id: i + 1, type, progress: 0 }));
+  e.missions = (["basic", "bosses", "potions", "chests", "floor", "noDamage"] as const).map((type, i) => ({ id: i + 1, type, progress: 0, claimed: 0 }));
   const tiles: Tile[] = [{ kind: "enemy", enemy: enemy("normal") }, { kind: "enemy", enemy: enemy("boss") }, { kind: "potion" }, { kind: "treasure" }, { kind: "stairs" }];
   corridor(g, ...tiles);
   assert.ok(g.move(1, 0));

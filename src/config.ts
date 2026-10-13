@@ -373,7 +373,7 @@ export const UPGRADES = [
   {
     id: "loot",
     name: "Loot",
-    description: "Kills and items picked up pay more Gold: opens Gold Bonus training, and Gold Bonus research in the Archives",
+    description: "Kills, chests, items picked up and doors opened pay more Gold: opens Gold Bonus training, and Gold Bonus research in the Archives",
     base: 2,
     max: 1,
     currency: "inspiration",
@@ -601,7 +601,7 @@ export const TRAINING = [
   { id: "floorGold", name: "Gold / Floor", group: "utility", requires: "spareChange", cost: 1, max: 150, description: "Raises the Gold paid for each floor climbed for the first time in a run." },
   { id: "floorSilver", name: "Silver / Floor", group: "utility", requires: "wishingWell", cost: 1, max: 150, description: "Raises the Silver paid for each floor climbed for the first time in a run." },
   { id: "silverBonus", name: "Silver Bonus", group: "utility", requires: "wealthy", cost: 1, max: 150, description: "Multiplies all Silver found in a run." },
-  { id: "goldBonus", name: "Gold Bonus", group: "utility", requires: "loot", cost: 1, max: 150, description: "Multiplies the Gold each kill pays, and each item picked up or door opened in a run." },
+  { id: "goldBonus", name: "Gold Bonus", group: "utility", requires: "loot", cost: 1, max: 150, description: "Multiplies the Gold kills, chests, items picked up and doors opened pay in a run, and what Floor Skip pays for them, with Gold Bonus research. Gold / Floor and Interest aren't raised." },
   { id: "freeOffense", name: "Free Offense Up", group: "utility", requires: "freeTraining", cost: 1, max: 100, description: "Each floor passed in a run has a chance to train a random Offense stat one level for free, for the run." },
   { id: "freeDefense", name: "Free Defense Up", group: "utility", requires: "freeTraining", cost: 1, max: 100, description: "Each floor passed in a run has a chance to train a random Defense stat one level for free, for the run." },
   { id: "freeUtility", name: "Free Utility Up", group: "utility", requires: "freeTraining", cost: 1, max: 100, description: "Each floor passed in a run has a chance to train a random Utility stat one level for free, for the run." },

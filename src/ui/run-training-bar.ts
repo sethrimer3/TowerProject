@@ -5,6 +5,7 @@ import { buyQuantityHtml, readQuantity, runCount } from "./buy-quantity-select.t
 import { trainingText, trainingOpen } from "../loadout.ts";
 import { el, itemSprite, POINTER_SVG, uiSprite } from "./dom.ts";
 import { sparkRed } from "./hud.ts";
+import { goldBonuses, goldBonusTotal } from "../gold-bonuses.ts";
 
 type Group = keyof typeof TRAINING_GROUPS;
 /** Each group's button icon. */
@@ -222,7 +223,8 @@ export class RunTrainingBar {
    * there, and the whole card greyed at its highest. */
   private fill(id: TrainingId) {
     const game = this.game, card = document.querySelector<HTMLElement>(`[data-drill="${id}"]`)!;
-    const offer = runTrainingOffer(game.save, game.run, id), { value, unit } = runTrainingValue(game.save, game.run, id);
+    const gold = goldBonusTotal(goldBonuses(game.save, game.tier, game.clock(), game.shrineGold));
+    const offer = runTrainingOffer(game.save, game.run, id), { value, unit } = runTrainingValue(game.save, game.run, id, gold);
     const q = game.buyQuantityFor("run"), bulk = runTrainingBulk(game.save, game.run, id, q, game.free ? Infinity : game.silver);
     const short = !offer.maxed && !bulk.affordable;
     card.classList.toggle("short", short);

@@ -635,7 +635,7 @@ export const RESEARCH = {
   },
   goldBonus: {
     name: "Gold Bonus",
-    description: "Search more thoroughly: every kill, and every item picked up or door opened in a run, pays more Gold.",
+    description: "Search more thoroughly: every kill, chest, item picked up and door opened in a run, and what Floor Skip pays for them, pays more Gold, multiplying Gold Bonus training.",
     categories: ["economy"],
     requires: [{ upgrade: "loot" }],
     levels: hundredLevels("goldBonus", 3, STEEP_INCOME),

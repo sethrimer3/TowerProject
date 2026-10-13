@@ -13,6 +13,8 @@ export type EventMission = {
   type: EventMissionType;
   /** Progress toward the last tier's target, never past it. */
   progress: number;
+  /** The tiers whose Medals have been claimed, never more than are done. */
+  claimed: number;
 };
 
 /** A run's streaks: floors climbed without fight damage (and whether the
@@ -55,11 +57,20 @@ export const defaultEvents = (): EventsSave => ({
 /** How many of a mission's tiers are done. */
 export const tiersDone = (m: EventMission) => EVENT_MISSIONS[m.type].targets.filter((t) => m.progress >= t).length;
 export const isComplete = (m: EventMission) => tiersDone(m) === TIERS;
+/** The tiers done whose Medals wait to be claimed. */
+export const unclaimedTiers = (m: EventMission) => tiersDone(m) - m.claimed;
+/** Whether every tier's Medals have been claimed. */
+export const isFinished = (m: EventMission) => m.claimed === TIERS;
 
 /** Whether the running event's booster is owned. */
 export const isBoosted = (e: EventsSave) => e.id !== null && e.boosted.includes(e.id);
-/** The Medals the event's missions have paid, before the booster doubles them. */
-export const baseMedals = (e: EventsSave) => e.missions.reduce((sum, m) => sum + tierMedals(tiersDone(m)), 0);
+/** The Medals the event's missions have paid (the tiers claimed), before
+ * the booster doubles them. */
+export const baseMedals = (e: EventsSave) => e.missions.reduce((sum, m) => sum + tierMedals(m.claimed), 0);
+/** The Medals the event's tiers done and not yet claimed hold, doubled once
+ * boosted. */
+export const unclaimedMedals = (e: EventsSave) =>
+  e.missions.reduce((sum, m) => sum + tierMedals(tiersDone(m)) - tierMedals(m.claimed), 0) * (isBoosted(e) ? 2 : 1);
 /** The Medals toward the event's relics: its own, doubled once boosted
  * (Medals carried over or from the weekly missions never count). */
 export const relicMedals = (e: EventsSave) => baseMedals(e) * (isBoosted(e) ? 2 : 1);
@@ -82,7 +93,7 @@ export const boostRefusal = (save: Save): "locked" | "owned" | null =>
   save.events.id === null ? "locked" : isBoosted(save.events) ? "owned" : null;
 
 /** The Event Booster bought: the running event's Medals double, those its
- * missions have paid already too, and its premium relics open. */
+ * missions have paid (claimed) already too, and its premium relics open. */
 export function boostEvent(save: Save) {
   const e = save.events;
   if (boostRefusal(save)) return;
@@ -103,7 +114,10 @@ export function decodeEvents(raw: unknown): EventsSave {
     if (!wholeIn(m.progress, 0, EVENT_MISSIONS[m.type as EventMissionType].targets[TIERS - 1]) || d.missions.length >= EVENT_MISSION_COUNT) continue;
     ids.add(m.id);
     types.add(m.type);
-    d.missions.push({ id: m.id, type: m.type, progress: m.progress });
+    const mission: EventMission = { id: m.id, type: m.type, progress: m.progress, claimed: 0 };
+    // TODO: drop the `undefined` case once saves from before claiming (whose tiers paid at once) are gone.
+    mission.claimed = m.claimed === undefined ? tiersDone(mission) : wholeIn(m.claimed, 0, tiersDone(mission)) ? m.claimed : 0;
+    d.missions.push(mission);
   }
   d.nextId = Math.max(whole(raw.nextId) ? raw.nextId : 1, ...[...ids].map((i) => i + 1));
   d.rng = wholeIn(raw.rng, 0, 4294967295) ? raw.rng : null;

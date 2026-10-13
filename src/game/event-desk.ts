@@ -4,13 +4,14 @@ import { goalUnlocked } from "../goals.ts";
 import { random, stream } from "../random.ts";
 import { estimatedServerTime, gmtDay } from "../shop/clock.ts";
 import {
-  DRAWN_MISSIONS, EVENT_MISSIONS, FIXED_MISSIONS, TIER_MEDALS, TIERS,
-  eventAt, nextReleaseAt, releasedBy, stubEvent, type EventInfo, type EventMissionType,
+  DRAWN_MISSIONS, EVENT_MISSIONS, FIXED_MISSIONS, TIERS,
+  eventAt, eventEndsAt, nextReleaseAt, releasedBy, stubEvent, tierMedals, type EventInfo, type EventMissionType,
 } from "../events/catalog.ts";
 import {
-  COUNTED_KEPT, defaultEvents, grantRelics, isBoosted, isComplete, noStreaks, relicMedals, tiersDone,
+  COUNTED_KEPT, defaultEvents, grantRelics, isBoosted, isComplete, isFinished, noStreaks, relicMedals, tiersDone, unclaimedMedals, unclaimedTiers,
   type EventMission, type EventsSave,
 } from "../events/progress.ts";
+import { postStubMail } from "../mail/server.ts";
 import type { DeskHost } from "./desk.ts";
 import { earn } from "../profile.ts";
 
@@ -19,8 +20,8 @@ const STEP = 0x6d2b79f5;
 
 /** Events' commands (the game's `events`): starting each event as the last
  * ends, releasing its missions day by day, counting what the player does
- * toward them, and paying each tier's Medals as it is done (no claim:
- * Medals come at once). Events go by the server's GMT clock as estimated
+ * toward them, and paying each tier's Medals when the player claims it
+ * (those left unclaimed come as Mail once the event ends). Events go by the server's GMT clock as estimated
  * (the Shop's), like the daily missions. Nothing counts before Tower I's
  * floor 70 Goal opens Events. */
 export class EventDesk {
@@ -65,10 +66,25 @@ export class EventDesk {
   }
 
   /** Whether the Events button wears its dot: a mission the Events page
-   * hasn't shown, or one completed and not yet moved under the rest. */
+   * hasn't shown, one with a tier to claim, or one finished and not yet
+   * moved under the rest. */
   get waiting() {
     const e = this.e;
-    return this.unlocked && e.missions.some((m) => !e.seen.includes(m.id) || (isComplete(m) && !e.moved.includes(m.id)));
+    return this.unlocked && e.missions.some((m) => !e.seen.includes(m.id) || unclaimedTiers(m) > 0 || (isFinished(m) && !e.moved.includes(m.id)));
+  }
+
+  /** Pays the Medals of mission `id`'s tiers done and not yet claimed
+   * (doubled once boosted), and any relic they reach; returns the Medals
+   * paid, or null with none to claim. */
+  claim(id: number) {
+    const e = this.e, m = e.missions.find((x) => x.id === id);
+    if (!m || unclaimedTiers(m) <= 0) return null;
+    const medals = (tierMedals(tiersDone(m)) - tierMedals(m.claimed)) * (isBoosted(e) ? 2 : 1);
+    m.claimed = tiersDone(m);
+    this.host.save.medals += medals;
+    earn(this.host.save, "medals", medals);
+    grantRelics(this.host.save);
+    return medals;
   }
 
   /** The Events page has shown every mission. */
@@ -82,13 +98,33 @@ export class EventDesk {
   }
 
   /** Starts the event over once the next has begun: its missions, what has
-   * counted and its streaks go; the events boosted stay. */
+   * counted and its streaks go; the events boosted stay. The Medals left
+   * unclaimed in the event that ended come as Mail. */
   private roll() {
     const id = eventAt(this.now), e = this.e;
     if (e.id === id) return false;
+    if (e.id !== null) this.mailUnclaimed();
     this.host.save.events = { ...defaultEvents(), boosted: e.boosted, rng: e.rng, nextId: e.nextId, loginDay: e.loginDay };
     this.host.save.events.id = id;
     return true;
+  }
+
+  /** Posts the ended event's unclaimed Medals to the mailbox, as the server
+   * will once it runs events (`TODO(server)`), and counts them toward its
+   * relics as if claimed. */
+  private mailUnclaimed() {
+    const e = this.e, save = this.host.save, medals = unclaimedMedals(e);
+    if (medals <= 0) return;
+    for (const m of e.missions) m.claimed = tiersDone(m);
+    grantRelics(save);
+    const name = stubEvent(e.id!).name, endsAt = eventEndsAt(e.id!);
+    postStubMail(save, {
+      subject: "Your event Medals",
+      body: `${name} has ended.
+
+Your Medals weren't claimed in time, so here they are.`,
+      items: [{ kind: "currency", currency: "medals", amount: medals }],
+    }, endsAt, `event:${e.id}`);
   }
 
   /** Brings Events up to date: a new event once the last has ended, today's
@@ -121,7 +157,7 @@ export class EventDesk {
         const pool = DRAWN_MISSIONS.filter((t) => !taken.has(t) && EVENT_MISSIONS[t].offered(save));
         const type = fixed ?? pool[Math.min(pool.length - 1, Math.floor(rng() * pool.length))];
         if (!type) break;
-        e.missions.push({ id: e.nextId++, type, progress: 0 });
+        e.missions.push({ id: e.nextId++, type, progress: 0, claimed: 0 });
         added = true;
       }
     });
@@ -177,20 +213,12 @@ export class EventDesk {
     return this.e.missions.find((m) => m.type === type && !isComplete(m));
   }
 
-  /** Raises mission `type`'s progress to `to` (up to its last target) and
-   * pays the Medals of each tier it completes: doubled once boosted. */
+  /** Raises mission `type`'s progress to `to` (up to its last target); a
+   * tier it completes waits to be claimed (`claim`). */
   private raise(type: EventMissionType, to: number) {
-    const e = this.e, m = e.missions.find((x) => x.type === type);
+    const m = this.e.missions.find((x) => x.type === type);
     if (!m || to <= m.progress) return false;
-    const before = tiersDone(m);
     m.progress = Math.min(EVENT_MISSIONS[type].targets[TIERS - 1], to);
-    const after = tiersDone(m);
-    if (after > before) {
-      const medals = TIER_MEDALS.slice(before, after).reduce((a, b) => a + b, 0) * (isBoosted(e) ? 2 : 1);
-      this.host.save.medals += medals;
-      earn(this.host.save, "medals", medals);
-      grantRelics(this.host.save);
-    }
     return true;
   }
 

@@ -29,10 +29,13 @@ export interface MailServer {
 /** What the stand-in posts: a message's subject, body and items. */
 export type MailDraft = { subject: string; body: string; items: MailItem[] };
 
-/** Posts `draft` to the stand-in's mailbox (Dev mail, from `mailDebug`). */
-export function postStubMail(save: Save, draft: MailDraft, now: number) {
+/** Posts `draft` to the stand-in's mailbox, sent at `now` (Dev mail, from
+ * `mailDebug`, and an ended event's unclaimed Medals, `event:<id>`, posted
+ * once). */
+export function postStubMail(save: Save, draft: MailDraft, now: number, id = `dev:${now}:${save.mail.stub.length}`) {
   const stub = save.mail.stub;
-  stub.push({ ...draft, id: `dev:${now}:${stub.length}`, sentAt: now, read: false, claimed: false, hidden: false });
+  if (stub.some((m) => m.id === id)) return;
+  stub.push({ ...draft, id, sentAt: now, read: false, claimed: false, hidden: false });
   save.mail.stub = stub.slice(-MAIL_IDS_KEPT);
 }
 

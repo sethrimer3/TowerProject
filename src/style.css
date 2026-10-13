@@ -3464,10 +3464,14 @@ nav.in-run.drilling .run-drills {
 .run-drills .drill-buy { position: relative; }
 .drill-count { position: absolute; left: 3px; bottom: 1px; font-size: 8px; line-height: 1; color: #f3ead8; opacity: 0.85; pointer-events: none; }
 /* Not enough Silver: the card's text and the price stay clear, and only the
-   outlines and the button's face fade. At its highest: greyed out. */
+   outlines and the button's face fade. At its highest: the card and its Max
+   in gold, set apart from the rows still to train. */
 .drill-card.short { border-color: #2c3440; }
 .run-drills .drill-card.short .drill-buy { opacity: 1; border-color: #333b47; background: #121821; color: #e8dfcf; }
-.drill-card.maxed { opacity: 0.45; filter: grayscale(0.8); }
+.drill-card.maxed { border-color: #d9a632; background: linear-gradient(#3a2c10, #1f1808); box-shadow: inset 0 0 6px #ffd34d40; }
+.drill-card.maxed .drill-name { color: #ffd34d; }
+.drill-card.maxed .drill-value { color: #ffe9a8; }
+.run-drills .drill-card.maxed .drill-buy:disabled { opacity: 1; border-color: #d9a632; background: linear-gradient(#8a6418, #4a340c); color: #fff3cf; letter-spacing: 1px; cursor: default; }
 .training-bar { display: flex; flex-shrink: 0; gap: 5px; padding: 0 0 max(5px, env(safe-area-inset-bottom)); }
 .training-bar[hidden] { display: none; }
 /* On the Job's lesson: a note over the hand, and a hand pointing down at a
@@ -4194,6 +4198,13 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
 .event-tier { flex: none; display: inline-flex; align-items: center; gap: 8px; font-size: 11px; color: #b9c2cf; font-variant-numeric: tabular-nums; }
 .event-tier .medal-icon { width: 14px; height: 14px; }
 .event-tier .check-icon { width: 16px; height: 16px; }
+/* A mission with a tier to claim: its bar, full and gold, reads Claim and is pressed to claim it. */
+.event-mission.ready { border-color: #d9a632; background: linear-gradient(180deg, #2a2210, #17130a); }
+button.mission-bar.event-claim { display: block; width: 100%; height: 22px; min-height: 0; padding: 0; border-color: #d9a632; animation: event-claim-glow 1.6s ease-in-out infinite; }
+button.mission-bar.event-claim i { width: 100% !important; background: linear-gradient(90deg, #8a5a12, #ffd34d); }
+button.mission-bar.event-claim span { font-size: 12px; line-height: 20px; font-weight: 600; letter-spacing: 1px; color: #fff8e0; }
+@keyframes event-claim-glow { 50% { box-shadow: 0 0 8px 2px #ffd34d88; } }
+html.reduce-motion button.mission-bar.event-claim { animation: none; }
 .event-new { display: inline-block; margin-right: 6px; padding: 1px 4px; border-radius: 3px; font-size: 8px; letter-spacing: 1px; color: #10161f; background: #ffd34d; vertical-align: 2px; }
 /* The Relics screen (relics-page.ts): a grid of the relics owned, and one
    raised to full size with rays and sparkles when pressed or hovered. */
