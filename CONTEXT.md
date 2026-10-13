@@ -255,6 +255,10 @@ _Avoid_: reflect, recoil
 An enemy strike turned partly aside: once the hero has any Parry %, every enemy strike is parried, the damage it does after DEF cut by Parry % (trained and researched, at most 98%) before the shroud and Lifesteal's heals. Parries are certain, so every prediction counts them.
 _Avoid_: dodge, block (the shroud blocks)
 
+**Piercing**:
+A share of the defender's DEF a strike ignores. The hero's comes from equipment (at most 50%); as an enemy trait it would ignore a share of the hero's DEF, the same effect turned against the hero, so both keep the one name.
+_Avoid_: penetration, armor break, sunder
+
 **Shroud**:
 The damage a hero's shroud blocks in each fight: the enemy's strikes, after DEF, wear it away before any HP is lost, and it is whole again when the next fight starts. The Shroud skill gives the first point; Shroud training adds more.
 _Avoid_: shield (the equipment slot), barrier
