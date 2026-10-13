@@ -497,11 +497,11 @@ _Avoid_: obstacle, deadlock cause
 ### Themes
 
 **UI theme**:
-A look for the page around the board: its panels, buttons and sounds. Classic is always available; Medieval is owned from the start; Neon, Terminal and Desktop are earned.
+A look for the page around the board: its panels, buttons and sounds. Classic is always available; Medieval is owned from the start; Neon, Terminal, Desktop, Glyph and Ember are earned.
 _Avoid_: skin, style
 
 **Game theme**:
-A look for the board itself: its tiles, the hero, enemies and torches. Classic is always available; Neon, Terminal and Desktop are earned.
+A look for the board itself: its tiles, the hero, enemies and torches. Classic is always available; Neon, Terminal, Desktop, Glyph and Ember are earned.
 _Avoid_: tileset, board skin
 
 **Owned theme**:

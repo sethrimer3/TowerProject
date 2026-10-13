@@ -1,0 +1,228 @@
+/* Ember theme: the page as warm cream and amber ASCII glowing on a dark
+   maroon field of dim letters, with red glows for what is dangerous.
+   Blocky VT323 type, `=`-ruled frames and soft ember light.
+   Every selector is scoped under `html.ember` so nothing changes while the
+   theme is off. Loaded after style.css and the other themes. */
+@font-face {
+  font-family: VT323;
+  src: url("../assets/fonts/VT323/VT323-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+html.ember {
+  --e-cream: #ffe9c4;
+  --e-amber: #ffb347;
+  --e-red: #ff2a1a;
+  --e-dim: #b08a78;
+  --e-faint: #5a2226;
+  --e-black: #0b0204;
+  --gold: var(--e-amber);
+  --muted: var(--e-dim);
+  --line: var(--e-faint);
+  color: var(--e-cream);
+  background: var(--e-black);
+}
+html.ember,
+html.ember *:not(.badge-glyph, .badge-mark) {
+  font-family: VT323, "Courier New", monospace;
+  font-size-adjust: 0.62;
+  letter-spacing: 0.04em;
+}
+/* The field: dim maroon letters on near-black, darker towards the rim. */
+html.ember body {
+  background:
+    radial-gradient(ellipse at 50% 40%, transparent 40%, #000000b0 100%),
+    url("../assets/theme/ember-field.svg"),
+    #160406;
+  text-shadow: 0 0 3px #ffb34799, 0 0 9px #ffb34744;
+}
+html.ember * {
+  scrollbar-color: var(--e-faint) transparent;
+}
+html.ember ::-webkit-scrollbar-thumb {
+  background-color: var(--e-faint);
+  background-image: none;
+  border-radius: 0;
+}
+
+/* The app's own dark panes give way to the field: every box but the ones
+   this theme dresses (panels, buttons, bars, dialogs) loses its background
+   and takes this theme's line colour. `:not(#_)` lifts this over the page's
+   class rules; a style written on an element (a colour swatch) still wins,
+   and drawings, the bars' fills (`i`), rarity colours and badge tokens keep
+   theirs. */
+html.ember body *:not(#_, canvas, img, svg, svg *, i, button, select, input, dialog, .stats, .card, .upgrade, .setting, .range-setting, .inspect-box, .shop, .skill-tree, .currencies, .theme-card, .board, .board-tip, .xp-track, .health-track, .badge-token, .eq-tile, [class*="rar"]) {
+  background-color: transparent;
+  background-image: none;
+  border-color: var(--e-faint);
+}
+html.ember main.shell:not(#_) {
+  background: #12030599;
+}
+/* Headings: amber, burning a little brighter. */
+html.ember h1,
+html.ember h2,
+html.ember h3,
+html.ember .page-title,
+html.ember .section-title,
+html.ember .tower-heading {
+  color: var(--e-amber);
+  text-shadow: 0 0 4px var(--e-amber), 0 0 14px #ff6a1a88;
+}
+html.ember .page-title h2::after {
+  content: " =========";
+  color: var(--e-faint);
+  text-shadow: none;
+}
+html.ember .eyebrow,
+html.ember .hint,
+html.ember .board-caption {
+  color: var(--e-dim);
+}
+
+/* Buttons: cream type glowing amber between `=` rules. */
+html.ember button,
+html.ember select,
+html.ember input {
+  color: var(--e-cream);
+  background: #12030599;
+  border: 1px solid var(--e-faint);
+  border-top: 2px dashed #ffb34788;
+  border-bottom: 2px dashed #ffb34788;
+  border-radius: 0;
+  box-shadow: none;
+}
+html.ember button:hover,
+html.ember button:active {
+  background: #3a0e0ccc;
+  box-shadow: 0 0 12px #ff6a1a66, inset 0 0 8px #ff2a1a44;
+}
+html.ember button:focus-visible,
+html.ember select:focus-visible,
+html.ember input:focus-visible {
+  outline: 1px dashed var(--e-amber);
+  outline-offset: 3px;
+}
+html.ember button:disabled {
+  color: var(--e-faint);
+  border-color: var(--e-faint);
+  background: transparent;
+  opacity: 1;
+  text-shadow: none;
+}
+html.ember option {
+  background: var(--e-black);
+  color: var(--e-cream);
+}
+
+/* Panels: a dark pane ruled in `=` above and below, glowing faintly red
+   from inside. */
+html.ember .stats,
+html.ember .card,
+html.ember .upgrade,
+html.ember .setting,
+html.ember .range-setting,
+html.ember .inspect-box,
+html.ember .shop,
+html.ember .skill-tree,
+html.ember .currencies,
+html.ember .theme-card {
+  background: #0d0204e6;
+  border: 1px solid var(--e-faint);
+  border-top: 3px double #ffb34799;
+  border-bottom: 3px double #ffb34799;
+  border-radius: 0;
+  box-shadow: inset 0 0 18px #ff2a1a22, 0 0 10px #00000088;
+}
+html.ember .theme-card.worn {
+  border-color: var(--e-amber);
+  box-shadow: inset 0 0 18px #ff6a1a44, 0 0 16px #ffb34766;
+}
+html.ember .board {
+  border: 1px solid var(--e-faint);
+  border-radius: 0;
+  box-shadow: 0 0 22px #ff2a1a33;
+}
+html.ember .rule,
+html.ember .inventory-divider {
+  background: none;
+  border: 0;
+  border-top: 2px dashed var(--e-faint);
+}
+
+/* The board's notes: a solid pane, so the board doesn't show through. */
+html.ember .board-tip,
+html.ember .board-tip.dismissable:hover {
+  color: var(--e-cream);
+  background: var(--e-black);
+  border: 1px solid var(--e-amber);
+  border-radius: 0;
+  box-shadow: 0 0 0 3px var(--e-black), 0 0 14px #ffb34755;
+}
+html.ember .board-tip p,
+html.ember .board-tip small {
+  color: var(--e-dim);
+}
+
+/* Tabs: the selected one lit amber with a red glow. */
+html.ember nav button {
+  border-radius: 0;
+}
+html.ember nav button.selected,
+html.ember nav button.selected > span {
+  color: var(--e-black);
+  background: var(--e-amber);
+  box-shadow: 0 0 14px #ff6a1a99;
+  text-shadow: none;
+}
+
+/* Bars: a dark trough filled with glowing embers. */
+html.ember .xp-track,
+html.ember .health-track {
+  background: #1a0507;
+  border: 1px solid var(--e-faint);
+  border-radius: 0;
+}
+html.ember .xp-track i {
+  border-radius: 0;
+  background: linear-gradient(to right, #ff6a1a, var(--e-amber));
+  box-shadow: 0 0 8px #ff6a1a;
+}
+html.ember .health-track i {
+  border-radius: 0;
+  background: linear-gradient(to right, #9a1010, var(--e-red));
+  box-shadow: 0 0 8px var(--e-red);
+}
+html.ember .safe {
+  color: #7dff6a;
+  text-shadow: 0 0 6px #4fd84a;
+}
+html.ember .danger {
+  color: #ff5a3a;
+  text-shadow: 0 0 6px var(--e-red);
+}
+
+/* Dialogs: an amber-ruled pane over a darkened field. */
+html.ember dialog {
+  color: var(--e-cream);
+  background: var(--e-black);
+  border: 1px solid var(--e-faint);
+  border-top: 3px double var(--e-amber);
+  border-bottom: 3px double var(--e-amber);
+  border-radius: 0;
+  box-shadow: 0 0 24px #ff2a1a44;
+}
+html.ember dialog::backdrop {
+  background: #0a0002cc;
+}
+
+/* The embers breathe: headings glow brighter and dimmer, unless motion is
+   reduced. */
+@keyframes ember-breathe {
+  0%, 100% { text-shadow: 0 0 4px var(--e-amber), 0 0 14px #ff6a1a88; }
+  50% { text-shadow: 0 0 6px var(--e-amber), 0 0 22px #ff2a1aaa; }
+}
+html.ember:not(.reduce-motion) .page-title h2 {
+  animation: ember-breathe 3s ease-in-out infinite;
+}

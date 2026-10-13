@@ -19,6 +19,14 @@ export const TERMINAL_CLASS = "terminal";
  * on the root. */
 export const DESKTOP_CLASS = "desktop";
 
+/** Glowing many-coloured ASCII cards on purple: `glyph.css` is scoped to
+ * this class on the root. */
+export const GLYPH_CLASS = "glyph";
+
+/** Warm glowing ASCII on a maroon field of letters: `ember.css` is scoped
+ * to this class on the root. */
+export const EMBER_CLASS = "ember";
+
 /** Dresses the page in the UI theme worn (`uiLook`: Classic wears none of
  * their classes) and mirrors Reduce motion. */
 export function applyUiTheme(save: Pick<Save, "themes" | "settings">) {
@@ -27,6 +35,8 @@ export function applyUiTheme(save: Pick<Save, "themes" | "settings">) {
   root.toggle(NEON_CLASS, look === "neon");
   root.toggle(TERMINAL_CLASS, look === "terminal");
   root.toggle(DESKTOP_CLASS, look === "desktop");
+  root.toggle(GLYPH_CLASS, look === "glyph");
+  root.toggle(EMBER_CLASS, look === "ember");
   root.toggle("reduce-motion", save.settings.reduceMotion);
 }
 
