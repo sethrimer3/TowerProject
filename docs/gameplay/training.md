@@ -58,7 +58,7 @@ One stat trains at a time, with one more for each trainer bought with Gems besid
 A rank in training shows its countdown (press it to stop, get the Gold back and keep the time spent as credit) and a Gem button that finishes it at once: 1 Gem for each 10 minutes left, and 1 more for any part of 10 minutes.
 A stat a trainer is training moves up under the trainer count, in the order they started, and goes back to its group once its training ends.
 While it trains, a box with a looping arrow before its name sets it to **auto-continue**: while ticked, each rank its trainer finishes starts the next at once, as long as the Gold is there, ranks finished while the game was closed included.
-A row a trainer is training puts its auto-continue box, its name and its levels (*Lv 0 → 10 / 6,000*) on a line of their own, and under it a batch's speedup (*×3*, large), its values, its countdown, the Gem button and the points; it has no reset while it trains, and its time to go shows only on the countdown.
+A row a trainer is training puts its auto-continue box, its name and its levels (*Lv 0 → 10 / 6,000*) on a line of their own, and under it a batch's speedup (*×3*, large), its values, its countdown (as wide as its time needs, on one line), the points, and the Gem button in the reset's place: it has no reset while it trains, and its time to go shows only on the countdown.
 Each rank a trainer finishes, whatever page shows or while the game was closed, announces "Training Complete!" at the top of the screen and counts at once, a run inside included.
 
 ## The training boost

@@ -2708,7 +2708,9 @@ nav button > span :is(img, svg) { display: block; width: 42px; height: 42px; max
 /* A row a trainer is training: its auto-continue box, name and levels on a
    line above the rest, so the values and buttons fit a phone's width, and
    its batch's speedup, large, at the left of the values. */
-.training-row.active { row-gap: 3px; }
+.training-row.active { row-gap: 3px; grid-template-columns: minmax(28px, 1fr) minmax(38px, auto) 12px minmax(38px, auto) minmax(56px, auto) minmax(38px, auto) minmax(28px, auto); }
+/* The countdown widens for a longer time rather than wrapping. */
+.training-row.active .training-timer { white-space: nowrap; }
 .training-row.active .training-head { grid-column: 1 / -1; }
 .training-row.active .training-speedup { justify-self: end; font-size: 17px; text-transform: none; line-height: 1; color: #ffb3a6; font-variant-numeric: tabular-nums; text-shadow: 0 0 6px #c0483c88; }
 button.training-timer { border-color: #c0483c; color: #ffd0c8; background: #2a1416; font-size: 10px; letter-spacing: .5px; font-variant-numeric: tabular-nums; }
@@ -2736,7 +2738,7 @@ button.training-timer { border-color: #c0483c; color: #ffd0c8; background: #2a14
 .training-box.next { border-color: #6e9a70; color: #b8f0b4; }
 .training-arrow { text-align: center; color: var(--gold); font-size: 14px; }
 button.training-cost { border-color: #d8b572; color: #ffe1a1; background: #2b2718; font-size: 10px; letter-spacing: .5px; }
-.training-job { display: grid; grid-template-columns: 1fr auto; gap: 3px; }
+.training-job { display: grid; }
 .training-finish, .buy-trainer { min-height: 30px; padding: 0 5px; display: inline-flex; align-items: center; gap: 2px; border: 1px solid #2f8fbf; border-radius: 8px; background: #0f2230; color: #bfefff; font-size: 10px; }
 .training-finish .gem-icon, .buy-trainer .gem-icon { width: 13px; height: 13px; }
 .buy-trainer { min-height: 22px; margin-left: 6px; vertical-align: middle; }

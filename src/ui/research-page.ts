@@ -244,7 +244,8 @@ export class ResearchPage {
    * trainer. A row a trainer is training puts its auto-continue box, name
    * and levels on a line of their own above the rest, which is its batch's
    * speedup (when it has one), the values, the countdown that stops it, the
-   * Gems that finish it and the points; it has no reset while training. */
+   * points, and the Gems that finish it in the reset's place: it has no
+   * reset while training. */
   private trainingRowHtml(t: TrainingRow) {
     const game = this.ctx.game, save = game.save, view = game.trainingView, step = trainingStep(save, t.id, 1, view), hired = game.training.hired;
     // A Buy Quantity above x1 shows its price for the ranks it buys and
@@ -269,7 +270,7 @@ export class ResearchPage {
       const speedup = job.speed > 1
         ? `<span class="training-speedup" title="Training ${job.speed}x faster for training ${job.ranks} ranks at once">×${job.speed}</span>`
         : `<span aria-hidden="true"></span>`;
-      return `<div class="training-row active" role="listitem" data-training-row="${t.id}"${job.speed > 1 ? ` data-speed="${job.speed}"` : ""}><span class="training-label training-head">${this.autoBox(t)}${t.name} - ${this.levelText(t.id, true)}</span>${speedup}${values}${this.trainerHtml(t, step)}${nowButton}</div>`;
+      return `<div class="training-row active" role="listitem" data-training-row="${t.id}"${job.speed > 1 ? ` data-speed="${job.speed}"` : ""}><span class="training-label training-head">${this.autoBox(t)}${t.name} - ${this.levelText(t.id, true)}</span>${speedup}${values}${this.trainerHtml(t, step)}${nowButton || `<span aria-hidden="true"></span>`}${this.finishButton(t.id, t.name)}</div>`;
     }
     return `<div class="training-row" role="listitem" data-training-row="${t.id}"><span class="training-label">${t.name} - ${this.levelText(t.id, false)}${notes ? `<small>${notes}</small>` : ""}</span>${values}${hired ? this.trainerHtml(t, step) : ""}${nowButton}${this.resetButton(t, false)}</div>`;
   }
@@ -303,11 +304,12 @@ export class ResearchPage {
   }
 
   /** A rank a trainer is training shows its countdown (tap to stop it and
-   * get the Gold back), else the trainer's price. */
+   * get the Gold back; its Gem finish stands at the row's end), else the
+   * trainer's price. */
   private trainerHtml(t: TrainingRow, step: ReturnType<typeof trainingStep>) {
     const game = this.ctx.game, save = game.save;
     if (trainingJob(save.trainingJobs, t.id))
-      return `<span class="training-job"><button class="training-box training-timer" data-cancel="${t.id}" aria-label="Training ${t.name}: tap to stop and get the Gold back" title="Tap to stop and get the Gold back"><span data-training-timer="${t.id}">${formatDuration(game.training.left(t.id))}</span></button>${this.finishButton(t.id, t.name)}</span>`;
+      return `<span class="training-job"><button class="training-box training-timer" data-cancel="${t.id}" aria-label="Training ${t.name}: tap to stop and get the Gold back" title="Tap to stop and get the Gold back"><span data-training-timer="${t.id}">${formatDuration(game.training.left(t.id))}</span></button></span>`;
     const q = game.buyQuantity, batch = game.training.batch(t.id, q), full = save.trainingJobs.length >= trainingSlots(save), gold = whole(batch.gold);
     const takes = formatDuration(game.training.toNextRank(t.id, q)), ranks = batch.count === 1 ? `to ${trainingText(step.next, step.unit)}` : `${batch.count} ranks`;
     return `<button class="training-box training-cost training-gold" data-train-gold="${t.id}" ${batch.affordable && !full ? "" : "disabled"} aria-label="Pay ${gold} Gold to a trainer to train ${t.name} ${ranks}, taking ${takes}" title="${full ? "Every trainer is busy" : `${batch.count === 1 ? "" : `${ranks}: `}Takes ${takes}`}">${maxCount(q, batch.count)}${goldIcon()}<span>${gold}</span></button>`;
