@@ -10,11 +10,11 @@ import { snap } from "./exact.ts";
 export type ThemeKind = "ui" | "game";
 /** The looks of each kind, as the `uiTheme` and `gameTheme` settings hold
  * them. */
-export type UiLook = "classic" | "medieval" | "neon" | "terminal" | "desktop" | "glyph" | "ember" | "yang" | "yin" | "shiro" | "kuro" | "arcade";
-export type GameLook = "classic" | "neon" | "terminal" | "desktop" | "glyph" | "ember" | "yang" | "yin" | "shiro" | "kuro" | "arcade";
+export type UiLook = "classic" | "medieval" | "neon" | "terminal" | "desktop" | "glyph" | "ember" | "yang" | "yin" | "shiro" | "kuro" | "arcade" | "system";
+export type GameLook = "classic" | "neon" | "terminal" | "desktop" | "glyph" | "ember" | "yang" | "yin" | "shiro" | "kuro" | "arcade" | "system";
 export type ThemeId =
-  | "medievalUi" | "neonUi" | "terminalUi" | "desktopUi" | "glyphUi" | "emberUi" | "yangUi" | "yinUi" | "shiroUi" | "kuroUi" | "arcadeUi"
-  | "neonGame" | "terminalGame" | "desktopGame" | "glyphGame" | "emberGame" | "yangGame" | "yinGame" | "shiroGame" | "kuroGame" | "arcadeGame";
+  | "medievalUi" | "neonUi" | "terminalUi" | "desktopUi" | "glyphUi" | "emberUi" | "yangUi" | "yinUi" | "shiroUi" | "kuroUi" | "arcadeUi" | "systemUi"
+  | "neonGame" | "terminalGame" | "desktopGame" | "glyphGame" | "emberGame" | "yangGame" | "yinGame" | "shiroGame" | "kuroGame" | "arcadeGame" | "systemGame";
 
 export type ThemeDef = {
   kind: ThemeKind;
@@ -47,6 +47,7 @@ export const THEMES: Readonly<Record<ThemeId, ThemeDef>> = {
   shiroUi: { kind: "ui", look: "shiro", name: "Shiro", unlock: "Complete floor 400 of Tower I", earned: (save) => towerOne(save) >= 400 },
   kuroUi: { kind: "ui", look: "kuro", name: "Kuro", unlock: "Reach depth 200 in the Delve", earned: (save) => highest(save.delve) >= 200 },
   arcadeUi: { kind: "ui", look: "arcade", name: "Arcade", unlock: "Complete floor 500 of Tower I", earned: (save) => towerOne(save) >= 500 },
+  systemUi: { kind: "ui", look: "system", name: "System", unlock: "Complete floor 550 of Tower I", earned: (save) => towerOne(save) >= 550 },
   neonGame: { kind: "game", look: "neon", name: "Neon", unlock: "Reach depth 25 in the Delve", earned: (save) => highest(save.delve) >= 25 },
   terminalGame: { kind: "game", look: "terminal", name: "Terminal", unlock: "Complete floor 150 of Tower I", earned: (save) => towerOne(save) >= 150 },
   desktopGame: { kind: "game", look: "desktop", name: "Desktop", unlock: "Reach depth 75 in the Delve", earned: (save) => highest(save.delve) >= 75 },
@@ -57,6 +58,7 @@ export const THEMES: Readonly<Record<ThemeId, ThemeDef>> = {
   shiroGame: { kind: "game", look: "shiro", name: "Shiro", unlock: "Complete floor 450 of Tower I", earned: (save) => towerOne(save) >= 450 },
   kuroGame: { kind: "game", look: "kuro", name: "Kuro", unlock: "Reach depth 225 in the Delve", earned: (save) => highest(save.delve) >= 225 },
   arcadeGame: { kind: "game", look: "arcade", name: "Arcade", unlock: "Reach depth 250 in the Delve", earned: (save) => highest(save.delve) >= 250 },
+  systemGame: { kind: "game", look: "system", name: "System", unlock: "Reach depth 275 in the Delve", earned: (save) => highest(save.delve) >= 275 },
 };
 export const THEME_IDS = Object.keys(THEMES) as ThemeId[];
 /** The themes every hero owns from the start. */

@@ -10,6 +10,7 @@ import { EMBER } from "../src/ember-board.ts";
 import { YANG, YIN } from "../src/zen-board.ts";
 import { KURO, SHIRO } from "../src/bare-board.ts";
 import { ARCADE } from "../src/arcade-board.ts";
+import { SYSTEM } from "../src/system-board.ts";
 import type { FrameContext } from "../src/render-frame.ts";
 import type { GainArt } from "../src/state.ts";
 
@@ -104,4 +105,10 @@ test("a potion picked up on an Arcade board rises as its cherries, a Heart Door'
   assert.ok(drawn({ tile: { kind: "potion", hp: 35 } as never }, "arcade").fills.includes(ARCADE.stem), "the cherries' stems");
   assert.ok(!drawn({ tile: { kind: "potion", hp: 35 } as never }, null).fills.includes(ARCADE.stem), "the classic board keeps its own art");
   assert.ok(drawn({ heart: true }, "arcade").fills.includes(ARCADE.red));
+});
+
+test("a potion picked up on a System board rises as its white flask, a Heart Door's toll as its black heart", () => {
+  const potion = drawn({ tile: { kind: "potion", hp: 35 } as never }, "system");
+  assert.ok(potion.fills.includes(SYSTEM.paper) && potion.strokes.includes(SYSTEM.ink));
+  assert.ok(drawn({ heart: true }, "system").fills.includes(SYSTEM.ink));
 });

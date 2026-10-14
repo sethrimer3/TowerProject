@@ -1,0 +1,371 @@
+/* System theme: the page as an old one-bit computer drew it. Black on
+   white and nothing between but dithered grey: white windows in a black
+   frame with a hard drop shadow on the desktop's 50% grey, title bars ruled
+   with fine black lines round a white caption and a close box, rounded
+   push buttons that turn black while pressed or chosen, a bitmap face for
+   every line, and black progress bars. Red marks only what is short or
+   dangerous, and keys keep their colour.
+   Every selector is scoped under `html.system` so nothing changes while the
+   theme is off. Loaded after style.css and the other themes. */
+@font-face {
+  font-family: "Pixelify Sans";
+  src: url("../assets/fonts/PixelifySans/PixelifySans-Regular.woff2") format("woff2");
+  font-weight: 400 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Pixelify Sans";
+  src: url("../assets/fonts/PixelifySans/PixelifySans-Bold.woff2") format("woff2");
+  font-weight: 600 900;
+  font-style: normal;
+  font-display: swap;
+}
+html.system {
+  --s-ink: #000;
+  --s-paper: #fff;
+  --s-red: #d00000;
+  --s-green: #007a00;
+  /* The desktop's 50% grey: a checker of single dots. */
+  --s-grey: repeating-conic-gradient(var(--s-ink) 0 25%, var(--s-paper) 0 50%) 0 0 / 2px 2px;
+  /* A lighter grey, one dot in four, for tracks and what is pressed in. */
+  --s-light: radial-gradient(var(--s-ink) 0.5px, transparent 0.6px) 0 0 / 2px 2px, var(--s-paper);
+  /* A window: a black frame and a hard shadow down and to the right. */
+  --s-window: 0 0 0 1px var(--s-ink), 2px 2px 0 1px var(--s-ink);
+  --gold: var(--s-ink);
+  --muted: #555;
+  --line: var(--s-ink);
+  color: var(--s-ink);
+  background: var(--s-grey);
+  color-scheme: light;
+}
+/* One bitmap face for every line of text (a badge's symbol keeps the
+   system face that has its glyph). */
+html.system,
+html.system *:not(.badge-glyph, .badge-mark) {
+  font-family: "Pixelify Sans", Chicago, Geneva, monospace;
+  letter-spacing: 0;
+}
+html.system body {
+  background: var(--s-grey);
+}
+/* The page's own colours give way everywhere: black on white, square
+   corners, no glows or soft shadows. `:not(#_)` lifts these over the page's
+   class rules (and the ones below over these); a style written on an
+   element (a colour swatch) still wins. Drawings (canvas, images, svg) and
+   the bars' fills (`i`) keep theirs. Pseudo-elements, such as the red dots
+   on what is new, are untouched. */
+html.system body *:not(#_, canvas, img, svg, svg *, i, .eq-tile, .badge-token, [class*="rar"]) {
+  background-color: transparent;
+  background-image: none;
+  border-color: var(--s-ink);
+  border-radius: 0;
+  box-shadow: none;
+  text-shadow: none;
+  backdrop-filter: none;
+}
+html.system body *:not(#_, svg, svg *) {
+  color: var(--s-ink);
+}
+/* The app sits on the desktop: the board's page shows the desktop between
+   its windows, every other page is a white window of its own (so no line
+   of text sits on the grey), the panels inside it windows within. */
+html.system main.shell:not(#_) {
+  background: transparent;
+}
+html.system .page:not(#board):not(#_) {
+  padding: 8px 14px 10px 8px;
+  background: var(--s-paper);
+  box-shadow: var(--s-window);
+}
+
+/* Scrollbars: a white box riding a dotted grey track. */
+html.system * {
+  scrollbar-color: var(--s-paper) #aaa;
+}
+html.system ::-webkit-scrollbar {
+  width: 14px;
+  height: 14px;
+}
+html.system ::-webkit-scrollbar-track {
+  background: var(--s-grey);
+  border-left: 1px solid var(--s-ink);
+}
+html.system ::-webkit-scrollbar-thumb {
+  min-height: 20px;
+  background: var(--s-paper);
+  border: 1px solid var(--s-ink);
+  border-radius: 0;
+}
+
+/* Windows: white in a black frame with a hard shadow. */
+html.system .stats:not(#_),
+html.system .card:not(#_),
+html.system .upgrade:not(#_),
+html.system .shop:not(#_),
+html.system .theme-card:not(#_),
+html.system .weekly:not(#_),
+html.system .mission:not(#_),
+html.system .event-boost:not(#_),
+html.system .archivist:not(#_),
+html.system .research:not(#_),
+html.system .pull-box:not(#_),
+html.system .eq-loadout:not(#_),
+html.system .equip-materials:not(#_),
+html.system .purse-big:not(#_),
+html.system .starting-stats:not(#_),
+html.system .training-boost:not(#_),
+html.system .tournament-standing:not(#_),
+html.system .tournament-tickets:not(#_),
+html.system .badge-box:not(#_),
+html.system .deck-reserve:not(#_),
+html.system .defend-palette:not(#_),
+html.system .card-reveal:not(#_),
+html.system .badge-reveal:not(#_),
+html.system .skill-tree:not(#_),
+html.system .goals-stage:not(#_),
+html.system .training-box:not(#_),
+html.system .setting:not(#_),
+html.system .status:not(#_),
+html.system .currencies:not(#_),
+html.system dialog:not(#_) {
+  border-color: transparent;
+  background: var(--s-paper);
+  box-shadow: var(--s-window);
+}
+/* Fields: white with a plain black line. */
+html.system .portrait-top:not(#_),
+html.system .hp-readout:not(#_),
+html.system .training-held:not(#_),
+html.system .node-icon:not(#_),
+html.system select:not(#_),
+html.system input:not([type="checkbox"]:not(#_),
+[type="radio"]:not(#_),
+[type="range"]):not(#_) {
+  background: var(--s-paper);
+  box-shadow: 0 0 0 1px var(--s-ink);
+}
+/* The theme worn: its window's frame drawn twice as heavy. */
+html.system .theme-card.worn:not(#_) {
+  box-shadow: 0 0 0 3px var(--s-ink), 3px 3px 0 3px var(--s-ink);
+}
+/* What explains or tells: a help balloon, white with rounded corners. */
+html.system .board-tip:not(#_),
+html.system .board-tip.dismissable:hover:not(#_),
+html.system .research-toast:not(#_),
+html.system .deck-tip:not(#_),
+html.system .node-name:not(#_),
+html.system .goals-floor:not(#_),
+html.system .inspection:not(#_),
+html.system .inspect-box:not(#_) {
+  background: var(--s-paper);
+  border: 1px solid var(--s-ink);
+  border-radius: 8px;
+  box-shadow: 2px 2px 0 var(--s-ink);
+}
+html.system .setting:not(#_) {
+  padding-left: 8px;
+  padding-right: 8px;
+}
+html.system .inspection:empty:not(#_) {
+  border: 0;
+  box-shadow: none;
+}
+html.system .page-title small:not(#_),
+html.system .eyebrow:not(#_),
+html.system .hint:not(#_),
+html.system .board-caption:not(#_),
+html.system small:not(#_) {
+  color: #555;
+}
+
+/* Title bars: fine black rules across a white bar, the caption knocked out
+   on white in the middle and a close box at the left. */
+html.system .page-title:not(#_),
+html.system .event-banner:not(#_),
+html.system .eq-loadout-head:not(#_) {
+  position: relative;
+  padding: 3px 26px;
+  text-align: center;
+  border-bottom: 1px solid var(--s-ink);
+  background: var(--s-paper) repeating-linear-gradient(var(--s-ink) 0 1px, var(--s-paper) 1px 2px) 0 0 / 100% 100%;
+  box-shadow: inset 0 0 0 3px var(--s-paper), var(--s-window);
+}
+html.system .page-title:not(#_) > *,
+html.system .event-banner:not(#_) > *,
+html.system .eq-loadout-head:not(#_) > * {
+  display: table;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0 6px;
+  background: var(--s-paper);
+}
+html.system .page-title small:not(#_) {
+  font-size: 10px;
+}
+html.system .page-title h2:not(#_) {
+  margin: 1px auto;
+  font-size: 17px;
+  font-weight: 700;
+}
+html.system .page-title::before,
+html.system .event-banner::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 8px;
+  width: 9px;
+  height: 9px;
+  margin-top: -7px;
+  border: 1px solid var(--s-ink);
+  background: var(--s-paper);
+  box-shadow: 0 0 0 2px var(--s-paper);
+}
+html.system .event-banner:not(#_) {
+  margin-left: 0;
+  margin-right: 0;
+}
+html.system dialog:not(#_) {
+  border: 5px double var(--s-ink);
+  outline: 1px solid var(--s-ink);
+  outline-offset: 2px;
+}
+html.system dialog h2:not(#_) {
+  font-weight: 700;
+}
+html.system dialog::backdrop {
+  background: transparent;
+  backdrop-filter: none;
+}
+
+/* Push buttons: white with a rounded black line, black with white text
+   while pressed or chosen, grey text when unavailable. */
+html.system button:not(#_) {
+  border: 1px solid var(--s-ink);
+  border-radius: 6px;
+  background: var(--s-paper);
+}
+html.system button:active:not(#_),
+html.system button.selected:not(#_),
+html.system button[aria-pressed="true"]:not(#_) {
+  background: var(--s-ink);
+}
+html.system button:active:not(#_),
+html.system button:active:not(#_) *:not(svg, svg *, img, canvas),
+html.system button.selected:not(#_),
+html.system button.selected:not(#_) *:not(svg, svg *, img, canvas),
+html.system button[aria-pressed="true"]:not(#_),
+html.system button[aria-pressed="true"]:not(#_) *:not(svg, svg *, img, canvas) {
+  color: var(--s-paper);
+}
+html.system button:focus-visible:not(#_),
+html.system select:focus-visible:not(#_),
+html.system input:focus-visible:not(#_) {
+  outline: 2px solid var(--s-ink);
+  outline-offset: 2px;
+}
+html.system button:disabled:not(#_),
+html.system button:disabled *:not(#_) {
+  color: #888;
+  opacity: 1;
+}
+/* Buttons drawn as pictures keep a bare face. */
+html.system .skill-node:not(#_),
+html.system .hand-card:not(#_) {
+  border-color: transparent;
+  background: transparent;
+}
+html.system .hand-card.active:not(#_) {
+  box-shadow: 0 0 0 2px var(--s-ink);
+}
+html.system input[type="checkbox"]:not(#_),
+html.system input[type="radio"]:not(#_),
+html.system input[type="range"]:not(#_) {
+  accent-color: var(--s-ink);
+}
+html.system option:not(#_) {
+  background: var(--s-paper);
+}
+
+/* The board sits in a window of its own. */
+html.system .board:not(#_) {
+  border-color: var(--s-ink);
+  border-width: 1px;
+  background: var(--s-paper);
+  box-shadow: 2px 2px 0 1px var(--s-ink);
+}
+html.system .rule:not(#_),
+html.system .inventory-divider:not(#_) {
+  background: var(--s-ink);
+}
+
+/* The tab bar: the menu bar, white over a black line, the open page's
+   button inverted. */
+html.system nav:not(#_) {
+  background: var(--s-paper);
+  box-shadow: 0 -1px 0 var(--s-ink);
+}
+html.system nav button:not(#_) {
+  border-color: transparent;
+  border-radius: 0;
+  background: transparent;
+}
+html.system nav button.selected:not(#_),
+html.system .training-bar button.selected:not(#_) {
+  background: var(--s-ink);
+}
+
+/* Bars: a white track in a black line, filled black. */
+html.system .xp-track:not(#_),
+html.system .health-track:not(#_),
+html.system .weekly-bar:not(#_),
+html.system .mission-bar:not(#_),
+html.system .research-bar:not(#_),
+html.system .refine-bar:not(#_) {
+  border: 1px solid var(--s-ink);
+  background: var(--s-paper);
+}
+html.system .xp-track i:not(#_),
+html.system .health-track i:not(#_):not(#health-gain, #health-loss),
+html.system .weekly-bar i:not(#_),
+html.system .mission-bar i:not(#_),
+html.system .research-bar i:not(#_),
+html.system .refine-bar span:not(#_),
+html.system .event-bar i:not(#_) {
+  border-radius: 0;
+  background: var(--s-ink);
+  box-shadow: none;
+}
+/* XP fills grey, so it never reads as the HP bar beside it. */
+html.system .xp-track i:not(#_) {
+  background: var(--s-grey);
+}
+/* A bar's own count sits over the fill in a white box. */
+html.system .mission-bar span:not(#_) {
+  width: fit-content;
+  margin: 1px auto;
+  padding: 0 4px;
+  line-height: 12px;
+  background: var(--s-paper);
+}
+html.system .heart:not(#_),
+html.system .danger:not(#_),
+html.system .danger *:not(#_),
+html.system .short:not(#_),
+html.system .short *:not(#_) {
+  color: var(--s-red) !important;
+}
+/* No card can act: the button that ends the run turns red. */
+html.system #end-run.deadlocked:not(#_),
+html.system #stuck-end-run.deadlocked:not(#_) {
+  color: var(--s-paper) !important;
+  background: var(--s-red);
+}
+html.system .safe:not(#_),
+html.system .eq-result-title:not(#_) {
+  color: var(--s-green) !important;
+}
+/* Keys keep their colour. */
+html.system .keys .yellow:not(#_) { color: #b38c00; }
+html.system .keys .blue:not(#_) { color: #2f6fe0; }
+html.system .keys .red:not(#_) { color: #d00000; }
