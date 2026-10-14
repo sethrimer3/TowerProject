@@ -46,7 +46,7 @@ Auto Pick (`ShrineDesk.autoPick`, on after a pick, a new Tower floor, research c
 **Research** (`archives.ts`, category `shrines`; each needs Unlock Shrines, and its Goal):
 Unlock Shrines (Tower II F150, 1.5M Gold, 4,999 min), Floors Required (−1 floor a level, 100 levels), Standard Boon Bonus (+1% a level, 25 levels, hand-set Gold table), First Boon Choice (Tower II F250), Improve Trade-off Boons (Tower II F400, +1% a level, 10 levels), Auto Pick Boons (Tower IV F50), Boon Option Quantity (Tower IV F80, 2 levels), Ban Boons (Tower V F40, 8 levels), Auto Pick Ranking (Tower VI F10, after Auto Pick Boons, 32 levels).
 Their tables are hard-coded (no `Math.pow` at load).
-Goals run every ten floors to 100, then every 50 to 400 (`CHECKPOINT_FLOORS`).
+Goals run every ten floors to 100, every 50 to 300, then 400 to 4,500 (`CHECKPOINT_FLOORS`).
 
 **UI.**
 The run's limited-use list holds the Shrine button (`#shrine-stat`, lit while boons wait) and the height column a line of floors to the next boon (`#shrine-next`), both from `renderShrine` in `ui/hud.ts`.

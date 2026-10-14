@@ -19,7 +19,7 @@ const LOCK = `<svg class="relic-lock" viewBox="0 0 16 16" aria-hidden="true"><re
  * it has paid, its relics above and its premium relics (the Event
  * Booster's) below; the booster's offer; and its missions, each with its
  * tier (*1/3*), the Medals its next tier pays and a bar, which reads Claim
- * and is pressed to claim them once the tier is done, those finished moved
+ * and those Medals and is pressed to claim them once the tier is done, those finished moved
  * under the rest a moment after their last tier is claimed. Opened by
  * the Events button, in the forest's actions column or the run's menu; its
  * X returns to whichever page opened it. */
@@ -136,16 +136,18 @@ export class EventsPage {
   }
 
   /** A mission: what its next tier to claim asks, the tiers claimed and
-   * that tier's Medals, and its bar, which reads Claim and claims that tier
+   * that tier's Medals (on the bar instead, beside Claim, once it is
+   * ready), and its bar, which reads Claim and claims that tier
    * while it is done (a press a tier); finished, its last tier and a check. */
   private missionHtml(m: EventMission) {
     const def = EVENT_MISSIONS[m.type], finished = isFinished(m), ready = unclaimedTiers(m) > 0;
     const tier = Math.min(m.claimed, TIERS - 1), target = def.targets[tier], boost = this.ctx.game.events.boosted ? 2 : 1;
     const medals = TIER_MEDALS[tier] * boost;
-    const reward = finished ? checkIcon() : `<span class="mission-reward" title="${medals} Medals">${medalIcon()}<b>${medals}</b></span>`;
+    // A tier ready to claim shows its Medals on the Claim bar instead.
+    const reward = finished ? checkIcon() : ready ? "" : `<span class="mission-reward" title="${medals} Medals">${medalIcon()}<b>${medals}</b></span>`;
     const fill = `<i style="width:${Math.min(100, (100 * m.progress) / target)}%"></i>`;
     const bar = ready
-      ? `<button type="button" class="mission-bar event-claim" data-claim="${m.id}" aria-label="Claim ${medals} Medals">${fill}<span>Claim</span></button>`
+      ? `<button type="button" class="mission-bar event-claim" data-claim="${m.id}" aria-label="Claim ${medals} Medals">${fill}<span>Claim <b class="event-claim-medals">${medals}${medalIcon()}</b></span></button>`
       : `<div class="mission-bar" role="progressbar" aria-valuemin="0" aria-valuemax="${target}" aria-valuenow="${Math.min(m.progress, target)}">${fill}<span>${finished ? "Complete!" : `${m.progress.toLocaleString("en-US")}/${target.toLocaleString("en-US")}`}</span></div>`;
     const fresh = this.fresh.has(m.id) ? `<small class="event-new">NEW</small>` : "";
     return `<li class="mission event-mission${finished ? " complete" : ready ? " ready" : ""}" data-mission="${m.id}"><div class="mission-body">` +

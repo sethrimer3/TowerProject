@@ -490,6 +490,32 @@ export const boardHeadingStale = (game: Game) => el("board").dataset.heading !==
 /** The key colours the run of this seed has held, for the HUD's key row. */
 let keysSeen: { run: number | null; colors: Set<string> } = { run: null, colors: new Set() };
 
+/** Shows a combat stat in `id`, shortened from 10,000, its name and exact
+ * amount (and `about`) in the stat's tooltip. */
+function combatStat(id: string, name: string, n: number, about = "") {
+  text(id, Number.isFinite(n) ? shortAmount(n) : n);
+  el(id).parentElement!.title = `${name}: ${Number.isFinite(n) ? n.toLocaleString("en-US") : n}${about}`;
+}
+
+/** What the combat stats' row was last fitted to: its text and the window's width. */
+let combatFitted = "";
+/** Shrinks the combat stats' row's text, when it changes, just enough that
+ * ATK, DEF and the shroud fit on one line (a narrow phone with large
+ * stats), down to 7px; otherwise it keeps its size. */
+function fitCombatStats() {
+  const row = document.querySelector<HTMLElement>(".combat-stats");
+  if (!row) return;
+  const key = `${row.textContent}|${el("shroud-stat").hidden}|${window.innerWidth}`;
+  if (key === combatFitted) return;
+  row.style.fontSize = "";
+  // Hidden (another page showing): fitted once it shows again.
+  if (!row.clientWidth) return;
+  combatFitted = key;
+  // The gaps between the stats (3px each at their narrowest) don't scale with the text.
+  const gaps = 6, over = (row.scrollWidth - gaps) / (row.clientWidth - gaps);
+  if (over > 1) row.style.fontSize = `${Math.max(7, Math.floor((parseFloat(getComputedStyle(row).fontSize) / over) * 10) / 10)}px`;
+}
+
 /** HP, ATK, DEF (and the shroud, once owned), the run's Gold and keys. During a fight being played out, HP counts down
  * strike by strike, the bar's red already at the HP the fight leaves and
  * the HP still to go in purple past it. */
@@ -503,10 +529,13 @@ export function renderVitals(game: Game) {
   const left = game.encounter ? Math.min(hp, game.fightEndHp()) : hp;
   el("health").style.width = `${(100 * left) / p.maxHp}%`;
   renderHealthLoss(hp - left, p.maxHp);
-  text("attack", whole(p.attack));
-  text("defense", whole(p.defense));
-  text("shroud", whole(p.shroud ?? 0));
+  // ATK, DEF and the shroud shortened the same way, so the three fit on one
+  // line on a phone; the exact amounts are in their tooltips.
+  combatStat("attack", "ATK", whole(p.attack));
+  combatStat("defense", "DEF", whole(p.defense));
+  combatStat("shroud", "Shroud", whole(p.shroud ?? 0), ", damage blocked at the start of every fight");
   el("shroud-stat").hidden = !game.save.upgrades.shroud;
+  fitCombatStats();
   renderPurse(game);
   // Inside a run, blue and red keys show once the hero holds one, and stay
   // for the rest of the run; the forest shows only the keys a run starts with.

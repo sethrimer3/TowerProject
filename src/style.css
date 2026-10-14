@@ -323,26 +323,24 @@ h1 span {
 #health-loss.settling {
   transition: width 1s linear;
 }
+/* ATK, DEF and the shroud in a row, the same space between each: up to
+   18px, narrowing evenly (to 3px) where the row is tight, so the shroud
+   never runs off the edge. */
 .combat-stats {
   display: grid;
-  grid-template-columns: minmax(40px, auto) 24px minmax(40px, 1fr) 24px;
-  gap: 7px;
+  grid-template-columns: auto minmax(3px, 18px) auto minmax(3px, 18px) auto;
+  justify-content: start;
   color: #97a9bf;
 }
-.combat-stats span {
-  min-width: 0;
-}
-/* A stat and its icon stay on one line, DEF with its shroud. */
+.combat-stats .attack-stat { grid-column: 1; }
+.combat-stats .defense-stat { grid-column: 3; }
+.combat-stats .shroud-stat { grid-column: 5; }
+/* A stat and its icon stay on one line. */
 .combat-stats > span {
   white-space: nowrap;
 }
 .combat-stats .shroud-stat {
   color: #c9d3e0;
-  white-space: nowrap;
-}
-.secret-stat-slot {
-  display: block;
-  visibility: hidden;
 }
 .keys {
   display: flex;
@@ -1676,9 +1674,8 @@ dialog p {
     margin-left: 4px;
   }
   .combat-stats {
-    /* ATK and DEF in a narrow column: the empty secret-stat slots fold away. */
-    grid-template-columns: minmax(0, auto) 0 minmax(0, 1fr) 0;
-    gap: 4px 10px;
+    grid-template-columns: auto minmax(3px, 10px) auto minmax(3px, 10px) auto;
+    letter-spacing: 0;
   }
   .tower-heading {
     margin-top: 20px;
@@ -4226,6 +4223,8 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
 button.mission-bar.event-claim { display: block; width: 100%; height: 22px; min-height: 0; padding: 0; border-color: #d9a632; animation: event-claim-glow 1.6s ease-in-out infinite; }
 button.mission-bar.event-claim i { width: 100% !important; background: linear-gradient(90deg, #8a5a12, #ffd34d); }
 button.mission-bar.event-claim span { font-size: 12px; line-height: 20px; font-weight: 600; letter-spacing: 1px; color: #fff8e0; }
+.event-claim-medals { display: inline-flex; align-items: center; gap: 2px; margin-left: 4px; letter-spacing: 0; vertical-align: top; }
+.event-claim-medals .medal-icon { width: 14px; height: 14px; }
 @keyframes event-claim-glow { 50% { box-shadow: 0 0 8px 2px #ffd34d88; } }
 html.reduce-motion button.mission-bar.event-claim { animation: none; }
 .event-new { display: inline-block; margin-right: 6px; padding: 1px 4px; border-radius: 3px; font-size: 8px; letter-spacing: 1px; color: #10161f; background: #ffd34d; vertical-align: 2px; }

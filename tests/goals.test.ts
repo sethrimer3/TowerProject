@@ -5,9 +5,9 @@ import { Game } from "../src/state.ts";
 import { CHECKPOINTS, PASSES, canWarp, decodeGoals, floorsCompleted, goalState, goalsWaiting, goalUnlocked, passFor, passTotals, unlockFloor, warpUnlocked } from "../src/goals.ts";
 import { TIERS } from "../src/tiers.ts";
 
-test("every tower has a checkpoint each ten floors to 100, then every 50 to 400; Tower I's first eight pay Damage Prediction, Combat Forecast, Attack Lore, 20 Gems, Damage Visual, the Tournament, Events and 30 Gems", () => {
+test("every tower has a checkpoint each ten floors to 100, every 50 to 300, then 400 to 4,500; Tower I's first eight pay Damage Prediction, Combat Forecast, Attack Lore, 20 Gems, Damage Visual, the Tournament, Events and 30 Gems", () => {
   for (let tower = 1; tower <= TIERS; tower++) {
-    assert.deepEqual(CHECKPOINTS[tower]!.map((c) => c.floor), [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 150, 200, 250, 300, 350, 400]);
+    assert.deepEqual(CHECKPOINTS[tower]!.map((c) => c.floor), [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 150, 200, 250, 300, 400, 500, 750, 1000, 1250, 1500, 2000, 2500, 4500]);
   }
   const gems = (amount: number) => ({ kind: "currency", currency: "gems", amount });
   assert.deepEqual(CHECKPOINTS[1]!.slice(0, 8), [
@@ -30,6 +30,8 @@ test("every tower has a checkpoint each ten floors to 100, then every 50 to 400;
   assert.deepEqual(CHECKPOINTS[1]![8], { floor: 90, reward: { kind: "currency", currency: "gold", amount: 2000 }, premium: { kind: "currency", currency: "gold", amount: 10000 } });
   assert.deepEqual(CHECKPOINTS[1]![10]!.reward, { kind: "unlock", unlock: "researchSpeed" });
   assert.deepEqual(CHECKPOINTS[1]![11]!.reward, gems(40));
+  const shards = (amount: number) => ({ kind: "currency", currency: "shards", amount });
+  assert.deepEqual(CHECKPOINTS[1]!.find((c) => c.floor === 1500), { floor: 1500, reward: shards(5), premium: shards(15) }, "Tower I's floor 1,500 pays Ascension Shards");
   // Tower III's first three make the hero an Archer, then open Attack Range and Attack Speed.
   assert.deepEqual(CHECKPOINTS[3]!.slice(0, 3).map((c) => c.reward), ["archer", "attackRange", "attackSpeed"].map((unlock) => ({ kind: "unlock", unlock })));
   assert.deepEqual(CHECKPOINTS[3]![8], { floor: 90, reward: { kind: "unlock", unlock: "multishot" }, premium: gems(90) }, "Multishot is Tower III's floor 90");
@@ -70,9 +72,10 @@ test("Relative Damage Color is owned once Tower II's floor 10 is claimed", () =>
 test("each pass covers three towers and totals its premium rewards", () => {
   assert.deepEqual(PASSES.map((p) => [p.towers, p.label]), [[[1, 2, 3], "$9.99"], [[4, 5, 6], "$19.99"], [[7, 8, 9], "$29.99"]]);
   assert.equal(passFor(5).n, 2);
-  // Sixteen checkpoints a tower, 10 Gems × n each; Tower I's first four pay 10, 15, 25 and 35, and its floor 90 pays 10,000 Gold.
-  assert.deepEqual(passTotals(PASSES[0]!), { gems: 1255 + 2 * 1360, gold: 10000 });
-  assert.deepEqual(passTotals(PASSES[2]!), { gems: 3 * 1360 });
+  // Twenty-three checkpoints a tower, 10 Gems × n each; Tower I's first four pay 10, 15, 25 and 35, its floor 90 pays
+  // 10,000 Gold and its floor 1,500 15 Ascension Shards, and Tower II's floor 400 pays 160 (the stub's 150).
+  assert.deepEqual(passTotals(PASSES[0]!), { gems: 2455 + 2760 + 10 + 2760, gold: 10000, shards: 15 });
+  assert.deepEqual(passTotals(PASSES[2]!), { gems: 3 * 2760 });
 });
 
 test("a reward is claimed once, after its floor is completed; a premium one needs the pass", () => {

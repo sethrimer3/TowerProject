@@ -66,14 +66,16 @@ export type Checkpoint = { floor: number; reward: GoalReward; premium: GoalRewar
 
 /** Floors between checkpoints. */
 export const CHECKPOINT_EVERY = 10;
-/** The floors of every tower's checkpoints: every ten to 100, then every 50 to 400. */
-export const CHECKPOINT_FLOORS: readonly number[] = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 150, 200, 250, 300, 350, 400];
+/** The floors of every tower's checkpoints: every ten to 100, every 50 to
+ * 300, then 400, 500, 750, 1,000, 1,250, 1,500, 2,000, 2,500 and 4,500. */
+export const CHECKPOINT_FLOORS: readonly number[] = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 150, 200, 250, 300, 400, 500, 750, 1000, 1250, 1500, 2000, 2500, 4500];
 
 const gold = (amount: number): GoalReward => ({ kind: "currency", currency: "gold", amount });
 const gems = (amount: number): GoalReward => ({ kind: "currency", currency: "gems", amount });
+const shards = (amount: number): GoalReward => ({ kind: "currency", currency: "shards", amount });
 
 const unlock = (unlock: GoalUnlock): GoalReward => ({ kind: "unlock", unlock });
-/** Tower I's checkpoints that differ from the stub: an unlock each, and Gems. */
+/** Tower I's checkpoints that differ from the stub: an unlock each, Gems, and Ascension Shards. */
 const TOWER_ONE: Record<number, Omit<Checkpoint, "floor">> = {
   10: { reward: unlock("damagePrediction"), premium: gems(10) },
   20: { reward: unlock("combatForecast"), premium: gems(15) },
@@ -87,6 +89,7 @@ const TOWER_ONE: Record<number, Omit<Checkpoint, "floor">> = {
   150: { reward: unlock("researchSpeed"), premium: gems(110) },
   200: { reward: gems(40), premium: gems(120) },
   250: { reward: unlock("noteTaking"), premium: gems(130) },
+  1500: { reward: shards(5), premium: shards(15) },
 };
 
 /** Tower II's checkpoints that differ from the stub: an unlock each, and Gold. */
