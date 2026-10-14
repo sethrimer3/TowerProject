@@ -582,7 +582,7 @@ try {
     await click("#stats-open");
     await shot(`${prefix}.stats`);
     await click("#stats-close");
-    // The theme menus: Classic and the themes, Neon still to be earned.
+    // The theme menus: Classic and the themes, Neon still to be bought.
     await click("#ui-themes");
     await shot(`${prefix}.themes.ui`);
     await click("#themes-back");
@@ -601,7 +601,7 @@ try {
     await menuClick("#auto-settings");
     await page.locator("#dev-mode").setChecked(true);
     await shot(`${prefix}.settings.dev`);
-    // Dev mode's floors earn every theme; one is worn from its menu.
+    // Dev mode owns every theme; one is worn from its menu.
     await click("#game-themes");
     await shot(`${prefix}.themes.game.owned`);
     await click('.theme-wear[data-look="neon"]');

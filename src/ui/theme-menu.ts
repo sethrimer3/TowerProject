@@ -1,8 +1,9 @@
-import { CLASSIC_NAME, THEME_GOLD_TEXT, THEMES, canWear, gameLook, themeGoldFactor, themesOf, uiLook, type ThemeId, type ThemeKind } from "../theme-collection.ts";
+import { CLASSIC_NAME, THEME_GOLD_TEXT, THEME_PRICE, THEMES, canBuyTheme, canWear, gameLook, themeGoldFactor, themesOf, uiLook, type ThemeId, type ThemeKind } from "../theme-collection.ts";
 import { factorText } from "../gold-bonuses.ts";
 import type { Toast } from "./research-toast.ts";
 import type { PageGame } from "./app.ts";
-import { UI_ASSET_BASE, el, goldIcon } from "./dom.ts";
+import { CURRENCIES, type CurrencyId } from "../shop/currency.ts";
+import { UI_ASSET_BASE, el, gemIcon, goldIcon, medalIcon, shardIcon } from "./dom.ts";
 
 /** Each kind's menu heading and the line over its heading. */
 const HEADINGS: Record<ThemeKind, { title: string; kicker: string }> = {
@@ -17,7 +18,9 @@ export function wornName(save: PageGame["save"], kind: ThemeKind) {
   return themesOf(kind).map((id) => THEMES[id]).find((t) => t.look === look)?.name ?? CLASSIC_NAME;
 }
 
-/** A theme earned, announced as research is. */
+const CURRENCY_ICONS: Record<CurrencyId, () => string> = { gems: () => gemIcon(), shards: () => shardIcon(), gold: goldIcon, medals: () => medalIcon() };
+
+/** A theme granted (Dev mode gives them all), announced as research is. */
 export const themeToast = (id: ThemeId): Toast => ({
   title: "Theme Unlocked!",
   text: `${THEMES[id].name} ${themeMenuTitle(THEMES[id].kind).replace(/s$/, "")} · ${THEME_GOLD_TEXT}`,
@@ -25,21 +28,28 @@ export const themeToast = (id: ThemeId): Toast => ({
 
 const preview = (kind: ThemeKind, look: string) => `${UI_ASSET_BASE}assets/themes/${kind}-${look}.png`;
 
-/** One choice's card: its preview and name, and Equipped, Equip, or how it
- * is earned. */
+/** A theme's Buy button, its price as the currency's icon and the amount. */
+function buyButton(game: PageGame, id: ThemeId) {
+  const { currency, amount } = THEME_PRICE;
+  const label = `Buy ${THEMES[id].name} for ${amount} ${CURRENCIES[currency].name}`;
+  return `<button class="theme-buy" data-id="${id}" aria-label="${label}" ${canBuyTheme(game.save, id) ? "" : "disabled"}>Buy · ${CURRENCY_ICONS[currency]()} <b>${amount}</b></button>`;
+}
+
+/** One choice's card: its preview and name, and Equipped, Equip, or Buy. */
 function card(game: PageGame, kind: ThemeKind, look: string, name: string, id: ThemeId | null) {
   const worn = (kind === "ui" ? uiLook(game.save) : gameLook(game.save)) === look;
   const owned = canWear(game.save, kind, look);
   const status = worn ? `<span class="theme-worn">Equipped</span>`
     : owned ? `<button class="theme-wear" data-look="${look}">Equip</button>`
-    : `<span class="theme-lock">🔒 ${THEMES[id!].unlock}</span>`;
+    : buyButton(game, id!);
   const perk = id ? `<small class="theme-perk">${owned ? goldIcon() + THEME_GOLD_TEXT : THEME_GOLD_TEXT + " once owned"}</small>` : `<small class="theme-perk">Always available</small>`;
   return `<article class="theme-card${worn ? " worn" : ""}${owned ? "" : " locked"}" data-theme="${kind}-${look}"><img class="theme-preview" src="${preview(kind, look)}" alt="${name} ${HEADINGS[kind].title.replace(/s$/, "")} preview"><h3>${name}</h3>${perk}${status}</article>`;
 }
 
 /** A kind's theme menu, drawn into `root`: Back, the Gold every owned theme
- * pays, and a card per choice (Classic, then each theme). Pressing Equip
- * wears that look; `changed` applies and saves it. */
+ * pays, and a card per choice (Classic, then each theme). Pressing Buy
+ * buys that theme, and Equip wears its look; `changed` applies and saves
+ * either. */
 export function renderThemeMenu(root: HTMLElement, game: PageGame, kind: ThemeKind, back: () => void, changed: () => void) {
   const owned = game.save.themes.length;
   const choices = [card(game, kind, "classic", CLASSIC_NAME, null), ...themesOf(kind).map((id) => card(game, kind, THEMES[id].look, THEMES[id].name, id))];
@@ -51,6 +61,11 @@ export function renderThemeMenu(root: HTMLElement, game: PageGame, kind: ThemeKi
   root.querySelectorAll<HTMLButtonElement>(".theme-wear").forEach((b) => {
     b.onclick = () => {
       if (game.wearTheme(kind, b.dataset.look!)) changed();
+    };
+  });
+  root.querySelectorAll<HTMLButtonElement>(".theme-buy").forEach((b) => {
+    b.onclick = () => {
+      if (game.buyTheme(b.dataset.id as ThemeId)) changed();
     };
   });
 }
