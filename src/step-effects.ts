@@ -48,7 +48,7 @@ export type StepOutcome = StepBlocked | StepEffect;
  * a potion restores (Potion HP research), what a percent potion restores
  * beyond its HP, in hundredths of a percent of max HP (Recovery and
  * Potion % training), and the HP the step regains (Regen: none in the
- * forest, or on the tiles a Rush crosses after its first step). */
+ * forest, or on the tiles a Dash crosses after its first step). */
 export type StepRules = {
   potionHeal: number;
   percentPotion: number;

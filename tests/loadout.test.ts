@@ -2,9 +2,9 @@ import { trainNow } from "./train-now.ts";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import type { GoldItemId, StatTrainingRow } from "../src/config.ts";
-import { loadout, trainingPoints, trainingStep, upgradeText, provisionPrice, provisionText } from "../src/loadout.ts";
-import { defaults } from "../src/save.ts";
-import { GOLD_SHOP, TRAINING, UPGRADES, isStatRow, levelForXp, trained, trainingWorth, xpForLevel } from "../src/config.ts";
+import { loadout, trainingBulk, trainingFull, trainingPoints, trainingStep, upgradeText, provisionPrice, provisionText } from "../src/loadout.ts";
+import { decode, defaults } from "../src/save.ts";
+import { GOLD_SHOP, LIMIT_BREAKS, TRAINING, UPGRADES, isStatRow, levelForXp, trained, trainingCap, trainingCeiling, trainingWorth, xpForLevel } from "../src/config.ts";
 import { addItem } from "../src/equipment/inventory.ts";
 import { Game } from "../src/state.ts";
 import { ENTRANCE_Y } from "../src/outside.ts";
@@ -90,7 +90,7 @@ test("each training rank is worth more than the one before, whatever the hero's 
 
 test("Shroud's ranks: 5.1 at the first, 60 at 10, about 2,100 at 100, 15,000 at 200, 62,000 at 300 and four billion at 5,000", () => {
   const row = TRAINING.find((t) => t.id === "shroud")!;
-  assert.equal(row.max, 5000);
+  assert.equal(trainingCeiling(row), 5000);
   const at = (n: number) => trained(row, n);
   assert.equal(at(1), 5.1);
   assert.ok(at(2) - at(1) > 5 && at(2) - at(1) < 6, "about 5 a rank at the start");
@@ -305,4 +305,32 @@ test("provisions last for good: every run takes them, and one bought mid-run cou
   assert.ok(g.gear.buyProvision("guard"));
   assert.equal(g.run.player.defense, 1, "one bought inside a run counts at once");
   assert.equal(s.delve.run!.player.defense, 1, "and in the Delve's forest run");
+});
+
+test("ATK, DEF, Max HP, Regen and Shroud train to 1,000 levels, and each Limit Break owned raises that by 500, Shroud's but by the first eight", () => {
+  const save = defaults();
+  const caps = () => (["attack", "defense", "hp", "regen", "shroud"] as const).map((id) => trainingCap(TRAINING.find((t) => t.id === id)!, save.upgrades));
+  assert.deepEqual(caps(), [1000, 1000, 1000, 1000, 1000]);
+  assert.equal(trainingCap(TRAINING.find((t) => t.id === "lifesteal")!, save.upgrades), 80, "rows without breaks keep their most");
+  save.upgrades.limitBreak1 = 1;
+  assert.deepEqual(caps(), [1500, 1500, 1500, 1500, 1500]);
+  for (const id of LIMIT_BREAKS) save.upgrades[id] = 1;
+  assert.deepEqual(caps(), [6000, 6000, 6000, 6000, 5000]);
+  assert.deepEqual(LIMIT_BREAKS.map((id) => UPGRADES.find((u) => u.id === id)!).map((u) => [u.currency, u.base, u.max]), LIMIT_BREAKS.map(() => ["inspiration", 50, 1]));
+});
+
+test("a rank can't be trained past the cap, and a saved rank above it is kept until Limit Breaks raise the cap to it", () => {
+  const save = defaults();
+  save.training.attack = 999;
+  assert.equal(trainingFull(save, "attack"), false);
+  save.training.attack = 1000;
+  assert.equal(trainingFull(save, "attack"), true, "1,000 without a Limit Break");
+  assert.equal(trainingBulk(save, "attack", "max").count, 0);
+  save.upgrades.limitBreak1 = 1;
+  assert.equal(trainingFull(save, "attack"), false);
+  const raw: any = defaults();
+  raw.training.attack = 3000;
+  const loaded = decode(JSON.stringify(raw));
+  assert.equal(loaded.training.attack, 3000, "kept, though over the cap without Limit Breaks");
+  assert.equal(trainingFull(loaded, "attack"), true);
 });

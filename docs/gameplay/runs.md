@@ -51,14 +51,14 @@ No offline progress is calculated.
 Inside a run, the row of tabs at the bottom (Tower, Delve, Deck, Defend, Gear, Upgrades, Shop) is hidden and its space left empty: modes, gear and upgrades are chosen in the forest before a run, and a run ends back there.
 The Settings button in the stats opens the Settings page at any time, with a Back button to the board; inside a run it, Research and End Run wait in the menu the three-line button at the top right opens over the stats, and the Shop (whose Back returns to the run) stands under that button.
 
-## Movement Speed and Rush
+## Movement Speed and Dash
 
 **Movement Speed** (the Courage tree's first skill, 1 Courage) opens the Archives' **Movement Speed** research (six levels, priced and timed like Focus Count's first six: 500 Gold and 8 hours, up to 8,000 Gold and 48 hours), each level letting the run's speed arrows go one step a second faster: 4, then 5, up to 9.
-**Rush** (1 Courage, after Movement Speed, right of Focus) opens the Archives' **Rush** research: each of its 25 levels lets the hand's first step toward a new target rush across one more empty tile (or chest already opened) in the same step (one turn, one undo), stopping on the tile before anything else (an item, a door, a monster, the stairs, a torch or a Gem), except that a rush with a tile left ends on the item its card is heading for, taking it (scaled by an Effective or Dampen badge as usual; with a Skip badge it stops before the item, which Skip rolls for on its own step); faint echoes of the hero appear on each tile it rushed off, one after another, and fade in the same order within half a second.
+**Dash** (1 Courage, after Movement Speed, right of Focus) opens the Archives' **Dash** research: each of its 25 levels lets the hand's first step toward a new target dash across one more empty tile (or chest already opened) in the same step (one turn, one undo), stopping on the tile before anything else (an item, a door, a monster, the stairs, a torch or a Gem), except that a dash with a tile left ends on the item its card is heading for, taking it (scaled by an Effective or Dampen badge as usual; with a Skip badge it stops before the item, which Skip rolls for on its own step); faint echoes of the hero appear on each tile it dashed off, one after another, and fade in the same order within half a second.
 Level n costs 250 × n × 2^(n−1) Gold and takes 1.75 × n × 1.2^(n−1) hours (250 Gold and 1.75 hours first; about 105 billion Gold and 145 days at level 25).
-A rushed turn regains HP by Regen once, on its first step, not on the tiles it rushes across.
-**Rush Regen** (1 Courage, below End Rush, above Rush Badge) opens the Archives' **Rush Regen** research: each of its 35 levels lets one more of a rush's first rushed tiles regain HP by Regen too.
-It costs the same in all as Rush, about 201 billion Gold and 697 days, spread more gently: level n takes n × 1.6^(n−1) shares of the Gold and n × 1.12^(n−1) shares of the time (about 260 Gold and 1.4 hours first, 79 billion Gold and 97 days at level 35), so each level after the first is cheaper and quicker than Rush's.
+A dashed turn regains HP by Regen once, on its first step, not on the tiles it dashes across.
+**Dash Regen** (1 Courage, below End Rush, above Dash Badge) opens the Archives' **Dash Regen** research: each of its 35 levels lets one more of a dash's first dashed tiles regain HP by Regen too.
+It costs the same in all as Dash, about 201 billion Gold and 697 days, spread more gently: level n takes n × 1.6^(n−1) shares of the Gold and n × 1.12^(n−1) shares of the time (about 260 Gold and 1.4 hours first, 79 billion Gold and 97 days at level 35), so each level after the first is cheaper and quicker than Dash's.
 
 ## More controls
 

@@ -40,7 +40,7 @@ A Ranged monster shoots once the hero ends a turn within its reach, five sixths 
 Its shot lands where the hero's step ends: its ATK less DEF, cut by Parry % when parried, the shroud (whole for every shot) taking what it can of the rest; the damage rises over the hero.
 A shot that costs HP costs the area's mastery, and one that leaves the hero no HP fells it, as a lost fight does (one undo takes the step back).
 The hand and Automove don't plan around shots.
-A rush is one turn: its shots come once it stops.
+A dash is one turn: its shots come once it stops.
 A Ranged monster pays 1 Gold more, and one both Fast and Ranged 2 more.
 Every monster beaten pays Gold by its strength: none for a weak one, 1 for a normal one, 2 for a strong one, 4 for an elite one and 5 for a boss.
 The stats show the Gold found so far this run beside ATK and DEF; undo never takes Gold back, so it never lowers the count.

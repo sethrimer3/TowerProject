@@ -95,7 +95,7 @@ Page titles are title bars ruled with fine black lines round a white caption, wi
 Red marks only what is short or dangerous, and the HUD's keys keep their colour.
 
 **Game themes but Classic** each draw the dungeon (not the forest outside) in their own art: a `ThemedBoard` (`themed-boards.ts`, `THEMED_BOARDS`, one per look) paints the ground over the whole board, then in tile space each tile's contents, the Heart Door's heart on its own, a torch and the hero, and optionally something over it all (`over`).
-In the dungeon `Renderer.draw` swaps the lit board for `drawThemedBoard`: the ground, contents (the enemy struck leaning into its lunge), torches, the route, the hero (its rush echoes too) and `over`, then the usual feedback overlays.
+In the dungeon `Renderer.draw` swaps the lit board for `drawThemedBoard`: the ground, contents (the enemy struck leaning into its lunge), torches, the route, the hero (its dash echoes too) and `over`, then the usual feedback overlays.
 Every themed board draws an enemy's rank chevrons as Classic does (`rankChevrons`), at the tile's top left in its own colours (Ember's down the left edge, under the name's letters), beside its own marks for strength and its Ranged and Fast marks.
 `BoardLook.themed` holds the board worn (null for Classic, and always outside), so what rises off it wears that art too: a pickup's tile contents and a Heart Door's heart; coins, the Gem, materials and Equipment, with no themed art yet, keep theirs (`tests/theme-popups.test.ts`).
 Lighting, glows and decor (`decorOn`) are off while one is worn, until each has a version of its own.

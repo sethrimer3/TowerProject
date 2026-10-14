@@ -1,5 +1,5 @@
 import type { CardId } from "../cards.ts";
-import type { UpgradeId } from "../config.ts";
+import { LIMIT_BREAKS, type UpgradeId } from "../config.ts";
 import { AREA1_ITEM_URLS } from "../area1-tileset.ts";
 
 /** Small DOM, number and sprite helpers shared by every page. */
@@ -102,10 +102,11 @@ const SKILL_ITEM_SPRITES: Partial<Record<UpgradeId, keyof typeof AREA1_ITEM_URLS
 };
 const SKILL_UI_SPRITES: Partial<Record<UpgradeId, UiSprite>> = {
   inspirationUndos: "undo", undos: "undo", archives: "log",
-  delve: "delve", gear: "gear", moveSpeed: "automove", rush: "automove", instantCombat: "attack", trainers: "arrow-up", fasterTrainers: "automove", freeTraining: "arrow-up", buyQuantity: "arrow-up",
+  delve: "delve", gear: "gear", moveSpeed: "automove", dash: "automove", instantCombat: "attack", trainers: "arrow-up", fasterTrainers: "automove", freeTraining: "arrow-up", buyQuantity: "arrow-up",
   revive: "revive", spareChange: "gold", loot: "gold", floorSkipReward: "gold", mug: "gold", legacy: "tower", quality: "tower",
   wisdomFocus: "settings", wisdomMemory: "undo", wisdomSight: "upgrades",
   renownBanner: "tower", renownOath: "defense", renownCrown: "gear",
+  ...Object.fromEntries(LIMIT_BREAKS.map((id) => [id, "arrow-up"])),
 };
 /** Skills about Silver show the Gold coin drained of colour, as the purse does. */
 const SKILL_SILVER = new Set<UpgradeId>(["wealthy", "wishingWell", "onTheJob", "pocketMoney", "interest", "maxInterest"]);

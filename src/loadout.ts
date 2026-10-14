@@ -4,7 +4,7 @@ import { snap } from "./exact.ts";
 import { PARRY_CAP, type CritRule } from "./combat.ts";
 import type { Mode, RunCore, Save } from "./entities.ts";
 import { boonFactor, runBoons } from "./shrines.ts";
-import { CRIT_CHANCE_RANK, CRIT_FACTOR_BASE, CRIT_FACTOR_RANK, FIND_POTION_BASE, FIND_POTION_MAX, FLOOR_GOLD_BASE, FLOOR_GOLD_RANK, FLOOR_SILVER_BASE, FLOOR_SILVER_RANK, FIND_POTION_RANK, FREE_TRAINING_RANK, TRAINING_GROUPS, REVIVE_BASE, REVIVE_MAX, REVIVE_RANK, GOLD_SHOP, GOLD_BONUS_RANK, SILVER_BONUS_RANK, schedulePrice, POTION_PERCENT_BASE, POTION_PERCENT_RANK, TRAINING, TRAINING_PER_LEVEL, UPGRADES, isStatRow, levelForXp, trained, trainingWorth, ATTACK_RANGE_BASE, ATTACK_RANGE_RANK, ATTACK_SPEED_BASE, ATTACK_SPEED_RANK, ATK_PER_TILE_FIRST, ATK_PER_TILE_FALL, MULTISHOT_CHANCE_RANK, MULTISHOT_TARGETS_BASE, MULTISHOT_TARGETS_RANK, type GoldItemId, type StatTrainingRow, type TrainingId, type TrainingRow, type UpgradeId } from "./config.ts";
+import { CRIT_CHANCE_RANK, CRIT_FACTOR_BASE, CRIT_FACTOR_RANK, FIND_POTION_BASE, FIND_POTION_MAX, FLOOR_GOLD_BASE, FLOOR_GOLD_RANK, FLOOR_SILVER_BASE, FLOOR_SILVER_RANK, FIND_POTION_RANK, FREE_TRAINING_RANK, TRAINING_GROUPS, REVIVE_BASE, REVIVE_MAX, REVIVE_RANK, GOLD_SHOP, GOLD_BONUS_RANK, SILVER_BONUS_RANK, schedulePrice, POTION_PERCENT_BASE, POTION_PERCENT_RANK, TRAINING, TRAINING_PER_LEVEL, UPGRADES, trainingCap, isStatRow, levelForXp, trained, trainingWorth, ATTACK_RANGE_BASE, ATTACK_RANGE_RANK, ATTACK_SPEED_BASE, ATTACK_SPEED_RANK, ATK_PER_TILE_FIRST, ATK_PER_TILE_FALL, MULTISHOT_CHANCE_RANK, MULTISHOT_TARGETS_BASE, MULTISHOT_TARGETS_RANK, type GoldItemId, type StatTrainingRow, type TrainingId, type TrainingRow, type UpgradeId } from "./config.ts";
 import { raised, wornEffects } from "./equipment/effects.ts";
 import { PIERCE_CAP } from "./equipment/balance.ts";
 import { RESEARCH, researched, type ResearchTarget } from "./archives.ts";
@@ -173,11 +173,12 @@ export function provisionBulk(save: Pick<Save, "provisions">, id: GoldItemId, q:
   return bulkBuy(q, Infinity, (k) => schedulePrice(price, owned + k), gold);
 }
 
-/** Training points: earned per level, spent on ranks of training bought
- * with them (`trainingPaid`; trainers' ranks cost Gold instead). `left`
- * never goes below zero, even if undo takes back a level already spent. */
-export function trainingPoints(save: Pick<Save, "xp" | "trainingPaid">) {
-  const earned = TRAINING_PER_LEVEL * levelForXp(save.xp),
+/** Training points: earned per level and by the weekly mission rewards
+ * (`bonusTrainingPoints`), spent on ranks of training bought with them
+ * (`trainingPaid`; trainers' ranks cost Gold instead). `left` never goes
+ * below zero, even if undo takes back a level already spent. */
+export function trainingPoints(save: Pick<Save, "xp" | "trainingPaid"> & Partial<Pick<Save, "bonusTrainingPoints">>) {
+  const earned = TRAINING_PER_LEVEL * levelForXp(save.xp) + (save.bonusTrainingPoints ?? 0),
     spent = TRAINING.reduce((sum, t) => sum + save.trainingPaid[t.id].points, 0);
   return { earned, spent, left: Math.max(0, earned - spent) };
 }
@@ -296,16 +297,16 @@ export const trainingDiscount = (save: Pick<Save, "archives">) => researched(sav
 
 /** Whether `id` can take no more ranks: at its most, counting a rank a
  * trainer is training. */
-export const trainingMaxed = (save: Pick<Save, "training"> & Partial<Pick<Save, "trainingJobs">>, id: TrainingId) => {
+export const trainingMaxed = (save: Pick<Save, "training" | "upgrades"> & Partial<Pick<Save, "trainingJobs">>, id: TrainingId) => {
   const row = TRAINING.find((t) => t.id === id)!;
-  return save.training[id] + ranksInTraining(save.trainingJobs, id) >= row.max;
+  return save.training[id] + ranksInTraining(save.trainingJobs, id) >= trainingCap(row, save.upgrades);
 };
 
 /** Whether `id` can take no more ranks bought with training points: at its
  * most by the ranks it has. A rank a trainer is training doesn't count, since
  * points bought past it take its room and the trainer trains fewer
  * (`TrainingDesk.train`). */
-export const trainingFull = (save: Pick<Save, "training">, id: TrainingId) => save.training[id] >= TRAINING.find((t) => t.id === id)!.max;
+export const trainingFull = (save: Pick<Save, "training" | "upgrades">, id: TrainingId) => save.training[id] >= trainingCap(TRAINING.find((t) => t.id === id)!, save.upgrades);
 
 /** The research multiplying what each Training row's value does (the
  * stats `loadout` multiplies itself, `statFactor`, aside): Regen's HP a
@@ -347,7 +348,7 @@ export function trainingStep(save: Save, id: TrainingId, count = 1, view: Traini
  * points they take, and whether the points held pay for them. */
 export function trainingBulk(save: Save, id: TrainingId, q: BuyQuantity) {
   const row = TRAINING.find((t) => t.id === id)!;
-  const room = row.max - save.training[id];
+  const room = trainingCap(row, save.upgrades) - save.training[id];
   return bulkBuy(q, Math.max(0, room), () => row.cost, save.settings.freePurchases ? Infinity : trainingPoints(save).left);
 }
 

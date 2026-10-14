@@ -34,7 +34,7 @@ function draw(run: Pick<RunCore, "seed" | "freeRolls">, group: FreeGroup) {
  * their most counting the run's ranks. */
 function candidates(save: Pick<Save, "training" | "upgrades" | "goals">, run: Pick<RunCore, "training">, group: FreeGroup): TrainingId[] {
   const ranks = ranksInRun(save, run);
-  return TRAINING.filter((row) => row.group === group && trainingOpen(row, save) && ranks[row.id] < runTrainingMax(row)).map((row) => row.id);
+  return TRAINING.filter((row) => row.group === group && trainingOpen(row, save) && ranks[row.id] < runTrainingMax(row, save)).map((row) => row.id);
 }
 
 /** One floor passed: each group, in turn, rolls its Free Upgrade chance on

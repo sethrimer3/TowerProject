@@ -22,9 +22,9 @@ import { DEFEAT_MS, drawStruckDown } from "./struck-down.ts";
 import { AREA_BURST_MS, drawAreaBurst, preloadAreaBurst, drawLevelUp, drawRevive, LEVEL_UP_MS, POINTS_MS, REVIVE_MS } from "./level-up.ts";
 import { drawPoof, POOF_MS } from "./poof.ts";
 import { drawGem, drawGemSparkle, GEM_SPARKLE_MS } from "./gem-art.ts";
-import { drawRushEchoes, RUSH_ECHO_MS } from "./rush-echoes.ts";
+import { drawDashEchoes, DASH_ECHO_MS } from "./dash-echoes.ts";
 import { drawVolley } from "./volley-art.ts";
-import type { Rush } from "./state.ts";
+import type { Dash } from "./state.ts";
 import { darknessOf, forEachViewTile, tileTransform, toTileSpace, type FrameContext } from "./render-frame.ts";
 import { gameLook } from "./theme-collection.ts";
 
@@ -75,8 +75,8 @@ export class Renderer {
    * it arrived on the one it stands on now. */
   private floorKey = "";
   private arrived = -Infinity;
-  /** The latest rush drawn: a new one snaps the hero to where it landed. */
-  private rushed: Rush | null = null;
+  /** The latest dash drawn: a new one snaps the hero to where it landed. */
+  private dashed: Dash | null = null;
   /** The enemy's lean into its strike this frame, drawn at its tile. */
   private enemyLunge = { x: 0, y: 0, dx: 0, dy: 0 };
   /** A golden path to preview for a highlighted-but-unconfirmed destination.
@@ -144,7 +144,7 @@ export class Renderer {
       if (f.look.outside) this.drawOutside(f);
       else this.light.draw(f, this.litBoard(f));
     }
-    drawRushEchoes(f, this.game.rush, themed ? themed.hero : (c) => paintHero(c, f.look.spritesOff));
+    drawDashEchoes(f, this.game.dash, themed ? themed.hero : (c) => paintHero(c, f.look.spritesOff));
     this.drawOverlays(f);
   }
   /** Gameplay feedback drawn over every board. */
@@ -262,9 +262,9 @@ export class Renderer {
       this.left = t.left;
     }
     if (Math.abs(p.x - this.playerX) > g.world.width / 2) this.playerX = p.x;
-    // A rush is one step: the hero is there at once, its echoes left behind.
-    if (g.rush !== this.rushed) {
-      this.rushed = g.rush;
+    // A dash is one step: the hero is there at once, its echoes left behind.
+    if (g.dash !== this.dashed) {
+      this.dashed = g.dash;
       this.playerX = p.x;
       this.playerY = p.y;
     }
@@ -567,13 +567,13 @@ export class Renderer {
     const p = this.game.run.player, t = this.target(this.density), near = (a: number, b: number) => Math.abs(a - b) < 0.01;
     return near(this.playerX, p.x) && near(this.playerY, p.y) && near(this.left, t.left) && near(this.bottom, t.bottom);
   }
-  /** Every timed effect has played out: the arrival glow, a rush's echoes,
+  /** Every timed effect has played out: the arrival glow, a dash's echoes,
    * a blocked step, the feedback text, the level-up, skulls, revivals, an area
    * reward's burst, a Greater Boss's poof, a Gem's sparkle and the turn's
    * shots in flight. */
   private effectsOver(now: number) {
     const g = this.game, sparkle = g.gemFinder.sparkle;
-    return now - this.arrived > ARRIVAL_GLOW_MS && (!g.rush || now - g.rush.at >= RUSH_ECHO_MS) && g.blocked.until <= now && g.effect.until <= now &&
+    return now - this.arrived > ARRIVAL_GLOW_MS && (!g.dash || now - g.dash.at >= DASH_ECHO_MS) && g.blocked.until <= now && g.effect.until <= now &&
       now - g.levelUpAt >= LEVEL_UP_MS + POINTS_MS && g.revivedAt.every((at) => now - at >= REVIVE_MS) && g.struckDown.every((at) => now - at >= DEFEAT_MS) &&
       g.areaBursts.every((b) => now - b.at >= AREA_BURST_MS) &&
       (!g.summoned || now - g.summoned.at >= POOF_MS) && (!g.vanished || now - g.vanished.at >= POOF_MS) &&

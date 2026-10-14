@@ -437,22 +437,22 @@ test("Rush completes an archivist's research for a Gem per ten minutes left, rou
 
 test("a busy archivist switches research: its Gold back, its time kept, the new project paid and started", () => {
   const save = owner(1_000);
-  save.upgrades.rush = 1;
+  save.upgrades.dash = 1;
   assert.ok(startResearch(save, 0, "focusCount", T0));
   assert.equal(save.gold, 500);
   assert.equal(cannotSwitch(save, 0, "focusCount"), "Already being researched.");
   assert.equal(switchResearch(save, 0, "focusCount", T0), false);
-  assert.equal(cannotSwitch(save, 0, "rush"), null, "the job's Gold back pays for the new one");
-  assert.equal(cannotStart(save, 0, "rush"), "That archivist is busy.");
-  assert.ok(switchResearch(save, 0, "rush", T0 + 2 * HOUR));
-  assert.equal(save.archives.slots[0].job?.research, "rush");
+  assert.equal(cannotSwitch(save, 0, "dash"), null, "the job's Gold back pays for the new one");
+  assert.equal(cannotStart(save, 0, "dash"), "That archivist is busy.");
+  assert.ok(switchResearch(save, 0, "dash", T0 + 2 * HOUR));
+  assert.equal(save.archives.slots[0].job?.research, "dash");
   assert.equal(save.gold, 1_000 - 250);
   assert.equal(save.archives.progress.focusCount, 0.25, "two of Focus Count's eight hours are kept");
   // Too little Gold, even with the job's back, changes nothing.
   save.gold = 0;
   assert.ok(cannotSwitch(save, 0, "focusCount"));
   assert.equal(switchResearch(save, 0, "focusCount", T0 + 3 * HOUR), false);
-  assert.equal(save.archives.slots[0].job?.research, "rush");
+  assert.equal(save.archives.slots[0].job?.research, "dash");
 });
 
 test("ATK (+2%), DEF and Max HP (+3%), open with the Archives, and Shroud (+4%, to ×5) multiply the whole stat, on Pocket Money's schedule", () => {

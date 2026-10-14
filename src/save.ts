@@ -1,7 +1,7 @@
 import { TRAINER_GEMS, trainingSlots, type TrainingJob, type TrainingPaid } from "./training-jobs.ts";
 import { count, dropInvalid, finite, fraction, isRecord, wholeIn } from "./decode.ts";
 import { TIERS } from "./tiers.ts";
-import { FIND_POTION_MAX, GOLD_SHOP, OLD_SAVE_KEY, SAVE_KEY, TOWER_WIDTH, TRAINING, UPGRADES, WIDTH, type UpgradeId } from "./config.ts";
+import { FIND_POTION_MAX, GOLD_SHOP, OLD_SAVE_KEY, SAVE_KEY, TOWER_WIDTH, TRAINING, UPGRADES, WIDTH, trainingCeiling, type UpgradeId } from "./config.ts";
 import type { AutomoveMemory, DelveRun, ModeSave, Fall, MoveSnapshot, Run, Save, TowerRun } from "./entities.ts";
 import { emptyMaterials, MATERIAL_IDS, type MaterialId } from "./materials.ts";
 import { decodeEquipment, defaultEquipment } from "./equipment/inventory.ts";
@@ -23,7 +23,6 @@ import { decodeShrines, defaultShrines, validShrineRun } from "./shrines.ts";
 import { decodeThemes, defaultThemes } from "./theme-collection.ts";
 import { isTournamentRun } from "./tournament/run.ts";
 import { decodeBadges, defaultBadges, validRunBadges } from "./badges.ts";
-import { runTrainingMax } from "./run-training.ts";
 import { backfillProfile, decodeProfile, defaultProfile } from "./profile.ts";
 import { decodeFinds, defaultFinds, validNotes } from "./run-notes.ts";
 export function defaults(): Save {
@@ -42,6 +41,7 @@ export function defaults(): Save {
       GOLD_SHOP.map((g) => [g.id, 0]),
     ) as Save["provisions"],
     xp: 0,
+    bonusTrainingPoints: 0,
     training: Object.fromEntries(TRAINING.map((t) => [t.id, 0])) as Save["training"],
     trainingPaid: Object.fromEntries(TRAINING.map((t) => [t.id, { points: 0, gold: 0, ms: 0 }])) as Save["trainingPaid"],
     trainerRanks: Object.fromEntries(TRAINING.map((t) => [t.id, 0])) as Save["trainerRanks"],
@@ -131,11 +131,11 @@ const validDelveState = (r: any) => Number.isInteger(r.milestone) && finite(r.mi
 const TOWER_FIELDS = ["damaged", "enemiesLeft", "summoned", "start", "shrine"];
 const DELVE_FIELDS = ["milestone", "tournament"];
 /** Training ranks bought in a run: known rows, each a whole number of
- * ranks, no more than the row reaches in a run. */
+ * ranks, no more than the row reaches in a run with every Limit Break. */
 const validRunTraining = (t: any) =>
   isRecord(t) && Object.entries(t).every(([id, n]) => {
     const row = TRAINING.find((r) => r.id === id);
-    return !!row && wholeIn(n, 0, runTrainingMax(row));
+    return !!row && wholeIn(n, 0, trainingCeiling(row));
   });
 /** A run's hand: known cards, each once, no more than a hand can hold,
  * STAIRS among them. */
@@ -288,7 +288,29 @@ function decodeInventory(s: any, d: Save) {
 /** Upgrades renamed since a save may have been made: each new id's old one,
  * read when the save has none under the new id.
  * TODO: remove these conversions in a future save version. */
-const RENAMED_UPGRADES: Partial<Record<UpgradeId, string>> = { parry: "evade" };
+const RENAMED_UPGRADES: Partial<Record<UpgradeId, string>> = { parry: "evade", dash: "rush", dashRegen: "rushRegen", dashBadge: "rushBadge" };
+/** Rush became Dash: its research projects' and badge's old ids, renamed
+ * in the raw save before the Archives and badges decode it.
+ * TODO: remove this conversion in a future save version. */
+const RUSH_RENAMES = new Map([["rush", "dash"], ["rushRegen", "dashRegen"]]);
+function renameRush(s: any) {
+  const a = s.archives;
+  if (isRecord(a)) {
+    for (const k of ["levels", "progress"]) {
+      const m = a[k];
+      if (isRecord(m)) for (const [old, now] of RUSH_RENAMES) if (old in m && !(now in m)) m[now] = m[old];
+    }
+    for (const slot of Array.isArray(a.slots) ? a.slots : []) if (isRecord(slot?.job) && RUSH_RENAMES.has(slot.job.research)) slot.job.research = RUSH_RENAMES.get(slot.job.research);
+    for (const r of Array.isArray(a.history) ? a.history : []) if (isRecord(r) && RUSH_RENAMES.has(r.research)) r.research = RUSH_RENAMES.get(r.research);
+  }
+  const b = s.badges, dash = (id: unknown) => (id === "rush" ? "dash" : id);
+  if (isRecord(b?.owned) && "rush" in b.owned && !("dash" in b.owned)) b.owned.dash = b.owned.rush;
+  if (isRecord(b?.cards)) for (const card of Object.keys(b.cards)) if (Array.isArray(b.cards[card])) b.cards[card] = b.cards[card].map(dash);
+  for (const mode of ["tower", "delve"]) {
+    const badges = s[mode]?.run?.badges;
+    if (isRecord(badges)) for (const list of Object.values(badges)) if (Array.isArray(list)) for (const r of list) if (isRecord(r)) r.id = dash(r.id);
+  }
+}
 function decodeUpgrades(raw: any, d: Save) {
   for (const u of UPGRADES) d.upgrades[u.id] = count(raw?.[u.id] || raw?.[RENAMED_UPGRADES[u.id] ?? ""], d.upgrades[u.id], u.max);
 }
@@ -302,6 +324,7 @@ function decodeProgress(s: any, d: Save, undoCapacity: number) {
   d.goldBoostUntil = count(s.goldBoostUntil, 0, Number.MAX_SAFE_INTEGER);
   for (const g of GOLD_SHOP) d.provisions[g.id] = count(s.provisions?.[g.id], d.provisions[g.id], 999);
   d.xp = count(s.xp, d.xp);
+  d.bonusTrainingPoints = count(s.bonusTrainingPoints, d.bonusTrainingPoints);
   decodeTraining(s, d);
   decodeModeRecords(s.tower ?? {}, s.delve ?? {}, d);
   applyMode(d.tower, decodeMode(s.tower, undoCapacity, decodeTowerRun));
@@ -312,7 +335,7 @@ function decodeProgress(s: any, d: Save, undoCapacity: number) {
  * finished (their own schedule), the trainers and
  * their jobs, each stat's time credit, the time bank and the boost. */
 function decodeTraining(s: any, d: Save) {
-  for (const t of TRAINING) d.training[t.id] = count(s.training?.[t.id], d.training[t.id], t.max);
+  for (const t of TRAINING) d.training[t.id] = count(s.training?.[t.id], d.training[t.id], trainingCeiling(t));
   for (const t of TRAINING) d.trainingPaid[t.id] = decodePaid(s.trainingPaid?.[t.id], t.cost * d.training[t.id]);
   for (const t of TRAINING) d.trainerRanks[t.id] = count(s.trainerRanks?.[t.id], 0, d.training[t.id]);
   d.trainers = count(s.trainers, d.trainers, TRAINER_GEMS.length);
@@ -431,6 +454,7 @@ export function decode(raw: string | null): Save {
   const d = defaults();
   try {
     const s = JSON.parse(raw ?? "null") ?? {};
+    if (isRecord(s)) renameRush(s);
     decodeUpgrades(s.upgrades, d);
     // Undo capacity counts Undo Count research, so the Archives come first.
     d.archives = decodeArchives(s.archives);

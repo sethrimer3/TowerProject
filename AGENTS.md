@@ -89,7 +89,7 @@ Read the area's doc before changing code there or answering questions about it; 
 - `tower-generation.md`: Tower floor generation (`src/tower/`): the pipeline, doors and keys, forks, embedding, the enemy schedule and stage, bosses, early floors.
 - `delve.md`: the Delve labyrinth and its Automove (`src/delve/`).
 - `movement-and-combat.md`: steps and `resolveStep`, fights and encounters, falling, Revive, crits, Lifesteal, kill pay, run training, Buy Quantity, gains.
-- `hand-and-automation.md`: the planners, Tower automation, the hand and cards, card badges, Focus, Ignore and Target, Rush, play/pause, deadlock.
+- `hand-and-automation.md`: the planners, Tower automation, the hand and cards, card badges, Focus, Ignore and Target, Dash, play/pause, deadlock.
 - `tiers-goals-areas.md`: tiers, Goals and Warp, Tower floor transitions, undo's `restore`, area rewards.
 - `progression.md`: enemy curves and stats, the loadout, fractions, XP and Training, the Archives, free purchases, skill trees, Equipment.
 - `economy-and-online.md`: Gems, the Shop, Gold bonuses, Spare Change and Wishing Well, the Tournament, Mail, Missions, Events and relics.

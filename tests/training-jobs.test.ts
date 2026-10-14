@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { defaults, decode } from "../src/save.ts";
-import { RUN_TRAINING_PRICES, TRAINER_GOLD_CURVES, TRAINING, xpForLevel } from "../src/config.ts";
+import { RUN_TRAINING_PRICES, TRAINER_GOLD_CURVES, TRAINING, trainingCeiling, xpForLevel } from "../src/config.ts";
 import { loadout, trainingPoints, trainingStep } from "../src/loadout.ts";
 import { BOOST_MAX_MS, claimBoost, doneAt, finishGems, trainingGold, trainingMs, trainingSeconds, workLeft } from "../src/training-jobs.ts";
 import { RESEARCH } from "../src/archives.ts";
@@ -406,9 +406,10 @@ test("a cubic scale adds (ranks / cubic)^3 to a trainer's Gold: never below the 
     if ("ratio" in c || "prices" in c || c.power) continue;
     assert.ok(c.cubic, `${t.id} has a cubic scale`);
     const linear = (r: number) => Math.ceil((c.start ?? 20) * t.cost * (r + 1) * (c.growth + r) / c.growth);
-    for (const r of [0, 1, 10, Math.floor(t.max / 2), t.max - 1]) assert.ok(trainingGold(t, r) >= linear(r), `${t.id} rank ${r}`);
+    const cap = trainingCeiling(t);
+    for (const r of [0, 1, 10, Math.floor(cap / 2), cap - 1]) assert.ok(trainingGold(t, r) >= linear(r), `${t.id} rank ${r}`);
     // The Free Upgrade rows' 100 ranks end at less than twice their linear price.
-    if (!c.start) assert.ok(trainingGold(t, t.max - 1) > 3 * linear(t.max - 1), `${t.id} much dearer at its cap`);
+    if (!c.start) assert.ok(trainingGold(t, cap - 1) > 3 * linear(cap - 1), `${t.id} much dearer at its cap`);
   }
 });
 

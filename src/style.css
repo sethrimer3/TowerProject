@@ -4118,8 +4118,8 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
    currencies bar, and wherever a reward pays them. */
 .medal-icon { width: 1em; height: 1em; vertical-align: -0.15em; }
 .purse .medal-icon { width: 18px; height: 18px; flex: none; }
-.medal-stat b { color: #ffd27a; }
-.currency.medal-currency { color: #ffd27a; }
+.medal-stat b { color: #d4b8ff; }
+.currency.medal-currency { color: #d4b8ff; }
 .currency > .medal-icon { width: 1.45em; height: 1.45em; vertical-align: -0.32em; }
 .reward-reveal-prize .medal-icon, .goal-art > .medal-icon { width: 72px; height: 72px; }
 @media (max-width: 420px) {

@@ -1,7 +1,7 @@
 import { askForGems, helpButton, showHelp } from "./dialogs.ts";
 import { play } from "../sound.ts";
 import { permanentBoost, trainingRate } from "../shop/entitlements.ts";
-import { TRAINING, TRAINING_GROUPS, TRAINING_PER_LEVEL, levelForXp, type TrainingId } from "../config.ts";
+import { TRAINING, TRAINING_GROUPS, TRAINING_PER_LEVEL, levelForXp, trainingCap, type TrainingId } from "../config.ts";
 import { trainingBulk, trainingPoints, trainingStep, trainingText, trainingWaiting, trainingOpen } from "../loadout.ts";
 import { whole } from "../whole.ts";
 import type { BuyQuantity } from "../buy-quantity.ts";
@@ -288,10 +288,10 @@ export class ResearchPage {
   }
 
   /** A row's level, its ranks, and while a trainer trains the next, the
-   * level it reaches, out of its most: "Lv 5 / 6,000", or "Lv 5 → 6 / 6,000". */
+   * level it reaches, out of its most: "Lv 5 / 1,000", or "Lv 5 → 6 / 1,000". */
   private levelText(id: TrainingId, training: boolean) {
     const save = this.ctx.game.save, ranks = save.training[id], row = TRAINING.find((t) => t.id === id)!;
-    const most = ` / ${row.max.toLocaleString("en-US")}`;
+    const most = ` / ${trainingCap(row, save.upgrades).toLocaleString("en-US")}`;
     return `<span class="training-level">Lv ${ranks}${training ? ` → ${ranks + ranksInTraining(save.trainingJobs, id)}` : ""}${most}</span>`;
   }
 

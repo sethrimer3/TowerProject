@@ -10,7 +10,7 @@ export type SkillNode = { id: UpgradeId; icon: string; x: number; y: number; req
  * only Dev mode shows it, and its skills can't be bought). */
 export type SkillTree = { id: TreeId; name: string; currency: Currency; gate?: UpgradeId | null; description: string; height?: number; unlocks?: boolean; nodes: SkillNode[] };
 export const TREES: SkillTree[] = [
-  { id: "inspiration", name: "Inspiration", currency: "inspiration", description: "Earn Inspiration by beating your best Tower climb.", height: 352, unlocks: true, nodes: [
+  { id: "inspiration", name: "Inspiration", currency: "inspiration", description: "Earn Inspiration by beating your best Tower climb.", height: 534, unlocks: true, nodes: [
     // The hand's skills, down to the Archives: Buildout, Trainers (two rows
     // lower), Shroud, Critical (with Critical Prediction to its left). Gear and On the Job branch off
     // Buildout, ATK Up and DEF Up under Gear, and Regen, then Heal, below On the Job.
@@ -81,6 +81,17 @@ export const TREES: SkillTree[] = [
     { id: "floorSkipReward", icon: "↷", x: 50, y: 340, requires: ["blueSiphon"] },
     { id: "cardTorch", icon: "☼", x: 30, y: 340, requires: ["floorSkipReward"] },
     { id: "cardWoodenDoor", icon: "⚿", x: 70, y: 340, requires: ["floorSkipReward"] },
+    // Limit Break 1 to 10 straight down under Torch, each requiring the one before.
+    { id: "limitBreak1", icon: "⇑", x: 30, y: 358, requires: ["cardTorch"] },
+    { id: "limitBreak2", icon: "⇑", x: 30, y: 376, requires: ["limitBreak1"] },
+    { id: "limitBreak3", icon: "⇑", x: 30, y: 394, requires: ["limitBreak2"] },
+    { id: "limitBreak4", icon: "⇑", x: 30, y: 412, requires: ["limitBreak3"] },
+    { id: "limitBreak5", icon: "⇑", x: 30, y: 430, requires: ["limitBreak4"] },
+    { id: "limitBreak6", icon: "⇑", x: 30, y: 448, requires: ["limitBreak5"] },
+    { id: "limitBreak7", icon: "⇑", x: 30, y: 466, requires: ["limitBreak6"] },
+    { id: "limitBreak8", icon: "⇑", x: 30, y: 484, requires: ["limitBreak7"] },
+    { id: "limitBreak9", icon: "⇑", x: 30, y: 502, requires: ["limitBreak8"] },
+    { id: "limitBreak10", icon: "⇑", x: 30, y: 520, requires: ["limitBreak9"] },
   ] },
   { id: "courage", name: "Courage", currency: "courage", gate: "delve", description: "Earn Courage by beating your best Delve depth.", height: 198, nodes: [
     { id: "moveSpeed", icon: "»", x: 50, y: 10, requires: ["delve"] },
@@ -88,11 +99,11 @@ export const TREES: SkillTree[] = [
     { id: "extraKey", icon: "⚿", x: 82, y: 10, requires: ["moveSpeed"] },
     { id: "pathfinder", icon: "⌖", x: 18, y: 34, requires: ["moveSpeed"] },
     { id: "focus", icon: "ϟ", x: 50, y: 34, requires: ["moveSpeed"] },
-    { id: "rush", icon: "⇶", x: 82, y: 34, requires: ["moveSpeed"] },
-    // Rush's own skills down the right edge: End Rush, Rush Regen, then Rush Badge.
-    { id: "endRush", icon: "⇶", x: 90, y: 61, requires: ["rush"] },
-    { id: "rushRegen", icon: "⇶", x: 90, y: 87, requires: ["endRush"] },
-    { id: "rushBadge", icon: "◪", x: 90, y: 111, requires: ["rushRegen", "cardBadges"] },
+    { id: "dash", icon: "⇶", x: 82, y: 34, requires: ["moveSpeed"] },
+    // Dash's own skills down the right edge: End Rush, Dash Regen, then Dash Badge.
+    { id: "endRush", icon: "⇶", x: 90, y: 61, requires: ["dash"] },
+    { id: "dashRegen", icon: "⇶", x: 90, y: 87, requires: ["endRush"] },
+    { id: "dashBadge", icon: "◪", x: 90, y: 111, requires: ["dashRegen", "cardBadges"] },
     { id: "undos", icon: "↺", x: 23, y: 61, requires: ["pathfinder"] },
     { id: "cardBadges", icon: "◪", x: 56, y: 61, requires: ["focus"] },
     // The research skills down the middle under Focus: Find Yellow Key, Key

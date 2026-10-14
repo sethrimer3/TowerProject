@@ -55,18 +55,19 @@ Every 5 daily missions **claimed** in the week (counted as each is claimed, not 
 The week runs from Monday 00:00 GMT; the tally and rewards claimed start over then, and a reward left unclaimed is gone.
 Gold is the daily mission's Gold for the highest tower open, times the multiplier (`WEEKLY_REWARDS`, `weeklyReward`).
 
-| Completed | Gold | Gems | Medals | Ascension Shards |
-|---|---|---|---|---|
-| 5 | ×3 | 10 | 0 | 0 |
-| 10 | ×4 | 15 | 10 | 0 |
-| 15 | ×5 | 20 | 15 | 0 |
-| 20 | ×7 | 25 | 20 | 0 |
-| 25 | ×10 | 30 | 25 | 10 |
-| 30 | ×15 | 35 | 30 | 15 |
-| 35 | ×20 | 50 | 35 | 20 |
+| Completed | Gold | Gems | Medals | Ascension Shards | Training Points |
+|---|---|---|---|---|---|
+| 5 | ×3 | 10 | 0 | 0 | 1 |
+| 10 | ×4 | 15 | 10 | 0 | 1 |
+| 15 | ×5 | 20 | 15 | 0 | 1 |
+| 20 | ×7 | 25 | 20 | 0 | 1 |
+| 25 | ×10 | 30 | 25 | 10 | 1 |
+| 30 | ×15 | 35 | 30 | 15 | 1 |
+| 35 | ×20 | 50 | 35 | 20 | 1 |
 
 **Medals** (`save.medals`) are a new limited currency, kept between runs; Events' missions pay them too (docs/EVENTS.md); nothing spends them yet.
-They show in the forest's purse once held (where it has room), and on the currencies bar.
+They show in the forest's purse once held (where it has room), and on the currencies bar, in light purple.
+Each weekly reward's **Training Point** adds to those the hero's levels earn (`save.bonusTrainingPoints`).
 
 ## Screens
 
@@ -75,7 +76,7 @@ They show in the forest's purse once held (where it has room), and on the curren
 - **Missions screen** (`ui/missions-page.ts`): an X at the top right returns to the page that opened it.
   Near the top, the weekly bar fills from 0 to 35 with the week's count, a prize box over each multiple of 5: dim until reached, glowing while it can be claimed, checked once claimed; pressing a glowing box claims it.
   Below, how many missions the list holds out of 8 and when the next two come (or, at 8, to claim or complete one to make room), then each mission: what it asks, what it pays, its bar, and once complete a Claim button.
-  What a claim pays rises to the middle of the screen (`revealReward`): a mission's Gold, with the rest under it, each as its currency's icon and the amount; a weekly reward's currencies one celebration each in turn (Gold, Gems, Medals, Ascension Shards, those it pays), each pressed away to show the next.
+  What a claim pays rises to the middle of the screen (`revealReward`): a mission's Gold, with the rest under it, each as its currency's icon and the amount; a weekly reward's currencies one celebration each in turn (Gold, Gems, Medals, Ascension Shards, Training Points, those it pays), each pressed away to show the next.
 
 ## Future
 
