@@ -19,6 +19,11 @@ Under the currencies, in the forest and inside a run, in the Tower and the Delve
 Inside a run a **×1.5 Gold** ad button stands beside it: each claim (again, no ad plays yet) stores 20 minutes of real time in which all Gold found is multiplied by 1.5, claimable again and again up to two hours stored (the button closes while it holds more than an hour and fifty minutes); while it lasts the button glows and shows the time left, and with none stored it reads *Inactive*.
 When the boost ran during a run, its end dialog adds a line for it, such as *50 Gold × 1.5 boost = 75 Gold*.
 
+## Themes
+
+Settings' UI Themes and Game Themes menus sell every theme but Medieval (owned from the start) for **1 Gold** each, bought with the Buy button on its card; each theme owned adds 2.5% to all Gold banked for good, worn or not.
+Dev mode owns every theme.
+
 ## In the forest
 
 In the forest the purse also shows the Silver each run starts with, once that is any, and the stats show only the keys a run starts with.

@@ -4,7 +4,7 @@ import { Game } from "../src/state.ts";
 import { decode, defaults } from "../src/save.ts";
 import { decodeSettings } from "../src/settings.ts";
 import { goldBonuses, goldBonusTotal } from "../src/gold-bonuses.ts";
-import { THEMES, THEME_IDS, claimThemes, gameLook, themeGoldFactor, themesOf, uiLook } from "../src/theme-collection.ts";
+import { THEME_IDS, THEME_PRICE, canBuyTheme, gameLook, themeGoldFactor, themesOf, uiLook } from "../src/theme-collection.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
 
 test("a new hero owns the Medieval UI theme and wears it, on the Classic board", () => {
@@ -14,99 +14,41 @@ test("a new hero owns the Medieval UI theme and wears it, on the Classic board",
   assert.equal(gameLook(save), "classic");
 });
 
-test("Neon, Terminal, Desktop, Glyph, Ember, Yang, Yin, Shiro, Kuro, Arcade and System are each a UI theme and a Game theme, each earned on its own", () => {
+test("Neon, Terminal, Desktop, Glyph, Ember, Yang, Yin, Shiro, Kuro, Arcade and System are each a UI theme and a Game theme, each bought on its own for 1 Gold", () => {
   assert.deepEqual(themesOf("ui"), ["medievalUi", "neonUi", "terminalUi", "desktopUi", "glyphUi", "emberUi", "yangUi", "yinUi", "shiroUi", "kuroUi", "arcadeUi", "systemUi"]);
   assert.deepEqual(themesOf("game"), ["neonGame", "terminalGame", "desktopGame", "glyphGame", "emberGame", "yangGame", "yinGame", "shiroGame", "kuroGame", "arcadeGame", "systemGame"]);
+  assert.deepEqual(THEME_PRICE, { currency: "gold", amount: 1 });
   const save = defaults();
-  assert.deepEqual(claimThemes(save), [], "nothing earned yet");
-  save.tower.reached = 49;
-  assert.deepEqual(claimThemes(save), []);
-  save.tower.reached = 50;
-  assert.deepEqual(claimThemes(save), ["neonUi"], "floor 50 of Tower I completed");
-  assert.deepEqual(claimThemes(save), [], "each is earned once");
-  save.tower.reached = 99;
-  assert.deepEqual(claimThemes(save), []);
-  save.tower.reached = 100;
-  assert.deepEqual(claimThemes(save), ["terminalUi"], "floor 100 of Tower I completed");
-  // A Delve depth in another tier's records counts.
-  save.delve.tierRecords[2] = { best: 25, reached: 25 };
-  assert.deepEqual(claimThemes(save), ["neonGame"]);
-  save.delve.tierRecords[2] = { best: 49, reached: 49 };
-  assert.deepEqual(claimThemes(save), []);
-  save.delve.reached = 50;
-  assert.deepEqual(claimThemes(save), ["desktopUi"], "depth 50 in the Delve");
-  save.delve.reached = 74;
-  assert.deepEqual(claimThemes(save), []);
-  save.delve.reached = 75;
-  assert.deepEqual(claimThemes(save), ["desktopGame"], "depth 75 in the Delve");
-  save.tower.reached = 149;
-  assert.deepEqual(claimThemes(save), []);
-  save.tower.reached = 150;
-  assert.deepEqual(claimThemes(save), ["terminalGame"], "floor 150 of Tower I completed");
-  save.tower.reached = 199;
-  assert.deepEqual(claimThemes(save), []);
-  save.tower.reached = 200;
-  assert.deepEqual(claimThemes(save), ["glyphUi"], "floor 200 of Tower I completed");
-  save.tower.reached = 250;
-  assert.deepEqual(claimThemes(save), ["glyphGame"], "floor 250 of Tower I completed");
-  save.delve.reached = 99;
-  assert.deepEqual(claimThemes(save), []);
-  save.delve.reached = 100;
-  assert.deepEqual(claimThemes(save), ["emberUi"], "depth 100 in the Delve");
-  save.delve.reached = 125;
-  assert.deepEqual(claimThemes(save), ["emberGame"], "depth 125 in the Delve");
-  save.tower.reached = 299;
-  assert.deepEqual(claimThemes(save), []);
-  save.tower.reached = 300;
-  assert.deepEqual(claimThemes(save), ["yangUi"], "floor 300 of Tower I completed");
-  save.tower.reached = 350;
-  assert.deepEqual(claimThemes(save), ["yangGame"], "floor 350 of Tower I completed");
-  save.delve.reached = 149;
-  assert.deepEqual(claimThemes(save), []);
-  save.delve.reached = 150;
-  assert.deepEqual(claimThemes(save), ["yinUi"], "depth 150 in the Delve");
-  save.delve.reached = 175;
-  assert.deepEqual(claimThemes(save), ["yinGame"], "depth 175 in the Delve");
-  save.tower.reached = 399;
-  assert.deepEqual(claimThemes(save), []);
-  save.tower.reached = 400;
-  assert.deepEqual(claimThemes(save), ["shiroUi"], "floor 400 of Tower I completed");
-  save.tower.reached = 450;
-  assert.deepEqual(claimThemes(save), ["shiroGame"], "floor 450 of Tower I completed");
-  save.delve.reached = 199;
-  assert.deepEqual(claimThemes(save), []);
-  save.delve.reached = 200;
-  assert.deepEqual(claimThemes(save), ["kuroUi"], "depth 200 in the Delve");
-  save.delve.reached = 225;
-  assert.deepEqual(claimThemes(save), ["kuroGame"], "depth 225 in the Delve");
-  save.tower.reached = 499;
-  assert.deepEqual(claimThemes(save), []);
-  save.tower.reached = 500;
-  assert.deepEqual(claimThemes(save), ["arcadeUi"], "floor 500 of Tower I completed");
-  save.delve.reached = 249;
-  assert.deepEqual(claimThemes(save), []);
-  save.delve.reached = 250;
-  assert.deepEqual(claimThemes(save), ["arcadeGame"], "depth 250 in the Delve");
-  save.tower.reached = 549;
-  assert.deepEqual(claimThemes(save), []);
-  save.tower.reached = 550;
-  assert.deepEqual(claimThemes(save), ["systemUi"], "floor 550 of Tower I completed");
-  save.delve.reached = 274;
-  assert.deepEqual(claimThemes(save), []);
-  save.delve.reached = 275;
-  assert.deepEqual(claimThemes(save), ["systemGame"], "depth 275 in the Delve");
-  assert.deepEqual(save.themes, THEME_IDS, "kept in catalog order");
-  // Tower I's floors count from its waiting records too, and only Tower I's.
-  const other = defaults();
-  other.tower.tier = 2;
-  other.tower.reached = 80;
-  assert.deepEqual(claimThemes(other), [], "Tower II's floors don't count");
-  other.tower.tierRecords[1] = { best: 60, reached: 60 };
-  assert.deepEqual(claimThemes(other), ["neonUi"]);
-  other.tower.tierRecords[1] = { best: 100, reached: 100 };
-  assert.deepEqual(claimThemes(other), ["terminalUi"]);
-  other.tower.tierRecords[1] = { best: 150, reached: 150 };
-  assert.deepEqual(claimThemes(other), ["terminalGame"]);
+  save.tower.reached = 1000;
+  save.delve.reached = 1000;
+  const g = new Game(save);
+  assert.deepEqual(g.claimThemes(), [], "climbing earns none");
+  save.gold = 0;
+  assert.equal(canBuyTheme(save, "neonUi"), false, "no Gold");
+  assert.equal(g.buyTheme("neonUi"), false);
+  save.gold = 2.5;
+  assert.ok(g.buyTheme("systemGame"));
+  assert.equal(save.gold, 1.5, "1 Gold paid");
+  assert.ok(g.buyTheme("neonUi"));
+  assert.deepEqual(save.themes, ["medievalUi", "neonUi", "systemGame"], "kept in catalog order");
+  assert.equal(g.buyTheme("neonUi"), false, "each is bought once");
+  assert.equal(g.buyTheme("medievalUi"), false, "Medieval is owned from the start");
+  assert.equal(save.gold, 0.5);
+  assert.equal(g.buyTheme("terminalUi"), false, "short of 1 Gold");
+  save.settings.freePurchases = true;
+  assert.ok(g.buyTheme("terminalUi"), "free purchases pay nothing");
+  assert.equal(save.gold, 0.5);
+});
+
+test("Dev mode owns every theme", () => {
+  const save = defaults();
+  const g = new Game(save);
+  g.setDevMode(true);
+  const fresh = g.claimThemes();
+  assert.deepEqual(fresh, THEME_IDS.filter((id) => id !== "medievalUi"), "each announced once");
+  assert.deepEqual(save.themes, THEME_IDS);
+  assert.deepEqual(g.claimThemes(), []);
+  assert.equal(new Game(defaults()).claimThemes().length, 0, "none without Dev mode");
 });
 
 test("the Terminal UI theme is worn once owned", () => {
@@ -154,7 +96,7 @@ test("the Terminal, Desktop, Glyph, Ember, Yang, Yin, Shiro, Kuro, Arcade and Sy
   }
 });
 
-test("a theme chosen but not owned shows Classic until it is earned", () => {
+test("a theme chosen but not owned shows Classic until it is bought", () => {
   const save = defaults();
   save.settings.uiTheme = "neon";
   save.settings.gameTheme = "neon";
@@ -212,8 +154,4 @@ test("older saves' Medieval and Neon toggles become the UI and Game themes", () 
   assert.deepEqual([old(false, true).uiTheme, old(false, true).gameTheme], ["neon", "neon"]);
   assert.equal(decodeSettings({}).uiTheme, "medieval", "a new save starts in Medieval");
   assert.equal(decodeSettings({ medievalTheme: false, uiTheme: "neon" }).uiTheme, "neon", "a saved choice wins");
-});
-
-test("every theme names how it is earned", () => {
-  for (const id of THEME_IDS) assert.ok(THEMES[id].unlock.length > 0, id);
 });

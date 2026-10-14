@@ -1404,17 +1404,11 @@ dialog > small {
   font-size: 11px;
   color: var(--gold);
 }
-.theme-wear {
+.theme-wear,
+.theme-buy {
   min-height: 34px;
   padding: 6px 10px;
   font-size: 11px;
-}
-.theme-lock {
-  min-height: 34px;
-  display: grid;
-  place-items: center;
-  font-size: 10px;
-  color: #8792a3;
 }
 select {
   padding: 8px;

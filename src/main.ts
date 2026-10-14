@@ -145,7 +145,7 @@ function update() {
   runTraining.render();
   renderBoardLesson(game, tab === "tower", update);
   const themes = game.claimThemes();
-  // A theme earned while its look was chosen (an old save's) shows at once.
+  // A theme Dev mode grants while its look was chosen shows at once.
   if (themes.length) applyUiTheme(game.save);
   const finished = [...game.research.done.splice(0).map(researchToast), ...game.training.done.splice(0).map(trainingToast), ...themes.map(themeToast)];
   if (finished.length) play("trained");

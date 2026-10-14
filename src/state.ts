@@ -1,5 +1,5 @@
 import { entrance, floorFor } from "./delve/labyrinth.ts";
-import { canWear, claimThemes, type GameLook, type ThemeId, type ThemeKind, type UiLook } from "./theme-collection.ts";
+import { buyTheme, canWear, grantAllThemes, type GameLook, type ThemeId, type ThemeKind, type UiLook } from "./theme-collection.ts";
 import { chooseStep } from "./automation.ts";
 import { CARDS, KEY_TO_HP_PERCENT, SIPHONS, TRADER_YELLOW_KEYS, cardText, explainStuck, isSiphon, keptLinks, linkedToNext, planHand, planTarget, stillOpen, walkAll, type CardId, type CardPlan, type CardRules, type SiphonCard, type StuckReport } from "./cards.ts";
 import { BADGE_IDS, BADGES, MAX_COPIES, badgeOn, badgesOn, badgeValue, runBadges, type BadgeId, type RunBadge } from "./badges.ts";
@@ -356,10 +356,14 @@ export class Game {
     // Events open with Dev mode: the running Event's first missions come at once.
     this.events.refresh();
   }
-  /** Adds the themes the save has earned (Dev mode's floors earn them all)
-   * and returns them, for the player to hear about. */
+  /** In Dev mode, gives every theme not owned yet and returns them, for
+   * the player to hear about; otherwise none. */
   claimThemes(): ThemeId[] {
-    return claimThemes(this.save);
+    return this.save.settings.devMode ? grantAllThemes(this.save) : [];
+  }
+  /** Buys a theme not owned yet (`THEME_PRICE`); false when it can't. */
+  buyTheme(id: ThemeId) {
+    return buyTheme(this.save, id);
   }
   /** Equips an owned theme's look, or Classic; false while it isn't owned. */
   wearTheme(kind: ThemeKind, look: string) {
