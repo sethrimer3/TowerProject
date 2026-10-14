@@ -2175,6 +2175,11 @@ export class Game {
     const t = this.world.tile(x, y);
     return t.kind === "enemy" ? this.purse.killGoldPreview(t.enemy!, x, y, instakill) : 0;
   }
+  /** The Gold opening the treasure chest at (x, y) would bank now, on
+   * average, or 0 once its tile is looted. */
+  chestGold(x: number, y: number) {
+    return this.world.tile(x, y).kind === "treasure" ? this.purse.treasureGoldPreview(x, y) : 0;
+  }
   /** What the run finds is paid through its purse. */
   private get purse() {
     // A tournament run's chances come from the seeds its league shares.

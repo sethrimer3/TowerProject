@@ -8,6 +8,7 @@ import { CURRENCIES } from "../src/shop/currency.ts";
 import { MODES } from "../src/modes.ts";
 import { RunPurse } from "../src/game/run-purse.ts";
 import { earn, stampProfile } from "../src/profile.ts";
+import { statsRows } from "../src/ui/stats-dialog.ts";
 
 const HOUR = 3_600_000;
 const T0 = Date.UTC(2026, 9, 11, 12);
@@ -105,4 +106,15 @@ test("research counts each level completed and its Gold, less what a stop gives 
   assert.ok(startResearch(save, 0, "focusCount", T0 + HOUR));
   settleArchives(save, T0 + 100 * HOUR);
   assert.deepEqual([save.profile.researchLevels, save.profile.researchGold], [1, 500]);
+});
+
+test("the Stats dialog shows tallies rounded down, in full below a million and shortened from it", () => {
+  const p = defaults().profile;
+  Object.assign(p.earned, { gold: 999_999.9, silver: 1_000_000, gems: 1_239_999 });
+  p.trainingGold = 4.56e9;
+  const value = new Map(statsRows(p));
+  assert.equal(value.get("Gold earned"), "999,999");
+  assert.equal(value.get("Silver earned"), "1.00M");
+  assert.equal(value.get("Gems earned"), "1.23M");
+  assert.equal(value.get("Gold spent on Training"), "4.56B");
 });

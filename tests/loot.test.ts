@@ -122,3 +122,25 @@ test("undo/reopen the same treasure chest cannot duplicate its Gold or metal pay
   g.newRun();
   assert.equal(g.save.tower.runGold, 0, "a new run starts its Gold count afresh");
 });
+
+test("Damage Visual's chest Gold is what a chest pays on average, and none once it is looted", () => {
+  const opened = (roll: number) => {
+    const g = new Game(defaults(), () => roll);
+    const w = g.world as RoomWorld;
+    w.cells = new Map();
+    for (let x = 0; x < 3; x++) w.cells.set(`${x},0`, { kind: "floor" });
+    w.cells.set("1,0", { kind: "treasure" });
+    g.run.changes["1,0"] = { kind: "treasure" };
+    g.run.player.x = 0; g.run.player.y = 0;
+    const preview = g.chestGold(1, 0), before = g.save.gold;
+    g.move(1, 0);
+    return { g, preview, paid: g.save.gold - before };
+  };
+  const low = opened(0), high = opened(0.999);
+  assert.equal(low.preview, high.preview);
+  assert.ok(low.paid < low.preview && low.preview < high.paid, `${low.paid} < ${low.preview} < ${high.paid}`);
+  assert.equal(low.g.chestGold(1, 0), 0, "an opened chest is no treasure");
+  low.g.run.changes["1,0"] = { kind: "treasure" };
+  assert.equal(low.g.world.tile(1, 0).kind, "treasure");
+  assert.equal(low.g.chestGold(1, 0), 0, "a chest already paid shows none");
+});

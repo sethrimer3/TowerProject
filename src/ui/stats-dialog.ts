@@ -1,6 +1,7 @@
 import type { LifetimeCurrency, Profile } from "../profile.ts";
 import type { AppContext } from "./app.ts";
 import { el } from "./dom.ts";
+import { currencyAmount } from "./hud.ts";
 import { copyButton, copyText } from "./run-notes-dialog.ts";
 
 /** Each currency's line in the table, in the order shown. */
@@ -16,7 +17,8 @@ const EARNED: [LifetimeCurrency, string][] = [
   ["tickets", "Tickets earned"],
 ];
 
-const amount = (n: number) => Math.floor(n).toLocaleString("en-US");
+/** A tally, rounded down: in full below a million, then shortened (1.23M). */
+const amount = (n: number) => currencyAmount(Math.floor(n));
 const created = (at: number) => (at ? new Date(at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) : "Unknown");
 
 /** The Stats table's rows, label then value. */

@@ -358,6 +358,7 @@ _Avoid_: combat preview
 
 **Damage Visual**:
 The cost of each fight drawn in the lower-left corner of every monster on the board, without inspecting it, once Tower I's floor 50 checkpoint is claimed: the HP Damage Prediction would show, shortened (1.2K), red when lethal (∞ when the hero can't hurt it), a gray 0 for an Instakill, a white 0 when the monster strikes but costs no HP, gold otherwise.
+Items wear what they give, rounded down: a potion's HP in blue, a shard's ATK or DEF in white, a treasure chest's Gold in yellow.
 _Avoid_: damage numbers, damage overlay
 
 **Relative Damage Color**:

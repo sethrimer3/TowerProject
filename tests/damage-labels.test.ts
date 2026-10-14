@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { DamagePredictions, damageLabel, drawDamageLabels, HEAL_COLOR, relativeColor } from "../src/damage-labels.ts";
+import { DamagePredictions, damageLabel, drawDamageLabels, GOLD_COLOR, HEAL_COLOR, itemLabel, relativeColor } from "../src/damage-labels.ts";
+import { BASE_RULES, shardStat } from "../src/step-effects.ts";
 import { predict } from "../src/combat.ts";
 import { forecast } from "../src/crit-forecast.ts";
 import type { Enemy, Player, Tile } from "../src/entities.ts";
@@ -111,4 +112,26 @@ test("each enemy in view is labelled at its lower-left corner, but not the one b
   texts.length = 0;
   drawDamageLabels(f, new DamagePredictions(), hero(), { to: { x: 3, y: 2 } });
   assert.deepEqual(texts.map(([, x]) => x), [20 + 1.2]);
+});
+
+test("items wear what they give, rounded down: a potion's HP blue, a shard's ATK or DEF white, a chest's Gold yellow", () => {
+  const rules = { ...BASE_RULES, potionHeal: 150 }, items = { rules, chestGold: (x: number) => (x === 4 ? 1_234.9 : 41.8) };
+  const potion = { kind: "potion", amount: 25.5 } as Tile, shard = { kind: "defense", amount: 3 } as Tile;
+  assert.deepEqual(itemLabel(potion, 0, 0, hero(), items), { text: "38", color: HEAL_COLOR }, "25.5 HP at 150% is 38.25");
+  assert.deepEqual(itemLabel(shard, 0, 0, hero(), items), { text: String(Math.floor(shardStat(shard, rules))), color: "#ffffff" });
+  assert.deepEqual(itemLabel({ kind: "treasure" } as Tile, 0, 0, hero(), items), { text: "41", color: GOLD_COLOR });
+  assert.deepEqual(itemLabel({ kind: "treasure" } as Tile, 4, 0, hero(), items), { text: "1.2K", color: GOLD_COLOR });
+  assert.equal(itemLabel({ kind: "floor" } as Tile, 0, 0, hero(), items), null);
+
+  const texts: string[] = [];
+  const c = new Proxy({} as CanvasRenderingContext2D, {
+    get: (_t, k) => (k === "fillText" ? (s: string) => texts.push(s) : () => {}),
+    set: () => true,
+  });
+  const at = (x: number, y: number): Tile => (x === 1 && y === 1 ? potion : x === 2 && y === 2 ? { kind: "treasure" } : { kind: "floor" }) as Tile;
+  const f = { c, s: 20, n: 5, left: 0, bottom: 0, world: { tile: at } } as unknown as FrameContext;
+  drawDamageLabels(f, new DamagePredictions(), hero(), null);
+  assert.deepEqual(texts, [], "no item labels without their values");
+  drawDamageLabels(f, new DamagePredictions(), hero(), null, false, undefined, items);
+  assert.deepEqual(texts, ["38", "41"]);
 });

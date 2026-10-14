@@ -244,6 +244,16 @@ export class RunPurse {
     return { gold, materials: loot.materials };
   }
 
+  /** The Gold opening the chest at (x, y) would bank, as `treasure` pays
+   * it on average (`averageGold`, its roll unknown until it opens;
+   * Goldback's combo counted): none once its tile is looted. Changes nothing. */
+  treasureGoldPreview(x: number, y: number) {
+    if (this.slice.lootedTiles[this.lootKey(x, y)]) return 0;
+    const rules = this.rules, floor = rules.equivalentFloor(rules.progressAt(this.run, y));
+    const found = tierGold(this.tier, snap(this.bonused(snap(averageGold(floor) + PICKUP_GOLD)) * (this.run.goldCombo ?? 1)));
+    return snap(this.beforeBoost(found) * goldBoostFactor(this.save, this.now));
+  }
+
   /** Spare Change: Gold for a floor climbed for the first time in the run,
    * its Gold / Floor raised by research and the tier's bonus. Gated by
    * `key` in lootedTiles, like a kill's Gold; returns what it paid. */

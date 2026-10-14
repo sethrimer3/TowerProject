@@ -1,8 +1,9 @@
 import { netDamage, PLAYED_ROUNDS, predict, type CritRule } from "./combat.ts";
 import { forecast } from "./crit-forecast.ts";
-import type { Enemy, Player } from "./entities.ts";
+import type { Enemy, Player, Tile } from "./entities.ts";
 import { forEachViewTile, type FrameContext } from "./render-frame.ts";
-import { compactAmount, wholeChange } from "./whole.ts";
+import { potionRestores, shardStat, type StepRules } from "./step-effects.ts";
+import { compactAmount, whole, wholeChange } from "./whole.ts";
 
 // Damage Visual (Tower I's floor 50 goal): each enemy in view wears, in its
 // lower-left corner, the HP its fight would cost the hero, as Damage
@@ -13,6 +14,9 @@ import { compactAmount, wholeChange } from "./whole.ts";
 // A Wooden Door wears the HP breaking it down takes while the hero holds no
 // key (with one, it costs a key, not HP): red when it would fell the hero,
 // so it stays shut.
+// Items wear what they give, rounded down: a potion the HP it restores in
+// full (blue), a shard its ATK or DEF (white) and a treasure chest the Gold
+// it holds on average (yellow), a badge's scale left out as for a fight.
 // Labels are worked out on the frame they first show, so a fight longer than
 // `PLAYED_ROUNDS` rounds is estimated past them rather than played out (the
 // inspect panel's line, worked out on a tap, plays every round).
@@ -110,9 +114,27 @@ type Fighting = { to: { x: number; y: number } } | null;
 const breakCost = (durability: number): Cost => ({ damage: durability, turns: 2 });
 const holdsKey = (player: Player) => player.keys.yellow > 0 || player.keys.blue > 0 || player.keys.red > 0;
 
-/** Draws each enemy's label in view, and each Wooden Door's while the hero
- * holds no key, over the darkness so it always reads. */
-export function drawDamageLabels(f: FrameContext, predictions: DamagePredictions, player: Player, fight: Fighting, relative = false, crit?: CritRule) {
+/** What items give, for their labels: the step's rules, and the Gold the
+ * chest at (x, y) holds. */
+export type ItemValues = { rules: StepRules; chestGold: (x: number, y: number) => number };
+
+/** The colour of a chest's Gold label. */
+export const GOLD_COLOR = "#ffd23f";
+
+/** An item's label, the whole amount it gives (rounded down), or null for
+ * a tile that isn't one. */
+export function itemLabel(t: Tile, x: number, y: number, player: Player, items: ItemValues) {
+  const label = (n: number, color: string) => ({ text: compactAmount(whole(n)), color });
+  if (t.kind === "potion") return label(potionRestores(t, player.maxHp, items.rules), HEAL_COLOR);
+  if (t.kind === "attack" || t.kind === "defense") return label(shardStat(t, items.rules), "#ffffff");
+  if (t.kind === "treasure") return label(items.chestGold(x, y), GOLD_COLOR);
+  return null;
+}
+
+/** Draws each enemy's label in view, each Wooden Door's while the hero
+ * holds no key, and with `items` each item's, over the darkness so it
+ * always reads. */
+export function drawDamageLabels(f: FrameContext, predictions: DamagePredictions, player: Player, fight: Fighting, relative = false, crit?: CritRule, items?: ItemValues) {
   const c = f.c, s = f.s, pad = s * 0.06;
   c.save();
   c.font = `bold ${Math.max(8, Math.round(s * 0.3))}px Cinzel, serif`;
@@ -123,10 +145,10 @@ export function drawDamageLabels(f: FrameContext, predictions: DamagePredictions
   c.strokeStyle = "#000d";
   forEachViewTile(f, (x, y) => {
     const t = f.world.tile(x, y);
+    const item = items && itemLabel(t, x, y, player, items);
     const wood = t.kind === "door" && t.door?.type === "wood" && !holdsKey(player) ? t.door.durability : null;
-    if (wood === null && (t.kind !== "enemy" || !t.enemy || (fight && fight.to.x === x && fight.to.y === y))) return;
-    const cost = wood !== null ? breakCost(wood) : predictions.cost(player, t.enemy!, crit);
-    const { text, color } = damageLabel(cost, player.hp, relative);
+    if (!item && wood === null && (t.kind !== "enemy" || !t.enemy || (fight && fight.to.x === x && fight.to.y === y))) return;
+    const { text, color } = item ?? damageLabel(wood !== null ? breakCost(wood) : predictions.cost(player, t.enemy!, crit), player.hp, relative);
     const left = (x - f.left) * s + pad, bottom = (f.n - (y - f.bottom)) * s - pad;
     c.strokeText(text, left, bottom);
     c.fillStyle = color;
