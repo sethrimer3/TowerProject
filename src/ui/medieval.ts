@@ -46,6 +46,10 @@ export const KURO_CLASS = "kuro";
  * root. */
 export const ARCADE_CLASS = "arcade";
 
+/** An old one-bit computer's black and white: `system.css` dresses this
+ * class on the root. */
+export const SYSTEM_CLASS = "system";
+
 /** Dresses the page in the UI theme worn (`uiLook`: Classic wears none of
  * their classes) and mirrors Reduce motion. */
 export function applyUiTheme(save: Pick<Save, "themes" | "settings">) {
@@ -61,6 +65,7 @@ export function applyUiTheme(save: Pick<Save, "themes" | "settings">) {
   root.toggle(SHIRO_CLASS, look === "shiro");
   root.toggle(KURO_CLASS, look === "kuro");
   root.toggle(ARCADE_CLASS, look === "arcade");
+  root.toggle(SYSTEM_CLASS, look === "system");
   root.toggle("reduce-motion", save.settings.reduceMotion);
 }
 

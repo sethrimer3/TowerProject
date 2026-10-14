@@ -9,6 +9,7 @@ import { EMBER_BOARD } from "./ember-board.ts";
 import { YANG_BOARD, YIN_BOARD } from "./zen-board.ts";
 import { KURO_BOARD, SHIRO_BOARD } from "./bare-board.ts";
 import { ARCADE_BOARD } from "./arcade-board.ts";
+import { SYSTEM_BOARD } from "./system-board.ts";
 
 /** How a Game theme other than Classic draws the dungeon board in place of
  * its lit art: the ground, each tile's contents, torches and the hero, each
@@ -36,6 +37,7 @@ export const THEMED_BOARDS: Readonly<Record<ThemedLook, ThemedBoard>> = {
   yang: YANG_BOARD, yin: YIN_BOARD,
   shiro: SHIRO_BOARD, kuro: KURO_BOARD,
   arcade: ARCADE_BOARD,
+  system: SYSTEM_BOARD,
 };
 /** How a Game theme look draws the board, or null for Classic's lit art. */
 export const themedBoardOf = (look: GameLook): ThemedBoard | null => (look === "classic" ? null : THEMED_BOARDS[look]);

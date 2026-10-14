@@ -51,18 +51,21 @@ export const SETTINGS = {
    * many-coloured ASCII cards on purple), Ember (warm glowing ASCII on a
    * maroon field of dim letters), Yang (ink on pale rice paper, spare and
    * still), Yin (pale ink on a dark stone ground), Shiro (flat black on
-   * white, nothing more), Kuro (flat white on black) or Arcade (an old
-   * arcade cabinet's screen: pixel type in a blue maze's frames) once owned. Chosen on the Settings page's UI Themes menu, not a row of its
+   * white, nothing more), Kuro (flat white on black), Arcade (an old
+   * arcade cabinet's screen: pixel type in a blue maze's frames) or System
+   * (an old one-bit computer: black-framed white windows on a dithered grey
+   * desktop) once owned. Chosen on the Settings page's UI Themes menu, not a row of its
    * own; a new hero starts in Medieval. */
-  uiTheme: { kind: "choice", default: "medieval", choices: [["classic", "Classic"], ["medieval", "Medieval"], ["neon", "Neon"], ["terminal", "Terminal"], ["desktop", "Desktop"], ["glyph", "Glyph"], ["ember", "Ember"], ["yang", "Yang"], ["yin", "Yin"], ["shiro", "Shiro"], ["kuro", "Kuro"], ["arcade", "Arcade"]] },
+  uiTheme: { kind: "choice", default: "medieval", choices: [["classic", "Classic"], ["medieval", "Medieval"], ["neon", "Neon"], ["terminal", "Terminal"], ["desktop", "Desktop"], ["glyph", "Glyph"], ["ember", "Ember"], ["yang", "Yang"], ["yin", "Yin"], ["shiro", "Shiro"], ["kuro", "Kuro"], ["arcade", "Arcade"], ["system", "System"]] },
   /** The Game theme the dungeon is drawn in: Classic, or Neon, Terminal
    * (a green-phosphor text dungeon), Desktop (an old desktop computer's
    * mine-sweeping field), Glyph (a many-coloured neon ASCII dungeon on
    * purple), Ember (warm glowing ASCII on maroon, enemies' red eyes), Yang
    * (a raked sand garden of ink strokes), Yin (the same garden by night),
    * Shiro (flat blocks and the simplest shapes on white), Kuro (the same
-   * on black) or Arcade (a pixel maze of ghosts and pellets) once owned. Chosen on the Game Themes menu. */
-  gameTheme: { kind: "choice", default: "classic", choices: [["classic", "Classic"], ["neon", "Neon"], ["terminal", "Terminal"], ["desktop", "Desktop"], ["glyph", "Glyph"], ["ember", "Ember"], ["yang", "Yang"], ["yin", "Yin"], ["shiro", "Shiro"], ["kuro", "Kuro"], ["arcade", "Arcade"]] },
+   * on black), Arcade (a pixel maze of ghosts and pellets) or System (an old
+   * one-bit paint program's dungeon of bricks, bombs and folders) once owned. Chosen on the Game Themes menu. */
+  gameTheme: { kind: "choice", default: "classic", choices: [["classic", "Classic"], ["neon", "Neon"], ["terminal", "Terminal"], ["desktop", "Desktop"], ["glyph", "Glyph"], ["ember", "Ember"], ["yang", "Yang"], ["yin", "Yin"], ["shiro", "Shiro"], ["kuro", "Kuro"], ["arcade", "Arcade"], ["system", "System"]] },
   /** Unlimited currency, every floor section and game mode unlocked. */
   devMode: { kind: "toggle", default: false, page: { id: "dev-mode", label: "Dev mode (unlimited currency, all floors &amp; modes unlocked)" } },
   /** Play each fight out strike by strike, damage rising off whoever was
