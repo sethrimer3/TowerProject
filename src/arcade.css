@@ -1,0 +1,376 @@
+/* Arcade theme: the page as an old arcade cabinet's screen shows it.
+   Black glass, panels framed in the maze's blue double line with rounded
+   corners, page titles in the bundled Press Start 2P pixel face, yellow
+   with a red drop, over a row of pellets; the rest in the blocky VT323.
+   Buttons are black with a blue frame, the chosen one lit yellow; bars are
+   segmented like a life meter; scanlines run over everything.
+   Every selector is scoped under `html.arcade` so nothing changes while the
+   theme is off. Loaded after style.css and the other themes. */
+@font-face {
+  font-family: "Press Start 2P";
+  src: url("../assets/fonts/PressStart2P/PressStart2P-Regular.woff2") format("woff2");
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: VT323;
+  src: url("../assets/fonts/VT323/VT323-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+html.arcade {
+  --a-black: #000000;
+  --a-panel: #04041a;
+  --a-press: #10104a;
+  --a-blue: #2a2aff;
+  --a-cyan: #3ff0ff;
+  --a-yellow: #ffe600;
+  --a-red: #ff2020;
+  --a-pink: #ffb8ff;
+  --a-peach: #ffb8ae;
+  --a-green: #2bd82b;
+  --a-ink: #ffffff;
+  --a-dim: #9a9ad0;
+  --a-pixel: "Press Start 2P", VT323, monospace;
+  --gold: var(--a-yellow);
+  --muted: var(--a-dim);
+  --line: var(--a-blue);
+  color-scheme: dark;
+  color: var(--a-ink);
+  background: var(--a-black);
+}
+/* VT323 for every line of text (a badge's symbol keeps the system face
+   that has its glyph); the pixel face for titles, below. */
+html.arcade,
+html.arcade *:not(.badge-glyph, .badge-mark) {
+  font-family: VT323, "Courier New", monospace;
+  font-size-adjust: 0.62;
+  letter-spacing: 0.04em;
+}
+html.arcade body {
+  background: var(--a-black);
+}
+/* The glass: scanlines and a darkened rim over everything, never in the
+   way of a touch. */
+html.arcade body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(to bottom, transparent 0 2px, #00000047 2px 3px),
+    radial-gradient(ellipse at center, transparent 65%, #00000090 100%);
+}
+/* The page's own colours, lines and glows give way everywhere: white on
+   black and nothing else. `:not(#_)` lifts these over the page's class
+   rules (and the ones below over these); a style written on an element (a
+   colour swatch) still wins. Drawings (canvas, images, svg), the bars'
+   fills (`i`), rarity colours and badge tokens keep theirs. */
+html.arcade body *:not(#_, canvas, img, svg, svg *, i, .eq-tile, .badge-token, [class*="rar"]) {
+  background-color: transparent;
+  background-image: none;
+  border-color: transparent;
+  box-shadow: none;
+  text-shadow: none;
+  backdrop-filter: none;
+  outline-color: transparent;
+}
+html.arcade body *:not(#_, svg, svg *) {
+  color: var(--a-ink);
+}
+html.arcade main.shell:not(#_) {
+  background: transparent;
+}
+html.arcade * {
+  scrollbar-color: var(--a-blue) transparent;
+}
+html.arcade ::-webkit-scrollbar-thumb {
+  background-color: var(--a-blue);
+  background-image: none;
+  border-radius: 0;
+}
+
+/* Titles: the pixel face, yellow with a red drop like a cabinet's marquee,
+   a row of pellets under a page's. */
+html.arcade h1:not(#_),
+html.arcade h2:not(#_),
+html.arcade h3:not(#_),
+html.arcade .page-title h2:not(#_),
+html.arcade .tower-heading:not(#_),
+html.arcade .section-title:not(#_) {
+  font-family: var(--a-pixel);
+  font-size-adjust: none;
+  letter-spacing: 0;
+  font-weight: 400;
+  font-synthesis: none;
+  font-size: 16px;
+  line-height: 1.4;
+  text-transform: uppercase;
+  color: var(--a-yellow);
+  text-shadow: 2px 2px 0 var(--a-red);
+}
+html.arcade .page-title h2:not(#_)::after {
+  content: "";
+  display: block;
+  height: 6px;
+  margin-top: 8px;
+  background: radial-gradient(circle, var(--a-peach) 0 1.6px, transparent 2px) 0 50% / 12px 6px repeat-x;
+}
+/* The floor reached reads like a high score. */
+html.arcade #height:not(#_) {
+  font-family: var(--a-pixel);
+  font-size-adjust: none;
+  font-weight: 400;
+  font-synthesis: none;
+  letter-spacing: 0;
+}
+html.arcade #height:not(#_) {
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--a-yellow);
+  text-shadow: 2px 2px 0 var(--a-red);
+}
+html.arcade .page-title small:not(#_),
+html.arcade .eyebrow:not(#_),
+html.arcade .hint:not(#_),
+html.arcade .board-caption:not(#_),
+html.arcade small:not(#_) {
+  color: var(--a-dim);
+}
+
+/* Panels: the maze's blue double line round a black box, its corners
+   rounded. */
+html.arcade .stats:not(#_),
+html.arcade .card:not(#_),
+html.arcade .upgrade:not(#_),
+html.arcade .shop:not(#_),
+html.arcade .theme-card:not(#_),
+html.arcade .weekly:not(#_),
+html.arcade .mission:not(#_),
+html.arcade .event-boost:not(#_),
+html.arcade .archivist:not(#_),
+html.arcade .research:not(#_),
+html.arcade .pull-box:not(#_),
+html.arcade .eq-loadout:not(#_),
+html.arcade .equip-materials:not(#_),
+html.arcade .purse-big:not(#_),
+html.arcade .starting-stats:not(#_),
+html.arcade .training-boost:not(#_),
+html.arcade .tournament-standing:not(#_),
+html.arcade .tournament-tickets:not(#_),
+html.arcade .badge-box:not(#_),
+html.arcade .deck-reserve:not(#_),
+html.arcade .defend-palette:not(#_),
+html.arcade .card-reveal:not(#_),
+html.arcade .badge-reveal:not(#_),
+html.arcade .skill-tree:not(#_),
+html.arcade .goals-stage:not(#_),
+html.arcade .training-box:not(#_),
+html.arcade .setting:not(#_),
+html.arcade .inspect-box:not(#_),
+html.arcade dialog:not(#_) {
+  background: var(--a-panel);
+  border: 5px double var(--a-blue);
+  border-radius: 10px;
+}
+html.arcade .setting:not(#_) {
+  padding-inline: 10px;
+}
+/* What sits inside a panel: a black box with a single blue line. */
+html.arcade .portrait-top:not(#_),
+html.arcade .hp-readout:not(#_),
+html.arcade .training-held:not(#_),
+html.arcade .node-icon:not(#_),
+html.arcade .node-name:not(#_),
+html.arcade .goals-floor:not(#_),
+html.arcade select:not(#_),
+html.arcade input:not([type="checkbox"]:not(#_),
+[type="radio"]:not(#_),
+[type="range"]):not(#_) {
+  background: var(--a-black);
+  border: 1px solid var(--a-blue);
+  border-radius: 4px;
+}
+html.arcade .inspection:not(#_) {
+  background: var(--a-panel);
+  border: 1px solid var(--a-blue);
+}
+html.arcade .inspection:empty:not(#_) {
+  background: transparent;
+  border-color: transparent;
+}
+/* The theme worn: its frame lit yellow. */
+html.arcade .theme-card.worn:not(#_) {
+  border-color: var(--a-yellow);
+}
+/* The board's notes: a solid card, so the board doesn't show through. */
+html.arcade .run-menu-frame:not(#_) {
+  background: var(--a-panel);
+  border: 2px solid var(--a-blue);
+  border-radius: 6px;
+}
+html.arcade .board-tip:not(#_),
+html.arcade .board-tip.dismissable:hover:not(#_),
+html.arcade .research-toast:not(#_),
+html.arcade .deck-tip:not(#_) {
+  background: var(--a-black);
+  border: 2px solid var(--a-yellow);
+  border-radius: 6px;
+}
+html.arcade .board:not(#_) {
+  border: 5px double var(--a-blue);
+  border-radius: 10px;
+}
+/* The line under the board, over the board's foot: a black strip. */
+html.arcade .status:not(#_) {
+  background: #000000d0;
+  border: 1px solid var(--a-blue);
+  border-radius: 4px;
+}
+html.arcade .live-dot:not(#_) {
+  background: var(--a-yellow);
+}
+html.arcade dialog::backdrop {
+  background: #000000c0;
+  backdrop-filter: none;
+}
+html.arcade .rule:not(#_),
+html.arcade .inventory-divider:not(#_) {
+  background: radial-gradient(circle, var(--a-peach) 0 1.2px, transparent 1.6px) 0 50% / 9px 100% repeat-x;
+}
+
+/* Buttons: black in a blue frame, its label white; lit yellow when
+   chosen, the frame cyan under a finger. */
+html.arcade button:not(#_) {
+  background: var(--a-black);
+  border: 2px solid var(--a-blue);
+  border-radius: 4px;
+}
+html.arcade button:hover:not(#_) {
+  border-color: var(--a-cyan);
+}
+html.arcade button:active:not(#_) {
+  background: var(--a-press);
+}
+html.arcade button.selected:not(#_),
+html.arcade button[aria-pressed="true"]:not(#_) {
+  background: var(--a-yellow);
+  border-color: var(--a-yellow);
+}
+html.arcade button.selected:not(#_) *:not(svg, svg *, img, canvas),
+html.arcade button.selected:not(#_),
+html.arcade button[aria-pressed="true"]:not(#_),
+html.arcade button[aria-pressed="true"]:not(#_) *:not(svg, svg *, img, canvas) {
+  color: var(--a-black);
+}
+html.arcade button:focus-visible:not(#_),
+html.arcade select:focus-visible:not(#_),
+html.arcade input:focus-visible:not(#_) {
+  outline: 2px solid var(--a-yellow);
+  outline-offset: 1px;
+}
+html.arcade button:disabled:not(#_),
+html.arcade button:disabled *:not(#_) {
+  color: var(--a-dim);
+  border-color: var(--a-press);
+}
+/* Buttons drawn as pictures keep a bare face. */
+html.arcade .skill-node:not(#_),
+html.arcade .hand-card:not(#_) {
+  background: transparent;
+  border-color: transparent;
+}
+html.arcade input[type="checkbox"]:not(#_),
+html.arcade input[type="radio"]:not(#_),
+html.arcade input[type="range"]:not(#_) {
+  accent-color: var(--a-yellow);
+}
+html.arcade option:not(#_) {
+  background: var(--a-black);
+}
+
+/* The tab bar: icons on the glass, the open one framed yellow. */
+html.arcade nav:not(#_),
+html.arcade nav button:not(#_) {
+  background: transparent;
+  border-color: transparent;
+}
+html.arcade nav button.selected:not(#_),
+html.arcade .training-bar button.selected:not(#_) {
+  background: var(--a-black);
+  border-color: var(--a-yellow);
+}
+html.arcade nav button.selected:not(#_) *:not(svg, svg *, img, canvas),
+html.arcade .training-bar button.selected:not(#_) *:not(svg, svg *, img, canvas),
+html.arcade .training-bar button.selected:not(#_) {
+  color: var(--a-yellow);
+}
+html.arcade .hand-card.active:not(#_) {
+  box-shadow: 0 0 0 2px var(--a-yellow);
+}
+
+/* Bars: a blue-framed track filled with segments, like a life meter; HP
+   red, the rest cyan. */
+html.arcade .xp-track:not(#_),
+html.arcade .health-track:not(#_),
+html.arcade .weekly-bar:not(#_),
+html.arcade .mission-bar:not(#_),
+html.arcade .research-bar:not(#_),
+html.arcade .refine-bar:not(#_) {
+  background: var(--a-black);
+  border: 1px solid var(--a-blue);
+  border-radius: 0;
+}
+html.arcade .xp-track i:not(#_),
+html.arcade .weekly-bar i:not(#_),
+html.arcade .mission-bar i:not(#_),
+html.arcade .research-bar i:not(#_),
+html.arcade .refine-bar span:not(#_),
+html.arcade .event-bar i:not(#_) {
+  border-radius: 0;
+  background: repeating-linear-gradient(to right, var(--a-cyan) 0 6px, transparent 6px 8px);
+  box-shadow: none;
+}
+html.arcade .health-track i:not(#_):not(#health-gain, #health-loss) {
+  border-radius: 0;
+  background: repeating-linear-gradient(to right, var(--a-red) 0 6px, transparent 6px 8px);
+  box-shadow: none;
+}
+html.arcade .mission-bar span:not(#_) {
+  color: var(--a-ink);
+  text-shadow: 1px 1px 0 var(--a-black);
+}
+html.arcade .heart:not(#_),
+html.arcade .danger:not(#_),
+html.arcade .danger *:not(#_),
+html.arcade .short:not(#_),
+html.arcade .short *:not(#_) {
+  color: var(--a-red) !important;
+}
+/* No card can act: the button that ends the run turns red. */
+html.arcade #end-run.deadlocked:not(#_),
+html.arcade #stuck-end-run.deadlocked:not(#_) {
+  color: var(--a-ink) !important;
+  background: var(--a-red);
+  border-color: var(--a-red);
+}
+html.arcade .safe:not(#_),
+html.arcade .eq-result-title:not(#_) {
+  color: var(--a-green) !important;
+}
+/* Keys keep their colour. */
+html.arcade .keys .yellow:not(#_) { color: #ffe600; }
+html.arcade .keys .blue:not(#_) { color: #3fa8ff; }
+html.arcade .keys .red:not(#_) { color: #ff2020; }
+
+/* The marquee blinks its pellets now and then, unless motion is reduced. */
+@keyframes arcade-blink {
+  0%, 60%, 100% { opacity: 1; }
+  70%, 90% { opacity: 0.25; }
+}
+html.arcade:not(.reduce-motion) .page-title h2::after {
+  animation: arcade-blink 2s steps(1) infinite;
+}
