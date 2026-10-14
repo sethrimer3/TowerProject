@@ -43,6 +43,11 @@ const CHARGE_BUTTONS = `<button type="button" id="ignore-stat" class="focus-stat
   `<button type="button" id="target-stat" class="focus-stat charge-stat" hidden title="Target: press, then tap a tile to send the hero there"><svg viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="4.6" fill="none" stroke="#7ad8ff" stroke-width="1.4"/><circle cx="7" cy="7" r="1.3" fill="#7ad8ff"/><path d="M7 0.5V3.5M7 10.5V13.5M0.5 7H3.5M10.5 7H13.5" stroke="#7ad8ff" stroke-width="1.4"/></svg><b id="target-left">0</b></button>` +
   `<button type="button" id="undo" class="focus-stat charge-stat" hidden title="Undo: take back the last turn"><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M4.5 3L1.8 5.7 4.5 8.4" fill="none" stroke="#b9e08a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.3 5.7h6a3.3 3.3 0 0 1 0 6.6H5" fill="none" stroke="#b9e08a" stroke-width="1.6" stroke-linecap="round"/></svg><b id="undo-state">0</b></button>` +
   `<button type="button" id="shrine-stat" class="focus-stat charge-stat shrine-stat" hidden title="Shrine boons: pick a boon, or see those taken">${shrineIcon()}<b id="shrine-left">0</b></button>`;
+/** Cinematic mode's own buttons (`cinematic.ts`), all else hidden: the gear
+ * a tap shows, which leaves it for Settings, and with its option on the
+ * ad's Gems while they can be claimed. */
+const CINEMATIC = `<button id="cinematic-gear" class="cinematic-gear" aria-label="Leave cinematic mode for Settings" title="Settings" hidden>${uiSprite("settings")}</button>` +
+  `<button id="cinematic-gems" class="gem-ad cinematic-gems" aria-label="Claim ${AD_GEMS} Gems" title="Claim ${AD_GEMS} Gems" hidden><span class="gem-ad-amount">${gemIcon()}<b>${AD_GEMS}</b></span><small>Claim</small></button>`;
 const MOVEMENT_SPRITES: Record<string, UiSprite> = {
   "-1,0": "arrow-left", "1,0": "arrow-right", "0,1": "arrow-up", "0,-1": "arrow-down",
 };
@@ -51,7 +56,7 @@ const MOVEMENT_SPRITES: Record<string, UiSprite> = {
  * pages, navigation and the shared dialog, with sprite icons in place of
  * the text glyphs. */
 export function buildShell(app: HTMLElement) {
-  app.innerHTML = `<main class="shell">${CURRENCIES}${STATS}${BOARD}<section id="deck" class="page"></section><section id="defend" class="page"></section><section id="gear" class="page"></section><section id="upgrades" class="page"></section><section id="research" class="page"></section><section id="settings" class="page"></section><section id="shop" class="page"></section><section id="goals" class="page"></section><section id="tournament" class="page"></section><section id="missions" class="page"></section><section id="events" class="page"></section><section id="relics" class="page"></section><section id="shrines" class="page"></section>${NAV}${TRAINING_BAR}</main><dialog id="modal"></dialog>`;
+  app.innerHTML = `<main class="shell">${CURRENCIES}${STATS}${BOARD}<section id="deck" class="page"></section><section id="defend" class="page"></section><section id="gear" class="page"></section><section id="upgrades" class="page"></section><section id="research" class="page"></section><section id="settings" class="page"></section><section id="shop" class="page"></section><section id="goals" class="page"></section><section id="tournament" class="page"></section><section id="missions" class="page"></section><section id="events" class="page"></section><section id="relics" class="page"></section><section id="shrines" class="page"></section>${NAV}${TRAINING_BAR}${CINEMATIC}</main><dialog id="modal"></dialog>`;
   arrangeHud();
   replaceGlyphs();
 }

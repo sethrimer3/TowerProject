@@ -1,11 +1,18 @@
 import type { Game } from "./state.ts";
 import type { Renderer } from "./rendering.ts";
+import { PinchTracker } from "./ui/cinematic.ts";
+
+/** Cinematic mode as the board's input sees it: a pinch (or Ctrl and the
+ * wheel) enters or leaves it, and while it shows a swipe never moves. */
+export type PinchTarget = { readonly active: boolean; pinch(direction: "in" | "out"): void };
+
 export function bindInput(
   game: Game,
   renderer: Renderer,
   onTap: (x: number, y: number) => void,
   changed: () => void,
   isTower: () => boolean,
+  cinematic: PinchTarget,
 ) {
   const active = () => isTower() && !document.querySelector("dialog[open]");
   const manual = (dx: number, dy: number) => {
@@ -35,14 +42,22 @@ export function bindInput(
     }
   });
   let gesture: { id: number; x: number; y: number } | null = null;
-  const canvas = renderer.canvas;
+  const canvas = renderer.canvas, pinch = new PinchTracker();
   canvas.addEventListener("pointerdown", (e) => {
-    if (!active() || !e.isPrimary) return;
+    if (!active()) return;
     e.preventDefault();
-    gesture = { id: e.pointerId, x: e.clientX, y: e.clientY };
+    pinch.down(e.pointerId, e.clientX, e.clientY);
     canvas.setPointerCapture(e.pointerId);
+    // A second finger makes it a pinch: the first's tap or swipe is dropped.
+    if (pinch.count > 1) gesture = null;
+    else if (e.isPrimary) gesture = { id: e.pointerId, x: e.clientX, y: e.clientY };
+  });
+  canvas.addEventListener("pointermove", (e) => {
+    const direction = pinch.move(e.pointerId, e.clientX, e.clientY);
+    if (direction && active()) cinematic.pinch(direction);
   });
   canvas.addEventListener("pointerup", (e) => {
+    pinch.up(e.pointerId);
     if (!gesture || gesture.id !== e.pointerId) return;
     const start = gesture;
     gesture = null;
@@ -53,6 +68,7 @@ export function bindInput(
     const dx = e.clientX - start.x,
       dy = e.clientY - start.y;
     if (Math.max(Math.abs(dx), Math.abs(dy)) >= 20) {
+      if (cinematic.active) return;
       if (Math.abs(dx) > Math.abs(dy)) manual(Math.sign(dx), 0);
       else manual(0, -Math.sign(dy));
       return;
@@ -69,7 +85,20 @@ export function bindInput(
     onTap(tile.x, tile.y);
     changed();
   });
-  canvas.addEventListener("pointercancel", () => (gesture = null));
+  canvas.addEventListener("pointercancel", (e) => {
+    pinch.up(e.pointerId);
+    gesture = null;
+  });
+  // Ctrl and the wheel (a trackpad's pinch) stand in for two fingers.
+  canvas.addEventListener(
+    "wheel",
+    (e) => {
+      if (!e.ctrlKey || !active()) return;
+      e.preventDefault();
+      cinematic.pinch(e.deltaY > 0 ? "in" : "out");
+    },
+    { passive: false },
+  );
   document.querySelectorAll<HTMLButtonElement>("[data-move]").forEach(
     (b) =>
       (b.onclick = () => {

@@ -14,14 +14,17 @@ import { showStats } from "./stats-dialog.ts";
  * SETTINGS. */
 const PAGE = [
   "transition", "fightAnimation", "damageVisual", "itemGains", "doorGains", "goldGains", "silverGains", "brightness", "spritesOff", "decorOff", "batterySaver", "showArrows", "reduceMotion", "weatherSound",
-  "infoDisplay", "oneTapMove", "devMode", "freePurchases",
+  "infoDisplay", "oneTapMove", "cinematic", "cinematicIdle", "cinematicGems", "devMode", "freePurchases",
 ] as const satisfies readonly SettingKey[];
 type PageKey = (typeof PAGE)[number];
 
-/** Settings that stay off the page until the upgrade behind them is owned. */
+/** Settings that stay off the page until the upgrade (or the setting)
+ * behind them is on. */
 const SHOWN: Partial<Record<PageKey, (save: Save) => boolean>> = {
   fightAnimation: (save) => !!save.upgrades.instantCombat,
   damageVisual: (save) => goalUnlocked(save, "damageVisual"),
+  cinematicIdle: (save) => save.settings.cinematic,
+  cinematicGems: (save) => save.settings.cinematic,
 };
 const onPage = (save: Save) => PAGE.filter((key) => SHOWN[key]?.(save) ?? true);
 
@@ -35,6 +38,11 @@ const AFTER: Partial<Record<PageKey, (ctx: AppContext, overlay: BoardOverlay, s:
     if (s.infoDisplay === "status" || s.infoDisplay === "none") overlay.hideInspect();
     ctx.save();
     ctx.update();
+  },
+  // Its two options show only while it is on.
+  cinematic: (ctx) => {
+    ctx.save();
+    ctx.renderPage();
   },
   // Turning it on also grants everything it unlocks.
   devMode: (ctx, _, s) => {

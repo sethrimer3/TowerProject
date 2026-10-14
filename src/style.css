@@ -4328,3 +4328,65 @@ dialog.run-notes h2 { margin-top: 0; }
 .inspect-box .tile-gain {
   white-space: nowrap;
 }
+
+/* Cinematic mode (ui/cinematic.ts): the board alone, as large as the screen
+   allows, on black. Every UI theme's frame gives way, so these win with
+   !important over the theme sheets loaded after this one. */
+html.cinematic,
+html.cinematic body {
+  touch-action: none;
+  background: #000 !important;
+}
+html.cinematic .shell {
+  width: 100%;
+  max-width: none;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left) !important;
+  border: 0 !important;
+  background: #000 !important;
+  box-shadow: none !important;
+  --board-cap: 100vmax;
+}
+html.cinematic :is(#stats, #currencies, nav, #training-bar, #drill-tip, .research-toast, #status-row, .controls, #inspect, #tile-highlight, .inspect-box, #free-training-box, .tier-arrow, #forest-sign, #density-label, .board-tip, .forest-pointer, .job-pointer) {
+  display: none !important;
+}
+html.cinematic .board-cell {
+  align-items: center;
+}
+html.cinematic .board {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: none !important;
+}
+html.cinematic .board::before,
+html.cinematic .board::after {
+  display: none !important;
+}
+/* Entered by idling: dimmed against screen burn-in until the next input. */
+html.cinematic #board-frame {
+  transition: filter 3s ease;
+}
+html.cinematic-dimmed #board-frame {
+  filter: brightness(0.45);
+}
+.cinematic-gear,
+.cinematic-gems {
+  position: fixed;
+  z-index: 20;
+  top: calc(12px + env(safe-area-inset-top));
+}
+.cinematic-gear {
+  right: calc(12px + env(safe-area-inset-right));
+  width: 40px;
+  height: 40px;
+  padding: 6px;
+  opacity: 0.6;
+}
+.cinematic-gear .ui-sprite { width: 100%; height: 100%; }
+.cinematic-gems {
+  left: calc(12px + env(safe-area-inset-left));
+  min-width: 56px;
+  min-height: 34px;
+  padding: 2px 6px;
+  opacity: 0.85;
+}

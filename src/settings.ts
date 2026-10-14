@@ -102,6 +102,13 @@ export const SETTINGS = {
   doorGains: { kind: "toggle", default: true, page: { id: "door-gains", label: "Door payment animations" } },
   goldGains: { kind: "toggle", default: true, page: { id: "gold-gains", label: "Gold pickup animations" } },
   silverGains: { kind: "toggle", default: true, page: { id: "silver-gains", label: "Silver pickup animations" } },
+  /** Cinematic mode (`ui/cinematic.ts`): inside a run, pinching the board
+   * in hides everything but the board; pinching out brings it back. */
+  cinematic: { kind: "toggle", default: false, page: { id: "cinematic", label: "Cinematic mode (pinch the board in)" } },
+  /** With Cinematic mode on: enter it, dimmed, after 2 minutes without input. */
+  cinematicIdle: { kind: "toggle", default: false, page: { id: "cinematic-idle", label: "Cinematic mode after 2 minutes idle" } },
+  /** With Cinematic mode on: keep the ad's Gem button while it shows. */
+  cinematicGems: { kind: "toggle", default: false, page: { id: "cinematic-gems", label: "Show the Gem button in cinematic mode" } },
 } as const satisfies Record<string, Setting>;
 
 export type SettingKey = keyof typeof SETTINGS;

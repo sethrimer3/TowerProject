@@ -30,6 +30,7 @@ import { ResearchPage } from "./ui/research-page.ts";
 import { confirmAction, RunEndDialog } from "./ui/dialogs.ts";
 import { RunNotesDialog } from "./ui/run-notes-dialog.ts";
 import { closeRunMenu, toggleRunMenu } from "./ui/run-menu.ts";
+import { Cinematic } from "./ui/cinematic.ts";
 import { GoalsPage } from "./ui/goals-page.ts";
 import { SkillTreePage } from "./ui/skill-tree-page.ts";
 import { ResearchToasts, researchToast, trainingToast } from "./ui/research-toast.ts";
@@ -109,6 +110,29 @@ const missions = new MissionsPage(ctx);
 const events = new EventsPage(ctx);
 const relics = new RelicsPage(ctx);
 const shrines = new ShrinesPage(ctx);
+// Cinematic mode: inside a run, the board alone. Its look is classes on the
+// root, so it reaches what sits on the body too (the research toasts).
+const cinematic = new Cinematic({
+  settings: () => game.save.settings,
+  allowed: () =>
+    isBoard(tab) && !game.run.outside && !game.fallen && !deck.teaching && !game.boardLesson && !game.teachesSpeed && !document.querySelector("dialog[open]"),
+  now: () => game.clock(),
+  show: (look) => {
+    const root = document.documentElement;
+    if (look.active && !root.classList.contains("cinematic")) {
+      closeRunMenu();
+      overlay.hide();
+    }
+    root.classList.toggle("cinematic", look.active);
+    root.classList.toggle("cinematic-dimmed", look.dimmed);
+    el("cinematic-gear").hidden = !look.gear;
+    renderCinematicGems();
+  },
+});
+/** The ad's Gems in cinematic mode, with its option on, while they can be claimed. */
+function renderCinematicGems() {
+  el("cinematic-gems").hidden = !(cinematic.active && game.save.settings.cinematicGems && game.gemFinder.adReady);
+}
 // A run training purchase changes the hero, so the highlighted enemy's forecast too.
 const runTraining = new RunTrainingBar(game, () => {
   overlay.refresh(true);
@@ -152,6 +176,8 @@ function update() {
   researchToasts.add(finished);
   save();
   runEnd.check();
+  // The run's end, a fall or a lesson takes cinematic mode away at once.
+  if (cinematic.active) cinematic.tick();
 }
 /** The board follows the game's mode: walking down the forest path
  * swaps it (`Game.swapForest`) without a tab press. */
@@ -200,6 +226,8 @@ const CURRENCY_PAGES: string[] = ["upgrades", "research", "deck", "gear"];
 function navigate(requested: string) {
   if (deck.teaching && requested !== "deck") return;
   const id = unlockTarget(requested === "board" ? game.mode : requested) as Tab;
+  // Cinematic mode is the board's alone.
+  if (!isBoard(id)) cinematic.exit();
   // Only the board plays a fight out: leaving it settles one still playing.
   game.finishEncounter();
   if (id !== "defend") defendPage.pause();
@@ -280,8 +308,13 @@ for (const c of ["ignore", "target"] as const)
     if (game.arm(c) === "spent") flashRed(el(`${c}-stat`));
     update();
   };
-/** A board tap: where a readied Ignore or Target goes, else the overlay's. */
+/** A board tap: in cinematic mode, a floating Gem's or one toward leaving
+ * it; else where a readied Ignore or Target goes, else the overlay's. */
 function boardTap(x: number, y: number) {
+  if (cinematic.active) {
+    if (!game.gemFinder.collectAt(x, y)) cinematic.tap();
+    return;
+  }
   if (!game.armed) return overlay.tap(x, y);
   const c = game.armed, result = game.useArmed(x, y);
   if (result === "invalid" || result === "noPath") flashRed(el(`${c}-stat`));
@@ -303,12 +336,26 @@ for (const [id, step] of [["tier-prev", -1], ["tier-next", 1]] as const)
     save();
     update();
   };
-el("gem-ad").onclick = () => {
-  if (!game.gemFinder.claimAd()) return;
-  if (!game.save.settings.reduceMotion) gemSparkle(el("gem-ad"));
-  save();
-  update();
-};
+for (const id of ["gem-ad", "cinematic-gems"])
+  el(id).onclick = () => {
+    if (!game.gemFinder.claimAd()) return;
+    if (!game.save.settings.reduceMotion) gemSparkle(el(id));
+    save();
+    update();
+    renderCinematicGems();
+  };
+// Cinematic mode's gear: back to the whole page, on Settings.
+el("cinematic-gear").onclick = () => navigate("settings");
+// Any input lights a dimmed board and restarts cinematic mode's idle clock;
+// in cinematic mode a tap off the board (on the dark around it) counts
+// toward leaving, as one on it does, and Escape leaves.
+for (const kind of ["pointerdown", "keydown", "wheel"] as const) window.addEventListener(kind, () => cinematic.input(), { capture: true, passive: true });
+window.addEventListener("pointerup", (e) => {
+  if (cinematic.active && e.isPrimary && !(e.target as Element).closest("canvas, button")) cinematic.tap();
+});
+window.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && cinematic.active) cinematic.exit();
+});
 el("gold-ad").onclick = () => {
   if (!game.gemFinder.claimGoldAd()) return;
   if (!game.save.settings.reduceMotion) goldSparkle(el("gold-ad"));
@@ -428,6 +475,7 @@ bindInput(
     update();
   },
   () => isBoard(tab),
+  cinematic,
 );
 
 /** Research completes on the wall clock, whatever page shows. */
@@ -443,6 +491,7 @@ function archivesTick() {
   // The ad button comes back on the wall clock too, and the Shop's daily Gems.
   else {
     renderAdButton(game);
+    renderCinematicGems();
     renderShopDot(game);
     renderTournamentButton(game);
     renderMailButton(game);
@@ -450,6 +499,8 @@ function archivesTick() {
     renderEventsButtons(game);
   }
   tournament.tick();
+  // Cinematic mode's idle clock, and the gear a tap showed.
+  cinematic.tick();
   // A tournament opening (or ending, or the Tournament unlocked) asks the
   // server again, for the free Ticket and the results.
   const stage = `${game.tournament.unlocked}|${game.tournament.phase}`;

@@ -36,6 +36,10 @@ _Avoid_: account, statistics save
 A run's trivia, kept as it plays: the tower and floor reached, its real time, steps, kills, keys and doors by kind, chests, and what it found (Gold, Silver, Inspiration or Courage, materials and other loot). Note Taking research opens them, from the floor number during a run or the run's end dialog, and they copy as text. Undo takes back what the run itself holds, never what was found for good.
 _Avoid_: run stats, run log
 
+**Cinematic mode**:
+Inside a run, the board alone on the screen, every control, stat and menu hidden, the hero playing on. A setting allows it; a pinch in (or two idle minutes, dimming the board) enters it, and a pinch out, three quick taps or the gear a tap shows leaves it. Never saved.
+_Avoid_: fullscreen, zen mode, screensaver
+
 ### Equipment
 
 **Equipment**:
