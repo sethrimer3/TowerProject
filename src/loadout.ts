@@ -173,11 +173,12 @@ export function provisionBulk(save: Pick<Save, "provisions">, id: GoldItemId, q:
   return bulkBuy(q, Infinity, (k) => schedulePrice(price, owned + k), gold);
 }
 
-/** Training points: earned per level, spent on ranks of training bought
- * with them (`trainingPaid`; trainers' ranks cost Gold instead). `left`
- * never goes below zero, even if undo takes back a level already spent. */
-export function trainingPoints(save: Pick<Save, "xp" | "trainingPaid">) {
-  const earned = TRAINING_PER_LEVEL * levelForXp(save.xp),
+/** Training points: earned per level and by the weekly mission rewards
+ * (`bonusTrainingPoints`), spent on ranks of training bought with them
+ * (`trainingPaid`; trainers' ranks cost Gold instead). `left` never goes
+ * below zero, even if undo takes back a level already spent. */
+export function trainingPoints(save: Pick<Save, "xp" | "trainingPaid"> & Partial<Pick<Save, "bonusTrainingPoints">>) {
+  const earned = TRAINING_PER_LEVEL * levelForXp(save.xp) + (save.bonusTrainingPoints ?? 0),
     spent = TRAINING.reduce((sum, t) => sum + save.trainingPaid[t.id].points, 0);
   return { earned, spent, left: Math.max(0, earned - spent) };
 }

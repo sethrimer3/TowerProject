@@ -323,6 +323,9 @@ export type Save = {
   gold: number;
   provisions: Record<GoldItemId, number>;
   xp: number;
+  /** Training points earned beyond the hero's levels: one for each weekly
+   * mission reward claimed (missions/catalog.ts). */
+  bonusTrainingPoints: number;
   /** Ranks of each stat trained, with training points (earned per level)
    * or by a trainer for Gold. */
   training: Record<TrainingId, number>;

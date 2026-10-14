@@ -14,7 +14,7 @@ import { earn } from "../profile.ts";
 const STEP = 0x6d2b79f5;
 
 /** What claiming a daily mission or a weekly reward paid. */
-export type MissionPayout = { gold: number; gems: number; medals: number; shards: number; material?: { id: string; amount: number } };
+export type MissionPayout = { gold: number; gems: number; medals: number; shards: number; training: number; material?: { id: string; amount: number } };
 
 /** The daily and weekly missions' commands (the game's `missions`):
  * giving new missions every 8 hours, counting what the player does toward
@@ -156,11 +156,11 @@ export class MissionDesk {
     earn(save, "gold", r.gold);
     if (r.materials) save.equipment.materials[r.material] += r.materials;
     this.host.message = `Mission complete · +${r.gems} Gems · +${r.gold.toLocaleString("en-US")} Gold`;
-    return { gold: r.gold, gems: r.gems, medals: 0, shards: 0, material: r.materials ? { id: r.material, amount: r.materials } : undefined };
+    return { gold: r.gold, gems: r.gems, medals: 0, shards: 0, training: 0, material: r.materials ? { id: r.material, amount: r.materials } : undefined };
   }
 
   /** Claims weekly reward `i`, once a week: Gold (a daily mission's, times
-   * its multiplier), Gems, Medals and Ascension Shards. */
+   * its multiplier), Gems, Medals, Ascension Shards and Training Points. */
   claimWeekly(i: number): MissionPayout | null {
     if (!WEEKLY_REWARDS[i] || !this.weeklyReady(i)) return null;
     const save = this.host.save, r = weeklyReward(save, i);
@@ -169,6 +169,7 @@ export class MissionDesk {
     save.gems += r.gems;
     save.medals += r.medals;
     save.ascensionShards += r.shards;
+    save.bonusTrainingPoints += r.training;
     earn(save, "gold", r.gold);
     earn(save, "gems", r.gems);
     earn(save, "medals", r.medals);

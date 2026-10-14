@@ -4,7 +4,7 @@ import { MISSION_CAPACITY, MISSIONS, missionReward, WEEKLY_MAX, WEEKLY_REWARDS, 
 import { isComplete, nextPeriodAt, weekEndsAt, type Mission } from "../missions/progress.ts";
 import { shortCountdown } from "../tournament/schedule.ts";
 import type { AppContext } from "./app.ts";
-import { checkIcon, el, gemIcon, giftIcon, goldIcon, medalIcon, shardIcon } from "./dom.ts";
+import { checkIcon, el, gemIcon, giftIcon, goldIcon, medalIcon, pointsIcon, shardIcon } from "./dom.ts";
 import { materialIcon } from "./equipment-icons.ts";
 import { currencyAmount } from "./hud.ts";
 import { revealReward, type RewardShown } from "./reward-reveal.ts";
@@ -32,11 +32,12 @@ function payoutShown(p: MissionPayout, kicker: string): RewardShown {
 }
 
 /** What a weekly reward paid, one celebration a currency in turn: Gold,
- * Gems, Medals and Ascension Shards, each it paid any of. */
+ * Gems, Medals, Ascension Shards and Training Points, each it paid any of. */
 function weeklyShown(p: MissionPayout, missions: number): RewardShown[] {
   const kicker = "WEEKLY REWARD", text = `For ${missions} daily missions this week`;
   const each: [number, string, string][] = [
     [p.gold, goldIcon(), "Gold"], [p.gems, gemIcon(), "Gems"], [p.medals, medalIcon(), "Medals"], [p.shards, shardIcon(), "Ascension Shards"],
+    [p.training, pointsIcon(), p.training === 1 ? "Training Point" : "Training Points"],
   ];
   return each.filter(([n]) => n > 0).map(([n, icon, name]) => ({ icon, amount: `+${n.toLocaleString("en-US")}`, kicker, name, text, permanent: false }));
 }
@@ -111,7 +112,7 @@ export class MissionsPage {
     const boxes = WEEKLY_REWARDS.map((w, i) => {
       const claimed = week.claimed.includes(i), ready = game.missions.weeklyReady(i), r = weeklyReward(game.save, i);
       const state = claimed ? "claimed" : ready ? "ready" : "dim";
-      const pays = [`${currencyAmount(r.gold)} Gold`, `${r.gems} Gems`, r.medals && `${r.medals} Medals`, r.shards && `${r.shards} Ascension Shards`].filter(Boolean).join(", ");
+      const pays = [`${currencyAmount(r.gold)} Gold`, `${r.gems} Gems`, r.medals && `${r.medals} Medals`, r.shards && `${r.shards} Ascension Shards`, r.training && `${r.training} Training Point${r.training === 1 ? "" : "s"}`].filter(Boolean).join(", ");
       const label = `${w.missions} missions: ${pays}${claimed ? " (claimed)" : ready ? " (claim)" : ""}`;
       return `<button class="weekly-box ${state}" data-weekly="${i}" style="--at:${(100 * w.missions) / WEEKLY_MAX}%" aria-label="${label}" title="${label}"${ready ? "" : " aria-disabled=\"true\""}>` +
         `<span class="weekly-prize">${giftIcon()}${claimed ? checkIcon() : ""}</span><small>${w.missions}</small></button>`;

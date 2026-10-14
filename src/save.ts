@@ -42,6 +42,7 @@ export function defaults(): Save {
       GOLD_SHOP.map((g) => [g.id, 0]),
     ) as Save["provisions"],
     xp: 0,
+    bonusTrainingPoints: 0,
     training: Object.fromEntries(TRAINING.map((t) => [t.id, 0])) as Save["training"],
     trainingPaid: Object.fromEntries(TRAINING.map((t) => [t.id, { points: 0, gold: 0, ms: 0 }])) as Save["trainingPaid"],
     trainerRanks: Object.fromEntries(TRAINING.map((t) => [t.id, 0])) as Save["trainerRanks"],
@@ -302,6 +303,7 @@ function decodeProgress(s: any, d: Save, undoCapacity: number) {
   d.goldBoostUntil = count(s.goldBoostUntil, 0, Number.MAX_SAFE_INTEGER);
   for (const g of GOLD_SHOP) d.provisions[g.id] = count(s.provisions?.[g.id], d.provisions[g.id], 999);
   d.xp = count(s.xp, d.xp);
+  d.bonusTrainingPoints = count(s.bonusTrainingPoints, d.bonusTrainingPoints);
   decodeTraining(s, d);
   decodeModeRecords(s.tower ?? {}, s.delve ?? {}, d);
   applyMode(d.tower, decodeMode(s.tower, undoCapacity, decodeTowerRun));

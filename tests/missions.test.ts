@@ -12,6 +12,7 @@ import { enemyFirstFloor } from "../src/enemy-schedule.ts";
 import { keyFirstFloor } from "../src/key-schedule.ts";
 import { DAY_MS } from "../src/shop/clock.ts";
 import { CURRENCIES } from "../src/shop/currency.ts";
+import { trainingPoints } from "../src/loadout.ts";
 import type { Enemy, Save, Tile } from "../src/entities.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
 
@@ -231,8 +232,11 @@ test("every 5 missions claimed in the week opens a weekly reward, claimed once, 
   assert.ok(g.missions.weeklyReady(0) && g.missions.weeklyReady(1));
   assert.equal(g.missions.weeklyReady(2), false);
   g.save.tower.tiersOpen = 2;
-  assert.deepEqual(weeklyReward(g.save, 1), { gold: 4000, gems: 15, medals: 10, shards: 0 });
+  assert.deepEqual(weeklyReward(g.save, 1), { gold: 4000, gems: 15, medals: 10, shards: 0, training: 1 });
+  const points = trainingPoints(g.save).left;
   const paid = g.missions.claimWeekly(1)!;
+  assert.equal(g.save.bonusTrainingPoints, 1, "each weekly reward pays a Training Point");
+  assert.equal(trainingPoints(g.save).left, points + 1);
   assert.deepEqual([g.save.gold, g.save.gems, g.save.medals, g.save.ascensionShards], [4000, 15, 10, 0]);
   assert.equal(paid.medals, 10);
   assert.equal(g.missions.claimWeekly(1), null, "once a week");

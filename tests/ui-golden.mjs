@@ -835,7 +835,7 @@ try {
 
   // Missions: the forest's button (3/8, with its dot); the screen, the
   // weekly bar with the 10's box glowing; a mission claimed, its reward
-  // revealed; the weekly reward claimed, its Gold, Gems and Medals each
+  // revealed; the weekly reward claimed, its Gold, Gems, Medals and Training Point each
   // celebrated in turn; and the X back to the board.
   await load("missions");
   await shot("missions.forest");
@@ -847,7 +847,7 @@ try {
   await click(".reward-reveal");
   await shot("missions.claimed");
   await click('[data-weekly="1"]');
-  for (const currency of ["gold", "gems", "medals"]) {
+  for (const currency of ["gold", "gems", "medals", "training"]) {
     await page.locator(".reward-reveal").waitFor();
     await shot(`missions.weekly.${currency}`);
     await click(".reward-reveal");
