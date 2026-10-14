@@ -75,74 +75,86 @@ const gems = (amount: number): GoalReward => ({ kind: "currency", currency: "gem
 const shards = (amount: number): GoalReward => ({ kind: "currency", currency: "shards", amount });
 
 const unlock = (unlock: GoalUnlock): GoalReward => ({ kind: "unlock", unlock });
-/** Tower I's checkpoints that differ from the stub: an unlock each, Gems, and Ascension Shards. */
-const TOWER_ONE: Record<number, Omit<Checkpoint, "floor">> = {
-  10: { reward: unlock("damagePrediction"), premium: gems(10) },
-  20: { reward: unlock("combatForecast"), premium: gems(15) },
-  30: { reward: unlock("attackLore"), premium: gems(25) },
-  40: { reward: gems(20), premium: gems(35) },
-  50: { reward: unlock("damageVisual"), premium: gems(50) },
-  60: { reward: unlock("tournament"), premium: gems(60) },
-  70: { reward: unlock("events"), premium: gems(70) },
-  80: { reward: gems(30), premium: gems(80) },
-  90: { reward: gold(2000), premium: gold(10000) },
-  150: { reward: unlock("researchSpeed"), premium: gems(110) },
-  200: { reward: gems(40), premium: gems(120) },
-  250: { reward: unlock("noteTaking"), premium: gems(130) },
-  1500: { reward: shards(5), premium: shards(15) },
+/** A checkpoint's rewards that differ from the stub; either left out is the stub's. */
+type CheckpointSet = Partial<Omit<Checkpoint, "floor">>;
+/** Tower I's checkpoints that differ from the stub: an unlock each, Gems,
+ * Gold and Ascension Shards, and its premium rewards. */
+const TOWER_ONE: Record<number, CheckpointSet> = {
+  10: { reward: unlock("damagePrediction"), premium: gold(100) },
+  20: { reward: unlock("combatForecast"), premium: gems(10) },
+  30: { reward: unlock("attackLore"), premium: gems(10) },
+  40: { reward: gems(20), premium: gold(300) },
+  50: { reward: unlock("damageVisual"), premium: gems(15) },
+  60: { reward: unlock("tournament"), premium: gems(20) },
+  70: { reward: unlock("events"), premium: gold(600) },
+  80: { reward: gems(30) },
+  90: { reward: gold(2000), premium: gems(20) },
+  150: { reward: unlock("researchSpeed"), premium: gold(15_000) },
+  200: { reward: gems(40), premium: gems(25) },
+  250: { reward: unlock("noteTaking"), premium: gold(30_000) },
+  300: { premium: gems(25) },
+  400: { premium: gold(100_000) },
+  500: { premium: gems(30) },
+  750: { premium: gems(35) },
+  1000: { premium: gems(40) },
+  1250: { premium: gems(45) },
+  1500: { reward: shards(5), premium: shards(10) },
+  2000: { premium: gems(50) },
+  2500: { premium: shards(15) },
+  4500: { premium: shards(20) },
 };
 
 /** Tower II's checkpoints that differ from the stub: an unlock each, and Gold. */
-const TOWER_TWO: Record<number, Omit<Checkpoint, "floor">> = {
-  10: { reward: unlock("relativeDamageColor"), premium: gems(10) },
-  20: { reward: unlock("shardAttack"), premium: gems(20) },
-  30: { reward: unlock("shardDefense"), premium: gems(30) },
-  40: { reward: unlock("warp"), premium: gems(40) },
-  50: { reward: gems(25), premium: gems(50) },
-  60: { reward: unlock("equipment"), premium: gems(60) },
-  70: { reward: gold(10000), premium: gems(70) },
-  80: { reward: unlock("trainingDiscount"), premium: gems(80) },
-  90: { reward: unlock("cardGroups"), premium: gems(90) },
-  150: { reward: unlock("shrines"), premium: gems(110) },
-  250: { reward: unlock("firstBoonChoice"), premium: gems(130) },
-  400: { reward: unlock("improveTradeoffs"), premium: gems(160) },
+const TOWER_TWO: Record<number, CheckpointSet> = {
+  10: { reward: unlock("relativeDamageColor") },
+  20: { reward: unlock("shardAttack") },
+  30: { reward: unlock("shardDefense") },
+  40: { reward: unlock("warp") },
+  50: { reward: gems(25) },
+  60: { reward: unlock("equipment") },
+  70: { reward: gold(10000) },
+  80: { reward: unlock("trainingDiscount") },
+  90: { reward: unlock("cardGroups") },
+  150: { reward: unlock("shrines") },
+  250: { reward: unlock("firstBoonChoice") },
+  400: { reward: unlock("improveTradeoffs") },
 };
 /** Tower III's checkpoints that differ from the stub. */
-const TOWER_THREE: Record<number, Omit<Checkpoint, "floor">> = {
-  10: { reward: unlock("archer"), premium: gems(10) },
-  20: { reward: unlock("attackRange"), premium: gems(20) },
-  30: { reward: unlock("attackSpeed"), premium: gems(30) },
-  50: { reward: unlock("attackPerTile"), premium: gems(50) },
-  80: { reward: unlock("chargedShot"), premium: gems(80) },
-  90: { reward: unlock("multishot"), premium: gems(90) },
+const TOWER_THREE: Record<number, CheckpointSet> = {
+  10: { reward: unlock("archer") },
+  20: { reward: unlock("attackRange") },
+  30: { reward: unlock("attackSpeed") },
+  50: { reward: unlock("attackPerTile") },
+  80: { reward: unlock("chargedShot") },
+  90: { reward: unlock("multishot") },
 };
 /** Tower IV's checkpoints that differ from the stub. */
-const TOWER_FOUR: Record<number, Omit<Checkpoint, "floor">> = {
-  50: { reward: unlock("autoPickBoons"), premium: gems(50) },
-  80: { reward: unlock("boonOptions"), premium: gems(80) },
+const TOWER_FOUR: Record<number, CheckpointSet> = {
+  50: { reward: unlock("autoPickBoons") },
+  80: { reward: unlock("boonOptions") },
 };
 /** Tower V's checkpoints that differ from the stub. */
-const TOWER_FIVE: Record<number, Omit<Checkpoint, "floor">> = {
-  30: { reward: unlock("parryPercent"), premium: gems(30) },
-  40: { reward: unlock("banBoons"), premium: gems(40) },
+const TOWER_FIVE: Record<number, CheckpointSet> = {
+  30: { reward: unlock("parryPercent") },
+  40: { reward: unlock("banBoons") },
 };
 /** Tower VI's checkpoints that differ from the stub. */
-const TOWER_SIX: Record<number, Omit<Checkpoint, "floor">> = {
-  10: { reward: unlock("autoPickRanking"), premium: gems(10) },
-  50: { reward: unlock("badgeSlots"), premium: gems(50) },
+const TOWER_SIX: Record<number, CheckpointSet> = {
+  10: { reward: unlock("autoPickRanking") },
+  50: { reward: unlock("badgeSlots") },
 };
 /** The checkpoint floor whose reward opens the next tower. */
 export const TOWER_UNLOCK_FLOOR = 100;
 
 /** A tower's checkpoints, lowest first.
- * TODO: the stub rewards (100 Gold × checkpoint number × tower, 10 Gems × checkpoint number)
- * are placeholders, to be tuned. */
+ * TODO: the stub rewards (100 Gold × checkpoint number × tower, 5 Gems × checkpoint number
+ * premium) are placeholders, to be tuned. */
 function towerCheckpoints(tower: number): Checkpoint[] {
-  const sets: Record<number, Record<number, Omit<Checkpoint, "floor">>> = { 1: TOWER_ONE, 2: TOWER_TWO, 3: TOWER_THREE, 4: TOWER_FOUR, 5: TOWER_FIVE, 6: TOWER_SIX };
+  const sets: Record<number, Record<number, CheckpointSet>> = { 1: TOWER_ONE, 2: TOWER_TWO, 3: TOWER_THREE, 4: TOWER_FOUR, 5: TOWER_FIVE, 6: TOWER_SIX };
   return CHECKPOINT_FLOORS.map((floor, i) => {
     const n = i + 1, set = sets[tower]?.[floor];
     const opens = floor === TOWER_UNLOCK_FLOOR && tower < TIERS ? { kind: "tower" as const, tower: tower + 1 } : null;
-    return { floor, ...(set ?? { reward: opens ?? gold(100 * n * tower), premium: gems(10 * n) }) };
+    return { floor, reward: set?.reward ?? opens ?? gold(100 * n * tower), premium: set?.premium ?? gems(5 * n) };
   });
 }
 

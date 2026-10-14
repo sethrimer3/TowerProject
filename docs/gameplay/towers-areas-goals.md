@@ -46,6 +46,7 @@ Tapping a claimed unlock shows what it does again.
 A green check beside a checkpoint marks its area cleared.
 Entering the tower from the forest always starts on floor 1.
 Every tower has its own checkpoints; once a second is open, arrows at the bottom pan between them.
-Their premium rewards are 10, 15, 25, 35 and 50 Gems; the rewards past them are placeholders for now (Gold on the left, Gems on the right); the store isn't connected yet, so only Dev mode (or its free purchases) unlocks a pass.
+Tower I's premium rewards, floor by floor: 100 Gold, 10 Gems, 10 Gems, 300 Gold, 15 Gems, 20 Gems, 600 Gold, 40 Gems, 20 Gems, 50 Gems (floor 100), 15,000 Gold, 25 Gems, 30,000 Gold, 25 Gems, 100,000 Gold, then 30, 35, 40 and 45 Gems (floors 500 to 1,250), 10 Ascension Shards (floor 1,500), 50 Gems (2,000), 15 Ascension Shards (2,500) and 20 Ascension Shards (4,500).
+The other towers' rewards past their unlocks are placeholders for now (Gold on the left, 5 Gems a checkpoint on the right, rising by 5 with each); the store isn't connected yet, so only Dev mode (or its free purchases) unlocks a pass.
 The Delve has no Goals yet.
 End Run shows only inside a run.
