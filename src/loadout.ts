@@ -283,11 +283,12 @@ const MULTIPLIER_ROWS: ReadonlyMap<TrainingId, number> = new Map([["silverBonus"
 /** How a Training row's value reads: a multiplier as ×1.30, Attack Range
  * as 3.00 tiles, Attack Speed as 1.00/10 turns, ATK / Tile as
  * +0.010×/tile, Multishot Targets as 2 targets, the others with their unit
- * after. `bare` leaves out Attack Range's and Attack Speed's units (3.00,
- * 1.00), for the run's training cards, whose tooltips say what they count. */
+ * after. `bare` leaves out the units of Attack Range, Attack Speed, ATK /
+ * Tile and Multishot Targets (3.00, 1.00, +0.010, 2), for the run's
+ * training cards, whose tooltips say what they count. */
 export const trainingText = (value: number, unit: string, bare = false) =>
   unit === "×" ? `×${value.toFixed(2)}` : unit === "tiles" ? `${value.toFixed(2)}${bare ? "" : " tiles"}` : unit === "shots" ? `${value.toFixed(2)}${bare ? "" : "/10 turns"}`
-    : unit === "perTile" ? `+${value.toFixed(3)}×/tile` : unit === "targets" ? `${value} targets` : `${value}${unit}`;
+    : unit === "perTile" ? `+${value.toFixed(3)}${bare ? "" : "×/tile"}` : unit === "targets" ? `${value}${bare ? "" : " targets"}` : `${value}${unit}`;
 
 /** Whether `id` has as many ranks as it can take. */
 /** How much faster trainers train than at first (Faster Trainers research:

@@ -227,7 +227,7 @@ export class RunTrainingBar {
     const short = !offer.maxed && !bulk.affordable;
     card.classList.toggle("short", short);
     card.classList.toggle("maxed", offer.maxed);
-    // Range and Speed without their units, which their tooltips give, so the value fits the card.
+    // Range, Speed, ATK / Tile and Targets without their units, which their tooltips give, so the value fits the card.
     card.querySelector(".drill-value")!.textContent = trainingText(value, unit, true);
     const buy = card.querySelector<HTMLButtonElement>(".drill-buy")!;
     const label = offer.maxed ? "Max" : `${runCount(q, bulk.count)}${silverIcon()}<b>${bulk.cost.toLocaleString("en-US")}</b>`;
