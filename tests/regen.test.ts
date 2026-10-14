@@ -64,12 +64,12 @@ test("each step regains Regen's HP after what the step does, up to max HP, and a
 });
 
 /** A Tower corridor along the bottom row with a key at its east end, the
- * hero at 50 HP regaining 0.5 a step, and `rush` Rush levels. */
-function corridor(rush: number) {
+ * hero at 50 HP regaining 0.5 a step, and `dash` Dash levels. */
+function corridor(dash: number) {
   const g = new Game(defaults());
-  if (rush) {
-    g.save.upgrades.rush = 1;
-    g.save.archives.levels.rush = rush;
+  if (dash) {
+    g.save.upgrades.dash = 1;
+    g.save.archives.levels.dash = dash;
   }
   const w = g.world as RoomWorld;
   w.cells = new Map();
@@ -82,32 +82,32 @@ function corridor(rush: number) {
   return g;
 }
 
-test("in a run each step regains HP, and a rushed turn counts as one step", () => {
+test("in a run each step regains HP, and a dashed turn counts as one step", () => {
   const walk = corridor(0);
   walk.autoTurn();
   walk.autoTurn();
   assert.equal(walk.run.player.hp, 51);
-  const rush = corridor(10);
-  rush.autoTurn();
-  assert.deepEqual([rush.run.player.x, rush.run.player.y], [4, 0], "it rushed four tiles");
-  assert.equal(rush.run.player.hp, 50.5, "but regained HP once");
-  rush.autoTurn();
-  assert.equal(rush.run.player.hp, 51, "the next step regains again");
+  const dash = corridor(10);
+  dash.autoTurn();
+  assert.deepEqual([dash.run.player.x, dash.run.player.y], [4, 0], "it dashed four tiles");
+  assert.equal(dash.run.player.hp, 50.5, "but regained HP once");
+  dash.autoTurn();
+  assert.equal(dash.run.player.hp, 51, "the next step regains again");
 });
 
-test("Rush Regen research lets a Rush's first rushed steps regain HP too, once the skill is owned", () => {
-  const rushed = (skill: boolean, levels: number) => {
+test("Dash Regen research lets a Dash's first dashed steps regain HP too, once the skill is owned", () => {
+  const dashed = (skill: boolean, levels: number) => {
     const g = corridor(10);
-    if (skill) g.save.upgrades.rushRegen = 1;
-    g.save.archives.levels.rushRegen = levels;
+    if (skill) g.save.upgrades.dashRegen = 1;
+    g.save.archives.levels.dashRegen = levels;
     g.autoTurn();
-    assert.deepEqual([g.run.player.x, g.run.player.y], [4, 0], "the step and three rushed tiles");
+    assert.deepEqual([g.run.player.x, g.run.player.y], [4, 0], "the step and three dashed tiles");
     return g.run.player.hp;
   };
-  assert.equal(rushed(false, 2), 50.5, "research without the skill does nothing");
-  assert.equal(rushed(true, 0), 50.5);
-  assert.equal(rushed(true, 2), 51.5, "the step's own, then the first two rushed");
-  assert.equal(rushed(true, 35), 52, "every rushed step, however many levels");
+  assert.equal(dashed(false, 2), 50.5, "research without the skill does nothing");
+  assert.equal(dashed(true, 0), 50.5);
+  assert.equal(dashed(true, 2), 51.5, "the step's own, then the first two dashed");
+  assert.equal(dashed(true, 35), 52, "every dashed step, however many levels");
 });
 
 test("no Regen in the forest", () => {

@@ -130,9 +130,9 @@ const GAIN_SETTINGS = { item: "itemGains", door: "doorGains", gold: "goldGains",
 const coinOf = (art: GainArt | null): Coin | null => (art && "coin" in art ? art.coin : null);
 /** A potion's heal: the HP from and to, where the hero stood, and its number. */
 export type Heal = { from: number; to: number; x: number; y: number; id: number };
-/** A rush: the tiles the hero rushed off in one step, in order, and when
+/** A dash: the tiles the hero dashed off in one step, in order, and when
  * (performance time). */
-export type Rush = { tiles: { x: number; y: number }[]; at: number };
+export type Dash = { tiles: { x: number; y: number }[]; at: number };
 /** Rewards kept for the board to show; older ones are dropped unseen. */
 const MAX_GAINS = 12;
 /** The forest's Automove walks at least this many steps a second, however
@@ -179,8 +179,8 @@ export type Shot = { by: "hero" | "enemy"; from: { x: number; y: number }; to: {
 export type Volley = { at: number; flight: number; shots: Shot[] };
 /** Tiles that stay on the board after being stepped on. */
 const PERMANENT_TILES = new Set<Tile["kind"]>(["floor", "stairs", "oneway", "openedChest"]);
-/** The targets a Rush may end on, a tile of it left: items to take. */
-const RUSH_ONTO = new Set<Tile["kind"]>(["key", "potion", "attack", "defense", "treasure", "reward"]);
+/** The targets a Dash may end on, a tile of it left: items to take. */
+const DASH_ONTO = new Set<Tile["kind"]>(["key", "potion", "attack", "defense", "treasure", "reward"]);
 export class Game {
   mode: Mode = "tower";
   world!: Board;
@@ -227,7 +227,7 @@ export class Game {
    * undo, a new run or a mode switch clears it. */
   volley: Volley | null = null;
   /** The snapshot from before the turn being taken, for a shot that fells
-   * the hero, and whether a Rush holds the turn open across its tiles. */
+   * the hero, and whether a Dash holds the turn open across its tiles. */
   private turnBefore: MoveSnapshot | null = null;
   private holdTurn = false;
   /** The last potion that healed, picked up or crafted: the HP it healed
@@ -265,9 +265,9 @@ export class Game {
   private stepScale = 1;
   /** Skip on STAIRS succeeded: the climb goes up two floors. */
   private floorSkip = false;
-  /** The latest rush: the tiles the hero rushed off, in order, and when
+  /** The latest dash: the tiles the hero dashed off, in order, and when
    * (performance.now()), for the board's fading echoes of the hero. */
-  rush: Rush | null = null;
+  dash: Dash | null = null;
   /** Delve Automove's committed route and last weighed decisions. */
   readonly delvePlan = new DelvePlan();
   /** The Training tab's commands. */
@@ -812,7 +812,7 @@ export class Game {
     const goal = plan.path[plan.path.length - 1], key = this.rules.lootKey(this.run, goal.x, goal.y);
     const step = plan.path.shift()!, p = this.run.player, from = { x: p.x, y: p.y };
     this.cardPlan = plan.path.length ? plan : null;
-    const rush = this.rushFor(id), rushes = fresh && rush > 0 && this.rushable(step.x, step.y);
+    const dash = this.dashFor(id), dashes = fresh && dash > 0 && this.dashable(step.x, step.y);
     // The card's last step onto its target: Skip may make it vanish (or, on
     // the Tower's stairs, climb two floors), and Effective or Dampen scale it.
     const last = !this.cardPlan, rolls = last && this.rollsSkip(id, step.x, step.y), skips = rolls && this.skipRoll() < this.skipChance(id);
@@ -825,8 +825,8 @@ export class Game {
     this.stepScale = last ? this.scaleOf(id) : 1;
     // The board changes only as the hero moves, so a refused step means the
     // plan is stale: drop it and let the next turn choose again.
-    // A rush is one turn: its shots come once it stops.
-    this.holdTurn = rushes;
+    // A dash is one turn: its shots come once it stops.
+    this.holdTurn = dashes;
     const moved = this.move(step.dx, step.dy, true);
     this.stepScale = 1;
     this.floorSkip = false;
@@ -835,12 +835,12 @@ export class Game {
       this.turnBefore = null;
       return void (this.cardPlan = null);
     }
-    const rushed = rushes ? this.rushOn(plan, id, from, rush) : true;
-    if (rushes) {
+    const dashed = dashes ? this.dashOn(plan, id, from, dash) : true;
+    if (dashes) {
       this.holdTurn = false;
       this.endTurn();
     }
-    if (!rushed) return;
+    if (!dashed) return;
     if (this.cardPlan) return;
     // The card's last step reaches its target: a focus on it is spent, and
     // it activates (once a fight into its target has played out).
@@ -1148,20 +1148,20 @@ export class Game {
     this.gain(p.x, p.y, lost, stat === "maxHp" ? { heart: true } : { tile: { kind: stat } });
     this.gain(p.x, p.y, `+${keyCount(scale)} ${color} key`, { tile: { kind: "key", color } });
   }
-  /** Rush: the first step toward a new target, onto an empty tile, goes on
+  /** Dash: the first step toward a new target, onto an empty tile, goes on
    * along the path in the same step across up to `tiles` more empty tiles
-   * (`rushFor` the card `id`), stopping on the tile before anything else,
-   * unless that is the card's target item and a tile of the rush is left:
+   * (`dashFor` the card `id`), stopping on the tile before anything else,
+   * unless that is the card's target item and a tile of the dash is left:
    * then it ends on the item, taking it (Effective or Dampen scaling it as
    * on any card's last step; with Skip, which may make it vanish, it stops
    * before it, so the item's own step rolls). One turn and one undo.
-   * Rushed steps skip Regen but for the first `rushRegenSteps`.
+   * Dashed steps skip Regen but for the first `dashRegenSteps`.
    * Returns false when a step was refused, leaving the target unreached. */
-  private rushOn(plan: CardPlan, id: CardId, from: { x: number; y: number }, rush: number) {
+  private dashOn(plan: CardPlan, id: CardId, from: { x: number; y: number }, dash: number) {
     const p = this.run.player, tiles = [from];
-    let moved = true, left = rush;
-    const regenerating = this.rushRegenSteps, regen = () => rush - left < regenerating;
-    for (; left > 0 && plan.path.length && this.rushable(plan.path[0].x, plan.path[0].y); left--) {
+    let moved = true, left = dash;
+    const regenerating = this.dashRegenSteps, regen = () => dash - left < regenerating;
+    for (; left > 0 && plan.path.length && this.dashable(plan.path[0].x, plan.path[0].y); left--) {
       const at = { x: p.x, y: p.y }, next = plan.path.shift()!;
       if (!this.move(next.dx, next.dy, true, false, regen())) {
         plan.path = [];
@@ -1171,7 +1171,7 @@ export class Game {
       tiles.push(at);
     }
     const target = plan.path.length === 1 ? plan.path[0] : null;
-    if (moved && left > 0 && target && RUSH_ONTO.has(this.world.tile(target.x, target.y).kind) && !this.rollsSkip(id, target.x, target.y)) {
+    if (moved && left > 0 && target && DASH_ONTO.has(this.world.tile(target.x, target.y).kind) && !this.rollsSkip(id, target.x, target.y)) {
       const at = { x: p.x, y: p.y };
       plan.path.shift();
       this.stepScale = this.scaleOf(id);
@@ -1179,38 +1179,38 @@ export class Game {
       this.stepScale = 1;
       if (moved) {
         tiles.push(at);
-        // Taking the item makes the rush a turn undo stops at.
+        // Taking the item makes the dash a turn undo stops at.
         delete this.slice.history.at(-1)?.quiet;
       }
     }
     this.cardPlan = plan.path.length ? plan : null;
-    if (tiles.length > 1) this.rush = { tiles, at: performance.now() };
+    if (tiles.length > 1) this.dash = { tiles, at: performance.now() };
     return moved;
   }
-  /** Tiles the hand's first step toward a new target may rush across: none
-   * without the Rush skill, and one more a Rush research level. */
-  get rushTiles() {
-    return (this.save.upgrades.rush ? researched(this.save.archives, "rushTiles", 0) : 0) + this.worn.rushTiles;
+  /** Tiles the hand's first step toward a new target may dash across: none
+   * without the Dash skill, and one more a Dash research level. */
+  get dashTiles() {
+    return (this.save.upgrades.dash ? researched(this.save.archives, "dashTiles", 0) : 0) + this.worn.dashTiles;
   }
-  /** How many of a Rush's rushed steps regain HP by Regen: none without the
-   * Rush Regen skill, and one more a Rush Regen research level. */
-  get rushRegenSteps() {
-    return this.save.upgrades.rushRegen ? researched(this.save.archives, "rushRegenSteps", 0) : 0;
+  /** How many of a Dash's dashed steps regain HP by Regen: none without the
+   * Dash Regen skill, and one more a Dash Regen research level. */
+  get dashRegenSteps() {
+    return this.save.upgrades.dashRegen ? researched(this.save.archives, "dashRegenSteps", 0) : 0;
   }
-  /** Tiles card `id`'s first step toward a new target may rush across:
-   * `rushTiles`, End Rush's research on STAIRS (toward the stairs, or the
-   * Delve's climb), and its Rush badge's value. They add up. */
-  rushFor(id: CardId) {
+  /** Tiles card `id`'s first step toward a new target may dash across:
+   * `dashTiles`, End Rush's research on STAIRS (toward the stairs, or the
+   * Delve's climb), and its Dash badge's value. They add up. */
+  dashFor(id: CardId) {
     const end = id === "stairs" && this.save.upgrades.endRush ? researched(this.save.archives, "endRushTiles", 0) : 0;
-    const badge = badgeOn(this.run.badges, id, "rush");
-    return this.rushTiles + end + (badge ? badgeValue("rush", badge.level) : 0);
+    const badge = badgeOn(this.run.badges, id, "dash");
+    return this.dashTiles + end + (badge ? badgeValue("dash", badge.level) : 0);
   }
-  /** Whether a rush may cross (x, y): empty floor (`emptyAt`), or a chest
+  /** Whether a dash may cross (x, y): empty floor (`emptyAt`), or a chest
    * already opened. */
-  private rushable(x: number, y: number) {
+  private dashable(x: number, y: number) {
     return this.emptyAt(x, y) || (this.world.tile(x, y).kind === "openedChest" && this.emptyAt(x, y, true));
   }
-  /** Whether (x, y) is empty floor a rush may cross: nothing on it, no torch
+  /** Whether (x, y) is empty floor a dash may cross: nothing on it, no torch
    * and no Gem (with `anyKind`, only those last two). */
   private emptyAt(x: number, y: number, anyKind = false) {
     const gem = this.gemFinder.gem;
@@ -1748,8 +1748,8 @@ export class Game {
   private canStep(dx: number, dy: number) {
     return !this.busy && Math.abs(dx) + Math.abs(dy) === 1;
   }
-  /** One step by (dx, dy); `regen` false for the tiles a Rush crosses after
-   * its first step (past its first `rushRegenSteps`), so a rushed turn
+  /** One step by (dx, dy); `regen` false for the tiles a Dash crosses after
+   * its first step (past its first `dashRegenSteps`), so a dashed turn
    * regains HP once (and once more for each of those). */
   move(dx: number, dy: number, force = true, track = true, regen = true) {
     if (!this.canStep(dx, dy)) return false;
@@ -1997,7 +1997,7 @@ export class Game {
     if (crits) this.events.record("crits", crits, this.missionKey(at));
     return [...coinsText(gold, silver), ...cellsFound, ...found.map((g) => g.text)];
   }
-  /** The end of a turn inside a run (a step, or a whole rush): each Ranged
+  /** The end of a turn inside a run (a step, or a whole dash): each Ranged
    * enemy within reach whose cooldown is ready shoots the hero where it now
    * stands, then the Archer, its arrow ready, shoots the closest enemy in
    * its range (ranged.ts). Nothing before the third tier unless the hero is

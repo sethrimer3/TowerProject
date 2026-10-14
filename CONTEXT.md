@@ -275,7 +275,7 @@ _Avoid_: drain
 A card that moves nowhere and trades keys it holds for something else: **BK Trader** (3 yellow keys for a blue key) and **YK to HP** (a yellow key for 10% of max HP, only while that much HP is missing). Skipped while it can't pay.
 
 **Regen**:
-The HP a hero regains with every step taken in a run, after whatever the step did, up to max HP. A Rush turn counts as one step, but for the first rushed tiles Rush Regen research lets regain HP too. The Regen skill opens Regen training, which gives it.
+The HP a hero regains with every step taken in a run, after whatever the step did, up to max HP. A Dash turn counts as one step, but for the first dashed tiles Dash Regen research lets regain HP too. The Regen skill opens Regen training, which gives it.
 _Avoid_: regeneration, healing (a potion's)
 
 **Provision**:
@@ -394,7 +394,7 @@ One project in the Archives, researched a level at a time; each completed level 
 _Avoid_: tech, study
 
 **Archivist**:
-One research slot: it works on one research level at a time, and optionally auto-continues to the next. Its research can be rushed: completed at once for Gems (not the hand's Rush).
+One research slot: it works on one research level at a time, and optionally auto-continues to the next. Its research can be rushed: completed at once for Gems (not the hand's Dash).
 _Avoid_: lab slot, researcher
 
 **Cell**:
@@ -402,7 +402,7 @@ A lasting currency, shown as a yellow triangle, that only Greater Bosses drop (m
 _Avoid_: energy, research points
 
 **Speed Up**:
-A while, bought with Cells, during which one archivist researches 1.5 to 4 times as fast; queued, it is bought again each time it ends while the Cells last. Not to be confused with Rush, which completes research at once for Gems.
+A while, bought with Cells, during which one archivist researches 1.5 to 4 times as fast; queued, it is bought again each time it ends while the Cells last. Not to be confused with Dash, which completes research at once for Gems.
 _Avoid_: boost (the training boost), haste
 
 **Research page**:
@@ -423,9 +423,9 @@ _Avoid_: loadout (what the character starts a run with)
 How many steps a second the hand (and Automove in the forest) takes. The player sets it inside a run with the arrows beside play/pause, from 0 (paused) to 3; Movement Speed research, which the Movement Speed skill opens, makes faster speeds available, up to 9. A new hero starts at 2; the forest walks at least 3.
 _Avoid_: Automove speed
 
-**Rush**:
-The hand's first step toward a new target carrying on along the path across empty floor in the same step, stopping on the tile before anything else. How many tiles it may cross comes from Rush research, once the Rush skill is owned, and adds up with End Rush research (on STAIRS only) and a Rush badge on the card.
-_Avoid_: dash, sprint, leap
+**Dash**:
+The hand's first step toward a new target carrying on along the path across empty floor in the same step, stopping on the tile before anything else. How many tiles it may cross comes from Dash research, once the Dash skill is owned, and adds up with End Rush research (on STAIRS only) and a Dash badge on the card.
+_Avoid_: rush (the Archives' Gem button that completes research at once), sprint, leap
 
 **Deck**:
 All the player's cards: those in the hand and those waiting outside it. Also the page where the hand is ordered (with the Combat Stance skill) and its cards chosen from the deck (with Buildout).

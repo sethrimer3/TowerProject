@@ -118,12 +118,12 @@ export const RESEARCH_TARGETS = {
   trainingSpeed: { name: "Training Speed", base: 0, shown: speed },
   /** What a trainer's Gold is cut by, in tenths of a percent. */
   trainingDiscount: { name: "Training Discount", base: 0, shown: tenths },
-  /** Tiles the hand's first step toward a new target may rush across, once Rush is owned. */
-  rushTiles: { name: "Tiles Rushed", base: 0, shown: count },
-  /** Tiles more STAIRS's rush toward the stairs may cross, once End Rush is owned. */
+  /** Tiles the hand's first step toward a new target may dash across, once Dash is owned. */
+  dashTiles: { name: "Tiles Dashed", base: 0, shown: count },
+  /** Tiles more STAIRS's dash toward the stairs may cross, once End Rush is owned. */
   endRushTiles: { name: "Tiles Rushed to the Stairs", base: 0, shown: count },
-  /** How many of a Rush's rushed tiles regain HP by Regen, once Rush Regen is owned. */
-  rushRegenSteps: { name: "Rushed Steps with Regen", base: 0, shown: count },
+  /** How many of a Dash's dashed tiles regain HP by Regen, once Dash Regen is owned. */
+  dashRegenSteps: { name: "Dashed Steps with Regen", base: 0, shown: count },
   /** Buy quantities opened past x1: x5, x10, x100, then Max. */
   buyQuantity: { name: "Buy Quantity", base: 0, shown: (n: number) => quantityLabel(BUY_QUANTITIES[Math.min(n, BUY_QUANTITIES.length - 1)]!) },
   /** How fast archivists work: a level of `d` hours takes d / (1 + speed). */
@@ -288,34 +288,34 @@ const trainingDiscountLevels = () => Array.from({ length: 99 }, (_, i): Research
   return { gold: 30 + Math.round((8 * m * m * m * 120) / (m + 120)), hours: minutes / 60, effect: { target: "trainingDiscount", op: "add", value: 5 } };
 });
 
-/** Rush: +1 tile rushed a level, for 25 levels. Each level starts from
+/** Dash: +1 tile dashed a level, for 25 levels. Each level starts from
  * 250 × n Gold and 1.75 × n hours and grows steeper: Gold
  * doubles each level and time grows 20% (250 Gold and 1.75 hours at level
  * 1, about 105 billion Gold and 145 days at 25; 201 billion and 697 days in
  * all), since a faster pace of play is worth the most. End Rush follows the
  * same schedule. */
-const rushLevels = (target: ResearchTarget) => Array.from({ length: 25 }, (_, i): ResearchLevel => ({
+const dashLevels = (target: ResearchTarget) => Array.from({ length: 25 }, (_, i): ResearchLevel => ({
   gold: 250 * (i + 1) * intPow(2, i),
   hours: 1.75 * (i + 1) * intPow(1.2, i),
   effect: { target, op: "add", value: 1 },
 }));
 
-/** Rush Regen: +1 rushed step with Regen a level, for 35 levels, in all
- * exactly Rush's Gold and time, spread more gently: level n weighs
+/** Dash Regen: +1 dashed step with Regen a level, for 35 levels, in all
+ * exactly Dash's Gold and time, spread more gently: level n weighs
  * n × 1.6^(n−1) of the Gold and n × 1.12^(n−1) of the time (about 260 Gold
  * and 1.4 hours at level 1, 79 billion Gold and 97 days at 35), the Gold's
  * rounding left on the last level. */
-const rushRegenLevels = (): ResearchLevel[] => {
-  const rush = rushLevels("rushTiles"), n = 35;
+const dashRegenLevels = (): ResearchLevel[] => {
+  const dash = dashLevels("dashTiles"), n = 35;
   const share = (total: number, growth: number) => {
     const weights = Array.from({ length: n }, (_, i) => (i + 1) * intPow(growth, i));
     const sum = weights.reduce((a, b) => a + b, 0);
     return weights.map((w) => (total * w) / sum);
   };
-  const goldTotal = rush.reduce((a, l) => a + l.gold, 0), hoursTotal = rush.reduce((a, l) => a + l.hours, 0);
+  const goldTotal = dash.reduce((a, l) => a + l.gold, 0), hoursTotal = dash.reduce((a, l) => a + l.hours, 0);
   const gold = share(goldTotal, 1.6).map(Math.round), hours = share(hoursTotal, 1.12);
   gold[n - 1]! += goldTotal - gold.reduce((a, b) => a + b, 0);
-  return gold.map((g, i) => ({ gold: g, hours: hours[i]!, effect: { target: "rushRegenSteps", op: "add", value: 1 } }));
+  return gold.map((g, i) => ({ gold: g, hours: hours[i]!, effect: { target: "dashRegenSteps", op: "add", value: 1 } }));
 };
 
 /** Max Interest's limits by level, up from 50 Silver a floor. */
@@ -550,26 +550,26 @@ export const RESEARCH = {
     requires: [{ upgrade: "moveSpeed" }],
     levels: countLevels("moveSpeed", 6),
   },
-  rush: {
-    name: "Rush",
-    description: "Learn the old climbers' dash: the hand's first step toward a new target rushes across more empty tiles at once.",
+  dash: {
+    name: "Dash",
+    description: "Learn the old climbers' dash: the hand's first step toward a new target dashes across more empty tiles at once.",
     categories: ["abilities"],
-    requires: [{ upgrade: "rush" }],
-    levels: rushLevels("rushTiles"),
+    requires: [{ upgrade: "dash" }],
+    levels: dashLevels("dashTiles"),
   },
   endRush: {
     name: "End Rush",
-    description: "Learn the last dash of the climb: STAIRS's rush toward the stairs crosses more empty tiles at once.",
+    description: "Learn the last dash of the climb: STAIRS's dash toward the stairs crosses more empty tiles at once.",
     categories: ["abilities"],
     requires: [{ upgrade: "endRush" }],
-    levels: rushLevels("endRushTiles"),
+    levels: dashLevels("endRushTiles"),
   },
-  rushRegen: {
-    name: "Rush Regen",
-    description: "Learn to catch your breath mid-dash: one more of a Rush's first rushed steps regains HP by Regen.",
+  dashRegen: {
+    name: "Dash Regen",
+    description: "Learn to catch your breath mid-dash: one more of a Dash's first dashed steps regains HP by Regen.",
     categories: ["abilities"],
-    requires: [{ upgrade: "rushRegen" }],
-    levels: rushRegenLevels(),
+    requires: [{ upgrade: "dashRegen" }],
+    levels: dashRegenLevels(),
   },
   undoCount: {
     name: "Undo Count",

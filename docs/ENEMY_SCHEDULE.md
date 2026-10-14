@@ -83,7 +83,7 @@ The More Enemies badge adds its percent of the floor's generated enemies, the ex
 ## 4. What pays for it
 
 - **Loot follows the enemies.** Each kill pays Gold, Silver and XP by its strength and floor, so more and stronger enemies pay more on later floors. That trains more levels in a run (Silver's run training, XP's training points) and buys higher research levels.
-- **Player powers to come:** ways to handle crowds, beside what the game already has (Rush, Ignore, Target, Skip, Deprioritize, crits, Revive).
+- **Player powers to come:** ways to handle crowds, beside what the game already has (Dash, Ignore, Target, Skip, Deprioritize, crits, Revive).
 - **The stat curves** are the last resort, lowered if the rest isn't enough.
 
 ## 5. Census

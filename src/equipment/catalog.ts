@@ -22,7 +22,7 @@ export const CATEGORIES: Record<CategoryId, CategoryDef> = {
   chestplate: { name: "Chestplate", plural: "Chestplates", role: "Defense: DEF, max HP and sustain", material: "rivets" },
   helmet: { name: "Helmet", plural: "Helmets", role: "The first blow: shroud, and what each fight teaches", material: "padding" },
   gloves: { name: "Gloves", plural: "Gloves", role: "Handling: ATK, keys and potions", material: "leather" },
-  boots: { name: "Boots", plural: "Boots", role: "Movement: speed, Rush and fresh floors", material: "hobnails" },
+  boots: { name: "Boots", plural: "Boots", role: "Movement: speed, Dash and fresh floors", material: "hobnails" },
   cape: { name: "Cape", plural: "Capes", role: "Fortune: Gold, Silver and materials", material: "silk" },
   belt: { name: "Belt", plural: "Belts", role: "Provisions: potions, max HP and Silver", material: "buckles" },
   ring: { name: "Ring", plural: "Rings", role: "Power: percentages of ATK, DEF and max HP", material: "moonstone" },
@@ -52,10 +52,10 @@ export type EffectKind =
   | "shroud" | "regen" | "yellowKeys" | "blueKeys" | "bossAttack" | "pierce"
   | "potionHeal" | "victoryHeal" | "floorHeal"
   | "goldFind" | "silverFind" | "xpGain" | "materialFind" | "bossDrops" | "startSilver"
-  | "moveSpeed" | "rushTiles";
+  | "moveSpeed" | "dashTiles";
 
 /** How an effect reads: its words after the number, whether the number is a
- * percent, whether it counts in whole units only (keys, Rush tiles) and
+ * percent, whether it counts in whole units only (keys, Dash tiles) and
  * its words for more than one, and a sign other than + before it. */
 type EffectText = { words: string; percent?: true; whole?: true; plural?: string; lead?: string };
 export const EFFECTS: Record<EffectKind, EffectText> = {
@@ -81,7 +81,7 @@ export const EFFECTS: Record<EffectKind, EffectText> = {
   bossDrops: { words: "boss equipment drop chance", percent: true },
   startSilver: { words: "Silver at the start of each run" },
   moveSpeed: { words: "movement speed", percent: true },
-  rushTiles: { words: "tile a Rush crosses", plural: "tiles a Rush crosses", whole: true },
+  dashTiles: { words: "tile a Dash crosses", plural: "tiles a Dash crosses", whole: true },
 };
 
 /** One line of an item's effects: `base` at level 1, `perLevel` more each
@@ -143,11 +143,11 @@ export const ITEMS: readonly ItemDef[] = [
   { id: "travelersBoots", name: "Traveler's Boots", category: "boots", class: "standard", identity: "Reliable DEF and a little speed",
     effects: [line("defense", 1, 0.25), line("moveSpeed", 5, 0.15, U), line("maxHp", 15, 3, R)] },
   { id: "fleetstepBoots", name: "Fleetstep Boots", category: "boots", class: "unique", identity: "Raw speed: the hand walks faster everywhere",
-    effects: [line("moveSpeed", 10, 0.4), line("defense", 1, 0.2, U), line("rushTiles", 1, 0, { ...R, fixed: true })] },
-  { id: "pathfinderTreads", name: "Pathfinder's Treads", category: "boots", class: "unique", identity: "Automation: each Rush crosses more empty floor",
-    effects: [line("rushTiles", 1, 0.05), line("moveSpeed", 5, 0.2, U), line("floorHeal", 1, 0.03, R)] },
+    effects: [line("moveSpeed", 10, 0.4), line("defense", 1, 0.2, U), line("dashTiles", 1, 0, { ...R, fixed: true })] },
+  { id: "pathfinderTreads", name: "Pathfinder's Treads", category: "boots", class: "unique", identity: "Automation: each Dash crosses more empty floor",
+    effects: [line("dashTiles", 1, 0.05), line("moveSpeed", 5, 0.2, U), line("floorHeal", 1, 0.03, R)] },
   { id: "delversGreaves", name: "Delver's Greaves", category: "boots", class: "unique", identity: "Made for the Delve: faster, and healed by each new depth",
-    effects: [line("moveSpeed", 15, 0.5, DELVE), line("floorHeal", 2, 0.05, DELVE), line("goldFind", 5, 0.2, { ...U, ...DELVE }), line("rushTiles", 1, 0.03, { ...R, ...DELVE })] },
+    effects: [line("moveSpeed", 15, 0.5, DELVE), line("floorHeal", 2, 0.05, DELVE), line("goldFind", 5, 0.2, { ...U, ...DELVE }), line("dashTiles", 1, 0.03, { ...R, ...DELVE })] },
   // Capes
   { id: "woolCloak", name: "Wool Cloak", category: "cape", class: "standard", identity: "Reliable max HP and a little DEF",
     effects: [line("maxHp", 10, 2), line("defense", 1, 0.2, U), line("goldFind", 3, 0.1, R)] },

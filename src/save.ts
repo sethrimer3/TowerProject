@@ -288,7 +288,29 @@ function decodeInventory(s: any, d: Save) {
 /** Upgrades renamed since a save may have been made: each new id's old one,
  * read when the save has none under the new id.
  * TODO: remove these conversions in a future save version. */
-const RENAMED_UPGRADES: Partial<Record<UpgradeId, string>> = { parry: "evade" };
+const RENAMED_UPGRADES: Partial<Record<UpgradeId, string>> = { parry: "evade", dash: "rush", dashRegen: "rushRegen", dashBadge: "rushBadge" };
+/** Rush became Dash: its research projects' and badge's old ids, renamed
+ * in the raw save before the Archives and badges decode it.
+ * TODO: remove this conversion in a future save version. */
+const RUSH_RENAMES = new Map([["rush", "dash"], ["rushRegen", "dashRegen"]]);
+function renameRush(s: any) {
+  const a = s.archives;
+  if (isRecord(a)) {
+    for (const k of ["levels", "progress"]) {
+      const m = a[k];
+      if (isRecord(m)) for (const [old, now] of RUSH_RENAMES) if (old in m && !(now in m)) m[now] = m[old];
+    }
+    for (const slot of Array.isArray(a.slots) ? a.slots : []) if (isRecord(slot?.job) && RUSH_RENAMES.has(slot.job.research)) slot.job.research = RUSH_RENAMES.get(slot.job.research);
+    for (const r of Array.isArray(a.history) ? a.history : []) if (isRecord(r) && RUSH_RENAMES.has(r.research)) r.research = RUSH_RENAMES.get(r.research);
+  }
+  const b = s.badges, dash = (id: unknown) => (id === "rush" ? "dash" : id);
+  if (isRecord(b?.owned) && "rush" in b.owned && !("dash" in b.owned)) b.owned.dash = b.owned.rush;
+  if (isRecord(b?.cards)) for (const card of Object.keys(b.cards)) if (Array.isArray(b.cards[card])) b.cards[card] = b.cards[card].map(dash);
+  for (const mode of ["tower", "delve"]) {
+    const badges = s[mode]?.run?.badges;
+    if (isRecord(badges)) for (const list of Object.values(badges)) if (Array.isArray(list)) for (const r of list) if (isRecord(r)) r.id = dash(r.id);
+  }
+}
 function decodeUpgrades(raw: any, d: Save) {
   for (const u of UPGRADES) d.upgrades[u.id] = count(raw?.[u.id] || raw?.[RENAMED_UPGRADES[u.id] ?? ""], d.upgrades[u.id], u.max);
 }
@@ -432,6 +454,7 @@ export function decode(raw: string | null): Save {
   const d = defaults();
   try {
     const s = JSON.parse(raw ?? "null") ?? {};
+    if (isRecord(s)) renameRush(s);
     decodeUpgrades(s.upgrades, d);
     // Undo capacity counts Undo Count research, so the Archives come first.
     d.archives = decodeArchives(s.archives);

@@ -28,7 +28,7 @@ Each category levels with its own upgrade material. Materials are currencies (`s
 | Chestplate | Defense: DEF, max HP and sustain | Iron Rivets | Rivets and plate scraps, hammered into armor. |
 | Helmet | The first blow: shroud, and what each fight teaches | Quilted Padding | Thick lining that softens the first blow. |
 | Gloves | Handling: ATK, keys and potions | Tanned Leather | Supple hide for a sure grip. |
-| Boots | Movement: speed, Rush and fresh floors | Hobnails | Iron studs for sure footing on worn stone. |
+| Boots | Movement: speed, Dash and fresh floors | Hobnails | Iron studs for sure footing on worn stone. |
 | Cape | Fortune: Gold, Silver and materials | Spun Silk | Fine thread that catches the light, and the luck. |
 | Belt | Provisions: potions, max HP and Silver | Brass Buckles | Clasps that keep provisions close at hand. |
 | Ring | Power: percentages of ATK, DEF and max HP | Moonstone | A pale stone that holds a quiet charge. |
@@ -62,7 +62,7 @@ Each rarity's row in `RARITY_TIERS` holds its cap (`maxLevel`), the level its sl
 
 ## 5. Effects
 
-Each line of an item is `(base + perLevel × (level − 1)) × rarity power`, kept on the game's snap grid (millionths); a *fixed* line ignores both (Bloodprice Blade's drawback). Keys and Rush tiles count whole units only (rounded down). All effects are deterministic: no random rolls, affixes, dodge or crits.
+Each line of an item is `(base + perLevel × (level − 1)) × rarity power`, kept on the game's snap grid (millionths); a *fixed* line ignores both (Bloodprice Blade's drawback). Keys and Dash tiles count whole units only (rounded down). All effects are deterministic: no random rolls, affixes, dodge or crits.
 
 | Effect | Read by |
 |---|---|
@@ -78,7 +78,7 @@ Each line of an item is `(base + perLevel × (level − 1)) × rarity power`, ke
 | Upgrade materials from kills, boss equipment drop chance | `RunPurse.enemyLoot` |
 | Silver at the start of each run | `Game.dealHand` (beside Pocket Money) |
 | Movement speed | `Game.moveRate` (the hand's and Automove's steps a second) |
-| Tiles a Rush crosses | `Game.rushTiles` (also lets the hand rush without the Rush skill) |
+| Tiles a Dash crosses | `Game.dashTiles` (also lets the hand dash without the Dash skill) |
 
 A line marked *(Tower only)* or *(Delve only)* counts only in that mode's loadout. Effects stack lightly across categories (a ring's ATK % multiplies the weapon's flat ATK, two heals both heal); there are no set bonuses.
 
@@ -127,9 +127,9 @@ Each category has one **Standard** piece (from bosses) and three **Unique** piec
 | Piece | Class | Identity | Common, level 1 | Uncommon, level 1 | Rare, level 1 | Growth a level (each line, before rarity) |
 |---|---|---|---|---|---|---|
 | Traveler's Boots | Standard | Reliable DEF and a little speed | +1 DEF | +1.25 DEF; +6.25% movement speed | +1.6 DEF; +8% movement speed; +24 max HP | 0.25 / 0.15 / 3 |
-| Fleetstep Boots | Unique | Raw speed: the hand walks faster everywhere | +10% movement speed | +12.5% movement speed; +1.25 DEF | +16% movement speed; +1.6 DEF; +1 tile a Rush crosses | 0.4 / 0.2 / fixed |
-| Pathfinder's Treads | Unique | Automation: each Rush crosses more empty floor | +1 tile a Rush crosses | +1 tile a Rush crosses; +6.25% movement speed | +1 tile a Rush crosses; +8% movement speed; 1.6% of max HP healed on each new floor | 0.05 / 0.2 / 0.03 |
-| Delver's Greaves | Unique | Made for the Delve: faster, and healed by each new depth | +15% movement speed (Delve only); 2% of max HP healed on each new floor (Delve only) | +18.75% movement speed (Delve only); 2.5% of max HP healed on each new floor (Delve only); +6.25% Gold found (Delve only) | +24% movement speed (Delve only); 3.2% of max HP healed on each new floor (Delve only); +8% Gold found (Delve only); +1 tile a Rush crosses (Delve only) | 0.5 / 0.05 / 0.2 / 0.03 |
+| Fleetstep Boots | Unique | Raw speed: the hand walks faster everywhere | +10% movement speed | +12.5% movement speed; +1.25 DEF | +16% movement speed; +1.6 DEF; +1 tile a Dash crosses | 0.4 / 0.2 / fixed |
+| Pathfinder's Treads | Unique | Automation: each Dash crosses more empty floor | +1 tile a Dash crosses | +1 tile a Dash crosses; +6.25% movement speed | +1 tile a Dash crosses; +8% movement speed; 1.6% of max HP healed on each new floor | 0.05 / 0.2 / 0.03 |
+| Delver's Greaves | Unique | Made for the Delve: faster, and healed by each new depth | +15% movement speed (Delve only); 2% of max HP healed on each new floor (Delve only) | +18.75% movement speed (Delve only); 2.5% of max HP healed on each new floor (Delve only); +6.25% Gold found (Delve only) | +24% movement speed (Delve only); 3.2% of max HP healed on each new floor (Delve only); +8% Gold found (Delve only); +1 tile a Dash crosses (Delve only) | 0.5 / 0.05 / 0.2 / 0.03 |
 
 ### Capes
 
