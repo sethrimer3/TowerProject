@@ -1,4 +1,4 @@
-import { RUN_TRAINING_PRICES, schedulePrice, TRAINING, type TrainingId, type TrainingRow } from "./config.ts";
+import { RUN_TRAINING_PRICES, schedulePrice, TRAINING, trainingCap, type TrainingId, type TrainingRow } from "./config.ts";
 import type { Mode, RunCore, Save } from "./entities.ts";
 import { bulkBuy, type BuyQuantity } from "./buy-quantity.ts";
 import { rowValue, trainingOpen } from "./loadout.ts";
@@ -12,8 +12,9 @@ import { rowValue, trainingOpen } from "./loadout.ts";
  * one before, `step` rising by `growth` every five, summed here at once. */
 export const silverPrice = (id: TrainingId, bought: number) => schedulePrice(RUN_TRAINING_PRICES[id], bought);
 
-/** The highest level `row` reaches in a run: its `max`, as on the Training tab. */
-export const runTrainingMax = (row: TrainingRow) => row.max;
+/** The highest level `row` reaches in a run: its cap with the Limit Breaks
+ * owned, as on the Training tab. */
+export const runTrainingMax = (row: TrainingRow, save: Pick<Save, "upgrades">) => trainingCap(row, save.upgrades);
 
 /** Ranks of `id` bought with Silver in `run`. */
 export const boughtInRun = (run: Pick<RunCore, "training">, id: TrainingId) => run.training?.[id] ?? 0;
@@ -36,7 +37,7 @@ export type RunTrainingOffer = ReturnType<typeof runTrainingOffer>;
 
 export function runTrainingOffer(save: Pick<Save, "training" | "upgrades" | "goals">, run: Pick<RunCore, "training">, id: TrainingId) {
   const row = TRAINING.find((t) => t.id === id)!, bought = boughtInRun(run, id);
-  const level = save.training[id] + bought, max = runTrainingMax(row);
+  const level = save.training[id] + bought, max = runTrainingMax(row, save);
   return { row, bought, level, max, price: silverPrice(id, bought), open: trainingOpen(row, save), maxed: level >= max };
 }
 

@@ -233,6 +233,10 @@ _Avoid_: banked time, refund time
 Training time a Gem reset returns: all the time spent on the reset stat (its trainers' ranks, a rank in training, and its time credit). Any stat's next ranks trainers train use it, after that stat's own time credit, until it is used up.
 _Avoid_: common credit, time pool
 
+**Limit Break**:
+One of ten Inspiration skills in a chain under Torch, 50 Inspiration each, each raising by 500 the most levels ATK, DEF, max HP, Regen and the shroud train to (the shroud by the first eight only): 1,000 levels without one, 6,000 with all ten (5,000 for the shroud).
+_Avoid_: level cap upgrade, prestige
+
 **Training boost**:
 An hour of ranks in training going twice as fast, claimed from the Training tab (by an ad, to come), up to four hours banked.
 _Avoid_: speedup, double time

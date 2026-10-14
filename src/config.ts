@@ -433,6 +433,18 @@ export const UPGRADES = [
   { id: "redSiphon", name: "RK Siphon", description: "Add the RK SIPHON card to your deck: it trades ATK training levels, for the rest of the run, for a red key, each use costing one level more than the last", card: "redSiphon", base: 20, max: 1, currency: "inspiration" },
   { id: "floorSkipReward", name: "Floor Skip Reward", description: "Open Floor Skip Reward research in the Archives: each level pays a share of the Gold a skipped floor's chests and battles held", base: 20, max: 1, currency: "inspiration" },
   { id: "cardTorch", name: "Torch", description: "Add the TORCH card to your deck: it moves you toward the closest lit torch, putting it out", card: "torch", base: 20, max: 1, currency: "inspiration" },
+  // Limit Break 1 to 10, a chain under Torch: each raises the most levels of
+  // the Training rows with `breaks` (LIMIT_BREAK_RANKS, trainingCap).
+  { id: "limitBreak1", name: "Limit Break 1", description: "Raise the most training levels of ATK, DEF, Max HP, Regen and Shroud by 500", base: 50, max: 1, currency: "inspiration" },
+  { id: "limitBreak2", name: "Limit Break 2", description: "Raise the most training levels of ATK, DEF, Max HP, Regen and Shroud by 500", base: 50, max: 1, currency: "inspiration" },
+  { id: "limitBreak3", name: "Limit Break 3", description: "Raise the most training levels of ATK, DEF, Max HP, Regen and Shroud by 500", base: 50, max: 1, currency: "inspiration" },
+  { id: "limitBreak4", name: "Limit Break 4", description: "Raise the most training levels of ATK, DEF, Max HP, Regen and Shroud by 500", base: 50, max: 1, currency: "inspiration" },
+  { id: "limitBreak5", name: "Limit Break 5", description: "Raise the most training levels of ATK, DEF, Max HP, Regen and Shroud by 500", base: 50, max: 1, currency: "inspiration" },
+  { id: "limitBreak6", name: "Limit Break 6", description: "Raise the most training levels of ATK, DEF, Max HP, Regen and Shroud by 500", base: 50, max: 1, currency: "inspiration" },
+  { id: "limitBreak7", name: "Limit Break 7", description: "Raise the most training levels of ATK, DEF, Max HP, Regen and Shroud by 500", base: 50, max: 1, currency: "inspiration" },
+  { id: "limitBreak8", name: "Limit Break 8", description: "Raise the most training levels of ATK, DEF, Max HP, Regen and Shroud by 500", base: 50, max: 1, currency: "inspiration" },
+  { id: "limitBreak9", name: "Limit Break 9", description: "Raise the most training levels of ATK, DEF, Max HP and Regen by 500", base: 50, max: 1, currency: "inspiration" },
+  { id: "limitBreak10", name: "Limit Break 10", description: "Raise the most training levels of ATK, DEF, Max HP and Regen by 500", base: 50, max: 1, currency: "inspiration" },
   { id: "cardWoodenDoor", name: "Wooden Door", description: "Add the WOODEN DOOR card to your deck: it moves you toward the closest Wooden Door you hold a key for, or can break down and survive", card: "woodenDoor", base: 20, max: 1, currency: "inspiration" },
   {
     id: "inspirationUndos",
@@ -579,11 +591,12 @@ export const TRAINING_GROUPS = { offense: "Offense", defense: "Defense", utility
  * and Gold Bonus `GOLD_BONUS_RANK` percent to their multiplier, the same at
  * every level. A row
  * with `requires` shows, and trains, only once that upgrade is owned. Each
- * trains no further than `max` ranks, its ranks and those bought for a run
- * with Silver together. */
+ * trains no further than its cap (`trainingCap`): `max` ranks, and
+ * `LIMIT_BREAK_RANKS` more for each of its first `breaks` Limit Breaks owned,
+ * its ranks and those bought for a run with Silver together. */
 export const TRAINING = [
-  { id: "hp", name: "Max HP", group: "defense", stat: "maxHp", curve: { per: 10, square: 1 }, cost: 1, max: 6000, description: "Raises maximum HP." },
-  { id: "attack", name: "ATK", group: "offense", stat: "attack", curve: { per: 1, square: 0.2 }, cost: 1, max: 6000, description: "Raises ATK, the damage each strike deals before the enemy's DEF." },
+  { id: "hp", name: "Max HP", group: "defense", stat: "maxHp", curve: { per: 10, square: 1 }, cost: 1, max: 1000, breaks: 10, description: "Raises maximum HP." },
+  { id: "attack", name: "ATK", group: "offense", stat: "attack", curve: { per: 1, square: 0.2 }, cost: 1, max: 1000, breaks: 10, description: "Raises ATK, the damage each strike deals before the enemy's DEF." },
   { id: "critChance", name: "Critical Chance", short: "Crit %", group: "offense", requires: "critical", cost: 1, max: 80, description: "Raises the chance each of your strikes is a critical hit." },
   { id: "critFactor", name: "Critical Factor", short: "Crit x", group: "offense", requires: "critical", cost: 1, max: 150, description: "Raises how much a critical hit multiplies your ATK." },
   { id: "attackRange", name: "Attack Range", short: "Range", group: "offense", goal: "attackRange", cost: 1, max: 80, description: "Raises how far the Archer's shots reach, in tiles." },
@@ -591,9 +604,9 @@ export const TRAINING = [
   { id: "attackPerTile", name: "ATK / Tile", short: "ATK/Tile", group: "offense", goal: "attackPerTile", cost: 1, max: 200, description: "Multiplies the ATK of each of the Archer's shots by more for every tile its target stands away." },
   { id: "multishotChance", name: "Multishot Chance", short: "Multi %", group: "offense", goal: "multishot", cost: 1, max: 99, description: "Raises the chance each of the Archer's shots fires more than one arrow, each at another enemy in range." },
   { id: "multishotTargets", name: "Multishot Targets", short: "Targets", group: "offense", goal: "multishot", cost: 1, max: 7, description: "Raises how many arrows a multishot fires, one at each of that many enemies in range." },
-  { id: "defense", name: "DEF", group: "defense", stat: "defense", curve: { per: 0, square: 1 / 12 }, cost: 1, max: 6000, description: "Raises DEF, taken off the damage of every enemy strike." },
-  { id: "regen", name: "Regen", group: "defense", stat: "regen", curve: { per: 0.1, square: 1 / 120 }, cost: 1, max: 6000, requires: "regen", description: "Raises the HP regained with every step taken in a run." },
-  { id: "shroud", name: "Shroud", group: "defense", stat: "shroud", curve: { per: 5, square: 0.1, fourth: 0.0000064 }, cost: 1, max: 5000, requires: "shroud", description: "Raises the damage the shroud blocks at the start of every fight." },
+  { id: "defense", name: "DEF", group: "defense", stat: "defense", curve: { per: 0, square: 1 / 12 }, cost: 1, max: 1000, breaks: 10, description: "Raises DEF, taken off the damage of every enemy strike." },
+  { id: "regen", name: "Regen", group: "defense", stat: "regen", curve: { per: 0.1, square: 1 / 120 }, cost: 1, max: 1000, breaks: 10, requires: "regen", description: "Raises the HP regained with every step taken in a run." },
+  { id: "shroud", name: "Shroud", group: "defense", stat: "shroud", curve: { per: 5, square: 0.1, fourth: 0.0000064 }, cost: 1, max: 1000, breaks: 8, requires: "shroud", description: "Raises the damage the shroud blocks at the start of every fight." },
   { id: "lifesteal", name: "Lifesteal", group: "defense", stat: "lifesteal", curve: { per: 0.1005, square: -0.0005 }, cost: 1, max: 80, requires: "lifesteal", description: "Raises the share of the damage each of your strikes deals that is restored to you as HP." },
   { id: "thorns", name: "Thorn Damage", short: "Thorns", group: "defense", stat: "thorns", curve: { per: 1 }, cost: 1, max: 99, requires: "thorns", description: "Each enemy strike costs the enemy this share of its max HP, half against bosses and Greater Bosses." },
   { id: "parry", name: "Parry %", group: "defense", stat: "parry", curve: { per: 0.5 }, cost: 1, max: 100, requires: "parry", description: "Raises how much every enemy strike's damage is cut." },
@@ -610,6 +623,19 @@ export const TRAINING = [
 ] as const;
 export type TrainingId = (typeof TRAINING)[number]["id"];
 export type TrainingRow = (typeof TRAINING)[number];
+/** The Limit Break skills, in the order the chain buys them. */
+export const LIMIT_BREAKS = ["limitBreak1", "limitBreak2", "limitBreak3", "limitBreak4", "limitBreak5", "limitBreak6", "limitBreak7", "limitBreak8", "limitBreak9", "limitBreak10"] as const satisfies readonly UpgradeId[];
+/** Training levels each Limit Break adds to the cap of a row it raises. */
+export const LIMIT_BREAK_RANKS = 500;
+/** The Limit Breaks that raise `row`'s cap: its first `breaks` of them. */
+const breaksOf = (row: TrainingRow) => ("breaks" in row ? row.breaks : 0);
+/** The most levels `row` trains to with `upgrades` owned: its `max`, and
+ * `LIMIT_BREAK_RANKS` more for each Limit Break owned that raises it. */
+export const trainingCap = (row: TrainingRow, upgrades: Partial<Record<UpgradeId, number>>) =>
+  row.max + LIMIT_BREAK_RANKS * LIMIT_BREAKS.slice(0, breaksOf(row)).filter((id) => upgrades[id]).length;
+/** The most levels `row` trains to with every Limit Break owned, which a
+ * saved rank may hold. */
+export const trainingCeiling = (row: TrainingRow) => row.max + LIMIT_BREAK_RANKS * breaksOf(row);
 /** A row that raises one of the character's stats. */
 export type StatTrainingRow = Extract<TrainingRow, { stat: string }>;
 export const isStatRow = (row: TrainingRow): row is StatTrainingRow => "stat" in row;

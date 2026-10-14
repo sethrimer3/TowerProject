@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { defaults, decode } from "../src/save.ts";
 import { Game } from "../src/state.ts";
 import { TREES, columnGap, mapNodes, treeHeight } from "../src/skill-trees.ts";
-import { TRAINING, UPGRADES, cost, type UpgradeId } from "../src/config.ts";
+import { LIMIT_BREAKS, TRAINING, UPGRADES, cost, type UpgradeId } from "../src/config.ts";
 import { RESEARCH } from "../src/archives.ts";
 test("fresh progression gates Delve, currencies, Courage root, and Legacy", () => {
   const g = new Game(defaults());
@@ -126,9 +126,9 @@ test("each skill in a tree of unlocks is bought once", () => {
 
 test("a tree taller than its view places its nodes on a taller map", () => {
   const inspiration = TREES[0];
-  assert.equal(treeHeight(inspiration), 352);
+  assert.equal(treeHeight(inspiration), 534);
   assert.ok(inspiration.nodes.every((n) => n.y > 0 && n.y < treeHeight(inspiration)), "every node on the map");
-  assert.equal(mapNodes(inspiration).find((n) => n.id === "recovery")!.y, (178 * 100) / 352);
+  assert.equal(mapNodes(inspiration).find((n) => n.id === "recovery")!.y, (178 * 100) / 534);
   assert.equal(treeHeight(TREES.find((t) => t.id === "courage")!), 198);
   assert.ok(TREES.slice(2).every((t) => treeHeight(t) === 100 && mapNodes(t).every((n, i) => n.y === t.nodes[i].y)), "other trees fit one view");
 });
@@ -262,4 +262,12 @@ test("a tree's column gap is the least distance across between two nodes in one 
   assert.equal(columnGap(tree("inspiration")), 20, "its five-across rows");
   assert.equal(columnGap(tree("courage")), 28);
   assert.equal(columnGap({ ...tree("courage"), nodes: [tree("courage").nodes[0]] }), 100, "no row holds two");
+});
+
+test("Limit Break 1 to 10 run straight down under Torch, each needing the one before", () => {
+  const nodes = TREES.find((t) => t.id === "inspiration")!.nodes, torch = nodes.find((n) => n.id === "cardTorch")!;
+  LIMIT_BREAKS.forEach((id, i) => {
+    const n = nodes.find((m) => m.id === id)!;
+    assert.deepEqual([n.x, n.y, n.requires], [torch.x, torch.y + 18 * (i + 1), [i ? LIMIT_BREAKS[i - 1] : "cardTorch"]], id);
+  });
 });

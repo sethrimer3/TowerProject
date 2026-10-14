@@ -1,7 +1,7 @@
 import { TRAINER_GEMS, trainingSlots, type TrainingJob, type TrainingPaid } from "./training-jobs.ts";
 import { count, dropInvalid, finite, fraction, isRecord, wholeIn } from "./decode.ts";
 import { TIERS } from "./tiers.ts";
-import { FIND_POTION_MAX, GOLD_SHOP, OLD_SAVE_KEY, SAVE_KEY, TOWER_WIDTH, TRAINING, UPGRADES, WIDTH, type UpgradeId } from "./config.ts";
+import { FIND_POTION_MAX, GOLD_SHOP, OLD_SAVE_KEY, SAVE_KEY, TOWER_WIDTH, TRAINING, UPGRADES, WIDTH, trainingCeiling, type UpgradeId } from "./config.ts";
 import type { AutomoveMemory, DelveRun, ModeSave, Fall, MoveSnapshot, Run, Save, TowerRun } from "./entities.ts";
 import { emptyMaterials, MATERIAL_IDS, type MaterialId } from "./materials.ts";
 import { decodeEquipment, defaultEquipment } from "./equipment/inventory.ts";
@@ -23,7 +23,6 @@ import { decodeShrines, defaultShrines, validShrineRun } from "./shrines.ts";
 import { decodeThemes, defaultThemes } from "./theme-collection.ts";
 import { isTournamentRun } from "./tournament/run.ts";
 import { decodeBadges, defaultBadges, validRunBadges } from "./badges.ts";
-import { runTrainingMax } from "./run-training.ts";
 import { backfillProfile, decodeProfile, defaultProfile } from "./profile.ts";
 import { decodeFinds, defaultFinds, validNotes } from "./run-notes.ts";
 export function defaults(): Save {
@@ -132,11 +131,11 @@ const validDelveState = (r: any) => Number.isInteger(r.milestone) && finite(r.mi
 const TOWER_FIELDS = ["damaged", "enemiesLeft", "summoned", "start", "shrine"];
 const DELVE_FIELDS = ["milestone", "tournament"];
 /** Training ranks bought in a run: known rows, each a whole number of
- * ranks, no more than the row reaches in a run. */
+ * ranks, no more than the row reaches in a run with every Limit Break. */
 const validRunTraining = (t: any) =>
   isRecord(t) && Object.entries(t).every(([id, n]) => {
     const row = TRAINING.find((r) => r.id === id);
-    return !!row && wholeIn(n, 0, runTrainingMax(row));
+    return !!row && wholeIn(n, 0, trainingCeiling(row));
   });
 /** A run's hand: known cards, each once, no more than a hand can hold,
  * STAIRS among them. */
@@ -314,7 +313,7 @@ function decodeProgress(s: any, d: Save, undoCapacity: number) {
  * finished (their own schedule), the trainers and
  * their jobs, each stat's time credit, the time bank and the boost. */
 function decodeTraining(s: any, d: Save) {
-  for (const t of TRAINING) d.training[t.id] = count(s.training?.[t.id], d.training[t.id], t.max);
+  for (const t of TRAINING) d.training[t.id] = count(s.training?.[t.id], d.training[t.id], trainingCeiling(t));
   for (const t of TRAINING) d.trainingPaid[t.id] = decodePaid(s.trainingPaid?.[t.id], t.cost * d.training[t.id]);
   for (const t of TRAINING) d.trainerRanks[t.id] = count(s.trainerRanks?.[t.id], 0, d.training[t.id]);
   d.trainers = count(s.trainers, d.trainers, TRAINER_GEMS.length);
