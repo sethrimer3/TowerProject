@@ -54,10 +54,11 @@ export const SETTINGS = {
    * white, nothing more), Kuro (flat white on black), Arcade (an old
    * arcade cabinet's screen: pixel type in a blue maze's frames), System
    * (an old one-bit computer: black-framed white windows on a dithered grey
-   * desktop) or Orbit (a space-age starship's console: glass capsules on a
-   * starfield) once owned. Chosen on the Settings page's UI Themes menu, not a row of its
+   * desktop), Orbit (a space-age starship's console: glass capsules on a
+   * starfield) or Pixel (chunky pixel-art panels with stepped corners and a
+   * pressed-in bevel on a night sky of pixel stars) once owned. Chosen on the Settings page's UI Themes menu, not a row of its
    * own; a new hero starts in Medieval. */
-  uiTheme: { kind: "choice", default: "medieval", choices: [["classic", "Classic"], ["medieval", "Medieval"], ["neon", "Neon"], ["terminal", "Terminal"], ["desktop", "Desktop"], ["glyph", "Glyph"], ["ember", "Ember"], ["yang", "Yang"], ["yin", "Yin"], ["shiro", "Shiro"], ["kuro", "Kuro"], ["arcade", "Arcade"], ["system", "System"], ["orbit", "Orbit"]] },
+  uiTheme: { kind: "choice", default: "medieval", choices: [["classic", "Classic"], ["medieval", "Medieval"], ["neon", "Neon"], ["terminal", "Terminal"], ["desktop", "Desktop"], ["glyph", "Glyph"], ["ember", "Ember"], ["yang", "Yang"], ["yin", "Yin"], ["shiro", "Shiro"], ["kuro", "Kuro"], ["arcade", "Arcade"], ["system", "System"], ["orbit", "Orbit"], ["pixel", "Pixel"]] },
   /** The Game theme the dungeon is drawn in: Classic, or Neon, Terminal
    * (a green-phosphor text dungeon), Desktop (an old desktop computer's
    * mine-sweeping field), Glyph (a many-coloured neon ASCII dungeon on
@@ -66,9 +67,11 @@ export const SETTINGS = {
    * Shiro (flat blocks and the simplest shapes on white), Kuro (the same
    * on black), Arcade (a pixel maze of crawlers and pellets), System (an old
    * one-bit paint program's dungeon of bricks, bombs and folders) Kroz (the
-   * old Kroz games' bright text-mode characters) or Orbit (a space station
-   * adrift among the stars, its crew and creatures our own) once owned. Chosen on the Game Themes menu. */
-  gameTheme: { kind: "choice", default: "classic", choices: [["classic", "Classic"], ["neon", "Neon"], ["terminal", "Terminal"], ["desktop", "Desktop"], ["glyph", "Glyph"], ["ember", "Ember"], ["yang", "Yang"], ["yin", "Yin"], ["shiro", "Shiro"], ["kuro", "Kuro"], ["arcade", "Arcade"], ["system", "System"], ["kroz", "Kroz"], ["orbit", "Orbit"]] },
+   * old Kroz games' bright text-mode characters) Orbit (a space station
+   * adrift among the stars, its crew and creatures our own) or Pixel (a
+   * shaded, outlined pixel-art dungeon of flagstones, slate walls and little
+   * creatures) once owned. Chosen on the Game Themes menu. */
+  gameTheme: { kind: "choice", default: "classic", choices: [["classic", "Classic"], ["neon", "Neon"], ["terminal", "Terminal"], ["desktop", "Desktop"], ["glyph", "Glyph"], ["ember", "Ember"], ["yang", "Yang"], ["yin", "Yin"], ["shiro", "Shiro"], ["kuro", "Kuro"], ["arcade", "Arcade"], ["system", "System"], ["kroz", "Kroz"], ["orbit", "Orbit"], ["pixel", "Pixel"]] },
   /** Unlimited currency, every floor section and game mode unlocked. */
   devMode: { kind: "toggle", default: false, page: { id: "dev-mode", label: "Dev mode (unlimited currency, all floors &amp; modes unlocked)" } },
   /** Play each fight out strike by strike, damage rising off whoever was

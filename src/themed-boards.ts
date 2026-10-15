@@ -13,6 +13,7 @@ import { ARCADE_BOARD } from "./arcade-board.ts";
 import { SYSTEM_BOARD } from "./system-board.ts";
 import { KROZ_BOARD } from "./kroz-board.ts";
 import { ORBIT_BOARD } from "./orbit-board.ts";
+import { PIXEL_BOARD } from "./pixel-board.ts";
 
 /** How a Game theme other than Classic draws the dungeon board in place of
  * its lit art: the ground, each tile's contents, torches and the hero, each
@@ -44,6 +45,7 @@ export const THEMED_BOARDS: Readonly<Record<ThemedLook, ThemedBoard>> = {
   system: SYSTEM_BOARD,
   kroz: KROZ_BOARD,
   orbit: ORBIT_BOARD,
+  pixel: PIXEL_BOARD,
 };
 /** How a Game theme look draws the board, or null for Classic's lit art. */
 export const themedBoardOf = (look: GameLook): ThemedBoard | null => (look === "classic" ? null : THEMED_BOARDS[look]);

@@ -5,6 +5,7 @@ import { defaults } from "../src/save.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import { THEMED_BOARDS } from "../src/themed-boards.ts";
 import { ARCADE } from "../src/arcade-board.ts";
+import { PIXEL } from "../src/pixel-board.ts";
 
 /** A Tower room of open floor, x 0..4 by y 0..4, the hero at its middle,
  * a wall at (3, 2) and an enemy at (2, 3). */
@@ -62,4 +63,26 @@ test("the Arcade hero turns the way it faces (world y up, the screen's down)", (
   assert.deepEqual(arcadeHero({ dx: -1, dy: 0 }), { mirrored: true, eyes: true });
   assert.deepEqual(arcadeHero({ dx: 0, dy: 1 }), { mirrored: false, eyes: false }, "its back going up the screen");
   assert.deepEqual(arcadeHero({ dx: 0, dy: -1 }), { mirrored: false, eyes: true }, "its face going down");
+});
+
+/** How the Pixel hero is painted: whether mirrored, and whether its sword
+ * (at its side, hidden behind it from the back) shows. */
+function pixelHero(facing?: { dx: number; dy: number }) {
+  const scales: number[][] = [], fills: string[] = [];
+  const c = new Proxy({ scale: (x: number, y: number) => scales.push([x, y]) } as Record<string | symbol, unknown>, {
+    get: (t, k) => (k in t ? t[k] : () => {}),
+    set: (_t, k, v) => {
+      if (k === "fillStyle") fills.push(String(v));
+      return true;
+    },
+  }) as unknown as CanvasRenderingContext2D;
+  THEMED_BOARDS.pixel.hero(c, facing!);
+  return { mirrored: scales.some(([x]) => x < 0), sword: fills.includes(PIXEL.steel) };
+}
+
+test("the Pixel hero turns the way it faces (world y up, the screen's down)", () => {
+  assert.deepEqual(pixelHero({ dx: 1, dy: 0 }), { mirrored: false, sword: true }, "side on, looking right");
+  assert.deepEqual(pixelHero({ dx: -1, dy: 0 }), { mirrored: true, sword: true });
+  assert.deepEqual(pixelHero({ dx: 0, dy: 1 }), { mirrored: false, sword: false }, "its back going up the screen");
+  assert.deepEqual(pixelHero({ dx: 0, dy: -1 }), { mirrored: false, sword: true }, "its face going down");
 });

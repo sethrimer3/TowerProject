@@ -54,6 +54,10 @@ export const SYSTEM_CLASS = "system";
  * root. */
 export const ORBIT_CLASS = "orbit";
 
+/** Chunky pixel-art panels on a night of pixel stars: `pixel.css` dresses
+ * this class on the root. */
+export const PIXEL_CLASS = "pixel";
+
 /** Dresses the page in the UI theme worn (`uiLook`: Classic wears none of
  * their classes) and mirrors Reduce motion. */
 export function applyUiTheme(save: Pick<Save, "themes" | "settings">) {
@@ -71,6 +75,7 @@ export function applyUiTheme(save: Pick<Save, "themes" | "settings">) {
   root.toggle(ARCADE_CLASS, look === "arcade");
   root.toggle(SYSTEM_CLASS, look === "system");
   root.toggle(ORBIT_CLASS, look === "orbit");
+  root.toggle(PIXEL_CLASS, look === "pixel");
   root.toggle("reduce-motion", save.settings.reduceMotion);
 }
 

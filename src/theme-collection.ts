@@ -11,11 +11,11 @@ import { CURRENCIES, type CurrencyId } from "./shop/currency.ts";
 export type ThemeKind = "ui" | "game";
 /** The looks of each kind, as the `uiTheme` and `gameTheme` settings hold
  * them. */
-export type UiLook = "classic" | "medieval" | "neon" | "terminal" | "desktop" | "glyph" | "ember" | "yang" | "yin" | "shiro" | "kuro" | "arcade" | "system" | "orbit";
-export type GameLook = "classic" | "neon" | "terminal" | "desktop" | "glyph" | "ember" | "yang" | "yin" | "shiro" | "kuro" | "arcade" | "system" | "kroz" | "orbit";
+export type UiLook = "classic" | "medieval" | "neon" | "terminal" | "desktop" | "glyph" | "ember" | "yang" | "yin" | "shiro" | "kuro" | "arcade" | "system" | "orbit" | "pixel";
+export type GameLook = "classic" | "neon" | "terminal" | "desktop" | "glyph" | "ember" | "yang" | "yin" | "shiro" | "kuro" | "arcade" | "system" | "kroz" | "orbit" | "pixel";
 export type ThemeId =
-  | "medievalUi" | "neonUi" | "terminalUi" | "desktopUi" | "glyphUi" | "emberUi" | "yangUi" | "yinUi" | "shiroUi" | "kuroUi" | "arcadeUi" | "systemUi" | "orbitUi"
-  | "neonGame" | "terminalGame" | "desktopGame" | "glyphGame" | "emberGame" | "yangGame" | "yinGame" | "shiroGame" | "kuroGame" | "arcadeGame" | "systemGame" | "krozGame" | "orbitGame";
+  | "medievalUi" | "neonUi" | "terminalUi" | "desktopUi" | "glyphUi" | "emberUi" | "yangUi" | "yinUi" | "shiroUi" | "kuroUi" | "arcadeUi" | "systemUi" | "orbitUi" | "pixelUi"
+  | "neonGame" | "terminalGame" | "desktopGame" | "glyphGame" | "emberGame" | "yangGame" | "yinGame" | "shiroGame" | "kuroGame" | "arcadeGame" | "systemGame" | "krozGame" | "orbitGame" | "pixelGame";
 
 export type ThemeDef = {
   kind: ThemeKind;
@@ -43,6 +43,7 @@ export const THEMES: Readonly<Record<ThemeId, ThemeDef>> = {
   arcadeUi: { kind: "ui", look: "arcade", name: "Arcade" },
   systemUi: { kind: "ui", look: "system", name: "System" },
   orbitUi: { kind: "ui", look: "orbit", name: "Orbit" },
+  pixelUi: { kind: "ui", look: "pixel", name: "Pixel" },
   neonGame: { kind: "game", look: "neon", name: "Neon" },
   terminalGame: { kind: "game", look: "terminal", name: "Terminal" },
   desktopGame: { kind: "game", look: "desktop", name: "Desktop" },
@@ -56,6 +57,7 @@ export const THEMES: Readonly<Record<ThemeId, ThemeDef>> = {
   systemGame: { kind: "game", look: "system", name: "System" },
   krozGame: { kind: "game", look: "kroz", name: "Kroz" },
   orbitGame: { kind: "game", look: "orbit", name: "Orbit" },
+  pixelGame: { kind: "game", look: "pixel", name: "Pixel" },
 };
 export const THEME_IDS = Object.keys(THEMES) as ThemeId[];
 /** The themes every hero owns from the start. */
