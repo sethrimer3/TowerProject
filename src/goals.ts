@@ -129,6 +129,7 @@ const TOWER_THREE: Record<number, CheckpointSet> = {
   60: { reward: unlock("chargedShot") },
   70: { reward: unlock("multishot") },
   80: { reward: unlock("rapidFire") },
+  90: { reward: gems(30) },
 };
 /** Tower IV's checkpoints that differ from the stub. */
 const TOWER_FOUR: Record<number, CheckpointSet> = {
