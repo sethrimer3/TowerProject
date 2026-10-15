@@ -1,4 +1,4 @@
-import type { Dash } from "./state.ts";
+import type { Dash, Facing } from "./state.ts";
 import { toTileSpace, type FrameContext } from "./render-frame.ts";
 
 /** How long a dash's echoes last, from the dash (ms). */
@@ -11,21 +11,21 @@ const ECHO_ALPHA = 0.55;
 /** Faint echoes of the hero on each tile it dashed off: they appear one
  * after another, from the first tile left, and fade away in the same order,
  * all gone DASH_ECHO_MS after the dash, each painted by `paintHero` (the
- * board's own hero: the sprite, or the Neon theme's lines). None with motion
- * reduced. */
-export function drawDashEchoes(f: FrameContext, dash: Dash | null, paintHero: (c: CanvasRenderingContext2D) => void) {
+ * board's own hero: the sprite, or the Neon theme's lines), facing the step
+ * it took off that tile. None with motion reduced. */
+export function drawDashEchoes(f: FrameContext, dash: Dash | null, paintHero: (c: CanvasRenderingContext2D, facing: Facing) => void) {
   if (!dash || f.look.reduceMotion) return;
   const age = f.now - dash.at, n = dash.tiles.length;
   if (age < 0 || age >= DASH_ECHO_MS) return;
   const gap = (DASH_ECHO_MS * APPEAR_SHARE) / n, life = DASH_ECHO_MS - gap * (n - 1);
   const c = f.c;
-  dash.tiles.forEach(({ x, y }, i) => {
+  dash.tiles.forEach(({ x, y, dx, dy }, i) => {
     const t = (age - i * gap) / life;
     if (t < 0 || t >= 1) return;
     c.save();
     c.globalAlpha = ECHO_ALPHA * (1 - t);
     toTileSpace(c, f, x, y);
-    paintHero(c);
+    paintHero(c, { dx, dy });
     c.restore();
   });
 }

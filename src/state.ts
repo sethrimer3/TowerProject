@@ -130,9 +130,12 @@ const GAIN_SETTINGS = { item: "itemGains", door: "doorGains", gold: "goldGains",
 const coinOf = (art: GainArt | null): Coin | null => (art && "coin" in art ? art.coin : null);
 /** A potion's heal: the HP from and to, where the hero stood, and its number. */
 export type Heal = { from: number; to: number; x: number; y: number; id: number };
-/** A dash: the tiles the hero dashed off in one step, in order, and when
- * (performance time). */
-export type Dash = { tiles: { x: number; y: number }[]; at: number };
+/** Which way the hero faces: the last step it took, (dx, dy) one tile
+ * across or up (world y grows upward). */
+export type Facing = { dx: number; dy: number };
+/** A dash: the tiles the hero dashed off in one step, in order, each with
+ * the step it took off it, and when (performance time). */
+export type Dash = { tiles: ({ x: number; y: number } & Facing)[]; at: number };
 /** Rewards kept for the board to show; older ones are dropped unseen. */
 const MAX_GAINS = 12;
 /** The forest's Automove walks at least this many steps a second, however
@@ -268,6 +271,9 @@ export class Game {
   /** The latest dash: the tiles the hero dashed off, in order, and when
    * (performance.now()), for the board's fading echoes of the hero. */
   dash: Dash | null = null;
+  /** The last step the hero took (into a fight too): the way it faces,
+   * for a board whose hero turns. Right until it first steps; undo leaves it. */
+  facing: Facing = { dx: 1, dy: 0 };
   /** Delve Automove's committed route and last weighed decisions. */
   readonly delvePlan = new DelvePlan();
   /** The Training tab's commands. */
@@ -839,7 +845,7 @@ export class Game {
       this.turnBefore = null;
       return void (this.cardPlan = null);
     }
-    const dashed = dashes ? this.dashOn(plan, id, from, dash) : true;
+    const dashed = dashes ? this.dashOn(plan, id, { ...from, dx: step.dx, dy: step.dy }, dash) : true;
     if (dashes) {
       this.holdTurn = false;
       this.endTurn();
@@ -1161,7 +1167,7 @@ export class Game {
    * before it, so the item's own step rolls). One turn and one undo.
    * Dashed steps skip Regen but for the first `dashRegenSteps`.
    * Returns false when a step was refused, leaving the target unreached. */
-  private dashOn(plan: CardPlan, id: CardId, from: { x: number; y: number }, dash: number) {
+  private dashOn(plan: CardPlan, id: CardId, from: Dash["tiles"][number], dash: number) {
     const p = this.run.player, tiles = [from];
     let moved = true, left = dash;
     const regenerating = this.dashRegenSteps, regen = () => dash - left < regenerating;
@@ -1172,7 +1178,7 @@ export class Game {
         moved = false;
         break;
       }
-      tiles.push(at);
+      tiles.push({ ...at, dx: next.dx, dy: next.dy });
     }
     const target = plan.path.length === 1 ? plan.path[0] : null;
     if (moved && left > 0 && target && DASH_ONTO.has(this.world.tile(target.x, target.y).kind) && !this.rollsSkip(id, target.x, target.y)) {
@@ -1182,7 +1188,7 @@ export class Game {
       moved = this.move(target.dx, target.dy, true, false, regen());
       this.stepScale = 1;
       if (moved) {
-        tiles.push(at);
+        tiles.push({ ...at, dx: target.dx, dy: target.dy });
         // Taking the item makes the dash a turn undo stops at.
         delete this.slice.history.at(-1)?.quiet;
       }
@@ -1775,6 +1781,7 @@ export class Game {
       return false;
     }
     const step: TakenStep = { tile: t, outcome, dest, track, quiet: this.emptyAt(dest.x, dest.y) };
+    this.facing = { dx, dy };
     return t.kind === "enemy" ? this.fightStep(step, t.enemy!) : this.take(step);
   }
   /** Steps into `enemy`. A strike that would fell the hero may revive it

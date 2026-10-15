@@ -144,7 +144,7 @@ export class Renderer {
       if (f.look.outside) this.drawOutside(f);
       else this.light.draw(f, this.litBoard(f));
     }
-    drawDashEchoes(f, this.game.dash, themed ? themed.hero : (c) => paintHero(c, f.look.spritesOff));
+    drawDashEchoes(f, this.game.dash, themed ? (c, facing) => themed.hero(c, facing) : (c) => paintHero(c, f.look.spritesOff));
     this.drawOverlays(f);
   }
   /** Gameplay feedback drawn over every board. */
@@ -223,7 +223,7 @@ export class Renderer {
     c.fillStyle = "#0b1017";
     c.fillRect(0, 0, box.width, box.width);
     const f: FrameContext = {
-      c, now, dt, dpr, width: box.width, n, s, left: this.left, bottom: this.bottom, playerX: this.playerX + lunge.hero.dx, playerY: this.playerY + lunge.hero.dy,
+      c, now, dt, dpr, width: box.width, n, s, left: this.left, bottom: this.bottom, playerX: this.playerX + lunge.hero.dx, playerY: this.playerY + lunge.hero.dy, heroFacing: g.facing,
       world: g.world, look: this.look(), darkness: darknessOf(g), torches: [], walls: [], glows: [],
     };
     f.torches = outside ? [] : this.visibleTorches();

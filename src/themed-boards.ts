@@ -1,4 +1,5 @@
 import type { Tile, Torch } from "./entities.ts";
+import type { Facing } from "./state.ts";
 import type { GameLook } from "./theme-collection.ts";
 import { forEachViewTile, tileTransform, toTileSpace, type FrameContext } from "./render-frame.ts";
 import { NEON_BOARD } from "./neon-board.ts";
@@ -23,7 +24,8 @@ export type ThemedBoard = {
   /** The Heart Door's heart on its own, as its toll rises off the door. */
   heart(c: CanvasRenderingContext2D): void;
   torch(c: CanvasRenderingContext2D, f: FrameContext, t: Torch): void;
-  hero(c: CanvasRenderingContext2D): void;
+  /** The hero, facing `facing` (its last step), for a board whose hero turns. */
+  hero(c: CanvasRenderingContext2D, facing: Facing): void;
   /** Drawn over the whole board after the hero, before the feedback
    * overlays. */
   over?(f: FrameContext): void;
@@ -65,7 +67,7 @@ export function drawThemedBoard(f: FrameContext, board: ThemedBoard, lunge: { x:
   drawRoute();
   c.save();
   c.setTransform(tileTransform(f, f.playerX, f.playerY));
-  board.hero(c);
+  board.hero(c, f.heroFacing);
   c.restore();
   board.over?.(f);
 }

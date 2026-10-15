@@ -1,6 +1,7 @@
 import type { KeyColor } from "./config.ts";
 import type { EnemyStrength, Tile, Torch } from "./entities.ts";
 import { forEachViewTile, toTileSpace, type FrameContext } from "./render-frame.ts";
+import type { Facing } from "./state.ts";
 import type { ThemedBoard } from "./themed-boards.ts";
 
 /** The Arcade Game theme's dungeon board: an old arcade maze. Open ground is
@@ -385,8 +386,16 @@ function paintArcadeTorch(c: CanvasRenderingContext2D, f: FrameContext, t: Torch
   sprite(c, FLAME_SPRITES[frame], { Y: ARCADE.hero, O: ARCADE.flame, R: ARCADE.red, S: ARCADE.brown }, 1.5);
 }
 
-/** The hero: the yellow chomper. */
-function paintArcadeHero(c: CanvasRenderingContext2D) {
+/** The hero: the yellow chomper, its mouth turned the way it last stepped
+ * (the sprite opens to the right; world y grows upward, the screen's down).
+ * The sprite is symmetric top to bottom, so facing left is a half turn. */
+function paintArcadeHero(c: CanvasRenderingContext2D, facing: Facing = { dx: 1, dy: 0 }) {
+  const turn = facing.dx < 0 ? Math.PI : facing.dy > 0 ? -Math.PI / 2 : facing.dy < 0 ? Math.PI / 2 : 0;
+  if (turn) {
+    c.translate(12, 12);
+    c.rotate(turn);
+    c.translate(-12, -12);
+  }
   sprite(c, HERO_SPRITE, { Y: ARCADE.hero }, 1.75);
 }
 

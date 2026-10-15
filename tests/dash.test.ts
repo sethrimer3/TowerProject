@@ -49,7 +49,7 @@ test("the first step toward a new target dashes across empty tiles, stopping bef
   g.autoTurn();
   assert.deepEqual(at(g), [4, 0], "with no tile left it stops on the tile before the key");
   assert.equal(g.save.tower.history.length, 1, "the dash is one undo");
-  assert.deepEqual(g.dash?.tiles, [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 2, y: 0 }, { x: 3, y: 0 }], "the tiles it dashed off, in order");
+  assert.deepEqual(g.dash?.tiles, [0, 1, 2, 3].map((x) => ({ x, y: 0, dx: 1, dy: 0 })), "the tiles it dashed off, in order, each with its step");
   g.autoTurn();
   assert.deepEqual(at(g), [5, 0], "the key is a step of its own");
   g.autoTurn();
