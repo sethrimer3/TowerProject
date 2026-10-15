@@ -17,8 +17,10 @@ const CURRENCY_ICONS: Record<CurrencyId, () => string> = { gems: () => gemIcon()
  * to its middle, with what it is written underneath, and a press claims it
  * (it is already the player's: the press only dismisses it). With Reduce
  * motion on, it appears still. A reveal still showing gives way to the next.
- * `onDone` runs once it is pressed away. */
-export function revealReward(r: RewardShown, reduceMotion: boolean, onDone?: () => void) {
+ * `onDone` runs once it is pressed away. With `onSkip`, one of several shown
+ * in turn wears a Skip button, which takes it away and runs `onSkip` instead,
+ * so none of the rest show. */
+export function revealReward(r: RewardShown, reduceMotion: boolean, onDone?: () => void, onSkip?: () => void) {
   document.querySelector(".reward-reveal")?.remove();
   const layer = document.createElement("div");
   layer.className = `card-reveal reward-reveal${r.permanent ? " permanent" : ""}${reduceMotion ? " still" : ""}`;
@@ -28,11 +30,13 @@ export function revealReward(r: RewardShown, reduceMotion: boolean, onDone?: () 
   const rays = r.permanent ? `<div class="card-reveal-rays" aria-hidden="true"></div>` : "";
   const amount = r.amount ? `<b class="reward-reveal-amount">${r.amount}</b>` : "";
   layer.innerHTML = `<div class="card-reveal-stage">${rays}<button type="button" class="reward-reveal-prize" id="reward-reveal-prize" aria-label="${r.name}: claim">${r.icon}${amount}</button></div><div class="card-reveal-text"><small>${r.kicker}</small><b>${r.name}</b>${r.text ? `<p>${r.text}</p>` : ""}<span>Press to claim</span></div>`;
+  if (onSkip) layer.insertAdjacentHTML("beforeend", `<button type="button" class="reward-reveal-skip" id="reward-reveal-skip">Skip</button>`);
   (document.querySelector("#app") ?? document.body).append(layer);
   // The whole screen claims it, so a press anywhere goes on.
-  layer.onclick = () => {
+  layer.onclick = (e) => {
     layer.remove();
-    onDone?.();
+    if (onSkip && (e.target as Element).closest("#reward-reveal-skip")) onSkip();
+    else onDone?.();
   };
   layer.querySelector<HTMLButtonElement>("#reward-reveal-prize")!.focus({ preventScroll: true });
 }

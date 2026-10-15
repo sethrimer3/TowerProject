@@ -237,17 +237,18 @@ try {
       }),
       // In the forest with the Tournament and Events open (Tower I's floors
       // 60 and 70 claimed), on the first day of the event of 5 October:
-      // its seven missions, two with tiers done and one complete (already
-      // moved under the rest), none new. Built last, so no fixture before it changes.
+      // its seven missions, two with tiers done, the login days' first tier
+      // ready to claim, and one complete (already moved under the rest), none
+      // new. Built last, so no fixture before it changes.
       events: forest((s) => {
         quiet(s);
         Object.assign(s.tutorials, { enter: true, upgrades: true });
         s.goals.claimed = { 1: [60, 70] };
         const now = Date.parse("2026-10-05T12:00:00Z"), day = Math.floor(now / 86_400_000);
         const types = ["login", "freeGems", "tournaments", "badges", "basic", "bosses", "potions"];
-        const progress = [1, 13, 1, 25, 6000, 10, 100];
+        const progress = [7, 13, 1, 25, 6000, 10, 100];
         s.events = {
-          id: Math.floor((day + 3) / 14), missions: types.map((type, i) => ({ id: i + 1, type, progress: progress[i] })), nextId: 8, rng: 12345,
+          id: Math.floor((day + 3) / 14), missions: types.map((type, i) => ({ id: i + 1, type, progress: progress[i], ...(type === "login" ? { claimed: 0 } : {}) })), nextId: 8, rng: 12345,
           boosted: [], seen: [1, 2, 3, 4, 5, 6, 7], moved: [2], loginDay: day, counted: [], streaks: { run: "", floors: 0, hurt: false, interest: 0 },
         };
         s.medals = 75;
@@ -835,8 +836,9 @@ try {
 
   // Missions: the forest's button (3/8, with its dot); the screen, under
   // the currencies bar, the weekly bar with the 10's box glowing; a mission
-  // claimed, its pay flown to the bar; the weekly reward claimed, its Gold, Gems, Medals and Training Point each
-  // celebrated in turn; and the X back to the board.
+  // claimed, its pay flown to the bar; the weekly reward claimed, its Gold
+  // celebrated and pressed on, then its Gems, with Skip passing over its
+  // Medals and Training Point; and the X back to the board.
   await load("missions");
   await shot("missions.forest");
   await menuClick("#missions-button");
@@ -844,11 +846,12 @@ try {
   await click('[data-claim="1"]');
   await shot("missions.claimed");
   await click('[data-weekly="1"]');
-  for (const currency of ["gold", "gems", "medals", "training"]) {
-    await page.locator(".reward-reveal").waitFor();
-    await shot(`missions.weekly.${currency}`);
-    await click(".reward-reveal");
-  }
+  await page.locator(".reward-reveal").waitFor();
+  await shot("missions.weekly.gold");
+  await click(".reward-reveal");
+  await page.locator(".reward-reveal").waitFor();
+  await shot("missions.weekly.gems");
+  await click("#reward-reveal-skip");
   await shot("missions.weekly");
   await click("#missions-close");
   await shot("missions.closed");
@@ -856,8 +859,8 @@ try {
   // Events: the forest's column (the hamburger, the Tournament's and Events'
   // buttons) and its menu (Settings, Missions, Relics); the Events screen
   // (the banner, the relic track, the booster's offer, the missions, the
-  // completed one last); the booster refused while the store is closed;
-  // and the Relics screen, empty.
+  // completed one last); a tier claimed, its Medals flown to the bar; the
+  // booster refused while the store is closed; and the Relics screen, empty.
   await load("events");
   await shot("events.forest");
   await click("#run-menu-toggle");
@@ -865,6 +868,8 @@ try {
   await click("#run-menu-toggle");
   await click("#events-button");
   await shot("events.page");
+  await click("#events [data-claim]");
+  await shot("events.claimed");
   await click("#event-boost-buy");
   await page.locator("#event-boost-message:not(:empty)").waitFor();
   await shot("events.boostRefused");

@@ -5,6 +5,8 @@ import { stubServer, type ShopServer } from "../shop/server.ts";
 import { shortCountdown } from "../tournament/schedule.ts";
 import type { AppContext } from "./app.ts";
 import { checkIcon, el, eventIcon, medalIcon, relicIcon } from "./dom.ts";
+import { flyToPurse } from "./flourish.ts";
+import { currencyAmount, holdAmount } from "./hud.ts";
 import { offerShown, revealReward } from "./reward-reveal.ts";
 
 /** How long a mission whose last tier is claimed stays where it is before it
@@ -162,14 +164,15 @@ export class EventsPage {
   }
 
   /** Claims mission `id`'s next tier: saved, redrawn (showing the next
-   * tier, Claim again while it too is done), and its Medals risen to the
-   * middle of the screen. */
+   * tier, Claim again while it too is done), and its Medals flown from the
+   * Claim bar to the currencies bar, whose Medals count them as they land. */
   private claim(id: number) {
-    const game = this.ctx.game, m = game.events.missions.find((x) => x.id === id), medals = game.events.claim(id);
-    if (!m || medals === null) return;
+    const game = this.ctx.game, from = el("events").querySelector(`[data-claim="${id}"]`)?.getBoundingClientRect(), medals = game.events.claim(id);
+    if (!from || medals === null) return;
+    const release = holdAmount("medals-held");
     this.ctx.update();
     this.render();
-    revealReward({ icon: medalIcon(), amount: `+${medals.toLocaleString("en-US")}`, kicker: "EVENT MISSION", name: "Medals", text: EVENT_MISSIONS[m.type].text(EVENT_MISSIONS[m.type].targets[m.claimed - 1]!), permanent: false }, game.save.settings.reduceMotion);
+    flyToPurse(from, [{ html: `${medalIcon()}<b>+${currencyAmount(medals)}</b>`, to: document.querySelector(".currencies .medal-currency"), landed: () => (release(), this.ctx.update()) }]);
   }
 
   /** Each mission's place on the screen, by id. */

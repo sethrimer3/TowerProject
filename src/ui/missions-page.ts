@@ -152,12 +152,13 @@ export class MissionsPage {
   }
 
   /** A reward claimed: saved, redrawn, and each of `shown` risen to the
-   * middle of the screen after the one before is pressed away. */
+   * middle of the screen after the one before is pressed away; Skip, on
+   * each but the last, passes over the rest. */
   private claimed(...shown: RewardShown[]) {
     this.ctx.update();
     this.render();
     const next = (i: number) => {
-      if (shown[i]) revealReward(shown[i]!, this.ctx.game.save.settings.reduceMotion, () => next(i + 1));
+      if (shown[i]) revealReward(shown[i]!, this.ctx.game.save.settings.reduceMotion, () => next(i + 1), i + 1 < shown.length ? () => {} : undefined);
     };
     next(0);
   }

@@ -100,10 +100,10 @@ export const goldSparkle = (el: Element) => gemSparkle(el, "gold");
  * it lands (show the entry's new amount). */
 export type Flight = { html: string; to: Element | null; landed?: () => void };
 
-/** Flies each of `flights` (a daily mission's pay, a tapped Gem) from the
- * middle of `from` (a box measured before the page is drawn again, which may
- * take the pressed button away) to its currency in the purse, one a moment
- * after the other, each fading as it lands and the entry it lands on
+/** Flies each of `flights` (a daily mission's pay, an event mission's
+ * Medals, a tapped Gem) from the middle of `from` (a box measured before the
+ * page is drawn again, which may take the pressed button away) to its
+ * currency in the purse, one a moment after the other, each fading as it lands and the entry it lands on
  * pulsing. With Reduce motion on, each shows still over its entry and fades.
  * Nothing waits on a press. */
 export function flyToPurse(from: DOMRect, flights: Flight[]) {
