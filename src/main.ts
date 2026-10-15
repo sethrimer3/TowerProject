@@ -99,7 +99,7 @@ const tournamentPage = new TournamentPage(ctx, tournament, refreshTournament);
 const mail = new MailClient(game.mail, stubMail(() => game.save, () => game.clock()));
 const mailDialog = new MailDialog(ctx, mail, refreshMail);
 // Tapping the forest's Blacksmith opens the Equipment screen, its Tournament Hall the Tournament page.
-const overlay = new BoardOverlay(game, renderer, openBlacksmith, () => navigate("tournament"));
+const overlay = new BoardOverlay(game, renderer, openBlacksmith, () => navigate("tournament"), () => update());
 const skillTree = new SkillTreePage(ctx);
 const research = new ResearchPage(ctx);
 const gear = new GearPage(ctx);
@@ -219,7 +219,7 @@ const LOCKED_TABS = new Map<string, { skill: UpgradeId; tree: TreeId }>([
   ["defend", { skill: "legacy", tree: "courage" }],
 ]);
 /** The pages topped by the currencies bar. */
-const CURRENCY_PAGES: string[] = ["upgrades", "research", "deck", "gear"];
+const CURRENCY_PAGES: string[] = ["upgrades", "research", "deck", "gear", "missions", "events"];
 /** Opens page `requested`: `board` is the active mode's board. Leaving the
  * board inside a run pauses the hand, and coming back plays it on as it
  * was (`Game.pauseForPage`). */

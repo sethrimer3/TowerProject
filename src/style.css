@@ -3225,9 +3225,6 @@ dialog.dismiss-anywhere { cursor: pointer; }
 .reward-reveal-amount { font-size: 28px; font-weight: 500; color: #ffe7a6; letter-spacing: 1px; }
 .reward-reveal .card-reveal-text small { color: #e9c77e; }
 .reward-reveal .card-reveal-text b { color: #fbf0d4; }
-/* What else a mission paid, under its Gold: each currency's icon and amount. */
-.reward-reveal .card-reveal-text .reveal-pay { display: inline-flex; align-items: center; gap: 3px; margin: 0 6px; font-style: normal; color: #fbf0d4; }
-.reveal-pay .gem-icon, .reveal-pay .medal-icon, .reveal-pay .shard-icon, .reveal-pay .mat-icon { width: 18px; height: 18px; vertical-align: 0; }
 .reward-reveal .card-reveal-text span { color: #8d794e; }
 .reward-reveal.permanent .card-reveal-rays {
   background:
@@ -3704,6 +3701,13 @@ dialog .shop-rewards { justify-content: center; margin: 4px 0 10px; }
   100% { opacity: 0; transform: translate(-50%, -260%); }
 }
 @media (prefers-reduced-motion: reduce) { .rise-pop { animation-name: rise-pop-still; } }
+/* A daily mission's pay or a tapped Gem flying to the currencies bar or the
+   purse (`flyToPurse`): each currency's icon and amount, and the entry it
+   lands on swelling a moment. */
+.reward-fly { position: fixed; z-index: 100; display: flex; align-items: center; gap: 3px; pointer-events: none; white-space: nowrap; font-size: 18px; font-weight: 600; color: #ffe7a6; text-shadow: 0 1px 2px #000, 0 0 6px rgba(0, 0, 0, 0.8); }
+.reward-fly .ui-sprite, .reward-fly .gem-icon, .reward-fly .medal-icon, .reward-fly .shard-icon, .reward-fly .points-icon, .reward-fly .mat-icon { width: 24px; height: 24px; vertical-align: 0; }
+.currency.purse-gain, .purse > span.purse-gain { animation: purse-gain 0.35s ease-out; }
+@keyframes purse-gain { 40% { transform: scale(1.25); filter: brightness(1.5); } }
 html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
 @keyframes rise-pop-still { 0%, 70% { opacity: 1; } 100% { opacity: 0; } }
 

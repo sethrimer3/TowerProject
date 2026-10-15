@@ -10,6 +10,7 @@ Inside a run a tap on the currencies switches Gold and Silver to the rates the r
 
 A Gem now and then lies on a floor: on the next new floor a run reaches (a Tower floor not reached before in that run, or each 10 depth of the Delve, within view ahead of the hero), on a plain tile the hero can walk to, out of the way where there is one (off the routes between the hero and the floor's items, monsters, doors and stairs, tucked into a corner or nook), so the hand's cards seldom walk the hero over it, shining over the darkness.
 Stepping on it, or tapping it anywhere on the board, collects it in a sparkle for 1 Gem, and the next can't appear for 30 minutes (on the real clock).
+A tapped Gem flies to the Gems in your purse, which count it as it lands.
 A Gem left on a floor the hero leaves, or in a run that ends, is gone, and another appears 3 new floors later, again and again until one is collected (that count carries into the next run).
 Undo never brings a collected Gem back or takes one away.
 

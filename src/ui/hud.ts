@@ -55,11 +55,20 @@ export function shortAmount(n: number, from = 10_000) {
   const v = n / size, digits = v < 10 ? 2 : v < 100 ? 1 : 0, step = size / 10 ** digits;
   return `${Math.floor(n / step) / 10 ** digits}${unit}`;
 }
+/** The purse's and currencies bar's amounts kept at what they read, by id,
+ * while what was just gained flies to them (`flyToPurse`). */
+const heldAmounts = new Map<string, string>();
+/** Keeps the purse's or currencies bar's amount `id` reading as it does now
+ * until the function it returns is called, which shows what is held again. */
+export function holdAmount(id: string) {
+  heldAmounts.set(id, el(id).textContent ?? "");
+  return () => void heldAmounts.delete(id);
+}
 /** Shows `held` in the purse's `id`, shortened (`shown` while it counts up
  * to it), the exact amount in its tooltip (∞ in Dev mode). */
 function purse(game: Game, id: string, held: number, name: string, shown = held) {
   const dev = game.save.settings.devMode, value = whole(held);
-  text(id, dev ? "∞" : shortAmount(whole(shown)));
+  text(id, heldAmounts.get(id) ?? (dev ? "∞" : shortAmount(whole(shown))));
   el(id).parentElement!.title = `${name}: ${dev ? "∞" : value.toLocaleString("en-US")}`;
 }
 /** Gold and Silver count up to each rise. */
@@ -149,6 +158,9 @@ function renderSilverHeld(game: Game) {
   text("silver-held", currencyAmount(whole(silver)));
 }
 
+/** Shows `value` in the currencies bar's `id`, unless it is held. */
+const barAmount = (id: string, value: string) => text(id, heldAmounts.get(id) ?? value);
+
 /** Each display frame: moves on the Gold and Silver still counting up, and
  * samples their rates, showing each new one while they are shown. `live`
  * is false while a dialog covers the board, which stops the rates' clock. */
@@ -165,15 +177,15 @@ export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay)
   renderFocus(game);
   renderProgress(game);
   renderModeActions(game);
-  text("gems-held", devAmount(game, game.save.gems));
-  text("shards-held", devAmount(game, game.save.ascensionShards));
-  text("medals-held", devAmount(game, game.save.medals));
+  barAmount("gems-held", devAmount(game, game.save.gems));
+  barAmount("shards-held", devAmount(game, game.save.ascensionShards));
+  barAmount("medals-held", devAmount(game, game.save.medals));
   el("medals-held").parentElement!.hidden = game.save.medals <= 0 && !game.save.settings.devMode;
-  text("gold-held", devAmount(game, game.save.gold));
+  barAmount("gold-held", devAmount(game, game.save.gold));
   renderSilverHeld(game);
   text("courage", devAmount(game, game.save.delve.courage));
   text("inspiration", devAmount(game, game.save.tower.inspiration));
-  text("training", currencyAmount(trainingPoints(game.save).left));
+  barAmount("training", currencyAmount(trainingPoints(game.save).left));
   // Courage means nothing until the Delve, which pays it, is open.
   (document.querySelector(".courage-currency") as HTMLElement).hidden = !game.save.upgrades.delve && !game.save.settings.devMode;
   renderXp(game);

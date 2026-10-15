@@ -6,7 +6,8 @@ import { shortCountdown } from "../tournament/schedule.ts";
 import type { AppContext } from "./app.ts";
 import { checkIcon, el, gemIcon, giftIcon, goldIcon, medalIcon, pointsIcon, shardIcon } from "./dom.ts";
 import { materialIcon } from "./equipment-icons.ts";
-import { currencyAmount } from "./hud.ts";
+import { currencyAmount, holdAmount } from "./hud.ts";
+import { flyToPurse, type Flight } from "./flourish.ts";
 import { revealReward, type RewardShown } from "./reward-reveal.ts";
 
 /** A countdown on the page: *2d 5h*, *7h 12m*, *12m*. */
@@ -14,21 +15,22 @@ const countdown = (ms: number) => shortCountdown(ms).replace(/([dh])(?=\d)/g, "$
 const amount = (icon: string, n: number, title: string) =>
   `<span class="mission-reward" title="${title}">${icon}<b>${currencyAmount(n)}</b></span>`;
 
-/** One currency a claim paid, under its Gold: its icon and the amount. */
-const paid = (icon: string, n: number, title: string) =>
-  `<i class="reveal-pay" title="${title}" aria-label="+${n} ${title}">${icon}+${n.toLocaleString("en-US")}</i>`;
-
-/** What a claim paid, risen to the middle of the screen: its Gold, the rest
- * under it, each by its icon. */
-function payoutShown(p: MissionPayout, kicker: string): RewardShown {
+/** What a daily mission's claim paid, each currency by its icon and amount,
+ * flown to its place in the currencies bar, which keeps its amount until it
+ * lands, then shows the new one (`update`); a material, with no place there,
+ * rises where it was claimed. Called before the HUD shows the claim. */
+function payoutFlights(p: MissionPayout, update: () => void): Flight[] {
   const m = p.material, material = m?.id as EquipMaterialId | undefined;
-  const rest = [
-    p.gems && paid(gemIcon(), p.gems, "Gems"),
-    p.medals && paid(medalIcon(), p.medals, "Medals"),
-    p.shards && paid(shardIcon(), p.shards, "Ascension Shards"),
-    m && material && paid(materialIcon(material), m.amount, EQUIP_MATERIALS[material].name),
-  ].filter(Boolean);
-  return { icon: goldIcon(), amount: `+${p.gold.toLocaleString("en-US")}`, kicker, name: "Gold", text: rest.join(" ") || undefined, permanent: false };
+  const bar = (n: number, icon: string, currency: string, id: string): Flight | null => {
+    if (n <= 0) return null;
+    const release = holdAmount(id);
+    return { html: `${icon}<b>+${currencyAmount(n)}</b>`, to: document.querySelector(`.currencies .${currency}-currency`), landed: () => (release(), update()) };
+  };
+  return [
+    bar(p.gold, goldIcon(), "gold", "gold-held"), bar(p.gems, gemIcon(), "gem", "gems-held"), bar(p.medals, medalIcon(), "medal", "medals-held"),
+    bar(p.shards, shardIcon(), "shard", "shards-held"), bar(p.training, pointsIcon(), "training", "training"),
+    m && material ? { html: `${materialIcon(material)}<b>+${currencyAmount(m.amount)}</b>`, to: null } : null,
+  ].filter((f): f is Flight => !!f);
 }
 
 /** What a weekly reward paid, one celebration a currency in turn: Gold,
@@ -137,8 +139,11 @@ export class MissionsPage {
     const ctx = this.ctx, game = ctx.game;
     el("missions-close").onclick = () => ctx.navigate(this.from || "board");
     el("missions").querySelectorAll<HTMLButtonElement>("[data-claim]").forEach((b) => (b.onclick = () => {
-      const paid = game.missions.claim(Number(b.dataset.claim));
-      if (paid) this.claimed(payoutShown(paid, "MISSION COMPLETE"));
+      const from = b.getBoundingClientRect(), paid = game.missions.claim(Number(b.dataset.claim));
+      if (!paid) return;
+      const flights = payoutFlights(paid, () => ctx.update());
+      this.claimed();
+      flyToPurse(from, flights);
     }));
     el("missions").querySelectorAll<HTMLButtonElement>("[data-weekly]").forEach((b) => (b.onclick = () => {
       const i = Number(b.dataset.weekly), paid = game.missions.claimWeekly(i);
@@ -146,8 +151,8 @@ export class MissionsPage {
     }));
   }
 
-  /** A reward claimed: saved, redrawn, and risen to the middle of the
-   * screen, each of `shown` after the one before is pressed away. */
+  /** A reward claimed: saved, redrawn, and each of `shown` risen to the
+   * middle of the screen after the one before is pressed away. */
   private claimed(...shown: RewardShown[]) {
     this.ctx.update();
     this.render();

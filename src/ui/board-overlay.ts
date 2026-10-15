@@ -2,7 +2,9 @@ import { MODES } from "../modes.ts";
 import type { Game, RouteEffects } from "../state.ts";
 import type { Step } from "../pathfinding.ts";
 import type { Renderer } from "../rendering.ts";
-import { el } from "./dom.ts";
+import { el, gemIcon } from "./dom.ts";
+import { flyToPurse } from "./flourish.ts";
+import { holdAmount } from "./hud.ts";
 import { litTorches } from "../board.ts";
 import { point } from "../entities.ts";
 import { routeTotalLines, tileInfo, tileInfoLine } from "./tile-info.ts";
@@ -43,13 +45,22 @@ export class BoardOverlay {
   private freeTimer: ReturnType<typeof setTimeout> | undefined;
 
   /** `blacksmith` opens the Equipment screen (the forest's Blacksmith
-   * tapped), `hall` the Tournament page (its Hall tapped). */
-  constructor(private game: Game, private renderer: Renderer, private blacksmith: () => void = () => {}, private hall: () => void = () => {}) {}
+   * tapped), `hall` the Tournament page (its Hall tapped), and `update`
+   * refreshes the HUD (a tapped Gem landed in the purse). */
+  constructor(private game: Game, private renderer: Renderer, private blacksmith: () => void = () => {}, private hall: () => void = () => {}, private update: () => void = () => {}) {}
 
   tap(x: number, y: number) {
-    // A Gem is collected wherever the hero stands.
-    if (this.game.gemFinder.collectAt(x, y)) {
+    // A Gem is collected wherever the hero stands, and flies to the purse,
+    // which counts it as it lands.
+    const gem = this.game.gemFinder.gem;
+    if (gem?.x === x && gem.y === y) {
+      const release = holdAmount("gems");
+      this.game.gemFinder.collectAt(x, y);
       this.hide();
+      const { left, top, s, frameRect } = this.tileRect(x, y);
+      flyToPurse(new DOMRect(frameRect.left + left, frameRect.top + top, s, s), [
+        { html: `${gemIcon()}<b>+1</b>`, to: document.querySelector(".purse .gem-stat"), landed: () => (release(), this.update()) },
+      ]);
       return;
     }
     if (this.game.atBlacksmith(x, y)) {

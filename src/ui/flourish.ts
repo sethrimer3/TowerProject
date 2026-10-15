@@ -93,3 +93,46 @@ export function gemSparkle(el: Element, tint = "") {
 }
 /** The same burst in gold glints, for the Gold ad. */
 export const goldSparkle = (el: Element) => gemSparkle(el, "gold");
+
+/** One amount a claim paid, flown to where its currency is shown: its icon
+ * and "+N" as HTML, the purse entry it lands on, or null for one with no
+ * place in the purse (it rises and fades where it starts), and what to do as
+ * it lands (show the entry's new amount). */
+export type Flight = { html: string; to: Element | null; landed?: () => void };
+
+/** Flies each of `flights` (a daily mission's pay, a tapped Gem) from the
+ * middle of `from` (a box measured before the page is drawn again, which may
+ * take the pressed button away) to its currency in the purse, one a moment
+ * after the other, each fading as it lands and the entry it lands on
+ * pulsing. With Reduce motion on, each shows still over its entry and fades.
+ * Nothing waits on a press. */
+export function flyToPurse(from: DOMRect, flights: Flight[]) {
+  const x0 = from.left + from.width / 2, y0 = from.top + from.height / 2, moving = on();
+  flights.forEach(({ html, to, landed }, i) => {
+    const target = to?.getBoundingClientRect(), shown = !!target && target.width > 0;
+    const x1 = shown ? target.left + target.width / 2 : x0, y1 = shown ? target.top + target.height / 2 : y0 - 60;
+    const fly = document.createElement("div");
+    fly.className = "reward-fly";
+    fly.innerHTML = html;
+    fly.setAttribute("aria-hidden", "true");
+    const [sx, sy] = moving ? [x0, y0] : [x1, y1];
+    fly.style.left = `${sx}px`;
+    fly.style.top = `${sy}px`;
+    document.body.append(fly);
+    const dx = x1 - sx, dy = y1 - sy, at = (tx: number, ty: number, s: number) => `translate(-50%, -50%) translate(${tx.toFixed(1)}px, ${ty.toFixed(1)}px) scale(${s})`;
+    const frames: Keyframe[] = moving
+      ? [
+          { transform: at(0, 0, 0.6), opacity: 0 },
+          { transform: at(0, -22, 1.15), opacity: 1, offset: 0.2 },
+          { transform: at(dx, dy, 0.85), opacity: 1, offset: 0.85, easing: "ease-out" },
+          { transform: at(dx, dy, 0.5), opacity: 0 },
+        ]
+      : [{ transform: at(0, 0, 1), opacity: 1, offset: 0.7 }, { transform: at(0, 0, 1), opacity: 0 }];
+    const flight = fly.animate(frames, { duration: moving ? 950 : 900, delay: i * 140, easing: "ease-in-out", fill: "both" });
+    flight.onfinish = () => {
+      fly.remove();
+      landed?.();
+      if (moving && shown) replay(to, "purse-gain");
+    };
+  });
+}
