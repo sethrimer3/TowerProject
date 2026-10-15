@@ -13,6 +13,7 @@ import { ARCADE } from "../src/arcade-board.ts";
 import { SYSTEM } from "../src/system-board.ts";
 import { KROZ } from "../src/kroz-board.ts";
 import { ORBIT } from "../src/orbit-board.ts";
+import { PIXEL, PIXEL_SPRITES } from "../src/pixel-board.ts";
 import type { FrameContext } from "../src/render-frame.ts";
 import type { GainArt } from "../src/state.ts";
 
@@ -127,4 +128,16 @@ test("on an Orbit board a potion rises as its med canister, a Heart Door's toll 
   assert.ok(potion.fills.includes(ORBIT.hullLight) && potion.strokes.includes(ORBIT.hullLight), "the canister's steel cap and rim");
   assert.ok(!drawn({ tile: { kind: "potion", hp: 35 } as never }, null).strokes.includes(ORBIT.hullLight), "the classic board keeps its own art");
   assert.ok(drawn({ heart: true }, "orbit").fills.includes(ORBIT.magenta));
+});
+
+test("on a Pixel board a potion rises as its blue flask (the red potion red), a Heart Door's toll as its outlined heart", () => {
+  const potion = drawn({ tile: { kind: "potion", hp: 35 } as never }, "pixel").fills;
+  assert.ok(potion.includes(PIXEL.blue) && potion.includes(PIXEL.out));
+  assert.ok(drawn({ tile: { kind: "potion", color: "red", hp: 35 } as never }, "pixel").fills.includes(PIXEL.red));
+  const heart = drawn({ heart: true }, "pixel").fills;
+  assert.ok(heart.includes(PIXEL.red) && heart.includes(PIXEL.out));
+});
+
+test("every Pixel sprite is a rectangle of letters", () => {
+  for (const rows of PIXEL_SPRITES) assert.ok(rows.every((row) => row.length === rows[0].length), rows.join("\n"));
 });

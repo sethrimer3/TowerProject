@@ -1,0 +1,421 @@
+/* Pixel theme: the page as a pixel-art game of our own draws its menus.
+   A night of pixel stars behind chunky indigo panels, each a nine-slice of
+   hard pixels with stepped corners, lit along its top and left and shaded
+   along its bottom and right; raised blue buttons that press in, the chosen
+   one gold; page titles on a wine banner in the blocky Silkscreen face,
+   the rest in the small Tiny5 pixel face; notes on parchment, and bars
+   filled in chunky segments. Every frame is a ten-pixel picture drawn as
+   inline SVG and stretched by `border-image` at two screen pixels a pixel,
+   so its corners stay stepped and sharp.
+   Every selector is scoped under `html.pixel` so nothing changes while the
+   theme is off. Loaded after style.css and the other themes. */
+@font-face {
+  font-family: Tiny5;
+  src: url("../assets/fonts/Tiny5/Tiny5-Regular.woff2") format("woff2");
+  /* One weight for all, so bold text never smears into a fake bold. */
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: Silkscreen;
+  src: url("../assets/fonts/Silkscreen/Silkscreen-Regular.woff2") format("woff2");
+  font-weight: 100 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: Silkscreen;
+  src: url("../assets/fonts/Silkscreen/Silkscreen-Bold.woff2") format("woff2");
+  font-weight: 600 900;
+  font-style: normal;
+  font-display: swap;
+}
+html.pixel {
+  --p-ink: #0e0b18;
+  --p-night: #1b1830;
+  --p-text: #f4eee0;
+  --p-dim: #a9a3c9;
+  --p-gold: #f2b63d;
+  --p-gold-light: #ffe08a;
+  --p-red: #ff6b5c;
+  --p-green: #7fdc6a;
+  --p-blue: #6fb6ff;
+  --p-title: Silkscreen, Tiny5, monospace;
+  /* a panel: indigo, lit along its top and left. */
+  --p-panel: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' shape-rendering='crispEdges'><path fill='%230e0b18' d='M2 0h6v1H2zM0 2h1v6H0zM9 2h1v6H9zM2 9h6v1H2zM1 1h1v1H1zM8 1h1v1H8zM1 8h1v1H1zM8 8h1v1H8z'/><path fill='%232c2950' d='M2 1h6v8H2zM1 2h8v6H1z'/><path fill='%234a4482' d='M2 1h6v1H2zM1 2h1v6H1zM2 2h1v1H2z'/><path fill='%231c1936' d='M2 8h6v1H2zM8 2h1v6H8zM7 7h1v1H7z'/></svg>");
+  /* a dialog: the panel framed in gold. */
+  --p-dialog: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' shape-rendering='crispEdges'><path fill='%23f2b63d' d='M2 0h6v1H2zM0 2h1v6H0zM9 2h1v6H9zM2 9h6v1H2zM1 1h1v1H1zM8 1h1v1H8zM1 8h1v1H1zM8 8h1v1H8z'/><path fill='%232c2950' d='M2 1h6v8H2zM1 2h8v6H1z'/><path fill='%234a4482' d='M2 1h6v1H2zM1 2h1v6H1zM2 2h1v1H2z'/><path fill='%231c1936' d='M2 8h6v1H2zM8 2h1v6H8zM7 7h1v1H7z'/></svg>");
+  /* a button: blue, raised. */
+  --p-button: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' shape-rendering='crispEdges'><path fill='%230e0b18' d='M2 0h6v1H2zM0 2h1v6H0zM9 2h1v6H9zM2 9h6v1H2zM1 1h1v1H1zM8 1h1v1H8zM1 8h1v1H1zM8 8h1v1H8z'/><path fill='%233d63b0' d='M2 1h6v8H2zM1 2h8v6H1z'/><path fill='%237aa4ec' d='M2 1h6v1H2zM1 2h1v6H1zM2 2h1v1H2z'/><path fill='%2324407a' d='M2 8h6v1H2zM8 2h1v6H8zM7 7h1v1H7z'/></svg>");
+  /* a button pressed in: its bevel turned over. */
+  --p-press: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' shape-rendering='crispEdges'><path fill='%230e0b18' d='M2 0h6v1H2zM0 2h1v6H0zM9 2h1v6H9zM2 9h6v1H2zM1 1h1v1H1zM8 1h1v1H8zM1 8h1v1H1zM8 8h1v1H8z'/><path fill='%232b4c8f' d='M2 1h6v8H2zM1 2h8v6H1z'/><path fill='%231b3263' d='M2 1h6v1H2zM1 2h1v6H1zM2 2h1v1H2z'/><path fill='%234f78c4' d='M2 8h6v1H2zM8 2h1v6H8zM7 7h1v1H7z'/></svg>");
+  /* what is chosen: gold, raised. */
+  --p-gold: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' shape-rendering='crispEdges'><path fill='%230e0b18' d='M2 0h6v1H2zM0 2h1v6H0zM9 2h1v6H9zM2 9h6v1H2zM1 1h1v1H1zM8 1h1v1H8zM1 8h1v1H1zM8 8h1v1H8z'/><path fill='%23e9a93a' d='M2 1h6v8H2zM1 2h8v6H1z'/><path fill='%23ffe08a' d='M2 1h6v1H2zM1 2h1v6H1zM2 2h1v1H2z'/><path fill='%23a8641c' d='M2 8h6v1H2zM8 2h1v6H8zM7 7h1v1H7z'/></svg>");
+  /* a button that can't be pressed: dull. */
+  --p-off: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' shape-rendering='crispEdges'><path fill='%230e0b18' d='M2 0h6v1H2zM0 2h1v6H0zM9 2h1v6H9zM2 9h6v1H2zM1 1h1v1H1zM8 1h1v1H8zM1 8h1v1H1zM8 8h1v1H8z'/><path fill='%2338355a' d='M2 1h6v8H2zM1 2h8v6H1z'/><path fill='%234a4670' d='M2 1h6v1H2zM1 2h1v6H1zM2 2h1v1H2z'/><path fill='%2327243f' d='M2 8h6v1H2zM8 2h1v6H8zM7 7h1v1H7z'/></svg>");
+  /* what is dangerous: red, raised. */
+  --p-danger: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' shape-rendering='crispEdges'><path fill='%230e0b18' d='M2 0h6v1H2zM0 2h1v6H0zM9 2h1v6H9zM2 9h6v1H2zM1 1h1v1H1zM8 1h1v1H8zM1 8h1v1H1zM8 8h1v1H8z'/><path fill='%23c23a3a' d='M2 1h6v8H2zM1 2h8v6H1z'/><path fill='%23ff7a5c' d='M2 1h6v1H2zM1 2h1v6H1zM2 2h1v1H2z'/><path fill='%237a1d26' d='M2 8h6v1H2zM8 2h1v6H8zM7 7h1v1H7z'/></svg>");
+  /* a field or well: dark, pressed in. */
+  --p-field: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' shape-rendering='crispEdges'><path fill='%230e0b18' d='M2 0h6v1H2zM0 2h1v6H0zM9 2h1v6H9zM2 9h6v1H2zM1 1h1v1H1zM8 1h1v1H8zM1 8h1v1H1zM8 8h1v1H8z'/><path fill='%2315122a' d='M2 1h6v8H2zM1 2h8v6H1z'/><path fill='%230a0814' d='M2 1h6v1H2zM1 2h1v6H1zM2 2h1v1H2z'/><path fill='%233a3566' d='M2 8h6v1H2zM8 2h1v6H8zM7 7h1v1H7z'/></svg>");
+  /* a note: parchment. */
+  --p-tip: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' shape-rendering='crispEdges'><path fill='%230e0b18' d='M2 0h6v1H2zM0 2h1v6H0zM9 2h1v6H9zM2 9h6v1H2zM1 1h1v1H1zM8 1h1v1H8zM1 8h1v1H1zM8 8h1v1H8z'/><path fill='%23f4e6c4' d='M2 1h6v8H2zM1 2h8v6H1z'/><path fill='%23fff8e4' d='M2 1h6v1H2zM1 2h1v6H1zM2 2h1v1H2z'/><path fill='%23d2b98a' d='M2 8h6v1H2zM8 2h1v6H8zM7 7h1v1H7z'/></svg>");
+  /* a page title's banner: wine. */
+  --p-banner: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' shape-rendering='crispEdges'><path fill='%230e0b18' d='M2 0h6v1H2zM0 2h1v6H0zM9 2h1v6H9zM2 9h6v1H2zM1 1h1v1H1zM8 1h1v1H8zM1 8h1v1H1zM8 8h1v1H8z'/><path fill='%237a3352' d='M2 1h6v8H2zM1 2h8v6H1z'/><path fill='%23b55a7c' d='M2 1h6v1H2zM1 2h1v6H1zM2 2h1v1H2z'/><path fill='%234a1d33' d='M2 8h6v1H2zM8 2h1v6H8zM7 7h1v1H7z'/></svg>");
+  /* The night behind it all: a few pixel stars, one gold twinkle. */
+  --p-stars: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='96' height='96' shape-rendering='crispEdges'><path fill='%23f4eee0' d='M14 18h2v2h-2zM70 9h2v2h-2zM44 61h2v2h-2z'/><path fill='%238f86c9' d='M33 37h2v2h-2zM86 47h2v2h-2zM7 77h2v2h-2zM61 85h2v2h-2zM90 70h2v2h-2z'/><path fill='%23ffe08a' d='M77 31h2v2h-2zM75 33h2v2h-2zM79 33h2v2h-2zM77 35h2v2h-2zM24 88h2v2h-2z'/><path fill='%233a3566' d='M52 22h2v2h-2zM20 50h2v2h-2zM66 58h2v2h-2zM38 76h2v2h-2zM5 5h2v2H5z'/></svg>");
+  --gold: var(--p-gold);
+  --muted: var(--p-dim);
+  --line: var(--p-ink);
+  color-scheme: dark;
+  color: var(--p-text);
+  background: var(--p-night) var(--p-stars) 0 0 / 192px 192px;
+}
+/* Tiny5 for every line of text (a badge's symbol keeps the system face
+   that has its glyph); Silkscreen for titles, below. */
+html.pixel,
+html.pixel *:not(.badge-glyph, .badge-mark) {
+  font-family: Tiny5, "Courier New", monospace;
+  --rate-em: 3.1; /* the purse's widest rate in this face (style.css) */
+  font-synthesis: none;
+  letter-spacing: 0.02em;
+}
+html.pixel body {
+  background: var(--p-night) var(--p-stars) 0 0 / 192px 192px;
+}
+/* The page's own colours, lines and glows give way everywhere: cream on
+   the night and nothing else. `:not(#_)` lifts these over the page's class
+   rules (and the ones below over these); a style written on an element (a
+   colour swatch) still wins. Drawings (canvas, images, svg), the bars'
+   fills (`i`), rarity colours and badge tokens keep theirs. */
+html.pixel body *:not(#_, canvas, img, svg, svg *, i, .eq-tile, .badge-token, [class*="rar"]) {
+  background-color: transparent;
+  background-image: none;
+  border-color: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  text-shadow: none;
+  backdrop-filter: none;
+  outline-color: transparent;
+}
+html.pixel body *:not(#_, svg, svg *) {
+  color: var(--p-text);
+}
+html.pixel main.shell:not(#_) {
+  background: transparent;
+}
+html.pixel img,
+html.pixel canvas {
+  image-rendering: pixelated;
+}
+
+/* Scrollbars: a raised blue block in a dark groove. */
+html.pixel * {
+  scrollbar-color: #3d63b0 var(--p-ink);
+}
+html.pixel ::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+html.pixel ::-webkit-scrollbar-track {
+  background: var(--p-ink);
+}
+html.pixel ::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-image: var(--p-button) 3 fill / 6px / 0 stretch;
+  background: transparent;
+}
+
+/* Titles: Silkscreen in gold with a hard drop; a page's on a wine banner. */
+html.pixel h1:not(#_),
+html.pixel h2:not(#_),
+html.pixel h3:not(#_),
+html.pixel .tower-heading:not(#_),
+html.pixel .section-title:not(#_) {
+  font-family: var(--p-title);
+  font-weight: 700;
+  letter-spacing: 0;
+  color: var(--p-gold-light);
+  text-shadow: 2px 2px 0 var(--p-ink);
+}
+html.pixel .page-title h2:not(#_) {
+  font-size: 16px;
+  line-height: 1.4;
+}
+html.pixel .page-title:not(#_),
+html.pixel .event-banner:not(#_),
+html.pixel .eq-loadout-head:not(#_) {
+  padding: 6px 12px;
+  text-align: center;
+  border: 2px solid transparent;
+  border-image: var(--p-banner) 3 fill / 6px / 0 stretch;
+}
+/* A gold diamond either side of a page's title. */
+html.pixel .page-title h2:not(#_)::before,
+html.pixel .page-title h2:not(#_)::after {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin: 0 8px 3px;
+  vertical-align: middle;
+  background: var(--p-gold);
+  box-shadow: 2px 2px 0 var(--p-ink);
+  transform: rotate(45deg);
+}
+/* The floor reached in the title face. */
+html.pixel #height:not(#_) {
+  font-family: var(--p-title);
+  font-weight: 700;
+  letter-spacing: 0;
+  color: var(--p-gold-light);
+  text-shadow: 2px 2px 0 var(--p-ink);
+}
+html.pixel .page-title small:not(#_),
+html.pixel .eyebrow:not(#_),
+html.pixel .hint:not(#_),
+html.pixel .board-caption:not(#_),
+html.pixel small:not(#_) {
+  color: var(--p-dim);
+}
+
+/* Panels: the indigo frame. */
+html.pixel .stats:not(#_),
+html.pixel .card:not(#_),
+html.pixel .upgrade:not(#_),
+html.pixel .shop:not(#_),
+html.pixel .theme-card:not(#_),
+html.pixel .weekly:not(#_),
+html.pixel .mission:not(#_),
+html.pixel .event-boost:not(#_),
+html.pixel .archivist:not(#_),
+html.pixel .research:not(#_),
+html.pixel .pull-box:not(#_),
+html.pixel .eq-loadout:not(#_),
+html.pixel .equip-materials:not(#_),
+html.pixel .purse-big:not(#_),
+html.pixel .starting-stats:not(#_),
+html.pixel .training-boost:not(#_),
+html.pixel .tournament-standing:not(#_),
+html.pixel .tournament-tickets:not(#_),
+html.pixel .badge-box:not(#_),
+html.pixel .deck-reserve:not(#_),
+html.pixel .defend-palette:not(#_),
+html.pixel .card-reveal:not(#_),
+html.pixel .badge-reveal:not(#_),
+html.pixel .skill-tree:not(#_),
+html.pixel .goals-stage:not(#_),
+html.pixel .training-box:not(#_),
+html.pixel .setting:not(#_),
+html.pixel .inspect-box:not(#_),
+html.pixel .run-menu-frame:not(#_),
+html.pixel .inspection:not(#_) {
+  border: 2px solid transparent;
+  border-image: var(--p-panel) 3 fill / 6px / 0 stretch;
+}
+html.pixel .setting:not(#_) {
+  padding-inline: 10px;
+}
+html.pixel .inspection:empty:not(#_) {
+  border-image: none;
+}
+/* Dialogs: the panel framed in gold, over a darkened night. */
+html.pixel dialog:not(#_) {
+  border: 2px solid transparent;
+  border-image: var(--p-dialog) 3 fill / 6px / 0 stretch;
+}
+html.pixel dialog::backdrop {
+  background: #0e0b18b0;
+  backdrop-filter: none;
+}
+/* What sits inside a panel: a dark well, pressed in. */
+html.pixel .portrait-top:not(#_),
+html.pixel .hp-readout:not(#_),
+html.pixel .training-held:not(#_),
+html.pixel .node-icon:not(#_),
+html.pixel .node-name:not(#_),
+html.pixel .goals-floor:not(#_),
+html.pixel select:not(#_),
+html.pixel input:not([type="checkbox"]:not(#_),
+[type="radio"]:not(#_),
+[type="range"]):not(#_) {
+  border: 2px solid transparent;
+  border-image: var(--p-field) 3 fill / 6px / 0 stretch;
+}
+/* The theme worn: its frame gold. */
+html.pixel .theme-card.worn:not(#_) {
+  border-image: var(--p-dialog) 3 fill / 6px / 0 stretch;
+}
+/* Notes and tips: parchment, its words in ink. */
+html.pixel .board-tip:not(#_),
+html.pixel .board-tip.dismissable:hover:not(#_),
+html.pixel .research-toast:not(#_),
+html.pixel .deck-tip:not(#_) {
+  border: 2px solid transparent;
+  border-image: var(--p-tip) 3 fill / 6px / 0 stretch;
+}
+html.pixel .board-tip:not(#_) *:not(svg, svg *),
+html.pixel .board-tip:not(#_),
+html.pixel .research-toast:not(#_) *:not(svg, svg *),
+html.pixel .research-toast:not(#_),
+html.pixel .deck-tip:not(#_) *:not(svg, svg *),
+html.pixel .deck-tip:not(#_) {
+  color: #2a1f2e;
+}
+/* The board: a dark frame, a lit indigo line and a dark one round it,
+   drawn outside it so it takes no room from the board. */
+html.pixel .board:not(#_) {
+  border: 2px solid var(--p-ink);
+  box-shadow: 0 0 0 2px #4a4482, 0 0 0 4px var(--p-ink);
+}
+/* The line under the board, over the board's foot: a dark strip. */
+html.pixel .status:not(#_) {
+  background: #0e0b18d8;
+}
+html.pixel .live-dot:not(#_) {
+  background: var(--p-gold);
+}
+html.pixel .rule:not(#_),
+html.pixel .inventory-divider:not(#_) {
+  background: repeating-linear-gradient(to right, #4a4482 0 4px, transparent 4px 6px);
+}
+
+/* Buttons: raised blue blocks that press in; gold when chosen, dull when
+   they can't be pressed. */
+html.pixel button:not(#_) {
+  border: 2px solid transparent;
+  border-image: var(--p-button) 3 fill / 6px / 0 stretch;
+}
+html.pixel button:active:not(#_) {
+  border-image: var(--p-press) 3 fill / 6px / 0 stretch;
+}
+html.pixel button:active:not(#_) > * {
+  transform: translateY(1px);
+}
+html.pixel button.selected:not(#_),
+html.pixel button[aria-pressed="true"]:not(#_) {
+  border-image: var(--p-gold) 3 fill / 6px / 0 stretch;
+}
+html.pixel button.selected:not(#_) *:not(svg, svg *, img, canvas),
+html.pixel button.selected:not(#_),
+html.pixel button[aria-pressed="true"]:not(#_),
+html.pixel button[aria-pressed="true"]:not(#_) *:not(svg, svg *, img, canvas) {
+  color: var(--p-ink);
+}
+html.pixel button:focus-visible:not(#_),
+html.pixel select:focus-visible:not(#_),
+html.pixel input:focus-visible:not(#_) {
+  outline: 2px solid var(--p-gold-light);
+  outline-offset: 2px;
+}
+html.pixel button:disabled:not(#_) {
+  border-image: var(--p-off) 3 fill / 6px / 0 stretch;
+}
+html.pixel button:disabled:not(#_),
+html.pixel button:disabled *:not(#_) {
+  color: var(--p-dim);
+  opacity: 1;
+}
+/* Buttons drawn as pictures keep a bare face. */
+html.pixel .skill-node:not(#_),
+html.pixel .hand-card:not(#_) {
+  border-color: transparent;
+  border-image: none;
+  background: transparent;
+}
+html.pixel .hand-card.active:not(#_) {
+  outline: 2px solid var(--p-gold-light);
+  outline-offset: 1px;
+}
+html.pixel input[type="checkbox"]:not(#_),
+html.pixel input[type="radio"]:not(#_),
+html.pixel input[type="range"]:not(#_) {
+  accent-color: var(--p-gold);
+}
+html.pixel option:not(#_) {
+  background: var(--p-night);
+}
+
+/* The tab bar: an indigo strip, its buttons bare, the open one gold. */
+html.pixel nav:not(#_) {
+  background: #2c2950;
+  box-shadow: 0 -2px 0 #4a4482, 0 -4px 0 var(--p-ink);
+}
+html.pixel nav button:not(#_) {
+  border-color: transparent;
+  border-image: none;
+  background: transparent;
+}
+html.pixel nav button.selected:not(#_),
+html.pixel .training-bar button.selected:not(#_) {
+  border-image: var(--p-gold) 3 fill / 6px / 0 stretch;
+}
+
+/* Bars: a dark groove filled in chunky segments, each lit along its top;
+   HP red, XP blue, the rest green. */
+html.pixel .xp-track:not(#_),
+html.pixel .health-track:not(#_),
+html.pixel .weekly-bar:not(#_),
+html.pixel .mission-bar:not(#_),
+html.pixel .research-bar:not(#_),
+html.pixel .refine-bar:not(#_) {
+  background: #0a0814;
+  box-shadow: 0 0 0 2px var(--p-ink);
+}
+html.pixel .xp-track i:not(#_),
+html.pixel .health-track i:not(#_):not(#health-gain, #health-loss),
+html.pixel .weekly-bar i:not(#_),
+html.pixel .mission-bar i:not(#_),
+html.pixel .research-bar i:not(#_),
+html.pixel .refine-bar span:not(#_),
+html.pixel .event-bar i:not(#_) {
+  --p-fill: var(--p-green);
+  border-radius: 0;
+  background:
+    repeating-linear-gradient(to right, transparent 0 6px, #0e0b1899 6px 8px),
+    linear-gradient(#ffffff59 0 2px, transparent 2px calc(100% - 2px), #0e0b1866 calc(100% - 2px)),
+    var(--p-fill);
+  box-shadow: none;
+}
+html.pixel .health-track i:not(#_):not(#health-gain, #health-loss) {
+  --p-fill: #e04a3f;
+}
+html.pixel .xp-track i:not(#_) {
+  --p-fill: #4c8fe0;
+}
+html.pixel .mission-bar span:not(#_) {
+  color: var(--p-text);
+  text-shadow: 1px 1px 0 var(--p-ink);
+}
+html.pixel .heart:not(#_),
+html.pixel .danger:not(#_),
+html.pixel .danger *:not(#_),
+html.pixel .short:not(#_),
+html.pixel .short *:not(#_) {
+  color: var(--p-red) !important;
+}
+/* No card can act: the button that ends the run turns red. */
+html.pixel #end-run.deadlocked:not(#_),
+html.pixel #stuck-end-run.deadlocked:not(#_) {
+  color: var(--p-text) !important;
+  border-image: var(--p-danger) 3 fill / 6px / 0 stretch;
+}
+html.pixel .safe:not(#_),
+html.pixel .eq-result-title:not(#_) {
+  color: var(--p-green) !important;
+}
+/* Keys keep their colour. */
+html.pixel .keys .yellow:not(#_) { color: #ffd23d; }
+html.pixel .keys .blue:not(#_) { color: #6fb6ff; }
+html.pixel .keys .red:not(#_) { color: #ff6b5c; }
+
+/* The diamonds by a page's title glint now and then, unless motion is
+   reduced. */
+@keyframes pixel-twinkle {
+  0%, 70%, 100% { opacity: 1; }
+  80%, 90% { opacity: 0.4; }
+}
+html.pixel:not(.reduce-motion) .page-title h2::before,
+html.pixel:not(.reduce-motion) .page-title h2::after {
+  animation: pixel-twinkle 3s steps(1) infinite;
+}
