@@ -279,9 +279,9 @@ export class ArchivesPanel {
         <p class="speed-up-choice">${choice.factor}x ${choice.hours}h</p>
         <p class="speed-up-cells${short ? " short" : ""}" aria-label="${held.toLocaleString("en-US")} Cells held, ${cells.toLocaleString("en-US")} needed">${shortAmount(held, 1000)}/${shortAmount(cells, 1000)} ${cellIcon()}</p>
         <label class="speed-up-queue"><input type="checkbox" id="speed-up-queue" ${choice.queued ? "checked" : ""}> Queue Speed Up</label>
-        <div class="dialog-actions"><button id="speed-up-cancel">Cancel</button><button id="speed-up-confirm" ${active || short ? "disabled" : ""} aria-label="Speed Up for ${cells.toLocaleString("en-US")} Cells">Speed Up · ${cellIcon()} <b>${shortAmount(cells, 1000)}</b></button></div>
+        <div class="dialog-actions"><button id="speed-up-close-button">Close</button><button id="speed-up-confirm" ${active || short ? "disabled" : ""} aria-label="Speed Up for ${cells.toLocaleString("en-US")} Cells">Speed Up · ${cellIcon()} <b>${shortAmount(cells, 1000)}</b></button></div>
         ${active ? `<p class="speed-up-busy">SPEED UP IN PROGRESS</p>` : ""}</div>`;
-      el("speed-up-close").onclick = el("speed-up-cancel").onclick = () => modal.close();
+      el("speed-up-close").onclick = el("speed-up-close-button").onclick = () => modal.close();
       modal.querySelectorAll<HTMLButtonElement>("[data-hours]").forEach((b) => (b.onclick = () => {
         this.speedUpChoice.hours = Number(b.dataset.hours) as SpeedUpHours;
         draw();

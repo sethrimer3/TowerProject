@@ -10,6 +10,19 @@ const FADE_SECONDS = 2.5;
 interface Mote { x: number; y: number; dx: number; dy: number; size: number; alpha: number; phase: number; rate: number }
 interface Ray { x: number; width: number; phase: number; rate: number; strength: number }
 
+/** A new backdrop's motes and rays, its light full while `lit`. */
+function newScene(lit: boolean) {
+  const rng = stream("effects");
+  const motes: Mote[] = Array.from({ length: MOTES }, () => ({
+    x: rng(), y: rng(), dx: (rng() - 0.5) * 0.012, dy: (rng() - 0.35) * 0.008,
+    size: 0.7 + rng() * 1.1, alpha: 0.12 + rng() * 0.16, phase: rng() * 6.28, rate: 2 + rng() * 4,
+  }));
+  const rays: Ray[] = Array.from({ length: RAYS }, (_, i) => ({
+    x: (i + 0.2 + rng() * 0.6) / RAYS * 1.3 - 0.1, width: 0.07 + rng() * 0.1, phase: rng() * 6.28, rate: 0.12 + rng() * 0.12, strength: 0.6 + rng() * 0.4,
+  }));
+  return { motes, rays, time: rng() * 100, light: lit ? 1 : 0 };
+}
+
 const prefersReduced = () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
 
 /** One ray's brightness at time `t`, 0 to 1: two slow waves, as clouds
@@ -20,26 +33,23 @@ const cloud = (r: Ray, t: number) => {
 };
 
 let stop: (() => void) | undefined;
+/** The motes, rays and clock, kept across backdrops, so a redraw of the
+ * pane (a tab pressed again, research completing) carries on where it was. */
+let scene: { motes: Mote[]; rays: Ray[]; time: number; light: number } | undefined;
 
 /** Paints the Archives pane's backdrop on `canvas`: dim dust motes drifting
  * slowly, and, while `lit()` says archivists are working, parallel slanted
  * sunrays from the top that fade toward the bottom and swell and dim like
  * clouds passing; the motes twinkle as they cross a ray. It draws until the
- * canvas leaves the page, and only one backdrop runs at a time. */
+ * canvas leaves the page, and only one backdrop runs at a time; the next
+ * picks up its motes, rays and light where it left off. */
 export function startArchivesAmbient(canvas: HTMLCanvasElement, lit: () => boolean) {
   stop?.();
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
-  const rng = stream("effects");
-  const motes: Mote[] = Array.from({ length: MOTES }, () => ({
-    x: rng(), y: rng(), dx: (rng() - 0.5) * 0.012, dy: (rng() - 0.35) * 0.008,
-    size: 0.7 + rng() * 1.1, alpha: 0.12 + rng() * 0.16, phase: rng() * 6.28, rate: 2 + rng() * 4,
-  }));
-  const rays: Ray[] = Array.from({ length: RAYS }, (_, i) => ({
-    x: (i + 0.2 + rng() * 0.6) / RAYS * 1.3 - 0.1, width: 0.07 + rng() * 0.1, phase: rng() * 6.28, rate: 0.12 + rng() * 0.12, strength: 0.6 + rng() * 0.4,
-  }));
-  const reduced = prefersReduced();
-  let light = lit() ? 1 : 0, time = rng() * 100, last = 0, frame = 0, alive = true;
+  scene ??= newScene(lit());
+  const { motes, rays } = scene, reduced = prefersReduced();
+  let last = 0, frame = 0, alive = true;
 
   const draw = () => {
     const dpr = window.devicePixelRatio || 1, w = canvas.clientWidth, h = canvas.clientHeight;
@@ -51,6 +61,7 @@ export function startArchivesAmbient(canvas: HTMLCanvasElement, lit: () => boole
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, w, h);
     // The rays are drawn upright then sheared, so all lean the same way.
+    const { time, light } = scene!;
     const level = rays.map((r) => cloud(r, time) * light);
     if (light > 0.01) {
       ctx.save();
@@ -87,9 +98,9 @@ export function startArchivesAmbient(canvas: HTMLCanvasElement, lit: () => boole
     const dt = Math.min(0.1, last ? (now - last) / 1000 : 0);
     last = now;
     if (!document.hidden) {
-      time += dt;
+      scene!.time += dt;
       const target = lit() ? 1 : 0;
-      light += Math.max(-dt / FADE_SECONDS, Math.min(dt / FADE_SECONDS, target - light));
+      scene!.light += Math.max(-dt / FADE_SECONDS, Math.min(dt / FADE_SECONDS, target - scene!.light));
       motes.forEach((m) => {
         m.x = (m.x + m.dx * dt + 1) % 1;
         m.y = (m.y + m.dy * dt + 1) % 1;
