@@ -44,6 +44,7 @@ html.system {
 html.system,
 html.system *:not(.badge-glyph, .badge-mark) {
   font-family: "Pixelify Sans", Chicago, Geneva, monospace;
+  --rate-em: 2.9; /* the purse's widest rate in this face (style.css) */
   letter-spacing: 0;
 }
 html.system body {

@@ -517,7 +517,23 @@ h1 span {
 /* Inside a run a tap anywhere on the left rail shows the rates Gold and
    Silver are found at. */
 .portrait-actions:has(> .purse:not(.forest)) { cursor: pointer; }
-.purse .per-minute { margin-left: 1px; font-size: 0.6em; font-weight: 500; opacity: 0.8; }
+/* The rates: the amount on top, a tiny /min on a short row under it at the
+   right edge. The amount shrinks below the purse's size only when the widest
+   one (88.8M) would overflow the rail: --rate-em is that amount's width in
+   ems of the face worn, which each UI theme with its own font sets. */
+.purse.rates {
+  container-type: inline-size;
+  --purse-icon: 18px;
+  --purse-gap: 5px;
+}
+.purse.rates b:has(> .rate-amount) {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.purse .rate-amount { font-size: min(1em, calc((100cqi - var(--purse-icon) - var(--purse-gap)) / var(--rate-em, 3.2))); }
+.purse .per-minute { align-self: flex-end; margin-top: -1px; font-size: 8px; font-weight: 500; line-height: 0.8; opacity: 0.8; }
 .gem-stat b { color: #8fe3ff; }
 .shard-stat b { color: #8dffb8; }
 .gold-stat b { color: #ffd86b; }
@@ -1648,6 +1664,10 @@ dialog p {
   }
   .purse > span {
     gap: 3px;
+  }
+  .purse.rates {
+    --purse-icon: 15px;
+    --purse-gap: 3px;
   }
   .purse .ui-sprite,
   .purse .gem-icon,

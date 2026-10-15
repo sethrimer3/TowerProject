@@ -52,6 +52,7 @@ html:is(.shiro, .kuro) {
 html:is(.shiro, .kuro),
 html:is(.shiro, .kuro) *:not(.badge-glyph, .badge-mark) {
   font-family: Inter, "Helvetica Neue", Arial, sans-serif;
+  --rate-em: 2.9; /* the purse's widest rate in this face (style.css) */
   font-size-adjust: 0.5;
   letter-spacing: 0;
 }

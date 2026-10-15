@@ -111,10 +111,10 @@ function sampleRates(game: Game, time: number, live: boolean) {
 }
 
 /** Shows the rate `perMinute` in the purse's `id`, abbreviated from 1,000
- * (1.42K), a dash before it is known, with a small /min after it. */
+ * (1.42K), a dash before it is known, with a tiny /min on a row under it. */
 function purseRate(game: Game, id: string, perMinute: number | null, name: string) {
   const dev = game.save.settings.devMode, rate = perMinute === null ? null : whole(perMinute);
-  el(id).innerHTML = `${dev ? "∞" : rate === null ? "—" : shortAmount(rate, 1000)}<small class="per-minute">/min</small>`;
+  el(id).innerHTML = `<span class="rate-amount">${dev ? "∞" : rate === null ? "—" : shortAmount(rate, 1000)}</span><small class="per-minute">/min</small>`;
   el(id).parentElement!.title = `${name} found a minute, over the last minute of play: ${dev ? "∞" : rate === null ? "—" : rate.toLocaleString("en-US")} (tap for ${name} held)`;
 }
 

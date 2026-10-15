@@ -39,6 +39,7 @@ html.desktop {
 html.desktop,
 html.desktop *:not(.badge-glyph, .badge-mark) {
   font-family: W95FA, "MS Sans Serif", Tahoma, sans-serif;
+  --rate-em: 2.4; /* the purse's widest rate in this face (style.css) */
   letter-spacing: 0;
 }
 html.desktop body {

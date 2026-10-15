@@ -27,6 +27,7 @@ html.terminal {
 html.terminal,
 html.terminal *:not(.badge-glyph, .badge-mark) {
   font-family: VT323, "Courier New", monospace;
+  --rate-em: 3.35; /* the purse's widest rate in this face (style.css) */
   font-size-adjust: 0.62;
   letter-spacing: 0.04em;
 }

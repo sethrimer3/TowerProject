@@ -54,6 +54,7 @@ html:is(.yang, .yin) {
 html:is(.yang, .yin),
 html:is(.yang, .yin) *:not(.badge-glyph, .badge-mark) {
   font-family: "Cormorant Garamond", Garamond, Georgia, serif;
+  --rate-em: 3.45; /* the purse's widest rate in this face (style.css) */
   font-size-adjust: 0.5;
   font-variant-numeric: lining-nums;
   letter-spacing: 0.02em;
