@@ -15,6 +15,7 @@ import { KROZ_BOARD } from "./kroz-board.ts";
 import { ORBIT_BOARD } from "./orbit-board.ts";
 import { PIXEL_BOARD } from "./pixel-board.ts";
 import { DOODLE_BOARD } from "./doodle-board.ts";
+import { MURK_BOARD } from "./murk-board.ts";
 
 /** How a Game theme other than Classic draws the dungeon board in place of
  * its lit art: the ground, each tile's contents, torches and the hero, each
@@ -48,6 +49,7 @@ export const THEMED_BOARDS: Readonly<Record<ThemedLook, ThemedBoard>> = {
   orbit: ORBIT_BOARD,
   pixel: PIXEL_BOARD,
   doodle: DOODLE_BOARD,
+  murk: MURK_BOARD,
 };
 /** How a Game theme look draws the board, or null for Classic's lit art. */
 export const themedBoardOf = (look: GameLook): ThemedBoard | null => (look === "classic" ? null : THEMED_BOARDS[look]);

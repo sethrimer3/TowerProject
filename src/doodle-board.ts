@@ -45,7 +45,7 @@ const keyColor = (k: KeyColor | undefined) => (k ? DOODLE.keys[k] ?? DOODLE.pape
 
 /** A small stream of numbers from a seed, so a stroke wobbles the same way
  * every frame. */
-function wobbler(seed: number) {
+export function wobbler(seed: number) {
   let s = (seed >>> 0) || 1;
   return () => {
     s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
@@ -53,11 +53,11 @@ function wobbler(seed: number) {
   };
 }
 
-type Pt = readonly [number, number];
+export type Pt = readonly [number, number];
 
 /** A path through `pts` as a hand drags a mouse along it: each straight
  * run bent a little at its middle, by `amount` units at most. */
-function handPath(c: CanvasRenderingContext2D, pts: readonly Pt[], seed: number, closed = false, amount = 0.9) {
+export function handPath(c: CanvasRenderingContext2D, pts: readonly Pt[], seed: number, closed = false, amount = 0.9) {
   const r = wobbler(seed);
   c.moveTo(pts[0][0] + r() * amount * 0.6, pts[0][1] + r() * amount * 0.6);
   const n = closed ? pts.length : pts.length - 1;
@@ -68,7 +68,7 @@ function handPath(c: CanvasRenderingContext2D, pts: readonly Pt[], seed: number,
   if (closed) c.closePath();
 }
 /** A lumpy ring round (cx, cy), as a circle drawn freehand. */
-function blobPath(c: CanvasRenderingContext2D, cx: number, cy: number, rx: number, ry: number, seed: number, lumps = 0.08) {
+export function blobPath(c: CanvasRenderingContext2D, cx: number, cy: number, rx: number, ry: number, seed: number, lumps = 0.08) {
   const r = wobbler(seed), n = 9;
   const pts: [number, number][] = [];
   for (let i = 0; i < n; i++) {
@@ -85,7 +85,7 @@ function blobPath(c: CanvasRenderingContext2D, cx: number, cy: number, rx: numbe
 
 /** Fills a shape a little off where it is outlined, the way a hurried
  * fill lands, then outlines it in the brush. */
-function shape(c: CanvasRenderingContext2D, path: () => void, color: string | null, width = 1.6, ink: string = DOODLE.ink) {
+export function shape(c: CanvasRenderingContext2D, path: () => void, color: string | null, width = 1.6, ink: string = DOODLE.ink) {
   if (color) {
     c.save();
     c.translate(0.7, 0.5);
@@ -102,20 +102,20 @@ function shape(c: CanvasRenderingContext2D, path: () => void, color: string | nu
   }
 }
 /** Strokes the current path in the round brush. */
-function line(c: CanvasRenderingContext2D, color: string, width: number) {
+export function line(c: CanvasRenderingContext2D, color: string, width: number) {
   c.lineCap = "round";
   c.lineJoin = "round";
   c.lineWidth = width;
   c.strokeStyle = color;
   c.stroke();
 }
-function stroke(c: CanvasRenderingContext2D, pts: readonly Pt[], seed: number, color: string = DOODLE.ink, width = 1.6) {
+export function stroke(c: CanvasRenderingContext2D, pts: readonly Pt[], seed: number, color: string = DOODLE.ink, width = 1.6) {
   c.beginPath();
   handPath(c, pts, seed);
   line(c, color, width);
 }
 /** Dots of the spray can round (cx, cy). */
-function spray(c: CanvasRenderingContext2D, cx: number, cy: number, radius: number, dots: number, seed: number, color: string) {
+export function spray(c: CanvasRenderingContext2D, cx: number, cy: number, radius: number, dots: number, seed: number, color: string) {
   const r = wobbler(seed);
   c.fillStyle = color;
   for (let i = 0; i < dots; i++) {
@@ -421,7 +421,7 @@ function doorFrame(c: CanvasRenderingContext2D, color: string) {
   shape(c, () => c.arc(17.5, 17.5, 1.3, 0, Math.PI * 2), DOODLE.yellow, 0.9);
 }
 
-function heartPath(c: CanvasRenderingContext2D, x: number, y: number, k: number) {
+export function heartPath(c: CanvasRenderingContext2D, x: number, y: number, k: number) {
   c.moveTo(x, y + 16 * k);
   c.bezierCurveTo(x - 10 * k, y + 9 * k, x - 7 * k, y, x, y + 4 * k);
   c.bezierCurveTo(x + 7 * k, y, x + 10 * k, y + 9 * k, x, y + 16 * k);

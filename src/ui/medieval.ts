@@ -62,6 +62,11 @@ export const PIXEL_CLASS = "pixel";
  * a simple paint program: `doodle.css` dresses this class on the root. */
 export const DOODLE_CLASS = "doodle";
 
+/** Doodle after dark: wobbly black outlines and muted fills on dusky
+ * violet paper under a scribbled moon: `murk.css` dresses this class on the
+ * root. */
+export const MURK_CLASS = "murk";
+
 /** Dresses the page in the UI theme worn (`uiLook`: Classic wears none of
  * their classes) and mirrors Reduce motion. */
 export function applyUiTheme(save: Pick<Save, "themes" | "settings">) {
@@ -81,6 +86,7 @@ export function applyUiTheme(save: Pick<Save, "themes" | "settings">) {
   root.toggle(ORBIT_CLASS, look === "orbit");
   root.toggle(PIXEL_CLASS, look === "pixel");
   root.toggle(DOODLE_CLASS, look === "doodle");
+  root.toggle(MURK_CLASS, look === "murk");
   root.toggle("reduce-motion", save.settings.reduceMotion);
 }
 
