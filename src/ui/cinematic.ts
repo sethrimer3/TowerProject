@@ -1,9 +1,9 @@
 /** Cinematic mode: inside a run, every control, stat and bar gives way to
  * the board alone. Entered by pinching the board in (fingers drawn
- * together), or after `CINEMATIC_IDLE_MS` without input (dimmed, against
- * screen burn-in); left by pinching out, a quick run of taps, Escape, the
- * gear a single tap shows, or anything that takes the board away (a page,
- * a dialog, the run's end) or pauses the hand. Never saved: a reload shows
+ * together), or after `CINEMATIC_IDLE_MS` without input while the hand
+ * plays (dimmed, against screen burn-in); left by pinching out, a quick run
+ * of taps, Escape, the gear a single tap shows, or anything that takes the
+ * board away (a page, a dialog, the run's end). Never saved: a reload shows
  * the whole UI. */
 
 /** How long without input before the idle option enters it. */
@@ -23,10 +23,12 @@ export type CinematicLook = { active: boolean; dimmed: boolean; gear: boolean; g
 export type CinematicHost = {
   /** The player's settings for it. */
   settings(): { cinematic: boolean; cinematicIdle: boolean; cinematicGems: boolean };
-  /** It may show: the board's page is open inside a run with the hand
-   * playing (a paused hand waits on the player, whose play button cinematic
-   * mode hides), with no dialog and no board lesson waiting on the player. */
+  /** It may show: the board's page is open inside a run, with no dialog
+   * and no board lesson waiting on the player. */
   allowed(): boolean;
+  /** The hand plays. Idling enters only then: a paused hand waits on the
+   * player, whose play button cinematic mode hides. */
+  playing(): boolean;
   /** Milliseconds, on the game's clock. */
   now(): number;
   /** Shows `look` on the page. */
@@ -100,7 +102,7 @@ export class Cinematic {
 
   /** Once a second: leaves once the board no longer allows it (or the
    * setting is off), hides the gear once its time is up, and enters after
-   * the idle time with the idle option on. */
+   * the idle time with the idle option on, while the hand plays. */
   tick() {
     const now = this.host.now(), settings = this.host.settings();
     if (this.active) {
@@ -111,7 +113,7 @@ export class Cinematic {
       }
       return;
     }
-    if (settings.cinematicIdle && now - this.lastInput >= CINEMATIC_IDLE_MS) this.enter("idle");
+    if (settings.cinematicIdle && this.host.playing() && now - this.lastInput >= CINEMATIC_IDLE_MS) this.enter("idle");
   }
 
   get gearShown() {

@@ -115,7 +115,8 @@ const shrines = new ShrinesPage(ctx);
 const cinematic = new Cinematic({
   settings: () => game.save.settings,
   allowed: () =>
-    isBoard(tab) && !game.run.outside && game.auto && !game.fallen && !deck.teaching && !game.boardLesson && !game.teachesSpeed && !document.querySelector("dialog[open]"),
+    isBoard(tab) && !game.run.outside && !game.fallen && !deck.teaching && !game.boardLesson && !game.teachesSpeed && !document.querySelector("dialog[open]"),
+  playing: () => game.auto,
   now: () => game.clock(),
   show: (look) => {
     const root = document.documentElement;

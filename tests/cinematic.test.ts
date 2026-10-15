@@ -4,10 +4,11 @@ import { Cinematic, CINEMATIC_IDLE_MS, EXIT_TAP_MS, GEAR_MS, PinchTracker, type 
 
 /** A Cinematic on a fake clock, with the setting on and the board allowing it. */
 function setup(settings: Partial<{ cinematic: boolean; cinematicIdle: boolean; cinematicGems: boolean }> = {}) {
-  const state = { now: 0, allowed: true, settings: { cinematic: true, cinematicIdle: false, cinematicGems: false, ...settings }, look: null as CinematicLook | null };
+  const state = { now: 0, allowed: true, playing: true, settings: { cinematic: true, cinematicIdle: false, cinematicGems: false, ...settings }, look: null as CinematicLook | null };
   const cinematic = new Cinematic({
     settings: () => state.settings,
     allowed: () => state.allowed,
+    playing: () => state.playing,
     now: () => state.now,
     show: (look) => (state.look = look),
   });
@@ -50,6 +51,18 @@ test("with the idle option it enters, dimmed, after two minutes without input, a
   cinematic.input();
   assert.equal(cinematic.active, true, "input lights the board but stays in cinematic mode");
   assert.equal(state.look!.dimmed, false);
+});
+
+test("idling never enters it while the hand is paused, though a pinch does", () => {
+  const { state, cinematic } = setup({ cinematicIdle: true });
+  state.playing = false;
+  state.now = CINEMATIC_IDLE_MS * 10;
+  cinematic.tick();
+  assert.equal(cinematic.active, false, "its play button would be hidden");
+  cinematic.pinch("in");
+  assert.equal(cinematic.active, true);
+  cinematic.tick();
+  assert.equal(cinematic.active, true, "a paused hand doesn't take it away");
 });
 
 test("without the idle option, idling never enters it", () => {
