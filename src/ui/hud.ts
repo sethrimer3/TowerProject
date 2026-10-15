@@ -55,6 +55,12 @@ export function shortAmount(n: number, from = 10_000) {
   const v = n / size, digits = v < 10 ? 2 : v < 100 ? 1 : 0, step = size / 10 ** digits;
   return `${Math.floor(n / step) / 10 ** digits}${unit}`;
 }
+/** A Gold price on a buy button (or beside one): in full to 99,999, then
+ * shortened as the purse is (123K, 4.56M), so the button keeps its width. */
+export function goldPrice(gold: number) {
+  const n = whole(gold);
+  return n < 100_000 ? n.toLocaleString("en-US") : shortAmount(n);
+}
 /** The purse's and currencies bar's amounts kept at what they read, by id,
  * while what was just gained flies to them (`flyToPurse`). */
 const heldAmounts = new Map<string, string>();
