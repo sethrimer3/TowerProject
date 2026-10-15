@@ -785,6 +785,17 @@ canvas {
 .run-menu.forest .run-menu-items { grid-template-rows: minmax(0, 1fr); }
 .run-menu-end small { font-size: 9px; letter-spacing: 1px; }
 .menu-icon { display: block; width: 16px; height: 16px; fill: currentColor; }
+/* Open, the hamburger's bars fold into an X that closes it: the outer two
+   meet in the middle and cross, the middle one fades. */
+.menu-icon rect {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform .22s ease, opacity .16s ease;
+}
+[aria-expanded="true"] > .mini-icon > .menu-icon rect:nth-child(1) { transform: translateY(4px) rotate(45deg); }
+[aria-expanded="true"] > .mini-icon > .menu-icon rect:nth-child(2) { opacity: 0; }
+[aria-expanded="true"] > .mini-icon > .menu-icon rect:nth-child(3) { transform: translateY(-4px) rotate(-45deg); }
+.run-menu.instant .menu-icon rect { transition: none; }
 /* Under play/pause inside a run: the hero's movement speed, steps a second,
    between the arrows that slow and speed it. Each arrow fills its side of
    the row, so a press near it counts. */
