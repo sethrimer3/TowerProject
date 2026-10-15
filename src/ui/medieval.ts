@@ -50,6 +50,10 @@ export const ARCADE_CLASS = "arcade";
  * class on the root. */
 export const SYSTEM_CLASS = "system";
 
+/** A space-age starship's console: `orbit.css` dresses this class on the
+ * root. */
+export const ORBIT_CLASS = "orbit";
+
 /** Dresses the page in the UI theme worn (`uiLook`: Classic wears none of
  * their classes) and mirrors Reduce motion. */
 export function applyUiTheme(save: Pick<Save, "themes" | "settings">) {
@@ -66,6 +70,7 @@ export function applyUiTheme(save: Pick<Save, "themes" | "settings">) {
   root.toggle(KURO_CLASS, look === "kuro");
   root.toggle(ARCADE_CLASS, look === "arcade");
   root.toggle(SYSTEM_CLASS, look === "system");
+  root.toggle(ORBIT_CLASS, look === "orbit");
   root.toggle("reduce-motion", save.settings.reduceMotion);
 }
 

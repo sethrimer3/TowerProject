@@ -12,6 +12,7 @@ import { KURO, SHIRO } from "../src/bare-board.ts";
 import { ARCADE } from "../src/arcade-board.ts";
 import { SYSTEM } from "../src/system-board.ts";
 import { KROZ } from "../src/kroz-board.ts";
+import { ORBIT } from "../src/orbit-board.ts";
 import type { FrameContext } from "../src/render-frame.ts";
 import type { GainArt } from "../src/state.ts";
 
@@ -119,4 +120,11 @@ test("on a Kroz board a potion rises as its cyan gem, a chest as its yellow C on
   const chest = drawn({ tile: { kind: "reward" } as never }, "kroz").fills;
   assert.ok(chest.includes(KROZ.red) && chest.includes(KROZ.yellow), "the chest keeps its red cell");
   assert.ok(drawn({ heart: true }, "kroz").fills.includes(KROZ.lightRed));
+});
+
+test("on an Orbit board a potion rises as its med canister, a Heart Door's toll as its magenta heart", () => {
+  const potion = drawn({ tile: { kind: "potion", hp: 35 } as never }, "orbit");
+  assert.ok(potion.fills.includes(ORBIT.hullLight) && potion.strokes.includes(ORBIT.hullLight), "the canister's steel cap and rim");
+  assert.ok(!drawn({ tile: { kind: "potion", hp: 35 } as never }, null).strokes.includes(ORBIT.hullLight), "the classic board keeps its own art");
+  assert.ok(drawn({ heart: true }, "orbit").fills.includes(ORBIT.magenta));
 });
