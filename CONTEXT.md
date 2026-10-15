@@ -510,11 +510,11 @@ _Avoid_: obstacle, deadlock cause
 ### Themes
 
 **UI theme**:
-A look for the page around the board: its panels, buttons and sounds. Classic is always available; Medieval is owned from the start; Neon, Terminal, Desktop, Glyph, Ember, Yang, Yin, Shiro, Kuro, Arcade, System, Orbit and Pixel are bought (1 Gold each for now).
+A look for the page around the board: its panels, buttons and sounds. Classic is always available; Medieval is owned from the start; Neon, Terminal, Desktop, Glyph, Ember, Yang, Yin, Shiro, Kuro, Arcade, System, Orbit, Pixel and Doodle are bought (1 Gold each for now).
 _Avoid_: skin, style
 
 **Game theme**:
-A look for the board itself: its tiles, the hero, enemies and torches. Classic is always available; Neon, Terminal, Desktop, Glyph, Ember, Yang, Yin, Shiro, Kuro, Arcade, System, Kroz, Orbit and Pixel are bought (1 Gold each for now).
+A look for the board itself: its tiles, the hero, enemies and torches. Classic is always available; Neon, Terminal, Desktop, Glyph, Ember, Yang, Yin, Shiro, Kuro, Arcade, System, Kroz, Orbit, Pixel and Doodle are bought (1 Gold each for now).
 _Avoid_: tileset, board skin
 
 **Owned theme**:

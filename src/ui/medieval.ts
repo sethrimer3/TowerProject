@@ -58,6 +58,10 @@ export const ORBIT_CLASS = "orbit";
  * this class on the root. */
 export const PIXEL_CLASS = "pixel";
 
+/** Wobbly brush outlines and flat bright fills on white paper, as drawn in
+ * a simple paint program: `doodle.css` dresses this class on the root. */
+export const DOODLE_CLASS = "doodle";
+
 /** Dresses the page in the UI theme worn (`uiLook`: Classic wears none of
  * their classes) and mirrors Reduce motion. */
 export function applyUiTheme(save: Pick<Save, "themes" | "settings">) {
@@ -76,6 +80,7 @@ export function applyUiTheme(save: Pick<Save, "themes" | "settings">) {
   root.toggle(SYSTEM_CLASS, look === "system");
   root.toggle(ORBIT_CLASS, look === "orbit");
   root.toggle(PIXEL_CLASS, look === "pixel");
+  root.toggle(DOODLE_CLASS, look === "doodle");
   root.toggle("reduce-motion", save.settings.reduceMotion);
 }
 
