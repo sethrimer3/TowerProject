@@ -12,8 +12,10 @@
  * `gain` units a turn and a shot costs `cost`, so it fires every
  * cost / gain turns on average (3 shots in 10 turns fire 4, 3 and 3 turns
  * apart). A shooter with no charge kept is ready; one that is ready and has
- * nothing to shoot waits, banking nothing more. Each tile's roll is a fixed
- * number of the run seed, the floor and the tile (`RANGED_SALT`). */
+ * nothing to shoot waits, banking nothing more. The Archer's charge runs a
+ * hundredth of a turn at a time (`archerTurn`), so Rapid Fire can start
+ * and end mid-turn. Each tile's roll is a fixed number of the run seed, the
+ * floor and the tile (`RANGED_SALT`). */
 import type { Enemy, Player, Tile } from "./entities.ts";
 import { attackAgainst, critMultiplier, defenseAgainst, parryCut, struckDamage } from "./combat.ts";
 import { fastShare, mayBeFast } from "./fast-enemies.ts";
@@ -68,9 +70,13 @@ export const woundMore = (raw: Tile, damage: number): Tile => ({ ...raw, wound: 
  * turn less every 500), never under 1. */
 export const FOE_GAIN = 500;
 export const foeShotCost = (floor: number) => Math.max(FOE_GAIN, 10 * FOE_GAIN - Math.max(0, floor - 1));
-/** What an arrow costs the Archer: its gain a turn is its Attack Speed
- * (twentieths of a shot every 10 turns), so 20 a turn fires every 10. */
-export const ARROW_COST = 200;
+/** What an arrow costs the Archer: its gain every hundredth of a turn
+ * (`ARCHER_TICKS` a turn) is its Attack Speed (twentieths of a shot every
+ * 10 turns), so 20 fires every 10 turns. */
+export const ARROW_COST = 20_000;
+export const ARCHER_TICKS = 100;
+/** How many times as fast the Archer's arrows charge during Rapid Fire. */
+export const RAPID_FIRE_SPEED = 4;
 
 /** A shooter's charge (undefined: ready, full) a turn later. */
 export const charged = (charge: number | undefined, gain: number) => (charge === undefined ? undefined : charge + gain);
@@ -80,6 +86,49 @@ export const ready = (charge: number | undefined, cost: number) => charge === un
 export const spent = (charge: number | undefined, cost: number) => (charge === undefined ? 0 : charge - cost);
 /** A shooter that didn't shoot: once ready it waits full, banking nothing. */
 export const held = (charge: number | undefined, cost: number) => (charge === undefined || charge >= cost ? undefined : charge);
+
+/** The Archer's clock: its charge (absent: ready, waiting for a target)
+ * and the hundredths of a turn of Rapid Fire left (absent: none). */
+export type ArcherClock = { charge?: number; rapid?: number };
+
+/** A turn of the Archer's clock, a hundredth of a turn at a time: each
+ * adds `speed` to the charge, `RAPID_FIRE_SPEED` times that while Rapid
+ * Fire lasts, and the hundredth the charge reaches `ARROW_COST`, `shoot` is
+ * asked to fire, told whether Rapid Fire is still going on (`rapid`) and how
+ * far into the turn it is (`tick`). It returns false when nothing can be
+ * shot (the arrow then waits ready, banking nothing more, while Rapid Fire
+ * runs on), or else the hundredths of Rapid Fire the shot starts from that
+ * moment, 0 for none. An arrow already waiting fires at the turn's end
+ * (`tick` = `ARCHER_TICKS`), the charge left over carrying either way, so
+ * without Rapid Fire it fires as a turn-by-turn charge would. Returns the
+ * clock a turn later, and whether the arrow is waiting at its end with
+ * nothing shot since it was last asked (`idle`). */
+export function archerTurn(clock: ArcherClock, speed: number, shoot: (rapid: boolean, tick: number) => number | false) {
+  let charge = clock.charge, rapid = clock.rapid ?? 0, idle = false;
+  const fire = (tick: number) => {
+    const starts = shoot(rapid > 0, tick);
+    if (starts === false) return false;
+    if (starts > 0) rapid = starts;
+    return true;
+  };
+  for (let tick = 1; tick <= ARCHER_TICKS; tick++) {
+    if (charge === undefined) {
+      // Waiting: the board doesn't change within the turn, so Rapid Fire just runs on.
+      rapid = Math.max(0, rapid - 1);
+      continue;
+    }
+    charge += rapid > 0 ? RAPID_FIRE_SPEED * speed : speed;
+    if (rapid > 0) rapid--;
+    if (charge < ARROW_COST) continue;
+    if (fire(tick)) charge -= ARROW_COST;
+    else charge = undefined, idle = true;
+  }
+  if (charge === undefined && !idle) {
+    if (fire(ARCHER_TICKS)) charge = 0;
+    else idle = true;
+  }
+  return { clock: { ...(charge === undefined ? {} : { charge }), ...(rapid > 0 ? { rapid } : {}) } as ArcherClock, idle };
+}
 
 /** Whether a tile `dx`, `dy` away lies within `range` hundredths of a tile
  * (Euclidean: a knight's move is √5 ≈ 2.24 away). */
@@ -118,9 +167,10 @@ export const arrowBoost = (perTile: number, d2: number, percent: number, waited:
 /** The Ranged and Archer state a run keeps, so undo takes it back with the
  * run: the turns taken inside (each shot's rolls are fixed by it), the
  * Archer's charge, the turns its ready arrow has waited unfired (`waited`,
- * counted once Charged Shot is researched), and each Ranged enemy's charge
- * that has shot on this floor, by its tile. Absent charge is full. */
-export type Volleys = { turn: number; hero?: number; waited?: number; foes?: Record<string, number> };
+ * counted once Charged Shot is researched), the hundredths of a turn of
+ * Rapid Fire left (`rapid`), and each Ranged enemy's charge that has shot
+ * on this floor, by its tile. Absent charge is full. */
+export type Volleys = { turn: number; hero?: number; waited?: number; rapid?: number; foes?: Record<string, number> };
 
 /** An enemy within reach: where it stands, its tile, and its squared distance. */
 export type InReach = { x: number; y: number; tile: Tile & { enemy: Enemy }; d2: number };

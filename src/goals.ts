@@ -34,9 +34,10 @@ import { TIERS } from "./tiers.ts";
  * the hero fires at the nearest enemy in range, ranged.ts), Attack Range
  * and Attack Speed (floors 20 and 30: the Training rows that improve it),
  * ATK / Tile (floor 50: the Training row that strikes harder from further
- * off), Charged Shot (floor 80: the Archives' project that strengthens
- * an arrow that waits) and Multishot (floor 90: the Training rows that let
- * a shot fire at several enemies), and Tower II's Training Discount (floor
+ * off), Charged Shot (floor 60: the Archives' project that strengthens
+ * an arrow that waits), Multishot (floor 70: the Training rows that let
+ * a shot fire at several enemies) and Rapid Fire (floor 80: the Training
+ * rows that may make the Archer fire four times as fast for a while), and Tower II's Training Discount (floor
  * 80: the Archives' project that cuts a trainer's Gold) and Card Groups
  * (floor 90: the Deck links neighbouring cards of the hand into a group
  * whose cards share one priority, cards.ts). */
@@ -44,7 +45,7 @@ export type GoalUnlock =
   | "damagePrediction" | "combatForecast" | "attackLore" | "warp" | "damageVisual" | "relativeDamageColor" | "equipment" | "tournament" | "events" | "researchSpeed"
   | "shardAttack" | "shardDefense" | "parryPercent"
   | "shrines" | "firstBoonChoice" | "improveTradeoffs" | "autoPickBoons" | "boonOptions" | "banBoons" | "autoPickRanking"
-  | "badgeSlots" | "noteTaking" | "archer" | "attackRange" | "attackSpeed" | "attackPerTile" | "chargedShot" | "multishot"
+  | "badgeSlots" | "noteTaking" | "archer" | "attackRange" | "attackSpeed" | "attackPerTile" | "chargedShot" | "multishot" | "rapidFire"
   | "trainingDiscount" | "cardGroups";
 export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   damagePrediction: "Damage Prediction", combatForecast: "Combat Forecast", attackLore: "Attack Lore", warp: "Warp", damageVisual: "Damage Visual",
@@ -54,7 +55,7 @@ export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   shrines: "Unlock Shrines", firstBoonChoice: "First Boon Choice", improveTradeoffs: "Improve Trade-off Boons",
   autoPickBoons: "Auto Pick Boons", boonOptions: "Boon Option Quantity", banBoons: "Ban Boons", autoPickRanking: "Auto Pick Ranking",
   badgeSlots: "Badge Slots", noteTaking: "Note Taking",
-  archer: "Archer Class", attackRange: "Attack Range", attackSpeed: "Attack Speed", attackPerTile: "ATK / Tile", chargedShot: "Charged Shot", multishot: "Multishot",
+  archer: "Archer Class", attackRange: "Attack Range", attackSpeed: "Attack Speed", attackPerTile: "ATK / Tile", chargedShot: "Charged Shot", multishot: "Multishot", rapidFire: "Rapid Fire",
   trainingDiscount: "Training Discount", cardGroups: "Card Groups",
 };
 /** What a checkpoint pays: an unlock, the next tower opened, or an amount of a currency. */
@@ -125,8 +126,9 @@ const TOWER_THREE: Record<number, CheckpointSet> = {
   20: { reward: unlock("attackRange") },
   30: { reward: unlock("attackSpeed") },
   50: { reward: unlock("attackPerTile") },
-  80: { reward: unlock("chargedShot") },
-  90: { reward: unlock("multishot") },
+  60: { reward: unlock("chargedShot") },
+  70: { reward: unlock("multishot") },
+  80: { reward: unlock("rapidFire") },
 };
 /** Tower IV's checkpoints that differ from the stub. */
 const TOWER_FOUR: Record<number, CheckpointSet> = {

@@ -1,4 +1,4 @@
-import type { Volley } from "./state.ts";
+import type { Shot, Volley } from "./state.ts";
 import { tileCenter, type FrameContext } from "./render-frame.ts";
 
 /** A Ranged enemy's shot: a small glowing ball, its radius in tiles. */
@@ -15,22 +15,31 @@ const CHARGED_GLOW = "#4da6ff";
 
 /** The turn's shots in flight at `f.now` (ranged.ts): each leaves its
  * shooter as the turn begins and reaches its target as `flight` ends, the
- * hero's step ending with it. `wrap`, the board's width where it wraps
+ * hero's step ending with it; one of several arrows a turn (Rapid Fire)
+ * flies half of it, leaving at its `lead` (`shotFlight`). `wrap`, the
+ * board's width where it wraps
  * (the Delve), sends a shot the short way round. */
 export function drawVolley(f: FrameContext, volley: Volley | null, wrap = 0) {
   if (!volley) return;
   const k = (f.now - volley.at) / volley.flight;
   if (k < 0 || k >= 1) return;
   for (const shot of volley.shots) {
+    const t = shotFlight(shot, k);
+    if (t < 0 || t >= 1) continue;
     let dx = shot.to.x - shot.from.x;
     if (wrap && Math.abs(dx) > wrap / 2) dx -= Math.sign(dx) * wrap;
     const dy = shot.to.y - shot.from.y;
-    const at = tileCenter(f, shot.from.x + dx * k, shot.from.y + dy * k);
+    const at = tileCenter(f, shot.from.x + dx * t, shot.from.y + dy * t);
     if (shot.by === "enemy") drawShot(f, at);
     // World y grows upward, the screen's downward.
     else drawArrow(f, at, Math.atan2(-dy, dx), !!shot.charged);
   }
 }
+
+/** How far along its path `shot` is when the volley is `k` of its flight
+ * through: all of it for one shot a turn, or half the flight from `lead` / 2
+ * for an arrow with a `lead`. Below 0 it hasn't left, from 1 it has landed. */
+export const shotFlight = (shot: Shot, k: number) => (shot.lead === undefined ? k : (k - shot.lead / 2) * 2);
 
 function drawShot(f: FrameContext, at: { x: number; y: number }) {
   const c = f.c, r = Math.max(2, f.s * SHOT_RADIUS);

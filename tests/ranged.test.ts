@@ -4,12 +4,12 @@ import { Game } from "../src/state.ts";
 import { defaults } from "../src/save.ts";
 import { ENEMY_GOLD, RANGED_GOLD, TRAINING } from "../src/config.ts";
 import { fastShare } from "../src/fast-enemies.ts";
-import { ARROW_COST, arrowBoost, arrowDamage, charged, enemiesWithin, FOE_GAIN, foeRange, foeShotCost, held, rangedShare, ready, shotDamage, spent, within, wounded } from "../src/ranged.ts";
+import { ARCHER_TICKS, archerTurn, ARROW_COST, arrowBoost, arrowDamage, charged, enemiesWithin, FOE_GAIN, foeRange, foeShotCost, held, rangedShare, ready, shotDamage, spent, within, wounded } from "../src/ranged.ts";
 import { enemyTitle } from "../src/scaling.ts";
 import { tierCells, tierGold } from "../src/tiers.ts";
 import { generateTowerRoom, RoomWorld } from "../src/tower/room-world.ts";
 import { heroClass, isArcher } from "../src/goals.ts";
-import { attackPerTile, attackRange, attackSpeed, multishotChance, multishotTargets, trainingOpen, trainingStep, trainingText } from "../src/loadout.ts";
+import { attackPerTile, attackRange, attackSpeed, multishotChance, multishotTargets, rapidFireChance, rapidFireDuration, trainingOpen, trainingStep, trainingText } from "../src/loadout.ts";
 import { runTrainingValue, silverPrice } from "../src/run-training.ts";
 import { trainingGold } from "../src/training-jobs.ts";
 import { RESEARCH } from "../src/archives.ts";
@@ -62,15 +62,21 @@ test("cooldowns are whole charge units, so a fraction of a turn carries: 3 shots
     }
     return out;
   };
-  // Attack Speed 3.00 shots every 10 turns: 60 twentieths a turn.
-  assert.deepEqual(fires(60, ARROW_COST, 11), [0, 4, 7, 10]);
-  assert.deepEqual(fires(20, ARROW_COST, 21), [0, 10, 20]);
+  // The Archer, a hundredth of a turn at a time: Attack Speed 3.00 shots every 10 turns, 60 twentieths.
+  const looses = (speed: number, turns: number) => {
+    let clock = {}, out: number[] = [];
+    for (let turn = 0; turn < turns; turn++) clock = archerTurn(clock, speed, () => (out.push(turn), 0)).clock;
+    return out;
+  };
+  assert.deepEqual(looses(60, 11), [0, 4, 7, 10]);
+  assert.deepEqual(looses(20, 21), [0, 10, 20]);
+  assert.deepEqual(fires(60 * ARCHER_TICKS, ARROW_COST, 11), [0, 4, 7, 10], "the same as charging a turn at a time");
   // A Ranged enemy's 9.5-turn cooldown (floor 251): twice in 19 turns, 10 then 9 apart.
   assert.equal(foeShotCost(251), 4750);
   assert.deepEqual(fires(FOE_GAIN, foeShotCost(251), 20), [0, 10, 19]);
   assert.deepEqual([1, 501, 4501, 9000].map(foeShotCost), [5000, 4500, 500, 500]);
   // Ready and waiting banks nothing more.
-  assert.equal(held(charged(150, 100), ARROW_COST), undefined);
+  assert.equal(held(charged(150, 100), 200), undefined);
 });
 
 test("reach is Euclidean: a knight's move is within a Ranged enemy's 2.5 tiles, a diagonal two away isn't; walls don't block", () => {
@@ -275,7 +281,7 @@ test("Charged Shot: each turn the ready arrow waits unfired adds its percent to 
   assert.deepEqual(plain.volley?.shots.map((s) => [s.damage, s.charged]), [[1000, undefined]]);
 });
 
-test("Charged Shot research: +1% a turn a level for 100 levels, opened by Tower III's floor 80, on Critical Factor's hours at ten times its Gold", () => {
+test("Charged Shot research: +1% a turn a level for 100 levels, opened by Tower III's floor 60, on Critical Factor's hours at ten times its Gold", () => {
   const def = RESEARCH.chargedShot, crit = RESEARCH.critFactor;
   assert.equal(def.levels.length, 100);
   assert.deepEqual(def.levels.map((l) => [l.gold, l.hours]), crit.levels.map((l) => [10 * l.gold, l.hours]));
@@ -312,12 +318,12 @@ test("a charged arrow flies in a blue glow; a plain arrow has none", () => {
   assert.deepEqual(glows(false), [""]);
 });
 
-test("Multishot Chance and Targets: 0.5% a rank to 49.5% at 99, and 2 targets to 9 at 7, opened by Tower III's floor 90; the same prices in Silver and a trainer's Gold", () => {
+test("Multishot Chance and Targets: 0.5% a rank to 49.5% at 99, and 2 targets to 9 at 7, opened by Tower III's floor 70; the same prices in Silver and a trainer's Gold", () => {
   const save = defaults();
   const rows = (["multishotChance", "multishotTargets"] as const).map((id) => TRAINING.find((t) => t.id === id)!);
   assert.deepEqual(rows.map((r) => [r.group, r.max]), [["offense", 99], ["offense", 7]]);
   assert.deepEqual(rows.map((r) => trainingOpen(r, save)), [false, false]);
-  save.goals.claimed[3] = [90];
+  save.goals.claimed[3] = [70];
   assert.deepEqual(rows.map((r) => trainingOpen(r, save)), [true, true]);
   const at = (training: Partial<typeof save.training>) => ({ training: { ...save.training, ...training } });
   assert.deepEqual([0, 1, 10, 99].map((r) => multishotChance(at({ multishotChance: r }))), [0, 50, 500, 4950]);
@@ -382,4 +388,72 @@ test("Multishot Chance at 99 ranks makes about 49.5% of shots multishots, a fixe
   assert.equal(roll(17), roll(17));
   g.save.training.multishotChance = 0;
   assert.ok(Array.from({ length: 200 }, (_, t) => roll(t)).every((m) => !m));
+});
+
+test("Rapid Fire Chance and Duration: 0.4% a rank to 34% at 85, and 1 turn, +0.05 a rank, to 5.95 at 99, opened by Tower III's floor 80; the same prices in Silver and a trainer's Gold", () => {
+  const save = defaults();
+  const rows = (["rapidFireChance", "rapidFireDuration"] as const).map((id) => TRAINING.find((t) => t.id === id)!);
+  assert.deepEqual(rows.map((r) => [r.group, r.max]), [["offense", 85], ["offense", 99]]);
+  save.goals.claimed[3] = [70];
+  assert.deepEqual(rows.map((r) => trainingOpen(r, save)), [false, false]);
+  save.goals.claimed[3] = [80];
+  assert.deepEqual(rows.map((r) => trainingOpen(r, save)), [true, true]);
+  const at = (training: Partial<typeof save.training>) => ({ training: { ...save.training, ...training } });
+  assert.deepEqual([0, 1, 10, 85].map((r) => rapidFireChance(at({ rapidFireChance: r }))), [0, 40, 400, 3400]);
+  assert.deepEqual([0, 1, 10, 99].map((r) => rapidFireDuration(at({ rapidFireDuration: r }))), [100, 105, 150, 595]);
+  save.training.rapidFireChance = 84;
+  const chance = trainingStep(save, "rapidFireChance");
+  assert.deepEqual([chance.unit, chance.now, chance.next], ["%", 33.6, 34]);
+  save.training.rapidFireDuration = 98;
+  const duration = trainingStep(save, "rapidFireDuration");
+  assert.deepEqual([trainingText(duration.now, duration.unit), trainingText(duration.next, duration.unit), trainingText(duration.now, duration.unit, true)], ["5.90 turns", "5.95 turns", "5.90"]);
+  const run = { training: { rapidFireDuration: 1 }, player: hero() };
+  assert.deepEqual(runTrainingValue(save, run, "rapidFireDuration"), { value: 5.95, unit: "turns" }, "Silver ranks count in the run");
+  for (const row of rows) {
+    const prices = Array.from({ length: row.max }, (_, k) => silverPrice(row.id, k));
+    assert.deepEqual(prices, Array.from({ length: row.max }, (_, k) => trainingGold(row, k)), `${row.id}: the same in Silver and Gold`);
+  }
+  // 120 + 42m + 7.85m² + 0.085m³ for the n-th, m = n − 1.
+  assert.deepEqual([1, 9, 30, 82, 85].map((n) => silverPrice("rapidFireChance", n - 1)), [120, 1002, 10_013, 100_199, 109_418]);
+  assert.deepEqual([1, 9, 30, 82, 99].map((n) => silverPrice("rapidFireDuration", n - 1)), [120, 1002, 10_013, 100_199, 159_629]);
+});
+
+test("Rapid Fire fires four times as fast from the shot that starts it; what's left toward a shot when it ends carries at the usual pace", () => {
+  // One shot every 2 turns (Attack Speed 5.00 a 10 turns), Rapid Fire 3.3 turns, started by the first shot only.
+  const times: [number, boolean][] = [];
+  let clock = {}, started = false;
+  for (let turn = 0; turn < 6; turn++)
+    clock = archerTurn(clock, 100, (rapid, tick) => {
+      times.push([turn * ARCHER_TICKS + tick, rapid]);
+      if (rapid || started) return 0;
+      started = true;
+      return 330;
+    }).clock;
+  // The first shot fires at the end of turn 0 (100); six more every half turn while Rapid Fire lasts (to 430),
+  // the last leaving 60% of a shot, so the next comes 0.8 turns after it ends, 1.1 after the last rapid one.
+  assert.deepEqual(times.map(([t]) => t), [100, 150, 200, 250, 300, 350, 400, 510]);
+  assert.deepEqual(times.map(([, rapid]) => rapid), [false, true, true, true, true, true, true, false], "only a shot after Rapid Fire may start it again");
+  // A waiting arrow lets Rapid Fire run down, and fires at the turn's end.
+  assert.deepEqual(archerTurn({ rapid: 150 }, 100, () => false), { clock: { rapid: 50 }, idle: true });
+  assert.deepEqual(archerTurn({}, 100, () => 250).clock, { charge: 0, rapid: 250 }, "a shot at the turn's end starts it for the turns after");
+});
+
+test("Rapid Fire in a run: several arrows a turn, each leaving in turn, at most one start per window; undo takes it back", () => {
+  const g = archer(arena({ "3,0": { ...brute, hp: 1e7, attack: 1 } }, { attack: 1000 }));
+  g.save.goals.claimed[3] = [10, 80];
+  g.save.training.attackSpeed = 100;
+  // Past its 85 ranks, so every shot fired outside Rapid Fire starts it.
+  g.save.training.rapidFireChance = 300;
+  g.save.training.rapidFireDuration = 99;
+  assert.ok(g.move(1, 0));
+  assert.equal(g.volley?.shots.length, 1, "the arrow waiting ready fires at the turn's end");
+  assert.equal(g.volley?.shots[0]!.lead, undefined, "one arrow a turn flies as ever");
+  assert.equal(g.run.volleys?.rapid, 595, "and starts Rapid Fire");
+  assert.ok(g.move(0, 1));
+  const shots = g.volley!.shots;
+  // 120 twentieths × 4 a hundredth: an arrow every 41⅔ hundredths, from an empty charge.
+  assert.deepEqual(shots.map((s) => s.lead), [0.42, 0.84]);
+  assert.equal(g.run.volleys?.rapid, 495);
+  assert.ok(g.undo());
+  assert.equal(g.run.volleys?.rapid, 595, "undo takes the turn's Rapid Fire back");
 });

@@ -604,6 +604,8 @@ export const TRAINING = [
   { id: "attackPerTile", name: "ATK / Tile", short: "ATK/Tile", group: "offense", goal: "attackPerTile", cost: 1, max: 200, description: "Multiplies the ATK of each of the Archer's shots by more for every tile its target stands away." },
   { id: "multishotChance", name: "Multishot Chance", short: "Multi %", group: "offense", goal: "multishot", cost: 1, max: 99, description: "Raises the chance each of the Archer's shots fires more than one arrow, each at another enemy in range." },
   { id: "multishotTargets", name: "Multishot Targets", short: "Targets", group: "offense", goal: "multishot", cost: 1, max: 7, description: "Raises how many arrows a multishot fires, one at each of that many enemies in range." },
+  { id: "rapidFireChance", name: "Rapid Fire Chance", short: "Rapid %", group: "offense", goal: "rapidFire", cost: 1, max: 85, description: "Raises the chance each of the Archer's shots starts Rapid Fire: shots come four times as fast for a while." },
+  { id: "rapidFireDuration", name: "Rapid Fire Duration", short: "Duration", group: "offense", goal: "rapidFire", cost: 1, max: 99, description: "Raises how many turns Rapid Fire lasts once it starts." },
   { id: "defense", name: "DEF", group: "defense", stat: "defense", curve: { per: 0, square: 1 / 12 }, cost: 1, max: 1000, breaks: 10, description: "Raises DEF, taken off the damage of every enemy strike." },
   { id: "regen", name: "Regen", group: "defense", stat: "regen", curve: { per: 0.1, square: 1 / 120 }, cost: 1, max: 1000, breaks: 10, requires: "regen", description: "Raises the HP regained with every step taken in a run." },
   { id: "shroud", name: "Shroud", group: "defense", stat: "shroud", curve: { per: 5, square: 0.1, fourth: 0.0000064 }, cost: 1, max: 1000, breaks: 8, requires: "shroud", description: "Raises the damage the shroud blocks at the start of every fight." },
@@ -654,6 +656,12 @@ export const ATK_PER_TILE_FIRST = 1000, ATK_PER_TILE_FALL = 4;
  * at up to `MULTISHOT_TARGETS_BASE` enemies, and one more a Multishot
  * Targets rank, 9 at its 7 (ranged.ts). */
 export const MULTISHOT_CHANCE_RANK = 50, MULTISHOT_TARGETS_BASE = 2, MULTISHOT_TARGETS_RANK = 1;
+/** The chance each of the Archer's shots, fired while Rapid Fire isn't,
+ * starts it, in hundredths of a percent: 0.4% a Rapid Fire Chance rank,
+ * 34% at its 85. How long it lasts, in hundredths of a turn: 1 turn, and
+ * 0.05 more a Rapid Fire Duration rank, 5.95 at its 99. While it lasts the
+ * Archer's arrows charge `RAPID_FIRE_SPEED` times as fast (ranged.ts). */
+export const RAPID_FIRE_CHANCE_RANK = 40, RAPID_FIRE_DURATION_BASE = 100, RAPID_FIRE_DURATION_RANK = 5;
 /** What a percent potion restores beyond its HP, in hundredths of a percent
  * of max HP: 1% with Recovery, and 0.25% more for each Potion % rank. */
 export const POTION_PERCENT_BASE = 100, POTION_PERCENT_RANK = 25;
@@ -780,6 +788,15 @@ const multishotChancePrices = { base: 60, growth: 12, power: 1.5 };
 /** Multishot Targets: its seven ranks priced one by one, the same in
  * Silver and a trainer's Gold. */
 const multishotTargetsPrices = { prices: [450, 2_000, 5_000, 12_500, 40_000, 120_000, 350_000] } as const;
+/** Rapid Fire Chance and Duration: the n-th rank costs 120 + 42m + 7.85m² +
+ * 0.085m³, m = n − 1, rounded up (1,002 for the 9th, 10,013 for the 30th,
+ * 100,199 for the 82nd, 109,418 for Chance's 85th, 159,629 for Duration's
+ * 99th), in whole numbers so every engine agrees, the same in Silver and a
+ * trainer's Gold. */
+const rapidFirePrices = (ranks: number) => ({
+  prices: Array.from({ length: ranks }, (_, m) => Math.ceil((24_000 + 8_400 * m + 1_570 * m * m + 17 * m * m * m) / 200)),
+});
+const rapidFireChancePrices = rapidFirePrices(85), rapidFireDurationPrices = rapidFirePrices(99);
 /** Training bought with Silver inside a run, lasting only for that run:
  * each row's price schedule. The rows open from the start cost least, the
  * ones later skills open more. */
@@ -793,6 +810,8 @@ export const RUN_TRAINING_PRICES: Record<TrainingId, PriceSchedule> = {
   attackPerTile: perTilePrices,
   multishotChance: multishotChancePrices,
   multishotTargets: multishotTargetsPrices,
+  rapidFireChance: rapidFireChancePrices,
+  rapidFireDuration: rapidFireDurationPrices,
   defense: cheap,
   regen: cheap,
   shroud: vital,
@@ -847,6 +866,9 @@ export const TRAINER_GOLD_CURVES: Record<TrainingId, TrainerCurve> = {
   /** Multishot Chance and Targets: the same curves as their Silver. */
   multishotChance: { growth: multishotChancePrices.growth, start: multishotChancePrices.base, power: multishotChancePrices.power },
   multishotTargets: multishotTargetsPrices,
+  /** Rapid Fire Chance and Duration: the same lists as their Silver. */
+  rapidFireChance: rapidFireChancePrices,
+  rapidFireDuration: rapidFireDurationPrices,
   defense: mildTrainers,
   regen: mildTrainers,
   shroud: { ...gentleTrainers, cubic: 700 },

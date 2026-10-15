@@ -208,8 +208,8 @@ export class BoardPopups {
       this.arrowBars = [];
       return;
     }
-    const start = volley.at + volley.flight;
     for (const s of volley.shots) {
+      const start = volley.at + volley.flight * (s.lead === undefined ? 1 : (s.lead + 1) / 2);
       if (s.by === "enemy") {
         if (s.damage > 0) this.raise({ by: "enemy", damage: s.damage, ...(s.shrouded ? { shrouded: s.shrouded } : {}), start: 0, at: 0, end: 0, hp: 0 }, s.to, start);
         continue;
