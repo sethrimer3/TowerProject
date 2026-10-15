@@ -4,6 +4,7 @@ import { Game } from "../src/state.ts";
 import { defaults } from "../src/save.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import { THEMED_BOARDS } from "../src/themed-boards.ts";
+import { ARCADE } from "../src/arcade-board.ts";
 
 /** A Tower room of open floor, x 0..4 by y 0..4, the hero at its middle,
  * a wall at (3, 2) and an enemy at (2, 3). */
@@ -40,21 +41,25 @@ test("the hero faces its last step: right until it moves, into a fight too, not 
   assert.deepEqual(g.facing, { dx: 0, dy: 1 }, "undo doesn't turn it");
 });
 
-/** The rotations the Arcade hero is painted with. */
-function arcadeTurns(facing?: { dx: number; dy: number }) {
-  const turns: number[] = [];
-  const c = new Proxy({ rotate: (a: number) => turns.push(a) }, {
-    get: (t, k) => (k in t ? t[k as "rotate"] : () => {}),
-    set: () => true,
+/** How the Arcade hero is painted: whether mirrored, and whether its eyes
+ * (the ground's black) show. */
+function arcadeHero(facing?: { dx: number; dy: number }) {
+  const scales: number[][] = [], fills: string[] = [];
+  const c = new Proxy({ scale: (x: number, y: number) => scales.push([x, y]) } as Record<string | symbol, unknown>, {
+    get: (t, k) => (k in t ? t[k] : () => {}),
+    set: (_t, k, v) => {
+      if (k === "fillStyle") fills.push(String(v));
+      return true;
+    },
   }) as unknown as CanvasRenderingContext2D;
   THEMED_BOARDS.arcade.hero(c, facing!);
-  return turns;
+  return { mirrored: scales.some(([x]) => x < 0), eyes: fills.includes(ARCADE.ground) };
 }
 
-test("the Arcade chomper turns its mouth the way the hero faces (world y up, the screen's down)", () => {
-  assert.deepEqual(arcadeTurns({ dx: 1, dy: 0 }), [], "the sprite opens right");
-  assert.deepEqual(arcadeTurns(undefined), [], "right without a facing");
-  assert.deepEqual(arcadeTurns({ dx: -1, dy: 0 }), [Math.PI]);
-  assert.deepEqual(arcadeTurns({ dx: 0, dy: 1 }), [-Math.PI / 2], "up the screen");
-  assert.deepEqual(arcadeTurns({ dx: 0, dy: -1 }), [Math.PI / 2], "down the screen");
+test("the Arcade hero turns the way it faces (world y up, the screen's down)", () => {
+  assert.deepEqual(arcadeHero({ dx: 1, dy: 0 }), { mirrored: false, eyes: true }, "side on, looking right");
+  assert.deepEqual(arcadeHero(undefined), { mirrored: false, eyes: true }, "right without a facing");
+  assert.deepEqual(arcadeHero({ dx: -1, dy: 0 }), { mirrored: true, eyes: true });
+  assert.deepEqual(arcadeHero({ dx: 0, dy: 1 }), { mirrored: false, eyes: false }, "its back going up the screen");
+  assert.deepEqual(arcadeHero({ dx: 0, dy: -1 }), { mirrored: false, eyes: true }, "its face going down");
 });

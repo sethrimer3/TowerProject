@@ -5,13 +5,15 @@ import type { Facing } from "./state.ts";
 import type { ThemedBoard } from "./themed-boards.ts";
 import { sprite, type Sprite } from "./pixel-sprite.ts";
 
-/** The Arcade Game theme's dungeon board: an old arcade maze. Open ground is
- * black with a pellet on each bare tile, the rock is hollow, traced by a
- * blue double line where it meets the ground, and everything on it is a
- * chunky pixel sprite: enemies ghosts (a frightened blue one for the weak,
- * then orange, pink and red) and bosses space invaders, keys and gates in
- * their key's colour, potions fruit, the hero a yellow chomper. A screen's
- * scanlines run over it all. */
+/** The Arcade Game theme's dungeon board: an old arcade maze, in sprites of
+ * our own rather than any one game's. Open ground is black with a pellet on
+ * each bare tile, the rock is hollow, traced by a blue double line where it
+ * meets the ground, and everything on it is a chunky pixel sprite, the
+ * creatures and a few things more scanlined (every other row a shade
+ * darker): enemies squat visored crawlers (green, orange, magenta, then a
+ * horned red one) and bosses pixel skulls, keys and gates in their key's
+ * colour, potions low-res bottles, the hero a little yellow figure. A
+ * screen's scanlines run over it all. */
 
 export const ARCADE = {
   ground: "#000000",
@@ -19,15 +21,12 @@ export const ARCADE = {
   pellet: "#ffb8ae",
   hero: "#ffe600",
   white: "#ffffff",
-  pupil: "#2a2aff",
-  /** The frightened ghost's face. */
-  scared: "#ffb8ae",
   red: "#ff2020",
   green: "#2bd82b",
-  stem: "#3fae3f",
   gold: "#ffcf3a",
   brown: "#9a5a22",
-  girder: "#ff3b6b",
+  cork: "#c98a4a",
+  glass: "#c8d8ff",
   cyan: "#3ff0ff",
   dim: "#555577",
   flame: "#ff8a1a",
@@ -36,63 +35,90 @@ export const ARCADE = {
 const KEY_ARCADE: Record<KeyColor, string> = { yellow: "#ffe600", blue: "#3fa8ff", red: "#ff2020" };
 const keyColor = (k: KeyColor | undefined) => (k ? KEY_ARCADE[k] ?? ARCADE.white : ARCADE.white);
 
-/** A ghost's body colour, by its strength (the weak are frightened). */
-const GHOST: Partial<Record<EnemyStrength, string>> = { weak: ARCADE.maze, normal: "#ffb852", strong: "#ffb8ff", elite: ARCADE.red };
+/** A crawler's body colour, by its strength. */
+const CRAWLER: Partial<Record<EnemyStrength, string>> = { weak: ARCADE.green, normal: "#ffb852", strong: "#ff5cf0", elite: ARCADE.red };
 /** A sprite's pixel, in tile units, by the enemy's strength. */
-const CELL: Record<EnemyStrength, number> = { weak: 1.55, normal: 1.7, strong: 1.85, elite: 2, boss: 2.05, greaterBoss: 2.2 };
+const CELL: Record<EnemyStrength, number> = { weak: 1.55, normal: 1.7, strong: 1.85, elite: 1.85, boss: 1.9, greaterBoss: 2 };
 
-const GHOST_SPRITE: Sprite = [
-  "....BBBB....",
+/** `rows` with each of `letters` in its odd rows swapped for its lower case,
+ * which `shaded` colours a shade darker: the screen's scanlines running
+ * through the sprite. */
+function scanlined(rows: Sprite, letters: string): Sprite {
+  const scan = new RegExp(`[${letters}]`, "g");
+  return rows.map((row, j) => (j % 2 ? row.replace(scan, (ch) => ch.toLowerCase()) : row));
+}
+
+/** `colors` with each upper-case letter's lower case added, a shade darker. */
+function shaded(colors: Record<string, string>): Record<string, string> {
+  const out = { ...colors };
+  for (const [k, hex] of Object.entries(colors)) {
+    if (k === k.toLowerCase()) continue;
+    const n = parseInt(hex.slice(1), 16);
+    const dark = (shift: number) => Math.round(((n >> shift) & 255) * 0.62).toString(16).padStart(2, "0");
+    out[k.toLowerCase()] = `#${dark(16)}${dark(8)}${dark(0)}`;
+  }
+  return out;
+}
+
+/** A squat crawler: a visor across its face, two pupils in it, stubby legs. */
+const CRAWLER_SPRITE = scanlined([
+  "...BBBBBB...",
   "..BBBBBBBB..",
   ".BBBBBBBBBB.",
-  ".BWWBBBBWWB.",
-  "BWWWWBBWWWWB",
-  "BWWPPBBWWPPB",
-  "BWWPPBBWWPPB",
-  "BBWWBBBBWWBB",
+  "BBWWWWWWWWBB",
+  "BBWPWWWWPWBB",
   "BBBBBBBBBBBB",
   "BBBBBBBBBBBB",
-  "BBBBBBBBBBBB",
-  "BB.BBB.BBB.B",
-];
-const SCARED_SPRITE: Sprite = [
-  "....BBBB....",
-  "..BBBBBBBB..",
   ".BBBBBBBBBB.",
+  "..BB....BB..",
+  ".BBB....BBB.",
+], "B");
+/** The elite's crawler, horned. */
+const HORNED_SPRITE = scanlined([
+  "B..........B",
+  "BB.BBBBBB.BB",
   ".BBBBBBBBBB.",
-  "BBBFFBBFFBBB",
-  "BBBFFBBFFBBB",
+  "BBWWWWWWWWBB",
+  "BBWPWWWWPWBB",
   "BBBBBBBBBBBB",
   "BBBBBBBBBBBB",
-  "BFFBBFFBBFFB",
-  "FBBFFBBFFBBF",
-  "BBBBBBBBBBBB",
-  "BB.BBB.BBB.B",
-];
-const INVADER_SPRITE: Sprite = [
-  "..X.....X..",
-  "...X...X...",
-  "..XXXXXXX..",
-  ".XX.XXX.XX.",
-  "XXXXXXXXXXX",
-  "X.XXXXXXX.X",
-  "X.X.....X.X",
-  "...XX.XX...",
-];
-const HERO_SPRITE: Sprite = [
-  "....YYYY....",
-  "..YYYYYYYY..",
-  ".YYYYYYYYYY.",
-  ".YYYYYYYY...",
-  "YYYYYYY.....",
-  "YYYYY.......",
-  "YYYYY.......",
-  "YYYYYYY.....",
-  ".YYYYYYYY...",
-  ".YYYYYYYYYY.",
-  "..YYYYYYYY..",
-  "....YYYY....",
-];
+  ".BBBBBBBBBB.",
+  "..BB....BB..",
+  ".BBB....BBB.",
+], "B");
+/** A boss: a pixel skull, its eyes glinting. */
+const SKULL_SPRITE = scanlined([
+  "..XXXXXXXX..",
+  ".XXXXXXXXXX.",
+  "XXXXXXXXXXXX",
+  "XX...XX...XX",
+  "XX.E.XX.E.XX",
+  "XX...XX...XX",
+  "XXXXX..XXXXX",
+  ".XXXXXXXXXX.",
+  "..X.XX.XX.X.",
+  "..XXXXXXXX..",
+], "X");
+/** The hero, a little yellow figure, by the way it faces: side on (looking
+ * right), towards the screen, and away from it. */
+const heroSprite = (face: string) => scanlined([
+  "...YYYY...",
+  "..YYYYYY..",
+  face,
+  "..YYYYYY..",
+  "...YYYY...",
+  "..YYYYYY..",
+  ".YYYYYYYY.",
+  "YY.YYYY.YY",
+  "...YYYY...",
+  "...YY.YY..",
+  "..YY...YY.",
+  "..YY...YY.",
+], "Y");
+const HERO_SIDE = heroSprite("..YYYYEY..");
+const HERO_FRONT = heroSprite("..YEYYEY..");
+const HERO_BACK = heroSprite("..YYYYYY..");
+const HERO_COLORS = shaded({ Y: ARCADE.hero, E: ARCADE.ground });
 const KEY_SPRITE: Sprite = [
   ".KKK........",
   "K...K.......",
@@ -100,29 +126,16 @@ const KEY_SPRITE: Sprite = [
   "K...K...K.K.",
   ".KKK....K.K.",
 ];
-const CHERRY_SPRITE: Sprite = [
-  "........GG..",
-  "......GG.G..",
-  ".....G...G..",
-  "....G.....G.",
-  "...G......G.",
-  ".RRRR...RRRR",
-  "RWRRRR.RWRRR",
-  "RRRRRR.RRRRR",
-  "RRRRRR.RRRRR",
-  ".RRRR...RRRR",
-];
-const STRAWBERRY_SPRITE: Sprite = [
-  "...GGGGGG...",
-  ".RRRGGGGRRR.",
-  "RRYRRRRRRYRR",
-  "RRRRRYRRRRRR",
-  "RYRRRRRRRYRR",
-  ".RRRYRRRRRR.",
-  ".RRRRRRYRRR.",
-  "..RYRRRRRR..",
-  "...RRRRYR...",
-  "....RRRR....",
+/** A low-res potion bottle: a cork, a glass neck and a belly of liquid. */
+const POTION_SPRITE: Sprite = [
+  "..CC..",
+  "..GG..",
+  ".G..G.",
+  "GLLLLG",
+  "GLHLLG",
+  "GLLLLG",
+  "GLLLLG",
+  ".GGGG.",
 ];
 const SWORD_SPRITE: Sprite = [
   "..........WW",
@@ -197,23 +210,30 @@ const ARROW_SPRITE: Sprite = [
   "....WW....",
   "....WW....",
 ];
-const PELLET_SPRITE: Sprite = [
-  "..PPPP..",
-  ".PPPPPP.",
-  "PPPPPPPP",
-  "PPPPPPPP",
-  "PPPPPPPP",
-  "PPPPPPPP",
-  ".PPPPPP.",
-  "..PPPP..",
-];
-const GIRDER_SPRITE: Sprite = [
-  "RRRRRRRRRRRR",
-  "R...R...R...",
-  ".R.R.R.R.R.R",
-  "..R...R...R.",
-  "RRRRRRRRRRRR",
-];
+/** Treasure: a cut gem. */
+const GEM_SPRITE = scanlined([
+  "..GGGGGG..",
+  ".GHGGGGGG.",
+  "GGGGGGGGGG",
+  ".GGGGGGGG.",
+  "..GGGGGG..",
+  "...GGGG...",
+  "....GG....",
+], "G");
+/** A Wooden Door: three planks, nailed. */
+const PLANKS_SPRITE = scanlined([
+  "PPPPPPPPPPPP",
+  "PNPPPPPPPPNP",
+  "PPPPPPPPPPPP",
+  "............",
+  "PPPPPPPPPPPP",
+  "PNPPPPPPPPNP",
+  "PPPPPPPPPPPP",
+  "............",
+  "PPPPPPPPPPPP",
+  "PNPPPPPPPPNP",
+  "PPPPPPPPPPPP",
+], "P");
 const FLAME_SPRITES: readonly Sprite[] = [
   ["..Y...", "..YY..", ".YOY..", ".YOOY.", "YORROY", "YORROY", ".YOOY.", "..SS..", "..SS.."],
   ["...Y..", "..YY..", "..YOY.", ".YOOY.", "YOORRY", "YORROY", ".YOOY.", "..SS..", "..SS.."],
@@ -272,17 +292,20 @@ function drawArcadeGround(f: FrameContext) {
 function paintArcadeContents(c: CanvasRenderingContext2D, t: Tile) {
   switch (t.kind) {
     case "enemy": {
-      // A ghost, larger and redder the stronger it is (the weak frightened
-      // blue); a boss a green space invader, a greater boss a larger red one.
+      // A crawler, larger and redder the stronger it is (the elite horned);
+      // a boss a white skull with red eyes, a greater boss a larger red one.
       const e = t.enemy;
       const strength = e?.strength ?? "normal";
       const cell = CELL[strength] ?? 1.7;
-      if (strength === "boss" || strength === "greaterBoss")
-        sprite(c, INVADER_SPRITE, { X: strength === "boss" ? ARCADE.green : ARCADE.red }, cell);
-      else if (strength === "weak") sprite(c, SCARED_SPRITE, { B: ARCADE.maze, F: ARCADE.scared }, cell);
-      else sprite(c, GHOST_SPRITE, { B: GHOST[strength] ?? ARCADE.red, W: ARCADE.white, P: ARCADE.pupil }, cell);
+      if (strength === "boss" || strength === "greaterBoss") {
+        const greater = strength === "greaterBoss";
+        sprite(c, SKULL_SPRITE, shaded({ X: greater ? ARCADE.red : ARCADE.white, E: greater ? ARCADE.hero : ARCADE.red }), cell);
+      } else {
+        const body = strength === "elite" ? HORNED_SPRITE : CRAWLER_SPRITE;
+        sprite(c, body, shaded({ B: CRAWLER[strength] ?? ARCADE.red, W: ARCADE.white, P: ARCADE.ground }), cell);
+      }
       // A Ranged enemy's arrow at the top right, a Fast enemy's chevrons at
-      // the bottom right, each on a black patch so it reads over the ghost.
+      // the bottom right, each on a black patch so it reads over the body.
       if (e?.ranged) badge(c, RANGED_SPRITE, 21.5, 3.5);
       if (e?.fast) badge(c, FAST_SPRITE, 20.5, 20.5);
       return;
@@ -297,9 +320,8 @@ function paintArcadeContents(c: CanvasRenderingContext2D, t: Tile) {
         return;
       }
       if (rule?.type === "wood") {
-        // Two girders: any key opens it, or the hero breaks it down.
-        sprite(c, GIRDER_SPRITE, { R: ARCADE.girder }, 2, 12, 7);
-        sprite(c, GIRDER_SPRITE, { R: ARCADE.girder }, 2, 12, 17);
+        // Nailed planks: any key opens it, or the hero breaks it down.
+        sprite(c, PLANKS_SPRITE, shaded({ P: ARCADE.brown, N: ARCADE.gold }), 1.8);
         return;
       }
       // A gate between two blue posts, a bar across it in each key's colour.
@@ -317,9 +339,8 @@ function paintArcadeContents(c: CanvasRenderingContext2D, t: Tile) {
       return;
     }
     case "potion":
-      // Fruit: cherries heal, the strawberry (the red potion) heals a share.
-      if (t.color === "red") sprite(c, STRAWBERRY_SPRITE, { R: ARCADE.red, Y: ARCADE.gold, G: ARCADE.stem }, 1.8);
-      else sprite(c, CHERRY_SPRITE, { R: ARCADE.red, W: ARCADE.white, G: ARCADE.stem }, 1.8);
+      // A low-res bottle: cyan heals, red (the red potion) heals a share.
+      sprite(c, POTION_SPRITE, { C: ARCADE.cork, G: ARCADE.glass, L: t.color === "red" ? ARCADE.red : ARCADE.cyan, H: ARCADE.white }, 2.6);
       return;
     case "attack":
       sprite(c, SWORD_SPRITE, { W: ARCADE.white, Y: ARCADE.gold, H: ARCADE.brown }, 1.6);
@@ -334,8 +355,7 @@ function paintArcadeContents(c: CanvasRenderingContext2D, t: Tile) {
       sprite(c, CHEST_SPRITE, { D: ARCADE.dim }, 1.7);
       return;
     case "treasure":
-      // A power pellet.
-      sprite(c, PELLET_SPRITE, { P: ARCADE.pellet }, 1.5);
+      sprite(c, GEM_SPRITE, shaded({ G: ARCADE.cyan, H: ARCADE.white }), 1.8);
       return;
     case "stairs":
       sprite(c, LADDER_SPRITE, { C: ARCADE.cyan }, 2);
@@ -362,17 +382,16 @@ function paintArcadeTorch(c: CanvasRenderingContext2D, f: FrameContext, t: Torch
   sprite(c, FLAME_SPRITES[frame], { Y: ARCADE.hero, O: ARCADE.flame, R: ARCADE.red, S: ARCADE.brown }, 1.5);
 }
 
-/** The hero: the yellow chomper, its mouth turned the way it last stepped
- * (the sprite opens to the right; world y grows upward, the screen's down).
- * The sprite is symmetric top to bottom, so facing left is a half turn. */
+/** The hero: the little yellow figure, turned the way it last stepped (world
+ * y grows upward, the screen's down): side on, mirrored when it went left,
+ * its back to us going up the screen, its face going down. */
 function paintArcadeHero(c: CanvasRenderingContext2D, facing: Facing = { dx: 1, dy: 0 }) {
-  const turn = facing.dx < 0 ? Math.PI : facing.dy > 0 ? -Math.PI / 2 : facing.dy < 0 ? Math.PI / 2 : 0;
-  if (turn) {
-    c.translate(12, 12);
-    c.rotate(turn);
-    c.translate(-12, -12);
+  if (facing.dx < 0) {
+    c.translate(24, 0);
+    c.scale(-1, 1);
   }
-  sprite(c, HERO_SPRITE, { Y: ARCADE.hero }, 1.75);
+  const rows = facing.dy > 0 ? HERO_BACK : facing.dy < 0 ? HERO_FRONT : HERO_SIDE;
+  sprite(c, rows, HERO_COLORS, 1.75);
 }
 
 /** The screen's scanlines, a faint dark line every third pixel. */

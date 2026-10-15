@@ -101,10 +101,10 @@ test("a potion picked up on a Shiro or Kuro board rises as its plus, a Heart Doo
   }
 });
 
-test("a potion picked up on an Arcade board rises as its cherries, a Heart Door's toll as its pixel heart", () => {
-  assert.ok(drawn({ tile: { kind: "potion", hp: 35 } as never }, "arcade").fills.includes(ARCADE.red));
-  assert.ok(drawn({ tile: { kind: "potion", hp: 35 } as never }, "arcade").fills.includes(ARCADE.stem), "the cherries' stems");
-  assert.ok(!drawn({ tile: { kind: "potion", hp: 35 } as never }, null).fills.includes(ARCADE.stem), "the classic board keeps its own art");
+test("a potion picked up on an Arcade board rises as its pixel bottle, a Heart Door's toll as its pixel heart", () => {
+  assert.ok(drawn({ tile: { kind: "potion", hp: 35 } as never }, "arcade").fills.includes(ARCADE.cyan));
+  assert.ok(drawn({ tile: { kind: "potion", hp: 35 } as never }, "arcade").fills.includes(ARCADE.cork), "the bottle's cork");
+  assert.ok(!drawn({ tile: { kind: "potion", hp: 35 } as never }, null).fills.includes(ARCADE.cork), "the classic board keeps its own art");
   assert.ok(drawn({ heart: true }, "arcade").fills.includes(ARCADE.red));
 });
 

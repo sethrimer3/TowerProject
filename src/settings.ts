@@ -63,7 +63,7 @@ export const SETTINGS = {
    * purple), Ember (warm glowing ASCII on maroon, enemies' red eyes), Yang
    * (a raked sand garden of ink strokes), Yin (the same garden by night),
    * Shiro (flat blocks and the simplest shapes on white), Kuro (the same
-   * on black), Arcade (a pixel maze of ghosts and pellets), System (an old
+   * on black), Arcade (a pixel maze of crawlers and pellets), System (an old
    * one-bit paint program's dungeon of bricks, bombs and folders) or Kroz (the
    * old Kroz games' bright text-mode characters) once owned. Chosen on the Game Themes menu. */
   gameTheme: { kind: "choice", default: "classic", choices: [["classic", "Classic"], ["neon", "Neon"], ["terminal", "Terminal"], ["desktop", "Desktop"], ["glyph", "Glyph"], ["ember", "Ember"], ["yang", "Yang"], ["yin", "Yin"], ["shiro", "Shiro"], ["kuro", "Kuro"], ["arcade", "Arcade"], ["system", "System"], ["kroz", "Kroz"]] },
