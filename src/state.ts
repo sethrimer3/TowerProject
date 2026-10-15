@@ -134,8 +134,9 @@ export type Heal = { from: number; to: number; x: number; y: number; id: number 
  * across or up (world y grows upward). */
 export type Facing = { dx: number; dy: number };
 /** A dash: the tiles the hero dashed off in one step, in order, each with
- * the step it took off it, and when (performance time). */
-export type Dash = { tiles: ({ x: number; y: number } & Facing)[]; at: number };
+ * the step it took off it, the empty tile it landed on (none when it ended
+ * on its target item), with the step onto it, and when (performance time). */
+export type Dash = { tiles: ({ x: number; y: number } & Facing)[]; end?: { x: number; y: number } & Facing; at: number };
 /** Rewards kept for the board to show; older ones are dropped unseen. */
 const MAX_GAINS = 12;
 /** The forest's Automove walks at least this many steps a second, however
@@ -1181,6 +1182,7 @@ export class Game {
       tiles.push({ ...at, dx: next.dx, dy: next.dy });
     }
     const target = plan.path.length === 1 ? plan.path[0] : null;
+    let onItem = false;
     if (moved && left > 0 && target && DASH_ONTO.has(this.world.tile(target.x, target.y).kind) && !this.rollsSkip(id, target.x, target.y)) {
       const at = { x: p.x, y: p.y };
       plan.path.shift();
@@ -1189,12 +1191,14 @@ export class Game {
       this.stepScale = 1;
       if (moved) {
         tiles.push({ ...at, dx: target.dx, dy: target.dy });
+        onItem = true;
         // Taking the item makes the dash a turn undo stops at.
         delete this.slice.history.at(-1)?.quiet;
       }
     }
     this.cardPlan = plan.path.length ? plan : null;
-    if (tiles.length > 1) this.dash = { tiles, at: performance.now() };
+    const last = tiles[tiles.length - 1], end = onItem ? undefined : { x: p.x, y: p.y, dx: last.dx, dy: last.dy };
+    if (tiles.length > 1) this.dash = { tiles, end, at: performance.now() };
     return moved;
   }
   /** Tiles the hand's first step toward a new target may dash across: none

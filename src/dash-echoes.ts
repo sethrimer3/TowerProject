@@ -33,18 +33,21 @@ export class DashEchoes {
   }
 }
 
-/** Faint echoes of the hero on each tile it dashed off: they appear one
- * after another, from the first tile left, and fade away in the same order,
+/** Faint echoes of the hero on each tile it dashed off, and last on the
+ * empty tile it landed on (the hero soon walks on from it, toward its
+ * target): they appear one after another, from the first tile left, and
+ * fade away in the same order,
  * all gone DASH_ECHO_MS after the dash, each painted by `paintHero` (the
  * board's own hero: the sprite, or the Neon theme's lines), facing the step
  * it took off that tile. None with motion reduced. */
 function drawDashEchoes(f: FrameContext, dash: Dash, paintHero: PaintHero) {
   if (f.look.reduceMotion) return;
-  const age = f.now - dash.at, n = dash.tiles.length;
+  const tiles = dash.end ? [...dash.tiles, dash.end] : dash.tiles;
+  const age = f.now - dash.at, n = tiles.length;
   if (age < 0 || age >= DASH_ECHO_MS) return;
   const gap = (DASH_ECHO_MS * APPEAR_SHARE) / n, life = DASH_ECHO_MS - gap * (n - 1);
   const c = f.c;
-  dash.tiles.forEach(({ x, y, dx, dy }, i) => {
+  tiles.forEach(({ x, y, dx, dy }, i) => {
     const t = (age - i * gap) / life;
     if (t < 0 || t >= 1) return;
     c.save();

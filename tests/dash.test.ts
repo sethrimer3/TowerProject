@@ -52,6 +52,7 @@ test("the first step toward a new target dashes across empty tiles, stopping bef
   assert.deepEqual(at(g), [4, 0], "with no tile left it stops on the tile before the key");
   assert.equal(g.save.tower.history.length, 1, "the dash is one undo");
   assert.deepEqual(g.dash?.tiles, [0, 1, 2, 3].map((x) => ({ x, y: 0, dx: 1, dy: 0 })), "the tiles it dashed off, in order, each with its step");
+  assert.deepEqual(g.dash?.end, { x: 4, y: 0, dx: 1, dy: 0 }, "and the empty tile it landed on, with the step onto it");
   g.autoTurn();
   assert.deepEqual(at(g), [5, 0], "the key is a step of its own");
   g.autoTurn();
@@ -65,6 +66,7 @@ test("a dash with a tile left ends on its target item, taking it", () => {
   assert.equal(g.run.player.keys.yellow, keys + 1, "the key is taken");
   assert.equal((g.world as RoomWorld).tile(5, 0).kind, "floor");
   assert.deepEqual(g.dash?.tiles.map((t) => t.x), [0, 1, 2, 3, 4]);
+  assert.equal(g.dash?.end, undefined, "no echo on the item's tile");
   assert.equal(g.save.tower.history.length, 1, "still one undo");
   assert.ok(g.undo());
   assert.deepEqual(at(g), [0, 0], "undo takes the dash and the key back whole");
@@ -270,6 +272,8 @@ test("a dash soon after another leaves the first one's echoes playing", () => {
   assert.ok(!echoes.over(DASH_ECHO_MS + 50) && echoes.over(DASH_ECHO_MS + 100), "over once the last dash's echoes fade");
   echoes.add({ tiles: along(30, 32), at: 900 }, 900);
   assert.deepEqual(echoedAt(echoes, 900), [30], "faded dashes are dropped");
+  echoes.add({ tiles: along(40, 42), end: { x: 42, y: 0, dx: 1, dy: 0 }, at: 1000 }, 1000);
+  assert.deepEqual(echoedAt(echoes, 1200).slice(-3), [40, 41, 42], "the empty tile landed on echoes last");
   echoes.clear();
   assert.deepEqual(echoedAt(echoes, 900), [], "another board drops them all");
 });
