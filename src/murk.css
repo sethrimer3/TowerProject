@@ -1,0 +1,349 @@
+/* Murk theme: Doodle after dark. The same hurried mouse in the same
+   simple paint program, at night: dusky violet paper with a dim star or a
+   little bat here and there and a glum crescent moon scribbled at the top
+   of the page, every panel and button a freehand box in a chalky line
+   whose fill lands a little off it, poured in muted colours: panels dark
+   slate, buttons dusky violet, what is chosen moss green, page titles a
+   stripe of wine, notes faded mustard sticky notes. Text pale as bone in
+   the bundled Patrick Hand, a handwritten face (OFL; only while worn).
+   Every frame is a 30-unit freehand box drawn as inline SVG (a second hand,
+   not Doodle's line), sliced at 10 and laid by `border-image`, its edge
+   pieces repeated (`round`) so the wobble keeps its size along any length.
+   Every selector is scoped under `html.murk` so nothing changes while the
+   theme is off. Loaded after style.css and the other themes. */
+@font-face {
+  font-family: "Patrick Hand";
+  src: url("../assets/fonts/PatrickHand/PatrickHand-Regular.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+html.murk {
+  --m-ink: #e4dccb;
+  --m-paper: #1e1b25;
+  --m-line: #a99fbd;
+  --m-dim: #9a92a8;
+  --m-red: #ff6878;
+  --m-green: #8fcf7a;
+  /* a panel: dark slate paper in a freehand chalky box. */
+  --m-panel: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30'><path fill='%232b2734' transform='translate(1.2 1.2)' d='M3.2 9.6Q3.4 2.6 10.4 3.2Q15.2 2.2 19.6 2.8Q27.6 3 26.8 10.4Q27.8 15.4 27.2 19.8Q26.8 27.2 19.4 27.2Q14.6 28 10.2 26.8Q3 27.4 2.8 20.2Q2.2 14.6 3.2 9.6Z'/><path fill='none' stroke='%23a99fbd' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' d='M3.2 9.6Q3.4 2.6 10.4 3.2Q15.2 2.2 19.6 2.8Q27.6 3 26.8 10.4Q27.8 15.4 27.2 19.8Q26.8 27.2 19.4 27.2Q14.6 28 10.2 26.8Q3 27.4 2.8 20.2Q2.2 14.6 3.2 9.6Z'/></svg>");
+  /* a dialog: the same box, its line thicker. */
+  --m-dialog: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30'><path fill='%232b2734' transform='translate(1.2 1.2)' d='M3.2 9.6Q3.4 2.6 10.4 3.2Q15.2 2.2 19.6 2.8Q27.6 3 26.8 10.4Q27.8 15.4 27.2 19.8Q26.8 27.2 19.4 27.2Q14.6 28 10.2 26.8Q3 27.4 2.8 20.2Q2.2 14.6 3.2 9.6Z'/><path fill='none' stroke='%23a99fbd' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round' d='M3.2 9.6Q3.4 2.6 10.4 3.2Q15.2 2.2 19.6 2.8Q27.6 3 26.8 10.4Q27.8 15.4 27.2 19.8Q26.8 27.2 19.4 27.2Q14.6 28 10.2 26.8Q3 27.4 2.8 20.2Q2.2 14.6 3.2 9.6Z'/></svg>");
+  /* a button: poured dusky violet, its fill landing a little off the line. */
+  --m-button: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30'><path fill='%234a3d63' transform='translate(1.2 1.2)' d='M3.2 9.6Q3.4 2.6 10.4 3.2Q15.2 2.2 19.6 2.8Q27.6 3 26.8 10.4Q27.8 15.4 27.2 19.8Q26.8 27.2 19.4 27.2Q14.6 28 10.2 26.8Q3 27.4 2.8 20.2Q2.2 14.6 3.2 9.6Z'/><path fill='none' stroke='%23a99fbd' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' d='M3.2 9.6Q3.4 2.6 10.4 3.2Q15.2 2.2 19.6 2.8Q27.6 3 26.8 10.4Q27.8 15.4 27.2 19.8Q26.8 27.2 19.4 27.2Q14.6 28 10.2 26.8Q3 27.4 2.8 20.2Q2.2 14.6 3.2 9.6Z'/></svg>");
+  /* a button pressed: a paler violet, the fill on the line. */
+  --m-press: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30'><path fill='%235f4d80' transform='translate(0 0)' d='M3.2 9.6Q3.4 2.6 10.4 3.2Q15.2 2.2 19.6 2.8Q27.6 3 26.8 10.4Q27.8 15.4 27.2 19.8Q26.8 27.2 19.4 27.2Q14.6 28 10.2 26.8Q3 27.4 2.8 20.2Q2.2 14.6 3.2 9.6Z'/><path fill='none' stroke='%23a99fbd' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' d='M3.2 9.6Q3.4 2.6 10.4 3.2Q15.2 2.2 19.6 2.8Q27.6 3 26.8 10.4Q27.8 15.4 27.2 19.8Q26.8 27.2 19.4 27.2Q14.6 28 10.2 26.8Q3 27.4 2.8 20.2Q2.2 14.6 3.2 9.6Z'/></svg>");
+  /* what is chosen: poured moss green. */
+  --m-chosen: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30'><path fill='%233d5a3a' transform='translate(1.2 1.2)' d='M3.2 9.6Q3.4 2.6 10.4 3.2Q15.2 2.2 19.6 2.8Q27.6 3 26.8 10.4Q27.8 15.4 27.2 19.8Q26.8 27.2 19.4 27.2Q14.6 28 10.2 26.8Q3 27.4 2.8 20.2Q2.2 14.6 3.2 9.6Z'/><path fill='none' stroke='%23a99fbd' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' d='M3.2 9.6Q3.4 2.6 10.4 3.2Q15.2 2.2 19.6 2.8Q27.6 3 26.8 10.4Q27.8 15.4 27.2 19.8Q26.8 27.2 19.4 27.2Q14.6 28 10.2 26.8Q3 27.4 2.8 20.2Q2.2 14.6 3.2 9.6Z'/></svg>");
+  /* a button that can't be pressed: near black in a dim line. */
+  --m-off: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30'><path fill='%23221f28' transform='translate(1.2 1.2)' d='M3.2 9.6Q3.4 2.6 10.4 3.2Q15.2 2.2 19.6 2.8Q27.6 3 26.8 10.4Q27.8 15.4 27.2 19.8Q26.8 27.2 19.4 27.2Q14.6 28 10.2 26.8Q3 27.4 2.8 20.2Q2.2 14.6 3.2 9.6Z'/><path fill='none' stroke='%234e4858' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' d='M3.2 9.6Q3.4 2.6 10.4 3.2Q15.2 2.2 19.6 2.8Q27.6 3 26.8 10.4Q27.8 15.4 27.2 19.8Q26.8 27.2 19.4 27.2Q14.6 28 10.2 26.8Q3 27.4 2.8 20.2Q2.2 14.6 3.2 9.6Z'/></svg>");
+  /* what is dangerous: poured blood red. */
+  --m-danger: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30'><path fill='%237a2030' transform='translate(1.2 1.2)' d='M3.2 9.6Q3.4 2.6 10.4 3.2Q15.2 2.2 19.6 2.8Q27.6 3 26.8 10.4Q27.8 15.4 27.2 19.8Q26.8 27.2 19.4 27.2Q14.6 28 10.2 26.8Q3 27.4 2.8 20.2Q2.2 14.6 3.2 9.6Z'/><path fill='none' stroke='%23a99fbd' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' d='M3.2 9.6Q3.4 2.6 10.4 3.2Q15.2 2.2 19.6 2.8Q27.6 3 26.8 10.4Q27.8 15.4 27.2 19.8Q26.8 27.2 19.4 27.2Q14.6 28 10.2 26.8Q3 27.4 2.8 20.2Q2.2 14.6 3.2 9.6Z'/></svg>");
+  /* a field or well: darker, a thinner line, the fill on it. */
+  --m-field: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30'><path fill='%2317141d' transform='translate(0 0)' d='M3.2 9.6Q3.4 2.6 10.4 3.2Q15.2 2.2 19.6 2.8Q27.6 3 26.8 10.4Q27.8 15.4 27.2 19.8Q26.8 27.2 19.4 27.2Q14.6 28 10.2 26.8Q3 27.4 2.8 20.2Q2.2 14.6 3.2 9.6Z'/><path fill='none' stroke='%23a99fbd' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' d='M3.2 9.6Q3.4 2.6 10.4 3.2Q15.2 2.2 19.6 2.8Q27.6 3 26.8 10.4Q27.8 15.4 27.2 19.8Q26.8 27.2 19.4 27.2Q14.6 28 10.2 26.8Q3 27.4 2.8 20.2Q2.2 14.6 3.2 9.6Z'/></svg>");
+  /* a note: a faded mustard sticky note. */
+  --m-tip: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30'><path fill='%234f4a2c' transform='translate(1.2 1.2)' d='M3.2 9.6Q3.4 2.6 10.4 3.2Q15.2 2.2 19.6 2.8Q27.6 3 26.8 10.4Q27.8 15.4 27.2 19.8Q26.8 27.2 19.4 27.2Q14.6 28 10.2 26.8Q3 27.4 2.8 20.2Q2.2 14.6 3.2 9.6Z'/><path fill='none' stroke='%23a99fbd' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' d='M3.2 9.6Q3.4 2.6 10.4 3.2Q15.2 2.2 19.6 2.8Q27.6 3 26.8 10.4Q27.8 15.4 27.2 19.8Q26.8 27.2 19.4 27.2Q14.6 28 10.2 26.8Q3 27.4 2.8 20.2Q2.2 14.6 3.2 9.6Z'/></svg>");
+  /* a page title's banner: wine. */
+  --m-banner: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30'><path fill='%235a2a3e' transform='translate(1.2 1.2)' d='M3.2 9.6Q3.4 2.6 10.4 3.2Q15.2 2.2 19.6 2.8Q27.6 3 26.8 10.4Q27.8 15.4 27.2 19.8Q26.8 27.2 19.4 27.2Q14.6 28 10.2 26.8Q3 27.4 2.8 20.2Q2.2 14.6 3.2 9.6Z'/><path fill='none' stroke='%23a99fbd' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round' d='M3.2 9.6Q3.4 2.6 10.4 3.2Q15.2 2.2 19.6 2.8Q27.6 3 26.8 10.4Q27.8 15.4 27.2 19.8Q26.8 27.2 19.4 27.2Q14.6 28 10.2 26.8Q3 27.4 2.8 20.2Q2.2 14.6 3.2 9.6Z'/></svg>");
+  /* The night, with a dim star or a bat now and then. */
+  --m-specks: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><g fill='%23524b60'><rect x='31' y='22' width='1.5' height='1.5'/><rect x='142' y='61' width='1.5' height='1.5'/><rect x='88' y='118' width='1.5' height='1.5'/><rect x='17' y='151' width='1.5' height='1.5'/><rect x='171' y='176' width='1.5' height='1.5'/><rect x='109' y='14' width='1.5' height='1.5'/></g><g fill='none' stroke='%23615a70' stroke-width='1.2' stroke-linecap='round'><path d='M60 70l0 6M57 73l6 0'/><path d='M158 132l0 6M155 135l6 0'/></g><path d='M120 92q3-3 6 0q3-3 6 0q-3 0-6 2q-3-2-6-2z' fill='%2312101a'/></svg>");
+  /* A scribbled crescent moon with a glum face, hung on a page title. */
+  --m-moon: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60'><path fill='%23d8cfb4' transform='translate(1 0.8)' d='M38 8Q22 12 23 30Q24 47 41 51Q30 56 19 50Q6 42 8 27Q11 11 26 6Q32 5 38 8Z'/><path fill='none' stroke='%230d0b12' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round' d='M38 8Q22 12 23 30Q24 47 41 51Q30 56 19 50Q6 42 8 27Q11 11 26 6Q32 5 38 8Z'/><path fill='none' stroke='%230d0b12' stroke-width='1.4' stroke-linecap='round' d='M14 24q2 2 4 0M15 33q3 3 6 0'/></svg>");
+  --gold: #e0b84a;
+  --muted: var(--m-dim);
+  --line: var(--m-line);
+  color-scheme: dark;
+  color: var(--m-ink);
+  background: var(--m-paper) var(--m-specks) 0 0 / 200px 200px;
+}
+/* Patrick Hand for every line of text (a badge's symbol keeps the system
+   face that has its glyph). It has one weight, drawn as it is. */
+html.murk,
+html.murk *:not(.badge-glyph, .badge-mark) {
+  font-family: "Patrick Hand", "Trebuchet MS", sans-serif;
+  --rate-em: 3; /* the purse's widest rate in this face (style.css) */
+  font-synthesis: none;
+  letter-spacing: 0;
+}
+html.murk body {
+  background: var(--m-paper) var(--m-specks) 0 0 / 200px 200px;
+}
+/* The page's own colours, lines and glows give way everywhere: bone on
+   the night and nothing else. `:not(#_)` lifts these over the page's class
+   rules (and the ones below over these); a style written on an element (a
+   colour swatch) still wins. Drawings (canvas, images, svg), the bars'
+   fills (`i`), rarity colours and badge tokens keep theirs. */
+html.murk body *:not(#_, canvas, img, svg, svg *, i, .eq-tile, .badge-token, [class*="rar"]) {
+  background-color: transparent;
+  background-image: none;
+  border-color: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  text-shadow: none;
+  backdrop-filter: none;
+  outline-color: transparent;
+}
+html.murk body *:not(#_, svg, svg *) {
+  color: var(--m-ink);
+}
+html.murk main.shell:not(#_) {
+  background: transparent;
+}
+
+/* Scrollbars: a dusky violet thumb in a dark track. */
+html.murk * {
+  scrollbar-color: #4a3d63 var(--m-paper);
+}
+
+/* Titles: pale, a little spaced; a page's on a stripe of wine. */
+html.murk h1:not(#_),
+html.murk h2:not(#_),
+html.murk h3:not(#_),
+html.murk .tower-heading:not(#_),
+html.murk .section-title:not(#_),
+html.murk #height:not(#_) {
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: var(--m-ink);
+}
+html.murk .page-title h2:not(#_) {
+  font-size: 22px;
+}
+html.murk .page-title:not(#_),
+html.murk .event-banner:not(#_),
+html.murk .eq-loadout-head:not(#_) {
+  padding: 4px 12px;
+  text-align: center;
+  border: 3px solid transparent;
+  border-image: var(--m-banner) 10 fill / 10px / 0 round;
+}
+/* A glum crescent moon hung at the banner's top right. */
+html.murk .page-title:not(#_),
+html.murk .event-banner:not(#_) {
+  position: relative;
+}
+html.murk .page-title::after,
+html.murk .event-banner::after {
+  content: "";
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  width: 30px;
+  height: 30px;
+  background: var(--m-moon) 0 0 / 30px 30px no-repeat;
+  pointer-events: none;
+}
+html.murk .page-title small:not(#_),
+html.murk .eyebrow:not(#_),
+html.murk .hint:not(#_),
+html.murk .board-caption:not(#_),
+html.murk small:not(#_) {
+  color: var(--m-dim);
+}
+
+/* Panels: a freehand chalky box on dark slate. */
+html.murk .stats:not(#_),
+html.murk .card:not(#_),
+html.murk .upgrade:not(#_),
+html.murk .shop:not(#_),
+html.murk .theme-card:not(#_),
+html.murk .weekly:not(#_),
+html.murk .mission:not(#_),
+html.murk .event-boost:not(#_),
+html.murk .archivist:not(#_),
+html.murk .research:not(#_),
+html.murk .pull-box:not(#_),
+html.murk .eq-loadout:not(#_),
+html.murk .equip-materials:not(#_),
+html.murk .purse-big:not(#_),
+html.murk .starting-stats:not(#_),
+html.murk .training-boost:not(#_),
+html.murk .tournament-standing:not(#_),
+html.murk .tournament-tickets:not(#_),
+html.murk .badge-box:not(#_),
+html.murk .deck-reserve:not(#_),
+html.murk .defend-palette:not(#_),
+html.murk .card-reveal:not(#_),
+html.murk .badge-reveal:not(#_),
+html.murk .skill-tree:not(#_),
+html.murk .goals-stage:not(#_),
+html.murk .training-box:not(#_),
+html.murk .setting:not(#_),
+html.murk .inspect-box:not(#_),
+html.murk .run-menu-frame:not(#_),
+html.murk .inspection:not(#_) {
+  border: 3px solid transparent;
+  border-image: var(--m-panel) 10 fill / 10px / 0 round;
+}
+html.murk .setting:not(#_) {
+  padding-inline: 10px;
+}
+html.murk .inspection:empty:not(#_) {
+  border-image: none;
+}
+/* Dialogs: the box drawn thicker, over a page sunk in the dark. */
+html.murk dialog:not(#_) {
+  border: 3px solid transparent;
+  border-image: var(--m-dialog) 10 fill / 10px / 0 round;
+}
+html.murk dialog::backdrop {
+  background: #0a080ecc;
+  backdrop-filter: none;
+}
+/* What sits inside a panel: a thinner box. */
+html.murk .portrait-top:not(#_),
+html.murk .hp-readout:not(#_),
+html.murk .training-held:not(#_),
+html.murk .node-icon:not(#_),
+html.murk .node-name:not(#_),
+html.murk .goals-floor:not(#_),
+html.murk select:not(#_),
+html.murk input:not([type="checkbox"]:not(#_),
+[type="radio"]:not(#_),
+[type="range"]):not(#_) {
+  border: 3px solid transparent;
+  border-image: var(--m-field) 10 fill / 10px / 0 round;
+}
+/* The theme worn: its box poured moss green. */
+html.murk .theme-card.worn:not(#_) {
+  border-image: var(--m-chosen) 10 fill / 10px / 0 round;
+}
+/* Notes and tips: faded mustard sticky notes. */
+html.murk .board-tip:not(#_),
+html.murk .board-tip.dismissable:hover:not(#_),
+html.murk .research-toast:not(#_),
+html.murk .deck-tip:not(#_) {
+  border: 3px solid transparent;
+  border-image: var(--m-tip) 10 fill / 10px / 0 round;
+}
+/* The board: a thick chalky line round it, as the canvas's edge. */
+html.murk .board:not(#_) {
+  border: 3px solid var(--m-line);
+}
+/* The line under the board, over the board's foot: a dark strip. */
+html.murk .status:not(#_) {
+  background: #1e1b25e0;
+}
+html.murk .live-dot:not(#_) {
+  background: var(--m-red);
+}
+html.murk .rule:not(#_),
+html.murk .inventory-divider:not(#_) {
+  background: repeating-linear-gradient(to right, var(--m-line) 0 6px, transparent 6px 9px);
+}
+
+/* Buttons: dusky violet, poured; paler while pressed, moss green when
+   chosen, near black when they can't be pressed. */
+html.murk button:not(#_) {
+  border: 3px solid transparent;
+  border-image: var(--m-button) 10 fill / 10px / 0 round;
+}
+html.murk button:active:not(#_) {
+  border-image: var(--m-press) 10 fill / 10px / 0 round;
+}
+html.murk button:active:not(#_) > * {
+  transform: translate(1px, 1px);
+}
+html.murk button.selected:not(#_),
+html.murk button[aria-pressed="true"]:not(#_) {
+  border-image: var(--m-chosen) 10 fill / 10px / 0 round;
+}
+html.murk button:focus-visible:not(#_),
+html.murk select:focus-visible:not(#_),
+html.murk input:focus-visible:not(#_) {
+  outline: 2px dashed var(--m-line);
+  outline-offset: 2px;
+}
+html.murk button:disabled:not(#_) {
+  border-image: var(--m-off) 10 fill / 10px / 0 round;
+}
+html.murk button:disabled:not(#_),
+html.murk button:disabled *:not(#_) {
+  color: #6a6378;
+  opacity: 1;
+}
+/* Buttons drawn as pictures keep a bare face. */
+html.murk .skill-node:not(#_),
+html.murk .hand-card:not(#_) {
+  border-color: transparent;
+  border-image: none;
+  background: transparent;
+}
+html.murk .hand-card.active:not(#_) {
+  outline: 2px dashed var(--m-line);
+  outline-offset: 1px;
+}
+html.murk input[type="checkbox"]:not(#_),
+html.murk input[type="radio"]:not(#_),
+html.murk input[type="range"]:not(#_) {
+  accent-color: #8a6cb8;
+}
+html.murk option:not(#_) {
+  background: var(--m-paper);
+}
+
+/* The tab bar: the night, under a thick chalky line, its buttons bare, the
+   open one poured moss green. */
+html.murk nav:not(#_) {
+  background: var(--m-paper);
+  box-shadow: 0 -3px 0 var(--m-line);
+}
+html.murk nav button:not(#_) {
+  border-color: transparent;
+  border-image: none;
+  background: transparent;
+}
+html.murk nav button.selected:not(#_),
+html.murk .training-bar button.selected:not(#_) {
+  border-image: var(--m-chosen) 10 fill / 10px / 0 round;
+}
+
+/* Bars: a dark track in a chalky line, filled flat; HP blood red, XP dusk
+   blue, the rest moss green. */
+html.murk .xp-track:not(#_),
+html.murk .health-track:not(#_),
+html.murk .weekly-bar:not(#_),
+html.murk .mission-bar:not(#_),
+html.murk .research-bar:not(#_),
+html.murk .refine-bar:not(#_) {
+  background: #17141d;
+  box-shadow: 0 0 0 2px var(--m-line);
+  border-radius: 3px;
+}
+html.murk .xp-track i:not(#_),
+html.murk .health-track i:not(#_):not(#health-gain, #health-loss),
+html.murk .weekly-bar i:not(#_),
+html.murk .mission-bar i:not(#_),
+html.murk .research-bar i:not(#_),
+html.murk .refine-bar span:not(#_),
+html.murk .event-bar i:not(#_) {
+  border-radius: 0;
+  background: #6f9a4e;
+  box-shadow: none;
+}
+html.murk .health-track i:not(#_):not(#health-gain, #health-loss) {
+  background: #c0304a;
+}
+html.murk .xp-track i:not(#_) {
+  background: #4a86d8;
+}
+html.murk .heart:not(#_),
+html.murk .danger:not(#_),
+html.murk .danger *:not(#_),
+html.murk .short:not(#_),
+html.murk .short *:not(#_) {
+  color: var(--m-red) !important;
+}
+/* No card can act: the button that ends the run turns red. */
+html.murk #end-run.deadlocked:not(#_),
+html.murk #stuck-end-run.deadlocked:not(#_) {
+  border-image: var(--m-danger) 10 fill / 10px / 0 round;
+}
+html.murk .safe:not(#_),
+html.murk .eq-result-title:not(#_) {
+  color: var(--m-green) !important;
+}
+/* Keys keep their colour, bright enough to read on the night. */
+html.murk .keys .yellow:not(#_) { color: #e8c040; }
+html.murk .keys .blue:not(#_) { color: #6aa0f0; }
+html.murk .keys .red:not(#_) { color: #ff6878; }

@@ -56,11 +56,13 @@ export const SETTINGS = {
    * (an old one-bit computer: black-framed white windows on a dithered grey
    * desktop), Orbit (a space-age starship's console: glass capsules on a
    * starfield), Pixel (chunky pixel-art panels with stepped corners and a
-   * pressed-in bevel on a night sky of pixel stars) or Doodle (a page drawn
+   * pressed-in bevel on a night sky of pixel stars), Doodle (a page drawn
    * with a mouse in a simple paint program: wobbly black outlines and flat
-   * bright fills on white paper) once owned. Chosen on the Settings page's UI Themes menu, not a row of its
+   * bright fills on white paper) or Murk (Doodle after dark: the same
+   * wobbly outlines with muted fills on dusky paper under a scribbled moon)
+   * once owned. Chosen on the Settings page's UI Themes menu, not a row of its
    * own; a new hero starts in Medieval. */
-  uiTheme: { kind: "choice", default: "medieval", choices: [["classic", "Classic"], ["medieval", "Medieval"], ["neon", "Neon"], ["terminal", "Terminal"], ["desktop", "Desktop"], ["glyph", "Glyph"], ["ember", "Ember"], ["yang", "Yang"], ["yin", "Yin"], ["shiro", "Shiro"], ["kuro", "Kuro"], ["arcade", "Arcade"], ["system", "System"], ["orbit", "Orbit"], ["pixel", "Pixel"], ["doodle", "Doodle"]] },
+  uiTheme: { kind: "choice", default: "medieval", choices: [["classic", "Classic"], ["medieval", "Medieval"], ["neon", "Neon"], ["terminal", "Terminal"], ["desktop", "Desktop"], ["glyph", "Glyph"], ["ember", "Ember"], ["yang", "Yang"], ["yin", "Yin"], ["shiro", "Shiro"], ["kuro", "Kuro"], ["arcade", "Arcade"], ["system", "System"], ["orbit", "Orbit"], ["pixel", "Pixel"], ["doodle", "Doodle"], ["murk", "Murk"]] },
   /** The Game theme the dungeon is drawn in: Classic, or Neon, Terminal
    * (a green-phosphor text dungeon), Desktop (an old desktop computer's
    * mine-sweeping field), Glyph (a many-coloured neon ASCII dungeon on
@@ -72,9 +74,11 @@ export const SETTINGS = {
    * old Kroz games' bright text-mode characters) Orbit (a space station
    * adrift among the stars, its crew and creatures our own), Pixel (a
    * shaded, outlined pixel-art dungeon of flagstones, slate walls and little
-   * creatures) or Doodle (a dungeon drawn with a mouse in a simple paint
-   * program, its hero a stick figure) once owned. Chosen on the Game Themes menu. */
-  gameTheme: { kind: "choice", default: "classic", choices: [["classic", "Classic"], ["neon", "Neon"], ["terminal", "Terminal"], ["desktop", "Desktop"], ["glyph", "Glyph"], ["ember", "Ember"], ["yang", "Yang"], ["yin", "Yin"], ["shiro", "Shiro"], ["kuro", "Kuro"], ["arcade", "Arcade"], ["system", "System"], ["kroz", "Kroz"], ["orbit", "Orbit"], ["pixel", "Pixel"], ["doodle", "Doodle"]] },
+   * creatures), Doodle (a dungeon drawn with a mouse in a simple paint
+   * program, its hero a stick figure) or Murk (Doodle's dungeon after dark:
+   * ghosts, bats, cobwebs and candles, its hero a glum stick figure in a
+   * scarf) once owned. Chosen on the Game Themes menu. */
+  gameTheme: { kind: "choice", default: "classic", choices: [["classic", "Classic"], ["neon", "Neon"], ["terminal", "Terminal"], ["desktop", "Desktop"], ["glyph", "Glyph"], ["ember", "Ember"], ["yang", "Yang"], ["yin", "Yin"], ["shiro", "Shiro"], ["kuro", "Kuro"], ["arcade", "Arcade"], ["system", "System"], ["kroz", "Kroz"], ["orbit", "Orbit"], ["pixel", "Pixel"], ["doodle", "Doodle"], ["murk", "Murk"]] },
   /** Unlimited currency, every floor section and game mode unlocked. */
   devMode: { kind: "toggle", default: false, page: { id: "dev-mode", label: "Dev mode (unlimited currency, all floors &amp; modes unlocked)" } },
   /** Play each fight out strike by strike, damage rising off whoever was

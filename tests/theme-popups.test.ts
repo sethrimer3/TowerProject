@@ -15,6 +15,7 @@ import { KROZ } from "../src/kroz-board.ts";
 import { ORBIT } from "../src/orbit-board.ts";
 import { PIXEL, PIXEL_SPRITES } from "../src/pixel-board.ts";
 import { DOODLE } from "../src/doodle-board.ts";
+import { MURK } from "../src/murk-board.ts";
 import type { FrameContext } from "../src/render-frame.ts";
 import type { GainArt } from "../src/state.ts";
 
@@ -150,4 +151,13 @@ test("on a Doodle board a potion rises as its blue flask (the red potion red), a
   assert.ok(drawn({ tile: { kind: "potion", color: "red", hp: 35 } as never }, "doodle").fills.includes(DOODLE.red));
   const heart = drawn({ heart: true }, "doodle");
   assert.ok(heart.fills.includes(DOODLE.red) && heart.strokes.includes(DOODLE.ink));
+});
+
+test("on a Murk board a potion rises as its blue flask (the red potion red), a Heart Door's toll as its outlined heart", () => {
+  const potion = drawn({ tile: { kind: "potion", hp: 35 } as never }, "murk");
+  assert.ok(potion.fills.includes(MURK.blue) && potion.strokes.includes(MURK.ink));
+  assert.ok(!drawn({ tile: { kind: "potion", hp: 35 } as never }, null).fills.includes(MURK.blue), "the classic board keeps its own art");
+  assert.ok(drawn({ tile: { kind: "potion", color: "red", hp: 35 } as never }, "murk").fills.includes(MURK.red));
+  const heart = drawn({ heart: true }, "murk");
+  assert.ok(heart.fills.includes(MURK.red) && heart.strokes.includes(MURK.ink));
 });
