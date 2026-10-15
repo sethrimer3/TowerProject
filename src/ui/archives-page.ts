@@ -1,7 +1,7 @@
 import {
   RESEARCH, RESEARCH_CATEGORIES, RESEARCH_IDS, RESEARCH_TARGETS, activeSlot, cannotSwitch, describe, duration, jobProgress, price as researchPrice,
   maxLevel, missing, nextArchivistPrice, nextLevel, research, researchLevel, researched, status, withNextLevel,
-  type ArchivesSave, type ResearchCategory, type ResearchId, type ResearchRequirement, type ResearchTarget,
+  type ArchivesSave, type ArchivistSlot, type ResearchCategory, type ResearchId, type ResearchRequirement, type ResearchTarget,
 } from "../archives.ts";
 import { UPGRADES } from "../config.ts";
 import type { Save } from "../entities.ts";
@@ -23,6 +23,24 @@ export function formatDuration(ms: number) {
   const first = parts.findIndex(([n]) => n > 0);
   if (first < 0) return "0s";
   return parts.slice(first, first + 2).filter(([n]) => n > 0).map(([n, unit]) => `${n}${unit}`).join(" ");
+}
+/** `ms` to the second, every unit from the largest down: "2d 4h 0m 5s",
+ * "7h 41m 12s", "3s"; an archivist's countdown. */
+export function formatCountdown(ms: number) {
+  const s = Math.max(0, Math.ceil(ms / 1000));
+  const parts: [number, string][] = [[Math.floor(s / 86400), "d"], [Math.floor(s / 3600) % 24, "h"], [Math.floor(s / 60) % 60, "m"], [s % 60, "s"]];
+  const first = parts.findIndex(([n]) => n > 0);
+  return parts.slice(first < 0 ? 3 : first).map(([n, unit]) => `${n}${unit}`).join(" ");
+}
+/** The real ms until `slot`'s countdown next shows another second at `now`:
+ * sooner by its Speed Up's factor while that lasts; undefined when idle. */
+export function nextCountdownIn(slot: ArchivistSlot, now: number) {
+  const job = jobAt(slot, now);
+  if (!job) return undefined;
+  const left = job.completesAt - now, factor = slot.speedUp && now < slot.speedUp.endsAt ? slot.speedUp.factor : 1;
+  // The research time until `left` falls past its next whole second.
+  const toNext = left > 0 ? left - (Math.ceil(left / 1000) - 1) * 1000 : 1000;
+  return toNext / factor;
 }
 /** A timestamp as local "YYYY-MM-DD HH:MM". */
 const formatDate = (at: number) => {
@@ -154,13 +172,25 @@ export class ArchivesPanel {
     const slots = this.ctx.game.save.archives.slots;
     const speedUpChanged = slots.some((s, i) => !!(s.job && s.speedUp) !== !!document.querySelector(`[data-speed-left="${i}"]`));
     if (completed || speedUpChanged) return this.rerender();
+    this.moveOn();
+  }
+
+  /** The real ms until an archivist's countdown next shows another second:
+   * a second, or a Speed Up's share of one; the page moves them on then. */
+  nextCountdownIn() {
     const now = this.ctx.game.clock();
+    return Math.min(1000, ...this.ctx.game.save.archives.slots.map((s) => nextCountdownIn(s, now) ?? 1000));
+  }
+
+  /** Moves each busy archivist's bar, countdown and Speed Up on. */
+  moveOn() {
+    const slots = this.ctx.game.save.archives.slots, now = this.ctx.game.clock();
     slots.forEach((slot, i) => {
       const job = jobAt(slot, now), fill = document.querySelector<HTMLElement>(`[data-progress="${i}"]`);
       if (!job || !fill) return;
       fill.style.width = `${(jobProgress(job, now) * 100).toFixed(2)}%`;
       const left = document.querySelector(`[data-countdown="${i}"]`);
-      if (left) left.textContent = `${formatDuration(job.completesAt - now)} left`;
+      if (left) left.textContent = `${formatCountdown(job.completesAt - now)} left`;
       const speed = document.querySelector(`[data-speed-left="${i}"]`);
       if (speed && slot.speedUp) speed.textContent = formatDuration(slot.speedUp.endsAt - now);
       const rush = document.querySelector<HTMLButtonElement>(`[data-rush="${i}"]`), gems = document.querySelector(`[data-rush-gems="${i}"]`);
@@ -335,7 +365,7 @@ export class ArchivesPanel {
       const finish = game.save.settings.devMode ? `<button data-finish="${i}">Finish now</button>` : "";
       return `<article class="archivist busy" role="listitem" data-pick="${i}" title="Select research: switch this archivist to other research"><div class="archivist-head"><div class="archivist-who">${title}<b>${def.name} · level ${job.level}</b></div><div class="archivist-actions">${auto}${this.rushHtml(i)}${finish}</div></div>
         <div class="research-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.floor(done * 100)}"><i data-progress="${i}" style="width:${(done * 100).toFixed(2)}%"></i></div>
-        <div class="archivist-line">${this.changeHtml(job.research)}<p class="archivist-time"><span data-countdown="${i}">${formatDuration(shown.completesAt - now)} left</span>${this.speedUpHtml(i)}</p></div></article>`;
+        <div class="archivist-line">${this.changeHtml(job.research)}<p class="archivist-time"><span data-countdown="${i}">${formatCountdown(shown.completesAt - now)} left</span>${this.speedUpHtml(i)}</p></div></article>`;
     }).join("");
   }
 

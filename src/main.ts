@@ -558,7 +558,7 @@ const loop = new FrameLoop({
   modal,
   tab: () => tab,
   upgradesFrame: (time) => skillTree.drawParticles(time),
-  researchFrame: (time) => research.drawParticles(time),
+  researchFrame: (time) => research.frame(time),
   archivesTick,
   defendFrame: (time) => defendPage.frame(time),
   update,

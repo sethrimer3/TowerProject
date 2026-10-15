@@ -4,6 +4,7 @@
 
 **Archives** (5 Inspiration, after Larger Hand; Into the depths, 3 Inspiration, follows it) adds an Archives tab to the Research page, after Training: research that lasts between runs, paid in Gold and real time.
 An archivist works on one project at a time, a level at a time: pay the level's Gold, and it completes on the clock, whether the game is open, on another page, or closed.
+A busy archivist shows the time its research has left down to the second (*7h 41m 33s left*), ticking each second.
 You start with one archivist and can hire up to four more for Gems (100, 400, 1,400 and 3,000).
 
 ## The first projects
@@ -22,7 +23,7 @@ With **Auto-continue** ticked (the box with the looping arrow, as on the Trainin
 
 **Cells** (a yellow triangle) drop from every Greater Boss: 1 in Tower I, and from 1 to the tower's number on later towers, evenly (an Effective or Dampen badge on the card that took the fight scales the drop, like its Gold); the Archives tab shows the Cells held beside its History button.
 **Speed Up**, after a busy archivist's time left, spends them: its dialog picks how long (1, 4, 8 or 24 hours) and how fast (1.5x, 2x, 3x or 4x, at 15, 75, 450 and 3,150 Cells an hour), shows the Cells held over the price, and **Queue Speed Up** buys the same Speed Up again each time it ends while the archivist is busy and the Cells are there (in the dialog of a Speed Up in progress, only that box can change).
-While one lasts the research left counts down that many times as fast, with the factor and the time the Speed Up has left in green beside it (*2x 49m 57s*); it belongs to the archivist, so the next level auto-continued keeps it, and only one runs at a time.
+While one lasts the research left counts down that many times as fast (at 4x, a second every quarter of a second), with the factor and the time the Speed Up has left in green beside it (*2x 49m 57s*); it belongs to the archivist, so the next level auto-continued keeps it, and only one runs at a time.
 It counts down only while the archivist researches: an idle archivist's Speed Up is paused (its row shows it, *2x 40m · paused*) until its next research starts, and a queued one is never bought again while idle.
 Switching away keeps the research done, not the time passed, and Rush prices the research left.
 

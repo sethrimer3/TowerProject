@@ -25,6 +25,8 @@ export class ResearchPage {
   private tab: ResearchTab = "training";
   private trainingParticles = new TrainingParticles();
   private archives: ArchivesPanel;
+  /** The frame time the archivists' countdowns next move on. */
+  private nextCountdown = 0;
 
   constructor(private ctx: AppContext) {
     this.archives = new ArchivesPanel(ctx, () => this.render());
@@ -410,8 +412,25 @@ export class ResearchPage {
     document.querySelector<HTMLButtonElement>("#boost-claim")?.addEventListener("click", () => this.saveAfter(game.training.claimBoost()));
   }
 
+  /** Each frame while the page shows: the Archives' countdowns, the moment
+   * one shows another second, or the Training tab's particles. */
+  frame(time: number) {
+    if (this.tab === "archives") return this.moveCountdowns(time);
+    this.drawParticles(time);
+  }
+
+  /** Moves the archivists' countdowns on as each shows another second,
+   * every second or, under a Speed Up, every second shared by its factor,
+   * so the time left reads true to the second. */
+  private moveCountdowns(time: number) {
+    if (time < this.nextCountdown) return;
+    this.archives.moveOn();
+    // A few ms past the turn of the second, so it has turned.
+    this.nextCountdown = time + this.archives.nextCountdownIn() + 5;
+  }
+
   /** The Training tab's specks and the stream along each row in training. */
-  drawParticles(time: number) {
+  private drawParticles(time: number) {
     if (this.tab !== "training") return;
     const canvas = document.querySelector<HTMLCanvasElement>(".training-particles");
     if (!canvas) return;

@@ -6,6 +6,7 @@ import { decode, defaults } from "../src/save.ts";
 import { Game } from "../src/state.ts";
 import { RunPurse } from "../src/game/run-purse.ts";
 import type { Enemy } from "../src/entities.ts";
+import { formatCountdown, nextCountdownIn } from "../src/ui/archives-page.ts";
 
 const HOUR = 3_600_000;
 const T0 = Date.UTC(2026, 9, 11, 12);
@@ -21,6 +22,30 @@ function researching(cells = 10_000) {
   assert.ok(startResearch(save, 0, "focusCount", T0));
   return save;
 }
+
+test("an archivist's countdown shows every unit down to the second", () => {
+  assert.equal(formatCountdown(8 * HOUR), "8h 0m 0s");
+  assert.equal(formatCountdown(Math.round(10 * HOUR / 1.3)), "7h 41m 33s");
+  assert.equal(formatCountdown(2 * 24 * HOUR + 5_000), "2d 0h 0m 5s");
+  assert.equal(formatCountdown(61_000), "1m 1s");
+  assert.equal(formatCountdown(4_001), "5s", "a part of a second counts as a second");
+  assert.equal(formatCountdown(0), "0s");
+});
+
+test("the countdown moves on as it shows another second: every second, or a Speed Up's share of one", () => {
+  const save = researching(), slot = save.archives.slots[0];
+  assert.equal(nextCountdownIn(slot, T0), 1000);
+  assert.equal(nextCountdownIn(slot, T0 + 300), 700);
+  assert.ok(startSpeedUp(save, slot, 4, 1, false, T0 + 300));
+  // Four times as fast: each second of research passes in a quarter of one.
+  assert.equal(nextCountdownIn(slot, T0 + 300), 700 / 4);
+  const at = T0 + 300 + 700 / 4;
+  assert.equal(formatCountdown(jobAt(slot, at)!.completesAt - at), "7h 59m 59s");
+  assert.equal(nextCountdownIn(slot, at), 250);
+  // Ended, it counts down by the second again, still 300 ms into one.
+  assert.equal(nextCountdownIn(slot, T0 + 300 + HOUR), 700);
+  assert.equal(nextCountdownIn({ autoContinue: false }, T0), undefined, "an idle archivist has none");
+});
 
 test("Speed Ups cost 15, 75, 450 and 3,150 Cells an hour by factor", () => {
   assert.deepEqual(SPEED_UP_FACTORS.map((f) => CELLS_PER_HOUR[f]), [15, 75, 450, 3150]);
