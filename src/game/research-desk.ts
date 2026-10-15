@@ -1,6 +1,6 @@
 import { RESEARCH, RESEARCH_IDS, cancelResearch, status, hastenResearch, hireArchivist, settleArchives, startResearch, switchResearch, type ResearchId, type ResearchRecord } from "../archives.ts";
 import { finishGems } from "../training-jobs.ts";
-import { speedUpCells, startSpeedUp, type SpeedUpFactor, type SpeedUpHours } from "../speed-ups.ts";
+import { queueNextSpeedUp, speedUpCells, startSpeedUp, type SpeedUpFactor, type SpeedUpHours } from "../speed-ups.ts";
 import { changeLoadout } from "./hero-sync.ts";
 import { affordsGems, type DeskHost } from "./desk.ts";
 
@@ -108,10 +108,20 @@ export class ResearchDesk {
     return this.open && startSpeedUp(this.save, this.save.archives.slots[slot], factor, hours, queued, this.host.clock());
   }
 
-  /** Whether archivist `slot`'s Speed Up in progress is bought again as it ends. */
+  /** Whether archivist `slot`'s Speed Up in progress is bought again as it
+   * ends; unqueued, it forgets the next one chosen. */
   setSpeedUpQueued(slot: number, on: boolean) {
     const s = this.save.archives.slots[slot]?.speedUp;
-    if (s) s.queued = on;
+    if (!s) return;
+    s.queued = on;
+    if (!on) delete s.next;
+  }
+
+  /** The Speed Up archivist `slot`'s queued one buys as it ends: `factor`
+   * for `hours`, its Cells paid then. False unless one is in progress and
+   * queued. */
+  queueNextSpeedUp(slot: number, factor: SpeedUpFactor, hours: SpeedUpHours) {
+    return this.open && queueNextSpeedUp(this.save.archives.slots[slot], factor, hours);
   }
 
   hire() {

@@ -262,32 +262,47 @@ export class ArchivesPanel {
   /** The Speed Up dialog for archivist `slot`: how long and how fast, the
    * Cells held over what that costs, whether to buy it again as it ends,
    * and Speed Up. While one is in progress it shows that one, and only its
-   * Queue box can change. */
+   * Queue box can change; queued, the options choose the Speed Up bought as
+   * it ends, which Next Speed Up keeps (paid then). */
   private showSpeedUp(slot: number) {
     const game = this.ctx.game, modal = this.ctx.modal, a = game.save.archives;
+    /** The next Speed Up being chosen while a queued one is in progress. */
+    let next: { factor: SpeedUpFactor; hours: SpeedUpHours } | undefined;
     const draw = () => {
       const s = a.slots[slot], job = s?.job;
       if (!job) return modal.close();
-      const active = s.speedUp, choice = active ? { factor: active.factor, hours: active.hours, queued: active.queued } : this.speedUpChoice;
+      const active = s.speedUp, queuing = !!active?.queued, queuedNow = active?.next ?? active;
+      if (!queuing) next = undefined;
+      else next ??= { factor: queuedNow!.factor, hours: queuedNow!.hours };
+      const choice = !active ? this.speedUpChoice : next ? { ...next, queued: true } : { factor: active.factor, hours: active.hours, queued: false };
       const cells = game.research.speedUpCells(choice.factor, choice.hours), held = whole(game.save.cells), short = !game.free && game.save.cells < cells;
+      // Queued, the choice is already what is queued until another is picked.
+      const unchanged = !!next && next.factor === queuedNow!.factor && next.hours === queuedNow!.hours;
       const option = (kind: "hours" | "factor", value: number, label: string) =>
-        `<button class="speed-up-option${choice[kind] === value ? " chosen" : ""}" data-${kind}="${value}" aria-pressed="${choice[kind] === value}" ${active ? "disabled" : ""}>${label}</button>`;
+        `<button class="speed-up-option${choice[kind] === value ? " chosen" : ""}" data-${kind}="${value}" aria-pressed="${choice[kind] === value}" ${active && !queuing ? "disabled" : ""}>${label}</button>`;
+      const confirm = queuing
+        ? `<button id="speed-up-confirm" ${unchanged ? "disabled" : ""} aria-label="Next Speed Up: ${choice.factor}x for ${choice.hours} hours, ${cells.toLocaleString("en-US")} Cells as this one ends">Next Speed Up · ${cellIcon()} <b>${shortAmount(cells, 1000)}</b></button>`
+        : `<button id="speed-up-confirm" ${active || short ? "disabled" : ""} aria-label="Speed Up for ${cells.toLocaleString("en-US")} Cells">Speed Up · ${cellIcon()} <b>${shortAmount(cells, 1000)}</b></button>`;
       modal.innerHTML = `<div class="speed-up"><button id="speed-up-close" class="dialog-x" aria-label="Close" title="Close">✕</button>
         <h2>Speed Up</h2><p class="speed-up-what">${RESEARCH[job.research].name} · level ${job.level}</p><p>Use cells to speed up research</p>
         <div class="speed-up-options" role="group" aria-label="How long">${SPEED_UP_HOURS.map((h) => option("hours", h, `${h}h`)).join("")}</div>
         <div class="speed-up-options" role="group" aria-label="How fast">${SPEED_UP_FACTORS.map((f) => option("factor", f, `${f}x`)).join("")}</div>
-        <p class="speed-up-choice">${choice.factor}x ${choice.hours}h</p>
+        <p class="speed-up-choice">${queuing ? "Next: " : ""}${choice.factor}x ${choice.hours}h</p>
         <p class="speed-up-cells${short ? " short" : ""}" aria-label="${held.toLocaleString("en-US")} Cells held, ${cells.toLocaleString("en-US")} needed">${shortAmount(held, 1000)}/${shortAmount(cells, 1000)} ${cellIcon()}</p>
         <label class="speed-up-queue"><input type="checkbox" id="speed-up-queue" ${choice.queued ? "checked" : ""}> Queue Speed Up</label>
-        <div class="dialog-actions"><button id="speed-up-close-button">Close</button><button id="speed-up-confirm" ${active || short ? "disabled" : ""} aria-label="Speed Up for ${cells.toLocaleString("en-US")} Cells">Speed Up · ${cellIcon()} <b>${shortAmount(cells, 1000)}</b></button></div>
-        ${active ? `<p class="speed-up-busy">SPEED UP IN PROGRESS</p>` : ""}</div>`;
+        <div class="dialog-actions"><button id="speed-up-close-button">Close</button>${confirm}</div>
+        ${active ? `<p class="speed-up-busy">SPEED UP IN PROGRESS · ${active.factor}x ${active.hours}h</p>` : ""}</div>`;
       el("speed-up-close").onclick = el("speed-up-close-button").onclick = () => modal.close();
       modal.querySelectorAll<HTMLButtonElement>("[data-hours]").forEach((b) => (b.onclick = () => {
-        this.speedUpChoice.hours = Number(b.dataset.hours) as SpeedUpHours;
+        const hours = Number(b.dataset.hours) as SpeedUpHours;
+        if (next) next.hours = hours;
+        else this.speedUpChoice.hours = hours;
         draw();
       }));
       modal.querySelectorAll<HTMLButtonElement>("[data-factor]").forEach((b) => (b.onclick = () => {
-        this.speedUpChoice.factor = Number(b.dataset.factor) as SpeedUpFactor;
+        const factor = Number(b.dataset.factor) as SpeedUpFactor;
+        if (next) next.factor = factor;
+        else this.speedUpChoice.factor = factor;
         draw();
       }));
       (el("speed-up-queue") as HTMLInputElement).onchange = (e) => {
@@ -297,9 +312,16 @@ export class ArchivesPanel {
         else {
           game.research.setSpeedUpQueued(slot, on);
           this.ctx.save();
+          draw();
         }
       };
       el("speed-up-confirm").onclick = () => {
+        if (next) {
+          if (!game.research.queueNextSpeedUp(slot, next.factor, next.hours)) return;
+          this.ctx.save();
+          modal.close();
+          return this.rerender();
+        }
         if (!game.research.speedUp(slot, choice.factor, choice.hours, choice.queued)) return;
         modal.close();
         this.ctx.update();

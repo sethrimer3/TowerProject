@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { cancelResearch, jobProgress, settleArchives, startResearch, decodeArchives } from "../src/archives.ts";
-import { CELLS_PER_HOUR, SPEED_UP_FACTORS, jobAt, speedUpCells, startSpeedUp } from "../src/speed-ups.ts";
+import { CELLS_PER_HOUR, SPEED_UP_FACTORS, jobAt, queueNextSpeedUp, speedUpCells, startSpeedUp } from "../src/speed-ups.ts";
 import { decode, defaults } from "../src/save.ts";
 import { Game } from "../src/state.ts";
 import { RunPurse } from "../src/game/run-purse.ts";
@@ -130,6 +130,28 @@ test("a queued Speed Up buys itself again as it ends, while the Cells are there"
   assert.equal(slot.job!.completesAt, T0 + 6 * HOUR);
 });
 
+test("a queued Speed Up buys the next one chosen meanwhile as it ends, paying then", () => {
+  const save = researching(1_000);
+  const slot = save.archives.slots[0];
+  assert.ok(startSpeedUp(save, slot, 2, 1, false, T0));
+  assert.equal(queueNextSpeedUp(slot, 3, 1), false, "only a queued one takes a next");
+  slot.speedUp!.queued = true;
+  assert.ok(queueNextSpeedUp(slot, 3, 1));
+  assert.deepEqual(slot.speedUp!.next, { factor: 3, hours: 1 });
+  assert.equal(save.cells, 925, "nothing paid until it starts");
+  settleArchives(save, T0 + HOUR);
+  assert.deepEqual([slot.speedUp?.factor, slot.speedUp?.hours, slot.speedUp?.next], [3, 1, undefined]);
+  assert.equal(save.cells, 925 - 450);
+  // Queued still, it buys itself again from there.
+  settleArchives(save, T0 + 2 * HOUR);
+  assert.equal(slot.speedUp?.factor, 3);
+  assert.equal(save.cells, 25);
+  // Choosing the one in progress again leaves no next.
+  assert.ok(queueNextSpeedUp(slot, 2, 1));
+  assert.ok(queueNextSpeedUp(slot, 3, 1));
+  assert.equal(slot.speedUp!.next, undefined);
+});
+
 test("stopping research under a Speed Up keeps the research done, not the time passed", () => {
   const save = researching();
   startSpeedUp(save, save.archives.slots[0], 3, 1, false, T0);
@@ -141,6 +163,7 @@ test("stopping research under a Speed Up keeps the research done, not the time p
 test("a Speed Up survives a save round trip, and a malformed one is dropped", () => {
   const save = researching();
   startSpeedUp(save, save.archives.slots[0], 3, 8, true, T0);
+  queueNextSpeedUp(save.archives.slots[0], 4, 1);
   const back = decode(JSON.stringify(save));
   assert.deepEqual(back.archives.slots[0].speedUp, save.archives.slots[0].speedUp);
   assert.equal(back.cells, save.cells);

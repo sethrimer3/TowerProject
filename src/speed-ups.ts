@@ -18,8 +18,11 @@ const HOUR = 3_600_000;
  * with no boost from then on; while the archivist is idle it is paused,
  * `endsAt` moving on with the clock, so only time spent researching uses
  * it up. `queued` buys the same Speed Up again as it
- * ends, while the Cells are there. */
-export type SpeedUp = { factor: SpeedUpFactor; hours: SpeedUpHours; endsAt: number; appliedUntil: number; queued: boolean };
+ * ends, while the Cells are there, or `next`, another chosen meanwhile. */
+export type SpeedUp = {
+  factor: SpeedUpFactor; hours: SpeedUpHours; endsAt: number; appliedUntil: number; queued: boolean;
+  next?: { factor: SpeedUpFactor; hours: SpeedUpHours };
+};
 
 /** The Cells a Speed Up of `factor` for `hours` costs. */
 export const speedUpCells = (factor: SpeedUpFactor, hours: SpeedUpHours) => CELLS_PER_HOUR[factor] * hours;
@@ -93,13 +96,24 @@ export function completionAt(slot: ArchivistSlot) {
   return boosted <= s.endsAt ? boosted : done - (s.factor - 1) * (s.endsAt - s.appliedUntil);
 }
 
+/** Sets the Speed Up `slot`'s queued one buys as it ends to `factor` for
+ * `hours`, paying nothing until then. False unless one is in progress and
+ * queued. */
+export function queueNextSpeedUp(slot: ArchivistSlot | undefined, factor: SpeedUpFactor, hours: SpeedUpHours) {
+  const s = slot?.speedUp;
+  if (!s?.queued) return false;
+  if (factor === s.factor && hours === s.hours) delete s.next;
+  else s.next = { factor, hours };
+  return true;
+}
+
 /** `slot`'s Speed Up ends at `at` (only ever while the archivist is busy):
- * a queued one is bought again from there while the Cells are there;
- * otherwise it is gone. */
+ * a queued one buys its `next`, or itself again, from there while the
+ * Cells are there; otherwise it is gone. */
 export function endSpeedUp(o: CellPurse, slot: ArchivistSlot, at: number) {
-  const s = slot.speedUp!;
+  const s = slot.speedUp!, next = s.next ?? s;
   delete slot.speedUp;
-  if (s.queued) startSpeedUp(o, slot, s.factor, s.hours, true, at);
+  if (s.queued) startSpeedUp(o, slot, next.factor, next.hours, true, at);
 }
 
 /** A saved Speed Up, or undefined when it isn't one. */
@@ -108,5 +122,9 @@ export function decodeSpeedUp(raw: any): SpeedUp | undefined {
   const { factor, hours, endsAt, appliedUntil, queued } = raw;
   if (!SPEED_UP_FACTORS.includes(factor) || !SPEED_UP_HOURS.includes(hours)) return undefined;
   if (!finite(endsAt, 1e15) || !finite(appliedUntil, 1e15) || appliedUntil > endsAt) return undefined;
-  return { factor, hours, endsAt, appliedUntil, queued: queued === true };
+  const speedUp: SpeedUp = { factor, hours, endsAt, appliedUntil, queued: queued === true };
+  const next = raw.next;
+  if (speedUp.queued && isRecord(next) && SPEED_UP_FACTORS.includes(next.factor as SpeedUpFactor) && SPEED_UP_HOURS.includes(next.hours as SpeedUpHours))
+    speedUp.next = { factor: next.factor as SpeedUpFactor, hours: next.hours as SpeedUpHours };
+  return speedUp;
 }
