@@ -6,6 +6,7 @@ import { RoomWorld } from "../src/tower/room-world.ts";
 import { THEMED_BOARDS } from "../src/themed-boards.ts";
 import { ARCADE } from "../src/arcade-board.ts";
 import { PIXEL } from "../src/pixel-board.ts";
+import { DOODLE } from "../src/doodle-board.ts";
 
 /** A Tower room of open floor, x 0..4 by y 0..4, the hero at its middle,
  * a wall at (3, 2) and an enemy at (2, 3). */
@@ -85,4 +86,25 @@ test("the Pixel hero turns the way it faces (world y up, the screen's down)", ()
   assert.deepEqual(pixelHero({ dx: -1, dy: 0 }), { mirrored: true, sword: true });
   assert.deepEqual(pixelHero({ dx: 0, dy: 1 }), { mirrored: false, sword: false }, "its back going up the screen");
   assert.deepEqual(pixelHero({ dx: 0, dy: -1 }), { mirrored: false, sword: true }, "its face going down");
+});
+
+/** Whether the Doodle hero is painted mirrored, and whether its sword is
+ * drawn. */
+function doodleHero(facing: { dx: number; dy: number }) {
+  const scales: number[][] = [], strokes: string[] = [];
+  const c = new Proxy({ scale: (x: number, y: number) => scales.push([x, y]) } as Record<string | symbol, unknown>, {
+    get: (t, k) => (k in t ? t[k] : () => {}),
+    set: (_t, k, v) => {
+      if (k === "strokeStyle") strokes.push(String(v));
+      return true;
+    },
+  }) as unknown as CanvasRenderingContext2D;
+  THEMED_BOARDS.doodle.hero(c, facing);
+  return { mirrored: scales.some(([x]) => x < 0), sword: strokes.includes(DOODLE.pencil) };
+}
+
+test("the Doodle hero turns the way it last stepped sideways, its sword always in hand", () => {
+  assert.deepEqual(doodleHero({ dx: 1, dy: 0 }), { mirrored: false, sword: true });
+  assert.deepEqual(doodleHero({ dx: -1, dy: 0 }), { mirrored: true, sword: true });
+  assert.deepEqual(doodleHero({ dx: 0, dy: 1 }), { mirrored: false, sword: true });
 });

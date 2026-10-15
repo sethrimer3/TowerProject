@@ -1,0 +1,337 @@
+/* Doodle theme: the page as drawn with a mouse in a simple paint program.
+   White paper, every panel and button a freehand black box whose line never
+   quite runs straight, the buttons poured full of flat bright colour with
+   the bucket, each fill landing a little off its line as a hurried hand
+   leaves it; page titles on a stripe of bright yellow, notes on pale yellow
+   sticky notes, and bars filled flat. Text in the bundled Comic Neue, a
+   friendly hand-lettered face (OFL; only while worn).
+   Every frame is a 30-unit freehand box drawn as inline SVG, sliced at 10
+   and laid by `border-image`, its edge pieces repeated (`round`) so the
+   wobble keeps its size along any length.
+   Every selector is scoped under `html.doodle` so nothing changes while the
+   theme is off. Loaded after style.css and the other themes. */
+@font-face {
+  font-family: "Comic Neue";
+  src: url("../assets/fonts/ComicNeue/ComicNeue-Regular.woff2") format("woff2");
+  font-weight: 100 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Comic Neue";
+  src: url("../assets/fonts/ComicNeue/ComicNeue-Bold.woff2") format("woff2");
+  font-weight: 600 900;
+  font-style: normal;
+  font-display: swap;
+}
+html.doodle {
+  --d-ink: #000000;
+  --d-paper: #ffffff;
+  --d-dim: #606060;
+  --d-red: #e00000;
+  --d-green: #008000;
+  --d-yellow: #ffff00;
+  /* a panel: white paper in a freehand black box. */
+  --d-panel: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30'><path fill='%23fff' transform='translate(1.2 1.2)' d='M3 10Q2.6 3.2 10 3Q15 1.6 20 3Q27 2.4 27 10Q28.4 15 27 20Q27.6 27.4 20 27Q15 28.4 10 27Q2.4 27.6 3 20Q1.6 15 3 10Z'/><path fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' d='M3 10Q2.6 3.2 10 3Q15 1.6 20 3Q27 2.4 27 10Q28.4 15 27 20Q27.6 27.4 20 27Q15 28.4 10 27Q2.4 27.6 3 20Q1.6 15 3 10Z'/></svg>");
+  /* a dialog: the same box, its line thicker. */
+  --d-dialog: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30'><path fill='%23fff' transform='translate(1.2 1.2)' d='M3 10Q2.6 3.2 10 3Q15 1.6 20 3Q27 2.4 27 10Q28.4 15 27 20Q27.6 27.4 20 27Q15 28.4 10 27Q2.4 27.6 3 20Q1.6 15 3 10Z'/><path fill='none' stroke='%23000' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round' d='M3 10Q2.6 3.2 10 3Q15 1.6 20 3Q27 2.4 27 10Q28.4 15 27 20Q27.6 27.4 20 27Q15 28.4 10 27Q2.4 27.6 3 20Q1.6 15 3 10Z'/></svg>");
+  /* a button: poured pale cyan, its fill landing a little off the line. */
+  --d-button: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30'><path fill='%2380ffff' transform='translate(1.2 1.2)' d='M3 10Q2.6 3.2 10 3Q15 1.6 20 3Q27 2.4 27 10Q28.4 15 27 20Q27.6 27.4 20 27Q15 28.4 10 27Q2.4 27.6 3 20Q1.6 15 3 10Z'/><path fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' d='M3 10Q2.6 3.2 10 3Q15 1.6 20 3Q27 2.4 27 10Q28.4 15 27 20Q27.6 27.4 20 27Q15 28.4 10 27Q2.4 27.6 3 20Q1.6 15 3 10Z'/></svg>");
+  /* a button pressed: deeper cyan, the fill on the line. */
+  --d-press: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30'><path fill='%2300ffff' transform='translate(0 0)' d='M3 10Q2.6 3.2 10 3Q15 1.6 20 3Q27 2.4 27 10Q28.4 15 27 20Q27.6 27.4 20 27Q15 28.4 10 27Q2.4 27.6 3 20Q1.6 15 3 10Z'/><path fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' d='M3 10Q2.6 3.2 10 3Q15 1.6 20 3Q27 2.4 27 10Q28.4 15 27 20Q27.6 27.4 20 27Q15 28.4 10 27Q2.4 27.6 3 20Q1.6 15 3 10Z'/></svg>");
+  /* what is chosen: poured pale green. */
+  --d-chosen: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30'><path fill='%2380ff80' transform='translate(1.2 1.2)' d='M3 10Q2.6 3.2 10 3Q15 1.6 20 3Q27 2.4 27 10Q28.4 15 27 20Q27.6 27.4 20 27Q15 28.4 10 27Q2.4 27.6 3 20Q1.6 15 3 10Z'/><path fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' d='M3 10Q2.6 3.2 10 3Q15 1.6 20 3Q27 2.4 27 10Q28.4 15 27 20Q27.6 27.4 20 27Q15 28.4 10 27Q2.4 27.6 3 20Q1.6 15 3 10Z'/></svg>");
+  /* a button that can't be pressed: grey in a grey line. */
+  --d-off: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30'><path fill='%23e0e0e0' transform='translate(1.2 1.2)' d='M3 10Q2.6 3.2 10 3Q15 1.6 20 3Q27 2.4 27 10Q28.4 15 27 20Q27.6 27.4 20 27Q15 28.4 10 27Q2.4 27.6 3 20Q1.6 15 3 10Z'/><path fill='none' stroke='%23a0a0a0' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' d='M3 10Q2.6 3.2 10 3Q15 1.6 20 3Q27 2.4 27 10Q28.4 15 27 20Q27.6 27.4 20 27Q15 28.4 10 27Q2.4 27.6 3 20Q1.6 15 3 10Z'/></svg>");
+  /* what is dangerous: poured pink-red. */
+  --d-danger: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30'><path fill='%23ff8080' transform='translate(1.2 1.2)' d='M3 10Q2.6 3.2 10 3Q15 1.6 20 3Q27 2.4 27 10Q28.4 15 27 20Q27.6 27.4 20 27Q15 28.4 10 27Q2.4 27.6 3 20Q1.6 15 3 10Z'/><path fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' d='M3 10Q2.6 3.2 10 3Q15 1.6 20 3Q27 2.4 27 10Q28.4 15 27 20Q27.6 27.4 20 27Q15 28.4 10 27Q2.4 27.6 3 20Q1.6 15 3 10Z'/></svg>");
+  /* a field or well: a thinner line, the fill on it. */
+  --d-field: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30'><path fill='%23fff' transform='translate(0 0)' d='M3 10Q2.6 3.2 10 3Q15 1.6 20 3Q27 2.4 27 10Q28.4 15 27 20Q27.6 27.4 20 27Q15 28.4 10 27Q2.4 27.6 3 20Q1.6 15 3 10Z'/><path fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' d='M3 10Q2.6 3.2 10 3Q15 1.6 20 3Q27 2.4 27 10Q28.4 15 27 20Q27.6 27.4 20 27Q15 28.4 10 27Q2.4 27.6 3 20Q1.6 15 3 10Z'/></svg>");
+  /* a note: pale yellow, as a sticky note. */
+  --d-tip: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30'><path fill='%23ffff80' transform='translate(1.2 1.2)' d='M3 10Q2.6 3.2 10 3Q15 1.6 20 3Q27 2.4 27 10Q28.4 15 27 20Q27.6 27.4 20 27Q15 28.4 10 27Q2.4 27.6 3 20Q1.6 15 3 10Z'/><path fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' d='M3 10Q2.6 3.2 10 3Q15 1.6 20 3Q27 2.4 27 10Q28.4 15 27 20Q27.6 27.4 20 27Q15 28.4 10 27Q2.4 27.6 3 20Q1.6 15 3 10Z'/></svg>");
+  /* a page title's banner: bright yellow. */
+  --d-banner: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30'><path fill='%23ffff00' transform='translate(1.2 1.2)' d='M3 10Q2.6 3.2 10 3Q15 1.6 20 3Q27 2.4 27 10Q28.4 15 27 20Q27.6 27.4 20 27Q15 28.4 10 27Q2.4 27.6 3 20Q1.6 15 3 10Z'/><path fill='none' stroke='%23000' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round' d='M3 10Q2.6 3.2 10 3Q15 1.6 20 3Q27 2.4 27 10Q28.4 15 27 20Q27.6 27.4 20 27Q15 28.4 10 27Q2.4 27.6 3 20Q1.6 15 3 10Z'/></svg>");
+  /* The paper, with a light grey speck of the spray can now and then. */
+  --d-specks: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><g fill='%23d8d8d8'><rect x='21' y='30' width='1.5' height='1.5'/><rect x='24' y='27' width='1.5' height='1.5'/><rect x='26' y='32' width='1.5' height='1.5'/><rect x='19' y='34' width='1.5' height='1.5'/><rect x='23' y='35' width='1.5' height='1.5'/><rect x='118' y='96' width='1.5' height='1.5'/><rect x='121' y='92' width='1.5' height='1.5'/><rect x='115' y='99' width='1.5' height='1.5'/><rect x='123' y='98' width='1.5' height='1.5'/><rect x='119' y='101' width='1.5' height='1.5'/></g><path d='M80 138q4-6 8 0t8 0' fill='none' stroke='%23e4e4e4' stroke-width='1.4' stroke-linecap='round'/></svg>");
+  --gold: #b07800;
+  --muted: var(--d-dim);
+  --line: var(--d-ink);
+  color-scheme: light;
+  color: var(--d-ink);
+  background: var(--d-paper) var(--d-specks) 0 0 / 160px 160px;
+}
+/* Comic Neue for every line of text (a badge's symbol keeps the system
+   face that has its glyph). */
+html.doodle,
+html.doodle *:not(.badge-glyph, .badge-mark) {
+  font-family: "Comic Neue", "Trebuchet MS", sans-serif;
+  --rate-em: 3; /* the purse's widest rate in this face (style.css) */
+  font-synthesis: none;
+  letter-spacing: 0;
+}
+html.doodle body {
+  background: var(--d-paper) var(--d-specks) 0 0 / 160px 160px;
+}
+/* The page's own colours, lines and glows give way everywhere: black on
+   white and nothing else. `:not(#_)` lifts these over the page's class
+   rules (and the ones below over these); a style written on an element (a
+   colour swatch) still wins. Drawings (canvas, images, svg), the bars'
+   fills (`i`), rarity colours and badge tokens keep theirs. */
+html.doodle body *:not(#_, canvas, img, svg, svg *, i, .eq-tile, .badge-token, [class*="rar"]) {
+  background-color: transparent;
+  background-image: none;
+  border-color: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  text-shadow: none;
+  backdrop-filter: none;
+  outline-color: transparent;
+}
+html.doodle body *:not(#_, svg, svg *) {
+  color: var(--d-ink);
+}
+html.doodle main.shell:not(#_) {
+  background: transparent;
+}
+
+/* Scrollbars: a pale cyan thumb in a white track. */
+html.doodle * {
+  scrollbar-color: #80ffff var(--d-paper);
+}
+
+/* Titles: bold, black; a page's on a stripe of bright yellow. */
+html.doodle h1:not(#_),
+html.doodle h2:not(#_),
+html.doodle h3:not(#_),
+html.doodle .tower-heading:not(#_),
+html.doodle .section-title:not(#_),
+html.doodle #height:not(#_) {
+  font-weight: 700;
+  letter-spacing: 0;
+  color: var(--d-ink);
+}
+html.doodle .page-title h2:not(#_) {
+  font-size: 20px;
+}
+html.doodle .page-title:not(#_),
+html.doodle .event-banner:not(#_),
+html.doodle .eq-loadout-head:not(#_) {
+  padding: 4px 12px;
+  text-align: center;
+  border: 3px solid transparent;
+  border-image: var(--d-banner) 10 fill / 10px / 0 round;
+}
+html.doodle .page-title small:not(#_),
+html.doodle .eyebrow:not(#_),
+html.doodle .hint:not(#_),
+html.doodle .board-caption:not(#_),
+html.doodle small:not(#_) {
+  color: var(--d-dim);
+}
+
+/* Panels: a freehand black box on white. */
+html.doodle .stats:not(#_),
+html.doodle .card:not(#_),
+html.doodle .upgrade:not(#_),
+html.doodle .shop:not(#_),
+html.doodle .theme-card:not(#_),
+html.doodle .weekly:not(#_),
+html.doodle .mission:not(#_),
+html.doodle .event-boost:not(#_),
+html.doodle .archivist:not(#_),
+html.doodle .research:not(#_),
+html.doodle .pull-box:not(#_),
+html.doodle .eq-loadout:not(#_),
+html.doodle .equip-materials:not(#_),
+html.doodle .purse-big:not(#_),
+html.doodle .starting-stats:not(#_),
+html.doodle .training-boost:not(#_),
+html.doodle .tournament-standing:not(#_),
+html.doodle .tournament-tickets:not(#_),
+html.doodle .badge-box:not(#_),
+html.doodle .deck-reserve:not(#_),
+html.doodle .defend-palette:not(#_),
+html.doodle .card-reveal:not(#_),
+html.doodle .badge-reveal:not(#_),
+html.doodle .skill-tree:not(#_),
+html.doodle .goals-stage:not(#_),
+html.doodle .training-box:not(#_),
+html.doodle .setting:not(#_),
+html.doodle .inspect-box:not(#_),
+html.doodle .run-menu-frame:not(#_),
+html.doodle .inspection:not(#_) {
+  border: 3px solid transparent;
+  border-image: var(--d-panel) 10 fill / 10px / 0 round;
+}
+html.doodle .setting:not(#_) {
+  padding-inline: 10px;
+}
+html.doodle .inspection:empty:not(#_) {
+  border-image: none;
+}
+/* Dialogs: the box drawn thicker, over a page washed grey. */
+html.doodle dialog:not(#_) {
+  border: 3px solid transparent;
+  border-image: var(--d-dialog) 10 fill / 10px / 0 round;
+}
+html.doodle dialog::backdrop {
+  background: #80808099;
+  backdrop-filter: none;
+}
+/* What sits inside a panel: a thinner box. */
+html.doodle .portrait-top:not(#_),
+html.doodle .hp-readout:not(#_),
+html.doodle .training-held:not(#_),
+html.doodle .node-icon:not(#_),
+html.doodle .node-name:not(#_),
+html.doodle .goals-floor:not(#_),
+html.doodle select:not(#_),
+html.doodle input:not([type="checkbox"]:not(#_),
+[type="radio"]:not(#_),
+[type="range"]):not(#_) {
+  border: 3px solid transparent;
+  border-image: var(--d-field) 10 fill / 10px / 0 round;
+}
+/* The theme worn: its box poured green. */
+html.doodle .theme-card.worn:not(#_) {
+  border-image: var(--d-chosen) 10 fill / 10px / 0 round;
+}
+/* Notes and tips: pale yellow sticky notes. */
+html.doodle .board-tip:not(#_),
+html.doodle .board-tip.dismissable:hover:not(#_),
+html.doodle .research-toast:not(#_),
+html.doodle .deck-tip:not(#_) {
+  border: 3px solid transparent;
+  border-image: var(--d-tip) 10 fill / 10px / 0 round;
+}
+/* The board: a thick black line round it, as the canvas's edge. */
+html.doodle .board:not(#_) {
+  border: 3px solid var(--d-ink);
+}
+/* The line under the board, over the board's foot: a white strip. */
+html.doodle .status:not(#_) {
+  background: #ffffffe0;
+}
+html.doodle .live-dot:not(#_) {
+  background: var(--d-red);
+}
+html.doodle .rule:not(#_),
+html.doodle .inventory-divider:not(#_) {
+  background: repeating-linear-gradient(to right, var(--d-ink) 0 6px, transparent 6px 9px);
+}
+
+/* Buttons: pale cyan, poured; deeper while pressed, green when chosen,
+   grey when they can't be pressed. */
+html.doodle button:not(#_) {
+  border: 3px solid transparent;
+  border-image: var(--d-button) 10 fill / 10px / 0 round;
+}
+html.doodle button:active:not(#_) {
+  border-image: var(--d-press) 10 fill / 10px / 0 round;
+}
+html.doodle button:active:not(#_) > * {
+  transform: translate(1px, 1px);
+}
+html.doodle button.selected:not(#_),
+html.doodle button[aria-pressed="true"]:not(#_) {
+  border-image: var(--d-chosen) 10 fill / 10px / 0 round;
+}
+html.doodle button:focus-visible:not(#_),
+html.doodle select:focus-visible:not(#_),
+html.doodle input:focus-visible:not(#_) {
+  outline: 2px dashed var(--d-ink);
+  outline-offset: 2px;
+}
+html.doodle button:disabled:not(#_) {
+  border-image: var(--d-off) 10 fill / 10px / 0 round;
+}
+html.doodle button:disabled:not(#_),
+html.doodle button:disabled *:not(#_) {
+  color: #909090;
+  opacity: 1;
+}
+/* Buttons drawn as pictures keep a bare face. */
+html.doodle .skill-node:not(#_),
+html.doodle .hand-card:not(#_) {
+  border-color: transparent;
+  border-image: none;
+  background: transparent;
+}
+html.doodle .hand-card.active:not(#_) {
+  outline: 2px dashed var(--d-ink);
+  outline-offset: 1px;
+}
+html.doodle input[type="checkbox"]:not(#_),
+html.doodle input[type="radio"]:not(#_),
+html.doodle input[type="range"]:not(#_) {
+  accent-color: #0080ff;
+}
+html.doodle option:not(#_) {
+  background: var(--d-paper);
+}
+
+/* The tab bar: white, under a thick black line, its buttons bare, the open
+   one poured green. */
+html.doodle nav:not(#_) {
+  background: var(--d-paper);
+  box-shadow: 0 -3px 0 var(--d-ink);
+}
+html.doodle nav button:not(#_) {
+  border-color: transparent;
+  border-image: none;
+  background: transparent;
+}
+html.doodle nav button.selected:not(#_),
+html.doodle .training-bar button.selected:not(#_) {
+  border-image: var(--d-chosen) 10 fill / 10px / 0 round;
+}
+
+/* Bars: a white track in a black line, filled flat; HP red, XP blue, the
+   rest green. */
+html.doodle .xp-track:not(#_),
+html.doodle .health-track:not(#_),
+html.doodle .weekly-bar:not(#_),
+html.doodle .mission-bar:not(#_),
+html.doodle .research-bar:not(#_),
+html.doodle .refine-bar:not(#_) {
+  background: var(--d-paper);
+  box-shadow: 0 0 0 2px var(--d-ink);
+  border-radius: 3px;
+}
+html.doodle .xp-track i:not(#_),
+html.doodle .health-track i:not(#_):not(#health-gain, #health-loss),
+html.doodle .weekly-bar i:not(#_),
+html.doodle .mission-bar i:not(#_),
+html.doodle .research-bar i:not(#_),
+html.doodle .refine-bar span:not(#_),
+html.doodle .event-bar i:not(#_) {
+  border-radius: 0;
+  background: #00e000;
+  box-shadow: none;
+}
+html.doodle .health-track i:not(#_):not(#health-gain, #health-loss) {
+  background: #ff0000;
+}
+html.doodle .xp-track i:not(#_) {
+  background: #0080ff;
+}
+html.doodle .heart:not(#_),
+html.doodle .danger:not(#_),
+html.doodle .danger *:not(#_),
+html.doodle .short:not(#_),
+html.doodle .short *:not(#_) {
+  color: var(--d-red) !important;
+}
+/* No card can act: the button that ends the run turns red. */
+html.doodle #end-run.deadlocked:not(#_),
+html.doodle #stuck-end-run.deadlocked:not(#_) {
+  border-image: var(--d-danger) 10 fill / 10px / 0 round;
+}
+html.doodle .safe:not(#_),
+html.doodle .eq-result-title:not(#_) {
+  color: var(--d-green) !important;
+}
+/* Keys keep their colour, dark enough to read on white. */
+html.doodle .keys .yellow:not(#_) { color: #c0a000; }
+html.doodle .keys .blue:not(#_) { color: #0060e0; }
+html.doodle .keys .red:not(#_) { color: #e00000; }
