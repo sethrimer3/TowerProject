@@ -190,7 +190,7 @@ export class ArchivesPanel {
       if (!job || !fill) return;
       fill.style.width = `${(jobProgress(job, now) * 100).toFixed(2)}%`;
       const left = document.querySelector(`[data-countdown="${i}"]`);
-      if (left) left.textContent = `${formatCountdown(job.completesAt - now)} left`;
+      if (left) left.textContent = formatCountdown(job.completesAt - now);
       const speed = document.querySelector(`[data-speed-left="${i}"]`);
       if (speed && slot.speedUp) speed.textContent = formatDuration(slot.speedUp.endsAt - now);
       const rush = document.querySelector<HTMLButtonElement>(`[data-rush="${i}"]`), gems = document.querySelector(`[data-rush-gems="${i}"]`);
@@ -365,7 +365,7 @@ export class ArchivesPanel {
       const finish = game.save.settings.devMode ? `<button data-finish="${i}">Finish now</button>` : "";
       return `<article class="archivist busy" role="listitem" data-pick="${i}" title="Select research: switch this archivist to other research"><div class="archivist-head"><div class="archivist-who">${title}<b>${def.name} · level ${job.level}</b></div><div class="archivist-actions">${auto}${this.rushHtml(i)}${finish}</div></div>
         <div class="research-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.floor(done * 100)}"><i data-progress="${i}" style="width:${(done * 100).toFixed(2)}%"></i></div>
-        <div class="archivist-line">${this.changeHtml(job.research)}<p class="archivist-time"><span data-countdown="${i}">${formatCountdown(shown.completesAt - now)} left</span>${this.speedUpHtml(i)}</p></div></article>`;
+        <div class="archivist-line">${this.changeHtml(job.research)}<p class="archivist-time"><span data-countdown="${i}" title="Time left">${formatCountdown(shown.completesAt - now)}</span>${this.speedUpHtml(i)}</p></div></article>`;
     }).join("");
   }
 
