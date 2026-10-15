@@ -2390,7 +2390,7 @@ export class Game {
     // The hero keeps every stat into a new section.
     const earned = sectionStart ? new AreaLedger(this.save).enter(this.towerRun, board) : [];
     if (skipped) this.feedback(passed.length ? `Floor Skipped · floors ${this.run.height - TOWER_SECTION}–${this.run.height - 1} ${passed.join(" and ")}` : "Floor Skipped", 1000);
-    else if (earned.length) this.feedback(`Floors ${this.run.height - TOWER_SECTION + 1}–${this.run.height} ${earned.join(" and ")} · reward ahead`);
+    else if (earned.length) this.feedback(`Floors ${this.run.height - TOWER_SECTION + 1}–${this.run.height} ${earned.join(" and ")} · Reward Granted`);
     // After the first Tower run a plain new floor only says so on the status line.
     else if (this.save.tutorials.chamber) this.message = "A new chamber opens.";
     else this.feedback("A new chamber opens.");
