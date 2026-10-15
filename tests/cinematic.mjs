@@ -1,6 +1,6 @@
 // Cinematic mode in the browser: two real fingers pinching the board in hide
 // every control, and pinching out, three taps, Escape, Ctrl and the wheel or
-// the gear bring them back.
+// the gear bring them back. A paused hand never enters it.
 import { chromium } from "@playwright/test";
 import { fixClock } from "./fixed-clock.mjs";
 
@@ -45,6 +45,11 @@ async function expect(on, what) {
 }
 
 await expect(false, "at the start");
+// A paused hand waits on the player's play button, so it never enters.
+await page.locator("#auto").click();
+await pinch(200, 60);
+await expect(false, "pinched in with the hand paused");
+await page.locator("#auto").click();
 await pinch(200, 60);
 await expect(true, "pinched in");
 if (await page.locator("nav").isVisible()) throw Error("The hand's row should be hidden");
@@ -85,5 +90,5 @@ await pinch(200, 60);
 await expect(false, "pinched with the setting off");
 
 if (errors.length) throw Error("Page errors: " + errors.join("; "));
-console.log(JSON.stringify({ errors, checks: ["pinch in", "board fills", "pinch out", "tap shows gear", "three taps", "Escape", "ctrl wheel", "gear to Settings", "setting off"] }));
+console.log(JSON.stringify({ errors, checks: ["paused stays out", "pinch in", "board fills", "pinch out", "tap shows gear", "three taps", "Escape", "ctrl wheel", "gear to Settings", "setting off"] }));
 await browser.close();

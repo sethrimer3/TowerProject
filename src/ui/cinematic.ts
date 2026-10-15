@@ -3,7 +3,8 @@
  * together), or after `CINEMATIC_IDLE_MS` without input (dimmed, against
  * screen burn-in); left by pinching out, a quick run of taps, Escape, the
  * gear a single tap shows, or anything that takes the board away (a page,
- * a dialog, the run's end). Never saved: a reload shows the whole UI. */
+ * a dialog, the run's end) or pauses the hand. Never saved: a reload shows
+ * the whole UI. */
 
 /** How long without input before the idle option enters it. */
 export const CINEMATIC_IDLE_MS = 120_000;
@@ -22,8 +23,9 @@ export type CinematicLook = { active: boolean; dimmed: boolean; gear: boolean; g
 export type CinematicHost = {
   /** The player's settings for it. */
   settings(): { cinematic: boolean; cinematicIdle: boolean; cinematicGems: boolean };
-  /** It may show: the board's page is open inside a run, with no dialog
-   * and no board lesson waiting on the player. */
+  /** It may show: the board's page is open inside a run with the hand
+   * playing (a paused hand waits on the player, whose play button cinematic
+   * mode hides), with no dialog and no board lesson waiting on the player. */
   allowed(): boolean;
   /** Milliseconds, on the game's clock. */
   now(): number;
