@@ -1,0 +1,424 @@
+/* Orbit theme: the page as a space-age starship's console shows it. Deep
+   space behind everything, a few stars and a faint nebula; panels are
+   dark glass with a pale cyan rim and an amber status light at
+   the top; page titles in the wide bundled Orbitron, each beside a ringed
+   planet; the rest in the bundled Exo 2. Buttons are capsules, the chosen
+   one lit amber; bars are thin glowing tubes.
+   Every selector is scoped under `html.orbit` so nothing changes while the
+   theme is off. Loaded after style.css and the other themes. */
+@font-face {
+  font-family: Orbitron;
+  src: url("../assets/fonts/Orbitron/Orbitron-Medium.woff2") format("woff2");
+  font-weight: 400 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: Orbitron;
+  src: url("../assets/fonts/Orbitron/Orbitron-Bold.woff2") format("woff2");
+  font-weight: 700 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Exo 2";
+  src: url("../assets/fonts/Exo2/Exo2-Regular.woff2") format("woff2");
+  font-weight: 300 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Exo 2";
+  src: url("../assets/fonts/Exo2/Exo2-SemiBold.woff2") format("woff2");
+  font-weight: 600 900;
+  font-style: normal;
+  font-display: swap;
+}
+html.orbit {
+  --o-space: #04060f;
+  --o-glass: #0b1530e8;
+  --o-glass-deep: #070d20f2;
+  --o-press: #16264f;
+  --o-rim: #7fe3ffa6;
+  --o-cyan: #7fe3ff;
+  --o-amber: #ffab3d;
+  --o-red: #ff5a4e;
+  --o-green: #6dffb0;
+  --o-ink: #e8f3ff;
+  --o-dim: #8ea3c8;
+  --o-wide: Orbitron, "Exo 2", sans-serif;
+  /* A pane of glass: a pale rim, a soft cyan halo, and the amber light
+     across the top left. */
+  --o-pane: 0 0 0 1px var(--o-rim), 0 0 14px #2fa8ff26, inset 0 1px 0 #ffffff14;
+  --o-light: linear-gradient(90deg, var(--o-amber) 0 26px, transparent 26px) 16px 0 / calc(100% - 32px) 2px no-repeat;
+  /* Deep space: a field of stars (`assets/theme/orbit-stars.svg`), a faint
+     violet and teal nebula, then black. */
+  --o-stars:
+    url("../assets/theme/orbit-stars.svg") 0 0 / 360px 360px,
+    radial-gradient(ellipse at 85% 12%, #5a3a9a40, transparent 45%),
+    radial-gradient(ellipse at 10% 90%, #1a6a8a33, transparent 50%),
+    var(--o-space);
+  --gold: var(--o-amber);
+  --muted: var(--o-dim);
+  --line: var(--o-rim);
+  color-scheme: dark;
+  color: var(--o-ink);
+  background: var(--o-stars);
+  background-attachment: fixed;
+}
+/* Exo 2 for every line of text (a badge's symbol keeps the system face
+   that has its glyph); Orbitron for titles, below. */
+html.orbit,
+html.orbit *:not(.badge-glyph, .badge-mark) {
+  font-family: "Exo 2", "Segoe UI", sans-serif;
+  --rate-em: 3.1; /* the purse's widest rate in this face (style.css) */
+  letter-spacing: 0.01em;
+}
+html.orbit body {
+  background: var(--o-stars);
+  background-attachment: fixed;
+}
+/* The page's own colours, lines and glows give way everywhere: pale ink
+   on space. `:not(#_)` lifts these over the page's class rules (and the
+   ones below over these); a style written on an element (a colour swatch)
+   still wins. Drawings (canvas, images, svg), the bars' fills (`i`),
+   rarity colours and badge tokens keep theirs. */
+html.orbit body *:not(#_, canvas, img, svg, svg *, i, .eq-tile, .badge-token, [class*="rar"]) {
+  background-color: transparent;
+  background-image: none;
+  border-color: transparent;
+  box-shadow: none;
+  text-shadow: none;
+  backdrop-filter: none;
+  outline-color: transparent;
+}
+html.orbit body *:not(#_, svg, svg *) {
+  color: var(--o-ink);
+}
+html.orbit main.shell:not(#_) {
+  background: transparent;
+}
+html.orbit * {
+  scrollbar-color: #3a5a8a transparent;
+}
+html.orbit ::-webkit-scrollbar-thumb {
+  background-color: #3a5a8a;
+  background-image: none;
+  border-radius: 6px;
+}
+
+/* Titles: Orbitron, wide and pale, glowing faintly cyan. */
+html.orbit h1:not(#_),
+html.orbit h2:not(#_),
+html.orbit h3:not(#_),
+html.orbit .page-title h2:not(#_),
+html.orbit .tower-heading:not(#_),
+html.orbit .section-title:not(#_) {
+  font-family: var(--o-wide);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--o-ink);
+  text-shadow: 0 0 8px #7fe3ff66;
+}
+html.orbit .page-title h2:not(#_) {
+  font-size: 18px;
+}
+/* A page's title sits beside a ringed planet: a disc tilted in its ring,
+   and a line under it fading out to either side. */
+html.orbit .page-title:not(#_) {
+  position: relative;
+  padding-bottom: 6px;
+  background: linear-gradient(90deg, transparent, var(--o-rim) 30%, var(--o-rim) 70%, transparent) 0 100% / 100% 1px no-repeat;
+}
+html.orbit .page-title h2:not(#_)::before {
+  content: "";
+  display: inline-block;
+  width: 22px;
+  height: 12px;
+  margin-right: 10px;
+  vertical-align: 1px;
+  background:
+    radial-gradient(circle, var(--o-amber) 0 4px, transparent 4.6px),
+    radial-gradient(ellipse 11px 3.5px, transparent 0 7px, var(--o-cyan) 7.6px 9px, transparent 9.6px);
+  transform: rotate(-18deg);
+}
+/* The floor reached reads like a flight readout. */
+html.orbit #height:not(#_) {
+  font-family: var(--o-wide);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--o-amber);
+  text-shadow: 0 0 8px #ffab3d66;
+}
+html.orbit .page-title small:not(#_),
+html.orbit .eyebrow:not(#_),
+html.orbit .hint:not(#_),
+html.orbit .board-caption:not(#_),
+html.orbit small:not(#_) {
+  color: var(--o-dim);
+}
+
+/* Panels: dark glass capsules with a pale rim and an amber light. */
+html.orbit .stats:not(#_),
+html.orbit .card:not(#_),
+html.orbit .upgrade:not(#_),
+html.orbit .shop:not(#_),
+html.orbit .theme-card:not(#_),
+html.orbit .weekly:not(#_),
+html.orbit .mission:not(#_),
+html.orbit .event-boost:not(#_),
+html.orbit .archivist:not(#_),
+html.orbit .research:not(#_),
+html.orbit .pull-box:not(#_),
+html.orbit .eq-loadout:not(#_),
+html.orbit .equip-materials:not(#_),
+html.orbit .purse-big:not(#_),
+html.orbit .starting-stats:not(#_),
+html.orbit .training-boost:not(#_),
+html.orbit .tournament-standing:not(#_),
+html.orbit .tournament-tickets:not(#_),
+html.orbit .badge-box:not(#_),
+html.orbit .deck-reserve:not(#_),
+html.orbit .defend-palette:not(#_),
+html.orbit .card-reveal:not(#_),
+html.orbit .badge-reveal:not(#_),
+html.orbit .skill-tree:not(#_),
+html.orbit .goals-stage:not(#_),
+html.orbit .training-box:not(#_),
+html.orbit .setting:not(#_),
+html.orbit .inspect-box:not(#_),
+html.orbit dialog:not(#_) {
+  background: var(--o-light), var(--o-glass);
+  border-radius: 14px;
+  box-shadow: var(--o-pane);
+}
+html.orbit .setting:not(#_) {
+  padding-inline: 12px;
+}
+html.orbit dialog:not(#_) {
+  background: var(--o-light), var(--o-glass-deep);
+  box-shadow: var(--o-pane), 0 0 0 4px #0b1530, 0 0 0 5px #7fe3ff40;
+}
+html.orbit dialog::backdrop {
+  background: #02040bcc;
+  backdrop-filter: blur(2px);
+}
+/* What sits inside a panel: a darker inset well with a fine rim. */
+html.orbit .portrait-top:not(#_),
+html.orbit .hp-readout:not(#_),
+html.orbit .training-held:not(#_),
+html.orbit .node-icon:not(#_),
+html.orbit .node-name:not(#_),
+html.orbit .goals-floor:not(#_),
+html.orbit select:not(#_),
+html.orbit input:not([type="checkbox"]:not(#_),
+[type="radio"]:not(#_),
+[type="range"]):not(#_) {
+  background: #050a18;
+  border: 1px solid #7fe3ff59;
+  border-radius: 8px;
+}
+html.orbit .inspection:not(#_) {
+  background: var(--o-glass);
+  border: 1px solid var(--o-rim);
+  border-radius: 10px;
+}
+html.orbit .inspection:empty:not(#_) {
+  background: transparent;
+  border-color: transparent;
+}
+/* The theme worn: its rim lit amber. */
+html.orbit .theme-card.worn:not(#_) {
+  box-shadow: 0 0 0 2px var(--o-amber), 0 0 16px #ffab3d40;
+}
+/* The board's notes: a solid card, so the board doesn't show through. */
+html.orbit .run-menu-frame:not(#_) {
+  background: var(--o-glass-deep);
+  border: 1px solid var(--o-rim);
+  border-radius: 12px;
+}
+/* What explains or tells: a transmission, its rim amber. */
+html.orbit .board-tip:not(#_),
+html.orbit .board-tip.dismissable:hover:not(#_),
+html.orbit .research-toast:not(#_),
+html.orbit .deck-tip:not(#_) {
+  background: var(--o-glass-deep);
+  border: 1px solid var(--o-amber);
+  border-radius: 12px;
+  box-shadow: 0 0 12px #ffab3d33;
+}
+/* The board is a viewport: a rounded window in a rim. */
+html.orbit .board:not(#_) {
+  border: 1px solid var(--o-rim);
+  border-radius: 16px;
+  box-shadow: 0 0 0 4px #0b1530, 0 0 0 5px #7fe3ff40, 0 0 22px #2fa8ff33;
+}
+/* The line under the board, over the board's foot: a dark strip. */
+html.orbit .status:not(#_) {
+  background: #050a18d8;
+  border: 1px solid #7fe3ff59;
+  border-radius: 10px;
+}
+html.orbit .live-dot:not(#_) {
+  background: var(--o-green);
+}
+html.orbit .rule:not(#_),
+html.orbit .inventory-divider:not(#_) {
+  background: linear-gradient(90deg, transparent, var(--o-rim), transparent);
+}
+
+/* Buttons: capsules with a cyan rim (a pill when short, a rounded block
+   when tall); lit amber when chosen. */
+html.orbit button:not(#_) {
+  background: linear-gradient(#ffffff0f, #ffffff00 60%), #0d1a38;
+  border: 1px solid var(--o-rim);
+  border-radius: 18px;
+}
+html.orbit button:hover:not(#_) {
+  border-color: var(--o-cyan);
+  box-shadow: 0 0 8px #7fe3ff55;
+}
+html.orbit button:active:not(#_) {
+  background: var(--o-press);
+}
+html.orbit button.selected:not(#_),
+html.orbit button[aria-pressed="true"]:not(#_) {
+  background: linear-gradient(#ffd58f, var(--o-amber));
+  border-color: var(--o-amber);
+  box-shadow: 0 0 10px #ffab3d66;
+}
+html.orbit button.selected:not(#_) *:not(svg, svg *, img, canvas),
+html.orbit button.selected:not(#_),
+html.orbit button[aria-pressed="true"]:not(#_),
+html.orbit button[aria-pressed="true"]:not(#_) *:not(svg, svg *, img, canvas) {
+  color: #1a0f00;
+}
+html.orbit button:focus-visible:not(#_),
+html.orbit select:focus-visible:not(#_),
+html.orbit input:focus-visible:not(#_) {
+  outline: 2px solid var(--o-cyan);
+  outline-offset: 2px;
+}
+html.orbit button:disabled:not(#_),
+html.orbit button:disabled *:not(#_) {
+  color: #5a6a8a;
+  border-color: #2a3a5a;
+  box-shadow: none;
+}
+/* A Shop offer is a pane, its rarity a light down its left side; its face
+   (a button) stays bare inside it. */
+html.orbit .shop-card:not(#_) {
+  background: var(--o-glass);
+  border-radius: 14px;
+  box-shadow: var(--o-pane), inset 3px 0 0 var(--rarity);
+}
+html.orbit .shop-card-face:not(#_),
+html.orbit .shop-card-face:hover:not(#_),
+html.orbit .shop-card-face:active:not(#_) {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+/* Buttons drawn as pictures keep a bare face. */
+html.orbit .skill-node:not(#_),
+html.orbit .hand-card:not(#_) {
+  background: transparent;
+  border-color: transparent;
+  border-radius: 0;
+}
+html.orbit .hand-card.active:not(#_) {
+  box-shadow: 0 0 0 2px var(--o-amber), 0 0 10px #ffab3d66;
+}
+html.orbit input[type="checkbox"]:not(#_),
+html.orbit input[type="radio"]:not(#_),
+html.orbit input[type="range"]:not(#_) {
+  accent-color: var(--o-amber);
+}
+html.orbit option:not(#_) {
+  background: #050a18;
+}
+
+/* The tab bar: a dark console strip, the open page's icon in an amber
+   capsule. */
+html.orbit nav:not(#_) {
+  background: #050a18e8;
+  box-shadow: 0 -1px 0 #7fe3ff59;
+}
+html.orbit nav button:not(#_) {
+  background: transparent;
+  border-color: transparent;
+}
+html.orbit nav button.selected:not(#_),
+html.orbit .training-bar button.selected:not(#_) {
+  background: #0d1a38;
+  border-color: var(--o-amber);
+  box-shadow: 0 0 10px #ffab3d40;
+}
+html.orbit nav button.selected:not(#_) *:not(svg, svg *, img, canvas),
+html.orbit .training-bar button.selected:not(#_) *:not(svg, svg *, img, canvas),
+html.orbit .training-bar button.selected:not(#_) {
+  color: var(--o-amber);
+}
+
+/* Bars: thin tubes, the fill glowing cyan to white; HP amber to red. */
+html.orbit .xp-track:not(#_),
+html.orbit .health-track:not(#_),
+html.orbit .weekly-bar:not(#_),
+html.orbit .mission-bar:not(#_),
+html.orbit .research-bar:not(#_),
+html.orbit .refine-bar:not(#_) {
+  background: #050a18;
+  border: 1px solid #7fe3ff59;
+  border-radius: 999px;
+}
+html.orbit .xp-track i:not(#_),
+html.orbit .weekly-bar i:not(#_),
+html.orbit .mission-bar i:not(#_),
+html.orbit .research-bar i:not(#_),
+html.orbit .refine-bar span:not(#_),
+html.orbit .event-bar i:not(#_) {
+  border-radius: 999px;
+  background: linear-gradient(90deg, #2f8fff, var(--o-cyan) 80%, #ffffff);
+  box-shadow: 0 0 6px #7fe3ff88;
+}
+html.orbit .health-track i:not(#_):not(#health-gain, #health-loss) {
+  border-radius: 999px;
+  background: linear-gradient(90deg, #d8323a, var(--o-red) 50%, var(--o-amber));
+  box-shadow: 0 0 6px #ff5a4e88;
+}
+html.orbit .mission-bar span:not(#_) {
+  color: var(--o-ink);
+  text-shadow: 0 1px 2px #000;
+}
+html.orbit .heart:not(#_),
+html.orbit .danger:not(#_),
+html.orbit .danger *:not(#_),
+html.orbit .short:not(#_),
+html.orbit .short *:not(#_) {
+  color: var(--o-red) !important;
+}
+/* No card can act: the button that ends the run turns red. */
+html.orbit #end-run.deadlocked:not(#_),
+html.orbit #stuck-end-run.deadlocked:not(#_) {
+  color: #fff !important;
+  background: #c8282e;
+  border-color: var(--o-red);
+}
+html.orbit .safe:not(#_),
+html.orbit .eq-result-title:not(#_) {
+  color: var(--o-green) !important;
+}
+/* Keys keep their colour. */
+html.orbit .keys .yellow:not(#_) { color: #ffd84a; }
+html.orbit .keys .blue:not(#_) { color: #5ab8ff; }
+html.orbit .keys .red:not(#_) { color: #ff5a4e; }
+
+/* The amber lights pulse slowly, unless motion is reduced. */
+@keyframes orbit-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+html.orbit:not(.reduce-motion) .live-dot {
+  animation: orbit-pulse 2.4s ease-in-out infinite;
+}
