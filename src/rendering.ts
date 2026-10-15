@@ -22,7 +22,7 @@ import { DEFEAT_MS, drawStruckDown } from "./struck-down.ts";
 import { AREA_BURST_MS, drawAreaBurst, preloadAreaBurst, drawLevelUp, drawRevive, LEVEL_UP_MS, POINTS_MS, REVIVE_MS } from "./level-up.ts";
 import { drawPoof, POOF_MS } from "./poof.ts";
 import { drawGem, drawGemSparkle, GEM_SPARKLE_MS } from "./gem-art.ts";
-import { drawDashEchoes, DASH_ECHO_MS } from "./dash-echoes.ts";
+import { DashEchoes } from "./dash-echoes.ts";
 import { drawVolley } from "./volley-art.ts";
 import type { Dash } from "./state.ts";
 import { darknessOf, forEachViewTile, tileTransform, toTileSpace, type FrameContext } from "./render-frame.ts";
@@ -77,6 +77,7 @@ export class Renderer {
   private arrived = -Infinity;
   /** The latest dash drawn: a new one snaps the hero to where it landed. */
   private dashed: Dash | null = null;
+  private echoes = new DashEchoes();
   /** The enemy's lean into its strike this frame, drawn at its tile. */
   private enemyLunge = { x: 0, y: 0, dx: 0, dy: 0 };
   /** A golden path to preview for a highlighted-but-unconfirmed destination.
@@ -144,7 +145,7 @@ export class Renderer {
       if (f.look.outside) this.drawOutside(f);
       else this.light.draw(f, this.litBoard(f));
     }
-    drawDashEchoes(f, this.game.dash, themed ? (c, facing) => themed.hero(c, facing) : (c) => paintHero(c, f.look.spritesOff));
+    this.echoes.draw(f, themed ? (c, facing) => themed.hero(c, facing) : (c) => paintHero(c, f.look.spritesOff));
     this.drawOverlays(f);
   }
   /** Gameplay feedback drawn over every board. */
@@ -243,6 +244,7 @@ export class Renderer {
     const g = this.game, p = g.run.player;
     const floor = g.mode === "tower" && !g.run.outside ? `${g.run.seed}|${g.run.height}` : "";
     if (floor !== this.floorKey) {
+      this.echoes.clear();
       const sameRun = floor && this.floorKey.startsWith(`${g.run.seed}|`);
       this.floorKey = floor;
       if (sameRun) {
@@ -252,6 +254,7 @@ export class Renderer {
       }
     }
     if (this.seed !== g.run.seed || this.outside !== !!g.run.outside) {
+      this.echoes.clear();
       this.outside = !!g.run.outside;
       this.weather.silence();
       this.seed = g.run.seed;
@@ -265,6 +268,7 @@ export class Renderer {
     // A dash is one step: the hero is there at once, its echoes left behind.
     if (g.dash !== this.dashed) {
       this.dashed = g.dash;
+      if (g.dash) this.echoes.add(g.dash, now);
       this.playerX = p.x;
       this.playerY = p.y;
     }
@@ -574,7 +578,7 @@ export class Renderer {
    * shots in flight. */
   private effectsOver(now: number) {
     const g = this.game, sparkle = g.gemFinder.sparkle;
-    return now - this.arrived > ARRIVAL_GLOW_MS && (!g.dash || now - g.dash.at >= DASH_ECHO_MS) && g.blocked.until <= now && g.effect.until <= now &&
+    return now - this.arrived > ARRIVAL_GLOW_MS && this.echoes.over(now) && g.blocked.until <= now && g.effect.until <= now &&
       now - g.levelUpAt >= LEVEL_UP_MS + POINTS_MS && g.revivedAt.every((at) => now - at >= REVIVE_MS) && g.struckDown.every((at) => now - at >= DEFEAT_MS) &&
       g.areaBursts.every((b) => now - b.at >= AREA_BURST_MS) &&
       (!g.summoned || now - g.summoned.at >= POOF_MS) && (!g.vanished || now - g.vanished.at >= POOF_MS) &&

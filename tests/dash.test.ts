@@ -5,6 +5,8 @@ import { decode, defaults } from "../src/save.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import { RESEARCH, missing, research } from "../src/archives.ts";
 import { BADGES, drawable, defaultBadges } from "../src/badges.ts";
+import { DashEchoes, DASH_ECHO_MS } from "../src/dash-echoes.ts";
+import type { FrameContext } from "../src/render-frame.ts";
 
 /** A Tower corridor along the bottom row: the hero at its west end, a
  * yellow key on x = 5 and the stairs at x = 7, with the Dash skill owned (or
@@ -248,4 +250,26 @@ test("a save from before Rush became Dash keeps its skills, research and badge u
   assert.deepEqual([save.upgrades.dash, save.upgrades.dashRegen, save.upgrades.dashBadge], [1, 1, 1]);
   assert.deepEqual([save.archives.levels.dash, save.archives.levels.dashRegen], [3, 2]);
   assert.deepEqual(save.badges.owned.dash, { copies: 1, pick: 0 });
+});
+
+/** The tiles `echoes` paints a hero on at `now`, in the order painted. */
+function echoedAt(echoes: DashEchoes, now: number) {
+  const painted: number[] = [];
+  let x = 0;
+  const c = { save() {}, restore() {}, scale() {}, translate(tx: number) { x = tx; }, globalAlpha: 1 };
+  const f = { c, now, s: 24, n: 9, left: 0, bottom: 0, look: { reduceMotion: false } } as unknown as FrameContext;
+  echoes.draw(f, () => painted.push(x / 24));
+  return painted;
+}
+
+test("a dash soon after another leaves the first one's echoes playing", () => {
+  const echoes = new DashEchoes(), along = (from: number, to: number) => Array.from({ length: to - from }, (_, i) => ({ x: from + i, y: 0, dx: 1, dy: 0 }));
+  echoes.add({ tiles: along(0, 20), at: 0 }, 0);
+  echoes.add({ tiles: along(20, 30), at: 100 }, 100);
+  assert.deepEqual(echoedAt(echoes, 150).slice(0, 20), along(0, 20).map((t) => t.x), "every tile of the first dash echoes by now");
+  assert.ok(!echoes.over(DASH_ECHO_MS + 50) && echoes.over(DASH_ECHO_MS + 100), "over once the last dash's echoes fade");
+  echoes.add({ tiles: along(30, 32), at: 900 }, 900);
+  assert.deepEqual(echoedAt(echoes, 900), [30], "faded dashes are dropped");
+  echoes.clear();
+  assert.deepEqual(echoedAt(echoes, 900), [], "another board drops them all");
 });
