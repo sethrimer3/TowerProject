@@ -36,3 +36,16 @@ test("settings on the page have their own control ids", () => {
   const ids = rows.flatMap(([, row]) => (row.page ? [row.page.id] : []));
   assert.equal(new Set(ids).size, ids.length);
 });
+
+test("no setting's control shares an id with the page shell's", async () => {
+  // The shell's elements stay in the document while Settings shows, so a
+  // shared id finds the other element (it once hid the cinematic Gem option).
+  const { readFileSync } = await import("node:fs");
+  const shell = readFileSync(new URL("../src/ui/shell.ts", import.meta.url), "utf8");
+  const shellIds = new Set([...shell.matchAll(/id="([\w-]+)"/g)].map((m) => m[1]));
+  assert.ok(shellIds.has("cinematic-gems"));
+  for (const [key, row] of rows) {
+    if (!("page" in row) || !row.page) continue;
+    for (const id of [row.page.id, `${row.page.id}-value`]) assert.ok(!shellIds.has(id), `${key}: #${id}`);
+  }
+});
