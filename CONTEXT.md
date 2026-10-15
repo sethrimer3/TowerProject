@@ -514,7 +514,7 @@ A look for the page around the board: its panels, buttons and sounds. Classic is
 _Avoid_: skin, style
 
 **Game theme**:
-A look for the board itself: its tiles, the hero, enemies and torches. Classic is always available; Neon, Terminal, Desktop, Glyph, Ember, Yang, Yin, Shiro, Kuro, Arcade and System are bought (1 Gold each for now).
+A look for the board itself: its tiles, the hero, enemies and torches. Classic is always available; Neon, Terminal, Desktop, Glyph, Ember, Yang, Yin, Shiro, Kuro, Arcade, System and Kroz are bought (1 Gold each for now).
 _Avoid_: tileset, board skin
 
 **Owned theme**:

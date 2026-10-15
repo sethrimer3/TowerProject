@@ -11,6 +11,7 @@ import { YANG, YIN } from "../src/zen-board.ts";
 import { KURO, SHIRO } from "../src/bare-board.ts";
 import { ARCADE } from "../src/arcade-board.ts";
 import { SYSTEM } from "../src/system-board.ts";
+import { KROZ } from "../src/kroz-board.ts";
 import type { FrameContext } from "../src/render-frame.ts";
 import type { GainArt } from "../src/state.ts";
 
@@ -111,4 +112,11 @@ test("a potion picked up on a System board rises as its white flask, a Heart Doo
   const potion = drawn({ tile: { kind: "potion", hp: 35 } as never }, "system");
   assert.ok(potion.fills.includes(SYSTEM.paper) && potion.strokes.includes(SYSTEM.ink));
   assert.ok(drawn({ heart: true }, "system").fills.includes(SYSTEM.ink));
+});
+
+test("on a Kroz board a potion rises as its cyan gem, a chest as its yellow C on red, a Heart Door's toll as its red heart", () => {
+  assert.ok(drawn({ tile: { kind: "potion", hp: 35 } as never }, "kroz").fills.includes(KROZ.lightCyan));
+  const chest = drawn({ tile: { kind: "reward" } as never }, "kroz").fills;
+  assert.ok(chest.includes(KROZ.red) && chest.includes(KROZ.yellow), "the chest keeps its red cell");
+  assert.ok(drawn({ heart: true }, "kroz").fills.includes(KROZ.lightRed));
 });
