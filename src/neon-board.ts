@@ -1,5 +1,5 @@
 import { COLORS, type KeyColor } from "./config.ts";
-import type { Tile, Torch } from "./entities.ts";
+import type { EnemyStrength, Tile, Torch } from "./entities.ts";
 import { WOOD_COLOR } from "./doors.ts";
 import { forEachViewTile, toTileSpace, type FrameContext } from "./render-frame.ts";
 import type { ThemedBoard } from "./themed-boards.ts";
@@ -81,15 +81,9 @@ export function drawNeonGround(f: FrameContext) {
 export function paintNeonContents(c: CanvasRenderingContext2D, t: Tile) {
   switch (t.kind) {
     case "enemy": {
-      // One sprite for every enemy: a horned head with two eyes.
-      const color = NEON.enemy;
-      path(c, () => {
-        c.moveTo(6, 9); c.lineTo(4, 3); c.lineTo(9, 7);
-        c.lineTo(15, 7); c.lineTo(20, 3); c.lineTo(18, 9);
-        c.lineTo(19, 15); c.lineTo(15, 21); c.lineTo(9, 21); c.lineTo(5, 15); c.closePath();
-      }, color);
-      path(c, () => { c.moveTo(8.5, 12); c.lineTo(11, 13.5); c.moveTo(15.5, 12); c.lineTo(13, 13.5); c.moveTo(10, 17.5); c.lineTo(14, 17.5); }, color, 1.3);
-      rankChevrons(c, t.enemy?.strength ?? "normal", NEON.stairs, "#05030a", 1, 1, 4);
+      const strength = t.enemy?.strength ?? "normal";
+      ENEMY_SPRITES[strength](c, NEON.enemy);
+      rankChevrons(c, strength, NEON.stairs, "#05030a", 1, 1, 4);
       // A Ranged enemy's arrow at the top right, and a Fast enemy's
       // fast-forward sign there, or below the arrow when it has both.
       if (t.enemy?.ranged) path(c, () => { c.moveTo(16, 7); c.lineTo(22, 1); c.moveTo(18.5, 1); c.lineTo(22, 1); c.lineTo(22, 4.5); }, NEON.ranged, 1);
@@ -167,6 +161,70 @@ export function paintNeonContents(c: CanvasRenderingContext2D, t: Tile) {
       return;
   }
 }
+
+/** A weak enemy: a slime sitting low on the tile, with a wobbly base, two
+ * round eyes and a shine, leaving the top clear for its marks. */
+function slime(c: CanvasRenderingContext2D, color: string) {
+  path(c, () => {
+    c.moveTo(4, 19.5); c.bezierCurveTo(4, 11, 8, 8, 12, 8); c.bezierCurveTo(16, 8, 20, 11, 20, 19.5);
+    c.quadraticCurveTo(18, 21.5, 15.5, 20); c.quadraticCurveTo(12, 21.5, 8.5, 20); c.quadraticCurveTo(6, 21.5, 4, 19.5);
+    c.moveTo(7, 20.4); c.lineTo(7, 22);
+  }, color);
+  path(c, () => { c.moveTo(10.7, 14.5); c.arc(9.5, 14.5, 1.2, 0, Math.PI * 2); c.moveTo(15.7, 14.5); c.arc(14.5, 14.5, 1.2, 0, Math.PI * 2); }, color, 1.2);
+  path(c, () => { c.moveTo(7, 14); c.quadraticCurveTo(7.3, 11, 10, 10.3); }, "#fff", 0.8);
+}
+
+/** A normal or strong enemy: a horned head with two eyes. */
+function imp(c: CanvasRenderingContext2D, color: string) {
+  path(c, () => {
+    c.moveTo(6, 9); c.lineTo(4, 3); c.lineTo(9, 7);
+    c.lineTo(15, 7); c.lineTo(20, 3); c.lineTo(18, 9);
+    c.lineTo(19, 15); c.lineTo(15, 21); c.lineTo(9, 21); c.lineTo(5, 15); c.closePath();
+  }, color);
+  path(c, () => { c.moveTo(8.5, 12); c.lineTo(11, 13.5); c.moveTo(15.5, 12); c.lineTo(13, 13.5); c.moveTo(10, 17.5); c.lineTo(14, 17.5); }, color, 1.3);
+}
+
+/** An elite or a boss: a broad demon's face filling the tile, with tall
+ * curved horns rising between the chevrons and the Ranged and Fast marks,
+ * slanted eyes and a fanged jaw. */
+function demonFace(c: CanvasRenderingContext2D) {
+  c.moveTo(7, 9); c.quadraticCurveTo(12, 7, 17, 9);
+  c.lineTo(20, 13); c.lineTo(17.5, 19); c.lineTo(14, 22); c.lineTo(10, 22); c.lineTo(6.5, 19); c.lineTo(4, 13); c.closePath();
+}
+function demon(c: CanvasRenderingContext2D, color: string) {
+  path(c, () => {
+    demonFace(c);
+    c.moveTo(7.5, 8.8); c.quadraticCurveTo(4.5, 5, 8, 1); c.quadraticCurveTo(8.5, 5, 10.5, 7.8);
+    c.moveTo(16.5, 8.8); c.quadraticCurveTo(19.5, 5, 16, 1); c.quadraticCurveTo(15.5, 5, 13.5, 7.8);
+  }, color);
+  path(c, () => {
+    c.moveTo(7, 12); c.lineTo(10.5, 13.8); c.moveTo(17, 12); c.lineTo(13.5, 13.8);
+    c.moveTo(9, 17); c.lineTo(15, 17);
+    c.moveTo(10, 17); c.lineTo(10.8, 19.2); c.lineTo(11.6, 17); c.moveTo(12.4, 17); c.lineTo(13.2, 19.2); c.lineTo(14, 17);
+  }, color, 1.3);
+}
+/** A Greater Boss: the demon inside a faint second outline of its face. */
+function greaterDemon(c: CanvasRenderingContext2D, color: string) {
+  c.save();
+  c.translate(12, 15);
+  c.scale(1.2, 1.2);
+  c.translate(-12, -15);
+  path(c, () => demonFace(c), `${color}88`, 0.9);
+  c.restore();
+  demon(c, color);
+}
+
+/** Each strength's sprite: three silhouettes, two strengths apiece, which the
+ * rank chevrons tell apart. */
+const ENEMY_SPRITES: Record<EnemyStrength, (c: CanvasRenderingContext2D, color: string) => void> = {
+  weak: slime,
+  normal: imp,
+  strong: imp,
+  elite: demon,
+  boss: demon,
+  greaterBoss: greaterDemon,
+};
+
 function frame(c: CanvasRenderingContext2D, color: string) {
   path(c, () => c.rect(4, 3, 16, 19), color, 1.8);
 }
