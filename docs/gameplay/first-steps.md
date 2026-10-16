@@ -16,8 +16,7 @@ Reloading mid-Delve-run opens the Delve where it was.
 ## Moving by hand
 
 In the forest before a run, a tap on an open tile walks straight to it.
-Swipes move one tile in any cardinal direction.
-Keyboard arrows / WASD also work.
+With Dev mode on, swipes and the keyboard arrows / WASD also step the hero one tile in any cardinal direction, in the forest or inside a run.
 Monsters on manual routes are fought even when lethal.
 Missing keys stop movement at the necessary door, with a fading red X; unreachable wall targets get the same feedback at the tapped spot.
 Routing prefers an available detour over a door for which no key is held.
