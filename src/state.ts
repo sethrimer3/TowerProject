@@ -1,7 +1,7 @@
 import { entrance, floorFor } from "./delve/labyrinth.ts";
 import { buyTheme, canWear, grantAllThemes, type GameLook, type ThemeId, type ThemeKind, type UiLook } from "./theme-collection.ts";
 import { chooseStep } from "./automation.ts";
-import { CARDS, KEY_TO_HP_PERCENT, SIPHONS, TRADER_YELLOW_KEYS, cardText, explainStuck, isSiphon, keptLinks, linkedToNext, planHand, planTarget, stillOpen, walkAll, type CardId, type CardPlan, type CardRules, type SiphonCard, type StuckReport } from "./cards.ts";
+import { CARDS, SIPHONS, TRADER_YELLOW_KEYS, cardText, explainStuck, isSiphon, keptLinks, planHand, planTarget, stillOpen, type CardId, type CardPlan, type SiphonCard, type StuckReport } from "./cards.ts";
 import { BADGE_IDS, BADGES, MAX_COPIES, badgeOn, badgesOn, badgeValue, runBadges, type BadgeId, type RunBadge } from "./badges.ts";
 import { adsOff, BOOST_FOREVER, permanentBoost } from "./shop/entitlements.ts";
 import { noteGoldBoost } from "./gold-boost.ts";
@@ -15,7 +15,7 @@ import { DelvePlan } from "./delve/automove.ts";
 import { defaults } from "./save.ts";
 import { stampProfile } from "./profile.ts";
 import { defaultFinds, newNotes, notesOf, tallyIn } from "./run-notes.ts";
-import { drawAt, stream, tileRandom } from "./random.ts";
+import { stream, tileRandom } from "./random.ts";
 import { freeTrainingLines, rollFreeTraining } from "./free-training.ts";
 import { doorBlockedMessage, doorName, doorRule, drainsHp, KEY_ORDER, pickupGold } from "./doors.ts";
 import type { SettingKey } from "./settings.ts";
@@ -70,7 +70,7 @@ import { enemyTitle } from "./scaling.ts";
 import { snap } from "./exact.ts";
 import { enemyStat, keyCount, whole, wholeChange } from "./whole.ts";
 import { MODES, milestones, type ModeProfile } from "./modes.ts";
-import { boughtInRun, ranksInRun, runTrainingBulk, runTrainingOffer, type RunTrainingOffer } from "./run-training.ts";
+import { ranksInRun, runTrainingBulk, runTrainingOffer, type RunTrainingOffer } from "./run-training.ts";
 import { openQuantities, type BuyQuantity } from "./buy-quantity.ts";
 import { attackPerTile, attackRange, attackSpeed, multishotChance, multishotTargets, rapidFireChance, rapidFireDuration, critRule, loadout, percentPotionChance, potionPercent, reviveChance, type TrainingView } from "./loadout.ts";
 import { researched } from "./archives.ts";
@@ -82,6 +82,7 @@ import { DeckEditor } from "./game/deck-editor.ts";
 import { GearDesk } from "./game/gear-desk.ts";
 import { GemFinder } from "./game/gem-finder.ts";
 import { BadgeDesk } from "./game/badge-desk.ts";
+import { HandRules } from "./hand-rules.ts";
 import { RunPurse, type EquipmentLoot } from "./game/run-purse.ts";
 import { EquipmentDesk } from "./game/equipment-desk.ts";
 import { TournamentDesk } from "./game/tournament-desk.ts";
@@ -171,8 +172,6 @@ const RAPID_FIRE_SALT = 0x5f1d3;
 const FLIGHT_MS = 220;
 /** Salts the run seed for Find Yellow Key's roll on each new floor. */
 const YELLOW_KEY_SALT = 0x6e11a;
-/** Mixed into the run seed to start Skip's stream of rolls. */
-const SKIP_SALT = 0x5c1b7;
 /** A step resolved and about to be taken: the tile stepped onto, what it
  * does, where it is, whether it goes in the undo history, and for a fight
  * the hero's critical strikes in it as played (`crits`). */
@@ -321,6 +320,10 @@ export class Game {
   /** The Deck page's card badges: drawing them with Gems and attaching
    * them to cards. */
   readonly badges = new BadgeDesk(this);
+  /** What the hand's cards may do now: their badges' rules and marks,
+   * Ignore's tiles and the cards that act in place; where the hand plans
+   * from. */
+  readonly handRules = new HandRules(this);
   /** The Shrines' commands: a Tower run's boons and the Shrine Boons page's
    * choices. */
   readonly shrine = new ShrineDesk(this);
@@ -814,19 +817,19 @@ export class Game {
     const next = this.nextHandPlan(), lost = next.lost;
     let plan = next.plan;
     // Stuck with tiles marked ?: the nearest becomes ! for Deprioritize's card.
-    while (!plan && this.raiseBang()) plan = planHand(this, this.hand, this.mode);
+    while (!plan && this.handRules.raiseBang()) plan = planHand(this.handRules, this.hand, this.mode);
     this.handStuck = !plan;
     if (!plan) return this.handWaits();
     this.activeCard = plan.card;
     const id = this.hand[plan.card];
     this.message = lost ? `Focus lost · ${CARDS[lost].name} has no path to a target · ${CARDS[id].name} leads.`
       : target === "lost" ? `Target lost · no path to the tile · ${CARDS[id].name} leads.` : this.cardMessage(id);
-    if (fresh) this.coolDown(id);
+    if (fresh) this.handRules.coolDown(id);
     // A card that acts in place takes the turn without a step.
     if (!plan.path.length) {
       this.cardPlan = null;
-      const p = this.run.player, key = `${this.rules.lootKey(this.run, p.x, p.y)}:${id}${this.cardUses(id)}`;
-      this.actInPlace(id, this.scaleOf(id));
+      const p = this.run.player, key = `${this.rules.lootKey(this.run, p.x, p.y)}:${id}${this.handRules.cardUses(id)}`;
+      this.actInPlace(id, this.handRules.scaleOf(id));
       if (id === this.run.focused) this.run.focused = undefined;
       this.activate(plan.card, key);
       return;
@@ -837,14 +840,14 @@ export class Game {
     const dash = this.dashFor(id), dashes = fresh && dash > 0 && this.dashable(step.x, step.y);
     // The card's last step onto its target: Skip may make it vanish (or, on
     // the Tower's stairs, climb two floors), and Effective or Dampen scale it.
-    const last = !this.cardPlan, rolls = last && this.rollsSkip(id, step.x, step.y), skips = rolls && this.skipRoll() < this.skipChance(id);
+    const last = !this.cardPlan, rolls = last && this.handRules.rollsSkip(id, step.x, step.y), skips = rolls && this.handRules.skipHits(id);
     if (skips && this.world.tile(step.x, step.y).kind !== "stairs") {
       this.vanish(step.x, step.y);
       if (id === this.run.focused) this.run.focused = undefined;
       return;
     }
     this.floorSkip = skips;
-    this.stepScale = last ? this.scaleOf(id) : 1;
+    this.stepScale = last ? this.handRules.scaleOf(id) : 1;
     // The board changes only as the hero moves, so a refused step means the
     // plan is stale: drop it and let the next turn choose again.
     // A dash is one turn: its shots come once it stops.
@@ -871,177 +874,25 @@ export class Game {
     // A roll counts once the step is in the undo history (after a fight,
     // once it settles), so undo takes it back with the step.
     if (!fight) {
-      if (rolls) this.skipRolled();
+      if (rolls) this.handRules.skipRolled();
       return this.activate(plan.card, key);
     }
     const settle = fight.settle;
     fight.settle = () => {
       settle();
-      if (rolls) this.skipRolled();
+      if (rolls) this.handRules.skipRolled();
       this.activate(plan.card, key);
     };
-  }
-  /** What card `card`'s badges change about planning it (`planHand`
-   * asks), each badge's rules together: a gate closes it while its
-   * condition fails (any one closed closes it), and Stairward and Skip Open
-   * Nodes count only on floors they aren't cooling down on. */
-  cardRules(card: CardId): CardRules | undefined {
-    if (this.run.outside) return undefined;
-    let rules: CardRules | undefined;
-    for (const badge of badgesOn(this.run.badges, card)) {
-      const r = this.badgeRules(card, badge);
-      if (!r) continue;
-      const closed = rules?.closed || r.closed;
-      rules = { ...rules, ...r };
-      if (closed) rules.closed = true;
-    }
-    return rules;
-  }
-  /** What one of card `card`'s badges changes about planning it. */
-  private badgeRules(card: CardId, badge: RunBadge): CardRules | undefined {
-    const v = badgeValue(badge.id, badge.level, badge.pick), p = this.run.player;
-    switch (badge.id) {
-      case "hpGate": return { closed: !(p.hp < snap((p.maxHp * v) / 100)) };
-      case "yellowGate": return { closed: !(p.keys.yellow < v) };
-      case "blueGate": return { closed: !(p.keys.blue < v) };
-      case "redGate": return { closed: !(p.keys.red < v) };
-      case "yellowAtLeast": return { closed: !(p.keys.yellow >= v) };
-      case "blueAtLeast": return { closed: !(p.keys.blue >= v) };
-      case "redAtLeast": return { closed: !(p.keys.red >= v) };
-      case "stairward": return this.cooled("stairward", v) ? { stairward: true } : undefined;
-      case "skipOpen": return this.cooled("skipOpen", v) ? { skipOpen: { skipped: new Set(this.skipMarks), skip: (x, y) => this.skipTile(x, y) } } : undefined;
-      case "charge": return { charge: v };
-      case "effective": case "dampen": return { scale: this.scaleOf(card) };
-      case "deprioritize": {
-        const m = this.floorMarks;
-        if (m.bangs.length) return { bang: new Set(m.bangs) };
-        return m.made < v ? { deprioritize: (x, y) => this.markTile(x, y) } : { closed: true };
-      }
-      default: return undefined;
-    }
-  }
-  /** What card `card`'s Effective or Dampen multiplies its target's effect
-   * by when it activates: 1 with neither. */
-  private scaleOf(card: CardId) {
-    const badge = badgesOn(this.run.badges, card).find((b) => BADGES[b.id].kind === "scale");
-    if (!badge || this.run.outside) return 1;
-    const v = badgeValue(badge.id, badge.level, badge.pick);
-    return (100 + (badge.id === "effective" ? v : -v)) / 100;
-  }
-  /** Whether Skip on card `card` rolls for its target at (x, y): never for
-   * a boss, the Delve's STAIRS card's climb (no stairs), or a torch (no tile
-   * to vanish). */
-  private rollsSkip(card: CardId, x: number, y: number) {
-    if (!badgeOn(this.run.badges, card, "skip") || this.run.outside || card === "torch") return false;
-    const t = this.world.tile(x, y);
-    if (t.kind === "enemy" && (t.enemy!.strength === "boss" || t.enemy!.strength === "greaterBoss")) return false;
-    return card !== "stairs" || t.kind === "stairs";
-  }
-  /** Skip's chance on card `card`, as a fraction. */
-  private skipChance(card: CardId) {
-    const badge = badgeOn(this.run.badges, card, "skip")!;
-    return badgeValue(badge.id, badge.level, badge.pick) / 100;
-  }
-  /** Skip's next roll: the next number of its own stream, started from the
-   * run seed (the floors' seed), so a run of the same seed played the same
-   * way skips the same targets. `run.skipRolls` counts those drawn. */
-  private skipRoll() {
-    const n = this.run.skipRolls ?? 0;
-    return drawAt(this.run.seed ^ SKIP_SALT, n);
-  }
-  /** Skip's roll is spent: the stream moves on. */
-  private skipRolled() {
-    this.run.skipRolls = (this.run.skipRolls ?? 0) + 1;
   }
   /** Skip: the card's target at (x, y) vanishes in a puff, without effect.
    * A turn of its own, so undo brings it back. */
   private vanish(x: number, y: number) {
     const t = this.world.tile(x, y);
     this.remember(this.snapshot());
-    this.skipRolled();
+    this.handRules.skipRolled();
     this.world.clear(x, y);
     this.vanished = { x, y, at: performance.now() };
     this.message = `Skip · ${t.kind === "enemy" ? enemyTitle(t.enemy!) : SKIPPED_NAMES[t.kind] ?? "the target"} vanished`;
-  }
-  /** Deprioritize's marks on this floor: none yet on a floor it hasn't
-   * marked. */
-  private get floorMarks() {
-    const m = this.run.marks, floor = this.badgeFloor;
-    return m && !this.run.outside && m.floor === floor ? m : { floor, made: 0, tiles: [] as string[], bangs: [] as string[] };
-  }
-  /** Deprioritize passes over (x, y): marked ? for the rest of the floor. */
-  private markTile(x: number, y: number) {
-    const m = (this.run.marks = this.floorMarks), k = `${x},${y}`;
-    if (!m.tiles.includes(k)) m.tiles.push(k);
-    m.made++;
-  }
-  /** The tiles marked ? on this floor, which no card's path crosses
-   * (`planHand` reads it). */
-  get marked(): ReadonlySet<string> {
-    return new Set(this.floorMarks.tiles);
-  }
-  /** The ? and ! marks on this floor, for the board. */
-  get badgeMarks() {
-    const m = this.floorMarks;
-    return { asked: m.tiles, bangs: m.bangs };
-  }
-  /** The hand is stuck: the ? nearest the hero by walk becomes !, which
-   * Deprioritize's card heads for. False with none left to raise. */
-  private raiseBang() {
-    const m = this.floorMarks;
-    if (!m.tiles.length) return false;
-    const away = walkAll(this, this.run.player, m.tiles);
-    const far = (t: string) => away.get(t) ?? Infinity;
-    const k = m.tiles.reduce((best, t) => (far(t) < far(best) ? t : best));
-    this.run.marks = { ...m, tiles: m.tiles.filter((t) => t !== k), bangs: [...m.bangs, k] };
-    return true;
-  }
-  /** Stepping on a marked tile clears its mark. */
-  private unmark(x: number, y: number) {
-    const m = this.run.marks, k = `${x},${y}`;
-    if (!m || (!m.tiles.includes(k) && !m.bangs.includes(k))) return;
-    this.run.marks = { ...m, tiles: m.tiles.filter((t) => t !== k), bangs: m.bangs.filter((t) => t !== k) };
-  }
-  /** Whether card `id` rests greyed out for the rest of the floor:
-   * Deprioritize with every mark made and no ! to head for. */
-  cardResting(id: CardId) {
-    const badge = badgeOn(this.run.badges, id, "deprioritize");
-    if (!badge || this.run.outside) return false;
-    const m = this.floorMarks;
-    return !m.bangs.length && m.made >= badgeValue(badge.id, badge.level, badge.pick);
-  }
-  /** The floor card badges count by: the Tower floor, or the Delve's
-   * equivalent floor where the hero stands. */
-  private get badgeFloor() {
-    return this.rules.equivalentFloor(this.rules.progressAt(this.run, this.run.player.y));
-  }
-  /** Whether a cooling-down badge works on this floor: never used, used
-   * on this floor already, or `every` floors on from the last it worked on. */
-  private cooled(kind: "stairward" | "skipOpen", every: number) {
-    const last = this.run.badgeFloors?.[kind], floor = this.badgeFloor;
-    return last === undefined || last === floor || floor - last >= every;
-  }
-  /** A cooling-down badge works on this floor: it rests from here. */
-  private markUsed(kind: "stairward" | "skipOpen") {
-    (this.run.badgeFloors ??= {})[kind] = this.badgeFloor;
-  }
-  /** A new plan for card `id` under Stairward counts as its use. */
-  private coolDown(id: CardId) {
-    if (badgeOn(this.run.badges, id, "stairward") && this.cardRules(id)?.stairward) this.markUsed("stairward");
-  }
-  /** The doors and monsters Skip Open Nodes passed over on this floor, as
-   * points, for the planner and the board's marks. */
-  get skipMarks(): string[] {
-    const skipped = this.run.skipped;
-    return skipped && !this.run.outside && skipped.floor === this.badgeFloor ? skipped.tiles : [];
-  }
-  /** Skip Open Nodes passes over (x, y) for the rest of the floor. */
-  private skipTile(x: number, y: number) {
-    const floor = this.badgeFloor;
-    if (this.run.skipped?.floor !== floor) this.run.skipped = { floor, tiles: [] };
-    const k = `${x},${y}`;
-    if (!this.run.skipped.tiles.includes(k)) this.run.skipped.tiles.push(k);
-    this.markUsed("skipOpen");
   }
   /** Card `card` of the hand activates: each of its badges pays what it
    * gives, top slot first. Gold is paid once per target (`key`, gated by
@@ -1070,7 +921,7 @@ export class Game {
         // Drawn as "×2" and the Gold coin.
         return this.gain(p.x, p.y, `×${this.run.goldCombo} Gold`, { coin: "gold" }, undefined, null);
       case "xp": {
-        const xp = Math.round((v * xpBase(this.badgeFloor)) / xpBase(0));
+        const xp = Math.round((v * xpBase(this.handRules.floor)) / xpBase(0));
         this.addXp(xp);
         return this.gain(p.x, p.y, `+${xp} XP`);
       }
@@ -1093,40 +944,6 @@ export class Game {
     this.recordHeal(healed);
     this.message = `${BADGES[id].name} · +${wholeChange(healed)} HP`;
   }
-  /** Whether a card that acts in place can act now (`planHand` asks),
-   * inside a run only: a siphon while enough of its training levels are
-   * left for its next use, BK TRADER while 3 yellow keys are held, and YK TO
-   * HP while a yellow key is held and its whole heal would land. */
-  canAct(card: CardId) {
-    if (this.run.outside) return false;
-    const p = this.run.player;
-    if (isSiphon(card)) return this.siphonLevel(card) >= this.siphonCost(card);
-    if (card === "blueTrader") return p.keys.yellow >= TRADER_YELLOW_KEYS;
-    if (card === "keyToHp") return p.keys.yellow >= 1 && snap(p.maxHp - p.hp) >= this.keyHeal();
-    return false;
-  }
-  /** Times card `card`, one that acts in place, has acted this run. */
-  cardUses(card: CardId) {
-    return this.run.cardUses?.[card] ?? 0;
-  }
-  /** YK TO HP's heal: 10% of max HP. */
-  private keyHeal() {
-    return snap((this.run.player.maxHp * KEY_TO_HP_PERCENT) / 100);
-  }
-  /** The run's training level of the row siphon `card` drains (Max HP for
-   * KEY SIPHON, DEF for BK SIPHON, ATK for RK SIPHON): the hero's own ranks
-   * and those bought with Silver this run, less the levels it siphoned (1
-   * for the first use, 2 for the second, and so on); 0 outside a run. */
-  siphonLevel(card: SiphonCard) {
-    if (this.run.outside) return 0;
-    const uses = this.cardUses(card), row = SIPHONS[card].row;
-    return this.save.training[row] + boughtInRun(this.run, row) - (uses * (uses + 1)) / 2;
-  }
-  /** The training levels siphon `card`'s next use takes: one more than the
-   * last. */
-  siphonCost(card: SiphonCard) {
-    return this.cardUses(card) + 1;
-  }
   /** A card that acts in place takes its turn, with no step: a turn of its
    * own, so undo takes it back. Effective and Dampen scale what it gives
    * (`scale`), never what it costs. */
@@ -1141,20 +958,20 @@ export class Game {
       this.gain(p.x, p.y, `−${TRADER_YELLOW_KEYS} yellow keys`, { tile: { kind: "key", color: "yellow" } });
       this.gain(p.x, p.y, `+${keyCount(scale)} blue key`, { tile: { kind: "key", color: "blue" } });
     } else if (card === "keyToHp") {
-      const healed = snap(Math.min(p.maxHp - p.hp, snap(this.keyHeal() * scale)));
+      const healed = snap(Math.min(p.maxHp - p.hp, snap(this.handRules.keyHeal() * scale)));
       p.keys.yellow = snap(p.keys.yellow - 1);
       p.hp = snap(p.hp + healed);
       this.gain(p.x, p.y, "−1 yellow key", { tile: { kind: "key", color: "yellow" } });
       this.recordHeal(healed);
     }
-    (this.run.cardUses ??= {})[card] = this.cardUses(card) + 1;
+    (this.run.cardUses ??= {})[card] = this.handRules.cardUses(card) + 1;
   }
   /** A siphon's turn: the run's top levels of its training row (its
    * `siphonCost`) traded for a key of its colour. The hero and the run's
    * loadout lose what those levels add (`rankShift`), for the rest of the
    * run only (max HP: HP falls only as far as the new max). */
   private siphon(card: SiphonCard, scale: number) {
-    const { row: id, color } = SIPHONS[card], level = this.siphonLevel(card), levels = this.siphonCost(card);
+    const { row: id, color } = SIPHONS[card], level = this.handRules.siphonLevel(card), levels = this.handRules.siphonCost(card);
     const p = this.run.player;
     const row = TRAINING.find((t) => t.id === id) as StatTrainingRow;
     const stat = row.stat as "maxHp" | "attack" | "defense";
@@ -1189,10 +1006,10 @@ export class Game {
     }
     const target = plan.path.length === 1 ? plan.path[0] : null;
     let onItem = false;
-    if (moved && left > 0 && target && DASH_ONTO.has(this.world.tile(target.x, target.y).kind) && !this.rollsSkip(id, target.x, target.y)) {
+    if (moved && left > 0 && target && DASH_ONTO.has(this.world.tile(target.x, target.y).kind) && !this.handRules.rollsSkip(id, target.x, target.y)) {
       const at = { x: p.x, y: p.y };
       plan.path.shift();
-      this.stepScale = this.scaleOf(id);
+      this.stepScale = this.handRules.scaleOf(id);
       moved = this.move(target.dx, target.dy, true, false, regen());
       this.stepScale = 1;
       if (moved) {
@@ -1237,15 +1054,11 @@ export class Game {
     return (anyKind || this.world.tile(x, y).kind === "floor") && !(gem && gem.x === x && gem.y === y) &&
       !this.world.torches?.some((t) => t.active && t.x === x && t.y === y);
   }
-  /** Drops the committed path when its card's gate badge (HP <, YK ≥, …)
-   * no longer holds, so the hand chooses a card again: walking on, Regen
-   * may have lifted HP past an HP < limit. A focused card ignores its gate. */
+  /** Drops the committed path when its card's gate badge no longer holds
+   * (`HandRules.gateShut`), so the hand chooses a card again. */
   private dropGatedPlan() {
     const plan = this.cardPlan;
-    if (!plan) return;
-    const id = this.hand[plan.card];
-    if (!badgesOn(this.run.badges, id).some((b) => BADGES[b.id].kind === "gate") || id === this.run.focused) return;
-    if (this.cardRules(id)?.closed) this.cardPlan = null;
+    if (plan && this.handRules.gateShut(this.hand[plan.card])) this.cardPlan = null;
   }
   /** The path the hand follows this turn: the one committed, else the
    * focused card's while it has a path to a target (`lost` once it has
@@ -1253,11 +1066,11 @@ export class Game {
   private nextHandPlan(): { plan: CardPlan | null; lost: CardId | null } {
     if (this.cardPlan) return { plan: this.cardPlan, lost: null };
     const focused = this.run.focused;
-    if (!focused) return { plan: planHand(this, this.hand, this.mode), lost: null };
-    const plan = planHand(this, this.hand, this.mode, this.hand.indexOf(focused));
+    if (!focused) return { plan: planHand(this.handRules, this.hand, this.mode), lost: null };
+    const plan = planHand(this.handRules, this.hand, this.mode, this.hand.indexOf(focused));
     if (plan) return { plan, lost: null };
     this.run.focused = undefined;
-    return { plan: planHand(this, this.hand, this.mode), lost: focused };
+    return { plan: planHand(this.handRules, this.hand, this.mode), lost: focused };
   }
   /** No card can act: the hand pauses and End Run lights up. */
   private handWaits() {
@@ -1269,7 +1082,7 @@ export class Game {
   /** What stops the hand while no card can act (`explainStuck`): the run's
    * end dialog shows it. */
   stuckReport(): StuckReport {
-    return explainStuck(this, this.hand);
+    return explainStuck(this.handRules, this.hand);
   }
   /** The status line for card `id` leading the hand. */
   private cardMessage(id: CardId) {
@@ -1279,7 +1092,7 @@ export class Game {
    * a stuck hand checks its cards again and plays on if one can act. */
   private afterPlayerAction() {
     if (!this.handStuck || !this.playing) return;
-    const plan = planHand(this, this.hand, this.mode);
+    const plan = planHand(this.handRules, this.hand, this.mode);
     if (!plan) return;
     this.handStuck = false;
     this.cardPlan = plan;
@@ -1437,18 +1250,8 @@ export class Game {
     }
     return c === "ignore" ? this.ignoreTile(x, y) : this.targetTile(x, y);
   }
-  /** The tiles Ignore marked on this floor, which no card's path nor
-   * Target's crosses (`planHand` reads it). */
-  get ignored(): ReadonlySet<string> {
-    const m = this.run.ignored;
-    return new Set(m && !this.run.outside && m.floor === this.badgeFloor ? m.tiles : []);
-  }
   private ignoreTile(x: number, y: number): "used" | "invalid" {
-    const p = this.run.player, k = `${x},${y}`;
-    if (this.world.tile(x, y).kind === "wall" || (p.x === x && p.y === y) || this.ignored.has(k)) return "invalid";
-    const floor = this.badgeFloor;
-    if (this.run.ignored?.floor !== floor) this.run.ignored = { floor, tiles: [] };
-    this.run.ignored.tiles.push(k);
+    if (!this.handRules.ignore(x, y)) return "invalid";
     spendCharge(this.run, "ignore");
     this.armed = null;
     // The hand plans again, round the tile, and a stuck hand looks again.
@@ -1459,7 +1262,7 @@ export class Game {
     return "used";
   }
   private targetTile(x: number, y: number): "used" | "noPath" {
-    const path = planTarget(this, x, y);
+    const path = planTarget(this.handRules, x, y);
     if (!path) return "noPath";
     this.targetPath = path;
     spendCharge(this.run, "target");
@@ -1481,7 +1284,7 @@ export class Game {
     const k = this.run.targeted;
     if (!k) return false;
     const [x, y] = k.split(",").map(Number);
-    const path = this.targetPath?.length && stillOpen(this, this.targetPath) ? this.targetPath : planTarget(this, x, y);
+    const path = this.targetPath?.length && stillOpen(this.handRules, this.targetPath) ? this.targetPath : planTarget(this.handRules, x, y);
     this.targetPath = null;
     if (!path) {
       this.run.targeted = undefined;
@@ -1513,7 +1316,7 @@ export class Game {
     if (!this.save.upgrades.focus || this.run.outside || this.fallen || !id) return "unavailable";
     if (this.run.focused === id || (card === this.activeCard && !this.handStuck)) return "active";
     if (this.focusLeft < 1) return "spent";
-    const plan = planHand(this, this.hand, this.mode, card);
+    const plan = planHand(this.handRules, this.hand, this.mode, card);
     if (!plan) return "noPath";
     this.run.focusUsed = (this.run.focusUsed ?? 0) + 1;
     this.missions.mark("focus", this.mode, this.run.seed, this.run.focusUsed);
@@ -1897,7 +1700,7 @@ export class Game {
     const p = this.run.player;
     p.x = x;
     p.y = y;
-    this.unmark(x, y);
+    this.handRules.unmark(x, y);
     // Walking into a torch destroys it immediately: light, collision and
     // sprite all disappear the same frame since rendering only ever draws
     // active torches from this same list.
@@ -2530,11 +2333,6 @@ export class Game {
    * next run will take, as the Deck orders it. */
   get hand(): readonly CardId[] {
     return this.run.hand ?? this.save.hand;
-  }
-  /** For each card of the hand, whether it is linked to the next (Card
-   * Groups): the run's links, or in the forest the saved ones. */
-  get links(): readonly boolean[] {
-    return linkedToNext(this.hand, this.run.hand ? this.run.links ?? [] : this.save.cardLinks);
   }
   /** Whether a tapped tile shows the route there and its totals: the
    * Courage skill Pathfinder owned, or Dev mode. */

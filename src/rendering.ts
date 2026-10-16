@@ -413,7 +413,7 @@ export class Renderer {
   /** Skip Open Nodes' marks: a violet X on each door or monster it passed
    * over on this floor. */
   private drawSkipMarks(f: FrameContext) {
-    const marks = this.game.skipMarks;
+    const marks = this.game.handRules.skipMarks;
     if (!marks.length) return;
     const c = f.c, s = f.s, r = s * 0.2;
     c.save();
@@ -436,7 +436,7 @@ export class Renderer {
   /** Deprioritize's marks: an amber ? on each tile it passed over on this
    * floor, and a red ! on each the stuck hand now heads for. */
   private drawBadgeMarks(f: FrameContext) {
-    const { asked, bangs } = this.game.badgeMarks;
+    const { asked, bangs } = this.game.handRules.badgeMarks;
     if (!asked.length && !bangs.length) return;
     const c = f.c, s = f.s;
     c.save();
@@ -457,7 +457,7 @@ export class Renderer {
   /** Ignore's marks: a red ⊘ over each tile ignored on this floor; and
    * Target's: a blue ring and cross over the tile the hero heads for. */
   private drawChargeMarks(f: FrameContext) {
-    const g = this.game, ignored = g.ignored, targeted = g.run.outside ? undefined : g.run.targeted;
+    const g = this.game, ignored = g.handRules.ignored, targeted = g.run.outside ? undefined : g.run.targeted;
     if (!ignored.size && !targeted) return;
     const c = f.c, s = f.s, r = s * 0.3;
     const centre = (k: string) => {

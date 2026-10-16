@@ -483,6 +483,10 @@ _Avoid_: rewind, history slot
 What undo can take a run back to: the moves held on the floor the hero stands on, and while the hero lies fallen, the run just before that fight.
 _Avoid_: undo stack, history (alone)
 
+**Hand rules**:
+What the hand's cards may do now: their badges' rules and marks, Ignore's tiles, and whether a card that acts in place can act. The hand plans from them; the hand's turn applies what they decide.
+_Avoid_: card logic, badge state
+
 **Ignore**:
 Marking a tile inside a run so the hero never steps on it for the rest of that floor.
 _Avoid_: block, ban

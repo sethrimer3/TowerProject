@@ -282,11 +282,11 @@ test("a gate keeps its card from acting while its condition fails; a Focus overr
   g.autoTurn();
   assert.ok(g.handStuck, "at full HP, HP < 100% keeps the card closed");
   g.run.player.hp = 99;
-  assert.equal(planHand(g, g.run.hand, "tower")?.card, 0, "below full HP it acts");
+  assert.equal(planHand(g.handRules, g.run.hand, "tower")?.card, 0, "below full HP it acts");
   g.run.player.hp = 100;
   badge(g, "yellowKey", "yellowGate", 1, 0);
   g.run.player.keys.yellow = 10;
-  assert.equal(planHand(g, g.run.hand, "tower"), null, "holding 10 yellow keys closes YK < 10");
+  assert.equal(planHand(g.handRules, g.run.hand, "tower"), null, "holding 10 yellow keys closes YK < 10");
   g.save.upgrades.focus = 1;
   assert.equal(g.focus(0), "focused", "a Focus plans the card whatever its gate");
   turns(g, 2);
@@ -311,9 +311,9 @@ test("a ≥ key gate lets its card act only while you hold at least its threshol
   g.run.hand = ["yellowKey"];
   badge(g, "yellowKey", "blueAtLeast", 3, 2);
   g.run.player.keys.blue = 2;
-  assert.equal(planHand(g, g.run.hand, "tower"), null, "2 blue keys keep BK ≥ 3 closed");
+  assert.equal(planHand(g.handRules, g.run.hand, "tower"), null, "2 blue keys keep BK ≥ 3 closed");
   g.run.player.keys.blue = 3;
-  assert.equal(planHand(g, g.run.hand, "tower")?.card, 0, "3 open it");
+  assert.equal(planHand(g.handRules, g.run.hand, "tower")?.card, 0, "3 open it");
 });
 
 test("activation pays when the card reaches its target: HP, HP %, Silver, XP scaled by floor", () => {
@@ -360,9 +360,9 @@ test("a card's badges work together: every reward pays, and any gate closes it",
   h.run.hand = ["atkUp"];
   badge(h, "atkUp", "stairward");
   badge(h, "atkUp", "hpGate");
-  assert.deepEqual(h.cardRules("atkUp"), { stairward: true, closed: true }, "full HP isn't below 100%: closed, whatever else it does");
+  assert.deepEqual(h.handRules.cardRules("atkUp"), { stairward: true, closed: true }, "full HP isn't below 100%: closed, whatever else it does");
   h.run.player.hp = 1;
-  assert.deepEqual(h.cardRules("atkUp"), { stairward: true, closed: false });
+  assert.deepEqual(h.handRules.cardRules("atkUp"), { stairward: true, closed: false });
 });
 
 test("Gold Touch pays once a target, even after undo", () => {
@@ -433,16 +433,16 @@ test("Stairward picks the target with the shortest walk on to the stairs, then r
   const g = floor(rows);
   (g.world as RoomWorld).cells.set("0,1", { kind: "floor" });
   g.run.hand = ["yellowKey"];
-  assert.deepEqual(planHand(g, g.run.hand, "tower")!.path.at(-1), { x: 3, y: 0, dx: 1, dy: 0 }, "without it, the closest key");
+  assert.deepEqual(planHand(g.handRules, g.run.hand, "tower")!.path.at(-1), { x: 3, y: 0, dx: 1, dy: 0 }, "without it, the closest key");
   badge(g, "yellowKey", "stairward", 1);
-  const end = planHand(g, g.run.hand, "tower")!.path.at(-1)!;
+  const end = planHand(g.handRules, g.run.hand, "tower")!.path.at(-1)!;
   assert.deepEqual([end.x, end.y], [0, 2], "the key beside the walk up to the stairs");
   g.autoTurn();
   assert.equal(g.run.badgeFloors?.stairward, 0, "it worked on this floor");
   g.run.height = 3;
-  assert.equal(g.cardRules("yellowKey"), undefined, "level 1 rests for 7 floors");
+  assert.equal(g.handRules.cardRules("yellowKey"), undefined, "level 1 rests for 7 floors");
   g.run.height = 7;
-  assert.deepEqual(g.cardRules("yellowKey"), { stairward: true });
+  assert.deepEqual(g.handRules.cardRules("yellowKey"), { stairward: true });
 });
 
 test("Skip Open Nodes passes over a monster that opens no new ground, and marks it for the floor", () => {
@@ -453,12 +453,12 @@ test("Skip Open Nodes passes over a monster that opens no new ground, and marks 
     "...P.",
   ]);
   g.run.hand = ["monster"];
-  const plain = planHand(g, g.run.hand, "tower")!.path.at(-1)!;
+  const plain = planHand(g.handRules, g.run.hand, "tower")!.path.at(-1)!;
   assert.deepEqual([plain.x, plain.y], [2, 3], "without it, the closest monster, in the open");
   badge(g, "monster", "skipOpen", 1);
-  const end = planHand(g, g.run.hand, "tower")!.path.at(-1)!;
+  const end = planHand(g.handRules, g.run.hand, "tower")!.path.at(-1)!;
   assert.deepEqual([end.x, end.y], [3, 1], "the monster guarding the potion's row");
-  assert.deepEqual(g.skipMarks, ["2,3"]);
+  assert.deepEqual(g.handRules.skipMarks, ["2,3"]);
   assert.equal(g.run.badgeFloors?.skipOpen, 0);
 });
 
@@ -466,11 +466,11 @@ test("Charge paths through up to its level of monsters and doors to reach a targ
   const g = floor(["@MD.S"]);
   g.run.hand = ["stairs"];
   g.run.player.keys.yellow = 1;
-  assert.equal(planHand(g, g.run.hand, "tower"), null, "the stairs lie past a monster and a door");
+  assert.equal(planHand(g.handRules, g.run.hand, "tower"), null, "the stairs lie past a monster and a door");
   badge(g, "stairs", "charge", 1);
-  assert.equal(planHand(g, g.run.hand, "tower"), null, "level 1 charges through one");
+  assert.equal(planHand(g.handRules, g.run.hand, "tower"), null, "level 1 charges through one");
   badge(g, "stairs", "charge", 2);
-  assert.equal(planHand(g, g.run.hand, "tower")!.path.length, 4);
+  assert.equal(planHand(g.handRules, g.run.hand, "tower")!.path.length, 4);
   turns(g, 4);
   assert.equal(g.run.height, 1, "the hero fought, opened the door and climbed");
 });
@@ -521,7 +521,7 @@ test("Effective makes the card's target stronger: more heal, a fraction more key
   d.run.hand = ["door"];
   d.run.player.keys.yellow = 1;
   badge(d, "door", "effective", 1);
-  assert.equal(planHand(d, d.run.hand, "tower"), null, "1 key can't pay 1.05");
+  assert.equal(planHand(d.handRules, d.run.hand, "tower"), null, "1 key can't pay 1.05");
   d.run.player.keys.yellow = 2;
   turns(d, 2);
   assert.equal(d.run.player.keys.yellow, 0.95);
@@ -591,21 +591,21 @@ test("Deprioritize marks the card's first targets with a ?, every path goes roun
   const g = floor(["@.K.K.K", "......."]);
   g.run.hand = ["yellowKey"];
   badge(g, "yellowKey", "deprioritize", 2);
-  assert.equal(planHand(g, g.run.hand, "tower"), null, "it passes over the first key");
-  assert.deepEqual(g.badgeMarks.asked, ["2,1"]);
-  assert.equal(planHand(g, g.run.hand, "tower"), null, "and the next");
-  assert.deepEqual(g.badgeMarks.asked, ["2,1", "4,1"]);
-  assert.ok(g.cardResting("yellowKey"), "its two marks made, it rests for the floor");
-  assert.deepEqual(g.cardRules("yellowKey"), { closed: true });
+  assert.equal(planHand(g.handRules, g.run.hand, "tower"), null, "it passes over the first key");
+  assert.deepEqual(g.handRules.badgeMarks.asked, ["2,1"]);
+  assert.equal(planHand(g.handRules, g.run.hand, "tower"), null, "and the next");
+  assert.deepEqual(g.handRules.badgeMarks.asked, ["2,1", "4,1"]);
+  assert.ok(g.handRules.cardResting("yellowKey"), "its two marks made, it rests for the floor");
+  assert.deepEqual(g.handRules.cardRules("yellowKey"), { closed: true });
   // Every card's path goes round a ? while it can, and never through one.
   const p = floor(["@K.P"]);
   p.run.hand = ["yellowKey", "heal"];
   badge(p, "yellowKey", "deprioritize", 1);
-  assert.equal(planHand(p, p.run.hand, "tower"), null, "the only way to the potion runs through the ?");
+  assert.equal(planHand(p.handRules, p.run.hand, "tower"), null, "the only way to the potion runs through the ?");
   const q = floor(["@K.P", "...."]);
   q.run.hand = ["yellowKey", "heal"];
   badge(q, "yellowKey", "deprioritize", 1);
-  const round = planHand(q, q.run.hand, "tower")!;
+  const round = planHand(q.handRules, q.run.hand, "tower")!;
   assert.equal(round.card, 1);
   assert.ok(round.path.every((s) => !(s.x === 1 && s.y === 1)), "HEAL goes round the ?");
 });
@@ -614,17 +614,17 @@ test("stuck with a ?, the nearest becomes ! and the card heads for it; stepping 
   const g = floor(["@.K.K", "....."]);
   g.run.hand = ["yellowKey"];
   badge(g, "yellowKey", "deprioritize", 2);
-  planHand(g, g.run.hand, "tower");
-  planHand(g, g.run.hand, "tower");
-  assert.deepEqual(g.badgeMarks.asked, ["2,1", "4,1"]);
+  planHand(g.handRules, g.run.hand, "tower");
+  planHand(g.handRules, g.run.hand, "tower");
+  assert.deepEqual(g.handRules.badgeMarks.asked, ["2,1", "4,1"]);
   g.autoTurn();
   assert.ok(!g.handStuck, "the hand isn't stuck while a ? is left");
-  assert.deepEqual(g.badgeMarks, { asked: ["4,1"], bangs: ["2,1"] }, "the nearest became !");
+  assert.deepEqual(g.handRules.badgeMarks, { asked: ["4,1"], bangs: ["2,1"] }, "the nearest became !");
   g.autoTurn();
   assert.deepEqual(at(g), [2, 1]);
   assert.equal(g.run.player.keys.yellow, 1);
-  assert.deepEqual(g.badgeMarks, { asked: ["4,1"], bangs: [] }, "its mark is gone");
-  assert.ok(g.cardResting("yellowKey"));
+  assert.deepEqual(g.handRules.badgeMarks, { asked: ["4,1"], bangs: [] }, "its mark is gone");
+  assert.ok(g.handRules.cardResting("yellowKey"));
   turns(g, 2);
   assert.equal(g.run.player.keys.yellow, 2, "stuck again, the last ? becomes ! too");
 });
@@ -650,8 +650,8 @@ test("Skip may make the card's target vanish without effect, the same after undo
   assert.equal(g.run.changes["2,0"], undefined, "undo brings the monster back");
   assert.equal(g.run.skipRolls, undefined, "and takes its roll back");
   assert.ok(make(seed).vanished, "the same seed and tile roll the same");
-  assert.equal(g.cardRules("monster"), undefined, "nothing closes it for the floor");
-  assert.ok(!g.cardResting("monster"));
+  assert.equal(g.handRules.cardRules("monster"), undefined, "nothing closes it for the floor");
+  assert.ok(!g.handRules.cardResting("monster"));
 });
 
 test("Skip's rolls come in order from their own stream, started from the run seed", () => {

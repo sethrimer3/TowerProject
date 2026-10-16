@@ -95,13 +95,13 @@ test("Ignore marks a tile no card steps on for the rest of the floor, for one us
   assert.equal(g.armed, null);
   assert.equal(g.arm("ignore"), "spent");
   const loaded = new Game(decode(JSON.stringify(g.save)));
-  assert.deepEqual([...loaded.ignored], ["1,0"], "the mark is saved with the run");
+  assert.deepEqual([...loaded.handRules.ignored], ["1,0"], "the mark is saved with the run");
   for (let i = 0; i < 6 && g.run.height === 0; i++) {
     g.autoTurn();
     assert.notDeepEqual([g.run.player.x, g.run.player.y], [1, 0]);
   }
   assert.equal(g.run.height, 1, "STAIRS goes round it");
-  assert.equal(g.ignored.size, 0, "the mark stays on its floor");
+  assert.equal(g.handRules.ignored.size, 0, "the mark stays on its floor");
 });
 
 test("Target sends the hero to the tile tapped, then the hand leads again", () => {

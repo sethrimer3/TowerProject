@@ -77,7 +77,7 @@ test("KEY SIPHON trades Max HP training levels for a yellow key without moving, 
   const g = corridor(3), p = g.run.player, maxHp = p.maxHp, keys = p.keys.yellow;
   // The top level goes first: the third rank's worth, then the first two's.
   const top = trained(hpRow, 3) - trained(hpRow, 2);
-  assert.deepEqual([g.siphonLevel("keySiphon"), g.siphonCost("keySiphon")], [3, 1]);
+  assert.deepEqual([g.handRules.siphonLevel("keySiphon"), g.handRules.siphonCost("keySiphon")], [3, 1]);
   g.autoTurn();
   assert.deepEqual([p.x, p.y], [0, 0], "no step");
   assert.equal(p.keys.yellow, keys + 1);
@@ -85,12 +85,12 @@ test("KEY SIPHON trades Max HP training levels for a yellow key without moving, 
   assert.equal(g.run.loadout!.maxHp, p.maxHp);
   assert.ok(p.hp <= p.maxHp, "HP falls with max HP");
   assert.equal(g.save.tower.history.length, 1, "a turn of its own");
-  assert.deepEqual([g.siphonLevel("keySiphon"), g.siphonCost("keySiphon")], [2, 2]);
+  assert.deepEqual([g.handRules.siphonLevel("keySiphon"), g.handRules.siphonCost("keySiphon")], [2, 2]);
   g.autoTurn();
   assert.equal(p.keys.yellow, keys + 2);
   assert.ok(near(p.maxHp, maxHp - trained(hpRow, 3)), "the second takes two");
-  assert.deepEqual([g.cardUses("keySiphon"), g.siphonLevel("keySiphon"), g.siphonCost("keySiphon")], [2, 0, 3]);
-  assert.equal(g.canAct("keySiphon"), false);
+  assert.deepEqual([g.handRules.cardUses("keySiphon"), g.handRules.siphonLevel("keySiphon"), g.handRules.siphonCost("keySiphon")], [2, 0, 3]);
+  assert.equal(g.handRules.canAct("keySiphon"), false);
   g.autoTurn();
   assert.deepEqual([p.x, p.y], [1, 0], "skipped: STAIRS moves the hero");
   assert.equal(p.keys.yellow, keys + 2);
@@ -100,9 +100,9 @@ test("KEY SIPHON trades Max HP training levels for a yellow key without moving, 
 test("with fewer levels left than the next use takes, the card is skipped", () => {
   const g = corridor(2);
   g.autoTurn();
-  assert.deepEqual([g.siphonLevel("keySiphon"), g.siphonCost("keySiphon")], [1, 2]);
-  assert.equal(g.canAct("keySiphon"), false);
-  assert.equal(planHand(g, g.hand, "tower")?.card, 1, "STAIRS plays instead");
+  assert.deepEqual([g.handRules.siphonLevel("keySiphon"), g.handRules.siphonCost("keySiphon")], [1, 2]);
+  assert.equal(g.handRules.canAct("keySiphon"), false);
+  assert.equal(planHand(g.handRules, g.hand, "tower")?.card, 1, "STAIRS plays instead");
 });
 
 test("HP below the new max stays as it was", () => {
@@ -116,30 +116,30 @@ test("undo takes a siphon back, and the next run starts with its max HP whole", 
   const g = corridor(1);
   const maxHp = g.run.player.maxHp;
   g.autoTurn();
-  assert.equal(g.cardUses("keySiphon"), 1);
+  assert.equal(g.handRules.cardUses("keySiphon"), 1);
   assert.ok(g.undo());
   assert.equal(g.run.player.maxHp, maxHp);
   assert.equal(g.run.cardUses, undefined);
   g.autoTurn();
   g.newRun({ seed: 8 });
   assert.equal(g.run.player.maxHp, loadout(g.save).maxHp);
-  assert.equal(g.siphonLevel("keySiphon"), 1);
+  assert.equal(g.handRules.siphonLevel("keySiphon"), 1);
 });
 
 test("Max HP bought with Silver this run can be siphoned too; with no Max HP training the card is skipped", () => {
   const none = corridor(0);
-  assert.equal(none.canAct("keySiphon"), false);
-  assert.equal(planHand(none, none.hand, "tower")?.card, 1, "STAIRS plays instead");
+  assert.equal(none.handRules.canAct("keySiphon"), false);
+  assert.equal(planHand(none.handRules, none.hand, "tower")?.card, 1, "STAIRS plays instead");
   const g = corridor(0, (s) => (s.upgrades.onTheJob = 1));
   g.run.silver = 100;
   assert.ok(g.trainInRun("hp"));
-  assert.equal(g.siphonLevel("keySiphon"), 1);
-  assert.deepEqual(planHand(g, g.hand, "tower"), { card: 0, path: [] });
+  assert.equal(g.handRules.siphonLevel("keySiphon"), 1);
+  assert.deepEqual(planHand(g.handRules, g.hand, "tower"), { card: 0, path: [] });
 });
 
 test("no siphon in the forest", () => {
   const g = corridor(3);
   g.newRun({ outside: true, seed: 9 });
-  assert.equal(g.siphonLevel("keySiphon"), 0);
-  assert.equal(g.canAct("keySiphon"), false);
+  assert.equal(g.handRules.siphonLevel("keySiphon"), 0);
+  assert.equal(g.handRules.canAct("keySiphon"), false);
 });

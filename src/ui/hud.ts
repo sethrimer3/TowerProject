@@ -477,7 +477,7 @@ function handCardTitle(game: Game, id: CardId) {
   for (const badge of badgesOn(game.run.badges, id)) title += `
 Badge: ${badgeTitle(badge)}`;
   if (isSiphon(id)) {
-    const uses = game.cardUses(id), next = game.siphonCost(id);
+    const uses = game.handRules.cardUses(id), next = game.handRules.siphonCost(id);
     title += `
 Used ${uses} time${uses === 1 ? "" : "s"} this run; the next use takes ${next} level${next === 1 ? "" : "s"}.`;
   }
@@ -513,7 +513,7 @@ function renderHand(game: Game) {
     // A card that acts in place greys out while it can't (KEY SIPHON
     // without the Max HP training levels its next use takes), and one
     // resting for the floor (Deprioritize with every mark made).
-    card.classList.toggle("unable", !game.run.outside && ((IN_PLACE.has(hand[i]) && !game.canAct(hand[i])) || game.cardResting(hand[i])));
+    card.classList.toggle("unable", !game.run.outside && ((IN_PLACE.has(hand[i]) && !game.handRules.canAct(hand[i])) || game.handRules.cardResting(hand[i])));
   });
 }
 
