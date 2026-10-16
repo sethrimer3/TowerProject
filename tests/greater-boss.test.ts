@@ -7,6 +7,8 @@ import { greaterBossSpot } from "../src/tower/greater-boss.ts";
 import { GREATER_BOSS_OVER_BOSS, enemyTitle, getTowerGateEnemy } from "../src/scaling.ts";
 import { ENEMY_GOLD, SILVER_MULTIPLIER, XP_MULTIPLIER } from "../src/config.ts";
 import type { Tile } from "../src/entities.ts";
+import type { RunPurse } from "../src/game/run-purse.ts";
+import { tileInfo } from "../src/ui/tile-info.ts";
 
 /** A game inside the Tower with Dev mode's manual steps, the hero standing
  * beside the floor's last lit torch, every other one put out. Returns the
@@ -93,4 +95,21 @@ test("a floor with a torch still lit calls none", () => {
     g.stepManually(dx, dy);
     assert.equal(greaterBosses(g.run.changes).length, 0);
   }
+});
+
+test("a Greater Boss called where the stairs' guard fell still shows and pays its Gold, once", () => {
+  const { g, world, dx, dy } = besideLastTorch();
+  g.stepManually(dx, dy);
+  const [key] = greaterBosses(g.run.changes)[0]!, [x, y] = key.split(",").map(Number) as [number, number];
+  // The guard killed on that tile already paid it.
+  g.save.tower.lootedTiles[`${g.run.seed}:${g.run.height}:${x},${y}`] = true;
+  const gold = g.enemyGold(x, y);
+  assert.ok(gold > 0, "the Greater Boss's Gold is its own");
+  assert.match(tileInfo(g, x, y).body, /alt="Gold"/, "its pop-up shows it");
+  const enemy = world.tile(x, y).enemy!;
+  const purse = (g as unknown as { purse: RunPurse }).purse, paid = purse.enemyLoot(enemy, x, y);
+  assert.ok(paid.gold > 0 && paid.cells > 0, "killing it pays its Gold and Cells");
+  // A reload keeps it paid, so undo can't pay it twice.
+  const loaded = new Game(decode(JSON.stringify(g.save)));
+  assert.equal(loaded.enemyGold(x, y), 0);
 });

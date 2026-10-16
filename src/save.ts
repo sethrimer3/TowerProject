@@ -241,7 +241,7 @@ function decodeLootedTiles(raw: any): Record<string, true> {
   const lootedTiles: Record<string, true> = {};
   if (isRecord(raw))
     for (const key of Object.keys(raw))
-      if (/^-?\d+:(-?\d+:)?-?\d+,-?\d+$/.test(key)) lootedTiles[key] = true;
+      if (/^-?\d+:(-?\d+:)?-?\d+,-?\d+(:\w+)?$/.test(key)) lootedTiles[key] = true;
   return lootedTiles;
 }
 function decodeMode<R extends Run>(s: any, undoCapacity: number, decodeRun: RunDecoder<R>): DecodedMode<R> {

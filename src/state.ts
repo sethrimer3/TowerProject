@@ -1996,11 +1996,12 @@ export class Game {
    * Silver, Gold and loot. Returns what it found, as the status line names it. */
   private payKill(enemy: Enemy, at: { x: number; y: number }, scale: number, instakill: boolean, crits?: number) {
     this.run.kills++;
-    this.countKill(enemy, at);
+    const purse = this.purse, key = `${this.mode}:${purse.killKey(enemy, at.x, at.y)}`;
+    this.countKill(enemy, key);
     const floor = this.rules.equivalentFloor(this.rules.progressAt(this.run, at.y));
     this.gainXp(enemy, floor, scale);
     // Silver belongs to the run, so it isn't gated like Gold: undo takes it back.
-    const purse = this.purse, silver = purse.killSilver(enemy, floor, scale);
+    const silver = purse.killSilver(enemy, floor, scale);
     const { gold, cells, equipment } = purse.enemyLoot(enemy, at.x, at.y, scale, instakill);
     const cellsFound = cells ? [cellsText(cells)] : [];
     const found = equipmentGains(equipment);
@@ -2011,9 +2012,9 @@ export class Game {
       ...cellsFound.map((text) => ({ text, art: { cell: true as const } })),
       ...found,
     ], gold ? 1 : 0);
-    if (equipment?.item || equipment?.salvaged) this.events.record("equipment", 1, this.missionKey(at));
+    if (equipment?.item || equipment?.salvaged) this.events.record("equipment", 1, key);
     if (equipment?.item) this.slice.runFinds.equipment++;
-    if (crits) this.events.record("crits", crits, this.missionKey(at));
+    if (crits) this.events.record("crits", crits, key);
     return [...coinsText(gold, silver), ...cellsFound, ...found.map((g) => g.text)];
   }
   /** The end of a turn inside a run (a step, or a whole dash): each Ranged
@@ -2174,12 +2175,13 @@ export class Game {
     if (!shots.length) return;
     this.volley = { at: performance.now(), flight: Math.min(FLIGHT_MS, 800 / Math.max(1, this.stepsPerSecond)), shots };
   }
-  /** A kill counts toward the missions and the Event for its strength, once a tile. */
-  private countKill(enemy: Enemy, at: { x: number; y: number }) {
+  /** A kill counts toward the missions and the Event for its strength, once
+   * a `key` (the mode and the kill's loot key). */
+  private countKill(enemy: Enemy, key: string) {
     const s = enemy.strength;
     const type: MissionType & EventMissionType = s === "boss" || s === "greaterBoss" ? "bosses" : s === "strong" ? "strong" : s === "elite" ? "elite" : "basic";
-    this.missions.record(type, 1, this.missionKey(at));
-    this.events.record(type, 1, this.missionKey(at));
+    this.missions.record(type, 1, key);
+    this.events.record(type, 1, key);
   }
   /** What a kill or pickup at `at` counts as for the missions: the mode
    * and its loot key, so undo bringing the tile back can't count it again. */

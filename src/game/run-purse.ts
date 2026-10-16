@@ -91,6 +91,14 @@ export class RunPurse {
     return this.rules.lootKey(this.run, x, y);
   }
 
+  /** What gates a kill's loot at (x, y): the tile's loot key, a Greater
+   * Boss's apart, since it appears on the floor nearest the stairs, most
+   * often where the stairs' guard already fell and paid. */
+  killKey(enemy: Enemy, x: number, y: number) {
+    const key = this.lootKey(x, y);
+    return enemy.strength === "greaterBoss" ? `${key}:greater` : key;
+  }
+
   /** What the equipment this mode's hero wears does. */
   private get worn() {
     return wornEffects(this.save, this.mode);
@@ -121,7 +129,7 @@ export class RunPurse {
    * it (Goldback's combo counted, a card's Effective or Dampen not): none
    * once its tile is looted. Changes nothing. */
   killGoldPreview(enemy: Enemy, x: number, y: number, instakill = false) {
-    if (this.slice.lootedTiles[this.lootKey(x, y)]) return 0;
+    if (this.slice.lootedTiles[this.killKey(enemy, x, y)]) return 0;
     const found = tierGold(this.tier, snap(this.killGold(enemy, instakill) * (this.run.goldCombo ?? 1)));
     return snap(this.beforeBoost(found) * goldBoostFactor(this.save, this.now));
   }
@@ -177,7 +185,7 @@ export class RunPurse {
    * Equipment is open, its upgrade materials and a boss's equipment, once
    * per physical kill. */
   enemyLoot(enemy: Enemy, x: number, y: number, scale = 1, instakill = false): { gold: number; cells: number; equipment: EquipmentLoot | null } {
-    if (!this.loot(this.lootKey(x, y))) return { gold: 0, cells: 0, equipment: null };
+    if (!this.loot(this.killKey(enemy, x, y))) return { gold: 0, cells: 0, equipment: null };
     // Then the tier's bonus; Effective or Dampen on the card that took the
     // fight scales it too.
     const base = this.withCombo(this.killGold(enemy, instakill)), raised = scale === 1 ? base : snap(base * scale);
