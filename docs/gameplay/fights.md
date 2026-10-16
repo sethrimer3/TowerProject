@@ -42,6 +42,12 @@ A shot that costs HP costs the area's mastery, and one that leaves the hero no H
 The hand and Automove don't plan around shots.
 A dash is one turn: its shots come once it stops.
 A Ranged monster pays 1 Gold more, and one both Fast and Ranged 2 more.
+From Tower IV and Delve IV on, a floor may hold one **Shielded** monster (4% of floors at first, 1% more a tower and 1% more every 250 floors to floor 4,000): the monster nearest the way up, boss aside, named *Shielded …*, inside a glowing green bubble.
+While it stands, the hero's strikes and arrows on every monster in its bubble, itself included, do 60% less after DEF; a strike that gets past DEF still lands, so no monster becomes unbeatable, and the inspect panel and damage numbers count the cut.
+Felling it bursts the bubble at once.
+The bubble reaches a tile at first (the four beside it), half a tile more every 1,000 floors, up to 3 tiles from floor 4,000, measured from tile centre to tile centre, so the diagonals come in at floor 829 and two tiles straight out at 2,000.
+A Shielded monster with no other in its bubble may bring standard monsters in front of it, nearer the way in (more often further up, one certain for each 100% the chance reaches), which may be Fast or Ranged as any other.
+A Shielded monster pays 1 Gold more.
 Every monster beaten pays Gold by its strength: none for a weak one, 1 for a normal one, 2 for a strong one, 4 for an elite one and 5 for a boss.
 The stats show the Gold found so far this run beside ATK and DEF; undo never takes Gold back, so it never lowers the count.
 
