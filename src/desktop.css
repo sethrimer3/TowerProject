@@ -123,6 +123,11 @@ html.desktop dialog:not(#_) {
   background: var(--face);
   box-shadow: var(--raised);
 }
+/* The locked deck: its empty slots faint dashed outlines on the panel, with
+   no shade over them, so the notice reads on the page's own colours. */
+html.desktop .deck-reserve-slots:not(#_) { filter: none; opacity: 0.45; }
+html.desktop .deck-reserve-slots i:not(#_) { background: transparent; border: 1px dashed var(--shade); }
+html.desktop .deck-reserve:not(#_)::after { content: none; }
 /* Wells: white and sunken, for what is entered, shown or filled. */
 html.desktop .portrait-top:not(#_),
 html.desktop .hp-readout:not(#_),
