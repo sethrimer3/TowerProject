@@ -9,7 +9,7 @@ export type FrameLoopHost = {
   tab(): Tab;
   /** Redraws the skill tree's particles while the Upgrades page shows. */
   upgradesFrame(time: number): void;
-  /** Moves the Archives' countdowns on as each shows another second, or
+  /** Moves the tab's countdowns on as each shows another second, and
    * redraws the Training tab's particles, while the Research page shows. */
   researchFrame(time: number): void;
   /** Advances the Defend battle while its page shows. */

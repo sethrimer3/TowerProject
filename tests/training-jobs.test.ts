@@ -437,3 +437,16 @@ test("Training Discount takes its share off every rank a trainer trains, and onl
   assert.equal(g.save.gold, gold, "a stop gives back what was paid");
   assert.equal(trainingGold(row, 30, 495), Math.ceil((trainingGold(row, 30) * 505) / 1000), "49.5% off at level 99, rounded up");
 });
+
+test("a training timer's next second comes sooner as training goes faster", async () => {
+  const { nextTrainingCountdownIn } = await import("../src/ui/research-page.ts");
+  const now = 1_000_000, job = { id: "attack", startedAt: now, completesAt: now + 10_400, gold: 0, ms: 10_400, ranks: 1, speed: 1, used: 0 } as const;
+  // 10.4s left shows 11s; it shows 10s 400ms of training on.
+  assert.equal(nextTrainingCountdownIn(job, 0, now, 1), 400);
+  // The Coin Packs' ×3: 10.4s × 3 = 31.2s of training left, 200ms to its next second, a third of that real time.
+  assert.ok(Math.abs(nextTrainingCountdownIn(job, 0, now, 3) - 200 / 3) < 1e-9);
+  // The boost doubles it while it lasts.
+  assert.equal(nextTrainingCountdownIn(job, now + 60_000, now, 1), 800 / 2);
+  // Done: a second.
+  assert.equal(nextTrainingCountdownIn(job, 0, now + 20_000, 1), 1000);
+});

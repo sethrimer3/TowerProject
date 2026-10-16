@@ -37,11 +37,15 @@ export function formatCountdown(ms: number) {
 export function nextCountdownIn(slot: ArchivistSlot, now: number) {
   const job = jobAt(slot, now);
   if (!job) return undefined;
-  const left = job.completesAt - now, factor = slot.speedUp && now < slot.speedUp.endsAt ? slot.speedUp.factor : 1;
-  // The research time until `left` falls past its next whole second.
-  const toNext = left > 0 ? left - (Math.ceil(left / 1000) - 1) * 1000 : 1000;
-  return toNext / factor;
+  const factor = slot.speedUp && now < slot.speedUp.endsAt ? slot.speedUp.factor : 1;
+  return toNextSecond(job.completesAt - now) / factor;
 }
+/** The time until a countdown with `left` ms to go falls past its next
+ * whole second (a second once it is done), at the normal rate. */
+export const toNextSecond = (left: number) => left > 0 ? left - (Math.ceil(left / 1000) - 1) * 1000 : 1000;
+/** Countdowns move on at most this often (ms): ten times a second, a move
+ * showing more than a second gone when time runs faster than that. */
+export const COUNTDOWN_MIN_MS = 100;
 /** A timestamp as local "YYYY-MM-DD HH:MM". */
 const formatDate = (at: number) => {
   const d = new Date(at), two = (n: number) => String(n).padStart(2, "0");

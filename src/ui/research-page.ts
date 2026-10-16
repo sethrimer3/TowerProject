@@ -7,15 +7,23 @@ import { whole } from "../whole.ts";
 import type { BuyQuantity } from "../buy-quantity.ts";
 import { buyQuantityHtml, maxCount, readQuantity } from "./buy-quantity-select.ts";
 import { TrainingParticles } from "../training-particles.ts";
-import { BOOST_CLAIM_MARGIN_MS, BOOST_MAX_MS, BOOST_RATE, boostLeft, claimBoost, finishGems, nextTrainerGems, ranksInTraining, trainingJob, trainingSlots } from "../training-jobs.ts";
+import { BOOST_CLAIM_MARGIN_MS, BOOST_MAX_MS, BOOST_RATE, boostLeft, claimBoost, finishGems, nextTrainerGems, ranksInTraining, trainingJob, trainingSlots, workLeft, type TrainingJob } from "../training-jobs.ts";
 import type { AppContext } from "./app.ts";
 import { adIcon, clockIcon, el, gemCount, gemIcon, goldIcon, pointsIcon, redoIcon, riseFrom, uiSprite } from "./dom.ts";
 import { TRAINING_RESET_GEMS } from "../gems.ts";
-import { ArchivesPanel, formatDuration } from "./archives-page.ts";
+import { ArchivesPanel, COUNTDOWN_MIN_MS, formatCountdown, formatDuration, toNextSecond } from "./archives-page.ts";
 import { priceAmount } from "./hud.ts";
 
 type TrainingRow = (typeof TRAINING)[number];
 type ResearchTab = "training" | "archives";
+
+/** The real ms until `job`'s timer next shows another second at `now`:
+ * training goes `rate` times as fast, and the boost's ×2 besides until
+ * `boostUntil`. */
+export function nextTrainingCountdownIn(job: TrainingJob, boostUntil: number, now: number, rate: number) {
+  const speed = rate * (now < boostUntil ? BOOST_RATE : 1);
+  return toNextSecond(workLeft(job.completesAt, boostUntil, now, rate)) / speed;
+}
 
 /** The Research page: what grows with time, a tab each. Training (open
  * from the start) and, once that skill is owned, the Archives. Inside a run
@@ -26,7 +34,8 @@ export class ResearchPage {
   private tab: ResearchTab = "training";
   private trainingParticles = new TrainingParticles();
   private archives: ArchivesPanel;
-  /** The frame time the archivists' countdowns next move on. */
+  /** The frame time the tab's countdowns next move on: at once after a
+   * redraw, which may show others. */
   private nextCountdown = 0;
 
   constructor(private ctx: AppContext) {
@@ -35,6 +44,7 @@ export class ResearchPage {
 
   render() {
     if (!this.archivesOpen) this.tab = "training";
+    this.nextCountdown = 0;
     const back = this.ctx.game.run.outside ? "" : `<button class="back" id="research-back">← Back</button>`;
     const head = `${back}${this.tabsHtml()}`;
     if (this.tab === "archives") this.renderArchives(head);
@@ -312,7 +322,7 @@ export class ResearchPage {
   private trainerHtml(t: TrainingRow, step: ReturnType<typeof trainingStep>) {
     const game = this.ctx.game, save = game.save;
     if (trainingJob(save.trainingJobs, t.id))
-      return `<span class="training-job"><button class="training-box training-timer" data-cancel="${t.id}" aria-label="Training ${t.name}: tap to stop and get the Gold back" title="Tap to stop and get the Gold back"><span data-training-timer="${t.id}">${formatDuration(game.training.left(t.id))}</span></button></span>`;
+      return `<span class="training-job"><button class="training-box training-timer" data-cancel="${t.id}" aria-label="Training ${t.name}: tap to stop and get the Gold back" title="Tap to stop and get the Gold back"><span data-training-timer="${t.id}">${formatCountdown(game.training.left(t.id))}</span></button></span>`;
     const q = game.buyQuantity, batch = game.training.batch(t.id, q), full = save.trainingJobs.length >= trainingSlots(save), gold = whole(batch.gold);
     const takes = formatDuration(game.training.toNextRank(t.id, q)), ranks = batch.count === 1 ? `to ${trainingText(step.next, step.unit)}` : `${batch.count} ranks`;
     return `<button class="training-box training-cost training-gold" data-train-gold="${t.id}" ${batch.affordable && !full ? "" : "disabled"} aria-label="Pay ${gold} Gold to a trainer to train ${t.name} ${ranks}, taking ${takes}" title="${full ? "Every trainer is busy" : `${batch.count === 1 ? "" : `${ranks}: `}Takes ${takes}`}">${maxCount(q, batch.count)}${goldIcon()}<span>${priceAmount(gold)}</span></button>`;
@@ -399,35 +409,51 @@ export class ResearchPage {
    * boost's own time. */
   private tickTraining() {
     const game = this.ctx.game;
-    for (const job of game.save.trainingJobs) {
-      const left = game.training.left(job.id);
-      const span = document.querySelector<HTMLElement>(`[data-training-timer="${job.id}"]`);
-      if (span) span.textContent = formatDuration(left);
-      const next = document.querySelector<HTMLElement>(`[data-training-left="${job.id}"]`);
-      if (next) next.textContent = formatDuration(left);
-      const gems = document.querySelector<HTMLElement>(`[data-finish-gems="${job.id}"]`);
-      if (gems && !game.free) gems.textContent = String(finishGems(left));
-    }
+    this.moveTraining();
     const boost = document.getElementById("training-boost");
     if (boost) boost.outerHTML = this.boostHtml();
     document.querySelector<HTMLButtonElement>("#boost-claim")?.addEventListener("click", () => this.saveAfter(game.training.claimBoost()));
   }
 
-  /** Each frame while the page shows: the Archives' countdowns, the moment
-   * one shows another second, or the Training tab's particles. */
-  frame(time: number) {
-    if (this.tab === "archives") return this.moveCountdowns(time);
-    this.drawParticles(time);
+  /** Moves the timers of the ranks in training on, with the Gems that
+   * would finish each. */
+  private moveTraining() {
+    const game = this.ctx.game;
+    for (const job of game.save.trainingJobs) {
+      const left = game.training.left(job.id);
+      const span = document.querySelector<HTMLElement>(`[data-training-timer="${job.id}"]`);
+      if (span) span.textContent = formatCountdown(left);
+      const gems = document.querySelector<HTMLElement>(`[data-finish-gems="${job.id}"]`);
+      if (gems && !game.free) gems.textContent = String(finishGems(left));
+    }
   }
 
-  /** Moves the archivists' countdowns on as each shows another second,
-   * every second or, under a Speed Up, every second shared by its factor,
-   * so the time left reads true to the second. */
+  /** The real ms until a timer of a rank in training next shows another
+   * second: a second, or less while training goes faster. */
+  private nextTrainingIn() {
+    const { save } = this.ctx.game, now = this.ctx.game.clock(), rate = trainingRate(save);
+    return Math.min(1000, ...save.trainingJobs.map((job) => nextTrainingCountdownIn(job, save.trainingBoostUntil, now, rate)));
+  }
+
+  /** Each frame while the page shows: the tab's countdowns, the moment one
+   * shows another second, and the Training tab's particles. */
+  frame(time: number) {
+    this.moveCountdowns(time);
+    if (this.tab === "training") this.drawParticles(time);
+  }
+
+  /** Moves the tab's countdowns on as each shows another second: every
+   * second or, as research or training goes faster, every second shared by
+   * its speed (at most ten times a second), so the time left reads true to
+   * the second. */
   private moveCountdowns(time: number) {
     if (time < this.nextCountdown) return;
-    this.archives.moveOn();
+    const archives = this.tab === "archives";
+    if (archives) this.archives.moveOn();
+    else this.moveTraining();
+    const due = archives ? this.archives.nextCountdownIn() : this.nextTrainingIn();
     // A few ms past the turn of the second, so it has turned.
-    this.nextCountdown = time + this.archives.nextCountdownIn() + 5;
+    this.nextCountdown = time + Math.max(COUNTDOWN_MIN_MS, due + 5);
   }
 
   /** The Training tab's specks and the stream along each row in training. */
