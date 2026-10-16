@@ -73,7 +73,7 @@ html.murk body {
    rules (and the ones below over these); a style written on an element (a
    colour swatch) still wins. Drawings (canvas, images, svg), the bars'
    fills (`i`), rarity colours and badge tokens keep theirs. */
-html.murk body *:not(#_, canvas, img, svg, svg *, i, .eq-tile, .badge-token, [class*="rar"]) {
+html.murk body *:not(#_, canvas, img, svg, svg *, i, .eq-tile, .badge-token, .hand-badge-level, [class*="rar"]) {
   background-color: transparent;
   background-image: none;
   border-color: transparent;
@@ -83,7 +83,10 @@ html.murk body *:not(#_, canvas, img, svg, svg *, i, .eq-tile, .badge-token, [cl
   backdrop-filter: none;
   outline-color: transparent;
 }
-html.murk body *:not(#_, svg, svg *) {
+/* A badge's symbol and the marks on the hand's cards keep their own
+   colours on their dark boxes, and a badge's level stays dark on its gold
+   star. */
+html.murk body *:not(#_, svg, svg *, .badge-glyph, .badge-mark, .hand-badge-level, .badge-level b) {
   color: var(--m-ink);
 }
 html.murk main.shell:not(#_) {
@@ -348,6 +351,13 @@ html.murk .eq-result-title:not(#_) {
 html.murk .inspect-box .hit-hurt:not(#_) { color: var(--m-red); }
 html.murk .inspect-box .hit-heal:not(#_) { color: #6aa0f0; }
 html.murk .inspect-box .hit-gold:not(#_) { color: #e8c040; }
+/* Goals' climb: the line up the tower in this theme's line colour, lit
+   up to the floor reached, and the floors completed lit with it.
+   Training's next value (and the Archives' next level) is green, a gain. */
+html.murk .goals-line:not(#_) { background: var(--m-dim); }
+html.murk .goals-line.lit:not(#_) { background: var(--gold); }
+html.murk .goal-floor.completed:not(#_) { color: var(--gold); }
+html.murk .training-box.next:not(#_) { color: var(--m-green); }
 /* Keys keep their colour, bright enough to read on the night. */
 html.murk .keys .yellow:not(#_) { color: #e8c040; }
 html.murk .keys .blue:not(#_) { color: #6aa0f0; }

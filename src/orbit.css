@@ -83,7 +83,7 @@ html.orbit body {
    ones below over these); a style written on an element (a colour swatch)
    still wins. Drawings (canvas, images, svg), the bars' fills (`i`),
    rarity colours and badge tokens keep theirs. */
-html.orbit body *:not(#_, canvas, img, svg, svg *, i, .eq-tile, .badge-token, [class*="rar"]) {
+html.orbit body *:not(#_, canvas, img, svg, svg *, i, .eq-tile, .badge-token, .hand-badge-level, [class*="rar"]) {
   background-color: transparent;
   background-image: none;
   border-color: transparent;
@@ -92,7 +92,10 @@ html.orbit body *:not(#_, canvas, img, svg, svg *, i, .eq-tile, .badge-token, [c
   backdrop-filter: none;
   outline-color: transparent;
 }
-html.orbit body *:not(#_, svg, svg *) {
+/* A badge's symbol and the marks on the hand's cards keep their own
+   colours on their dark boxes, and a badge's level stays dark on its gold
+   star. */
+html.orbit body *:not(#_, svg, svg *, .badge-glyph, .badge-mark, .hand-badge-level, .badge-level b) {
   color: var(--o-ink);
 }
 html.orbit main.shell:not(#_) {
@@ -414,6 +417,13 @@ html.orbit .eq-result-title:not(#_) {
 html.orbit .inspect-box .hit-hurt:not(#_) { color: var(--o-red); }
 html.orbit .inspect-box .hit-heal:not(#_) { color: #5ab8ff; }
 html.orbit .inspect-box .hit-gold:not(#_) { color: #ffd84a; }
+/* Goals' climb: the line up the tower in this theme's line colour, lit
+   up to the floor reached, and the floors completed lit with it.
+   Training's next value (and the Archives' next level) is green, a gain. */
+html.orbit .goals-line:not(#_) { background: var(--o-rim); }
+html.orbit .goals-line.lit:not(#_) { background: linear-gradient(var(--o-ink), var(--o-amber) 30px); }
+html.orbit .goal-floor.completed:not(#_) { color: var(--o-amber); }
+html.orbit .training-box.next:not(#_) { color: var(--o-green); }
 /* Keys keep their colour. */
 html.orbit .keys .yellow:not(#_) { color: #ffd84a; }
 html.orbit .keys .blue:not(#_) { color: #5ab8ff; }

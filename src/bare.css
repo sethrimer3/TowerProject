@@ -65,7 +65,7 @@ html:is(.shiro, .kuro) body {
    swatch) still wins. Drawings (canvas, images, svg) and the bars' fills
    (`i`) keep theirs. Pseudo-elements, such as the red dots on what is new,
    are untouched. */
-html:is(.shiro, .kuro) body *:not(#_, canvas, img, svg, svg *, i, .eq-tile, .badge-token, [class*="rar"]) {
+html:is(.shiro, .kuro) body *:not(#_, canvas, img, svg, svg *, i, .eq-tile, .badge-token, .hand-badge-level, [class*="rar"]) {
   background-color: transparent;
   background-image: none;
   border-color: transparent;
@@ -75,7 +75,10 @@ html:is(.shiro, .kuro) body *:not(#_, canvas, img, svg, svg *, i, .eq-tile, .bad
   backdrop-filter: none;
   outline-color: transparent;
 }
-html:is(.shiro, .kuro) body *:not(#_, svg, svg *) {
+/* A badge's symbol and the marks on the hand's cards keep their own
+   colours on their dark boxes, and a badge's level stays dark on its gold
+   star. */
+html:is(.shiro, .kuro) body *:not(#_, svg, svg *, .badge-glyph, .badge-mark, .hand-badge-level, .badge-level b) {
   color: var(--b-ink);
 }
 html:is(.shiro, .kuro) main.shell:not(#_) {
@@ -277,6 +280,13 @@ html.shiro .inspect-box .hit-heal:not(#_) { color: #3d7bd9; }
 html.shiro .inspect-box .hit-gold:not(#_) { color: #b38c00; }
 html.kuro .inspect-box .hit-heal:not(#_) { color: #5d96ef; }
 html.kuro .inspect-box .hit-gold:not(#_) { color: #f2cc2a; }
+/* Goals' climb: the line up the tower in this theme's line colour, lit
+   up to the floor reached, and the floors completed lit with it.
+   Training's next value (and the Archives' next level) is green, a gain. */
+html:is(.shiro, .kuro) .goals-line:not(#_) { background: var(--b-soft); }
+html:is(.shiro, .kuro) .goals-line.lit:not(#_) { background: var(--b-ink); }
+html:is(.shiro, .kuro) .goal-floor.completed:not(#_) { color: var(--b-page); background: var(--b-ink); }
+html:is(.shiro, .kuro) .training-box.next:not(#_) { color: var(--b-green); }
 /* Keys keep their colour. */
 html.shiro .keys .yellow:not(#_) { color: #b38c00; }
 html.shiro .keys .blue:not(#_) { color: #3d7bd9; }

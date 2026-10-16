@@ -58,7 +58,7 @@ html.glyph ::-webkit-scrollbar-thumb {
    class rules; a style written on an element (a colour swatch) still wins,
    and drawings, the bars' fills (`i`), rarity colours and badge tokens keep
    theirs. */
-html.glyph body *:not(#_, canvas, img, svg, svg *, i, button, select, input, dialog, .stats, .card, .upgrade, .setting, .range-setting, .inspect-box, .shop, .skill-tree, .currencies, .theme-card, .board, .board-tip, .xp-track, .health-track, .badge-token, .eq-tile, [class*="rar"]) {
+html.glyph body *:not(#_, canvas, img, svg, svg *, i, button, select, input, dialog, .stats, .card, .upgrade, .setting, .range-setting, .inspect-box, .shop, .skill-tree, .currencies, .theme-card, .board, .board-tip, .xp-track, .health-track, .badge-token, .hand-badge-level, .eq-tile, [class*="rar"]) {
   background-color: transparent;
   background-image: none;
   border-color: var(--g-faint);
@@ -225,6 +225,10 @@ html.glyph .danger {
   color: #ff4f5e;
   text-shadow: 0 0 6px #ff4f5e;
 }
+/* Goals' climb: the line up the tower in this theme's line colour, lit
+   up to the floor reached. */
+html.glyph .goals-line:not(#_) { background: var(--g-faint); }
+html.glyph .goals-line.lit:not(#_) { background: var(--g-yellow); }
 
 /* Dialogs: a yellow card over a darkened field. */
 html.glyph dialog {

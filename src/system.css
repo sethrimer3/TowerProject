@@ -56,7 +56,7 @@ html.system body {
    element (a colour swatch) still wins. Drawings (canvas, images, svg) and
    the bars' fills (`i`) keep theirs. Pseudo-elements, such as the red dots
    on what is new, are untouched. */
-html.system body *:not(#_, canvas, img, svg, svg *, i, .eq-tile, .badge-token, [class*="rar"]) {
+html.system body *:not(#_, canvas, img, svg, svg *, i, .eq-tile, .badge-token, .hand-badge-level, [class*="rar"]) {
   background-color: transparent;
   background-image: none;
   border-color: var(--s-ink);
@@ -65,7 +65,10 @@ html.system body *:not(#_, canvas, img, svg, svg *, i, .eq-tile, .badge-token, [
   text-shadow: none;
   backdrop-filter: none;
 }
-html.system body *:not(#_, svg, svg *) {
+/* A badge's symbol and the marks on the hand's cards keep their own
+   colours on their dark boxes, and a badge's level stays dark on its gold
+   star. */
+html.system body *:not(#_, svg, svg *, .badge-glyph, .badge-mark, .hand-badge-level, .badge-level b) {
   color: var(--s-ink);
 }
 /* The app sits on the desktop: the board's page shows the desktop between
@@ -371,6 +374,13 @@ html.system .eq-result-title:not(#_) {
 html.system .inspect-box .hit-hurt:not(#_) { color: var(--s-red); }
 html.system .inspect-box .hit-heal:not(#_) { color: #2f6fe0; }
 html.system .inspect-box .hit-gold:not(#_) { color: #b38c00; }
+/* Goals' climb: the line up the tower in this theme's line colour, lit
+   up to the floor reached, and the floors completed lit with it.
+   Training's next value (and the Archives' next level) is green, a gain. */
+html.system .goals-line:not(#_) { background: var(--s-grey); }
+html.system .goals-line.lit:not(#_) { background: var(--s-ink); }
+html.system .goal-floor.completed:not(#_) { color: var(--s-paper); background: var(--s-ink); }
+html.system .training-box.next:not(#_) { color: var(--s-green); }
 /* Keys keep their colour. */
 html.system .keys .yellow:not(#_) { color: #b38c00; }
 html.system .keys .blue:not(#_) { color: #2f6fe0; }

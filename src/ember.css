@@ -53,7 +53,7 @@ html.ember ::-webkit-scrollbar-thumb {
    class rules; a style written on an element (a colour swatch) still wins,
    and drawings, the bars' fills (`i`), rarity colours and badge tokens keep
    theirs. */
-html.ember body *:not(#_, canvas, img, svg, svg *, i, button, select, input, dialog, .stats, .card, .upgrade, .setting, .range-setting, .inspect-box, .shop, .skill-tree, .currencies, .theme-card, .board, .board-tip, .xp-track, .health-track, .badge-token, .eq-tile, [class*="rar"]) {
+html.ember body *:not(#_, canvas, img, svg, svg *, i, button, select, input, dialog, .stats, .card, .upgrade, .setting, .range-setting, .inspect-box, .shop, .skill-tree, .currencies, .theme-card, .board, .board-tip, .xp-track, .health-track, .badge-token, .hand-badge-level, .eq-tile, [class*="rar"]) {
   background-color: transparent;
   background-image: none;
   border-color: var(--e-faint);
@@ -203,6 +203,10 @@ html.ember .danger {
   color: #ff5a3a;
   text-shadow: 0 0 6px var(--e-red);
 }
+/* Goals' climb: the line up the tower in this theme's line colour, lit
+   up to the floor reached. */
+html.ember .goals-line:not(#_) { background: var(--e-faint); }
+html.ember .goals-line.lit:not(#_) { background: var(--e-amber); }
 
 /* Dialogs: an amber-ruled pane over a darkened field. */
 html.ember dialog {
