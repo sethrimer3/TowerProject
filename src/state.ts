@@ -19,7 +19,7 @@ import { stream, tileRandom } from "./random.ts";
 import { freeTrainingLines, rollFreeTraining } from "./free-training.ts";
 import { doorBlockedMessage, doorName, doorRule, drainsHp, KEY_ORDER, pickupGold } from "./doors.ts";
 import type { SettingKey } from "./settings.ts";
-import { TREES, skillAvailable } from "./skill-trees.ts";
+import { skillAvailable } from "./skill-trees.ts";
 import { routeTo, type Step } from "./pathfinding.ts";
 import {
   TOWER_START_X,
@@ -50,7 +50,6 @@ import {
   type MoveSnapshot,
   type Player,
   type ChestTier,
-  type NoticeTree,
 } from "./entities.ts";
 import { World, LAYOUT_VERSION } from "./delve/world.ts";
 import { RoomWorld, TOWER_LAYOUT_VERSION } from "./tower/room-world.ts";
@@ -90,6 +89,7 @@ import { MailDesk } from "./game/mail-desk.ts";
 import { MissionDesk } from "./game/mission-desk.ts";
 import { EventDesk } from "./game/event-desk.ts";
 import { ShrineDesk } from "./game/shrine-desk.ts";
+import { NoticeDesk } from "./game/notice-desk.ts";
 import { boonFactor, runBoons } from "./shrines.ts";
 import type { MissionType } from "./missions/catalog.ts";
 import type { EventMissionType } from "./events/catalog.ts";
@@ -311,6 +311,9 @@ export class Game {
   /** The Shrines' commands: a Tower run's boons and the Shrine Boons page's
    * choices. */
   readonly shrine = new ShrineDesk(this);
+  /** The Notices: which tabs and buttons wear a dot, and what the player
+   * has been shown. */
+  readonly notices = new NoticeDesk(this);
   /** `rng` is the game's randomness: new run seeds, enemy drops and
    * treasure loot all draw from it (the `game` stream unless given), so a
    * seeded stream replays a game and no visual effect can shift it. */
@@ -2367,15 +2370,6 @@ export class Game {
     const u = UPGRADES.find((u) => u.id === id)!, n = this.save.upgrades[id];
     const held = u.currency === "courage" ? this.save.delve.courage : this.save.tower.inspiration;
     return n < u.max && (this.free || cost(id, n) <= held);
-  }
-  /** Whether `tree`'s tab (and the Upgrades button leading to it) wears a
-   * dot: in the forest, after a run that earned the tree's currency
-   * (Inspiration from the Tower, Courage from the Delve), while a skill in
-   * it can be bought (so never while the tree is locked). Showing that tree
-   * clears it. */
-  treeWaiting(tree: NoticeTree) {
-    return this.save.treeNotices[tree] && !!this.run.outside &&
-      TREES.find((t) => t.id === tree)!.nodes.some((n) => this.canBuySkill(n.id));
   }
   buy(id: UpgradeId) {
     if (!this.canBuySkill(id)) return false;

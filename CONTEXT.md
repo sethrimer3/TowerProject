@@ -539,6 +539,12 @@ _Avoid_: deadlock
 What a stuck hand can't get past: a door, monster, stairs up or ignored tile at the edge of the ground the hero can walk, with more ground beyond it. The run's end dialog names each, where it stands and why no card gets past it.
 _Avoid_: obstacle, deadlock cause
 
+### Notices
+
+**Notice**:
+A dot on a tab or button saying something new waits there for the player: a skill to buy, a card new to the deck, a level-up's points, a reward to claim. Showing the player what it points at clears it until the next thing new.
+_Avoid_: badge (a card's), attention, alert, notification
+
 ### Themes
 
 **UI theme**:

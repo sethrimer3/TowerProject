@@ -1,4 +1,3 @@
-import { deckCards } from "./cards.ts";
 import type { UpgradeId } from "./config.ts";
 import type { TreeId } from "./skill-trees.ts";
 import "./style.css";
@@ -29,7 +28,7 @@ import { isBoard, type AppContext, type Tab } from "./ui/app.ts";
 import { el, ticketIcon } from "./ui/dom.ts";
 import { buildShell } from "./ui/shell.ts";
 import { BoardOverlay } from "./ui/board-overlay.ts";
-import { boardHeadingStale, flashRed, renderAdButton, renderEventsButtons, renderMailButton, renderMissionsButton, renderShopDot, renderTournamentButton, renderBoardHeading, renderHud, renderVitals, purseFrame, togglePurseRates, gearWaiting, upgradesWaiting, dismissResearch } from "./ui/hud.ts";
+import { boardHeadingStale, flashRed, renderAdButton, renderEventsButtons, renderMailButton, renderMissionsButton, renderShopDot, renderTournamentButton, renderBoardHeading, renderHud, renderVitals, purseFrame, togglePurseRates } from "./ui/hud.ts";
 import { ResearchPage } from "./ui/research-page.ts";
 import { confirmAction, RunEndDialog } from "./ui/dialogs.ts";
 import { RunNotesDialog } from "./ui/run-notes-dialog.ts";
@@ -39,7 +38,6 @@ import { GoalsPage } from "./ui/goals-page.ts";
 import { SkillTreePage } from "./ui/skill-tree-page.ts";
 import { ResearchToasts, researchToast, trainingToast } from "./ui/research-toast.ts";
 import { GearPage } from "./ui/gear-page.ts";
-import { equipmentWaiting } from "./equipment/inventory.ts";
 import { DeckPage } from "./ui/deck-page.ts";
 import { RunTrainingBar } from "./ui/run-training-bar.ts";
 import { renderBoardLesson } from "./ui/board-lesson.ts";
@@ -238,7 +236,7 @@ function navigate(requested: string) {
   if (id !== "defend") defendPage.pause();
   const from = tab;
   tab = id;
-  clearDots(id);
+  if (id === "upgrades" || id === "gear" || id === "research" || id === "deck") game.notices.shown(id);
   deck.shown(id === "deck");
   // The Shop's Back returns to the page that opened it.
   if (id === "shop" && from !== "shop") shop.open(from);
@@ -249,7 +247,7 @@ function navigate(requested: string) {
   // And the Events and Relics screens'. A relic shown at full size goes with its screen.
   document.querySelector(".relic-pop")?.remove();
   // A newly opened Equipment screen greets the first visit to the Gear page.
-  if (id === "gear" && from !== "gear" && equipmentWaiting(game.save)) gear.openEquipment();
+  if (id === "gear" && from !== "gear" && game.notices.waiting("equipment")) gear.openEquipment();
   renderer.weather.silence();
   if (isBoard(id)) {
     game.switchMode(id);
@@ -268,15 +266,6 @@ function navigate(requested: string) {
   else if (id === "shrines" && from !== "shrines") shrines.open(from);
   else renderPage();
   update();
-}
-/** Opening the Upgrades page clears the dot the first Inspiration put on
- * it, the Gear page the dot the Gear skill put on it, the Research page
- * the run's Research dot, and the Deck page the dot new cards put on it. */
-function clearDots(id: Tab) {
-  if (id === "upgrades" && upgradesWaiting(game)) game.save.tutorials.upgrades = true;
-  if (id === "gear" && gearWaiting(game)) game.save.tutorials.gear = true;
-  if (id === "research") dismissResearch(game);
-  if (id === "deck") game.save.seen.cards = deckCards(game.save.upgrades);
 }
 /** Opens the Gear page on its Equipment screen. */
 function openBlacksmith() {

@@ -54,11 +54,7 @@ export class SkillTreePage {
     const shown = TREES.filter(t => this.shown(t.id)).length;
     this.renderTree(shown > 1 ? `<div class="tree-tabs" role="group" aria-label="Skill trees">${this.tabsHtml()}</div>` : "");
     // Showing the Inspiration or Courage tree clears the dot a run's currency put on it.
-    const notices = this.ctx.game.save.treeNotices;
-    if ((this.tree === "inspiration" || this.tree === "courage") && notices[this.tree]) {
-      notices[this.tree] = false;
-      this.ctx.update();
-    }
+    if ((this.tree === "inspiration" || this.tree === "courage") && this.ctx.game.notices.shown(this.tree)) this.ctx.update();
   }
 
   /** A tree's tab shows once the tree is open; Dev mode shows them all. */
@@ -71,7 +67,7 @@ export class SkillTreePage {
    * while a run's currency waits to be spent there. */
   private tabsHtml() {
     return TREES.filter(t => this.shown(t.id)).map(t =>
-      `<button data-tree="${t.id}" aria-pressed="${t.id === this.tree}"${(t.id === "inspiration" || t.id === "courage") && this.tree !== t.id && this.ctx.game.treeWaiting(t.id) ? ` class="notify"` : ""}><span>${uiSprite(TREE_ICONS[t.id] ?? "defend")}</span>${t.name}</button>`).join("");
+      `<button data-tree="${t.id}" aria-pressed="${t.id === this.tree}"${(t.id === "inspiration" || t.id === "courage") && this.tree !== t.id && this.ctx.game.notices.waiting(t.id) ? ` class="notify"` : ""}><span>${uiSprite(TREE_ICONS[t.id] ?? "defend")}</span>${t.name}</button>`).join("");
   }
 
   private bindTabs() {

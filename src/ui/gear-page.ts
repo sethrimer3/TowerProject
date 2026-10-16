@@ -52,7 +52,7 @@ export class GearPage {
   render() {
     if (!this.open(this.tab)) this.tab = this.open("equipment") ? "equipment" : "provisions";
     const save = this.ctx.game.save;
-    if (this.tab === "equipment") save.equipment.seen = true;
+    if (this.tab === "equipment") this.ctx.game.notices.shown("equipment");
     const body = this.tab === "equipment" ? this.equipment.html() : this.provisionsHtml();
     const tabs = (["provisions", "equipment"] as const).filter((t) => t === "equipment" || save.upgrades.gear);
     const lockHint = (t: GearTab) => t === "equipment" ? `Claim Tower ${tierNumeral(unlockAt("equipment").tower)}'s floor ${unlockAt("equipment").floor} Goal to open Equipment` : "Locked";

@@ -202,6 +202,12 @@ export class TournamentDesk {
     return !!info && at !== null && this.now < at + CLAIM_MS && !!this.t.entries[info.id] && !this.t.claimed.includes(info.id);
   }
 
+  /** Whether the Tournament button wears its dot: a final prize waits to
+   * be claimed. */
+  get waiting() {
+    return this.unlocked && this.phase === "results" && this.claimable;
+  }
+
   /** Pays the prize the server granted for tournament `id`, once. */
   claim(id: string, prize: Prize) {
     if (this.t.claimed.includes(id)) return false;

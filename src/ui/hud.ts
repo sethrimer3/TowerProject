@@ -7,21 +7,17 @@ import { tierNumeral, tierRewardText } from "../tiers.ts";
 import { MODES, milestones } from "../modes.ts";
 import { capitalized, cardArt, CURRENCY_SPRITES, displayedProgress, el, POINTER_SVG, text, uiSprite } from "./dom.ts";
 import { notesResearched } from "./run-notes-dialog.ts";
-import { CARDS, IN_PLACE, cardText, deckCards, isSiphon, type CardId } from "../cards.ts";
+import { CARDS, IN_PLACE, cardText, isSiphon, type CardId } from "../cards.ts";
 import { BADGES, badgeDef, badgesOn, badgeValue, type RunBadge } from "../badges.ts";
 import { badgeStyle } from "./badge-token.ts";
-import { trainingPoints, trainingWaiting } from "../loadout.ts";
-import { goalsWaiting, heroClass } from "../goals.ts";
+import { trainingPoints } from "../loadout.ts";
+import { heroClass } from "../goals.ts";
 import { shrinesOpen } from "../shrines.ts";
 import type { BoardOverlay } from "./board-overlay.ts";
 import { CountUp } from "./count-up.ts";
 import { PlayClock, RateTally } from "./purse-rate.ts";
-import { estimatedServerTime } from "../shop/clock.ts";
-import { OFFERS } from "../shop/offers.ts";
-import { refusal } from "../shop/transactions.ts";
 import { caveLabel } from "../tournament/leagues.ts";
 import { shortCountdown } from "../tournament/schedule.ts";
-import { equipmentWaiting } from "../equipment/inventory.ts";
 import { GOLD_BOOST_FACTOR, GOLD_BOOST_MS } from "../gold-boost.ts";
 import { adsOff } from "../shop/entitlements.ts";
 import { renderRunMenu } from "./run-menu.ts";
@@ -224,42 +220,26 @@ export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay)
   renderMissionsButton(game);
   renderEventsButtons(game);
   el("run-shop").hidden = !!game.run.outside;
-  el("run-research").classList.toggle("notify", !game.run.outside && researchWaiting(game));
+  el("run-research").classList.toggle("notify", game.notices.waiting("run-research"));
   renderAdButton(game);
   renderLockedTab("deck", !!game.save.upgrades.combatStance, "Deck", "Unlock Combat Stance in the Inspiration tree");
-  // A new Deck lesson waits behind the button until its tutorial is done.
-  const { deck, addCard } = game.save.tutorials;
-  document.querySelector(`[data-tab="deck"]`)?.classList.toggle("notify", !deck || (!!game.save.upgrades.buildout && !addCard) || deckWaiting(game));
-  document.querySelector(`[data-tab="upgrades"]`)?.classList.toggle("notify", upgradesWaiting(game) || game.treeWaiting("inspiration") || game.treeWaiting("courage"));
-  document.querySelector(`[data-tab="research"]`)?.classList.toggle("notify", trainingWaiting(game.save));
+  for (const tab of ["deck", "upgrades", "research"] as const)
+    document.querySelector(`[data-tab="${tab}"]`)?.classList.toggle("notify", game.notices.waiting(tab));
   renderLockedTab("gear", !!game.save.upgrades.gear || game.save.equipment.unlocked, "Gear", "Unlock Gear in the Inspiration tree");
-  document.querySelector(`[data-tab="gear"]`)?.classList.toggle("notify", gearWaiting(game) || equipmentWaiting(game.save));
+  document.querySelector(`[data-tab="gear"]`)?.classList.toggle("notify", game.notices.waiting("gear"));
   renderShopDot(game);
   renderLockedTab("defend", !!game.save.upgrades.legacy, "Defend", "Not yet open");
 }
 
-/** Whether the Shop button shows its dot: a daily offer can be claimed, on
- * the server's time as estimated (the claim itself asks the server). */
-export const shopWaiting = (game: Game) => {
-  const now = estimatedServerTime(game.save.shop.clock, game.clock());
-  return OFFERS.some((o) => o.period === 1 && !refusal(game.save, o, now));
-};
-/** Puts the dot on the Shop tab and the run's Shop while `shopWaiting`,
- * and on the run's hamburger while a button folded in its menu wears one. */
+/** Puts the dot on the Shop tab and the run's Shop while a daily offer can
+ * be claimed, and on the run's hamburger while a button folded in its menu
+ * wears one (`game.notices`). */
 export const renderShopDot = (game: Game) => {
-  const waiting = shopWaiting(game);
+  const waiting = game.notices.waiting("shop");
   document.querySelector(`[data-tab="shop"]`)?.classList.toggle("notify", waiting);
   el("run-shop").classList.toggle("notify", waiting);
-  // The hamburger wears the dots of the buttons folded away in its menu:
-  // Missions always; inside a run Research, the Tournament's and Events';
-  // in the forest Mail.
-  el("run-menu-toggle").classList.toggle("notify", game.missions.waiting || (game.run.outside
-    ? game.mail.recent.length > 0 && game.mail.unread
-    : researchWaiting(game) || tournamentWaiting(game) || game.events.waiting));
+  el("run-menu-toggle").classList.toggle("notify", game.notices.waiting("run-menu"));
 };
-/** Whether the Tournament button wears its dot: a final prize waits to be
- * claimed. */
-const tournamentWaiting = (game: Game) => game.tournament.unlocked && game.tournament.phase === "results" && game.tournament.claimable;
 /** The Tournament button, once the Tournament is open to the player: its
  * trophy over the phase, `2d5h` until the next opens, `OPEN`, `ENDING`, or
  * `CLAIM` with a dot while a final prize waits. In the forest's actions
@@ -270,7 +250,7 @@ export function renderTournamentButton(game: Game) {
   const button = el("tournament-button"), desk = game.tournament, inside = !game.run.outside;
   button.hidden = !desk.unlocked || (inside && !desk.entered);
   if (button.hidden) return;
-  const phase = desk.phase, claim = tournamentWaiting(game);
+  const phase = desk.phase, claim = desk.waiting;
   text("tournament-state", phase === "open" ? "OPEN" : phase === "ending" ? "ENDING" : claim ? "CLAIM" : shortCountdown(desk.nextOpensAt - desk.now));
   button.classList.toggle("notify", claim);
   button.classList.toggle("live", phase === "open");
@@ -315,34 +295,6 @@ export function renderEventsButtons(game: Game) {
   button.title = label;
   button.setAttribute("aria-label", label);
 }
-/** Whether the Upgrades button shows its dot: the first Inspiration has
- * been earned (so the run that paid it has ended by the time the tabs show)
- * and the page hasn't been opened since. */
-export const upgradesWaiting = (game: Game) => !game.save.tutorials.upgrades && game.save.tower.inspiration > 0;
-/** Whether the Gear button shows its dot: the Gear skill is owned and the
- * page hasn't been opened since. */
-export const gearWaiting = (game: Game) => !game.save.tutorials.gear && !!game.save.upgrades.gear;
-
-/** Whether the run's Research button wears its dot: training points can
- * be spent and the hero has levelled up since the Research page was last
- * opened, or an archivist stands idle and research has completed (or an
- * archivist been hired) since. Opening the page dismisses it
- * (`dismissResearch`) until the next such event. */
-export const researchWaiting = (game: Game) => {
-  const seen = game.save.seen;
-  return (trainingWaiting(game.save) && levelForXp(game.save.xp) > seen.level) ||
-    (game.research.idle && game.research.events > seen.archives);
-};
-/** Dismisses the run's Research dot until the next level-up or idle archivist. */
-export function dismissResearch(game: Game) {
-  game.save.seen.level = levelForXp(game.save.xp);
-  game.save.seen.archives = game.research.events;
-}
-/** Whether the Deck tab wears its dot: the deck holds a card (from a skill,
- * a Goal or anywhere else) the Deck page hasn't shown since it was earned. */
-export const deckWaiting = (game: Game) =>
-  !!game.save.upgrades.combatStance && deckCards(game.save.upgrades).some((id) => !game.save.seen.cards.includes(id));
-
 /** The level at the front of the XP bar, which fills with this level's
  * progress; hovering shows the XP still needed. The hero's class names it
  * above (`heroClass`). */
@@ -823,7 +775,7 @@ function renderModeActions(game: Game) {
   floorsButton.title = tower ? "Goals" : "Future Delve action 2";
   floorsButton.classList.toggle("placeholder-action", !tower);
   // A dot while a Goals reward waits to be claimed.
-  floorsButton.classList.toggle("notify", tower && goalsWaiting(game.save));
+  floorsButton.classList.toggle("notify", tower && game.notices.waiting("goals"));
 }
 
 function renderStatus(game: Game, overlay: BoardOverlay) {

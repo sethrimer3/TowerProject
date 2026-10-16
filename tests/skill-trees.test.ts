@@ -223,15 +223,15 @@ test("a run that earned Inspiration puts a dot on the Inspiration tab in the for
   assert.ok(g.enterRun());
   g.save.tower.runCurrency = 1;
   g.save.tower.inspiration = 1;
-  assert.equal(g.treeWaiting("inspiration"), false, "not inside a run");
+  assert.equal(g.notices.waiting("inspiration"), false, "not inside a run");
   g.finish("Ascent ended");
   assert.deepEqual(g.save.treeNotices, { inspiration: true, courage: false });
-  assert.ok(g.run.outside && g.treeWaiting("inspiration"), "Combat Stance costs 1");
+  assert.ok(g.run.outside && g.notices.waiting("inspiration"), "Combat Stance costs 1");
   g.save.tower.inspiration = 0;
-  assert.equal(g.treeWaiting("inspiration"), false, "nothing affordable");
+  assert.equal(g.notices.waiting("inspiration"), false, "nothing affordable");
   g.save.tower.inspiration = 1;
   assert.ok(g.buy("combatStance"));
-  assert.equal(g.treeWaiting("inspiration"), false, "spent");
+  assert.equal(g.notices.waiting("inspiration"), false, "spent");
   assert.ok(decode(JSON.stringify(g.save)).treeNotices.inspiration, "kept until the tree is shown");
 });
 test("a Delve run that earned Courage puts a dot on the Courage tab in the forest once the tree is open and a skill there can be bought", () => {
@@ -242,18 +242,18 @@ test("a Delve run that earned Courage puts a dot on the Courage tab in the fores
   assert.ok(g.enterRun());
   g.save.delve.runCurrency = 3;
   g.save.delve.courage = 1;
-  assert.equal(g.treeWaiting("courage"), false, "not inside a run");
+  assert.equal(g.notices.waiting("courage"), false, "not inside a run");
   g.finish("Delve run ended");
   assert.deepEqual(g.save.treeNotices, { inspiration: false, courage: true });
-  assert.ok(g.run.outside && g.treeWaiting("courage"), "Movement Speed costs 1");
+  assert.ok(g.run.outside && g.notices.waiting("courage"), "Movement Speed costs 1");
   g.save.delve.courage = 0;
-  assert.equal(g.treeWaiting("courage"), false, "nothing affordable");
+  assert.equal(g.notices.waiting("courage"), false, "nothing affordable");
   g.save.delve.courage = 1;
   g.save.upgrades.delve = 0;
-  assert.equal(g.treeWaiting("courage"), false, "the tree is locked");
+  assert.equal(g.notices.waiting("courage"), false, "the tree is locked");
   g.save.upgrades.delve = 1;
   assert.ok(g.buy("moveSpeed"));
-  assert.equal(g.treeWaiting("courage"), false, "spent");
+  assert.equal(g.notices.waiting("courage"), false, "spent");
   assert.ok(decode(JSON.stringify(g.save)).treeNotices.courage, "kept until the tree is shown");
 });
 

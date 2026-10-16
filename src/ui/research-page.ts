@@ -1,8 +1,8 @@
 import { askForGems, helpButton, showHelp } from "./dialogs.ts";
 import { play } from "../sound.ts";
 import { permanentBoost, trainingRate } from "../shop/entitlements.ts";
-import { TRAINING, TRAINING_GROUPS, TRAINING_PER_LEVEL, levelForXp, trainingCap, type TrainingId } from "../config.ts";
-import { trainingBulk, trainingPoints, trainingStep, trainingText, trainingWaiting, trainingOpen } from "../loadout.ts";
+import { TRAINING, TRAINING_GROUPS, TRAINING_PER_LEVEL, trainingCap, type TrainingId } from "../config.ts";
+import { trainingBulk, trainingPoints, trainingStep, trainingText, trainingOpen } from "../loadout.ts";
 import { whole } from "../whole.ts";
 import type { BuyQuantity } from "../buy-quantity.ts";
 import { buyQuantityHtml, maxCount, readQuantity } from "./buy-quantity-select.ts";
@@ -67,7 +67,7 @@ export class ResearchPage {
     const save = this.ctx.game.save, busy = save.archives.slots.filter(s => s.job).length;
     // Once trainers work, Training's subtitle also counts them at work.
     const trainers = this.ctx.game.training.hired ? ` · ${save.trainingJobs.length}/${trainingSlots(save)} TRAINING` : "";
-    const trainingDot = this.tab !== "training" && trainingWaiting(save) && levelForXp(save.xp) > save.seen.training ? ` class="notify"` : "";
+    const trainingDot = this.tab !== "training" && this.ctx.game.notices.waiting("training") ? ` class="notify"` : "";
     return `<div class="tree-tabs" role="group" aria-label="Research">` +
       `<button data-research-tab="training" aria-pressed="${this.tab === "training"}"${trainingDot}><span>${pointsIcon("ui-sprite")}</span>Training<small>${trainingPoints(save).left} POINTS${trainers}</small></button>` +
       `<button data-research-tab="archives" aria-pressed="${this.tab === "archives"}"><span>${uiSprite("log")}</span>Archives<small>${busy}/${save.archives.slots.length} RESEARCHING</small></button></div>`;
@@ -88,8 +88,7 @@ export class ResearchPage {
   }
 
   private renderTraining(tabs: string) {
-    const save = this.ctx.game.save;
-    save.seen.training = levelForXp(save.xp);
+    this.ctx.game.notices.shown("training");
     // The rows scroll; a purchase redraws them without moving the list.
     const scrolled = document.querySelector(".training-scroll")?.scrollTop ?? 0;
     el("research").innerHTML = `${tabs}${this.trainingHtml()}`;
