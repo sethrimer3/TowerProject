@@ -6,7 +6,7 @@ import { tierNumeral } from "../tiers.ts";
 import type { AppContext } from "./app.ts";
 import { helpButton } from "./dialogs.ts";
 import { el, itemSprite, uiSprite } from "./dom.ts";
-import { devAmount, goldPrice } from "./hud.ts";
+import { devAmount, priceAmount } from "./hud.ts";
 import { buyQuantityHtml, readQuantity } from "./buy-quantity-select.ts";
 import { EquipmentPanel } from "./equipment-panel.ts";
 
@@ -139,7 +139,7 @@ export class GearPage {
       (Object.entries(item.grants) as [Stat, number][]).filter(([, n]) => n > 1).map(([stat, n]) => ` · +${n * owned} ${TOTAL_WORDS[stat]}`).join("");
     return `<div class="provision-head"><div class="purse-big" title="Gold">${uiSprite("gold")}<b>${devAmount(game, game.save.gold)}</b></div>${this.startingStatsHtml(open, bought)}${buyQuantityHtml(game.buyQuantities, q)}</div>${open.map((item) => {
       const owned = game.save.provisions[item.id], bulk = provisionBulk(game.save, item.id, q, game.free ? Infinity : game.save.gold), price = whole(bulk.cost);
-      return `<article class="card"><div class="item-icon${item.id === bought ? " bought" : ""}">${provisionSprite(item.id)}</div><div><small>${owned ? `OWNED × ${owned}${total(item, owned)}` : "NOT YET OWNED"}</small><h3>${item.name}</h3><p>${provisionText(item.id)}</p></div><button data-gold="${item.id}" ${!bulk.affordable && !game.free ? "disabled" : ""}>Buy · ${uiSprite("gold", "stat-sprite")} ${goldPrice(price)}${q !== 1 ? `<small class="buy-count">x${bulk.count}</small>` : ""}</button></article>`;
+      return `<article class="card"><div class="item-icon${item.id === bought ? " bought" : ""}">${provisionSprite(item.id)}</div><div><small>${owned ? `OWNED × ${owned}${total(item, owned)}` : "NOT YET OWNED"}</small><h3>${item.name}</h3><p>${provisionText(item.id)}</p></div><button data-gold="${item.id}" ${!bulk.affordable && !game.free ? "disabled" : ""}>Buy · ${uiSprite("gold", "stat-sprite")} ${priceAmount(price)}${q !== 1 ? `<small class="buy-count">x${bulk.count}</small>` : ""}</button></article>`;
     }).join("")}`;
   }
 }

@@ -12,7 +12,7 @@ import type { AppContext } from "./app.ts";
 import { adIcon, clockIcon, el, gemCount, gemIcon, goldIcon, pointsIcon, redoIcon, riseFrom, uiSprite } from "./dom.ts";
 import { TRAINING_RESET_GEMS } from "../gems.ts";
 import { ArchivesPanel, formatDuration } from "./archives-page.ts";
-import { goldPrice } from "./hud.ts";
+import { priceAmount } from "./hud.ts";
 
 type TrainingRow = (typeof TRAINING)[number];
 type ResearchTab = "training" | "archives";
@@ -315,7 +315,7 @@ export class ResearchPage {
       return `<span class="training-job"><button class="training-box training-timer" data-cancel="${t.id}" aria-label="Training ${t.name}: tap to stop and get the Gold back" title="Tap to stop and get the Gold back"><span data-training-timer="${t.id}">${formatDuration(game.training.left(t.id))}</span></button></span>`;
     const q = game.buyQuantity, batch = game.training.batch(t.id, q), full = save.trainingJobs.length >= trainingSlots(save), gold = whole(batch.gold);
     const takes = formatDuration(game.training.toNextRank(t.id, q)), ranks = batch.count === 1 ? `to ${trainingText(step.next, step.unit)}` : `${batch.count} ranks`;
-    return `<button class="training-box training-cost training-gold" data-train-gold="${t.id}" ${batch.affordable && !full ? "" : "disabled"} aria-label="Pay ${gold} Gold to a trainer to train ${t.name} ${ranks}, taking ${takes}" title="${full ? "Every trainer is busy" : `${batch.count === 1 ? "" : `${ranks}: `}Takes ${takes}`}">${maxCount(q, batch.count)}${goldIcon()}<span>${goldPrice(gold)}</span></button>`;
+    return `<button class="training-box training-cost training-gold" data-train-gold="${t.id}" ${batch.affordable && !full ? "" : "disabled"} aria-label="Pay ${gold} Gold to a trainer to train ${t.name} ${ranks}, taking ${takes}" title="${full ? "Every trainer is busy" : `${batch.count === 1 ? "" : `${ranks}: `}Takes ${takes}`}">${maxCount(q, batch.count)}${goldIcon()}<span>${priceAmount(gold)}</span></button>`;
   }
 
   /** A row's Gem reset: closed inside a run, where a hero is only ever

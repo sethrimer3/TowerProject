@@ -19,7 +19,7 @@ import {
 import type { AppContext } from "./app.ts";
 import { askForGems, showHelp } from "./dialogs.ts";
 import { el, gemIcon, riseFrom, uiSprite } from "./dom.ts";
-import { currencyAmount, devAmount, goldPrice } from "./hud.ts";
+import { currencyAmount, devAmount, priceAmount } from "./hud.ts";
 import { ACTION_ICONS, categoryIcon, itemIcon, materialIcon } from "./equipment-icons.ts";
 import { playSlagMerge } from "./slag-merge.ts";
 
@@ -418,7 +418,7 @@ export class EquipmentPanel {
     const cost = levelCost(item), free = this.game.free, mat = materialOf(category);
     const affordable = cost && (free || (this.game.save.gold >= cost.gold && this.e.materials[mat] >= cost.material));
     const level = cost
-      ? `<p class="level-cost">Next level: ${uiSprite("gold", "ui-sprite gold-icon")} ${goldPrice(cost.gold)} + ${materialIcon(mat)} ${cost.material} ${EQUIP_MATERIALS[mat].name}</p>
+      ? `<p class="level-cost">Next level: ${uiSprite("gold", "ui-sprite gold-icon")} ${priceAmount(cost.gold)} + ${materialIcon(mat)} ${cost.material} ${EQUIP_MATERIALS[mat].name}</p>
         <div class="dialog-actions"><button id="eq-level"${affordable ? "" : " disabled"}>${ACTION_ICONS.upgrade} Level up</button><button id="eq-level10"${affordable ? "" : " disabled"}>+10</button><button id="eq-levelmax"${affordable ? "" : " disabled"}>Max</button></div>`
       : `<p class="hint">At ${RARITY_TIERS[item.rarity].name}'s highest level.${RARITY_TIERS[item.rarity].next ? ` Merge to ${RARITY_TIERS[RARITY_TIERS[item.rarity].next!].name} to raise it to ${RARITY_TIERS[RARITY_TIERS[item.rarity].next!].maxLevel} and open effect slot ${rarityRank(RARITY_TIERS[item.rarity].next!) + 1} at Level ${RARITY_TIERS[RARITY_TIERS[item.rarity].next!].slotLevel}.` : ""}</p>`;
     const worn = wornIn(this.e, item.id);
@@ -497,7 +497,7 @@ export class EquipmentPanel {
     const item = findItem(this.e, id), slot = item?.slots[index];
     if (!item || !slot || index >= openSlotCount(item)) return;
     const { modal } = this.ctx, free = this.game.free, mat = materialOf(categoryOf(item));
-    const costText = (c: { gold: number; material: number }) => `${uiSprite("gold", "ui-sprite gold-icon")} ${goldPrice(c.gold)} + ${materialIcon(mat)} ${c.material}`;
+    const costText = (c: { gold: number; material: number }) => `${uiSprite("gold", "ui-sprite gold-icon")} ${priceAmount(c.gold)} + ${materialIcon(mat)} ${c.material}`;
     const affords = (c: { gold: number; material: number }) => free || (this.game.save.gold >= c.gold && this.e.materials[mat] >= c.material);
     const current = slot.effect && slot.rarity ? `<div class="slot-current"><small>CURRENT</small><p>${this.choiceHtml(item, { effect: slot.effect, rarity: slot.rarity })}</p></div>` : "";
     const offer = slot.offer ? `<div class="slot-offer"><small>${slot.effect ? "NEW CANDIDATES" : "CHOOSE ONE"}</small>${slot.offer.map((c, i) =>

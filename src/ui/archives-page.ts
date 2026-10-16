@@ -9,7 +9,7 @@ import { loadout } from "../loadout.ts";
 import { unlockAt } from "../goals.ts";
 import { tierNumeral } from "../tiers.ts";
 import type { AppContext } from "./app.ts";
-import { currencyAmount, goldPrice, shortAmount } from "./hud.ts";
+import { currencyAmount, priceAmount, shortAmount } from "./hud.ts";
 import { cellIcon, el, gemCount, gemIcon, redoIcon, uiSprite } from "./dom.ts";
 import { whole } from "../whole.ts";
 import { SPEED_UP_FACTORS, SPEED_UP_HOURS, jobAt, type SpeedUpFactor, type SpeedUpHours } from "../speed-ups.ts";
@@ -442,7 +442,7 @@ export class ArchivesPanel {
       const ms = duration(a, next), share = a.progress[id] ?? 0;
       const target = next.effect.target, shown = (archives: ArchivesSave) => RESEARCH_TARGETS[target].shown(targetValue(save, target, archives));
       // The Research button shows the Gold; without it, the price does.
-      const gold = state === "available" ? "" : `${uiSprite("gold", "stat-sprite")} ${goldPrice(researchPrice(a, next))} · `;
+      const gold = state === "available" ? "" : `${uiSprite("gold", "stat-sprite")} ${priceAmount(researchPrice(a, next))} · `;
       detail = `<span class="research-target">${RESEARCH_TARGETS[target].name}:</span><span class="training-box">${shown(a)}</span><span class="training-arrow" aria-hidden="true">→</span><span class="training-box next">${shown(withNextLevel(a, id))}</span>`;
       const time = share
         ? `<span class="research-time kept" title="Progress kept: ${formatDuration(share * ms)} of ${formatDuration(ms)} done">${formatDuration((1 - share) * ms)}</span>`
@@ -454,7 +454,7 @@ export class ArchivesPanel {
     else if (state === "locked") action = `<span class="research-state">Requires ${missing(save, id).map(requirementText).join(" + ")}</span>`;
     else {
       const why = this.picking === null ? "Choose an archivist first." : cannotSwitch(save, this.picking, id);
-      action = `<button data-research="${id}" aria-label="Research ${def.name} for ${currencyAmount(researchPrice(a, next!))} Gold" ${why ? `disabled title="${why}"` : ""}><span class="research-gold">${uiSprite("gold", "stat-sprite")} ${goldPrice(researchPrice(a, next!))}</span></button>`;
+      action = `<button data-research="${id}" aria-label="Research ${def.name} for ${currencyAmount(researchPrice(a, next!))} Gold" ${why ? `disabled title="${why}"` : ""}><span class="research-gold">${uiSprite("gold", "stat-sprite")} ${priceAmount(researchPrice(a, next!))}</span></button>`;
     }
     return `<article class="research ${state}" role="listitem"><div class="research-head"><b>${def.name}</b><button class="tree-help research-about" data-about="${id}" aria-label="About ${def.name}" title="About ${def.name}">?</button><small>LEVEL ${level} / ${maxLevel(id, save.upgrades)}</small></div>
       <div class="research-next">${detail}<span class="research-action">${price}${action}</span></div></article>`;

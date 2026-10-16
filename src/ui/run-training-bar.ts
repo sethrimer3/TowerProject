@@ -4,7 +4,7 @@ import { runTrainingBulk, runTrainingOffer, runTrainingValue } from "../run-trai
 import { buyQuantityHtml, readQuantity, runCount } from "./buy-quantity-select.ts";
 import { trainingText, trainingOpen } from "../loadout.ts";
 import { el, itemSprite, POINTER_SVG, uiSprite } from "./dom.ts";
-import { sparkRed } from "./hud.ts";
+import { priceAmount, sparkRed } from "./hud.ts";
 
 type Group = keyof typeof TRAINING_GROUPS;
 /** Each group's button icon. */
@@ -230,7 +230,7 @@ export class RunTrainingBar {
     // Range, Speed, ATK / Tile and Targets without their units, which their tooltips give, so the value fits the card.
     card.querySelector(".drill-value")!.textContent = trainingText(value, unit, true);
     const buy = card.querySelector<HTMLButtonElement>(".drill-buy")!;
-    const label = offer.maxed ? "Max" : `${runCount(q, bulk.count)}${silverIcon()}<b>${bulk.cost.toLocaleString("en-US")}</b>`;
+    const label = offer.maxed ? "Max" : `${runCount(q, bulk.count)}${silverIcon()}<b>${priceAmount(bulk.cost, 10_000)}</b>`;
     if (buy.dataset.label !== label) {
       buy.dataset.label = label;
       buy.innerHTML = label;
