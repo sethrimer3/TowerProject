@@ -529,11 +529,14 @@ h1 span {
 .purse.rates b:has(> .rate-amount) {
   flex: 1;
   min-width: 0;
-  display: flex;
-  flex-direction: column;
 }
 .purse .rate-amount { font-size: min(1em, calc((100cqi - var(--purse-icon) - var(--purse-gap)) / var(--rate-em, 3.2))); }
-.purse .per-minute { align-self: flex-end; margin-top: -1px; font-size: 8px; font-weight: 500; line-height: 0.8; opacity: 0.8; }
+/* Inside a run the amounts held keep the /min row's room under them, left
+   empty, so tapping between them and the rates moves no line of the purse. */
+.purse:not(.forest) :is(.gold-stat, .silver-stat) b { display: flex; flex-direction: column; }
+.purse:not(.forest):not(.rates) :is(.gold-stat, .silver-stat) b::after { content: "/min"; visibility: hidden; }
+.purse .per-minute,
+.purse:not(.forest):not(.rates) :is(.gold-stat, .silver-stat) b::after { align-self: flex-end; margin-top: -1px; font-size: 8px; font-weight: 500; line-height: 0.8; opacity: 0.8; }
 .gem-stat b { color: #8fe3ff; }
 .shard-stat b { color: #8dffb8; }
 .gold-stat b { color: #ffd86b; }
