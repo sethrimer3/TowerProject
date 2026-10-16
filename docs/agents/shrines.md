@@ -23,7 +23,7 @@ Spell boons, Bounce Shot, Orbs, Unlock a Random Spell and the ranged enemies' tr
 - Hero stats (ATK, max HP, shroud, Regen, Lifesteal, Parry %) are stored in the run, so `ShrineDesk.sync` rescales them from the factors the run last applied (`run.shrine.applied`) to the factors its boons give now (`rescaleHero`; HP keeps its share of max HP).
   Parry % is the hero's own times its factor (the Lifesteal trade-off's 0.3) plus the Parry % boon's `parryBonus`, up to `PARRY_CAP`.
   It runs on every pick and whenever research completes (`DeskHost.researchDone`, called by `ResearchDesk.settle`).
-  Anything the hero gains or loses mid-run is multiplied by the same factor (`boonFactor`): training and gear shifts (`hero-sync.ts`), run training and siphons, the Max HP badge, and ATK shards (`Game.stepRules.shardAttack`).
+  Anything the hero gains or loses mid-run is multiplied by the same factor (`boonFactor`): every loadout change, run training, siphons and the Max HP badge (`shiftHero` in `hero-stats.ts`), and ATK shards (`Game.stepRules.shardAttack`).
 - Enemies: `RoomWorld.foes` (from `run.shrine.applied.foes`) passes every tile, changes included (a Greater Boss is summoned into `run.changes`), through `foeTile`: HP and ATK scaled, boss HP on top, a boss striking first (`fast`), and a Fast enemy striking second (`fast` dropped) with ATK ×2.5.
   `Game.boonsChanged` sets it on the board and drops the hand's plan.
 - Economy: `RunPurse` (Gold banked, Silver found, kill Silver, Silver / Floor, Interest's rate); the Gold multipliers' Shrine Boons line (`GoldContext.shrine`, from `Game.goldContext` and `RunPurse`); Free Up Chance (`rollFreeTraining`'s `boonChance`); Max Play Speed (`Game.maxSpeed`, scaled by SBB, so it may be fractional).

@@ -35,7 +35,7 @@ All its rolls come from a stream seeded by the run seed and floor (`extrasSeed`)
 Turning on Dev mode (`setDevMode`) owns Combat Stance, Buildout and Badges and every badge at level 7.
 `handTurn` activates a card when its path's last step lands (after its fight settles, wrapping the encounter's `settle`) or an in-place card acts: `Game.activate` pays the rewards, HP and Silver and XP through the run (so undo takes them back) and Gold through `RunPurse.badgeGold`, gated per target in `lootedTiles`.
 `ui/badge-token.ts` draws the tokens, the marks cards wear for them and each badge's value at every level (`badgeLevelsHtml`, from each `BADGES` entry's `unit` and `lead`, and a gate's `sign`, `<` or `≥` (`gateSign`), under its description in the Deck page's detail and the draw animations) and `ui/badge-reveal.ts` the draw animations.
-**Max HP** raises the hero's max HP (and `run.loadout`'s) and its HP by the badge's value for the rest of the run.
+**Max HP** raises the hero's max HP (and `run.loadout`'s) and its HP by the badge's value for the rest of the run, raised as a provision is (`flatShift`: Max HP research, then the boons).
 **Goldback** (last card of the hand; it raises *×2* beside the Gold coin) adds its value to `run.goldCombo`, which the next kill's or chest's Gold multiplies by and spends (`RunPurse.withCombo`, once the Gold is actually paid; the combo is the run's, so undo takes an activation back).
 The Badges draw screens offer `DrawAgain` ("x1 more" / "x10 more" with the Gem price, its price red (`short`) while unaffordable, and a press then asks for Gems) on their last screen.
 `tests/badges.test.ts` covers it.

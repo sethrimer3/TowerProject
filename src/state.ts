@@ -29,7 +29,6 @@ import {
   levelForXp,
   TRAINING_PER_LEVEL,
   isStatRow,
-  trained,
   cost,
   UPGRADES,
   TRAINING,
@@ -66,13 +65,14 @@ import { materialDef, MATERIALS } from "./materials.ts";
 import { switchTier, tierNumeral, tierRewardText, tierXp } from "./tiers.ts";
 import type { GoldContext } from "./gold-multipliers.ts";
 import { RunTimeline } from "./run-timeline.ts";
+import { flatShift, rankShift, shiftHero } from "./hero-stats.ts";
 import { enemyTitle } from "./scaling.ts";
 import { snap } from "./exact.ts";
 import { enemyStat, keyCount, whole, wholeChange } from "./whole.ts";
 import { MODES, milestones, type ModeProfile } from "./modes.ts";
 import { boughtInRun, ranksInRun, runTrainingBulk, runTrainingOffer, type RunTrainingOffer } from "./run-training.ts";
 import { openQuantities, type BuyQuantity } from "./buy-quantity.ts";
-import { attackPerTile, attackRange, attackSpeed, multishotChance, multishotTargets, rapidFireChance, rapidFireDuration, critRule, loadout, percentPotionChance, potionPercent, reviveChance, statFactor, type TrainingView } from "./loadout.ts";
+import { attackPerTile, attackRange, attackSpeed, multishotChance, multishotTargets, rapidFireChance, rapidFireDuration, critRule, loadout, percentPotionChance, potionPercent, reviveChance, type TrainingView } from "./loadout.ts";
 import { researched } from "./archives.ts";
 import { chargesLeft, chargesPerRun, climbFloor, spendCharge, type Charge } from "./run-charges.ts";
 import type { MaterialId, MaterialStack } from "./materials.ts";
@@ -1076,14 +1076,12 @@ export class Game {
       }
     }
   }
-  /** Max HP's badge: the hero's max HP (and the run's loadout, as a rank
-   * of training bought for the run) rises by `n`, with the HP to fill it. */
+  /** Max HP's badge: the hero's max HP (and the run's loadout) rises by
+   * `n` for the run, raised as a provision's is (`flatShift`), with the HP
+   * to fill it. */
   private raiseMaxHp(n: number, id: BadgeId) {
-    const p = this.run.player, kept = this.run.loadout;
-    n = snap(n * boonFactor(this.run, "maxHp"));
-    p.maxHp = snap(p.maxHp + n);
-    p.hp = snap(p.hp + n);
-    if (kept) kept.maxHp = snap(kept.maxHp + n);
+    const p = this.run.player;
+    n = shiftHero(this.run, { maxHp: flatShift(this.save, "maxHp", n) }).maxHp ?? 0;
     this.gain(p.x, p.y, `+${wholeChange(n)} max HP`, { heart: true, raised: true });
     this.message = `${BADGES[id].name} · +${wholeChange(n)} max HP`;
   }
@@ -1153,17 +1151,14 @@ export class Game {
   }
   /** A siphon's turn: the run's top levels of its training row (its
    * `siphonCost`) traded for a key of its colour. The hero and the run's
-   * loadout lose what those levels add (times the stat's research), for the rest of
-   * the run only (max HP: HP falls only as far as the new max). */
+   * loadout lose what those levels add (`rankShift`), for the rest of the
+   * run only (max HP: HP falls only as far as the new max). */
   private siphon(card: SiphonCard, scale: number) {
     const { row: id, color } = SIPHONS[card], level = this.siphonLevel(card), levels = this.siphonCost(card);
     const p = this.run.player;
     const row = TRAINING.find((t) => t.id === id) as StatTrainingRow;
     const stat = row.stat as "maxHp" | "attack" | "defense";
-    const loss = snap((trained(row, level) - trained(row, level - levels)) * statFactor(this.save, stat) * boonFactor(this.run, stat));
-    p[stat] = snap(p[stat] - loss);
-    if (stat === "maxHp") p.hp = Math.min(p.hp, p.maxHp);
-    if (this.run.loadout) this.run.loadout[stat] = snap(this.run.loadout[stat] - loss);
+    const loss = -(shiftHero(this.run, { [stat]: rankShift(this.save, this.mode, row, level, level - levels) })[stat] ?? 0);
     p.keys[color] = snap(p.keys[color] + scale);
     this.noteKey(color, scale);
     const lost = stat === "maxHp" ? `−${wholeChange(loss)} max HP` : `−${wholeChange(loss)} ${stat === "attack" ? "ATK" : "DEF"}`;
@@ -2648,17 +2643,10 @@ export class Game {
     return this.trainsOnTheJob && this.playing && !this.encounter?.summary;
   }
   /** A stat row's rank bought for the run: the hero and the run's loadout
-   * gain what the rank from `level` adds, times the stat's research. Returns the
-   * max HP it added. */
+   * gain what the rank from `level` adds (`rankShift`). Returns the max HP
+   * it added. */
   private raiseRunStat(row: StatTrainingRow, level: number) {
-    const stat = row.stat, p = this.run.player,
-      gain = snap((trained(row, level + 1) - trained(row, level)) * statFactor(this.save, stat) * boonFactor(this.run, stat));
-    p[stat] = snap((p[stat] ?? 0) + gain);
-    const kept = this.run.loadout;
-    if (kept) kept[stat] = snap((kept[stat] ?? 0) + gain);
-    // More maximum HP comes with the HP to fill it.
-    if (stat === "maxHp") p.hp = snap(p.hp + gain);
-    return stat === "maxHp" ? gain : 0;
+    return shiftHero(this.run, { [row.stat]: rankShift(this.save, this.mode, row, level, level + 1) }).maxHp ?? 0;
   }
   /** Find Potion bought for the run: its chance of percent potions rises,
    * and the floor stood on shows its new percent potions at once. */

@@ -7,6 +7,7 @@ import { boonFactor, runBoons } from "./shrines.ts";
 import { CRIT_CHANCE_RANK, CRIT_FACTOR_BASE, CRIT_FACTOR_RANK, FIND_POTION_BASE, FIND_POTION_MAX, FLOOR_GOLD_BASE, FLOOR_GOLD_RANK, FLOOR_SILVER_BASE, FLOOR_SILVER_RANK, FIND_POTION_RANK, FREE_TRAINING_RANK, RAPID_FIRE_CHANCE_RANK, RAPID_FIRE_DURATION_BASE, RAPID_FIRE_DURATION_RANK, TRAINING_GROUPS, REVIVE_BASE, REVIVE_MAX, REVIVE_RANK, GOLD_SHOP, GOLD_BONUS_RANK, SILVER_BONUS_RANK, schedulePrice, POTION_PERCENT_BASE, POTION_PERCENT_RANK, TRAINING, TRAINING_PER_LEVEL, UPGRADES, trainingCap, isStatRow, levelForXp, trained, trainingWorth, ATTACK_RANGE_BASE, ATTACK_RANGE_RANK, ATTACK_SPEED_BASE, ATTACK_SPEED_RANK, ATK_PER_TILE_FIRST, ATK_PER_TILE_FALL, MULTISHOT_CHANCE_RANK, MULTISHOT_TARGETS_BASE, MULTISHOT_TARGETS_RANK, type GoldItemId, type StatTrainingRow, type TrainingId, type TrainingRow, type UpgradeId } from "./config.ts";
 import { wornEffects } from "./equipment/effects.ts";
 import { silverFound } from "./gold-multipliers.ts";
+import { rankShift } from "./hero-stats.ts";
 import { PIERCE_CAP } from "./equipment/balance.ts";
 import { RESEARCH, researched, type ResearchTarget } from "./archives.ts";
 import { ranksInTraining, trainingGold } from "./training-jobs.ts";
@@ -91,7 +92,7 @@ function add(total: Record<Stat, number>, rows: readonly (Granting & { id: strin
  * and the research target each reads. */
 const STAT_RESEARCH = { attack: "attackPercent", defense: "defensePercent", maxHp: "maxHpPercent", shroud: "shroudPercent" } as const;
 /** What `stat` is multiplied by, the whole of it a run starts with and
- * each rank a run trains or siphons: its research's percent (1 without). */
+ * so each change to it mid-run (hero-stats.ts): its research's percent (1 without). */
 export const statFactor = (save: Pick<Save, "archives">, stat: Stat) =>
   stat in STAT_RESEARCH ? researched(save.archives, STAT_RESEARCH[stat as keyof typeof STAT_RESEARCH], 100) / 100 : 1;
 
@@ -383,10 +384,12 @@ function trainingPrices(save: Save, row: TrainingRow, maxed: boolean, trainerMax
  * multiply it (Silver / Floor counting Silver Bonus). */
 export function rowValue(save: Save, id: TrainingId, extra: number, view: TrainingView): { unit: string; value: number } {
   const row = TRAINING.find((t) => t.id === id)!, f = rowResearchFactor(save, id), run = view.run;
-  const more = (ranks: number) => ({ ...save, training: { ...save.training, [id]: save.training[id] + ranks } });
   if (isStatRow(row)) {
-    const stat = row.stat, base = loadout(save, view.mode)[stat], gain = extra ? loadout(more(extra), view.mode)[stat] - base : 0;
-    const value = run ? (run.player[stat] ?? 0) + gain * boonFactor(run, stat) : base + gain;
+    // What `extra` ranks change, from the ranks the hero has (a run's own
+    // too), as a run would gain them (`rankShift`).
+    const stat = row.stat, ranks = save.training[id] + (run?.training?.[id] ?? 0);
+    const gain = extra ? rankShift(save, view.mode, row, ranks, ranks + extra) : 0;
+    const value = run ? (run.player[stat] ?? 0) + gain * boonFactor(run, stat) : loadout(save, view.mode)[stat] + gain;
     return { unit: statUnit(stat), value: shownStat(stat, snap(value * f)) };
   }
   const ranks = save.training[id] + (run?.training?.[id] ?? 0) + extra, boons = run ? runBoons(run, save) : null;
