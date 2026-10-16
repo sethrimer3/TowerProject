@@ -63,6 +63,10 @@ export type Enemy = {
   /** The percent a Shielded enemy's bubble cuts the hero's damage to this
    * one by, after DEF; set by the board as it reads the tile, never saved. */
   guard?: number;
+  /** An enemy spawned onto the floor during the run (`Game.spawnEnemy`):
+   * its number among the run's spawns, which keys its loot apart from the
+   * tile's (`RunPurse.killKey`); absent on enemies the floor was made with. */
+  spawn?: number;
 };
 /** An area reward chest's metal: gold for an area mastered, silver for one
  * cleared (tower/area-ledger.ts). */
@@ -211,6 +215,11 @@ export type RunCore = {
   /** How many of each Free Upgrade group's rolls this run has drawn from
    * its stream, which starts from the run seed (free-training.ts). */
   freeRolls?: Partial<Record<"offense" | "defense" | "utility", number>>;
+  /** How many enemies the run has spawned onto its floors
+   * (`Game.spawnEnemy`), each numbered by the count before it; absent with
+   * none. Undo takes it back with the run, so a spawn undone and made again
+   * gets the same number. */
+  spawns?: number;
   /** Goldback's combo: the multiplier its activations have tallied for the
    * next Gold the run finds (each adds its value), used up by that Gold;
    * absent with none. */

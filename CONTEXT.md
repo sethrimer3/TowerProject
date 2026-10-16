@@ -328,6 +328,10 @@ _Avoid_: area boss, guardian
 The Tower floor's secret monster: once every torch on a floor is put out, it appears on the open floor nearest the stairs, once a floor each run. It has twice a boss's HP, ATK and DEF and pays twice a boss's rewards, but guards nothing.
 _Avoid_: super boss, secret boss
 
+**Spawned enemy**:
+A monster that appears on a floor during a run rather than being made with it, like the Greater Boss. It pays its own rewards even on a tile where a monster already fell.
+_Avoid_: summon, added enemy
+
 **Silver**:
 The currency of a single run: each monster beaten pays some, more on higher floors and for stronger monsters (and each new floor, with Wishing Well), and it is spent only inside that run, on run training. Undo takes it back with the kill, and it is gone when the run ends.
 _Avoid_: coins, run gold

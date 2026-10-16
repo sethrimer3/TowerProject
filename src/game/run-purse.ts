@@ -91,12 +91,12 @@ export class RunPurse {
     return this.rules.lootKey(this.run, x, y);
   }
 
-  /** What gates a kill's loot at (x, y): the tile's loot key, a Greater
-   * Boss's apart, since it appears on the floor nearest the stairs, most
-   * often where the stairs' guard already fell and paid. */
+  /** What gates a kill's loot at (x, y): the tile's loot key, an enemy
+   * spawned during the run's with its spawn number after it, since it may
+   * stand where an enemy already fell and paid. */
   killKey(enemy: Enemy, x: number, y: number) {
     const key = this.lootKey(x, y);
-    return enemy.strength === "greaterBoss" ? `${key}:greater` : key;
+    return enemy.spawn === undefined ? key : `${key}:s${enemy.spawn}`;
   }
 
   /** What the equipment this mode's hero wears does. */

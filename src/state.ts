@@ -1931,8 +1931,17 @@ export class Game {
     const gem = this.gemFinder.gem, at = greaterBossSpot(world, gem ? [run.player, gem] : [run.player]);
     if (!at) return;
     run.summoned = [...(run.summoned ?? []), world.room];
-    run.changes[`${at.x},${at.y}`] = greaterBoss(world);
+    this.spawnEnemy(at, greaterBoss(world));
     this.summoned = { ...at, at: performance.now() };
+  }
+  /** Puts `tile`'s enemy on the floor at `at` mid-run, numbered among the
+   * run's spawns (`run.spawns`), so its kill pays its own loot and counts
+   * toward missions even where an enemy already fell (`RunPurse.killKey`).
+   * Every enemy made during a run, rather than with its floor, comes here. */
+  private spawnEnemy(at: { x: number; y: number }, tile: Tile) {
+    const spawn = this.run.spawns ?? 0;
+    this.run.spawns = spawn + 1;
+    this.run.changes[`${at.x},${at.y}`] = { ...tile, enemy: { ...tile.enemy!, spawn } };
   }
   /** Mode-specific progress once the player stands on the new tile,
    * stepped onto from `from`. */

@@ -113,3 +113,37 @@ test("a Greater Boss called where the stairs' guard fell still shows and pays it
   const loaded = new Game(decode(JSON.stringify(g.save)));
   assert.equal(loaded.enemyGold(x, y), 0);
 });
+
+test("every enemy spawned mid-run pays its own loot, once, even on a tile already paid", () => {
+  const { g, world } = besideLastTorch();
+  const game = g as unknown as { purse: RunPurse; spawnEnemy(at: { x: number; y: number }, tile: Tile): void };
+  const { x, y } = greaterBossSpot(world, [g.run.player])!;
+  g.save.tower.lootedTiles[`${g.run.seed}:${g.run.height}:${x},${y}`] = true;
+  const enemy = getTowerGateEnemy(world.room, "normal", "balanced");
+  for (const spawn of [0, 1]) {
+    game.spawnEnemy({ x, y }, { kind: "enemy", enemy });
+    assert.equal(world.tile(x, y).enemy!.spawn, spawn, "numbered in turn");
+    assert.ok(g.enemyGold(x, y) > 0, `spawn ${spawn} shows its Gold`);
+    assert.ok(game.purse.enemyLoot(world.tile(x, y).enemy!, x, y).gold > 0, `spawn ${spawn} pays it`);
+    assert.equal(g.enemyGold(x, y), 0, "and only once");
+    // A reload keeps the spawn, its number and the Gold paid.
+    const loaded = new Game(decode(JSON.stringify(g.save)));
+    assert.equal(loaded.world.tile(x, y).enemy?.spawn, spawn);
+    assert.equal(loaded.run.spawns, spawn + 1);
+    assert.equal(loaded.enemyGold(x, y), 0);
+    world.clear(x, y);
+  }
+});
+
+test("a spawn undone and made again keeps its number, so it can't pay twice", () => {
+  const { g, dx, dy } = besideLastTorch(4, true);
+  g.stepManually(dx, dy);
+  const [[, first]] = greaterBosses(g.run.changes) as [[string, Tile]];
+  assert.equal(first.enemy!.spawn, 0);
+  assert.ok(g.undo());
+  assert.equal(g.run.spawns, undefined);
+  g.stepManually(dx, dy);
+  const [[, again]] = greaterBosses(g.run.changes) as [[string, Tile]];
+  assert.equal(again.enemy!.spawn, 0);
+  assert.equal(g.run.spawns, 1);
+});
