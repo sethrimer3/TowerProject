@@ -6,6 +6,7 @@
 The stats show the height in their right-hand column (in the forest, the tower or delve the entrance leads to, such as Tower 2), and beside it, once a run has earned any, the Inspiration (Courage in the Delve) it has earned, its icon and number flashing each time it rises; under them the Inspiration or Courage a new best would pay, and below that the currencies held, one a line: Gems, in the forest Ascension Shards, Gold and, inside a run, its Silver (amounts over 9,999 shortened, such as 123K; the exact amount on hover).
 Inside a run a tap on the currencies switches Gold and Silver to the rates the run finds them at, such as *12/min*, over the last minute of play: time the hand waits (paused, or with no card able to act) or a page or dialog covers the board doesn't count, so a pause leaves the rates as they were.
 Gold prices on buy buttons read in full up to 99,999 and shortened from 100,000 (123K, 4.56M); Silver prices on a run's training cards are shortened from 10,000 (12.3K).
+Shortened amounts, wherever they appear, use K (thousand), M (million), B (billion), T (trillion), q (quadrillion), Q (quintillion), s (sextillion), S (septillion), O (octillion), N (nonillion) and D (decillion), always rounded down; past 999D they read as a power of ten.
 
 ## Gems on the floors
 

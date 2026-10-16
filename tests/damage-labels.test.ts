@@ -13,8 +13,8 @@ const hero = (over: Partial<Player> = {}): Player =>
 const enemy = (hp: number, attack: number, defense: number): Enemy => ({ name: "Slime", hp, attack, defense, tier: 1, strength: "normal" });
 
 test("amounts shorten to fit a tile's corner, rounded down", () => {
-  const shown = [0, 999, 1000, 1299, 9999, 12_345, 999_999, 1_500_000, 2.34e9, 5e12, 1e15].map(compactAmount);
-  assert.deepEqual(shown, ["0", "999", "1K", "1.2K", "9.9K", "12K", "999K", "1.5M", "2.3B", "5T", "1e15"]);
+  const shown = [0, 999, 1000, 1299, 9999, 12_345, 999_999, 1_500_000, 2.34e9, 5e12, 1e15, 2.5e18, 4e21, 6e24, 7e27, 8e30, 9.9e33, 1e36].map(compactAmount);
+  assert.deepEqual(shown, ["0", "999", "1K", "1.2K", "9.9K", "12K", "999K", "1.5M", "2.3B", "5T", "1q", "2.5Q", "4s", "6S", "7O", "8N", "9.9D", "1e36"]);
 });
 
 test("a prediction is worked out once per kind of enemy until the hero's ATK, DEF or shroud changes", () => {

@@ -1,4 +1,4 @@
-import { compactAmount, enemyStat, keyCount, whole, wholeHp } from "../whole.ts";
+import { amountUnit, compactAmount, enemyStat, keyCount, stepsIn, whole, wholeHp } from "../whole.ts";
 import { enemyStats } from "../enemy-curves.ts";
 import { tierStats } from "../tiers.ts";
 import type { Game } from "../state.ts";
@@ -33,27 +33,30 @@ import { MISSION_CAPACITY } from "../missions/catalog.ts";
 /** The stats cluster, action buttons and status line around the board. */
 
 export const devAmount = (game: Pick<Game, "save">, value: number) => game.save.settings.devMode ? "∞" : currencyAmount(whole(value));
-const UNITS = ["M", "B", "T", "Qa", "Qi"];
 /** A currency held, bounded in width: in full with thousands separators
- * below a million, then in millions, billions … with two decimals, rounded
- * down (1.23M, 456.78B), and past the last unit in scientific notation. */
+ * below a million, then in millions, billions … decillions with two
+ * decimals, rounded down (1.23M, 456.78B, 7.00q), and past 999D in
+ * scientific notation. */
 export function currencyAmount(n: number) {
   if (n < 1e6) return n.toLocaleString("en-US");
-  let unit = 0, size = 1e6;
-  while (unit < UNITS.length - 1 && n >= size * 1000) [unit, size] = [unit + 1, size * 1000];
-  if (n >= size * 1000) return n.toExponential(2);
+  const found = amountUnit(n);
+  if (!found) return n.toExponential(2);
+  const [size, unit] = found;
   // Whole hundredths of the unit, so no rounding creeps in (1,150,000 is 1.15M).
-  return `${(Math.floor(n / (size / 100)) / 100).toFixed(2)}${UNITS[unit]}`;
+  return `${(stepsIn(n, size / 100) / 100).toFixed(2)}${unit}`;
 }
 /** An amount short enough for the HUD's narrow purse: in full below `from`
- * (10,000), then to three figures in thousands, millions or billions
- * (12.3K, 456M). */
+ * (10,000), then to three figures in thousands, millions … decillions
+ * (12.3K, 456M, 7.89q; see `AMOUNT_UNITS`), and past 999D in scientific
+ * notation. */
 export function shortAmount(n: number, from = 10_000) {
   if (n < from) return String(n);
-  const [size, unit] = n < 1e6 ? [1e3, "K"] : n < 1e9 ? [1e6, "M"] : [1e9, "B"];
+  const found = amountUnit(n);
+  if (!found) return n.toExponential(2);
+  const [size, unit] = found;
   // Whole steps of the last figure shown, so no rounding creeps in.
   const v = n / size, digits = v < 10 ? 2 : v < 100 ? 1 : 0, step = size / 10 ** digits;
-  return `${Math.floor(n / step) / 10 ** digits}${unit}`;
+  return `${stepsIn(n, step) / 10 ** digits}${unit}`;
 }
 /** A price on a buy button (or beside one): in full below `from`, then
  * shortened as the purse is (123K, 4.56M), so the button keeps its width.

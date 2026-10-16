@@ -265,7 +265,8 @@ export class ResearchPage {
     // the value they reach.
     const q = game.buyQuantity, bulk = trainingBulk(save, t.id, q), count = step.maxed ? 1 : Math.max(1, bulk.count);
     const { now, unit } = step, next = count === 1 ? step.next : trainingStep(save, t.id, count, view).next;
-    const shown = (v: number) => trainingText(v, unit);
+    // Attack Range and Attack Speed show the bare value; the row's name says what it counts.
+    const shown = (v: number) => trainingText(v, unit, unit === "tiles" || unit === "shots");
     const job = trainingJob(save.trainingJobs, t.id);
     const notes = step.maxed || !hired || job ? "" : this.timeNote(t.id, q);
     // A row at its most has nothing more to show or buy: its label spans the
