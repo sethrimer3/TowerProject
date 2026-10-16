@@ -3243,7 +3243,7 @@ dialog.dismiss-anywhere { cursor: pointer; }
   box-shadow: 0 0 0 2px #f5dc9c55, 0 0 28px 8px #e9b84a66, 0 14px 30px #000c;
   animation: card-rise 0.9s cubic-bezier(0.2, 0.9, 0.3, 1.08) backwards;
 }
-.reward-reveal-prize .gem-icon, .reward-reveal-prize .shard-icon, .reward-reveal-prize .ui-sprite { width: 72px; height: 72px; }
+.reward-reveal-prize .gem-icon, .reward-reveal-prize .shard-icon, .reward-reveal-prize .points-icon, .reward-reveal-prize .ui-sprite { width: 72px; height: 72px; }
 .reward-reveal-star { font-size: 64px; line-height: 1; color: #ffd76a; text-shadow: 0 0 18px #ffbf3c; }
 .reward-reveal-amount { font-size: 28px; font-weight: 500; color: #ffe7a6; letter-spacing: 1px; }
 .reward-reveal .card-reveal-text small { color: #e9c77e; }
