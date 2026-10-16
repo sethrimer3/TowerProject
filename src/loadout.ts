@@ -5,7 +5,8 @@ import { PARRY_CAP, type CritRule } from "./combat.ts";
 import type { Mode, RunCore, Save } from "./entities.ts";
 import { boonFactor, runBoons } from "./shrines.ts";
 import { CRIT_CHANCE_RANK, CRIT_FACTOR_BASE, CRIT_FACTOR_RANK, FIND_POTION_BASE, FIND_POTION_MAX, FLOOR_GOLD_BASE, FLOOR_GOLD_RANK, FLOOR_SILVER_BASE, FLOOR_SILVER_RANK, FIND_POTION_RANK, FREE_TRAINING_RANK, RAPID_FIRE_CHANCE_RANK, RAPID_FIRE_DURATION_BASE, RAPID_FIRE_DURATION_RANK, TRAINING_GROUPS, REVIVE_BASE, REVIVE_MAX, REVIVE_RANK, GOLD_SHOP, GOLD_BONUS_RANK, SILVER_BONUS_RANK, schedulePrice, POTION_PERCENT_BASE, POTION_PERCENT_RANK, TRAINING, TRAINING_PER_LEVEL, UPGRADES, trainingCap, isStatRow, levelForXp, trained, trainingWorth, ATTACK_RANGE_BASE, ATTACK_RANGE_RANK, ATTACK_SPEED_BASE, ATTACK_SPEED_RANK, ATK_PER_TILE_FIRST, ATK_PER_TILE_FALL, MULTISHOT_CHANCE_RANK, MULTISHOT_TARGETS_BASE, MULTISHOT_TARGETS_RANK, type GoldItemId, type StatTrainingRow, type TrainingId, type TrainingRow, type UpgradeId } from "./config.ts";
-import { raised, wornEffects } from "./equipment/effects.ts";
+import { wornEffects } from "./equipment/effects.ts";
+import { silverFound } from "./gold-multipliers.ts";
 import { PIERCE_CAP } from "./equipment/balance.ts";
 import { RESEARCH, researched, type ResearchTarget } from "./archives.ts";
 import { ranksInTraining, trainingGold } from "./training-jobs.ts";
@@ -265,10 +266,6 @@ export const floorSilver = (save: Pick<Save, "upgrades" | "training">) =>
   save.upgrades.wishingWell ? floorSilverAt(save.training.floorSilver) : 0;
 const floorSilverAt = (ranks: number) => FLOOR_SILVER_BASE + FLOOR_SILVER_RANK * ranks;
 
-/** Silver Bonus training's multiplier on all Silver a run finds, in
- * percent: 100 without Wealthy. */
-export const silverBonus = (save: Pick<Save, "upgrades" | "training">) =>
-  bonusAt(save.upgrades.wealthy ? save.training.silverBonus : 0, SILVER_BONUS_RANK);
 /** Gold Bonus training's multiplier on the Gold a kill, or an item picked up
  * or door opened in a run, pays, in percent:
  * 100 without Loot. */
@@ -395,10 +392,9 @@ export function rowValue(save: Save, id: TrainingId, extra: number, view: Traini
   const ranks = save.training[id] + (run?.training?.[id] ?? 0) + extra, boons = run ? runBoons(run, save) : null;
   if (id === "floorGold") return { unit: "", value: shownAmount(floorGoldAt(ranks) * f) };
   if (id === "floorSilver" || id === "silverBonus") {
-    // Silver / Floor is raised by Silver Bonus, once Wealthy opens it.
+    // Silver / Floor is raised by Silver found, as the run pays it.
     const bonusRanks = id === "silverBonus" ? ranks : save.training.silverBonus + (run?.training?.silverBonus ?? 0);
-    const bonus = id === "silverBonus" || save.upgrades.wealthy ? bonusAt(bonusRanks, SILVER_BONUS_RANK) : 100;
-    const found = raised((bonus / 100) * rowResearchFactor(save, "silverBonus") * (boons?.silverFound ?? 1), wornEffects(save, view.mode).silverFind);
+    const found = silverFound(save, view.mode, bonusRanks, boons?.silverFound);
     if (id === "silverBonus") return { unit: "×", value: snap(found) };
     return { unit: "", value: shownAmount(floorSilverAt(ranks) * f * (boons?.floorSilver ?? 1) * found) };
   }

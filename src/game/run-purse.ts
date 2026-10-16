@@ -2,7 +2,7 @@ import { interestCap, researched } from "../archives.ts";
 import { ENEMY_GOLD, FAST_GOLD, PICKUP_GOLD, RANGED_GOLD, SHIELDED_GOLD, silverForKill } from "../config.ts";
 import type { RoomWorld } from "../tower/room-world.ts";
 import { snap } from "../exact.ts";
-import { floorGold, floorSilver, goldBonus, silverBonus } from "../loadout.ts";
+import { floorGold, floorSilver, goldBonus } from "../loadout.ts";
 import { averageGold, rollTreasureLoot } from "../loot.ts";
 import { pickupGold } from "../doors.ts";
 import { litTorches } from "../board.ts";
@@ -10,11 +10,8 @@ import { point, type Enemy, type Mode, type Run, type Save, type Tile } from "..
 import type { MaterialStack } from "../materials.ts";
 import { MODES, type ModeProfile } from "../modes.ts";
 import { ranksInRun } from "../run-training.ts";
-import { goldFactor } from "../shop/entitlements.ts";
-import { themeGoldFactor } from "../theme-collection.ts";
-import { goldBoostFactor } from "../gold-boost.ts";
-import { tierGold } from "../tiers.ts";
-import { raised, wornEffects } from "../equipment/effects.ts";
+import { goldBanked, silverFound, type GoldContext } from "../gold-multipliers.ts";
+import { wornEffects } from "../equipment/effects.ts";
 import { keepDrop, rollBossDrop, rollMaterials } from "../equipment/acquire.ts";
 import type { EquipItem } from "../equipment/inventory.ts";
 import { CATEGORIES, type EquipMaterialId } from "../equipment/catalog.ts";
@@ -104,25 +101,23 @@ export class RunPurse {
     return wornEffects(this.save, this.mode);
   }
 
-  /** Banks Gold found in the run, fractions and all (`snap`), times the
-   * Shop's coin packs and the themes owned, and the Gold ad's boost while
-   * it lasts (what it found while boosted kept in `runBoostGold`), and raised by
-   * equipment's Gold found, and by the run's Gold boons; returns what it
-   * banked. */
+  /** What the Gold multipliers read for this run (`gold-multipliers.ts`). */
+  private get goldContext(): GoldContext {
+    return { save: this.save, mode: this.mode, tier: this.tier, now: this.now, shrine: this.boons?.gold };
+  }
+
+  /** Banks Gold found in the run, fractions and all (`snap`), times every
+   * Gold multiplier (`goldBanked`: the tower's, the ads', the Shop's coin
+   * packs, the themes owned, equipment's Gold found and the run's Gold
+   * boons; what it found while the Gold ad's boost ran kept in
+   * `runBoostGold`); returns what it banked. */
   gold(found: number) {
-    const before = this.beforeBoost(found), boost = goldBoostFactor(this.save, this.now);
-    const gold = snap(before * boost);
-    if (boost !== 1) this.slice.runBoostGold = snap((this.slice.runBoostGold ?? 0) + before);
+    const { gold, unboosted } = goldBanked(found, this.goldContext);
+    if (unboosted !== null) this.slice.runBoostGold = snap((this.slice.runBoostGold ?? 0) + unboosted);
     this.save.gold = snap(this.save.gold + gold);
     earn(this.save, "gold", gold);
     this.slice.runGold = snap(this.slice.runGold + gold);
     return gold;
-  }
-
-  /** Gold found raised by equipment's Gold found, the Shop's coin packs,
-   * the themes owned and the run's Gold boons, before the Gold ad's boost. */
-  private beforeBoost(found: number) {
-    return raised(found, this.worn.goldFind) * goldFactor(this.save) * themeGoldFactor(this.save) * (this.boons?.gold ?? 1);
   }
 
   /** The Gold a kill of `enemy` at (x, y) would bank, as `enemyLoot` pays
@@ -130,16 +125,15 @@ export class RunPurse {
    * once its tile is looted. Changes nothing. */
   killGoldPreview(enemy: Enemy, x: number, y: number, instakill = false) {
     if (this.slice.lootedTiles[this.killKey(enemy, x, y)]) return 0;
-    const found = tierGold(this.tier, snap(this.killGold(enemy, instakill) * (this.run.goldCombo ?? 1)));
-    return snap(this.beforeBoost(found) * goldBoostFactor(this.save, this.now));
+    return goldBanked(snap(this.killGold(enemy, instakill) * (this.run.goldCombo ?? 1)), this.goldContext).gold;
   }
 
-  /** Adds Silver found in the run, raised by Silver Bonus training and
-   * research and the run's Silver Bonus boons (all multiplied), fractions
-   * and all; returns what it added. */
+  /** Adds Silver found in the run, times Silver found's multiplier
+   * (`silverFound`: Silver Bonus training and research, the run's Silver
+   * Bonus boons and equipment's Silver found), fractions and all; returns
+   * what it added. */
   silver(base: number) {
-    const bonus = snap((base * silverBonus(this.trainingNow) * researched(this.save.archives, "silverBonus", 100) * (this.boons?.silverFound ?? 1)) / 10_000);
-    const silver = raised(bonus, this.worn.silverFind);
+    const silver = snap(base * silverFound(this.save, this.mode, this.trainingNow.training.silverBonus, this.boons?.silverFound));
     this.run.silver = snap((this.run.silver ?? 0) + silver);
     this.noteSilver(silver);
     return silver;
@@ -186,10 +180,10 @@ export class RunPurse {
    * per physical kill. */
   enemyLoot(enemy: Enemy, x: number, y: number, scale = 1, instakill = false): { gold: number; cells: number; equipment: EquipmentLoot | null } {
     if (!this.loot(this.killKey(enemy, x, y))) return { gold: 0, cells: 0, equipment: null };
-    // Then the tier's bonus; Effective or Dampen on the card that took the
-    // fight scales it too.
+    // Effective or Dampen on the card that took the fight scales it; `gold`
+    // then adds the tier's bonus and the other Gold multipliers.
     const base = this.withCombo(this.killGold(enemy, instakill)), raised = scale === 1 ? base : snap(base * scale);
-    const gold = this.gold(tierGold(this.tier, raised));
+    const gold = this.gold(raised);
     const cells = enemy.strength === "greaterBoss" ? this.cells(scale) : 0;
     return { gold, cells, equipment: this.equipmentLoot(enemy, y) };
   }
@@ -231,7 +225,7 @@ export class RunPurse {
    * Returns what it paid. */
   pickupGold(x: number, y: number, base: number) {
     if (!base || !this.loot(this.pickupKey(x, y))) return 0;
-    return this.gold(tierGold(this.tier, this.bonused(base)));
+    return this.gold(this.bonused(base));
   }
 
   /** What gates an item's Gold at (x, y), apart from a kill's or chest's
@@ -247,7 +241,7 @@ export class RunPurse {
     if (!this.loot(this.lootKey(x, y))) return null;
     const rules = this.rules;
     const loot = rollTreasureLoot(rules.equivalentFloor(rules.progressAt(this.run, y)), this.rng);
-    const gold = this.gold(tierGold(this.tier, this.withCombo(this.bonused(snap(loot.gold + PICKUP_GOLD)))));
+    const gold = this.gold(this.withCombo(this.bonused(snap(loot.gold + PICKUP_GOLD))));
     for (const m of loot.materials) this.save.materials[m.id] += m.quantity;
     for (const m of loot.materials) tallyIn(this.slice.runFinds.materials, m.id, m.quantity);
     return { gold, materials: loot.materials };
@@ -259,8 +253,7 @@ export class RunPurse {
   treasureGoldPreview(x: number, y: number) {
     if (this.slice.lootedTiles[this.lootKey(x, y)]) return 0;
     const rules = this.rules, floor = rules.equivalentFloor(rules.progressAt(this.run, y));
-    const found = tierGold(this.tier, snap(this.bonused(snap(averageGold(floor) + PICKUP_GOLD)) * (this.run.goldCombo ?? 1)));
-    return snap(this.beforeBoost(found) * goldBoostFactor(this.save, this.now));
+    return goldBanked(snap(this.bonused(snap(averageGold(floor) + PICKUP_GOLD)) * (this.run.goldCombo ?? 1)), this.goldContext).gold;
   }
 
   /** Spare Change: Gold for a floor climbed for the first time in the run,
@@ -269,7 +262,7 @@ export class RunPurse {
   floorGold(key: string) {
     const base = floorGold(this.trainingNow);
     if (!base || !this.loot(key)) return 0;
-    return this.gold(tierGold(this.tier, this.researched(base, "floorGold")));
+    return this.gold(this.researched(base, "floorGold"));
   }
 
   /** Floor Skip Reward: when Skip climbs past the floor the run stands on
@@ -297,7 +290,7 @@ export class RunPurse {
         }
         found = snap(found + gold);
       }
-    return found ? this.gold(tierGold(this.tier, snap((found * percent) / 100))) : 0;
+    return found ? this.gold(snap((found * percent) / 100)) : 0;
   }
 
   /** Goldback's combo: `amount` times the multiplier its activations
@@ -316,7 +309,7 @@ export class RunPurse {
    * since undo can't take Gold back. Returns what it paid. */
   badgeGold(key: string, amount: number) {
     if (!this.loot(key)) return 0;
-    return this.gold(tierGold(this.tier, amount));
+    return this.gold(amount);
   }
 
   /** The key that gates a floor's Spare Change: the Tower's stairs tile at

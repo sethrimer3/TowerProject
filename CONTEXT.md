@@ -332,6 +332,10 @@ _Avoid_: super boss, secret boss
 A monster that appears on a floor during a run rather than being made with it, like the Greater Boss. It pays its own rewards even on a tile where a monster already fell.
 _Avoid_: summon, added enemy
 
+**Gold multiplier**:
+A factor on every Gold banked: the tower's, the Gold ad's boost or Ad-Disable (one slot), each coin pack, the themes owned, the equipment's Gold found and the run's Gold boons. The player sees them together as *All Gold Bonuses*; Gold Bonus training is none of them, since it raises only a kill's, a chest's and an item's Gold.
+_Avoid_: Gold bonus (the Training row)
+
 **Silver**:
 The currency of a single run: each monster beaten pays some, more on higher floors and for stronger monsters (and each new floor, with Wishing Well), and it is spent only inside that run, on run training. Undo takes it back with the kill, and it is gone when the run ends.
 _Avoid_: coins, run gold

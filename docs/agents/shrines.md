@@ -26,7 +26,7 @@ Spell boons, Bounce Shot, Orbs, Unlock a Random Spell and the ranged enemies' tr
   Anything the hero gains or loses mid-run is multiplied by the same factor (`boonFactor`): training and gear shifts (`hero-sync.ts`), run training and siphons, the Max HP badge, and ATK shards (`Game.stepRules.shardAttack`).
 - Enemies: `RoomWorld.foes` (from `run.shrine.applied.foes`) passes every tile, changes included (a Greater Boss is summoned into `run.changes`), through `foeTile`: HP and ATK scaled, boss HP on top, a boss striking first (`fast`), and a Fast enemy striking second (`fast` dropped) with ATK ×2.5.
   `Game.boonsChanged` sets it on the board and drops the hand's plan.
-- Economy: `RunPurse` (Gold banked, Silver found, kill Silver, Silver / Floor, Interest's rate); the Gold bonus breakdown's Shrine Boons line (`goldBonuses`' `shrine`, `Game.shrineGold`); Free Up Chance (`rollFreeTraining`'s `boonChance`); Max Play Speed (`Game.maxSpeed`, scaled by SBB, so it may be fractional).
+- Economy: `RunPurse` (Gold banked, Silver found, kill Silver, Silver / Floor, Interest's rate); the Gold multipliers' Shrine Boons line (`GoldContext.shrine`, from `Game.goldContext` and `RunPurse`); Free Up Chance (`rollFreeTraining`'s `boonChance`); Max Play Speed (`Game.maxSpeed`, scaled by SBB, so it may be fractional).
 
 **Undo.**
 A pick (and the offer's draws) is copied into every undo snapshot of the run and a fall's (`ShrineDesk.share`), and `sync` rescales each, as Training bought mid-run is: undo takes back steps, never a boon.

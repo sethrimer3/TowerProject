@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { decode, defaults } from "../src/save.ts";
 import { decodeSettings } from "../src/settings.ts";
-import { goldBonuses, goldBonusTotal } from "../src/gold-bonuses.ts";
+import { goldMultipliers, goldMultiplierTotal } from "../src/gold-multipliers.ts";
 import { THEME_IDS, THEME_PRICE, canBuyTheme, gameLook, themeGoldFactor, themesOf, uiLook } from "../src/theme-collection.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
 
@@ -115,10 +115,10 @@ test("each theme owned adds 2.5% to all Gold banked", () => {
   assert.equal(themeGoldFactor(save), 1.025);
   save.themes = [...THEME_IDS];
   assert.equal(themeGoldFactor(save), 1.8);
-  const row = goldBonuses(save, 1, 0).at(-1)!;
-  assert.deepEqual(row, { name: "Themes owned (32)", factor: 1.8 });
-  assert.equal(goldBonusTotal(goldBonuses(save, 1, 0)), 1.8);
-  assert.equal(goldBonuses({ ...save, themes: [] }, 1, 0).at(-1)!.factor, null, "none owned: Inactive");
+  const themes = (s: typeof save) => goldMultipliers({ save: s, mode: "tower", tier: 1, now: 0 }).find((m) => m.id === "themes")!;
+  assert.deepEqual(themes(save), { id: "themes", name: "Themes owned (32)", factor: 1.8 });
+  assert.equal(goldMultiplierTotal(goldMultipliers({ save, mode: "tower", tier: 1, now: 0 })), 1.8);
+  assert.equal(themes({ ...save, themes: [] }).factor, null, "none owned: Inactive");
 
   // Banking: a kill's Gold with no theme and with all of them.
   const killGold = (themes: typeof save.themes) => {

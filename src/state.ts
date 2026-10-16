@@ -63,7 +63,8 @@ import { AREA_BURST_MS, AreaLedger, chestReward, clearedInspiration, type AreaRe
 import { TowerClimb } from "./tower/climb.ts";
 import { callsGreaterBoss, greaterBoss, greaterBossSpot } from "./tower/greater-boss.ts";
 import { materialDef, MATERIALS } from "./materials.ts";
-import { switchTier, tierGold, tierNumeral, tierRewardText, tierXp } from "./tiers.ts";
+import { switchTier, tierNumeral, tierRewardText, tierXp } from "./tiers.ts";
+import type { GoldContext } from "./gold-multipliers.ts";
 import { enemyTitle } from "./scaling.ts";
 import { snap } from "./exact.ts";
 import { enemyStat, keyCount, whole, wholeChange } from "./whole.ts";
@@ -525,7 +526,7 @@ export class Game {
   private payout(): boolean {
     const record = this.run.height > this.slice.reached;
     this.recordProgress();
-    this.purse.gold(tierGold(this.tier, this.rules.endGold(this.run)));
+    this.purse.gold(this.rules.endGold(this.run));
     return record;
   }
   snapshot(): MoveSnapshot {
@@ -1323,10 +1324,11 @@ export class Game {
   get boons() {
     return this.mode === "tower" && !this.run.outside ? runBoons(this.run as TowerRun, this.save) : null;
   }
-  /** The Gold bonus breakdown's Shrine Boons line: the boons' Gold factor
-   * inside a Tower run once Shrines are open (1 with none), else none. */
-  get shrineGold() {
-    return this.shrine.open ? this.boons?.gold ?? 1 : undefined;
+  /** What the Gold multipliers read now (`gold-multipliers.ts`): the
+   * Shrine Boons line is the boons' Gold factor inside a Tower run once
+   * Shrines are open (1 with none), else none. */
+  get goldContext(): GoldContext {
+    return { save: this.save, mode: this.mode, tier: this.tier, now: this.clock(), shrine: this.shrine.open ? this.boons?.gold ?? 1 : undefined };
   }
   /** The run's boons changed its hero or enemies (`ShrineDesk.sync`): the
    * floor's enemies are read afresh and the hand plans again. */

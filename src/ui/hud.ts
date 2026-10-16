@@ -27,7 +27,7 @@ import { equipmentWaiting } from "../equipment/inventory.ts";
 import { GOLD_BOOST_FACTOR, GOLD_BOOST_MS } from "../gold-boost.ts";
 import { adsOff } from "../shop/entitlements.ts";
 import { renderRunMenu } from "./run-menu.ts";
-import { factorText, goldBonuses, goldBonusTotal } from "../gold-bonuses.ts";
+import { factorText, goldMultipliers, goldMultiplierTotal } from "../gold-multipliers.ts";
 import { MISSION_CAPACITY } from "../missions/catalog.ts";
 
 /** The stats cluster, action buttons and status line around the board. */
@@ -738,7 +738,7 @@ function renderGoldBonus(game: Game) {
   const button = el("gold-bonus"), inside = !game.run.outside;
   button.hidden = el("gold-bonus-divider").hidden = !inside;
   if (!inside) return;
-  text("gold-bonus-val", factorText(goldBonusTotal(goldBonuses(game.save, game.tier, game.clock(), game.shrineGold))));
+  text("gold-bonus-val", factorText(goldMultiplierTotal(goldMultipliers(game.goldContext))));
 }
 
 /** A stat in a few characters: two decimals below 1,000 when not whole,

@@ -6,7 +6,7 @@ import { trainingOpen } from "../src/loadout.ts";
 import { TRAINING, cost, type TrainingId, type UpgradeId } from "../src/config.ts";
 import { TREES } from "../src/skill-trees.ts";
 import { RESEARCH, researched, type ResearchId } from "../src/archives.ts";
-import { floorSilver, goldBonus, silverBonus, trainingStep, trainingText, type TrainingView } from "../src/loadout.ts";
+import { floorSilver, goldBonus, trainingStep, trainingText, type TrainingView } from "../src/loadout.ts";
 import { addItem } from "../src/equipment/inventory.ts";
 import { boonEffects } from "../src/shrines.ts";
 import { runTrainingValue } from "../src/run-training.ts";
@@ -14,6 +14,11 @@ import type { RoomWorld } from "../src/tower/room-world.ts";
 import type { World } from "../src/delve/world.ts";
 import type { Tile } from "../src/entities.ts";
 import { random } from "../src/random.ts";
+import { silverFound } from "../src/gold-multipliers.ts";
+import { snap } from "../src/exact.ts";
+
+/** Silver Bonus training's multiplier on all Silver, in percent. */
+const silverBonus = (save: ReturnType<typeof defaults>) => snap(silverFound(save, "tower", save.training.silverBonus) * 100);
 
 /** Wealthy, Loot and Wishing Well (under Spare Change): each opens a
  * Utility Training row and Archives research of the same name. */

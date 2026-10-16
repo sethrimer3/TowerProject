@@ -2,7 +2,7 @@ import { CHUNK, TOWER_HEIGHT, VIEWPORT_TILES } from "./config.ts";
 import type { Game } from "./state.ts";
 import type { Tile, Torch } from "./entities.ts";
 import { TIER_BONUS_TENTHS, tierNumeral } from "./tiers.ts";
-import { factorText } from "./gold-bonuses.ts";
+import { factorText } from "./gold-multipliers.ts";
 import { drawBlacksmith, drawEntrance, drawTournamentHall, OutsideWorld, OUTSIDE_SIZE, outsideWeather, roadsOf } from "./outside.ts";
 import { DecorLayer, type DecorFrame, type MirroredSprites } from "./decor-render.ts";
 import { OutsideGrass } from "./outside-grass.ts";

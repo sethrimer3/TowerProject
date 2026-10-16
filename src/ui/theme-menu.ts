@@ -1,5 +1,5 @@
 import { CLASSIC_NAME, THEME_GOLD_TEXT, THEME_PRICE, THEMES, canBuyTheme, canWear, gameLook, themeGoldFactor, themesOf, uiLook, type ThemeId, type ThemeKind } from "../theme-collection.ts";
-import { factorText } from "../gold-bonuses.ts";
+import { factorText } from "../gold-multipliers.ts";
 import type { Toast } from "./research-toast.ts";
 import type { PageGame } from "./app.ts";
 import { CURRENCIES, type CurrencyId } from "../shop/currency.ts";
