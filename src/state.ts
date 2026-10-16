@@ -9,7 +9,7 @@ import { offer, type OfferId } from "./shop/offers.ts";
 import { purchase, type Refusal } from "./shop/transactions.ts";
 import { confirmServerTime } from "./shop/clock.ts";
 import { canWarp, claimGoal, goalUnlocked, isArcher } from "./goals.ts";
-import { ARCHER_TICKS, archerTurn, arrowBoost, arrowDamage, charged, enemiesWithin, FOE_GAIN, foeRange, foeShotCost, held, ready, shotDamage, spent, type InReach, type Volleys } from "./ranged.ts";
+import { volleyTurn, type Shot, type Volley } from "./volley.ts";
 import { missGem } from "./gems.ts";
 import { DelvePlan } from "./delve/automove.ts";
 import { defaults } from "./save.ts";
@@ -72,7 +72,7 @@ import { enemyStat, keyCount, whole, wholeChange } from "./whole.ts";
 import { MODES, milestones, type ModeProfile } from "./modes.ts";
 import { ranksInRun, runTrainingBulk, runTrainingOffer, type RunTrainingOffer } from "./run-training.ts";
 import { openQuantities, type BuyQuantity } from "./buy-quantity.ts";
-import { attackPerTile, attackRange, attackSpeed, multishotChance, multishotTargets, rapidFireChance, rapidFireDuration, critRule, loadout, percentPotionChance, potionPercent, reviveChance, type TrainingView } from "./loadout.ts";
+import { critRule, loadout, percentPotionChance, potionPercent, reviveChance, type TrainingView } from "./loadout.ts";
 import { researched } from "./archives.ts";
 import { chargesLeft, chargesPerRun, climbFloor, spendCharge, type Charge } from "./run-charges.ts";
 import type { MaterialId, MaterialStack } from "./materials.ts";
@@ -163,10 +163,6 @@ const LESSON_SPEED = 3;
 const REVIVE_SALT = 0x7e51e;
 /** Seeds the critical rolls apart from the revival rolls. */
 const CRIT_SALT = 0x3c71c;
-/** Salts the run seed for the Archer's critical rolls apart from a fight's. */
-const ARROW_SALT = 0xa770e;
-const MULTISHOT_SALT = 0x3a17c;
-const RAPID_FIRE_SALT = 0x5f1d3;
 /** How long a shot or arrow flies, at most (ms): it lands as the hero's
  * step ends, sooner at higher speeds. */
 const FLIGHT_MS = 220;
@@ -185,18 +181,6 @@ export type ShownFight = { from: { x: number; y: number }; to: { x: number; y: n
  * enemy stands at `to`, and nothing changes until `finishEncounter` settles
  * it (at `start + bout.duration`). */
 export type Encounter = ShownFight & { enemy: Enemy; outcome: StepEffect; settle: () => void };
-/** One shot of a turn's volley (ranged.ts), as the board shows it: a
- * Ranged enemy's at the hero, or the Archer's arrow at an enemy, flying
- * `from` → `to`, and what it did when it landed: the damage that got through
- * (and the shroud's share, a critical arrow's applications, the HP an
- * arrow's Lifesteal restored), and for an arrow the enemy's HP before and
- * after it out of its full HP. When the Archer fires more than once in a
- * turn (Rapid Fire), each of its arrows has a `lead`, how far into the
- * turn it fired (0 to 1), and flies half the flight from that share of its
- * first half, so they leave one after another. */
-export type Shot = { by: "hero" | "enemy"; from: { x: number; y: number }; to: { x: number; y: number }; damage: number; shrouded?: number; crit?: number; charged?: boolean; healed?: number; before?: number; hp?: number; full?: number; lead?: number };
-/** A turn's shots, flying from `at` (performance time) for `flight` ms. */
-export type Volley = { at: number; flight: number; shots: Shot[] };
 /** Tiles that stay on the board after being stepped on. */
 const PERMANENT_TILES = new Set<Tile["kind"]>(["floor", "stairs", "oneway", "openedChest"]);
 /** The targets a Dash may end on, a tile of it left: items to take. */
@@ -1840,20 +1824,24 @@ export class Game {
     const archer = isArcher(this.save);
     if (!before || this.run.outside || this.fallen || (this.tier < 3 && !archer)) return;
     if (this.mode === "tower" && before.run.height !== this.run.height) return;
-    const v: Volleys = { ...(this.run.volleys ?? { turn: 0 }) };
-    v.turn++;
-    const shots: Shot[] = [], range = attackRange(this.trainingNow);
-    const fell = this.foesShoot(v, shots, range);
-    if (fell) {
-      this.run.volleys = v;
-      this.showVolley(shots);
-      this.fallIn(before, fell);
-      this.message = `Shot down by ${enemyTitle(fell)}.`;
-      return;
+    const v = this.run.volleys ?? { turn: 0 }, p = this.run.player;
+    const out = volleyTurn({ board: this.world, wrap: this.wrap, floorOf: (x, y) => this.floorOf(x, y), hero: p, seed: this.run.seed,
+      volleys: { ...v, turn: v.turn + 1 }, archer, ranks: { ...this.trainingNow, archives: this.save.archives } });
+    this.run.volleys = out.volleys;
+    p.hp = out.hp;
+    if (out.hurt) {
+      this.markDamaged();
+      this.events.hurt(this.mode, this.run.seed);
+      const taken = out.shots.reduce((sum, s) => (s.by === "enemy" ? snap(sum + s.damage) : sum), 0);
+      if (!out.fell) this.message = `Shot · −${wholeChange(taken)} HP`;
     }
-    if (archer) this.loose(v, shots, range);
-    this.run.volleys = v;
-    this.showVolley(shots);
+    for (const { enemy, at, instakill, crits } of out.kills)
+      this.message = [`Arrow · ${enemyTitle(enemy)} defeated`, ...this.payKill(enemy, at, 1, instakill, crits ? 1 : 0)].join(" · ");
+    this.showVolley(out.shots);
+    if (out.fell) {
+      this.fallIn(before, out.fell);
+      this.message = `Shot down by ${enemyTitle(out.fell)}.`;
+    }
   }
   /** Board columns wrap in the Delve. */
   private get wrap() {
@@ -1863,124 +1851,6 @@ export class Game {
   private floorOf(x: number, y: number) {
     const world = this.world;
     return world instanceof World ? Math.floor(world.depth(x, y) / 10) + 1 : this.run.height + 1;
-  }
-  /** Each Ranged enemy's cooldown runs a turn, and those within reach that
-   * are ready shoot the hero. Returns the enemy whose shot felled it, if one did. */
-  private foesShoot(v: Volleys, shots: Shot[], range: number): Enemy | null {
-    const p = this.run.player, foes = { ...v.foes }, costs = new Map<string, number>();
-    for (const k of Object.keys(foes)) {
-      const [x, y] = k.split(",").map(Number) as [number, number];
-      if (this.world.tile(x, y).enemy?.ranged) foes[k] = charged(foes[k], FOE_GAIN)!;
-      else delete foes[k];
-    }
-    let fell: Enemy | null = null, hurt = false;
-    for (const { x, y, tile } of enemiesWithin(this.world, p, foeRange(range), this.wrap)) {
-      if (!tile.enemy.ranged) continue;
-      const k = `${x},${y}`, cost = foeShotCost(this.floorOf(x, y));
-      costs.set(k, cost);
-      if (!ready(foes[k], cost)) continue;
-      const { damage, shrouded } = shotDamage(p, tile.enemy);
-      foes[k] = spent(foes[k], cost);
-      p.hp = snap(Math.max(0, p.hp - damage));
-      shots.push({ by: "enemy", from: { x, y }, to: { x: p.x, y: p.y }, damage, ...(shrouded ? { shrouded } : {}) });
-      if (damage > 0) hurt = true;
-      if (!p.hp) {
-        fell = tile.enemy;
-        break;
-      }
-    }
-    // A shooter that didn't shoot waits full once it is ready.
-    for (const k of Object.keys(foes)) {
-      const [x, y] = k.split(",").map(Number) as [number, number];
-      const kept = held(foes[k], costs.get(k) ?? foeShotCost(this.floorOf(x, y)));
-      if (kept === undefined) delete foes[k];
-      else foes[k] = kept;
-    }
-    if (Object.keys(foes).length) v.foes = foes;
-    else delete v.foes;
-    if (hurt) {
-      this.markDamaged();
-      this.events.hurt(this.mode, this.run.seed);
-      const taken = shots.reduce((sum, s) => snap(sum + s.damage), 0);
-      if (!fell) this.message = `Shot · −${wholeChange(taken)} HP`;
-    }
-    return fell;
-  }
-  /** The Archer's cooldown runs a turn (`archerTurn`), and each time it is
-   * ready it shoots the closest enemy within its range that an arrow can
-   * hurt, its ATK raised by ATK / Tile for the distance and by Charged Shot
-   * for the turns it waited (`arrowBoost`). A multishot (`multishot`) fires
-   * the same charge at up to Multishot Targets of the closest enemies it can
-   * hurt, each arrow with the first's Charged Shot, its own ATK / Tile and
-   * its own critical roll. A shot fired while Rapid Fire isn't may start it
-   * (`rapidFire`), for Rapid Fire Duration from that moment, so the turn
-   * may fire more than once. A ready arrow with no target waits for one,
-   * counting the turn toward Charged Shot once that is researched. */
-  private loose(v: Volleys, shots: Shot[], range: number) {
-    const p = this.run.player, perTile = attackPerTile(this.trainingNow), percent = researched(this.save.archives, "chargedShotPercent", 0);
-    const boost = (d2: number) => arrowBoost(perTile, d2, percent, v.waited ?? 0);
-    const hurts = (e: InReach) => arrowDamage(p, e.tile.enemy, 0, 1, boost(e.d2)) > 0;
-    const first = shots.length;
-    let fired = 0;
-    const { clock, idle } = archerTurn({ charge: v.hero, rapid: v.rapid }, attackSpeed(this.trainingNow), (rapid, tick) => {
-      const inReach = enemiesWithin(this.world, p, range, this.wrap), target = inReach.find(hurts);
-      if (!target) return false;
-      const shot = fired++, from = shots.length;
-      const targets = this.multishot(v.turn, shot) ? inReach.filter(hurts).slice(0, multishotTargets(this.trainingNow)) : [target];
-      for (const t of targets) this.shoot(t, v.turn, shots, boost(t.d2), !!(percent && v.waited), shot);
-      for (let i = from; i < shots.length; i++) shots[i]!.lead = tick / ARCHER_TICKS;
-      delete v.waited;
-      return rapid ? 0 : this.rapidFire(v.turn, shot);
-    });
-    // A turn of one shot flies as ever.
-    if (fired < 2) for (let i = first; i < shots.length; i++) delete shots[i]!.lead;
-    if (clock.charge === undefined) delete v.hero;
-    else v.hero = clock.charge;
-    if (clock.rapid === undefined) delete v.rapid;
-    else v.rapid = clock.rapid;
-    if (idle && percent > 0) v.waited = (v.waited ?? 0) + 1;
-  }
-  /** A fixed number per run, turn, shot of the turn (`shot`, the first
-   * keeping the turn's own roll) and the hero's tile, for `salt`. */
-  private shotRoll(salt: number, turn: number, shot: number) {
-    const p = this.run.player;
-    return tileRandom(p.x, p.y, (this.run.seed ^ salt ^ Math.imul(turn, 0x85ebca6b) ^ Math.imul(shot, 0xc2b2ae35)) | 0);
-  }
-  /** Whether the Archer's shot `shot` of turn `turn` is a multishot, under
-   * Multishot Chance. */
-  private multishot(turn: number, shot = 0) {
-    const chance = multishotChance(this.trainingNow);
-    return chance > 0 && this.shotRoll(MULTISHOT_SALT, turn, shot) * 10_000 < chance;
-  }
-  /** The hundredths of a turn of Rapid Fire the Archer's shot `shot` of
-   * turn `turn` starts: Rapid Fire Duration under Rapid Fire Chance, or 0. */
-  private rapidFire(turn: number, shot: number) {
-    const chance = rapidFireChance(this.trainingNow);
-    return chance > 0 && this.shotRoll(RAPID_FIRE_SALT, turn, shot) * 10_000 < chance ? rapidFireDuration(this.trainingNow) : 0;
-  }
-  /** The Archer's arrow lands on `target`: one strike's damage, its ATK
-   * multiplied by `boost` and critical rolls counted, healing by
-   * Lifesteal; it wounds the enemy, or fells it and pays the kill. A
-   * `charged` arrow's number wears a gold outline. */
-  private shoot({ x, y, tile }: InReach, turn: number, shots: Shot[], boost = 1, chargedShot = false, shot = 0) {
-    const p = this.run.player, enemy = tile.enemy, rule = this.crit;
-    let applications = 0;
-    if (rule) {
-      const sure = guaranteedCrits(rule.chance), rest = snap(rule.chance - 100 * sure);
-      applications = sure + (tileRandom(x, y, (this.run.seed ^ ARROW_SALT ^ Math.imul(turn, 0x85ebca6b) ^ Math.imul(shot, 0xc2b2ae35)) | 0) * 100 < rest ? 1 : 0);
-    }
-    const damage = arrowDamage(p, enemy, applications, rule?.factor ?? 1, boost), left = snap(Math.max(0, enemy.hp - damage));
-    const healed = p.lifesteal ? snap(Math.min(p.maxHp - p.hp, (damage * p.lifesteal) / 100)) : 0;
-    if (healed > 0) p.hp = snap(p.hp + healed);
-    shots.push({ by: "hero", from: { x: p.x, y: p.y }, to: { x, y }, damage, ...(applications ? { crit: applications } : {}), ...(chargedShot ? { charged: true } : {}), ...(healed > 0 ? { healed } : {}),
-      before: enemy.hp, hp: left, full: snap(enemy.hp + (tile.wound ?? 0)) });
-    if (left > 0) {
-      this.world.wound?.(x, y, damage);
-      return;
-    }
-    // One arrow felling an unwounded enemy is an instakill, as Mug pays it.
-    this.world.clear(x, y);
-    this.message = [`Arrow · ${enemyTitle(enemy)} defeated`, ...this.payKill(enemy, { x, y }, 1, !tile.wound, applications ? 1 : 0)].join(" · ");
   }
   /** The board flies the turn's shots, landing as the step ends. */
   private showVolley(shots: Shot[]) {

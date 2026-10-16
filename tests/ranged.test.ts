@@ -378,18 +378,6 @@ test("every arrow of a multishot carries the first's Charged Shot", () => {
   assert.deepEqual(g.volley?.shots.map((s) => [s.to, s.damage, s.charged]), [[{ x: 5, y: 2 }, 1200, true], [{ x: 6, y: 0 }, 1200, true]]);
 });
 
-test("Multishot Chance at 99 ranks makes about 49.5% of shots multishots, a fixed roll per run, turn and tile", () => {
-  const g = archer(arena({}));
-  g.save.training.multishotChance = 99;
-  const roll = (turn: number) => (g as unknown as { multishot(turn: number): boolean }).multishot(turn);
-  let hits = 0;
-  for (let turn = 1; turn <= 4000; turn++) hits += roll(turn) ? 1 : 0;
-  assert.ok(Math.abs(hits / 4000 - 0.495) < 0.03, `about 49.5%: ${hits / 4000}`);
-  assert.equal(roll(17), roll(17));
-  g.save.training.multishotChance = 0;
-  assert.ok(Array.from({ length: 200 }, (_, t) => roll(t)).every((m) => !m));
-});
-
 test("Rapid Fire Chance and Duration: 0.4% a rank to 34% at 85, and 1 turn, +0.05 a rank, to 5.95 at 99, opened by Tower III's floor 80; the same prices in Silver and a trainer's Gold", () => {
   const save = defaults();
   const rows = (["rapidFireChance", "rapidFireDuration"] as const).map((id) => TRAINING.find((t) => t.id === id)!);

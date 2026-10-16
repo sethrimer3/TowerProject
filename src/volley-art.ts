@@ -1,4 +1,4 @@
-import type { Shot, Volley } from "./state.ts";
+import type { Shot, Volley } from "./volley.ts";
 import { tileCenter, type FrameContext } from "./render-frame.ts";
 
 /** A Ranged enemy's shot: a small glowing ball, its radius in tiles. */
