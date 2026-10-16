@@ -229,6 +229,15 @@ export function nextBoonFloor(floor: number, picked: readonly BoonId[], o: Shrin
   return at;
 }
 
+/** The floor (its number) the run's latest boon was earned on: the sum of
+ * the intervals of the boons earned so far, 0 before the first. */
+export function lastBoonFloor(floor: number, picked: readonly BoonId[], o: ShrineOwner) {
+  const req = boonEffects(picked, o).floorReq, earned = boonsEarned(floor, picked, o);
+  let at = 0;
+  for (let k = 1; k <= earned; k++) at += floorsFor(k, o, req);
+  return at;
+}
+
 // --- Offers ---
 
 /** What the Shrine Boons page keeps between runs: Auto Pick on or off,

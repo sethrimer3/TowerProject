@@ -348,3 +348,17 @@ html.yang .keys .red:not(#_) { color: #b5402a; }
 html.yin .keys .yellow:not(#_) { color: #d4b04a; }
 html.yin .keys .blue:not(#_) { color: #7ea6c4; }
 html.yin .keys .red:not(#_) { color: #d0573f; }
+
+/* The Shrine bar (style.css): its fill indigo ink, apart from the black ink XP bar; its diamond an inked outline on the paper, stamped with the seal's red while boons wait. */
+html:is(.yang, .yin) {
+  --shrine-line: var(--z-ink);
+  --shrine-idle: var(--z-panel);
+  --shrine-lit: var(--z-seal);
+  --shrine-lit-line: var(--z-seal);
+  --shrine-lit-ink: var(--z-paper);
+  --shrine-edge: none;
+  --shrine-glow: none;
+  --shrine-ink: var(--z-ink);
+}
+html.yang { --shrine-fill: #4b5590; }
+html.yin { --shrine-fill: #8f98d0; }

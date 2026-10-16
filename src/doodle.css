@@ -335,3 +335,16 @@ html.doodle .eq-result-title:not(#_) {
 html.doodle .keys .yellow:not(#_) { color: #c0a000; }
 html.doodle .keys .blue:not(#_) { color: #0060e0; }
 html.doodle .keys .red:not(#_) { color: #e00000; }
+
+/* The Shrine bar (style.css): its fill the paint box's purple, apart from the blue XP bar; its diamond a black line on the paper, bucket-filled yellow while boons wait. */
+html.doodle {
+  --shrine-fill: #8000ff;
+  --shrine-line: var(--d-ink);
+  --shrine-idle: var(--d-paper);
+  --shrine-lit: var(--d-yellow);
+  --shrine-lit-line: var(--d-ink);
+  --shrine-lit-ink: var(--d-ink);
+  --shrine-edge: none;
+  --shrine-glow: none;
+  --shrine-ink: var(--d-ink);
+}

@@ -347,3 +347,16 @@ html.murk .eq-result-title:not(#_) {
 html.murk .keys .yellow:not(#_) { color: #e8c040; }
 html.murk .keys .blue:not(#_) { color: #6aa0f0; }
 html.murk .keys .red:not(#_) { color: #ff6878; }
+
+/* The Shrine bar (style.css): its fill a dusky violet, apart from the blue XP bar; its diamond a chalky line, filled gold while boons wait. */
+html.murk {
+  --shrine-fill: #9a6ad8;
+  --shrine-line: var(--m-line);
+  --shrine-idle: var(--m-paper);
+  --shrine-lit: var(--gold);
+  --shrine-lit-line: var(--m-ink);
+  --shrine-lit-ink: var(--m-paper);
+  --shrine-edge: none;
+  --shrine-glow: none;
+  --shrine-ink: var(--m-ink);
+}

@@ -1,6 +1,6 @@
 import type { Mode, TowerRun } from "../entities.ts";
 import {
-  appliedNow, appliedOf, autoChoice, autoPickOpen, boonEffects, boonsEarned, nextBoonFloor, ranked, rescaleHero, rollOffer, sameFoes, shrinesOpen,
+  appliedNow, appliedOf, autoChoice, autoPickOpen, boonEffects, boonsEarned, lastBoonFloor, nextBoonFloor, ranked, rescaleHero, rollOffer, sameFoes, shrinesOpen,
   type BoonId, type ShrineRun,
 } from "../shrines.ts";
 import type { DeskHost } from "./desk.ts";
@@ -55,6 +55,16 @@ export class ShrineDesk {
   get floorsToNext() {
     const at = this.open ? nextBoonFloor(this.floor, this.picked, this.save) : null;
     return at === null ? null : at - this.floor;
+  }
+
+  /** How far the run has climbed from its latest boon's floor toward the
+   * next's, from 0 to 1 (1 with none left to earn). */
+  get progress() {
+    if (!this.open) return 0;
+    const next = nextBoonFloor(this.floor, this.picked, this.save);
+    if (next === null) return 1;
+    const last = lastBoonFloor(this.floor, this.picked, this.save);
+    return (this.floor - last) / (next - last);
   }
 
   /** The boons offered now: the offer waiting, or a new one rolled while a

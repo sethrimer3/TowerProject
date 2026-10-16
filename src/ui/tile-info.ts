@@ -128,9 +128,6 @@ function enemyStats(e: Enemy, p: Player, r: CombatPrediction, gold: number) {
     + ` · ${stat(itemSprite("upgrade_defense", "stat-sprite"), "DEF", enemyStat(e.defense), ` (<span class="hit-hurt">-${enemyStat(r.hit)}</span>)`)}${coins}</span>`;
 }
 
-/** What a Shielded enemy's bubble does to an enemy standing in it (shielded.ts). */
-const guardLine = (e: Enemy) => (e.guard ? `<br><small>Shielded: your strikes do ${e.guard}% less</small>` : "");
-
 const DESCRIBE: Partial<Record<Kind, Describe>> = {
   enemy: (t, p, g, at) => {
     // Critical strikes count in the prediction only with Critical Prediction.
@@ -139,7 +136,7 @@ const DESCRIBE: Partial<Record<Kind, Describe>> = {
     const gold = g.run.outside ? 0 : g.enemyGold(at.x, at.y, !r.impervious && instakill(r));
     return {
       title: enemyTitle(e),
-      body: enemyStats(e, p, r, gold) + guardLine(e) + prediction(r, p, g, c) + forecast(p, e, r.impervious ? 0 : r.turns, g, !!crit),
+      body: enemyStats(e, p, r, gold) + prediction(r, p, g, c) + forecast(p, e, r.impervious ? 0 : r.turns, g, !!crit),
     };
   },
   wall: () => ({ title: "Wall", body: "Impassable obstacle." }),

@@ -515,8 +515,6 @@ export const ENEMY_GOLD: Record<EnemyStrength, number> = { weak: 1, normal: 1, s
 export const FAST_GOLD = 1;
 /** The Gold a Ranged enemy pays more than its strength's (ranged.ts). */
 export const RANGED_GOLD = 1;
-/** The Gold a Shielded enemy pays more than its strength's (shielded.ts). */
-export const SHIELDED_GOLD = 1;
 /** Gold every item a run takes off the floor pays, before Gold Bonus and
  * the tier's bonus: a potion, a shard, a torch put out, a treasure chest
  * opened (not an area reward chest), a door without a colour (Heart,

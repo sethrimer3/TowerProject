@@ -357,3 +357,16 @@ html.desktop .eq-result-title:not(#_) {
 html.desktop .safe:not(#_) {
   color: #006000 !important;
 }
+
+/* The Shrine bar (style.css): its fill purple blocks, apart from the navy XP bar; its diamond a white field in a dark line, filled title navy while boons wait. */
+html.desktop {
+  --shrine-fill: repeating-linear-gradient(90deg, #800080 0 7px, transparent 7px 9px);
+  --shrine-line: var(--dark);
+  --shrine-idle: var(--field);
+  --shrine-lit: var(--title);
+  --shrine-lit-line: var(--dark);
+  --shrine-lit-ink: var(--hilite);
+  --shrine-edge: none;
+  --shrine-glow: none;
+  --shrine-ink: #000;
+}

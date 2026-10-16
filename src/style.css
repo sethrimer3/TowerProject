@@ -4299,11 +4299,80 @@ html.reduce-motion button.mission-bar.event-claim { animation: none; }
 
 /* --- Shrines --- */
 .shrines-button .shrine-icon { display: block; width: 18px; height: 18px; }
-.shrine-stat svg { width: 16px; height: 16px; }
-.shrine-stat.notify { border-color: #ffd34d; box-shadow: 0 0 6px #ffd34d; }
-.shrine-next { display: inline-flex; align-items: center; gap: 2px; color: #ffcf9a; font-size: 11px; font-weight: 700; }
-.shrine-next[hidden] { display: none; }
-.shrine-next svg { width: 11px; height: 11px; }
+/* The Shrine bar under the XP bar: blue-purple, apart from the XP bar's
+   gold, filling toward the next boon, the floors left centred under it,
+   and over its left end a diamond holding the boons waiting, lit flame
+   gold while any wait. Its rules are written strong enough to beat the UI
+   themes' blanket button and element rules and their XP bar fills; a theme
+   recolours it through the --shrine-* custom properties (its track is an
+   .xp-track, so wears the theme's bars). */
+html .stats .portrait-top .shrine-bar:not(#_) {
+  position: relative;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  margin: 5px 4px 0;
+  padding: 0 0 0 7px;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  font: inherit;
+  cursor: pointer;
+}
+.shrine-bar[hidden]:not(#_) { display: none; }
+.shrine-bar .shrine-track {
+  display: block;
+  flex: none;
+  height: 5px;
+}
+html .stats .portrait-top .shrine-track i:not(#_) {
+  background: var(--shrine-fill, linear-gradient(90deg, #4a5ee0, #a77bff));
+  box-shadow: var(--shrine-fill-glow, none);
+}
+html .stats .shrine-diamond:not(#_) {
+  position: absolute;
+  left: 0;
+  top: -2px;
+  width: 9px;
+  height: 9px;
+  display: grid;
+  place-items: center;
+  transform: rotate(45deg);
+  border: 1px solid var(--shrine-line, #b9a0ff);
+  border-radius: 0;
+  background: var(--shrine-idle, #1e1640);
+  box-shadow: var(--shrine-edge, 0 0 0 1px #000);
+}
+html .stats .shrine-diamond b:not(#_) {
+  transform: rotate(-45deg);
+  font-size: 7px;
+  line-height: 1;
+  text-shadow: none;
+  color: var(--shrine-lit-ink, #2a1400);
+}
+html .stats .shrine-diamond.lit:not(#_) {
+  border-color: var(--shrine-lit-line, #fff1b0);
+  background: var(--shrine-lit, #ffd34d);
+  box-shadow: var(--shrine-edge, 0 0 0 1px #000), var(--shrine-glow, 0 0 6px #ffd34d);
+}
+.shrine-diamond.flash { animation: shrine-flash 0.4s ease-in-out 3; }
+@keyframes shrine-flash {
+  50% { scale: 1.45; filter: brightness(1.6); }
+}
+@media (prefers-reduced-motion: reduce) { .shrine-diamond.flash { animation: none; } }
+html .stats .portrait-top .shrine-next:not(#_) {
+  margin-top: 2px;
+  font-size: 7px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0;
+  text-align: center;
+  text-shadow: none;
+  color: var(--shrine-ink, #c9b8ff);
+}
 .shrine-title-icon { width: 20px; height: 20px; vertical-align: -3px; }
 .boon-offer { display: grid; gap: 8px; margin: 10px 0; }
 .boon-choice { display: grid; gap: 2px; padding: 10px 12px; text-align: left; font: inherit; border: 1px solid #5d5230; border-radius: 4px; background: #1d1a12; color: #f1e6c8; cursor: pointer; }

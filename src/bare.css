@@ -277,3 +277,16 @@ html.shiro .keys .red:not(#_) { color: #d93a3a; }
 html.kuro .keys .yellow:not(#_) { color: #f2cc2a; }
 html.kuro .keys .blue:not(#_) { color: #5d96ef; }
 html.kuro .keys .red:not(#_) { color: #ff5a5a; }
+
+/* The Shrine bar (style.css): its fill a flat blue-purple, apart from the ink XP bar; its diamond an ink outline, filled with ink while boons wait. */
+html:is(.shiro, .kuro) {
+  --shrine-fill: #6464d8;
+  --shrine-line: var(--b-ink);
+  --shrine-idle: var(--b-page);
+  --shrine-lit: var(--b-ink);
+  --shrine-lit-line: var(--b-ink);
+  --shrine-lit-ink: var(--b-page);
+  --shrine-edge: none;
+  --shrine-glow: none;
+  --shrine-ink: var(--b-ink);
+}

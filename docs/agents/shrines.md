@@ -49,8 +49,9 @@ Their tables are hard-coded (no `Math.pow` at load).
 Goals run every ten floors to 100, every 50 to 300, then 400 to 4,500 (`CHECKPOINT_FLOORS`).
 
 **UI.**
-The run's limited-use list holds the Shrine button (`#shrine-stat`, lit while boons wait) and the height column a line of floors to the next boon (`#shrine-next`), both from `renderShrine` in `ui/hud.ts`.
-The button opens `ui/shrine-dialog.ts`: the offer (again while more wait), or the boons taken in a scrolling table, and the Auto Pick toggle once researched.
+The Shrine bar (`#shrine-bar`, a button under the XP bar in the portrait, from `renderShrine` in `ui/hud.ts`) fills from the latest boon's floor to the next's (`ShrineDesk.progress`, from `lastBoonFloor` and `nextBoonFloor`), the floors left centred under it (`#shrine-next`, `floorsToNext`), and on its left end a diamond (`#shrine-diamond`) holds the boons waiting, lit while any wait and flashing (`.flash`) as the count rises.
+Its rules in `style.css` are written strong enough to beat the UI themes' blanket button and element rules; its track is an `.xp-track`, so it wears each theme's bar frame, its fill blue-purple (`--shrine-fill`) to stand apart from the XP bar, and each theme recolours the fill, the diamond and the count through the `--shrine-*` custom properties at the end of its stylesheet, keeping the fill apart from its own XP bar's.
+The bar opens `ui/shrine-dialog.ts`: the offer (again while more wait), or the boons taken in a scrolling table, and the Auto Pick toggle once researched.
 The forest's menu has Shrine Boons (`#shrines-button`) once Shrines are researched, opening `ui/shrines-page.ts` (`ShrinesPage`, tab `shrines`): First Boon Choice, bans and the ranking (dragged by its grips or moved by arrows, the rows counted lit, banned ones last in red), each shown once researched; the desk refuses changes inside a run.
 
 **Tests.** `tests/shrines.test.ts`.

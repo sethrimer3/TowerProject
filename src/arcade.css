@@ -375,3 +375,15 @@ html.arcade .keys .red:not(#_) { color: #ff2020; }
 html.arcade:not(.reduce-motion) .page-title h2::after {
   animation: arcade-blink 2s steps(1) infinite;
 }
+
+/* The Shrine bar (style.css): its fill pink segments, apart from the cyan XP bar; its diamond a blue-framed box, lit yellow while boons wait. */
+html.arcade {
+  --shrine-fill: repeating-linear-gradient(to right, var(--a-pink) 0 6px, transparent 6px 8px);
+  --shrine-line: var(--a-blue);
+  --shrine-idle: var(--a-black);
+  --shrine-lit: var(--a-yellow);
+  --shrine-lit-line: var(--a-ink);
+  --shrine-lit-ink: var(--a-black);
+  --shrine-glow: none;
+  --shrine-ink: var(--a-ink);
+}

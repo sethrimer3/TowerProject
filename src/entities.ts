@@ -57,12 +57,6 @@ export type Enemy = {
   fast?: true;
   /** A Ranged enemy (ranged.ts) shoots the hero from a distance. */
   ranged?: true;
-  /** A Shielded enemy (shielded.ts) casts a bubble that cuts the hero's
-   * damage to every enemy within it. */
-  shielded?: true;
-  /** The percent a Shielded enemy's bubble cuts the hero's damage to this
-   * one by, after DEF; set by the board as it reads the tile, never saved. */
-  guard?: number;
 };
 /** An area reward chest's metal: gold for an area mastered, silver for one
  * cleared (tower/area-ledger.ts). */

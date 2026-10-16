@@ -1,6 +1,5 @@
 import { point, type Kind, type Run, type Tile, type Torch } from "./entities.ts";
 import { tileRandom } from "./random.ts";
-import type { Shield } from "./shielded.ts";
 
 /** A board the player walks: the Delve labyrinth, a Tower floor, or the
  * forest outside. */
@@ -27,9 +26,6 @@ export type Board = {
   /** The tiles holding a lit torch, by `point`, on boards that keep them
    * (`litTorches` works them out otherwise). */
   litTorches?(): ReadonlySet<string>;
-  /** The Shielded enemies still standing (shielded.ts), whose bubbles the
-   * board draws, on boards that hold them. */
-  shields?(): readonly Shield[];
 };
 
 /** Tiles the hero takes something from by stepping on them: every pickup

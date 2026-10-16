@@ -247,3 +247,16 @@ html.glyph:not(.reduce-motion) .page-title h2::before,
 html.glyph:not(.reduce-motion) .page-title h2::after {
   animation: glyph-hum 2.4s ease-in-out infinite;
 }
+
+/* The Shrine bar (style.css): its fill glowing magenta blocks, apart from the blue XP bar; its diamond a dim violet outline, lit glowing yellow while boons wait. */
+html.glyph {
+  --shrine-fill: repeating-linear-gradient(to right, var(--g-magenta) 0 5px, transparent 5px 7px);
+  --shrine-fill-glow: 0 0 8px var(--g-magenta);
+  --shrine-line: var(--g-dim);
+  --shrine-idle: var(--g-black);
+  --shrine-lit: var(--g-yellow);
+  --shrine-lit-line: var(--g-ink);
+  --shrine-lit-ink: var(--g-black);
+  --shrine-glow: 0 0 8px var(--g-yellow);
+  --shrine-ink: var(--g-yellow);
+}

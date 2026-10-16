@@ -370,3 +370,16 @@ html.system .eq-result-title:not(#_) {
 html.system .keys .yellow:not(#_) { color: #b38c00; }
 html.system .keys .blue:not(#_) { color: #2f6fe0; }
 html.system .keys .red:not(#_) { color: #d00000; }
+
+/* The Shrine bar (style.css): its fill a diagonal hatch, apart from the dithered XP bar; its diamond white in a black line, filled black while boons wait. */
+html.system {
+  --shrine-fill: repeating-linear-gradient(45deg, var(--s-ink) 0 1px, var(--s-paper) 1px 3px);
+  --shrine-line: var(--s-ink);
+  --shrine-idle: var(--s-paper);
+  --shrine-lit: var(--s-ink);
+  --shrine-lit-line: var(--s-ink);
+  --shrine-lit-ink: var(--s-paper);
+  --shrine-edge: none;
+  --shrine-glow: none;
+  --shrine-ink: var(--s-ink);
+}

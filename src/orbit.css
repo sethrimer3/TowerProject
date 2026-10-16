@@ -422,3 +422,16 @@ html.orbit .keys .red:not(#_) { color: #ff5a4e; }
 html.orbit:not(.reduce-motion) .live-dot {
   animation: orbit-pulse 2.4s ease-in-out infinite;
 }
+
+/* The Shrine bar (style.css): its fill a violet light, apart from the XP bar; its diamond a cyan-rimmed glass, lit amber while boons wait. */
+html.orbit {
+  --shrine-fill: linear-gradient(90deg, #5a6bff, #b07bff);
+  --shrine-fill-glow: 0 0 6px #8a7bff;
+  --shrine-line: var(--o-rim);
+  --shrine-idle: var(--o-glass-deep);
+  --shrine-lit: var(--o-amber);
+  --shrine-lit-line: var(--o-ink);
+  --shrine-lit-ink: var(--o-space);
+  --shrine-glow: 0 0 8px var(--o-amber);
+  --shrine-ink: var(--o-ink);
+}

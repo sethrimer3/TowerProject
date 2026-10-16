@@ -162,3 +162,15 @@ html.neon:not(.reduce-motion) .page-title,
 html.neon:not(.reduce-motion) nav button.selected {
   animation: neon-hum 4s infinite;
 }
+
+/* The Shrine bar (style.css): its fill a violet tube; its diamond a pink tube round the diamond, lit amber with a glow. */
+html.neon {
+  --shrine-fill: linear-gradient(90deg, #5a6bff, #b86bff);
+  --shrine-fill-glow: 0 0 6px #8a6bff;
+  --shrine-line: var(--neon-pink);
+  --shrine-idle: #1a0414;
+  --shrine-lit: var(--neon-amber);
+  --shrine-lit-line: var(--neon-yellow);
+  --shrine-glow: 0 0 8px var(--neon-pink);
+  --shrine-ink: var(--neon-yellow);
+}

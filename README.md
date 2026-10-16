@@ -37,7 +37,7 @@ The player-facing rules, in full, one topic a page:
 | [Gear and Equipment](docs/gameplay/gear-and-equipment.md) | Provisions, the Blacksmith and Equipment |
 | [The Archives](docs/gameplay/archives.md) | Archivists, Rush, Cells and Speed Up, the library, Focus Count |
 | [Skills and stats](docs/gameplay/skills-and-stats.md) | Shroud, potions, Silver and Gold skills, Free Training, Buy Quantity, Revive, Thorns, Parry |
-| [Fights](docs/gameplay/fights.md) | How a fight plays out, Fast, Ranged and Shielded monsters, the Archer, kill pay, fractions |
+| [Fights](docs/gameplay/fights.md) | How a fight plays out, Fast and Ranged monsters, the Archer, kill pay, fractions |
 | [Floors](docs/gameplay/floors.md) | Bosses and Greater Bosses, doors and keys, the early floors, world wrap |
 | [Training](docs/gameplay/training.md) | Silver, training for the run, XP and levels, the Training tab and trainers |
 | [Runs](docs/gameplay/runs.md) | Movement settings, Undo, how a run ends, Run Notes, rewards, the in-run controls, Dash |

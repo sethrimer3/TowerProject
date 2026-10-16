@@ -614,18 +614,36 @@ function renderHealthLoss(lost: number, maxHp: number) {
   }
 }
 
-/** Once Shrines are researched, inside a Tower run: the Shrine button,
- * its count the boons waiting (lit while any wait), and under the floor
- * the floors left to the next boon. */
+/** The boons waiting when the Shrine bar was last drawn, so the diamond
+ * flashes as another arrives (null before the first draw, so a reload
+ * with boons waiting doesn't flash). */
+let shrineWaiting: number | null = null;
+
+/** Once Shrines are researched, inside a Tower run: the Shrine bar under
+ * the XP bar, filling from the latest boon's floor to the next's, the
+ * floors left under it, and on its left end a diamond with the boons
+ * waiting to be picked (lit while any wait, flashing as one arrives). */
 function renderShrine(game: Game) {
-  const shrine = game.shrine, open = shrine.open, waiting = shrine.unspent, next = shrine.floorsToNext;
-  const button = el("shrine-stat");
-  button.hidden = !open;
-  button.classList.toggle("notify", waiting > 0);
-  text("shrine-left", waiting);
-  button.setAttribute("aria-label", waiting ? `Shrine: ${waiting} boon${waiting === 1 ? "" : "s"} to pick` : "Shrine: boons taken");
-  el("shrine-next").hidden = !open || next === null;
-  text("shrine-next-val", next ?? 0);
+  const shrine = game.shrine, open = shrine.open, bar = el("shrine-bar");
+  bar.hidden = !open;
+  if (!open) {
+    shrineWaiting = null;
+    return;
+  }
+  const waiting = shrine.unspent, next = shrine.floorsToNext, diamond = el("shrine-diamond");
+  el("shrine-fill").style.width = `${100 * shrine.progress}%`;
+  diamond.classList.toggle("lit", waiting > 0);
+  if (shrineWaiting !== null && waiting > shrineWaiting) {
+    diamond.classList.remove("flash");
+    void diamond.offsetWidth;
+    diamond.classList.add("flash");
+  }
+  shrineWaiting = waiting;
+  text("shrine-left", waiting || "");
+  text("shrine-next", next ?? "");
+  const pick = waiting ? `${waiting} boon${waiting === 1 ? "" : "s"} to pick` : "no boons to pick";
+  const left = next === null ? "every boon earned" : `next boon in ${next} floor${next === 1 ? "" : "s"}`;
+  bar.setAttribute("aria-label", `Shrine: ${pick}, ${left}`);
 }
 
 /** Focus uses left, once the Focus skill is owned. */

@@ -72,15 +72,11 @@ export function atWorst(player: Player, crit?: CritRule): Player {
   const k = crit ? guaranteedCrits(crit.chance) : 0;
   return k ? { ...player, attack: snap(player.attack * critMultiplier(crit!.factor, k)) } : player;
 }
-/** `damage` past `enemy`'s DEF (0 or less: none) as it lands: cut by the
- * percent a Shielded enemy's bubble guards it with (shielded.ts), as a
- * parry cuts the enemy's. The cut never stops a strike that gets past DEF. */
-export const guarded = (damage: number, enemy: Enemy) => (enemy.guard && damage > 0 ? snap((damage * (100 - enemy.guard)) / 100) : damage);
 /** What each of the hero's strikes takes off `enemy`'s HP (0 or less: none),
  * its ATK multiplied by `multiplier` (a critical strike's). */
 const heroHit = (player: Player, enemy: Enemy, multiplier = 1) => {
   const attack = attackAgainst(player, enemy);
-  return guarded(snap((multiplier === 1 ? attack : snap(attack * multiplier)) - defenseAgainst(player, enemy)), enemy);
+  return snap((multiplier === 1 ? attack : snap(attack * multiplier)) - defenseAgainst(player, enemy));
 };
 /** Whether the hero's strikes can't hurt `enemy` at all (`predict`'s
  * `impervious`), without working out the rest of the fight. */
@@ -187,14 +183,13 @@ function lifestealEnding(player: Player, enemy: Enemy, hit: number, played = Inf
 /** Attack Lore: the fewest whole points of ATK more that defeat `enemy` in
  * one hit fewer, or null when one hit does already (or none can). Taking
  * `turns − 1` hits needs each to deal at least HP / (turns − 1), so that
- * much over the enemy's DEF (more under a bubble's guard), rounded up;
- * then checked against `predict`, which snaps as the fight does. */
+ * much over the enemy's DEF, rounded up; then checked against `predict`,
+ * which snaps as the fight does. */
 export function attackForFewerHits(player: Player, enemy: Enemy): number | null {
   const { impervious, turns } = predict(player, enemy);
   if (impervious || turns <= 1) return null;
   const fewer = (more: number) => predict({ ...player, attack: snap(player.attack + more) }, enemy).turns < turns;
-  const each = enemy.guard ? (enemy.hp * 100) / ((turns - 1) * (100 - enemy.guard)) : enemy.hp / (turns - 1);
-  let more = Math.max(1, Math.ceil(snap(each + defenseAgainst(player, enemy) - player.attack)));
+  let more = Math.max(1, Math.ceil(snap(enemy.hp / (turns - 1) + defenseAgainst(player, enemy) - player.attack)));
   while (more > 1 && fewer(more - 1)) more--;
   while (!fewer(more)) more++;
   return more;

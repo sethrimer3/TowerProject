@@ -419,3 +419,16 @@ html.pixel:not(.reduce-motion) .page-title h2::before,
 html.pixel:not(.reduce-motion) .page-title h2::after {
   animation: pixel-twinkle 3s steps(1) infinite;
 }
+
+/* The Shrine bar (style.css): its fill pixel violet, apart from the blue XP bar; its diamond a dark field, lit gold while boons wait. */
+html.pixel {
+  --shrine-fill: #a46ae0;
+  --shrine-line: var(--p-dim);
+  --shrine-idle: var(--p-ink);
+  --shrine-lit: var(--p-gold-light);
+  --shrine-lit-line: var(--p-ink);
+  --shrine-lit-ink: var(--p-ink);
+  --shrine-edge: none;
+  --shrine-glow: none;
+  --shrine-ink: var(--p-text);
+}

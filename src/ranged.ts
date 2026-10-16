@@ -17,7 +17,7 @@
  * and end mid-turn. Each tile's roll is a fixed number of the run seed, the
  * floor and the tile (`RANGED_SALT`). */
 import type { Enemy, Player, Tile } from "./entities.ts";
-import { attackAgainst, critMultiplier, defenseAgainst, guarded, parryCut, struckDamage } from "./combat.ts";
+import { attackAgainst, critMultiplier, defenseAgainst, parryCut, struckDamage } from "./combat.ts";
 import { fastShare, mayBeFast } from "./fast-enemies.ts";
 import { snap } from "./exact.ts";
 import { tileRandom } from "./random.ts";
@@ -150,11 +150,11 @@ export function shotDamage(player: Player, enemy: Enemy) {
 /** What the Archer's arrow takes off `enemy`: one of its strikes, raised
  * against a boss, multiplied by its `boost` (`arrowBoost`) and by
  * `applications` of the critical `factor`, less the enemy's DEF (Piercing
- * ignoring some), cut by a Shielded enemy's bubble; 0 or less does nothing. */
+ * ignoring some); 0 or less does nothing. */
 export function arrowDamage(player: Player, enemy: Enemy, applications = 0, factor = 1, boost = 1) {
   const attack = boost === 1 ? attackAgainst(player, enemy) : snap(attackAgainst(player, enemy) * boost);
   const raised = applications ? snap(attack * critMultiplier(factor, applications)) : attack;
-  return guarded(snap(raised - defenseAgainst(player, enemy)), enemy);
+  return snap(raised - defenseAgainst(player, enemy));
 }
 
 /** What an arrow's ATK is multiplied by before any critical hit: ATK / Tile

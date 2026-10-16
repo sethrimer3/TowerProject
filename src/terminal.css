@@ -229,3 +229,15 @@ html.terminal:not(.reduce-motion) body::after {
 html.terminal:not(.reduce-motion) .page-title h2::after {
   animation: terminal-blink 1s steps(1) infinite;
 }
+
+/* The Shrine bar (style.css): its fill dim phosphor dashes, apart from the solid XP bar; its diamond a hollow phosphor diamond, filled solid while boons wait. */
+html.terminal {
+  --shrine-fill: repeating-linear-gradient(to right, var(--crt-dim) 0 3px, transparent 3px 4px);
+  --shrine-line: var(--crt-dim);
+  --shrine-idle: var(--crt-black);
+  --shrine-lit: var(--crt);
+  --shrine-lit-line: var(--crt-bright);
+  --shrine-lit-ink: var(--crt-black);
+  --shrine-glow: 0 0 6px var(--crt);
+  --shrine-ink: var(--crt);
+}

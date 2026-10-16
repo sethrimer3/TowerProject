@@ -227,3 +227,16 @@ html.ember dialog::backdrop {
 html.ember:not(.reduce-motion) .page-title h2 {
   animation: ember-breathe 3s ease-in-out infinite;
 }
+
+/* The Shrine bar (style.css): its fill a violet flame, apart from the orange XP bar; its diamond a cold coal, glowing amber while boons wait. */
+html.ember {
+  --shrine-fill: linear-gradient(to right, #5a2aff, #b86bff);
+  --shrine-fill-glow: 0 0 8px #8a4aff;
+  --shrine-line: var(--e-faint);
+  --shrine-idle: #1a0507;
+  --shrine-lit: var(--e-amber);
+  --shrine-lit-line: var(--e-cream);
+  --shrine-lit-ink: var(--e-black);
+  --shrine-glow: 0 0 8px #ff6a1a;
+  --shrine-ink: var(--e-amber);
+}

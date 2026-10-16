@@ -419,8 +419,8 @@ el("shrines-button").onclick = () => {
   closeRunMenu();
   navigate("shrines");
 };
-// The run's Shrine button: the boons waiting to be picked, or those taken.
-el("shrine-stat").onclick = () => {
+// The run's Shrine bar: the boons waiting to be picked, or those taken.
+el("shrine-bar").onclick = () => {
   overlay.hide();
   showShrine(ctx);
 };

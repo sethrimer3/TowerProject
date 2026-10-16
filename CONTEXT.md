@@ -162,14 +162,6 @@ _Avoid_: swift, quick, first strike enemy
 An enemy that shoots the hero from a distance, walls and doors no obstacle, without beginning a fight: once the hero ends a turn within its reach (five sixths of the hero's Attack Range), then again each time its cooldown (10 turns, shorter further up) is ready. From the third tower and delve up, a share of the non-boss enemies are Ranged (a point under the Fast share), rolled apart from Fast, paying 1 Gold more. Its name starts with "Ranged" and its tile wears an arrow.
 _Avoid_: archer enemy, shooter, sniper
 
-**Shielded enemy**:
-An enemy that casts a **bubble** round itself: while it stands, the hero's strikes and arrows on every enemy within the bubble, itself included, do 60% less after DEF. From the fourth tower and delve up, a share of floors hold one (4% at first, growing with the floor and the tower), the non-boss enemy nearest the way up; alone in its bubble, it may bring standard enemies in front of it. The bubble's radius grows from a tile to three by floor 4,000. It pays 1 Gold more. Its name starts with "Shielded" and its bubble is a glowing green ring.
-_Avoid_: shield enemy, guardian, aura
-
-**Bubble**:
-The circle round a Shielded enemy within which its guard cuts the hero's damage to enemies, measured from tile centre to tile centre.
-_Avoid_: aura, shield radius, field
-
 **Archer**:
 The hero's class once Tower III's floor 10 Goal is claimed: at the end of each turn its arrow is ready, it shoots the closest enemy within its **Attack Range** (3 tiles, more with training) for one strike's damage, wounding it before any fight. **Attack Speed** sets how often (1 shot every 10 turns, more with training). **ATK / Tile** (training, Tower III's floor 50) multiplies an arrow's ATK by more for each tile to its target, and **Charged Shot** (research, floor 60) raises it for each turn a ready arrow waits unfired; **Multishot** (training, floor 70) gives a shot a chance to fire at several enemies in range at once, and **Rapid Fire** (training, floor 80) a chance to make its arrows come four times as fast for a few turns. The class's name, shown under the portrait, is cosmetic before it (Wayfarer, then Pathfinder once Tower II is open).
 _Avoid_: ranger, bowman
