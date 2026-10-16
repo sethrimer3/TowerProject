@@ -119,10 +119,18 @@ function sampleRates(game: Game, time: number, live: boolean) {
 }
 
 /** Shows the rate `perMinute` in the purse's `id`, abbreviated from 1,000
- * (1.42K), a dash before it is known, with a tiny /min on a row under it. */
+ * (1.42K), a dash before it is known, with a tiny /min on a row under it.
+ * The amount's node is built once and only its text changed after, since a
+ * press whose node is replaced before it lifts (each frame of a count-up)
+ * makes no click, and the tap would not switch the purse back. */
 function purseRate(game: Game, id: string, perMinute: number | null, name: string) {
   const dev = game.save.settings.devMode, rate = perMinute === null ? null : whole(perMinute);
-  el(id).innerHTML = `<span class="rate-amount">${dev ? "∞" : rate === null ? "—" : shortAmount(rate, 1000)}</span><small class="per-minute">/min</small>`;
+  let amount = el(id).querySelector<HTMLElement>(".rate-amount");
+  if (!amount) {
+    el(id).innerHTML = `<span class="rate-amount"></span><small class="per-minute">/min</small>`;
+    amount = el(id).querySelector<HTMLElement>(".rate-amount")!;
+  }
+  amount.textContent = dev ? "∞" : rate === null ? "—" : shortAmount(rate, 1000);
   el(id).parentElement!.title = `${name} found a minute, over the last minute of play: ${dev ? "∞" : rate === null ? "—" : rate.toLocaleString("en-US")} (tap for ${name} held)`;
 }
 
@@ -138,7 +146,7 @@ function renderPurse(game: Game) {
   purse(game, "medals", game.save.medals, "Medals, kept between runs");
   el("medals").parentElement!.hidden = !game.run.outside || game.save.medals <= 0;
   el("shards").closest(".purse")!.classList.toggle("forest", !!game.run.outside);
-  purse(game, "gold", game.save.gold, "Gold, kept between runs", goldShown.show(game.save.gold, now, instant));
+  const gold = goldShown.show(game.save.gold, now, instant);
   const showRates = rates.shown && !game.run.outside;
   el("gold").closest(".purse")!.classList.toggle("rates", showRates);
   if (showRates) {
@@ -146,7 +154,10 @@ function renderPurse(game: Game) {
     el("run-silver").parentElement!.hidden = false;
     purseRate(game, "gold", rates.gold.perMinute, "Gold");
     purseRate(game, "run-silver", rates.silver.perMinute, "Silver");
-  } else if (game.run.outside) {
+    return;
+  }
+  purse(game, "gold", game.save.gold, "Gold, kept between runs", gold);
+  if (game.run.outside) {
     const start = game.startingSilver;
     purse(game, "run-silver", start, "Silver each run starts with");
     el("run-silver").parentElement!.hidden = start <= 0;
