@@ -65,13 +65,14 @@ import { callsGreaterBoss, greaterBoss, greaterBossSpot } from "./tower/greater-
 import { materialDef, MATERIALS } from "./materials.ts";
 import { switchTier, tierNumeral, tierRewardText, tierXp } from "./tiers.ts";
 import type { GoldContext } from "./gold-multipliers.ts";
+import { RunTimeline } from "./run-timeline.ts";
 import { enemyTitle } from "./scaling.ts";
 import { snap } from "./exact.ts";
 import { enemyStat, keyCount, whole, wholeChange } from "./whole.ts";
 import { MODES, milestones, type ModeProfile } from "./modes.ts";
 import { boughtInRun, ranksInRun, runTrainingBulk, runTrainingOffer, type RunTrainingOffer } from "./run-training.ts";
 import { openQuantities, type BuyQuantity } from "./buy-quantity.ts";
-import { attackPerTile, attackRange, attackSpeed, multishotChance, multishotTargets, rapidFireChance, rapidFireDuration, critRule, keepUndos, loadout, percentPotionChance, potionPercent, reviveChance, statFactor, type TrainingView } from "./loadout.ts";
+import { attackPerTile, attackRange, attackSpeed, multishotChance, multishotTargets, rapidFireChance, rapidFireDuration, critRule, loadout, percentPotionChance, potionPercent, reviveChance, statFactor, type TrainingView } from "./loadout.ts";
 import { researched } from "./archives.ts";
 import { chargesLeft, chargesPerRun, climbFloor, spendCharge, type Charge } from "./run-charges.ts";
 import type { MaterialId, MaterialStack } from "./materials.ts";
@@ -343,13 +344,17 @@ export class Game {
   get undoCapacity() {
     return loadout(this.save, this.mode).undoCapacity;
   }
+  /** What undo can take this mode's run back to (run-timeline.ts). */
+  private get timeline() {
+    return new RunTimeline(this.save, this.mode, () => this.undoCapacity);
+  }
   /** Undos the run has left to spend. */
   get undosLeft() {
-    return Math.max(0, this.undoCapacity - (this.run.undosUsed ?? 0));
+    return this.timeline.undosLeft;
   }
   /** Whether undo can take a move back: one is left and a move is held. */
   get canUndo() {
-    return this.undosLeft > 0 && this.slice.history.length > 0;
+    return this.timeline.canUndo;
   }
   /** Grants unlimited currency, the first 250 floors, and every game mode.
    * Reversible: turning Dev Mode back off leaves the grants in place, since
@@ -468,14 +473,19 @@ export class Game {
       this.adoptRun(run);
     }
     this.recordProgress();
-    this.route = [];
     if (!this.run.outside && this.handStartsPlaying && !this.fallen) this.playHand();
     else this.auto = false;
-    this.dropHandPlan();
+    this.stopPlay();
+    this.blocked = { x: 0, y: 0, until: 0 };
+  }
+  /** Stops the play under way, for a run restored, loaded or begun: the
+   * route walked, a fight or volley playing out and the hand's plan. */
+  private stopPlay() {
+    this.route = [];
     this.encounter = null;
     this.fight = null;
     this.volley = null;
-    this.blocked = { x: 0, y: 0, until: 0 };
+    this.dropHandPlan();
   }
   /** Makes `run` the live run of this mode and rebuilds its board. */
   private adoptRun(run: Run) {
@@ -504,8 +514,7 @@ export class Game {
   }
   /** Returns the player to their section's entrance on the new labyrinth. */
   private reshapeDelve(run: DelveRun) {
-    this.save.delve.history = [];
-    this.save.delve.fall = null;
+    this.timeline.reset();
     run.layoutVersion = LAYOUT_VERSION;
     run.changes = {};
     run.milestone = Math.floor(run.height / 100);
@@ -517,6 +526,7 @@ export class Game {
   }
   /** The floor's geometry changed: stand at its entrance. */
   private reshapeTower(run: TowerRun) {
+    this.timeline.reset();
     run.layoutVersion = TOWER_LAYOUT_VERSION;
     run.changes = {};
     run.player.x = TOWER_START_X;
@@ -530,7 +540,7 @@ export class Game {
     return record;
   }
   snapshot(): MoveSnapshot {
-    return { run: structuredClone(this.run), best: this.slice.best, xp: this.save.xp, silver: this.save.profile.earned.silver };
+    return this.timeline.snapshot();
   }
   restore(snapshot: MoveSnapshot) {
     // The snapshot's board brings back any chest it had; area rewards are
@@ -548,13 +558,9 @@ export class Game {
     this.save.xp = snapshot.xp;
     // The Silver found since is taken back with the run, so it was never earned.
     if (snapshot.silver !== undefined) this.save.profile.earned.silver = Math.min(this.save.profile.earned.silver, snapshot.silver);
-    this.route = [];
     // Undo pauses the hand, so the player can act before it carries on.
     this.auto = false;
-    this.dropHandPlan();
-    this.encounter = null;
-    this.fight = null;
-    this.volley = null;
+    this.stopPlay();
     this.paused = false;
     this.blocked.until = 0;
   }
@@ -570,22 +576,10 @@ export class Game {
     // A fight still playing out counts first, so undo takes it back.
     this.finishEncounter();
     this.armed = null;
-    const slice = this.slice;
-    if (!this.undosLeft) return false;
     // Fallen, undo spends one and takes back the fight the hero fell in.
-    const fall = this.fallen ? slice.fall : null;
-    let snapshot = slice.history.pop();
-    if (!snapshot) return false;
-    // A step onto empty floor is seldom worth resuming at: undo goes on
-    // back past a run of them to before the last turn that did something.
-    while (!fall && snapshot.quiet && slice.history.length) snapshot = slice.history.pop()!;
-    slice.fall = null;
-    // An undo spent is gone for the run: the count rides onto the run restored.
-    const used = (this.run.undosUsed ?? 0) + 1;
-    this.restore(fall?.snapshot ?? snapshot);
-    this.run.undosUsed = used;
-    slice.history = keepUndos(slice.history, this.undosLeft);
-    this.feedback(fall ? "Fatal fight undone · the hand waits" : "Move undone");
+    const undone = this.timeline.undo(this.fallen, (snapshot) => this.restore(snapshot));
+    if (!undone) return false;
+    this.feedback(undone === "fall" ? "Fatal fight undone · the hand waits" : "Move undone");
     return true;
   }
   /** Accepts the hero's defeat: the run ends and pays out, and the next one
@@ -1056,7 +1050,7 @@ export class Game {
     const id = this.hand[card], badges = id ? badgesOn(this.run.badges, id) : [];
     if (!badges.length || !this.playing) return;
     // Paying out makes the step it ends a turn undo stops at.
-    delete this.slice.history.at(-1)?.quiet;
+    this.timeline.eventful();
     for (const badge of badges) this.payBadge(card, key, badge);
   }
   /** One of hand card `card`'s badges pays what it gives on activation. */
@@ -1209,7 +1203,7 @@ export class Game {
         tiles.push({ ...at, dx: target.dx, dy: target.dy });
         onItem = true;
         // Taking the item makes the dash a turn undo stops at.
-        delete this.slice.history.at(-1)?.quiet;
+        this.timeline.eventful();
       }
     }
     this.cardPlan = plan.path.length ? plan : null;
@@ -1592,17 +1586,13 @@ export class Game {
     if (this.save.gemDrop.out?.mode === this.mode) missGem(this.save.gemDrop);
     this.armed = null;
     this.heldPlay = null;
-    this.slice.fall = null;
-    this.slice.history = [];
+    this.timeline.reset();
     this.slice.runGold = 0;
     this.slice.runBoostGold = null;
     this.slice.runCurrency = 0;
     this.slice.runRecord = false;
     this.slice.runFinds = defaultFinds();
-    this.route = [];
-    this.encounter = null;
-    this.fight = null;
-    this.volley = null;
+    this.stopPlay();
     const { player, loadout } = startingHero(this.save, this.mode);
     const core: RunCore = {
       layoutVersion: this.rules.layoutVersion,
@@ -1742,7 +1732,6 @@ export class Game {
     this.forestSeeds.clear();
     // A run that earned its currency sends the player to spend it.
     if (this.slice.runCurrency > 0) this.save.treeNotices[this.rules === MODES.tower ? "inspiration" : "courage"] = true;
-    this.slice.history = [];
     this.route = [];
     const tournament = this.mode === "delve" ? this.delveRun.tournament : undefined;
     if (tournament) this.tournament.recordScore(tournament.id, tournamentScore(this.run));
@@ -1759,7 +1748,7 @@ export class Game {
   private fallIn(before: MoveSnapshot, enemy: Enemy) {
     this.run.player.hp = 0;
     this.struckDown = [...this.struckDown, performance.now()];
-    this.slice.fall = { snapshot: before, by: enemyTitle(enemy) };
+    this.timeline.fall(before, enemyTitle(enemy));
     this.route = [];
     this.auto = false;
     this.dropHandPlan();
@@ -1909,7 +1898,7 @@ export class Game {
   }
   /** Moves the player onto the tile and applies what standing there does. */
   private land(t: Tile, x: number, y: number, outcome: StepEffect) {
-    const p = this.run.player, from = { x: p.x, y: p.y };
+    const p = this.run.player;
     p.x = x;
     p.y = y;
     this.unmark(x, y);
@@ -1931,7 +1920,7 @@ export class Game {
     this.collect(t, x, y, outcome);
     this.consumeTile(t, x, y);
     if (t.kind !== "stairs") this.callGreaterBoss();
-    this.afterStep(t, x, y, from);
+    this.afterStep(t, x, y);
   }
   /** A Tower floor's secret: with every torch on it out, a Greater Boss
    * appears on the open floor nearest the stairs, once a floor a run. It is
@@ -1958,9 +1947,13 @@ export class Game {
   }
   /** Mode-specific progress once the player stands on the new tile,
    * stepped onto from `from`. */
-  private afterStep(t: Tile, x: number, y: number, from: { x: number; y: number }) {
-    if (this.mode === "delve") this.afterDelveStep(t, x, y, from);
+  private afterStep(t: Tile, x: number, y: number) {
+    if (this.mode === "delve") this.afterDelveStep(t, x, y);
     else if (t.kind === "stairs") this.advanceTowerRoom();
+    // Undo stays on the floor it was taken on: a step onto another (a
+    // Tower's stairs, a Delve floor line or milestone gate either way)
+    // forgets the history.
+    this.timeline.standOn();
   }
   private rejectStep(outcome: StepBlocked, t: Tile, x: number, y: number): false {
     if (outcome.blocked === "wall") this.reject(x, y, "A wall blocks the way.");
@@ -1971,9 +1964,7 @@ export class Game {
     return false;
   }
   private remember(snapshot: MoveSnapshot) {
-    const slice = this.slice;
-    slice.history.push(snapshot);
-    slice.history = keepUndos(slice.history, this.undosLeft);
+    this.timeline.remember(snapshot);
   }
   /** Copies resolved stats onto the live player, keeping its object identity. */
   private applyStats(next: Player) {
@@ -2302,17 +2293,13 @@ export class Game {
   private forgetLabyrinth() {
     if (this.mode === "delve") this.save.delve.memory = { known: {}, visited: {} };
   }
-  private afterDelveStep(t: Tile, x: number, y: number, from: { x: number; y: number }) {
+  private afterDelveStep(t: Tile, x: number, y: number) {
     const world = this.world;
     if (!(world instanceof World)) return;
-    // Undo stays on the floor it was taken on: crossing a floor line (each
-    // ten depth, either way) forgets the history.
-    const floorAt = (at: { x: number; y: number }) => this.rules.equivalentFloor(world.depth(at.x, at.y));
-    if (floorAt(from) !== floorAt({ x, y })) this.save.delve.history = [];
-    // The world keeps the run's milestone and floor itself.
+    // The world keeps the run's milestone and floor itself; the gate's
+    // new floor puts the passage out of undo's reach (`afterStep`).
     if (t.kind === "oneway" && world.cross(x, y)) {
       this.forgetLabyrinth();
-      this.save.delve.history = []; // Milestone passages cannot be reversed with undo.
       this.route = [];
       this.feedback(`Depth ${world.milestone * 100} · the passage seals behind you.`);
     }
@@ -2376,8 +2363,6 @@ export class Game {
     this.gain(at.x, at.y, "+1 yellow key", { tile: { kind: "key", color: "yellow" } });
   }
   advanceTowerRoom() {
-    // Undo stays on the floor it was taken on: climbing forgets the history.
-    this.slice.history = [];
     const purse = this.purse, p = this.run.player;
     // Keyed by the stairs taken, so it pays once a run.
     const gold = purse.floorGold(purse.floorKey(p.x, p.y));

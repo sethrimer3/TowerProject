@@ -6,6 +6,7 @@
 import { START_X, TOWER_START_X, TOWER_WIDTH, WIDTH, goldReward } from "./config.ts";
 import type { DelveRun, Mode, Run, Save, TowerRun } from "./entities.ts";
 import { LAYOUT_VERSION, World } from "./delve/world.ts";
+import { depthAt } from "./delve/labyrinth.ts";
 import { RoomWorld, TOWER_LAYOUT_VERSION } from "./tower/room-world.ts";
 import type { Board } from "./board.ts";
 import { extraEnemies } from "./more-enemies.ts";
@@ -20,6 +21,9 @@ export type ModeProfile<R extends Run = Run> = {
   equivalentFloor(progress: number): number;
   /** The progress loot at row `y` of the run's board is measured at. */
   progressAt(run: R, y: number): number;
+  /** The equivalent floor the run's hero stands on, from the run alone
+   * (undo never leaves it: run-timeline.ts). */
+  floorOf(run: R): number;
   /** The board's width, and the column a run enters at from the forest. */
   width: number;
   entranceX: number;
@@ -86,12 +90,16 @@ export function milestones(profile: ModeProfile, from: number, to: number) {
   return milestonePoints(profile.equivalentFloor(to)) - milestonePoints(profile.equivalentFloor(from));
 }
 
+/** A Delve depth's equivalent floor: one for each ten depth. */
+const delveFloor = (depth: number) => Math.floor(depth / 10);
+
 export const MODES: { tower: ModeProfile<TowerRun>; delve: ModeProfile<DelveRun> } = {
   tower: {
     balance: (save) => save.tower.inspiration,
     credit: (save, amount) => { save.tower.inspiration += amount; earn(save, "inspiration", amount); },
     equivalentFloor: (height) => height,
     progressAt: (run) => run.height,
+    floorOf: (run) => run.height,
     width: TOWER_WIDTH,
     entranceX: TOWER_START_X,
     layoutVersion: TOWER_LAYOUT_VERSION,
@@ -118,8 +126,9 @@ export const MODES: { tower: ModeProfile<TowerRun>; delve: ModeProfile<DelveRun>
   delve: {
     balance: (save) => save.delve.courage,
     credit: (save, amount) => { save.delve.courage += amount; earn(save, "courage", amount); },
-    equivalentFloor: (depth) => Math.floor(depth / 10),
+    equivalentFloor: delveFloor,
     progressAt: (_run, y) => y,
+    floorOf: (run) => delveFloor(depthAt(run.seed, run.player.x, run.player.y, run.milestone, run.tier ?? 1)),
     width: WIDTH,
     entranceX: START_X,
     layoutVersion: LAYOUT_VERSION,

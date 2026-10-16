@@ -3,6 +3,7 @@ import { snap } from "../exact.ts";
 import { loadout, type Loadout } from "../loadout.ts";
 import { MODES } from "../modes.ts";
 import { boonFactor } from "../shrines.ts";
+import { RunTimeline } from "../run-timeline.ts";
 
 /** The stats the loadout carries into a run's hero. */
 type HeroStats = { attack: number; defense: number; maxHp: number; shroud?: number; regen?: number; lifesteal?: number; thorns?: number; parry?: number; bossAttack?: number; pierce?: number };
@@ -49,12 +50,10 @@ export function changeLoadout(save: Save, change: () => boolean | void) {
   const before = BOTH_MODES.map((mode) => loadout(save, mode));
   if (change() === false) return false;
   BOTH_MODES.forEach((mode, i) => {
-    const slice = save[mode], run = slice.run;
+    const run = save[mode].run;
     if (!run || run.outside) return;
     const after = loadout(save, mode);
-    shiftRun(run, before[i], after);
-    for (const snapshot of slice.history) shiftRun(snapshot.run, before[i], after);
-    if (slice.fall) shiftRun(slice.fall.snapshot.run, before[i], after);
+    for (const copy of new RunTimeline(save, mode).runs()) shiftRun(copy, before[i], after);
   });
   readyForestRuns(save);
   return true;

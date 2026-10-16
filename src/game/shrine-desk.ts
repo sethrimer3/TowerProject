@@ -4,6 +4,7 @@ import {
   type BoonId, type ShrineRun,
 } from "../shrines.ts";
 import type { DeskHost } from "./desk.ts";
+import { RunTimeline } from "../run-timeline.ts";
 
 /** What the Shrine desk needs from the game beyond any desk's: the mode,
  * and word that the run's boons changed its enemies or hero, so the board
@@ -122,8 +123,7 @@ export class ShrineDesk {
 
   /** The live Tower run and every copy of it undo or a fall may restore. */
   private runs(): TowerRun[] {
-    const slice = this.save.tower;
-    return [this.run, ...slice.history.map((s) => s.run), ...(slice.fall ? [slice.fall.snapshot.run] : [])];
+    return new RunTimeline<TowerRun>(this.save, "tower").runs();
   }
 
   /** Moves the run's hero (and each undo snapshot's) to what its boons

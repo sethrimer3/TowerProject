@@ -479,6 +479,10 @@ _Avoid_: token, mana
 Taking back the last move on the floor the hero stands on. A run has a limited number of undos (Rehearsed steps, Echoes of time and Undo Count research set how many), and one spent never comes back during that run.
 _Avoid_: rewind, history slot
 
+**Run timeline**:
+What undo can take a run back to: the moves held on the floor the hero stands on, and while the hero lies fallen, the run just before that fight.
+_Avoid_: undo stack, history (alone)
+
 **Ignore**:
 Marking a tile inside a run so the hero never steps on it for the rest of that floor.
 _Avoid_: block, ban
