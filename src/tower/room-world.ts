@@ -9,6 +9,8 @@ import { fastCells } from "../fast-enemies.ts";
 import { rangedCells, wounded, woundMore } from "../ranged.ts";
 import { addEnemies, extrasSeed, hasExtras, type ExtraEnemies } from "../more-enemies.ts";
 import { ENTRY } from "./embedder.ts";
+import { getTowerGateEnemy } from "../scaling.ts";
+import { guardedTile, holdsShield, placeShield, walkDistances, type Shield } from "../shielded.ts";
 
 // v3 adds declarative multi-key/condition doors and places their prerequisite
 // keys differently; old per-room coordinate mutations must not overlay it.
@@ -37,7 +39,9 @@ import { ENTRY } from "./embedder.ts";
 // v23 deals every enemy a profile by the enemy schedule, any strength any
 // profile, and starts each tower's zone rosters one zone further along.
 // v24 leaves every floor's entrance open floor: no stairs lead back down.
-export const TOWER_LAYOUT_VERSION = 24;
+// v25 gives a share of the fourth tower's floors and up a Shielded enemy,
+// and adds standard enemies in front of one alone in its bubble.
+export const TOWER_LAYOUT_VERSION = 25;
 
 /** A self-contained 17x17 Tower floor. Generation is strategy-first (see
  * src/tower/index.ts): an abstract graph of gates, keys and rewards is
@@ -85,12 +89,41 @@ export function withExtraEnemies(cells: Map<string, Tile>, seed: number, room: n
   for (const [k, t] of placed) out.set(k, t);
   return out;
 }
+/** `cells` with the floor's Shielded enemy marked and its extras added
+ * (shielded.ts), and its shield (null for none): the way in is the tile
+ * just inside, the way up the stairs; no extra stands round the way in,
+ * beside the stairs or on a torch. */
+export function withShield(cells: Map<string, Tile>, seed: number, room: number, tier: number, torches: readonly Torch[]) {
+  if (tier < 4) return { cells, shield: null };
+  const band: { x: number; y: number }[] = [];
+  for (let y = 0; y < TOWER_HEIGHT; y++) for (let x = 0; x < TOWER_WIDTH; x++) band.push({ x, y });
+  const stairs = band.find((p) => cells.get(point(p.x, p.y))?.kind === "stairs");
+  if (!stairs) return { cells, shield: null };
+  const [ex, ey] = ENTRY;
+  const avoid = new Set([[ex, ey], [ex, ey + 1], [ex - 1, ey], [ex + 1, ey]].map(([x, y]) => point(x!, y!)));
+  for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) avoid.add(point(stairs.x + dx!, stairs.y + dy!));
+  for (const t of torches) avoid.add(point(t.x, t.y));
+  const toExit = walkDistances(cells, TOWER_WIDTH, [stairs]), toEntrance = walkDistances(cells, TOWER_WIDTH, [{ x: ex, y: ey }]);
+  const placed = new Map<string, Tile>();
+  const shield = placeShield({
+    cells, width: TOWER_WIDTH, wraps: false, band, avoid, seed, tier, floor: room + 1,
+    toExit: (p) => toExit.get(point(p.x, p.y)) ?? Infinity,
+    toEntrance: (p) => toEntrance.get(point(p.x, p.y)) ?? Infinity,
+    normal: () => getTowerGateEnemy(room, "normal", "balanced", tier),
+  }, placed);
+  if (!placed.size) return { cells, shield };
+  const out = new Map(cells);
+  for (const [k, t] of placed) out.set(k, t);
+  return { cells: out, shield };
+}
 export class RoomWorld implements Board {
   width = TOWER_WIDTH;
   height = TOWER_HEIGHT;
   floor = 0;
   cells: Map<string, Tile>;
   torches: Torch[];
+  /** The floor's Shielded enemy as generated (shielded.ts), if any. */
+  private shield: Shield | null;
   constructor(
     public seed: number,
     public room: number,
@@ -108,8 +141,12 @@ export class RoomWorld implements Board {
     public foes?: FoeRule,
   ) {
     let cells = generateTowerRoom(seed, room, tier);
-    this.torches = torchesLeft(torchesForRoom(seed, room, tier, cells), changes);
+    const torches = torchesForRoom(seed, room, tier, cells);
+    this.torches = torchesLeft(torches, changes);
     if (hasExtras(extras)) cells = withExtraEnemies(cells, seed, room, this.torches, extras);
+    const shielded = withShield(cells, seed, room, tier, torches);
+    this.shield = shielded.shield;
+    cells = shielded.cells;
     this.cells = rangedCells(fastCells(tierCells(cells, tier), "tower", tier, seed, () => room + 1), tier, seed, () => room + 1);
   }
   breakTorchAt(x: number, y: number): boolean {
@@ -122,8 +159,16 @@ export class RoomWorld implements Board {
   tile(x: number, y: number): Tile {
     if (!this.inside(x, y)) return { kind: "wall" };
     const changed = this.changes[point(x, y)];
-    if (changed) return wounded(foeTile(changed, this.foes));
-    return foeTile(withPotions(this.cells.get(point(x, y)) ?? { kind: "wall" }, x, y, this.seed ^ Math.imul(this.room + 1, 0x9e3779b1), this.percentPotions), this.foes);
+    const t = changed ? wounded(foeTile(changed, this.foes)) : foeTile(withPotions(this.cells.get(point(x, y)) ?? { kind: "wall" }, x, y, this.seed ^ Math.imul(this.room + 1, 0x9e3779b1), this.percentPotions), this.foes);
+    return this.shield ? guardedTile(t, x, y, [this.shield], (s) => this.holds(s)) : t;
+  }
+  /** Whether the Shielded enemy `s` still stands. */
+  private holds(s: Shield) {
+    const k = point(s.x, s.y);
+    return holdsShield(this.changes[k] ?? this.cells.get(k));
+  }
+  shields(): readonly Shield[] {
+    return this.shield && this.holds(this.shield) ? [this.shield] : [];
   }
   step(x: number, y: number, dx: number, dy: number) {
     const nx = x + dx,

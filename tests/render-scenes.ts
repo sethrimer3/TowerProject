@@ -199,6 +199,19 @@ const LATER_BOARD_SCENES: Record<string, () => BoardScene> = {
     if (!world.blacksmith || !world.hall) throw Error("the forest has no Blacksmith or Hall");
     return { g };
   },
+  /** A Shielded enemy's green bubble, three tiles round it, over another
+   * enemy it guards, the hero outside it. */
+  towerShield: () => {
+    const g = game("tower", { brightness: 70 });
+    const p = g.run.player, open = (x: number, y: number) => g.world.tile(x, y).kind === "floor";
+    let at: Point | null = null;
+    for (let dy = 3; dy <= 8 && !at; dy++) for (let dx = -2; dx <= 2 && !at; dx++) if (open(p.x + dx, p.y + dy) && open(p.x + dx + 1, p.y + dy)) at = { x: p.x + dx, y: p.y + dy };
+    if (!at) throw Error("no room for the shield");
+    g.run.changes[`${at.x},${at.y}`] = { kind: "enemy", enemy: { name: "Slime", hp: 40, attack: 9, defense: 1, tier: 0, strength: "strong", shielded: true } };
+    g.run.changes[`${at.x + 1},${at.y}`] = { kind: "enemy", enemy: { name: "Slime", hp: 40, attack: 9, defense: 1, tier: 0, strength: "normal" } };
+    (g.world as unknown as { shield: { x: number; y: number; floor: number } }).shield = { ...at, floor: 4000 };
+    return { g };
+  },
 };
 
 /** One board scene on `canvas` (408×408 CSS pixels), fully synchronous so
