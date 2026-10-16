@@ -476,16 +476,18 @@ export class Game {
     if (!this.run.outside && this.handStartsPlaying && !this.fallen) this.playHand();
     else this.auto = false;
     this.stopPlay();
-    this.blocked = { x: 0, y: 0, until: 0 };
   }
   /** Stops the play under way, for a run restored, loaded or begun: the
-   * route walked, a fight or volley playing out and the hand's plan. */
+   * route walked, a fight or volley playing out, the hand's plan and a
+   * refused step's mark (which would stand on the wrong tile of a new
+   * board). */
   private stopPlay() {
     this.route = [];
     this.encounter = null;
     this.fight = null;
     this.volley = null;
     this.dropHandPlan();
+    this.blocked = { x: 0, y: 0, until: 0 };
   }
   /** Makes `run` the live run of this mode and rebuilds its board. */
   private adoptRun(run: Run) {
@@ -562,7 +564,6 @@ export class Game {
     this.auto = false;
     this.stopPlay();
     this.paused = false;
-    this.blocked.until = 0;
   }
   /** A copy of an earlier state of the run, on the same floor (a Tower
    * floor's climb forgets the history). Damage taken in this area stays on
