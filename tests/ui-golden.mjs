@@ -155,7 +155,6 @@ try {
         rich(s);
         s.settings.devMode = true;
         s.settings.infoDisplay = "status";
-        s.settings.showArrows = true;
       }, 25),
       // Built last, so the fixtures above keep their run seeds.
       fallenUndo: fallen((s) => { s.upgrades.inspirationUndos = 1; }),
@@ -596,9 +595,8 @@ try {
     await shot(`${prefix}.statusInfo`);
     await menuClick("#auto-settings");
     await page.locator("#info-display").selectOption("popup");
-    await page.locator("#arrows").setChecked(true);
     await click("#settings-back");
-    await shot(`${prefix}.popupArrows`);
+    await shot(`${prefix}.popup`);
     await menuClick("#auto-settings");
     await page.locator("#dev-mode").setChecked(true);
     await shot(`${prefix}.settings.dev`);

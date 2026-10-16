@@ -697,12 +697,6 @@ canvas {
   border-radius: 50%;
   flex-shrink: 0;
 }
-.controls {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
 .actions {
   display: flex;
   flex-direction: column;
@@ -953,20 +947,6 @@ canvas {
 .mini-action.enabled {
   border-color: #b59861;
   color: #ecd19d;
-}
-.dpad {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-}
-.dpad > div {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-.dpad button {
-  min-height: 28px;
-  padding: 3px 12px;
 }
 .tile-highlight {
   position: absolute;
@@ -1718,9 +1698,6 @@ dialog p {
   .ascent {
     margin-bottom: 12px;
   }
-  .controls {
-    gap: 5px;
-  }
   .actions {
     padding: 3px 2px;
   }
@@ -1740,9 +1717,6 @@ dialog p {
   }
   .auto-speed {
     font-size: 7px;
-  }
-  .dpad button {
-    padding-inline: 10px;
   }
   nav button {
     font-size: 9px;
@@ -1840,9 +1814,6 @@ dialog p {
   .stats {
     min-height: 75px;
   }
-  .controls {
-    margin-top: 0;
-  }
   .inspection {
     font-size: 8px;
   }
@@ -1910,13 +1881,6 @@ footer {
 .board > .inspection:empty {
   display: none;
 }
-.board > .controls {
-  position: absolute;
-  z-index: 8;
-  right: 8px;
-  bottom: 35px;
-  margin: 0;
-}
 /* Sizes the square playfield to the largest square that fits the space left
    over by the surrounding chrome, in whichever dimension is tighter. */
 .board-cell {
@@ -1980,9 +1944,6 @@ nav {
 .board {
   border: 0;
   box-shadow: none;
-}
-.controls {
-  flex-wrap: wrap;
 }
 .shop {
   display: flex;
@@ -2388,7 +2349,6 @@ nav button > span :is(img, svg) { display: block; width: 42px; height: 42px; max
 .slot-filter button img { width: 28px; height: 28px; }
 .summary-icon img { width: 72px; height: 72px; }
 .ascent > span img { width: 24px; height: 24px; }
-.dpad button img { display: block; width: 22px; height: 22px; margin: auto; }
 /* ── DEFEND ─────────────────────────────────────────────────────────── */
 #defend.page {
   min-height: 0;
@@ -4454,7 +4414,7 @@ html.cinematic .shell {
   box-shadow: none !important;
   --board-cap: 100vmax;
 }
-html.cinematic :is(#stats, #currencies, nav, #training-bar, #drill-tip, .research-toast, #status-row, .controls, #inspect, #tile-highlight, .inspect-box, #free-training-box, .tier-arrow, #forest-sign, #density-label, .board-tip, .forest-pointer, .job-pointer) {
+html.cinematic :is(#stats, #currencies, nav, #training-bar, #drill-tip, .research-toast, #status-row, #inspect, #tile-highlight, .inspect-box, #free-training-box, .tier-arrow, #forest-sign, #density-label, .board-tip, .forest-pointer, .job-pointer) {
   display: none !important;
 }
 html.cinematic .board-cell {

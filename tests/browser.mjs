@@ -31,6 +31,12 @@ async function toDelve() {
   if (await board.isVisible()) await board.click();
   if ((await board.getAttribute("aria-label")) !== "Delve") await page.locator("#forest-sign").click();
 }
+/** One step up by the keyboard, which reaches the board only with no
+ * button focused. */
+async function stepUp() {
+  await page.evaluate(() => document.activeElement?.blur());
+  await page.keyboard.press("ArrowUp");
+}
 /** A forest run's hero starts on row 6; the entrance is on row 12. */
 const FOREST_STEPS = 6;
 const fontCheck = await page.evaluate(() => ({
@@ -72,8 +78,6 @@ await page.mouse.move(box.x + box.width - 2, box.y + box.height - 2, { steps: 5 
 await page.mouse.up();
 if (await page.evaluate(() => getSelection().toString()))
   throw Error("Dragging across the HUD selected text");
-if (await page.locator(".dpad").isVisible())
-  throw Error("Arrows should be hidden by default");
 // Inside a run the tabs give way to an empty row; Settings opens from the HUD.
 if (await page.locator('[data-tab="gear"]').isVisible())
   throw Error("Tabs should be hidden inside a run");
@@ -84,12 +88,9 @@ if (!(await page.locator("#world").isVisible()))
 // Inside a run the tabs are hidden: end the first Tower run to reach the forest.
 await openMenu(page); await page.locator("#end-run").click();
 await page.locator("#confirm").click();
-await openMenu(page); await page.locator("#auto-settings").click();
-await page.locator("#arrows").check();
-await page.locator("#settings-back").click();
 await toDelve();
 await page.locator("#enter-run").click();
-await page.getByRole("button", { name: "Move up", exact: true }).click();
+await stepUp();
 if ((await page.locator("#height").textContent()) !== "1")
   throw Error("Movement failed");
 // A reload mid-Delve-run opens the Delve where it was.
@@ -133,13 +134,13 @@ for (let i = 0; i < 2; i++) {
   await toDelve();
   // Restart now begins outside; reaching the cave must not earn depth.
   for (let step = 0; step < FOREST_STEPS; step++)
-    await page.getByRole("button", { name: "Move up", exact: true }).click();
+    await stepUp();
   // The HUD counts the cave's first row as 1, so check the saved run instead.
   const entered = await page.evaluate(() => JSON.parse(localStorage.getItem("towerdelve.v1")).delve.run);
   if (entered.outside || entered.height !== 0)
     throw Error("Forest walking awarded depth");
   for (let step = 0; step < i + 2; step++)
-    await page.getByRole("button", { name: "Move up", exact: true }).click();
+    await stepUp();
   await openMenu(page); await page.locator("#auto-settings").click();
   await page.locator("#retire").click();
   await page.locator("#confirm").click();
@@ -158,7 +159,7 @@ await page.locator('[data-skill="moveSpeed"]').click();
 await page.locator('[data-skill="moveSpeed"]').click();
 await toDelve();
 for (let step = 0; step < FOREST_STEPS; step++)
-  await page.getByRole("button", { name: "Move up", exact: true }).click();
+  await stepUp();
 // Automove may spend its first steps sideways or fighting, so check that it
 // moved the player at all rather than that it gained height.
 const position = async () => JSON.stringify((await page.evaluate(() => JSON.parse(localStorage.getItem("towerdelve.v1")))).delve.run.player);
@@ -204,14 +205,13 @@ console.log(
 );
 const fit = await page.evaluate(() => {
   const grid = document.querySelector("canvas").getBoundingClientRect();
-  const controls = document.querySelector(".controls").getBoundingClientRect();
   const nav = document.querySelector("nav").getBoundingClientRect();
   return (
     Math.abs(grid.width - grid.height) < 1 &&
-    controls.bottom <= nav.top &&
+    grid.bottom <= nav.top &&
     nav.bottom <= innerHeight
   );
 });
-if (!fit) throw Error("Grid or controls do not fit above navigation");
+if (!fit) throw Error("Grid does not fit above navigation");
 await browser.close();
 if (errors.length) process.exitCode = 1;

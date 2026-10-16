@@ -215,7 +215,6 @@ export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay)
   renderHand(game);
   text("density-label", `${renderer.density} × ${renderer.density}`);
   renderUndo(game);
-  (document.querySelector(".dpad") as HTMLElement).hidden = !game.save.settings.showArrows;
   renderModeTab(game);
   renderForestSign(game);
   renderRunMenu(game);

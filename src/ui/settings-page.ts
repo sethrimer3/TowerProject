@@ -13,8 +13,8 @@ import { showStats } from "./stats-dialog.ts";
 /** The settings on the page, in order; each control comes from its row in
  * SETTINGS. */
 const PAGE = [
-  "transition", "fightAnimation", "damageVisual", "itemGains", "doorGains", "goldGains", "silverGains", "brightness", "spritesOff", "decorOff", "batterySaver", "showArrows", "reduceMotion", "weatherSound",
-  "infoDisplay", "oneTapMove", "cinematic", "cinematicIdle", "cinematicGems", "devMode", "freePurchases",
+  "transition", "fightAnimation", "damageVisual", "itemGains", "doorGains", "goldGains", "silverGains", "brightness", "spritesOff", "decorOff", "batterySaver", "reduceMotion", "weatherSound",
+  "infoDisplay", "cinematic", "cinematicIdle", "cinematicGems", "devMode", "freePurchases",
 ] as const satisfies readonly SettingKey[];
 type PageKey = (typeof PAGE)[number];
 
@@ -30,7 +30,6 @@ const onPage = (save: Save) => PAGE.filter((key) => SHOWN[key]?.(save) ?? true);
 
 /** What a change does once written, beyond saving. */
 const AFTER: Partial<Record<PageKey, (ctx: AppContext, overlay: BoardOverlay, s: Settings) => void>> = {
-  showArrows: (ctx) => ctx.update(),
   reduceMotion: (ctx) => applyUiTheme(ctx.game.save),
   // The board silences the weather itself once sound is off.
   weatherSound: (ctx) => ctx.update(),

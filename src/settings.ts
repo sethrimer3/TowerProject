@@ -25,7 +25,6 @@ export const SETTINGS = {
     kind: "choice", default: "smooth", choices: [["smooth", "Smooth"], ["fast", "Fast"], ["instant", "Off (instant)"]],
     page: { id: "transition", label: "Movement transition" },
   },
-  showArrows: { kind: "toggle", default: false, page: { id: "arrows", label: "Show directional buttons" } },
   /** Steps a second, for the hand and Automove, set by the arrows beside the
    * run's play button (no row on the page): 0 (paused) up to 3, and one more
    * per Movement Speed research level; a new hero starts at 2, and the
@@ -34,11 +33,7 @@ export const SETTINGS = {
   reduceMotion: { kind: "toggle", default: false, page: { id: "motion", label: "Reduce motion" } },
   /** Dungeon brightness, 20 (very dark) to 100 (default look). */
   brightness: { kind: "range", default: 100, min: 20, max: 100, step: 5, page: { id: "brightness", label: "Brightness", aria: "Dungeon brightness" } },
-  /** Tapping a tile walks there immediately instead of requiring a second
-   * tap to confirm. The info box still appears either way. */
-  oneTapMove: { kind: "toggle", default: false, page: { id: "one-tap", label: "Move with one tap" } },
-  /** Which tile-inspection surfaces appear on tap. "none" makes a single tap
-   * always walk there directly. */
+  /** Which tile-inspection surfaces appear on tap. */
   infoDisplay: {
     kind: "choice", default: "both", choices: [["both", "Popup + status line"], ["popup", "Popup only"], ["status", "Status line only"], ["none", "Off"]],
     page: { id: "info-display", label: "Tile info display" },

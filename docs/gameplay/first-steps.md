@@ -15,14 +15,14 @@ Reloading mid-Delve-run opens the Delve where it was.
 
 ## Moving by hand
 
-In the forest before a run, tap an open tile to walk to it, fighting monsters and collecting items along the route.
+In the forest before a run, a tap on an open tile walks straight to it.
 Swipes move one tile in any cardinal direction.
-Keyboard arrows / WASD also work; on-screen arrows are off by default and can be enabled in Settings.
+Keyboard arrows / WASD also work.
 Monsters on manual routes are fought even when lethal.
 Missing keys stop movement at the necessary door, with a fading red X; unreachable wall targets get the same feedback at the tapped spot.
 Routing prefers an available detour over a door for which no key is held.
-A first tap on a tile highlights it and shows what's there (a monster's stats, an item, a door's keys); once **Pathfinder** (1 Courage, after Movement Speed in the Courage tree, left of Focus) is owned, it also draws the route there on the board and adds a Route totals box of what happens along it (the HP lost, the keys spent, what's picked up).
-A second tap walks there either way.
+Inside a run, where the hand moves the hero, a tap on a tile highlights it and shows what's there (a monster's stats, an item, a door's keys); once **Pathfinder** (1 Courage, after Movement Speed in the Courage tree, left of Focus) is owned, it also draws the route there on the board and adds a Route totals box of what happens along it (the HP lost, the keys spent, what's picked up).
+With Dev mode on, the hero can also walk by hand inside a run: a second tap on the highlighted tile walks there, fighting monsters and collecting items along the route.
 A pickup's box shows what it gives with every bonus counted, as its icon and +N (a key's keys, a potion's full heal, a shard's ATK or DEF), and a lit torch's says Torch.
 With Pathfinder, tapping a tile inside a run pauses the hand while the highlight shows; once it goes (and no other tile is highlighted in its place), a hand it paused plays on.
 Pressing play clears the highlight and the route.

@@ -53,8 +53,8 @@ const mode = (make: (over?: object) => object, extra: object = {}) => ({
   ...extra,
 });
 const settings = {
-  speed: 6, transition: "fast", showArrows: true, spritesOff: true, reduceMotion: true, brightness: 55.4,
-  weatherSound: false, decorOff: true, batterySaver: true, oneTapMove: true,
+  speed: 6, transition: "fast", spritesOff: true, reduceMotion: true, brightness: 55.4,
+  weatherSound: false, decorOff: true, batterySaver: true,
   infoDisplay: "popup", devMode: true,
 };
 const v3 = () => ({

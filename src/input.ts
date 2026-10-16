@@ -99,11 +99,4 @@ export function bindInput(
     },
     { passive: false },
   );
-  document.querySelectorAll<HTMLButtonElement>("[data-move]").forEach(
-    (b) =>
-      (b.onclick = () => {
-        const [dx, dy] = b.dataset.move!.split(",").map(Number);
-        manual(dx, dy);
-      }),
-  );
 }
