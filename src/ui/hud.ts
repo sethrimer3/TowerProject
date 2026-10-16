@@ -1,6 +1,4 @@
 import { amountUnit, compactAmount, enemyStat, keyCount, stepsIn, whole, wholeHp } from "../whole.ts";
-import { enemyStats } from "../enemy-curves.ts";
-import { tierStats } from "../tiers.ts";
 import type { Game } from "../state.ts";
 import type { Renderer } from "../rendering.ts";
 import { levelForXp, xpForLevel } from "../config.ts";
@@ -745,15 +743,15 @@ function renderGoldBonus(game: Game) {
  * then 1.2K, 12M … */
 const shortStat = (n: number) => (n < 1000 ? enemyStat(n) : compactAmount(Math.floor(n)));
 /** Under the floor inside a run, below a dividing line: the ATK, DEF and HP
- * of a normal, balanced enemy there, as the tier's factor makes them. */
+ * of the normal enemy at the run's deepest point, as the board makes it. */
 function renderBaseEnemy(game: Game) {
-  const box = el("base-enemy"), divider = el("base-enemy-divider"), inside = !game.run.outside;
-  box.hidden = divider.hidden = !inside;
-  if (!inside) return;
-  const s = enemyStats(game.mode, game.tier, game.run.height, "normal", "balanced"), f = tierStats(game.tier);
-  text("base-enemy-atk", shortStat(s.attack * f));
-  text("base-enemy-def", shortStat(s.defense * f));
-  text("base-enemy-hp", shortStat(s.hp * f));
+  const box = el("base-enemy"), divider = el("base-enemy-divider");
+  const s = game.run.outside ? undefined : game.world.normalEnemy?.(game.run.height);
+  box.hidden = divider.hidden = !s;
+  if (!s) return;
+  text("base-enemy-atk", shortStat(s.attack));
+  text("base-enemy-def", shortStat(s.defense));
+  text("base-enemy-hp", shortStat(s.hp));
 }
 
 /** The run's Inspiration (Courage in the Delve) last shown under the

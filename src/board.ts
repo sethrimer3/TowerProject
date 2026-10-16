@@ -1,4 +1,4 @@
-import { point, type Kind, type Run, type Tile, type Torch } from "./entities.ts";
+import { point, type Enemy, type Kind, type Run, type Tile, type Torch } from "./entities.ts";
 import { tileRandom } from "./random.ts";
 import type { Shield } from "./shielded.ts";
 
@@ -30,6 +30,10 @@ export type Board = {
   /** The Shielded enemies still standing (shielded.ts), whose bubbles the
    * board draws, on boards that hold them. */
   shields?(): readonly Shield[];
+  /** The normal enemy `depth` makes on boards that hold enemies, with every
+   * stat step the board applies to its real enemies: the HUD shows it.
+   * A Tower floor has one floor, so it ignores `depth`. */
+  normalEnemy?(depth: number): Enemy;
 };
 
 /** Tiles the hero takes something from by stepping on them: every pickup

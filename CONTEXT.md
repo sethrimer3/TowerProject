@@ -150,6 +150,10 @@ _Avoid_: double door, multi-lock
 How strong a normal, balanced enemy is on each floor of a tower or delve: HP and ATK set at a few anchor floors and grown smoothly between them, and DEF a share of ATK. Every enemy is that floor's curve times its strength and profile, so a boss placed on any floor takes that floor's value.
 _Avoid_: power budget, enemy table, zone stats
 
+**Normal enemy**:
+The enemy a floor's or depth's enemy curve makes when it is neither weak, strong, elite nor a boss, and balanced, with every change the run makes to its enemies (the tower's or cave's factor, a tournament's raise, the Shrine boons). The HUD shows it under the floor; a Wooden Door's durability is measured against its ATK before the run's changes.
+_Avoid_: average enemy, typical enemy (Base Enemy is a card, heading for any enemy of normal strength)
+
 **Enemy strength**:
 How hard the floor asked an enemy to be: weak, normal, strong or elite. Each strength multiplies its floor's enemy curve: strong enemies are the floor's own made tougher, elite ones come from the next zone (the Tower's curve ten floors on). The board shows it round the enemy (a dark red rim for normal, the same with one chevron pointing down for weak, bright red with one chevron for strong, bright red inside a gold rim with two chevrons for elite) and the inspect title and fight messages name weak, strong and elite (and a boss or Greater Boss) before the enemy's name.
 _Avoid_: tier, rank, level

@@ -1,16 +1,16 @@
 import { region, depthAt, areasBetween, floorFor, ownerAt, type Region } from "./labyrinth.ts";
 import { CHUNK, WIDTH, START_X } from "../config.ts";
-import { point, type DelveRun, type Point, type Tile, type Torch } from "../entities.ts";
+import { point, type DelveRun, type Enemy, type Point, type Tile, type Torch } from "../entities.ts";
 import { withPotions, type Board } from "../board.ts";
 import { breakTorch, placeTorches, torchesLeft } from "../torches.ts";
-import { tierCells } from "../tiers.ts";
+import { tierCells, tierTile } from "../tiers.ts";
 import { fastCells } from "../fast-enemies.ts";
 import { rangedCells, wounded, woundMore } from "../ranged.ts";
-import { tournamentCells } from "../tournament/run.ts";
+import { tournamentStatFactor, tournamentTile } from "../tournament/run.ts";
 import { addEnemies, extraGround, extrasKey, extrasSeed, hasExtras, type ExtraEnemies } from "../more-enemies.ts";
 import { guardedTile, holdsShield, placeShield, walkDistances, type Shield } from "../shielded.ts";
 import { enemyStats } from "../enemy-curves.ts";
-import { enemyTier } from "../scaling.ts";
+import { DELVE_ENEMY_NAMES, enemyTier } from "../scaling.ts";
 
 // v8 turns some pocket throats into forks: two parallel lanes of costs.
 // v9 adds yellow-or-blue and blue-or-red door forks.
@@ -227,11 +227,22 @@ export class World implements Board {
       // Each enemy rolls Fast by its own equivalent floor.
       const floorAt = (x: number, y: number) => Math.floor(depthAt(this.seed, x, y, ownerAt(this.seed, x, y), this.tier) / 10) + 1;
       const cells = rangedCells(fastCells(tierCells(this.generated(index), this.tier), "delve", this.tier, this.seed, floorAt), this.tier, this.seed, floorAt);
-      // A tournament run's enemies stand as strong as the next cave's.
-      chunk = this.run.tournament ? tournamentCells(cells, this.run.tournament.league) : cells;
+      chunk = this.run.tournament ? new Map([...cells].map(([k, t]) => [k, this.inLeague(t)])) : cells;
       this.chunks.set(index, chunk);
     }
     return chunk;
+  }
+  /** `t` as the run's league makes it: in a tournament run, an enemy as
+   * strong as the next cave's. */
+  private inLeague(t: Tile) {
+    const league = this.run.tournament?.league;
+    return league ? tournamentTile(t, tournamentStatFactor(league)) : t;
+  }
+  /** The normal enemy at `depth`: the delve's curve, its stat factor as
+   * the chunks take it, then the run's league. */
+  normalEnemy(depth: number): Enemy {
+    const enemy: Enemy = { name: DELVE_ENEMY_NAMES[0]!, tier: enemyTier("normal"), strength: "normal", profile: "balanced", ...enemyStats("delve", this.tier, depth, "normal", "balanced") };
+    return this.inLeague(tierTile({ kind: "enemy", enemy }, this.tier)).enemy!;
   }
   /** Chunk `index` as generated, with More Enemies' extras, then each
    * area's Shielded enemies and theirs. */

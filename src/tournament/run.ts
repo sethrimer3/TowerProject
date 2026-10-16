@@ -39,13 +39,6 @@ export function tournamentTile(tile: Tile, factor: number): Tile {
   return { ...tile, enemy: { ...e, hp: f(e.hp), attack: f(e.attack), defense: f(e.defense) } };
 }
 
-/** Every tile of `cells` as it stands in a tournament run in `league`. */
-export function tournamentCells(cells: Map<string, Tile>, league: League) {
-  const out = new Map<string, Tile>(), factor = tournamentStatFactor(league);
-  for (const [k, t] of cells) out.set(k, tournamentTile(t, factor));
-  return out;
-}
-
 /** The step a mulberry32 stream's state takes each draw (random.ts). */
 const STEP = 0x6d2b79f5;
 

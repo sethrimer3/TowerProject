@@ -1,9 +1,9 @@
 import { TOWER_WIDTH, TOWER_HEIGHT } from "../config.ts";
-import { point, type Tile, type Torch } from "../entities.ts";
+import { point, type Enemy, type Tile, type Torch } from "../entities.ts";
 import { withPotions, type Board } from "../board.ts";
 import { breakTorch, placeTorches, torchesLeft } from "../torches.ts";
 import { generateTowerFloor } from "./index.ts";
-import { tierCells } from "../tiers.ts";
+import { tierCells, tierTile } from "../tiers.ts";
 import { foeTile, type FoeRule } from "../shrines.ts";
 import { fastCells } from "../fast-enemies.ts";
 import { rangedCells, wounded, woundMore } from "../ranged.ts";
@@ -159,8 +159,18 @@ export class RoomWorld implements Board {
   tile(x: number, y: number): Tile {
     if (!this.inside(x, y)) return { kind: "wall" };
     const changed = this.changes[point(x, y)];
-    const t = changed ? wounded(foeTile(changed, this.foes)) : foeTile(withPotions(this.cells.get(point(x, y)) ?? { kind: "wall" }, x, y, this.seed ^ Math.imul(this.room + 1, 0x9e3779b1), this.percentPotions), this.foes);
+    const t = changed ? wounded(this.withBoons(changed)) : this.withBoons(withPotions(this.cells.get(point(x, y)) ?? { kind: "wall" }, x, y, this.seed ^ Math.imul(this.room + 1, 0x9e3779b1), this.percentPotions));
     return this.shield ? guardedTile(t, x, y, [this.shield], (s) => this.holds(s)) : t;
+  }
+  /** `t` as the run's boons make it now, read afresh since a boon can
+   * change mid-run. */
+  private withBoons(t: Tile) {
+    return foeTile(t, this.foes);
+  }
+  /** The floor's normal enemy: the tower's curve, its stat factor as the
+   * cells take it, then the run's boons. */
+  normalEnemy(): Enemy {
+    return this.withBoons(tierTile({ kind: "enemy", enemy: getTowerGateEnemy(this.room, "normal", "balanced", this.tier) }, this.tier)).enemy!;
   }
   /** Whether the Shielded enemy `s` still stands. */
   private holds(s: Shield) {
