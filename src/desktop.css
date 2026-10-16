@@ -357,6 +357,11 @@ html.desktop .eq-result-title:not(#_) {
 html.desktop .safe:not(#_) {
   color: #006000 !important;
 }
+/* An enemy's stat line keeps its colours, dark enough for the tooltip:
+   what gets through red, Lifesteal's heal blue, the Gold drop gold. */
+html.desktop .inspect-box .hit-hurt:not(#_) { color: #c00000; }
+html.desktop .inspect-box .hit-heal:not(#_) { color: #0000c0; }
+html.desktop .inspect-box .hit-gold:not(#_) { color: #806000; }
 
 /* The Shrine bar (style.css): its fill purple blocks, apart from the navy XP bar; its diamond a white field in a dark line, filled title navy while boons wait. */
 html.desktop {

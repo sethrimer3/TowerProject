@@ -343,6 +343,11 @@ html.murk .safe:not(#_),
 html.murk .eq-result-title:not(#_) {
   color: var(--m-green) !important;
 }
+/* An enemy's stat line keeps its colours: what gets through red, Lifesteal's
+   heal blue, the Gold drop gold. */
+html.murk .inspect-box .hit-hurt:not(#_) { color: var(--m-red); }
+html.murk .inspect-box .hit-heal:not(#_) { color: #6aa0f0; }
+html.murk .inspect-box .hit-gold:not(#_) { color: #e8c040; }
 /* Keys keep their colour, bright enough to read on the night. */
 html.murk .keys .yellow:not(#_) { color: #e8c040; }
 html.murk .keys .blue:not(#_) { color: #6aa0f0; }

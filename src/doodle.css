@@ -331,6 +331,11 @@ html.doodle .safe:not(#_),
 html.doodle .eq-result-title:not(#_) {
   color: var(--d-green) !important;
 }
+/* An enemy's stat line keeps its colours, dark enough to read on white:
+   what gets through red, Lifesteal's heal blue, the Gold drop gold. */
+html.doodle .inspect-box .hit-hurt:not(#_) { color: var(--d-red); }
+html.doodle .inspect-box .hit-heal:not(#_) { color: #0060e0; }
+html.doodle .inspect-box .hit-gold:not(#_) { color: #c0a000; }
 /* Keys keep their colour, dark enough to read on white. */
 html.doodle .keys .yellow:not(#_) { color: #c0a000; }
 html.doodle .keys .blue:not(#_) { color: #0060e0; }

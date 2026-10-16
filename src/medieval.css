@@ -516,6 +516,18 @@ html.medieval .tree-tooltip .safe {
 html.medieval .inspect-box .danger {
   color: #8a1a12 !important;
 }
+/* An enemy's stat line keeps its colours, inked dark enough for the
+   parchment: what gets through red, Lifesteal's heal blue, the Gold drop
+   gold. */
+html.medieval .inspect-box .hit-hurt {
+  color: #8a1a12;
+}
+html.medieval .inspect-box .hit-heal {
+  color: #1f4f86;
+}
+html.medieval .inspect-box .hit-gold {
+  color: #7a5600;
+}
 /* The skill's name is inked, not lit, on parchment. */
 html.medieval .tree-tooltip {
   --tree-color: #7a3e10;

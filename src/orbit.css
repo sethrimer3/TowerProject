@@ -409,6 +409,11 @@ html.orbit .safe:not(#_),
 html.orbit .eq-result-title:not(#_) {
   color: var(--o-green) !important;
 }
+/* An enemy's stat line keeps its colours: what gets through red, Lifesteal's
+   heal blue, the Gold drop gold. */
+html.orbit .inspect-box .hit-hurt:not(#_) { color: var(--o-red); }
+html.orbit .inspect-box .hit-heal:not(#_) { color: #5ab8ff; }
+html.orbit .inspect-box .hit-gold:not(#_) { color: #ffd84a; }
 /* Keys keep their colour. */
 html.orbit .keys .yellow:not(#_) { color: #ffd84a; }
 html.orbit .keys .blue:not(#_) { color: #5ab8ff; }

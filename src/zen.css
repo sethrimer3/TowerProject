@@ -341,6 +341,13 @@ html:is(.yang, .yin) .safe:not(#_),
 html:is(.yang, .yin) .eq-result-title:not(#_) {
   color: var(--z-moss) !important;
 }
+/* An enemy's stat line keeps its colours, in quiet tones: what gets through
+   the seal's red, Lifesteal's heal blue, the Gold drop gold. */
+html:is(.yang, .yin) .inspect-box .hit-hurt:not(#_) { color: var(--z-seal); }
+html.yang .inspect-box .hit-heal:not(#_) { color: #3f6585; }
+html.yang .inspect-box .hit-gold:not(#_) { color: #a8811c; }
+html.yin .inspect-box .hit-heal:not(#_) { color: #7ea6c4; }
+html.yin .inspect-box .hit-gold:not(#_) { color: #d4b04a; }
 /* Keys keep their colour, in quiet tones. */
 html.yang .keys .yellow:not(#_) { color: #a8811c; }
 html.yang .keys .blue:not(#_) { color: #3f6585; }

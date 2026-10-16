@@ -362,6 +362,11 @@ html.arcade .safe:not(#_),
 html.arcade .eq-result-title:not(#_) {
   color: var(--a-green) !important;
 }
+/* An enemy's stat line keeps its colours: what gets through red, Lifesteal's
+   heal blue, the Gold drop yellow. */
+html.arcade .inspect-box .hit-hurt:not(#_) { color: var(--a-red); }
+html.arcade .inspect-box .hit-heal:not(#_) { color: #3fa8ff; }
+html.arcade .inspect-box .hit-gold:not(#_) { color: var(--a-yellow); }
 /* Keys keep their colour. */
 html.arcade .keys .yellow:not(#_) { color: #ffe600; }
 html.arcade .keys .blue:not(#_) { color: #3fa8ff; }

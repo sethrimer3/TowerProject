@@ -270,6 +270,13 @@ html:is(.shiro, .kuro) .safe:not(#_),
 html:is(.shiro, .kuro) .eq-result-title:not(#_) {
   color: var(--b-green) !important;
 }
+/* An enemy's stat line keeps its colours: what gets through red, Lifesteal's
+   heal blue, the Gold drop gold. */
+html:is(.shiro, .kuro) .inspect-box .hit-hurt:not(#_) { color: var(--b-red); }
+html.shiro .inspect-box .hit-heal:not(#_) { color: #3d7bd9; }
+html.shiro .inspect-box .hit-gold:not(#_) { color: #b38c00; }
+html.kuro .inspect-box .hit-heal:not(#_) { color: #5d96ef; }
+html.kuro .inspect-box .hit-gold:not(#_) { color: #f2cc2a; }
 /* Keys keep their colour. */
 html.shiro .keys .yellow:not(#_) { color: #b38c00; }
 html.shiro .keys .blue:not(#_) { color: #3d7bd9; }
