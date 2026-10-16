@@ -1348,10 +1348,21 @@ dialog > small {
   color: #e5d5b8;
   font-size: 13px;
 }
-#themes-back {
+/* The Settings page's button into a menu of its own, the Toggles. */
+.setting.menu-open {
+  width: 100%;
+  min-height: 56px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid #36404f;
+}
+.menu-open b {
+  color: #e5d5b8;
+  font-size: 15px;
+}
+#themes-back, #toggles-back {
   margin-top: 12px;
 }
-#themes-back + .page-title {
+#themes-back + .page-title, #toggles-back + .page-title {
   margin-top: 16px;
 }
 .theme-gold .gold-icon {

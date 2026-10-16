@@ -140,6 +140,8 @@ export class BoardPopups {
    * fight that begins before the last one's bar is gone leaves it to finish. */
   private fights: { fight: ShownFight; landed: number }[] = [];
   private seed = NaN;
+  /** Which of the numbers the Settings show. */
+  private shown: Shown = ALL_SHOWN;
   /** The last turn's shots taken (ranged.ts), and the enemies' HP bars the
    * Archer's arrows raised: drained from `from` to `hp` out of `full` as
    * the arrow lands at `start`, held a while, then faded. */
@@ -149,9 +151,10 @@ export class BoardPopups {
   /** Takes the game's new rewards, starting now (those that came together
    * one after another, but a kill's or a chest's drops all at once,
    * stacked, and a played-out fight's once its last numbers fade), the latest
-   * fight's strikes that have landed by `now`, and a new heal. A new run
-   * clears whatever was still showing. */
-  update(game: { run: { seed: number }; gains: Gain[]; fight: ShownFight | null; lastHeal: Heal | null; volley?: Volley | null }, now: number) {
+   * fight's strikes that have landed by `now`, and a new heal, each unless
+   * its Settings row is off. A new run clears whatever was still showing. */
+  update(game: { run: { seed: number }; gains: Gain[]; fight: ShownFight | null; lastHeal: Heal | null; volley?: Volley | null; save?: { settings: Shown } }, now: number) {
+    this.shown = game.save?.settings ?? ALL_SHOWN;
     if (game.run.seed !== this.seed) {
       this.seed = game.run.seed;
       this.rewards = [];
@@ -161,7 +164,7 @@ export class BoardPopups {
     const heal = game.lastHeal;
     if (heal && heal.id !== this.healed) {
       this.healed = heal.id;
-      this.numbers.push({ x: heal.x, y: heal.y + DAMAGE_START, start: now, text: `+${wholeChange(heal.to - heal.from)}`, color: HEAL_COLOR });
+      if (this.shown.hpGains) this.numbers.push({ x: heal.x, y: heal.y + DAMAGE_START, start: now, text: `+${wholeChange(heal.to - heal.from)}`, color: HEAL_COLOR });
     }
     let start = now - POPUP_MS;
     const held = dropsHeld(game.fight, now);
@@ -222,20 +225,21 @@ export class BoardPopups {
   /** What the enemy's thorns cost it, in yellow over the enemy, as the
    * strike's damage rises over the hero. */
   private thorns(amount: number, fight: ShownFight, start: number) {
+    if (!this.shown.hitNumbers) return;
     this.numbers.push({ x: fight.to.x, y: fight.to.y + DAMAGE_START, start, text: String(wholeChange(amount)), color: THORN_COLOR });
   }
   /** The HP Lifesteal restored, as a blue +N over the hero (nothing when it
    * rounds to none). */
   private heal(amount: number, on: { x: number; y: number }, start: number) {
     const shown = wholeChange(amount);
-    if (shown > 0) this.numbers.push({ x: on.x, y: on.y + DAMAGE_START, start, text: `+${shown}`, color: HEAL_COLOR });
+    if (shown > 0 && this.shown.hitNumbers) this.numbers.push({ x: on.x, y: on.y + DAMAGE_START, start, text: `+${shown}`, color: HEAL_COLOR });
   }
   /** A strike's numbers over `on` from `start`: the damage that got
    * through, and what the shroud blocked in silver beside it. A round the
    * hero came out ahead of raises only its blue gain. A `charged` arrow's
    * number wears a gold outline around its black one. */
   private raise(s: Strike, on: { x: number; y: number }, start: number, charged = false) {
-    if (s.by === "enemy" && s.healed && !s.damage && !s.shrouded) return;
+    if (!this.shown.hitNumbers || (s.by === "enemy" && s.healed && !s.damage && !s.shrouded)) return;
     const both = !!s.shrouded && s.damage > 0, y = on.y + DAMAGE_START;
     if (s.shrouded) this.numbers.push({ x: on.x - (both ? SHROUD_SPLIT : 0), y, start, text: String(wholeChange(s.shrouded)), color: SHROUD_COLOR });
     if (s.shrouded && !s.damage) return;
@@ -306,6 +310,11 @@ export class BoardPopups {
     return true;
   }
 }
+
+/** The Settings rows the popups' own numbers obey: a fight's (its strikes,
+ * thorns and Lifesteal) and a heal's. */
+type Shown = { hitNumbers: boolean; hpGains: boolean };
+const ALL_SHOWN: Shown = { hitNumbers: true, hpGains: true };
 
 type Strike = ShownFight["bout"]["strikes"][number];
 

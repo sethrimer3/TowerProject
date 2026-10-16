@@ -49,3 +49,9 @@ test("no setting's control shares an id with the page shell's", async () => {
     for (const id of [row.page.id, `${row.page.id}-value`]) assert.ok(!shellIds.has(id), `${key}: #${id}`);
   }
 });
+
+test("an older save's one item toggle, turned off, turns off ATK, DEF, HP and keys", () => {
+  const s = decoded({ itemGains: false, keyGains: true });
+  assert.deepEqual([s.attackGains, s.defenseGains, s.hpGains, s.keyGains], [false, false, false, true]);
+  assert.equal(decoded({ itemGains: true }).attackGains, true);
+});

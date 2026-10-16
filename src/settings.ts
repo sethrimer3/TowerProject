@@ -101,15 +101,22 @@ export const SETTINGS = {
   },
   /** Draw on each enemy the HP its fight would cost (`damage-labels.ts`).
    * Only Damage Visual, Tower I's floor 50 goal, shows it. */
-  damageVisual: { kind: "toggle", default: true, page: { id: "damage-visual", label: "Show damage on enemies" } },
-  /** The board's gains, each kind turned off on its own once the player
-   * knows what the floor's items give and take (`Game.gain`): an item's
-   * sprite rising as it is picked up, the keys and HP a door takes, and
-   * the Gold and Silver found. */
-  itemGains: { kind: "toggle", default: true, page: { id: "item-gains", label: "Item pickup animations" } },
-  doorGains: { kind: "toggle", default: true, page: { id: "door-gains", label: "Door payment animations" } },
-  goldGains: { kind: "toggle", default: true, page: { id: "gold-gains", label: "Gold pickup animations" } },
-  silverGains: { kind: "toggle", default: true, page: { id: "silver-gains", label: "Silver pickup animations" } },
+  damageVisual: { kind: "toggle", default: true, page: { id: "damage-visual", label: "Damage on enemies" } },
+  /** The values rising off the board in a run, each kind turned off on its
+   * own on the Settings page's Toggles menu once the player knows what the
+   * floor's items give and take (`Game.gain`): ATK, DEF and HP as they
+   * change (a shard or potion picked up, a siphon, max HP raised, a heal),
+   * the keys found, what a door takes, and the Gold and Silver found. */
+  attackGains: { kind: "toggle", default: true, page: { id: "attack-gains", label: "ATK changes" } },
+  defenseGains: { kind: "toggle", default: true, page: { id: "defense-gains", label: "DEF changes" } },
+  hpGains: { kind: "toggle", default: true, page: { id: "hp-gains", label: "HP changes" } },
+  keyGains: { kind: "toggle", default: true, page: { id: "key-gains", label: "Keys found" } },
+  doorGains: { kind: "toggle", default: true, page: { id: "door-gains", label: "Door payments" } },
+  goldGains: { kind: "toggle", default: true, page: { id: "gold-gains", label: "Gold found" } },
+  silverGains: { kind: "toggle", default: true, page: { id: "silver-gains", label: "Silver found" } },
+  /** The numbers a fight raises as each strike lands: the damage dealt and
+   * taken, the shroud's share, thorns and Lifesteal (`BoardPopups`). */
+  hitNumbers: { kind: "toggle", default: true, page: { id: "hit-numbers", label: "Fight damage numbers" } },
   /** Cinematic mode (`ui/cinematic.ts`): inside a run, pinching the board
    * in hides everything but the board; pinching out brings it back. */
   cinematic: { kind: "toggle", default: false, page: { id: "cinematic", label: "Cinematic mode (pinch the board in)" } },
@@ -151,5 +158,8 @@ export function decodeSettings(raw: any): Settings {
   if (typeof s.medievalTheme === "boolean" && settingValue(SETTINGS.uiTheme, s.uiTheme) === undefined)
     out.uiTheme = s.neonTheme === true ? "neon" : s.medievalTheme ? "medieval" : "classic";
   if (s.neonTheme === true && settingValue(SETTINGS.gameTheme, s.gameTheme) === undefined) out.gameTheme = "neon";
+  // TODO: remove in a future save version. Item pickups had one toggle,
+  // now one each for ATK, DEF, HP and keys.
+  if (s.itemGains === false) for (const k of ["attackGains", "defenseGains", "hpGains", "keyGains"] as const) if (s[k] === undefined) out[k] = false;
   return out as Settings;
 }

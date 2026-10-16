@@ -589,6 +589,10 @@ try {
     await click("#game-themes");
     await shot(`${prefix}.themes.game`);
     await click("#themes-back");
+    // The Toggles menu: what the board shows in a run.
+    await click("#toggles-open");
+    await shot(`${prefix}.toggles`);
+    await click("#toggles-back");
     await page.locator("#info-display").selectOption("status");
     await click("#settings-back");
     await tapTile(8, 3);

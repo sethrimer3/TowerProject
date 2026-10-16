@@ -64,7 +64,9 @@ It costs the same in all as Dash, about 201 billion Gold and 697 days, spread mo
 ## More controls
 
 Instant Combat likewise adds **Animate fights** (see [Fights](fights.md#how-a-fight-plays-out)).
-**Item pickup animations**, **Door payment animations**, **Gold pickup animations** and **Silver pickup animations** each turn off one kind of gain rising off the board: an item's sprite rising as it is picked up, the keys and HP a door takes, and the Gold and Silver found (what each pays is paid all the same).
+The **Toggles** button opens a menu of what the board shows during a run, each turned off on its own (what each pays is paid all the same):
+**ATK changes**, **DEF changes** and **HP changes** (a shard or potion picked up, a siphon, max HP raised, a heal), **Keys found**, **Door payments** (the keys and HP a door takes), **Gold found**, **Silver found**, **Damage on enemies** (once Damage Visual is claimed; see [Towers](towers-areas-goals.md)) and **Fight damage numbers** (the damage, shroud, thorns and Lifesteal numbers each strike raises).
+Materials, Cells, Gems and Free Training's levels always show.
 Beside Dev mode, **Dev: free purchases** is a lighter tool for testing: it unlocks nothing, but every purchase (skills, Training, provisions, research and archivists, Defend) goes through whatever you have and costs nothing, and research completes the moment it starts.
 In the forest **Enter**, an arrow going into an arch, stands under Goals beside the tower's number: one press goes straight in through the entrance and starts the run.
 Inside a run the button under Settings plays and pauses the hand.

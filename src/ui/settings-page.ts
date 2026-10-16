@@ -13,10 +13,15 @@ import { showStats } from "./stats-dialog.ts";
 /** The settings on the page, in order; each control comes from its row in
  * SETTINGS. */
 const PAGE = [
-  "transition", "fightAnimation", "damageVisual", "itemGains", "doorGains", "goldGains", "silverGains", "brightness", "spritesOff", "decorOff", "batterySaver", "reduceMotion", "weatherSound",
+  "transition", "fightAnimation", "brightness", "spritesOff", "decorOff", "batterySaver", "reduceMotion", "weatherSound",
   "infoDisplay", "cinematic", "cinematicIdle", "cinematicGems", "devMode", "freePurchases",
 ] as const satisfies readonly SettingKey[];
-type PageKey = (typeof PAGE)[number];
+/** The settings on the Toggles menu, in order: the values the board shows
+ * in a run. */
+const TOGGLES = [
+  "attackGains", "defenseGains", "hpGains", "keyGains", "doorGains", "goldGains", "silverGains", "damageVisual", "hitNumbers",
+] as const satisfies readonly SettingKey[];
+type PageKey = (typeof PAGE)[number] | (typeof TOGGLES)[number];
 
 /** Settings that stay off the page until the upgrade (or the setting)
  * behind them is on. */
@@ -26,7 +31,7 @@ const SHOWN: Partial<Record<PageKey, (save: Save) => boolean>> = {
   cinematicIdle: (save) => save.settings.cinematic,
   cinematicGems: (save) => save.settings.cinematic,
 };
-const onPage = (save: Save) => PAGE.filter((key) => SHOWN[key]?.(save) ?? true);
+const shownOf = (keys: readonly PageKey[], save: Save) => keys.filter((key) => SHOWN[key]?.(save) ?? true);
 
 /** What a change does once written, beyond saving. */
 const AFTER: Partial<Record<PageKey, (ctx: AppContext, overlay: BoardOverlay, s: Settings) => void>> = {
@@ -70,9 +75,9 @@ function control(key: PageKey, game: PageGame): string {
   }
 }
 
-/** The theme menu open over the Settings page, if any: kept while the page
- * redraws, closed by its Back. */
-let menu: ThemeKind | null = null;
+/** The menu open over the Settings page, if any (a theme menu, or the
+ * Toggles): kept while the page redraws, closed by its Back. */
+let menu: ThemeKind | "toggles" | null = null;
 
 /** The buttons that open each kind's theme menu, naming the look worn. */
 const themeButtons = (game: PageGame) =>
@@ -83,6 +88,18 @@ const themeButtons = (game: PageGame) =>
  * menus, display and control options, retire, and erase. */
 export function renderSettingsPage(ctx: AppContext, overlay: BoardOverlay) {
   const { game } = ctx;
+  if (menu === "toggles") {
+    const keys = shownOf(TOGGLES, game.save);
+    el("settings").innerHTML =
+      `<button class="back" id="toggles-back">← Settings</button><div class="page-title"><small>WHAT THE BOARD SHOWS IN A RUN</small><h2>Toggles</h2></div>` +
+      keys.map((key) => control(key, game)).join("");
+    el("toggles-back").onclick = () => {
+      menu = null;
+      ctx.renderPage();
+    };
+    bindControls(ctx, overlay, keys);
+    return;
+  }
   if (menu) {
     renderThemeMenu(el("settings"), game, menu, () => {
       menu = null;
@@ -99,15 +116,14 @@ export function renderSettingsPage(ctx: AppContext, overlay: BoardOverlay) {
   el("settings").innerHTML =
     `<button class="back" id="settings-back">← Back</button><div class="page-title"><small>MAKE THE ASCENT YOUR OWN</small><h2>Settings</h2></div><button class="wide" id="stats-open">Stats</button>` +
     themeButtons(game) +
-    onPage(game.save).map((key) => control(key, game)).join("") +
+    `<button class="setting menu-open" id="toggles-open">Toggles<b>›</b></button>` +
+    shownOf(PAGE, game.save).map((key) => control(key, game)).join("") +
     `<p class="hint">Automation pauses outside the board tabs and while the browser is hidden. Progress saves after each action.</p><button class="wide" id="retire">Retire this ${words.run}</button><p class="hint">Keep your milestone rewards and enter a freshly generated ${words.fresh}.</p><button class="wide danger" id="erase">Erase all progress</button><p class="seed">RUN SEED · ${game.run.seed}</p>`;
   bindSettings(ctx, overlay);
 }
 
 function bindSettings(ctx: AppContext, overlay: BoardOverlay) {
   const { game } = ctx;
-  // Read live: erasing progress replaces the whole save.
-  const s = () => game.save.settings;
   el("settings-back").onclick = () => ctx.navigate(game.mode);
   el("stats-open").onclick = () => showStats(ctx);
   document.querySelectorAll<HTMLButtonElement>(".theme-open").forEach((b) => {
@@ -116,34 +132,11 @@ function bindSettings(ctx: AppContext, overlay: BoardOverlay) {
       ctx.renderPage();
     };
   });
-  for (const key of onPage(game.save)) {
-    const row = SETTINGS[key], input = el(row.page.id) as HTMLInputElement & HTMLSelectElement;
-    const changed = () => (AFTER[key] ?? (() => ctx.save()))(ctx, overlay, s());
-    const set = (value: unknown) => { (s() as Record<SettingKey, unknown>)[key] = value; };
-    switch (row.kind) {
-      case "toggle":
-        input.onchange = () => {
-          const on = "invert" in row.page ? !input.checked : input.checked;
-          set(on);
-          changed();
-        };
-        break;
-      case "choice":
-        input.onchange = () => {
-          set(row.choices.find(([c]) => String(c) === input.value)?.[0]);
-          changed();
-        };
-        break;
-      case "range":
-        // Live preview while dragging; the renderer reads the setting each frame.
-        input.oninput = () => {
-          set(Number(input.value));
-          el(`${row.page.id}-value`).textContent = String(s()[key]);
-        };
-        input.onchange = changed;
-        break;
-    }
-  }
+  el("toggles-open").onclick = () => {
+    menu = "toggles";
+    ctx.renderPage();
+  };
+  bindControls(ctx, overlay, shownOf(PAGE, game.save));
   el("retire").onclick = () =>
     ctx.confirm(
       {
@@ -171,4 +164,39 @@ function bindSettings(ctx: AppContext, overlay: BoardOverlay) {
         ctx.navigate("tower");
       },
     );
+}
+
+/** Writes each of `keys`' controls' changes to its setting. */
+function bindControls(ctx: AppContext, overlay: BoardOverlay, keys: readonly PageKey[]) {
+  const { game } = ctx;
+  // Read live: erasing progress replaces the whole save.
+  const s = () => game.save.settings;
+  for (const key of keys) {
+    const row = SETTINGS[key], input = el(row.page.id) as HTMLInputElement & HTMLSelectElement;
+    const changed = () => (AFTER[key] ?? (() => ctx.save()))(ctx, overlay, s());
+    const set = (value: unknown) => { (s() as Record<SettingKey, unknown>)[key] = value; };
+    switch (row.kind) {
+      case "toggle":
+        input.onchange = () => {
+          const on = "invert" in row.page ? !input.checked : input.checked;
+          set(on);
+          changed();
+        };
+        break;
+      case "choice":
+        input.onchange = () => {
+          set(row.choices.find(([c]) => String(c) === input.value)?.[0]);
+          changed();
+        };
+        break;
+      case "range":
+        // Live preview while dragging; the renderer reads the setting each frame.
+        input.oninput = () => {
+          set(Number(input.value));
+          el(`${row.page.id}-value`).textContent = String(s()[key]);
+        };
+        input.onchange = changed;
+        break;
+    }
+  }
 }

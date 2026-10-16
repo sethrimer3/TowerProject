@@ -80,6 +80,20 @@ test("the shroud takes the enemy's first damage, then the hero's HP takes the re
     ["0:5:#c9d3e0", "-0.22:3:#c9d3e0", "0.22:3:#b3121f"], "what the shroud blocks rises in silver, beside what got through");
 });
 
+test("a fight's numbers stay off the board while their setting is off, and a heal's while HP's is", () => {
+  const fight = bout(hero(), foe()), shown = { from: { x: 0, y: 0 }, to: { x: 1, y: 0 }, bout: fight, start: 0, hp: 30, summary: false };
+  const raised = (settings: { hitNumbers: boolean; hpGains: boolean }) => {
+    const popups = new BoardPopups();
+    popups.update({ run: { seed: 1 }, gains: [], fight: shown, lastHeal: { from: 1, to: 5, x: 0, y: 0, id: 1 }, save: { settings } }, fight.duration);
+    return numbers(popups).map((d) => d.text);
+  };
+  const all = raised({ hitNumbers: true, hpGains: true });
+  assert.ok(all.includes("+4") && all.length > 1);
+  assert.deepEqual(raised({ hitNumbers: false, hpGains: true }), ["+4"]);
+  assert.ok(!raised({ hitNumbers: true, hpGains: false }).includes("+4"));
+  assert.deepEqual(raised({ hitNumbers: false, hpGains: false }), []);
+});
+
 test("the shroud is whole again for every fight", () => {
   const g = arena({ kind: "enemy", enemy: foe() }, false);
   g.world.cells.set("0,1", { kind: "enemy", enemy: foe() });
@@ -239,7 +253,7 @@ test("a door raises each key it took, with a minus sign, and a Heart Door a chec
 });
 
 test("each kind of gain stays off the board while its setting is off, what it pays paid all the same", () => {
-  const shown = (setting: "itemGains" | "doorGains" | "goldGains", east: Tile) => {
+  const shown = (setting: "attackGains" | "defenseGains" | "hpGains" | "keyGains" | "doorGains" | "goldGains", east: Tile) => {
     const g = arena(east);
     g.save.settings[setting] = false;
     Object.assign(g.run.player.keys, { yellow: 1 });
@@ -248,7 +262,10 @@ test("each kind of gain stays off the board while its setting is off, what it pa
     assert.ok(g.save.gold > gold, "the Gold is paid");
     return g.gains.map((gain) => gain.text);
   };
-  assert.deepEqual(shown("itemGains", { kind: "attack", amount: 1 }), ["+1 Gold"]);
+  assert.deepEqual(shown("attackGains", { kind: "attack", amount: 1 }), ["+1 Gold"]);
+  assert.deepEqual(shown("defenseGains", { kind: "attack", amount: 1 }), ["+1 attack", "+1 Gold"], "each stat has its own row");
+  assert.deepEqual(shown("defenseGains", { kind: "defense", amount: 1 }), ["+1 Gold"]);
+  assert.deepEqual(shown("keyGains", { kind: "key", color: "blue" }), ["+2 Gold"]);
   assert.deepEqual(shown("goldGains", { kind: "attack", amount: 1 }), ["+1 attack"]);
   assert.deepEqual(shown("doorGains", { kind: "door", door: { type: "keys", keys: ["yellow"], mode: "all" } }), ["+1 Gold"]);
   const kill = arena({ kind: "enemy", enemy: foe({ hp: 1, attack: 0, strength: "weak" }) }, false);

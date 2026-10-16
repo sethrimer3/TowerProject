@@ -122,12 +122,23 @@ export type GainArt = { tile: Tile; spent?: true } | { material: MaterialId; qua
   | { equipMaterial: EquipMaterialId; quantity: number } | { equipPiece: string; rarity: EquipRarity };
 /** The coin a Gold or Silver gain raises. */
 export type Coin = "gold" | "silver";
-/** The gains a Settings row can turn off: items picked up, what a door
- * takes, and Gold and Silver found. */
-export type GainKind = "item" | "door" | Coin;
-const GAIN_SETTINGS = { item: "itemGains", door: "doorGains", gold: "goldGains", silver: "silverGains" } as const satisfies Record<GainKind, SettingKey>;
-/** The coin `art` raises, if it is one. */
-const coinOf = (art: GainArt | null): Coin | null => (art && "coin" in art ? art.coin : null);
+/** The gains a Settings row can turn off: ATK, DEF and HP changed, keys
+ * found, what a door takes, Gold and Silver found, and what a fight costs
+ * past its strikes. */
+export type GainKind = "attack" | "defense" | "hp" | "key" | "door" | "hit" | Coin;
+const GAIN_SETTINGS = {
+  attack: "attackGains", defense: "defenseGains", hp: "hpGains", key: "keyGains", door: "doorGains", hit: "hitNumbers", gold: "goldGains", silver: "silverGains",
+} as const satisfies Record<GainKind, SettingKey>;
+/** The kind of gain `art` raises, if a Settings row covers it: a coin, a
+ * heart, or an ATK or DEF shard, potion or key's sprite. */
+function kindOf(art: GainArt | null): GainKind | null {
+  if (!art) return null;
+  if ("coin" in art) return art.coin;
+  if ("heart" in art) return "hp";
+  if (!("tile" in art)) return null;
+  const kind = art.tile.kind;
+  return kind === "attack" || kind === "defense" || kind === "key" ? kind : kind === "potion" ? "hp" : null;
+}
 /** A potion's heal: the HP from and to, where the hero stood, and its number. */
 export type Heal = { from: number; to: number; x: number; y: number; id: number };
 /** Which way the hero faces: the last step it took, (dx, dy) one tile
@@ -1694,8 +1705,8 @@ export class Game {
     drops.forEach(({ text, art }, i) => this.gain(at.x, at.y, text, art, { row: top - i, with: i > 0 }));
   }
   /** Queues a reward to rise from (x, y), unless the Settings turn off
-   * gains of its `kind` (by default, a coin's Gold or Silver). */
-  gain(x: number, y: number, text: string, art: GainArt | null = null, drop?: Drop, kind: GainKind | null = coinOf(art)) {
+   * gains of its `kind` (by default, the kind its art raises). */
+  gain(x: number, y: number, text: string, art: GainArt | null = null, drop?: Drop, kind: GainKind | null = kindOf(art)) {
     if (kind && !this.save.settings[GAIN_SETTINGS[kind]]) return;
     this.gains.push({ x, y, text, art, ...(drop ? { drop } : {}) });
     if (this.gains.length > MAX_GAINS) this.gains.shift();
@@ -1890,7 +1901,7 @@ export class Game {
     if (t.kind !== "enemy") return true;
     const extra = outcome.extraDamage ?? 0, p = this.run.player;
     // Effective's added damage rises off the hero; Dampen's given back heals.
-    if (extra > 0 && p.hp > 0) this.gain(p.x, p.y, `−${wholeChange(extra)} HP`, { heart: true });
+    if (extra > 0 && p.hp > 0) this.gain(p.x, p.y, `−${wholeChange(extra)} HP`, { heart: true }, undefined, "hit");
     else if (extra < 0) this.recordHeal(-extra);
     return this.winFight({ enemy: t.enemy!, damage: snap(outcome.combat!.damage + extra), at: dest, revived, scale: outcome.scale, instakill: instakill(outcome.combat!), crits }, before);
   }
@@ -2480,7 +2491,7 @@ export class Game {
     const text = pickupText(t, outcome, this.stepRules);
     this.notePickup(t, outcome);
     if (text) {
-      this.gain(x, y, text, { tile: { ...t } }, undefined, "item");
+      this.gain(x, y, text, { tile: { ...t } });
       this.payPickup(t, { x, y });
       if (t.kind === "potion") this.recordHeal(outcome.healed);
       if (t.kind === "potion") this.missions.record("potions", 1, this.missionKey({ x, y }));
