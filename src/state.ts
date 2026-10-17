@@ -53,8 +53,8 @@ import {
 import { World, LAYOUT_VERSION } from "./delve/world.ts";
 import { RoomWorld, TOWER_LAYOUT_VERSION } from "./tower/room-world.ts";
 import type { Board } from "./board.ts";
-import { bout, DEFEAT_MS, guaranteedCrits, heroHpAfter, heroHpDuring, instakill, resume, REVIVE_PAUSE_MS, revivals, summarize, type Bout, type CritRule, type Crits, type Revival } from "./combat.ts";
-import { HEART_DOOR_HP, healAfterVictory, isLethal, regenerate, resolveStep, type StepBlocked, type StepEffect, type StepRules, shardStat } from "./step-effects.ts";
+import { instakill, type CritRule } from "./combat.ts";
+import { HEART_DOOR_HP, isLethal, resolveStep, type StepBlocked, type StepEffect, type StepRules, shardStat } from "./step-effects.ts";
 import { OUTSIDE_START_Y, OutsideWorld } from "./outside.ts";
 import { AREA_BURST_MS, AreaLedger, chestReward, clearedInspiration, type AreaReward } from "./tower/area-ledger.ts";
 import { TowerClimb } from "./tower/climb.ts";
@@ -100,7 +100,8 @@ import { RARITY_TIERS, type EquipRarity } from "./equipment/balance.ts";
 import { EQUIP_MATERIALS, EQUIP_MATERIAL_IDS, itemDef, type EquipMaterialId } from "./equipment/catalog.ts";
 import { readyForestRuns, startingHero } from "./game/hero-sync.ts";
 import { CardActivation } from "./game/card-activation.ts";
-import type { Coin, Dash, Drop, Encounter, Facing, Gain, GainArt, Heal, ShownFight } from "./shown.ts";
+import { FightPlayback } from "./game/fight-playback.ts";
+import type { Coin, Dash, Drop, Facing, Gain, GainArt, Heal } from "./shown.ts";
 /** How a new run starts: out in the forest or at the entrance, and from
  * which seed (rolled from the game's randomness when left out). */
 export type RunStart = { outside?: boolean; seed?: number; height?: number };
@@ -138,10 +139,6 @@ const FOREST_SPEED = 3;
 /** The speed the second floor's lesson teaches: one press of › from a new
  * hero's 2. */
 const LESSON_SPEED = 3;
-/** Salts the run seed for Revive's rolls, apart from the world's own. */
-const REVIVE_SALT = 0x7e51e;
-/** Seeds the critical rolls apart from the revival rolls. */
-const CRIT_SALT = 0x3c71c;
 /** How long a shot or arrow flies, at most (ms): it lands as the hero's
  * step ends, sooner at higher speeds. */
 const FLIGHT_MS = 220;
@@ -193,16 +190,6 @@ export class Game {
   /** The free levels Free Training gave last, as the board announces them
    * ("+1 ATK"), and when (`performance.now()`). */
   freeTrained: { lines: string[]; at: number } | null = null;
-  /** Whether something settles fights played out (the app's frame loop).
-   * A game without one (tests, tools) settles every fight at once, whatever
-   * the Animate fights setting says. */
-  playsFights = false;
-  /** The fight being played out, if any; steps wait until it settles. */
-  encounter: Encounter | null = null;
-  /** The latest fight, for the board's damage numbers and the enemy's HP
-   * bar; cleared by undo and when the run or mode changes. Only a game that
-   * plays fights (`playsFights`) shows them. */
-  fight: ShownFight | null = null;
   /** The latest turn's shots (ranged.ts), for the board to fly and land;
    * undo, a new run or a mode switch clears it. */
   volley: Volley | null = null;
@@ -219,14 +206,6 @@ export class Game {
   /** The training points the latest level-up earned, which the board
    * raises over the hero once its burst is over. */
   levelUpPoints = 0;
-  /** When each of the latest fight's revivals begins (performance.now()),
-   * for the board's golden fire, once its skull is over; emptied by undo. */
-  revivedAt: number[] = [];
-  /** When the hero was last struck down (performance.now()): each strike
-   * of the latest fight that revived it, and the fall that ended a run,
-   * for the board's skull; emptied by undo. The defeat dialog waits for
-   * it (`defeatShownUntil`). */
-  struckDown: number[] = [];
   /** The area rewards whose chests were opened, each with when its golden
    * burst starts (performance.now()): a chest opened while another's burst
    * plays waits for it to end. Emptied by undo. */
@@ -280,6 +259,9 @@ export class Game {
   readonly handRules = new HandRules(this);
   /** What a card does as it activates, and what its badges pay. */
   readonly activation = new CardActivation(this);
+  /** How fights are played and shown: the Revive and critical rolls, the
+   * fight the board shows and an Encounter playing out. */
+  readonly fights = new FightPlayback<TakenStep>(this, (step, revived) => this.take(step, revived));
   /** The Shrines' commands: a Tower run's boons and the Shrine Boons page's
    * choices. */
   readonly shrine = new ShrineDesk(this);
@@ -372,7 +354,7 @@ export class Game {
    * tournament run plays there). */
   private enterMode(next: Mode, outside: boolean) {
     if (next === this.mode) return;
-    this.finishEncounter();
+    this.fights.finish();
     this.armed = null;
     this.mode = next;
     if (next === "delve" && this.save.upgrades.delve) this.save.tutorials.delve = true;
@@ -445,8 +427,7 @@ export class Game {
    * board). */
   private stopPlay() {
     this.route = [];
-    this.encounter = null;
-    this.fight = null;
+    this.fights.clear();
     this.volley = null;
     this.dropHandPlan();
     this.blocked = { x: 0, y: 0, until: 0 };
@@ -514,8 +495,7 @@ export class Game {
     // (and any level it reached) is: the kill it paid for is undone.
     this.recordProgress();
     if (levelForXp(snapshot.xp) < levelForXp(this.save.xp)) this.levelUpAt = -Infinity;
-    this.revivedAt = [];
-    this.struckDown = [];
+    this.fights.forgetMarks();
     this.areaBursts = [];
     this.summoned = null;
     this.vanished = null;
@@ -537,7 +517,7 @@ export class Game {
   }
   undo() {
     // A fight still playing out counts first, so undo takes it back.
-    this.finishEncounter();
+    this.fights.finish();
     this.armed = null;
     // Fallen, undo spends one and takes back the fight the hero fell in.
     const undone = this.timeline.undo(this.fallen, (snapshot) => this.restore(snapshot));
@@ -602,7 +582,7 @@ export class Game {
   }
   /** Whether play waits: paused, fallen, or a fight playing out. */
   private get busy() {
-    return this.paused || this.fallen || !!this.encounter;
+    return this.paused || this.fallen || !!this.fights.encounter;
   }
   walkTo(x: number, y: number) {
     if (this.busy) return;
@@ -634,7 +614,7 @@ export class Game {
   }
   /** A step the player takes themselves: it drops any queued route and Automove. */
   stepManually(dx: number, dy: number) {
-    if (this.encounter) return false;
+    if (this.fights.encounter) return false;
     if (!this.manualMoves) return this.handMovesNote();
     this.route = [];
     this.auto = false;
@@ -820,7 +800,7 @@ export class Game {
     // The card's last step reaches its target: a focus on it is spent, and
     // it activates (once a fight into its target has played out).
     if (id === this.run.focused) this.run.focused = undefined;
-    const fight = this.encounter;
+    const fight = this.fights.encounter;
     // A roll counts once the step is in the undo history (after a fight,
     // once it settles), so undo takes it back with the step.
     if (!fight) {
@@ -1039,6 +1019,10 @@ export class Game {
       shardAttack: researched(this.save.archives, "shardAttackPercent") * boonFactor(this.run, "attack"), shardDefense: researched(this.save.archives, "shardDefensePercent"),
       ...(worn.victoryHeal ? { victoryHeal: worn.victoryHeal } : {}), ...(crit ? { crit } : {}) };
   }
+  /** Revive's chance now (its training, the run's Silver ranks counting). */
+  get reviveChance() {
+    return trainedAmount(this.trainingNow, "revive");
+  }
   /** The hero's critical strikes now (Critical, Crit % and Crit x training
    * and research, the run's Silver ranks counting), read when a fight is
    * taken or shown; none in the forest. */
@@ -1183,7 +1167,7 @@ export class Game {
     this.run.focused = id;
     this.route = [];
     // During a fight, the path is found again once the hero has stepped in.
-    this.cardPlan = this.encounter ? null : plan;
+    this.cardPlan = this.fights.encounter ? null : plan;
     this.activeCard = card;
     this.handStuck = false;
     this.playHand();
@@ -1196,27 +1180,6 @@ export class Game {
     this.targetPath = null;
     this.activeCard = null;
     this.handStuck = false;
-  }
-  /** Settles the fight being played out, as if it had played to the end.
-   * Returns whether there was one. */
-  finishEncounter() {
-    const fight = this.encounter;
-    if (!fight) return false;
-    this.encounter = null;
-    fight.settle();
-    return true;
-  }
-  /** The hero's HP as the HUD shows it at `now` (performance time): during
-   * a fight being played out, what the strikes so far have left. */
-  shownHp(now: number) {
-    const fight = this.encounter, hp = this.run.player.hp;
-    return fight ? heroHpDuring(fight.bout, hp, now - fight.start) : hp;
-  }
-  /** The HP the fight being played out leaves the hero with once its last
-   * strike lands (the HP now while there is none). */
-  fightEndHp() {
-    const fight = this.encounter, hp = this.run.player.hp;
-    return fight ? heroHpDuring(fight.bout, hp, Infinity) : hp;
   }
   /** Erases all progress and starts again outside the Tower. */
   eraseAll() {
@@ -1406,7 +1369,7 @@ export class Game {
    * the player to undo the fight or accept defeat. */
   private fallIn(before: MoveSnapshot, enemy: Enemy) {
     this.run.player.hp = 0;
-    this.struckDown = [...this.struckDown, performance.now()];
+    this.fights.strikeDown();
     this.timeline.fall(before, enemyTitle(enemy));
     this.route = [];
     this.auto = false;
@@ -1452,80 +1415,7 @@ export class Game {
     }
     const step: TakenStep = { tile: t, outcome, dest, track, quiet: this.emptyAt(dest.x, dest.y), card };
     this.facing = { dx, dy };
-    return t.kind === "enemy" ? this.fightStep(step, t.enemy!) : this.take(step);
-  }
-  /** Steps into `enemy`. A strike that would fell the hero may revive it
-   * instead (Revive), so a lost fight is played out strike by strike to see
-   * how it ends, as is one with critical strikes that may land;
-   * a game that plays fights shows it on the board. */
-  private fightStep(step: TakenStep, enemy: Enemy) {
-    const p = this.run.player, outcome = step.outcome;
-    const revive = isLethal(outcome) ? this.revival(step.dest) : undefined, crits = this.critRolls(step.dest);
-    if (!this.playsFights && !revive && !crits) return this.take(step);
-    const fight = bout(p, enemy, revive, crits), start = performance.now(), rose = revivals(fight).length;
-    step.crits = critHits(fight);
-    // Critical strikes change how long the fight lasts, so it ends as it was played.
-    if (crits) this.restate(outcome, fight);
-    else if (rose) {
-      const rules = this.stepRules;
-      outcome.player.hp = regenerate(healAfterVictory(afterExtra(heroHpAfter(fight, p.hp), outcome.extraDamage, p.maxHp), p.maxHp, rules), p.maxHp, rules);
-      outcome.combat = { ...outcome.combat!, survivable: outcome.player.hp > 0 };
-    }
-    if (this.playsFights) return this.showFight(step, enemy, fight, start);
-    if (rose) this.showRevivals(start, revivals(fight));
-    return this.take(step, rose);
-  }
-  /** Shows `fight` on the board. Animate fights plays it out strike by
-   * strike before it counts; otherwise it shows in summary rounds, and only
-   * one with a revival waits, for each round after the revival's fire. */
-  private showFight(step: TakenStep, enemy: Enemy, fight: Bout, start: number) {
-    const p = this.run.player, animate = this.animatesFights, rose = revivals(fight).length;
-    const shown = animate ? fight : summarize(fight, REVIVE_PAUSE_MS);
-    this.fight = { from: { x: p.x, y: p.y }, to: step.dest, bout: shown, start, hp: enemy.hp, summary: !animate };
-    this.showRevivals(start, revivals(shown));
-    if (!animate && !rose) return this.take(step, rose);
-    // The same fight, so the board shows it as it plays out.
-    const encounter: Encounter = Object.assign(this.fight, { enemy, outcome: step.outcome, settle: () => {
-      // Training bought as it plays out replays the rest: count the crits as played.
-      if (!encounter.summary) step.crits = critHits(encounter.bout);
-      this.take(step, revivals(encounter.bout).length);
-    } });
-    this.encounter = encounter;
-    return true;
-  }
-  /** The board shows each revival (`at`, ms into a fight that began at
-   * `start`): the skull as the strike lands, then, once it is over, the fire. */
-  private showRevivals(start: number, at: number[]) {
-    this.struckDown = at.map((t) => start + t);
-    this.revivedAt = this.struckDown.map((t) => t + DEFEAT_MS);
-  }
-  /** When the skull over the hero last struck down is over, so the defeat
-   * dialog may open (performance time; -Infinity when there was none). */
-  get defeatShownUntil() {
-    return Math.max(-Infinity, ...this.struckDown) + DEFEAT_MS;
-  }
-  /** Whether each strike at (x, y) that would fell the hero revives it: a
-   * fixed number per run, floor, tile and strike, under the Revive chance,
-   * so taking the fight back and fighting it again ends the same way, and
-   * more Revive training only ever adds revivals. */
-  private revival(at: { x: number; y: number }): Revival | undefined {
-    const chance = trainedAmount(this.trainingNow, "revive");
-    if (!chance || this.run.outside) return undefined;
-    const floor = this.mode === "tower" ? this.run.height + 1 : 0,
-      seed = this.run.seed ^ REVIVE_SALT ^ Math.imul(floor, 0x9e3779b1);
-    return (strike) => tileRandom(at.x, at.y, (seed ^ Math.imul(strike + 1, 0x85ebca6b)) | 0) * 10000 < chance;
-  }
-  /** The hero's critical rolls for the fight at (x, y): a fixed number per
-   * run, floor, tile and strike, so taking the fight back and fighting it
-   * again lands the same crits, and more Crit % only ever adds some. Chance
-   * of 100% or more lands that many applications of the factor for certain,
-   * and the rest rolls for one more. */
-  private critRolls(at: { x: number; y: number }): Crits | undefined {
-    const rule = this.crit;
-    if (!rule) return undefined;
-    const floor = this.mode === "tower" ? this.run.height + 1 : 0, seed = this.run.seed ^ CRIT_SALT ^ Math.imul(floor, 0x9e3779b1);
-    const sure = guaranteedCrits(rule.chance), rest = snap(rule.chance - 100 * sure);
-    return { factor: rule.factor, applications: (strike) => sure + (tileRandom(at.x, at.y, (seed ^ Math.imul(strike + 1, 0x85ebca6b)) | 0) * 100 < rest ? 1 : 0) };
+    return t.kind === "enemy" ? this.fights.fight(step, t.enemy!) : this.take(step);
   }
   /** Takes a resolved step: in through its door or fight, then onto the tile. */
   private take(step: TakenStep, revived = 0) {
@@ -2091,7 +1981,7 @@ export class Game {
   }
   /** Ends the run (the End Run button), or, fallen, accepts defeat. */
   finish(reason: string) {
-    this.finishEncounter();
+    this.fights.finish();
     if (this.fallen) this.acceptDefeat();
     else this.finalizeRun(reason);
   }
@@ -2142,7 +2032,7 @@ export class Game {
    * many as Buy Quantity `quantity` takes (`runTrainingBulk`): they count
    * from the next turn on, until the run ends. Each purchase is a turn of
    * its own, so undo takes it back. Bought while a fight plays out, they
-   * count in that fight from its next strike (`retrainFight`). Refused
+   * count in that fight from its next strike (`fights.retrain`). Refused
    * before On the Job is owned, during a fight shown in summary rounds, for
    * a row whose upgrade isn't owned or at its highest, or without the
    * Silver for them all. */
@@ -2164,7 +2054,7 @@ export class Game {
       hpGain = snap(hpGain + this.applyRunTraining(offer));
     }
     // A fight playing out goes on with the stats (or Revive) bought.
-    if (this.encounter && (isStatRow(first.row) || id === "revive")) this.retrainFight(this.encounter, hpGain);
+    if (isStatRow(first.row) || id === "revive") this.fights.retrain(hpGain);
     this.message = `${first.row.name} trained for this run · level ${first.level + bulk.count}`;
     // Undo takes the ranks back, so only the run's most bought counts.
     const bought = Object.values(this.run.training ?? {}).reduce((n, k) => n + (k ?? 0), 0);
@@ -2204,7 +2094,7 @@ export class Game {
   /** Whether Training can be bought for the run now: On the Job owned,
    * inside a run, and no fight shown in summary rounds. */
   private get mayTrainInRun() {
-    return this.trainsOnTheJob && this.playing && !this.encounter?.summary;
+    return this.trainsOnTheJob && this.playing && !this.fights.encounter?.summary;
   }
   /** A stat row's rank bought for the run: the hero and the run's loadout
    * gain what the rank from `level` adds (`rankShift`). Returns the max HP
@@ -2218,43 +2108,6 @@ export class Game {
     const chance = trainedAmount(this.trainingNow, "findPotion");
     this.run.percentPotions = chance;
     if (this.world instanceof RoomWorld) this.world.percentPotions = chance;
-  }
-  /** Training bought while a fight plays out counts in it from the first
-   * strike not yet swinging: the fight plays on from there with the hero's
-   * stats as they are now (more max HP raising the HP left by `hpGain`),
-   * and the step commits the new ending once it is over. */
-  private retrainFight(fight: Encounter, hpGain: number) {
-    const p = this.run.player, strikes = fight.bout.strikes, elapsed = performance.now() - fight.start;
-    let from = strikes.findIndex((s) => s.start > elapsed);
-    if (from < 0) from = strikes.length;
-    let hp = p.hp, shroud = p.shroud ?? 0;
-    for (const s of strikes.slice(0, from)) {
-      if (s.by === "hero") {
-        // Lifesteal's heal, and the HP shown with it, rise with the max HP bought.
-        if (s.heroHp !== undefined) hp = s.heroHp = snap(s.heroHp + hpGain);
-        continue;
-      }
-      // The HP shown so far rises with the max HP bought.
-      if (s.hp) s.hp = snap(s.hp + hpGain);
-      hp = s.hp;
-      shroud = snap(Math.max(0, shroud - (s.shrouded ?? 0)));
-    }
-    fight.bout = resume(fight.bout, from, { player: { ...p, hp, shroud }, enemy: fight.enemy, revives: this.revival(fight.to), crits: this.critRolls(fight.to) });
-    this.showRevivals(fight.start, revivals(fight.bout));
-    this.restate(fight.outcome, fight.bout);
-    Object.assign(fight.outcome.player, { attack: p.attack, defense: p.defense, maxHp: p.maxHp });
-  }
-  /** Makes `o`, a fight's resolved step, end as the fight `played` does: the
-   * damage taken, the HP left and whether the hero lives, and whether the
-   * first strike won (or the enemy's thorns felled it). */
-  private restate(o: StepEffect, played: Bout) {
-    const p = this.run.player, damage = snap(played.strikes.reduce((sum, s) => (s.by === "enemy" ? sum + s.damage : sum), 0));
-    // A badge's scale adds to (or gives back) the new fight's damage.
-    if (o.scale) o.extraDamage = snap(damage * o.scale - damage);
-    const rules = this.stepRules, fought = afterExtra(heroHpAfter(played, p.hp), o.extraDamage, p.maxHp);
-    o.player.hp = regenerate(healAfterVictory(fought, p.maxHp, rules), p.maxHp, rules);
-    const { thornKill: _, ...combat } = o.combat!, last = played.strikes.at(-1);
-    o.combat = { ...combat, turns: played.strikes.filter((s) => s.by === "hero").length, damage, survivable: fought > 0, ...(last?.thornHp === 0 && fought > 0 ? { thornKill: true as const } : {}) };
   }
   /** Whether skill `id` can be bought now: open, below its last rank, and
    * paid for by the currency held (anything, with Dev free purchases). */
@@ -2296,12 +2149,7 @@ export class Game {
  * how many times the hero revived in it. */
 /** A fight won: `instakill` when the hero's first strike ended it (Mug). */
 type FightEnd = { enemy: Enemy; damage: number; at: { x: number; y: number }; revived: number; scale?: number; instakill?: boolean; crits?: number };
-/** How many of a fight's strikes were the hero's critical ones. */
-const critHits = (fight: Bout) => fight.strikes.filter((s) => s.by === "hero" && s.crit).length;
 
-/** HP left after a fight's own damage, `hp`, once a badge's scale has
- * added `extra` (or, below 0, given it back, up to `maxHp`). */
-const afterExtra = (hp: number, extra = 0, maxHp = Infinity) => (extra ? snap(Math.min(maxHp, Math.max(0, hp - extra))) : hp);
 /** How Skip's message names what vanished, by tile kind. */
 /** The screens that keep their own Buy Quantity, and the setting each saves it in. */
 export type QuantityScope = "training" | "run" | "provisions";

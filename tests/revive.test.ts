@@ -89,9 +89,9 @@ test("in play, a lethal fight revives the hero by a fixed roll per run, tile and
     g.move(0, 1);
     if (g.fallen) {
       fell++;
-      assert.equal(g.revivedAt.length, 0);
-      assert.equal(g.struckDown.length, 1, "a skull rises over the fallen hero");
-      assert.ok(g.defeatShownUntil > performance.now(), "and the defeat dialog waits for it");
+      assert.equal(g.fights.revivedAt.length, 0);
+      assert.equal(g.fights.struckDown.length, 1, "a skull rises over the fallen hero");
+      assert.ok(g.fights.defeatShownUntil > performance.now(), "and the defeat dialog waits for it");
       // Taken back and fought again, the fight ends the same way.
       assert.ok(g.undo());
       guard(g);
@@ -103,44 +103,44 @@ test("in play, a lethal fight revives the hero by a fixed roll per run, tile and
     assert.equal(g.run.player.y, 2, "the hero stands where the Brute fell");
     assert.equal(g.run.player.hp, 100, "at full HP, the Brute felled by the next strike");
     assert.equal(g.run.kills, 1);
-    assert.equal(g.revivedAt.length, 1);
+    assert.equal(g.fights.revivedAt.length, 1);
     assert.match(g.message, /^Revived · Brute defeated/);
     assert.ok(g.undo());
-    assert.deepEqual([g.revivedAt.length, g.struckDown.length], [0, 0], "undo puts out the skull and the fire");
+    assert.deepEqual([g.fights.revivedAt.length, g.fights.struckDown.length], [0, 0], "undo puts out the skull and the fire");
     guard(g);
     g.move(0, 1);
     assert.ok(!g.fallen && g.run.player.hp === 100, `seed ${seed}: the same revival again`);
     // Played out strike by strike, a skull rises when the revival lands, and
     // the fire once it is over; the fight goes on after both.
     const shown = arena(seed, 99);
-    shown.playsFights = true;
+    shown.fights.playsFights = true;
     const start = performance.now();
     shown.move(0, 1);
-    const fight = shown.encounter!;
+    const fight = shown.fights.encounter!;
     assert.ok(fight);
-    assert.deepEqual(shown.struckDown, revivals(fight.bout).map((at) => fight.start + at));
-    assert.deepEqual(shown.revivedAt, shown.struckDown.map((at) => at + DEFEAT_MS));
-    assert.ok(shown.struckDown[0] > start);
+    assert.deepEqual(shown.fights.struckDown, revivals(fight.bout).map((at) => fight.start + at));
+    assert.deepEqual(shown.fights.revivedAt, shown.fights.struckDown.map((at) => at + DEFEAT_MS));
+    assert.ok(shown.fights.struckDown[0] > start);
     const rose = fight.bout.strikes.findIndex((s) => s.revived), next = fight.bout.strikes[rose + 1];
     if (next) assert.ok(next.start >= fight.bout.strikes[rose].end + REVIVE_PAUSE_MS, "the next strike waits for the skull and the fire");
     const at = fight.bout.strikes[rose].at;
     assert.equal(heroHpDuring(fight.bout, 100, at + DEFEAT_MS - 1), 0, "no HP shown while the skull burns");
     assert.equal(heroHpDuring(fight.bout, 100, at + DEFEAT_MS), 100, "full HP as the fire rises");
-    shown.finishEncounter();
+    shown.fights.finish();
     assert.ok(!shown.fallen && shown.run.player.hp === 100);
     // Settled at once, it shows in summary rounds, each after the last
     // revival's skull and fire, and counts once the last has shown.
     const quick = arena(seed, 99);
-    quick.playsFights = true;
+    quick.fights.playsFights = true;
     quick.save.upgrades.instantCombat = 1;
     quick.save.settings.fightAnimation = false;
     quick.move(0, 1);
-    const summary = quick.encounter!;
+    const summary = quick.fights.encounter!;
     assert.ok(summary?.summary, "a revival makes even a quick fight wait");
-    assert.deepEqual(quick.struckDown.map((at) => at - summary.start), [0]);
-    assert.deepEqual(quick.revivedAt.map((at) => Math.round(at - summary.start)), [DEFEAT_MS]);
+    assert.deepEqual(quick.fights.struckDown.map((at) => at - summary.start), [0]);
+    assert.deepEqual(quick.fights.revivedAt.map((at) => Math.round(at - summary.start)), [DEFEAT_MS]);
     assert.equal(summary.bout.duration, REVIVE_PAUSE_MS);
-    quick.finishEncounter();
+    quick.fights.finish();
     assert.ok(!quick.fallen && quick.run.player.hp === 100);
   }
   // At 50%, about half of them.

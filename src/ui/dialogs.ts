@@ -135,7 +135,7 @@ export class RunEndDialog {
   check() {
     const game = this.ctx.game;
     if (!game.fallen || this.ctx.modal.open || this.waiting) return;
-    const wait = game.defeatShownUntil - performance.now();
+    const wait = game.fights.defeatShownUntil - performance.now();
     if (wait > 0) this.waiting = setTimeout(() => ((this.waiting = null), this.check()), wait);
     else this.show("fallen");
   }

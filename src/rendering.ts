@@ -166,8 +166,8 @@ export class Renderer {
     drawVolley(f, this.game.volley, this.game.mode === "delve" ? this.game.world.width : 0);
     this.popups.draw(f);
     this.drawEffectText(f);
-    for (const at of this.game.struckDown) drawStruckDown(f, f.now - at);
-    for (const at of this.game.revivedAt) drawRevive(f, f.now - at);
+    for (const at of this.game.fights.struckDown) drawStruckDown(f, f.now - at);
+    for (const at of this.game.fights.revivedAt) drawRevive(f, f.now - at);
     drawLevelUp(f, f.now - this.game.levelUpAt, this.game.levelUpPoints);
     for (const area of this.game.areaBursts) if (f.now >= area.at) drawAreaBurst(f, f.now - area.at, area.reward, area.inspiration);
     const summoned = this.game.summoned;
@@ -220,9 +220,9 @@ export class Renderer {
     const dt = Math.min(0.1, (now - this.last) / 1000 || 0.016);
     this.last = now;
     this.follow(n, dt);
-    this.popups.update(g, now);
-    const lunge = lunges(g.encounter, now, g.save.settings.reduceMotion);
-    this.enemyLunge = { ...(g.encounter?.to ?? { x: 0, y: 0 }), ...lunge.enemy };
+    this.popups.update({ run: g.run, gains: g.gains, fight: g.fights.shown, lastHeal: g.lastHeal, volley: g.volley, save: g.save }, now);
+    const lunge = lunges(g.fights.encounter, now, g.save.settings.reduceMotion);
+    this.enemyLunge = { ...(g.fights.encounter?.to ?? { x: 0, y: 0 }), ...lunge.enemy };
     const c = this.ctx, s = this.size, outside = !!g.run.outside, settings = g.save.settings;
     c.fillStyle = "#0b1017";
     c.fillRect(0, 0, box.width, box.width);
@@ -408,7 +408,7 @@ export class Renderer {
     if (g.run.outside || (!enemies && !itemLabels) || !goalUnlocked(g.save, "damageVisual")) return;
     const crit = g.save.upgrades.critPrediction ? g.crit : undefined;
     const items = itemLabels ? { rules: g.stepRules, chestGold: (x: number, y: number) => g.chestGold(x, y) } : undefined;
-    drawDamageLabels(f, this.predictions, g.run.player, g.fight, goalUnlocked(g.save, "relativeDamageColor"), crit, items, enemies);
+    drawDamageLabels(f, this.predictions, g.run.player, g.fights.shown, goalUnlocked(g.save, "relativeDamageColor"), crit, items, enemies);
   }
   /** A fading red cross where a step was refused. */
   /** Skip Open Nodes' marks: a violet X on each door or monster it passed
@@ -569,7 +569,7 @@ export class Renderer {
    * effect is playing. (Torches and grass still sway.) Used by Battery saver. */
   isIdle(now: number) {
     const g = this.game;
-    return this.settled() && !g.route.length && !g.encounter && this.popups.idle(now) && !this.decor.busy && this.effectsOver(now);
+    return this.settled() && !g.route.length && !g.fights.encounter && this.popups.idle(now) && !this.decor.busy && this.effectsOver(now);
   }
   /** The hero and the camera stand where they are headed. */
   private settled() {
@@ -583,7 +583,7 @@ export class Renderer {
   private effectsOver(now: number) {
     const g = this.game, sparkle = g.gemFinder.sparkle;
     return now - this.arrived > ARRIVAL_GLOW_MS && this.echoes.over(now) && g.blocked.until <= now && g.effect.until <= now &&
-      now - g.levelUpAt >= LEVEL_UP_MS + POINTS_MS && g.revivedAt.every((at) => now - at >= REVIVE_MS) && g.struckDown.every((at) => now - at >= DEFEAT_MS) &&
+      now - g.levelUpAt >= LEVEL_UP_MS + POINTS_MS && g.fights.revivedAt.every((at) => now - at >= REVIVE_MS) && g.fights.struckDown.every((at) => now - at >= DEFEAT_MS) &&
       g.areaBursts.every((b) => now - b.at >= AREA_BURST_MS) &&
       (!g.summoned || now - g.summoned.at >= POOF_MS) && (!g.vanished || now - g.vanished.at >= POOF_MS) &&
       (!sparkle || now - sparkle.at >= GEM_SPARKLE_MS) && (!g.volley || now - g.volley.at >= g.volley.flight);

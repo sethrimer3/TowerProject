@@ -96,7 +96,7 @@ export function togglePurseRates(game: Game) {
  * hero (not paused or stuck) or a fight playing out, with nothing over the
  * board (`live`) and the tab in view. */
 function runPlays(game: Game, live: boolean) {
-  return live && !document.hidden && game.playing && !game.paused && ((game.auto && !game.handStuck) || !!game.encounter);
+  return live && !document.hidden && game.playing && !game.paused && ((game.auto && !game.handStuck) || !!game.fights.encounter);
 }
 
 /** Samples the run's Gold found (`runGold`) and Silver found (held and
@@ -503,13 +503,13 @@ function fitCombatStats() {
  * strike by strike, the bar's red already at the HP the fight leaves and
  * the HP still to go in purple past it. */
 export function renderVitals(game: Game) {
-  const p = game.run.player, hp = game.shownHp(performance.now());
+  const p = game.run.player, hp = game.fights.shownHp(performance.now());
   // Shortened from 10,000 like the purse, so the line stays one line on a
   // phone; the exact HP is in the tooltip.
   text("hp", `${shortAmount(wholeHp(hp))} / ${shortAmount(whole(p.maxHp))}`);
   el("hp").parentElement!.title = `HP: ${wholeHp(hp).toLocaleString("en-US")} / ${whole(p.maxHp).toLocaleString("en-US")}`;
   renderHealthGain(game);
-  const left = game.encounter ? Math.min(hp, game.fightEndHp()) : hp;
+  const left = game.fights.encounter ? Math.min(hp, game.fights.endHp()) : hp;
   el("health").style.width = `${(100 * left) / p.maxHp}%`;
   renderHealthLoss(hp - left, p.maxHp);
   // ATK, DEF and the shroud shortened the same way, so the three fit on one
@@ -546,12 +546,12 @@ function renderHealthGain(game: Game) {
     gain.classList.remove("healing");
     gain.style.width = "0%";
   };
-  if (game.encounter) settle();
+  if (game.fights.encounter) settle();
   if (!heal || heal.id === shownHeal) return;
   shownHeal = heal.id;
   // Only the heal the HUD is looking at now fills up; one from before a
   // reload, a new run or an undo is simply there.
-  if (heal.to !== game.run.player.hp || game.encounter) return;
+  if (heal.to !== game.run.player.hp || game.fights.encounter) return;
   const max = game.run.player.maxHp;
   settle();
   fill.style.width = `${(100 * heal.from) / max}%`;

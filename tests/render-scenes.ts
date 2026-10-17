@@ -235,13 +235,13 @@ function playBoard(name: string, seed: number, canvas: HTMLCanvasElement, grab: 
         { ...at, text: "Full HP ✓", art: { heart: true } },
       );
     } else if (scene.fight) {
-      g.playsFights = true;
+      g.fights.playsFights = true;
       g.save.settings.fightAnimation = true;
       g.move(to.x - from.x, to.y - from.y);
-      g.encounter!.start = 1400;
+      g.fights.encounter!.start = 1400;
       // The skull over a hero struck down, as a revival's strike raises it,
       // and the heart with a plus of Max HP's badge.
-      g.struckDown = [1400];
+      g.fights.struckDown = [1400];
       g.gains.push({ ...from, text: "+16 max HP", art: { heart: true, raised: true } });
     } else {
       g.run.player.x = to.x;
@@ -257,7 +257,7 @@ function playBoard(name: string, seed: number, canvas: HTMLCanvasElement, grab: 
     grab("moving");
     for (let t = 1500; t <= 3300; t += 60) {
       // As the frame loop does: the fight counts once its last strike is done.
-      if (g.encounter && t >= g.encounter.start + g.encounter.bout.duration) g.finishEncounter();
+      if (g.fights.encounter && t >= g.fights.encounter.start + g.fights.encounter.bout.duration) g.fights.finish();
       r.draw(t);
       // Ripples spread past the hero's feet.
       if (t === 2100) grab("ripples");
@@ -267,7 +267,7 @@ function playBoard(name: string, seed: number, canvas: HTMLCanvasElement, grab: 
       // Guards the scene itself: the effect it exists for must be live.
       if (scene.check && !scene.check(r.decor)) throw Error(`${name}: its decor effect never started`);
     }
-    if (scene.fight && (g.encounter || g.run.player.x !== to.x || g.run.player.y !== to.y)) throw Error(`${name}: the fight never settled`);
+    if (scene.fight && (g.fights.encounter || g.run.player.x !== to.x || g.run.player.y !== to.y)) throw Error(`${name}: the fight never settled`);
     grab("later");
   });
 }

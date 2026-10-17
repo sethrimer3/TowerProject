@@ -204,12 +204,12 @@ test("in play, crits land by a fixed roll per run, tile and strike: the same fig
 
 test("a played fight shows its crits, and the step ends as the shown fight does", () => {
   const g = arena(3, 100);
-  g.playsFights = true;
+  g.fights.playsFights = true;
   g.move(0, 1);
-  const fight = g.encounter!;
+  const fight = g.fights.encounter!;
   assert.ok(fight);
   assert.deepEqual(fight.bout.strikes.filter((s) => s.by === "hero").map((s) => s.crit), [1, 1]);
-  g.finishEncounter();
+  g.fights.finish();
   assert.ok(!g.fallen && g.run.player.hp === 70);
   assert.equal(g.run.kills, 1);
   assert.equal(heroHpAfter(fight.bout, 100), 70);

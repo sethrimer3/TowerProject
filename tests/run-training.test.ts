@@ -148,7 +148,7 @@ test("training for the run ends with the run, and a save keeps it while the run 
 
 test("training bought while a fight plays out counts in it from the next strike", () => {
   const g = arena(1e6);
-  g.playsFights = true;
+  g.fights.playsFights = true;
   g.save.settings.fightAnimation = true;
   const w = g.world as RoomWorld;
   // Five hits to fell it; its four strikes back (8, 9, 10, 11) fell a hero of 20 HP.
@@ -156,14 +156,14 @@ test("training bought while a fight plays out counts in it from the next strike"
   Object.assign(g.run.player, { attack: 10, defense: 0, hp: 20, maxHp: 20 });
   delete g.run.player.shroud;
   assert.ok(g.move(1, 0));
-  const fight = g.encounter!;
+  const fight = g.fights.encounter!;
   assert.ok(fight && !fight.outcome.combat!.survivable, "lethal as it stands");
   const first = fight.bout.strikes[0]!;
   // Max HP until the fight is won: each rank raises the HP left as well.
   let bought = 0;
   while (!fight.outcome.combat!.survivable && bought < 50) assert.ok(g.trainInRun("hp")), bought++;
   assert.ok(fight.outcome.combat!.survivable && bought > 0);
-  assert.equal(g.encounter, fight, "the same fight plays on");
+  assert.equal(g.fights.encounter, fight, "the same fight plays on");
   assert.equal(fight.bout.strikes[0], first, "the strike already swung stands");
   const atk = g.run.player.attack;
   assert.ok(g.trainInRun("attack"));
@@ -173,7 +173,7 @@ test("training bought while a fight plays out counts in it from the next strike"
   assert.ok(hits.slice(1).every((d) => d === g.run.player.attack), "later strikes hit with the ATK bought");
   const end = fight.bout.strikes.filter((s) => s.by === "enemy").at(-1)!.hp;
   const maxHp = g.run.player.maxHp, attack = g.run.player.attack;
-  assert.ok(g.finishEncounter());
+  assert.ok(g.fights.finish());
   assert.ok(!g.fallen, "the training won the fight");
   assert.equal(g.run.player.hp, end);
   assert.deepEqual([g.run.player.maxHp, g.run.player.attack], [maxHp, attack], "the stats bought are kept once it counts");

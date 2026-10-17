@@ -72,7 +72,7 @@ stampProfile(game.save, game.clock());
 applyUiTheme(game.save);
 bindMedievalFeedback(() => uiLook(game.save) === "medieval", () => game.save.settings.reduceMotion);
 // The frame loop settles fights as they finish playing out.
-game.playsFights = true;
+game.fights.playsFights = true;
 const renderer = new Renderer(document.querySelector("#world")!, game);
 {
   const portraitCtx = (document.querySelector("#portrait-sprite") as HTMLCanvasElement).getContext("2d")!;
@@ -232,7 +232,7 @@ function navigate(requested: string) {
   // Cinematic mode is the board's alone.
   if (!isBoard(id)) cinematic.exit();
   // Only the board plays a fight out: leaving it settles one still playing.
-  game.finishEncounter();
+  game.fights.finish();
   if (id !== "defend") defendPage.pause();
   const from = tab;
   tab = id;

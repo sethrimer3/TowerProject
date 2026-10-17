@@ -21,7 +21,7 @@ const foe = (over: Partial<Enemy> = {}): Enemy => ({ name: "Slime", hp: 30, atta
 function arena(east: Tile, animate = true) {
   const g = new Game(defaults());
   g.save.upgrades.inspirationUndos = 1; // undo needs Rehearsed steps
-  g.playsFights = true;
+  g.fights.playsFights = true;
   g.save.settings.fightAnimation = animate;
   // Only Instant Combat lets fights settle at once.
   if (!animate) g.save.upgrades.instantCombat = 1;
@@ -131,17 +131,17 @@ test("a fight played out waits beside the enemy, then counts exactly like one se
   played.run.notes = structuredClone(instant.run.notes);
   const hp = played.run.player.hp;
   assert.ok(played.move(1, 0));
-  assert.ok(played.encounter, "the fight is playing out");
+  assert.ok(played.fights.encounter, "the fight is playing out");
   assert.deepEqual([played.run.player.x, played.run.player.hp], [0, hp], "nothing counts yet");
   assert.equal(played.world.tile(1, 0).kind, "enemy");
   assert.ok(!played.stepManually(0, 1) && !played.move(0, 1), "steps wait for the fight");
   played.walkTo(2, 2);
   assert.equal(played.route.length, 0);
-  assert.ok(played.shownHp(played.encounter.start + played.encounter.bout.duration) < hp);
+  assert.ok(played.fights.shownHp(played.fights.encounter.start + played.fights.encounter.bout.duration) < hp);
 
-  assert.ok(played.finishEncounter());
+  assert.ok(played.fights.finish());
   assert.ok(instant.move(1, 0));
-  assert.equal(played.encounter, null);
+  assert.equal(played.fights.encounter, null);
   assert.deepEqual(played.run, instant.run);
   assert.equal(played.message, instant.message);
   assert.deepEqual([played.run.player.x, played.world.tile(1, 0).kind], [1, "floor"]);
@@ -151,7 +151,7 @@ test("undo during a fight takes the whole fight back", () => {
   const g = arena({ kind: "enemy", enemy: foe() }), hp = g.run.player.hp;
   g.move(1, 0);
   assert.ok(g.undo());
-  assert.equal(g.encounter, null);
+  assert.equal(g.fights.encounter, null);
   assert.deepEqual([g.run.player.x, g.run.player.hp, g.run.kills], [0, hp, 0]);
 });
 
@@ -159,7 +159,7 @@ test("a fight the hero loses leaves it fallen only once it has played out", () =
   const g = arena({ kind: "enemy", enemy: foe({ hp: 600, attack: 30 }) });
   assert.ok(g.move(1, 0, true));
   assert.equal(g.fallen, false);
-  g.finishEncounter();
+  g.fights.finish();
   assert.ok(g.fallen);
 });
 
@@ -343,7 +343,7 @@ test("Animate fights stays on until Instant Combat opens the setting", () => {
   g.save.settings.fightAnimation = false;
   assert.ok(g.animatesFights, "the setting is hidden, so fights still play out");
   g.move(1, 0);
-  assert.ok(g.encounter);
+  assert.ok(g.fights.encounter);
   g.save.upgrades.instantCombat = 1;
   assert.equal(g.animatesFights, false);
 });
@@ -351,27 +351,27 @@ test("Animate fights stays on until Instant Combat opens the setting", () => {
 test("a fight won at once raises only what the hero took, over the hero, and no bar", () => {
   const g = arena({ kind: "enemy", enemy: foe() }, false);
   assert.ok(g.move(1, 0));
-  assert.equal(g.encounter, null, "it counts at once");
-  assert.deepEqual([g.run.player.x, g.fight!.summary], [1, true]);
-  const popups = new BoardPopups(), now = g.fight!.start, taken = g.fight!.bout.strikes[1].damage;
-  popups.update({ ...g, gains: [] }, now);
+  assert.equal(g.fights.encounter, null, "it counts at once");
+  assert.deepEqual([g.run.player.x, g.fights.shown!.summary], [1, true]);
+  const popups = new BoardPopups(), now = g.fights.shown!.start, taken = g.fights.shown!.bout.strikes[1].damage;
+  popups.update({ ...g, gains: [], fight: g.fights.shown }, now);
   assert.equal(taken, 100 - g.run.player.hp);
   assert.deepEqual(numbers(popups).map((d) => `${d.x}:${d.text}`), [`1:${taken}`], "no number over the felled enemy");
-  assert.equal(enemyBar(g.fight!, now + 1000), null);
+  assert.equal(enemyBar(g.fights.shown!, now + 1000), null);
 });
 
 test("a fight lost at once raises a summary over both, and the enemy's bar shows its HP left", () => {
   const g = arena({ kind: "enemy", enemy: foe({ hp: 600, attack: 30 }) }, false);
   assert.ok(!g.move(1, 0, true));
-  assert.ok(g.fallen && !g.encounter);
-  const popups = new BoardPopups(), now = g.fight!.start;
-  popups.update({ ...g, gains: [] }, now);
-  const [dealt, taken] = g.fight!.bout.strikes.map((s) => s.damage);
+  assert.ok(g.fallen && !g.fights.encounter);
+  const popups = new BoardPopups(), now = g.fights.shown!.start;
+  popups.update({ ...g, gains: [], fight: g.fights.shown }, now);
+  const [dealt, taken] = g.fights.shown!.bout.strikes.map((s) => s.damage);
   assert.ok(taken >= 100, "every strike it took, the last one in full");
   assert.deepEqual(numbers(popups).map((d) => `${d.x}:${d.text}`), [`1:${dealt}`, `0:${taken}`]);
-  assert.deepEqual(enemyBar(g.fight!, now + 60_000), { hp: 600 - dealt, alpha: 1 });
+  assert.deepEqual(enemyBar(g.fights.shown!, now + 60_000), { hp: 600 - dealt, alpha: 1 });
   assert.ok(g.undo());
-  assert.equal(g.fight, null, "undo takes the bar away");
+  assert.equal(g.fights.shown, null, "undo takes the bar away");
 });
 
 test("the enemy's HP bar stays off the board while its Toggle is off", () => {
