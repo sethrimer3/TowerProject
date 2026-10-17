@@ -314,6 +314,34 @@ function renameRush(s: any) {
     if (isRecord(badges)) for (const list of Object.values(badges)) if (Array.isArray(list)) for (const r of list) if (isRecord(r)) r.id = dash(r.id);
   }
 }
+/** KEY took YELLOW KEY's place in the base hand, and YELLOW KEY became an
+ * Inspiration skill: a save with no KEY card that hasn't earned YELLOW KEY
+ * holds KEY in its place, in the hand, its links and the badges on it (and
+ * a run inside's), renamed in the raw save before it decodes. The skill
+ * earns YELLOW KEY back.
+ * TODO: remove this conversion in a future save version. */
+function retireYellowKey(s: any) {
+  if ((isRecord(s.upgrades) && s.upgrades.cardYellowKey) || !Array.isArray(s.hand) || s.hand.includes("key")) return;
+  const card = (id: unknown) => (id === "yellowKey" ? "key" : id);
+  const cards = (list: unknown) => (Array.isArray(list) ? list.map(card) : list);
+  const pairs = (list: unknown) => (Array.isArray(list) ? list.map(cards) : list);
+  /** Moves the badges a map by card holds on YELLOW KEY onto KEY. */
+  const badges = (byCard: unknown) => {
+    if (!isRecord(byCard) || !("yellowKey" in byCard) || "key" in byCard) return;
+    byCard.key = byCard.yellowKey;
+    delete byCard.yellowKey;
+  };
+  s.hand = cards(s.hand);
+  s.cardLinks = pairs(s.cardLinks);
+  badges(s.badges?.cards);
+  for (const mode of ["tower", "delve"]) {
+    const run = s[mode]?.run;
+    if (!isRecord(run) || !Array.isArray(run.hand) || run.hand.includes("key")) continue;
+    run.hand = cards(run.hand);
+    run.links = pairs(run.links);
+    badges(run.badges);
+  }
+}
 function decodeUpgrades(raw: any, d: Save) {
   for (const u of UPGRADES) d.upgrades[u.id] = count(raw?.[u.id] || raw?.[RENAMED_UPGRADES[u.id] ?? ""], d.upgrades[u.id], u.max);
 }
@@ -458,6 +486,7 @@ export function decode(raw: string | null): Save {
   try {
     const s = JSON.parse(raw ?? "null") ?? {};
     if (isRecord(s)) renameRush(s);
+    if (isRecord(s)) retireYellowKey(s);
     decodeUpgrades(s.upgrades, d);
     // Undo capacity counts Undo Count research, so the Archives come first.
     d.archives = decodeArchives(s.archives);

@@ -278,14 +278,14 @@ const turns = (g: Game, n: number) => { for (let i = 0; i < n; i++) g.autoTurn()
 
 test("a gate keeps its card from acting while its condition fails; a Focus overrides it", () => {
   const g = floor(["@.K", "..."]);
-  g.run.hand = ["yellowKey"];
-  badge(g, "yellowKey", "hpGate");
+  g.run.hand = ["key"];
+  badge(g, "key", "hpGate");
   g.autoTurn();
   assert.ok(g.handStuck, "at full HP, HP < 100% keeps the card closed");
   g.run.player.hp = 99;
   assert.equal(planHand(g.handRules, g.run.hand, "tower")?.card, 0, "below full HP it acts");
   g.run.player.hp = 100;
-  badge(g, "yellowKey", "yellowGate", 1, 0);
+  badge(g, "key", "yellowGate", 1, 0);
   g.run.player.keys.yellow = 10;
   assert.equal(planHand(g.handRules, g.run.hand, "tower"), null, "holding 10 yellow keys closes YK < 10");
   g.save.upgrades.focus = 1;
@@ -296,8 +296,8 @@ test("a gate keeps its card from acting while its condition fails; a Focus overr
 
 test("a gate re-checks mid-path: HP rising past HP < drops the plan and the hand chooses again", () => {
   const g = floor(["@...K.", "......"]);
-  g.run.hand = ["yellowKey"];
-  badge(g, "yellowKey", "hpGate", 3, 2);
+  g.run.hand = ["key"];
+  badge(g, "key", "hpGate", 3, 2);
   g.run.player.hp = 10;
   g.autoTurn();
   assert.ok(g.cardPlan, "below the limit, the card commits to a path");
@@ -309,8 +309,8 @@ test("a gate re-checks mid-path: HP rising past HP < drops the plan and the hand
 
 test("a ≥ key gate lets its card act only while you hold at least its threshold", () => {
   const g = floor(["@.K", "..."]);
-  g.run.hand = ["yellowKey"];
-  badge(g, "yellowKey", "blueAtLeast", 3, 2);
+  g.run.hand = ["key"];
+  badge(g, "key", "blueAtLeast", 3, 2);
   g.run.player.keys.blue = 2;
   assert.equal(planHand(g.handRules, g.run.hand, "tower"), null, "2 blue keys keep BK ≥ 3 closed");
   g.run.player.keys.blue = 3;
@@ -368,7 +368,7 @@ test("a card's badges work together: every reward pays, and any gate closes it",
 
 test("Gold Touch pays once a target, even after undo", () => {
   const g = floor(["@.A.K"]);
-  g.run.hand = ["atkUp", "yellowKey"];
+  g.run.hand = ["atkUp", "key"];
   badge(g, "atkUp", "goldTouch", 5);
   const gold = g.save.gold;
   turns(g, 2);
@@ -381,14 +381,14 @@ test("Gold Touch pays once a target, even after undo", () => {
 
 test("Goldback tallies a linear combo on the hand's last card, which the next Gold found uses up", () => {
   const back = floor(["@.A.K"]);
-  back.run.hand = ["atkUp", "yellowKey"];
+  back.run.hand = ["atkUp", "key"];
   badge(back, "atkUp", "goldback", 3);
-  badge(back, "yellowKey", "goldback", 3);
+  badge(back, "key", "goldback", 3);
   const before = back.save.gold;
   turns(back, 2);
   assert.equal(back.run.goldCombo, undefined, "ATK UP is not the last card");
   turns(back, 2);
-  assert.equal(back.run.goldCombo, 4, "YELLOW KEY is: level 3 adds x4");
+  assert.equal(back.run.goldCombo, 4, "KEY is: level 3 adds x4");
   assert.equal(back.save.gold, before + 2, "the badge itself pays no Gold: only the shard and key picked up, 1 each, which the combo leaves alone");
   assert.ok(back.undo());
   assert.equal(back.run.goldCombo, undefined, "undo takes the activation back");
@@ -433,17 +433,17 @@ test("Stairward picks the target with the shortest walk on to the stairs, then r
   ];
   const g = floor(rows);
   (g.world as RoomWorld).cells.set("0,1", { kind: "floor" });
-  g.run.hand = ["yellowKey"];
+  g.run.hand = ["key"];
   assert.deepEqual(planHand(g.handRules, g.run.hand, "tower")!.path.at(-1), { x: 3, y: 0, dx: 1, dy: 0 }, "without it, the closest key");
-  badge(g, "yellowKey", "stairward", 1);
+  badge(g, "key", "stairward", 1);
   const end = planHand(g.handRules, g.run.hand, "tower")!.path.at(-1)!;
   assert.deepEqual([end.x, end.y], [0, 2], "the key beside the walk up to the stairs");
   g.autoTurn();
   assert.equal(g.run.badgeFloors?.stairward, 0, "it worked on this floor");
   g.run.height = 3;
-  assert.equal(g.handRules.cardRules("yellowKey"), undefined, "level 1 rests for 7 floors");
+  assert.equal(g.handRules.cardRules("key"), undefined, "level 1 rests for 7 floors");
   g.run.height = 7;
-  assert.deepEqual(g.handRules.cardRules("yellowKey"), { stairward: true });
+  assert.deepEqual(g.handRules.cardRules("key"), { stairward: true });
 });
 
 test("Skip Open Nodes passes over a monster that opens no new ground, and marks it for the floor", () => {
@@ -508,9 +508,9 @@ const snapped = (n: number) => Math.round(n * 1e6) / 1e6;
 
 test("Effective makes the card's target stronger: more heal, a fraction more key, a dearer door, a fiercer fight", () => {
   const g = floor(["@.K.P"]);
-  g.run.hand = ["yellowKey", "heal"];
+  g.run.hand = ["key", "heal"];
   g.run.player.hp = 10;
-  badge(g, "yellowKey", "effective", 7);
+  badge(g, "key", "effective", 7);
   badge(g, "heal", "effective", 1);
   turns(g, 2);
   assert.equal(g.run.player.keys.yellow, 1.35, "a key gives 1.35 at level 7");
@@ -556,8 +556,8 @@ test("Effective's added damage can fell the hero; undo takes the fight back", ()
 
 test("Dampen makes the target weaker: a fraction of a key, a gentler Heart Door and fight", () => {
   const g = floor(["@.K"]);
-  g.run.hand = ["yellowKey"];
-  badge(g, "yellowKey", "dampen", 1);
+  g.run.hand = ["key"];
+  badge(g, "key", "dampen", 1);
   turns(g, 2);
   assert.equal(g.run.player.keys.yellow, 0.95);
   const h = floor(["@.H"]);
@@ -590,22 +590,22 @@ test("fractional keys: a door needs a whole key of its colour, and keys show two
 
 test("Deprioritize marks the card's first targets with a ?, every path goes round them, then the card rests", () => {
   const g = floor(["@.K.K.K", "......."]);
-  g.run.hand = ["yellowKey"];
-  badge(g, "yellowKey", "deprioritize", 2);
+  g.run.hand = ["key"];
+  badge(g, "key", "deprioritize", 2);
   assert.equal(planHand(g.handRules, g.run.hand, "tower"), null, "it passes over the first key");
   assert.deepEqual(g.handRules.badgeMarks.asked, ["2,1"]);
   assert.equal(planHand(g.handRules, g.run.hand, "tower"), null, "and the next");
   assert.deepEqual(g.handRules.badgeMarks.asked, ["2,1", "4,1"]);
-  assert.ok(g.handRules.cardResting("yellowKey"), "its two marks made, it rests for the floor");
-  assert.deepEqual(g.handRules.cardRules("yellowKey"), { closed: true });
+  assert.ok(g.handRules.cardResting("key"), "its two marks made, it rests for the floor");
+  assert.deepEqual(g.handRules.cardRules("key"), { closed: true });
   // Every card's path goes round a ? while it can, and never through one.
   const p = floor(["@K.P"]);
-  p.run.hand = ["yellowKey", "heal"];
-  badge(p, "yellowKey", "deprioritize", 1);
+  p.run.hand = ["key", "heal"];
+  badge(p, "key", "deprioritize", 1);
   assert.equal(planHand(p.handRules, p.run.hand, "tower"), null, "the only way to the potion runs through the ?");
   const q = floor(["@K.P", "...."]);
-  q.run.hand = ["yellowKey", "heal"];
-  badge(q, "yellowKey", "deprioritize", 1);
+  q.run.hand = ["key", "heal"];
+  badge(q, "key", "deprioritize", 1);
   const round = planHand(q.handRules, q.run.hand, "tower")!;
   assert.equal(round.card, 1);
   assert.ok(round.path.every((s) => !(s.x === 1 && s.y === 1)), "HEAL goes round the ?");
@@ -613,8 +613,8 @@ test("Deprioritize marks the card's first targets with a ?, every path goes roun
 
 test("stuck with a ?, the nearest becomes ! and the card heads for it; stepping on it clears it", () => {
   const g = floor(["@.K.K", "....."]);
-  g.run.hand = ["yellowKey"];
-  badge(g, "yellowKey", "deprioritize", 2);
+  g.run.hand = ["key"];
+  badge(g, "key", "deprioritize", 2);
   planHand(g.handRules, g.run.hand, "tower");
   planHand(g.handRules, g.run.hand, "tower");
   assert.deepEqual(g.handRules.badgeMarks.asked, ["2,1", "4,1"]);
@@ -625,7 +625,7 @@ test("stuck with a ?, the nearest becomes ! and the card heads for it; stepping 
   assert.deepEqual(at(g), [2, 1]);
   assert.equal(g.run.player.keys.yellow, 1);
   assert.deepEqual(g.handRules.badgeMarks, { asked: ["4,1"], bangs: [] }, "its mark is gone");
-  assert.ok(g.handRules.cardResting("yellowKey"));
+  assert.ok(g.handRules.cardResting("key"));
   turns(g, 2);
   assert.equal(g.run.player.keys.yellow, 2, "stuck again, the last ? becomes ! too");
 });
@@ -756,9 +756,9 @@ test("Dev mode owns the Badges box and every badge at the top level", () => {
 test("the XP and Gold combo a badge pays rise off the board only while their Toggles are on", () => {
   const shown = (on: boolean) => {
     const g = floor(["@.A.K"]);
-    g.run.hand = ["atkUp", "yellowKey"];
+    g.run.hand = ["atkUp", "key"];
     badge(g, "atkUp", "xp", 1);
-    badge(g, "yellowKey", "goldback", 3);
+    badge(g, "key", "goldback", 3);
     g.save.settings.xpGains = on;
     g.save.settings.comboGains = on;
     const xp = g.save.xp;

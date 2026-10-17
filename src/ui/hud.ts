@@ -7,7 +7,7 @@ import { tierNumeral, tierRewardText } from "../tiers.ts";
 import { MODES, milestones } from "../modes.ts";
 import { capitalized, cardArt, CURRENCY_SPRITES, displayedProgress, el, POINTER_SVG, text, uiSprite } from "./dom.ts";
 import { notesResearched } from "./run-notes-dialog.ts";
-import { CARDS, IN_PLACE, cardText, isSiphon, type CardId } from "../cards.ts";
+import { CARDS, IN_PLACE, cardBonusText, cardText, isSiphon, type CardId } from "../cards.ts";
 import { BADGES, badgeDef, badgesOn, badgeValue, type RunBadge } from "../badges.ts";
 import { badgeStyle } from "./badge-token.ts";
 import { trainingPoints } from "../loadout.ts";
@@ -438,6 +438,9 @@ function badgeTitle(badge: RunBadge) {
  * badge it holds, top slot first, and a siphon's uses so far this run. */
 function handCardTitle(game: Game, id: CardId) {
   let title = `${CARDS[id].name}: ${cardText(id, game.save.upgrades)}`;
+  const bonus = cardBonusText(id);
+  if (bonus) title += `
+${bonus}`;
   if (game.run.outside) return title;
   for (const badge of badgesOn(game.run.badges, id)) title += `
 Badge: ${badgeTitle(badge)}`;

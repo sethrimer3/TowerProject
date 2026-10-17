@@ -31,7 +31,7 @@ export type StepEffect = {
   /** Potions only: HP actually restored (capped at max HP). */
   healed: number;
   /** Doors and keys: how much of a key each key colour took or gave, when
-   * a badge's scale made it other than 1. */
+   * a badge's scale or a held key card's bonus made it other than 1. */
   keyAmount?: number;
   /** Enemies only, under a badge's scale: the damage added to the fight's
    * (or, below 0, given back) once it is over. */
@@ -64,6 +64,9 @@ export type StepRules = {
   /** How much of a key each key colour a door takes costs, in tenths of a
    * percent (Key Efficiency research), 1,000 when absent. */
   keyCost?: number;
+  /** The percent more a key of each colour picked up is worth, from the
+   * key cards the run's hand holds (`handBonus`), none when absent. */
+  keyFind?: Partial<Record<KeyColor, number>>;
   /** The percent of its stat an ATK or DEF shard gives (Shard ATK and
    * Shard DEF research), 100 when absent. */
   shardAttack?: number;
@@ -132,10 +135,12 @@ export function resolveStep(player: Player, tile: Tile, rules: StepRules = BASE_
       if (keyScale !== 1 && cost.length) effect.keyAmount = keyScale;
       break;
     }
-    case "key":
-      next.keys[tile.color!] = snap(next.keys[tile.color!] + scaled(1));
-      if (scale !== 1) effect.keyAmount = scaled(1);
+    case "key": {
+      const found = rules.keyFind?.[tile.color!] ?? 0, amount = found ? snap((scaled(1) * (100 + found)) / 100) : scaled(1);
+      next.keys[tile.color!] = snap(next.keys[tile.color!] + amount);
+      if (amount !== 1) effect.keyAmount = amount;
       break;
+    }
     case "potion": {
       const heal = scaled(potionRestores(tile, next.maxHp, rules));
       effect.healed = snap(Math.min(next.maxHp - next.hp, heal));

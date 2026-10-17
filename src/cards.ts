@@ -8,13 +8,28 @@ import { UPGRADES, type TrainingId, type UpgradeId } from "./config.ts";
 import type { DelveRun } from "./runs.ts";
 import type { EnemyStrength, Mode } from "./entities.ts";
 
-/** Every card a hand can hold: its name and what it moves the hero toward. */
+/** What a card gives, on top of where it moves the hero, for as long as the
+ * run's hand holds it, whichever card leads the hero there. */
+export type CardBonus = {
+  /** Each key of `color` picked up off the floor is worth `percent` more,
+   * and pays `gold` more Pickup Gold (raised by Gold Bonus as its own is). */
+  key?: { color: KeyColor; percent: number; gold: number };
+  /** Each treasure chest opened has a `supply` percent chance of being a
+   * Supply Chest, and an `equipment` percent chance of being an Equipment
+   * Chest (one roll for both, once Equipment is open). */
+  chest?: { supply: number; equipment: number };
+};
+type CardDef = { name: string; text: string; bonus?: CardBonus };
+
+/** Every card a hand can hold: its name, what it moves the hero toward,
+ * and any bonus it gives while held (`bonus`). */
 export const CARDS = {
   stairs: { name: "Stairs", text: "Move toward the stairs up (in the Delve, the highest open tile it can reach, above any row reached this run)." },
   heal: { name: "Heal", text: "Move toward the closest healing potion." },
   door: { name: "Door", text: "Move toward the closest door you hold the keys for, or a Wooden Door you can break down." },
-  yellowKey: { name: "Yellow Key", text: "Move toward the closest yellow key." },
-  blueKey: { name: "Blue Key", text: "Move toward the closest blue key." },
+  key: { name: "Key", text: "Move toward the closest key of any colour." },
+  yellowKey: { name: "Yellow Key", text: "Move toward the closest yellow key.", bonus: { key: { color: "yellow", percent: 5, gold: 1 } } },
+  blueKey: { name: "Blue Key", text: "Move toward the closest blue key.", bonus: { key: { color: "blue", percent: 5, gold: 2 } } },
   monster: { name: "Enemy", text: "Move toward the closest enemy." },
   atkUp: { name: "ATK Up", text: "Move toward the closest ATK pickup." },
   defUp: { name: "DEF Up", text: "Move toward the closest DEF pickup." },
@@ -28,11 +43,11 @@ export const CARDS = {
   bossEnemy: { name: "Boss Enemy", text: "Move toward the closest boss or Greater Boss." },
   nonBossEnemy: { name: "Non-Boss Enemy", text: "Move toward the closest enemy that is not a boss or Greater Boss." },
   fastEnemy: { name: "Fast Enemy", text: "Move toward the closest Fast enemy." },
-  chest: { name: "Chest", text: "Move toward the closest closed chest: a treasure chest or an area reward chest." },
+  chest: { name: "Chest", text: "Move toward the closest closed chest: a treasure chest or an area reward chest.", bonus: { chest: { supply: 1.5, equipment: 0.5 } } },
   blueSiphon: { name: "BK Siphon", text: "Trade DEF training levels for a blue key, without moving, for the rest of the run. The first use takes 1 level and each use after takes 1 more (2, then 3…). Skipped without enough levels left." },
   blueTrader: { name: "BK Trader", text: "Trade 3 yellow keys for a blue key, without moving. Skipped with fewer than 3 yellow keys." },
   keyToHp: { name: "YK to HP", text: "Trade a yellow key for 10% of your max HP, without moving. Skipped without a yellow key, or while you are missing less than 10% of your max HP." },
-  redKey: { name: "Red Key", text: "Move toward the closest red key." },
+  redKey: { name: "Red Key", text: "Move toward the closest red key.", bonus: { key: { color: "red", percent: 5, gold: 3 } } },
   redSiphon: { name: "RK Siphon", text: "Trade ATK training levels for a red key, without moving, for the rest of the run. The first use takes 1 level and each use after takes 1 more (2, then 3…). Skipped without enough levels left." },
   torch: { name: "Torch", text: "Move toward the closest lit torch, putting it out." },
   woodenDoor: { name: "Wooden Door", text: "Move toward the closest Wooden Door you hold a key for, or can break down and survive." },
@@ -57,6 +72,40 @@ export const KEY_TO_HP_PERCENT = 10;
 export function cardText(id: CardId, upgrades: Record<UpgradeId, number>): string {
   return id === "stairs" && !upgrades.delve ? "Move toward the stairs up." : CARDS[id].text;
 }
+/** What card `id` gives while held, if anything (`CardBonus`). */
+export const cardBonus = (id: CardId): CardBonus | undefined => (CARDS[id] as CardDef).bonus;
+/** A card bonus's lines as the player reads them, each with its tone: a
+ * Supply Chest's chance light blue, an Equipment Chest's purple, the rarer. */
+export function cardBonusLines(id: CardId): { text: string; tone: "plain" | "supply" | "equipment" }[] {
+  const bonus = cardBonus(id), key = bonus?.key, chest = bonus?.chest;
+  return [
+    ...(key ? [{ text: `+${key.percent}% ${CARDS[`${key.color}Key`].name}s`, tone: "plain" as const }, { text: `+${key.gold} Gold a key`, tone: "plain" as const }] : []),
+    ...(chest ? [{ text: `${chest.supply}% Supplies`, tone: "supply" as const }, { text: `${chest.equipment}% Equipment`, tone: "equipment" as const }] : []),
+  ];
+}
+/** A card bonus's lines as one line of plain text, for a tooltip ("" for none). */
+export const cardBonusText = (id: CardId) => cardBonusLines(id).map((l) => l.text).join(" · ");
+/** What the cards of `hand` give while held, added up: for each key colour
+ * the percent more each key is worth and the Gold it pays more, and a
+ * treasure chest's chances, in percent, of being a Supply or Equipment Chest. */
+export function handBonus(hand: readonly CardId[]) {
+  const keys: Partial<Record<KeyColor, { percent: number; gold: number }>> = {};
+  const chest = { supply: 0, equipment: 0 };
+  for (const id of new Set(hand)) {
+    const bonus = cardBonus(id);
+    if (bonus?.key) {
+      const k = (keys[bonus.key.color] ??= { percent: 0, gold: 0 });
+      k.percent += bonus.key.percent;
+      k.gold += bonus.key.gold;
+    }
+    if (bonus?.chest) {
+      chest.supply = snap(chest.supply + bonus.chest.supply);
+      chest.equipment = snap(chest.equipment + bonus.chest.equipment);
+    }
+  }
+  return { keys, chest };
+}
+export type HandBonus = ReturnType<typeof handBonus>;
 
 /** How many cards a hand holds before Larger Hand, and at most, with
  * Larger Hand's slot and every slot bought with Gems. */
@@ -76,8 +125,8 @@ export const handSlots = (save: { upgrades: Record<UpgradeId, number>; handSlots
 export const nextHandSlotGems = (save: { upgrades: Record<UpgradeId, number>; handSlots: number }) =>
   save.upgrades.largerHand ? HAND_SLOT_GEMS[save.handSlots] ?? null : null;
 /** The hand a new profile starts with, in priority order: its whole deck.
- * HEAL, ATK UP, DEF UP and BLUE KEY are earned from the Inspiration tree. */
-export const BASE_HAND: readonly CardId[] = ["stairs", "door", "yellowKey", "monster"];
+ * HEAL, YELLOW KEY, ATK UP, DEF UP and BLUE KEY are earned from the Inspiration tree. */
+export const BASE_HAND: readonly CardId[] = ["stairs", "door", "key", "monster"];
 /** The cards the player owns, in `CARDS` order: the base hand's, and each
  * card whose upgrade is owned. A hand holds any of them, but always STAIRS. */
 export function deckCards(upgrades: Record<UpgradeId, number>): CardId[] {
@@ -249,6 +298,7 @@ const WANTS: Record<CardId, (t: Tile, at: HandAt, rules: CardRules | undefined, 
   // A door that opens: the keys held pay for it, a Heart Door, or a Wooden
   // Door the hero can break down and survive.
   door: (t, at, rules, r) => t.kind === "door" && paysRun(at, r, keyScale(at, rules), rules?.scale ?? 1),
+  key: (t) => t.kind === "key",
   yellowKey: (t) => t.kind === "key" && t.color === "yellow",
   blueKey: (t) => t.kind === "key" && t.color === "blue",
   monster: fightable(),

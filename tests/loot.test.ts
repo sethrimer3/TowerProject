@@ -5,14 +5,11 @@ import { Game } from "../src/state.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import { World } from "../src/delve/world.ts";
 import { metalUnlocked, MATERIAL_IDS } from "../src/materials.ts";
-import { rollGold, rollMetal, rollTreasureLoot } from "../src/loot.ts";
+import { rollGold } from "../src/loot.ts";
 import { TOWER_ZONE_ENEMIES } from "../src/scaling.ts";
+import { RunPurse } from "../src/game/run-purse.ts";
 
 // --- Deterministic RNG helpers ---
-const always = (values: number[]) => {
-  let i = 0;
-  return () => values[Math.min(i++, values.length - 1)];
-};
 const constant = (v: number) => () => v;
 
 
@@ -24,19 +21,15 @@ test("metal availability follows documented unlock floors", () => {
   assert.equal(metalUnlocked("voidsteel", 100), true);
 });
 
-test("treasure chests always award gold, and at most a stack of metal bars", () => {
-  const loot = rollTreasureLoot(0, constant(0.999));
-  assert.ok(loot.gold >= 3);
-  assert.equal(loot.materials.length, 0, "the metal roll failed at rng()=0.999");
-  const lucky = rollTreasureLoot(0, constant(0));
-  assert.deepEqual(lucky.materials.map((m) => m.id), ["ironBar"]);
-});
-
-test("metal roll respects the 28% gate and only selects unlocked-at-floor metals", () => {
-  assert.equal(rollMetal(0, constant(0.99)), null, "above the 28% threshold never drops a metal");
-  const stack = rollMetal(0, always([0, 0, 0]));
-  assert.ok(stack);
-  assert.equal(stack!.id, "ironBar", "only iron is available at floor 0");
+test("a treasure chest pays only Gold: no metal bars, whatever its roll", () => {
+  for (const roll of [0, 0.5, 0.999]) {
+    const g = new Game(defaults());
+    g.newRun({ seed: 7 });
+    const loot = new RunPurse(g.save, g.mode, g.run, constant(roll)).treasure(3, 3)!;
+    assert.ok(loot.gold >= 3);
+    assert.equal(loot.kind, "plain");
+    assert.ok(Object.values(g.save.materials).every((n) => n === 0), `no bars at ${roll}`);
+  }
 });
 
 test("gold formula matches the documented range at floor 0", () => {
@@ -93,7 +86,7 @@ test("kills drop none of the old crafting materials, in either mode", () => {
   assert.ok(Object.values(delve.save.materials).every((n) => n === 0));
 });
 
-test("undo/reopen the same treasure chest cannot duplicate its Gold or metal payout", () => {
+test("undo/reopen the same treasure chest cannot duplicate its Gold", () => {
   const g = new Game(defaults());
   g.save.upgrades.inspirationUndos = 1; // undo needs Rehearsed steps
   const w = g.world as RoomWorld;

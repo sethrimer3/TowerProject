@@ -57,7 +57,7 @@ export type EquipmentSave = {
   nextId: number;
   /** Where the Gem pulls' stream stands (null until the first pull). */
   rng: number | null;
-  /** The player's choice to salvage Common boss drops into their material
+  /** The player's choice to salvage Common chest pieces into their material
    * as they drop, instead of keeping them (the Salvage section's toggle). */
   autoSalvage: boolean;
 };

@@ -51,7 +51,7 @@ The pieces one mode's hero wears; the Tower and the Delve each have their own, d
 _Avoid_: build, set
 
 **Standard piece**:
-A category's plain piece, dropped by bosses on any floor once Equipment is open.
+A category's plain piece, held by Equipment Chests once Equipment is open.
 _Avoid_: common item (Common is a rarity)
 
 **Unique piece**:
@@ -59,7 +59,7 @@ One of a category's three named pieces with a specialised ability, from Gem pull
 _Avoid_: legendary, artifact
 
 **Upgrade material**:
-A category's leveling currency (Whetstone, Iron Rivets …), dropped by enemies and returned by dismantling.
+A category's leveling currency (Whetstone, Iron Rivets …), held by Supply Chests and returned by dismantling.
 _Avoid_: crafting material, monster part
 
 **Merge**:
@@ -68,7 +68,7 @@ _Avoid_: fuse, combine
 
 **Dismantle**:
 Breaking pieces into their upgrade material.
-_Avoid_: salvage (used only for the amount returned, and in **Auto-salvage**: the player's toggle that dismantles Common boss drops as they drop), destroy
+_Avoid_: salvage (used only for the amount returned, and in **Auto-salvage**: the player's toggle that dismantles Common chest pieces as they are found), destroy
 
 **Pity**:
 The count, per category, of Gem pulls since the last Rare; the 100th without one is a Rare.
@@ -453,8 +453,18 @@ _Avoid_: lab page, training screen
 ### The hand
 
 **Card**:
-One way of moving the hero, toward one kind of target: the stairs, a potion, a door the hero holds the keys for, a key of one colour (yellow, or blue), a monster, an ATK pickup, or a DEF pickup. A card can act when the hero can reach such a target on the current floor over open floor and items.
+One way of moving the hero, toward one kind of target: the stairs, a potion, a door the hero holds the keys for, a key (of any colour, or of one), a monster, an ATK pickup, or a DEF pickup. A card can act when the hero can reach such a target on the current floor over open floor and items.
 _Avoid_: skill (a skill is something the player uses), ability
+
+**Card bonus**:
+What a card gives for as long as the run's hand holds it, beside where it moves the hero, whichever card leads there: a key card's keys worth more and paying more Gold, or the Chest card's chance of a Supply or Equipment Chest.
+_Avoid_: perk, passive
+
+**Supply Chest**:
+A treasure chest that, through the Chest card's bonus, also holds Equipment upgrade materials (supplies) beside its Gold.
+
+**Equipment Chest**:
+A treasure chest that, through the Chest card's bonus, also holds a Standard piece of equipment, Common, Uncommon or Rare.
 
 **Hand**:
 The cards the player sets up before a run, in priority order, in four slots (five with Larger Hand, and more bought with Gems); it always holds the STAIRS card. Inside a run the hand moves the hero, and the player can't: the first card that can act (or Card Group, as one) picks its closest target, and the hero follows the shortest path there a step at a time before the hand chooses again. The player can pause it, and undo pauses it. Each run keeps the hand as ordered when it went inside.

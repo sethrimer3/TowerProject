@@ -43,7 +43,7 @@ The rest are drawn among (`DRAWN_MISSIONS`):
 | Tap X floating Gems | 12, 24, 50 | each floor Gem collected, tapped or stepped on |
 | Complete X Training upgrades | 50, 150, 400 | each rank bought with training points or finished by a trainer |
 | Take no damage for X floors in a row | 100, 250, 500 | the run's floors climbed without fight damage in a row (`best`) |
-| Obtain X Equipment pieces | 40, 80, 150 | boss drops (auto-salvaged included) and Gem pulls; merging doesn't count |
+| Obtain X Equipment pieces | 40, 80, 150 | Equipment Chests' pieces (auto-salvaged included) and Gem pulls; merging doesn't count |
 | Obtain X Equipment by merging | 10, 20, 40 | each merge |
 | Claim ad Gems X times | 10, 25, 60 | each ad Gems claim, with Ad-Disable too |
 | Obtain X potions | 2k, 10k, 30k | once a tile |

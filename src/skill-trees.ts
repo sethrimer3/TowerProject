@@ -13,7 +13,7 @@ export const TREES: SkillTree[] = [
   { id: "inspiration", name: "Inspiration", currency: "inspiration", description: "Earn Inspiration by beating your best Tower climb.", height: 534, unlocks: true, nodes: [
     // The hand's skills, down to the Archives: Buildout, Trainers (two rows
     // lower), Shroud, Critical (with Critical Prediction to its left). Gear and On the Job branch off
-    // Buildout, ATK Up and DEF Up under Gear, and Regen, then Heal, below On the Job.
+    // Buildout, Yellow Key, ATK Up and DEF Up under Gear, and Regen, then Heal, below On the Job.
     { id: "combatStance", icon: "▤", x: 50, y: 12, requires: [] },
     { id: "buildout", icon: "⚔", x: 50, y: 30, requires: ["combatStance"] },
     { id: "trainers", icon: "⚔", x: 50, y: 66, requires: ["buildout"] },
@@ -26,8 +26,9 @@ export const TREES: SkillTree[] = [
     { id: "regen", icon: "♥", x: 80, y: 48, requires: ["onTheJob"] },
     { id: "cardHeal", icon: "♥", x: 80, y: 66, requires: ["regen"] },
     { id: "archives", icon: "▥", x: 50, y: 120, requires: ["critical"] },
-    { id: "cardAtkUp", icon: "⚔", x: 20, y: 48, requires: ["gear"] },
-    { id: "cardDefUp", icon: "⛨", x: 20, y: 66, requires: ["cardAtkUp"] },
+    { id: "cardYellowKey", icon: "⚿", x: 20, y: 48, requires: ["gear"] },
+    { id: "cardAtkUp", icon: "⚔", x: 20, y: 66, requires: ["cardYellowKey"] },
+    { id: "cardDefUp", icon: "⛨", x: 20, y: 84, requires: ["cardAtkUp"] },
     // Research needs the Archives, so the skills that open it come after them:
     // Blue Key and Faster Trainers either side of the Archives, Rehearsed steps
     // left of Into the depths, and Pocket Money (then Spare Change, Wishing

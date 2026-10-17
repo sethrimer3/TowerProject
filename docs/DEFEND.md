@@ -172,6 +172,7 @@ from its seed; `tests/defend-replay.test.ts` pins it.
 ## Economy (`progress.ts`, Armory tab)
 
 - Everything is bought with main-game gold, iron bars and steel bars.
+  Nothing finds metal bars any more (treasure chests stopped holding them), so only bars already saved can be spent.
 - City elements get more expensive with each one owned. Upgrades are
   universal (they apply to every building of that type) and take effect from
   the next run.

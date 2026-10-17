@@ -89,6 +89,16 @@ function key(p, color, rim) {
   rect(p, 31, 21, 2, 5, color);
   rect(p, 35, 21, 2, 4, color);
 }
+/** A small key at (x, y), in `color` with a `rim` round its bow (KEY's icon
+ * stacks three). */
+function tinyKey(p, x, y, color, rim) {
+  rect(p, x, y, 7, 7, rim);
+  rect(p, x + 1, y + 1, 5, 5, color);
+  rect(p, x + 3, y + 3, 1, 1, C.back);
+  rect(p, x + 6, y + 2, 13, 3, color);
+  rect(p, x + 14, y + 5, 2, 3, color);
+  rect(p, x + 17, y + 5, 2, 2, color);
+}
 /** A shield (DEF UP's icon). */
 function shield(p) {
   rect(p, 14, 13, 20, 18, C.blue);
@@ -176,6 +186,12 @@ const ICONS = {
     rect(p, 18, 23, 2, 5, C.white);
   },
   door: (p) => door(p),
+  key(p) {
+    // Any key: a yellow, a blue and a red one, stacked.
+    tinyKey(p, 12, 9, C.gold, C.gold2);
+    tinyKey(p, 15, 19, C.sky, C.blue);
+    tinyKey(p, 12, 29, C.red, C.red2);
+  },
   yellowKey: (p) => key(p, C.gold, C.gold2),
   blueKey: (p) => key(p, C.sky, C.blue),
   monster: (p) => monster(p),
@@ -270,7 +286,7 @@ const ICONS = {
   },
 };
 
-const CARDS = [["stairs", "STAIRS"], ["heal", "HEAL"], ["door", "DOOR"], ["yellowKey", "YELLOW KEY"], ["blueKey", "BLUE KEY"], ["monster", "ENEMY"], ["atkUp", "ATK UP"], ["defUp", "DEF UP"], ["keySiphon", "KEY SIPHON"],
+const CARDS = [["stairs", "STAIRS"], ["heal", "HEAL"], ["door", "DOOR"], ["key", "KEY"], ["yellowKey", "YELLOW KEY"], ["blueKey", "BLUE KEY"], ["monster", "ENEMY"], ["atkUp", "ATK UP"], ["defUp", "DEF UP"], ["keySiphon", "KEY SIPHON"],
   ["yellowDoor", "YELLOW DOOR"], ["heartDoor", "HEART DOOR"], ["weakEnemy", "WEAK ENEMY"], ["baseEnemy", "BASE ENEMY"], ["strongEnemy", "STRONG ENEMY"],
   ["eliteEnemy", "ELITE ENEMY"], ["bossEnemy", "BOSS ENEMY"], ["nonBossEnemy", "NON-BOSS ENEMY"], ["fastEnemy", "FAST ENEMY"], ["chest", "CHEST"], ["blueSiphon", "BK SIPHON"], ["blueTrader", "BK TRADER"], ["keyToHp", "YK TO HP"],
   ["redKey", "RED KEY"], ["redSiphon", "RK SIPHON"], ["torch", "TORCH"], ["woodenDoor", "WOODEN DOOR"]];

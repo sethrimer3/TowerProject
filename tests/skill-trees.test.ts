@@ -80,10 +80,11 @@ test("Shroud follows Trainers, ahead of Critical; Greater Heal, then Recovery, R
   assert.deepEqual([at("keySiphon").x, at("keySiphon").y, at("keySiphon").requires], [50, 214, ["thorns"]], "Key Siphon sits under Thorns");
   assert.deepEqual([at("cardYellowDoor").y, at("cardYellowDoor").requires], [268, ["keySiphon"]], "the cards hang from Key Siphon, a row clear of it and Revive");
 });
-test("the hand's skills run Buildout, Trainers, Shroud, Critical to the Archives, Gear and On the Job off Buildout, ATK Up then DEF Up after Gear, Regen then Heal below On the Job, Larger Hand sits by itself to Shroud's right, and Buildout, Trainers, On the Job and Gear cost 1 (Critical 2)", () => {
+test("the hand's skills run Buildout, Trainers, Shroud, Critical to the Archives, Gear and On the Job off Buildout, Yellow Key, ATK Up then DEF Up after Gear, Regen then Heal below On the Job, Larger Hand sits by itself to Shroud's right, and Buildout, Trainers, On the Job and Gear cost 1 (Critical 2)", () => {
   const at = (id: string) => TREES[0].nodes.find((n) => n.id === id)!;
-  assert.deepEqual(["buildout", "trainers", "shroud", "critical", "archives", "onTheJob", "regen", "cardHeal", "gear", "cardAtkUp", "cardDefUp"].map((id) => at(id).requires),
-    [["combatStance"], ["buildout"], ["trainers"], ["shroud"], ["critical"], ["buildout"], ["onTheJob"], ["regen"], ["buildout"], ["gear"], ["cardAtkUp"]]);
+  assert.deepEqual(["buildout", "trainers", "shroud", "critical", "archives", "onTheJob", "regen", "cardHeal", "gear", "cardYellowKey", "cardAtkUp", "cardDefUp"].map((id) => at(id).requires),
+    [["combatStance"], ["buildout"], ["trainers"], ["shroud"], ["critical"], ["buildout"], ["onTheJob"], ["regen"], ["buildout"], ["gear"], ["cardYellowKey"], ["cardAtkUp"]]);
+  assert.deepEqual(["gear", "cardYellowKey", "cardAtkUp", "cardDefUp"].map((id) => [at(id).x, at(id).y]), [[20, 30], [20, 48], [20, 66], [20, 84]], "Yellow Key, ATK Up and DEF Up straight down under Gear");
   assert.deepEqual(["buildout", "trainers", "shroud", "critical", "archives"].map((id) => [at(id).x, at(id).y]), [[50, 30], [50, 66], [50, 84], [50, 102], [50, 120]], "down the middle, Shroud between Trainers and Critical");
   assert.deepEqual([at("largerHand").x, at("largerHand").y, at("largerHand").requires], [80, 84, ["trainers"]], "Larger Hand stands right of Shroud, alone");
   assert.deepEqual([at("critPrediction").x, at("critPrediction").y, at("critPrediction").requires], [30, 102, ["critical"]], "Critical Prediction stands left of Critical");
@@ -94,7 +95,7 @@ test("the hand's skills run Buildout, Trainers, Shroud, Critical to the Archives
   assert.ok(at("gear").x < at("buildout").x && at("gear").y === at("buildout").y, "Gear sits left of Buildout");
   assert.ok(at("cardAtkUp").x === at("gear").x && at("cardAtkUp").y > at("gear").y, "ATK Up sits under Gear");
   assert.ok(at("cardDefUp").x === at("cardAtkUp").x && at("cardDefUp").y > at("cardAtkUp").y, "DEF Up sits under ATK Up");
-  assert.deepEqual(["cardAtkUp", "cardDefUp"].map((id) => cost(id as UpgradeId, 0)), [5, 5]);
+  assert.deepEqual(["cardYellowKey", "cardAtkUp", "cardDefUp"].map((id) => cost(id as UpgradeId, 0)), [3, 5, 5]);
   assert.deepEqual(["combatStance", "buildout", "trainers", "onTheJob", "largerHand", "gear", "critical", "archives"].map((id) => cost(id as UpgradeId, 0)), [1, 1, 1, 1, 1, 1, 2, 5]);
   assert.deepEqual(["gear", "cardAtkUp", "cardDefUp", "onTheJob"].map((id) => UPGRADES.find((u) => u.id === id)!.name), ["Gear", "ATK Up", "DEF Up", "On the Job"]);
   const g = new Game(defaults());
@@ -107,7 +108,8 @@ test("the hand's skills run Buildout, Trainers, Shroud, Critical to the Archives
   assert.equal(g.buy("archives"), false, "the Archives wait for Critical");
   assert.equal(g.buy("cardAtkUp"), false, "ATK Up waits for Gear");
   assert.equal(g.buy("cardDefUp"), false, "DEF Up waits for ATK Up");
-  assert.ok(g.buy("gear") && g.buy("cardAtkUp") && g.buy("cardDefUp"));
+  assert.equal(g.buy("cardAtkUp"), false, "ATK Up waits for Yellow Key");
+  assert.ok(g.buy("gear") && g.buy("cardYellowKey") && g.buy("cardAtkUp") && g.buy("cardDefUp"));
   assert.ok(g.buy("trainers") && g.buy("shroud") && g.buy("critical") && g.buy("archives") && g.buy("largerHand"));
 });
 test("Trainers (1) follows Buildout, Blue Key (2) the Archives, and Extra Key (1) Movement Speed", () => {

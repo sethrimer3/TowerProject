@@ -2,18 +2,17 @@ import { researched } from "../archives.ts";
 import { ENEMY_GOLD, FAST_GOLD, PICKUP_GOLD, RANGED_GOLD, SHIELDED_GOLD, silverForKill, trainedAmount } from "../config.ts";
 import type { RoomWorld } from "../tower/room-world.ts";
 import { snap } from "../exact.ts";
-import { averageGold, rollTreasureLoot } from "../loot.ts";
+import { averageGold, rollGold } from "../loot.ts";
 import { pickupGold } from "../doors.ts";
 import { litTorches } from "../board.ts";
 import { point, type Enemy, type Mode, type Tile } from "../entities.ts";
 import type { Run } from "../runs.ts";
 import type { Save } from "../save-shape.ts";
-import type { MaterialStack } from "../materials.ts";
 import { MODES, type ModeProfile } from "../modes.ts";
 import { ranksInRun } from "../run-training.ts";
 import { goldBanked, silverFound, type GoldContext } from "../gold-multipliers.ts";
 import { wornEffects } from "../equipment/effects.ts";
-import { keepDrop, rollBossDrop, rollMaterials } from "../equipment/acquire.ts";
+import { keepDrop, rollChestPiece, rollSupplies } from "../equipment/acquire.ts";
 import type { EquipItem } from "../equipment/inventory.ts";
 import { CATEGORIES, type EquipMaterialId } from "../equipment/catalog.ts";
 import { runBoons } from "../shrines.ts";
@@ -23,14 +22,22 @@ import { notesOf, tallyIn } from "../run-notes.ts";
 /** The tiles whose Pickup Gold a skipped floor counts, beside its lit torches. */
 const ITEMS: ReadonlySet<Tile["kind"]> = new Set(["key", "potion", "attack", "defense", "door"]);
 
-/** What a kill gave toward Equipment, once it is open: upgrade materials,
- * and a boss's Standard piece (or, the inventory full, its salvage). */
+/** What a Supply or Equipment Chest gave toward Equipment: upgrade
+ * materials, or a Standard piece (or, the inventory full, its salvage). */
 export type EquipmentLoot = {
   materials: { id: EquipMaterialId; quantity: number } | null;
   item: EquipItem | null;
   /** A drop salvaged at once: by Auto-salvage (`auto`), or for want of room. */
   salvaged: { id: EquipMaterialId; quantity: number; auto: boolean } | null;
 };
+
+/** A treasure chest's kind: a plain one pays only Gold; a
+ * Supply Chest adds upgrade materials and an Equipment Chest a Standard
+ * piece, both only ever from the CHEST card held. */
+export type ChestKind = "plain" | "supply" | "equipment";
+/** A treasure chest's chances, in percent, of being a Supply or an
+ * Equipment Chest (`HandBonus.chest`). */
+export type ChestOdds = { supply: number; equipment: number };
 
 /** What a run finds: Gold, banked in the save as it is found, and Silver,
  * which belongs to the run. Gold paid for a physical kill, chest or floor
@@ -45,7 +52,7 @@ export class RunPurse {
     private readonly rng: () => number,
     /** The wall clock now (ms), for the Gold ad's boost. */
     private readonly now = 0,
-    /** What Equipment's drops (materials, boss pieces) draw from: `rng`,
+    /** What Equipment's finds (a chest's kind, its materials or piece) draw from: `rng`,
      * unless a tournament run gives them a stream of their own. */
     private readonly equipmentRng: () => number = rng,
   ) {}
@@ -176,17 +183,16 @@ export class RunPurse {
     return instakill ? snap((gold * researched(this.save.archives, "instakillGold")) / 100) : gold;
   }
 
-  /** An enemy's Gold (by its strength), a Greater Boss's Cells and, once
-   * Equipment is open, its upgrade materials and a boss's equipment, once
-   * per physical kill. */
-  enemyLoot(enemy: Enemy, x: number, y: number, scale = 1, instakill = false): { gold: number; cells: number; equipment: EquipmentLoot | null } {
-    if (!this.loot(this.killKey(enemy, x, y))) return { gold: 0, cells: 0, equipment: null };
+  /** An enemy's Gold (by its strength) and a Greater Boss's Cells, once
+   * per physical kill. Kills drop no Equipment: chests hold it (`treasure`). */
+  enemyLoot(enemy: Enemy, x: number, y: number, scale = 1, instakill = false): { gold: number; cells: number } {
+    if (!this.loot(this.killKey(enemy, x, y))) return { gold: 0, cells: 0 };
     // Effective or Dampen on the card that took the fight scales it; `gold`
     // then adds the tier's bonus and the other Gold multipliers.
     const base = this.withCombo(this.killGold(enemy, instakill)), raised = scale === 1 ? base : snap(base * scale);
     const gold = this.gold(raised);
     const cells = enemy.strength === "greaterBoss" ? this.cells(scale) : 0;
-    return { gold, cells, equipment: this.equipmentLoot(enemy, y) };
+    return { gold, cells };
   }
 
   /** A Greater Boss's Cells, banked in the save: a whole number from 1 to
@@ -199,25 +205,6 @@ export class RunPurse {
     earn(this.save, "cells", cells);
     this.slice.runFinds.cells = snap(this.slice.runFinds.cells + cells);
     return cells;
-  }
-
-  /** A kill's upgrade materials and a boss's equipment, on the equivalent
-   * floor at row `y`; nothing before Equipment opens. */
-  private equipmentLoot(enemy: Enemy, y: number): EquipmentLoot | null {
-    const e = this.save.equipment;
-    if (!e.unlocked) return null;
-    const floor = this.rules.equivalentFloor(this.rules.progressAt(this.run, y)), worn = this.worn;
-    const materials = rollMaterials(enemy.strength, floor, worn.materialFind, this.equipmentRng);
-    if (materials) e.materials[materials.id] += materials.quantity;
-    if (materials) tallyIn(this.slice.runFinds.materials, materials.id, materials.quantity);
-    const drop = rollBossDrop(enemy.strength, worn.bossDrops, this.equipmentRng);
-    const kept = drop && keepDrop(e, drop);
-    if (kept && !kept.item) tallyIn(this.slice.runFinds.materials, CATEGORIES[drop!.category].material, kept.salvaged);
-    return {
-      materials,
-      item: kept?.item ?? null,
-      salvaged: kept && !kept.item ? { id: CATEGORIES[drop!.category].material, quantity: kept.salvaged, auto: kept.auto } : null,
-    };
   }
 
   /** Gold for an item taken off the floor at (x, y), or a door opened
@@ -235,17 +222,41 @@ export class RunPurse {
     return `${this.lootKey(x, y)}:pickup`;
   }
 
-  /** A treasure chest's Gold and metal bars, once per physical chest, or
-   * null when it was already paid; its Gold, the chest's own `PICKUP_GOLD`
-   * counted, is raised by Gold Bonus. */
-  treasure(x: number, y: number): { gold: number; materials: MaterialStack[] } | null {
+  /** A treasure chest's Gold, once per physical chest, or null when it was
+   * already paid; its Gold, the chest's own `PICKUP_GOLD` counted, is raised
+   * by Gold Bonus. Once Equipment is open, `odds` (the CHEST card's) may
+   * make it a Supply Chest, adding upgrade materials, or an Equipment Chest,
+   * adding a Standard piece (`chestKind`). */
+  treasure(x: number, y: number, odds: ChestOdds = { supply: 0, equipment: 0 }): { gold: number; kind: ChestKind; equipment: EquipmentLoot | null } | null {
     if (!this.loot(this.lootKey(x, y))) return null;
-    const rules = this.rules;
-    const loot = rollTreasureLoot(rules.equivalentFloor(rules.progressAt(this.run, y)), this.rng);
-    const gold = this.gold(this.withCombo(this.bonused(snap(loot.gold + PICKUP_GOLD))));
-    for (const m of loot.materials) this.save.materials[m.id] += m.quantity;
-    for (const m of loot.materials) tallyIn(this.slice.runFinds.materials, m.id, m.quantity);
-    return { gold, materials: loot.materials };
+    const rules = this.rules, floor = rules.equivalentFloor(rules.progressAt(this.run, y));
+    const gold = this.gold(this.withCombo(this.bonused(snap(rollGold(floor, this.rng) + PICKUP_GOLD))));
+    const kind = this.chestKind(odds);
+    return { gold, kind, equipment: kind === "plain" ? null : this.chestEquipment(kind, floor) };
+  }
+
+  /** A treasure chest's kind under `odds`: one roll of Equipment's stream,
+   * the Equipment Chest's chance first, drawn only once Equipment is open
+   * and the hand holds a card that gives one, so other chests draw nothing. */
+  private chestKind(odds: ChestOdds): ChestKind {
+    if (!this.save.equipment.unlocked || !(odds.supply + odds.equipment)) return "plain";
+    const roll = this.equipmentRng() * 100;
+    return roll < odds.equipment ? "equipment" : roll < odds.equipment + odds.supply ? "supply" : "plain";
+  }
+
+  /** What a Supply or Equipment Chest on equivalent floor `floor` adds:
+   * upgrade materials, or a Standard piece kept (or salvaged) as a boss's is. */
+  private chestEquipment(kind: "supply" | "equipment", floor: number): EquipmentLoot {
+    const e = this.save.equipment;
+    if (kind === "supply") {
+      const materials = rollSupplies(floor, this.worn.materialFind, this.equipmentRng);
+      e.materials[materials.id] += materials.quantity;
+      tallyIn(this.slice.runFinds.materials, materials.id, materials.quantity);
+      return { materials, item: null, salvaged: null };
+    }
+    const drop = rollChestPiece(this.equipmentRng), kept = keepDrop(e, drop), material = CATEGORIES[drop.category].material;
+    if (!kept.item) tallyIn(this.slice.runFinds.materials, material, kept.salvaged);
+    return { materials: null, item: kept.item, salvaged: kept.item ? null : { id: material, quantity: kept.salvaged, auto: kept.auto } };
   }
 
   /** The Gold opening the chest at (x, y) would bank, as `treasure` pays

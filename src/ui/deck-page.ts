@@ -1,5 +1,5 @@
 import { askForGems, showHelp } from "./dialogs.ts";
-import { CARDS, cardText, deckCards, handSlots, linkedToNext, moveCard, nextHandSlotGems, placeCard, type CardId } from "../cards.ts";
+import { CARDS, cardBonusText, cardText, deckCards, handSlots, linkedToNext, moveCard, nextHandSlotGems, placeCard, type CardId } from "../cards.ts";
 import type { AppContext } from "./app.ts";
 import { cardArt, el, escapeHtml, gemIcon, POINTER_SVG } from "./dom.ts";
 import { DRAW_GEMS, type DrawCount } from "../game/badge-desk.ts";
@@ -265,7 +265,7 @@ export class DeckPage {
     const pointed = lesson === "remove" && id === this.removeTarget;
     const x = this.removable(id) ? `<button type="button" class="deck-remove${pointed ? " shown" : ""}" data-remove="${id}" title="Return ${card.name} to the deck" aria-label="Return ${card.name} to the deck">${X_SVG}</button>` : "";
     const lessonPointer = lesson === "order" && id === "stairs" ? this.pointer("at-card") : pointed ? this.pointer("at-x") : "";
-    return `<div class="deck-slot${held ? " held" : ""}" role="listitem"${this.badgeTarget(id)}<button type="button" class="deck-card" data-slot="${i}" ${fixed ? "disabled" : ""} aria-label="${card.name}, slot ${i + 1} of ${count}. Drag, or press the left and right arrow keys, to move it." title="${card.name}: ${cardText(id, upgrades)}">${cardArt(id, card.name)}</button>${x}${lessonPointer}${links}</div>`;
+    return `<div class="deck-slot${held ? " held" : ""}" role="listitem"${this.badgeTarget(id)}<button type="button" class="deck-card" data-slot="${i}" ${fixed ? "disabled" : ""} aria-label="${card.name}, slot ${i + 1} of ${count}. Drag, or press the left and right arrow keys, to move it." title="${card.name}: ${cardText(id, upgrades)}${cardBonusText(id) ? ` · ${cardBonusText(id)}` : ""}">${cardArt(id, card.name)}</button>${x}${lessonPointer}${links}</div>`;
   }
 
   /** The end of card `id`'s opening tag and what follows it, with the

@@ -390,7 +390,7 @@ A checkpoint is a convenience feature, not an offline-reward or skip-reward mech
 
 ### Lower floors remain intentionally replayable
 
-If the player wants to clear or master an earlier area, farm its Equipment materials, or gather its chests' Gold and metal bars, they can deliberately begin from Floor 0 or a lower checkpoint.
+If the player wants to clear or master an earlier area, or gather its chests' Gold (and, holding the Chest card, their supplies and equipment), they can deliberately begin from Floor 0 or a lower checkpoint.
 
 ### Checkpoint as run lower bound
 
@@ -480,7 +480,7 @@ Rebalance if simulation shows any of the following:
 
 ## 13. Relationship to other design documentation
 
-- `CRAFTING_AND_EQUIPMENT.md` defines treasure chests' Gold and metal bars (its enemy drops, gems, crafting and crafted equipment are retired); `EQUIPMENT.md` defines what kills drop toward Equipment.
+- `CRAFTING_AND_EQUIPMENT.md` defines treasure chests' Gold (its metal bars, enemy drops, gems, crafting and crafted equipment are retired); `EQUIPMENT.md` defines the Supply and Equipment Chests that find Equipment's pieces and materials.
 - This document defines **when those bands should matter to player power and difficulty**.
 - The research/skill-tree implementation should use this document when setting Inspiration costs and prerequisites.
 - Enemy generation/scaling should use this document when converting Tower floor or Delve depth into a shared difficulty budget.

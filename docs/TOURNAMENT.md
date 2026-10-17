@@ -108,7 +108,7 @@ Each entry spends one Ticket. A player may enter as often as they have Tickets; 
 - **The same run for everyone:** the server sends the tournament's seeds, by name, and every chance in the run draws from them:
   - `layout`: the run seed (the labyrinth, torches, decor, percent potions, Skip and Revive rolls, which all derive from the run seed already);
   - `game`: the run's other chances (treasure loot, and every other draw `RunPurse` makes), in place of the game's shared `game` stream;
-  - `equipment`: Equipment's material and boss drops (`RunPurse`'s `equipmentRng`).
+  - `equipment`: a chest's kind under the Chest card, and a Supply or Equipment Chest's finds (`RunPurse`'s `equipmentRng`).
 
   Each is a stream of its own (`runStream` in `tournament/run.ts`): draw *n* is the *n*th number of the stream the seed starts, and the run counts the draws it has taken (`tournament.drawn`), so undo takes draws back and a reload carries on where it stopped.
 

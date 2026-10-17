@@ -67,7 +67,8 @@ test("the first card in the hand that can reach a target moves the hero", () => 
 });
 
 test("each card heads for its own kind of target", () => {
-  const only = (tile: string, hero = {}) => play(board([`@.${tile}`], hero), CARD_IDS)?.card ?? null;
+  // KEY takes every colour, so it is left out to see the cards of one colour.
+  const only = (tile: string, hero = {}) => play(board([`@.${tile}`], hero), CARD_IDS.filter((id) => id !== "key"))?.card ?? null;
   assert.equal(only("S"), "stairs");
   assert.equal(only("P"), "heal");
   assert.equal(only("K"), "yellowKey");
@@ -159,16 +160,20 @@ test("each key card heads for its own colour of key only", () => {
   assert.deepEqual(play(board(["@.B.K"]), ["yellowKey"]), { card: "yellowKey", to: [4, 0], steps: 4 });
   assert.deepEqual(play(board(["@.K.B"]), ["blueKey"]), { card: "blueKey", to: [4, 0], steps: 4 });
   assert.equal(play(board(["@.K"]), ["blueKey"]), null);
+  assert.deepEqual(play(board(["@.B.K"]), ["key"]), { card: "key", to: [2, 0], steps: 2 }, "KEY heads for the closest key of any colour");
+  assert.deepEqual(play(board(["@.K.B"]), ["key"]), { card: "key", to: [2, 0], steps: 2 });
 });
 
-test("the deck starts as the base hand, and HEAL, EQUIPMENT, BLUE KEY and KEY SIPHON join it with their skills", () => {
+test("the deck starts as the base hand, and HEAL, YELLOW KEY, EQUIPMENT, BLUE KEY and KEY SIPHON join it with their skills", () => {
   const none = defaults().upgrades;
-  assert.deepEqual(BASE_HAND, ["stairs", "door", "yellowKey", "monster"]);
+  assert.deepEqual(BASE_HAND, ["stairs", "door", "key", "monster"]);
   assert.equal(BASE_HAND.length, BASE_HAND_SLOTS, "the base hand fills the base slots");
-  assert.deepEqual(deckCards(none), ["stairs", "door", "yellowKey", "monster"]);
-  assert.deepEqual(deckCards({ ...none, cardHeal: 1 }), ["stairs", "heal", "door", "yellowKey", "monster"]);
-  assert.deepEqual(deckCards({ ...none, cardBlueKey: 1 }), ["stairs", "door", "yellowKey", "blueKey", "monster"]);
+  assert.deepEqual(deckCards(none), ["stairs", "door", "key", "monster"]);
+  assert.deepEqual(deckCards({ ...none, cardHeal: 1 }), ["stairs", "heal", "door", "key", "monster"]);
+  assert.deepEqual(deckCards({ ...none, cardYellowKey: 1 }), ["stairs", "door", "key", "yellowKey", "monster"]);
+  assert.deepEqual(deckCards({ ...none, cardBlueKey: 1 }), ["stairs", "door", "key", "blueKey", "monster"]);
   assert.deepEqual(deckCards({ ...none, ...Object.fromEntries(UPGRADES.filter((u) => "card" in u).map((u) => [u.id, 1])) }), CARD_IDS);
+  assert.equal(upgradeCard("cardYellowKey"), "yellowKey");
   assert.equal(upgradeCard("cardAtkUp"), "atkUp");
   assert.equal(upgradeCard("cardDefUp"), "defUp");
   assert.equal(upgradeCard("cardBlueKey"), "blueKey");

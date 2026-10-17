@@ -3168,6 +3168,10 @@ dialog.dismiss-anywhere { cursor: pointer; }
 .card-reveal-text small { display: block; font-size: 10px; letter-spacing: 3px; color: #8fdc9f; }
 .card-reveal-text b { display: block; margin: 6px 0; font-size: 24px; font-weight: 500; color: #e9f7d8; }
 .card-reveal-text p { font-size: 13px; line-height: 1.6; color: #b9c9bd; }
+.card-reveal-text .card-bonus { margin-top: 4px; }
+.card-reveal-text .card-bonus i { display: block; font-style: normal; font-size: 13px; color: #e9f7d8; }
+.card-reveal-text .card-bonus i.bonus-supply { color: #8fd0ff; }
+.card-reveal-text .card-bonus i.bonus-equipment { color: #c495ff; }
 .card-reveal-text span { display: block; margin-top: 12px; font-size: 9px; letter-spacing: 2px; color: #6f8a76; text-transform: uppercase; }
 .card-reveal.still .card-reveal-rays,
 .card-reveal.still .card-reveal-card,

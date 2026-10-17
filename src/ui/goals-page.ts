@@ -102,7 +102,7 @@ const UNLOCK_TUTORIALS: Record<GoalUnlock, string> = {
     `<p>Items show what they give: a potion's HP in blue, a shard's ATK or DEF in white, and a chest's Gold in yellow.</p>` +
     `<p class="hint">Turn it off in Settings if the board feels crowded.</p>`,
   equipment: `<p>A Blacksmith opens in the forest: tap it, or the Gear tab, to wear weapons, armour and trinkets, level them up with Gold and materials, and merge them.</p>` +
-    `<p class="hint">Every boss now has a chance to drop equipment, on any floor, and every enemy drops upgrade materials.</p>`,
+    `<p class="hint">With the Chest card in your hand, a treasure chest may now be a Supply Chest, holding upgrade materials, or an Equipment Chest, holding a piece of equipment.</p>`,
   noteTaking: `<p>Note Taking opens in the Archives: research it, and tap the floor number during a run to read the run's notes, kept as you play: its time, steps, kills, keys, doors, chests and loot.</p>` +
     `<p class="hint">The notes stay open while the run plays on, and copy to paste elsewhere. The run's summary opens them too.</p>`,
   researchSpeed: `<p>Research Speed opens in the Archives: train the archivists to read faster, and every research, those under way included, takes less time.</p>`,

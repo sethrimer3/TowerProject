@@ -77,7 +77,7 @@ export const EFFECTS: Record<EffectKind, EffectText> = {
   goldFind: { words: "Gold found", percent: true },
   silverFind: { words: "Silver found", percent: true },
   xpGain: { words: "XP from kills", percent: true },
-  materialFind: { words: "upgrade materials from kills", percent: true },
+  materialFind: { words: "upgrade materials from Supply Chests", percent: true },
   bossDrops: { words: "boss equipment drop chance", percent: true },
   startSilver: { words: "Silver at the start of each run" },
   moveSpeed: { words: "movement speed", percent: true },
@@ -190,7 +190,7 @@ export type ItemId = string;
 const BY_ID = new Map(ITEMS.map((d) => [d.id, d]));
 /** The definition `id` names, or undefined for one the catalogue no longer has. */
 export const itemDef = (id: string): ItemDef | undefined => BY_ID.get(id);
-/** The Standard piece of each category, which bosses drop. */
+/** The Standard piece of each category, which Equipment Chests hold. */
 export const standardOf = (category: CategoryId) => ITEMS.find((d) => d.category === category && d.class === "standard")!;
 /** The Unique pieces of a category, which its Gem pulls choose among. */
 export const uniquesOf = (category: CategoryId) => ITEMS.filter((d) => d.category === category && d.class === "unique");

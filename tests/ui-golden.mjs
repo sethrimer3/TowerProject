@@ -457,8 +457,8 @@ try {
   async function cardRevealTour(prefix) {
     await tab("upgrades");
     await click('[data-tree="inspiration"]');
-    await click('[data-skill="cardAtkUp"]');
-    await click('[data-skill="cardAtkUp"]');
+    await click('[data-skill="cardYellowKey"]');
+    await click('[data-skill="cardYellowKey"]');
     await shot(`${prefix}.cardReveal`);
     await click("#card-reveal-card");
     await shot(`${prefix}.cardRevealed`);
@@ -657,7 +657,7 @@ try {
   await boardTour("rich", "rich");
   await dialogsTour("rich");
   // Focus: a card with no target flashes red for free; one with a target takes the lead.
-  for (const card of ["door", "yellowKey", "monster"]) {
+  for (const card of ["door", "key", "monster"]) {
     await click(`#hand .hand-card[data-card="${card}"]`);
     await shot(`rich.focus.${card}`);
   }

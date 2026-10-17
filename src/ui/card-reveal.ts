@@ -1,10 +1,17 @@
-import { CARDS, cardText, type CardId } from "../cards.ts";
+import { CARDS, cardBonusLines, cardText, type CardId } from "../cards.ts";
 import type { UpgradeId } from "../config.ts";
 import { cardArt } from "./dom.ts";
 
 /** What a card's reveal says over and under it: the line above its name,
  * the hint at the foot, and the card button's label. */
 type Words = { kicker: string; hint: string; label: string };
+
+/** What card `id` gives while held, a line each under what it does: a
+ * Supply Chest's chance light blue, an Equipment Chest's purple. */
+function bonusHtml(id: CardId) {
+  const lines = cardBonusLines(id);
+  return lines.length ? `<p class="card-bonus">${lines.map((l) => `<i class="bonus-${l.tone}">${l.text}</i>`).join("")}</p>` : "";
+}
 
 /** The card over the screen, green rays turning behind it, with what it
  * does written underneath. Pressing the card closes it. */
@@ -17,7 +24,7 @@ function cardLayer(id: CardId, upgrades: Record<UpgradeId, number>, classes: str
   layer.setAttribute("role", "dialog");
   layer.setAttribute("aria-modal", "true");
   layer.setAttribute("aria-label", words.label);
-  layer.innerHTML = `<div class="card-reveal-stage">${rays}<button type="button" class="card-reveal-card" id="card-reveal-card" aria-label="${card.name}: ${words.hint.toLowerCase()}">${cardArt(id, card.name)}</button></div><div class="card-reveal-text"><small>${words.kicker}</small><b>${card.name}</b><p>${cardText(id, upgrades)}</p>${extra}<span>${words.hint}</span></div>`;
+  layer.innerHTML = `<div class="card-reveal-stage">${rays}<button type="button" class="card-reveal-card" id="card-reveal-card" aria-label="${card.name}: ${words.hint.toLowerCase()}">${cardArt(id, card.name)}</button></div><div class="card-reveal-text"><small>${words.kicker}</small><b>${card.name}</b><p>${cardText(id, upgrades)}</p>${bonusHtml(id)}${extra}<span>${words.hint}</span></div>`;
   (document.querySelector("#app") ?? document.body).append(layer);
   const button = layer.querySelector<HTMLButtonElement>("#card-reveal-card")!;
   button.onclick = () => layer.remove();

@@ -10,7 +10,7 @@
 - The moment it opens inside a run, a golden burst reads *EQUIPMENT UNLOCKED · A Blacksmith opens in the forest*, and the status line says so. Back in the forest, a dialog explains it once and offers to visit the Blacksmith.
 - From then on the **Blacksmith** stands in the forest clearing, up and left of the path (a stone forge with a red banner bearing a breastplate). Tapping it opens the Equipment screen. Before the unlock it isn't there at all.
 - The Gear tab opens with Equipment even without the Gear skill (only its Equipment tab then), and wears a dot until the Equipment screen is first seen.
-- Bosses drop equipment, and every enemy drops upgrade materials, only once Equipment is open.
+- Once Equipment is open, the Chest card's Equipment Chests and Supply Chests hold Standard pieces and upgrade materials (sections 11 and 12); kills drop neither.
 
 ## 2. Loadouts
 
@@ -75,7 +75,8 @@ Each line of an item is `(base + perLevel × (level − 1)) × rarity power`, ke
 | Max HP healed on each new floor | `Game.floorHeal` (a Tower floor first reached, each new Delve equivalent floor) |
 | Gold / Silver found | `RunPurse.gold` / `RunPurse.silver` |
 | XP from kills | `Game.gainXp` |
-| Upgrade materials from kills, boss equipment drop chance | `RunPurse.enemyLoot` |
+| Upgrade materials from Supply Chests | `RunPurse.treasure` |
+| Boss equipment drop chance | nothing, since bosses drop no pieces (section 11) |
 | Silver at the start of each run | `Game.dealHand` (beside Pocket Money) |
 | Movement speed | `Game.moveRate` (the hand's and Automove's steps a second) |
 | Tiles a Dash crosses | `Game.dashTiles` (also lets the hand dash without the Dash skill) |
@@ -201,35 +202,27 @@ Three pieces of the **same definition and rarity** make one of the next rarity. 
 
 Dismantling breaks pieces into their category's material (section 4 amounts). From the List view's Select mode (any number of pieces, across categories) or its Salvage quick buttons (every unprotected piece of a rarity). The confirmation shows the count, the rarities, the materials returned, and a warning for valuable pieces (Rare, Unique or leveled). Locked and worn pieces can't be selected or dismantled; unlock or take them off first. The materials gained rise from their balances (*+20*).
 
-The Salvage section also holds the **Auto-salvage common drops** toggle (`save.equipment.autoSalvage`, off by default, kept between sessions): while it is on, a Common piece a boss drops in a run is dismantled at once into its material (`keepDrop`) instead of joining the inventory, and the status line says *Auto-salvaged · +5 …* (on the board, the material rises as its icon with its count). A Gem pull's Common pieces are dismantled the same way once pulled (`EquipmentDesk.pull`): the result screen still shows each, dimmed, with the material it returned. Uncommon and Rare pieces are always kept.
+The Salvage section also holds the **Auto-salvage common drops** toggle (`save.equipment.autoSalvage`, off by default, kept between sessions): while it is on, a Common piece an Equipment Chest holds is dismantled at once into its material (`keepDrop`) instead of joining the inventory, and the status line says *Auto-salvaged · +5 …* (on the board, the material rises as its icon with its count). A Gem pull's Common pieces are dismantled the same way once pulled (`EquipmentDesk.pull`): the result screen still shows each, dimmed, with the material it returned. Uncommon and Rare pieces are always kept.
 
 ## 10. Inventory
 
-At most **500** pieces (`EQUIPMENT_CAPACITY`). A boss drop that finds the inventory full is dismantled at once into its material; a Gem pull needs room for every piece it brings. The List view shows the loadout (nine slots in a 3×3 grid shaped like the hero: ring, helmet, amulet; weapon, chestplate, cape; gloves, boots, belt; the Tower/Delve switch at its top left; an empty slot shows only its category below) over the inventory as a grid of square tiles. It filters by category and by rarity together, sorts by rarity, level, category, newest or name, and selects several pieces at once to dismantle or (two) to compare. Each tile shows the icon on its rarity's colour, the rarity mark, the level, a check when the loadout shown wears it, a lock, and a star for a Unique; tapping it opens the piece.
+At most **500** pieces (`EQUIPMENT_CAPACITY`). An Equipment Chest's piece that finds the inventory full is dismantled at once into its material; a Gem pull needs room for every piece it brings. The List view shows the loadout (nine slots in a 3×3 grid shaped like the hero: ring, helmet, amulet; weapon, chestplate, cape; gloves, boots, belt; the Tower/Delve switch at its top left; an empty slot shows only its category below) over the inventory as a grid of square tiles. It filters by category and by rarity together, sorts by rarity, level, category, newest or name, and selects several pieces at once to dismantle or (two) to compare. Each tile shows the icon on its rarity's colour, the rarity mark, the level, a check when the loadout shown wears it, a lock, and a star for a Unique; tapping it opens the piece.
 
-## 11. Boss drops (Standard pieces)
+## 11. Equipment Chests (Standard pieces)
 
-From every boss and Greater Boss, on any floor and in either mode, once Equipment is open. Each physical kill pays once (`lootedTiles`, so undo can't farm it).
+Kills drop no equipment. While the run's hand holds the **Chest** card, each treasure chest opened, once Equipment is open and in either mode, has a **0.5%** chance of being an **Equipment Chest**, which holds a Standard piece beside its Gold (`EQUIPMENT_CHEST_RARITY`, `rollChestPiece`). Each physical chest pays once (`lootedTiles`, so undo can't farm it).
 
-| Enemy | Chance | Common | Uncommon | Rare |
-|---|---:|---:|---:|---:|
-| Boss | 60% | 78% | 22% | — |
-| Greater Boss | 100% | 55% | 45% | — |
+| Common | Uncommon | Rare |
+|---:|---:|---:|
+| 67% | 30% | 3% |
 
-The category is even among the nine. Boss equipment drop chance (Kingsbane, Gatherer's Shroud, Spire Signet) adds percentage points to the chance. Rare comes only from merging and Gem pulls.
+The category is even among the nine. One roll of Equipment's stream decides a chest's kind, the Equipment Chest's chance first (`RunPurse.chestKind`). The rates are low on purpose, to be raised by upgrades later.
 
-## 12. Upgrade material drops
+Boss equipment drop chance (Kingsbane, Gatherer's Shroud, Spire Signet, the Bounty slot effect) no longer has anything to raise, since bosses drop no pieces; it waits to be reworked.
 
-Every enemy, once Equipment is open, of one category at random, paid once per physical kill:
+## 12. Supply Chests (upgrade materials)
 
-| Enemy | Chance | Amount |
-|---|---:|---:|
-| Weak | 10% | 1 |
-| Normal | 15% | 1 |
-| Strong | 30% | 2 |
-| Elite | 50% | 3 |
-| Boss | 100% | 8 |
-| Greater Boss | 100% | 20 |
+Kills drop no upgrade materials. While the run's hand holds the **Chest** card, each treasure chest opened, once Equipment is open, has a **1.5%** chance of being a **Supply Chest**, which holds **8** upgrade materials (`SUPPLY_CHEST_MATERIALS`) of one category at random beside its Gold.
 
 The amount is multiplied by `1 + ⌊equivalent floor / 25⌋` (×3 at floor 60, ×5 at floor 100) and raised by Material Find (rounded down, never below the base).
 

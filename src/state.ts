@@ -1,7 +1,7 @@
 import { entrance, floorFor } from "./delve/labyrinth.ts";
 import { buyTheme, canWear, grantAllThemes, type GameLook, type ThemeId, type ThemeKind, type UiLook } from "./theme-collection.ts";
 import { chooseStep } from "./automation.ts";
-import { CARDS, cardText, explainStuck, keptLinks, planHand, planTarget, stillOpen, type CardId, type CardPlan, type StuckReport } from "./cards.ts";
+import { CARDS, cardText, explainStuck, handBonus, keptLinks, planHand, planTarget, stillOpen, type CardId, type CardPlan, type HandBonus, type StuckReport } from "./cards.ts";
 import { BADGE_IDS, MAX_COPIES, badgeOn, badgeValue, runBadges } from "./badges.ts";
 import { adsOff, BOOST_FOREVER, permanentBoost } from "./shop/entitlements.ts";
 import { noteGoldBoost } from "./gold-boost.ts";
@@ -1018,9 +1018,10 @@ export class Game {
     const regen = this.run.outside || !this.run.player.regen ? 0
       : snap((this.run.player.regen * researched(this.save.archives, "regenPercent")) / 100);
     const worn = this.worn, potionHeal = raised(researched(this.save.archives, "potionHeal"), worn.potionHeal);
-    const crit = this.crit;
+    const crit = this.crit, keys = Object.entries(this.handBonus.keys);
+    const keyFind = keys.length ? { keyFind: Object.fromEntries(keys.map(([color, k]) => [color, k.percent])) } : {};
     return { potionHeal, percentPotion: trainedAmount(this.trainingNow, "potion"), regen,
-      heartToll: researched(this.save.archives, "heartToll"), keyCost: this.keyCost,
+      heartToll: researched(this.save.archives, "heartToll"), keyCost: this.keyCost, ...keyFind,
       shardAttack: researched(this.save.archives, "shardAttackPercent") * boonFactor(this.run, "attack"), shardDefense: researched(this.save.archives, "shardDefensePercent"),
       ...(worn.victoryHeal ? { victoryHeal: worn.victoryHeal } : {}), ...(crit ? { crit } : {}) };
   }
@@ -1880,6 +1881,11 @@ export class Game {
    * next run will take, as the Deck orders it. */
   get hand(): readonly CardId[] {
     return this.run.hand ?? this.save.hand;
+  }
+  /** What the cards of the run's hand give while held (`handBonus`): none
+   * in the forest. */
+  get handBonus(): HandBonus {
+    return handBonus(this.run.outside ? [] : this.hand);
   }
   /** Whether a tapped tile shows the route there and its totals: the
    * Courage skill Pathfinder owned, or Dev mode. */

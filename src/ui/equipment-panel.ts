@@ -194,7 +194,7 @@ export class EquipmentPanel {
     }).join("");
     const auto = this.e.autoSalvage;
     const toggle = `<button class="eq-auto-salvage" data-eq-auto-salvage="1" aria-pressed="${auto}"><span class="eq-check" aria-hidden="true">${auto ? "✓" : ""}</span>Auto-salvage common drops</button>`;
-    return `<details class="eq-salvage"${this.salvageOpen ? " open" : ""}><summary>${ACTION_ICONS.dismantle} Salvage</summary><div class="equip-quick">${quick}</div>${toggle}<p class="hint">While on, a ${RARITY_TIERS.common.name} piece a boss drops in a run, or a Gem pull brings, is dismantled at once into its material instead of joining the inventory.</p></details>`;
+    return `<details class="eq-salvage"${this.salvageOpen ? " open" : ""}><summary>${ACTION_ICONS.dismantle} Salvage</summary><div class="equip-quick">${quick}</div>${toggle}<p class="hint">While on, a ${RARITY_TIERS.common.name} piece an Equipment Chest holds, or a Gem pull brings, is dismantled at once into its material instead of joining the inventory.</p></details>`;
   }
 
   // --- Assemble: three alike into the next rarity ---
@@ -445,10 +445,10 @@ export class EquipmentPanel {
    * the page's heading. */
   showHelp() {
     const salvage = EQUIP_RARITIES.map((r) => `${RARITY_TIERS[r].name} ${RARITY_TIERS[r].salvage}`).join(" · ");
-    showHelp(this.ctx, "GEAR", "Equipment", `<p><b>Wearing.</b> Each hero wears one piece of each kind; the Tower and the Delve keep separate loadouts. Tap a piece to equip, level or lock it. Bosses may drop Standard pieces; Gem pulls bring Unique ones.</p>
+    showHelp(this.ctx, "GEAR", "Equipment", `<p><b>Wearing.</b> Each hero wears one piece of each kind; the Tower and the Delve keep separate loadouts. Tap a piece to equip, level or lock it. Equipment Chests hold Standard pieces; Gem pulls bring Unique ones.</p>
       <p><b>Assemble.</b> Three copies of a piece at the same rarity (Uncommon or above; Common pieces never merge) make one of the next rarity, with a higher level cap. The piece kept keeps its level, effect slots and Refinement; what was put into the others is lost. Locked and worn copies don't count. Auto-assemble lists every merge your unworn pieces make at once, to make all you leave checked.</p>
       <p><b>Acquire.</b> Each pull brings a Unique piece at a rolled rarity, of the chosen category, or of a random one for ${PULL_ALL_DISCOUNT}% less. The ${PITY}th pull in a row without a Rare in a category is a Rare.</p>
-      <p><b>Salvage.</b> Dismantling turns a piece into its category's material (${salvage}; Unique twice that), not returning upgrades. Locked and worn pieces are never included; press Select to choose pieces one by one. With Auto-salvage on, Common pieces bosses drop are dismantled as they drop, and those Gem pulls bring once pulled.</p>`);
+      <p><b>Salvage.</b> Dismantling turns a piece into its category's material (${salvage}; Unique twice that), not returning upgrades. Locked and worn pieces are never included; press Select to choose pieces one by one. With Auto-salvage on, Common pieces Equipment Chests hold are dismantled as they are found, and those Gem pulls bring once pulled.</p>`);
   }
 
   private rerender() {

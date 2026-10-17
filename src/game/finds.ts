@@ -1,9 +1,9 @@
 import { doorName, doorRule, drainsHp, pickupGold } from "../doors.ts";
+import type { HandBonus } from "../cards.ts";
 import type { Enemy, Mode, Tile, KeyColor } from "../entities.ts";
 import { RARITY_TIERS } from "../equipment/balance.ts";
 import { EQUIP_MATERIALS, itemDef } from "../equipment/catalog.ts";
 import { snap } from "../exact.ts";
-import { materialDef, type MaterialStack } from "../materials.ts";
 import type { EventMissionType } from "../events/catalog.ts";
 import type { MissionType } from "../missions/catalog.ts";
 import { MODES, type ModeProfile } from "../modes.ts";
@@ -22,6 +22,9 @@ export interface FindsHost extends DeskHost {
   readonly mode: Mode;
   readonly purse: RunPurse;
   readonly stepRules: StepRules;
+  /** What the cards of the run's hand give while held: a key's Gold, a
+   * chest's chances of Supplies or Equipment. */
+  readonly handBonus: HandBonus;
   readonly missions: { record(type: MissionType, amount?: number, key?: string): void };
   readonly events: { record(type: EventMissionType, amount?: number, key?: string): void };
   gain(x: number, y: number, text: string, art?: GainArt | null, drop?: Drop, kind?: "door"): void;
@@ -38,7 +41,8 @@ export class Finds {
   constructor(private readonly host: FindsHost) {}
 
   /** Pays a kill at `at` (a fight won, or an arrow's): counted, its XP,
-   * Silver, Gold and loot. Returns what it found, as the status line names it. */
+   * Silver, Gold and a Greater Boss's Cells. Returns what it found, as the
+   * status line names it. */
   kill(enemy: Enemy, at: { x: number; y: number }, scale: number, instakill: boolean, crits?: number) {
     const { run, mode } = this.host, rules: ModeProfile = MODES[mode];
     run.kills++;
@@ -48,20 +52,16 @@ export class Finds {
     this.host.gainXp(enemy, floor, scale);
     // Silver belongs to the run, so it isn't gated like Gold: undo takes it back.
     const silver = purse.killSilver(enemy, floor, scale);
-    const { gold, cells, equipment } = purse.enemyLoot(enemy, at.x, at.y, scale, instakill);
+    const { gold, cells } = purse.enemyLoot(enemy, at.x, at.y, scale, instakill);
     const cellsFound = cells ? [cellsText(cells)] : [];
-    const found = equipmentGains(equipment);
     // Gold over Silver at the tile, the rest below.
     this.drops(at, [
       ...(gold ? [{ text: `+${wholeChange(gold)} Gold`, art: { coin: "gold" as const } }] : []),
       { text: `+${wholeChange(silver)} Silver`, art: { coin: "silver" } },
       ...cellsFound.map((text) => ({ text, art: { cell: true as const } })),
-      ...found,
     ], gold ? 1 : 0);
-    if (equipment?.item || equipment?.salvaged) this.host.events.record("equipment", 1, key);
-    if (equipment?.item) this.host.save[mode].runFinds.equipment++;
     if (crits) this.host.events.record("crits", crits, key);
-    return [...coinsText(gold, silver), ...cellsFound, ...found.map((g) => g.text)];
+    return [...coinsText(gold, silver), ...cellsFound];
   }
   /** A kill counts toward the missions and the Event for its strength, once
    * a `key` (the mode and the kill's loot key). */
@@ -77,7 +77,8 @@ export class Finds {
     this.notePickup(t, outcome);
     if (text) {
       this.host.gain(x, y, text, { tile: { ...t } });
-      this.pickupGold(t, { x, y });
+      // A key card held pays its Gold on top of the key's own.
+      this.pickupGold(t, { x, y }, t.kind === "key" ? this.host.handBonus.keys[t.color!]?.gold : 0);
       if (t.kind === "potion") this.host.recordHeal(outcome.healed);
       if (t.kind === "potion") missions.record("potions", 1, this.missionKey({ x, y }));
       if (t.kind === "potion") events.record("potions", 1, this.missionKey({ x, y }));
@@ -87,10 +88,11 @@ export class Finds {
     if (t.kind === "treasure") this.treasure(x, y);
   }
   /** Gold Bonus's Gold for taking `t` (a torch when null) off the floor at
-   * `at`, or opening it (a door), rising a row up at the same time as the
-   * item's own gain (a door's last key or HP) where it has one. */
-  pickupGold(t: Tile | null, at: { x: number; y: number }) {
-    const gold = this.host.purse.pickupGold(at.x, at.y, pickupGold(t));
+   * `at`, or opening it (a door), `more` added to its Pickup Gold, rising a
+   * row up at the same time as the item's own gain (a door's last key or
+   * HP) where it has one. */
+  pickupGold(t: Tile | null, at: { x: number; y: number }, more = 0) {
+    const gold = this.host.purse.pickupGold(at.x, at.y, pickupGold(t) + (more ?? 0));
     if (gold) this.host.gain(at.x, at.y, `+${wholeChange(gold)} Gold`, { coin: "gold" }, { row: 1, with: !!t });
   }
   /** A pickup counted in the run's notes: a key (by colour, under a
@@ -104,18 +106,20 @@ export class Finds {
     else if (t.kind === "defense") notes.defenseShards++;
   }
   /** A treasure chest: counted, and paid once per physical chest (undo and
-   * reopening can't pay it again). */
+   * reopening can't pay it again). The CHEST card held may make it a Supply
+   * or Equipment Chest (`handBonus.chest`). */
   private treasure(x: number, y: number) {
     this.host.run.treasures++;
     this.host.events.record("chests", 1, this.missionKey({ x, y }));
-    const loot = this.host.purse.treasure(x, y);
+    const loot = this.host.purse.treasure(x, y, this.host.handBonus.chest);
     if (!loot) return;
-    // The Gold at the tile, the materials below it, rising together.
-    this.drops({ x, y }, [
-      { text: `+${wholeChange(loot.gold)} Gold`, art: { coin: "gold" } },
-      ...loot.materials.map((m) => ({ text: materialText(m), art: { material: m.id, quantity: m.quantity } })),
-    ]);
-    this.host.message = [`+${wholeChange(loot.gold)} Gold`, ...loot.materials.map(materialText)].join(" · ");
+    const found = equipmentGains(loot.equipment);
+    if (loot.equipment?.item || loot.equipment?.salvaged) this.host.events.record("equipment", 1, this.missionKey({ x, y }));
+    if (loot.equipment?.item) this.host.save[this.host.mode].runFinds.equipment++;
+    // The Gold at the tile, what a Supply or Equipment Chest holds below it, rising together.
+    this.drops({ x, y }, [{ text: `+${wholeChange(loot.gold)} Gold`, art: { coin: "gold" } }, ...found]);
+    const kind = loot.kind === "supply" ? ["Supply Chest"] : loot.kind === "equipment" ? ["Equipment Chest"] : [];
+    this.host.message = [...kind, `+${wholeChange(loot.gold)} Gold`, ...found.map((g) => g.text)].join(" · ");
   }
   /** Each key the door took rises from it with a minus sign; a door that
    * takes HP (a Heart Door, down to 1, or a Wooden Door broken without a
@@ -154,7 +158,7 @@ export class Finds {
 /** Cells found, as "+3 Cells" (to two decimals when a badge's scale left
  * a fraction). */
 const cellsText = (cells: number) => `+${keyCount(cells)} ${keyCount(cells) === "1" ? "Cell" : "Cells"}`;
-/** What a kill gave toward Equipment: the status line's words for each, and
+/** What a chest gave toward Equipment: the status line's words for each, and
  * the icon that rises off the board for it (a material with its count, or
  * the piece itself). */
 function equipmentGains(loot: EquipmentLoot | null): { text: string; art: GainArt }[] {
@@ -178,5 +182,3 @@ function pickupText(t: Tile, outcome: StepEffect, rules: StepRules) {
     default: return null;
   }
 }
-/** "+2 Slime Gels": a material reward as the board and status line name it. */
-const materialText = (m: MaterialStack) => `+${m.quantity} ${materialDef(m.id).name}${m.quantity > 1 ? "s" : ""}`;

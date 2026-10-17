@@ -121,17 +121,18 @@ test("saved notes and finds come back, and malformed ones are dropped", () => {
   assert.deepEqual(bad.tower.runFinds, { materials: {}, cells: 0, gems: 3, equipment: 0 });
 });
 
-test("the purse notes the Silver found in the run, and a chest's metal bars beside it", () => {
+test("the purse notes the Silver found in the run, and a Supply Chest's materials beside it", () => {
   const g = new Game(defaults());
+  g.save.equipment.unlocked = true;
   g.newRun({ seed: 7 });
   const before = g.snapshot(), purse = new RunPurse(g.save, g.mode, g.run, () => 0);
   const silver = purse.silver(25);
   assert.equal(g.run.notes!.silver, silver);
-  // A roll of 0 always finds metal in the chest.
-  const loot = purse.treasure(3, 3)!;
-  assert.ok(loot.materials.length > 0);
-  for (const m of loot.materials) assert.equal(g.save.tower.runFinds.materials[m.id], m.quantity);
+  // A roll of 0 under these odds makes a Supply Chest.
+  const loot = purse.treasure(3, 3, { supply: 100, equipment: 0 })!;
+  const m = loot.equipment!.materials!;
+  assert.equal(g.save.tower.runFinds.materials[m.id], m.quantity);
   g.restore(before);
   assert.equal(g.run.notes!.silver, 0, "the Silver went with the run");
-  assert.ok(Object.keys(g.save.tower.runFinds.materials).length, "the bars stay found");
+  assert.ok(Object.keys(g.save.tower.runFinds.materials).length, "the materials stay found");
 });

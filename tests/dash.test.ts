@@ -75,13 +75,13 @@ test("a dash with a tile left ends on its target item, taking it", () => {
 
 test("a dash ending on its item scales it with Effective, and stops before it with Skip", () => {
   const g = toKey(10);
-  g.run.badges = { yellowKey: [{ id: "effective", level: 1, pick: 0 }] };
+  g.run.badges = { key: [{ id: "effective", level: 1, pick: 0 }] };
   const keys = g.run.player.keys.yellow;
   g.autoTurn();
   assert.deepEqual(at(g), [5, 0]);
   assert.ok(g.run.player.keys.yellow > keys + 1, "Effective scales the key taken");
   const skip = toKey(10);
-  skip.run.badges = { yellowKey: [{ id: "skip", level: 1, pick: 0 }] };
+  skip.run.badges = { key: [{ id: "skip", level: 1, pick: 0 }] };
   skip.autoTurn();
   assert.deepEqual(at(skip), [4, 0], "the item's own step rolls Skip");
 });
@@ -200,7 +200,7 @@ test("End Rush works without Dash research, and only on STAIRS", () => {
   const key = toKey(0);
   key.save.upgrades.endRush = 1;
   key.save.archives.levels.endRush = 5;
-  assert.equal(key.dashFor("yellowKey"), 0);
+  assert.equal(key.dashFor("key"), 0);
   key.autoTurn();
   assert.deepEqual(at(key), [1, 0], "the key card doesn't dash");
 });
@@ -215,16 +215,16 @@ test("End Rush counts for STAIRS's climb in the Delve too", () => {
 
 test("the Dash badge adds its value to its card's dash, stacking with Dash and End Rush", () => {
   const key = toKey(1);
-  key.run.badges = { yellowKey: [{ id: "dash", level: 2, pick: 0 }] };
-  assert.equal(key.dashFor("yellowKey"), 3);
+  key.run.badges = { key: [{ id: "dash", level: 2, pick: 0 }] };
+  assert.equal(key.dashFor("key"), 3);
   key.autoTurn();
   assert.deepEqual(at(key), [4, 0], "1 + 2 tiles, stopping before the key");
   const onto = toKey(1);
-  onto.run.badges = { yellowKey: [{ id: "dash", level: 3, pick: 0 }] };
+  onto.run.badges = { key: [{ id: "dash", level: 3, pick: 0 }] };
   onto.autoTurn();
   assert.deepEqual(at(onto), [5, 0], "1 + 3 tiles: a tile left, onto the key");
   const bare = toKey(0);
-  bare.run.badges = { yellowKey: [{ id: "dash", level: 1, pick: 0 }] };
+  bare.run.badges = { key: [{ id: "dash", level: 1, pick: 0 }] };
   bare.autoTurn();
   assert.deepEqual(at(bare), [2, 0], "the badge dashes with no Dash research");
   const stairs = toStairs(1, 2);
