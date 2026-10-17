@@ -1,9 +1,8 @@
-import type { KeyColor } from "../config.ts";
 import { QUOTA_DOORS, keyFirstFloor, towerDoorRate, towerKeyRatio, towerWoodPercent } from "../key-schedule.ts";
 import { PROFILES, RANKED_STRENGTHS, enemyCountPercent, enemyShare, isRanked, profileShare } from "../enemy-schedule.ts";
 import { GATE_VALUE } from "./forks.ts";
 import { doorRule } from "../doors.ts";
-import type { Tile } from "../entities.ts";
+import type { Tile, KeyColor } from "../entities.ts";
 import { generateTowerFloor, type TowerFloor } from "./index.ts";
 import type { LaneStep } from "./types.ts";
 

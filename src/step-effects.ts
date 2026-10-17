@@ -1,8 +1,7 @@
 import { snap } from "./exact.ts";
 import { atWorst, predict, type CombatPrediction, type CritRule } from "./combat.ts";
 import { doorCost, doorRule, drainsHp, woodToll } from "./doors.ts";
-import type { KeyColor } from "./config.ts";
-import type { Player, Tile } from "./entities.ts";
+import type { Player, Tile, KeyColor } from "./entities.ts";
 
 /** What stepping onto each pickup grants. The single source for the move
  * itself, route previews, the inspect panel, and Automove's planning. */

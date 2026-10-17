@@ -1,4 +1,4 @@
-import type { TowerRun } from "../entities.ts";
+import type { TowerRun } from "../runs.ts";
 import { TOWER_SECTION, TOWER_START_X } from "../config.ts";
 import { RoomWorld } from "./room-world.ts";
 import { extraEnemies } from "../more-enemies.ts";

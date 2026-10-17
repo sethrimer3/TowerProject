@@ -1,6 +1,5 @@
 import { TOWER_SECTION, TOWER_START_X, UNGUARDED_LOOT_CHANCE } from "../config.ts";
-import type { KeyColor } from "../config.ts";
-import { point, type Tile } from "../entities.ts";
+import { point, type Tile, type KeyColor } from "../entities.ts";
 import { random } from "../random.ts";
 import { reachable } from "../board.ts";
 import { getTowerGateEnemy } from "../scaling.ts";

@@ -1,4 +1,5 @@
-import type { Run, Save } from "./entities.ts";
+import type { Run } from "./runs.ts";
+import type { Save } from "./save-shape.ts";
 import { snap } from "./exact.ts";
 import { statFactor, type Loadout, type Stat } from "./loadout.ts";
 import { boonFactor } from "./shrines.ts";

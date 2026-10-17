@@ -8,7 +8,8 @@ import { defaults } from "../src/save.ts";
 import { Game } from "../src/state.ts";
 import { areaCleared, areaMastered, canWarp, decodeGoals, unmasteredBelow } from "../src/goals.ts";
 import { TOWER_START_X } from "../src/config.ts";
-import type { Tile, TowerRun } from "../src/entities.ts";
+import type { Tile } from "../src/entities.ts";
+import type { TowerRun } from "../src/runs.ts";
 
 /** Takes every enemy off the run's current floor. */
 function clearFloor(run: TowerRun) {

@@ -1,11 +1,12 @@
-import { point, type Tile } from "./entities.ts";
+import { point, type Tile, type KeyColor } from "./entities.ts";
 import { litTorches, takesSomething, type Position } from "./board.ts";
 import type { Step } from "./pathfinding.ts";
 import { doorCost, doorId, doorRule, drainsHp, woodToll } from "./doors.ts";
 import { impervious } from "./combat.ts";
 import { snap } from "./exact.ts";
-import { UPGRADES, type KeyColor, type TrainingId, type UpgradeId } from "./config.ts";
-import type { DelveRun, EnemyStrength, Mode } from "./entities.ts";
+import { UPGRADES, type TrainingId, type UpgradeId } from "./config.ts";
+import type { DelveRun } from "./runs.ts";
+import type { EnemyStrength, Mode } from "./entities.ts";
 
 /** Every card a hand can hold: its name and what it moves the hero toward. */
 export const CARDS = {

@@ -33,22 +33,23 @@ import {
   trainedAmount,
   type UpgradeId,
   type TrainingId,
-  type KeyColor,
   type StatTrainingRow,
 } from "./config.ts";
-import {
-  type Save,
-  type Run,
-  type RunCore,
-  type TowerRun,
-  type DelveRun,
-  type ModeSave,
-  type Tile,
-  type Enemy,
-  type Mode,
-  type MoveSnapshot,
-  type Player,
-  type ChestTier,
+import type { Save, ModeSave } from "./save-shape.ts";
+import type {
+  Run,
+  RunCore,
+  TowerRun,
+  DelveRun,
+  MoveSnapshot,
+} from "./runs.ts";
+import type {
+  Tile,
+  Enemy,
+  Mode,
+  Player,
+  ChestTier,
+  KeyColor,
 } from "./entities.ts";
 import { World, LAYOUT_VERSION } from "./delve/world.ts";
 import { RoomWorld, TOWER_LAYOUT_VERSION } from "./tower/room-world.ts";

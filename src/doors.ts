@@ -1,6 +1,6 @@
 import { snap } from "./exact.ts";
-import { COLORS, KEY_GOLD, PICKUP_GOLD, type KeyColor } from "./config.ts";
-import type { DoorRule, Player, Tile } from "./entities.ts";
+import { COLORS, KEY_GOLD, PICKUP_GOLD } from "./config.ts";
+import type { DoorRule, Player, Tile, KeyColor } from "./entities.ts";
 import { wholeChange } from "./whole.ts";
 
 export const KEY_ORDER: KeyColor[] = ["yellow", "blue", "red"];

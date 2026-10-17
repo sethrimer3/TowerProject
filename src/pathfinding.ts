@@ -1,7 +1,6 @@
 import { CHUNK } from "./config.ts";
-import { point } from "./entities.ts";
+import { point, type KeyColor } from "./entities.ts";
 import { litTorches, takesSomething, type Position } from "./board.ts";
-import type { KeyColor } from "./config.ts";
 import { doorCost } from "./doors.ts";
 export type Step = { dx: number; dy: number; x: number; y: number };
 /** A sliver of route cost per key a door eats, by rarity: never enough to

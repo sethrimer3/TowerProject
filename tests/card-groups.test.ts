@@ -5,7 +5,8 @@ import { Game } from "../src/state.ts";
 import { decode, defaults } from "../src/save.ts";
 import { unlockAt } from "../src/goals.ts";
 import type { Board } from "../src/board.ts";
-import type { Run, Tile } from "../src/entities.ts";
+import type { Run } from "../src/runs.ts";
+import type { Tile } from "../src/entities.ts";
 
 // Card Groups (Tower II floor 80's Goal): cards linked side by side in the
 // hand share one priority, the closest target of any of them taken first.

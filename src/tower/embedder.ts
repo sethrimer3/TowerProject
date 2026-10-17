@@ -1,11 +1,10 @@
 import { TOWER_HEIGHT, TOWER_START_X, TOWER_WIDTH } from "../config.ts";
-import { point, type Tile } from "../entities.ts";
+import { point, type Tile, type KeyColor } from "../entities.ts";
 import type { Fork, Gate, ShortcutRequest, StrategicGraph, StrategicNode } from "./types.ts";
 import { area, inRect, minSide, centre, type Rect, type XY } from "./grid.ts";
 import { Furnisher, gateTile, laneTile, type Dropped, type Placement } from "./furnisher.ts";
 import { forkDepth } from "./forks.ts";
 import { QUOTA_DOORS, forkCredit, owesDoor, towerKeyRatio, type QuotaDoor } from "../key-schedule.ts";
-import type { KeyColor } from "../config.ts";
 import { runsWith } from "./door-quota.ts";
 import { lockColors } from "./resource-planner.ts";
 import { keyedFloor } from "./patterns.ts";

@@ -1,5 +1,5 @@
-import type { EnemyStrength } from "./entities.ts";
-import { enemyStats, floorsAhead, type EnemyProfile } from "./enemy-curves.ts";
+import type { EnemyStrength, EnemyProfile } from "./entities.ts";
+import { enemyStats, floorsAhead } from "./enemy-curves.ts";
 import { enemyFirstFloor } from "./enemy-schedule.ts";
 
 export { GREATER_BOSS_OVER_BOSS } from "./enemy-curves.ts";

@@ -1,7 +1,9 @@
 import { BADGES, badgeOn, badgesOn, badgeValue, type RunBadge } from "./badges.ts";
 import type { Board } from "./board.ts";
 import { KEY_TO_HP_PERCENT, SIPHONS, TRADER_YELLOW_KEYS, isSiphon, linkedToNext, walkAll, type CardId, type CardRules, type HandAt, type SiphonCard } from "./cards.ts";
-import type { Mode, Run, Save } from "./entities.ts";
+import type { Mode } from "./entities.ts";
+import type { Run } from "./runs.ts";
+import type { Save } from "./save-shape.ts";
 import { snap } from "./exact.ts";
 import { MODES, type ModeProfile } from "./modes.ts";
 import { drawAt } from "./random.ts";

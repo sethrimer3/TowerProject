@@ -1,4 +1,5 @@
-import { point, type Enemy, type Kind, type Run, type Tile, type Torch } from "./entities.ts";
+import { point, type Enemy, type Kind, type Tile, type Torch } from "./entities.ts";
+import type { Run } from "./runs.ts";
 import { tileRandom } from "./random.ts";
 import type { Shield } from "./shielded.ts";
 

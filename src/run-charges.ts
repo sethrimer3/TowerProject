@@ -1,6 +1,6 @@
 import type { UpgradeId } from "./config.ts";
 import { researched, type ArchivesSave, type ResearchTarget } from "./archives.ts";
-import type { Run } from "./entities.ts";
+import type { Run } from "./runs.ts";
 
 // A run's charges: the uses of Focus, Ignore and Target it has. Each opens
 // with its skill, starts every run with its research's count, and, once its

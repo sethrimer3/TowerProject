@@ -6,7 +6,8 @@
  * Gold (the first Gold multiplier, `gold-multipliers.ts`), and XP by the same factor as the stats (`tierXp`);
  * Silver stays the same. The layouts are
  * the same in every tier: only the enemies differ. */
-import type { Enemy, ModeSave, Save, Tile } from "./entities.ts";
+import type { Enemy, Tile } from "./entities.ts";
+import type { ModeSave, Save } from "./save-shape.ts";
 import { intPow, snap } from "./exact.ts";
 
 export const TIERS = 9;

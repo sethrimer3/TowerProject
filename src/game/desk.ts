@@ -1,4 +1,5 @@
-import type { Run, Save } from "../entities.ts";
+import type { Run } from "../runs.ts";
+import type { Save } from "../save-shape.ts";
 import type { MissionType } from "../missions/catalog.ts";
 import type { EventMissionType } from "../events/catalog.ts";
 

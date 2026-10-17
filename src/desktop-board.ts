@@ -1,5 +1,4 @@
-import type { KeyColor } from "./config.ts";
-import type { Tile, Torch } from "./entities.ts";
+import type { Tile, Torch, KeyColor } from "./entities.ts";
 import { forEachViewTile, toTileSpace, type FrameContext } from "./render-frame.ts";
 import { contentsFrom, type ThemedBoard } from "./themed-board.ts";
 import { rankChevrons } from "./rank-chevrons.ts";

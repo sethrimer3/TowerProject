@@ -1,4 +1,4 @@
-import type { KeyColor } from "../config.ts";
+import type { KeyColor } from "../entities.ts";
 import { doorKeys, towerDoorRate, towerKeyRatio } from "../key-schedule.ts";
 import { forkKeyDemand } from "./forks.ts";
 import { keyedFloor, pick, type Weighted } from "./patterns.ts";

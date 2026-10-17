@@ -1,4 +1,4 @@
-import type { EnemyStrength } from "./entities.ts";
+import type { EnemyStrength, KeyColor } from "./entities.ts";
 import type { GoalUnlock } from "./goals.ts";
 import type { ResearchTarget } from "./archives.ts";
 import { halfPow, intPow, snap } from "./exact.ts";
@@ -15,8 +15,7 @@ export const TOWER_SECTION = 10;
 export const SAVE_KEY = "towerdelve.v1";
 /** Where saves were kept before the game was named Tower Delve; `load` reads it when nothing is under `SAVE_KEY`. */
 export const OLD_SAVE_KEY = "towerincramental.v1";
-export const COLORS = { yellow: "#eac16b", blue: "#6dbdf1", red: "#df797e" };
-export type KeyColor = keyof typeof COLORS;
+export const COLORS: Record<KeyColor, string> = { yellow: "#eac16b", blue: "#6dbdf1", red: "#df797e" };
 export type Currency = "courage" | "inspiration";
 /** Upgrades that make the character stronger say so in `grants` (what one
  * rank adds; see loadout.ts), which also writes their description. */

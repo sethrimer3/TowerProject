@@ -9,7 +9,8 @@ import { wornEffects } from "../src/equipment/effects.ts";
 import { snap } from "../src/exact.ts";
 import { THEME_IDS } from "../src/theme-collection.ts";
 import { rowValue } from "../src/loadout.ts";
-import type { Enemy, TowerRun } from "../src/entities.ts";
+import type { Enemy } from "../src/entities.ts";
+import type { TowerRun } from "../src/runs.ts";
 
 const NOW = 1_000_000;
 

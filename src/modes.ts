@@ -4,7 +4,9 @@
  * uses for it. Code that needs a per-mode answer asks `MODES[mode]` rather
  * than branching on the mode; features only the Tower has still test for it. */
 import { START_X, TOWER_START_X, TOWER_WIDTH, WIDTH, goldReward } from "./config.ts";
-import type { DelveRun, Mode, Run, Save, TowerRun } from "./entities.ts";
+import type { DelveRun, Run, TowerRun } from "./runs.ts";
+import type { Mode } from "./entities.ts";
+import type { Save } from "./save-shape.ts";
 import { LAYOUT_VERSION, World } from "./delve/world.ts";
 import { depthAt } from "./delve/labyrinth.ts";
 import { RoomWorld, TOWER_LAYOUT_VERSION } from "./tower/room-world.ts";

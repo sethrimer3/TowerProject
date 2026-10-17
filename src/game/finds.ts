@@ -1,6 +1,5 @@
-import type { KeyColor } from "../config.ts";
 import { doorName, doorRule, drainsHp, pickupGold } from "../doors.ts";
-import type { Enemy, Mode, Tile } from "../entities.ts";
+import type { Enemy, Mode, Tile, KeyColor } from "../entities.ts";
 import { RARITY_TIERS } from "../equipment/balance.ts";
 import { EQUIP_MATERIALS, itemDef } from "../equipment/catalog.ts";
 import { snap } from "../exact.ts";

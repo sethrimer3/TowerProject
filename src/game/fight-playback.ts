@@ -1,5 +1,6 @@
 import { bout, DEFEAT_MS, guaranteedCrits, heroHpAfter, heroHpDuring, resume, REVIVE_PAUSE_MS, revivals, summarize, type Bout, type CritRule, type Crits, type Revival } from "../combat.ts";
-import type { Enemy, Mode, Run } from "../entities.ts";
+import type { Enemy, Mode } from "../entities.ts";
+import type { Run } from "../runs.ts";
 import { snap } from "../exact.ts";
 import { tileRandom } from "../random.ts";
 import type { Encounter, ShownFight } from "../shown.ts";

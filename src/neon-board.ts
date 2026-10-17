@@ -1,5 +1,5 @@
-import { COLORS, type KeyColor } from "./config.ts";
-import type { EnemyStrength, Tile, Torch } from "./entities.ts";
+import { COLORS } from "./config.ts";
+import type { EnemyStrength, Tile, Torch, KeyColor } from "./entities.ts";
 import { WOOD_COLOR } from "./doors.ts";
 import { forEachViewTile, toTileSpace, type FrameContext } from "./render-frame.ts";
 import { contentsFrom, type ThemedBoard } from "./themed-board.ts";

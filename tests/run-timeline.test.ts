@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { defaults } from "../src/save.ts";
 import { Game } from "../src/state.ts";
 import { RunTimeline } from "../src/run-timeline.ts";
-import type { MoveSnapshot, TowerRun } from "../src/entities.ts";
+import type { MoveSnapshot, TowerRun } from "../src/runs.ts";
 
 /** A Tower run inside, on floor `height`, and its timeline with `undos`. */
 function towerAt(height: number, undos = 5) {

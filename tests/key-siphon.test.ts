@@ -7,7 +7,7 @@ import { deckCards, planHand } from "../src/cards.ts";
 import { RESEARCH } from "../src/archives.ts";
 import { loadout } from "../src/loadout.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
-import type { Save } from "../src/entities.ts";
+import type { Save } from "../src/save-shape.ts";
 
 const hpRow = TRAINING.find((t) => t.id === "hp")! as StatTrainingRow;
 

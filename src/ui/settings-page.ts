@@ -2,7 +2,7 @@ import { applyUiTheme } from "./medieval.ts";
 import { renderThemeMenu, themeMenuTitle, wornName } from "./theme-menu.ts";
 import type { ThemeKind } from "../theme-collection.ts";
 import { SETTINGS, type SettingKey, type Settings } from "../settings.ts";
-import type { Save } from "../entities.ts";
+import type { Save } from "../save-shape.ts";
 import type { AppContext, PageGame } from "./app.ts";
 import type { BoardOverlay } from "./board-overlay.ts";
 import { capitalized, displayedProgress, el } from "./dom.ts";

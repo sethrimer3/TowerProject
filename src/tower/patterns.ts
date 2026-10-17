@@ -1,4 +1,4 @@
-import type { KeyColor } from "../config.ts";
+import type { KeyColor } from "../entities.ts";
 import type {
   Archetype,
   Footprint,

@@ -1,6 +1,7 @@
 import { region, depthAt, areasBetween, floorFor, ownerAt, type Region } from "./labyrinth.ts";
 import { CHUNK, WIDTH, START_X } from "../config.ts";
-import { point, type DelveRun, type Enemy, type Point, type Tile, type Torch } from "../entities.ts";
+import { point, type Enemy, type Point, type Tile, type Torch } from "../entities.ts";
+import type { DelveRun } from "../runs.ts";
 import { withPotions, type Board } from "../board.ts";
 import { breakTorch, placeTorches, torchesLeft } from "../torches.ts";
 import { tierCells, tierTile } from "../tiers.ts";

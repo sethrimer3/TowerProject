@@ -2,7 +2,8 @@ import { TRAINER_GEMS, trainingSlots, type TrainingJob, type TrainingPaid } from
 import { count, dropInvalid, finite, fraction, isRecord, wholeIn } from "./decode.ts";
 import { TIERS } from "./tiers.ts";
 import { GOLD_SHOP, OLD_SAVE_KEY, SAVE_KEY, TOWER_WIDTH, TRAINING, UPGRADES, WIDTH, trainingCeiling, trainingDef, type UpgradeId } from "./config.ts";
-import type { AutomoveMemory, DelveRun, ModeSave, Fall, MoveSnapshot, Run, Save, TowerRun } from "./entities.ts";
+import type { AutomoveMemory, DelveRun, Fall, MoveSnapshot, Run, TowerRun } from "./runs.ts";
+import type { ModeSave, Save } from "./save-shape.ts";
 import { emptyMaterials, MATERIAL_IDS, type MaterialId } from "./materials.ts";
 import { decodeEquipment, defaultEquipment } from "./equipment/inventory.ts";
 import { decodeDefendSave, defaultDefendSave } from "./defend/progress.ts";

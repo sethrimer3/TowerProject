@@ -1,4 +1,4 @@
-import type { KeyColor } from "./config.ts";
+import type { KeyColor } from "./entities.ts";
 import { isRecord } from "./decode.ts";
 import { snap } from "./exact.ts";
 

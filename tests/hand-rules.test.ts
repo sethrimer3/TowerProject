@@ -5,7 +5,8 @@ import { defaults } from "../src/save.ts";
 import type { BadgeId } from "../src/badges.ts";
 import type { Board } from "../src/board.ts";
 import type { CardId } from "../src/cards.ts";
-import type { Enemy, Run, Tile } from "../src/entities.ts";
+import type { Enemy, Tile } from "../src/entities.ts";
+import type { Run } from "../src/runs.ts";
 
 const BOSS: Enemy = { name: "Boss", hp: 9, attack: 1, defense: 0, tier: 0, strength: "boss" };
 const LEGEND: Record<string, Tile> = {

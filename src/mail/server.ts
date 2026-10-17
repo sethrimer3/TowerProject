@@ -1,4 +1,4 @@
-import type { Save } from "../entities.ts";
+import type { Save } from "../save-shape.ts";
 import { DAY_MS } from "../shop/clock.ts";
 import { LEAGUE_INFO } from "../tournament/leagues.ts";
 import { prizeFor } from "../tournament/prizes.ts";

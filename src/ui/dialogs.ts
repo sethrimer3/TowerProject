@@ -9,7 +9,7 @@ import { tileInfo } from "./tile-info.ts";
 import type { AppContext, PageGame } from "./app.ts";
 import { capitalized, CURRENCY_SPRITES, displayedProgress, el, uiSprite } from "./dom.ts";
 import { boardTitle } from "./hud.ts";
-import type { DelveRun } from "../entities.ts";
+import type { DelveRun } from "../runs.ts";
 import type { TournamentClient } from "../tournament/client.ts";
 import { LEAGUE_INFO } from "../tournament/leagues.ts";
 import { placeText } from "../tournament/prizes.ts";

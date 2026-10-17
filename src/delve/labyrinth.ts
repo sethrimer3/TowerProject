@@ -1,4 +1,4 @@
-import { point, type Point, type Tile } from '../entities.ts';
+import { point, type Point, type Tile, type KeyColor } from '../entities.ts';
 import type { Fork, Gate, LaneStep } from '../tower/types.ts';
 import { isRanked, type RankedStrength } from '../enemy-schedule.ts';
 import { dealProfiles, drawStrength, extraEnemies, profilesOn, rankStrengths, sharesOn } from '../enemy-stage.ts';
@@ -9,7 +9,6 @@ import { pick } from '../tower/patterns.ts';
 import { runsWith } from '../tower/door-quota.ts';
 import { choosePattern, FALSE_ASCENTS, quotaPatterns, type Pattern } from './patterns.ts';
 import { tileRandom } from '../random.ts';
-import type { KeyColor } from '../config.ts';
 import {
   QUOTA_DOORS, doorKeys, forkCredit, onlyOpenKeys, owesDoor, quotaDoorsIn, towerDoorFirstFloor, towerDoorHundredths, towerDoorRate,
   towerKeyColorsOn, towerKeyRatio, towerWoodPercent, withoutQuotaDoors, yellowRun, type QuotaDoor,

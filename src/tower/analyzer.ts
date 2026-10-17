@@ -1,7 +1,7 @@
-import { TOWER_HEIGHT, TOWER_START_X, TOWER_WIDTH, type KeyColor } from "../config.ts";
+import { TOWER_HEIGHT, TOWER_START_X, TOWER_WIDTH } from "../config.ts";
 import { doorCost } from "../doors.ts";
 import { doorKeys } from "../key-schedule.ts";
-import { point, type Tile } from "../entities.ts";
+import { point, type Tile, type KeyColor } from "../entities.ts";
 import type { Embedding } from "./embedder.ts";
 import type { Gate, LaneStep, Reward, StrategicNode } from "./types.ts";
 

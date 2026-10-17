@@ -9,7 +9,7 @@ import { drawAt } from "../src/random.ts";
 import { runTrainingOffer, runTrainingValue, silverPrice } from "../src/run-training.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
 import type { World } from "../src/delve/world.ts";
-import type { RunCore } from "../src/entities.ts";
+import type { RunCore } from "../src/runs.ts";
 
 /** A save with Free Training owned and `ranks` of each Free Upgrade row. */
 function owned(ranks: Partial<Record<"freeOffense" | "freeDefense" | "freeUtility", number>>) {

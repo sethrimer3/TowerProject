@@ -1,6 +1,6 @@
 import { FOCUS_PER_RUN, IGNORE_PER_RUN, REGAIN_FLOORS, TARGET_PER_RUN, levelForXp, type UpgradeId } from "./config.ts";
 import type { Settings } from "./settings.ts";
-import type { Save } from "./entities.ts";
+import type { Save } from "./save-shape.ts";
 import type { Profile } from "./profile.ts";
 import { goalUnlocked, type GoalUnlock } from "./goals.ts";
 import { finite as finiteIn, isRecord, wholeIn } from "./decode.ts";

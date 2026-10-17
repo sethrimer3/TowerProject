@@ -1,4 +1,6 @@
-import type { Mode, Player, Run, Save } from "../entities.ts";
+import type { Mode, Player } from "../entities.ts";
+import type { Run } from "../runs.ts";
+import type { Save } from "../save-shape.ts";
 import { loadout } from "../loadout.ts";
 import { MODES } from "../modes.ts";
 import { loadoutShift, shiftHero } from "../hero-stats.ts";

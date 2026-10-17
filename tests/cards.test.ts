@@ -4,7 +4,8 @@ import { BASE_HAND, BASE_HAND_SLOTS, CARDS, CARD_IDS, cardText, explainStuck, HA
 import { defaults } from "../src/save.ts";
 import { UPGRADES } from "../src/config.ts";
 import type { Board, Position } from "../src/board.ts";
-import type { DelveRun, Enemy, Run, Tile } from "../src/entities.ts";
+import type { DelveRun, Run } from "../src/runs.ts";
+import type { Enemy, Tile } from "../src/entities.ts";
 
 const WEAK: Enemy = { name: "Weak", hp: 1, attack: 1, defense: 0, tier: 0, strength: "normal" };
 /** Hits hard enough to kill the hero, but can be fought. */

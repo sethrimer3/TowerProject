@@ -1,6 +1,6 @@
 import { TRAINING } from "./config.ts";
 import { fraction, isRecord, time } from "./decode.ts";
-import type { Save } from "./entities.ts";
+import type { Save } from "./save-shape.ts";
 import { snap } from "./exact.ts";
 
 /** The currencies whose lifetime earnings the player profile tallies. */

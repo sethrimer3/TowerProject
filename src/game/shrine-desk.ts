@@ -1,4 +1,5 @@
-import type { Mode, TowerRun } from "../entities.ts";
+import type { Mode } from "../entities.ts";
+import type { TowerRun } from "../runs.ts";
 import {
   appliedNow, appliedOf, autoChoice, autoPickOpen, boonEffects, boonsEarned, lastBoonFloor, nextBoonFloor, ranked, rescaleHero, rollOffer, sameFoes, shrinesOpen,
   type BoonId, type ShrineRun,

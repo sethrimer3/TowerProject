@@ -1,5 +1,5 @@
 import type { QuotaDoor } from "../key-schedule.ts";
-import type { KeyColor } from "../config.ts";
+import type { KeyColor } from "../entities.ts";
 import type { TowerEnemyProfile, TowerEnemyStrength } from "../scaling.ts";
 
 /** Shared vocabulary for strategic Tower generation.

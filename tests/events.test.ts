@@ -11,7 +11,8 @@ import { baseMedals, decodeEvents, defaultEvents, isComplete, isFinished, milest
 import { decodeRelics } from "../src/relics.ts";
 import { BADGE_IDS, MAX_COPIES } from "../src/badges.ts";
 import { DAY_MS } from "../src/shop/clock.ts";
-import type { Enemy, Save, Tile } from "../src/entities.ts";
+import type { Enemy, Tile } from "../src/entities.ts";
+import type { Save } from "../src/save-shape.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
 
 const HOUR = 3_600_000;

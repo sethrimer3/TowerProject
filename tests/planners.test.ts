@@ -1,7 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import type { Board, Position } from "../src/board.ts";
-import type { AutomoveMemory, DelveRun, Tile } from "../src/entities.ts";
+import type { AutomoveMemory, DelveRun } from "../src/runs.ts";
+import type { Tile } from "../src/entities.ts";
 import { routeTo } from "../src/pathfinding.ts";
 import { capabilities, chooseDelveStep, DelvePlan } from "../src/delve/automove.ts";
 import { defaults } from "../src/save.ts";

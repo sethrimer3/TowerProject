@@ -1,4 +1,4 @@
-import type { Save } from "./entities.ts";
+import type { Save } from "./save-shape.ts";
 import { snap } from "./exact.ts";
 import { CURRENCIES, type CurrencyId } from "./shop/currency.ts";
 

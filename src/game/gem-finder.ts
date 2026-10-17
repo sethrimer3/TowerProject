@@ -1,6 +1,7 @@
 import type { Board } from "../board.ts";
 import { VIEWPORT_TILES } from "../config.ts";
-import type { Mode, Run } from "../entities.ts";
+import type { Mode } from "../entities.ts";
+import type { Run } from "../runs.ts";
 import { AD_COOLDOWN_MS, AD_GEMS, collectedGem, gemOn, gemSpot, reachFloor, type GemSpot } from "../gems.ts";
 import { MODES } from "../modes.ts";
 import { canClaimGoldBoost, claimGoldBoost, goldBoostLeft, GOLD_BOOST_FACTOR, GOLD_BOOST_MS, noteGoldBoost } from "../gold-boost.ts";

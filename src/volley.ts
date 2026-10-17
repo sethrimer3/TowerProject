@@ -6,7 +6,8 @@
  * board, and says what happened. `Game` decides whether a turn has a volley
  * at all and applies the outcome (the hero's HP, kill pay, a fall). */
 import type { Board } from "./board.ts";
-import type { Enemy, Player, Save } from "./entities.ts";
+import type { Enemy, Player } from "./entities.ts";
+import type { Save } from "./save-shape.ts";
 import { guaranteedCrits } from "./combat.ts";
 import { critRule } from "./loadout.ts";
 import { trainedAmount } from "./config.ts";

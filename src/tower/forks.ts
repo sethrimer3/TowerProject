@@ -1,4 +1,4 @@
-import type { KeyColor } from "../config.ts";
+import type { KeyColor } from "../entities.ts";
 import type { TowerEnemyProfile } from "../scaling.ts";
 import { ARCHETYPES, keyedFloor, pick, type Weighted } from "./patterns.ts";
 import type { GraphBuilder } from "./graph-builder.ts";

@@ -6,7 +6,8 @@ import { RoomWorld } from "../src/tower/room-world.ts";
 import { xpBase } from "../src/config.ts";
 import { planHand, type CardId } from "../src/cards.ts";
 import type { Board, Position } from "../src/board.ts";
-import type { Enemy, Run, Tile } from "../src/entities.ts";
+import type { Enemy, Tile } from "../src/entities.ts";
+import type { Run } from "../src/runs.ts";
 import {
   attachBadge, attachConflict, badgeConflict, COPIES_FOR_LEVEL, copiesLeft, decodeBadges, defaultBadges, detachBadge, drawBadges, levelProgress, MAX_COPIES,
   BADGE_IDS, BADGES, badgeLevel, badgeValue, RARITY_WEIGHTS, runBadges, validRunBadges, type BadgeId, type BadgesSave,

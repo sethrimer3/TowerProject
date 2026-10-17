@@ -1,7 +1,7 @@
 import { SIPHONS, TRADER_YELLOW_KEYS, isSiphon, type CardId, type SiphonCard } from "../cards.ts";
 import { BADGES, badgesOn, badgeValue, type BadgeId, type RunBadge } from "../badges.ts";
-import { TRAINING, xpBase, type KeyColor, type StatTrainingRow } from "../config.ts";
-import type { Mode } from "../entities.ts";
+import { TRAINING, xpBase, type StatTrainingRow } from "../config.ts";
+import type { Mode, KeyColor } from "../entities.ts";
 import { snap } from "../exact.ts";
 import { flatShift, shiftHero } from "../hero-stats.ts";
 import { rankShift } from "../loadout.ts";

@@ -6,7 +6,8 @@ import { TRAINING, cost, trained, type StatTrainingRow, type UpgradeId } from ".
 import { deckCards, planHand, upgradeCard, type CardId } from "../src/cards.ts";
 import { TREES } from "../src/skill-trees.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
-import type { EnemyStrength, Save, Tile } from "../src/entities.ts";
+import type { EnemyStrength, Tile } from "../src/entities.ts";
+import type { Save } from "../src/save-shape.ts";
 
 /** The new Inspiration card nodes, in the order they can be bought, with
  * their price, the node each needs and its card (null for a node that opens

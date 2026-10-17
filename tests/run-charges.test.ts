@@ -7,7 +7,7 @@ import { chargesLeft, chargesPerRun, climbFloor, floorsToRegain, regainEvery } f
 import { RESEARCH, researched } from "../src/archives.ts";
 import { cost } from "../src/config.ts";
 import { skillAvailable } from "../src/skill-trees.ts";
-import type { Run } from "../src/entities.ts";
+import type { Run } from "../src/runs.ts";
 
 /** A Tower floor of open tiles, `size` a side, the hero in the corner and
  * the stairs opposite, with the skills `owned`. */

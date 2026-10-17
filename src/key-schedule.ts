@@ -1,4 +1,4 @@
-import type { KeyColor } from "./config.ts";
+import type { KeyColor } from "./entities.ts";
 
 /** The key colours a floor's generation may use: no door or key of a
  * closed colour appears on it. The Tower's come from its door schedule

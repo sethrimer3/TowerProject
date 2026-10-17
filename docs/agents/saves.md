@@ -3,7 +3,7 @@
 How the save loads and decodes, adding save state, settings rows, and the save golden.
 
 **Saves.** `src/save.ts` loads defensively: `defaults()` defines every field, and loading must tolerate missing or old fields.
-When adding save state, add it to `defaults()`, the `Save` type in `entities.ts`, and a small decoder called from `decode()` (per-version steps live in `VERSION_STEPS`).
+When adding save state, add it to `defaults()`, the `Save` type in `save-shape.ts`, and a small decoder called from `decode()` (per-version steps live in `VERSION_STEPS`).
 Every decoder (the save's and each module's own, such as `decodeArchives`, `decodeGemDrop`, `decodeGoals`, `decodeShop`) reads fields through the shared readers in `src/decode.ts` (`isRecord`, `finite`, `whole`, `wholeIn`, `time`, `count`, `fraction`, and `dropInvalid` for a run's optional fields).
 Each mode's run has its own decoder (`decodeTowerRun`, `decodeDelveRun`), which checks the player's column against that mode's board width and drops the other mode's fields.
 Unsupported versions reset safely.
