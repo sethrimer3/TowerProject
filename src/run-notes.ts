@@ -49,6 +49,13 @@ export function notesOf(run: { outside?: boolean; notes?: RunNotes }): RunNotes 
   return (run.notes ??= newNotes(0));
 }
 
+/** A key obtained (picked up, traded or siphoned), counted in the run's
+ * notes (none in the forest). */
+export function noteKey(run: { outside?: boolean; notes?: RunNotes }, color: KeyColor, amount: number) {
+  const notes = notesOf(run);
+  if (notes) tallyIn(notes.keys, color, amount);
+}
+
 /** Adds `amount` to `record[key]`. */
 export function tallyIn<K extends string>(record: Partial<Record<K, number>>, key: K, amount = 1) {
   if (amount > 0) record[key] = snap((record[key] ?? 0) + amount);

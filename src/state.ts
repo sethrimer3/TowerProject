@@ -14,7 +14,7 @@ import { missGem } from "./gems.ts";
 import { DelvePlan } from "./delve/automove.ts";
 import { defaults } from "./save.ts";
 import { stampProfile } from "./profile.ts";
-import { defaultFinds, newNotes, notesOf, tallyIn } from "./run-notes.ts";
+import { defaultFinds, newNotes, noteKey, notesOf } from "./run-notes.ts";
 import { stream, tileRandom } from "./random.ts";
 import { freeTrainingLines, rollFreeTraining } from "./free-training.ts";
 import { doorBlockedMessage, doorName, doorRule, drainsHp, KEY_ORDER, pickupGold } from "./doors.ts";
@@ -100,6 +100,7 @@ import { RARITY_TIERS, type EquipRarity } from "./equipment/balance.ts";
 import { EQUIP_MATERIALS, EQUIP_MATERIAL_IDS, itemDef, type EquipMaterialId } from "./equipment/catalog.ts";
 import { readyForestRuns, startingHero } from "./game/hero-sync.ts";
 import { CardActivation } from "./game/card-activation.ts";
+import { Finds } from "./game/finds.ts";
 import { FightPlayback } from "./game/fight-playback.ts";
 import type { Coin, Dash, Drop, Facing, Gain, GainArt, Heal } from "./shown.ts";
 /** How a new run starts: out in the forest or at the entrance, and from
@@ -258,6 +259,9 @@ export class Game {
    * from. */
   readonly handRules = new HandRules(this);
   /** What a card does as it activates, and what its badges pay. */
+  /** What the run finds: kills, items, chests and doors, paid, raised and
+   * counted. */
+  readonly finds = new Finds(this);
   readonly activation = new CardActivation(this);
   /** How fights are played and shown: the Revive and critical rolls, the
    * fight the board shows and an Encounter playing out. */
@@ -1313,11 +1317,6 @@ export class Game {
       until: performance.now() + ms,
     };
   }
-  /** Queues `drops` (a kill's or a chest's) to rise from `at` together,
-   * stacked a row apart from row `top` down. */
-  private gainDrops(at: { x: number; y: number }, drops: { text: string; art: GainArt }[], top = 0) {
-    drops.forEach(({ text, art }, i) => this.gain(at.x, at.y, text, art, { row: top - i, with: i > 0 }));
-  }
   /** Queues a reward to rise from (x, y), unless the Settings turn off
    * gains of its `kind` (by default, the kind its art raises). */
   gain(x: number, y: number, text: string, art: GainArt | null = null, drop?: Drop, kind: GainKind | null = kindOf(art)) {
@@ -1438,7 +1437,7 @@ export class Game {
     if (track) this.remember(quiet ? { ...before, quiet: true } : before);
     const drained = snap(this.run.player.hp - outcome.player.hp);
     this.applyStats(outcome.player);
-    if (t.kind === "door") this.openDoor(t, outcome.keysSpent, drained, dest, outcome.keyAmount);
+    if (t.kind === "door") this.finds.door(t, outcome.keysSpent, drained, dest, outcome.keyAmount);
     if (t.kind !== "enemy") return true;
     const extra = outcome.extraDamage ?? 0, p = this.run.player;
     // Effective's added damage rises off the hero; Dampen's given back heals.
@@ -1461,13 +1460,13 @@ export class Game {
       else if (this.world instanceof OutsideWorld && this.world.atExit(x, y)) this.swapForest();
       return;
     }
-    if (torch) this.payPickup(null, { x, y });
+    if (torch) this.finds.pickupGold(null, { x, y });
     if (t.kind === "reward") {
       this.run.changes[`${x},${y}`] = { kind: "openedChest", tier: t.tier };
       this.openAreaChest(t.tier);
       return;
     }
-    this.collect(t, x, y, outcome);
+    this.finds.pickup(t, x, y, outcome);
     this.consumeTile(t, x, y);
     if (t.kind !== "stairs") this.callGreaterBoss();
     this.afterStep(t, x, y, floorSkip);
@@ -1538,20 +1537,6 @@ export class Game {
   private markDamaged() {
     if (this.mode === "tower") this.towerRun.damaged = true;
   }
-  /** Each key the door took rises from it with a minus sign; a door that
-   * takes HP (a Heart Door, down to 1, or a Wooden Door broken without a
-   * key) raises a heart with the HP it took (a toll, not damage: it never
-   * costs an area's mastery). */
-  private openDoor(t: Tile, keysSpent: KeyColor[], drained: number, at: { x: number; y: number }, amount = 1) {
-    const n = keysSpent.length, rule = doorRule(t), notes = notesOf(this.run);
-    if (notes) tallyIn(notes.doors, doorName(t));
-    for (const color of keysSpent) this.gain(at.x, at.y, `−${keyCount(amount)} ${color} key`, { tile: { kind: "key", color }, spent: true }, undefined, "door");
-    if (!n || (drainsHp(rule) && drained > 0)) this.gain(at.x, at.y, `−${wholeChange(drained)} HP`, { heart: true }, undefined, "door");
-    this.payPickup(t, at);
-    const spent = amount === 1 ? `${n} key${n === 1 ? "" : "s"} spent` : `${keyCount(snap(n * amount))} keys spent`;
-    if (rule.type === "wood" && !n) this.message = `${doorName(t)} broken down · −${wholeChange(drained)} HP`;
-    else this.message = `${doorName(t)} opened${n ? ` · ${spent}` : ""}${drainsHp(rule) ? (this.run.player.hp > HEART_DOOR_HP ? " · HP drained" : " · HP drained to 1") : ""}`;
-  }
   /** Settles a fight whose damage is already applied. Returns false when
    * the player fell. */
   private winFight(fight: FightEnd, before: MoveSnapshot) {
@@ -1562,33 +1547,8 @@ export class Game {
       this.fallIn(before, enemy);
       return false;
     }
-    this.message = [fightText(fight), ...this.payKill(enemy, at, fight.scale ?? 1, !!fight.instakill, fight.crits)].join(" · ");
+    this.message = [fightText(fight), ...this.finds.kill(enemy, at, fight.scale ?? 1, !!fight.instakill, fight.crits)].join(" · ");
     return true;
-  }
-  /** Pays a kill at `at` (a fight won, or an arrow's): counted, its XP,
-   * Silver, Gold and loot. Returns what it found, as the status line names it. */
-  private payKill(enemy: Enemy, at: { x: number; y: number }, scale: number, instakill: boolean, crits?: number) {
-    this.run.kills++;
-    const purse = this.purse, key = `${this.mode}:${purse.killKey(enemy, at.x, at.y)}`;
-    this.countKill(enemy, key);
-    const floor = this.rules.equivalentFloor(this.rules.progressAt(this.run, at.y));
-    this.gainXp(enemy, floor, scale);
-    // Silver belongs to the run, so it isn't gated like Gold: undo takes it back.
-    const silver = purse.killSilver(enemy, floor, scale);
-    const { gold, cells, equipment } = purse.enemyLoot(enemy, at.x, at.y, scale, instakill);
-    const cellsFound = cells ? [cellsText(cells)] : [];
-    const found = equipmentGains(equipment);
-    // Gold over Silver at the tile, the rest below.
-    this.gainDrops(at, [
-      ...(gold ? [{ text: `+${wholeChange(gold)} Gold`, art: { coin: "gold" as const } }] : []),
-      { text: `+${wholeChange(silver)} Silver`, art: { coin: "silver" } },
-      ...cellsFound.map((text) => ({ text, art: { cell: true as const } })),
-      ...found,
-    ], gold ? 1 : 0);
-    if (equipment?.item || equipment?.salvaged) this.events.record("equipment", 1, key);
-    if (equipment?.item) this.slice.runFinds.equipment++;
-    if (crits) this.events.record("crits", crits, key);
-    return [...coinsText(gold, silver), ...cellsFound, ...found.map((g) => g.text)];
   }
   /** The end of a turn inside a run (a step, or a whole dash): each Ranged
    * enemy within reach whose cooldown is ready shoots the hero where it now
@@ -1613,7 +1573,7 @@ export class Game {
       if (!out.fell) this.message = `Shot · −${wholeChange(taken)} HP`;
     }
     for (const { enemy, at, instakill, crits } of out.kills)
-      this.message = [`Arrow · ${enemyTitle(enemy)} defeated`, ...this.payKill(enemy, at, 1, instakill, crits ? 1 : 0)].join(" · ");
+      this.message = [`Arrow · ${enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, at, 1, instakill, crits ? 1 : 0)].join(" · ");
     this.showVolley(out.shots);
     if (out.fell) {
       this.fallIn(before, out.fell);
@@ -1634,19 +1594,6 @@ export class Game {
     if (!shots.length) return;
     this.volley = { at: performance.now(), flight: Math.min(FLIGHT_MS, 800 / Math.max(1, this.stepsPerSecond)), shots };
   }
-  /** A kill counts toward the missions and the Event for its strength, once
-   * a `key` (the mode and the kill's loot key). */
-  private countKill(enemy: Enemy, key: string) {
-    const s = enemy.strength;
-    const type: MissionType & EventMissionType = s === "boss" || s === "greaterBoss" ? "bosses" : s === "strong" ? "strong" : s === "elite" ? "elite" : "basic";
-    this.missions.record(type, 1, key);
-    this.events.record(type, 1, key);
-  }
-  /** What a kill or pickup at `at` counts as for the missions: the mode
-   * and its loot key, so undo bringing the tile back can't count it again. */
-  private missionKey(at: { x: number; y: number }) {
-    return `${this.mode}:${this.rules.lootKey(this.run, at.x, at.y)}`;
-  }
   /** A desk's command counted toward the missions (Training, badges), and
    * the Event's alike. */
   missionDone(type: MissionType, amount: number) {
@@ -1658,12 +1605,6 @@ export class Game {
    * Equipment pulls and merges). */
   eventDone(type: EventMissionType, amount: number) {
     this.events.record(type, amount);
-  }
-  /** Raises the Gold and Silver just found from `at`, each only when some
-   * was; a kill always shows its Silver. */
-  gainCoins(at: { x: number; y: number }, gold: number, silver: number, alwaysSilver = true) {
-    if (gold) this.gain(at.x, at.y, `+${wholeChange(gold)} Gold`, { coin: "gold" });
-    if (silver || alwaysSilver) this.gain(at.x, at.y, `+${wholeChange(silver)} Silver`, { coin: "silver" });
   }
   /** The Gold killing the enemy at (x, y) would bank now (`instakill`:
    * the hero's first strike ending it), or 0 once its tile is looted. */
@@ -1780,7 +1721,7 @@ export class Game {
       this.floorHeal();
     }
     this.freeTrain(last - floorBefore);
-    this.gainCoins(at, gold, silver, false);
+    this.finds.coins(at, gold, silver, false);
   }
   /** Free Training for `floors` floors passed, one after another: the
    * levels each floor's rolls give (`rollFreeTraining`) join the run's
@@ -1807,7 +1748,7 @@ export class Game {
     if (!chance || tileRandom(-1, floor, (this.run.seed ^ YELLOW_KEY_SALT) | 0) * 1000 >= chance) return;
     const keys = this.run.player.keys;
     keys.yellow = snap(keys.yellow + 1);
-    this.noteKey("yellow", 1);
+    noteKey(this.run, "yellow", 1);
     this.gain(at.x, at.y, "+1 yellow key", { tile: { kind: "key", color: "yellow" } });
   }
   /** The hero takes the stairs; `floorSkip` (Skip on STAIRS) climbs past
@@ -1853,7 +1794,7 @@ export class Game {
     // After the first Tower run a plain new floor only says so on the status line.
     else if (this.save.tutorials.chamber) this.message = "A new chamber opens.";
     else this.feedback("A new chamber opens.");
-    this.gainCoins(p, snap(gold + skipGold), silver, false);
+    this.finds.coins(p, snap(gold + skipGold), silver, false);
   }
   /** Stands on the floor the climb just reached. */
   private enterTowerFloor(board: RoomWorld) {
@@ -1927,57 +1868,6 @@ export class Game {
     const playing = this.areaBursts.filter((b) => now - b.at < AREA_BURST_MS), last = playing.at(-1);
     this.areaBursts = [...playing, { reward, inspiration, at: last ? Math.max(now, last.at + AREA_BURST_MS) : now }];
     this.message = reward === "mastered" ? "Area mastered · checkpoint warp unlocked" : `Enemies cleared · +${inspiration} Inspiration`;
-  }
-  /** Pickup rewards and treasure payouts; stats were already applied. */
-  private collect(t: Tile, x: number, y: number, outcome: StepEffect) {
-    const text = pickupText(t, outcome, this.stepRules);
-    this.notePickup(t, outcome);
-    if (text) {
-      this.gain(x, y, text, { tile: { ...t } });
-      this.payPickup(t, { x, y });
-      if (t.kind === "potion") this.recordHeal(outcome.healed);
-      if (t.kind === "potion") this.missions.record("potions", 1, this.missionKey({ x, y }));
-      if (t.kind === "potion") this.events.record("potions", 1, this.missionKey({ x, y }));
-      if (t.kind === "key" && t.color !== "yellow") this.missions.record(t.color === "blue" ? "blueKeys" : "redKeys", 1, this.missionKey({ x, y }));
-      this.message = text;
-    }
-    if (t.kind === "treasure") this.openTreasure(x, y);
-  }
-  /** Gold Bonus's Gold for taking `t` (a torch when null) off the floor at
-   * `at`, or opening it (a door), rising a row up at the same time as the
-   * item's own gain (a door's last key or HP) where it has one. */
-  private payPickup(t: Tile | null, at: { x: number; y: number }) {
-    const gold = this.purse.pickupGold(at.x, at.y, pickupGold(t));
-    if (gold) this.gain(at.x, at.y, `+${wholeChange(gold)} Gold`, { coin: "gold" }, { row: 1, with: !!t });
-  }
-  /** A pickup counted in the run's notes: a key (by colour, under a
-   * badge's scale), a potion, or an ATK or DEF shard. */
-  private notePickup(t: Tile, outcome: StepEffect) {
-    const notes = notesOf(this.run);
-    if (!notes) return;
-    if (t.kind === "key") this.noteKey(t.color!, outcome.keyAmount ?? 1);
-    else if (t.kind === "potion") notes.potions++;
-    else if (t.kind === "attack") notes.attackShards++;
-    else if (t.kind === "defense") notes.defenseShards++;
-  }
-  /** A key obtained (picked up, traded or siphoned), counted in the run's notes. */
-  noteKey(color: KeyColor, amount: number) {
-    const notes = notesOf(this.run);
-    if (notes) tallyIn(notes.keys, color, amount);
-  }
-  /** A treasure chest: counted, and paid once per physical chest (undo and
-   * reopening can't pay it again). */
-  private openTreasure(x: number, y: number) {
-    this.run.treasures++;
-    this.events.record("chests", 1, this.missionKey({ x, y }));
-    const loot = this.purse.treasure(x, y);
-    if (!loot) return;
-    // The Gold at the tile, the materials below it, rising together.
-    this.gainDrops({ x, y }, [
-      { text: `+${wholeChange(loot.gold)} Gold`, art: { coin: "gold" } },
-      ...loot.materials.map((m) => ({ text: materialText(m), art: { material: m.id, quantity: m.quantity } })),
-    ]);
-    this.message = [`+${wholeChange(loot.gold)} Gold`, ...loot.materials.map(materialText)].join(" · ");
   }
   /** Ends the run (the End Run button), or, fallen, accepts defeat. */
   finish(reason: string) {
@@ -2157,39 +2047,8 @@ const QUANTITY_SETTINGS = { training: "buyQuantity", run: "runBuyQuantity", prov
 const SKIPPED_NAMES: Partial<Record<Tile["kind"], string>> = { door: "The door", key: "The key", potion: "The potion", attack: "The ATK shard", defense: "The DEF shard", treasure: "The chest", reward: "The chest" };
 
 /** How the status line opens on a fight won. */
-/** Cells found, as "+3 Cells" (to two decimals when a badge's scale left
- * a fraction). */
-const cellsText = (cells: number) => `+${keyCount(cells)} ${keyCount(cells) === "1" ? "Cell" : "Cells"}`;
 function fightText({ enemy, damage, revived }: FightEnd) {
   if (revived) return `Revived · ${enemyTitle(enemy)} defeated`;
   return damage ? `−${wholeChange(damage)} HP · ${enemyTitle(enemy)} defeated` : "Unscathed victory";
 }
 
-/** What a kill gave toward Equipment: the status line's words for each, and
- * the icon that rises off the board for it (a material with its count, or
- * the piece itself). */
-function equipmentGains(loot: EquipmentLoot | null): { text: string; art: GainArt }[] {
-  if (!loot) return [];
-  const gains: { text: string; art: GainArt }[] = [];
-  if (loot.materials) gains.push({ text: `+${loot.materials.quantity} ${EQUIP_MATERIALS[loot.materials.id].name}`, art: { equipMaterial: loot.materials.id, quantity: loot.materials.quantity } });
-  if (loot.item) gains.push({ text: `${RARITY_TIERS[loot.item.rarity].name} ${itemDef(loot.item.def)!.name}!`, art: { equipPiece: loot.item.def, rarity: loot.item.rarity } });
-  if (loot.salvaged) gains.push({ text: `${loot.salvaged.auto ? "Auto-salvaged" : "Inventory full"} · +${loot.salvaged.quantity} ${EQUIP_MATERIALS[loot.salvaged.id].name}`, art: { equipMaterial: loot.salvaged.id, quantity: loot.salvaged.quantity } });
-  return gains;
-}
-/** A kill's Gold (when it paid any) and Silver, as the status line names them. */
-const coinsText = (gold: number, silver: number) => [...(gold ? [`+${wholeChange(gold)} Gold`] : []), `+${wholeChange(silver)} Silver`];
-
-/** What picking up `t` shows: the key, the HP a potion healed, or the
- * shard's stat under `rules`; null for anything else. */
-function pickupText(t: Tile, outcome: StepEffect, rules: StepRules) {
-  switch (t.kind) {
-    case "key": return `+${keyCount(outcome.keyAmount ?? 1)} ${t.color} key`;
-    case "potion": return `+${wholeChange(outcome.healed)} HP`;
-    case "attack": return `+${enemyStat(shardStat(t, rules))} attack`;
-    case "defense": return `+${enemyStat(shardStat(t, rules))} defense`;
-    default: return null;
-  }
-}
-
-/** "+2 Slime Gels": a material reward as the board and status line name it. */
-const materialText = (m: MaterialStack) => `+${m.quantity} ${materialDef(m.id).name}${m.quantity > 1 ? "s" : ""}`;

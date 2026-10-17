@@ -5,15 +5,17 @@ import type { Mode } from "../entities.ts";
 import { snap } from "../exact.ts";
 import { flatShift, shiftHero } from "../hero-stats.ts";
 import { rankShift } from "../loadout.ts";
+import { noteKey } from "../run-notes.ts";
 import type { HandRules } from "../hand-rules.ts";
 import type { GainArt } from "../shown.ts";
 import { keyCount, wholeChange } from "../whole.ts";
 import type { RunPurse } from "./run-purse.ts";
 import type { DeskHost } from "./desk.ts";
+import type { Finds } from "./finds.ts";
 
 /** What a card's activation reads from the game and reports back to it:
- * the hand, its rules and the purse the run is paid through, and the
- * gains, heals, keys and XP the board and the run's notes record. */
+ * the hand, its rules and the purse the run is paid through, where its
+ * coins rise (`finds`), and the gains, heals and XP the board records. */
 export interface ActivationHost extends DeskHost {
   readonly mode: Mode;
   readonly hand: readonly CardId[];
@@ -21,11 +23,11 @@ export interface ActivationHost extends DeskHost {
   /** Inside a run the hero is still standing in. */
   readonly playing: boolean;
   readonly purse: RunPurse;
+  /** Where Silver and Gold Touch raise the coins they pay. */
+  readonly finds: Pick<Finds, "coins">;
   gain(x: number, y: number, text: string, art?: GainArt | null, drop?: undefined, kind?: "combo" | "xp"): void;
-  gainCoins(at: { x: number; y: number }, gold: number, silver: number, alwaysSilver?: boolean): void;
   addXp(xp: number): void;
   recordHeal(n: number): void;
-  noteKey(color: KeyColor, amount: number): void;
   /** A turn of its own begins: undo can take it back. */
   rememberTurn(): void;
   /** The step being taken pays out, so it is a turn undo stops at. */
@@ -56,8 +58,8 @@ export class CardActivation {
     switch (badge.id) {
       case "hp": return this.raiseMaxHp(v, badge.id);
       case "hpPercent": return this.badgeHeal(snap((p.maxHp * v) / 100), badge.id);
-      case "silverTouch": return host.gainCoins(p, 0, host.purse.silver(v));
-      case "goldTouch": return host.gainCoins(p, host.purse.badgeGold(`badge:${id}:${key}`, v), 0, false);
+      case "silverTouch": return host.finds.coins(p, 0, host.purse.silver(v));
+      case "goldTouch": return host.finds.coins(p, host.purse.badgeGold(`badge:${id}:${key}`, v), 0, false);
       case "goldback":
         if (card !== hand.length - 1) return;
         // The combo is the run's, so undo takes an activation back; the
@@ -99,7 +101,7 @@ export class CardActivation {
     else if (card === "blueTrader") {
       p.keys.yellow = snap(p.keys.yellow - TRADER_YELLOW_KEYS);
       p.keys.blue = snap(p.keys.blue + scale);
-      host.noteKey("blue", scale);
+      noteKey(run, "blue", scale);
       host.gain(p.x, p.y, `−${TRADER_YELLOW_KEYS} yellow keys`, { tile: { kind: "key", color: "yellow" } });
       host.gain(p.x, p.y, `+${keyCount(scale)} blue key`, { tile: { kind: "key", color: "blue" } });
     } else if (card === "keyToHp") {
@@ -123,7 +125,7 @@ export class CardActivation {
     const stat = row.stat as "maxHp" | "attack" | "defense";
     const loss = -(shiftHero(run, { [stat]: rankShift(host.save, host.mode, row, level, level - levels) })[stat] ?? 0);
     p.keys[color] = snap(p.keys[color] + scale);
-    host.noteKey(color, scale);
+    noteKey(run, color, scale);
     const lost = stat === "maxHp" ? `−${wholeChange(loss)} max HP` : `−${wholeChange(loss)} ${stat === "attack" ? "ATK" : "DEF"}`;
     host.gain(p.x, p.y, lost, stat === "maxHp" ? { heart: true } : { tile: { kind: stat } });
     host.gain(p.x, p.y, `+${keyCount(scale)} ${color} key`, { tile: { kind: "key", color } });
