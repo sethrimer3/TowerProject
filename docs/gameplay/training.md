@@ -30,6 +30,7 @@ The first run after On the Job is bought teaches the bar: a note over the hand e
 
 Every monster defeated pays XP, more for stronger monsters and higher floors, and XP carries over between runs.
 Each level needs more XP than the last (with the cube of the level), faster than the XP a kill rises with height, so levels come more slowly the higher you climb, even replaying the floors below.
+Past level 25 each level costs 25% more, past 50 another 50% more on top (×1.875), past 75 another 75% more (×3.28), past 100 double that (×6.56), and each 25 levels after that another 25% more (×8.2 past 125, ×10.25 past 150, …).
 The level shows as a large number at the front of the XP bar under the hero's portrait, which fills with the current level's progress; hovering it shows the XP gained toward the next level and what that level needs.
 Reaching a new level bursts fire outward from the hero, surrounds the hero with a glow for two seconds (fading over the last half second), and flashes "LEVEL UP!" over the board; once it fades, "+3" and the training points' golden arrow rise off the hero.
 

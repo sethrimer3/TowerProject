@@ -125,9 +125,14 @@ test("Shroud blocks 1 damage a fight and opens Shroud training", () => {
   assert.equal(trainingPoints(g.save).spent, 2, "a point a rank");
 });
 
-test("each level costs the cube of its number in XP, and levels are found exactly", () => {
-  assert.deepEqual([1, 5, 10, 20, 50].map(xpForLevel), [48, 1200, 6600, 42000, 561000]);
-  for (const level of [0, 1, 2, 7, 49, 300]) {
+test("each level costs the cube of its number in XP, more in each band of 25 levels, and levels are found exactly", () => {
+  assert.deepEqual([1, 5, 10, 20, 25, 26, 50, 51, 76, 101, 126].map(xpForLevel), [48, 1200, 6600, 42000, 78000, 89310, 681750, 743715, 3286283, 11811128, 38492691]);
+  // Each band raises a level's cost over the base curve's 12 × level × (level + 3) by 25%, 50%, 75%, 100%, then 25% each, more than the band below.
+  for (const [level, factor] of [[25, 1], [26, 1.25], [51, 1.875], [76, 3.28125], [101, 6.5625], [126, 8.203125], [151, 10.25390625]]) {
+    const cost = xpForLevel(level) - xpForLevel(level - 1);
+    assert.ok(Math.abs(cost - 12 * level * (level + 3) * factor) <= 1, `level ${level} costs ${cost}`);
+  }
+  for (const level of [0, 1, 2, 7, 25, 26, 49, 51, 76, 101, 126, 300]) {
     assert.equal(levelForXp(xpForLevel(level)), level);
     if (level) assert.equal(levelForXp(xpForLevel(level) - 1), level - 1);
   }
