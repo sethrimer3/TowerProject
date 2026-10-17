@@ -1,8 +1,7 @@
 import { interestCap, researched } from "../archives.ts";
-import { ENEMY_GOLD, FAST_GOLD, PICKUP_GOLD, RANGED_GOLD, SHIELDED_GOLD, silverForKill } from "../config.ts";
+import { ENEMY_GOLD, FAST_GOLD, PICKUP_GOLD, RANGED_GOLD, SHIELDED_GOLD, silverForKill, trainedAmount } from "../config.ts";
 import type { RoomWorld } from "../tower/room-world.ts";
 import { snap } from "../exact.ts";
-import { floorGold, floorSilver, goldBonus } from "../loadout.ts";
 import { averageGold, rollTreasureLoot } from "../loot.ts";
 import { pickupGold } from "../doors.ts";
 import { litTorches } from "../board.ts";
@@ -157,7 +156,7 @@ export class RunPurse {
   /** Gold Bonus training's and research's multiplier, in hundredths of a
    * percent (×1 is 10,000). */
   private get goldBonus() {
-    return goldBonus(this.trainingNow) * researched(this.save.archives, "goldBonus", 100);
+    return trainedAmount(this.trainingNow, "goldBonus") * researched(this.save.archives, "goldBonus", 100);
   }
 
   /** `base` Gold raised by Gold Bonus. */
@@ -260,7 +259,7 @@ export class RunPurse {
    * its Gold / Floor raised by research and the tier's bonus. Gated by
    * `key` in lootedTiles, like a kill's Gold; returns what it paid. */
   floorGold(key: string) {
-    const base = floorGold(this.trainingNow);
+    const base = trainedAmount(this.trainingNow, "floorGold");
     if (!base || !this.loot(key)) return 0;
     return this.gold(this.researched(base, "floorGold"));
   }
@@ -322,7 +321,7 @@ export class RunPurse {
    * run, its Silver / Floor raised by research and the run's boons, then by
    * Silver Bonus. Returns what it paid. */
   floorSilver() {
-    const base = floorSilver(this.trainingNow);
+    const base = trainedAmount(this.trainingNow, "floorSilver");
     return base ? this.silver(snap(this.researched(base, "floorSilver") * (this.boons?.floorSilver ?? 1))) : 0;
   }
 

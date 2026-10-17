@@ -3,9 +3,9 @@ import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { defaults } from "../src/save.ts";
 import { trainingOpen } from "../src/loadout.ts";
-import { TRAINING } from "../src/config.ts";
+import { TRAINING, trainedAmount } from "../src/config.ts";
 import { RESEARCH, researched } from "../src/archives.ts";
-import { floorGold, trainingStep } from "../src/loadout.ts";
+import { trainingStep } from "../src/loadout.ts";
 import { runTrainingValue } from "../src/run-training.ts";
 import { tierGold } from "../src/tiers.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
@@ -31,13 +31,13 @@ function standBeside(g: Game) {
 
 test("Spare Change opens Gold / Floor training (3, and 1 a rank) and its research", () => {
   const save = defaults(), row = TRAINING.find((t) => t.id === "floorGold")!;
-  assert.equal(floorGold(save), 0);
+  assert.equal(trainedAmount(save, "floorGold"), 0);
   assert.equal(trainingOpen(row, save), false);
   save.upgrades.spareChange = 1;
   assert.ok(trainingOpen(row, save));
-  assert.equal(floorGold(save), 3);
+  assert.equal(trainedAmount(save, "floorGold"), 3);
   save.training.floorGold = 4;
-  assert.equal(floorGold(save), 7);
+  assert.equal(trainedAmount(save, "floorGold"), 7);
   assert.deepEqual([trainingStep(save, "floorGold").now, trainingStep(save, "floorGold").next], [7, 8]);
   assert.deepEqual(RESEARCH.floorGold.requires, [{ upgrade: "spareChange" }]);
   assert.equal(RESEARCH.floorGold.levels.length, 100);

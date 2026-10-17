@@ -2,14 +2,14 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { defaults } from "../src/save.ts";
-import { ENEMY_GOLD, RANGED_GOLD, TRAINING } from "../src/config.ts";
+import { ENEMY_GOLD, RANGED_GOLD, TRAINING, trainedAmount } from "../src/config.ts";
 import { fastShare } from "../src/fast-enemies.ts";
 import { ARCHER_TICKS, archerTurn, ARROW_COST, arrowBoost, arrowDamage, charged, enemiesWithin, FOE_GAIN, foeRange, foeShotCost, held, rangedShare, ready, shotDamage, spent, within, wounded } from "../src/ranged.ts";
 import { enemyTitle } from "../src/scaling.ts";
 import { tierCells, tierGold } from "../src/tiers.ts";
 import { generateTowerRoom, RoomWorld } from "../src/tower/room-world.ts";
 import { heroClass, isArcher } from "../src/goals.ts";
-import { attackPerTile, attackRange, attackSpeed, multishotChance, multishotTargets, rapidFireChance, rapidFireDuration, trainingOpen, trainingStep, trainingText } from "../src/loadout.ts";
+import { trainingOpen, trainingStep, trainingText } from "../src/loadout.ts";
 import { runTrainingValue, silverPrice } from "../src/run-training.ts";
 import { trainingGold } from "../src/training-jobs.ts";
 import { RESEARCH } from "../src/archives.ts";
@@ -207,10 +207,10 @@ test("an arrow that fells an unwounded enemy pays the kill as an instakill; a re
 
 test("Attack Range and Attack Speed: 3.00 tiles and 1.00 shot every 10 turns, 0.05 more a rank, 7 and 6 at their most, opened by Tower III's floors 20 and 30", () => {
   const save = defaults();
-  assert.deepEqual([attackRange(save), attackSpeed(save)], [300, 20]);
+  assert.deepEqual([trainedAmount(save, "attackRange"), trainedAmount(save, "attackSpeed")], [300, 20]);
   save.training.attackRange = 80;
   save.training.attackSpeed = 100;
-  assert.deepEqual([attackRange(save), attackSpeed(save)], [700, 120]);
+  assert.deepEqual([trainedAmount(save, "attackRange"), trainedAmount(save, "attackSpeed")], [700, 120]);
   save.training.attackRange = 1;
   const step = trainingStep(save, "attackRange");
   assert.deepEqual([step.now, step.next, trainingText(step.now, step.unit)], [3.05, 3.1, "3.05 tiles"]);
@@ -234,7 +234,7 @@ test("ATK / Tile: 0.01 a tile for the first rank, each later rank 0.00004 less, 
   assert.equal(trainingOpen(row, save), false);
   save.goals.claimed[3] = [50];
   assert.equal(trainingOpen(row, save), true);
-  assert.deepEqual([0, 1, 2, 200].map((r) => attackPerTile({ training: { ...save.training, attackPerTile: r } })), [0, 1000, 1996, 120_400]);
+  assert.deepEqual([0, 1, 2, 200].map((r) => trainedAmount({ training: { ...save.training, attackPerTile: r } }, "attackPerTile")), [0, 1000, 1996, 120_400]);
   save.training.attackPerTile = 1;
   const step = trainingStep(save, "attackPerTile");
   assert.deepEqual([step.now, step.next, trainingText(step.now, step.unit), trainingText(step.next, step.unit)], [0.01, 0.01996, "+0.010×/tile", "+0.020×/tile"]);
@@ -326,8 +326,8 @@ test("Multishot Chance and Targets: 0.5% a rank to 49.5% at 99, and 2 targets to
   save.goals.claimed[3] = [70];
   assert.deepEqual(rows.map((r) => trainingOpen(r, save)), [true, true]);
   const at = (training: Partial<typeof save.training>) => ({ training: { ...save.training, ...training } });
-  assert.deepEqual([0, 1, 10, 99].map((r) => multishotChance(at({ multishotChance: r }))), [0, 50, 500, 4950]);
-  assert.deepEqual([0, 1, 7].map((r) => multishotTargets(at({ multishotTargets: r }))), [2, 3, 9]);
+  assert.deepEqual([0, 1, 10, 99].map((r) => trainedAmount(at({ multishotChance: r }), "multishotChance")), [0, 50, 500, 4950]);
+  assert.deepEqual([0, 1, 7].map((r) => trainedAmount(at({ multishotTargets: r }), "multishotTargets")), [2, 3, 9]);
   save.training.multishotChance = 98;
   const chance = trainingStep(save, "multishotChance");
   assert.deepEqual([chance.unit, chance.now, chance.next], ["%", 49, 49.5]);
@@ -387,8 +387,8 @@ test("Rapid Fire Chance and Duration: 0.4% a rank to 34% at 85, and 1 turn, +0.0
   save.goals.claimed[3] = [80];
   assert.deepEqual(rows.map((r) => trainingOpen(r, save)), [true, true]);
   const at = (training: Partial<typeof save.training>) => ({ training: { ...save.training, ...training } });
-  assert.deepEqual([0, 1, 10, 85].map((r) => rapidFireChance(at({ rapidFireChance: r }))), [0, 40, 400, 3400]);
-  assert.deepEqual([0, 1, 10, 99].map((r) => rapidFireDuration(at({ rapidFireDuration: r }))), [100, 105, 150, 595]);
+  assert.deepEqual([0, 1, 10, 85].map((r) => trainedAmount(at({ rapidFireChance: r }), "rapidFireChance")), [0, 40, 400, 3400]);
+  assert.deepEqual([0, 1, 10, 99].map((r) => trainedAmount(at({ rapidFireDuration: r }), "rapidFireDuration")), [100, 105, 150, 595]);
   save.training.rapidFireChance = 84;
   const chance = trainingStep(save, "rapidFireChance");
   assert.deepEqual([chance.unit, chance.now, chance.next], ["%", 33.6, 34]);

@@ -1,4 +1,6 @@
 import type { EnemyStrength } from "./entities.ts";
+import type { GoalUnlock } from "./goals.ts";
+import type { ResearchTarget } from "./archives.ts";
 import { halfPow, intPow, snap } from "./exact.ts";
 export const UNGUARDED_LOOT_CHANCE = 1 / 1000;
 export const WIDTH = 30;
@@ -577,54 +579,6 @@ export const TRAINING_PER_LEVEL = 3;
 /** The groups the Training tab, and a run's training bar, show the rows
  * in, in order. */
 export const TRAINING_GROUPS = { offense: "Offense", defense: "Defense", utility: "Utility" } as const;
-/** What training raises, each rank costing `cost` points. A stat row's
- * ranks add up on its own rank curve (`curve`, see `trained`), never on the
- * hero's level: levels only earn the points that buy ranks. Each curve is
- * super-linear, every rank worth more than the one before, but Thorn
- * Damage's and Parry %'s, a flat percent a rank (1 and 0.5). Regen adds to
- * the HP regained each step in a run, Shroud to the damage the shroud
- * blocks each fight, Lifesteal (0.1% of the damage a strike deals for the
- * first rank, each later rank adding 0.001% less, 0.021% for the 80th, 4.84%
- * in all) to the share of it restored as HP. Potion % adds `POTION_PERCENT_RANK`
- * to what a percent potion restores, Find Potion `FIND_POTION_RANK` to
- * the chance a potion is a percent potion, Gold / Floor
- * `FLOOR_GOLD_RANK` to the Gold a new floor pays and Silver / Floor
- * `FLOOR_SILVER_RANK` to its Silver, and Silver Bonus `SILVER_BONUS_RANK`
- * and Gold Bonus `GOLD_BONUS_RANK` percent to their multiplier, the same at
- * every level. A row
- * with `requires` shows, and trains, only once that upgrade is owned. Each
- * trains no further than its cap (`trainingCap`): `max` ranks, and
- * `LIMIT_BREAK_RANKS` more for each of its first `breaks` Limit Breaks owned,
- * its ranks and those bought for a run with Silver together. */
-export const TRAINING = [
-  { id: "hp", name: "Max HP", group: "defense", stat: "maxHp", curve: { per: 10, square: 1 }, cost: 1, max: 1000, breaks: 10, description: "Raises maximum HP." },
-  { id: "attack", name: "ATK", group: "offense", stat: "attack", curve: { per: 1, square: 0.2 }, cost: 1, max: 1000, breaks: 10, description: "Raises ATK, the damage each strike deals before the enemy's DEF." },
-  { id: "critChance", name: "Critical Chance", short: "Crit %", group: "offense", requires: "critical", cost: 1, max: 80, description: "Raises the chance each of your strikes is a critical hit." },
-  { id: "critFactor", name: "Critical Factor", short: "Crit x", group: "offense", requires: "critical", cost: 1, max: 150, description: "Raises how much a critical hit multiplies your ATK." },
-  { id: "attackRange", name: "Attack Range", short: "Range", group: "offense", goal: "attackRange", cost: 1, max: 80, description: "Raises how far the Archer's shots reach, in tiles." },
-  { id: "attackSpeed", name: "Attack Speed", short: "Speed", group: "offense", goal: "attackSpeed", cost: 1, max: 100, description: "Raises how many shots the Archer fires every 10 turns." },
-  { id: "attackPerTile", name: "ATK / Tile", short: "ATK/Tile", group: "offense", goal: "attackPerTile", cost: 1, max: 200, description: "Multiplies the ATK of each of the Archer's shots by more for every tile its target stands away." },
-  { id: "multishotChance", name: "Multishot Chance", short: "Multi %", group: "offense", goal: "multishot", cost: 1, max: 99, description: "Raises the chance each of the Archer's shots fires more than one arrow, each at another enemy in range." },
-  { id: "multishotTargets", name: "Multishot Targets", short: "Targets", group: "offense", goal: "multishot", cost: 1, max: 7, description: "Raises how many arrows a multishot fires, one at each of that many enemies in range." },
-  { id: "rapidFireChance", name: "Rapid Fire Chance", short: "Rapid %", group: "offense", goal: "rapidFire", cost: 1, max: 85, description: "Raises the chance each of the Archer's shots starts Rapid Fire: shots come four times as fast for a while." },
-  { id: "rapidFireDuration", name: "Rapid Fire Duration", short: "Duration", group: "offense", goal: "rapidFire", cost: 1, max: 99, description: "Raises how many turns Rapid Fire lasts once it starts." },
-  { id: "defense", name: "DEF", group: "defense", stat: "defense", curve: { per: 0, square: 1 / 12 }, cost: 1, max: 1000, breaks: 10, description: "Raises DEF, taken off the damage of every enemy strike." },
-  { id: "regen", name: "Regen", group: "defense", stat: "regen", curve: { per: 0.1, square: 1 / 120 }, cost: 1, max: 1000, breaks: 10, requires: "regen", description: "Raises the HP regained with every step taken in a run." },
-  { id: "shroud", name: "Shroud", group: "defense", stat: "shroud", curve: { per: 5, square: 0.1, fourth: 0.0000064 }, cost: 1, max: 1000, breaks: 8, requires: "shroud", description: "Raises the damage the shroud blocks at the start of every fight." },
-  { id: "lifesteal", name: "Lifesteal", group: "defense", stat: "lifesteal", curve: { per: 0.1005, square: -0.0005 }, cost: 1, max: 80, requires: "lifesteal", description: "Raises the share of the damage each of your strikes deals that is restored to you as HP." },
-  { id: "thorns", name: "Thorn Damage", short: "Thorns", group: "defense", stat: "thorns", curve: { per: 1 }, cost: 1, max: 99, requires: "thorns", description: "Each enemy strike costs the enemy this share of its max HP, half against bosses and Greater Bosses." },
-  { id: "parry", name: "Parry %", group: "defense", stat: "parry", curve: { per: 0.5 }, cost: 1, max: 100, requires: "parry", description: "Raises how much every enemy strike's damage is cut." },
-  { id: "revive", name: "Revive", group: "defense", requires: "revive", cost: 1, max: 99, description: "Raises the chance a strike that would fell you revives you at full HP instead." },
-  { id: "floorGold", name: "Gold / Floor", group: "utility", requires: "spareChange", cost: 1, max: 150, description: "Raises the Gold paid for each floor climbed for the first time in a run." },
-  { id: "floorSilver", name: "Silver / Floor", group: "utility", requires: "wishingWell", cost: 1, max: 150, description: "Raises the Silver paid for each floor climbed for the first time in a run." },
-  { id: "silverBonus", name: "Silver Bonus", group: "utility", requires: "wealthy", cost: 1, max: 150, description: "Multiplies all Silver found in a run." },
-  { id: "goldBonus", name: "Gold Bonus", group: "utility", requires: "loot", cost: 1, max: 150, description: "Multiplies the Gold kills, chests, items picked up and doors opened pay in a run, and what Floor Skip pays for them, with Gold Bonus research. Gold / Floor and Interest aren't raised." },
-  { id: "freeOffense", name: "Free Offense Up", group: "utility", requires: "freeTraining", cost: 1, max: 100, description: "Each floor passed in a run has a chance to train a random Offense stat one level for free, for the run." },
-  { id: "freeDefense", name: "Free Defense Up", group: "utility", requires: "freeTraining", cost: 1, max: 100, description: "Each floor passed in a run has a chance to train a random Defense stat one level for free, for the run." },
-  { id: "freeUtility", name: "Free Utility Up", group: "utility", requires: "freeTraining", cost: 1, max: 100, description: "Each floor passed in a run has a chance to train a random Utility stat one level for free, for the run." },
-  { id: "potion", name: "Potion %", group: "utility", requires: "recovery", cost: 1, max: 300, description: "Percent potions restore more of your maximum HP." },
-  { id: "findPotion", name: "Find Potion", group: "utility", requires: "findPotion", cost: 1, max: 72, description: "More of the potions found are percent potions." },
-] as const;
 export type TrainingId = (typeof TRAINING)[number]["id"];
 export type TrainingRow = (typeof TRAINING)[number];
 /** The Limit Break skills, in the order the chain buys them. */
@@ -643,58 +597,6 @@ export const trainingCeiling = (row: TrainingRow) => row.max + LIMIT_BREAK_RANKS
 /** A row that raises one of the character's stats. */
 export type StatTrainingRow = Extract<TrainingRow, { stat: string }>;
 export const isStatRow = (row: TrainingRow): row is StatTrainingRow => "stat" in row;
-/** The Archer's reach (Attack Range), in hundredths of a tile: 3 tiles,
- * and 0.05 more a rank, 7 at its 80. Its rate of fire (Attack Speed), in
- * twentieths of a shot every 10 turns: 1 shot, and 0.05 more a rank, 6 at
- * its 100 (ranged.ts). */
-export const ATTACK_RANGE_BASE = 300, ATTACK_RANGE_RANK = 5, ATTACK_SPEED_BASE = 20, ATTACK_SPEED_RANK = 1;
-/** ATK / Tile, in hundred-thousandths of ×1 a tile: the first rank adds
- * 0.01 a tile, and each later rank 0.00004 less (0.00204 for the 200th),
- * 1.204 a tile in all. An arrow's ATK is multiplied by 1 + this × the
- * Euclidean distance to its target (ranged.ts). */
-export const ATK_PER_TILE_FIRST = 1000, ATK_PER_TILE_FALL = 4;
-/** The chance each of the Archer's shots is a multishot, in hundredths of a
- * percent: 0.5% a Multishot Chance rank, 49.5% at its 99. A multishot fires
- * at up to `MULTISHOT_TARGETS_BASE` enemies, and one more a Multishot
- * Targets rank, 9 at its 7 (ranged.ts). */
-export const MULTISHOT_CHANCE_RANK = 50, MULTISHOT_TARGETS_BASE = 2, MULTISHOT_TARGETS_RANK = 1;
-/** The chance each of the Archer's shots, fired while Rapid Fire isn't,
- * starts it, in hundredths of a percent: 0.4% a Rapid Fire Chance rank,
- * 34% at its 85. How long it lasts, in hundredths of a turn: 1 turn, and
- * 0.05 more a Rapid Fire Duration rank, 5.95 at its 99. While it lasts the
- * Archer's arrows charge `RAPID_FIRE_SPEED` times as fast (ranged.ts). */
-export const RAPID_FIRE_CHANCE_RANK = 40, RAPID_FIRE_DURATION_BASE = 100, RAPID_FIRE_DURATION_RANK = 5;
-/** What a percent potion restores beyond its HP, in hundredths of a percent
- * of max HP: 1% with Recovery, and 0.25% more for each Potion % rank. */
-export const POTION_PERCENT_BASE = 100, POTION_PERCENT_RANK = 25;
-/** The chance each potion that may be one is a percent potion, in
- * hundredths of a percent: 2% with Recovery, and 0.25% more for each Find
- * Potion rank, up to 20% (72 ranks). */
-export const FIND_POTION_BASE = 200, FIND_POTION_RANK = 25, FIND_POTION_MAX = 2000;
-/** The chance each strike that would fell the hero revives it instead, in
- * hundredths of a percent: 0.5% with Revive, and 0.5% more for each Revive
- * rank, up to 50% (99 ranks). */
-export const REVIVE_BASE = 50, REVIVE_RANK = 50, REVIVE_MAX = 5000;
-/** The chance each of the hero's strikes is critical, in hundredths of a
- * percent: 1% a Crit % rank. A critical strike multiplies the hero's ATK by
- * the critical factor, in hundredths: ×1.2 with Critical, and ×0.1 more a
- * Crit x rank. */
-export const CRIT_CHANCE_RANK = 100, CRIT_FACTOR_BASE = 120, CRIT_FACTOR_RANK = 10;
-/** The Gold each floor climbed for the first time in a run pays, before
- * the tier's bonus and Gold / Floor research: 3 with Spare Change, and 1
- * more for each Gold / Floor rank. */
-export const FLOOR_GOLD_BASE = 3, FLOOR_GOLD_RANK = 1;
-/** The Silver each floor climbed for the first time in a run pays, before
- * Silver / Floor research and Silver Bonus: none with Wishing Well alone,
- * and 4 for each Silver / Floor rank. */
-export const FLOOR_SILVER_BASE = 0, FLOOR_SILVER_RANK = 4;
-/** What each Silver Bonus or Gold Bonus rank adds to its multiplier, in
- * percent (×1 with no ranks). */
-export const SILVER_BONUS_RANK = 1, GOLD_BONUS_RANK = 3;
-/** The chance each floor passed in a run trains a stat of a Free Upgrade
- * row's group a level for free, in hundredths of a percent: 0.5% a rank,
- * 50% at its 100. */
-export const FREE_TRAINING_RANK = 50;
 /** A price that rises with each purchase (a Training row's Silver inside a
  * run, a provision's Gold): the first costs `base`, and each one after
  * costs more than the last by `step` plus the number already bought, the
@@ -799,38 +701,6 @@ const rapidFirePrices = (ranks: number) => ({
   prices: Array.from({ length: ranks }, (_, m) => Math.ceil((24_000 + 8_400 * m + 1_570 * m * m + 17 * m * m * m) / 200)),
 });
 const rapidFireChancePrices = rapidFirePrices(85), rapidFireDurationPrices = rapidFirePrices(99);
-/** Training bought with Silver inside a run, lasting only for that run:
- * each row's price schedule. The rows open from the start cost least, the
- * ones later skills open more. */
-export const RUN_TRAINING_PRICES: Record<TrainingId, PriceSchedule> = {
-  hp: vital,
-  attack: cheap,
-  critChance: opened,
-  critFactor: { base: 12, step: 2, growth: 3 },
-  attackRange: rangePrices,
-  attackSpeed: speedPrices,
-  attackPerTile: perTilePrices,
-  multishotChance: multishotChancePrices,
-  multishotTargets: multishotTargetsPrices,
-  rapidFireChance: rapidFireChancePrices,
-  rapidFireDuration: rapidFireDurationPrices,
-  defense: cheap,
-  regen: cheap,
-  shroud: vital,
-  potion: deep,
-  findPotion: deep,
-  revive: revivePrices,
-  lifesteal: { base: 60, growth: 20.5, power: 2 },
-  thorns: thornPrices,
-  parry: parryPrices,
-  floorGold: opened,
-  floorSilver: opened,
-  silverBonus: opened,
-  goldBonus: opened,
-  freeOffense: freeUpgrades,
-  freeDefense: freeUpgrades,
-  freeUtility: freeUpgrades,
-};
 /** A trainer's Gold curve: each rank asks `TRAINING_GOLD_PER_POINT` Gold
  * a point of the row's cost times the rank's number, times 1 + ranks /
  * `growth` (see `trainingGold`), so a smaller `growth` pulls away faster. A
@@ -852,47 +722,268 @@ const gentleTrainers: TrainerCurve = { growth: 60, cubic: 800 };
 /** The Offense crit rows: from 30 Gold, rising with the cube of the ranks done
  * (`power`), so the 13th rank costs 2,356, the 35th 121,000 and the 72nd 2.26 million. */
 const critTrainers: TrainerCurve = { growth: 7, start: 30, power: 3 };
-/** Each row's trainer Gold curve, kept apart from its Silver schedule
- * (`RUN_TRAINING_PRICES`) so either can change alone. */
-export const TRAINER_GOLD_CURVES: Record<TrainingId, TrainerCurve> = {
-  hp: gentleTrainers,
-  attack: mildTrainers,
-  /** Crit % and Crit x: 30 Gold for the first rank, then 30 × n × (1 + ((n − 1) / 7)³) for the n-th (1,000+ by the 13th, 100,000+ by the 35th, a million by the 72nd). */
-  critChance: critTrainers,
-  critFactor: critTrainers,
-  /** Attack Range and Attack Speed: the same curves as their Silver. */
-  attackRange: { growth: rangePrices.growth, start: rangePrices.base, cubic: rangePrices.cubic },
-  attackSpeed: { growth: speedPrices.growth, start: speedPrices.base, cubic: speedPrices.cubic },
-  /** ATK / Tile: the same curve as its Silver (`perTilePrices`). */
-  attackPerTile: { start: perTilePrices.base, ratio: perTilePrices.ratio, rise: perTilePrices.rise },
-  /** Multishot Chance and Targets: the same curves as their Silver. */
-  multishotChance: { growth: multishotChancePrices.growth, start: multishotChancePrices.base, power: multishotChancePrices.power },
-  multishotTargets: multishotTargetsPrices,
-  /** Rapid Fire Chance and Duration: the same lists as their Silver. */
-  rapidFireChance: rapidFireChancePrices,
-  rapidFireDuration: rapidFireDurationPrices,
-  defense: mildTrainers,
-  regen: mildTrainers,
-  shroud: { ...gentleTrainers, cubic: 700 },
-  potion: steepTrainers,
-  findPotion: { ...steepTrainers, cubic: 25 },
-  /** Revive: the same curve as its Silver (`revivePrices`). */
-  revive: { growth: revivePrices.growth, start: revivePrices.base, power: revivePrices.power },
-  /** Lifesteal: 60 Gold for the first rank, then 60 × n × (1 + ((n − 1) / 20.5)²) for the n-th: about 1,000 for the 13th, 9,000 for the 37th and 70,000 for the 80th. */
-  lifesteal: { growth: 20.5, start: 60, power: 2 },
-  /** Thorn Damage and Parry %: the same curves as their Silver. */
-  thorns: { growth: thornPrices.growth, start: thornPrices.base, power: thornPrices.power },
-  parry: { growth: parryPrices.growth, start: parryPrices.base, power: parryPrices.power },
-  floorGold: firmTrainers,
-  floorSilver: firmTrainers,
-  silverBonus: firmTrainers,
-  goldBonus: firmTrainers,
-  /** The Free Upgrade rows: the same curve as their Silver (`freeUpgrades`). */
-  freeOffense: { growth: freeUpgrades.growth, start: freeUpgrades.base, cubic: freeUpgrades.cubic },
-  freeDefense: { growth: freeUpgrades.growth, start: freeUpgrades.base, cubic: freeUpgrades.cubic },
-  freeUtility: { growth: freeUpgrades.growth, start: freeUpgrades.base, cubic: freeUpgrades.cubic },
+/** The Free Upgrade rows' trainers: the same curve as their Silver (`freeUpgrades`). */
+const freeUpgradeTrainers: TrainerCurve = { growth: freeUpgrades.growth, start: freeUpgrades.base, cubic: freeUpgrades.cubic };
+/** How a value row's amount reads on the Training tab and the run's cards
+ * (`trainingText`): a multiplier (×1.30), tiles, shots every 10 turns, ATK
+ * multiplier a tile, targets, turns, a percent, or a bare amount. */
+export type TrainingUnit = "×" | "tiles" | "shots" | "perTile" | "targets" | "turns" | "%" | "";
+/** One Training row, all of it in one place. Each rank costs `cost`
+ * training points, and the row trains no further than its cap
+ * (`trainingCap`): `max` ranks, and `LIMIT_BREAK_RANKS` more for each of its
+ * first `breaks` Limit Breaks owned, its ranks and those bought for a run with
+ * Silver together. A row with `requires` shows, and trains, only once that
+ * upgrade is owned, and one with `goal` once that Goals checkpoint is claimed
+ * (`trainingOpen`).
+ *
+ * Its ranks add up on its rank `curve` (`trained`). A stat row's (`stat`) add
+ * to that stat of the hero, never by the hero's level: levels only earn
+ * the points that buy ranks. Any other row is a value row, whose amount is
+ * `base` plus its curve, up to `cap`, in its own units, `scale` of them to
+ * one `unit` shown (`amountAt`). The game reads a value row's amount by
+ * `trainedAmount`: `off` (0 unless given) until its `needs` upgrade is owned
+ * (its `requires` unless given), and its ranks counted only once its
+ * `requires` is.
+ *
+ * `research` multiplies what the row's value does (`rowResearchFactor`).
+ * A rank bought with Silver inside a run, for that run alone, costs by the
+ * row's `silver` schedule, and one a trainer trains costs Gold by its `gold`
+ * curve (`trainingGold`): two curves chosen apart, the dearer a row's first
+ * Silver rank the steeper its trainers. */
+export type TrainingDef = {
+  readonly id: string;
+  readonly name: string;
+  readonly short?: string;
+  readonly group: keyof typeof TRAINING_GROUPS;
+  readonly requires?: UpgradeId;
+  readonly goal?: GoalUnlock;
+  readonly cost: number;
+  readonly max: number;
+  readonly breaks?: number;
+  readonly description: string;
+  readonly stat?: string;
+  readonly curve: TrainingCurve;
+  readonly base?: number;
+  readonly cap?: number;
+  readonly scale?: number;
+  readonly unit?: TrainingUnit;
+  readonly needs?: UpgradeId;
+  readonly off?: number;
+  readonly research?: ResearchTarget;
+  readonly silver: PriceSchedule;
+  readonly gold: TrainerCurve;
 };
-/** A stat row's rank curve: what `n` ranks add up to is `per` × n +
+/** The Training rows, in the order the Training tab and a run's training
+ * bar list them within each group. Every stat row's curve is super-linear,
+ * every rank worth more than the one before, but Thorn Damage's and
+ * Parry %'s, a flat percent a rank. */
+export const TRAINING = [
+  {
+    id: "hp", name: "Max HP", group: "defense", stat: "maxHp", curve: { per: 10, square: 1 }, cost: 1, max: 1000, breaks: 10,
+    description: "Raises maximum HP.",
+    silver: vital, gold: gentleTrainers,
+  },
+  {
+    id: "attack", name: "ATK", group: "offense", stat: "attack", curve: { per: 1, square: 0.2 }, cost: 1, max: 1000, breaks: 10,
+    description: "Raises ATK, the damage each strike deals before the enemy's DEF.",
+    silver: cheap, gold: mildTrainers,
+  },
+  // The chance each of the hero's strikes is critical, in hundredths of a
+  // percent: 1% a rank, before research.
+  {
+    id: "critChance", name: "Critical Chance", short: "Crit %", group: "offense", requires: "critical", cost: 1, max: 80,
+    curve: { per: 100 }, scale: 100, unit: "%", research: "critChancePercent",
+    description: "Raises the chance each of your strikes is a critical hit.",
+    silver: opened, gold: critTrainers,
+  },
+  // What a critical strike multiplies the hero's ATK by, in hundredths:
+  // ×1.2 with Critical, and ×0.1 more a rank, before research.
+  {
+    id: "critFactor", name: "Critical Factor", short: "Crit x", group: "offense", requires: "critical", cost: 1, max: 150,
+    curve: { per: 10 }, base: 120, off: 100, scale: 100, unit: "×", research: "critFactorPercent",
+    description: "Raises how much a critical hit multiplies your ATK.",
+    silver: { base: 12, step: 2, growth: 3 }, gold: critTrainers,
+  },
+  // The Archer's reach, in hundredths of a tile: 3 tiles, and 0.05 more a
+  // rank, 7 at its 80 (ranged.ts).
+  {
+    id: "attackRange", name: "Attack Range", short: "Range", group: "offense", goal: "attackRange", cost: 1, max: 80,
+    curve: { per: 5 }, base: 300, scale: 100, unit: "tiles",
+    description: "Raises how far the Archer's shots reach, in tiles.",
+    silver: rangePrices, gold: { growth: rangePrices.growth, start: rangePrices.base, cubic: rangePrices.cubic },
+  },
+  // The Archer's rate of fire, in twentieths of a shot every 10 turns: 1
+  // shot, and 0.05 more a rank, 6 at its 100 (ranged.ts).
+  {
+    id: "attackSpeed", name: "Attack Speed", short: "Speed", group: "offense", goal: "attackSpeed", cost: 1, max: 100,
+    curve: { per: 1 }, base: 20, scale: 20, unit: "shots",
+    description: "Raises how many shots the Archer fires every 10 turns.",
+    silver: speedPrices, gold: { growth: speedPrices.growth, start: speedPrices.base, cubic: speedPrices.cubic },
+  },
+  // What ATK / Tile adds to an arrow's ATK multiplier for each tile to its
+  // target, in hundred-thousandths of ×1: 0.01 for the first rank, and each
+  // later rank 0.00004 less (0.00204 for the 200th), 1.204 a tile in all.
+  // An arrow's ATK is multiplied by 1 + this × the Euclidean distance to
+  // its target (ranged.ts).
+  {
+    id: "attackPerTile", name: "ATK / Tile", short: "ATK/Tile", group: "offense", goal: "attackPerTile", cost: 1, max: 200,
+    curve: { per: 1002, square: -2 }, scale: 100_000, unit: "perTile",
+    description: "Multiplies the ATK of each of the Archer's shots by more for every tile its target stands away.",
+    silver: perTilePrices, gold: { start: perTilePrices.base, ratio: perTilePrices.ratio, rise: perTilePrices.rise },
+  },
+  // The chance each of the Archer's shots is a multishot, in hundredths of
+  // a percent: 0.5% a rank, 49.5% at its 99 (ranged.ts).
+  {
+    id: "multishotChance", name: "Multishot Chance", short: "Multi %", group: "offense", goal: "multishot", cost: 1, max: 99,
+    curve: { per: 50 }, scale: 100, unit: "%",
+    description: "Raises the chance each of the Archer's shots fires more than one arrow, each at another enemy in range.",
+    silver: multishotChancePrices, gold: { growth: multishotChancePrices.growth, start: multishotChancePrices.base, power: multishotChancePrices.power },
+  },
+  // How many enemies a multishot fires at: 2, and one more a rank, 9 at its 7.
+  {
+    id: "multishotTargets", name: "Multishot Targets", short: "Targets", group: "offense", goal: "multishot", cost: 1, max: 7,
+    curve: { per: 1 }, base: 2, unit: "targets",
+    description: "Raises how many arrows a multishot fires, one at each of that many enemies in range.",
+    silver: multishotTargetsPrices, gold: multishotTargetsPrices,
+  },
+  // The chance each of the Archer's shots, fired while Rapid Fire isn't,
+  // starts it, in hundredths of a percent: 0.4% a rank, 34% at its 85.
+  // While it lasts the Archer's arrows charge `RAPID_FIRE_SPEED` times as
+  // fast (ranged.ts).
+  {
+    id: "rapidFireChance", name: "Rapid Fire Chance", short: "Rapid %", group: "offense", goal: "rapidFire", cost: 1, max: 85,
+    curve: { per: 40 }, scale: 100, unit: "%",
+    description: "Raises the chance each of the Archer's shots starts Rapid Fire: shots come four times as fast for a while.",
+    silver: rapidFireChancePrices, gold: rapidFireChancePrices,
+  },
+  // How long Rapid Fire lasts, in hundredths of a turn: 1 turn, and 0.05
+  // more a rank, 5.95 at its 99.
+  {
+    id: "rapidFireDuration", name: "Rapid Fire Duration", short: "Duration", group: "offense", goal: "rapidFire", cost: 1, max: 99,
+    curve: { per: 5 }, base: 100, scale: 100, unit: "turns",
+    description: "Raises how many turns Rapid Fire lasts once it starts.",
+    silver: rapidFireDurationPrices, gold: rapidFireDurationPrices,
+  },
+  {
+    id: "defense", name: "DEF", group: "defense", stat: "defense", curve: { per: 0, square: 1 / 12 }, cost: 1, max: 1000, breaks: 10,
+    description: "Raises DEF, taken off the damage of every enemy strike.",
+    silver: cheap, gold: mildTrainers,
+  },
+  // The HP regained each step taken in a run.
+  {
+    id: "regen", name: "Regen", group: "defense", stat: "regen", curve: { per: 0.1, square: 1 / 120 }, cost: 1, max: 1000, breaks: 10, requires: "regen",
+    research: "regenPercent",
+    description: "Raises the HP regained with every step taken in a run.",
+    silver: cheap, gold: mildTrainers,
+  },
+  // The damage the shroud blocks each fight.
+  {
+    id: "shroud", name: "Shroud", group: "defense", stat: "shroud", curve: { per: 5, square: 0.1, fourth: 0.0000064 }, cost: 1, max: 1000, breaks: 8, requires: "shroud",
+    description: "Raises the damage the shroud blocks at the start of every fight.",
+    silver: vital, gold: { ...gentleTrainers, cubic: 700 },
+  },
+  // The share of the damage a strike deals restored as HP, in percent: 0.1%
+  // for the first rank, each later rank adding 0.001% less, 0.021% for the
+  // 80th, 4.84% in all.
+  {
+    id: "lifesteal", name: "Lifesteal", group: "defense", stat: "lifesteal", curve: { per: 0.1005, square: -0.0005 }, cost: 1, max: 80, requires: "lifesteal",
+    description: "Raises the share of the damage each of your strikes deals that is restored to you as HP.",
+    // 60 Gold for the first rank, then 60 × n × (1 + ((n − 1) / 20.5)²) for the n-th: about 1,000 for the 13th, 9,000 for the 37th and 70,000 for the 80th.
+    silver: { base: 60, growth: 20.5, power: 2 }, gold: { growth: 20.5, start: 60, power: 2 },
+  },
+  // 1% a rank.
+  {
+    id: "thorns", name: "Thorn Damage", short: "Thorns", group: "defense", stat: "thorns", curve: { per: 1 }, cost: 1, max: 99, requires: "thorns",
+    description: "Each enemy strike costs the enemy this share of its max HP, half against bosses and Greater Bosses.",
+    silver: thornPrices, gold: { growth: thornPrices.growth, start: thornPrices.base, power: thornPrices.power },
+  },
+  // 0.5% a rank.
+  {
+    id: "parry", name: "Parry %", group: "defense", stat: "parry", curve: { per: 0.5 }, cost: 1, max: 100, requires: "parry",
+    description: "Raises how much every enemy strike's damage is cut.",
+    silver: parryPrices, gold: { growth: parryPrices.growth, start: parryPrices.base, power: parryPrices.power },
+  },
+  // The chance each strike that would fell the hero revives it instead, in
+  // hundredths of a percent: 0.5% with Revive, and 0.5% more a rank, up to
+  // 50% (99 ranks).
+  {
+    id: "revive", name: "Revive", group: "defense", requires: "revive", cost: 1, max: 99,
+    curve: { per: 50 }, base: 50, cap: 5000, scale: 100, unit: "%",
+    description: "Raises the chance a strike that would fell you revives you at full HP instead.",
+    silver: revivePrices, gold: { growth: revivePrices.growth, start: revivePrices.base, power: revivePrices.power },
+  },
+  // The Gold each floor climbed for the first time in a run pays, before
+  // the tier's bonus and research: 3 with Spare Change, and 1 more a rank.
+  {
+    id: "floorGold", name: "Gold / Floor", group: "utility", requires: "spareChange", cost: 1, max: 150,
+    curve: { per: 1 }, base: 3, unit: "", research: "floorGold",
+    description: "Raises the Gold paid for each floor climbed for the first time in a run.",
+    silver: opened, gold: firmTrainers,
+  },
+  // The Silver each floor climbed for the first time in a run pays, before
+  // research and Silver Bonus: none with Wishing Well alone, and 4 a rank.
+  {
+    id: "floorSilver", name: "Silver / Floor", group: "utility", requires: "wishingWell", cost: 1, max: 150,
+    curve: { per: 4 }, unit: "", research: "floorSilver",
+    description: "Raises the Silver paid for each floor climbed for the first time in a run.",
+    silver: opened, gold: firmTrainers,
+  },
+  // Silver Bonus's multiplier on all Silver a run finds, in percent: ×1, and
+  // 1% more a rank (`silverFound`).
+  {
+    id: "silverBonus", name: "Silver Bonus", group: "utility", requires: "wealthy", cost: 1, max: 150,
+    curve: { per: 1 }, base: 100, off: 100, scale: 100, unit: "×", research: "silverBonus",
+    description: "Multiplies all Silver found in a run.",
+    silver: opened, gold: firmTrainers,
+  },
+  // Gold Bonus's multiplier on the Gold a kill, chest, item picked up or
+  // door opened pays in a run, in percent: ×1, and 3% more a rank.
+  {
+    id: "goldBonus", name: "Gold Bonus", group: "utility", requires: "loot", cost: 1, max: 150,
+    curve: { per: 3 }, base: 100, off: 100, scale: 100, unit: "×", research: "goldBonus",
+    description: "Multiplies the Gold kills, chests, items picked up and doors opened pay in a run, and what Floor Skip pays for them, with Gold Bonus research. Gold / Floor and Interest aren't raised.",
+    silver: opened, gold: firmTrainers,
+  },
+  // The Free Upgrade rows: the chance each floor passed in a run trains a
+  // stat of the row's group a level for free, in hundredths of a percent:
+  // 0.5% a rank, 50% at its 100 (`FREE_TRAINING_ROWS`).
+  {
+    id: "freeOffense", name: "Free Offense Up", group: "utility", requires: "freeTraining", cost: 1, max: 100,
+    curve: { per: 50 }, scale: 100, unit: "%",
+    description: "Each floor passed in a run has a chance to train a random Offense stat one level for free, for the run.",
+    silver: freeUpgrades, gold: freeUpgradeTrainers,
+  },
+  {
+    id: "freeDefense", name: "Free Defense Up", group: "utility", requires: "freeTraining", cost: 1, max: 100,
+    curve: { per: 50 }, scale: 100, unit: "%",
+    description: "Each floor passed in a run has a chance to train a random Defense stat one level for free, for the run.",
+    silver: freeUpgrades, gold: freeUpgradeTrainers,
+  },
+  {
+    id: "freeUtility", name: "Free Utility Up", group: "utility", requires: "freeTraining", cost: 1, max: 100,
+    curve: { per: 50 }, scale: 100, unit: "%",
+    description: "Each floor passed in a run has a chance to train a random Utility stat one level for free, for the run.",
+    silver: freeUpgrades, gold: freeUpgradeTrainers,
+  },
+  // What a percent potion restores beyond its HP, in hundredths of a
+  // percent of max HP: 1% with Recovery, and 0.25% more a rank.
+  {
+    id: "potion", name: "Potion %", group: "utility", requires: "recovery", cost: 1, max: 300,
+    curve: { per: 25 }, base: 100, scale: 100, unit: "%",
+    description: "Percent potions restore more of your maximum HP.",
+    silver: deep, gold: steepTrainers,
+  },
+  // The chance each potion that may be one is a percent potion, in
+  // hundredths of a percent: 2% with Recovery, and 0.25% more a rank once
+  // Find Potion opens the row, up to 20% (72 ranks).
+  {
+    id: "findPotion", name: "Find Potion", group: "utility", requires: "findPotion", needs: "recovery", cost: 1, max: 72,
+    curve: { per: 25 }, base: 200, cap: 2000, scale: 100, unit: "%",
+    description: "More of the potions found are percent potions.",
+    silver: deep, gold: { ...steepTrainers, cubic: 25 },
+  },
+] as const satisfies readonly TrainingDef[];
+/** A row's rank curve: what `n` ranks add up to is `per` × n +
  * `square` × n² + `cube` × (n − 1)³ + `fourth` × (n − 1)⁴, the cubic and
  * quartic terms counted from the second rank so the first is worth exactly
  * `per` + `square`. Rows that grew with the hero's level give a hero
@@ -902,15 +993,30 @@ export const TRAINER_GOLD_CURVES: Record<TrainingId, TrainerCurve> = {
  * about 2,100 at 100, 15,000 at 200 and 62,000 at 300, about four billion at
  * its 5,000. */
 export type TrainingCurve = { per: number; square?: number; cube?: number; fourth?: number };
-/** What `ranks` ranks of `row` add to the character, rounded once. Only
- * `+` and `*`, so it is the same in every engine. */
-export function trained(row: StatTrainingRow, ranks: number) {
+/** What `ranks` ranks of `row` add up to on its curve (to the character,
+ * for a stat row), rounded once. Only `+` and `*`, so it is the same in
+ * every engine. */
+export function trained(row: Pick<TrainingDef, "curve">, ranks: number) {
   if (ranks <= 0) return 0;
   const c: TrainingCurve = row.curve, m = ranks - 1;
   return snap(c.per * ranks + (c.square ?? 0) * ranks * ranks + (c.cube ?? 0) * m * m * m + (c.fourth ?? 0) * m * m * m * m);
 }
 /** What the rank after `ranks` adds to `row`'s stat. */
 export const trainingWorth = (row: StatTrainingRow, ranks: number) => snap(trained(row, ranks + 1) - trained(row, ranks));
+/** Row `id`, read through its definition's type. */
+export const trainingDef = (id: TrainingId): TrainingDef => TRAINING.find((t) => t.id === id)!;
+/** A value row's amount at `ranks`, in its own units: its `base` and
+ * curve, up to its `cap`. */
+export const amountAt = (row: TrainingDef, ranks: number) => Math.min(row.cap ?? Infinity, (row.base ?? 0) + trained(row, ranks));
+/** Value row `id`'s amount as the game reads it, in the row's own units,
+ * at `ranks` (the ranks `save` holds; a run's `trainingNow` counts those
+ * bought with Silver): `off` until its `needs` upgrade is owned, and its
+ * ranks counted only once its `requires` is. */
+export function trainedAmount(save: { upgrades: Partial<Record<UpgradeId, number>>; training?: Partial<Record<TrainingId, number>> }, id: TrainingId, ranks = save.training?.[id] ?? 0) {
+  const row = trainingDef(id), needs = row.needs ?? row.requires;
+  if (needs && !save.upgrades[needs]) return row.off ?? 0;
+  return amountAt(row, row.requires && !save.upgrades[row.requires] ? 0 : ranks);
+}
 /** Provisions, bought with Gold on the Gear page and kept for good: each
  * one bought adds its grants to every run. Each is priced by a schedule
  * like run training's (`schedulePrice`), from its `price.base` Gold; the

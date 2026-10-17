@@ -1,6 +1,6 @@
-import { TRAINING, TRAINING_GROUPS, type TrainingId } from "./config.ts";
+import { TRAINING, TRAINING_GROUPS, trainedAmount, type TrainingId } from "./config.ts";
 import type { RunCore, Save } from "./entities.ts";
-import { freeTrainingChance, trainingOpen } from "./loadout.ts";
+import { FREE_TRAINING_ROWS, trainingOpen } from "./loadout.ts";
 import { drawAt } from "./random.ts";
 import { ranksInRun, runTrainingMax } from "./run-training.ts";
 
@@ -48,7 +48,7 @@ export function rollFreeTraining(save: Pick<Save, "training" | "upgrades" | "goa
   const picked: TrainingId[] = [];
   for (const group of FREE_GROUPS) {
     // A run's Free Up Chance boons add to every group's chance, in hundredths of a percent.
-    const chance = freeTrainingChance(now, group) + boonChance;
+    const chance = trainedAmount(now, FREE_TRAINING_ROWS[group]) + boonChance;
     if (!chance || draw(run, group) * 10_000 >= chance) continue;
     const rows = candidates(save, run, group);
     if (!rows.length) continue;

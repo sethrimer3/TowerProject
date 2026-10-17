@@ -1,5 +1,5 @@
 import { researched } from "./archives.ts";
-import { SILVER_BONUS_RANK } from "./config.ts";
+import { trainedAmount } from "./config.ts";
 import type { Mode, Save } from "./entities.ts";
 import { wornEffects } from "./equipment/effects.ts";
 import { snap } from "./exact.ts";
@@ -69,6 +69,6 @@ export const factorText = (factor: number) => `×${Number(factor.toFixed(3))}`;
  * of the equipment `mode`'s hero wears. Paying (`RunPurse.silver`) and
  * the Training rows read it. */
 export function silverFound(save: Pick<Save, "upgrades" | "archives" | "equipment">, mode: Mode, ranks: number, boon = 1) {
-  const bonus = save.upgrades.wealthy ? 100 + SILVER_BONUS_RANK * ranks : 100;
+  const bonus = trainedAmount(save, "silverBonus", ranks);
   return (((bonus * researched(save.archives, "silverBonus", 100)) / 10_000) * boon * (100 + wornEffects(save, mode).silverFind)) / 100;
 }

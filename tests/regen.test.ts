@@ -3,7 +3,7 @@ import { snap } from "../src/exact.ts";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { defaults } from "../src/save.ts";
-import { GOLD_SHOP, RUN_TRAINING_PRICES, TRAINING, cost, levelForXp, schedulePrice, trained, trainingWorth, type StatTrainingRow } from "../src/config.ts";
+import { GOLD_SHOP, TRAINING, cost, levelForXp, schedulePrice, trained, trainingWorth, type StatTrainingRow, trainingDef } from "../src/config.ts";
 import { loadout, provisionPrice, trainingStep } from "../src/loadout.ts";
 import { resolveStep, BASE_RULES } from "../src/step-effects.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
@@ -24,7 +24,7 @@ test("Regen costs 1 Inspiration between On the Job and Heal, and opens a Defense
   const regen = row("regen"), def = row("defense");
   assert.equal(regen.group, "defense");
   assert.equal(regen.cost, def.cost, "a rank costs DEF's points, and so a trainer DEF's Gold and time");
-  assert.equal(RUN_TRAINING_PRICES.regen, RUN_TRAINING_PRICES.defense, "and DEF's Silver in a run");
+  assert.equal(trainingDef("regen").silver, trainingDef("defense").silver, "and DEF's Silver in a run");
   // 0.1n + n²/120: the first rank 0.108333, each after it a 60th more.
   assert.equal(trainingWorth(regen, 0), 0.108333);
   assert.equal(trainingWorth(regen, 12), 0.308333);

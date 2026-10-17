@@ -245,6 +245,10 @@ _Avoid_: skill point, stat point
 Who trains a rank for Gold, over time, instead of training points, on each stat's own schedule (only ranks trainers finished raise its Gold and time). The Trainers skill hires the first, and each bought with Gems lets one more rank train at the same time.
 _Avoid_: training slot, archivist (who does research)
 
+**Training row**:
+One thing training raises, bought by the rank with training points, a trainer's Gold, or a run's Silver. A **stat row** raises one of the character's stats (max HP, ATK, DEF …); a **value row** raises an amount of its own (a chance, a multiplier, a reach, the Gold a floor pays), from a base, and counts only once the skill it needs is owned.
+_Avoid_: stat (for a value row), upgrade
+
 **Time credit**:
 Training time given back to a stat when its trainer's rank is stopped (by hand, or by buying the rank with training points): that stat's next ranks trainers train start that far along, until it is used up. Each stat keeps its own.
 _Avoid_: banked time, refund time

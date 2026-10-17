@@ -8,8 +8,8 @@ import { RoomWorld } from "../src/tower/room-world.ts";
 import { World } from "../src/delve/world.ts";
 import { withPotions } from "../src/board.ts";
 import { resolveStep, POTION_HEAL, type StepEffect } from "../src/step-effects.ts";
-import { percentPotionChance, potionPercent, trainingPoints, trainingStep } from "../src/loadout.ts";
-import { xpForLevel } from "../src/config.ts";
+import { trainingPoints, trainingStep } from "../src/loadout.ts";
+import { xpForLevel, trainedAmount } from "../src/config.ts";
 import type { Player, Tile } from "../src/entities.ts";
 
 const redPotions = (tiles: Iterable<Tile>) => [...tiles].filter((t) => t.kind === "potion" && t.color === "red").length;
@@ -32,16 +32,16 @@ test("a percent potion restores its HP and a share of max HP, which Potion HP le
 test("Recovery opens percent potions at 1%, and Potion % training adds 0.25% a rank", () => {
   const s = defaults();
   s.xp = xpForLevel(2);
-  assert.equal(potionPercent(s), 0);
+  assert.equal(trainedAmount(s, "potion"), 0);
   const g = new Game(s);
   assert.equal(trainNow(g, "potion"), false, "the row waits on Recovery");
   s.upgrades.recovery = 1;
-  assert.equal(potionPercent(s), 100);
+  assert.equal(trainedAmount(s, "potion"), 100);
   assert.deepEqual((({ now, next, worth, unit }) => ({ now, next, worth, unit }))(trainingStep(s, "potion")), { now: 1, next: 1.25, worth: 0.25, unit: "%" });
   const left = trainingPoints(s).left;
   assert.ok(trainNow(g, "potion"));
   assert.equal(trainingPoints(s).left, left - 1, "one point a rank");
-  assert.equal(potionPercent(s), 125);
+  assert.equal(trainedAmount(s, "potion"), 125);
   assert.equal(g.stepRules.percentPotion, 125);
 });
 
@@ -80,9 +80,9 @@ test("percent potions come at 2% with Recovery; Find Potion training adds 0.25% 
   const s = defaults();
   s.xp = xpForLevel(40);
   const g = new Game(s);
-  assert.equal(percentPotionChance(s), 0);
+  assert.equal(trainedAmount(s, "findPotion"), 0);
   s.upgrades.recovery = 1;
-  assert.equal(percentPotionChance(s), 200);
+  assert.equal(trainedAmount(s, "findPotion"), 200);
   assert.equal(trainNow(g, "findPotion"), false, "the row waits on Find Potion");
   s.upgrades.findPotion = 1;
   const step = () => (({ now, next, worth, unit, maxed }) => ({ now, next, worth, unit, maxed }))(trainingStep(s, "findPotion"));
@@ -90,13 +90,13 @@ test("percent potions come at 2% with Recovery; Find Potion training adds 0.25% 
   const left = trainingPoints(s).left;
   assert.ok(trainNow(g, "findPotion"));
   assert.equal(trainingPoints(s).left, left - 1, "one point a rank");
-  assert.equal(percentPotionChance(s), 225);
+  assert.equal(trainedAmount(s, "findPotion"), 225);
   s.training.findPotion = 71;
   assert.ok(trainNow(g, "findPotion"));
-  assert.equal(percentPotionChance(s), 2000);
+  assert.equal(trainedAmount(s, "findPotion"), 2000);
   assert.equal(trainNow(g, "findPotion"), false, "72 ranks at most");
   assert.equal(s.training.findPotion, 72);
-  assert.deepEqual(step(), { now: 20, next: 20, worth: 0.25, unit: "%", maxed: true });
+  assert.deepEqual(step(), { now: 20, next: 20, worth: 0, unit: "%", maxed: true });
   assert.equal(trainingStep(s, "findPotion").affordable, false);
 });
 

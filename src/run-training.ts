@@ -1,4 +1,4 @@
-import { RUN_TRAINING_PRICES, schedulePrice, TRAINING, trainingCap, type TrainingId, type TrainingRow } from "./config.ts";
+import { schedulePrice, trainingDef, TRAINING, trainingCap, type TrainingId, type TrainingRow } from "./config.ts";
 import type { Mode, RunCore, Save } from "./entities.ts";
 import { bulkBuy, type BuyQuantity } from "./buy-quantity.ts";
 import { rowValue, trainingOpen } from "./loadout.ts";
@@ -7,10 +7,10 @@ import { rowValue, trainingOpen } from "./loadout.ts";
  * the hero's own, lasting only for that run (`run.training`, so undo takes
  * a purchase back with the rest of the run). */
 
-/** What the rank after `bought` ranks bought this run costs in Silver: the
- * schedule's base, and for the k-th rank after it `step + k` more than the
+/** What the rank after `bought` ranks bought this run costs in Silver, on
+ * the row's `silver` schedule: its base, and for the k-th rank after it `step + k` more than the
  * one before, `step` rising by `growth` every five, summed here at once. */
-export const silverPrice = (id: TrainingId, bought: number) => schedulePrice(RUN_TRAINING_PRICES[id], bought);
+export const silverPrice = (id: TrainingId, bought: number) => schedulePrice(trainingDef(id).silver, bought);
 
 /** The highest level `row` reaches in a run: its cap with the Limit Breaks
  * owned, as on the Training tab. */

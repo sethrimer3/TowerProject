@@ -4,9 +4,9 @@ import { Game } from "../src/state.ts";
 import { defaults } from "../src/save.ts";
 import { point, type Enemy, type Tile } from "../src/entities.ts";
 import { bout, DEFEAT_MS, heroHpAfter, heroHpDuring, REVIVE_PAUSE_MS, revivals } from "../src/combat.ts";
-import { reviveChance, trainingStep } from "../src/loadout.ts";
+import { trainingStep } from "../src/loadout.ts";
 import { TREES } from "../src/skill-trees.ts";
-import { UPGRADES } from "../src/config.ts";
+import { UPGRADES, trainedAmount } from "../src/config.ts";
 
 // 12 ATK takes five strikes to beat it; its fourth strike back (30, 30, 30,
 // 31) fells a 100 HP hero, who at full HP again wins with its fifth.
@@ -32,13 +32,13 @@ test("a revival raises the hero at full HP from the strike that would fell it, a
 
 test("Revive's chance: 0.5%, and 0.5% more a training rank, up to 50% at 99 ranks", () => {
   const s = defaults();
-  assert.equal(reviveChance(s), 0, "nothing without the skill");
+  assert.equal(trainedAmount(s, "revive"), 0, "nothing without the skill");
   s.upgrades.revive = 1;
-  assert.equal(reviveChance(s), 50);
+  assert.equal(trainedAmount(s, "revive"), 50);
   s.training.revive = 10;
-  assert.equal(reviveChance(s), 550);
+  assert.equal(trainedAmount(s, "revive"), 550);
   s.training.revive = 99;
-  assert.equal(reviveChance(s), 5000);
+  assert.equal(trainedAmount(s, "revive"), 5000);
   const step = trainingStep(s, "revive");
   assert.ok(step.maxed);
   assert.equal(step.now, 50);

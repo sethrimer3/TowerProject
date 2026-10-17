@@ -12,7 +12,7 @@ The Upgrades page's trees: Inspiration (Tower currency), Courage, Wayfinding, Le
 
 **Row** (`UPGRADES` in `src/config.ts`): `{ id, name, description?, grants?, words?, card?, base, max, currency }`.
 - `grants` (e.g. `{ attack: 2 }`, per rank) makes it a stat upgrade: `loadout()` adds it and `upgradeText` writes the description from it, so leave `description` out. `words` renames a stat in that text.
-- Otherwise `description` is the player-facing text, and the effect is code that checks `save.upgrades.<id>` (look at how `focus` and `training` are read in `state.ts`, `hud.ts`, `ui/skill-tree-page.ts`, or `revive` through `reviveChance` in `loadout.ts`).
+- Otherwise `description` is the player-facing text, and the effect is code that checks `save.upgrades.<id>` (look at how `focus` and `training` are read in `state.ts`, `hud.ts`, `ui/skill-tree-page.ts`, or `revive` through `trainedAmount(…, "revive")` in `config.ts`).
 - A card badge is not an upgrade row: it is a `BADGES` entry in `src/badges.ts`, drawn with Gems on the Deck page. One that should join the draw pool only once a skill is owned names it in `unlock`.
 - `card` adds a card to the deck (`deckCards` in `cards.ts`); the card itself needs a `CARDS` entry and face art.
 

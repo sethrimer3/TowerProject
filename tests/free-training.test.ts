@@ -2,8 +2,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { decode, defaults } from "../src/save.ts";
-import { TRAINING, type TrainingId } from "../src/config.ts";
-import { freeTrainingChance, trainingStep } from "../src/loadout.ts";
+import { TRAINING, type TrainingId, trainedAmount } from "../src/config.ts";
+import { FREE_TRAINING_ROWS, trainingStep } from "../src/loadout.ts";
 import { freeTrainingLines, freeTrainingSeed, rollFreeTraining } from "../src/free-training.ts";
 import { drawAt } from "../src/random.ts";
 import { runTrainingOffer, runTrainingValue, silverPrice } from "../src/run-training.ts";
@@ -22,11 +22,11 @@ const run = (seed: number): Pick<RunCore, "seed" | "freeRolls" | "training"> => 
 
 test("Free Training opens the three Free Upgrade rows: 0.5% a rank, 50% at their 100", () => {
   const save = defaults();
-  assert.equal(freeTrainingChance(save, "offense"), 0);
+  assert.equal(trainedAmount(save, FREE_TRAINING_ROWS["offense"]), 0);
   save.training.freeOffense = 10;
-  assert.equal(freeTrainingChance(save, "offense"), 0, "nothing without the skill");
+  assert.equal(trainedAmount(save, FREE_TRAINING_ROWS["offense"]), 0, "nothing without the skill");
   save.upgrades.freeTraining = 1;
-  assert.deepEqual(["offense", "defense", "utility"].map((g) => freeTrainingChance(save, g as "offense")), [500, 0, 0]);
+  assert.deepEqual(["offense", "defense", "utility"].map((g) => trainedAmount(save, FREE_TRAINING_ROWS[g as "offense"])), [500, 0, 0]);
   assert.deepEqual([trainingStep(save, "freeOffense").now, trainingStep(save, "freeOffense").next, trainingStep(save, "freeOffense").unit], [5, 5.5, "%"]);
   assert.deepEqual(runTrainingValue(save, {}, "freeOffense"), { value: 5, unit: "%" });
   save.training.freeOffense = 100;

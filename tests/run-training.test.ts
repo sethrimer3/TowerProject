@@ -2,8 +2,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { decode, defaults } from "../src/save.ts";
-import { LIMIT_BREAKS, RUN_TRAINING_PRICES, TRAINING, trained, xpForLevel, levelForXp } from "../src/config.ts";
-import { reviveChance } from "../src/loadout.ts";
+import { LIMIT_BREAKS, TRAINING, trained, xpForLevel, levelForXp, trainedAmount, trainingDef } from "../src/config.ts";
+
 import { ranksInRun, runTrainingOffer, runTrainingValue, silverPrice } from "../src/run-training.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
 
@@ -42,7 +42,7 @@ test("Silver prices start at the row's base and rise by a step plus the ranks bo
   assert.deepEqual([1, 12, 36, 78].map((n) => silverPrice("attackRange", n - 1)), [50, 1165, 8573, 64075]);
   assert.deepEqual([1, 12, 34, 92].map((n) => silverPrice("attackSpeed", n - 1)), [30, 1166, 8870, 116464]);
   for (const row of TRAINING) {
-    const schedule = RUN_TRAINING_PRICES[row.id], base = "prices" in schedule ? schedule.prices[0] : schedule.base;
+    const schedule = trainingDef(row.id).silver, base = "prices" in schedule ? schedule.prices[0] : schedule.base;
     assert.ok([3, 5, 10, 12, 20, 30, 40, 50, 60, 75, 100, 120, 450].includes(base), `${row.id} starts at 3, 5, 10, 12, 20, 30, 40, 50, 60, 75, 100, 120 or 450`);
     let last = 0;
     for (let k = 0; k < Math.min(1000, row.max); k++) {
@@ -51,7 +51,7 @@ test("Silver prices start at the row's base and rise by a step plus the ranks bo
       last = price;
     }
   }
-  assert.ok(RUN_TRAINING_PRICES.hp.base < RUN_TRAINING_PRICES.floorGold.base, "Max HP costs least");
+  assert.ok(trainingDef("hp").silver.base < trainingDef("floorGold").silver.base, "Max HP costs least");
 });
 
 test("training for the run spends Silver and raises the stat at once; undo takes it back", () => {
@@ -127,11 +127,11 @@ test("a row reaches no higher in a run than its most on the Training tab, or the
 
 test("the hero's own ranks raise where a run starts, at the same Silver prices", () => {
   const g = arena(100, (g) => { g.save.upgrades.revive = 1; g.save.training.revive = 10; });
-  assert.deepEqual(runTrainingOffer(g.save, g.run, "revive").price, RUN_TRAINING_PRICES.revive.base);
+  assert.deepEqual(runTrainingOffer(g.save, g.run, "revive").price, trainingDef("revive").silver.base);
   assert.equal(runTrainingOffer(g.save, g.run, "revive").level, 10);
   assert.ok(g.trainInRun("revive"));
   assert.equal(ranksInRun(g.save, g.run).revive, 11);
-  assert.equal(runTrainingValue(g.save, g.run, "revive").value, reviveChance({ upgrades: g.save.upgrades, training: { ...g.save.training, revive: 11 } }) / 100);
+  assert.equal(runTrainingValue(g.save, g.run, "revive").value, trainedAmount({ upgrades: g.save.upgrades, training: { ...g.save.training, revive: 11 } }, "revive") / 100);
 });
 
 test("training for the run ends with the run, and a save keeps it while the run lasts", () => {

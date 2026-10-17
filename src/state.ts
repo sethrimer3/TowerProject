@@ -32,6 +32,7 @@ import {
   cost,
   UPGRADES,
   TRAINING,
+  trainedAmount,
   type UpgradeId,
   type TrainingId,
   type KeyColor,
@@ -71,7 +72,7 @@ import { enemyStat, keyCount, whole, wholeChange } from "./whole.ts";
 import { MODES, milestones, type ModeProfile } from "./modes.ts";
 import { ranksInRun, runTrainingBulk, runTrainingOffer, type RunTrainingOffer } from "./run-training.ts";
 import { openQuantities, type BuyQuantity } from "./buy-quantity.ts";
-import { critRule, loadout, percentPotionChance, potionPercent, reviveChance, type TrainingView } from "./loadout.ts";
+import { critRule, loadout, type TrainingView } from "./loadout.ts";
 import { researched } from "./archives.ts";
 import { chargesLeft, chargesPerRun, climbFloor, spendCharge, type Charge } from "./run-charges.ts";
 import type { MaterialId, MaterialStack } from "./materials.ts";
@@ -1098,7 +1099,7 @@ export class Game {
     if (Object.keys(badges).length) this.run.badges = badges;
     const pocket = this.startingSilver;
     if (pocket) this.run.silver = pocket;
-    const chance = percentPotionChance(this.save);
+    const chance = trainedAmount(this.save, "findPotion");
     if (chance) this.run.percentPotions = chance;
     else delete this.run.percentPotions;
     this.run.focusUsed = 0;
@@ -1161,7 +1162,7 @@ export class Game {
       : snap((this.run.player.regen * researched(this.save.archives, "regenPercent", 100)) / 100);
     const worn = this.worn, potionHeal = raised(researched(this.save.archives, "potionHeal", 100), worn.potionHeal);
     const crit = this.crit;
-    return { potionHeal, percentPotion: potionPercent(this.trainingNow), regen,
+    return { potionHeal, percentPotion: trainedAmount(this.trainingNow, "potion"), regen,
       heartToll: researched(this.save.archives, "heartToll", 100), keyCost: this.keyCost,
       shardAttack: researched(this.save.archives, "shardAttackPercent", 100) * boonFactor(this.run, "attack"), shardDefense: researched(this.save.archives, "shardDefensePercent", 100),
       ...(worn.victoryHeal ? { victoryHeal: worn.victoryHeal } : {}), ...(crit ? { crit } : {}) };
@@ -1635,7 +1636,7 @@ export class Game {
    * so taking the fight back and fighting it again ends the same way, and
    * more Revive training only ever adds revivals. */
   private revival(at: { x: number; y: number }): Revival | undefined {
-    const chance = reviveChance(this.trainingNow);
+    const chance = trainedAmount(this.trainingNow, "revive");
     if (!chance || this.run.outside) return undefined;
     const floor = this.mode === "tower" ? this.run.height + 1 : 0,
       seed = this.run.seed ^ REVIVE_SALT ^ Math.imul(floor, 0x9e3779b1);
@@ -2322,7 +2323,7 @@ export class Game {
   /** Find Potion bought for the run: its chance of percent potions rises,
    * and the floor stood on shows its new percent potions at once. */
   private raisePercentPotions() {
-    const chance = percentPotionChance(this.trainingNow);
+    const chance = trainedAmount(this.trainingNow, "findPotion");
     this.run.percentPotions = chance;
     if (this.world instanceof RoomWorld) this.world.percentPotions = chance;
   }

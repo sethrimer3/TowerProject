@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { defaults, decode } from "../src/save.ts";
-import { RUN_TRAINING_PRICES, TRAINER_GOLD_CURVES, TRAINING, trainingCeiling, xpForLevel } from "../src/config.ts";
+import { TRAINING, trainingCeiling, xpForLevel, trainingDef } from "../src/config.ts";
 import { loadout, trainingPoints, trainingStep } from "../src/loadout.ts";
 import { BOOST_MAX_MS, claimBoost, doneAt, finishGems, trainingGold, trainingMs, trainingSeconds, workLeft } from "../src/training-jobs.ts";
 import { RESEARCH } from "../src/archives.ts";
@@ -26,7 +26,7 @@ test("a stat's first ranks are quick, then each takes ten minutes more", () => {
 });
 
 test("a trainer's Gold: 20 a point, times the rank's number, times 1 + ranks / the row's growth", () => {
-  const at = (id: (typeof TRAINING)[number]["id"], ranks: number[], cost = 1) => ranks.map((r) => trainingGold({ id, cost }, r));
+  const at = (id: (typeof TRAINING)[number]["id"], ranks: number[], cost = 1) => ranks.map((r) => trainingGold({ ...trainingDef(id), cost }, r));
   assert.deepEqual(at("potion", [0, 1, 2, 3, 4, 9]), [20, 44, 72, 104, 140, 380], "20 Silver rows: growth 10");
   assert.deepEqual(at("floorGold", [0, 1, 2, 3, 9]), [20, 42, 66, 92, 291], "10 Silver rows: growth 20");
   assert.deepEqual(at("attack", [0, 1, 2, 3, 9]), [20, 41, 63, 86, 245], "5 Silver rows: growth 40");
@@ -35,12 +35,12 @@ test("a trainer's Gold: 20 a point, times the rank's number, times 1 + ranks / t
   assert.deepEqual(at("attack", [0], 3), [60], "times the row's point cost");
   // The dearer a row's first Silver rank, the steeper its trainers, and rows
   // that start alike in Silver share a trainer curve.
-  const silverBase = (id: keyof typeof RUN_TRAINING_PRICES) => RUN_TRAINING_PRICES[id].base;
+  const silverBase = (id: TrainingId) => trainingDef(id).silver.base;
   // (The crit rows' growth is on a cubic curve of its own, and the Free
   // Upgrade rows start from their own price, so neither compares.)
-  const linear = TRAINING.filter((t) => !("prices" in TRAINER_GOLD_CURVES[t.id]) && !TRAINER_GOLD_CURVES[t.id].power && !TRAINER_GOLD_CURVES[t.id].start);
+  const linear = TRAINING.filter((t) => !("prices" in t.gold) && !t.gold.power && !t.gold.start);
   for (const a of linear) for (const b of linear) {
-    const [ga, gb] = [TRAINER_GOLD_CURVES[a.id].growth, TRAINER_GOLD_CURVES[b.id].growth];
+    const [ga, gb] = [a.gold.growth, b.gold.growth];
     if (silverBase(a.id) < silverBase(b.id)) assert.ok(ga > gb, `${a.id} softer than ${b.id}`);
     if (silverBase(a.id) === silverBase(b.id)) assert.equal(ga, gb, `${a.id} and ${b.id} alike`);
   }
@@ -401,7 +401,7 @@ test("the time bank serves any stat, after that stat's own time credit", () => {
 
 test("a cubic scale adds (ranks / cubic)^3 to a trainer's Gold: never below the linear price, far above it at the cap", () => {
   for (const t of TRAINING) {
-    const c = TRAINER_GOLD_CURVES[t.id];
+    const c = t.gold;
     // (ATK / Tile's trainers ask a rising ratio more each rank instead, and Multishot Targets' a price a rank.)
     if ("ratio" in c || "prices" in c || c.power) continue;
     assert.ok(c.cubic, `${t.id} has a cubic scale`);
@@ -415,7 +415,7 @@ test("a cubic scale adds (ranks / cubic)^3 to a trainer's Gold: never below the 
 
 test("the Free Upgrade rows: 75 Gold for the first rank, 1,582 for the 11th, 9,771 for the 32nd, 92,815 for the 87th, 136,855 for the 100th, the same in Silver", () => {
   for (const id of ["freeOffense", "freeDefense", "freeUtility"] as const) {
-    const gold = (n: number) => trainingGold({ id, cost: 1 }, n - 1);
+    const gold = (n: number) => trainingGold(trainingDef(id), n - 1);
     assert.deepEqual([1, 10, 11, 32, 87, 100].map(gold), [75, 1368, 1582, 9771, 92815, 136855]);
     for (let n = 1; n <= 100; n++) assert.equal(silverPrice(id, n - 1), gold(n), `${id} rank ${n} costs as much Silver as Gold`);
     assert.equal(TRAINING.find((t) => t.id === id)!.max, 100);

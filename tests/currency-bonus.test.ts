@@ -3,10 +3,10 @@ import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { decode, defaults } from "../src/save.ts";
 import { trainingOpen } from "../src/loadout.ts";
-import { TRAINING, cost, type TrainingId, type UpgradeId } from "../src/config.ts";
+import { TRAINING, cost, type TrainingId, type UpgradeId, trainedAmount } from "../src/config.ts";
 import { TREES } from "../src/skill-trees.ts";
 import { RESEARCH, researched, type ResearchId } from "../src/archives.ts";
-import { floorSilver, goldBonus, trainingStep, trainingText, type TrainingView } from "../src/loadout.ts";
+import { trainingStep, trainingText, type TrainingView } from "../src/loadout.ts";
 import { addItem } from "../src/equipment/inventory.ts";
 import { boonEffects } from "../src/shrines.ts";
 import { runTrainingValue } from "../src/run-training.ts";
@@ -54,13 +54,13 @@ test("Wealthy, Loot and Wishing Well each open their Training row and research",
 
 test("Silver Bonus starts at ×1 and adds 1% a rank, Gold Bonus 3%; Silver / Floor starts at 0 and adds 4", () => {
   const save = defaults();
-  assert.deepEqual([silverBonus(save), goldBonus(save), floorSilver(save)], [100, 100, 0], "nothing without the skills");
+  assert.deepEqual([silverBonus(save), trainedAmount(save, "goldBonus"), trainedAmount(save, "floorSilver")], [100, 100, 0], "nothing without the skills");
   save.training.silverBonus = save.training.goldBonus = save.training.floorSilver = 10;
-  assert.deepEqual([silverBonus(save), goldBonus(save), floorSilver(save)], [100, 100, 0], "ranks count only with the skill");
+  assert.deepEqual([silverBonus(save), trainedAmount(save, "goldBonus"), trainedAmount(save, "floorSilver")], [100, 100, 0], "ranks count only with the skill");
   save.upgrades.wealthy = save.upgrades.loot = save.upgrades.wishingWell = 1;
-  assert.deepEqual([silverBonus(save), goldBonus(save), floorSilver(save)], [110, 130, 40]);
+  assert.deepEqual([silverBonus(save), trainedAmount(save, "goldBonus"), trainedAmount(save, "floorSilver")], [110, 130, 40]);
   const step = trainingStep(save, "silverBonus");
-  assert.deepEqual([step.unit, step.now, step.next, step.worth], ["×", 1.1, 1.11, 1]);
+  assert.deepEqual([step.unit, step.now, step.next, step.worth], ["×", 1.1, 1.11, 0.01]);
   assert.equal(trainingText(step.now, step.unit), "×1.10");
   assert.equal(trainingText(40, ""), "40");
   // Research adds 3% a level (5% for Silver / Floor), simply.

@@ -8,7 +8,8 @@
 import type { Board } from "./board.ts";
 import type { Enemy, Player, Save } from "./entities.ts";
 import { guaranteedCrits } from "./combat.ts";
-import { attackPerTile, attackRange, attackSpeed, critRule, multishotChance, multishotTargets, rapidFireChance, rapidFireDuration } from "./loadout.ts";
+import { critRule } from "./loadout.ts";
+import { trainedAmount } from "./config.ts";
 import { researched } from "./archives.ts";
 import { ARCHER_TICKS, archerTurn, arrowBoost, arrowDamage, charged, enemiesWithin, FOE_GAIN, foeRange, foeShotCost, held, ready, shotDamage, spent, type InReach, type Volleys } from "./ranged.ts";
 import { tileRandom } from "./random.ts";
@@ -62,7 +63,7 @@ export type VolleyOutcome = { volleys: Volleys; shots: Shot[]; hp: number; hurt:
  * felled the hero, the Archer's arrows. Edits the board's enemies as its
  * arrows wound and fell them; changes nothing else it is given. */
 export function volleyTurn(turn: VolleyTurn): VolleyOutcome {
-  const hero = { ...turn.hero }, v: Volleys = { ...turn.volleys }, shots: Shot[] = [], range = attackRange(turn.ranks);
+  const hero = { ...turn.hero }, v: Volleys = { ...turn.volleys }, shots: Shot[] = [], range = trainedAmount(turn.ranks, "attackRange");
   const { fell, hurt } = foesShoot(turn, hero, v, shots, range);
   const kills = fell || !turn.archer ? [] : loose(turn, hero, v, shots, range);
   return { volleys: v, shots, hp: hero.hp, hurt, ...(fell ? { fell } : {}), kills };
@@ -116,27 +117,27 @@ function foesShoot({ board, wrap, floorOf }: VolleyTurn, p: Player, v: Volleys, 
  * may fire more than once. A ready arrow with no target waits for one,
  * counting the turn toward Charged Shot once that is researched. */
 function loose(turn: VolleyTurn, p: Player, v: Volleys, shots: Shot[], range: number) {
-  const { board, wrap, ranks } = turn, perTile = attackPerTile(ranks), percent = researched(ranks.archives, "chargedShotPercent", 0);
+  const { board, wrap, ranks } = turn, perTile = trainedAmount(ranks, "attackPerTile"), percent = researched(ranks.archives, "chargedShotPercent", 0);
   const boost = (d2: number) => arrowBoost(perTile, d2, percent, v.waited ?? 0);
   const hurts = (e: InReach) => arrowDamage(p, e.tile.enemy, 0, 1, boost(e.d2)) > 0;
   // A fixed number per run, turn, shot of the turn (the first keeping the
   // turn's own roll) and the hero's tile, for `salt`.
   const shotRoll = (salt: number, shot: number) => tileRandom(p.x, p.y, (turn.seed ^ salt ^ Math.imul(v.turn, 0x85ebca6b) ^ Math.imul(shot, 0xc2b2ae35)) | 0);
   const multishot = (shot: number) => {
-    const chance = multishotChance(ranks);
+    const chance = trainedAmount(ranks, "multishotChance");
     return chance > 0 && shotRoll(MULTISHOT_SALT, shot) * 10_000 < chance;
   };
   const rapidFire = (shot: number) => {
-    const chance = rapidFireChance(ranks);
-    return chance > 0 && shotRoll(RAPID_FIRE_SALT, shot) * 10_000 < chance ? rapidFireDuration(ranks) : 0;
+    const chance = trainedAmount(ranks, "rapidFireChance");
+    return chance > 0 && shotRoll(RAPID_FIRE_SALT, shot) * 10_000 < chance ? trainedAmount(ranks, "rapidFireDuration") : 0;
   };
   const kills: VolleyKill[] = [], crit = critRule(ranks), first = shots.length;
   let fired = 0;
-  const { clock, idle } = archerTurn({ charge: v.hero, rapid: v.rapid }, attackSpeed(ranks), (rapid, tick) => {
+  const { clock, idle } = archerTurn({ charge: v.hero, rapid: v.rapid }, trainedAmount(ranks, "attackSpeed"), (rapid, tick) => {
     const inReach = enemiesWithin(board, p, range, wrap), target = inReach.find(hurts);
     if (!target) return false;
     const shot = fired++, from = shots.length;
-    const targets = multishot(shot) ? inReach.filter(hurts).slice(0, multishotTargets(ranks)) : [target];
+    const targets = multishot(shot) ? inReach.filter(hurts).slice(0, trainedAmount(ranks, "multishotTargets")) : [target];
     for (const t of targets) {
       const kill = arrow(turn, p, t, crit, shot, boost(t.d2), !!(percent && v.waited), shots);
       if (kill) kills.push(kill);
