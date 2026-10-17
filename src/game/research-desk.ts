@@ -135,7 +135,7 @@ export class ResearchDesk {
     let done: ResearchRecord[] = [];
     changeLoadout(this.save, () => (done = settleArchives(this.save, this.host.clock())).length > 0);
     this.done.push(...done);
-    if (done.length) this.host.researchDone?.();
+    if (done.length) this.host.researchDone();
     const last = done.at(-1);
     if (last) this.host.message = `Archives · ${RESEARCH[last.research].name} level ${last.level} complete.`;
     return done;

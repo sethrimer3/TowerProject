@@ -284,7 +284,7 @@ export class Game {
   readonly research = new ResearchDesk(this);
   /** The Deck page's commands over the next run's hand. */
   readonly deck = new DeckEditor(this);
-  /** The Gear page's commands: provisions, crafting and equipment. */
+  /** The Gear page's commands: buying provisions. */
   readonly gear = new GearDesk(this);
   /** The Gem on the board, collecting it, and the ad's Gems. */
   readonly gemFinder = new GemFinder(this);
@@ -1520,7 +1520,7 @@ export class Game {
     // A run that earned its currency sends the player to spend it.
     if (this.slice.runCurrency > 0) this.save.treeNotices[this.rules === MODES.tower ? "inspiration" : "courage"] = true;
     this.route = [];
-    const tournament = this.mode === "delve" ? this.delveRun.tournament : undefined;
+    const tournament = this.tournamentRun;
     if (tournament) this.tournament.recordScore(tournament.id, tournamentScore(this.run));
     // A tournament run's cave gives way to the tier the player had selected.
     if (tournament && tournament.back.tier !== this.slice.tier) switchTier(this.slice, tournament.back.tier);
@@ -1903,10 +1903,12 @@ export class Game {
   chestGold(x: number, y: number) {
     return this.world.tile(x, y).kind === "treasure" ? this.purse.treasureGoldPreview(x, y) : 0;
   }
-  /** What the run finds is paid through its purse. */
+  /** What the run finds is paid through its purse. It is built afresh on
+   * each use, so it always pays into the save, mode and run of now: an erase,
+   * a mode switch and a new run each replace one. */
   private get purse() {
     // A tournament run's chances come from the seeds its league shares.
-    const t = this.mode === "delve" ? this.delveRun.tournament : undefined;
+    const t = this.tournamentRun;
     return t
       ? new RunPurse(this.save, this.mode, this.run, runStream(t, "game"), this.clock(), runStream(t, "equipment"))
       : new RunPurse(this.save, this.mode, this.run, this.rng, this.clock());
@@ -2135,6 +2137,11 @@ export class Game {
   get delveRun(): DelveRun {
     if (this.mode !== "delve") throw new Error("Not a Delve run");
     return this.run as DelveRun;
+  }
+  /** The live run's tournament, when it is a tournament run (only a Delve
+   * run can be). */
+  get tournamentRun(): TournamentRun | undefined {
+    return this.mode === "delve" ? this.delveRun.tournament : undefined;
   }
   /** An area reward chest opened: its reward was paid when earned, so it
    * only shows it, with the board's golden burst. The chest stands on the

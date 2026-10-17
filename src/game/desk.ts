@@ -3,8 +3,9 @@ import type { MissionType } from "../missions/catalog.ts";
 import type { EventMissionType } from "../events/catalog.ts";
 
 /** What the game's desks need from it: the save (replaced by an erase, so
- * read each time), the active run, Dev free purchases, the wall clock and
- * the status line. */
+ * read each time), the active run, Dev free purchases, the wall clock, the
+ * status line, and what a command reports back (missions, the Event's
+ * missions, research done). */
 export interface DeskHost {
   readonly save: Save;
   readonly run: Run;
@@ -12,11 +13,11 @@ export interface DeskHost {
   clock(): number;
   message: string;
   /** Counts what a desk's command did toward the daily missions. */
-  missionDone?(type: MissionType, amount: number): void;
+  missionDone(type: MissionType, amount: number): void;
   /** Counts what a desk's command did toward the Event's missions. */
-  eventDone?(type: EventMissionType, amount: number): void;
+  eventDone(type: EventMissionType, amount: number): void;
   /** Research completed: the game applies what it changes at once. */
-  researchDone?(): void;
+  researchDone(): void;
 }
 
 /** Whether `gems` can be paid now (always, with Dev free purchases). */

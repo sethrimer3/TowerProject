@@ -38,7 +38,7 @@ export class BadgeDesk {
     if (!this.canDraw(count) || !affordsGems(this.host, price)) return null;
     if (!this.host.free) this.save.gems -= price;
     const draws = drawBadges(this.save.badges, this.save.upgrades, count, stream("badges"));
-    this.host.missionDone?.("badge", draws.length);
+    this.host.missionDone("badge", draws.length);
     return draws;
   }
 

@@ -53,7 +53,7 @@ export class TrainingDesk {
     if (!trainingOpen(rowOf(id), this.save) || trainingFull(this.save, id)) return false;
     const { count, cost, affordable } = trainingBulk(this.save, id, quantity);
     if (!affordable) return false;
-    this.host.missionDone?.("train", count);
+    this.host.missionDone("train", count);
     const bought = changeLoadout(this.save, () => {
       if (!free) this.save.trainingPaid[id].points += cost;
       this.save.training[id] += count;
@@ -123,7 +123,7 @@ export class TrainingDesk {
     const { count, gold, ms, speedup, affordable } = this.batch(id, quantity);
     if (!affordable) return false;
     if (this.host.free) {
-      this.host.missionDone?.("train", count);
+      this.host.missionDone("train", count);
       return changeLoadout(save, () => {
         save.training[id] += count;
         save.trainerRanks[id] += count;
@@ -322,7 +322,7 @@ export class TrainingDesk {
     paid.gold = snap(paid.gold + job.gold);
     paid.ms += jobInvested(job, 0);
     this.done.push({ id: job.id, level: save.training[job.id] });
-    this.host.missionDone?.("train", job.ranks);
+    this.host.missionDone("train", job.ranks);
   }
 
   /** Whether a Gem reset is open: only from the forest. */

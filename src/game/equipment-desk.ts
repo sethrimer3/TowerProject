@@ -56,7 +56,7 @@ export class EquipmentDesk {
       result = merge(this.e, targetId, fodder);
       return typeof result !== "string";
     });
-    if (typeof result !== "string") this.host.eventDone?.("merges", 1);
+    if (typeof result !== "string") this.host.eventDone("merges", 1);
     return result;
   }
 
@@ -154,7 +154,7 @@ export class EquipmentDesk {
     if (refusal) return refusal;
     if (!this.host.free) this.save.gems -= pullGems(count, all);
     const pulled: Pulled[] = pull(this.e, category, count, stream("equipment"));
-    this.host.eventDone?.("equipment", pulled.length);
+    this.host.eventDone("equipment", pulled.length);
     if (!this.e.autoSalvage) return pulled;
     const commons = pulled.filter((p) => p.item.rarity === "common");
     for (const p of commons) p.salvaged = { id: materialOf(categoryOf(p.item)), quantity: salvageOf(p.item) };

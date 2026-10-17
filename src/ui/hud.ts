@@ -659,7 +659,7 @@ function renderProgress(game: Game) {
   const tier = el("height-tier");
   tier.hidden = outside;
   // A tournament run's cave wears its +, for the stronger enemies.
-  const t = game.mode === "delve" ? game.delveRun.tournament : undefined;
+  const t = game.tournamentRun;
   text("height-tier", (t ? caveLabel(t.league) : `${rules.words.tierName} ${game.save[game.mode].tier}`).toUpperCase());
   text("height-label", (outside ? rules.words.tierName : rules.words.progress).toUpperCase());
   const rawRunBest = game.run.maxHeight ?? game.run.height;
