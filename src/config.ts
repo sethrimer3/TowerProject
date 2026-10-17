@@ -724,9 +724,15 @@ const critTrainers: TrainerCurve = { growth: 7, start: 30, power: 3 };
 /** The Free Upgrade rows' trainers: the same curve as their Silver (`freeUpgrades`). */
 const freeUpgradeTrainers: TrainerCurve = { growth: freeUpgrades.growth, start: freeUpgrades.base, cubic: freeUpgrades.cubic };
 /** How a value row's amount reads on the Training tab and the run's cards
- * (`trainingText`): a multiplier (×1.30), tiles, shots every 10 turns, ATK
- * multiplier a tile, targets, turns, a percent, or a bare amount. */
-export type TrainingUnit = "×" | "tiles" | "shots" | "perTile" | "targets" | "turns" | "%" | "";
+ * (`trainingText`): a multiplier (×1.30), meters (a tile is one), shots
+ * every 10 turns, ATK multiplier a meter, a count with no unit (its name
+ * says what), turns, a percent, or a bare amount. */
+export type TrainingUnit = "×" | "m" | "shots" | "perMeter" | "count" | "turns" | "%" | "";
+/** How long a trainer's ranks of a row take, when not the usual schedule
+ * (`trainingSeconds`): `skip` passes over that many of its quickest first
+ * ranks, so the row's first rank takes as long as the usual second; `each`
+ * makes its n-th rank take n times that many seconds. */
+export type TrainerTime = { readonly skip: number } | { readonly each: number };
 /** One Training row, all of it in one place. Each rank costs `cost`
  * training points, and the row trains no further than its cap
  * (`trainingCap`): `max` ranks, and `LIMIT_BREAK_RANKS` more for each of its
@@ -748,7 +754,8 @@ export type TrainingUnit = "×" | "tiles" | "shots" | "perTile" | "targets" | "t
  * A rank bought with Silver inside a run, for that run alone, costs by the
  * row's `silver` schedule, and one a trainer trains costs Gold by its `gold`
  * curve (`trainingGold`): two curves chosen apart, the dearer a row's first
- * Silver rank the steeper its trainers. */
+ * Silver rank the steeper its trainers, and takes the usual trainer's time
+ * a rank unless `time` says otherwise. */
 export type TrainingDef = {
   readonly id: string;
   readonly name: string;
@@ -771,6 +778,7 @@ export type TrainingDef = {
   readonly research?: ResearchTarget;
   readonly silver: PriceSchedule;
   readonly gold: TrainerCurve;
+  readonly time?: TrainerTime;
 };
 /** The Training rows, in the order the Training tab and a run's training
  * bar list them within each group. Every stat row's curve is super-linear,
@@ -803,12 +811,12 @@ export const TRAINING = [
     description: "Raises how much a critical hit multiplies your ATK.",
     silver: { base: 12, step: 2, growth: 3 }, gold: critTrainers,
   },
-  // The Archer's reach, in hundredths of a tile: 3 tiles, and 0.05 more a
+  // The Archer's reach, in hundredths of a tile (a meter): 3 tiles, and 0.05 more a
   // rank, 7 at its 80 (ranged.ts).
   {
     id: "attackRange", name: "Attack Range", short: "Range", group: "offense", goal: "attackRange", cost: 1, max: 80,
-    curve: { per: 5 }, base: 300, scale: 100, unit: "tiles",
-    description: "Raises how far the Archer's shots reach, in tiles.",
+    curve: { per: 5 }, base: 300, scale: 100, unit: "m",
+    description: "Raises how far the Archer's shots reach, in meters.",
     silver: rangePrices, gold: { growth: rangePrices.growth, start: rangePrices.base, cubic: rangePrices.cubic },
   },
   // The Archer's rate of fire, in twentieths of a shot every 10 turns: 1
@@ -823,27 +831,30 @@ export const TRAINING = [
   // target, in hundred-thousandths of ×1: 0.01 for the first rank, and each
   // later rank 0.00004 less (0.00204 for the 200th), 1.204 a tile in all.
   // An arrow's ATK is multiplied by 1 + this × the Euclidean distance to
-  // its target (ranged.ts).
+  // its target (ranged.ts). Its trainers start at a minute a rank.
   {
     id: "attackPerTile", name: "ATK / Tile", short: "ATK/Tile", group: "offense", goal: "attackPerTile", cost: 1, max: 200,
-    curve: { per: 1002, square: -2 }, scale: 100_000, unit: "perTile",
-    description: "Multiplies the ATK of each of the Archer's shots by more for every tile its target stands away.",
-    silver: perTilePrices, gold: { start: perTilePrices.base, ratio: perTilePrices.ratio, rise: perTilePrices.rise },
+    curve: { per: 1002, square: -2 }, scale: 100_000, unit: "perMeter",
+    description: "Multiplies the ATK of each of the Archer's shots by more for every meter its target stands away.",
+    silver: perTilePrices, gold: { start: perTilePrices.base, ratio: perTilePrices.ratio, rise: perTilePrices.rise }, time: { skip: 1 },
   },
   // The chance each of the Archer's shots is a multishot, in hundredths of
-  // a percent: 0.5% a rank, 49.5% at its 99 (ranged.ts).
+  // a percent: 0.5% a rank, 49.5% at its 99 (ranged.ts). Its trainers
+  // start at a minute a rank. Its trainers
+  // start at a minute a rank.
   {
     id: "multishotChance", name: "Multishot Chance", short: "Multi %", group: "offense", goal: "multishot", cost: 1, max: 99,
     curve: { per: 50 }, scale: 100, unit: "%",
     description: "Raises the chance each of the Archer's shots fires more than one arrow, each at another enemy in range.",
-    silver: multishotChancePrices, gold: { growth: multishotChancePrices.growth, start: multishotChancePrices.base, power: multishotChancePrices.power },
+    silver: multishotChancePrices, gold: { growth: multishotChancePrices.growth, start: multishotChancePrices.base, power: multishotChancePrices.power }, time: { skip: 1 },
   },
-  // How many enemies a multishot fires at: 2, and one more a rank, 9 at its 7.
+  // How many enemies a multishot fires at: 2, and one more a rank, 9 at its
+  // 7. A trainer's n-th rank takes n hours.
   {
     id: "multishotTargets", name: "Multishot Targets", short: "Targets", group: "offense", goal: "multishot", cost: 1, max: 7,
-    curve: { per: 1 }, base: 2, unit: "targets",
+    curve: { per: 1 }, base: 2, unit: "count",
     description: "Raises how many arrows a multishot fires, one at each of that many enemies in range.",
-    silver: multishotTargetsPrices, gold: multishotTargetsPrices,
+    silver: multishotTargetsPrices, gold: multishotTargetsPrices, time: { each: 3600 },
   },
   // The chance each of the Archer's shots, fired while Rapid Fire isn't,
   // starts it, in hundredths of a percent: 0.4% a rank, 34% at its 85.

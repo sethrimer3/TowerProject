@@ -81,7 +81,7 @@ export const EFFECTS: Record<EffectKind, EffectText> = {
   bossDrops: { words: "boss equipment drop chance", percent: true },
   startSilver: { words: "Silver at the start of each run" },
   moveSpeed: { words: "movement speed", percent: true },
-  dashTiles: { words: "tile a Dash crosses", plural: "tiles a Dash crosses", whole: true },
+  dashTiles: { words: "m a Dash crosses", whole: true },
 };
 
 /** One line of an item's effects: `base` at level 1, `perLevel` more each

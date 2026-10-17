@@ -175,8 +175,12 @@ The circle round a Shielded enemy within which its guard cuts the hero's damage 
 _Avoid_: aura, shield radius, field
 
 **Archer**:
-The hero's class once Tower III's floor 10 Goal is claimed: at the end of each turn its arrow is ready, it shoots the closest enemy within its **Attack Range** (3 tiles, more with training) for one strike's damage, wounding it before any fight. **Attack Speed** sets how often (1 shot every 10 turns, more with training). **ATK / Tile** (training, Tower III's floor 50) multiplies an arrow's ATK by more for each tile to its target, and **Charged Shot** (research, floor 60) raises it for each turn a ready arrow waits unfired; **Multishot** (training, floor 70) gives a shot a chance to fire at several enemies in range at once, and **Rapid Fire** (training, floor 80) a chance to make its arrows come four times as fast for a few turns. The class's name, shown under the portrait, is cosmetic before it (Wayfarer, then Pathfinder once Tower II is open).
+The hero's class once Tower III's floor 10 Goal is claimed: at the end of each turn its arrow is ready, it shoots the closest enemy within its **Attack Range** (3 m, more with training) for one strike's damage, wounding it before any fight. **Attack Speed** sets how often (1 shot every 10 turns, more with training). **ATK / Tile** (training, Tower III's floor 50) multiplies an arrow's ATK by more for each **meter** to its target, and **Charged Shot** (research, floor 60) raises it for each turn a ready arrow waits unfired; **Multishot** (training, floor 70) gives a shot a chance to fire at several enemies in range at once, and **Rapid Fire** (training, floor 80) a chance to make its arrows come four times as fast for a few turns. The class's name, shown under the portrait, is cosmetic before it (Wayfarer, then Pathfinder once Tower II is open).
 _Avoid_: ranger, bowman
+
+**Meter**:
+The unit distances are shown in on screen ("m"): one tile across. Attack Range, ATK / Tile and a Dash's reach are given in meters.
+_Avoid_: tiles (as a shown unit)
 
 **Volley**:
 A turn's shots, at the end of each turn inside a run: each ready **Ranged enemy** within reach shoots the hero, closest first, and then, unless a shot felled the hero, the **Archer**'s arrows fly.

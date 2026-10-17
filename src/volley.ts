@@ -30,7 +30,7 @@ const RAPID_FIRE_SALT = 0x5f1d3;
  * turn (Rapid Fire), each of its arrows has a `lead`, how far into the
  * turn it fired (0 to 1), and flies half the flight from that share of its
  * first half, so they leave one after another. */
-export type Shot = { by: "hero" | "enemy"; from: { x: number; y: number }; to: { x: number; y: number }; damage: number; shrouded?: number; crit?: number; charged?: boolean; healed?: number; before?: number; hp?: number; full?: number; lead?: number };
+export type Shot = { by: "hero" | "enemy"; from: { x: number; y: number }; to: { x: number; y: number }; damage: number; shrouded?: number; crit?: number; charge?: number; healed?: number; before?: number; hp?: number; full?: number; lead?: number };
 /** A turn's shots, flying from `at` (performance time) for `flight` ms. */
 export type Volley = { at: number; flight: number; shots: Shot[] };
 
@@ -140,7 +140,7 @@ function loose(turn: VolleyTurn, p: Player, v: Volleys, shots: Shot[], range: nu
     const shot = fired++, from = shots.length;
     const targets = multishot(shot) ? inReach.filter(hurts).slice(0, trainedAmount(ranks, "multishotTargets")) : [target];
     for (const t of targets) {
-      const kill = arrow(turn, p, t, crit, shot, boost(t.d2), !!(percent && v.waited), shots);
+      const kill = arrow(turn, p, t, crit, shot, boost(t.d2), percent * (v.waited ?? 0), shots);
       if (kill) kills.push(kill);
     }
     for (let i = from; i < shots.length; i++) shots[i]!.lead = tick / ARCHER_TICKS;
@@ -160,9 +160,9 @@ function loose(turn: VolleyTurn, p: Player, v: Volleys, shots: Shot[], range: nu
 /** The Archer's arrow `shot` of the turn lands on its target: one strike's
  * damage, its ATK multiplied by `boost` and critical rolls counted,
  * healing by Lifesteal; it wounds the enemy, or clears it from the board
- * and is returned as a kill. A `chargedShot` arrow's number wears a gold
- * outline. */
-function arrow({ board, seed, volleys }: VolleyTurn, p: Player, { x, y, tile }: InReach, crit: ReturnType<typeof critRule>, shot: number, boost: number, chargedShot: boolean, shots: Shot[]): VolleyKill | undefined {
+ * and is returned as a kill. An arrow with a `charge` (the percent Charged
+ * Shot added to its ATK) above 0 carries it, for its glow and gold outline. */
+function arrow({ board, seed, volleys }: VolleyTurn, p: Player, { x, y, tile }: InReach, crit: ReturnType<typeof critRule>, shot: number, boost: number, charge: number, shots: Shot[]): VolleyKill | undefined {
   const enemy = tile.enemy;
   let applications = 0;
   if (crit) {
@@ -172,7 +172,7 @@ function arrow({ board, seed, volleys }: VolleyTurn, p: Player, { x, y, tile }: 
   const damage = arrowDamage(p, enemy, applications, crit?.factor ?? 1, boost), left = snap(Math.max(0, enemy.hp - damage));
   const healed = p.lifesteal ? snap(Math.min(p.maxHp - p.hp, (damage * p.lifesteal) / 100)) : 0;
   if (healed > 0) p.hp = snap(p.hp + healed);
-  shots.push({ by: "hero", from: { x: p.x, y: p.y }, to: { x, y }, damage, ...(applications ? { crit: applications } : {}), ...(chargedShot ? { charged: true } : {}), ...(healed > 0 ? { healed } : {}),
+  shots.push({ by: "hero", from: { x: p.x, y: p.y }, to: { x, y }, damage, ...(applications ? { crit: applications } : {}), ...(charge > 0 ? { charge } : {}), ...(healed > 0 ? { healed } : {}),
     before: enemy.hp, hp: left, full: snap(enemy.hp + (tile.wound ?? 0)) });
   if (left > 0) {
     board.wound?.(x, y, damage);

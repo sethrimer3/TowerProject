@@ -1,4 +1,4 @@
-import { curvePrice, risingPrice, type TrainerCurve, type TrainingId } from "./config.ts";
+import { curvePrice, risingPrice, type TrainerCurve, type TrainerTime, type TrainingId } from "./config.ts";
 import { halfPow } from "./exact.ts";
 
 // A Training rank is bought one of two ways: with training points, which
@@ -10,6 +10,8 @@ import { halfPow } from "./exact.ts";
 /** A trainer's rank takes time: a stat's first four ranks are quick (15 s,
  * 1 min, 5 min, 10 min), then the m-th rank after them takes m times
  * ten minutes (10 min, 20 min, 30 min …), before Faster Trainers research.
+ * A row's own `time` may start it further along, or step by its own amount.
+ * A row's own `time` may start it further along, or step by its own amount.
  * With every speedup (Ad-Disable and both Coin Packs ×12, batches of 100
  * ×10, Faster Trainers researched alongside), a stat's 6,000 ranks take
  * about 17 months. */
@@ -46,12 +48,15 @@ export type TrainingJob = { id: TrainingId; startedAt: number; completesAt: numb
 export type TrainingPaid = { points: number; gold: number; ms: number };
 
 /** Seconds the next rank takes for a stat that already has `ranks` ranks,
- * before Faster Trainers. */
-export const trainingSeconds = (ranks: number) =>
-  Math.min(TRAINING_LONGEST_SECONDS, TRAINING_START_SECONDS[ranks] ?? TRAINING_STEP_SECONDS * (ranks + 1 - TRAINING_START_SECONDS.length));
+ * before Faster Trainers, on the row's own `time` if it has one. */
+export const trainingSeconds = (ranks: number, time?: TrainerTime) => {
+  if (time && "each" in time) return Math.min(TRAINING_LONGEST_SECONDS, time.each * (ranks + 1));
+  const n = ranks + (time?.skip ?? 0);
+  return Math.min(TRAINING_LONGEST_SECONDS, TRAINING_START_SECONDS[n] ?? TRAINING_STEP_SECONDS * (n + 1 - TRAINING_START_SECONDS.length));
+};
 /** The training time (ms) of the next rank of a stat with `ranks` ranks,
- * at `speed` (Faster Trainers: 0.02 a level). */
-export const trainingMs = (ranks: number, speed: number) => Math.round((trainingSeconds(ranks) * 1000) / (1 + speed));
+ * at `speed` (Faster Trainers: 0.02 a level), on the row's `time`. */
+export const trainingMs = (ranks: number, speed: number, time?: TrainerTime) => Math.round((trainingSeconds(ranks, time) * 1000) / (1 + speed));
 /** The Gold a trainer asks for the next rank of `row`, with `ranks`
  * ranks, on the row's `gold` curve:
  * `TRAINING_GOLD_PER_POINT` a point of its cost times the rank's number,
@@ -82,11 +87,11 @@ const listGold = (row: { cost: number; gold: TrainerCurve }, ranks: number) => {
  * batch's speedup) of `count` ranks more of `row` trained by trainers who
  * have finished `ranks`, at Faster Trainers `speed` and Training Discount
  * `discount`. */
-export function trainerBatch(row: { cost: number; gold: TrainerCurve }, ranks: number, count: number, speed: number, discount = 0) {
+export function trainerBatch(row: { cost: number; gold: TrainerCurve; time?: TrainerTime }, ranks: number, count: number, speed: number, discount = 0) {
   let gold = 0, ms = 0;
   for (let k = 0; k < count; k++) {
     gold += trainingGold(row, ranks + k, discount);
-    ms += trainingMs(ranks + k, speed);
+    ms += trainingMs(ranks + k, speed, row.time);
   }
   return { gold, ms };
 }

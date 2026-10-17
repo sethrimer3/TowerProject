@@ -205,7 +205,7 @@ test("an arrow that fells an unwounded enemy pays the kill as an instakill; a re
   assert.equal(g.run.volleys?.hero, 0, "fired: the cooldown starts again");
 });
 
-test("Attack Range and Attack Speed: 3.00 tiles and 1.00 shot every 10 turns, 0.05 more a rank, 7 and 6 at their most, opened by Tower III's floors 20 and 30", () => {
+test("Attack Range and Attack Speed: 3.00 m and 1.00 shot every 10 turns, 0.05 more a rank, 7 and 6 at their most, opened by Tower III's floors 20 and 30", () => {
   const save = defaults();
   assert.deepEqual([trainedAmount(save, "attackRange"), trainedAmount(save, "attackSpeed")], [300, 20]);
   save.training.attackRange = 80;
@@ -213,7 +213,7 @@ test("Attack Range and Attack Speed: 3.00 tiles and 1.00 shot every 10 turns, 0.
   assert.deepEqual([trainedAmount(save, "attackRange"), trainedAmount(save, "attackSpeed")], [700, 120]);
   save.training.attackRange = 1;
   const step = trainingStep(save, "attackRange");
-  assert.deepEqual([step.now, step.next, trainingText(step.now, step.unit)], [3.05, 3.1, "3.05 tiles"]);
+  assert.deepEqual([step.now, step.next, trainingText(step.now, step.unit)], [3.05, 3.1, "3.05 m"]);
   assert.equal(trainingText(trainingStep(save, "attackSpeed").now, "shots"), "6.00/10 turns");
   const run = { training: { attackSpeed: 0 }, player: hero() };
   assert.deepEqual(runTrainingValue({ ...save, training: { ...save.training, attackSpeed: 10 } }, run, "attackSpeed"), { value: 1.5, unit: "shots" });
@@ -237,7 +237,8 @@ test("ATK / Tile: 0.01 a tile for the first rank, each later rank 0.00004 less, 
   assert.deepEqual([0, 1, 2, 200].map((r) => trainedAmount({ training: { ...save.training, attackPerTile: r } }, "attackPerTile")), [0, 1000, 1996, 120_400]);
   save.training.attackPerTile = 1;
   const step = trainingStep(save, "attackPerTile");
-  assert.deepEqual([step.now, step.next, trainingText(step.now, step.unit), trainingText(step.next, step.unit)], [0.01, 0.01996, "+0.010×/tile", "+0.020×/tile"]);
+  assert.deepEqual([step.now, step.next, trainingText(step.now, step.unit), trainingText(step.next, step.unit)], [0.01, 0.01996, "×1.010/m", "×1.020/m"]);
+  assert.equal(trainingText(step.now, step.unit, true), "×1.010", "bare on the run's cards");
   const prices = [1, 38, 98, 130, 200].map((n) => silverPrice("attackPerTile", n - 1));
   assert.deepEqual(prices, [1, 38, 98, 130, 200].map((n) => trainingGold(row, n - 1)), "the same in Silver and a trainer's Gold");
   assert.deepEqual(prices, [50, 589, 60_929, 1_000_039, 998_422_519]);
@@ -263,14 +264,14 @@ test("ATK / Tile lets the Archer hurt, and so target, an enemy its plain arrows 
   assert.deepEqual(far.volley?.shots.map((s) => [s.to, s.damage]), [[{ x: 4, y: 0 }, 26.12]]);
 });
 
-test("Charged Shot: each turn the ready arrow waits unfired adds its percent to the next arrow's ATK, shown in gold, then starts over; nothing counts before it is researched", () => {
+test("Charged Shot: each turn the ready arrow waits unfired adds its percent to the next arrow's ATK, carried on the arrow for its gold, then starts over; nothing counts before it is researched", () => {
   const g = archer(arena({ "6,0": { ...brute, hp: 9000 } }, { attack: 1000 }));
   g.save.archives.levels.chargedShot = 10;
   for (let i = 0; i < 2; i++) assert.ok(g.move(1, 0));
   assert.equal(g.run.volleys?.waited, 2, "out of range two turns");
   assert.ok(g.move(1, 0));
   // Two turns waited, at 10% a turn.
-  assert.deepEqual(g.volley?.shots.map((s) => [s.damage, s.charged]), [[1200, true]]);
+  assert.deepEqual(g.volley?.shots.map((s) => [s.damage, s.charge]), [[1200, 20]]);
   assert.equal(g.run.volleys?.waited, undefined, "fired: the wait starts over");
   assert.ok(g.undo());
   assert.equal(g.run.volleys?.waited, 2, "undo takes the arrow back, and the wait with it");
@@ -278,7 +279,7 @@ test("Charged Shot: each turn the ready arrow waits unfired adds its percent to 
   for (let i = 0; i < 2; i++) assert.ok(plain.move(1, 0));
   assert.equal(plain.run.volleys?.waited, undefined);
   assert.ok(plain.move(1, 0));
-  assert.deepEqual(plain.volley?.shots.map((s) => [s.damage, s.charged]), [[1000, undefined]]);
+  assert.deepEqual(plain.volley?.shots.map((s) => [s.damage, s.charge]), [[1000, undefined]]);
 });
 
 test("Charged Shot research: +1% a turn a level for 100 levels, opened by Tower III's floor 60, on Critical Factor's hours at ten times its Gold", () => {
@@ -290,32 +291,32 @@ test("Charged Shot research: +1% a turn a level for 100 levels, opened by Tower 
   assert.equal(def.levels.reduce((sum, l) => sum + l.gold, 0), 1_960_230_000);
 });
 
-test("a charged arrow's number rises in a gold outline drawn under its black one; a plain arrow's has the black alone", () => {
+test("a charged arrow's number rises in a gold outline drawn under its black one, faint and narrower under 50%; a plain arrow's has the black alone", () => {
   const popups = new BoardPopups();
-  const shot = (to: number, charged: boolean) => ({ by: "hero" as const, from: { x: 0, y: 0 }, to: { x: to, y: 0 }, damage: 40, ...(charged ? { charged } : {}), before: 100, hp: 60, full: 100 });
-  popups.update({ run: { seed: 1 }, gains: [], fight: null, lastHeal: null, volley: { at: 0, flight: 0, shots: [shot(1, true), shot(2, false)] } }, 0);
+  const shot = (to: number, charge: number) => ({ by: "hero" as const, from: { x: 0, y: 0 }, to: { x: to, y: 0 }, damage: 40, ...(charge ? { charge } : {}), before: 100, hp: 60, full: 100 });
+  popups.update({ run: { seed: 1 }, gains: [], fight: null, lastHeal: null, volley: { at: 0, flight: 0, shots: [shot(1, 50), shot(2, 20), shot(3, 0)] } }, 0);
   const strokes: string[] = [];
   const c = new Proxy({} as Record<string, unknown>, {
     get: (t, k) => (k === "strokeText" ? (text: string) => strokes.push(`${text}:${t.strokeStyle}:${t.lineWidth}`) : k in t ? t[k as string] : () => ({ addColorStop() {} })),
     set: (t, k, v) => ((t[k as string] = v), true),
   });
   popups.draw({ c, s: 40, now: 10, left: 0, bottom: 0, n: 9, look: { reduceMotion: true, themed: null } } as never);
-  assert.deepEqual(strokes, ["40:#ffd34d:8.8", "40:#000:4", "40:#000:4"]);
+  assert.deepEqual(strokes, ["40:#ffd34d:8.8", "40:#000:4", "40:rgba(255, 211, 77, 0.45):6.4", "40:#000:4", "40:#000:4"]);
 });
 
 test("a charged arrow flies in a blue glow; a plain arrow has none", () => {
-  const glows = (charged: boolean) => {
+  const glows = (charge: number) => {
     const seen = new Set<string>();
     const c = new Proxy({} as Record<string, unknown>, {
       get: (t, k) => (k === "stroke" || k === "fill" ? () => seen.add(String(t.shadowColor ?? "")) : k in t ? t[k as string] : () => {}),
       set: (t, k, v) => ((t[k as string] = v), true),
     });
-    const shot = { by: "hero" as const, from: { x: 0, y: 0 }, to: { x: 3, y: 0 }, damage: 40, ...(charged ? { charged } : {}) };
+    const shot = { by: "hero" as const, from: { x: 0, y: 0 }, to: { x: 3, y: 0 }, damage: 40, ...(charge ? { charge } : {}) };
     drawVolley({ c, s: 40, now: 50, left: 0, bottom: 0, n: 9 } as never, { at: 0, flight: 100, shots: [shot] });
     return [...seen];
   };
-  assert.deepEqual(glows(true), ["#4da6ff"]);
-  assert.deepEqual(glows(false), [""]);
+  assert.deepEqual(glows(5), ["#4da6ff"]);
+  assert.deepEqual(glows(0), [""]);
 });
 
 test("Multishot Chance and Targets: 0.5% a rank to 49.5% at 99, and 2 targets to 9 at 7, opened by Tower III's floor 70; the same prices in Silver and a trainer's Gold", () => {
@@ -332,9 +333,9 @@ test("Multishot Chance and Targets: 0.5% a rank to 49.5% at 99, and 2 targets to
   const chance = trainingStep(save, "multishotChance");
   assert.deepEqual([chance.unit, chance.now, chance.next], ["%", 49, 49.5]);
   const targets = trainingStep(save, "multishotTargets");
-  assert.deepEqual([trainingText(targets.now, targets.unit), trainingText(targets.next, targets.unit)], ["2 targets", "3 targets"]);
+  assert.deepEqual([trainingText(targets.now, targets.unit), trainingText(targets.next, targets.unit)], ["2", "3"], "no unit: the row's name says what it counts");
   const run = { training: { multishotTargets: 2 }, player: hero() };
-  assert.deepEqual(runTrainingValue(save, run, "multishotTargets"), { value: 4, unit: "targets" }, "Silver ranks count in the run");
+  assert.deepEqual(runTrainingValue(save, run, "multishotTargets"), { value: 4, unit: "count" }, "Silver ranks count in the run");
   assert.deepEqual(runTrainingValue(save, run, "multishotChance"), { value: 49, unit: "%" });
   for (const row of rows) {
     const prices = Array.from({ length: row.max }, (_, k) => silverPrice(row.id, k));
@@ -375,7 +376,7 @@ test("every arrow of a multishot carries the first's Charged Shot", () => {
   g.save.archives.levels.chargedShot = 10;
   g.save.training.multishotChance = 200;
   for (let i = 0; i < 3; i++) assert.ok(g.move(1, 0));
-  assert.deepEqual(g.volley?.shots.map((s) => [s.to, s.damage, s.charged]), [[{ x: 5, y: 2 }, 1200, true], [{ x: 6, y: 0 }, 1200, true]]);
+  assert.deepEqual(g.volley?.shots.map((s) => [s.to, s.damage, s.charge]), [[{ x: 5, y: 2 }, 1200, 20], [{ x: 6, y: 0 }, 1200, 20]]);
 });
 
 test("Rapid Fire Chance and Duration: 0.4% a rank to 34% at 85, and 1 turn, +0.05 a rank, to 5.95 at 99, opened by Tower III's floor 80; the same prices in Silver and a trainer's Gold", () => {

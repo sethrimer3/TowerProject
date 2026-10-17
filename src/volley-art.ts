@@ -32,7 +32,7 @@ export function drawVolley(f: FrameContext, volley: Volley | null, wrap = 0) {
     const at = tileCenter(f, shot.from.x + dx * t, shot.from.y + dy * t);
     if (shot.by === "enemy") drawShot(f, at);
     // World y grows upward, the screen's downward.
-    else drawArrow(f, at, Math.atan2(-dy, dx), !!shot.charged);
+    else drawArrow(f, at, Math.atan2(-dy, dx), !!shot.charge);
   }
 }
 

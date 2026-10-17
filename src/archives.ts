@@ -119,9 +119,9 @@ export const RESEARCH_TARGETS = {
   /** What a trainer's Gold is cut by, in tenths of a percent. */
   trainingDiscount: { name: "Training Discount", base: 0, shown: tenths },
   /** Tiles the hand's first step toward a new target may dash across, once Dash is owned. */
-  dashTiles: { name: "Tiles Dashed", base: 0, shown: count },
+  dashTiles: { name: "Meters Dashed", base: 0, shown: count },
   /** Tiles more STAIRS's dash toward the stairs may cross, once End Rush is owned. */
-  endRushTiles: { name: "Tiles Rushed to the Stairs", base: 0, shown: count },
+  endRushTiles: { name: "Meters Rushed to the Stairs", base: 0, shown: count },
   /** How many of a Dash's dashed tiles regain HP by Regen, once Dash Regen is owned. */
   dashRegenSteps: { name: "Dashed Steps with Regen", base: 0, shown: count },
   /** Buy quantities opened past x1: x5, x10, x100, then Max. */

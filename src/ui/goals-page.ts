@@ -69,12 +69,12 @@ const UNLOCK_TUTORIALS: Record<GoalUnlock, string> = {
     `<p class="hint">Training points and a run's Silver cost the same as ever.</p>`,
   cardGroups: `<p>Card Groups opens on the Deck: tap a diamond under the hand, between two cards, to link them into a group. The cards of a group share one priority: of every target any of them can reach, the hand heads for the closest.</p>` +
     `<p class="hint">Link Yellow Key and Blue Key, and the hero takes whichever key is nearer. Moving a card out of place breaks its links.</p>`,
-  archer: `<p>Your hero is now an Archer: every 10 turns it fires an arrow at the closest enemy within 3 tiles, walls and doors no obstacle, dealing one strike's damage (critical hits and the enemy's DEF counted) before you ever touch it.</p>` +
+  archer: `<p>Your hero is now an Archer: every 10 turns it fires an arrow at the closest enemy within 3 m, walls and doors no obstacle, dealing one strike's damage (critical hits and the enemy's DEF counted) before you ever touch it.</p>` +
     `<p>A ready shot waits for an enemy to come in range, and fires the turn one does. Only Ranged enemies can shoot back; the rest strike only when you fight them.</p>` +
     `<p class="hint">Ranged enemies reach five sixths as far as your arrows: strike first, then close in.</p>`,
-  attackRange: `<p>Attack Range joins Offense training: each rank lets your arrows reach 0.05 tiles further, from 3 tiles up to 7.</p>` +
+  attackRange: `<p>Attack Range joins Offense training: each rank lets your arrows reach 0.05 m further, from 3 m up to 7 m.</p>` +
     `<p class="hint">Ranged enemies always reach five sixths as far as you do.</p>`,
-  attackPerTile: `<p>ATK / Tile joins Offense training: each arrow's ATK is multiplied by more for every tile its target stands away, counted straight across. The first rank adds ×0.01 a tile, and 200 ranks ×1.204 a tile.</p>` +
+  attackPerTile: `<p>ATK / Tile joins Offense training: each arrow's ATK is multiplied by more for every meter (a tile) its target stands away, counted straight across. The first rank makes it ×1.01 a meter, and 200 ranks ×2.204 a meter.</p>` +
     `<p class="hint">A far enemy your arrows can't hurt up close may fall to a shot from further off. Critical hits multiply on top.</p>`,
   chargedShot: `<p>Charged Shot opens in the Archives: once your arrow is ready, every turn it waits without firing adds to the next arrow's ATK, by 1% a turn for each level researched.</p>` +
     `<p class="hint">A charged arrow flies in a blue glow, and its number wears a gold outline. Its bonus multiplies with ATK / Tile and critical hits, and resets once it fires.</p>`,

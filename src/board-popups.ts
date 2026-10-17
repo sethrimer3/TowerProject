@@ -34,8 +34,13 @@ const HERO_DAMAGE_COLOR = "#b3121f";
 /** A critical strike's number: a little brighter, in a glow. */
 const CRIT_COLOR = "#ff7a6a";
 const CRIT_GLOW = "#ffb04a";
-/** A Charged Shot's number: a gold outline around its black one. */
-const CHARGED_RING = "#ffd34d";
+/** A Charged Shot's number: a gold outline around its black one, as wide
+ * as `width` times the black's; fainter and narrower while the charge is
+ * under `FULL_CHARGE` percent. */
+type Ring = { color: string; width: number };
+const CHARGED_RING: Ring = { color: "#ffd34d", width: 2.2 };
+const FAINT_RING: Ring = { color: "rgba(255, 211, 77, 0.45)", width: 1.6 };
+const FULL_CHARGE = 50;
 /** What the enemy's thorns cost it: yellow, never mistaken for a heal's blue
  * or green. */
 const THORN_COLOR = "#ffd83d";
@@ -117,7 +122,7 @@ const PARRY_GIVE = 0.4;
 
 type Popup = { x: number; y: number; start: number };
 /** A rising number's colour, how far it rises (tiles) and its size (of a tile). */
-type TextStyle = { color: string; rise: number; size: number; glow?: string; ring?: string };
+type TextStyle = { color: string; rise: number; size: number; glow?: string; ring?: Ring };
 /** A reward without a sprite, written in gold. */
 const REWARD_TEXT: TextStyle = { color: REWARD_COLOR, rise: REWARD_RISE, size: 0.42 };
 /** A mark's colour, size (px in tile space) and alignment. */
@@ -132,7 +137,7 @@ const STILL: Offset = { dx: 0, dy: 0 };
 export class BoardPopups {
   private rewards: (Popup & { gain: Gain })[] = [];
   /** Damage and heal numbers. */
-  private numbers: (Popup & { text: string; color: string; glow?: string; ring?: string })[] = [];
+  private numbers: (Popup & { text: string; color: string; glow?: string; ring?: Ring })[] = [];
   /** The last heal raised. */
   private healed = 0;
   /** The fights still showing, oldest first, the game's latest last, each
@@ -218,7 +223,7 @@ export class BoardPopups {
         if (s.damage > 0) this.raise({ by: "enemy", damage: s.damage, ...(s.shrouded ? { shrouded: s.shrouded } : {}), start: 0, at: 0, end: 0, hp: 0 }, s.to, start);
         continue;
       }
-      this.raise({ by: "hero", damage: s.damage, ...(s.crit ? { crit: s.crit } : {}), start: 0, at: 0, end: 0, hp: s.hp ?? 0 }, s.to, start, s.charged);
+      this.raise({ by: "hero", damage: s.damage, ...(s.crit ? { crit: s.crit } : {}), start: 0, at: 0, end: 0, hp: s.hp ?? 0 }, s.to, start, s.charge);
       if (s.healed) this.heal(s.healed, s.from, start);
       if (s.full) this.arrowBars.push({ x: s.to.x, y: s.to.y, from: s.before ?? s.full, hp: s.hp ?? 0, full: s.full, start });
     }
@@ -237,32 +242,36 @@ export class BoardPopups {
   }
   /** A strike's numbers over `on` from `start`: the damage that got
    * through, and what the shroud blocked in silver beside it. A round the
-   * hero came out ahead of raises only its blue gain. A `charged` arrow's
-   * number wears a gold outline around its black one. */
-  private raise(s: Strike, on: { x: number; y: number }, start: number, charged = false) {
+   * hero came out ahead of raises only its blue gain. An arrow with a
+   * `charge` (percent) above 0 wears a gold outline around its black one,
+   * a faint one under `FULL_CHARGE`. */
+  private raise(s: Strike, on: { x: number; y: number }, start: number, charge = 0) {
     if (!this.shown.hitNumbers || (s.by === "enemy" && s.healed && !s.damage && !s.shrouded)) return;
     const both = !!s.shrouded && s.damage > 0, y = on.y + DAMAGE_START;
     if (s.shrouded) this.numbers.push({ x: on.x - (both ? SHROUD_SPLIT : 0), y, start, text: String(wholeChange(s.shrouded)), color: SHROUD_COLOR });
     if (s.shrouded && !s.damage) return;
-    this.numbers.push({ x: on.x + (both ? SHROUD_SPLIT : 0), y, start, text: String(wholeChange(s.damage)), ...(s.crit ? { color: CRIT_COLOR, glow: CRIT_GLOW } : { color: s.by === "hero" ? DAMAGE_COLOR : HERO_DAMAGE_COLOR }), ...(charged ? { ring: CHARGED_RING } : {}) });
+    this.numbers.push({ x: on.x + (both ? SHROUD_SPLIT : 0), y, start, text: String(wholeChange(s.damage)), ...(s.crit ? { color: CRIT_COLOR, glow: CRIT_GLOW } : { color: s.by === "hero" ? DAMAGE_COLOR : HERO_DAMAGE_COLOR }), ...(charge > 0 ? { ring: charge < FULL_CHARGE ? FAINT_RING : CHARGED_RING } : {}) });
   }
   /** Nothing is rising or waiting to, and the enemy's HP bar is still. */
   idle(now: number) {
     return !this.rewards.length && !this.numbers.length && !this.arrowBars.length && !this.fights.some((shown) => barMoving(shown.fight, now));
   }
 
-  /** Each enemy's HP bar, then every reward that has started, then every
-   * number, each oldest first so newer ones draw on top. Numbers draw over
-   * the rewards, so a potion's heal or a strike's damage is never hidden
-   * behind a sprite rising from the same tile. */
+  /** Each enemy's HP bar, then every reward that has started but a kill's
+   * or a chest's drops, then every number, then the drops, each oldest first
+   * so newer ones draw on top. Numbers draw over the other rewards, so a
+   * potion's heal is never hidden behind its sprite; drops draw over the
+   * numbers, so what a kill gives is never hidden behind its damage. */
   draw(f: FrameContext) {
     if (this.shown.enemyBars) {
       for (const shown of this.fights) drawEnemyBar(f, shown.fight);
       for (const bar of this.arrowBars) drawArrowBar(f, bar);
     }
     const started = <T extends Popup>(popups: T[]) => popups.filter((p) => p.start <= f.now).sort((a, b) => a.start - b.start);
-    for (const p of started(this.rewards)) if (!this.drawSprite(f, p)) this.drawText(f, p, p.gain.text, REWARD_TEXT);
+    const rewards = started(this.rewards), reward = (p: (typeof rewards)[number]) => this.drawSprite(f, p) || this.drawText(f, p, p.gain.text, REWARD_TEXT);
+    for (const p of rewards) if (!p.gain.drop) reward(p);
     for (const p of started(this.numbers)) this.drawText(f, p, p.text, { color: p.color, rise: DAMAGE_RISE, size: 0.55, ...(p.glow ? { glow: p.glow } : {}), ...(p.ring ? { ring: p.ring } : {}) });
+    for (const p of rewards) if (p.gain.drop) reward(p);
   }
   /** The popup's opacity and how far it has risen (in tiles) at `now`. */
   private phase(f: FrameContext, p: Popup, rise: number) {
@@ -283,8 +292,8 @@ export class BoardPopups {
     if (ring) {
       // The gold outline, wider, under the black one.
       c.lineJoin = "round";
-      c.lineWidth = outline * 2.2;
-      c.strokeStyle = ring;
+      c.lineWidth = outline * ring.width;
+      c.strokeStyle = ring.color;
       c.strokeText(text, at.x, at.y);
     }
     c.lineWidth = outline;

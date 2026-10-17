@@ -1,4 +1,4 @@
-import { TRAINING, type TrainingId } from "../config.ts";
+import { TRAINING, trainingDef, type TrainingId } from "../config.ts";
 import { snap } from "../exact.ts";
 import { TRAINING_RESET_GEMS } from "../gems.ts";
 import { batchSpeedup, bulkBuy, type BuyQuantity } from "../buy-quantity.ts";
@@ -72,17 +72,17 @@ export class TrainingDesk {
    * beyond its new base time goes back as the stat's credit. With no rank
    * left it stops, as `cancel` does. Its speedup stays. */
   private trimJob(id: TrainingId) {
-    const save = this.save, job = trainingJob(save.trainingJobs, id), row = rowOf(id);
+    const save = this.save, job = trainingJob(save.trainingJobs, id), row = rowOf(id), time = trainingDef(id).time;
     const keep = Math.max(0, row.max - save.training[id]);
     if (!job || keep >= job.ranks) return;
     if (keep === 0) return void this.cancel(id);
     const from = save.trainerRanks[id], done = jobInvested(job, this.left(id)) - job.used;
     let dropGold = 0, dropSeconds = 0, allSeconds = 0;
     for (let k = 0; k < job.ranks; k++) {
-      allSeconds += trainingSeconds(from + k);
+      allSeconds += trainingSeconds(from + k, time);
       if (k < keep) continue;
       dropGold += trainingGold(row, from + k, trainingDiscount(save));
-      dropSeconds += trainingSeconds(from + k);
+      dropSeconds += trainingSeconds(from + k, time);
     }
     const back = Math.min(job.gold, dropGold), ms = job.ms - Math.round((job.ms * dropSeconds) / allSeconds);
     save.gold = snap(save.gold + back);

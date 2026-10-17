@@ -190,6 +190,19 @@ test("every victory, a weak enemy's too, raises both its Gold and its Silver as 
   assert.ok(g.save.gold > 0 && g.silver > 0);
 });
 
+test("a kill's or a chest's drops draw over the damage and heal numbers, which draw over the other rewards", () => {
+  const popups = new BoardPopups();
+  const gains = [{ x: 1, y: 0, text: "+1 blue key", art: null }, { x: 1, y: 0, text: "+2 Gold", art: null, drop: { row: 1, with: true } }];
+  popups.update({ run: { seed: 1 }, gains, fight: null, lastHeal: { from: 50, to: 60, x: 1, y: 0, id: 1 } }, 1000);
+  const filled: string[] = [];
+  const c = new Proxy({} as Record<string, unknown>, {
+    get: (t, k) => (k === "fillText" ? (text: string) => filled.push(text) : k in t ? t[k as string] : () => ({ addColorStop() {} })),
+    set: (t, k, v) => ((t[k as string] = v), true),
+  });
+  popups.draw({ c, s: 40, now: 1010, left: 0, bottom: 0, n: 9, look: { reduceMotion: true, themed: null } } as never);
+  assert.deepEqual(filled, ["+1 blue key", "+10", "+2 Gold"]);
+});
+
 test("the board shows rewards that came together one after another, and each strike's damage as it lands", () => {
   const popups = new BoardPopups(), gain = (text: string) => ({ x: 1, y: 0, text, art: null });
   const game = { run: { seed: 1 }, gains: [gain("+5 Gold"), gain("+1 Slime Gel")], fight: null, lastHeal: null };
