@@ -66,7 +66,7 @@ test("Silver Bonus starts at ×1 and adds 1% a rank, Gold Bonus 3%; Silver / Flo
   // Research adds 3% a level (5% for Silver / Floor), simply.
   save.archives.levels.silverBonus = 10;
   save.archives.levels.floorSilver = 10;
-  assert.deepEqual([researched(save.archives, "silverBonus", 100), researched(save.archives, "floorSilver", 100)], [130, 150]);
+  assert.deepEqual([researched(save.archives, "silverBonus"), researched(save.archives, "floorSilver")], [130, 150]);
 });
 
 test("the Training tab's values count research, equipment and Silver Bonus; a run's cards its own ranks and boons too, never a global Gold multiplier", () => {
@@ -75,7 +75,7 @@ test("the Training tab's values count research, equipment and Silver Bonus; a ru
   save.training.silverBonus = save.training.goldBonus = save.training.floorSilver = save.training.floorGold = 10;
   save.training.critChance = 5;
   Object.assign(save.archives.levels, { silverBonus: 10, goldBonus: 10, floorSilver: 10, floorGold: 10, critChance: 3 });
-  const crit = researched(save.archives, "critChancePercent", 100) / 100;
+  const crit = researched(save.archives, "critChancePercent") / 100;
   const step = (id: TrainingId, view?: TrainingView) => [trainingStep(save, id, 1, view).now, trainingStep(save, id, 1, view).next];
   assert.deepEqual(step("silverBonus"), [1.43, 1.443], "×1.10 → ×1.11, times 1.3");
   assert.deepEqual(step("goldBonus"), [1.69, 1.729], "×1.30 → ×1.33, times 1.3");

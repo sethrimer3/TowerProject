@@ -72,7 +72,7 @@ test("research completes on the wall clock, however long the game was closed", (
   assert.deepEqual(done, [{ at: T0 + 8 * HOUR, research: "focusCount", level: 1 }]);
   assert.equal(save.archives.levels.focusCount, 1);
   assert.equal(save.archives.slots[0].job, undefined, "without auto-continue the archivist waits");
-  assert.equal(researched(save.archives, "focusPerRun", 1), 2);
+  assert.equal(researched(save.archives, "focusPerRun"), 2);
 });
 
 test("auto-continue starts each next level the moment the last completes, while the Gold lasts", () => {
@@ -94,7 +94,7 @@ test("auto-continue stops at the last level", () => {
   settleArchives(save, T0 + 10_000 * HOUR);
   assert.equal(save.archives.levels.focusCount, 9);
   assert.equal(status(save, "focusCount"), "completed");
-  assert.equal(researched(save.archives, "focusPerRun", 1), 10);
+  assert.equal(researched(save.archives, "focusPerRun"), 10);
 });
 
 test("stopping research refunds it and keeps its time for later", () => {
@@ -135,10 +135,10 @@ test("Research Speed and Research Cost Discount: open with the Archives, linear 
   }
   const a = defaultArchives();
   a.levels.researchSpeed = 50;
-  assert.equal(RESEARCH_TARGETS.researchSpeed.shown(researched(a, "researchSpeed", 0)), "200%");
+  assert.equal(RESEARCH_TARGETS.researchSpeed.shown(researched(a, "researchSpeed")), "200%");
   assert.equal(duration(a, { gold: 1, hours: 48, effect: { target: "focusPerRun", op: "add", value: 1 } }), 24 * HOUR, "48 hours at 200% take 24");
   a.levels.researchCostDiscount = 100;
-  assert.equal(RESEARCH_TARGETS.researchCost.shown(researched(a, "researchCost", 1000)), "70%");
+  assert.equal(RESEARCH_TARGETS.researchCost.shown(researched(a, "researchCost")), "70%");
   assert.equal(price(a, { gold: 1000, hours: 1, effect: { target: "focusPerRun", op: "add", value: 1 } }), 700);
 });
 
@@ -186,7 +186,7 @@ test("archivists are hired one at a time for Gems, not Gold, up to the maximum",
 
 test("a project's next level reads as the total before and after it", () => {
   const a = owner().archives, show = (archives: typeof a, t: "focusPerRun" | "potionHeal" | "trainingSpeed") =>
-    RESEARCH_TARGETS[t].shown(researched(archives, t, RESEARCH_TARGETS[t].base));
+    RESEARCH_TARGETS[t].shown(researched(archives, t));
   assert.deepEqual([show(a, "focusPerRun"), show(withNextLevel(a, "focusCount"), "focusPerRun")], ["1", "2"]);
   assert.deepEqual([show(a, "potionHeal"), show(withNextLevel(a, "potionHp"), "potionHeal")], ["100%", "103%"]);
   assert.equal(show(a, "trainingSpeed"), "100%");
@@ -325,7 +325,7 @@ test("Potion HP needs Greater Heal, and every level strengthens potions at once,
   assert.equal(g.stepRules.potionHeal, 103);
   save.archives.levels.potionHp = 100;
   assert.equal(g.stepRules.potionHeal, 400);
-  assert.equal(researched(save.archives, "potionHeal", 100), 400);
+  assert.equal(researched(save.archives, "potionHeal"), 400);
 });
 
 test("Shard ATK and Shard DEF open with Tower II's floor 20 and 30 Goals, cost what Potion HP does, and raise every shard picked up at once", () => {
@@ -463,7 +463,7 @@ test("ATK (+2%), DEF and Max HP (+3%), open with the Archives, and Shroud (+4%, 
     assert.ok(def.levels.every((l) => l.effect.target === target && l.effect.op === "add" && l.effect.value === value), id);
   }
   const done = (id: ResearchId, level: number) => ({ ...defaultArchives(), levels: { [id]: level } }) as ReturnType<typeof defaultArchives>;
-  assert.equal(researched(done("shroud", 100), "shroudPercent", 100), 500, "Shroud ×5 at level 100");
+  assert.equal(researched(done("shroud", 100), "shroudPercent"), 500, "Shroud ×5 at level 100");
   // The loadout's whole stat is multiplied, and a run inside gains it as the level completes.
   const save = owner();
   save.upgrades.shroud = 1;
@@ -504,5 +504,5 @@ test("Training Discount opens with Tower II's floor 80 Goal: 99 levels of 0.5% o
   assert.equal(Math.round(minutes(99) / 1440), 49, "49 days at 99");
   assert.ok(def.levels.every((l, i) => i === 0 || (l.gold > def.levels[i - 1]!.gold && l.hours > def.levels[i - 1]!.hours)), "each level dearer and longer");
   save.archives.levels.trainingDiscount = 99;
-  assert.equal(researched(save.archives, "trainingDiscount", 0), 495, "49.5% off, in tenths of a percent");
+  assert.equal(researched(save.archives, "trainingDiscount"), 495, "49.5% off, in tenths of a percent");
 });

@@ -97,12 +97,12 @@ export type BoonEffects = Record<HeroFactor, number> & {
 export type ShrineOwner = { archives: ArchivesSave };
 
 /** Whether Shrines are researched. */
-export const shrinesOpen = (o: ShrineOwner) => researched(o.archives, "shrines", 0) > 0;
+export const shrinesOpen = (o: ShrineOwner) => researched(o.archives, "shrines") > 0;
 /** Standard Boon Bonus, in percent. */
-const standardBonus = (o: ShrineOwner) => researched(o.archives, "standardBoonBonus", 0);
+const standardBonus = (o: ShrineOwner) => researched(o.archives, "standardBoonBonus");
 /** How strong a trade-off's benefit is: 1, and 1% more a level of Improve
  * Trade-off Boons. */
-const tradeoffStrength = (o: ShrineOwner) => 1 + researched(o.archives, "tradeoffBonus", 0) / 100;
+const tradeoffStrength = (o: ShrineOwner) => 1 + researched(o.archives, "tradeoffBonus") / 100;
 
 /** How many of each boon `picked` holds. */
 export function copies(picked: readonly BoonId[]) {
@@ -198,7 +198,7 @@ export const baseFloors = (k: number) => (k <= 20 ? 200 : k <= 30 ? 250 : k <= 4
  * share, rounded down; at least 1. Whole numbers throughout (`floorReq` in
  * hundredths of a percent), so the schedule is exact. */
 export function floorsFor(k: number, o: ShrineOwner, floorReq: number) {
-  const base = Math.max(1, baseFloors(k) + researched(o.archives, "shrineFloors", 0));
+  const base = Math.max(1, baseFloors(k) + researched(o.archives, "shrineFloors"));
   return Math.max(1, Math.floor((base * (10_000 - floorReq)) / 10_000));
 }
 
@@ -255,23 +255,23 @@ export type ShrineRun = { picked: BoonId[]; rolls: number; offer?: BoonId[]; app
 export type OfferOwner = ShrineOwner & { shrines: ShrinesSave };
 
 /** The boons banned now: the first as many as Ban Boons research allows. */
-export const bans = (o: OfferOwner) => o.shrines.banned.slice(0, researched(o.archives, "boonBans", 0));
+export const bans = (o: OfferOwner) => o.shrines.banned.slice(0, researched(o.archives, "boonBans"));
 /** The boons Auto Pick ranks now, best first: as many as Auto Pick Ranking
  * research allows, banned ones left out. */
 export function ranked(o: OfferOwner) {
   const banned = bans(o);
-  return o.shrines.ranking.filter((id) => !banned.includes(id)).slice(0, researched(o.archives, "boonRanks", 0));
+  return o.shrines.ranking.filter((id) => !banned.includes(id)).slice(0, researched(o.archives, "boonRanks"));
 }
 /** The First Boon Choice now: researched, chosen and not banned. */
 export function firstChoice(o: OfferOwner) {
   const id = o.shrines.firstChoice;
-  return id && researched(o.archives, "firstBoonChoice", 0) && !bans(o).includes(id) && boon(id).kind === "standard" ? id : undefined;
+  return id && researched(o.archives, "firstBoonChoice") && !bans(o).includes(id) && boon(id).kind === "standard" ? id : undefined;
 }
 /** How many boons an offer gives: 2, and one more a level of Boon Option
  * Quantity. */
-export const offerSize = (o: OfferOwner) => researched(o.archives, "boonOptions", 2);
+export const offerSize = (o: OfferOwner) => researched(o.archives, "boonOptions");
 /** Whether Auto Pick can be turned on. */
-export const autoPickOpen = (o: ShrineOwner) => researched(o.archives, "autoPickBoons", 0) > 0;
+export const autoPickOpen = (o: ShrineOwner) => researched(o.archives, "autoPickBoons") > 0;
 
 /** Mixed into the run seed to start the offers' stream. */
 const SHRINE_SALT = 0x5a1e7;

@@ -1,4 +1,4 @@
-import { interestCap, researched } from "../archives.ts";
+import { researched } from "../archives.ts";
 import { ENEMY_GOLD, FAST_GOLD, PICKUP_GOLD, RANGED_GOLD, SHIELDED_GOLD, silverForKill, trainedAmount } from "../config.ts";
 import type { RoomWorld } from "../tower/room-world.ts";
 import { snap } from "../exact.ts";
@@ -72,7 +72,7 @@ export class RunPurse {
 
   /** `base` raised by the research `target`'s percent. */
   private researched(base: number, target: "floorGold" | "floorSilver") {
-    return snap((base * researched(this.save.archives, target, 100)) / 100);
+    return snap((base * researched(this.save.archives, target)) / 100);
   }
 
   /** Marks `key` looted; false when it already was. */
@@ -156,7 +156,7 @@ export class RunPurse {
   /** Gold Bonus training's and research's multiplier, in hundredths of a
    * percent (×1 is 10,000). */
   private get goldBonus() {
-    return trainedAmount(this.trainingNow, "goldBonus") * researched(this.save.archives, "goldBonus", 100);
+    return trainedAmount(this.trainingNow, "goldBonus") * researched(this.save.archives, "goldBonus");
   }
 
   /** `base` Gold raised by Gold Bonus. */
@@ -171,7 +171,7 @@ export class RunPurse {
    * `instakill` (the hero's first strike ended it) by Mug research too. */
   private killGold(enemy: Enemy, instakill = false) {
     const gold = snap(((ENEMY_GOLD[enemy.strength] + (enemy.fast ? FAST_GOLD : 0) + (enemy.ranged ? RANGED_GOLD : 0) + (enemy.shielded ? SHIELDED_GOLD : 0)) * this.goldBonus) / 10_000);
-    return instakill ? snap((gold * researched(this.save.archives, "instakillGold", 100)) / 100) : gold;
+    return instakill ? snap((gold * researched(this.save.archives, "instakillGold")) / 100) : gold;
   }
 
   /** An enemy's Gold (by its strength), a Greater Boss's Cells and, once
@@ -273,7 +273,7 @@ export class RunPurse {
    * fought, opened or picked up later pays no Gold again, and the floor
    * pays once a run. Returns what it paid. */
   skippedFloorGold(board: RoomWorld) {
-    const percent = researched(this.save.archives, "floorSkipGold", 0);
+    const percent = researched(this.save.archives, "floorSkipGold");
     if (!percent || !this.loot(`${this.lootKey(-1, -1)}:skipped`)) return 0;
     const chest = this.bonused(snap(averageGold(this.rules.equivalentFloor(this.rules.progressAt(this.run, 0))) + PICKUP_GOLD));
     const torches = litTorches(board);
@@ -330,7 +330,7 @@ export class RunPurse {
    * held (the run's Interest boons raising the share), up to Max
    * Interest. Silver Bonus doesn't raise it. Returns what it added. */
   interest() {
-    const rate = researched(this.save.archives, "interestRate", 0) * (this.boons?.interest ?? 1);
+    const rate = researched(this.save.archives, "interestRate") * (this.boons?.interest ?? 1);
     if (!rate) return 0;
     const held = this.run.silver ?? 0;
     const paid = Math.min(this.interestCap, snap((held * rate) / 1000));
@@ -341,6 +341,6 @@ export class RunPurse {
 
   /** The most Interest a floor pays (Max Interest research). */
   get interestCap() {
-    return interestCap(this.save.archives);
+    return researched(this.save.archives, "interestCap");
   }
 }

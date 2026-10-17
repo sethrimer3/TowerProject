@@ -45,7 +45,7 @@ export class BadgeDesk {
   /** The badges each card can hold: one, and one more for each Badge
    * Slots level researched. */
   get slots() {
-    return researched(this.save.archives, "badgeSlots", 1);
+    return researched(this.save.archives, "badgeSlots");
   }
 
   /** Whether tokens can move between cards now: the skill owned, in the forest. */

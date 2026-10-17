@@ -94,7 +94,7 @@ const STAT_RESEARCH = { attack: "attackPercent", defense: "defensePercent", maxH
 /** What `stat` is multiplied by, the whole of it a run starts with and
  * so each change to it mid-run (hero-stats.ts): its research's percent (1 without). */
 export const statFactor = (save: Pick<Save, "archives">, stat: Stat) =>
-  stat in STAT_RESEARCH ? researched(save.archives, STAT_RESEARCH[stat as keyof typeof STAT_RESEARCH], 100) / 100 : 1;
+  stat in STAT_RESEARCH ? researched(save.archives, STAT_RESEARCH[stat as keyof typeof STAT_RESEARCH]) / 100 : 1;
 
 /** The character a run in `mode` would start with now: the baseline,
  * permanent upgrades and training, then the equipment that mode's hero
@@ -124,7 +124,7 @@ export function loadout(save: Save, mode: Mode = "tower"): Loadout {
     lifesteal: own.lifesteal,
     thorns: own.thorns,
     // Parry % research is kept in tenths of a percent.
-    parry: Math.min(PARRY_CAP, snap(own.parry + researched(save.archives, "parryPercent", 0) / 10)),
+    parry: Math.min(PARRY_CAP, snap(own.parry + researched(save.archives, "parryPercent") / 10)),
     bossAttack: eq.bossAttack,
     pierce: Math.min(eq.pierce, PIERCE_CAP),
     keys: { yellow: own.yellow + prov.yellow, blue: own.blue + prov.blue, red: own.red + prov.red },
@@ -195,9 +195,9 @@ export function trainingWaiting(save: Save) {
 /** A hero's critical strikes: what `save` gives (research included), or none:
  * Crit %'s chance, in percent, and Crit x's factor on the hero's ATK. */
 export function critRule(save: Pick<Save, "upgrades" | "training" | "archives">): CritRule | undefined {
-  const chance = snap(trainedAmount(save, "critChance") / 100 * researched(save.archives, "critChancePercent", 100) / 100);
+  const chance = snap(trainedAmount(save, "critChance") / 100 * researched(save.archives, "critChancePercent") / 100);
   if (chance <= 0) return undefined;
-  return { chance, factor: snap(trainedAmount(save, "critFactor") / 100 * researched(save.archives, "critFactorPercent", 100) / 100) };
+  return { chance, factor: snap(trainedAmount(save, "critFactor") / 100 * researched(save.archives, "critFactorPercent") / 100) };
 }
 
 /** The Free Upgrade row training each group's free levels. */
@@ -218,9 +218,9 @@ export const trainingText = (value: number, unit: string, bare = false) =>
 
 /** How much faster trainers train than at first (Faster Trainers research:
  * 0.02 a level); a rank takes its time / (1 + this). */
-export const trainingSpeed = (save: Pick<Save, "archives">) => researched(save.archives, "trainingSpeed", 0);
+export const trainingSpeed = (save: Pick<Save, "archives">) => researched(save.archives, "trainingSpeed");
 /** What Training Discount takes off a trainer's Gold, in tenths of a percent. */
-export const trainingDiscount = (save: Pick<Save, "archives">) => researched(save.archives, "trainingDiscount", 0);
+export const trainingDiscount = (save: Pick<Save, "archives">) => researched(save.archives, "trainingDiscount");
 
 /** Whether `id` can take no more ranks: at its most, counting a rank a
  * trainer is training. */
@@ -242,7 +242,7 @@ export const trainingFull = (save: Pick<Save, "training" | "upgrades">, id: Trai
  * shows only in the HUD's Gold bonus total. */
 export const rowResearchFactor = (save: Pick<Save, "archives">, id: TrainingId) => {
   const target = trainingDef(id).research;
-  return target ? researched(save.archives, target, 100) / 100 : 1;
+  return target ? researched(save.archives, target) / 100 : 1;
 };
 /** A Gold or Silver amount as the Training rows show it: to the hundredth. */
 export const shownAmount = (value: number) => Math.round(value * 100) / 100;

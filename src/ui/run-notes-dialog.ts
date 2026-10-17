@@ -13,7 +13,7 @@ import { capitalized, displayedProgress } from "./dom.ts";
 export type NotesSection = { title: string; rows: [string, string][] };
 
 /** Whether the run's notes can be read: Note Taking researched. */
-export const notesResearched = (save: Pick<Save, "archives">) => researched(save.archives, "runNotes", 0) > 0;
+export const notesResearched = (save: Pick<Save, "archives">) => researched(save.archives, "runNotes") > 0;
 
 const amount = (n: number) => whole(n).toLocaleString("en-US");
 /** A length of time as "1h 02m 05s" (minutes and seconds alone under an hour). */

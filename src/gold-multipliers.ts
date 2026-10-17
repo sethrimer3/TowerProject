@@ -70,5 +70,5 @@ export const factorText = (factor: number) => `×${Number(factor.toFixed(3))}`;
  * the Training rows read it. */
 export function silverFound(save: Pick<Save, "upgrades" | "archives" | "equipment">, mode: Mode, ranks: number, boon = 1) {
   const bonus = trainedAmount(save, "silverBonus", ranks);
-  return (((bonus * researched(save.archives, "silverBonus", 100)) / 10_000) * boon * (100 + wornEffects(save, mode).silverFind)) / 100;
+  return (((bonus * researched(save.archives, "silverBonus")) / 10_000) * boon * (100 + wornEffects(save, mode).silverFind)) / 100;
 }

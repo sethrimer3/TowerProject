@@ -5,7 +5,7 @@ import { decode, defaults } from "../src/save.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import { chargesLeft, chargesPerRun, climbFloor, floorsToRegain, regainEvery } from "../src/run-charges.ts";
 import { RESEARCH, researched } from "../src/archives.ts";
-import { cost, REGAIN_FLOORS } from "../src/config.ts";
+import { cost } from "../src/config.ts";
 import { skillAvailable } from "../src/skill-trees.ts";
 import type { Run } from "../src/entities.ts";
 
@@ -41,15 +41,15 @@ test("the charges' research: counts to 10 and 5 uses, and regains down to every 
   for (const [id, target, growth, cubic] of [["refocus", "refocusFloors", 1, 8], ["ignoreMore", "ignoreFloors", 1.05, 0], ["targetMore", "targetFloors", 1.1, 0]] as const) {
     const levels = RESEARCH[id].levels;
     assert.equal(levels.length, 90, id);
-    assert.equal(researched({ ...defaults().archives, levels: { [id]: 90 } }, target, REGAIN_FLOORS), 10, `${id} reaches every 10 floors`);
+    assert.equal(researched({ ...defaults().archives, levels: { [id]: 90 } }, target), 10, `${id} reaches every 10 floors`);
     assert.ok(Math.abs(years(id) - 2.82) < 0.01, `${id} takes about 2.8 years`);
     assert.deepEqual([levels[0].hours, levels[89].hours], [0.1, 810], `${id}: n² / 10 hours`);
     assert.equal(levels[0].gold, 500);
     assert.equal(levels[2].gold, Math.round(((2000 + cubic * 27) * growth * growth) / 100) * 100, `${id} grows ${growth} a level`);
   }
   assert.deepEqual(RESEARCH.targetCount.levels.map((l) => l.gold), [10_000_000, 100_000_000, 1_000_000_000, 10_000_000_000]);
-  assert.equal(researched({ ...defaults().archives, levels: { targetCount: 4 } }, "targetPerRun", 1), 5);
-  assert.equal(researched({ ...defaults().archives, levels: { ignoreCount: 9 } }, "ignorePerRun", 1), 10);
+  assert.equal(researched({ ...defaults().archives, levels: { targetCount: 4 } }, "targetPerRun"), 5);
+  assert.equal(researched({ ...defaults().archives, levels: { ignoreCount: 9 } }, "ignorePerRun"), 10);
   const ignore = RESEARCH.ignoreCount.levels.map((l) => l.gold), focus = RESEARCH.focusCount.levels.map((l) => l.gold);
   for (let i = 1; i < ignore.length; i++) {
     assert.ok(ignore[i] / ignore[i - 1] > focus[i] / focus[i - 1], "steeper than Focus Count");

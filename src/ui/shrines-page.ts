@@ -35,7 +35,7 @@ export class ShrinesPage {
 
   render() {
     const save = this.save, a = save.archives;
-    const first = researched(a, "firstBoonChoice", 0) > 0, banMax = researched(a, "boonBans", 0), rankMax = researched(a, "boonRanks", 0);
+    const first = researched(a, "firstBoonChoice") > 0, banMax = researched(a, "boonBans"), rankMax = researched(a, "boonRanks");
     const label = (id: BoonId) => boonLabel(id, save);
     const parts: string[] = [];
     if (first) {
@@ -86,7 +86,7 @@ export class ShrinesPage {
       shrine.setFirstChoice((first.value || undefined) as BoonId | undefined);
       this.changed();
     };
-    const banMax = researched(this.save.archives, "boonBans", 0);
+    const banMax = researched(this.save.archives, "boonBans");
     page.querySelectorAll<HTMLInputElement>("[data-ban]").forEach((box) => (box.onchange = () => {
       shrine.toggleBan(box.dataset.ban as BoonId, banMax);
       this.changed();

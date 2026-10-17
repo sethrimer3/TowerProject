@@ -673,7 +673,7 @@ export const RESEARCH = {
   },
   interest: {
     name: "Interest %",
-    description: (a) => `Put your Silver to work: each new floor climbed adds a share of the Silver you hold, after the floor's other Silver, up to Max Interest (now ${interestCap(a).toLocaleString("en-US")} Silver a floor).`,
+    description: (a) => `Put your Silver to work: each new floor climbed adds a share of the Silver you hold, after the floor's other Silver, up to Max Interest (now ${researched(a, "interestCap").toLocaleString("en-US")} Silver a floor).`,
     categories: ["economy"],
     requires: [{ upgrade: "interest" }],
     levels: hundredLevels("interestRate", 1),
@@ -873,10 +873,9 @@ export function maxLevel(id: ResearchId, upgrades?: Record<UpgradeId, number>) {
 export const nextLevel = (a: ArchivesSave, id: ResearchId, upgrades?: Record<UpgradeId, number>): ResearchLevel | undefined =>
   researchLevel(a, id) < maxLevel(id, upgrades) ? research(id).levels[researchLevel(a, id)] : undefined;
 
-/** The most Silver Interest pays a floor: Max Interest research, from its target's base. */
-export const interestCap = (a: ArchivesSave) => researched(a, "interestCap", RESEARCH_TARGETS.interestCap.base);
-/** `base` changed by every completed research level aimed at `target`. */
-export function researched(a: ArchivesSave, target: ResearchTarget, base: number) {
+/** `base` (the base `RESEARCH_TARGETS` declares for `target`, unless given)
+ * changed by every completed research level aimed at `target`. */
+export function researched(a: ArchivesSave, target: ResearchTarget, base: number = RESEARCH_TARGETS[target].base) {
   let add = 0, multiply = 1, set: number | undefined;
   for (const id of RESEARCH_IDS) {
     for (const { effect } of research(id).levels.slice(0, researchLevel(a, id))) {
@@ -896,14 +895,14 @@ export const withNextLevel = (a: ArchivesSave, id: ResearchId): ArchivesSave =>
 /** How long `level` takes with the research speed the Archives have now,
  * in ms. The definition keeps its own hours. */
 export const duration = (a: ArchivesSave, level: ResearchLevel) =>
-  Math.round((level.hours * 3_600_000) / (1 + researched(a, "researchSpeed", 0)));
+  Math.round((level.hours * 3_600_000) / (1 + researched(a, "researchSpeed")));
 
 /** The Gold `level` costs with the Research Cost Discount the Archives have
  * now. The definition keeps its own Gold. */
 export const price = (a: ArchivesSave, level: ResearchLevel) =>
-  Math.round((level.gold * researched(a, "researchCost", 1000)) / 1000);
+  Math.round((level.gold * researched(a, "researchCost")) / 1000);
 /** The research speed's factor: a level of `d` hours takes d / factor. */
-const speedFactor = (a: ArchivesSave) => 1 + researched(a, "researchSpeed", 0);
+const speedFactor = (a: ArchivesSave) => 1 + researched(a, "researchSpeed");
 
 const met = (o: ArchivesOwner, r: ResearchRequirement) =>
   "upgrade" in r ? o.upgrades[r.upgrade] > 0

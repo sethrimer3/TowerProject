@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { defaults } from "../src/save.ts";
 import { ENEMY_GOLD } from "../src/config.ts";
-import { RESEARCH, describe, interestCap, researched, status } from "../src/archives.ts";
+import { RESEARCH, describe, researched, status } from "../src/archives.ts";
 import { resolveStep, type StepEffect } from "../src/step-effects.ts";
 import type { Enemy, Player } from "../src/entities.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
@@ -41,15 +41,15 @@ test("each skill opens its research, which is priced as agreed", () => {
   assert.deepEqual(RESEARCH.maxInterest.levels.slice(0, 4).map((l) => [l.gold, l.hours]), [[500, 8], [1200, 16], [2900, 24], [6000, 32]]);
   assert.equal(RESEARCH.maxInterest.levels[19]!.gold, 3051000);
   const full = (id: keyof typeof RESEARCH) => ({ ...save.archives, levels: { [id]: RESEARCH[id].levels.length } });
-  assert.equal(researched(full("findYellowKey"), "yellowKeyChance", 0), 200, "20%, in tenths of a percent");
-  assert.equal(researched(full("keyEfficiency"), "keyCost", 1000), 500, "half a key");
-  assert.equal(researched(full("interest"), "interestRate", 0), 100, "10%");
-  assert.equal(interestCap(full("maxInterest")), 50000);
-  assert.equal(interestCap({ ...save.archives, levels: { maxInterest: 3 } }), 350);
+  assert.equal(researched(full("findYellowKey"), "yellowKeyChance"), 200, "20%, in tenths of a percent");
+  assert.equal(researched(full("keyEfficiency"), "keyCost"), 500, "half a key");
+  assert.equal(researched(full("interest"), "interestRate"), 100, "10%");
+  assert.equal(researched(full("maxInterest"), "interestCap"), 50000);
+  assert.equal(researched({ ...save.archives, levels: { maxInterest: 3 } }, "interestCap"), 350);
   // Interest %'s description names the Max Interest the Archives give now.
   assert.match(describe(save.archives, "interest"), /up to Max Interest \(now 50 Silver a floor\)/);
   assert.match(describe(full("maxInterest"), "interest"), /now 50,000 Silver a floor/);
-  assert.equal(researched(full("mug"), "instakillGold", 100), 300);
+  assert.equal(researched(full("mug"), "instakillGold"), 300);
 });
 
 test("Key Efficiency: a door takes less of each key, so less than a whole key opens it", () => {

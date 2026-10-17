@@ -487,7 +487,7 @@ export function decode(raw: string | null): Save {
     if (d.upgrades.largerHand) d.handSlots = count(s.handSlots, 0, HAND_SLOT_GEMS.length);
     d.hand = decodeHand(s.hand, deckCards(d.upgrades), handSlots(d));
     d.cardLinks = keptLinks(d.hand, links(s.cardLinks));
-    d.badges = decodeBadges(s.badges, d.upgrades, researched(d.archives, "badgeSlots", 1));
+    d.badges = decodeBadges(s.badges, d.upgrades, researched(d.archives, "badgeSlots"));
     for (const k of ["deck", "removeCard", "addCard", "upgrades", "gear", "onTheJob", "speed", "climb", "enter", "delve", "chamber"] as const) d.tutorials[k] = s.tutorials?.[k] === true;
     for (const k of ["inspiration", "courage"] as const) d.treeNotices[k] = s.treeNotices?.[k] === true;
     d.seen = decodeSeen(s.seen, d);

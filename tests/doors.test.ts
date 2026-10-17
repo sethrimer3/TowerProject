@@ -59,7 +59,7 @@ test("Heart Door Resilience research shrinks a Heart Door's toll 5% a level, for
   const g = new Game(defaults());
   assert.equal(g.stepRules.heartToll, 100);
   g.save.archives.levels.heartDoorResilience = 10;
-  assert.equal(researched(g.save.archives, "heartToll", 100), 50);
+  assert.equal(researched(g.save.archives, "heartToll"), 50);
   assert.equal(g.stepRules.heartToll, 50, "read at the moment of the step");
 });
 

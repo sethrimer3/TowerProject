@@ -55,7 +55,7 @@ test("Spare Change opens Gold / Floor training (3, and 1 a rank) and its researc
   assert.ok(keys.every((l, i) => i === 0 || l.gold > keys[i - 1]!.gold));
   assert.deepEqual([1, 2, 3, 4, 5, 10, 100].map((n) => keys[n - 1]!.gold), [10, 25, 70, 185, 493, 13673, 2156802]);
   save.archives.levels.floorGold = 3;
-  assert.equal(researched(save.archives, "floorGold", 100), 115);
+  assert.equal(researched(save.archives, "floorGold"), 115);
 });
 
 test("a floor climbed for the first time in a run pays Gold / Floor, with research and the tier's bonus", () => {

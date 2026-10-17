@@ -117,7 +117,7 @@ function foesShoot({ board, wrap, floorOf }: VolleyTurn, p: Player, v: Volleys, 
  * may fire more than once. A ready arrow with no target waits for one,
  * counting the turn toward Charged Shot once that is researched. */
 function loose(turn: VolleyTurn, p: Player, v: Volleys, shots: Shot[], range: number) {
-  const { board, wrap, ranks } = turn, perTile = trainedAmount(ranks, "attackPerTile"), percent = researched(ranks.archives, "chargedShotPercent", 0);
+  const { board, wrap, ranks } = turn, perTile = trainedAmount(ranks, "attackPerTile"), percent = researched(ranks.archives, "chargedShotPercent");
   const boost = (d2: number) => arrowBoost(perTile, d2, percent, v.waited ?? 0);
   const hurts = (e: InReach) => arrowDamage(p, e.tile.enemy, 0, 1, boost(e.d2)) > 0;
   // A fixed number per run, turn, shot of the turn (the first keeping the

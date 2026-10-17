@@ -54,7 +54,7 @@ const formatDate = (at: number) => {
 /** `target`'s total with the Archives as `archives`, as the game reads it:
  * Undo Count from the loadout's own undos, the rest from their base. */
 const targetValue = (save: Save, target: ResearchTarget, archives: ArchivesSave) =>
-  target === "undoCapacity" ? loadout({ ...save, archives }).undoCapacity : researched(archives, target, RESEARCH_TARGETS[target].base);
+  target === "undoCapacity" ? loadout({ ...save, archives }).undoCapacity : researched(archives, target);
 const requirementText =(r: ResearchRequirement) =>
   "upgrade" in r ? UPGRADES.find((u) => u.id === r.upgrade)!.name
   : "anyUpgrade" in r ? r.anyUpgrade.map((id) => UPGRADES.find((u) => u.id === id)!.name).join(" or ")

@@ -1015,18 +1015,18 @@ export class Game {
   /** Tiles the hand's first step toward a new target may dash across: none
    * without the Dash skill, and one more a Dash research level. */
   get dashTiles() {
-    return (this.save.upgrades.dash ? researched(this.save.archives, "dashTiles", 0) : 0) + this.worn.dashTiles;
+    return (this.save.upgrades.dash ? researched(this.save.archives, "dashTiles") : 0) + this.worn.dashTiles;
   }
   /** How many of a Dash's dashed steps regain HP by Regen: none without the
    * Dash Regen skill, and one more a Dash Regen research level. */
   get dashRegenSteps() {
-    return this.save.upgrades.dashRegen ? researched(this.save.archives, "dashRegenSteps", 0) : 0;
+    return this.save.upgrades.dashRegen ? researched(this.save.archives, "dashRegenSteps") : 0;
   }
   /** Tiles card `id`'s first step toward a new target may dash across:
    * `dashTiles`, End Rush's research on STAIRS (toward the stairs, or the
    * Delve's climb), and its Dash badge's value. They add up. */
   dashFor(id: CardId) {
-    const end = id === "stairs" && this.save.upgrades.endRush ? researched(this.save.archives, "endRushTiles", 0) : 0;
+    const end = id === "stairs" && this.save.upgrades.endRush ? researched(this.save.archives, "endRushTiles") : 0;
     const badge = badgeOn(this.run.badges, id, "dash");
     return this.dashTiles + end + (badge ? badgeValue("dash", badge.level) : 0);
   }
@@ -1108,7 +1108,7 @@ export class Game {
   /** The fastest speed the run's arrows reach: 3 steps a second, and one
    * more a Movement Speed research level. */
   get maxSpeed() {
-    return 3 + researched(this.save.archives, "moveSpeed", 0) + (this.boons?.playSpeed ?? 0);
+    return researched(this.save.archives, "moveSpeed") + (this.boons?.playSpeed ?? 0);
   }
   /** What the Tower run's boons change now, or null (none picked, or the
    * Delve). */
@@ -1159,12 +1159,12 @@ export class Game {
   get stepRules(): StepRules {
     // Regen research raises the HP each step regains by its percent.
     const regen = this.run.outside || !this.run.player.regen ? 0
-      : snap((this.run.player.regen * researched(this.save.archives, "regenPercent", 100)) / 100);
-    const worn = this.worn, potionHeal = raised(researched(this.save.archives, "potionHeal", 100), worn.potionHeal);
+      : snap((this.run.player.regen * researched(this.save.archives, "regenPercent")) / 100);
+    const worn = this.worn, potionHeal = raised(researched(this.save.archives, "potionHeal"), worn.potionHeal);
     const crit = this.crit;
     return { potionHeal, percentPotion: trainedAmount(this.trainingNow, "potion"), regen,
-      heartToll: researched(this.save.archives, "heartToll", 100), keyCost: this.keyCost,
-      shardAttack: researched(this.save.archives, "shardAttackPercent", 100) * boonFactor(this.run, "attack"), shardDefense: researched(this.save.archives, "shardDefensePercent", 100),
+      heartToll: researched(this.save.archives, "heartToll"), keyCost: this.keyCost,
+      shardAttack: researched(this.save.archives, "shardAttackPercent") * boonFactor(this.run, "attack"), shardDefense: researched(this.save.archives, "shardDefensePercent"),
       ...(worn.victoryHeal ? { victoryHeal: worn.victoryHeal } : {}), ...(crit ? { crit } : {}) };
   }
   /** The hero's critical strikes now (Critical, Crit % and Crit x training
@@ -1176,7 +1176,7 @@ export class Game {
   /** How much of a key each key a door takes costs, in tenths of a percent
    * (Key Efficiency research): what steps pay and the door cards plan by. */
   get keyCost() {
-    return researched(this.save.archives, "keyCost", 1000);
+    return researched(this.save.archives, "keyCost");
   }
   /** Where the Training tab reads its rows' values: this mode's hero, and
    * the run while one is inside (`TrainingView`). */
@@ -1198,7 +1198,7 @@ export class Game {
   /** The Silver a run starts with as it goes inside: Pocket Money research
    * and worn Equipment's. */
   get startingSilver() {
-    return snap(researched(this.save.archives, "startingSilver", 0) + this.worn.startSilver);
+    return snap(researched(this.save.archives, "startingSilver") + this.worn.startSilver);
   }
   /** Focus uses left: this run's inside one, or in the forest what the
    * next run will start with. */
@@ -2030,7 +2030,7 @@ export class Game {
    * number per run seed and floor, so undo and a replay find the same
    * keys, and more research only ever adds some. */
   private findYellowKey(floor: number, at: { x: number; y: number }) {
-    const chance = researched(this.save.archives, "yellowKeyChance", 0);
+    const chance = researched(this.save.archives, "yellowKeyChance");
     if (!chance || tileRandom(-1, floor, (this.run.seed ^ YELLOW_KEY_SALT) | 0) * 1000 >= chance) return;
     const keys = this.run.player.keys;
     keys.yellow = snap(keys.yellow + 1);
@@ -2290,7 +2290,7 @@ export class Game {
   /** The Buy Quantity choices open: x1 once the Buy Quantity skill is owned
    * (or in Dev mode), and one more per level of its research; none before. */
   get buyQuantities(): readonly BuyQuantity[] {
-    return this.save.upgrades.buyQuantity || this.save.settings.devMode ? openQuantities(researched(this.save.archives, "buyQuantity", 0)) : [];
+    return this.save.upgrades.buyQuantity || this.save.settings.devMode ? openQuantities(researched(this.save.archives, "buyQuantity")) : [];
   }
   /** How many ranks a press buys on `scope`'s screen (the Training tab,
    * the run's training bar, or the Gear page's provisions, each its own
