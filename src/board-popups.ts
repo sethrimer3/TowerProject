@@ -256,8 +256,10 @@ export class BoardPopups {
    * the rewards, so a potion's heal or a strike's damage is never hidden
    * behind a sprite rising from the same tile. */
   draw(f: FrameContext) {
-    for (const shown of this.fights) drawEnemyBar(f, shown.fight);
-    for (const bar of this.arrowBars) drawArrowBar(f, bar);
+    if (this.shown.enemyBars) {
+      for (const shown of this.fights) drawEnemyBar(f, shown.fight);
+      for (const bar of this.arrowBars) drawArrowBar(f, bar);
+    }
     const started = <T extends Popup>(popups: T[]) => popups.filter((p) => p.start <= f.now).sort((a, b) => a.start - b.start);
     for (const p of started(this.rewards)) if (!this.drawSprite(f, p)) this.drawText(f, p, p.gain.text, REWARD_TEXT);
     for (const p of started(this.numbers)) this.drawText(f, p, p.text, { color: p.color, rise: DAMAGE_RISE, size: 0.55, ...(p.glow ? { glow: p.glow } : {}), ...(p.ring ? { ring: p.ring } : {}) });
@@ -314,8 +316,8 @@ export class BoardPopups {
 
 /** The Settings rows the popups' own numbers obey: a fight's (its strikes,
  * thorns and Lifesteal) and a heal's. */
-type Shown = { hitNumbers: boolean; hpGains: boolean };
-const ALL_SHOWN: Shown = { hitNumbers: true, hpGains: true };
+type Shown = { hitNumbers: boolean; hpGains: boolean; enemyBars: boolean };
+const ALL_SHOWN: Shown = { hitNumbers: true, hpGains: true, enemyBars: true };
 
 type Strike = ShownFight["bout"]["strikes"][number];
 

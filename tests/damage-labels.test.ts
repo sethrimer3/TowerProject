@@ -134,4 +134,11 @@ test("items wear what they give, rounded down: a potion's HP blue, a shard's ATK
   assert.deepEqual(texts, [], "no item labels without their values");
   drawDamageLabels(f, new DamagePredictions(), hero(), null, false, undefined, items);
   assert.deepEqual(texts, ["38", "41"]);
+  texts.length = 0;
+  {
+    const withEnemy = (x: number, y: number): Tile => (x === 3 && y === 3 ? { kind: "enemy", enemy: enemy(30, 8, 1) } as Tile : at(x, y));
+    const both = { ...f, world: { tile: withEnemy } } as unknown as FrameContext;
+    drawDamageLabels(both, new DamagePredictions(), hero(), null, false, undefined, items, false);
+    assert.deepEqual(texts, ["38", "41"], "with the enemies' labels off, only the items wear theirs");
+  }
 });

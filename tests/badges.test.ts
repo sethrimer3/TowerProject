@@ -751,3 +751,22 @@ test("Dev mode owns the Badges box and every badge at the top level", () => {
   assert.ok(g.save.upgrades.combatStance && g.save.upgrades.buildout && g.save.upgrades.cardBadges);
   assert.ok(BADGE_IDS.every((id) => g.save.badges.owned[id]?.copies === MAX_COPIES));
 });
+
+test("the XP and Gold combo a badge pays rise off the board only while their Toggles are on", () => {
+  const shown = (on: boolean) => {
+    const g = floor(["@.A.K"]);
+    g.run.hand = ["atkUp", "yellowKey"];
+    badge(g, "atkUp", "xp", 1);
+    badge(g, "yellowKey", "goldback", 3);
+    g.save.settings.xpGains = on;
+    g.save.settings.comboGains = on;
+    const xp = g.save.xp;
+    turns(g, 4);
+    assert.ok(g.save.xp > xp, "the XP is paid");
+    assert.equal(g.run.goldCombo, 4, "the combo is tallied");
+    return g.gains.map((gain) => gain.text).filter((t) => /XP$|^×/.test(t));
+  };
+  const on = shown(true);
+  assert.ok(on.some((t) => t.endsWith("XP")) && on.includes("×4 Gold"), on.join());
+  assert.deepEqual(shown(false), []);
+});

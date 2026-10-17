@@ -132,10 +132,10 @@ export function itemLabel(t: Tile, x: number, y: number, player: Player, items: 
   return null;
 }
 
-/** Draws each enemy's label in view, each Wooden Door's while the hero
- * holds no key, and with `items` each item's, over the darkness so it
- * always reads. */
-export function drawDamageLabels(f: FrameContext, predictions: DamagePredictions, player: Player, fight: Fighting, relative = false, crit?: CritRule, items?: ItemValues) {
+/** Draws, unless `enemies` is false, each enemy's label in view and each
+ * Wooden Door's while the hero holds no key, and with `items` each item's,
+ * over the darkness so it always reads. */
+export function drawDamageLabels(f: FrameContext, predictions: DamagePredictions, player: Player, fight: Fighting, relative = false, crit?: CritRule, items?: ItemValues, enemies = true) {
   const c = f.c, s = f.s, pad = s * 0.06;
   c.save();
   c.font = `bold ${Math.max(8, Math.round(s * 0.3))}px Cinzel, serif`;
@@ -147,8 +147,8 @@ export function drawDamageLabels(f: FrameContext, predictions: DamagePredictions
   forEachViewTile(f, (x, y) => {
     const t = f.world.tile(x, y);
     const item = items && itemLabel(t, x, y, player, items);
-    const wood = t.kind === "door" && t.door?.type === "wood" && !holdsKey(player) ? t.door.durability : null;
-    if (!item && wood === null && (t.kind !== "enemy" || !t.enemy || (fight && fight.to.x === x && fight.to.y === y))) return;
+    const wood = enemies && t.kind === "door" && t.door?.type === "wood" && !holdsKey(player) ? t.door.durability : null;
+    if (!item && wood === null && (!enemies || t.kind !== "enemy" || !t.enemy || (fight && fight.to.x === x && fight.to.y === y))) return;
     const { text, color } = item ?? damageLabel(wood !== null ? breakCost(wood) : predictions.cost(player, t.enemy!, crit), player.hp, relative);
     const left = (x - f.left) * s + pad, bottom = (f.n - (y - f.bottom)) * s - pad;
     c.strokeText(text, left, bottom);

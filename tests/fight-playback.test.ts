@@ -7,6 +7,7 @@ import { bout, heroHpDuring, predict, raisedAttack, REVIVE_MS, summarize } from 
 import { BoardPopups, enemyBar, lunges } from "../src/board-popups.ts";
 import { HEAL_COLOR } from "../src/damage-labels.ts";
 import type { Enemy, Player, Tile } from "../src/entities.ts";
+import type { FrameContext } from "../src/render-frame.ts";
 
 /** The damage and heal numbers rising off the board. */
 const numbers = (popups: BoardPopups) =>
@@ -371,4 +372,19 @@ test("a fight lost at once raises a summary over both, and the enemy's bar shows
   assert.deepEqual(enemyBar(g.fight!, now + 60_000), { hp: 600 - dealt, alpha: 1 });
   assert.ok(g.undo());
   assert.equal(g.fight, null, "undo takes the bar away");
+});
+
+test("the enemy's HP bar stays off the board while its Toggle is off", () => {
+  const fight = bout(hero(), foe()), shown = { from: { x: 0, y: 0 }, to: { x: 1, y: 0 }, bout: fight, start: 0, hp: 30, summary: false };
+  const at = fight.strikes.find((s) => s.by === "hero")!.at;
+  const bars = (enemyBars: boolean) => {
+    let rects = 0;
+    const c = new Proxy({} as CanvasRenderingContext2D, { get: (_t, k) => (k === "fillRect" ? () => rects++ : () => {}), set: () => true });
+    const popups = new BoardPopups();
+    popups.update({ run: { seed: 1 }, gains: [], fight: shown, lastHeal: null, save: { settings: { hitNumbers: false, hpGains: true, enemyBars } } }, at);
+    popups.draw({ c, s: 20, n: 5, left: 0, bottom: 0, now: at, look: {} } as unknown as FrameContext);
+    return rects;
+  };
+  assert.ok(bars(true) > 0);
+  assert.equal(bars(false), 0);
 });

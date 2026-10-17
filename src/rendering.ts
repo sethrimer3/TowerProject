@@ -399,15 +399,16 @@ export class Renderer {
     c.fillRect(w - 2, 0, 2, w);
   }
   /** Damage Visual: what each enemy in view would cost, and what each item
-   * gives, once its goal is claimed and while its setting is on, a fight
+   * gives, once its goal is claimed and while each one's setting is on, a fight
    * coloured by its share of the hero's HP once Relative Damage Color is
    * claimed too; critical strikes count only with Critical Prediction. */
   private drawDamageLabels(f: FrameContext) {
     const g = this.game;
-    if (g.run.outside || !g.save.settings.damageVisual || !goalUnlocked(g.save, "damageVisual")) return;
+    const { damageVisual: enemies, itemLabels } = g.save.settings;
+    if (g.run.outside || (!enemies && !itemLabels) || !goalUnlocked(g.save, "damageVisual")) return;
     const crit = g.save.upgrades.critPrediction ? g.crit : undefined;
-    const items = { rules: g.stepRules, chestGold: (x: number, y: number) => g.chestGold(x, y) };
-    drawDamageLabels(f, this.predictions, g.run.player, g.fight, goalUnlocked(g.save, "relativeDamageColor"), crit, items);
+    const items = itemLabels ? { rules: g.stepRules, chestGold: (x: number, y: number) => g.chestGold(x, y) } : undefined;
+    drawDamageLabels(f, this.predictions, g.run.player, g.fight, goalUnlocked(g.save, "relativeDamageColor"), crit, items, enemies);
   }
   /** A fading red cross where a step was refused. */
   /** Skip Open Nodes' marks: a violet X on each door or monster it passed

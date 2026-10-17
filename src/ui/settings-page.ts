@@ -19,7 +19,8 @@ const PAGE = [
 /** The settings on the Toggles menu, in order: the values the board shows
  * in a run. */
 const TOGGLES = [
-  "attackGains", "defenseGains", "hpGains", "keyGains", "doorGains", "goldGains", "silverGains", "damageVisual", "hitNumbers",
+  "attackGains", "defenseGains", "hpGains", "keyGains", "doorGains", "goldGains", "silverGains", "xpGains", "comboGains",
+  "damageVisual", "itemLabels", "hitNumbers", "enemyBars",
 ] as const satisfies readonly SettingKey[];
 type PageKey = (typeof PAGE)[number] | (typeof TOGGLES)[number];
 
@@ -28,6 +29,7 @@ type PageKey = (typeof PAGE)[number] | (typeof TOGGLES)[number];
 const SHOWN: Partial<Record<PageKey, (save: Save) => boolean>> = {
   fightAnimation: (save) => !!save.upgrades.instantCombat,
   damageVisual: (save) => goalUnlocked(save, "damageVisual"),
+  itemLabels: (save) => goalUnlocked(save, "damageVisual"),
   cinematicIdle: (save) => save.settings.cinematic,
   cinematicGems: (save) => save.settings.cinematic,
 };

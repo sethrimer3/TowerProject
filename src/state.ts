@@ -127,11 +127,12 @@ export type GainArt = { tile: Tile; spent?: true } | { material: MaterialId; qua
 /** The coin a Gold or Silver gain raises. */
 export type Coin = "gold" | "silver";
 /** The gains a Settings row can turn off: ATK, DEF and HP changed, keys
- * found, what a door takes, Gold and Silver found, and what a fight costs
- * past its strikes. */
-export type GainKind = "attack" | "defense" | "hp" | "key" | "door" | "hit" | Coin;
+ * found, what a door takes, Gold and Silver found, what a fight costs
+ * past its strikes, XP gained and the Gold combo. */
+export type GainKind = "attack" | "defense" | "hp" | "key" | "door" | "hit" | "xp" | "combo" | Coin;
 const GAIN_SETTINGS = {
-  attack: "attackGains", defense: "defenseGains", hp: "hpGains", key: "keyGains", door: "doorGains", hit: "hitNumbers", gold: "goldGains", silver: "silverGains",
+  attack: "attackGains", defense: "defenseGains", hp: "hpGains", key: "keyGains", door: "doorGains", hit: "hitNumbers",
+  xp: "xpGains", combo: "comboGains", gold: "goldGains", silver: "silverGains",
 } as const satisfies Record<GainKind, SettingKey>;
 /** The kind of gain `art` raises, if a Settings row covers it: a coin, a
  * heart, or an ATK or DEF shard, potion or key's sprite. */
@@ -907,11 +908,11 @@ export class Game {
         // next Gold found spends it (RunPurse).
         this.run.goldCombo = (this.run.goldCombo ?? 0) + v;
         // Drawn as "×2" and the Gold coin.
-        return this.gain(p.x, p.y, `×${this.run.goldCombo} Gold`, { coin: "gold" }, undefined, null);
+        return this.gain(p.x, p.y, `×${this.run.goldCombo} Gold`, { coin: "gold" }, undefined, "combo");
       case "xp": {
         const xp = Math.round((v * xpBase(this.handRules.floor)) / xpBase(0));
         this.addXp(xp);
-        return this.gain(p.x, p.y, `+${xp} XP`);
+        return this.gain(p.x, p.y, `+${xp} XP`, null, undefined, "xp");
       }
     }
   }

@@ -99,8 +99,9 @@ export const SETTINGS = {
   provisionBuyQuantity: {
     kind: "choice", default: 1, choices: [[1, "x1"], [5, "x5"], [10, "x10"], [25, "x25"], [100, "x100"], ["max", "Max"]],
   },
-  /** Draw on each enemy the HP its fight would cost (`damage-labels.ts`).
-   * Only Damage Visual, Tower I's floor 50 goal, shows it. */
+  /** Draw on each enemy the HP its fight would cost, and on a Wooden Door
+   * what breaking it would (`damage-labels.ts`). Only Damage Visual, Tower
+   * I's floor 50 goal, shows it. */
   damageVisual: { kind: "toggle", default: true, page: { id: "damage-visual", label: "Damage on enemies" } },
   /** The values rising off the board in a run, each kind turned off on its
    * own on the Settings page's Toggles menu once the player knows what the
@@ -117,6 +118,17 @@ export const SETTINGS = {
   /** The numbers a fight raises as each strike lands: the damage dealt and
    * taken, the shroud's share, thorns and Lifesteal (`BoardPopups`). */
   hitNumbers: { kind: "toggle", default: true, page: { id: "hit-numbers", label: "Fight damage numbers" } },
+  /** The XP a badge pays, and the Gold combo's "×N Gold" as it grows
+   * (`Game.gain`). */
+  xpGains: { kind: "toggle", default: true, page: { id: "xp-gains", label: "XP gained" } },
+  comboGains: { kind: "toggle", default: true, page: { id: "combo-gains", label: "Gold combo" } },
+  /** An enemy's HP bar over it as it is struck, by the hero or an arrow
+   * (`BoardPopups`). */
+  enemyBars: { kind: "toggle", default: true, page: { id: "enemy-bars", label: "Enemy HP bars" } },
+  /** Draw on each item what it gives (`itemLabel`): a potion's HP, a
+   * shard's stat, a chest's Gold. Only Damage Visual shows it, as it does
+   * the enemies' costs. */
+  itemLabels: { kind: "toggle", default: true, page: { id: "item-labels", label: "Item amounts" } },
   /** Cinematic mode (`ui/cinematic.ts`): inside a run, pinching the board
    * in hides everything but the board; pinching out brings it back. */
   cinematic: { kind: "toggle", default: false, page: { id: "cinematic", label: "Cinematic mode (pinch the board in)" } },
