@@ -2,9 +2,9 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { defaults, decode } from "../src/save.ts";
-import { TRAINING, trainingCeiling, xpForLevel, trainingDef } from "../src/config.ts";
-import { loadout, trainingPoints, trainingStep } from "../src/loadout.ts";
-import { BOOST_MAX_MS, claimBoost, doneAt, finishGems, trainingGold, trainingMs, trainingSeconds, workLeft } from "../src/training-jobs.ts";
+import { TRAINING, trainingCap, trainingCeiling, xpForLevel, trainingDef } from "../src/config.ts";
+import { loadout, trainingOpen, trainingPoints, trainingRowsFull, trainingStep } from "../src/loadout.ts";
+import { BOOST_MAX_MS, claimBoost, doneAt, finishGems, rushEfficiencyText, trainingGold, trainingMs, trainingSeconds, workLeft } from "../src/training-jobs.ts";
 import { RESEARCH } from "../src/archives.ts";
 import { silverPrice } from "../src/run-training.ts";
 
@@ -219,7 +219,7 @@ test("one stat trains at a time, and each trainer bought with Gems adds one", ()
 });
 
 test("Gems finish a rank at once: one per ten minutes left, rounded up", () => {
-  assert.deepEqual([0, -5, 1, 600_000, 600_001, 1_800_000].map(finishGems), [0, 0, 1, 1, 2, 3]);
+  assert.deepEqual([0, -5, 1, 600_000, 600_001, 1_800_000].map((ms) => finishGems(ms)), [0, 0, 1, 1, 2, 3]);
   const { g, wait } = game();
   g.save.training.hp = g.save.trainerRanks.hp = 6; // its next rank takes 30 minutes
   assert.ok(g.training.trainWithGold("hp"));
@@ -231,6 +231,35 @@ test("Gems finish a rank at once: one per ten minutes left, rounded up", () => {
   assert.equal(g.save.training.hp, 7);
   assert.deepEqual(g.save.trainingJobs, []);
   assert.equal(g.training.finish("hp"), false, "nothing in training");
+});
+
+test("each item maxed takes 1.5% off a rush: its Gems divided by 1 + 1.5% each, rounded up", () => {
+  assert.equal(finishGems(100 * 600_000, 10), 87, "100 Gems over 1.15");
+  assert.equal(finishGems(115 * 600_000, 10), 100, "an exact quotient stays whole");
+  assert.equal(finishGems(600_000, 200), 1, "a Gem's worth still costs one");
+  assert.equal(finishGems(0, 10), 0);
+  assert.deepEqual([1, 3, 10].map(rushEfficiencyText), ["+1.5% to Rush", "+4.5% to Rush", "+15% to Rush"]);
+});
+
+test("each Training row at its most makes finishing a rank cheaper, and a reset takes that back", () => {
+  const { g, wait } = game();
+  g.save.training.hp = g.save.trainerRanks.hp = 60;
+  assert.ok(g.training.trainWithGold("hp"));
+  wait(60);
+  const base = finishGems(g.training.left("hp"));
+  assert.ok(base > 20);
+  assert.equal(g.training.finishGems("hp"), base, "no row at its most");
+  const rows = TRAINING.filter((t) => t.id !== "hp" && trainingOpen(t, g.save));
+  for (const t of rows) g.save.training[t.id] = trainingCap(t, g.save.upgrades);
+  assert.ok(rows.length >= 2);
+  assert.equal(trainingRowsFull(g.save), rows.length);
+  assert.equal(g.training.finishGems("hp"), Math.ceil((base * 1000) / (1000 + 15 * rows.length)));
+  g.save.training[rows[0].id]--;
+  assert.equal(trainingRowsFull(g.save), rows.length - 1, "a rank taken back leaves its row short of its most");
+  assert.equal(g.training.finishGems("hp"), Math.ceil((base * 1000) / (1000 + 15 * (rows.length - 1))));
+  g.save.gems = g.training.finishGems("hp");
+  assert.ok(g.training.finish("hp"));
+  assert.equal(g.save.gems, 0);
 });
 
 test("stopping a rank gives its Gold back and its time spent as credit, which the next rank uses up", () => {

@@ -1,4 +1,4 @@
-import { RESEARCH, RESEARCH_IDS, cancelResearch, status, hastenResearch, hireArchivist, settleArchives, startResearch, switchResearch, type ResearchId, type ResearchRecord } from "../archives.ts";
+import { RESEARCH, RESEARCH_IDS, cancelResearch, researchCompleted, status, hastenResearch, hireArchivist, settleArchives, startResearch, switchResearch, type ResearchId, type ResearchRecord } from "../archives.ts";
 import { finishGems } from "../training-jobs.ts";
 import { queueNextSpeedUp, speedUpCells, startSpeedUp, type SpeedUpFactor, type SpeedUpHours } from "../speed-ups.ts";
 import { changeLoadout } from "./hero-sync.ts";
@@ -68,11 +68,12 @@ export class ResearchDesk {
   }
 
   /** The Gems that rush archivist `slot`'s research to completion now: one
-   * per ten minutes left, rounded up, as for a rank in training (none with
-   * Dev free purchases, or when it has none). */
+   * per ten minutes left, rounded up, as for a rank in training, less 1.5%
+   * for each project completed (none with Dev free purchases, or when it
+   * has none). */
   rushGems(slot: number) {
     const job = this.save.archives.slots[slot]?.job;
-    return !job || this.host.free ? 0 : finishGems(job.completesAt - this.host.clock());
+    return !job || this.host.free ? 0 : finishGems(job.completesAt - this.host.clock(), researchCompleted(this.save));
   }
 
   /** Rushes archivist `slot`'s research: pays `rushGems` and completes it

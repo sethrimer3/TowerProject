@@ -17,6 +17,8 @@ Both cost 40 Gold and 1 minute at level 1, up to 20 million Gold and 100 days at
 Research once begun can't be stopped, only switched to another project.
 Pressing a busy archivist opens Select Research too, its own research marked Researching; choosing another asks to switch, and switching gives the old research's Gold back, keeps the time already spent on it for when you start it again (paying again), and starts the new.
 **Rush**, beside the time left, completes the research at once for Gems: 1 Gem for each 10 minutes left, and 1 more for any part of 10 minutes.
+Each project completed (in a gold box) makes Rush 1.5% more efficient for good: with 10 completed, Rush's Gems are divided by 1.15 and rounded up, so 100 Gems become 87.
+Once any project is completed, the Archives heading shows it at its left, opposite History: *+1.5% to Rush* for one.
 With **Auto-continue** ticked (the box with the looping arrow, as on the Training tab), an archivist starts the project's next level as soon as one completes, if you have the Gold; otherwise it waits idle.
 
 ## Cells and Speed Up

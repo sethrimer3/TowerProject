@@ -923,6 +923,10 @@ export function status(o: ArchivesOwner, id: ResearchId): ResearchStatus {
   return nextLevel(o.archives, id, o.upgrades) ? "available" : "completed";
 }
 
+/** How many projects are completed (at their most levels open, each in a
+ * gold box), which makes Rush cheaper (`finishGems`). */
+export const researchCompleted = (o: ArchivesOwner) => RESEARCH_IDS.filter((id) => status(o, id) === "completed").length;
+
 /** A job's share done at `now`, 0–1 (a clock set back reads as no progress). */
 export const jobProgress = (job: ResearchJob, now: number) =>
   Math.min(1, Math.max(0, (now - job.startedAt) / Math.max(1, job.completesAt - job.startedAt)));

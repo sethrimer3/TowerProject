@@ -58,6 +58,9 @@ ATK / m and Multishot Chance skip the 15 seconds, starting at 1 minute, and Mult
 **Training Discount** research (opened by Tower II's floor 80 Goal) takes 0.5% a level off the Gold every rank a trainer trains costs, rounded up, for 99 levels (30 Gold and 30 seconds for the first level, about 10,000 Gold at level 12, 100,000 at 26, a million at 59 and 4.1 million at 99, which takes 49 days); training points and a run's Silver cost the same as ever.
 One stat trains at a time, with one more for each trainer bought with Gems beside the trainer count (100, 250, 450, 700, 1,000 and 1,400 Gems, up to seven at once).
 A rank in training shows its countdown (press it to stop, get the Gold back and keep the time spent as credit) and a Gem button that finishes it at once: 1 Gem for each 10 minutes left, and 1 more for any part of 10 minutes.
+Each stat at its most (Max, in a gold box) makes finishing 1.5% more efficient: with 10 at their most, the Gems are divided by 1.15 and rounded up, so 100 Gems become 87.
+Since a reset or a Limit Break can take a stat off its most, this can go down as well as up.
+Once any stat is at its most, the Training heading shows it at its left: *+1.5% to Rush* for one.
 The countdown reads to the second (*7h 41m 33s*), ticking each time it shows another second, sooner as training goes faster (the boost, the Shop's packs), but at most ten times a second: faster than that, each tick takes off more than a second.
 A stat a trainer is training moves up under the trainer count, in the order they started, and goes back to its group once its training ends.
 While it trains, a box with a looping arrow before its name sets it to **auto-continue**: while ticked, each rank its trainer finishes starts the next at once, as long as the Gold is there, ranks finished while the game was closed included.

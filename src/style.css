@@ -3357,7 +3357,9 @@ dialog.dismiss-anywhere { cursor: pointer; }
 .research-action button:disabled .research-gold { color: #f0d79c; }
 .research-state { font-size: 10px; letter-spacing: 1px; color: #9aa6b5; }
 .research-empty { margin: 0; font-size: 11px; color: #7c8898; }
-.archives .tree-heading { position: relative; }
+.archives .tree-heading, .training .tree-heading { position: relative; }
+/* The tab's rush efficiency from items maxed, opposite History at the heading's top-left corner. */
+.rush-efficiency { position: absolute; left: 0; top: 2px; font-size: 11px; color: #ffe680; letter-spacing: 0.5px; }
 /* The Cells held and History share the heading's top-right corner. */
 .research-corner { position: absolute; right: 0; top: 0; display: flex; align-items: center; gap: 8px; }
 .research-cells { display: inline-flex; align-items: center; gap: 3px; font-size: 12px; }

@@ -434,6 +434,10 @@ _Avoid_: tech, study
 One research slot: it works on one research level at a time, and optionally auto-continues to the next. Its research can be rushed: completed at once for Gems (not the hand's Dash).
 _Avoid_: lab slot, researcher
 
+**Rush efficiency**:
+How much cheaper rushing gets for good: 1.5% for each item maxed in its tab (a research project completed for the Archives' Rush, a Training stat at its most for finishing a rank), the Gems divided by 1 plus it and rounded up.
+_Avoid_: rush discount
+
 **Cell**:
 A lasting currency, shown as a yellow triangle, that only Greater Bosses drop (more on later towers); it buys Speed Ups. The Archives show it, and their Speed Up buttons, only once the player profile has earned some.
 _Avoid_: energy, research points

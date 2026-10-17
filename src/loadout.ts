@@ -243,6 +243,11 @@ export const trainingMaxed = (save: Pick<Save, "training" | "upgrades"> & Partia
  * points bought past it take its room and the trainer trains fewer
  * (`TrainingDesk.train`). */
 export const trainingFull = (save: Pick<Save, "training" | "upgrades">, id: TrainingId) => save.training[id] >= trainingCap(TRAINING.find((t) => t.id === id)!, save.upgrades);
+/** How many open rows are at their most (each in a gold box), which makes
+ * finishing a rank cheaper (`finishGems`). A reset or a Limit Break can
+ * take one out again. */
+export const trainingRowsFull = (save: Pick<Save, "training" | "upgrades" | "goals">) =>
+  TRAINING.filter((t) => trainingOpen(t, save) && trainingFull(save, t.id)).length;
 
 /** What row `id`'s value is multiplied by in play: its `research`'s percent
  * (1 without), which the Training tab and the run's cards show it with.

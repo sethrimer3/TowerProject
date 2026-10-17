@@ -112,9 +112,20 @@ export const jobInvested = (job: TrainingJob, left: number) => Math.round(job.us
 export const trainingSlots = (save: { trainers: number }) => TRAINING_SLOTS + save.trainers;
 /** The Gems the next trainer costs, or null once every one is bought. */
 export const nextTrainerGems = (save: { trainers: number }) => TRAINER_GEMS[save.trainers] ?? null;
+/** What each item maxed takes off its tab's Gem rushes, in tenths of a
+ * percent: an Archives project completed off Rush, a Training row at its
+ * most off finishing a rank (1.5% each). */
+export const RUSH_EFFICIENCY_TENTHS = 15;
 /** The Gems that finish a rank with `ms` of training left at once (none
- * once it's due). */
-export const finishGems = (ms: number) => Math.max(0, Math.ceil(ms / (FINISH_GEM_SECONDS * 1000)));
+ * once it's due): one per ten minutes, rounded up, then shared by the rush
+ * efficiency of `maxed` items maxed (1 + 1.5% each), rounded up again. */
+export function finishGems(ms: number, maxed = 0) {
+  const gems = Math.max(0, Math.ceil(ms / (FINISH_GEM_SECONDS * 1000)));
+  return Math.ceil((gems * 1000) / (1000 + RUSH_EFFICIENCY_TENTHS * maxed));
+}
+/** The rush efficiency of `maxed` items maxed, as its tab's heading shows
+ * it: "+1.5% to Rush". */
+export const rushEfficiencyText = (maxed: number) => `+${(RUSH_EFFICIENCY_TENTHS * maxed) / 10}% to Rush`;
 
 /** The job training `id`, if any. */
 export const trainingJob = (jobs: readonly TrainingJob[], id: TrainingId) => jobs.find((j) => j.id === id);

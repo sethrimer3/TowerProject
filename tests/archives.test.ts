@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   ARCHIVISTS, HISTORY_LIMIT, RESEARCH, RESEARCH_CATEGORIES, RESEARCH_IDS, RESEARCH_TARGETS, cancelResearch, cannotStart, decodeArchives,
-  cannotSwitch, defaultArchives, duration, price, hireArchivist, jobProgress, maxLevel, researchLevel, researched, settleArchives, startResearch, status, switchResearch, withNextLevel,
+  cannotSwitch, defaultArchives, duration, price, hireArchivist, jobProgress, maxLevel, researchCompleted, researchLevel, researched, settleArchives, startResearch, status, switchResearch, withNextLevel,
   type ResearchId,
 } from "../src/archives.ts";
 import { loadout } from "../src/loadout.ts";
@@ -433,6 +433,18 @@ test("Rush completes an archivist's research for a Gem per ten minutes left, rou
   // Dev free purchases rush for nothing.
   g.save.settings.freePurchases = true;
   assert.equal(g.research.rushGems(0), 0);
+});
+
+test("each project completed takes 1.5% off Rush", () => {
+  const g = new Game(owner());
+  g.clock = () => T0;
+  assert.ok(g.research.start(0, "focusCount"));
+  const base = g.research.rushGems(0);
+  const done = RESEARCH_IDS.filter((id) => id !== "focusCount" && status(g.save, id) === "available").slice(0, 10);
+  for (const id of done) g.save.archives.levels[id] = RESEARCH[id].levels.length;
+  assert.equal(researchCompleted(g.save), done.length);
+  assert.ok(done.length >= 2);
+  assert.equal(g.research.rushGems(0), Math.ceil((base * 1000) / (1000 + 15 * done.length)));
 });
 
 test("a busy archivist switches research: its Gold back, its time kept, the new project paid and started", () => {

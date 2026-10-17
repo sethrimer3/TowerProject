@@ -2,7 +2,7 @@ import { TRAINING, trainingDef, type TrainingId } from "../config.ts";
 import { snap } from "../exact.ts";
 import { TRAINING_RESET_GEMS } from "../gems.ts";
 import { batchSpeedup, bulkBuy, type BuyQuantity } from "../buy-quantity.ts";
-import { trainingBulk, trainingDiscount, trainingFull, trainingMaxed, trainingSpeed, trainingOpen } from "../loadout.ts";
+import { trainingBulk, trainingDiscount, trainingFull, trainingMaxed, trainingRowsFull, trainingSpeed, trainingOpen } from "../loadout.ts";
 import { BOOST_FOREVER, permanentBoost, trainingRate } from "../shop/entitlements.ts";
 import { batchWork, claimBoost, doneAt, finishGems, jobInvested, nextTrainerGems, ranksInTraining, trainerBatch, trainingGold, trainingJob, trainingSeconds, workLeft, trainingSlots, type TrainingJob } from "../training-jobs.ts";
 import { affordsGems, type DeskHost } from "./desk.ts";
@@ -219,12 +219,18 @@ export class TrainingDesk {
     return jobInvested(job, this.left(job.id));
   }
 
-  /** Finishes the rank of `id` in training now, for `finishGems` of the
-   * training time its timer shows (none with Dev free purchases). */
+  /** The Gems that finish the rank of `id` in training now: `finishGems`
+   * of the training time its timer shows, less 1.5% for each row at its
+   * most (none with Dev free purchases). */
+  finishGems(id: TrainingId) {
+    return this.host.free ? 0 : finishGems(this.left(id), trainingRowsFull(this.save));
+  }
+
+  /** Finishes the rank of `id` in training now, for `finishGems`. */
   finish(id: TrainingId) {
     const job = trainingJob(this.save.trainingJobs, id);
     if (!job) return false;
-    const gems = this.host.free ? 0 : finishGems(this.left(id));
+    const gems = this.finishGems(id);
     if (this.save.gems < gems) return false;
     this.save.gems -= gems;
     job.completesAt = Math.min(job.completesAt, this.host.clock());

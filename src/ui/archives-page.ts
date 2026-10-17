@@ -1,6 +1,6 @@
 import {
   RESEARCH, RESEARCH_CATEGORIES, RESEARCH_IDS, RESEARCH_TARGETS, activeSlot, cannotSwitch, describe, duration, jobProgress, price as researchPrice,
-  maxLevel, missing, nextArchivistPrice, nextLevel, research, researchLevel, researched, status, withNextLevel,
+  maxLevel, missing, nextArchivistPrice, nextLevel, research, researchCompleted, researchLevel, researched, status, withNextLevel,
   type ArchivesSave, type ArchivistSlot, type ResearchCategory, type ResearchId, type ResearchRequirement, type ResearchTarget,
 } from "../archives.ts";
 import { UPGRADES } from "../config.ts";
@@ -12,6 +12,7 @@ import type { AppContext } from "./app.ts";
 import { currencyAmount, priceAmount, shortAmount } from "./hud.ts";
 import { cellIcon, el, gemCount, gemIcon, redoIcon, uiSprite } from "./dom.ts";
 import { whole } from "../whole.ts";
+import { RUSH_EFFICIENCY_TENTHS, rushEfficiencyText } from "../training-jobs.ts";
 import { SPEED_UP_FACTORS, SPEED_UP_HOURS, jobAt, type SpeedUpFactor, type SpeedUpHours } from "../speed-ups.ts";
 import { askForGems, helpButton, showHelp } from "./dialogs.ts";
 import { startArchivesAmbient } from "./archives-ambient.ts";
@@ -62,6 +63,15 @@ const requirementText =(r: ResearchRequirement) =>
   : "goalUnlock" in r ? `Tower ${tierNumeral(unlockAt(r.goalUnlock).tower)}'s floor ${unlockAt(r.goalUnlock).floor} Goal`
   : `Hero level ${r.playerLevel}`;
 
+/** A tab's rush efficiency at its heading's top-left corner: "+1.5% to
+ * Rush" for each of its `maxed` items maxed, which take that much off the
+ * Gems of `rushing`; nothing before any is. */
+export function rushEfficiencyHtml(maxed: number, rushing: string) {
+  if (maxed <= 0) return "";
+  const title = `${maxed} maxed: the Gems for ${rushing} are divided by ${(1000 + RUSH_EFFICIENCY_TENTHS * maxed) / 1000}`;
+  return `<span class="rush-efficiency" title="${title}">${rushEfficiencyText(maxed)}</span>`;
+}
+
 /** The Upgrades page's Archives tab: the archivists, one a row, each busy
  * one with what it is researching, and a History button opening the
  * research completed. Pressing an archivist opens Select Research for it:
@@ -98,7 +108,7 @@ export class ArchivesPanel {
     if (job && job.research !== this.pickedFrom) this.picking = null;
     // The currencies bar above shows the Gold research costs.
     if (this.picking !== null) return this.pickHtml(this.picking);
-    return `<section class="archives"><canvas class="archives-ambient" aria-hidden="true"></canvas><header class="tree-heading"><h3>Archives${helpButton("How the Archives work", "research-help")}</h3><div class="research-corner">${this.cellsHtml()}<button id="research-history-open" class="research-history-open">History</button></div></header>
+    return `<section class="archives"><canvas class="archives-ambient" aria-hidden="true"></canvas><header class="tree-heading">${rushEfficiencyHtml(researchCompleted(save), "rushing research")}<h3>Archives${helpButton("How the Archives work", "research-help")}</h3><div class="research-corner">${this.cellsHtml()}<button id="research-history-open" class="research-history-open">History</button></div></header>
       <div class="archivists" role="list" aria-label="Archivists">${this.archivistsHtml()}</div></section>`;
   }
 

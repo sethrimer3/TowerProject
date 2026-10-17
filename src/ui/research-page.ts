@@ -2,16 +2,16 @@ import { askForGems, helpButton, showHelp } from "./dialogs.ts";
 import { play } from "../sound.ts";
 import { permanentBoost, trainingRate } from "../shop/entitlements.ts";
 import { TRAINING, TRAINING_GROUPS, TRAINING_PER_LEVEL, trainingCap, type TrainingId } from "../config.ts";
-import { trainingBulk, trainingPoints, trainingStep, trainingText, trainingOpen } from "../loadout.ts";
+import { trainingBulk, trainingPoints, trainingRowsFull, trainingStep, trainingText, trainingOpen } from "../loadout.ts";
 import { whole } from "../whole.ts";
 import type { BuyQuantity } from "../buy-quantity.ts";
 import { buyQuantityHtml, maxCount, readQuantity } from "./buy-quantity-select.ts";
 import { TrainingParticles } from "../training-particles.ts";
-import { BOOST_CLAIM_MARGIN_MS, BOOST_MAX_MS, BOOST_RATE, boostLeft, claimBoost, finishGems, nextTrainerGems, ranksInTraining, trainingJob, trainingSlots, workLeft, type TrainingJob } from "../training-jobs.ts";
+import { BOOST_CLAIM_MARGIN_MS, BOOST_MAX_MS, BOOST_RATE, boostLeft, claimBoost, nextTrainerGems, ranksInTraining, trainingJob, trainingSlots, workLeft, type TrainingJob } from "../training-jobs.ts";
 import type { AppContext } from "./app.ts";
 import { adIcon, clockIcon, el, gemCount, gemIcon, goldIcon, pointsIcon, redoIcon, riseFrom, uiSprite } from "./dom.ts";
 import { TRAINING_RESET_GEMS } from "../gems.ts";
-import { ArchivesPanel, COUNTDOWN_MIN_MS, formatCountdown, formatDuration, toNextSecond } from "./archives-page.ts";
+import { ArchivesPanel, COUNTDOWN_MIN_MS, formatCountdown, formatDuration, rushEfficiencyHtml, toNextSecond } from "./archives-page.ts";
 import { priceAmount } from "./hud.ts";
 
 type TrainingRow = (typeof TRAINING)[number];
@@ -124,7 +124,7 @@ export class ResearchPage {
     this.onEach("data-cancel", (id) => this.withRefund(() => training.cancel(id)));
     this.onEach("data-finish", (id) => {
       const game = this.ctx.game;
-      if (!game.free && game.save.gems < finishGems(training.left(id))) return askForGems(this.ctx);
+      if (game.save.gems < training.finishGems(id)) return askForGems(this.ctx);
       this.saveAfter(training.finish(id));
     });
     document.querySelector<HTMLButtonElement>("#buy-trainer")?.addEventListener("click", () => {
@@ -241,7 +241,7 @@ export class ResearchPage {
       : "";
     // The points held, at the right end of the trainers' row once there are trainers.
     const held = `<span class="training-held" title="Training points"><span class="points-held">${pointsIcon()}<b id="training-points">${points.left}</b></span><small>Training Points</small></span>`;
-    return `<section class="training"><canvas class="training-particles" aria-hidden="true"></canvas><header class="tree-heading"><h3>Training${helpButton("How Training works", "research-help")}</h3></header>
+    return `<section class="training"><canvas class="training-particles" aria-hidden="true"></canvas><header class="tree-heading">${rushEfficiencyHtml(trainingRowsFull(save), "finishing a rank in training")}<h3>Training${helpButton("How Training works", "research-help")}</h3></header>
       ${hired ? this.boostHtml() : ""}
       ${hired
         ? `<div class="training-points training-slots"><span class="training-trainers">Trainers: <b id="training-slots">${save.trainingJobs.length} / ${slots}</b> ${this.trainerButton()}${this.speedHtml()}</span><span class="training-end">${quantity}${bank}${held}</span></div>`
@@ -378,7 +378,7 @@ export class ResearchPage {
   /** The Gem button that finishes a rank in training at once: one Gem per
    * ten minutes its timer shows, rounded up. */
   private finishButton(id: TrainingId, name: string) {
-    const game = this.ctx.game, gems = game.free ? 0 : finishGems(game.training.left(id));
+    const game = this.ctx.game, gems = game.training.finishGems(id);
     return `<button class="training-finish${game.save.gems >= gems ? "" : " short"}" data-finish="${id}" aria-label="Finish training ${name} now for ${gemCount(gems)}" title="Finish now for ${gemCount(gems)}">${gemIcon()}<span data-finish-gems="${id}">${gems}</span></button>`;
   }
 
@@ -424,7 +424,7 @@ export class ResearchPage {
       const span = document.querySelector<HTMLElement>(`[data-training-timer="${job.id}"]`);
       if (span) span.textContent = formatCountdown(left);
       const gems = document.querySelector<HTMLElement>(`[data-finish-gems="${job.id}"]`);
-      if (gems && !game.free) gems.textContent = String(finishGems(left));
+      if (gems) gems.textContent = String(game.training.finishGems(job.id));
     }
   }
 
