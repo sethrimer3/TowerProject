@@ -108,8 +108,9 @@ export class EventsPage {
   }
 
   /** The relic track: a bar filling to the last milestone with the Medals
-   * the event has paid toward its relics, the relics for all above it and
-   * the premium ones below, each lit once reached. */
+   * the event has paid toward its relics, and reading how many, the free
+   * relics above it and the Event Booster's below, each row named on its
+   * left and each relic lit once reached. */
   private track(milestones: readonly RelicMilestone[]) {
     const game = this.ctx.game, events = game.events, e = game.save.events, medals = events.medals;
     const top = Math.max(...milestones.map((m) => m.medals));
@@ -120,11 +121,11 @@ export class EventsPage {
       return `<span class="event-relic ${m.rarity}${reached ? " reached" : ""}${locked ? " locked" : ""}" style="--at:${(100 * m.medals) / top}%" title="${label}" aria-label="${label}" role="img">` +
         `<span class="event-relic-art">${relicIcon(m.rarity)}${reached ? checkIcon() : locked ? LOCK : ""}</span><small>${m.medals.toLocaleString("en-US")}</small></span>`;
     };
-    const row = (premium: boolean) => `<div class="event-relics ${premium ? "premium" : "standard"}">${milestones.filter((m) => m.premium === premium).map(relic).join("")}</div>`;
-    const next = milestones.filter((m) => !milestoneReached(e, m) && (!m.premium || events.boosted)).sort((a, b) => a.medals - b.medals)[0];
-    return `<section class="weekly event-track" aria-label="Relics"><div class="weekly-head"><b>Relics</b><small>${medalIcon()} <b>${medals.toLocaleString("en-US")}</b> Medals${events.boosted ? " · ×2" : ""}</small></div>` +
-      `<div class="event-track-body">${row(false)}<div class="weekly-bar event-bar" role="progressbar" aria-valuemin="0" aria-valuemax="${top}" aria-valuenow="${Math.min(medals, top)}"><i style="width:${Math.min(100, (100 * medals) / top)}%"></i></div>${row(true)}</div>` +
-      `<small class="weekly-count">${next ? `${(next.medals - medals).toLocaleString("en-US")} Medals to the next relic` : "Every relic won"} · premium relics below</small></section>`;
+    const row = (premium: boolean) => `<b class="event-row-name${premium ? " premium" : ""}">${premium ? "Event Boost Relics" : "Free Relics"}</b>` +
+      `<div class="event-relics ${premium ? "premium" : "standard"}">${milestones.filter((m) => m.premium === premium).map(relic).join("")}</div>`;
+    const count = `<span class="event-bar-count"><b>${medals.toLocaleString("en-US")}</b>${medalIcon()}${events.boosted ? " ×2" : ""}</span>`;
+    return `<section class="weekly event-track" aria-label="Relics"><div class="weekly-head"><b>Relics</b></div>` +
+      `<div class="event-track-body">${row(false)}<span></span><div class="weekly-bar event-bar" role="progressbar" aria-label="Medals" aria-valuemin="0" aria-valuemax="${top}" aria-valuenow="${Math.min(medals, top)}"><i style="width:${Math.min(100, (100 * medals) / top)}%"></i>${count}</div>${row(true)}</div></section>`;
   }
 
   /** The Event Booster's offer, or that it is active. */

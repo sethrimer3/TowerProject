@@ -4196,11 +4196,12 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
 .event-banner .page-title h2 { font-size: 20px; }
 .event-ends { position: relative; margin: 4px 0 0; font-size: 11px; color: #c7b6d6; font-variant-numeric: tabular-nums; }
 .event-ends b { color: #ffe9a8; font-weight: 500; }
-.event-track .weekly-head small { display: inline-flex; align-items: center; gap: 3px; }
-.event-track .weekly-head small b { font-size: 12px; color: #ffe9a8; }
 .event-track .medal-icon { width: 14px; height: 14px; }
-.event-track-body { position: relative; padding: 0 18px; }
-.event-relics { position: relative; height: 46px; }
+/* Each row's name on the left; the relics stand over (and under) the bar, each at its Medals' place along it. */
+.event-track-body { display: grid; grid-template-columns: 90px 1fr; align-items: center; column-gap: 2px; }
+.event-row-name { font-size: 12px; font-weight: 500; line-height: 1.2; color: #e5d5b8; }
+.event-row-name.premium { color: #d6b8ff; }
+.event-relics { position: relative; height: 46px; margin: 0 18px; }
 .event-relic { position: absolute; left: var(--at); transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 1px; width: 36px; }
 .event-relics.standard .event-relic { bottom: 0; }
 .event-relics.premium .event-relic { top: 0; flex-direction: column-reverse; }
@@ -4213,7 +4214,10 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
 .event-relic.reached .event-relic-art { box-shadow: 0 0 10px 3px #ffd34d88; }
 .event-relic.reached small { color: #ffe9a8; }
 .event-relics.premium .event-relic small { color: #d6b8ff; }
-.event-bar i { background: linear-gradient(90deg, #7a3fae, #ffd34d); }
+.event-bar { position: relative; height: 20px; margin: 4px 18px; }
+.event-bar i { position: absolute; inset: 0 auto 0 0; height: auto; background: linear-gradient(90deg, #7a3fae, #ffd34d); }
+.event-bar-count { position: relative; display: flex; align-items: center; justify-content: center; gap: 3px; height: 100%; font-size: 11px; color: #f2f4f8; font-variant-numeric: tabular-nums; text-shadow: 0 1px 2px #000; }
+.event-bar-count b { font-size: 12px; color: #fff3cf; }
 .event-boost { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; padding: 10px 12px; border: 1px solid #d9a632; border-radius: 8px; background: linear-gradient(135deg, #3a2a10, #1a1408); }
 .event-boost > div { flex: 1; min-width: 0; }
 .event-boost b { display: block; font-size: 13px; font-weight: 500; color: #ffe9a8; }
