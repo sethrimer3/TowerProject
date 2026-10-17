@@ -1,6 +1,6 @@
 import type { Game } from "./state.ts";
 import type { Tile, Torch } from "./entities.ts";
-import type { Facing } from "./state.ts";
+import type { Facing } from "./shown.ts";
 import type { BoardLook } from "./tile-painters.ts";
 
 /** A glowing object this frame: tile position, color, reach (tiles), and strength. */

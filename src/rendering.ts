@@ -25,7 +25,7 @@ import { drawGem, drawGemSparkle, GEM_SPARKLE_MS } from "./gem-art.ts";
 import { DashEchoes } from "./dash-echoes.ts";
 import { drawVolley } from "./volley-art.ts";
 import { drawShields } from "./shield-art.ts";
-import type { Dash } from "./state.ts";
+import type { Dash } from "./shown.ts";
 import { darknessOf, forEachViewTile, tileTransform, toTileSpace, type FrameContext } from "./render-frame.ts";
 import { gameLook } from "./theme-collection.ts";
 

@@ -1,7 +1,7 @@
 import type { KeyColor } from "../config.ts";
 import type { TowerEnemyProfile } from "../scaling.ts";
 import { ARCHETYPES, keyedFloor, pick, type Weighted } from "./patterns.ts";
-import type { GraphBuilder } from "./strategic-graph.ts";
+import type { GraphBuilder } from "./graph-builder.ts";
 import type { Archetype, Fork, Gate, Lane, LaneStep, Reward, StrategicNode, StrategicTag, Strength } from "./types.ts";
 import { YELLOW_ONLY, doorKeys, onlyOpenKeys, withoutQuotaDoors } from "../key-schedule.ts";
 

@@ -2,7 +2,7 @@ import type { KeyColor } from "../config.ts";
 import { doorKeys, towerDoorRate, towerKeyRatio } from "../key-schedule.ts";
 import { forkKeyDemand } from "./forks.ts";
 import { keyedFloor, pick, type Weighted } from "./patterns.ts";
-import type { GraphBuilder } from "./strategic-graph.ts";
+import type { GraphBuilder } from "./graph-builder.ts";
 import type { Gate, Reward, StrategicGraph, StrategicNode, Strength } from "./types.ts";
 
 /** Resource planner: treats keys and doors as an economy

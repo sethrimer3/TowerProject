@@ -1,7 +1,6 @@
-import type { StatTrainingRow } from "./config.ts";
-import type { Mode, Run, Save } from "./entities.ts";
+import type { Run, Save } from "./entities.ts";
 import { snap } from "./exact.ts";
-import { loadout, statFactor, type Loadout, type Stat } from "./loadout.ts";
+import { statFactor, type Loadout, type Stat } from "./loadout.ts";
 import { boonFactor } from "./shrines.ts";
 
 /** The stats the loadout carries into a run's hero, which a change to the
@@ -19,14 +18,6 @@ export function loadoutShift(before: Loadout, after: Loadout): StatShift {
     if (change) shift[stat] = change;
   }
   return shift;
-}
-
-/** What stat row `row` standing at `to` ranks rather than `from` moves
- * `mode`'s loadout by: the ranks' worth on its curve, raised as the loadout
- * raises them (equipment's percent, then the stat's research). */
-export function rankShift(save: Save, mode: Mode, row: StatTrainingRow, from: number, to: number) {
-  const at = (ranks: number) => loadout({ ...save, training: { ...save.training, [row.id]: ranks } }, mode)[row.stat];
-  return snap(at(to) - at(from));
 }
 
 /** What a flat `amount` of `stat` given for the run (the Max HP badge)

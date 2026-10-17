@@ -1,7 +1,7 @@
 import type { KeyColor } from "./config.ts";
 import type { EnemyStrength, Tile, Torch } from "./entities.ts";
 import { forEachViewTile, toTileSpace, type FrameContext } from "./render-frame.ts";
-import type { Facing } from "./state.ts";
+import type { Facing } from "./shown.ts";
 import type { ThemedBoard } from "./themed-boards.ts";
 import { sprite, type Sprite } from "./pixel-sprite.ts";
 

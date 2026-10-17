@@ -1,5 +1,5 @@
 import type { Tile, Torch } from "./entities.ts";
-import type { Facing } from "./state.ts";
+import type { Facing } from "./shown.ts";
 import type { GameLook } from "./theme-collection.ts";
 import { forEachViewTile, tileTransform, toTileSpace, type FrameContext } from "./render-frame.ts";
 import { NEON_BOARD } from "./neon-board.ts";

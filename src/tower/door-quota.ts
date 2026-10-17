@@ -2,7 +2,7 @@ import { QUOTA_DOORS, doorKeys, owesDoor, quotaDoorsIn, towerDoorHundredths, tow
 import { forkFits, forksWorth, mayFork, stepValue } from "./forks.ts";
 import { TOWER_PATTERNS, patternWeight, pick, type TowerPattern, type Weighted } from "./patterns.ts";
 import { MAX_REGIONS } from "./resource-planner.ts";
-import { openOptions, placePattern, type GraphBuilder } from "./strategic-graph.ts";
+import { openOptions, placePattern, type GraphBuilder } from "./graph-builder.ts";
 import type { Archetype, Fork, Gate, StrategicGraph, StrategicNode } from "./types.ts";
 
 /** The door stage (docs/DOOR_AND_KEY_SCHEDULE.md): each floor rolls how many

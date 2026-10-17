@@ -6,7 +6,7 @@ import { MODES } from "../modes.ts";
 import { canClaimGoldBoost, claimGoldBoost, goldBoostLeft, GOLD_BOOST_FACTOR, GOLD_BOOST_MS, noteGoldBoost } from "../gold-boost.ts";
 import { random } from "../random.ts";
 import { adsOff } from "../shop/entitlements.ts";
-import type { GainArt } from "../state.ts";
+import type { GainArt } from "../shown.ts";
 import type { DeskHost } from "./desk.ts";
 import { earn } from "../profile.ts";
 

@@ -7,7 +7,6 @@ import { boonFactor, runBoons } from "./shrines.ts";
 import { TRAINING_GROUPS, GOLD_SHOP, schedulePrice, TRAINING, TRAINING_PER_LEVEL, UPGRADES, trainingCap, isStatRow, levelForXp, trained, trainingWorth, amountAt, trainedAmount, trainingDef, type GoldItemId, type StatTrainingRow, type TrainingDef, type TrainingId, type TrainingRow, type UpgradeId } from "./config.ts";
 import { wornEffects } from "./equipment/effects.ts";
 import { silverFound } from "./gold-multipliers.ts";
-import { rankShift } from "./hero-stats.ts";
 import { PIERCE_CAP } from "./equipment/balance.ts";
 import { RESEARCH, researched } from "./archives.ts";
 import { ranksInTraining, trainingGold } from "./training-jobs.ts";
@@ -133,6 +132,14 @@ export function loadout(save: Save, mode: Mode = "tower"): Loadout {
     // Count research, which either opens, stores the rest.
     undoCapacity: save.upgrades.inspirationUndos || save.upgrades.undos ? researched(save.archives, "undoCapacity", own.undos) : 0,
   };
+}
+
+/** What stat row `row` standing at `to` ranks rather than `from` moves
+ * `mode`'s loadout by: the ranks' worth on its curve, raised as the loadout
+ * raises them (equipment's percent, then the stat's research). */
+export function rankShift(save: Save, mode: Mode, row: StatTrainingRow, from: number, to: number) {
+  const at = (ranks: number) => loadout({ ...save, training: { ...save.training, [row.id]: ranks } }, mode)[row.stat];
+  return snap(at(to) - at(from));
 }
 
 /** Text for a row's grants: "+2 starting attack", joined by "and". A row

@@ -65,14 +65,14 @@ import { materialDef, MATERIALS } from "./materials.ts";
 import { switchTier, tierNumeral, tierRewardText, tierXp } from "./tiers.ts";
 import type { GoldContext } from "./gold-multipliers.ts";
 import { RunTimeline } from "./run-timeline.ts";
-import { flatShift, rankShift, shiftHero } from "./hero-stats.ts";
+import { flatShift, shiftHero } from "./hero-stats.ts";
 import { enemyTitle } from "./scaling.ts";
 import { snap } from "./exact.ts";
 import { enemyStat, keyCount, whole, wholeChange } from "./whole.ts";
 import { MODES, milestones, type ModeProfile } from "./modes.ts";
 import { ranksInRun, runTrainingBulk, runTrainingOffer, type RunTrainingOffer } from "./run-training.ts";
 import { openQuantities, type BuyQuantity } from "./buy-quantity.ts";
-import { critRule, loadout, type TrainingView } from "./loadout.ts";
+import { critRule, loadout, rankShift, type TrainingView } from "./loadout.ts";
 import { researched } from "./archives.ts";
 import { chargesLeft, chargesPerRun, climbFloor, spendCharge, type Charge } from "./run-charges.ts";
 import type { MaterialId, MaterialStack } from "./materials.ts";
@@ -101,6 +101,7 @@ import { raised, wornEffects } from "./equipment/effects.ts";
 import { RARITY_TIERS, type EquipRarity } from "./equipment/balance.ts";
 import { EQUIP_MATERIALS, EQUIP_MATERIAL_IDS, itemDef, type EquipMaterialId } from "./equipment/catalog.ts";
 import { readyForestRuns, startingHero } from "./game/hero-sync.ts";
+import type { Coin, Dash, Drop, Encounter, Facing, Gain, GainArt, Heal, ShownFight } from "./shown.ts";
 /** How a new run starts: out in the forest or at the entrance, and from
  * which seed (rolled from the game's randomness when left out). */
 export type RunStart = { outside?: boolean; seed?: number; height?: number };
@@ -112,20 +113,6 @@ export type RouteEffects = {
   defense: [number, number];
   keys: Partial<Record<KeyColor, [number, number]>>;
 };
-/** A reward just picked up, or what a door took, to rise from the tile it
- * came from: drawn as its sprite (a tile's contents, marked `spent` for a
- * key a door used, a material, or the heart a Heart Door checked, or with
- * a plus, `raised`, the max HP Max HP's badge added), or as `text` where it
- * has none. A kill's drops carry their `drop` place, so they rise together. */
-export type Gain = { x: number; y: number; text: string; art: GainArt | null; drop?: Drop };
-/** Where one of a kill's or a chest's drops rises: `row` rows above its tile (below,
- * negative), Gold over Silver over the rest, and whether it starts `with`
- * the drop queued before it rather than after. */
-export type Drop = { row: number; with: boolean };
-export type GainArt = { tile: Tile; spent?: true } | { material: MaterialId; quantity: number } | { heart: true; raised?: true } | { gem: true } | { coin: Coin } | { cell: true }
-  | { equipMaterial: EquipMaterialId; quantity: number } | { equipPiece: string; rarity: EquipRarity };
-/** The coin a Gold or Silver gain raises. */
-export type Coin = "gold" | "silver";
 /** The gains a Settings row can turn off: ATK, DEF and HP changed, keys
  * found, what a door takes, Gold and Silver found, what a fight costs
  * past its strikes, XP gained and the Gold combo. */
@@ -144,15 +131,6 @@ function kindOf(art: GainArt | null): GainKind | null {
   const kind = art.tile.kind;
   return kind === "attack" || kind === "defense" || kind === "key" ? kind : kind === "potion" ? "hp" : null;
 }
-/** A potion's heal: the HP from and to, where the hero stood, and its number. */
-export type Heal = { from: number; to: number; x: number; y: number; id: number };
-/** Which way the hero faces: the last step it took, (dx, dy) one tile
- * across or up (world y grows upward). */
-export type Facing = { dx: number; dy: number };
-/** A dash: the tiles the hero dashed off in one step, in order, each with
- * the step it took off it, the empty tile it landed on (none when it ended
- * on its target item), with the step onto it, and when (performance time). */
-export type Dash = { tiles: ({ x: number; y: number } & Facing)[]; end?: { x: number; y: number } & Facing; at: number };
 /** Rewards kept for the board to show; older ones are dropped unseen. */
 const MAX_GAINS = 12;
 /** The forest's Automove walks at least this many steps a second, however
@@ -174,15 +152,6 @@ const YELLOW_KEY_SALT = 0x6e11a;
  * does, where it is, whether it goes in the undo history, and for a fight
  * the hero's critical strikes in it as played (`crits`). */
 type TakenStep = { tile: Tile; outcome: StepEffect; dest: { x: number; y: number }; track: boolean; quiet?: boolean; crits?: number };
-/** The latest fight as the board shows it: the hero struck from `from`,
- * the enemy (`hp` at the start) stood at `to`, and its strikes land from
- * `start` (performance time). Played out, they are the fight's own; settled
- * at once (`summary`), they are its summary rounds (`summarize`). */
-export type ShownFight = { from: { x: number; y: number }; to: { x: number; y: number }; bout: Bout; start: number; hp: number; summary: boolean };
-/** A fight being shown before it counts: the hero waits at `from`, the
- * enemy stands at `to`, and nothing changes until `finishEncounter` settles
- * it (at `start + bout.duration`). */
-export type Encounter = ShownFight & { enemy: Enemy; outcome: StepEffect; settle: () => void };
 /** Tiles that stay on the board after being stepped on. */
 const PERMANENT_TILES = new Set<Tile["kind"]>(["floor", "stairs", "oneway", "openedChest"]);
 /** The targets a Dash may end on, a tile of it left: items to take. */

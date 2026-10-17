@@ -17,7 +17,7 @@ import { PIXEL, PIXEL_SPRITES } from "../src/pixel-board.ts";
 import { DOODLE } from "../src/doodle-board.ts";
 import { MURK } from "../src/murk-board.ts";
 import type { FrameContext } from "../src/render-frame.ts";
-import type { GainArt } from "../src/state.ts";
+import type { GainArt } from "../src/shown.ts";
 
 // A reward rising off a board drawn in a Game theme but Classic wears the
 // theme's own art, not the sprites.

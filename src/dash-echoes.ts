@@ -1,4 +1,4 @@
-import type { Dash, Facing } from "./state.ts";
+import type { Dash, Facing } from "./shown.ts";
 import { toTileSpace, type FrameContext } from "./render-frame.ts";
 
 /** How long a dash's echoes last, from the dash (ms). */
