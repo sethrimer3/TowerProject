@@ -21,13 +21,13 @@ import type { Enemy, Player, Tile } from "../src/entities.ts";
 const hero = (over: Partial<Player> = {}): Player => ({ x: 0, y: 0, hp: 100, maxHp: 100, attack: 12, defense: 0, keys: { yellow: 0, blue: 0, red: 0 }, ...over }) as Player;
 const brute: Enemy = { name: "Brute", hp: 60, attack: 30, defense: 0, tier: 0, strength: "normal" };
 
-test("Ranged enemies start a point under Fast's share in the third tier and grow as it does; none before", () => {
+test("Ranged enemies start a point and a half under Fast's share in the third tier and grow as it does; none before", () => {
   assert.deepEqual([1, 500, 9000].map((f) => rangedShare(2, f)), [0, 0, 0]);
-  assert.deepEqual([1, 201, 9000].map((f) => rangedShare(3, f)), [7500, 8500, 19_500]);
-  for (const f of [1, 77, 3000]) assert.equal(rangedShare(6, f), fastShare(6, f) - 1000);
+  assert.deepEqual([1, 201, 9001].map((f) => rangedShare(3, f)), [11_250, 12_750, 78_750]);
+  for (const f of [1, 77, 3000]) assert.equal(rangedShare(6, f), fastShare(6, f) - 1500);
 });
 
-test("Tower floors make about 7.5% of their non-boss enemies Ranged from the third tier, changing nothing else, Fast and Ranged rolled apart", () => {
+test("Tower floors make about 11.25% of their non-boss enemies Ranged from the third tier, changing nothing else, Fast and Ranged rolled apart", () => {
   let enemies = 0, ranged = 0, both = 0;
   for (const seed of [3, 41, 977])
     for (let room = 0; room < 60; room++) {
@@ -44,7 +44,7 @@ test("Tower floors make about 7.5% of their non-boss enemies Ranged from the thi
       enemies += [...cells.values()].filter((t) => t.enemy && t.enemy.strength !== "boss").length;
     }
   const share = ranged / enemies;
-  assert.ok(share > 0.055 && share < 0.095, `about 7.5% Ranged: ${share}`);
+  assert.ok(share > 0.09 && share < 0.135, `about 11.25% Ranged: ${share}`);
   assert.ok(both > 0, "some enemies are both Fast and Ranged");
 });
 

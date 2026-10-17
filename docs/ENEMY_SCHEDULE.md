@@ -137,7 +137,7 @@ A hero strong enough for that boss fells the next tower's first enemies in one s
 Raising every early enemy's ATK would not reach the first of those, and raising their HP too would make the whole early tower harder; a Fast enemy strikes first, so it lands a blow even when the hero fells it in one strike, and it alone carries a raised ATK.
 
 - **Who:** from Tower II and Delve II up, any enemy but a boss or Greater Boss, More Enemies' extras among them.
-- **Share** (`fastShare`, thousandths of a percent): 8% on Tower II's floor 1, growing 1% every 200 floors (a little each floor) to 20% on floor 2,401; each tower after starts and stops half a point higher (8.5% to 20.5% in Tower III, 11.5% to 23.5% in Tower IX). The Delve counts its equivalent floor.
+- **Share** (`fastShare`, thousandths of a percent): 12% on Tower II's floor 1, growing 1.5% every 200 floors (a little each floor) without end (30% on floor 2,401); each tower after starts three quarters of a point higher (12.75% in Tower III, 17.25% in Tower IX). The Delve counts its equivalent floor.
 - **Roll:** one `tileRandom` number per run seed, floor and tile (`FAST_SALT`), drawn after the tier's factor (`fastCells`, beside `tierCells` in `RoomWorld` and the Delve's `World`), so nothing else in generation draws differently.
 - **ATK:** at least the **carry** (`fastCarry`): `FAST_CARRY` (1.75) times the tier below's floor-100 normal, balanced enemy's ATK, in the tier's own units: 700 in Tower II (the Tower I floor-100 boss's ATK); Towers III, IV and V carry set values instead (`FAST_CARRY_AT`): 1,000, 2,000 and 4,000 rather than 3,500, 14,000 and 42,000. The Delve's caves carry the same. Every Fast enemy below it strikes with it, whatever its strength or profile; past the floor where the curve outgrows it (about 73 in Tower II), Fast changes no stats. HP and DEF are untouched.
 - **Fights:** it strikes first, then the fight goes on as ever; its ATK rises after its own strikes. Thorns answer its opening strike, the shroud takes it first, Revive may catch it, and Lifesteal heals only from the hero's strikes. A fight against it is never an Instakill, so Mug pays nothing more.
@@ -152,7 +152,7 @@ Tune it with `FAST_CARRY`, `FAST_CARRY_AT` and `fastShare`.
 A Ranged enemy (`src/ranged.ts`) shoots the hero from a distance, so a hero who outclasses its fight still pays to walk past it, and the Archer (Tower III's floor 10 Goal) gets to shoot first.
 
 - **Who:** any enemy but a boss or Greater Boss, from Tower III and Delve III up, on its own roll, so an enemy may be both Fast and Ranged.
-- **Share** (`rangedShare`): a point under Fast's, growing as it does: 7.5% on Tower III's floor 1, 19.5% from floor 2,401.
+- **Share** (`rangedShare`): a point and a half under Fast's, growing as it does: 11.25% on Tower III's floor 1, 29.25% on floor 2,401.
 - **Roll:** one `tileRandom` number per run seed, floor and tile (`RANGED_SALT`), after the Fast roll (`rangedCells`); it changes no stats.
 - **Shots:** from five sixths of the hero's Attack Range (2.5 tiles to its 3), Euclidean, walls and doors no obstacle, every 10 turns (`foeShotCost`: a turn less every 500 floors, at least 1), its ATK less DEF, cut by parries, less the whole shroud.
 - **Pay:** 1 Gold more (`RANGED_GOLD`), 2 more for one both Fast and Ranged.

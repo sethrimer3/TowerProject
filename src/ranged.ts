@@ -25,10 +25,10 @@ import { tileRandom } from "./random.ts";
 const RANGED_SALT = 0x4a2c3;
 
 /** The share of enemies that are Ranged on equivalent floor `floor` (from
- * 1) of tier `tier`, in thousandths of a percent: a point under the Fast
- * share, growing as it does (7.5% on the third tier's floor 1). None in the
- * first two tiers. */
-export const rangedShare = (tier: number, floor: number) => (tier < 3 ? 0 : fastShare(tier, floor) - 1_000);
+ * 1) of tier `tier`, in thousandths of a percent: a point and a half under
+ * the Fast share, growing as it does (11.25% on the third tier's floor 1).
+ * None in the first two tiers. */
+export const rangedShare = (tier: number, floor: number) => (tier < 3 ? 0 : fastShare(tier, floor) - 1_500);
 
 /** Whether `enemy` may be Ranged: anything but a boss or Greater Boss. */
 export const mayBeRanged = mayBeFast;
