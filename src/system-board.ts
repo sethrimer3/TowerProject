@@ -3,6 +3,7 @@ import type { EnemyStrength, Tile, Torch } from "./entities.ts";
 import { forEachViewTile, toTileSpace, type FrameContext } from "./render-frame.ts";
 import { contentsFrom, type ThemedBoard } from "./themed-board.ts";
 import { rankChevrons } from "./rank-chevrons.ts";
+import { roundRect } from "./themed-art.ts";
 
 /** The System Game theme's dungeon board, as an old one-bit computer's paint
  * program would draw it: black on white and nothing between but dithered
@@ -69,14 +70,6 @@ function shape(c: CanvasRenderingContext2D, draw: () => void, fill: string | Can
   c.beginPath();
   draw();
   icon(c, fill, width);
-}
-function roundRect(c: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
-  c.moveTo(x + r, y);
-  c.arcTo(x + w, y, x + w, y + h, r);
-  c.arcTo(x + w, y + h, x, y + h, r);
-  c.arcTo(x, y + h, x, y, r);
-  c.arcTo(x, y, x + w, y, r);
-  c.closePath();
 }
 
 /** The desktop's grey over the whole board, white paper on open ground, and

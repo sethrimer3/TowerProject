@@ -4,6 +4,7 @@ import { forEachViewTile, toTileSpace, type FrameContext } from "./render-frame.
 import { contentsFrom, type ThemedBoard } from "./themed-board.ts";
 import { rankChevrons } from "./rank-chevrons.ts";
 import { tileHash } from "./ascii-glyphs.ts";
+import { vignette } from "./themed-art.ts";
 
 /** The Yang and Yin Game themes' dungeon board: a raked sand garden drawn
  * in a few strokes of ink. Open ground is sand raked in slow waves, the
@@ -356,13 +357,7 @@ function hero(p: ZenPalette, c: CanvasRenderingContext2D) {
 }
 
 function rim(p: ZenPalette, f: FrameContext) {
-  if (!p.rim) return;
-  const c = f.c, w = f.width;
-  const g = c.createRadialGradient(w / 2, w / 2, w * 0.35, w / 2, w / 2, w * 0.75);
-  g.addColorStop(0, "rgba(0, 0, 0, 0)");
-  g.addColorStop(1, p.rim);
-  c.fillStyle = g;
-  c.fillRect(0, 0, w, w);
+  if (p.rim) vignette(f, 0.35, "rgba(0, 0, 0, 0)", p.rim);
 }
 
 const zenBoard = (p: ZenPalette): ThemedBoard => ({

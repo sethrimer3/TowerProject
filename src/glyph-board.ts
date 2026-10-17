@@ -4,6 +4,7 @@ import { forEachViewTile, toTileSpace, type FrameContext } from "./render-frame.
 import { contentsFrom, type ThemedBoard } from "./themed-board.ts";
 import { rankChevrons } from "./rank-chevrons.ts";
 import { askAsciiFont, asciiGlyph as glyph, letterField } from "./ascii-glyphs.ts";
+import { vignette } from "./themed-art.ts";
 
 /** The Glyph Game theme's dungeon board: an ASCII dungeon in many neon
  * colours on purple, every wall, tile content, torch and the hero a
@@ -163,12 +164,7 @@ function paintGlyphHero(c: CanvasRenderingContext2D) {
 
 /** A soft dark rim round the board. */
 function drawGlyphVignette(f: FrameContext) {
-  const c = f.c, w = f.width;
-  const g = c.createRadialGradient(w / 2, w / 2, w * 0.35, w / 2, w / 2, w * 0.75);
-  g.addColorStop(0, "rgba(20, 0, 40, 0)");
-  g.addColorStop(1, "rgba(10, 0, 20, 0.55)");
-  c.fillStyle = g;
-  c.fillRect(0, 0, w, w);
+  vignette(f, 0.35, "rgba(20, 0, 40, 0)", "rgba(10, 0, 20, 0.55)");
 }
 
 export const GLYPH_BOARD: ThemedBoard = {

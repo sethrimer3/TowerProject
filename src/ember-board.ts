@@ -4,6 +4,7 @@ import { forEachViewTile, toTileSpace, type FrameContext } from "./render-frame.
 import { contentsFrom, type ThemedBoard } from "./themed-board.ts";
 import { rankChevrons } from "./rank-chevrons.ts";
 import { askAsciiFont, asciiGlyph as glyph, letterField, tileHash } from "./ascii-glyphs.ts";
+import { vignette } from "./themed-art.ts";
 
 /** The Ember Game theme's dungeon board: warm cream and amber ASCII glowing
  * on a dark maroon field of dim letters, open ground left black, enemies a
@@ -170,12 +171,7 @@ function paintEmberHero(c: CanvasRenderingContext2D) {
 
 /** A warm dark rim round the board. */
 function drawEmberVignette(f: FrameContext) {
-  const c = f.c, w = f.width;
-  const g = c.createRadialGradient(w / 2, w / 2, w * 0.3, w / 2, w / 2, w * 0.75);
-  g.addColorStop(0, "rgba(30, 0, 0, 0)");
-  g.addColorStop(1, "rgba(12, 0, 0, 0.6)");
-  c.fillStyle = g;
-  c.fillRect(0, 0, w, w);
+  vignette(f, 0.3, "rgba(30, 0, 0, 0)", "rgba(12, 0, 0, 0.6)");
 }
 
 export const EMBER_BOARD: ThemedBoard = {

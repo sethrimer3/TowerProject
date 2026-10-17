@@ -6,6 +6,7 @@ import { contentsFrom, type ThemedBoard } from "./themed-board.ts";
 import { tileHash } from "./ascii-glyphs.ts";
 import { rankChevrons } from "./rank-chevrons.ts";
 import { blobPath, handPath, heartPath, line, shape as doodleShape, spray, stroke as doodleStroke, type Pt } from "./doodle-board.ts";
+import { vignette } from "./themed-art.ts";
 
 /** The Murk Game theme's dungeon board: Doodle's gloomy twin, the same
  * hurried mouse in the same simple paint program, but after dark. Dusky
@@ -477,12 +478,7 @@ function hero(c: CanvasRenderingContext2D, facing: Facing) {
 
 /** The board fades into the dark at its edges. */
 function over(f: FrameContext) {
-  const c = f.c, w = f.width;
-  const g = c.createRadialGradient(w / 2, w / 2, w * 0.3, w / 2, w / 2, w * 0.75);
-  g.addColorStop(0, "rgba(13, 11, 18, 0)");
-  g.addColorStop(1, "rgba(13, 11, 18, 0.55)");
-  c.fillStyle = g;
-  c.fillRect(0, 0, w, w);
+  vignette(f, 0.3, "rgba(13, 11, 18, 0)", "rgba(13, 11, 18, 0.55)");
 }
 
 export const MURK_BOARD: ThemedBoard = { ground, contents, heart, torch, hero, over };

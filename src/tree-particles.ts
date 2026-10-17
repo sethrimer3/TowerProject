@@ -24,6 +24,17 @@ type Forcing = Size & { nodes: SkillNode[]; selected: string | null };
 // A small forced incompressible Euler approximation: advect velocity, apply
 // node/edge forces, then project out divergence. No explicit viscosity.
 // Inspired by the Euler 2D fluid-flow effect; original implementation here.
+/** The value of the `n` x `n` grid `field` at (x, y), between its cells:
+ * blended from the four cells round it (bilinear), (x, y) held inside the
+ * grid. The skill trees' fluid and Training's read their velocities so. */
+export function sampleField(field: Float32Array, n: number, x: number, y: number) {
+  x = Math.max(0, Math.min(n - 1.001, x));
+  y = Math.max(0, Math.min(n - 1.001, y));
+  const ix = Math.floor(x), iy = Math.floor(y), fx = x - ix, fy = y - iy;
+  return (field[iy*n+ix]*(1-fx)+field[iy*n+ix+1]*fx)*(1-fy)
+    + (field[(iy+1)*n+ix]*(1-fx)+field[(iy+1)*n+ix+1]*fx)*fy;
+}
+
 export class TreeParticles {
   private readonly size = 40;
   private u = new Float32Array(1600);
@@ -46,15 +57,6 @@ export class TreeParticles {
   unlock(node: SkillNode, at: Point = { x: node.x / 100, y: node.y / 100 }) {
     this.purchase(node, at);
     this.rays.push({ ...at, age: 0 });
-  }
-
-  private sample(field: Float32Array, x: number, y: number) {
-    const n = this.size;
-    x = Math.max(0, Math.min(n - 1.001, x));
-    y = Math.max(0, Math.min(n - 1.001, y));
-    const ix = Math.floor(x), iy = Math.floor(y), fx = x - ix, fy = y - iy;
-    return (field[iy*n+ix]*(1-fx)+field[iy*n+ix+1]*fx)*(1-fy)
-      + (field[(iy+1)*n+ix]*(1-fx)+field[(iy+1)*n+ix+1]*fx)*fy;
   }
 
   draw(canvas: HTMLCanvasElement, time: number, scene: TreeScene) {
@@ -108,7 +110,7 @@ export class TreeParticles {
   /** Carries a particle along the fluid and the purchase bursts, wrapping
    * at the edges. */
   private move(p: Particle, dt: number, size: Size) {
-    let vx = this.sample(this.u, p.x*39, p.y*39), vy = this.sample(this.v, p.x*39, p.y*39);
+    let vx = sampleField(this.u, this.size, p.x*39, p.y*39), vy = sampleField(this.v, this.size, p.x*39, p.y*39);
     // Purchase is a transient tracer impulse, separate from the solenoidal
     // fluid: projecting a purely radial source would remove the burst.
     for (const pulse of this.pulses) {
@@ -127,8 +129,8 @@ export class TreeParticles {
       const i=y*n+x;
       const [fx, fy] = forceAt({ x: x/(n-1)*w, y: y/(n-1)*h }, forcing, edges);
       const bx=x-this.u[i]*dt*(n-1), by=y-this.v[i]*dt*(n-1);
-      nextU[i]=this.sample(this.u,bx,by)*(1-blend)+fx/w*blend;
-      nextV[i]=this.sample(this.v,bx,by)*(1-blend)+fy/h*blend;
+      nextU[i]=sampleField(this.u,this.size,bx,by)*(1-blend)+fx/w*blend;
+      nextV[i]=sampleField(this.v,this.size,bx,by)*(1-blend)+fy/h*blend;
     }
     this.project(nextU, nextV, w, h);
     this.u=nextU; this.v=nextV;

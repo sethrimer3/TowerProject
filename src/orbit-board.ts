@@ -5,6 +5,7 @@ import { forEachViewTile, toTileSpace, type FrameContext } from "./render-frame.
 import { contentsFrom, type ThemedBoard } from "./themed-board.ts";
 import { tileHash } from "./ascii-glyphs.ts";
 import { rankChevrons } from "./rank-chevrons.ts";
+import { roundRect, vignette } from "./themed-art.ts";
 
 /** The Orbit Game theme's dungeon board: a space station adrift among the
  * stars. The rock is open space, a few stars to a tile, the walls along
@@ -56,14 +57,6 @@ function stroke(c: CanvasRenderingContext2D, draw: () => void, color: string, wi
   c.lineWidth = width;
   c.strokeStyle = color;
   c.stroke();
-}
-function roundRect(c: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
-  c.moveTo(x + r, y);
-  c.arcTo(x + w, y, x + w, y + h, r);
-  c.arcTo(x + w, y + h, x, y + h, r);
-  c.arcTo(x, y + h, x, y, r);
-  c.arcTo(x, y, x + w, y, r);
-  c.closePath();
 }
 
 /** Space over the whole board with its stars, deck plating on open ground,
@@ -435,13 +428,7 @@ function hero(c: CanvasRenderingContext2D, facing: Facing) {
 
 /** A soft dark rim round the board, as through a viewport. */
 function over(f: FrameContext) {
-  const c = f.c, w = f.width;
-  if (typeof c.createRadialGradient !== "function") return;
-  const g = c.createRadialGradient(w / 2, w / 2, w * 0.38, w / 2, w / 2, w * 0.75);
-  g.addColorStop(0, "#04060f00");
-  g.addColorStop(1, "#04060f99");
-  c.fillStyle = g;
-  c.fillRect(0, 0, w, w);
+  vignette(f, 0.38, "#04060f00", "#04060f99");
 }
 
 export const ORBIT_BOARD: ThemedBoard = { ground, contents, heart, torch, hero, over };
