@@ -13,6 +13,7 @@ Most tests here are characterization goldens (`tests/fixtures/*.golden.json`): t
 | Procedural terrain art (`themes.ts`) | `terrain-paint`, `render-calls`, `render.golden.json` |
 | World or content generation (Tower floors, Delve labyrinth, decor plans, Defend cities) | the generation golden (`tower-layout`, `tower-planning`, `delve-labyrinth`, `decor-plan`, `world-boards`, `defend-city`), then every golden that plays on those boards (`step-trace`, `undo-clear-trace`, `tower-automation`, `delve-automove`, `defend-replay`, `render-calls`, `render.golden.json`); saved maps change, so also bump `LAYOUT_VERSION` |
 | Gameplay rules or balance (`config.ts`, `step-effects.ts`, enemies, pickups, Defend units) | `step-trace`, `undo-clear-trace`, `tower-automation`, `delve-automove`, `tournament-trace`, `defend-replay` as they fail |
+| The assemble's melt (`ui/slag-merge.ts`) | `slag-merge` |
 | UI text, pages, HUD or dialogs | `ui.golden.json` (`npm run test:ui`), and `defend-pointer.golden.json` for the Defend page |
 | Save format | `save-decode` |
 
