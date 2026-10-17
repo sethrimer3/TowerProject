@@ -193,6 +193,23 @@ export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay)
   renderFocus(game);
   renderProgress(game);
   renderModeActions(game);
+  renderCurrencyBar(game);
+  renderXp(game);
+  renderStatus(game, overlay);
+  // The status line sits over the board's bottom row: let the hero show through.
+  el("status-row").classList.toggle("see-through", game.run.player.y === renderer.target(renderer.density).bottom);
+  renderAutoButton(game);
+  renderHand(game);
+  text("density-label", `${renderer.density} × ${renderer.density}`);
+  renderUndo(game);
+  renderModeTab(game);
+  renderForestSign(game);
+  renderRunButtons(game);
+  renderTabs(game);
+}
+
+/** The currencies bar's balances, each shown once it means something. */
+function renderCurrencyBar(game: Game) {
   barAmount("gems-held", devAmount(game, game.save.gems));
   barAmount("shards-held", devAmount(game, game.save.ascensionShards));
   barAmount("medals-held", devAmount(game, game.save.medals));
@@ -204,16 +221,10 @@ export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay)
   barAmount("training", currencyAmount(trainingPoints(game.save).left));
   // Courage means nothing until the Delve, which pays it, is open.
   (document.querySelector(".courage-currency") as HTMLElement).hidden = !game.save.upgrades.delve && !game.save.settings.devMode;
-  renderXp(game);
-  renderStatus(game, overlay);
-  // The status line sits over the board's bottom row: let the hero show through.
-  el("status-row").classList.toggle("see-through", game.run.player.y === renderer.target(renderer.density).bottom);
-  renderAutoButton(game);
-  renderHand(game);
-  text("density-label", `${renderer.density} × ${renderer.density}`);
-  renderUndo(game);
-  renderModeTab(game);
-  renderForestSign(game);
+}
+
+/** The run's buttons beside the board: its menu, the online ones, the Shop, Research and the ad. */
+function renderRunButtons(game: Game) {
   renderRunMenu(game);
   renderTournamentButton(game);
   renderMailButton(game);
@@ -222,6 +233,10 @@ export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay)
   el("run-shop").hidden = !!game.run.outside;
   el("run-research").classList.toggle("notify", game.notices.waiting("run-research"));
   renderAdButton(game);
+}
+
+/** The tab bar: which tabs are open yet, and the dots on those with news. */
+function renderTabs(game: Game) {
   renderLockedTab("deck", !!game.save.upgrades.combatStance, "Deck", "Unlock Combat Stance in the Inspiration tree");
   for (const tab of ["deck", "upgrades", "research"] as const)
     document.querySelector(`[data-tab="${tab}"]`)?.classList.toggle("notify", game.notices.waiting(tab));
