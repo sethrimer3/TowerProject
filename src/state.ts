@@ -1,8 +1,8 @@
 import { entrance, floorFor } from "./delve/labyrinth.ts";
 import { buyTheme, canWear, grantAllThemes, type GameLook, type ThemeId, type ThemeKind, type UiLook } from "./theme-collection.ts";
 import { chooseStep } from "./automation.ts";
-import { CARDS, SIPHONS, TRADER_YELLOW_KEYS, cardText, explainStuck, isSiphon, keptLinks, planHand, planTarget, stillOpen, type CardId, type CardPlan, type SiphonCard, type StuckReport } from "./cards.ts";
-import { BADGE_IDS, BADGES, MAX_COPIES, badgeOn, badgesOn, badgeValue, runBadges, type BadgeId, type RunBadge } from "./badges.ts";
+import { CARDS, cardText, explainStuck, keptLinks, planHand, planTarget, stillOpen, type CardId, type CardPlan, type StuckReport } from "./cards.ts";
+import { BADGE_IDS, MAX_COPIES, badgeOn, badgeValue, runBadges } from "./badges.ts";
 import { adsOff, BOOST_FOREVER, permanentBoost } from "./shop/entitlements.ts";
 import { noteGoldBoost } from "./gold-boost.ts";
 import { offer, type OfferId } from "./shop/offers.ts";
@@ -25,13 +25,11 @@ import {
   TOWER_START_X,
   TOWER_SECTION,
   xpForKill,
-  xpBase,
   levelForXp,
   TRAINING_PER_LEVEL,
   isStatRow,
   cost,
   UPGRADES,
-  TRAINING,
   trainedAmount,
   type UpgradeId,
   type TrainingId,
@@ -65,7 +63,7 @@ import { materialDef, MATERIALS } from "./materials.ts";
 import { switchTier, tierNumeral, tierRewardText, tierXp } from "./tiers.ts";
 import type { GoldContext } from "./gold-multipliers.ts";
 import { RunTimeline } from "./run-timeline.ts";
-import { flatShift, shiftHero } from "./hero-stats.ts";
+import { shiftHero } from "./hero-stats.ts";
 import { enemyTitle } from "./scaling.ts";
 import { snap } from "./exact.ts";
 import { enemyStat, keyCount, whole, wholeChange } from "./whole.ts";
@@ -101,6 +99,7 @@ import { raised, wornEffects } from "./equipment/effects.ts";
 import { RARITY_TIERS, type EquipRarity } from "./equipment/balance.ts";
 import { EQUIP_MATERIALS, EQUIP_MATERIAL_IDS, itemDef, type EquipMaterialId } from "./equipment/catalog.ts";
 import { readyForestRuns, startingHero } from "./game/hero-sync.ts";
+import { CardActivation } from "./game/card-activation.ts";
 import type { Coin, Dash, Drop, Encounter, Facing, Gain, GainArt, Heal, ShownFight } from "./shown.ts";
 /** How a new run starts: out in the forest or at the entrance, and from
  * which seed (rolled from the game's randomness when left out). */
@@ -279,6 +278,8 @@ export class Game {
    * Ignore's tiles and the cards that act in place; where the hand plans
    * from. */
   readonly handRules = new HandRules(this);
+  /** What a card does as it activates, and what its badges pay. */
+  readonly activation = new CardActivation(this);
   /** The Shrines' commands: a Tower run's boons and the Shrine Boons page's
    * choices. */
   readonly shrine = new ShrineDesk(this);
@@ -787,9 +788,9 @@ export class Game {
     if (!plan.path.length) {
       this.cardPlan = null;
       const p = this.run.player, key = `${this.rules.lootKey(this.run, p.x, p.y)}:${id}${this.handRules.cardUses(id)}`;
-      this.actInPlace(id, this.handRules.scaleOf(id));
+      this.activation.actInPlace(id, this.handRules.scaleOf(id));
       if (id === this.run.focused) this.run.focused = undefined;
-      this.activate(plan.card, key);
+      this.activation.activate(plan.card, key);
       return;
     }
     const goal = plan.path[plan.path.length - 1], key = this.rules.lootKey(this.run, goal.x, goal.y);
@@ -833,13 +834,13 @@ export class Game {
     // once it settles), so undo takes it back with the step.
     if (!fight) {
       if (rolls) this.handRules.skipRolled();
-      return this.activate(plan.card, key);
+      return this.activation.activate(plan.card, key);
     }
     const settle = fight.settle;
     fight.settle = () => {
       settle();
       if (rolls) this.handRules.skipRolled();
-      this.activate(plan.card, key);
+      this.activation.activate(plan.card, key);
     };
   }
   /** Skip: the card's target at (x, y) vanishes in a puff, without effect.
@@ -851,94 +852,6 @@ export class Game {
     this.world.clear(x, y);
     this.vanished = { x, y, at: performance.now() };
     this.message = `Skip · ${t.kind === "enemy" ? enemyTitle(t.enemy!) : SKIPPED_NAMES[t.kind] ?? "the target"} vanished`;
-  }
-  /** Card `card` of the hand activates: each of its badges pays what it
-   * gives, top slot first. Gold is paid once per target (`key`, gated by
-   * lootedTiles like a kill's), since undo can't take it back; HP, Silver
-   * and XP are the run's or in its undo snapshot. */
-  private activate(card: number, key: string) {
-    const id = this.hand[card], badges = id ? badgesOn(this.run.badges, id) : [];
-    if (!badges.length || !this.playing) return;
-    // Paying out makes the step it ends a turn undo stops at.
-    this.timeline.eventful();
-    for (const badge of badges) this.payBadge(card, key, badge);
-  }
-  /** One of hand card `card`'s badges pays what it gives on activation. */
-  private payBadge(card: number, key: string, badge: RunBadge) {
-    const id = this.hand[card], v = badgeValue(badge.id, badge.level, badge.pick), p = this.run.player;
-    switch (badge.id) {
-      case "hp": return this.raiseMaxHp(v, badge.id);
-      case "hpPercent": return this.badgeHeal(snap((p.maxHp * v) / 100), badge.id);
-      case "silverTouch": return this.gainCoins(p, 0, this.purse.silver(v));
-      case "goldTouch": return this.gainCoins(p, this.purse.badgeGold(`badge:${id}:${key}`, v), 0, false);
-      case "goldback":
-        if (card !== this.hand.length - 1) return;
-        // The combo is the run's, so undo takes an activation back; the
-        // next Gold found spends it (RunPurse).
-        this.run.goldCombo = (this.run.goldCombo ?? 0) + v;
-        // Drawn as "×2" and the Gold coin.
-        return this.gain(p.x, p.y, `×${this.run.goldCombo} Gold`, { coin: "gold" }, undefined, "combo");
-      case "xp": {
-        const xp = Math.round((v * xpBase(this.handRules.floor)) / xpBase(0));
-        this.addXp(xp);
-        return this.gain(p.x, p.y, `+${xp} XP`, null, undefined, "xp");
-      }
-    }
-  }
-  /** Max HP's badge: the hero's max HP (and the run's loadout) rises by
-   * `n` for the run, raised as a provision's is (`flatShift`), with the HP
-   * to fill it. */
-  private raiseMaxHp(n: number, id: BadgeId) {
-    const p = this.run.player;
-    n = shiftHero(this.run, { maxHp: flatShift(this.save, "maxHp", n) }).maxHp ?? 0;
-    this.gain(p.x, p.y, `+${wholeChange(n)} max HP`, { heart: true, raised: true });
-    this.message = `${BADGES[id].name} · +${wholeChange(n)} max HP`;
-  }
-  /** Heals up to `n` HP for badge `id`, as a potion's heal shows. */
-  private badgeHeal(n: number, id: BadgeId) {
-    const p = this.run.player, healed = snap(Math.min(p.maxHp - p.hp, n));
-    if (healed <= 0) return;
-    p.hp = snap(p.hp + healed);
-    this.recordHeal(healed);
-    this.message = `${BADGES[id].name} · +${wholeChange(healed)} HP`;
-  }
-  /** A card that acts in place takes its turn, with no step: a turn of its
-   * own, so undo takes it back. Effective and Dampen scale what it gives
-   * (`scale`), never what it costs. */
-  private actInPlace(card: CardId, scale = 1) {
-    const p = this.run.player;
-    this.remember(this.snapshot());
-    if (isSiphon(card)) this.siphon(card, scale);
-    else if (card === "blueTrader") {
-      p.keys.yellow = snap(p.keys.yellow - TRADER_YELLOW_KEYS);
-      p.keys.blue = snap(p.keys.blue + scale);
-      this.noteKey("blue", scale);
-      this.gain(p.x, p.y, `−${TRADER_YELLOW_KEYS} yellow keys`, { tile: { kind: "key", color: "yellow" } });
-      this.gain(p.x, p.y, `+${keyCount(scale)} blue key`, { tile: { kind: "key", color: "blue" } });
-    } else if (card === "keyToHp") {
-      const healed = snap(Math.min(p.maxHp - p.hp, snap(this.handRules.keyHeal() * scale)));
-      p.keys.yellow = snap(p.keys.yellow - 1);
-      p.hp = snap(p.hp + healed);
-      this.gain(p.x, p.y, "−1 yellow key", { tile: { kind: "key", color: "yellow" } });
-      this.recordHeal(healed);
-    }
-    (this.run.cardUses ??= {})[card] = this.handRules.cardUses(card) + 1;
-  }
-  /** A siphon's turn: the run's top levels of its training row (its
-   * `siphonCost`) traded for a key of its colour. The hero and the run's
-   * loadout lose what those levels add (`rankShift`), for the rest of the
-   * run only (max HP: HP falls only as far as the new max). */
-  private siphon(card: SiphonCard, scale: number) {
-    const { row: id, color } = SIPHONS[card], level = this.handRules.siphonLevel(card), levels = this.handRules.siphonCost(card);
-    const p = this.run.player;
-    const row = TRAINING.find((t) => t.id === id) as StatTrainingRow;
-    const stat = row.stat as "maxHp" | "attack" | "defense";
-    const loss = -(shiftHero(this.run, { [stat]: rankShift(this.save, this.mode, row, level, level - levels) })[stat] ?? 0);
-    p.keys[color] = snap(p.keys[color] + scale);
-    this.noteKey(color, scale);
-    const lost = stat === "maxHp" ? `−${wholeChange(loss)} max HP` : `−${wholeChange(loss)} ${stat === "attack" ? "ATK" : "DEF"}`;
-    this.gain(p.x, p.y, lost, stat === "maxHp" ? { heart: true } : { tile: { kind: stat } });
-    this.gain(p.x, p.y, `+${keyCount(scale)} ${color} key`, { tile: { kind: "key", color } });
   }
   /** Dash: the first step toward a new target, onto an empty tile, goes on
    * along the path in the same step across up to `tiles` more empty tiles
@@ -1469,7 +1382,7 @@ export class Game {
   }
   /** Adds `xp` to the hero's and the run's, raising the level-up burst
    * when it reaches a new level. */
-  private addXp(xp: number) {
+  addXp(xp: number) {
     const level = levelForXp(this.save.xp);
     this.save.xp += xp;
     this.run.xp = (this.run.xp ?? 0) + xp;
@@ -1723,6 +1636,16 @@ export class Game {
   private remember(snapshot: MoveSnapshot) {
     this.timeline.remember(snapshot);
   }
+  /** A turn of its own begins (a card acting in place): undo can take it
+   * back. */
+  rememberTurn() {
+    this.remember(this.snapshot());
+  }
+  /** The step being taken pays out (a card activating), so it is a turn
+   * undo stops at. */
+  eventful() {
+    this.timeline.eventful();
+  }
   /** Copies resolved stats onto the live player, keeping its object identity. */
   private applyStats(next: Player) {
     const p = this.run.player;
@@ -1858,7 +1781,7 @@ export class Game {
   }
   /** Raises the Gold and Silver just found from `at`, each only when some
    * was; a kill always shows its Silver. */
-  private gainCoins(at: { x: number; y: number }, gold: number, silver: number, alwaysSilver = true) {
+  gainCoins(at: { x: number; y: number }, gold: number, silver: number, alwaysSilver = true) {
     if (gold) this.gain(at.x, at.y, `+${wholeChange(gold)} Gold`, { coin: "gold" });
     if (silver || alwaysSilver) this.gain(at.x, at.y, `+${wholeChange(silver)} Silver`, { coin: "silver" });
   }
@@ -1876,7 +1799,7 @@ export class Game {
   /** What the run finds is paid through its purse. It is built afresh on
    * each use, so it always pays into the save, mode and run of now: an erase,
    * a mode switch and a new run each replace one. */
-  private get purse() {
+  get purse() {
     // A tournament run's chances come from the seeds its league shares.
     const t = this.tournamentRun;
     return t
@@ -2156,7 +2079,7 @@ export class Game {
     else if (t.kind === "defense") notes.defenseShards++;
   }
   /** A key obtained (picked up, traded or siphoned), counted in the run's notes. */
-  private noteKey(color: KeyColor, amount: number) {
+  noteKey(color: KeyColor, amount: number) {
     const notes = notesOf(this.run);
     if (notes) tallyIn(notes.keys, color, amount);
   }
@@ -2370,7 +2293,7 @@ export class Game {
   /** The wall clock the Archives' research runs on (ms); tests set it. */
   clock: () => number = () => Date.now();
   /** Records a potion's heal of `n` HP, already applied, where the hero stands. */
-  private recordHeal(n: number) {
+  recordHeal(n: number) {
     if (n <= 0) return;
     const p = this.run.player;
     this.lastHeal = { from: p.hp - n, to: p.hp, x: p.x, y: p.y, id: (this.lastHeal?.id ?? 0) + 1 };

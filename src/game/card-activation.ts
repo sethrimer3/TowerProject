@@ -1,0 +1,131 @@
+import { SIPHONS, TRADER_YELLOW_KEYS, isSiphon, type CardId, type SiphonCard } from "../cards.ts";
+import { BADGES, badgesOn, badgeValue, type BadgeId, type RunBadge } from "../badges.ts";
+import { TRAINING, xpBase, type KeyColor, type StatTrainingRow } from "../config.ts";
+import type { Mode } from "../entities.ts";
+import { snap } from "../exact.ts";
+import { flatShift, shiftHero } from "../hero-stats.ts";
+import { rankShift } from "../loadout.ts";
+import type { HandRules } from "../hand-rules.ts";
+import type { GainArt } from "../shown.ts";
+import { keyCount, wholeChange } from "../whole.ts";
+import type { RunPurse } from "./run-purse.ts";
+import type { DeskHost } from "./desk.ts";
+
+/** What a card's activation reads from the game and reports back to it:
+ * the hand, its rules and the purse the run is paid through, and the
+ * gains, heals, keys and XP the board and the run's notes record. */
+export interface ActivationHost extends DeskHost {
+  readonly mode: Mode;
+  readonly hand: readonly CardId[];
+  readonly handRules: HandRules;
+  /** Inside a run the hero is still standing in. */
+  readonly playing: boolean;
+  readonly purse: RunPurse;
+  gain(x: number, y: number, text: string, art?: GainArt | null, drop?: undefined, kind?: "combo" | "xp"): void;
+  gainCoins(at: { x: number; y: number }, gold: number, silver: number, alwaysSilver?: boolean): void;
+  addXp(xp: number): void;
+  recordHeal(n: number): void;
+  noteKey(color: KeyColor, amount: number): void;
+  /** A turn of its own begins: undo can take it back. */
+  rememberTurn(): void;
+  /** The step being taken pays out, so it is a turn undo stops at. */
+  eventful(): void;
+}
+
+/** A card of the hand activating: a card that acts in place doing what it
+ * does (a siphon, Blue Trader, Key to HP), and every card's badges paying
+ * what they give. The hand's turn (`Game.handTurn`) decides when. */
+export class CardActivation {
+  constructor(private readonly host: ActivationHost) {}
+
+  /** Card `card` of the hand activates: each of its badges pays what it
+   * gives, top slot first. Gold is paid once per target (`key`, gated by
+   * lootedTiles like a kill's), since undo can't take it back; HP, Silver
+   * and XP are the run's or in its undo snapshot. */
+  activate(card: number, key: string) {
+    const { hand, run } = this.host, id = hand[card], badges = id ? badgesOn(run.badges, id) : [];
+    if (!badges.length || !this.host.playing) return;
+    // Paying out makes the step it ends a turn undo stops at.
+    this.host.eventful();
+    for (const badge of badges) this.payBadge(card, key, badge);
+  }
+  /** One of hand card `card`'s badges pays what it gives on activation. */
+  private payBadge(card: number, key: string, badge: RunBadge) {
+    const host = this.host, { hand, run } = host;
+    const id = hand[card], v = badgeValue(badge.id, badge.level, badge.pick), p = run.player;
+    switch (badge.id) {
+      case "hp": return this.raiseMaxHp(v, badge.id);
+      case "hpPercent": return this.badgeHeal(snap((p.maxHp * v) / 100), badge.id);
+      case "silverTouch": return host.gainCoins(p, 0, host.purse.silver(v));
+      case "goldTouch": return host.gainCoins(p, host.purse.badgeGold(`badge:${id}:${key}`, v), 0, false);
+      case "goldback":
+        if (card !== hand.length - 1) return;
+        // The combo is the run's, so undo takes an activation back; the
+        // next Gold found spends it (RunPurse).
+        run.goldCombo = (run.goldCombo ?? 0) + v;
+        // Drawn as "×2" and the Gold coin.
+        return host.gain(p.x, p.y, `×${run.goldCombo} Gold`, { coin: "gold" }, undefined, "combo");
+      case "xp": {
+        const xp = Math.round((v * xpBase(host.handRules.floor)) / xpBase(0));
+        host.addXp(xp);
+        return host.gain(p.x, p.y, `+${xp} XP`, null, undefined, "xp");
+      }
+    }
+  }
+  /** Max HP's badge: the hero's max HP (and the run's loadout) rises by
+   * `n` for the run, raised as a provision's is (`flatShift`), with the HP
+   * to fill it. */
+  private raiseMaxHp(n: number, id: BadgeId) {
+    const { run, save } = this.host, p = run.player;
+    n = shiftHero(run, { maxHp: flatShift(save, "maxHp", n) }).maxHp ?? 0;
+    this.host.gain(p.x, p.y, `+${wholeChange(n)} max HP`, { heart: true, raised: true });
+    this.host.message = `${BADGES[id].name} · +${wholeChange(n)} max HP`;
+  }
+  /** Heals up to `n` HP for badge `id`, as a potion's heal shows. */
+  private badgeHeal(n: number, id: BadgeId) {
+    const p = this.host.run.player, healed = snap(Math.min(p.maxHp - p.hp, n));
+    if (healed <= 0) return;
+    p.hp = snap(p.hp + healed);
+    this.host.recordHeal(healed);
+    this.host.message = `${BADGES[id].name} · +${wholeChange(healed)} HP`;
+  }
+  /** A card that acts in place takes its turn, with no step: a turn of its
+   * own, so undo takes it back. Effective and Dampen scale what it gives
+   * (`scale`), never what it costs. */
+  actInPlace(card: CardId, scale = 1) {
+    const host = this.host, run = host.run, p = run.player;
+    host.rememberTurn();
+    if (isSiphon(card)) this.siphon(card, scale);
+    else if (card === "blueTrader") {
+      p.keys.yellow = snap(p.keys.yellow - TRADER_YELLOW_KEYS);
+      p.keys.blue = snap(p.keys.blue + scale);
+      host.noteKey("blue", scale);
+      host.gain(p.x, p.y, `−${TRADER_YELLOW_KEYS} yellow keys`, { tile: { kind: "key", color: "yellow" } });
+      host.gain(p.x, p.y, `+${keyCount(scale)} blue key`, { tile: { kind: "key", color: "blue" } });
+    } else if (card === "keyToHp") {
+      const healed = snap(Math.min(p.maxHp - p.hp, snap(host.handRules.keyHeal() * scale)));
+      p.keys.yellow = snap(p.keys.yellow - 1);
+      p.hp = snap(p.hp + healed);
+      host.gain(p.x, p.y, "−1 yellow key", { tile: { kind: "key", color: "yellow" } });
+      host.recordHeal(healed);
+    }
+    (run.cardUses ??= {})[card] = host.handRules.cardUses(card) + 1;
+  }
+  /** A siphon's turn: the run's top levels of its training row (its
+   * `siphonCost`) traded for a key of its colour. The hero and the run's
+   * loadout lose what those levels add (`rankShift`), for the rest of the
+   * run only (max HP: HP falls only as far as the new max). */
+  private siphon(card: SiphonCard, scale: number) {
+    const host = this.host, rules = host.handRules;
+    const { row: id, color } = SIPHONS[card], level = rules.siphonLevel(card), levels = rules.siphonCost(card);
+    const run = host.run, p = run.player;
+    const row = TRAINING.find((t) => t.id === id) as StatTrainingRow;
+    const stat = row.stat as "maxHp" | "attack" | "defense";
+    const loss = -(shiftHero(run, { [stat]: rankShift(host.save, host.mode, row, level, level - levels) })[stat] ?? 0);
+    p.keys[color] = snap(p.keys[color] + scale);
+    host.noteKey(color, scale);
+    const lost = stat === "maxHp" ? `−${wholeChange(loss)} max HP` : `−${wholeChange(loss)} ${stat === "attack" ? "ATK" : "DEF"}`;
+    host.gain(p.x, p.y, lost, stat === "maxHp" ? { heart: true } : { tile: { kind: stat } });
+    host.gain(p.x, p.y, `+${keyCount(scale)} ${color} key`, { tile: { kind: "key", color } });
+  }
+}
