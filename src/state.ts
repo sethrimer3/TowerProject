@@ -150,7 +150,13 @@ const YELLOW_KEY_SALT = 0x6e11a;
 /** A step resolved and about to be taken: the tile stepped onto, what it
  * does, where it is, whether it goes in the undo history, and for a fight
  * the hero's critical strikes in it as played (`crits`). */
-type TakenStep = { tile: Tile; outcome: StepEffect; dest: { x: number; y: number }; track: boolean; quiet?: boolean; crits?: number };
+type TakenStep = { tile: Tile; outcome: StepEffect; dest: { x: number; y: number }; track: boolean; quiet?: boolean; crits?: number; card: CardStep };
+/** How the hand's turn takes a step: Effective or Dampen on a card's last
+ * step (`scale`, what its target's effect is multiplied by; 1 on every
+ * other step), Skip on STAIRS succeeding (`floorSkip`: the climb goes up
+ * two floors), and a Dash holding the turn open across its tiles (`hold`,
+ * so its shots come once it stops). */
+export type CardStep = { scale?: number; floorSkip?: boolean; hold?: boolean };
 /** Tiles that stay on the board after being stepped on. */
 const PERMANENT_TILES = new Set<Tile["kind"]>(["floor", "stairs", "oneway", "openedChest"]);
 /** The targets a Dash may end on, a tile of it left: items to take. */
@@ -201,9 +207,8 @@ export class Game {
    * undo, a new run or a mode switch clears it. */
   volley: Volley | null = null;
   /** The snapshot from before the turn being taken, for a shot that fells
-   * the hero, and whether a Dash holds the turn open across its tiles. */
+   * the hero. */
   private turnBefore: MoveSnapshot | null = null;
-  private holdTurn = false;
   /** The last potion that healed, picked up or crafted: the HP it healed
    * from and to, where the hero stood, and a number that grows with each, so
    * the HP bar can fill up to it and the board raise the HP healed. */
@@ -234,11 +239,6 @@ export class Game {
   /** Where Skip last made a card's target vanish, and when
    * (performance.now()), for the board's poof; cleared by undo. */
   vanished: { x: number; y: number; at: number } | null = null;
-  /** Effective or Dampen on the step being taken: what the card's target's
-   * effect is multiplied by; 1 on every other step. */
-  private stepScale = 1;
-  /** Skip on STAIRS succeeded: the climb goes up two floors. */
-  private floorSkip = false;
   /** The latest dash: the tiles the hero dashed off, in order, and when
    * (performance.now()), for the board's fading echoes of the hero. */
   dash: Dash | null = null;
@@ -805,25 +805,16 @@ export class Game {
       if (id === this.run.focused) this.run.focused = undefined;
       return;
     }
-    this.floorSkip = skips;
-    this.stepScale = last ? this.handRules.scaleOf(id) : 1;
+    // A dash is one turn: its shots come once it stops.
+    const moved = this.move(step.dx, step.dy, true, true, true, { scale: last ? this.handRules.scaleOf(id) : 1, floorSkip: skips, hold: dashes });
     // The board changes only as the hero moves, so a refused step means the
     // plan is stale: drop it and let the next turn choose again.
-    // A dash is one turn: its shots come once it stops.
-    this.holdTurn = dashes;
-    const moved = this.move(step.dx, step.dy, true);
-    this.stepScale = 1;
-    this.floorSkip = false;
     if (!moved) {
-      this.holdTurn = false;
       this.turnBefore = null;
       return void (this.cardPlan = null);
     }
     const dashed = dashes ? this.dashOn(plan, id, { ...from, dx: step.dx, dy: step.dy }, dash) : true;
-    if (dashes) {
-      this.holdTurn = false;
-      this.endTurn();
-    }
+    if (dashes) this.endTurn();
     if (!dashed) return;
     if (this.cardPlan) return;
     // The card's last step reaches its target: a focus on it is spent, and
@@ -868,7 +859,7 @@ export class Game {
     const regenerating = this.dashRegenSteps, regen = () => dash - left < regenerating;
     for (; left > 0 && plan.path.length && this.dashable(plan.path[0].x, plan.path[0].y); left--) {
       const at = { x: p.x, y: p.y }, next = plan.path.shift()!;
-      if (!this.move(next.dx, next.dy, true, false, regen())) {
+      if (!this.move(next.dx, next.dy, true, false, regen(), { hold: true })) {
         plan.path = [];
         moved = false;
         break;
@@ -880,9 +871,7 @@ export class Game {
     if (moved && left > 0 && target && DASH_ONTO.has(this.world.tile(target.x, target.y).kind) && !this.handRules.rollsSkip(id, target.x, target.y)) {
       const at = { x: p.x, y: p.y };
       plan.path.shift();
-      this.stepScale = this.handRules.scaleOf(id);
-      moved = this.move(target.dx, target.dy, true, false, regen());
-      this.stepScale = 1;
+      moved = this.move(target.dx, target.dy, true, false, regen(), { scale: this.handRules.scaleOf(id), hold: true });
       if (moved) {
         tiles.push({ ...at, dx: target.dx, dy: target.dy });
         onItem = true;
@@ -1440,8 +1429,9 @@ export class Game {
   }
   /** One step by (dx, dy); `regen` false for the tiles a Dash crosses after
    * its first step (past its first `dashRegenSteps`), so a dashed turn
-   * regains HP once (and once more for each of those). */
-  move(dx: number, dy: number, force = true, track = true, regen = true) {
+   * regains HP once (and once more for each of those). The hand's turn says
+   * how a card takes it (`card`). */
+  move(dx: number, dy: number, force = true, track = true, regen = true, card: CardStep = {}) {
     if (!this.canStep(dx, dy)) return false;
     const p = this.run.player,
       dest = this.world.step(p.x, p.y, dx, dy);
@@ -1453,14 +1443,14 @@ export class Game {
     // The step is resolved once, before any snapshot/undo bookkeeping, so a
     // wall, lock, impervious enemy, or (automation's) declined lethal fight
     // never touches history, damages the player, alters the enemy, or ends the run.
-    const rules: StepRules = { ...this.stepRules, ...(regen ? {} : { regen: 0 }), ...(this.stepScale !== 1 ? { scale: this.stepScale } : {}) };
+    const rules: StepRules = { ...this.stepRules, ...(regen ? {} : { regen: 0 }), ...(card.scale !== undefined && card.scale !== 1 ? { scale: card.scale } : {}) };
     const outcome = resolveStep(p, t, rules);
     if (outcome.blocked) return this.rejectStep(outcome, t, dest.x, dest.y);
     if (!force && isLethal(outcome)) {
       this.feedback("Lethal encounter. Inspect the enemy before proceeding.");
       return false;
     }
-    const step: TakenStep = { tile: t, outcome, dest, track, quiet: this.emptyAt(dest.x, dest.y) };
+    const step: TakenStep = { tile: t, outcome, dest, track, quiet: this.emptyAt(dest.x, dest.y), card };
     this.facing = { dx, dy };
     return t.kind === "enemy" ? this.fightStep(step, t.enemy!) : this.take(step);
   }
@@ -1545,9 +1535,9 @@ export class Game {
     }
     const notes = notesOf(this.run);
     if (notes) notes.steps++;
-    this.land(step.tile, step.dest.x, step.dest.y, step.outcome);
+    this.land(step.tile, step.dest.x, step.dest.y, step.outcome, step.card.floorSkip);
     this.gemFinder.step();
-    if (!this.holdTurn) this.endTurn();
+    if (!step.card.hold) this.endTurn();
     return true;
   }
   /** Commits a resolved step: undo history, stats, and the door or fight on
@@ -1567,7 +1557,7 @@ export class Game {
     return this.winFight({ enemy: t.enemy!, damage: snap(outcome.combat!.damage + extra), at: dest, revived, scale: outcome.scale, instakill: instakill(outcome.combat!), crits }, before);
   }
   /** Moves the player onto the tile and applies what standing there does. */
-  private land(t: Tile, x: number, y: number, outcome: StepEffect) {
+  private land(t: Tile, x: number, y: number, outcome: StepEffect, floorSkip = false) {
     const p = this.run.player;
     p.x = x;
     p.y = y;
@@ -1590,7 +1580,7 @@ export class Game {
     this.collect(t, x, y, outcome);
     this.consumeTile(t, x, y);
     if (t.kind !== "stairs") this.callGreaterBoss();
-    this.afterStep(t, x, y);
+    this.afterStep(t, x, y, floorSkip);
   }
   /** A Tower floor's secret: with every torch on it out, a Greater Boss
    * appears on the open floor nearest the stairs, once a floor a run. It is
@@ -1616,10 +1606,10 @@ export class Game {
     this.run.changes[`${at.x},${at.y}`] = { ...tile, enemy: { ...tile.enemy!, spawn } };
   }
   /** Mode-specific progress once the player stands on the new tile,
-   * stepped onto from `from`. */
-  private afterStep(t: Tile, x: number, y: number) {
+   * stepped onto from `from`; `floorSkip` as `advanceTowerRoom` takes it. */
+  private afterStep(t: Tile, x: number, y: number, floorSkip = false) {
     if (this.mode === "delve") this.afterDelveStep(t, x, y);
-    else if (t.kind === "stairs") this.advanceTowerRoom();
+    else if (t.kind === "stairs") this.advanceTowerRoom(floorSkip);
     // Undo stays on the floor it was taken on: a step onto another (a
     // Tower's stairs, a Delve floor line or milestone gate either way)
     // forgets the history.
@@ -1930,14 +1920,16 @@ export class Game {
     this.noteKey("yellow", 1);
     this.gain(at.x, at.y, "+1 yellow key", { tile: { kind: "key", color: "yellow" } });
   }
-  advanceTowerRoom() {
+  /** The hero takes the stairs; `floorSkip` (Skip on STAIRS) climbs past
+   * the next floor too. */
+  advanceTowerRoom(floorSkip = false) {
     const purse = this.purse, p = this.run.player;
     // Keyed by the stairs taken, so it pays once a run.
     const gold = purse.floorGold(purse.floorKey(p.x, p.y));
     const highest = this.run.maxHeight ?? this.run.height;
     // Skip on STAIRS climbs past the next floor, which pays nothing; an area
     // climbed past is still judged as its section ends.
-    const skipped = this.floorSkip ? this.climb.up() : null;
+    const skipped = floorSkip ? this.climb.up() : null;
     // Floor Skip Reward pays a share of the Gold the floor passed held.
     const skipGold = skipped ? purse.skippedFloorGold(skipped.board) : 0;
     const passed = skipped?.sectionStart ? new AreaLedger(this.save).enter(this.towerRun, skipped.board) : [];
