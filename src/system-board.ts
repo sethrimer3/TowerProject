@@ -1,7 +1,7 @@
 import type { KeyColor } from "./config.ts";
 import type { EnemyStrength, Tile, Torch } from "./entities.ts";
 import { forEachViewTile, toTileSpace, type FrameContext } from "./render-frame.ts";
-import type { ThemedBoard } from "./themed-boards.ts";
+import { contentsFrom, type ThemedBoard } from "./themed-board.ts";
 import { rankChevrons } from "./rank-chevrons.ts";
 
 /** The System Game theme's dungeon board, as an old one-bit computer's paint
@@ -177,154 +177,150 @@ function sadComputer(c: CanvasRenderingContext2D, big: boolean) {
 const BOMB: Record<EnemyStrength, number> = { weak: 4, normal: 5.2, strong: 6.4, elite: 6.4, boss: 0, greaterBoss: 0 };
 
 /** One tile's contents in tile space (24x24). */
-function contents(c: CanvasRenderingContext2D, t: Tile) {
-  switch (t.kind) {
-    case "enemy": {
-      const e = t.enemy, strength = e?.strength ?? "normal";
-      if (strength === "boss" || strength === "greaterBoss") sadComputer(c, strength === "greaterBoss");
-      else bomb(c, BOMB[strength]);
-      // The elite: a marching-ants ring round its bomb.
-      if (strength === "elite") {
-        c.beginPath();
-        c.arc(12, 14, 9.3, 0, Math.PI * 2);
-        c.setLineDash?.([1.5, 1.5]);
-        c.lineWidth = 1.2;
-        c.strokeStyle = SYSTEM.ink;
-        c.stroke();
-        c.setLineDash?.([]);
-      }
-      rankChevrons(c, strength, SYSTEM.ink, SYSTEM.paper);
-      // A Ranged enemy's arrow at the top right, a Fast enemy's
-      // fast-forward sign at the bottom right.
-      if (e?.ranged) {
-        c.beginPath();
-        c.moveTo(17, 7); c.lineTo(22.5, 1.5); c.moveTo(19, 1.5); c.lineTo(22.5, 1.5); c.lineTo(22.5, 5);
-        c.lineWidth = 1.3;
-        c.strokeStyle = SYSTEM.ink;
-        c.stroke();
-      }
-      if (e?.fast) {
-        c.beginPath();
-        c.moveTo(16, 19); c.lineTo(19, 21); c.lineTo(16, 23); c.closePath();
-        c.moveTo(19.5, 19); c.lineTo(22.5, 21); c.lineTo(19.5, 23); c.closePath();
-        c.fillStyle = SYSTEM.ink;
-        c.fill();
-      }
-      return;
+const contents = contentsFrom({
+  enemy(c, t) {
+    const e = t.enemy, strength = e?.strength ?? "normal";
+    if (strength === "boss" || strength === "greaterBoss") sadComputer(c, strength === "greaterBoss");
+    else bomb(c, BOMB[strength]);
+    // The elite: a marching-ants ring round its bomb.
+    if (strength === "elite") {
+      c.beginPath();
+      c.arc(12, 14, 9.3, 0, Math.PI * 2);
+      c.setLineDash?.([1.5, 1.5]);
+      c.lineWidth = 1.2;
+      c.strokeStyle = SYSTEM.ink;
+      c.stroke();
+      c.setLineDash?.([]);
     }
-    case "key":
-      shape(c, () => {
-        c.arc(7.5, 12, 4.5, 0, Math.PI * 2);
-        c.moveTo(12, 10.5); c.lineTo(21, 10.5); c.lineTo(21, 15.5); c.lineTo(19, 15.5); c.lineTo(19, 13.5);
-        c.lineTo(17, 13.5); c.lineTo(17, 15); c.lineTo(15, 15); c.lineTo(15, 13.5); c.lineTo(12, 13.5); c.closePath();
-      }, keyColor(t.color));
-      shape(c, () => c.arc(7.5, 12, 1.6, 0, Math.PI * 2), SYSTEM.paper, 1);
-      return;
-    case "door": {
-      const rule = t.door;
-      if (rule?.type === "fullHp") {
-        shape(c, () => c.rect(3.5, 2.5, 17, 19), SYSTEM.paper);
-        heart(c);
-        return;
-      }
-      if (rule?.type === "wood") {
-        // Planks of grey with black seams.
-        shape(c, () => c.rect(3.5, 2.5, 17, 19), dither(c));
-        c.fillStyle = SYSTEM.ink;
-        c.fillRect(9, 2.5, 1, 19);
-        c.fillRect(14.5, 2.5, 1, 19);
-        return;
-      }
-      // A door in a black frame, a panel per key it takes in that key's
-      // colour, and a white knob.
-      const keys = rule?.type === "keys" ? rule.keys : t.color ? [t.color] : [];
-      const n = Math.max(1, keys.length), w = 17 / n;
+    rankChevrons(c, strength, SYSTEM.ink, SYSTEM.paper);
+    // A Ranged enemy's arrow at the top right, a Fast enemy's
+    // fast-forward sign at the bottom right.
+    if (e?.ranged) {
+      c.beginPath();
+      c.moveTo(17, 7); c.lineTo(22.5, 1.5); c.moveTo(19, 1.5); c.lineTo(22.5, 1.5); c.lineTo(22.5, 5);
+      c.lineWidth = 1.3;
+      c.strokeStyle = SYSTEM.ink;
+      c.stroke();
+    }
+    if (e?.fast) {
+      c.beginPath();
+      c.moveTo(16, 19); c.lineTo(19, 21); c.lineTo(16, 23); c.closePath();
+      c.moveTo(19.5, 19); c.lineTo(22.5, 21); c.lineTo(19.5, 23); c.closePath();
+      c.fillStyle = SYSTEM.ink;
+      c.fill();
+    }
+  },
+  key(c, t) {
+    shape(c, () => {
+      c.arc(7.5, 12, 4.5, 0, Math.PI * 2);
+      c.moveTo(12, 10.5); c.lineTo(21, 10.5); c.lineTo(21, 15.5); c.lineTo(19, 15.5); c.lineTo(19, 13.5);
+      c.lineTo(17, 13.5); c.lineTo(17, 15); c.lineTo(15, 15); c.lineTo(15, 13.5); c.lineTo(12, 13.5); c.closePath();
+    }, keyColor(t.color));
+    shape(c, () => c.arc(7.5, 12, 1.6, 0, Math.PI * 2), SYSTEM.paper, 1);
+  },
+  door(c, t) {
+    const rule = t.door;
+    if (rule?.type === "fullHp") {
       shape(c, () => c.rect(3.5, 2.5, 17, 19), SYSTEM.paper);
-      for (let i = 0; i < n; i++) shape(c, () => c.rect(3.5 + i * w, 2.5, w, 19), keyColor(keys[i]), 1.2);
-      if (rule?.type === "keys" && rule.heart) shape(c, () => heartPath(c, 12, 5.5, 0.4), SYSTEM.paper, 1);
-      shape(c, () => c.arc(17, 13, 1.4, 0, Math.PI * 2), SYSTEM.paper, 1);
+      heart(c);
       return;
     }
-    case "potion": {
-      // A flask with a cross on it: white, or black with a white cross for
-      // the red potion.
-      const dark = t.color === "red";
-      shape(c, () => {
-        c.moveTo(10, 3.5); c.lineTo(14, 3.5); c.lineTo(14, 9);
-        c.lineTo(18, 14); c.arc(12, 16, 6.3, -0.3, Math.PI + 0.3); c.lineTo(10, 9); c.closePath();
-      }, dark ? SYSTEM.ink : SYSTEM.paper);
-      c.fillStyle = dark ? SYSTEM.paper : SYSTEM.ink;
-      c.fillRect(11, 13, 2, 6);
-      c.fillRect(9, 15, 6, 2);
-      return;
-    }
-    case "attack":
-      // A sword: a white blade, a black guard and grip.
-      shape(c, () => { c.moveTo(19, 3); c.lineTo(21, 5); c.lineTo(11, 15); c.lineTo(9, 13); c.closePath(); }, SYSTEM.paper);
-      shape(c, () => { c.moveTo(6, 12); c.lineTo(8, 10); c.lineTo(14, 16); c.lineTo(12, 18); c.closePath(); }, SYSTEM.ink, 1);
-      shape(c, () => { c.moveTo(8, 15); c.lineTo(9.5, 16.5); c.lineTo(5, 21); c.lineTo(3.5, 19.5); c.closePath(); }, SYSTEM.ink, 1);
-      return;
-    case "defense":
-      // A shield, its left half grey.
-      shape(c, () => {
-        c.moveTo(12, 3); c.lineTo(19, 5.5); c.lineTo(18.5, 13); c.quadraticCurveTo(16, 18, 12, 21);
-        c.quadraticCurveTo(8, 18, 5.5, 13); c.lineTo(5, 5.5); c.closePath();
-      }, SYSTEM.paper);
-      shape(c, () => {
-        c.moveTo(12, 3); c.lineTo(5, 5.5); c.lineTo(5.5, 13); c.quadraticCurveTo(8, 18, 12, 21); c.closePath();
-      }, dither(c), 0);
-      shape(c, () => {
-        c.moveTo(12, 3); c.lineTo(19, 5.5); c.lineTo(18.5, 13); c.quadraticCurveTo(16, 18, 12, 21);
-        c.quadraticCurveTo(8, 18, 5.5, 13); c.lineTo(5, 5.5); c.closePath();
-        c.moveTo(12, 3); c.lineTo(12, 21);
-      }, "transparent");
-      return;
-    case "reward":
-    case "openedChest": {
-      // A folder: closed and full while it holds a reward, an empty dotted
-      // outline once emptied.
-      if (t.kind === "openedChest") {
-        c.beginPath();
-        c.moveTo(3.5, 7.5); c.lineTo(9, 7.5); c.lineTo(11, 9.5); c.lineTo(20.5, 9.5); c.lineTo(20.5, 19.5); c.lineTo(3.5, 19.5); c.closePath();
-        c.setLineDash?.([1, 1.5]);
-        c.lineWidth = 1;
-        c.strokeStyle = SYSTEM.ink;
-        c.stroke();
-        c.setLineDash?.([]);
-        return;
-      }
-      shape(c, () => { c.moveTo(3, 7); c.lineTo(9, 7); c.lineTo(11, 9); c.lineTo(21, 9); c.lineTo(21, 20); c.lineTo(3, 20); c.closePath(); }, SYSTEM.paper);
+    if (rule?.type === "wood") {
+      // Planks of grey with black seams.
+      shape(c, () => c.rect(3.5, 2.5, 17, 19), dither(c));
       c.fillStyle = SYSTEM.ink;
-      c.fillRect(3, 11, 18, 1.2);
+      c.fillRect(9, 2.5, 1, 19);
+      c.fillRect(14.5, 2.5, 1, 19);
       return;
     }
-    case "treasure":
-      // A gem: white facets on one side, grey on the other.
-      shape(c, () => { c.moveTo(12, 4); c.lineTo(19, 10); c.lineTo(12, 20); c.lineTo(5, 10); c.closePath(); }, SYSTEM.paper);
-      shape(c, () => { c.moveTo(12, 10); c.lineTo(19, 10); c.lineTo(12, 20); c.closePath(); }, dither(c), 0);
-      shape(c, () => {
-        c.moveTo(12, 4); c.lineTo(19, 10); c.lineTo(12, 20); c.lineTo(5, 10); c.closePath();
-        c.moveTo(5, 10); c.lineTo(19, 10); c.moveTo(9, 10); c.lineTo(12, 20); c.lineTo(15, 10);
-      }, "transparent", 1.1);
-      return;
-    case "stairs":
-      shape(c, () => {
-        c.moveTo(3, 21); c.lineTo(3, 16); c.lineTo(8, 16); c.lineTo(8, 11); c.lineTo(13, 11); c.lineTo(13, 6); c.lineTo(21, 6); c.lineTo(21, 21); c.closePath();
-      }, SYSTEM.paper);
-      c.fillStyle = SYSTEM.ink;
-      c.fillRect(3, 16, 5, 1.5);
-      c.fillRect(8, 11, 5, 1.5);
-      c.fillRect(13, 6, 8, 1.5);
-      shape(c, () => { c.moveTo(4, 9); c.lineTo(7.5, 3); c.lineTo(11, 9); c.closePath(); }, SYSTEM.ink, 0.6);
-      return;
-    case "oneway":
-      // A scroll bar's up arrow: a hollow arrow in a box.
-      shape(c, () => c.rect(5, 5, 14, 14), SYSTEM.paper, 1.2);
-      shape(c, () => {
-        c.moveTo(12, 7.5); c.lineTo(17, 12.5); c.lineTo(14.2, 12.5); c.lineTo(14.2, 16.5); c.lineTo(9.8, 16.5); c.lineTo(9.8, 12.5); c.lineTo(7, 12.5); c.closePath();
-      }, SYSTEM.paper, 1.1);
-      return;
+    // A door in a black frame, a panel per key it takes in that key's
+    // colour, and a white knob.
+    const keys = rule?.type === "keys" ? rule.keys : t.color ? [t.color] : [];
+    const n = Math.max(1, keys.length), w = 17 / n;
+    shape(c, () => c.rect(3.5, 2.5, 17, 19), SYSTEM.paper);
+    for (let i = 0; i < n; i++) shape(c, () => c.rect(3.5 + i * w, 2.5, w, 19), keyColor(keys[i]), 1.2);
+    if (rule?.type === "keys" && rule.heart) shape(c, () => heartPath(c, 12, 5.5, 0.4), SYSTEM.paper, 1);
+    shape(c, () => c.arc(17, 13, 1.4, 0, Math.PI * 2), SYSTEM.paper, 1);
+  },
+  potion(c, t) {
+    // A flask with a cross on it: white, or black with a white cross for
+    // the red potion.
+    const dark = t.color === "red";
+    shape(c, () => {
+      c.moveTo(10, 3.5); c.lineTo(14, 3.5); c.lineTo(14, 9);
+      c.lineTo(18, 14); c.arc(12, 16, 6.3, -0.3, Math.PI + 0.3); c.lineTo(10, 9); c.closePath();
+    }, dark ? SYSTEM.ink : SYSTEM.paper);
+    c.fillStyle = dark ? SYSTEM.paper : SYSTEM.ink;
+    c.fillRect(11, 13, 2, 6);
+    c.fillRect(9, 15, 6, 2);
+  },
+  attack(c) {
+    // A sword: a white blade, a black guard and grip.
+    shape(c, () => { c.moveTo(19, 3); c.lineTo(21, 5); c.lineTo(11, 15); c.lineTo(9, 13); c.closePath(); }, SYSTEM.paper);
+    shape(c, () => { c.moveTo(6, 12); c.lineTo(8, 10); c.lineTo(14, 16); c.lineTo(12, 18); c.closePath(); }, SYSTEM.ink, 1);
+    shape(c, () => { c.moveTo(8, 15); c.lineTo(9.5, 16.5); c.lineTo(5, 21); c.lineTo(3.5, 19.5); c.closePath(); }, SYSTEM.ink, 1);
+  },
+  defense(c) {
+    // A shield, its left half grey.
+    shape(c, () => {
+      c.moveTo(12, 3); c.lineTo(19, 5.5); c.lineTo(18.5, 13); c.quadraticCurveTo(16, 18, 12, 21);
+      c.quadraticCurveTo(8, 18, 5.5, 13); c.lineTo(5, 5.5); c.closePath();
+    }, SYSTEM.paper);
+    shape(c, () => {
+      c.moveTo(12, 3); c.lineTo(5, 5.5); c.lineTo(5.5, 13); c.quadraticCurveTo(8, 18, 12, 21); c.closePath();
+    }, dither(c), 0);
+    shape(c, () => {
+      c.moveTo(12, 3); c.lineTo(19, 5.5); c.lineTo(18.5, 13); c.quadraticCurveTo(16, 18, 12, 21);
+      c.quadraticCurveTo(8, 18, 5.5, 13); c.lineTo(5, 5.5); c.closePath();
+      c.moveTo(12, 3); c.lineTo(12, 21);
+    }, "transparent");
+  },
+  reward: paintChest,
+  openedChest: paintChest,
+  treasure(c) {
+    // A gem: white facets on one side, grey on the other.
+    shape(c, () => { c.moveTo(12, 4); c.lineTo(19, 10); c.lineTo(12, 20); c.lineTo(5, 10); c.closePath(); }, SYSTEM.paper);
+    shape(c, () => { c.moveTo(12, 10); c.lineTo(19, 10); c.lineTo(12, 20); c.closePath(); }, dither(c), 0);
+    shape(c, () => {
+      c.moveTo(12, 4); c.lineTo(19, 10); c.lineTo(12, 20); c.lineTo(5, 10); c.closePath();
+      c.moveTo(5, 10); c.lineTo(19, 10); c.moveTo(9, 10); c.lineTo(12, 20); c.lineTo(15, 10);
+    }, "transparent", 1.1);
+  },
+  stairs(c) {
+    shape(c, () => {
+      c.moveTo(3, 21); c.lineTo(3, 16); c.lineTo(8, 16); c.lineTo(8, 11); c.lineTo(13, 11); c.lineTo(13, 6); c.lineTo(21, 6); c.lineTo(21, 21); c.closePath();
+    }, SYSTEM.paper);
+    c.fillStyle = SYSTEM.ink;
+    c.fillRect(3, 16, 5, 1.5);
+    c.fillRect(8, 11, 5, 1.5);
+    c.fillRect(13, 6, 8, 1.5);
+    shape(c, () => { c.moveTo(4, 9); c.lineTo(7.5, 3); c.lineTo(11, 9); c.closePath(); }, SYSTEM.ink, 0.6);
+  },
+  oneway(c) {
+    // A scroll bar's up arrow: a hollow arrow in a box.
+    shape(c, () => c.rect(5, 5, 14, 14), SYSTEM.paper, 1.2);
+    shape(c, () => {
+      c.moveTo(12, 7.5); c.lineTo(17, 12.5); c.lineTo(14.2, 12.5); c.lineTo(14.2, 16.5); c.lineTo(9.8, 16.5); c.lineTo(9.8, 12.5); c.lineTo(7, 12.5); c.closePath();
+    }, SYSTEM.paper, 1.1);
+  },
+});
+/** A reward chest, shut or opened (`reward`, `openedChest`). */
+function paintChest(c: CanvasRenderingContext2D, t: Tile) {
+  // A folder: closed and full while it holds a reward, an empty dotted
+  // outline once emptied.
+  if (t.kind === "openedChest") {
+    c.beginPath();
+    c.moveTo(3.5, 7.5); c.lineTo(9, 7.5); c.lineTo(11, 9.5); c.lineTo(20.5, 9.5); c.lineTo(20.5, 19.5); c.lineTo(3.5, 19.5); c.closePath();
+    c.setLineDash?.([1, 1.5]);
+    c.lineWidth = 1;
+    c.strokeStyle = SYSTEM.ink;
+    c.stroke();
+    c.setLineDash?.([]);
+    return;
   }
+  shape(c, () => { c.moveTo(3, 7); c.lineTo(9, 7); c.lineTo(11, 9); c.lineTo(21, 9); c.lineTo(21, 20); c.lineTo(3, 20); c.closePath(); }, SYSTEM.paper);
+  c.fillStyle = SYSTEM.ink;
+  c.fillRect(3, 11, 18, 1.2);
 }
 function heartPath(c: CanvasRenderingContext2D, x: number, y: number, k: number) {
   c.moveTo(x, y + 16 * k);

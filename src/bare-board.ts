@@ -1,7 +1,7 @@
 import type { KeyColor } from "./config.ts";
 import type { EnemyStrength, Tile, Torch } from "./entities.ts";
 import { forEachViewTile, toTileSpace, type FrameContext } from "./render-frame.ts";
-import type { ThemedBoard } from "./themed-boards.ts";
+import { contentsFrom, type ThemedBoard } from "./themed-board.ts";
 import { rankChevrons } from "./rank-chevrons.ts";
 
 /** The Shiro and Kuro Game themes' dungeon board, as bare as it can be while
@@ -85,106 +85,100 @@ function ground(p: BarePalette, f: FrameContext) {
   });
 }
 
-function contents(p: BarePalette, c: CanvasRenderingContext2D, t: Tile) {
-  switch (t.kind) {
-    case "enemy": {
-      const e = t.enemy;
-      const strength = e?.strength ?? "normal";
-      if (strength === "boss" || strength === "greaterBoss") square(c, SIZE[strength], p.ink);
-      else circle(c, SIZE[strength], p.ink);
-      if (strength === "elite") {
-        c.beginPath();
-        c.arc(12, 12, 9.5, 0, Math.PI * 2);
-        c.strokeStyle = p.ink;
-        c.lineWidth = 1.5;
-        c.stroke();
-      }
-      rankChevrons(c, strength, p.ink, p.floor);
-      // A Ranged enemy's dot at the top right, a Fast enemy's at the
-      // bottom right.
-      if (e?.ranged) circle(c, 1.8, p.ink, 21, 3);
-      if (e?.fast) circle(c, 1.8, p.ink, 21, 21);
-      return;
-    }
-    case "key": {
+const contents = (p: BarePalette) => contentsFrom({
+  enemy(c, t) {
+    const e = t.enemy;
+    const strength = e?.strength ?? "normal";
+    if (strength === "boss" || strength === "greaterBoss") square(c, SIZE[strength], p.ink);
+    else circle(c, SIZE[strength], p.ink);
+    if (strength === "elite") {
       c.beginPath();
-      c.moveTo(12, 6.5);
-      c.lineTo(17.5, 12);
-      c.lineTo(12, 17.5);
-      c.lineTo(6.5, 12);
-      c.closePath();
-      c.fillStyle = t.color ? p.keys[t.color] ?? p.ink : p.ink;
-      c.fill();
-      return;
-    }
-    case "door": {
-      const rule = t.door;
-      if (rule?.type === "fullHp") {
-        heart(p, c);
-        return;
-      }
-      if (rule?.type === "wood") {
-        square(c, 8, p.wood);
-        return;
-      }
-      // A square in its key's colour, split in a band per key it takes.
-      const keys = rule?.type === "keys" ? rule.keys : t.color ? [t.color] : [];
-      const colors = keys.length ? keys.map((k) => p.keys[k] ?? p.ink) : [p.ink];
-      const w = 16 / colors.length;
-      colors.forEach((col, i) => {
-        c.fillStyle = col;
-        c.fillRect(4 + i * w, 4, w, 16);
-      });
-      if (rule?.type === "keys" && rule.heart) circle(c, 2.5, p.heart);
-      return;
-    }
-    case "potion": {
-      // A plus, the red potion's red.
-      c.fillStyle = t.color === "red" ? p.heart : p.heal;
-      c.fillRect(10.5, 6, 3, 12);
-      c.fillRect(6, 10.5, 12, 3);
-      return;
-    }
-    case "attack":
-      c.beginPath();
-      c.moveTo(12, 6);
-      c.lineTo(18, 17);
-      c.lineTo(6, 17);
-      c.closePath();
-      c.fillStyle = p.ink;
-      c.fill();
-      return;
-    case "defense":
+      c.arc(12, 12, 9.5, 0, Math.PI * 2);
       c.strokeStyle = p.ink;
-      c.lineWidth = 2;
-      c.strokeRect(7, 7, 10, 10);
-      return;
-    case "reward":
-      square(c, 5, p.gold);
-      return;
-    case "openedChest":
-      c.strokeStyle = p.faint;
-      c.lineWidth = 1;
-      c.strokeRect(7.5, 7.5, 9, 9);
-      return;
-    case "treasure":
-      circle(c, 3.5, p.gold);
-      return;
-    case "stairs":
-      c.fillStyle = p.ink;
-      for (const y of [6, 11, 16]) c.fillRect(6, y, 12, 2);
-      return;
-    case "oneway":
-      c.beginPath();
-      c.moveTo(6, 15);
-      c.lineTo(12, 9);
-      c.lineTo(18, 15);
-      c.strokeStyle = p.ink;
-      c.lineWidth = 2.2;
+      c.lineWidth = 1.5;
       c.stroke();
+    }
+    rankChevrons(c, strength, p.ink, p.floor);
+    // A Ranged enemy's dot at the top right, a Fast enemy's at the
+    // bottom right.
+    if (e?.ranged) circle(c, 1.8, p.ink, 21, 3);
+    if (e?.fast) circle(c, 1.8, p.ink, 21, 21);
+  },
+  key(c, t) {
+    c.beginPath();
+    c.moveTo(12, 6.5);
+    c.lineTo(17.5, 12);
+    c.lineTo(12, 17.5);
+    c.lineTo(6.5, 12);
+    c.closePath();
+    c.fillStyle = t.color ? p.keys[t.color] ?? p.ink : p.ink;
+    c.fill();
+  },
+  door(c, t) {
+    const rule = t.door;
+    if (rule?.type === "fullHp") {
+      heart(p, c);
       return;
-  }
-}
+    }
+    if (rule?.type === "wood") {
+      square(c, 8, p.wood);
+      return;
+    }
+    // A square in its key's colour, split in a band per key it takes.
+    const keys = rule?.type === "keys" ? rule.keys : t.color ? [t.color] : [];
+    const colors = keys.length ? keys.map((k) => p.keys[k] ?? p.ink) : [p.ink];
+    const w = 16 / colors.length;
+    colors.forEach((col, i) => {
+      c.fillStyle = col;
+      c.fillRect(4 + i * w, 4, w, 16);
+    });
+    if (rule?.type === "keys" && rule.heart) circle(c, 2.5, p.heart);
+  },
+  potion(c, t) {
+    // A plus, the red potion's red.
+    c.fillStyle = t.color === "red" ? p.heart : p.heal;
+    c.fillRect(10.5, 6, 3, 12);
+    c.fillRect(6, 10.5, 12, 3);
+  },
+  attack(c) {
+    c.beginPath();
+    c.moveTo(12, 6);
+    c.lineTo(18, 17);
+    c.lineTo(6, 17);
+    c.closePath();
+    c.fillStyle = p.ink;
+    c.fill();
+  },
+  defense(c) {
+    c.strokeStyle = p.ink;
+    c.lineWidth = 2;
+    c.strokeRect(7, 7, 10, 10);
+  },
+  reward(c) {
+    square(c, 5, p.gold);
+  },
+  openedChest(c) {
+    c.strokeStyle = p.faint;
+    c.lineWidth = 1;
+    c.strokeRect(7.5, 7.5, 9, 9);
+  },
+  treasure(c) {
+    circle(c, 3.5, p.gold);
+  },
+  stairs(c) {
+    c.fillStyle = p.ink;
+    for (const y of [6, 11, 16]) c.fillRect(6, y, 12, 2);
+  },
+  oneway(c) {
+    c.beginPath();
+    c.moveTo(6, 15);
+    c.lineTo(12, 9);
+    c.lineTo(18, 15);
+    c.strokeStyle = p.ink;
+    c.lineWidth = 2.2;
+    c.stroke();
+  },
+});
 
 /** The Heart Door: a square outlined in the heart's red. */
 function heart(p: BarePalette, c: CanvasRenderingContext2D) {
@@ -205,7 +199,7 @@ function hero(p: BarePalette, c: CanvasRenderingContext2D) {
 
 const bareBoard = (p: BarePalette): ThemedBoard => ({
   ground: (f) => ground(p, f),
-  contents: (c, t) => contents(p, c, t),
+  contents: contents(p),
   heart: (c) => heart(p, c),
   torch: (c, f, t) => torch(p, c, f, t),
   hero: (c) => hero(p, c),

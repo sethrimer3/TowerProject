@@ -1,7 +1,7 @@
 import type { KeyColor } from "./config.ts";
 import type { EnemyStrength, Tile, Torch } from "./entities.ts";
 import { forEachViewTile, toTileSpace, type FrameContext } from "./render-frame.ts";
-import type { ThemedBoard } from "./themed-boards.ts";
+import { contentsFrom, type ThemedBoard } from "./themed-board.ts";
 import { rankChevrons } from "./rank-chevrons.ts";
 import { tileHash } from "./ascii-glyphs.ts";
 
@@ -192,130 +192,125 @@ function heart(p: ZenPalette, c: CanvasRenderingContext2D) {
   c.stroke();
 }
 
-function contents(p: ZenPalette, c: CanvasRenderingContext2D, t: Tile) {
-  switch (t.kind) {
-    case "enemy": {
-      const e = t.enemy;
-      const strength = e?.strength ?? "normal";
-      const ch = (e?.name.trim()[0] ?? "e").toUpperCase();
-      if (strength === "boss" || strength === "greaterBoss") {
-        // A red seal stamped with its letter, a greater boss's framed twice.
-        const big = strength === "greaterBoss";
-        const r = big ? 9.5 : 8;
-        c.fillStyle = p.seal;
-        c.fillRect(12 - r, 12 - r, r * 2, r * 2);
-        c.strokeStyle = p.paper;
-        c.lineWidth = 1;
-        c.strokeRect(12 - r + 1.8, 12 - r + 1.8, r * 2 - 3.6, r * 2 - 3.6);
-        letter(c, ch, p.paper, big ? 16 : 14, 12, 13);
-      } else {
-        // An ink dot holding its letter, an ensō round the strong, two
-        // round the elite.
-        dot(c, 12, 12, DOT[strength], p.ink);
-        letter(c, ch, p.paper, strength === "weak" ? 9 : 11, 12, 12.8);
-        if (strength === "strong" || strength === "elite") enso(c, 9.5, p.ink, 1.6);
-        if (strength === "elite") enso(c, 11.5, p.seal, 1);
-      }
-      rankChevrons(c, strength, p.ink, p.sand);
-      // A Ranged enemy's arrow at the top right, a Fast enemy's two strokes
-      // at its bottom right.
-      if (e?.ranged) {
-        stroke(c, p.ink, 1.2, 18, 6, 23, 1);
-        stroke(c, p.ink, 1.2, 20, 1, 23, 1, 23, 4);
-      }
-      if (e?.fast) {
-        stroke(c, p.ink, 1.2, 18, 19, 21, 21.5, 18, 24);
-        stroke(c, p.ink, 1.2, 21, 19, 24, 21.5, 21, 24);
-      }
-      return;
-    }
-    case "key": {
-      // A ring and a short stem in its colour.
-      const k = t.color ? p.keys[t.color] ?? p.ink : p.ink;
-      c.beginPath();
-      c.arc(8, 12, 3.4, 0, Math.PI * 2);
-      c.strokeStyle = k;
-      c.lineWidth = 2;
-      c.stroke();
-      stroke(c, k, 2, 11.4, 12, 19, 12);
-      stroke(c, k, 2, 17, 12, 17, 15);
-      return;
-    }
-    case "door": {
-      const rule = t.door;
-      if (rule?.type === "fullHp") {
-        heart(p, c);
-        return;
-      }
-      if (rule?.type === "wood") {
-        // A bamboo fence: any key opens it, or the hero breaks it down.
-        for (const x of [6, 10, 14, 18]) stroke(c, p.moss, 1.8, x, 5, x, 21);
-        stroke(c, p.ink, 1.2, 4, 10, 20, 10);
-        stroke(c, p.ink, 1.2, 4, 16, 20, 16);
-        return;
-      }
-      const keys = rule?.type === "keys" ? rule.keys : t.color ? [t.color] : [];
-      torii(c, keys[0] ? p.keys[keys[0]] ?? p.ink : p.ink);
-      // A dot per key the gate takes, in that key's colour.
-      keys.forEach((k, i) => dot(c, 12 - (keys.length - 1) * 2.5 + i * 5, 17, 1.5, p.keys[k] ?? p.ink));
-      if (rule?.type === "keys" && rule.heart) dot(c, 12, 13.5, 1.6, p.heart);
-      return;
-    }
-    case "potion":
-      // A tea bowl, the red potion's filled with the seal's red.
-      c.beginPath();
-      c.moveTo(5, 11);
-      c.quadraticCurveTo(12, 23, 19, 11);
-      c.closePath();
-      c.fillStyle = t.color === "red" ? p.seal : p.moss;
-      c.fill();
-      stroke(c, p.ink, 1.4, 5, 11, 19, 11);
-      stroke(c, p.ink, 1.2, 9, 19, 15, 19);
-      return;
-    case "attack":
-      // One sweeping stroke, a blade.
-      stroke(c, p.ink, 2.2, 6, 19, 18, 5);
-      stroke(c, p.ink, 1.4, 5, 14, 10, 19);
-      return;
-    case "defense":
-      c.beginPath();
-      c.moveTo(6, 6);
-      c.lineTo(18, 6);
-      c.quadraticCurveTo(18, 16, 12, 20);
-      c.quadraticCurveTo(6, 16, 6, 6);
-      c.strokeStyle = p.ink;
-      c.lineWidth = 1.8;
-      c.lineJoin = "round";
-      c.stroke();
-      return;
-    case "reward":
-      // A lacquer box, its lid's line red.
-      c.fillStyle = p.ink;
-      c.fillRect(6, 8, 12, 10);
-      stroke(c, p.seal, 1.6, 6, 11, 18, 11);
-      return;
-    case "openedChest":
-      c.strokeStyle = p.faint;
+const contents = (p: ZenPalette) => contentsFrom({
+  enemy(c, t) {
+    const e = t.enemy;
+    const strength = e?.strength ?? "normal";
+    const ch = (e?.name.trim()[0] ?? "e").toUpperCase();
+    if (strength === "boss" || strength === "greaterBoss") {
+      // A red seal stamped with its letter, a greater boss's framed twice.
+      const big = strength === "greaterBoss";
+      const r = big ? 9.5 : 8;
+      c.fillStyle = p.seal;
+      c.fillRect(12 - r, 12 - r, r * 2, r * 2);
+      c.strokeStyle = p.paper;
       c.lineWidth = 1;
-      c.strokeRect(6.5, 10.5, 11, 7);
+      c.strokeRect(12 - r + 1.8, 12 - r + 1.8, r * 2 - 3.6, r * 2 - 3.6);
+      letter(c, ch, p.paper, big ? 16 : 14, 12, 13);
+    } else {
+      // An ink dot holding its letter, an ensō round the strong, two
+      // round the elite.
+      dot(c, 12, 12, DOT[strength], p.ink);
+      letter(c, ch, p.paper, strength === "weak" ? 9 : 11, 12, 12.8);
+      if (strength === "strong" || strength === "elite") enso(c, 9.5, p.ink, 1.6);
+      if (strength === "elite") enso(c, 11.5, p.seal, 1);
+    }
+    rankChevrons(c, strength, p.ink, p.sand);
+    // A Ranged enemy's arrow at the top right, a Fast enemy's two strokes
+    // at its bottom right.
+    if (e?.ranged) {
+      stroke(c, p.ink, 1.2, 18, 6, 23, 1);
+      stroke(c, p.ink, 1.2, 20, 1, 23, 1, 23, 4);
+    }
+    if (e?.fast) {
+      stroke(c, p.ink, 1.2, 18, 19, 21, 21.5, 18, 24);
+      stroke(c, p.ink, 1.2, 21, 19, 24, 21.5, 21, 24);
+    }
+  },
+  key(c, t) {
+    // A ring and a short stem in its colour.
+    const k = t.color ? p.keys[t.color] ?? p.ink : p.ink;
+    c.beginPath();
+    c.arc(8, 12, 3.4, 0, Math.PI * 2);
+    c.strokeStyle = k;
+    c.lineWidth = 2;
+    c.stroke();
+    stroke(c, k, 2, 11.4, 12, 19, 12);
+    stroke(c, k, 2, 17, 12, 17, 15);
+  },
+  door(c, t) {
+    const rule = t.door;
+    if (rule?.type === "fullHp") {
+      heart(p, c);
       return;
-    case "treasure":
-      // A pearl with a gold glint.
-      dot(c, 12, 12, 4.5, p.gold);
-      dot(c, 10.5, 10.5, 1.3, p.paper);
+    }
+    if (rule?.type === "wood") {
+      // A bamboo fence: any key opens it, or the hero breaks it down.
+      for (const x of [6, 10, 14, 18]) stroke(c, p.moss, 1.8, x, 5, x, 21);
+      stroke(c, p.ink, 1.2, 4, 10, 20, 10);
+      stroke(c, p.ink, 1.2, 4, 16, 20, 16);
       return;
-    case "stairs":
-      // Stepping stones, smaller as they climb.
-      for (const [y, w] of [[18, 14], [12.5, 10], [7, 6]]) {
-        c.fillStyle = p.ink;
-        c.fillRect(12 - w / 2, y, w, 2.6);
-      }
-      return;
-    case "oneway":
-      stroke(c, p.ink, 2, 6, 15, 12, 8, 18, 15);
-      return;
-  }
-}
+    }
+    const keys = rule?.type === "keys" ? rule.keys : t.color ? [t.color] : [];
+    torii(c, keys[0] ? p.keys[keys[0]] ?? p.ink : p.ink);
+    // A dot per key the gate takes, in that key's colour.
+    keys.forEach((k, i) => dot(c, 12 - (keys.length - 1) * 2.5 + i * 5, 17, 1.5, p.keys[k] ?? p.ink));
+    if (rule?.type === "keys" && rule.heart) dot(c, 12, 13.5, 1.6, p.heart);
+  },
+  potion(c, t) {
+    // A tea bowl, the red potion's filled with the seal's red.
+    c.beginPath();
+    c.moveTo(5, 11);
+    c.quadraticCurveTo(12, 23, 19, 11);
+    c.closePath();
+    c.fillStyle = t.color === "red" ? p.seal : p.moss;
+    c.fill();
+    stroke(c, p.ink, 1.4, 5, 11, 19, 11);
+    stroke(c, p.ink, 1.2, 9, 19, 15, 19);
+  },
+  attack(c) {
+    // One sweeping stroke, a blade.
+    stroke(c, p.ink, 2.2, 6, 19, 18, 5);
+    stroke(c, p.ink, 1.4, 5, 14, 10, 19);
+  },
+  defense(c) {
+    c.beginPath();
+    c.moveTo(6, 6);
+    c.lineTo(18, 6);
+    c.quadraticCurveTo(18, 16, 12, 20);
+    c.quadraticCurveTo(6, 16, 6, 6);
+    c.strokeStyle = p.ink;
+    c.lineWidth = 1.8;
+    c.lineJoin = "round";
+    c.stroke();
+  },
+  reward(c) {
+    // A lacquer box, its lid's line red.
+    c.fillStyle = p.ink;
+    c.fillRect(6, 8, 12, 10);
+    stroke(c, p.seal, 1.6, 6, 11, 18, 11);
+  },
+  openedChest(c) {
+    c.strokeStyle = p.faint;
+    c.lineWidth = 1;
+    c.strokeRect(6.5, 10.5, 11, 7);
+  },
+  treasure(c) {
+    // A pearl with a gold glint.
+    dot(c, 12, 12, 4.5, p.gold);
+    dot(c, 10.5, 10.5, 1.3, p.paper);
+  },
+  stairs(c) {
+    // Stepping stones, smaller as they climb.
+    for (const [y, w] of [[18, 14], [12.5, 10], [7, 6]]) {
+      c.fillStyle = p.ink;
+      c.fillRect(12 - w / 2, y, w, 2.6);
+    }
+  },
+  oneway(c) {
+    stroke(c, p.ink, 2, 6, 15, 12, 8, 18, 15);
+  },
+});
 
 /** A stone lantern: its light glows warm while it burns. */
 function torch(p: ZenPalette, c: CanvasRenderingContext2D, f: FrameContext, t: Torch) {
@@ -372,7 +367,7 @@ function rim(p: ZenPalette, f: FrameContext) {
 
 const zenBoard = (p: ZenPalette): ThemedBoard => ({
   ground: (f) => drawGround(p, f),
-  contents: (c, t) => contents(p, c, t),
+  contents: contents(p),
   heart: (c) => heart(p, c),
   torch: (c, f, t) => torch(p, c, f, t),
   hero: (c) => hero(p, c),

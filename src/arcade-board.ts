@@ -2,7 +2,7 @@ import type { KeyColor } from "./config.ts";
 import type { EnemyStrength, Tile, Torch } from "./entities.ts";
 import { forEachViewTile, toTileSpace, type FrameContext } from "./render-frame.ts";
 import type { Facing } from "./shown.ts";
-import type { ThemedBoard } from "./themed-boards.ts";
+import { contentsFrom, type ThemedBoard } from "./themed-board.ts";
 import { sprite, type Sprite } from "./pixel-sprite.ts";
 
 /** The Arcade Game theme's dungeon board: an old arcade maze, in sprites of
@@ -289,82 +289,78 @@ function drawArcadeGround(f: FrameContext) {
 }
 
 /** One tile's contents in tile space (24x24). */
-function paintArcadeContents(c: CanvasRenderingContext2D, t: Tile) {
-  switch (t.kind) {
-    case "enemy": {
-      // A crawler, larger and redder the stronger it is (the elite horned);
-      // a boss a white skull with red eyes, a greater boss a larger red one.
-      const e = t.enemy;
-      const strength = e?.strength ?? "normal";
-      const cell = CELL[strength] ?? 1.7;
-      if (strength === "boss" || strength === "greaterBoss") {
-        const greater = strength === "greaterBoss";
-        sprite(c, SKULL_SPRITE, shaded({ X: greater ? ARCADE.red : ARCADE.white, E: greater ? ARCADE.hero : ARCADE.red }), cell);
-      } else {
-        const body = strength === "elite" ? HORNED_SPRITE : CRAWLER_SPRITE;
-        sprite(c, body, shaded({ B: CRAWLER[strength] ?? ARCADE.red, W: ARCADE.white, P: ARCADE.ground }), cell);
-      }
-      // A Ranged enemy's arrow at the top right, a Fast enemy's chevrons at
-      // the bottom right, each on a black patch so it reads over the body.
-      if (e?.ranged) badge(c, RANGED_SPRITE, 21.5, 3.5);
-      if (e?.fast) badge(c, FAST_SPRITE, 20.5, 20.5);
+const paintArcadeContents = contentsFrom({
+  enemy(c, t) {
+    // A crawler, larger and redder the stronger it is (the elite horned);
+    // a boss a white skull with red eyes, a greater boss a larger red one.
+    const e = t.enemy;
+    const strength = e?.strength ?? "normal";
+    const cell = CELL[strength] ?? 1.7;
+    if (strength === "boss" || strength === "greaterBoss") {
+      const greater = strength === "greaterBoss";
+      sprite(c, SKULL_SPRITE, shaded({ X: greater ? ARCADE.red : ARCADE.white, E: greater ? ARCADE.hero : ARCADE.red }), cell);
+    } else {
+      const body = strength === "elite" ? HORNED_SPRITE : CRAWLER_SPRITE;
+      sprite(c, body, shaded({ B: CRAWLER[strength] ?? ARCADE.red, W: ARCADE.white, P: ARCADE.ground }), cell);
+    }
+    // A Ranged enemy's arrow at the top right, a Fast enemy's chevrons at
+    // the bottom right, each on a black patch so it reads over the body.
+    if (e?.ranged) badge(c, RANGED_SPRITE, 21.5, 3.5);
+    if (e?.fast) badge(c, FAST_SPRITE, 20.5, 20.5);
+  },
+  key(c, t) {
+    sprite(c, KEY_SPRITE, { K: keyColor(t.color) }, 1.8);
+  },
+  door(c, t) {
+    const rule = t.door;
+    if (rule?.type === "fullHp") {
+      paintArcadeHeart(c);
       return;
     }
-    case "key":
-      sprite(c, KEY_SPRITE, { K: keyColor(t.color) }, 1.8);
-      return;
-    case "door": {
-      const rule = t.door;
-      if (rule?.type === "fullHp") {
-        paintArcadeHeart(c);
-        return;
-      }
-      if (rule?.type === "wood") {
-        // Nailed planks: any key opens it, or the hero breaks it down.
-        sprite(c, PLANKS_SPRITE, shaded({ P: ARCADE.brown, N: ARCADE.gold }), 1.8);
-        return;
-      }
-      // A gate between two blue posts, a bar across it in each key's colour.
-      const keys = rule?.type === "keys" ? rule.keys : t.color ? [t.color] : [];
-      c.fillStyle = ARCADE.maze;
-      c.fillRect(1, 1, 4, 22);
-      c.fillRect(19, 1, 4, 22);
-      const colors = keys.length ? keys.map(keyColor) : [ARCADE.white];
-      const step = 20 / colors.length;
-      colors.forEach((col, i) => {
-        c.fillStyle = col;
-        c.fillRect(5, 2 + i * step + step / 2 - 2.5, 14, 5);
-      });
-      if (rule?.type === "keys" && rule.heart) sprite(c, HEART_SPRITE, { R: ARCADE.red, W: ARCADE.white }, 0.8, 12, 20);
+    if (rule?.type === "wood") {
+      // Nailed planks: any key opens it, or the hero breaks it down.
+      sprite(c, PLANKS_SPRITE, shaded({ P: ARCADE.brown, N: ARCADE.gold }), 1.8);
       return;
     }
-    case "potion":
-      // A low-res bottle: cyan heals, red (the red potion) heals a share.
-      sprite(c, POTION_SPRITE, { C: ARCADE.cork, G: ARCADE.glass, L: t.color === "red" ? ARCADE.red : ARCADE.cyan, H: ARCADE.white }, 2.6);
-      return;
-    case "attack":
-      sprite(c, SWORD_SPRITE, { W: ARCADE.white, Y: ARCADE.gold, H: ARCADE.brown }, 1.6);
-      return;
-    case "defense":
-      sprite(c, SHIELD_SPRITE, { C: ARCADE.cyan, B: ARCADE.maze }, 1.6);
-      return;
-    case "reward":
-      sprite(c, CHEST_SPRITE, { D: ARCADE.brown, Y: ARCADE.gold, K: ARCADE.ground }, 1.7);
-      return;
-    case "openedChest":
-      sprite(c, CHEST_SPRITE, { D: ARCADE.dim }, 1.7);
-      return;
-    case "treasure":
-      sprite(c, GEM_SPRITE, shaded({ G: ARCADE.cyan, H: ARCADE.white }), 1.8);
-      return;
-    case "stairs":
-      sprite(c, LADDER_SPRITE, { C: ARCADE.cyan }, 2);
-      return;
-    case "oneway":
-      sprite(c, ARROW_SPRITE, { W: ARCADE.white }, 1.6);
-      return;
-  }
-}
+    // A gate between two blue posts, a bar across it in each key's colour.
+    const keys = rule?.type === "keys" ? rule.keys : t.color ? [t.color] : [];
+    c.fillStyle = ARCADE.maze;
+    c.fillRect(1, 1, 4, 22);
+    c.fillRect(19, 1, 4, 22);
+    const colors = keys.length ? keys.map(keyColor) : [ARCADE.white];
+    const step = 20 / colors.length;
+    colors.forEach((col, i) => {
+      c.fillStyle = col;
+      c.fillRect(5, 2 + i * step + step / 2 - 2.5, 14, 5);
+    });
+    if (rule?.type === "keys" && rule.heart) sprite(c, HEART_SPRITE, { R: ARCADE.red, W: ARCADE.white }, 0.8, 12, 20);
+  },
+  potion(c, t) {
+    // A low-res bottle: cyan heals, red (the red potion) heals a share.
+    sprite(c, POTION_SPRITE, { C: ARCADE.cork, G: ARCADE.glass, L: t.color === "red" ? ARCADE.red : ARCADE.cyan, H: ARCADE.white }, 2.6);
+  },
+  attack(c) {
+    sprite(c, SWORD_SPRITE, { W: ARCADE.white, Y: ARCADE.gold, H: ARCADE.brown }, 1.6);
+  },
+  defense(c) {
+    sprite(c, SHIELD_SPRITE, { C: ARCADE.cyan, B: ARCADE.maze }, 1.6);
+  },
+  reward(c) {
+    sprite(c, CHEST_SPRITE, { D: ARCADE.brown, Y: ARCADE.gold, K: ARCADE.ground }, 1.7);
+  },
+  openedChest(c) {
+    sprite(c, CHEST_SPRITE, { D: ARCADE.dim }, 1.7);
+  },
+  treasure(c) {
+    sprite(c, GEM_SPRITE, shaded({ G: ARCADE.cyan, H: ARCADE.white }), 1.8);
+  },
+  stairs(c) {
+    sprite(c, LADDER_SPRITE, { C: ARCADE.cyan }, 2);
+  },
+  oneway(c) {
+    sprite(c, ARROW_SPRITE, { W: ARCADE.white }, 1.6);
+  },
+});
 
 /** The Heart Door's heart. */
 function paintArcadeHeart(c: CanvasRenderingContext2D) {

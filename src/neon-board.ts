@@ -2,7 +2,7 @@ import { COLORS, type KeyColor } from "./config.ts";
 import type { EnemyStrength, Tile, Torch } from "./entities.ts";
 import { WOOD_COLOR } from "./doors.ts";
 import { forEachViewTile, toTileSpace, type FrameContext } from "./render-frame.ts";
-import type { ThemedBoard } from "./themed-boards.ts";
+import { contentsFrom, type ThemedBoard } from "./themed-board.ts";
 import { rankChevrons } from "./rank-chevrons.ts";
 
 /** The Neon theme's dungeon board: every wall, tile content, torch and the
@@ -78,88 +78,83 @@ export function drawNeonGround(f: FrameContext) {
 }
 
 /** One tile's contents in tile space (24x24). */
-export function paintNeonContents(c: CanvasRenderingContext2D, t: Tile) {
-  switch (t.kind) {
-    case "enemy": {
-      const strength = t.enemy?.strength ?? "normal";
-      ENEMY_SPRITES[strength](c, NEON.enemy);
-      rankChevrons(c, strength, NEON.stairs, "#05030a", 1, 1, 4);
-      // A Ranged enemy's arrow at the top right, and a Fast enemy's
-      // fast-forward sign there, or below the arrow when it has both.
-      if (t.enemy?.ranged) path(c, () => { c.moveTo(16, 7); c.lineTo(22, 1); c.moveTo(18.5, 1); c.lineTo(22, 1); c.lineTo(22, 4.5); }, NEON.ranged, 1);
-      const fy = t.enemy?.ranged ? 7 : 0;
-      if (t.enemy?.fast) path(c, () => { c.moveTo(16, 1 + fy); c.lineTo(19, 3 + fy); c.lineTo(16, 5 + fy); c.closePath(); c.moveTo(19, 1 + fy); c.lineTo(22, 3 + fy); c.lineTo(19, 5 + fy); c.closePath(); }, NEON.fast, 1);
+export const paintNeonContents = contentsFrom({
+  enemy(c, t) {
+    const strength = t.enemy?.strength ?? "normal";
+    ENEMY_SPRITES[strength](c, NEON.enemy);
+    rankChevrons(c, strength, NEON.stairs, "#05030a", 1, 1, 4);
+    // A Ranged enemy's arrow at the top right, and a Fast enemy's
+    // fast-forward sign there, or below the arrow when it has both.
+    if (t.enemy?.ranged) path(c, () => { c.moveTo(16, 7); c.lineTo(22, 1); c.moveTo(18.5, 1); c.lineTo(22, 1); c.lineTo(22, 4.5); }, NEON.ranged, 1);
+    const fy = t.enemy?.ranged ? 7 : 0;
+    if (t.enemy?.fast) path(c, () => { c.moveTo(16, 1 + fy); c.lineTo(19, 3 + fy); c.lineTo(16, 5 + fy); c.closePath(); c.moveTo(19, 1 + fy); c.lineTo(22, 3 + fy); c.lineTo(19, 5 + fy); c.closePath(); }, NEON.fast, 1);
+  },
+  key(c, t) {
+    const color = keyColor(t.color);
+    path(c, () => { c.arc(8, 12, 4, 0, Math.PI * 2); c.moveTo(12, 12); c.lineTo(21, 12); c.moveTo(18, 12); c.lineTo(18, 16); c.moveTo(21, 12); c.lineTo(21, 15); }, color);
+  },
+  door(c, t) {
+    const rule = t.door;
+    if (rule?.type === "fullHp") {
+      frame(c, NEON.heart);
+      path(c, () => heart(c), NEON.heart, 1.4);
       return;
     }
-    case "key": {
-      const color = keyColor(t.color);
-      path(c, () => { c.arc(8, 12, 4, 0, Math.PI * 2); c.moveTo(12, 12); c.lineTo(21, 12); c.moveTo(18, 12); c.lineTo(18, 16); c.moveTo(21, 12); c.lineTo(21, 15); }, color);
+    if (rule?.type === "wood") {
+      // Planks: a frame and a crossbar in the timber's colour.
+      frame(c, WOOD_COLOR);
+      path(c, () => { c.moveTo(4, 13); c.lineTo(20, 13); c.moveTo(10, 6); c.lineTo(10, 20); c.moveTo(14, 6); c.lineTo(14, 20); }, WOOD_COLOR, 1.2);
       return;
     }
-    case "door": {
-      const rule = t.door;
-      if (rule?.type === "fullHp") {
-        frame(c, NEON.heart);
-        path(c, () => heart(c), NEON.heart, 1.4);
-        return;
-      }
-      if (rule?.type === "wood") {
-        // Planks: a frame and a crossbar in the timber's colour.
-        frame(c, WOOD_COLOR);
-        path(c, () => { c.moveTo(4, 13); c.lineTo(20, 13); c.moveTo(10, 6); c.lineTo(10, 20); c.moveTo(14, 6); c.lineTo(14, 20); }, WOOD_COLOR, 1.2);
-        return;
-      }
-      if (rule?.type === "keys" && rule.heart) path(c, () => heart(c), NEON.heart, 1);
-      const keys = rule?.type === "keys" ? rule.keys : t.color ? [t.color] : [];
-      const color = keyColor(keys[0]);
-      frame(c, color);
-      // A bar per key the door takes, in that key's colour.
-      const n = Math.max(1, keys.length);
-      for (let i = 0; i < n; i++) {
-        const bx = 4 + (16 * (i + 1)) / (n + 1);
-        path(c, () => { c.moveTo(bx, 6); c.lineTo(bx, 20); }, keyColor(keys[i]), 1.4);
-      }
-      return;
+    if (rule?.type === "keys" && rule.heart) path(c, () => heart(c), NEON.heart, 1);
+    const keys = rule?.type === "keys" ? rule.keys : t.color ? [t.color] : [];
+    const color = keyColor(keys[0]);
+    frame(c, color);
+    // A bar per key the door takes, in that key's colour.
+    const n = Math.max(1, keys.length);
+    for (let i = 0; i < n; i++) {
+      const bx = 4 + (16 * (i + 1)) / (n + 1);
+      path(c, () => { c.moveTo(bx, 6); c.lineTo(bx, 20); }, keyColor(keys[i]), 1.4);
     }
-    case "potion": {
-      const color = t.color === "red" ? NEON.percentPotion : NEON.potion;
-      path(c, () => {
-        c.moveTo(10, 4); c.lineTo(14, 4); c.moveTo(10.5, 4); c.lineTo(10.5, 9);
-        c.lineTo(6, 15); c.arc(12, 16, 6, Math.PI * 1.05, Math.PI * -0.05, true);
-        c.lineTo(13.5, 9); c.lineTo(13.5, 4);
-      }, color);
-      path(c, () => { c.moveTo(7.5, 16); c.lineTo(16.5, 16); }, color, 1.2);
-      return;
-    }
-    case "attack":
-      path(c, () => { c.moveTo(18, 4); c.lineTo(8, 14); c.moveTo(5, 12); c.lineTo(12, 19); c.moveTo(8, 16); c.lineTo(4, 20); c.moveTo(18, 4); c.lineTo(20, 4); c.lineTo(20, 6); }, NEON.attack);
-      return;
-    case "defense":
-      path(c, () => { c.moveTo(12, 3); c.lineTo(19, 6); c.lineTo(18, 13); c.quadraticCurveTo(16, 18, 12, 21); c.quadraticCurveTo(8, 18, 6, 13); c.lineTo(5, 6); c.closePath(); c.moveTo(12, 7); c.lineTo(12, 17); }, NEON.defense);
-      return;
-    case "reward":
-    case "openedChest": {
-      const open = t.kind === "openedChest";
-      path(c, () => {
-        c.rect(4, 11, 16, 9);
-        if (open) { c.moveTo(4, 11); c.lineTo(6, 5); c.lineTo(18, 5); c.lineTo(20, 11); }
-        else { c.moveTo(4, 11); c.quadraticCurveTo(12, 4, 20, 11); c.moveTo(12, 13); c.lineTo(12, 16); }
-      }, open ? "#ffd24a88" : NEON.chest);
-      return;
-    }
-    case "treasure":
-      path(c, () => { c.moveTo(12, 4); c.lineTo(19, 10); c.lineTo(12, 20); c.lineTo(5, 10); c.closePath(); c.moveTo(5, 10); c.lineTo(19, 10); c.moveTo(9, 10); c.lineTo(12, 20); c.lineTo(15, 10); }, NEON.chest);
-      return;
-    case "stairs":
-      path(c, () => {
-        c.moveTo(4, 20); c.lineTo(4, 16); c.lineTo(9, 16); c.lineTo(9, 11); c.lineTo(14, 11); c.lineTo(14, 6); c.lineTo(20, 6); c.lineTo(20, 20); c.closePath();
-      }, NEON.stairs);
-      path(c, () => { c.moveTo(7, 9); c.lineTo(9.5, 4); c.lineTo(12, 9); }, NEON.stairs, 1.2);
-      return;
-    case "oneway":
-      path(c, () => { c.moveTo(6, 15); c.lineTo(12, 9); c.lineTo(18, 15); }, NEON.wall, 1.8);
-      return;
-  }
+  },
+  potion(c, t) {
+    const color = t.color === "red" ? NEON.percentPotion : NEON.potion;
+    path(c, () => {
+      c.moveTo(10, 4); c.lineTo(14, 4); c.moveTo(10.5, 4); c.lineTo(10.5, 9);
+      c.lineTo(6, 15); c.arc(12, 16, 6, Math.PI * 1.05, Math.PI * -0.05, true);
+      c.lineTo(13.5, 9); c.lineTo(13.5, 4);
+    }, color);
+    path(c, () => { c.moveTo(7.5, 16); c.lineTo(16.5, 16); }, color, 1.2);
+  },
+  attack(c) {
+    path(c, () => { c.moveTo(18, 4); c.lineTo(8, 14); c.moveTo(5, 12); c.lineTo(12, 19); c.moveTo(8, 16); c.lineTo(4, 20); c.moveTo(18, 4); c.lineTo(20, 4); c.lineTo(20, 6); }, NEON.attack);
+  },
+  defense(c) {
+    path(c, () => { c.moveTo(12, 3); c.lineTo(19, 6); c.lineTo(18, 13); c.quadraticCurveTo(16, 18, 12, 21); c.quadraticCurveTo(8, 18, 6, 13); c.lineTo(5, 6); c.closePath(); c.moveTo(12, 7); c.lineTo(12, 17); }, NEON.defense);
+  },
+  reward: paintChest,
+  openedChest: paintChest,
+  treasure(c) {
+    path(c, () => { c.moveTo(12, 4); c.lineTo(19, 10); c.lineTo(12, 20); c.lineTo(5, 10); c.closePath(); c.moveTo(5, 10); c.lineTo(19, 10); c.moveTo(9, 10); c.lineTo(12, 20); c.lineTo(15, 10); }, NEON.chest);
+  },
+  stairs(c) {
+    path(c, () => {
+      c.moveTo(4, 20); c.lineTo(4, 16); c.lineTo(9, 16); c.lineTo(9, 11); c.lineTo(14, 11); c.lineTo(14, 6); c.lineTo(20, 6); c.lineTo(20, 20); c.closePath();
+    }, NEON.stairs);
+    path(c, () => { c.moveTo(7, 9); c.lineTo(9.5, 4); c.lineTo(12, 9); }, NEON.stairs, 1.2);
+  },
+  oneway(c) {
+    path(c, () => { c.moveTo(6, 15); c.lineTo(12, 9); c.lineTo(18, 15); }, NEON.wall, 1.8);
+  },
+});
+/** A reward chest, shut or opened (`reward`, `openedChest`). */
+function paintChest(c: CanvasRenderingContext2D, t: Tile) {
+  const open = t.kind === "openedChest";
+  path(c, () => {
+    c.rect(4, 11, 16, 9);
+    if (open) { c.moveTo(4, 11); c.lineTo(6, 5); c.lineTo(18, 5); c.lineTo(20, 11); }
+    else { c.moveTo(4, 11); c.quadraticCurveTo(12, 4, 20, 11); c.moveTo(12, 13); c.lineTo(12, 16); }
+  }, open ? "#ffd24a88" : NEON.chest);
 }
 
 /** A weak enemy: a slime sitting low on the tile, with a wobbly base, two

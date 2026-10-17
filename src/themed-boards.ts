@@ -1,5 +1,4 @@
-import type { Tile, Torch } from "./entities.ts";
-import type { Facing } from "./shown.ts";
+import type { ThemedBoard } from "./themed-board.ts";
 import type { GameLook } from "./theme-collection.ts";
 import { forEachViewTile, tileTransform, toTileSpace, type FrameContext } from "./render-frame.ts";
 import { NEON_BOARD } from "./neon-board.ts";
@@ -16,25 +15,6 @@ import { ORBIT_BOARD } from "./orbit-board.ts";
 import { PIXEL_BOARD } from "./pixel-board.ts";
 import { DOODLE_BOARD } from "./doodle-board.ts";
 import { MURK_BOARD } from "./murk-board.ts";
-
-/** How a Game theme other than Classic draws the dungeon board in place of
- * its lit art: the ground, each tile's contents, torches and the hero, each
- * in tile space (24x24) but the ground. Lighting, glows and decor are off
- * while one is worn, until each has a version of its own. */
-export type ThemedBoard = {
-  /** The background, floor and walls over the whole board. */
-  ground(f: FrameContext): void;
-  /** One tile's contents (also as they rise off the board). */
-  contents(c: CanvasRenderingContext2D, t: Tile): void;
-  /** The Heart Door's heart on its own, as its toll rises off the door. */
-  heart(c: CanvasRenderingContext2D): void;
-  torch(c: CanvasRenderingContext2D, f: FrameContext, t: Torch): void;
-  /** The hero, facing `facing` (its last step), for a board whose hero turns. */
-  hero(c: CanvasRenderingContext2D, facing: Facing): void;
-  /** Drawn over the whole board after the hero, before the feedback
-   * overlays. */
-  over?(f: FrameContext): void;
-};
 
 /** The Game theme looks that draw the board their own way. */
 export type ThemedLook = Exclude<GameLook, "classic">;

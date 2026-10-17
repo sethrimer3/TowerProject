@@ -2,7 +2,7 @@ import type { KeyColor } from "./config.ts";
 import type { EnemyStrength, Tile, Torch } from "./entities.ts";
 import { forEachViewTile, toTileSpace, type FrameContext } from "./render-frame.ts";
 import type { Facing } from "./shown.ts";
-import type { ThemedBoard } from "./themed-boards.ts";
+import { contentsFrom, type ThemedBoard } from "./themed-board.ts";
 import { sprite, type Sprite } from "./pixel-sprite.ts";
 import { rankChevrons } from "./rank-chevrons.ts";
 import { tileHash } from "./ascii-glyphs.ts";
@@ -615,68 +615,64 @@ function lockBar(c: CanvasRenderingContext2D, k: KeyColor, y: number, h: number)
 }
 
 /** One tile's contents in tile space (24x24). */
-function paintPixelContents(c: CanvasRenderingContext2D, t: Tile) {
-  switch (t.kind) {
-    case "enemy": {
-      const e = t.enemy;
-      const strength = e?.strength ?? "normal";
-      const look = CREATURE[strength] ?? CREATURE.normal;
-      draw(c, look.art, look.cell, 12, look.cy);
-      if (strength === "greaterBoss") draw(c, CROWN_ART, 1.2, 12, 3.5);
-      rankChevrons(c, strength, PIXEL.mark, PIXEL.out, 1, 1);
-      if (e?.ranged) draw(c, RANGED_MARK, 1, 21, 3.5);
-      if (e?.fast) draw(c, FAST_MARK, 1, 20.5, 21.5);
+const paintPixelContents = contentsFrom({
+  enemy(c, t) {
+    const e = t.enemy;
+    const strength = e?.strength ?? "normal";
+    const look = CREATURE[strength] ?? CREATURE.normal;
+    draw(c, look.art, look.cell, 12, look.cy);
+    if (strength === "greaterBoss") draw(c, CROWN_ART, 1.2, 12, 3.5);
+    rankChevrons(c, strength, PIXEL.mark, PIXEL.out, 1, 1);
+    if (e?.ranged) draw(c, RANGED_MARK, 1, 21, 3.5);
+    if (e?.fast) draw(c, FAST_MARK, 1, 20.5, 21.5);
+  },
+  key(c, t) {
+    draw(c, keyArt(t.color), 1.4);
+  },
+  door(c, t) {
+    const rule = t.door;
+    if (rule?.type === "fullHp") {
+      draw(c, HEART_SLAB, 1.5);
+      paintPixelHeart(c, 1.2);
       return;
     }
-    case "key":
-      draw(c, keyArt(t.color), 1.4);
-      return;
-    case "door": {
-      const rule = t.door;
-      if (rule?.type === "fullHp") {
-        draw(c, HEART_SLAB, 1.5);
-        paintPixelHeart(c, 1.2);
-        return;
-      }
-      if (rule?.type === "wood") {
-        draw(c, PLANKS, 1.5);
-        return;
-      }
-      // A door with a lock bar for each key it takes.
-      draw(c, DOOR, 1.5);
-      const keys = rule?.type === "keys" ? rule.keys : t.color ? [t.color] : [];
-      const h = keys.length > 2 ? 3 : 4.5;
-      const gap = 18 / Math.max(1, keys.length);
-      keys.forEach((k, i) => lockBar(c, k, 5.25 + gap * i + gap / 2 - h / 2, h));
-      if (rule?.type === "keys" && rule.heart) draw(c, HEART_ART, 0.75, 18.5, 18.5);
+    if (rule?.type === "wood") {
+      draw(c, PLANKS, 1.5);
       return;
     }
-    case "potion":
-      draw(c, potionArt(t.color === "red"), 1.6);
-      return;
-    case "attack":
-      draw(c, SWORD_ART, 1.4);
-      return;
-    case "defense":
-      draw(c, SHIELD_ART, 1.4);
-      return;
-    case "reward":
-      draw(c, CHEST_ART, 1.5, 12, 13);
-      return;
-    case "openedChest":
-      draw(c, OPENED_ART, 1.5, 12, 13);
-      return;
-    case "treasure":
-      draw(c, COINS_ART, 1.4, 12, 13);
-      return;
-    case "stairs":
-      draw(c, STAIRS_ART, 1.5);
-      return;
-    case "oneway":
-      draw(c, ARROW_ART, 1.6);
-      return;
-  }
-}
+    // A door with a lock bar for each key it takes.
+    draw(c, DOOR, 1.5);
+    const keys = rule?.type === "keys" ? rule.keys : t.color ? [t.color] : [];
+    const h = keys.length > 2 ? 3 : 4.5;
+    const gap = 18 / Math.max(1, keys.length);
+    keys.forEach((k, i) => lockBar(c, k, 5.25 + gap * i + gap / 2 - h / 2, h));
+    if (rule?.type === "keys" && rule.heart) draw(c, HEART_ART, 0.75, 18.5, 18.5);
+  },
+  potion(c, t) {
+    draw(c, potionArt(t.color === "red"), 1.6);
+  },
+  attack(c) {
+    draw(c, SWORD_ART, 1.4);
+  },
+  defense(c) {
+    draw(c, SHIELD_ART, 1.4);
+  },
+  reward(c) {
+    draw(c, CHEST_ART, 1.5, 12, 13);
+  },
+  openedChest(c) {
+    draw(c, OPENED_ART, 1.5, 12, 13);
+  },
+  treasure(c) {
+    draw(c, COINS_ART, 1.4, 12, 13);
+  },
+  stairs(c) {
+    draw(c, STAIRS_ART, 1.5);
+  },
+  oneway(c) {
+    draw(c, ARROW_ART, 1.6);
+  },
+});
 
 /** The Heart Door's heart. */
 function paintPixelHeart(c: CanvasRenderingContext2D, cell = 1.6) {

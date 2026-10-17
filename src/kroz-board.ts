@@ -1,7 +1,7 @@
 import type { KeyColor } from "./config.ts";
 import type { EnemyStrength, Tile, Torch } from "./entities.ts";
 import { forEachViewTile, toTileSpace, type FrameContext } from "./render-frame.ts";
-import type { ThemedBoard } from "./themed-boards.ts";
+import { contentsFrom, type ThemedBoard } from "./themed-board.ts";
 import { sprite, type Sprite } from "./pixel-sprite.ts";
 import { rankChevrons } from "./rank-chevrons.ts";
 
@@ -115,77 +115,73 @@ function drawKrozGround(f: FrameContext) {
 }
 
 /** One tile's contents in tile space (24x24). */
-function paintKrozContents(c: CanvasRenderingContext2D, t: Tile) {
-  switch (t.kind) {
-    case "enemy": {
-      const e = t.enemy;
-      const strength = e?.strength ?? "normal";
-      const look = MONSTER[strength] ?? MONSTER.normal;
-      char(c, look.rows, look.color, look.back);
-      rankChevrons(c, strength, KROZ.white, KROZ.black, 1, 1);
-      // A Ranged enemy's arrow at the top right, a Fast enemy's » at the
-      // bottom right.
-      if (e?.ranged) mark(c, RANGED_MARK, KROZ.white, 20.5, 3.5);
-      if (e?.fast) mark(c, FAST_MARK, KROZ.white, 20.5, 20.5);
+const paintKrozContents = contentsFrom({
+  enemy(c, t) {
+    const e = t.enemy;
+    const strength = e?.strength ?? "normal";
+    const look = MONSTER[strength] ?? MONSTER.normal;
+    char(c, look.rows, look.color, look.back);
+    rankChevrons(c, strength, KROZ.white, KROZ.black, 1, 1);
+    // A Ranged enemy's arrow at the top right, a Fast enemy's » at the
+    // bottom right.
+    if (e?.ranged) mark(c, RANGED_MARK, KROZ.white, 20.5, 3.5);
+    if (e?.fast) mark(c, FAST_MARK, KROZ.white, 20.5, 20.5);
+  },
+  key(c, t) {
+    char(c, KEY, keyColor(t.color));
+  },
+  door(c, t) {
+    const rule = t.door;
+    if (rule?.type === "fullHp") {
+      char(c, HEART, KROZ.lightRed, KROZ.magenta);
       return;
     }
-    case "key":
-      char(c, KEY, keyColor(t.color));
-      return;
-    case "door": {
-      const rule = t.door;
-      if (rule?.type === "fullHp") {
-        char(c, HEART, KROZ.lightRed, KROZ.magenta);
-        return;
-      }
-      if (rule?.type === "wood") {
-        // Kroz's breakable wall: any key opens it, or the hero breaks it down.
-        char(c, SHADE, KROZ.brown);
-        return;
-      }
-      // A black ∞ on its key's colour, a band of the cell per key it takes;
-      // Kroz's own cyan on magenta for a door no key colours.
-      const keys = rule?.type === "keys" ? rule.keys : t.color ? [t.color] : [];
-      if (!keys.length) {
-        char(c, DOOR, KROZ.cyan, KROZ.magenta);
-        return;
-      }
-      const band = 24 / keys.length;
-      keys.forEach((k, i) => {
-        c.fillStyle = keyColor(k);
-        c.fillRect(i * band, 0, band + (i < keys.length - 1 ? 0.15 : 0), 24);
-      });
-      char(c, DOOR, KROZ.black);
-      if (rule?.type === "keys" && rule.heart) mark(c, SMALL_HEART, KROZ.lightRed, 20.5, 20.5);
+    if (rule?.type === "wood") {
+      // Kroz's breakable wall: any key opens it, or the hero breaks it down.
+      char(c, SHADE, KROZ.brown);
       return;
     }
-    case "potion":
-      // Kroz's gems: the red potion, which heals a share of HP, a red one.
-      char(c, GEM, t.color === "red" ? KROZ.lightRed : KROZ.lightCyan);
+    // A black ∞ on its key's colour, a band of the cell per key it takes;
+    // Kroz's own cyan on magenta for a door no key colours.
+    const keys = rule?.type === "keys" ? rule.keys : t.color ? [t.color] : [];
+    if (!keys.length) {
+      char(c, DOOR, KROZ.cyan, KROZ.magenta);
       return;
-    case "attack":
-      char(c, WHIP, KROZ.white);
-      return;
-    case "defense":
-      char(c, TABLET, KROZ.lightBlue);
-      return;
-    case "reward":
-      char(c, LETTER_C, KROZ.yellow, KROZ.red);
-      return;
-    case "openedChest":
-      char(c, LETTER_C, KROZ.darkGrey);
-      return;
-    case "treasure":
-      char(c, NUGGET, KROZ.yellow);
-      return;
-    case "stairs":
-      char(c, STAIRS, KROZ.black, KROZ.white);
-      return;
-    case "oneway":
-      char(c, UP_ARROW, KROZ.lightMagenta);
-      return;
-  }
-}
+    }
+    const band = 24 / keys.length;
+    keys.forEach((k, i) => {
+      c.fillStyle = keyColor(k);
+      c.fillRect(i * band, 0, band + (i < keys.length - 1 ? 0.15 : 0), 24);
+    });
+    char(c, DOOR, KROZ.black);
+    if (rule?.type === "keys" && rule.heart) mark(c, SMALL_HEART, KROZ.lightRed, 20.5, 20.5);
+  },
+  potion(c, t) {
+    // Kroz's gems: the red potion, which heals a share of HP, a red one.
+    char(c, GEM, t.color === "red" ? KROZ.lightRed : KROZ.lightCyan);
+  },
+  attack(c) {
+    char(c, WHIP, KROZ.white);
+  },
+  defense(c) {
+    char(c, TABLET, KROZ.lightBlue);
+  },
+  reward(c) {
+    char(c, LETTER_C, KROZ.yellow, KROZ.red);
+  },
+  openedChest(c) {
+    char(c, LETTER_C, KROZ.darkGrey);
+  },
+  treasure(c) {
+    char(c, NUGGET, KROZ.yellow);
+  },
+  stairs(c) {
+    char(c, STAIRS, KROZ.black, KROZ.white);
+  },
+  oneway(c) {
+    char(c, UP_ARROW, KROZ.lightMagenta);
+  },
+});
 
 /** The Heart Door's heart on its own. */
 function paintKrozHeart(c: CanvasRenderingContext2D) {

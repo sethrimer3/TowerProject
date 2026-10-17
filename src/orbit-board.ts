@@ -2,7 +2,7 @@ import type { KeyColor } from "./config.ts";
 import type { EnemyStrength, Tile, Torch } from "./entities.ts";
 import type { Facing } from "./shown.ts";
 import { forEachViewTile, toTileSpace, type FrameContext } from "./render-frame.ts";
-import type { ThemedBoard } from "./themed-boards.ts";
+import { contentsFrom, type ThemedBoard } from "./themed-board.ts";
 import { tileHash } from "./ascii-glyphs.ts";
 import { rankChevrons } from "./rank-chevrons.ts";
 
@@ -242,133 +242,128 @@ const ENEMIES: Record<EnemyStrength, (c: CanvasRenderingContext2D) => void> = {
 };
 
 /** One tile's contents in tile space (24x24). */
-function contents(c: CanvasRenderingContext2D, t: Tile) {
-  switch (t.kind) {
-    case "enemy": {
-      const e = t.enemy, strength = e?.strength ?? "normal";
-      (ENEMIES[strength] ?? ENEMIES.normal)(c);
-      rankChevrons(c, strength, ORBIT.amber, ORBIT.space);
-      // A Ranged enemy's arrow at the top right, and a Fast enemy's
-      // chevrons there, or below the arrow when it has both.
-      if (e?.ranged) stroke(c, () => { c.moveTo(16.5, 6.5); c.lineTo(22, 1); c.moveTo(18.5, 1); c.lineTo(22, 1); c.lineTo(22, 4.5); }, ORBIT.amber, 1.2);
-      const fy = e?.ranged ? 7 : 0;
-      if (e?.fast) stroke(c, () => { c.moveTo(16, 1 + fy); c.lineTo(18.5, 3 + fy); c.lineTo(16, 5 + fy); c.moveTo(19.5, 1 + fy); c.lineTo(22, 3 + fy); c.lineTo(19.5, 5 + fy); }, ORBIT.cyan, 1.2);
-      return;
-    }
-    case "key": {
-      // A keycard in the key's colour, its chip and stripe dark.
-      const color = keyColor(t.color);
-      glow(c, color, 5);
-      fill(c, () => roundRect(c, 5, 6, 14, 12, 2), color);
-      noGlow(c);
-      fill(c, () => c.rect(5, 8.5, 14, 2), "#00000066");
-      fill(c, () => roundRect(c, 7, 12, 4, 3.5, 0.6), "#fff4c8");
-      fill(c, () => c.rect(13, 13, 4, 1), "#00000066");
-      return;
-    }
-    case "door": {
-      const rule = t.door;
-      if (rule?.type === "wood") {
-        // A barricade of cargo crates.
-        fill(c, () => c.rect(3, 3, 18, 18), "#6b4a26");
-        for (const [bx, by] of [[3, 3], [12, 3], [3, 12], [12, 12]]) {
-          fill(c, () => c.rect(bx + 0.6, by + 0.6, 7.8, 7.8), ORBIT.crate);
-          stroke(c, () => { c.moveTo(bx + 1.5, by + 1.5); c.lineTo(bx + 7.5, by + 7.5); }, "#6b4a26", 1);
-        }
-        return;
+const contents = contentsFrom({
+  enemy(c, t) {
+    const e = t.enemy, strength = e?.strength ?? "normal";
+    (ENEMIES[strength] ?? ENEMIES.normal)(c);
+    rankChevrons(c, strength, ORBIT.amber, ORBIT.space);
+    // A Ranged enemy's arrow at the top right, and a Fast enemy's
+    // chevrons there, or below the arrow when it has both.
+    if (e?.ranged) stroke(c, () => { c.moveTo(16.5, 6.5); c.lineTo(22, 1); c.moveTo(18.5, 1); c.lineTo(22, 1); c.lineTo(22, 4.5); }, ORBIT.amber, 1.2);
+    const fy = e?.ranged ? 7 : 0;
+    if (e?.fast) stroke(c, () => { c.moveTo(16, 1 + fy); c.lineTo(18.5, 3 + fy); c.lineTo(16, 5 + fy); c.moveTo(19.5, 1 + fy); c.lineTo(22, 3 + fy); c.lineTo(19.5, 5 + fy); }, ORBIT.cyan, 1.2);
+  },
+  key(c, t) {
+    // A keycard in the key's colour, its chip and stripe dark.
+    const color = keyColor(t.color);
+    glow(c, color, 5);
+    fill(c, () => roundRect(c, 5, 6, 14, 12, 2), color);
+    noGlow(c);
+    fill(c, () => c.rect(5, 8.5, 14, 2), "#00000066");
+    fill(c, () => roundRect(c, 7, 12, 4, 3.5, 0.6), "#fff4c8");
+    fill(c, () => c.rect(13, 13, 4, 1), "#00000066");
+  },
+  door(c, t) {
+    const rule = t.door;
+    if (rule?.type === "wood") {
+      // A barricade of cargo crates.
+      fill(c, () => c.rect(3, 3, 18, 18), "#6b4a26");
+      for (const [bx, by] of [[3, 3], [12, 3], [3, 12], [12, 12]]) {
+        fill(c, () => c.rect(bx + 0.6, by + 0.6, 7.8, 7.8), ORBIT.crate);
+        stroke(c, () => { c.moveTo(bx + 1.5, by + 1.5); c.lineTo(bx + 7.5, by + 7.5); }, "#6b4a26", 1);
       }
-      airlock(c);
-      if (rule?.type === "fullHp") {
-        heart(c);
-        return;
-      }
-      // A lit stripe across the doors per key it takes, in that key's
-      // colour.
-      const keys = rule?.type === "keys" ? rule.keys : t.color ? [t.color] : [];
-      const n = Math.max(1, keys.length);
-      glow(c, keyColor(keys[0]), 4);
-      for (let i = 0; i < n; i++) {
-        const y = 12 - (n - 1) * 1.8 + i * 3.6 - 1;
-        fill(c, () => c.rect(4.5, y, 15, 2), keyColor(keys[i]));
-      }
-      noGlow(c);
-      if (rule?.type === "keys" && rule.heart) fill(c, () => heartPath(c, 12, 15.5, 0.32), ORBIT.magenta);
       return;
     }
-    case "potion": {
-      // A med canister: a glass tube of glowing fluid under a steel cap,
-      // teal, or rose for the red potion.
-      const color = t.color === "red" ? "#ff6f9a" : "#4fe3c8";
-      fill(c, () => roundRect(c, 8, 7, 8, 14, 3), "#1b2a44");
-      stroke(c, () => roundRect(c, 8, 7, 8, 14, 3), ORBIT.hullLight, 1);
-      glow(c, color, 5);
-      fill(c, () => roundRect(c, 9, 11, 6, 9, 2.2), color);
-      noGlow(c);
-      fill(c, () => c.rect(10, 12, 1.2, 6), "#ffffff88");
-      fill(c, () => roundRect(c, 7.5, 3.5, 9, 4, 1), ORBIT.hullLight);
-      fill(c, () => c.rect(9, 4.5, 6, 1), ORBIT.white);
+    airlock(c);
+    if (rule?.type === "fullHp") {
+      heart(c);
       return;
     }
-    case "attack":
-      // A power cell's bolt, amber.
-      glow(c, ORBIT.amber, 6);
-      fill(c, () => { c.moveTo(14, 2.5); c.lineTo(6, 13.5); c.lineTo(11.5, 13.5); c.lineTo(9.5, 21.5); c.lineTo(18, 9.5); c.lineTo(12.5, 9.5); c.closePath(); }, ORBIT.amber);
-      noGlow(c);
-      fill(c, () => { c.moveTo(13, 5); c.lineTo(8.5, 12); c.lineTo(10.5, 12); c.closePath(); }, "#fff0c8");
-      return;
-    case "defense":
-      // A shield emitter: two cyan hexagons, one inside the other.
-      glow(c, ORBIT.cyan, 5);
-      stroke(c, () => hexagon(c, 12, 12, 8.5), ORBIT.cyan, 1.6);
-      noGlow(c);
-      fill(c, () => hexagon(c, 12, 12, 4.5), "#7fe3ff55");
-      stroke(c, () => hexagon(c, 12, 12, 4.5), ORBIT.cyan, 1);
-      return;
-    case "reward":
-    case "openedChest": {
-      // A supply pod: a rounded crate with an amber band and a status
-      // light; open and dark once emptied.
-      if (t.kind === "openedChest") {
-        fill(c, () => roundRect(c, 4, 11, 16, 9, 2), ORBIT.hullDark);
-        stroke(c, () => roundRect(c, 4, 11, 16, 9, 2), ORBIT.hullLight, 1);
-        stroke(c, () => { c.moveTo(4.5, 10); c.lineTo(7, 4.5); c.lineTo(18, 4.5); c.lineTo(19.5, 10); }, ORBIT.hullLight, 1);
-        return;
-      }
-      fill(c, () => roundRect(c, 4, 7, 16, 13, 3), ORBIT.hullLight);
-      fill(c, () => c.rect(4, 12, 16, 3), ORBIT.amber);
-      fill(c, () => c.rect(4, 9.5, 16, 0.8), ORBIT.hull);
-      glow(c, ORBIT.green, 4);
-      fill(c, () => c.arc(17, 17.5, 1.1, 0, Math.PI * 2), ORBIT.green);
-      noGlow(c);
-      return;
+    // A lit stripe across the doors per key it takes, in that key's
+    // colour.
+    const keys = rule?.type === "keys" ? rule.keys : t.color ? [t.color] : [];
+    const n = Math.max(1, keys.length);
+    glow(c, keyColor(keys[0]), 4);
+    for (let i = 0; i < n; i++) {
+      const y = 12 - (n - 1) * 1.8 + i * 3.6 - 1;
+      fill(c, () => c.rect(4.5, y, 15, 2), keyColor(keys[i]));
     }
-    case "treasure":
-      // A star crystal: a four-pointed golden sparkle.
-      glow(c, "#ffd84a", 7);
-      fill(c, () => {
-        c.moveTo(12, 3); c.quadraticCurveTo(13, 11, 21, 12); c.quadraticCurveTo(13, 13, 12, 21);
-        c.quadraticCurveTo(11, 13, 3, 12); c.quadraticCurveTo(11, 11, 12, 3);
-      }, "#ffd84a");
-      noGlow(c);
-      fill(c, () => c.arc(12, 12, 1.8, 0, Math.PI * 2), "#fffbe8");
-      return;
-    case "stairs":
-      // A lift pad: a ring of light on the deck under a beam and an arrow
-      // pointing up.
-      fill(c, () => c.ellipse(12, 18, 9, 3.5, 0, 0, Math.PI * 2), ORBIT.hullDark);
-      fill(c, () => { c.moveTo(4.5, 18); c.lineTo(7, 4); c.lineTo(17, 4); c.lineTo(19.5, 18); c.closePath(); }, "#7fe3ff22");
-      glow(c, ORBIT.cyan, 5);
-      stroke(c, () => c.ellipse(12, 18, 9, 3.5, 0, 0, Math.PI * 2), ORBIT.cyan, 1.4);
-      stroke(c, () => { c.moveTo(8, 11); c.lineTo(12, 6.5); c.lineTo(16, 11); c.moveTo(12, 6.5); c.lineTo(12, 15); }, ORBIT.white, 1.6);
-      noGlow(c);
-      return;
-    case "oneway":
-      // A gravity lift's chevrons, pointing the one way it goes.
-      glow(c, ORBIT.cyan, 4);
-      stroke(c, () => { c.moveTo(6, 12); c.lineTo(12, 6); c.lineTo(18, 12); c.moveTo(6, 18); c.lineTo(12, 12); c.lineTo(18, 18); }, ORBIT.cyan, 1.8);
-      noGlow(c);
-      return;
+    noGlow(c);
+    if (rule?.type === "keys" && rule.heart) fill(c, () => heartPath(c, 12, 15.5, 0.32), ORBIT.magenta);
+  },
+  potion(c, t) {
+    // A med canister: a glass tube of glowing fluid under a steel cap,
+    // teal, or rose for the red potion.
+    const color = t.color === "red" ? "#ff6f9a" : "#4fe3c8";
+    fill(c, () => roundRect(c, 8, 7, 8, 14, 3), "#1b2a44");
+    stroke(c, () => roundRect(c, 8, 7, 8, 14, 3), ORBIT.hullLight, 1);
+    glow(c, color, 5);
+    fill(c, () => roundRect(c, 9, 11, 6, 9, 2.2), color);
+    noGlow(c);
+    fill(c, () => c.rect(10, 12, 1.2, 6), "#ffffff88");
+    fill(c, () => roundRect(c, 7.5, 3.5, 9, 4, 1), ORBIT.hullLight);
+    fill(c, () => c.rect(9, 4.5, 6, 1), ORBIT.white);
+  },
+  attack(c) {
+    // A power cell's bolt, amber.
+    glow(c, ORBIT.amber, 6);
+    fill(c, () => { c.moveTo(14, 2.5); c.lineTo(6, 13.5); c.lineTo(11.5, 13.5); c.lineTo(9.5, 21.5); c.lineTo(18, 9.5); c.lineTo(12.5, 9.5); c.closePath(); }, ORBIT.amber);
+    noGlow(c);
+    fill(c, () => { c.moveTo(13, 5); c.lineTo(8.5, 12); c.lineTo(10.5, 12); c.closePath(); }, "#fff0c8");
+  },
+  defense(c) {
+    // A shield emitter: two cyan hexagons, one inside the other.
+    glow(c, ORBIT.cyan, 5);
+    stroke(c, () => hexagon(c, 12, 12, 8.5), ORBIT.cyan, 1.6);
+    noGlow(c);
+    fill(c, () => hexagon(c, 12, 12, 4.5), "#7fe3ff55");
+    stroke(c, () => hexagon(c, 12, 12, 4.5), ORBIT.cyan, 1);
+  },
+  reward: paintChest,
+  openedChest: paintChest,
+  treasure(c) {
+    // A star crystal: a four-pointed golden sparkle.
+    glow(c, "#ffd84a", 7);
+    fill(c, () => {
+      c.moveTo(12, 3); c.quadraticCurveTo(13, 11, 21, 12); c.quadraticCurveTo(13, 13, 12, 21);
+      c.quadraticCurveTo(11, 13, 3, 12); c.quadraticCurveTo(11, 11, 12, 3);
+    }, "#ffd84a");
+    noGlow(c);
+    fill(c, () => c.arc(12, 12, 1.8, 0, Math.PI * 2), "#fffbe8");
+  },
+  stairs(c) {
+    // A lift pad: a ring of light on the deck under a beam and an arrow
+    // pointing up.
+    fill(c, () => c.ellipse(12, 18, 9, 3.5, 0, 0, Math.PI * 2), ORBIT.hullDark);
+    fill(c, () => { c.moveTo(4.5, 18); c.lineTo(7, 4); c.lineTo(17, 4); c.lineTo(19.5, 18); c.closePath(); }, "#7fe3ff22");
+    glow(c, ORBIT.cyan, 5);
+    stroke(c, () => c.ellipse(12, 18, 9, 3.5, 0, 0, Math.PI * 2), ORBIT.cyan, 1.4);
+    stroke(c, () => { c.moveTo(8, 11); c.lineTo(12, 6.5); c.lineTo(16, 11); c.moveTo(12, 6.5); c.lineTo(12, 15); }, ORBIT.white, 1.6);
+    noGlow(c);
+  },
+  oneway(c) {
+    // A gravity lift's chevrons, pointing the one way it goes.
+    glow(c, ORBIT.cyan, 4);
+    stroke(c, () => { c.moveTo(6, 12); c.lineTo(12, 6); c.lineTo(18, 12); c.moveTo(6, 18); c.lineTo(12, 12); c.lineTo(18, 18); }, ORBIT.cyan, 1.8);
+    noGlow(c);
+  },
+});
+/** A reward chest, shut or opened (`reward`, `openedChest`). */
+function paintChest(c: CanvasRenderingContext2D, t: Tile) {
+  // A supply pod: a rounded crate with an amber band and a status
+  // light; open and dark once emptied.
+  if (t.kind === "openedChest") {
+    fill(c, () => roundRect(c, 4, 11, 16, 9, 2), ORBIT.hullDark);
+    stroke(c, () => roundRect(c, 4, 11, 16, 9, 2), ORBIT.hullLight, 1);
+    stroke(c, () => { c.moveTo(4.5, 10); c.lineTo(7, 4.5); c.lineTo(18, 4.5); c.lineTo(19.5, 10); }, ORBIT.hullLight, 1);
+    return;
   }
+  fill(c, () => roundRect(c, 4, 7, 16, 13, 3), ORBIT.hullLight);
+  fill(c, () => c.rect(4, 12, 16, 3), ORBIT.amber);
+  fill(c, () => c.rect(4, 9.5, 16, 0.8), ORBIT.hull);
+  glow(c, ORBIT.green, 4);
+  fill(c, () => c.arc(17, 17.5, 1.1, 0, Math.PI * 2), ORBIT.green);
+  noGlow(c);
 }
 
 function hexagon(c: CanvasRenderingContext2D, x: number, y: number, r: number) {

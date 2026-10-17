@@ -1,4 +1,4 @@
-import type { ThemedBoard } from "./themed-boards.ts";
+import type { ThemedBoard } from "./themed-board.ts";
 import { CHUNK, COLORS } from "./config.ts";
 import { drawCornerBricks, drawTerrain, themeAt, type Corner } from "./themes.ts";
 import { tileRandom } from "./random.ts";

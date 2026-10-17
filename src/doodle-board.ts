@@ -2,7 +2,7 @@ import type { KeyColor } from "./config.ts";
 import type { EnemyStrength, Tile, Torch } from "./entities.ts";
 import type { Facing } from "./shown.ts";
 import { forEachViewTile, toTileSpace, type FrameContext } from "./render-frame.ts";
-import type { ThemedBoard } from "./themed-boards.ts";
+import { contentsFrom, type ThemedBoard } from "./themed-board.ts";
 import { tileHash } from "./ascii-glyphs.ts";
 import { rankChevrons } from "./rank-chevrons.ts";
 
@@ -280,133 +280,128 @@ const ENEMIES: Record<EnemyStrength, (c: CanvasRenderingContext2D) => void> = {
 };
 
 /** One tile's contents in tile space (24x24). */
-function contents(c: CanvasRenderingContext2D, t: Tile) {
-  switch (t.kind) {
-    case "enemy": {
-      const e = t.enemy, strength = e?.strength ?? "normal";
-      (ENEMIES[strength] ?? ENEMIES.normal)(c);
-      rankChevrons(c, strength, DOODLE.red, DOODLE.ink);
-      // A Ranged enemy's arrow at the top right, and a Fast enemy's
-      // speed lines there, or below the arrow when it has both.
-      if (e?.ranged) {
-        stroke(c, [[17, 6], [22, 1]], 60, DOODLE.ink, 1.2);
-        stroke(c, [[18.5, 1], [22, 1], [22, 4.5]], 61, DOODLE.ink, 1.2);
-      }
-      const fy = e?.ranged ? 7 : 0;
-      if (e?.fast) for (let i = 0; i < 3; i++) stroke(c, [[17 + i * 0.6, 1.5 + fy + i * 1.6], [22, 1.5 + fy + i * 1.6]], 62 + i, DOODLE.blue, 1);
+const contents = contentsFrom({
+  enemy(c, t) {
+    const e = t.enemy, strength = e?.strength ?? "normal";
+    (ENEMIES[strength] ?? ENEMIES.normal)(c);
+    rankChevrons(c, strength, DOODLE.red, DOODLE.ink);
+    // A Ranged enemy's arrow at the top right, and a Fast enemy's
+    // speed lines there, or below the arrow when it has both.
+    if (e?.ranged) {
+      stroke(c, [[17, 6], [22, 1]], 60, DOODLE.ink, 1.2);
+      stroke(c, [[18.5, 1], [22, 1], [22, 4.5]], 61, DOODLE.ink, 1.2);
+    }
+    const fy = e?.ranged ? 7 : 0;
+    if (e?.fast) for (let i = 0; i < 3; i++) stroke(c, [[17 + i * 0.6, 1.5 + fy + i * 1.6], [22, 1.5 + fy + i * 1.6]], 62 + i, DOODLE.blue, 1);
+  },
+  key(c, t) {
+    // A key in the key's colour: a ring, a shaft and two teeth.
+    const color = keyColor(t.color);
+    shape(c, () => handPath(c, [[11, 11], [20, 11], [20, 13.5], [19, 13.5], [19, 16], [17, 16], [17, 13.5], [15.5, 13.5], [15.5, 15], [13.5, 15], [13.5, 13.5], [11, 13.5]], 70, true, 0.2), color, 1.3);
+    shape(c, () => blobPath(c, 7.5, 12.2, 4.4, 4.4, 71), color, 1.5);
+    shape(c, () => c.arc(7.5, 12.2, 1.6, 0, Math.PI * 2), DOODLE.paper, 1.1);
+  },
+  door(c, t) {
+    const rule = t.door;
+    if (rule?.type === "wood") {
+      // Planks nailed across with a big X.
+      shape(c, () => handPath(c, [[3, 3], [21, 3], [21, 21], [3, 21]], 80, true, 0.4), DOODLE.tan, 1.6);
+      for (const y of [9, 15]) stroke(c, [[3, y], [21, y]], 81 + y, DOODLE.brown, 1);
+      stroke(c, [[4, 4], [20, 20]], 82, DOODLE.brown, 2.2);
+      stroke(c, [[20, 4], [4, 20]], 83, DOODLE.brown, 2.2);
       return;
     }
-    case "key": {
-      // A key in the key's colour: a ring, a shaft and two teeth.
-      const color = keyColor(t.color);
-      shape(c, () => handPath(c, [[11, 11], [20, 11], [20, 13.5], [19, 13.5], [19, 16], [17, 16], [17, 13.5], [15.5, 13.5], [15.5, 15], [13.5, 15], [13.5, 13.5], [11, 13.5]], 70, true, 0.2), color, 1.3);
-      shape(c, () => blobPath(c, 7.5, 12.2, 4.4, 4.4, 71), color, 1.5);
-      shape(c, () => c.arc(7.5, 12.2, 1.6, 0, Math.PI * 2), DOODLE.paper, 1.1);
+    if (rule?.type === "fullHp") {
+      // A pink door with a red heart on it.
+      doorFrame(c, DOODLE.pink);
+      heart(c);
       return;
     }
-    case "door": {
-      const rule = t.door;
-      if (rule?.type === "wood") {
-        // Planks nailed across with a big X.
-        shape(c, () => handPath(c, [[3, 3], [21, 3], [21, 21], [3, 21]], 80, true, 0.4), DOODLE.tan, 1.6);
-        for (const y of [9, 15]) stroke(c, [[3, y], [21, y]], 81 + y, DOODLE.brown, 1);
-        stroke(c, [[4, 4], [20, 20]], 82, DOODLE.brown, 2.2);
-        stroke(c, [[20, 4], [4, 20]], 83, DOODLE.brown, 2.2);
-        return;
-      }
-      if (rule?.type === "fullHp") {
-        // A pink door with a red heart on it.
-        doorFrame(c, DOODLE.pink);
-        heart(c);
-        return;
-      }
-      doorFrame(c, DOODLE.brown);
-      // A band across the door per key it takes, in that key's colour.
-      const keys = rule?.type === "keys" ? rule.keys : t.color ? [t.color] : [];
-      const n = Math.max(1, keys.length);
-      for (let i = 0; i < n; i++) {
-        const y = 12 - (n - 1) * 2 + i * 4 - 1.5;
-        shape(c, () => handPath(c, [[5.5, y], [18.5, y], [18.5, y + 3], [5.5, y + 3]], 90 + i, true, 0.25), keyColor(keys[i]), 1);
-      }
-      if (rule?.type === "keys" && rule.heart) shape(c, () => heartPath(c, 12, 15.5, 0.32), DOODLE.red, 0.9);
-      return;
+    doorFrame(c, DOODLE.brown);
+    // A band across the door per key it takes, in that key's colour.
+    const keys = rule?.type === "keys" ? rule.keys : t.color ? [t.color] : [];
+    const n = Math.max(1, keys.length);
+    for (let i = 0; i < n; i++) {
+      const y = 12 - (n - 1) * 2 + i * 4 - 1.5;
+      shape(c, () => handPath(c, [[5.5, y], [18.5, y], [18.5, y + 3], [5.5, y + 3]], 90 + i, true, 0.25), keyColor(keys[i]), 1);
     }
-    case "potion": {
-      // A round flask on a cork: blue, the red potion red.
-      const color = t.color === "red" ? DOODLE.red : DOODLE.blue;
-      shape(c, () => blobPath(c, 12, 15, 6.5, 6, 100), DOODLE.paper, 0);
-      shape(c, () => {
-        c.moveTo(6, 15);
-        c.quadraticCurveTo(12, 13, 18, 15);
-        c.quadraticCurveTo(18, 21, 12, 21);
-        c.quadraticCurveTo(6, 21, 6, 15);
-      }, color, 0);
-      shape(c, () => handPath(c, [[10, 9], [10, 5], [14, 5], [14, 9]], 101, false, 0.2), DOODLE.paper, 1.3);
-      shape(c, () => blobPath(c, 12, 15, 6.5, 6, 100), null, 1.6);
-      shape(c, () => handPath(c, [[10, 2.5], [14, 2.5], [14, 5], [10, 5]], 102, true, 0.2), DOODLE.tan, 1.1);
-      c.fillStyle = DOODLE.paper;
-      c.fillRect(8.5, 16, 1.5, 2.5);
-      return;
-    }
-    case "attack":
-      // A sword: a grey blade, a brown cross guard and grip.
-      shape(c, () => handPath(c, [[11, 15], [11, 3.5], [12, 1.5], [13, 3.5], [13, 15]], 110, true, 0.15), DOODLE.brick, 1.3);
-      shape(c, () => handPath(c, [[7, 15], [17, 15], [17, 17], [7, 17]], 111, true, 0.2), DOODLE.yellow, 1.2);
-      shape(c, () => handPath(c, [[11, 17], [13, 17], [13, 22], [11, 22]], 112, true, 0.15), DOODLE.brown, 1.2);
-      return;
-    case "defense":
-      // A shield: blue, a yellow cross on it.
-      shape(c, () => {
-        c.moveTo(4.5, 4.5);
-        c.quadraticCurveTo(12, 2, 19.5, 4.5);
-        c.quadraticCurveTo(20, 16, 12, 21.5);
-        c.quadraticCurveTo(4, 16, 4.5, 4.5);
-      }, DOODLE.blue, 1.6);
-      stroke(c, [[12, 5], [12, 18]], 120, DOODLE.yellow, 2.2);
-      stroke(c, [[6.5, 10], [17.5, 10]], 121, DOODLE.yellow, 2.2);
-      return;
-    case "reward":
-    case "openedChest": {
-      // A brown chest with a yellow lock; its lid thrown back and nothing
-      // in it once emptied.
-      if (t.kind === "openedChest") {
-        shape(c, () => handPath(c, [[4, 4], [20, 4], [20, 10], [4, 10]], 130, true, 0.3), DOODLE.brown, 1.4);
-        shape(c, () => handPath(c, [[3.5, 11], [20.5, 11], [20.5, 21], [3.5, 21]], 131, true, 0.3), DOODLE.brown, 1.6);
-        shape(c, () => handPath(c, [[5.5, 12.5], [18.5, 12.5], [18.5, 14.5], [5.5, 14.5]], 132, true, 0.2), DOODLE.ink, 0);
-        return;
+    if (rule?.type === "keys" && rule.heart) shape(c, () => heartPath(c, 12, 15.5, 0.32), DOODLE.red, 0.9);
+  },
+  potion(c, t) {
+    // A round flask on a cork: blue, the red potion red.
+    const color = t.color === "red" ? DOODLE.red : DOODLE.blue;
+    shape(c, () => blobPath(c, 12, 15, 6.5, 6, 100), DOODLE.paper, 0);
+    shape(c, () => {
+      c.moveTo(6, 15);
+      c.quadraticCurveTo(12, 13, 18, 15);
+      c.quadraticCurveTo(18, 21, 12, 21);
+      c.quadraticCurveTo(6, 21, 6, 15);
+    }, color, 0);
+    shape(c, () => handPath(c, [[10, 9], [10, 5], [14, 5], [14, 9]], 101, false, 0.2), DOODLE.paper, 1.3);
+    shape(c, () => blobPath(c, 12, 15, 6.5, 6, 100), null, 1.6);
+    shape(c, () => handPath(c, [[10, 2.5], [14, 2.5], [14, 5], [10, 5]], 102, true, 0.2), DOODLE.tan, 1.1);
+    c.fillStyle = DOODLE.paper;
+    c.fillRect(8.5, 16, 1.5, 2.5);
+  },
+  attack(c) {
+    // A sword: a grey blade, a brown cross guard and grip.
+    shape(c, () => handPath(c, [[11, 15], [11, 3.5], [12, 1.5], [13, 3.5], [13, 15]], 110, true, 0.15), DOODLE.brick, 1.3);
+    shape(c, () => handPath(c, [[7, 15], [17, 15], [17, 17], [7, 17]], 111, true, 0.2), DOODLE.yellow, 1.2);
+    shape(c, () => handPath(c, [[11, 17], [13, 17], [13, 22], [11, 22]], 112, true, 0.15), DOODLE.brown, 1.2);
+  },
+  defense(c) {
+    // A shield: blue, a yellow cross on it.
+    shape(c, () => {
+      c.moveTo(4.5, 4.5);
+      c.quadraticCurveTo(12, 2, 19.5, 4.5);
+      c.quadraticCurveTo(20, 16, 12, 21.5);
+      c.quadraticCurveTo(4, 16, 4.5, 4.5);
+    }, DOODLE.blue, 1.6);
+    stroke(c, [[12, 5], [12, 18]], 120, DOODLE.yellow, 2.2);
+    stroke(c, [[6.5, 10], [17.5, 10]], 121, DOODLE.yellow, 2.2);
+  },
+  reward: paintChest,
+  openedChest: paintChest,
+  treasure(c) {
+    // A fat yellow star.
+    shape(c, () => {
+      for (let i = 0; i < 10; i++) {
+        const a = -Math.PI / 2 + (i / 10) * Math.PI * 2, r = i % 2 ? 4.2 : 10;
+        if (i === 0) c.moveTo(12 + Math.cos(a) * r, 12.5 + Math.sin(a) * r);
+        else c.lineTo(12 + Math.cos(a) * r, 12.5 + Math.sin(a) * r);
       }
-      shape(c, () => handPath(c, [[3.5, 8], [20.5, 8], [20.5, 21], [3.5, 21]], 133, true, 0.3), DOODLE.brown, 1.6);
-      shape(c, () => {
-        c.moveTo(3.5, 8);
-        c.quadraticCurveTo(12, 1, 20.5, 8);
-        c.closePath();
-      }, DOODLE.brown, 1.6);
-      stroke(c, [[3.5, 12], [20.5, 12]], 134, DOODLE.ink, 1.2);
-      shape(c, () => handPath(c, [[10, 10], [14, 10], [14, 15], [10, 15]], 135, true, 0.2), DOODLE.yellow, 1.2);
-      return;
-    }
-    case "treasure":
-      // A fat yellow star.
-      shape(c, () => {
-        for (let i = 0; i < 10; i++) {
-          const a = -Math.PI / 2 + (i / 10) * Math.PI * 2, r = i % 2 ? 4.2 : 10;
-          if (i === 0) c.moveTo(12 + Math.cos(a) * r, 12.5 + Math.sin(a) * r);
-          else c.lineTo(12 + Math.cos(a) * r, 12.5 + Math.sin(a) * r);
-        }
-        c.closePath();
-      }, DOODLE.yellow, 1.6);
-      spray(c, 19, 5, 2.4, 8, 140, DOODLE.orange);
-      return;
-    case "stairs":
-      // Steps going up to the right, drawn as one zigzag line, the space
-      // under them filled grey.
-      shape(c, () => handPath(c, [[2.5, 21.5], [2.5, 17], [8, 17], [8, 12], [13.5, 12], [13.5, 7], [19, 7], [19, 2.5], [21.5, 2.5], [21.5, 21.5]], 150, true, 0.25), DOODLE.brick, 1.6);
-      return;
-    case "oneway":
-      // A fat lime arrow pointing the one way it goes.
-      shape(c, () => handPath(c, [[12, 2.5], [21, 12], [16, 12], [16, 21.5], [8, 21.5], [8, 12], [3, 12]], 160, true, 0.3), DOODLE.lime, 1.6);
-      return;
+      c.closePath();
+    }, DOODLE.yellow, 1.6);
+    spray(c, 19, 5, 2.4, 8, 140, DOODLE.orange);
+  },
+  stairs(c) {
+    // Steps going up to the right, drawn as one zigzag line, the space
+    // under them filled grey.
+    shape(c, () => handPath(c, [[2.5, 21.5], [2.5, 17], [8, 17], [8, 12], [13.5, 12], [13.5, 7], [19, 7], [19, 2.5], [21.5, 2.5], [21.5, 21.5]], 150, true, 0.25), DOODLE.brick, 1.6);
+  },
+  oneway(c) {
+    // A fat lime arrow pointing the one way it goes.
+    shape(c, () => handPath(c, [[12, 2.5], [21, 12], [16, 12], [16, 21.5], [8, 21.5], [8, 12], [3, 12]], 160, true, 0.3), DOODLE.lime, 1.6);
+  },
+});
+/** A reward chest, shut or opened (`reward`, `openedChest`). */
+function paintChest(c: CanvasRenderingContext2D, t: Tile) {
+  // A brown chest with a yellow lock; its lid thrown back and nothing
+  // in it once emptied.
+  if (t.kind === "openedChest") {
+    shape(c, () => handPath(c, [[4, 4], [20, 4], [20, 10], [4, 10]], 130, true, 0.3), DOODLE.brown, 1.4);
+    shape(c, () => handPath(c, [[3.5, 11], [20.5, 11], [20.5, 21], [3.5, 21]], 131, true, 0.3), DOODLE.brown, 1.6);
+    shape(c, () => handPath(c, [[5.5, 12.5], [18.5, 12.5], [18.5, 14.5], [5.5, 14.5]], 132, true, 0.2), DOODLE.ink, 0);
+    return;
   }
+  shape(c, () => handPath(c, [[3.5, 8], [20.5, 8], [20.5, 21], [3.5, 21]], 133, true, 0.3), DOODLE.brown, 1.6);
+  shape(c, () => {
+    c.moveTo(3.5, 8);
+    c.quadraticCurveTo(12, 1, 20.5, 8);
+    c.closePath();
+  }, DOODLE.brown, 1.6);
+  stroke(c, [[3.5, 12], [20.5, 12]], 134, DOODLE.ink, 1.2);
+  shape(c, () => handPath(c, [[10, 10], [14, 10], [14, 15], [10, 15]], 135, true, 0.2), DOODLE.yellow, 1.2);
 }
 
 /** A door in its frame: a slab of `color` with a yellow knob. */
