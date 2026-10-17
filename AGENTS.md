@@ -141,7 +141,7 @@ While iterating, run only the tests for the area you touched, then `npm test` on
 | Goals, Missions and Events (`goals.ts`, `src/missions/`, `src/events/`) | `tests/goals.test.ts tests/missions.test.ts tests/events.test.ts tests/shop.test.ts` |
 | Shrines (`shrines.ts`, `game/shrine-desk.ts`) | `tests/shrines.test.ts tests/goals.test.ts tests/archives.test.ts tests/save.test.ts` |
 | Saves and settings | `tests/save.test.ts tests/settings.test.ts` |
-| Board drawing, lighting, decor art | `tests/render-calls.test.ts tests/lighting-passes.test.ts tests/art-modules.test.ts tests/terrain-paint.test.ts tests/decor.test.ts` |
+| Board drawing, lighting, decor art | `tests/render-calls.test.ts tests/lighting-passes.test.ts tests/art-modules.test.ts tests/terrain-paint.test.ts tests/decor.test.ts tests/themed-boards.test.ts` |
 | Outside and weather | `tests/outside*.test.ts tests/outdoor-art.test.ts tests/torch-light.test.ts` |
 | Defend (`src/defend/`) | `tests/defend*.test.ts` |
 
