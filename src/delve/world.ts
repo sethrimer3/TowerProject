@@ -7,6 +7,7 @@ import { breakTorch, placeTorches, torchesLeft } from "../torches.ts";
 import { tierCells, tierTile } from "../tiers.ts";
 import { fastCells } from "../fast-enemies.ts";
 import { rangedCells, wounded, woundMore } from "../ranged.ts";
+import { flyingCells } from "../flying.ts";
 import { tournamentStatFactor, tournamentTile } from "../tournament/run.ts";
 import { addEnemies, extraGround, extrasKey, extrasSeed, hasExtras, type ExtraEnemies } from "../more-enemies.ts";
 import { guardedTile, holdsShield, placeShield, walkDistances, type Shield } from "../shielded.ts";
@@ -227,7 +228,8 @@ export class World implements Board {
     if (!chunk) {
       // Each enemy rolls Fast by its own equivalent floor.
       const floorAt = (x: number, y: number) => Math.floor(depthAt(this.seed, x, y, ownerAt(this.seed, x, y), this.tier) / 10) + 1;
-      const cells = rangedCells(fastCells(tierCells(this.generated(index), this.tier), "delve", this.tier, this.seed, floorAt), this.tier, this.seed, floorAt);
+      const lifted = flyingCells(tierCells(this.generated(index), this.tier), this.tier, this.seed, floorAt);
+      const cells = rangedCells(fastCells(lifted, "delve", this.tier, this.seed, floorAt), this.tier, this.seed, floorAt);
       chunk = this.run.tournament ? new Map([...cells].map(([k, t]) => [k, this.inLeague(t)])) : cells;
       this.chunks.set(index, chunk);
     }
@@ -293,9 +295,10 @@ export class World implements Board {
   }
   /** The enemy as generated keeps its wound in the changes. */
   wound(x: number, y: number, damage: number) {
-    if (this.tile(x, y).kind !== "enemy") return;
+    const t = this.tile(x, y);
+    if (t.kind !== "enemy" && !t.flyer) return;
     const k = point(x, y), raw = this.changes[k] ?? this.chunks.get(Math.floor(y / CHUNK))?.get(k);
-    if (raw?.kind === "enemy") this.changes[k] = woundMore(raw, damage);
+    if (raw?.kind === "enemy" || raw?.flyer) this.changes[k] = woundMore(raw, damage);
   }
   private torchAreas = new Map<number, Torch[]>();
   /** The torch list and lit tiles last worked out: the list until the areas

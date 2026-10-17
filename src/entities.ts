@@ -36,6 +36,19 @@ export type Enemy = {
   fast?: true;
   /** A Ranged enemy (ranged.ts) shoots the hero from a distance. */
   ranged?: true;
+  /** A Flying enemy (flying.ts) hovers over a floor tile (`Tile.flyer`):
+   * it shoots the hero as a Ranged one does, and the hero can only shoot
+   * it, walking under it as over open floor. */
+  flying?: true;
+  /** An Aggroed enemy (flying.ts) closes on the hero, a step each time its
+   * `stride` charge (whole charge units, as a Ranged enemy's cooldown) is
+   * full; a Flying enemy becomes one once an arrow wounds it. */
+  aggro?: true;
+  stride?: number;
+  /** Where an enemy that has moved (an Aggroed one) stood as the board made
+   * it, by `point`: its loot is keyed there (`RunPurse.killKey`), wherever
+   * it falls. */
+  home?: string;
   /** A Shielded enemy (shielded.ts) casts a bubble that cuts the hero's
    * damage to every enemy within it. */
   shielded?: true;
@@ -61,8 +74,10 @@ export type DoorRule =
    * for `durability` HP, which DEF doesn't reduce (doors.ts). */
   | { type: "wood"; durability: number };
 /** `wound`: the HP the hero's arrows have taken off the enemy standing
- * here (ranged.ts); the board reads its HP that much lower. */
-export type Tile = { kind: Kind; amount?: number; color?: KeyColor; door?: DoorRule; enemy?: Enemy; tier?: ChestTier; wound?: number };
+ * here (ranged.ts); the board reads its HP that much lower. `flyer`: the
+ * Flying enemy hovering over this open floor tile (flying.ts), which the
+ * hero walks under; its wound is the tile's `wound`. */
+export type Tile = { kind: Kind; amount?: number; color?: KeyColor; door?: DoorRule; enemy?: Enemy; flyer?: Enemy; tier?: ChestTier; wound?: number };
 export type Point = { x: number; y: number };
 /** A stationary wall-mounted light source, anchored to a walkable floor
  * tile adjacent to a wall. Its visibility polygon is computed once (on

@@ -22,6 +22,8 @@ export interface HandHost {
   readonly mode: Mode;
   readonly hand: readonly CardId[];
   readonly keyCost: number;
+  /** How far the Archer's arrows reach, and the wrap (`HandAt.shotReach`). */
+  readonly shotReach?: { range: number; wrap: number };
 }
 
 /** What the hand's cards may do now (the hand rules): their badges' rules
@@ -41,6 +43,9 @@ export class HandRules implements HandAt {
   }
   get keyCost() {
     return this.host.keyCost;
+  }
+  get shotReach() {
+    return this.host.shotReach;
   }
   /** For each card of the hand, whether it is linked to the next (Card
    * Groups): the run's links, or in the forest the saved ones. */
@@ -111,10 +116,10 @@ export class HandRules implements HandAt {
   }
 
   /** Whether Skip on card `card` rolls for its target at (x, y): never for
-   * a boss, the Delve's STAIRS card's climb (no stairs), or a torch (no tile
-   * to vanish). */
+   * a boss, the Delve's STAIRS card's climb (no stairs), a torch (no tile
+   * to vanish), or FLYING ENEMY (its path ends short of its target). */
   rollsSkip(card: CardId, x: number, y: number) {
-    if (!badgeOn(this.run.badges, card, "skip") || this.run.outside || card === "torch") return false;
+    if (!badgeOn(this.run.badges, card, "skip") || this.run.outside || card === "torch" || card === "flyingEnemy") return false;
     const t = this.world.tile(x, y);
     if (t.kind === "enemy" && (t.enemy!.strength === "boss" || t.enemy!.strength === "greaterBoss")) return false;
     return card !== "stairs" || t.kind === "stairs";

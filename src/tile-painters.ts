@@ -1,4 +1,5 @@
 import type { ThemedBoard } from "./themed-board.ts";
+import { wingMark } from "./flyer-art.ts";
 import { CHUNK, COLORS } from "./config.ts";
 import { drawCornerBricks, drawTerrain, themeAt, type Corner } from "./themes.ts";
 import { tileRandom } from "./random.ts";
@@ -412,14 +413,14 @@ const ENEMY_LOOK: Record<EnemyStrength, { rings: Ring[] }> = {
 const ENEMY_OUTLINE: Ring = { r: 1, color: "#0b0a0e", alpha: 1 };
 /** Room round a baked enemy for its outermost ring. */
 const ENEMY_MARGIN = 3;
-/** Baked enemies by name, tier, strength, whether it is Fast or Ranged, and whether the sprite art drew. */
+/** Baked enemies by name, tier, strength, whether it is Fast, Ranged or Flying, and whether the sprite art drew. */
 const bakedEnemies = new Map<string, HTMLCanvasElement>();
 
 function paintEnemy(c: CanvasRenderingContext2D, t: Tile, art: TileArt) {
   const e = t.enemy!;
   groundShadow(c, 12, 21, 8, 2.6, 0.4);
   const sprite = !art.spritesOff && enemySpriteReady(e.name);
-  const key = `${e.name}|${e.tier}|${e.strength}|${e.fast ? "fast" : ""}|${sprite}${e.ranged ? "|ranged" : ""}`;
+  const key = `${e.name}|${e.tier}|${e.strength}|${e.fast ? "fast" : ""}|${sprite}${e.ranged ? "|ranged" : ""}${e.flying ? "|flying" : ""}`;
   let baked = bakedEnemies.get(key);
   if (!baked) bakedEnemies.set(key, (baked = bakeEnemy(e, sprite)));
   c.drawImage(baked, -ENEMY_MARGIN, -ENEMY_MARGIN);
@@ -446,7 +447,9 @@ function bakeEnemy(e: Enemy, sprite: boolean) {
   oc.globalAlpha = 1;
   oc.drawImage(body, m, m);
   rankChevrons(oc, e.strength, CHEVRON, "#0b0a0e", m + 1, m + 1);
-  // A Ranged enemy's arrow takes the top right, the Fast mark moving below it.
+  // A Ranged enemy's arrow takes the top right (a Flying enemy's wing in
+  // its place), the Fast mark moving below it.
+  if (e.flying) wingMark(oc, m + 16, m + 1);
   if (e.ranged) rangedMark(oc, m + 16, m + 1);
   if (e.fast) fastMark(oc, m + 16, m + (e.ranged ? 8 : 1));
   return out;

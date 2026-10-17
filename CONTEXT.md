@@ -166,6 +166,14 @@ _Avoid_: swift, quick, first strike enemy
 An enemy that shoots the hero from a distance, walls and doors no obstacle, without beginning a fight: once the hero ends a turn within its reach (five sixths of the hero's Attack Range), then again each time its cooldown (10 turns, shorter further up) is ready. From the third tower and delve up, a share of the non-boss enemies are Ranged (a point under the Fast share), rolled apart from Fast, paying 1 Gold more. Its name starts with "Ranged" and its tile wears an arrow.
 _Avoid_: archer enemy, shooter, sniper
 
+**Flying enemy**:
+An enemy that hovers over open floor: the hero walks under it and can't fight it, only shoot it with the Archer's arrows, and it shoots the hero as a **Ranged enemy** does (and pays as one). From the fifth tower and delve up, a share of the non-boss enemies fly (the Ranged share), never Fast, Ranged or Shielded as well. Its name starts with "Flying" and its tile wears a wing.
+_Avoid_: flyer (in player-facing text), airborne enemy, bat
+
+**Aggroed**:
+Said of an enemy that closes in on the hero, a step along open floor each time it could shoot. A **Flying enemy** an arrow wounds becomes Aggroed.
+_Avoid_: enraged, hunting, chasing
+
 **Shielded enemy**:
 An enemy that casts a **bubble** round itself: while it stands, the hero's strikes and arrows on every enemy within the bubble, itself included, do 60% less after DEF. From the fourth tower and delve up, a share of floors hold one (4% at first, growing with the floor and the tower), the non-boss enemy nearest the way up; alone in its bubble, it may bring standard enemies in front of it. The bubble's radius grows from a tile to three by floor 4,000. It pays 1 Gold more. Its name starts with "Shielded" and its bubble is a glowing green ring.
 _Avoid_: shield enemy, guardian, aura
@@ -183,7 +191,7 @@ The unit distances are shown in on screen ("m"): one tile across. Attack Range, 
 _Avoid_: tiles (as a shown unit)
 
 **Volley**:
-A turn's shots, at the end of each turn inside a run: each ready **Ranged enemy** within reach shoots the hero, closest first, and then, unless a shot felled the hero, the **Archer**'s arrows fly.
+A turn's shots, at the end of each turn inside a run: each ready **Ranged enemy** or **Flying enemy** within reach shoots the hero, closest first, and then, unless a shot felled the hero, the **Archer**'s arrows fly; then each **Aggroed** enemy may step closer.
 _Avoid_: barrage, salvo
 
 **Wound**:

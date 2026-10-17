@@ -10,12 +10,13 @@ import { EQUIPMENT_CHEST_RARITY, SUPPLY_CHEST_MATERIALS } from "../src/equipment
 import { standardOf } from "../src/equipment/catalog.ts";
 import type { Tile } from "../src/entities.ts";
 
-test("only YELLOW, BLUE and RED KEY and CHEST carry a bonus, and KEY none", () => {
-  assert.deepEqual(CARD_IDS.filter((id) => cardBonus(id)), ["yellowKey", "blueKey", "chest", "redKey"]);
+test("only YELLOW, BLUE and RED KEY, CHEST and FLYING ENEMY carry a bonus, and KEY none", () => {
+  assert.deepEqual(CARD_IDS.filter((id) => cardBonus(id)), ["yellowKey", "blueKey", "chest", "redKey", "flyingEnemy"]);
   assert.deepEqual(cardBonus("yellowKey"), { key: { color: "yellow", percent: 5, gold: 1 } });
   assert.deepEqual(cardBonus("blueKey"), { key: { color: "blue", percent: 5, gold: 2 } });
   assert.deepEqual(cardBonus("redKey"), { key: { color: "red", percent: 5, gold: 3 } });
   assert.deepEqual(cardBonus("chest"), { chest: { supply: 1.5, equipment: 0.5 } });
+  assert.deepEqual(cardBonus("flyingEnemy"), { shot: { attack: 5, speed: 5 } });
   assert.equal(cardBonus("key"), undefined);
 });
 
@@ -29,8 +30,9 @@ test("a hand's bonuses add up by key colour, with the chest's chances", () => {
   assert.deepEqual(handBonus(["stairs", "yellowKey", "redKey", "chest"]), {
     keys: { yellow: { percent: 5, gold: 1 }, red: { percent: 5, gold: 3 } },
     chest: { supply: 1.5, equipment: 0.5 },
+    shot: { attack: 0, speed: 0 },
   });
-  assert.deepEqual(handBonus(["stairs", "key"]), { keys: {}, chest: { supply: 0, equipment: 0 } });
+  assert.deepEqual(handBonus(["stairs", "key"]), { keys: {}, chest: { supply: 0, equipment: 0 }, shot: { attack: 0, speed: 0 } });
 });
 
 const TILES: Record<string, Tile> = {

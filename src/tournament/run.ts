@@ -34,6 +34,7 @@ export const tournamentStatFactor = (league: League) => TIER_STEP_FACTORS[Math.m
 /** `tile` as it stands in a tournament run: an enemy `factor` times as
  * strong (after its tier's factor), anything else as it was. */
 export function tournamentTile(tile: Tile, factor: number): Tile {
+  if (tile.flyer) return { ...tile, flyer: tournamentTile({ kind: "enemy", enemy: tile.flyer }, factor).enemy };
   if (tile.kind !== "enemy" || !tile.enemy) return tile;
   const e: Enemy = tile.enemy, f = (n: number) => snap(n * factor);
   return { ...tile, enemy: { ...e, hp: f(e.hp), attack: f(e.attack), defense: f(e.defense) } };

@@ -1,5 +1,6 @@
 import { CARD_IDS, deckCards, type CardId } from "./cards.ts";
 import type { UpgradeId } from "./config.ts";
+import type { Save } from "./save-shape.ts";
 import { isRecord, wholeIn } from "./decode.ts";
 import { random } from "./random.ts";
 import { MORE_ENEMIES_CARDS, MORE_ENEMIES_PERCENTS } from "./more-enemies.ts";
@@ -284,7 +285,7 @@ export const validRunBadges = (v: unknown) =>
  * top level's) and a pick their level has opened; cards holding owned
  * badges, each on one card, among the cards the player owns, at most
  * `slots` on a card and none in conflict. */
-export function decodeBadges(raw: unknown, upgrades: Record<UpgradeId, number>, slots = 1): BadgesSave {
+export function decodeBadges(raw: unknown, upgrades: Record<UpgradeId, number>, slots = 1, goals?: Save["goals"]): BadgesSave {
   const m = defaultBadges();
   if (!isRecord(raw)) return m;
   if (isRecord(raw.owned)) for (const id of BADGE_IDS) {
@@ -293,7 +294,7 @@ export function decodeBadges(raw: unknown, upgrades: Record<UpgradeId, number>, 
     const level = badgeLevel(o.copies);
     m.owned[id] = { copies: o.copies, pick: wholeIn(o.pick, 0, level - 1) ? o.pick : 0 };
   }
-  const owned = deckCards(upgrades);
+  const owned = deckCards(upgrades, goals);
   if (isRecord(raw.cards)) for (const card of owned) {
     const saved: unknown = raw.cards[card], on: BadgeId[] = [];
     for (const id of Array.isArray(saved) ? saved : []) {

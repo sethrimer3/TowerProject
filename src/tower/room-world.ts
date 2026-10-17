@@ -7,6 +7,7 @@ import { tierCells, tierTile } from "../tiers.ts";
 import { foeTile, type FoeRule } from "../shrines.ts";
 import { fastCells } from "../fast-enemies.ts";
 import { rangedCells, wounded, woundMore } from "../ranged.ts";
+import { flyingCells } from "../flying.ts";
 import { addEnemies, extrasSeed, hasExtras, type ExtraEnemies } from "../more-enemies.ts";
 import { ENTRY } from "./embedder.ts";
 import { getTowerGateEnemy } from "../scaling.ts";
@@ -147,7 +148,8 @@ export class RoomWorld implements Board {
     const shielded = withShield(cells, seed, room, tier, torches);
     this.shield = shielded.shield;
     cells = shielded.cells;
-    this.cells = rangedCells(fastCells(tierCells(cells, tier), "tower", tier, seed, () => room + 1), tier, seed, () => room + 1);
+    const floorAt = () => room + 1;
+    this.cells = rangedCells(fastCells(flyingCells(tierCells(cells, tier), tier, seed, floorAt), "tower", tier, seed, floorAt), tier, seed, floorAt);
   }
   breakTorchAt(x: number, y: number): boolean {
     return breakTorch(this.torches, this.changes, x, y);
@@ -192,6 +194,6 @@ export class RoomWorld implements Board {
    * its wound in the changes; `tile` scales it, then takes the wound off. */
   wound(x: number, y: number, damage: number) {
     const k = point(x, y), raw = this.changes[k] ?? this.cells.get(k);
-    if (raw?.kind === "enemy") this.changes[k] = woundMore(raw, damage);
+    if (raw?.kind === "enemy" || raw?.flyer) this.changes[k] = woundMore(raw, damage);
   }
 }

@@ -1,4 +1,5 @@
 import { CHUNK, TOWER_HEIGHT, VIEWPORT_TILES } from "./config.ts";
+import { drawFlyers } from "./flyer-art.ts";
 import type { Game } from "./state.ts";
 import type { Tile, Torch } from "./entities.ts";
 import { TIER_BONUS_TENTHS, tierNumeral } from "./tiers.ts";
@@ -138,13 +139,17 @@ export class Renderer {
   draw(now: number) {
     const f = this.beginFrame(now);
     const themed = f.look.themed;
-    if (themed) drawThemedBoard(f, themed, this.enemyLunge, () => this.drawRoute(f));
+    if (themed) drawThemedBoard(f, themed, this.enemyLunge, () => this.drawRoute(f), this.game.run.player, this.game.mode === "delve" ? this.game.world.width : 0);
     else {
       // Ground first; in the dungeon the light then runs the frame (relief,
       // decor, shadows, contents, torches, route, hero, frame) over it.
       this.drawGround(f);
       if (f.look.outside) this.drawOutside(f);
-      else this.light.draw(f, this.litBoard(f));
+      else {
+        this.light.draw(f, this.litBoard(f));
+        // Flying enemies hover over it all, the hero included.
+        drawFlyers(f, this.game.run.player, this.game.mode === "delve" ? this.game.world.width : 0, (c, t, x, y) => this.tile(c, f, t, x, y, 1), false);
+      }
     }
     this.echoes.draw(f, themed ? (c, facing) => themed.hero(c, facing) : (c) => paintHero(c, f.look.spritesOff));
     this.drawOverlays(f);

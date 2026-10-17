@@ -194,7 +194,7 @@ export class DeckPage {
    * returns them, the rest ready to add. */
   private deckHtml(note: boolean) {
     const hand = this.ctx.game.save.hand, full = hand.length >= handSlots(this.ctx.game.save);
-    const cards = deckCards(this.ctx.game.save.upgrades).map((id) => {
+    const cards = deckCards(this.ctx.game.save.upgrades, this.ctx.game.save.goals).map((id) => {
       const name = CARDS[id].name;
       if (hand.includes(id)) {
         const stays = id === "stairs";

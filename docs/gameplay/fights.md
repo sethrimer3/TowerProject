@@ -43,6 +43,11 @@ A shot that costs HP costs the area's mastery, and one that leaves the hero no H
 The hand and Automove don't plan around shots.
 A dash is one turn: its shots come once it stops.
 A Ranged monster pays 1 Gold more, and one both Fast and Ranged 2 more.
+From Tower V and Delve V on, some monsters are **Flying** (as many as are Ranged: 12.75% at first, growing as Fast does; never a boss or a Shielded monster): named *Flying …*, with a wing at the top right of their tile, they hover a little above it.
+A Flying monster shoots the hero as a Ranged one does, from the same reach and as often, but it is never Fast or Ranged as well, and no fight can reach it: the hero walks under it as over open floor, and no card but **Flying Enemy** heads for it.
+While the hero stands under one, it shows half see-through.
+Only the Archer's arrows can hurt it, and it pays what a Ranged monster does.
+A Flying monster an arrow wounds turns **Aggroed**: it closes in on the hero along open floor (never over an item, a lit torch or another monster), a tile each time it could shoot, so 10 turns a tile at first, until it hovers over the hero.
 From Tower IV and Delve IV on, a floor may hold one **Shielded** monster (4% of floors at first, 1% more a tower and 1% more every 250 floors to floor 4,000): the monster nearest the way up, boss aside, named *Shielded …*, inside a glowing green bubble.
 While it stands, the hero's strikes and arrows on every monster in its bubble, itself included, do 60% less after DEF; a strike that gets past DEF still lands, so no monster becomes unbeatable, and the inspect panel and damage numbers count the cut.
 Felling it bursts the bubble at once.
@@ -59,7 +64,7 @@ At the end of each turn its arrow is ready, it shoots the closest monster within
 An arrow deals one of the hero's strikes: ATK (raised against bosses, critical hits rolled) less the monster's DEF, Piercing counted, healing by Lifesteal; its damage rises over the monster, whose HP bar shows what it has left.
 A wounded monster keeps its wound, so the fight that follows is shorter, and the wound counts in its inspect panel and damage number; undo takes an arrow back with the step.
 An arrow that fells a monster pays the kill as a fight would; one that fells an unwounded monster with a single arrow is an instakill, as Mug pays it.
-Only Ranged monsters shoot back: the rest strike only when the hero fights them.
+Only Ranged and Flying monsters shoot back: the rest strike only when the hero fights them.
 The arrow is ready every 10 turns (Attack Speed: 1 shot every 10 turns, more with training), a fraction of a turn carrying to the next; a ready arrow with no monster in reach waits, and fires the turn one comes in reach.
 Attack Range and Attack Speed join Offense training from Tower III's floors 20 and 30 ([Training](training.md)).
 **ATK / m** joins it from floor 50: each arrow's ATK is multiplied by 1 plus its value for every meter (tile) to its target, counted straight across (diagonals included), so a monster too well armored for an arrow up close may still be hurt, and shot, from further off.

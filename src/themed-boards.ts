@@ -1,4 +1,5 @@
 import type { ThemedBoard } from "./themed-board.ts";
+import { drawFlyers } from "./flyer-art.ts";
 import type { GameLook } from "./theme-collection.ts";
 import { forEachViewTile, tileTransform, toTileSpace, type FrameContext } from "./render-frame.ts";
 import { NEON_BOARD } from "./neon-board.ts";
@@ -36,7 +37,7 @@ export const themedBoardOf = (look: GameLook): ThemedBoard | null => (look === "
 
 /** The dungeon board in a Game theme's own art: ground, contents (the enemy struck leaning
  * into its lunge), torches, then the route and the hero. */
-export function drawThemedBoard(f: FrameContext, board: ThemedBoard, lunge: { x: number; y: number; dx: number; dy: number }, drawRoute: () => void) {
+export function drawThemedBoard(f: FrameContext, board: ThemedBoard, lunge: { x: number; y: number; dx: number; dy: number }, drawRoute: () => void, hero: { x: number; y: number }, wrap: number) {
   const c = f.c;
   board.ground(f);
   forEachViewTile(f, (x, y) => {
@@ -59,5 +60,6 @@ export function drawThemedBoard(f: FrameContext, board: ThemedBoard, lunge: { x:
   c.setTransform(tileTransform(f, f.playerX, f.playerY));
   board.hero(c, f.heroFacing);
   c.restore();
+  drawFlyers(f, hero, wrap, (ctx, t) => board.contents(ctx, t), true);
   board.over?.(f);
 }

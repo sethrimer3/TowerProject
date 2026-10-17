@@ -32,8 +32,10 @@ const CURRENCY_ICONS: Record<CurrencyId, () => string> = { gems: () => gemIcon("
  * the Archer Class a drawn bow and arrow, Attack Range an arrow flying past
  * a range ring, Attack Speed two arrows in a row, Training Discount a Gold
  * coin under a falling arrow, Card Groups two cards linked by a bracket and
- * a diamond, and every Shrine research a shrine's gate (`shrineIcon`). */
+ * a diamond, the Flying Enemy Card a card wearing a wing, and every Shrine
+ * research a shrine's gate (`shrineIcon`). */
 const UNLOCK_ICONS: Record<GoalUnlock, string> = {
+  flyingEnemyCard: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="2" width="15" height="20" rx="2" fill="#2a3346" stroke="#c9ced8" stroke-width="1.3"/><path d="M6.5 15c2-4.5 6-7.5 11-8.5-1 1.2-1.6 2.2-2 3.2 1-.2 1.8-.2 2.6 0-1 .9-1.8 1.8-2.4 2.8.8 0 1.5.2 2.1.5-2.6 1.6-6.4 2.4-11.3 2z" fill="#e8f2ff" stroke="#7fb6ff" stroke-width="1" stroke-linejoin="round"/></svg>`,
   trainingDiscount: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="13" r="7.5" fill="#6b4a0e" stroke="#ffd34d" stroke-width="1.5"/><circle cx="10" cy="13" r="4.6" fill="none" stroke="#ffe58a" stroke-width="1"/><path d="M19.5 2.5v9M16.6 8.6l2.9 2.9 2.9-2.9" fill="none" stroke="#8ff0a8" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
   cardGroups: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="2.5" width="8.5" height="12" rx="1.3" fill="#2a3346" stroke="#c9ced8" stroke-width="1.2"/><rect x="13.5" y="2.5" width="8.5" height="12" rx="1.3" fill="#2a3346" stroke="#c9ced8" stroke-width="1.2"/><path d="M6.25 17v3h11.5v-3" fill="none" stroke="#fff" stroke-width="1.3" stroke-linejoin="round"/><path d="M12 17.2l2.3 2.8-2.3 2.8-2.3-2.8z" fill="#fff" stroke="#1d2230" stroke-width=".8"/></svg>`,
   archer: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2.5c6 2.5 6 16.5 0 19" fill="none" stroke="#b07a42" stroke-width="2" stroke-linecap="round"/><path d="M7 2.5v19" stroke="#e6ebf2" stroke-width=".9"/><path d="M4 12h16" stroke="#c9ced8" stroke-width="1.5" stroke-linecap="round"/><path d="M17.5 9.5L21 12l-3.5 2.5z" fill="#ffd34d"/><path d="M4 12l-1.5-2M4 12l-1.5 2" stroke="#e86d7a" stroke-width="1.2" stroke-linecap="round"/></svg>`,
@@ -65,6 +67,9 @@ const UNLOCK_ICONS: Record<GoalUnlock, string> = {
 const TOWER_ICON = `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21.5V8.5H4.5v-5h3v2h2.2v-2h4.6v2h2.2v-2h3v5H18v13z" fill="#3a3f4b" stroke="#c9ced8" stroke-width="1.3" stroke-linejoin="round"/><path d="M10 21.5v-4a2 2 0 0 1 4 0v4z" fill="#ffd34d"/><rect x="11" y="10" width="2" height="3" rx=".5" fill="#ffd34d"/></svg>`;
 /** What each unlock does, shown once it is claimed and again whenever its claimed reward is pressed. */
 const UNLOCK_TUTORIALS: Record<GoalUnlock, string> = {
+  flyingEnemyCard: `<p>The Flying Enemy card joins your deck: it moves you toward the closest Flying enemy your arrows can hurt, stops once one is within your Attack Range, and waits there while your arrows fly.</p>` +
+    `<p>While it is in your hand, your arrows strike with 5% more ATK and charge 5% faster.</p>` +
+    `<p class="hint">Flying enemies hover out of reach of your sword: walk under them freely, but only arrows can bring them down. A Flying enemy an arrow wounds comes after you.</p>`,
   trainingDiscount: `<p>Training Discount opens in the Archives: research it, and every rank a trainer trains costs 0.5% less Gold a level, up to 49.5% at level 99.</p>` +
     `<p class="hint">Training points and a run's Silver cost the same as ever.</p>`,
   cardGroups: `<p>Card Groups opens on the Deck: tap a diamond under the hand, between two cards, to link them into a group. The cards of a group share one priority: of every target any of them can reach, the hand heads for the closest.</p>` +

@@ -59,11 +59,26 @@ export function rangedCells(cells: Map<string, Tile>, tier: number, seed: number
   return out;
 }
 
+/** The enemy a tile holds: one standing on it, or a Flying one hovering
+ * over it (`Tile.flyer`). */
+export const foeOn = (t: Tile): Enemy | undefined => (t.kind === "enemy" ? t.enemy : t.flyer);
+/** Whether `enemy` shoots the hero: a Ranged or Flying one. */
+export const shoots = (enemy: Enemy) => !!(enemy.ranged || enemy.flying);
+
 /** A tile as it stands once the hero's arrows have wounded its enemy: its
  * HP less the `wound` (kept on the tile, so its full HP is HP + wound). */
-export const wounded = (t: Tile): Tile => (t.wound && t.enemy ? { ...t, enemy: { ...t.enemy, hp: snap(Math.max(0, t.enemy.hp - t.wound)) } } : t);
-/** `raw` (a tile as generated) with `damage` more wound. */
-export const woundMore = (raw: Tile, damage: number): Tile => ({ ...raw, wound: snap((raw.wound ?? 0) + damage) });
+export const wounded = (t: Tile): Tile => {
+  if (!t.wound) return t;
+  const less = (e: Enemy) => ({ ...e, hp: snap(Math.max(0, e.hp - t.wound!)) });
+  return t.enemy ? { ...t, enemy: less(t.enemy) } : t.flyer ? { ...t, flyer: less(t.flyer) } : t;
+};
+/** `raw` (a tile as generated) with `damage` more wound. A Flying enemy
+ * wounded becomes Aggroed (flying.ts). */
+export const woundMore = (raw: Tile, damage: number): Tile => ({
+  ...raw,
+  ...(raw.flyer && !raw.flyer.aggro ? { flyer: { ...raw.flyer, aggro: true as const } } : {}),
+  wound: snap((raw.wound ?? 0) + damage),
+});
 
 /** Charge a Ranged enemy gains a turn, and what a shot costs it on
  * equivalent floor `floor`: 10 turns, a 500th of a turn less each floor (a
@@ -172,21 +187,24 @@ export const arrowBoost = (perTile: number, d2: number, percent: number, waited:
  * on this floor, by its tile. Absent charge is full. */
 export type Volleys = { turn: number; hero?: number; waited?: number; rapid?: number; foes?: Record<string, number> };
 
-/** An enemy within reach: where it stands, its tile, and its squared distance. */
+/** An enemy within reach: where it stands, its tile (a Flying enemy's as
+ * `enemy`, the tile still open floor), and its squared distance. */
 export type InReach = { x: number; y: number; tile: Tile & { enemy: Enemy }; d2: number };
 /** The enemies on `board` within `range` hundredths of a tile of `at`,
  * closest first (then lowest row, then column), walls and doors no
- * obstacle; on a board that wraps (`wrap`, its width) distances go round. */
+ * obstacle, a Flying enemy over `at` itself counted first; on a board that
+ * wraps (`wrap`, its width) distances go round. */
 export function enemiesWithin(board: { tile(x: number, y: number): Tile }, at: { x: number; y: number }, range: number, wrap = 0): InReach[] {
   const reach = Math.floor(range / 100), seen = new Set<string>(), found: InReach[] = [];
   for (let dy = -reach; dy <= reach; dy++)
     for (let dx = -reach; dx <= reach; dx++) {
       if (!within(dx, dy, range)) continue;
       const x = wrap ? (((at.x + dx) % wrap) + wrap) % wrap : at.x + dx, y = at.y + dy, k = `${x},${y}`;
-      if (seen.has(k) || (x === at.x && y === at.y)) continue;
+      if (seen.has(k)) continue;
       seen.add(k);
       const tile = board.tile(x, y);
-      if (tile.kind === "enemy" && tile.enemy) found.push({ x, y, tile: tile as InReach["tile"], d2: dx * dx + dy * dy });
+      if (tile.kind === "enemy" && tile.enemy && (x !== at.x || y !== at.y)) found.push({ x, y, tile: tile as InReach["tile"], d2: dx * dx + dy * dy });
+      else if (tile.flyer) found.push({ x, y, tile: { ...tile, enemy: tile.flyer }, d2: dx * dx + dy * dy });
     }
   return found.sort((a, b) => a.d2 - b.d2 || a.y - b.y || a.x - b.x);
 }

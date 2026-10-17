@@ -100,7 +100,9 @@ export class RunPurse {
    * spawned during the run's with its spawn number after it, since it may
    * stand where an enemy already fell and paid. */
   killKey(enemy: Enemy, x: number, y: number) {
-    const key = this.lootKey(x, y);
+    // An enemy that has moved keeps the loot key of the tile it was made on.
+    const [hx, hy] = enemy.home ? enemy.home.split(",").map(Number) as [number, number] : [x, y];
+    const key = this.lootKey(hx, hy);
     return enemy.spawn === undefined ? key : `${key}:s${enemy.spawn}`;
   }
 
@@ -175,11 +177,11 @@ export class RunPurse {
 
   /** A kill's Gold before the tier's bonus: by the enemy's strength, raised
    * by Gold Bonus training and research, multiplied (a Fast enemy paying
-   * `FAST_GOLD` more first, a Ranged one `RANGED_GOLD`, a Shielded one
+   * `FAST_GOLD` more first, a Ranged or Flying one `RANGED_GOLD`, a Shielded one
    * `SHIELDED_GOLD`), and for an
    * `instakill` (the hero's first strike ended it) by Mug research too. */
   private killGold(enemy: Enemy, instakill = false) {
-    const gold = snap(((ENEMY_GOLD[enemy.strength] + (enemy.fast ? FAST_GOLD : 0) + (enemy.ranged ? RANGED_GOLD : 0) + (enemy.shielded ? SHIELDED_GOLD : 0)) * this.goldBonus) / 10_000);
+    const gold = snap(((ENEMY_GOLD[enemy.strength] + (enemy.fast ? FAST_GOLD : 0) + (enemy.ranged || enemy.flying ? RANGED_GOLD : 0) + (enemy.shielded ? SHIELDED_GOLD : 0)) * this.goldBonus) / 10_000);
     return instakill ? snap((gold * researched(this.save.archives, "instakillGold")) / 100) : gold;
   }
 

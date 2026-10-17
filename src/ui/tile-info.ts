@@ -5,6 +5,7 @@ import type { Game, RouteEffects } from "../state.ts";
 import { POTION_HEAL, potionRestores, resolveStep, shardStat } from "../step-effects.ts";
 import { attackForFewerHits, instakill, lifestealHeal, netDamage, parryCut, predict, struckDamage, type CombatPrediction } from "../combat.ts";
 import { forecast as critForecast, type CritForecast } from "../crit-forecast.ts";
+import { arrowDamage, shotDamage } from "../ranged.ts";
 import { goalUnlocked } from "../goals.ts";
 import { chestReward, clearedInspiration } from "../tower/area-ledger.ts";
 import { doorColor, doorDescription, doorName, doorRule, drainsHp, KEY_NAMES } from "../doors.ts";
@@ -128,6 +129,20 @@ function enemyStats(e: Enemy, p: Player, r: CombatPrediction, gold: number) {
     + ` · ${stat(itemSprite("upgrade_defense", "stat-sprite"), "DEF", enemyStat(e.defense), ` (<span class="hit-hurt">-${enemyStat(r.hit)}</span>)`)}${coins}</span>`;
 }
 
+/** A Flying enemy's panel (flying.ts): its HP, its ATK with what each of
+ * its shots does to the hero, its DEF with what one of the hero's arrows
+ * takes off it before ATK / m and critical hits, and the Gold killing it
+ * would bank; then that only arrows reach it, and whether it is Aggroed. */
+function flyerInfo(e: Enemy, p: Player, gold: number) {
+  const shot = shotDamage(p, e).damage, arrow = Math.max(0, arrowDamage(p, e));
+  const coins = gold ? ` · ${stat(goldIcon(), "Gold", `<span class="hit-gold">${enemyStat(gold)}</span>`)}` : "";
+  const line = `<span>${stat(uiSprite("health", "stat-sprite"), "HP", enemyStat(e.hp))}`
+    + ` · ${stat(itemSprite("upgrade_attack", "stat-sprite"), "ATK", enemyStat(e.attack), ` (<span class="hit-hurt">-${enemyStat(shot)}</span>)`)}`
+    + ` · ${stat(itemSprite("upgrade_defense", "stat-sprite"), "DEF", enemyStat(e.defense), ` (<span class="hit-hurt">-${enemyStat(arrow)}</span>)`)}${coins}</span>`;
+  const aggro = e.aggro ? "<br><small>Aggroed: it closes in on you as fast as it shoots</small>" : "";
+  return `${line}<br><small>Flying: it shoots you from the air; only your arrows reach it, and you walk under it freely</small>${aggro}`;
+}
+
 /** What a Shielded enemy's bubble does to an enemy standing in it (shielded.ts). */
 const guardLine = (e: Enemy) => (e.guard ? `<br><small>Shielded: your strikes do ${e.guard}% less</small>` : "");
 
@@ -190,6 +205,7 @@ const DESCRIBE: Partial<Record<Kind, Describe>> = {
 export function tileInfo(g: Board, x: number, y: number): TileInfo {
   const t = g.world.tile(x, y);
   const describe = DESCRIBE[t.kind];
+  if (t.flyer) return { color: KIND_COLORS.enemy!, title: enemyTitle(t.flyer), body: flyerInfo(t.flyer, g.run.player, g.run.outside ? 0 : g.enemyGold(x, y)) };
   if (t.kind === "door") return { color: doorColor(t), ...describe!(t, g.run.player, g, { x, y }) };
   // A floor tile holding a lit torch is the torch.
   if (t.kind === "floor" && litTorches(g.world).has(point(x, y)))

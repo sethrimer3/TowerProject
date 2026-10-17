@@ -168,7 +168,10 @@ export const sameFoes = (a: FoeRule, b: FoeRule) =>
  * its own factor too, a Fast enemy's ATK by its), a boss striking first,
  * and a Fast enemy, with Fast Enemies Strike Second, striking second. */
 export function foeTile(tile: Tile, foes: FoeRule | undefined): Tile {
-  if (!foes || tile.kind !== "enemy" || !tile.enemy || sameFoes(foes, NO_FOES)) return tile;
+  if (!foes || sameFoes(foes, NO_FOES)) return tile;
+  // A Flying enemy over open floor takes the boons as one on the ground does.
+  if (tile.flyer) return { ...tile, flyer: foeTile({ kind: "enemy", enemy: tile.flyer }, foes).enemy };
+  if (tile.kind !== "enemy" || !tile.enemy) return tile;
   const e = tile.enemy, boss = e.strength === "boss" || e.strength === "greaterBoss";
   const enemy: Enemy = {
     ...e,

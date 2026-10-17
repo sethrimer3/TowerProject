@@ -160,6 +160,20 @@ A Ranged enemy (`src/ranged.ts`) shoots the hero from a distance, so a hero who 
 
 `tests/ranged.test.ts` covers it.
 
+### Flying (built)
+
+A Flying enemy (`src/flying.ts`) hovers over the floor: it can't be fought, only shot, so the Archer's arrows, and the FLYING ENEMY card (Tower V's floor 10 Goal) that stands the hero in reach of one, earn their keep.
+
+- **Who:** any enemy but a boss, Greater Boss or Shielded enemy, from Tower V and Delve V up, on its own roll.
+- **Share** (`flyingShare`): the Ranged share (12.75% on Tower V's floor 1).
+- **Roll:** one `tileRandom` number per run seed, floor and tile (`FLYING_SALT`), after the tier's factor and before the Fast and Ranged rolls (`flyingCells`), which then pass it by; its tile becomes open floor carrying it (`Tile.flyer`). It changes no stats.
+- **Shots:** as a Ranged enemy's.
+- **Aggroed:** an arrow that wounds it makes it Aggroed: it steps toward the hero along open floor each time a shot's worth of turns has charged (`aggroTurn`, `stride`), every Aggroed enemy by one shared walk to the hero (`walkToHero`).
+- **Pay:** as a Ranged enemy (`RANGED_GOLD`), its loot keyed to the tile it was made on (`home`) however far it moves.
+- **Look:** "Flying" before the rest of its name (*Flying Elite Goblin*), a wing at the tile's top right, drawn over the board a little above its tile, half see-through over the hero.
+
+`tests/flying.test.ts` covers it.
+
 ### Shielded (built)
 
 A Shielded enemy (`src/shielded.ts`) guards the enemies round it, so the way up asks the hero either to fight through a bubble at a cut or to fell the Shielded enemy first.

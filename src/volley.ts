@@ -12,7 +12,7 @@ import { guaranteedCrits } from "./combat.ts";
 import { critRule } from "./loadout.ts";
 import { trainedAmount } from "./config.ts";
 import { researched } from "./archives.ts";
-import { ARCHER_TICKS, archerTurn, arrowBoost, arrowDamage, charged, enemiesWithin, FOE_GAIN, foeRange, foeShotCost, held, ready, shotDamage, spent, type InReach, type Volleys } from "./ranged.ts";
+import { ARCHER_TICKS, archerTurn, arrowBoost, arrowDamage, charged, enemiesWithin, FOE_GAIN, foeOn, foeRange, foeShotCost, held, ready, shoots, shotDamage, spent, type InReach, type Volleys } from "./ranged.ts";
 import { tileRandom } from "./random.ts";
 import { snap } from "./exact.ts";
 
@@ -38,8 +38,9 @@ export type Volley = { at: number; flight: number; shots: Shot[] };
  * cleared as arrows land), whether its columns wrap (`wrap`, its width, or
  * 0), the equivalent floor (from 1) an enemy at (x, y) stands on, the hero,
  * the run's seed and volley state as the turn begins (`turn` already
- * counted), whether the hero is an Archer, and the ranks and research its
- * arrows read. */
+ * counted), whether the hero is an Archer, the ranks and research its
+ * arrows read, and the percent more Shot ATK and Attack Speed the hand's
+ * cards give while held (`handBonus` in cards.ts; none when absent). */
 export type VolleyTurn = {
   board: Pick<Board, "tile" | "clear" | "wound">;
   wrap: number;
@@ -49,6 +50,7 @@ export type VolleyTurn = {
   volleys: Volleys;
   archer: boolean;
   ranks: Pick<Save, "upgrades" | "training" | "archives">;
+  handShot?: { attack: number; speed: number };
 };
 /** An enemy an arrow felled: where, whether it fell to its first wound
  * (an instakill), and the arrow's critical applications. */
@@ -70,18 +72,19 @@ export function volleyTurn(turn: VolleyTurn): VolleyOutcome {
   return { volleys: v, shots, hp: hero.hp, hurt, ...(fell ? { fell } : {}), kills };
 }
 
-/** Each Ranged enemy's cooldown runs a turn, and those within reach that
- * are ready shoot the hero, closest first, until one fells it. */
+/** Each Ranged or Flying enemy's cooldown runs a turn, and those within
+ * reach that are ready shoot the hero, closest first, until one fells it. */
 function foesShoot({ board, wrap, floorOf }: VolleyTurn, p: Player, v: Volleys, shots: Shot[], range: number) {
   const foes = { ...v.foes }, costs = new Map<string, number>();
   for (const k of Object.keys(foes)) {
     const [x, y] = k.split(",").map(Number) as [number, number];
-    if (board.tile(x, y).enemy?.ranged) foes[k] = charged(foes[k], FOE_GAIN)!;
+    const foe = foeOn(board.tile(x, y));
+    if (foe && shoots(foe)) foes[k] = charged(foes[k], FOE_GAIN)!;
     else delete foes[k];
   }
   let fell: Enemy | undefined, hurt = false;
   for (const { x, y, tile } of enemiesWithin(board, p, foeRange(range), wrap)) {
-    if (!tile.enemy.ranged) continue;
+    if (!shoots(tile.enemy)) continue;
     const k = `${x},${y}`, cost = foeShotCost(floorOf(x, y));
     costs.set(k, cost);
     if (!ready(foes[k], cost)) continue;
@@ -119,7 +122,8 @@ function foesShoot({ board, wrap, floorOf }: VolleyTurn, p: Player, v: Volleys, 
  * counting the turn toward Charged Shot once that is researched. */
 function loose(turn: VolleyTurn, p: Player, v: Volleys, shots: Shot[], range: number) {
   const { board, wrap, ranks } = turn, perTile = trainedAmount(ranks, "attackPerTile"), percent = researched(ranks.archives, "chargedShotPercent");
-  const boost = (d2: number) => arrowBoost(perTile, d2, percent, v.waited ?? 0);
+  const shotAtk = turn.handShot?.attack ?? 0, speed = trainedAmount(ranks, "attackSpeed");
+  const boost = (d2: number) => (shotAtk ? snap(arrowBoost(perTile, d2, percent, v.waited ?? 0) * (1 + shotAtk / 100)) : arrowBoost(perTile, d2, percent, v.waited ?? 0));
   const hurts = (e: InReach) => arrowDamage(p, e.tile.enemy, 0, 1, boost(e.d2)) > 0;
   // A fixed number per run, turn, shot of the turn (the first keeping the
   // turn's own roll) and the hero's tile, for `salt`.
@@ -134,7 +138,7 @@ function loose(turn: VolleyTurn, p: Player, v: Volleys, shots: Shot[], range: nu
   };
   const kills: VolleyKill[] = [], crit = critRule(ranks), first = shots.length;
   let fired = 0;
-  const { clock, idle } = archerTurn({ charge: v.hero, rapid: v.rapid }, trainedAmount(ranks, "attackSpeed"), (rapid, tick) => {
+  const { clock, idle } = archerTurn({ charge: v.hero, rapid: v.rapid }, turn.handShot?.speed ? snap(speed * (1 + turn.handShot.speed / 100)) : speed, (rapid, tick) => {
     const inReach = enemiesWithin(board, p, range, wrap), target = inReach.find(hurts);
     if (!target) return false;
     const shot = fired++, from = shots.length;

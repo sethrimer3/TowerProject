@@ -103,7 +103,7 @@ export class NoticeDesk {
         return changed;
       }
       case "deck": {
-        const cards = deckCards(save.upgrades), changed = cards.length !== seen.cards.length || cards.some((id) => !seen.cards.includes(id));
+        const cards = deckCards(save.upgrades, save.goals), changed = cards.length !== seen.cards.length || cards.some((id) => !seen.cards.includes(id));
         seen.cards = cards;
         return changed;
       }
@@ -138,7 +138,7 @@ export class NoticeDesk {
   /** The deck holds a card (from a skill, a Goal or anywhere else) the
    * Deck page hasn't shown since it was earned. */
   private get newCard() {
-    return !!this.save.upgrades.combatStance && deckCards(this.save.upgrades).some((id) => !this.save.seen.cards.includes(id));
+    return !!this.save.upgrades.combatStance && deckCards(this.save.upgrades, this.save.goals).some((id) => !this.save.seen.cards.includes(id));
   }
 
   /** Training points can be spent and the hero has levelled up since the

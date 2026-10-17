@@ -40,13 +40,15 @@ import { TIERS } from "./tiers.ts";
  * rows that may make the Archer fire four times as fast for a while), and Tower II's Training Discount (floor
  * 80: the Archives' project that cuts a trainer's Gold) and Card Groups
  * (floor 90: the Deck links neighbouring cards of the hand into a group
- * whose cards share one priority, cards.ts). */
+ * whose cards share one priority, cards.ts), and Tower V's Flying Enemy
+ * Card (floor 10: the FLYING ENEMY card joins the deck, `GOAL_CARDS` in
+ * cards.ts). */
 export type GoalUnlock =
   | "damagePrediction" | "combatForecast" | "attackLore" | "warp" | "damageVisual" | "relativeDamageColor" | "equipment" | "tournament" | "events" | "researchSpeed"
   | "shardAttack" | "shardDefense" | "parryPercent"
   | "shrines" | "firstBoonChoice" | "improveTradeoffs" | "autoPickBoons" | "boonOptions" | "banBoons" | "autoPickRanking"
   | "badgeSlots" | "noteTaking" | "archer" | "attackRange" | "attackSpeed" | "attackPerTile" | "chargedShot" | "multishot" | "rapidFire"
-  | "trainingDiscount" | "cardGroups";
+  | "trainingDiscount" | "cardGroups" | "flyingEnemyCard";
 export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   damagePrediction: "Damage Prediction", combatForecast: "Combat Forecast", attackLore: "Attack Lore", warp: "Warp", damageVisual: "Damage Visual",
   relativeDamageColor: "Relative Damage Color", equipment: "Equipment", tournament: "Tournament", events: "Events",
@@ -56,7 +58,7 @@ export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   autoPickBoons: "Auto Pick Boons", boonOptions: "Boon Option Quantity", banBoons: "Ban Boons", autoPickRanking: "Auto Pick Ranking",
   badgeSlots: "Badge Slots", noteTaking: "Note Taking",
   archer: "Archer Class", attackRange: "Attack Range", attackSpeed: "Attack Speed", attackPerTile: "ATK / m", chargedShot: "Charged Shot", multishot: "Multishot", rapidFire: "Rapid Fire",
-  trainingDiscount: "Training Discount", cardGroups: "Card Groups",
+  trainingDiscount: "Training Discount", cardGroups: "Card Groups", flyingEnemyCard: "Flying Enemy Card",
 };
 /** What a checkpoint pays: an unlock, the next tower opened, or an amount of a currency. */
 export type GoalReward =
@@ -138,6 +140,7 @@ const TOWER_FOUR: Record<number, CheckpointSet> = {
 };
 /** Tower V's checkpoints that differ from the stub. */
 const TOWER_FIVE: Record<number, CheckpointSet> = {
+  10: { reward: unlock("flyingEnemyCard") },
   30: { reward: unlock("parryPercent") },
   40: { reward: unlock("banBoons") },
 };

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { BASE_HAND, BASE_HAND_SLOTS, CARDS, CARD_IDS, cardText, explainStuck, HAND_SLOT_GEMS, MAX_HAND_SLOTS, deckCards, handSlots, nextHandSlotGems, moveCard, placeCard, planHand, upgradeCard, type CardId } from "../src/cards.ts";
+import { BASE_HAND, BASE_HAND_SLOTS, CARDS, CARD_IDS, cardText, explainStuck, GOAL_CARDS, HAND_SLOT_GEMS, MAX_HAND_SLOTS, deckCards, handSlots, nextHandSlotGems, moveCard, placeCard, planHand, upgradeCard, type CardId } from "../src/cards.ts";
 import { defaults } from "../src/save.ts";
 import { UPGRADES } from "../src/config.ts";
 import type { Board, Position } from "../src/board.ts";
@@ -172,7 +172,11 @@ test("the deck starts as the base hand, and HEAL, YELLOW KEY, EQUIPMENT, BLUE KE
   assert.deepEqual(deckCards({ ...none, cardHeal: 1 }), ["stairs", "heal", "door", "key", "monster"]);
   assert.deepEqual(deckCards({ ...none, cardYellowKey: 1 }), ["stairs", "door", "key", "yellowKey", "monster"]);
   assert.deepEqual(deckCards({ ...none, cardBlueKey: 1 }), ["stairs", "door", "key", "blueKey", "monster"]);
-  assert.deepEqual(deckCards({ ...none, ...Object.fromEntries(UPGRADES.filter((u) => "card" in u).map((u) => [u.id, 1])) }), CARD_IDS);
+  const everyUpgrade = { ...none, ...Object.fromEntries(UPGRADES.filter((u) => "card" in u).map((u) => [u.id, 1])) };
+  assert.deepEqual(deckCards(everyUpgrade), CARD_IDS.filter((id) => !Object.values(GOAL_CARDS).includes(id)), "every card but a Goal's comes from an upgrade");
+  const goals = defaults().goals;
+  goals.claimed[5] = [10];
+  assert.deepEqual(deckCards(everyUpgrade, goals), CARD_IDS, "and Tower V's floor 10 Goal adds FLYING ENEMY");
   assert.equal(upgradeCard("cardYellowKey"), "yellowKey");
   assert.equal(upgradeCard("cardAtkUp"), "atkUp");
   assert.equal(upgradeCard("cardDefUp"), "defUp");

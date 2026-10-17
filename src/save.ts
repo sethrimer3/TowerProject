@@ -100,8 +100,11 @@ const validSpawned = (e: any) => validEnemy(e) && (e.spawn !== undefined || e.st
 /** An enemy the hero's arrows have wounded (ranged.ts): the generated or
  * spawned enemy, kept with its wound. */
 const validWounded = (v: any) => finite(v.wound) && v.wound > 0 && validEnemy(v.enemy);
+/** Open floor, maybe with a Flying enemy over it (flying.ts), generated
+ * or moved there, kept with its wound. */
+const validFloor = (v: any) => v.flyer === undefined ? v.wound === undefined : validEnemy(v.flyer) && (v.wound === undefined || (finite(v.wound) && v.wound > 0));
 const validChange = (v: any) =>
-  v?.kind === "floor" || v?.kind === "wall" ||
+  (v?.kind === "floor" && validFloor(v)) || v?.kind === "wall" ||
   (v?.kind === "enemy" && (v.wound === undefined ? validSpawned(v.enemy) : validWounded(v))) ||
   (v?.kind === "openedChest" && (v.tier === undefined || CHEST_TIERS.includes(v.tier))) ||
   (v?.kind === "reward" && CHEST_TIERS.includes(v.tier));
@@ -478,7 +481,7 @@ function decodeHand(raw: any, owned: CardId[], slots: number): CardId[] {
 }
 /** The dots' dismissals; a save without them has seen the deck it holds. */
 function decodeSeen(s: any, d: Save): Save["seen"] {
-  const cards = Array.isArray(s?.cards) ? CARD_IDS.filter((id) => s.cards.includes(id)) : deckCards(d.upgrades);
+  const cards = Array.isArray(s?.cards) ? CARD_IDS.filter((id) => s.cards.includes(id)) : deckCards(d.upgrades, d.goals);
   return { level: count(s?.level, 0), training: count(s?.training, 0), archives: count(s?.archives, 0), cards };
 }
 export function decode(raw: string | null): Save {
@@ -515,9 +518,9 @@ export function decode(raw: string | null): Save {
     d.defend = decodeDefendSave(s.defend);
     // Slots bought with Gems count only with Larger Hand, which opens them.
     if (d.upgrades.largerHand) d.handSlots = count(s.handSlots, 0, HAND_SLOT_GEMS.length);
-    d.hand = decodeHand(s.hand, deckCards(d.upgrades), handSlots(d));
+    d.hand = decodeHand(s.hand, deckCards(d.upgrades, d.goals), handSlots(d));
     d.cardLinks = keptLinks(d.hand, links(s.cardLinks));
-    d.badges = decodeBadges(s.badges, d.upgrades, researched(d.archives, "badgeSlots"));
+    d.badges = decodeBadges(s.badges, d.upgrades, researched(d.archives, "badgeSlots"), d.goals);
     for (const k of ["deck", "removeCard", "addCard", "upgrades", "gear", "onTheJob", "speed", "climb", "enter", "delve", "chamber"] as const) d.tutorials[k] = s.tutorials?.[k] === true;
     for (const k of ["inspiration", "courage"] as const) d.treeNotices[k] = s.treeNotices?.[k] === true;
     d.seen = decodeSeen(s.seen, d);

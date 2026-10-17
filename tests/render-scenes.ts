@@ -56,6 +56,7 @@ const PLANTS: Tile[] = [
   ...(["weak", "normal", "strong", "elite"] as const).map((strength, tier): Tile => ({ kind: "enemy", enemy: { name: `Planted ${tier}`, hp: 20, attack: 5, defense: 1, tier, strength } })),
   { kind: "enemy", enemy: { name: "Slime", hp: 20, attack: 5, defense: 1, tier: 0, strength: "elite" } },
   { kind: "stairs" }, { kind: "oneway" },
+  { kind: "floor", flyer: { name: "Bat", hp: 20, attack: 5, defense: 1, tier: 5, strength: "strong", flying: true } },
 ];
 /** Fills plain floor near the player, nearest first, with every plant. */
 function plantAll(g: Game) {
@@ -66,6 +67,8 @@ function plantAll(g: Game) {
   }
   spots.sort((a, b) => a[0] - b[0] || a[2] - b[2] || a[1] - b[1]);
   PLANTS.forEach((t, i) => { if (spots[i]) g.run.changes[`${spots[i][1]},${spots[i][2]}`] = structuredClone(t); });
+  // A Flying enemy over the hero, drawn half see-through.
+  if (g.world.tile(p.x, p.y).kind === "floor") g.run.changes[`${p.x},${p.y}`] = { kind: "floor", flyer: { name: "Bat", hp: 20, attack: 5, defense: 1, tier: 5, strength: "normal", flying: true } };
 }
 function game(mode: "tower" | "delve", settings: Record<string, unknown> = {}) {
   const save = defaults();

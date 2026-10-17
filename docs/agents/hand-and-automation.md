@@ -65,4 +65,7 @@ The player can't step or walk inside a run unless Dev mode is on (`game.manualMo
 The paths go round lit torches through `litTorches` (`board.ts`), which the Delve `World` answers from a cached set, cleared when a torch goes out or its areas change, as its torch list is.
 `npm run hand:bench -- [seeds] [turns]` (`tools/hand-bench.ts`) times a fresh `planHand`, each hand turn and a Target walk over seeded Delve runs: compare its numbers before and after a change to the hand's pathing, on the same machine.
 
+**FLYING ENEMY** (Tower V's floor 10 Goal, `GOAL_CARDS`) is planned apart (`flyerPlan` in `cards.ts`, from `HandAt.shotReach`: the Archer's Attack Range and the wrap, which `HandRules` reads from `Game.shotReach`, absent unless the hero is an Archer inside a run): with a Flying enemy its arrows can hurt within reach, a plan with no path, which `handTurn` plays as `holdTurn` (a quiet undo snapshot and the turn's volley, no step, no Regen, no activation); otherwise the plain search's way to the closest such flyer, cut at the first tile with one in reach, its last step activating nothing and never rolling Skip.
+While held its `CardBonus` (`shot`, 5% each) adds Shot ATK and Attack Speed, which `handBonus` sums and `volleyTurn` multiplies into each arrow's boost and the Archer's speed (`VolleyTurn.handShot`, from `Game.handBonus.shot`).
+
 The `add-badge` skill lists the files of the badge mechanism: update it when they move.

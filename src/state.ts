@@ -2,6 +2,8 @@ import { entrance, floorFor } from "./delve/labyrinth.ts";
 import { buyTheme, canWear, grantAllThemes, type GameLook, type ThemeId, type ThemeKind, type UiLook } from "./theme-collection.ts";
 import { chooseStep } from "./automation.ts";
 import { CARDS, cardText, explainStuck, handBonus, keptLinks, planHand, planTarget, stillOpen, type CardId, type CardPlan, type HandBonus, type StuckReport } from "./cards.ts";
+import { aggroTurn } from "./flying.ts";
+import { foeOn } from "./ranged.ts";
 import { BADGE_IDS, MAX_COPIES, badgeOn, badgeValue, runBadges } from "./badges.ts";
 import { adsOff, BOOST_FOREVER, permanentBoost } from "./shop/entitlements.ts";
 import { noteGoldBoost } from "./gold-boost.ts";
@@ -53,7 +55,7 @@ import type {
 } from "./entities.ts";
 import { World, LAYOUT_VERSION } from "./delve/world.ts";
 import { RoomWorld, TOWER_LAYOUT_VERSION } from "./tower/room-world.ts";
-import type { Board } from "./board.ts";
+import { litTorches, type Board } from "./board.ts";
 import { instakill, type CritRule } from "./combat.ts";
 import { HEART_DOOR_HP, isLethal, resolveStep, type StepBlocked, type StepEffect, type StepRules, shardStat } from "./step-effects.ts";
 import { OUTSIDE_START_Y, OutsideWorld } from "./outside.ts";
@@ -772,6 +774,7 @@ export class Game {
     // A card that acts in place takes the turn without a step.
     if (!plan.path.length) {
       this.cardPlan = null;
+      if (id === "flyingEnemy") return this.holdTurn();
       const p = this.run.player, key = `${this.rules.lootKey(this.run, p.x, p.y)}:${id}${this.handRules.cardUses(id)}`;
       this.activation.actInPlace(id, this.handRules.scaleOf(id));
       if (id === this.run.focused) this.run.focused = undefined;
@@ -803,8 +806,10 @@ export class Game {
     if (!dashed) return;
     if (this.cardPlan) return;
     // The card's last step reaches its target: a focus on it is spent, and
-    // it activates (once a fight into its target has played out).
+    // it activates (once a fight into its target has played out). FLYING
+    // ENEMY's last step only brings an enemy in reach: nothing activates.
     if (id === this.run.focused) this.run.focused = undefined;
+    if (id === "flyingEnemy") return;
     const fight = this.fights.encounter;
     // A roll counts once the step is in the undo history (after a fight,
     // once it settles), so undo takes it back with the step.
@@ -1565,7 +1570,7 @@ export class Game {
     if (this.mode === "tower" && before.run.height !== this.run.height) return;
     const v = this.run.volleys ?? { turn: 0 }, p = this.run.player;
     const out = volleyTurn({ board: this.world, wrap: this.wrap, floorOf: (x, y) => this.floorOf(x, y), hero: p, seed: this.run.seed,
-      volleys: { ...v, turn: v.turn + 1 }, archer, ranks: { ...this.trainingNow, archives: this.save.archives } });
+      volleys: { ...v, turn: v.turn + 1 }, archer, ranks: { ...this.trainingNow, archives: this.save.archives }, handShot: this.handBonus.shot });
     this.run.volleys = out.volleys;
     p.hp = out.hp;
     if (out.hurt) {
@@ -1580,7 +1585,30 @@ export class Game {
     if (out.fell) {
       this.fallIn(before, out.fell);
       this.message = `Shot down by ${enemyTitle(out.fell)}.`;
+      return;
     }
+    // Then the Aggroed enemies close in (flying.ts), their cooldowns with them.
+    const moved = aggroTurn({ board: this.world, changes: this.run.changes, hero: p, floorOf: (x, y) => this.floorOf(x, y), lit: litTorches(this.world), foes: this.run.volleys.foes });
+    if (moved.steps.length) {
+      if (moved.foes && Object.keys(moved.foes).length) this.run.volleys.foes = moved.foes;
+      else delete this.run.volleys.foes;
+    }
+  }
+  /** A turn the hero holds its ground (FLYING ENEMY with a Flying enemy in
+   * reach): no step, so no Regen, but a turn all the same, which the undo
+   * history keeps quietly and the volley ends. */
+  private holdTurn() {
+    const before = this.snapshot();
+    this.turnBefore = before;
+    this.remember({ ...before, quiet: true });
+    this.message = `${CARDS.flyingEnemy.name} · holding ground`;
+    this.endTurn();
+  }
+  /** How far the Archer's arrows reach and the board's wrap, which FLYING
+   * ENEMY plans by (`HandAt.shotReach`); undefined while the hero can't
+   * shoot (not an Archer, or in the forest). */
+  get shotReach() {
+    return isArcher(this.save) && !this.run.outside ? { range: trainedAmount(this.trainingNow, "attackRange"), wrap: this.wrap } : undefined;
   }
   /** Board columns wrap in the Delve. */
   private get wrap() {
@@ -1611,8 +1639,8 @@ export class Game {
   /** The Gold killing the enemy at (x, y) would bank now (`instakill`:
    * the hero's first strike ending it), or 0 once its tile is looted. */
   enemyGold(x: number, y: number, instakill = false) {
-    const t = this.world.tile(x, y);
-    return t.kind === "enemy" ? this.purse.killGoldPreview(t.enemy!, x, y, instakill) : 0;
+    const e = foeOn(this.world.tile(x, y));
+    return e ? this.purse.killGoldPreview(e, x, y, instakill) : 0;
   }
   /** The Gold opening the treasure chest at (x, y) would bank now, on
    * average, or 0 once its tile is looted. */

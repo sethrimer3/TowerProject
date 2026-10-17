@@ -33,7 +33,7 @@ export class DeckEditor {
 
   /** Whether `id` is a deck card not yet in the hand, free to be placed. */
   private canPlace(id: CardId) {
-    return this.canChoose && deckCards(this.save.upgrades).includes(id) && !this.save.hand.includes(id);
+    return this.canChoose && deckCards(this.save.upgrades, this.save.goals).includes(id) && !this.save.hand.includes(id);
   }
 
   /** Moves the hand's card in slot `from` to slot `to`, the cards between

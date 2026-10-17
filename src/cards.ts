@@ -7,6 +7,9 @@ import { snap } from "./exact.ts";
 import { UPGRADES, type TrainingId, type UpgradeId } from "./config.ts";
 import type { DelveRun } from "./runs.ts";
 import type { EnemyStrength, Mode } from "./entities.ts";
+import type { Save } from "./save-shape.ts";
+import { goalUnlocked, type GoalUnlock } from "./goals.ts";
+import { arrowDamage, enemiesWithin } from "./ranged.ts";
 
 /** What a card gives, on top of where it moves the hero, for as long as the
  * run's hand holds it, whichever card leads the hero there. */
@@ -18,6 +21,10 @@ export type CardBonus = {
    * Supply Chest, and an `equipment` percent chance of being an Equipment
    * Chest (one roll for both, once Equipment is open). */
   chest?: { supply: number; equipment: number };
+  /** The Archer's arrows strike with `attack` percent more Shot ATK
+   * (multiplying each arrow's ATK) and charge `speed` percent faster
+   * (multiplying Attack Speed). */
+  shot?: { attack: number; speed: number };
 };
 type CardDef = { name: string; text: string; bonus?: CardBonus };
 
@@ -51,6 +58,7 @@ export const CARDS = {
   redSiphon: { name: "RK Siphon", text: "Trade ATK training levels for a red key, without moving, for the rest of the run. The first use takes 1 level and each use after takes 1 more (2, then 3…). Skipped without enough levels left." },
   torch: { name: "Torch", text: "Move toward the closest lit torch, putting it out." },
   woodenDoor: { name: "Wooden Door", text: "Move toward the closest Wooden Door you hold a key for, or can break down and survive." },
+  flyingEnemy: { name: "Flying Enemy", text: "Move toward the closest Flying enemy your arrows can hurt, stopping once one is within your Attack Range, and wait there while one is.", bonus: { shot: { attack: 5, speed: 5 } } },
 } as const;
 export type CardId = keyof typeof CARDS;
 export const CARD_IDS = Object.keys(CARDS) as CardId[];
@@ -77,8 +85,9 @@ export const cardBonus = (id: CardId): CardBonus | undefined => (CARDS[id] as Ca
 /** A card bonus's lines as the player reads them, each with its tone: a
  * Supply Chest's chance light blue, an Equipment Chest's purple, the rarer. */
 export function cardBonusLines(id: CardId): { text: string; tone: "plain" | "supply" | "equipment" }[] {
-  const bonus = cardBonus(id), key = bonus?.key, chest = bonus?.chest;
+  const bonus = cardBonus(id), key = bonus?.key, chest = bonus?.chest, shot = bonus?.shot;
   return [
+    ...(shot ? [{ text: `+${shot.attack}% Shot ATK`, tone: "plain" as const }, { text: `+${shot.speed}% Attack Speed`, tone: "plain" as const }] : []),
     ...(key ? [{ text: `+${key.percent}% ${CARDS[`${key.color}Key`].name}s`, tone: "plain" as const }, { text: `+${key.gold} Gold a key`, tone: "plain" as const }] : []),
     ...(chest ? [{ text: `${chest.supply}% Supplies`, tone: "supply" as const }, { text: `${chest.equipment}% Equipment`, tone: "equipment" as const }] : []),
   ];
@@ -86,13 +95,18 @@ export function cardBonusLines(id: CardId): { text: string; tone: "plain" | "sup
 /** A card bonus's lines as one line of plain text, for a tooltip ("" for none). */
 export const cardBonusText = (id: CardId) => cardBonusLines(id).map((l) => l.text).join(" · ");
 /** What the cards of `hand` give while held, added up: for each key colour
- * the percent more each key is worth and the Gold it pays more, and a
- * treasure chest's chances, in percent, of being a Supply or Equipment Chest. */
+ * the percent more each key is worth and the Gold it pays more, a
+ * treasure chest's chances, in percent, of being a Supply or Equipment
+ * Chest, and the percent more Shot ATK and Attack Speed the arrows have. */
 export function handBonus(hand: readonly CardId[]) {
   const keys: Partial<Record<KeyColor, { percent: number; gold: number }>> = {};
-  const chest = { supply: 0, equipment: 0 };
+  const chest = { supply: 0, equipment: 0 }, shot = { attack: 0, speed: 0 };
   for (const id of new Set(hand)) {
     const bonus = cardBonus(id);
+    if (bonus?.shot) {
+      shot.attack += bonus.shot.attack;
+      shot.speed += bonus.shot.speed;
+    }
     if (bonus?.key) {
       const k = (keys[bonus.key.color] ??= { percent: 0, gold: 0 });
       k.percent += bonus.key.percent;
@@ -103,7 +117,7 @@ export function handBonus(hand: readonly CardId[]) {
       chest.equipment = snap(chest.equipment + bonus.chest.equipment);
     }
   }
-  return { keys, chest };
+  return { keys, chest, shot };
 }
 export type HandBonus = ReturnType<typeof handBonus>;
 
@@ -127,10 +141,14 @@ export const nextHandSlotGems = (save: { upgrades: Record<UpgradeId, number>; ha
 /** The hand a new profile starts with, in priority order: its whole deck.
  * HEAL, YELLOW KEY, ATK UP, DEF UP and BLUE KEY are earned from the Inspiration tree. */
 export const BASE_HAND: readonly CardId[] = ["stairs", "door", "key", "monster"];
-/** The cards the player owns, in `CARDS` order: the base hand's, and each
- * card whose upgrade is owned. A hand holds any of them, but always STAIRS. */
-export function deckCards(upgrades: Record<UpgradeId, number>): CardId[] {
+/** The cards a Goal adds to the deck once claimed (goals.ts). */
+export const GOAL_CARDS: Partial<Record<GoalUnlock, CardId>> = { flyingEnemyCard: "flyingEnemy" };
+/** The cards the player owns, in `CARDS` order: the base hand's, each card
+ * whose upgrade is owned, and each card whose Goal is claimed (`goals`;
+ * none without). A hand holds any of them, but always STAIRS. */
+export function deckCards(upgrades: Record<UpgradeId, number>, goals?: Pick<Save, "goals">["goals"]): CardId[] {
   const earned = UPGRADES.flatMap((u) => ("card" in u && upgrades[u.id] ? [u.card as CardId] : []));
+  if (goals) for (const [unlock, card] of Object.entries(GOAL_CARDS)) if (goalUnlocked({ goals }, unlock as GoalUnlock)) earned.push(card);
   return CARD_IDS.filter((id) => BASE_HAND.includes(id) || earned.includes(id));
 }
 /** The card an upgrade adds to the deck, if any. */
@@ -232,6 +250,10 @@ export type HandAt = Position & {
   /** For each card of the hand, whether it is linked to the next (Card
    * Groups, `linkedToNext`): the cards of a group share one priority. */
   links?: readonly boolean[];
+  /** How far the Archer's arrows reach, in hundredths of a tile, and the
+   * board's wrap (its width in the Delve, else 0): FLYING ENEMY plans by
+   * them. Absent while the hero can't shoot, when that card can't act. */
+  shotReach?: { range: number; wrap: number };
 };
 
 /** What each key a door takes costs a card heading for it: Key Efficiency
@@ -321,6 +343,8 @@ const WANTS: Record<CardId, (t: Tile, at: HandAt, rules: CardRules | undefined, 
   bossEnemy: fightable(["boss", "greaterBoss"]),
   nonBossEnemy: fightable(["weak", "normal", "strong", "elite"]),
   fastEnemy: (t, at) => fightable()(t, at) && !!t.enemy!.fast,
+  // Planned apart (`flyerPlan`): it stops once a Flying enemy is in reach.
+  flyingEnemy: never,
   chest: (t) => t.kind === "treasure" || t.kind === "reward",
   blueSiphon: never,
   blueTrader: never,
@@ -358,6 +382,7 @@ export function planHand(at: HandAt, hand: readonly CardId[], mode: Mode, only?:
       return target ? { card, path: pathTo(target) } : null;
     }
     if (IN_PLACE.has(hand[card])) return at.canAct?.(hand[card]) ? { card, path: [] } : null;
+    if (hand[card] === "flyingEnemy") return flyerPlan(at, card, reached);
     const target = targetOf(at, hand[card], mode, rules?.charge ? chargeSearch(at, rules.charge, marked) : reached, reached, rules);
     if (target && rules?.deprioritize) {
       // Passed over and marked: the cards after it go round it too.
@@ -377,6 +402,24 @@ export function planHand(at: HandAt, hand: readonly CardId[], mode: Mode, only?:
     if (best && !at.links?.[card]) return best;
   }
   return best;
+}
+
+/** FLYING ENEMY's plan (card `card` of the hand): while a Flying enemy its
+ * arrows can hurt is within the Archer's reach, a turn waiting where the
+ * hero stands (no path); otherwise the way toward the closest such enemy
+ * the hero can walk under (`reached`, the plain search), cut short at the
+ * first tile from which one is within reach. Null while the hero can't
+ * shoot (`shotReach` absent) or no such enemy is in reach of its walk. */
+function flyerPlan(at: HandAt, card: number, reached: Reached[]): CardPlan | null {
+  const reach = at.shotReach;
+  if (!reach) return null;
+  const p = at.run.player, hurts = (t: Tile) => !!t.flyer && arrowDamage(p, t.flyer) > 0;
+  const inReach = (x: number, y: number) => enemiesWithin(at.world, { x, y }, reach.range, reach.wrap).some((e) => e.tile.enemy.flying && hurts({ kind: "floor", flyer: e.tile.enemy }));
+  if (inReach(p.x, p.y)) return { card, path: [] };
+  const target = reached.find((r) => hurts(r.tile));
+  if (!target) return null;
+  const path = pathTo(target), stop = path.findIndex((s) => inReach(s.x, s.y));
+  return { card, path: stop < 0 ? path : path.slice(0, stop + 1) };
 }
 
 /** Target's path to (x, y): the shortest over crossable tiles, round the
