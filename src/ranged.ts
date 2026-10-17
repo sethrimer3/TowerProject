@@ -157,7 +157,7 @@ export function arrowDamage(player: Player, enemy: Enemy, applications = 0, fact
   return guarded(snap(raised - defenseAgainst(player, enemy)), enemy);
 }
 
-/** What an arrow's ATK is multiplied by before any critical hit: ATK / Tile
+/** What an arrow's ATK is multiplied by before any critical hit: ATK / m
  * (`perTile`, hundred-thousandths of ×1 a tile) times the Euclidean distance
  * to its target (`d2`, squared), and Charged Shot (`percent` a turn for the
  * `waited` turns the ready arrow held), each multiplying the other. */

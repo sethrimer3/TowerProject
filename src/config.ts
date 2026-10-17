@@ -698,7 +698,7 @@ const rangePrices = { base: 50, growth: 12, cubic: 37 };
  * ((n − 1) / 32)³) for the n-th (1,166 for the 12th, 8,870 for the 34th,
  * 116,464 for the 92nd), the same in Silver and a trainer's Gold. */
 const speedPrices = { base: 30, growth: 5, cubic: 32 };
-/** ATK / Tile: 50 for the first rank, each 6.47% dearer than the one
+/** ATK / m: 50 for the first rank, each 6.47% dearer than the one
  * before, that rise itself growing 0.022% a rank (589 for the 38th, 60,929
  * for the 98th, 1 million for the 130th, 998 million for the 200th; about
  * 10 billion in all), the same in Silver and a trainer's Gold. */
@@ -847,13 +847,13 @@ export const TRAINING = [
     description: "Raises how many shots the Archer fires every 10 turns.",
     silver: speedPrices, gold: { growth: speedPrices.growth, start: speedPrices.base, cubic: speedPrices.cubic },
   },
-  // What ATK / Tile adds to an arrow's ATK multiplier for each tile to its
+  // What ATK / m adds to an arrow's ATK multiplier for each tile to its
   // target, in hundred-thousandths of ×1: 0.01 for the first rank, and each
   // later rank 0.00004 less (0.00204 for the 200th), 1.204 a tile in all.
   // An arrow's ATK is multiplied by 1 + this × the Euclidean distance to
   // its target (ranged.ts). Its trainers start at a minute a rank.
   {
-    id: "attackPerTile", name: "ATK / Tile", short: "ATK/Tile", group: "offense", goal: "attackPerTile", cost: 1, max: 200,
+    id: "attackPerTile", name: "ATK / m", short: "ATK/m", group: "offense", goal: "attackPerTile", cost: 1, max: 200,
     curve: { per: 1002, square: -2 }, scale: 100_000, unit: "perMeter",
     description: "Multiplies the ATK of each of the Archer's shots by more for every meter its target stands away.",
     silver: perTilePrices, gold: { start: perTilePrices.base, ratio: perTilePrices.ratio, rise: perTilePrices.rise }, time: { skip: 1 },

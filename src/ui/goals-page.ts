@@ -74,12 +74,12 @@ const UNLOCK_TUTORIALS: Record<GoalUnlock, string> = {
     `<p class="hint">Ranged enemies reach five sixths as far as your arrows: strike first, then close in.</p>`,
   attackRange: `<p>Attack Range joins Offense training: each rank lets your arrows reach 0.05 m further, from 3 m up to 7 m.</p>` +
     `<p class="hint">Ranged enemies always reach five sixths as far as you do.</p>`,
-  attackPerTile: `<p>ATK / Tile joins Offense training: each arrow's ATK is multiplied by more for every meter (a tile) its target stands away, counted straight across. The first rank makes it ×1.01 a meter, and 200 ranks ×2.204 a meter.</p>` +
+  attackPerTile: `<p>ATK / m joins Offense training: each arrow's ATK is multiplied by more for every meter (a tile) its target stands away, counted straight across. The first rank makes it ×1.01 a meter, and 200 ranks ×2.204 a meter.</p>` +
     `<p class="hint">A far enemy your arrows can't hurt up close may fall to a shot from further off. Critical hits multiply on top.</p>`,
   chargedShot: `<p>Charged Shot opens in the Archives: once your arrow is ready, every turn it waits without firing adds to the next arrow's ATK, by 1% a turn for each level researched.</p>` +
-    `<p class="hint">A charged arrow flies in a blue glow, and its number wears a gold outline. Its bonus multiplies with ATK / Tile and critical hits, and resets once it fires.</p>`,
+    `<p class="hint">A charged arrow flies in a blue glow, and its number wears a gold outline. Its bonus multiplies with ATK / m and critical hits, and resets once it fires.</p>`,
   multishot: `<p>Multishot Chance and Multishot Targets join Offense training: each rank of Chance gives every shot 0.5% more chance, up to 49.5%, to fire at several enemies in range at once, 2 of them and one more for each rank of Targets, up to 9.</p>` +
-    `<p class="hint">Every arrow of a multishot carries the first's Charged Shot, rolls its own critical hit, and has its own ATK / Tile for its distance. With fewer enemies in range, it fires one at each.</p>`,
+    `<p class="hint">Every arrow of a multishot carries the first's Charged Shot, rolls its own critical hit, and has its own ATK / m for its distance. With fewer enemies in range, it fires one at each.</p>`,
   rapidFire: `<p>Rapid Fire Chance and Rapid Fire Duration join Offense training: each rank of Chance gives every shot 0.4% more chance, up to 34%, to start Rapid Fire, and your arrows come four times as fast from that moment for 1 turn, and 0.05 turns more for each rank of Duration, up to 5.95.</p>` +
     `<p class="hint">A shot fired during Rapid Fire can't start another. Time left toward a shot when it ends carries on toward the next one at the usual pace.</p>`,
   attackSpeed: `<p>Attack Speed joins Offense training: each rank adds 0.05 shots every 10 turns, from 1 up to 6.</p>` +

@@ -25,7 +25,7 @@ test("a stat's first ranks are quick, then each takes ten minutes more", () => {
   assert.deepEqual([0, 1, 2, 3, 4, 5, 6, 99].map((r) => trainingSeconds(r)), [15, 60, 300, 600, 600, 1200, 1800, 57600]);
 });
 
-test("ATK / Tile and Multishot Chance trainers start at a minute and rise from there; Multishot Targets' n-th rank takes n hours", () => {
+test("ATK / m and Multishot Chance trainers start at a minute and rise from there; Multishot Targets' n-th rank takes n hours", () => {
   const time = (id: (typeof TRAINING)[number]["id"], ranks: number[]) => ranks.map((r) => trainingSeconds(r, trainingDef(id).time));
   assert.deepEqual(time("attackPerTile", [0, 1, 2, 3, 4]), [60, 300, 600, 600, 1200]);
   assert.deepEqual(time("multishotChance", [0, 1, 2, 3, 4]), time("attackPerTile", [0, 1, 2, 3, 4]));
@@ -411,7 +411,7 @@ test("the time bank serves any stat, after that stat's own time credit", () => {
 test("a cubic scale adds (ranks / cubic)^3 to a trainer's Gold: never below the linear price, far above it at the cap", () => {
   for (const t of TRAINING) {
     const c = t.gold;
-    // (ATK / Tile's trainers ask a rising ratio more each rank instead, and Multishot Targets' a price a rank.)
+    // (ATK / m's trainers ask a rising ratio more each rank instead, and Multishot Targets' a price a rank.)
     if ("ratio" in c || "prices" in c || c.power) continue;
     assert.ok(c.cubic, `${t.id} has a cubic scale`);
     const linear = (r: number) => Math.ceil((c.start ?? 20) * t.cost * (r + 1) * (c.growth + r) / c.growth);

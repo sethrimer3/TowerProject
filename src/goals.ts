@@ -33,7 +33,7 @@ import { TIERS } from "./tiers.ts";
  * project that opens the run's notes), and Tower III's Archer (floor 10:
  * the hero fires at the nearest enemy in range, ranged.ts), Attack Range
  * and Attack Speed (floors 20 and 30: the Training rows that improve it),
- * ATK / Tile (floor 50: the Training row that strikes harder from further
+ * ATK / m (floor 50: the Training row that strikes harder from further
  * off), Charged Shot (floor 60: the Archives' project that strengthens
  * an arrow that waits), Multishot (floor 70: the Training rows that let
  * a shot fire at several enemies) and Rapid Fire (floor 80: the Training
@@ -55,7 +55,7 @@ export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   shrines: "Unlock Shrines", firstBoonChoice: "First Boon Choice", improveTradeoffs: "Improve Trade-off Boons",
   autoPickBoons: "Auto Pick Boons", boonOptions: "Boon Option Quantity", banBoons: "Ban Boons", autoPickRanking: "Auto Pick Ranking",
   badgeSlots: "Badge Slots", noteTaking: "Note Taking",
-  archer: "Archer Class", attackRange: "Attack Range", attackSpeed: "Attack Speed", attackPerTile: "ATK / Tile", chargedShot: "Charged Shot", multishot: "Multishot", rapidFire: "Rapid Fire",
+  archer: "Archer Class", attackRange: "Attack Range", attackSpeed: "Attack Speed", attackPerTile: "ATK / m", chargedShot: "Charged Shot", multishot: "Multishot", rapidFire: "Rapid Fire",
   trainingDiscount: "Training Discount", cardGroups: "Card Groups",
 };
 /** What a checkpoint pays: an unlock, the next tower opened, or an amount of a currency. */

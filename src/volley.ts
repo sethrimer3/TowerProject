@@ -109,10 +109,10 @@ function foesShoot({ board, wrap, floorOf }: VolleyTurn, p: Player, v: Volleys, 
 
 /** The Archer's cooldown runs a turn (`archerTurn`), and each time it is
  * ready it shoots the closest enemy within its range that an arrow can
- * hurt, its ATK raised by ATK / Tile for the distance and by Charged Shot
+ * hurt, its ATK raised by ATK / m for the distance and by Charged Shot
  * for the turns it waited (`arrowBoost`). A multishot fires
  * the same charge at up to Multishot Targets of the closest enemies it can
- * hurt, each arrow with the first's Charged Shot, its own ATK / Tile and
+ * hurt, each arrow with the first's Charged Shot, its own ATK / m and
  * its own critical roll. A shot fired while Rapid Fire isn't may start it,
  * for Rapid Fire Duration from that moment, so the turn
  * may fire more than once. A ready arrow with no target waits for one,

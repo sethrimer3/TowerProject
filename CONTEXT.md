@@ -175,11 +175,11 @@ The circle round a Shielded enemy within which its guard cuts the hero's damage 
 _Avoid_: aura, shield radius, field
 
 **Archer**:
-The hero's class once Tower III's floor 10 Goal is claimed: at the end of each turn its arrow is ready, it shoots the closest enemy within its **Attack Range** (3 m, more with training) for one strike's damage, wounding it before any fight. **Attack Speed** sets how often (1 shot every 10 turns, more with training). **ATK / Tile** (training, Tower III's floor 50) multiplies an arrow's ATK by more for each **meter** to its target, and **Charged Shot** (research, floor 60) raises it for each turn a ready arrow waits unfired; **Multishot** (training, floor 70) gives a shot a chance to fire at several enemies in range at once, and **Rapid Fire** (training, floor 80) a chance to make its arrows come four times as fast for a few turns. The class's name, shown under the portrait, is cosmetic before it (Wayfarer, then Pathfinder once Tower II is open).
+The hero's class once Tower III's floor 10 Goal is claimed: at the end of each turn its arrow is ready, it shoots the closest enemy within its **Attack Range** (3 m, more with training) for one strike's damage, wounding it before any fight. **Attack Speed** sets how often (1 shot every 10 turns, more with training). **ATK / m** (training, Tower III's floor 50) multiplies an arrow's ATK by more for each **meter** to its target, and **Charged Shot** (research, floor 60) raises it for each turn a ready arrow waits unfired; **Multishot** (training, floor 70) gives a shot a chance to fire at several enemies in range at once, and **Rapid Fire** (training, floor 80) a chance to make its arrows come four times as fast for a few turns. The class's name, shown under the portrait, is cosmetic before it (Wayfarer, then Pathfinder once Tower II is open).
 _Avoid_: ranger, bowman
 
 **Meter**:
-The unit distances are shown in on screen ("m"): one tile across. Attack Range, ATK / Tile and a Dash's reach are given in meters.
+The unit distances are shown in on screen ("m"): one tile across. Attack Range, ATK / m and a Dash's reach are given in meters.
 _Avoid_: tiles (as a shown unit)
 
 **Volley**:
@@ -242,7 +242,7 @@ How much XP the character has gathered from kills over every run. A kill pays mo
 _Avoid_: rank
 
 **Training point**:
-The currency each level earns (three a level), spent to buy ranks of training at once (a trainer can train them for Gold instead) in the character's stats (max HP, ATK, DEF, and the shroud once the Shroud skill is owned; Lifesteal once the Lifesteal skill is, Thorn Damage once Thorns is, Parry % once Parry is, Crit % and Crit x once Critical is, Attack Range, Attack Speed and ATK / Tile once Tower III's floor 20, 30 and 50 Goals are claimed, Multishot Chance and Multishot Targets once its floor 70 Goal is, Rapid Fire Chance and Rapid Fire Duration once its floor 80 Goal is) and, with Recovery, Find Potion, Revive, Spare Change, Wishing Well, Wealthy, Loot and Free Training, in Potion %, Find Potion, Revive, Gold / Floor, Silver / Floor, Silver Bonus, Gold Bonus and the Free Offense, Defense and Utility Up rows on the Training tab. A stat's ranks add up on its **rank curve**: each rank is worth more than the one before, whatever the character's level.
+The currency each level earns (three a level), spent to buy ranks of training at once (a trainer can train them for Gold instead) in the character's stats (max HP, ATK, DEF, and the shroud once the Shroud skill is owned; Lifesteal once the Lifesteal skill is, Thorn Damage once Thorns is, Parry % once Parry is, Crit % and Crit x once Critical is, Attack Range, Attack Speed and ATK / m once Tower III's floor 20, 30 and 50 Goals are claimed, Multishot Chance and Multishot Targets once its floor 70 Goal is, Rapid Fire Chance and Rapid Fire Duration once its floor 80 Goal is) and, with Recovery, Find Potion, Revive, Spare Change, Wishing Well, Wealthy, Loot and Free Training, in Potion %, Find Potion, Revive, Gold / Floor, Silver / Floor, Silver Bonus, Gold Bonus and the Free Offense, Defense and Utility Up rows on the Training tab. A stat's ranks add up on its **rank curve**: each rank is worth more than the one before, whatever the character's level.
 _Avoid_: skill point, stat point
 
 **Trainer**:

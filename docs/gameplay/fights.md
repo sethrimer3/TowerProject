@@ -62,12 +62,12 @@ An arrow that fells a monster pays the kill as a fight would; one that fells an 
 Only Ranged monsters shoot back: the rest strike only when the hero fights them.
 The arrow is ready every 10 turns (Attack Speed: 1 shot every 10 turns, more with training), a fraction of a turn carrying to the next; a ready arrow with no monster in reach waits, and fires the turn one comes in reach.
 Attack Range and Attack Speed join Offense training from Tower III's floors 20 and 30 ([Training](training.md)).
-**ATK / Tile** joins it from floor 50: each arrow's ATK is multiplied by 1 plus its value for every meter (tile) to its target, counted straight across (diagonals included), so a monster too well armored for an arrow up close may still be hurt, and shot, from further off.
+**ATK / m** joins it from floor 50: each arrow's ATK is multiplied by 1 plus its value for every meter (tile) to its target, counted straight across (diagonals included), so a monster too well armored for an arrow up close may still be hurt, and shot, from further off.
 Training shows it as that multiplier a meter: ×1.010/m for the first rank.
 **Charged Shot** opens in the Archives from floor 60: each turn a ready arrow waits without firing adds its percent (1% a level) to the next arrow's ATK, and that arrow flies in a blue glow and its number rises with a gold outline, a faint one while the charge is under 50%; the charge starts over once it fires.
-ATK / Tile, Charged Shot and a critical hit multiply one another.
+ATK / m, Charged Shot and a critical hit multiply one another.
 **Multishot Chance** and **Multishot Targets** join Offense training from floor 70: each shot has a chance (0.5% a rank, up to 49.5%) to be a multishot, firing at once at the closest enemies an arrow can hurt, 2 of them and one more a Targets rank (up to 9), or one at each when fewer are in range.
-Every arrow of a multishot carries the first's Charged Shot, rolls its own critical hit, and has its own ATK / Tile for its own distance.
+Every arrow of a multishot carries the first's Charged Shot, rolls its own critical hit, and has its own ATK / m for its own distance.
 **Rapid Fire Chance** and **Rapid Fire Duration** join Offense training from floor 80: each shot fired outside Rapid Fire has a chance (0.4% a rank, up to 34%) to start it, and from that moment the Archer's arrows come four times as fast for its Duration (1 turn, and 0.05 turns more a rank, up to 5.95).
 A shot during Rapid Fire can't start another, and what was built toward a shot when it ends carries on toward the next at the usual pace: at one shot every 2 turns, 3.3 turns of Rapid Fire fire six arrows, half a turn apart, and the next comes 1.1 turns after the sixth.
 With Rapid Fire, a turn may fire several arrows, one after another, each rolling its own multishot and critical hit.

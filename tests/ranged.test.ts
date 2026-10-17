@@ -228,7 +228,7 @@ test("the hero's class: a Wayfarer, a Pathfinder once Tower II is open, an Arche
   assert.equal(heroClass(save), "Archer");
 });
 
-test("ATK / Tile: 0.01 a tile for the first rank, each later rank 0.00004 less, 1.204 at its 200, opened by Tower III's floor 50; 50 Silver or Gold for the first rank, 1 million for the 130th", () => {
+test("ATK / m: 0.01 a tile for the first rank, each later rank 0.00004 less, 1.204 at its 200, opened by Tower III's floor 50; 50 Silver or Gold for the first rank, 1 million for the 130th", () => {
   const save = defaults();
   const row = TRAINING.find((t) => t.id === "attackPerTile")!;
   assert.equal(trainingOpen(row, save), false);
@@ -244,7 +244,7 @@ test("ATK / Tile: 0.01 a tile for the first rank, each later rank 0.00004 less, 
   assert.deepEqual(prices, [50, 589, 60_929, 1_000_039, 998_422_519]);
 });
 
-test("an arrow's ATK is multiplied by ATK / Tile for the distance, Charged Shot for the turns waited, and a critical hit, each on the others", () => {
+test("an arrow's ATK is multiplied by ATK / m for the distance, Charged Shot for the turns waited, and a critical hit, each on the others", () => {
   assert.equal(arrowBoost(0, 9, 0, 0), 1);
   assert.equal(arrowBoost(1000, 9, 0, 0), 1.03, "3 tiles at 0.01 a tile");
   assert.equal(arrowBoost(1000, 5, 0, 0), snap(1 + Math.sqrt(5) / 100), "Euclidean: a knight's move is √5 away");
@@ -252,7 +252,7 @@ test("an arrow's ATK is multiplied by ATK / Tile for the distance, Charged Shot 
   assert.equal(arrowDamage(hero({ attack: 100 }), { ...brute, defense: 20 }, 1, 2, 1.5), 280, "100 × 1.5 × 2 − 20");
 });
 
-test("ATK / Tile lets the Archer hurt, and so target, an enemy its plain arrows can't", () => {
+test("ATK / m lets the Archer hurt, and so target, an enemy its plain arrows can't", () => {
   const armored = { ...brute, hp: 3000, defense: 20 };
   const plain = archer(arena({ "4,0": armored }, { attack: 10 }));
   assert.ok(plain.move(1, 0));
@@ -346,7 +346,7 @@ test("Multishot Chance and Targets: 0.5% a rank to 49.5% at 99, and 2 targets to
   assert.deepEqual(Array.from({ length: 7 }, (_, k) => silverPrice("multishotTargets", k)), [450, 2000, 5000, 12_500, 40_000, 120_000, 350_000]);
 });
 
-test("a multishot fires one charge at up to Multishot Targets of the closest enemies an arrow can hurt, each with its own ATK / Tile; undo takes them all back", () => {
+test("a multishot fires one charge at up to Multishot Targets of the closest enemies an arrow can hurt, each with its own ATK / m; undo takes them all back", () => {
   const foes = { "2,1": { ...brute, hp: 3000, defense: 5000 }, "3,0": { ...brute, hp: 3000 }, "1,2": { ...brute, hp: 3000 }, "4,0": { ...brute, hp: 3000 }, "1,3": { ...brute, hp: 3000 } };
   const shots = (targets: number) => {
     const g = archer(arena(foes, { attack: 1000 }));
