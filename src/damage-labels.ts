@@ -108,7 +108,8 @@ export function damageLabel(cost: Cost, hp: number, relative = false) {
   return { text: compactAmount(shown), color };
 }
 
-/** The fight on the board (its enemy's tile), whose HP bar tells its story. */
+/** The fight being played out on the board (its enemy's tile), whose HP
+ * bar tells its story. */
 type Fighting = { to: { x: number; y: number } } | null;
 
 /** What breaking a Wooden Door costs, as a fight's cost: never an Instakill. */

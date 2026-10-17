@@ -401,14 +401,17 @@ export class Renderer {
   /** Damage Visual: what each enemy in view would cost, and what each item
    * gives, once its goal is claimed and while each one's setting is on, a fight
    * coloured by its share of the hero's HP once Relative Damage Color is
-   * claimed too; critical strikes count only with Critical Prediction. */
+   * claimed too; critical strikes count only with Critical Prediction. The
+   * enemy being fought wears none while its fight plays out, but the latest
+   * fight once over hides nothing: an enemy may appear where it ended (a
+   * Greater Boss on a kill's tile by the stairs). */
   private drawDamageLabels(f: FrameContext) {
     const g = this.game;
     const { damageVisual: enemies, itemLabels } = g.save.settings;
     if (g.run.outside || (!enemies && !itemLabels) || !goalUnlocked(g.save, "damageVisual")) return;
     const crit = g.save.upgrades.critPrediction ? g.crit : undefined;
     const items = itemLabels ? { rules: g.stepRules, chestGold: (x: number, y: number) => g.chestGold(x, y) } : undefined;
-    drawDamageLabels(f, this.predictions, g.run.player, g.fights.shown, goalUnlocked(g.save, "relativeDamageColor"), crit, items, enemies);
+    drawDamageLabels(f, this.predictions, g.run.player, g.fights.encounter, goalUnlocked(g.save, "relativeDamageColor"), crit, items, enemies);
   }
   /** A fading red cross where a step was refused. */
   /** Skip Open Nodes' marks: a violet X on each door or monster it passed

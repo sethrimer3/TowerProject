@@ -6,6 +6,8 @@ import { RoomWorld } from "../src/tower/room-world.ts";
 import { bout, heroHpDuring, predict, raisedAttack, REVIVE_MS, summarize } from "../src/combat.ts";
 import { BoardPopups, enemyBar, lunges } from "../src/board-popups.ts";
 import { HEAL_COLOR } from "../src/damage-labels.ts";
+import { Renderer } from "../src/rendering.ts";
+import { unlockAt } from "../src/goals.ts";
 import type { Enemy, Player, Tile } from "../src/entities.ts";
 import type { FrameContext } from "../src/render-frame.ts";
 
@@ -400,4 +402,23 @@ test("the enemy's HP bar stays off the board while its Toggle is off", () => {
   };
   assert.ok(bars(true) > 0);
   assert.equal(bars(false), 0);
+});
+
+test("an enemy that appears where the latest fight ended wears its damage label, as a Greater Boss on a kill's tile does", () => {
+  const g = arena({ kind: "enemy", enemy: foe({ hp: 1, attack: 0 }) }, false);
+  const at = unlockAt("damageVisual");
+  g.save.goals.claimed[at.tower] = [at.floor];
+  assert.ok(g.move(1, 0));
+  assert.deepEqual(g.fights.shown?.to, { x: 1, y: 0 }, "the fight won is still the latest shown");
+  g.move(-1, 0);
+  g.run.changes["1,0"] = { kind: "enemy", enemy: foe({ strength: "greaterBoss" }) };
+  const labelled: string[] = [];
+  const c = new Proxy({} as Record<string, unknown>, {
+    get: (t, k) => (k === "fillText" ? (_text: string, x: number, y: number) => labelled.push(`${x},${y}`) : k in t ? t[k as string] : () => {}),
+    set: (t, k, v) => ((t[k as string] = v), true),
+  });
+  const renderer = new Renderer({ getContext: () => ({}), getBoundingClientRect: () => ({ width: 400 }) } as unknown as HTMLCanvasElement, g);
+  (renderer as unknown as { drawDamageLabels(f: FrameContext): void }).drawDamageLabels({ c, s: 20, n: 3, left: 0, bottom: 0, world: g.world } as unknown as FrameContext);
+  // Tile (1, 0)'s bottom edge is 3 rows down a 3-tile view of 20px tiles.
+  assert.ok(labelled.includes(`${20 + 1.2},${60 - 1.2}`), `labels at ${labelled}`);
 });
