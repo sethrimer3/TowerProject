@@ -129,7 +129,7 @@ export class Fences {
       const def = ENEMIES[e.kind];
       if (def.flying) continue;
       for (const s of this.byCell.get(cellIndex(Math.floor(e.x), Math.floor(e.y))) ?? [])
-        if (!s.broken && segDist(s, e.x, e.y) < def.size / 2 + 0.06) this.snap(s, e.x, e.y);
+        if (!s.broken && segDist(s, e.x, e.y) < def.size / 2 + 0.06) this.splinter(s, e.x, e.y);
     }
   }
 
@@ -137,7 +137,7 @@ export class Fences {
   private blast(sim: DefendSim) {
     for (const fx of sim.effects) {
       if (!this.firstSight(fx)) continue;
-      for (const s of this.sections) if (!s.broken && segDist(s, fx.x, fx.y) < fx.r) this.snap(s, fx.x, fx.y, 2.2);
+      for (const s of this.sections) if (!s.broken && segDist(s, fx.x, fx.y) < fx.r) this.splinter(s, fx.x, fx.y, 2.2);
     }
     if (this.seenBlasts.size > BLAST_MEMORY) this.seenBlasts.clear();
   }
@@ -165,7 +165,7 @@ export class Fences {
   }
 
   /** Break a section: it bursts into splinters flung away from the cause. */
-  snap(s: FenceSection, fromX: number, fromY: number, force = 1) {
+  splinter(s: FenceSection, fromX: number, fromY: number, force = 1) {
     s.broken = true;
     const n = 6 + Math.floor(fx() * 4);
     for (let i = 0; i < n; i++) {

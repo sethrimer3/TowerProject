@@ -87,7 +87,7 @@ export function generateCity(
   const { city, wall, structures } = fit;
   const t = new Uint8Array(CELL_COUNT);
   for (let i = 0; i < CELL_COUNT; i++) t[i] = city[i] ? FREE : wall[i] ? CellType.WALL : CellType.OUT;
-  for (const s of structures) fillRect(t, s.rect, CellType.STRUCT);
+  for (const s of structures) fillCells(t, s.rect, CellType.STRUCT);
 
   const keep = structures[0].rect;
   layPlaza(t, keep);
@@ -131,7 +131,7 @@ function neighbours(i: number): number[] {
   return out;
 }
 
-function fillRect(t: Uint8Array, r: Rect, v: number) {
+function fillCells(t: Uint8Array, r: Rect, v: number) {
   for (const i of rectCells(r)) t[i] = v;
 }
 
@@ -394,7 +394,7 @@ function buildHouse(t: Uint8Array, lots: Lots, i: number, seed: number) {
     .map(([w, h]) => ({ x, y, w, h }))
     .find((r) => rectAll(t, r, FREE) && sideCells(r).some((n) => isRoad(t[n])));
   if (rect) {
-    fillRect(t, rect, CellType.HOUSE);
+    fillCells(t, rect, CellType.HOUSE);
     lots.add("house", rect);
   } else if (neighbours(i).some((n) => isRoad(t[n]))) {
     t[i] = CellType.HOUSE;
