@@ -8,7 +8,7 @@ import {
   type EquipRarity, type PullCount,
 } from "../equipment/balance.ts";
 import {
-  categoryOf, findItem, isProtected, levelCost, maxLevel, mergeFodder, openSlotCount, salvageTotals, wornIn,
+  autoMerges, categoryOf, findItem, isProtected, levelCost, maxLevel, mergeFodder, openSlotCount, salvageTotals, wornIn,
   type EffectChoice, type EffectSlot, type EquipItem,
 } from "../equipment/inventory.ts";
 import { effectText, equipmentEffects, itemLines, lineValue } from "../equipment/effects.ts";
@@ -226,7 +226,7 @@ export class EquipmentPanel {
         : `<p class="hint">None are ready yet.</p>`;
       const empty = `<span class="eq-tile eq-ghost" aria-hidden="true"></span>`;
       return `<div class="eq-assemble"><div class="eq-recipe"><span class="eq-inputs">${this.inputsHtml([empty, empty, empty])}</span><span class="eq-arrow" aria-hidden="true">▶</span><span class="eq-tile eq-ghost eq-result-slot" aria-hidden="true">?</span></div>
-        <p class="eq-need">Choose the piece to keep</p></div><h3 class="eq-section">List</h3>${list}${this.assembleActions(false)}`;
+        <div class="eq-need-row"><p class="eq-need">Choose the piece to keep</p><button id="eq-auto-asm"${autoMerges(this.e).length ? "" : " disabled"}>${ACTION_ICONS.merge} Auto-assemble</button></div></div><h3 class="eq-section">List</h3>${list}${this.assembleActions(false)}`;
     }
     const t = RARITY_TIERS[target.rarity], next = t.next!, need = t.merge - 1, category = categoryOf(target);
     const fodder = mergeFodder(this.e, target), copies = this.copies.map((id) => fodder.find((i) => i.id === id)).filter((i): i is EquipItem => !!i);
@@ -270,6 +270,57 @@ export class EquipmentPanel {
     this.changed();
     const item = findItem(this.e, id);
     if (item) playSlagMerge(going, { def: item.def, rarity: item.rarity }, this.game.save.settings.reduceMotion, () => this.showResult("Assemble Complete!", [item]));
+  }
+
+  /** Auto-assemble: every merge the inventory makes at once (`autoMerges`),
+   * each with a box to leave it out, then Assemble makes those checked,
+   * without the melt. The ✕ or a press outside the dialog cancels. */
+  private showAutoAssemble() {
+    const merges = autoMerges(this.e), chosen = new Set(merges.map((_, k) => k));
+    if (!merges.length) return;
+    const { modal } = this.ctx;
+    const rows = merges.map((m, k) => {
+      const target = findItem(this.e, m.target)!, next = RARITY_TIERS[target.rarity].next!;
+      const fodder = m.fodder.map((id) => findItem(this.e, id)!);
+      const lost = fodder.some((i) => i.level > 1 || i.spent) ? ` <span class="warning" title="A copy used up has been leveled: what was put into it is lost">⚠</span>` : "";
+      return `<li><label class="eq-auto-row"><input type="checkbox" data-eq-auto="${k}" checked>
+        <span class="equip-icon-frame rar-${target.rarity}">${itemIcon(target.def)}</span>
+        <span class="eq-auto-text"><strong class="rar-${target.rarity} eq-need-name">${nameOf(target)}</strong>
+        <span>${rarityTag(target.rarity)} → ${rarityTag(next)} Lv ${target.level}${target.locked ? ` ${ACTION_ICONS.lock}` : ""}</span>
+        <small>Uses up Lv ${fodder.map((i) => i.level).join(", Lv ")}${lost}</small></span></label></li>`;
+    }).join("");
+    modal.innerHTML = `<div class="eq-auto"><button id="eq-auto-close" class="dialog-x" aria-label="Close" title="Close">✕</button>
+      <small>${ACTION_ICONS.merge} ASSEMBLE</small><h2>Auto-assemble</h2>
+      <p class="eq-auto-note">Every merge your pieces make. Worn pieces take no part; locked ones are only kept. Uncheck any to leave it out.</p>
+      <ul class="eq-auto-list">${rows}</ul>
+      <div class="dialog-actions"><button id="eq-auto-go" class="eq-go">${ACTION_ICONS.merge} Assemble (<span id="eq-auto-count">${chosen.size}</span>)</button></div></div>`;
+    const go = el("eq-auto-go") as HTMLButtonElement;
+    modal.querySelectorAll<HTMLInputElement>("[data-eq-auto]").forEach((box) => (box.onchange = () => {
+      const k = Number(box.dataset.eqAuto);
+      if (box.checked) chosen.add(k);
+      else chosen.delete(k);
+      el("eq-auto-count").textContent = String(chosen.size);
+      go.disabled = !chosen.size;
+    }));
+    // A press on the backdrop (outside the dialog's box) cancels.
+    modal.onclick = (ev) => {
+      const r = modal.getBoundingClientRect();
+      if (ev.target === modal && (ev.clientX < r.left || ev.clientX > r.right || ev.clientY < r.top || ev.clientY > r.bottom)) modal.close();
+    };
+    modal.addEventListener("close", () => { modal.onclick = null; }, { once: true });
+    el("eq-auto-close").onclick = () => modal.close();
+    go.onclick = () => {
+      modal.onclick = null;
+      const made = merges.filter((_, k) => chosen.has(k))
+        .filter((m) => typeof this.game.equipment.merge(m.target, m.fodder) !== "string")
+        .map((m) => findItem(this.e, m.target)).filter((i): i is EquipItem => !!i);
+      this.target = null;
+      this.copies = [];
+      this.changed();
+      if (made.length) this.showResult("Assemble Complete!", made);
+      else modal.close();
+    };
+    modal.showModal();
   }
 
   // --- Acquire: Gem pulls ---
@@ -383,6 +434,7 @@ export class EquipmentPanel {
     const on = (id: string, fn: () => void) => { const b = document.querySelector<HTMLButtonElement>(`#gear #${id}`); if (b) b.onclick = fn; };
     on("eq-asm-cancel", () => { this.target = null; this.copies = []; this.rerender(); });
     on("eq-asm-go", () => this.doAssemble());
+    on("eq-auto-asm", () => this.showAutoAssemble());
     const salvage = document.querySelector<HTMLDetailsElement>("#gear .eq-salvage");
     if (salvage) salvage.ontoggle = () => { this.salvageOpen = salvage.open; };
     const sort = document.querySelector<HTMLSelectElement>("#eq-sort");
@@ -394,7 +446,7 @@ export class EquipmentPanel {
   showHelp() {
     const salvage = EQUIP_RARITIES.map((r) => `${RARITY_TIERS[r].name} ${RARITY_TIERS[r].salvage}`).join(" · ");
     showHelp(this.ctx, "GEAR", "Equipment", `<p><b>Wearing.</b> Each hero wears one piece of each kind; the Tower and the Delve keep separate loadouts. Tap a piece to equip, level or lock it. Bosses may drop Standard pieces; Gem pulls bring Unique ones.</p>
-      <p><b>Assemble.</b> Three copies of a piece at the same rarity (Uncommon or above; Common pieces never merge) make one of the next rarity, with a higher level cap. The piece kept keeps its level, effect slots and Refinement; what was put into the others is lost. Locked and worn copies don't count.</p>
+      <p><b>Assemble.</b> Three copies of a piece at the same rarity (Uncommon or above; Common pieces never merge) make one of the next rarity, with a higher level cap. The piece kept keeps its level, effect slots and Refinement; what was put into the others is lost. Locked and worn copies don't count. Auto-assemble lists every merge your unworn pieces make at once, to make all you leave checked.</p>
       <p><b>Acquire.</b> Each pull brings a Unique piece at a rolled rarity, of the chosen category, or of a random one for ${PULL_ALL_DISCOUNT}% less. The ${PITY}th pull in a row without a Rare in a category is a Rare.</p>
       <p><b>Salvage.</b> Dismantling turns a piece into its category's material (${salvage}; Unique twice that), not returning upgrades. Locked and worn pieces are never included; press Select to choose pieces one by one. With Auto-salvage on, Common pieces bosses drop are dismantled as they drop, and those Gem pulls bring once pulled.</p>`);
   }

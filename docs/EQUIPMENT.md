@@ -195,6 +195,7 @@ From level 1, reaching level 20 costs 20,900 Gold and 225 material; level 40, 13
 ## 8. Merging
 
 Three pieces of the **same definition and rarity** make one of the next rarity. In the Assemble view the player chooses the piece to keep (the target), shown beside the copies to use up with the result it makes: it moves up a rarity **keeping its level**, lock, loadouts, investment, **effect slots, their effects and their Refinement** (nothing is rerolled: the new rarity raises the cap, lets its slots hold rarer effects, and opens the next slot once leveled past the old cap); the player picks the two copies used up (the two lowest-level unprotected ones are picked to start). Locked or worn copies are never offered; the target itself may be locked or worn. Assemble lists every piece with enough copies ready (its tab wears an *N* while one is), and ends on a full-screen *Assemble Complete!* with the piece made.
+**Auto-assemble**, beside *Choose the piece to keep*, lists every merge the inventory makes at once, each checked by default: no piece in two merges, worn pieces left out altogether, a locked piece only ever kept, and each merge keeping the best piece left (locked first, then the highest level) and using up the lowest-level copies. Its Assemble makes those left checked, without the melt, and ends on one *Assemble Complete!* showing them all; its ✕ or a press outside it cancels. A merge's result never joins another in the same list: pressing again offers merges at the new rarity.
 
 ## 9. Dismantling
 

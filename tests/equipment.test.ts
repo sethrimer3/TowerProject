@@ -17,7 +17,7 @@ import {
   upgradeGold, upgradeMaterial,
 } from "../src/equipment/balance.ts";
 import {
-  addItem, decodeEquipment, defaultEquipment, dismantle, equip, isProtected, levelUp, merge, mergeFodder, salvageTotals,
+  addItem, autoMerges, decodeEquipment, defaultEquipment, dismantle, equip, isProtected, levelUp, merge, mergeFodder, salvageTotals,
   setLocked, unequip, type EquipmentSave,
 } from "../src/equipment/inventory.ts";
 import { lineValue, effectText } from "../src/equipment/effects.ts";
@@ -375,6 +375,25 @@ test("merging takes exactly two other copies, raises the chosen target's rarity 
   assert.ok(!e.items.some((i) => i.id === b.id || i.id === d.id));
   const r = addItem(e, "ringOfWarding", "rare")!;
   assert.equal(merge(e, r.id, []), "unmergeable", "Rare is the top for now");
+});
+
+test("Auto-assemble offers every merge at once, none sharing a piece, leaving worn pieces out and locked ones only kept", () => {
+  const e = open();
+  const [worn, locked, a, b, c, d, f] = [0, 1, 2, 3, 4, 5, 6].map(() => addItem(e, "ringOfWarding", "uncommon")!);
+  equip(e, "tower", worn.id);
+  setLocked(e, locked.id, true);
+  [worn.level, locked.level, a.level, b.level, c.level, d.level, f.level] = [40, 3, 9, 1, 5, 2, 7];
+  addItem(e, "silverBand", "uncommon");
+  addItem(e, "silverBand", "uncommon");
+  [0, 1, 2].map(() => addItem(e, "knightsSword", "common"));
+  const merges = autoMerges(e);
+  assert.deepEqual(merges, [
+    { target: locked.id, fodder: [b.id, d.id] },
+    { target: a.id, fodder: [c.id, f.id] },
+  ], "the locked piece kept first, then the highest level; the lowest-level copies used up");
+  for (const m of merges) assert.ok(typeof merge(e, m.target, m.fodder) !== "string", "each merge still stands after those before it");
+  assert.deepEqual([worn, locked, a].map((i) => i.rarity), ["uncommon", "rare", "rare"]);
+  assert.deepEqual(autoMerges(e), [], "nothing left to assemble");
 });
 
 test("Common pieces never merge: they are only worn as they are or salvaged", () => {

@@ -2226,6 +2226,21 @@ button.eq-mode:hover { border-color: #e8b84a; }
 .eq-plus { color: #c9cdf2; font-size: 22px; font-weight: 700; }
 .eq-need { width: fit-content; margin: 10px auto 0; padding: 4px 10px; background: #000; color: #fff; font-size: 12px; }
 .eq-need-name { color: var(--rar); }
+/* "Choose the piece to keep" with Auto-assemble beside it. */
+.eq-need-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; }
+.eq-need-row .eq-need { margin: 0; }
+.eq-need-row button { padding: 4px 10px; font-size: 12px; }
+.eq-need-row button:disabled { opacity: .45; }
+/* Auto-assemble's dialog: one checkable row per merge, the list scrolling. */
+.eq-auto-list { max-height: 55dvh; margin: 8px 0; padding: 0; overflow-y: auto; list-style: none; }
+.eq-auto-row { display: flex; align-items: center; gap: 10px; padding: 6px 4px; border-bottom: 1px solid #36414f; cursor: pointer; }
+.eq-auto-row input { flex: none; width: 20px; height: 20px; margin: 0; }
+.eq-auto-text { display: grid; gap: 2px; min-width: 0; font-size: 12px; text-align: left; }
+.eq-auto-text > span { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.eq-auto-note { font-size: 12px; line-height: 1.5; }
+.eq-auto-text small { color: inherit; opacity: .8; }
+.eq-auto .dialog-actions button { min-height: 44px; }
+.eq-auto .eq-go:disabled { opacity: .45; }
 .eq-assemble-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 14px 0 4px; padding-top: 12px; border-top: 2px solid #4a4f8a; }
 .eq-assemble-actions button { padding: 12px 6px; font-size: 14px; }
 .eq-go { border: 2px solid #4ee05a; background: #2d7a20; color: #fff; }
@@ -4031,8 +4046,8 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
 /* A piece's detail card: a close X pinned to its top right, and its actions
  * in rows that wrap instead of running off the side on a phone. */
 #modal:has(> .equip-detail) { padding: 18px 16px 20px; }
-.equip-detail .dialog-x { position: sticky; top: 0; z-index: 3; float: right; width: 36px; height: 36px; margin: -6px -6px 0 8px; padding: 0; border: 1px solid #8d794e; border-radius: 50%; background: #101823; color: #e9d4ac; font-size: 16px; line-height: 1; }
-.equip-detail .dialog-x:hover, .equip-detail .dialog-x:focus-visible { background: #2a3546; color: #fff; }
+.equip-detail .dialog-x, .eq-auto .dialog-x { position: sticky; top: 0; z-index: 3; float: right; width: 36px; height: 36px; margin: -6px -6px 0 8px; padding: 0; border: 1px solid #8d794e; border-radius: 50%; background: #101823; color: #e9d4ac; font-size: 16px; line-height: 1; }
+.equip-detail .dialog-x:hover, .equip-detail .dialog-x:focus-visible, .eq-auto .dialog-x:hover, .eq-auto .dialog-x:focus-visible { background: #2a3546; color: #fff; }
 .equip-detail > small { display: block; padding: 0 44px; }
 .equip-detail .equip-title { justify-content: center; margin: 10px 0 6px; font-size: 22px; line-height: 1.2; }
 .equip-detail .item-meta { justify-content: center; font-size: 11px; }
