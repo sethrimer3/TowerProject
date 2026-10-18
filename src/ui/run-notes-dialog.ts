@@ -1,3 +1,4 @@
+import { kitIcon } from "../sprite-kit.ts";
 import { researched } from "../archives.ts";
 import { KEY_NAMES } from "../doors.ts";
 import type { Mode } from "../entities.ts";
@@ -69,7 +70,7 @@ export function notesText(title: string, sections: NotesSection[]) {
 }
 
 /** Two sheets, one over the other: the copy button's icon. */
-export const COPY_ICON = `<svg class="copy-icon" viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="9" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.5a1.5 1.5 0 0 0-1.5-1.5H4A1.5 1.5 0 0 0 2.5 3v6.5A1.5 1.5 0 0 0 4 11h.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>`;
+export const COPY_ICON = kitIcon("ui-copy", `<svg class="copy-icon" viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="9" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.5a1.5 1.5 0 0 0-1.5-1.5H4A1.5 1.5 0 0 0 2.5 3v6.5A1.5 1.5 0 0 0 4 11h.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>`, "copy-icon");
 /** The copy button, its id `id`. */
 export const copyButton = (id: string) => `<button id="${id}" class="copy-button" aria-label="Copy to clipboard" title="Copy to clipboard">${COPY_ICON}</button>`;
 

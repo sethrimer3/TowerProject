@@ -1,3 +1,4 @@
+import { kitIcon } from "../sprite-kit.ts";
 import { askForGems, showHelp } from "./dialogs.ts";
 import { CARDS, cardBonusText, cardText, deckCards, handSlots, linkedToNext, moveCard, nextHandSlotGems, placeCard, type CardId } from "../cards.ts";
 import type { AppContext } from "./app.ts";
@@ -26,8 +27,8 @@ type DeckDrag = { card: CardId; to: number | null; pointer: number; x: number; y
  * (null while it is over none). */
 type BadgeDrag = { badge: BadgeId; card: CardId | null; pointer: number; x: number; y: number; lifted: boolean; ghost: HTMLElement | null };
 
-const X_SVG = `<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M2.5 2.5L7.5 7.5M7.5 2.5L2.5 7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`;
-const CHECK_SVG = `<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M2 5.4L4.2 7.6L8.2 2.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const X_SVG = kitIcon("close", `<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M2.5 2.5L7.5 7.5M7.5 2.5L2.5 7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`, "deck-control-icon");
+const CHECK_SVG = kitIcon("check", `<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M2 5.4L4.2 7.6L8.2 2.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`, "deck-control-icon");
 
 const ARROW_STEPS = new Map([["ArrowLeft", -1], ["ArrowRight", 1]]);
 

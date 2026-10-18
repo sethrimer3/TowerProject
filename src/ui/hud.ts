@@ -1,3 +1,4 @@
+import { kitIcon } from "../sprite-kit.ts";
 import { amountUnit, enemyStat, keyCount, stepsIn, whole, wholeHp } from "../whole.ts";
 import type { Game } from "../state.ts";
 import type { Renderer } from "../rendering.ts";
@@ -395,7 +396,7 @@ function renderAutoButton(game: Game) {
   const label = game.auto ? "Pause the hand" : "Play the hand";
   const icon = game.auto ? HAND_ICON.pause : HAND_ICON.play,
     slot = button.querySelector<HTMLElement>(".mini-icon")!;
-  if (inside && slot.textContent !== icon) slot.textContent = icon;
+  if (inside && slot.textContent !== icon) slot.innerHTML = kitIcon(game.auto ? "pause" : "play", icon, "hand-control-icon");
   text("auto-state", game.auto ? "PLAYING" : "PAUSED");
   renderSpeed(game, inside);
   // The speed lesson waits on the › arrow, not on play; the first run's

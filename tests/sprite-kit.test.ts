@@ -5,6 +5,7 @@ import { createHash } from "node:crypto";
 import { BADGE_IDS } from "../src/badges.ts";
 import { CARD_SPRITE_LAYERS } from "../src/sprite-cards.ts";
 import { ICON_SPRITES, WORLD_SPRITES, CONTROL_SPRITES, DETAIL_SPRITES, CITY_SPRITES, DEFEND_STRUCTURE_SPRITES, NAMED_ENEMY_SPRITES, drawKit, kitEnemy, spriteRevision } from "../src/sprite-kit.ts";
+import { GOAL_SPRITES, UI_DETAIL_SPRITES, UI_ORNAMENT_SPRITES } from "../src/sprite-ui-details.ts";
 import { CARDS } from "../src/cards.ts";
 import { ICON_ROWS } from "../src/ui/equipment-icons.ts";
 import { THEMED_TILESET_URLS } from "../src/themed-tilesets.ts";
@@ -14,7 +15,7 @@ import { paintContents, paintHero } from "../src/tile-painters.ts";
 test("every world, UI, Equipment and card sprite ships as a real native-sized PNG", () => {
   const base = new URL("../public/assets/style/", import.meta.url);
   const manifest = JSON.parse(readFileSync(new URL("manifest.json", base), "utf8"));
-  for (const id of [...ICON_SPRITES, ...WORLD_SPRITES, ...CONTROL_SPRITES, ...DETAIL_SPRITES, ...CITY_SPRITES, ...DEFEND_STRUCTURE_SPRITES, ...NAMED_ENEMY_SPRITES.map(id => `enemy-${id}`), ...Object.keys(ICON_ROWS).map(id => `equip-${id}`), ...Object.keys(CARDS).map(id => `card-${id}`), ...BADGE_IDS.map(id => `badge-${id}`), "badge-star", "card-exchange", ...["common", "rare", "epic"].map(rarity => `badge-frame-${rarity}`)]) {
+  for (const id of [...UI_DETAIL_SPRITES, ...UI_ORNAMENT_SPRITES, ...ICON_SPRITES, ...WORLD_SPRITES, ...CONTROL_SPRITES, ...DETAIL_SPRITES, ...CITY_SPRITES, ...DEFEND_STRUCTURE_SPRITES, ...NAMED_ENEMY_SPRITES.map(id => `enemy-${id}`), ...Object.keys(ICON_ROWS).map(id => `equip-${id}`), ...Object.keys(CARDS).map(id => `card-${id}`), ...BADGE_IDS.map(id => `badge-${id}`), "badge-star", "card-exchange", ...["common", "rare", "epic"].map(rarity => `badge-frame-${rarity}`)]) {
     const asset = manifest.assets[id];
     assert.ok(asset, id);
     const png = readFileSync(new URL(asset.file, base));
@@ -94,4 +95,16 @@ test("every badge and card has a distinct PNG, with card subjects clear of live 
     assert.ok(layer.x >= 6 && layer.y >= 8 && layer.x + layer.size <= 42 && layer.y + layer.size <= 44, "leave frame and name band clear");
     assert.ok(readFileSync(new URL(`${layer.sprite}.png`, base)).length > 100);
   }
+});
+
+
+test("all Goal unlocks have deployed matching art and new utility symbols are distinct", () => {
+  const base = new URL("../public/assets/style/", import.meta.url);
+  for (const [unlock, id] of Object.entries(GOAL_SPRITES)) {
+    const png = readFileSync(new URL(`${id}.png`, base));
+    assert.equal(png.subarray(0, 8).toString("hex"), "89504e470d0a1a0a", unlock);
+  }
+  const ids = [...UI_DETAIL_SPRITES, ...UI_ORNAMENT_SPRITES];
+  const hashes = ids.map(id => createHash("sha256").update(readFileSync(new URL(`${id}.png`, base))).digest("hex"));
+  assert.equal(new Set(hashes).size, ids.length, "range, charge, rapid fire and attack speed must remain distinguishable");
 });

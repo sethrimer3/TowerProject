@@ -56,3 +56,6 @@ Tower I's premium rewards, floor by floor: 100 Gold, 10 Gems, 10 Gems, 300 Gold,
 The other towers' rewards past their unlocks are placeholders for now (Gold on the left, 5 Gems a checkpoint on the right, rising by 5 with each); the store isn't connected yet, so only Dev mode (or its free purchases) unlocks a pass.
 The Delve has no Goals yet.
 End Run shows only inside a run.
+
+With Settings → **Sprites** on, Goal rewards and their locked, claimed, mastered and cleared marks use matching pixel-art PNGs.
+The option defaults to off, and non-default UI themes supply their own look; reward names, amounts and floor numbers stay live text.

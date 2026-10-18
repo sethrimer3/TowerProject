@@ -269,3 +269,67 @@ html.ui-sprites .badge-entry.attached .badge-token { box-shadow: none; }
 
 /* The PNG dialog has a dark slate center rather than parchment. */
 html.ui-sprites dialog p:not(#_) { color: #b8c2bb; }
+
+/* PNG pairs occupy the same boxes as the original compact SVG controls. */
+.charge-icon { width: 13px; height: 18px; }
+.charge-stat .charge-icon { width: 15px; height: 15px; }
+.deck-control-icon { width: 10px; height: 10px; }
+.hand-control-icon { width: 1em; height: 1em; }
+html.ui-sprites .silver-sprite.sprite-ready { filter: none; }
+html.ui-sprites :is(.goal-mark, .goal-badge, .relic-lock).sprite-ready { filter: none; }
+html.ui-sprites .goal-marks > .inactive .goal-mark.sprite-ready { opacity: 0.45; }
+html.ui-sprites.medieval dialog::before {
+  background: url("../public/assets/style/ui-seal.png") center / contain no-repeat;
+  width: 48px;
+  height: 48px;
+  transform: translateX(-50%);
+  filter: none;
+  image-rendering: pixelated;
+}
+html.ui-sprites .forest-sign:not(#_) {
+  border-image: url("../public/assets/style/ui-sign.png") 6 fill / 12px / 0 stretch;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  image-rendering: pixelated;
+}
+html.ui-sprites #deck-hand .deck-link-toggle:not(#_) { border-image: none; background: none; box-shadow: none; }
+html.ui-sprites #deck-hand .deck-link-toggle::before {
+  width: 16px;
+  height: 16px;
+  border: 0;
+  background: url("../public/assets/style/ui-link.png") center / contain no-repeat;
+  transform: translate(-50%, -50%);
+  image-rendering: pixelated;
+  box-shadow: none;
+  opacity: 0.5;
+}
+html.ui-sprites #deck-hand .deck-link-toggle:is(.on, :hover, :focus-visible)::before { opacity: 1; box-shadow: none; }
+html.ui-sprites .badge-coin.sprite-ready { border: 0; border-radius: 0; background: none; box-shadow: none; }
+.sprite-icon.goal-badge, .sprite-icon.badge-coin { position: absolute; }
+/* Text-symbol fallbacks retain their intrinsic size outside sprite mode. */
+html.ui-sprites :is(.stat-icon, .key-icon) { width: 1em; height: 1em; }
+
+/* Node state frames and their backdrop share the same quiet PNG materials. */
+html.ui-sprites .tree-viewport:not(#_) { background: #10151c; }
+html.ui-sprites .skill-node .node-icon:not(#_) {
+  border: 1px solid transparent;
+  border-image: var(--ui-field) 6 fill / 6px / 0 stretch;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  image-rendering: pixelated;
+}
+html.ui-sprites .skill-node.owned .node-icon:not(#_) { border-image-source: var(--ui-selected); }
+html.ui-sprites .skill-node.locked .node-icon:not(#_) { border-image-source: var(--ui-disabled); }
+html.ui-sprites .skill-node.chosen .node-icon:not(#_) { outline: 2px solid #e1bb78; outline-offset: 2px; }
+html.ui-sprites :is(.training-group, .page-title h2, .tree-heading h3)::before,
+html.ui-sprites :is(.training-group, .page-title h2, .tree-heading h3)::after {
+  background: url("../public/assets/style/ui-link.png") right center / auto 12px no-repeat;
+  image-rendering: pixelated;
+}
+/* Notes and stat tables also sit on slate when the PNG dialog is active. */
+html.ui-sprites dialog > small:not(#_) { color: #8b9a9d; }
+html.ui-sprites dialog .stats-table th:not(#_) { color: #b8c2bb; border-bottom-color: #3e4c59; }
+html.ui-sprites dialog .stats-table td:not(#_) { color: #eee0b7; border-bottom-color: #3e4c59; }
+html.ui-sprites dialog .notes-table caption:not(#_) { color: #e1bb78; }

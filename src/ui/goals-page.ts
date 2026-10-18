@@ -1,3 +1,5 @@
+import { kitIcon } from "../sprite-kit.ts";
+import { GOAL_SPRITES } from "../sprite-ui-details.ts";
 import { CHECKPOINT_EVERY, CHECKPOINT_FLOORS, CHECKPOINTS, UNLOCK_NAMES, areaCleared, checkpoint, areaMastered, canWarp, floorsCompleted, goalState, unmasteredBelow, passFor, passTotals, unlockAt, unlockFloor, warpUnlocked, type Checkpoint, type GoalReward, type GoalState, type GoalUnlock, type Pass } from "../goals.ts";
 import { CURRENCIES, type CurrencyId } from "../shop/currency.ts";
 import { owns } from "../shop/entitlements.ts";
@@ -34,7 +36,7 @@ const CURRENCY_ICONS: Record<CurrencyId, () => string> = { gems: () => gemIcon("
  * coin under a falling arrow, Card Groups two cards linked by a bracket and
  * a diamond, the Flying Enemy Card a card wearing a wing, and every Shrine
  * research a shrine's gate (`shrineIcon`). */
-const UNLOCK_ICONS: Record<GoalUnlock, string> = {
+const LEGACY_UNLOCK_ICONS: Record<GoalUnlock, string> = {
   flyingEnemyCard: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="2" width="15" height="20" rx="2" fill="#2a3346" stroke="#c9ced8" stroke-width="1.3"/><path d="M6.5 15c2-4.5 6-7.5 11-8.5-1 1.2-1.6 2.2-2 3.2 1-.2 1.8-.2 2.6 0-1 .9-1.8 1.8-2.4 2.8.8 0 1.5.2 2.1.5-2.6 1.6-6.4 2.4-11.3 2z" fill="#e8f2ff" stroke="#7fb6ff" stroke-width="1" stroke-linejoin="round"/></svg>`,
   warpLoot: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="9" cy="11" rx="6" ry="8" fill="#2a1d4a" stroke="#c9a6ff" stroke-width="1.5"/><path d="M9 6.8c2.2 0 3.4 1.8 3 3.6-.5 1.7-2.6 2.5-3.9 1.5-1.1-.8-.9-2.4.3-2.7" fill="none" stroke="#f0e2ff" stroke-width="1.3" stroke-linecap="round"/><circle cx="16.5" cy="16.5" r="5" fill="#5d6673" stroke="#e6ebf2" stroke-width="1.4"/><circle cx="16.5" cy="16.5" r="2.8" fill="none" stroke="#ffffff" stroke-width="1"/></svg>`,
   trainingDiscount: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="13" r="7.5" fill="#6b4a0e" stroke="#ffd34d" stroke-width="1.5"/><circle cx="10" cy="13" r="4.6" fill="none" stroke="#ffe58a" stroke-width="1"/><path d="M19.5 2.5v9M16.6 8.6l2.9 2.9 2.9-2.9" fill="none" stroke="#8ff0a8" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
@@ -64,8 +66,14 @@ const UNLOCK_ICONS: Record<GoalUnlock, string> = {
   damageVisual: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="2.5" fill="#1d2230" stroke="#8d97a8" stroke-width="1.3"/><path d="M8 15.5c0-4.5 1.8-8 4.5-8s4.5 3.5 4.5 8l-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1z" fill="#6b3a44" stroke="#df797e" stroke-width="1.2" stroke-linejoin="round"/><circle cx="11" cy="11" r="0.9" fill="#ffd0d5"/><circle cx="14" cy="11" r="0.9" fill="#ffd0d5"/><path d="M4.5 20.5v-5h2.6a1.6 1.6 0 0 1 0 3.2H4.5" fill="none" stroke="#000" stroke-width="2.6" stroke-linejoin="round"/><path d="M4.5 20.5v-5h2.6a1.6 1.6 0 0 1 0 3.2H4.5" fill="none" stroke="#ff5a5a" stroke-width="1.4" stroke-linejoin="round"/></svg>`,
   relativeDamageColor: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="goal-spectrum"><stop offset="0" stop-color="#4dff6a"/><stop offset=".35" stop-color="#ffe14d"/><stop offset=".65" stop-color="#ff9a3d"/><stop offset="1" stop-color="#ff5a5a"/></linearGradient></defs><rect x="2.5" y="2.5" width="19" height="14" rx="2.5" fill="#1d2230" stroke="#8d97a8" stroke-width="1.3"/><path d="M8.5 13.5c0-3.6 1.5-6.5 3.5-6.5s3.5 2.9 3.5 6.5l-1.2-.8-1.2.8-1.1-.8-1.1.8-1.2-.8z" fill="#6b3a44" stroke="#df797e" stroke-width="1.1" stroke-linejoin="round"/><rect x="2.5" y="18" width="19" height="3.5" rx="1.75" fill="url(#goal-spectrum)" stroke="#000" stroke-width=".8"/></svg>`,
 };
+/** Loaded PNGs replace only the default presentation; other themes and
+ * failed requests retain the original reward art. */
+const UNLOCK_ICONS = Object.fromEntries((Object.keys(LEGACY_UNLOCK_ICONS) as GoalUnlock[]).map(id => [id,
+  LEGACY_UNLOCK_ICONS[id].startsWith("<svg") ? kitIcon(GOAL_SPRITES[id], LEGACY_UNLOCK_ICONS[id], "goal-icon") : LEGACY_UNLOCK_ICONS[id],
+])) as Record<GoalUnlock, string>;
+
 /** The next tower's reward: a tower's silhouette with its door lit. */
-const TOWER_ICON = `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21.5V8.5H4.5v-5h3v2h2.2v-2h4.6v2h2.2v-2h3v5H18v13z" fill="#3a3f4b" stroke="#c9ced8" stroke-width="1.3" stroke-linejoin="round"/><path d="M10 21.5v-4a2 2 0 0 1 4 0v4z" fill="#ffd34d"/><rect x="11" y="10" width="2" height="3" rx=".5" fill="#ffd34d"/></svg>`;
+const TOWER_ICON = kitIcon("tower", `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21.5V8.5H4.5v-5h3v2h2.2v-2h4.6v2h2.2v-2h3v5H18v13z" fill="#3a3f4b" stroke="#c9ced8" stroke-width="1.3" stroke-linejoin="round"/><path d="M10 21.5v-4a2 2 0 0 1 4 0v4z" fill="#ffd34d"/><rect x="11" y="10" width="2" height="3" rx=".5" fill="#ffd34d"/></svg>`, "goal-icon");
 /** What each unlock does, shown once it is claimed and again whenever its claimed reward is pressed. */
 const UNLOCK_TUTORIALS: Record<GoalUnlock, string> = {
   flyingEnemyCard: `<p>The Flying Enemy card joins your deck: it moves you toward the closest Flying enemy your arrows can hurt, stops once one is within your Attack Range, and waits there while your arrows fly.</p>` +
@@ -130,11 +138,11 @@ const UNLOCK_TUTORIALS: Record<GoalUnlock, string> = {
   banBoons: `<p>Ban Boons opens in the Archives once Shrines are yours: research it, and ban boons from ever being offered, on the forest's Shrine Boons page.</p>`,
   autoPickRanking: `<p>Auto Pick Ranking opens in the Archives once Auto Pick Boons is yours: research it, and rank the boons Auto Pick takes first, on the forest's Shrine Boons page.</p>`,
 };
-const LOCK_ICON = `<svg class="goal-badge" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7.5" rx="1.5" fill="#3a3f4b" stroke="#c9ced8" stroke-width="1.1"/><path d="M5.2 7V5.2a2.8 2.8 0 0 1 5.6 0V7" fill="none" stroke="#c9ced8" stroke-width="1.4"/></svg>`;
+const LOCK_ICON = kitIcon("lock", `<svg class="goal-badge" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7.5" rx="1.5" fill="#3a3f4b" stroke="#c9ced8" stroke-width="1.1"/><path d="M5.2 7V5.2a2.8 2.8 0 0 1 5.6 0V7" fill="none" stroke="#c9ced8" stroke-width="1.4"/></svg>`, "goal-badge");
 /** Beside a checkpoint's floor: its area mastered (a golden swirl, shown once Warp is owned) and cleared (a green check). */
-const SWIRL_MARK = `<svg class="goal-mark" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#3a2a08" stroke="#ffd34d" stroke-width="1.6"/><path d="M12 5.5c3.6 0 6 2.7 5.4 5.9-.6 3-3.8 4.5-6.3 3.3-2.1-1-2.1-3.9-.1-4.6 1.4-.5 2.7.5 2.3 1.7" fill="none" stroke="#fff1b0" stroke-width="1.8" stroke-linecap="round"/></svg>`;
-const CLEARED_MARK = `<svg class="goal-mark" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#1f6a34" stroke="#8ff0a8" stroke-width="1.6"/><path d="M7 12.5l3.4 3.4L17.2 8.4" fill="none" stroke="#f0fff4" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-const CHECK_ICON = `<svg class="goal-badge" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="#1f5a34" stroke="#9fe0b0" stroke-width="1.1"/><path d="M4.6 8.3l2.3 2.3 4.6-5" fill="none" stroke="#e8fff0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const SWIRL_MARK = kitIcon("ui-mastered", `<svg class="goal-mark" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#3a2a08" stroke="#ffd34d" stroke-width="1.6"/><path d="M12 5.5c3.6 0 6 2.7 5.4 5.9-.6 3-3.8 4.5-6.3 3.3-2.1-1-2.1-3.9-.1-4.6 1.4-.5 2.7.5 2.3 1.7" fill="none" stroke="#fff1b0" stroke-width="1.8" stroke-linecap="round"/></svg>`, "goal-mark");
+const CLEARED_MARK = kitIcon("check", `<svg class="goal-mark" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#1f6a34" stroke="#8ff0a8" stroke-width="1.6"/><path d="M7 12.5l3.4 3.4L17.2 8.4" fill="none" stroke="#f0fff4" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`, "goal-mark");
+const CHECK_ICON = kitIcon("check", `<svg class="goal-badge" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="#1f5a34" stroke="#9fe0b0" stroke-width="1.1"/><path d="M4.6 8.3l2.3 2.3 4.6-5" fill="none" stroke="#e8fff0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`, "goal-badge");
 
 const rewardIcon = (r: GoalReward) => (r.kind === "unlock" ? UNLOCK_ICONS[r.unlock] : r.kind === "tower" ? TOWER_ICON : CURRENCY_ICONS[r.currency]());
 /** An unlock's name with "Unlock" before it, once: Unlock Shrines is already named so. */
