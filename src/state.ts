@@ -2,6 +2,7 @@ import { entrance, floorFor } from "./delve/labyrinth.ts";
 import { buyTheme, canWear, grantAllThemes, type GameLook, type ThemeId, type ThemeKind, type UiLook } from "./theme-collection.ts";
 import { chooseStep } from "./automation.ts";
 import { CARDS, cardText, explainStuck, handBonus, keptLinks, planHand, planTarget, shootsWith, stillOpen, type CardId, type CardPlan, type HandBonus, type StuckReport } from "./cards.ts";
+import { addCardXp, PASSIVE_CARDS } from "./card-levels.ts";
 import { aggroTurn } from "./flying.ts";
 import { foeOn } from "./ranged.ts";
 import { BADGE_IDS, MAX_COPIES, badgeOn, badgeValue, runBadges } from "./badges.ts";
@@ -198,6 +199,9 @@ export class Game {
   /** The free levels Free Training gave last, as the board announces them
    * ("+1 ATK"), and when (`performance.now()`). */
   freeTrained: { lines: string[]; at: number } | null = null;
+  /** Each card level reached since the board last took them, oldest
+   * first, for the hand's level-up animation; emptied by undo. */
+  cardLevelUps: { card: CardId; level: number }[] = [];
   /** The latest turn's shots (ranged.ts), for the board to fly and land;
    * undo, a new run or a mode switch clears it. */
   volley: Volley | null = null;
@@ -520,6 +524,9 @@ export class Game {
     this.summoned = null;
     this.vanished = null;
     this.save.xp = snapshot.xp;
+    // Card XP too: the activation or floor it paid for is undone.
+    if (snapshot.cardXp) this.save.cardXp = { ...snapshot.cardXp };
+    this.cardLevelUps = [];
     // The Silver found since is taken back with the run, so it was never earned.
     if (snapshot.silver !== undefined) this.save.profile.earned.silver = Math.min(this.save.profile.earned.silver, snapshot.silver);
     // Undo pauses the hand, so the player can act before it carries on.
@@ -822,7 +829,8 @@ export class Game {
     // it activates (once a fight into its target has played out). FLYING
     // ENEMY's last step only brings an enemy in reach: nothing activates.
     if (id === this.run.focused) this.run.focused = undefined;
-    if (id === "flyingEnemy") return;
+    // Its arrival counts as its activation toward its level.
+    if (id === "flyingEnemy") return this.gainCardXp(id, 1);
     const fight = this.fights.encounter;
     // A roll counts once the step is in the undo history (after a fight,
     // once it settles), so undo takes it back with the step.
@@ -1388,6 +1396,17 @@ export class Game {
       this.levelUpPoints = TRAINING_PER_LEVEL * (reached - level);
     }
   }
+  /** Card `id` gains `xp` toward its levels, each level it reaches queued
+   * for the hand's animation. Undo takes it back with the move. */
+  gainCardXp(id: CardId, xp: number) {
+    for (const level of addCardXp(this.save.cardXp, id, xp)) this.cardLevelUps.push({ card: id, level });
+  }
+  /** `floors` new floors completed: each card of the hand that never
+   * activates (`PASSIVE_CARDS`) gains one XP a floor. */
+  private passiveCardXp(floors: number) {
+    if (floors <= 0) return;
+    for (const id of this.hand) if (PASSIVE_CARDS.has(id)) this.gainCardXp(id, floors);
+  }
   /** The single path that ends the current run, whether the player
    * accepts defeat or ends it: pays out exactly once and starts the next run
    * in the forest. */
@@ -1807,6 +1826,7 @@ export class Game {
       this.floorHeal();
     }
     this.freeTrain(last - floorBefore);
+    this.passiveCardXp(last - floorBefore);
     this.finds.coins(at, gold, silver, false);
   }
   /** Free Training for `floors` floors passed, one after another: the
@@ -1869,6 +1889,7 @@ export class Game {
       this.findYellowKey(this.run.height, p);
       this.floorHeal();
       this.freeTrain(this.run.height - highest);
+      this.passiveCardXp(this.run.height - highest);
     }
     this.enterTowerFloor(board);
     // A new floor may earn a boon, which Auto Pick takes at once.

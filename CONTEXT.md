@@ -537,6 +537,17 @@ _Avoid_: block, ban
 Sending the hero inside a run to a tile the player taps, ahead of the hand, until it arrives.
 _Avoid_: waypoint, goto
 
+**Card level**:
+How far a card has grown, from 0 to 25, by the card XP it gathers over every run; each level costs more than the one before and gives a card point. Shown on the card's top left from level 1; from level 15 the card shines silver, and gold at 25.
+_Avoid_: card rank, card tier
+
+**Card XP**:
+What raises a card's level: one each time the card activates in a run, or, for a card that never activates (Archer), one for each floor completed for the first time in the run while the hand holds it. Undo takes it back with the move.
+
+**Card point**:
+What each card level gives the card, to spend on its own upgrade tree (still to come; until then they are only shown). Not the character's training points.
+_Avoid_: training point, ability point, upgrade point
+
 **Card badge**:
 A token bought with Gems (drawn by rarity: common, rare or epic) and attached to one card, changing what the card does when it activates: paying something (HP, Silver, Gold, XP), gating it (it acts only while a condition holds), changing its target (Stairward, Skip Open Nodes, Charge, Deprioritize), scaling its target's effect (Effective, Dampen), making it vanish (Skip), or adding enemies to the floors (More Enemies, only on a monster card). A card holds one in each of its badge slots, and a badge sits on one card at a time. More copies of a badge raise its level, up to 7.
 _Avoid_: rune, gem, charm, enchantment
@@ -566,7 +577,7 @@ _Avoid_: dividend
 Gold paid for a floor skipped: Floor Skip Reward research's percent of the Gold the floor's battles, chests and items still held (each closed chest counted at its average, each item at its Pickup Gold). What it counts pays no Gold if met later.
 
 **Activation**:
-A card of the hand doing what it is for: its path's last step reaching its target, or a card that acts in place acting. Card badges pay on activation.
+A card of the hand doing what it is for: its path's last step reaching its target, or a card that acts in place acting. Card badges pay on activation, and the card gains a card XP. Flying Enemy's arrival within reach of a flyer counts toward its level, though no badge pays then.
 _Avoid_: trigger, proc
 
 **Stuck hand**:

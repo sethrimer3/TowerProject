@@ -8,6 +8,7 @@ import { MODES, milestones } from "../modes.ts";
 import { capitalized, cardArt, CURRENCY_SPRITES, displayedProgress, el, POINTER_SVG, text, uiSprite } from "./dom.ts";
 import { notesResearched } from "./run-notes-dialog.ts";
 import { CARDS, IN_PLACE, cardBonusText, cardText, isSiphon, type CardId } from "../cards.ts";
+import { cardLevelHtml, cardLevelTitle } from "./card-level-marks.ts";
 import { BADGES, badgeDef, badgesOn, badgeValue, type RunBadge } from "../badges.ts";
 import { badgeStyle } from "./badge-token.ts";
 import { trainingPoints } from "../loadout.ts";
@@ -422,7 +423,7 @@ function renderSpeed(game: Game, inside: boolean) {
   } else if (!lesson) pointer?.remove();
 }
 
-/** The hand (and its badges) the cards were last drawn for. */
+/** The hand (its badges and levels) the cards were last drawn for. */
 let shownHand = "";
 /** A badge's tooltip line with its value in effect, not its level: a gate
  * reads "HP < 100%", the rest "Skip 7%" (a unit already in the name is not
@@ -434,10 +435,11 @@ function badgeTitle(badge: RunBadge) {
   const unit = percent ? "%" : def.unit === def.name ? "" : ` ${def.unit}`;
   return `${def.name}: ${def.lead ? `${def.lead} ` : ""}${v}${unit}`;
 }
-/** A hand card's tooltip: its name and text, inside a run a line for each
- * badge it holds, top slot first, and a siphon's uses so far this run. */
+/** A hand card's tooltip: its name, level and text, inside a run a line
+ * for each badge it holds, top slot first, and a siphon's uses so far this
+ * run. */
 function handCardTitle(game: Game, id: CardId) {
-  let title = `${CARDS[id].name}: ${cardText(id, game.save.upgrades)}`;
+  let title = `${CARDS[id].name} (${cardLevelTitle(game.save.cardXp[id] ?? 0)}): ${cardText(id, game.save.upgrades)}`;
   const bonus = cardBonusText(id);
   if (bonus) title += `
 ${bonus}`;
@@ -462,12 +464,13 @@ function handBadgeHtml(game: Game, id: CardId) {
  * latest step glowing (paused too); End Run lights up while no card can act. */
 function renderHand(game: Game) {
   const row = el("hand"), hand = game.hand;
-  const key = `${hand.join()}|${game.run.outside ? "" : JSON.stringify(game.run.badges ?? {})}`;
+  const levels = hand.map((id) => cardLevelHtml(game.save.cardXp[id] ?? 0));
+  const key = `${hand.join()}|${game.run.outside ? "" : JSON.stringify(game.run.badges ?? {})}|${levels.join()}`;
   if (key !== shownHand) {
     shownHand = key;
     // Room for five cards; a bigger hand scrolls sideways.
     row.style.setProperty("--slots", String(Math.max(5, hand.length)));
-    row.innerHTML = hand.map((id, i) => `<div class="hand-card" role="listitem" data-card="${id}" data-hand-slot="${i}">${cardArt(id, CARDS[id].name)}${handBadgeHtml(game, id)}</div>`).join("");
+    row.innerHTML = hand.map((id, i) => `<div class="hand-card" role="listitem" data-card="${id}" data-hand-slot="${i}">${cardArt(id, CARDS[id].name)}${levels[i]}${handBadgeHtml(game, id)}</div>`).join("");
   }
   // Paused, the card that made the latest step still glows.
   const glowing = game.handStuck ? null : game.activeCard;

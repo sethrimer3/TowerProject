@@ -66,6 +66,21 @@ Every change is saved at once.
 The first visit teaches the drag: a note explains the order and a hand points at STAIRS, the other cards and tabs stay disabled until STAIRS is moved, and a dialog then praises the new order.
 With Buildout, the next lesson shows the X on ENEMY with a hand pointing at it, and again nothing else can be used until it is pressed; a dialog praises that (closed by pressing anywhere on it), and a note over the deck, dismissed by pressing it, explains adding cards.
 
+## Card levels
+
+Each card has a level of its own, from 0 up to 25, raised by the XP it gains in runs.
+A card gains 1 XP each time it activates: its path reaching its target (once any fight there is over), or a card that moves nowhere acting (the siphons and trades); **Flying Enemy** gains it each time it brings a Flying enemy within reach.
+**Archer**, which never activates, gains 1 XP for each floor completed for the first time in the run while it is in the run's hand, a floor the Skip badge climbs past included (in the Delve, each equivalent floor passed).
+Only the cards in the run's hand gain XP, and undo takes back what the move gained.
+The levels cost, in XP: 200, 400, 600, 800 and 1,000 for the first five; 1,400, 1,800, 2,200, 2,600 and 3,000 for the next five; then 3,600, 4,200, 4,800, 5,400 and 6,000; then 7,000, 8,000, 9,000, 10,000 and 11,000; and 12,500, 14,500, 17,000, 20,000 and 23,500 for the last five (170,500 in all).
+A card at level 25 gains no more XP.
+Each level gives the card 1 card point, to be spent on the card's own upgrade tree; until those trees arrive, the points are only shown.
+A card shows its level in small type at its top left, in the hand and on the Deck page, from level 1; from level 15 its face wears a silver sheen, and at level 25 a golden one.
+A card's details show its level on the card, and under its name the level, its XP toward the next (*340/1,800 XP*) and its card points; the hand card's tooltip names its level too.
+A card can level up during a run: if the card is in view in the hand, a golden glow covers it with the training point icon at its centre for a second, which then rises and fades over the next second, and the glow fades over a third.
+A card out of view (in a hand scrolled sideways) shows as a ghost at 75% transparency over the board's top left, a golden glow behind it, with the same icon, the ghost fading once the icon is gone.
+Several level-ups play one after another, and wait while a page covers the board.
+
 ## Card Groups
 
 Tower II's floor 90 Goal opens **Card Groups** on the Deck page: a thin row under each row of the hand holds a hollow light grey diamond between each card and the next (none after the last).
@@ -107,7 +122,7 @@ Ten drawn at once show one at a time, counting 1 / 10 to 10 / 10 (Skip jumps ahe
 The first copy opens level 1 and counts toward level 2; 3, 5, 8, 12, 20 and 32 copies reach levels 2 to 7 (80 in all), each token showing its copies toward the next under it, and a badge at level 7 is no longer drawn.
 Drag a token onto a card, in the hand or the deck, to attach it: a card holds one badge (more with Badge Slots research) and a badge sits on one card, so dropping one on a card whose slots are full swaps it with the card's bottom badge (or takes that one off, for a token from the box).
 Badges that can't work together, a key colour's < and ≥ gates (YK < with YK ≥) or Effective with Dampen, can't share a card: dropping one there instead opens a box naming the two.
-An attached token keeps its place in the box with an X that takes it off, and its card wears small marks of its badges down its top left, top slot first.
+An attached token keeps its place in the box with an X that takes it off, and its card wears small marks of its badges down its top right, under its X, top slot first.
 **Badge Slots** (Archives research, opened by Tower VI's floor 50 Goal with Badges owned) gives every card one more slot a level: 1 billion Gold and 4 days, then 100 billion and 20 days.
 Inside a run a card wears its badges' icons down its top right, and its tooltip has a line for each.
 Pressing a token shows what it does at its level, its copies, and, for a gate, a slider to choose its threshold among those its level has opened; under the description, as when one is drawn, a line gives its value at every level, the one in use bright.

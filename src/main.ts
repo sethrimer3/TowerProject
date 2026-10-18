@@ -33,6 +33,7 @@ import { isBoard, type AppContext, type Tab } from "./ui/app.ts";
 import { el, ticketIcon } from "./ui/dom.ts";
 import { buildShell } from "./ui/shell.ts";
 import { BoardOverlay } from "./ui/board-overlay.ts";
+import { CardLevelUps } from "./ui/card-level-up.ts";
 import { boardHeadingStale, flashRed, renderAdButton, renderEventsButtons, renderMailButton, renderMissionsButton, renderShopDot, renderTournamentButton, renderBoardHeading, renderHud, renderVitals, purseFrame, togglePurseRates } from "./ui/hud.ts";
 import { ResearchPage } from "./ui/research-page.ts";
 import { confirmAction, RunEndDialog } from "./ui/dialogs.ts";
@@ -119,6 +120,7 @@ const tournamentPage = new TournamentPage(ctx, tournament, refreshTournament);
 const mail = new MailClient(game.mail, stubMail(() => game.save, () => game.clock()));
 const mailDialog = new MailDialog(ctx, mail, refreshMail);
 // Tapping the forest's Blacksmith opens the Equipment screen, its Tournament Hall the Tournament page.
+const cardLevelUps = new CardLevelUps(game);
 const overlay = new BoardOverlay(game, renderer, openBlacksmith, () => navigate("tournament"), () => update());
 const skillTree = new SkillTreePage(ctx);
 const research = new ResearchPage(ctx);
@@ -590,6 +592,7 @@ const loop = new FrameLoop({
     overlay.track();
     overlay.placeSign();
     overlay.showFreeTraining();
+    cardLevelUps.frame();
   },
   save,
 });

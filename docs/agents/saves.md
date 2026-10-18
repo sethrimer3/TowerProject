@@ -5,6 +5,7 @@ How the save loads and decodes, adding save state, settings rows, and the save g
 **Saves.** `src/save.ts` loads defensively: `defaults()` defines every field, and loading must tolerate missing or old fields.
 When adding save state, add it to `defaults()`, the `Save` type in `save-shape.ts`, and a small decoder called from `decode()` (per-version steps live in `VERSION_STEPS`).
 Every decoder (the save's and each module's own, such as `decodeArchives`, `decodeGemDrop`, `decodeGoals`, `decodeShop`) reads fields through the shared readers in `src/decode.ts` (`isRecord`, `finite`, `whole`, `wholeIn`, `time`, `count`, `fraction`, and `dropInvalid` for a run's optional fields).
+Each card's XP (`save.cardXp`, `decodeCardXp` in `card-levels.ts`: known cards, whole, at most `MAX_CARD_XP`) is outside the run, so each undo snapshot keeps a copy, `cardXp` (dropped by the snapshot decoder when malformed), as it keeps `xp`.
 Each mode's run has its own decoder (`decodeTowerRun`, `decodeDelveRun`), which checks the player's column against that mode's board width and drops the other mode's fields.
 Unsupported versions reset safely.
 Old saves needn't convert while the game is a prototype, but a simple rename gets a conversion so a player keeps what they bought: the decoder reads the old key when the new one holds nothing (`RENAMED_UPGRADES` in `save.ts`, the Evade skill now Parry, and the Rush skills now Dash, whose research projects and badge `renameRush` renames in the raw save before it decodes).

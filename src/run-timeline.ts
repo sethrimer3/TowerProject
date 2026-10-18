@@ -41,7 +41,7 @@ export class RunTimeline<R extends Run = Run> {
 
   /** The run as it stands now, for undo to come back to. */
   snapshot(): MoveSnapshot<R> {
-    return { run: structuredClone(this.run), best: this.slice.best, xp: this.save.xp, silver: this.save.profile.earned.silver };
+    return { run: structuredClone(this.run), best: this.slice.best, xp: this.save.xp, silver: this.save.profile.earned.silver, cardXp: { ...this.save.cardXp } };
   }
 
   /** Keeps `snapshot`, taken before a move, as many held as undos are left. */

@@ -32,7 +32,7 @@ The player-facing rules, in full, one topic a page:
 | Page | What it covers |
 |---|---|
 | [First steps](docs/gameplay/first-steps.md) | The opening notes, the tab bar and its dots, the forest and its sign, moving by hand, Pathfinder |
-| [The hand and cards](docs/gameplay/hand-and-cards.md) | The hand and every card, the Deck page, Focus, Refocus, Ignore and Target, Badges |
+| [The hand and cards](docs/gameplay/hand-and-cards.md) | The hand and every card, card levels, the Deck page, Focus, Refocus, Ignore and Target, Badges |
 | [Upgrades](docs/gameplay/upgrades.md) | The skill trees' tabs, prices and help, Critical |
 | [Gear and Equipment](docs/gameplay/gear-and-equipment.md) | Provisions, the Blacksmith and Equipment |
 | [The Archives](docs/gameplay/archives.md) | Archivists, Rush, Cells and Speed Up, the library, Focus Count |

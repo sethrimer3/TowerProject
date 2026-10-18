@@ -28,6 +28,8 @@ export interface ActivationHost extends DeskHost {
   gain(x: number, y: number, text: string, art?: GainArt | null, drop?: undefined, kind?: "combo" | "xp"): void;
   addXp(xp: number): void;
   recordHeal(n: number): void;
+  /** Card `id` gains `xp` toward its levels. */
+  gainCardXp(id: CardId, xp: number): void;
   /** A turn of its own begins: undo can take it back. */
   rememberTurn(): void;
   /** The step being taken pays out, so it is a turn undo stops at. */
@@ -40,13 +42,16 @@ export interface ActivationHost extends DeskHost {
 export class CardActivation {
   constructor(private readonly host: ActivationHost) {}
 
-  /** Card `card` of the hand activates: each of its badges pays what it
-   * gives, top slot first. Gold is paid once per target (`key`, gated by
+  /** Card `card` of the hand activates: it gains an XP toward its level,
+   * and each of its badges pays what it gives, top slot first. Gold is paid once per target (`key`, gated by
    * lootedTiles like a kill's), since undo can't take it back; HP, Silver
    * and XP are the run's or in its undo snapshot. */
   activate(card: number, key: string) {
-    const { hand, run } = this.host, id = hand[card], badges = id ? badgesOn(run.badges, id) : [];
-    if (!badges.length || !this.host.playing) return;
+    const { hand, run } = this.host, id = hand[card];
+    if (!id || !this.host.playing) return;
+    this.host.gainCardXp(id, 1);
+    const badges = badgesOn(run.badges, id);
+    if (!badges.length) return;
     // Paying out makes the step it ends a turn undo stops at.
     this.host.eventful();
     for (const badge of badges) this.payBadge(card, key, badge);

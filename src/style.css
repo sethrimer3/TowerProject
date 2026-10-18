@@ -1226,6 +1226,120 @@ nav:not(.in-run) .hand {
 .hand-card.unable img {
   filter: grayscale(1) brightness(0.55);
 }
+
+/* A card's level, in small type down its top left: in the hand, on the
+   Deck page and in its details (none before level 1). */
+.card-level {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  z-index: 1;
+  min-width: 13px;
+  height: 13px;
+  padding: 0 2px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #ebc77f;
+  border-radius: 4px;
+  background: #0c1018e6;
+  color: #ffe39a;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
+  box-shadow: 0 1px 3px #000c;
+}
+.card-reveal-card .card-level { top: 6px; left: 6px; min-width: 22px; height: 22px; border-radius: 6px; font-size: 13px; }
+/* The sheen of a high-level card's background: silver from level 15, gold
+   at the cap, a band of light sweeping across it now and then. */
+.card-sheen {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+.card-sheen::after {
+  content: "";
+  position: absolute;
+  inset: 0 -60%;
+  background: linear-gradient(110deg, transparent 42%, var(--sheen-band) 50%, transparent 58%);
+  animation: card-sheen 4s ease-in-out infinite;
+}
+.card-sheen.silver { --sheen-band: #f4f8ffb0; background: linear-gradient(160deg, #e6edf842, #8f9bb026 55%, #ffffff36); box-shadow: inset 0 0 0 1px #d8e0ecb0; }
+.card-sheen.gold { --sheen-band: #fff3c4d0; background: linear-gradient(160deg, #ffd96a4a, #c8902630 55%, #fff3c052); box-shadow: inset 0 0 0 1px #ffd76ad0, inset 0 0 8px #ffc94a66; }
+@keyframes card-sheen {
+  0% { transform: translateX(-45%); }
+  55%, 100% { transform: translateX(45%); }
+}
+html.reduce-motion .card-sheen::after { animation: none; opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .card-sheen::after { animation: none; opacity: 0; } }
+.card-reveal-text .card-level-line { margin: -2px 0 2px; font-size: 12px; color: #ffe39a; }
+.card-reveal-text .card-level-line b { display: inline; margin: 0; font-size: 12px; font-weight: 700; color: #ffe39a; }
+.card-reveal-text .card-points-line { margin-bottom: 6px; font-size: 11px; color: #8fa596; }
+/* A card level gained (ui/card-level-up.ts): a golden glow over the card
+   in the hand, or a ghost of it at 75% transparency over the board's top
+   left with a golden glow behind it, and the training point icon at its
+   centre for 1s, rising and fading over the next; then the glow (or the
+   ghost) fades over 1s. */
+.card-level-up {
+  position: fixed;
+  z-index: 40;
+  pointer-events: none;
+}
+.card-level-up-glow {
+  position: absolute;
+  inset: -3px;
+  border-radius: 5px;
+  background: radial-gradient(closest-side, #fff0b0aa, #ffd76a66 65%, #ffc94a33);
+  box-shadow: 0 0 0 2px #fff0b0, 0 0 22px 8px #ffc94a;
+  animation: card-level-glow 3s ease-out forwards;
+}
+.card-level-up.ghost .card-level-up-glow {
+  inset: -14%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, #ffe58acc, #ffc94a77 55%, transparent);
+  box-shadow: none;
+}
+.card-level-up-ghost {
+  position: absolute;
+  inset: 0;
+  opacity: 0.25;
+  animation: card-level-ghost 3s ease-out forwards;
+}
+.card-level-up-ghost .card-art { border-radius: 3px; }
+.card-level-up-icon {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 34px;
+  height: 34px;
+  filter: drop-shadow(0 0 4px #fff3b8);
+  transform: translate(-50%, -50%);
+  animation: card-level-icon 3s ease-out forwards;
+}
+.card-level-up-icon > * { display: block; width: 100%; height: 100%; }
+@keyframes card-level-glow {
+  0% { opacity: 0; }
+  10%, 66.7% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes card-level-ghost {
+  0%, 66.7% { opacity: 0.25; }
+  100% { opacity: 0; }
+}
+@keyframes card-level-icon {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+  8% { opacity: 1; transform: translate(-50%, -50%) scale(1.15); }
+  14%, 33.3% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  66.7%, 100% { opacity: 0; transform: translate(-50%, -190%) scale(1); }
+}
+@keyframes card-level-icon-still {
+  0%, 33.3% { opacity: 1; transform: translate(-50%, -50%); }
+  66.7%, 100% { opacity: 0; transform: translate(-50%, -50%); }
+}
+html.reduce-motion .card-level-up-icon { animation-name: card-level-icon-still; }
 /* No card can act: the run waits for the player to end it. */
 #end-run.deadlocked,
 #stuck-end-run.deadlocked {
@@ -3879,12 +3993,13 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
 .badge-token.big .badge-glyph { font-size: 52px; }
 .badge-token.big .badge-level { top: -16px; right: -16px; width: 42px; height: 42px; }
 .badge-token.big .badge-level b { font-size: 17px; }
-/* The marks a card wears for the badges it holds, down its top left, top
-   slot first, clear of the X (top right) and the check (bottom right). */
+/* The marks a card wears for the badges it holds, down its top right
+   under the X, top slot first, clear of its level (top left) and the
+   check (bottom right). */
 .badge-marks {
   position: absolute;
-  top: 3px;
-  left: 3px;
+  top: 18px;
+  right: 3px;
   z-index: 1;
   display: flex;
   flex-direction: column;

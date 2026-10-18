@@ -137,6 +137,9 @@ export type Save = {
   /** The hand's Card Groups: links between cards side by side in it, each
    * dropped once either card moves out of place (cards.ts). */
   cardLinks: CardLink[];
+  /** Each card's XP toward its levels (card-levels.ts), gained in runs;
+   * a card with none is left out. Undo takes back what a move gained. */
+  cardXp: Partial<Record<CardId, number>>;
   /** Hand slots bought with Gems (after Larger Hand's). */
   handSlots: number;
   /** The card badges owned, which card holds each, and where their

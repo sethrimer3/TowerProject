@@ -27,6 +27,7 @@ import { decodeBadges, defaultBadges, validRunBadges } from "./badges.ts";
 import { backfillProfile, decodeProfile, defaultProfile } from "./profile.ts";
 import { decodeFinds, defaultFinds, validNotes } from "./run-notes.ts";
 import { isFoeCard } from "./foe-cards.ts";
+import { decodeCardXp } from "./card-levels.ts";
 export function defaults(): Save {
   return {
     version: 3,
@@ -61,6 +62,7 @@ export function defaults(): Save {
     equipment: defaultEquipment(),
     hand: [...BASE_HAND],
     cardLinks: [],
+    cardXp: {},
     handSlots: 0,
     badges: defaultBadges(),
     tutorials: { deck: false, removeCard: false, addCard: false, upgrades: false, gear: false, onTheJob: false, speed: false, climb: false, enter: false, delve: false, chamber: false },
@@ -219,7 +221,7 @@ const validSnapshot = (value: any) => !!value && finite(value.best) && finite(va
 function snapshot<R extends Run>(value: any, decodeRun: RunDecoder<R>): MoveSnapshot<R> | null {
   if (!validSnapshot(value)) return null;
   const run = decodeRun(value.run);
-  return run ? { run, best: value.best, xp: Math.floor(value.xp), ...(finite(value.silver) ? { silver: fraction(value.silver, 0) } : {}), ...(value.quiet === true ? { quiet: true as const } : {}) } : null;
+  return run ? { run, best: value.best, xp: Math.floor(value.xp), ...(finite(value.silver) ? { silver: fraction(value.silver, 0) } : {}), ...(isRecord(value.cardXp) ? { cardXp: decodeCardXp(value.cardXp) } : {}), ...(value.quiet === true ? { quiet: true as const } : {}) } : null;
 }
 /** Whether an undo snapshot belongs to `run`: its seed and layout. */
 const sameRun = <R extends Run>(item: MoveSnapshot<R> | null, run: Run): item is MoveSnapshot<R> =>
@@ -524,6 +526,7 @@ export function decode(raw: string | null): Save {
     if (d.upgrades.largerHand) d.handSlots = count(s.handSlots, 0, HAND_SLOT_GEMS.length);
     d.hand = decodeHand(s.hand, deckCards(d.upgrades, d.goals), handSlots(d));
     d.cardLinks = keptLinks(d.hand, links(s.cardLinks));
+    d.cardXp = decodeCardXp(s.cardXp);
     d.badges = decodeBadges(s.badges, d.upgrades, researched(d.archives, "badgeSlots"), d.goals);
     for (const k of ["deck", "removeCard", "addCard", "upgrades", "gear", "onTheJob", "speed", "climb", "enter", "delve", "chamber"] as const) d.tutorials[k] = s.tutorials?.[k] === true;
     for (const k of ["inspiration", "courage"] as const) d.treeNotices[k] = s.treeNotices?.[k] === true;

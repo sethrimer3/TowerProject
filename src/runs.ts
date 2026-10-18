@@ -148,10 +148,11 @@ export type DelveRun = RunCore & {
  * in it, so undo never copies or rewinds it. */
 export type AutomoveMemory = { known: Record<string, true>; visited: Record<string, number> };
 export type Run = TowerRun | DelveRun;
-/** An undo point: the run, the best and XP then, and the lifetime Silver
- * then (`silver`, absent in a snapshot older than the profile), since undo
- * takes back the Silver found after it. */
-export type MoveSnapshot<R extends Run = Run> = { run: R; best: number; xp: number; silver?: number; quiet?: true };
+/** An undo point: the run, the best and XP then, the lifetime Silver then
+ * (`silver`, absent in a snapshot older than the profile), since undo
+ * takes back the Silver found after it, and each card's XP then (`cardXp`,
+ * absent in a snapshot older than card levels). */
+export type MoveSnapshot<R extends Run = Run> = { run: R; best: number; xp: number; silver?: number; cardXp?: Partial<Record<CardId, number>>; quiet?: true };
 /** A hero fallen in a fight, waiting for the player to undo it or accept
  * defeat: the run just before that fight, and the enemy that won it. */
 export type Fall<R extends Run = Run> = { snapshot: MoveSnapshot<R>; by: string };

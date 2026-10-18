@@ -7,6 +7,7 @@ import { cardWith, fitsCard, BADGE_IDS, BADGES, badgeLevel, badgeValue, type Bad
 import { RARITIES } from "../shop/rarity.ts";
 import { revealDraws } from "./badge-reveal.ts";
 import { showCard } from "./card-reveal.ts";
+import { cardLevelHtml } from "./card-level-marks.ts";
 import { badgeLevelsHtml, cardBadgeHtml, badgeText, progressText, tokenHtml } from "./badge-token.ts";
 
 /** Where a hand card dropped on the deck goes: back to the deck. */
@@ -201,10 +202,10 @@ export class DeckPage {
         const check = stays
           ? `disabled title="STAIRS always stays in your hand" aria-label="${name} is in your hand and always stays there"`
           : `title="Return ${name} to the deck" aria-label="${name} is in your hand: return it to the deck"`;
-        return `<div class="deck-entry in-hand" role="listitem"${this.badgeTarget(id)}<button type="button" class="deck-entry-art" data-info="${id}" title="${name}: in your hand. Press for details" aria-label="${name}: in your hand. Press for details">${cardArt(id, name)}</button><button type="button" class="deck-check" data-return="${id}" ${check}>${CHECK_SVG}</button></div>`;
+        return `<div class="deck-entry in-hand" role="listitem"${this.badgeTarget(id)}<button type="button" class="deck-entry-art" data-info="${id}" title="${name}: in your hand. Press for details" aria-label="${name}: in your hand. Press for details">${cardArt(id, name)}${this.levelHtml(id)}</button><button type="button" class="deck-check" data-return="${id}" ${check}>${CHECK_SVG}</button></div>`;
       }
       // A full hand takes a card only by dragging it onto one to swap out.
-      return `<div class="deck-entry" role="listitem"${this.badgeTarget(id)}<button type="button" class="deck-add${full ? " full" : ""}" data-add="${id}" title="${full ? `${name}: press for details. Your hand is full: drag it onto a card to swap it` : `${name}: press for details, or drag it to a slot`}" aria-label="${full ? `${name}: press for details. Your hand is full: drag it onto a card to swap it` : `${name}: press for details or to add it to your hand`}">${cardArt(id, name)}</button></div>`;
+      return `<div class="deck-entry" role="listitem"${this.badgeTarget(id)}<button type="button" class="deck-add${full ? " full" : ""}" data-add="${id}" title="${full ? `${name}: press for details. Your hand is full: drag it onto a card to swap it` : `${name}: press for details, or drag it to a slot`}" aria-label="${full ? `${name}: press for details. Your hand is full: drag it onto a card to swap it` : `${name}: press for details or to add it to your hand`}">${cardArt(id, name)}${this.levelHtml(id)}</button></div>`;
     }).join("");
     return `<section class="deck-reserve open" aria-labelledby="deck-label">
         <h3 id="deck-label" class="deck-label">Deck</h3>
@@ -265,7 +266,12 @@ export class DeckPage {
     const pointed = lesson === "remove" && id === this.removeTarget;
     const x = this.removable(id) ? `<button type="button" class="deck-remove${pointed ? " shown" : ""}" data-remove="${id}" title="Return ${card.name} to the deck" aria-label="Return ${card.name} to the deck">${X_SVG}</button>` : "";
     const lessonPointer = lesson === "order" && id === "stairs" ? this.pointer("at-card") : pointed ? this.pointer("at-x") : "";
-    return `<div class="deck-slot${held ? " held" : ""}" role="listitem"${this.badgeTarget(id)}<button type="button" class="deck-card" data-slot="${i}" ${fixed ? "disabled" : ""} aria-label="${card.name}, slot ${i + 1} of ${count}. Drag, or press the left and right arrow keys, to move it." title="${card.name}: ${cardText(id, upgrades)}${cardBonusText(id) ? ` · ${cardBonusText(id)}` : ""}">${cardArt(id, card.name)}</button>${x}${lessonPointer}${links}</div>`;
+    return `<div class="deck-slot${held ? " held" : ""}" role="listitem"${this.badgeTarget(id)}<button type="button" class="deck-card" data-slot="${i}" ${fixed ? "disabled" : ""} aria-label="${card.name}, slot ${i + 1} of ${count}. Drag, or press the left and right arrow keys, to move it." title="${card.name}: ${cardText(id, upgrades)}${cardBonusText(id) ? ` · ${cardBonusText(id)}` : ""}">${cardArt(id, card.name)}${this.levelHtml(id)}</button>${x}${lessonPointer}${links}</div>`;
+  }
+
+  /** Card `id`'s level and sheen, over its art. */
+  private levelHtml(id: CardId) {
+    return cardLevelHtml(this.ctx.game.save.cardXp[id] ?? 0);
   }
 
   /** The end of card `id`'s opening tag and what follows it, with the
@@ -618,7 +624,7 @@ export class DeckPage {
   private showHandCard(id: CardId) {
     const { save } = this.ctx.game;
     const action = this.removable(id) ? { label: "Return to deck", run: () => this.remove(id) } : undefined;
-    showCard(id, save.upgrades, save.settings.reduceMotion, "IN YOUR HAND", action, id === "stairs" ? "STAIRS always stays in your hand." : undefined);
+    showCard(id, save.upgrades, save.settings.reduceMotion, "IN YOUR HAND", action, id === "stairs" ? "STAIRS always stays in your hand." : undefined, save.cardXp[id] ?? 0);
   }
 
   /** A deck card's details, with the offer to add it to the hand while
@@ -626,7 +632,7 @@ export class DeckPage {
   private showDeckCard(id: CardId) {
     const { save, deck } = this.ctx.game, full = save.hand.length >= handSlots(save);
     const action = full ? undefined : { label: "Add to hand", run: () => this.change(deck.add(id)) };
-    showCard(id, save.upgrades, save.settings.reduceMotion, "IN YOUR DECK", action, full ? "Your hand is full: drag this card onto one in your hand to swap it." : undefined);
+    showCard(id, save.upgrades, save.settings.reduceMotion, "IN YOUR DECK", action, full ? "Your hand is full: drag this card onto one in your hand to swap it." : undefined, save.cardXp[id] ?? 0);
   }
 
   /** Asks before spending Gems on the next hand slot. */
