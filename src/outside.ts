@@ -2,6 +2,8 @@ import type { Mode, Tile } from "./entities.ts";
 import type { Board } from "./board.ts";
 import { tileRandom } from "./random.ts";
 import { MODES } from "./modes.ts";
+import { drawKit } from "./sprite-kit.ts";
+import { drawKitTerrain } from "./sprite-terrain.ts";
 
 export const OUTSIDE_SIZE = 20;
 export const ENTRANCE_Y = 12;
@@ -146,7 +148,11 @@ export class OutsideWorld implements Board {
 
 /** Returns false when it drew the plain fallback because the sprite art
  * hasn't loaded yet. */
-export function drawForestTile(c: CanvasRenderingContext2D, t: Tile, s: ForestSpot, useSprites = true) {
+export function drawForestTile(c: CanvasRenderingContext2D, t: Tile, s: ForestSpot, useSprites = true, styled = false) {
+  if (useSprites && styled) {
+    const id = outsideSpriteKind(t, s);
+    if (drawKitTerrain(c, OUTSIDE_SPRITE_URLS[id.family][id.variant])) return true;
+  }
   if (useSprites && drawOutsideSprite(c, t, s)) return true;
   drawForestFallback(c, t, s);
   return !useSprites;
@@ -196,11 +202,13 @@ function paintPebbles(c: CanvasRenderingContext2D) {
 // the path leads into.
 // `bonus` (the tier's Gold multiplier, "×3.1", and the Gold coin once loaded)
 // stands in a line under the numeral, which rises to make room for it.
-export function drawEntrance(c: CanvasRenderingContext2D, mode: Mode, center: number, numeral = "", bonus?: { text: string; coin: CanvasImageSource | null }) {
+export function drawEntrance(c: CanvasRenderingContext2D, mode: Mode, center: number, numeral = "", bonus?: { text: string; coin: CanvasImageSource | null }, styled = false) {
   const x = center * 24 + 12, base = (OUTSIDE_SIZE - 1 - ENTRANCE_Y) * 24;
   c.save();
-  if (mode === "tower") drawTowerGate(c, x, base);
-  else drawCaveMouth(c, x, base);
+  if (!(styled && drawKit(c, mode === "tower" ? "tower" : "cave", x - 48, base - 76, 96, 96))) {
+    if (mode === "tower") drawTowerGate(c, x, base);
+    else drawCaveMouth(c, x, base);
+  }
   const y = base - (mode === "tower" ? 66 : 76);
   if (numeral) {
     drawTierNumeral(c, numeral, x, bonus ? y - 24 : y);
@@ -269,9 +277,10 @@ function drawCaveMouth(c: CanvasRenderingContext2D, x: number, base: number) {
  * forge under a slate roof, its door facing the path's side of the
  * clearing, a forge-lit window, a chimney, and on the roof's gable a banner
  * with a breastplate, so its purpose reads even when small. */
-export function drawBlacksmith(c: CanvasRenderingContext2D, center: number) {
+export function drawBlacksmith(c: CanvasRenderingContext2D, center: number, styled = false) {
   const left = (center + BLACKSMITH.dx) * 24, w = BLACKSMITH.width * 24;
   const top = (OUTSIDE_SIZE - BLACKSMITH.y - BLACKSMITH.height) * 24, base = (OUTSIDE_SIZE - BLACKSMITH.y) * 24;
+  if (styled && drawKit(c, "blacksmith", left, top, w, w)) return;
   const wallTop = top + 26;
   c.save();
   // Shadow on the grass, then the stone walls.
@@ -310,9 +319,10 @@ export function drawBlacksmith(c: CanvasRenderingContext2D, center: number) {
  * stone hall under a blue roof with gilded edges, columns either side of
  * its open doorway, toward the path, lit from inside, and on the gable a
  * blue pennant bearing a golden trophy. */
-export function drawTournamentHall(c: CanvasRenderingContext2D, center: number) {
+export function drawTournamentHall(c: CanvasRenderingContext2D, center: number, styled = false) {
   const left = (center + TOURNAMENT_HALL.dx) * 24, w = TOURNAMENT_HALL.width * 24;
   const top = (OUTSIDE_SIZE - TOURNAMENT_HALL.y - TOURNAMENT_HALL.height) * 24, base = (OUTSIDE_SIZE - TOURNAMENT_HALL.y) * 24;
+  if (styled && drawKit(c, "hall", left, top, w, w)) return;
   const wallTop = top + 26;
   c.save();
   // Shadow on the grass, then the pale stone walls.

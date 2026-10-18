@@ -1,4 +1,5 @@
 import { TILE_PX, waterAt, type Blade, type Crate, type DecorSource, type Drip } from "./decor.ts";
+import { drawKit } from "./sprite-kit.ts";
 
 /** Painting shared by decor's live passes (ground, foreground, and the
  * mirrored copy in the water): crates, tall grass, ripple rings and drips,
@@ -53,7 +54,7 @@ type BoxAt = { bx: number; top: number };
 
 /** The crates on tile (x, y), lower and nearer ones first. Once broken,
  * only a few splintered boards remain where each stood. */
-export function drawCrates(c: CanvasRenderingContext2D, x: number, y: number, crates: Crate[], broken: boolean) {
+export function drawCrates(c: CanvasRenderingContext2D, x: number, y: number, crates: Crate[], broken: boolean, styled = false) {
   const ox = x * TILE_PX, oy = -y * TILE_PX;
   const sorted = [...crates].sort((a, b) => a.lift - b.lift || a.y - b.y);
   for (const k of sorted) {
@@ -67,6 +68,7 @@ export function drawCrates(c: CanvasRenderingContext2D, x: number, y: number, cr
       c.fillStyle = "rgba(0,0,0,0.32)";
       c.fillRect(at.bx + 1, at.top + k.h - 1, k.w, 2);
     }
+    if (styled && drawKit(c, k.kind === "barrel" ? "barrel" : "crate", at.bx, at.top, k.w, k.h)) continue;
     if (k.kind === "barrel") drawBarrel(c, k, at, wood);
     else drawCrate(c, k, at, wood);
   }

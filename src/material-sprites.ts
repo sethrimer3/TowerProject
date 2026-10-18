@@ -1,4 +1,5 @@
 import { METALS, type MaterialId, type MetalId } from "./materials.ts";
+import { kitIcon } from "./sprite-kit.ts";
 
 const ASSET_BASE = (import.meta as ImportMeta & { env?: { BASE_URL?: string } }).env?.BASE_URL ?? "/";
 
@@ -12,7 +13,7 @@ export const METAL_BAR_URLS: Record<MetalId, string> = {
 };
 
 export function metalBarSprite(id: MetalId, className = "ui-sprite") {
-  return `<img class="${className}" src="${METAL_BAR_URLS[id]}" alt="" aria-hidden="true">`;
+  return kitIcon(`metal-${id}-bar`, `<img class="${className}" src="${METAL_BAR_URLS[id]}" alt="" aria-hidden="true">`, className);
 }
 
 /** Every material's sprite art: the metal bars. */

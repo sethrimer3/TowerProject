@@ -30,6 +30,8 @@ import { drawChestMarks } from "./chest-marks.ts";
 import type { Dash } from "./shown.ts";
 import { darknessOf, forEachViewTile, tileTransform, toTileSpace, type FrameContext } from "./render-frame.ts";
 import { gameLook } from "./theme-collection.ts";
+import { usesGameSprites } from "./sprite-style.ts";
+import { spriteRevision } from "./sprite-kit.ts";
 
 export { ATMOSPHERE_CONFIG, type AtmosphereConfig } from "./lighting-pass.ts";
 
@@ -152,7 +154,7 @@ export class Renderer {
         drawFlyers(f, this.game.run.player, this.game.mode === "delve" ? this.game.world.width : 0, (c, t, x, y) => this.tile(c, f, t, x, y, 1), false);
       }
     }
-    this.echoes.draw(f, themed ? (c, facing) => themed.hero(c, facing) : (c) => paintHero(c, f.look.spritesOff));
+    this.echoes.draw(f, themed ? (c, facing) => themed.hero(c, facing) : (c) => paintHero(c, f.look.spritesOff, f.look.styledSprites, f.heroFacing));
     this.drawOverlays(f);
   }
   /** Gameplay feedback drawn over every board. */
@@ -203,7 +205,7 @@ export class Renderer {
       route: () => this.drawRoute(f),
       // Only while the hero has just reached a new floor.
       halo: f.now - this.arrived < ARRIVAL_GLOW_MS ? (ctx) => this.drawArrivalGlow(ctx, f.now) : undefined,
-      hero: (ctx) => paintHero(ctx, f.look.spritesOff),
+      hero: (ctx) => paintHero(ctx, f.look.spritesOff, f.look.styledSprites, f.heroFacing),
       foreground: () => {
         const bounds = decor && this.decor.foregroundBounds(decor);
         return bounds ? { bounds, draw: (ctx) => this.decor.drawForeground(ctx, decor!) } : null;
@@ -308,6 +310,7 @@ export class Renderer {
       this.worldIds.get(g.world), g.run.seed, g.mode, g.run.height, g.run.outside ? 1 : 0, g.world.floor, anyWorld.milestone ?? 0,
       // Without sprite art, floor under items is drawn differently, so edits matter.
       g.save.settings.spritesOff ? `off:${Object.keys(g.run.changes).length}` : "",
+      f.look.styledSprites ? `kit:${spriteRevision()}` : "",
     ].join("|");
     this.groundCache.draw(f.c, f, f.dpr, groundKey, f.now, CACHE_COLUMNS,
       (ctx, x, y) => this.tile(ctx, f, g.world.tile(x, y), x, y, 0));
@@ -332,7 +335,7 @@ export class Renderer {
           this.drawTorchSprite(c, f, t);
         },
       })),
-      hero: { x: this.playerX, y: this.playerY, paint: (c) => paintHero(c, f.look.spritesOff) },
+      hero: { x: this.playerX, y: this.playerY, paint: (c) => paintHero(c, f.look.spritesOff, f.look.styledSprites, f.heroFacing) },
     };
   }
   /** Doors, stairs, items, and enemies, drawn onto `ctx`. */
@@ -355,9 +358,9 @@ export class Renderer {
     const slice = g.save[g.mode];
     const tiers = slice.tiersOpen > 1;
     drawEntrance(c, g.mode, Math.floor(g.world.width / 2), tiers ? tierNumeral(slice.tier) : "",
-      tiers ? { text: factorText(TIER_BONUS_TENTHS[slice.tier - 1]! / 10), coin: goldCoin() } : undefined);
-    if (g.world instanceof OutsideWorld && g.world.blacksmith) drawBlacksmith(c, g.world.entranceX);
-    if (g.world instanceof OutsideWorld && g.world.hall) drawTournamentHall(c, g.world.entranceX);
+      tiers ? { text: factorText(TIER_BONUS_TENTHS[slice.tier - 1]! / 10), coin: goldCoin() } : undefined, f.look.styledSprites);
+    if (g.world instanceof OutsideWorld && g.world.blacksmith) drawBlacksmith(c, g.world.entranceX, f.look.styledSprites);
+    if (g.world instanceof OutsideWorld && g.world.hall) drawTournamentHall(c, g.world.entranceX, f.look.styledSprites);
     c.restore();
   }
   private drawRoute(f: FrameContext) {
@@ -374,7 +377,7 @@ export class Renderer {
     if (this.decorOn) grass("back");
     c.save();
     c.setTransform(m);
-    paintHero(c, f.look.spritesOff);
+    paintHero(c, f.look.spritesOff, f.look.styledSprites, f.heroFacing);
     c.restore();
     if (this.decorOn) grass("front");
   }
@@ -551,7 +554,7 @@ export class Renderer {
   }
   private tileAt = (x: number, y: number) => this.game.world.tile(x, y);
   private decorFrame(f: FrameContext): DecorFrame {
-    return { view: f, now: f.now, tileAt: this.tileAt, reduceMotion: f.look.reduceMotion };
+    return { view: f, now: f.now, tileAt: this.tileAt, reduceMotion: f.look.reduceMotion, styledSprites: f.look.styledSprites };
   }
   private look(): BoardLook {
     const g = this.game;
@@ -559,6 +562,7 @@ export class Renderer {
       mode: g.mode, height: g.run.height, seed: g.run.seed, outside: !!g.run.outside, entranceX: Math.floor(g.world.width / 2),
       roads: g.run.outside ? roadsOf(g.world) : undefined,
       spritesOff: g.save.settings.spritesOff, reduceMotion: g.save.settings.reduceMotion, area1: !g.save.settings.spritesOff && isArea1(g.mode, g.run.height),
+      styledSprites: usesGameSprites(g.save),
       themed: g.run.outside ? null : this.themed,
     };
   }
@@ -570,7 +574,7 @@ export class Renderer {
   private drawTorchSprite(c: CanvasRenderingContext2D, f: FrameContext, t: Torch) {
     c.save();
     toTileSpace(c, f, t.x, t.y);
-    paintTorch(c, t, f.now, f.look.reduceMotion, f.look.spritesOff);
+    paintTorch(c, t, f.now, f.look.reduceMotion, f.look.spritesOff, f.look.styledSprites);
     c.restore();
   }
 

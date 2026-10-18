@@ -1,3 +1,4 @@
+import { kitIcon } from "../sprite-kit.ts";
 import { itemDef, type CategoryId, type EquipMaterialId } from "../equipment/catalog.ts";
 
 // Pixel icons for Equipment, drawn as inline SVG from 12×12 rows so they
@@ -19,6 +20,8 @@ const PALETTE: Record<string, string> = {
   v: "#9a5ae0", q: "#5a3290", h: "#5e1414", f: "#2e6a2e", i: "#a6dc6e",
   u: "#3a68c8", z: "#2a3a6a", x: "#efe2c0",
 };
+/** Also used by the offline PNG exporter; gameplay never changes it. */
+export const ICON_PALETTE = PALETTE;
 
 /** Mirrors each six-letter half-row into twelve. */
 const mirrored = (rows: string[]) => rows.map((r) => r + [...r].reverse().join(""));
@@ -224,6 +227,9 @@ function pixelSvg(rows: string[], className: string) {
 
 /** A piece's rows, by definition id: its own, or its category's. */
 export const pieceRows = (def: string) => ITEM_ROWS[def] ?? CATEGORY_ROWS[itemDef(def)?.category ?? "weapon"];
+/** Only request PNGs that were exported, including category fallbacks for
+ * Standard pieces that intentionally share their category's silhouette. */
+export const pieceSpriteId = (def: string) => `equip-${ITEM_ROWS[def] ? def : itemDef(def)?.category ?? "weapon"}`;
 /** Icon rows as coloured pixels on their 12×12 grid, for drawing on a canvas. */
 const pixels = (rows: string[]) => rows.flatMap((row, y) => [...row].flatMap((ch, x) => (PALETTE[ch] ? [{ x, y, color: PALETTE[ch] }] : [])));
 /** A piece's icon as coloured pixels (the slag of an assemble, a boss's
@@ -233,13 +239,13 @@ export const iconPixels = (def: string) => pixels(pieceRows(def));
  * off the board). */
 export const materialPixels = (id: EquipMaterialId) => pixels(MATERIAL_ROWS[id]);
 /** A category's icon (the shape of its piece), for filters and empty places. */
-export const categoryIcon = (id: CategoryId, className = "equip-icon") => pixelSvg(CATEGORY_ROWS[id], className);
+export const categoryIcon = (id: CategoryId, className = "equip-icon") => kitIcon(`equip-${id}`, pixelSvg(CATEGORY_ROWS[id], className), className);
 /** A piece's own icon, by its definition id. */
-export const itemIcon = (def: string, className = "equip-icon") => pixelSvg(pieceRows(def), className);
+export const itemIcon = (def: string, className = "equip-icon") => kitIcon(pieceSpriteId(def), pixelSvg(pieceRows(def), className), className);
 /** The rows of every icon, for tests. */
 export const ICON_ROWS = { ...CATEGORY_ROWS, ...ITEM_ROWS, ...MATERIAL_ROWS };
 /** An upgrade material's icon. */
-export const materialIcon = (id: EquipMaterialId, className = "mat-icon") => pixelSvg(MATERIAL_ROWS[id], className);
+export const materialIcon = (id: EquipMaterialId, className = "mat-icon") => kitIcon(`equip-${id}`, pixelSvg(MATERIAL_ROWS[id], className), className);
 
 /** The action icons: a hammer (dismantle), three arrows into one (merge), an
  * arrow up (level up), a padlock (locked). */

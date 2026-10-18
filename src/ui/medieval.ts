@@ -2,6 +2,7 @@ import { soundEnabledBy, play } from "../sound.ts";
 import { flourishesEnabledBy, sparks } from "./flourish.ts";
 import type { Save } from "../save-shape.ts";
 import { uiLook } from "../theme-collection.ts";
+import { usesUiSprites, usesGameSprites } from "../sprite-style.ts";
 
 /** Whether the page wears the keep's look: `medieval.css` is scoped to this
  * class on the root, and `reduce-motion` mirrors the Reduce motion setting
@@ -88,7 +89,8 @@ export function applyUiTheme(save: Pick<Save, "themes" | "settings">) {
   root.toggle(DOODLE_CLASS, look === "doodle");
   root.toggle(MURK_CLASS, look === "murk");
   root.toggle("reduce-motion", save.settings.reduceMotion);
-  root.toggle("ui-sprites", save.settings.uiSprites);
+  root.toggle("ui-sprites", usesUiSprites(save));
+  root.toggle("game-sprites", usesGameSprites(save));
 }
 
 /** Sounds, sparks and the button knock exist only while the Medieval UI

@@ -40,6 +40,12 @@ const AFTER: Partial<Record<PageKey, (ctx: AppContext, overlay: BoardOverlay, s:
   uiSprites: (ctx) => {
     applyUiTheme(ctx.game.save);
     ctx.save();
+    ctx.update();
+  },
+  spritesOff: (ctx) => {
+    applyUiTheme(ctx.game.save);
+    ctx.save();
+    ctx.update();
   },
   reduceMotion: (ctx) => applyUiTheme(ctx.game.save),
   // The board silences the weather itself once sound is off.
@@ -123,7 +129,7 @@ export function renderSettingsPage(ctx: AppContext, overlay: BoardOverlay) {
     `<button class="back" id="settings-back">← Back</button><div class="page-title"><small>MAKE THE ASCENT YOUR OWN</small><h2>Settings</h2></div><button class="wide" id="stats-open">Stats</button>` +
     themeButtons(game) +
     `<button class="setting menu-open" id="toggles-open">Toggles<b>›</b></button>` +
-    shownOf(PAGE, game.save).map((key) => control(key, game)).join("") +
+    shownOf(PAGE, game.save).map((key) => control(key, game) + (key === "uiSprites" ? `<p class="hint">Sprites apply to the default interface and board. Other UI and Game themes use their own art.</p>` : "")).join("") +
     `<p class="hint">Automation pauses outside the board tabs and while the browser is hidden. Progress saves after each action.</p><button class="wide" id="retire">Retire this ${words.run}</button><p class="hint">Keep your milestone rewards and enter a freshly generated ${words.fresh}.</p><button class="wide danger" id="erase">Erase all progress</button><p class="seed">RUN SEED · ${game.run.seed}</p>`;
   bindSettings(ctx, overlay);
 }

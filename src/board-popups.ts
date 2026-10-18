@@ -6,7 +6,8 @@ import { paintContents } from "./tile-painters.ts";
 import { materialImage } from "./material-sprites.ts";
 import { paintGem } from "./gem-art.ts";
 import { RARITY_TIERS } from "./equipment/balance.ts";
-import { iconPixels, materialPixels } from "./ui/equipment-icons.ts";
+import { iconPixels, materialPixels, pieceSpriteId } from "./ui/equipment-icons.ts";
+import { drawKit } from "./sprite-kit.ts";
 import { tileCenter, toTileSpace, type FrameContext } from "./render-frame.ts";
 
 /** How long each popup shows, and the fade that ends it (ms). */
@@ -395,36 +396,39 @@ function artImage(art: GainArt): CanvasImageSource | null {
 function paintArt(c: CanvasRenderingContext2D, f: FrameContext, p: Popup & { gain: Gain }, image: CanvasImageSource | null) {
   const art = p.gain.art!;
   if ("tile" in art) return paintSpentTile(c, f, p, art);
-  if ("gem" in art) return paintGem(c, f.now, true);
+  if ("gem" in art) {
+    if (!(f.look.styledSprites && drawKit(c, "gem"))) paintGem(c, f.now, true);
+    return;
+  }
   if ("cell" in art) {
     // The amount, then the Cell: "+3 ▲" in place of "+3 Cells".
-    paintCell(c);
+    if (!(f.look.styledSprites && drawKit(c, "cell"))) paintCell(c);
     mark(c, p.gain.text.split(" ")[0], { x: 10, y: 12 }, { color: CELL_COLOR, size: 10, align: "right" });
     return;
   }
   if ("equipMaterial" in art) {
-    paintPixels(c, materialPixels(art.equipMaterial));
+    if (!(f.look.styledSprites && drawKit(c, `equip-${art.equipMaterial}`))) paintPixels(c, materialPixels(art.equipMaterial));
     if (art.quantity > 1) mark(c, `×${art.quantity}`, { x: 18, y: 21 }, { color: REWARD_COLOR, size: 8, align: "left" });
     return;
   }
   if ("equipPiece" in art) {
     const tier = RARITY_TIERS[art.rarity];
-    paintPixels(c, iconPixels(art.equipPiece));
+    if (!(f.look.styledSprites && drawKit(c, pieceSpriteId(art.equipPiece)))) paintPixels(c, iconPixels(art.equipPiece));
     mark(c, tier.mark, { x: 19, y: 21 }, { color: tier.color, size: 8, align: "left" });
     return;
   }
   c.imageSmoothingEnabled = false;
   if ("coin" in art) {
     // The amount, then the coin: "+5 ●" in place of "+5 Gold".
-    c.drawImage(image!, 11, 3, 18, 18);
+    if (!(f.look.styledSprites && drawKit(c, art.coin, 11, 3, 18))) c.drawImage(image!, 11, 3, 18, 18);
     mark(c, p.gain.text.split(" ")[0], { x: 10, y: 12 }, { color: art.coin === "gold" ? REWARD_COLOR : SILVER_COLOR, size: 10, align: "right" });
   } else if ("heart" in art) {
     if (f.look.themed) f.look.themed.heart(c);
-    else c.drawImage(image!, 2, 2, 18, 18);
+    else if (!(f.look.styledSprites && drawKit(c, "heart", 2, 2, 18))) c.drawImage(image!, 2, 2, 18, 18);
     if (art.raised) plus(c, 17, 17);
     else check(c, 13, 13);
   } else {
-    c.drawImage(image!, 3, 3, 18, 18);
+    if (!(f.look.styledSprites && "material" in art && drawKit(c, `metal-${art.material.replace(/Bar$/, "")}-bar`, 3, 3, 18))) c.drawImage(image!, 3, 3, 18, 18);
     if (art.quantity > 1) mark(c, `×${art.quantity}`, { x: 18, y: 21 }, { color: REWARD_COLOR, size: 8, align: "left" });
   }
 }
@@ -459,7 +463,7 @@ function paintSpentTile(c: CanvasRenderingContext2D, f: FrameContext, p: Popup, 
   const look = f.look;
   if (art.spent) c.translate(4, 0);
   if (look.themed) look.themed.contents(c, art.tile);
-  else paintContents(c, art.tile, { x: p.x, y: p.y, time: f.now, spritesOff: look.spritesOff, reduceMotion: look.reduceMotion, area1: look.area1, lifted: true });
+  else paintContents(c, art.tile, { x: p.x, y: p.y, time: f.now, spritesOff: look.spritesOff, reduceMotion: look.reduceMotion, area1: look.area1, lifted: true, styledSprites: look.styledSprites });
   if (!art.spent) return;
   c.translate(-4, 0);
   mark(c, "−", { x: 3, y: 12 }, { color: SPENT_COLOR, size: 14 });

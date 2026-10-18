@@ -8,6 +8,7 @@ import { CellType, type Building, type CityMap } from "./citygen.ts";
 import type { Light, Stone } from "./lighting.ts";
 import type { DefendSim } from "./sim.ts";
 import { OUTLINE, ROAD, ROOFS, paintStructureArt } from "./structure-art.ts";
+import { drawKitTerrain } from "../sprite-terrain.ts";
 
 const ASSET_BASE = (import.meta as ImportMeta & { env?: { BASE_URL?: string } }).env?.BASE_URL ?? "/";
 const floorImages: HTMLImageElement[] = [];
@@ -48,6 +49,7 @@ const WALL = "#8e897c";
 
 /** What the city layer is painted from. `px` is canvas pixels per cell. */
 export type CityScene = {
+  styledSprites?: boolean;
   map: CityMap;
   /** The battle, if one is on: buildings it knocked down show as rubble. */
   sim: DefendSim | null;
@@ -57,6 +59,7 @@ export type CityScene = {
 
 /** Everything the painters share for one repaint. */
 type Paint = {
+  styledSprites?: boolean;
   c: CanvasRenderingContext2D;
   px: number;
   map: CityMap;
@@ -69,7 +72,7 @@ type Paint = {
 export function paintCityLayer(c: CanvasRenderingContext2D, px: number, scene: CityScene) {
   const { map, sim } = scene;
   const solid = (i: number) => (sim ? sim.solid[i] === 1 : map.owner[i] >= 0 && map.type[i] !== CellType.ROAD);
-  const p: Paint = { c, px, map, sim, solid };
+  const p: Paint = { c, px, map, sim, solid, styledSprites: scene.styledSprites };
   c.imageSmoothingEnabled = false;
   paintFlagstones(p);
   paintCityGround(p);
@@ -84,7 +87,7 @@ export function paintCityLayer(c: CanvasRenderingContext2D, px: number, scene: C
 
 /** Ground: the mossy flagstones, one randomly turned tile per board tile,
  * with the spawn lane darkened as hostile ground. */
-function paintFlagstones({ c, px }: Paint) {
+function paintFlagstones({ c, px, styledSprites }: Paint) {
   const T = px * SUB;
   const { width, height } = c.canvas;
   // Very dark grey shows in the gaps around the flagstone sprites.
@@ -96,6 +99,7 @@ function paintFlagstones({ c, px }: Paint) {
       const x = Math.floor(tx * T),
         y = Math.floor(ty * T),
         s = Math.ceil(T) + 1;
+      if (styledSprites && drawKitTerrain(c, `assets/defend/floor-${hash(tx, ty, 3) % 4 + 1}.png`, x, y, s)) continue;
       if (ready(img)) {
         // Mossy floor tiles only: unrotated, grown 15% about their centre.
         const g = s * FLOOR_TILE_SCALE;
@@ -272,7 +276,7 @@ function paintBuilding(p: Paint, b: Building) {
   c.fillStyle = "rgba(0,0,0,0.35)";
   c.fillRect(x + gap + sh, y + gap + sh, w - gap * 2, h - gap * 2);
   if (b.kind === "house") paintHouse(p, b, { x: x + gap, y: y + gap, w: w - gap * 2, h: h - gap * 2 });
-  else paintStructureArt(c, b.kind, { x, y, w, h, px });
+  else paintStructureArt(c, b.kind, { x, y, w, h, px }, p.styledSprites);
 }
 
 /** Partially rebuilt: finished sections show as fresh timber framing. */
