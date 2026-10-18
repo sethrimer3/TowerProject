@@ -1,6 +1,6 @@
 import { doorName, doorRule, drainsHp, pickupGold } from "../doors.ts";
 import type { HandBonus } from "../cards.ts";
-import type { Enemy, Mode, Tile, KeyColor } from "../entities.ts";
+import type { ChestKind, Enemy, Mode, Tile, KeyColor } from "../entities.ts";
 import { RARITY_TIERS } from "../equipment/balance.ts";
 import { EQUIP_MATERIALS, itemDef } from "../equipment/catalog.ts";
 import { snap } from "../exact.ts";
@@ -85,7 +85,7 @@ export class Finds {
       if (t.kind === "key" && t.color !== "yellow") missions.record(t.color === "blue" ? "blueKeys" : "redKeys", 1, this.missionKey({ x, y }));
       this.host.message = text;
     }
-    if (t.kind === "treasure") this.treasure(x, y);
+    if (t.kind === "treasure") this.treasure(x, y, t.chest ?? "plain");
   }
   /** Gold Bonus's Gold for taking `t` (a torch when null) off the floor at
    * `at`, or opening it (a door), `more` added to its Pickup Gold, rising a
@@ -106,20 +106,20 @@ export class Finds {
     else if (t.kind === "defense") notes.defenseShards++;
   }
   /** A treasure chest: counted, and paid once per physical chest (undo and
-   * reopening can't pay it again). The CHEST card held may make it a Supply
-   * or Equipment Chest (`handBonus.chest`). */
-  private treasure(x: number, y: number) {
+   * reopening can't pay it again). It may be a Supply or Equipment Chest
+   * (`kind`, fixed as its floor was generated under the run's `chestOdds`). */
+  private treasure(x: number, y: number, kind: ChestKind) {
     this.host.run.treasures++;
     this.host.events.record("chests", 1, this.missionKey({ x, y }));
-    const loot = this.host.purse.treasure(x, y, this.host.handBonus.chest);
+    const loot = this.host.purse.treasure(x, y, kind);
     if (!loot) return;
     const found = equipmentGains(loot.equipment);
     if (loot.equipment?.item || loot.equipment?.salvaged) this.host.events.record("equipment", 1, this.missionKey({ x, y }));
     if (loot.equipment?.item) this.host.save[this.host.mode].runFinds.equipment++;
     // The Gold at the tile, what a Supply or Equipment Chest holds below it, rising together.
     this.drops({ x, y }, [{ text: `+${wholeChange(loot.gold)} Gold`, art: { coin: "gold" } }, ...found]);
-    const kind = loot.kind === "supply" ? ["Supply Chest"] : loot.kind === "equipment" ? ["Equipment Chest"] : [];
-    this.host.message = [...kind, `+${wholeChange(loot.gold)} Gold`, ...found.map((g) => g.text)].join(" · ");
+    const named = loot.kind === "supply" ? ["Supply Chest"] : loot.kind === "equipment" ? ["Equipment Chest"] : [];
+    this.host.message = [...named, `+${wholeChange(loot.gold)} Gold`, ...found.map((g) => g.text)].join(" · ");
   }
   /** Each key the door took rises from it with a minus sign; a door that
    * takes HP (a Heart Door, down to 1, or a Wooden Door broken without a

@@ -128,8 +128,7 @@ test("the purse notes the Silver found in the run, and a Supply Chest's material
   const before = g.snapshot(), purse = new RunPurse(g.save, g.mode, g.run, () => 0);
   const silver = purse.silver(25);
   assert.equal(g.run.notes!.silver, silver);
-  // A roll of 0 under these odds makes a Supply Chest.
-  const loot = purse.treasure(3, 3, { supply: 100, equipment: 0 })!;
+  const loot = purse.treasure(3, 3, "supply")!;
   const m = loot.equipment!.materials!;
   assert.equal(g.save.tower.runFinds.materials[m.id], m.quantity);
   g.restore(before);

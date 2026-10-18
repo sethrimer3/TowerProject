@@ -5,6 +5,7 @@ import { bakeTorchRelief, type BakedRelief } from "./floor-relief.ts";
 import { bakeTorchLight, type BakedLight } from "./torch-light.ts";
 import { doorColor, doorId } from "./doors.ts";
 import type { Tile } from "./entities.ts";
+import { CHEST_LOOK } from "./chest-marks.ts";
 import {
   forEachViewTile, screenX, screenY, sized, tileCenter, type FrameContext, type GlowSource, type Rect,
 } from "./render-frame.ts";
@@ -57,6 +58,8 @@ function tileGlow(t: Tile, breathe: number): Omit<GlowSource, "x" | "y"> | null 
     const glow = og.enemy[t.enemy!.strength];
     return { rgb: glow.color, radius: glow.radius, strength: glow.strength * breathe };
   }
+  // A Supply or Equipment Chest, and the floor it leaves once opened, glow its colour.
+  if (t.chest) return { rgb: CHEST_LOOK[t.chest].rgb, radius: og.item.radius, strength: og.item.strength * breathe };
   if (GLOW_ITEMS.has(t.kind)) return { rgb: og.item.color, radius: og.item.radius, strength: og.item.strength * breathe };
   if (t.kind === "door") return { rgb: doorGlow(t), radius: og.door.radius, strength: og.door.strength, door: true };
   if (t.kind === "stairs")

@@ -1,4 +1,4 @@
-import { point, type Enemy, type Kind, type Tile, type Torch } from "./entities.ts";
+import { point, type ChestKind, type ChestOdds, type Enemy, type Kind, type Tile, type Torch } from "./entities.ts";
 import type { Run } from "./runs.ts";
 import { tileRandom } from "./random.ts";
 import type { Shield } from "./shielded.ts";
@@ -88,6 +88,25 @@ export function reachable(
 }
 
 const PERCENT_POTION_SALT = 0x5eed7;
+const CHEST_KIND_SALT = 0xc4e57;
+/** The kind of the treasure chest generated at (x, y) on a board generated
+ * from `seed`, under a run's `odds`: its tile's fixed number, in percent,
+ * under the Equipment Chest's chance makes one, then under both chances a
+ * Supply Chest; plain without odds. So a floor's chests are what they are
+ * from the moment it is generated, and higher odds only ever add more. */
+export function chestKindAt(t: Tile, x: number, y: number, seed: number, odds?: ChestOdds): ChestKind {
+  if (t.kind !== "treasure" || !odds) return "plain";
+  const roll = tileRandom(x, y, seed ^ CHEST_KIND_SALT) * 100;
+  return roll < odds.equipment ? "equipment" : roll < odds.equipment + odds.supply ? "supply" : "plain";
+}
+/** Tile `t` marked with the kind of the chest `generated` there (`chestKindAt`):
+ * a Supply or Equipment Chest, or the floor left once it opened, keeps its
+ * kind, which the board shows. */
+export function withChest(t: Tile, generated: Tile, x: number, y: number, seed: number, odds?: ChestOdds): Tile {
+  if (!odds || (t.kind !== "treasure" && t.kind !== "floor")) return t;
+  const kind = chestKindAt(generated, x, y, seed, odds);
+  return kind === "plain" ? t : { ...t, chest: kind };
+}
 /** A generated tile at (x, y) on a board generated from `seed`, as a run
  * with `chance` (hundredths of a percent) of percent potions sees it: each
  * potion that may be one (generated blue) is a percent (red) potion when its

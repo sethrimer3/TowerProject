@@ -63,16 +63,12 @@ export const UNIQUE_SALVAGE = 2;
 export const upgradeGold = (level: number) => 5 * level * (level + 9);
 export const upgradeMaterial = (level: number) => Math.ceil((level * (level + 10)) / 20);
 
-/** Upgrade materials scale with the floor: one more lot for every
- * `MATERIAL_FLOORS` equivalent floors. */
-export const MATERIAL_FLOORS = 25;
-
 /** What the CHEST card's special chests hold, once Equipment is open: a
- * Supply Chest's upgrade materials (this many, of one category at random,
- * times one more for every `MATERIAL_FLOORS` equivalent floors),
+ * Supply Chest's upgrade materials (of one category at random, `base` in
+ * tower I and `perTower` more in each tower after),
  * and an Equipment Chest's Standard piece, of a random category at these
  * rarity weights. */
-export const SUPPLY_CHEST_MATERIALS = 8;
+export const SUPPLY_CHEST_MATERIALS = { base: 5, perTower: 2 };
 export const EQUIPMENT_CHEST_RARITY: Record<EquipRarity, number> = { common: 67, uncommon: 30, rare: 3 };
 
 /** The Gem pull: its price for one and for ten (ten resolve one by one),

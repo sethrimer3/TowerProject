@@ -195,7 +195,9 @@ const DESCRIBE: Partial<Record<Kind, Describe>> = {
   floor: (_t, _p, g) => ({ title: "Floor", body: MODES[g.mode].words.floor }),
   attack: (t, p, g) => ({ title: "Attack Shard", body: `<span>Raises ATK for this run</span><br>${gain(t, shardGain(t, p, g, "attack"), " ATK")}` }),
   defense: (t, p, g) => ({ title: "Defense Shard", body: `<span>Raises DEF for this run</span><br>${gain(t, shardGain(t, p, g, "defense"), " DEF")}` }),
-  treasure: () => ({ title: "Treasure", body: "Contains gold and crafting materials." }),
+  treasure: (t) => t.chest === "supply" ? { title: "Supply Chest", body: "Contains Gold and upgrade materials." }
+    : t.chest === "equipment" ? { title: "Equipment Chest", body: "Contains Gold and a piece of equipment." }
+    : { title: "Treasure", body: "Contains Gold." },
   reward: (t, _p, g) => chestReward(t.tier) === "mastered"
     ? { title: "Mastery Chest", body: "The area below was climbed without taking damage: the next checkpoint can be warped to." }
     : { title: "Clearing Chest", body: `Every enemy in the area below was defeated: +${clearedInspiration(g.run.height)} Inspiration, already yours.` },

@@ -77,5 +77,10 @@
  "towerShield.moving": "d22515e161cdcf21",
  "towerShield.after": "0b62649c3f120265",
  "towerShield.ripples": "fd6172b963ba2dd2",
- "towerShield.later": "bdaebd86226eac88"
+ "towerShield.later": "bdaebd86226eac88",
+ "towerChests.settled": "657bf32f51682edf",
+ "towerChests.moving": "8c85ebc28f9dccd8",
+ "towerChests.after": "8236557e53933f4b",
+ "towerChests.ripples": "aa4a1b439cd83b56",
+ "towerChests.later": "c12bab5df9bf857f"
 }

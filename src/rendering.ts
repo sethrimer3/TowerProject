@@ -26,6 +26,7 @@ import { drawGem, drawGemSparkle, GEM_SPARKLE_MS } from "./gem-art.ts";
 import { DashEchoes } from "./dash-echoes.ts";
 import { drawVolley } from "./volley-art.ts";
 import { drawShields } from "./shield-art.ts";
+import { drawChestMarks } from "./chest-marks.ts";
 import type { Dash } from "./shown.ts";
 import { darknessOf, forEachViewTile, tileTransform, toTileSpace, type FrameContext } from "./render-frame.ts";
 import { gameLook } from "./theme-collection.ts";
@@ -158,6 +159,8 @@ export class Renderer {
   private drawOverlays(f: FrameContext) {
     // A Shielded enemy's bubble shows above the darkness, under the labels.
     if (!this.game.run.outside) drawShields(f, this.game.world.shields?.() ?? [], this.game.mode === "delve" ? this.game.world.width : 0);
+    // Supply and Equipment Chests show their kind, opened or not.
+    if (!this.game.run.outside) drawChestMarks(f);
     this.drawDamageLabels(f);
     if (!this.game.run.outside) this.bossFlash.draw(f, this.game.run.seed, this.game.run.height, f.look.reduceMotion);
     this.drawSkipMarks(f);

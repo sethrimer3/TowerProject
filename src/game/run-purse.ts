@@ -5,7 +5,7 @@ import { snap } from "../exact.ts";
 import { averageGold, rollGold } from "../loot.ts";
 import { pickupGold } from "../doors.ts";
 import { litTorches } from "../board.ts";
-import { point, type Enemy, type Mode, type Tile } from "../entities.ts";
+import { point, type ChestKind, type Enemy, type Mode, type Tile } from "../entities.ts";
 import type { Run } from "../runs.ts";
 import type { Save } from "../save-shape.ts";
 import { MODES, type ModeProfile } from "../modes.ts";
@@ -31,14 +31,6 @@ export type EquipmentLoot = {
   salvaged: { id: EquipMaterialId; quantity: number; auto: boolean } | null;
 };
 
-/** A treasure chest's kind: a plain one pays only Gold; a
- * Supply Chest adds upgrade materials and an Equipment Chest a Standard
- * piece, both only ever from the CHEST card held. */
-export type ChestKind = "plain" | "supply" | "equipment";
-/** A treasure chest's chances, in percent, of being a Supply or an
- * Equipment Chest (`HandBonus.chest`). */
-export type ChestOdds = { supply: number; equipment: number };
-
 /** What a run finds: Gold, banked in the save as it is found, and Silver,
  * which belongs to the run. Gold paid for a physical kill, chest or floor
  * is gated by the mode's `lootedTiles` (outside the run), so undo can bring
@@ -52,7 +44,7 @@ export class RunPurse {
     private readonly rng: () => number,
     /** The wall clock now (ms), for the Gold ad's boost. */
     private readonly now = 0,
-    /** What Equipment's finds (a chest's kind, its materials or piece) draw from: `rng`,
+    /** What Equipment's finds (a Supply Chest's materials, an Equipment Chest's piece) draw from: `rng`,
      * unless a tournament run gives them a stream of their own. */
     private readonly equipmentRng: () => number = rng,
   ) {}
@@ -226,32 +218,23 @@ export class RunPurse {
 
   /** A treasure chest's Gold, once per physical chest, or null when it was
    * already paid; its Gold, the chest's own `PICKUP_GOLD` counted, is raised
-   * by Gold Bonus. Once Equipment is open, `odds` (the CHEST card's) may
-   * make it a Supply Chest, adding upgrade materials, or an Equipment Chest,
-   * adding a Standard piece (`chestKind`). */
-  treasure(x: number, y: number, odds: ChestOdds = { supply: 0, equipment: 0 }): { gold: number; kind: ChestKind; equipment: EquipmentLoot | null } | null {
+   * by Gold Bonus. A Supply Chest (`kind`, fixed as its floor was generated)
+   * adds upgrade materials, and an Equipment Chest a Standard piece, once
+   * Equipment is open. */
+  treasure(x: number, y: number, kind: ChestKind = "plain"): { gold: number; kind: ChestKind; equipment: EquipmentLoot | null } | null {
     if (!this.loot(this.lootKey(x, y))) return null;
     const rules = this.rules, floor = rules.equivalentFloor(rules.progressAt(this.run, y));
     const gold = this.gold(this.withCombo(this.bonused(snap(rollGold(floor, this.rng) + PICKUP_GOLD))));
-    const kind = this.chestKind(odds);
-    return { gold, kind, equipment: kind === "plain" ? null : this.chestEquipment(kind, floor) };
+    if (!this.save.equipment.unlocked) kind = "plain";
+    return { gold, kind, equipment: kind === "plain" ? null : this.chestEquipment(kind) };
   }
 
-  /** A treasure chest's kind under `odds`: one roll of Equipment's stream,
-   * the Equipment Chest's chance first, drawn only once Equipment is open
-   * and the hand holds a card that gives one, so other chests draw nothing. */
-  private chestKind(odds: ChestOdds): ChestKind {
-    if (!this.save.equipment.unlocked || !(odds.supply + odds.equipment)) return "plain";
-    const roll = this.equipmentRng() * 100;
-    return roll < odds.equipment ? "equipment" : roll < odds.equipment + odds.supply ? "supply" : "plain";
-  }
-
-  /** What a Supply or Equipment Chest on equivalent floor `floor` adds:
-   * upgrade materials, or a Standard piece kept (or salvaged) as a boss's is. */
-  private chestEquipment(kind: "supply" | "equipment", floor: number): EquipmentLoot {
+  /** What a Supply or Equipment Chest adds: upgrade materials, more in
+   * each tower after the first, or a Standard piece kept (or salvaged). */
+  private chestEquipment(kind: "supply" | "equipment"): EquipmentLoot {
     const e = this.save.equipment;
     if (kind === "supply") {
-      const materials = rollSupplies(floor, this.worn.materialFind, this.equipmentRng);
+      const materials = rollSupplies(this.tier, this.worn.materialFind, this.equipmentRng);
       e.materials[materials.id] += materials.quantity;
       tallyIn(this.slice.runFinds.materials, materials.id, materials.quantity);
       return { materials, item: null, salvaged: null };

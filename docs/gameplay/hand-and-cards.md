@@ -24,7 +24,9 @@ Tower III's floor 10 Goal adds **Archer** to the deck, a plain wooden bow on its
 Some cards also give a bonus for as long as the run's hand holds them, whichever card leads the hero to the key or chest; a card's details list it under what it does.
 **Yellow Key**, **Blue Key** and **Red Key** make each key of their colour picked up worth 5% more (1.05 keys) and pay 1, 2 or 3 more Gold (raised by Gold Bonus, like a key's own Gold); **Key** gives no bonus.
 **Archer** gives its arrows +5% ATK against a boss or Greater Boss (shown as +5% Shot ATK for Bosses); fights are untouched.
-**Chest** gives each treasure chest opened, once Equipment is open, a 1.5% chance of being a **Supply Chest**, which adds Equipment upgrade materials to its Gold (kills drop none) (8 of one category, more on higher floors, raised by Material Find), and a 0.5% chance of being an **Equipment Chest**, which adds a Standard piece: 67% Common, 30% Uncommon, 3% Rare (bosses drop none).
+**Chest** gives each treasure chest, once Equipment is open, a 1.5% chance of being a **Supply Chest**, which adds Equipment upgrade materials to its Gold (kills drop none) (5 of one category in Tower I and 2 more in each tower after, raised by Material Find), and a 0.5% chance of being an **Equipment Chest**, which adds a Standard piece: 67% Common, 30% Uncommon, 3% Rare (bosses drop none).
+Equipment's Supply and Equipment Chest chance raises both chances by its percent.
+A chest's kind is settled as its floor is made, by the hand the run went in with: a Supply Chest shows a light blue glow and one star in its upper-left corner, an Equipment Chest a purple glow and two stars, and both marks stay once it is opened.
 Otherwise a treasure chest holds only Gold.
 The card's details show these as *1.5% Supplies* in light blue and *0.5% Equipment* in purple.
 A profile from before the Key card holds Key in Yellow Key's place, with any badges and links Yellow Key had; the Yellow Key skill earns Yellow Key back.

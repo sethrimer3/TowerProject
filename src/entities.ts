@@ -63,6 +63,14 @@ export type Enemy = {
 /** An area reward chest's metal: gold for an area mastered, silver for one
  * cleared (tower/area-ledger.ts). */
 export type ChestTier = "silver" | "gold";
+/** A treasure chest's kind: a plain one pays only Gold; a Supply Chest adds
+ * upgrade materials and an Equipment Chest a Standard piece, both only ever
+ * from the CHEST card held. Fixed as the floor is generated (board.ts
+ * `withChest`). */
+export type ChestKind = "plain" | "supply" | "equipment";
+/** A run's chances, in percent, of each treasure chest being a Supply or
+ * an Equipment Chest, fixed as it goes inside. */
+export type ChestOdds = { supply: number; equipment: number };
 /** Declarative lock rules. `color` remains on Tile for legacy single-key
  * doors and keys; new doors use this rule so every gameplay system shares
  * the same requirements and consumption behavior. */
@@ -77,7 +85,7 @@ export type DoorRule =
  * here (ranged.ts); the board reads its HP that much lower. `flyer`: the
  * Flying enemy hovering over this open floor tile (flying.ts), which the
  * hero walks under; its wound is the tile's `wound`. */
-export type Tile = { kind: Kind; amount?: number; color?: KeyColor; door?: DoorRule; enemy?: Enemy; flyer?: Enemy; tier?: ChestTier; wound?: number };
+export type Tile = { kind: Kind; amount?: number; color?: KeyColor; door?: DoorRule; enemy?: Enemy; flyer?: Enemy; tier?: ChestTier; wound?: number; chest?: Exclude<ChestKind, "plain"> };
 export type Point = { x: number; y: number };
 /** A stationary wall-mounted light source, anchored to a walkable floor
  * tile adjacent to a wall. Its visibility polygon is computed once (on

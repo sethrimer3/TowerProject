@@ -6,7 +6,7 @@ import type { TrainingId } from "./config.ts";
 import type { RunNotes } from "./run-notes.ts";
 import type { TournamentRun } from "./tournament/run.ts";
 import type { Volleys } from "./ranged.ts";
-import type { Player, Tile } from "./entities.ts";
+import type { ChestOdds, Player, Tile } from "./entities.ts";
 /** What a run holds in either mode. */
 export type RunCore = {
   outside?: boolean;
@@ -60,6 +60,11 @@ export type RunCore = {
    * went inside (none without). Fixed for the run, so its floors never
    * change under it. */
   percentPotions?: number;
+  /** The chances, in percent, of each treasure chest being a Supply or an
+   * Equipment Chest (the CHEST card's, raised by Supply and Equipment
+   * Chest chance), fixed as the run went inside, so its floors' chests are
+   * what they were generated as; none without. */
+  chestOdds?: ChestOdds;
   /** The card a Focus put ahead of the others, until it reaches its target
    * or has no path to one. */
   focused?: CardId;

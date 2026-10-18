@@ -51,6 +51,7 @@ import type {
   Mode,
   Player,
   ChestTier,
+  ChestOdds,
   KeyColor,
 } from "./entities.ts";
 import { World, LAYOUT_VERSION } from "./delve/world.ts";
@@ -964,8 +965,20 @@ export class Game {
     const chance = trainedAmount(this.save, "findPotion");
     if (chance) this.run.percentPotions = chance;
     else delete this.run.percentPotions;
+    const odds = this.chestOddsFor(this.run.hand);
+    if (odds) this.run.chestOdds = odds;
+    else delete this.run.chestOdds;
     this.run.focusUsed = 0;
     for (const k of ["ignoreUsed", "targetUsed", "regain", "ignored", "targeted"] as const) delete this.run[k];
+  }
+  /** A run's chances of Supply and Equipment Chests with `hand`: the
+   * hand's (the CHEST card's), raised by the worn Supply and Equipment Chest
+   * chance; none before Equipment opens or without a card that gives one. */
+  private chestOddsFor(hand: readonly CardId[]): ChestOdds | undefined {
+    const { chest } = handBonus(hand);
+    if (!this.save.equipment.unlocked || !(chest.supply + chest.equipment)) return undefined;
+    const find = wornEffects(this.save, this.mode).chestFind;
+    return { supply: raised(chest.supply, find), equipment: raised(chest.equipment, find) };
   }
   /** The fastest speed the run's arrows reach: 3 steps a second, and one
    * more a Movement Speed research level. */

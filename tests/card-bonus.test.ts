@@ -1,13 +1,17 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { defaults } from "../src/save.ts";
+import { decode, defaults } from "../src/save.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import { CARD_IDS, cardBonus, cardBonusLines, handBonus } from "../src/cards.ts";
 import { RunPurse } from "../src/game/run-purse.ts";
 import { rollChestPiece, rollSupplies } from "../src/equipment/acquire.ts";
 import { EQUIPMENT_CHEST_RARITY, SUPPLY_CHEST_MATERIALS } from "../src/equipment/balance.ts";
-import { standardOf } from "../src/equipment/catalog.ts";
+import { itemDef, standardOf } from "../src/equipment/catalog.ts";
+import { addItem } from "../src/equipment/inventory.ts";
+import { equipmentEffects } from "../src/equipment/effects.ts";
+import { chestKindAt } from "../src/board.ts";
+import { snap } from "../src/exact.ts";
 import type { Tile } from "../src/entities.ts";
 
 test("only YELLOW, BLUE and RED KEY, CHEST, FLYING ENEMY and ARCHER carry a bonus, and KEY none", () => {
@@ -78,30 +82,82 @@ test("YELLOW KEY held makes each yellow key worth 5% more and pay 1 more Gold, w
   assert.equal(blue.run.player.keys.blue, 1, "YELLOW KEY gives nothing for a blue key");
 });
 
-test("CHEST held rolls each treasure chest's kind once Equipment is open, from Equipment's stream", () => {
+test("a Supply or Equipment Chest pays its finds once Equipment is open, from Equipment's stream", () => {
   const g = new Game(defaults());
   g.newRun({ seed: 7 });
   const draws: number[] = [];
   const purse = (roll: number) => new RunPurse(g.save, g.mode, g.run, () => 0.5, 0, () => (draws.push(roll), roll));
-  const odds = { supply: 1.5, equipment: 0.5 };
-  assert.equal(purse(0).treasure(3, 3, odds)!.kind, "plain", "before Equipment opens");
+  assert.equal(purse(0).treasure(3, 3, "equipment")!.kind, "plain", "before Equipment opens");
   assert.equal(draws.length, 0, "and it draws nothing");
   g.save.equipment.unlocked = true;
-  assert.equal(purse(0).treasure(3, 4)!.kind, "plain", "without the card");
-  assert.equal(draws.length, 0, "and it draws nothing");
-  // Under 0.5 an Equipment Chest, under 2 a Supply Chest, else plain.
-  const equipment = purse(0.0049).treasure(3, 5, odds)!;
+  assert.equal(purse(0).treasure(3, 4)!.kind, "plain", "a plain chest");
+  assert.equal(draws.length, 0, "draws nothing");
+  const equipment = purse(0).treasure(3, 5, "equipment")!;
   assert.equal(equipment.kind, "equipment");
   assert.ok(equipment.equipment?.item, "its piece goes into the inventory");
-  assert.equal(equipment.equipment.item.rarity, "common", "the same low roll picks Common");
+  assert.equal(equipment.equipment.item.rarity, "common", "a low roll picks Common");
   assert.ok(g.save.equipment.items.some((i) => i.id === equipment.equipment!.item!.id));
-  const supply = purse(0.0199).treasure(3, 6, odds)!;
+  const supply = purse(0).treasure(3, 6, "supply")!;
   assert.equal(supply.kind, "supply");
-  assert.ok(supply.equipment?.materials && supply.equipment.materials.quantity >= SUPPLY_CHEST_MATERIALS);
-  assert.equal(g.save.equipment.materials[supply.equipment.materials.id], supply.equipment.materials.quantity);
-  assert.equal(purse(0.02).treasure(3, 7, odds)!.kind, "plain");
-  assert.equal(purse(0).treasure(3, 7, odds), null, "a chest pays once");
+  assert.equal(supply.equipment?.materials?.quantity, SUPPLY_CHEST_MATERIALS.base);
+  assert.equal(g.save.equipment.materials[supply.equipment!.materials!.id], supply.equipment!.materials!.quantity);
+  assert.equal(purse(0).treasure(3, 6, "supply"), null, "a chest pays once");
 });
+
+/** Every treasure tile of Tower floors 1 to 30 under `odds`, as generated
+ * and as the board reads it. */
+function chests(odds?: { supply: number; equipment: number }) {
+  const found: { world: RoomWorld; x: number; y: number; tile: Tile }[] = [];
+  for (let room = 1; room <= 30; room++) {
+    const world = new RoomWorld(11, room, {}, 0, 1, undefined, undefined, odds);
+    for (let y = 0; y < world.height; y++)
+      for (let x = 0; x < world.width; x++) if (world.tile(x, y).kind === "treasure") found.push({ world, x, y, tile: world.tile(x, y) });
+  }
+  return found;
+}
+
+test("a floor's chests are Supply or Equipment Chests as it is generated, under the run's odds, and stay marked once opened", () => {
+  const plain = chests(), all = chests({ supply: 0, equipment: 100 }), some = chests({ supply: 30, equipment: 20 });
+  assert.ok(plain.length > 5, "the floors have chests");
+  assert.ok(plain.every((c) => !c.tile.chest), "none without odds");
+  assert.ok(all.every((c) => c.tile.chest === "equipment"));
+  const kinds = some.map((c) => c.tile.chest ?? "plain");
+  assert.ok(new Set(kinds).size === 3, `all three kinds at these odds: ${kinds}`);
+  assert.deepEqual(chests({ supply: 30, equipment: 20 }).map((c) => c.tile.chest), some.map((c) => c.tile.chest), "the same floor, the same chests");
+  for (const c of some) assert.equal(chestKindAt(c.tile, c.x, c.y, c.world.seed ^ Math.imul(c.world.room + 1, 0x9e3779b1), { supply: 30, equipment: 20 }), c.tile.chest ?? "plain");
+  // Opened, the chest's floor keeps its kind for the board to show.
+  const marked = some.find((c) => c.tile.chest)!;
+  marked.world.changes[`${marked.x},${marked.y}`] = { kind: "floor" };
+  assert.deepEqual(marked.world.tile(marked.x, marked.y), { kind: "floor", chest: marked.tile.chest });
+});
+
+test("a run fixes its chest odds as it goes inside: the CHEST card's, raised by Supply and Equipment Chest chance, once Equipment is open", () => {
+  const run = (setup: (s: ReturnType<typeof defaults>) => void) => {
+    const s = defaults();
+    s.hand = ["chest", "stairs", "door", "key"];
+    setup(s);
+    const g = new Game(s);
+    g.newRun({ seed: 5 });
+    assert.deepEqual(decode(JSON.stringify(g.save)).tower.run!.chestOdds, g.run.chestOdds, "and saves them");
+    return g.run.chestOdds;
+  };
+  assert.equal(run(() => {}), undefined, "before Equipment opens");
+  assert.equal(run((s) => { s.equipment.unlocked = true; s.hand = ["stairs", "door", "key"]; }), undefined, "without the card");
+  assert.deepEqual(run((s) => { s.equipment.unlocked = true; }), { supply: 1.5, equipment: 0.5 });
+  const raisedBy = run((s) => { s.equipment = defaultsWithShroud(); })!;
+  const find = equipmentEffects(defaultsWithShroud(), "tower").chestFind;
+  assert.ok(find > 0);
+  assert.deepEqual(raisedBy, { supply: snap((1.5 * (100 + find)) / 100), equipment: snap((0.5 * (100 + find)) / 100) });
+});
+
+/** A save wearing an Uncommon Gatherer's Shroud in the Tower. */
+function defaultsWithShroud() {
+  const s = defaults();
+  s.equipment.unlocked = true;
+  const item = addItem(s.equipment, "gatherersShroud", "uncommon")!;
+  s.equipment.equipped.tower[itemDef(item.def)!.category] = item.id;
+  return s.equipment;
+}
 
 test("an Equipment Chest's piece is Standard, at 67% Common, 30% Uncommon and 3% Rare", () => {
   assert.deepEqual(EQUIPMENT_CHEST_RARITY, { common: 67, uncommon: 30, rare: 3 });
@@ -111,8 +167,8 @@ test("an Equipment Chest's piece is Standard, at 67% Common, 30% Uncommon and 3%
   assert.equal(piece.def, standardOf(piece.category).id);
 });
 
-test("a Supply Chest's materials grow with the floor as a kill's do", () => {
-  assert.equal(rollSupplies(0, 0, () => 0).quantity, SUPPLY_CHEST_MATERIALS);
-  assert.equal(rollSupplies(50, 0, () => 0).quantity, SUPPLY_CHEST_MATERIALS * 3);
-  assert.equal(rollSupplies(0, 50, () => 0).quantity, SUPPLY_CHEST_MATERIALS * 1.5, "raised by Material Find");
+test("a Supply Chest holds 5 materials in tower I and 2 more each tower after, raised by Material Find", () => {
+  assert.deepEqual([1, 2, 3, 10].map((tier) => rollSupplies(tier, 0, () => 0).quantity), [5, 7, 9, 23]);
+  assert.equal(rollSupplies(1, 50, () => 0).quantity, 7, "5 raised by half, rounded down");
+  assert.equal(rollSupplies(3, 50, () => 0).quantity, 13);
 });

@@ -2,7 +2,7 @@ import { region, depthAt, areasBetween, floorFor, ownerAt, type Region } from ".
 import { CHUNK, WIDTH, START_X } from "../config.ts";
 import { point, type Enemy, type Point, type Tile, type Torch } from "../entities.ts";
 import type { DelveRun } from "../runs.ts";
-import { withPotions, type Board } from "../board.ts";
+import { withChest, withPotions, type Board } from "../board.ts";
 import { breakTorch, placeTorches, torchesLeft } from "../torches.ts";
 import { tierCells, tierTile } from "../tiers.ts";
 import { fastCells } from "../fast-enemies.ts";
@@ -173,7 +173,7 @@ const upward = (dx: number, dy: number) => dx === 0 && dy === 1;
 
 /** What of a run the Delve board keeps: its map edits, the floor below
  * which the labyrinth is sealed, and the milestones crossed. */
-type WorldRun = Pick<DelveRun, "seed" | "changes" | "floor" | "milestone" | "percentPotions" | "tier" | "tournament">;
+type WorldRun = Pick<DelveRun, "seed" | "changes" | "floor" | "milestone" | "percentPotions" | "chestOdds" | "tier" | "tournament">;
 
 /** The endless Delve labyrinth of a run, generated chunk by chunk around
  * the player. It reads and writes the run's own changes, floor and
@@ -208,7 +208,8 @@ export class World implements Board {
     if (!this.inside(x, y)) return { kind: "wall" };
     const chunk = this.chunk(Math.floor(y / CHUNK));
     const k = point(x, y), changed = this.changes[k];
-    const t = changed ? wounded(changed) : withPotions(chunk.get(k) ?? { kind: "wall" }, x, y, this.seed, this.run.percentPotions ?? 0);
+    const generated = chunk.get(k) ?? { kind: "wall" }, odds = this.run.chestOdds;
+    const t = changed ? wounded(withChest(changed, generated, x, y, this.seed, odds)) : withChest(withPotions(generated, x, y, this.seed, this.run.percentPotions ?? 0), generated, x, y, this.seed, odds);
     return this.shieldList.length ? guardedTile(t, x, y, this.shieldList, (s) => this.holds(s), this.width) : t;
   }
   /** Whether the Shielded enemy `s` still stands; `loaded`: judged only

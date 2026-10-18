@@ -215,6 +215,20 @@ const LATER_BOARD_SCENES: Record<string, () => BoardScene> = {
     (g.world as unknown as { shield: { x: number; y: number; floor: number } }).shield = { ...at, floor: 4000 };
     return { g };
   },
+  /** A Supply Chest (a blue glow, one star), an Equipment Chest (a purple
+   * glow, two stars) and the floor an opened Equipment Chest left, still
+   * marked, in a row above the hero. */
+  towerChests: () => {
+    const g = game("tower", { brightness: 70 });
+    const p = g.run.player, open = (x: number, y: number) => g.world.tile(x, y).kind === "floor";
+    let at: Point | null = null;
+    for (let dy = 2; dy <= 8 && !at; dy++) for (let dx = -3; dx <= 1 && !at; dx++) if ([0, 1, 2].every((i) => open(p.x + dx + i, p.y + dy))) at = { x: p.x + dx, y: p.y + dy };
+    if (!at) throw Error("no room for the chests");
+    g.run.changes[`${at.x},${at.y}`] = { kind: "treasure", chest: "supply" };
+    g.run.changes[`${at.x + 1},${at.y}`] = { kind: "treasure", chest: "equipment" };
+    g.run.changes[`${at.x + 2},${at.y}`] = { kind: "floor", chest: "equipment" };
+    return { g };
+  },
 };
 
 /** One board scene on `canvas` (408×408 CSS pixels), fully synchronous so

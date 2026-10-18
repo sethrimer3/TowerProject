@@ -469,10 +469,10 @@ What a card gives for as long as the run's hand holds it, beside where it moves 
 _Avoid_: perk, passive
 
 **Supply Chest**:
-A treasure chest that, through the Chest card's bonus, also holds Equipment upgrade materials (supplies) beside its Gold.
+A treasure chest that, through the Chest card's bonus, also holds Equipment upgrade materials (supplies) beside its Gold; marked by a light blue glow and one star, settled as its floor is made.
 
 **Equipment Chest**:
-A treasure chest that, through the Chest card's bonus, also holds a Standard piece of equipment, Common, Uncommon or Rare.
+A treasure chest that, through the Chest card's bonus, also holds a Standard piece of equipment, Common, Uncommon or Rare; marked by a purple glow and two stars, settled as its floor is made.
 
 **Hand**:
 The cards the player sets up before a run, in priority order, in four slots (five with Larger Hand, and more bought with Gems); it always holds the STAIRS card. Inside a run the hand moves the hero, and the player can't: the first card that can act (or Card Group, as one) picks its closest target, and the hero follows the shortest path there a step at a time before the hand chooses again. The player can pause it, and undo pauses it. Each run keeps the hand as ordered when it went inside.

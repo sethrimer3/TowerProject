@@ -165,6 +165,7 @@ const RUN_FIELD_CHECKS = {
   cardUses: (v: unknown) => isRecord(v) && Object.entries(v).every(([id, n]) => IN_PLACE.has(id as CardId) && wholeIn(n, 1, 1e6)),
   tier: (v: unknown) => wholeIn(v, 2, TIERS),
   percentPotions: (v: unknown) => wholeIn(v, 1, trainingDef("findPotion").cap!),
+  chestOdds: (v: any) => isRecord(v) && Object.keys(v).length === 2 && [v.supply, v.equipment].every((n) => finite(n) && n >= 0 && n <= 100) && v.supply + v.equipment > 0,
   // The hand is checked first: every card holding a badge must be in it.
   badges: (v: unknown, r: any) => validRunBadges(v) && Object.keys(v as object).every((card) => r.hand?.includes(card)),
   // The hand is checked first: each link joins cards side by side in it.

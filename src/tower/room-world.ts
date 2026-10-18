@@ -1,6 +1,6 @@
 import { TOWER_WIDTH, TOWER_HEIGHT } from "../config.ts";
-import { point, type Enemy, type Tile, type Torch } from "../entities.ts";
-import { withPotions, type Board } from "../board.ts";
+import { point, type ChestOdds, type Enemy, type Tile, type Torch } from "../entities.ts";
+import { withChest, withPotions, type Board } from "../board.ts";
 import { breakTorch, placeTorches, torchesLeft } from "../torches.ts";
 import { generateTowerFloor } from "./index.ts";
 import { tierCells, tierTile } from "../tiers.ts";
@@ -140,6 +140,8 @@ export class RoomWorld implements Board {
      * enemy tile read through it, a Greater Boss summoned too; none without.
      * `Game` sets it afresh when a boon changes it. */
     public foes?: FoeRule,
+    /** The run's chances of Supply and Equipment Chests (`chestOdds`); none without. */
+    public chestOdds?: ChestOdds,
   ) {
     let cells = generateTowerRoom(seed, room, tier);
     const torches = torchesForRoom(seed, room, tier, cells);
@@ -160,8 +162,11 @@ export class RoomWorld implements Board {
   }
   tile(x: number, y: number): Tile {
     if (!this.inside(x, y)) return { kind: "wall" };
-    const changed = this.changes[point(x, y)];
-    const t = changed ? wounded(this.withBoons(changed)) : this.withBoons(withPotions(this.cells.get(point(x, y)) ?? { kind: "wall" }, x, y, this.seed ^ Math.imul(this.room + 1, 0x9e3779b1), this.percentPotions));
+    const k = point(x, y), changed = this.changes[k], generated = this.cells.get(k) ?? { kind: "wall" };
+    const seed = this.seed ^ Math.imul(this.room + 1, 0x9e3779b1);
+    const t = changed
+      ? wounded(this.withBoons(withChest(changed, generated, x, y, seed, this.chestOdds)))
+      : this.withBoons(withChest(withPotions(generated, x, y, seed, this.percentPotions), generated, x, y, seed, this.chestOdds));
     return this.shield ? guardedTile(t, x, y, [this.shield], (s) => this.holds(s)) : t;
   }
   /** `t` as the run's boons make it now, read afresh since a boon can

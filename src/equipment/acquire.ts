@@ -5,7 +5,7 @@
 import { random } from "../random.ts";
 import { CATEGORY_IDS, materialOf, standardOf, uniquesOf, type CategoryId, type EquipMaterialId } from "./catalog.ts";
 import {
-  EQUIP_RARITIES, EQUIPMENT_CHEST_RARITY, MATERIAL_FLOORS, PITY, PULL_RATES, SUPPLY_CHEST_MATERIALS,
+  EQUIP_RARITIES, EQUIPMENT_CHEST_RARITY, PITY, PULL_RATES, SUPPLY_CHEST_MATERIALS,
   type EquipRarity,
 } from "./balance.ts";
 import { addItem, salvageOf, type EquipItem, type EquipmentSave } from "./inventory.ts";
@@ -75,14 +75,11 @@ export function keepDrop(e: EquipmentSave, drop: { def: string; rarity: EquipRar
   return { item: null, salvaged, auto };
 }
 
-/** A Supply Chest's upgrade materials on equivalent floor `floor`:
- * `SUPPLY_CHEST_MATERIALS`, scaled by the floor and `find`, of one category at random. */
-export const rollSupplies = (floor: number, find: number, rng: () => number) => materialStack(SUPPLY_CHEST_MATERIALS, floor, find, rng);
-
-/** `amount` upgrade materials times 1 + ⌊floor / 25⌋, raised by `find`
+/** A Supply Chest's upgrade materials in tower `tier`: 5 in tower I and 2
+ * more each tower after (`SUPPLY_CHEST_MATERIALS`), raised by `find`
  * percent (rounded down), of one category at random. */
-function materialStack(amount: number, floor: number, find: number, rng: () => number): { id: EquipMaterialId; quantity: number } {
-  const base = amount * (1 + Math.floor(Math.max(0, floor) / MATERIAL_FLOORS));
+export function rollSupplies(tier: number, find: number, rng: () => number): { id: EquipMaterialId; quantity: number } {
+  const base = SUPPLY_CHEST_MATERIALS.base + SUPPLY_CHEST_MATERIALS.perTower * (Math.max(1, tier) - 1);
   const quantity = Math.max(base, Math.floor((base * (100 + find)) / 100));
   return { id: materialOf(pick(CATEGORY_IDS, rng())), quantity };
 }
