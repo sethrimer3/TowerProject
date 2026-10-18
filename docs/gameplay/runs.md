@@ -34,6 +34,7 @@ Gold is banked the moment it is found and kept however the run ends: the stats s
 Tower I's floor 250 Goal opens the Archives' **Note Taking** (one level, 100,000 Gold and 2 days).
 Once it is researched, tapping the floor number during a run opens the run's notes, and the run plays on beneath them.
 Below the floor number during a run, under a line, stand the ATK, DEF and HP of a normal enemy at the run's deepest floor or depth, as strong as the real ones there: the tower's or cave's factor, a tournament's raise and the Shrine boons that change enemies all count.
+Large stats are shortened to three figures (1.21K, 12.3K, 123K).
 They list the tower, the floor reached and the current floor, the real time since the run went inside, the steps taken, chests opened, enemies defeated and XP earned, the keys obtained by colour and the doors opened by kind, the Gold, Silver and Inspiration (or Courage) found, the materials found, and the potions, ATK and DEF shards, Gems, Cells and equipment picked up, each group under its heading.
 They refresh as the run goes, and the X at their top right closes them.
 The copy button beside the X puts them in the clipboard as text, to paste elsewhere.

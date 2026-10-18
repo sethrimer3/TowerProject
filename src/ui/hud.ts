@@ -1,4 +1,4 @@
-import { amountUnit, compactAmount, enemyStat, keyCount, stepsIn, whole, wholeHp } from "../whole.ts";
+import { amountUnit, enemyStat, keyCount, stepsIn, whole, wholeHp } from "../whole.ts";
 import type { Game } from "../state.ts";
 import type { Renderer } from "../rendering.ts";
 import { levelForXp, xpForLevel } from "../config.ts";
@@ -710,8 +710,8 @@ function renderGoldBonus(game: Game) {
 }
 
 /** A stat in a few characters: two decimals below 1,000 when not whole,
- * then 1.2K, 12M … */
-const shortStat = (n: number) => (n < 1000 ? enemyStat(n) : compactAmount(Math.floor(n)));
+ * then to three figures, 1.21K, 12.3M … */
+export const shortStat = (n: number) => (n < 1000 ? enemyStat(n) : shortAmount(Math.floor(n), 1000));
 /** Under the floor inside a run, below a dividing line: the ATK, DEF and HP
  * of the normal enemy at the run's deepest point, as the board makes it. */
 function renderBaseEnemy(game: Game) {
