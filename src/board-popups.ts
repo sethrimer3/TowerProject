@@ -1,7 +1,7 @@
 import { wholeChange } from "./whole.ts";
 import { HEAL_COLOR } from "./damage-labels.ts";
 import type { Coin, Encounter, Gain, GainArt, Heal, ShownFight } from "./shown.ts";
-import type { Volley } from "./volley.ts";
+import { landsAt, type Volley } from "./volley.ts";
 import { paintContents } from "./tile-painters.ts";
 import { materialImage } from "./material-sprites.ts";
 import { paintGem } from "./gem-art.ts";
@@ -219,7 +219,7 @@ export class BoardPopups {
       return;
     }
     for (const s of volley.shots) {
-      const start = volley.at + volley.flight * (s.lead === undefined ? 1 : (s.lead + 1) / 2);
+      const start = landsAt(volley, s);
       if (s.by === "enemy") {
         if (s.damage > 0) this.raise({ by: "enemy", damage: s.damage, ...(s.shrouded ? { shrouded: s.shrouded } : {}), start: 0, at: 0, end: 0, hp: 0 }, s.to, start);
         continue;

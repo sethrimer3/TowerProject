@@ -163,7 +163,7 @@ An enemy that strikes first in every fight, so it lands a blow even when the her
 _Avoid_: swift, quick, first strike enemy
 
 **Ranged enemy**:
-An enemy that shoots the hero from a distance, walls and doors no obstacle, without beginning a fight: once the hero ends a turn within its reach (five sixths of the hero's Attack Range), then again each time its cooldown (10 turns, shorter further up) is ready. From the third tower and delve up, a share of the non-boss enemies are Ranged (a point under the Fast share), rolled apart from Fast, paying 1 Gold more. Its name starts with "Ranged" and its tile wears an arrow.
+An enemy that shoots the hero from a distance, walls and doors no obstacle, without beginning a fight: the **tick** the hero comes within its reach (five sixths of the hero's Attack Range), then again each time its cooldown (10 turns, shorter further up) is ready. From the third tower and delve up, a share of the non-boss enemies are Ranged (a point under the Fast share), rolled apart from Fast, paying 1 Gold more. Its name starts with "Ranged" and its tile wears an arrow.
 _Avoid_: archer enemy, shooter, sniper
 
 **Flying enemy**:
@@ -183,7 +183,7 @@ The circle round a Shielded enemy within which its guard cuts the hero's damage 
 _Avoid_: aura, shield radius, field
 
 **Archer**:
-The hero's class while the run's hand holds the **Archer card** (Tower III's floor 10 Goal adds it to the deck): at the end of each turn its arrow is ready, it shoots the closest enemy within its **Attack Range** (3 m, more with training) for one strike's damage, wounding it before any fight. **Attack Speed** sets how often (1 shot every 10 turns, more with training). **ATK / m** (training, Tower III's floor 50) multiplies an arrow's ATK by more for each **meter** to its target, and **Charged Shot** (research, floor 60) raises it for each turn a ready arrow waits unfired; **Multishot** (training, floor 70) gives a shot a chance to fire at several enemies in range at once, and **Rapid Fire** (training, floor 80) a chance to make its arrows come four times as fast for a few turns. Without the card no arrow flies and the Archer's training can't be raised with Silver in a run, though it trains between runs. The class's name, shown under the portrait, is cosmetic otherwise (Wayfarer, then Pathfinder once Tower II is open).
+The hero's class while the run's hand holds the **Archer card** (Tower III's floor 10 Goal adds it to the deck): the **tick** its arrow is ready, it shoots the closest enemy within its **Attack Range** (3 m, more with training) for one strike's damage, wounding it before any fight. **Attack Speed** sets how often (1 shot every 10 turns, more with training). **ATK / m** (training, Tower III's floor 50) multiplies an arrow's ATK by more for each **meter** to its target, and **Charged Shot** (research, floor 60) raises it for each turn a ready arrow waits unfired; **Multishot** (training, floor 70) gives a shot a chance to fire at several enemies in range at once, and **Rapid Fire** (training, floor 80) a chance to make its arrows come four times as fast for a few turns. Without the card no arrow flies and the Archer's training can't be raised with Silver in a run, though it trains between runs. The class's name, shown under the portrait, is cosmetic otherwise (Wayfarer, then Pathfinder once Tower II is open).
 _Avoid_: ranger, bowman
 
 **Meter**:
@@ -191,8 +191,12 @@ The unit distances are shown in on screen ("m"): one tile across. Attack Range, 
 _Avoid_: tiles (as a shown unit)
 
 **Volley**:
-A turn's shots, at the end of each turn inside a run: each ready **Ranged enemy** or **Flying enemy** within reach shoots the hero, closest first, and then, unless a shot felled the hero, the **Archer**'s arrows fly; then each **Aggroed** enemy may step closer.
+A turn's shots inside a run, played out over the turn a **tick** at a time as the hero walks its step: each ready **Ranged enemy** or **Flying enemy** shoots the hero the tick it is within reach, closest first, after the **Archer**'s arrows of that tick; a shot lands the tick it fires, so an enemy an arrow fells shoots no more, and a shot that fells the hero ends the turn. Then each **Aggroed** enemy may step closer.
 _Avoid_: barrage, salvo
+
+**Tick**:
+A hundredth of a turn, the moment within a turn a shot fires: cooldowns charge a tick at a time and start over from the tick their shot fired, and a shot fires the first tick its shooter is ready and its target in reach, partway through the hero's step perhaps.
+_Avoid_: frame (a display frame is the screen's, not the turn's), sub-turn
 
 **Wound**:
 The HP the Archer's arrows have taken off an enemy that still stands; the enemy keeps it, so its fight starts that much shorter.

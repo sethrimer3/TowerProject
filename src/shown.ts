@@ -33,6 +33,11 @@ export type Facing = { dx: number; dy: number };
  * the step it took off it, the empty tile it landed on (none when it ended
  * on its target item), with the step onto it, and when (performance time). */
 export type Dash = { tiles: ({ x: number; y: number } & Facing)[]; end?: { x: number; y: number } & Facing; at: number };
+/** The latest turn's step as the board shows it: from (performance time)
+ * `at`, for `ms`, the hero walks straight from tile `from` to `to`, at an
+ * even pace, so a shot fired a share of the way through the turn leaves
+ * from where the hero is drawn then (volley.ts). */
+export type ShownTurn = { at: number; ms: number; from: { x: number; y: number }; to: { x: number; y: number } };
 /** The latest fight as the board shows it: the hero struck from `from`,
  * the enemy (`hp` at the start) stood at `to`, and its strikes land from
  * `start` (performance time). Played out, they are the fight's own; settled

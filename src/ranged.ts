@@ -13,10 +13,12 @@
  * cost / gain turns on average (3 shots in 10 turns fire 4, 3 and 3 turns
  * apart); a Fast enemy gains twice as much, so shoots twice as often.
  * A shooter with no charge kept is ready; one that is ready and has
- * nothing to shoot waits, banking nothing more. The Archer's charge runs a
- * hundredth of a turn at a time (`archerTurn`), so Rapid Fire can start
- * and end mid-turn. Each tile's roll is a fixed number of the run seed, the
- * floor and the tile (`RANGED_SALT`). */
+ * nothing to shoot waits, banking nothing more. Every charge runs a tick
+ * (a hundredth of a turn, `TURN_TICKS`) at a time, so a shot fires the tick
+ * its shooter is ready and its target in reach (`reachTicks`), and its
+ * cooldown starts over from that tick; Rapid Fire too starts and ends
+ * mid-turn. Each tile's roll is a fixed number of the run seed, the floor
+ * and the tile (`RANGED_SALT`). */
 import type { Enemy, Player, Tile } from "./entities.ts";
 import { attackAgainst, critMultiplier, defenseAgainst, guarded, parryCut, struckDamage } from "./combat.ts";
 import { fastShare, mayBeFast } from "./fast-enemies.ts";
@@ -81,6 +83,9 @@ export const woundMore = (raw: Tile, damage: number): Tile => ({
   wound: snap((raw.wound ?? 0) + damage),
 });
 
+/** The ticks a turn is played in: every shot of a turn fires on one of
+ * them, 1 to `TURN_TICKS`, the last at the turn's end. */
+export const TURN_TICKS = 100;
 /** Charge a Ranged enemy gains a turn, and what a shot costs it on
  * equivalent floor `floor`: 10 turns, a 500th of a turn less each floor (a
  * turn less every 500), never under 1. */
@@ -88,12 +93,12 @@ export const FOE_GAIN = 500;
 /** The charge `enemy` gains a turn: a Fast one twice `FOE_GAIN`, so it
  * shoots twice as often, the cost shrinking by floor as anyone's. */
 export const foeGain = (enemy: Enemy) => (enemy.fast ? 2 * FOE_GAIN : FOE_GAIN);
+/** The charge `enemy` gains a tick: a hundredth of its turn's, a whole number. */
+export const foeTickGain = (enemy: Enemy) => foeGain(enemy) / TURN_TICKS;
 export const foeShotCost = (floor: number) => Math.max(FOE_GAIN, 10 * FOE_GAIN - Math.max(0, floor - 1));
-/** What an arrow costs the Archer: its gain every hundredth of a turn
- * (`ARCHER_TICKS` a turn) is its Attack Speed (twentieths of a shot every
- * 10 turns), so 20 fires every 10 turns. */
+/** What an arrow costs the Archer: its gain every tick is its Attack Speed
+ * (twentieths of a shot every 10 turns), so 20 fires every 10 turns. */
 export const ARROW_COST = 20_000;
-export const ARCHER_TICKS = 100;
 /** How many times as fast the Archer's arrows charge during Rapid Fire. */
 export const RAPID_FIRE_SPEED = 4;
 
@@ -107,46 +112,73 @@ export const spent = (charge: number | undefined, cost: number) => (charge === u
 export const held = (charge: number | undefined, cost: number) => (charge === undefined || charge >= cost ? undefined : charge);
 
 /** The Archer's clock: its charge (absent: ready, waiting for a target)
- * and the hundredths of a turn of Rapid Fire left (absent: none). */
+ * and the ticks of Rapid Fire left (absent: none). */
 export type ArcherClock = { charge?: number; rapid?: number };
+/** The Archer's clock as a turn runs it, a tick at a time. */
+export type ArcherState = { charge: number | undefined; rapid: number };
+/** The clock a turn runs from, and the one it keeps once it has. */
+export const archerState = (clock: ArcherClock): ArcherState => ({ charge: clock.charge, rapid: clock.rapid ?? 0 });
+export const archerClock = ({ charge, rapid }: ArcherState) => ({ ...(charge === undefined ? {} : { charge }), ...(rapid > 0 ? { rapid } : {}) }) as ArcherClock;
 
-/** A turn of the Archer's clock, a hundredth of a turn at a time: each
- * adds `speed` to the charge, `RAPID_FIRE_SPEED` times that while Rapid
- * Fire lasts, and the hundredth the charge reaches `ARROW_COST`, `shoot` is
- * asked to fire, told whether Rapid Fire is still going on (`rapid`) and how
- * far into the turn it is (`tick`). It returns false when nothing can be
- * shot (the arrow then waits ready, banking nothing more, while Rapid Fire
- * runs on), or else the hundredths of Rapid Fire the shot starts from that
- * moment, 0 for none. An arrow already waiting fires at the turn's end
- * (`tick` = `ARCHER_TICKS`), the charge left over carrying either way, so
- * without Rapid Fire it fires as a turn-by-turn charge would. Returns the
- * clock a turn later, and whether the arrow is waiting at its end with
- * nothing shot since it was last asked (`idle`). */
+/** Tick `tick` of the Archer's clock: a charging arrow gains `speed`,
+ * `RAPID_FIRE_SPEED` times that while Rapid Fire lasts, and once it holds
+ * `ARROW_COST`, or every tick it waits ready, `shoot` is asked to fire,
+ * told whether Rapid Fire is still going on (`rapid`). It returns false
+ * when nothing can be shot (the arrow then waits ready, banking nothing
+ * more, while Rapid Fire runs on), or else the ticks of Rapid Fire the shot
+ * starts from that moment, 0 for none. A shot keeps the charge over its
+ * cost, so the next arrow charges from the tick it fired. */
+export function archerTick(clock: ArcherState, speed: number, tick: number, shoot: (rapid: boolean, tick: number) => number | false) {
+  if (clock.charge === undefined) clock.rapid = Math.max(0, clock.rapid - 1);
+  else {
+    clock.charge += clock.rapid > 0 ? RAPID_FIRE_SPEED * speed : speed;
+    if (clock.rapid > 0) clock.rapid--;
+    if (clock.charge < ARROW_COST) return;
+  }
+  const starts = shoot(clock.rapid > 0, tick);
+  if (starts === false) {
+    clock.charge = undefined;
+    return;
+  }
+  clock.charge = spent(clock.charge, ARROW_COST);
+  if (starts > 0) clock.rapid = starts;
+}
+/** A whole turn of the Archer's clock (`archerTick`, every tick). Returns
+ * the clock a turn later, and whether the arrow waits ready at its end
+ * (`idle`). */
 export function archerTurn(clock: ArcherClock, speed: number, shoot: (rapid: boolean, tick: number) => number | false) {
-  let charge = clock.charge, rapid = clock.rapid ?? 0, idle = false;
-  const fire = (tick: number) => {
-    const starts = shoot(rapid > 0, tick);
-    if (starts === false) return false;
-    if (starts > 0) rapid = starts;
-    return true;
+  const state = archerState(clock);
+  for (let tick = 1; tick <= TURN_TICKS; tick++) archerTick(state, speed, tick, shoot);
+  return { clock: archerClock(state), idle: state.charge === undefined };
+}
+
+/** The ticks of a turn (1 to `TURN_TICKS`) at which a hero walking from
+ * `dx`, `dy` tiles off a target by `ux`, `uy` over the turn (a step, or
+ * none) is within reach of it: its squared distance in hundredths of a
+ * tile, times `scale`, at most `limit` (`range`² for reach `range`).
+ * Closed form: at tick k the hero is X(k) = 100·(dx, dy) + k·(ux, uy)
+ * hundredths off, and |X(k)|² = A·k² + 2B·k + C is at most the limit
+ * between the roots (−B ± √(B² − A·(C − limit / scale))) / A; each end is
+ * then settled on whole ticks by the exact test, so the square root's
+ * rounding never matters. Undefined when it is out of reach all turn. */
+export function reachTicks(dx: number, dy: number, ux: number, uy: number, limit: number, scale = 1): { first: number; last: number } | undefined {
+  const fits = (k: number) => {
+    const x = 100 * dx + ux * k, y = 100 * dy + uy * k;
+    return (x * x + y * y) * scale <= limit;
   };
-  for (let tick = 1; tick <= ARCHER_TICKS; tick++) {
-    if (charge === undefined) {
-      // Waiting: the board doesn't change within the turn, so Rapid Fire just runs on.
-      rapid = Math.max(0, rapid - 1);
-      continue;
-    }
-    charge += rapid > 0 ? RAPID_FIRE_SPEED * speed : speed;
-    if (rapid > 0) rapid--;
-    if (charge < ARROW_COST) continue;
-    if (fire(tick)) charge -= ARROW_COST;
-    else charge = undefined, idle = true;
-  }
-  if (charge === undefined && !idle) {
-    if (fire(ARCHER_TICKS)) charge = 0;
-    else idle = true;
-  }
-  return { clock: { ...(charge === undefined ? {} : { charge }), ...(rapid > 0 ? { rapid } : {}) } as ArcherClock, idle };
+  const a = ux * ux + uy * uy;
+  if (!a) return fits(0) ? { first: 1, last: TURN_TICKS } : undefined;
+  const b = 100 * (dx * ux + dy * uy), c = 10_000 * (dx * dx + dy * dy);
+  // The discriminant times `scale`, in whole numbers.
+  const disc = b * b * scale - a * (c * scale - limit);
+  if (disc < 0) return undefined;
+  const root = Math.sqrt(disc / scale);
+  let first = Math.max(1, Math.ceil((-b - root) / a)), last = Math.min(TURN_TICKS, Math.floor((-b + root) / a));
+  while (first > 1 && fits(first - 1)) first--;
+  while (first <= last && !fits(first)) first++;
+  while (last < TURN_TICKS && fits(last + 1)) last++;
+  while (last >= first && !fits(last)) last--;
+  return first <= last ? { first, last } : undefined;
 }
 
 /** Whether a tile `dx`, `dy` away lies within `range` hundredths of a tile
@@ -154,8 +186,10 @@ export function archerTurn(clock: ArcherClock, speed: number, shoot: (rapid: boo
 export const within = (dx: number, dy: number, range: number) => (dx * dx + dy * dy) * 10_000 <= range * range;
 /** How far a Ranged enemy shoots, in hundredths of a tile: five sixths of
  * the hero's reach (`range`), 2.5 tiles to its 3, so the hero always gets
- * the first shot. */
+ * the first shot. `reachTicks` takes it as `FOE_REACH`, in whole numbers:
+ * 36 times the squared distance against 25 times `range`². */
 export const foeRange = (range: number) => (range * 5) / 6;
+export const FOE_REACH = { scale: 36, limit: (range: number) => 25 * range * range };
 
 /** What a Ranged enemy's shot does to `player`: its ATK less DEF, cut by
  * Parry % (every shot is parried), and the shroud (whole for every
@@ -179,7 +213,8 @@ export function arrowDamage(player: Player, enemy: Enemy, applications = 0, fact
 
 /** What an arrow's ATK is multiplied by before any critical hit: ATK / m
  * (`perTile`, hundred-thousandths of ×1 a tile) times the Euclidean distance
- * to its target (`d2`, squared), and Charged Shot (`percent` a turn for the
+ * to its target (`d2`, squared, in tiles, as it is the tick the arrow
+ * fires), and Charged Shot (`percent` a turn for the
  * `waited` turns the ready arrow held), each multiplying the other. */
 export const arrowBoost = (perTile: number, d2: number, percent: number, waited: number) =>
   snap((1 + (perTile * Math.sqrt(d2)) / 100_000) * (1 + (percent * waited) / 100));

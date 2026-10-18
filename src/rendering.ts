@@ -24,10 +24,11 @@ import { AREA_BURST_MS, drawAreaBurst, preloadAreaBurst, drawLevelUp, drawRevive
 import { drawPoof, POOF_MS } from "./poof.ts";
 import { drawGem, drawGemSparkle, GEM_SPARKLE_MS } from "./gem-art.ts";
 import { DashEchoes } from "./dash-echoes.ts";
-import { drawVolley } from "./volley-art.ts";
+import { drawVolley, ShotsInFlight } from "./volley-art.ts";
+import { volleyOver } from "./volley.ts";
 import { drawShields } from "./shield-art.ts";
 import { drawChestMarks } from "./chest-marks.ts";
-import type { Dash } from "./shown.ts";
+import type { Dash, ShownTurn } from "./shown.ts";
 import { darknessOf, forEachViewTile, tileTransform, toTileSpace, type FrameContext } from "./render-frame.ts";
 import { gameLook } from "./theme-collection.ts";
 import { usesGameSprites } from "./sprite-style.ts";
@@ -83,6 +84,11 @@ export class Renderer {
   /** The latest dash drawn: a new one snaps the hero to where it landed. */
   private dashed: Dash | null = null;
   private echoes = new DashEchoes();
+  /** The turns' shots still flying, and the enemies they felled still standing until they land. */
+  private inFlight = new ShotsInFlight();
+  /** The turn's step the hero last walked, and when its walk began. */
+  private turnSeen: ShownTurn | null = null;
+  private turnStart = 0;
   /** The enemy's lean into its strike this frame, drawn at its tile. */
   private enemyLunge = { x: 0, y: 0, dx: 0, dy: 0 };
   /** A golden path to preview for a highlighted-but-unconfirmed destination.
@@ -173,7 +179,7 @@ export class Renderer {
     const gem = this.game.gemFinder.gem, sparkle = this.game.gemFinder.sparkle;
     if (gem) drawGem(f, gem.x, gem.y);
     if (sparkle) drawGemSparkle(f, sparkle.x, sparkle.y, f.now - sparkle.at);
-    drawVolley(f, this.game.volley, this.game.mode === "delve" ? this.game.world.width : 0);
+    drawVolley(f, this.inFlight.volleys, this.game.mode === "delve" ? this.game.world.width : 0);
     this.popups.draw(f);
     this.drawEffectText(f);
     for (const at of this.game.fights.struckDown) drawStruckDown(f, f.now - at);
@@ -229,7 +235,8 @@ export class Renderer {
     this.size = box.width / n;
     const dt = Math.min(0.1, (now - this.last) / 1000 || 0.016);
     this.last = now;
-    this.follow(n, dt);
+    this.follow(n, dt, now);
+    this.inFlight.update(g.volley, now, g.mode === "delve" ? g.world.width : 0);
     this.popups.update({ run: g.run, gains: g.gains, fight: g.fights.shown, lastHeal: g.lastHeal, volley: g.volley, save: g.save }, now);
     const lunge = lunges(g.fights.encounter, now, g.save.settings.reduceMotion);
     this.enemyLunge = { ...(g.fights.encounter?.to ?? { x: 0, y: 0 }), ...lunge.enemy };
@@ -238,7 +245,7 @@ export class Renderer {
     c.fillRect(0, 0, box.width, box.width);
     const f: FrameContext = {
       c, now, dt, dpr, width: box.width, n, s, left: this.left, bottom: this.bottom, playerX: this.playerX + lunge.hero.dx, playerY: this.playerY + lunge.hero.dy, heroFacing: g.facing,
-      world: g.world, look: this.look(), darkness: darknessOf(g), torches: [], walls: [], glows: [],
+      world: this.inFlight.board(g.world), look: this.look(), darkness: darknessOf(g), torches: [], walls: [], glows: [],
     };
     f.torches = outside ? [] : this.visibleTorches();
     f.walls = outside ? [] : this.visibleWallTiles();
@@ -287,16 +294,27 @@ export class Renderer {
     }
   }
   /** Glides the camera and the drawn hero toward where they belong (or
-   * snaps them, with motion reduced or transitions off). */
-  private follow(n: number, dt: number) {
-    const p = this.game.run.player, settings = this.game.save.settings;
-    const blend =
-      settings.reduceMotion || settings.transition === "instant"
-        ? 1
-        : 1 - Math.exp(-dt * (settings.transition === "fast" ? 32 : 14));
+   * snaps them, with motion reduced or transitions off). Through a turn's
+   * step inside a run (`Game.turnShown`) the hero walks it at an even pace
+   * instead, so it stands where the turn's shots leave from. */
+  private follow(n: number, dt: number, now: number) {
+    const p = this.game.run.player, settings = this.game.save.settings, snaps = settings.reduceMotion || settings.transition === "instant";
+    const blend = snaps ? 1 : 1 - Math.exp(-dt * (settings.transition === "fast" ? 32 : 14));
     const target = this.target(n);
     this.bottom += (target.bottom - this.bottom) * blend;
     this.left += (target.left - this.left) * blend;
+    const turn = this.game.turnShown;
+    // A turn stamped after the first frame showing it (a clock that frame doesn't keep) walks from that frame.
+    if (turn !== this.turnSeen) {
+      this.turnSeen = turn;
+      this.turnStart = turn ? Math.min(turn.at, now) : 0;
+    }
+    const k = turn && !snaps && turn.to.x === p.x && turn.to.y === p.y ? (now - this.turnStart) / turn.ms : 1;
+    if (turn && k < 1) {
+      this.playerX = turn.from.x + (turn.to.x - turn.from.x) * Math.max(0, k);
+      this.playerY = turn.from.y + (turn.to.y - turn.from.y) * Math.max(0, k);
+      return;
+    }
     this.playerX += (p.x - this.playerX) * blend;
     this.playerY += (p.y - this.playerY) * blend;
   }
@@ -341,7 +359,7 @@ export class Renderer {
   /** Doors, stairs, items, and enemies, drawn onto `ctx`. */
   private drawEachContents(f: FrameContext, ctx: CanvasRenderingContext2D) {
     forEachViewTile(f, (x, y) => {
-      const t = this.game.world.tile(x, y);
+      const t = f.world.tile(x, y);
       if (t.kind === "wall" || t.kind === "floor") return;
       const lunge = this.enemyLunge, leaning = x === lunge.x && y === lunge.y;
       ctx.save();
@@ -601,7 +619,7 @@ export class Renderer {
       now - g.levelUpAt >= LEVEL_UP_MS + POINTS_MS && g.fights.revivedAt.every((at) => now - at >= REVIVE_MS) && g.fights.struckDown.every((at) => now - at >= DEFEAT_MS) &&
       g.areaBursts.every((b) => now - b.at >= AREA_BURST_MS) &&
       (!g.summoned || now - g.summoned.at >= POOF_MS) && (!g.vanished || now - g.vanished.at >= POOF_MS) &&
-      (!sparkle || now - sparkle.at >= GEM_SPARKLE_MS) && (!g.volley || now - g.volley.at >= g.volley.flight);
+      (!sparkle || now - sparkle.at >= GEM_SPARKLE_MS) && (!g.volley || volleyOver(g.volley, now)) && this.inFlight.over(now);
   }
   /** Active torches roughly within the camera viewport, padded so a torch
    * whose center is just offscreen can still light visible ground. Cheap

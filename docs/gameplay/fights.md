@@ -37,12 +37,14 @@ After its DEF, in light red, comes what each of the hero's strikes takes off it 
 Last comes the Gold killing it would bank, in yellow (every Gold bonus counted, and the Mug bonus when the hero's first strike fells it; none once it has paid).
 From Tower II and Delve II on, some monsters are **Fast** (12% at first, 1.5% more every 200 floors up and more in each tower after): named *Fast …* with a fast-forward mark at the top right of their tile, they strike before the hero, so even one the hero fells in a strike lands a blow, they hit at least 1.75 times as hard as the last tower's floor 100 monster (700 ATK in Tower II; less in Towers III, IV and V: 1,000, 2,000 and 4,000 ATK; the Delve's caves alike), and they pay 1 Gold more.
 From Tower III and Delve III on, some monsters are **Ranged** (a point and a half fewer than Fast: 11.25% at first, growing as Fast does): named *Ranged …* with an arrow at the top right of their tile (the Fast mark moving below it on a monster that is both), they shoot the hero from a distance, walls and doors no obstacle, without beginning a fight.
-A Ranged monster shoots once the hero ends a turn within its reach, five sixths of the hero's own Attack Range (2.5 m to the hero's 3; a tile is one meter), measured straight across, so a knight's move away is in reach, then waits 10 turns before it can shoot again (a 500th of a turn less each floor, a whole turn less every 500 floors; a fraction carries to the next shot, so 9.5 turns fire 10, then 9, apart).
+A Ranged monster shoots the moment its shot is ready and the hero is within its reach, five sixths of the hero's own Attack Range (2.5 m to the hero's 3; a tile is one meter), measured straight across, so a knight's move away is in reach, then waits 10 turns from that moment before it can shoot again (a 500th of a turn less each floor, a whole turn less every 500 floors).
+Every shot fires a share of the way through a turn, as the hero walks its step: a shot ready halfway through a turn fires halfway, and one waiting for the hero fires the moment the hero steps into reach, partway across a tile perhaps.
 A monster both Fast and Ranged readies its shot twice as fast: 5 turns at first, half the wait on every floor.
-Its shot lands where the hero's step ends: its ATK less DEF, cut by Parry % when parried, the shroud (whole for every shot) taking what it can of the rest; the damage rises over the hero.
+Its shot always hits: its ATK less DEF, cut by Parry % when parried, the shroud (whole for every shot) taking what it can of the rest; the damage rises over the hero.
 A shot that costs HP costs the area's mastery, and one that leaves the hero no HP fells it, as a lost fight does (one undo takes the step back).
 The hand and Automove don't plan around shots.
-A dash is one turn: its shots come once it stops.
+Shots resolve in the order they fire through the turn: a monster an arrow fells shoots no more, and a shot that fells the hero ends the turn there; when the hero's arrow and a monster's shot are ready at the same moment, the arrow lands first.
+A dash is one turn, taken all at once: its shots fire from where it stops.
 A Ranged monster pays 1 Gold more, and one both Fast and Ranged 2 more.
 From Tower V and Delve V on, some monsters are **Flying** (as many as are Ranged: 12.75% at first, growing as Fast does; never a boss or a Shielded monster): named *Flying …*, with a wing at the top right of their tile, they hover a little above it.
 A Flying monster shoots the hero as a Ranged one does, from the same reach and as often, but it is never Fast or Ranged as well, and no fight can reach it: the hero walks under it as over open floor, and no card but **Flying Enemy** heads for it.
@@ -63,22 +65,24 @@ The stats show the Gold found so far this run beside ATK and DEF; undo never tak
 Claiming Tower III's floor 10 Goal adds the **Archer** card to the deck ([The hand](hand-and-cards.md)); while the run's hand holds it the hero is an **Archer** (the name under its portrait says so), in the Tower and the Delve alike.
 Without the card in the hand no arrow flies, and the Archer's Training rows (Attack Range, Attack Speed, ATK / m, Multishot, Rapid Fire) can't be raised with Silver in the run; between runs they train as ever, card or not.
 The card gives its arrows +5% ATK against a boss or Greater Boss.
-At the end of each turn its arrow is ready, it shoots the closest monster within its Attack Range (3 m to begin with, walls and doors no obstacle) that an arrow can hurt; the arrow flies from the hero and lands as the step ends.
+The moment its arrow is ready, it shoots the closest monster within its Attack Range (3 m to begin with, walls and doors no obstacle) that an arrow can hurt; the arrow flies from where the hero is then, partway through its step perhaps.
 An arrow deals one of the hero's strikes: ATK (raised against bosses, critical hits rolled) less the monster's DEF, Piercing counted, healing by Lifesteal; its damage rises over the monster, whose HP bar shows what it has left.
 A wounded monster keeps its wound, so the fight that follows is shorter, and the wound counts in its inspect panel and damage number; undo takes an arrow back with the step.
 An arrow that fells a monster pays the kill as a fight would; one that fells an unwounded monster with a single arrow is an instakill, as Mug pays it.
 Only Ranged and Flying monsters shoot back: the rest strike only when the hero fights them.
-The arrow is ready every 10 turns (Attack Speed: 1 shot every 10 turns, more with training), a fraction of a turn carrying to the next; a ready arrow with no monster in reach waits, and fires the turn one comes in reach.
+The arrow is ready every 10 turns from the moment it last fired (Attack Speed: 1 shot every 10 turns, more with training); a ready arrow with no monster in reach waits, and fires the moment one comes in reach, from where the hero is then.
+**ATK / m** counts the distance at that moment.
 Attack Range and Attack Speed join Offense training from Tower III's floors 20 and 30 ([Training](training.md)).
 **ATK / m** joins it from floor 50: each arrow's ATK is multiplied by 1 plus its value for every meter (tile) to its target, counted straight across (diagonals included), so a monster too well armored for an arrow up close may still be hurt, and shot, from further off.
 Training shows it as that multiplier a meter: ×1.010/m for the first rank.
-**Charged Shot** opens in the Archives from floor 60: each turn a ready arrow waits without firing adds its percent (1% a level) to the next arrow's ATK, and that arrow flies in a blue glow and its number rises with a gold outline, a faint one while the charge is under 50%; the charge starts over once it fires.
+**Charged Shot** opens in the Archives from floor 60: each turn that ends with a ready arrow still waiting adds its percent (1% a level) to the next arrow's ATK, and that arrow flies in a blue glow and its number rises with a gold outline, a faint one while the charge is under 50%; the charge starts over once it fires.
 ATK / m, Charged Shot and a critical hit multiply one another.
 **Multishot Chance** and **Multishot Targets** join Offense training from floor 70: each shot has a chance (0.5% a rank, up to 49.5%) to be a multishot, firing at once at the closest enemies an arrow can hurt, 2 of them and one more a Targets rank (up to 9), or one at each when fewer are in range.
 Every arrow of a multishot carries the first's Charged Shot, rolls its own critical hit, and has its own ATK / m for its own distance.
 **Rapid Fire Chance** and **Rapid Fire Duration** join Offense training from floor 80: each shot fired outside Rapid Fire has a chance (0.4% a rank, up to 34%) to start it, and from that moment the Archer's arrows come four times as fast for its Duration (1 turn, and 0.05 turns more a rank, up to 5.95).
 A shot during Rapid Fire can't start another, and what was built toward a shot when it ends carries on toward the next at the usual pace: at one shot every 2 turns, 3.3 turns of Rapid Fire fire six arrows, half a turn apart, and the next comes 1.1 turns after the sixth.
 With Rapid Fire, a turn may fire several arrows, one after another, each rolling its own multishot and critical hit.
+The board shows each shot leaving as far through the hero's step as it fired, and its damage rises as it lands; a monster an arrow fells stays on its tile until the arrow reaches it.
 
 ## Fractions
 

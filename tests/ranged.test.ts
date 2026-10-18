@@ -4,7 +4,7 @@ import { Game } from "../src/state.ts";
 import { defaults } from "../src/save.ts";
 import { ENEMY_GOLD, RANGED_GOLD, TRAINING, trainedAmount } from "../src/config.ts";
 import { fastShare } from "../src/fast-enemies.ts";
-import { ARCHER_TICKS, archerTurn, ARROW_COST, arrowBoost, arrowDamage, charged, enemiesWithin, FOE_GAIN, foeRange, foeShotCost, held, rangedShare, ready, shotDamage, spent, within, wounded } from "../src/ranged.ts";
+import { TURN_TICKS, archerTurn, type ArcherClock, ARROW_COST, arrowBoost, arrowDamage, charged, enemiesWithin, FOE_GAIN, foeRange, foeShotCost, held, rangedShare, ready, shotDamage, spent, within, wounded } from "../src/ranged.ts";
 import { enemyTitle } from "../src/scaling.ts";
 import { tierCells, tierGold } from "../src/tiers.ts";
 import { generateTowerRoom, RoomWorld } from "../src/tower/room-world.ts";
@@ -65,15 +65,18 @@ test("cooldowns are whole charge units, so a fraction of a turn carries: 3 shots
     }
     return out;
   };
-  // The Archer, a hundredth of a turn at a time: Attack Speed 3.00 shots every 10 turns, 60 twentieths.
-  const looses = (speed: number, turns: number) => {
-    let clock = {}, out: number[] = [];
+  // The Archer, a tick at a time: Attack Speed 3.00 shots every 10 turns, 60 twentieths.
+  const looses = (speed: number, turns: number, clock: ArcherClock = {}) => {
+    const out: number[] = [];
     for (let turn = 0; turn < turns; turn++) clock = archerTurn(clock, speed, () => (out.push(turn), 0)).clock;
     return out;
   };
-  assert.deepEqual(looses(60, 11), [0, 4, 7, 10]);
+  // An arrow charged to fire as the first turn ends: the same as charging a turn at a time.
+  assert.deepEqual(looses(60, 11, { charge: ARROW_COST - 60 * TURN_TICKS }), [0, 4, 7, 10]);
+  assert.deepEqual(fires(60 * TURN_TICKS, ARROW_COST, 11), [0, 4, 7, 10], "the same as charging a turn at a time");
+  // One waiting ready fires as the first turn begins, and its cooldown runs from there.
+  assert.deepEqual(looses(60, 11), [0, 3, 6, 10]);
   assert.deepEqual(looses(20, 21), [0, 10, 20]);
-  assert.deepEqual(fires(60 * ARCHER_TICKS, ARROW_COST, 11), [0, 4, 7, 10], "the same as charging a turn at a time");
   // A Ranged enemy's 9.5-turn cooldown (floor 251): twice in 19 turns, 10 then 9 apart.
   assert.equal(foeShotCost(251), 4750);
   assert.deepEqual(fires(FOE_GAIN, foeShotCost(251), 20), [0, 10, 19]);
@@ -135,7 +138,9 @@ test("a Ranged enemy shoots once the hero steps into its 2.5 tiles, every 10 tur
   assert.equal(g.run.player.hp, 100, "√10 away: still out of reach");
   assert.ok(g.move(1, 0));
   assert.equal(g.run.player.hp, 93, "a knight's move away: shot");
-  assert.deepEqual(g.volley?.shots.map((s) => [s.by, s.from, s.to, s.damage]), [["enemy", { x: 4, y: 0 }, { x: 2, y: 1 }, 7]]);
+  // Within 2.5 tiles from 71% of the way from (1, 1) to (2, 1): √(2.29² + 1) ≤ 2.5.
+  assert.deepEqual(g.volley?.shots.map((s) => [s.by, s.from, s.to, s.damage, s.tick]), [["enemy", { x: 4, y: 0 }, { x: 2, y: 1 }, 7, 71]]);
+  assert.deepEqual([g.turnShown?.from, g.turnShown?.to, g.turnShown?.at], [{ x: 1, y: 1 }, { x: 2, y: 1 }, g.volley?.at], "the board walks the step on the volley's clock");
   // Pacing within reach, between (2, 1) and (2, 0): nine turns of cooldown, then the next shot.
   const hps: number[] = [];
   for (let turn = 1; turn <= 10; turn++) {
@@ -348,8 +353,8 @@ test("Charged Shot research: +1% a turn a level for 100 levels, opened by Tower 
 
 test("a charged arrow's number rises in a gold outline drawn under its black one, faint and narrower under 50%; a plain arrow's has the black alone", () => {
   const popups = new BoardPopups();
-  const shot = (to: number, charge: number) => ({ by: "hero" as const, from: { x: 0, y: 0 }, to: { x: to, y: 0 }, damage: 40, ...(charge ? { charge } : {}), before: 100, hp: 60, full: 100 });
-  popups.update({ run: { seed: 1 }, gains: [], fight: null, lastHeal: null, volley: { at: 0, flight: 0, shots: [shot(1, 50), shot(2, 20), shot(3, 0)] } }, 0);
+  const shot = (to: number, charge: number) => ({ by: "hero" as const, from: { x: 0, y: 0 }, to: { x: to, y: 0 }, damage: 40, tick: TURN_TICKS, ...(charge ? { charge } : {}), before: 100, hp: 60, full: 100 });
+  popups.update({ run: { seed: 1 }, gains: [], fight: null, lastHeal: null, volley: { at: 0, ms: 0, shots: [shot(1, 50), shot(2, 20), shot(3, 0)] } }, 0);
   const strokes: string[] = [];
   const c = new Proxy({} as Record<string, unknown>, {
     get: (t, k) => (k === "strokeText" ? (text: string) => strokes.push(`${text}:${t.strokeStyle}:${t.lineWidth}`) : k in t ? t[k as string] : () => ({ addColorStop() {} })),
@@ -366,8 +371,8 @@ test("a charged arrow flies in a blue glow; a plain arrow has none", () => {
       get: (t, k) => (k === "stroke" || k === "fill" ? () => seen.add(String(t.shadowColor ?? "")) : k in t ? t[k as string] : () => {}),
       set: (t, k, v) => ((t[k as string] = v), true),
     });
-    const shot = { by: "hero" as const, from: { x: 0, y: 0 }, to: { x: 3, y: 0 }, damage: 40, ...(charge ? { charge } : {}) };
-    drawVolley({ c, s: 40, now: 50, left: 0, bottom: 0, n: 9 } as never, { at: 0, flight: 100, shots: [shot] });
+    const shot = { by: "hero" as const, from: { x: 0, y: 0 }, to: { x: 3, y: 0 }, damage: 40, tick: 0, ...(charge ? { charge } : {}) };
+    drawVolley({ c, s: 40, now: 20, dt: 0.016, left: 0, bottom: 0, n: 9 } as never, [{ at: 0, ms: 100, shots: [shot] }]);
     return [...seen];
   };
   assert.deepEqual(glows(5), ["#4da6ff"]);
@@ -410,6 +415,8 @@ test("a multishot fires one charge at up to Multishot Targets of the closest ene
     g.save.training.multishotChance = 200;
     g.save.training.multishotTargets = targets;
     g.save.training.attackPerTile = 1;
+    // Charged to fire as the step ends, from (1, 0).
+    g.run.volleys = { turn: 0, hero: ARROW_COST - TURN_TICKS * trainedAmount(g.save, "attackSpeed") };
     assert.ok(g.move(1, 0));
     assert.equal(g.run.volleys?.hero, 0, "one arrow's charge spent");
     return g;
@@ -419,7 +426,7 @@ test("a multishot fires one charge at up to Multishot Targets of the closest ene
   const g = shots(7);
   assert.deepEqual(g.volley?.shots.map((s) => [s.to, s.damage]), [[{ x: 3, y: 0 }, 1020], [{ x: 1, y: 2 }, 1020], [{ x: 4, y: 0 }, 1030], [{ x: 1, y: 3 }, 1030]], "fewer enemies than targets: one arrow each");
   assert.ok(g.undo());
-  assert.deepEqual([g.run.volleys, g.volley], [undefined, null], "the arrows and their charge taken back");
+  assert.deepEqual([g.run.volleys, g.volley], [{ turn: 0, hero: ARROW_COST - TURN_TICKS * trainedAmount(g.save, "attackSpeed") }, null], "the arrows and their charge taken back");
   for (const [x, y] of [[3, 0], [1, 2], [4, 0], [1, 3]] as const) assert.equal(g.world.tile(x, y).wound, undefined);
   const single = archer(arena(foes, { attack: 1000 }));
   assert.ok(single.move(1, 0));
@@ -427,11 +434,15 @@ test("a multishot fires one charge at up to Multishot Targets of the closest ene
 });
 
 test("every arrow of a multishot carries the first's Charged Shot", () => {
-  const g = archer(arena({ "6,0": { ...brute, hp: 9000 }, "5,2": { ...brute, hp: 9000 } }, { attack: 1000 }));
+  // Walking up between two enemies mirrored about its column: both come into reach the same tick of the fourth step.
+  const g = archer(arena({ "2,6": { ...brute, hp: 9000 }, "6,6": { ...brute, hp: 9000 } }, { x: 4, attack: 1000 }));
   g.save.archives.levels.chargedShot = 10;
   g.save.training.multishotChance = 200;
-  for (let i = 0; i < 3; i++) assert.ok(g.move(1, 0));
-  assert.deepEqual(g.volley?.shots.map((s) => [s.to, s.damage, s.charge]), [[{ x: 5, y: 2 }, 1200, 20], [{ x: 6, y: 0 }, 1200, 20]]);
+  for (let i = 0; i < 4; i++) assert.ok(g.move(0, 1));
+  const shots = g.volley!.shots;
+  assert.deepEqual(shots.map((s) => [s.to, s.charge]), [[{ x: 2, y: 6 }, 30], [{ x: 6, y: 6 }, 30]], "three turns waited");
+  assert.equal(shots[0]!.tick, shots[1]!.tick);
+  assert.equal(shots[0]!.damage, shots[1]!.damage);
 });
 
 test("Rapid Fire Chance and Duration: 0.4% a rank to 34% at 85, and 1 turn, +0.05 a rank, to 5.95 at 99, opened by Tower III's floor 80; the same prices in Silver and a trainer's Gold", () => {
@@ -463,12 +474,13 @@ test("Rapid Fire Chance and Duration: 0.4% a rank to 34% at 85, and 1 turn, +0.0
 });
 
 test("Rapid Fire fires four times as fast from the shot that starts it; what's left toward a shot when it ends carries at the usual pace", () => {
-  // One shot every 2 turns (Attack Speed 5.00 a 10 turns), Rapid Fire 3.3 turns, started by the first shot only.
+  // One shot every 2 turns (Attack Speed 5.00 a 10 turns), Rapid Fire 3.3 turns, started by the first shot only,
+  // which is charged to fire as the first turn ends.
   const times: [number, boolean][] = [];
-  let clock = {}, started = false;
+  let clock: ArcherClock = { charge: ARROW_COST - 100 * TURN_TICKS }, started = false;
   for (let turn = 0; turn < 6; turn++)
     clock = archerTurn(clock, 100, (rapid, tick) => {
-      times.push([turn * ARCHER_TICKS + tick, rapid]);
+      times.push([turn * TURN_TICKS + tick, rapid]);
       if (rapid || started) return 0;
       started = true;
       return 330;
@@ -477,9 +489,9 @@ test("Rapid Fire fires four times as fast from the shot that starts it; what's l
   // the last leaving 60% of a shot, so the next comes 0.8 turns after it ends, 1.1 after the last rapid one.
   assert.deepEqual(times.map(([t]) => t), [100, 150, 200, 250, 300, 350, 400, 510]);
   assert.deepEqual(times.map(([, rapid]) => rapid), [false, true, true, true, true, true, true, false], "only a shot after Rapid Fire may start it again");
-  // A waiting arrow lets Rapid Fire run down, and fires at the turn's end.
+  // A waiting arrow with nothing to shoot lets Rapid Fire run down.
   assert.deepEqual(archerTurn({ rapid: 150 }, 100, () => false), { clock: { rapid: 50 }, idle: true });
-  assert.deepEqual(archerTurn({}, 100, () => 250).clock, { charge: 0, rapid: 250 }, "a shot at the turn's end starts it for the turns after");
+  assert.deepEqual(archerTurn({ charge: ARROW_COST - 100 * TURN_TICKS }, 100, () => 250).clock, { charge: 0, rapid: 250 }, "a shot at the turn's end starts it for the turns after");
 });
 
 test("Rapid Fire in a run: several arrows a turn, each leaving in turn, at most one start per window; undo takes it back", () => {
@@ -489,14 +501,15 @@ test("Rapid Fire in a run: several arrows a turn, each leaving in turn, at most 
   // Past its 85 ranks, so every shot fired outside Rapid Fire starts it.
   g.save.training.rapidFireChance = 300;
   g.save.training.rapidFireDuration = 99;
+  // Charged to fire as the first step ends.
+  g.run.volleys = { turn: 0, hero: ARROW_COST - TURN_TICKS * trainedAmount(g.save, "attackSpeed") };
   assert.ok(g.move(1, 0));
-  assert.equal(g.volley?.shots.length, 1, "the arrow waiting ready fires at the turn's end");
-  assert.equal(g.volley?.shots[0]!.lead, undefined, "one arrow a turn flies as ever");
+  assert.deepEqual(g.volley?.shots.map((s) => s.tick), [TURN_TICKS], "the arrow fires at the turn's end");
   assert.equal(g.run.volleys?.rapid, 595, "and starts Rapid Fire");
   assert.ok(g.move(0, 1));
   const shots = g.volley!.shots;
   // 120 twentieths × 4 a hundredth: an arrow every 41⅔ hundredths, from an empty charge.
-  assert.deepEqual(shots.map((s) => s.lead), [0.42, 0.84]);
+  assert.deepEqual(shots.map((s) => s.tick), [42, 84]);
   assert.equal(g.run.volleys?.rapid, 495);
   assert.ok(g.undo());
   assert.equal(g.run.volleys?.rapid, 595, "undo takes the turn's Rapid Fire back");

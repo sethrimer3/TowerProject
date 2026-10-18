@@ -108,7 +108,7 @@ import { readyForestRuns, startingHero } from "./game/hero-sync.ts";
 import { CardActivation } from "./game/card-activation.ts";
 import { Finds } from "./game/finds.ts";
 import { FightPlayback } from "./game/fight-playback.ts";
-import type { Coin, Dash, Drop, Facing, Gain, GainArt, Heal } from "./shown.ts";
+import type { Coin, Dash, Drop, Facing, Gain, GainArt, Heal, ShownTurn } from "./shown.ts";
 /** How a new run starts: out in the forest or at the entrance, and from
  * which seed (rolled from the game's randomness when left out). */
 export type RunStart = { outside?: boolean; seed?: number; height?: number };
@@ -146,9 +146,9 @@ const FOREST_SPEED = 3;
 /** The speed the second floor's lesson teaches: one press of › from a new
  * hero's 2. */
 const LESSON_SPEED = 3;
-/** How long a shot or arrow flies, at most (ms): it lands as the hero's
- * step ends, sooner at higher speeds. */
-const FLIGHT_MS = 220;
+/** How long a turn inside a run shows, at most (ms): the hero's step and
+ * its shots leaving through it, shorter at higher speeds. */
+const TURN_MS = 220;
 /** Salts the run seed for Find Yellow Key's roll on each new floor. */
 const YELLOW_KEY_SALT = 0x6e11a;
 /** A step resolved and about to be taken: the tile stepped onto, what it
@@ -200,6 +200,9 @@ export class Game {
   /** The latest turn's shots (ranged.ts), for the board to fly and land;
    * undo, a new run or a mode switch clears it. */
   volley: Volley | null = null;
+  /** The latest turn's step inside a run, for the board to walk the hero
+   * along as its shots leave; null when it came no single step. */
+  turnShown: ShownTurn | null = null;
   /** The snapshot from before the turn being taken, for a shot that fells
    * the hero. */
   private turnBefore: MoveSnapshot | null = null;
@@ -439,6 +442,7 @@ export class Game {
     this.route = [];
     this.fights.clear();
     this.volley = null;
+    this.turnShown = null;
     this.dropHandPlan();
     this.blocked = { x: 0, y: 0, until: 0 };
   }
@@ -1576,19 +1580,25 @@ export class Game {
     this.message = [fightText(fight), ...this.finds.kill(enemy, at, fight.scale ?? 1, !!fight.instakill, fight.crits)].join(" · ");
     return true;
   }
-  /** The end of a turn inside a run (a step, or a whole dash): each Ranged
-   * enemy within reach whose cooldown is ready shoots the hero where it now
-   * stands, then the Archer, its arrow ready, shoots the closest enemy in
-   * its range (ranged.ts). Nothing before the third tier unless the hero is
-   * an Archer; a turn that climbs to another floor leaves its shooters behind. */
+  /** The end of a turn inside a run (a step, or a whole dash): its shots
+   * play out over it as the hero walks its step (volley.ts): the Archer,
+   * its arrow ready, shoots the closest enemy in its range, and each Ranged
+   * enemy whose cooldown is ready shoots the hero once it is within reach,
+   * in the order they fire. Nothing before the third tier unless the hero
+   * is an Archer; a turn that climbs to another floor leaves its shooters
+   * behind. */
   private endTurn() {
     const before = this.turnBefore;
     this.turnBefore = null;
     const archer = this.isArcher;
-    if (!before || this.run.outside || this.fallen || (this.tier < 3 && !archer)) return;
-    if (this.mode === "tower" && before.run.height !== this.run.height) return;
-    const v = this.run.volleys ?? { turn: 0 }, p = this.run.player;
-    const out = volleyTurn({ board: this.world, wrap: this.wrap, floorOf: (x, y) => this.floorOf(x, y), hero: p, seed: this.run.seed,
+    if (!before || this.run.outside || this.fallen) return;
+    const p = this.run.player, from = before.run.player, sameFloor = this.mode !== "tower" || before.run.height === this.run.height;
+    const at = performance.now(), ms = Math.min(TURN_MS, 800 / Math.max(1, this.stepsPerSecond));
+    // The board walks a single step at an even pace; anything else it snaps.
+    this.turnShown = sameFloor && Math.abs(p.x - from.x) + Math.abs(p.y - from.y) === 1 ? { at, ms, from: { x: from.x, y: from.y }, to: { x: p.x, y: p.y } } : null;
+    if ((this.tier < 3 && !archer) || !sameFloor) return;
+    const v = this.run.volleys ?? { turn: 0 };
+    const out = volleyTurn({ board: this.world, wrap: this.wrap, floorOf: (x, y) => this.floorOf(x, y), hero: p, from, seed: this.run.seed,
       volleys: { ...v, turn: v.turn + 1 }, archer, ranks: { ...this.trainingNow, archives: this.save.archives }, handShot: this.handBonus.shot });
     this.run.volleys = out.volleys;
     p.hp = out.hp;
@@ -1600,7 +1610,7 @@ export class Game {
     }
     for (const { enemy, at, instakill, crits } of out.kills)
       this.message = [`Arrow · ${enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, at, 1, instakill, crits ? 1 : 0)].join(" · ");
-    this.showVolley(out.shots);
+    this.showVolley(out.shots, at, ms);
     if (out.fell) {
       this.fallIn(before, out.fell);
       this.message = `Shot down by ${enemyTitle(out.fell)}.`;
@@ -1638,10 +1648,11 @@ export class Game {
     const world = this.world;
     return world instanceof World ? Math.floor(world.depth(x, y) / 10) + 1 : this.run.height + 1;
   }
-  /** The board flies the turn's shots, landing as the step ends. */
-  private showVolley(shots: Shot[]) {
+  /** The board flies the turn's shots, each leaving as far into the turn
+   * shown from `at` for `ms` as it fired. */
+  private showVolley(shots: Shot[], at: number, ms: number) {
     if (!shots.length) return;
-    this.volley = { at: performance.now(), flight: Math.min(FLIGHT_MS, 800 / Math.max(1, this.stepsPerSecond)), shots };
+    this.volley = { at, ms, shots };
   }
   /** A desk's command counted toward the missions (Training, badges), and
    * the Event's alike. */
