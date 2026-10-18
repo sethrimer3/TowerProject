@@ -21,6 +21,18 @@ test("every setting defaults to a value its own row allows", () => {
   for (const [key, row] of rows) assert.equal(settingValue(row, d[key]), d[key], key);
 });
 
+test("UI sprites are opt-in for new and older saves, independent of board sprites", () => {
+  assert.equal(defaults().settings.uiSprites, false);
+  assert.equal(decoded({}).uiSprites, false);
+  assert.equal(decoded({ uiSprites: "true" }).uiSprites, false);
+  for (const spritesOff of [true, false]) {
+    const s = decoded({ uiSprites: true, spritesOff });
+    assert.equal(s.uiSprites, true);
+    assert.equal(s.spritesOff, spritesOff);
+    assert.equal(decoded({ ...s, uiSprites: false }).uiSprites, false);
+  }
+});
+
 test("each setting keeps every value it allows and defaults the rest", () => {
   for (const [key, row] of rows) {
     const { good, bad } = values(row);

@@ -1,0 +1,180 @@
+/* Actual PNG components, opt-in independently of UI/game themes.
+   Native frames are 48 × 24; six-pixel slices render at 2×. The center is
+   quiet so it can stretch behind live labels without distorting artwork.
+   Keep skin rules here; layout and game interactions belong to style.css. */
+html.ui-sprites {
+  --ui-button: url("../public/assets/ui/frames/button.png");
+  --ui-hover: url("../public/assets/ui/frames/button-hover.png");
+  --ui-pressed: url("../public/assets/ui/frames/button-pressed.png");
+  --ui-selected: url("../public/assets/ui/frames/button-selected.png");
+  --ui-disabled: url("../public/assets/ui/frames/button-disabled.png");
+  --ui-danger: url("../public/assets/ui/frames/button-danger.png");
+  --ui-panel: url("../public/assets/ui/frames/panel.png");
+  --ui-dialog: url("../public/assets/ui/frames/dialog.png");
+  --ui-field: url("../public/assets/ui/frames/field.png");
+  --ui-face: var(--ui-button);
+  --gold: #e1bb78;
+  --muted: #8b9a9d;
+}
+
+html.ui-sprites body:not(#_) {
+  background: #10151c url("../public/assets/ui/frames/surface.png") repeat;
+  background-size: 96px 48px;
+}
+html.ui-sprites .shell:not(#_) {
+  background: #10151c;
+  color: #eee0b7;
+  box-shadow: none;
+}
+
+html.ui-sprites :is(.stats, .card, .upgrade, .shop, .theme-card, .weekly,
+  .mission, .event-boost, .archivist, .research, .pull-box, .eq-loadout,
+  .equip-materials, .purse-big, .starting-stats, .training-boost,
+  .tournament-standing, .tournament-tickets, .badge-box, .deck-reserve,
+  .defend-palette, .card-reveal, .badge-reveal, .skill-tree, .goals-stage,
+  .training-box, label.setting, .inspect-box, .run-menu-frame, .inspection):not(#_) {
+  border-color: transparent;
+  border-style: solid;
+  border-image: var(--ui-panel) 6 fill / 12px / 0 stretch;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  image-rendering: pixelated;
+  color: #eee0b7;
+  text-shadow: none;
+}
+html.ui-sprites label.setting:not(#_) {
+  padding-inline: 14px;
+  margin-block: 4px;
+}
+html.ui-sprites .inspection:empty:not(#_) { border-image: none; }
+
+html.ui-sprites :is(dialog, .theme-card.worn):not(#_) {
+  border-color: transparent;
+  border-image: var(--ui-dialog) 6 fill / 12px / 0 stretch;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  image-rendering: pixelated;
+  color: #eee0b7;
+}
+html.ui-sprites dialog::backdrop { background: #10151cd9; backdrop-filter: none; }
+
+/* Keep picture buttons (cards, map markers and skill nodes) intact. */
+html.ui-sprites button:not(:where(.hand-card, .skill-node, .badge-token, .eq-tile,
+  .forest-sign, .forest-building, .mission-bar, #shrine-bar, #forest-sign)):not(#_) {
+  border-color: transparent;
+  border-image: var(--ui-face) 6 fill / 12px / 0 stretch;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: #eee0b7;
+  text-shadow: none;
+  image-rendering: pixelated;
+  transition: none;
+}
+html.ui-sprites button:hover:not(:disabled):not(#_) { --ui-face: var(--ui-hover); }
+html.ui-sprites button:is(.selected, .active, [aria-pressed="true"], [aria-expanded="true"]):not(#_) {
+  --ui-face: var(--ui-selected);
+}
+html.ui-sprites button.danger:not(#_) { --ui-face: var(--ui-danger); }
+html.ui-sprites button:active:not(:disabled):not(#_) {
+  --ui-face: var(--ui-pressed);
+  translate: none;
+  scale: none;
+}
+html.ui-sprites button:disabled:not(#_) {
+  --ui-face: var(--ui-disabled);
+  color: #8b9a9d;
+  filter: none;
+  opacity: 0.65;
+}
+/* A Gem shortage is actionable: preserve the bright face and red price. */
+html.ui-sprites button.short:not(#_) { opacity: 1; filter: none; }
+html.ui-sprites :is(button, select, input):focus-visible:not(#_) {
+  outline: 2px solid #e1bb78;
+  outline-offset: 3px;
+}
+
+html.ui-sprites :is(select, input[type="text"], input[type="search"],
+  input[type="number"], .portrait-top, .hp-readout, .training-held):not(#_) {
+  border-color: transparent;
+  border-image: var(--ui-field) 6 fill / 10px / 0 stretch;
+  border-radius: 0;
+  background: transparent;
+  color: #eee0b7;
+  box-shadow: none;
+  image-rendering: pixelated;
+}
+html.ui-sprites select option { background: #1b2430; color: #eee0b7; }
+html.ui-sprites :is(.deck-slot, .node-icon):not(#_) {
+  border: 2px solid transparent;
+  border-image: url("../public/assets/ui/frames/slot.png") 6 fill / 12px / 0 stretch;
+  border-radius: 0;
+  background: transparent;
+  image-rendering: pixelated;
+}
+html.ui-sprites input[type="checkbox"]:not(#_) {
+  appearance: none;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: url("../public/assets/ui/frames/field.png") center / 24px 24px no-repeat;
+  box-shadow: none;
+  image-rendering: pixelated;
+  cursor: pointer;
+}
+html.ui-sprites input[type="checkbox"]:checked:not(#_) {
+  background-image: url("../public/assets/ui/frames/button-selected.png");
+}
+html.ui-sprites input[type="checkbox"]:checked::after {
+  content: "";
+  display: block;
+  width: 12px;
+  height: 10px;
+  margin: 6px;
+  background: #eee0b7;
+  clip-path: polygon(0 40%, 33% 40%, 33% 60%, 50% 60%, 50% 40%, 66% 40%, 66% 20%, 83% 20%, 83% 0, 100% 0, 100% 40%, 83% 40%, 83% 60%, 66% 60%, 66% 80%, 50% 80%, 50% 100%, 33% 100%, 33% 80%, 16% 80%, 16% 60%, 0 60%);
+}
+html.ui-sprites input[type="range"]:not(#_) { accent-color: #e1bb78; }
+
+html.ui-sprites :is(.xp-track, .health-track, .weekly-bar, .mission-bar,
+  .research-bar, .refine-bar):not(#_) {
+  background: #10151c;
+  border-color: transparent;
+  border-image: url("../public/assets/ui/frames/track.png") 6 fill / 4px / 0 stretch;
+  border-radius: 0;
+  box-shadow: none;
+  image-rendering: pixelated;
+}
+html.ui-sprites :is(.xp-track i, .weekly-bar i, .mission-bar i,
+  .research-bar i, .refine-bar span, .event-bar i):not(#_) {
+  background: url("../public/assets/ui/frames/fill-green.png") left top / 32px 100% repeat-x;
+  border-radius: 0;
+  box-shadow: none;
+  image-rendering: pixelated;
+}
+html.ui-sprites .xp-track i:not(#_) {
+  background-image: url("../public/assets/ui/frames/fill-blue.png");
+}
+html.ui-sprites #health:not(#_) {
+  background: url("../public/assets/ui/frames/fill-red.png") left top / 32px 100% repeat-x;
+}
+html.ui-sprites #health-gain:not(#_) {
+  background: url("../public/assets/ui/frames/fill-blue.png") left top / 32px 100% repeat-x;
+}
+/* The pending-damage segment retains its distinct purple semantics. */
+html.ui-sprites #health-loss:not(#_) { background: #80608e; }
+
+html.ui-sprites .page-title:not(#_) {
+  background: transparent;
+  border: 2px solid transparent;
+  border-image: url("../public/assets/ui/frames/banner.png") 6 fill / 12px / 0 stretch;
+  image-rendering: pixelated;
+  padding-block: 14px;
+  color: #10151c;
+}
+html.ui-sprites .page-title :is(h2, small):not(#_) { color: #10151c; text-shadow: none; }

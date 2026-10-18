@@ -88,6 +88,7 @@ export function applyUiTheme(save: Pick<Save, "themes" | "settings">) {
   root.toggle(DOODLE_CLASS, look === "doodle");
   root.toggle(MURK_CLASS, look === "murk");
   root.toggle("reduce-motion", save.settings.reduceMotion);
+  root.toggle("ui-sprites", save.settings.uiSprites);
 }
 
 /** Sounds, sparks and the button knock exist only while the Medieval UI

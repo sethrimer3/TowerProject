@@ -1,0 +1,102 @@
+{
+  "nativeScale": 2,
+  "palette": "slate-and-brass",
+  "assets": {
+    "button": {
+      "file": "button.png",
+      "width": 48,
+      "height": 24,
+      "slice": 6
+    },
+    "button-hover": {
+      "file": "button-hover.png",
+      "width": 48,
+      "height": 24,
+      "slice": 6
+    },
+    "button-pressed": {
+      "file": "button-pressed.png",
+      "width": 48,
+      "height": 24,
+      "slice": 6
+    },
+    "button-selected": {
+      "file": "button-selected.png",
+      "width": 48,
+      "height": 24,
+      "slice": 6
+    },
+    "button-disabled": {
+      "file": "button-disabled.png",
+      "width": 48,
+      "height": 24,
+      "slice": 6
+    },
+    "button-danger": {
+      "file": "button-danger.png",
+      "width": 48,
+      "height": 24,
+      "slice": 6
+    },
+    "panel": {
+      "file": "panel.png",
+      "width": 48,
+      "height": 24,
+      "slice": 6
+    },
+    "dialog": {
+      "file": "dialog.png",
+      "width": 48,
+      "height": 24,
+      "slice": 6
+    },
+    "field": {
+      "file": "field.png",
+      "width": 48,
+      "height": 24,
+      "slice": 6
+    },
+    "track": {
+      "file": "track.png",
+      "width": 48,
+      "height": 24,
+      "slice": 6
+    },
+    "fill-blue": {
+      "file": "fill-blue.png",
+      "width": 16,
+      "height": 4,
+      "slice": 0
+    },
+    "fill-red": {
+      "file": "fill-red.png",
+      "width": 16,
+      "height": 4,
+      "slice": 0
+    },
+    "fill-green": {
+      "file": "fill-green.png",
+      "width": 16,
+      "height": 4,
+      "slice": 0
+    },
+    "surface": {
+      "file": "surface.png",
+      "width": 24,
+      "height": 12,
+      "slice": 0
+    },
+    "banner": {
+      "file": "banner.png",
+      "width": 48,
+      "height": 24,
+      "slice": 6
+    },
+    "slot": {
+      "file": "slot.png",
+      "width": 48,
+      "height": 24,
+      "slice": 6
+    }
+  }
+}
