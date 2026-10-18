@@ -2,7 +2,7 @@ import type { Game } from "../state.ts";
 import { TRAINING, TRAINING_GROUPS, type TrainingId } from "../config.ts";
 import { runTrainingBulk, runTrainingOffer, runTrainingValue } from "../run-training.ts";
 import { buyQuantityHtml, readQuantity, runCount } from "./buy-quantity-select.ts";
-import { trainingText, trainingOpen } from "../loadout.ts";
+import { trainingText, runTrainingOpen } from "../loadout.ts";
 import { el, itemSprite, POINTER_SVG, uiSprite } from "./dom.ts";
 import { priceAmount, sparkRed } from "./hud.ts";
 
@@ -212,9 +212,10 @@ export class RunTrainingBar {
       : `<b>Train on the Job</b><p>Spend the ${silverIcon()} Silver you find on upgrades that raise your stats for the rest of this run. Press any of the three menus below to open it, and press it again to close it.</p>`;
   }
 
-  /** The rows of `group` the hero can train. */
+  /** The rows of `group` the hero can train in this run (the shot rows
+   * only while the hand holds ARCHER). */
   private rows(group: Group): TrainingId[] {
-    return TRAINING.filter((t) => t.group === group && trainingOpen(t, this.game.save)).map((t) => t.id);
+    return TRAINING.filter((t) => t.group === group && runTrainingOpen(t, this.game.save, this.game.hand)).map((t) => t.id);
   }
 
   /** One card's value and price (for the ranks the Buy Quantity buys, past

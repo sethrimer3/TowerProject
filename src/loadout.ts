@@ -12,12 +12,24 @@ import { silverFound } from "./gold-multipliers.ts";
 import { PIERCE_CAP } from "./equipment/balance.ts";
 import { RESEARCH, researched } from "./archives.ts";
 import { ranksInTraining, trainingGold } from "./training-jobs.ts";
-import { goalUnlocked } from "./goals.ts";
+import { goalUnlocked, type GoalUnlock } from "./goals.ts";
+import type { CardId } from "./cards.ts";
 
 /** Whether `row` can be seen and trained: its upgrade owned, or the Goals
  * checkpoint that unlocks it claimed (Attack Range, Attack Speed). */
 export const trainingOpen = (row: TrainingRow, save: Pick<Save, "upgrades" | "goals">) =>
   ("requires" in row ? save.upgrades[row.requires] > 0 : true) && ("goal" in row ? goalUnlocked(save, row.goal) : true);
+
+/** The Goals whose Training rows only the Archer's arrows read. */
+const SHOT_GOALS: ReadonlySet<GoalUnlock> = new Set(["attackRange", "attackSpeed", "attackPerTile", "multishot", "rapidFire"]);
+/** Whether `row` is one only the Archer's arrows read (Attack Range,
+ * Attack Speed, ATK / m, Multishot, Rapid Fire). */
+export const shotRow = (row: TrainingRow) => "goal" in row && SHOT_GOALS.has(row.goal);
+/** Whether `row` can be raised inside a run whose hand is `hand` (Silver,
+ * Free Training): open (`trainingOpen`), and a shot row only while the
+ * hand holds ARCHER. Outside a run every open row trains, ARCHER or not. */
+export const runTrainingOpen = (row: TrainingRow, save: Pick<Save, "upgrades" | "goals">, hand: readonly CardId[]) =>
+  trainingOpen(row, save) && (!shotRow(row) || hand.includes("archer"));
 
 /** What one rank of an upgrade, or one provision, adds to a character. */
 export type Grants = Partial<Record<Stat, number>>;

@@ -30,8 +30,9 @@ import { TIERS } from "./tiers.ts";
  * Ban Boons (Tower V floor 40) and Auto Pick Ranking (Tower VI floor 10),
  * Badge Slots (Tower VI floor 50: the Archives' project that lets each
  * card hold more badges), Note Taking (Tower I floor 250: the Archives'
- * project that opens the run's notes), and Tower III's Archer (floor 10:
- * the hero fires at the nearest enemy in range, ranged.ts), Attack Range
+ * project that opens the run's notes), and Tower III's Archer Card (floor
+ * 10: the ARCHER card joins the deck, `GOAL_CARDS` in cards.ts; while the
+ * hand holds it the hero fires at the nearest enemy in range, ranged.ts), Attack Range
  * and Attack Speed (floors 20 and 30: the Training rows that improve it),
  * ATK / m (floor 50: the Training row that strikes harder from further
  * off), Charged Shot (floor 60: the Archives' project that strengthens
@@ -47,7 +48,7 @@ export type GoalUnlock =
   | "damagePrediction" | "combatForecast" | "attackLore" | "warp" | "damageVisual" | "relativeDamageColor" | "equipment" | "tournament" | "events" | "researchSpeed"
   | "shardAttack" | "shardDefense" | "parryPercent"
   | "shrines" | "firstBoonChoice" | "improveTradeoffs" | "autoPickBoons" | "boonOptions" | "banBoons" | "autoPickRanking"
-  | "badgeSlots" | "noteTaking" | "archer" | "attackRange" | "attackSpeed" | "attackPerTile" | "chargedShot" | "multishot" | "rapidFire"
+  | "badgeSlots" | "noteTaking" | "archerCard" | "attackRange" | "attackSpeed" | "attackPerTile" | "chargedShot" | "multishot" | "rapidFire"
   | "trainingDiscount" | "cardGroups" | "flyingEnemyCard";
 export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   damagePrediction: "Damage Prediction", combatForecast: "Combat Forecast", attackLore: "Attack Lore", warp: "Warp", damageVisual: "Damage Visual",
@@ -57,7 +58,7 @@ export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   shrines: "Unlock Shrines", firstBoonChoice: "First Boon Choice", improveTradeoffs: "Improve Trade-off Boons",
   autoPickBoons: "Auto Pick Boons", boonOptions: "Boon Option Quantity", banBoons: "Ban Boons", autoPickRanking: "Auto Pick Ranking",
   badgeSlots: "Badge Slots", noteTaking: "Note Taking",
-  archer: "Archer Class", attackRange: "Attack Range", attackSpeed: "Attack Speed", attackPerTile: "ATK / m", chargedShot: "Charged Shot", multishot: "Multishot", rapidFire: "Rapid Fire",
+  archerCard: "Archer Card", attackRange: "Attack Range", attackSpeed: "Attack Speed", attackPerTile: "ATK / m", chargedShot: "Charged Shot", multishot: "Multishot", rapidFire: "Rapid Fire",
   trainingDiscount: "Training Discount", cardGroups: "Card Groups", flyingEnemyCard: "Flying Enemy Card",
 };
 /** What a checkpoint pays: an unlock, the next tower opened, or an amount of a currency. */
@@ -124,7 +125,7 @@ const TOWER_TWO: Record<number, CheckpointSet> = {
 };
 /** Tower III's checkpoints that differ from the stub. */
 const TOWER_THREE: Record<number, CheckpointSet> = {
-  10: { reward: unlock("archer") },
+  10: { reward: unlock("archerCard") },
   20: { reward: unlock("attackRange") },
   30: { reward: unlock("attackSpeed") },
   50: { reward: unlock("attackPerTile") },
@@ -261,13 +262,12 @@ export function unlockAt(what: GoalUnlock) {
 }
 /** The checkpoint floor whose reward unlocks `what`. */
 export const unlockFloor = (what: GoalUnlock) => unlockAt(what).floor;
-/** Whether the hero is an Archer: Tower III's floor 10 Goal claimed. */
-export const isArcher = (save: Pick<Save, "goals">) => goalUnlocked(save, "archer");
-/** The hero's class, as the HUD names it under its portrait: a Wayfarer,
- * a Pathfinder once Tower II is open, an Archer once Tower III's floor 10
- * Goal is claimed. Cosmetic. */
-export const heroClass = (save: Pick<Save, "goals" | "tower">) =>
-  isArcher(save) ? "Archer" : save.tower.tiersOpen >= 2 ? "Pathfinder" : "Wayfarer";
+/** The hero's class, as the HUD names it under its portrait: an Archer
+ * while the hand holds the ARCHER card (`archer`, `shootsWith` in
+ * cards.ts), else a Wayfarer, or a Pathfinder once Tower II is open.
+ * Cosmetic. */
+export const heroClass = (save: Pick<Save, "tower">, archer: boolean) =>
+  archer ? "Archer" : save.tower.tiersOpen >= 2 ? "Pathfinder" : "Wayfarer";
 /** Whether Warp is owned. */
 export const warpUnlocked = (save: Save) => goalUnlocked(save, "warp");
 

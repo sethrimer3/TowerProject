@@ -176,7 +176,9 @@ test("the deck starts as the base hand, and HEAL, YELLOW KEY, EQUIPMENT, BLUE KE
   assert.deepEqual(deckCards(everyUpgrade), CARD_IDS.filter((id) => !Object.values(GOAL_CARDS).includes(id)), "every card but a Goal's comes from an upgrade");
   const goals = defaults().goals;
   goals.claimed[5] = [10];
-  assert.deepEqual(deckCards(everyUpgrade, goals), CARD_IDS, "and Tower V's floor 10 Goal adds FLYING ENEMY");
+  assert.deepEqual(deckCards(everyUpgrade, goals), CARD_IDS.filter((id) => id !== "archer"), "Tower V's floor 10 Goal adds FLYING ENEMY");
+  goals.claimed[3] = [10];
+  assert.deepEqual(deckCards(everyUpgrade, goals), CARD_IDS, "and Tower III's floor 10 Goal ARCHER");
   assert.equal(upgradeCard("cardYellowKey"), "yellowKey");
   assert.equal(upgradeCard("cardAtkUp"), "atkUp");
   assert.equal(upgradeCard("cardDefUp"), "defUp");

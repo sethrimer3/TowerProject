@@ -28,7 +28,7 @@ export const instakill = (r: CombatPrediction) => r.turns === 1 && !r.thornKill 
 export function attackAgainst(player: Player, enemy: Enemy) {
   return isBoss(enemy) && player.bossAttack ? snap((player.attack * (100 + player.bossAttack)) / 100) : player.attack;
 }
-const isBoss = (enemy: Enemy) => enemy.strength === "boss" || enemy.strength === "greaterBoss";
+export const isBoss = (enemy: Enemy) => enemy.strength === "boss" || enemy.strength === "greaterBoss";
 /** Thorns: what each of `enemy`'s strikes costs it, the hero's Thorn Damage
  * percent of its max HP (its HP as the fight starts), half against a boss
  * or Greater Boss. DEF takes nothing off it. */

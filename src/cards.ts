@@ -25,6 +25,10 @@ export type CardBonus = {
    * (multiplying each arrow's ATK) and charge `speed` percent faster
    * (multiplying Attack Speed). */
   shot?: { attack: number; speed: number };
+  /** The Archer's arrows strike bosses and Greater Bosses with `attack`
+   * percent more ATK, added to the Shot ATK (multiplying each such arrow's
+   * ATK); fights are untouched. */
+  boss?: { attack: number };
 };
 type CardDef = { name: string; text: string; bonus?: CardBonus };
 
@@ -59,6 +63,7 @@ export const CARDS = {
   torch: { name: "Torch", text: "Move toward the closest lit torch, putting it out." },
   woodenDoor: { name: "Wooden Door", text: "Move toward the closest Wooden Door you hold a key for, or can break down and survive." },
   flyingEnemy: { name: "Flying Enemy", text: "Move toward the closest Flying enemy your arrows can hurt, stopping once one is within your Attack Range, and wait there while one is.", bonus: { shot: { attack: 5, speed: 5 } } },
+  archer: { name: "Archer", text: "Never moves you. While it is in your hand, you fire arrows at the closest enemy within your Attack Range, and your Archer training can be raised with Silver in the run.", bonus: { boss: { attack: 5 } } },
 } as const;
 export type CardId = keyof typeof CARDS;
 export const CARD_IDS = Object.keys(CARDS) as CardId[];
@@ -85,8 +90,9 @@ export const cardBonus = (id: CardId): CardBonus | undefined => (CARDS[id] as Ca
 /** A card bonus's lines as the player reads them, each with its tone: a
  * Supply Chest's chance light blue, an Equipment Chest's purple, the rarer. */
 export function cardBonusLines(id: CardId): { text: string; tone: "plain" | "supply" | "equipment" }[] {
-  const bonus = cardBonus(id), key = bonus?.key, chest = bonus?.chest, shot = bonus?.shot;
+  const bonus = cardBonus(id), key = bonus?.key, chest = bonus?.chest, shot = bonus?.shot, boss = bonus?.boss;
   return [
+    ...(boss ? [{ text: `+${boss.attack}% Shot ATK for Bosses`, tone: "plain" as const }] : []),
     ...(shot ? [{ text: `+${shot.attack}% Shot ATK`, tone: "plain" as const }, { text: `+${shot.speed}% Attack Speed`, tone: "plain" as const }] : []),
     ...(key ? [{ text: `+${key.percent}% ${CARDS[`${key.color}Key`].name}s`, tone: "plain" as const }, { text: `+${key.gold} Gold a key`, tone: "plain" as const }] : []),
     ...(chest ? [{ text: `${chest.supply}% Supplies`, tone: "supply" as const }, { text: `${chest.equipment}% Equipment`, tone: "equipment" as const }] : []),
@@ -97,12 +103,15 @@ export const cardBonusText = (id: CardId) => cardBonusLines(id).map((l) => l.tex
 /** What the cards of `hand` give while held, added up: for each key colour
  * the percent more each key is worth and the Gold it pays more, a
  * treasure chest's chances, in percent, of being a Supply or Equipment
- * Chest, and the percent more Shot ATK and Attack Speed the arrows have. */
+ * Chest, the percent more Shot ATK and Attack Speed the arrows have, and
+ * the percent more ATK the arrows strike bosses with. */
 export function handBonus(hand: readonly CardId[]) {
   const keys: Partial<Record<KeyColor, { percent: number; gold: number }>> = {};
   const chest = { supply: 0, equipment: 0 }, shot = { attack: 0, speed: 0 };
+  let boss = 0;
   for (const id of new Set(hand)) {
     const bonus = cardBonus(id);
+    if (bonus?.boss) boss += bonus.boss.attack;
     if (bonus?.shot) {
       shot.attack += bonus.shot.attack;
       shot.speed += bonus.shot.speed;
@@ -117,7 +126,7 @@ export function handBonus(hand: readonly CardId[]) {
       chest.equipment = snap(chest.equipment + bonus.chest.equipment);
     }
   }
-  return { keys, chest, shot };
+  return { keys, chest, shot: { ...shot, boss } };
 }
 export type HandBonus = ReturnType<typeof handBonus>;
 
@@ -142,7 +151,10 @@ export const nextHandSlotGems = (save: { upgrades: Record<UpgradeId, number>; ha
  * HEAL, YELLOW KEY, ATK UP, DEF UP and BLUE KEY are earned from the Inspiration tree. */
 export const BASE_HAND: readonly CardId[] = ["stairs", "door", "key", "monster"];
 /** The cards a Goal adds to the deck once claimed (goals.ts). */
-export const GOAL_CARDS: Partial<Record<GoalUnlock, CardId>> = { flyingEnemyCard: "flyingEnemy" };
+export const GOAL_CARDS: Partial<Record<GoalUnlock, CardId>> = { archerCard: "archer", flyingEnemyCard: "flyingEnemy" };
+/** Whether `hand` makes the hero an Archer: it holds ARCHER, so its arrows
+ * fly and its Archer training rows can be raised in the run. */
+export const shootsWith = (hand: readonly CardId[]) => hand.includes("archer");
 /** The cards the player owns, in `CARDS` order: the base hand's, each card
  * whose upgrade is owned, and each card whose Goal is claimed (`goals`;
  * none without). A hand holds any of them, but always STAIRS. */
@@ -345,6 +357,8 @@ const WANTS: Record<CardId, (t: Tile, at: HandAt, rules: CardRules | undefined, 
   fastEnemy: (t, at) => fightable()(t, at) && !!t.enemy!.fast,
   // Planned apart (`flyerPlan`): it stops once a Flying enemy is in reach.
   flyingEnemy: never,
+  // Never moves the hero: it only makes it an Archer while held.
+  archer: never,
   chest: (t) => t.kind === "treasure" || t.kind === "reward",
   blueSiphon: never,
   blueTrader: never,

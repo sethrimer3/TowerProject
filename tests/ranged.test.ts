@@ -8,8 +8,11 @@ import { ARCHER_TICKS, archerTurn, ARROW_COST, arrowBoost, arrowDamage, charged,
 import { enemyTitle } from "../src/scaling.ts";
 import { tierCells, tierGold } from "../src/tiers.ts";
 import { generateTowerRoom, RoomWorld } from "../src/tower/room-world.ts";
-import { heroClass, isArcher } from "../src/goals.ts";
-import { trainingOpen, trainingStep, trainingText } from "../src/loadout.ts";
+import { checkpoint, goalUnlocked, heroClass } from "../src/goals.ts";
+import { deckCards, handBonus } from "../src/cards.ts";
+import { decode } from "../src/save.ts";
+import { runTrainingOpen, trainingOpen, trainingStep, trainingText } from "../src/loadout.ts";
+import { runTrainingOffer } from "../src/run-training.ts";
 import { runTrainingValue, silverPrice } from "../src/run-training.ts";
 import { trainingGold } from "../src/training-jobs.ts";
 import { RESEARCH } from "../src/archives.ts";
@@ -164,10 +167,11 @@ test("no shots below the third tier, and the Archer shoots only once its Goal is
   assert.deepEqual([g.run.player.hp, g.run.volleys, g.volley], [100, undefined, null]);
 });
 
-/** Makes the save's hero an Archer. */
+/** Makes the run's hero an Archer: the Archer Card claimed and in its hand. */
 const archer = (g: Game) => {
   g.save.goals.claimed[3] = [10];
-  assert.ok(isArcher(g.save));
+  g.run.hand = [...g.hand, "archer"];
+  assert.ok(g.isArcher);
   return g;
 };
 
@@ -219,13 +223,64 @@ test("Attack Range and Attack Speed: 3.00 m and 1.00 shot every 10 turns, 0.05 m
   assert.deepEqual(runTrainingValue({ ...save, training: { ...save.training, attackSpeed: 10 } }, run, "attackSpeed"), { value: 1.5, unit: "shots" });
 });
 
-test("the hero's class: a Wayfarer, a Pathfinder once Tower II is open, an Archer once Tower III's floor 10 Goal is claimed", () => {
+test("the hero's class: a Wayfarer, a Pathfinder once Tower II is open, an Archer while the hand holds the ARCHER card", () => {
   const save = defaults();
-  assert.equal(heroClass(save), "Wayfarer");
+  assert.equal(heroClass(save, false), "Wayfarer");
   save.tower.tiersOpen = 3;
-  assert.equal(heroClass(save), "Pathfinder");
+  assert.equal(heroClass(save, false), "Pathfinder");
+  assert.equal(heroClass(save, true), "Archer");
+  const g = new Game(defaults());
+  g.newRun({ outside: true });
+  g.save.goals.claimed[3] = [10];
+  assert.ok(!g.isArcher, "the Goal alone makes no Archer");
+  g.save.hand = [...g.save.hand, "archer"];
+  assert.ok(g.isArcher, "the forest's hand, for the next run");
+});
+
+test("Tower III's floor 10 Goal adds the ARCHER card to the deck; a save that was an Archer has it in the deck, not the hand", () => {
+  assert.deepEqual(checkpoint(3, 10)?.reward, { kind: "unlock", unlock: "archerCard" });
+  const save = defaults();
+  assert.ok(!deckCards(save.upgrades, save.goals).includes("archer"));
   save.goals.claimed[3] = [10];
-  assert.equal(heroClass(save), "Archer");
+  assert.ok(goalUnlocked(save, "archerCard"));
+  const back = decode(JSON.stringify(save));
+  assert.ok(deckCards(back.upgrades, back.goals).includes("archer"), "the claim alone puts it in the deck");
+  assert.ok(!back.hand.includes("archer"));
+  assert.deepEqual(decode(JSON.stringify({ ...save, hand: ["stairs", "archer"] })).hand, ["stairs", "archer"], "a hand may hold it");
+  assert.deepEqual(decode(JSON.stringify({ ...defaults(), hand: ["stairs", "archer"] })).hand, ["stairs"], "and not before");
+});
+
+test("the Archer's Training rows train between runs with or without ARCHER, and with Silver in a run only while its hand holds it", () => {
+  const save = defaults();
+  save.goals.claimed[3] = [10, 20, 30, 50, 70, 80];
+  const row = (id: string) => TRAINING.find((t) => t.id === id)!;
+  for (const id of ["attackRange", "attackSpeed", "attackPerTile", "multishotChance", "multishotTargets", "rapidFireChance", "rapidFireDuration"]) {
+    assert.ok(trainingOpen(row(id), save), `${id}: open between runs`);
+    assert.ok(!runTrainingOpen(row(id), save, ["stairs"]), `${id}: closed in a run without ARCHER`);
+    assert.ok(runTrainingOpen(row(id), save, ["stairs", "archer"]), `${id}: open in a run with it`);
+  }
+  assert.ok(runTrainingOpen(row("attack"), save, ["stairs"]), "the other rows as ever");
+  assert.equal(runTrainingOffer(save, { hand: ["stairs"] }, "attackRange").open, false);
+  assert.equal(runTrainingOffer(save, { hand: ["stairs", "archer"] }, "attackRange").open, true);
+});
+
+test("without ARCHER in the hand no arrow flies, however much of the Archer's training is owned", () => {
+  const g = arena({ "3,0": { ...brute, hp: 3000, attack: 1 } }, { attack: 1000 });
+  g.save.goals.claimed[3] = [10];
+  assert.ok(g.move(1, 0));
+  assert.equal(g.world.tile(3, 0).enemy!.hp, 3000);
+  assert.equal(g.volley, null);
+});
+
+test("ARCHER's +5% ATK for Bosses raises only its arrows at a boss or Greater Boss, never a fight", () => {
+  assert.equal(handBonus(["stairs", "archer"]).shot.boss, 5);
+  const shot = (strength: Enemy["strength"]) => {
+    const g = archer(arena({ "3,0": { ...brute, hp: 1e6, attack: 1, strength } }, { attack: 1000 }));
+    assert.ok(g.move(1, 0));
+    return g.volley!.shots[0]!.damage;
+  };
+  assert.deepEqual([shot("normal"), shot("boss"), shot("greaterBoss")], [1000, 1050, 1050]);
+  assert.equal(archer(arena({})).run.player.bossAttack, undefined, "the hero's own boss ATK, which fights read, is untouched");
 });
 
 test("ATK / m: 0.01 a tile for the first rank, each later rank 0.00004 less, 1.204 at its 200, opened by Tower III's floor 50; 50 Silver or Gold for the first rank, 1 million for the 130th", () => {

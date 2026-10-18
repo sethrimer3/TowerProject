@@ -1,7 +1,7 @@
 import { entrance, floorFor } from "./delve/labyrinth.ts";
 import { buyTheme, canWear, grantAllThemes, type GameLook, type ThemeId, type ThemeKind, type UiLook } from "./theme-collection.ts";
 import { chooseStep } from "./automation.ts";
-import { CARDS, cardText, explainStuck, handBonus, keptLinks, planHand, planTarget, stillOpen, type CardId, type CardPlan, type HandBonus, type StuckReport } from "./cards.ts";
+import { CARDS, cardText, explainStuck, handBonus, keptLinks, planHand, planTarget, shootsWith, stillOpen, type CardId, type CardPlan, type HandBonus, type StuckReport } from "./cards.ts";
 import { aggroTurn } from "./flying.ts";
 import { foeOn } from "./ranged.ts";
 import { BADGE_IDS, MAX_COPIES, badgeOn, badgeValue, runBadges } from "./badges.ts";
@@ -10,7 +10,7 @@ import { noteGoldBoost } from "./gold-boost.ts";
 import { offer, type OfferId } from "./shop/offers.ts";
 import { purchase, type Refusal } from "./shop/transactions.ts";
 import { confirmServerTime } from "./shop/clock.ts";
-import { canWarp, claimGoal, goalUnlocked, isArcher } from "./goals.ts";
+import { canWarp, claimGoal, goalUnlocked } from "./goals.ts";
 import { volleyTurn, type Shot, type Volley } from "./volley.ts";
 import { missGem } from "./gems.ts";
 import { DelvePlan } from "./delve/automove.ts";
@@ -1565,7 +1565,7 @@ export class Game {
   private endTurn() {
     const before = this.turnBefore;
     this.turnBefore = null;
-    const archer = isArcher(this.save);
+    const archer = this.isArcher;
     if (!before || this.run.outside || this.fallen || (this.tier < 3 && !archer)) return;
     if (this.mode === "tower" && before.run.height !== this.run.height) return;
     const v = this.run.volleys ?? { turn: 0 }, p = this.run.player;
@@ -1608,7 +1608,7 @@ export class Game {
    * ENEMY plans by (`HandAt.shotReach`); undefined while the hero can't
    * shoot (not an Archer, or in the forest). */
   get shotReach() {
-    return isArcher(this.save) && !this.run.outside ? { range: trainedAmount(this.trainingNow, "attackRange"), wrap: this.wrap } : undefined;
+    return this.isArcher && !this.run.outside ? { range: trainedAmount(this.trainingNow, "attackRange"), wrap: this.wrap } : undefined;
   }
   /** Board columns wrap in the Delve. */
   private get wrap() {
@@ -1909,6 +1909,12 @@ export class Game {
    * next run will take, as the Deck orders it. */
   get hand(): readonly CardId[] {
     return this.run.hand ?? this.save.hand;
+  }
+  /** Whether the hero is an Archer: the hand (in the forest, the next
+   * run's) holds the ARCHER card (`shootsWith`). Its arrows fly only inside
+   * a run. */
+  get isArcher() {
+    return shootsWith(this.hand);
   }
   /** What the cards of the run's hand give while held (`handBonus`): none
    * in the forest. */

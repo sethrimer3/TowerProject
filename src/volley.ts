@@ -8,7 +8,7 @@
 import type { Board } from "./board.ts";
 import type { Enemy, Player } from "./entities.ts";
 import type { Save } from "./save-shape.ts";
-import { guaranteedCrits } from "./combat.ts";
+import { guaranteedCrits, isBoss } from "./combat.ts";
 import { critRule } from "./loadout.ts";
 import { trainedAmount } from "./config.ts";
 import { researched } from "./archives.ts";
@@ -40,7 +40,8 @@ export type Volley = { at: number; flight: number; shots: Shot[] };
  * the run's seed and volley state as the turn begins (`turn` already
  * counted), whether the hero is an Archer, the ranks and research its
  * arrows read, and the percent more Shot ATK and Attack Speed the hand's
- * cards give while held (`handBonus` in cards.ts; none when absent). */
+ * cards give while held, and the percent more ATK their arrows strike a
+ * boss or Greater Boss with (`handBonus` in cards.ts; none when absent). */
 export type VolleyTurn = {
   board: Pick<Board, "tile" | "clear" | "wound">;
   wrap: number;
@@ -50,7 +51,7 @@ export type VolleyTurn = {
   volleys: Volleys;
   archer: boolean;
   ranks: Pick<Save, "upgrades" | "training" | "archives">;
-  handShot?: { attack: number; speed: number };
+  handShot?: { attack: number; speed: number; boss?: number };
 };
 /** An enemy an arrow felled: where, whether it fell to its first wound
  * (an instakill), and the arrow's critical applications. */
@@ -113,7 +114,8 @@ function foesShoot({ board, wrap, floorOf }: VolleyTurn, p: Player, v: Volleys, 
 /** The Archer's cooldown runs a turn (`archerTurn`), and each time it is
  * ready it shoots the closest enemy within its range that an arrow can
  * hurt, its ATK raised by ATK / m for the distance and by Charged Shot
- * for the turns it waited (`arrowBoost`). A multishot fires
+ * for the turns it waited (`arrowBoost`), and by the hand's Shot ATK, and
+ * its boss bonus when it aims at a boss. A multishot fires
  * the same charge at up to Multishot Targets of the closest enemies it can
  * hurt, each arrow with the first's Charged Shot, its own ATK / m and
  * its own critical roll. A shot fired while Rapid Fire isn't may start it,
@@ -122,9 +124,12 @@ function foesShoot({ board, wrap, floorOf }: VolleyTurn, p: Player, v: Volleys, 
  * counting the turn toward Charged Shot once that is researched. */
 function loose(turn: VolleyTurn, p: Player, v: Volleys, shots: Shot[], range: number) {
   const { board, wrap, ranks } = turn, perTile = trainedAmount(ranks, "attackPerTile"), percent = researched(ranks.archives, "chargedShotPercent");
-  const shotAtk = turn.handShot?.attack ?? 0, speed = trainedAmount(ranks, "attackSpeed");
-  const boost = (d2: number) => (shotAtk ? snap(arrowBoost(perTile, d2, percent, v.waited ?? 0) * (1 + shotAtk / 100)) : arrowBoost(perTile, d2, percent, v.waited ?? 0));
-  const hurts = (e: InReach) => arrowDamage(p, e.tile.enemy, 0, 1, boost(e.d2)) > 0;
+  const shotAtk = turn.handShot?.attack ?? 0, bossAtk = turn.handShot?.boss ?? 0, speed = trainedAmount(ranks, "attackSpeed");
+  const boost = ({ d2, tile }: InReach) => {
+    const base = arrowBoost(perTile, d2, percent, v.waited ?? 0), atk = shotAtk + (isBoss(tile.enemy) ? bossAtk : 0);
+    return atk ? snap(base * (1 + atk / 100)) : base;
+  };
+  const hurts = (e: InReach) => arrowDamage(p, e.tile.enemy, 0, 1, boost(e)) > 0;
   // A fixed number per run, turn, shot of the turn (the first keeping the
   // turn's own roll) and the hero's tile, for `salt`.
   const shotRoll = (salt: number, shot: number) => tileRandom(p.x, p.y, (turn.seed ^ salt ^ Math.imul(v.turn, 0x85ebca6b) ^ Math.imul(shot, 0xc2b2ae35)) | 0);
@@ -144,7 +149,7 @@ function loose(turn: VolleyTurn, p: Player, v: Volleys, shots: Shot[], range: nu
     const shot = fired++, from = shots.length;
     const targets = multishot(shot) ? inReach.filter(hurts).slice(0, trainedAmount(ranks, "multishotTargets")) : [target];
     for (const t of targets) {
-      const kill = arrow(turn, p, t, crit, shot, boost(t.d2), percent * (v.waited ?? 0), shots);
+      const kill = arrow(turn, p, t, crit, shot, boost(t), percent * (v.waited ?? 0), shots);
       if (kill) kills.push(kill);
     }
     for (let i = from; i < shots.length; i++) shots[i]!.lead = tick / ARCHER_TICKS;

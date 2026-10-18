@@ -3,7 +3,7 @@ import type { Mode } from "./entities.ts";
 import type { RunCore } from "./runs.ts";
 import type { Save } from "./save-shape.ts";
 import { bulkBuy, type BuyQuantity } from "./buy-quantity.ts";
-import { rowValue, trainingOpen } from "./loadout.ts";
+import { rowValue, runTrainingOpen } from "./loadout.ts";
 
 /** Run training: Training ranks bought with Silver inside a run, on top of
  * the hero's own, lasting only for that run (`run.training`, so undo takes
@@ -37,16 +37,16 @@ export function ranksInRun(save: Pick<Save, "training">, run: Pick<RunCore, "tra
  * and is maxed. */
 export type RunTrainingOffer = ReturnType<typeof runTrainingOffer>;
 
-export function runTrainingOffer(save: Pick<Save, "training" | "upgrades" | "goals">, run: Pick<RunCore, "training">, id: TrainingId) {
+export function runTrainingOffer(save: Pick<Save, "training" | "upgrades" | "goals">, run: Pick<RunCore, "training" | "hand">, id: TrainingId) {
   const row = TRAINING.find((t) => t.id === id)!, bought = boughtInRun(run, id);
   const level = save.training[id] + bought, max = runTrainingMax(row, save);
-  return { row, bought, level, max, price: silverPrice(id, bought), open: trainingOpen(row, save), maxed: level >= max };
+  return { row, bought, level, max, price: silverPrice(id, bought), open: runTrainingOpen(row, save, run.hand ?? []), maxed: level >= max };
 }
 
 /** What one press of `id`'s price buys in `run` at Buy Quantity `q`: the
  * ranks (up to its most) and their Silver, and whether `silver` pays for
  * them. */
-export function runTrainingBulk(save: Pick<Save, "training" | "upgrades" | "goals">, run: Pick<RunCore, "training">, id: TrainingId, q: BuyQuantity, silver: number) {
+export function runTrainingBulk(save: Pick<Save, "training" | "upgrades" | "goals">, run: Pick<RunCore, "training" | "hand">, id: TrainingId, q: BuyQuantity, silver: number) {
   const offer = runTrainingOffer(save, run, id);
   return bulkBuy(q, Math.max(0, offer.max - offer.level), (k) => silverPrice(id, offer.bought + k), silver);
 }

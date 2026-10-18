@@ -15,13 +15,15 @@ Below Torch, straight down, **Limit Break 1** to **10** (50 Inspiration each, ea
 Two skills on that path open research instead: **Heart Door Resilience** (left of Yellow Door, with Heart Door to its left) opens research making every Heart Door drain 5% less of your HP a level, for ten levels, and **Floor Skip Reward** (below BK Siphon, between Torch and Wooden Door) opens research that, when the Skip badge on STAIRS climbs past a Tower floor, pays 10% a level (up to 110%) of the Gold that floor's battles and chests held; both are priced and timed like Focus Count, with one and two more levels.
 The siphons and trades move nowhere, like Key Siphon, and grey out while they can't act.
 Tower V's floor 10 Goal adds **Flying Enemy** to the deck: it heads for the closest Flying monster the Archer's arrows can hurt, stops as soon as one is within the Attack Range, and holds its ground there, a turn at a time, while one is, the arrows doing the work; once none is in reach, the hand moves on.
-It can't act before the hero is an Archer.
+It can't act unless the hand holds Archer too.
 While it is in the hand it also gives the arrows +5% Shot ATK and +5% Attack Speed.
+Tower III's floor 10 Goal adds **Archer** to the deck, a plain wooden bow on its face: it never moves the hero, but while the run's hand holds it the hero is an Archer, firing arrows at the closest monster in reach ([The Archer](fights.md#the-archer)), and the Archer's Training rows can be raised with Silver in the run.
 
 ## Card bonuses
 
 Some cards also give a bonus for as long as the run's hand holds them, whichever card leads the hero to the key or chest; a card's details list it under what it does.
 **Yellow Key**, **Blue Key** and **Red Key** make each key of their colour picked up worth 5% more (1.05 keys) and pay 1, 2 or 3 more Gold (raised by Gold Bonus, like a key's own Gold); **Key** gives no bonus.
+**Archer** gives its arrows +5% ATK against a boss or Greater Boss (shown as +5% Shot ATK for Bosses); fights are untouched.
 **Chest** gives each treasure chest opened, once Equipment is open, a 1.5% chance of being a **Supply Chest**, which adds Equipment upgrade materials to its Gold (kills drop none) (8 of one category, more on higher floors, raised by Material Find), and a 0.5% chance of being an **Equipment Chest**, which adds a Standard piece: 67% Common, 30% Uncommon, 3% Rare (bosses drop none).
 Otherwise a treasure chest holds only Gold.
 The card's details show these as *1.5% Supplies* in light blue and *0.5% Equipment* in purple.

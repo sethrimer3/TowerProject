@@ -314,7 +314,7 @@ export function renderEventsButtons(game: Game) {
  * progress; hovering shows the XP still needed. The hero's class names it
  * above (`heroClass`). */
 function renderXp(game: Game) {
-  text("hero-class", heroClass(game.save).toUpperCase());
+  text("hero-class", heroClass(game.save, game.isArcher).toUpperCase());
   const level = levelForXp(game.save.xp), from = xpForLevel(level),
     into = game.save.xp - from, need = xpForLevel(level + 1) - from;
   text("level", String(level));

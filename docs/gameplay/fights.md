@@ -59,7 +59,9 @@ The stats show the Gold found so far this run beside ATK and DEF; undo never tak
 
 ## The Archer
 
-Claiming Tower III's floor 10 Goal makes the hero an **Archer** (the name under its portrait says so), in the Tower and the Delve alike.
+Claiming Tower III's floor 10 Goal adds the **Archer** card to the deck ([The hand](hand-and-cards.md)); while the run's hand holds it the hero is an **Archer** (the name under its portrait says so), in the Tower and the Delve alike.
+Without the card in the hand no arrow flies, and the Archer's Training rows (Attack Range, Attack Speed, ATK / m, Multishot, Rapid Fire) can't be raised with Silver in the run; between runs they train as ever, card or not.
+The card gives its arrows +5% ATK against a boss or Greater Boss.
 At the end of each turn its arrow is ready, it shoots the closest monster within its Attack Range (3 m to begin with, walls and doors no obstacle) that an arrow can hurt; the arrow flies from the hero and lands as the step ends.
 An arrow deals one of the hero's strikes: ATK (raised against bosses, critical hits rolled) less the monster's DEF, Piercing counted, healing by Lifesteal; its damage rises over the monster, whose HP bar shows what it has left.
 A wounded monster keeps its wound, so the fight that follows is shorter, and the wound counts in its inspect panel and damage number; undo takes an arrow back with the step.

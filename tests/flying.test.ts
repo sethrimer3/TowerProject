@@ -78,6 +78,7 @@ function arena(foes: Record<string, Enemy>, over: Partial<Player> = {}, walls: s
 }
 const archer = (g: Game) => {
   g.save.goals.claimed[3] = [10];
+  g.run.hand = [...g.hand, "archer"];
   return g;
 };
 
@@ -180,8 +181,8 @@ test("Flying enemies shoot in the volley as Ranged ones do", () => {
 });
 
 test("the hand's Shot ATK and Attack Speed bonuses come from FLYING ENEMY in hand", () => {
-  assert.deepEqual(handBonus(["stairs", "monster"]).shot, { attack: 0, speed: 0 });
-  assert.deepEqual(handBonus(["stairs", "flyingEnemy"]).shot, { attack: 5, speed: 5 });
+  assert.deepEqual(handBonus(["stairs", "monster"]).shot, { attack: 0, speed: 0, boss: 0 });
+  assert.deepEqual(handBonus(["stairs", "flyingEnemy"]).shot, { attack: 5, speed: 5, boss: 0 });
   assert.deepEqual(cardBonusLines("flyingEnemy").map((l) => l.text), ["+5% Shot ATK", "+5% Attack Speed"], "its details say so");
   // An arrow strikes 5% harder with it.
   const tiles = new Map<string, Tile>([["0,1", { kind: "enemy", enemy: { ...brute, hp: 5000 } }]]);
@@ -221,7 +222,7 @@ test("FLYING ENEMY walks toward the closest Flying enemy only until it is in rea
 
 test("in a run, FLYING ENEMY holds its ground with a Flying enemy in reach while the arrows bring it down, then the next card leads", () => {
   const g = archer(arena({ "6,0": { ...bat, attack: 0, hp: 2500 } }));
-  g.run.hand = ["flyingEnemy", "stairs"];
+  g.run.hand = ["flyingEnemy", "stairs", "archer"];
   g.auto = true;
   for (let i = 0; i < 3; i++) g.autoTurn();
   assert.equal(g.run.player.x, 3, "it walked up to 3 tiles off");

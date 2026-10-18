@@ -241,6 +241,17 @@ const ICONS = {
     // A wing on each side, as a Flying enemy's tile wears one.
     for (const [x0, dir] of [[13, -1], [34, 1]]) for (let i = 0; i < 4; i++) rect(p, dir < 0 ? x0 - 3 * i - 3 : x0 + 3 * i, 8 + i * 2, 3, 12 - i * 3, C.white);
   },
+  archer(p) {
+    // A plain wooden bow, strung, standing on end: its limb bowed right,
+    // the string straight down its left, a darker grip at the middle.
+    rect(p, 16, 7, 1, 33, C.white);
+    for (let y = 6; y <= 40; y++) {
+      const x = 16 + Math.round(12 * Math.sin((Math.PI * (y - 6)) / 34));
+      rect(p, x, y, 3, 1, C.wood);
+      rect(p, x + 2, y, 1, 1, C.wood2);
+    }
+    rect(p, 27, 20, 3, 7, C.wood2);
+  },
   chest(p) {
     rect(p, 10, 18, 28, 18, C.wood2);
     rect(p, 11, 19, 26, 16, C.wood);
@@ -294,7 +305,7 @@ const ICONS = {
 const CARDS = [["stairs", "STAIRS"], ["heal", "HEAL"], ["door", "DOOR"], ["key", "KEY"], ["yellowKey", "YELLOW KEY"], ["blueKey", "BLUE KEY"], ["monster", "ENEMY"], ["atkUp", "ATK UP"], ["defUp", "DEF UP"], ["keySiphon", "KEY SIPHON"],
   ["yellowDoor", "YELLOW DOOR"], ["heartDoor", "HEART DOOR"], ["weakEnemy", "WEAK ENEMY"], ["baseEnemy", "BASE ENEMY"], ["strongEnemy", "STRONG ENEMY"],
   ["eliteEnemy", "ELITE ENEMY"], ["bossEnemy", "BOSS ENEMY"], ["nonBossEnemy", "NON-BOSS ENEMY"], ["fastEnemy", "FAST ENEMY"], ["chest", "CHEST"], ["blueSiphon", "BK SIPHON"], ["blueTrader", "BK TRADER"], ["keyToHp", "YK TO HP"],
-  ["redKey", "RED KEY"], ["redSiphon", "RK SIPHON"], ["torch", "TORCH"], ["woodenDoor", "WOODEN DOOR"], ["flyingEnemy", "FLYING ENEMY"]];
+  ["redKey", "RED KEY"], ["redSiphon", "RK SIPHON"], ["torch", "TORCH"], ["woodenDoor", "WOODEN DOOR"], ["flyingEnemy", "FLYING ENEMY"], ["archer", "ARCHER"]];
 mkdirSync(OUT, { recursive: true });
 for (const [id, name] of CARDS) {
   const p = canvas();
