@@ -16,11 +16,15 @@ import type { Enemy, Player, Tile } from "../src/entities.ts";
 import { attackAgainst } from "../src/combat.ts";
 import { arrowDamage } from "../src/ranged.ts";
 import { foeGold } from "../src/foe-cards.ts";
+import { BASE_RULES, resolveStep, type StepRules } from "../src/step-effects.ts";
 
-test("only YELLOW, BLUE and RED KEY, CHEST, the enemy cards but ENEMY and ARCHER carry a bonus, and KEY none", () => {
+test("only YELLOW, BLUE and RED KEY, YELLOW, HEART and WOODEN DOOR, CHEST, the enemy cards but ENEMY and ARCHER carry a bonus, and KEY none", () => {
   assert.deepEqual(CARD_IDS.filter((id) => cardBonus(id)), [
-    "yellowKey", "blueKey", "weakEnemy", "baseEnemy", "strongEnemy", "eliteEnemy", "bossEnemy", "nonBossEnemy", "fastEnemy", "chest", "redKey", "flyingEnemy", "archer",
+    "yellowKey", "blueKey", "yellowDoor", "heartDoor", "weakEnemy", "baseEnemy", "strongEnemy", "eliteEnemy", "bossEnemy", "nonBossEnemy", "fastEnemy", "chest", "redKey", "woodenDoor", "flyingEnemy", "archer",
   ]);
+  assert.deepEqual(cardBonus("yellowDoor"), { door: { kind: "yellow", percent: 5 } });
+  assert.deepEqual(cardBonus("heartDoor"), { door: { kind: "heart", percent: 5 } });
+  assert.deepEqual(cardBonus("woodenDoor"), { door: { kind: "wood", percent: 5 } });
   assert.equal(cardBonus("monster"), undefined, "ENEMY gives none");
   assert.deepEqual(cardBonus("weakEnemy"), { foe: { attack: 5, gold: 5 } });
   assert.deepEqual(cardBonus("yellowKey"), { key: { color: "yellow", percent: 5, gold: 1 } });
@@ -37,6 +41,8 @@ test("a card's bonus reads as short lines, the chest's chances light blue and pu
   assert.deepEqual(cardBonusLines("chest"), [{ text: "1.5% Supplies", tone: "supply" }, { text: "0.5% Equipment", tone: "equipment" }]);
   assert.deepEqual(cardBonusLines("blueKey").map((l) => l.text), ["+5% Blue Keys", "+2 Gold a key"]);
   assert.deepEqual(cardBonusLines("door"), []);
+  assert.deepEqual(cardBonusLines("yellowDoor").map((l) => l.text), ["−5% Yellow Door cost"]);
+  assert.deepEqual(cardBonusLines("woodenDoor").map((l) => l.text), ["−5% Wooden Door cost"]);
   assert.deepEqual(cardBonusLines("nonBossEnemy").map((l) => l.text), ["+5% ATK vs Non-Boss Enemies", "+5% Gold from Non-Boss Enemies"]);
 });
 
@@ -46,13 +52,16 @@ test("a hand's bonuses add up by key colour, with the chest's chances", () => {
     chest: { supply: 1.5, equipment: 0.5 },
     shot: { attack: 0, speed: 0, boss: 0 },
     foe: {},
+    doors: {},
   });
-  assert.deepEqual(handBonus(["stairs", "key"]), { keys: {}, chest: { supply: 0, equipment: 0 }, shot: { attack: 0, speed: 0, boss: 0 }, foe: {} });
+  assert.deepEqual(handBonus(["stairs", "key"]), { keys: {}, chest: { supply: 0, equipment: 0 }, shot: { attack: 0, speed: 0, boss: 0 }, foe: {}, doors: {} });
+  assert.deepEqual(handBonus(["yellowDoor", "heartDoor", "woodenDoor", "door"]).doors, { yellow: 5, heart: 5, wood: 5 });
   assert.deepEqual(handBonus(["weakEnemy", "fastEnemy"]).foe, { weakEnemy: { attack: 5, gold: 5 }, fastEnemy: { attack: 5, gold: 5 } });
 });
 
 const TILES: Record<string, Tile> = {
   K: { kind: "key", color: "yellow" }, B: { kind: "key", color: "blue" }, T: { kind: "treasure" },
+  D: { kind: "door", color: "yellow" },
 };
 /** A Tower floor drawn row by row; `@` is the hero. No theme's Gold, so
  * the figures are the bonus's alone. */
@@ -90,6 +99,58 @@ test("YELLOW KEY held makes each yellow key worth 5% more and pay 1 more Gold, w
   blue.run.hand = ["key", "yellowKey"];
   turns(blue, 2);
   assert.equal(blue.run.player.keys.blue, 1, "YELLOW KEY gives nothing for a blue key");
+});
+
+const heroAt = (hp: number, yellow = 0): Player =>
+  ({ x: 0, y: 0, hp, maxHp: hp, attack: 10, defense: 0, keys: { yellow, blue: 0, red: 0 } }) as Player;
+const YELLOW_DOOR: Tile = { kind: "door", color: "yellow" };
+const HEART_DOOR: Tile = { kind: "door", door: { type: "fullHp" } };
+const GOLD_HEART_DOOR: Tile = { kind: "door", door: { type: "keys", keys: ["yellow"], mode: "all", heart: true } };
+const BLUE_DOOR: Tile = { kind: "door", color: "blue" };
+const WOODEN_DOOR: Tile = { kind: "door", door: { type: "wood", durability: 20 } };
+const step = (player: Player, tile: Tile, rules: Partial<StepRules>) => resolveStep(player, tile, { ...BASE_RULES, ...rules }).player!;
+
+test("a door card held makes its doors cost 5% less: YELLOW DOOR a yellow door's key, HEART DOOR the HP drained, WOODEN DOOR its key or the HP breaking it takes", () => {
+  const doorOff = handBonus(["yellowDoor", "heartDoor", "woodenDoor"]).doors;
+  assert.equal(step(heroAt(100, 1), YELLOW_DOOR, { doorOff }).keys.yellow, 0.05, "0.95 of a key");
+  assert.equal(step(heroAt(100, 0.95), YELLOW_DOOR, { doorOff }).keys.yellow, 0, "0.95 of a key opens it");
+  assert.equal(resolveStep(heroAt(100, 0.95), YELLOW_DOOR).blocked, "locked", "but not without the card");
+  assert.equal(step(heroAt(101), HEART_DOOR, { doorOff }).hp, 6, "95 of the 100 HP it would drain");
+  assert.equal(step(heroAt(100, 1), WOODEN_DOOR, { doorOff }).keys.yellow, 0.05);
+  assert.equal(step(heroAt(100), WOODEN_DOOR, { doorOff }).hp, 81, "19 of its 20 HP");
+  // Each card covers its own doors only.
+  assert.equal(step(heroAt(100, 1), YELLOW_DOOR, { doorOff: { heart: 5, wood: 5 } }).keys.yellow, 0);
+  assert.equal(step(heroAt(100, 1), WOODEN_DOOR, { doorOff: { yellow: 5 } }).keys.yellow, 0, "a Wooden Door is WOODEN DOOR's");
+  const blue = heroAt(100);
+  blue.keys.blue = 1;
+  assert.equal(step(blue, BLUE_DOOR, { doorOff }).keys.blue, 0);
+  // A Gold Heart Door is both: YELLOW DOOR's key and HEART DOOR's drain.
+  const both = step(heroAt(101, 1), GOLD_HEART_DOOR, { doorOff });
+  assert.deepEqual([both.keys.yellow, both.hp], [0.05, 6]);
+  const keyOnly = step(heroAt(101, 1), GOLD_HEART_DOOR, { doorOff: { yellow: 5 } });
+  assert.deepEqual([keyOnly.keys.yellow, keyOnly.hp], [0.05, 1]);
+});
+
+test("a door card's discount multiplies Key Efficiency, Heart Door Resilience and a badge's scale", () => {
+  const doorOff = { yellow: 5, heart: 5, wood: 5 };
+  assert.equal(step(heroAt(100, 1), YELLOW_DOOR, { doorOff, keyCost: 900 }).keys.yellow, snap(1 - 0.9 * 0.95));
+  assert.equal(step(heroAt(101), HEART_DOOR, { doorOff, heartToll: 50 }).hp, snap(101 - 100 * 0.95 * 0.5));
+  assert.equal(step(heroAt(100, 1), YELLOW_DOOR, { doorOff, scale: 0.9 }).keys.yellow, snap(1 - 0.9 * 0.95));
+  assert.equal(step(heroAt(100), WOODEN_DOOR, { doorOff, scale: 0.9 }).hp, snap(100 - 20 * 0.9 * 0.95));
+});
+
+test("YELLOW DOOR held makes a yellow door cost 0.95 of a key, whichever card opens it", () => {
+  const plain = floor(["@.D"]);
+  plain.run.player.keys.yellow = 1;
+  plain.run.hand = ["door"];
+  turns(plain, 2);
+  assert.equal(plain.run.player.keys.yellow, 0);
+
+  const held = floor(["@.D"]);
+  held.run.player.keys.yellow = 1;
+  held.run.hand = ["door", "yellowDoor"];
+  turns(held, 2);
+  assert.equal(held.run.player.keys.yellow, 0.05, "DOOR opened it, but YELLOW DOOR is held");
 });
 
 test("a Supply or Equipment Chest pays its finds once Equipment is open, from Equipment's stream", () => {

@@ -75,10 +75,10 @@ test("Shroud follows Trainers, ahead of Critical; Greater Heal, then Recovery, R
   assert.deepEqual([at("revive").x, at("revive").y, at("revive").requires], [90, 214, ["parry"]], "Revive sits below Parry");
   assert.deepEqual([at("findPotion").x, at("findPotion").y, at("findPotion").requires], [70, 196, ["recovery"]], "Find Potion sits below Recovery");
   assert.deepEqual([at("buyQuantity").x, at("buyQuantity").y, at("buyQuantity").requires], [50, 178, ["lifesteal"]], "Buy Quantity sits under Lifesteal");
-  assert.deepEqual([at("lifesteal").x, at("lifesteal").y, at("lifesteal").requires], [50, 160, ["delve"]], "Lifesteal sits where Key Siphon did, under Into the depths");
+  assert.deepEqual([at("lifesteal").x, at("lifesteal").y, at("lifesteal").requires], [50, 160, ["delve"]], "Lifesteal sits where YK Siphon did, under Into the depths");
   assert.deepEqual([at("thorns").x, at("thorns").y, at("thorns").requires], [50, 196, ["buyQuantity"]], "Thorns sits under Buy Quantity");
-  assert.deepEqual([at("keySiphon").x, at("keySiphon").y, at("keySiphon").requires], [50, 214, ["thorns"]], "Key Siphon sits under Thorns");
-  assert.deepEqual([at("cardYellowDoor").y, at("cardYellowDoor").requires], [268, ["keySiphon"]], "the cards hang from Key Siphon, a row clear of it and Revive");
+  assert.deepEqual([at("keySiphon").x, at("keySiphon").y, at("keySiphon").requires], [50, 214, ["thorns"]], "YK Siphon sits under Thorns");
+  assert.deepEqual([at("cardYellowDoor").y, at("cardYellowDoor").requires], [268, ["keySiphon"]], "the cards hang from YK Siphon, a row clear of it and Revive");
 });
 test("the hand's skills run Buildout, Trainers, Shroud, Critical to the Archives, Gear and On the Job off Buildout, Yellow Key, ATK Up then DEF Up after Gear, Regen then Heal below On the Job, Larger Hand sits by itself to Shroud's right, and Buildout, Trainers, On the Job and Gear cost 1 (Critical 2)", () => {
   const at = (id: string) => TREES[0].nodes.find((n) => n.id === id)!;

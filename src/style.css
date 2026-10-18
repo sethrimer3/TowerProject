@@ -1221,7 +1221,7 @@ nav:not(.in-run) .hand {
 .hand-card.active {
   box-shadow: 0 0 0 2px #ebc77f, 0 0 12px 3px #e0b25a;
 }
-/* A card that acts in place but can't now (KEY SIPHON without the Max HP
+/* A card that acts in place but can't now (YK SIPHON without the Max HP
  * training levels its next use takes): the hand skips it. */
 .hand-card.unable img {
   filter: grayscale(1) brightness(0.55);

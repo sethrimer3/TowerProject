@@ -164,7 +164,7 @@ test("each key card heads for its own colour of key only", () => {
   assert.deepEqual(play(board(["@.K.B"]), ["key"]), { card: "key", to: [2, 0], steps: 2 });
 });
 
-test("the deck starts as the base hand, and HEAL, YELLOW KEY, EQUIPMENT, BLUE KEY and KEY SIPHON join it with their skills", () => {
+test("the deck starts as the base hand, and HEAL, YELLOW KEY, EQUIPMENT, BLUE KEY and YK SIPHON join it with their skills", () => {
   const none = defaults().upgrades;
   assert.deepEqual(BASE_HAND, ["stairs", "door", "key", "monster"]);
   assert.equal(BASE_HAND.length, BASE_HAND_SLOTS, "the base hand fills the base slots");
@@ -268,6 +268,19 @@ test("the door cards plan by Key Efficiency: less than a whole key opens a door 
   // A card's Dampen multiplies with it: 94% of 95% is under 0.9.
   assert.equal(planHand(at(940), ["door"], "tower"), null);
   assert.ok(planHand({ ...at(940), cardRules: () => ({ scale: 0.95 }) }, ["door"], "tower"));
+});
+
+test("the door cards plan by the door cards held: YELLOW DOOR's 5% makes 0.95 of a key open a yellow door", () => {
+  const at = (doorOff?: { yellow?: number; wood?: number }, rows = ["@.D"]) => ({ ...board(rows, { keys: { yellow: 0.95, blue: 0, red: 0 } }), doorOff });
+  for (const card of ["door", "yellowDoor"] as const) {
+    assert.equal(planHand(at(), [card], "tower"), null, `${card}: not without the discount`);
+    assert.ok(planHand(at({ yellow: 5 }), [card], "tower"), `${card}: with it`);
+  }
+  // WOODEN DOOR's cheapens the key a Wooden Door takes, and the HP breaking it does.
+  assert.ok(planHand(at({ wood: 5 }, ["@.W"]), ["door"], "tower"));
+  const breaks = (hp: number, doorOff?: { wood: number }) => planHand({ ...board(["@.W"], { hp }), doorOff }, ["woodenDoor"], "tower");
+  assert.equal(breaks(480), null, "500 HP to break it down fells a hero of 480");
+  assert.ok(breaks(480, { wood: 5 }), "475 doesn't");
 });
 
 /** What `explainStuck` finds blocking `hand`: each blocker's tile, place,

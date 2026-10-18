@@ -50,6 +50,26 @@ export function doorCost(tile: Tile, player: Opener, scale = 1, tollScale = scal
  * keyed door that is also one. */
 export const drainsHp = (rule: DoorRule) => rule.type === "fullHp" || (rule.type === "keys" && !!rule.heart);
 
+/** A single yellow door, YELLOW DOOR's: one yellow key, a Heart Door's drain or not. */
+export function isYellowDoor(tile: Tile) {
+  const rule = doorRule(tile);
+  return rule.type === "keys" && rule.mode === "all" && rule.keys.length === 1 && rule.keys[0] === "yellow";
+}
+/** The doors the door cards make cheaper while held (`CardBonus.door`), and
+ * the percent less each costs: a single yellow door's key (YELLOW DOOR), the
+ * HP a door draining HP takes (HEART DOOR), and a Wooden Door's key and the
+ * HP breaking it takes (WOODEN DOOR). */
+export type DoorKind = "yellow" | "heart" | "wood";
+export type DoorDiscounts = Partial<Record<DoorKind, number>>;
+/** What `off` multiplies the door `tile`'s keys and its HP toll by: 1 for
+ * each it leaves alone. */
+export function doorDiscount(tile: Tile, off?: DoorDiscounts): { keys: number; toll: number } {
+  if (!off) return { keys: 1, toll: 1 };
+  const rule = doorRule(tile), less = (percent = 0) => (100 - percent) / 100;
+  if (rule.type === "wood") return { keys: less(off.wood), toll: less(off.wood) };
+  return { keys: isYellowDoor(tile) ? less(off.yellow) : 1, toll: drainsHp(rule) ? less(off.heart) : 1 };
+}
+
 export function doorId(tile: Tile): DoorId {
   const rule = doorRule(tile);
   if (rule.type === "fullHp") return "heart";

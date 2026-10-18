@@ -1,5 +1,6 @@
 import { BADGES, badgeOn, badgesOn, badgeValue, type RunBadge } from "./badges.ts";
 import type { Board } from "./board.ts";
+import type { DoorDiscounts } from "./doors.ts";
 import { KEY_TO_HP_PERCENT, SIPHONS, TRADER_YELLOW_KEYS, isSiphon, linkedToNext, walkAll, type CardId, type CardRules, type HandAt, type SiphonCard } from "./cards.ts";
 import type { Mode } from "./entities.ts";
 import type { Run } from "./runs.ts";
@@ -14,7 +15,8 @@ const SKIP_SALT = 0x5c1b7;
 
 /** What the hand rules read from the game, each time (an erase replaces
  * the save, and undo or a mode change the run): the save, the active run
- * and its board, the mode, the hand, and Key Efficiency's cost. */
+ * and its board, the mode, the hand, Key Efficiency's cost and the door
+ * cards' discounts. */
 export interface HandHost {
   readonly save: Save;
   readonly run: Run;
@@ -22,6 +24,8 @@ export interface HandHost {
   readonly mode: Mode;
   readonly hand: readonly CardId[];
   readonly keyCost: number;
+  /** The percent less each kind of door costs (`HandAt.doorOff`). */
+  readonly doorOff?: DoorDiscounts;
   /** How far the Archer's arrows reach, and the wrap (`HandAt.shotReach`). */
   readonly shotReach?: { range: number; wrap: number };
 }
@@ -43,6 +47,9 @@ export class HandRules implements HandAt {
   }
   get keyCost() {
     return this.host.keyCost;
+  }
+  get doorOff() {
+    return this.host.doorOff;
   }
   get shotReach() {
     return this.host.shotReach;
@@ -253,7 +260,7 @@ export class HandRules implements HandAt {
     return snap((this.run.player.maxHp * KEY_TO_HP_PERCENT) / 100);
   }
   /** The run's training level of the row siphon `card` drains (Max HP for
-   * KEY SIPHON, DEF for BK SIPHON, ATK for RK SIPHON): the hero's own ranks
+   * YK SIPHON, DEF for BK SIPHON, ATK for RK SIPHON): the hero's own ranks
    * and those bought with Silver this run, less the levels it siphoned (1
    * for the first use, 2 for the second, and so on); 0 outside a run. */
   siphonLevel(card: SiphonCard) {

@@ -198,7 +198,7 @@ for (const [card, id, color] of [["blueSiphon", "defense", "blue"], ["redSiphon"
     assert.ok(near(p[id], stat - top), "the first use takes one level");
     assert.equal(g.run.loadout![id], p[id]);
     assert.deepEqual([g.handRules.cardUses(card), g.handRules.siphonLevel(card), g.handRules.siphonCost(card)], [1, 2, 2]);
-    assert.equal(g.handRules.cardUses("keySiphon"), 0, "counted apart from KEY SIPHON");
+    assert.equal(g.handRules.cardUses("keySiphon"), 0, "counted apart from YK SIPHON");
     g.autoTurn();
     assert.ok(near(p[id], stat - trained(row(id), 3)), "the second takes two");
     assert.equal(g.handRules.canAct(card), false, "none left for a third");

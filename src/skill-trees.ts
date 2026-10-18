@@ -33,7 +33,7 @@ export const TREES: SkillTree[] = [
     // Blue Key and Faster Trainers either side of the Archives, Rehearsed steps
     // left of Into the depths, and Pocket Money (then Spare Change, Wishing
     // Well and Free Training below it) and Greater Heal after it,
-    // either side of the core path down the middle (Lifesteal, Buy Quantity, Thorns, then Key Siphon).
+    // either side of the core path down the middle (Lifesteal, Buy Quantity, Thorns, then YK Siphon).
     // Recovery and Regen Research (then Parry, then Revive) stand under Greater Heal.
     { id: "cardBlueKey", icon: "⚿", x: 20, y: 120, requires: ["archives"] },
     { id: "inspirationUndos", icon: "↺", x: 20, y: 142, requires: ["archives"] },
@@ -55,7 +55,7 @@ export const TREES: SkillTree[] = [
     { id: "regenResearch", icon: "♥", x: 90, y: 178, requires: ["greaterHeal"] },
     { id: "parry", icon: "⇋", x: 90, y: 196, requires: ["regenResearch"] },
     { id: "revive", icon: "☼", x: 90, y: 214, requires: ["parry"] },
-    // The cards down the middle, a row clear of Key Siphon: Yellow Door (Key < Badges,
+    // The cards down the middle, a row clear of YK Siphon: Yellow Door (Key < Badges,
     // then Key ≥ Badges, to its right; Heart Door Resilience, then Heart Door, to its
     // left), Weak Enemy (Base, then Strong, to its left, Fast under Base; Elite, then Boss, to its
     // right, Non-Boss under Boss), Chest, BK Siphon (BK Trader, then YK to HP, to its left; Red

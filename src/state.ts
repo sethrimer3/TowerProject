@@ -1064,7 +1064,7 @@ export class Game {
     const crit = this.crit, keys = Object.entries(this.handBonus.keys);
     const keyFind = keys.length ? { keyFind: Object.fromEntries(keys.map(([color, k]) => [color, k.percent])) } : {};
     return { potionHeal, percentPotion: trainedAmount(this.trainingNow, "potion"), regen,
-      heartToll: researched(this.save.archives, "heartToll"), keyCost: this.keyCost, ...keyFind,
+      heartToll: researched(this.save.archives, "heartToll"), keyCost: this.keyCost, ...keyFind, ...(this.doorOff ? { doorOff: this.doorOff } : {}),
       shardAttack: researched(this.save.archives, "shardAttackPercent") * boonFactor(this.run, "attack"), shardDefense: researched(this.save.archives, "shardDefensePercent"),
       ...(worn.victoryHeal ? { victoryHeal: worn.victoryHeal } : {}), ...(crit ? { crit } : {}) };
   }
@@ -1082,6 +1082,13 @@ export class Game {
    * (Key Efficiency research): what steps pay and the door cards plan by. */
   get keyCost() {
     return researched(this.save.archives, "keyCost");
+  }
+  /** The percent less each kind of door costs, from the door cards the run's
+   * hand holds: what steps pay and the door cards plan by; undefined with
+   * none. */
+  get doorOff() {
+    const doors = this.handBonus.doors;
+    return Object.keys(doors).length ? doors : undefined;
   }
   /** Where the Training tab reads its rows' values: this mode's hero, and
    * the run while one is inside (`TrainingView`). */

@@ -1,6 +1,6 @@
 # Door and key schedule
 
-How often each kind of door, and the keys to open them, appear on a Tower floor, by tower and floor. The goal is one steady difficulty ramp: every floor a little harder than the one below, every tower a little harder than the one before, so the player needs to keep investing in progress upgrades (Key Efficiency, the Find Key research, Key Siphon, badges) to keep up.
+How often each kind of door, and the keys to open them, appear on a Tower floor, by tower and floor. The goal is one steady difficulty ramp: every floor a little harder than the one below, every tower a little harder than the one before, so the player needs to keep investing in progress upgrades (Key Efficiency, the Find Key research, YK Siphon, badges) to keep up.
 
 The Delve follows the same schedules by equivalent floor, each delve the tower of its number's (section 6).
 
@@ -152,7 +152,7 @@ Yellow runs 0.1–0.3 above its aim: keys in guarded niches and keyed floors' ke
 A surplus is intended: it dwindles as the ratio falls below 1 higher up, and a run warping to a later floor starts without it. Blue and red fall up to 0.25 under theirs at depth, where the planner can't always find room for a key source. Thinned keys made potions commoner: about 6 a floor, from 5.
 
 What helps the player keep up:
-- **Already in the game:** Key Efficiency, Find Yellow Key, Key Siphon, the Effective badge, breaking wooden doors.
+- **Already in the game:** Key Efficiency, Find Yellow Key, YK Siphon, the Effective badge, breaking wooden doors.
 - **Proposed, each as its own spec later:** Find Blue Key and Find Red Key research, research or a Training row cutting wooden-door durability, a badge for door cards that lowers a door's cost or gives a key back.
 
 ## 5. Census tool

@@ -307,7 +307,7 @@ _Avoid_: penetration, armor break, sunder
 The damage a hero's shroud blocks in each fight: the enemy's strikes, after DEF, wear it away before any HP is lost, and it is whole again when the next fight starts. The Shroud skill gives the first point; Shroud training adds more.
 _Avoid_: shield (the equipment slot), barrier
 
-**Key Siphon**:
+**YK Siphon**:
 A card that moves nowhere: its turn trades Max HP training levels, for the rest of the run only, for a yellow key, each use in a run taking one level more than the last (1, then 2, then 3 …). Skipped once the run has too few Max HP training levels left for the next use. **BK Siphon** and **RK Siphon** do the same with DEF and ATK training levels, for a blue and a red key, each counting its own uses; the three are the **siphons**.
 _Avoid_: drain
 
@@ -469,7 +469,7 @@ One way of moving the hero, toward one kind of target: the stairs, a potion, a d
 _Avoid_: skill (a skill is something the player uses), ability
 
 **Card bonus**:
-What a card gives for as long as the run's hand holds it, beside where it moves the hero, whichever card leads there: a key card's keys worth more and paying more Gold, the Chest card's chance of a Supply or Equipment Chest, or an enemy card's ATK against and Gold from the enemies it heads for.
+What a card gives for as long as the run's hand holds it, beside where it moves the hero, whichever card leads there: a key card's keys worth more and paying more Gold, the Chest card's chance of a Supply or Equipment Chest, an enemy card's ATK against and Gold from the enemies it heads for, or a door card's doors costing less (their keys, and the HP they drain or breaking them takes).
 _Avoid_: perk, passive
 
 **Supply Chest**:

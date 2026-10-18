@@ -333,8 +333,8 @@ export const UPGRADES = [
   },
   {
     id: "keySiphon",
-    name: "Key Siphon",
-    description: "Add the KEY SIPHON card to your deck: it trades Max HP training levels, for the rest of the run, for a yellow key, each use costing one level more than the last",
+    name: "YK Siphon",
+    description: "Add the YK SIPHON card to your deck: it trades Max HP training levels, for the rest of the run, for a yellow key, each use costing one level more than the last",
     card: "keySiphon",
     base: 5,
     max: 1,

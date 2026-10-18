@@ -107,7 +107,7 @@ function shield(p) {
   rect(p, 17, 16, 14, 13, C.steel2);
   rect(p, 23, 16, 2, 19, C.blue);
 }
-/** A heart (KEY SIPHON's, under its key): the curve
+/** A heart (YK SIPHON's, under its key): the curve
  * (x² + y² − 1)³ ≤ x²y³ over 28 × 26 pixels, dark red round its edge with a
  * light spot on its upper left lobe. */
 function heart(p) {
@@ -302,7 +302,7 @@ const ICONS = {
   },
 };
 
-const CARDS = [["stairs", "STAIRS"], ["heal", "HEAL"], ["door", "DOOR"], ["key", "KEY"], ["yellowKey", "YELLOW KEY"], ["blueKey", "BLUE KEY"], ["monster", "ENEMY"], ["atkUp", "ATK UP"], ["defUp", "DEF UP"], ["keySiphon", "KEY SIPHON"],
+const CARDS = [["stairs", "STAIRS"], ["heal", "HEAL"], ["door", "DOOR"], ["key", "KEY"], ["yellowKey", "YELLOW KEY"], ["blueKey", "BLUE KEY"], ["monster", "ENEMY"], ["atkUp", "ATK UP"], ["defUp", "DEF UP"], ["keySiphon", "YK SIPHON"],
   ["yellowDoor", "YELLOW DOOR"], ["heartDoor", "HEART DOOR"], ["weakEnemy", "WEAK ENEMY"], ["baseEnemy", "BASE ENEMY"], ["strongEnemy", "STRONG ENEMY"],
   ["eliteEnemy", "ELITE ENEMY"], ["bossEnemy", "BOSS ENEMY"], ["nonBossEnemy", "NON-BOSS ENEMY"], ["fastEnemy", "FAST ENEMY"], ["chest", "CHEST"], ["blueSiphon", "BK SIPHON"], ["blueTrader", "BK TRADER"], ["keyToHp", "YK TO HP"],
   ["redKey", "RED KEY"], ["redSiphon", "RK SIPHON"], ["torch", "TORCH"], ["woodenDoor", "WOODEN DOOR"], ["flyingEnemy", "FLYING ENEMY"], ["archer", "ARCHER"]];

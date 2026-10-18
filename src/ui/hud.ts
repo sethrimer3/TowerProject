@@ -481,7 +481,7 @@ function renderHand(game: Game) {
     card.classList.toggle("focused", i === focused);
     const title = handCardTitle(game, hand[i]);
     if (card.title !== title) card.title = title;
-    // A card that acts in place greys out while it can't (KEY SIPHON
+    // A card that acts in place greys out while it can't (YK SIPHON
     // without the Max HP training levels its next use takes), and one
     // resting for the floor (Deprioritize with every mark made).
     card.classList.toggle("unable", !game.run.outside && ((IN_PLACE.has(hand[i]) && !game.handRules.canAct(hand[i])) || game.handRules.cardResting(hand[i])));

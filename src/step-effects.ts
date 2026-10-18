@@ -1,6 +1,6 @@
 import { snap } from "./exact.ts";
 import { atWorst, predict, type CombatPrediction, type CritRule } from "./combat.ts";
-import { doorCost, doorRule, drainsHp, woodToll } from "./doors.ts";
+import { doorCost, doorDiscount, doorRule, drainsHp, woodToll, type DoorDiscounts } from "./doors.ts";
 import type { Player, Tile, KeyColor } from "./entities.ts";
 
 /** What stepping onto each pickup grants. The single source for the move
@@ -64,6 +64,9 @@ export type StepRules = {
   /** How much of a key each key colour a door takes costs, in tenths of a
    * percent (Key Efficiency research), 1,000 when absent. */
   keyCost?: number;
+  /** The percent less each kind of door costs, from the door cards the
+   * run's hand holds (`handBonus`), none when absent. */
+  doorOff?: DoorDiscounts;
   /** The percent more a key of each colour picked up is worth, from the
    * key cards the run's hand holds (`handBonus`), none when absent. */
   keyFind?: Partial<Record<KeyColor, number>>;
@@ -116,19 +119,22 @@ export function resolveStep(player: Player, tile: Tile, rules: StepRules = BASE_
     }
     case "door": {
       // Key Efficiency makes each key the door takes cost less, on top of
-      // a badge's scale.
-      const keyScale = snap((scale * (rules.keyCost ?? 1000)) / 1000);
-      const cost = doorCost(tile, player, keyScale, scale);
+      // a badge's scale, and a door card held makes its doors cost less
+      // again (each its own factor).
+      const off = doorDiscount(tile, rules.doorOff);
+      const keyScale = snap((scale * (rules.keyCost ?? 1000) * off.keys) / 1000), tollScale = snap(scale * off.toll);
+      const cost = doorCost(tile, player, keyScale, tollScale);
       if (cost === null) return { blocked: "locked" };
       for (const color of cost) next.keys[color] = snap(next.keys[color] - keyScale);
       const rule = doorRule(tile);
       // A Wooden Door broken without a key takes its durability in HP,
-      // under the badge's scale; DEF doesn't reduce it.
-      if (rule.type === "wood" && !cost.length) next.hp = snap(next.hp - woodToll(rule, scale));
+      // under the badge's scale and WOODEN DOOR's; DEF doesn't reduce it.
+      if (rule.type === "wood" && !cost.length) next.hp = snap(next.hp - woodToll(rule, tollScale));
       // A Heart Door's toll, all but 1 HP, shrinks under a weaker scale and
-      // never grows past it; Heart Door Resilience shrinks it by its percent.
+      // never grows past it; Heart Door Resilience and HEART DOOR shrink it
+      // by their percents.
       if (drainsHp(rule)) {
-        const toll = snap((next.hp - HEART_DOOR_HP) * Math.min(1, scale) * (rules.heartToll ?? 100) / 100);
+        const toll = snap((next.hp - HEART_DOOR_HP) * Math.min(1, scale) * off.toll * (rules.heartToll ?? 100) / 100);
         next.hp = Math.min(next.hp, snap(next.hp - toll));
       }
       effect.keysSpent = cost;
