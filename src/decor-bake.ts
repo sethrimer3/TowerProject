@@ -1,4 +1,5 @@
 import { tileRandom } from "./random.ts";
+import { drawKit, kitImage, spriteRevision } from "./sprite-kit.ts";
 import { FLOWER_COLORS, TILE_PX, tileKey, valueNoise, type DecorSource, type Flower, type Plant, type PlantKind, type TileDecor } from "./decor.ts";
 
 /** Bakes a tile's static decor (moss, water, vines, flowers, plants) into a
@@ -28,12 +29,15 @@ const WET_STONE: Rgba = [0, 0, 0, 0.22];
 /** Caches each tile's baked image (null when it has nothing to draw). */
 export class DecorBaker {
   private bakes = new Map<number, HTMLCanvasElement | null>();
+  private styleKey = "";
 
   clear() {
     this.bakes.clear();
   }
 
-  bake(src: DecorSource, x: number, y: number, d: TileDecor) {
+  bake(src: DecorSource, x: number, y: number, d: TileDecor, styled = false) {
+    const styleKey = styled ? `kit:${spriteRevision()}` : "original";
+    if (this.styleKey !== styleKey) { this.clear(); this.styleKey = styleKey; }
     const key = tileKey(x, y);
     if (this.bakes.has(key)) return this.bakes.get(key)!;
     if (typeof document === "undefined") return null;
@@ -42,11 +46,15 @@ export class DecorBaker {
     const ctx = cv.getContext("2d");
     if (!ctx) return null;
     const img = ctx.createImageData(TILE_PX, TILE_PX);
-    if (!paintTile(new TilePixels(img.data, src, x, y), d)) {
+    // Keep the procedural plant until its replacement really is ready.
+    // Image loads change the revision and invalidate both bake caches.
+    const replacements = new Set(styled ? d.plants.filter(p => !p.glow && kitImage(p.kind)) : []);
+    if (!paintTile(new TilePixels(img.data, src, x, y), d, replacements)) {
       this.bakes.set(key, null);
       return null;
     }
     ctx.putImageData(img, 0, 0);
+    for (const p of replacements) paintKitPlant(ctx, p);
     if (this.bakes.size > 3000) this.bakes.clear();
     this.bakes.set(key, cv);
     return cv;
@@ -86,13 +94,25 @@ class TilePixels {
 const inTile = (i: number, j: number) => i >= 0 && j >= 0 && i < TILE_PX && j < TILE_PX;
 
 /** Paints every static layer; false when nothing was drawn. */
-function paintTile(tp: TilePixels, d: TileDecor) {
+function paintTile(tp: TilePixels, d: TileDecor, replacements: Set<Plant>) {
   const water = d.water ? paintWater(tp, d.water) : false;
   const moss = d.moss ? paintMoss(tp, d.moss) : false;
   for (const p of d.vines) tp.blend(p.i, p.j, VINE[p.c]);
   for (const f of d.flowers) paintFlower(tp, f);
-  for (const p of d.plants) PLANTS[p.kind](tp, p);
+  for (const p of d.plants) if (!replacements.has(p)) PLANTS[p.kind](tp, p);
   return water || moss || d.vines.length + d.flowers.length + d.plants.length > 0;
+}
+
+/** Twelve native pixels, painted 1:1 on the tile's existing 24-pixel grid. */
+export function paintKitPlant(c: CanvasRenderingContext2D, p: Plant) {
+  if (p.kind !== "web") return drawKit(c, p.kind, p.i - 6, p.j - 10, 12, 12);
+  c.save();
+  const corner = p.corner ?? 0;
+  c.translate(corner === 1 || corner === 2 ? TILE_PX : 0, corner >= 2 ? TILE_PX : 0);
+  c.rotate(corner * Math.PI / 2);
+  const drawn = drawKit(c, "web", 0, 0, 12, 12);
+  c.restore();
+  return drawn;
 }
 
 // ---------------------------------------------------------------- water

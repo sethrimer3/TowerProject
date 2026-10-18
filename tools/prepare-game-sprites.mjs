@@ -6,7 +6,7 @@ import { mkdirSync, readdirSync, writeFileSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { deflateSync } from "node:zlib";
-import { ICON_SPRITES, WORLD_SPRITES, CONTROL_SPRITES, NAMED_ENEMY_SPRITES } from "../src/sprite-kit.ts";
+import { ICON_SPRITES, WORLD_SPRITES, CONTROL_SPRITES, DETAIL_SPRITES, NAMED_ENEMY_SPRITES } from "../src/sprite-kit.ts";
 import { ICON_ROWS, ICON_PALETTE } from "../src/ui/equipment-icons.ts";
 import { CARD_SPRITE_SUBJECTS } from "../src/sprite-cards.ts";
 const root = fileURLToPath(new URL("../", import.meta.url));
@@ -21,7 +21,8 @@ const run = (args) => new Promise((resolve, reject) => {
   p.on("error", reject);
   p.on("exit", code => code === 0 ? resolve() : reject(new Error(`ImageMagick exit ${code}`)));
 });
-const cardsOnly = process.argv.includes("--cards-only");
+const detailsOnly = process.argv.includes("--details-only");
+const cardsOnly = detailsOnly || process.argv.includes("--cards-only");
 const manifest = cardsOnly ? JSON.parse(readFileSync(join(out,"manifest.json"),"utf8")) : { palette: "../ui/frames/manifest.json", nativeSize: 24, assets: {}, terrain: {} };
 if (!cardsOnly) for (const [file, ids] of [["icons.png", ICON_SPRITES], ["world.png", WORLD_SPRITES], ["controls.png", CONTROL_SPRITES]]) {
   const image = join(source, file), header = readFileSync(image);
@@ -41,7 +42,7 @@ if (!cardsOnly) for (const [file, ids] of [["icons.png", ICON_SPRITES], ["world.
     await run([image, "-crop", `${cw}x${ch}+${x}+${y}`, "+repage", "-channel", "A", "-threshold", "85%", "+channel",
       "-trim", "+repage", "-filter", "point", "-resize", `${inner}x${inner}`, "-background", "none",
       "-gravity", file === "world.png" && !building ? "south" : "center", "-extent", `${n}x${n}`,
-      "+dither", "-remap", palette, "-strip", `PNG32:${join(out, `${id}.png`)}`]);
+      "-write", "mpr:original", "+dither", "-remap", palette, "mpr:original", "-compose", "CopyAlpha", "-composite", "-strip", `PNG32:${join(out, `${id}.png`)}`]);
     manifest.assets[id] = { file: `${id}.png`, width: n, height: n };
   }
 }
@@ -49,9 +50,24 @@ if (!cardsOnly) for (const [file, ids] of [["icons.png", ICON_SPRITES], ["world.
 if (!cardsOnly) for (const [folder, names, prefix] of [["enemies", NAMED_ENEMY_SPRITES, "enemy"], ["materials", ["iron-bar", "steel-bar", "silversteel-bar", "embersteel-bar", "starsteel-bar", "voidsteel-bar"], "metal"]]) {
   for (const name of names) {
     const id = `${prefix}-${name}`;
-    await run([join(root,`public/assets/${folder}/${name}.png`),"-channel","A","-threshold","50%","+channel","-filter","point","-resize","24x24!","+dither","-remap",palette,"-strip",`PNG32:${join(out,`${id}.png`)}`]);
+    await run([join(root,`public/assets/${folder}/${name}.png`),"-channel","A","-threshold","50%","+channel","-filter","point","-resize","24x24!","-write","mpr:original","+dither","-remap",palette,"mpr:original","-compose","CopyAlpha","-composite","-strip",`PNG32:${join(out,`${id}.png`)}`]);
     manifest.assets[id]={file:`${id}.png`,width:24,height:24};
   }
+}
+
+// Small dressing exports at 12 native pixels: it paints at 1:1 inside a
+// 24-pixel tile, keeping the same pixel density as the larger objects.
+if (!process.argv.includes("--cards-only")) for (const [i, id] of DETAIL_SPRITES.entries()) {
+  const image = join(source, "details.png");
+  const edges = [40, 350, 655, 940, 1230];
+  const row = Math.floor(i / 4), x = i % 4 * 313;
+  const n = i >= 8 ? 12 : 24, inner = n - 2;
+  await run([image, "-crop", `313x${edges[row + 1] - edges[row]}+${x}+${edges[row]}`, "+repage",
+    "-channel", "A", "-threshold", "85%", "+channel", "-trim", "+repage",
+    ...(id === "web" ? ["-flop"] : []), "-filter", "point", "-resize", `${inner}x${inner}`,
+    "-background", "none", "-gravity", "center", "-extent", `${n}x${n}`,
+    "-write", "mpr:original", "+dither", "-remap", palette, "mpr:original", "-compose", "CopyAlpha", "-composite", "-strip", `PNG32:${join(out, `${id}.png`)}`]);
+  manifest.assets[id] = { file: `${id}.png`, width: n, height: n };
 }
 
 // Equipment retains each Unique piece's own silhouette, exported as true
@@ -72,7 +88,7 @@ if (!cardsOnly) for (const [id, rows] of Object.entries(ICON_ROWS)) {
   const header=Buffer.alloc(13);header.writeUInt32BE(24);header.writeUInt32BE(24,4);header[8]=8;header[9]=6;
   const intermediate=join(temp,`${id}.png`);
   writeFileSync(intermediate,Buffer.concat([Buffer.from("89504e470d0a1a0a","hex"),chunk("IHDR",header),chunk("IDAT",deflateSync(raw)),chunk("IEND",Buffer.alloc(0))]));
-  await run([intermediate,"+dither","-remap",palette,"-strip",`PNG32:${join(out,`equip-${id}.png`)}`]);
+  await run([intermediate,"-write","mpr:original","+dither","-remap",palette,"mpr:original","-compose","CopyAlpha","-composite","-strip",`PNG32:${join(out,`equip-${id}.png`)}`]);
   manifest.assets[`equip-${id}`]={file:`equip-${id}.png`,width:24,height:24};
 }
 
@@ -83,7 +99,7 @@ const terrain = [...walk(join(root,"public/assets/tilesets")), ...walk(join(root
 const tiles=[];
 if (!cardsOnly) for(const [i,path]of terrain.entries()){
   const tile=join(temp,`terrain-${i}.png`);
-  await run([path,"-filter","point","-resize","24x24!","-channel","A","-threshold","50%","+channel","+dither","-remap",palette,"-strip",`PNG32:${tile}`]);
+  await run([path,"-filter","point","-resize","24x24!","-channel","A","-threshold","50%","+channel","-write","mpr:original","+dither","-remap",palette,"mpr:original","-compose","CopyAlpha","-composite","-strip",`PNG32:${tile}`]);
   tiles.push(tile);manifest.terrain[path.slice(join(root,"public/assets/").length)]={x:i%16*24,y:Math.floor(i/16)*24};
 }
 // montage is a subcommand, so it precedes the shared thread limit.
@@ -93,7 +109,7 @@ if (!cardsOnly) await new Promise((resolve,reject)=>{
 });
 writeFileSync(join(out,"manifest.json"),JSON.stringify(manifest,null,2)+"\n");
 if (!cardsOnly) writeFileSync(join(root,"src/sprite-terrain-index.ts"),"// Generated by tools/prepare-game-sprites.mjs.\nexport const SPRITE_TERRAIN: Record<string, { x: number; y: number }> = "+JSON.stringify(manifest.terrain,null,2)+";\n");
-for (const [id, subject] of Object.entries(CARD_SPRITE_SUBJECTS)) {
+if (!detailsOnly) for (const [id, subject] of Object.entries(CARD_SPRITE_SUBJECTS)) {
   const frame = join(root,"public/assets/ui/frames/slot.png");
   await run(["-size","48x64","xc:none","-filter","point",
     "(",frame,"-crop","48x6+0+0","+repage",")","-geometry","+0+0","-composite",

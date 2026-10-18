@@ -622,6 +622,86 @@
       "width": 24,
       "height": 24
     },
+    "hammer": {
+      "file": "hammer.png",
+      "width": 24,
+      "height": 24
+    },
+    "merge": {
+      "file": "merge.png",
+      "width": 24,
+      "height": 24
+    },
+    "lock": {
+      "file": "lock.png",
+      "width": 24,
+      "height": 24
+    },
+    "pointer": {
+      "file": "pointer.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-rare": {
+      "file": "relic-rare.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-epic": {
+      "file": "relic-epic.png",
+      "width": 24,
+      "height": 24
+    },
+    "cart": {
+      "file": "cart.png",
+      "width": 24,
+      "height": 24
+    },
+    "deck": {
+      "file": "deck.png",
+      "width": 24,
+      "height": 24
+    },
+    "fern": {
+      "file": "fern.png",
+      "width": 12,
+      "height": 12
+    },
+    "mushrooms": {
+      "file": "mushrooms.png",
+      "width": 12,
+      "height": 12
+    },
+    "tuft": {
+      "file": "tuft.png",
+      "width": 12,
+      "height": 12
+    },
+    "sprout": {
+      "file": "sprout.png",
+      "width": 12,
+      "height": 12
+    },
+    "crate-broken": {
+      "file": "crate-broken.png",
+      "width": 12,
+      "height": 12
+    },
+    "barrel-broken": {
+      "file": "barrel-broken.png",
+      "width": 12,
+      "height": 12
+    },
+    "pebbles": {
+      "file": "pebbles.png",
+      "width": 12,
+      "height": 12
+    },
+    "web": {
+      "file": "web.png",
+      "width": 12,
+      "height": 12
+    },
     "equip-weapon": {
       "file": "equip-weapon.png",
       "width": 24,

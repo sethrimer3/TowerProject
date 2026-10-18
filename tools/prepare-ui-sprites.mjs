@@ -33,10 +33,15 @@ for (const [index, name] of names.entries()) {
     size = "24x12!";
     slice = 0;
   }
+  // Stretch a flat center behind live text; stretchable atlas shading can
+  // otherwise become large, distracting blocks in tall HUD panels.
+  const center = name === "banner" ? "#e1bb78" : name === "button-danger" ? "#532c36"
+    : name === "button-hover" || name === "button-selected" ? "#293543" : "#1b2430";
   await new Promise((resolve, reject) => {
     const child = spawn("magick", ["-limit", "thread", "1", source, "-crop", crop, "+repage", "-channel", "A",
       "-threshold", "50%", "+channel", "-filter", "point", "-resize", size,
-      "+dither", "-remap", palette, "-strip", `PNG32:${join(out, `${name}.png`)}`], { stdio: "inherit", timeout: 10000 });
+      ...(slice ? ["-fill", center, "-draw", "rectangle 6,6 41,17"] : []),
+      "-write", "mpr:original", "+dither", "-remap", palette, "mpr:original", "-compose", "CopyAlpha", "-composite", "-strip", `PNG32:${join(out, `${name}.png`)}`], { stdio: "inherit", timeout: 10000 });
     child.on("error", reject);
     child.on("exit", (code) => code === 0 ? resolve() : reject(new Error(`Exporting ${name}: exit ${code}`)));
   });

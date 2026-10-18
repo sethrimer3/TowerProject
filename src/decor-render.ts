@@ -93,11 +93,11 @@ export class DecorLayer {
   /** Paints tile (x, y)'s baked moss, water, vines, and plants, in tile
    * units (0..24), for the renderer's cached ground. False while the tile
    * is still waiting to be planned. */
-  bakeTile(c: CanvasRenderingContext2D, x: number, y: number) {
+  bakeTile(c: CanvasRenderingContext2D, x: number, y: number, styled = false) {
     const d = this.plan(x, y);
     if (!d) return false;
     if (d.empty) return true;
-    const img = this.baker.bake(this.src!, x, y, d);
+    const img = this.baker.bake(this.src!, x, y, d, styled);
     if (img) c.drawImage(img, 0, 0, TILE_PX, TILE_PX);
     return true;
   }

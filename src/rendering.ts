@@ -339,7 +339,8 @@ export class Renderer {
    * them), with the board's sprites mirrored in its water. */
   private drawDecorGround(f: FrameContext) {
     if (!this.decorOn || !this.decor.key) return;
-    this.decorCache.draw(f.c, f, f.dpr, this.decor.key, f.now, CACHE_COLUMNS, (ctx, x, y) => this.decor.bakeTile(ctx, x, y));
+    const key = this.decor.key + (f.look.styledSprites ? `:kit:${spriteRevision()}` : "");
+    this.decorCache.draw(f.c, f, f.dpr, key, f.now, CACHE_COLUMNS, (ctx, x, y) => this.decor.bakeTile(ctx, x, y, f.look.styledSprites));
     this.decor.drawGround(f.c, this.decorFrame(f), this.mirroredSprites(f));
   }
   /** The tiles, torches and hero, for the water to mirror. */

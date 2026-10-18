@@ -250,8 +250,8 @@ export const materialIcon = (id: EquipMaterialId, className = "mat-icon") => kit
 /** The action icons: a hammer (dismantle), three arrows into one (merge), an
  * arrow up (level up), a padlock (locked). */
 export const ACTION_ICONS = {
-  dismantle: `<svg class="act-icon" viewBox="0 0 12 12" shape-rendering="crispEdges" aria-hidden="true"><rect x="1" y="2" width="7" height="3" fill="#9aa3ab"/><rect x="1" y="2" width="7" height="1" fill="#e3e6e8"/><rect x="4" y="5" width="2" height="6" fill="#7a4a28"/></svg>`,
-  merge: `<svg class="act-icon" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2l4 4M10 2L6 6M6 1v5M6 6v5" stroke="#e8b84a" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M3.5 8.5L6 11l2.5-2.5" stroke="#e8b84a" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
-  upgrade: `<svg class="act-icon" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1.5L10.5 6.5H7.6V10.5H4.4V6.5H1.5z" fill="#ffc94a" stroke="#5a3200" stroke-width="0.8" stroke-linejoin="round"/></svg>`,
-  lock: `<svg class="act-icon" viewBox="0 0 12 12" aria-hidden="true"><path d="M3.5 5.5V4a2.5 2.5 0 0 1 5 0v1.5" stroke="#e3e6e8" stroke-width="1.4" fill="none"/><rect x="2.5" y="5.5" width="7" height="5" rx="1" fill="#e8b84a"/></svg>`,
+  dismantle: kitIcon("hammer", `<svg class="act-icon" viewBox="0 0 12 12" shape-rendering="crispEdges" aria-hidden="true"><rect x="1" y="2" width="7" height="3" fill="#9aa3ab"/><rect x="1" y="2" width="7" height="1" fill="#e3e6e8"/><rect x="4" y="5" width="2" height="6" fill="#7a4a28"/></svg>`, "act-icon"),
+  merge: kitIcon("merge", `<svg class="act-icon" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2l4 4M10 2L6 6M6 1v5M6 6v5" stroke="#e8b84a" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M3.5 8.5L6 11l2.5-2.5" stroke="#e8b84a" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`, "act-icon"),
+  upgrade: kitIcon("arrow-up", `<svg class="act-icon" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1.5L10.5 6.5H7.6V10.5H4.4V6.5H1.5z" fill="#ffc94a" stroke="#5a3200" stroke-width="0.8" stroke-linejoin="round"/></svg>`, "act-icon"),
+  lock: kitIcon("lock", `<svg class="act-icon" viewBox="0 0 12 12" aria-hidden="true"><path d="M3.5 5.5V4a2.5 2.5 0 0 1 5 0v1.5" stroke="#e3e6e8" stroke-width="1.4" fill="none"/><rect x="2.5" y="5.5" width="7" height="5" rx="1" fill="#e8b84a"/></svg>`, "act-icon"),
 };

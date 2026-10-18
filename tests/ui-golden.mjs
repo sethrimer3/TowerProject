@@ -19,7 +19,7 @@ const GOLDEN = new URL("./fixtures/ui.golden.json", import.meta.url);
 const BASELINE_DIR = "test-results/ui-golden";
 const OUT_DIR = "test-results/ui";
 const server = await startPreview(4190);
-const browser = await chromium.launch({ headless: true, channel: process.env.PLAYWRIGHT_CHANNEL || "msedge" });
+const browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH } : { channel: process.env.PLAYWRIGHT_CHANNEL || "msedge" }) });
 let exitCode = 1;
 try {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });

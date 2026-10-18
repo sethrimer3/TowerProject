@@ -61,7 +61,7 @@ export function drawCrates(c: CanvasRenderingContext2D, x: number, y: number, cr
     const wood = WOOD[k.tone % WOOD.length];
     const at = { bx: ox + k.x, top: oy + k.y - k.lift };
     if (broken) {
-      if (!k.lift) drawWreck(c, k, at, wood);
+      if (!k.lift && !(styled && drawKit(c, `${k.kind}-broken`, at.bx + Math.round((k.w - 12) / 2), at.top + k.h - 10, 12, 12))) drawWreck(c, k, at, wood);
       continue;
     }
     if (!k.lift) {
