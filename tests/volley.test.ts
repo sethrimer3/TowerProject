@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { defaults } from "../src/save.ts";
 import { volleyTurn, type VolleyTurn } from "../src/volley.ts";
-import { FOE_GAIN, foeShotCost, type Volleys } from "../src/ranged.ts";
+import { FOE_GAIN, foeGain, foeShotCost, type Volleys } from "../src/ranged.ts";
 import type { Enemy, Player, Tile } from "../src/entities.ts";
 
 const shooter: Enemy = { name: "Archer", hp: 50, attack: 7, defense: 0, tier: 3, strength: "normal", ranged: true };
@@ -47,6 +47,23 @@ test("a charge whose tile no longer holds a Ranged enemy is dropped; one out of 
   assert.deepEqual(out.shots.map((s) => s.from), [{ x: 1, y: 0 }]);
   assert.deepEqual(out.volleys.foes, { "8,8": 1000 + FOE_GAIN, "1,0": 300 });
   assert.equal(out.hp, 93);
+});
+
+test("a Fast Ranged enemy charges twice as fast, so it shoots twice as often as a plain one on the same floor", () => {
+  assert.equal(foeGain({ ...shooter, fast: true }), 2 * FOE_GAIN);
+  assert.equal(foeGain(shooter), FOE_GAIN);
+  const floor = 251, fired = (enemy: Enemy) => {
+    let volleys: Volleys = { turn: 0 }, shots = 0;
+    for (let i = 1; i <= 40; i++) {
+      const out = volleyTurn(turn({ "1,0": enemy }, { floorOf: () => floor, volleys: { ...volleys, turn: i } }));
+      shots += out.shots.length;
+      volleys = out.volleys;
+    }
+    return shots;
+  };
+  // 4,750 a shot: every 9.5 turns, or 4.75 for a Fast one.
+  assert.equal(fired(shooter), 5);
+  assert.equal(fired({ ...shooter, fast: true }), 9);
 });
 
 test("under Rapid Fire the Archer fires several arrows a turn, each leaving later, the next aiming at what the last left standing", () => {

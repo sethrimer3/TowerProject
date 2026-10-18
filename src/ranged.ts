@@ -11,7 +11,8 @@
  * of a turn left over carries exactly to the next shot: a shooter gains
  * `gain` units a turn and a shot costs `cost`, so it fires every
  * cost / gain turns on average (3 shots in 10 turns fire 4, 3 and 3 turns
- * apart). A shooter with no charge kept is ready; one that is ready and has
+ * apart); a Fast enemy gains twice as much, so shoots twice as often.
+ * A shooter with no charge kept is ready; one that is ready and has
  * nothing to shoot waits, banking nothing more. The Archer's charge runs a
  * hundredth of a turn at a time (`archerTurn`), so Rapid Fire can start
  * and end mid-turn. Each tile's roll is a fixed number of the run seed, the
@@ -84,6 +85,9 @@ export const woundMore = (raw: Tile, damage: number): Tile => ({
  * equivalent floor `floor`: 10 turns, a 500th of a turn less each floor (a
  * turn less every 500), never under 1. */
 export const FOE_GAIN = 500;
+/** The charge `enemy` gains a turn: a Fast one twice `FOE_GAIN`, so it
+ * shoots twice as often, the cost shrinking by floor as anyone's. */
+export const foeGain = (enemy: Enemy) => (enemy.fast ? 2 * FOE_GAIN : FOE_GAIN);
 export const foeShotCost = (floor: number) => Math.max(FOE_GAIN, 10 * FOE_GAIN - Math.max(0, floor - 1));
 /** What an arrow costs the Archer: its gain every hundredth of a turn
  * (`ARCHER_TICKS` a turn) is its Attack Speed (twentieths of a shot every

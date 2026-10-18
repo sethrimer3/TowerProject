@@ -12,7 +12,7 @@ import { guaranteedCrits, isBoss } from "./combat.ts";
 import { critRule } from "./loadout.ts";
 import { trainedAmount } from "./config.ts";
 import { researched } from "./archives.ts";
-import { ARCHER_TICKS, archerTurn, arrowBoost, arrowDamage, charged, enemiesWithin, FOE_GAIN, foeOn, foeRange, foeShotCost, held, ready, shoots, shotDamage, spent, type InReach, type Volleys } from "./ranged.ts";
+import { ARCHER_TICKS, archerTurn, arrowBoost, arrowDamage, charged, enemiesWithin, foeGain, foeOn, foeRange, foeShotCost, held, ready, shoots, shotDamage, spent, type InReach, type Volleys } from "./ranged.ts";
 import { tileRandom } from "./random.ts";
 import { snap } from "./exact.ts";
 
@@ -73,14 +73,15 @@ export function volleyTurn(turn: VolleyTurn): VolleyOutcome {
   return { volleys: v, shots, hp: hero.hp, hurt, ...(fell ? { fell } : {}), kills };
 }
 
-/** Each Ranged or Flying enemy's cooldown runs a turn, and those within
+/** Each Ranged or Flying enemy's cooldown runs a turn (twice as fast for a
+ * Fast one, `foeGain`), and those within
  * reach that are ready shoot the hero, closest first, until one fells it. */
 function foesShoot({ board, wrap, floorOf }: VolleyTurn, p: Player, v: Volleys, shots: Shot[], range: number) {
   const foes = { ...v.foes }, costs = new Map<string, number>();
   for (const k of Object.keys(foes)) {
     const [x, y] = k.split(",").map(Number) as [number, number];
     const foe = foeOn(board.tile(x, y));
-    if (foe && shoots(foe)) foes[k] = charged(foes[k], FOE_GAIN)!;
+    if (foe && shoots(foe)) foes[k] = charged(foes[k], foeGain(foe))!;
     else delete foes[k];
   }
   let fell: Enemy | undefined, hurt = false;

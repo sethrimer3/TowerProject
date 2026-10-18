@@ -154,7 +154,7 @@ A Ranged enemy (`src/ranged.ts`) shoots the hero from a distance, so a hero who 
 - **Who:** any enemy but a boss or Greater Boss, from Tower III and Delve III up, on its own roll, so an enemy may be both Fast and Ranged.
 - **Share** (`rangedShare`): a point and a half under Fast's, growing as it does: 11.25% on Tower III's floor 1, 29.25% on floor 2,401.
 - **Roll:** one `tileRandom` number per run seed, floor and tile (`RANGED_SALT`), after the Fast roll (`rangedCells`); it changes no stats.
-- **Shots:** from five sixths of the hero's Attack Range (2.5 tiles to its 3), Euclidean, walls and doors no obstacle, every 10 turns (`foeShotCost`: a turn less every 500 floors, at least 1), its ATK less DEF, cut by parries, less the whole shroud.
+- **Shots:** from five sixths of the hero's Attack Range (2.5 tiles to its 3), Euclidean, walls and doors no obstacle, every 10 turns (`foeShotCost`: a turn less every 500 floors, at least 1; a Fast one charges twice as fast, `foeGain`, so every 5), its ATK less DEF, cut by parries, less the whole shroud.
 - **Pay:** 1 Gold more (`RANGED_GOLD`), 2 more for one both Fast and Ranged.
 - **Look:** "Ranged" after "Fast" and before its strength (*Fast Ranged Elite Goblin*), and an arrow at the tile's top right, the Fast mark moving below it.
 
