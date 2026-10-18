@@ -206,9 +206,9 @@ test("a run going inside gives its hero the ATK of its hand's enemy cards", () =
   assert.equal(decode(JSON.stringify({ ...g.save })).tower.run?.player.foeAttack, undefined);
 });
 
-test("an enemy card held makes each enemy it covers drop 5% more Gold, multiplying the other bonuses and each other", () => {
+test("an enemy card held makes each enemy it covers drop 5% more Gold, multiplying the other bonuses, and two cards' percents add", () => {
   assert.equal(foeGold(["weakEnemy"], foe("weak")), 1.05);
-  assert.equal(foeGold(["weakEnemy", "nonBossEnemy", "monster"], foe("weak")), 1.1025);
+  assert.equal(foeGold(["weakEnemy", "nonBossEnemy", "monster"], foe("weak")), 1.1);
   assert.equal(foeGold(["weakEnemy"], foe("strong")), 1);
   const g = new Game(defaults());
   g.newRun({ seed: 7 });
@@ -216,6 +216,6 @@ test("an enemy card held makes each enemy it covers drop 5% more Gold, multiplyi
   g.run.hand = ["stairs"];
   const plain = purse().killGoldPreview(foe("elite"), 3, 3);
   g.run.hand = ["stairs", "eliteEnemy", "nonBossEnemy"];
-  assert.equal(purse().killGoldPreview(foe("elite"), 3, 3), snap(plain * 1.1025));
+  assert.equal(purse().killGoldPreview(foe("elite"), 3, 3), snap(plain * 1.1));
   assert.equal(purse().killGoldPreview(foe("weak"), 3, 3) > 0, true);
 });

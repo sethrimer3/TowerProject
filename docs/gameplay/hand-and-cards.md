@@ -24,7 +24,7 @@ Tower III's floor 10 Goal adds **Archer** to the deck, a plain wooden bow on its
 Some cards also give a bonus for as long as the run's hand holds them, whichever card leads the hero to the key or chest; a card's details list it under what it does.
 **Yellow Key**, **Blue Key** and **Red Key** make each key of their colour picked up worth 5% more (1.05 keys) and pay 1, 2 or 3 more Gold (raised by Gold Bonus, like a key's own Gold); **Key** gives no bonus.
 The enemy cards but **Enemy** (Weak, Base, Strong, Elite, Boss, Non-Boss, Fast and Flying Enemy) give +5% ATK against the enemies they head for, in fights and for arrows alike, and make each of those enemies drop 5% more Gold when defeated, multiplying every other Gold bonus (shown as *+5% ATK vs Weak Enemies* and *+5% Gold from Weak Enemies*).
-Two such cards covering the same enemy add their ATK (+10%) and multiply their Gold (×1.1025); a Boss Enemy covers Greater Bosses too, and **Enemy** gives no bonus.
+Two such cards covering the same enemy add their ATK (+10%) and their Gold (+10%, one ×1.1 on the rest); a Boss Enemy covers Greater Bosses too, and **Enemy** gives no bonus.
 **Archer** gives its arrows +5% ATK against a boss or Greater Boss (shown as +5% Shot ATK for Bosses); fights are untouched.
 **Chest** gives each treasure chest, once Equipment is open, a 1.5% chance of being a **Supply Chest**, which adds Equipment upgrade materials to its Gold (kills drop none) (5 of one category in Tower I and 2 more in each tower after, raised by Material Find), and a 0.5% chance of being an **Equipment Chest**, which adds a Standard piece: 67% Common, 30% Uncommon, 3% Rare (bosses drop none).
 Equipment's Supply and Equipment Chest chance raises both chances by its percent.

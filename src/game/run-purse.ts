@@ -180,7 +180,8 @@ export class RunPurse {
    * `FAST_GOLD` more first, a Ranged or Flying one `RANGED_GOLD`, a Shielded one
    * `SHIELDED_GOLD`), and for an
    * `instakill` (the hero's first strike ended it) by Mug research too; then
-   * ×1.05 for each enemy card the run's hand holds that covers it (`foeGold`). */
+   * by 5% more for each enemy card the run's hand holds that covers it,
+   * added into one factor (`foeGold`). */
   private killGold(enemy: Enemy, instakill = false) {
     const raw = snap(((ENEMY_GOLD[enemy.strength] + (enemy.fast ? FAST_GOLD : 0) + (enemy.ranged || enemy.flying ? RANGED_GOLD : 0) + (enemy.shielded ? SHIELDED_GOLD : 0)) * this.goldBonus) / 10_000);
     const gold = instakill ? snap((raw * researched(this.save.archives, "instakillGold")) / 100) : raw;

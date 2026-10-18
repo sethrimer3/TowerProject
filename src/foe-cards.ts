@@ -20,7 +20,8 @@ export const isFoeCard = (id: string): id is FoeCard => Object.hasOwn(FOE_CARDS,
 /** The percent more ATK an enemy card gives against the enemies it covers. */
 export const FOE_ATTACK = 5;
 /** The percent more Gold an enemy card makes each enemy it covers drop,
- * multiplying every other Gold bonus (and each other such card's). */
+ * multiplying every other Gold bonus; the cards covering one enemy add
+ * their percents into one factor. */
 export const FOE_GOLD = 5;
 
 /** The enemy cards of `hand` that cover `enemy`. */
@@ -35,9 +36,6 @@ export function foeAttack(foes: Partial<Record<FoeCard, number>> | undefined, en
 }
 
 /** What `enemy`'s kill Gold is multiplied by for the enemy cards of `hand`
- * covering it: ×1.05 for each. */
-export function foeGold(hand: Iterable<string>, enemy: Enemy) {
-  let factor = 1;
-  for (const _ of foeCardsFor(hand, enemy)) factor = snap((factor * (100 + FOE_GOLD)) / 100);
-  return factor;
-}
+ * covering it: their percents added, 5% each, as one factor (×1.1 for two). */
+export const foeGold = (hand: Iterable<string>, enemy: Enemy) =>
+  snap((100 + FOE_GOLD * foeCardsFor(hand, enemy).length) / 100);
