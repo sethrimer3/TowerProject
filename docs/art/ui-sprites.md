@@ -1,8 +1,11 @@
 # UI sprite kit
 
-Settings → **Sprites** opts into the PNG interface kit and defaults to off, including saves from before this option existed.
-The separate **Turn off board sprites** option controls the existing dungeon artwork.
+Settings → **Sprites** opts into the shared PNG interface and world kit and defaults to off, including saves from before this option existed.
+The separate **Turn off board sprites** option also opts out of the new world art.
 UI themes and Game themes retain their saved selections.
+The default Medieval interface and free Classic interface use the kit; every other owned UI theme overrides its interface frames, icons and cards.
+Every non-Classic Game theme overrides world sprites independently of the UI theme, including the portrait and Defend's optional sprites.
+Switching back to the default look restores the kit without changing the saved Sprites preference.
 
 ## Art contract
 
@@ -16,7 +19,13 @@ Do not use SVG replacements, gradients, glow, blur or fine texture in this kit.
 The runtime components live in `public/assets/ui/frames/`, with sizes and slice widths in `manifest.json`.
 There are six button states, panel and dialog frames, an inset field, a progress track, three colored progress fills, a tiling surface, a title banner and a card slot.
 `src/ui-sprites.css` applies these components only under `html.ui-sprites`; buttons, dialogs, settings controls, HUD bars and page panels retain their existing interactions.
-Card faces, map markers and skill-node buttons keep their specialized artwork.
+The shared extension lives in `public/assets/style/`, with its native dimensions in `manifest.json`.
+It includes currencies, pickups, controls, four hero directions, every named enemy, forest and Defend structures, Equipment, materials and card faces.
+Card names remain live text over the PNG backgrounds.
+All ten biome sets and the forest retain their seeded variations and wall adjacency while sharing a palette-normalized 24-pixel terrain atlas.
+Equipment's existing Unique silhouettes and the named enemy roster are preserved during normalization.
+Objects use a 24-pixel native grid; larger structures use 48 pixels, and card faces use 48 × 64.
+The source atlases for [icons](../../assets/game-sprites/icons.png), [world objects](../../assets/game-sprites/world.png) and [controls](../../assets/game-sprites/controls.png) remain outside the deployed assets.
 
 ## Prompt template
 
@@ -41,6 +50,9 @@ With ImageMagick installed, run `node tools/prepare-ui-sprites.mjs` from the rep
 An optional first argument selects a replacement source atlas, but a different layout requires updating the measured crop rectangles.
 Source art remains outside `public/` so it is not deployed.
 The game needs no image-processing dependency.
+For the world and icon extension, run `node --experimental-transform-types tools/prepare-game-sprites.mjs`.
+That exporter also packs the terrain atlas and produces `src/sprite-terrain-index.ts`.
+PNG load failures keep the original icon or procedural renderer visible; loaded images invalidate cached terrain and city layers through a shared revision.
 
 Before accepting a replacement, inspect the native-size pieces and compare normal, hover, selected, pressed and disabled states together.
 Check phone and desktop layouts, keyboard focus, save/reload, toggling off, erase-progress reset, and short-of-Gems controls remaining actionable.

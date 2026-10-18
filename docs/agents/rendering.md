@@ -1,5 +1,11 @@
 # Rendering
 
+**Optional shared PNG kit.** `sprite-style.ts` enables it only with Sprites on, board sprites allowed and the Classic Game theme worn.
+`BoardLook.styledSprites` passes this choice to tiles, pickups, all named enemies, four-direction heroes, torches, rising rewards and forest buildings.
+The normalized terrain atlas (`sprite-terrain.ts`, generated `sprite-terrain-index.ts`) preserves every biome's texture selection and adjacency.
+`spriteRevision()` participates in ground cache keys so asynchronous image arrivals repaint fallbacks.
+Other Game themes keep their own drawing and portrait art; changing UI themes affects only the interface kit.
+
 Board drawing (`Renderer`, frames, lighting, decor, popups, tile caches, the forest outside, weather), the render goldens, and the Medieval and Neon themes.
 
 **Rendering layers.** `rendering.ts` (`Renderer`) owns the camera and smooth player interpolation.

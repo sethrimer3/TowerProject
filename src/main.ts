@@ -16,6 +16,10 @@ import "./pixel.css";
 import "./doodle.css";
 import "./murk.css";
 import "./ui-sprites.css";
+import { bindSpriteImages, drawKit, onSpritesLoaded } from "./sprite-kit.ts";
+import { usesGameSprites } from "./sprite-style.ts";
+import { gameLook } from "./theme-collection.ts";
+import { themedBoardOf } from "./themed-boards.ts";
 import { load, persist } from "./save.ts";
 import { stampProfile } from "./profile.ts";
 import { Game } from "./state.ts";
@@ -67,6 +71,7 @@ import { themeToast } from "./ui/theme-menu.ts";
 // Wires the pages together: builds the shell, creates the game and renderer,
 // and routes navigation, HUD refreshes and input between the ui/ modules.
 
+bindSpriteImages();
 buildShell(document.querySelector<HTMLDivElement>("#app")!);
 const game = new Game(load());
 // A new profile (or one from before profiles kept the date) is made now.
@@ -76,12 +81,23 @@ bindMedievalFeedback(() => uiLook(game.save) === "medieval", () => game.save.set
 // The frame loop settles fights as they finish playing out.
 game.fights.playsFights = true;
 const renderer = new Renderer(document.querySelector("#world")!, game);
-{
+function renderPortrait() {
   const portraitCtx = (document.querySelector("#portrait-sprite") as HTMLCanvasElement).getContext("2d")!;
+  portraitCtx.clearRect(0, 0, 24, 24);
+  const themed = themedBoardOf(gameLook(game.save));
+  if (themed) {
+    portraitCtx.save();
+    themed.hero(portraitCtx, game.facing);
+    portraitCtx.restore();
+    return;
+  }
+  if (usesGameSprites(game.save) && drawKit(portraitCtx, "hero-down")) return;
   if (game.save.settings.spritesOff || !drawGameSprite(portraitCtx, "player")) {
     Renderer.drawHero(portraitCtx);
   }
 }
+renderPortrait();
+onSpritesLoaded(renderPortrait);
 let tab: Tab = "tower";
 const modal = el("modal") as HTMLDialogElement;
 const ctx: AppContext = {
@@ -155,6 +171,7 @@ const defendPage = new DefendPage(el("defend"), {
   persist: save,
   reduceMotion: () => game.save.settings.reduceMotion,
   devMode: () => game.save.settings.devMode,
+  sprites: () => usesGameSprites(game.save),
 });
 
 function save() {
@@ -163,6 +180,7 @@ function save() {
 }
 /** Refreshes the HUD from game state, saves, and asks a fallen hero's player what next. */
 function update() {
+  renderPortrait();
   followMode();
   if (boardHeadingStale(game)) renderBoardHeading(game, overlay);
   // Inside a run the tabs give way to an empty row, kept for the hand.

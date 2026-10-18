@@ -15,8 +15,10 @@ import { onCityArtLoaded, paintCityLayer } from "./city-layer.ts";
 import { carriedLights, drawDamage, drawScorches, drawUnits, shadowCasters, type Brush } from "./battle-art.ts";
 import { drawGrid, drawOverlay, type Overlay } from "./edit-overlay.ts";
 import { drawFlag } from "./structure-art.ts";
+import { spriteRevision } from "../sprite-kit.ts";
 
 export type DrawOptions = {
+  styledSprites?: boolean;
   /** Show the (dim, gold) tile grid — while the player is editing. */
   grid: boolean;
   weather: Weather | null;
@@ -41,6 +43,7 @@ export class DefendRenderer {
   private layer: HTMLCanvasElement;
   private lctx: CanvasRenderingContext2D;
   private layerKey = "";
+  private styledSprites = false;
   private map: CityMap | null = null;
   px = 8;
 
@@ -112,6 +115,7 @@ export class DefendRenderer {
   }
 
   draw(map: CityMap, sim: DefendSim | null, overlay: Overlay | null, opts: DrawOptions) {
+    this.styledSprites = !!opts.styledSprites;
     this.refreshLayer(map, sim);
     const dt = this.lastNow ? (opts.now - this.lastNow) / 1000 : 0;
     this.lastNow = opts.now;
@@ -165,7 +169,7 @@ export class DefendRenderer {
   /** Blast scorches, then units, projectiles and effects (carrying torches
    * in weather). */
   private drawBattleUnits(sim: DefendSim, torches: boolean) {
-    const brush: Brush = { c: this.ctx, px: this.px };
+    const brush: Brush = { c: this.ctx, px: this.px, styledSprites: this.styledSprites };
     drawScorches(brush, sim);
     drawUnits(brush, sim, torches);
   }
@@ -183,14 +187,14 @@ export class DefendRenderer {
     let k = this.cam.s >= 2.5 ? 3 : this.cam.s >= 1.4 ? 2 : 1;
     while (k > 1 && W * H * k * k > 18e6) k--;
     this.layerScale = k;
-    const key = `${W}:${k}:${sim ? sim.mapVersion : -1}`;
+    const key = `${W}:${k}:${sim ? sim.mapVersion : -1}${this.styledSprites ? `:kit:${spriteRevision()}` : ""}`;
     if (map === this.map && key === this.layerKey) return;
     this.map = map;
     this.layerKey = key;
     this.lighting.setMap(map);
     this.layer.width = W * k;
     this.layer.height = H * k;
-    paintCityLayer(this.lctx, this.px * k, { map, sim, lights: this.lighting.lights, stones: this.lighting.roadStones });
+    paintCityLayer(this.lctx, this.px * k, { map, sim, lights: this.lighting.lights, stones: this.lighting.roadStones, styledSprites: this.styledSprites });
   }
 
   /** Folds fallen and rebuilt buildings into the lighting, then draws what

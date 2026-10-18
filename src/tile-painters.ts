@@ -13,6 +13,9 @@ import { drawEnemySprite, enemySpriteReady } from "./enemy-sprites.ts";
 import { rankChevrons } from "./rank-chevrons.ts";
 import { DELVE_ENEMY_NAMES } from "./scaling.ts";
 import { drawGameSprite, drawGameSpriteFrame, gameSprite, torchAnimationFrame, TORCH_FRAME_COUNT } from "./game-sprites.ts";
+import { drawKit, kitEnemy, kitImage } from "./sprite-kit.ts";
+import { drawKitTerrain } from "./sprite-terrain.ts";
+import { themedTileUrl } from "./themed-tilesets.ts";
 
 // Everything here paints in 24x24 tile space: the caller translates and
 // scales the context to the tile first.
@@ -38,6 +41,7 @@ export type BoardLook = {
   /** The roads laid to the clearing's buildings (outside only). */
   roads?: Roads;
   spritesOff: boolean;
+  styledSprites?: boolean;
   reduceMotion: boolean;
   /** Whether the first Tower section's hand-drawn art is showing: its own
    * doors, chests, floor, and the torch relief on that floor. Never with
@@ -53,7 +57,7 @@ type TileWorld = { tile(x: number, y: number): Tile | undefined };
  * per-tile variation), the time (for sparkles), and which art to use.
  * `lifted` items are off the ground (a reward rising from its tile), so they
  * cast no ground shadow. */
-export type TileArt = { x: number; y: number; time: number; spritesOff: boolean; reduceMotion: boolean; area1: boolean; lifted?: boolean };
+export type TileArt = { x: number; y: number; time: number; spritesOff: boolean; reduceMotion: boolean; area1: boolean; lifted?: boolean; styledSprites?: boolean };
 
 /** The first Tower section has its own hand-drawn doors, chests, and floor. */
 export const isArea1 = (mode: Mode, height: number) => mode === "tower" && height >= 0 && height < 10;
@@ -62,10 +66,10 @@ export const isArea1 = (mode: Mode, height: number) => mode === "tower" && heigh
  * on it (items, doors, enemies...). Returns false while ground art is still
  * loading, so cached layers know to repaint it. */
 export function paintTile(c: CanvasRenderingContext2D, world: TileWorld, t: Tile, x: number, y: number, time: number, layer: 0 | 1, look: BoardLook) {
-  if (look.outside) return layer !== 0 || drawForestTile(c, t, { x, y, seed: look.seed, center: look.entranceX, roads: look.roads }, !look.spritesOff);
+  if (look.outside) return layer !== 0 || drawForestTile(c, t, { x, y, seed: look.seed, center: look.entranceX, roads: look.roads }, !look.spritesOff, look.styledSprites);
   if (layer === 0) return paintGround(c, world, t, x, y, look);
   if (t.kind === "wall" || t.kind === "floor") return true;
-  paintContents(c, t, { x, y, time, spritesOff: look.spritesOff, reduceMotion: look.reduceMotion, area1: look.area1 });
+  paintContents(c, t, { x, y, time, spritesOff: look.spritesOff, reduceMotion: look.reduceMotion, area1: look.area1, styledSprites: look.styledSprites });
   return true;
 }
 
@@ -82,7 +86,7 @@ function paintGround(c: CanvasRenderingContext2D, world: TileWorld, t: Tile, x: 
   // Every biome has a PNG floor/wall set. Images load asynchronously; until
   // ready (or if an asset fails), the procedural renderer remains a complete
   // fallback and the Sprites setting can still opt out of bitmap art.
-  const drewSprite = !look.spritesOff && drawThemedTile(c, look.mode, look.height, wall, x, y, look.seed, neighbors);
+  const drewSprite = !look.spritesOff && ((look.styledSprites && drawKitTerrain(c, themedTileUrl(look.mode, look.height, wall, x, y, look.seed, neighbors))) || drawThemedTile(c, look.mode, look.height, wall, x, y, look.seed, neighbors));
   if (!drewSprite) drawTerrain(c, terrain);
   if (wall) {
     const decor = themeAt(look.mode, look.height, x, y, look.seed).decor;
@@ -129,7 +133,28 @@ const PAINTERS: Partial<Record<Tile["kind"], Painter>> = {
 };
 /** Doors, stairs, items, chests, and enemies. */
 export function paintContents(c: CanvasRenderingContext2D, t: Tile, art: TileArt) {
+  if (art.styledSprites && !art.spritesOff && paintKitContents(c, t)) return;
   PAINTERS[t.kind]?.(c, t, art);
+}
+
+function paintKitContents(c: CanvasRenderingContext2D, t: Tile) {
+  const id = t.kind === "key" ? `key-${t.color ?? "yellow"}`
+    : t.kind === "potion" ? `potion-${t.color === "red" ? "red" : "blue"}`
+    : t.kind === "attack" ? "sword" : t.kind === "defense" ? "shield"
+    : t.kind === "stairs" ? "stairs" : t.kind === "oneway" ? "arrow-up" : t.kind === "treasure" ? "chest-wood"
+    : t.kind === "reward" ? `chest-${t.tier === "gold" ? "gold" : "silver"}`
+    : t.kind === "openedChest" ? "chest-open" : null;
+  if (id) return drawKit(c, id);
+  if (t.kind !== "door") return false;
+  const rule = doorRule(t);
+  if (!drawKit(c, rule.type === "keys" && rule.mode === "any" ? "door-steel" : "door-wood")) return false;
+  if (drainsHp(rule)) drawKit(c, "heart", 8, 7, 8);
+  // Keep every colored-key requirement visible on mixed doors.
+  if (rule.type !== "wood" && "keys" in rule) {
+    const colors = rule.keys;
+    colors.forEach((color, i) => drawKit(c, `key-${color}`, 3 + i * 6, 14, 7));
+  }
+  return true;
 }
 
 function paintOneway(c: CanvasRenderingContext2D) {
@@ -419,10 +444,11 @@ const bakedEnemies = new Map<string, HTMLCanvasElement>();
 function paintEnemy(c: CanvasRenderingContext2D, t: Tile, art: TileArt) {
   const e = t.enemy!;
   groundShadow(c, 12, 21, 8, 2.6, 0.4);
+  const styled = !!art.styledSprites && !art.spritesOff && !!kitImage(kitEnemy(e.name));
   const sprite = !art.spritesOff && enemySpriteReady(e.name);
-  const key = `${e.name}|${e.tier}|${e.strength}|${e.fast ? "fast" : ""}|${sprite}${e.ranged ? "|ranged" : ""}${e.flying ? "|flying" : ""}`;
+  const key = `${e.name}|${e.tier}|${e.strength}|${e.fast ? "fast" : ""}|${sprite}${styled ? "|kit" : ""}${e.ranged ? "|ranged" : ""}${e.flying ? "|flying" : ""}`;
   let baked = bakedEnemies.get(key);
-  if (!baked) bakedEnemies.set(key, (baked = bakeEnemy(e, sprite)));
+  if (!baked) bakedEnemies.set(key, (baked = bakeEnemy(e, sprite, styled)));
   c.drawImage(baked, -ENEMY_MARGIN, -ENEMY_MARGIN);
 }
 
@@ -430,9 +456,9 @@ function paintEnemy(c: CanvasRenderingContext2D, t: Tile, art: TileArt) {
  * wider than the tile on every side. The rings go on from the outside in,
  * each cutting out what lies inside it first, so every band keeps exactly
  * its own opacity; the sprite goes on last. */
-function bakeEnemy(e: Enemy, sprite: boolean) {
+function bakeEnemy(e: Enemy, sprite: boolean, styled = false) {
   const m = ENEMY_MARGIN, body = square(24), bc = body.getContext("2d")!;
-  if (!(sprite && drawEnemySprite(bc, e.name))) paintEnemyBody(bc, e);
+  if (!(styled && drawKit(bc, kitEnemy(e.name))) && !(sprite && drawEnemySprite(bc, e.name))) paintEnemyBody(bc, e);
   const out = square(24 + 2 * m), oc = out.getContext("2d")!;
   const look = ENEMY_LOOK[e.strength];
   for (const ring of [...look.rings, ENEMY_OUTLINE]) {
@@ -504,7 +530,9 @@ function square(size: number) {
 }
 
 /** The hero with its grounding shadow and outline. */
-export function paintHero(c: CanvasRenderingContext2D, spritesOff: boolean) {
+export function paintHero(c: CanvasRenderingContext2D, spritesOff: boolean, styled = false, facing = { dx: 0, dy: -1 }) {
+  const direction = facing.dx > 0 ? "right" : facing.dx < 0 ? "left" : facing.dy > 0 ? "up" : "down";
+  if (!spritesOff && styled && drawKit(c, `hero-${direction}`)) return;
   groundShadow(c, 12, 22, 8, 2.6, 0.4);
   withOutline(c, DARK_BLUE, (c) => {
     if (!spritesOff && drawGameSprite(c, "player")) return;
@@ -544,7 +572,8 @@ export function paintHeroFallback(c: CanvasRenderingContext2D) {
 /** Torch + a living flame: the flame stretches, shrinks, and leans side
  * to side from its base (in step with the light's sway), and its core
  * pulses with the light's flicker. The handle stays put. */
-export function paintTorch(c: CanvasRenderingContext2D, t: Torch, now: number, reduceMotion: boolean, spritesOff: boolean) {
+export function paintTorch(c: CanvasRenderingContext2D, t: Torch, now: number, reduceMotion: boolean, spritesOff: boolean, styled = false) {
+  if (!spritesOff && styled && drawKit(c, "torch")) return;
   const sway = getTorchSway(t, now, reduceMotion);
   const flicker = getTorchFlicker(t, now, reduceMotion);
   // Small deterministic per-torch variation (flame height/width) so a room

@@ -2,6 +2,8 @@
  * (drawn into the city layer and the palette icons), the keep's live banner,
  * and the shared palette. */
 import { SOLDIER, type StructureKind } from "./catalog.ts";
+import { drawKit } from "../sprite-kit.ts";
+export const structureSprite = (kind: StructureKind) => ({ keep: "keep", barracks: "barracks", archerBarracks: "archer-barracks", archerTower: "archer-tower", cannonTower: "cannon-tower", watchTower: "watch-tower" })[kind];
 
 /** Medieval roofing: terracotta tile, old brick, weathered timber, thatch,
  * slate and straw. */
@@ -16,7 +18,8 @@ export type ArtBox = { x: number; y: number; w: number; h: number; px: number };
 /** A structure's box snapped to whole pixels, with its outline widths. */
 type Frame = ArtBox & { inset: number; line: number };
 
-export function paintStructureArt(c: CanvasRenderingContext2D, kind: StructureKind, box: ArtBox) {
+export function paintStructureArt(c: CanvasRenderingContext2D, kind: StructureKind, box: ArtBox, styled = false) {
+  if (styled && drawKit(c, structureSprite(kind), box.x, box.y, box.w, box.h)) return;
   const px = box.px;
   const f: Frame = {
     x: Math.round(box.x),
@@ -119,11 +122,13 @@ function paintWatchTower(c: CanvasRenderingContext2D, f: Frame) {
 export type IconItem = StructureKind | "cityTile" | "bomb";
 
 /** Palette icon for an item, drawn into a small square canvas. */
-export function paintIcon(canvas: HTMLCanvasElement, item: IconItem) {
+export function paintIcon(canvas: HTMLCanvasElement, item: IconItem, styled = false) {
   const c = canvas.getContext("2d")!;
   const n = canvas.width;
   c.clearRect(0, 0, n, n);
   c.imageSmoothingEnabled = false;
+  if (styled && item === "bomb" && drawKit(c, "bomb", 0, 0, n)) return;
+  if (styled && item !== "cityTile" && item !== "bomb" && drawKit(c, structureSprite(item), 0, 0, n)) return;
   if (item === "cityTile") return paintCityIcon(c, n);
   if (item === "bomb") return paintBombIcon(c, n);
   const def = { keep: [3, 3], barracks: [3, 4], archerBarracks: [3, 3], archerTower: [2, 2], cannonTower: [2, 2], watchTower: [2, 2] }[item];

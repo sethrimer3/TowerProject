@@ -178,3 +178,31 @@ html.ui-sprites .page-title:not(#_) {
   color: #10151c;
 }
 html.ui-sprites .page-title :is(h2, small):not(#_) { color: #10151c; text-shadow: none; }
+
+/* Sprite pairs preserve each theme's original icon. Only loaded PNGs
+   replace it, and only under the effective default sprite presentation. */
+.sprite-icon { position: relative; display: inline-block; vertical-align: middle; }
+.sprite-fallback { display: contents; }
+.sprite-replacement, .sprite-card-label { display: none !important; }
+html.ui-sprites .sprite-ready > .sprite-fallback { visibility: hidden; }
+html.ui-sprites .sprite-ready > .sprite-replacement:not(#_) {
+  display: block !important;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: none;
+}
+html.ui-sprites .sprite-card.sprite-ready + .sprite-card-label:not(#_) {
+  display: block !important;
+  position: absolute;
+  bottom: 8%;
+  inset-inline: 4%;
+  color: #eee0b7;
+  font-size: 7px;
+  line-height: 1.15;
+  text-align: center;
+  pointer-events: none;
+}

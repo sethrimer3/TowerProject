@@ -1,5 +1,10 @@
 # Defend
 
+With the shared Sprites option active under the Classic Game theme, `DefendHost.sprites` passes effective art through `DrawOptions.styledSprites` to the city, palette and units.
+Structures and troops draw shared PNGs; health, damage flashes, marks, torches, simulation, building footprints and pointer rules stay in their existing passes.
+The city and palette include `spriteRevision()` in their invalidation keys so art arriving after the first frame repaints.
+Other Game themes override this optional kit, and an absent host callback preserves the original renderer.
+
 Defend's battle simulation, units, drawing, board pointers, city building, fences and save; read with `docs/DEFEND.md`.
 
 Its battle simulation, `DefendSim` (`defend/sim.ts`), owns the world state and what happens to it (damage, rebuilding, blasts, movement), and steps the units in a fixed order.

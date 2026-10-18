@@ -5,6 +5,7 @@ import { decorSourceFor, FLOWER_COLORS, TILE_PX, tileDecor, tileKey, waterAt, ty
 import { DecorBaker } from "./decor-bake.ts";
 import { DecorEffects, type EffectFrame, type TileAt } from "./decor-effects.ts";
 import { WaterReflections, type MirroredSprites, type ReflectionScene, type Wave } from "./decor-reflections.ts";
+import { spriteRevision } from "./sprite-kit.ts";
 import { drawBlades, drawCrates, DRIP_FALL, dripNow, dripRings, PixelBatch, ring, type DripNow, type Sway } from "./decor-sprites.ts";
 
 export type { MirroredSprites } from "./decor-reflections.ts";
@@ -20,7 +21,7 @@ export type { MirroredSprites } from "./decor-reflections.ts";
 
 /** One frame of the board as the decor passes see it: the view, the time in
  * ms, the board's tiles, and whether motion is reduced. */
-export type DecorFrame = { view: BoardView; now: number; tileAt: TileAt; reduceMotion: boolean };
+export type DecorFrame = { view: BoardView; now: number; tileAt: TileAt; reduceMotion: boolean; styledSprites?: boolean };
 /** One step of the live effects: seconds since the last, the time in ms,
  * the hero's interpolated tile position, the board's tiles, and whether
  * motion is reduced. */
@@ -37,6 +38,7 @@ type Standing = { crates: DecorTile[]; thickets: DecorTile[] };
 type HeroPixels = { hgx: number; hgy: number };
 
 export class DecorLayer {
+  private styledSprites = false;
   src: DecorSource | null = null;
   private world: Board | null = null;
   private baker = new DecorBaker();
@@ -155,6 +157,7 @@ export class DecorLayer {
    * and tall grass. (The static pixels come from bakeTile, which the
    * renderer caches with the rest of the ground.) */
   drawGround(c: CanvasRenderingContext2D, f: DecorFrame, sprites?: MirroredSprites) {
+    this.styledSprites = !!f.styledSprites;
     const src = this.src;
     if (!src) return;
     c.save();
@@ -182,7 +185,7 @@ export class DecorLayer {
       if (d.water && d.waterCount) pools.push([x, y, d]);
     });
     return {
-      key: src.key, pools, now, reduceMotion, tileAt, sprites,
+      key: src.key + (this.styledSprites ? `:kit:${spriteRevision()}` : ""), pools, now, reduceMotion, tileAt, sprites,
       waves: () => this.waves(view, now),
       plan: (x, y) => this.plan(x, y),
       isBroken: (x, y) => this.effects.isBroken(src.key, x, y),
@@ -213,7 +216,7 @@ export class DecorLayer {
   }
 
   private drawCratesAt(c: CanvasRenderingContext2D, [x, y, d]: DecorTile) {
-    drawCrates(c, x, y, d.crates, this.effects.isBroken(this.src!.key, x, y));
+    drawCrates(c, x, y, d.crates, this.effects.isBroken(this.src!.key, x, y), this.styledSprites);
   }
 
   /** How tile (x, y)'s tall grass moves this frame. */
@@ -293,7 +296,8 @@ export class DecorLayer {
 
   /** Things in front of the hero: grass over its feet, the water line,
    * flying splinters and falling drips. */
-  drawForeground(c: CanvasRenderingContext2D, { view, now, tileAt, reduceMotion }: DecorFrame) {
+  drawForeground(c: CanvasRenderingContext2D, { view, now, tileAt, reduceMotion, styledSprites }: DecorFrame) {
+    this.styledSprites = !!styledSprites;
     const src = this.src;
     if (!src) return;
     const t = now / 1000, px = new PixelBatch();

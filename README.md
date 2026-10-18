@@ -54,6 +54,9 @@ Code lives in `src/`, with the Tower generator and its floors in `src/tower/`, t
 
 ## Browser verification
 
+The optional PNG sprite kit shares one palette across the interface, characters, items, cards and terrain; non-default UI and Game themes take precedence in their own areas.
+Its art guidelines and export tools are described in [UI sprites](docs/art/ui-sprites.md).
+
 Start `npm run dev` in another terminal, then run `npm run test:browser`. See [docs/agents/testing.md](docs/agents/testing.md) for browser-channel and screenshot details.
 
 ## GitHub Pages

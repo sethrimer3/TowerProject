@@ -1,0 +1,1879 @@
+{
+  "palette": "../ui/frames/manifest.json",
+  "nativeSize": 24,
+  "assets": {
+    "gold": {
+      "file": "gold.png",
+      "width": 24,
+      "height": 24
+    },
+    "silver": {
+      "file": "silver.png",
+      "width": 24,
+      "height": 24
+    },
+    "gem": {
+      "file": "gem.png",
+      "width": 24,
+      "height": 24
+    },
+    "shard": {
+      "file": "shard.png",
+      "width": 24,
+      "height": 24
+    },
+    "cell": {
+      "file": "cell.png",
+      "width": 24,
+      "height": 24
+    },
+    "medal": {
+      "file": "medal.png",
+      "width": 24,
+      "height": 24
+    },
+    "sword": {
+      "file": "sword.png",
+      "width": 24,
+      "height": 24
+    },
+    "shield": {
+      "file": "shield.png",
+      "width": 24,
+      "height": 24
+    },
+    "heart": {
+      "file": "heart.png",
+      "width": 24,
+      "height": 24
+    },
+    "key-yellow": {
+      "file": "key-yellow.png",
+      "width": 24,
+      "height": 24
+    },
+    "key-blue": {
+      "file": "key-blue.png",
+      "width": 24,
+      "height": 24
+    },
+    "key-red": {
+      "file": "key-red.png",
+      "width": 24,
+      "height": 24
+    },
+    "potion-blue": {
+      "file": "potion-blue.png",
+      "width": 24,
+      "height": 24
+    },
+    "potion-red": {
+      "file": "potion-red.png",
+      "width": 24,
+      "height": 24
+    },
+    "chest-wood": {
+      "file": "chest-wood.png",
+      "width": 24,
+      "height": 24
+    },
+    "chest-silver": {
+      "file": "chest-silver.png",
+      "width": 24,
+      "height": 24
+    },
+    "chest-gold": {
+      "file": "chest-gold.png",
+      "width": 24,
+      "height": 24
+    },
+    "chest-open": {
+      "file": "chest-open.png",
+      "width": 24,
+      "height": 24
+    },
+    "stairs": {
+      "file": "stairs.png",
+      "width": 24,
+      "height": 24
+    },
+    "torch": {
+      "file": "torch.png",
+      "width": 24,
+      "height": 24
+    },
+    "scroll": {
+      "file": "scroll.png",
+      "width": 24,
+      "height": 24
+    },
+    "hourglass": {
+      "file": "hourglass.png",
+      "width": 24,
+      "height": 24
+    },
+    "book": {
+      "file": "book.png",
+      "width": 24,
+      "height": 24
+    },
+    "cog": {
+      "file": "cog.png",
+      "width": 24,
+      "height": 24
+    },
+    "trophy": {
+      "file": "trophy.png",
+      "width": 24,
+      "height": 24
+    },
+    "ticket": {
+      "file": "ticket.png",
+      "width": 24,
+      "height": 24
+    },
+    "mail": {
+      "file": "mail.png",
+      "width": 24,
+      "height": 24
+    },
+    "gift": {
+      "file": "gift.png",
+      "width": 24,
+      "height": 24
+    },
+    "mission": {
+      "file": "mission.png",
+      "width": 24,
+      "height": 24
+    },
+    "event": {
+      "file": "event.png",
+      "width": 24,
+      "height": 24
+    },
+    "helmet": {
+      "file": "helmet.png",
+      "width": 24,
+      "height": 24
+    },
+    "chestplate": {
+      "file": "chestplate.png",
+      "width": 24,
+      "height": 24
+    },
+    "gloves": {
+      "file": "gloves.png",
+      "width": 24,
+      "height": 24
+    },
+    "boots": {
+      "file": "boots.png",
+      "width": 24,
+      "height": 24
+    },
+    "ring": {
+      "file": "ring.png",
+      "width": 24,
+      "height": 24
+    },
+    "amulet": {
+      "file": "amulet.png",
+      "width": 24,
+      "height": 24
+    },
+    "hero-up": {
+      "file": "hero-up.png",
+      "width": 24,
+      "height": 24
+    },
+    "hero-right": {
+      "file": "hero-right.png",
+      "width": 24,
+      "height": 24
+    },
+    "hero-down": {
+      "file": "hero-down.png",
+      "width": 24,
+      "height": 24
+    },
+    "hero-left": {
+      "file": "hero-left.png",
+      "width": 24,
+      "height": 24
+    },
+    "skeleton": {
+      "file": "skeleton.png",
+      "width": 24,
+      "height": 24
+    },
+    "slime": {
+      "file": "slime.png",
+      "width": 24,
+      "height": 24
+    },
+    "goblin": {
+      "file": "goblin.png",
+      "width": 24,
+      "height": 24
+    },
+    "orc": {
+      "file": "orc.png",
+      "width": 24,
+      "height": 24
+    },
+    "knight": {
+      "file": "knight.png",
+      "width": 24,
+      "height": 24
+    },
+    "mage": {
+      "file": "mage.png",
+      "width": 24,
+      "height": 24
+    },
+    "bat": {
+      "file": "bat.png",
+      "width": 24,
+      "height": 24
+    },
+    "dragon": {
+      "file": "dragon.png",
+      "width": 24,
+      "height": 24
+    },
+    "troll": {
+      "file": "troll.png",
+      "width": 24,
+      "height": 24
+    },
+    "golem": {
+      "file": "golem.png",
+      "width": 24,
+      "height": 24
+    },
+    "wraith": {
+      "file": "wraith.png",
+      "width": 24,
+      "height": 24
+    },
+    "demon": {
+      "file": "demon.png",
+      "width": 24,
+      "height": 24
+    },
+    "crystal": {
+      "file": "crystal.png",
+      "width": 24,
+      "height": 24
+    },
+    "spore": {
+      "file": "spore.png",
+      "width": 24,
+      "height": 24
+    },
+    "tower": {
+      "file": "tower.png",
+      "width": 48,
+      "height": 48
+    },
+    "cave": {
+      "file": "cave.png",
+      "width": 48,
+      "height": 48
+    },
+    "blacksmith": {
+      "file": "blacksmith.png",
+      "width": 48,
+      "height": 48
+    },
+    "hall": {
+      "file": "hall.png",
+      "width": 48,
+      "height": 48
+    },
+    "keep": {
+      "file": "keep.png",
+      "width": 48,
+      "height": 48
+    },
+    "barracks": {
+      "file": "barracks.png",
+      "width": 48,
+      "height": 48
+    },
+    "archer-barracks": {
+      "file": "archer-barracks.png",
+      "width": 48,
+      "height": 48
+    },
+    "archer-tower": {
+      "file": "archer-tower.png",
+      "width": 48,
+      "height": 48
+    },
+    "cannon-tower": {
+      "file": "cannon-tower.png",
+      "width": 48,
+      "height": 48
+    },
+    "watch-tower": {
+      "file": "watch-tower.png",
+      "width": 48,
+      "height": 48
+    },
+    "civilian": {
+      "file": "civilian.png",
+      "width": 24,
+      "height": 24
+    },
+    "swordsman": {
+      "file": "swordsman.png",
+      "width": 24,
+      "height": 24
+    },
+    "archer": {
+      "file": "archer.png",
+      "width": 24,
+      "height": 24
+    },
+    "crate": {
+      "file": "crate.png",
+      "width": 24,
+      "height": 24
+    },
+    "barrel": {
+      "file": "barrel.png",
+      "width": 24,
+      "height": 24
+    },
+    "shrine": {
+      "file": "shrine.png",
+      "width": 24,
+      "height": 24
+    },
+    "door-wood": {
+      "file": "door-wood.png",
+      "width": 24,
+      "height": 24
+    },
+    "door-steel": {
+      "file": "door-steel.png",
+      "width": 24,
+      "height": 24
+    },
+    "undo": {
+      "file": "undo.png",
+      "width": 24,
+      "height": 24
+    },
+    "redo": {
+      "file": "redo.png",
+      "width": 24,
+      "height": 24
+    },
+    "play": {
+      "file": "play.png",
+      "width": 24,
+      "height": 24
+    },
+    "pause": {
+      "file": "pause.png",
+      "width": 24,
+      "height": 24
+    },
+    "arrow-up": {
+      "file": "arrow-up.png",
+      "width": 24,
+      "height": 24
+    },
+    "arrow-down": {
+      "file": "arrow-down.png",
+      "width": 24,
+      "height": 24
+    },
+    "arrow-left": {
+      "file": "arrow-left.png",
+      "width": 24,
+      "height": 24
+    },
+    "arrow-right": {
+      "file": "arrow-right.png",
+      "width": 24,
+      "height": 24
+    },
+    "ad-screen": {
+      "file": "ad-screen.png",
+      "width": 24,
+      "height": 24
+    },
+    "settings-cog": {
+      "file": "settings-cog.png",
+      "width": 24,
+      "height": 24
+    },
+    "close": {
+      "file": "close.png",
+      "width": 24,
+      "height": 24
+    },
+    "check": {
+      "file": "check.png",
+      "width": 24,
+      "height": 24
+    },
+    "target": {
+      "file": "target.png",
+      "width": 24,
+      "height": 24
+    },
+    "focus": {
+      "file": "focus.png",
+      "width": 24,
+      "height": 24
+    },
+    "ignore": {
+      "file": "ignore.png",
+      "width": 24,
+      "height": 24
+    },
+    "bomb": {
+      "file": "bomb.png",
+      "width": 24,
+      "height": 24
+    },
+    "enemy-amethyst-golem": {
+      "file": "enemy-amethyst-golem.png",
+      "width": 24,
+      "height": 24
+    },
+    "enemy-armored-knight": {
+      "file": "enemy-armored-knight.png",
+      "width": 24,
+      "height": 24
+    },
+    "enemy-assassin": {
+      "file": "enemy-assassin.png",
+      "width": 24,
+      "height": 24
+    },
+    "enemy-bat": {
+      "file": "enemy-bat.png",
+      "width": 24,
+      "height": 24
+    },
+    "enemy-berserker": {
+      "file": "enemy-berserker.png",
+      "width": 24,
+      "height": 24
+    },
+    "enemy-blackstone-colossus": {
+      "file": "enemy-blackstone-colossus.png",
+      "width": 24,
+      "height": 24
+    },
+    "enemy-celestial-guardian": {
+      "file": "enemy-celestial-guardian.png",
+      "width": 24,
+      "height": 24
+    },
+    "enemy-coral-knight": {
+      "file": "enemy-coral-knight.png",
+      "width": 24,
+      "height": 24
+    },
+    "enemy-crystal-savant": {
+      "file": "enemy-crystal-savant.png",
+      "width": 24,
+      "height": 24
+    },
+    "enemy-cultist": {
+      "file": "enemy-cultist.png",
+      "width": 24,
+      "height": 24
+    },
+    "enemy-demon": {
+      "file": "enemy-demon.png",
+      "width": 24,
+      "height": 24
+    },
+    "enemy-dragon-whelp": {
+      "file": "enemy-dragon-whelp.png",
+      "width": 24,
+      "height": 24
+    },
+    "enemy-drowned-marauder": {
+      "file": "enemy-drowned-marauder.png",
+      "width": 24,
+      "height": 24
+    },
+    "enemy-gargoyle": {
+      "file": "enemy-gargoyle.png",
+      "width": 24,
+      "height": 24
+    },
+    "enemy-goblin": {
+      "file": "enemy-goblin.png",
+      "width": 24,
+      "height": 24
+    },
+    "enemy-golem": {
+      "file": "enemy-golem.png",
+      "width": 24,
+      "height": 24
+    },
+    "enemy-mage": {
+      "file": "enemy-mage.png",
+      "width": 24,
+      "height": 24
+    },
+    "enemy-obsidian-revenant": {
+      "file": "enemy-obsidian-revenant.png",
+      "width": 24,
+      "height": 24
+    },
+    "enemy-ogre": {
+      "file": "enemy-ogre.png",
+      "width": 24,
+      "height": 24
+    },
+    "enemy-orc": {
+      "file": "enemy-orc.png",
+      "width": 24,
+      "height": 24
+    },
+    "enemy-shadow-stalker": {
+      "file": "enemy-shadow-stalker.png",
+      "width": 24,
+      "height": 24
+    },
+    "enemy-skeleton": {
+      "file": "enemy-skeleton.png",
+      "width": 24,
+      "height": 24
+    },
+    "enemy-slime": {
+      "file": "enemy-slime.png",
+      "width": 24,
+      "height": 24
+    },
+    "enemy-spore-colossus": {
+      "file": "enemy-spore-colossus.png",
+      "width": 24,
+      "height": 24
+    },
+    "enemy-sporeling": {
+      "file": "enemy-sporeling.png",
+      "width": 24,
+      "height": 24
+    },
+    "enemy-starfire-adept": {
+      "file": "enemy-starfire-adept.png",
+      "width": 24,
+      "height": 24
+    },
+    "enemy-stone-warden": {
+      "file": "enemy-stone-warden.png",
+      "width": 24,
+      "height": 24
+    },
+    "enemy-temple-wraith": {
+      "file": "enemy-temple-wraith.png",
+      "width": 24,
+      "height": 24
+    },
+    "enemy-thief": {
+      "file": "enemy-thief.png",
+      "width": 24,
+      "height": 24
+    },
+    "enemy-troll": {
+      "file": "enemy-troll.png",
+      "width": 24,
+      "height": 24
+    },
+    "metal-iron-bar": {
+      "file": "metal-iron-bar.png",
+      "width": 24,
+      "height": 24
+    },
+    "metal-steel-bar": {
+      "file": "metal-steel-bar.png",
+      "width": 24,
+      "height": 24
+    },
+    "metal-silversteel-bar": {
+      "file": "metal-silversteel-bar.png",
+      "width": 24,
+      "height": 24
+    },
+    "metal-embersteel-bar": {
+      "file": "metal-embersteel-bar.png",
+      "width": 24,
+      "height": 24
+    },
+    "metal-starsteel-bar": {
+      "file": "metal-starsteel-bar.png",
+      "width": 24,
+      "height": 24
+    },
+    "metal-voidsteel-bar": {
+      "file": "metal-voidsteel-bar.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-weapon": {
+      "file": "equip-weapon.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-chestplate": {
+      "file": "equip-chestplate.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-helmet": {
+      "file": "equip-helmet.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-gloves": {
+      "file": "equip-gloves.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-boots": {
+      "file": "equip-boots.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-cape": {
+      "file": "equip-cape.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-belt": {
+      "file": "equip-belt.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-ring": {
+      "file": "equip-ring.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-amulet": {
+      "file": "equip-amulet.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-kingsbane": {
+      "file": "equip-kingsbane.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-reapersScythe": {
+      "file": "equip-reapersScythe.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-bloodpriceBlade": {
+      "file": "equip-bloodpriceBlade.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-bastionPlate": {
+      "file": "equip-bastionPlate.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-giantsHauberk": {
+      "file": "equip-giantsHauberk.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-verdantMail": {
+      "file": "equip-verdantMail.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-sentinelVisor": {
+      "file": "equip-sentinelVisor.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-scholarsCirclet": {
+      "file": "equip-scholarsCirclet.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-minersHelm": {
+      "file": "equip-minersHelm.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-brawlersWraps": {
+      "file": "equip-brawlersWraps.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-locksmithsGloves": {
+      "file": "equip-locksmithsGloves.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-alchemistsGloves": {
+      "file": "equip-alchemistsGloves.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-fleetstepBoots": {
+      "file": "equip-fleetstepBoots.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-pathfinderTreads": {
+      "file": "equip-pathfinderTreads.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-delversGreaves": {
+      "file": "equip-delversGreaves.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-magpieMantle": {
+      "file": "equip-magpieMantle.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-gatherersShroud": {
+      "file": "equip-gatherersShroud.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-pilgrimsCape": {
+      "file": "equip-pilgrimsCape.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-provisionersBelt": {
+      "file": "equip-provisionersBelt.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-championsGirdle": {
+      "file": "equip-championsGirdle.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-merchantsSash": {
+      "file": "equip-merchantsSash.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-silverBand": {
+      "file": "equip-silverBand.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-ringOfFury": {
+      "file": "equip-ringOfFury.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-ringOfWarding": {
+      "file": "equip-ringOfWarding.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-spireSignet": {
+      "file": "equip-spireSignet.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-heartOfTheGrove": {
+      "file": "equip-heartOfTheGrove.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-sagesLocket": {
+      "file": "equip-sagesLocket.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-phoenixTalisman": {
+      "file": "equip-phoenixTalisman.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-whetstone": {
+      "file": "equip-whetstone.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-rivets": {
+      "file": "equip-rivets.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-padding": {
+      "file": "equip-padding.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-leather": {
+      "file": "equip-leather.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-hobnails": {
+      "file": "equip-hobnails.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-silk": {
+      "file": "equip-silk.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-buckles": {
+      "file": "equip-buckles.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-moonstone": {
+      "file": "equip-moonstone.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-amber": {
+      "file": "equip-amber.png",
+      "width": 24,
+      "height": 24
+    },
+    "card-stairs": {
+      "file": "card-stairs.png",
+      "width": 48,
+      "height": 64
+    },
+    "card-heal": {
+      "file": "card-heal.png",
+      "width": 48,
+      "height": 64
+    },
+    "card-door": {
+      "file": "card-door.png",
+      "width": 48,
+      "height": 64
+    },
+    "card-key": {
+      "file": "card-key.png",
+      "width": 48,
+      "height": 64
+    },
+    "card-yellowKey": {
+      "file": "card-yellowKey.png",
+      "width": 48,
+      "height": 64
+    },
+    "card-blueKey": {
+      "file": "card-blueKey.png",
+      "width": 48,
+      "height": 64
+    },
+    "card-monster": {
+      "file": "card-monster.png",
+      "width": 48,
+      "height": 64
+    },
+    "card-atkUp": {
+      "file": "card-atkUp.png",
+      "width": 48,
+      "height": 64
+    },
+    "card-defUp": {
+      "file": "card-defUp.png",
+      "width": 48,
+      "height": 64
+    },
+    "card-keySiphon": {
+      "file": "card-keySiphon.png",
+      "width": 48,
+      "height": 64
+    },
+    "card-yellowDoor": {
+      "file": "card-yellowDoor.png",
+      "width": 48,
+      "height": 64
+    },
+    "card-heartDoor": {
+      "file": "card-heartDoor.png",
+      "width": 48,
+      "height": 64
+    },
+    "card-weakEnemy": {
+      "file": "card-weakEnemy.png",
+      "width": 48,
+      "height": 64
+    },
+    "card-baseEnemy": {
+      "file": "card-baseEnemy.png",
+      "width": 48,
+      "height": 64
+    },
+    "card-strongEnemy": {
+      "file": "card-strongEnemy.png",
+      "width": 48,
+      "height": 64
+    },
+    "card-eliteEnemy": {
+      "file": "card-eliteEnemy.png",
+      "width": 48,
+      "height": 64
+    },
+    "card-bossEnemy": {
+      "file": "card-bossEnemy.png",
+      "width": 48,
+      "height": 64
+    },
+    "card-nonBossEnemy": {
+      "file": "card-nonBossEnemy.png",
+      "width": 48,
+      "height": 64
+    },
+    "card-fastEnemy": {
+      "file": "card-fastEnemy.png",
+      "width": 48,
+      "height": 64
+    },
+    "card-chest": {
+      "file": "card-chest.png",
+      "width": 48,
+      "height": 64
+    },
+    "card-blueSiphon": {
+      "file": "card-blueSiphon.png",
+      "width": 48,
+      "height": 64
+    },
+    "card-blueTrader": {
+      "file": "card-blueTrader.png",
+      "width": 48,
+      "height": 64
+    },
+    "card-keyToHp": {
+      "file": "card-keyToHp.png",
+      "width": 48,
+      "height": 64
+    },
+    "card-redKey": {
+      "file": "card-redKey.png",
+      "width": 48,
+      "height": 64
+    },
+    "card-redSiphon": {
+      "file": "card-redSiphon.png",
+      "width": 48,
+      "height": 64
+    },
+    "card-torch": {
+      "file": "card-torch.png",
+      "width": 48,
+      "height": 64
+    },
+    "card-woodenDoor": {
+      "file": "card-woodenDoor.png",
+      "width": 48,
+      "height": 64
+    },
+    "card-flyingEnemy": {
+      "file": "card-flyingEnemy.png",
+      "width": 48,
+      "height": 64
+    },
+    "card-archer": {
+      "file": "card-archer.png",
+      "width": 48,
+      "height": 64
+    }
+  },
+  "terrain": {
+    "defend/floor-1.png": {
+      "x": 0,
+      "y": 0
+    },
+    "defend/floor-2.png": {
+      "x": 24,
+      "y": 0
+    },
+    "defend/floor-3.png": {
+      "x": 48,
+      "y": 0
+    },
+    "defend/floor-4.png": {
+      "x": 72,
+      "y": 0
+    },
+    "tilesets/amber-catacombs/floor_01.png": {
+      "x": 96,
+      "y": 0
+    },
+    "tilesets/amber-catacombs/floor_02.png": {
+      "x": 120,
+      "y": 0
+    },
+    "tilesets/amber-catacombs/floor_03.png": {
+      "x": 144,
+      "y": 0
+    },
+    "tilesets/amber-catacombs/floor_04.png": {
+      "x": 168,
+      "y": 0
+    },
+    "tilesets/amber-catacombs/wall_cap_e.png": {
+      "x": 192,
+      "y": 0
+    },
+    "tilesets/amber-catacombs/wall_cap_n.png": {
+      "x": 216,
+      "y": 0
+    },
+    "tilesets/amber-catacombs/wall_cap_s.png": {
+      "x": 240,
+      "y": 0
+    },
+    "tilesets/amber-catacombs/wall_cap_w.png": {
+      "x": 264,
+      "y": 0
+    },
+    "tilesets/amber-catacombs/wall_corner_ne.png": {
+      "x": 288,
+      "y": 0
+    },
+    "tilesets/amber-catacombs/wall_corner_nw.png": {
+      "x": 312,
+      "y": 0
+    },
+    "tilesets/amber-catacombs/wall_corner_se.png": {
+      "x": 336,
+      "y": 0
+    },
+    "tilesets/amber-catacombs/wall_corner_sw.png": {
+      "x": 360,
+      "y": 0
+    },
+    "tilesets/amber-catacombs/wall_cross.png": {
+      "x": 0,
+      "y": 24
+    },
+    "tilesets/amber-catacombs/wall_horizontal.png": {
+      "x": 24,
+      "y": 24
+    },
+    "tilesets/amber-catacombs/wall_isolated.png": {
+      "x": 48,
+      "y": 24
+    },
+    "tilesets/amber-catacombs/wall_tee_e.png": {
+      "x": 72,
+      "y": 24
+    },
+    "tilesets/amber-catacombs/wall_tee_n.png": {
+      "x": 96,
+      "y": 24
+    },
+    "tilesets/amber-catacombs/wall_tee_s.png": {
+      "x": 120,
+      "y": 24
+    },
+    "tilesets/amber-catacombs/wall_tee_w.png": {
+      "x": 144,
+      "y": 24
+    },
+    "tilesets/amber-catacombs/wall_vertical.png": {
+      "x": 168,
+      "y": 24
+    },
+    "tilesets/area1/floor_01.png": {
+      "x": 192,
+      "y": 24
+    },
+    "tilesets/area1/floor_02.png": {
+      "x": 216,
+      "y": 24
+    },
+    "tilesets/area1/floor_03.png": {
+      "x": 240,
+      "y": 24
+    },
+    "tilesets/area1/floor_04.png": {
+      "x": 264,
+      "y": 24
+    },
+    "tilesets/area1/wall_cap_e.png": {
+      "x": 288,
+      "y": 24
+    },
+    "tilesets/area1/wall_cap_n.png": {
+      "x": 312,
+      "y": 24
+    },
+    "tilesets/area1/wall_cap_s.png": {
+      "x": 336,
+      "y": 24
+    },
+    "tilesets/area1/wall_cap_w.png": {
+      "x": 360,
+      "y": 24
+    },
+    "tilesets/area1/wall_center_01.png": {
+      "x": 0,
+      "y": 48
+    },
+    "tilesets/area1/wall_center_02.png": {
+      "x": 24,
+      "y": 48
+    },
+    "tilesets/area1/wall_center_03.png": {
+      "x": 48,
+      "y": 48
+    },
+    "tilesets/area1/wall_corner_ne.png": {
+      "x": 72,
+      "y": 48
+    },
+    "tilesets/area1/wall_corner_nw.png": {
+      "x": 96,
+      "y": 48
+    },
+    "tilesets/area1/wall_corner_se.png": {
+      "x": 120,
+      "y": 48
+    },
+    "tilesets/area1/wall_corner_sw.png": {
+      "x": 144,
+      "y": 48
+    },
+    "tilesets/area1/wall_cross.png": {
+      "x": 168,
+      "y": 48
+    },
+    "tilesets/area1/wall_horizontal.png": {
+      "x": 192,
+      "y": 48
+    },
+    "tilesets/area1/wall_isolated.png": {
+      "x": 216,
+      "y": 48
+    },
+    "tilesets/area1/wall_tee_e.png": {
+      "x": 240,
+      "y": 48
+    },
+    "tilesets/area1/wall_tee_n.png": {
+      "x": 264,
+      "y": 48
+    },
+    "tilesets/area1/wall_tee_s.png": {
+      "x": 288,
+      "y": 48
+    },
+    "tilesets/area1/wall_tee_w.png": {
+      "x": 312,
+      "y": 48
+    },
+    "tilesets/area1/wall_vertical.png": {
+      "x": 336,
+      "y": 48
+    },
+    "tilesets/astral-sanctuary/floor_01.png": {
+      "x": 360,
+      "y": 48
+    },
+    "tilesets/astral-sanctuary/floor_02.png": {
+      "x": 0,
+      "y": 72
+    },
+    "tilesets/astral-sanctuary/floor_03.png": {
+      "x": 24,
+      "y": 72
+    },
+    "tilesets/astral-sanctuary/floor_04.png": {
+      "x": 48,
+      "y": 72
+    },
+    "tilesets/astral-sanctuary/wall_cap_e.png": {
+      "x": 72,
+      "y": 72
+    },
+    "tilesets/astral-sanctuary/wall_cap_n.png": {
+      "x": 96,
+      "y": 72
+    },
+    "tilesets/astral-sanctuary/wall_cap_s.png": {
+      "x": 120,
+      "y": 72
+    },
+    "tilesets/astral-sanctuary/wall_cap_w.png": {
+      "x": 144,
+      "y": 72
+    },
+    "tilesets/astral-sanctuary/wall_corner_ne.png": {
+      "x": 168,
+      "y": 72
+    },
+    "tilesets/astral-sanctuary/wall_corner_nw.png": {
+      "x": 192,
+      "y": 72
+    },
+    "tilesets/astral-sanctuary/wall_corner_se.png": {
+      "x": 216,
+      "y": 72
+    },
+    "tilesets/astral-sanctuary/wall_corner_sw.png": {
+      "x": 240,
+      "y": 72
+    },
+    "tilesets/astral-sanctuary/wall_cross.png": {
+      "x": 264,
+      "y": 72
+    },
+    "tilesets/astral-sanctuary/wall_horizontal.png": {
+      "x": 288,
+      "y": 72
+    },
+    "tilesets/astral-sanctuary/wall_isolated.png": {
+      "x": 312,
+      "y": 72
+    },
+    "tilesets/astral-sanctuary/wall_tee_e.png": {
+      "x": 336,
+      "y": 72
+    },
+    "tilesets/astral-sanctuary/wall_tee_n.png": {
+      "x": 360,
+      "y": 72
+    },
+    "tilesets/astral-sanctuary/wall_tee_s.png": {
+      "x": 0,
+      "y": 96
+    },
+    "tilesets/astral-sanctuary/wall_tee_w.png": {
+      "x": 24,
+      "y": 96
+    },
+    "tilesets/astral-sanctuary/wall_vertical.png": {
+      "x": 48,
+      "y": 96
+    },
+    "tilesets/drowned-temple/floor_01.png": {
+      "x": 72,
+      "y": 96
+    },
+    "tilesets/drowned-temple/floor_02.png": {
+      "x": 96,
+      "y": 96
+    },
+    "tilesets/drowned-temple/floor_03.png": {
+      "x": 120,
+      "y": 96
+    },
+    "tilesets/drowned-temple/floor_04.png": {
+      "x": 144,
+      "y": 96
+    },
+    "tilesets/drowned-temple/wall_cap_e.png": {
+      "x": 168,
+      "y": 96
+    },
+    "tilesets/drowned-temple/wall_cap_n.png": {
+      "x": 192,
+      "y": 96
+    },
+    "tilesets/drowned-temple/wall_cap_s.png": {
+      "x": 216,
+      "y": 96
+    },
+    "tilesets/drowned-temple/wall_cap_w.png": {
+      "x": 240,
+      "y": 96
+    },
+    "tilesets/drowned-temple/wall_corner_ne.png": {
+      "x": 264,
+      "y": 96
+    },
+    "tilesets/drowned-temple/wall_corner_nw.png": {
+      "x": 288,
+      "y": 96
+    },
+    "tilesets/drowned-temple/wall_corner_se.png": {
+      "x": 312,
+      "y": 96
+    },
+    "tilesets/drowned-temple/wall_corner_sw.png": {
+      "x": 336,
+      "y": 96
+    },
+    "tilesets/drowned-temple/wall_cross.png": {
+      "x": 360,
+      "y": 96
+    },
+    "tilesets/drowned-temple/wall_horizontal.png": {
+      "x": 0,
+      "y": 120
+    },
+    "tilesets/drowned-temple/wall_isolated.png": {
+      "x": 24,
+      "y": 120
+    },
+    "tilesets/drowned-temple/wall_tee_e.png": {
+      "x": 48,
+      "y": 120
+    },
+    "tilesets/drowned-temple/wall_tee_n.png": {
+      "x": 72,
+      "y": 120
+    },
+    "tilesets/drowned-temple/wall_tee_s.png": {
+      "x": 96,
+      "y": 120
+    },
+    "tilesets/drowned-temple/wall_tee_w.png": {
+      "x": 120,
+      "y": 120
+    },
+    "tilesets/drowned-temple/wall_vertical.png": {
+      "x": 144,
+      "y": 120
+    },
+    "tilesets/ember-forge/floor_01.png": {
+      "x": 168,
+      "y": 120
+    },
+    "tilesets/ember-forge/floor_02.png": {
+      "x": 192,
+      "y": 120
+    },
+    "tilesets/ember-forge/floor_03.png": {
+      "x": 216,
+      "y": 120
+    },
+    "tilesets/ember-forge/floor_04.png": {
+      "x": 240,
+      "y": 120
+    },
+    "tilesets/ember-forge/wall_cap_e.png": {
+      "x": 264,
+      "y": 120
+    },
+    "tilesets/ember-forge/wall_cap_n.png": {
+      "x": 288,
+      "y": 120
+    },
+    "tilesets/ember-forge/wall_cap_s.png": {
+      "x": 312,
+      "y": 120
+    },
+    "tilesets/ember-forge/wall_cap_w.png": {
+      "x": 336,
+      "y": 120
+    },
+    "tilesets/ember-forge/wall_corner_ne.png": {
+      "x": 360,
+      "y": 120
+    },
+    "tilesets/ember-forge/wall_corner_nw.png": {
+      "x": 0,
+      "y": 144
+    },
+    "tilesets/ember-forge/wall_corner_se.png": {
+      "x": 24,
+      "y": 144
+    },
+    "tilesets/ember-forge/wall_corner_sw.png": {
+      "x": 48,
+      "y": 144
+    },
+    "tilesets/ember-forge/wall_cross.png": {
+      "x": 72,
+      "y": 144
+    },
+    "tilesets/ember-forge/wall_horizontal.png": {
+      "x": 96,
+      "y": 144
+    },
+    "tilesets/ember-forge/wall_isolated.png": {
+      "x": 120,
+      "y": 144
+    },
+    "tilesets/ember-forge/wall_tee_e.png": {
+      "x": 144,
+      "y": 144
+    },
+    "tilesets/ember-forge/wall_tee_n.png": {
+      "x": 168,
+      "y": 144
+    },
+    "tilesets/ember-forge/wall_tee_s.png": {
+      "x": 192,
+      "y": 144
+    },
+    "tilesets/ember-forge/wall_tee_w.png": {
+      "x": 216,
+      "y": 144
+    },
+    "tilesets/ember-forge/wall_vertical.png": {
+      "x": 240,
+      "y": 144
+    },
+    "tilesets/frozen-vault/floor_01.png": {
+      "x": 264,
+      "y": 144
+    },
+    "tilesets/frozen-vault/floor_02.png": {
+      "x": 288,
+      "y": 144
+    },
+    "tilesets/frozen-vault/floor_03.png": {
+      "x": 312,
+      "y": 144
+    },
+    "tilesets/frozen-vault/floor_04.png": {
+      "x": 336,
+      "y": 144
+    },
+    "tilesets/frozen-vault/wall_cap_e.png": {
+      "x": 360,
+      "y": 144
+    },
+    "tilesets/frozen-vault/wall_cap_n.png": {
+      "x": 0,
+      "y": 168
+    },
+    "tilesets/frozen-vault/wall_cap_s.png": {
+      "x": 24,
+      "y": 168
+    },
+    "tilesets/frozen-vault/wall_cap_w.png": {
+      "x": 48,
+      "y": 168
+    },
+    "tilesets/frozen-vault/wall_corner_ne.png": {
+      "x": 72,
+      "y": 168
+    },
+    "tilesets/frozen-vault/wall_corner_nw.png": {
+      "x": 96,
+      "y": 168
+    },
+    "tilesets/frozen-vault/wall_corner_se.png": {
+      "x": 120,
+      "y": 168
+    },
+    "tilesets/frozen-vault/wall_corner_sw.png": {
+      "x": 144,
+      "y": 168
+    },
+    "tilesets/frozen-vault/wall_cross.png": {
+      "x": 168,
+      "y": 168
+    },
+    "tilesets/frozen-vault/wall_horizontal.png": {
+      "x": 192,
+      "y": 168
+    },
+    "tilesets/frozen-vault/wall_isolated.png": {
+      "x": 216,
+      "y": 168
+    },
+    "tilesets/frozen-vault/wall_tee_e.png": {
+      "x": 240,
+      "y": 168
+    },
+    "tilesets/frozen-vault/wall_tee_n.png": {
+      "x": 264,
+      "y": 168
+    },
+    "tilesets/frozen-vault/wall_tee_s.png": {
+      "x": 288,
+      "y": 168
+    },
+    "tilesets/frozen-vault/wall_tee_w.png": {
+      "x": 312,
+      "y": 168
+    },
+    "tilesets/frozen-vault/wall_vertical.png": {
+      "x": 336,
+      "y": 168
+    },
+    "tilesets/fungal-hollow/floor_01.png": {
+      "x": 360,
+      "y": 168
+    },
+    "tilesets/fungal-hollow/floor_02.png": {
+      "x": 0,
+      "y": 192
+    },
+    "tilesets/fungal-hollow/floor_03.png": {
+      "x": 24,
+      "y": 192
+    },
+    "tilesets/fungal-hollow/floor_04.png": {
+      "x": 48,
+      "y": 192
+    },
+    "tilesets/fungal-hollow/wall_cap_e.png": {
+      "x": 72,
+      "y": 192
+    },
+    "tilesets/fungal-hollow/wall_cap_n.png": {
+      "x": 96,
+      "y": 192
+    },
+    "tilesets/fungal-hollow/wall_cap_s.png": {
+      "x": 120,
+      "y": 192
+    },
+    "tilesets/fungal-hollow/wall_cap_w.png": {
+      "x": 144,
+      "y": 192
+    },
+    "tilesets/fungal-hollow/wall_corner_ne.png": {
+      "x": 168,
+      "y": 192
+    },
+    "tilesets/fungal-hollow/wall_corner_nw.png": {
+      "x": 192,
+      "y": 192
+    },
+    "tilesets/fungal-hollow/wall_corner_se.png": {
+      "x": 216,
+      "y": 192
+    },
+    "tilesets/fungal-hollow/wall_corner_sw.png": {
+      "x": 240,
+      "y": 192
+    },
+    "tilesets/fungal-hollow/wall_cross.png": {
+      "x": 264,
+      "y": 192
+    },
+    "tilesets/fungal-hollow/wall_horizontal.png": {
+      "x": 288,
+      "y": 192
+    },
+    "tilesets/fungal-hollow/wall_isolated.png": {
+      "x": 312,
+      "y": 192
+    },
+    "tilesets/fungal-hollow/wall_tee_e.png": {
+      "x": 336,
+      "y": 192
+    },
+    "tilesets/fungal-hollow/wall_tee_n.png": {
+      "x": 360,
+      "y": 192
+    },
+    "tilesets/fungal-hollow/wall_tee_s.png": {
+      "x": 0,
+      "y": 216
+    },
+    "tilesets/fungal-hollow/wall_tee_w.png": {
+      "x": 24,
+      "y": 216
+    },
+    "tilesets/fungal-hollow/wall_vertical.png": {
+      "x": 48,
+      "y": 216
+    },
+    "tilesets/mossbound-ruins/floor_01.png": {
+      "x": 72,
+      "y": 216
+    },
+    "tilesets/mossbound-ruins/floor_02.png": {
+      "x": 96,
+      "y": 216
+    },
+    "tilesets/mossbound-ruins/floor_03.png": {
+      "x": 120,
+      "y": 216
+    },
+    "tilesets/mossbound-ruins/floor_04.png": {
+      "x": 144,
+      "y": 216
+    },
+    "tilesets/mossbound-ruins/wall_cap_e.png": {
+      "x": 168,
+      "y": 216
+    },
+    "tilesets/mossbound-ruins/wall_cap_n.png": {
+      "x": 192,
+      "y": 216
+    },
+    "tilesets/mossbound-ruins/wall_cap_s.png": {
+      "x": 216,
+      "y": 216
+    },
+    "tilesets/mossbound-ruins/wall_cap_w.png": {
+      "x": 240,
+      "y": 216
+    },
+    "tilesets/mossbound-ruins/wall_corner_ne.png": {
+      "x": 264,
+      "y": 216
+    },
+    "tilesets/mossbound-ruins/wall_corner_nw.png": {
+      "x": 288,
+      "y": 216
+    },
+    "tilesets/mossbound-ruins/wall_corner_se.png": {
+      "x": 312,
+      "y": 216
+    },
+    "tilesets/mossbound-ruins/wall_corner_sw.png": {
+      "x": 336,
+      "y": 216
+    },
+    "tilesets/mossbound-ruins/wall_cross.png": {
+      "x": 360,
+      "y": 216
+    },
+    "tilesets/mossbound-ruins/wall_horizontal.png": {
+      "x": 0,
+      "y": 240
+    },
+    "tilesets/mossbound-ruins/wall_isolated.png": {
+      "x": 24,
+      "y": 240
+    },
+    "tilesets/mossbound-ruins/wall_tee_e.png": {
+      "x": 48,
+      "y": 240
+    },
+    "tilesets/mossbound-ruins/wall_tee_n.png": {
+      "x": 72,
+      "y": 240
+    },
+    "tilesets/mossbound-ruins/wall_tee_s.png": {
+      "x": 96,
+      "y": 240
+    },
+    "tilesets/mossbound-ruins/wall_tee_w.png": {
+      "x": 120,
+      "y": 240
+    },
+    "tilesets/mossbound-ruins/wall_vertical.png": {
+      "x": 144,
+      "y": 240
+    },
+    "tilesets/obsidian-crypt/floor_01.png": {
+      "x": 168,
+      "y": 240
+    },
+    "tilesets/obsidian-crypt/floor_02.png": {
+      "x": 192,
+      "y": 240
+    },
+    "tilesets/obsidian-crypt/floor_03.png": {
+      "x": 216,
+      "y": 240
+    },
+    "tilesets/obsidian-crypt/floor_04.png": {
+      "x": 240,
+      "y": 240
+    },
+    "tilesets/obsidian-crypt/wall_cap_e.png": {
+      "x": 264,
+      "y": 240
+    },
+    "tilesets/obsidian-crypt/wall_cap_n.png": {
+      "x": 288,
+      "y": 240
+    },
+    "tilesets/obsidian-crypt/wall_cap_s.png": {
+      "x": 312,
+      "y": 240
+    },
+    "tilesets/obsidian-crypt/wall_cap_w.png": {
+      "x": 336,
+      "y": 240
+    },
+    "tilesets/obsidian-crypt/wall_corner_ne.png": {
+      "x": 360,
+      "y": 240
+    },
+    "tilesets/obsidian-crypt/wall_corner_nw.png": {
+      "x": 0,
+      "y": 264
+    },
+    "tilesets/obsidian-crypt/wall_corner_se.png": {
+      "x": 24,
+      "y": 264
+    },
+    "tilesets/obsidian-crypt/wall_corner_sw.png": {
+      "x": 48,
+      "y": 264
+    },
+    "tilesets/obsidian-crypt/wall_cross.png": {
+      "x": 72,
+      "y": 264
+    },
+    "tilesets/obsidian-crypt/wall_horizontal.png": {
+      "x": 96,
+      "y": 264
+    },
+    "tilesets/obsidian-crypt/wall_isolated.png": {
+      "x": 120,
+      "y": 264
+    },
+    "tilesets/obsidian-crypt/wall_tee_e.png": {
+      "x": 144,
+      "y": 264
+    },
+    "tilesets/obsidian-crypt/wall_tee_n.png": {
+      "x": 168,
+      "y": 264
+    },
+    "tilesets/obsidian-crypt/wall_tee_s.png": {
+      "x": 192,
+      "y": 264
+    },
+    "tilesets/obsidian-crypt/wall_tee_w.png": {
+      "x": 216,
+      "y": 264
+    },
+    "tilesets/obsidian-crypt/wall_vertical.png": {
+      "x": 240,
+      "y": 264
+    },
+    "tilesets/outside/boulder_01.png": {
+      "x": 264,
+      "y": 264
+    },
+    "tilesets/outside/boulder_02.png": {
+      "x": 288,
+      "y": 264
+    },
+    "tilesets/outside/grass_01.png": {
+      "x": 312,
+      "y": 264
+    },
+    "tilesets/outside/grass_02.png": {
+      "x": 336,
+      "y": 264
+    },
+    "tilesets/outside/grass_03.png": {
+      "x": 360,
+      "y": 264
+    },
+    "tilesets/outside/grass_04.png": {
+      "x": 0,
+      "y": 288
+    },
+    "tilesets/outside/path_01.png": {
+      "x": 24,
+      "y": 288
+    },
+    "tilesets/outside/path_02.png": {
+      "x": 48,
+      "y": 288
+    },
+    "tilesets/outside/path_03.png": {
+      "x": 72,
+      "y": 288
+    },
+    "tilesets/outside/tree_01.png": {
+      "x": 96,
+      "y": 288
+    },
+    "tilesets/outside/tree_02.png": {
+      "x": 120,
+      "y": 288
+    },
+    "tilesets/outside/tree_03.png": {
+      "x": 144,
+      "y": 288
+    },
+    "tilesets/violet-geode/floor_01.png": {
+      "x": 168,
+      "y": 288
+    },
+    "tilesets/violet-geode/floor_02.png": {
+      "x": 192,
+      "y": 288
+    },
+    "tilesets/violet-geode/floor_03.png": {
+      "x": 216,
+      "y": 288
+    },
+    "tilesets/violet-geode/floor_04.png": {
+      "x": 240,
+      "y": 288
+    },
+    "tilesets/violet-geode/wall_cap_e.png": {
+      "x": 264,
+      "y": 288
+    },
+    "tilesets/violet-geode/wall_cap_n.png": {
+      "x": 288,
+      "y": 288
+    },
+    "tilesets/violet-geode/wall_cap_s.png": {
+      "x": 312,
+      "y": 288
+    },
+    "tilesets/violet-geode/wall_cap_w.png": {
+      "x": 336,
+      "y": 288
+    },
+    "tilesets/violet-geode/wall_corner_ne.png": {
+      "x": 360,
+      "y": 288
+    },
+    "tilesets/violet-geode/wall_corner_nw.png": {
+      "x": 0,
+      "y": 312
+    },
+    "tilesets/violet-geode/wall_corner_se.png": {
+      "x": 24,
+      "y": 312
+    },
+    "tilesets/violet-geode/wall_corner_sw.png": {
+      "x": 48,
+      "y": 312
+    },
+    "tilesets/violet-geode/wall_cross.png": {
+      "x": 72,
+      "y": 312
+    },
+    "tilesets/violet-geode/wall_horizontal.png": {
+      "x": 96,
+      "y": 312
+    },
+    "tilesets/violet-geode/wall_isolated.png": {
+      "x": 120,
+      "y": 312
+    },
+    "tilesets/violet-geode/wall_tee_e.png": {
+      "x": 144,
+      "y": 312
+    },
+    "tilesets/violet-geode/wall_tee_n.png": {
+      "x": 168,
+      "y": 312
+    },
+    "tilesets/violet-geode/wall_tee_s.png": {
+      "x": 192,
+      "y": 312
+    },
+    "tilesets/violet-geode/wall_tee_w.png": {
+      "x": 216,
+      "y": 312
+    },
+    "tilesets/violet-geode/wall_vertical.png": {
+      "x": 240,
+      "y": 312
+    }
+  }
+}

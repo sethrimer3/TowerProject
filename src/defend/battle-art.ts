@@ -7,8 +7,9 @@ import type { Building } from "./citygen.ts";
 import { center } from "./pathing.ts";
 import type { CarriedLight } from "./lighting.ts";
 import { BUILDING_FLASH, type DefendSim, type Effect, type Enemy, type Scorch } from "./sim.ts";
+import { drawKit, kitEnemy } from "../sprite-kit.ts";
 
-export type Brush = { c: CanvasRenderingContext2D; px: number };
+export type Brush = { c: CanvasRenderingContext2D; px: number; styledSprites?: boolean };
 
 /** Struck buildings flash pale for a moment; hurt houses and walls darken,
  * and other hurt structures wear a health bar. */
@@ -82,8 +83,10 @@ function drawCivilians(b: Brush, sim: DefendSim, torches: boolean) {
   const { c, px } = b;
   for (const u of sim.civilians) {
     const s = Math.max(2, CIVILIAN.size * px);
-    c.fillStyle = u.flash > 0 ? "#fff" : CIVILIAN.color;
-    c.fillRect(u.x * px - s / 2, u.y * px - s / 2, s, s);
+    if (!(b.styledSprites && u.flash <= 0 && drawKit(c, "civilian", u.x * px - s / 2, u.y * px - s / 2, s))) {
+      c.fillStyle = u.flash > 0 ? "#fff" : CIVILIAN.color;
+      c.fillRect(u.x * px - s / 2, u.y * px - s / 2, s, s);
+    }
     if (torches) drawHandTorch(b, { x: u.x + CIVILIAN.size * 0.6, y: u.y - CIVILIAN.size * 0.4, id: u.id }, sim.time);
     if (u.state === "working" && Math.floor(sim.time * 6) % 2) {
       c.fillStyle = "#f2d27a";
@@ -98,6 +101,10 @@ function drawSoldiers(b: Brush, sim: DefendSim, torches: boolean) {
   for (const u of sim.soldiers) {
     const archer = u.kind === "archer";
     const s = Math.max(2, (archer ? ARCHER_UNIT.size : SOLDIER.size) * px);
+    if (b.styledSprites && u.flash <= 0 && drawKit(c, archer ? "archer" : "swordsman", u.x * px - s / 2, u.y * px - s / 2, s)) {
+      if (torches) drawHandTorch(b, { x: u.x + SOLDIER.size * 0.65, y: u.y - SOLDIER.size * 0.45, id: u.id }, sim.time);
+      continue;
+    }
     c.fillStyle = archer ? "#1b3324" : "#1c2a40";
     c.fillRect(u.x * px - s / 2 - 1, u.y * px - s / 2 - 1, s + 2, s + 2);
     c.fillStyle = u.flash > 0 ? "#fff" : archer ? ARCHER_UNIT.color : SOLDIER.color;
@@ -139,8 +146,10 @@ function drawEnemy(b: Brush, e: Enemy) {
     c.fillStyle = "#1a0606";
     c.fillRect(x - 1, y - 1, s + 2, s + 2);
   }
-  c.fillStyle = e.flash > 0 ? "#fff" : def.color;
-  c.fillRect(x, y, s, s);
+  if (!(b.styledSprites && e.flash <= 0 && drawKit(c, kitEnemy(e.kind), x, y, s))) {
+    c.fillStyle = e.flash > 0 ? "#fff" : def.color;
+    c.fillRect(x, y, s, s);
+  }
   if (def.boss) drawBossMarks(b, e, { x, y, s });
 }
 
