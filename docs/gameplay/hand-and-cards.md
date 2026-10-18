@@ -104,8 +104,8 @@ Undo brings back the Focus uses and focused card of the moment they return to.
 
 ## Refocus, Ignore and Target
 
-Below Max Interest, Interest and Mug at the foot of the Courage tree, five skills (20 Courage each) give the run more of a say.
-**Refocus** (below Max Interest) regains a spent Focus use every 100 new floors a run climbs (new equivalent floors in the Delve); the count waits while Focus is full, and its Archives research, **Refocus**, takes a floor off the wait a level, down to every 10 floors.
+Below Interest and Mug at the foot of the Courage tree, and below Overheal under Max Interest, five skills (20 Courage each) give the run more of a say.
+**Refocus** (below Overheal) regains a spent Focus use every 100 new floors a run climbs (new equivalent floors in the Delve); the count waits while Focus is full, and its Archives research, **Refocus**, takes a floor off the wait a level, down to every 10 floors.
 **Ignore** (below Interest) adds a button beside the Focus bolt, a red ⊘ with the uses left: press it, then tap a tile, and no card's path (nor Target's) steps on that tile for the rest of the floor, marked with a red ⊘.
 A run gets 1 use, and **Ignore Count** research adds one a level, up to 10.
 A wall, the hero's own tile or one already ignored costs nothing, and pressing the button again puts it away.

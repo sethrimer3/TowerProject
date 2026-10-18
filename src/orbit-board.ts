@@ -1,4 +1,4 @@
-import type { EnemyStrength, Tile, Torch, KeyColor } from "./entities.ts";
+import { potionShade, type EnemyStrength, type Tile, type Torch, type KeyColor } from "./entities.ts";
 import type { Facing } from "./shown.ts";
 import { forEachViewTile, toTileSpace, type FrameContext } from "./render-frame.ts";
 import { contentsFrom, type ThemedBoard } from "./themed-board.ts";
@@ -285,8 +285,8 @@ const contents = contentsFrom({
   },
   potion(c, t) {
     // A med canister: a glass tube of glowing fluid under a steel cap,
-    // teal, or rose for the red potion.
-    const color = t.color === "red" ? "#ff6f9a" : "#4fe3c8";
+    // rose, or teal for the percent potion.
+    const color = potionShade(t) === "red" ? "#ff6f9a" : "#4fe3c8";
     fill(c, () => roundRect(c, 8, 7, 8, 14, 3), "#1b2a44");
     stroke(c, () => roundRect(c, 8, 7, 8, 14, 3), ORBIT.hullLight, 1);
     glow(c, color, 5);

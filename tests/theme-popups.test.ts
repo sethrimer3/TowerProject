@@ -93,20 +93,23 @@ test("a Heart Door's toll rises as the Glyph and Ember hearts", () => {
 
 test("a potion picked up on a Yang or Yin board rises as its tea bowl, a Heart Door's toll as its heart", () => {
   for (const [look, palette] of [["yang", YANG], ["yin", YIN]] as const) {
-    assert.ok(drawn({ tile: { kind: "potion", hp: 35 } as never }, look).fills.includes(palette.moss), look);
+    assert.ok(drawn({ tile: { kind: "potion", hp: 35 } as never }, look).fills.includes(palette.seal), look);
+    assert.ok(drawn({ tile: { kind: "potion", color: "red", hp: 35 } as never }, look).fills.includes(palette.moss), `${look}: the percent potion's moss`);
     assert.ok(drawn({ heart: true }, look).strokes.includes(palette.heart), look);
   }
 });
 
 test("a potion picked up on a Shiro or Kuro board rises as its plus, a Heart Door's toll as its red square", () => {
   for (const [look, palette] of [["shiro", SHIRO], ["kuro", KURO]] as const) {
-    assert.ok(drawn({ tile: { kind: "potion", hp: 35 } as never }, look).fills.includes(palette.heal), look);
+    assert.ok(drawn({ tile: { kind: "potion", hp: 35 } as never }, look).fills.includes(palette.heart), look);
+    assert.ok(drawn({ tile: { kind: "potion", color: "red", hp: 35 } as never }, look).fills.includes(palette.heal), `${look}: the percent potion's heal colour`);
     assert.ok(drawn({ heart: true }, look).strokes.includes(palette.heart), look);
   }
 });
 
 test("a potion picked up on an Arcade board rises as its pixel bottle, a Heart Door's toll as its pixel heart", () => {
-  assert.ok(drawn({ tile: { kind: "potion", hp: 35 } as never }, "arcade").fills.includes(ARCADE.cyan));
+  assert.ok(drawn({ tile: { kind: "potion", hp: 35 } as never }, "arcade").fills.includes(ARCADE.red));
+  assert.ok(drawn({ tile: { kind: "potion", color: "red", hp: 35 } as never }, "arcade").fills.includes(ARCADE.cyan), "the percent potion cyan");
   assert.ok(drawn({ tile: { kind: "potion", hp: 35 } as never }, "arcade").fills.includes(ARCADE.cork), "the bottle's cork");
   assert.ok(!drawn({ tile: { kind: "potion", hp: 35 } as never }, null).fills.includes(ARCADE.cork), "the classic board keeps its own art");
   assert.ok(drawn({ heart: true }, "arcade").fills.includes(ARCADE.red));
@@ -118,8 +121,9 @@ test("a potion picked up on a System board rises as its white flask, a Heart Doo
   assert.ok(drawn({ heart: true }, "system").fills.includes(SYSTEM.ink));
 });
 
-test("on a Kroz board a potion rises as its cyan gem, a chest as its yellow C on red, a Heart Door's toll as its red heart", () => {
-  assert.ok(drawn({ tile: { kind: "potion", hp: 35 } as never }, "kroz").fills.includes(KROZ.lightCyan));
+test("on a Kroz board a potion rises as its red gem (the percent potion cyan), a chest as its yellow C on red, a Heart Door's toll as its red heart", () => {
+  assert.ok(drawn({ tile: { kind: "potion", hp: 35 } as never }, "kroz").fills.includes(KROZ.lightRed));
+  assert.ok(drawn({ tile: { kind: "potion", color: "red", hp: 35 } as never }, "kroz").fills.includes(KROZ.lightCyan));
   const chest = drawn({ tile: { kind: "reward" } as never }, "kroz").fills;
   assert.ok(chest.includes(KROZ.red) && chest.includes(KROZ.yellow), "the chest keeps its red cell");
   assert.ok(drawn({ heart: true }, "kroz").fills.includes(KROZ.lightRed));
@@ -132,10 +136,10 @@ test("on an Orbit board a potion rises as its med canister, a Heart Door's toll 
   assert.ok(drawn({ heart: true }, "orbit").fills.includes(ORBIT.magenta));
 });
 
-test("on a Pixel board a potion rises as its blue flask (the red potion red), a Heart Door's toll as its outlined heart", () => {
+test("on a Pixel board a potion rises as its red flask (the percent potion blue), a Heart Door's toll as its outlined heart", () => {
   const potion = drawn({ tile: { kind: "potion", hp: 35 } as never }, "pixel").fills;
-  assert.ok(potion.includes(PIXEL.blue) && potion.includes(PIXEL.out));
-  assert.ok(drawn({ tile: { kind: "potion", color: "red", hp: 35 } as never }, "pixel").fills.includes(PIXEL.red));
+  assert.ok(potion.includes(PIXEL.red) && potion.includes(PIXEL.out));
+  assert.ok(drawn({ tile: { kind: "potion", color: "red", hp: 35 } as never }, "pixel").fills.includes(PIXEL.blue));
   const heart = drawn({ heart: true }, "pixel").fills;
   assert.ok(heart.includes(PIXEL.red) && heart.includes(PIXEL.out));
 });
@@ -144,20 +148,20 @@ test("every Pixel sprite is a rectangle of letters", () => {
   for (const rows of PIXEL_SPRITES) assert.ok(rows.every((row) => row.length === rows[0].length), rows.join("\n"));
 });
 
-test("on a Doodle board a potion rises as its blue flask (the red potion red), a Heart Door's toll as its outlined heart", () => {
+test("on a Doodle board a potion rises as its red flask (the percent potion blue), a Heart Door's toll as its outlined heart", () => {
   const potion = drawn({ tile: { kind: "potion", hp: 35 } as never }, "doodle");
-  assert.ok(potion.fills.includes(DOODLE.blue) && potion.strokes.includes(DOODLE.ink));
-  assert.ok(!drawn({ tile: { kind: "potion", hp: 35 } as never }, null).fills.includes(DOODLE.blue), "the classic board keeps its own art");
-  assert.ok(drawn({ tile: { kind: "potion", color: "red", hp: 35 } as never }, "doodle").fills.includes(DOODLE.red));
+  assert.ok(potion.fills.includes(DOODLE.red) && potion.strokes.includes(DOODLE.ink));
+  assert.ok(!drawn({ tile: { kind: "potion", hp: 35 } as never }, null).fills.includes(DOODLE.red), "the classic board keeps its own art");
+  assert.ok(drawn({ tile: { kind: "potion", color: "red", hp: 35 } as never }, "doodle").fills.includes(DOODLE.blue));
   const heart = drawn({ heart: true }, "doodle");
   assert.ok(heart.fills.includes(DOODLE.red) && heart.strokes.includes(DOODLE.ink));
 });
 
-test("on a Murk board a potion rises as its blue flask (the red potion red), a Heart Door's toll as its outlined heart", () => {
+test("on a Murk board a potion rises as its red flask (the percent potion blue), a Heart Door's toll as its outlined heart", () => {
   const potion = drawn({ tile: { kind: "potion", hp: 35 } as never }, "murk");
-  assert.ok(potion.fills.includes(MURK.blue) && potion.strokes.includes(MURK.ink));
-  assert.ok(!drawn({ tile: { kind: "potion", hp: 35 } as never }, null).fills.includes(MURK.blue), "the classic board keeps its own art");
-  assert.ok(drawn({ tile: { kind: "potion", color: "red", hp: 35 } as never }, "murk").fills.includes(MURK.red));
+  assert.ok(potion.fills.includes(MURK.red) && potion.strokes.includes(MURK.ink));
+  assert.ok(!drawn({ tile: { kind: "potion", hp: 35 } as never }, null).fills.includes(MURK.red), "the classic board keeps its own art");
+  assert.ok(drawn({ tile: { kind: "potion", color: "red", hp: 35 } as never }, "murk").fills.includes(MURK.blue));
   const heart = drawn({ heart: true }, "murk");
   assert.ok(heart.fills.includes(MURK.red) && heart.strokes.includes(MURK.ink));
 });

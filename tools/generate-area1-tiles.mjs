@@ -234,8 +234,8 @@ function potionTile(percent) {
     "...ghhmmmmmmmgg...", "...ghhmmmmmmmdg...", "...ghmmmmmmmmddg..",
     "...ghmmmmmmmmddg..", "...gmmmmmmmmmddg..", "...gsmmmmmmmmddg..",
     "....gsmmmmmmddg...", ".....gssddddgg....", "......gggggg......",
-  ], { c: ITEM.woodDark, l: ITEM.woodLight, d: percent ? ITEM.redDark : ITEM.blueDark,
-    m: percent ? ITEM.red : ITEM.blue, g: "#607e91", h: "#ecffff", s: "#afced9", '.': undefined }, 3, 3).map((pixel, i) => {
+  ], { c: ITEM.woodDark, l: ITEM.woodLight, d: percent ? ITEM.blueDark : ITEM.redDark,
+    m: percent ? ITEM.blue : ITEM.red, g: "#607e91", h: "#ecffff", s: "#afced9", '.': undefined }, 3, 3).map((pixel, i) => {
     const x = i % SIZE, y = Math.floor(i / SIZE);
     const mark = percent
       ? ((x === 11 && y === 13) || (x === 14 && y === 16) || (x + y === 27 && y >= 13 && y <= 16))

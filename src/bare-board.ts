@@ -1,4 +1,4 @@
-import type { EnemyStrength, Tile, Torch, KeyColor } from "./entities.ts";
+import { potionShade, type EnemyStrength, type Tile, type Torch, type KeyColor } from "./entities.ts";
 import { forEachViewTile, toTileSpace, type FrameContext } from "./render-frame.ts";
 import { contentsFrom, type ThemedBoard } from "./themed-board.ts";
 import { rankChevrons } from "./rank-chevrons.ts";
@@ -134,8 +134,8 @@ const contents = (p: BarePalette) => contentsFrom({
     if (rule?.type === "keys" && rule.heart) circle(c, 2.5, p.heart);
   },
   potion(c, t) {
-    // A plus, the red potion's red.
-    c.fillStyle = t.color === "red" ? p.heart : p.heal;
+    // A plus, red, the percent potion's the heal colour.
+    c.fillStyle = potionShade(t) === "red" ? p.heart : p.heal;
     c.fillRect(10.5, 6, 3, 12);
     c.fillRect(6, 10.5, 12, 3);
   },

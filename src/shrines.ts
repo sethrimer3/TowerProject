@@ -339,8 +339,13 @@ export function rescaleHero(stats: HeroStats, before: ShrineRun["applied"] & obj
   for (const stat of HERO_FACTORS) {
     const from = before[stat], to = after[stat];
     if (stat === "parry" || from === to || stats[stat] === undefined) continue;
-    stats[stat] = snap((stats[stat]! * to) / from);
-    if (stat === "maxHp" && stats.hp !== undefined && stats.hp > 0) stats.hp = Math.max(1, Math.min(stats.maxHp, snap((stats.hp * to) / from)));
+    const was = stats[stat]!;
+    stats[stat] = snap((was * to) / from);
+    // HP Overheal holds above max keeps its share too.
+    if (stat === "maxHp" && stats.hp !== undefined && stats.hp > 0) {
+      const hp = snap((stats.hp * to) / from);
+      stats.hp = Math.max(1, stats.hp > was ? hp : Math.min(stats.maxHp, hp));
+    }
   }
   if (after.parry !== before.parry || after.parryBonus !== before.parryBonus) {
     const own = Math.max(0, (stats.parry ?? 0) - before.parryBonus) / before.parry, parry = Math.min(PARRY_CAP, snap(own * after.parry + after.parryBonus));

@@ -1,4 +1,4 @@
-import type { EnemyStrength, Tile, Torch, KeyColor } from "./entities.ts";
+import { potionShade, type EnemyStrength, type Tile, type Torch, type KeyColor } from "./entities.ts";
 import { forEachViewTile, toTileSpace, type FrameContext } from "./render-frame.ts";
 import { contentsFrom, type ThemedBoard } from "./themed-board.ts";
 import { rankChevrons } from "./rank-chevrons.ts";
@@ -258,12 +258,12 @@ const contents = (p: ZenPalette) => contentsFrom({
     if (rule?.type === "keys" && rule.heart) dot(c, 12, 13.5, 1.6, p.heart);
   },
   potion(c, t) {
-    // A tea bowl, the red potion's filled with the seal's red.
+    // A tea bowl filled with the seal's red, the percent potion's with moss.
     c.beginPath();
     c.moveTo(5, 11);
     c.quadraticCurveTo(12, 23, 19, 11);
     c.closePath();
-    c.fillStyle = t.color === "red" ? p.seal : p.moss;
+    c.fillStyle = potionShade(t) === "red" ? p.seal : p.moss;
     c.fill();
     stroke(c, p.ink, 1.4, 5, 11, 19, 11);
     stroke(c, p.ink, 1.2, 9, 19, 15, 19);

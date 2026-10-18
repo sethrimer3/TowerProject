@@ -212,5 +212,6 @@ export class FightPlayback<S extends FoughtStep> {
 const critHits = (fight: Bout) => fight.strikes.filter((s) => s.by === "hero" && s.crit).length;
 
 /** HP left after a fight's own damage, `hp`, once a badge's scale has
- * added `extra` (or, below 0, given it back, up to `maxHp`). */
-const afterExtra = (hp: number, extra = 0, maxHp = Infinity) => (extra ? snap(Math.min(maxHp, Math.max(0, hp - extra))) : hp);
+ * added `extra` (or, below 0, given it back, up to `maxHp`, or the HP it
+ * held above that by Overheal). */
+const afterExtra = (hp: number, extra = 0, maxHp = Infinity) => (extra ? snap(Math.min(Math.max(maxHp, hp), Math.max(0, hp - extra))) : hp);

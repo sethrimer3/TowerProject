@@ -85,6 +85,10 @@ export type DoorRule =
  * here (ranged.ts); the board reads its HP that much lower. `flyer`: the
  * Flying enemy hovering over this open floor tile (flying.ts), which the
  * hero walks under; its wound is the tile's `wound`. */
+/** The colour a potion is drawn in: a regular potion red, like the HP bar
+ * it fills, and a percent potion (whose tile is marked `color: "red"`, the
+ * mark generation and saves keep) blue, like the Overheal bar. */
+export const potionShade = (t: Pick<Tile, "color">): "red" | "blue" => (t.color === "red" ? "blue" : "red");
 export type Tile = { kind: Kind; amount?: number; color?: KeyColor; door?: DoorRule; enemy?: Enemy; flyer?: Enemy; tier?: ChestTier; wound?: number; chest?: Exclude<ChestKind, "plain"> };
 export type Point = { x: number; y: number };
 /** A stationary wall-mounted light source, anchored to a walkable floor

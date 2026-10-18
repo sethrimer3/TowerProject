@@ -236,7 +236,7 @@ const contents = contentsFrom({
   },
   potion(c, t) {
     // A flask with a cross on it: white, or black with a white cross for
-    // the red potion.
+    // the percent potion.
     const dark = t.color === "red";
     shape(c, () => {
       c.moveTo(10, 3.5); c.lineTo(14, 3.5); c.lineTo(14, 9);

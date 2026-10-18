@@ -2,6 +2,11 @@ import type { Enemy, Player } from "./entities.ts";
 import { snap } from "./exact.ts";
 import { foeAttack } from "./foe-cards.ts";
 
+/** `hp` after a heal of `n` that stops at `ceiling` (max HP, or the
+ * Overheal ceiling for a heal that overheals): a heal never lowers HP that
+ * Overheal holds above it. */
+export const healUpTo = (hp: number, n: number, ceiling: number) => (hp >= ceiling ? hp : snap(Math.min(ceiling, hp + n)));
+
 export type CombatPrediction = {
   impervious: boolean;
   hit: number;
@@ -183,7 +188,7 @@ function lifestealEnding(player: Player, enemy: Enemy, hit: number, played = Inf
   for (let round = 0; ; round++) {
     if (round >= played && enemyHp > hit) return lifestealEstimate(player, { hp, enemyHp, attack, shroud }, hit, cut);
     enemyHp = snap(Math.max(0, enemyHp - hit));
-    hp = snap(Math.min(player.maxHp, hp + lifestealHeal(player, hit)));
+    hp = healUpTo(hp, lifestealHeal(player, hit), player.maxHp);
     if (!enemyHp) return hp;
     if (!reply()) return null;
     if (!enemyHp) return hp;
@@ -288,7 +293,7 @@ function lifestealEstimate(player: Player, at: { hp: number; enemyHp: number; at
   const ceiling = player.maxHp - Math.max(0, f * (attackAfter(at.attack, climbing - 1) - defense));
   let hp = climbing ? Math.min(Math.max(at.hp, ceiling), at.hp + climbing * heal - early) : at.hp;
   hp -= absorb(f * estimatedDamage(attackAfter(at.attack, climbing), defense, replies - climbing)) - (replies - climbing) * heal;
-  return hp <= 0 ? null : snap(Math.min(player.maxHp, hp + heal));
+  return hp <= 0 ? null : hp >= player.maxHp ? snap(hp) : snap(Math.min(player.maxHp, hp + heal));
 }
 
 /** How long each strike of a fight played out round by round takes: the first
@@ -365,7 +370,7 @@ function play(strikes: Strike[], { player, enemy, revives, crits }: Fighters, st
     if (!s.enemyNext) {
       const applications = crits?.applications(s.heroStrikes) ?? 0, struck = applications ? heroHit(player, enemy, critMultiplier(crits!.factor, applications)) : hit;
       s.heroStrikes++;
-      const healed = player.lifesteal ? snap(Math.min(player.maxHp, s.heroHp + lifestealHeal(player, struck))) : s.heroHp;
+      const healed = player.lifesteal ? healUpTo(s.heroHp, lifestealHeal(player, struck), player.maxHp) : s.heroHp;
       const heals = healed !== s.heroHp, gained = snap(healed - s.heroHp);
       s.heroHp = healed;
       s.enemyHp = snap(Math.max(0, s.enemyHp - struck));

@@ -58,8 +58,8 @@ import type {
 import { World, LAYOUT_VERSION } from "./delve/world.ts";
 import { RoomWorld, TOWER_LAYOUT_VERSION } from "./tower/room-world.ts";
 import { litTorches, type Board } from "./board.ts";
-import { instakill, type CritRule } from "./combat.ts";
-import { HEART_DOOR_HP, isLethal, resolveStep, type StepBlocked, type StepEffect, type StepRules, shardStat } from "./step-effects.ts";
+import { healUpTo, instakill, type CritRule } from "./combat.ts";
+import { HEART_DOOR_HP, hpCeiling, isLethal, resolveStep, type StepBlocked, type StepEffect, type StepRules, shardStat } from "./step-effects.ts";
 import { OUTSIDE_START_Y, OutsideWorld } from "./outside.ts";
 import { AREA_BURST_MS, AreaLedger, chestReward, clearedInspiration, type AreaReward } from "./tower/area-ledger.ts";
 import { TowerClimb } from "./tower/climb.ts";
@@ -1063,10 +1063,21 @@ export class Game {
     const worn = this.worn, potionHeal = raised(researched(this.save.archives, "potionHeal"), worn.potionHeal);
     const crit = this.crit, keys = Object.entries(this.handBonus.keys);
     const keyFind = keys.length ? { keyFind: Object.fromEntries(keys.map(([color, k]) => [color, k.percent])) } : {};
-    return { potionHeal, percentPotion: trainedAmount(this.trainingNow, "potion"), regen,
+    const overheal = this.overheal;
+    return { potionHeal, percentPotion: trainedAmount(this.trainingNow, "potion"), regen, ...(overheal > 1000 ? { overheal } : {}),
       heartToll: researched(this.save.archives, "heartToll"), keyCost: this.keyCost, ...keyFind, ...(this.doorOff ? { doorOff: this.doorOff } : {}),
       shardAttack: researched(this.save.archives, "shardAttackPercent") * boonFactor(this.run, "attack"), shardDefense: researched(this.save.archives, "shardDefensePercent"),
       ...(worn.victoryHeal ? { victoryHeal: worn.victoryHeal } : {}), ...(crit ? { crit } : {}) };
+  }
+  /** How far potions, YK to HP and badge heals may heal above max HP now,
+   * as a multiple of max HP in thousandths (Overheal training, the run's
+   * Silver ranks counting): 1,000 until Overheal is owned. */
+  get overheal() {
+    return trainedAmount(this.trainingNow, "overheal");
+  }
+  /** The most HP the hero may hold now: max HP, raised by Overheal. */
+  get hpCeiling() {
+    return hpCeiling(this.run.player.maxHp, { overheal: this.overheal });
   }
   /** Revive's chance now (its training, the run's Silver ranks counting). */
   get reviveChance() {
@@ -1946,7 +1957,8 @@ export class Game {
   private floorHeal() {
     const pct = this.worn.floorHeal, p = this.run.player;
     if (!pct || p.hp <= 0) return;
-    const n = snap(Math.min(p.maxHp - p.hp, (p.maxHp * pct) / 100));
+    const n = snap(healUpTo(p.hp, (p.maxHp * pct) / 100, p.maxHp) - p.hp);
+    if (!n) return;
     p.hp = snap(p.hp + n);
     this.recordHeal(n);
   }
@@ -2115,7 +2127,7 @@ export class Game {
    * gain what the rank from `level` adds (`rankShift`). Returns the max HP
    * it added. */
   private raiseRunStat(row: StatTrainingRow, level: number) {
-    return shiftHero(this.run, { [row.stat]: rankShift(this.save, this.mode, row, level, level + 1) }).maxHp ?? 0;
+    return shiftHero(this.run, { [row.stat]: rankShift(this.save, this.mode, row, level, level + 1) }, this.overheal).maxHp ?? 0;
   }
   /** Find Potion bought for the run: its chance of percent potions rises,
    * and the floor stood on shows its new percent potions at once. */

@@ -1,4 +1,4 @@
-import type { EnemyStrength, Tile, Torch, KeyColor } from "./entities.ts";
+import { potionShade, type EnemyStrength, type Tile, type Torch, type KeyColor } from "./entities.ts";
 import { forEachViewTile, toTileSpace, type FrameContext } from "./render-frame.ts";
 import { contentsFrom, type ThemedBoard } from "./themed-board.ts";
 import { rankChevrons } from "./rank-chevrons.ts";
@@ -111,8 +111,8 @@ const paintGlyphContents = contentsFrom({
     if (rule?.type === "keys" && rule.heart) glyph(c, "<3", GLYPH.heart, 10, 19, 4, 4);
   },
   potion(c, t) {
-    glyph(c, "!", GLYPH.red, 24, 12, 12.5, 10);
-    // The red potion heals a share of HP: its % beside it.
+    // Red, and the percent potion, which heals a share of HP, blue with its % beside it.
+    glyph(c, "!", potionShade(t) === "red" ? GLYPH.red : GLYPH.blue, 24, 12, 12.5, 10);
     if (t.color === "red") glyph(c, "%", GLYPH.magenta, 12, 19, 5, 4);
   },
   attack(c) {

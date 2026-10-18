@@ -254,7 +254,7 @@ How much XP the character has gathered from kills over every run. A kill pays mo
 _Avoid_: rank
 
 **Training point**:
-The currency each level earns (three a level), spent to buy ranks of training at once (a trainer can train them for Gold instead) in the character's stats (max HP, ATK, DEF, and the shroud once the Shroud skill is owned; Lifesteal once the Lifesteal skill is, Thorn Damage once Thorns is, Parry % once Parry is, Crit % and Crit x once Critical is, Attack Range, Attack Speed and ATK / m once Tower III's floor 20, 30 and 50 Goals are claimed, Multishot Chance and Multishot Targets once its floor 70 Goal is, Rapid Fire Chance and Rapid Fire Duration once its floor 80 Goal is) and, with Recovery, Find Potion, Revive, Spare Change, Wishing Well, Wealthy, Loot and Free Training, in Potion %, Find Potion, Revive, Gold / Floor, Silver / Floor, Silver Bonus, Gold Bonus and the Free Offense, Defense and Utility Up rows on the Training tab. A stat's ranks add up on its **rank curve**: each rank is worth more than the one before, whatever the character's level.
+The currency each level earns (three a level), spent to buy ranks of training at once (a trainer can train them for Gold instead) in the character's stats (max HP, ATK, DEF, and the shroud once the Shroud skill is owned; Lifesteal once the Lifesteal skill is, Thorn Damage once Thorns is, Parry % once Parry is, Crit % and Crit x once Critical is, Attack Range, Attack Speed and ATK / m once Tower III's floor 20, 30 and 50 Goals are claimed, Multishot Chance and Multishot Targets once its floor 70 Goal is, Rapid Fire Chance and Rapid Fire Duration once its floor 80 Goal is) and, with Recovery, Find Potion, Revive, Spare Change, Wishing Well, Wealthy, Loot, Free Training and Overheal, in Potion %, Find Potion, Revive, Gold / Floor, Silver / Floor, Silver Bonus, Gold Bonus, the Free Offense, Defense and Utility Up rows and, with Overheal, Overheal on the Training tab. A stat's ranks add up on its **rank curve**: each rank is worth more than the one before, whatever the character's level.
 _Avoid_: skill point, stat point
 
 **Trainer**:
@@ -286,7 +286,11 @@ The hero rising at full HP from a strike that would have felled it, by the Reviv
 _Avoid_: resurrection, second life
 
 **Percent potion**:
-The red, striped potion: it restores a regular potion's HP plus a share of max HP (1% with the Recovery skill, more with Potion % training). With Recovery owned, each potion a run finds may be one, by a chance fixed when the run goes inside (2%, more with Find Potion training, up to 20%); otherwise each is a regular potion.
+The striped potion drawn blue (a regular potion is red): it restores a regular potion's HP plus a share of max HP (1% with the Recovery skill, more with Potion % training). With Recovery owned, each potion a run finds may be one, by a chance fixed when the run goes inside (2%, more with Find Potion training, up to 20%); otherwise each is a regular potion.
+
+**Overheal**:
+HP held above max HP, which the Overheal skill allows: potions, YK TO HP and badge heals may heal up to the **Overheal ceiling**, max HP times the Overheal training row's value (×1 to ×16.5); other heals stop at max HP and never lower HP above it. The HUD shows it as a blue bar over the full red HP bar.
+_Avoid_: overhealth, shield HP
 
 **Lifesteal**:
 The share of the damage each of the hero's strikes deals to an enemy that is restored to the hero as HP (up to max HP), as the strike lands and before the enemy's reply. It starts at 0% and Lifesteal training raises it by 0.1% for the first rank, each later rank adding 0.001% less, to 4.84% at 80 ranks. Fight forecasts and Damage Visual count it.

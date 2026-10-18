@@ -116,7 +116,7 @@ const paintTerminalContents = contentsFrom({
   },
   potion(c, t) {
     glyph(c, "!", TERMINAL.green);
-    // The red potion heals a share of HP: its % beside it.
+    // The percent potion heals a share of HP: its % beside it.
     if (t.color === "red") glyph(c, "%", TERMINAL.green, 12, 19, 5, 2);
   },
   attack(c) {

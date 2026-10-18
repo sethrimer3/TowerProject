@@ -1,4 +1,4 @@
-import type { EnemyStrength, Tile, Torch, KeyColor } from "./entities.ts";
+import { potionShade, type EnemyStrength, type Tile, type Torch, type KeyColor } from "./entities.ts";
 import { forEachViewTile, toTileSpace, type FrameContext } from "./render-frame.ts";
 import type { Facing } from "./shown.ts";
 import { contentsFrom, type ThemedBoard } from "./themed-board.ts";
@@ -335,8 +335,8 @@ const paintArcadeContents = contentsFrom({
     if (rule?.type === "keys" && rule.heart) sprite(c, HEART_SPRITE, { R: ARCADE.red, W: ARCADE.white }, 0.8, 12, 20);
   },
   potion(c, t) {
-    // A low-res bottle: cyan heals, red (the red potion) heals a share.
-    sprite(c, POTION_SPRITE, { C: ARCADE.cork, G: ARCADE.glass, L: t.color === "red" ? ARCADE.red : ARCADE.cyan, H: ARCADE.white }, 2.6);
+    // A low-res bottle: red heals, cyan (the percent potion) heals a share.
+    sprite(c, POTION_SPRITE, { C: ARCADE.cork, G: ARCADE.glass, L: potionShade(t) === "red" ? ARCADE.red : ARCADE.cyan, H: ARCADE.white }, 2.6);
   },
   attack(c) {
     sprite(c, SWORD_SPRITE, { W: ARCADE.white, Y: ARCADE.gold, H: ARCADE.brown }, 1.6);

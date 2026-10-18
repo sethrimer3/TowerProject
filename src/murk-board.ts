@@ -1,4 +1,4 @@
-import type { EnemyStrength, Tile, Torch, KeyColor } from "./entities.ts";
+import { potionShade, type EnemyStrength, type Tile, type Torch, type KeyColor } from "./entities.ts";
 import type { Facing } from "./shown.ts";
 import { forEachViewTile, toTileSpace, type FrameContext } from "./render-frame.ts";
 import { contentsFrom, type ThemedBoard } from "./themed-board.ts";
@@ -319,8 +319,8 @@ const contents = contentsFrom({
     if (rule?.type === "keys" && rule.heart) shape(c, () => heartPath(c, 12, 15.5, 0.32), MURK.red, 0.9);
   },
   potion(c, t) {
-    // A round flask on a cork: blue, the red potion red, a bubble rising.
-    const color = t.color === "red" ? MURK.red : MURK.blue;
+    // A round flask on a cork: red, the percent potion blue, a bubble rising.
+    const color = potionShade(t) === "red" ? MURK.red : MURK.blue;
     shape(c, () => blobPath(c, 12, 15, 6.5, 6, 100), MURK.mortar, 0);
     shape(c, () => {
       c.moveTo(6, 15);

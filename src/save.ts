@@ -1,7 +1,7 @@
 import { TRAINER_GEMS, trainingSlots, type TrainingJob, type TrainingPaid } from "./training-jobs.ts";
 import { count, dropInvalid, finite, fraction, isRecord, wholeIn } from "./decode.ts";
 import { TIERS } from "./tiers.ts";
-import { GOLD_SHOP, OLD_SAVE_KEY, SAVE_KEY, TOWER_WIDTH, TRAINING, UPGRADES, WIDTH, trainingCeiling, trainingDef, type UpgradeId } from "./config.ts";
+import { GOLD_SHOP, OLD_SAVE_KEY, SAVE_KEY, TOWER_WIDTH, TRAINING, UPGRADES, WIDTH, amountAt, trainingCeiling, trainingDef, type UpgradeId } from "./config.ts";
 import type { AutomoveMemory, DelveRun, Fall, MoveSnapshot, Run, TowerRun } from "./runs.ts";
 import type { ModeSave, Save } from "./save-shape.ts";
 import { emptyMaterials, MATERIAL_IDS, type MaterialId } from "./materials.ts";
@@ -119,11 +119,14 @@ const validOutside = (r: any) =>
 const validCounters = (r: any) =>
   Number.isInteger(r.seed) && finite(r.height) && finite(r.floor) && r.floor <= r.player?.y &&
   finite(r.kills) && finite(r.treasures);
+/** The most HP a hero may hold, as a multiple of its max HP: all of
+ * Overheal's ranks. */
+const OVERHEAL_MOST = amountAt(trainingDef("overheal"), trainingDef("overheal").max) / 1000;
 const validPlayer = (p: any, width: number) =>
   !!p &&
   Number.isInteger(p.x) && p.x >= 0 && p.x < width &&
   Number.isInteger(p.y) && finite(p.y) &&
-  finite(p.hp) && p.hp >= 0 && finite(p.maxHp) && p.hp <= p.maxHp &&
+  finite(p.hp) && p.hp >= 0 && finite(p.maxHp) && p.hp <= p.maxHp * OVERHEAL_MOST &&
   finite(p.attack) && finite(p.defense) && (p.shroud === undefined || (finite(p.shroud) && p.shroud >= 0)) &&
   (p.regen === undefined || (finite(p.regen) && p.regen >= 0)) &&
   (p.lifesteal === undefined || (finite(p.lifesteal) && p.lifesteal >= 0)) &&

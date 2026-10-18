@@ -16,7 +16,7 @@ const doorKeys: CardSpriteLayer[] = ["yellow", "blue", "red"].map((color, i) => 
  * YK to HP depicts a trade, and a Heart Door still depicts a door). */
 export const CARD_SPRITE_LAYERS = {
   stairs: [subject("stairs")],
-  heal: [subject("potion-blue"), mark("heart")],
+  heal: [subject("potion-red"), mark("heart")],
   door: [subject("door-steel"), ...doorKeys],
   key: trio("key-yellow", "key-blue", "key-red"),
   yellowKey: [subject("key-yellow")],

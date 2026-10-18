@@ -29,6 +29,7 @@ export function chooseStep(game: Game) {
     return chooseDelveStep(game, { memory: game.save.delve.memory, plan: game.delvePlan, capabilities: capabilities(game.save.upgrades), rules: game.stepRules });
   const best = new Search(game, {
     progress: game.mode === "tower" ? game.run.player.y : game.run.height,
+    ceiling: game.hpCeiling,
   }).run();
   if (!best) return null;
   const kind = game.world.tile(best.x, best.y).kind;
@@ -56,8 +57,9 @@ type Combat = ReturnType<typeof predict>;
 const lethal = (c: Combat) => !c.survivable && !c.impervious;
 
 /** What the search scores against: the run's progress mark (so
- * backtracking isn't progress). */
-type SearchRules = { progress: number };
+ * backtracking isn't progress), and the most HP the hero may hold (max HP,
+ * or above it by Overheal), past which a potion is worth nothing. */
+type SearchRules = { progress: number; ceiling: number };
 
 /** Breadth-first search from the player for the best-scoring tile to head
  * for. It walks only through floor and stairs, so it stops at every
@@ -127,7 +129,7 @@ class Search {
     const { run } = this.at;
     const p = run.player;
     let value = run.outside ? (t.kind === "stairs" ? 100 : 0) - next.d * 0.18 : score(t, next.y, this.rules.progress, next.d);
-    if (t.kind === "potion" && p.hp === p.maxHp) value -= 10;
+    if (t.kind === "potion" && p.hp >= this.rules.ceiling) value -= 10;
     // Impervious enemies cost nothing in expected damage (they are never
     // actually fought — game.move() rejects the bump); a real fight's
     // predicted damage still discourages picking a costly-but-survivable one.

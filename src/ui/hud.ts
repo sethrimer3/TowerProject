@@ -523,17 +523,31 @@ function fitCombatStats() {
 
 /** HP, ATK, DEF (and the shroud, once owned), the run's Gold and keys. During a fight being played out, HP counts down
  * strike by strike, the bar's red already at the HP the fight leaves and
- * the HP still to go in purple past it. */
+ * the HP still to go in purple past it. HP above max (Overheal) fills the
+ * red and shows in blue over it, full when it reaches the Overheal
+ * ceiling; while it shows, the fight's purple and a heal's growth are
+ * drawn on the blue. */
 export function renderVitals(game: Game) {
   const p = game.run.player, hp = game.fights.shownHp(performance.now());
   // Shortened from 10,000 like the purse, so the line stays one line on a
   // phone; the exact HP is in the tooltip.
   text("hp", `${shortAmount(wholeHp(hp))} / ${shortAmount(whole(p.maxHp))}`);
-  el("hp").parentElement!.title = `HP: ${wholeHp(hp).toLocaleString("en-US")} / ${whole(p.maxHp).toLocaleString("en-US")}`;
-  renderHealthGain(game);
+  const ceiling = game.hpCeiling, upTo = ceiling > p.maxHp ? ` (Overheal up to ${whole(ceiling).toLocaleString("en-US")})` : "";
+  el("hp").parentElement!.title = `HP: ${wholeHp(hp).toLocaleString("en-US")} / ${whole(p.maxHp).toLocaleString("en-US")}${upTo}`;
+  const over = hp > p.maxHp, span = Math.max(ceiling, hp) - p.maxHp;
+  el("overheal").hidden = !over;
+  renderHealthGain(game, span);
   const left = game.fights.encounter ? Math.min(hp, game.fights.endHp()) : hp;
-  el("health").style.width = `${(100 * left) / p.maxHp}%`;
-  renderHealthLoss(hp - left, p.maxHp);
+  if (over) {
+    el("health").style.width = "100%";
+    el("overheal-fill").style.width = `${(100 * (Math.max(left, p.maxHp) - p.maxHp)) / span}%`;
+    renderHealthLoss("health-loss", 0, p.maxHp);
+    renderHealthLoss("overheal-loss", hp - Math.max(left, p.maxHp), span);
+  } else {
+    el("health").style.width = `${(100 * left) / p.maxHp}%`;
+    renderHealthLoss("health-loss", hp - left, p.maxHp);
+    renderHealthLoss("overheal-loss", 0, 1);
+  }
   // ATK, DEF and the shroud shortened the same way, so the three fit on one
   // line on a phone; the exact amounts are in their tooltips.
   combatStat("attack", "ATK", whole(p.attack));
@@ -560,13 +574,17 @@ export function renderVitals(game: Game) {
 let shownHeal = 0;
 /** A potion just picked up or drunk: the red fill starts at the HP before it with the
  * HP it healed in blue beyond, and grows over the blue in a
- * second. A fight starting, or the next potion, stops it where it is. */
-function renderHealthGain(game: Game) {
-  const heal = game.lastHeal, fill = el("health"), gain = el("health-gain");
+ * second. A heal to above max HP does so on the Overheal bar instead
+ * (`span` HP across), from the Overheal before it, the red simply full.
+ * A fight starting, or the next potion, stops it where it is. */
+function renderHealthGain(game: Game, span: number) {
+  const heal = game.lastHeal, bars = [["health", "health-gain"], ["overheal-fill", "overheal-gain"]] as const;
   const settle = () => {
-    fill.classList.remove("healing");
-    gain.classList.remove("healing");
-    gain.style.width = "0%";
+    for (const [fill, gain] of bars) {
+      el(fill).classList.remove("healing");
+      el(gain).classList.remove("healing");
+      el(gain).style.width = "0%";
+    }
   };
   if (game.fights.encounter) settle();
   if (!heal || heal.id === shownHeal) return;
@@ -574,10 +592,12 @@ function renderHealthGain(game: Game) {
   // Only the heal the HUD is looking at now fills up; one from before a
   // reload, a new run or an undo is simply there.
   if (heal.to !== game.run.player.hp || game.fights.encounter) return;
-  const max = game.run.player.maxHp;
+  const max = game.run.player.maxHp, over = heal.to > max;
+  const [from, healed, across] = over ? [Math.max(heal.from, max) - max, heal.to - Math.max(heal.from, max), span] : [heal.from, heal.to - heal.from, max];
+  const [fillId, gainId] = bars[over ? 1 : 0], fill = el(fillId), gain = el(gainId);
   settle();
-  fill.style.width = `${(100 * heal.from) / max}%`;
-  gain.style.width = `${(100 * (heal.to - heal.from)) / max}%`;
+  fill.style.width = `${(100 * from) / across}%`;
+  gain.style.width = `${(100 * healed) / across}%`;
   void fill.offsetWidth; // Lay out the starting widths before the transition.
   fill.classList.add("healing");
   gain.classList.add("healing");
@@ -586,13 +606,13 @@ function renderHealthGain(game: Game) {
 }
 
 /** The HP the fight being played out is still to cost, shown in purple just
- * past the HP it leaves, shrinking strike by strike; any left once the
- * fight settles shrinks away over a second. */
-function renderHealthLoss(lost: number, maxHp: number) {
-  const bar = el("health-loss");
+ * past the HP it leaves on bar `id` (`across` HP wide), shrinking strike
+ * by strike; any left once the fight settles shrinks away over a second. */
+function renderHealthLoss(id: "health-loss" | "overheal-loss", lost: number, across: number) {
+  const bar = el(id);
   if (lost > 0) {
     bar.classList.remove("settling");
-    bar.style.width = `${(100 * lost) / maxHp}%`;
+    bar.style.width = `${(100 * lost) / across}%`;
   } else if (bar.style.width && bar.style.width !== "0%") {
     bar.classList.add("settling");
     bar.style.width = "0%";

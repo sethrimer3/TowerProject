@@ -94,7 +94,7 @@ export const giftIcon = (className = "gift-icon") =>
 export const escapeHtml = (text: string) =>
   text.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 export const gemCount = (n: number) => `${n} ${n === 1 ? "Gem" : "Gems"}`;
-const ITEM_KIT: Record<keyof typeof AREA1_ITEM_URLS, string> = { key_yellow: "key-yellow", key_blue: "key-blue", key_red: "key-red", potion_flat: "potion-blue", potion_percent: "potion-red", upgrade_attack: "sword", upgrade_defense: "shield", chest_treasure: "chest-wood", chest_silver: "chest-silver", chest_gold: "chest-gold", chest_treasure_open: "chest-open", chest_silver_open: "chest-open", chest_gold_open: "chest-open" };
+const ITEM_KIT: Record<keyof typeof AREA1_ITEM_URLS, string> = { key_yellow: "key-yellow", key_blue: "key-blue", key_red: "key-red", potion_flat: "potion-red", potion_percent: "potion-blue", upgrade_attack: "sword", upgrade_defense: "shield", chest_treasure: "chest-wood", chest_silver: "chest-silver", chest_gold: "chest-gold", chest_treasure_open: "chest-open", chest_silver_open: "chest-open", chest_gold_open: "chest-open" };
 export const itemSprite = (name: keyof typeof AREA1_ITEM_URLS, className = "ui-sprite") =>
   kitIcon(ITEM_KIT[name], `<img class="${className}" src="${AREA1_ITEM_URLS[name]}" alt="" aria-hidden="true">`, className);
 
@@ -109,7 +109,7 @@ const SKILL_ITEM_SPRITES: Partial<Record<UpgradeId, keyof typeof AREA1_ITEM_URLS
 const SKILL_UI_SPRITES: Partial<Record<UpgradeId, UiSprite>> = {
   inspirationUndos: "undo", undos: "undo", archives: "log",
   delve: "delve", gear: "gear", moveSpeed: "automove", dash: "automove", instantCombat: "attack", trainers: "arrow-up", fasterTrainers: "automove", freeTraining: "arrow-up", buyQuantity: "arrow-up",
-  revive: "revive", spareChange: "gold", loot: "gold", floorSkipReward: "gold", mug: "gold", legacy: "tower", quality: "tower",
+  revive: "revive", overheal: "health", spareChange: "gold", loot: "gold", floorSkipReward: "gold", mug: "gold", legacy: "tower", quality: "tower",
   wisdomFocus: "settings", wisdomMemory: "undo", wisdomSight: "upgrades",
   renownBanner: "tower", renownOath: "defense", renownCrown: "gear",
   ...Object.fromEntries(LIMIT_BREAKS.map((id) => [id, "arrow-up"])),

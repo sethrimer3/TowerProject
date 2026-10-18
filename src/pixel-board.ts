@@ -1,4 +1,4 @@
-import type { EnemyStrength, Tile, Torch, KeyColor } from "./entities.ts";
+import { potionShade, type EnemyStrength, type Tile, type Torch, type KeyColor } from "./entities.ts";
 import { forEachViewTile, toTileSpace, type FrameContext } from "./render-frame.ts";
 import type { Facing } from "./shown.ts";
 import { contentsFrom, type ThemedBoard } from "./themed-board.ts";
@@ -648,7 +648,7 @@ const paintPixelContents = contentsFrom({
     if (rule?.type === "keys" && rule.heart) draw(c, HEART_ART, 0.75, 18.5, 18.5);
   },
   potion(c, t) {
-    draw(c, potionArt(t.color === "red"), 1.6);
+    draw(c, potionArt(potionShade(t) === "red"), 1.6);
   },
   attack(c) {
     draw(c, SWORD_ART, 1.4);

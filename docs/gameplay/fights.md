@@ -16,6 +16,7 @@ A fight the hero loses raises the damage each way at once, and the monster's HP 
 A revival shows the fight up to it the same way, and once its golden fire is out the rest of the fight follows as another summary.
 While a fight plays out, the HP bar's red already shows the HP the fight will leave, and the HP still to be lost shows in purple just past it, shrinking as each strike lands.
 A potion's heal shows in blue past the HP before it, and the red fills over the blue in a second.
+With Overheal, HP above max shows as a blue bar over the full red one; while it shows, the fight's purple and a heal's growth (in pale blue) are drawn on it.
 A health potion picked up does the opposite: the HP it heals shows in light red past the HP you had, the red bar fills up over it in a second, and the HP actually healed rises as a blue +N over the hero (blue is kept for HP gained, as a fight's Lifesteal heals rise too).
 The first round's strikes take 0.25 s each, and each later round runs at 90% of the one before, down to 0.05 s a strike.
 Once the monster falls the hero steps onto its tile.

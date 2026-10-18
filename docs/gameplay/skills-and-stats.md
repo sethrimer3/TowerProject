@@ -23,7 +23,19 @@ Silver keeps its fractions, like Gold, and the purse shows it rounded down.
 
 The shroud is whole again at the start of each fight and takes the enemy's strikes until it is spent; only then does HP fall.
 What it blocks rises off the hero in silver, beside the red of any damage that got through, the HUD shows it beside DEF once owned, and every damage forecast (the inspect box, route totals, the hand and Automove) counts it.
-Without Recovery every potion is a regular one; with it, the red, striped potions the Tower's floors roll (half of them) and half of the Delve's corridor-guard potions become percent potions, from the next run on: each restores the regular 35 HP plus 1% of max HP, and 0.25% more for each rank of **Potion %** training.
+Without Recovery every potion is a regular one; with it, the striped potions the Tower's floors roll (half of them) and half of the Delve's corridor-guard potions become percent potions, from the next run on: each restores the regular 35 HP plus 1% of max HP, and 0.25% more for each rank of **Potion %** training.
+A regular potion is drawn red, like the HP bar, and a percent potion blue, like the Overheal bar.
+
+## Overheal
+
+**Overheal** (20 Courage, below Max Interest in the Courage tree, with Refocus below it) lets HP rise above max HP, and opens Overheal training.
+Potions, regular and percent, YK TO HP and the badges' heals then heal past max HP, up to the Overheal ceiling: max HP times the Overheal training row's value (×1.00 until it has ranks).
+Regen, Lifesteal, Dash Regen, equipment's victory and floor heals still stop at max HP, and none of them lowers HP held above it.
+The HP readout shows HP over max (1,240 / 1,000), and its tooltip the ceiling.
+The HP bar stays full red, and a blue bar over it shows the HP above max, full at the ceiling.
+While it shows, a fight's purple and a potion's growing heal are drawn on the blue bar instead of the red.
+Max HP changing in a run (training, a Shrine boon, the Max HP badge, a siphon) keeps HP above max, within the new ceiling; Revive still rises at max HP.
+
 **Regen** research (after **Regen Research**, 10 Inspiration, below Shroud, beside Recovery; listed after Potion HP) makes every step regain 3% more of what Regen training gives a level, for 100 levels, priced and timed exactly like Potion HP, and counting at once.
 
 ## Buy Quantity
@@ -35,7 +47,7 @@ Trainers still train one rank at a time.
 
 ## Potion HP
 
-**Potion HP** (listed first in the Archives) makes every potion restore 3% more HP a level, for 100 levels (up to four times as much), the Cinder Tonic included but not the red potion; each level counts the moment it completes, even mid-run.
+**Potion HP** (listed first in the Archives) makes every potion restore 3% more HP a level, for 100 levels (up to four times as much), the Cinder Tonic included but not the percent potion; each level counts the moment it completes, even mid-run.
 The first four levels are quick (15 seconds for 10 Gold, 1 minute for 25, 5 minutes for 50, 10 minutes for 75); then the formula starts over, so the m-th level after those takes m/4 + m²/100 hours and costs 100 × m + m³ Gold (about 16 minutes and 101 Gold at level 5, up to about 4.8 days and 894,000 Gold at level 100).
 
 ## Revive

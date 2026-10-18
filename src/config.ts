@@ -51,6 +51,7 @@ export const UPGRADES = [
   { id: "interest", name: "Interest", description: "Open Interest % research in the Archives: each new floor climbed adds a share of the Silver you hold, up to a limit", base: 10, max: 1, currency: "courage" },
   { id: "maxInterest", name: "Max Interest", description: "Open Max Interest research in the Archives: each level raises the most Interest a floor pays", base: 10, max: 1, currency: "courage" },
   { id: "mug", name: "Mug", description: "Open Mug research in the Archives: each level adds Gold to a kill your first strike makes", base: 10, max: 1, currency: "courage" },
+  { id: "overheal", name: "Overheal", description: "Potions can heal you above max HP, up to your Overheal: opens Overheal training", base: 20, max: 1, currency: "courage" },
   { id: "refocus", name: "Refocus", description: `Inside a run, regain 1 Focus every ${REGAIN_FLOORS} new floors climbed; opens Refocus research, which shortens it`, base: 20, max: 1, currency: "courage" },
   { id: "ignore", name: "Ignore", description: `Inside a run, press Ignore, then a tile: the hero won't step on it for the rest of the floor (${IGNORE_PER_RUN} use a run); opens Ignore Count research`, base: 20, max: 1, currency: "courage" },
   { id: "ignoreMore", name: "Ignore More", description: `Inside a run, regain 1 Ignore use every ${REGAIN_FLOORS} new floors climbed; opens Ignore More research, which shortens it`, base: 20, max: 1, currency: "courage" },
@@ -729,6 +730,17 @@ const rapidFirePrices = (ranks: number) => ({
   prices: Array.from({ length: ranks }, (_, m) => Math.ceil((24_000 + 8_400 * m + 1_570 * m * m + 17 * m * m * m) / 200)),
 });
 const rapidFireChancePrices = rapidFirePrices(85), rapidFireDurationPrices = rapidFirePrices(99);
+/** Overheal: the n-th rank costs 1,000 + (n⁴ − 1) × (800 + n) / 400, rounded
+ * up (21,262 for the 10th, 5.4 million for the 40th, 1.2 billion for the
+ * 150th, 10.3 billion for the 250th, 128 billion for the 450th, 203 billion
+ * for the 500th), in whole numbers so every engine agrees, the same in
+ * Silver and a trainer's Gold. */
+const overhealPrices = {
+  prices: Array.from({ length: 500 }, (_, m) => {
+    const n = m + 1;
+    return 1_000 + Math.ceil(((n * n * n * n - 1) * (800 + n)) / 400);
+  }),
+};
 /** A trainer's Gold curve: each rank asks `TRAINING_GOLD_PER_POINT` Gold
  * a point of the row's cost times the rank's number, times 1 + ranks /
  * `growth` (see `trainingGold`), so a smaller `growth` pulls away faster. A
@@ -1020,6 +1032,15 @@ export const TRAINING = [
     curve: { per: 25 }, base: 200, cap: 2000, scale: 100, unit: "%",
     description: "More of the potions found are percent potions.",
     silver: deep, gold: { ...steepTrainers, cubic: 25 },
+  },
+  // How far HP may rise above max HP once Overheal is owned, as a multiple
+  // of max HP in thousandths: ×1 (none above), and 0.031 more a rank, ×16.5
+  // at its 500 (`hpCeiling`).
+  {
+    id: "overheal", name: "Overheal", group: "utility", requires: "overheal", cost: 1, max: 500,
+    curve: { per: 31 }, base: 1000, off: 1000, scale: 1000, unit: "×",
+    description: "Raises how far potions, YK to HP and badge heals can heal you above max HP.",
+    silver: overhealPrices, gold: overhealPrices,
   },
 ] as const satisfies readonly TrainingDef[];
 /** A row's rank curve: what `n` ranks add up to is `per` × n +

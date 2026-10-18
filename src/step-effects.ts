@@ -1,5 +1,5 @@
 import { snap } from "./exact.ts";
-import { atWorst, predict, type CombatPrediction, type CritRule } from "./combat.ts";
+import { atWorst, healUpTo, predict, type CombatPrediction, type CritRule } from "./combat.ts";
 import { doorCost, doorDiscount, doorRule, drainsHp, woodToll, type DoorDiscounts } from "./doors.ts";
 import type { Player, Tile, KeyColor } from "./entities.ts";
 
@@ -28,7 +28,8 @@ export type StepEffect = {
   combat: CombatPrediction | null;
   /** Doors only: the keys the door consumes (empty for Heart Doors). */
   keysSpent: KeyColor[];
-  /** Potions only: HP actually restored (capped at max HP). */
+  /** Potions only: HP actually restored (capped at max HP, or above it
+   * by Overheal). */
   healed: number;
   /** Doors and keys: how much of a key each key colour took or gave, when
    * a badge's scale or a held key card's bonus made it other than 1. */
@@ -55,6 +56,9 @@ export type StepRules = {
   /** Effective and Dampen, on the step that activates their card: what the
    * target's effect is multiplied by (1.05 is 5% stronger). */
   scale?: number;
+  /** How far potions may heal above max HP (Overheal training), as a
+   * multiple of max HP in thousandths: 1,000 (none above) when absent. */
+  overheal?: number;
   /** The percent of max HP the hero regains after each fight it wins
    * (equipment), before the step's Regen. */
   victoryHeal?: number;
@@ -93,6 +97,12 @@ export const potionRestores = (tile: Tile, maxHp: number, rules: StepRules) => {
   const amount = tile.amount ?? POTION_HEAL;
   return tile.color === "red" ? snap(amount + (maxHp * rules.percentPotion) / 10000) : potionHeal(amount, rules);
 };
+
+/** The most HP a hero of `maxHp` may hold under `rules`: its max HP, times
+ * its Overheal once owned. Potions, YK to HP and badge heals heal up to
+ * it; every other heal stops at max HP. */
+export const hpCeiling = (maxHp: number, rules: Pick<StepRules, "overheal">) =>
+  rules.overheal && rules.overheal > 1000 ? snap((maxHp * rules.overheal) / 1000) : maxHp;
 
 /** Resolves stepping onto `tile` with stats `player`: whether the step is
  * possible, and the player's stats afterwards. Pure: movement, previews, and
@@ -149,7 +159,7 @@ export function resolveStep(player: Player, tile: Tile, rules: StepRules = BASE_
     }
     case "potion": {
       const heal = scaled(potionRestores(tile, next.maxHp, rules));
-      effect.healed = snap(Math.min(next.maxHp - next.hp, heal));
+      effect.healed = snap(healUpTo(next.hp, heal, hpCeiling(next.maxHp, rules)) - next.hp);
       next.hp = snap(next.hp + effect.healed);
       break;
     }

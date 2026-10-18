@@ -3,6 +3,7 @@ import { BADGES, badgesOn, badgeValue, type BadgeId, type RunBadge } from "../ba
 import { TRAINING, xpBase, type StatTrainingRow } from "../config.ts";
 import type { Mode, KeyColor } from "../entities.ts";
 import { snap } from "../exact.ts";
+import { healUpTo } from "../combat.ts";
 import { boostMaxHp, shiftHero } from "../hero-stats.ts";
 import { rankShift } from "../loadout.ts";
 import { noteKey } from "../run-notes.ts";
@@ -89,7 +90,7 @@ export class CardActivation {
   }
   /** Heals up to `n` HP for badge `id`, as a potion's heal shows. */
   private badgeHeal(n: number, id: BadgeId) {
-    const p = this.host.run.player, healed = snap(Math.min(p.maxHp - p.hp, n));
+    const p = this.host.run.player, healed = snap(healUpTo(p.hp, n, this.host.handRules.hpCeiling) - p.hp);
     if (healed <= 0) return;
     p.hp = snap(p.hp + healed);
     this.host.recordHeal(healed);
@@ -109,7 +110,7 @@ export class CardActivation {
       host.gain(p.x, p.y, `−${TRADER_YELLOW_KEYS} yellow keys`, { tile: { kind: "key", color: "yellow" } });
       host.gain(p.x, p.y, `+${keyCount(scale)} blue key`, { tile: { kind: "key", color: "blue" } });
     } else if (card === "keyToHp") {
-      const healed = snap(Math.min(p.maxHp - p.hp, snap(host.handRules.keyHeal() * scale)));
+      const healed = snap(healUpTo(p.hp, snap(host.handRules.keyHeal() * scale), host.handRules.hpCeiling) - p.hp);
       p.keys.yellow = snap(p.keys.yellow - 1);
       p.hp = snap(p.hp + healed);
       host.gain(p.x, p.y, "−1 yellow key", { tile: { kind: "key", color: "yellow" } });
@@ -127,7 +128,7 @@ export class CardActivation {
     const run = host.run, p = run.player;
     const row = TRAINING.find((t) => t.id === id) as StatTrainingRow;
     const stat = row.stat as "maxHp" | "attack" | "defense";
-    const loss = -(shiftHero(run, { [stat]: rankShift(host.save, host.mode, row, level, level - levels) })[stat] ?? 0);
+    const loss = -(shiftHero(run, { [stat]: rankShift(host.save, host.mode, row, level, level - levels) }, rules.overheal)[stat] ?? 0);
     p.keys[color] = snap(p.keys[color] + scale);
     noteKey(run, color, scale);
     const lost = stat === "maxHp" ? `−${wholeChange(loss)} max HP` : `−${wholeChange(loss)} ${stat === "attack" ? "ATK" : "DEF"}`;

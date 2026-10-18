@@ -289,6 +289,7 @@ h1 span {
   image-rendering: pixelated;
 }
 .health-track {
+  position: relative;
   display: flex;
   height: 6px;
   background: #482a33;
@@ -321,6 +322,38 @@ h1 span {
   background: repeating-linear-gradient(90deg, #6b3f9e 0 5px, #8a5cc4 5px 10px, #a97ee0 10px 15px);
 }
 #health-loss.settling {
+  transition: width 1s linear;
+}
+/* HP above max (Overheal), in blue over the full red bar: full at the
+ * Overheal ceiling, a heal's growth in pale blue and the fight's purple on it. */
+.overheal-track {
+  position: absolute;
+  inset: 0;
+  display: flex;
+}
+.overheal-track[hidden] {
+  display: none;
+}
+.overheal-track span {
+  display: block;
+  height: 100%;
+}
+#overheal-fill {
+  background: repeating-linear-gradient(90deg, #2f5fc0 0 5px, #4a7fe0 5px 10px, #6fa0f5 10px 15px);
+}
+#overheal-gain {
+  flex: none;
+  width: 0;
+  background: repeating-linear-gradient(90deg, #a9d4ff 0 5px, #c6e3ff 5px 10px, #e4f2ff 10px 15px);
+}
+#overheal-loss {
+  flex: none;
+  width: 0;
+  background: repeating-linear-gradient(90deg, #6b3f9e 0 5px, #8a5cc4 5px 10px, #a97ee0 10px 15px);
+}
+#overheal-fill.healing,
+#overheal-gain.healing,
+#overheal-loss.settling {
   transition: width 1s linear;
 }
 /* ATK, DEF and the shroud in a row, the same space between each: up to

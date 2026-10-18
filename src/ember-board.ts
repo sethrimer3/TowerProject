@@ -119,7 +119,7 @@ const paintEmberContents = contentsFrom({
   },
   potion(c, t) {
     glyph(c, "!", EMBER.cream, 24, 12, 12.5, 8, EMBER.red);
-    // The red potion heals a share of HP: its % beside it.
+    // The percent potion heals a share of HP: its % beside it.
     if (t.color === "red") glyph(c, "%", EMBER.amber, 12, 19, 5, 4);
   },
   attack(c) {

@@ -20,7 +20,7 @@ export const NEON = {
   torch: "#ffb347",
   stairs: "#ffe866",
   potion: "#ff5a7a",
-  percentPotion: "#ff3fd0",
+  percentPotion: "#3fa8ff",
   attack: "#ff7a3d",
   defense: "#5fd8ff",
   chest: "#ffd24a",

@@ -28,6 +28,10 @@ export interface HandHost {
   readonly doorOff?: DoorDiscounts;
   /** How far the Archer's arrows reach, and the wrap (`HandAt.shotReach`). */
   readonly shotReach?: { range: number; wrap: number };
+  /** The most HP the hero may hold: max HP, raised by Overheal. */
+  readonly hpCeiling: number;
+  /** Overheal now, in thousandths of max HP (`Game.overheal`). */
+  readonly overheal: number;
 }
 
 /** What the hand's cards may do now (the hand rules): their badges' rules
@@ -53,6 +57,13 @@ export class HandRules implements HandAt {
   }
   get shotReach() {
     return this.host.shotReach;
+  }
+  /** The most HP YK to HP and badge heals may heal to: max HP, raised by Overheal. */
+  get hpCeiling() {
+    return this.host.hpCeiling;
+  }
+  get overheal() {
+    return this.host.overheal;
   }
   /** For each card of the hand, whether it is linked to the next (Card
    * Groups): the run's links, or in the forest the saved ones. */
@@ -248,7 +259,7 @@ export class HandRules implements HandAt {
     const p = this.run.player;
     if (isSiphon(card)) return this.siphonLevel(card) >= this.siphonCost(card);
     if (card === "blueTrader") return p.keys.yellow >= TRADER_YELLOW_KEYS;
-    if (card === "keyToHp") return p.keys.yellow >= 1 && snap(p.maxHp - p.hp) >= this.keyHeal();
+    if (card === "keyToHp") return p.keys.yellow >= 1 && snap(this.hpCeiling - p.hp) >= this.keyHeal();
     return false;
   }
   /** Times card `card`, one that acts in place, has acted this run. */

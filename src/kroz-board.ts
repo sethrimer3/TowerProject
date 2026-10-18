@@ -1,4 +1,4 @@
-import type { EnemyStrength, Tile, Torch, KeyColor } from "./entities.ts";
+import { potionShade, type EnemyStrength, type Tile, type Torch, type KeyColor } from "./entities.ts";
 import { forEachViewTile, toTileSpace, type FrameContext } from "./render-frame.ts";
 import { contentsFrom, type ThemedBoard } from "./themed-board.ts";
 import { sprite, type Sprite } from "./pixel-sprite.ts";
@@ -156,8 +156,9 @@ const paintKrozContents = contentsFrom({
     if (rule?.type === "keys" && rule.heart) mark(c, SMALL_HEART, KROZ.lightRed, 20.5, 20.5);
   },
   potion(c, t) {
-    // Kroz's gems: the red potion, which heals a share of HP, a red one.
-    char(c, GEM, t.color === "red" ? KROZ.lightRed : KROZ.lightCyan);
+    // Kroz's gems: a red one, and for the percent potion, which heals a
+    // share of HP, a cyan one.
+    char(c, GEM, potionShade(t) === "red" ? KROZ.lightRed : KROZ.lightCyan);
   },
   attack(c) {
     char(c, WHIP, KROZ.white);

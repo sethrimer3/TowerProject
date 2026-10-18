@@ -114,9 +114,10 @@ export const TREES: SkillTree[] = [
     { id: "interest", icon: "¤", x: 50, y: 135, requires: ["keyEfficiency"] },
     { id: "maxInterest", icon: "¤", x: 22, y: 135, requires: ["interest"] },
     { id: "mug", icon: "☠", x: 78, y: 135, requires: ["interest"] },
-    // The run's charges under them: Refocus, Ignore and Target, each
-    // Ignore and Target with the skill that regains it below.
-    { id: "refocus", icon: "ϟ", x: 22, y: 161, requires: ["maxInterest"] },
+    // Overheal under Max Interest, then the run's charges: Refocus under
+    // Overheal, Ignore and Target, each with the skill that regains it below.
+    { id: "overheal", icon: "♥", x: 22, y: 161, requires: ["maxInterest"] },
+    { id: "refocus", icon: "ϟ", x: 22, y: 185, requires: ["overheal"] },
     { id: "ignore", icon: "⊘", x: 50, y: 161, requires: ["interest"] },
     { id: "target", icon: "⌖", x: 78, y: 161, requires: ["mug"] },
     { id: "ignoreMore", icon: "⊘", x: 50, y: 185, requires: ["ignore"] },

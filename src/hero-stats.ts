@@ -28,10 +28,11 @@ export const heroFactor = (run: Run, stat: HeroStat) => boonFactor(run, stat) * 
 /** Moves `run`'s hero, and the loadout it keeps, by `shift`, each stat
  * times what the run's boons and Max HP badge boosts multiply it by (as
  * the hero's stats already were, `heroFactor`). More max HP comes with the HP to fill it, less leaves HP no higher
- * than the new max, and a fallen hero (0 HP) stays down. Returns how far
- * the hero's stats moved. */
-export function shiftHero(run: Run, shift: StatShift): StatShift {
-  const p = run.player, moved: StatShift = {};
+ * than the new max (or, for HP Overheal held above max, the new Overheal
+ * ceiling: `overheal`, in thousandths), and a fallen hero (0 HP) stays
+ * down. Returns how far the hero's stats moved. */
+export function shiftHero(run: Run, shift: StatShift, overheal = 1000): StatShift {
+  const p = run.player, moved: StatShift = {}, over = p.hp > p.maxHp;
   for (const stat of HERO_STATS) {
     const change = snap((shift[stat] ?? 0) * heroFactor(run, stat));
     if (!change) continue;
@@ -39,7 +40,8 @@ export function shiftHero(run: Run, shift: StatShift): StatShift {
     p[stat] = snap((p[stat] ?? 0) + change);
     if (run.loadout) run.loadout[stat] = snap((run.loadout[stat] ?? 0) + change);
   }
-  if (p.hp > 0) p.hp = Math.max(1, Math.min(p.maxHp, snap(p.hp + Math.max(0, moved.maxHp ?? 0))));
+  const ceiling = over && overheal > 1000 ? snap((p.maxHp * overheal) / 1000) : p.maxHp;
+  if (p.hp > 0) p.hp = Math.max(1, Math.min(Math.max(p.maxHp, ceiling), snap(p.hp + Math.max(0, moved.maxHp ?? 0))));
   return moved;
 }
 
@@ -53,7 +55,8 @@ export function boostMaxHp(run: Run, percent: number) {
   run.maxHpBoost = snap((run.maxHpBoost ?? 0) + percent);
   const after = badgeFactor(run, "maxHp"), max = p.maxHp;
   p.maxHp = snap((p.maxHp * after) / before);
-  if (p.hp > 0) p.hp = Math.max(1, Math.min(p.maxHp, snap((p.hp * after) / before)));
+  // HP Overheal holds above max keeps its share too.
+  if (p.hp > 0) p.hp = Math.max(1, p.hp > max ? snap((p.hp * after) / before) : Math.min(p.maxHp, snap((p.hp * after) / before)));
   if (run.loadout) run.loadout.maxHp = snap((run.loadout.maxHp * after) / before);
   return snap(p.maxHp - max);
 }

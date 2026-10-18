@@ -322,7 +322,8 @@ test("a Tower run keeps no floor but the one it stands on", () => {
 });
 
 test("decode rejects runs that break player invariants", () => {
-  for (const bad of [player({ hp: -1 }), player({ hp: 60 }), player({ x: 17 }), player({ keys: { yellow: 1 } })]) {
+  // HP may sit above max HP by Overheal, up to ×16.5 at its last rank, and no further.
+  for (const bad of [player({ hp: -1 }), player({ hp: 826 }), player({ x: 17 }), player({ keys: { yellow: 1 } })]) {
     const s = v3();
     s.tower.run = towerRun({ player: bad });
     assert.equal(decode(JSON.stringify(s)).tower.run, null);

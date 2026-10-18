@@ -3,7 +3,7 @@ import { wingMark } from "./flyer-art.ts";
 import { CHUNK, COLORS } from "./config.ts";
 import { drawCornerBricks, drawTerrain, themeAt, type Corner } from "./themes.ts";
 import { tileRandom } from "./random.ts";
-import type { Enemy, EnemyStrength, Mode, Tile, Torch } from "./entities.ts";
+import { potionShade, type Enemy, type EnemyStrength, type Mode, type Tile, type Torch } from "./entities.ts";
 import { drawForestTile, type Roads } from "./outside.ts";
 import { getTorchFlicker, getTorchSway } from "./lighting.ts";
 import { drawArea1Door, drawArea1Item, drawArea1Quoins, wallAdjacencyMask } from "./area1-tileset.ts";
@@ -139,7 +139,7 @@ export function paintContents(c: CanvasRenderingContext2D, t: Tile, art: TileArt
 
 function paintKitContents(c: CanvasRenderingContext2D, t: Tile) {
   const id = t.kind === "key" ? `key-${t.color ?? "yellow"}`
-    : t.kind === "potion" ? `potion-${t.color === "red" ? "red" : "blue"}`
+    : t.kind === "potion" ? `potion-${potionShade(t)}`
     : t.kind === "attack" ? "sword" : t.kind === "defense" ? "shield"
     : t.kind === "stairs" ? "stairs" : t.kind === "oneway" ? "arrow-up" : t.kind === "treasure" ? "chest-wood"
     : t.kind === "reward" ? `chest-${t.tier === "gold" ? "gold" : "silver"}`
@@ -259,7 +259,7 @@ function paintPotion(c: CanvasRenderingContext2D, t: Tile, art: TileArt) {
     c.fillStyle = "#bbc4ca";
     c.fillRect(9, 4, 6, 5);
     c.fillRect(6, 10, 12, 11);
-    c.fillStyle = COLORS[t.color ?? "blue"];
+    c.fillStyle = COLORS[potionShade(t)];
     c.fillRect(8, 12, 8, 7);
     if (isPercent) {
       // Diagonal stripes distinguish the percent potion by shape, not just color.
