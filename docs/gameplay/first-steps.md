@@ -2,7 +2,7 @@
 
 ## Interface sprites
 
-Open Settings from the HUD menu and turn **Sprites** on to use matching pixel-art controls, icons, cards, heroes, enemies, pickups, terrain, buildings and small dungeon decorations throughout Tower, Delve and Defend.
+Open Settings from the HUD menu and turn **Sprites** on to use matching pixel-art controls, icons, cards, heroes, enemies, pickups, terrain, buildings and small dungeon decorations and Defend city details throughout Tower, Delve and Defend.
 This option starts off, applies immediately and is remembered when you reload.
 Turn it off to return to your selected UI theme's usual controls.
 The default Medieval and Classic interface looks use the sprites; other UI themes override them.

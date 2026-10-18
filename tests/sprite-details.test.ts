@@ -12,7 +12,7 @@ test("all shared PNGs obey the shared palette, binary transparency and native gr
     .replace(/#[^\n]*/g, "").trim().split(/\s+/).slice(4).map(Number);
   const palette = new Set(Array.from({ length: values.length / 3 }, (_, i) => values.slice(i * 3, i * 3 + 3).join(",")));
   const manifest = JSON.parse(readFileSync(new URL("../public/assets/style/manifest.json", import.meta.url), "utf8"));
-  for (const [id, asset] of Object.entries(manifest.assets) as [string, { width: number; height: number }][]) {
+  for (const [id, asset] of Object.entries(manifest.assets) as [string, { width: number; height: number; tile?: boolean }][]) {
     const png = readFileSync(new URL(`../public/assets/style/${id}.png`, import.meta.url));
     const width = png.readUInt32BE(16), height = png.readUInt32BE(20);
     assert.equal(width, asset.width, id);
@@ -45,7 +45,7 @@ test("all shared PNGs obey the shared palette, binary transparency and native gr
       if (alpha) { opaque++; assert.ok(palette.has([...pixels.subarray(i, i + 3)].join(",")), `${id}: off-palette pixel`); }
       else transparent++;
     }
-    assert.ok(opaque > 10 && transparent > 10, `${id}: visible subject on transparency`);
+    assert.ok(opaque > 10 && (asset.tile || transparent > 10), `${id}: visible subject on transparency`);
   }
 });
 

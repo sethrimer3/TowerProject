@@ -25,6 +25,13 @@ Card names remain live text over the PNG backgrounds.
 All ten biome sets and the forest retain their seeded variations and wall adjacency while sharing a palette-normalized 24-pixel terrain atlas.
 Equipment's existing Unique silhouettes and the named enemy roster are preserved during normalization.
 Small dressing (plants, cobwebs, pebbles and broken containers) uses 12-pixel PNGs drawn 1:1 inside the same 24-pixel tile grid.
+Defend’s [city atlas](../../assets/game-sprites/city.png) adds six roof materials, oak and pine canopies, wall cap and face pieces, rubble, scaffolding, lilies, reeds, lanterns and the city-tile tool icon.
+Roofs use 24-pixel panels whose narrow centers repeat to fit the existing house footprints, preserving square pixels and upper-left lighting.
+Small city objects and wall caps use 12 pixels, and the wall face is 12 × 6.
+The [Defend structure atlas](../../assets/game-sprites/defend-structures.png) replaces the earlier front-facing city structures with overhead buildings at twelve native pixels per simulation cell.
+The keep and archer barracks are 36 × 36, the barracks 36 × 48 (48 × 36 for a horizontal fit), and towers 24 × 24; their palette icons retain the same aspect ratios.
+The [tower reference](../../assets/game-sprites/defend-towers.png) simplifies the three small towers for their 24-pixel grid, and the [horizontal barracks](../../assets/game-sprites/defend-barracks-wide.png) is separately lit from the upper left.
+Roof and wall panels are marked `tile` in the manifest and may be opaque so adjacent pieces join; isolated objects keep transparent padding.
 Objects use a 24-pixel native grid; larger structures use 48 pixels, and card faces use 48 × 64.
 The source atlases for [icons](../../assets/game-sprites/icons.png), [world objects](../../assets/game-sprites/world.png) and [controls](../../assets/game-sprites/controls.png) remain outside the deployed assets.
 
@@ -54,7 +61,9 @@ Source art remains outside `public/` so it is not deployed.
 Palette conversion saves and restores the alpha channel explicitly: remapping against an opaque PPM palette otherwise makes transparent backgrounds opaque.
 Frame centers are flat slate (brass for the title banner) so stretching does not enlarge stray texture behind live text.
 The game needs no image-processing dependency.
+For city prompts, specify directly overhead buildings, the exact footprint and twelve native pixels per simulation cell, with no front facade.
 For the world and icon extension, run `node --experimental-transform-types tools/prepare-game-sprites.mjs`.
+Use `--city-only` to export just the city set and `--structures-only` for the overhead Defend buildings.
 Use `--details-only` to refresh the sixteen detail sprites, or `--cards-only` after changing frame art.
 That exporter also packs the terrain atlas and produces `src/sprite-terrain-index.ts`.
 PNG load failures keep the original icon or procedural renderer visible; loaded images invalidate cached terrain and city layers through a shared revision.
@@ -62,5 +71,7 @@ PNG load failures keep the original icon or procedural renderer visible; loaded 
 Before accepting a replacement, inspect the native-size pieces and compare normal, hover, selected, pressed and disabled states together.
 Check phone and desktop layouts, keyboard focus, save/reload, toggling off, erase-progress reset, and short-of-Gems controls remaining actionable.
 
-`tests/sprite-details.test.ts` decodes every shared object/card PNG and checks the palette, binary alpha and transparent padding.
+`tests/sprite-details.test.ts` decodes every shared object/card PNG and checks the palette, binary alpha and transparent padding for isolated objects.
 With the dev server running, `PLAYWRIGHT_EXECUTABLE_PATH=/usr/bin/chromium node tests/sprite-browser.mjs` checks real PNG loading, mobile/desktop layouts, save/reload and independent theme overrides, and captures review screenshots under `test-results/sprites/`.
+
+`PLAYWRIGHT_EXECUTABLE_PATH=/usr/bin/chromium node tests/city-sprites-browser.mjs` starts its own server and captures Defend at both scales, including damage and rebuilding, then checks identical pixels after switching sprites off.

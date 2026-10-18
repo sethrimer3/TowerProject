@@ -3,6 +3,9 @@
 A tower-defense-style simulation where the player lays out a walled city and
 holds it against endless waves. Code lives in `src/defend/`.
 
+With Settings → **Sprites** on under the Classic Game theme, overhead structures, city roofs, trees, wall pieces, rubble, scaffolding, pond plants, lantern brackets and the city-tile icon use the shared PNG palette.
+The option starts off, and other Game themes override this art.
+
 ## Board
 
 - 9 × 13 **tiles**, each subdivided into 7 × 7 **cells** (63 × 91 cells).
