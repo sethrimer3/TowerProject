@@ -25,7 +25,7 @@ const BASELINE_DIR = "test-results/render-golden";
 const OUT_DIR = "test-results/render";
 
 const server = await startPreview(4180);
-const browser = await chromium.launch({ headless: true, channel: process.env.PLAYWRIGHT_CHANNEL || "msedge" });
+const browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH } : { channel: process.env.PLAYWRIGHT_CHANNEL || "msedge" }) });
 let exitCode = 1;
 try {
   const page = await browser.newPage({ viewport: { width: 600, height: 900 }, deviceScaleFactor: 1 });

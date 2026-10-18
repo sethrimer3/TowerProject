@@ -48,6 +48,10 @@ html.ui-sprites label.setting:not(#_) {
   margin-block: 4px;
 }
 html.ui-sprites .inspection:empty:not(#_) { border-image: none; }
+html.ui-sprites .inspection:not(:empty):not(#_) {
+  border-image-width: 6px;
+  padding: 8px 10px;
+}
 
 html.ui-sprites :is(dialog, .theme-card.worn):not(#_) {
   border-color: transparent;
@@ -59,6 +63,8 @@ html.ui-sprites :is(dialog, .theme-card.worn):not(#_) {
   color: #eee0b7;
 }
 html.ui-sprites dialog::backdrop { background: #10151cd9; backdrop-filter: none; }
+html.ui-sprites dialog :is(h2, h3):not(#_) { color: #e1bb78; text-shadow: none; }
+html.ui-sprites :is(.hint, .item-meta, .item-identity, .level-cost):not(#_) { color: #8b9a9d; }
 
 /* Keep picture buttons (cards, map markers and skill nodes) intact. */
 html.ui-sprites button:not(:where(.hand-card, .skill-node, .badge-token, .eq-tile,
@@ -89,6 +95,9 @@ html.ui-sprites button:disabled:not(#_) {
   filter: none;
   opacity: 0.65;
 }
+html.ui-sprites :is(.mini-action, .speed-arrow, .training-reset):not(#_) {
+  border-image-width: 6px;
+}
 /* A Gem shortage is actionable: preserve the bright face and red price. */
 html.ui-sprites button.short:not(#_) { opacity: 1; filter: none; }
 html.ui-sprites :is(button, select, input):focus-visible:not(#_) {
@@ -107,6 +116,7 @@ html.ui-sprites :is(select, input[type="text"], input[type="search"],
   image-rendering: pixelated;
 }
 html.ui-sprites select option { background: #1b2430; color: #eee0b7; }
+html.ui-sprites .hp-readout:not(#_) { border-image-width: 4px; }
 html.ui-sprites :is(.deck-slot, .node-icon):not(#_) {
   border: 2px solid transparent;
   border-image: url("../public/assets/ui/frames/slot.png") 6 fill / 12px / 0 stretch;
@@ -183,6 +193,7 @@ html.ui-sprites .page-title :is(h2, small):not(#_) { color: #10151c; text-shadow
    replace it, and only under the effective default sprite presentation. */
 .sprite-icon { position: relative; display: inline-block; vertical-align: middle; }
 .sprite-fallback { display: contents; }
+.tutorial-pointer-art { width: 100%; }
 .sprite-replacement, .sprite-card-label { display: none !important; }
 html.ui-sprites .sprite-ready > .sprite-fallback { visibility: hidden; }
 html.ui-sprites .sprite-ready > .sprite-replacement:not(#_) {
@@ -194,6 +205,10 @@ html.ui-sprites .sprite-ready > .sprite-replacement:not(#_) {
   object-fit: contain;
   image-rendering: pixelated;
   filter: none;
+  transform: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 html.ui-sprites .sprite-card.sprite-ready + .sprite-card-label:not(#_) {
   display: block !important;

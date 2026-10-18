@@ -43,7 +43,7 @@ export const redoIcon = (className = "redo-icon") =>
 export const adIcon = (className = "ad-icon") =>
   kitIcon("ad-screen", `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2.5" fill="#2b2f3a" stroke="#e9e1c8" stroke-width="1.6"/><path d="M10 9l5 3-5 3z" fill="#ffc94a"/></svg>`, className);
 /** A shopping cart: the Shop. */
-export const CART_ICON = kitIcon("chest-gold", `<svg class="cart-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M1.5 3.5h3l2.6 11.2h11.4l2.3-8H6" fill="none" stroke="#e9e1c8" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.4 8.8h12.4l-1.4 4.4H8.4z" fill="#ffc94a"/><circle cx="9" cy="19" r="1.9" fill="#e9e1c8"/><circle cx="17" cy="19" r="1.9" fill="#e9e1c8"/></svg>`, "cart-icon");
+export const CART_ICON = kitIcon("cart", `<svg class="cart-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M1.5 3.5h3l2.6 11.2h11.4l2.3-8H6" fill="none" stroke="#e9e1c8" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.4 8.8h12.4l-1.4 4.4H8.4z" fill="#ffc94a"/><circle cx="9" cy="19" r="1.9" fill="#e9e1c8"/><circle cx="17" cy="19" r="1.9" fill="#e9e1c8"/></svg>`, "cart-icon");
 /** The Gold coin, sized to sit in a line of text. */
 export const goldIcon = () => uiSprite("gold", "ui-sprite gold-icon");
 /** A cut cyan gem, the Gems currency's icon (drawn like the board's). */
@@ -65,10 +65,10 @@ export const missionIcon = (className = "mission-icon") =>
 export const eventIcon = (className = "event-icon") =>
   kitIcon("event", `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 2.5v19" stroke="#c9ced8" stroke-width="1.6" stroke-linecap="round"/><path d="M5.8 3.5h13.5l-3.2 4.8 3.2 4.8H5.8z" fill="#7a2a8c" stroke="#ffd34d" stroke-width="1.3" stroke-linejoin="round"/><path d="M11.5 5.3l.9 1.8 2 .3-1.45 1.4.35 2-1.8-.95-1.8.95.35-2L8.6 7.4l2-.3z" fill="#ffe9a8"/></svg>`, className);
 /** A relic: a jewel in a gold setting on a chain, its stone the rarity's
- * colour (rare blue, epic purple). A stand-in until each relic has its sprite. */
+ * colour (rare blue, epic purple), with matching PNG pendants. */
 export const relicIcon = (rarity: "rare" | "epic", className = "relic-icon") => {
   const [stone, glint] = rarity === "epic" ? ["#9b4dff", "#e6c8ff"] : ["#3d8bff", "#c8e2ff"];
-  return `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2.5c0 3 2 4.5 5 4.5s5-1.5 5-4.5" fill="none" stroke="#ffd34d" stroke-width="1.2" stroke-dasharray="1.6 1"/><path d="M12 6.5l7 4.5-2.6 9H7.6L5 11z" fill="#6a4a12" stroke="#ffd34d" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 9l4.3 2.8-1.6 5.7H9.3l-1.6-5.7z" fill="${stone}" stroke="${glint}" stroke-width=".9" stroke-linejoin="round"/><path d="M10.2 11.6l1.8-1.2" stroke="#fff" stroke-width="1.1" stroke-linecap="round"/></svg>`;
+  return kitIcon(`relic-${rarity}`, `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2.5c0 3 2 4.5 5 4.5s5-1.5 5-4.5" fill="none" stroke="#ffd34d" stroke-width="1.2" stroke-dasharray="1.6 1"/><path d="M12 6.5l7 4.5-2.6 9H7.6L5 11z" fill="#6a4a12" stroke="#ffd34d" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 9l4.3 2.8-1.6 5.7H9.3l-1.6-5.7z" fill="${stone}" stroke="${glint}" stroke-width=".9" stroke-linejoin="round"/><path d="M10.2 11.6l1.8-1.2" stroke="#fff" stroke-width="1.1" stroke-linecap="round"/></svg>`, className);
 };
 /** A plain check mark: a weekly reward claimed. */
 export const checkIcon = (className = "check-icon") =>
@@ -124,7 +124,7 @@ const SKILL_CARDS: Partial<Record<UpgradeId, CardId>> = { combatStance: "stairs"
 /** The forest's Enter button: an arrow going up into an arched doorway. */
 export const ENTER_ICON = kitIcon("tower", `<svg class="enter-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 22.5V11a8.5 8.5 0 0 1 17 0v11.5z" fill="#1b1410"/><path d="M3.5 22.5V11a8.5 8.5 0 0 1 17 0v11.5" fill="none" stroke="#c9b48a" stroke-width="2" stroke-linejoin="round"/><path d="M12 21V11.5M8 15.2l4-4 4 4" fill="none" stroke="#ffe27a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`, "enter-icon");
 /** Two cards fanned out: the Deck's icon, made from the card faces. */
-const DECK_ICON = kitIcon("book", `<span class="deck-icon" aria-hidden="true"><img src="${UI_ASSET_BASE}assets/cards/heal.png" alt=""><img src="${UI_ASSET_BASE}assets/cards/stairs.png" alt=""></span>`, "deck-icon");
+const DECK_ICON = kitIcon("deck", `<span class="deck-icon" aria-hidden="true"><img src="${UI_ASSET_BASE}assets/cards/heal.png" alt=""><img src="${UI_ASSET_BASE}assets/cards/stairs.png" alt=""></span>`, "deck-icon");
 export const skillSprite = (id: UpgradeId) => {
   const card = SKILL_CARDS[id];
   if (card) return kitIcon(`card-${card}`, `<img class="skill-sprite card-sprite" src="${UI_ASSET_BASE}assets/cards/${card}.png" alt="" aria-hidden="true">`, "skill-sprite card-sprite");
@@ -166,9 +166,9 @@ const POINTER_ROWS = [
   "...#######..",
 ];
 /** The tutorials' pointing hand. */
-export const POINTER_SVG = `<svg viewBox="0 0 12 14" shape-rendering="crispEdges" aria-hidden="true">${POINTER_ROWS.flatMap((row, y) =>
+export const POINTER_SVG = kitIcon("pointer", `<svg viewBox="0 0 12 14" shape-rendering="crispEdges" aria-hidden="true">${POINTER_ROWS.flatMap((row, y) =>
   [...row].map((c, x) => (c === "." ? "" : `<rect x="${x}" y="${y}" width="1" height="1" fill="${c === "#" ? "#2b1d14" : "#f3d9b8"}"/>`)),
-).join("")}</svg>`;
+).join("")}</svg>`, "tutorial-pointer-art");
 
 /** Raises `html` (an amount gained, such as "+20" with its icon) from over
  * `target`, fading as it rises, then removes it. It sits outside `#app`, in

@@ -7,7 +7,7 @@ Erasing progress reapplies the default UI theme and removes the sprite class.
 The art contract, reference, prompt and extraction instructions live in [UI sprites](../art/ui-sprites.md).
 `sprite-style.ts` decides effective art independently for UI and Game themes: the Medieval/Classic interface uses the optional kit, other UI themes override it, and only the Classic Game theme uses world sprites.
 `sprite-kit.ts` provides shared PNG loading, load revisions and icon pairs that retain their original art until a replacement PNG loads.
-DOM icons and Equipment use those pairs; `sprite-cards.ts` selects PNG card subjects with live card names.
+DOM icons, relic pendants, tutorial hands and Equipment actions use those pairs; `sprite-cards.ts` selects PNG card subjects with live card names.
 `applyUiTheme` mirrors effective art in `ui-sprites` and `game-sprites` classes without changing the saved preference.
 
 `main.ts` wiring, `PageGame` and the desks, `Game`'s UI commands, every page in `src/ui/`, the HUD, dialogs, lessons, the frame loop and the UI golden.
