@@ -13,7 +13,7 @@ import { showStats } from "./stats-dialog.ts";
 /** The settings on the page, in order; each control comes from its row in
  * SETTINGS. */
 const PAGE = [
-  "transition", "fightAnimation", "brightness", "spritesOff", "decorOff", "batterySaver", "reduceMotion", "weatherSound",
+  "uiSprites", "transition", "fightAnimation", "brightness", "spritesOff", "decorOff", "batterySaver", "reduceMotion", "weatherSound",
   "infoDisplay", "cinematic", "cinematicIdle", "cinematicGems", "devMode", "freePurchases",
 ] as const satisfies readonly SettingKey[];
 /** The settings on the Toggles menu, in order: the values the board shows
@@ -37,6 +37,10 @@ const shownOf = (keys: readonly PageKey[], save: Save) => keys.filter((key) => S
 
 /** What a change does once written, beyond saving. */
 const AFTER: Partial<Record<PageKey, (ctx: AppContext, overlay: BoardOverlay, s: Settings) => void>> = {
+  uiSprites: (ctx) => {
+    applyUiTheme(ctx.game.save);
+    ctx.save();
+  },
   reduceMotion: (ctx) => applyUiTheme(ctx.game.save),
   // The board silences the weather itself once sound is off.
   weatherSound: (ctx) => ctx.update(),
@@ -162,6 +166,7 @@ function bindSettings(ctx: AppContext, overlay: BoardOverlay) {
       },
       () => {
         game.eraseAll();
+        applyUiTheme(game.save);
         ctx.save();
         ctx.navigate("tower");
       },

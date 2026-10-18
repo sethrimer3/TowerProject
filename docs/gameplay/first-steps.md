@@ -1,5 +1,12 @@
 # First steps
 
+## Interface sprites
+
+Open Settings from the HUD menu and turn **Sprites** on to use the pixel-art buttons, panel frames, fields and progress bars.
+This option starts off, applies immediately and is remembered when you reload.
+Turn it off to return to your selected UI theme's usual controls.
+The separate **Turn off board sprites** option controls the dungeon artwork.
+
 ## The first runs
 
 A new game starts inside its first Tower run, with a note over the board, *Climb the Tower to gain Inspiration, XP and resources*, and the hand paused (play and the speed arrows closed) until the note is tapped; it then plays at 2 steps a second.

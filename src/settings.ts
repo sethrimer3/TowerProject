@@ -12,8 +12,11 @@ export type Setting = Toggle | Choice | Range;
  * type, the defaults and the save decoder all come from this table, so a new
  * setting is one row here. Rows are in saved key order. */
 export const SETTINGS = {
+  /** Reusable PNG frames and controls for the interface, opt-in independently
+   * of the existing board artwork. */
+  uiSprites: { kind: "toggle", default: false, page: { id: "ui-sprites", label: "Sprites" } },
   /** Use the original procedural renderers instead of bitmap art. */
-  spritesOff: { kind: "toggle", default: false, page: { id: "sprites-off", label: "Turn off Sprites" } },
+  spritesOff: { kind: "toggle", default: false, page: { id: "sprites-off", label: "Turn off board sprites" } },
   weatherSound: { kind: "toggle", default: true, page: { id: "weather-sound", label: "Weather sounds" } },
   /** Hide the procedural environment dressing: moss, vines, plants, crates,
    * pools, and the forest's wind-blown grass. */
