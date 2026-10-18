@@ -105,6 +105,7 @@ import { raised, wornEffects } from "./equipment/effects.ts";
 import { RARITY_TIERS, type EquipRarity } from "./equipment/balance.ts";
 import { EQUIP_MATERIALS, EQUIP_MATERIAL_IDS, itemDef, type EquipMaterialId } from "./equipment/catalog.ts";
 import { readyForestRuns, startingHero } from "./game/hero-sync.ts";
+import { warpLootSilver } from "./warp-loot.ts";
 import { CardActivation } from "./game/card-activation.ts";
 import { Finds } from "./game/finds.ts";
 import { FightPlayback } from "./game/fight-playback.ts";
@@ -220,6 +221,10 @@ export class Game {
    * burst starts (performance.now()): a chest opened while another's burst
    * plays waits for it to end. Emptied by undo. */
   areaBursts: { reward: AreaReward; inspiration: number; at: number }[] = [];
+  /** The Silver Warp Loot added to the run as it went inside, and when
+   * (performance.now()), for the board's burst over the hero; null when
+   * it added under 1. Cleared by undo and a new run. */
+  warpLooted: { silver: number; at: number } | null = null;
   /** When Equipment opened (performance.now()), for the
    * board's burst. */
   /** Where a Greater Boss last appeared, and when (performance.now()), for
@@ -511,6 +516,7 @@ export class Game {
     if (levelForXp(snapshot.xp) < levelForXp(this.save.xp)) this.levelUpAt = -Infinity;
     this.fights.forgetMarks();
     this.areaBursts = [];
+    this.warpLooted = null;
     this.summoned = null;
     this.vanished = null;
     this.save.xp = snapshot.xp;
@@ -956,8 +962,8 @@ export class Game {
     this.playHand();
   }
   /** A run going inside keeps the hand as it was ordered on the way in,
-   * gets its Focus uses and its Pocket Money Silver, and fixes its chance
-   * of percent potions. */
+   * gets its Focus uses, its Pocket Money Silver and, above floor 1, its
+   * Warp Loot Silver, and fixes its chance of percent potions. */
   private dealHand() {
     noteGoldBoost(this.save, this.slice, this.clock());
     this.run.hand = [...this.save.hand];
@@ -966,8 +972,9 @@ export class Game {
     else delete this.run.links;
     const badges = this.save.upgrades.cardBadges ? runBadges(this.save.badges, this.run.hand, this.badges.slots) : {};
     if (Object.keys(badges).length) this.run.badges = badges;
-    const pocket = this.startingSilver;
-    if (pocket) this.run.silver = pocket;
+    const pocket = this.startingSilver, loot = this.warpLoot(pocket);
+    if (pocket || loot) this.run.silver = snap(pocket + loot);
+    this.warpLooted = loot >= 1 ? { silver: loot, at: performance.now() } : null;
     const chance = trainedAmount(this.save, "findPotion");
     if (chance) this.run.percentPotions = chance;
     else delete this.run.percentPotions;
@@ -1084,6 +1091,13 @@ export class Game {
   /** Silver held this run. */
   get silver() {
     return this.run.silver ?? 0;
+  }
+  /** The Silver Warp Loot research adds to a Tower run going inside above
+   * floor 1 (a Warp, or a Retry from one), holding `pocket` Silver: its
+   * percent of the Silver the floors below would have paid (warp-loot.ts). */
+  private warpLoot(pocket: number) {
+    const start = this.mode === "tower" ? this.towerRun.start ?? 0 : 0;
+    return start ? warpLootSilver(this.save, this.run.tier ?? 1, start, pocket) : 0;
   }
   /** The Silver a run starts with as it goes inside: Pocket Money research
    * and worn Equipment's. */
@@ -1248,6 +1262,7 @@ export class Game {
     this.slice.runCurrency = 0;
     this.slice.runRecord = false;
     this.slice.runFinds = defaultFinds();
+    this.warpLooted = null;
     this.stopPlay();
     const { player, loadout } = startingHero(this.save, this.mode);
     const core: RunCore = {

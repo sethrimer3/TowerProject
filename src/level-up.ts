@@ -1,10 +1,13 @@
 import { tileTransform, type FrameContext } from "./render-frame.ts";
 import { REVIVE_MS } from "./combat.ts";
-import { INSPIRATION_URL, sprite } from "./board-popups.ts";
+import { coinImage, INSPIRATION_URL, sprite } from "./board-popups.ts";
+import { compactAmount } from "./whole.ts";
 import { AREA_BURST_MS, type AreaReward } from "./tower/area-ledger.ts";
 
 /** How long the level-up glow and its "LEVEL UP!" text last. */
 export const LEVEL_UP_MS = 2000;
+/** How long Warp Loot's burst lasts as a run goes inside. */
+export const WARP_LOOT_MS = 2800;
 /** How long the training points a level-up earned rise over the hero,
  * once its burst is over. */
 export const POINTS_MS = 1400;
@@ -63,6 +66,14 @@ const AREA: Omit<Blaze, "text"> = {
   textSize: 0.08, textMin: 20, outline: "#3a2600", shadow: "rgba(255, 196, 40, 0.9)",
   fill: ["#fffbe0", "#ffe07a", "#e8a91c"],
 };
+/** Warp Loot's Silver as a run goes inside: a cool, silvery blaze. */
+const WARP_LOOT: Blaze = {
+  ms: WARP_LOOT_MS, fadeMs: 600, burstMs: 800, flames: 14, glow: 32, reach: 0.9,
+  glowColors: ["235, 242, 255", "190, 205, 230", "140, 155, 190"],
+  flameTail: "150, 165, 200", flameMid: "205, 215, 235", flameTip: "255, 255, 255", flashEdge: "210, 222, 245",
+  text: "WARP LOOT", textSize: 0.08, textMin: 20, outline: "#1c2230", shadow: "rgba(190, 210, 255, 0.9)",
+  fill: ["#ffffff", "#dfe6f0", "#9eacc0"],
+};
 const AREA_TITLES: Record<AreaReward, string> = { mastered: "AREA MASTERED", cleared: "ENEMIES CLEARED" };
 /** Starts loading the Inspiration icon, so the burst has it from its first frame. */
 export const preloadAreaBurst = () => void sprite(INSPIRATION_URL);
@@ -75,6 +86,15 @@ export function drawAreaBurst(f: FrameContext, age: number, reward: AreaReward, 
   const fade = Math.min(1, (b.ms - age) / b.fadeMs);
   const sub = reward === "mastered" ? "Checkpoint Warp Unlocked" : `+${inspiration}`;
   drawWords(f, age, fade, b, sub, 0.6, 0.1, reward === "cleared" ? sprite(INSPIRATION_URL) : null);
+}
+
+/** Warp Loot's Silver added as the run went inside, `age` ms ago: the
+ * silvery blaze, "WARP LOOT", and under it the Silver with its coin. */
+export function drawWarpLoot(f: FrameContext, age: number, silver: number) {
+  if (!drawBlaze(f, age, WARP_LOOT)) return;
+  const fade = Math.min(1, (WARP_LOOT.ms - age) / WARP_LOOT.fadeMs);
+  const amount = silver < 1_000_000 ? silver.toLocaleString("en-US") : compactAmount(silver);
+  drawWords(f, age, fade, WARP_LOOT, `+${amount}`, 0.6, 0.1, coinImage("silver"));
 }
 
 /** The hero's level-up, drawn over the board: a fiery flash bursting

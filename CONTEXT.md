@@ -187,7 +187,7 @@ The hero's class while the run's hand holds the **Archer card** (Tower III's flo
 _Avoid_: ranger, bowman
 
 **Meter**:
-The unit distances are shown in on screen ("m"): one tile across. Attack Range, ATK / m and a Dash's reach are given in meters.
+The unit distances are shown in on screen ("m"): one tile across. Attack Range and ATK / m are given in meters, as an arrow flies straight across; a Dash's and End Rush's reach stay in tiles, since they step along the grid.
 _Avoid_: tiles (as a shown unit)
 
 **Volley**:
@@ -553,6 +553,10 @@ A ? on a tile the Deprioritize badge passed over on this floor: no card's path c
 
 **Floor Skipped**:
 Skip on the STAIRS card in the Tower: the hero climbs two floors instead of one, never standing on the floor between.
+
+**Warp Loot**:
+The Silver a run starting above floor 1 (a Warp, or a Retry from one) goes inside with, beside Pocket Money: Warp Loot research's share of an estimate of what its skipped floors would have paid (their kills, Wishing Well and Interest).
+_Avoid_: warp bonus, skip silver
 
 **Interest**:
 Silver added on each floor climbed for the first time in a run: Interest % research's share of the Silver held, at most Max Interest's limit (50 at first).

@@ -20,7 +20,7 @@ import { DamagePredictions, drawDamageLabels } from "./damage-labels.ts";
 import { BossFlash } from "./boss-flash.ts";
 import { goalUnlocked } from "./goals.ts";
 import { DEFEAT_MS, drawStruckDown } from "./struck-down.ts";
-import { AREA_BURST_MS, drawAreaBurst, preloadAreaBurst, drawLevelUp, drawRevive, LEVEL_UP_MS, POINTS_MS, REVIVE_MS } from "./level-up.ts";
+import { AREA_BURST_MS, drawAreaBurst, preloadAreaBurst, drawLevelUp, drawRevive, drawWarpLoot, LEVEL_UP_MS, POINTS_MS, REVIVE_MS, WARP_LOOT_MS } from "./level-up.ts";
 import { drawPoof, POOF_MS } from "./poof.ts";
 import { drawGem, drawGemSparkle, GEM_SPARKLE_MS } from "./gem-art.ts";
 import { DashEchoes } from "./dash-echoes.ts";
@@ -186,6 +186,8 @@ export class Renderer {
     for (const at of this.game.fights.revivedAt) drawRevive(f, f.now - at);
     drawLevelUp(f, f.now - this.game.levelUpAt, this.game.levelUpPoints);
     for (const area of this.game.areaBursts) if (f.now >= area.at) drawAreaBurst(f, f.now - area.at, area.reward, area.inspiration);
+    const loot = this.game.warpLooted;
+    if (loot) drawWarpLoot(f, f.now - loot.at, loot.silver);
     const summoned = this.game.summoned;
     if (summoned) drawPoof(f, summoned.x, summoned.y, f.now - summoned.at);
     const vanished = this.game.vanished;
@@ -611,13 +613,13 @@ export class Renderer {
   }
   /** Every timed effect has played out: the arrival glow, a dash's echoes,
    * a blocked step, the feedback text, the level-up, skulls, revivals, an area
-   * reward's burst, a Greater Boss's poof, a Gem's sparkle and the turn's
+   * reward's burst, Warp Loot's, a Greater Boss's poof, a Gem's sparkle and the turn's
    * shots in flight. */
   private effectsOver(now: number) {
     const g = this.game, sparkle = g.gemFinder.sparkle;
     return now - this.arrived > ARRIVAL_GLOW_MS && this.echoes.over(now) && g.blocked.until <= now && g.effect.until <= now &&
       now - g.levelUpAt >= LEVEL_UP_MS + POINTS_MS && g.fights.revivedAt.every((at) => now - at >= REVIVE_MS) && g.fights.struckDown.every((at) => now - at >= DEFEAT_MS) &&
-      g.areaBursts.every((b) => now - b.at >= AREA_BURST_MS) &&
+      g.areaBursts.every((b) => now - b.at >= AREA_BURST_MS) && (!g.warpLooted || now - g.warpLooted.at >= WARP_LOOT_MS) &&
       (!g.summoned || now - g.summoned.at >= POOF_MS) && (!g.vanished || now - g.vanished.at >= POOF_MS) &&
       (!sparkle || now - sparkle.at >= GEM_SPARKLE_MS) && (!g.volley || volleyOver(g.volley, now)) && this.inFlight.over(now);
   }

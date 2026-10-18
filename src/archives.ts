@@ -114,14 +114,16 @@ export const RESEARCH_TARGETS = {
   instakillGold: { name: "Gold per Instakill", base: 100, shown: percent },
   /** Silver a run has in hand when it goes inside. */
   startingSilver: { name: "Starting Silver", base: 0, shown: count },
+  /** The percent of the Silver its skipped floors would have paid that a Warp run starts with (warp-loot.ts). */
+  warpLoot: { name: "Warp Loot", base: 0, shown: percent },
   /** How fast trainers work: a rank of `d` takes d / (1 + speed). */
   trainingSpeed: { name: "Training Speed", base: 0, shown: speed },
   /** What a trainer's Gold is cut by, in tenths of a percent. */
   trainingDiscount: { name: "Training Discount", base: 0, shown: tenths },
   /** Tiles the hand's first step toward a new target may dash across, once Dash is owned. */
-  dashTiles: { name: "Meters Dashed", base: 0, shown: count },
+  dashTiles: { name: "Tiles Dashed", base: 0, shown: count },
   /** Tiles more STAIRS's dash toward the stairs may cross, once End Rush is owned. */
-  endRushTiles: { name: "Meters Rushed to the Stairs", base: 0, shown: count },
+  endRushTiles: { name: "Tiles Rushed to the Stairs", base: 0, shown: count },
   /** How many of a Dash's dashed tiles regain HP by Regen, once Dash Regen is owned. */
   dashRegenSteps: { name: "Dashed Steps with Regen", base: 0, shown: count },
   /** Buy quantities opened past x1: x5, x10, x100, then Max. */
@@ -316,6 +318,23 @@ const dashRegenLevels = (): ResearchLevel[] => {
   const gold = share(goldTotal, 1.6).map(Math.round), hours = share(hoursTotal, 1.12);
   gold[n - 1]! += goldTotal - gold.reduce((a, b) => a + b, 0);
   return gold.map((g, i) => ({ gold: g, hours: hours[i]!, effect: { target: "dashRegenSteps", op: "add", value: 1 } }));
+};
+
+/** Warp Loot: +2% a level, for 50 levels. Gold is Dash's for the first 25
+ * levels (250 × n × 2^(n−1), 105 billion at 25), then 40% more each level
+ * (about 470 trillion at 50; 1.6 quadrillion in all). Time is Dash's in all
+ * (697 days), spread so level n weighs n × 1.095^(n−1): Dash's growth
+ * stretched over twice the levels (26 minutes at level 1, 9.7 hours at 10,
+ * 3.9 days at 25 and 76 days at 50). */
+const warpLootLevels = (): ResearchLevel[] => {
+  const n = 50, dash = dashLevels("dashTiles"), last = dash[dash.length - 1]!.gold;
+  const hoursTotal = dash.reduce((a, l) => a + l.hours, 0);
+  const weights = Array.from({ length: n }, (_, i) => (i + 1) * intPow(1.095, i)), sum = weights.reduce((a, b) => a + b, 0);
+  return weights.map((w, i): ResearchLevel => ({
+    gold: dash[i]?.gold ?? Math.round(last * intPow(1.4, i + 1 - dash.length)),
+    hours: (hoursTotal * w) / sum,
+    effect: { target: "warpLoot", op: "add", value: 2 },
+  }));
 };
 
 /** Max Interest's limits by level, up from 50 Silver a floor. */
@@ -684,6 +703,13 @@ export const RESEARCH = {
     categories: ["economy"],
     requires: [{ upgrade: "maxInterest" }],
     levels: maxInterestLevels(),
+  },
+  warpLoot: {
+    name: "Warp Loot",
+    description: "Pick the pockets of the climb you skip: a run that starts above floor 1 (a Warp, or a Retry from one) goes inside with a share of the Silver its skipped floors' kills, Wishing Well and Interest would have paid, estimated from your training and research.",
+    categories: ["economy"],
+    requires: [{ upgrade: "archives" }, { goalUnlock: "warpLoot" }],
+    levels: warpLootLevels(),
   },
   mug: {
     name: "Mug",

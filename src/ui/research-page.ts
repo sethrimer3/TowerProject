@@ -68,7 +68,7 @@ export class ResearchPage {
     // Once trainers work, Training's subtitle also counts them at work.
     const trainers = this.ctx.game.training.hired ? ` · ${save.trainingJobs.length}/${trainingSlots(save)} TRAINING` : "";
     const trainingDot = this.tab !== "training" && this.ctx.game.notices.waiting("training") ? ` class="notify"` : "";
-    return `<div class="tree-tabs" role="group" aria-label="Research">` +
+    return `<div class="tree-tabs research-tabs" role="group" aria-label="Research">` +
       `<button data-research-tab="training" aria-pressed="${this.tab === "training"}"${trainingDot}><span>${pointsIcon("ui-sprite")}</span>Training<small>${trainingPoints(save).left} POINTS${trainers}</small></button>` +
       `<button data-research-tab="archives" aria-pressed="${this.tab === "archives"}"><span>${uiSprite("log")}</span>Archives<small>${busy}/${save.archives.slots.length} RESEARCHING</small></button></div>`;
   }

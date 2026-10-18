@@ -2392,6 +2392,10 @@ nav button > span :is(img, svg) { display: block; width: 42px; height: 42px; max
   image-rendering: pixelated;
 }
 .tree-tabs span img { width: 34px; height: 34px; margin-inline: auto; }
+/* Training's and the Archives' tabs carry their icon left of the name, not above it. */
+.research-tabs button { display: grid; grid-template-columns: auto auto; justify-content: center; align-items: center; column-gap: 6px; min-height: 0; text-align: left; }
+.research-tabs span { grid-row: span 2; margin-bottom: 0; }
+.research-tabs small { margin-top: 1px; }
 .node-icon img { width: 38px; height: 38px; }
 .skill-node.locked .node-icon img { filter: grayscale(1); opacity: .48; }
 .slot-filter button img { width: 28px; height: 28px; }

@@ -81,7 +81,7 @@ let silverCoin: HTMLCanvasElement | null = null;
 /** The coin for `coin`, or null while it loads. There is no Silver art yet,
  * so Silver is the Gold coin drained of colour and brightened, as the
  * purse shows it (`.silver-sprite`), baked once. */
-function coinImage(coin: Coin): CanvasImageSource | null {
+export function coinImage(coin: Coin): CanvasImageSource | null {
   const gold = sprite(GOLD_URL);
   if (!gold || coin === "gold") return gold;
   if (!silverCoin) {
