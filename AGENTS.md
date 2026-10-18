@@ -13,14 +13,15 @@ Requires Node 22.18+ (CI uses 24). Tests and tools run `.ts` files directly via 
 ```sh
 npm run dev            # Vite on 127.0.0.1:5173 (PORT env overrides)
 npm run build          # tsc --noEmit && vite build -> dist/
-npm test               # all tests/*.test.ts via node:test (local sample; CI=1 for CI's full size)
-node --experimental-transform-types --import ./tests/pin-random.ts --test tests/defend.test.ts                          # one file
+npm test               # all tests/*.test.ts but Defend's via node:test (local sample; CI=1 for CI's full size)
+npm run test:defend    # Defend's tests (tests/defend*.test.ts), on demand only: Defend is on hold, so neither npm test nor CI runs them
+node --experimental-transform-types --import ./tests/pin-random.ts --test tests/cards.test.ts                           # one file
 node --experimental-transform-types --import ./tests/pin-random.ts --test --test-name-pattern="gold formula" tests/*.test.ts  # one test
 npm run test:browser   # Playwright suites (tests/*.mjs); needs `npm run dev` running in another terminal
 npm run test:render    # board screenshot hashes vs tests/fixtures/render.golden.json (builds and serves its own copy; no dev server)
 npm run test:ui        # page/HUD/dialog HTML hashes vs tests/fixtures/ui.golden.json (builds and serves its own copy; no dev server)
 npm run test:snapshots # both of the above side by side on one build (tests/snapshot-suites.mjs): the wall time of the slower one
-npm run test:pointer   # Defend board pointer gestures vs tests/fixtures/defend-pointer.golden.json (also needs `npm run dev`)
+npm run test:pointer   # Defend board pointer gestures vs tests/fixtures/defend-pointer.golden.json (also needs `npm run dev`; on demand only, like test:defend)
 npm run tiles:area1 / tiles:outside     # regenerate tile PNGs
 npm run cards:stubs                     # regenerate the placeholder card faces in public/assets/cards/
 ```
@@ -147,7 +148,7 @@ While iterating, run only the tests for the area you touched, then `npm test` on
 | Saves and settings | `tests/save.test.ts tests/settings.test.ts` |
 | Board drawing, lighting, decor art | `tests/render-calls.test.ts tests/lighting-passes.test.ts tests/art-modules.test.ts tests/terrain-paint.test.ts tests/decor.test.ts tests/themed-boards.test.ts` |
 | Outside and weather | `tests/outside*.test.ts tests/outdoor-art.test.ts tests/torch-light.test.ts` |
-| Defend (`src/defend/`) | `tests/defend*.test.ts` |
+| Defend (`src/defend/`), on hold | `npm run test:defend` (and `npm run test:pointer`), only when changing Defend |
 
 ## Agent docs
 

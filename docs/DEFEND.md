@@ -168,9 +168,10 @@ from its seed; `tests/defend-replay.test.ts` pins it.
   space (`weather.ts`).
 - `structure-art.ts` holds the keep, barracks and tower art (shared by the
   city layer and the palette icons), the banner, and the palette colours.
-- `npm run test:render` draws seeded Defend scenes (building mode, a rainy
-  battle, the night boss wave, a stormy night zoomed in) and the palette
-  icons, and compares their pixels to the recorded golden.
+- `tests/render-scenes.ts` holds seeded Defend scenes (building mode, a
+  rainy battle, the night boss wave, a stormy night zoomed in) and the
+  palette icons for `npm run test:render`; they are switched off (`DEFEND`)
+  while Defend's tests are on hold.
 
 ## Economy (`progress.ts`, Armory tab)
 

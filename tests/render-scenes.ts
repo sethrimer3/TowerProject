@@ -458,10 +458,16 @@ function playIcons(_name: string, _seed: number, sheet: HTMLCanvasElement, grab:
 export type CanvasKind = "board" | "defend" | "icons";
 export type Job = { name: string; seed: number; canvas: CanvasKind; play: (canvas: HTMLCanvasElement, grab: Grab) => void };
 
-/** Every scene, in order, each with its own seed. */
+/** Whether the Defend scenes are drawn: not while Defend isn't being tested
+ * (`npm run test:defend` runs its Node tests on demand). */
+const DEFEND = false;
+
+/** Every scene, in order, each with its own seed. The Defend scenes keep
+ * their places while off, so the later board scenes keep their seeds. */
 export const JOBS: Job[] = [
   ...Object.keys(BOARD_SCENES).map((name) => ({ name, canvas: "board" as const, run: playBoard })),
   ...Object.keys(DEFEND_SCENES).map((name) => ({ name, canvas: "defend" as const, run: playDefend })),
   { name: "defendIcons", canvas: "icons" as const, run: playIcons },
   ...Object.keys(LATER_BOARD_SCENES).map((name) => ({ name, canvas: "board" as const, run: playBoard })),
-].map(({ name, canvas, run }, i) => ({ name, seed: i + 1, canvas, play: (cv: HTMLCanvasElement, grab: Grab) => run(name, i + 1, cv, grab) }));
+].map(({ name, canvas, run }, i) => ({ name, seed: i + 1, canvas, play: (cv: HTMLCanvasElement, grab: Grab) => run(name, i + 1, cv, grab) }))
+  .filter((job) => DEFEND || job.canvas === "board");

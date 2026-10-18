@@ -695,8 +695,6 @@ try {
   await click("#goals-back");
   await deckTour("rich");
   await cardRevealTour("rich");
-  await tab("defend");
-  await shot("rich.defend");
   await upgradesTour("rich");
   await researchTour("rich");
   await gearTour("rich");

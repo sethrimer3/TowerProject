@@ -105,28 +105,7 @@ for (const width of [390, 320]) {
   assert.equal(overflow, false, `Every tab should not overflow at ${width}px`);
 }
 
-// 4. Click DEFEND tab: the city grid should render
-await page.locator('[data-tab="defend"]').click();
-const defendSelected = await page.locator('[data-tab="defend"]').evaluate((el) => el.classList.contains("selected"));
-assert.equal(defendSelected, true, "DEFEND tab should be selected");
-
-const defendSection = page.locator("#defend");
-assert.equal(await defendSection.isVisible(), true, "DEFEND page section should be active/visible");
-const boardCanvas = page.locator("#defend-canvas");
-await page.waitForFunction(() => document.querySelector("#defend-canvas")?.style.width);
-assert.equal(await boardCanvas.isVisible(), true, "DEFEND board canvas should render");
-const box = await boardCanvas.boundingBox();
-assert.ok(box && Math.abs(box.width / box.height - 9 / 13) < 0.02, "DEFEND board should keep a 9:13 aspect ratio");
-const paletteItems = await page.locator("#defend-palette [data-item]").count();
-assert.equal(paletteItems, 6, "Build palette should list city tile, both barracks, archer tower, cannon tower and watch tower");
-const cityTiles = await page.locator('#defend-palette [data-item="cityTile"] b').textContent();
-assert.equal(cityTiles, "×8", "Player starts with 8 city tiles");
-
-const statsVisible = await page.locator("#stats").isVisible();
-assert.equal(statsVisible, false, "Stats section should be hidden on DEFEND tab");
-
-const currenciesVisible = await page.locator("#currencies").isVisible();
-assert.equal(currenciesVisible, false, "Currencies section should be hidden on DEFEND tab");
+// The Defend page itself isn't tested while Defend is on hold.
 
 // Clean up fixture from sessionStorage
 await page.evaluate(() => sessionStorage.removeItem("__testFixture"));
