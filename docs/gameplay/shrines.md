@@ -12,3 +12,7 @@ A boon applies at once, to the hero's stats as they stand and to what it gains l
 Taking a Boon Floor Requirement boon shortens the whole schedule, so several boons can come due at once.
 More research, each opened by a later Goal: Floors Required (one floor fewer a level), First Boon Choice (a standard boon heading each run's first offer), Auto Pick Boons (the run takes the top boon itself; toggled in the Shrine bar's list), Ban Boons and Auto Pick Ranking, set on the forest menu's **Shrine Boons** page.
 The Delve has no shrines.
+
+With Settings → **Sprites** on, each boon has a matching pixel-art PNG symbol in offers, the taken-boons list, First Boon Choice, bans and ranking.
+Standard choices have brass frames and trade-offs have red frames; names, values, copies and the waiting count remain readable text.
+The option defaults to off, and non-default UI themes supply their own look.

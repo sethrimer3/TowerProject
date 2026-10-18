@@ -1,3 +1,5 @@
+import { boonIcon } from "./boon-icon.ts";
+import { kitIcon } from "../sprite-kit.ts";
 import { autoPickOpen, boon, boonLabel, pickedLines, type BoonId } from "../shrines.ts";
 import type { AppContext } from "./app.ts";
 import { el, shrineIcon } from "./dom.ts";
@@ -33,7 +35,7 @@ function offerHtml(ctx: AppContext, offer: BoonId[]) {
     `<p class="hint">${waiting > 1 ? `${waiting} boons waiting. ` : ""}It lasts the rest of this run.</p>` +
     `<div class="boon-offer">${offer.map((id) => {
       const kind = boon(id).kind;
-      return `<button class="boon-choice ${kind}" data-boon="${id}"><small>${kind === "tradeoff" ? "TRADE-OFF" : "STANDARD"}</small><b>${boonLabel(id, save)}</b></button>`;
+      return `<button class="boon-choice ${kind}" data-boon="${id}">${boonIcon(id)}<span class="boon-choice-text"><small>${kind === "tradeoff" ? "TRADE-OFF" : "STANDARD"}</small><b>${boonLabel(id, save)}</b></span></button>`;
     }).join("")}</div>`;
 }
 
@@ -43,12 +45,12 @@ function pickedHtml(ctx: AppContext) {
   return `<small>SHRINE</small><h2>${shrineIcon("shrine-title-icon")} Boons</h2><p class="hint">${nextText}</p>` +
     (lines.length
       ? `<div class="boon-table-scroll"><table class="boon-table"><thead><tr><th>Boon</th><th>Taken</th></tr></thead><tbody>${lines.map((l) =>
-        `<tr class="${boon(l.id).kind}"><td>${l.text}</td><td>${l.count}</td></tr>`).join("")}</tbody></table></div>`
+        `<tr class="${boon(l.id).kind}"><td>${boonIcon(l.id)}<span>${l.text}</span></td><td>${l.count}</td></tr>`).join("")}</tbody></table></div>`
       : `<p class="research-empty">No boons taken yet this run.</p>`);
 }
 
 function autoPickHtml(ctx: AppContext) {
   const save = ctx.game.save;
   if (!autoPickOpen(save)) return "";
-  return `<label class="boon-autopick"><input type="checkbox" id="boon-autopick"${save.shrines.autoPick ? " checked" : ""}> Auto Pick Boons</label>`;
+  return `<label class="boon-autopick"><input type="checkbox" id="boon-autopick"${save.shrines.autoPick ? " checked" : ""}>${kitIcon("shrine-auto", "", "shrine-control-icon")} Auto Pick Boons</label>`;
 }

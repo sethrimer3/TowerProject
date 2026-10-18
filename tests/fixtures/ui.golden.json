@@ -50,7 +50,7 @@
   "rich.tap.0.0": "2c03ef71cae048e7",
   "rich.tap.8.0": "0148061f557546f9",
   "rich.tap.1.2": "9b0369713c8f2c9a",
-  "rich.tap.7.2": "2cd6fea3de6ad88e",
+  "rich.tap.7.2": "0ccf9ed1a466f0e4",
   "rich.tap.11.2": "113ac85d41e58909",
   "rich.tap.1.4": "789ead4cf6c09f4c",
   "rich.tap.8.4": "56c9a9327e7695aa",
@@ -245,5 +245,12 @@
   "tournament.open": "fd579ac90148d339",
   "tournament.results": "5e21fd4b4cbf0992",
   "tournament.claimed": "d1be56ce57fb55de",
-  "tournament.forestAfter": "8f78c1f6917ce4cb"
+  "tournament.forestAfter": "8f78c1f6917ce4cb",
+  "shrines.forest": "c597360d0d373a03",
+  "shrines.firstChoice": "24bdc0119587dfbf",
+  "shrines.banned": "7afb6f0e01683b38",
+  "shrines.ranked": "d0d9e01321681f7f",
+  "shrines.offer": "6d31ae937bc4b4b0",
+  "shrines.taken": "dfcc62125c86a08c",
+  "shrines.auto": "1ad4e86799631b11"
 }
