@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { createHash } from "node:crypto";
+import { BOON_IDS } from "../src/shrines.ts";
+import { BOON_SPRITES, SHRINE_CONTROL_SPRITES } from "../src/sprite-boons.ts";
 import { BADGE_IDS } from "../src/badges.ts";
 import { CARD_SPRITE_LAYERS } from "../src/sprite-cards.ts";
 import { ICON_SPRITES, WORLD_SPRITES, CONTROL_SPRITES, DETAIL_SPRITES, CITY_SPRITES, DEFEND_STRUCTURE_SPRITES, NAMED_ENEMY_SPRITES, drawKit, kitEnemy, spriteRevision } from "../src/sprite-kit.ts";
@@ -15,7 +17,7 @@ import { paintContents, paintHero } from "../src/tile-painters.ts";
 test("every world, UI, Equipment and card sprite ships as a real native-sized PNG", () => {
   const base = new URL("../public/assets/style/", import.meta.url);
   const manifest = JSON.parse(readFileSync(new URL("manifest.json", base), "utf8"));
-  for (const id of [...UI_DETAIL_SPRITES, ...UI_ORNAMENT_SPRITES, ...ICON_SPRITES, ...WORLD_SPRITES, ...CONTROL_SPRITES, ...DETAIL_SPRITES, ...CITY_SPRITES, ...DEFEND_STRUCTURE_SPRITES, ...NAMED_ENEMY_SPRITES.map(id => `enemy-${id}`), ...Object.keys(ICON_ROWS).map(id => `equip-${id}`), ...Object.keys(CARDS).map(id => `card-${id}`), ...BADGE_IDS.map(id => `badge-${id}`), "badge-star", "card-exchange", ...["common", "rare", "epic"].map(rarity => `badge-frame-${rarity}`)]) {
+  for (const id of [...Object.values(BOON_SPRITES), ...SHRINE_CONTROL_SPRITES, "shrine-fill", ...UI_DETAIL_SPRITES, ...UI_ORNAMENT_SPRITES, ...ICON_SPRITES, ...WORLD_SPRITES, ...CONTROL_SPRITES, ...DETAIL_SPRITES, ...CITY_SPRITES, ...DEFEND_STRUCTURE_SPRITES, ...NAMED_ENEMY_SPRITES.map(id => `enemy-${id}`), ...Object.keys(ICON_ROWS).map(id => `equip-${id}`), ...Object.keys(CARDS).map(id => `card-${id}`), ...BADGE_IDS.map(id => `badge-${id}`), "badge-star", "card-exchange", ...["common", "rare", "epic"].map(rarity => `badge-frame-${rarity}`)]) {
     const asset = manifest.assets[id];
     assert.ok(asset, id);
     const png = readFileSync(new URL(asset.file, base));
@@ -107,4 +109,17 @@ test("all Goal unlocks have deployed matching art and new utility symbols are di
   const ids = [...UI_DETAIL_SPRITES, ...UI_ORNAMENT_SPRITES];
   const hashes = ids.map(id => createHash("sha256").update(readFileSync(new URL(`${id}.png`, base))).digest("hex"));
   assert.equal(new Set(hashes).size, ids.length, "range, charge, rapid fire and attack speed must remain distinguishable");
+});
+
+
+test("every Shrine boon has distinct native PNG art and both kinds keep complete coverage", () => {
+  assert.deepEqual(Object.keys(BOON_SPRITES).sort(), [...BOON_IDS].sort());
+  const ids = [...Object.values(BOON_SPRITES), ...SHRINE_CONTROL_SPRITES];
+  const hashes = ids.map(id => {
+    const png = readFileSync(new URL(`../public/assets/style/${id}.png`, import.meta.url));
+    assert.equal(png.readUInt32BE(16), 24, id);
+    assert.equal(png.readUInt32BE(20), 24, id);
+    return createHash("sha256").update(png).digest("hex");
+  });
+  assert.equal(new Set(hashes).size, ids.length, "standard and trade-off boons keep distinct subjects");
 });

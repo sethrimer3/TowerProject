@@ -1494,6 +1494,132 @@
       "file": "ui-crown.png",
       "width": 24,
       "height": 24
+    },
+    "boon-max-hp": {
+      "file": "boon-max-hp.png",
+      "width": 24,
+      "height": 24
+    },
+    "boon-attack": {
+      "file": "boon-attack.png",
+      "width": 24,
+      "height": 24
+    },
+    "boon-gold": {
+      "file": "boon-gold.png",
+      "width": 24,
+      "height": 24
+    },
+    "boon-shroud": {
+      "file": "boon-shroud.png",
+      "width": 24,
+      "height": 24
+    },
+    "boon-silver": {
+      "file": "boon-silver.png",
+      "width": 24,
+      "height": 24
+    },
+    "boon-regen": {
+      "file": "boon-regen.png",
+      "width": 24,
+      "height": 24
+    },
+    "boon-interest": {
+      "file": "boon-interest.png",
+      "width": 24,
+      "height": 24
+    },
+    "boon-free-up": {
+      "file": "boon-free-up.png",
+      "width": 24,
+      "height": 24
+    },
+    "boon-parry": {
+      "file": "boon-parry.png",
+      "width": 24,
+      "height": 24
+    },
+    "boon-floor-req": {
+      "file": "boon-floor-req.png",
+      "width": 24,
+      "height": 24
+    },
+    "boon-play-speed": {
+      "file": "boon-play-speed.png",
+      "width": 24,
+      "height": 24
+    },
+    "boon-attack-boss-hp": {
+      "file": "boon-attack-boss-hp.png",
+      "width": 24,
+      "height": 24
+    },
+    "boon-gold-max-hp": {
+      "file": "boon-gold-max-hp.png",
+      "width": 24,
+      "height": 24
+    },
+    "boon-enemy-hp-regen": {
+      "file": "boon-enemy-hp-regen.png",
+      "width": 24,
+      "height": 24
+    },
+    "boon-enemy-attack": {
+      "file": "boon-enemy-attack.png",
+      "width": 24,
+      "height": 24
+    },
+    "boon-floor-silver": {
+      "file": "boon-floor-silver.png",
+      "width": 24,
+      "height": 24
+    },
+    "boon-regen-max-hp": {
+      "file": "boon-regen-max-hp.png",
+      "width": 24,
+      "height": 24
+    },
+    "boon-boss-hp": {
+      "file": "boon-boss-hp.png",
+      "width": 24,
+      "height": 24
+    },
+    "boon-lifesteal": {
+      "file": "boon-lifesteal.png",
+      "width": 24,
+      "height": 24
+    },
+    "boon-fast-second": {
+      "file": "boon-fast-second.png",
+      "width": 24,
+      "height": 24
+    },
+    "shrine-count": {
+      "file": "shrine-count.png",
+      "width": 24,
+      "height": 24
+    },
+    "shrine-grip": {
+      "file": "shrine-grip.png",
+      "width": 24,
+      "height": 24
+    },
+    "shrine-auto": {
+      "file": "shrine-auto.png",
+      "width": 24,
+      "height": 24
+    },
+    "shrine-ban": {
+      "file": "shrine-ban.png",
+      "width": 24,
+      "height": 24
+    },
+    "shrine-fill": {
+      "file": "shrine-fill.png",
+      "width": 16,
+      "height": 4,
+      "tile": true
     }
   },
   "terrain": {

@@ -333,3 +333,56 @@ html.ui-sprites dialog > small:not(#_) { color: #8b9a9d; }
 html.ui-sprites dialog .stats-table th:not(#_) { color: #b8c2bb; border-bottom-color: #3e4c59; }
 html.ui-sprites dialog .stats-table td:not(#_) { color: #eee0b7; border-bottom-color: #3e4c59; }
 html.ui-sprites dialog .notes-table caption:not(#_) { color: #e1bb78; }
+
+/* Shrine subjects supplement the live descriptions; other themes keep
+   the text-only layout, including while a PNG is unavailable. */
+.boon-icon, .shrine-control-icon, .boon-first-preview { display: none; }
+.boon-choice-text { display: grid; gap: 2px; }
+.shrine-grip-icon { width: 16px; height: 18px; }
+.rank-arrow-icon, .shrine-close-icon { width: 12px; height: 12px; }
+html.ui-sprites :is(.boon-icon, .shrine-control-icon).sprite-ready {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+html.ui-sprites .boon-choice:has(> .boon-icon.sprite-ready) { grid-template-columns: 32px minmax(0, 1fr); align-items: center; gap: 10px; }
+html.ui-sprites :is(.boon-choice, .boon-ban, .boon-rank):not(#_) {
+  border: 1px solid transparent;
+  border-image: var(--ui-button) 6 fill / 8px / 0 stretch;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  image-rendering: pixelated;
+  padding: 10px 12px;
+}
+html.ui-sprites :is(.boon-choice, .boon-ban, .boon-rank).tradeoff:not(#_) {
+  border-image-source: var(--ui-danger);
+}
+html.ui-sprites :is(.boon-ban, .boon-rank).banned:not(#_) { border-image-source: var(--ui-danger); }
+html.ui-sprites .boon-rank.ranked:not(#_) { border-image-source: var(--ui-selected); }
+html.ui-sprites .boon-choice-text :is(small, b) { display: block; }
+html.ui-sprites .boon-ban-name { flex: 1; min-width: 0; }
+html.ui-sprites .boon-rank .rank-grip { flex-shrink: 0; }
+html.ui-sprites .boon-table .boon-icon { margin-inline-end: 8px; }
+html.ui-sprites .boon-first-choice { display: flex; align-items: center; gap: 10px; }
+html.ui-sprites .boon-first-choice select { min-width: 0; flex: 1; }
+html.ui-sprites .boon-first-preview:has(.sprite-ready) { display: inline-flex; }
+html.ui-sprites .boon-rank .rank-name, html.ui-sprites .boon-choice-text { overflow-wrap: anywhere; }
+html.ui-sprites .stats .shrine-diamond:not(#_) {
+  width: 18px;
+  height: 18px;
+  top: -5px;
+  left: -4px;
+  border: 0;
+  background: url("../public/assets/style/shrine-count.png") center / contain no-repeat;
+  transform: none;
+  box-shadow: none;
+  image-rendering: pixelated;
+  opacity: 0.65;
+}
+html.ui-sprites .stats .shrine-diamond.lit:not(#_) { opacity: 1; }
+html.ui-sprites .stats .shrine-diamond b:not(#_) { transform: none; color: #eee0b7; }
+html.ui-sprites #shrine-fill:not(#_) { background: url("../public/assets/style/shrine-fill.png") left top / 32px 100% repeat-x; box-shadow: none; }
+html.ui-sprites #overheal-fill:not(#_) { background: url("../public/assets/ui/frames/fill-blue.png") left top / 32px 100% repeat-x; }

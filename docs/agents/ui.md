@@ -14,6 +14,7 @@ Gate signs remain live text, visible only with a loaded replacement.
 Goal/status icons, compact HUD controls, Copy, Deck remove/check controls and Event locks use PNG pairs; the seal, forest sign and linked-card diamonds use reusable PNG components under the same opt-in class.
 Skill nodes use PNG state frames and specific shared subjects, and Silver uses its own PNG while its original recolored art remains the fallback.
 Shell icon replacement updates an existing pair rather than inserting duplicate currency or combat symbols.
+`boon-icon.ts` adds optional, load-aware Shrine subjects to the existing text controls; the native first-choice select and all boon labels, counts, ban and ranking actions remain live.
 `applyUiTheme` mirrors effective art in `ui-sprites` and `game-sprites` classes without changing the saved preference.
 
 `main.ts` wiring, `PageGame` and the desks, `Game`'s UI commands, every page in `src/ui/`, the HUD, dialogs, lessons, the frame loop and the UI golden.

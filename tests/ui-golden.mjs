@@ -275,6 +275,25 @@ try {
         s.upgrades.archives = 1;
         s.archives.levels.noteTaking = 1;
       }),
+      // Shrine art fixtures are last so every existing run keeps its seed.
+      shrinesForest: forest((s) => {
+        quiet(s);
+        Object.keys(s.tutorials).forEach(k => s.tutorials[k] = true);
+        s.upgrades.archives = 1;
+        Object.assign(s.archives.levels, { unlockShrines: 1, firstBoonChoice: 1, banBoons: 2, autoPickRanking: 4, autoPickBoons: 1 });
+        s.shrines.firstChoice = "attack";
+        s.shrines.ranking = ["maxHp", "attack", "gold"];
+      }),
+      shrinesRun: (() => {
+        const s = defaults(); quiet(s);
+        Object.keys(s.tutorials).forEach(k => s.tutorials[k] = true);
+        s.upgrades.archives = 1;
+        Object.assign(s.archives.levels, { unlockShrines: 1, autoPickBoons: 1 });
+        const g = new Game(s); g.newRun({ seed: 7 });
+        g.run.height = g.run.maxHeight = 199;
+        g.run.shrine = { picked: [], rolls: 0, offer: ["attack", "goldMaxHp"] };
+        return { save: JSON.stringify(g.save), targets: [] };
+      })(),
     };
   });
 
@@ -909,6 +928,25 @@ try {
   await click(".reward-reveal");
   await click("#tournament-back");
   await shot("tournament.forestAfter");
+
+  // Shrine management and a waiting offer, including both boon kinds.
+  await load("shrinesForest");
+  await menuClick("#shrines-button");
+  await shot("shrines.forest");
+  await page.locator("#first-boon").selectOption("regen");
+  await shot("shrines.firstChoice");
+  await page.locator('[data-ban="goldMaxHp"]').check();
+  await shot("shrines.banned");
+  await click('[data-rank="attack"] [data-up]');
+  await shot("shrines.ranked");
+  await load("shrinesRun");
+  await click("#shrine-bar");
+  await shot("shrines.offer");
+  await click('[data-boon="attack"]');
+  await click("#shrine-bar");
+  await shot("shrines.taken");
+  await page.locator("#boon-autopick").check();
+  await shot("shrines.auto");
 
   // --- Compare ---
   const hashes = Object.fromEntries(Object.entries(shots).map(([k, html]) => [k, createHash("sha256").update(html).digest("hex").slice(0, 16)]));

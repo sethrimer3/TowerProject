@@ -18,3 +18,6 @@ The UI and render snapshot suites also accept `PLAYWRIGHT_EXECUTABLE_PATH` for a
 
 `tests/goals-hud-sprites-browser.mjs` starts its own Vite server for Tower/Delve PNG presentation, with native/2× review art and actual Goals, skill and HUD checks at phone/desktop widths.
 It covers independent theme overrides, original-image fallback, live control counts and palette-correct Silver without entering Defend.
+
+`tests/shrine-sprites-browser.mjs` starts its own Vite server for the Shrine PNG subjects, count/choice components and real offer/pick/management actions at phone and desktop widths, including save/reload, PNG grip dragging, independent theme overrides and failed-image fallback.
+The UI golden's Shrine fixtures are appended after earlier fixtures so their seeded runs keep the same seeds.
