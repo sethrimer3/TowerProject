@@ -43,13 +43,14 @@ function candidates(save: Pick<Save, "training" | "upgrades" | "goals">, run: Pi
  * again to pick which of its rows gains the level. Returns the rows picked,
  * in order; `run.freeRolls` moves on, and applying the levels is the
  * caller's (`Game`). The chances are read before any level is applied, so
- * Free Utility raising a Free Upgrade row counts from the next floor. */
-export function rollFreeTraining(save: Pick<Save, "training" | "upgrades" | "goals">, run: Pick<RunCore, "seed" | "freeRolls" | "training" | "hand">, boonChance = 0): TrainingId[] {
+ * Free Utility raising a Free Upgrade row counts from the next floor.
+ * `factors` (STAIRS' card tree) multiply each group's chance. */
+export function rollFreeTraining(save: Pick<Save, "training" | "upgrades" | "goals">, run: Pick<RunCore, "seed" | "freeRolls" | "training" | "hand">, boonChance = 0, factors?: Record<FreeGroup, number>): TrainingId[] {
   const now = { upgrades: save.upgrades, training: ranksInRun(save, run) };
   const picked: TrainingId[] = [];
   for (const group of FREE_GROUPS) {
     // A run's Free Up Chance boons add to every group's chance, in hundredths of a percent.
-    const chance = trainedAmount(now, FREE_TRAINING_ROWS[group]) + boonChance;
+    const chance = (trainedAmount(now, FREE_TRAINING_ROWS[group]) + boonChance) * (factors?.[group] ?? 1);
     if (!chance || draw(run, group) * 10_000 >= chance) continue;
     const rows = candidates(save, run, group);
     if (!rows.length) continue;

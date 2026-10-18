@@ -35,8 +35,8 @@ export type CardLevel = ReturnType<typeof cardLevel>;
 /** Card `id`'s level and progress in the save. */
 export const levelOf = (save: { cardXp: Partial<Record<CardId, number>> }, id: CardId) => cardLevel(save.cardXp[id] ?? 0);
 
-/** A card's points: one a level, less those spent on its tree. Nothing
- * can spend them yet (`CARD_TREES`), so they are only shown. */
+/** A card's points: one a level, spent on its tree (card-trees.ts,
+ * `pointsLeft` counting those not yet spent). */
 export const cardPoints = (xp: number) => cardLevel(xp).level * POINTS_PER_CARD_LEVEL;
 
 /** The sheen a card's background wears for its level: silver from
@@ -44,23 +44,6 @@ export const cardPoints = (xp: number) => cardLevel(xp).level * POINTS_PER_CARD_
 export function cardSheen(level: number): "" | "silver" | "gold" {
   return level >= MAX_CARD_LEVEL ? "gold" : level >= SILVER_CARD_LEVEL ? "silver" : "";
 }
-
-/** One node of a card's upgrade tree: what a card point buys for it. */
-export type CardTreeNode = {
-  id: string;
-  name: string;
-  text: string;
-  /** Card points it costs. */
-  points: number;
-  /** The nodes that must be bought first. */
-  needs?: readonly string[];
-};
-/** Each card's upgrade tree, which its card points are spent on.
- * TODO: define each card's tree: nodes that strengthen its special effect
- * (a card bonus, an in-place card's trade) or add new ones, and for a card
- * with no special effect a node giving it its first. Until then no card
- * has nodes and its points can only be shown. */
-export const CARD_TREES: Partial<Record<CardId, readonly CardTreeNode[]>> = {};
 
 /** A saved `cardXp`: known cards only, each a whole XP (more
  * than the cap comes down to it), and none left out. */

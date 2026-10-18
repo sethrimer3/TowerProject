@@ -7,6 +7,7 @@ import { loadoutShift, shiftHero } from "../hero-stats.ts";
 import { RunTimeline } from "../run-timeline.ts";
 import { trainedAmount } from "../config.ts";
 import { ranksInRun } from "../run-training.ts";
+import { treeBonus, treeOverheal } from "../card-trees.ts";
 
 const BOTH_MODES = ["tower", "delve"] as const;
 const KEY_COLORS = ["yellow", "blue", "red"] as const;
@@ -54,7 +55,7 @@ export function changeLoadout(save: Save, change: () => boolean | void) {
     if (!run || run.outside) return;
     const after = loadout(save, mode), shift = loadoutShift(before[i], after);
     for (const copy of new RunTimeline(save, mode).runs()) {
-      shiftHero(copy, shift, trainedAmount({ upgrades: save.upgrades, training: ranksInRun(save, copy) }, "overheal"));
+      shiftHero(copy, shift, treeOverheal(trainedAmount({ upgrades: save.upgrades, training: ranksInRun(save, copy) }, "overheal"), save, treeBonus(copy.cardTrees)));
       // Keys a provision adds come into the hand at once.
       const keys = copy.player.keys;
       for (const color of KEY_COLORS) keys[color] = Math.max(0, keys[color] + after.keys[color] - before[i].keys[color]);

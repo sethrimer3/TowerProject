@@ -549,8 +549,12 @@ _Avoid_: card rank, card tier
 What raises a card's level: one each time the card activates in a run, or, for a card that never activates (Archer), one for each floor completed for the first time in the run while the hand holds it. Undo takes it back with the move.
 
 **Card point**:
-What each card level gives the card, to spend on its own upgrade tree (still to come; until then they are only shown). Not the character's training points.
+What each card level gives the card, to spend on its own card tree. Not the character's training points.
 _Avoid_: training point, ability point, upgrade point
+
+**Card tree**:
+A card's tree of nodes its card points buy, a level a point: tracks from the card itself, each node open once the node before it is full, its bonuses counting while the run's hand holds the card. A **respec** gives all of a card's points back for Gems.
+_Avoid_: card skill tree, talent tree, reward tree
 
 **Card badge**:
 A token bought with Gems (drawn by rarity: common, rare or epic) and attached to one card, changing what the card does when it activates: paying something (HP, Silver, Gold, XP), gating it (it acts only while a condition holds), changing its target (Stairward, Skip Open Nodes, Charge, Deprioritize), scaling its target's effect (Effective, Dampen), making it vanish (Skip), or adding enemies to the floors (More Enemies, only on a monster card). A card holds one in each of its badge slots, and a badge sits on one card at a time. More copies of a badge raise its level, up to 7.

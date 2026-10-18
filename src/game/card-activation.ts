@@ -5,6 +5,7 @@ import type { Mode, KeyColor } from "../entities.ts";
 import { snap } from "../exact.ts";
 import { healUpTo } from "../combat.ts";
 import { boostMaxHp, shiftHero } from "../hero-stats.ts";
+import { treeBonus } from "../card-trees.ts";
 import { rankShift } from "../loadout.ts";
 import { noteKey } from "../run-notes.ts";
 import type { HandRules } from "../hand-rules.ts";
@@ -51,11 +52,21 @@ export class CardActivation {
     const { hand, run } = this.host, id = hand[card];
     if (!id || !this.host.playing) return;
     this.host.gainCardXp(id, 1);
+    // HEAL's tree: each potion it reaches boosts max HP for the run, as the
+    // Max HP badge does.
+    const boost = id === "heal" ? treeBonus(run.cardTrees).potionMaxHp : 0;
     const badges = badgesOn(run.badges, id);
-    if (!badges.length) return;
+    if (!badges.length && !boost) return;
     // Paying out makes the step it ends a turn undo stops at.
     this.host.eventful();
+    if (boost) this.treeMaxHp(boost);
     for (const badge of badges) this.payBadge(card, key, badge);
+  }
+  /** HEAL's tree's boost: the run's max HP multiplier grows by `percent`. */
+  private treeMaxHp(percent: number) {
+    const run = this.host.run, p = run.player;
+    boostMaxHp(run, percent);
+    this.host.gain(p.x, p.y, `+${percent}% max HP`, { heart: true, raised: true });
   }
   /** One of hand card `card`'s badges pays what it gives on activation. */
   private payBadge(card: number, key: string, badge: RunBadge) {

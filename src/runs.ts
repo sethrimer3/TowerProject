@@ -2,6 +2,7 @@
 import type { ShrineRun } from "./shrines.ts";
 import type { CardId, CardLink } from "./cards.ts";
 import type { RunBadges } from "./badges.ts";
+import type { CardTreeLevels } from "./card-trees.ts";
 import type { TrainingId } from "./config.ts";
 import type { RunNotes } from "./run-notes.ts";
 import type { TournamentRun } from "./tournament/run.ts";
@@ -83,6 +84,10 @@ export type RunCore = {
   /** The card badges on the hand's cards as the run went inside
    * (badges.ts), each card's top slot first, fixed for the run. */
   badges?: RunBadges;
+  /** The card points spent on the trees of the hand's cards as the run went
+   * inside (card-trees.ts, `runCardTrees`), fixed for the run, so its floors
+   * (More Enemies' extras) and bonuses never change under it. */
+  cardTrees?: CardTreeLevels;
   /** The floor each cooling-down badge (Stairward, Skip Open Nodes) last
    * worked on: it works again on that floor, or once enough floors pass. */
   badgeFloors?: Partial<Record<"stairward" | "skipOpen", number>>;

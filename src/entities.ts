@@ -127,8 +127,14 @@ export type Player = {
    * when absent). */
   bossAttack?: number;
   /** The percent more ATK the hero strikes the enemies each enemy card of
-   * the run's hand covers with (foe-cards.ts), by card; absent without one. */
-  foeAttack?: Partial<Record<"weakEnemy" | "baseEnemy" | "strongEnemy" | "eliteEnemy" | "bossEnemy" | "nonBossEnemy" | "fastEnemy" | "flyingEnemy", number>>;
+   * the run's hand covers with (foe-cards.ts), by card, ENEMY's and TORCH's
+   * from their card trees; absent without one. */
+  foeAttack?: Partial<Record<"weakEnemy" | "baseEnemy" | "strongEnemy" | "eliteEnemy" | "bossEnemy" | "nonBossEnemy" | "fastEnemy" | "flyingEnemy" | "monster" | "torch", number>>;
+  /** The percent more DEF and shroud the hero holds against the enemies a
+   * card tree covers (ENEMY's every enemy, TORCH's the Greater Boss), by
+   * card; absent without one. */
+  foeDefense?: Partial<Record<"monster" | "torch", number>>;
+  foeShroud?: Partial<Record<"torch", number>>;
   /** The percent of an enemy's DEF the hero's strikes ignore (equipment's
    * Piercing; none when absent). */
   pierce?: number;

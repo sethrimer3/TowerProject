@@ -1,5 +1,6 @@
 import { doorName, doorRule, drainsHp, pickupGold } from "../doors.ts";
 import type { HandBonus } from "../cards.ts";
+import type { TreeBonus } from "../card-trees.ts";
 import type { ChestKind, Enemy, Mode, Tile, KeyColor } from "../entities.ts";
 import { RARITY_TIERS } from "../equipment/balance.ts";
 import { EQUIP_MATERIALS, itemDef } from "../equipment/catalog.ts";
@@ -25,6 +26,9 @@ export interface FindsHost extends DeskHost {
   /** What the cards of the run's hand give while held: a key's Gold, a
    * chest's chances of Supplies or Equipment. */
   readonly handBonus: HandBonus;
+  /** What the card trees of the run's hand give: a key's, door's or
+   * shard's Gold. */
+  readonly treeBonus: TreeBonus;
   readonly missions: { record(type: MissionType, amount?: number, key?: string): void };
   readonly events: { record(type: EventMissionType, amount?: number, key?: string): void };
   gain(x: number, y: number, text: string, art?: GainArt | null, drop?: Drop, kind?: "door"): void;
@@ -77,8 +81,11 @@ export class Finds {
     this.notePickup(t, outcome);
     if (text) {
       this.host.gain(x, y, text, { tile: { ...t } });
-      // A key card held pays its Gold on top of the key's own.
-      this.pickupGold(t, { x, y }, t.kind === "key" ? this.host.handBonus.keys[t.color!]?.gold : 0);
+      // A key card held pays its Gold on top of the key's own, and KEY's
+      // tree raises it; ATK UP's and DEF UP's trees add to a shard's.
+      const tree = this.host.treeBonus;
+      if (t.kind === "key") this.pickupGold(t, { x, y }, this.host.handBonus.keys[t.color!]?.gold, tree.keyGold);
+      else this.pickupGold(t, { x, y }, t.kind === "attack" ? tree.attackShardGold : t.kind === "defense" ? tree.defenseShardGold : 0);
       if (t.kind === "potion") this.host.recordHeal(outcome.healed);
       if (t.kind === "potion") missions.record("potions", 1, this.missionKey({ x, y }));
       if (t.kind === "potion") events.record("potions", 1, this.missionKey({ x, y }));
@@ -88,11 +95,11 @@ export class Finds {
     if (t.kind === "treasure") this.treasure(x, y, t.chest ?? "plain");
   }
   /** Gold Bonus's Gold for taking `t` (a torch when null) off the floor at
-   * `at`, or opening it (a door), `more` added to its Pickup Gold, rising a
-   * row up at the same time as the item's own gain (a door's last key or
-   * HP) where it has one. */
-  pickupGold(t: Tile | null, at: { x: number; y: number }, more = 0) {
-    const gold = this.host.purse.pickupGold(at.x, at.y, pickupGold(t) + (more ?? 0));
+   * `at`, or opening it (a door), `more` added to its Pickup Gold and the
+   * whole raised by `percent` (a card tree's), rising a row up at the same
+   * time as the item's own gain (a door's last key or HP) where it has one. */
+  pickupGold(t: Tile | null, at: { x: number; y: number }, more = 0, percent = 0) {
+    const gold = this.host.purse.pickupGold(at.x, at.y, snap(pickupGold(t) + (more ?? 0)), percent);
     if (gold) this.host.gain(at.x, at.y, `+${wholeChange(gold)} Gold`, { coin: "gold" }, { row: 1, with: !!t });
   }
   /** A pickup counted in the run's notes: a key (by colour, under a
@@ -130,7 +137,8 @@ export class Finds {
     if (notes) tallyIn(notes.doors, doorName(t));
     for (const color of keysSpent) host.gain(at.x, at.y, `−${keyCount(amount)} ${color} key`, { tile: { kind: "key", color }, spent: true }, undefined, "door");
     if (!n || (drainsHp(rule) && drained > 0)) host.gain(at.x, at.y, `−${wholeChange(drained)} HP`, { heart: true }, undefined, "door");
-    this.pickupGold(t, at);
+    // DOOR's tree raises a door's Gold.
+    this.pickupGold(t, at, 0, host.treeBonus.doorGold);
     const spent = amount === 1 ? `${n} key${n === 1 ? "" : "s"} spent` : `${keyCount(snap(n * amount))} keys spent`;
     if (rule.type === "wood" && !n) host.message = `${doorName(t)} broken down · −${wholeChange(drained)} HP`;
     else host.message = `${doorName(t)} opened${n ? ` · ${spent}` : ""}${drainsHp(rule) ? (host.run.player.hp > HEART_DOOR_HP ? " · HP drained" : " · HP drained to 1") : ""}`;

@@ -20,7 +20,7 @@
  * mid-turn. Each tile's roll is a fixed number of the run seed, the floor
  * and the tile (`RANGED_SALT`). */
 import type { Enemy, Player, Tile } from "./entities.ts";
-import { attackAgainst, critMultiplier, defenseAgainst, guarded, parryCut, struckDamage } from "./combat.ts";
+import { attackAgainst, critMultiplier, defenseAgainst, facing, guarded, parryCut, struckDamage } from "./combat.ts";
 import { fastShare, mayBeFast } from "./fast-enemies.ts";
 import { snap } from "./exact.ts";
 import { tileRandom } from "./random.ts";
@@ -193,8 +193,10 @@ export const FOE_REACH = { scale: 36, limit: (range: number) => 25 * range * ran
 
 /** What a Ranged enemy's shot does to `player`: its ATK less DEF, cut by
  * Parry % (every shot is parried), and the shroud (whole for every
- * shot) taking what it can of the rest. */
+ * shot) taking what it can of the rest; the card trees' DEF and shroud
+ * against it count (`facing`). */
 export function shotDamage(player: Player, enemy: Enemy) {
+  player = facing(player, enemy);
   const struck = struckDamage(enemy.attack, player.defense, parryCut(player));
   const shrouded = Math.min(player.shroud ?? 0, struck);
   return { damage: snap(struck - shrouded), shrouded };

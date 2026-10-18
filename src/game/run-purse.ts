@@ -19,6 +19,7 @@ import { runBoons } from "../shrines.ts";
 import { earn } from "../profile.ts";
 import { notesOf, tallyIn } from "../run-notes.ts";
 import { foeGold } from "../foe-cards.ts";
+import { treeBonus, treeFactor } from "../card-trees.ts";
 
 /** The tiles whose Pickup Gold a skipped floor counts, beside its lit torches. */
 const ITEMS: ReadonlySet<Tile["kind"]> = new Set(["key", "potion", "attack", "defense", "door"]);
@@ -60,6 +61,12 @@ export class RunPurse {
 
   private get tier() {
     return this.run.tier ?? 1;
+  }
+
+  /** What the card trees of the run's hand give (`treeBonus`): none in
+   * the forest. */
+  private get tree() {
+    return treeBonus(this.run.outside ? undefined : this.run.cardTrees);
   }
 
   /** What the run's boons change (a Tower run's only), or null. */
@@ -140,10 +147,10 @@ export class RunPurse {
 
   /** Adds Silver found in the run, times Silver found's multiplier
    * (`silverFound`: Silver Bonus training and research, the run's Silver
-   * Bonus boons and equipment's Silver found), fractions and all; returns
-   * what it added. */
+   * Bonus boons and equipment's Silver found), times the card trees'
+   * Silver Bonus, fractions and all; returns what it added. */
   silver(base: number) {
-    const silver = snap(base * silverFound(this.save, this.mode, this.trainingNow.training.silverBonus, this.boons?.silverFound));
+    const silver = snap(base * silverFound(this.save, this.mode, this.trainingNow.training.silverBonus, this.boons?.silverFound) * treeFactor(this.tree, "silverBonus"));
     this.run.silver = snap((this.run.silver ?? 0) + silver);
     this.noteSilver(silver);
     return silver;
@@ -164,10 +171,10 @@ export class RunPurse {
     return this.silver(scale === 1 ? base : snap(base * scale));
   }
 
-  /** Gold Bonus training's and research's multiplier, in hundredths of a
-   * percent (×1 is 10,000). */
+  /** Gold Bonus training's and research's multiplier, times the card
+   * trees' Gold Bonus, in hundredths of a percent (×1 is 10,000). */
   private get goldBonus() {
-    return trainedAmount(this.trainingNow, "goldBonus") * researched(this.save.archives, "goldBonus");
+    return trainedAmount(this.trainingNow, "goldBonus") * researched(this.save.archives, "goldBonus") * treeFactor(this.tree, "goldBonus");
   }
 
   /** `base` Gold raised by Gold Bonus. */
@@ -181,11 +188,13 @@ export class RunPurse {
    * `SHIELDED_GOLD`), and for an
    * `instakill` (the hero's first strike ended it) by Mug research too; then
    * by 5% more for each enemy card the run's hand holds that covers it,
-   * added into one factor (`foeGold`). */
+   * added into one factor with the card trees' (ENEMY's for every enemy,
+   * TORCH's for a Greater Boss: `foeGold`). */
   private killGold(enemy: Enemy, instakill = false) {
     const raw = snap(((ENEMY_GOLD[enemy.strength] + (enemy.fast ? FAST_GOLD : 0) + (enemy.ranged || enemy.flying ? RANGED_GOLD : 0) + (enemy.shielded ? SHIELDED_GOLD : 0)) * this.goldBonus) / 10_000);
     const gold = instakill ? snap((raw * researched(this.save.archives, "instakillGold")) / 100) : raw;
-    const foe = this.run.outside ? 1 : foeGold(this.run.hand ?? [], enemy);
+    const tree = this.tree, more = tree.foeGold + (enemy.strength === "greaterBoss" ? tree.bossGold : 0);
+    const foe = this.run.outside ? 1 : foeGold(this.run.hand ?? [], enemy, more);
     return foe === 1 ? gold : snap(gold * foe);
   }
 
@@ -202,10 +211,11 @@ export class RunPurse {
   }
 
   /** A Greater Boss's Cells, banked in the save: a whole number from 1 to
-   * the tower's number, evenly (tower I's always 1, drawing nothing), then
-   * the scale of Effective or Dampen on the card that took the fight. */
+   * the tower's number, evenly (tower I's always 1, drawing nothing), and
+   * TORCH's tree's Cells more, then the scale of Effective or Dampen on the
+   * card that took the fight. */
   private cells(scale: number) {
-    const found = this.tier > 1 ? 1 + Math.floor(this.rng() * this.tier) : 1;
+    const found = (this.tier > 1 ? 1 + Math.floor(this.rng() * this.tier) : 1) + this.tree.bossCells;
     const cells = scale === 1 ? found : snap(found * scale);
     this.save.cells = snap(this.save.cells + cells);
     earn(this.save, "cells", cells);
@@ -214,12 +224,14 @@ export class RunPurse {
   }
 
   /** Gold for an item taken off the floor at (x, y), or a door opened
-   * there: `base` (`pickupGold`) raised by Gold Bonus, then the tier's bonus,
-   * once per tile (gated like a kill's Gold, so undo can't pay it twice).
-   * Returns what it paid. */
-  pickupGold(x: number, y: number, base: number) {
+   * there: `base` (`pickupGold`) raised by Gold Bonus and by `more` percent
+   * (a card tree's, for keys or doors), then the tier's bonus, once per tile
+   * (gated like a kill's Gold, so undo can't pay it twice). Returns what it
+   * paid. */
+  pickupGold(x: number, y: number, base: number, more = 0) {
     if (!base || !this.loot(this.pickupKey(x, y))) return 0;
-    return this.gold(this.bonused(base));
+    const gold = this.bonused(base);
+    return this.gold(more ? snap((gold * (100 + more)) / 100) : gold);
   }
 
   /** What gates an item's Gold at (x, y), apart from a kill's or chest's
@@ -230,13 +242,13 @@ export class RunPurse {
 
   /** A treasure chest's Gold, once per physical chest, or null when it was
    * already paid; its Gold, the chest's own `PICKUP_GOLD` counted, is raised
-   * by Gold Bonus. A Supply Chest (`kind`, fixed as its floor was generated)
-   * adds upgrade materials, and an Equipment Chest a Standard piece, once
-   * Equipment is open. */
+   * by Gold Bonus and CHEST's tree. A Supply Chest (`kind`, fixed as its
+   * floor was generated) adds upgrade materials, and an Equipment Chest a
+   * Standard piece, once Equipment is open. */
   treasure(x: number, y: number, kind: ChestKind = "plain"): { gold: number; kind: ChestKind; equipment: EquipmentLoot | null } | null {
     if (!this.loot(this.lootKey(x, y))) return null;
     const rules = this.rules, floor = rules.equivalentFloor(rules.progressAt(this.run, y));
-    const gold = this.gold(this.withCombo(this.bonused(snap(rollGold(floor, this.rng) + PICKUP_GOLD))));
+    const gold = this.gold(this.withCombo(this.chestGold(snap(rollGold(floor, this.rng) + PICKUP_GOLD))));
     if (!this.save.equipment.unlocked) kind = "plain";
     return { gold, kind, equipment: kind === "plain" ? null : this.chestEquipment(kind) };
   }
@@ -262,7 +274,14 @@ export class RunPurse {
   treasureGoldPreview(x: number, y: number) {
     if (this.slice.lootedTiles[this.lootKey(x, y)]) return 0;
     const rules = this.rules, floor = rules.equivalentFloor(rules.progressAt(this.run, y));
-    return goldBanked(snap(this.bonused(snap(averageGold(floor) + PICKUP_GOLD)) * (this.run.goldCombo ?? 1)), this.goldContext).gold;
+    return goldBanked(snap(this.chestGold(snap(averageGold(floor) + PICKUP_GOLD)) * (this.run.goldCombo ?? 1)), this.goldContext).gold;
+  }
+
+  /** A treasure chest's Gold `base` raised by Gold Bonus, then by CHEST's
+   * tree's percent. */
+  private chestGold(base: number) {
+    const gold = this.bonused(base), more = this.tree.chestGold;
+    return more ? snap((gold * (100 + more)) / 100) : gold;
   }
 
   /** Spare Change: Gold for a floor climbed for the first time in the run,
@@ -271,7 +290,7 @@ export class RunPurse {
   floorGold(key: string) {
     const base = trainedAmount(this.trainingNow, "floorGold");
     if (!base || !this.loot(key)) return 0;
-    return this.gold(this.researched(base, "floorGold"));
+    return this.gold(snap(this.researched(base, "floorGold") * treeFactor(this.tree, "floorGold")));
   }
 
   /** Floor Skip Reward: when Skip climbs past the floor the run stands on
@@ -332,7 +351,7 @@ export class RunPurse {
    * Silver Bonus. Returns what it paid. */
   floorSilver() {
     const base = trainedAmount(this.trainingNow, "floorSilver");
-    return base ? this.silver(snap(this.researched(base, "floorSilver") * (this.boons?.floorSilver ?? 1))) : 0;
+    return base ? this.silver(snap(this.researched(base, "floorSilver") * (this.boons?.floorSilver ?? 1) * treeFactor(this.tree, "floorSilver"))) : 0;
   }
 
   /** Interest: for a floor climbed for the first time in the run, after

@@ -3,6 +3,7 @@ import { buyTheme, canWear, grantAllThemes, type GameLook, type ThemeId, type Th
 import { chooseStep } from "./automation.ts";
 import { CARDS, cardText, explainStuck, handBonus, keptLinks, planHand, planTarget, shootsWith, stillOpen, type CardId, type CardPlan, type HandBonus, type StuckReport } from "./cards.ts";
 import { addCardXp, PASSIVE_CARDS } from "./card-levels.ts";
+import { freeUpFactors, runCardTrees, treeBonus, treeFactor, treeOverheal, type TreeBonus } from "./card-trees.ts";
 import { aggroTurn } from "./flying.ts";
 import { foeOn } from "./ranged.ts";
 import { BADGE_IDS, MAX_COPIES, badgeOn, badgeValue, runBadges } from "./badges.ts";
@@ -87,6 +88,7 @@ import { DeckEditor } from "./game/deck-editor.ts";
 import { GearDesk } from "./game/gear-desk.ts";
 import { GemFinder } from "./game/gem-finder.ts";
 import { BadgeDesk } from "./game/badge-desk.ts";
+import { CardTreeDesk } from "./game/card-tree-desk.ts";
 import { HandRules } from "./hand-rules.ts";
 import { RunPurse, type EquipmentLoot } from "./game/run-purse.ts";
 import { EquipmentDesk } from "./game/equipment-desk.ts";
@@ -272,6 +274,7 @@ export class Game {
   /** The Deck page's card badges: drawing them with Gems and attaching
    * them to cards. */
   readonly badges = new BadgeDesk(this);
+  readonly cardTrees = new CardTreeDesk(this);
   /** What the hand's cards may do now: their badges' rules and marks,
    * Ignore's tiles and the cards that act in place; where the hand plans
    * from. */
@@ -980,30 +983,49 @@ export class Game {
     else delete this.run.links;
     const badges = this.save.upgrades.cardBadges ? runBadges(this.save.badges, this.run.hand, this.badges.slots) : {};
     if (Object.keys(badges).length) this.run.badges = badges;
+    const trees = runCardTrees(this.save.cardTrees, this.run.hand);
+    if (Object.keys(trees).length) this.run.cardTrees = trees;
+    else delete this.run.cardTrees;
+    const tree = treeBonus(this.run.cardTrees);
     const pocket = this.startingSilver, loot = this.warpLoot(pocket);
     if (pocket || loot) this.run.silver = snap(pocket + loot);
     this.warpLooted = loot >= 1 ? { silver: loot, at: performance.now() } : null;
-    const chance = trainedAmount(this.save, "findPotion");
+    // HEAL's tree raises the chance, up to every potion; whole hundredths
+    // of a percent, so the floors come out the same in every engine.
+    const chance = Math.min(10_000, Math.floor(trainedAmount(this.save, "findPotion") * treeFactor(tree, "percentPotions")));
     if (chance) this.run.percentPotions = chance;
     else delete this.run.percentPotions;
-    const odds = this.chestOddsFor(this.run.hand);
+    const odds = this.chestOddsFor(this.run.hand, tree);
     if (odds) this.run.chestOdds = odds;
     else delete this.run.chestOdds;
-    // The hero strikes the enemies each enemy card covers harder (combat.ts reads it).
-    const foes = Object.entries(handBonus(this.run.hand).foe).map(([id, b]) => [id, b.attack]);
-    if (foes.length) this.run.player.foeAttack = Object.fromEntries(foes);
-    else delete this.run.player.foeAttack;
+    // The hero strikes the enemies each enemy card covers harder, and with
+    // ENEMY's and TORCH's trees holds more DEF and shroud against theirs
+    // (combat.ts reads them).
+    const p = this.run.player, foes: NonNullable<Player["foeAttack"]> = Object.fromEntries(Object.entries(handBonus(this.run.hand).foe).map(([id, b]) => [id, b.attack]));
+    if (tree.foeAttack) foes.monster = tree.foeAttack;
+    if (tree.bossAttack) foes.torch = tree.bossAttack;
+    const defense = { ...(tree.foeDefense ? { monster: tree.foeDefense } : {}), ...(tree.bossDefense ? { torch: tree.bossDefense } : {}) };
+    for (const [k, v] of [["foeAttack", foes], ["foeDefense", defense], ["foeShroud", tree.bossShroud ? { torch: tree.bossShroud } : {}]] as const) {
+      if (Object.keys(v).length) (p as Record<string, unknown>)[k] = v;
+      else delete p[k];
+    }
     this.run.focusUsed = 0;
     for (const k of ["ignoreUsed", "targetUsed", "regain", "ignored", "targeted"] as const) delete this.run[k];
   }
   /** A run's chances of Supply and Equipment Chests with `hand`: the
-   * hand's (the CHEST card's), raised by the worn Supply and Equipment Chest
-   * chance; none before Equipment opens or without a card that gives one. */
-  private chestOddsFor(hand: readonly CardId[]): ChestOdds | undefined {
+   * hand's (the CHEST card's, and the points its tree adds, `tree`), raised
+   * by the worn Supply and Equipment Chest chance; none before Equipment
+   * opens or without a card that gives one. */
+  private chestOddsFor(hand: readonly CardId[], tree: TreeBonus): ChestOdds | undefined {
     const { chest } = handBonus(hand);
     if (!this.save.equipment.unlocked || !(chest.supply + chest.equipment)) return undefined;
     const find = wornEffects(this.save, this.mode).chestFind;
-    return { supply: raised(chest.supply, find), equipment: raised(chest.equipment, find) };
+    return { supply: raised(snap(chest.supply + tree.supplyChance), find), equipment: raised(snap(chest.equipment + tree.equipmentChance), find) };
+  }
+  /** What the card trees of the run's hand give (`treeBonus`): none in the
+   * forest. */
+  get treeBonus(): TreeBonus {
+    return treeBonus(this.run.outside ? undefined : this.run.cardTrees);
   }
   /** The fastest speed the run's arrows reach: 3 steps a second, and one
    * more a Movement Speed research level. */
@@ -1061,19 +1083,24 @@ export class Game {
     const regen = this.run.outside || !this.run.player.regen ? 0
       : snap((this.run.player.regen * researched(this.save.archives, "regenPercent")) / 100);
     const worn = this.worn, potionHeal = raised(researched(this.save.archives, "potionHeal"), worn.potionHeal);
-    const crit = this.crit, keys = Object.entries(this.handBonus.keys);
-    const keyFind = keys.length ? { keyFind: Object.fromEntries(keys.map(([color, k]) => [color, k.percent])) } : {};
+    const crit = this.crit, keys = this.handBonus.keys, tree = this.treeBonus;
+    // KEY's tree adds to every colour's percent, the key cards' adding to their own.
+    const found = KEY_ORDER.flatMap((color) => { const n = (keys[color]?.percent ?? 0) + tree.keyFind; return n ? [[color, n] as const] : []; });
+    const keyFind = found.length ? { keyFind: Object.fromEntries(found) } : {};
     const overheal = this.overheal;
     return { potionHeal, percentPotion: trainedAmount(this.trainingNow, "potion"), regen, ...(overheal > 1000 ? { overheal } : {}),
       heartToll: researched(this.save.archives, "heartToll"), keyCost: this.keyCost, ...keyFind, ...(this.doorOff ? { doorOff: this.doorOff } : {}),
-      shardAttack: researched(this.save.archives, "shardAttackPercent") * boonFactor(this.run, "attack"), shardDefense: researched(this.save.archives, "shardDefensePercent"),
+      shardAttack: researched(this.save.archives, "shardAttackPercent") * boonFactor(this.run, "attack") * treeFactor(tree, "attackShard"),
+      shardDefense: researched(this.save.archives, "shardDefensePercent") * treeFactor(tree, "defenseShard"),
+      ...(tree.potionHeal ? { potionCard: tree.potionHeal } : {}),
       ...(worn.victoryHeal ? { victoryHeal: worn.victoryHeal } : {}), ...(crit ? { crit } : {}) };
   }
   /** How far potions, YK to HP and badge heals may heal above max HP now,
    * as a multiple of max HP in thousandths (Overheal training, the run's
-   * Silver ranks counting): 1,000 until Overheal is owned. */
+   * Silver ranks counting, raised by the card trees' Overheal once the
+   * skill is owned): 1,000 until Overheal is owned. */
   get overheal() {
-    return trainedAmount(this.trainingNow, "overheal");
+    return treeOverheal(trainedAmount(this.trainingNow, "overheal"), this.save, this.treeBonus);
   }
   /** The most HP the hero may hold now: max HP, raised by Overheal. */
   get hpCeiling() {
@@ -1098,7 +1125,8 @@ export class Game {
    * hand holds: what steps pay and the door cards plan by; undefined with
    * none. */
   get doorOff() {
-    const doors = this.handBonus.doors;
+    const doors = { ...this.handBonus.doors }, all = this.treeBonus.doorCost;
+    if (all) doors.all = all;
     return Object.keys(doors).length ? doors : undefined;
   }
   /** Where the Training tab reads its rows' values: this mode's hero, and
@@ -1854,7 +1882,7 @@ export class Game {
   private freeTrain(floors: number) {
     const given: TrainingId[] = [];
     for (let f = 0; f < floors; f++)
-      for (const id of rollFreeTraining(this.save, this.run, this.boons?.freeUp ?? 0)) {
+      for (const id of rollFreeTraining(this.save, this.run, this.boons?.freeUp ?? 0, freeUpFactors(this.treeBonus))) {
         const offer = runTrainingOffer(this.save, this.run, id);
         this.run.training = { ...this.run.training, [id]: offer.bought + 1 };
         this.applyRunTraining(offer);
@@ -1952,15 +1980,20 @@ export class Game {
   atTournamentHall(x: number, y: number) {
     return this.run.outside && this.world instanceof OutsideWorld && this.world.isTournamentHall(x, y);
   }
-  /** Equipment's heal on a floor reached for the first time in the run (a
-   * share of max HP, by `floorHeal`), shown like a potion's. */
+  /** The heals on a floor reached for the first time in the run, each a
+   * share of max HP and shown like a potion's: equipment's (`floorHeal`, up
+   * to max HP), then STAIRS' tree's (up to the Overheal ceiling). */
   private floorHeal() {
-    const pct = this.worn.floorHeal, p = this.run.player;
-    if (!pct || p.hp <= 0) return;
-    const n = snap(healUpTo(p.hp, (p.maxHp * pct) / 100, p.maxHp) - p.hp);
-    if (!n) return;
-    p.hp = snap(p.hp + n);
-    this.recordHeal(n);
+    const p = this.run.player;
+    const heal = (pct: number, ceiling: number) => {
+      if (!pct || p.hp <= 0) return;
+      const n = snap(healUpTo(p.hp, (p.maxHp * pct) / 100, ceiling) - p.hp);
+      if (!n) return;
+      p.hp = snap(p.hp + n);
+      this.recordHeal(n);
+    };
+    heal(this.worn.floorHeal, p.maxHp);
+    heal(this.treeBonus.floorHeal, this.hpCeiling);
   }
   /** How the current mode differs from the other. */
   private get rules(): ModeProfile {

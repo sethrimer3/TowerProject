@@ -26,8 +26,9 @@ import { isTournamentRun } from "./tournament/run.ts";
 import { decodeBadges, defaultBadges, validRunBadges } from "./badges.ts";
 import { backfillProfile, decodeProfile, defaultProfile } from "./profile.ts";
 import { decodeFinds, defaultFinds, validNotes } from "./run-notes.ts";
-import { isFoeCard } from "./foe-cards.ts";
+import { isFoeKey } from "./foe-cards.ts";
 import { decodeCardXp } from "./card-levels.ts";
+import { treeNode, decodeCardTrees } from "./card-trees.ts";
 export function defaults(): Save {
   return {
     version: 3,
@@ -63,6 +64,7 @@ export function defaults(): Save {
     hand: [...BASE_HAND],
     cardLinks: [],
     cardXp: {},
+    cardTrees: {},
     handSlots: 0,
     badges: defaultBadges(),
     tutorials: { deck: false, removeCard: false, addCard: false, upgrades: false, gear: false, onTheJob: false, speed: false, climb: false, enter: false, delve: false, chamber: false },
@@ -134,7 +136,7 @@ const validPlayer = (p: any, width: number) =>
   (p.parry === undefined || (finite(p.parry) && p.parry >= 0 && p.parry <= 100)) &&
   (p.bossAttack === undefined || (finite(p.bossAttack) && p.bossAttack >= 0)) &&
   (p.pierce === undefined || (finite(p.pierce) && p.pierce >= 0 && p.pierce <= 100)) &&
-  (p.foeAttack === undefined || (!!p.foeAttack && typeof p.foeAttack === "object" && Object.entries(p.foeAttack).every(([id, v]) => isFoeCard(id) && finite(v) && (v as number) >= 0))) &&
+  [p.foeAttack, p.foeDefense, p.foeShroud].every((m) => m === undefined || (isRecord(m) && Object.entries(m).every(([id, v]) => isFoeKey(id) && finite(v) && (v as number) >= 0))) &&
   KEY_COLORS.every((k) => finite(p.keys?.[k]));
 /** Checks every run passes, whatever its mode; `width` is the mode's board. */
 const validCore = (r: any, width: number) =>
@@ -171,10 +173,14 @@ const RUN_FIELD_CHECKS = {
   training: validRunTraining,
   cardUses: (v: unknown) => isRecord(v) && Object.entries(v).every(([id, n]) => IN_PLACE.has(id as CardId) && wholeIn(n, 1, 1e6)),
   tier: (v: unknown) => wholeIn(v, 2, TIERS),
-  percentPotions: (v: unknown) => wholeIn(v, 1, trainingDef("findPotion").cap!),
+  // HEAL's tree raises the trained chance, up to every potion.
+  percentPotions: (v: unknown) => wholeIn(v, 1, 10_000),
   chestOdds: (v: any) => isRecord(v) && Object.keys(v).length === 2 && [v.supply, v.equipment].every((n) => finite(n) && n >= 0 && n <= 100) && v.supply + v.equipment > 0,
   // The hand is checked first: every card holding a badge must be in it.
   badges: (v: unknown, r: any) => validRunBadges(v) && Object.keys(v as object).every((card) => r.hand?.includes(card)),
+  // The hand is checked first: every card with a tree copied must be in it.
+  cardTrees: (v: unknown, r: any) => isRecord(v) && Object.entries(v).every(([card, nodes]) => !!r.hand?.includes(card) && isRecord(nodes) &&
+    Object.entries(nodes).every(([id, n]) => { const node = treeNode(card as CardId, id); return !!node && wholeIn(n, 1, node.levels); })),
   // The hand is checked first: each link joins cards side by side in it.
   links: (v: unknown, r: any) => Array.isArray(v) && v.length > 0 && keptLinks(r.hand ?? [], links(v)).length === v.length,
   badgeFloors: (v: unknown) => isRecord(v) && Object.entries(v).every(([k, n]) => (k === "stairward" || k === "skipOpen") && wholeIn(n, 0, 1e6)),
@@ -530,6 +536,7 @@ export function decode(raw: string | null): Save {
     d.hand = decodeHand(s.hand, deckCards(d.upgrades, d.goals), handSlots(d));
     d.cardLinks = keptLinks(d.hand, links(s.cardLinks));
     d.cardXp = decodeCardXp(s.cardXp);
+    d.cardTrees = decodeCardTrees(s.cardTrees, d.cardXp);
     d.badges = decodeBadges(s.badges, d.upgrades, researched(d.archives, "badgeSlots"), d.goals);
     for (const k of ["deck", "removeCard", "addCard", "upgrades", "gear", "onTheJob", "speed", "climb", "enter", "delve", "chamber"] as const) d.tutorials[k] = s.tutorials?.[k] === true;
     for (const k of ["inspiration", "courage"] as const) d.treeNotices[k] = s.treeNotices?.[k] === true;

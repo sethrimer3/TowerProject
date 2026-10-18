@@ -77,12 +77,31 @@ A card gains 1 XP each time it activates: its path reaching its target (once any
 Only the cards in the run's hand gain XP, and undo takes back what the move gained.
 The levels cost, in XP: 200, 400, 600, 800 and 1,000 for the first five; 1,400, 1,800, 2,200, 2,600 and 3,000 for the next five; then 3,600, 4,200, 4,800, 5,400 and 6,000; then 7,000, 8,000, 9,000, 10,000 and 11,000; and 12,500, 14,500, 17,000, 20,000 and 23,500 for the last five (170,500 in all).
 A card at level 25 gains no more XP.
-Each level gives the card 1 card point, to be spent on the card's own upgrade tree; until those trees arrive, the points are only shown.
+Each level gives the card 1 card point, to be spent on the card's own tree (see Card trees below); until the tree screen arrives, the points are only shown.
 A card shows its level in small type at its top left, in the hand and on the Deck page, from level 1; from level 15 its face wears a silver sheen, and at level 25 a golden one.
 A card's details show its level on the card, and under its name the level, its XP toward the next (*340/1,800 XP*) and its card points; the hand card's tooltip names its level too.
 A card can level up during a run: if the card is in view in the hand, a golden glow covers it with the training point icon at its centre for a second, which then rises and fades over the next second, and the glow fades over a third.
 A card out of view (in a hand scrolled sideways) shows as a ghost at 75% transparency over the board's top left, a golden glow behind it, with the same icon, the ghost fading once the icon is gone.
 Several level-ups play one after another, and wait while a page covers the board.
+
+## Card trees
+
+Nine cards have a tree of upgrades their card points buy, one level of a node a point; each tree takes exactly the 25 points a card earns.
+Each tree's tracks start from the card itself, so a track's first node takes points at once; a node after another takes points only once that one is full.
+A tree's bonuses count while the run's hand holds the card, whichever card leads the hero; each adds into one factor with every other card's bonus to the same thing (two cards' +10% Gold Bonus make ×1.2), and that factor multiplies the other kinds of bonus.
+A run keeps the trees its hand had as it went inside, so points are spent in the forest only; for 20 Gems a card's points all come back, to spend again.
+The tree screen that spends them is still to come.
+
+- **Stairs**: +10% Gold and Silver a floor (Spare Change and Wishing Well, 5 levels), then +10% Gold Bonus (1) and +10% Silver Bonus (1); +5% to each Free Up chance (Offense, Defense and Utility, 2 levels each); a heal of 10% of max HP on each floor new to the run, up to the Overheal ceiling (5 levels, then 5 more), with +10% Overheal ceiling after the first five (1) and +15% after the second (1).
+- **Heal**: +10% chance of a percent potion (5 levels, up to every potion), +10% HP from every potion (5), +10% Gold Bonus (5), +0.01% max HP for the run each time it reaches a potion (5), and +5% Overheal ceiling (5).
+- **Door**: −1% cost of every door, its keys and any HP it takes (10 levels), +1% Gold from doors (10) and +2% Silver Bonus (5).
+- **Key**: +1% more each key of every colour (10 levels), +1% Gold from each key (10) and +2% Silver Bonus (5).
+- **Enemy**: +1% ATK (5 levels), +1% DEF (5) and +1% Gold (5) against every enemy, and 1% more enemies of every strength on each floor (10).
+- **ATK Up** and **DEF Up**: +1% from each of their shards (10 levels), +0.1 Gold from each (10) and +1% Silver Bonus (5).
+- **Torch**, against a Greater Boss: +1% ATK (5 levels), +1% DEF (5), +1% Gold (5), +2% shroud (5) and 1 Cell more (5).
+- **Chest**: +2% Gold from treasure chests (5 levels), +0.2% Supply Chest chance (10, up to 3.5%) and +0.1% Equipment Chest chance (10, up to 1.5%).
+
+The Overheal ceiling bonuses count only once Overheal is owned.
 
 ## Card Groups
 

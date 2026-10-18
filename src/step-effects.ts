@@ -52,6 +52,10 @@ export type StepOutcome = StepBlocked | StepEffect;
 export type StepRules = {
   potionHeal: number;
   percentPotion: number;
+  /** The percent more HP every potion restores, from HEAL's tree (a card
+   * factor on top of Potion HP and a percent potion's share); none when
+   * absent. */
+  potionCard?: number;
   regen: number;
   /** Effective and Dampen, on the step that activates their card: what the
    * target's effect is multiplied by (1.05 is 5% stronger). */
@@ -92,10 +96,11 @@ export const potionHeal = (amount: number, rules: StepRules) => snap((amount * r
 /** The HP the potion `tile` restores to a hero of `maxHp` under `rules`
  * (before a badge's scale, and before the HP the hero lacks caps it): a
  * percent (red) potion its HP, which Potion HP leaves alone, and a share of
- * max HP. */
+ * max HP; then HEAL's tree raises either (`potionCard`). */
 export const potionRestores = (tile: Tile, maxHp: number, rules: StepRules) => {
   const amount = tile.amount ?? POTION_HEAL;
-  return tile.color === "red" ? snap(amount + (maxHp * rules.percentPotion) / 10000) : potionHeal(amount, rules);
+  const heal = tile.color === "red" ? snap(amount + (maxHp * rules.percentPotion) / 10000) : potionHeal(amount, rules);
+  return rules.potionCard ? snap((heal * (100 + rules.potionCard)) / 100) : heal;
 };
 
 /** The most HP a hero of `maxHp` may hold under `rules`: its max HP, times

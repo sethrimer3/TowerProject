@@ -40,6 +40,19 @@ export function attackAgainst(player: Player, enemy: Enemy, cards = 0) {
   return card ? snap((geared * (100 + card)) / 100) : geared;
 }
 export const isBoss = (enemy: Enemy) => enemy.strength === "boss" || enemy.strength === "greaterBoss";
+/** `player` as it stands against `enemy`: its DEF and shroud raised by the
+ * card trees' percents covering it (`foeDefense`, `foeShroud`), each added
+ * into one card factor; itself when none does. Fights and enemy shots take
+ * the hero through it. */
+export function facing(player: Player, enemy: Enemy): Player {
+  const defense = foeAttack(player.foeDefense, enemy), shroud = foeAttack(player.foeShroud, enemy);
+  if (!defense && !(shroud && player.shroud)) return player;
+  return {
+    ...player,
+    ...(defense ? { defense: snap((player.defense * (100 + defense)) / 100) } : {}),
+    ...(shroud && player.shroud ? { shroud: snap((player.shroud * (100 + shroud)) / 100) } : {}),
+  };
+}
 /** Thorns: what each of `enemy`'s strikes costs it, the hero's Thorn Damage
  * percent of its max HP (its HP as the fight starts), half against a boss
  * or Greater Boss. DEF takes nothing off it. */
@@ -106,6 +119,7 @@ export const PLAYED_ROUNDS = 50;
  * them unless given) the rest of the fight is estimated, not played out:
  * close, but not the exact ending a step resolves to. */
 export function predict(player: Player, enemy: Enemy, played = Infinity): CombatPrediction {
+  player = facing(player, enemy);
   const hit = heroHit(player, enemy);
   if (hit <= 0) {
     return {
@@ -343,6 +357,7 @@ export type Revival = (strike: number) => boolean;
  * parries every strike. */
 export function bout(player: Player, enemy: Enemy, revives?: Revival, crits?: Crits): Bout {
   if (heroHit(player, enemy) <= 0) return { strikes: [], duration: 0 };
+  player = facing(player, enemy);
   return play([], { player, enemy, revives, crits }, { enemyHp: enemy.hp, heroHp: player.hp, shroud: player.shroud ?? 0, attack: enemy.attack, t: 0, ms: FIRST_STRIKE_MS, enemyStrikes: 0, heroStrikes: 0, enemyNext: !!enemy.fast });
 }
 
@@ -410,7 +425,10 @@ function enemyBlow(s: BoutState, player: Player, thorn: number, revives?: Reviva
  * strike `from` on the hero fights as `player`, whose `hp` and `shroud`
  * are what the hero has left at that point. */
 export function resume(fight: Bout, from: number, fighters: Fighters): Bout {
-  const { player, enemy } = fighters;
+  // The shroud given is what is left of the one the fight began with
+  // (already raised against this enemy), so only DEF is raised again.
+  const { enemy } = fighters, player = { ...fighters.player, defense: facing({ ...fighters.player, shroud: 0 }, enemy).defense };
+  fighters = { ...fighters, player };
   const kept = fight.strikes.slice(0, from), next = fight.strikes[from];
   if (!next) return { strikes: kept, duration: fight.duration };
   let enemyHp = enemy.hp, attack = enemy.attack, ms = FIRST_STRIKE_MS, enemyStrikes = 0, heroStrikes = 0;

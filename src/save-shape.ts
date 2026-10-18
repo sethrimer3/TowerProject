@@ -6,6 +6,7 @@ import type { ArchivesSave } from "./archives.ts";
 import type { ShrinesSave } from "./shrines.ts";
 import type { CardId, CardLink } from "./cards.ts";
 import type { BadgesSave } from "./badges.ts";
+import type { CardTreeLevels } from "./card-trees.ts";
 import type { GoldItemId, TrainingId, UpgradeId } from "./config.ts";
 import type { MaterialId } from "./materials.ts";
 import type { EquipmentSave } from "./equipment/inventory.ts";
@@ -140,6 +141,9 @@ export type Save = {
   /** Each card's XP toward its levels (card-levels.ts), gained in runs;
    * a card with none is left out. Undo takes back what a move gained. */
   cardXp: Partial<Record<CardId, number>>;
+  /** The card points spent on each card's tree, by node (card-trees.ts);
+   * a card with none is left out. Spent and respecced in the forest only. */
+  cardTrees: CardTreeLevels;
   /** Hand slots bought with Gems (after Larger Hand's). */
   handSlots: number;
   /** The card badges owned, which card holds each, and where their
