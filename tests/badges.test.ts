@@ -18,6 +18,7 @@ import { DRAW_GEMS } from "../src/game/badge-desk.ts";
 import { doorCost } from "../src/doors.ts";
 import { keyCount } from "../src/whole.ts";
 import { random } from "../src/random.ts";
+import { snap } from "../src/exact.ts";
 
 test("Badges costs 2 Courage and follows Focus in the Courage tree", () => {
   const g = new Game(defaults());
@@ -42,7 +43,7 @@ test("the first copy opens level 1 and counts toward level 2; 80 copies reach le
 });
 
 test("each badge's values by level, and a gate's threshold picked among those its level opened", () => {
-  assert.deepEqual([1, 4, 7].map((l) => badgeValue("hp", l)), [1, 16, 49]);
+  assert.deepEqual([1, 4, 7].map((l) => badgeValue("hp", l)), [0.01, 0.04, 0.07]);
   assert.deepEqual([1, 7].map((l) => badgeValue("goldTouch", l)), [1, 7]);
   assert.deepEqual(BADGES.hpGate.values, [100, 90, 75, 50, 35, 20, 5]);
   assert.equal(badgeValue("hpGate", 3, 2), 75);
@@ -325,9 +326,10 @@ test("activation pays when the card reaches its target: HP, HP %, Silver, XP sca
   badge(g, "atkUp", "silverTouch", 3);
   const hpBefore = g.run.player.hp, maxBefore = g.run.player.maxHp;
   turns(g, 2);
-  assert.equal(g.run.player.maxHp, maxBefore + 16, "Max HP at level 4 raises max HP by 16");
-  assert.ok(g.run.player.hp >= hpBefore + 16, "the potion heals and the 16 come with the HP to fill them");
-  assert.ok(g.gains.some((gain) => gain.text === "+16 max HP" && gain.art && "heart" in gain.art && gain.art.raised), "it rises as a heart with a plus");
+  assert.equal(g.run.maxHpBoost, 0.04);
+  assert.equal(g.run.player.maxHp, snap(maxBefore * 1.0004), "Max HP at level 4 boosts max HP by 0.04%");
+  assert.ok(g.run.player.hp > hpBefore, "the potion heals");
+  assert.ok(g.gains.some((gain) => gain.text === "+0.04% max HP" && gain.art && "heart" in gain.art && gain.art.raised), "it rises as a heart with a plus");
   const silver = g.silver;
   turns(g, 2);
   assert.equal(g.silver, silver + 3, "Silver Touch at level 3 pays 3 (no Silver bonus owned)");
@@ -356,7 +358,7 @@ test("a card's badges work together: every reward pays, and any gate closes it",
   const silver = g.silver, maxHp = g.run.player.maxHp;
   turns(g, 2);
   assert.equal(g.silver, silver + 3, "Silver Touch pays");
-  assert.equal(g.run.player.maxHp, maxHp + 4, "and Max HP too");
+  assert.equal(g.run.player.maxHp, snap(maxHp * 1.0002), "and Max HP too");
   const h = floor(["@.A"]);
   h.run.hand = ["atkUp"];
   badge(h, "atkUp", "stairward");
@@ -420,9 +422,10 @@ test("undo takes back the HP, Silver and XP an activation paid", () => {
   g.autoTurn();
   const hp = g.run.player.hp, silver = g.silver, xp = g.save.xp;
   g.autoTurn();
-  assert.equal(g.run.player.hp, hp + 9);
+  assert.equal(g.run.player.hp, snap(hp * 1.0003));
+  assert.equal(g.run.maxHpBoost, 0.03);
   assert.ok(g.undo());
-  assert.deepEqual([g.run.player.hp, g.silver, g.save.xp], [hp, silver, xp]);
+  assert.deepEqual([g.run.player.hp, g.silver, g.save.xp, g.run.maxHpBoost], [hp, silver, xp, undefined]);
 });
 
 test("Stairward picks the target with the shortest walk on to the stairs, then rests for its cooldown", () => {

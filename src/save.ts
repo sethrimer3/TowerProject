@@ -176,6 +176,7 @@ const RUN_FIELD_CHECKS = {
   skipRolls: (v: unknown) => wholeIn(v, 1, 1e9),
   freeRolls: (v: unknown) => isRecord(v) && Object.entries(v).every(([k, n]) => ["offense", "defense", "utility"].includes(k) && wholeIn(n, 1, 1e9)),
   goldCombo: (v: unknown) => wholeIn(v, 1, 1e9),
+  maxHpBoost: (v: unknown) => finite(v) && v > 0 && v <= 1e9,
   spawns: (v: unknown) => wholeIn(v, 1, 1e9),
   volleys: (v: any) => isRecord(v) && wholeIn(v.turn, 0, 1e12) && (v.hero === undefined || wholeIn(v.hero, 0, 1e6)) &&
     (v.waited === undefined || wholeIn(v.waited, 1, 1e12)) && (v.rapid === undefined || wholeIn(v.rapid, 1, 1e4)) &&

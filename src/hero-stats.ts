@@ -1,8 +1,8 @@
 import type { Run } from "./runs.ts";
-import type { Save } from "./save-shape.ts";
 import { snap } from "./exact.ts";
-import { statFactor, type Loadout, type Stat } from "./loadout.ts";
+import type { Loadout } from "./loadout.ts";
 import { boonFactor } from "./shrines.ts";
+import { badgeFactor } from "./badges.ts";
 
 /** The stats the loadout carries into a run's hero, which a change to the
  * loadout moves mid-run. */
@@ -21,19 +21,19 @@ export function loadoutShift(before: Loadout, after: Loadout): StatShift {
   return shift;
 }
 
-/** What a flat `amount` of `stat` given for the run (the Max HP badge)
- * moves the loadout by: as a provision counts, times the stat's research. */
-export const flatShift = (save: Pick<Save, "archives">, stat: Stat & HeroStat, amount: number) => snap(amount * statFactor(save, stat));
+/** What the run's boons and Max HP badge boosts multiply hero stat
+ * `stat` by now. */
+export const heroFactor = (run: Run, stat: HeroStat) => boonFactor(run, stat) * badgeFactor(run, stat);
 
 /** Moves `run`'s hero, and the loadout it keeps, by `shift`, each stat
- * times what the run's boons multiply it by (as the hero's stats already
- * were). More max HP comes with the HP to fill it, less leaves HP no higher
+ * times what the run's boons and Max HP badge boosts multiply it by (as
+ * the hero's stats already were, `heroFactor`). More max HP comes with the HP to fill it, less leaves HP no higher
  * than the new max, and a fallen hero (0 HP) stays down. Returns how far
  * the hero's stats moved. */
 export function shiftHero(run: Run, shift: StatShift): StatShift {
   const p = run.player, moved: StatShift = {};
   for (const stat of HERO_STATS) {
-    const change = snap((shift[stat] ?? 0) * boonFactor(run, stat));
+    const change = snap((shift[stat] ?? 0) * heroFactor(run, stat));
     if (!change) continue;
     moved[stat] = change;
     p[stat] = snap((p[stat] ?? 0) + change);
@@ -41,4 +41,19 @@ export function shiftHero(run: Run, shift: StatShift): StatShift {
   }
   if (p.hp > 0) p.hp = Math.max(1, Math.min(p.maxHp, snap(p.hp + Math.max(0, moved.maxHp ?? 0))));
   return moved;
+}
+
+/** The Max HP badge boosts `run`'s max HP by `percent`: the run's boosts
+ * add up (`maxHpBoost`) into one multiplier on the hero's max HP (and the
+ * run's loadout's), so max HP moves by the ratio of the new multiplier to
+ * the old, and HP with it, keeping its share; a fallen hero (0 HP) stays
+ * down. Returns how far max HP moved. */
+export function boostMaxHp(run: Run, percent: number) {
+  const p = run.player, before = badgeFactor(run, "maxHp");
+  run.maxHpBoost = snap((run.maxHpBoost ?? 0) + percent);
+  const after = badgeFactor(run, "maxHp"), max = p.maxHp;
+  p.maxHp = snap((p.maxHp * after) / before);
+  if (p.hp > 0) p.hp = Math.max(1, Math.min(p.maxHp, snap((p.hp * after) / before)));
+  if (run.loadout) run.loadout.maxHp = snap((run.loadout.maxHp * after) / before);
+  return snap(p.maxHp - max);
 }

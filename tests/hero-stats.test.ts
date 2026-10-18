@@ -4,8 +4,8 @@ import { defaults } from "../src/save.ts";
 import { Game } from "../src/state.ts";
 import { addItem, equip } from "../src/equipment/inventory.ts";
 import { changeLoadout } from "../src/game/hero-sync.ts";
-import { flatShift, shiftHero } from "../src/hero-stats.ts";
-import { rowValue, statFactor } from "../src/loadout.ts";
+import { boostMaxHp, shiftHero } from "../src/hero-stats.ts";
+import { rowValue } from "../src/loadout.ts";
 import { snap } from "../src/exact.ts";
 
 /** A Tower run inside, its hero wearing the Bloodprice Blade (+8% ATK,
@@ -40,12 +40,31 @@ test("the Training tab's next value is what buying the rank for the run gives", 
   assert.equal(rowValue(g.save, "attack", 0, g.trainingView).value, promised);
 });
 
-test("a flat max HP given for the run is raised by Max HP research, as a provision is", () => {
-  const save = defaults();
-  assert.equal(flatShift(save, "maxHp", 10), 10);
-  save.archives.levels.maxHp = 10;
-  assert.ok(statFactor(save, "maxHp") > 1);
-  assert.equal(flatShift(save, "maxHp", 10), snap(10 * statFactor(save, "maxHp")));
+test("Max HP badge boosts add up into one multiplier on max HP, HP keeping its share, and multiply what max HP is gained later", () => {
+  const g = armed(), p = g.run.player;
+  p.hp = snap(p.maxHp / 2);
+  const max = p.maxHp, loadout = g.run.loadout!.maxHp;
+  assert.equal(boostMaxHp(g.run, 0.07), snap(p.maxHp - max));
+  boostMaxHp(g.run, 0.05);
+  assert.equal(g.run.maxHpBoost, 0.12);
+  assert.equal(p.maxHp, snap(max * 1.0012), "0.07% and 0.05%: max HP ×1.0012, not compounded per boost");
+  assert.equal(g.run.loadout!.maxHp, snap(loadout * 1.0012));
+  assert.equal(p.hp, snap(p.maxHp / 2), "HP keeps its half of max HP");
+  // A rank bought now gains 0.12% more max HP than it would have, and the
+  // Training card promises that.
+  const promised = rowValue(g.save, "hp", 1, g.trainingView).value, before = p.maxHp;
+  const plain = armed(), plainMax = plain.run.player.maxHp;
+  assert.ok(plain.trainInRun("hp") && g.trainInRun("hp"));
+  assert.equal(snap(p.maxHp - before), snap((plain.run.player.maxHp - plainMax) * 1.0012));
+  assert.equal(rowValue(g.save, "hp", 0, g.trainingView).value, promised);
+});
+
+test("a fallen hero stays down whatever the Max HP badge boosts", () => {
+  const g = new Game(defaults());
+  g.newRun({ seed: 5 });
+  g.run.player.hp = 0;
+  boostMaxHp(g.run, 0.07);
+  assert.equal(g.run.player.hp, 0);
 });
 
 test("more max HP mid-run comes with the HP to fill it, however it came; less leaves HP no higher than the max", () => {

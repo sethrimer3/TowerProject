@@ -55,11 +55,13 @@ const PERCENTS = [5, 10, 15, 20, 25, 30, 35];
 const KEY_LIMITS = [10, 8, 6, 4, 3, 2, 1];
 const COOLDOWNS = [7, 6, 5, 4, 3, 2, 1];
 const COMBOS = [2, 3, 4, 5, 6, 7, 8];
+/** The Max HP badge's boost by level, in percent of max HP. */
+const HP_BOOSTS = [0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07];
 const every = (n: number) => (n === 1 ? "every floor" : `once every ${n} floors`);
 
 /** Every card badge, in the order the Badges box lists them. */
 export const BADGES = {
-  hp: { name: "Max HP", rarity: "common", kind: "reward", glyph: "♥", color: "#ff6b6b", values: SQUARES, unit: "Max HP", text: (v) => `Raise max HP by ${v} (raised by Max HP research) for the rest of the run each time the card activates, with the HP to fill it.` },
+  hp: { name: "Max HP", rarity: "common", kind: "reward", glyph: "♥", color: "#ff6b6b", values: HP_BOOSTS, unit: "% max HP", text: (v) => `Boost max HP by ${v}% each time the card activates. The boosts add up for the rest of the run into one multiplier on max HP, which also multiplies all max HP gained later in the run, and HP rises with it, keeping its share of max HP.` },
   silverTouch: { name: "Silver Touch", rarity: "common", kind: "reward", glyph: "◉", color: "#d6dde6", values: LEVELS, unit: "Silver", text: (v) => `Gain ${v} Silver each time the card activates (Silver bonuses apply).` },
   goldback: { name: "Goldback", rarity: "common", kind: "reward", glyph: "⇥", color: "#f5c542", values: COMBOS, unit: "× Gold", text: (v) => `On the last card in the hand, multiply the next Gold pickup by ${v}× each time it activates, stacking: the combo adds up until a Gold pickup uses it, then starts over.` },
   xp: { name: "XP", rarity: "common", kind: "reward", glyph: "✧", color: "#9be86f", values: SQUARES, unit: "XP", text: (v) => `Gain ${v} XP each time the card activates, rising with the floor like a kill's XP.` },
@@ -87,6 +89,11 @@ export const BADGE_IDS = Object.keys(BADGES) as BadgeId[];
 export const badgeDef = (id: BadgeId): BadgeDef => BADGES[id];
 /** A gate's sign: "<" unless it says otherwise. */
 export const gateSign = (id: BadgeId) => badgeDef(id).sign ?? "<";
+
+/** What the run's Max HP badge boosts (`maxHpBoost`, in percent, summed)
+ * multiply `stat` by now: 1 for any other stat. Whatever max HP the hero
+ * gains or loses mid-run is multiplied by it, as max HP already was. */
+export const badgeFactor = (run: { maxHpBoost?: number }, stat: string) => (stat === "maxHp" ? 1 + (run.maxHpBoost ?? 0) / 100 : 1);
 
 /** The copies each level past the first takes, levels 2 to 7. The copy that
  * opens level 1 counts toward level 2's. */

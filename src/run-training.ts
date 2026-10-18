@@ -55,6 +55,6 @@ export function runTrainingBulk(save: Pick<Save, "training" | "upgrades" | "goal
  * Training tab's value (`rowValue`) for the run, so its hero's stats, the
  * ranks it bought with Silver and its boons count, as do the equipment
  * worn in `mode` and research. */
-export function runTrainingValue(save: Save, run: Pick<RunCore, "training" | "player">, id: TrainingId, mode: Mode = "tower") {
+export function runTrainingValue(save: Save, run: Pick<RunCore, "training" | "player" | "maxHpBoost">, id: TrainingId, mode: Mode = "tower") {
   return rowValue(save, id, 0, { mode, run });
 }

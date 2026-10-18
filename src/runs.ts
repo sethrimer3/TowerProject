@@ -108,6 +108,11 @@ export type RunCore = {
    * next Gold the run finds (each adds its value), used up by that Gold;
    * absent with none. */
   goldCombo?: number;
+  /** The Max HP badge's boosts this run, in percent of max HP, summed:
+   * the hero's max HP is 1 + this / 100 times what it would be without
+   * them (`badgeFactor`); absent with none. Undo takes it back with the
+   * run. */
+  maxHpBoost?: number;
 };
 /** A Tower ascent. */
 export type TowerRun = RunCore & {

@@ -3,7 +3,7 @@ import { BADGES, badgesOn, badgeValue, type BadgeId, type RunBadge } from "../ba
 import { TRAINING, xpBase, type StatTrainingRow } from "../config.ts";
 import type { Mode, KeyColor } from "../entities.ts";
 import { snap } from "../exact.ts";
-import { flatShift, shiftHero } from "../hero-stats.ts";
+import { boostMaxHp, shiftHero } from "../hero-stats.ts";
 import { rankShift } from "../loadout.ts";
 import { noteKey } from "../run-notes.ts";
 import type { HandRules } from "../hand-rules.ts";
@@ -56,7 +56,7 @@ export class CardActivation {
     const host = this.host, { hand, run } = host;
     const id = hand[card], v = badgeValue(badge.id, badge.level, badge.pick), p = run.player;
     switch (badge.id) {
-      case "hp": return this.raiseMaxHp(v, badge.id);
+      case "hp": return this.boostMaxHp(v, badge.id);
       case "hpPercent": return this.badgeHeal(snap((p.maxHp * v) / 100), badge.id);
       case "silverTouch": return host.finds.coins(p, 0, host.purse.silver(v));
       case "goldTouch": return host.finds.coins(p, host.purse.badgeGold(`badge:${id}:${key}`, v), 0, false);
@@ -74,14 +74,13 @@ export class CardActivation {
       }
     }
   }
-  /** Max HP's badge: the hero's max HP (and the run's loadout) rises by
-   * `n` for the run, raised as a provision's is (`flatShift`), with the HP
-   * to fill it. */
-  private raiseMaxHp(n: number, id: BadgeId) {
-    const { run, save } = this.host, p = run.player;
-    n = shiftHero(run, { maxHp: flatShift(save, "maxHp", n) }).maxHp ?? 0;
-    this.host.gain(p.x, p.y, `+${wholeChange(n)} max HP`, { heart: true, raised: true });
-    this.host.message = `${BADGES[id].name} · +${wholeChange(n)} max HP`;
+  /** Max HP's badge: the run's max HP multiplier grows by `percent`
+   * (`boostMaxHp`), and HP with it. */
+  private boostMaxHp(percent: number, id: BadgeId) {
+    const run = this.host.run, p = run.player;
+    boostMaxHp(run, percent);
+    this.host.gain(p.x, p.y, `+${percent}% max HP`, { heart: true, raised: true });
+    this.host.message = `${BADGES[id].name} · +${percent}% max HP (+${run.maxHpBoost}% this run)`;
   }
   /** Heals up to `n` HP for badge `id`, as a potion's heal shows. */
   private badgeHeal(n: number, id: BadgeId) {
