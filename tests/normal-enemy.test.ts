@@ -9,7 +9,7 @@ import type { Board } from "../src/board.ts";
 import type { Enemy } from "../src/entities.ts";
 import type { League } from "../src/tournament/leagues.ts";
 
-// A board's normal enemy (`Board.normalEnemy`, which the HUD shows under
+// A board's normal enemy (`Board.typicalEnemy`, which the HUD shows under
 // the floor) against the real normal enemies standing on it: every stat
 // step the board applies to them, it applies to the normal enemy too.
 
@@ -31,7 +31,7 @@ const stats = (e: Enemy) => ({ attack: e.attack, defense: e.defense, hp: e.hp })
 function matches(board: Board, rows: number, depth: (x: number, y: number) => number) {
   const found = plainNormals(board, rows, depth);
   assert.ok(found.length, "the board holds a plain normal enemy to compare");
-  for (const f of found) assert.deepEqual(stats(board.normalEnemy!(f.depth)), stats(f.enemy), `at depth ${f.depth}`);
+  for (const f of found) assert.deepEqual(stats(board.typicalEnemy!(f.depth)), stats(f.enemy), `at depth ${f.depth}`);
 }
 
 /** The first Tower floor from `room` holding a plain normal enemy. */
@@ -52,7 +52,7 @@ test("a Tower floor's normal enemy carries the run's foe boons", () => {
   const foes = boonEffects(["enemyAttack", "enemyHpRegen"], save).foes;
   const plain = towerFloor(30, 2), boons = towerFloor(30, 2, foes);
   matches(boons, 17, () => 30);
-  const was = plain.normalEnemy(), now = boons.normalEnemy();
+  const was = plain.typicalEnemy(), now = boons.typicalEnemy();
   assert.ok(now.attack < was.attack && now.hp < was.hp, "the boons weaken it");
   assert.equal(now.defense, was.defense);
 });
@@ -66,11 +66,11 @@ test("a Delve depth's normal enemy is its real normal enemies, in and out of a t
     const w = delve(7, tier, league);
     matches(w, CHUNK * 3, (x, y) => w.depth(x, y));
   }
-  const plain = delve(7, 1).normalEnemy(40), copper = delve(7, 1, "copper").normalEnemy(40);
+  const plain = delve(7, 1).typicalEnemy(40), copper = delve(7, 1, "copper").typicalEnemy(40);
   assert.ok(copper.attack > plain.attack * 4, "a tournament's enemies stand as strong as the next cave's");
 });
 
 test("the forest holds no enemies, so it has no normal enemy", async () => {
   const { OutsideWorld } = await import("../src/outside.ts");
-  assert.equal("normalEnemy" in OutsideWorld.prototype, false);
+  assert.equal("typicalEnemy" in OutsideWorld.prototype, false);
 });

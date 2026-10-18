@@ -1,6 +1,6 @@
 import { region, depthAt, areasBetween, floorFor, ownerAt, type Region } from "./labyrinth.ts";
 import { CHUNK, WIDTH, START_X } from "../config.ts";
-import { point, type Enemy, type Point, type Tile, type Torch } from "../entities.ts";
+import { point, type Enemy, type EnemyStrength, type Point, type Tile, type Torch } from "../entities.ts";
 import type { DelveRun } from "../runs.ts";
 import { withChest, withPotions, type Board } from "../board.ts";
 import { breakTorch, placeTorches, torchesLeft } from "../torches.ts";
@@ -242,10 +242,10 @@ export class World implements Board {
     const league = this.run.tournament?.league;
     return league ? tournamentTile(t, tournamentStatFactor(league)) : t;
   }
-  /** The normal enemy at `depth`: the delve's curve, its stat factor as
-   * the chunks take it, then the run's league. */
-  normalEnemy(depth: number): Enemy {
-    const enemy: Enemy = { name: DELVE_ENEMY_NAMES[0]!, tier: enemyTier("normal"), strength: "normal", profile: "balanced", ...enemyStats("delve", this.tier, depth, "normal", "balanced") };
+  /** The balanced enemy of `strength` at `depth`: the delve's curve, its
+   * stat factor as the chunks take it, then the run's league. */
+  typicalEnemy(depth: number, strength: EnemyStrength = "normal"): Enemy {
+    const enemy: Enemy = { name: DELVE_ENEMY_NAMES[0]!, tier: enemyTier(strength), strength, profile: "balanced", ...enemyStats("delve", this.tier, depth, strength, "balanced") };
     return this.inLeague(tierTile({ kind: "enemy", enemy }, this.tier)).enemy!;
   }
   /** Chunk `index` as generated, with More Enemies' extras, then each

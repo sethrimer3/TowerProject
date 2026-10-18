@@ -46,12 +46,12 @@ export class DamagePredictions {
     // even at full HP; HP is part of the key only with Lifesteal, since a
     // fight that fells the hero first heals nothing.
     const steal = player.lifesteal ? `${player.lifesteal}|${player.hp}` : "";
-    const guard = `${player.thorns ?? 0}|${player.parry ?? 0}`;
+    const guard = `${player.thorns ?? 0}|${player.parry ?? 0}|${player.bossAttack ?? 0}|${player.pierce ?? 0}|${JSON.stringify(player.foeAttack ?? {})}`;
     const hero = `${player.attack}|${player.defense}|${player.shroud ?? 0}|${steal}|${crit ? `${crit.chance}|${crit.factor}` : ""}|${guard}`;
     if (hero !== this.hero) [this.hero, this.costs] = [hero, new Map()];
     // A boss's strength sets its thorns and the hero's boss ATK; a Fast enemy strikes first;
     // a bubble's guard cuts the hero's strikes.
-    const key = `${enemy.hp}|${enemy.attack}|${enemy.defense}|${enemy.strength}|${enemy.fast ? "fast" : ""}|${enemy.guard ?? 0}`;
+    const key = `${enemy.hp}|${enemy.attack}|${enemy.defense}|${enemy.strength}|${enemy.fast ? "fast" : ""}|${enemy.flying ? "flying" : ""}|${enemy.guard ?? 0}`;
     let cost = this.costs.get(key);
     if (!cost) {
       // A fight of more than PLAYED_ROUNDS rounds is estimated past them, so

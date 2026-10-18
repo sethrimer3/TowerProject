@@ -1,5 +1,5 @@
 import { TOWER_WIDTH, TOWER_HEIGHT } from "../config.ts";
-import { point, type ChestOdds, type Enemy, type Tile, type Torch } from "../entities.ts";
+import { point, type ChestOdds, type Enemy, type EnemyStrength, type Tile, type Torch } from "../entities.ts";
 import { withChest, withPotions, type Board } from "../board.ts";
 import { breakTorch, placeTorches, torchesLeft } from "../torches.ts";
 import { generateTowerFloor } from "./index.ts";
@@ -174,10 +174,10 @@ export class RoomWorld implements Board {
   private withBoons(t: Tile) {
     return foeTile(t, this.foes);
   }
-  /** The floor's normal enemy: the tower's curve, its stat factor as the
-   * cells take it, then the run's boons. */
-  normalEnemy(): Enemy {
-    return this.withBoons(tierTile({ kind: "enemy", enemy: getTowerGateEnemy(this.room, "normal", "balanced", this.tier) }, this.tier)).enemy!;
+  /** The floor's balanced enemy of `strength`: the tower's curve, its stat
+   * factor as the cells take it, then the run's boons. */
+  typicalEnemy(_depth = 0, strength: EnemyStrength = "normal"): Enemy {
+    return this.withBoons(tierTile({ kind: "enemy", enemy: getTowerGateEnemy(this.room, strength, "balanced", this.tier) }, this.tier)).enemy!;
   }
   /** Whether the Shielded enemy `s` still stands. */
   private holds(s: Shield) {

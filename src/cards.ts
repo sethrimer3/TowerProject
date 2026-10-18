@@ -10,6 +10,7 @@ import type { EnemyStrength, Mode } from "./entities.ts";
 import type { Save } from "./save-shape.ts";
 import { goalUnlocked, type GoalUnlock } from "./goals.ts";
 import { arrowDamage, enemiesWithin } from "./ranged.ts";
+import { FOE_ATTACK, FOE_GOLD, isFoeCard, type FoeCard } from "./foe-cards.ts";
 
 /** What a card gives, on top of where it moves the hero, for as long as the
  * run's hand holds it, whichever card leads the hero there. */
@@ -29,8 +30,15 @@ export type CardBonus = {
    * percent more ATK, added to the Shot ATK (multiplying each such arrow's
    * ATK); fights are untouched. */
   boss?: { attack: number };
+  /** The hero strikes the enemies an enemy card covers (`FOE_CARDS`) with
+   * `attack` percent more ATK, and each one's kill drops `gold` percent more
+   * Gold, multiplying every other Gold bonus. */
+  foe?: { attack: number; gold: number };
 };
 type CardDef = { name: string; text: string; bonus?: CardBonus };
+
+/** What each enemy card but ENEMY gives against the enemies it covers. */
+const FOE = { foe: { attack: FOE_ATTACK, gold: FOE_GOLD } } as const;
 
 /** Every card a hand can hold: its name, what it moves the hero toward,
  * and any bonus it gives while held (`bonus`). */
@@ -47,13 +55,13 @@ export const CARDS = {
   keySiphon: { name: "Key Siphon", text: "Trade Max HP training levels for a yellow key, without moving, for the rest of the run. The first use takes 1 level and each use after takes 1 more (2, then 3…). Skipped without enough levels left." },
   yellowDoor: { name: "Yellow Door", text: "Move toward the closest yellow door, while you hold a yellow key." },
   heartDoor: { name: "Heart Door", text: "Move toward the closest Heart Door." },
-  weakEnemy: { name: "Weak Enemy", text: "Move toward the closest weak enemy." },
-  baseEnemy: { name: "Base Enemy", text: "Move toward the closest enemy that is neither weak, strong, elite nor a boss." },
-  strongEnemy: { name: "Strong Enemy", text: "Move toward the closest strong enemy." },
-  eliteEnemy: { name: "Elite Enemy", text: "Move toward the closest elite enemy." },
-  bossEnemy: { name: "Boss Enemy", text: "Move toward the closest boss or Greater Boss." },
-  nonBossEnemy: { name: "Non-Boss Enemy", text: "Move toward the closest enemy that is not a boss or Greater Boss." },
-  fastEnemy: { name: "Fast Enemy", text: "Move toward the closest Fast enemy." },
+  weakEnemy: { name: "Weak Enemy", text: "Move toward the closest weak enemy.", bonus: FOE },
+  baseEnemy: { name: "Base Enemy", text: "Move toward the closest enemy that is neither weak, strong, elite nor a boss.", bonus: FOE },
+  strongEnemy: { name: "Strong Enemy", text: "Move toward the closest strong enemy.", bonus: FOE },
+  eliteEnemy: { name: "Elite Enemy", text: "Move toward the closest elite enemy.", bonus: FOE },
+  bossEnemy: { name: "Boss Enemy", text: "Move toward the closest boss or Greater Boss.", bonus: FOE },
+  nonBossEnemy: { name: "Non-Boss Enemy", text: "Move toward the closest enemy that is not a boss or Greater Boss.", bonus: FOE },
+  fastEnemy: { name: "Fast Enemy", text: "Move toward the closest Fast enemy.", bonus: FOE },
   chest: { name: "Chest", text: "Move toward the closest closed chest: a treasure chest or an area reward chest.", bonus: { chest: { supply: 1.5, equipment: 0.5 } } },
   blueSiphon: { name: "BK Siphon", text: "Trade DEF training levels for a blue key, without moving, for the rest of the run. The first use takes 1 level and each use after takes 1 more (2, then 3…). Skipped without enough levels left." },
   blueTrader: { name: "BK Trader", text: "Trade 3 yellow keys for a blue key, without moving. Skipped with fewer than 3 yellow keys." },
@@ -62,7 +70,7 @@ export const CARDS = {
   redSiphon: { name: "RK Siphon", text: "Trade ATK training levels for a red key, without moving, for the rest of the run. The first use takes 1 level and each use after takes 1 more (2, then 3…). Skipped without enough levels left." },
   torch: { name: "Torch", text: "Move toward the closest lit torch, putting it out." },
   woodenDoor: { name: "Wooden Door", text: "Move toward the closest Wooden Door you hold a key for, or can break down and survive." },
-  flyingEnemy: { name: "Flying Enemy", text: "Move toward the closest Flying enemy your arrows can hurt, stopping once one is within your Attack Range, and wait there while one is.", bonus: { shot: { attack: 5, speed: 5 } } },
+  flyingEnemy: { name: "Flying Enemy", text: "Move toward the closest Flying enemy your arrows can hurt, stopping once one is within your Attack Range, and wait there while one is.", bonus: { shot: { attack: 5, speed: 5 }, ...FOE } },
   archer: { name: "Archer", text: "Never moves you. While it is in your hand, you fire arrows at the closest enemy within your Attack Range, and your Archer training can be raised with Silver in the run.", bonus: { boss: { attack: 5 } } },
 } as const;
 export type CardId = keyof typeof CARDS;
@@ -90,12 +98,15 @@ export const cardBonus = (id: CardId): CardBonus | undefined => (CARDS[id] as Ca
 /** A card bonus's lines as the player reads them, each with its tone: a
  * Supply Chest's chance light blue, an Equipment Chest's purple, the rarer. */
 export function cardBonusLines(id: CardId): { text: string; tone: "plain" | "supply" | "equipment" }[] {
-  const bonus = cardBonus(id), key = bonus?.key, chest = bonus?.chest, shot = bonus?.shot, boss = bonus?.boss;
+  const bonus = cardBonus(id), key = bonus?.key, chest = bonus?.chest, shot = bonus?.shot, boss = bonus?.boss, foe = bonus?.foe;
+  // "Weak Enemy" covers Weak Enemies.
+  const foes = CARDS[id].name.replace(/Enemy$/, "Enemies");
   return [
     ...(boss ? [{ text: `+${boss.attack}% Shot ATK for Bosses`, tone: "plain" as const }] : []),
     ...(shot ? [{ text: `+${shot.attack}% Shot ATK`, tone: "plain" as const }, { text: `+${shot.speed}% Attack Speed`, tone: "plain" as const }] : []),
     ...(key ? [{ text: `+${key.percent}% ${CARDS[`${key.color}Key`].name}s`, tone: "plain" as const }, { text: `+${key.gold} Gold a key`, tone: "plain" as const }] : []),
     ...(chest ? [{ text: `${chest.supply}% Supplies`, tone: "supply" as const }, { text: `${chest.equipment}% Equipment`, tone: "equipment" as const }] : []),
+    ...(foe ? [{ text: `+${foe.attack}% ATK vs ${foes}`, tone: "plain" as const }, { text: `+${foe.gold}% Gold from ${foes}`, tone: "plain" as const }] : []),
   ];
 }
 /** A card bonus's lines as one line of plain text, for a tooltip ("" for none). */
@@ -103,14 +114,17 @@ export const cardBonusText = (id: CardId) => cardBonusLines(id).map((l) => l.tex
 /** What the cards of `hand` give while held, added up: for each key colour
  * the percent more each key is worth and the Gold it pays more, a
  * treasure chest's chances, in percent, of being a Supply or Equipment
- * Chest, the percent more Shot ATK and Attack Speed the arrows have, and
- * the percent more ATK the arrows strike bosses with. */
+ * Chest, the percent more Shot ATK and Attack Speed the arrows have, the
+ * percent more ATK the arrows strike bosses with, and each enemy card's
+ * ATK and Gold percents against the enemies it covers (`foe`, by card). */
 export function handBonus(hand: readonly CardId[]) {
   const keys: Partial<Record<KeyColor, { percent: number; gold: number }>> = {};
   const chest = { supply: 0, equipment: 0 }, shot = { attack: 0, speed: 0 };
+  const foe: Partial<Record<FoeCard, { attack: number; gold: number }>> = {};
   let boss = 0;
   for (const id of new Set(hand)) {
     const bonus = cardBonus(id);
+    if (bonus?.foe && isFoeCard(id)) foe[id] = { ...bonus.foe };
     if (bonus?.boss) boss += bonus.boss.attack;
     if (bonus?.shot) {
       shot.attack += bonus.shot.attack;
@@ -126,7 +140,7 @@ export function handBonus(hand: readonly CardId[]) {
       chest.equipment = snap(chest.equipment + bonus.chest.equipment);
     }
   }
-  return { keys, chest, shot: { ...shot, boss } };
+  return { keys, chest, shot: { ...shot, boss }, foe };
 }
 export type HandBonus = ReturnType<typeof handBonus>;
 

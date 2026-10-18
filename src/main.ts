@@ -51,6 +51,7 @@ import { stubTournament } from "./tournament/server.ts";
 import { TournamentPage } from "./ui/tournament-page.ts";
 import { revealReward } from "./ui/reward-reveal.ts";
 import { toggleGoldBonusBox } from "./ui/gold-bonus-box.ts";
+import { refreshEnemyOddsBox, toggleEnemyOddsBox } from "./ui/enemy-odds-box.ts";
 import { MailClient } from "./mail/client.ts";
 import { postStubMail, stubMail } from "./mail/server.ts";
 import { MailDialog } from "./ui/mail-dialog.ts";
@@ -169,6 +170,7 @@ function update() {
   document.querySelectorAll<HTMLButtonElement>("[data-tab]").forEach((b) => (b.disabled = deck.teaching && b.dataset.tab !== "deck"));
   renderHud(game, renderer, overlay);
   if (runNotes.open) runNotes.refresh();
+  refreshEnemyOddsBox(game);
   runTraining.render();
   renderBoardLesson(game, tab === "tower", update);
   const themes = game.claimThemes();
@@ -357,6 +359,7 @@ el("gold-ad").onclick = () => {
   update();
 };
 el("gold-bonus").onclick = () => toggleGoldBonusBox(game);
+el("base-enemy").onclick = () => toggleEnemyOddsBox(game);
 // The floor number (its tower and label with it) opens the run's notes, once Note Taking is researched.
 document.querySelector(".height")!.addEventListener("click", (e) => {
   if ((e.target as Element).closest("#height, #height-label, #height-tier")) runNotes.show();

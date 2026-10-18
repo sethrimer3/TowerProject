@@ -716,7 +716,7 @@ export const shortStat = (n: number) => (n < 1000 ? enemyStat(n) : shortAmount(M
  * of the normal enemy at the run's deepest point, as the board makes it. */
 function renderBaseEnemy(game: Game) {
   const box = el("base-enemy"), divider = el("base-enemy-divider");
-  const s = game.run.outside ? undefined : game.world.normalEnemy?.(game.run.height);
+  const s = game.run.outside ? undefined : game.world.typicalEnemy?.(game.run.height);
   box.hidden = divider.hidden = !s;
   if (!s) return;
   text("base-enemy-atk", shortStat(s.attack));

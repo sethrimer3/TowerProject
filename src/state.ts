@@ -63,6 +63,8 @@ import { OUTSIDE_START_Y, OutsideWorld } from "./outside.ts";
 import { AREA_BURST_MS, AreaLedger, chestReward, clearedInspiration, type AreaReward } from "./tower/area-ledger.ts";
 import { TowerClimb } from "./tower/climb.ts";
 import { callsGreaterBoss, greaterBoss, greaterBossSpot } from "./tower/greater-boss.ts";
+import { strengthOdds, traitOdds, type OddsSource } from "./enemy-odds.ts";
+import { STEPS_PER_FLOOR } from "./enemy-curves.ts";
 import { materialDef, MATERIALS } from "./materials.ts";
 import { switchTier, tierNumeral, tierRewardText, tierXp } from "./tiers.ts";
 import type { GoldContext } from "./gold-multipliers.ts";
@@ -968,6 +970,10 @@ export class Game {
     const odds = this.chestOddsFor(this.run.hand);
     if (odds) this.run.chestOdds = odds;
     else delete this.run.chestOdds;
+    // The hero strikes the enemies each enemy card covers harder (combat.ts reads it).
+    const foes = Object.entries(handBonus(this.run.hand).foe).map(([id, b]) => [id, b.attack]);
+    if (foes.length) this.run.player.foeAttack = Object.fromEntries(foes);
+    else delete this.run.player.foeAttack;
     this.run.focusUsed = 0;
     for (const k of ["ignoreUsed", "targetUsed", "regain", "ignored", "targeted"] as const) delete this.run[k];
   }
@@ -1654,6 +1660,17 @@ export class Game {
   enemyGold(x: number, y: number, instakill = false) {
     const e = foeOn(this.world.tile(x, y));
     return e ? this.purse.killGoldPreview(e, x, y, instakill) : 0;
+  }
+  /** What the floor the hero stands on can roll (`enemy-odds.ts`): each
+   * strength's chance, stats and Gold, and each trait's chance, for the
+   * enemy stats box; null in the forest. */
+  get enemyOdds() {
+    const world = this.world, p = this.run.player;
+    if (this.run.outside || !world.typicalEnemy) return null;
+    const floor = this.floorOf(p.x, p.y) - 1, depth = floor * STEPS_PER_FLOOR[this.mode], purse = this.purse;
+    const greaterBoss = this.mode === "tower" && !!this.towerRun.summoned?.includes(this.run.height);
+    const source: OddsSource = { tier: this.tier, floor, enemy: (s) => world.typicalEnemy!(depth, s), gold: (e) => purse.killGoldOf(e), greaterBoss };
+    return { floor, strengths: strengthOdds(source), traits: traitOdds(this.tier, floor) };
   }
   /** The Gold opening the treasure chest at (x, y) would bank now, on
    * average, or 0 once its tile is looted. */

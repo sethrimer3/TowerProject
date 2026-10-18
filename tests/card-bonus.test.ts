@@ -12,15 +12,21 @@ import { addItem } from "../src/equipment/inventory.ts";
 import { equipmentEffects } from "../src/equipment/effects.ts";
 import { chestKindAt } from "../src/board.ts";
 import { snap } from "../src/exact.ts";
-import type { Tile } from "../src/entities.ts";
+import type { Enemy, Player, Tile } from "../src/entities.ts";
+import { attackAgainst } from "../src/combat.ts";
+import { foeGold } from "../src/foe-cards.ts";
 
-test("only YELLOW, BLUE and RED KEY, CHEST, FLYING ENEMY and ARCHER carry a bonus, and KEY none", () => {
-  assert.deepEqual(CARD_IDS.filter((id) => cardBonus(id)), ["yellowKey", "blueKey", "chest", "redKey", "flyingEnemy", "archer"]);
+test("only YELLOW, BLUE and RED KEY, CHEST, the enemy cards but ENEMY and ARCHER carry a bonus, and KEY none", () => {
+  assert.deepEqual(CARD_IDS.filter((id) => cardBonus(id)), [
+    "yellowKey", "blueKey", "weakEnemy", "baseEnemy", "strongEnemy", "eliteEnemy", "bossEnemy", "nonBossEnemy", "fastEnemy", "chest", "redKey", "flyingEnemy", "archer",
+  ]);
+  assert.equal(cardBonus("monster"), undefined, "ENEMY gives none");
+  assert.deepEqual(cardBonus("weakEnemy"), { foe: { attack: 5, gold: 5 } });
   assert.deepEqual(cardBonus("yellowKey"), { key: { color: "yellow", percent: 5, gold: 1 } });
   assert.deepEqual(cardBonus("blueKey"), { key: { color: "blue", percent: 5, gold: 2 } });
   assert.deepEqual(cardBonus("redKey"), { key: { color: "red", percent: 5, gold: 3 } });
   assert.deepEqual(cardBonus("chest"), { chest: { supply: 1.5, equipment: 0.5 } });
-  assert.deepEqual(cardBonus("flyingEnemy"), { shot: { attack: 5, speed: 5 } });
+  assert.deepEqual(cardBonus("flyingEnemy"), { shot: { attack: 5, speed: 5 }, foe: { attack: 5, gold: 5 } });
   assert.deepEqual(cardBonus("archer"), { boss: { attack: 5 } });
   assert.deepEqual(cardBonusLines("archer").map((l) => l.text), ["+5% Shot ATK for Bosses"]);
   assert.equal(cardBonus("key"), undefined);
@@ -30,6 +36,7 @@ test("a card's bonus reads as short lines, the chest's chances light blue and pu
   assert.deepEqual(cardBonusLines("chest"), [{ text: "1.5% Supplies", tone: "supply" }, { text: "0.5% Equipment", tone: "equipment" }]);
   assert.deepEqual(cardBonusLines("blueKey").map((l) => l.text), ["+5% Blue Keys", "+2 Gold a key"]);
   assert.deepEqual(cardBonusLines("door"), []);
+  assert.deepEqual(cardBonusLines("nonBossEnemy").map((l) => l.text), ["+5% ATK vs Non-Boss Enemies", "+5% Gold from Non-Boss Enemies"]);
 });
 
 test("a hand's bonuses add up by key colour, with the chest's chances", () => {
@@ -37,8 +44,10 @@ test("a hand's bonuses add up by key colour, with the chest's chances", () => {
     keys: { yellow: { percent: 5, gold: 1 }, red: { percent: 5, gold: 3 } },
     chest: { supply: 1.5, equipment: 0.5 },
     shot: { attack: 0, speed: 0, boss: 0 },
+    foe: {},
   });
-  assert.deepEqual(handBonus(["stairs", "key"]), { keys: {}, chest: { supply: 0, equipment: 0 }, shot: { attack: 0, speed: 0, boss: 0 } });
+  assert.deepEqual(handBonus(["stairs", "key"]), { keys: {}, chest: { supply: 0, equipment: 0 }, shot: { attack: 0, speed: 0, boss: 0 }, foe: {} });
+  assert.deepEqual(handBonus(["weakEnemy", "fastEnemy"]).foe, { weakEnemy: { attack: 5, gold: 5 }, fastEnemy: { attack: 5, gold: 5 } });
 });
 
 const TILES: Record<string, Tile> = {
@@ -171,4 +180,42 @@ test("a Supply Chest holds 5 materials in tower I and 2 more each tower after, r
   assert.deepEqual([1, 2, 3, 10].map((tier) => rollSupplies(tier, 0, () => 0).quantity), [5, 7, 9, 23]);
   assert.equal(rollSupplies(1, 50, () => 0).quantity, 7, "5 raised by half, rounded down");
   assert.equal(rollSupplies(3, 50, () => 0).quantity, 13);
+});
+
+const foe = (strength: Enemy["strength"], extra: Partial<Enemy> = {}): Enemy => ({ name: "Slime", hp: 100, attack: 10, defense: 0, tier: 1, strength, ...extra });
+
+test("an enemy card held strikes the enemies it covers with 5% more ATK, each card adding its own", () => {
+  const hero: Player = { x: 0, y: 0, hp: 100, maxHp: 100, attack: 100, defense: 0, keys: { yellow: 0, blue: 0, red: 0 } };
+  const armed = { ...hero, foeAttack: { weakEnemy: 5, nonBossEnemy: 5 } };
+  assert.equal(attackAgainst(armed, foe("weak")), 110, "WEAK ENEMY and NON-BOSS ENEMY both cover a weak enemy");
+  assert.equal(attackAgainst(armed, foe("strong")), 105);
+  assert.equal(attackAgainst(armed, foe("boss")), 100);
+  assert.equal(attackAgainst({ ...hero, bossAttack: 10, foeAttack: { bossEnemy: 5 } }, foe("greaterBoss")), 115, "added to the equipment's boss ATK");
+  assert.equal(attackAgainst({ ...hero, foeAttack: { fastEnemy: 5 } }, foe("normal", { fast: true })), 105);
+  assert.equal(attackAgainst({ ...hero, foeAttack: { flyingEnemy: 5 } }, foe("normal", { flying: true })), 105);
+});
+
+test("a run going inside gives its hero the ATK of its hand's enemy cards", () => {
+  const g = new Game(defaults());
+  g.save.hand = ["stairs", "weakEnemy", "monster"];
+  g.newRun({ seed: 3 });
+  assert.deepEqual(g.run.player.foeAttack, { weakEnemy: 5 });
+  g.save.hand = ["stairs", "monster"];
+  g.newRun({ seed: 3 });
+  assert.equal(g.run.player.foeAttack, undefined, "ENEMY gives none");
+  assert.equal(decode(JSON.stringify({ ...g.save })).tower.run?.player.foeAttack, undefined);
+});
+
+test("an enemy card held makes each enemy it covers drop 5% more Gold, multiplying the other bonuses and each other", () => {
+  assert.equal(foeGold(["weakEnemy"], foe("weak")), 1.05);
+  assert.equal(foeGold(["weakEnemy", "nonBossEnemy", "monster"], foe("weak")), 1.1025);
+  assert.equal(foeGold(["weakEnemy"], foe("strong")), 1);
+  const g = new Game(defaults());
+  g.newRun({ seed: 7 });
+  const purse = () => new RunPurse(g.save, g.mode, g.run, () => 0.5);
+  g.run.hand = ["stairs"];
+  const plain = purse().killGoldPreview(foe("elite"), 3, 3);
+  g.run.hand = ["stairs", "eliteEnemy", "nonBossEnemy"];
+  assert.equal(purse().killGoldPreview(foe("elite"), 3, 3), snap(plain * 1.1025));
+  assert.equal(purse().killGoldPreview(foe("weak"), 3, 3) > 0, true);
 });

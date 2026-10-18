@@ -638,6 +638,11 @@ try {
   // In the forest Enter, under Goals, goes straight in.
   await click("#enter-run");
   await shot("fresh.entered");
+  // The enemy stats under the floor open every enemy the floor can roll; the X closes it.
+  await click("#base-enemy");
+  await shot("fresh.enemyOdds");
+  await click(".enemy-odds-x");
+  if (await page.locator(".enemy-odds-layer").count()) throw Error("the enemy stats box stayed open");
 
   // A fallen hero: the defeat dialog, with an undo or without.
   await load("fallenUndo");

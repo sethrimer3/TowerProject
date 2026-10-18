@@ -18,6 +18,7 @@ import { CATEGORIES, type EquipMaterialId } from "../equipment/catalog.ts";
 import { runBoons } from "../shrines.ts";
 import { earn } from "../profile.ts";
 import { notesOf, tallyIn } from "../run-notes.ts";
+import { foeGold } from "../foe-cards.ts";
 
 /** The tiles whose Pickup Gold a skipped floor counts, beside its lit torches. */
 const ITEMS: ReadonlySet<Tile["kind"]> = new Set(["key", "potion", "attack", "defense", "door"]);
@@ -130,6 +131,13 @@ export class RunPurse {
     return goldBanked(snap(this.killGold(enemy, instakill) * (this.run.goldCombo ?? 1)), this.goldContext).gold;
   }
 
+  /** The Gold a kill of `enemy` banks now, wherever it stands and whether
+   * or not its tile is looted, without Goldback's combo (the enemy stats
+   * box's). Changes nothing. */
+  killGoldOf(enemy: Enemy) {
+    return goldBanked(this.killGold(enemy), this.goldContext).gold;
+  }
+
   /** Adds Silver found in the run, times Silver found's multiplier
    * (`silverFound`: Silver Bonus training and research, the run's Silver
    * Bonus boons and equipment's Silver found), fractions and all; returns
@@ -171,10 +179,13 @@ export class RunPurse {
    * by Gold Bonus training and research, multiplied (a Fast enemy paying
    * `FAST_GOLD` more first, a Ranged or Flying one `RANGED_GOLD`, a Shielded one
    * `SHIELDED_GOLD`), and for an
-   * `instakill` (the hero's first strike ended it) by Mug research too. */
+   * `instakill` (the hero's first strike ended it) by Mug research too; then
+   * ×1.05 for each enemy card the run's hand holds that covers it (`foeGold`). */
   private killGold(enemy: Enemy, instakill = false) {
-    const gold = snap(((ENEMY_GOLD[enemy.strength] + (enemy.fast ? FAST_GOLD : 0) + (enemy.ranged || enemy.flying ? RANGED_GOLD : 0) + (enemy.shielded ? SHIELDED_GOLD : 0)) * this.goldBonus) / 10_000);
-    return instakill ? snap((gold * researched(this.save.archives, "instakillGold")) / 100) : gold;
+    const raw = snap(((ENEMY_GOLD[enemy.strength] + (enemy.fast ? FAST_GOLD : 0) + (enemy.ranged || enemy.flying ? RANGED_GOLD : 0) + (enemy.shielded ? SHIELDED_GOLD : 0)) * this.goldBonus) / 10_000);
+    const gold = instakill ? snap((raw * researched(this.save.archives, "instakillGold")) / 100) : raw;
+    const foe = this.run.outside ? 1 : foeGold(this.run.hand ?? [], enemy);
+    return foe === 1 ? gold : snap(gold * foe);
   }
 
   /** An enemy's Gold (by its strength) and a Greater Boss's Cells, once

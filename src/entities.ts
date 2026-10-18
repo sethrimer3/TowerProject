@@ -122,6 +122,9 @@ export type Player = {
   /** The percent more ATK the hero strikes bosses with (equipment; none
    * when absent). */
   bossAttack?: number;
+  /** The percent more ATK the hero strikes the enemies each enemy card of
+   * the run's hand covers with (foe-cards.ts), by card; absent without one. */
+  foeAttack?: Partial<Record<"weakEnemy" | "baseEnemy" | "strongEnemy" | "eliteEnemy" | "bossEnemy" | "nonBossEnemy" | "fastEnemy" | "flyingEnemy", number>>;
   /** The percent of an enemy's DEF the hero's strikes ignore (equipment's
    * Piercing; none when absent). */
   pierce?: number;

@@ -472,7 +472,18 @@ h1 span {
 .gold-bonus-box li, .gold-bonus-total { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; font-size: 13px; border-bottom: 1px solid #ffffff14; }
 .gold-bonus-box li.inactive { color: #7d8594; }
 .gold-bonus-total { border: 0; padding-top: 9px; font-size: 15px; font-weight: 700; color: #ffd86b; }
-.base-enemy { display: flex; justify-content: center; flex-wrap: wrap; gap: 1px 5px; font-size: 9px; line-height: 1.2; color: #c9cfda; white-space: nowrap; }
+.base-enemy { display: flex; justify-content: center; flex-wrap: wrap; gap: 1px 5px; min-height: 0; padding: 0; border: 0; background: none; font: inherit; font-size: 9px; line-height: 1.2; color: #c9cfda; white-space: nowrap; cursor: pointer; }
+/* Pressed, every enemy the floor can roll, over the middle of the screen: a
+   press on its X or outside it closes it, and the game plays on behind. */
+.enemy-odds-layer { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: 16px; }
+.enemy-odds-box { position: relative; width: min(420px, 100%); max-height: 100%; overflow: auto; padding: 14px 14px 12px; border: 1px solid #8a93a6; border-radius: 10px; background: #12161dee; box-shadow: 0 0 24px #000c; color: #e1e5ee; }
+.enemy-odds-box h2 { margin: 0 28px 8px 0; font-size: 16px; font-weight: 600; }
+.enemy-odds-x { position: absolute; top: 6px; right: 6px; min-width: 28px; min-height: 28px; padding: 0; border: 0; background: none; color: #a8afbc; font-size: 15px; cursor: pointer; }
+.enemy-odds-table { width: 100%; border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; }
+.enemy-odds-table + .enemy-odds-table { margin-top: 12px; }
+.enemy-odds-table th, .enemy-odds-table td { padding: 4px 3px; border-bottom: 1px solid #ffffff14; text-align: right; white-space: nowrap; }
+.enemy-odds-table th[scope="row"], .enemy-odds-table thead th:first-child { text-align: left; font-weight: 600; }
+.enemy-odds-table thead th { color: #a8afbc; font-size: 11px; font-weight: 600; }
 .base-enemy > span { display: inline-flex; align-items: center; gap: 1px; }
 .base-enemy b { font-weight: 700; }
 .base-enemy-hp { color: #df797e; }

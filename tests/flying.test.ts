@@ -183,7 +183,7 @@ test("Flying enemies shoot in the volley as Ranged ones do", () => {
 test("the hand's Shot ATK and Attack Speed bonuses come from FLYING ENEMY in hand", () => {
   assert.deepEqual(handBonus(["stairs", "monster"]).shot, { attack: 0, speed: 0, boss: 0 });
   assert.deepEqual(handBonus(["stairs", "flyingEnemy"]).shot, { attack: 5, speed: 5, boss: 0 });
-  assert.deepEqual(cardBonusLines("flyingEnemy").map((l) => l.text), ["+5% Shot ATK", "+5% Attack Speed"], "its details say so");
+  assert.deepEqual(cardBonusLines("flyingEnemy").map((l) => l.text), ["+5% Shot ATK", "+5% Attack Speed", "+5% ATK vs Flying Enemies", "+5% Gold from Flying Enemies"], "its details say so");
   // An arrow strikes 5% harder with it.
   const tiles = new Map<string, Tile>([["0,1", { kind: "enemy", enemy: { ...brute, hp: 5000 } }]]);
   const board = { tile: (x: number, y: number) => tiles.get(`${x},${y}`) ?? { kind: "floor" as const }, clear: () => {}, wound: () => {} };

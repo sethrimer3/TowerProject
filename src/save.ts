@@ -26,6 +26,7 @@ import { isTournamentRun } from "./tournament/run.ts";
 import { decodeBadges, defaultBadges, validRunBadges } from "./badges.ts";
 import { backfillProfile, decodeProfile, defaultProfile } from "./profile.ts";
 import { decodeFinds, defaultFinds, validNotes } from "./run-notes.ts";
+import { isFoeCard } from "./foe-cards.ts";
 export function defaults(): Save {
   return {
     version: 3,
@@ -128,6 +129,7 @@ const validPlayer = (p: any, width: number) =>
   (p.parry === undefined || (finite(p.parry) && p.parry >= 0 && p.parry <= 100)) &&
   (p.bossAttack === undefined || (finite(p.bossAttack) && p.bossAttack >= 0)) &&
   (p.pierce === undefined || (finite(p.pierce) && p.pierce >= 0 && p.pierce <= 100)) &&
+  (p.foeAttack === undefined || (!!p.foeAttack && typeof p.foeAttack === "object" && Object.entries(p.foeAttack).every(([id, v]) => isFoeCard(id) && finite(v) && (v as number) >= 0))) &&
   KEY_COLORS.every((k) => finite(p.keys?.[k]));
 /** Checks every run passes, whatever its mode; `width` is the mode's board. */
 const validCore = (r: any, width: number) =>

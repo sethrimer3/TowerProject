@@ -1,5 +1,6 @@
 import type { Enemy, Player } from "./entities.ts";
 import { snap } from "./exact.ts";
+import { foeAttack } from "./foe-cards.ts";
 
 export type CombatPrediction = {
   impervious: boolean;
@@ -24,9 +25,11 @@ export const replies = (r: CombatPrediction) => r.turns - 1 + (r.thornKill ? 1 :
 export const instakill = (r: CombatPrediction) => r.turns === 1 && !r.thornKill && !r.fast;
 
 /** The ATK the hero strikes `enemy` with: its own, raised against a boss
- * or Greater Boss by the percent its equipment gives (`bossAttack`). */
+ * or Greater Boss by the percent its equipment gives (`bossAttack`), and
+ * by the percents the hand's enemy cards covering it give (`foeAttack`). */
 export function attackAgainst(player: Player, enemy: Enemy) {
-  return isBoss(enemy) && player.bossAttack ? snap((player.attack * (100 + player.bossAttack)) / 100) : player.attack;
+  const percent = (isBoss(enemy) ? (player.bossAttack ?? 0) : 0) + foeAttack(player.foeAttack, enemy);
+  return percent ? snap((player.attack * (100 + percent)) / 100) : player.attack;
 }
 export const isBoss = (enemy: Enemy) => enemy.strength === "boss" || enemy.strength === "greaterBoss";
 /** Thorns: what each of `enemy`'s strikes costs it, the hero's Thorn Damage

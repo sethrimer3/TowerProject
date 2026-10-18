@@ -465,7 +465,7 @@ One way of moving the hero, toward one kind of target: the stairs, a potion, a d
 _Avoid_: skill (a skill is something the player uses), ability
 
 **Card bonus**:
-What a card gives for as long as the run's hand holds it, beside where it moves the hero, whichever card leads there: a key card's keys worth more and paying more Gold, or the Chest card's chance of a Supply or Equipment Chest.
+What a card gives for as long as the run's hand holds it, beside where it moves the hero, whichever card leads there: a key card's keys worth more and paying more Gold, the Chest card's chance of a Supply or Equipment Chest, or an enemy card's ATK against and Gold from the enemies it heads for.
 _Avoid_: perk, passive
 
 **Supply Chest**:
