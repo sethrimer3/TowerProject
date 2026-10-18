@@ -22,8 +22,14 @@ export const DETAIL_SPRITES = [
   "hammer", "merge", "lock", "pointer", "relic-rare", "relic-epic", "cart", "deck",
   "fern", "mushrooms", "tuft", "sprout", "crate-broken", "barrel-broken", "pebbles", "web",
 ] as const;
+export const CITY_SPRITES = [
+  "roof-terracotta", "roof-brick", "roof-timber", "roof-thatch", "roof-slate", "roof-straw",
+  "city-oak", "city-pine", "city-rubble", "city-scaffold", "city-wall-cap", "city-wall-face",
+  "pond-lily", "city-lantern", "city-tile", "pond-reeds",
+] as const;
+export const DEFEND_STRUCTURE_SPRITES = ["defend-keep", "defend-barracks", "defend-archer-barracks", "defend-archer-tower", "defend-cannon-tower", "defend-watch-tower", "defend-barracks-wide"] as const;
 export const NAMED_ENEMY_SPRITES = ["amethyst-golem", "armored-knight", "assassin", "bat", "berserker", "blackstone-colossus", "celestial-guardian", "coral-knight", "crystal-savant", "cultist", "demon", "dragon-whelp", "drowned-marauder", "gargoyle", "goblin", "golem", "mage", "obsidian-revenant", "ogre", "orc", "shadow-stalker", "skeleton", "slime", "spore-colossus", "sporeling", "starfire-adept", "stone-warden", "temple-wraith", "thief", "troll"] as const;
-export type KitSprite = typeof ICON_SPRITES[number] | typeof WORLD_SPRITES[number] | typeof CONTROL_SPRITES[number] | typeof DETAIL_SPRITES[number];
+export type KitSprite = typeof ICON_SPRITES[number] | typeof WORLD_SPRITES[number] | typeof CONTROL_SPRITES[number] | typeof DETAIL_SPRITES[number] | typeof CITY_SPRITES[number] | typeof DEFEND_STRUCTURE_SPRITES[number];
 export const kitUrl = (id: string) => `${BASE}assets/style/${id}.png`;
 const images = new Map<string, HTMLImageElement>();
 let revision = 0;

@@ -1076,6 +1076,129 @@
       "file": "card-archer.png",
       "width": 48,
       "height": 64
+    },
+    "roof-terracotta": {
+      "file": "roof-terracotta.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "roof-brick": {
+      "file": "roof-brick.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "roof-timber": {
+      "file": "roof-timber.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "roof-thatch": {
+      "file": "roof-thatch.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "roof-slate": {
+      "file": "roof-slate.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "roof-straw": {
+      "file": "roof-straw.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "city-oak": {
+      "file": "city-oak.png",
+      "width": 12,
+      "height": 12
+    },
+    "city-pine": {
+      "file": "city-pine.png",
+      "width": 12,
+      "height": 12
+    },
+    "city-rubble": {
+      "file": "city-rubble.png",
+      "width": 12,
+      "height": 12
+    },
+    "city-scaffold": {
+      "file": "city-scaffold.png",
+      "width": 12,
+      "height": 12
+    },
+    "city-wall-cap": {
+      "file": "city-wall-cap.png",
+      "width": 12,
+      "height": 12,
+      "tile": true
+    },
+    "city-wall-face": {
+      "file": "city-wall-face.png",
+      "width": 12,
+      "height": 6,
+      "tile": true
+    },
+    "pond-lily": {
+      "file": "pond-lily.png",
+      "width": 12,
+      "height": 12
+    },
+    "city-lantern": {
+      "file": "city-lantern.png",
+      "width": 12,
+      "height": 12
+    },
+    "city-tile": {
+      "file": "city-tile.png",
+      "width": 24,
+      "height": 24
+    },
+    "pond-reeds": {
+      "file": "pond-reeds.png",
+      "width": 12,
+      "height": 12
+    },
+    "defend-keep": {
+      "file": "defend-keep.png",
+      "width": 36,
+      "height": 36
+    },
+    "defend-barracks": {
+      "file": "defend-barracks.png",
+      "width": 36,
+      "height": 48
+    },
+    "defend-archer-barracks": {
+      "file": "defend-archer-barracks.png",
+      "width": 36,
+      "height": 36
+    },
+    "defend-archer-tower": {
+      "file": "defend-archer-tower.png",
+      "width": 24,
+      "height": 24
+    },
+    "defend-cannon-tower": {
+      "file": "defend-cannon-tower.png",
+      "width": 24,
+      "height": 24
+    },
+    "defend-watch-tower": {
+      "file": "defend-watch-tower.png",
+      "width": 24,
+      "height": 24
+    },
+    "defend-barracks-wide": {
+      "file": "defend-barracks-wide.png",
+      "width": 48,
+      "height": 36
     }
   },
   "terrain": {

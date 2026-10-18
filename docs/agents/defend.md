@@ -1,8 +1,11 @@
 # Defend
 
 With the shared Sprites option active under the Classic Game theme, `DefendHost.sprites` passes effective art through `DrawOptions.styledSprites` to the city, palette and units.
-Structures and troops draw shared PNGs; health, damage flashes, marks, torches, simulation, building footprints and pointer rules stay in their existing passes.
+Structures, troops, houses, trees, wall pieces, rubble, rebuilding frames, pond plants, lantern brackets and the city-tile palette icon draw shared PNGs; health, damage flashes, marks, torches, simulation, building footprints and pointer rules stay in their existing passes.
 The city and palette include `spriteRevision()` in their invalidation keys so art arriving after the first frame repaints.
+Defend structures use overhead PNGs separate from the forest art, with twelve native pixels per simulation cell and matching palette-icon aspect ratios.
+`city-sprites.ts` repeats roof centers at one pixel scale, retaining the exact generated house footprints and upper-left lighting without rotating textures.
+Wall breaches and rebuild progress still use standing-cell adjacency and simulation state, and unavailable PNGs retain the original painters.
 Other Game themes override this optional kit, and an absent host callback preserves the original renderer.
 
 Defend's battle simulation, units, drawing, board pointers, city building, fences and save; read with `docs/DEFEND.md`.

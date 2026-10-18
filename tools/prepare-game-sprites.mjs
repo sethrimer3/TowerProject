@@ -6,7 +6,7 @@ import { mkdirSync, readdirSync, writeFileSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { deflateSync } from "node:zlib";
-import { ICON_SPRITES, WORLD_SPRITES, CONTROL_SPRITES, DETAIL_SPRITES, NAMED_ENEMY_SPRITES } from "../src/sprite-kit.ts";
+import { ICON_SPRITES, WORLD_SPRITES, CONTROL_SPRITES, DETAIL_SPRITES, CITY_SPRITES, DEFEND_STRUCTURE_SPRITES, NAMED_ENEMY_SPRITES } from "../src/sprite-kit.ts";
 import { ICON_ROWS, ICON_PALETTE } from "../src/ui/equipment-icons.ts";
 import { CARD_SPRITE_SUBJECTS } from "../src/sprite-cards.ts";
 const root = fileURLToPath(new URL("../", import.meta.url));
@@ -22,7 +22,9 @@ const run = (args) => new Promise((resolve, reject) => {
   p.on("exit", code => code === 0 ? resolve() : reject(new Error(`ImageMagick exit ${code}`)));
 });
 const detailsOnly = process.argv.includes("--details-only");
-const cardsOnly = detailsOnly || process.argv.includes("--cards-only");
+const cityOnly = process.argv.includes("--city-only");
+const structuresOnly = process.argv.includes("--structures-only");
+const cardsOnly = detailsOnly || cityOnly || structuresOnly || process.argv.includes("--cards-only");
 const manifest = cardsOnly ? JSON.parse(readFileSync(join(out,"manifest.json"),"utf8")) : { palette: "../ui/frames/manifest.json", nativeSize: 24, assets: {}, terrain: {} };
 if (!cardsOnly) for (const [file, ids] of [["icons.png", ICON_SPRITES], ["world.png", WORLD_SPRITES], ["controls.png", CONTROL_SPRITES]]) {
   const image = join(source, file), header = readFileSync(image);
@@ -57,7 +59,7 @@ if (!cardsOnly) for (const [folder, names, prefix] of [["enemies", NAMED_ENEMY_S
 
 // Small dressing exports at 12 native pixels: it paints at 1:1 inside a
 // 24-pixel tile, keeping the same pixel density as the larger objects.
-if (!process.argv.includes("--cards-only")) for (const [i, id] of DETAIL_SPRITES.entries()) {
+if (!cityOnly && !structuresOnly && !process.argv.includes("--cards-only")) for (const [i, id] of DETAIL_SPRITES.entries()) {
   const image = join(source, "details.png");
   const edges = [40, 350, 655, 940, 1230];
   const row = Math.floor(i / 4), x = i % 4 * 313;
@@ -68,6 +70,38 @@ if (!process.argv.includes("--cards-only")) for (const [i, id] of DETAIL_SPRITES
     "-background", "none", "-gravity", "center", "-extent", `${n}x${n}`,
     "-write", "mpr:original", "+dither", "-remap", palette, "mpr:original", "-compose", "CopyAlpha", "-composite", "-strip", `PNG32:${join(out, `${id}.png`)}`]);
   manifest.assets[id] = { file: `${id}.png`, width: n, height: n };
+}
+
+// City roofs and wall pieces are reusable panels; small dressing shares
+// a 12-pixel grid, with a half-height wall face preserving square pixels.
+if (!detailsOnly && !structuresOnly && !process.argv.includes("--cards-only")) for (const [i, id] of CITY_SPRITES.entries()) {
+  const roof = i < 6, panel = roof || id === "city-wall-cap" || id === "city-wall-face";
+  const w = roof || id === "city-tile" ? 24 : 12, h = id === "city-wall-face" ? 6 : w;
+  const edges = [30, 320, 625, 910, 1220], row = Math.floor(i / 4);
+  await run([join(source, "city.png"), "-crop", `313x${edges[row + 1] - edges[row]}+${i % 4 * 313}+${edges[row]}`,
+    "+repage", "-channel", "A", "-threshold", "85%", "+channel", "-trim", "+repage", "-filter", "point",
+    "-resize", panel ? `${w}x${h}!` : `${w - 2}x${h - 2}`, "-background", "none", "-gravity", "center", "-extent", `${w}x${h}`,
+    "-write", "mpr:original", "+dither", "-remap", palette, "mpr:original", "-compose", "CopyAlpha", "-composite", "-strip", `PNG32:${join(out, `${id}.png`)}`]);
+  manifest.assets[id] = { file: `${id}.png`, width: w, height: h, ...(panel ? { tile: true } : {}) };
+}
+
+// Structures use twelve native pixels per simulation cell, the same
+// density as roofs and wall pieces, including the barracks' 3:4 footprint.
+if (!detailsOnly && !cityOnly && !process.argv.includes("--cards-only")) for (const [i, id] of DEFEND_STRUCTURE_SPRITES.entries()) {
+  const image = join(source, i === 6 ? "defend-barracks-wide.png" : i < 3 ? "defend-structures.png" : "defend-towers.png");
+  // The keep extends past an equal-width cell; measured transparent
+  // gutters prevent its turrets leaking into the neighboring sprites.
+  const header = readFileSync(image), iw = header.readUInt32BE(16), ih = header.readUInt32BE(20);
+  const columns = i === 6 ? [0, iw] : i < 3 ? [15, 570, 995, 1505] : [0, Math.round(iw / 3), Math.round(iw * 2 / 3), iw];
+  const rows = i < 3 ? [25, 550] : [0, ih];
+  const col = i === 6 ? 0 : i % 3, row = 0;
+  const w = i === 6 ? 48 : i < 3 ? 36 : 24, h = i === 6 ? 36 : i === 1 ? 48 : w;
+  const x = columns[col], y = rows[row];
+  const cw = columns[col + 1] - x, ch = rows[row + 1] - y;
+  await run([image, "-crop", `${cw}x${ch}+${x}+${y}`, "+repage", "-channel", "A", "-threshold", "85%", "+channel",
+    "-trim", "+repage", "-filter", "point", "-resize", `${w - 2}x${h - 2}`, "-background", "none", "-gravity", "center", "-extent", `${w}x${h}`,
+    "-write", "mpr:original", "+dither", "-remap", palette, "mpr:original", "-compose", "CopyAlpha", "-composite", "-strip", `PNG32:${join(out, `${id}.png`)}`]);
+  manifest.assets[id] = { file: `${id}.png`, width: w, height: h };
 }
 
 // Equipment retains each Unique piece's own silhouette, exported as true
@@ -109,7 +143,7 @@ if (!cardsOnly) await new Promise((resolve,reject)=>{
 });
 writeFileSync(join(out,"manifest.json"),JSON.stringify(manifest,null,2)+"\n");
 if (!cardsOnly) writeFileSync(join(root,"src/sprite-terrain-index.ts"),"// Generated by tools/prepare-game-sprites.mjs.\nexport const SPRITE_TERRAIN: Record<string, { x: number; y: number }> = "+JSON.stringify(manifest.terrain,null,2)+";\n");
-if (!detailsOnly) for (const [id, subject] of Object.entries(CARD_SPRITE_SUBJECTS)) {
+if (!detailsOnly && !cityOnly && !structuresOnly) for (const [id, subject] of Object.entries(CARD_SPRITE_SUBJECTS)) {
   const frame = join(root,"public/assets/ui/frames/slot.png");
   await run(["-size","48x64","xc:none","-filter","point",
     "(",frame,"-crop","48x6+0+0","+repage",")","-geometry","+0+0","-composite",

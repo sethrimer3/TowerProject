@@ -3,7 +3,7 @@
  * and the shared palette. */
 import { SOLDIER, type StructureKind } from "./catalog.ts";
 import { drawKit } from "../sprite-kit.ts";
-export const structureSprite = (kind: StructureKind) => ({ keep: "keep", barracks: "barracks", archerBarracks: "archer-barracks", archerTower: "archer-tower", cannonTower: "cannon-tower", watchTower: "watch-tower" })[kind];
+export const structureSprite = (kind: StructureKind, wide = false) => kind === "barracks" && wide ? "defend-barracks-wide" : ({ keep: "defend-keep", barracks: "defend-barracks", archerBarracks: "defend-archer-barracks", archerTower: "defend-archer-tower", cannonTower: "defend-cannon-tower", watchTower: "defend-watch-tower" })[kind];
 
 /** Medieval roofing: terracotta tile, old brick, weathered timber, thatch,
  * slate and straw. */
@@ -19,7 +19,7 @@ export type ArtBox = { x: number; y: number; w: number; h: number; px: number };
 type Frame = ArtBox & { inset: number; line: number };
 
 export function paintStructureArt(c: CanvasRenderingContext2D, kind: StructureKind, box: ArtBox, styled = false) {
-  if (styled && drawKit(c, structureSprite(kind), box.x, box.y, box.w, box.h)) return;
+  if (styled && drawKit(c, structureSprite(kind, box.w > box.h), box.x, box.y, box.w, box.h)) return;
   const px = box.px;
   const f: Frame = {
     x: Math.round(box.x),
@@ -128,14 +128,14 @@ export function paintIcon(canvas: HTMLCanvasElement, item: IconItem, styled = fa
   c.clearRect(0, 0, n, n);
   c.imageSmoothingEnabled = false;
   if (styled && item === "bomb" && drawKit(c, "bomb", 0, 0, n)) return;
-  if (styled && item !== "cityTile" && item !== "bomb" && drawKit(c, structureSprite(item), 0, 0, n)) return;
+  if (styled && item === "cityTile" && drawKit(c, "city-tile", 0, 0, n)) return;
   if (item === "cityTile") return paintCityIcon(c, n);
   if (item === "bomb") return paintBombIcon(c, n);
   const def = { keep: [3, 3], barracks: [3, 4], archerBarracks: [3, 3], archerTower: [2, 2], cannonTower: [2, 2], watchTower: [2, 2] }[item];
   const px = n / Math.max(def[0], def[1]) / 1.1;
   const w = def[0] * px,
     h = def[1] * px;
-  paintStructureArt(c, item, { x: (n - w) / 2, y: (n - h) / 2, w, h, px });
+  paintStructureArt(c, item, { x: (n - w) / 2, y: (n - h) / 2, w, h, px }, styled);
 }
 
 /** A block of roofs round a little park. */

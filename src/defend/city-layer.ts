@@ -9,6 +9,8 @@ import type { Light, Stone } from "./lighting.ts";
 import type { DefendSim } from "./sim.ts";
 import { OUTLINE, ROAD, ROOFS, paintStructureArt } from "./structure-art.ts";
 import { drawKitTerrain } from "../sprite-terrain.ts";
+import { drawKit } from "../sprite-kit.ts";
+import { paintRoofSprite } from "./city-sprites.ts";
 
 const ASSET_BASE = (import.meta as ImportMeta & { env?: { BASE_URL?: string } }).env?.BASE_URL ?? "/";
 const floorImages: HTMLImageElement[] = [];
@@ -209,7 +211,7 @@ function paintWater(p: Paint) {
 }
 
 /** A ripple glint and, now and then, a lily pad (some in flower). */
-function paintPondSurface({ c, px }: Paint, cx: number, cy: number) {
+function paintPondSurface({ c, px, styledSprites }: Paint, cx: number, cy: number) {
   const x = cx * px,
     y = cy * px;
   c.fillStyle = "rgba(210,235,240,0.4)";
@@ -219,6 +221,7 @@ function paintPondSurface({ c, px }: Paint, cx: number, cy: number) {
   const r = Math.max(1.5, px * 0.15);
   const lx = x + px * (0.25 + hash01(cx, cy, 64) * 0.5),
     ly = y + px * (0.25 + hash01(cx, cy, 65) * 0.5);
+  if (styledSprites && drawKit(c, hash01(cx, cy, 69) < 0.7 ? "pond-lily" : "pond-reeds", lx - r, ly - r, r * 2)) return;
   c.fillStyle = "#4f7d3b";
   c.beginPath();
   c.moveTo(lx, ly);
@@ -238,7 +241,7 @@ function paintTrees(p: Paint) {
       if (p.map.type[cellIndex(cx, cy)] === CellType.PARK && hash01(cx, cy, 21) <= 0.42) paintTree(p, cx, cy);
 }
 
-function paintTree({ c, px }: Paint, cx: number, cy: number) {
+function paintTree({ c, px, styledSprites }: Paint, cx: number, cy: number) {
   const r = px * (0.3 + hash01(cx, cy, 23) * 0.18);
   const x = (cx + 0.3 + hash01(cx, cy, 24) * 0.4) * px,
     y = (cy + 0.3 + hash01(cx, cy, 25) * 0.4) * px;
@@ -249,6 +252,7 @@ function paintTree({ c, px }: Paint, cx: number, cy: number) {
     c.fill();
   };
   disc("rgba(0,0,0,0.3)", r * 0.35, r * 0.4, r);
+  if (styledSprites && drawKit(c, hash01(cx, cy, 22) < 0.5 ? "city-pine" : "city-oak", x - r, y - r, r * 2)) return;
   disc(OUTLINE, 0, 0, r + Math.max(1, px * 0.06));
   const dark = hash01(cx, cy, 22) < 0.5;
   disc(dark ? "#284420" : "#335a27", 0, 0, r);
@@ -280,11 +284,12 @@ function paintBuilding(p: Paint, b: Building) {
 }
 
 /** Partially rebuilt: finished sections show as fresh timber framing. */
-function paintRebuilding({ c, px, solid }: Paint, b: Building) {
+function paintRebuilding({ c, px, solid, styledSprites }: Paint, b: Building) {
   for (const i of b.cells) {
     if (!solid(i)) continue;
     const cx = i % CELLS_W,
       cy = (i - cx) / CELLS_W;
+    if (styledSprites && drawKit(c, "city-scaffold", cx * px, cy * px, px)) continue;
     c.fillStyle = "#9c8356";
     c.fillRect(cx * px + 1, cy * px + 1, px - 2, px - 2);
     c.strokeStyle = "#5b4a2e";
@@ -296,7 +301,8 @@ function paintRebuilding({ c, px, solid }: Paint, b: Building) {
 /** A roof inside a black outline: two slopes meeting at a ridge along the
  * long axis, the sunny slope lighter, a crisp dark ridge line, and faint
  * tile courses. `box` is the outline's extent in canvas pixels. */
-function paintHouse({ c, px }: Paint, b: Building, box: { x: number; y: number; w: number; h: number }) {
+function paintHouse({ c, px, styledSprites }: Paint, b: Building, box: { x: number; y: number; w: number; h: number }) {
+  if (styledSprites && paintRoofSprite(c, b.variant, box, px)) return;
   const line = Math.max(1, Math.round(px * 0.08));
   c.fillStyle = OUTLINE;
   c.fillRect(box.x, box.y, box.w, box.h);
@@ -332,7 +338,9 @@ function paintWall(p: Paint, cx: number, cy: number) {
     const i = cellIndex(nx, ny);
     return map.wall[i] === 1 && solid(i);
   };
-  if (ready(wallArt.cap)) {
+  if (p.styledSprites && drawKit(c, "city-wall-cap", x, y, Math.round((cx + 1) * px) - x, Math.round((cy + 1) * px) - y)) {
+    // Adjacency still paints the exposed edges and south face below.
+  } else if (ready(wallArt.cap)) {
     const sy = CAP.y0 + ((cy * CAP.w + cx * 37) % CAP.span);
     c.drawImage(wallArt.cap, CAP.x, sy, CAP.w, CAP.w, x, y, Math.round((cx + 1) * px) - x, Math.round((cy + 1) * px) - y);
   } else {
@@ -357,10 +365,12 @@ function paintWallEdges({ c, px }: Paint, at: { x: number; y: number }, standing
 
 /** The wall's south face, seen from above at a slant, hung below the stone
  * in column `cx` whose top-left is `at` (canvas pixels). */
-function paintWallFace({ c, px }: Paint, cx: number, { x, y }: { x: number; y: number }) {
+function paintWallFace({ c, px, styledSprites }: Paint, cx: number, { x, y }: { x: number; y: number }) {
   const e = Math.max(1, px * 0.12);
-  const h = px * 0.45;
-  if (ready(wallArt.face)) {
+  const h = px * (styledSprites ? 0.5 : 0.45);
+  if (styledSprites && drawKit(c, "city-wall-face", x, y + px, px, h)) {
+    // The same exposed-face rule applies after a wall is breached.
+  } else if (ready(wallArt.face)) {
     const sx = FACE.x0 + ((cx * CAP.w) % FACE.span);
     c.drawImage(wallArt.face, sx, FACE.y, CAP.w, FACE.h, x, y + px, px + 0.5, h);
   } else {
@@ -372,11 +382,12 @@ function paintWallFace({ c, px }: Paint, cx: number, { x, y }: { x: number; y: n
 }
 
 /** Lantern brackets on house walls (lit during battles). */
-function paintLanternBrackets({ c, px, map, sim }: Paint, lights: readonly Light[]) {
+function paintLanternBrackets({ c, px, map, sim, styledSprites }: Paint, lights: readonly Light[]) {
   for (const l of lights) {
     if (l.kind !== "lantern" && l.kind !== "door") continue;
     if (sim && !sim.intact(map.buildings[l.owner])) continue;
     const s = Math.max(2, px * 0.28);
+    if (styledSprites && drawKit(c, "city-lantern", l.x * px - s / 2, l.y * px - s / 2, s)) continue;
     c.fillStyle = "#2b2622";
     c.fillRect(l.x * px - s / 2, l.y * px - s / 2, s, s);
     c.fillStyle = "#8a7045";
@@ -385,11 +396,12 @@ function paintLanternBrackets({ c, px, map, sim }: Paint, lights: readonly Light
 }
 
 /** Rubble chunks over the cells of fallen buildings. */
-function paintRubble({ c, px, map, solid }: Paint) {
+function paintRubble({ c, px, map, solid, styledSprites }: Paint) {
   for (let i = 0; i < map.type.length; i++) {
     if (map.owner[i] < 0 || solid(i)) continue;
     const cx = i % CELLS_W,
       cy = (i - cx) / CELLS_W;
+    if (styledSprites && drawKit(c, "city-rubble", cx * px, cy * px, px)) continue;
     for (let k = 0; k < 3; k++) {
       c.fillStyle = k === 0 ? "#6b645a" : "#57514a";
       const s = px * (0.14 + hash01(i, k, 41) * 0.16);
