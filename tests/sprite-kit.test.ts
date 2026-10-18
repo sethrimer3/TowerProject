@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { createHash } from "node:crypto";
+import { BADGE_IDS } from "../src/badges.ts";
+import { CARD_SPRITE_LAYERS } from "../src/sprite-cards.ts";
 import { ICON_SPRITES, WORLD_SPRITES, CONTROL_SPRITES, DETAIL_SPRITES, CITY_SPRITES, DEFEND_STRUCTURE_SPRITES, NAMED_ENEMY_SPRITES, drawKit, kitEnemy, spriteRevision } from "../src/sprite-kit.ts";
 import { CARDS } from "../src/cards.ts";
 import { ICON_ROWS } from "../src/ui/equipment-icons.ts";
@@ -11,7 +14,7 @@ import { paintContents, paintHero } from "../src/tile-painters.ts";
 test("every world, UI, Equipment and card sprite ships as a real native-sized PNG", () => {
   const base = new URL("../public/assets/style/", import.meta.url);
   const manifest = JSON.parse(readFileSync(new URL("manifest.json", base), "utf8"));
-  for (const id of [...ICON_SPRITES, ...WORLD_SPRITES, ...CONTROL_SPRITES, ...DETAIL_SPRITES, ...CITY_SPRITES, ...DEFEND_STRUCTURE_SPRITES, ...NAMED_ENEMY_SPRITES.map(id => `enemy-${id}`), ...Object.keys(ICON_ROWS).map(id => `equip-${id}`), ...Object.keys(CARDS).map(id => `card-${id}`)]) {
+  for (const id of [...ICON_SPRITES, ...WORLD_SPRITES, ...CONTROL_SPRITES, ...DETAIL_SPRITES, ...CITY_SPRITES, ...DEFEND_STRUCTURE_SPRITES, ...NAMED_ENEMY_SPRITES.map(id => `enemy-${id}`), ...Object.keys(ICON_ROWS).map(id => `equip-${id}`), ...Object.keys(CARDS).map(id => `card-${id}`), ...BADGE_IDS.map(id => `badge-${id}`), "badge-star", "card-exchange", ...["common", "rare", "epic"].map(rarity => `badge-frame-${rarity}`)]) {
     const asset = manifest.assets[id];
     assert.ok(asset, id);
     const png = readFileSync(new URL(asset.file, base));
@@ -76,5 +79,19 @@ test("a missing or loading PNG falls back, then draws without smoothing when rea
   } finally {
     if (previous) Object.defineProperty(globalThis, "Image", previous);
     else Reflect.deleteProperty(globalThis, "Image");
+  }
+});
+
+
+test("every badge and card has a distinct PNG, with card subjects clear of live names", () => {
+  const base = new URL("../public/assets/style/", import.meta.url);
+  for (const ids of [BADGE_IDS.map(id => `badge-${id}`), Object.keys(CARDS).map(id => `card-${id}`)]) {
+    const hashes = ids.map(id => createHash("sha256").update(readFileSync(new URL(`${id}.png`, base))).digest("hex"));
+    assert.equal(new Set(hashes).size, ids.length, "no badge or card silently reuses another face");
+  }
+  assert.deepEqual(Object.keys(CARD_SPRITE_LAYERS).sort(), Object.keys(CARDS).sort());
+  for (const layers of Object.values(CARD_SPRITE_LAYERS)) for (const layer of layers) {
+    assert.ok(layer.x >= 6 && layer.y >= 8 && layer.x + layer.size <= 42 && layer.y + layer.size <= 44, "leave frame and name band clear");
+    assert.ok(readFileSync(new URL(`${layer.sprite}.png`, base)).length > 100);
   }
 });

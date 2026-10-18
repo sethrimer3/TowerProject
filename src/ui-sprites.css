@@ -221,3 +221,51 @@ html.ui-sprites .sprite-card.sprite-ready + .sprite-card-label:not(#_) {
   text-align: center;
   pointer-events: none;
 }
+
+/* The original star still fills its corner when sprites are off. */
+.badge-star { position: absolute; inset: 0; width: 100%; height: 100%; }
+.badge-condition { display: none; }
+.badge-mark > .badge-glyph, .hand-badge-level > .badge-glyph { font-size: inherit; }
+html.ui-sprites :is(.badge-token, .badge-mark, .hand-badge-level) {
+  --badge-frame: url("../public/assets/style/badge-frame-common.png");
+  border-image: var(--badge-frame) 6 fill / 6px / 0 stretch;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  image-rendering: pixelated;
+}
+html.ui-sprites :is(.badge-token, .badge-mark, .hand-badge-level).rarity-rare {
+  --badge-frame: url("../public/assets/style/badge-frame-rare.png");
+}
+html.ui-sprites :is(.badge-token, .badge-mark, .hand-badge-level).rarity-epic {
+  --badge-frame: url("../public/assets/style/badge-frame-epic.png");
+}
+html.ui-sprites .badge-token > .badge-glyph { width: 24px; height: 24px; text-shadow: none; }
+html.ui-sprites .badge-token.big { border-image-width: 12px; }
+html.ui-sprites .badge-token.big > .badge-glyph { width: 48px; height: 48px; }
+html.ui-sprites :is(.badge-mark, .hand-badge-level) { border-image-width: 3px; padding: 0; }
+html.ui-sprites .badge-mark > .badge-glyph { width: 14px; height: 14px; }
+html.ui-sprites .hand-badge-level > .badge-glyph { width: 12px; height: 12px; }
+html.ui-sprites .badge-glyph.sprite-ready > .badge-condition {
+  display: block;
+  position: absolute;
+  right: -3px;
+  bottom: -1px;
+  padding: 0 1px;
+  background: #10151c;
+  color: #eee0b7;
+  font-family: inherit;
+  font-size: 10px;
+  line-height: 1;
+  text-shadow: none;
+}
+html.ui-sprites .badge-token.big .badge-condition { font-size: 16px; }
+html.ui-sprites :is(.badge-mark, .hand-badge-level) .badge-condition { right: -2px; font-size: 8px; }
+html.ui-sprites .badge-level b { color: #10151c; }
+
+/* A token supplies its own rarity frame inside the transparent pick button. */
+html.ui-sprites button.badge-pick:not(#_) { border-image: none; background: none; box-shadow: none; }
+html.ui-sprites .badge-entry.attached .badge-token { box-shadow: none; }
+
+/* The PNG dialog has a dark slate center rather than parchment. */
+html.ui-sprites dialog p:not(#_) { color: #b8c2bb; }

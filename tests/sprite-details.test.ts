@@ -39,11 +39,19 @@ test("all shared PNGs obey the shared palette, binary transparency and native gr
       pixels[y * stride + x] = raw[y * (stride + 1) + x + 1] + [0, left, up, Math.floor((left + up) / 2), predictor][filter];
     }
     let opaque = 0, transparent = 0;
+    let left = width, right = -1, top = height, bottom = -1;
     for (let i = 0; i < pixels.length; i += 4) {
       const alpha = pixels[i + 3];
       assert.ok(alpha === 0 || alpha === 255, `${id}: soft alpha ${alpha}`);
-      if (alpha) { opaque++; assert.ok(palette.has([...pixels.subarray(i, i + 3)].join(",")), `${id}: off-palette pixel`); }
-      else transparent++;
+      if (alpha) {
+        const x = i / 4 % width, y = Math.floor(i / 4 / width);
+        left = Math.min(left, x); right = Math.max(right, x); top = Math.min(top, y); bottom = Math.max(bottom, y);
+        opaque++;
+        assert.ok(palette.has([...pixels.subarray(i, i + 3)].join(",")), `${id}: off-palette pixel`);
+      } else transparent++;
+    }
+    if (id.startsWith("badge-frame-")) {
+      assert.ok(right - left >= 21 && bottom - top >= 21, `${id}: frame alpha must reach all four sides`);
     }
     assert.ok(opaque > 10 && (asset.tile || transparent > 10), `${id}: visible subject on transparency`);
   }

@@ -1199,6 +1199,141 @@
       "file": "defend-barracks-wide.png",
       "width": 48,
       "height": 36
+    },
+    "badge-hp": {
+      "file": "badge-hp.png",
+      "width": 24,
+      "height": 24
+    },
+    "badge-silverTouch": {
+      "file": "badge-silverTouch.png",
+      "width": 24,
+      "height": 24
+    },
+    "badge-goldback": {
+      "file": "badge-goldback.png",
+      "width": 24,
+      "height": 24
+    },
+    "badge-xp": {
+      "file": "badge-xp.png",
+      "width": 24,
+      "height": 24
+    },
+    "badge-hpGate": {
+      "file": "badge-hpGate.png",
+      "width": 24,
+      "height": 24
+    },
+    "badge-effective": {
+      "file": "badge-effective.png",
+      "width": 24,
+      "height": 24
+    },
+    "badge-dampen": {
+      "file": "badge-dampen.png",
+      "width": 24,
+      "height": 24
+    },
+    "badge-hpPercent": {
+      "file": "badge-hpPercent.png",
+      "width": 24,
+      "height": 24
+    },
+    "badge-goldTouch": {
+      "file": "badge-goldTouch.png",
+      "width": 24,
+      "height": 24
+    },
+    "badge-yellowGate": {
+      "file": "badge-yellowGate.png",
+      "width": 24,
+      "height": 24
+    },
+    "badge-blueGate": {
+      "file": "badge-blueGate.png",
+      "width": 24,
+      "height": 24
+    },
+    "badge-yellowAtLeast": {
+      "file": "badge-yellowAtLeast.png",
+      "width": 24,
+      "height": 24
+    },
+    "badge-blueAtLeast": {
+      "file": "badge-blueAtLeast.png",
+      "width": 24,
+      "height": 24
+    },
+    "badge-deprioritize": {
+      "file": "badge-deprioritize.png",
+      "width": 24,
+      "height": 24
+    },
+    "badge-skip": {
+      "file": "badge-skip.png",
+      "width": 24,
+      "height": 24
+    },
+    "badge-moreEnemies": {
+      "file": "badge-moreEnemies.png",
+      "width": 24,
+      "height": 24
+    },
+    "badge-dash": {
+      "file": "badge-dash.png",
+      "width": 24,
+      "height": 24
+    },
+    "badge-redGate": {
+      "file": "badge-redGate.png",
+      "width": 24,
+      "height": 24
+    },
+    "badge-redAtLeast": {
+      "file": "badge-redAtLeast.png",
+      "width": 24,
+      "height": 24
+    },
+    "badge-stairward": {
+      "file": "badge-stairward.png",
+      "width": 24,
+      "height": 24
+    },
+    "badge-skipOpen": {
+      "file": "badge-skipOpen.png",
+      "width": 24,
+      "height": 24
+    },
+    "badge-charge": {
+      "file": "badge-charge.png",
+      "width": 24,
+      "height": 24
+    },
+    "badge-star": {
+      "file": "badge-star.png",
+      "width": 24,
+      "height": 24
+    },
+    "card-exchange": {
+      "file": "card-exchange.png",
+      "width": 24,
+      "height": 24
+    },
+    "badge-frame-common": {
+      "file": "badge-frame-common.png",
+      "width": 24,
+      "height": 24
+    },
+    "badge-frame-rare": {
+      "file": "badge-frame-rare.png",
+      "width": 24,
+      "height": 24
+    },
+    "badge-frame-epic": {
+      "file": "badge-frame-epic.png",
+      "width": 24,
+      "height": 24
     }
   },
   "terrain": {
