@@ -59,8 +59,8 @@ export function drawKit(c: CanvasRenderingContext2D, id: string, x = 0, y = 0, w
 
 /** The existing icon remains visible until the PNG loads. The root class
  * switches both copies together, including dialogs and newly built pages. */
-export function kitIcon(id: string, fallback: string, className: string) {
-  return `<span class="sprite-icon ${className}" aria-hidden="true"><span class="sprite-fallback">${fallback}</span><img class="sprite-replacement" src="${kitUrl(id)}" alt=""></span>`;
+export function kitIcon(id: string, fallback: string, className: string, overlay = "") {
+  return `<span class="sprite-icon ${className}" aria-hidden="true"><span class="sprite-fallback">${fallback}</span><img class="sprite-replacement" src="${kitUrl(id)}" alt="">${overlay}</span>`;
 }
 
 /** Capturing load handles icons created later by any page, and keeps their

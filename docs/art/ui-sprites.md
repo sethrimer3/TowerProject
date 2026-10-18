@@ -22,6 +22,10 @@ There are six button states, panel and dialog frames, an inset field, a progress
 The shared extension lives in `public/assets/style/`, with its native dimensions in `manifest.json`.
 It includes currencies, pickups, controls, four hero directions, every named enemy, forest and Defend structures, Equipment, materials and card faces.
 Card names remain live text over the PNG backgrounds.
+All 29 card faces have distinct compositions: door requirements, enemy groups and source-to-destination trades remain recognizable without baked lettering.
+The [badge atlas](../../assets/game-sprites/badges.png) adds one 24-pixel symbol for each of the 22 badges, a level star and an exchange mark used on trade cards.
+Badge tokens use reusable 24 × 24 PNG frames for common, rare and epic rarity; the same symbols appear in the Deck, card marks, hand, details, drag ghosts and draw reveals.
+Levels and gate signs stay live text over the sprites, and a missing symbol keeps its original glyph.
 All ten biome sets and the forest retain their seeded variations and wall adjacency while sharing a palette-normalized 24-pixel terrain atlas.
 Equipment's existing Unique silhouettes and the named enemy roster are preserved during normalization.
 Small dressing (plants, cobwebs, pebbles and broken containers) uses 12-pixel PNGs drawn 1:1 inside the same 24-pixel tile grid.
@@ -64,7 +68,9 @@ The game needs no image-processing dependency.
 For city prompts, specify directly overhead buildings, the exact footprint and twelve native pixels per simulation cell, with no front facade.
 For the world and icon extension, run `node --experimental-transform-types tools/prepare-game-sprites.mjs`.
 Use `--city-only` to export just the city set and `--structures-only` for the overhead Defend buildings.
-Use `--details-only` to refresh the sixteen detail sprites, or `--cards-only` after changing frame art.
+Run `node --experimental-transform-types tools/prepare-badge-sprites.mjs` to export the badge symbols and rarity frames before rebuilding card faces.
+Use `--details-only` to refresh the sixteen detail sprites, or `--cards-only` after changing frame art or the explicit compositions in `src/sprite-cards.ts`.
+The full game exporter preserves the badge assets; rerun the badge exporter when its source atlas changes.
 That exporter also packs the terrain atlas and produces `src/sprite-terrain-index.ts`.
 PNG load failures keep the original icon or procedural renderer visible; loaded images invalidate cached terrain and city layers through a shared revision.
 
@@ -75,3 +81,5 @@ Check phone and desktop layouts, keyboard focus, save/reload, toggling off, eras
 With the dev server running, `PLAYWRIGHT_EXECUTABLE_PATH=/usr/bin/chromium node tests/sprite-browser.mjs` checks real PNG loading, mobile/desktop layouts, save/reload and independent theme overrides, and captures review screenshots under `test-results/sprites/`.
 
 `PLAYWRIGHT_EXECUTABLE_PATH=/usr/bin/chromium node tests/city-sprites-browser.mjs` starts its own server and captures Defend at both scales, including damage and rebuilding, then checks identical pixels after switching sprites off.
+
+`PLAYWRIGHT_EXECUTABLE_PATH=/usr/bin/chromium node tests/badge-card-sprites-browser.mjs` starts its own server and checks the actual Deck, card marks, draw controls, badge details/reveals and in-run hand at phone and desktop sizes, including live text, fallbacks and independent theme overrides.

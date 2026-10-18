@@ -9,8 +9,8 @@ import { capitalized, cardArt, CURRENCY_SPRITES, displayedProgress, el, POINTER_
 import { notesResearched } from "./run-notes-dialog.ts";
 import { CARDS, IN_PLACE, cardBonusText, cardText, isSiphon, type CardId } from "../cards.ts";
 import { cardLevelHtml, cardLevelTitle } from "./card-level-marks.ts";
-import { BADGES, badgeDef, badgesOn, badgeValue, type RunBadge } from "../badges.ts";
-import { badgeStyle } from "./badge-token.ts";
+import { badgeDef, badgesOn, badgeValue, type RunBadge } from "../badges.ts";
+import { badgeGlyph, badgeStyle } from "./badge-token.ts";
 import { trainingPoints } from "../loadout.ts";
 import { heroClass } from "../goals.ts";
 import { shrinesOpen } from "../shrines.ts";
@@ -458,7 +458,7 @@ Used ${uses} time${uses === 1 ? "" : "s"} this run; the next use takes ${next} l
 function handBadgeHtml(game: Game, id: CardId) {
   const badges = game.run.outside ? [] : badgesOn(game.run.badges, id);
   if (!badges.length) return "";
-  return `<span class="hand-badges" aria-hidden="true">${badges.map((b) => `<span class="hand-badge-level" style="${badgeStyle(b.id)}">${BADGES[b.id].glyph}</span>`).join("")}</span>`;
+  return `<span class="hand-badges" aria-hidden="true">${badges.map((b) => `<span class="hand-badge-level rarity-${badgeDef(b.id).rarity}" style="${badgeStyle(b.id)}">${badgeGlyph(b.id)}</span>`).join("")}</span>`;
 }
 /** The active hand in the row under the board, the card that made the
  * latest step glowing (paused too); End Run lights up while no card can act. */
