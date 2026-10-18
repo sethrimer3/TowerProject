@@ -465,7 +465,7 @@ function renderHand(game: Game) {
   const key = `${hand.join()}|${game.run.outside ? "" : JSON.stringify(game.run.badges ?? {})}`;
   if (key !== shownHand) {
     shownHand = key;
-    // Room for five cards, and narrower cards for a bigger hand.
+    // Room for five cards; a bigger hand scrolls sideways.
     row.style.setProperty("--slots", String(Math.max(5, hand.length)));
     row.innerHTML = hand.map((id, i) => `<div class="hand-card" role="listitem" data-card="${id}" data-hand-slot="${i}">${cardArt(id, CARDS[id].name)}${handBadgeHtml(game, id)}</div>`).join("");
   }

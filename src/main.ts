@@ -316,6 +316,13 @@ el("hand").onclick = (e) => {
   if (result === "noPath") flashRed(card);
   update();
 };
+// With no scrollbar shown, a mouse wheel scrolls a hand wider than the screen sideways.
+el("hand").addEventListener("wheel", (e) => {
+  const row = el("hand");
+  if (!e.deltaY || row.scrollWidth <= row.clientWidth) return;
+  row.scrollLeft += e.deltaY;
+  e.preventDefault();
+}, { passive: false });
 // Ignore and Target: readied by their button, used by the next board tap.
 for (const c of ["ignore", "target"] as const)
   el(`${c}-stat`).onclick = () => {

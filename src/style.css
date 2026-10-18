@@ -1158,15 +1158,26 @@ nav.in-run button,
 nav:not(.in-run) .hand {
   display: none;
 }
+/* The cards keep their size; a hand wider than the screen scrolls sideways
+ * (swiped, or wheel-scrolled from main.ts), with no scrollbar to add to its
+ * height. The padding, taken back by the margin, keeps the glows unclipped. */
 .hand {
   display: grid;
-  grid-template-columns: repeat(var(--slots, 6), minmax(0, 54px));
-  justify-content: center;
+  grid-template-columns: repeat(var(--slots, 6), 54px);
+  justify-content: safe center;
   align-items: center;
   gap: 6px;
-  width: 100%;
-  min-height: 69px;
+  box-sizing: border-box;
+  width: calc(100% + 16px);
+  min-height: 85px;
+  margin: -8px;
+  padding: 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
 }
+.hand::-webkit-scrollbar { display: none; }
 .hand-card {
   position: relative;
   aspect-ratio: 3 / 4;

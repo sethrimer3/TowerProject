@@ -51,6 +51,7 @@ The ‹ and › arrows either side of the speed (a press anywhere on its side of
 A new hero walks at 2; on the second floor the game pauses once, a pointing hand under ›, until the player speeds up to 3, then plays on.
 The forest's Automove keeps the speed last set in a run, but never walks slower than 3.
 The cards sit in the row under the board.
+They keep their size however many the hand holds; a hand wider than the screen scrolls sideways, swiped or wheel-scrolled.
 Each run keeps the hand as it was ordered when the run went inside, however the hand is rearranged before the next.
 
 ## The Deck page
