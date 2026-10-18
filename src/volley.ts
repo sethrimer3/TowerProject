@@ -125,11 +125,10 @@ function foesShoot({ board, wrap, floorOf }: VolleyTurn, p: Player, v: Volleys, 
 function loose(turn: VolleyTurn, p: Player, v: Volleys, shots: Shot[], range: number) {
   const { board, wrap, ranks } = turn, perTile = trainedAmount(ranks, "attackPerTile"), percent = researched(ranks.archives, "chargedShotPercent");
   const shotAtk = turn.handShot?.attack ?? 0, bossAtk = turn.handShot?.boss ?? 0, speed = trainedAmount(ranks, "attackSpeed");
-  const boost = ({ d2, tile }: InReach) => {
-    const base = arrowBoost(perTile, d2, percent, v.waited ?? 0), atk = shotAtk + (isBoss(tile.enemy) ? bossAtk : 0);
-    return atk ? snap(base * (1 + atk / 100)) : base;
-  };
-  const hurts = (e: InReach) => arrowDamage(p, e.tile.enemy, 0, 1, boost(e)) > 0;
+  const boost = ({ d2 }: InReach) => arrowBoost(perTile, d2, percent, v.waited ?? 0);
+  // The cards' Shot ATK adds to the enemy cards' ATK, one factor for the hand.
+  const cards = ({ tile }: InReach) => shotAtk + (isBoss(tile.enemy) ? bossAtk : 0);
+  const hurts = (e: InReach) => arrowDamage(p, e.tile.enemy, 0, 1, boost(e), cards(e)) > 0;
   // A fixed number per run, turn, shot of the turn (the first keeping the
   // turn's own roll) and the hero's tile, for `salt`.
   const shotRoll = (salt: number, shot: number) => tileRandom(p.x, p.y, (turn.seed ^ salt ^ Math.imul(v.turn, 0x85ebca6b) ^ Math.imul(shot, 0xc2b2ae35)) | 0);
@@ -149,7 +148,7 @@ function loose(turn: VolleyTurn, p: Player, v: Volleys, shots: Shot[], range: nu
     const shot = fired++, from = shots.length;
     const targets = multishot(shot) ? inReach.filter(hurts).slice(0, trainedAmount(ranks, "multishotTargets")) : [target];
     for (const t of targets) {
-      const kill = arrow(turn, p, t, crit, shot, boost(t), percent * (v.waited ?? 0), shots);
+      const kill = arrow(turn, p, t, crit, shot, boost(t), cards(t), percent * (v.waited ?? 0), shots);
       if (kill) kills.push(kill);
     }
     for (let i = from; i < shots.length; i++) shots[i]!.lead = tick / ARCHER_TICKS;
@@ -171,14 +170,14 @@ function loose(turn: VolleyTurn, p: Player, v: Volleys, shots: Shot[], range: nu
  * healing by Lifesteal; it wounds the enemy, or clears it from the board
  * and is returned as a kill. An arrow with a `charge` (the percent Charged
  * Shot added to its ATK) above 0 carries it, for its glow and gold outline. */
-function arrow({ board, seed, volleys }: VolleyTurn, p: Player, { x, y, tile }: InReach, crit: ReturnType<typeof critRule>, shot: number, boost: number, charge: number, shots: Shot[]): VolleyKill | undefined {
+function arrow({ board, seed, volleys }: VolleyTurn, p: Player, { x, y, tile }: InReach, crit: ReturnType<typeof critRule>, shot: number, boost: number, cards: number, charge: number, shots: Shot[]): VolleyKill | undefined {
   const enemy = tile.enemy;
   let applications = 0;
   if (crit) {
     const sure = guaranteedCrits(crit.chance), rest = snap(crit.chance - 100 * sure);
     applications = sure + (tileRandom(x, y, (seed ^ ARROW_SALT ^ Math.imul(volleys.turn, 0x85ebca6b) ^ Math.imul(shot, 0xc2b2ae35)) | 0) * 100 < rest ? 1 : 0);
   }
-  const damage = arrowDamage(p, enemy, applications, crit?.factor ?? 1, boost), left = snap(Math.max(0, enemy.hp - damage));
+  const damage = arrowDamage(p, enemy, applications, crit?.factor ?? 1, boost, cards), left = snap(Math.max(0, enemy.hp - damage));
   const healed = p.lifesteal ? snap(Math.min(p.maxHp - p.hp, (damage * p.lifesteal) / 100)) : 0;
   if (healed > 0) p.hp = snap(p.hp + healed);
   shots.push({ by: "hero", from: { x: p.x, y: p.y }, to: { x, y }, damage, ...(applications ? { crit: applications } : {}), ...(charge > 0 ? { charge } : {}), ...(healed > 0 ? { healed } : {}),

@@ -25,11 +25,14 @@ export const replies = (r: CombatPrediction) => r.turns - 1 + (r.thornKill ? 1 :
 export const instakill = (r: CombatPrediction) => r.turns === 1 && !r.thornKill && !r.fast;
 
 /** The ATK the hero strikes `enemy` with: its own, raised against a boss
- * or Greater Boss by the percent its equipment gives (`bossAttack`), and
- * by the percents the hand's enemy cards covering it give (`foeAttack`). */
-export function attackAgainst(player: Player, enemy: Enemy) {
-  const percent = (isBoss(enemy) ? (player.bossAttack ?? 0) : 0) + foeAttack(player.foeAttack, enemy);
-  return percent ? snap((player.attack * (100 + percent)) / 100) : player.attack;
+ * or Greater Boss by the percent its equipment gives (`bossAttack`), then
+ * by the hand's cards' percents added into one factor: the enemy cards
+ * covering it (`foeAttack`) and `cards` more (an arrow's Shot ATK). Each
+ * kind of source sums its own bonuses; the kinds multiply. */
+export function attackAgainst(player: Player, enemy: Enemy, cards = 0) {
+  const boss = isBoss(enemy) ? (player.bossAttack ?? 0) : 0, card = foeAttack(player.foeAttack, enemy) + cards;
+  const geared = boss ? snap((player.attack * (100 + boss)) / 100) : player.attack;
+  return card ? snap((geared * (100 + card)) / 100) : geared;
 }
 export const isBoss = (enemy: Enemy) => enemy.strength === "boss" || enemy.strength === "greaterBoss";
 /** Thorns: what each of `enemy`'s strikes costs it, the hero's Thorn Damage

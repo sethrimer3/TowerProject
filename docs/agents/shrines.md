@@ -16,6 +16,7 @@ Unspent = earned − picked (`ShrineDesk.unspent`).
 **Boons** (`BOONS`): standard boons (several copies each) and trade-offs (one copy each).
 A standard boon's total with n copies is `(1 + value × n) × (1 + SBB/100)` for a multiplier, `value × n × (1 + SBB/100)` for an addition, nothing with no copy (`standardTotal`; SBB is Standard Boon Bonus research).
 A trade-off's benefit is scaled by `t = 1 + Improve Trade-off Boons%` (`1 + 0.5t` for ×1.50 ATK, `1 − 0.5t` for −50% enemy HP), its cost never; Fast Enemies Strike Second is `fixed`.
+Copies of one standard boon add, but boons of different types multiply on purpose (an exception to the rule that a kind of source sums its bonuses, AGENTS.md): `boonEffects` multiplies each trade-off's benefit and cost onto the standard boons' totals and each other (5 ATK copies' ×1.75 with ×1.50 ATK make ×2.625; −70% and −60% max HP make ×0.12).
 `boonEffects(picked, owner)` folds them into one `BoonEffects`.
 Spell boons, Bounce Shot, Orbs, Unlock a Random Spell and the ranged enemies' trade-off wait for what they act on.
 

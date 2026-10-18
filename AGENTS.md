@@ -114,6 +114,9 @@ Read the area's doc before changing code there or answering questions about it; 
 - Write one sentence per line (a paragraph's lines render joined), and start a new line for each new fact, so diffs and merges stay local; don't re-join lines into long paragraphs.
 - `CONTEXT.md` is the domain glossary (terms only, no implementation). Use its words in code, comments and docs, and add a term there when a change names a new domain concept.
 
+- Percent bonuses from the same kind of source (cards, badges, equipment, themes, research levels, copies of one standard boon) add into one factor, and the kinds' factors multiply: sum(cards) × sum(badges) × sum(equipment) × ….
+  Only two exceptions multiply within their kind, on purpose: the Coin Packs (each its own Gold and training factor, as the Shop says) and Shrine boons of different types (a trade-off's benefit and cost multiply each other and the standard boons' totals).
+  Anything else that should compound says so where it is defined.
 - Gem purchases (anything paid in Gems: hand slots, trainers, archivists, finishing training, resets) always look active and prominent, never `disabled` or greyed out for lack of Gems.
   A button short of Gems gets the `short` class, which turns only its price red, and a press while short opens `askForGems` (`ui/dialogs.ts`), offering the Shop (on the Shop page itself, a Gem-priced offer short of Gems points to the Gem packs instead).
   Only a purchase that can't happen at all (sold out, all hired, locked) may look unavailable.

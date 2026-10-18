@@ -14,6 +14,7 @@ import { chestKindAt } from "../src/board.ts";
 import { snap } from "../src/exact.ts";
 import type { Enemy, Player, Tile } from "../src/entities.ts";
 import { attackAgainst } from "../src/combat.ts";
+import { arrowDamage } from "../src/ranged.ts";
 import { foeGold } from "../src/foe-cards.ts";
 
 test("only YELLOW, BLUE and RED KEY, CHEST, the enemy cards but ENEMY and ARCHER carry a bonus, and KEY none", () => {
@@ -184,13 +185,14 @@ test("a Supply Chest holds 5 materials in tower I and 2 more each tower after, r
 
 const foe = (strength: Enemy["strength"], extra: Partial<Enemy> = {}): Enemy => ({ name: "Slime", hp: 100, attack: 10, defense: 0, tier: 1, strength, ...extra });
 
-test("an enemy card held strikes the enemies it covers with 5% more ATK, each card adding its own", () => {
+test("an enemy card held strikes the enemies it covers with 5% more ATK, the cards' percents adding into one factor", () => {
   const hero: Player = { x: 0, y: 0, hp: 100, maxHp: 100, attack: 100, defense: 0, keys: { yellow: 0, blue: 0, red: 0 } };
   const armed = { ...hero, foeAttack: { weakEnemy: 5, nonBossEnemy: 5 } };
   assert.equal(attackAgainst(armed, foe("weak")), 110, "WEAK ENEMY and NON-BOSS ENEMY both cover a weak enemy");
   assert.equal(attackAgainst(armed, foe("strong")), 105);
   assert.equal(attackAgainst(armed, foe("boss")), 100);
-  assert.equal(attackAgainst({ ...hero, bossAttack: 10, foeAttack: { bossEnemy: 5 } }, foe("greaterBoss")), 115, "added to the equipment's boss ATK");
+  assert.equal(attackAgainst({ ...hero, bossAttack: 10, foeAttack: { bossEnemy: 5 } }, foe("greaterBoss")), 115.5, "multiplying the equipment's boss ATK");
+  assert.equal(attackAgainst({ ...hero, foeAttack: { flyingEnemy: 5 } }, foe("normal", { flying: true }), 5), 110, "an arrow's Shot ATK adds to the cards' factor");
   assert.equal(attackAgainst({ ...hero, foeAttack: { fastEnemy: 5 } }, foe("normal", { fast: true })), 105);
   assert.equal(attackAgainst({ ...hero, foeAttack: { flyingEnemy: 5 } }, foe("normal", { flying: true })), 105);
 });
@@ -218,4 +220,10 @@ test("an enemy card held makes each enemy it covers drop 5% more Gold, multiplyi
   g.run.hand = ["stairs", "eliteEnemy", "nonBossEnemy"];
   assert.equal(purse().killGoldPreview(foe("elite"), 3, 3), snap(plain * 1.1));
   assert.equal(purse().killGoldPreview(foe("weak"), 3, 3) > 0, true);
+});
+
+test("an arrow's Shot ATK from the cards adds to the enemy cards' ATK rather than multiplying it", () => {
+  const hero: Player = { x: 0, y: 0, hp: 100, maxHp: 100, attack: 100, defense: 0, keys: { yellow: 0, blue: 0, red: 0 }, foeAttack: { flyingEnemy: 5 } };
+  assert.equal(arrowDamage(hero, foe("normal", { flying: true }), 0, 1, 1, 5), 110, "FLYING ENEMY's +5% vs Flying and +5% Shot ATK make ×1.10");
+  assert.equal(arrowDamage(hero, foe("normal", { flying: true }), 0, 1, 2, 5), 220, "the arrow's boost multiplies the cards' factor");
 });
