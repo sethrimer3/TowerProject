@@ -1,3 +1,4 @@
+import { kitIcon } from "../sprite-kit.ts";
 import { EVENT_MISSION_COUNT, EVENT_MISSIONS, TIER_MEDALS, TIERS, type RelicMilestone } from "../events/catalog.ts";
 import { isFinished, milestoneReached, unclaimedTiers, type EventMission } from "../events/progress.ts";
 import { offer } from "../shop/offers.ts";
@@ -14,7 +15,7 @@ import { offerShown, revealReward } from "./reward-reveal.ts";
 const MOVE_AFTER_MS = 2000;
 /** A countdown on the page: *9d 4h*, *7h 12m*, *12m*. */
 const countdown = (ms: number) => shortCountdown(ms).replace(/([dh])(?=\d)/g, "$1 ");
-const LOCK = `<svg class="relic-lock" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7.5" rx="1.5" fill="#3a3f4b" stroke="#c9ced8" stroke-width="1.1"/><path d="M5.2 7V5.2a2.8 2.8 0 0 1 5.6 0V7" fill="none" stroke="#c9ced8" stroke-width="1.4"/></svg>`;
+const LOCK = kitIcon("lock", `<svg class="relic-lock" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7.5" rx="1.5" fill="#3a3f4b" stroke="#c9ced8" stroke-width="1.1"/><path d="M5.2 7V5.2a2.8 2.8 0 0 1 5.6 0V7" fill="none" stroke="#c9ced8" stroke-width="1.4"/></svg>`, "relic-lock");
 
 /** The Events screen (docs/EVENTS.md): the running event's name and banner
  * and the time it has left; its relic track, a bar filling with the Medals

@@ -26,8 +26,8 @@ const cityOnly = process.argv.includes("--city-only");
 const structuresOnly = process.argv.includes("--structures-only");
 const cardsOnly = detailsOnly || cityOnly || structuresOnly || process.argv.includes("--cards-only");
 const previousManifest = JSON.parse(readFileSync(join(out,"manifest.json"),"utf8"));
-const badgeAssets = Object.fromEntries(Object.entries(previousManifest.assets).filter(([id]) => id.startsWith("badge-") || id === "card-exchange"));
-const manifest = cardsOnly ? previousManifest : { palette: "../ui/frames/manifest.json", nativeSize: 24, assets: badgeAssets, terrain: {} };
+const extensionAssets = Object.fromEntries(Object.entries(previousManifest.assets).filter(([id]) => id.startsWith("badge-") || id.startsWith("goal-") || id.startsWith("ui-") || id === "card-exchange"));
+const manifest = cardsOnly ? previousManifest : { palette: "../ui/frames/manifest.json", nativeSize: 24, assets: extensionAssets, terrain: {} };
 if (!cardsOnly) for (const [file, ids] of [["icons.png", ICON_SPRITES], ["world.png", WORLD_SPRITES], ["controls.png", CONTROL_SPRITES]]) {
   const image = join(source, file), header = readFileSync(image);
   const w = header.readUInt32BE(16), h = header.readUInt32BE(20);

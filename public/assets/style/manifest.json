@@ -1334,6 +1334,166 @@
       "file": "badge-frame-epic.png",
       "width": 24,
       "height": 24
+    },
+    "goal-warp": {
+      "file": "goal-warp.png",
+      "width": 24,
+      "height": 24
+    },
+    "goal-warp-loot": {
+      "file": "goal-warp-loot.png",
+      "width": 24,
+      "height": 24
+    },
+    "goal-training-discount": {
+      "file": "goal-training-discount.png",
+      "width": 24,
+      "height": 24
+    },
+    "goal-card-groups": {
+      "file": "goal-card-groups.png",
+      "width": 24,
+      "height": 24
+    },
+    "goal-attack-range": {
+      "file": "goal-attack-range.png",
+      "width": 24,
+      "height": 24
+    },
+    "goal-attack-speed": {
+      "file": "goal-attack-speed.png",
+      "width": 24,
+      "height": 24
+    },
+    "goal-attack-per-tile": {
+      "file": "goal-attack-per-tile.png",
+      "width": 24,
+      "height": 24
+    },
+    "goal-charged-shot": {
+      "file": "goal-charged-shot.png",
+      "width": 24,
+      "height": 24
+    },
+    "goal-multishot": {
+      "file": "goal-multishot.png",
+      "width": 24,
+      "height": 24
+    },
+    "goal-rapid-fire": {
+      "file": "goal-rapid-fire.png",
+      "width": 24,
+      "height": 24
+    },
+    "goal-badge-slots": {
+      "file": "goal-badge-slots.png",
+      "width": 24,
+      "height": 24
+    },
+    "goal-shard-attack": {
+      "file": "goal-shard-attack.png",
+      "width": 24,
+      "height": 24
+    },
+    "goal-shard-defense": {
+      "file": "goal-shard-defense.png",
+      "width": 24,
+      "height": 24
+    },
+    "goal-note-taking": {
+      "file": "goal-note-taking.png",
+      "width": 24,
+      "height": 24
+    },
+    "goal-damage-prediction": {
+      "file": "goal-damage-prediction.png",
+      "width": 24,
+      "height": 24
+    },
+    "goal-combat-forecast": {
+      "file": "goal-combat-forecast.png",
+      "width": 24,
+      "height": 24
+    },
+    "goal-attack-lore": {
+      "file": "goal-attack-lore.png",
+      "width": 24,
+      "height": 24
+    },
+    "goal-parry": {
+      "file": "goal-parry.png",
+      "width": 24,
+      "height": 24
+    },
+    "goal-equipment": {
+      "file": "goal-equipment.png",
+      "width": 24,
+      "height": 24
+    },
+    "goal-damage-visual": {
+      "file": "goal-damage-visual.png",
+      "width": 24,
+      "height": 24
+    },
+    "goal-relative-damage": {
+      "file": "goal-relative-damage.png",
+      "width": 24,
+      "height": 24
+    },
+    "ui-copy": {
+      "file": "ui-copy.png",
+      "width": 24,
+      "height": 24
+    },
+    "ui-skeleton-key": {
+      "file": "ui-skeleton-key.png",
+      "width": 24,
+      "height": 24
+    },
+    "ui-ward": {
+      "file": "ui-ward.png",
+      "width": 24,
+      "height": 24
+    },
+    "ui-menu": {
+      "file": "ui-menu.png",
+      "width": 24,
+      "height": 24
+    },
+    "ui-seal": {
+      "file": "ui-seal.png",
+      "width": 24,
+      "height": 24
+    },
+    "ui-mastered": {
+      "file": "ui-mastered.png",
+      "width": 24,
+      "height": 24
+    },
+    "ui-revive": {
+      "file": "ui-revive.png",
+      "width": 24,
+      "height": 24
+    },
+    "ui-sign": {
+      "file": "ui-sign.png",
+      "width": 24,
+      "height": 24
+    },
+    "ui-link": {
+      "file": "ui-link.png",
+      "width": 24,
+      "height": 24
+    },
+    "ui-duplicate": {
+      "file": "ui-duplicate.png",
+      "width": 24,
+      "height": 24
+    },
+    "ui-crown": {
+      "file": "ui-crown.png",
+      "width": 24,
+      "height": 24
     }
   },
   "terrain": {

@@ -141,3 +141,5 @@ Gates keep their card from acting while their condition fails: **HP <** (HP belo
 
 With Settings → **Sprites** on, cards use distinct pixel-art PNG faces and badges use matching symbols, rarity frames and level stars in the Deck, hand and draw reveals.
 Names, levels and gate signs remain readable text; the default setting is off, and a non-default UI theme supplies its own look.
+
+The same optional sprite kit covers the compact Focus, Ignore, Target, Undo and Play/Pause controls, with their uses and movement speed kept as live text.

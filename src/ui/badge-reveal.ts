@@ -1,3 +1,4 @@
+import { kitIcon } from "../sprite-kit.ts";
 import { levelProgress, badgeDef, badgeLevel, type BadgeDraw, type BadgeId } from "../badges.ts";
 import { RARITIES } from "../shop/rarity.ts";
 import { gemIcon } from "./dom.ts";
@@ -96,7 +97,7 @@ const firstHtml = (draw: BadgeDraw, pick: number) =>
 /** A repeat: the token as it was, the coin above it, and the copies so far. */
 function repeatHtml(draw: BadgeDraw, pick: number) {
   const level = badgeLevel(draw.before), had = levelProgress(draw.before)!;
-  return `<div class="badge-reveal-show repeat"><div class="badge-reveal-stage" style="${badgeStyle(draw.id)}"><span class="badge-coin" aria-hidden="true" style="${badgeStyle(draw.id)}"></span>${tokenHtml(draw.id, level, "big")}</div>` +
+  return `<div class="badge-reveal-show repeat"><div class="badge-reveal-stage" style="${badgeStyle(draw.id)}">${kitIcon("ui-duplicate", "", "badge-coin")}${tokenHtml(draw.id, level, "big")}</div>` +
     `<div class="badge-tally" aria-live="polite"><b class="badge-have">${had.have}</b><span class="badge-need">/${had.need}</span></div>${caption(draw, `LEVEL ${level}`, pick)}</div>`;
 }
 
