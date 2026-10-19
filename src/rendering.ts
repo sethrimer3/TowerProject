@@ -33,7 +33,7 @@ import { darknessOf, forEachViewTile, tileTransform, toTileSpace, type FrameCont
 import { gameLook } from "./theme-collection.ts";
 import { usesGameSprites } from "./sprite-style.ts";
 import { spriteRevision } from "./sprite-kit.ts";
-import { FAST_GLIDE_SECONDS, FollowCamera, GLIDE_SECONDS, type CameraView } from "./camera.ts";
+import { FAST_GLIDE_SECONDS, FollowCamera, GLIDE_SECONDS, pointsAhead, type CameraView } from "./camera.ts";
 
 export { ATMOSPHERE_CONFIG, type AtmosphereConfig } from "./lighting-pass.ts";
 
@@ -300,7 +300,10 @@ export class Renderer {
     // A dash is one step: the hero is there at once, its echoes left behind.
     if (g.dash !== this.dashed) {
       this.dashed = g.dash;
-      if (g.dash) this.echoes.add(g.dash, now);
+      if (g.dash) {
+        this.echoes.add(g.dash, now);
+        this.camera.leap();
+      }
       this.playerX = p.x;
       this.playerY = p.y;
     }
@@ -315,7 +318,8 @@ export class Renderer {
     this.walkHero(blend, snaps, now);
     if (this.followsHero) {
       const view = this.cameraView(n);
-      this.camera.update({ x: this.playerX + 0.5, y: this.playerY + 0.5 }, view, dt, fast ? FAST_GLIDE_SECONDS : GLIDE_SECONDS, snaps);
+      const ahead = pointsAhead(this.game.run.player, this.game.pathAhead);
+      this.camera.update({ x: this.playerX + 0.5, y: this.playerY + 0.5 }, view, dt, fast ? FAST_GLIDE_SECONDS : GLIDE_SECONDS, snaps, ahead);
       this.left = this.camera.left(view);
       this.bottom = this.camera.bottom(view);
       return;

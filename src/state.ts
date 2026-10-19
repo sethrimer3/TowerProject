@@ -184,6 +184,12 @@ export class Game {
   /** The rest of the path Target committed to, until the hero arrives or
    * the path can't be followed (`stillOpen`); never saved. */
   private targetPath: Step[] | null = null;
+  /** The steps the hero is about to take, nearest first: a walk tapped,
+   * Target's path, or the hand's card's; empty with none planned. The
+   * Delve's camera looks along it. */
+  get pathAhead(): readonly Step[] {
+    return this.route.length ? this.route : this.targetPath ?? this.cardPlan?.path ?? [];
+  }
   /** The hand's card that made the latest step, to show it glowing. */
   activeCard: number | null = null;
   /** No card in the hand can act: the hand pauses, and the run ends only

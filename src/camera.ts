@@ -2,8 +2,11 @@
  * walks. It holds still while the hero moves within a box round the middle
  * (the dead zone), so a step or two and back never pans, and when the hero
  * leaves the box it glides after it with momentum (a critically damped
- * spring), easing in and out instead of following each step. No drawing:
- * the renderer reads `left` and `bottom`. */
+ * spring), easing in and out instead of following each step.
+ * With a path ahead (a tapped walk, Target's or the hand's), the camera
+ * frames the hero's next steps instead: it moves as little as it can to keep
+ * them in view with the hero, so a trip out and back that fits never pans.
+ * No drawing: the renderer reads `left` and `bottom`. */
 
 type Point = { x: number; y: number };
 /** The view's size in tiles and the board's width, which the view stays within. */
@@ -27,6 +30,15 @@ const PACE_FALL_SECONDS = 0.6;
  * glide may trail by: a spring trails a steady walk by speed × glide time,
  * so a quicker pace glides quicker, and the edge margin never has to step in. */
 const TRAIL_SHARE = 0.8;
+/** How many of the path's next steps the camera tries to keep in view. */
+export const LOOK_AHEAD = 8;
+/** Tiles kept between a step ahead and the view's edge, so what lies just
+ * past it shows too. */
+export const AHEAD_MARGIN = 2;
+/** How long the camera keeps framing as if a path were ahead once it ends,
+ * in seconds: through the moment between one card reaching its target and
+ * the next choosing its path, so the camera doesn't start back to the hero. */
+export const PATH_GRACE_SECONDS = 0.6;
 
 /** One axis of a critically damped spring after `dt` seconds (the form in
  * Game Programming Gems 4, 1.10): smooth in position and speed, never
@@ -38,6 +50,34 @@ function glide(at: number, speed: number, goal: number, seconds: number, dt: num
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 
+/** The centres of the next `LOOK_AHEAD` tiles of a path from tile `from`,
+ * found by adding up each step's move, so a path round the Delve's wrap
+ * stays beside the hero rather than jumping to the far side. */
+export function pointsAhead(from: Point, path: readonly { dx: number; dy: number }[]): Point[] {
+  const out: Point[] = [];
+  let x = from.x + 0.5, y = from.y + 0.5;
+  for (const step of path.slice(0, LOOK_AHEAD)) {
+    x += step.dx;
+    y += step.dy;
+    out.push({ x, y });
+  }
+  return out;
+}
+
+/** Along one axis, the range of goals that keeps the hero within `slack` of
+ * the middle and as many of the points ahead, in order, within `room`: it
+ * stops at the first point that won't fit with those before it. */
+function framing(hero: number, slack: number, ahead: readonly number[], room: number) {
+  let lo = hero - slack, hi = hero + slack;
+  for (const p of ahead) {
+    const l = Math.max(lo, p - room), h = Math.min(hi, p + room);
+    if (l > h) break;
+    lo = l;
+    hi = h;
+  }
+  return { lo, hi };
+}
+
 export class FollowCamera {
   /** The view's centre now, its speed (tiles a second), and where it is headed. */
   private at: Point = { x: 0, y: 0 };
@@ -46,29 +86,48 @@ export class FollowCamera {
   private hero: Point = { x: 0, y: 0 };
   /** The hero's average speed along each axis lately (tiles a second). */
   private pace: Point = { x: 0, y: 0 };
+  /** Seconds since a path last lay ahead. */
+  private sincePath = Infinity;
+  /** The hero has leapt (a dash) and the camera hasn't caught up yet. */
+  private leaping = false;
 
   /** Centres the camera on the hero at once, standing still. */
   reset(hero: Point, view: CameraView) {
     this.hero = { ...hero };
     this.pace = { x: 0, y: 0 };
+    this.sincePath = Infinity;
+    this.leaping = false;
     this.goal = this.within({ ...hero }, view);
     this.at = { ...this.goal };
     this.speed = { x: 0, y: 0 };
   }
+  /** The hero is about to stand somewhere else at once (a dash): the camera
+   * glides after it at its usual pace, with no rush from the leap's speed,
+   * holding the hero only within the view's edge, not EDGE_MARGIN, until it
+   * catches up. */
+  leap() {
+    this.leaping = true;
+  }
 
   /** Moves the camera for a frame of `dt` seconds, the hero's centre drawn
-   * at `hero` (tiles). With `snaps` (motion reduced, transitions off) it
+   * at `hero` (tiles) and `ahead` the centres of its next steps
+   * (`pointsAhead`). With `snaps` (motion reduced, transitions off) it
    * stands at its goal at once. */
-  update(hero: Point, view: CameraView, dt: number, seconds: number, snaps: boolean) {
-    // A jump (round the wrap, a fall, an undo) is no speed to carry on with.
-    const speedOf = (d: number) => (dt > 0 && Math.abs(d) < view.n / 2 ? d / dt : 0);
+  update(hero: Point, view: CameraView, dt: number, seconds: number, snaps: boolean, ahead: readonly Point[] = []) {
+    // A jump (a leap, round the wrap, a fall, an undo) is no speed to carry on with.
+    const speedOf = (d: number) => (dt > 0 && !this.leaping && Math.abs(d) < view.n / 2 ? d / dt : 0);
     const heroSpeed = { x: speedOf(hero.x - this.hero.x), y: speedOf(hero.y - this.hero.y) };
     this.hero = { ...hero };
-    this.goal = this.within({
-      x: clamp(this.goal.x, hero.x - DEAD_ZONE, hero.x + DEAD_ZONE),
-      y: clamp(this.goal.y, hero.y - DEAD_ZONE, hero.y + DEAD_ZONE),
-    }, view);
     const reach = view.n / 2 - EDGE_MARGIN - 0.5, trail = (reach - DEAD_ZONE) * TRAIL_SHARE;
+    // A leap is over once the hero is back within the edge margin.
+    if (this.leaping && Math.abs(hero.x - this.at.x) <= reach && Math.abs(hero.y - this.at.y) <= reach) this.leaping = false;
+    const hold = this.leaping ? view.n / 2 - 0.5 : reach;
+    this.sincePath = ahead.length ? 0 : this.sincePath + dt;
+    // Framing a path, the hero may stand off the middle, short of the edge
+    // margin by a tile so the glide has room; otherwise it keeps to the dead zone.
+    const slack = this.sincePath <= PATH_GRACE_SECONDS ? reach - 1 : DEAD_ZONE, room = view.n / 2 - AHEAD_MARGIN - 0.5;
+    const x = framing(hero.x, slack, ahead.map((p) => p.x), room), y = framing(hero.y, slack, ahead.map((p) => p.y), room);
+    this.goal = this.within({ x: clamp(this.goal.x, x.lo, x.hi), y: clamp(this.goal.y, y.lo, y.hi) }, view);
     for (const axis of ["x", "y"] as const) {
       const pace = Math.abs(heroSpeed[axis]), lag = pace > this.pace[axis] ? PACE_RISE_SECONDS : PACE_FALL_SECONDS;
       this.pace[axis] += (pace - this.pace[axis]) * (1 - Math.exp(-dt / lag));
@@ -78,10 +137,11 @@ export class FollowCamera {
         continue;
       }
       const g = glide(this.at[axis], this.speed[axis], this.goal[axis], Math.min(seconds, trail / Math.max(this.pace[axis], 1e-9)), dt);
-      // Never let the hero within EDGE_MARGIN of the edge: held there, the camera moves with it.
-      const held = clamp(g.at, hero[axis] - reach, hero[axis] + reach);
+      // Never let the hero within EDGE_MARGIN of the edge (through a leap, off
+      // the view): held there, the camera moves with it.
+      const held = clamp(g.at, hero[axis] - hold, hero[axis] + hold);
       this.at[axis] = held;
-      this.speed[axis] = held === g.at ? g.speed : heroSpeed[axis];
+      this.speed[axis] = held === g.at || this.leaping ? g.speed : heroSpeed[axis];
     }
     // At the board's edge the camera stops there rather than pressing on.
     const kept = this.within(this.at, view);
