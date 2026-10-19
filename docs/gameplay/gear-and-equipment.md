@@ -14,6 +14,8 @@ A **Blacksmith** then stands in the forest, up and left of the path; tapping it 
 The hero wears one piece in each of nine categories (Weapon, Chestplate, Helmet, Gloves, Boots, Cape, Belt, Ring, Amulet); the inventory (up to 500 pieces) is shared, and the Tower's and the Delve's heroes each wear their own loadout.
 Each Unique piece (and the Silver Band) has its own pixel icon, so pieces of one category tell apart at a glance.
 Pieces come in Common, Uncommon and Rare, shown by word, letter and colour.
+With Settings → **Sprites** on, the three rarities have matching pixel-art PNG frames, empty slots have recessed frames, selected pieces have brass corner marks, and worn and Unique pieces have PNG symbols.
+Names, rarity letters and levels remain readable text; Sprites defaults to off and non-default UI themes supply their own look.
 Standard pieces come only from Equipment Chests (below); the three Unique pieces of each category come only from Gem pulls (20 Gems, or 200 for ten, in one category; or 10% less, 18 and 180, for a piece of any category; 72% Common, 25% Uncommon, 3% Rare, and the 100th pull in a row without a Rare in a category is a Rare).
 Upgrade materials (one category's) level a piece with Gold up to its rarity's cap (20, 40, 60).
 Kills drop neither pieces nor materials: with the Chest card in the hand, a treasure chest may be a Supply Chest (upgrade materials) or an Equipment Chest (a Standard piece, up to Rare); see [The hand and cards](hand-and-cards.md#card-bonuses).

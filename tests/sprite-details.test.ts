@@ -53,6 +53,15 @@ test("all shared PNGs obey the shared palette, binary transparency and native gr
     if (id.startsWith("badge-frame-")) {
       assert.ok(right - left >= 21 && bottom - top >= 21, `${id}: frame alpha must reach all four sides`);
     }
+    if (id.startsWith("ui-equip-frame-")) {
+      assert.equal(width, 24, id); assert.equal(height, 24, id);
+      assert.ok(right - left >= 21 && bottom - top >= 21, `${id}: keep the square frame footprint`);
+      for (let y = 8; y < 16; y++) for (let x = 8; x < 16; x++) {
+        const at = (y * width + x) * 4;
+        if (id.endsWith("selection")) assert.equal(pixels[at + 3], 0, "selection corners must leave live content clear");
+        else assert.deepEqual([...pixels.subarray(at, at + 4)], [27, 36, 48, 255], "Equipment centers stay flat slate behind item art");
+      }
+    }
     assert.ok(opaque > 10 && (asset.tile || transparent > 10), `${id}: visible subject on transparency`);
   }
 });

@@ -386,3 +386,77 @@ html.ui-sprites .stats .shrine-diamond.lit:not(#_) { opacity: 1; }
 html.ui-sprites .stats .shrine-diamond b:not(#_) { transform: none; color: #eee0b7; }
 html.ui-sprites #shrine-fill:not(#_) { background: url("../public/assets/style/shrine-fill.png") left top / 32px 100% repeat-x; box-shadow: none; }
 html.ui-sprites #overheal-fill:not(#_) { background: url("../public/assets/ui/frames/fill-blue.png") left top / 32px 100% repeat-x; }
+
+/* Equipment keeps its live rarity letters and levels over reusable frames. */
+.sprite-icon.eq-tile-worn, .sprite-icon.eq-tile-unique { position: absolute; }
+.eq-salvage-icon { display: none; }
+html.ui-sprites :is(.eq-tile, .equip-icon-frame):not(#_) {
+  --equipment-frame: url("../public/assets/style/ui-equip-frame-common.png");
+  border: 1px solid transparent;
+  border-image: var(--equipment-frame) 6 fill / 6px / 0 stretch;
+  border-radius: 0;
+  background: #1b2430;
+  box-shadow: none;
+  image-rendering: pixelated;
+}
+html.ui-sprites :is(.eq-tile, .equip-icon-frame).rar-uncommon:not(#_) { --equipment-frame: url("../public/assets/style/ui-equip-frame-uncommon.png"); }
+html.ui-sprites :is(.eq-tile, .equip-icon-frame).rar-rare:not(#_) { --equipment-frame: url("../public/assets/style/ui-equip-frame-rare.png"); }
+html.ui-sprites .eq-tile.eq-ghost:not(#_) { --equipment-frame: url("../public/assets/style/ui-equip-frame-empty.png"); background: #10151c; }
+html.ui-sprites .eq-tile.selected:not(#_) { outline: none; }
+html.ui-sprites .eq-tile.selected:focus-visible:not(#_) { outline: 2px solid #e1bb78; outline-offset: 3px; }
+html.ui-sprites .eq-tile.selected::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border: 1px solid transparent;
+  border-image: url("../public/assets/style/ui-equip-frame-selection.png") 6 / 6px / 0 stretch;
+  pointer-events: none;
+}
+html.ui-sprites :is(.eq-tile-mark, .eq-tile-level, .eq-tile-worn, .eq-tile-unique):not(#_) { text-shadow: none; }
+html.ui-sprites :is(.eq-tile-worn, .eq-tile-unique).sprite-ready { width: 12px; height: 12px; }
+html.ui-sprites .eq-tile-worn.sprite-ready { bottom: 2px; left: 2px; }
+html.ui-sprites .eq-tile-unique.sprite-ready { top: 2px; left: 2px; }
+html.ui-sprites .eq-tile-lock + .eq-tile-unique.sprite-ready { left: auto; right: 15px; }
+html.ui-sprites .eq-tile .eq-tile-icon { width: 24px; height: 24px; }
+html.ui-sprites .equip-icon-frame .equip-icon { width: 24px; height: 24px; }
+html.ui-sprites .eq-check:not(#_) {
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 0;
+  background: url("../public/assets/ui/frames/field.png") center / 24px 24px no-repeat;
+  image-rendering: pixelated;
+  flex-shrink: 0;
+}
+html.ui-sprites .eq-check-icon { width: 12px; height: 12px; }
+html.ui-sprites .eq-salvage-icon.sprite-ready { display: inline-block; width: 12px; height: 12px; flex-shrink: 0; }
+html.ui-sprites :is(.eq-slots, .eq-inputs, .eq-assemble, .equip-selection, .eq-salvage):not(#_) {
+  border: 1px solid transparent;
+  border-image: var(--ui-panel) 6 fill / 6px / 0 stretch;
+  border-radius: 0;
+  background: #10151c;
+  box-shadow: none;
+  image-rendering: pixelated;
+}
+html.ui-sprites :is(.rarity-tag, .rarity-mark, .eq-input-n):not(#_) { border-radius: 0; background: #1b2430; box-shadow: none; text-shadow: none; }
+html.ui-sprites .rar-common { --rar: #b8c2bb; }
+html.ui-sprites .rar-uncommon { --rar: #a7bd75; }
+html.ui-sprites .rar-rare { --rar: #88c5db; }
+html.ui-sprites .eq-ghost .eq-tile-icon.sprite-ready { filter: none; }
+html.ui-sprites .eq-totals li:not(#_) {
+  border: 1px solid transparent;
+  border-image: var(--ui-field) 6 fill / 3px / 0 stretch;
+  border-radius: 0;
+  background: #1b2430;
+  color: #b8c2bb;
+}
+html.ui-sprites .eq-arrow:not(#_) {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  font-size: 0;
+  background: url("../public/assets/style/arrow-right.png") center / 24px 24px no-repeat;
+  image-rendering: pixelated;
+  text-shadow: none;
+}
