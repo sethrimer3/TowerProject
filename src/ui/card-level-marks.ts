@@ -10,12 +10,14 @@ export function cardLevelHtml(xp: number) {
 }
 
 /** A card's level, its XP toward the next (X/Y) and its card points, as
- * its details say them. */
-export function cardLevelLines(xp: number) {
+ * its details say them, with those left to spend on its tree (`left`;
+ * null for a card without one). */
+export function cardLevelLines(xp: number, left: number | null = null) {
   const { level, into, needed } = cardLevel(xp), points = cardPoints(xp);
   const progress = level >= MAX_CARD_LEVEL ? "Max level" : `${into.toLocaleString("en-US")}/${needed.toLocaleString("en-US")} XP`;
+  const tree = left === null ? "this card has no upgrade tree" : `${left} to spend on its upgrade tree`;
   return `<p class="card-level-line"><b>Level ${level}</b> · ${progress}</p>`
-    + `<p class="card-points-line">${points} card point${points === 1 ? "" : "s"} · the card's upgrade tree is coming soon</p>`;
+    + `<p class="card-points-line">${points} card point${points === 1 ? "" : "s"} · ${tree}</p>`;
 }
 
 /** A card's tooltip line for its level ("Level 3 · 120/800 XP"). */

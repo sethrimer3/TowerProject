@@ -3375,6 +3375,116 @@ dialog.dismiss-anywhere { cursor: pointer; }
   cursor: pointer;
 }
 .card-reveal-action:hover { background: #21482d; }
+.card-reveal-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 10px; }
+.card-reveal-action b { display: inline; margin: 0; font-size: inherit; color: #ffe39a; }
+
+/* ── A card's upgrade tree (ui/card-tree-panel.ts, ui/upgrade-graph.ts) ───
+   Over the page: a night of faint stars behind pixel-framed nodes on
+   glowing pixel branches, the card at the root. Gold for a full node, a
+   bright rim for one taking points, dim for one waiting on the node before
+   it; new ones sprout from their parent. */
+.card-tree {
+  position: fixed; inset: 8px; z-index: 61;
+  display: flex; flex-direction: column; overflow: hidden;
+  border: 2px solid #000; border-top: 2px solid #57d6e0; border-radius: 4px;
+  background: radial-gradient(circle at 50% 110%, #2a6f7a40, transparent 60%), radial-gradient(#ffffff14 1px, transparent 1.5px) 0 0 / 22px 22px, #0b1418;
+  box-shadow: 0 0 0 100vmax #04070bb0, 0 4px 0 #000;
+  color: #d9e8ea;
+}
+.card-tree.opening { animation: card-tree-open 0.22s ease-out; }
+@keyframes card-tree-open { from { opacity: 0; transform: scale(0.96); } }
+.card-tree button { font: inherit; }
+.ug-top { position: relative; z-index: 2; display: flex; align-items: flex-start; gap: 8px; padding: 6px; }
+.ug-title { flex: 1; text-align: center; padding-top: 2px; }
+.ug-title small { display: block; font-size: 8px; letter-spacing: 1px; color: #7fd8e0; }
+.ug-title b { display: block; font-size: 14px; color: #f4d999; }
+.ug-alloc {
+  flex: none; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; min-width: 96px; padding: 5px 7px;
+  border: 2px solid #000; border-radius: 3px; background: #050a0cd8;
+  box-shadow: inset 0 0 0 1px #57d6e055, 0 2px 0 #000;
+}
+.ug-alloc small { font-size: 8px; letter-spacing: 1px; color: #7fd8e0; }
+.ug-alloc > b { font-size: 14px; color: #ffe39a; }
+.ug-respec {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 10px; padding: 4px 6px; color: #f6e3b4; border: 1px solid #000; border-radius: 2px; cursor: pointer;
+  background: linear-gradient(#ffffff10, #00000050), #5a3a1c; box-shadow: inset 0 0 0 1px #c9954a66;
+}
+.ug-respec .gem-icon, .ug-respec .sprite-icon { width: 12px; height: 12px; }
+.ug-respec.short b { color: #ff6a5a; }
+.ug-respec:disabled { opacity: 0.45; cursor: default; }
+.ct-close {
+  flex: none; width: 30px; height: 30px; padding: 0; font-size: 18px; line-height: 1; cursor: pointer;
+  color: #f6e3b4; border: 2px solid #000; border-radius: 3px; background: #2a1d10; box-shadow: inset 0 0 0 1px #c9954a66;
+}
+
+.ug-host { position: relative; flex: 1; min-height: 0; overflow: hidden; touch-action: none; cursor: grab; }
+.ug-host:active { cursor: grabbing; }
+.ug-view { position: absolute; left: 0; top: 0; z-index: 1; transform-origin: 0 0; }
+.ug-branches { position: absolute; left: 0; top: 0; pointer-events: none; image-rendering: pixelated; }
+
+.ug-nodes { position: absolute; left: 0; top: 0; }
+.ug-node {
+  position: absolute; left: 0; top: 0; width: 44px; height: 44px; padding: 0;
+  display: grid; place-items: center; cursor: pointer;
+  border: 2px solid #000; border-radius: 4px; background: #0c1214;
+  box-shadow: inset 0 0 0 2px #4b5a5e, 0 2px 0 #000; color: #eee;
+  transition: box-shadow 0.25s, filter 0.25s;
+}
+.ug-node .ct-icon { display: grid; place-items: center; width: 28px; height: 28px; pointer-events: none; }
+.ug-node .ct-icon img, .ug-node .ct-icon svg, .ug-node .ct-icon .sprite-icon { width: 26px; height: 26px; image-rendering: pixelated; }
+.ug-node.root { width: 48px; height: 66px; overflow: visible; }
+.ug-node.root .card-art { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+.ug-node.root .sprite-card-label { display: none; }
+.ug-node > b { position: absolute; right: 2px; bottom: 0; font-size: 10px; color: #f4d999; text-shadow: 0 1px 0 #000, 1px 0 0 #000; pointer-events: none; }
+.ug-node > small { position: absolute; top: calc(100% + 3px); left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 9px; color: #9fe8ef; text-shadow: 0 1px 0 #000; pointer-events: none; }
+.ug-node.owned { box-shadow: inset 0 0 0 2px #f2c95a, inset 0 0 10px #f2c95a40, 0 0 10px #f2c95a60, 0 2px 0 #000; background: #1d1608; }
+.ug-node.owned > small { color: #f2c95a; }
+.ug-node.next { box-shadow: inset 0 0 0 2px #e9fbff, inset 0 0 10px #57d6e050, 0 0 12px #57d6e090, 0 2px 0 #000; }
+.ug-node.locked { filter: grayscale(0.7) brightness(0.55); }
+.ug-node.picked { outline: 2px solid #57d6e0; outline-offset: 3px; }
+.ug-node.dragged { cursor: grabbing; z-index: 2; }
+.ug-node.withering { pointer-events: none; animation: ug-wither 1.1s ease-in forwards !important; }
+.ug-node.sprouting { animation: ug-sprout 0.55s cubic-bezier(.3, 1.6, .5, 1) both; }
+.ug-node.bought { animation: ug-bought 0.5s cubic-bezier(.3, 1.6, .5, 1); }
+:root:not(.reduce-motion) .ug-node.next { animation: ug-ready 1.8s ease-in-out infinite; }
+:root:not(.reduce-motion) .ug-node.next.sprouting { animation: ug-sprout 0.55s cubic-bezier(.3, 1.6, .5, 1) both; }
+:root:not(.reduce-motion) .ug-node.next.bought { animation: ug-bought 0.5s cubic-bezier(.3, 1.6, .5, 1); }
+@keyframes ug-ready { 50% { box-shadow: inset 0 0 0 2px #e9fbff, inset 0 0 14px #57d6e070, 0 0 18px #57d6e0c0, 0 2px 0 #000; } }
+@keyframes ug-wither {
+  0% { filter: none; opacity: 1; }
+  35% { filter: sepia(1) saturate(0.6) brightness(0.55); opacity: 1; }
+  100% { filter: sepia(1) saturate(0.3) brightness(0.3); opacity: 0; }
+}
+@keyframes ug-sprout { from { scale: 0.2; opacity: 0; } to { scale: 1; opacity: 1; } }
+@keyframes ug-bought { 40% { scale: 1.25; } }
+:root.reduce-motion .ug-node, :root.reduce-motion .card-tree { animation: none !important; }
+@media (prefers-reduced-motion: reduce) { .ug-node, .card-tree { animation: none !important; } }
+
+.ug-card {
+  position: relative; z-index: 2; margin: 0 6px 6px; padding: 7px 9px; min-height: 64px;
+  border: 2px solid #000; border-radius: 3px; background: #050a0ce8;
+  box-shadow: inset 0 0 0 1px #57d6e066, 0 2px 0 #000; font-size: 11px; line-height: 1.45; color: #d9e8ea;
+}
+.ug-card p { margin: 3px 0 0; }
+.ug-card-head { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; border-bottom: 1px solid #57d6e040; padding-bottom: 3px; }
+.ug-card-head b { color: #f4d999; font-size: 12px; }
+.ug-card-head small { color: #7fd8e0; white-space: nowrap; }
+.ug-stats { color: #9fc4c8; }
+.ug-card-foot { margin-top: 5px; display: flex; justify-content: flex-end; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ug-owned { color: #f2c95a; }
+.ug-locked { color: #8a9a9e; }
+.ug-hint { color: #8a9a9e; margin: 0; }
+.ug-buy {
+  font-size: 11px; padding: 5px 10px; cursor: pointer; color: #08181b; border: 1px solid #000; border-radius: 2px;
+  background: linear-gradient(#e9fbff, #57d6e0); box-shadow: 0 0 8px #57d6e080;
+}
+.ug-buy:disabled { color: #889; background: #2a3336; box-shadow: none; cursor: default; }
+.ug-again { flex-basis: 100%; text-align: right; font-size: 9px; color: #8a9a9e; letter-spacing: 0.3px; }
+@media (max-width: 520px) {
+  .ug-alloc { min-width: 0; }
+  .ug-title b { font-size: 12px; }
+}
 @keyframes card-pop {
   from { transform: scale(0.6); opacity: 0; }
 }

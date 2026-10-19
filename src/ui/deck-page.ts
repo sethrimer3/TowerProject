@@ -7,7 +7,9 @@ import { DRAW_GEMS, type DrawCount } from "../game/badge-desk.ts";
 import { cardWith, fitsCard, BADGE_IDS, BADGES, badgeLevel, badgeValue, type BadgeId } from "../badges.ts";
 import { RARITIES } from "../shop/rarity.ts";
 import { revealDraws } from "./badge-reveal.ts";
-import { showCard } from "./card-reveal.ts";
+import { showCard, type CardAction, type CardDetails } from "./card-reveal.ts";
+import { CardTreePanel } from "./card-tree-panel.ts";
+import { CARD_TREES } from "../card-trees.ts";
 import { cardLevelHtml } from "./card-level-marks.ts";
 import { badgeLevelsHtml, cardBadgeHtml, badgeText, progressText, tokenHtml } from "./badge-token.ts";
 
@@ -624,16 +626,26 @@ export class DeckPage {
    * its X would. */
   private showHandCard(id: CardId) {
     const { save } = this.ctx.game;
-    const action = this.removable(id) ? { label: "Return to deck", run: () => this.remove(id) } : undefined;
-    showCard(id, save.upgrades, save.settings.reduceMotion, "IN YOUR HAND", action, id === "stairs" ? "STAIRS always stays in your hand." : undefined, save.cardXp[id] ?? 0);
+    const actions = this.removable(id) ? [{ label: "Return to deck", run: () => this.remove(id) }] : [];
+    showCard(id, save.upgrades, save.settings.reduceMotion, "IN YOUR HAND", { ...this.treeDetails(id, actions), note: id === "stairs" ? "STAIRS always stays in your hand." : undefined });
+  }
+
+  /** A card's XP, its points left for its tree, and the offer to open the
+   * tree (first) beside `actions`, for its details. */
+  private treeDetails(id: CardId, actions: CardAction[]): CardDetails {
+    const { save, cardTrees } = this.ctx.game, xp = save.cardXp[id] ?? 0;
+    if (!CARD_TREES[id]) return { xp, actions, left: null };
+    const left = cardTrees.pointsLeft(id);
+    const tree = { label: `Upgrade tree${left ? ` · <b>${left}</b> point${left === 1 ? "" : "s"}` : ""}`, run: () => new CardTreePanel(this.ctx, id, () => this.showing && this.render()) };
+    return { xp, left, actions: [tree, ...actions] };
   }
 
   /** A deck card's details, with the offer to add it to the hand while
    * there is room. */
   private showDeckCard(id: CardId) {
     const { save, deck } = this.ctx.game, full = save.hand.length >= handSlots(save);
-    const action = full ? undefined : { label: "Add to hand", run: () => this.change(deck.add(id)) };
-    showCard(id, save.upgrades, save.settings.reduceMotion, "IN YOUR DECK", action, full ? "Your hand is full: drag this card onto one in your hand to swap it." : undefined, save.cardXp[id] ?? 0);
+    const actions = full ? [] : [{ label: "Add to hand", run: () => this.change(deck.add(id)) }];
+    showCard(id, save.upgrades, save.settings.reduceMotion, "IN YOUR DECK", { ...this.treeDetails(id, actions), note: full ? "Your hand is full: drag this card onto one in your hand to swap it." : undefined });
   }
 
   /** Asks before spending Gems on the next hand slot. */
