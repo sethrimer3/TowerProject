@@ -40,3 +40,8 @@ The appended `spriteCombat` render scene covers projectiles, shield boundaries, 
 `tests/environment-sprites-browser.mjs` starts its own server, defers one water PNG, and checks literal PNG texels against the real baked pool/depth/bank pixels, unchanged pool/moss coverage, vine leaves staying out of water and immediate cache refresh.
 It reviews native/enlarged pieces and repeated materials, real phone/desktop dungeon frames, independent themes, board/decor opt-outs, exact off/on/off restoration, and palette-matched emitted light colors with unchanged light geometry.
 `tests/environment-sprites.test.ts` checks native material/plant sizes, distinct variants and exact flower/cap draw anchors; the appended `spriteEnvironment` golden walks a real wet, overgrown room with Sprites on.
+
+`tests/forest-sprites-browser.mjs` starts its own Vite server for native forest art, real Tower/Delve scenes at phone/desktop widths, independent theme gates, decoration/board opt-outs and exact off/on/off restoration.
+It delays a crown PNG to verify the atomic ground/foliage switch, tests failed foliage and landmark images, and taps the real Blacksmith, Tournament Hall, mode sign and both entrances.
+`tests/forest-sprites.test.ts` checks native sizes/anchors, seeded placement, unchanged tiles, all seventeen nature silhouettes, multi-tile crowns above understory, road/building/sign clearance and the decoration opt-out.
+The appended `spriteForestTower` and `spriteForestDelve` scenes add ten browser and drawing-call golden frames without changing earlier scene seeds.

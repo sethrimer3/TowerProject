@@ -13,6 +13,9 @@ Sliders still work with pointer or keyboard input and show their values as live 
 The active interface kit uses custom pixel lettering, with button frames that leave room for text and icons. On phones, ad controls stack and Training values sit above their purchase buttons.
 The Classic board kit also uses pixel lettering for damage, rewards and other annotations, plus matching Target, Ignore, skipped and blocked tile marks. Torch lighting follows the active sprite shapes.
 With environmental decoration enabled, the Classic sprite kit also gives moss, pools, vine leaves, flowers and glowing mushrooms matching PNG artwork, preserving their locations, water movement and interactions.
+In the forest, the Classic sprite kit shows the enormous lower bases of the Tower and Delve mountain extending beyond the top of the view.
+Oak, birch and pine crowns span several tiles above smaller trees, bushes, ferns, rocks, logs, stumps, flowers and mushrooms, with paths, entrances, building yards and the mode sign kept clear.
+Grass still moves around the hero; turning environmental decoration off hides that grass and extra floor plants while keeping the forest's trees and rocks.
 
 ## The first runs
 

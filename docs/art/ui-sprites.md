@@ -55,8 +55,15 @@ Material tiles are 24 × 24, flowers and vine leaves 8 × 8, and glowing caps 12
 Moss stays within its shared green/teal palette ramps; water materials are opaque tiles sampled through the exact existing pool and shore masks.
 Vine leaves attach to the existing stem joints at native size, clipped to their planned tile and out of water.
 The seed still determines coverage and placement, and the flowers/caps retain runtime lighting rather than baked glow.
+The [forest nature atlas](../../assets/game-sprites/forest-nature.png) supplies twenty components: five multi-tile crowns (oak, elder oak, birch and two pines), young pine, sapling, shrub, berry bush, fern, two boulders, log, stump, flowers, mushrooms, pebbles and three quiet ground tiles.
+Crowns contain 48–96 native pixels across; small objects use 12–36 pixels, all on the same 24-pixel world tile grid and drawn at native density.
+Use a steep top-down angle showing crown tops and a short south-facing trunk, upper-left light and restrained green clusters; larger trees receive more pixels instead of enlarging an icon.
+The [forest landmark atlas](../../assets/game-sprites/forest-landmarks.png) supplies a 216 × 216 Tower base and a 360 × 240 mountain base, each cropped across the top with no roof, crown or peak.
+Show only the monumental lower entrance facade: the tower's stepped threshold and mountain's south-facing cave meet the existing path, with live tier text above them.
+Nature objects use binary-alpha silhouettes and quiet green ramps; ground tiles use two-color green or brown ramps, and the tower/mountain use the shared slate ramp.
+The forest loads its materials and foliage together before removing the older baked tile trees, and the larger crowns render above smaller foliage while paths, buildings and the sign stay clear.
 The old SVG and PNG artwork stays available for unloaded images, Sprites off and theme overrides.
-All ten biome sets and the forest retain their seeded variations and wall adjacency while sharing a palette-normalized 24-pixel terrain atlas.
+All ten biome sets retain their seeded variations and wall adjacency in a palette-normalized 24-pixel terrain atlas; the forest uses its new ground and foliage components after loading.
 Equipment's existing Unique silhouettes and the named enemy roster are preserved during normalization.
 Small dressing (plants, cobwebs, pebbles and broken containers) uses 12-pixel PNGs drawn 1:1 inside the same 24-pixel tile grid.
 Defend’s [city atlas](../../assets/game-sprites/city.png) adds six roof materials, oak and pine canopies, wall cap and face pieces, rubble, scaffolding, lilies, reeds, lanterns and the city-tile tool icon.
@@ -66,7 +73,7 @@ The [Defend structure atlas](../../assets/game-sprites/defend-structures.png) re
 The keep and archer barracks are 36 × 36, the barracks 36 × 48 (48 × 36 for a horizontal fit), and towers 24 × 24; their palette icons retain the same aspect ratios.
 The [tower reference](../../assets/game-sprites/defend-towers.png) simplifies the three small towers for their 24-pixel grid, and the [horizontal barracks](../../assets/game-sprites/defend-barracks-wide.png) is separately lit from the upper left.
 Roof and wall panels are marked `tile` in the manifest and may be opaque so adjacent pieces join; isolated objects keep transparent padding.
-Objects use a 24-pixel native grid; larger structures use 48 pixels, and card faces use 48 × 64.
+Ordinary objects use a 24-pixel native grid; structure icons use 48 pixels, forest crowns and entrance bases use the larger native dimensions above, and card faces use 48 × 64.
 The source atlases for [icons](../../assets/game-sprites/icons.png), [world objects](../../assets/game-sprites/world.png) and [controls](../../assets/game-sprites/controls.png) remain outside the deployed assets.
 
 ## Prompt template
@@ -107,8 +114,9 @@ Run `node --experimental-transform-types tools/prepare-ui-controls.mjs` for the 
 Run `node --experimental-transform-types tools/prepare-combat-sprites.mjs` for the directional projectile, mark, chest-star and shield set.
 Run `node --experimental-transform-types tools/prepare-board-marks.mjs` for Target, Ignore, skipped and blocked marks.
 Run `node --experimental-transform-types tools/prepare-environment-sprites.mjs` for moss, water, vine leaves, flowers and glowing cap variants.
+Run `node --experimental-transform-types tools/prepare-forest-sprites.mjs` for the twenty forest materials/objects and two enormous entrance bases; measured crops, binary alpha and palette normalization reproduce the deployed PNGs.
 Regenerate the original font with `python tools/prepare-pixel-font.py` using FontTools with WOFF2 support (`fonttools[woff]`); no font-building dependency is needed at runtime.
-The full game exporter preserves environment, combat, badge, Shrine, Equipment UI and UI-detail assets; rerun their own exporter when a source atlas changes.
+The full game exporter preserves forest, environment, combat, badge, Shrine, Equipment UI and UI-detail assets; rerun their own exporter when a source atlas changes.
 That exporter also packs the terrain atlas and produces `src/sprite-terrain-index.ts`.
 PNG load failures keep the original icon or procedural renderer visible; loaded images invalidate cached terrain and city layers through a shared revision.
 

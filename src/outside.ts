@@ -5,6 +5,7 @@ import { tileRandom } from "./random.ts";
 import { MODES } from "./modes.ts";
 import { drawKit } from "./sprite-kit.ts";
 import { drawKitTerrain } from "./sprite-terrain.ts";
+import { drawForestLandmark, drawForestSprite, forestSpritesReady } from "./sprite-forest.ts";
 
 export const OUTSIDE_SIZE = 20;
 export const ENTRANCE_Y = 12;
@@ -36,7 +37,7 @@ export type Roads = { blacksmith: boolean; hall: boolean; prev: boolean; next: b
 /** The dirt path up to the entrance, widening every fifth row; its
  * crossroads (the row the hero starts on) goes on to a building's door
  * once the building stands, or on out of the clearing (`roads`). */
-const onPath = ({ x, y, center, roads }: ForestSpot) => {
+export const onPath = ({ x, y, center, roads }: ForestSpot) => {
   if (Math.abs(x - center) <= (y % 5 === 2 ? 1 : 0)) return true;
   if (!roads || y !== OUTSIDE_START_Y) return false;
   // Each door is in the middle column of its building, on the row in front.
@@ -151,6 +152,7 @@ export class OutsideWorld implements Board {
  * hasn't loaded yet. */
 export function drawForestTile(c: CanvasRenderingContext2D, t: Tile, s: ForestSpot, useSprites = true, styled = false) {
   if (useSprites && styled) {
+    if (forestSpritesReady()) return drawForestSprite(c, onPath(s) ? "forest-path" : t.kind === "wall" ? "forest-litter" : "forest-grass", 0, 0);
     const id = outsideSpriteKind(t, s);
     if (drawKitTerrain(c, OUTSIDE_SPRITE_URLS[id.family][id.variant])) return true;
   }
@@ -206,7 +208,7 @@ function paintPebbles(c: CanvasRenderingContext2D) {
 export function drawEntrance(c: CanvasRenderingContext2D, mode: Mode, center: number, numeral = "", bonus?: { text: string; coin: CanvasImageSource | null }, styled = false) {
   const x = center * 24 + 12, base = (OUTSIDE_SIZE - 1 - ENTRANCE_Y) * 24;
   c.save();
-  if (!(styled && drawKit(c, mode === "tower" ? "tower" : "cave", x - 48, base - 76, 96, 96))) {
+  if (!(styled && drawForestLandmark(c, mode === "tower", x, base + 24))) {
     if (mode === "tower") drawTowerGate(c, x, base);
     else drawCaveMouth(c, x, base);
   }

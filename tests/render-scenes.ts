@@ -286,6 +286,17 @@ const LATER_BOARD_SCENES: Record<string, () => BoardScene> = {
 // Appended to keep all existing scene seeds unchanged.
 LATER_BOARD_SCENES.spriteCombat = () => combatSpriteScene();
 LATER_BOARD_SCENES.spriteEnvironment = () => environmentSpriteScene();
+LATER_BOARD_SCENES.spriteForestTower = () => forestSpriteScene("tower");
+LATER_BOARD_SCENES.spriteForestDelve = () => forestSpriteScene("delve");
+
+/** Both enormous entrance bases and the layered forest at the crossroads. */
+export function forestSpriteScene(mode: "tower" | "delve", settings: Record<string, unknown> = {}): BoardScene {
+  const g = game(mode, { uiSprites: true, reduceMotion: true, weatherSound: false, ...settings });
+  g.save.goals.claimed = { 1: [60, 70] };
+  g.save.equipment.unlocked = true;
+  g.newRun({ outside: true, seed: mode === "tower" ? 503 : 507 });
+  return { g };
+}
 
 /** One board scene on `canvas` (408×408 CSS pixels), fully synchronous so
  * no frame loop can interleave: a settled frame, a frame mid-step with
