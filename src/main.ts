@@ -18,6 +18,7 @@ import "./murk.css";
 import "./ui-sprites.css";
 import { bindSpriteImages, drawKit, onSpritesLoaded } from "./sprite-kit.ts";
 import { usesGameSprites } from "./sprite-style.ts";
+import { onSpriteFontLoaded } from "./sprite-font.ts";
 import { gameLook } from "./theme-collection.ts";
 import { themedBoardOf } from "./themed-boards.ts";
 import { load, persist } from "./save.ts";
@@ -82,6 +83,8 @@ bindMedievalFeedback(() => uiLook(game.save) === "medieval", () => game.save.set
 // The frame loop settles fights as they finish playing out.
 game.fights.playsFights = true;
 const renderer = new Renderer(document.querySelector("#world")!, game);
+onSpriteFontLoaded(() => renderVitals(game));
+window.addEventListener("resize", () => renderVitals(game));
 function renderPortrait() {
   const portraitCtx = (document.querySelector("#portrait-sprite") as HTMLCanvasElement).getContext("2d")!;
   portraitCtx.clearRect(0, 0, 24, 24);

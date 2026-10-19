@@ -1,7 +1,15 @@
+@font-face {
+  font-family: "Tower Pixel";
+  src: url("../assets/fonts/TowerPixel/TowerPixel-Regular.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+}
+
 /* Actual PNG components, opt-in independently of UI/game themes.
-   Native frames are 48 × 24; six-pixel slices render at 2×. The center is
+   Native frames are 48 × 24; reserve the displayed edge in each control. The center is
    quiet so it can stretch behind live labels without distorting artwork.
-   Keep skin rules here; layout and game interactions belong to style.css. */
+   Keep kit-specific frame metrics here; shared layout belongs to style.css. */
 html.ui-sprites {
   --ui-button: url("../public/assets/ui/frames/button.png");
   --ui-hover: url("../public/assets/ui/frames/button-hover.png");
@@ -19,6 +27,14 @@ html.ui-sprites {
   --gold: #e1bb78;
   --muted: #8b9a9d;
 }
+
+/* Keep labels as live text, including inputs and headings with their own font.
+   Badge glyphs and the paused Defend page retain their existing typography. */
+html.ui-sprites:not(#_),
+html.ui-sprites :not(:where(svg, svg *, .badge-glyph, .badge-glyph *, #defend, #defend *)):not(#_) {
+  font-family: "Tower Pixel", monospace;
+}
+html.ui-sprites #defend { font-family: Cinzel, Georgia, serif; }
 
 html.ui-sprites body:not(#_) {
   background: #10151c url("../public/assets/ui/frames/surface.png") repeat;
@@ -70,7 +86,7 @@ html.ui-sprites dialog :is(h2, h3):not(#_) { color: #e1bb78; text-shadow: none; 
 html.ui-sprites :is(.hint, .item-meta, .item-identity, .level-cost):not(#_) { color: #8b9a9d; }
 
 /* Keep picture buttons (cards, map markers and skill nodes) intact. */
-html.ui-sprites button:not(:where(.hand-card, .skill-node, .badge-token, .eq-tile,
+html.ui-sprites button:not(:where(.hand-card, .skill-node, .badge-token, .eq-tile, .deck-add,
   .forest-sign, .forest-building, .mission-bar, #shrine-bar, #forest-sign)):not(#_) {
   border-color: transparent;
   border-image: var(--ui-face) 6 fill / 12px / 0 stretch;
@@ -81,6 +97,16 @@ html.ui-sprites button:not(:where(.hand-card, .skill-node, .badge-token, .eq-til
   text-shadow: none;
   image-rendering: pixelated;
   transition: none;
+}
+html.ui-sprites button:not(:where(.hand-card, .skill-node, .badge-token, .eq-tile, .deck-add,
+  .forest-sign, .forest-building, .mission-bar, .badge-pick, .deck-link-toggle,
+  #shrine-bar, #forest-sign, #defend *)):not(#_) {
+  border-width: 6px;
+  border-style: solid;
+  border-image-width: 6px;
+  padding: 4px 6px;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
 }
 html.ui-sprites button:hover:not(:disabled):not(#_) { --ui-face: var(--ui-hover); }
 html.ui-sprites button:is(.selected, .active, [aria-pressed="true"], [aria-expanded="true"]):not(#_) {
@@ -99,8 +125,46 @@ html.ui-sprites button:disabled:not(#_) {
   opacity: 0.65;
 }
 html.ui-sprites :is(.mini-action, .speed-arrow, .training-reset):not(#_) {
-  border-image-width: 6px;
+  border-width: 3px;
+  border-image-width: 3px;
+  padding: 1px;
 }
+
+/* Compact frames reserve their full edge, so neither text nor PNGs sit on trim. */
+html.ui-sprites :is(.gold-bonus, .base-enemy, .gem-ad, .height-actions button,
+  .run-consumables button, .dialog-x, .enemy-odds-x, .gold-bonus-x,
+  .training-cost, .training-timer, .training-box, .deck-remove, .back-btn,
+  .badge-detach, .deck-check, .tree-help, .research-about,
+  .eq-filter, .eq-level, .buy-quantity, .tier-arrow):not(#_) {
+  border-width: 3px;
+  border-image-width: 3px;
+  padding: 2px 3px;
+}
+html.ui-sprites :is(.gold-bonus, .base-enemy):not(#_) {
+  max-width: 100%;
+  min-width: 0;
+  min-height: 26px;
+  font-size: 10px;
+  line-height: 1.2;
+  gap: 3px;
+}
+html.ui-sprites .gold-bonus:not(#_) { flex-wrap: wrap; }
+html.ui-sprites .base-enemy > span { gap: 2px; }
+html.ui-sprites .ad-row { flex-direction: column; }
+html.ui-sprites .hud-controls .gem-ad:not(#_) {
+  width: 100%;
+  min-height: 36px;
+  gap: 2px;
+  padding: 2px;
+}
+html.ui-sprites .gem-ad-amount:not(#_) { font-size: 12px; gap: 3px; }
+html.ui-sprites .gem-ad small:not(#_) { font-size: 10px; letter-spacing: 0; }
+html.ui-sprites :is(.run-consumables button, .speed-arrow, .training-reset):not(#_) { padding: 0; }
+html.ui-sprites :is(.deck-remove, .badge-detach, .deck-check, .tree-help, .research-about):not(#_) { padding: 0; }
+html.ui-sprites .mini-action { height: auto; min-height: 36px; }
+html.ui-sprites .mini-action small { font-size: 7px; letter-spacing: 0; }
+html.ui-sprites .run-menu-items { grid-auto-columns: max(48px, var(--cell)); }
+html.ui-sprites :is(button, .gem-ad-amount) > .sprite-icon { flex-shrink: 0; }
 /* A Gem shortage is actionable: preserve the bright face and red price. */
 html.ui-sprites button.short:not(#_) { opacity: 1; filter: none; }
 html.ui-sprites :is(button, select, input):focus-visible:not(#_) {
@@ -119,7 +183,67 @@ html.ui-sprites :is(select, input[type="text"], input[type="search"],
   image-rendering: pixelated;
 }
 html.ui-sprites select option { background: #1b2430; color: #eee0b7; }
+html.ui-sprites :is(select, input[type="text"], input[type="search"], input[type="number"]):not(:where(#defend *)):not(#_) {
+  border-width: 6px;
+  border-style: solid;
+  border-image-width: 6px;
+  padding: 4px 6px;
+  min-width: 0;
+  max-width: 100%;
+}
 html.ui-sprites .hp-readout:not(#_) { border-image-width: 4px; }
+html.ui-sprites .stats:not(#_) { border-image-width: 6px; }
+html.ui-sprites .stats .portrait-top:not(#_) {
+  border-width: 3px;
+  border-style: solid;
+  border-image-width: 3px;
+  padding: 4px 2px;
+  min-width: 0;
+}
+html.ui-sprites .portrait-top small { font-size: 7px; letter-spacing: 0; }
+html.ui-sprites .portrait-top canvas { max-width: 100%; height: auto; }
+html.ui-sprites .xp-row { min-width: 0; margin-inline: 0; }
+html.ui-sprites .xp-row #level { flex-shrink: 0; }
+html.ui-sprites .stats .hp-readout:not(#_) {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  border: 4px solid transparent;
+  border-image-width: 4px;
+  padding: 1px 3px;
+}
+html.ui-sprites .hp-readout .heart { flex-shrink: 0; margin-right: 0; }
+html.ui-sprites .hp-readout b { float: none; flex: 1; min-width: 0; white-space: nowrap; text-align: right; }
+html.ui-sprites .keys { flex-wrap: wrap; }
+@media (max-width: 480px) {
+  html.ui-sprites .stats { grid-template-columns: 72px minmax(0, 1fr) 64px 38px; }
+  /* Long current/next values get their own line above the purchase controls. */
+  html.ui-sprites .training-row:not(.maxed) {
+    grid-template-columns: minmax(0, 1fr) 12px minmax(0, 1fr) 28px;
+    row-gap: 3px;
+  }
+  html.ui-sprites .training-row:not(.maxed) .training-label { grid-column: 1 / -1; grid-row: 1; }
+  html.ui-sprites .training-row > span.training-box { grid-column: 1; grid-row: 2; min-width: 0; overflow-wrap: anywhere; }
+  html.ui-sprites .training-row > .training-arrow { grid-column: 2; grid-row: 2; }
+  html.ui-sprites .training-row > span.training-box.next { grid-column: 3; }
+  html.ui-sprites .training-row > .training-speedup { grid-column: 4; grid-row: 2; }
+  html.ui-sprites .training-row:not(.maxed) > :is(.training-gold, .training-job) { grid-column: 1 / 3; grid-row: 3; }
+  html.ui-sprites .training-row:not(.maxed) > .training-now { grid-column: 3; grid-row: 3; }
+  html.ui-sprites .training-row:not(.maxed) > :is(.training-reset, .training-finish) { grid-column: 4; grid-row: 3; }
+}
+@media (max-width: 360px) {
+  html.ui-sprites .player-stats { grid-template-columns: minmax(0, 1fr); align-content: start; }
+  html.ui-sprites .stats .portrait-top:not(#_) {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr);
+    gap: 2px;
+    margin: 6px 4px 0;
+  }
+  html.ui-sprites .portrait-top canvas { grid-row: 1 / span 2; width: 28px; }
+  html.ui-sprites .portrait-top .shrine-bar { grid-column: 1 / -1; }
+  html.ui-sprites .portrait-top small { font-size: 6px; }
+  html.ui-sprites .vitals { padding-inline: 4px; }
+}
 html.ui-sprites :is(.deck-slot, .node-icon):not(#_) {
   border: 2px solid transparent;
   border-image: url("../public/assets/ui/frames/slot.png") 6 fill / 12px / 0 stretch;

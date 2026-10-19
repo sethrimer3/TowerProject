@@ -1,3 +1,4 @@
+import { boardFont } from "./sprite-font.ts";
 import { tileTransform, type FrameContext } from "./render-frame.ts";
 import { REVIVE_MS } from "./combat.ts";
 import { coinImage, INSPIRATION_URL, sprite } from "./board-popups.ts";
@@ -114,7 +115,7 @@ function drawPoints(f: FrameContext, age: number, points: number) {
   c.setTransform(tileTransform(f, f.playerX, f.playerY));
   c.globalAlpha = Math.min(1, age / 150, (1 - t) / 0.3);
   c.translate(12, -8 - rise);
-  c.font = "700 17px Cinzel";
+  c.font = boardFont(f.look.styledSprites, 17);
   c.textAlign = "right";
   c.textBaseline = "middle";
   c.lineJoin = "round";
@@ -303,7 +304,7 @@ function drawWords(f: FrameContext, age: number, fade: number, b: Blaze, text: s
   c.globalAlpha = fade;
   c.translate(f.width / 2, f.width * (0.32 + down));
   c.scale(pop, pop);
-  c.font = `700 ${size}px Cinzel`;
+  c.font = boardFont(f.look.styledSprites, size);
   // The words and icon together stand centred.
   const iconSize = icon ? size * 1.9 : 0, gap = icon ? size * 0.15 : 0;
   if (icon) c.translate(-(iconSize + gap) / 2, 0);

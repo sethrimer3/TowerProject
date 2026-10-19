@@ -20,6 +20,10 @@ Shell icon replacement updates an existing pair rather than inserting duplicate 
 Range inputs retain their original event handlers, values and keyboard behavior, with PNG track/thumb states applied only by the effective UI sprite class.
 The Gold-bonus and enemy-odds layers reuse the dialog PNG, and heal/loss preview segments use palette-matched PNG fills, including Overheal.
 `applyUiTheme` mirrors effective art in `ui-sprites` and `game-sprites` classes without changing the saved preference.
+The active UI kit uses the original local Tower Pixel face (`sprite-font.ts`, `assets/fonts/TowerPixel/`); text remains live, and Defend and badge glyphs keep their original typography.
+PNG button edges reserve real border space: six pixels on ordinary controls and three on compact controls, with matching `border-image-width`; picture buttons keep their own component frames.
+Phone HUD ad controls stack, very narrow portraits sit above vitals, menu cells keep a 48-pixel minimum, and phone Training values sit above purchase controls.
+`fitCombatStats` refits both combat values and sprite HP after a font load, resize or theme change; its cache includes available width, effective classes and the font revision.
 
 `main.ts` wiring, `PageGame` and the desks, `Game`'s UI commands, every page in `src/ui/`, the HUD, dialogs, lessons, the frame loop and the UI golden.
 

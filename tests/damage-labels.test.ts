@@ -104,7 +104,7 @@ test("each enemy in view is labelled at its lower-left corner, but not the one b
     set: () => true,
   });
   const at = (x: number, y: number): Tile => ((x === 1 && y === 1) || (x === 3 && y === 2) ? { kind: "enemy", enemy: enemy(30, 8, 1) } : { kind: "floor" }) as Tile;
-  const f = { c, s: 20, n: 5, left: 0, bottom: 0, world: { tile: at } } as unknown as FrameContext;
+  const f = { c, s: 20, n: 5, left: 0, bottom: 0, look: { styledSprites: false }, world: { tile: at } } as unknown as FrameContext;
   drawDamageLabels(f, new DamagePredictions(), hero(), null);
   const text = damageLabel(new DamagePredictions().cost(hero(), enemy(30, 8, 1)), 100).text;
   // Tile (1, 1)'s bottom edge is 4 rows down a 5-tile view of 20px tiles.
@@ -129,7 +129,7 @@ test("items wear what they give, rounded down: a potion's HP blue, a shard's ATK
     set: () => true,
   });
   const at = (x: number, y: number): Tile => (x === 1 && y === 1 ? potion : x === 2 && y === 2 ? { kind: "treasure" } : { kind: "floor" }) as Tile;
-  const f = { c, s: 20, n: 5, left: 0, bottom: 0, world: { tile: at } } as unknown as FrameContext;
+  const f = { c, s: 20, n: 5, left: 0, bottom: 0, look: { styledSprites: false }, world: { tile: at } } as unknown as FrameContext;
   drawDamageLabels(f, new DamagePredictions(), hero(), null);
   assert.deepEqual(texts, [], "no item labels without their values");
   drawDamageLabels(f, new DamagePredictions(), hero(), null, false, undefined, items);

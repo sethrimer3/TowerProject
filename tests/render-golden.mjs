@@ -54,7 +54,10 @@ try {
     };
   });
   await page.goto(server.url);
-  await page.evaluate(() => document.fonts.ready);
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+    await document.fonts.load('16px "Tower Pixel"');
+  });
 
   // The recorded hashes, so the page encodes PNGs and redraws scenes only
   // where they are needed; none when recording.

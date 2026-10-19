@@ -18,7 +18,11 @@ try {
     const result = await page.evaluate(async width => {
       const { combatSpriteScene } = await import("/tests/render-scenes.ts");
       const { Renderer } = await import("/src/rendering.ts");
+      const { loadSpriteFont } = await import("/src/sprite-font.ts");
+      await loadSpriteFont();
       const { COMBAT_SPRITES } = await import("/src/sprite-combat.ts");
+      const { BOARD_MARK_SPRITES } = await import("/src/sprite-board-marks.ts");
+      const artIds = [...COMBAT_SPRITES, ...Object.values(BOARD_MARK_SPRITES).map(mark => mark.id)];
       const { kitImage } = await import("/src/sprite-kit.ts");
       const { THEME_IDS } = await import("/src/theme-collection.ts");
       const scene = combatSpriteScene(), g = scene.g;
@@ -49,27 +53,27 @@ try {
       };
       const hash = async () => [...new Uint8Array(await crypto.subtle.digest("SHA-256", board.getContext("2d").getImageData(0, 0, board.width, board.height).data))].join(",");
       g.save.settings.uiSprites = false; draw(); await settle(); const off = await hash();
-      COMBAT_SPRITES.forEach(kitImage);
+      artIds.forEach(kitImage);
       g.save.settings.uiSprites = true; draw(); await settle(); const on = await hash();
       g.save.settings.uiTheme = "neon"; draw(); const uiTheme = await hash();
       g.save.settings.gameTheme = "neon"; draw(); await settle(); const gameTheme = await hash();
       g.save.settings.gameTheme = "classic"; draw(); await settle(); const restored = await hash();
       g.save.settings.uiSprites = false; draw(); const offAgain = await hash();
       g.save.settings.uiSprites = true; draw();
-      const loaded = COMBAT_SPRITES.filter(id => !!kitImage(id));
+      const loaded = artIds.filter(id => !!kitImage(id));
       // Native-size and 4x art contact sheet, with labels outside the PNGs.
       const sheet = document.createElement("canvas"); sheet.id = "combat-art";
-      sheet.width = 960; sheet.height = 750;
-      const c = sheet.getContext("2d"); c.imageSmoothingEnabled = false; c.fillStyle = "#293543"; c.fillRect(0, 0, 960, 750);
-      COMBAT_SPRITES.forEach((id, i) => {
-        const image = kitImage(id), x = (i % 6) * 160, y = Math.floor(i / 6) * 140;
+      sheet.width = 960; sheet.height = 1080;
+      const c = sheet.getContext("2d"); c.imageSmoothingEnabled = false; c.fillStyle = "#293543"; c.fillRect(0, 0, 960, 1080);
+      artIds.forEach((id, i) => {
+        const image = kitImage(id), x = (i % 6) * 160, y = Math.floor(i / 6) * 180;
         const scale = id.includes("shield") ? 1 : 4;
         c.drawImage(image, x + 8, y + 5);
         if (!id.includes("shield")) c.drawImage(image, x + 50, y + 10, image.naturalWidth * scale, image.naturalHeight * scale);
-        c.fillStyle = "#eee0b7"; c.font = "10px sans-serif"; c.fillText(id.replace("combat-", ""), x + 8, y + 130);
+        c.fillStyle = "#eee0b7"; c.font = "10px sans-serif"; c.fillText(id.replace("combat-", ""), x + 8, y + 170);
       });
       sheet.style.cssText = "position:fixed;left:0;top:0;z-index:100000"; document.body.append(sheet);
-      return { off, on, uiTheme, gameTheme, restored, offAgain, loaded, total: COMBAT_SPRITES.length };
+      return { off, on, uiTheme, gameTheme, restored, offAgain, loaded, total: artIds.length };
     }, width);
     assert.equal(result.loaded.length, result.total, "every combat PNG loads");
     assert.notEqual(result.off, result.on, "Sprites changes the real board");

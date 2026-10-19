@@ -1,3 +1,5 @@
+import { boardFont } from "./sprite-font.ts";
+import { drawBoardMark } from "./sprite-board-marks.ts";
 import { CHUNK, TOWER_HEIGHT, VIEWPORT_TILES } from "./config.ts";
 import { drawFlyers } from "./flyer-art.ts";
 import type { Game } from "./state.ts";
@@ -483,6 +485,7 @@ export class Renderer {
     c.lineCap = "round";
     for (const k of marks) {
       const [wx, wy] = k.split(",").map(Number), x = (wx - f.left + 0.5) * s + s * 0.22, y = (f.n - 0.5 - (wy - f.bottom)) * s - s * 0.22;
+      if (drawBoardMark(f, "skip", x, y)) continue;
       for (const [color, width] of [["#000c", Math.max(3, s * 0.12)], ["#d7a6ff", Math.max(1.5, s * 0.06)]] as const) {
         c.strokeStyle = color;
         c.lineWidth = width;
@@ -503,7 +506,7 @@ export class Renderer {
     if (!asked.length && !bangs.length) return;
     const c = f.c, s = f.s;
     c.save();
-    c.font = `bold ${Math.max(10, Math.round(s * 0.42))}px Cinzel, serif`;
+    c.font = boardFont(f.look.styledSprites, Math.max(10, Math.round(s * 0.42)), "bold", "Cinzel, serif");
     c.textAlign = "center";
     c.textBaseline = "middle";
     c.lineWidth = Math.max(2, s * 0.08);
@@ -531,6 +534,7 @@ export class Renderer {
     c.lineCap = "round";
     for (const k of ignored) {
       const [x, y] = centre(k);
+      if (drawBoardMark(f, "ignore", x, y)) continue;
       for (const [color, width] of [["#000c", Math.max(3, s * 0.13)], ["#ff6a5a", Math.max(1.5, s * 0.07)]] as const) {
         c.strokeStyle = color;
         c.lineWidth = width;
@@ -543,6 +547,7 @@ export class Renderer {
     }
     if (targeted) {
       const [x, y] = centre(targeted);
+      if (drawBoardMark(f, "target", x, y)) { c.restore(); return; }
       for (const [color, width] of [["#000c", Math.max(3, s * 0.12)], ["#7ad8ff", Math.max(1.5, s * 0.06)]] as const) {
         c.strokeStyle = color;
         c.lineWidth = width;
@@ -565,6 +570,7 @@ export class Renderer {
       r = s * 0.28;
     c.save();
     c.globalAlpha = Math.min(1, (g.blocked.until - f.now) / 700);
+    if (drawBoardMark(f, "blocked", x, y)) { c.restore(); return; }
     c.strokeStyle = "#ff5869";
     c.lineWidth = Math.max(2, s * 0.13);
     c.beginPath();
@@ -579,7 +585,7 @@ export class Renderer {
   private drawEffectText(f: FrameContext) {
     const g = this.game, c = f.c, s = f.s;
     if (g.effect.until <= f.now) return;
-    c.font = `600 ${Math.max(11, s * 0.6)}px Cinzel`;
+    c.font = boardFont(f.look.styledSprites, Math.max(11, s * 0.6), 600);
     c.textAlign = "center";
     c.fillStyle = "#f3d69a";
     c.shadowColor = "#000";

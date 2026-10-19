@@ -418,7 +418,7 @@ test("an enemy that appears where the latest fight ended wears its damage label,
     set: (t, k, v) => ((t[k as string] = v), true),
   });
   const renderer = new Renderer({ getContext: () => ({}), getBoundingClientRect: () => ({ width: 400 }) } as unknown as HTMLCanvasElement, g);
-  (renderer as unknown as { drawDamageLabels(f: FrameContext): void }).drawDamageLabels({ c, s: 20, n: 3, left: 0, bottom: 0, world: g.world } as unknown as FrameContext);
+  (renderer as unknown as { drawDamageLabels(f: FrameContext): void }).drawDamageLabels({ c, s: 20, n: 3, left: 0, bottom: 0, world: g.world, look: { styledSprites: false } } as unknown as FrameContext);
   // Tile (1, 0)'s bottom edge is 3 rows down a 3-tile view of 20px tiles.
   assert.ok(labelled.includes(`${20 + 1.2},${60 - 1.2}`), `labels at ${labelled}`);
 });

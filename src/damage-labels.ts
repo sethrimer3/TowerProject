@@ -1,3 +1,4 @@
+import { boardFont } from "./sprite-font.ts";
 import { netDamage, PLAYED_ROUNDS, predict, type CritRule } from "./combat.ts";
 import { forecast } from "./crit-forecast.ts";
 import type { Enemy, Player, Tile } from "./entities.ts";
@@ -139,7 +140,7 @@ export function itemLabel(t: Tile, x: number, y: number, player: Player, items: 
 export function drawDamageLabels(f: FrameContext, predictions: DamagePredictions, player: Player, fight: Fighting, relative = false, crit?: CritRule, items?: ItemValues, enemies = true) {
   const c = f.c, s = f.s, pad = s * 0.06;
   c.save();
-  c.font = `bold ${Math.max(8, Math.round(s * 0.3))}px Cinzel, serif`;
+  c.font = boardFont(f.look.styledSprites, Math.max(8, Math.round(s * 0.3)), "bold", "Cinzel, serif");
   c.textAlign = "left";
   c.textBaseline = "bottom";
   c.lineJoin = "round";
