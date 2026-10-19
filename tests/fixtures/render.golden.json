@@ -83,5 +83,15 @@
   "spriteEnvironment.moving": "79dfe392ced3d1fed13feeae",
   "spriteEnvironment.after": "1c3ab68d03ce59bc5ba6c75b",
   "spriteEnvironment.ripples": "bc372f50808507c19d0201db",
-  "spriteEnvironment.later": "111d6c678b946c16143673b7"
+  "spriteEnvironment.later": "111d6c678b946c16143673b7",
+  "spriteForestTower.settled": "c395b4fc1c5aaf0597abb07d",
+  "spriteForestTower.moving": "bc8d99ba0ba02ab08693351b",
+  "spriteForestTower.after": "776dcc79bc46a1b954da6f94",
+  "spriteForestTower.ripples": "cc4fa92b2a16727c2a190cde",
+  "spriteForestTower.later": "3b72cd802d2f3e8e3fb6d0d7",
+  "spriteForestDelve.settled": "5640589c3e7c98c903f3e441",
+  "spriteForestDelve.moving": "2dd3fc7d2fd0494541f2310f",
+  "spriteForestDelve.after": "1ba175666157844b122bbffd",
+  "spriteForestDelve.ripples": "3426311cb55609224bb51235",
+  "spriteForestDelve.later": "36b633b1fe1176ffaf7e1332"
 }

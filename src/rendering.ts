@@ -9,6 +9,8 @@ import { factorText } from "./gold-multipliers.ts";
 import { drawBlacksmith, drawEntrance, drawTournamentHall, OutsideWorld, OUTSIDE_SIZE, outsideWeather, roadsOf } from "./outside.ts";
 import { DecorLayer, type DecorFrame, type MirroredSprites } from "./decor-render.ts";
 import { OutsideGrass } from "./outside-grass.ts";
+import { ForestFoliage } from "./forest-foliage.ts";
+import { forestSpritesReady } from "./sprite-forest.ts";
 import { TileLayerCache } from "./tile-cache.ts";
 import { OutdoorWeather } from "./weather.ts";
 import { torchAnimationFrame } from "./game-sprites.ts";
@@ -208,9 +210,14 @@ export class Renderer {
    * in its grass, and the weather. */
   private drawOutside(f: FrameContext) {
     this.drawEachContents(f, f.c);
+    const forest = f.look.styledSprites && this.game.world instanceof OutsideWorld && forestSpritesReady();
+    if (forest) {
+      if (this.decorOn) this.drawForestGrass(f, "back");
+      this.forestFoliage.draw(f.c, f, this.game.world as OutsideWorld, this.decorOn);
+    }
     this.drawForestEntrance(f);
     this.drawRoute(f);
-    this.drawHeroOutside(f);
+    this.drawHeroOutside(f, forest);
     this.drawWeather(f);
   }
   /** What the dungeon board draws between the light's steps. */
@@ -417,19 +424,21 @@ export class Renderer {
     this.routePath.update(this.game.route, this.previewRoute, this.game.run.player, f.dt);
     this.routePath.draw(f);
   }
+  private forestFoliage = new ForestFoliage();
+  private drawForestGrass(f: FrameContext, layer: "back" | "front") {
+    this.grass.draw(f.c, f, this.game.world, this.game.run.seed, Math.floor(this.game.world.width / 2), outsideWeather(this.game.run.seed), f.now, f.dt,
+      this.playerX, this.playerY, f.look.reduceMotion, layer);
+  }
   /** The hero between the forest grass behind it and the blades at its feet. */
-  private drawHeroOutside(f: FrameContext) {
+  private drawHeroOutside(f: FrameContext, grassBehindFoliage = false) {
     const c = f.c, g = this.game;
-    const grass = (layer: "back" | "front") =>
-      this.grass.draw(c, f, g.world, g.run.seed, Math.floor(g.world.width / 2), outsideWeather(g.run.seed), f.now, f.dt,
-        this.playerX, this.playerY, f.look.reduceMotion, layer);
     const m = tileTransform(f, f.playerX, f.playerY);
-    if (this.decorOn) grass("back");
+    if (this.decorOn && !grassBehindFoliage) this.drawForestGrass(f, "back");
     c.save();
     c.setTransform(m);
     paintHero(c, f.look.spritesOff, f.look.styledSprites, f.heroFacing);
     c.restore();
-    if (this.decorOn) grass("front");
+    if (this.decorOn) this.drawForestGrass(f, "front");
   }
   private drawWeather(f: FrameContext) {
     const g = this.game;

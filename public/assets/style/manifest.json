@@ -1968,6 +1968,119 @@
       "file": "env-vine-tip.png",
       "width": 8,
       "height": 8
+    },
+    "forest-oak": {
+      "file": "forest-oak.png",
+      "width": 72,
+      "height": 72
+    },
+    "forest-elder": {
+      "file": "forest-elder.png",
+      "width": 96,
+      "height": 72
+    },
+    "forest-birch": {
+      "file": "forest-birch.png",
+      "width": 72,
+      "height": 72
+    },
+    "forest-pine": {
+      "file": "forest-pine.png",
+      "width": 48,
+      "height": 72
+    },
+    "forest-old-pine": {
+      "file": "forest-old-pine.png",
+      "width": 72,
+      "height": 96
+    },
+    "forest-young-pine": {
+      "file": "forest-young-pine.png",
+      "width": 24,
+      "height": 36
+    },
+    "forest-sapling": {
+      "file": "forest-sapling.png",
+      "width": 24,
+      "height": 36
+    },
+    "forest-shrub": {
+      "file": "forest-shrub.png",
+      "width": 24,
+      "height": 24
+    },
+    "forest-berries": {
+      "file": "forest-berries.png",
+      "width": 24,
+      "height": 24
+    },
+    "forest-fern": {
+      "file": "forest-fern.png",
+      "width": 24,
+      "height": 24
+    },
+    "forest-boulder": {
+      "file": "forest-boulder.png",
+      "width": 24,
+      "height": 24
+    },
+    "forest-mossy-boulder": {
+      "file": "forest-mossy-boulder.png",
+      "width": 24,
+      "height": 24
+    },
+    "forest-log": {
+      "file": "forest-log.png",
+      "width": 36,
+      "height": 12
+    },
+    "forest-stump": {
+      "file": "forest-stump.png",
+      "width": 24,
+      "height": 24
+    },
+    "forest-flowers": {
+      "file": "forest-flowers.png",
+      "width": 24,
+      "height": 24
+    },
+    "forest-mushrooms": {
+      "file": "forest-mushrooms.png",
+      "width": 12,
+      "height": 12
+    },
+    "forest-litter": {
+      "file": "forest-litter.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "forest-grass": {
+      "file": "forest-grass.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "forest-path": {
+      "file": "forest-path.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "forest-pebbles": {
+      "file": "forest-pebbles.png",
+      "width": 24,
+      "height": 24
+    },
+    "forest-tower-base": {
+      "file": "forest-tower-base.png",
+      "width": 216,
+      "height": 216
+    },
+    "forest-mountain-base": {
+      "file": "forest-mountain-base.png",
+      "width": 360,
+      "height": 240
     }
   },
   "terrain": {

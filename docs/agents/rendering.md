@@ -19,6 +19,16 @@ Other Game themes keep their own drawing and portrait art; changing UI themes af
 Vine leaves attach to the seeded stem joints, clipped to their tile and out of water; stems remain one-pixel connectors.
 Flowers and glowing caps replace their procedural bodies only after loading, and their emitted pixels and light colors follow the active PNGs.
 The light-color cache includes effective style and image revision, while source plans, light geometry, water motion and interactions stay unchanged.
+`sprite-forest.ts` defines twenty native forest components and two dedicated entrance bases, exported from the forest source atlases by `tools/prepare-forest-sprites.mjs`.
+The Tower base is 216 × 216 (nine tiles wide), the mountain base 360 × 240 (fifteen tiles wide); their bottom centers meet the existing stairs tile, and their cropped tops continue beyond the northern view without a complete roof or peak.
+`drawEntrance` uses these bases at native density, retaining the large original procedural entrance while a PNG loads or fails; the small building icons remain for interface uses.
+Once every forest material/object PNG is ready, `drawForestTile` switches atomically from the old tiles with baked trees to quiet ground-only grass, litter and path PNGs; the image revision invalidates cached ground.
+`forest-foliage.ts` plans coordinate-hashed understory and mature oak, elder, birch and pine crowns at 48–96 native pixels across multiple tiles, without consuming a game RNG or changing tiles.
+The full rectangular extent of every object clears all roads, the mode sign, entrance footprint and both building yards; crowns may overhang ordinary woodland floor.
+Plans cache by seed, mode, entrance column and road/building flags, with north-to-south ordering inside each layer and every large crown above smaller foliage.
+The active forest draws dynamic back grass, small foliage, crowns, buildings, route and hero, then the existing grass at the hero's feet and weather; dynamic grass retains its original planning, motion and interaction.
+Wall foliage remains with decoration off, while optional floor plants and dynamic grass follow that setting.
+Sprites off, board sprites off and other Game themes retain their original forest; UI themes gate the interface independently, and Defend is excluded from this forest extension.
 
 Board drawing (`Renderer`, frames, lighting, decor, popups, tile caches, the forest outside, weather), the render goldens, and the Medieval and Neon themes.
 
