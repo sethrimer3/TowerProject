@@ -5,6 +5,7 @@ import { createHash } from "node:crypto";
 import { BOON_IDS } from "../src/shrines.ts";
 import { BOON_SPRITES, SHRINE_CONTROL_SPRITES } from "../src/sprite-boons.ts";
 import { EQUIPMENT_FRAME_SPRITES, EQUIPMENT_MARK_SPRITES } from "../src/sprite-equipment.ts";
+import { SMALL_CONTROL_SPRITES, SLIDER_SPRITES } from "../src/sprite-controls.ts";
 import { BADGE_IDS } from "../src/badges.ts";
 import { CARD_SPRITE_LAYERS } from "../src/sprite-cards.ts";
 import { ICON_SPRITES, WORLD_SPRITES, CONTROL_SPRITES, DETAIL_SPRITES, CITY_SPRITES, DEFEND_STRUCTURE_SPRITES, NAMED_ENEMY_SPRITES, drawKit, kitEnemy, spriteRevision } from "../src/sprite-kit.ts";
@@ -18,7 +19,7 @@ import { paintContents, paintHero } from "../src/tile-painters.ts";
 test("every world, UI, Equipment and card sprite ships as a real native-sized PNG", () => {
   const base = new URL("../public/assets/style/", import.meta.url);
   const manifest = JSON.parse(readFileSync(new URL("manifest.json", base), "utf8"));
-  for (const id of [...EQUIPMENT_FRAME_SPRITES, ...EQUIPMENT_MARK_SPRITES, ...Object.values(BOON_SPRITES), ...SHRINE_CONTROL_SPRITES, "shrine-fill", ...UI_DETAIL_SPRITES, ...UI_ORNAMENT_SPRITES, ...ICON_SPRITES, ...WORLD_SPRITES, ...CONTROL_SPRITES, ...DETAIL_SPRITES, ...CITY_SPRITES, ...DEFEND_STRUCTURE_SPRITES, ...NAMED_ENEMY_SPRITES.map(id => `enemy-${id}`), ...Object.keys(ICON_ROWS).map(id => `equip-${id}`), ...Object.keys(CARDS).map(id => `card-${id}`), ...BADGE_IDS.map(id => `badge-${id}`), "badge-star", "card-exchange", ...["common", "rare", "epic"].map(rarity => `badge-frame-${rarity}`)]) {
+  for (const id of [...Object.values(SMALL_CONTROL_SPRITES), ...SLIDER_SPRITES, "ui-fill-gain", ...EQUIPMENT_FRAME_SPRITES, ...EQUIPMENT_MARK_SPRITES, ...Object.values(BOON_SPRITES), ...SHRINE_CONTROL_SPRITES, "shrine-fill", ...UI_DETAIL_SPRITES, ...UI_ORNAMENT_SPRITES, ...ICON_SPRITES, ...WORLD_SPRITES, ...CONTROL_SPRITES, ...DETAIL_SPRITES, ...CITY_SPRITES, ...DEFEND_STRUCTURE_SPRITES, ...NAMED_ENEMY_SPRITES.map(id => `enemy-${id}`), ...Object.keys(ICON_ROWS).map(id => `equip-${id}`), ...Object.keys(CARDS).map(id => `card-${id}`), ...BADGE_IDS.map(id => `badge-${id}`), "badge-star", "card-exchange", ...["common", "rare", "epic"].map(rarity => `badge-frame-${rarity}`)]) {
     const asset = manifest.assets[id];
     assert.ok(asset, id);
     const png = readFileSync(new URL(asset.file, base));
@@ -123,4 +124,19 @@ test("every Shrine boon has distinct native PNG art and both kinds keep complete
     return createHash("sha256").update(png).digest("hex");
   });
   assert.equal(new Set(hashes).size, ids.length, "standard and trade-off boons keep distinct subjects");
+});
+
+test("small controls keep their native grid and slider states remain distinct", () => {
+  const png = (id: string) => readFileSync(new URL(`../public/assets/style/${id}.png`, import.meta.url));
+  for (const [name, id] of Object.entries(SMALL_CONTROL_SPRITES)) {
+    const size = name === "star" ? 24 : 12, data = png(id);
+    assert.equal(data.readUInt32BE(16), size, id); assert.equal(data.readUInt32BE(20), size, id);
+  }
+  const hashes = SLIDER_SPRITES.map(id => createHash("sha256").update(png(id)).digest("hex"));
+  assert.equal(new Set(hashes).size, 3, "normal/active thumbs and track have distinct art");
+  for (const id of SLIDER_SPRITES.slice(0, 2)) {
+    assert.equal(png(id).readUInt32BE(16), 24, id); assert.equal(png(id).readUInt32BE(20), 24, id);
+  }
+  assert.equal(png(SLIDER_SPRITES[2]).readUInt32BE(16), 48);
+  assert.equal(png(SLIDER_SPRITES[2]).readUInt32BE(20), 12);
 });

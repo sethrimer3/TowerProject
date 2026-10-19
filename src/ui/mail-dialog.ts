@@ -1,3 +1,4 @@
+import { controlIcon } from "./control-icon.ts";
 import type { MailClient } from "../mail/client.ts";
 import { waiting, type MailItem, type MailMessage } from "../mail/message.ts";
 import { CURRENCIES } from "../shop/currency.ts";
@@ -29,7 +30,7 @@ const bodyHtml = (body: string) =>
 /** One item: its icon over its amount and name; a kind this game doesn't
  * know asks for an update. */
 function itemHtml(i: MailItem, claimed: boolean) {
-  const mark = claimed ? `<span class="mail-item-check" aria-label="claimed">✓</span>` : "";
+  const mark = claimed ? `<span class="mail-item-check" aria-label="claimed">${controlIcon("check")}</span>` : "";
   if (i.kind === "currency")
     return `<span class="mail-item">${CURRENCY_ICONS[i.currency]()}<b>${i.amount.toLocaleString("en-US")}</b><small>${CURRENCIES[i.currency].name}</small>${mark}</span>`;
   if (i.kind === "tickets") return `<span class="mail-item">${ticketIcon()}<b>${i.amount}</b><small>${i.amount === 1 ? "Ticket" : "Tickets"}</small>${mark}</span>`;
@@ -96,7 +97,7 @@ export class MailDialog {
     const rows = this.recent.map((m) => {
       const gift = waiting(m) ? giftIcon("gift-icon mail-gift") : "";
       const label = `${m.subject || "(no subject)"}${m.read ? "" : ", unread"}${waiting(m) ? ", reward to claim" : ""}`;
-      const remove = waiting(m) ? "" : `<button class="mail-remove" data-mail-hide="${escapeHtml(m.id)}" aria-label="Remove ${escapeHtml(m.subject)}" title="Remove">✕</button>`;
+      const remove = waiting(m) ? "" : `<button class="mail-remove" data-mail-hide="${escapeHtml(m.id)}" aria-label="Remove ${escapeHtml(m.subject)}" title="Remove">${controlIcon("close")}</button>`;
       return `<li class="mail-row${m.read ? "" : " unread"}"><button class="mail-open" data-mail-open="${escapeHtml(m.id)}" aria-label="${escapeHtml(label)}"><i class="mail-dot" aria-hidden="true"></i><span class="mail-subject">${escapeHtml(m.subject)}</span>${gift}<small class="mail-age">${age(now, m.sentAt)}</small></button>${remove}</li>`;
     });
     return `<div class="mail-dialog"><small>INBOX</small><h2>Mail</h2><ul class="mail-list">${rows.join("")}</ul><div class="dialog-actions"><button id="mail-close">Close</button></div></div>`;

@@ -1,3 +1,4 @@
+import { controlIcon } from "./control-icon.ts";
 import type { LifetimeCurrency, Profile } from "../profile.ts";
 import type { AppContext } from "./app.ts";
 import { el } from "./dom.ts";
@@ -37,7 +38,7 @@ export function statsRows(p: Profile): [string, string][] {
  * closed by the X at its top right, and copied as text by the button beside it. */
 export function showStats(ctx: AppContext) {
   const modal = ctx.modal, rows = statsRows(ctx.game.save.profile);
-  modal.innerHTML = `<div class="stats-dialog"><button id="stats-close" class="dialog-x" aria-label="Close" title="Close">✕</button>${copyButton("stats-copy")}<small>PLAYER PROFILE</small><h2>Stats</h2>
+  modal.innerHTML = `<div class="stats-dialog"><button id="stats-close" class="dialog-x" aria-label="Close" title="Close">${controlIcon("close")}</button>${copyButton("stats-copy")}<small>PLAYER PROFILE</small><h2>Stats</h2>
     <table class="stats-table"><tbody>${rows.map(([label, value]) => `<tr><th scope="row">${label}</th><td>${value}</td></tr>`).join("")}</tbody></table></div>`;
   el("stats-close").onclick = () => modal.close();
   const copy = el("stats-copy") as HTMLButtonElement;

@@ -1,3 +1,4 @@
+import { controlIcon } from "./control-icon.ts";
 import {
   RESEARCH, RESEARCH_CATEGORIES, RESEARCH_IDS, RESEARCH_TARGETS, activeSlot, cannotSwitch, describe, duration, jobProgress, price as researchPrice,
   maxLevel, missing, nextArchivistPrice, nextLevel, research, researchCompleted, researchLevel, researched, status, withNextLevel,
@@ -118,7 +119,7 @@ export class ArchivesPanel {
     const options = <T extends string>(entries: [T, string][], chosen: T) =>
       entries.map(([id, name]) => `<option value="${id}" ${id === chosen ? "selected" : ""}>${name}</option>`).join("");
     const categories: ["all" | ResearchCategory, string][] = [["all", "All categories"], ...Object.entries(RESEARCH_CATEGORIES) as [ResearchCategory, string][]];
-    return `<section class="archives picking"><header class="tree-heading"><h3>Select Research</h3><small class="research-pick-for">ARCHIVIST ${slot + 1}</small><button id="research-pick-close" class="research-pick-close" aria-label="Back to the archivists without choosing" title="Back">✕</button></header>
+    return `<section class="archives picking"><header class="tree-heading"><h3>Select Research</h3><small class="research-pick-for">ARCHIVIST ${slot + 1}</small><button id="research-pick-close" class="research-pick-close" aria-label="Back to the archivists without choosing" title="Back">${controlIcon("close")}</button></header>
       <div class="research-filters">
         <input type="search" id="research-search" placeholder="Search research" aria-label="Search research" value="${this.search.replace(/"/g, "&quot;")}">
         <select id="research-category" aria-label="Category">${options(categories, this.category)}</select>${this.anyCompleted() ? `<label class="research-hide-done"><input type="checkbox" id="research-hide-done" ${this.hideCompleted ? "checked" : ""}> Hide Completed</label>` : ""}
@@ -297,7 +298,7 @@ export class ArchivesPanel {
       const confirm = queuing
         ? `<button id="speed-up-confirm" ${unchanged ? "disabled" : ""} aria-label="Next Speed Up: ${choice.factor}x for ${choice.hours} hours, ${cells.toLocaleString("en-US")} Cells as this one ends">Next Speed Up · ${cellIcon()} <b>${shortAmount(cells, 1000)}</b></button>`
         : `<button id="speed-up-confirm" ${active || short ? "disabled" : ""} aria-label="Speed Up for ${cells.toLocaleString("en-US")} Cells">Speed Up · ${cellIcon()} <b>${shortAmount(cells, 1000)}</b></button>`;
-      modal.innerHTML = `<div class="speed-up"><button id="speed-up-close" class="dialog-x" aria-label="Close" title="Close">✕</button>
+      modal.innerHTML = `<div class="speed-up"><button id="speed-up-close" class="dialog-x" aria-label="Close" title="Close">${controlIcon("close")}</button>
         <h2>Speed Up</h2><p class="speed-up-what">${RESEARCH[job.research].name} · level ${job.level}</p><p>Use cells to speed up research</p>
         <div class="speed-up-options" role="group" aria-label="How long">${SPEED_UP_HOURS.map((h) => option("hours", h, `${h}h`)).join("")}</div>
         <div class="speed-up-options" role="group" aria-label="How fast">${SPEED_UP_FACTORS.map((f) => option("factor", f, `${f}x`)).join("")}</div>

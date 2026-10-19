@@ -23,3 +23,6 @@ It covers independent theme overrides, original-image fallback, live control cou
 The UI golden's Shrine fixtures are appended after earlier fixtures so their seeded runs keep the same seeds.
 
 `tests/equipment-sprites-browser.mjs` starts its own Vite server for Equipment's PNG frames and status marks, exercising leveling, both loadouts, selection, assembly, save/reload, actionable Gem shortages, missing-image fallback and independent theme overrides at phone/desktop widths.
+
+`tests/ui-controls-sprites-browser.mjs` starts its own Vite server for real navigation and popup-close clicks on PNG images, native range inputs with keyboard/pointer and save/reload, focus, Overheal fills, reward art, fallbacks and independent theme overrides at phone/desktop widths.
+It checks slider variables and actual PNG response loads rather than Chromium's unsupported computed styles for its internal thumb pseudo-element.

@@ -1,4 +1,5 @@
 import { boonIcon } from "./boon-icon.ts";
+import { controlIcon } from "./control-icon.ts";
 import { kitIcon } from "../sprite-kit.ts";
 import { researched } from "../archives.ts";
 import { BOON_IDS, STANDARD_BOONS, bans, boon, boonLabel, type BoonId } from "../shrines.ts";
@@ -63,13 +64,13 @@ export class ShrinesPage {
           return `<li class="boon-rank ${boon(id).kind}${counted ? " ranked" : ""}${isBanned ? " banned" : ""}" data-rank="${id}">` +
             (isBanned ? `<span class="rank-grip" aria-hidden="true"></span>` : `<span class="rank-grip" aria-hidden="true">${kitIcon("shrine-grip", "⋮⋮", "shrine-grip-icon")}</span>`) +
             `${boonIcon(id)}<span class="rank-name">${label(id)}</span>` +
-            (isBanned ? "" : `<button class="rank-move" data-up="${i}" aria-label="Move up"${i === 0 ? " disabled" : ""}>${kitIcon("arrow-up", "▲", "rank-arrow-icon")}</button><button class="rank-move" data-down="${i}" aria-label="Move down"${i >= order.length - banned.length - 1 ? " disabled" : ""}>${kitIcon("arrow-down", "▼", "rank-arrow-icon")}</button>`) +
+            (isBanned ? "" : `<button class="rank-move" data-up="${i}" aria-label="Move up"${i === 0 ? " disabled" : ""}>${controlIcon("up", "▲", "rank-arrow-icon")}</button><button class="rank-move" data-down="${i}" aria-label="Move down"${i >= order.length - banned.length - 1 ? " disabled" : ""}>${controlIcon("down", "▼", "rank-arrow-icon")}</button>`) +
             `</li>`;
         }).join("")}</ol></section>`);
     }
     if (!parts.length) parts.push(`<p class="hint">Research First Boon Choice, Ban Boons or Auto Pick Ranking in the Archives to set them here.</p>`);
     el("shrines").innerHTML =
-      `<button class="missions-close" id="shrines-close" aria-label="Close" title="Close">${kitIcon("close", "✕", "shrine-close-icon")}</button>` +
+      `<button class="missions-close" id="shrines-close" aria-label="Close" title="Close">${controlIcon("close", "✕", "shrine-close-icon")}</button>` +
       `<div class="page-title"><small>BETWEEN RUNS</small><h2>Shrine Boons</h2></div>` +
       (this.ctx.game.run.outside ? "" : `<p class="hint">Return to the forest to change these.</p>`) + parts.join("");
     el("shrines-close").onclick = () => this.ctx.navigate(this.from || "board");

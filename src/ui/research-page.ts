@@ -1,3 +1,4 @@
+import { controlIcon } from "./control-icon.ts";
 import { askForGems, helpButton, showHelp } from "./dialogs.ts";
 import { play } from "../sound.ts";
 import { permanentBoost, trainingRate } from "../shop/entitlements.ts";
@@ -45,7 +46,7 @@ export class ResearchPage {
   render() {
     if (!this.archivesOpen) this.tab = "training";
     this.nextCountdown = 0;
-    const back = this.ctx.game.run.outside ? "" : `<button class="back" id="research-back">← Back</button>`;
+    const back = this.ctx.game.run.outside ? "" : `<button class="back" id="research-back">${controlIcon("back")} Back</button>`;
     const head = `${back}${this.tabsHtml()}`;
     if (this.tab === "archives") this.renderArchives(head);
     else this.renderTraining(head);

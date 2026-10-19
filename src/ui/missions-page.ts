@@ -1,3 +1,4 @@
+import { controlIcon } from "./control-icon.ts";
 import { EQUIP_MATERIALS, type EquipMaterialId } from "../equipment/catalog.ts";
 import type { MissionPayout } from "../game/mission-desk.ts";
 import { MISSION_CAPACITY, MISSIONS, missionReward, WEEKLY_MAX, WEEKLY_REWARDS, weeklyReward } from "../missions/catalog.ts";
@@ -86,7 +87,7 @@ export class MissionsPage {
     this.shown = this.state();
     const list = missions.list;
     el("missions").innerHTML =
-      `<button class="missions-close" id="missions-close" aria-label="Close" title="Close">✕</button>` +
+      `<button class="missions-close" id="missions-close" aria-label="Close" title="Close">${controlIcon("close")}</button>` +
       `<div class="page-title"><small>NEW MISSIONS EVERY 8 HOURS</small><h2>Missions</h2></div>` +
       this.weekly() +
       `<p class="missions-next" id="missions-next">${this.nextText()}</p>` +

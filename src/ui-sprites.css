@@ -12,6 +12,9 @@ html.ui-sprites {
   --ui-panel: url("../public/assets/ui/frames/panel.png");
   --ui-dialog: url("../public/assets/ui/frames/dialog.png");
   --ui-field: url("../public/assets/ui/frames/field.png");
+  --ui-slider-thumb: url("../public/assets/style/ui-slider-thumb.png");
+  --ui-slider-thumb-active: url("../public/assets/style/ui-slider-thumb-active.png");
+  --ui-slider-track: url("../public/assets/style/ui-slider-track.png");
   --ui-face: var(--ui-button);
   --gold: #e1bb78;
   --muted: #8b9a9d;
@@ -455,8 +458,75 @@ html.ui-sprites .eq-arrow:not(#_) {
   width: 24px;
   height: 24px;
   flex-shrink: 0;
-  font-size: 0;
-  background: url("../public/assets/style/arrow-right.png") center / 24px 24px no-repeat;
+  font-size: 26px;
+  background: none;
   image-rendering: pixelated;
   text-shadow: none;
 }
+
+/* Small controls have their own native grid, rather than shrinking large art. */
+html.ui-sprites .ui-control-icon.sprite-ready { width: 12px; height: 12px; vertical-align: middle; }
+html.ui-sprites .eq-arrow > .ui-control-icon.sprite-ready { width: 24px; height: 24px; }
+html.ui-sprites .ui-control-icon.reward-reveal-star.sprite-ready { width: 72px; height: 72px; text-shadow: none; }
+html.ui-sprites .reward-reveal .card-reveal-text :is(p, span):not(#_) { color: #b8c2bb; text-shadow: none; }
+html.ui-sprites .reward-reveal .card-reveal-text b:not(#_) { color: #eee0b7; text-shadow: none; }
+html.ui-sprites .reward-reveal .card-reveal-text small:not(#_) { color: #e1bb78; text-shadow: none; }
+html.ui-sprites :is(.gold-bonus-box, .enemy-odds-box):not(#_) {
+  border: 1px solid transparent;
+  border-image: var(--ui-dialog) 6 fill / 12px / 0 stretch;
+  border-radius: 0;
+  background: #1b2430;
+  box-shadow: none;
+  image-rendering: pixelated;
+  color: #eee0b7;
+}
+html.ui-sprites :is(.gold-bonus-box, .enemy-odds-box) :is(h2, th):not(#_) { color: #e1bb78; }
+html.ui-sprites :is(.gold-bonus-box, .enemy-odds-box) :is(td, li, p):not(#_) { color: #b8c2bb; }
+html.ui-sprites .gold-bonus-box li.inactive:not(#_) { color: #8b9a9d; }
+html.ui-sprites :is(#health-gain, #overheal-gain):not(#_) { background: url("../public/assets/style/ui-fill-gain.png") left top / 32px 100% repeat-x; }
+html.ui-sprites :is(#health-loss, #overheal-loss):not(#_) { background: url("../public/assets/style/shrine-fill.png") left top / 32px 100% repeat-x; image-rendering: pixelated; }
+
+/* The native input retains its value, keyboard behavior and accessible label. */
+html.ui-sprites input[type="range"]:not(#_) {
+  appearance: none;
+  height: 24px;
+  background: transparent;
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+  image-rendering: pixelated;
+}
+html.ui-sprites input[type="range"]::-webkit-slider-runnable-track {
+  height: 12px;
+  border: 1px solid transparent;
+  border-image: var(--ui-slider-track) 6 fill / 6px / 0 stretch;
+  background: #10151c;
+}
+html.ui-sprites input[type="range"]::-moz-range-track {
+  height: 12px;
+  border: 1px solid transparent;
+  border-image: var(--ui-slider-track) 6 fill / 6px / 0 stretch;
+  background: #10151c;
+}
+html.ui-sprites input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  margin-top: -7px;
+  border: 0;
+  border-radius: 0;
+  background: var(--ui-slider-thumb) center / 24px 24px no-repeat;
+  box-shadow: none;
+  cursor: pointer;
+}
+html.ui-sprites input[type="range"]::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 0;
+  background: var(--ui-slider-thumb) center / 24px 24px no-repeat;
+  box-shadow: none;
+  cursor: pointer;
+}
+html.ui-sprites input[type="range"]:active::-webkit-slider-thumb { background-image: var(--ui-slider-thumb-active); }
+html.ui-sprites input[type="range"]:active::-moz-range-thumb { background-image: var(--ui-slider-thumb-active); }

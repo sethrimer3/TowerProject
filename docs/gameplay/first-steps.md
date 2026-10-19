@@ -8,6 +8,8 @@ Turn it off to return to your selected UI theme's usual controls.
 The default Medieval and Classic interface looks use the sprites; other UI themes override them.
 Other Game themes override world sprites independently, and returning to Classic restores them while the option is on.
 The separate **Turn off board sprites** option controls the dungeon artwork, including the optional shared sprite kit.
+With Sprites on, small navigation and close marks, slider tracks and handles, reward stars, and the Gold-bonus and enemy-odds popup frames share the pixel-art look.
+Sliders still work with pointer or keyboard input and show their values as live text.
 
 ## The first runs
 

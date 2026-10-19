@@ -1,3 +1,4 @@
+import { controlIcon } from "./control-icon.ts";
 import { whole } from "../whole.ts";
 import { CURRENCIES, type CurrencyId } from "../shop/currency.ts";
 import { estimatedServerTime } from "../shop/clock.ts";
@@ -91,13 +92,13 @@ export class ShopPage {
     const owned = (o: ShopOffer) => o.category === "special" && soldOut(save, o, this.now);
     const section = (id: CategoryId, offers: ShopOffer[], extra = "") => {
       const c = CATEGORIES[id], locked = unmet(save, c.requires);
-      if (locked) return `<section class="shop-section locked"><h3>🔒 ${c.name}</h3><p class="hint">${requirementText(locked)}</p></section>`;
+      if (locked) return `<section class="shop-section locked"><h3>${controlIcon("lock")} ${c.name}</h3><p class="hint">${requirementText(locked)}</p></section>`;
       return offers.length ? `<section class="shop-section shop-${id} ${extra}"><h3>${c.name}</h3><div class="shop-grid">${offers.map((o) => this.card(o)).join("")}</div>${c.note ? `<p class="shop-note">${c.note}</p>` : ""}</section>` : "";
     };
     const of = (id: CategoryId) => OFFERS.filter((o) => o.category === id);
     const ownedOffers = OFFERS.filter(owned);
     el("shop").innerHTML =
-      `<button class="back" id="shop-back">← Back</button><div class="page-title"><small>SUPPLIES FOR THE ASCENT</small><h2>Shop</h2></div>` +
+      `<button class="back" id="shop-back">${controlIcon("back")} Back</button><div class="page-title"><small>SUPPLIES FOR THE ASCENT</small><h2>Shop</h2></div>` +
       this.purse() +
       `<p class="shop-message" id="shop-message" aria-live="polite">${this.message}</p>` +
       section("limited", of("limited")) +

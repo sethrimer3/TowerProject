@@ -1,3 +1,4 @@
+import { controlIcon } from "./control-icon.ts";
 import { kitIcon } from "../sprite-kit.ts";
 import { researched } from "../archives.ts";
 import { KEY_NAMES } from "../doors.ts";
@@ -157,7 +158,7 @@ export class RunNotesDialog {
   /** The dialog's frame: the X, the copy button, the heading, and the body the tables fill. */
   private frame() {
     const { game } = this.ctx;
-    this.dialog.innerHTML = `<button id="run-notes-close" class="dialog-x" aria-label="Close" title="Close">✕</button>${copyButton("run-notes-copy")}<small>NOTE TAKING</small><h2 id="run-notes-title"></h2><div class="notes-body"></div>`;
+    this.dialog.innerHTML = `<button id="run-notes-close" class="dialog-x" aria-label="Close" title="Close">${controlIcon("close")}</button>${copyButton("run-notes-copy")}<small>NOTE TAKING</small><h2 id="run-notes-title"></h2><div class="notes-body"></div>`;
     this.dialog.querySelector<HTMLButtonElement>("#run-notes-close")!.onclick = () => this.dialog.close();
     const copy = this.dialog.querySelector<HTMLButtonElement>("#run-notes-copy")!;
     copy.onclick = () => copyText(copy, notesText(this.dialog.querySelector("#run-notes-title")!.textContent ?? "", notesSections(game.save, game.mode, game.run, game.clock())));
