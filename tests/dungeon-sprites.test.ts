@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { DUNGEON_ATLASES, DUNGEON_EDGE_ATLAS, drawDungeonGround, dungeonAtlasId, dungeonFloorFrame, dungeonMaterial } from "../src/sprite-dungeon.ts";
+import { DUNGEON_ATLASES, DUNGEON_EDGE_ATLAS, drawDungeonGround, dungeonAtlasId, dungeonDiagonals, dungeonFloorFrame, dungeonMaterial, dungeonWallVariant } from "../src/sprite-dungeon.ts";
 import { paintTile, type BoardLook } from "../src/tile-painters.ts";
 import { WaterReflections, type ReflectionScene } from "../src/decor-reflections.ts";
 import type { TileDecor } from "../src/decor.ts";
@@ -11,7 +11,7 @@ test("interior PNGs contain native 24-pixel floors, all sixteen wall joins and s
   assert.equal(DUNGEON_ATLASES.length, 21);
   for (const id of [...DUNGEON_ATLASES, DUNGEON_EDGE_ATLAS]) {
     const bytes = readFileSync(new URL(`../public/assets/style/${id}.png`, import.meta.url));
-    assert.deepEqual([bytes.readUInt32BE(16), bytes.readUInt32BE(20)], [96, id === DUNGEON_EDGE_ATLAS ? 192 : 120], id);
+    assert.deepEqual([bytes.readUInt32BE(16), bytes.readUInt32BE(20)], [96, id === DUNGEON_EDGE_ATLAS ? 216 : 240], id);
     assert.equal(manifest.assets[id].tile, true);
   }
 });
@@ -33,7 +33,7 @@ test("Delve stone and earth form repeatable contiguous patches rather than indep
 
 test("all wall connections, material floors and live tile contents use the correct native atlas frame", () => {
   const original = Object.getOwnPropertyDescriptor(globalThis, "Image");
-  class ReadyImage { src = ""; complete = true; naturalWidth = 96; naturalHeight = 120; }
+  class ReadyImage { src = ""; complete = true; naturalWidth = 96; naturalHeight = 240; }
   Object.defineProperty(globalThis, "Image", { configurable: true, value: ReadyImage });
   const draws: (string | number)[][] = [];
   const c = new Proxy({}, { set: () => true, get: (_, name) => name === "drawImage"
@@ -43,7 +43,7 @@ test("all wall connections, material floors and live tile contents use the corre
       const neighbors = { northWall: !!(mask & 1), eastWall: !!(mask & 2), southWall: !!(mask & 4), westWall: !!(mask & 8) };
       draws.length = 0;
       assert.ok(drawDungeonGround(c, { mode: "tower", height: 0, seed: 3, x: 8, y: 5, wall: true, empty: false, neighbors }));
-      assert.deepEqual(draws, [["dungeon-masonry-0.png", (4 + mask) % 4 * 24, Math.floor((4 + mask) / 4) * 24, 24, 24, 0, 0, 24, 24]]);
+      assert.deepEqual(draws, [["dungeon-masonry-0.png", (20 + mask) % 4 * 24, Math.floor((20 + mask) / 4) * 24, 24, 24, 0, 0, 24, 24]]);
     }
     const world = { tile: () => ({ kind: "floor" as const }) };
     const look: BoardLook = { mode: "delve", height: 0, seed: 1107, outside: false, entranceX: 8,
@@ -60,6 +60,50 @@ test("all wall connections, material floors and live tile contents use the corre
     }
     assert.equal(materialSeen.size, 2);
     assert.equal(dungeonAtlasId("earth", 8), "dungeon-earth", "dirt stays earthy in every biome");
+  } finally {
+    if (original) Object.defineProperty(globalThis, "Image", original); else Reflect.deleteProperty(globalThis, "Image");
+  }
+});
+
+test("wall variation is seeded, diagonal corners read real openings, and corner PNGs stay on eligible joins", () => {
+  assert.deepEqual(new Set(Array.from({ length: 30 }, (_, x) => dungeonWallVariant(x, 5, 3))), new Set([0, 1]));
+  const original = Object.getOwnPropertyDescriptor(globalThis, "Image");
+  class ReadyImage { src = ""; complete = true; naturalWidth = 96; naturalHeight = 240; }
+  Object.defineProperty(globalThis, "Image", { configurable: true, value: ReadyImage });
+  const frames: number[] = [];
+  const c = new Proxy({}, { set: () => true, get: (_, name) => name === "drawImage"
+    ? (_image: ReadyImage, sx: number, sy: number) => frames.push(sy / 24 * 4 + sx / 24) : () => {} }) as CanvasRenderingContext2D;
+  try {
+    const tile = { mode: "tower" as const, height: 0, seed: 3, x: 8, y: 5, wall: true, empty: false };
+    const calls: string[] = [];
+    const diagonals = dungeonDiagonals({ tile: (x, y) => { calls.push(`${x},${y}`); return x === 7 && y === 6 ? { kind: "door", color: "blue" } : { kind: "wall" }; } }, "tower", 8, 5, 3);
+    assert.deepEqual(calls, ["7,6", "9,6", "9,4", "7,4"]);
+    assert.deepEqual(diagonals, ["masonry", "wall", "wall", "wall"], "a door is an opening; no out-of-world opening is invented");
+    for (let corner = 0; corner < 4; corner++) for (const joined of [false, true]) {
+      frames.length = 0;
+      const neighbors = { northWall: joined, eastWall: joined, southWall: joined, westWall: joined };
+      const d = ["wall", "wall", "wall", "wall"] as ("wall" | "masonry")[]; d[corner] = "masonry";
+      drawDungeonGround(c, { ...tile, neighbors }, d);
+      assert.equal(frames.length, 2); assert.equal(frames[1], 36 + corner);
+    }
+    frames.length = 0;
+    drawDungeonGround(c, { ...tile, neighbors: { northWall: true, eastWall: false, southWall: true, westWall: false } }, ["masonry", "masonry", "masonry", "masonry"]);
+    assert.equal(frames.length, 1, "straight sides keep their original lips");
+    frames.length = 0;
+    drawDungeonGround(c, { ...tile, neighbors: { northWall: true, eastWall: true, southWall: true, westWall: true } }, [undefined, "wall", "wall", "wall"]);
+    assert.equal(frames.length, 1, "missing diagonal terrain is not an opening");
+    const seed = 1107;
+    let at: { x: number; y: number } | undefined;
+    for (let y = 0; y < 20 && !at; y++) for (let x = 0; x < 20 && !at; x++)
+      if ([[0, 0], [0, 1], [1, 0], [0, -1], [-1, 0]].every(([dx, dy]) => dungeonMaterial("delve", x + dx, y + dy, seed) === "stone")) at = { x, y };
+    assert.ok(at);
+    const floor = { mode: "delve" as const, height: 0, seed, ...at, wall: false, empty: true };
+    frames.length = 0;
+    drawDungeonGround(c, floor, ["earth", "earth", "earth", "earth"]);
+    assert.deepEqual(frames.slice(1), [32, 33, 34, 35], "diagonal earth joins receive their matching soil PNGs");
+    frames.length = 0;
+    drawDungeonGround(c, { ...floor, neighbors: { northWall: true, eastWall: true, southWall: true, westWall: true } }, ["earth", "earth", "earth", "earth"]);
+    assert.ok(frames.every(frame => frame < 32), "soil corners cannot cross a wall");
   } finally {
     if (original) Object.defineProperty(globalThis, "Image", original); else Reflect.deleteProperty(globalThis, "Image");
   }

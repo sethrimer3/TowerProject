@@ -1,4 +1,4 @@
-import type { Mode } from "./entities.ts";
+import type { Mode, Tile } from "./entities.ts";
 import { tileRandom } from "./random.ts";
 import { themeAt, type TerrainTile } from "./themes.ts";
 import { kitImage } from "./sprite-kit.ts";
@@ -9,7 +9,12 @@ export type DungeonMaterial = typeof DUNGEON_MATERIALS[number];
 export const DUNGEON_TONES = 10;
 export const DUNGEON_COLUMNS = 4;
 export const DUNGEON_WALL_FRAME = 4;
+export const DUNGEON_CORNER_FRAME = 36;
 export const DUNGEON_CONTACT_FRAME = 16;
+export const DUNGEON_SOIL_CORNER_FRAME = 32;
+/** Clockwise from northwest; world north is +y. */
+export const DUNGEON_CORNERS = [[-1, 1], [1, 1], [1, -1], [-1, -1]] as const;
+export type DungeonDiagonal = DungeonMaterial | "wall" | undefined;
 export const dungeonAtlasId = (material: DungeonMaterial, tone: number) => material === "earth" ? "dungeon-earth" : `dungeon-${material}-${tone}`;
 export const DUNGEON_ATLASES = [...["masonry", "stone"].flatMap(material =>
   Array.from({ length: DUNGEON_TONES }, (_, tone) => dungeonAtlasId(material as DungeonMaterial, tone))), "dungeon-earth"];
@@ -31,6 +36,17 @@ export function dungeonFloorFrame(x: number, y: number, seed: number) {
   return Math.floor(tileRandom(x, y, seed ^ 0x73a91) * 4);
 }
 
+export function dungeonWallVariant(x: number, y: number, seed: number) {
+  return Math.floor(tileRandom(x + 53, y - 71, seed ^ 0x3b618) * 2);
+}
+
+export function dungeonDiagonals(world: { tile(x: number, y: number): Tile | undefined }, mode: Mode, x: number, y: number, seed: number): DungeonDiagonal[] {
+  return DUNGEON_CORNERS.map(([dx, dy]) => {
+    const tile = world.tile(x + dx, y + dy);
+    return !tile ? undefined : tile.kind === "wall" ? "wall" : dungeonMaterial(mode, x + dx, y + dy, seed);
+  });
+}
+
 function imagesFor(mode: Mode, tone: number) {
   const ids = mode === "tower" ? [dungeonAtlasId("masonry", tone), DUNGEON_EDGE_ATLAS]
     : [dungeonAtlasId("stone", tone), "dungeon-earth", DUNGEON_EDGE_ATLAS];
@@ -45,10 +61,10 @@ export function drawDungeonFrame(c: CanvasRenderingContext2D, image: HTMLImageEl
   c.restore();
 }
 
-/** Four quiet floors and sixteen connected wall shapes per material.
+/** Four quiet floors, two variants of sixteen wall shapes, and corners.
  * South-facing facades occupy eight pixels; north/side lips are shallow.
  * Everything stays inside the existing tile and collision footprint. */
-export function drawDungeonGround(c: CanvasRenderingContext2D, tile: TerrainTile) {
+export function drawDungeonGround(c: CanvasRenderingContext2D, tile: TerrainTile, diagonals: readonly DungeonDiagonal[] = []) {
   const { mode, height, x, y, seed } = tile, tone = themeAt(mode, height, x, y, seed).decor;
   const images = imagesFor(mode, tone);
   if (!images) return false;
@@ -57,13 +73,28 @@ export function drawDungeonGround(c: CanvasRenderingContext2D, tile: TerrainTile
   const edges = images.at(-1)!;
   const n = tile.neighbors;
   const mask = wallAdjacencyMask({ northWall: !!n?.northWall, eastWall: !!n?.eastWall, southWall: !!n?.southWall, westWall: !!n?.westWall });
-  drawDungeonFrame(c, image, tile.wall ? DUNGEON_WALL_FRAME + mask : dungeonFloorFrame(x, y, seed));
+  drawDungeonFrame(c, image, tile.wall ? DUNGEON_WALL_FRAME + dungeonWallVariant(x, y, seed) * 16 + mask : dungeonFloorFrame(x, y, seed));
+  if (tile.wall) {
+    for (let corner = 0; corner < 4; corner++) {
+      const diagonal = diagonals[corner];
+      // A diagonal opening meets either two joined sides (concave) or two
+      // exposed sides (convex); a straight side keeps its existing lip.
+      const [a, b] = [[1, 8], [1, 2], [4, 2], [4, 8]][corner];
+      if (diagonal && diagonal !== "wall" && !!(mask & a) === !!(mask & b))
+        drawDungeonFrame(c, image, DUNGEON_CORNER_FRAME + corner);
+    }
+  }
   if (!tile.wall) {
     if (material === "stone") {
       const earth = (dx: number, dy: number, wall?: boolean) => !wall && dungeonMaterial(mode, x + dx, y + dy, seed) === "earth";
       const soilMask = wallAdjacencyMask({ northWall: earth(0, 1, n?.northWall), eastWall: earth(1, 0, n?.eastWall),
         southWall: earth(0, -1, n?.southWall), westWall: earth(-1, 0, n?.westWall) });
       if (soilMask) drawDungeonFrame(c, edges, soilMask);
+      for (let corner = 0; corner < 4; corner++) {
+        const adjacent = [9, 3, 6, 12][corner];
+        if (diagonals[corner] === "earth" && !(soilMask & adjacent) && !(mask & adjacent))
+          drawDungeonFrame(c, edges, DUNGEON_SOIL_CORNER_FRAME + corner);
+      }
     }
     if (mask) drawDungeonFrame(c, edges, DUNGEON_CONTACT_FRAME + mask);
   }

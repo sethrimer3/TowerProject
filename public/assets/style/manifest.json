@@ -2085,133 +2085,133 @@
     "dungeon-edges": {
       "file": "dungeon-edges.png",
       "width": 96,
-      "height": 192,
+      "height": 216,
       "tile": true
     },
     "dungeon-masonry-0": {
       "file": "dungeon-masonry-0.png",
       "width": 96,
-      "height": 120,
+      "height": 240,
       "tile": true
     },
     "dungeon-masonry-1": {
       "file": "dungeon-masonry-1.png",
       "width": 96,
-      "height": 120,
+      "height": 240,
       "tile": true
     },
     "dungeon-masonry-2": {
       "file": "dungeon-masonry-2.png",
       "width": 96,
-      "height": 120,
+      "height": 240,
       "tile": true
     },
     "dungeon-masonry-3": {
       "file": "dungeon-masonry-3.png",
       "width": 96,
-      "height": 120,
+      "height": 240,
       "tile": true
     },
     "dungeon-masonry-4": {
       "file": "dungeon-masonry-4.png",
       "width": 96,
-      "height": 120,
+      "height": 240,
       "tile": true
     },
     "dungeon-masonry-5": {
       "file": "dungeon-masonry-5.png",
       "width": 96,
-      "height": 120,
+      "height": 240,
       "tile": true
     },
     "dungeon-masonry-6": {
       "file": "dungeon-masonry-6.png",
       "width": 96,
-      "height": 120,
+      "height": 240,
       "tile": true
     },
     "dungeon-masonry-7": {
       "file": "dungeon-masonry-7.png",
       "width": 96,
-      "height": 120,
+      "height": 240,
       "tile": true
     },
     "dungeon-masonry-8": {
       "file": "dungeon-masonry-8.png",
       "width": 96,
-      "height": 120,
+      "height": 240,
       "tile": true
     },
     "dungeon-masonry-9": {
       "file": "dungeon-masonry-9.png",
       "width": 96,
-      "height": 120,
+      "height": 240,
       "tile": true
     },
     "dungeon-stone-0": {
       "file": "dungeon-stone-0.png",
       "width": 96,
-      "height": 120,
+      "height": 240,
       "tile": true
     },
     "dungeon-stone-1": {
       "file": "dungeon-stone-1.png",
       "width": 96,
-      "height": 120,
+      "height": 240,
       "tile": true
     },
     "dungeon-stone-2": {
       "file": "dungeon-stone-2.png",
       "width": 96,
-      "height": 120,
+      "height": 240,
       "tile": true
     },
     "dungeon-stone-3": {
       "file": "dungeon-stone-3.png",
       "width": 96,
-      "height": 120,
+      "height": 240,
       "tile": true
     },
     "dungeon-stone-4": {
       "file": "dungeon-stone-4.png",
       "width": 96,
-      "height": 120,
+      "height": 240,
       "tile": true
     },
     "dungeon-stone-5": {
       "file": "dungeon-stone-5.png",
       "width": 96,
-      "height": 120,
+      "height": 240,
       "tile": true
     },
     "dungeon-stone-6": {
       "file": "dungeon-stone-6.png",
       "width": 96,
-      "height": 120,
+      "height": 240,
       "tile": true
     },
     "dungeon-stone-7": {
       "file": "dungeon-stone-7.png",
       "width": 96,
-      "height": 120,
+      "height": 240,
       "tile": true
     },
     "dungeon-stone-8": {
       "file": "dungeon-stone-8.png",
       "width": 96,
-      "height": 120,
+      "height": 240,
       "tile": true
     },
     "dungeon-stone-9": {
       "file": "dungeon-stone-9.png",
       "width": 96,
-      "height": 120,
+      "height": 240,
       "tile": true
     },
     "dungeon-earth": {
       "file": "dungeon-earth.png",
       "width": 96,
-      "height": 120,
+      "height": 240,
       "tile": true
     }
   },
