@@ -6,6 +6,7 @@ import { BOON_IDS } from "../src/shrines.ts";
 import { BOON_SPRITES, SHRINE_CONTROL_SPRITES } from "../src/sprite-boons.ts";
 import { EQUIPMENT_FRAME_SPRITES, EQUIPMENT_MARK_SPRITES } from "../src/sprite-equipment.ts";
 import { COMBAT_SPRITES } from "../src/sprite-combat.ts";
+import { BOARD_MARK_SPRITES } from "../src/sprite-board-marks.ts";
 import { SMALL_CONTROL_SPRITES, SLIDER_SPRITES } from "../src/sprite-controls.ts";
 import { BADGE_IDS } from "../src/badges.ts";
 import { CARD_SPRITE_LAYERS } from "../src/sprite-cards.ts";
@@ -143,12 +144,12 @@ test("small controls keep their native grid and slider states remain distinct", 
 });
 
 test("combat pieces retain distinct facings and native tile density", () => {
-  const hashes = COMBAT_SPRITES.map(id => {
+  const hashes = [...COMBAT_SPRITES, ...Object.values(BOARD_MARK_SPRITES).map(mark => mark.id)].map(id => {
     const png = readFileSync(new URL(`../public/assets/style/${id}.png`, import.meta.url));
     const width = png.readUInt32BE(16), height = png.readUInt32BE(20);
     if (/combat-(arrow|charged)-/.test(id)) assert.deepEqual([width, height], [16, 16], id);
     if (id.startsWith("combat-shield-")) assert.deepEqual([width, height], [Number(id.split("-").at(-1)), Number(id.split("-").at(-1))]);
     return createHash("sha256").update(png).digest("hex");
   });
-  assert.equal(new Set(hashes).size, COMBAT_SPRITES.length, "charged arrows, traits, chest types and shield sizes keep distinct art");
+  assert.equal(new Set(hashes).size, COMBAT_SPRITES.length + 4, "projectiles, traits, shields and semantic marks keep distinct art");
 });

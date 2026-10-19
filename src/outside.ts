@@ -1,3 +1,4 @@
+import { boardFont } from "./sprite-font.ts";
 import type { Mode, Tile } from "./entities.ts";
 import type { Board } from "./board.ts";
 import { tileRandom } from "./random.ts";
@@ -211,17 +212,17 @@ export function drawEntrance(c: CanvasRenderingContext2D, mode: Mode, center: nu
   }
   const y = base - (mode === "tower" ? 66 : 76);
   if (numeral) {
-    drawTierNumeral(c, numeral, x, bonus ? y - 24 : y);
-    if (bonus) drawGoldBonus(c, bonus.text, bonus.coin, x, y);
+    drawTierNumeral(c, numeral, x, bonus ? y - 24 : y, styled);
+    if (bonus) drawGoldBonus(c, bonus.text, bonus.coin, x, y, styled);
   }
   c.restore();
 }
 
 /** The Gold coin, ×, and the multiplier, centred on (x, y), in gold. */
-function drawGoldBonus(c: CanvasRenderingContext2D, text: string, coin: CanvasImageSource | null, x: number, y: number) {
+function drawGoldBonus(c: CanvasRenderingContext2D, text: string, coin: CanvasImageSource | null, x: number, y: number, styled = false) {
   const size = 14, gap = 3, width = size + gap + text.length * 8, left = x - width / 2;
   if (coin) { c.save(); c.imageSmoothingEnabled = false; c.drawImage(coin, left, y - size / 2, size, size); c.restore(); }
-  c.font = "700 14px Cinzel";
+  c.font = boardFont(styled, 14);
   c.textAlign = "left";
   c.textBaseline = "middle";
   c.shadowColor = "#ffc94a";
@@ -231,8 +232,8 @@ function drawGoldBonus(c: CanvasRenderingContext2D, text: string, coin: CanvasIm
 }
 
 /** The tier's number, glowing gold. */
-function drawTierNumeral(c: CanvasRenderingContext2D, numeral: string, x: number, y: number) {
-  c.font = "700 22px Cinzel";
+function drawTierNumeral(c: CanvasRenderingContext2D, numeral: string, x: number, y: number, styled = false) {
+  c.font = boardFont(styled, 22);
   c.textAlign = "center";
   c.textBaseline = "middle";
   c.shadowColor = "#ffc94a";

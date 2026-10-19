@@ -10,6 +10,9 @@ Enemy bakes clear on kit image arrival so small marks loaded after the body repl
 `shield-art.ts` selects a 48-, 96- or 144-pixel hollow ring nearest the native diameter, drawing at the exact existing radius with no baked glow.
 `chest-marks.ts` keeps one blue Supply star and two purple Equipment stars over both closed and opened chest tiles.
 Each effect keeps its original renderer until its PNG is ready and when the effective Game kit is disabled.
+`sprite-board-marks.ts` supplies native Target/Ignore (16 pixels) and skipped/blocked X (12 pixels) PNGs inside the same 24-pixel tile grid, preserving blocked-mark fading.
+`boardFont` in `sprite-font.ts` selects the original bundled Tower Pixel face for Classic kit annotations, damage/reward numbers, level-up text and forest signs; other Game themes and Sprites off preserve the original font strings.
+`EntityLighting` paints silhouettes from the active PNG contents and hero facing; both shadow and highlight caches clear immediately when the effective style or image revision changes.
 Other Game themes keep their own drawing and portrait art; changing UI themes affects only the interface kit.
 
 Board drawing (`Renderer`, frames, lighting, decor, popups, tile caches, the forest outside, weather), the render goldens, and the Medieval and Neon themes.

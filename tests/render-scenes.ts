@@ -112,6 +112,9 @@ export function combatSpriteScene(settings: Record<string, unknown> = {}): Board
   g.run.changes["7,6"] = { kind: "treasure", chest: "equipment" };
   g.run.changes["9,6"] = { kind: "floor", chest: "supply" };
   g.run.changes["11,6"] = { kind: "floor", chest: "equipment" };
+  g.run.targeted = "8,8";
+  g.run.ignored = { floor: g.handRules.floor, tiles: ["5,8"] };
+  g.run.skipped = { floor: g.handRules.floor, tiles: ["11,10"] };
   g.volley = { at: 1400, ms: 800, shots: [
     { by: "hero", from: { x: 8, y: 3 }, to: { x: 5, y: 10 }, damage: 0, tick: 1 },
     { by: "hero", from: { x: 8, y: 3 }, to: { x: 11, y: 10 }, damage: 0, tick: 1, charge: 60 },

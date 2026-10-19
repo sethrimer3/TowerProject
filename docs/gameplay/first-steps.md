@@ -10,6 +10,8 @@ Other Game themes override world sprites independently, and returning to Classic
 The separate **Turn off board sprites** option controls the dungeon artwork, including the optional shared sprite kit.
 With Sprites on, small navigation and close marks, slider tracks and handles, reward stars, and the Gold-bonus and enemy-odds popup frames share the pixel-art look.
 Sliders still work with pointer or keyboard input and show their values as live text.
+The active interface kit uses custom pixel lettering, with button frames that leave room for text and icons. On phones, ad controls stack and Training values sit above their purchase buttons.
+The Classic board kit also uses pixel lettering for damage, rewards and other annotations, plus matching Target, Ignore, skipped and blocked tile marks. Torch lighting follows the active sprite shapes.
 
 ## The first runs
 

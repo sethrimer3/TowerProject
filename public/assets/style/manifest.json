@@ -1861,6 +1861,26 @@
       "file": "combat-shield-144.png",
       "width": 144,
       "height": 144
+    },
+    "combat-mark-target": {
+      "file": "combat-mark-target.png",
+      "width": 16,
+      "height": 16
+    },
+    "combat-mark-ignore": {
+      "file": "combat-mark-ignore.png",
+      "width": 16,
+      "height": 16
+    },
+    "combat-mark-skip": {
+      "file": "combat-mark-skip.png",
+      "width": 12,
+      "height": 12
+    },
+    "combat-mark-blocked": {
+      "file": "combat-mark-blocked.png",
+      "width": 12,
+      "height": 12
     }
   },
   "terrain": {

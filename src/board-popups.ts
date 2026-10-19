@@ -1,3 +1,4 @@
+import { boardFont } from "./sprite-font.ts";
 import { popupAmount } from "./whole.ts";
 import { HEAL_COLOR } from "./damage-labels.ts";
 import type { Coin, Encounter, Gain, GainArt, Heal, ShownFight } from "./shown.ts";
@@ -127,7 +128,7 @@ type TextStyle = { color: string; rise: number; size: number; glow?: string; rin
 /** A reward without a sprite, written in gold. */
 const REWARD_TEXT: TextStyle = { color: REWARD_COLOR, rise: REWARD_RISE, size: 0.42 };
 /** A mark's colour, size (px in tile space) and alignment. */
-type MarkStyle = { color: string; size: number; align?: CanvasTextAlign };
+type MarkStyle = { color: string; size: number; align?: CanvasTextAlign; styled?: boolean };
 type Offset = { dx: number; dy: number };
 const STILL: Offset = { dx: 0, dy: 0 };
 
@@ -288,7 +289,7 @@ export class BoardPopups {
     const c = f.c, { alpha, rise: up } = this.phase(f, p, rise), at = tileCenter(f, p.x, p.y + up);
     c.save();
     c.globalAlpha = alpha;
-    c.font = `700 ${Math.max(11, f.s * size)}px Cinzel`;
+    c.font = boardFont(f.look.styledSprites, Math.max(11, f.s * size));
     c.textAlign = "center";
     c.textBaseline = "middle";
     const outline = Math.max(2, f.s * 0.1);
@@ -405,25 +406,25 @@ function paintArt(c: CanvasRenderingContext2D, f: FrameContext, p: Popup & { gai
   if ("cell" in art) {
     // The amount, then the Cell: "+3 ▲" in place of "+3 Cells".
     if (!(f.look.styledSprites && drawKit(c, "cell"))) paintCell(c);
-    mark(c, p.gain.text.split(" ")[0], { x: 10, y: 12 }, { color: CELL_COLOR, size: 10, align: "right" });
+    mark(c, p.gain.text.split(" ")[0], { x: 10, y: 12 }, { color: CELL_COLOR, size: 10, align: "right", styled: f.look.styledSprites });
     return;
   }
   if ("equipMaterial" in art) {
     if (!(f.look.styledSprites && drawKit(c, `equip-${art.equipMaterial}`))) paintPixels(c, materialPixels(art.equipMaterial));
-    if (art.quantity > 1) mark(c, `×${art.quantity}`, { x: 18, y: 21 }, { color: REWARD_COLOR, size: 8, align: "left" });
+    if (art.quantity > 1) mark(c, `×${art.quantity}`, { x: 18, y: 21 }, { color: REWARD_COLOR, size: 8, align: "left", styled: f.look.styledSprites });
     return;
   }
   if ("equipPiece" in art) {
     const tier = RARITY_TIERS[art.rarity];
     if (!(f.look.styledSprites && drawKit(c, pieceSpriteId(art.equipPiece)))) paintPixels(c, iconPixels(art.equipPiece));
-    mark(c, tier.mark, { x: 19, y: 21 }, { color: tier.color, size: 8, align: "left" });
+    mark(c, tier.mark, { x: 19, y: 21 }, { color: tier.color, size: 8, align: "left", styled: f.look.styledSprites });
     return;
   }
   c.imageSmoothingEnabled = false;
   if ("coin" in art) {
     // The amount, then the coin: "+5 ●" in place of "+5 Gold".
     if (!(f.look.styledSprites && drawKit(c, art.coin, 11, 3, 18))) c.drawImage(image!, 11, 3, 18, 18);
-    mark(c, p.gain.text.split(" ")[0], { x: 10, y: 12 }, { color: art.coin === "gold" ? REWARD_COLOR : SILVER_COLOR, size: 10, align: "right" });
+    mark(c, p.gain.text.split(" ")[0], { x: 10, y: 12 }, { color: art.coin === "gold" ? REWARD_COLOR : SILVER_COLOR, size: 10, align: "right", styled: f.look.styledSprites });
   } else if ("heart" in art) {
     if (f.look.themed) f.look.themed.heart(c);
     else if (!(f.look.styledSprites && drawKit(c, "heart", 2, 2, 18))) c.drawImage(image!, 2, 2, 18, 18);
@@ -431,7 +432,7 @@ function paintArt(c: CanvasRenderingContext2D, f: FrameContext, p: Popup & { gai
     else check(c, 13, 13);
   } else {
     if (!(f.look.styledSprites && "material" in art && drawKit(c, `metal-${art.material.replace(/Bar$/, "")}-bar`, 3, 3, 18))) c.drawImage(image!, 3, 3, 18, 18);
-    if (art.quantity > 1) mark(c, `×${art.quantity}`, { x: 18, y: 21 }, { color: REWARD_COLOR, size: 8, align: "left" });
+    if (art.quantity > 1) mark(c, `×${art.quantity}`, { x: 18, y: 21 }, { color: REWARD_COLOR, size: 8, align: "left", styled: f.look.styledSprites });
   }
 }
 
@@ -468,7 +469,7 @@ function paintSpentTile(c: CanvasRenderingContext2D, f: FrameContext, p: Popup, 
   else paintContents(c, art.tile, { x: p.x, y: p.y, time: f.now, spritesOff: look.spritesOff, reduceMotion: look.reduceMotion, area1: look.area1, lifted: true, styledSprites: look.styledSprites });
   if (!art.spent) return;
   c.translate(-4, 0);
-  mark(c, "−", { x: 3, y: 12 }, { color: SPENT_COLOR, size: 14 });
+  mark(c, "−", { x: 3, y: 12 }, { color: SPENT_COLOR, size: 14, styled: look.styledSprites });
 }
 
 /** Whether the fight ends with the enemy felled, by a strike or its thorns. */
@@ -554,8 +555,8 @@ function facing(fight: Encounter) {
 }
 
 /** Outlined text in tile space: a count, or the minus on a spent key. */
-function mark(c: CanvasRenderingContext2D, text: string, { x, y }: { x: number; y: number }, { color, size, align = "center" }: MarkStyle) {
-  c.font = `700 ${size}px Cinzel`;
+function mark(c: CanvasRenderingContext2D, text: string, { x, y }: { x: number; y: number }, { color, size, align = "center", styled }: MarkStyle) {
+  c.font = boardFont(styled, size);
   c.textAlign = align;
   c.textBaseline = "middle";
   c.lineWidth = 2;

@@ -11,8 +11,8 @@ Switching back to the default look restores the kit without changing the saved S
 
 Use the [source atlas](../../assets/ui-sprites/source-atlas.png) as the visual reference for additional components.
 Keep the shared [27-color palette](../../assets/ui-sprites/palette.ppm), upper-left light, charcoal outlines, stepped corners, restrained brass trim and quiet slate interiors.
-Frames are 48 × 24 native pixels with six-pixel edge slices displayed at 2×.
-Keep typography and values as live DOM text; never bake labels into an asset.
+Frames are 48 × 24 native pixels with six-pixel edge slices. Ordinary buttons display a six-pixel edge and compact controls a three-pixel edge; reserve that same width as a real border so trim never covers labels or icons. Larger panels can display the slices at 2×.
+Keep typography and values as live DOM or Canvas text; never bake labels into an asset. The active kit uses the original local Tower Pixel face, with editable square-pixel matrices, distinct lowercase and tabular digits; UI and Game themes gate it independently, excluding Defend.
 The native grid is enforced during export with nearest-neighbor sampling, binary alpha, palette remapping and no dithering.
 Do not use SVG replacements, gradients, glow, blur or fine texture in this kit.
 
@@ -48,6 +48,8 @@ The [combat atlas](../../assets/game-sprites/combat.png) and [fine-grid shield s
 Normal and blue charged arrows have eight exported facings on a 16-pixel canvas, preserving crisp edges while flight positions remain continuous.
 Enemy marks use small native footprints inside the 24-pixel tile grid; Supply and Equipment Chests keep one blue star and two purple stars after opening.
 Shield boundaries use 48-, 96- and 144-pixel versions selected by the bubble's native diameter, with the existing radius and Delve wrapping preserved.
+The [board-mark atlas](../../assets/game-sprites/board-marks.png) adds a blue Target reticle and red Ignore ring at 16 pixels, plus purple skipped and red blocked X marks at 12 pixels. They use the same native density inside the 24-pixel tile grid.
+Torch shadows and highlights follow the active PNG silhouettes, hero direction and late image loads.
 The old SVG and PNG artwork stays available for unloaded images, Sprites off and theme overrides.
 All ten biome sets and the forest retain their seeded variations and wall adjacency while sharing a palette-normalized 24-pixel terrain atlas.
 Equipment's existing Unique silhouettes and the named enemy roster are preserved during normalization.
@@ -98,6 +100,8 @@ Run `node --experimental-transform-types tools/prepare-shrine-sprites.mjs` for t
 Run `node --experimental-transform-types tools/prepare-equipment-ui.mjs` for the five Equipment frames and three status marks.
 Run `node --experimental-transform-types tools/prepare-ui-controls.mjs` for the small controls, slider components and pale gain fill.
 Run `node --experimental-transform-types tools/prepare-combat-sprites.mjs` for the directional projectile, mark, chest-star and shield set.
+Run `node --experimental-transform-types tools/prepare-board-marks.mjs` for Target, Ignore, skipped and blocked marks.
+Regenerate the original font with `python tools/prepare-pixel-font.py` using FontTools with WOFF2 support (`fonttools[woff]`); no font-building dependency is needed at runtime.
 The full game exporter preserves combat, badge, Shrine, Equipment UI and UI-detail assets; rerun their own exporter when a source atlas changes.
 That exporter also packs the terrain atlas and produces `src/sprite-terrain-index.ts`.
 PNG load failures keep the original icon or procedural renderer visible; loaded images invalidate cached terrain and city layers through a shared revision.
@@ -122,9 +126,13 @@ With the dev server running, `PLAYWRIGHT_EXECUTABLE_PATH=/usr/bin/chromium node 
 
 `PLAYWRIGHT_EXECUTABLE_PATH=/usr/bin/chromium node tests/combat-sprites-browser.mjs` checks native/enlarged art and real combat frames at phone/desktop sizes, complete PNG loading, independent theme overrides and exact restoration after switching Sprites off.
 
+`PLAYWRIGHT_EXECUTABLE_PATH=/usr/bin/chromium node tests/sprite-layout-browser.mjs` checks that live lettering and PNG icons stay inside button trim, including narrow HUDs, menu buttons, large stats, Training, Settings, Deck and Shop.
+
+`PLAYWRIGHT_EXECUTABLE_PATH=/usr/bin/chromium node tests/sprite-lighting-browser.mjs` checks actual hero PNG alpha against shadows/highlights through loads, facing changes and toggles.
+
 ## Remaining sprite work
 
 Excluding Defend and custom themes, environmental moss, vines, flowers, water/ripples, glowing mushrooms and some wall-corner overlays still need palette-matched PNG treatment.
-Reveal rays, celebration/skill particles and the Equipment melt still use procedural or older icon art; lighting masks also need to follow the active PNG silhouettes instead of older art.
-Board route/Target/Ignore and badge annotations also retain procedural marks; letters should remain live text.
+Reveal rays, celebration/skill particles and the Equipment melt still use procedural or older icon art.
+The board route and badge annotations also retain procedural marks; letters should remain live text.
 These are separate from the older PNGs and SVGs deliberately retained for Sprites off and theme fallbacks.

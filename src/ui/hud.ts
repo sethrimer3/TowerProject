@@ -1,4 +1,5 @@
 import { kitIcon } from "../sprite-kit.ts";
+import { spriteFontRevision } from "../sprite-font.ts";
 import { amountUnit, enemyStat, keyCount, shortAmount, stepsIn, whole, wholeHp } from "../whole.ts";
 import type { Game } from "../state.ts";
 import type { Renderer } from "../rendering.ts";
@@ -497,7 +498,10 @@ let combatFitted = "";
 function fitCombatStats() {
   const row = document.querySelector<HTMLElement>(".combat-stats");
   if (!row) return;
-  const key = `${row.textContent}|${el("shroud-stat").hidden}|${window.innerWidth}`;
+  const hp = el("hp"), pixel = document.documentElement.classList.contains("ui-sprites");
+  // Pixel digits are tabular: equal-length HP changes need no new measurement.
+  const hpShape = pixel ? hp.textContent?.replace(/\d/g, "0") : "";
+  const key = `${row.textContent}|${el("shroud-stat").hidden}|${row.clientWidth}|${document.documentElement.className}|${spriteFontRevision()}|${hpShape}`;
   if (key === combatFitted) return;
   row.style.fontSize = "";
   // Hidden (another page showing): fitted once it shows again.
@@ -506,6 +510,9 @@ function fitCombatStats() {
   // The gaps between the stats (3px each at their narrowest) don't scale with the text.
   const gaps = 6, over = (row.scrollWidth - gaps) / (row.clientWidth - gaps);
   if (over > 1) row.style.fontSize = `${Math.max(7, Math.floor((parseFloat(getComputedStyle(row).fontSize) / over) * 10) / 10)}px`;
+  hp.style.removeProperty("font-size");
+  if (pixel && hp.clientWidth && hp.scrollWidth > hp.clientWidth + 1)
+    hp.style.fontSize = `${Math.max(7, Math.floor(parseFloat(getComputedStyle(hp).fontSize) * hp.clientWidth / hp.scrollWidth))}px`;
 }
 
 /** HP, ATK, DEF (and the shroud, once owned), the run's Gold and keys. During a fight being played out, HP counts down
