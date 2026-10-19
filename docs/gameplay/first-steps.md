@@ -16,6 +16,9 @@ With environmental decoration enabled, the Classic sprite kit also gives moss, p
 In the forest, the Classic sprite kit shows the enormous lower bases of the Tower and Delve mountain extending beyond the top of the view.
 Oak, birch and pine crowns span several tiles above smaller trees, bushes, ferns, rocks, logs, stumps, flowers and mushrooms, with paths, entrances, building yards and the mode sign kept clear.
 Grass still moves around the hero; turning environmental decoration off hides that grass and extra floor plants while keeping the forest's trees and rocks.
+Inside the Tower, the Classic sprite kit uses fitted stone floors and joined masonry walls with visible tops and south-facing wall faces.
+In the Delve, rough stone and packed earth form adjoining patches of floors and walls, with stepped soil edges and matching biome colors.
+These interior tiles remain with environmental decoration off; torchlight follows the selected floor's seams, and movement, doors and map layouts stay the same.
 
 ## The first runs
 

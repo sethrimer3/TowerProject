@@ -102,7 +102,8 @@ export function insidePolygon(px: number, py: number, poly: { x: number; y: numb
 }
 
 type BakedLayers = Record<ReliefDir, { highlight: HTMLCanvasElement; shadow: HTMLCanvasElement; shadowFar: HTMLCanvasElement }>;
-const baked = new Map<HTMLImageElement, BakedLayers | null>();
+export type ReliefSprite = HTMLImageElement | HTMLCanvasElement;
+const baked = new Map<ReliefSprite, BakedLayers | null>();
 
 function maskCanvas(mask: Float32Array, [r, g, b]: readonly number[]) {
   const cv = document.createElement("canvas");
@@ -118,7 +119,7 @@ function maskCanvas(mask: Float32Array, [r, g, b]: readonly number[]) {
 }
 
 /** Relief layers for a loaded sprite, baked on first use and cached. */
-function layersFor(sprite: HTMLImageElement): BakedLayers | null {
+function layersFor(sprite: ReliefSprite): BakedLayers | null {
   if (baked.has(sprite)) return baked.get(sprite)!;
   let result: BakedLayers | null = null;
   try {
@@ -174,7 +175,7 @@ export type BakedRelief = {
  * in range is still loading, so the caller can retry on a later frame. */
 export function bakeTorchRelief(
   t: Torch,
-  floorSprite: (x: number, y: number) => HTMLImageElement | null | undefined,
+  floorSprite: (x: number, y: number) => ReliefSprite | null | undefined,
   /** Nudges the light sideways (tiles) without moving the baked region. */
   offsetX = 0,
 ): BakedRelief | null | undefined {

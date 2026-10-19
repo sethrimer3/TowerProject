@@ -288,6 +288,16 @@ LATER_BOARD_SCENES.spriteCombat = () => combatSpriteScene();
 LATER_BOARD_SCENES.spriteEnvironment = () => environmentSpriteScene();
 LATER_BOARD_SCENES.spriteForestTower = () => forestSpriteScene("tower");
 LATER_BOARD_SCENES.spriteForestDelve = () => forestSpriteScene("delve");
+LATER_BOARD_SCENES.spriteDungeonMasonry = () => dungeonSpriteScene("tower");
+LATER_BOARD_SCENES.spriteDungeonCave = () => dungeonSpriteScene("delve");
+
+/** Real connected interior geometry, with native wall faces and material patches. */
+export function dungeonSpriteScene(mode: "tower" | "delve", settings: Record<string, unknown> = {}): BoardScene {
+  const g = game(mode, { uiSprites: true, brightness: 75, reduceMotion: true, ...settings });
+  g.newRun({ seed: mode === "tower" ? 1103 : 1107 });
+  if (mode === "tower") for (let i = 0; i < 3; i++) g.advanceTowerRoom();
+  return { g };
+}
 
 /** Both enormous entrance bases and the layered forest at the crossroads. */
 export function forestSpriteScene(mode: "tower" | "delve", settings: Record<string, unknown> = {}): BoardScene {

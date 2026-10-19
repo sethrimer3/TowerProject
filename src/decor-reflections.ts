@@ -14,6 +14,8 @@ type Paint = (ctx: CanvasRenderingContext2D) => void;
 /** The board's sprites, as the water shows them. Each is painted in
  * 24-pixel tile space at the origin. */
 export type MirroredSprites = {
+  /** Effective board art and loaded PNG revision, for immediate refresh. */
+  style?: string;
   /** Paints tile `t` at (x, y): its ground or wall (layer 0), or what
    * stands on it (1). */
   tile(ctx: CanvasRenderingContext2D, t: Tile, x: number, y: number, layer: 0 | 1): void;
@@ -77,10 +79,17 @@ export class WaterReflections {
    * so their outline passes aren't redone every frame. Refreshed every few
    * seconds so sprite art that loads late shows up. */
   private snapshots = new Map<string, { canvas: HTMLCanvasElement; at: number }>();
+  private snapshotStyle = "";
 
   /** Draws the reflections onto `c`, which is already in world pixels. */
   draw(c: CanvasRenderingContext2D, scene: ReflectionScene) {
     if (!scene.pools.length || typeof document === "undefined") return;
+    const style = scene.sprites?.style ?? "";
+    if (style !== this.snapshotStyle) {
+      this.snapshotStyle = style;
+      this.snapshots.clear();
+      this.stillKey = this.frameKey = "";
+    }
     const area = poolArea(scene.pools);
     if (!this.allocate(area.W, area.H)) return;
     const { tiles, near } = mirroredTiles(scene, area);

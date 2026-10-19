@@ -2,7 +2,7 @@
 
 **Optional shared PNG kit.** `sprite-style.ts` enables it only with Sprites on, board sprites allowed and the Classic Game theme worn.
 `BoardLook.styledSprites` passes this choice to tiles, pickups, all named enemies, four-direction heroes, torches, rising rewards and forest buildings.
-The normalized terrain atlas (`sprite-terrain.ts`, generated `sprite-terrain-index.ts`) preserves every biome's texture selection and adjacency.
+The normalized terrain atlas (`sprite-terrain.ts`, generated `sprite-terrain-index.ts`) remains a loading fallback for the dedicated native dungeon materials and the forest kit.
 `spriteRevision()` participates in ground cache keys so asynchronous image arrivals repaint fallbacks.
 `src/sprite-combat.ts` names native projectile, rank/trait, chest-star and shield pieces, exported by `tools/prepare-combat-sprites.mjs` from the combat atlases.
 Enemy bakes clear on kit image arrival so small marks loaded after the body replace their procedural fallbacks.
@@ -29,6 +29,16 @@ Plans cache by seed, mode, entrance column and road/building flags, with north-t
 The active forest draws dynamic back grass, small foliage, crowns, buildings, route and hero, then the existing grass at the hero's feet and weather; dynamic grass retains its original planning, motion and interaction.
 Wall foliage remains with decoration off, while optional floor plants and dynamic grass follow that setting.
 Sprites off, board sprites off and other Game themes retain their original forest; UI themes gate the interface independently, and Defend is excluded from this forest extension.
+`sprite-dungeon.ts` supplies dedicated interior PNG materials: fitted Tower masonry and contiguous Delve stone/earth patches, selected with coordinate hashes independent of generation.
+Twenty-one 96 × 120 atlases contain four 24-pixel floor variants and all sixteen wall-neighbor masks: ten biome ramps for masonry, ten for rough stone and one brown earth set.
+A shared 96 × 192 atlas supplies sixteen stepped soil-edge masks and sixteen contact-shadow masks, with transparent centers that leave items and movement targets readable.
+Walls expose shallow three-pixel north/side lips and eight-pixel south-facing facades, keeping a steep top-down angle inside the existing collision tile; joined sides have no facade.
+`paintGround` returns after drawing these native tiles, so old procedural quoins cannot add off-palette corners over the new walls.
+Each material group loads completely before replacing the fallback, and `spriteRevision` refreshes the ground cache as its PNGs arrive.
+`dungeonFloorSprite` extracts each selected native floor frame once for first-section torch relief; `floor-relief.ts` accepts image or canvas sources, and `LightingPass` invalidates its torch bakes when kit style or image revision changes.
+Changing Sprites or Game themes on a live renderer therefore restores matching terrain and floor relief; all other lighting and decor retain their existing placement and behavior.
+The water mirror receives the effective board-art key too, refreshing cached walls, hero and torch snapshots immediately when sprites or board art change.
+`tools/prepare-dungeon-sprites.mjs` extracts the material components, assembles connected walls and edge masks, and maps all twenty biome variations into the existing palette, without changing the older atlas or Defend.
 
 Board drawing (`Renderer`, frames, lighting, decor, popups, tile caches, the forest outside, weather), the render goldens, and the Medieval and Neon themes.
 

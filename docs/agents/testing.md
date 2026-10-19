@@ -45,3 +45,8 @@ It reviews native/enlarged pieces and repeated materials, real phone/desktop dun
 It delays a crown PNG to verify the atomic ground/foliage switch, tests failed foliage and landmark images, and taps the real Blacksmith, Tournament Hall, mode sign and both entrances.
 `tests/forest-sprites.test.ts` checks native sizes/anchors, seeded placement, unchanged tiles, all seventeen nature silhouettes, multi-tile crowns above understory, road/building/sign clearance and the decoration opt-out.
 The appended `spriteForestTower` and `spriteForestDelve` scenes add ten browser and drawing-call golden frames without changing earlier scene seeds.
+
+`tests/dungeon-sprites-browser.mjs` starts its own server for literal floor/relief PNG texels, transparent transition centers, native atlases, delayed/failed material loads and real Tower/Delve interiors at phone/desktop widths.
+It changes sprite, board, decoration and independent theme settings on a reused Renderer, verifies exact legacy-pixel restoration and checks that drawing never changes tiles; its monotonically advancing warmup settles the Delve camera and older image caches before comparing frames.
+`tests/dungeon-sprites.test.ts` checks atlas dimensions, contiguous stone/earth patches and all sixteen native wall-frame selections, including the floor under items and doors.
+The appended `spriteDungeonMasonry` and `spriteDungeonCave` golden scenes cover real interior layouts; the existing `spriteCombat` and `spriteEnvironment` frames change only for the intended new ground/relief.
