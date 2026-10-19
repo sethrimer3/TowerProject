@@ -54,11 +54,12 @@ export function facing(player: Player, enemy: Enemy): Player {
   };
 }
 /** Thorns: what each of `enemy`'s strikes costs it, the hero's Thorn Damage
- * percent of its max HP (its HP as the fight starts), half against a boss
- * or Greater Boss. DEF takes nothing off it. */
+ * percent of its max HP (its HP as the fight starts, or before the arrows
+ * that wounded it, `fullHp`), half against a boss or Greater Boss. DEF
+ * takes nothing off it. */
 export function thornDamage(player: Player, enemy: Enemy) {
   const thorns = player.thorns ?? 0;
-  return thorns ? snap((enemy.hp * thorns) / (isBoss(enemy) ? 200 : 100)) : 0;
+  return thorns ? snap(((enemy.fullHp ?? enemy.hp) * thorns) / (isBoss(enemy) ? 200 : 100)) : 0;
 }
 /** The most a parry can cut a strike's damage, in percent, whatever trains
  * or researches Parry %. */

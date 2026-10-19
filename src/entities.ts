@@ -55,6 +55,10 @@ export type Enemy = {
   /** The percent a Shielded enemy's bubble cuts the hero's damage to this
    * one by, after DEF; set by the board as it reads the tile, never saved. */
   guard?: number;
+  /** The HP an enemy the hero's arrows have wounded had before them (its
+   * HP plus the tile's wound), which its thorns are a share of; set by the
+   * board as it reads the tile (`wounded` in ranged.ts), never saved. */
+  fullHp?: number;
   /** An enemy spawned onto the floor during the run (`Game.spawnEnemy`):
    * its number among the run's spawns, which keys its loot apart from the
    * tile's (`RunPurse.killKey`); absent on enemies the floor was made with. */

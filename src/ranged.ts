@@ -69,10 +69,11 @@ export const foeOn = (t: Tile): Enemy | undefined => (t.kind === "enemy" ? t.ene
 export const shoots = (enemy: Enemy) => !!(enemy.ranged || enemy.flying);
 
 /** A tile as it stands once the hero's arrows have wounded its enemy: its
- * HP less the `wound` (kept on the tile, so its full HP is HP + wound). */
+ * HP less the `wound` (kept on the tile, so its full HP is HP + wound),
+ * its full HP kept as `fullHp`. */
 export const wounded = (t: Tile): Tile => {
   if (!t.wound) return t;
-  const less = (e: Enemy) => ({ ...e, hp: snap(Math.max(0, e.hp - t.wound!)) });
+  const less = (e: Enemy) => ({ ...e, hp: snap(Math.max(0, e.hp - t.wound!)), fullHp: e.fullHp ?? e.hp });
   return t.enemy ? { ...t, enemy: less(t.enemy) } : t.flyer ? { ...t, flyer: less(t.flyer) } : t;
 };
 /** `raw` (a tile as generated) with `damage` more wound. A Flying enemy

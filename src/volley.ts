@@ -203,7 +203,7 @@ export function volleyTurn(turn: VolleyTurn): VolleyOutcome {
  * does; they wound it, or clear it from the board and return it as a kill.
  * Recorded on the `shot`, for the board's numbers and HP bar. */
 function thornsOf(board: VolleyTurn["board"], hero: Player, { x, y, tile }: InReach, shot: Shot): VolleyKill | undefined {
-  const enemy = tile.enemy, full = snap(enemy.hp + (tile.wound ?? 0)), thorns = thornDamage(hero, { ...enemy, hp: full });
+  const enemy = tile.enemy, full = snap(enemy.hp + (tile.wound ?? 0)), thorns = thornDamage(hero, { ...enemy, fullHp: full });
   if (!thorns) return undefined;
   const left = snap(Math.max(0, enemy.hp - thorns));
   Object.assign(shot, { thorns, before: enemy.hp, hp: left, full });

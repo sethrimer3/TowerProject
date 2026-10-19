@@ -50,8 +50,8 @@ export class DamagePredictions {
     const hero = `${player.attack}|${player.defense}|${player.shroud ?? 0}|${steal}|${crit ? `${crit.chance}|${crit.factor}` : ""}|${guard}`;
     if (hero !== this.hero) [this.hero, this.costs] = [hero, new Map()];
     // A boss's strength sets its thorns and the hero's boss ATK; a Fast enemy strikes first;
-    // a bubble's guard cuts the hero's strikes.
-    const key = `${enemy.hp}|${enemy.attack}|${enemy.defense}|${enemy.strength}|${enemy.fast ? "fast" : ""}|${enemy.flying ? "flying" : ""}|${enemy.guard ?? 0}`;
+    // a bubble's guard cuts the hero's strikes; a wounded enemy's full HP sets its thorns.
+    const key = `${enemy.hp}|${enemy.fullHp ?? ""}|${enemy.attack}|${enemy.defense}|${enemy.strength}|${enemy.fast ? "fast" : ""}|${enemy.flying ? "flying" : ""}|${enemy.guard ?? 0}`;
     let cost = this.costs.get(key);
     if (!cost) {
       // A fight of more than PLAYED_ROUNDS rounds is estimated past them, so
