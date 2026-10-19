@@ -1620,6 +1620,46 @@
       "width": 16,
       "height": 4,
       "tile": true
+    },
+    "ui-equip-frame-common": {
+      "file": "ui-equip-frame-common.png",
+      "width": 24,
+      "height": 24
+    },
+    "ui-equip-frame-uncommon": {
+      "file": "ui-equip-frame-uncommon.png",
+      "width": 24,
+      "height": 24
+    },
+    "ui-equip-frame-rare": {
+      "file": "ui-equip-frame-rare.png",
+      "width": 24,
+      "height": 24
+    },
+    "ui-equip-frame-empty": {
+      "file": "ui-equip-frame-empty.png",
+      "width": 24,
+      "height": 24
+    },
+    "ui-equip-worn": {
+      "file": "ui-equip-worn.png",
+      "width": 12,
+      "height": 12
+    },
+    "ui-equip-unique": {
+      "file": "ui-equip-unique.png",
+      "width": 12,
+      "height": 12
+    },
+    "ui-equip-salvage": {
+      "file": "ui-equip-salvage.png",
+      "width": 12,
+      "height": 12
+    },
+    "ui-equip-frame-selection": {
+      "file": "ui-equip-frame-selection.png",
+      "width": 24,
+      "height": 24
     }
   },
   "terrain": {

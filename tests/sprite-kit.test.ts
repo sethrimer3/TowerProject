@@ -4,6 +4,7 @@ import test from "node:test";
 import { createHash } from "node:crypto";
 import { BOON_IDS } from "../src/shrines.ts";
 import { BOON_SPRITES, SHRINE_CONTROL_SPRITES } from "../src/sprite-boons.ts";
+import { EQUIPMENT_FRAME_SPRITES, EQUIPMENT_MARK_SPRITES } from "../src/sprite-equipment.ts";
 import { BADGE_IDS } from "../src/badges.ts";
 import { CARD_SPRITE_LAYERS } from "../src/sprite-cards.ts";
 import { ICON_SPRITES, WORLD_SPRITES, CONTROL_SPRITES, DETAIL_SPRITES, CITY_SPRITES, DEFEND_STRUCTURE_SPRITES, NAMED_ENEMY_SPRITES, drawKit, kitEnemy, spriteRevision } from "../src/sprite-kit.ts";
@@ -17,7 +18,7 @@ import { paintContents, paintHero } from "../src/tile-painters.ts";
 test("every world, UI, Equipment and card sprite ships as a real native-sized PNG", () => {
   const base = new URL("../public/assets/style/", import.meta.url);
   const manifest = JSON.parse(readFileSync(new URL("manifest.json", base), "utf8"));
-  for (const id of [...Object.values(BOON_SPRITES), ...SHRINE_CONTROL_SPRITES, "shrine-fill", ...UI_DETAIL_SPRITES, ...UI_ORNAMENT_SPRITES, ...ICON_SPRITES, ...WORLD_SPRITES, ...CONTROL_SPRITES, ...DETAIL_SPRITES, ...CITY_SPRITES, ...DEFEND_STRUCTURE_SPRITES, ...NAMED_ENEMY_SPRITES.map(id => `enemy-${id}`), ...Object.keys(ICON_ROWS).map(id => `equip-${id}`), ...Object.keys(CARDS).map(id => `card-${id}`), ...BADGE_IDS.map(id => `badge-${id}`), "badge-star", "card-exchange", ...["common", "rare", "epic"].map(rarity => `badge-frame-${rarity}`)]) {
+  for (const id of [...EQUIPMENT_FRAME_SPRITES, ...EQUIPMENT_MARK_SPRITES, ...Object.values(BOON_SPRITES), ...SHRINE_CONTROL_SPRITES, "shrine-fill", ...UI_DETAIL_SPRITES, ...UI_ORNAMENT_SPRITES, ...ICON_SPRITES, ...WORLD_SPRITES, ...CONTROL_SPRITES, ...DETAIL_SPRITES, ...CITY_SPRITES, ...DEFEND_STRUCTURE_SPRITES, ...NAMED_ENEMY_SPRITES.map(id => `enemy-${id}`), ...Object.keys(ICON_ROWS).map(id => `equip-${id}`), ...Object.keys(CARDS).map(id => `card-${id}`), ...BADGE_IDS.map(id => `badge-${id}`), "badge-star", "card-exchange", ...["common", "rare", "epic"].map(rarity => `badge-frame-${rarity}`)]) {
     const asset = manifest.assets[id];
     assert.ok(asset, id);
     const png = readFileSync(new URL(asset.file, base));

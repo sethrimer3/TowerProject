@@ -22,6 +22,7 @@ import { el, gemIcon, riseFrom, uiSprite } from "./dom.ts";
 import { currencyAmount, devAmount, priceAmount } from "./hud.ts";
 import { ACTION_ICONS, categoryIcon, itemIcon, materialIcon } from "./equipment-icons.ts";
 import { playSlagMerge } from "./slag-merge.ts";
+import { kitIcon } from "../sprite-kit.ts";
 
 /** The Equipment screen's views, chosen by the tabs along its bottom: the
  * list (the loadout over the inventory), Assemble (merging) and Acquire
@@ -110,7 +111,7 @@ export class EquipmentPanel {
     const label = `${def.name}, ${RARITY_TIERS[item.rarity].name}, Level ${item.level}${worn ? `, worn in the ${MODE_NAMES[this.mode]}` : ""}${item.locked ? ", locked" : ""}`;
     return `<button class="eq-tile rar-${item.rarity}${extra}" data-${attr}="${item.id}" title="${label}" aria-label="${label}">${itemIcon(def.id, "eq-tile-icon")}
       <span class="eq-tile-mark">${RARITY_TIERS[item.rarity].mark}</span><span class="eq-tile-level">${item.level}</span>
-      ${worn ? `<span class="eq-tile-worn" aria-hidden="true">✓</span>` : ""}${item.locked ? `<span class="eq-tile-lock">${ACTION_ICONS.lock}</span>` : ""}${def.class === "unique" ? `<span class="eq-tile-unique" aria-hidden="true">★</span>` : ""}</button>`;
+      ${worn ? kitIcon("ui-equip-worn", "✓", "eq-tile-worn") : ""}${item.locked ? `<span class="eq-tile-lock">${ACTION_ICONS.lock}</span>` : ""}${def.class === "unique" ? kitIcon("ui-equip-unique", "★", "eq-tile-unique") : ""}</button>`;
   }
   /** An empty place for a piece of `category`, its icon dimmed. */
   private ghost(category: CategoryId, attr = "", label = CATEGORIES[category].name) {
@@ -193,7 +194,7 @@ export class EquipmentPanel {
       return `<button data-eq-salvage-all="${r}"${n ? "" : " disabled"}>${ACTION_ICONS.dismantle} All ${RARITY_TIERS[r].name} (${n})</button>`;
     }).join("");
     const auto = this.e.autoSalvage;
-    const toggle = `<button class="eq-auto-salvage" data-eq-auto-salvage="1" aria-pressed="${auto}"><span class="eq-check" aria-hidden="true">${auto ? "✓" : ""}</span>Auto-salvage common drops</button>`;
+    const toggle = `<button class="eq-auto-salvage" data-eq-auto-salvage="1" aria-pressed="${auto}"><span class="eq-check" aria-hidden="true">${auto ? kitIcon("check", "✓", "eq-check-icon") : ""}</span>${kitIcon("ui-equip-salvage", "", "eq-salvage-icon")}Auto-salvage common drops</button>`;
     return `<details class="eq-salvage"${this.salvageOpen ? " open" : ""}><summary>${ACTION_ICONS.dismantle} Salvage</summary><div class="equip-quick">${quick}</div>${toggle}<p class="hint">While on, a ${RARITY_TIERS.common.name} piece an Equipment Chest holds, or a Gem pull brings, is dismantled at once into its material instead of joining the inventory.</p></details>`;
   }
 

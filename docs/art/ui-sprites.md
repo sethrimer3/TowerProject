@@ -37,6 +37,9 @@ The [Shrine atlas](../../assets/game-sprites/shrines.png) adds a distinct 24-pix
 Standard and trade-off choices reuse the existing normal and danger PNG frames, while ranked and banned rows use the kit's selected and danger states.
 The Shrine bar has a palette-matched tiling fill and the count stays live over a quiet diamond center.
 The Overheal bar also uses the existing blue PNG fill in the active kit.
+The [Equipment UI atlas](../../assets/game-sprites/equipment-ui.png) supplies Common, Uncommon, Rare and empty-slot frames plus transparent selection corners at 24 pixels, and worn, Unique and salvage marks at 12 pixels.
+Inventory, loadouts, item details, Auto-assemble and result screens share those frames; item art stays at 24 pixels while rarity letters and levels remain live text.
+The loadout and assemble trays reuse the existing panel PNG, and Auto-salvage uses the shared field and check PNGs.
 The old SVG and PNG artwork stays available for unloaded images, Sprites off and theme overrides.
 All ten biome sets and the forest retain their seeded variations and wall adjacency while sharing a palette-normalized 24-pixel terrain atlas.
 Equipment's existing Unique silhouettes and the named enemy roster are preserved during normalization.
@@ -84,7 +87,8 @@ Run `node --experimental-transform-types tools/prepare-badge-sprites.mjs` to exp
 Use `--details-only` to refresh the sixteen detail sprites, or `--cards-only` after changing frame art or the explicit compositions in `src/sprite-cards.ts`.
 Run `node --experimental-transform-types tools/prepare-ui-details.mjs` to extract the Goal, HUD and ornament set from its measured gutters.
 Run `node --experimental-transform-types tools/prepare-shrine-sprites.mjs` for the twenty boon and four control symbols plus the repeatable bar fill.
-The full game exporter preserves badge, Shrine and UI-detail assets; rerun their own exporter when a source atlas changes.
+Run `node --experimental-transform-types tools/prepare-equipment-ui.mjs` for the five Equipment frames and three status marks.
+The full game exporter preserves badge, Shrine, Equipment UI and UI-detail assets; rerun their own exporter when a source atlas changes.
 That exporter also packs the terrain atlas and produces `src/sprite-terrain-index.ts`.
 PNG load failures keep the original icon or procedural renderer visible; loaded images invalidate cached terrain and city layers through a shared revision.
 
@@ -101,3 +105,5 @@ With the dev server running, `PLAYWRIGHT_EXECUTABLE_PATH=/usr/bin/chromium node 
 `PLAYWRIGHT_EXECUTABLE_PATH=/usr/bin/chromium node tests/goals-hud-sprites-browser.mjs` starts its own server and reviews the new art at native size and 2×, then checks actual Goals, skill nodes, HUD controls, live counts, Silver, the dialog seal, theme overrides and failed-image fallback on phone and desktop layouts.
 
 `PLAYWRIGHT_EXECUTABLE_PATH=/usr/bin/chromium node tests/shrine-sprites-browser.mjs` checks real offers, picks, live copy counts, first choice, bans, arrow and grip reordering, save/reload, failure fallback and independent theme overrides at phone and desktop sizes.
+
+`PLAYWRIGHT_EXECUTABLE_PATH=/usr/bin/chromium node tests/equipment-sprites-browser.mjs` checks the actual Equipment inventory, both loadouts, selection, leveling, assembly, saved Auto-salvage, actionable Gem shortages and theme/fallback behavior at phone and desktop sizes.
