@@ -63,7 +63,13 @@ Show only the monumental lower entrance facade: the tower's stepped threshold an
 Nature objects use binary-alpha silhouettes and quiet green ramps; ground tiles use two-color green or brown ramps, and the tower/mountain use the shared slate ramp.
 The forest loads its materials and foliage together before removing the older baked tile trees, and the larger crowns render above smaller foliage while paths, buildings and the sign stay clear.
 The old SVG and PNG artwork stays available for unloaded images, Sprites off and theme overrides.
-All ten biome sets retain their seeded variations and wall adjacency in a palette-normalized 24-pixel terrain atlas; the forest uses its new ground and foliage components after loading.
+Tower interiors use native fitted masonry floors and connected walls; Delve uses rough bedrock and compact earth for both floors and walls, with coordinate-hashed contiguous material patches.
+The [dungeon material source](../../assets/game-sprites/dungeon-materials.png) supplies four floor variations, wall-top variations, south-facing facade strips and coping for each material, plus stepped soil/contact strips.
+Twenty-one 96 × 120 deployed PNG atlases hold four floors and sixteen wall-neighbor frames each, and one shared 96 × 192 PNG holds sixteen soil borders and sixteen floor-contact masks (452 native frames total).
+Ten palette ramps retain each masonry and rock biome's identity, while earth keeps its brown ramp; slate and earth extraction use restricted material palettes to avoid stray green or red noise.
+Use axis-aligned 24-pixel tiles seen at a steep top-down angle, visible wall tops, shallow three-pixel north/side lips and eight-pixel south-facing wall facades; no isometric diamonds or vanishing points.
+Connected walls hide shared edges, and floor centers remain quiet and flat beneath items; soil borders have stepped binary transparency and contact shadows stay inside the floor tile.
+The older palette-normalized terrain atlas remains a complete loading fallback; Sprites off and other Game themes keep their original artwork.
 Equipment's existing Unique silhouettes and the named enemy roster are preserved during normalization.
 Small dressing (plants, cobwebs, pebbles and broken containers) uses 12-pixel PNGs drawn 1:1 inside the same 24-pixel tile grid.
 Defend’s [city atlas](../../assets/game-sprites/city.png) adds six roof materials, oak and pine canopies, wall cap and face pieces, rubble, scaffolding, lilies, reeds, lanterns and the city-tile tool icon.
@@ -115,8 +121,9 @@ Run `node --experimental-transform-types tools/prepare-combat-sprites.mjs` for t
 Run `node --experimental-transform-types tools/prepare-board-marks.mjs` for Target, Ignore, skipped and blocked marks.
 Run `node --experimental-transform-types tools/prepare-environment-sprites.mjs` for moss, water, vine leaves, flowers and glowing cap variants.
 Run `node --experimental-transform-types tools/prepare-forest-sprites.mjs` for the twenty forest materials/objects and two enormous entrance bases; measured crops, binary alpha and palette normalization reproduce the deployed PNGs.
+Run `node --experimental-transform-types tools/prepare-dungeon-sprites.mjs` for the interior material atlases, connected walls and shared soil/contact masks.
 Regenerate the original font with `python tools/prepare-pixel-font.py` using FontTools with WOFF2 support (`fonttools[woff]`); no font-building dependency is needed at runtime.
-The full game exporter preserves forest, environment, combat, badge, Shrine, Equipment UI and UI-detail assets; rerun their own exporter when a source atlas changes.
+The full game exporter preserves dungeon, forest, environment, combat, badge, Shrine, Equipment UI and UI-detail assets; rerun their own exporter when a source atlas changes.
 That exporter also packs the terrain atlas and produces `src/sprite-terrain-index.ts`.
 PNG load failures keep the original icon or procedural renderer visible; loaded images invalidate cached terrain and city layers through a shared revision.
 

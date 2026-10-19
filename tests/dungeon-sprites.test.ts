@@ -1,0 +1,92 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import test from "node:test";
+import { DUNGEON_ATLASES, DUNGEON_EDGE_ATLAS, drawDungeonGround, dungeonAtlasId, dungeonFloorFrame, dungeonMaterial } from "../src/sprite-dungeon.ts";
+import { paintTile, type BoardLook } from "../src/tile-painters.ts";
+import { WaterReflections, type ReflectionScene } from "../src/decor-reflections.ts";
+import type { TileDecor } from "../src/decor.ts";
+
+test("interior PNGs contain native 24-pixel floors, all sixteen wall joins and shared transition masks", () => {
+  const manifest = JSON.parse(readFileSync(new URL("../public/assets/style/manifest.json", import.meta.url), "utf8"));
+  assert.equal(DUNGEON_ATLASES.length, 21);
+  for (const id of [...DUNGEON_ATLASES, DUNGEON_EDGE_ATLAS]) {
+    const bytes = readFileSync(new URL(`../public/assets/style/${id}.png`, import.meta.url));
+    assert.deepEqual([bytes.readUInt32BE(16), bytes.readUInt32BE(20)], [96, id === DUNGEON_EDGE_ATLAS ? 192 : 120], id);
+    assert.equal(manifest.assets[id].tile, true);
+  }
+});
+
+test("Delve stone and earth form repeatable contiguous patches rather than independent tile noise", () => {
+  for (const seed of [1, 1107, 8903]) {
+    let changes = 0, pairs = 0; const counts = { stone: 0, earth: 0 };
+    for (let y = -10; y < 80; y++) for (let x = -10; x < 80; x++) {
+      const m = dungeonMaterial("delve", x, y, seed);
+      assert.notEqual(m, "masonry"); counts[m as keyof typeof counts]++;
+      assert.equal(dungeonMaterial("delve", x, y, seed), m);
+      assert.equal(dungeonMaterial("tower", x, y, seed), "masonry");
+      for (const [dx, dy] of [[1, 0], [0, 1]]) { pairs++; if (dungeonMaterial("delve", x + dx, y + dy, seed) !== m) changes++; }
+    }
+    assert.ok(counts.stone > 1500 && counts.earth > 1500);
+    assert.ok(changes / pairs < .16, "neighboring tiles usually share their material");
+  }
+});
+
+test("all wall connections, material floors and live tile contents use the correct native atlas frame", () => {
+  const original = Object.getOwnPropertyDescriptor(globalThis, "Image");
+  class ReadyImage { src = ""; complete = true; naturalWidth = 96; naturalHeight = 120; }
+  Object.defineProperty(globalThis, "Image", { configurable: true, value: ReadyImage });
+  const draws: (string | number)[][] = [];
+  const c = new Proxy({}, { set: () => true, get: (_, name) => name === "drawImage"
+    ? (image: ReadyImage, ...args: number[]) => draws.push([image.src.split("/").at(-1)!, ...args]) : () => {} }) as CanvasRenderingContext2D;
+  try {
+    for (let mask = 0; mask < 16; mask++) {
+      const neighbors = { northWall: !!(mask & 1), eastWall: !!(mask & 2), southWall: !!(mask & 4), westWall: !!(mask & 8) };
+      draws.length = 0;
+      assert.ok(drawDungeonGround(c, { mode: "tower", height: 0, seed: 3, x: 8, y: 5, wall: true, empty: false, neighbors }));
+      assert.deepEqual(draws, [["dungeon-masonry-0.png", (4 + mask) % 4 * 24, Math.floor((4 + mask) / 4) * 24, 24, 24, 0, 0, 24, 24]]);
+    }
+    const world = { tile: () => ({ kind: "floor" as const }) };
+    const look: BoardLook = { mode: "delve", height: 0, seed: 1107, outside: false, entranceX: 8,
+      styledSprites: true, spritesOff: false, reduceMotion: true, area1: false, themed: null };
+    const materialSeen = new Set<string>();
+    for (let x = 0; x < 20; x++) for (const tile of [{ kind: "floor" }, { kind: "attack" }, { kind: "door", color: "blue" }] as const) {
+      draws.length = 0;
+      assert.ok(paintTile(c, world, tile, x, 1, 0, 0, look));
+      const material = dungeonMaterial("delve", x, 1, look.seed); materialSeen.add(material);
+      assert.ok(String(draws[0][0]).startsWith(`dungeon-${material}`));
+      const frame = dungeonFloorFrame(x, 1, look.seed);
+      assert.deepEqual(draws[0].slice(1), [frame * 24, 0, 24, 24, 0, 0, 24, 24]);
+      assert.equal(world.tile().kind, "floor");
+    }
+    assert.equal(materialSeen.size, 2);
+    assert.equal(dungeonAtlasId("earth", 8), "dungeon-earth", "dirt stays earthy in every biome");
+  } finally {
+    if (original) Object.defineProperty(globalThis, "Image", original); else Reflect.deleteProperty(globalThis, "Image");
+  }
+});
+
+test("water refreshes reflected hero and wall art immediately on a sprite-style change", () => {
+  const original = Object.getOwnPropertyDescriptor(globalThis, "document");
+  const context = () => new Proxy({}, { set: () => true, get: (_, name) => name === "createImageData"
+    ? (w: number, h: number) => ({ data: new Uint8ClampedArray(w * h * 4) }) : () => {} }) as CanvasRenderingContext2D;
+  Object.defineProperty(globalThis, "document", { configurable: true, value: { createElement: () => ({ width: 0, height: 0, getContext: context }) } });
+  try {
+    let hero = 0, walls = 0;
+    const pool = { water: new Uint8Array(576).fill(1), waterCount: 576, crates: [] } as unknown as TileDecor;
+    const scene: ReflectionScene = { key: "same-board", pools: [[0, -1, pool]], now: 1000, reduceMotion: true,
+      waves: () => [], tileAt: () => ({ kind: "wall" }), plan: (x, y) => x === 0 && y === -1 ? pool : null,
+      isBroken: () => false, drawCrates() {}, sprites: { style: "legacy", tile: () => { walls++; }, torches: [],
+        hero: { x: 0, y: 0, paint: () => { hero++; } } } };
+    const reflections = new WaterReflections(), c = context();
+    reflections.draw(c, scene); const firstWalls = walls;
+    assert.equal(hero, 1); assert.ok(firstWalls > 0);
+    scene.now++; reflections.draw(c, scene);
+    assert.equal(hero, 1); assert.equal(walls, firstWalls, "unchanged art reuses its snapshot");
+    scene.sprites!.style = "kit:1"; scene.now++; reflections.draw(c, scene);
+    assert.equal(hero, 2); assert.ok(walls > firstWalls, "refresh before the four-second image cache expires");
+    scene.sprites!.style = "legacy"; scene.now++; reflections.draw(c, scene);
+    assert.equal(hero, 3, "switching off restores the original reflected hero immediately");
+  } finally {
+    if (original) Object.defineProperty(globalThis, "document", original); else Reflect.deleteProperty(globalThis, "document");
+  }
+});

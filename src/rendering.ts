@@ -383,6 +383,7 @@ export class Renderer {
   private mirroredSprites(f: FrameContext): MirroredSprites {
     const s = f.s, n = f.n;
     return {
+      style: `${f.look.spritesOff}|${!!f.look.styledSprites}|${f.look.styledSprites ? spriteRevision() : 0}`,
       tile: (ctx, t, x, y, layer) => this.tile(ctx, f, t, x, y, layer),
       torches: f.torches.map((t) => ({
         x: t.x, y: t.y, frame: torchAnimationFrame(t.x, t.y, f.now, f.look.reduceMotion),

@@ -1,7 +1,9 @@
 import type { Torch } from "./entities.ts";
 import { LIGHTING_CONFIG, getTorchFlicker, getTorchSway } from "./lighting.ts";
 import { area1FloorSprite } from "./area1-tileset.ts";
-import { bakeTorchRelief, type BakedRelief } from "./floor-relief.ts";
+import { bakeTorchRelief, type BakedRelief, type ReliefSprite } from "./floor-relief.ts";
+import { dungeonFloorSprite } from "./sprite-dungeon.ts";
+import { spriteRevision } from "./sprite-kit.ts";
 import { bakeTorchLight, type BakedLight } from "./torch-light.ts";
 import { doorColor, doorId } from "./doors.ts";
 import type { Tile } from "./entities.ts";
@@ -143,6 +145,7 @@ export class LightingPass {
   private torchBakes = new WeakMap<Torch, { left: BakedLight; right: BakedLight } | null>();
   /** Each torch's relief baked with the light nudged left and right. */
   private reliefBakes = new WeakMap<Torch, { left: BakedRelief; right: BakedRelief } | null>();
+  private reliefStyle = "";
   /** Torch bakes cost a few ms each; spread them over frames on room entry. */
   private bakeBudget = 0;
 
@@ -183,10 +186,13 @@ export class LightingPass {
    * each torch's relief is baked once, then blitted with its flicker. */
   drawTorchRelief(f: FrameContext) {
     if (!f.look.area1) return;
+    const style = f.look.styledSprites ? `kit:${spriteRevision()}` : "legacy";
+    if (style !== this.reliefStyle) { this.reliefStyle = style; this.reliefBakes = new WeakMap(); }
     const c = f.c;
     const cfg = LIGHTING_CONFIG.relief;
-    const floorSprite = (x: number, y: number) =>
-      f.world.tile(x, y)?.kind === "wall" ? null : area1FloorSprite(x, y, f.look.seed) ?? undefined;
+    const floorSprite = (x: number, y: number) => f.world.tile(x, y)?.kind === "wall" ? null
+      : f.look.styledSprites ? dungeonFloorSprite(f.look.mode, f.look.height, x, y, f.look.seed)
+      : area1FloorSprite(x, y, f.look.seed) ?? undefined;
     c.save();
     c.imageSmoothingEnabled = false;
     for (const t of f.torches) {
@@ -204,7 +210,7 @@ export class LightingPass {
   }
   /** A torch's baked floor relief; null when it has none, undefined while
    * it can't be baked yet (budget spent or sprites still loading). */
-  private reliefBake(t: Torch, floorSprite: (x: number, y: number) => HTMLImageElement | null | undefined) {
+  private reliefBake(t: Torch, floorSprite: (x: number, y: number) => ReliefSprite | null | undefined) {
     const known = this.reliefBakes.get(t);
     if (known !== undefined) return known;
     if (this.bakeBudget <= 0) return undefined;
