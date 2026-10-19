@@ -42,6 +42,7 @@ A Ranged monster shoots the moment its shot is ready and the hero is within its 
 Every shot fires a share of the way through a turn, as the hero walks its step: a shot ready halfway through a turn fires halfway, and one waiting for the hero fires the moment the hero steps into reach, partway across a tile perhaps.
 A monster both Fast and Ranged readies its shot twice as fast: 5 turns at first, half the wait on every floor.
 Its shot always hits: its ATK less DEF, cut by Parry % when parried, the shroud (whole for every shot) taking what it can of the rest; the damage rises over the hero.
+A shot the hero lives through costs the shooter the hero's thorns (see [Skills and stats](skills-and-stats.md)), which rise in yellow over it with its HP bar, and a shooter its thorns fell counts as any other kill.
 A shot that costs HP costs the area's mastery, and one that leaves the hero no HP fells it, as a lost fight does (one undo takes the step back).
 The hand and Automove don't plan around shots.
 Shots resolve in the order they fire through the turn: a monster an arrow fells shoots no more, and a shot that fells the hero ends the turn there; when the hero's arrow and a monster's shot are ready at the same moment, the arrow lands first.
@@ -83,9 +84,10 @@ Every arrow of a multishot carries the first's Charged Shot, rolls its own criti
 **Rapid Fire Chance** and **Rapid Fire Duration** join Offense training from floor 80: each shot fired outside Rapid Fire has a chance (0.4% a rank, up to 34%) to start it, and from that moment the Archer's arrows come four times as fast for its Duration (1 turn, and 0.05 turns more a rank, up to 5.95).
 A shot during Rapid Fire can't start another, and what was built toward a shot when it ends carries on toward the next at the usual pace: at one shot every 2 turns, 3.3 turns of Rapid Fire fire six arrows, half a turn apart, and the next comes 1.1 turns after the sixth.
 With Rapid Fire, a turn may fire several arrows, one after another, each rolling its own multishot and critical hit.
-The board shows each shot leaving as far through the hero's step as it fired, and its damage rises as it lands; a monster an arrow fells stays on its tile until the arrow reaches it.
+The board shows each shot leaving as far through the hero's step as it fired, and its damage rises as it lands; a monster an arrow fells stays on its tile until the arrow reaches it, as one its own shot's thorns fell does until the shot reaches the hero.
 
 ## Fractions
 
 Gold, HP and the hero's and monsters' stats keep their fractions in play: a 2% ATK bonus on 1 ATK strikes for 1.02, a monster in a higher tower can pay 3.1 Gold, and potion healing raised by research keeps its half points.
 The screen shows whole numbers: Gold and the hero's stats rounded down, each strike, heal and reward to the nearest whole, and a monster's stats to two decimals when they aren't whole (one from 100, none from 1,000).
+The damage, shroud, thorns and heal numbers rising off the board shorten from 100,000 to three figures, rounded down (123K, 4.56M).

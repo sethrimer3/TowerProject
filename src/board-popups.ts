@@ -1,4 +1,4 @@
-import { wholeChange } from "./whole.ts";
+import { popupAmount } from "./whole.ts";
 import { HEAL_COLOR } from "./damage-labels.ts";
 import type { Coin, Encounter, Gain, GainArt, Heal, ShownFight } from "./shown.ts";
 import { landsAt, type Volley } from "./volley.ts";
@@ -171,7 +171,7 @@ export class BoardPopups {
     const heal = game.lastHeal;
     if (heal && heal.id !== this.healed) {
       this.healed = heal.id;
-      if (this.shown.hpGains) this.numbers.push({ x: heal.x, y: heal.y + DAMAGE_START, start: now, text: `+${wholeChange(heal.to - heal.from)}`, color: HEAL_COLOR });
+      if (this.shown.hpGains) this.numbers.push({ x: heal.x, y: heal.y + DAMAGE_START, start: now, text: `+${popupAmount(heal.to - heal.from)}`, color: HEAL_COLOR });
     }
     let start = now - POPUP_MS;
     const held = dropsHeld(game.fight, now);
@@ -204,13 +204,14 @@ export class BoardPopups {
       if (s.healed) this.heal(s.healed, won && fight.summary ? fight.to : fight.from, fight.start + s.at);
       if (!hiddenInSummary(fight, s)) this.raise(s, struckAt(fight, s, won), fight.start + s.at);
       // Summary rounds raise no thorns: they would only cover the drops.
-      if (s.thorns && !fight.summary) this.thorns(s.thorns, fight, fight.start + s.at);
+      if (s.thorns && !fight.summary) this.thorns(s.thorns, fight.to, fight.start + s.at);
     }
   }
   /** A new turn's shots raise their numbers as they land: what a Ranged
    * enemy's shot cost the hero (with the shroud's share beside it), when it
-   * cost any, over the hero; an arrow's damage over the enemy, with its HP
-   * bar, and its Lifesteal over the hero. Undo (no volley) clears the bars. */
+   * cost any, over the hero, and its thorns over the shooter, with its HP
+   * bar; an arrow's damage over the enemy, with its HP bar, and its
+   * Lifesteal over the hero. Undo (no volley) clears the bars. */
   private shots(volley: Volley | null) {
     if (volley === this.volley) return;
     this.volley = volley;
@@ -222,6 +223,8 @@ export class BoardPopups {
       const start = landsAt(volley, s);
       if (s.by === "enemy") {
         if (s.damage > 0) this.raise({ by: "enemy", damage: s.damage, ...(s.shrouded ? { shrouded: s.shrouded } : {}), start: 0, at: 0, end: 0, hp: 0 }, s.to, start);
+        if (s.thorns) this.thorns(s.thorns, s.from, start);
+        if (s.thorns && s.full) this.arrowBars.push({ x: s.from.x, y: s.from.y, from: s.before ?? s.full, hp: s.hp ?? 0, full: s.full, start });
         continue;
       }
       this.raise({ by: "hero", damage: s.damage, ...(s.crit ? { crit: s.crit } : {}), start: 0, at: 0, end: 0, hp: s.hp ?? 0 }, s.to, start, s.charge);
@@ -229,17 +232,16 @@ export class BoardPopups {
       if (s.full) this.arrowBars.push({ x: s.to.x, y: s.to.y, from: s.before ?? s.full, hp: s.hp ?? 0, full: s.full, start });
     }
   }
-  /** What the enemy's thorns cost it, in yellow over the enemy, as the
-   * strike's damage rises over the hero. */
-  private thorns(amount: number, fight: ShownFight, start: number) {
+  /** What the enemy's thorns cost it, in yellow over the enemy (`on`), as
+   * the strike's damage rises over the hero. */
+  private thorns(amount: number, on: { x: number; y: number }, start: number) {
     if (!this.shown.hitNumbers) return;
-    this.numbers.push({ x: fight.to.x, y: fight.to.y + DAMAGE_START, start, text: String(wholeChange(amount)), color: THORN_COLOR });
+    this.numbers.push({ x: on.x, y: on.y + DAMAGE_START, start, text: popupAmount(amount), color: THORN_COLOR });
   }
   /** The HP Lifesteal restored, as a blue +N over the hero (nothing when it
    * rounds to none). */
   private heal(amount: number, on: { x: number; y: number }, start: number) {
-    const shown = wholeChange(amount);
-    if (shown > 0 && this.shown.hitNumbers) this.numbers.push({ x: on.x, y: on.y + DAMAGE_START, start, text: `+${shown}`, color: HEAL_COLOR });
+    if (Math.round(amount) > 0 && this.shown.hitNumbers) this.numbers.push({ x: on.x, y: on.y + DAMAGE_START, start, text: `+${popupAmount(amount)}`, color: HEAL_COLOR });
   }
   /** A strike's numbers over `on` from `start`: the damage that got
    * through, and what the shroud blocked in silver beside it. A round the
@@ -249,9 +251,9 @@ export class BoardPopups {
   private raise(s: Strike, on: { x: number; y: number }, start: number, charge = 0) {
     if (!this.shown.hitNumbers || (s.by === "enemy" && s.healed && !s.damage && !s.shrouded)) return;
     const both = !!s.shrouded && s.damage > 0, y = on.y + DAMAGE_START;
-    if (s.shrouded) this.numbers.push({ x: on.x - (both ? SHROUD_SPLIT : 0), y, start, text: String(wholeChange(s.shrouded)), color: SHROUD_COLOR });
+    if (s.shrouded) this.numbers.push({ x: on.x - (both ? SHROUD_SPLIT : 0), y, start, text: popupAmount(s.shrouded), color: SHROUD_COLOR });
     if (s.shrouded && !s.damage) return;
-    this.numbers.push({ x: on.x + (both ? SHROUD_SPLIT : 0), y, start, text: String(wholeChange(s.damage)), ...(s.crit ? { color: CRIT_COLOR, glow: CRIT_GLOW } : { color: s.by === "hero" ? DAMAGE_COLOR : HERO_DAMAGE_COLOR }), ...(charge > 0 ? { ring: charge < FULL_CHARGE ? FAINT_RING : CHARGED_RING } : {}) });
+    this.numbers.push({ x: on.x + (both ? SHROUD_SPLIT : 0), y, start, text: popupAmount(s.damage), ...(s.crit ? { color: CRIT_COLOR, glow: CRIT_GLOW } : { color: s.by === "hero" ? DAMAGE_COLOR : HERO_DAMAGE_COLOR }), ...(charge > 0 ? { ring: charge < FULL_CHARGE ? FAINT_RING : CHARGED_RING } : {}) });
   }
   /** Nothing is rising or waiting to, and the enemy's HP bar is still. */
   idle(now: number) {

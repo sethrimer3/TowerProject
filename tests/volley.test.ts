@@ -181,6 +181,44 @@ test("a shot leaves on the display frame nearest its tick, a tie going to the la
   assert.deepEqual(frames([1030, 1047, 1064], 17), [undefined, 0, 0.28]);
 });
 
+test("a shot the hero lives through costs its shooter the hero's thorns, a share of its full HP, wounding or felling it; a shot that fells the hero costs nothing", () => {
+  const thorny = hero({ thorns: 30 });
+  const wounded = turn({ "1,0": shooter }, { hero: thorny });
+  const out = volleyTurn(wounded);
+  assert.deepEqual(out.shots.map((s) => [s.by, s.damage, s.thorns, s.before, s.hp, s.full, s.fell]), [["enemy", 7, 15, 50, 35, 50, undefined]]);
+  assert.deepEqual([out.hp, out.kills], [93, []]);
+  assert.deepEqual([wounded.board.tile(1, 0).enemy?.hp, wounded.board.tile(1, 0).wound], [35, 15]);
+  // Wounded to 20 of its 50 HP, 30% of its full HP fells it, and it is paid as a Thorns kill.
+  const felled = turn({}, { hero: thorny });
+  felled.board.tiles.set("1,0", { kind: "enemy", enemy: { ...shooter, hp: 20 }, wound: 30 });
+  const last = volleyTurn(felled);
+  assert.deepEqual(last.shots.map((s) => [s.thorns, s.before, s.hp, s.full, s.fell?.name]), [[15, 20, 5, 50, undefined]]);
+  felled.board.tiles.set("1,0", { kind: "enemy", enemy: { ...shooter, hp: 10 }, wound: 40 });
+  const kill = volleyTurn(felled);
+  assert.deepEqual(kill.shots.map((s) => [s.thorns, s.hp, s.fell?.name]), [[15, 0, "Archer"]]);
+  assert.deepEqual(kill.kills, [{ enemy: { ...shooter, hp: 10 }, at: { x: 1, y: 0 }, instakill: false, crits: 0, thorns: true }]);
+  assert.equal(felled.board.tile(1, 0).kind, "floor");
+  assert.equal(kill.volleys.foes, undefined, "its cooldown goes with it");
+  // The shot that fells the hero costs the shooter nothing.
+  const fatal = turn({ "1,0": shooter }, { hero: hero({ thorns: 30, hp: 5 }) });
+  const end = volleyTurn(fatal);
+  assert.deepEqual([end.fell?.name, end.shots[0]!.thorns, fatal.board.tile(1, 0).enemy?.hp], ["Archer", undefined, 50]);
+  // A shot the shroud blocks whole is still lived through.
+  assert.equal(volleyTurn(turn({ "1,0": shooter }, { hero: hero({ thorns: 30, shroud: 10 }) })).shots[0]!.thorns, 15);
+});
+
+test("a Flying shooter's thorns wound it where it hovers", () => {
+  const t = turn({}, { hero: hero({ thorns: 50 }) });
+  t.board.tiles.set("1,0", { kind: "floor", flyer: { ...goblin, flying: true } });
+  t.board.wound = (x, y, damage) => {
+    const tile = t.board.tiles.get(`${x},${y}`)!;
+    t.board.tiles.set(`${x},${y}`, { ...tile, flyer: { ...tile.flyer!, hp: tile.flyer!.hp - damage }, wound: (tile.wound ?? 0) + damage });
+  };
+  const out = volleyTurn(t);
+  assert.deepEqual(out.shots.map((s) => [s.from, s.thorns, s.hp]), [[{ x: 1, y: 0 }, 25, 25]]);
+  assert.equal(t.board.tile(1, 0).flyer?.hp, 25);
+});
+
 test("the shots in flight keep a turn's last shots flying into the next, and an enemy an arrow felled stands until it lands", () => {
   const goblinShot = (tick: number, x: number) => ({ by: "hero" as const, from: { x: 0, y: 0 }, to: { x, y: 0 }, damage: 50, tick, fell: goblin });
   const first = { at: 0, ms: 100, shots: [goblinShot(100, 2)] }, second = { at: 100, ms: 100, shots: [goblinShot(10, 3)] };
@@ -199,6 +237,9 @@ test("the shots in flight keep a turn's last shots flying into the next, and an 
   // A felled flyer hovers on until its arrow lands.
   flying.update({ at: 0, ms: 100, shots: [{ ...goblinShot(50, 4), fell: { ...goblin, flying: true } }] }, 60, 0);
   assert.deepEqual([shown.tile(4, 0).kind, shown.tile(4, 0).flyer?.name], ["floor", "Goblin"]);
+  // A shooter its own shot's thorns felled stands where it shot from until the shot lands.
+  flying.update({ at: 0, ms: 100, shots: [{ by: "enemy", from: { x: 5, y: 0 }, to: { x: 0, y: 0 }, damage: 1, tick: 50, thorns: 50, fell: shooter }] }, 60, 0);
+  assert.deepEqual([shown.tile(5, 0).enemy?.name, shown.tile(0, 0).kind], ["Archer", "floor"]);
 });
 
 test("Multishot Chance at 99 ranks makes about 49.5% of shots multishots, a fixed roll per run, turn and tile", () => {

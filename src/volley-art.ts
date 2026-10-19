@@ -1,5 +1,5 @@
 import type { Tile } from "./entities.ts";
-import { landsAt, leavesAt, SHOT_FLIGHT, volleyOver, type Shot, type Volley } from "./volley.ts";
+import { enemyOf, landsAt, leavesAt, SHOT_FLIGHT, volleyOver, type Shot, type Volley } from "./volley.ts";
 import { tileCenter, type BoardTiles, type FrameContext } from "./render-frame.ts";
 
 /** A Ranged enemy's shot: a small glowing ball, its radius in tiles. */
@@ -70,7 +70,7 @@ export class ShotsInFlight {
     this.wrap = wrap;
     this.ghosts.clear();
     for (const v of this.volleys)
-      for (const s of v.shots) if (s.fell && now < landsAt(v, s)) this.ghosts.set(`${s.to.x},${s.to.y}`, s.fell.flying ? { kind: "floor", flyer: s.fell } : { kind: "enemy", enemy: s.fell });
+      for (const s of v.shots) if (s.fell && now < landsAt(v, s)) this.ghosts.set(`${enemyOf(s).x},${enemyOf(s).y}`, s.fell.flying ? { kind: "floor", flyer: s.fell } : { kind: "enemy", enemy: s.fell });
   }
   /** Whether every shot it holds has landed by `now`. */
   over(now: number) {

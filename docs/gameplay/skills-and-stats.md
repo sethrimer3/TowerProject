@@ -60,6 +60,7 @@ Forecasts, Automove and the hand still treat such a fight as lost.
 ## Thorns
 
 **Thorns** (10 Inspiration, below Buy Quantity) opens Thorn Damage training, 1% a rank up to 99%: every monster strike the hero lives through (parried or not, blocked by the shroud or not) costs the monster that share of its maximum HP, half against a boss or Greater Boss, whatever its DEF, so at 50% a monster falls to its second strike however much HP it has.
+A Ranged or Flying monster's shot the hero lives through costs it the same, a share of its maximum HP however wounded it is.
 The amount rises in yellow over the monster as the strike's damage rises over the hero, and a monster felled this way counts as any other kill (though never as an Instakill).
 Thorns are certain, so every forecast, Automove and the hand count them.
 

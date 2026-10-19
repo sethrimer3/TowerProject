@@ -1688,8 +1688,8 @@ export class Game {
       const taken = out.shots.reduce((sum, s) => (s.by === "enemy" ? snap(sum + s.damage) : sum), 0);
       if (!out.fell) this.message = `Shot · −${wholeChange(taken)} HP`;
     }
-    for (const { enemy, at, instakill, crits } of out.kills)
-      this.message = [`Arrow · ${enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, at, 1, instakill, crits ? 1 : 0)].join(" · ");
+    for (const { enemy, at, instakill, crits, thorns } of out.kills)
+      this.message = [`${thorns ? "Thorns" : "Arrow"} · ${enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, at, 1, instakill, crits ? 1 : 0)].join(" · ");
     this.showVolley(out.shots, at, ms);
     if (out.fell) {
       this.fallIn(before, out.fell);

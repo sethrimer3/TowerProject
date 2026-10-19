@@ -1,5 +1,5 @@
 import { kitIcon } from "../sprite-kit.ts";
-import { amountUnit, enemyStat, keyCount, stepsIn, whole, wholeHp } from "../whole.ts";
+import { amountUnit, enemyStat, keyCount, shortAmount, stepsIn, whole, wholeHp } from "../whole.ts";
 import type { Game } from "../state.ts";
 import type { Renderer } from "../rendering.ts";
 import { levelForXp, xpForLevel } from "../config.ts";
@@ -40,19 +40,6 @@ export function currencyAmount(n: number) {
   const [size, unit] = found;
   // Whole hundredths of the unit, so no rounding creeps in (1,150,000 is 1.15M).
   return `${(stepsIn(n, size / 100) / 100).toFixed(2)}${unit}`;
-}
-/** An amount short enough for the HUD's narrow purse: in full below `from`
- * (10,000), then to three figures in thousands, millions … decillions
- * (12.3K, 456M, 7.89q; see `AMOUNT_UNITS`), and past 999D in scientific
- * notation. */
-export function shortAmount(n: number, from = 10_000) {
-  if (n < from) return String(n);
-  const found = amountUnit(n);
-  if (!found) return n.toExponential(2);
-  const [size, unit] = found;
-  // Whole steps of the last figure shown, so no rounding creeps in.
-  const v = n / size, digits = v < 10 ? 2 : v < 100 ? 1 : 0, step = size / 10 ** digits;
-  return `${stepsIn(n, step) / 10 ** digits}${unit}`;
 }
 /** A price on a buy button (or beside one): in full below `from`, then
  * shortened as the purse is (123K, 4.56M), so the button keeps its width.

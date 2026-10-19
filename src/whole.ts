@@ -45,3 +45,20 @@ export function compactAmount(n: number) {
   const [size, unit] = found, tenths = n < size * 10;
   return `${tenths ? stepsIn(n, size / 10) / 10 : stepsIn(n, size)}${unit}`;
 }
+/** An amount short enough for the HUD's narrow purse: in full below `from`
+ * (10,000), then to three figures in thousands, millions … decillions
+ * (12.3K, 456M, 7.89q; see `AMOUNT_UNITS`), and past 999D in scientific
+ * notation. */
+export function shortAmount(n: number, from = 10_000) {
+  if (n < from) return String(n);
+  const found = amountUnit(n);
+  if (!found) return n.toExponential(2);
+  const [size, unit] = found;
+  // Whole steps of the last figure shown, so no rounding creeps in.
+  const v = n / size, digits = v < 10 ? 2 : v < 100 ? 1 : 0, step = size / 10 ** digits;
+  return `${stepsIn(n, step) / 10 ** digits}${unit}`;
+}
+/** A number rising over the board (a strike's damage, the shroud's share,
+ * thorns, a heal): to the nearest whole, then from 100,000 shortened to
+ * three figures as the purse is (123K, 4.56M). */
+export const popupAmount = (n: number) => shortAmount(wholeChange(n), 100_000);

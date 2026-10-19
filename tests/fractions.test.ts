@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { bout, heroHpAfter, predict } from "../src/combat.ts";
 import { snap } from "../src/exact.ts";
 import { random } from "../src/random.ts";
-import { enemyStat, whole, wholeChange, wholeHp } from "../src/whole.ts";
+import { enemyStat, popupAmount, whole, wholeChange, wholeHp } from "../src/whole.ts";
 import type { Enemy, Player } from "../src/entities.ts";
 
 const hero = (over: Partial<Player>): Player => ({ x: 0, y: 0, hp: 100, maxHp: 100, attack: 10, defense: 0, keys: { yellow: 0, blue: 0, red: 0 }, ...over }) as Player;
@@ -16,6 +16,10 @@ test("held amounts show whole and rounded down, changes to the nearest whole, en
   assert.deepEqual([enemyStat(12), enemyStat(1.02), enemyStat(3.14159), enemyStat(2.5)], ["12", "1.02", "3.14", "2.5"]);
   assert.deepEqual([enemyStat(99.456), enemyStat(100.25), enemyStat(345.67), enemyStat(999.94), enemyStat(1000.4), enemyStat(12345.6), enemyStat(150)], ["99.46", "100.3", "345.7", "999.9", "1000", "12346", "150"]);
   assert.equal(snap(0.1 + 0.2), 0.3);
+});
+
+test("the board's rising numbers show whole below 100,000, then to three figures, rounded down", () => {
+  assert.deepEqual([12.5, 99_999.4, 99_999.6, 100_000, 123_456, 4_567_890, 98_765_432_100].map(popupAmount), ["13", "99999", "100K", "100K", "123K", "4.56M", "98.7B"]);
 });
 
 test("fractional ATK strikes for its fraction: 1.02 ATK fells 10.2 HP in exactly 10 strikes", () => {
