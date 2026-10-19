@@ -37,18 +37,45 @@ try {
     await page.locator("[data-card-action='0']").click();
     const tree = page.locator(".card-tree");
     await tree.waitFor();
-    assert.equal(await tree.locator(".ug-alloc > b").innerText(), "6 / 6");
+    assert.equal(await tree.locator(".ct-left b").innerText(), "6");
+    // It stands in place of the Deck page, not over it.
+    assert.equal(await page.locator("#deck .deck-page").count(), 0);
+    assert.ok(await page.locator("#deck").evaluate((e) => e.classList.contains("tree-open")));
+    // A phone starts on the list, which reads at a glance; elsewhere, the tree.
+    const list = name === "phone";
+    assert.equal(await tree.locator('[data-ct-view="list"]').getAttribute("aria-pressed"), String(list));
+    if (list) {
+      assert.equal(await tree.locator(".ct-row").count(), 10);
+      assert.match(await tree.locator('.ct-row:has([data-ct-pick="goldBonus"])').innerText(), /Locked/);
+      for (let i = 0; i < 5; i++) await tree.locator('[data-ct-raise="floorPay"]').click();
+      assert.match(await tree.locator(".ct-status").innerText(), /level 5 of 5\. 1 point left/);
+      assert.match(await tree.locator('.ct-row:has([data-ct-pick="goldBonus"])').innerText(), /Available/);
+      await page.screenshot({ path: `test-results/card-tree/${name}-list.png` });
+      await tree.locator('[data-ct-view="tree"]').click();
+    }
     assert.equal(await tree.locator(".ug-node").count(), 11, "the card and its ten upgrades");
-    // Gold & Silver Bonus wait on the floor pay track.
-    assert.ok(await tree.locator('[data-node="goldBonus"]').evaluate((e) => e.classList.contains("locked")));
     await page.waitForTimeout(700);
-    await tree.locator('[data-node="floorPay"]').click();
-    await tree.locator("[data-ct-raise]").click();
-    for (let i = 0; i < 4; i++) { await page.waitForTimeout(80); await tree.locator('[data-node="floorPay"]').click(); }
-    assert.equal(await tree.locator(".ug-alloc > b").innerText(), "1 / 6");
+    if (!list) {
+      // Gold & Silver Bonus wait on the floor pay track.
+      assert.ok(await tree.locator('[data-node="goldBonus"]').evaluate((e) => e.classList.contains("locked")));
+      await tree.locator('[data-node="floorPay"]').click({ force: true });
+      await tree.locator("[data-ct-raise]").click();
+      for (let i = 0; i < 3; i++) await tree.locator('[data-node="floorPay"]').click({ force: true });
+      // The keyboard: Enter on the chosen upgrade spends a point too.
+      await tree.locator('[data-node="floorPay"]').focus();
+      await page.keyboard.press("Enter");
+      assert.match(await tree.locator(".ct-status").innerText(), /level 5 of 5/);
+      // Up the tree from the full floor pay to Gold Bonus, then across.
+      await page.keyboard.press("ArrowUp");
+      assert.equal(await page.evaluate(() => document.activeElement?.dataset.node), "goldBonus");
+      await page.keyboard.press("ArrowRight");
+      assert.equal(await page.evaluate(() => document.activeElement?.dataset.node), "silverBonus");
+      assert.match(await tree.locator(".ug-card").innerText(), /Silver Bonus/);
+    }
+    assert.equal(await tree.locator(".ct-left b").innerText(), "1");
     assert.ok(await tree.locator('[data-node="floorPay"]').evaluate((e) => e.classList.contains("owned")));
     assert.ok(await tree.locator('[data-node="goldBonus"]').evaluate((e) => e.classList.contains("next")));
-    await page.waitForTimeout(900);
+    await page.waitForTimeout(1500);
     await page.screenshot({ path: `test-results/card-tree/${name}.png` });
     // The branches are painted.
     const painted = await tree.locator(".ug-branches").evaluate((c) => {
@@ -59,15 +86,17 @@ try {
     // Respec: 20 of the 25 Gems.
     await tree.locator("[data-ct-respec]").click();
     await page.locator("#confirm").click();
-    assert.equal(await tree.locator(".ug-alloc > b").innerText(), "6 / 6");
+    assert.equal(await tree.locator(".ct-left b").innerText(), "6");
     assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem("towerdelve.v1")).gems), 5);
-    await tree.locator('[data-node="freeOffense"]').click();
+    await tree.locator('[data-node="freeOffense"]').click({ force: true });
     await tree.locator("[data-ct-raise]").click();
     await tree.locator("[data-ct-respec]").click();
     assert.ok(await page.locator("dialog[open]").innerText().then((t) => /not enough gems/i.test(t)), "short of Gems asks for Gems");
     await page.locator("#cancel").click();
     await page.keyboard.press("Escape");
     await tree.waitFor({ state: "detached" });
+    // Back on the Deck page.
+    await page.locator("#deck .deck-page").waitFor();
     await page.reload(); await page.locator("#hp").waitFor();
     assert.deepEqual(await page.evaluate(() => JSON.parse(localStorage.getItem("towerdelve.v1")).cardTrees), { stairs: { freeOffense: 1 } });
     assert.deepEqual(errors, []);

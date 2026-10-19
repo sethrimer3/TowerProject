@@ -91,11 +91,14 @@ Each tree's tracks start from the card itself, so a track's first node takes poi
 A tree's bonuses count while the run's hand holds the card, whichever card leads the hero; each adds into one factor with every other card's bonus to the same thing (two cards' +10% Gold Bonus make ×1.2), and that factor multiplies the other kinds of bonus.
 A run keeps the trees its hand had as it went inside, so points are spent in the forest only; for 20 Gems a card's points all come back, to spend again.
 
-On the Deck page, a card with a tree offers **Upgrade tree** in its details (with the points it has left), which opens the tree over the page.
-The card stands at the root, each track growing up from it: a full upgrade glows gold, one taking points has a bright rim and pulses, and one waiting on the upgrade before it is dim, its branch dashed.
-Each upgrade shows its levels under it (*2/5*).
-Tapping an upgrade shows what each level gives, what it gives now and with one more level; **Spend a point** (or tapping it again) fills a level, and the upgrades after it sprout open once it is full.
-The top left shows the points left of the card's total, with **Respec** for 20 Gems; the tree can be dragged, panned and zoomed, and its nodes pulled about, springing back when let go.
+On the Deck page, a card with a tree offers **Upgrade tree** in its details (with the points it has left), which opens the tree in place of the Deck page; **‹ Deck** (or Escape, or another tab) goes back.
+Its top shows the card, its level and XP toward the next, the points left to spend (and how many of its points are spent), and **Respec** for 20 Gems.
+The upgrades show as a **Tree** or a **List** (a phone starts on the list); the choice lasts while the game is open.
+In the tree the card stands at the bottom and each track grows up from it: a full upgrade glows gold, one that can take points has a bright rim and pulses, and one waiting on the upgrade below it is dim with a dashed frame and branch, as the key above the tree shows.
+Each upgrade wears its icon, a bar and count of its levels (*2/5*) and its name under it; the tree can be dragged, panned and zoomed, and its upgrades pulled about, springing back when let go.
+Choosing an upgrade shows what each level gives and what it gives now and with one more level; **Spend a point** (or choosing it again) fills a level, and the upgrades after it sprout open once it is full.
+The list shows the same in rows, each with its own **Spend**, an upgrade indented under the one it follows.
+With a keyboard, the arrow keys move through the tree (up the track, down toward the card, and across), Enter chooses an upgrade and again spends a point, and each point spent is announced to screen readers.
 Points are spent in the forest; inside a run the tree only shows.
 
 - **Stairs**: +10% Gold and Silver a floor (Spare Change and Wishing Well, 5 levels), then +10% Gold Bonus (1) and +10% Silver Bonus (1); +5% to each Free Up chance (Offense, Defense and Utility, 2 levels each); a heal of 10% of max HP on each floor new to the run, up to the Overheal ceiling (5 levels, then 5 more), with +10% Overheal ceiling after the first five (1) and +15% after the second (1).

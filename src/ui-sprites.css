@@ -87,7 +87,7 @@ html.ui-sprites :is(.hint, .item-meta, .item-identity, .level-cost):not(#_) { co
 
 /* Keep picture buttons (cards, map markers and skill nodes) intact. */
 html.ui-sprites button:not(:where(.hand-card, .skill-node, .badge-token, .eq-tile, .deck-add,
-  .forest-sign, .forest-building, .mission-bar, #shrine-bar, #forest-sign)):not(#_) {
+  .forest-sign, .forest-building, .mission-bar, #shrine-bar, #forest-sign, .ug-node, .ct-row-main)):not(#_) {
   border-color: transparent;
   border-image: var(--ui-face) 6 fill / 12px / 0 stretch;
   border-radius: 0;
@@ -100,7 +100,7 @@ html.ui-sprites button:not(:where(.hand-card, .skill-node, .badge-token, .eq-til
 }
 html.ui-sprites button:not(:where(.hand-card, .skill-node, .badge-token, .eq-tile, .deck-add,
   .forest-sign, .forest-building, .mission-bar, .badge-pick, .deck-link-toggle,
-  #shrine-bar, #forest-sign, #defend *)):not(#_) {
+  #shrine-bar, #forest-sign, #defend *, .ug-node, .ct-row-main)):not(#_) {
   border-width: 6px;
   border-style: solid;
   border-image-width: 6px;

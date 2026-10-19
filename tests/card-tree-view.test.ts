@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { CARD_IDS } from "../src/cards.ts";
 import { CARD_TREES, type CardTreeLevels } from "../src/card-trees.ts";
-import { cardTreeCardHtml, cardTreeGraph, nodeName, ROOT, statText } from "../src/ui/card-tree-view.ts";
+import { cardTreeCardHtml, cardTreeGraph, cardTreeListHtml, levelPips, nodeLabel, nodeName, ROOT, statText } from "../src/ui/card-tree-view.ts";
 import { layout, trailAim } from "../src/ui/upgrade-graph.ts";
 
 const TREES = CARD_IDS.filter((id) => CARD_TREES[id]);
@@ -26,7 +26,10 @@ test("a node is next while it takes points, owned once full, locked behind an un
   assert.equal(state({ stairs: { floorPay: 3 } }, "goldBonus"), "locked");
   assert.equal(state({ stairs: { floorPay: 5 } }, "floorPay"), "owned");
   assert.equal(state({ stairs: { floorPay: 5 } }, "goldBonus"), "next");
-  assert.equal(cardTreeGraph("stairs", { stairs: { floorPay: 3 } }).find((n) => n.id === "floorPay")!.tag, "3/5");
+  const floorPay = cardTreeGraph("stairs", { stairs: { floorPay: 3 } }).find((n) => n.id === "floorPay")!;
+  assert.equal(floorPay.tag, "Floor Pay");
+  assert.match(floorPay.face, /3\/5/);
+  assert.match(floorPay.label!, /^Floor Pay: level 3 of 5, available\. Gives \+30% Spare Change Gold/);
 });
 
 test("every node has a name and says what its levels give", () => {
@@ -59,4 +62,17 @@ test("the graph's layout stands every node apart, tracks above the card", () => 
     for (const [id, [, y]] of at) if (id !== ROOT) assert.ok(y < 0, `${card}.${id}`);
   }
   assert.deepEqual(trailAim({ side: false, i: 2, n: 3 }, { side: false, i: 0, n: 3 }, false), [132, -74]);
+});
+
+test("the list shows every upgrade with its state in words, and Spend only where a point can go", () => {
+  const why = (id: string) => (id === "goldBonus" ? "Fill Floor Pay first." : null);
+  const html = cardTreeListHtml("stairs", { stairs: { floorPay: 5 } }, "floorPay", why);
+  assert.equal(html.match(/class="ct-row /g)!.length, CARD_TREES.stairs!.length);
+  assert.match(html, /data-ct-raise="goldBonus" disabled/);
+  assert.match(html, /Fill Floor Pay first\./);
+  assert.match(html, /ct-row owned picked/);
+  assert.doesNotMatch(html, /data-ct-raise="floorPay"/);
+  assert.match(nodeLabel("key", {}, CARD_TREES.key![0], "No points."), /level 0 of 10, available\. Gives nothing yet\. No points\./);
+  assert.equal(levelPips(2, 3).match(/class="on"/g)!.length, 2);
+  assert.match(levelPips(4, 25), /width:16%/);
 });

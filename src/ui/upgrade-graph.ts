@@ -108,7 +108,16 @@ export class UpgradeGraph {
 
   constructor(
     host: HTMLElement,
-    private readonly opts: { reduceMotion: () => boolean; onPick: (id: string) => void; paint?: (el: HTMLElement) => void },
+    private readonly opts: {
+      reduceMotion: () => boolean;
+      onPick: (id: string) => void;
+      paint?: (el: HTMLElement) => void;
+      /** Pixels between neighbouring leaves and between generations (`GAP_X`, `GAP_Y` by default). */
+      gap?: { x: number; y: number };
+      /** The fit's zoom bounds: below `minScale` the tree overflows the view, to be panned, rather than shrink out of reading. */
+      minScale?: number;
+      maxScale?: number;
+    },
   ) {
     this.el = host;
     host.classList.add("ug");
@@ -121,6 +130,7 @@ export class UpgradeGraph {
     host.addEventListener("pointerup", this.up);
     host.addEventListener("pointercancel", this.up);
     host.addEventListener("wheel", this.wheel, { passive: false });
+    host.addEventListener("click", this.key);
     this.raf = requestAnimationFrame(this.tick);
   }
 
@@ -132,12 +142,13 @@ export class UpgradeGraph {
     this.el.removeEventListener("pointerup", this.up);
     this.el.removeEventListener("pointercancel", this.up);
     this.el.removeEventListener("wheel", this.wheel);
+    this.el.removeEventListener("click", this.key);
     this.el.innerHTML = "";
   }
 
   /** The tree as it is now: new nodes sprout, gone ones wither. */
   set(nodes: GraphNode[], picked: string) {
-    const homes = layout(nodes), still = this.opts.reduceMotion();
+    const homes = layout(nodes, this.opts.gap), still = this.opts.reduceMotion();
     const live = new Set(nodes.map((n) => n.id));
     for (const [id, b] of this.bodies) {
       if (live.has(id) || b.dying >= 0) continue;
@@ -201,8 +212,11 @@ export class UpgradeGraph {
     }
     if (x0 > x1) return;
     const w = this.el.clientWidth || 300, h = this.el.clientHeight || 300, pad = 46;
-    const s = Math.min(1.25, (w - pad * 2) / Math.max(1, x1 - x0), (h - pad * 2) / Math.max(1, y1 - y0));
-    this.fit = { s, x: w / 2 - ((x0 + x1) / 2) * s, y: h / 2 - ((y0 + y1) / 2) * s };
+    const fits = Math.min((w - pad * 2) / Math.max(1, x1 - x0), (h - pad * 2) / Math.max(1, y1 - y0));
+    const s = Math.max(this.opts.minScale ?? 0, Math.min(this.opts.maxScale ?? 1.25, fits));
+    // Too tall to fit: the root (at the bottom) stays in view, the rest panned up to.
+    const tall = (y1 - y0) * s > h - pad * 2;
+    this.fit = { s, x: w / 2 - ((x0 + x1) / 2) * s, y: tall ? h - pad - y1 * s : h / 2 - ((y0 + y1) / 2) * s };
     if (now) {
       this.pan = { ...this.fit };
       this.steered = false;
@@ -473,6 +487,28 @@ export class UpgradeGraph {
     if (this.opts.reduceMotion()) this.snap();
   };
 
+  /** A node's button pressed from the keyboard (Enter or Space): a pick,
+   * as a tap is. */
+  private key = (e: MouseEvent) => {
+    if (e.detail !== 0) return;
+    const node = (e.target as Element).closest<HTMLElement>(".ug-node");
+    if (node?.dataset.node && !node.classList.contains("withering")) this.opts.onPick(node.dataset.node);
+  };
+
+  /** Moves the view so node `id` is in it, if it isn't (keyboard focus). */
+  reveal(id: string) {
+    const b = this.bodies.get(id);
+    if (!b) return;
+    const w = this.el.clientWidth, h = this.el.clientHeight, m = 48;
+    const x = this.pan.x + b.hx * this.pan.s, y = this.pan.y + b.hy * this.pan.s;
+    const dx = x < m ? m - x : x > w - m ? w - m - x : 0, dy = y < m ? m - y : y > h - m ? h - m - y : 0;
+    if (!dx && !dy) return;
+    this.pan.x += dx;
+    this.pan.y += dy;
+    this.steered = true;
+    this.draw();
+  }
+
   private wheel = (e: WheelEvent) => {
     e.preventDefault();
     this.zoom(Math.exp(-e.deltaY * 0.0015), e.clientX, e.clientY);
@@ -531,7 +567,8 @@ export function trailAim(slot: Slot, took: Slot, root: boolean): [number, number
  * children, the root at the bottom); `side` nodes, choices down another
  * branch, sit to its left and right a little below it, row under row (the
  * root's odd one out straight below it). */
-export function layout(nodes: readonly { id: string; parent?: string; side?: boolean }[]): Map<string, [number, number]> {
+export function layout(nodes: readonly { id: string; parent?: string; side?: boolean }[], gap = { x: GAP_X, y: GAP_Y }): Map<string, [number, number]> {
+  const GX = gap.x, GY = gap.y;
   const up = new Map<string, string[]>(), side = new Map<string, string[]>(), at = new Map<string, [number, number]>();
   const ids = new Set(nodes.map((n) => n.id));
   const roots: string[] = [];
@@ -546,11 +583,11 @@ export function layout(nodes: readonly { id: string; parent?: string; side?: boo
   const width = (id: string): number => (up.get(id) ?? []).reduce((w, k) => w + width(k), 0) || 1;
   const place = (id: string, x: number, y: number, root: boolean) => {
     at.set(id, [x, y]);
-    let left = x - ((width(id) - 1) / 2) * GAP_X;
+    let left = x - ((width(id) - 1) / 2) * GX;
     for (const k of up.get(id) ?? []) {
       const w = width(k);
-      place(k, left + ((w - 1) / 2) * GAP_X, y - GAP_Y, false);
-      left += w * GAP_X;
+      place(k, left + ((w - 1) / 2) * GX, y - GY, false);
+      left += w * GX;
     }
     const sides = side.get(id) ?? [];
     sides.forEach((k, i) => {
@@ -561,7 +598,7 @@ export function layout(nodes: readonly { id: string; parent?: string; side?: boo
   let x = 0;
   for (const r of roots) {
     place(r, x, 0, true);
-    x += (width(r) + 2) * GAP_X;
+    x += (width(r) + 2) * GX;
   }
   return at;
 }
