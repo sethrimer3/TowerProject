@@ -1,6 +1,8 @@
 import type { Tile } from "./entities.ts";
 import { enemyOf, landsAt, leavesAt, SHOT_FLIGHT, volleyOver, type Shot, type Volley } from "./volley.ts";
 import { tileCenter, type BoardTiles, type FrameContext } from "./render-frame.ts";
+import { drawKit } from "./sprite-kit.ts";
+import { arrowSprite } from "./sprite-combat.ts";
 
 /** A Ranged enemy's shot: a small glowing ball, its radius in tiles. */
 const SHOT_COLOR = "#ffb347";
@@ -96,6 +98,8 @@ export class ShotsInFlight {
 }
 
 function drawShot(f: FrameContext, at: { x: number; y: number }) {
+  const size = f.s * 8 / 24;
+  if (f.look.styledSprites && drawKit(f.c, "combat-shot", at.x - size / 2, at.y - size / 2, size)) return;
   const c = f.c, r = Math.max(2, f.s * SHOT_RADIUS);
   c.save();
   c.shadowColor = SHOT_GLOW;
@@ -108,6 +112,8 @@ function drawShot(f: FrameContext, at: { x: number; y: number }) {
 }
 
 function drawArrow(f: FrameContext, at: { x: number; y: number }, angle: number, charged = false) {
+  const size = f.s * 16 / 24;
+  if (f.look.styledSprites && drawKit(f.c, arrowSprite(angle, charged), at.x - size / 2, at.y - size / 2, size)) return;
   const c = f.c, len = f.s * ARROW_LENGTH, w = Math.max(1.5, f.s * 0.05);
   c.save();
   if (charged) {

@@ -86,6 +86,10 @@ A shot during Rapid Fire can't start another, and what was built toward a shot w
 With Rapid Fire, a turn may fire several arrows, one after another, each rolling its own multishot and critical hit.
 The board shows each shot leaving as far through the hero's step as it fired, and its damage rises as it lands; a monster an arrow fells stays on its tile until the arrow reaches it, as one its own shot's thorns fell does until the shot reaches the hero.
 
+With **Sprites** on and the Classic Game theme worn, arrows, enemy shots, rank and trait marks use the shared pixel-art PNG kit.
+Charged arrows are blue, shield bubbles have a thin green pixel boundary, and Supply/Equipment Chests keep one blue/two purple stars after opening.
+Sprites is off by default, and other Game themes keep their own look.
+
 ## Fractions
 
 Gold, HP and the hero's and monsters' stats keep their fractions in play: a 2% ATK bonus on 1 ATK strikes for 1.02, a monster in a higher tower can pay 3.1 Gold, and potion healing raised by research keeps its half points.
