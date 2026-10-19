@@ -1726,6 +1726,141 @@
       "width": 16,
       "height": 4,
       "tile": true
+    },
+    "combat-arrow-e": {
+      "file": "combat-arrow-e.png",
+      "width": 16,
+      "height": 16
+    },
+    "combat-arrow-se": {
+      "file": "combat-arrow-se.png",
+      "width": 16,
+      "height": 16
+    },
+    "combat-arrow-s": {
+      "file": "combat-arrow-s.png",
+      "width": 16,
+      "height": 16
+    },
+    "combat-arrow-sw": {
+      "file": "combat-arrow-sw.png",
+      "width": 16,
+      "height": 16
+    },
+    "combat-arrow-w": {
+      "file": "combat-arrow-w.png",
+      "width": 16,
+      "height": 16
+    },
+    "combat-arrow-nw": {
+      "file": "combat-arrow-nw.png",
+      "width": 16,
+      "height": 16
+    },
+    "combat-arrow-n": {
+      "file": "combat-arrow-n.png",
+      "width": 16,
+      "height": 16
+    },
+    "combat-arrow-ne": {
+      "file": "combat-arrow-ne.png",
+      "width": 16,
+      "height": 16
+    },
+    "combat-charged-e": {
+      "file": "combat-charged-e.png",
+      "width": 16,
+      "height": 16
+    },
+    "combat-charged-se": {
+      "file": "combat-charged-se.png",
+      "width": 16,
+      "height": 16
+    },
+    "combat-charged-s": {
+      "file": "combat-charged-s.png",
+      "width": 16,
+      "height": 16
+    },
+    "combat-charged-sw": {
+      "file": "combat-charged-sw.png",
+      "width": 16,
+      "height": 16
+    },
+    "combat-charged-w": {
+      "file": "combat-charged-w.png",
+      "width": 16,
+      "height": 16
+    },
+    "combat-charged-nw": {
+      "file": "combat-charged-nw.png",
+      "width": 16,
+      "height": 16
+    },
+    "combat-charged-n": {
+      "file": "combat-charged-n.png",
+      "width": 16,
+      "height": 16
+    },
+    "combat-charged-ne": {
+      "file": "combat-charged-ne.png",
+      "width": 16,
+      "height": 16
+    },
+    "combat-shot": {
+      "file": "combat-shot.png",
+      "width": 8,
+      "height": 8
+    },
+    "combat-wing": {
+      "file": "combat-wing.png",
+      "width": 9,
+      "height": 8
+    },
+    "combat-ranged": {
+      "file": "combat-ranged.png",
+      "width": 9,
+      "height": 8
+    },
+    "combat-fast": {
+      "file": "combat-fast.png",
+      "width": 12,
+      "height": 8
+    },
+    "combat-rank-up": {
+      "file": "combat-rank-up.png",
+      "width": 7,
+      "height": 6
+    },
+    "combat-rank-down": {
+      "file": "combat-rank-down.png",
+      "width": 7,
+      "height": 6
+    },
+    "combat-chest-supply": {
+      "file": "combat-chest-supply.png",
+      "width": 10,
+      "height": 10
+    },
+    "combat-chest-equipment": {
+      "file": "combat-chest-equipment.png",
+      "width": 20,
+      "height": 10
+    },
+    "combat-shield-48": {
+      "file": "combat-shield-48.png",
+      "width": 48,
+      "height": 48
+    },
+    "combat-shield-96": {
+      "file": "combat-shield-96.png",
+      "width": 96,
+      "height": 96
+    },
+    "combat-shield-144": {
+      "file": "combat-shield-144.png",
+      "width": 144,
+      "height": 144
     }
   },
   "terrain": {

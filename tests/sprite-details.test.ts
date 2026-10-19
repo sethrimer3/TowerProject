@@ -53,6 +53,12 @@ test("all shared PNGs obey the shared palette, binary transparency and native gr
     if (id.startsWith("badge-frame-")) {
       assert.ok(right - left >= 21 && bottom - top >= 21, `${id}: frame alpha must reach all four sides`);
     }
+    if (id.startsWith("combat-shield-")) {
+      assert.ok(right - left >= width - 3 && bottom - top >= height - 3, `${id}: boundary must preserve its full radius`);
+      for (let y = Math.ceil(height * 0.2); y < height * 0.8; y++)
+        for (let x = Math.ceil(width * 0.2); x < width * 0.8; x++)
+          assert.equal(pixels[(y * width + x) * 4 + 3], 0, `${id}: leave the guarded tiles visible`);
+    }
     if (id.startsWith("ui-equip-frame-")) {
       assert.equal(width, 24, id); assert.equal(height, 24, id);
       assert.ok(right - left >= 21 && bottom - top >= 21, `${id}: keep the square frame footprint`);

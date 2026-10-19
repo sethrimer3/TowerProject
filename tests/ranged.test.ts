@@ -364,7 +364,7 @@ test("a charged arrow's number rises in a gold outline drawn under its black one
   assert.deepEqual(strokes, ["40:#ffd34d:8.8", "40:#000:4", "40:rgba(255, 211, 77, 0.45):6.4", "40:#000:4", "40:#000:4"]);
 });
 
-test("a charged arrow flies in a blue glow; a plain arrow has none", () => {
+test("with the PNG kit off, a charged arrow flies in a blue glow; a plain arrow has none", () => {
   const glows = (charge: number) => {
     const seen = new Set<string>();
     const c = new Proxy({} as Record<string, unknown>, {
@@ -372,7 +372,7 @@ test("a charged arrow flies in a blue glow; a plain arrow has none", () => {
       set: (t, k, v) => ((t[k as string] = v), true),
     });
     const shot = { by: "hero" as const, from: { x: 0, y: 0 }, to: { x: 3, y: 0 }, damage: 40, tick: 0, ...(charge ? { charge } : {}) };
-    drawVolley({ c, s: 40, now: 20, dt: 0.016, left: 0, bottom: 0, n: 9 } as never, [{ at: 0, ms: 100, shots: [shot] }]);
+    drawVolley({ c, s: 40, now: 20, dt: 0.016, left: 0, bottom: 0, n: 9, look: { styledSprites: false } } as never, [{ at: 0, ms: 100, shots: [shot] }]);
     return [...seen];
   };
   assert.deepEqual(glows(5), ["#4da6ff"]);

@@ -44,6 +44,10 @@ The [small-control atlas](../../assets/game-sprites/ui-controls.png) adds native
 `ui/control-icon.ts` shares load-aware icon pairs across page navigation, dialog closes, Mail, settings, Equipment and Shrine controls; larger controls retain their own native art.
 The slider PNGs skin the original range inputs, preserving keyboard and pointer behavior and live values in Settings and badge thresholds.
 Gold-bonus and enemy-odds popups reuse the dialog frame, heal previews use a pale blue PNG fill, and pending damage reuses the purple Shrine fill, including Overheal.
+The [combat atlas](../../assets/game-sprites/combat.png) and [fine-grid shield source](../../assets/game-sprites/combat-shield.png) add 27 native PNGs for arrows, enemy shots, rank and trait marks, chest stars and hollow shield boundaries.
+Normal and blue charged arrows have eight exported facings on a 16-pixel canvas, preserving crisp edges while flight positions remain continuous.
+Enemy marks use small native footprints inside the 24-pixel tile grid; Supply and Equipment Chests keep one blue star and two purple stars after opening.
+Shield boundaries use 48-, 96- and 144-pixel versions selected by the bubble's native diameter, with the existing radius and Delve wrapping preserved.
 The old SVG and PNG artwork stays available for unloaded images, Sprites off and theme overrides.
 All ten biome sets and the forest retain their seeded variations and wall adjacency while sharing a palette-normalized 24-pixel terrain atlas.
 Equipment's existing Unique silhouettes and the named enemy roster are preserved during normalization.
@@ -93,7 +97,8 @@ Run `node --experimental-transform-types tools/prepare-ui-details.mjs` to extrac
 Run `node --experimental-transform-types tools/prepare-shrine-sprites.mjs` for the twenty boon and four control symbols plus the repeatable bar fill.
 Run `node --experimental-transform-types tools/prepare-equipment-ui.mjs` for the five Equipment frames and three status marks.
 Run `node --experimental-transform-types tools/prepare-ui-controls.mjs` for the small controls, slider components and pale gain fill.
-The full game exporter preserves badge, Shrine, Equipment UI and UI-detail assets; rerun their own exporter when a source atlas changes.
+Run `node --experimental-transform-types tools/prepare-combat-sprites.mjs` for the directional projectile, mark, chest-star and shield set.
+The full game exporter preserves combat, badge, Shrine, Equipment UI and UI-detail assets; rerun their own exporter when a source atlas changes.
 That exporter also packs the terrain atlas and produces `src/sprite-terrain-index.ts`.
 PNG load failures keep the original icon or procedural renderer visible; loaded images invalidate cached terrain and city layers through a shared revision.
 
@@ -115,9 +120,11 @@ With the dev server running, `PLAYWRIGHT_EXECUTABLE_PATH=/usr/bin/chromium node 
 
 `PLAYWRIGHT_EXECUTABLE_PATH=/usr/bin/chromium node tests/ui-controls-sprites-browser.mjs` checks actual PNG navigation and popup closes, range input keyboard/pointer interaction and persistence, focused controls, Overheal textures, reward art, fallback and independent themes at phone/desktop widths.
 
+`PLAYWRIGHT_EXECUTABLE_PATH=/usr/bin/chromium node tests/combat-sprites-browser.mjs` checks native/enlarged art and real combat frames at phone/desktop sizes, complete PNG loading, independent theme overrides and exact restoration after switching Sprites off.
+
 ## Remaining sprite work
 
-Excluding Defend and custom themes, combat projectiles, shield bubbles, enemy trait marks and special-chest stars still use procedural drawing.
-Environmental moss, vines, flowers, water/ripples, glowing mushrooms and some wall-corner overlays still need palette-matched PNG treatment.
+Excluding Defend and custom themes, environmental moss, vines, flowers, water/ripples, glowing mushrooms and some wall-corner overlays still need palette-matched PNG treatment.
 Reveal rays, celebration/skill particles and the Equipment melt still use procedural or older icon art; lighting masks also need to follow the active PNG silhouettes instead of older art.
+Board route/Target/Ignore and badge annotations also retain procedural marks; letters should remain live text.
 These are separate from the older PNGs and SVGs deliberately retained for Sprites off and theme fallbacks.

@@ -1,5 +1,7 @@
 import { bubbleRadius, type Shield } from "./shielded.ts";
 import { tileCenter, type FrameContext } from "./render-frame.ts";
+import { drawKit } from "./sprite-kit.ts";
+import { shieldSprite } from "./sprite-combat.ts";
 
 /** A Shielded enemy's bubble (shielded.ts): a hollow green ring of its
  * radius, glowing, centred on the enemy's tile. */
@@ -23,6 +25,13 @@ export function drawShields(f: FrameContext, shields: readonly Shield[], wrap = 
     const r = bubbleRadius(s.floor) * f.s;
     for (const shift of wrap ? [-wrap, 0, wrap] : [0]) {
       const at = tileCenter(f, s.x + shift, s.y);
+      // The original radius still defines the boundary at every floor.
+      // Clear the fallback glow before drawing the hard-edged PNG.
+      if (f.look.styledSprites) {
+        c.shadowBlur = 0;
+        if (drawKit(c, shieldSprite(bubbleRadius(s.floor) * 48), at.x - r, at.y - r, r * 2)) continue;
+        c.shadowBlur = Math.max(4, f.s * 0.35);
+      }
       c.beginPath();
       c.arc(at.x, at.y, r, 0, Math.PI * 2);
       c.fill();

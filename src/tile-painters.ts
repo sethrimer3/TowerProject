@@ -10,10 +10,11 @@ import { drawArea1Door, drawArea1Item, drawArea1Quoins, wallAdjacencyMask } from
 import { drawThemedTile } from "./themed-tilesets.ts";
 import { doorColor, doorRule, drainsHp } from "./doors.ts";
 import { drawEnemySprite, enemySpriteReady } from "./enemy-sprites.ts";
-import { rankChevrons } from "./rank-chevrons.ts";
+import { rankChevrons, RANK_CHEVRONS } from "./rank-chevrons.ts";
 import { DELVE_ENEMY_NAMES } from "./scaling.ts";
 import { drawGameSprite, drawGameSpriteFrame, gameSprite, torchAnimationFrame, TORCH_FRAME_COUNT } from "./game-sprites.ts";
-import { drawKit, kitEnemy, kitImage } from "./sprite-kit.ts";
+import { drawKit, kitEnemy, kitImage, onSpritesLoaded } from "./sprite-kit.ts";
+import { COMBAT_MARKS } from "./sprite-combat.ts";
 import { drawKitTerrain } from "./sprite-terrain.ts";
 import { themedTileUrl } from "./themed-tilesets.ts";
 
@@ -440,6 +441,8 @@ const ENEMY_OUTLINE: Ring = { r: 1, color: "#0b0a0e", alpha: 1 };
 const ENEMY_MARGIN = 3;
 /** Baked enemies by name, tier, strength, whether it is Fast, Ranged or Flying, and whether the sprite art drew. */
 const bakedEnemies = new Map<string, HTMLCanvasElement>();
+// A body may arrive before its small marks. Re-bake when either loads.
+onSpritesLoaded(() => bakedEnemies.clear());
 
 function paintEnemy(c: CanvasRenderingContext2D, t: Tile, art: TileArt) {
   const e = t.enemy!;
@@ -472,12 +475,19 @@ function bakeEnemy(e: Enemy, sprite: boolean, styled = false) {
   }
   oc.globalAlpha = 1;
   oc.drawImage(body, m, m);
-  rankChevrons(oc, e.strength, CHEVRON, "#0b0a0e", m + 1, m + 1);
+  const rank = RANK_CHEVRONS[e.strength];
+  const rankId = rank.down ? COMBAT_MARKS.rankDown : COMBAT_MARKS.rankUp;
+  if (styled && kitImage(rankId)) {
+    for (let i = 0; i < rank.count; i++) drawKit(oc, rankId, m, m + i * 4, 7, 6);
+  } else rankChevrons(oc, e.strength, CHEVRON, "#0b0a0e", m + 1, m + 1);
   // A Ranged enemy's arrow takes the top right (a Flying enemy's wing in
   // its place), the Fast mark moving below it.
-  if (e.flying) wingMark(oc, m + 16, m + 1);
-  if (e.ranged) rangedMark(oc, m + 16, m + 1);
-  if (e.fast) fastMark(oc, m + 16, m + (e.ranged ? 8 : 1));
+  if (e.flying && !(styled && drawKit(oc, COMBAT_MARKS.flying, m + 15, m, 9, 8))) wingMark(oc, m + 16, m + 1);
+  if (e.ranged && !(styled && drawKit(oc, COMBAT_MARKS.ranged, m + 15, m, 9, 8))) rangedMark(oc, m + 16, m + 1);
+  if (e.fast) {
+    const y = m + (e.ranged ? 8 : 0);
+    if (!(styled && drawKit(oc, COMBAT_MARKS.fast, m + 12, y, 12, 8))) fastMark(oc, m + 16, m + (e.ranged ? 8 : 1));
+  }
   return out;
 }
 

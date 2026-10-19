@@ -94,6 +94,33 @@ function neighbour(g: Game): Point {
  * Heart Door's checked heart rise on the new floor. */
 type BoardScene = { g: Game; to?: Point; fight?: boolean; climb?: boolean; check?: (decor: DecorLayer) => boolean };
 
+/** A readable combat-art arena, shared by the golden and browser review. */
+export function combatSpriteScene(settings: Record<string, unknown> = {}): BoardScene {
+  const g = game("tower", { uiSprites: true, brightness: 85, decorOff: true, ...settings });
+  const p = g.run.player;
+  p.x = 8; p.y = 3;
+  for (let y = 1; y < 16; y++) for (let x = 1; x < 16; x++) g.run.changes[`${x},${y}`] = { kind: "floor" };
+  const foes: Tile[] = [
+    { kind: "enemy", enemy: { name: "Goblin", tier: 0, strength: "weak", hp: 80, attack: 10, defense: 1, fast: true } },
+    { kind: "enemy", enemy: { name: "Skeleton", tier: 1, strength: "strong", hp: 80, attack: 10, defense: 1, ranged: true, fast: true } },
+    { kind: "enemy", enemy: { name: "Golem", tier: 3, strength: "elite", hp: 80, attack: 10, defense: 1, shielded: true } },
+    { kind: "floor", flyer: { name: "Bat", tier: 2, strength: "strong", hp: 80, attack: 10, defense: 1, flying: true } },
+  ];
+  foes.forEach((t, i) => { g.run.changes[`${5 + i * 2},10`] = t; });
+  (g.world as unknown as { shield: { x: number; y: number; floor: number } }).shield = { x: 9, y: 10, floor: 4000 };
+  g.run.changes["5,6"] = { kind: "treasure", chest: "supply" };
+  g.run.changes["7,6"] = { kind: "treasure", chest: "equipment" };
+  g.run.changes["9,6"] = { kind: "floor", chest: "supply" };
+  g.run.changes["11,6"] = { kind: "floor", chest: "equipment" };
+  g.volley = { at: 1400, ms: 800, shots: [
+    { by: "hero", from: { x: 8, y: 3 }, to: { x: 5, y: 10 }, damage: 0, tick: 1 },
+    { by: "hero", from: { x: 8, y: 3 }, to: { x: 11, y: 10 }, damage: 0, tick: 1, charge: 60 },
+    { by: "enemy", from: { x: 7, y: 10 }, to: { x: 8, y: 3 }, damage: 0, tick: 1 },
+    { by: "hero", from: { x: 8, y: 3 }, to: { x: 9, y: 10 }, damage: 0, tick: 40 },
+  ] };
+  return { g, to: { x: 8, y: 4 } };
+}
+
 /** A Tower game on the first floor where `want(plan)` holds for a floor
  * tile with a plain floor tile beside it: the hero starts beside it and
  * steps onto it. */
@@ -230,6 +257,9 @@ const LATER_BOARD_SCENES: Record<string, () => BoardScene> = {
     return { g };
   },
 };
+
+// Appended to keep all existing scene seeds unchanged.
+LATER_BOARD_SCENES.spriteCombat = () => combatSpriteScene();
 
 /** One board scene on `canvas` (408×408 CSS pixels), fully synchronous so
  * no frame loop can interleave: a settled frame, a frame mid-step with

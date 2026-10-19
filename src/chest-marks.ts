@@ -1,5 +1,6 @@
 import type { ChestKind } from "./entities.ts";
 import { forEachViewTile, tileCenter, tileOrigin, type FrameContext } from "./render-frame.ts";
+import { drawKit } from "./sprite-kit.ts";
 
 /** How a Supply or Equipment Chest shows on the board, opened or not: a
  * glow of its colour (the CHEST card's bonus lines' light blue and purple)
@@ -28,6 +29,10 @@ export function drawChestMarks(f: FrameContext) {
   forEachViewTile(f, (x, y) => {
     const kind = f.world.tile(x, y).chest;
     if (!kind) return;
+    if (f.look.styledSprites) {
+      const o = tileOrigin(f, x, y), width = kind === "supply" ? 10 : 20;
+      if (drawKit(c, `combat-chest-${kind}`, o.x, o.y, s * width / 24, s * 10 / 24)) return;
+    }
     if (!started) {
       c.save();
       c.lineJoin = "round";

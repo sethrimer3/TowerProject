@@ -73,5 +73,10 @@
   "towerChests.moving": "6b051818f3d37d56bf00982f",
   "towerChests.after": "efd6cde03439126dcf9a3199",
   "towerChests.ripples": "92b3df79a208e37ea469a4dc",
-  "towerChests.later": "cd0c0bac97a16957708a1aa7"
+  "towerChests.later": "cd0c0bac97a16957708a1aa7",
+  "spriteCombat.settled": "96277c202499ecab7080c756",
+  "spriteCombat.moving": "fe5a54b6dc7550ae17d51477",
+  "spriteCombat.after": "42b2b001f51d1c35eeea5d87",
+  "spriteCombat.ripples": "d5627d0654fc4d6c007339d9",
+  "spriteCombat.later": "0962c4eb4a2f5408a62316e2"
 }

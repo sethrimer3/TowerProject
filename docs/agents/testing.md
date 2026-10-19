@@ -26,3 +26,6 @@ The UI golden's Shrine fixtures are appended after earlier fixtures so their see
 
 `tests/ui-controls-sprites-browser.mjs` starts its own Vite server for real navigation and popup-close clicks on PNG images, native range inputs with keyboard/pointer and save/reload, focus, Overheal fills, reward art, fallbacks and independent theme overrides at phone/desktop widths.
 It checks slider variables and actual PNG response loads rather than Chromium's unsupported computed styles for its internal thumb pseudo-element.
+
+`tests/combat-sprites-browser.mjs` starts its own server for native/enlarged PNG art and real combat Renderer frames at phone/desktop widths, complete asset loading, independent theme overrides and exact off/on/off pixel restoration.
+The appended `spriteCombat` render scene covers projectiles, shield boundaries, enemy marks and opened/closed chest stars with Sprites on, without changing earlier scene seeds.
