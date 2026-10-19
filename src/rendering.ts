@@ -33,6 +33,7 @@ import { darknessOf, forEachViewTile, tileTransform, toTileSpace, type FrameCont
 import { gameLook } from "./theme-collection.ts";
 import { usesGameSprites } from "./sprite-style.ts";
 import { spriteRevision } from "./sprite-kit.ts";
+import { FAST_GLIDE_SECONDS, FollowCamera, GLIDE_SECONDS, type CameraView } from "./camera.ts";
 
 export { ATMOSPHERE_CONFIG, type AtmosphereConfig } from "./lighting-pass.ts";
 
@@ -89,6 +90,8 @@ export class Renderer {
   /** The turn's step the hero last walked, and when its walk began. */
   private turnSeen: ShownTurn | null = null;
   private turnStart = 0;
+  /** The Delve's camera, which trails the hero with a dead zone and momentum. */
+  private camera = new FollowCamera();
   /** The enemy's lean into its strike this frame, drawn at its tile. */
   private enemyLunge = { x: 0, y: 0, dx: 0, dy: 0 };
   /** A golden path to preview for a highlighted-but-unconfirmed destination.
@@ -125,9 +128,17 @@ export class Renderer {
       document.addEventListener("visibilitychange", () => { if (document.hidden) this.weather.silence(); });
     }
   }
+  /** Inside the Delve the camera trails the hero (camera.ts); the Tower and
+   * the forest hold still. */
+  private get followsHero() {
+    return this.game.mode === "delve" && !this.game.run.outside;
+  }
+  private cameraView(n: number): CameraView {
+    return { n, width: this.game.world.width };
+  }
+  /** Where the camera settles. */
   target(n: number) {
-    const g = this.game,
-      p = g.run.player;
+    const g = this.game;
     // A Tower room is one fixed, fully-enclosed challenge: the camera holds
     // still and shows the room rather than following the player around it.
     if (g.mode === "tower")
@@ -140,10 +151,8 @@ export class Renderer {
         bottom: Math.max(0, Math.floor((CHUNK - n) / 2)),
         left: Math.max(0, Math.floor((g.world.width - n) / 2)),
       };
-    return {
-      bottom: Math.max(0, p.y - Math.floor(n / 2)),
-      left: Math.max(0, Math.min(g.world.width - n, p.x - Math.floor(n / 2))),
-    };
+    const view = this.cameraView(n);
+    return { bottom: this.camera.restingBottom(view), left: this.camera.restingLeft(view) };
   }
   draw(now: number) {
     const f = this.beginFrame(now);
@@ -282,6 +291,7 @@ export class Renderer {
       this.seed = g.run.seed;
       this.playerX = p.x;
       this.playerY = p.y;
+      this.camera.reset({ x: p.x + 0.5, y: p.y + 0.5 }, this.cameraView(n));
       const t = this.target(n);
       this.bottom = t.bottom;
       this.left = t.left;
@@ -295,17 +305,30 @@ export class Renderer {
       this.playerY = p.y;
     }
   }
-  /** Glides the camera and the drawn hero toward where they belong (or
-   * snaps them, with motion reduced or transitions off). Through a turn's
-   * step inside a run (`Game.turnShown`) the hero walks it at an even pace
-   * instead, so it stands where the turn's shots leave from. */
+  /** Glides the drawn hero, then the camera, toward where they belong (or
+   * snaps them, with motion reduced or transitions off). In the Delve the
+   * camera trails where the hero is drawn (camera.ts); elsewhere it eases to
+   * its fixed spot. */
   private follow(n: number, dt: number, now: number) {
-    const p = this.game.run.player, settings = this.game.save.settings, snaps = settings.reduceMotion || settings.transition === "instant";
-    const blend = snaps ? 1 : 1 - Math.exp(-dt * (settings.transition === "fast" ? 32 : 14));
+    const settings = this.game.save.settings, snaps = settings.reduceMotion || settings.transition === "instant";
+    const fast = settings.transition === "fast", blend = snaps ? 1 : 1 - Math.exp(-dt * (fast ? 32 : 14));
+    this.walkHero(blend, snaps, now);
+    if (this.followsHero) {
+      const view = this.cameraView(n);
+      this.camera.update({ x: this.playerX + 0.5, y: this.playerY + 0.5 }, view, dt, fast ? FAST_GLIDE_SECONDS : GLIDE_SECONDS, snaps);
+      this.left = this.camera.left(view);
+      this.bottom = this.camera.bottom(view);
+      return;
+    }
     const target = this.target(n);
     this.bottom += (target.bottom - this.bottom) * blend;
     this.left += (target.left - this.left) * blend;
-    const turn = this.game.turnShown;
+  }
+  /** Moves the drawn hero toward its tile. Through a turn's step inside a
+   * run (`Game.turnShown`) it walks the step at an even pace instead, so it
+   * stands where the turn's shots leave from. */
+  private walkHero(blend: number, snaps: boolean, now: number) {
+    const p = this.game.run.player, turn = this.game.turnShown;
     // A turn stamped after the first frame showing it (a clock that frame doesn't keep) walks from that frame.
     if (turn !== this.turnSeen) {
       this.turnSeen = turn;
@@ -610,7 +633,7 @@ export class Renderer {
   /** The hero and the camera stand where they are headed. */
   private settled() {
     const p = this.game.run.player, t = this.target(this.density), near = (a: number, b: number) => Math.abs(a - b) < 0.01;
-    return near(this.playerX, p.x) && near(this.playerY, p.y) && near(this.left, t.left) && near(this.bottom, t.bottom);
+    return near(this.playerX, p.x) && near(this.playerY, p.y) && near(this.left, t.left) && near(this.bottom, t.bottom) && (!this.followsHero || this.camera.settled());
   }
   /** Every timed effect has played out: the arrival glow, a dash's echoes,
    * a blocked step, the feedback text, the level-up, skulls, revivals, an area

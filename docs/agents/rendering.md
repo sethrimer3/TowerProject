@@ -9,6 +9,11 @@ Other Game themes keep their own drawing and portrait art; changing UI themes af
 Board drawing (`Renderer`, frames, lighting, decor, popups, tile caches, the forest outside, weather), the render goldens, and the Medieval and Neon themes.
 
 **Rendering layers.** `rendering.ts` (`Renderer`) owns the camera and smooth player interpolation: the camera, and the hero outside a run's turns, ease after their targets, while through a turn's single step inside a run (`Game.turnShown`) the hero walks at an even pace over the turn's `ms`, so it stands where that turn's shots leave from (a turn stamped after the first frame showing it walks from that frame).
+Inside the Delve the camera is `FollowCamera` (`src/camera.ts`, no drawing), which trails where the hero is drawn rather than its tile.
+It holds still while the hero stays within a dead zone round the middle (`DEAD_ZONE`, 2 tiles each way), so a step or two and back never pans; past it, the camera's goal follows just far enough to keep the hero at the zone's edge.
+The camera glides to its goal as a critically damped spring (`GLIDE_SECONDS`, `FAST_GLIDE_SECONDS` with Fast transitions), easing in and out with no jolt; its glide quickens with the hero's recent pace, so its trail fits between the dead zone and `EDGE_MARGIN`, the 3 tiles always kept between the hero and the view's edge.
+Reduce Motion and Instant transitions stand it at its goal at once; `Renderer.target` reports the goal, and `isIdle` waits for it to settle.
+`tests/camera.test.ts` covers it.
 The turns' shots (`volley-art.ts`): `ShotsInFlight` keeps every volley still flying (a turn's last shots land as the next's leave), and `drawVolley` starts each on the display frame nearest its tick (`shotFlight`: up to half a frame early, a tie going to the later frame), an arrow from where the hero stood as it fired, an enemy's shot homing on the hero as drawn.
 An enemy an arrow felled is cleared from the board at once, but `ShotsInFlight.board` (the frame's `f.world`, one object per board) keeps it standing on its tile until that arrow lands, for every pass that reads the frame's tiles.
 Each `draw()` builds one `FrameContext` (`render-frame.ts`: the camera's `BoardView`, the canvas, the board's tiles as a narrow `BoardTiles` rather than the `Game`, the `BoardLook`, and the torches, walls and glows in view).
