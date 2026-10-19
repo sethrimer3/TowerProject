@@ -423,7 +423,7 @@ try {
     await click("#card-reveal-card");
     await click('[data-add="heal"]');
     await shot(`${prefix}.deck.deckCard`);
-    await click("#card-reveal-action");
+    await click(".card-reveal-actions .card-reveal-action:last-child");
     await shot(`${prefix}.deck.added`);
     // A deck card dragged onto a slot goes there, the cards after it sliding on.
     await dragFromDeck("door", 1);
