@@ -14,6 +14,11 @@ Each effect keeps its original renderer until its PNG is ready and when the effe
 `boardFont` in `sprite-font.ts` selects the original bundled Tower Pixel face for Classic kit annotations, damage/reward numbers, level-up text and forest signs; other Game themes and Sprites off preserve the original font strings.
 `EntityLighting` paints silhouettes from the active PNG contents and hero facing; both shadow and highlight caches clear immediately when the effective style or image revision changes.
 Other Game themes keep their own drawing and portrait art; changing UI themes affects only the interface kit.
+`sprite-environment.ts` names sixteen native environmental components: seven 24-pixel material tiles, four 8-pixel flowers, two 8-pixel vine modules and three 12-pixel glowing mushroom clusters.
+`environmentPixels` decodes material and vine PNGs once; `DecorBaker` samples their literal texels through the existing moss and pool masks, preserving coverage and bank/shore/depth selection.
+Vine leaves attach to the seeded stem joints, clipped to their tile and out of water; stems remain one-pixel connectors.
+Flowers and glowing caps replace their procedural bodies only after loading, and their emitted pixels and light colors follow the active PNGs.
+The light-color cache includes effective style and image revision, while source plans, light geometry, water motion and interactions stay unchanged.
 
 Board drawing (`Renderer`, frames, lighting, decor, popups, tile caches, the forest outside, weather), the render goldens, and the Medieval and Neon themes.
 

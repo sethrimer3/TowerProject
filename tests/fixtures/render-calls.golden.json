@@ -78,5 +78,10 @@
  "spriteCombat.moving": "6a6ece2a1a283da5",
  "spriteCombat.after": "4f4bc799a84d315c",
  "spriteCombat.ripples": "c45af67d5877fc9c",
- "spriteCombat.later": "9dd59254c9bd2da8"
+ "spriteCombat.later": "9dd59254c9bd2da8",
+ "spriteEnvironment.settled": "cf1c723e61c3782e",
+ "spriteEnvironment.moving": "cff66bddea05f907",
+ "spriteEnvironment.after": "794d02f284614333",
+ "spriteEnvironment.ripples": "d739c270b89a2fd1",
+ "spriteEnvironment.later": "469bbfa0e40e8586"
 }

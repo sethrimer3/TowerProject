@@ -2,10 +2,11 @@ import type { Board } from "./board.ts";
 import type { BoardView } from "./render-frame.ts";
 import { tileRandom } from "./random.ts";
 import { decorSourceFor, FLOWER_COLORS, TILE_PX, tileDecor, tileKey, waterAt, type DecorSource, type Flower, type Plant, type TileDecor } from "./decor.ts";
-import { DecorBaker } from "./decor-bake.ts";
+import { DecorBaker, paintKitFlower, paintKitPlant } from "./decor-bake.ts";
 import { DecorEffects, type EffectFrame, type TileAt } from "./decor-effects.ts";
 import { WaterReflections, type MirroredSprites, type ReflectionScene, type Wave } from "./decor-reflections.ts";
-import { spriteRevision } from "./sprite-kit.ts";
+import { kitImage, spriteRevision } from "./sprite-kit.ts";
+import { FLOWER_LIGHTS, FLOWER_SPRITES, GLOWCAP_LIGHT, GLOWCAP_SPRITES } from "./sprite-environment.ts";
 import { drawBlades, drawCrates, DRIP_FALL, dripNow, dripRings, PixelBatch, ring, type DripNow, type Sway } from "./decor-sprites.ts";
 
 export type { MirroredSprites } from "./decor-reflections.ts";
@@ -50,6 +51,7 @@ export class DecorLayer {
    * tile (or while some are still waiting to be planned). */
   private visible: { key: string; tiles: DecorTile[]; complete: boolean } = { key: "", tiles: [], complete: false };
   private glowCache: DecorGlow[] | null = null;
+  private glowStyleKey = "";
   /** Tiles planned per frame at most, so entering a room never stalls. */
   planBudget = 60;
   private planned = 0;
@@ -233,7 +235,9 @@ export class DecorLayer {
   // ---------------------------------------------------------------- glow
 
   /** Glowing flowers and caps as light sources for the darkness pass. */
-  glows(v: BoardView): DecorGlow[] {
+  glows(v: BoardView, styled = false): DecorGlow[] {
+    const styleKey = styled ? `kit:${spriteRevision()}` : "original";
+    if (styleKey !== this.glowStyleKey) { this.glowCache = null; this.glowStyleKey = styleKey; }
     this.visibleTiles(v);
     if (this.glowCache) return this.glowCache;
     const out: DecorGlow[] = (this.glowCache = []);
@@ -241,11 +245,12 @@ export class DecorLayer {
       for (const f of d.flowers)
         out.push({
           x: x + (f.i + 0.5) / TILE_PX - 0.5, y: y + 0.5 - (f.j + 0.5) / TILE_PX,
-          rgb: FLOWER_COLORS[f.color], radius: 0.62, strength: 0.5,
+          rgb: styled && kitImage(FLOWER_SPRITES[f.color]) ? FLOWER_LIGHTS[f.color] : FLOWER_COLORS[f.color], radius: 0.62, strength: 0.5,
         });
       for (const p of d.plants)
         if (p.kind === "mushrooms" && p.glow)
-          out.push({ x: x + (p.i + 0.5) / TILE_PX - 0.5, y: y + 0.5 - (p.j - 1) / TILE_PX, rgb: GLOWCAP, radius: 0.5, strength: 0.42 });
+          out.push({ x: x + (p.i + 0.5) / TILE_PX - 0.5, y: y + 0.5 - (p.j - 1) / TILE_PX,
+            rgb: styled && kitImage(GLOWCAP_SPRITES[p.variant]) ? GLOWCAP_LIGHT : GLOWCAP, radius: 0.5, strength: 0.42 });
     });
     return out;
   }
@@ -260,7 +265,7 @@ export class DecorLayer {
     this.worldSpace(c, f.view);
     c.globalCompositeOperation = "lighter";
     this.eachTile(f.view, (x, y, d) => {
-      bloom(px, [x, y, d], glow);
+      bloom(px, [x, y, d], glow, c, !!f.styledSprites);
       if (!f.reduceMotion && this.hasFireflies([x, y, d])) firefly(px, [x, y], glow);
     });
     this.effects.drawSporeGlow(px, k);
@@ -390,9 +395,26 @@ function fallingDrop(px: PixelBatch, { gx, gy: landing, local }: DripNow) {
 type GlowFrame = { t: number; k: number; pulse: boolean };
 
 /** The bloom on a tile's glowing flowers and caps. */
-function bloom(px: PixelBatch, [x, y, d]: DecorTile, glow: GlowFrame) {
-  for (const f of d.flowers) flowerGlow(px, [x, y], f, glow);
-  for (const p of d.plants) if (p.kind === "mushrooms" && p.glow) capGlow(px, [x, y], p, glow);
+function bloom(px: PixelBatch, [x, y, d]: DecorTile, glow: GlowFrame, c: CanvasRenderingContext2D, styled: boolean) {
+  for (const f of d.flowers) {
+    const pulse = glow.pulse ? 0.8 + 0.2 * Math.sin(glow.t * 1.6 + f.i + x * 2.1 + y) : 1;
+    if (!(styled && kitBloom(c, x, y, glow.k * pulse, () => paintKitFlower(c, f)))) flowerGlow(px, [x, y], f, glow);
+  }
+  for (const p of d.plants) if (p.kind === "mushrooms" && p.glow) {
+    const pulse = glow.pulse ? 0.75 + 0.25 * Math.sin(glow.t * 0.9 + p.i * 1.7 + y) : 1;
+    if (!(styled && kitBloom(c, x, y, glow.k * pulse, () => paintKitPlant(c, p)))) capGlow(px, [x, y], p, glow);
+  }
+}
+
+/** Emission follows the PNG itself rather than painting an older star/cap over it. */
+function kitBloom(c: CanvasRenderingContext2D, x: number, y: number, strength: number, paint: () => boolean) {
+  c.save();
+  c.translate(x * TILE_PX, -y * TILE_PX);
+  c.beginPath(); c.rect(0, 0, TILE_PX, TILE_PX); c.clip();
+  c.globalAlpha *= Math.min(1, strength) * 0.6;
+  const drawn = paint();
+  c.restore();
+  return drawn;
 }
 
 function flowerGlow(px: PixelBatch, [x, y]: [number, number], f: Flower, g: GlowFrame) {

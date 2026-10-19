@@ -12,6 +12,7 @@ With Sprites on, small navigation and close marks, slider tracks and handles, re
 Sliders still work with pointer or keyboard input and show their values as live text.
 The active interface kit uses custom pixel lettering, with button frames that leave room for text and icons. On phones, ad controls stack and Training values sit above their purchase buttons.
 The Classic board kit also uses pixel lettering for damage, rewards and other annotations, plus matching Target, Ignore, skipped and blocked tile marks. Torch lighting follows the active sprite shapes.
+With environmental decoration enabled, the Classic sprite kit also gives moss, pools, vine leaves, flowers and glowing mushrooms matching PNG artwork, preserving their locations, water movement and interactions.
 
 ## The first runs
 
