@@ -1053,6 +1053,12 @@ canvas {
   font-size: 11px;
   margin-bottom: 2px;
 }
+/* A whole pixel size, not `smaller`'s 8.33px: text measured at a fractional
+   size comes out a little wider or narrower from one machine's text engine
+   to the next, and the box is centred on its width. */
+.inspect-box small {
+  font-size: 8px;
+}
 .inspect-box .safe {
   color: #8fab79;
 }
