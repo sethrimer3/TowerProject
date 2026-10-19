@@ -266,7 +266,7 @@ export class Renderer {
     if (!outside && this.decorOn) {
       this.decor.sync(g.world, g.run.seed);
       this.decor.update({ dt, now, hx: this.playerX, hy: this.playerY, tileAt: this.tileAt, reduceMotion: f.look.reduceMotion });
-      f.glows.push(...this.decor.glows(f));
+      f.glows.push(...this.decor.glows(f, f.look.styledSprites));
     }
     return f;
   }

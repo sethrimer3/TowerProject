@@ -50,6 +50,11 @@ Enemy marks use small native footprints inside the 24-pixel tile grid; Supply an
 Shield boundaries use 48-, 96- and 144-pixel versions selected by the bubble's native diameter, with the existing radius and Delve wrapping preserved.
 The [board-mark atlas](../../assets/game-sprites/board-marks.png) adds a blue Target reticle and red Ignore ring at 16 pixels, plus purple skipped and red blocked X marks at 12 pixels. They use the same native density inside the 24-pixel tile grid.
 Torch shadows and highlights follow the active PNG silhouettes, hero direction and late image loads.
+The [environment atlas](../../assets/game-sprites/environment.png) adds sixteen components: green, teal and wall moss; deep, middle, shore and bank water; four flower hues; two small vine leaf modules; and three glowing mushroom clusters.
+Material tiles are 24 × 24, flowers and vine leaves 8 × 8, and glowing caps 12 × 12, with binary alpha and nearest-neighbor sampling.
+Moss stays within its shared green/teal palette ramps; water materials are opaque tiles sampled through the exact existing pool and shore masks.
+Vine leaves attach to the existing stem joints at native size, clipped to their planned tile and out of water.
+The seed still determines coverage and placement, and the flowers/caps retain runtime lighting rather than baked glow.
 The old SVG and PNG artwork stays available for unloaded images, Sprites off and theme overrides.
 All ten biome sets and the forest retain their seeded variations and wall adjacency while sharing a palette-normalized 24-pixel terrain atlas.
 Equipment's existing Unique silhouettes and the named enemy roster are preserved during normalization.
@@ -101,8 +106,9 @@ Run `node --experimental-transform-types tools/prepare-equipment-ui.mjs` for the
 Run `node --experimental-transform-types tools/prepare-ui-controls.mjs` for the small controls, slider components and pale gain fill.
 Run `node --experimental-transform-types tools/prepare-combat-sprites.mjs` for the directional projectile, mark, chest-star and shield set.
 Run `node --experimental-transform-types tools/prepare-board-marks.mjs` for Target, Ignore, skipped and blocked marks.
+Run `node --experimental-transform-types tools/prepare-environment-sprites.mjs` for moss, water, vine leaves, flowers and glowing cap variants.
 Regenerate the original font with `python tools/prepare-pixel-font.py` using FontTools with WOFF2 support (`fonttools[woff]`); no font-building dependency is needed at runtime.
-The full game exporter preserves combat, badge, Shrine, Equipment UI and UI-detail assets; rerun their own exporter when a source atlas changes.
+The full game exporter preserves environment, combat, badge, Shrine, Equipment UI and UI-detail assets; rerun their own exporter when a source atlas changes.
 That exporter also packs the terrain atlas and produces `src/sprite-terrain-index.ts`.
 PNG load failures keep the original icon or procedural renderer visible; loaded images invalidate cached terrain and city layers through a shared revision.
 
@@ -130,9 +136,11 @@ With the dev server running, `PLAYWRIGHT_EXECUTABLE_PATH=/usr/bin/chromium node 
 
 `PLAYWRIGHT_EXECUTABLE_PATH=/usr/bin/chromium node tests/sprite-lighting-browser.mjs` checks actual hero PNG alpha against shadows/highlights through loads, facing changes and toggles.
 
+`PLAYWRIGHT_EXECUTABLE_PATH=/usr/bin/chromium node tests/environment-sprites-browser.mjs` checks literal material pixels, exact coverage, delayed loads, native/tiled review art, emitted colors, real dungeon frames and independent theme/toggle behavior.
+
 ## Remaining sprite work
 
-Excluding Defend and custom themes, environmental moss, vines, flowers, water/ripples, glowing mushrooms and some wall-corner overlays still need palette-matched PNG treatment.
+Excluding Defend and custom themes, live water ripples/glints, falling drops, wet-foot overlays, moving tall grass and some wall-corner overlays still use procedural pixels.
 Reveal rays, celebration/skill particles and the Equipment melt still use procedural or older icon art.
 The board route and badge annotations also retain procedural marks; letters should remain live text.
 These are separate from the older PNGs and SVGs deliberately retained for Sprites off and theme fallbacks.

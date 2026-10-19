@@ -146,6 +146,28 @@ function decorScene(settings: Record<string, unknown>, want: (d: TileDecor) => b
   throw Error("no floor has that decor");
 }
 
+/** A real overgrown, wet room: reusable environment review and animated golden. */
+export function environmentSpriteScene(settings: Record<string, unknown> = {}): BoardScene {
+  const g = game("tower", { uiSprites: true, brightness: 50, ...settings });
+  g.newRun({ seed: 7 });
+  for (let room = 0; room < 25; room++) g.advanceTowerRoom();
+  const src = decorSourceFor(g.world, g.run.seed)!, candidates: { x: number; y: number; water: number }[] = [];
+  for (let y = 1; y < 16; y++) for (let x = 1; x < 16; x++) {
+    const d = tileDecor(src, x, y);
+    if (g.world.tile(x, y).kind === "floor" && d.water?.[20 * 24 + 12] === 1 && d.waterCount > 150)
+      candidates.push({ x, y, water: d.waterCount });
+  }
+  candidates.sort((a, b) => b.water - a.water || a.y - b.y || a.x - b.x);
+  for (const to of candidates) {
+    const from = [[0, -1], [-1, 0], [1, 0], [0, 1]].map(([dx, dy]) => ({ x: to.x + dx, y: to.y + dy }))
+      .find(p => g.world.tile(p.x, p.y).kind === "floor" && !tileDecor(src, p.x, p.y).crates.length);
+    if (!from) continue;
+    Object.assign(g.run.player, from);
+    return { g, to: { x: to.x, y: to.y }, check: decor => decor.ripples.length > 0 };
+  }
+  throw Error("the environment scene has no walkable pool");
+}
+
 const BOARD_SCENES: Record<string, () => BoardScene> = {
   towerArea1: () => {
     const g = game("tower");
@@ -263,6 +285,7 @@ const LATER_BOARD_SCENES: Record<string, () => BoardScene> = {
 
 // Appended to keep all existing scene seeds unchanged.
 LATER_BOARD_SCENES.spriteCombat = () => combatSpriteScene();
+LATER_BOARD_SCENES.spriteEnvironment = () => environmentSpriteScene();
 
 /** One board scene on `canvas` (408×408 CSS pixels), fully synchronous so
  * no frame loop can interleave: a settled frame, a frame mid-step with

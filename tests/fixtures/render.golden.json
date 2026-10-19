@@ -78,5 +78,10 @@
   "spriteCombat.moving": "6669136bb750beb2304cba5a",
   "spriteCombat.after": "fb01f441e3f86ebb66a5372c",
   "spriteCombat.ripples": "2bc68d0e26e5e23d68b1b0e4",
-  "spriteCombat.later": "8eaaafc082fc6bb774aaa0dc"
+  "spriteCombat.later": "8eaaafc082fc6bb774aaa0dc",
+  "spriteEnvironment.settled": "9df947b494382c54b38ebbe5",
+  "spriteEnvironment.moving": "79dfe392ced3d1fed13feeae",
+  "spriteEnvironment.after": "1c3ab68d03ce59bc5ba6c75b",
+  "spriteEnvironment.ripples": "bc372f50808507c19d0201db",
+  "spriteEnvironment.later": "111d6c678b946c16143673b7"
 }

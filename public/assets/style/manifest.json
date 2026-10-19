@@ -1881,6 +1881,93 @@
       "file": "combat-mark-blocked.png",
       "width": 12,
       "height": 12
+    },
+    "env-moss-green": {
+      "file": "env-moss-green.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "env-moss-teal": {
+      "file": "env-moss-teal.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "env-moss-wall": {
+      "file": "env-moss-wall.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "env-water-deep": {
+      "file": "env-water-deep.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "env-water-mid": {
+      "file": "env-water-mid.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "env-water-shore": {
+      "file": "env-water-shore.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "env-water-bank": {
+      "file": "env-water-bank.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "env-flower-cyan": {
+      "file": "env-flower-cyan.png",
+      "width": 8,
+      "height": 8
+    },
+    "env-flower-violet": {
+      "file": "env-flower-violet.png",
+      "width": 8,
+      "height": 8
+    },
+    "env-flower-rose": {
+      "file": "env-flower-rose.png",
+      "width": 8,
+      "height": 8
+    },
+    "env-flower-gold": {
+      "file": "env-flower-gold.png",
+      "width": 8,
+      "height": 8
+    },
+    "env-glowcap-small": {
+      "file": "env-glowcap-small.png",
+      "width": 12,
+      "height": 12
+    },
+    "env-glowcap-pair": {
+      "file": "env-glowcap-pair.png",
+      "width": 12,
+      "height": 12
+    },
+    "env-glowcap-cluster": {
+      "file": "env-glowcap-cluster.png",
+      "width": 12,
+      "height": 12
+    },
+    "env-vine-leaves": {
+      "file": "env-vine-leaves.png",
+      "width": 8,
+      "height": 8
+    },
+    "env-vine-tip": {
+      "file": "env-vine-tip.png",
+      "width": 8,
+      "height": 8
     }
   },
   "terrain": {
