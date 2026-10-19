@@ -84,6 +84,7 @@ export class DeckPage {
   private deckDrag: DeckDrag | null = null;
   private badgeDrag: BadgeDrag | null = null;
   private showing = false;
+  private tree: CardTreePanel | null = null;
 
   constructor(private ctx: AppContext) {}
 
@@ -109,7 +110,20 @@ export class DeckPage {
   /** Called whenever the tab changes, so `teaching` knows the page is open. */
   shown(open: boolean) {
     this.showing = open;
-    if (!open) this.cancelDrag();
+    if (open) return;
+    this.cancelDrag();
+    // Leaving the page puts a card's tree away: the Deck shows again next time.
+    this.tree?.close(true);
+    this.tree = null;
+  }
+
+  /** Opens `id`'s upgrade tree in place of the page, until its Back. */
+  private openTree(id: CardId) {
+    this.tree?.close(true);
+    this.tree = new CardTreePanel(this.ctx, id, el("deck"), () => {
+      this.tree = null;
+      if (this.showing) this.render();
+    });
   }
 
   /** The card the remove tutorial points at: MONSTER, or the last card
@@ -120,6 +134,8 @@ export class DeckPage {
   }
 
   render() {
+    // A card's tree stands in for the page while it is open.
+    if (this.tree) return;
     const save = this.ctx.game.save;
     // With nothing to take out of the hand, the remove step has nothing to teach.
     if (this.lesson === "remove" && !this.removeTarget) {
@@ -636,7 +652,7 @@ export class DeckPage {
     const { save, cardTrees } = this.ctx.game, xp = save.cardXp[id] ?? 0;
     if (!CARD_TREES[id]) return { xp, actions, left: null };
     const left = cardTrees.pointsLeft(id);
-    const tree = { label: `Upgrade tree${left ? ` · <b>${left}</b> point${left === 1 ? "" : "s"}` : ""}`, run: () => new CardTreePanel(this.ctx, id, () => this.showing && this.render()) };
+    const tree = { label: `Upgrade tree${left ? ` · <b>${left}</b> point${left === 1 ? "" : "s"}` : ""}`, run: () => this.openTree(id) };
     return { xp, left, actions: [tree, ...actions] };
   }
 
