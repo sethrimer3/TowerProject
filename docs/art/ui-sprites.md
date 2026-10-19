@@ -65,7 +65,9 @@ The forest loads its materials and foliage together before removing the older ba
 The old SVG and PNG artwork stays available for unloaded images, Sprites off and theme overrides.
 Tower interiors use native fitted masonry floors and connected walls; Delve uses rough bedrock and compact earth for both floors and walls, with coordinate-hashed contiguous material patches.
 The [dungeon material source](../../assets/game-sprites/dungeon-materials.png) supplies four floor variations, wall-top variations, south-facing facade strips and coping for each material, plus stepped soil/contact strips.
-Twenty-one 96 × 120 deployed PNG atlases hold four floors and sixteen wall-neighbor frames each, and one shared 96 × 192 PNG holds sixteen soil borders and sixteen floor-contact masks (452 native frames total).
+Twenty-one 96 × 240 deployed PNG atlases hold four floors, two variations of sixteen wall-neighbor frames and four corner overlays each; one shared 96 × 216 PNG holds sixteen soil borders, sixteen floor-contact masks and four diagonal soil corners (876 native frames total).
+The [corner source](../../assets/game-sprites/dungeon-corners.png) supplies northwest, northeast, southeast and southwest masonry, stone and earth corner insets, plus four flat soil corner patches.
+Corner pieces occupy six native pixels at the corresponding tile corner and retain upper-left lighting in every orientation; wall tops vary by seed without rotating or stretching the artwork.
 Ten palette ramps retain each masonry and rock biome's identity, while earth keeps its brown ramp; slate and earth extraction use restricted material palettes to avoid stray green or red noise.
 Use axis-aligned 24-pixel tiles seen at a steep top-down angle, visible wall tops, shallow three-pixel north/side lips and eight-pixel south-facing wall facades; no isometric diamonds or vanishing points.
 Connected walls hide shared edges, and floor centers remain quiet and flat beneath items; soil borders have stepped binary transparency and contact shadows stay inside the floor tile.
@@ -121,7 +123,7 @@ Run `node --experimental-transform-types tools/prepare-combat-sprites.mjs` for t
 Run `node --experimental-transform-types tools/prepare-board-marks.mjs` for Target, Ignore, skipped and blocked marks.
 Run `node --experimental-transform-types tools/prepare-environment-sprites.mjs` for moss, water, vine leaves, flowers and glowing cap variants.
 Run `node --experimental-transform-types tools/prepare-forest-sprites.mjs` for the twenty forest materials/objects and two enormous entrance bases; measured crops, binary alpha and palette normalization reproduce the deployed PNGs.
-Run `node --experimental-transform-types tools/prepare-dungeon-sprites.mjs` for the interior material atlases, connected walls and shared soil/contact masks.
+Run `node --experimental-transform-types tools/prepare-dungeon-sprites.mjs` for the interior material atlases, both connected-wall variants and the cardinal/diagonal soil, corner and contact pieces.
 Regenerate the original font with `python tools/prepare-pixel-font.py` using FontTools with WOFF2 support (`fonttools[woff]`); no font-building dependency is needed at runtime.
 The full game exporter preserves dungeon, forest, environment, combat, badge, Shrine, Equipment UI and UI-detail assets; rerun their own exporter when a source atlas changes.
 That exporter also packs the terrain atlas and produces `src/sprite-terrain-index.ts`.

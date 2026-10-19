@@ -66,6 +66,34 @@ try {
     return centerClear;
   });
   assert.ok(masks.every(Boolean), "soil transitions and contact shadows leave floor centers readable");
+  const corners = await page.evaluate(async () => {
+    const { DUNGEON_ATLASES, DUNGEON_EDGE_ATLAS } = await import("/src/sprite-dungeon.ts"), { kitImage } = await import("/src/sprite-kit.ts");
+    return [...DUNGEON_ATLASES, DUNGEON_EDGE_ATLAS].map(id => {
+      const image = kitImage(id), cv = document.createElement("canvas"); cv.width = image.naturalWidth; cv.height = image.naturalHeight;
+      const c = cv.getContext("2d"); c.drawImage(image, 0, 0);
+      const pixels = c.getImageData(0, 0, cv.width, cv.height).data;
+      const first = id === DUNGEON_EDGE_ATLAS ? 32 : 36;
+      const pieces = Array.from({ length: 4 }, (_, corner) => {
+        const frame = first + corner, x0 = frame % 4 * 24, y0 = Math.floor(frame / 4) * 24;
+        const left = corner === 1 || corner === 2 ? 18 : 0, top = corner >= 2 ? 18 : 0;
+        let visible = 0, outside = 0;
+        for (let y = 0; y < 24; y++) for (let x = 0; x < 24; x++) if (pixels[((y0 + y) * cv.width + x0 + x) * 4 + 3]) {
+          visible++; if (x < left || x >= left + 6 || y < top || y >= top + 6) outside++;
+        }
+        return { visible, outside };
+      });
+      let varied = false;
+      if (id !== DUNGEON_EDGE_ATLAS) {
+        const a = c.getImageData(72, 96, 24, 24).data, b = c.getImageData(72, 192, 24, 24).data;
+        varied = a.some((value, i) => value !== b[i]);
+      }
+      return { id, pieces, varied };
+    });
+  });
+  for (const atlas of corners) {
+    for (const piece of atlas.pieces) { assert.ok(piece.visible >= 5, atlas.id); assert.equal(piece.outside, 0, atlas.id); }
+    if (atlas.id !== "dungeon-edges") assert.ok(atlas.varied, `${atlas.id}: long joined walls have two different native tops`);
+  }
   for (const width of [390, 1100]) for (const mode of ["tower", "delve"]) {
     await page.setViewportSize({ width, height: 1000 });
     const result = await page.evaluate(async ({ width, mode }) => {
@@ -119,16 +147,17 @@ try {
     await page.locator("#dungeon-review").screenshot({ path: `test-results/dungeon-sprites/${mode}-${width}.png` });
     await page.locator("#dungeon-review").evaluate(e => e.remove());
   }
+  await page.setViewportSize({ width: 1100, height: 1150 });
   await page.evaluate(async () => {
     const { DUNGEON_ATLASES } = await import("/src/sprite-dungeon.ts"), { kitImage } = await import("/src/sprite-kit.ts");
-    const sheet = document.createElement("canvas"); sheet.id = "dungeon-art"; sheet.width = 1100; sheet.height = 850;
+    const sheet = document.createElement("canvas"); sheet.id = "dungeon-art"; sheet.width = 1100; sheet.height = 1050;
     const c = sheet.getContext("2d"); c.imageSmoothingEnabled = false; c.fillStyle = "#10151c"; c.fillRect(0, 0, sheet.width, sheet.height);
     DUNGEON_ATLASES.forEach((id, i) => {
-      const image = kitImage(id), x = i % 7 * 155 + 6, y = Math.floor(i / 7) * 280;
-      c.drawImage(image, x, y + 6); c.drawImage(image, 0, 0, 96, 24, x, y + 140, 144, 36);
-      c.fillStyle = "#eee0b7"; c.font = "11px sans-serif"; c.fillText(id.replace("dungeon-", ""), x, y + 200);
+      const image = kitImage(id), x = i % 7 * 155 + 6, y = Math.floor(i / 7) * 350;
+      c.drawImage(image, x, y + 6); c.drawImage(image, 0, 0, 96, 24, x, y + 250, 144, 36);
+      c.fillStyle = "#eee0b7"; c.font = "11px sans-serif"; c.fillText(id.replace("dungeon-", ""), x, y + 315);
     });
-    sheet.style.cssText = "position:fixed;left:0;top:0;width:1100px;height:850px;z-index:100000"; document.body.append(sheet);
+    sheet.style.cssText = "position:fixed;left:0;top:0;width:1100px;height:1050px;z-index:100000"; document.body.append(sheet);
   });
   await page.locator("#dungeon-art").screenshot({ path: "test-results/dungeon-sprites/native-atlases.png" });
   await page.locator("#dungeon-art").evaluate(e => e.remove());
