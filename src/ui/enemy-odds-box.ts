@@ -1,3 +1,4 @@
+import { controlIcon } from "./control-icon.ts";
 import type { Game } from "../state.ts";
 import type { EnemyStrength } from "../entities.ts";
 import type { StrengthOdds, Trait, TraitOdds } from "../enemy-odds.ts";
@@ -27,7 +28,7 @@ function content(game: Game) {
   const traits = odds.traits.length
     ? `<table class="enemy-odds-table"><thead><tr><th scope="col">Attribute</th><th scope="col">Chance</th><th scope="col">Attack Speed</th><th scope="col">Move Speed</th></tr></thead><tbody>${odds.traits.map(traitRow).join("")}</tbody></table>`
     : "";
-  return { key, html: `<button type="button" class="enemy-odds-x" aria-label="Close">✕</button><h2>Enemies on this floor</h2>${strengths}${traits}` };
+  return { key, html: `<button type="button" class="enemy-odds-x" aria-label="Close">${controlIcon("close")}</button><h2>Enemies on this floor</h2>${strengths}${traits}` };
 }
 
 /** The box over the middle of the screen listing the enemies the floor the

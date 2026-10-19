@@ -1,3 +1,4 @@
+import { controlIcon } from "./control-icon.ts";
 import { kitIcon } from "../sprite-kit.ts";
 import { GOAL_SPRITES } from "../sprite-ui-details.ts";
 import { CHECKPOINT_EVERY, CHECKPOINT_FLOORS, CHECKPOINTS, UNLOCK_NAMES, areaCleared, checkpoint, areaMastered, canWarp, floorsCompleted, goalState, unmasteredBelow, passFor, passTotals, unlockAt, unlockFloor, warpUnlocked, type Checkpoint, type GoalReward, type GoalState, type GoalUnlock, type Pass } from "../goals.ts";
@@ -202,7 +203,7 @@ export class GoalsPage {
     document.querySelectorAll<HTMLElement>("#goals [data-scroll]").forEach((s) => (this.scrolled[Number(s.dataset.scroll)] = s.scrollTop));
     const panels = Array.from({ length: this.towers }, (_, i) => this.towerPanel(i + 1)).join("");
     el("goals").innerHTML =
-      `<div class="goals-head"><button class="back" id="goals-back">← Back</button><div class="page-title"><small>THE ASCENT'S MILESTONES</small><h2>Goals</h2></div><button id="goals-pass" class="goals-pass"></button></div>` +
+      `<div class="goals-head"><button class="back" id="goals-back">${controlIcon("back")} Back</button><div class="page-title"><small>THE ASCENT'S MILESTONES</small><h2>Goals</h2></div><button id="goals-pass" class="goals-pass"></button></div>` +
       `<p class="goals-message" id="goals-message" aria-live="polite">${this.message}</p>` +
       `<div class="goals-stage"><div class="goals-strip" id="goals-strip">${panels}</div><div class="goals-floor" id="goals-floor"></div></div>` +
       (this.towers > 1

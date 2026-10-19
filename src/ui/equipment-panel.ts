@@ -1,3 +1,4 @@
+import { controlIcon } from "./control-icon.ts";
 import type { Mode } from "../entities.ts";
 import {
   CATEGORIES, CATEGORY_IDS, EQUIP_MATERIALS, EQUIP_MATERIAL_IDS, itemDef, materialOf, uniquesOf,
@@ -135,7 +136,7 @@ export class EquipmentPanel {
       return `<div class="eq-slot${item ? ` rar-${item.rarity}` : ""}">${item ? this.tile(item, "eq-item") : this.ghost(c, ` data-eq-slot="${c}"`, `${CATEGORIES[c].name}: empty`)}${name}</div>`;
     }).join("");
     const switcher = delve
-      ? `<button class="eq-mode" data-eq-mode="${other}" title="Showing the ${MODE_NAMES[this.mode]} loadout: switch to the ${MODE_NAMES[other]}'s">${uiSprite(this.mode)}<span>${MODE_NAMES[this.mode]}</span><b aria-hidden="true">⇄</b></button>`
+      ? `<button class="eq-mode" data-eq-mode="${other}" title="Showing the ${MODE_NAMES[this.mode]} loadout: switch to the ${MODE_NAMES[other]}'s">${uiSprite(this.mode)}<span>${MODE_NAMES[this.mode]}</span><b aria-hidden="true">${controlIcon("swap")}</b></button>`
       : `<span class="eq-mode">${uiSprite(this.mode)}<span>${MODE_NAMES[this.mode]}</span></span>`;
     const totals = equipmentEffects(this.e, this.mode), lines = (Object.entries(totals) as [keyof typeof totals, number][]).filter(([, v]) => v);
     const summary = lines.length ? `<ul class="eq-totals">${lines.map(([k, v]) => `<li>${effectText(k, v)}</li>`).join("")}</ul>` : `<p class="eq-totals-empty">Nothing worn yet.</p>`;
@@ -226,7 +227,7 @@ export class EquipmentPanel {
       const list = ready.length ? `<div class="eq-grid">${ready.map((i) => this.tile(i, "eq-target")).join("")}</div>`
         : `<p class="hint">None are ready yet.</p>`;
       const empty = `<span class="eq-tile eq-ghost" aria-hidden="true"></span>`;
-      return `<div class="eq-assemble"><div class="eq-recipe"><span class="eq-inputs">${this.inputsHtml([empty, empty, empty])}</span><span class="eq-arrow" aria-hidden="true">▶</span><span class="eq-tile eq-ghost eq-result-slot" aria-hidden="true">?</span></div>
+      return `<div class="eq-assemble"><div class="eq-recipe"><span class="eq-inputs">${this.inputsHtml([empty, empty, empty])}</span><span class="eq-arrow" aria-hidden="true">${controlIcon("forward", "▶")}</span><span class="eq-tile eq-ghost eq-result-slot" aria-hidden="true">?</span></div>
         <div class="eq-need-row"><p class="eq-need">Choose the piece to keep</p><button id="eq-auto-asm"${autoMerges(this.e).length ? "" : " disabled"}>${ACTION_ICONS.merge} Auto-assemble</button></div></div><h3 class="eq-section">List</h3>${list}${this.assembleActions(false)}`;
     }
     const t = RARITY_TIERS[target.rarity], next = t.next!, need = t.merge - 1, category = categoryOf(target);
@@ -241,7 +242,7 @@ export class EquipmentPanel {
     const left = fodder.filter((i) => !this.copies.includes(i.id));
     const list = left.length ? `<div class="eq-grid">${left.map((i) => this.tile(i, "eq-pick")).join("")}</div>` : `<p class="hint">No other copies left to choose.</p>`;
     return `<div class="eq-assemble"><p class="eq-formula"><b>${t.merge}×</b> <span class="rar-${target.rarity} eq-need-name">${nameOf(target)}</span> ${rarityTag(target.rarity)} <span class="eq-formula-arrow">→</span> <b>1×</b> <span class="rar-${next} eq-need-name">${nameOf(target)}</span> ${rarityTag(next)}</p>
-      <div class="eq-recipe"><span class="eq-inputs">${inputs}</span><span class="eq-arrow" aria-hidden="true">▶</span>${this.tile(result as EquipItem, "eq-result", " eq-result-slot")}</div>
+      <div class="eq-recipe"><span class="eq-inputs">${inputs}</span><span class="eq-arrow" aria-hidden="true">${controlIcon("forward", "▶")}</span>${this.tile(result as EquipItem, "eq-result", " eq-result-slot")}</div>
       <p class="eq-need">${copies.length + 1} of ${t.merge} pieces chosen${copies.length === need ? ": ready to assemble" : `: choose ${need - copies.length} more below`}</p></div>
       <p class="hint">${rarityTag(target.rarity)} Lv ${target.level} → ${rarityTag(next)} Lv ${target.level} (up to ${RARITY_TIERS[next].maxLevel}); leveling it to ${RARITY_TIERS[next].slotLevel} opens effect slot ${rarityRank(next) + 1}.${unlocks.length ? ` Unlocks: ${unlocks.join(" · ")}.` : ""}</p>
       ${warning}${blocked.length ? `<p class="hint">Not offered (locked or worn): ${blocked.map((i) => `${nameOf(i)} Lv ${i.level}`).join(", ")}.</p>` : ""}
@@ -290,7 +291,7 @@ export class EquipmentPanel {
         <span>${rarityTag(target.rarity)} → ${rarityTag(next)} Lv ${target.level}${target.locked ? ` ${ACTION_ICONS.lock}` : ""}</span>
         <small>Uses up Lv ${fodder.map((i) => i.level).join(", Lv ")}${lost}</small></span></label></li>`;
     }).join("");
-    modal.innerHTML = `<div class="eq-auto"><button id="eq-auto-close" class="dialog-x" aria-label="Close" title="Close">✕</button>
+    modal.innerHTML = `<div class="eq-auto"><button id="eq-auto-close" class="dialog-x" aria-label="Close" title="Close">${controlIcon("close")}</button>
       <small>${ACTION_ICONS.merge} ASSEMBLE</small><h2>Auto-assemble</h2>
       <p class="eq-auto-note">Every merge your pieces make. Worn pieces take no part; locked ones are only kept. Uncheck any to leave it out.</p>
       <ul class="eq-auto-list">${rows}</ul>
@@ -468,7 +469,7 @@ export class EquipmentPanel {
     const item = findItem(this.e, id);
     if (!item) return;
     const { modal } = this.ctx, def = itemDef(item.def)!;
-    modal.innerHTML = `<div class="equip-detail"><button id="eq-close" class="dialog-x" aria-label="Close" title="Close">✕</button>
+    modal.innerHTML = `<div class="equip-detail"><button id="eq-close" class="dialog-x" aria-label="Close" title="Close">${controlIcon("close")}</button>
       <small>${CATEGORIES[def.category].name.toUpperCase()} · ${def.class === "unique" ? "UNIQUE" : "STANDARD"}</small>
       <h2 class="equip-title"><span class="equip-icon-frame rar-${item.rarity}">${itemIcon(def.id)}</span>${def.name}</h2>
       <p class="item-meta">${rarityTag(item.rarity)} Level ${item.level}/${maxLevel(item)}</p>${this.progressHtml(item)}<p class="item-identity">${def.identity}.</p>

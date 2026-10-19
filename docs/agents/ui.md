@@ -16,6 +16,9 @@ Skill nodes use PNG state frames and specific shared subjects, and Silver uses i
 Shell icon replacement updates an existing pair rather than inserting duplicate currency or combat symbols.
 `boon-icon.ts` adds optional, load-aware Shrine subjects to the existing text controls; the native first-choice select and all boon labels, counts, ban and ranking actions remain live.
 `sprite-equipment.ts` lists Equipment's native PNG rarity/empty/selection frames and status marks, shared across its inventory, loadouts, detail and result screens through `ui-sprites.css` and `kitIcon` pairs.
+`ui/control-icon.ts` maps small navigation, close, check, lock, swap and ranking symbols through `sprite-controls.ts` to native 12-pixel PNGs; the same atlas supplies the reward star and native slider parts.
+Range inputs retain their original event handlers, values and keyboard behavior, with PNG track/thumb states applied only by the effective UI sprite class.
+The Gold-bonus and enemy-odds layers reuse the dialog PNG, and heal/loss preview segments use palette-matched PNG fills, including Overheal.
 `applyUiTheme` mirrors effective art in `ui-sprites` and `game-sprites` classes without changing the saved preference.
 
 `main.ts` wiring, `PageGame` and the desks, `Game`'s UI commands, every page in `src/ui/`, the HUD, dialogs, lessons, the frame loop and the UI golden.

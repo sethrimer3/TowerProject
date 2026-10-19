@@ -1660,6 +1660,72 @@
       "file": "ui-equip-frame-selection.png",
       "width": 24,
       "height": 24
+    },
+    "ui-control-close": {
+      "file": "ui-control-close.png",
+      "width": 12,
+      "height": 12
+    },
+    "ui-control-back": {
+      "file": "ui-control-back.png",
+      "width": 12,
+      "height": 12
+    },
+    "ui-control-forward": {
+      "file": "ui-control-forward.png",
+      "width": 12,
+      "height": 12
+    },
+    "ui-control-check": {
+      "file": "ui-control-check.png",
+      "width": 12,
+      "height": 12
+    },
+    "ui-control-lock": {
+      "file": "ui-control-lock.png",
+      "width": 12,
+      "height": 12
+    },
+    "ui-control-up": {
+      "file": "ui-control-up.png",
+      "width": 12,
+      "height": 12
+    },
+    "ui-control-down": {
+      "file": "ui-control-down.png",
+      "width": 12,
+      "height": 12
+    },
+    "ui-control-swap": {
+      "file": "ui-control-swap.png",
+      "width": 12,
+      "height": 12
+    },
+    "ui-control-star": {
+      "file": "ui-control-star.png",
+      "width": 24,
+      "height": 24
+    },
+    "ui-slider-thumb": {
+      "file": "ui-slider-thumb.png",
+      "width": 24,
+      "height": 24
+    },
+    "ui-slider-thumb-active": {
+      "file": "ui-slider-thumb-active.png",
+      "width": 24,
+      "height": 24
+    },
+    "ui-slider-track": {
+      "file": "ui-slider-track.png",
+      "width": 48,
+      "height": 12
+    },
+    "ui-fill-gain": {
+      "file": "ui-fill-gain.png",
+      "width": 16,
+      "height": 4,
+      "tile": true
     }
   },
   "terrain": {

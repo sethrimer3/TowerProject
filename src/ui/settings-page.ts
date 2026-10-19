@@ -1,3 +1,4 @@
+import { controlIcon } from "./control-icon.ts";
 import { applyUiTheme } from "./medieval.ts";
 import { renderThemeMenu, themeMenuTitle, wornName } from "./theme-menu.ts";
 import type { ThemeKind } from "../theme-collection.ts";
@@ -94,7 +95,7 @@ let menu: ThemeKind | "toggles" | null = null;
 /** The buttons that open each kind's theme menu, naming the look worn. */
 const themeButtons = (game: PageGame) =>
   `<div class="theme-buttons">${(["ui", "game"] as const).map((kind) =>
-    `<button class="setting theme-open" id="${kind}-themes" data-kind="${kind}">${themeMenuTitle(kind)}<b>${wornName(game.save, kind)} ›</b></button>`).join("")}</div>`;
+    `<button class="setting theme-open" id="${kind}-themes" data-kind="${kind}">${themeMenuTitle(kind)}<b>${wornName(game.save, kind)} ${controlIcon("forward")}</b></button>`).join("")}</div>`;
 
 /** The Settings page: a way back to the board, the Stats dialog, the theme
  * menus, display and control options, retire, and erase. */
@@ -103,7 +104,7 @@ export function renderSettingsPage(ctx: AppContext, overlay: BoardOverlay) {
   if (menu === "toggles") {
     const keys = shownOf(TOGGLES, game.save);
     el("settings").innerHTML =
-      `<button class="back" id="toggles-back">← Settings</button><div class="page-title"><small>WHAT THE BOARD SHOWS IN A RUN</small><h2>Toggles</h2></div>` +
+      `<button class="back" id="toggles-back">${controlIcon("back")} Settings</button><div class="page-title"><small>WHAT THE BOARD SHOWS IN A RUN</small><h2>Toggles</h2></div>` +
       keys.map((key) => control(key, game)).join("");
     el("toggles-back").onclick = () => {
       menu = null;
@@ -126,9 +127,9 @@ export function renderSettingsPage(ctx: AppContext, overlay: BoardOverlay) {
   }
   const words = MODES[game.mode].words;
   el("settings").innerHTML =
-    `<button class="back" id="settings-back">← Back</button><div class="page-title"><small>MAKE THE ASCENT YOUR OWN</small><h2>Settings</h2></div><button class="wide" id="stats-open">Stats</button>` +
+    `<button class="back" id="settings-back">${controlIcon("back")} Back</button><div class="page-title"><small>MAKE THE ASCENT YOUR OWN</small><h2>Settings</h2></div><button class="wide" id="stats-open">Stats</button>` +
     themeButtons(game) +
-    `<button class="setting menu-open" id="toggles-open">Toggles<b>›</b></button>` +
+    `<button class="setting menu-open" id="toggles-open">Toggles<b>${controlIcon("forward")}</b></button>` +
     shownOf(PAGE, game.save).map((key) => control(key, game) + (key === "uiSprites" ? `<p class="hint">Sprites apply to the default interface and board. Other UI and Game themes use their own art.</p>` : "")).join("") +
     `<p class="hint">Automation pauses outside the board tabs and while the browser is hidden. Progress saves after each action.</p><button class="wide" id="retire">Retire this ${words.run}</button><p class="hint">Keep your milestone rewards and enter a freshly generated ${words.fresh}.</p><button class="wide danger" id="erase">Erase all progress</button><p class="seed">RUN SEED · ${game.run.seed}</p>`;
   bindSettings(ctx, overlay);

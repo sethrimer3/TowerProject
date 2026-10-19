@@ -40,6 +40,10 @@ The Overheal bar also uses the existing blue PNG fill in the active kit.
 The [Equipment UI atlas](../../assets/game-sprites/equipment-ui.png) supplies Common, Uncommon, Rare and empty-slot frames plus transparent selection corners at 24 pixels, and worn, Unique and salvage marks at 12 pixels.
 Inventory, loadouts, item details, Auto-assemble and result screens share those frames; item art stays at 24 pixels while rarity letters and levels remain live text.
 The loadout and assemble trays reuse the existing panel PNG, and Auto-salvage uses the shared field and check PNGs.
+The [small-control atlas](../../assets/game-sprites/ui-controls.png) adds native 12-pixel close, navigation, check, lock, ranking and swap marks, a 24-pixel reward star, two 24-pixel slider thumbs and a 48 × 12 track.
+`ui/control-icon.ts` shares load-aware icon pairs across page navigation, dialog closes, Mail, settings, Equipment and Shrine controls; larger controls retain their own native art.
+The slider PNGs skin the original range inputs, preserving keyboard and pointer behavior and live values in Settings and badge thresholds.
+Gold-bonus and enemy-odds popups reuse the dialog frame, heal previews use a pale blue PNG fill, and pending damage reuses the purple Shrine fill, including Overheal.
 The old SVG and PNG artwork stays available for unloaded images, Sprites off and theme overrides.
 All ten biome sets and the forest retain their seeded variations and wall adjacency while sharing a palette-normalized 24-pixel terrain atlas.
 Equipment's existing Unique silhouettes and the named enemy roster are preserved during normalization.
@@ -88,6 +92,7 @@ Use `--details-only` to refresh the sixteen detail sprites, or `--cards-only` af
 Run `node --experimental-transform-types tools/prepare-ui-details.mjs` to extract the Goal, HUD and ornament set from its measured gutters.
 Run `node --experimental-transform-types tools/prepare-shrine-sprites.mjs` for the twenty boon and four control symbols plus the repeatable bar fill.
 Run `node --experimental-transform-types tools/prepare-equipment-ui.mjs` for the five Equipment frames and three status marks.
+Run `node --experimental-transform-types tools/prepare-ui-controls.mjs` for the small controls, slider components and pale gain fill.
 The full game exporter preserves badge, Shrine, Equipment UI and UI-detail assets; rerun their own exporter when a source atlas changes.
 That exporter also packs the terrain atlas and produces `src/sprite-terrain-index.ts`.
 PNG load failures keep the original icon or procedural renderer visible; loaded images invalidate cached terrain and city layers through a shared revision.
@@ -107,3 +112,12 @@ With the dev server running, `PLAYWRIGHT_EXECUTABLE_PATH=/usr/bin/chromium node 
 `PLAYWRIGHT_EXECUTABLE_PATH=/usr/bin/chromium node tests/shrine-sprites-browser.mjs` checks real offers, picks, live copy counts, first choice, bans, arrow and grip reordering, save/reload, failure fallback and independent theme overrides at phone and desktop sizes.
 
 `PLAYWRIGHT_EXECUTABLE_PATH=/usr/bin/chromium node tests/equipment-sprites-browser.mjs` checks the actual Equipment inventory, both loadouts, selection, leveling, assembly, saved Auto-salvage, actionable Gem shortages and theme/fallback behavior at phone and desktop sizes.
+
+`PLAYWRIGHT_EXECUTABLE_PATH=/usr/bin/chromium node tests/ui-controls-sprites-browser.mjs` checks actual PNG navigation and popup closes, range input keyboard/pointer interaction and persistence, focused controls, Overheal textures, reward art, fallback and independent themes at phone/desktop widths.
+
+## Remaining sprite work
+
+Excluding Defend and custom themes, combat projectiles, shield bubbles, enemy trait marks and special-chest stars still use procedural drawing.
+Environmental moss, vines, flowers, water/ripples, glowing mushrooms and some wall-corner overlays still need palette-matched PNG treatment.
+Reveal rays, celebration/skill particles and the Equipment melt still use procedural or older icon art; lighting masks also need to follow the active PNG silhouettes instead of older art.
+These are separate from the older PNGs and SVGs deliberately retained for Sprites off and theme fallbacks.

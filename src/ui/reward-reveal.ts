@@ -1,3 +1,4 @@
+import { controlIcon } from "./control-icon.ts";
 import type { GoalReward } from "../goals.ts";
 import { CURRENCIES, type CurrencyId } from "../shop/currency.ts";
 import { ENTITLEMENTS } from "../shop/entitlements.ts";
@@ -63,7 +64,7 @@ export function offerShown(o: ShopOffer): RewardShown | null {
   if (item.kind === "eventBoost")
     return { icon: medalIcon(), amount: "×2", kicker: "PURCHASED", name: o.name, text: o.effects.join(" · "), permanent: true };
   const factor = ENTITLEMENTS[item.id].goldFactor;
-  const icon = factor > 1 ? goldIcon() : `<span class="reward-reveal-star" aria-hidden="true">★</span>`;
+  const icon = factor > 1 ? goldIcon() : controlIcon("star", "★", "reward-reveal-star");
   const gained = bundleAmounts(item.amounts).map(([c, n]) => `+${(n * o.quantity).toLocaleString("en-US")} ${CURRENCIES[c].name}`);
   return { icon, amount: factor > 1 ? `×${factor}` : undefined, kicker: "UNLOCKED FOR GOOD", name: o.name, text: [...o.effects, ...gained].join(" · "), permanent: true };
 }

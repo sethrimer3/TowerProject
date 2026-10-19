@@ -1,3 +1,4 @@
+import { controlIcon } from "./control-icon.ts";
 import { CLASSIC_NAME, THEME_GOLD_TEXT, THEME_PRICE, THEMES, canBuyTheme, canWear, gameLook, themeGoldFactor, themesOf, uiLook, type ThemeId, type ThemeKind } from "../theme-collection.ts";
 import { factorText } from "../gold-multipliers.ts";
 import type { Toast } from "./research-toast.ts";
@@ -54,7 +55,7 @@ export function renderThemeMenu(root: HTMLElement, game: PageGame, kind: ThemeKi
   const owned = game.save.themes.length;
   const choices = [card(game, kind, "classic", CLASSIC_NAME, null), ...themesOf(kind).map((id) => card(game, kind, THEMES[id].look, THEMES[id].name, id))];
   root.innerHTML =
-    `<button class="back" id="themes-back">← Settings</button><div class="page-title"><small>${HEADINGS[kind].kicker}</small><h2>${HEADINGS[kind].title}</h2></div>` +
+    `<button class="back" id="themes-back">${controlIcon("back")} Settings</button><div class="page-title"><small>${HEADINGS[kind].kicker}</small><h2>${HEADINGS[kind].title}</h2></div>` +
     `<p class="hint theme-gold">Every theme owned, UI or Game, adds ${THEME_GOLD_TEXT} for good. Owned: <b>${owned}</b> · ${goldIcon()}<b>${factorText(themeGoldFactor(game.save))}</b></p>` +
     `<div class="theme-grid">${choices.join("")}</div>`;
   el("themes-back").onclick = back;

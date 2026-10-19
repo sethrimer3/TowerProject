@@ -1,3 +1,4 @@
+import { controlIcon } from "./control-icon.ts";
 import { kitIcon } from "../sprite-kit.ts";
 import { EVENT_MISSION_COUNT, EVENT_MISSIONS, TIER_MEDALS, TIERS, type RelicMilestone } from "../events/catalog.ts";
 import { isFinished, milestoneReached, unclaimedTiers, type EventMission } from "../events/progress.ts";
@@ -85,7 +86,7 @@ export class EventsPage {
     // Completed missions move under the rest only once the page has shown them done for a moment.
     const order = [...events.missions].sort((a, b) => Number(e.moved.includes(a.id)) - Number(e.moved.includes(b.id)) || a.id - b.id);
     el("events").innerHTML =
-      `<button class="missions-close" id="events-close" aria-label="Close" title="Close">✕</button>` +
+      `<button class="missions-close" id="events-close" aria-label="Close" title="Close">${controlIcon("close")}</button>` +
       `<header class="event-banner"><span class="event-banner-art" aria-hidden="true">${eventIcon("event-icon event-banner-icon")}</span>` +
       `<div class="page-title"><small>EVENT</small><h2>${info.name}</h2></div><p class="event-ends" id="event-ends">${this.endsText()}</p></header>` +
       this.track(info.milestones) +
