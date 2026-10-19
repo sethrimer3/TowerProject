@@ -202,24 +202,51 @@ test("standing with no path a while, the camera settles back to the dead zone", 
   assert.ok(Math.abs(hero.y - centre) <= DEAD_ZONE + 1e-6, `the hero stands ${hero.y - centre} tiles from the middle`);
 });
 
-test("a dash glides the camera after the hero instead of jumping it", () => {
-  for (const tiles of [5, 7, 12]) {
-    const camera = new FollowCamera();
-    camera.reset({ x: 15.5, y: 20.5 }, view);
-    const hero = { x: 15.5, y: 20.5 + tiles };
-    camera.leap();
-    let last = camera.bottom(view), biggest = 0;
-    for (let f = 0; f < 120; f++) {
-      camera.update(hero, view, dt, GLIDE_SECONDS, false);
-      const now = camera.bottom(view);
-      biggest = Math.max(biggest, now - last);
-      last = now;
-      // The hero stays on the view, though it may come nearer the edge than EDGE_MARGIN for a moment.
-      assert.ok(camera.bottom(view) + view.n - (hero.y + 0.5) >= -1e-9, `after a ${tiles}-tile dash the hero left the view`);
-    }
-    // A camera that holds the hero EDGE_MARGIN from the edge would jump; this
-    // one moves at most a third of a tile a frame, except to keep a long dash on the view.
-    if (tiles <= view.n / 2) assert.ok(biggest < 0.34, `a ${tiles}-tile dash moved the camera ${biggest} tiles in a frame`);
+/** Runs the camera through dashes, each `tiles` up (down when negative),
+ * `gap` seconds apart, then a second to catch up, and returns the most the
+ * camera's move in a frame changed from the frame before (a jump shows as a
+ * sudden change) and the most it moved in a frame. */
+function dashes(list: number[], gap: number, told: boolean) {
+  const camera = new FollowCamera();
+  camera.reset({ x: 15.5, y: 100.5 }, view);
+  const hero = { x: 15.5, y: 100.5 };
+  let last = camera.bottom(view), lastMove = 0, sudden = 0, fastest = 0;
+  const frame = () => {
+    camera.update(hero, view, dt, GLIDE_SECONDS, false);
+    const move = camera.bottom(view) - last;
+    sudden = Math.max(sudden, Math.abs(move - lastMove));
+    fastest = Math.max(fastest, Math.abs(move));
+    last = camera.bottom(view);
+    lastMove = move;
+  };
+  for (const tiles of list) {
+    if (told) camera.leap();
+    hero.y += tiles;
+    for (let f = 0; f < Math.round(gap / dt); f++) frame();
+  }
+  for (let f = 0; f < 60; f++) frame();
+  return { camera, hero, sudden, fastest };
+}
+
+test("a dash, however long, glides the camera after the hero instead of jumping it", () => {
+  for (const tiles of [5, 8, 12, 20, -12]) {
+    const { camera, hero, sudden } = dashes([tiles], 0, true);
+    assert.ok(sudden < 0.25, `a ${tiles}-tile dash changed the camera's move by ${sudden} tiles in a frame`);
     assert.ok(Math.abs(hero.y - (camera.bottom(view) + view.n / 2)) <= view.n / 2 - EDGE_MARGIN - 0.5 + 1e-6, "caught up, within the margin again");
   }
+});
+
+test("repeated long dashes keep the camera gliding, the hero leaving the view for a moment if it must", () => {
+  for (const gap of [0.15, 0.3, 0.6]) {
+    const { camera, hero, sudden } = dashes([10, 10, 10, 10, 10], gap, true);
+    assert.ok(sudden < 0.25, `dashes ${gap}s apart changed the camera's move by ${sudden} tiles in a frame`);
+    assert.ok(Math.abs(hero.y - (camera.bottom(view) + view.n / 2)) <= view.n / 2 - EDGE_MARGIN - 0.5 + 1e-6);
+  }
+  const back = dashes([10, -10, 10, -10], 0.3, true);
+  assert.ok(back.sudden < 0.25, `dashes up and down changed the camera's move by ${back.sudden} tiles in a frame`);
+});
+
+test("a jump the camera isn't told of is a leap too", () => {
+  const { sudden } = dashes([9, 9], 0.3, false);
+  assert.ok(sudden < 0.25, `an untold jump changed the camera's move by ${sudden} tiles in a frame`);
 });

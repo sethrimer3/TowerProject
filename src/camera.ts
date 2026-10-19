@@ -30,6 +30,9 @@ const PACE_FALL_SECONDS = 0.6;
  * glide may trail by: a spring trails a steady walk by speed × glide time,
  * so a quicker pace glides quicker, and the edge margin never has to step in. */
 const TRAIL_SHARE = 0.8;
+/** A move of more than this many tiles in one frame is a leap, not a walk:
+ * walking, even at 40 steps a second, moves under a tile a frame. */
+export const LEAP_TILES = 1.5;
 /** How many of the path's next steps the camera tries to keep in view. */
 export const LOOK_AHEAD = 8;
 /** Tiles kept between a step ahead and the view's edge, so what lies just
@@ -102,9 +105,10 @@ export class FollowCamera {
     this.speed = { x: 0, y: 0 };
   }
   /** The hero is about to stand somewhere else at once (a dash): the camera
-   * glides after it at its usual pace, with no rush from the leap's speed,
-   * holding the hero only within the view's edge, not EDGE_MARGIN, until it
-   * catches up. */
+   * glides after it at its usual pace, with no rush from the leap's speed and
+   * no hold on the hero, which may stand near or past the view's edge for a
+   * moment, until it catches up. A move of more than `LEAP_TILES` in one
+   * frame counts as a leap without being told. */
   leap() {
     this.leaping = true;
   }
@@ -114,14 +118,14 @@ export class FollowCamera {
    * (`pointsAhead`). With `snaps` (motion reduced, transitions off) it
    * stands at its goal at once. */
   update(hero: Point, view: CameraView, dt: number, seconds: number, snaps: boolean, ahead: readonly Point[] = []) {
-    // A jump (a leap, round the wrap, a fall, an undo) is no speed to carry on with.
-    const speedOf = (d: number) => (dt > 0 && !this.leaping && Math.abs(d) < view.n / 2 ? d / dt : 0);
+    const reach = view.n / 2 - EDGE_MARGIN - 0.5, trail = (reach - DEAD_ZONE) * TRAIL_SHARE;
+    // Any jump (a dash, round the wrap) is a leap, and no speed to carry on with.
+    if (Math.abs(hero.x - this.hero.x) > LEAP_TILES || Math.abs(hero.y - this.hero.y) > LEAP_TILES) this.leaping = true;
+    // A leap is over once the hero is back within the edge margin.
+    else if (this.leaping && Math.abs(hero.x - this.at.x) <= reach && Math.abs(hero.y - this.at.y) <= reach) this.leaping = false;
+    const speedOf = (d: number) => (dt > 0 && !this.leaping ? d / dt : 0);
     const heroSpeed = { x: speedOf(hero.x - this.hero.x), y: speedOf(hero.y - this.hero.y) };
     this.hero = { ...hero };
-    const reach = view.n / 2 - EDGE_MARGIN - 0.5, trail = (reach - DEAD_ZONE) * TRAIL_SHARE;
-    // A leap is over once the hero is back within the edge margin.
-    if (this.leaping && Math.abs(hero.x - this.at.x) <= reach && Math.abs(hero.y - this.at.y) <= reach) this.leaping = false;
-    const hold = this.leaping ? view.n / 2 - 0.5 : reach;
     this.sincePath = ahead.length ? 0 : this.sincePath + dt;
     // Framing a path, the hero may stand off the middle, short of the edge
     // margin by a tile so the glide has room; otherwise it keeps to the dead zone.
@@ -137,11 +141,11 @@ export class FollowCamera {
         continue;
       }
       const g = glide(this.at[axis], this.speed[axis], this.goal[axis], Math.min(seconds, trail / Math.max(this.pace[axis], 1e-9)), dt);
-      // Never let the hero within EDGE_MARGIN of the edge (through a leap, off
-      // the view): held there, the camera moves with it.
-      const held = clamp(g.at, hero[axis] - hold, hero[axis] + hold);
+      // Walking, never let the hero within EDGE_MARGIN of the edge: held
+      // there, the camera moves with it. Through a leap it only glides.
+      const held = this.leaping ? g.at : clamp(g.at, hero[axis] - reach, hero[axis] + reach);
       this.at[axis] = held;
-      this.speed[axis] = held === g.at || this.leaping ? g.speed : heroSpeed[axis];
+      this.speed[axis] = held === g.at ? g.speed : heroSpeed[axis];
     }
     // At the board's edge the camera stops there rather than pressing on.
     const kept = this.within(this.at, view);
