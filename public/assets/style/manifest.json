@@ -2213,6 +2213,18 @@
       "width": 96,
       "height": 624,
       "tile": true
+    },
+    "dungeon-blends": {
+      "file": "dungeon-blends.png",
+      "width": 96,
+      "height": 480,
+      "tile": true
+    },
+    "dungeon-infill": {
+      "file": "dungeon-infill.png",
+      "width": 96,
+      "height": 96,
+      "tile": true
     }
   },
   "terrain": {

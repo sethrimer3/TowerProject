@@ -86,8 +86,8 @@ try {
       if (id !== DUNGEON_EDGE_ATLAS) {
         const topPixels = new Set(), facePixels = new Set();
         for (let variant = 0; variant < DUNGEON_WALL_VARIANTS; variant++) {
-          // Mask 15 is fully joined rock; mask 11 exposes the south face.
-          const top = 4 + variant * 16 + 15, face = 4 + variant * 16 + 11;
+          // Mask 14 exposes a north rim; mask 11 exposes the south face.
+          const top = 4 + variant * 16 + 14, face = 4 + variant * 16 + 11;
           topPixels.add([...c.getImageData(top % 4 * 24, Math.floor(top / 4) * 24, 24, 24).data].join(","));
           facePixels.add([...c.getImageData(face % 4 * 24, Math.floor(face / 4) * 24 + 16, 24, 8).data].join(","));
         }
@@ -103,6 +103,47 @@ try {
       assert.equal(atlas.faces, 6, `${atlas.id}: six distinct south-facing facades`);
     }
   }
+  const materials = await page.evaluate(async () => {
+    const { drawDungeonGround, drawDungeonFrame, dungeonMaterialJoins, dungeonMaterial, dungeonFloorFrame, dungeonWallVariant,
+      DUNGEON_ATLASES } = await import("/src/sprite-dungeon.ts");
+    const { kitImage } = await import("/src/sprite-kit.ts");
+    const canvas = document.createElement("canvas"); canvas.width = canvas.height = 24;
+    const c = canvas.getContext("2d");
+    const pixels = (id, frame) => { c.clearRect(0, 0, 24, 24); drawDungeonFrame(c, kitImage(id), frame); return [...c.getImageData(0, 0, 24, 24).data]; };
+    const core = pixels("dungeon-infill", 12);
+    const flat = data => data.every((value, i) => value === [12, 16, 22, 255][i % 4]);
+    const shared = DUNGEON_ATLASES.every(id => flat(pixels(id, 19)));
+    const padding = Array.from({ length: 12 }, (_, frame) => {
+      const data = pixels("dungeon-infill", frame); let dark = 0;
+      for (let i = 0; i < data.length; i += 4) if (data[i] === 12 && data[i + 1] === 16 && data[i + 2] === 22) dark++;
+      return dark;
+    });
+    const clear = Array.from({ length: 4 }, (_, variant) => {
+      const data = pixels("dungeon-blends", variant * 20 + 15);
+      for (let y = 9; y < 15; y++) for (let x = 9; x < 15; x++) if (data[(y * 24 + x) * 4 + 3]) return false;
+      return true;
+    });
+    let tile, joins;
+    for (let y = 0; y < 40 && !tile; y++) for (let x = 0; x < 40 && !tile; x++) {
+      const candidate = { mode: "delve", height: 0, seed: 1107, x, y, wall: false, empty: true };
+      const j = dungeonMaterialJoins(candidate, []);
+      if (dungeonMaterial("delve", x, y, 1107) === "stone" && j.sides) { tile = candidate; joins = j; }
+    }
+    const frame = dungeonFloorFrame(tile.x, tile.y, tile.seed);
+    const stone = pixels("dungeon-stone-0", frame), earth = pixels("dungeon-earth", frame);
+    const mask = pixels("dungeon-blends", dungeonWallVariant(tile.x, tile.y, tile.seed) % 4 * 20 + joins.sides);
+    c.clearRect(0, 0, 24, 24); drawDungeonGround(c, tile);
+    const blended = [...c.getImageData(0, 0, 24, 24).data]; let same = true, changed = 0;
+    for (let i = 0; i < blended.length; i++) {
+      if (blended[i] !== (mask[Math.floor(i / 4) * 4 + 3] ? earth : stone)[i]) same = false;
+      if (blended[i] !== stone[i]) changed++;
+    }
+    return { black: flat(core), shared, padding, clear, same, changed };
+  });
+  assert.ok(materials.black && materials.shared, "deep interiors share a flat near-black PNG across every material and biome");
+  assert.ok(materials.padding.every(dark => dark > 576 * .65), "padding stays sparse against the shared black");
+  assert.ok(materials.clear.every(Boolean), "material blending leaves quiet floor centers");
+  assert.ok(materials.same && materials.changed > 10, "actual floor blends use authored binary masks and literal neighboring material texels");
   for (const width of [390, 1100]) for (const mode of ["tower", "delve"]) {
     await page.setViewportSize({ width, height: 1000 });
     const result = await page.evaluate(async ({ width, mode }) => {
@@ -186,5 +227,5 @@ try {
   assert.equal(fallback.ready, false); assert.equal(fallback.visible, 576, "failed PNGs retain a complete legacy ground tile");
   await failed.close();
   assert.deepEqual(errors, []);
-  console.log("Native PNG floors, relief texels, clear transition masks, late/failed loads, Tower/Delve phone/desktop frames and reused-renderer theme/toggle restoration pass.");
+  console.log("Native PNG floors, material joins, shared black interiors, sparse padding, relief, late/failed loads, phone/desktop scenes and theme/toggle restoration pass.");
 } finally { await browser.close(); await server.close(); }

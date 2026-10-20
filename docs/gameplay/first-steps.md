@@ -19,7 +19,8 @@ Grass still moves around the hero; turning environmental decoration off hides th
 Inside the Tower, the Classic sprite kit uses fitted stone floors and joined masonry walls with visible tops and south-facing wall faces.
 In the Delve, rough stone and packed earth form adjoining patches of floors and walls, with stepped soil edges and matching biome colors.
 Walls have six variations of their tops and south-facing faces, with fitted masonry, broad fractured bedrock or packed earth, plus matching diagonal corner pieces.
-Soil joins also follow diagonal contact between floor patches.
+Earth and stone interlock at their edges and diagonal joins on both floors and exposed walls.
+Wall detail stays near open ground, then recedes through sparse dark fragments into a shared black interior deeper inside solid terrain.
 These interior tiles remain with environmental decoration off; torchlight follows the selected floor's seams, and movement, doors and map layouts stay the same.
 
 ## The first runs
