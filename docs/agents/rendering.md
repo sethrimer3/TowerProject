@@ -30,8 +30,9 @@ The active forest draws dynamic back grass, small foliage, crowns, buildings, ro
 Wall foliage remains with decoration off, while optional floor plants and dynamic grass follow that setting.
 Sprites off, board sprites off and other Game themes retain their original forest; UI themes gate the interface independently, and Defend is excluded from this forest extension.
 `sprite-dungeon.ts` supplies dedicated interior PNG materials: fitted Tower masonry and contiguous Delve stone/earth patches, selected with coordinate hashes independent of generation.
-Twenty-one 96 × 240 atlases contain four 24-pixel floor variants, two versions of all sixteen wall-neighbor masks and four native six-pixel corner overlays: ten biome ramps for masonry, ten for rough stone and one brown earth set.
-`dungeonWallVariant` chooses both authored top textures by coordinate hash, so long connected walls have seeded variety without rotating their lighting or altering geometry.
+Twenty-one 96 × 624 atlases contain four 24-pixel floor variants, six versions of all sixteen wall-neighbor masks and four native six-pixel corner overlays: ten biome ramps for masonry, ten for rough stone and one brown earth set.
+`dungeonWallVariant` chooses six authored top and south-facing facade pairs by coordinate hash, so long connected walls have seeded variety without rotating their lighting or altering geometry.
+Masonry varies broad fitted blocks and worn joints; bedrock uses continuous quiet planes with sparse fractures, while earth varies compact layers and embedded stone.
 A shared 96 × 216 atlas supplies sixteen stepped soil-edge masks, sixteen contact-shadow masks and four diagonal soil corners, with transparent centers that leave items and movement targets readable.
 `dungeonDiagonals` reads the four actual diagonal tiles only in the active kit; the overlays address northwest, northeast, southeast and southwest inside their existing collision tile.
 Wall corners draw only where a diagonal opening meets two joined or two exposed sides; straight edges and missing diagonal terrain retain their existing lips.
@@ -44,6 +45,7 @@ Changing Sprites or Game themes on a live renderer therefore restores matching t
 The water mirror receives the effective board-art key too, refreshing cached walls, hero and torch snapshots immediately when sprites or board art change.
 `tools/prepare-dungeon-sprites.mjs` extracts the material components, assembles connected walls and edge masks, and maps all twenty biome variations into the existing palette, without changing the older atlas or Defend.
 Its corner components come from `assets/game-sprites/dungeon-corners.png`, sharing the existing native grid, upper-left light and restricted material ramps.
+Its six top/facade pairs per material come from `assets/game-sprites/dungeon-wall-variations.png`; floor, coping, corner and transition components retain their existing sources.
 
 Board drawing (`Renderer`, frames, lighting, decor, popups, tile caches, the forest outside, weather), the render goldens, and the Medieval and Neon themes.
 
