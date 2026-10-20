@@ -55,3 +55,7 @@ It also checks seeded wall variation, two-ring wall depth and exact opening posi
 The browser suite checks six distinct exposed north rims and south-facing facades, flat shared black cores, broad shaded wall bodies, literal native texels in every contour band and fully rendered adjoining Tower/Delve walls without repeated black cutouts or transparent seams.
 It also verifies literal material blends, clear blend centers, six-pixel corner bounds and pixel-exact wall scaling at fractional sizes/offsets, then reviews the native sheets.
 The appended `spriteDungeonMasonry` and `spriteDungeonCave` golden scenes cover real interior layouts; the existing `spriteCombat` and `spriteEnvironment` frames change only for the intended new ground/relief.
+
+`tests/dungeon-details.test.ts` checks the twenty-one detail atlas sizes, shared two-tile selections at negative coordinates, sparse spacing, context-specific variants and exclusions at missing cells, material joins, corners and deep solids.
+`tests/dungeon-details-browser.mjs` starts its own Vite server to check literal detail PNG texels in both halves, clipped shade levels, protected coping, late-image refresh of warmed bakes and exact native-wall fallback after a detail image fails.
+It validates sparse alpha coverage, clear native gutters and matching shade silhouettes across every biome, and captures `test-results/dungeon-sprites/contextual-details.png` for native/enlarged art and connected-room review.

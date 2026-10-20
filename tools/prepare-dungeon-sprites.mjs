@@ -4,6 +4,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
+import { gray, tones } from "./dungeon-palette.mjs";
 import { DUNGEON_MATERIALS, DUNGEON_TONES, DUNGEON_WALL_VARIANTS, dungeonAtlasId } from "../src/sprite-dungeon.ts";
 const root = fileURLToPath(new URL("../", import.meta.url)), out = join(root, "public/assets/style");
 const palette = join(root, "assets/ui-sprites/palette.ppm"), source = join(root, "assets/game-sprites/dungeon-materials.png");
@@ -49,19 +50,6 @@ async function cornerFrames(material, row) {
   }
   return frames;
 }
-const gray = ["10151c", "1b2430", "293543", "3e4c59", "63717b", "8b9a9d", "b8c2bb"];
-// Shared palette ramps retain existing biome identities without new colors.
-const tones = [gray,
-  ["10151c", "1b2430", "283b2c", "3c5837", "668348", "a7bd75", "b8c2bb"],
-  ["10151c", "29251f", "493a2c", "80603d", "b28a52", "e1bb78", "eee0b7"],
-  ["10151c", "16303d", "293543", "315363", "54879a", "88c5db", "b8c2bb"],
-  ["10151c", "382027", "693239", "a6544e", "d68a86", "e1bb78", "eee0b7"],
-  ["10151c", "1b2430", "293543", "3e4c59", "80608e", "8b9a9d", "b8c2bb"],
-  ["10151c", "16303d", "283b2c", "315363", "54879a", "a7bd75", "b8c2bb"],
-  ["10151c", "382027", "493a2c", "693239", "80608e", "d68a86", "eee0b7"],
-  ["0c1016", "10151c", "1b2430", "293543", "3e4c59", "80608e", "8b9a9d"],
-  ["10151c", "1b2430", "293543", "3e4c59", "63717b", "e1bb78", "eee0b7"],
-];
 try {
   // Authored stepped silhouettes, with opaque joins and no soft-alpha fade.
   const blendFrames = [];
