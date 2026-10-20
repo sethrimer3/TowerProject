@@ -4,6 +4,10 @@
 
 Open Settings from the HUD menu and turn **Sprites** on to use matching pixel-art controls, icons, cards, heroes, enemies, pickups, terrain, buildings and small dungeon decorations and Defend city details throughout Tower, Delve and Defend.
 This option starts off, applies immediately and is remembered when you reload.
+While Sprites is checked, **Animations** and **Square doors** appear directly below it; both start off and remember your choices.
+Animations enables matching flickering torch PNG frames, which freeze with Reduce motion on.
+Square doors uses tile-filling rectangular doors with the same key and HP requirements as before.
+Tower sprite floors mix large slabs and smaller bricks with connected joints across neighboring tiles.
 Turn it off to return to your selected UI theme's usual controls.
 The default Medieval and Classic interface looks use the sprites; other UI themes override them.
 Other Game themes override world sprites independently, and returning to Classic restores them while the option is on.

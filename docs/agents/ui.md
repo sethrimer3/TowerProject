@@ -2,6 +2,8 @@
 
 **PNG UI sprites.** `ui-sprites.css`, imported after the theme styles, skins buttons, panels, dialogs, fields, checkboxes, bars, banners and slots with the shared PNG kit in `public/assets/ui/frames/`.
 Every rule is scoped to `html.ui-sprites`, mirrored from `settings.uiSprites` by `applyUiTheme`; its Settings row is **Sprites**, off by default and saved immediately.
+Checking Sprites reveals indented **Animations** and **Square doors** checkboxes directly below it, both initially unchecked and saved independently.
+Switching Sprites rerenders the Settings page immediately, restores focus to its checkbox, and preserves the hidden child preferences.
 The existing board-art setting remains separate, labelled **Turn off board sprites**.
 Erasing progress reapplies the default UI theme and removes the sprite class.
 The art contract, reference, prompt and extraction instructions live in [UI sprites](../art/ui-sprites.md).

@@ -290,6 +290,7 @@ LATER_BOARD_SCENES.spriteForestTower = () => forestSpriteScene("tower");
 LATER_BOARD_SCENES.spriteForestDelve = () => forestSpriteScene("delve");
 LATER_BOARD_SCENES.spriteDungeonMasonry = () => dungeonSpriteScene("tower");
 LATER_BOARD_SCENES.spriteDungeonCave = () => dungeonSpriteScene("delve");
+LATER_BOARD_SCENES.spriteOptions = () => dungeonSpriteScene("tower", { squareDoors: true, spriteAnimations: true, reduceMotion: false });
 
 /** Real connected interior geometry, with native wall faces and material patches. */
 export function dungeonSpriteScene(mode: "tower" | "delve", settings: Record<string, unknown> = {}): BoardScene {

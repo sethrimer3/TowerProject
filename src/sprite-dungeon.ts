@@ -44,6 +44,14 @@ export function dungeonFloorFrame(x: number, y: number, seed: number) {
   return Math.floor(tileRandom(x, y, seed ^ 0x73a91) * 4);
 }
 
+export const towerFloorAtlasId = (tone: number) => `dungeon-floor-masonry-${tone}`;
+/** One connected 4×4 paving panel, phased per run without rotating the light.
+ * World north is +y, while PNG rows increase toward screen south. */
+export function towerFloorFrame(x: number, y: number, seed: number) {
+  const wrap = (n: number) => ((n % 4) + 4) % 4;
+  return wrap(x + (seed & 3)) + wrap(-y + ((seed >>> 2) & 3)) * 4;
+}
+
 export function dungeonWallVariant(x: number, y: number, seed: number) {
   return Math.floor(tileRandom(x + 53, y - 71, seed ^ 0x3b618) * DUNGEON_WALL_VARIANTS);
 }
@@ -60,8 +68,11 @@ function imagesFor(mode: Mode, tone: number) {
     : [dungeonAtlasId("stone", tone), "dungeon-earth", DUNGEON_EDGE_ATLAS];
   // Request the complete group even when the first image is delayed.
   ids.push(DUNGEON_INFILL_ATLAS, DUNGEON_BLEND_ATLAS);
+  if (mode === "tower") ids.push(towerFloorAtlasId(tone));
   const images = ids.map(kitImage);
-  return images.every(Boolean) ? { surface: images[0]!, earth: images[mode === "delve" ? 1 : 0]!, edges: images.at(-3)!, infill: images.at(-2)!, blends: images.at(-1)! } : null;
+  const shared = mode === "tower" ? 2 : 3;
+  return images.every(Boolean) ? { surface: images[0]!, earth: images[mode === "delve" ? 1 : 0]!,
+    edges: images[shared - 1]!, infill: images[shared]!, blends: images[shared + 1]!, floor: mode === "tower" ? images.at(-1)! : undefined } : null;
 }
 
 /** Earth crosses the material seam in authored stepped clusters. Wall
@@ -135,13 +146,13 @@ function paintDungeonGround(c: CanvasRenderingContext2D, tile: TerrainTile, diag
   const images = imagesFor(mode, tone);
   if (!images) return false;
   const material = dungeonMaterial(mode, x, y, seed);
-  const image = material === "earth" ? images.earth : images.surface;
+  const image = !tile.wall && images.floor ? images.floor : material === "earth" ? images.earth : images.surface;
   if (tile.wall && profile?.depth === 2) { drawDungeonFrame(c, images.infill, DUNGEON_CORE_FRAME); return true; }
   const edges = images.edges;
   const n = tile.neighbors;
   const mask = wallAdjacencyMask({ northWall: !!n?.northWall, eastWall: !!n?.eastWall, southWall: !!n?.southWall, westWall: !!n?.westWall });
   const variant = dungeonWallVariant(x, y, seed);
-  const frame = tile.wall ? DUNGEON_WALL_FRAME + variant * 16 + mask : dungeonFloorFrame(x, y, seed);
+  const frame = tile.wall ? DUNGEON_WALL_FRAME + variant * 16 + mask : mode === "tower" ? towerFloorFrame(x, y, seed) : dungeonFloorFrame(x, y, seed);
   const joins = dungeonMaterialJoins(tile, diagonals), blendVariant = variant % 4;
   const surface = (frame: number) => {
     drawDungeonFrame(c, image, frame);
@@ -201,7 +212,8 @@ export function dungeonFloorSprite(mode: Mode, height: number, x: number, y: num
   if (typeof document === "undefined") return undefined;
   const tone = themeAt(mode, height, x, y, seed).decor;
   if (!imagesFor(mode, tone)) return undefined;
-  const id = dungeonAtlasId(dungeonMaterial(mode, x, y, seed), tone), frame = dungeonFloorFrame(x, y, seed);
+  const id = mode === "tower" ? towerFloorAtlasId(tone) : dungeonAtlasId(dungeonMaterial(mode, x, y, seed), tone);
+  const frame = mode === "tower" ? towerFloorFrame(x, y, seed) : dungeonFloorFrame(x, y, seed);
   const key = `${id}:${frame}`;
   let canvas = floorImages.get(key);
   if (!canvas) {

@@ -25,5 +25,7 @@ The run decoder drops malformed notes (`validNotes`) and `decodeFinds` reads the
 Player settings are the exception: each is one row in `SETTINGS` (`src/settings.ts`: its default, the values a save may hold, and its control on the Settings page), from which the `Settings` type, the defaults and the decoder all come, so every setting is always present and readers never re-default it.
 Rows are in saved key order; the page lists its own order.
 `uiSprites` is an opt-in boolean, false for new saves and missing or malformed saved values, independent of `spritesOff` for existing board artwork.
+`spriteAnimations` and `squareDoors` also default false, decode as booleans, and retain their independent preferences when Sprites is switched off.
+Their controls appear only while `uiSprites` is checked; non-default Game themes and the board-art opt-out still override their rendering.
 `tests/settings.test.ts` checks every row round-trips and defaults bad values.
 `tests/save.test.ts` pins `decode()` behaviour with a corpus of mutated saves hashed against `tests/fixtures/save-decode.golden.json`; if a decode change is intended, regenerate it with `UPDATE_GOLDEN=1 node --experimental-transform-types --import ./tests/pin-random.ts --test tests/save.test.ts` and review which cases changed.

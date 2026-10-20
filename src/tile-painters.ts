@@ -20,6 +20,7 @@ import { themedTileUrl } from "./themed-tilesets.ts";
 import { drawDungeonGround, dungeonDiagonals, dungeonMaterial } from "./sprite-dungeon.ts";
 import { dungeonWallProfile } from "./wall-depth.ts";
 import { dungeonDetail } from "./dungeon-details.ts";
+import { drawAnimatedTorch, drawSquareDoor } from "./sprite-options.ts";
 
 // Everything here paints in 24x24 tile space: the caller translates and
 // scales the context to the tile first.
@@ -46,6 +47,8 @@ export type BoardLook = {
   roads?: Roads;
   spritesOff: boolean;
   styledSprites?: boolean;
+  spriteAnimations?: boolean;
+  squareDoors?: boolean;
   reduceMotion: boolean;
   /** Whether the first Tower section's hand-drawn art is showing: its own
    * doors, chests, floor, and the torch relief on that floor. Never with
@@ -61,7 +64,7 @@ type TileWorld = { tile(x: number, y: number): Tile | undefined };
  * per-tile variation), the time (for sparkles), and which art to use.
  * `lifted` items are off the ground (a reward rising from its tile), so they
  * cast no ground shadow. */
-export type TileArt = { x: number; y: number; time: number; spritesOff: boolean; reduceMotion: boolean; area1: boolean; lifted?: boolean; styledSprites?: boolean };
+export type TileArt = { x: number; y: number; time: number; spritesOff: boolean; reduceMotion: boolean; area1: boolean; lifted?: boolean; styledSprites?: boolean; squareDoors?: boolean };
 
 /** The first Tower section has its own hand-drawn doors, chests, and floor. */
 export const isArea1 = (mode: Mode, height: number) => mode === "tower" && height >= 0 && height < 10;
@@ -73,7 +76,7 @@ export function paintTile(c: CanvasRenderingContext2D, world: TileWorld, t: Tile
   if (look.outside) return layer !== 0 || drawForestTile(c, t, { x, y, seed: look.seed, center: look.entranceX, roads: look.roads }, !look.spritesOff, look.styledSprites);
   if (layer === 0) return paintGround(c, world, t, x, y, look);
   if (t.kind === "wall" || t.kind === "floor") return true;
-  paintContents(c, t, { x, y, time, spritesOff: look.spritesOff, reduceMotion: look.reduceMotion, area1: look.area1, styledSprites: look.styledSprites });
+  paintContents(c, t, { x, y, time, spritesOff: look.spritesOff, reduceMotion: look.reduceMotion, area1: look.area1, styledSprites: look.styledSprites, squareDoors: look.squareDoors });
   return true;
 }
 
@@ -143,7 +146,10 @@ const PAINTERS: Partial<Record<Tile["kind"], Painter>> = {
 };
 /** Doors, stairs, items, chests, and enemies. */
 export function paintContents(c: CanvasRenderingContext2D, t: Tile, art: TileArt) {
-  if (art.styledSprites && !art.spritesOff && paintKitContents(c, t)) return;
+  if (art.styledSprites && !art.spritesOff) {
+    if (art.squareDoors && t.kind === "door" && drawSquareDoor(c, t)) return;
+    if (paintKitContents(c, t)) return;
+  }
   PAINTERS[t.kind]?.(c, t, art);
 }
 
@@ -591,7 +597,8 @@ export function paintHeroFallback(c: CanvasRenderingContext2D) {
 /** Torch + a living flame: the flame stretches, shrinks, and leans side
  * to side from its base (in step with the light's sway), and its core
  * pulses with the light's flicker. The handle stays put. */
-export function paintTorch(c: CanvasRenderingContext2D, t: Torch, now: number, reduceMotion: boolean, spritesOff: boolean, styled = false) {
+export function paintTorch(c: CanvasRenderingContext2D, t: Torch, now: number, reduceMotion: boolean, spritesOff: boolean, styled = false, animated = false) {
+  if (!spritesOff && styled && animated && drawAnimatedTorch(c, t.x, t.y, now, reduceMotion)) return;
   if (!spritesOff && styled && drawKit(c, "torch")) return;
   const sway = getTorchSway(t, now, reduceMotion);
   const flicker = getTorchFlicker(t, now, reduceMotion);

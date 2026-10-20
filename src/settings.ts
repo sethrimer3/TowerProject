@@ -15,6 +15,8 @@ export const SETTINGS = {
   /** Reusable PNG frames and controls for the interface, opt-in independently
    * of the existing board artwork. */
   uiSprites: { kind: "toggle", default: false, page: { id: "ui-sprites", label: "Sprites" } },
+  spriteAnimations: { kind: "toggle", default: false, page: { id: "sprite-animations", label: "Animations" } },
+  squareDoors: { kind: "toggle", default: false, page: { id: "square-doors", label: "Square doors" } },
   /** Use the original procedural renderers instead of bitmap art. */
   spritesOff: { kind: "toggle", default: false, page: { id: "sprites-off", label: "Turn off board sprites" } },
   weatherSound: { kind: "toggle", default: true, page: { id: "weather-sound", label: "Weather sounds" } },
