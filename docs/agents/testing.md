@@ -16,6 +16,9 @@ The UI and render snapshot suites also accept `PLAYWRIGHT_EXECUTABLE_PATH` for a
 `tests/sprite-options-browser.mjs` starts its own server for the Sprites child controls, focus, save/reload, mobile/desktop layout, full-tile square doors, four torch frames with stationary hardware, Reduce motion, live Renderer toggles, theme gates and failed-image fallback.
 The appended `spriteOptions` render scene captures square doors and animated torches without changing the existing scene seeds.
 The dungeon suite's literal floor/relief checks read the connected Tower paving panel, while the Node suite checks positive/negative coordinate continuity and screen-row orientation across all sixteen frames.
+`tests/tower-tier-sprites.test.ts` checks the four new Tower II/III atlas dimensions, fixed selection across biome boundaries, floor under contents, all sixteen wall joins, and exclusion from Delve and legacy rendering.
+`tests/tower-tier-sprites-browser.mjs` starts its own server for literal connected floor reconstruction, correct relief texels, corner footprints, flat black cores, atomic late loading, failed-image fallback, real phone/desktop boards, saved tiers, theme gates and exact restoration on a reused renderer.
+Its native material and board review images go to `test-results/tower-tiers/`; the appended `spriteTowerTwo` and `spriteTowerThree` scenes add ten board and drawing-call golden frames without moving earlier scene seeds.
 
 `tests/city-sprites-browser.mjs` starts its own Vite server and checks Defend PNGs at normal and zoomed scales, damage/rebuilding and exact pixel restoration after toggling off.
 

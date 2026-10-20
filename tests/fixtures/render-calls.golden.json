@@ -108,5 +108,15 @@
  "spriteOptions.moving": "1a284bf4c994694c",
  "spriteOptions.after": "bd143cce1731a4af",
  "spriteOptions.ripples": "ab5c21f1b60c16fc",
- "spriteOptions.later": "6a2ad327f24cccaa"
+ "spriteOptions.later": "6a2ad327f24cccaa",
+ "spriteTowerTwo.settled": "c30b728bd82ecc3a",
+ "spriteTowerTwo.moving": "5ec18f101c5c530e",
+ "spriteTowerTwo.after": "b056978e94be6c1a",
+ "spriteTowerTwo.ripples": "d32ff9af6db34633",
+ "spriteTowerTwo.later": "1aad38d94130b132",
+ "spriteTowerThree.settled": "680286b2d63594f4",
+ "spriteTowerThree.moving": "3f534799f7498336",
+ "spriteTowerThree.after": "739a482860c4959d",
+ "spriteTowerThree.ripples": "c751203951274bde",
+ "spriteTowerThree.later": "f6da043c390d7950"
 }

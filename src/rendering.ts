@@ -14,6 +14,7 @@ import { forestSpritesReady } from "./sprite-forest.ts";
 import { TileLayerCache } from "./tile-cache.ts";
 import { OutdoorWeather } from "./weather.ts";
 import { torchAnimationFrame } from "./game-sprites.ts";
+import { towerTileset } from "./sprite-dungeon.ts";
 import { isArea1, paintHero, paintHeroFallback, paintTile, paintTorch, type BoardLook } from "./tile-painters.ts";
 import type { AtmosphereConfig } from "./lighting-pass.ts";
 import { DungeonLight, type LitBoard } from "./dungeon-light.ts";
@@ -367,6 +368,7 @@ export class Renderer {
       // Without sprite art, floor under items is drawn differently, so edits matter.
       g.save.settings.spritesOff ? `off:${Object.keys(g.run.changes).length}` : "",
       f.look.styledSprites ? `kit:${spriteRevision()}` : "",
+      ...(f.look.styledSprites && towerTileset(f.look.mode, f.look.tier) ? [`tower:${f.look.tier}`] : []),
     ].join("|");
     this.groundCache.draw(f.c, f, f.dpr, groundKey, f.now, CACHE_COLUMNS,
       (ctx, x, y) => this.tile(ctx, f, g.world.tile(x, y), x, y, 0));
@@ -383,7 +385,7 @@ export class Renderer {
   private mirroredSprites(f: FrameContext): MirroredSprites {
     const s = f.s, n = f.n;
     return {
-      style: `${f.look.spritesOff}|${!!f.look.styledSprites}|${f.look.styledSprites ? spriteRevision() : 0}${f.look.squareDoors ? "|square" : ""}${f.look.spriteAnimations ? "|animated" : ""}`,
+      style: `${f.look.spritesOff}|${!!f.look.styledSprites}|${f.look.styledSprites ? spriteRevision() : 0}${f.look.squareDoors ? "|square" : ""}${f.look.spriteAnimations ? "|animated" : ""}${f.look.styledSprites && towerTileset(f.look.mode, f.look.tier) ? `|tower:${f.look.tier}` : ""}`,
       tile: (ctx, t, x, y, layer) => this.tile(ctx, f, t, x, y, layer),
       torches: f.torches.map((t) => ({
         x: t.x, y: t.y, frame: torchAnimationFrame(t.x, t.y, f.now, f.look.reduceMotion),
@@ -623,7 +625,7 @@ export class Renderer {
   private look(): BoardLook {
     const g = this.game;
     return {
-      mode: g.mode, height: g.run.height, seed: g.run.seed, outside: !!g.run.outside, entranceX: Math.floor(g.world.width / 2),
+      mode: g.mode, tier: g.run.tier ?? 1, height: g.run.height, seed: g.run.seed, outside: !!g.run.outside, entranceX: Math.floor(g.world.width / 2),
       roads: g.run.outside ? roadsOf(g.world) : undefined,
       spritesOff: g.save.settings.spritesOff, reduceMotion: g.save.settings.reduceMotion, area1: !g.save.settings.spritesOff && isArea1(g.mode, g.run.height),
       styledSprites: usesGameSprites(g.save),

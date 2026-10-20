@@ -39,6 +39,13 @@ Tower floors instead use ten dedicated 96 × 96 `dungeon-floor-masonry-*` PNG pa
 `towerFloorFrame` selects neighboring frames by world coordinates and a seeded phase, reversing world y into screen rows and wrapping negative coordinates correctly without rotating the upper-left light.
 The complete panel loads with its material group, and floor relief samples the same selected PNG texels; Delve retains its existing material floor variants.
 `tools/prepare-tower-floors.mjs` exports the generated `assets/game-sprites/tower-floor.png` into four quiet shared-palette colors per biome, preserving the full field instead of independently sampling tile textures.
+Towers II and III instead each use one fixed floor-and-wall material set at every height: warm limestone ashlar and rectangular paving for II, cool blue-violet basalt and octagonal paving with small square insets for III.
+`towerTileset` selects only these two numbered Tower tiers; Tower I, later tiers, Delve, forests, Sprites off and non-Classic Game themes keep their existing art.
+Each set has one 96 × 96 connected floor PNG and one 96 × 720 wall PNG with the existing six variants, sixteen neighbor masks, native corners and shade frames.
+`tools/prepare-tower-tier-sprites.mjs` extracts the original `assets/game-sprites/tower-2-materials.png` and `tower-3-materials.png` into the shared palette with fixed upper-left lighting.
+The wall-corner alpha footprints are shared, while visible corner texels come from the new material; these tiers omit the older biome-specific wall motifs.
+`BoardLook.tier` passes the run's saved number into `TerrainTile`, material selection and floor relief; ground, native wall, relief and water-reflection caches include the effective tileset so a reused renderer switches immediately.
+The shared contact shadows and continuous shade contours remain in place, and both new wall sets recede to the same flat black core.
 `dungeonWallVariant` chooses six authored top and south-facing facade pairs by coordinate hash, so long connected walls have seeded variety without rotating their lighting or altering geometry.
 Masonry varies broad fitted blocks and worn joints; bedrock uses continuous quiet planes with sparse fractures, while earth varies compact layers and embedded stone.
 A shared 96 × 216 atlas retains the original contact-shadow masks and soil reference pieces.
@@ -96,7 +103,7 @@ The turns' shots (`volley-art.ts`): `ShotsInFlight` keeps every volley still fly
 An enemy an arrow felled is cleared from the board at once, but `ShotsInFlight.board` (the frame's `f.world`, one object per board) keeps it standing on its tile until that arrow lands, for every pass that reads the frame's tiles.
 Each `draw()` builds one `FrameContext` (`render-frame.ts`: the camera's `BoardView`, the canvas, the board's tiles as a narrow `BoardTiles` rather than the `Game`, the `BoardLook`, and the torches, walls and glows in view).
 `BoardView` (`left`, `bottom`, `n`, `s`) is the one view shape: the tile caches, decor and the forest grass all take the frame itself as their view.
-`BoardLook` holds the art set (mode, height, seed, outside) and the player's settings (sprites off, reduced motion), and decides once per frame whether the board is area one (`area1`, the first Tower section's hand-drawn art and floor relief); passes read these from `f.look`, never from the game and draws the ground over it.
+`BoardLook` holds the art set (mode, tier, height, seed, outside) and the player's settings (sprites off, reduced motion), and decides once per frame whether the board is area one (`area1`, the first Tower section's hand-drawn art and floor relief); passes read these from `f.look`, never from the game and draws the ground over it.
 Outside, it then draws the tile contents, entrance, route line, hero in its grass, and weather; in the dungeon, `DungeonLight` (`dungeon-light.ts`) runs the rest of the frame in its fixed order (torch relief, decor, cast shadows, darkness and glows, tile contents, torches and lightmap, route line, hero and what stands in front of it, frame edge, vignette), calling back into a `LitBoard` the renderer builds for what it draws between the light's steps.
 What the game hands the board to show of its moves (`Gain`, `Heal`, `Facing`, `Dash`, `ShownFight`, `Encounter`) is typed in `shown.ts`, so the renderer and themed boards draw them without importing `state.ts`.
 Blocked-step and feedback text, then the skull over a hero struck down (`struck-down.ts`), the revival's fire and the level-up burst (`level-up.ts`), go last.

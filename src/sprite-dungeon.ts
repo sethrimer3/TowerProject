@@ -45,6 +45,9 @@ export function dungeonFloorFrame(x: number, y: number, seed: number) {
 }
 
 export const towerFloorAtlasId = (tone: number) => `dungeon-floor-masonry-${tone}`;
+/** Towers II and III each keep one material set throughout the climb. */
+export const towerTileset = (mode: Mode, tier = 1): 2 | 3 | undefined => mode === "tower" && (tier === 2 || tier === 3) ? tier : undefined;
+export const towerTierAtlasId = (tier: 2 | 3, part: "floor" | "walls") => `dungeon-tower-${tier}-${part}`;
 /** One connected 4×4 paving panel, phased per run without rotating the light.
  * World north is +y, while PNG rows increase toward screen south. */
 export function towerFloorFrame(x: number, y: number, seed: number) {
@@ -63,12 +66,13 @@ export function dungeonDiagonals(world: { tile(x: number, y: number): Tile | und
   });
 }
 
-function imagesFor(mode: Mode, tone: number) {
-  const ids = mode === "tower" ? [dungeonAtlasId("masonry", tone), DUNGEON_EDGE_ATLAS]
+function imagesFor(mode: Mode, tone: number, tier = 1) {
+  const set = towerTileset(mode, tier);
+  const ids = mode === "tower" ? [set ? towerTierAtlasId(set, "walls") : dungeonAtlasId("masonry", tone), DUNGEON_EDGE_ATLAS]
     : [dungeonAtlasId("stone", tone), "dungeon-earth", DUNGEON_EDGE_ATLAS];
   // Request the complete group even when the first image is delayed.
   ids.push(DUNGEON_INFILL_ATLAS, DUNGEON_BLEND_ATLAS);
-  if (mode === "tower") ids.push(towerFloorAtlasId(tone));
+  if (mode === "tower") ids.push(set ? towerTierAtlasId(set, "floor") : towerFloorAtlasId(tone));
   const images = ids.map(kitImage);
   const shared = mode === "tower" ? 2 : 3;
   return images.every(Boolean) ? { surface: images[0]!, earth: images[mode === "delve" ? 1 : 0]!,
@@ -120,11 +124,12 @@ const wallImages = new Map<string, HTMLCanvasElement>();
 export function drawDungeonGround(c: CanvasRenderingContext2D, tile: TerrainTile, diagonals: readonly DungeonDiagonal[] = [], profile?: DungeonWallProfile, detail?: DungeonDetail): boolean {
   if (!tile.wall || !profile || profile.depth === 2 || typeof document === "undefined") return paintDungeonGround(c, tile, diagonals, profile);
   const tone = themeAt(tile.mode, tile.height, tile.x, tile.y, tile.seed).decor;
-  const detailImage = detail ? kitImage(dungeonDetailId(dungeonMaterial(tile.mode, tile.x, tile.y, tile.seed), tone)) : null;
+  const set = towerTileset(tile.mode, tile.tier);
+  const detailImage = detail && !set ? kitImage(dungeonDetailId(dungeonMaterial(tile.mode, tile.x, tile.y, tile.seed), tone)) : null;
   const n = tile.neighbors;
   const key = [tile.mode, tone, tile.seed, tile.x, tile.y,
     n?.northWall, n?.eastWall, n?.southWall, n?.westWall, diagonals.join(","), profile.openings,
-    detailImage ? `${detail!.variant},${detail!.half}` : ""].join(":");
+    detailImage ? `${detail!.variant},${detail!.half}` : "", ...(set ? [set] : [])].join(":");
   let canvas = wallImages.get(key);
   if (!canvas) {
     canvas = document.createElement("canvas"); canvas.width = canvas.height = 24;
@@ -143,7 +148,7 @@ export function drawDungeonGround(c: CanvasRenderingContext2D, tile: TerrainTile
 function paintDungeonGround(c: CanvasRenderingContext2D, tile: TerrainTile, diagonals: readonly DungeonDiagonal[], profile?: DungeonWallProfile,
   detail?: DungeonDetail, detailImage?: HTMLImageElement | null) {
   const { mode, height, x, y, seed } = tile, tone = themeAt(mode, height, x, y, seed).decor;
-  const images = imagesFor(mode, tone);
+  const images = imagesFor(mode, tone, tile.tier);
   if (!images) return false;
   const material = dungeonMaterial(mode, x, y, seed);
   const image = !tile.wall && images.floor ? images.floor : material === "earth" ? images.earth : images.surface;
@@ -208,11 +213,12 @@ function paintDungeonGround(c: CanvasRenderingContext2D, tile: TerrainTile, diag
 const floorImages = new Map<string, HTMLCanvasElement>();
 /** The literal selected floor PNG texels for torch relief, not the old
  * area-one texture. Each native frame is decoded only once. */
-export function dungeonFloorSprite(mode: Mode, height: number, x: number, y: number, seed: number): HTMLCanvasElement | undefined {
+export function dungeonFloorSprite(mode: Mode, height: number, x: number, y: number, seed: number, tier = 1): HTMLCanvasElement | undefined {
   if (typeof document === "undefined") return undefined;
   const tone = themeAt(mode, height, x, y, seed).decor;
-  if (!imagesFor(mode, tone)) return undefined;
-  const id = mode === "tower" ? towerFloorAtlasId(tone) : dungeonAtlasId(dungeonMaterial(mode, x, y, seed), tone);
+  if (!imagesFor(mode, tone, tier)) return undefined;
+  const set = towerTileset(mode, tier);
+  const id = mode === "tower" ? set ? towerTierAtlasId(set, "floor") : towerFloorAtlasId(tone) : dungeonAtlasId(dungeonMaterial(mode, x, y, seed), tone);
   const frame = mode === "tower" ? towerFloorFrame(x, y, seed) : dungeonFloorFrame(x, y, seed);
   const key = `${id}:${frame}`;
   let canvas = floorImages.get(key);

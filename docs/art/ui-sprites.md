@@ -184,6 +184,10 @@ The [torch animation source](../../assets/game-sprites/torch-animation.png) supp
 Run `node --experimental-transform-types tools/prepare-sprite-options.mjs` to reproduce these palette-matched, binary-alpha PNGs.
 The [Tower floor source](../../assets/game-sprites/tower-floor.png) supplies one connected paving field combining large and small rectangular bricks, exported into ten 96 × 96 biome panels by `node tools/prepare-tower-floors.mjs`.
 The sixteen native frames retain their spatial relationship across tile boundaries, including under doors and pickups; the shared material palette and upper-left lighting stay fixed.
+The [Tower II material source](../../assets/game-sprites/tower-2-materials.png) supplies limestone ashlar, rectangular paving, south-facing facades and coping.
+The [Tower III material source](../../assets/game-sprites/tower-3-materials.png) supplies vertical basalt masonry, octagonal paving with square insets, facades and coping.
+Run `node tools/prepare-tower-tier-sprites.mjs` to export one 96 × 96 floor panel and one 96 × 720 connected-wall atlas for each tower, with one fixed palette per set rather than biome recolors.
+Both use the shared native corner silhouettes, original upper-left light, three wall shade levels and flat black interior cores; visible texels come from the new sources.
 `tests/sprite-options-browser.mjs` starts its own server to check real Settings visibility, focus, persistence, phone/desktop layout, door coverage, stationary torch hardware, frame animation, reduced motion, live renderer restoration, theme gates and failed-image fallback.
 
 ## Remaining sprite work
