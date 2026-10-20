@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { DUNGEON_ATLASES, DUNGEON_EDGE_ATLAS, drawDungeonGround, dungeonAtlasId, dungeonDiagonals, dungeonFloorFrame, dungeonMaterial, dungeonWallVariant } from "../src/sprite-dungeon.ts";
+import { DUNGEON_ATLASES, DUNGEON_EDGE_ATLAS, DUNGEON_CORNER_FRAME, drawDungeonGround, dungeonAtlasId, dungeonDiagonals, dungeonFloorFrame, dungeonMaterial, dungeonWallVariant } from "../src/sprite-dungeon.ts";
 import { paintTile, type BoardLook } from "../src/tile-painters.ts";
 import { WaterReflections, type ReflectionScene } from "../src/decor-reflections.ts";
 import type { TileDecor } from "../src/decor.ts";
@@ -11,7 +11,7 @@ test("interior PNGs contain native 24-pixel floors, all sixteen wall joins and s
   assert.equal(DUNGEON_ATLASES.length, 21);
   for (const id of [...DUNGEON_ATLASES, DUNGEON_EDGE_ATLAS]) {
     const bytes = readFileSync(new URL(`../public/assets/style/${id}.png`, import.meta.url));
-    assert.deepEqual([bytes.readUInt32BE(16), bytes.readUInt32BE(20)], [96, id === DUNGEON_EDGE_ATLAS ? 216 : 240], id);
+    assert.deepEqual([bytes.readUInt32BE(16), bytes.readUInt32BE(20)], [96, id === DUNGEON_EDGE_ATLAS ? 216 : 624], id);
     assert.equal(manifest.assets[id].tile, true);
   }
 });
@@ -33,17 +33,18 @@ test("Delve stone and earth form repeatable contiguous patches rather than indep
 
 test("all wall connections, material floors and live tile contents use the correct native atlas frame", () => {
   const original = Object.getOwnPropertyDescriptor(globalThis, "Image");
-  class ReadyImage { src = ""; complete = true; naturalWidth = 96; naturalHeight = 240; }
+  class ReadyImage { src = ""; complete = true; naturalWidth = 96; naturalHeight = 624; }
   Object.defineProperty(globalThis, "Image", { configurable: true, value: ReadyImage });
   const draws: (string | number)[][] = [];
   const c = new Proxy({}, { set: () => true, get: (_, name) => name === "drawImage"
     ? (image: ReadyImage, ...args: number[]) => draws.push([image.src.split("/").at(-1)!, ...args]) : () => {} }) as CanvasRenderingContext2D;
   try {
-    for (let mask = 0; mask < 16; mask++) {
+    for (const [variant, x] of [10, 2, 1, 5, 0, 3].entries()) for (let mask = 0; mask < 16; mask++) {
       const neighbors = { northWall: !!(mask & 1), eastWall: !!(mask & 2), southWall: !!(mask & 4), westWall: !!(mask & 8) };
       draws.length = 0;
-      assert.ok(drawDungeonGround(c, { mode: "tower", height: 0, seed: 3, x: 8, y: 5, wall: true, empty: false, neighbors }));
-      assert.deepEqual(draws, [["dungeon-masonry-0.png", (20 + mask) % 4 * 24, Math.floor((20 + mask) / 4) * 24, 24, 24, 0, 0, 24, 24]]);
+      assert.ok(drawDungeonGround(c, { mode: "tower", height: 0, seed: 3, x, y: 5, wall: true, empty: false, neighbors }));
+      const frame = 4 + variant * 16 + mask;
+      assert.deepEqual(draws, [["dungeon-masonry-0.png", frame % 4 * 24, Math.floor(frame / 4) * 24, 24, 24, 0, 0, 24, 24]]);
     }
     const world = { tile: () => ({ kind: "floor" as const }) };
     const look: BoardLook = { mode: "delve", height: 0, seed: 1107, outside: false, entranceX: 8,
@@ -66,9 +67,12 @@ test("all wall connections, material floors and live tile contents use the corre
 });
 
 test("wall variation is seeded, diagonal corners read real openings, and corner PNGs stay on eligible joins", () => {
-  assert.deepEqual(new Set(Array.from({ length: 30 }, (_, x) => dungeonWallVariant(x, 5, 3))), new Set([0, 1]));
+  assert.deepEqual(new Set(Array.from({ length: 60 }, (_, x) => dungeonWallVariant(x, 5, 3))), new Set([0, 1, 2, 3, 4, 5]));
+  const variants = (seed: number) => Array.from({ length: 60 }, (_, x) => dungeonWallVariant(x, 5, seed));
+  assert.deepEqual(variants(3), variants(3), "wall art is stable on redraw and reload");
+  assert.notDeepEqual(variants(3), variants(4), "different runs vary their wall art");
   const original = Object.getOwnPropertyDescriptor(globalThis, "Image");
-  class ReadyImage { src = ""; complete = true; naturalWidth = 96; naturalHeight = 240; }
+  class ReadyImage { src = ""; complete = true; naturalWidth = 96; naturalHeight = 624; }
   Object.defineProperty(globalThis, "Image", { configurable: true, value: ReadyImage });
   const frames: number[] = [];
   const c = new Proxy({}, { set: () => true, get: (_, name) => name === "drawImage"
@@ -84,7 +88,7 @@ test("wall variation is seeded, diagonal corners read real openings, and corner 
       const neighbors = { northWall: joined, eastWall: joined, southWall: joined, westWall: joined };
       const d = ["wall", "wall", "wall", "wall"] as ("wall" | "masonry")[]; d[corner] = "masonry";
       drawDungeonGround(c, { ...tile, neighbors }, d);
-      assert.equal(frames.length, 2); assert.equal(frames[1], 36 + corner);
+      assert.equal(frames.length, 2); assert.equal(frames[1], DUNGEON_CORNER_FRAME + corner);
     }
     frames.length = 0;
     drawDungeonGround(c, { ...tile, neighbors: { northWall: true, eastWall: false, southWall: true, westWall: false } }, ["masonry", "masonry", "masonry", "masonry"]);

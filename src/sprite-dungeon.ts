@@ -9,7 +9,8 @@ export type DungeonMaterial = typeof DUNGEON_MATERIALS[number];
 export const DUNGEON_TONES = 10;
 export const DUNGEON_COLUMNS = 4;
 export const DUNGEON_WALL_FRAME = 4;
-export const DUNGEON_CORNER_FRAME = 36;
+export const DUNGEON_WALL_VARIANTS = 6;
+export const DUNGEON_CORNER_FRAME = DUNGEON_WALL_FRAME + DUNGEON_WALL_VARIANTS * 16;
 export const DUNGEON_CONTACT_FRAME = 16;
 export const DUNGEON_SOIL_CORNER_FRAME = 32;
 /** Clockwise from northwest; world north is +y. */
@@ -37,7 +38,7 @@ export function dungeonFloorFrame(x: number, y: number, seed: number) {
 }
 
 export function dungeonWallVariant(x: number, y: number, seed: number) {
-  return Math.floor(tileRandom(x + 53, y - 71, seed ^ 0x3b618) * 2);
+  return Math.floor(tileRandom(x + 53, y - 71, seed ^ 0x3b618) * DUNGEON_WALL_VARIANTS);
 }
 
 export function dungeonDiagonals(world: { tile(x: number, y: number): Tile | undefined }, mode: Mode, x: number, y: number, seed: number): DungeonDiagonal[] {
@@ -61,7 +62,7 @@ export function drawDungeonFrame(c: CanvasRenderingContext2D, image: HTMLImageEl
   c.restore();
 }
 
-/** Four quiet floors, two variants of sixteen wall shapes, and corners.
+/** Four quiet floors, six variants of sixteen wall shapes, and corners.
  * South-facing facades occupy eight pixels; north/side lips are shallow.
  * Everything stays inside the existing tile and collision footprint. */
 export function drawDungeonGround(c: CanvasRenderingContext2D, tile: TerrainTile, diagonals: readonly DungeonDiagonal[] = []) {
