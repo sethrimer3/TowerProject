@@ -137,6 +137,9 @@ export const pointsSpent = (levels: CardTreeLevels, card: CardId) => Object.valu
  * less those spent. */
 export const pointsLeft = (save: { cardXp: Partial<Record<CardId, number>>; cardTrees: CardTreeLevels }, card: CardId) =>
   Math.max(0, cardPoints(save.cardXp[card] ?? 0) - pointsSpent(save.cardTrees, card));
+/** Whether `card` has a tree and card points left to spend on it. */
+export const hasPointsToSpend = (save: { cardXp: Partial<Record<CardId, number>>; cardTrees: CardTreeLevels }, card: CardId) =>
+  !!CARD_TREES[card] && pointsLeft(save, card) > 0;
 /** Whether node `node` of `card` takes levels yet: a track's first node
  * always, any other once every level of the node before it is filled. */
 export function nodeOpen(levels: CardTreeLevels, card: CardId, node: CardTreeNode) {

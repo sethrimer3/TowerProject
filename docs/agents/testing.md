@@ -37,6 +37,8 @@ The appended `spriteCombat` render scene covers projectiles, shield boundaries, 
 
 `tests/card-tree-browser.mjs` starts its own Vite server and opens STAIRS' upgrade tree from the Deck page at phone and desktop widths: that it replaces the page, spending points from the list (phone) and from the tree by mouse, by choosing again and by keyboard (desktop), the arrow keys, the next nodes opening, the branches painted, a respec for Gems and one short of them, back to the Deck, and the tree saved across a reload.
 
+`tests/card-points-lesson-browser.mjs` starts its own Vite server and plays the card points lesson at phone and desktop widths: the Deck tab's numbered dot and pointing hand in the forest with everything else held, the Deck page's arrows and NEW marks, the lesson's card the only one to press, its tree held open until a point is spent, the closing note, NEW gone once a card is met, and the lesson gone after a reload.
+
 `tests/environment-sprites-browser.mjs` starts its own server, defers one water PNG, and checks literal PNG texels against the real baked pool/depth/bank pixels, unchanged pool/moss coverage, vine leaves staying out of water and immediate cache refresh.
 It reviews native/enlarged pieces and repeated materials, real phone/desktop dungeon frames, independent themes, board/decor opt-outs, exact off/on/off restoration, and palette-matched emitted light colors with unchanged light geometry.
 `tests/environment-sprites.test.ts` checks native material/plant sizes, distinct variants and exact flower/cap draw anchors; the appended `spriteEnvironment` golden walks a real wet, overgrown room with Sprites on.

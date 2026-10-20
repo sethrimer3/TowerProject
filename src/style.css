@@ -976,6 +976,14 @@ canvas {
   transform: rotate(180deg);
   animation: forest-point-down 1s ease-in-out infinite;
 }
+/* The card points lesson's hand points down at the Deck tab from above. */
+.forest-pointer.cards {
+  bottom: calc(100% + 2px);
+  left: 50%;
+  margin-left: -13px;
+  transform: rotate(180deg);
+  animation: forest-point-down 1s ease-in-out infinite;
+}
 @keyframes forest-point-up {
   0%, 100% { transform: translateY(6px); }
   50% { transform: translateY(0); }
@@ -3011,6 +3019,78 @@ nav button.notify::after, .tree-tabs button.notify::after {
   border-radius: 50%;
   background: #d8352b;
   box-shadow: 0 0 0 2px #10161f, 0 0 6px #ff4a3a;
+}
+/* The Deck tab's dot counts what waits on the page: new cards, and cards
+   with card points to spend. */
+nav button.notify[data-count]::after {
+  content: attr(data-count);
+  top: 2px;
+  right: 2px;
+  width: auto;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  box-sizing: border-box;
+  border-radius: 8px;
+  color: #fff;
+  font: 700 10px/16px sans-serif;
+  text-align: center;
+}
+/* A card with card points to spend on its tree: a gold arrow rising
+   beside its level, on the Deck page. */
+.card-points-mark {
+  position: absolute;
+  top: 1px;
+  left: 17px;
+  z-index: 1;
+  width: 13px;
+  color: #ffd257;
+  pointer-events: none;
+  filter: drop-shadow(0 0 3px #ffb200) drop-shadow(0 1px 1px #000);
+  animation: points-rise 1.2s ease-in-out infinite;
+}
+.card-points-mark svg { display: block; width: 100%; }
+@keyframes points-rise {
+  0% { transform: translateY(4px); opacity: .5; }
+  35%, 70% { opacity: 1; }
+  100% { transform: translateY(-2px); opacity: .5; }
+}
+.card-points-mark.still { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .card-points-mark { animation: none; }
+}
+/* A card the player hasn't met on the Deck page yet. */
+.card-new {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  z-index: 1;
+  padding: 1px 3px;
+  border-radius: 3px;
+  background: #0c1018e6;
+  color: #ffd257;
+  font: 700 8px/1 sans-serif;
+  letter-spacing: .5px;
+  pointer-events: none;
+  text-shadow: 0 0 4px #ffb200aa;
+  box-shadow: 0 0 0 1px #c99a32;
+}
+/* The card points lesson, in a card's tree: its note, and the hand under
+   the button that spends a point. */
+.card-tree .ct-tip { margin: 10px auto; }
+.card-tree.teaching .ug-buy { position: relative; overflow: visible; }
+.deck-pointer.ct-lesson-pointer {
+  top: 50%;
+  left: auto;
+  right: calc(100% + 4px);
+  width: 24px;
+  margin: -12px 0 0;
+  animation-name: ct-point;
+  transform: rotate(90deg);
+}
+@keyframes ct-point {
+  0%, 100% { transform: translateX(-6px) rotate(90deg); }
+  50% { transform: rotate(90deg); }
 }
 .deck-icon { position: relative; display: block; width: 42px; height: 42px; }
 .deck-icon img { position: absolute; top: 4px; width: 25px; height: 33px; image-rendering: pixelated; border-radius: 2px; box-shadow: 0 1px 3px #000a; }

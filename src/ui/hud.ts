@@ -230,6 +230,7 @@ function renderTabs(game: Game) {
   renderLockedTab("deck", !!game.save.upgrades.combatStance, "Deck", "Unlock Combat Stance in the Inspiration tree");
   for (const tab of ["deck", "upgrades", "research"] as const)
     document.querySelector(`[data-tab="${tab}"]`)?.classList.toggle("notify", game.notices.waiting(tab));
+  renderDeckCount(game);
   renderLockedTab("gear", !!game.save.upgrades.gear || game.save.equipment.unlocked, "Gear", "Unlock Gear in the Inspiration tree");
   document.querySelector(`[data-tab="gear"]`)?.classList.toggle("notify", game.notices.waiting("gear"));
   renderShopDot(game);
@@ -855,6 +856,18 @@ function renderForestSign(game: Game) {
   const label = other === "delve" ? "Down the path to the Delve" : "Down the path to the Tower";
   sign.title = label;
   sign.setAttribute("aria-label", label);
+}
+
+/** The number on the Deck tab's dot, while it shows: the new cards and
+ * those with card points to spend (none, a plain dot, for a lesson alone). */
+function renderDeckCount(game: Game) {
+  const tab = document.querySelector<HTMLButtonElement>(`[data-tab="deck"]`);
+  if (!tab) return;
+  const count = !tab.hidden && tab.classList.contains("notify") ? game.notices.deckCount() : 0;
+  if (count) {
+    tab.dataset.count = count > 99 ? "99+" : String(count);
+    tab.setAttribute("aria-label", `Deck, ${count} to look at`);
+  } else delete tab.dataset.count;
 }
 
 function renderLockedTab(id: string, unlocked: boolean, name: string, hint: string) {

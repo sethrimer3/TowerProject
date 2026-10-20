@@ -84,6 +84,17 @@ A card can level up during a run: if the card is in view in the hand, a golden g
 A card out of view (in a hand scrolled sideways) shows as a ghost at 75% transparency over the board's top left, a golden glow behind it, with the same icon, the ghost fading once the icon is gone.
 Several level-ups play one after another, and wait while a page covers the board.
 
+Back in the forest after a card levels up, the Deck tab carries a red dot with a number: the cards new to the deck and the cards with card points to spend.
+Opening the Deck takes the dot away, points spent or not, until the next level-up or new card.
+On the Deck page a card with card points to spend wears a gold arrow rising beside its level, and a card new to the deck wears **NEW** in gold at its top right until you meet it: press it for its details, move it, put it in the hand or give it a badge.
+The starting hand's cards never wear NEW.
+
+The first time a card has a point to spend, after a run (and after the Deck's lessons on the hand), a note over the forest says cards gain levels as you use them, each level granting a card point, and a hand points at the Deck tab, the only thing that can be pressed.
+On the Deck page the hand points at the card with the most points to spend (a hand card first), the only card that can be pressed; pressing it opens its upgrade tree at once.
+There the hand points at the button that spends a point on an upgrade that can take one, and **‹ Deck** waits until a point is spent.
+A note then encourages you to keep levelling your cards to unlock more bonuses, says Gems will soon unlock stronger rare and special card powers, and that Gems can respec a card.
+A player who had already spent a card point never sees the lesson.
+
 ## Card trees
 
 Nine cards have a tree of upgrades their card points buy, one level of a node a point; each tree takes exactly the 25 points a card earns.

@@ -55,4 +55,5 @@ A potion's box also says how much HP it restores (a percent potion its share of 
 ## Tab dots
 
 While a Deck lesson is waiting, its tab carries a red dot.
+After a card levels up or joins the deck, the Deck tab carries one with a number until you open it: the new cards and the cards with card points to spend (see Card levels in hand-and-cards.md).
 The Upgrades tab carries one too, once the first run that earns Inspiration is over, until you open it; and whenever a run that earned Inspiration ends, the Upgrades tab and the Inspiration tab on that page carry one in the forest while you hold enough Inspiration to buy a skill there, until you look at the Inspiration tree (likewise a Delve run that earned Courage, once the Courage tree is open, for the Courage tab); and so does the Gear tab once the Gear skill is bought, until you open it.

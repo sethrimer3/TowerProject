@@ -5,14 +5,16 @@
  * chosen, whose button spends a point on it (as does choosing it again).
  * Spending happens through the game's `cardTrees` desk, in the forest only.
  * Arrow keys move between the graph's upgrades (up the tree, down toward
- * the card, and across to its neighbours), and each change is announced. */
+ * the card, and across to its neighbours), and each change is announced.
+ * Opened by the card points lesson, it chooses an upgrade that can take a
+ * point, points at its Spend button, and holds Back until a point is spent. */
 import { CARDS, type CardId } from "../cards.ts";
 import { cardLevel, cardPoints, MAX_CARD_LEVEL } from "../card-levels.ts";
 import { CARD_TREES, nodeLevel, RESPEC_GEMS, treeNode } from "../card-trees.ts";
 import type { TreeRefusal } from "../game/card-tree-desk.ts";
 import type { AppContext } from "./app.ts";
 import { askForGems } from "./dialogs.ts";
-import { cardArt, gemIcon } from "./dom.ts";
+import { cardArt, gemIcon, POINTER_SVG } from "./dom.ts";
 import { replay, sparksOver } from "./flourish.ts";
 import { cardTreeCardHtml, cardTreeGraph, cardTreeListHtml, nodeName, ROOT } from "./card-tree-view.ts";
 import { UpgradeGraph } from "./upgrade-graph.ts";
@@ -36,14 +38,16 @@ function refusalText(card: CardId, id: string, refusal: TreeRefusal): string {
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
-/** One card's tree, in `host` (the Deck page) until closed (`onClose` then runs). */
+/** One card's tree, in `host` (the Deck page) until closed (`onClose` then
+ * runs); `teach`, given by the card points lesson, runs once the first
+ * point is spent. */
 export class CardTreePanel {
   private readonly el: HTMLElement;
   private graph: UpgradeGraph | null = null;
   private picked = ROOT;
   private view: View = lastView ?? (window.matchMedia?.("(max-width: 520px)").matches ? "list" : "tree");
 
-  constructor(private readonly ctx: AppContext, private readonly card: CardId, private readonly host: HTMLElement, private readonly onClose?: () => void) {
+  constructor(private readonly ctx: AppContext, private readonly card: CardId, private readonly host: HTMLElement, private readonly onClose?: () => void, private teach?: () => void) {
     const el = (this.el = document.createElement("div"));
     el.className = `card-tree${ctx.game.save.settings.reduceMotion ? "" : " opening"}`;
     el.setAttribute("role", "region");
@@ -73,8 +77,12 @@ export class CardTreePanel {
     el.addEventListener("click", this.click);
     el.addEventListener("keydown", this.keys);
     document.addEventListener("keydown", this.escape, true);
+    // The lesson starts on the first upgrade that can take a point.
+    if (teach) this.picked = (CARD_TREES[card] ?? []).find((n) => !ctx.game.cardTrees.raiseRefusal(card, n.id))?.id ?? ROOT;
     this.render();
     el.querySelector<HTMLElement>(this.view === "tree" ? `.ug-node[data-node="${ROOT}"]` : "[data-ct-pick]")?.focus({ preventScroll: true });
+    // The lesson's hand may sit below the tree, out of view on a short screen.
+    if (teach) el.querySelector(".ct-lesson-pointer")?.closest("button")?.scrollIntoView({ block: "nearest" });
   }
 
   /** Back to the Deck page (`quiet`: without running `onClose`, as when the page is left). */
@@ -89,14 +97,14 @@ export class CardTreePanel {
 
   private escape = (e: KeyboardEvent) => {
     // The shared dialog (a respec's confirm) takes Escape first.
-    if (e.key !== "Escape" || this.ctx.modal.open || !this.el.isConnected) return;
+    if (e.key !== "Escape" || this.ctx.modal.open || !this.el.isConnected || this.teach) return;
     e.preventDefault();
     this.close();
   };
 
   private click = (e: MouseEvent) => {
     const t = e.target as HTMLElement;
-    if (t.closest("[data-ct-close]")) return this.close();
+    if (t.closest("[data-ct-close]")) return this.teach ? undefined : this.close();
     if (t.closest("[data-ct-respec]")) return this.respec();
     const view = t.closest<HTMLElement>("[data-ct-view]")?.dataset.ctView as View | undefined;
     if (view) return this.show(view);
@@ -163,6 +171,11 @@ export class CardTreePanel {
     const at = this.el.querySelector(this.view === "tree" ? `.ug-node[data-node="${id}"]` : `.ct-row.picked`);
     if (!game.save.settings.reduceMotion) replay(at, "bought");
     sparksOver(at, "gold");
+    const taught = this.teach;
+    if (!taught) return;
+    this.teach = undefined;
+    this.lesson();
+    taught();
   }
 
   /** Asks before respeccing the card for Gems: every point comes back. */
@@ -197,6 +210,26 @@ export class CardTreePanel {
   };
 
   private render() {
+    this.renderTree();
+    this.lesson();
+  }
+
+  /** The card points lesson's part of the panel while it waits: its note
+   * under the header, Back held, and the pointing hand on the button that
+   * spends a point on the upgrade chosen. */
+  private lesson() {
+    const teaching = !!this.teach;
+    this.el.classList.toggle("teaching", teaching);
+    this.el.querySelector<HTMLButtonElement>("[data-ct-close]")!.disabled = teaching;
+    this.el.querySelector(".ct-lesson-pointer")?.remove();
+    const tip = this.el.querySelector(".ct-tip");
+    if (!teaching) return tip?.remove();
+    if (!tip) this.el.querySelector(".ct-head")!.insertAdjacentHTML("afterend", `<div class="deck-tip ct-tip" role="status"><b>Spend a card point</b><p>Choose an upgrade on the tree, then spend a point on it to unlock its bonus.</p></div>`);
+    const spend = this.el.querySelector(this.view === "tree" ? ".ug-card [data-ct-raise]:not(:disabled)" : ".ct-row.picked [data-ct-raise]:not(:disabled)");
+    spend?.insertAdjacentHTML("beforeend", `<span class="deck-pointer ct-lesson-pointer${this.ctx.game.save.settings.reduceMotion ? " still" : ""}" aria-hidden="true">${POINTER_SVG}</span>`);
+  }
+
+  private renderTree() {
     const { game } = this.ctx, save = game.save, desk = game.cardTrees, xp = save.cardXp[this.card] ?? 0;
     const left = desk.pointsLeft(this.card), total = cardPoints(xp), spent = desk.pointsSpent(this.card);
     const { level, into, needed } = cardLevel(xp), max = level >= MAX_CARD_LEVEL;
