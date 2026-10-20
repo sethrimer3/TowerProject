@@ -1,6 +1,8 @@
 import { levelForXp, type UpgradeId } from "../config.ts";
 import type { NoticeTree } from "../save-shape.ts";
-import { deckCards } from "../cards.ts";
+import { deckCards, type CardId } from "../cards.ts";
+import { cardLevelTotal } from "../card-levels.ts";
+import { hasPointsToSpend } from "../card-trees.ts";
 import { equipmentWaiting } from "../equipment/inventory.ts";
 import { goalsWaiting } from "../goals.ts";
 import { trainingWaiting } from "../loadout.ts";
@@ -60,9 +62,10 @@ export class NoticeDesk {
       case "gear": return this.firstGear || equipmentWaiting(save);
       case "research": return trainingWaiting(save);
       case "deck": {
-        // A new Deck lesson waits behind the tab until it is done, as does a card not yet shown.
+        // A new Deck lesson waits behind the tab until it is done, as does a
+        // card not yet shown or a card level gained since the page last showed.
         const { deck, addCard } = save.tutorials;
-        return !deck || (!!save.upgrades.buildout && !addCard) || this.newCard;
+        return !deck || (!!save.upgrades.buildout && !addCard) || this.newCard || this.cardLevelNews;
       }
       case "shop": {
         const now = estimatedServerTime(save.shop.clock, host.clock());
@@ -103,8 +106,10 @@ export class NoticeDesk {
         return changed;
       }
       case "deck": {
-        const cards = deckCards(save.upgrades, save.goals), changed = cards.length !== seen.cards.length || cards.some((id) => !seen.cards.includes(id));
+        const cards = deckCards(save.upgrades, save.goals), levels = cardLevelTotal(save.cardXp);
+        const changed = cards.length !== seen.cards.length || cards.some((id) => !seen.cards.includes(id)) || levels !== seen.cardLevels;
         seen.cards = cards;
+        seen.cardLevels = levels;
         return changed;
       }
       case "inspiration": case "courage": {
@@ -113,6 +118,34 @@ export class NoticeDesk {
         return changed;
       }
     }
+  }
+
+  /** The number the Deck tab's dot shows while it shows: the deck's cards
+   * the Deck page hasn't shown since they were earned, and the cards with
+   * card points left to spend on their trees. */
+  deckCount(): number {
+    const save = this.save, cards = deckCards(save.upgrades, save.goals);
+    return cards.filter((id) => !save.seen.cards.includes(id)).length + cards.filter((id) => hasPointsToSpend(save, id)).length;
+  }
+
+  /** Whether card `id` wears NEW on the Deck page: in the deck, and not yet
+   * met there. */
+  isNew(id: CardId): boolean {
+    return !this.save.seen.met.includes(id);
+  }
+
+  /** Records that the player met card `id` on the Deck page (pressed it
+   * for its details, moved it, put it in the hand or gave it a badge),
+   * taking its NEW away; whether that changed what has been seen. */
+  met(id: CardId): boolean {
+    if (!this.isNew(id)) return false;
+    this.save.seen.met.push(id);
+    return true;
+  }
+
+  /** A card has levelled up since the Deck page last showed. */
+  private get cardLevelNews() {
+    return !!this.save.upgrades.combatStance && cardLevelTotal(this.save.cardXp) > this.save.seen.cardLevels;
   }
 
   /** The first Inspiration has been earned (so the run that paid it has

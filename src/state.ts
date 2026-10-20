@@ -1,9 +1,9 @@
 import { entrance, floorFor } from "./delve/labyrinth.ts";
 import { buyTheme, canWear, grantAllThemes, type GameLook, type ThemeId, type ThemeKind, type UiLook } from "./theme-collection.ts";
 import { chooseStep } from "./automation.ts";
-import { CARDS, cardText, explainStuck, handBonus, keptLinks, planHand, planTarget, shootsWith, stillOpen, type CardId, type CardPlan, type HandBonus, type StuckReport } from "./cards.ts";
+import { CARDS, cardText, deckCards, explainStuck, handBonus, keptLinks, planHand, planTarget, shootsWith, stillOpen, type CardId, type CardPlan, type HandBonus, type StuckReport } from "./cards.ts";
 import { addCardXp, PASSIVE_CARDS } from "./card-levels.ts";
-import { freeUpFactors, runCardTrees, treeBonus, treeFactor, treeOverheal, type TreeBonus } from "./card-trees.ts";
+import { freeUpFactors, hasPointsToSpend, pointsLeft, runCardTrees, treeBonus, treeFactor, treeOverheal, type TreeBonus } from "./card-trees.ts";
 import { aggroTurn } from "./flying.ts";
 import { foeOn } from "./ranged.ts";
 import { BADGE_IDS, MAX_COPIES, badgeOn, badgeValue, runBadges } from "./badges.ts";
@@ -116,8 +116,8 @@ import type { Coin, Dash, Drop, Facing, Gain, GainArt, Heal, ShownTurn } from ".
 /** How a new run starts: out in the forest or at the entrance, and from
  * which seed (rolled from the game's randomness when left out). */
 export type RunStart = { outside?: boolean; seed?: number; height?: number };
-/** A lesson shown on the Tower's board (`Game.boardLesson`). */
-export type BoardLesson = "climb" | "enter" | "delve";
+/** A lesson shown on the board (`Game.boardLesson`). */
+export type BoardLesson = "climb" | "enter" | "cards" | "delve";
 export type RouteEffects = {
   hp: [number, number];
   attack: [number, number];
@@ -414,16 +414,31 @@ export class Game {
     p.x = this.rules.entranceX;
     p.y = OUTSIDE_START_Y;
   }
-  /** The lesson waiting on the Tower's board: in a new game's first run,
-   * `climb`, which holds the hand paused until dismissed; in the forest,
-   * `enter`, until dismissed or a run goes inside from the forest; then,
-   * once Into the depths is owned, `delve`, until the Delve is opened. */
+  /** The lesson waiting on the board: in a new game's first run,
+   * `climb`, which holds the hand paused until dismissed; in the Tower's
+   * forest, `enter`, until dismissed or a run goes inside from the forest;
+   * then, in either forest, `cards`, which leads to the Deck to spend the
+   * first card point (`cardPointsLesson`); then, in the Tower's forest once
+   * Into the depths is owned, `delve`, until the Delve is opened. */
   get boardLesson(): BoardLesson | null {
-    if (this.mode !== "tower") return null;
-    const { climb, enter, delve } = this.save.tutorials;
-    if (!this.run.outside) return climb || this.fallen ? null : "climb";
-    if (!enter) return "enter";
-    return this.save.upgrades.delve && !delve ? "delve" : null;
+    const tower = this.mode === "tower", { climb, enter, delve } = this.save.tutorials;
+    if (!this.run.outside) return !tower || climb || this.fallen ? null : "climb";
+    if (tower && !enter) return "enter";
+    if (this.cardPointsLesson) return "cards";
+    return tower && this.save.upgrades.delve && !delve ? "delve" : null;
+  }
+  /** The card the card points lesson points at, while it waits: in the
+   * forest after a run once a card has a point to spend on its tree, the
+   * Deck open (Combat Stance) and its own lessons on the hand done. Of the
+   * cards the Deck page shows (the hand's, and with Buildout the deck's),
+   * the one with the most points left, the hand's first. */
+  get cardPointsLesson(): CardId | null {
+    const save = this.save, t = save.tutorials;
+    if (t.cardPoints || !this.run.outside || !save.upgrades.combatStance || !t.deck || (save.upgrades.buildout && !t.removeCard)) return null;
+    const shown = save.upgrades.buildout ? [...new Set([...save.hand, ...deckCards(save.upgrades, save.goals)])] : save.hand;
+    let best: CardId | null = null;
+    for (const id of shown) if (hasPointsToSpend(save, id) && (!best || pointsLeft(save, id) > pointsLeft(save, best))) best = id;
+    return best;
   }
   /** Dismisses the `climb` or `enter` lesson (the `delve` lesson waits on
    * the Delve tab); dismissing `climb` sets the hand playing. */

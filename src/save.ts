@@ -27,8 +27,8 @@ import { decodeBadges, defaultBadges, validRunBadges } from "./badges.ts";
 import { backfillProfile, decodeProfile, defaultProfile } from "./profile.ts";
 import { decodeFinds, defaultFinds, validNotes } from "./run-notes.ts";
 import { isFoeKey } from "./foe-cards.ts";
-import { decodeCardXp } from "./card-levels.ts";
-import { treeNode, decodeCardTrees } from "./card-trees.ts";
+import { cardLevelTotal, decodeCardXp } from "./card-levels.ts";
+import { treeNode, decodeCardTrees, pointsSpent } from "./card-trees.ts";
 export function defaults(): Save {
   return {
     version: 3,
@@ -67,9 +67,9 @@ export function defaults(): Save {
     cardTrees: {},
     handSlots: 0,
     badges: defaultBadges(),
-    tutorials: { deck: false, removeCard: false, addCard: false, upgrades: false, gear: false, onTheJob: false, speed: false, climb: false, enter: false, delve: false, chamber: false },
+    tutorials: { deck: false, removeCard: false, addCard: false, upgrades: false, gear: false, onTheJob: false, speed: false, climb: false, enter: false, delve: false, chamber: false, cardPoints: false },
     treeNotices: { inspiration: false, courage: false },
-    seen: { level: 0, training: 0, archives: 0, cards: [...BASE_HAND] },
+    seen: { level: 0, training: 0, archives: 0, cards: [...BASE_HAND], cardLevels: 0, met: [...BASE_HAND] },
     archives: defaultArchives(),
     defend: defaultDefendSave(),
     entitlements: [],
@@ -494,10 +494,12 @@ function decodeHand(raw: any, owned: CardId[], slots: number): CardId[] {
   const hand = [...new Set(raw.filter((id): id is CardId => owned.includes(id)))].slice(0, slots);
   return validHand(hand) ? hand : [...BASE_HAND];
 }
-/** The dots' dismissals; a save without them has seen the deck it holds. */
+/** The dots' dismissals; a save without them has seen, and met, the deck
+ * it holds and its cards' levels. */
 function decodeSeen(s: any, d: Save): Save["seen"] {
-  const cards = Array.isArray(s?.cards) ? CARD_IDS.filter((id) => s.cards.includes(id)) : deckCards(d.upgrades, d.goals);
-  return { level: count(s?.level, 0), training: count(s?.training, 0), archives: count(s?.archives, 0), cards };
+  const held = deckCards(d.upgrades, d.goals), known = (raw: unknown) => Array.isArray(raw) ? CARD_IDS.filter((id) => raw.includes(id)) : held;
+  const cardLevels = s?.cardLevels === undefined ? cardLevelTotal(d.cardXp) : count(s.cardLevels, 0);
+  return { level: count(s?.level, 0), training: count(s?.training, 0), archives: count(s?.archives, 0), cards: known(s?.cards), cardLevels, met: known(s?.met) };
 }
 export function decode(raw: string | null): Save {
   const d = defaults();
@@ -538,7 +540,9 @@ export function decode(raw: string | null): Save {
     d.cardXp = decodeCardXp(s.cardXp);
     d.cardTrees = decodeCardTrees(s.cardTrees, d.cardXp);
     d.badges = decodeBadges(s.badges, d.upgrades, researched(d.archives, "badgeSlots"), d.goals);
-    for (const k of ["deck", "removeCard", "addCard", "upgrades", "gear", "onTheJob", "speed", "climb", "enter", "delve", "chamber"] as const) d.tutorials[k] = s.tutorials?.[k] === true;
+    for (const k of ["deck", "removeCard", "addCard", "upgrades", "gear", "onTheJob", "speed", "climb", "enter", "delve", "chamber", "cardPoints"] as const) d.tutorials[k] = s.tutorials?.[k] === true;
+    // A player who has already spent a card point needs no lesson on it.
+    if (CARD_IDS.some((id) => pointsSpent(d.cardTrees, id) > 0)) d.tutorials.cardPoints = true;
     for (const k of ["inspiration", "courage"] as const) d.treeNotices[k] = s.treeNotices?.[k] === true;
     d.seen = decodeSeen(s.seen, d);
     d.profile = decodeProfile(s.profile);

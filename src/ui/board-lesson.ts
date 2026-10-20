@@ -1,15 +1,17 @@
 import type { BoardLesson, Game } from "../state.ts";
 import { el, POINTER_SVG } from "./dom.ts";
 
-// The lessons on the Tower's board (`game.boardLesson`): a note over the top
-// of the board. The first run's (`climb`) and the forest's `enter` are
-// dismissed by tapping the note; in the forest the tutorials' pointing hand
-// shows the button to press next, Enter or the sign down the path to the
-// Delve, and `delve` waits until the Delve is opened.
+// The lessons on the board (`game.boardLesson`): a note over the top of the
+// board. The first run's (`climb`) and the forest's `enter` are dismissed by
+// tapping the note; in the forest the tutorials' pointing hand shows the
+// button to press next, Enter, the Deck tab or the sign down the path to the
+// Delve; `cards` waits until a card point is spent (on the Deck page, which
+// takes the lesson on), and `delve` until the Delve is opened.
 
 const NOTES: Record<BoardLesson, { title: string; text?: string }> = {
   climb: { title: "Climb the Tower to gain Inspiration, XP and resources." },
   enter: { title: "Enter the Tower to try again.", text: "Open Upgrades and check the Inspiration tree: the Inspiration this run earned unlocks new skills." },
+  cards: { title: "Your cards gain levels as you use them.", text: "Each level grants a card point. Open your Deck to spend it." },
   delve: { title: "Follow the path down to the Delve to gain Courage, XP and resources." },
 };
 
@@ -30,7 +32,7 @@ export function renderBoardLesson(game: Game, onBoard: boolean, dismissed: () =>
   }
   if (!note) {
     const { title, text } = NOTES[lesson], body = `<b>${title}</b>${text ? `<p>${text}</p>` : ""}`;
-    frame.insertAdjacentHTML("beforeend", lesson === "delve"
+    frame.insertAdjacentHTML("beforeend", lesson === "delve" || lesson === "cards"
       ? `<div class="board-tip" role="status" data-lesson="${lesson}">${body}</div>`
       : `<button type="button" class="board-tip dismissable" data-lesson="${lesson}">${body}<small>Tap to dismiss</small></button>`);
     note = frame.querySelector<HTMLElement>(".board-tip")!;
@@ -39,8 +41,8 @@ export function renderBoardLesson(game: Game, onBoard: boolean, dismissed: () =>
     };
   }
   // In the forest the hand sits inside the button it points at: Enter,
-  // from below, or the forest's sign, from above.
-  const target = lesson === "climb" ? null : lesson === "enter" ? el("enter-run") : el("forest-sign");
+  // from below, or the Deck tab or the forest's sign, from above.
+  const target = lesson === "climb" ? null : lesson === "enter" ? el("enter-run") : lesson === "cards" ? document.querySelector<HTMLElement>(`nav [data-tab="deck"]`) : el("forest-sign");
   if (!target) pointer?.remove();
   else if (pointer?.parentElement !== target || pointer.dataset.lesson !== lesson) {
     pointer?.remove();

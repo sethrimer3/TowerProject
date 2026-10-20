@@ -34,6 +34,8 @@ export function cardLevel(xp: number) {
 export type CardLevel = ReturnType<typeof cardLevel>;
 /** Card `id`'s level and progress in the save. */
 export const levelOf = (save: { cardXp: Partial<Record<CardId, number>> }, id: CardId) => cardLevel(save.cardXp[id] ?? 0);
+/** Every card's level summed: it rises with each level-up. */
+export const cardLevelTotal = (cardXp: Partial<Record<CardId, number>>) => CARD_IDS.reduce((sum, id) => sum + cardLevel(cardXp[id] ?? 0).level, 0);
 
 /** A card's points: one a level, spent on its tree (card-trees.ts,
  * `pointsLeft` counting those not yet spent). */

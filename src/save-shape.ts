@@ -158,10 +158,11 @@ export type Save = {
    * Job; `speed`, speeding the hand up on the second floor; `climb`, the
    * first run's note, dismissed; and in the forest `enter`, the note to try
    * again, dismissed (or a run entered), `delve`, opening the Delve
-   * once Into the depths is owned, and `chamber`, the first Tower run
+   * once Into the depths is owned, `chamber`, the first Tower run
    * ended, after which a new floor's "A new chamber opens." no longer
-   * rises over the board. */
-  tutorials: { deck: boolean; removeCard: boolean; addCard: boolean; upgrades: boolean; gear: boolean; onTheJob: boolean; speed: boolean; climb: boolean; enter: boolean; delve: boolean; chamber: boolean };
+   * rises over the board, and `cardPoints`, spending the first card point
+   * on an upgrade tree, led there from the forest's Deck tab. */
+  tutorials: { deck: boolean; removeCard: boolean; addCard: boolean; upgrades: boolean; gear: boolean; onTheJob: boolean; speed: boolean; climb: boolean; enter: boolean; delve: boolean; chamber: boolean; cardPoints: boolean };
   /** Per tree: a run that earned its currency (Inspiration in the Tower,
    * Courage in the Delve) has ended since the tree was last shown, so its
    * tab (and the Upgrades tab) wear a dot in the forest while a skill there
@@ -171,9 +172,12 @@ export type Save = {
    * Archives' `archives` events (levels completed plus archivists hired)
    * when the Research page was last opened, which the run's Research
    * button compares; the hero's `training` level when the Research page's
-   * Training tab last showed, which that tab's dot compares; and the deck's
-   * `cards` when the Deck page was last opened, which the Deck tab compares. */
-  seen: { level: number; training: number; archives: number; cards: CardId[] };
+   * Training tab last showed, which that tab's dot compares; the deck's
+   * `cards` and the levels of all its cards summed (`cardLevels`) when the
+   * Deck page was last opened, which the Deck tab compares; and the cards
+   * the player has `met` on the Deck page (pressed for details, moved,
+   * added to the hand or given a badge), the rest wearing NEW there. */
+  seen: { level: number; training: number; archives: number; cards: CardId[]; cardLevels: number; met: CardId[] };
   /** The Archives' archivists, completed research and its history
    * (archives.ts). */
   archives: ArchivesSave;

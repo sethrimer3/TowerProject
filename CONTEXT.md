@@ -552,6 +552,10 @@ What raises a card's level: one each time the card activates in a run, or, for a
 What each card level gives the card, to spend on its own card tree. Not the character's training points.
 _Avoid_: training point, ability point, upgrade point
 
+**New card**:
+A card in the deck the player hasn't met on the Deck page yet (pressed for its details, moved, put in the hand or given a badge); it wears NEW there until then.
+_Avoid_: unseen card (a card the Deck page hasn't shown is what the Deck tab's dot counts, and it clears on opening the page)
+
 **Card tree**:
 A card's tree of nodes its card points buy, a level a point: tracks from the card itself, each node open once the node before it is full, its bonuses counting while the run's hand holds the card. A **respec** gives all of a card's points back for Gems.
 _Avoid_: card skill tree, talent tree, reward tree

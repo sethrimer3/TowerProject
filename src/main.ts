@@ -190,13 +190,18 @@ function update() {
   if (boardHeadingStale(game)) renderBoardHeading(game, overlay);
   // Inside a run the tabs give way to an empty row, kept for the hand.
   document.querySelector("nav")!.classList.toggle("in-run", !game.run.outside);
-  // The Deck tutorial keeps the player on its page until they reorder the hand.
-  document.querySelectorAll<HTMLButtonElement>("[data-tab]").forEach((b) => (b.disabled = deck.teaching && b.dataset.tab !== "deck"));
+  // The Deck tutorials keep the player on its page until they reorder the
+  // hand, and the card points lesson leads them there and keeps them there
+  // until a point is spent: in the forest only the Deck tab can be pressed.
+  const deckOnly = deckLesson();
+  document.querySelectorAll<HTMLButtonElement>("[data-tab]").forEach((b) => (b.disabled = deckOnly && b.dataset.tab !== "deck"));
+  const forestHeld = isBoard(tab) && game.boardLesson === "cards";
+  document.querySelectorAll<HTMLElement>(".shell > :not(nav)").forEach((part) => (part.inert = forestHeld));
   renderHud(game, renderer, overlay);
   if (runNotes.open) runNotes.refresh();
   refreshEnemyOddsBox(game);
   runTraining.render();
-  renderBoardLesson(game, tab === "tower", update);
+  renderBoardLesson(game, isBoard(tab), update);
   const themes = game.claimThemes();
   // A theme Dev mode grants while its look was chosen shows at once.
   if (themes.length) applyUiTheme(game.save);
@@ -249,11 +254,15 @@ const LOCKED_TABS = new Map<string, { skill: UpgradeId; tree: TreeId }>([
 ]);
 /** The pages topped by the currencies bar. */
 const CURRENCY_PAGES: string[] = ["upgrades", "research", "deck", "gear", "missions", "events"];
+/** Whether a lesson keeps the player on the Deck page, or leads them to it. */
+function deckLesson() {
+  return deck.teaching || game.boardLesson === "cards";
+}
 /** Opens page `requested`: `board` is the active mode's board. Leaving the
  * board inside a run pauses the hand, and coming back plays it on as it
  * was (`Game.pauseForPage`). */
 function navigate(requested: string) {
-  if (deck.teaching && requested !== "deck") return;
+  if (deckLesson() && requested !== "deck") return;
   const id = unlockTarget(requested === "board" ? game.mode : requested) as Tab;
   // Cinematic mode is the board's alone.
   if (!isBoard(id)) cinematic.exit();
