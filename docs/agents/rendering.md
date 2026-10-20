@@ -30,7 +30,7 @@ The active forest draws dynamic back grass, small foliage, crowns, buildings, ro
 Wall foliage remains with decoration off, while optional floor plants and dynamic grass follow that setting.
 Sprites off, board sprites off and other Game themes retain their original forest; UI themes gate the interface independently, and Defend is excluded from this forest extension.
 `sprite-dungeon.ts` supplies dedicated interior PNG materials: fitted Tower masonry and contiguous Delve stone/earth patches, selected with coordinate hashes independent of generation.
-Twenty-one 96 × 624 atlases contain four 24-pixel floor variants, six versions of all sixteen wall-neighbor masks and four native six-pixel corner overlays: ten biome ramps for masonry, ten for rough stone and one brown earth set.
+Twenty-one 96 × 720 atlases contain four 24-pixel floor variants, six versions of all sixteen wall-neighbor masks, four native six-pixel corner overlays and sixteen directional shade joins: ten biome ramps for masonry, ten for rough stone and one brown earth set.
 `dungeonWallVariant` chooses six authored top and south-facing facade pairs by coordinate hash, so long connected walls have seeded variety without rotating their lighting or altering geometry.
 Masonry varies broad fitted blocks and worn joints; bedrock uses continuous quiet planes with sparse fractures, while earth varies compact layers and embedded stone.
 A shared 96 × 216 atlas retains the original contact-shadow masks and soil reference pieces.
@@ -41,10 +41,14 @@ Masked material bakes are cached with a 512-entry limit; no gradients, soft alph
 Wall corners draw only where a diagonal opening meets two joined or two exposed sides; straight edges and missing diagonal terrain retain their existing lips.
 Diagonal material patches draw where earth touches stone at a corner without an existing cardinal blend or a change between open floor and blocking wall.
 Walls expose shallow three-pixel north/side lips and eight-pixel south-facing facades, keeping a steep top-down angle inside the existing collision tile; joined sides have no facade.
-The authored fringe masks also break up the inward boundary of exposed wall strips against a common near-black fill.
-`wall-depth.ts` checks two Chebyshev rings of actual world tiles: neighboring air exposes the wall, air two tiles away selects sparse dark padding, and farther interiors use a flat shared near-black PNG.
+Exposed wall texture reaches up to eighteen pixels into its tile over a full shaded material body, with stepped inward contours.
+The shadow body continues beyond the bright rim, so thin walls remain solid and wider walls recede through a fuller intermediate shade before black.
+`wall-depth.ts` checks two Chebyshev rings of actual world tiles: neighboring air exposes the wall, air two tiles away selects directional shaded material, and farther interiors use a flat shared near-black PNG.
+`dungeonWallProfile` supplies the north/east/south/west mask of those second-ring openings; diagonal air combines both bands and missing cells never create a false edge.
 Every material counts as connected solid, missing cells remain solid, and doors/items/stairs count as air; generation and collision are unchanged.
-`dungeon-infill.png` holds three sparse padding variations plus one empty choice per material and a common core (96 × 96); no biome tint changes the shared core.
+Each material atlas appends sixteen shade masks at `DUNGEON_PADDING_FRAME`, assembled from four separately lit directional PNGs and tinted with its biome ramp.
+Material blending continues through the shaded band as well as exposed wall tops.
+`dungeon-infill.png` retains the common core and earlier sparse reference pieces (96 × 96); the deep core stays flat and is never biome-tinted.
 The styled decor bake skips core walls so moss cannot repaint their flat interiors; Sprites off and other Game themes retain their original decor.
 `paintGround` returns after drawing these native tiles, so old procedural quoins cannot add off-palette corners over the new walls.
 Each material group loads completely before replacing the fallback, and `spriteRevision` refreshes the ground cache as its PNGs arrive.
@@ -54,7 +58,8 @@ The water mirror receives the effective board-art key too, refreshing cached wal
 `tools/prepare-dungeon-sprites.mjs` extracts the material components, assembles connected walls and edge masks, and maps all twenty biome variations into the existing palette, without changing the older atlas or Defend.
 Its corner components come from `assets/game-sprites/dungeon-corners.png`, sharing the existing native grid, upper-left light and restricted material ramps.
 Its six top/facade pairs per material come from `assets/game-sprites/dungeon-wall-variations.png`; floor, coping and corner components retain their existing sources.
-The dark infill and stepped blend masks come from `assets/game-sprites/dungeon-material-blends.png`.
+The shared core and stepped blend masks come from `assets/game-sprites/dungeon-material-blends.png`.
+The fuller, connected shade bands come from `assets/game-sprites/dungeon-wall-shading.png`, with fixed upper-left light in each authored direction.
 
 Board drawing (`Renderer`, frames, lighting, decor, popups, tile caches, the forest outside, weather), the render goldens, and the Medieval and Neon themes.
 

@@ -105,19 +105,33 @@ try {
   }
   const materials = await page.evaluate(async () => {
     const { drawDungeonGround, drawDungeonFrame, dungeonMaterialJoins, dungeonMaterial, dungeonFloorFrame, dungeonWallVariant,
-      DUNGEON_ATLASES } = await import("/src/sprite-dungeon.ts");
+      DUNGEON_ATLASES, DUNGEON_PADDING_FRAME } = await import("/src/sprite-dungeon.ts");
     const { kitImage } = await import("/src/sprite-kit.ts");
     const canvas = document.createElement("canvas"); canvas.width = canvas.height = 24;
     const c = canvas.getContext("2d");
     const pixels = (id, frame) => { c.clearRect(0, 0, 24, 24); drawDungeonFrame(c, kitImage(id), frame); return [...c.getImageData(0, 0, 24, 24).data]; };
     const core = pixels("dungeon-infill", 12);
     const flat = data => data.every((value, i) => value === [12, 16, 22, 255][i % 4]);
-    const shared = DUNGEON_ATLASES.every(id => flat(pixels(id, 19)));
-    const padding = Array.from({ length: 12 }, (_, frame) => {
-      const data = pixels("dungeon-infill", frame); let dark = 0;
-      for (let i = 0; i < data.length; i += 4) if (data[i] === 12 && data[i + 1] === 16 && data[i + 2] === 22) dark++;
-      return dark;
+    const shared = ["tower", "delve"].every(mode => Array.from({ length: 10 }, (_, tone) => {
+      c.clearRect(0, 0, 24, 24); drawDungeonGround(c, { mode, height: tone * 10, seed: 1107, x: 8, y: 5, wall: true, empty: false }, [], 2);
+      return flat([...c.getImageData(0, 0, 24, 24).data]);
+    }).every(Boolean));
+    const blackAt = (data, x, y) => data.slice((y * 24 + x) * 4, (y * 24 + x) * 4 + 3).join(",") === "12,16,22";
+    const bodies = DUNGEON_ATLASES.map(id => {
+      const data = pixels(id, 18); let visible = 0;
+      for (let y = 0; y < 24; y++) for (let x = 0; x < 24; x++) if (!blackAt(data, x, y)) visible++;
+      return visible;
     });
+    const padding = DUNGEON_ATLASES.flatMap(id => [1, 2, 4, 8].map((bit, direction) => {
+      const data = pixels(id, DUNGEON_PADDING_FRAME + bit); let dark = 0, entry = 0, far = 0;
+      for (let y = 0; y < 24; y++) for (let x = 0; x < 24; x++) if (blackAt(data, x, y)) dark++;
+      for (let i = 0; i < 24; i++) {
+        const [x, y] = [[i, 0], [23, i], [i, 23], [0, i]][direction];
+        if (!blackAt(data, x, y)) entry++;
+        if (blackAt(data, 23 - x, 23 - y)) far++;
+      }
+      return { dark, entry, far };
+    }));
     const clear = Array.from({ length: 4 }, (_, variant) => {
       const data = pixels("dungeon-blends", variant * 20 + 15);
       for (let y = 9; y < 15; y++) for (let x = 9; x < 15; x++) if (data[(y * 24 + x) * 4 + 3]) return false;
@@ -138,10 +152,11 @@ try {
       if (blended[i] !== (mask[Math.floor(i / 4) * 4 + 3] ? earth : stone)[i]) same = false;
       if (blended[i] !== stone[i]) changed++;
     }
-    return { black: flat(core), shared, padding, clear, same, changed };
+    return { black: flat(core), shared, bodies, padding, clear, same, changed };
   });
   assert.ok(materials.black && materials.shared, "deep interiors share a flat near-black PNG across every material and biome");
-  assert.ok(materials.padding.every(dark => dark > 576 * .65), "padding stays sparse against the shared black");
+  assert.ok(materials.bodies.every(visible => visible > 576 * .8), "exposed walls retain a broad shaded body behind the rim");
+  assert.ok(materials.padding.every(({ dark, entry, far }) => dark > 576 * .15 && dark < 576 * .85 && entry >= 12 && far >= 12), "directional shade connects at the opening and recedes to black");
   assert.ok(materials.clear.every(Boolean), "material blending leaves quiet floor centers");
   assert.ok(materials.same && materials.changed > 10, "actual floor blends use authored binary masks and literal neighboring material texels");
   for (const width of [390, 1100]) for (const mode of ["tower", "delve"]) {
@@ -197,17 +212,17 @@ try {
     await page.locator("#dungeon-review").screenshot({ path: `test-results/dungeon-sprites/${mode}-${width}.png` });
     await page.locator("#dungeon-review").evaluate(e => e.remove());
   }
-  await page.setViewportSize({ width: 1100, height: 2250 });
+  await page.setViewportSize({ width: 1100, height: 2500 });
   await page.evaluate(async () => {
     const { DUNGEON_ATLASES } = await import("/src/sprite-dungeon.ts"), { kitImage } = await import("/src/sprite-kit.ts");
-    const sheet = document.createElement("canvas"); sheet.id = "dungeon-art"; sheet.width = 1100; sheet.height = 2160;
+    const sheet = document.createElement("canvas"); sheet.id = "dungeon-art"; sheet.width = 1100; sheet.height = 2430;
     const c = sheet.getContext("2d"); c.imageSmoothingEnabled = false; c.fillStyle = "#10151c"; c.fillRect(0, 0, sheet.width, sheet.height);
     DUNGEON_ATLASES.forEach((id, i) => {
-      const image = kitImage(id), x = i % 7 * 155 + 6, y = Math.floor(i / 7) * 720;
-      c.drawImage(image, x, y + 6); c.drawImage(image, 0, 0, 96, 24, x, y + 635, 144, 36);
-      c.fillStyle = "#eee0b7"; c.font = "11px sans-serif"; c.fillText(id.replace("dungeon-", ""), x, y + 700);
+      const image = kitImage(id), x = i % 7 * 155 + 6, y = Math.floor(i / 7) * 810;
+      c.drawImage(image, x, y + 6); c.drawImage(image, 0, 0, 96, 24, x, y + 735, 144, 36);
+      c.fillStyle = "#eee0b7"; c.font = "11px sans-serif"; c.fillText(id.replace("dungeon-", ""), x, y + 790);
     });
-    sheet.style.cssText = "position:fixed;left:0;top:0;width:1100px;height:2160px;z-index:100000"; document.body.append(sheet);
+    sheet.style.cssText = "position:fixed;left:0;top:0;width:1100px;height:2430px;z-index:100000"; document.body.append(sheet);
   });
   await page.locator("#dungeon-art").screenshot({ path: "test-results/dungeon-sprites/native-atlases.png" });
   await page.locator("#dungeon-art").evaluate(e => e.remove());
@@ -227,5 +242,5 @@ try {
   assert.equal(fallback.ready, false); assert.equal(fallback.visible, 576, "failed PNGs retain a complete legacy ground tile");
   await failed.close();
   assert.deepEqual(errors, []);
-  console.log("Native PNG floors, material joins, shared black interiors, sparse padding, relief, late/failed loads, phone/desktop scenes and theme/toggle restoration pass.");
+  console.log("Native PNG floors, material joins, thick wall bodies, directional shade, black cores, relief, late/failed loads, phone/desktop scenes and theme/toggle restoration pass.");
 } finally { await browser.close(); await server.close(); }
