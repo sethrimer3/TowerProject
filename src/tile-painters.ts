@@ -87,8 +87,8 @@ function paintGround(c: CanvasRenderingContext2D, world: TileWorld, t: Tile, x: 
   const wall = t.kind === "wall";
   const terrain = { mode: look.mode, height: look.height, seed: look.seed, x, y, wall, empty: t.kind === "floor", neighbors };
   if (look.styledSprites && !look.spritesOff) {
-    const profile = wall ? dungeonWallProfile(world, x, y) : { depth: 0 as const, paddingMask: 0 };
-    if (drawDungeonGround(c, terrain, dungeonDiagonals(world, look.mode, x, y, look.seed), profile.depth, profile.paddingMask)) return true;
+    const profile = wall ? dungeonWallProfile(world, x, y) : undefined;
+    if (drawDungeonGround(c, terrain, dungeonDiagonals(world, look.mode, x, y, look.seed), profile)) return true;
   }
   // Every biome has a PNG floor/wall set. Images load asynchronously; until
   // ready (or if an asset fails), the procedural renderer remains a complete

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { DUNGEON_ATLASES, DUNGEON_EDGE_ATLAS, DUNGEON_BLEND_ATLAS, DUNGEON_INFILL_ATLAS, DUNGEON_CORNER_FRAME, drawDungeonGround, dungeonAtlasId, dungeonDiagonals, dungeonFloorFrame, dungeonMaterial, dungeonMaterialJoins, dungeonWallVariant } from "../src/sprite-dungeon.ts";
-import { dungeonWallDepth, dungeonWallProfile } from "../src/wall-depth.ts";
+import { dungeonWallBands, dungeonWallDepth, dungeonWallProfile } from "../src/wall-depth.ts";
 import { paintTile, type BoardLook } from "../src/tile-painters.ts";
 import { WaterReflections, type ReflectionScene } from "../src/decor-reflections.ts";
 import type { TileDecor } from "../src/decor.ts";
@@ -30,11 +30,33 @@ test("wall depth follows real air across materials, including diagonals, while m
   }
   assert.equal(dungeonWallDepth({ tile: () => undefined }, 0, 0), 2, "world bounds do not create a false bright edge");
   const world = { tile: (x: number, y: number) => ({ kind: x === 0 && y === 0 ? "floor" as const : "wall" as const }) };
-  assert.deepEqual(dungeonWallProfile(world, 0, 2), { depth: 1, paddingMask: 4 }, "shade attaches toward the opening to the south");
-  assert.deepEqual(dungeonWallProfile(world, 2, 0), { depth: 1, paddingMask: 8 });
-  assert.deepEqual(dungeonWallProfile(world, 2, 2), { depth: 1, paddingMask: 12 }, "diagonal openings join both shadow bands");
-  assert.deepEqual(dungeonWallProfile(world, -2, -2), { depth: 1, paddingMask: 3 });
-  assert.deepEqual(dungeonWallProfile(world, 0, 1), { depth: 0, paddingMask: 0 });
+  assert.deepEqual(dungeonWallProfile(world, 0, 2), { depth: 1, openings: 1 << 2 }, "shade attaches toward the actual opening to the south");
+  assert.deepEqual(dungeonWallProfile(world, 2, 0), { depth: 1, openings: 1 << 10 });
+  assert.deepEqual(dungeonWallProfile(world, 2, 2), { depth: 1, openings: 1 }, "diagonal air retains its precise corner position");
+  assert.deepEqual(dungeonWallProfile(world, -2, -2), { depth: 1, openings: 1 << 24 });
+  assert.deepEqual(dungeonWallProfile(world, 0, 1), { depth: 0, openings: 1 << 7 });
+});
+
+test("wall contours cross seams continuously without repeating holes or illuminating entire diagonal edges", () => {
+  const straight = { tile: (_x: number, y: number) => ({ kind: y < 0 ? "floor" as const : "wall" as const }) };
+  for (const seed of [1, 1107, 8903]) for (let x = -8; x < 8; x++) {
+    const bands = (x: number, y: number) => dungeonWallBands(dungeonWallProfile(straight, x, y), x, y, seed);
+    for (const y of [0, 1]) {
+      const current = bands(x, y), next = bands(x + 1, y);
+      for (let row = 0; row < 12; row++)
+        assert.ok(Math.abs(current[row * 12 + 11] - next[row * 12]) <= 1, "adjacent native clusters cannot jump across shade levels at a tile seam");
+      for (let col = 0; col < 12; col++) for (let row = 1; row < 12; row++)
+        assert.ok(current[row * 12 + col] <= current[(row - 1) * 12 + col], "no isolated dark holes inside a connected band");
+    }
+    assert.ok([...bands(x, 0)].every(b => b < 2), "the exposed tile keeps a broad, solid material body");
+    assert.ok([...bands(x, 2)].every(b => b === 3), "farther solids are uniformly black");
+    assert.deepEqual(bands(x, 1), bands(x, 1), "contours are stable on redraw");
+  }
+  const corner = { tile: (x: number, y: number) => ({ kind: !x && !y ? "floor" as const : "wall" as const }) };
+  const bands = dungeonWallBands(dungeonWallProfile(corner, 2, 2), 2, 2, 1107);
+  assert.equal(bands[11 * 12], 2, "the nearby southwest corner receives the dark transition");
+  assert.equal(bands[11], 3, "the unrelated northeast corner stays black");
+  assert.ok([...bands].filter(b => b !== 3).length < 36, "one diagonal opening cannot light two whole tile edges");
 });
 
 test("Delve stone and earth form repeatable contiguous patches rather than independent tile noise", () => {
@@ -126,10 +148,8 @@ test("wall variation is seeded, diagonal corners read real openings, and corner 
     frames.length = 0;
     assert.deepEqual(dungeonMaterialJoins(floor, ["earth", "earth", "earth", "earth"]), { sides: 0, corners: 15 });
     assert.deepEqual(dungeonMaterialJoins({ ...floor, neighbors: { northWall: true, eastWall: true, southWall: true, westWall: true } }, ["earth", "earth", "earth", "earth"]), { sides: 0, corners: 0 }, "soil corners cannot cross a wall");
-    for (const depth of [1, 2] as const) {
-      frames.length = 0; drawDungeonGround(c, tile, [], depth, 4);
-      assert.deepEqual(frames, [depth === 2 ? 12 : 108], "directional material shade precedes the shared black core");
-    }
+    frames.length = 0; drawDungeonGround(c, tile, [], { depth: 2, openings: 0 });
+    assert.deepEqual(frames, [12], "deep solids use only the shared black core");
   } finally {
     if (original) Object.defineProperty(globalThis, "Image", original); else Reflect.deleteProperty(globalThis, "Image");
   }

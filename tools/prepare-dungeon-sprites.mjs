@@ -10,7 +10,6 @@ const palette = join(root, "assets/ui-sprites/palette.ppm"), source = join(root,
 const cornerSource = join(root, "assets/game-sprites/dungeon-corners.png");
 const wallSource = join(root, "assets/game-sprites/dungeon-wall-variations.png");
 const blendSource = join(root, "assets/game-sprites/dungeon-material-blends.png");
-const shadingSource = join(root, "assets/game-sprites/dungeon-wall-shading.png");
 const manifest = JSON.parse(readFileSync(join(out, "manifest.json"), "utf8"));
 const scratch = mkdtempSync(join(tmpdir(), "tower-dungeon-")), p = name => join(scratch, `${name}.png`);
 const run = args => new Promise((resolve, reject) => {
@@ -153,19 +152,19 @@ try {
         "-geometry", "+0+0", "-compose", "Over", "-composite", "-strip", `PNG32:${file}`]); frames.push(file);
     }
     frames.push(...await cornerFrames(material, row));
-    const shadePalette = join(scratch, `${material}-padding.ppm`);
-    const shadeColors = material === "earth" ? ["0c1016", "29251f", "493a2c"] : ["0c1016", "1b2430", "293543"];
-    writeFileSync(shadePalette, `P3\n3 1\n255\n${shadeColors.flatMap(color => [0, 2, 4].map(i => parseInt(color.slice(i, i + 2), 16))).join(" ")}\n`);
-    // Clean isolated sampling speckles at native resolution, then restore the fixed palette.
-    for (let direction = 0; direction < 4; direction++)
-      await run([shadingSource, "-crop", `316x312+${[32, 388, 744, 1100][direction]}+${[28, 378, 726][row]}`, "+repage", "-alpha", "off", "-filter", "point", "-resize", "24x24!",
-        "-statistic", "Median", "3x3", "-alpha", "on", ...normalizer(shadePalette), "-transparent", "#0c1016", "-strip", `PNG32:${p(`${material}-padding-${direction}`)}`]);
-    for (let mask = 0; mask < 16; mask++) {
-      const args = ["-size", "24x24", "canvas:#0c1016"];
-      for (let direction = 0; direction < 4; direction++) if (mask & (1 << direction))
-        args.push(p(`${material}-padding-${direction}`), "-geometry", "+0+0", "-compose", "Over", "-composite");
-      const file = p(`${material}-padding-mask-${mask}`); await run([...args, "-strip", `PNG32:${file}`]); frames.push(file);
+    // Full top textures share one lighting direction. World-space clipping
+    // supplies their contours; no repeated directional cutout is baked in.
+    for (let variant = 0; variant < DUNGEON_WALL_VARIANTS; variant++) frames.push(p(`${material}-cap-${variant}`));
+    for (let variant = 0; variant < DUNGEON_WALL_VARIANTS; variant++) {
+      const capColors = material === "earth" ? ["493a2c", "80603d", "3e4c59"] : ["293543", "3e4c59", "63717b"];
+      const darkColors = material === "earth" ? ["10151c", "29251f", "10151c"] : ["10151c", "1b2430", "1b2430"];
+      const args = [p(`${material}-cap-${variant}`)];
+      capColors.forEach((color, i) => args.push("-fill", `rgb(1,4,${i + 1})`, "-opaque", `#${color}`));
+      darkColors.forEach((color, i) => args.push("-fill", `#${color}`, "-opaque", `rgb(1,4,${i + 1})`));
+      const file = p(`${material}-dark-${variant}`); await run([...args, "-strip", `PNG32:${file}`]); frames.push(file);
     }
+    // Reserve the final row without changing atlas dimensions or other art.
+    for (let col = 0; col < 4; col++) frames.push(p(`infill-core-${col}`));
     const base = p(`${material}-base`);
     await run(["montage", ...frames, "-tile", "4x30", "-geometry", "24x24+0+0", "-background", "none", "-strip", `PNG32:${base}`]);
     for (let tone = 0; tone < (material === "earth" ? 1 : DUNGEON_TONES); tone++) {
@@ -180,4 +179,4 @@ try {
   }
 } finally { rmSync(scratch, { recursive: true, force: true }); }
 writeFileSync(join(out, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n");
-console.log("Prepared 21 native interior material atlases, directional shadow bands, material blends and dark infill (2652 frames).");
+console.log("Prepared 21 native interior material atlases, full wall shade textures, material blends and dark infill (2652 frames).");

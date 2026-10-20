@@ -3,7 +3,7 @@ import { tileRandom } from "./random.ts";
 import { themeAt, type TerrainTile } from "./themes.ts";
 import { kitImage } from "./sprite-kit.ts";
 import { wallAdjacencyMask } from "./area1-tileset.ts";
-import type { DungeonWallDepth } from "./wall-depth.ts";
+import { dungeonWallBands, type DungeonWallProfile } from "./wall-depth.ts";
 
 export const DUNGEON_MATERIALS = ["masonry", "stone", "earth"] as const;
 export type DungeonMaterial = typeof DUNGEON_MATERIALS[number];
@@ -24,7 +24,8 @@ export const DUNGEON_EDGE_ATLAS = "dungeon-edges";
 export const DUNGEON_BLEND_ATLAS = "dungeon-blends";
 export const DUNGEON_INFILL_ATLAS = "dungeon-infill";
 export const DUNGEON_CORE_FRAME = 12;
-export const DUNGEON_PADDING_FRAME = DUNGEON_CORNER_FRAME + 4;
+export const DUNGEON_CAP_FRAME = DUNGEON_CORNER_FRAME + 4;
+export const DUNGEON_SHADE_FRAME = DUNGEON_CAP_FRAME + DUNGEON_WALL_VARIANTS;
 
 /** Smooth, coordinate-hashed material patches, independent of generation
  * and its random stream. Both wall and floor at a position share material. */
@@ -101,26 +102,76 @@ export function drawDungeonFrame(c: CanvasRenderingContext2D, image: HTMLImageEl
   c.restore();
 }
 
+const wallImages = new Map<string, HTMLCanvasElement>();
+/** Compose at native resolution before scaling: clipping directly into a
+ * fractional-size ground cache can leave hairlines between pixel clusters. */
+export function drawDungeonGround(c: CanvasRenderingContext2D, tile: TerrainTile, diagonals: readonly DungeonDiagonal[] = [], profile?: DungeonWallProfile): boolean {
+  if (!tile.wall || !profile || profile.depth === 2 || typeof document === "undefined") return paintDungeonGround(c, tile, diagonals, profile);
+  const n = tile.neighbors;
+  const key = [tile.mode, themeAt(tile.mode, tile.height, tile.x, tile.y, tile.seed).decor, tile.seed, tile.x, tile.y,
+    n?.northWall, n?.eastWall, n?.southWall, n?.westWall, diagonals.join(","), profile.openings].join(":");
+  let canvas = wallImages.get(key);
+  if (!canvas) {
+    canvas = document.createElement("canvas"); canvas.width = canvas.height = 24;
+    const ctx = canvas.getContext("2d");
+    if (!ctx || !paintDungeonGround(ctx, tile, diagonals, profile)) return false;
+    if (wallImages.size >= 512) wallImages.clear();
+    wallImages.set(key, canvas);
+  }
+  c.save(); c.imageSmoothingEnabled = false; c.drawImage(canvas, 0, 0, 24, 24); c.restore();
+  return true;
+}
+
 /** Four quiet floors, six variants of sixteen wall shapes, and corners.
  * South-facing facades occupy eight pixels; north/side lips are shallow.
  * Everything stays inside the existing tile and collision footprint. */
-export function drawDungeonGround(c: CanvasRenderingContext2D, tile: TerrainTile, diagonals: readonly DungeonDiagonal[] = [], depth: DungeonWallDepth = 0, paddingMask = 15) {
+function paintDungeonGround(c: CanvasRenderingContext2D, tile: TerrainTile, diagonals: readonly DungeonDiagonal[], profile?: DungeonWallProfile) {
   const { mode, height, x, y, seed } = tile, tone = themeAt(mode, height, x, y, seed).decor;
   const images = imagesFor(mode, tone);
   if (!images) return false;
   const material = dungeonMaterial(mode, x, y, seed);
   const image = material === "earth" ? images.earth : images.surface;
-  if (tile.wall && depth === 2) { drawDungeonFrame(c, images.infill, DUNGEON_CORE_FRAME); return true; }
+  if (tile.wall && profile?.depth === 2) { drawDungeonFrame(c, images.infill, DUNGEON_CORE_FRAME); return true; }
   const edges = images.edges;
   const n = tile.neighbors;
   const mask = wallAdjacencyMask({ northWall: !!n?.northWall, eastWall: !!n?.eastWall, southWall: !!n?.southWall, westWall: !!n?.westWall });
-  const frame = tile.wall ? depth === 1 ? DUNGEON_PADDING_FRAME + paddingMask : DUNGEON_WALL_FRAME + dungeonWallVariant(x, y, seed) * 16 + mask : dungeonFloorFrame(x, y, seed);
-  drawDungeonFrame(c, image, frame);
-  const joins = dungeonMaterialJoins(tile, diagonals), blendVariant = dungeonWallVariant(x, y, seed) % 4;
-  if (joins.sides) drawMaterialBlend(c, images.earth, frame, images.blends, blendVariant * 20 + joins.sides);
-  for (let corner = 0; corner < 4; corner++) if (joins.corners & (1 << corner))
-    drawMaterialBlend(c, images.earth, frame, images.blends, blendVariant * 20 + 16 + corner);
-  if (tile.wall && !depth) {
+  const variant = dungeonWallVariant(x, y, seed);
+  const frame = tile.wall ? DUNGEON_WALL_FRAME + variant * 16 + mask : dungeonFloorFrame(x, y, seed);
+  const joins = dungeonMaterialJoins(tile, diagonals), blendVariant = variant % 4;
+  const surface = (frame: number) => {
+    drawDungeonFrame(c, image, frame);
+    if (joins.sides) drawMaterialBlend(c, images.earth, frame, images.blends, blendVariant * 20 + joins.sides);
+    for (let corner = 0; corner < 4; corner++) if (joins.corners & (1 << corner))
+      drawMaterialBlend(c, images.earth, frame, images.blends, blendVariant * 20 + 16 + corner);
+  };
+  if (tile.wall && profile) {
+    drawDungeonFrame(c, images.infill, DUNGEON_CORE_FRAME);
+    const bands = dungeonWallBands(profile, x, y, seed);
+    for (const band of [2, 1, 0]) {
+      c.save(); c.beginPath(); let visible = false;
+      for (let row = 0; row < 12; row++) for (let col = 0; col < 12;) {
+        if (bands[row * 12 + col] !== band) { col++; continue; }
+        const start = col++;
+        while (col < 12 && bands[row * 12 + col] === band) col++;
+        c.rect(start * 2, row * 2, (col - start) * 2, 2); visible = true;
+      }
+      if (visible) {
+        c.clip();
+        surface(band === 0 ? DUNGEON_CAP_FRAME + variant : band === 1 ? DUNGEON_WALL_FRAME + variant * 16 + 15 : DUNGEON_SHADE_FRAME + variant);
+      }
+      c.restore();
+    }
+    // Keep physical coping/facades independent of the inward shade contour.
+    if (mask !== 15) {
+      c.save(); c.beginPath();
+      if (!(mask & 1)) c.rect(0, 0, 24, 3);
+      if (!(mask & 2)) c.rect(21, 0, 3, 24);
+      if (!(mask & 4)) c.rect(0, 15, 24, 9);
+      if (!(mask & 8)) c.rect(0, 0, 3, 24);
+      c.clip(); surface(frame); c.restore();
+    }
+  } else surface(frame);
+  if (tile.wall && (!profile || profile.depth === 0)) {
     for (let corner = 0; corner < 4; corner++) {
       const diagonal = diagonals[corner];
       // A diagonal opening meets either two joined sides (concave) or two
