@@ -9,6 +9,7 @@ const root = fileURLToPath(new URL("../", import.meta.url)), out = join(root, "p
 const palette = join(root, "assets/ui-sprites/palette.ppm"), source = join(root, "assets/game-sprites/dungeon-materials.png");
 const cornerSource = join(root, "assets/game-sprites/dungeon-corners.png");
 const wallSource = join(root, "assets/game-sprites/dungeon-wall-variations.png");
+const blendSource = join(root, "assets/game-sprites/dungeon-material-blends.png");
 const manifest = JSON.parse(readFileSync(join(out, "manifest.json"), "utf8"));
 const scratch = mkdtempSync(join(tmpdir(), "tower-dungeon-")), p = name => join(scratch, `${name}.png`);
 const run = args => new Promise((resolve, reject) => {
@@ -62,6 +63,42 @@ const tones = [gray,
   ["10151c", "1b2430", "293543", "3e4c59", "63717b", "e1bb78", "eee0b7"],
 ];
 try {
+  // Authored stepped silhouettes, with opaque joins and no soft-alpha fade.
+  const blendFrames = [];
+  for (let variant = 0; variant < 4; variant++) {
+    await run([blendSource, "-crop", `274x160+${[30, 337, 644, 951][variant]}+995`, "+repage", "-fuzz", "12%", "-transparent", "#ff00ff",
+      "-channel", "A", "-threshold", "50%", "+channel", "-trim", "+repage", "-filter", "point", "-resize", "24x9!",
+      "-channel", "RGB", "-fill", "#eee0b7", "-colorize", "100", "+channel", "-strip", `PNG32:${p(`fringe-${variant}`)}`]);
+    for (let mask = 0; mask < 16; mask++) {
+      const args = ["-size", "24x24", "canvas:none"];
+      for (const [bit, angle] of [[1, 0], [2, 90], [4, 180], [8, 270]]) if (mask & bit)
+        args.push("(", "-size", "24x24", "canvas:none", p(`fringe-${variant}`), "-geometry", "+0+0", "-compose", "Over", "-composite",
+          "-fill", "#eee0b7", "-draw", "rectangle 0,0 23,2", "-rotate", String(angle), ")", "-geometry", "+0+0", "-compose", "Over", "-composite");
+      const file = p(`blend-${variant}-${mask}`); await run([...args, "-strip", `PNG32:${file}`]); blendFrames.push(file);
+    }
+    const corners = await cornerFrames("soil", 3);
+    for (let corner = 0; corner < 4; corner++) {
+      const file = p(`blend-${variant}-corner-${corner}`);
+      await run([corners[corner], "-channel", "RGB", "-fill", "#eee0b7", "-colorize", "100", "+channel", "-strip", `PNG32:${file}`]); blendFrames.push(file);
+    }
+  }
+  await run(["montage", ...blendFrames, "-tile", "4x20", "-geometry", "24x24+0+0", "-background", "none", "-strip", `PNG32:${join(out, "dungeon-blends.png")}`]);
+  manifest.assets["dungeon-blends"] = { file: "dungeon-blends.png", width: 96, height: 480, tile: true };
+  const infillFrames = [];
+  const darkPalette = join(scratch, "infill.ppm");
+  writeFileSync(darkPalette, "P3\n3 1\n255\n12 16 22 27 36 48 41 37 31\n");
+  for (let row = 0; row < 3; row++) for (let col = 0; col < 4; col++) {
+    const file = p(`infill-${row}-${col}`);
+    if (col === 3) await run(["-size", "24x24", "canvas:#0c1016", "-strip", `PNG32:${file}`]);
+    else await run([blendSource, "-crop", `266x266+${[34, 341, 648][col]}+${[33, 335, 643][row]}`, "+repage", "-alpha", "off",
+      "-filter", "point", "-resize", "24x24!", "-alpha", "on", ...normalizer(darkPalette), `PNG32:${file}`]);
+    infillFrames.push(file);
+  }
+  for (let col = 0; col < 4; col++) {
+    const file = p(`infill-core-${col}`); await run(["-size", "24x24", "canvas:#0c1016", "-strip", `PNG32:${file}`]); infillFrames.push(file);
+  }
+  await run(["montage", ...infillFrames, "-tile", "4x4", "-geometry", "24x24+0+0", "-background", "none", "-strip", `PNG32:${join(out, "dungeon-infill.png")}`]);
+  manifest.assets["dungeon-infill"] = { file: "dungeon-infill.png", width: 96, height: 96, tile: true };
   await extract("soil", "220x64+20+1395", 24, 6, true);
   await extract("shadow", "210x64+280+1395", 24, 3, true);
   await run([p("shadow"), "-fill", "#10151c", "-colorize", "100", ...normalize, `PNG32:${p("shadow")}`]);
@@ -97,7 +134,10 @@ try {
       if (!(mask & 2)) over(p(`${material}-east`), 21, 0);
       if (!(mask & 1)) over(p(`${material}-rim`), 0, 0);
       if (!(mask & 4)) { over(p(`${material}-face-${variant}`), 0, 16); over(p(`${material}-rim`), 0, 15); }
-      const file = p(`${material}-wall-${variant}-${mask}`); await run([...args, "-strip", `PNG32:${file}`]); frames.push(file);
+      const wallMask = p(`wall-mask-${variant}-${mask}`);
+      await run([p(`blend-${variant % 4}-${15 ^ mask}`), ...(!(mask & 4) ? ["-fill", "#eee0b7", "-draw", "rectangle 0,16 23,23"] : []), "-strip", `PNG32:${wallMask}`]);
+      const file = p(`${material}-wall-${variant}-${mask}`);
+      await run([...args, wallMask, "-compose", "DstIn", "-composite", "-background", "#0c1016", "-alpha", "remove", "-alpha", "on", "-strip", `PNG32:${file}`]); frames.push(file);
     }
     frames.push(...await cornerFrames(material, row));
     const base = p(`${material}-base`);
@@ -114,4 +154,4 @@ try {
   }
 } finally { rmSync(scratch, { recursive: true, force: true }); }
 writeFileSync(join(out, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n");
-console.log("Prepared 21 native interior material atlases and one transition/contact atlas (2220 frames).");
+console.log("Prepared 21 native interior material atlases, transitions, material blends and dark infill (2316 frames).");

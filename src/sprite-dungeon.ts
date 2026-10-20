@@ -3,6 +3,7 @@ import { tileRandom } from "./random.ts";
 import { themeAt, type TerrainTile } from "./themes.ts";
 import { kitImage } from "./sprite-kit.ts";
 import { wallAdjacencyMask } from "./area1-tileset.ts";
+import type { DungeonWallDepth } from "./wall-depth.ts";
 
 export const DUNGEON_MATERIALS = ["masonry", "stone", "earth"] as const;
 export type DungeonMaterial = typeof DUNGEON_MATERIALS[number];
@@ -20,6 +21,9 @@ export const dungeonAtlasId = (material: DungeonMaterial, tone: number) => mater
 export const DUNGEON_ATLASES = [...["masonry", "stone"].flatMap(material =>
   Array.from({ length: DUNGEON_TONES }, (_, tone) => dungeonAtlasId(material as DungeonMaterial, tone))), "dungeon-earth"];
 export const DUNGEON_EDGE_ATLAS = "dungeon-edges";
+export const DUNGEON_BLEND_ATLAS = "dungeon-blends";
+export const DUNGEON_INFILL_ATLAS = "dungeon-infill";
+export const DUNGEON_CORE_FRAME = 12;
 
 /** Smooth, coordinate-hashed material patches, independent of generation
  * and its random stream. Both wall and floor at a position share material. */
@@ -52,8 +56,42 @@ function imagesFor(mode: Mode, tone: number) {
   const ids = mode === "tower" ? [dungeonAtlasId("masonry", tone), DUNGEON_EDGE_ATLAS]
     : [dungeonAtlasId("stone", tone), "dungeon-earth", DUNGEON_EDGE_ATLAS];
   // Request the complete group even when the first image is delayed.
+  ids.push(DUNGEON_INFILL_ATLAS, DUNGEON_BLEND_ATLAS);
   const images = ids.map(kitImage);
-  return images.every(Boolean) ? images : null;
+  return images.every(Boolean) ? { surface: images[0]!, earth: images[mode === "delve" ? 1 : 0]!, edges: images.at(-3)!, infill: images.at(-2)!, blends: images.at(-1)! } : null;
+}
+
+/** Earth crosses the material seam in authored stepped clusters. Wall
+ * joins require solid neighbors; floor joins never cross a blocking wall. */
+export function dungeonMaterialJoins(tile: TerrainTile, diagonals: readonly DungeonDiagonal[]) {
+  const { mode, x, y, seed, wall, neighbors: n } = tile;
+  let sides = 0, corners = 0;
+  if (dungeonMaterial(mode, x, y, seed) !== "stone") return { sides, corners };
+  const wallMask = wallAdjacencyMask({ northWall: !!n?.northWall, eastWall: !!n?.eastWall, southWall: !!n?.southWall, westWall: !!n?.westWall });
+  for (const [bit, dx, dy] of [[1, 0, 1], [2, 1, 0], [4, 0, -1], [8, -1, 0]])
+    if (!!(wallMask & bit) === wall && dungeonMaterial(mode, x + dx, y + dy, seed) === "earth") sides |= bit;
+  for (let corner = 0; corner < 4; corner++) {
+    const adjacent = [9, 3, 6, 12][corner], [dx, dy] = DUNGEON_CORNERS[corner];
+    const earth = wall ? diagonals[corner] === "wall" && dungeonMaterial(mode, x + dx, y + dy, seed) === "earth" : diagonals[corner] === "earth";
+    if (earth && !(sides & adjacent) && (wall ? (wallMask & adjacent) === adjacent : !(wallMask & adjacent))) corners |= 1 << corner;
+  }
+  return { sides, corners };
+}
+
+const materialBlends = new Map<string, HTMLCanvasElement>();
+function drawMaterialBlend(c: CanvasRenderingContext2D, image: HTMLImageElement, frame: number, mask: HTMLImageElement, maskFrame: number) {
+  if (typeof document === "undefined") return;
+  const key = `${image.src}:${frame}:${maskFrame}`;
+  let canvas = materialBlends.get(key);
+  if (!canvas) {
+    canvas = document.createElement("canvas"); canvas.width = canvas.height = 24;
+    const ctx = canvas.getContext("2d"); if (!ctx) return;
+    drawDungeonFrame(ctx, image, frame);
+    ctx.globalCompositeOperation = "destination-in"; drawDungeonFrame(ctx, mask, maskFrame);
+    if (materialBlends.size >= 512) materialBlends.clear();
+    materialBlends.set(key, canvas);
+  }
+  c.save(); c.imageSmoothingEnabled = false; c.drawImage(canvas, 0, 0); c.restore();
 }
 
 export function drawDungeonFrame(c: CanvasRenderingContext2D, image: HTMLImageElement, frame: number) {
@@ -65,16 +103,25 @@ export function drawDungeonFrame(c: CanvasRenderingContext2D, image: HTMLImageEl
 /** Four quiet floors, six variants of sixteen wall shapes, and corners.
  * South-facing facades occupy eight pixels; north/side lips are shallow.
  * Everything stays inside the existing tile and collision footprint. */
-export function drawDungeonGround(c: CanvasRenderingContext2D, tile: TerrainTile, diagonals: readonly DungeonDiagonal[] = []) {
+export function drawDungeonGround(c: CanvasRenderingContext2D, tile: TerrainTile, diagonals: readonly DungeonDiagonal[] = [], depth: DungeonWallDepth = 0) {
   const { mode, height, x, y, seed } = tile, tone = themeAt(mode, height, x, y, seed).decor;
   const images = imagesFor(mode, tone);
   if (!images) return false;
   const material = dungeonMaterial(mode, x, y, seed);
-  const image = material === "earth" ? images[1]! : images[0]!;
-  const edges = images.at(-1)!;
+  const image = material === "earth" ? images.earth : images.surface;
+  if (tile.wall && depth) {
+    const frame = depth === 2 ? DUNGEON_CORE_FRAME : DUNGEON_MATERIALS.indexOf(material) * 4 + dungeonWallVariant(x, y, seed) % 4;
+    drawDungeonFrame(c, images.infill, frame); return true;
+  }
+  const edges = images.edges;
   const n = tile.neighbors;
   const mask = wallAdjacencyMask({ northWall: !!n?.northWall, eastWall: !!n?.eastWall, southWall: !!n?.southWall, westWall: !!n?.westWall });
-  drawDungeonFrame(c, image, tile.wall ? DUNGEON_WALL_FRAME + dungeonWallVariant(x, y, seed) * 16 + mask : dungeonFloorFrame(x, y, seed));
+  const frame = tile.wall ? DUNGEON_WALL_FRAME + dungeonWallVariant(x, y, seed) * 16 + mask : dungeonFloorFrame(x, y, seed);
+  drawDungeonFrame(c, image, frame);
+  const joins = dungeonMaterialJoins(tile, diagonals), blendVariant = dungeonWallVariant(x, y, seed) % 4;
+  if (joins.sides) drawMaterialBlend(c, images.earth, frame, images.blends, blendVariant * 20 + joins.sides);
+  for (let corner = 0; corner < 4; corner++) if (joins.corners & (1 << corner))
+    drawMaterialBlend(c, images.earth, frame, images.blends, blendVariant * 20 + 16 + corner);
   if (tile.wall) {
     for (let corner = 0; corner < 4; corner++) {
       const diagonal = diagonals[corner];
@@ -86,17 +133,6 @@ export function drawDungeonGround(c: CanvasRenderingContext2D, tile: TerrainTile
     }
   }
   if (!tile.wall) {
-    if (material === "stone") {
-      const earth = (dx: number, dy: number, wall?: boolean) => !wall && dungeonMaterial(mode, x + dx, y + dy, seed) === "earth";
-      const soilMask = wallAdjacencyMask({ northWall: earth(0, 1, n?.northWall), eastWall: earth(1, 0, n?.eastWall),
-        southWall: earth(0, -1, n?.southWall), westWall: earth(-1, 0, n?.westWall) });
-      if (soilMask) drawDungeonFrame(c, edges, soilMask);
-      for (let corner = 0; corner < 4; corner++) {
-        const adjacent = [9, 3, 6, 12][corner];
-        if (diagonals[corner] === "earth" && !(soilMask & adjacent) && !(mask & adjacent))
-          drawDungeonFrame(c, edges, DUNGEON_SOIL_CORNER_FRAME + corner);
-      }
-    }
     if (mask) drawDungeonFrame(c, edges, DUNGEON_CONTACT_FRAME + mask);
   }
   return true;

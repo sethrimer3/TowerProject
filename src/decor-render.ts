@@ -6,6 +6,7 @@ import { DecorBaker, paintKitFlower, paintKitPlant } from "./decor-bake.ts";
 import { DecorEffects, type EffectFrame, type TileAt } from "./decor-effects.ts";
 import { WaterReflections, type MirroredSprites, type ReflectionScene, type Wave } from "./decor-reflections.ts";
 import { kitImage, spriteRevision } from "./sprite-kit.ts";
+import { dungeonWallDepth } from "./wall-depth.ts";
 import { FLOWER_LIGHTS, FLOWER_SPRITES, GLOWCAP_LIGHT, GLOWCAP_SPRITES } from "./sprite-environment.ts";
 import { drawBlades, drawCrates, DRIP_FALL, dripNow, dripRings, PixelBatch, ring, type DripNow, type Sway } from "./decor-sprites.ts";
 
@@ -96,6 +97,7 @@ export class DecorLayer {
    * units (0..24), for the renderer's cached ground. False while the tile
    * is still waiting to be planned. */
   bakeTile(c: CanvasRenderingContext2D, x: number, y: number, styled = false) {
+    if (styled && this.world?.tile(x, y)?.kind === "wall" && dungeonWallDepth(this.world, x, y) === 2) return true;
     const d = this.plan(x, y);
     if (!d) return false;
     if (d.empty) return true;

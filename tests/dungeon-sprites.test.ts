@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { DUNGEON_ATLASES, DUNGEON_EDGE_ATLAS, DUNGEON_CORNER_FRAME, drawDungeonGround, dungeonAtlasId, dungeonDiagonals, dungeonFloorFrame, dungeonMaterial, dungeonWallVariant } from "../src/sprite-dungeon.ts";
+import { DUNGEON_ATLASES, DUNGEON_EDGE_ATLAS, DUNGEON_BLEND_ATLAS, DUNGEON_INFILL_ATLAS, DUNGEON_CORNER_FRAME, drawDungeonGround, dungeonAtlasId, dungeonDiagonals, dungeonFloorFrame, dungeonMaterial, dungeonMaterialJoins, dungeonWallVariant } from "../src/sprite-dungeon.ts";
+import { dungeonWallDepth } from "../src/wall-depth.ts";
 import { paintTile, type BoardLook } from "../src/tile-painters.ts";
 import { WaterReflections, type ReflectionScene } from "../src/decor-reflections.ts";
 import type { TileDecor } from "../src/decor.ts";
@@ -9,11 +10,25 @@ import type { TileDecor } from "../src/decor.ts";
 test("interior PNGs contain native 24-pixel floors, all sixteen wall joins and shared transition masks", () => {
   const manifest = JSON.parse(readFileSync(new URL("../public/assets/style/manifest.json", import.meta.url), "utf8"));
   assert.equal(DUNGEON_ATLASES.length, 21);
-  for (const id of [...DUNGEON_ATLASES, DUNGEON_EDGE_ATLAS]) {
+  for (const id of [...DUNGEON_ATLASES, DUNGEON_EDGE_ATLAS, DUNGEON_BLEND_ATLAS, DUNGEON_INFILL_ATLAS]) {
     const bytes = readFileSync(new URL(`../public/assets/style/${id}.png`, import.meta.url));
-    assert.deepEqual([bytes.readUInt32BE(16), bytes.readUInt32BE(20)], [96, id === DUNGEON_EDGE_ATLAS ? 216 : 624], id);
+    const height = id === DUNGEON_EDGE_ATLAS ? 216 : id === DUNGEON_BLEND_ATLAS ? 480 : id === DUNGEON_INFILL_ATLAS ? 96 : 624;
+    assert.deepEqual([bytes.readUInt32BE(16), bytes.readUInt32BE(20)], [96, height], id);
     assert.equal(manifest.assets[id].tile, true);
   }
+});
+
+test("wall depth follows real air across materials, including diagonals, while missing cells remain solid", () => {
+  for (const kind of ["floor", "door", "stairs", "enemy"] as const) {
+    const world = { tile: (x: number, y: number) => ({ kind: x === 0 && y === 0 ? kind : "wall" as const }) };
+    assert.equal(dungeonWallDepth(world, 1, 0), 0);
+    assert.equal(dungeonWallDepth(world, 1, 1), 0, "diagonal air exposes an inner corner");
+    assert.equal(dungeonWallDepth(world, 2, 0), 1);
+    assert.equal(dungeonWallDepth(world, 2, 2), 1);
+    assert.equal(dungeonWallDepth(world, 3, 0), 2);
+    assert.equal(dungeonWallDepth(world, 3, 3), 2);
+  }
+  assert.equal(dungeonWallDepth({ tile: () => undefined }, 0, 0), 2, "world bounds do not create a false bright edge");
 });
 
 test("Delve stone and earth form repeatable contiguous patches rather than independent tile noise", () => {
@@ -103,11 +118,12 @@ test("wall variation is seeded, diagonal corners read real openings, and corner 
     assert.ok(at);
     const floor = { mode: "delve" as const, height: 0, seed, ...at, wall: false, empty: true };
     frames.length = 0;
-    drawDungeonGround(c, floor, ["earth", "earth", "earth", "earth"]);
-    assert.deepEqual(frames.slice(1), [32, 33, 34, 35], "diagonal earth joins receive their matching soil PNGs");
-    frames.length = 0;
-    drawDungeonGround(c, { ...floor, neighbors: { northWall: true, eastWall: true, southWall: true, westWall: true } }, ["earth", "earth", "earth", "earth"]);
-    assert.ok(frames.every(frame => frame < 32), "soil corners cannot cross a wall");
+    assert.deepEqual(dungeonMaterialJoins(floor, ["earth", "earth", "earth", "earth"]), { sides: 0, corners: 15 });
+    assert.deepEqual(dungeonMaterialJoins({ ...floor, neighbors: { northWall: true, eastWall: true, southWall: true, westWall: true } }, ["earth", "earth", "earth", "earth"]), { sides: 0, corners: 0 }, "soil corners cannot cross a wall");
+    for (const depth of [1, 2] as const) {
+      frames.length = 0; drawDungeonGround(c, tile, [], depth);
+      assert.deepEqual(frames, [depth === 2 ? 12 : 0], "padding and core use the shared infill PNG");
+    }
   } finally {
     if (original) Object.defineProperty(globalThis, "Image", original); else Reflect.deleteProperty(globalThis, "Image");
   }
