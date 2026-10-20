@@ -23,6 +23,7 @@ Earth and stone interlock at their edges and diagonal joins on both floors and e
 Walls keep a broad textured edge and recede through connected shades of stone or earth into the shared black interior.
 The shading follows room boundaries continuously across tiles and around corners, while south-facing wall faces keep their visible height.
 Occasional chipped joints, rock fractures and embedded roots or earth layers span adjoining wall tiles, chosen to fit the surrounding edges while leaving most surfaces quiet.
+Tower masonry also has repaired mortar joints, shallow spalled flakes and worn chisel marks that fit broad edges, thin strips and sheltered faces.
 These interior tiles remain with environmental decoration off; torchlight follows the selected floor's seams, and movement, doors and map layouts stay the same.
 
 ## The first runs

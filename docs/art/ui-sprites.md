@@ -87,7 +87,9 @@ Our original PNGs retain the angled top-down perspective and native 24-pixel gri
 Earth overlaps stone through binary PNG masks on floors and exposed walls, replacing square material seams without blur, dithering or a rim between connected walls.
 The shared core is the existing palette color `#0c1016`, fixed across materials and biome ramps; do not texture deep cores or cover them with moss.
 The [original contextual detail source](../../assets/game-sprites/dungeon-details.png) adds four 48 × 24 motifs each for masonry, bedrock and earth: worn joints/chips, branching fractures/mineral seams and embedded roots/strata.
-Twenty-one 192 × 48 PNGs preserve each two-tile motif at native density in two palette shades; hard alpha removes the source glow, and every motif retains two clear border pixels.
+The [Tower masonry extension](../../assets/game-sprites/tower-masonry-details.png) adds repaired mortar joints, spalled flakes and worn chisel grooves, selected for broad edges, thin strips and sheltered faces respectively.
+The ten Tower detail atlases are 336 × 48 with seven motifs; the eleven Delve detail atlases remain 192 × 48 with four motifs.
+All motifs retain the same 48 × 24 native footprint and two palette shades; hard alpha removes the source glow, and every motif retains two clear border pixels.
 The [Celeste tileset format reference](https://github.com/EverestAPI/Resources/wiki/Tileset-Format-Reference) documents 3 × 3 neighborhood masks, lists of variants, padding/center layers and optional overlapping tile sprites.
 Our application uses original static marks on the 24-pixel angled grid: choose details by edge context, share one motif across two tiles, leave most wall tiles unmarked and never rotate authored lighting.
 Use small chips on thin strips and longer joints on compatible broad surfaces; reject material boundaries, missing terrain and incompatible corners rather than cutting a feature in half.

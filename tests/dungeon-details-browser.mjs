@@ -42,16 +42,16 @@ try {
   const result = await page.evaluate(async before => {
     const { world, left, look, paint, dungeonWallProfile, dungeonWallBands } = detailReview;
     const { kitImage } = await import("/src/sprite-kit.ts"), { dungeonDetail } = await import("/src/dungeon-details.ts");
-    const cv = document.createElement("canvas"); cv.width = 192; cv.height = 48;
+    const cv = document.createElement("canvas"); cv.width = kitImage("dungeon-details-masonry-0").naturalWidth; cv.height = 48;
     const ctx = cv.getContext("2d"); ctx.drawImage(kitImage("dungeon-details-masonry-0"), 0, 0);
-    const source = ctx.getImageData(0, 0, 192, 48).data, after = paint();
+    const source = ctx.getImageData(0, 0, cv.width, 48).data, after = paint();
     let exact = true, changed = 0;
     for (let half = 0; half < 2; half++) {
       const bands = dungeonWallBands(dungeonWallProfile(world, left + half, 0), left + half, 0, look.seed);
       const d = dungeonDetail(world, left + half, 0, look.seed, () => "masonry");
       for (let y = 0; y < 24; y++) for (let x = 0; x < 24; x++) {
         const at = (y * 48 + half * 24 + x) * 4, band = bands[Math.floor(y / 2) * 12 + Math.floor(x / 2)];
-        const sample = ((band * 24 + y) * 192 + d.variant * 48 + half * 24 + x) * 4;
+        const sample = ((band * 24 + y) * cv.width + d.variant * 48 + half * 24 + x) * 4;
         const overlay = y >= 3 && band < 2 && source[sample + 3];
         for (let channel = 0; channel < 4; channel++) {
           if (after[at + channel] !== (overlay ? source[sample + channel] : before[at + channel])) exact = false;
@@ -73,15 +73,15 @@ try {
   const atlas = await page.evaluate(async () => {
     const { DUNGEON_ATLASES } = await import("/src/sprite-dungeon.ts"), { kitImage } = await import("/src/sprite-kit.ts");
     return DUNGEON_ATLASES.flatMap(id => {
-      const cv = document.createElement("canvas"); cv.width = 192; cv.height = 48;
+      const cv = document.createElement("canvas"); cv.width = kitImage(id.replace("dungeon-", "dungeon-details-")).naturalWidth; cv.height = 48;
       const c = cv.getContext("2d"); c.drawImage(kitImage(id.replace("dungeon-", "dungeon-details-")), 0, 0);
-      const p = c.getImageData(0, 0, 192, 48).data;
-      return Array.from({ length: 4 }, (_, v) => {
+      const p = c.getImageData(0, 0, cv.width, 48).data;
+      return Array.from({ length: cv.width / 48 }, (_, v) => {
         let visible = 0, gutter = 0, sameAlpha = true, crossing = false;
         for (let y = 0; y < 24; y++) for (let x = 0; x < 48; x++) {
-          const at = (y * 192 + v * 48 + x) * 4;
+          const at = (y * cv.width + v * 48 + x) * 4;
           if (p[at + 3]) { visible++; if (x < 2 || x > 45 || y < 2 || y > 21) gutter++; if (x === 23 || x === 24) crossing = true; }
-          if (p[at + 3] !== p[at + 24 * 192 * 4 + 3]) sameAlpha = false;
+          if (p[at + 3] !== p[at + 24 * cv.width * 4 + 3]) sameAlpha = false;
         }
         return { id, visible, gutter, sameAlpha, crossing };
       });
@@ -95,7 +95,7 @@ try {
     const c = cv.getContext("2d"); c.imageSmoothingEnabled = false; c.fillStyle = "#10151c"; c.fillRect(0, 0, 1100, 910);
     ["masonry-0", "stone-0", "earth"].forEach((material, i) => {
       const im = kitImage(`dungeon-details-${material}`), y = i * 140;
-      c.drawImage(im, 10, y + 24); c.drawImage(im, 230, y + 10, 384, 96);
+      c.drawImage(im, 10, y + 24); c.drawImage(im, 380, y + 10, im.naturalWidth * 2, 96);
       c.fillStyle = "#eee0b7"; c.font = "12px sans-serif"; c.fillText(material, 10, y + 100);
     });
     for (const [i, mode] of ["tower", "delve"].entries()) {
