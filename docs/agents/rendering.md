@@ -30,7 +30,7 @@ The active forest draws dynamic back grass, small foliage, crowns, buildings, ro
 Wall foliage remains with decoration off, while optional floor plants and dynamic grass follow that setting.
 Sprites off, board sprites off and other Game themes retain their original forest; UI themes gate the interface independently, and Defend is excluded from this forest extension.
 `sprite-dungeon.ts` supplies dedicated interior PNG materials: fitted Tower masonry and contiguous Delve stone/earth patches, selected with coordinate hashes independent of generation.
-Twenty-one 96 × 720 atlases contain four 24-pixel floor variants, six versions of all sixteen wall-neighbor masks, four native six-pixel corner overlays and sixteen directional shade joins: ten biome ramps for masonry, ten for rough stone and one brown earth set.
+Twenty-one 96 × 720 atlases contain four 24-pixel floors, six versions of all sixteen wall-neighbor masks, four native six-pixel corners, six full tops, six dark tops and four reserved core frames: ten biome ramps for masonry, ten for rough stone and one brown earth set.
 `dungeonWallVariant` chooses six authored top and south-facing facade pairs by coordinate hash, so long connected walls have seeded variety without rotating their lighting or altering geometry.
 Masonry varies broad fitted blocks and worn joints; bedrock uses continuous quiet planes with sparse fractures, while earth varies compact layers and embedded stone.
 A shared 96 × 216 atlas retains the original contact-shadow masks and soil reference pieces.
@@ -41,12 +41,16 @@ Masked material bakes are cached with a 512-entry limit; no gradients, soft alph
 Wall corners draw only where a diagonal opening meets two joined or two exposed sides; straight edges and missing diagonal terrain retain their existing lips.
 Diagonal material patches draw where earth touches stone at a corner without an existing cardinal blend or a change between open floor and blocking wall.
 Walls expose shallow three-pixel north/side lips and eight-pixel south-facing facades, keeping a steep top-down angle inside the existing collision tile; joined sides have no facade.
-Exposed wall texture reaches up to eighteen pixels into its tile over a full shaded material body, with stepped inward contours.
+Exposed wall texture recedes through three hard shade levels, with connected two-pixel contours and a broad material body.
 The shadow body continues beyond the bright rim, so thin walls remain solid and wider walls recede through a fuller intermediate shade before black.
-`wall-depth.ts` checks two Chebyshev rings of actual world tiles: neighboring air exposes the wall, air two tiles away selects directional shaded material, and farther interiors use a flat shared near-black PNG.
-`dungeonWallProfile` supplies the north/east/south/west mask of those second-ring openings; diagonal air combines both bands and missing cells never create a false edge.
+`wall-depth.ts` records actual openings in a 5 × 5 neighborhood, treating neighboring air as exposed wall, second-ring air as transition and farther solids as core.
+`dungeonWallBands` measures native pixel distance to those air rectangles, preserving the position of diagonal openings instead of illuminating two entire edges.
 Every material counts as connected solid, missing cells remain solid, and doors/items/stairs count as air; generation and collision are unchanged.
-Each material atlas appends sixteen shade masks at `DUNGEON_PADDING_FRAME`, assembled from four separately lit directional PNGs and tinted with its biome ramp.
+The contour thresholds lie at 14, 28 and 42 native pixels from air, with a small coordinate-hashed displacement interpolated over 48-pixel world cells to avoid repeating tile-shaped cutouts.
+Binary clipping selects literal PNG texels from full tops at `DUNGEON_CAP_FRAME`, the existing shaded wall body and dark tops at `DUNGEON_SHADE_FRAME`; only geometry varies, never color interpolation or lighting direction.
+Physical coping and south-facing facades draw separately over the shade bands, retaining their original height and upper-left lighting.
+Each complete wall is composed once at native 24 × 24 resolution before nearest-neighbor scaling, so fractional ground-cache transforms cannot antialias the internal clipping boundaries.
+Wall-image bakes have a 512-entry cache keyed by art, seed, coordinates and actual opening geometry.
 Material blending continues through the shaded band as well as exposed wall tops.
 `dungeon-infill.png` retains the common core and earlier sparse reference pieces (96 × 96); the deep core stays flat and is never biome-tinted.
 The styled decor bake skips core walls so moss cannot repaint their flat interiors; Sprites off and other Game themes retain their original decor.
@@ -59,7 +63,7 @@ The water mirror receives the effective board-art key too, refreshing cached wal
 Its corner components come from `assets/game-sprites/dungeon-corners.png`, sharing the existing native grid, upper-left light and restricted material ramps.
 Its six top/facade pairs per material come from `assets/game-sprites/dungeon-wall-variations.png`; floor, coping and corner components retain their existing sources.
 The shared core and stepped blend masks come from `assets/game-sprites/dungeon-material-blends.png`.
-The fuller, connected shade bands come from `assets/game-sprites/dungeon-wall-shading.png`, with fixed upper-left light in each authored direction.
+The older `assets/game-sprites/dungeon-wall-shading.png` remains an art reference; repeated directional cutout stamps are no longer deployed.
 
 Board drawing (`Renderer`, frames, lighting, decor, popups, tile caches, the forest outside, weather), the render goldens, and the Medieval and Neon themes.
 

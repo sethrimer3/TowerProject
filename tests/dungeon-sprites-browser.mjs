@@ -105,7 +105,9 @@ try {
   }
   const materials = await page.evaluate(async () => {
     const { drawDungeonGround, drawDungeonFrame, dungeonMaterialJoins, dungeonMaterial, dungeonFloorFrame, dungeonWallVariant,
-      DUNGEON_ATLASES, DUNGEON_PADDING_FRAME } = await import("/src/sprite-dungeon.ts");
+      DUNGEON_ATLASES, DUNGEON_CAP_FRAME, DUNGEON_SHADE_FRAME } = await import("/src/sprite-dungeon.ts");
+    const { dungeonWallProfile, dungeonWallBands } = await import("/src/wall-depth.ts");
+    const { paintTile } = await import("/src/tile-painters.ts");
     const { kitImage } = await import("/src/sprite-kit.ts");
     const canvas = document.createElement("canvas"); canvas.width = canvas.height = 24;
     const c = canvas.getContext("2d");
@@ -113,7 +115,7 @@ try {
     const core = pixels("dungeon-infill", 12);
     const flat = data => data.every((value, i) => value === [12, 16, 22, 255][i % 4]);
     const shared = ["tower", "delve"].every(mode => Array.from({ length: 10 }, (_, tone) => {
-      c.clearRect(0, 0, 24, 24); drawDungeonGround(c, { mode, height: tone * 10, seed: 1107, x: 8, y: 5, wall: true, empty: false }, [], 2);
+      c.clearRect(0, 0, 24, 24); drawDungeonGround(c, { mode, height: tone * 10, seed: 1107, x: 8, y: 5, wall: true, empty: false }, [], { depth: 2, openings: 0 });
       return flat([...c.getImageData(0, 0, 24, 24).data]);
     }).every(Boolean));
     const blackAt = (data, x, y) => data.slice((y * 24 + x) * 4, (y * 24 + x) * 4 + 3).join(",") === "12,16,22";
@@ -122,16 +124,51 @@ try {
       for (let y = 0; y < 24; y++) for (let x = 0; x < 24; x++) if (!blackAt(data, x, y)) visible++;
       return visible;
     });
-    const padding = DUNGEON_ATLASES.flatMap(id => [1, 2, 4, 8].map((bit, direction) => {
-      const data = pixels(id, DUNGEON_PADDING_FRAME + bit); let dark = 0, entry = 0, far = 0;
-      for (let y = 0; y < 24; y++) for (let x = 0; x < 24; x++) if (blackAt(data, x, y)) dark++;
-      for (let i = 0; i < 24; i++) {
-        const [x, y] = [[i, 0], [23, i], [i, 23], [0, i]][direction];
-        if (!blackAt(data, x, y)) entry++;
-        if (blackAt(data, 23 - x, 23 - y)) far++;
+    const world = { tile: (_x, y) => ({ kind: y < 0 ? "floor" : "wall" }) };
+    const shadeTile = { mode: "tower", height: 0, seed: 1107, x: 2, y: 1, wall: true, empty: false,
+      neighbors: { northWall: true, eastWall: true, southWall: true, westWall: true } };
+    const variant = dungeonWallVariant(shadeTile.x, shadeTile.y, shadeTile.seed);
+    const sources = [DUNGEON_CAP_FRAME + variant, 4 + variant * 16 + 15, DUNGEON_SHADE_FRAME + variant]
+      .map(frame => pixels("dungeon-masonry-0", frame)); sources.push(core);
+    const profile = dungeonWallProfile(world, shadeTile.x, shadeTile.y);
+    const bands = dungeonWallBands(profile, shadeTile.x, shadeTile.y, shadeTile.seed);
+    c.clearRect(0, 0, 24, 24); drawDungeonGround(c, shadeTile, [], profile);
+    const shadePixels = [...c.getImageData(0, 0, 24, 24).data];
+    const literal = shadePixels.every((value, i) => {
+      const pixel = Math.floor(i / 4), band = bands[Math.floor(pixel / 24 / 2) * 12 + Math.floor(pixel % 24 / 2)];
+      return value === sources[band][i];
+    });
+    const nativeWall = document.createElement("canvas"); nativeWall.width = nativeWall.height = 24;
+    nativeWall.getContext("2d").putImageData(new ImageData(new Uint8ClampedArray(shadePixels), 24, 24), 0, 0);
+    const scaledSame = [.73, 1.37, 2.125].every(scale => {
+      const actual = document.createElement("canvas"), expected = document.createElement("canvas");
+      actual.width = actual.height = expected.width = expected.height = 64;
+      const ac = actual.getContext("2d"), ec = expected.getContext("2d");
+      for (const ctx of [ac, ec]) { ctx.translate(.35, .65); ctx.scale(scale, scale); ctx.imageSmoothingEnabled = false; }
+      drawDungeonGround(ac, shadeTile, [], profile); ec.drawImage(nativeWall, 0, 0, 24, 24);
+      const a = ac.getImageData(0, 0, 64, 64).data, e = ec.getImageData(0, 0, 64, 64).data;
+      return a.every((value, i) => value === e[i]);
+    });
+    const connected = ["tower", "delve"].every(mode => {
+      const cv = document.createElement("canvas"); cv.width = 192; cv.height = 72;
+      const ctx = cv.getContext("2d"), look = { mode, height: 0, seed: 1107, outside: false, entranceX: 8,
+        styledSprites: true, spritesOff: false, reduceMotion: true, area1: false, themed: null };
+      for (let y = 0; y < 3; y++) for (let x = -4; x < 4; x++) {
+        ctx.save(); ctx.translate((x + 4) * 24, (2 - y) * 24);
+        paintTile(ctx, world, world.tile(x, y), x, y, 0, 0, look); ctx.restore();
       }
-      return { dark, entry, far };
-    }));
+      const data = ctx.getImageData(0, 0, 192, 72).data;
+      for (let x = 0; x < 192; x++) {
+        let material = false;
+        for (let y = 0; y < 63; y++) {
+          const i = (y * 192 + x) * 4, black = data[i] === 12 && data[i + 1] === 16 && data[i + 2] === 22;
+          if (black && material) return false; // A black cutout after the core ended.
+          if (!black) material = true;
+          if (data[i + 3] !== 255) return false;
+        }
+      }
+      return true;
+    });
     const clear = Array.from({ length: 4 }, (_, variant) => {
       const data = pixels("dungeon-blends", variant * 20 + 15);
       for (let y = 9; y < 15; y++) for (let x = 9; x < 15; x++) if (data[(y * 24 + x) * 4 + 3]) return false;
@@ -152,11 +189,13 @@ try {
       if (blended[i] !== (mask[Math.floor(i / 4) * 4 + 3] ? earth : stone)[i]) same = false;
       if (blended[i] !== stone[i]) changed++;
     }
-    return { black: flat(core), shared, bodies, padding, clear, same, changed };
+    return { black: flat(core), shared, bodies, literal, scaledSame, connected, clear, same, changed };
   });
   assert.ok(materials.black && materials.shared, "deep interiors share a flat near-black PNG across every material and biome");
   assert.ok(materials.bodies.every(visible => visible > 576 * .8), "exposed walls retain a broad shaded body behind the rim");
-  assert.ok(materials.padding.every(({ dark, entry, far }) => dark > 576 * .15 && dark < 576 * .85 && entry >= 12 && far >= 12), "directional shade connects at the opening and recedes to black");
+  assert.ok(materials.literal, "continuous shade bands sample literal native PNG texels without color interpolation or soft alpha");
+  assert.ok(materials.scaledSame, "fractional scales and offsets draw one native wall image without antialiased band seams");
+  assert.ok(materials.connected, "actual joined Tower and Delve walls have no repeated black holes or transparent tile seams");
   assert.ok(materials.clear.every(Boolean), "material blending leaves quiet floor centers");
   assert.ok(materials.same && materials.changed > 10, "actual floor blends use authored binary masks and literal neighboring material texels");
   for (const width of [390, 1100]) for (const mode of ["tower", "delve"]) {
@@ -242,5 +281,5 @@ try {
   assert.equal(fallback.ready, false); assert.equal(fallback.visible, 576, "failed PNGs retain a complete legacy ground tile");
   await failed.close();
   assert.deepEqual(errors, []);
-  console.log("Native PNG floors, material joins, thick wall bodies, directional shade, black cores, relief, late/failed loads, phone/desktop scenes and theme/toggle restoration pass.");
+  console.log("Native PNG floors, material joins, continuous wall contours, seam and cutout regressions, black cores, relief, late/failed loads, phone/desktop scenes and theme/toggle restoration pass.");
 } finally { await browser.close(); await server.close(); }

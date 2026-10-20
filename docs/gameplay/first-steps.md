@@ -20,7 +20,8 @@ Inside the Tower, the Classic sprite kit uses fitted stone floors and joined mas
 In the Delve, rough stone and packed earth form adjoining patches of floors and walls, with stepped soil edges and matching biome colors.
 Walls have six variations of their tops and south-facing faces, with fitted masonry, broad fractured bedrock or packed earth, plus matching diagonal corner pieces.
 Earth and stone interlock at their edges and diagonal joins on both floors and exposed walls.
-Walls keep a broad textured edge and a full shaded body, then a connected band of darker stone or earth recedes into the shared black interior.
+Walls keep a broad textured edge and recede through connected shades of stone or earth into the shared black interior.
+The shading follows room boundaries continuously across tiles and around corners, while south-facing wall faces keep their visible height.
 These interior tiles remain with environmental decoration off; torchlight follows the selected floor's seams, and movement, doors and map layouts stay the same.
 
 ## The first runs
