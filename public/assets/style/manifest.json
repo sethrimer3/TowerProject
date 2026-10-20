@@ -2453,6 +2453,30 @@
       "width": 96,
       "height": 96,
       "tile": true
+    },
+    "dungeon-tower-2-floor": {
+      "file": "dungeon-tower-2-floor.png",
+      "width": 96,
+      "height": 96,
+      "tile": true
+    },
+    "dungeon-tower-2-walls": {
+      "file": "dungeon-tower-2-walls.png",
+      "width": 96,
+      "height": 720,
+      "tile": true
+    },
+    "dungeon-tower-3-floor": {
+      "file": "dungeon-tower-3-floor.png",
+      "width": 96,
+      "height": 96,
+      "tile": true
+    },
+    "dungeon-tower-3-walls": {
+      "file": "dungeon-tower-3-walls.png",
+      "width": 96,
+      "height": 720,
+      "tile": true
     }
   },
   "terrain": {

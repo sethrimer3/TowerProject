@@ -17,7 +17,7 @@ import { drawKit, kitEnemy, kitImage, onSpritesLoaded } from "./sprite-kit.ts";
 import { COMBAT_MARKS } from "./sprite-combat.ts";
 import { drawKitTerrain } from "./sprite-terrain.ts";
 import { themedTileUrl } from "./themed-tilesets.ts";
-import { drawDungeonGround, dungeonDiagonals, dungeonMaterial } from "./sprite-dungeon.ts";
+import { drawDungeonGround, dungeonDiagonals, dungeonMaterial, towerTileset } from "./sprite-dungeon.ts";
 import { dungeonWallProfile } from "./wall-depth.ts";
 import { dungeonDetail } from "./dungeon-details.ts";
 import { drawAnimatedTorch, drawSquareDoor } from "./sprite-options.ts";
@@ -38,6 +38,7 @@ const OUTLINE_THICKNESS = 2;
 /** How the board looks: which art set applies, and the player's settings. */
 export type BoardLook = {
   mode: Mode;
+  tier?: number;
   height: number;
   seed: number;
   outside: boolean;
@@ -89,10 +90,10 @@ function paintGround(c: CanvasRenderingContext2D, world: TileWorld, t: Tile, x: 
     eastWall: wallAt(1, 0),
   };
   const wall = t.kind === "wall";
-  const terrain = { mode: look.mode, height: look.height, seed: look.seed, x, y, wall, empty: t.kind === "floor", neighbors };
+  const terrain = { mode: look.mode, tier: look.tier, height: look.height, seed: look.seed, x, y, wall, empty: t.kind === "floor", neighbors };
   if (look.styledSprites && !look.spritesOff) {
     const profile = wall ? dungeonWallProfile(world, x, y) : undefined;
-    const detail = wall && profile?.depth === 0 ? dungeonDetail(world, x, y, look.seed,
+    const detail = wall && profile?.depth === 0 && !towerTileset(look.mode, look.tier) ? dungeonDetail(world, x, y, look.seed,
       (xx, yy) => dungeonMaterial(look.mode, xx, yy, look.seed)) : undefined;
     if (drawDungeonGround(c, terrain, dungeonDiagonals(world, look.mode, x, y, look.seed), profile, detail)) return true;
   }

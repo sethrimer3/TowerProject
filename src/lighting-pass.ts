@@ -2,7 +2,7 @@ import type { Torch } from "./entities.ts";
 import { LIGHTING_CONFIG, getTorchFlicker, getTorchSway } from "./lighting.ts";
 import { area1FloorSprite } from "./area1-tileset.ts";
 import { bakeTorchRelief, type BakedRelief, type ReliefSprite } from "./floor-relief.ts";
-import { dungeonFloorSprite } from "./sprite-dungeon.ts";
+import { dungeonFloorSprite, towerTileset } from "./sprite-dungeon.ts";
 import { spriteRevision } from "./sprite-kit.ts";
 import { bakeTorchLight, type BakedLight } from "./torch-light.ts";
 import { doorColor, doorId } from "./doors.ts";
@@ -186,12 +186,12 @@ export class LightingPass {
    * each torch's relief is baked once, then blitted with its flicker. */
   drawTorchRelief(f: FrameContext) {
     if (!f.look.area1) return;
-    const style = f.look.styledSprites ? `kit:${spriteRevision()}` : "legacy";
+    const style = f.look.styledSprites ? `kit:${spriteRevision()}${towerTileset(f.look.mode, f.look.tier) ? `|tower:${f.look.tier}` : ""}` : "legacy";
     if (style !== this.reliefStyle) { this.reliefStyle = style; this.reliefBakes = new WeakMap(); }
     const c = f.c;
     const cfg = LIGHTING_CONFIG.relief;
     const floorSprite = (x: number, y: number) => f.world.tile(x, y)?.kind === "wall" ? null
-      : f.look.styledSprites ? dungeonFloorSprite(f.look.mode, f.look.height, x, y, f.look.seed)
+      : f.look.styledSprites ? dungeonFloorSprite(f.look.mode, f.look.height, x, y, f.look.seed, f.look.tier)
       : area1FloorSprite(x, y, f.look.seed) ?? undefined;
     c.save();
     c.imageSmoothingEnabled = false;

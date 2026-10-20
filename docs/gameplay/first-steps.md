@@ -7,7 +7,9 @@ This option starts off, applies immediately and is remembered when you reload.
 While Sprites is checked, **Animations** and **Square doors** appear directly below it; both start off and remember your choices.
 Animations enables matching flickering torch PNG frames, which freeze with Reduce motion on.
 Square doors uses tile-filling rectangular doors with the same key and HP requirements as before.
-Tower sprite floors mix large slabs and smaller bricks with connected joints across neighboring tiles.
+Tower I sprite floors mix large slabs and smaller bricks with connected joints across neighboring tiles.
+Tower II has warm limestone walls and rectangular paving; Tower III has cool basalt walls and octagonal paving with small square insets.
+Each of these two towers keeps its own single floor-and-wall tileset throughout the climb while Sprites is on and the Classic Game theme is selected.
 Turn it off to return to your selected UI theme's usual controls.
 The default Medieval and Classic interface looks use the sprites; other UI themes override them.
 Other Game themes override world sprites independently, and returning to Classic restores them while the option is on.

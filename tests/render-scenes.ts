@@ -291,6 +291,18 @@ LATER_BOARD_SCENES.spriteForestDelve = () => forestSpriteScene("delve");
 LATER_BOARD_SCENES.spriteDungeonMasonry = () => dungeonSpriteScene("tower");
 LATER_BOARD_SCENES.spriteDungeonCave = () => dungeonSpriteScene("delve");
 LATER_BOARD_SCENES.spriteOptions = () => dungeonSpriteScene("tower", { squareDoors: true, spriteAnimations: true, reduceMotion: false });
+LATER_BOARD_SCENES.spriteTowerTwo = () => towerTierSpriteScene(2);
+LATER_BOARD_SCENES.spriteTowerThree = () => towerTierSpriteScene(3);
+
+/** One fixed material identity for each later Tower, on real tier geometry. */
+export function towerTierSpriteScene(tier: 2 | 3): BoardScene {
+  const save = defaults();
+  Object.assign(save.settings, { uiSprites: true, brightness: 75, reduceMotion: true });
+  save.tower.tiersOpen = 3; save.tower.tier = tier;
+  const g = new Game(save); g.newRun({ seed: 1103 });
+  for (let i = 0; i < 3; i++) g.advanceTowerRoom();
+  return { g };
+}
 
 /** Real connected interior geometry, with native wall faces and material patches. */
 export function dungeonSpriteScene(mode: "tower" | "delve", settings: Record<string, unknown> = {}): BoardScene {

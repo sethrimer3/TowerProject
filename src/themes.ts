@@ -114,6 +114,7 @@ function applyBlockVariation(baseColor: string, x: number, y: number, seed: numb
  * what it is. `empty` floors (nothing standing on them) may carry a detail. */
 export type TerrainTile = {
   mode: Mode;
+  tier?: number;
   height: number;
   seed: number;
   x: number;
