@@ -179,6 +179,13 @@ With the dev server running, `PLAYWRIGHT_EXECUTABLE_PATH=/usr/bin/chromium node 
 
 `PLAYWRIGHT_EXECUTABLE_PATH=/usr/bin/chromium node tests/environment-sprites-browser.mjs` checks literal material pixels, exact coverage, delayed loads, native/tiled review art, emitted colors, real dungeon frames and independent theme/toggle behavior.
 
+The [square-door source](../../assets/game-sprites/square-doors.png) supplies six 24 × 24 opaque doors: yellow, blue, red, steel, wood and heart.
+The [torch animation source](../../assets/game-sprites/torch-animation.png) supplies four flame frames packed into a 96 × 24 strip, with the original torch hardware restored identically below row 11.
+Run `node --experimental-transform-types tools/prepare-sprite-options.mjs` to reproduce these palette-matched, binary-alpha PNGs.
+The [Tower floor source](../../assets/game-sprites/tower-floor.png) supplies one connected paving field combining large and small rectangular bricks, exported into ten 96 × 96 biome panels by `node tools/prepare-tower-floors.mjs`.
+The sixteen native frames retain their spatial relationship across tile boundaries, including under doors and pickups; the shared material palette and upper-left lighting stay fixed.
+`tests/sprite-options-browser.mjs` starts its own server to check real Settings visibility, focus, persistence, phone/desktop layout, door coverage, stationary torch hardware, frame animation, reduced motion, live renderer restoration, theme gates and failed-image fallback.
+
 ## Remaining sprite work
 
 Excluding Defend and custom themes, live water ripples/glints, falling drops, wet-foot overlays, moving tall grass and some wall-corner overlays still use procedural pixels.

@@ -62,7 +62,7 @@ export class EntityLighting {
   drawShadows(f: FrameContext, wallMask: () => HTMLCanvasElement | null) {
     // Swap masks immediately on a toggle or image arrival, keeping old
     // revisions out of the caches rather than accumulating one per load.
-    const style = `${f.look.spritesOff}|${!!f.look.styledSprites}|${spriteRevision()}`;
+    const style = `${f.look.spritesOff}|${!!f.look.styledSprites}|${spriteRevision()}${f.look.squareDoors ? "|square" : ""}`;
     if (style !== this.spriteState) {
       this.spriteState = style;
       this.silhouettes.clear();
@@ -144,7 +144,7 @@ export class EntityLighting {
 
   /** Items and enemies in view, then the hero. */
   private casters(f: FrameContext): Caster[] {
-    const { spritesOff, reduceMotion, area1, styledSprites } = f.look;
+    const { spritesOff, reduceMotion, area1, styledSprites, squareDoors } = f.look;
     const casters: Caster[] = [];
     forEachViewTile(f, (x, y) => {
       const t = f.world.tile(x, y);
@@ -152,7 +152,7 @@ export class EntityLighting {
       casters.push({
         x, y,
         key: `${t.kind}|${t.color}|${t.tier}|${t.enemy?.name ?? ""}|${t.enemy?.tier}|${t.enemy?.strength}|${area1}${styledSprites ? `|kit|${t.enemy?.fast}|${t.enemy?.ranged}|${t.enemy?.flying}` : ""}`,
-        draw: (c) => paintContents(c, t, { x, y, time: f.now, spritesOff, reduceMotion, area1, styledSprites }),
+        draw: (c) => paintContents(c, t, { x, y, time: f.now, spritesOff, reduceMotion, area1, styledSprites, squareDoors }),
       });
     });
     casters.push({

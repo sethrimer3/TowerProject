@@ -38,20 +38,21 @@ try {
   await page.waitForFunction(async () => !!(await import("/src/sprite-kit.ts")).kitImage("dungeon-masonry-0"));
   const loaded = await paint(); assert.ok(loaded.ready);
   const native = await page.evaluate(async () => {
-    const { dungeonFloorSprite, dungeonFloorFrame, DUNGEON_ATLASES, DUNGEON_EDGE_ATLAS } = await import("/src/sprite-dungeon.ts");
+    const { dungeonFloorSprite, towerFloorFrame, DUNGEON_ATLASES, DUNGEON_EDGE_ATLAS } = await import("/src/sprite-dungeon.ts");
     const { kitImage } = await import("/src/sprite-kit.ts");
     DUNGEON_ATLASES.forEach(kitImage); kitImage(DUNGEON_EDGE_ATLAS);
     const image = dungeonFloorSprite("tower", 0, 8, 5, 3);
     const pixels = [...image.getContext("2d").getImageData(0, 0, 24, 24).data];
     const cv = document.createElement("canvas"); cv.width = cv.height = 24;
-    const c = cv.getContext("2d"); c.drawImage(kitImage("dungeon-masonry-0"), dungeonFloorFrame(8, 5, 3) * 24, 0, 24, 24, 0, 0, 24, 24);
+    const frame = towerFloorFrame(8, 5, 3);
+    const c = cv.getContext("2d"); c.drawImage(kitImage("dungeon-floor-masonry-0"), frame % 4 * 24, Math.floor(frame / 4) * 24, 24, 24, 0, 0, 24, 24);
     return { pixels, source: [...c.getImageData(0, 0, 24, 24).data] };
   });
   assert.deepEqual(loaded.pixels, native.source, "floor painter uses literal PNG texels");
   assert.deepEqual(native.pixels, native.source, "torch relief reads the selected new floor, not an older texture");
   await page.waitForFunction(async () => {
-    const { DUNGEON_ATLASES, DUNGEON_EDGE_ATLAS } = await import("/src/sprite-dungeon.ts"), { kitImage } = await import("/src/sprite-kit.ts");
-    return [...DUNGEON_ATLASES, DUNGEON_EDGE_ATLAS].every(id => !!kitImage(id));
+    const { DUNGEON_ATLASES, DUNGEON_EDGE_ATLAS, towerFloorAtlasId } = await import("/src/sprite-dungeon.ts"), { kitImage } = await import("/src/sprite-kit.ts");
+    return [...DUNGEON_ATLASES, DUNGEON_EDGE_ATLAS, ...Array.from({ length: 10 }, (_, tone) => towerFloorAtlasId(tone))].map(kitImage).every(Boolean);
   });
   const masks = await page.evaluate(async () => {
     const { kitImage } = await import("/src/sprite-kit.ts");

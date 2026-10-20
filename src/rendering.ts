@@ -383,7 +383,7 @@ export class Renderer {
   private mirroredSprites(f: FrameContext): MirroredSprites {
     const s = f.s, n = f.n;
     return {
-      style: `${f.look.spritesOff}|${!!f.look.styledSprites}|${f.look.styledSprites ? spriteRevision() : 0}`,
+      style: `${f.look.spritesOff}|${!!f.look.styledSprites}|${f.look.styledSprites ? spriteRevision() : 0}${f.look.squareDoors ? "|square" : ""}${f.look.spriteAnimations ? "|animated" : ""}`,
       tile: (ctx, t, x, y, layer) => this.tile(ctx, f, t, x, y, layer),
       torches: f.torches.map((t) => ({
         x: t.x, y: t.y, frame: torchAnimationFrame(t.x, t.y, f.now, f.look.reduceMotion),
@@ -627,6 +627,8 @@ export class Renderer {
       roads: g.run.outside ? roadsOf(g.world) : undefined,
       spritesOff: g.save.settings.spritesOff, reduceMotion: g.save.settings.reduceMotion, area1: !g.save.settings.spritesOff && isArea1(g.mode, g.run.height),
       styledSprites: usesGameSprites(g.save),
+      spriteAnimations: usesGameSprites(g.save) && g.save.settings.spriteAnimations,
+      squareDoors: usesGameSprites(g.save) && g.save.settings.squareDoors,
       themed: g.run.outside ? null : this.themed,
     };
   }
@@ -638,7 +640,7 @@ export class Renderer {
   private drawTorchSprite(c: CanvasRenderingContext2D, f: FrameContext, t: Torch) {
     c.save();
     toTileSpace(c, f, t.x, t.y);
-    paintTorch(c, t, f.now, f.look.reduceMotion, f.look.spritesOff, f.look.styledSprites);
+    paintTorch(c, t, f.now, f.look.reduceMotion, f.look.spritesOff, f.look.styledSprites, f.look.spriteAnimations);
     c.restore();
   }
 

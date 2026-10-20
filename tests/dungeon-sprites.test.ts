@@ -6,6 +6,21 @@ import { dungeonWallBands, dungeonWallDepth, dungeonWallProfile } from "../src/w
 import { paintTile, type BoardLook } from "../src/tile-painters.ts";
 import { WaterReflections, type ReflectionScene } from "../src/decor-reflections.ts";
 import type { TileDecor } from "../src/decor.ts";
+import { towerFloorAtlasId, towerFloorFrame } from "../src/sprite-dungeon.ts";
+
+test("Tower paving crosses positive and negative tile boundaries in screen order without rotating its light", () => {
+  for (let tone = 0; tone < 10; tone++) {
+    const bytes = readFileSync(new URL(`../public/assets/style/${towerFloorAtlasId(tone)}.png`, import.meta.url));
+    assert.deepEqual([bytes.readUInt32BE(16), bytes.readUInt32BE(20)], [96, 96]);
+  }
+  for (const seed of [0, 3, 1103, -7]) for (let y = -8; y < 8; y++) for (let x = -8; x < 8; x++) {
+    const frame = towerFloorFrame(x, y, seed), east = towerFloorFrame(x + 1, y, seed), south = towerFloorFrame(x, y - 1, seed);
+    assert.equal(east % 4, (frame % 4 + 1) % 4);
+    assert.equal(Math.floor(east / 4), Math.floor(frame / 4));
+    assert.equal(Math.floor(south / 4), (Math.floor(frame / 4) + 1) % 4);
+    assert.equal(south % 4, frame % 4);
+  }
+});
 
 test("interior PNGs contain native 24-pixel floors, all sixteen wall joins and shared transition masks", () => {
   const manifest = JSON.parse(readFileSync(new URL("../public/assets/style/manifest.json", import.meta.url), "utf8"));

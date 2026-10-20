@@ -2,6 +2,10 @@
 
 **Optional shared PNG kit.** `sprite-style.ts` enables it only with Sprites on, board sprites allowed and the Classic Game theme worn.
 `BoardLook.styledSprites` passes this choice to tiles, pickups, all named enemies, four-direction heroes, torches, rising rewards and forest buildings.
+`sprite-options.ts` provides six full-tile square door PNGs and a four-frame torch strip, controlled by the saved `squareDoors` and `spriteAnimations` child settings only while the effective Game kit is active.
+Square doors retain live key and HP requirement marks, including mixed locks; missing PNGs fall back to the existing door or torch.
+Torch frames share the original stationary hardware, advance at 130 milliseconds with spatial phase, and freeze when Reduce motion is on.
+The water reflection style key includes both options so warmed snapshots refresh immediately on a toggle.
 The normalized terrain atlas (`sprite-terrain.ts`, generated `sprite-terrain-index.ts`) remains a loading fallback for the dedicated native dungeon materials and the forest kit.
 `spriteRevision()` participates in ground cache keys so asynchronous image arrivals repaint fallbacks.
 `src/sprite-combat.ts` names native projectile, rank/trait, chest-star and shield pieces, exported by `tools/prepare-combat-sprites.mjs` from the combat atlases.
@@ -31,6 +35,10 @@ Wall foliage remains with decoration off, while optional floor plants and dynami
 Sprites off, board sprites off and other Game themes retain their original forest; UI themes gate the interface independently, and Defend is excluded from this forest extension.
 `sprite-dungeon.ts` supplies dedicated interior PNG materials: fitted Tower masonry and contiguous Delve stone/earth patches, selected with coordinate hashes independent of generation.
 Twenty-one 96 × 720 atlases contain four 24-pixel floors, six versions of all sixteen wall-neighbor masks, four native six-pixel corners, six full tops, six dark tops and four reserved core frames: ten biome ramps for masonry, ten for rough stone and one brown earth set.
+Tower floors instead use ten dedicated 96 × 96 `dungeon-floor-masonry-*` PNG panels that mix large slabs and smaller bricks across a connected 4 × 4 tile field.
+`towerFloorFrame` selects neighboring frames by world coordinates and a seeded phase, reversing world y into screen rows and wrapping negative coordinates correctly without rotating the upper-left light.
+The complete panel loads with its material group, and floor relief samples the same selected PNG texels; Delve retains its existing material floor variants.
+`tools/prepare-tower-floors.mjs` exports the generated `assets/game-sprites/tower-floor.png` into four quiet shared-palette colors per biome, preserving the full field instead of independently sampling tile textures.
 `dungeonWallVariant` chooses six authored top and south-facing facade pairs by coordinate hash, so long connected walls have seeded variety without rotating their lighting or altering geometry.
 Masonry varies broad fitted blocks and worn joints; bedrock uses continuous quiet planes with sparse fractures, while earth varies compact layers and embedded stone.
 A shared 96 × 216 atlas retains the original contact-shadow masks and soil reference pieces.

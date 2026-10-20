@@ -13,6 +13,9 @@ The render suite encodes PNGs only for frames that changed (every frame when rec
 
 The UI and render snapshot suites also accept `PLAYWRIGHT_EXECUTABLE_PATH` for an installed Chromium binary.
 `tests/sprite-browser.mjs` uses the dev server to check the real Sprites toggle, save/reload, mobile/desktop layouts, PNG loading and independent UI/Game theme overrides.
+`tests/sprite-options-browser.mjs` starts its own server for the Sprites child controls, focus, save/reload, mobile/desktop layout, full-tile square doors, four torch frames with stationary hardware, Reduce motion, live Renderer toggles, theme gates and failed-image fallback.
+The appended `spriteOptions` render scene captures square doors and animated torches without changing the existing scene seeds.
+The dungeon suite's literal floor/relief checks read the connected Tower paving panel, while the Node suite checks positive/negative coordinate continuity and screen-row orientation across all sixteen frames.
 
 `tests/city-sprites-browser.mjs` starts its own Vite server and checks Defend PNGs at normal and zoomed scales, damage/rebuilding and exact pixel restoration after toggling off.
 

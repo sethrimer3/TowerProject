@@ -2351,6 +2351,108 @@
       "width": 192,
       "height": 48,
       "tile": true
+    },
+    "square-door-yellow": {
+      "file": "square-door-yellow.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "square-door-blue": {
+      "file": "square-door-blue.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "square-door-red": {
+      "file": "square-door-red.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "square-door-steel": {
+      "file": "square-door-steel.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "square-door-wood": {
+      "file": "square-door-wood.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "square-door-heart": {
+      "file": "square-door-heart.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "torch-animation": {
+      "file": "torch-animation.png",
+      "width": 96,
+      "height": 24,
+      "tile": true
+    },
+    "dungeon-floor-masonry-0": {
+      "file": "dungeon-floor-masonry-0.png",
+      "width": 96,
+      "height": 96,
+      "tile": true
+    },
+    "dungeon-floor-masonry-1": {
+      "file": "dungeon-floor-masonry-1.png",
+      "width": 96,
+      "height": 96,
+      "tile": true
+    },
+    "dungeon-floor-masonry-2": {
+      "file": "dungeon-floor-masonry-2.png",
+      "width": 96,
+      "height": 96,
+      "tile": true
+    },
+    "dungeon-floor-masonry-3": {
+      "file": "dungeon-floor-masonry-3.png",
+      "width": 96,
+      "height": 96,
+      "tile": true
+    },
+    "dungeon-floor-masonry-4": {
+      "file": "dungeon-floor-masonry-4.png",
+      "width": 96,
+      "height": 96,
+      "tile": true
+    },
+    "dungeon-floor-masonry-5": {
+      "file": "dungeon-floor-masonry-5.png",
+      "width": 96,
+      "height": 96,
+      "tile": true
+    },
+    "dungeon-floor-masonry-6": {
+      "file": "dungeon-floor-masonry-6.png",
+      "width": 96,
+      "height": 96,
+      "tile": true
+    },
+    "dungeon-floor-masonry-7": {
+      "file": "dungeon-floor-masonry-7.png",
+      "width": 96,
+      "height": 96,
+      "tile": true
+    },
+    "dungeon-floor-masonry-8": {
+      "file": "dungeon-floor-masonry-8.png",
+      "width": 96,
+      "height": 96,
+      "tile": true
+    },
+    "dungeon-floor-masonry-9": {
+      "file": "dungeon-floor-masonry-9.png",
+      "width": 96,
+      "height": 96,
+      "tile": true
     }
   },
   "terrain": {

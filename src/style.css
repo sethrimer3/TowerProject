@@ -1513,6 +1513,12 @@ dialog > small {
   border-bottom: 1px solid #2c3746;
   font-size: 12px;
 }
+.setting.sprite-option {
+  margin-left: 16px;
+  padding-left: 12px;
+  border-left: 2px solid #3e4c59;
+  min-height: 52px;
+}
 /* The Settings page's buttons into the UI and Game theme menus. */
 .theme-buttons {
   display: grid;
