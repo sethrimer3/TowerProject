@@ -10,6 +10,7 @@ const palette = join(root, "assets/ui-sprites/palette.ppm"), source = join(root,
 const cornerSource = join(root, "assets/game-sprites/dungeon-corners.png");
 const wallSource = join(root, "assets/game-sprites/dungeon-wall-variations.png");
 const blendSource = join(root, "assets/game-sprites/dungeon-material-blends.png");
+const shadingSource = join(root, "assets/game-sprites/dungeon-wall-shading.png");
 const manifest = JSON.parse(readFileSync(join(out, "manifest.json"), "utf8"));
 const scratch = mkdtempSync(join(tmpdir(), "tower-dungeon-")), p = name => join(scratch, `${name}.png`);
 const run = args => new Promise((resolve, reject) => {
@@ -123,6 +124,12 @@ try {
       const left = [27, 232, 438, 643, 849, 1054][col];
       await extract(`${material}-cap-${col}`, `173x173+${left}+${[63, 278, 487][row]}`, 24, 24, false, wallSource);
       await extract(`${material}-face-${col}`, `173x80+${left}+${[726, 884, 1042][row]}`, 24, 8, false, wallSource);
+      const capColors = material === "earth" ? ["493a2c", "80603d", "3e4c59"] : ["293543", "3e4c59", "63717b"];
+      const shadeColors = material === "earth" ? ["29251f", "493a2c", "1b2430"] : ["1b2430", "293543", "293543"];
+      const shade = [p(`${material}-cap-${col}`)];
+      capColors.forEach((color, i) => shade.push("-fill", `rgb(1,3,${i + 1})`, "-opaque", `#${color}`));
+      shadeColors.forEach((color, i) => shade.push("-fill", `#${color}`, "-opaque", `rgb(1,3,${i + 1})`));
+      await run([...shade, "-strip", `PNG32:${p(`${material}-shade-${col}`)}`]);
     }
     await extract(`${material}-rim`, `220x48+786+${[770, 986, 1200][row]}`, 24, 3, true);
     await run([p(`${material}-rim`), "-rotate", "270", "-strip", `PNG32:${p(`${material}-west`)}`]);
@@ -135,13 +142,32 @@ try {
       if (!(mask & 1)) over(p(`${material}-rim`), 0, 0);
       if (!(mask & 4)) { over(p(`${material}-face-${variant}`), 0, 16); over(p(`${material}-rim`), 0, 15); }
       const wallMask = p(`wall-mask-${variant}-${mask}`);
-      await run([p(`blend-${variant % 4}-${15 ^ mask}`), ...(!(mask & 4) ? ["-fill", "#eee0b7", "-draw", "rectangle 0,16 23,23"] : []), "-strip", `PNG32:${wallMask}`]);
+      const maskArgs = ["-size", "24x24", "canvas:none"];
+      for (const [bit, angle] of [[1, 0], [2, 90], [4, 180], [8, 270]]) if (!(mask & bit))
+        maskArgs.push("(", "-size", "24x24", "canvas:none", "(", p(`fringe-${variant % 4}`), "-filter", "point", "-resize", "24x18!", ")",
+          "-geometry", "+0+0", "-compose", "Over", "-composite", "-fill", "#eee0b7", "-draw", "rectangle 0,0 23,7", "-rotate", String(angle), ")",
+          "-geometry", "+0+0", "-compose", "Over", "-composite");
+      await run([...maskArgs, ...(!(mask & 4) ? ["-fill", "#eee0b7", "-draw", "rectangle 0,16 23,23"] : []), "-strip", `PNG32:${wallMask}`]);
       const file = p(`${material}-wall-${variant}-${mask}`);
-      await run([...args, wallMask, "-compose", "DstIn", "-composite", "-background", "#0c1016", "-alpha", "remove", "-alpha", "on", "-strip", `PNG32:${file}`]); frames.push(file);
+      await run([p(`${material}-shade-${variant}`), "(", ...args, wallMask, "-geometry", "+0+0", "-compose", "DstIn", "-composite", ")",
+        "-geometry", "+0+0", "-compose", "Over", "-composite", "-strip", `PNG32:${file}`]); frames.push(file);
     }
     frames.push(...await cornerFrames(material, row));
+    const shadePalette = join(scratch, `${material}-padding.ppm`);
+    const shadeColors = material === "earth" ? ["0c1016", "29251f", "493a2c"] : ["0c1016", "1b2430", "293543"];
+    writeFileSync(shadePalette, `P3\n3 1\n255\n${shadeColors.flatMap(color => [0, 2, 4].map(i => parseInt(color.slice(i, i + 2), 16))).join(" ")}\n`);
+    // Clean isolated sampling speckles at native resolution, then restore the fixed palette.
+    for (let direction = 0; direction < 4; direction++)
+      await run([shadingSource, "-crop", `316x312+${[32, 388, 744, 1100][direction]}+${[28, 378, 726][row]}`, "+repage", "-alpha", "off", "-filter", "point", "-resize", "24x24!",
+        "-statistic", "Median", "3x3", "-alpha", "on", ...normalizer(shadePalette), "-transparent", "#0c1016", "-strip", `PNG32:${p(`${material}-padding-${direction}`)}`]);
+    for (let mask = 0; mask < 16; mask++) {
+      const args = ["-size", "24x24", "canvas:#0c1016"];
+      for (let direction = 0; direction < 4; direction++) if (mask & (1 << direction))
+        args.push(p(`${material}-padding-${direction}`), "-geometry", "+0+0", "-compose", "Over", "-composite");
+      const file = p(`${material}-padding-mask-${mask}`); await run([...args, "-strip", `PNG32:${file}`]); frames.push(file);
+    }
     const base = p(`${material}-base`);
-    await run(["montage", ...frames, "-tile", "4x26", "-geometry", "24x24+0+0", "-background", "none", "-strip", `PNG32:${base}`]);
+    await run(["montage", ...frames, "-tile", "4x30", "-geometry", "24x24+0+0", "-background", "none", "-strip", `PNG32:${base}`]);
     for (let tone = 0; tone < (material === "earth" ? 1 : DUNGEON_TONES); tone++) {
       const id = dungeonAtlasId(material, tone), args = [base];
       if (material !== "earth") {
@@ -149,9 +175,9 @@ try {
         tones[tone].forEach((color, i) => args.push("-fill", `#${color}`, "-opaque", `rgb(1,2,${i + 1})`));
       }
       await run([...args, "-strip", `PNG32:${join(out, `${id}.png`)}`]);
-      manifest.assets[id] = { file: `${id}.png`, width: 96, height: 624, tile: true };
+      manifest.assets[id] = { file: `${id}.png`, width: 96, height: 720, tile: true };
     }
   }
 } finally { rmSync(scratch, { recursive: true, force: true }); }
 writeFileSync(join(out, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n");
-console.log("Prepared 21 native interior material atlases, transitions, material blends and dark infill (2316 frames).");
+console.log("Prepared 21 native interior material atlases, directional shadow bands, material blends and dark infill (2652 frames).");

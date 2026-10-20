@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { DUNGEON_ATLASES, DUNGEON_EDGE_ATLAS, DUNGEON_BLEND_ATLAS, DUNGEON_INFILL_ATLAS, DUNGEON_CORNER_FRAME, drawDungeonGround, dungeonAtlasId, dungeonDiagonals, dungeonFloorFrame, dungeonMaterial, dungeonMaterialJoins, dungeonWallVariant } from "../src/sprite-dungeon.ts";
-import { dungeonWallDepth } from "../src/wall-depth.ts";
+import { dungeonWallDepth, dungeonWallProfile } from "../src/wall-depth.ts";
 import { paintTile, type BoardLook } from "../src/tile-painters.ts";
 import { WaterReflections, type ReflectionScene } from "../src/decor-reflections.ts";
 import type { TileDecor } from "../src/decor.ts";
@@ -12,7 +12,7 @@ test("interior PNGs contain native 24-pixel floors, all sixteen wall joins and s
   assert.equal(DUNGEON_ATLASES.length, 21);
   for (const id of [...DUNGEON_ATLASES, DUNGEON_EDGE_ATLAS, DUNGEON_BLEND_ATLAS, DUNGEON_INFILL_ATLAS]) {
     const bytes = readFileSync(new URL(`../public/assets/style/${id}.png`, import.meta.url));
-    const height = id === DUNGEON_EDGE_ATLAS ? 216 : id === DUNGEON_BLEND_ATLAS ? 480 : id === DUNGEON_INFILL_ATLAS ? 96 : 624;
+    const height = id === DUNGEON_EDGE_ATLAS ? 216 : id === DUNGEON_BLEND_ATLAS ? 480 : id === DUNGEON_INFILL_ATLAS ? 96 : 720;
     assert.deepEqual([bytes.readUInt32BE(16), bytes.readUInt32BE(20)], [96, height], id);
     assert.equal(manifest.assets[id].tile, true);
   }
@@ -29,6 +29,12 @@ test("wall depth follows real air across materials, including diagonals, while m
     assert.equal(dungeonWallDepth(world, 3, 3), 2);
   }
   assert.equal(dungeonWallDepth({ tile: () => undefined }, 0, 0), 2, "world bounds do not create a false bright edge");
+  const world = { tile: (x: number, y: number) => ({ kind: x === 0 && y === 0 ? "floor" as const : "wall" as const }) };
+  assert.deepEqual(dungeonWallProfile(world, 0, 2), { depth: 1, paddingMask: 4 }, "shade attaches toward the opening to the south");
+  assert.deepEqual(dungeonWallProfile(world, 2, 0), { depth: 1, paddingMask: 8 });
+  assert.deepEqual(dungeonWallProfile(world, 2, 2), { depth: 1, paddingMask: 12 }, "diagonal openings join both shadow bands");
+  assert.deepEqual(dungeonWallProfile(world, -2, -2), { depth: 1, paddingMask: 3 });
+  assert.deepEqual(dungeonWallProfile(world, 0, 1), { depth: 0, paddingMask: 0 });
 });
 
 test("Delve stone and earth form repeatable contiguous patches rather than independent tile noise", () => {
@@ -48,7 +54,7 @@ test("Delve stone and earth form repeatable contiguous patches rather than indep
 
 test("all wall connections, material floors and live tile contents use the correct native atlas frame", () => {
   const original = Object.getOwnPropertyDescriptor(globalThis, "Image");
-  class ReadyImage { src = ""; complete = true; naturalWidth = 96; naturalHeight = 624; }
+  class ReadyImage { src = ""; complete = true; naturalWidth = 96; naturalHeight = 720; }
   Object.defineProperty(globalThis, "Image", { configurable: true, value: ReadyImage });
   const draws: (string | number)[][] = [];
   const c = new Proxy({}, { set: () => true, get: (_, name) => name === "drawImage"
@@ -87,7 +93,7 @@ test("wall variation is seeded, diagonal corners read real openings, and corner 
   assert.deepEqual(variants(3), variants(3), "wall art is stable on redraw and reload");
   assert.notDeepEqual(variants(3), variants(4), "different runs vary their wall art");
   const original = Object.getOwnPropertyDescriptor(globalThis, "Image");
-  class ReadyImage { src = ""; complete = true; naturalWidth = 96; naturalHeight = 624; }
+  class ReadyImage { src = ""; complete = true; naturalWidth = 96; naturalHeight = 720; }
   Object.defineProperty(globalThis, "Image", { configurable: true, value: ReadyImage });
   const frames: number[] = [];
   const c = new Proxy({}, { set: () => true, get: (_, name) => name === "drawImage"
@@ -121,8 +127,8 @@ test("wall variation is seeded, diagonal corners read real openings, and corner 
     assert.deepEqual(dungeonMaterialJoins(floor, ["earth", "earth", "earth", "earth"]), { sides: 0, corners: 15 });
     assert.deepEqual(dungeonMaterialJoins({ ...floor, neighbors: { northWall: true, eastWall: true, southWall: true, westWall: true } }, ["earth", "earth", "earth", "earth"]), { sides: 0, corners: 0 }, "soil corners cannot cross a wall");
     for (const depth of [1, 2] as const) {
-      frames.length = 0; drawDungeonGround(c, tile, [], depth);
-      assert.deepEqual(frames, [depth === 2 ? 12 : 0], "padding and core use the shared infill PNG");
+      frames.length = 0; drawDungeonGround(c, tile, [], depth, 4);
+      assert.deepEqual(frames, [depth === 2 ? 12 : 108], "directional material shade precedes the shared black core");
     }
   } finally {
     if (original) Object.defineProperty(globalThis, "Image", original); else Reflect.deleteProperty(globalThis, "Image");
