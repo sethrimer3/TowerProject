@@ -55,10 +55,11 @@ Material blending continues through the shaded band as well as exposed wall tops
 `dungeon-details.ts` adapts Celeste-style neighborhood rules and optional overlap sprites into sparse, original 48 × 24 wall motifs shared across two collision tiles.
 `dungeonDetail` chooses one candidate row per seeded 3 × 3 block, keeps a clear column between motifs, and rejects missing cells, material seams, incompatible north/south edges and pairs without nearby openings.
 Thin strips select small chips before general rules; sheltered side runs select inset joints, while broad exposed edges choose three fracture/joint variants without rotating the lighting.
-Twenty-one `dungeon-details-*` PNGs (192 × 48) contain four shared motifs in bright/body shades, using the same masonry, stone and earth biome ramps as the base materials.
+The ten masonry `dungeon-details-*` PNGs are 336 × 48 with seven motifs; the ten stone and one earth atlases remain 192 × 48 with four motifs, each in bright/body shades matching the base biome ramps.
+Tower-only repaired mortar joints join broad-edge variants, spalled flakes alternate with chips on thin strips, and chisel grooves alternate with inset joints on sheltered faces, preserving the existing seeded spacing.
 Details compose inside native wall bakes after each surface pass, clipped to the first two shade bands and covered by the original coping/facades and corner pieces; deep shade and flat black cores stay quiet.
 Optional detail images load independently: a missing image preserves the complete existing native wall, and a late image changes the bake key and sprite revision so warmed caches repaint.
-`tools/prepare-dungeon-details.mjs` exports the original `assets/game-sprites/dungeon-details.png`; both dungeon exporters use `tools/dungeon-palette.mjs` for identical biome colors.
+`tools/prepare-dungeon-details.mjs` exports the original `assets/game-sprites/dungeon-details.png` and Tower extension `assets/game-sprites/tower-masonry-details.png`; both dungeon exporters use `tools/dungeon-palette.mjs` for identical biome colors.
 `dungeon-infill.png` retains the common core and earlier sparse reference pieces (96 × 96); the deep core stays flat and is never biome-tinted.
 The styled decor bake skips core walls so moss cannot repaint their flat interiors; Sprites off and other Game themes retain their original decor.
 `paintGround` returns after drawing these native tiles, so old procedural quoins cannot add off-palette corners over the new walls.
