@@ -17,8 +17,9 @@ import { drawKit, kitEnemy, kitImage, onSpritesLoaded } from "./sprite-kit.ts";
 import { COMBAT_MARKS } from "./sprite-combat.ts";
 import { drawKitTerrain } from "./sprite-terrain.ts";
 import { themedTileUrl } from "./themed-tilesets.ts";
-import { drawDungeonGround, dungeonDiagonals } from "./sprite-dungeon.ts";
+import { drawDungeonGround, dungeonDiagonals, dungeonMaterial } from "./sprite-dungeon.ts";
 import { dungeonWallProfile } from "./wall-depth.ts";
+import { dungeonDetail } from "./dungeon-details.ts";
 
 // Everything here paints in 24x24 tile space: the caller translates and
 // scales the context to the tile first.
@@ -88,7 +89,9 @@ function paintGround(c: CanvasRenderingContext2D, world: TileWorld, t: Tile, x: 
   const terrain = { mode: look.mode, height: look.height, seed: look.seed, x, y, wall, empty: t.kind === "floor", neighbors };
   if (look.styledSprites && !look.spritesOff) {
     const profile = wall ? dungeonWallProfile(world, x, y) : undefined;
-    if (drawDungeonGround(c, terrain, dungeonDiagonals(world, look.mode, x, y, look.seed), profile)) return true;
+    const detail = wall && profile?.depth === 0 ? dungeonDetail(world, x, y, look.seed,
+      (xx, yy) => dungeonMaterial(look.mode, xx, yy, look.seed)) : undefined;
+    if (drawDungeonGround(c, terrain, dungeonDiagonals(world, look.mode, x, y, look.seed), profile, detail)) return true;
   }
   // Every biome has a PNG floor/wall set. Images load asynchronously; until
   // ready (or if an asset fails), the procedural renderer remains a complete

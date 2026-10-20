@@ -67,7 +67,7 @@ Tower interiors use native fitted masonry floors and connected walls; Delve uses
 The [dungeon material source](../../assets/game-sprites/dungeon-materials.png) supplies four floor variations, wall-top variations, south-facing facade strips and coping for each material, plus stepped soil/contact strips.
 Twenty-one 96 × 720 deployed PNG atlases hold four floors, six variations of sixteen wall-neighbor frames, four corners, six full tops, six dark tops and four reserved core frames each.
 One shared 96 × 216 PNG retains sixteen soil borders, sixteen floor-contact masks and four diagonal soil corners.
-Two additional atlases add eighty material masks and sixteen infill/core frames (2,652 native frames total).
+Two shared atlases add eighty material masks and sixteen infill/core frames, for 2,652 base and transition frames.
 The [wall variation source](../../assets/game-sprites/dungeon-wall-variations.png) supplies six distinct top/facade pairs per material: broad fitted masonry, continuous bedrock with sparse fractures and layered earth with embedded stones.
 Keep bedrock surfaces continuous and quiet rather than outlining every stone as separate cobbles; top and south-facing facade variations share a seed choice and fixed lighting.
 Exposed wall tops use restricted muted ramps (two slate tones for bedrock, three for masonry/earth), while the south-facing facades keep deeper shading for clear height.
@@ -86,6 +86,12 @@ The [Celeste tileset analysis](https://aran.ink/posts/celeste-tilesets) informed
 Our original PNGs retain the angled top-down perspective and native 24-pixel grid; wall depth follows actual open tiles across all materials.
 Earth overlaps stone through binary PNG masks on floors and exposed walls, replacing square material seams without blur, dithering or a rim between connected walls.
 The shared core is the existing palette color `#0c1016`, fixed across materials and biome ramps; do not texture deep cores or cover them with moss.
+The [original contextual detail source](../../assets/game-sprites/dungeon-details.png) adds four 48 × 24 motifs each for masonry, bedrock and earth: worn joints/chips, branching fractures/mineral seams and embedded roots/strata.
+Twenty-one 192 × 48 PNGs preserve each two-tile motif at native density in two palette shades; hard alpha removes the source glow, and every motif retains two clear border pixels.
+The [Celeste tileset format reference](https://github.com/EverestAPI/Resources/wiki/Tileset-Format-Reference) documents 3 × 3 neighborhood masks, lists of variants, padding/center layers and optional overlapping tile sprites.
+Our application uses original static marks on the 24-pixel angled grid: choose details by edge context, share one motif across two tiles, leave most wall tiles unmarked and never rotate authored lighting.
+Use small chips on thin strips and longer joints on compatible broad surfaces; reject material boundaries, missing terrain and incompatible corners rather than cutting a feature in half.
+Clip marks to exposed and body shades before coping/facades, and leave the deepest shaded band and core untextured.
 The older palette-normalized terrain atlas remains a complete loading fallback; Sprites off and other Game themes keep their original artwork.
 Equipment's existing Unique silhouettes and the named enemy roster are preserved during normalization.
 Small dressing (plants, cobwebs, pebbles and broken containers) uses 12-pixel PNGs drawn 1:1 inside the same 24-pixel tile grid.
@@ -139,6 +145,7 @@ Run `node --experimental-transform-types tools/prepare-board-marks.mjs` for Targ
 Run `node --experimental-transform-types tools/prepare-environment-sprites.mjs` for moss, water, vine leaves, flowers and glowing cap variants.
 Run `node --experimental-transform-types tools/prepare-forest-sprites.mjs` for the twenty forest materials/objects and two enormous entrance bases; measured crops, binary alpha and palette normalization reproduce the deployed PNGs.
 Run `node --experimental-transform-types tools/prepare-dungeon-sprites.mjs` for the interior material atlases, all six connected-wall variants, full top/shade textures, ragged material masks, dark core, and the cardinal/diagonal corner and contact pieces.
+Run `node --experimental-transform-types tools/prepare-dungeon-details.mjs` for the sparse paired wall motifs in matching biome ramps; the two dungeon exporters share `tools/dungeon-palette.mjs`.
 Regenerate the original font with `python tools/prepare-pixel-font.py` using FontTools with WOFF2 support (`fonttools[woff]`); no font-building dependency is needed at runtime.
 The full game exporter preserves dungeon, forest, environment, combat, badge, Shrine, Equipment UI and UI-detail assets; rerun their own exporter when a source atlas changes.
 That exporter also packs the terrain atlas and produces `src/sprite-terrain-index.ts`.

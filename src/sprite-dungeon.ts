@@ -4,6 +4,7 @@ import { themeAt, type TerrainTile } from "./themes.ts";
 import { kitImage } from "./sprite-kit.ts";
 import { wallAdjacencyMask } from "./area1-tileset.ts";
 import { dungeonWallBands, type DungeonWallProfile } from "./wall-depth.ts";
+import { dungeonDetailId, type DungeonDetail } from "./dungeon-details.ts";
 
 export const DUNGEON_MATERIALS = ["masonry", "stone", "earth"] as const;
 export type DungeonMaterial = typeof DUNGEON_MATERIALS[number];
@@ -105,16 +106,19 @@ export function drawDungeonFrame(c: CanvasRenderingContext2D, image: HTMLImageEl
 const wallImages = new Map<string, HTMLCanvasElement>();
 /** Compose at native resolution before scaling: clipping directly into a
  * fractional-size ground cache can leave hairlines between pixel clusters. */
-export function drawDungeonGround(c: CanvasRenderingContext2D, tile: TerrainTile, diagonals: readonly DungeonDiagonal[] = [], profile?: DungeonWallProfile): boolean {
+export function drawDungeonGround(c: CanvasRenderingContext2D, tile: TerrainTile, diagonals: readonly DungeonDiagonal[] = [], profile?: DungeonWallProfile, detail?: DungeonDetail): boolean {
   if (!tile.wall || !profile || profile.depth === 2 || typeof document === "undefined") return paintDungeonGround(c, tile, diagonals, profile);
+  const tone = themeAt(tile.mode, tile.height, tile.x, tile.y, tile.seed).decor;
+  const detailImage = detail ? kitImage(dungeonDetailId(dungeonMaterial(tile.mode, tile.x, tile.y, tile.seed), tone)) : null;
   const n = tile.neighbors;
-  const key = [tile.mode, themeAt(tile.mode, tile.height, tile.x, tile.y, tile.seed).decor, tile.seed, tile.x, tile.y,
-    n?.northWall, n?.eastWall, n?.southWall, n?.westWall, diagonals.join(","), profile.openings].join(":");
+  const key = [tile.mode, tone, tile.seed, tile.x, tile.y,
+    n?.northWall, n?.eastWall, n?.southWall, n?.westWall, diagonals.join(","), profile.openings,
+    detailImage ? `${detail!.variant},${detail!.half}` : ""].join(":");
   let canvas = wallImages.get(key);
   if (!canvas) {
     canvas = document.createElement("canvas"); canvas.width = canvas.height = 24;
     const ctx = canvas.getContext("2d");
-    if (!ctx || !paintDungeonGround(ctx, tile, diagonals, profile)) return false;
+    if (!ctx || !paintDungeonGround(ctx, tile, diagonals, profile, detailImage ? detail : undefined, detailImage)) return false;
     if (wallImages.size >= 512) wallImages.clear();
     wallImages.set(key, canvas);
   }
@@ -125,7 +129,8 @@ export function drawDungeonGround(c: CanvasRenderingContext2D, tile: TerrainTile
 /** Four quiet floors, six variants of sixteen wall shapes, and corners.
  * South-facing facades occupy eight pixels; north/side lips are shallow.
  * Everything stays inside the existing tile and collision footprint. */
-function paintDungeonGround(c: CanvasRenderingContext2D, tile: TerrainTile, diagonals: readonly DungeonDiagonal[], profile?: DungeonWallProfile) {
+function paintDungeonGround(c: CanvasRenderingContext2D, tile: TerrainTile, diagonals: readonly DungeonDiagonal[], profile?: DungeonWallProfile,
+  detail?: DungeonDetail, detailImage?: HTMLImageElement | null) {
   const { mode, height, x, y, seed } = tile, tone = themeAt(mode, height, x, y, seed).decor;
   const images = imagesFor(mode, tone);
   if (!images) return false;
@@ -158,6 +163,8 @@ function paintDungeonGround(c: CanvasRenderingContext2D, tile: TerrainTile, diag
       if (visible) {
         c.clip();
         surface(band === 0 ? DUNGEON_CAP_FRAME + variant : band === 1 ? DUNGEON_WALL_FRAME + variant * 16 + 15 : DUNGEON_SHADE_FRAME + variant);
+        if (band < 2 && detail && detailImage)
+          c.drawImage(detailImage, detail.variant * 48 + detail.half * 24, band * 24, 24, 24, 0, 0, 24, 24);
       }
       c.restore();
     }
