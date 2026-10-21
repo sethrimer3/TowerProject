@@ -13,12 +13,12 @@ import { CARDS, IN_PLACE, cardBonusText, cardText, isSiphon, type CardId } from 
 import { cardLevelHtml, cardLevelTitle } from "./card-level-marks.ts";
 import { badgeDef, badgesOn, badgeValue, type RunBadge } from "../badges.ts";
 import { badgeGlyph, badgeStyle } from "./badge-token.ts";
-import { trainingPoints } from "../loadout.ts";
 import { heroClass } from "../goals.ts";
 import { shrinesOpen } from "../shrines.ts";
 import type { BoardOverlay } from "./board-overlay.ts";
 import { CountUp } from "./count-up.ts";
 import { PlayClock, RateTally } from "./purse-rate.ts";
+import { heldAmount } from "./currencies-dialog.ts";
 import { caveLabel } from "../tournament/leagues.ts";
 import { shortCountdown } from "../tournament/schedule.ts";
 import { GOLD_BOOST_FACTOR, GOLD_BOOST_MS } from "../gold-boost.ts";
@@ -154,16 +154,6 @@ function renderPurse(game: Game) {
   }
 }
 
-/** The currencies bar's Silver: the run's inside one, or in the forest
- * what the next run starts with, shown once that is any. */
-function renderSilverHeld(game: Game) {
-  const outside = !!game.run.outside, silver = outside ? game.startingSilver : game.silver;
-  const box = el("silver-held").parentElement!;
-  box.hidden = outside && silver <= 0;
-  box.title = outside ? "Silver each run starts with" : "Silver, spent only inside this run";
-  text("silver-held", currencyAmount(whole(silver)));
-}
-
 /** Shows `value` in the currencies bar's `id`, unless it is held. */
 const barAmount = (id: string, value: string) => text(id, heldAmounts.get(id) ?? value);
 
@@ -198,19 +188,12 @@ export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay)
   renderTabs(game);
 }
 
-/** The currencies bar's balances, each shown once it means something. */
+/** The currencies bar's Gold, Gems and Ascension Shards, in full to 9,999,
+ * then shortened; the rest are in the dialog its chevron opens. */
 function renderCurrencyBar(game: Game) {
-  barAmount("gems-held", devAmount(game, game.save.gems));
-  barAmount("shards-held", devAmount(game, game.save.ascensionShards));
-  barAmount("medals-held", devAmount(game, game.save.medals));
-  el("medals-held").parentElement!.hidden = game.save.medals <= 0 && !game.save.settings.devMode;
-  barAmount("gold-held", devAmount(game, game.save.gold));
-  renderSilverHeld(game);
-  text("courage", devAmount(game, game.save.delve.courage));
-  text("inspiration", devAmount(game, game.save.tower.inspiration));
-  barAmount("training", currencyAmount(trainingPoints(game.save).left));
-  // Courage means nothing until the Delve, which pays it, is open.
-  (document.querySelector(".courage-currency") as HTMLElement).hidden = !game.save.upgrades.delve && !game.save.settings.devMode;
+  barAmount("gold-held", heldAmount(game, game.save.gold));
+  barAmount("gems-held", heldAmount(game, game.save.gems));
+  barAmount("shards-held", heldAmount(game, game.save.ascensionShards));
 }
 
 /** The run's buttons beside the board: its menu, the online ones, the Shop, Research and the ad. */

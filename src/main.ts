@@ -38,6 +38,7 @@ import { CardLevelUps } from "./ui/card-level-up.ts";
 import { boardHeadingStale, flashRed, renderAdButton, renderEventsButtons, renderMailButton, renderMissionsButton, renderShopDot, renderTournamentButton, renderBoardHeading, renderHud, renderVitals, purseFrame, togglePurseRates } from "./ui/hud.ts";
 import { ResearchPage } from "./ui/research-page.ts";
 import { confirmAction, RunEndDialog } from "./ui/dialogs.ts";
+import { showCurrencies } from "./ui/currencies-dialog.ts";
 import { RunNotesDialog } from "./ui/run-notes-dialog.ts";
 import { closeRunMenu, toggleRunMenu } from "./ui/run-menu.ts";
 import { Cinematic } from "./ui/cinematic.ts";
@@ -400,6 +401,7 @@ el("gold-ad").onclick = () => {
 };
 el("gold-bonus").onclick = () => toggleGoldBonusBox(game);
 el("base-enemy").onclick = () => toggleEnemyOddsBox(game);
+el("currencies-open").onclick = () => showCurrencies(modal, game);
 // The floor number (its tower and label with it) opens the run's notes, once Note Taking is researched.
 document.querySelector(".height")!.addEventListener("click", (e) => {
   if ((e.target as Element).closest("#height, #height-label, #height-tier")) runNotes.show();

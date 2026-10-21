@@ -139,23 +139,36 @@ h1 {
 h1 span {
   color: var(--gold);
 }
+/* The pages' currencies bar: one short row of Gold, Gems and Ascension
+   Shards, then the chevron that opens every currency held. */
 .currencies {
   display: flex;
-  gap: 16px;
+  align-items: center;
+  gap: 14px;
   justify-content: center;
-  margin: 0 0 16px;
+  margin: 0 0 6px;
+  padding: 2px 6px;
 }
 .currency {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   color: var(--gold);
-  text-align: center;
-  font-size: 19px;
+  font-size: 15px;
+  line-height: 1;
+  white-space: nowrap;
 }
-.currency small {
-  display: block;
-  font-size: 7px;
-  letter-spacing: 2px;
-  margin-top: 5px;
+.currencies-open {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 24px;
+  min-height: 0;
+  padding: 0;
+  border-radius: 6px;
+  color: var(--gold);
 }
+.currencies-open svg { width: 16px; height: 16px; }
 .stats {
   display: grid;
   grid-template-columns: 96px minmax(150px, 1fr) 90px 60px;
@@ -2008,12 +2021,8 @@ dialog p {
   .currency {
     font-size: 14px;
   }
-  .currency small {
-    font-size: 6px;
-    letter-spacing: 1px;
-  }
   .currencies {
-    gap: 6px;
+    gap: 10px;
   }
 }
 /* Keep two inventory controls abreast on the smallest phones. */
@@ -5041,6 +5050,18 @@ html .stats .portrait-top .shrine-next:not(#_) {
 .stats-table th, .stats-table td { padding: 6px 4px; border-bottom: 1px solid #2c3746; }
 .stats-table th { font-weight: 500; color: #b7c0cc; }
 .stats-table td { text-align: right; color: #e9d4ac; font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* The currencies bar's dialog: every currency held, its table scrolling
+   (a swipe on a phone) under the heading and the X. */
+#modal[open]:has(> .currencies-dialog) { display: flex; flex-direction: column; overflow: hidden; }
+.currencies-dialog { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
+.currencies-dialog .dialog-x { align-self: flex-end; width: 32px; height: 32px; min-height: 0; margin: -18px -18px 0 0; padding: 0; border-radius: 50%; font-size: 15px; line-height: 1; }
+.currencies-dialog h2 { margin-top: 0; }
+.currencies-scroll { min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; touch-action: pan-y; }
+/* It wears the Stats table's look (.stats-table), each theme's included. */
+.currencies-table { margin-top: 0; font-size: 13px; }
+.currencies-table th, .currencies-table td { padding: 7px 4px; }
+.currencies-icon { display: inline-grid; place-items: center; width: 22px; height: 22px; margin-right: 8px; vertical-align: middle; }
+.currencies-icon > * { max-width: 22px; max-height: 22px; width: 22px; height: 22px; }
 #stats-open { margin-bottom: 8px; }
 /* A copy button beside a dialog's X: two sheets, turning green once copied. */
 .copy-button { float: right; display: grid; place-items: center; width: 32px; height: 32px; min-height: 0; margin: -18px 8px 0 0; padding: 0; border-radius: 50%; line-height: 1; }
