@@ -25,6 +25,7 @@ The Gold-bonus and enemy-odds layers reuse the dialog PNG, and heal/loss preview
 `applyUiTheme` mirrors effective art in `ui-sprites` and `game-sprites` classes without changing the saved preference.
 The active UI kit uses the original local Tower Pixel face (`sprite-font.ts`, `assets/fonts/TowerPixel/`); text remains live, and Defend and badge glyphs keep their original typography.
 PNG button edges reserve real border space: six pixels on ordinary controls and three on compact controls, with matching `border-image-width`; picture buttons keep their own component frames.
+Deck card faces fill their controls without the generic button frame or an occupied hand-slot frame; empty and purchasable slots retain their inset frames, and lesson dimming, level marks and badge targeting remain separate.
 The shared HUD puts full-width HP, combat stats and keys above a compact portrait beside the limited-use inventory (`.run-inventory`), with XP and the unlocked Shrine bar retained inside the portrait.
 Phone action columns reserve enough width for whole play/pause labels, inventory controls wrap, ad controls stack, menu cells keep a 48-pixel minimum, and phone Training values sit above purchase controls.
 `fitCombatStats` refits both combat values and HP after a font load, resize or theme change; its cache includes available width, effective classes and the font revision.

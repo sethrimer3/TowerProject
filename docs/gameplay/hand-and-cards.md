@@ -60,6 +60,7 @@ Each run keeps the hand as it was ordered when the run went inside, however the 
 ## The Deck page
 
 The Inspiration tree's first skill, **Combat Stance** (1 Inspiration), adds a **Deck** tab after Tower and Delve.
+With Sprites on, occupied cards use one full-size card frame, while empty slots keep their own frames.
 The Deck page shows the hand's slots along the top: four, five with **Larger Hand** (1 Inspiration, beside the Archives), and one more for each slot bought with Gems after that (50, 100, 200, 300, 400, 500, 600, 750, 1,000, 1,200, 1,400, 1,600, 1,800, 2,500, 3,500, 4,500, 5,500, 6,500, 7,500, 8,500 and 10,000 Gems, up to 26), the next for sale standing after them; dragging a card to another slot (or moving a focused card with the arrow keys) shifts each card in between over one, and the new order is saved at once.
 Below the hand sits the deck, locked until **Buildout** (1 Inspiration, after Combat Stance): then the deck's cards are laid out on a grid, those in the hand greyed out with a check that returns them to the deck, and pressing any other card adds it to the hand's first empty slot.
 Dragging one onto a hand slot puts it there instead: with room in the hand, the cards from that slot on slide one slot later; with the hand full, the card in that slot goes back to the deck (never STAIRS).

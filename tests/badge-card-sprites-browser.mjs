@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { mkdirSync } from "node:fs";
 import { createServer } from "vite";
 import { chromium } from "@playwright/test";
+import { fixClock } from "./fixed-clock.mjs";
 const server = await createServer({ server: { host: "127.0.0.1", port: 5186 }, logLevel: "error" });
 await server.listen();
 const browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH
@@ -11,6 +12,7 @@ const browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIG
 mkdirSync("test-results/badge-card-sprites", { recursive: true });
 try {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await fixClock(page);
   const errors = [];
   page.on("pageerror", e => errors.push(e.message));
   page.on("response", r => { if (r.url().includes("/assets/style/") && r.status() >= 400) errors.push(`${r.status()} ${r.url()}`); });
@@ -42,6 +44,19 @@ try {
   await page.reload();
   await page.locator('[data-tab="deck"]').click();
   const ready = selector => page.waitForFunction(selector => [...document.querySelectorAll(`${selector} .sprite-icon`)].every(e => e.classList.contains("sprite-ready")), selector);
+  const singleCardFrame = async () => {
+    const problems = await page.locator(".deck-card, .deck-entry-art, .deck-add").evaluateAll(cards => cards.flatMap(card => {
+      const art = card.querySelector(".sprite-card"), image = art.querySelector(".sprite-replacement"), style = getComputedStyle(card);
+      const outer = card.getBoundingClientRect(), inner = image.getBoundingClientRect();
+      const issues = [];
+      if (style.borderImageSource !== "none" || parseFloat(style.borderLeftWidth) || parseFloat(style.paddingLeft)) issues.push("extra button frame/inset");
+      if (["left", "right", "top", "bottom"].some(edge => Math.abs(outer[edge] - inner[edge]) > 0.5)) issues.push("card image does not fill its control");
+      if (card.classList.contains("deck-card") && getComputedStyle(card.parentElement).borderImageSource !== "none") issues.push("occupied slot has a second frame");
+      return issues.map(issue => `${card.getAttribute("aria-label")}: ${issue}`);
+    }));
+    assert.deepEqual(problems, []);
+    assert.ok(await page.locator(".deck-slot.empty, .deck-slot.for-sale").evaluateAll(slots => slots.length > 0 && slots.every(e => getComputedStyle(e).borderImageSource.includes("slot.png"))), "empty and purchasable slots retain their frames");
+  };
   await ready("#deck");
   assert.equal(await page.locator(".badge-grid .badge-token").count(), 22);
   assert.equal(await page.locator(".badge-grid .badge-level b").first().textContent(), "2");
@@ -51,11 +66,18 @@ try {
   assert.equal(await page.locator('[data-draw="1"]').isEnabled(), true);
   assert.ok(await page.locator(".badge-mark .sprite-replacement").first().isVisible());
   assert.ok(await page.locator(".sprite-card-label").first().isVisible());
-  for (const width of [390, 1024]) {
+  for (const width of [320, 390, 1024]) {
     await page.setViewportSize({ width, height: 844 });
+    await singleCardFrame();
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     await page.screenshot({ path: `test-results/badge-card-sprites/deck-${width}.png`, fullPage: true, animations: "disabled" });
   }
+  // The full-size card remains the keyboard control for ordering the hand.
+  await page.locator('.deck-card[data-slot="0"]').focus();
+  await page.keyboard.press("ArrowRight");
+  assert.ok((await page.locator('.deck-card[data-slot="1"] .sprite-replacement').getAttribute("src")).endsWith("card-stairs.png"));
+  await page.keyboard.press("ArrowLeft");
+  assert.ok((await page.locator('.deck-card[data-slot="0"] .sprite-replacement').getAttribute("src")).endsWith("card-stairs.png"));
   await page.locator('[data-badge="blueAtLeast"]').click();
   await ready("#modal");
   assert.ok(await page.locator("#modal .badge-token.big .sprite-replacement").first().isVisible());
@@ -93,6 +115,22 @@ try {
   await page.reload();
   await page.locator('[data-tab="deck"]').click();
   await ready("#deck");
+  // Match the reported card-points lesson: disabled cards still have one
+  // full-size face, and the pointed card still opens its upgrade tree.
+  const normalSave = await page.evaluate(() => localStorage.getItem("towerdelve.v1"));
+  await page.evaluate(raw => {
+    const s = JSON.parse(raw); s.tutorials.cardPoints = false; s.cardXp.key = 200;
+    sessionStorage.setItem("__badgeSpriteFixture", JSON.stringify(s));
+  }, normalSave);
+  await page.reload(); await page.locator('[data-tab="deck"]').click(); await ready("#deck");
+  assert.ok(await page.locator(".deck-card:disabled").count() > 0, "lesson cards remain disabled");
+  await singleCardFrame();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({ path: "test-results/badge-card-sprites/deck-lesson-390.png", fullPage: true, animations: "disabled" });
+  await page.locator('.deck-card:not(:disabled)').click();
+  assert.ok(await page.locator(".card-tree").isVisible(), "lesson card opens its tree");
+  await page.evaluate(raw => sessionStorage.setItem("__badgeSpriteFixture", raw), normalSave);
+  await page.reload(); await page.locator('[data-tab="deck"]').click(); await ready("#deck");
   await page.locator('.badge-pick[data-badge="hp"] .badge-glyph').evaluate(e => {
     e.classList.remove("sprite-ready"); e.querySelector("img").removeAttribute("src");
   });
