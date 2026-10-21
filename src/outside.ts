@@ -205,14 +205,17 @@ function paintPebbles(c: CanvasRenderingContext2D) {
 // the path leads into.
 // `bonus` (the tier's Gold multiplier, "×3.1", and the Gold coin once loaded)
 // stands in a line under the numeral, which rises to make room for it.
+// The PNG tower's arch stands taller than the drawn gate's, so over it both
+// sit up by the board's top edge instead, clear of the arch.
 export function drawEntrance(c: CanvasRenderingContext2D, mode: Mode, center: number, numeral = "", bonus?: { text: string; coin: CanvasImageSource | null }, styled = false) {
   const x = center * 24 + 12, base = (OUTSIDE_SIZE - 1 - ENTRANCE_Y) * 24;
   c.save();
-  if (!(styled && drawForestLandmark(c, mode === "tower", x, base + 24))) {
+  const landmark = styled && drawForestLandmark(c, mode === "tower", x, base + 24);
+  if (!landmark) {
     if (mode === "tower") drawTowerGate(c, x, base);
     else drawCaveMouth(c, x, base);
   }
-  const y = base - (mode === "tower" ? 66 : 76);
+  const y = landmark && mode === "tower" ? (bonus ? 46 : 22) : base - (mode === "tower" ? 66 : 76);
   if (numeral) {
     drawTierNumeral(c, numeral, x, bonus ? y - 24 : y, styled);
     if (bonus) drawGoldBonus(c, bonus.text, bonus.coin, x, y, styled);
