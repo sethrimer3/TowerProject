@@ -58,7 +58,7 @@ export function buildShell(app: HTMLElement) {
 }
 
 // The left rail holds the currencies and the ad's Gems. The identity card
-// belongs to the stat cluster, alongside HP/combat and above both item rows.
+// sits beside the limited-use inventory, below the full-width vitals.
 function arrangeHud() {
   const oldPortrait = document.querySelector<HTMLElement>(".portrait")!;
   const identity = oldPortrait.querySelector<HTMLElement>(".portrait-top")!;
@@ -68,11 +68,10 @@ function arrangeHud() {
   playerStats.className = "player-stats";
   hudActions.classList.add("hud-controls");
   oldPortrait.replaceWith(hudActions, playerStats);
-  playerStats.append(identity, vitals);
-  vitals.insertAdjacentHTML(
-    "beforeend",
-    `<div class="inventory-divider" aria-hidden="true"></div><div class="run-consumables" aria-label="Run consumables">${FOCUS_STAT}${CHARGE_BUTTONS}</div>`,
-  );
+  const inventory = document.createElement("div");
+  inventory.className = "run-inventory";
+  inventory.innerHTML = `<div class="run-consumables" aria-label="Run consumables">${FOCUS_STAT}${CHARGE_BUTTONS}</div>`;
+  playerStats.append(vitals, identity, inventory);
   const boardFrame = document.querySelector<HTMLElement>("#board-frame")!;
   boardFrame.append(
     document.querySelector<HTMLElement>("#status-row")!,
