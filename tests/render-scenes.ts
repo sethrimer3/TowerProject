@@ -293,6 +293,12 @@ LATER_BOARD_SCENES.spriteDungeonCave = () => dungeonSpriteScene("delve");
 LATER_BOARD_SCENES.spriteOptions = () => dungeonSpriteScene("tower", { squareDoors: true, spriteAnimations: true, reduceMotion: false });
 LATER_BOARD_SCENES.spriteTowerTwo = () => towerTierSpriteScene(2);
 LATER_BOARD_SCENES.spriteTowerThree = () => towerTierSpriteScene(3);
+LATER_BOARD_SCENES.spriteAmbient = () => {
+  const { g } = dungeonSpriteScene("tower", { spriteAnimations: true, reduceMotion: false });
+  plantAll(g);
+  g.fights.struckDown = [1400];
+  return { g };
+};
 
 /** One fixed material identity for each later Tower, on real tier geometry. */
 export function towerTierSpriteScene(tier: 2 | 3): BoardScene {

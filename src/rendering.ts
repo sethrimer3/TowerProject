@@ -38,6 +38,7 @@ import { darknessOf, forEachViewTile, tileTransform, toTileSpace, type FrameCont
 import { gameLook } from "./theme-collection.ts";
 import { usesGameSprites } from "./sprite-style.ts";
 import { spriteRevision } from "./sprite-kit.ts";
+import { HeroIdleAnimation, pickupAnimationFrame } from "./sprite-animations.ts";
 import { FAST_GLIDE_SECONDS, FollowCamera, GLIDE_SECONDS, pointsAhead, type CameraView } from "./camera.ts";
 
 export { ATMOSPHERE_CONFIG, type AtmosphereConfig } from "./lighting-pass.ts";
@@ -78,6 +79,7 @@ export class Renderer {
   private worldIds = new WeakMap<object, number>();
   private nextWorldId = 1;
   private light = new DungeonLight();
+  private heroIdle = new HeroIdleAnimation();
   private routePath = new RoutePath();
   private predictions = new DamagePredictions();
   private bossFlash = new BossFlash();
@@ -232,7 +234,7 @@ export class Renderer {
       route: () => this.drawRoute(f),
       // Only while the hero has just reached a new floor.
       halo: f.now - this.arrived < ARRIVAL_GLOW_MS ? (ctx) => this.drawArrivalGlow(ctx, f.now) : undefined,
-      hero: (ctx) => paintHero(ctx, f.look.spritesOff, f.look.styledSprites, f.heroFacing),
+      hero: (ctx) => paintHero(ctx, f.look.spritesOff, f.look.styledSprites, f.heroFacing, f.heroIdleFrame),
       foreground: () => {
         const bounds = decor && this.decor.foregroundBounds(decor);
         return bounds ? { bounds, draw: (ctx) => this.decor.drawForeground(ctx, decor!) } : null;
@@ -264,9 +266,14 @@ export class Renderer {
     const c = this.ctx, s = this.size, outside = !!g.run.outside, settings = g.save.settings;
     c.fillStyle = "#0b1017";
     c.fillRect(0, 0, box.width, box.width);
+    const look = this.look(), p = g.run.player;
+    const idle = look.styledSprites && look.spriteAnimations && !look.reduceMotion && !g.route.length && !g.fights.encounter && p.hp > 0
+      && Math.abs(this.playerX - p.x) < .01 && Math.abs(this.playerY - p.y) < .01;
+    const idleKey = `${g.run.seed}:${g.run.height}:${g.run.tier}:${outside}:${p.x},${p.y}:${g.facing.dx},${g.facing.dy}`;
+    const heroIdleFrame = this.heroIdle.frame(now, !!idle, idleKey);
     const f: FrameContext = {
       c, now, dt, dpr, width: box.width, n, s, left: this.left, bottom: this.bottom, playerX: this.playerX + lunge.hero.dx, playerY: this.playerY + lunge.hero.dy, heroFacing: g.facing,
-      world: this.inFlight.board(g.world), look: this.look(), darkness: darknessOf(g), torches: [], walls: [], glows: [],
+      world: this.inFlight.board(g.world), look, heroIdleFrame, darkness: darknessOf(g), torches: [], walls: [], glows: [],
     };
     f.torches = outside ? [] : this.visibleTorches();
     f.walls = outside ? [] : this.visibleWallTiles();
@@ -384,9 +391,11 @@ export class Renderer {
   /** The tiles, torches and hero, for the water to mirror. */
   private mirroredSprites(f: FrameContext): MirroredSprites {
     const s = f.s, n = f.n;
+    const animated = !!f.look.spriteAnimations && !f.look.reduceMotion;
     return {
       style: `${f.look.spritesOff}|${!!f.look.styledSprites}|${f.look.styledSprites ? spriteRevision() : 0}${f.look.squareDoors ? "|square" : ""}${f.look.spriteAnimations ? "|animated" : ""}${f.look.styledSprites && towerTileset(f.look.mode, f.look.tier) ? `|tower:${f.look.tier}` : ""}`,
       tile: (ctx, t, x, y, layer) => this.tile(ctx, f, t, x, y, layer),
+      contentFrame: animated ? (t, x, y) => pickupAnimationFrame(t, x, y, f.now, f.look.seed) : undefined,
       torches: f.torches.map((t) => ({
         x: t.x, y: t.y, frame: torchAnimationFrame(t.x, t.y, f.now, f.look.reduceMotion),
         // The torch draws in screen space: map its tile back to 0..24.
@@ -395,7 +404,8 @@ export class Renderer {
           this.drawTorchSprite(c, f, t);
         },
       })),
-      hero: { x: this.playerX, y: this.playerY, paint: (c) => paintHero(c, f.look.spritesOff, f.look.styledSprites, f.heroFacing) },
+      hero: { x: this.playerX, y: this.playerY, frame: animated ? `${f.heroFacing.dx},${f.heroFacing.dy}:${f.heroIdleFrame}` : undefined,
+        paint: (c) => paintHero(c, f.look.spritesOff, f.look.styledSprites, f.heroFacing, f.heroIdleFrame) },
     };
   }
   /** Doors, stairs, items, and enemies, drawn onto `ctx`. */
@@ -439,7 +449,7 @@ export class Renderer {
     if (this.decorOn && !grassBehindFoliage) this.drawForestGrass(f, "back");
     c.save();
     c.setTransform(m);
-    paintHero(c, f.look.spritesOff, f.look.styledSprites, f.heroFacing);
+    paintHero(c, f.look.spritesOff, f.look.styledSprites, f.heroFacing, f.heroIdleFrame);
     c.restore();
     if (this.decorOn) this.drawForestGrass(f, "front");
   }

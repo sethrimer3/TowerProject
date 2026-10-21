@@ -1,5 +1,7 @@
 import { tileTransform, type FrameContext } from "./render-frame.ts";
 import { DEFEAT_MS } from "./combat.ts";
+import { deathSkullFrame, drawSpriteFrame } from "./sprite-animations.ts";
+import { kitImage } from "./sprite-kit.ts";
 
 export { DEFEAT_MS };
 
@@ -8,13 +10,18 @@ const BONE = "#f2e8d5";
 const OUTLINE = "#1a0303";
 const SOCKET = "#5a0000";
 
-/** The hero struck down: a skull and crossbones in a pulsing red glow over
- * its head, `age` ms after the strike, popping in and fading away over
- * `DEFEAT_MS`; with reduced motion, it neither bobs nor pulses. */
+/** The hero struck down, `age` ms after the strike: native kit frames or
+ * a static PNG, with the existing fade over `DEFEAT_MS`. The original
+ * fallback keeps its red glow, pop and bob unless motion is reduced. */
 export function drawStruckDown(f: FrameContext, age: number) {
   if (age < 0 || age >= DEFEAT_MS) return;
   const c = f.c, still = f.look.reduceMotion;
   const appear = Math.min(1, age / 200), alpha = appear * Math.min(1, (DEFEAT_MS - age) / 400);
+  if (f.look.styledSprites && !f.look.spritesOff && kitImage("ambient-death-skull")) {
+    c.save(); c.setTransform(tileTransform(f, f.playerX, f.playerY)); c.globalAlpha = alpha;
+    drawSpriteFrame(c, "ambient-death-skull", deathSkullFrame(age, !!f.look.spriteAnimations && !still), 0, -22);
+    c.restore(); return;
+  }
   const pulse = still ? 1 : 0.85 + 0.15 * Math.sin(age / 110), bob = still ? 0 : 1.5 * Math.sin(age / 280);
   c.save();
   c.setTransform(tileTransform(f, f.playerX, f.playerY));

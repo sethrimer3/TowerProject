@@ -5,7 +5,9 @@
 Open Settings from the HUD menu and turn **Sprites** on to use matching pixel-art controls, icons, cards, heroes, enemies, pickups, terrain, buildings and small dungeon decorations and Defend city details throughout Tower, Delve and Defend.
 This option starts off, applies immediately and is remembered when you reload.
 While Sprites is checked, **Animations** and **Square doors** appear directly below it; both start off and remember your choices.
-Animations enables matching flickering torch PNG frames, which freeze with Reduce motion on.
+Animations enables matching torch frames, subtle potion bubbles, occasional key shines and a small idle motion after the hero stops.
+The skull and crossbones shown when the hero falls also uses matching PNG art, with a short animation while Animations is on.
+Reduce motion keeps these frames still; movement and combat stop the hero's idle motion.
 Square doors uses tile-filling rectangular doors with the same key and HP requirements as before.
 Tower I sprite floors mix large slabs and smaller bricks with connected joints across neighboring tiles.
 Tower II has warm limestone walls and rectangular paving; Tower III has cool basalt walls and octagonal paving with small square insets.

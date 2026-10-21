@@ -2477,6 +2477,48 @@
       "width": 96,
       "height": 720,
       "tile": true
+    },
+    "ambient-potion-bubbles": {
+      "file": "ambient-potion-bubbles.png",
+      "width": 120,
+      "height": 24,
+      "tile": true
+    },
+    "ambient-key-shine": {
+      "file": "ambient-key-shine.png",
+      "width": 120,
+      "height": 24,
+      "tile": true
+    },
+    "ambient-hero-down": {
+      "file": "ambient-hero-down.png",
+      "width": 96,
+      "height": 24,
+      "tile": true
+    },
+    "ambient-hero-up": {
+      "file": "ambient-hero-up.png",
+      "width": 96,
+      "height": 24,
+      "tile": true
+    },
+    "ambient-hero-left": {
+      "file": "ambient-hero-left.png",
+      "width": 96,
+      "height": 24,
+      "tile": true
+    },
+    "ambient-hero-right": {
+      "file": "ambient-hero-right.png",
+      "width": 96,
+      "height": 24,
+      "tile": true
+    },
+    "ambient-death-skull": {
+      "file": "ambient-death-skull.png",
+      "width": 144,
+      "height": 24,
+      "tile": true
     }
   },
   "terrain": {

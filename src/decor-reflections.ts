@@ -19,11 +19,13 @@ export type MirroredSprites = {
   /** Paints tile `t` at (x, y): its ground or wall (layer 0), or what
    * stands on it (1). */
   tile(ctx: CanvasRenderingContext2D, t: Tile, x: number, y: number, layer: 0 | 1): void;
+  /** Optional native pickup frame; a resting effect is zero. */
+  contentFrame?: (tile: Tile, x: number, y: number) => number;
   /** Torches near the view, with their flame's animation frame (torches on
    * the same frame look alike). */
   torches: { x: number; y: number; frame: number; paint: Paint }[];
   /** The hero at its drawn (possibly fractional) tile. */
-  hero: { x: number; y: number; paint: Paint };
+  hero: { x: number; y: number; frame?: string | number; paint: Paint };
 };
 /** Sets a context to world pixels mirrored about gy = base (a reflected
  * thing's foot), so drawing it normally paints its reflection. */
@@ -201,7 +203,7 @@ export class WaterReflections {
       if (sprite) ctx.drawImage(sprite, t.x * TILE_PX, -t.y * TILE_PX);
     }
     if (near(Math.round(hero.x), Math.round(hero.y))) {
-      const sprite = this.snapshot("hero", scene.now, hero.paint);
+      const sprite = this.snapshot(hero.frame ? `hero:${hero.frame}` : "hero", scene.now, hero.paint);
       flip(-hero.y * TILE_PX + 23);
       if (sprite) ctx.drawImage(sprite, hero.x * TILE_PX, -hero.y * TILE_PX);
     }
@@ -329,6 +331,7 @@ function movingKey(sprites?: MirroredSprites) {
   if (!sprites) return "";
   const { hero, torches } = sprites;
   let key = `${Math.round(hero.x * TILE_PX)},${Math.round(hero.y * TILE_PX)}`;
+  if (hero.frame) key += `|hero:${hero.frame}`;
   for (const t of torches) key += `|${t.frame}`;
   return key;
 }
@@ -336,7 +339,8 @@ function movingKey(sprites?: MirroredSprites) {
 /** What stands on a tile, as far as its mirror image goes. */
 function standingKey(scene: ReflectionScene, x: number, y: number) {
   const t = scene.tileAt(x, y);
-  return `${t.kind}${t.color ?? ""}${t.tier ?? ""}${scene.isBroken(x, y) ? "b" : ""}`;
+  const frame = scene.sprites?.contentFrame?.(t, x, y);
+  return `${t.kind}${t.color ?? ""}${t.tier ?? ""}${scene.isBroken(x, y) ? "b" : ""}${frame ? `:frame${frame}` : ""}`;
 }
 
 /** Sets `ctx` to world pixels mirrored about gy = base. */
