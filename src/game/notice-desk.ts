@@ -1,8 +1,7 @@
 import { levelForXp, type UpgradeId } from "../config.ts";
 import type { NoticeTree } from "../save-shape.ts";
 import { deckCards, type CardId } from "../cards.ts";
-import { cardLevelTotal } from "../card-levels.ts";
-import { hasPointsToSpend } from "../card-trees.ts";
+import { hasPointsToSpend, totalCardLevels } from "../card-trees.ts";
 import { equipmentWaiting } from "../equipment/inventory.ts";
 import { goalsWaiting } from "../goals.ts";
 import { trainingWaiting } from "../loadout.ts";
@@ -106,7 +105,7 @@ export class NoticeDesk {
         return changed;
       }
       case "deck": {
-        const cards = deckCards(save.upgrades, save.goals), levels = cardLevelTotal(save.cardXp);
+        const cards = deckCards(save.upgrades, save.goals), levels = totalCardLevels(save);
         const changed = cards.length !== seen.cards.length || cards.some((id) => !seen.cards.includes(id)) || levels !== seen.cardLevels;
         seen.cards = cards;
         seen.cardLevels = levels;
@@ -145,7 +144,7 @@ export class NoticeDesk {
 
   /** A card has levelled up since the Deck page last showed. */
   private get cardLevelNews() {
-    return !!this.save.upgrades.combatStance && cardLevelTotal(this.save.cardXp) > this.save.seen.cardLevels;
+    return !!this.save.upgrades.combatStance && totalCardLevels(this.save) > this.save.seen.cardLevels;
   }
 
   /** The first Inspiration has been earned (so the run that paid it has

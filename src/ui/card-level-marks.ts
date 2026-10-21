@@ -1,27 +1,59 @@
-import { cardLevel, cardPoints, cardSheen, MAX_CARD_LEVEL } from "../card-levels.ts";
+import type { CardId } from "../cards.ts";
+import { MAX_CARD_LEVEL } from "../card-levels.ts";
+import { CARD_RARITY_NAMES, CARD_RARITY_STARS, type CardRarity } from "../card-rarity.ts";
+import { cardLook, cardMaxLevel, levelIn, type TreeSave } from "../card-trees.ts";
 
-/** What a card wears for its level, laid over its art: the sheen of a high
- * level (silver from level 15, gold at the cap) and the level in small type
- * down its top left (none before level 1). */
-export function cardLevelHtml(xp: number) {
-  const { level } = cardLevel(xp), sheen = cardSheen(level);
-  return (sheen ? `<span class="card-sheen ${sheen}" aria-hidden="true"></span>` : "")
-    + (level ? `<span class="card-level" aria-hidden="true">${level}</span>` : "");
+/** What the card marks read from the save: each card's XP and the levels
+ * card buys opened on its tree. */
+type Levels = Pick<TreeSave, "cardXp" | "cardBuys">;
+
+/** The frame a card or tree node wears for its rarity, laid over it: none
+ * for a plain common one, green for a common one card buys raised
+ * (`upgraded`), silver with a shine now and then for uncommon, gold with
+ * one for rare, a run of rainbow hues round the edge for epic, and white
+ * over a shifting foil for legendary. */
+export function rarityFrameHtml(rarity: CardRarity, upgraded: boolean) {
+  if (rarity === "common" && !upgraded) return "";
+  return `<span class="rarity-frame r-${rarity}${rarity === "common" ? " up" : ""}" aria-hidden="true"></span>`;
 }
 
-/** A card's level, its XP toward the next (X/Y) and its card points, as
- * its details say them, with those left to spend on its tree (`left`;
- * null for a card without one). */
-export function cardLevelLines(xp: number, left: number | null = null) {
-  const { level, into, needed } = cardLevel(xp), points = cardPoints(xp);
-  const progress = level >= MAX_CARD_LEVEL ? "Max level" : `${into.toLocaleString("en-US")}/${needed.toLocaleString("en-US")} XP`;
-  const tree = left === null ? "this card has no upgrade tree" : `${left} to spend on its upgrade tree`;
-  return `<p class="card-level-line"><b>Level ${level}</b> · ${progress}</p>`
-    + `<p class="card-points-line">${points} card point${points === 1 ? "" : "s"} · ${tree}</p>`;
+/** The stars a rarity wears: a hollow one for a raised common, one to
+ * three gold ones from uncommon to epic, a purple one for legendary. */
+export function rarityStarsHtml(rarity: CardRarity, upgraded: boolean) {
+  const n = CARD_RARITY_STARS[rarity];
+  if (!n && !upgraded) return "";
+  const star = n ? "★" : "☆";
+  return `<span class="rarity-stars r-${rarity}" aria-hidden="true">${star.repeat(Math.max(1, n))}</span>`;
 }
 
-/** A card's tooltip line for its level ("Level 3 · 120/800 XP"). */
-export function cardLevelTitle(xp: number) {
-  const { level, into, needed } = cardLevel(xp);
-  return `Level ${level} · ${level >= MAX_CARD_LEVEL ? "Max level" : `${into.toLocaleString("en-US")}/${needed.toLocaleString("en-US")} XP`}`;
+/** What a card wears over its art: its rarity's frame and its level in
+ * small type down its top left (none before level 1). */
+export function cardLevelHtml(save: Levels, id: CardId) {
+  const { level } = levelIn(save, id), { rarity, upgraded } = cardLook(save.cardBuys.opened, id);
+  return rarityFrameHtml(rarity, upgraded) + (level ? `<span class="card-level" aria-hidden="true">${level}</span>` : "");
+}
+
+/** A card's level of its max level and its XP toward the next, as its
+ * details and tooltip say it ("Level 3 / 10 · 120/800 XP"): "max level"
+ * at 60, and at a lower cap, the XP it keeps gathering toward the levels a
+ * card buy will open. A card's points are its level, so they go unsaid. */
+function levelText(save: Levels, id: CardId) {
+  const { level, into, needed, capped } = levelIn(save, id), head = `Level ${level} / ${cardMaxLevel(save.cardBuys.opened, id)}`;
+  if (level >= MAX_CARD_LEVEL) return { head, xp: "max level" };
+  const xp = `${Math.min(into, needed).toLocaleString("en-US")}/${needed.toLocaleString("en-US")} XP`;
+  return { head, xp: capped ? `${xp} · buy cards to raise the max` : xp };
+}
+
+/** A card's rarity (with its stars), and its level of its max level with
+ * its XP toward the next, as its details say them. */
+export function cardLevelLines(save: Levels, id: CardId) {
+  const { rarity, upgraded } = cardLook(save.cardBuys.opened, id), { head, xp } = levelText(save, id);
+  return `<p class="card-rarity-line r-${rarity}">${rarityStarsHtml(rarity, upgraded)}${CARD_RARITY_NAMES[rarity]}</p>`
+    + `<p class="card-level-line"><b>${head}</b> · ${xp}</p>`;
+}
+
+/** A card's tooltip line for its level ("Level 3 / 10 · 120/800 XP"). */
+export function cardLevelTitle(save: Levels, id: CardId) {
+  const { head, xp } = levelText(save, id);
+  return `${head} · ${xp}`;
 }

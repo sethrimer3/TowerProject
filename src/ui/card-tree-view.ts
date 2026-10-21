@@ -3,7 +3,9 @@
  * words (`nodeName`, `statText`), and the card of the node picked in it
  * (`cardTreeCardHtml`). The tree itself comes from `card-trees.ts`. */
 import { CARDS, type CardId } from "../cards.ts";
-import { CARD_TREES, nodeLevel, nodeOpen, treeNode, type CardTreeLevels, type CardTreeNode, type TreeStat } from "../card-trees.ts";
+import { CARD_TREES, cardLook, nodeCap, nodeLevel, nodeOpen, opensAt, treeNode, type CardOpened, type CardTreeLevels, type CardTreeNode, type TreeStat } from "../card-trees.ts";
+import { CARD_RARITY_NAMES, type CardRarity } from "../card-rarity.ts";
+import { rarityFrameHtml, rarityStarsHtml } from "./card-level-marks.ts";
 import { snap } from "../exact.ts";
 import { cardArt, cellIcon, itemSprite, uiSprite, type UiSprite } from "./dom.ts";
 import type { GraphNode } from "./upgrade-graph.ts";
@@ -15,7 +17,7 @@ export const ROOT = "card";
 const STAT_NAMES: Record<TreeStat, string> = {
   floorGold: "Spare Change", floorSilver: "Wishing Well", goldBonus: "Gold Bonus", silverBonus: "Silver Bonus",
   freeOffense: "Free Offense", freeDefense: "Free Defense", freeUtility: "Free Utility",
-  floorHeal: "Floor Heal", overheal: "Overheal", percentPotions: "Percent Potions", potionHeal: "Potion Heal", potionMaxHp: "Potion Vigor",
+  floorHeal: "Floor Heal", overheal: "Overheal", overhealMax: "Overheal Max", stairSkip: "Stair Skip", percentPotions: "Percent Potions", potionHeal: "Potion Heal", potionMaxHp: "Potion Vigor",
   doorCost: "Door Cost", doorGold: "Door Gold", keyFind: "Key Find", keyGold: "Key Gold",
   foeAttack: "Attack", foeDefense: "Defense", foeGold: "Bounty", moreEnemies: "More Enemies",
   attackShard: "Sharper Shards", defenseShard: "Sturdier Shards", attackShardGold: "Shard Gold", defenseShardGold: "Shard Gold",
@@ -24,7 +26,7 @@ const STAT_NAMES: Record<TreeStat, string> = {
 };
 
 /** Names of nodes raising more than one stat, short enough to sit under them. */
-const NODE_NAMES: Record<string, string> = { "stairs.floorPay": "Floor Pay" };
+const NODE_NAMES: Record<string, string> = {};
 
 /** What `n` of each stat does, a line. */
 const STAT_TEXT: Record<TreeStat, (n: string) => string> = {
@@ -37,6 +39,8 @@ const STAT_TEXT: Record<TreeStat, (n: string) => string> = {
   freeUtility: (n) => `+${n}% Free Utility Upgrade chance`,
   floorHeal: (n) => `Heals ${n}% of max HP on each floor new to the run`,
   overheal: (n) => `+${n}% Overheal ceiling (once Overheal is owned)`,
+  overhealMax: (n) => `+${n}% Overheal ceiling, multiplying the rest, Overheal owned or not`,
+  stairSkip: (n) => `${n}% chance the Tower's stairs climb two floors`,
   percentPotions: (n) => `+${n}% chance each potion is a percent potion`,
   potionHeal: (n) => `+${n}% HP from every potion`,
   potionMaxHp: (n) => `+${n}% max HP for the run each time a potion is reached`,
@@ -68,7 +72,7 @@ const silver = () => uiSprite("gold", "ui-sprite silver-sprite");
 const STAT_ICONS: Record<TreeStat, () => string> = {
   floorGold: ui("gold"), floorSilver: silver, goldBonus: ui("gold"), silverBonus: silver,
   freeOffense: ui("attack"), freeDefense: ui("defense"), freeUtility: ui("arrow-up"),
-  floorHeal: ui("health"), overheal: ui("health"), percentPotions: () => itemSprite("potion_percent"), potionHeal: () => itemSprite("potion_flat"), potionMaxHp: ui("health"),
+  floorHeal: ui("health"), overheal: ui("health"), overhealMax: ui("health"), stairSkip: ui("arrow-up"), percentPotions: () => itemSprite("potion_percent"), potionHeal: () => itemSprite("potion_flat"), potionMaxHp: ui("health"),
   doorCost: () => itemSprite("key_red"), doorGold: ui("gold"), keyFind: () => itemSprite("key_yellow"), keyGold: ui("gold"),
   foeAttack: ui("attack"), foeDefense: ui("defense"), foeGold: ui("gold"), moreEnemies: ui("upgrades"),
   attackShard: () => itemSprite("upgrade_attack"), defenseShard: () => itemSprite("upgrade_defense"), attackShardGold: ui("gold"), defenseShardGold: ui("gold"),
@@ -83,8 +87,8 @@ const amount = (n: number) => snap(n).toLocaleString("en-US", { maximumFractionD
 /** The stats node `node` raises, first first. */
 const statsOf = (node: CardTreeNode) => Object.entries(node.stats) as [TreeStat, number][];
 
-/** Node `node`'s name: its first stat's (STAIRS' floor pay names both), a
- * numeral after it for a later node raising the same stat on its track. */
+/** Node `node`'s name: its first stat's, a numeral after it for a later
+ * node raising the same stat on its tree. */
 export function nodeName(card: CardId, node: CardTreeNode) {
   const stats = statsOf(node);
   const base = NODE_NAMES[`${card}.${node.id}`] ?? (stats.length > 1 ? stats.map(([s]) => STAT_NAMES[s]).join(" & ") : STAT_NAMES[stats[0][0]]);
@@ -97,15 +101,26 @@ export function statText(node: CardTreeNode, level: number) {
   return statsOf(node).map(([stat, each]) => STAT_TEXT[stat](amount(each * level)));
 }
 
-/** A node's state in the graph: full (`owned`), taking points now (`next`),
- * or waiting on the node before it (`locked`). */
-export function nodeState(levels: CardTreeLevels, card: CardId, node: CardTreeNode): GraphNode["state"] {
-  if (nodeLevel(levels, card, node.id) >= node.levels) return "owned";
-  return nodeOpen(levels, card, node) ? "next" : "locked";
+/** What a card's tree reads: the levels spent on it, and those card buys
+ * opened on it. */
+export type TreeLevels = { levels: CardTreeLevels; opened: CardOpened };
+
+/** A node's state in the graph: holding every level opened on it
+ * (`owned`), taking points now (`next`), or waiting on the node before it
+ * or on a card buy of its rarity to open it (`locked`). */
+export function nodeState({ levels, opened }: TreeLevels, card: CardId, node: CardTreeNode): GraphNode["state"] {
+  const cap = nodeCap(opened, card, node);
+  if (cap && nodeLevel(levels, card, node.id) >= cap) return "owned";
+  return nodeOpen(levels, opened, card, node) ? "next" : "locked";
 }
 
 /** A node's state in words, for screen readers and the list. */
 const STATE_WORDS: Record<GraphNode["state"], string> = { owned: "full", next: "available", locked: "locked" };
+const article = (rarity: CardRarity) => (rarity === "uncommon" || rarity === "epic" ? "an" : "a");
+/** A sealed node, in words: what it is stays hidden until a card buy opens it. */
+const SEALED_WORDS = "Sealed upgrade: a card buy opens it";
+/** A sealed node's face: a ? and nothing else, so what it is stays hidden. */
+const SEALED_FACE = `<span class="ct-sealed-mark" aria-hidden="true">?</span>`;
 
 /** The pips of a node's levels, filled up to `level` (a bar for more than ten). */
 export function levelPips(level: number, levels: number) {
@@ -113,79 +128,122 @@ export function levelPips(level: number, levels: number) {
   return `<span class="ct-pips" aria-hidden="true">${Array.from({ length: levels }, (_, i) => `<i${i < level ? ` class="on"` : ""}></i>`).join("")}</span>`;
 }
 
-/** What a node is, its level and state, and what it gives now, in one
- * line for a screen reader (`why`: why it can't take a point, if so). */
-export function nodeLabel(card: CardId, levels: CardTreeLevels, node: CardTreeNode, why: string | null = null) {
-  const level = nodeLevel(levels, card, node.id), state = nodeState(levels, card, node);
+/** Node `node`'s look for its rarity: its rarity, and whether card buys
+ * raised it past the levels it started with (a common node then wears
+ * green and a hollow star). */
+const lookOf = (opened: CardOpened, card: CardId, node: CardTreeNode) => ({ rarity: node.rarity, upgraded: node.levels > 0 && nodeCap(opened, card, node) > node.levels });
+/** Whether no card buy has opened node `node` yet: it shows nothing of what it is. */
+const sealed = (tree: TreeLevels, card: CardId, node: CardTreeNode) => !nodeCap(tree.opened, card, node);
+
+/** What a node is, its rarity, level and state, and what it gives now, in
+ * one line for a screen reader (`why`: why it can't take a point, if so);
+ * a sealed node says only that it is sealed. */
+export function nodeLabel(card: CardId, tree: TreeLevels, node: CardTreeNode, why: string | null = null) {
+  if (sealed(tree, card, node)) return `${SEALED_WORDS}.`;
+  const level = nodeLevel(tree.levels, card, node.id), cap = nodeCap(tree.opened, card, node), state = nodeState(tree, card, node);
   const now = level ? statText(node, level).join(", ") : "nothing yet";
-  return `${nodeName(card, node)}: level ${level} of ${node.levels}, ${STATE_WORDS[state]}. Gives ${now}.${why && state !== "owned" ? ` ${why}` : ""}`;
+  return `${nodeName(card, node)}, ${CARD_RARITY_NAMES[node.rarity].toLowerCase()}: level ${level} of ${cap}, ${STATE_WORDS[state]}. Gives ${now}.${why && state !== "owned" ? ` ${why}` : ""}`;
 }
 
-/** Card `card`'s tree as the graph draws it: the card at the root, every
- * track growing up from it, each node its stat's icon over a fill of its
+/** A node's icon: its first stat's, and on a legendary node, three copies
+ * of it in shifted hues drifting on cycles of their own over a black
+ * ground, flashing behind them when they line up. */
+function nodeIcon(node: CardTreeNode) {
+  const icon = STAT_ICONS[statsOf(node)[0][0]]();
+  if (node.rarity !== "legendary") return `<span class="ct-icon">${icon}</span>`;
+  return `<span class="ct-icon ct-holo"><span class="ct-holo-flash" aria-hidden="true"></span>${[1, 2, 3].map((i) => `<span class="ct-holo-${i}" aria-hidden="true">${icon}</span>`).join("")}</span>`;
+}
+
+/** Card `card`'s tree as the graph draws it: the card at the root in its
+ * rarity's frame, every track growing up from it, each node in its
+ * rarity's frame with its stars, its stat's icon over a fill of its
  * levels, its count in the corner and its name under it (empty for a card
- * without a tree). `why` says why a node can't take a point, for its label. */
-export function cardTreeGraph(card: CardId, levels: CardTreeLevels, why: (id: string) => string | null = () => null): GraphNode[] {
+ * without a tree). A sealed node is an empty frame with a ?: no icon,
+ * rarity, count or name until a card buy opens it. `why` says why a node can't take a
+ * point, for its label. */
+export function cardTreeGraph(card: CardId, tree: TreeLevels, why: (id: string) => string | null = () => null): GraphNode[] {
   const nodes = CARD_TREES[card];
   if (!nodes) return [];
-  const root: GraphNode = { id: ROOT, state: "owned", face: cardArt(card, CARDS[card].name), cls: "root", label: `${CARDS[card].name}: the card, root of its tree` };
+  const look = cardLook(tree.opened, card);
+  const root: GraphNode = {
+    id: ROOT, state: "owned", face: cardArt(card, CARDS[card].name) + rarityFrameHtml(look.rarity, look.upgraded) + rarityStarsHtml(look.rarity, look.upgraded),
+    cls: `root r-${look.rarity}`, label: `${CARDS[card].name}, ${CARD_RARITY_NAMES[look.rarity].toLowerCase()}: the card, root of its tree`,
+  };
   return [root, ...nodes.map((node): GraphNode => {
-    const level = nodeLevel(levels, card, node.id), state = nodeState(levels, card, node);
+    if (sealed(tree, card, node)) return { id: node.id, parent: node.after ?? ROOT, state: "locked", face: SEALED_FACE, cls: "sealed", label: nodeLabel(card, tree, node) };
+    const level = nodeLevel(tree.levels, card, node.id), cap = nodeCap(tree.opened, card, node), state = nodeState(tree, card, node), { rarity, upgraded } = lookOf(tree.opened, card, node);
     return {
       id: node.id, parent: node.after ?? ROOT, state,
-      face: `<span class="ct-icon">${STAT_ICONS[statsOf(node)[0][0]]()}</span><span class="ct-fill" aria-hidden="true"><i style="width:${(level / node.levels) * 100}%"></i></span><b aria-hidden="true">${level}/${node.levels}</b>`,
+      face: nodeIcon(node) + rarityStarsHtml(rarity, upgraded)
+        + `<span class="ct-fill" aria-hidden="true"><i style="width:${(level / cap) * 100}%"></i></span><b aria-hidden="true">${level}/${cap}</b>`,
       tag: nodeName(card, node),
-      label: nodeLabel(card, levels, node, why(node.id)),
+      cls: `r-${rarity}${upgraded ? " up" : ""}`,
+      label: nodeLabel(card, tree, node, why(node.id)),
     };
   })];
 }
 
-/** The details for node `id` of `card`'s tree: what it is, its levels,
- * what each level gives, what it gives now and with the next, and the
- * button that spends a point on it, with why not when it can't (`refusal`,
- * in words). The root's tell how the tree works. */
-export function cardTreeCardHtml(card: CardId, levels: CardTreeLevels, id: string, left: number, refusal: string | null): string {
-  if (id === ROOT || !treeNode(card, id)) {
-    const n = CARD_TREES[card]?.length ?? 0;
-    return `<div class="ug-card-head"><span class="ct-detail-icon ct-detail-card">${cardArt(card, CARDS[card].name)}</span><div><b>${CARDS[card].name}</b><small>${left} point${left === 1 ? "" : "s"} to spend on ${n} upgrades</small></div></div>`
-      + `<p class="ug-hint">Each card level earns a point. Upgrades open from the card upward, each once the one below it is full, and count while the card is in the run's hand. Choose one to see what it does.</p>`;
-  }
-  const node = treeNode(card, id)!, level = nodeLevel(levels, card, id), state = nodeState(levels, card, node);
+/** How a card's tree works, behind the tree's ? button. */
+export function cardTreeHelpHtml(card: CardId, left: number) {
+  const n = CARD_TREES[card]?.length ?? 0;
+  return `<p>${CARDS[card].name} has <b>${left}</b> point${left === 1 ? "" : "s"} to spend on ${n} upgrades.</p>`
+    + `<p>Each card level earns a point. Upgrades open from the card upward, each once the one below it holds enough levels, and count while the card is in the run's hand. Choose one to see what it does.</p>`
+    + `<p>Buying cards on the Deck page raises a card's max level and the levels its upgrades hold, and opens its sealed upgrades: uncommon, rare, epic and legendary, each opened by a card buy of its rarity.</p>`;
+}
+
+/** The details for node `id` of `card`'s tree: a head with its icon, its
+ * name, one line of its rarity, state and level, and at its right the
+ * button that buys a level with a card point (or Full); then why it can't
+ * (`refusal`, in words), its levels, what each gives, now and with the
+ * next, and how many card buys can still open. Nothing for the root (how
+ * the tree works is behind the ? button) or a sealed node. */
+export function cardTreeCardHtml(card: CardId, tree: TreeLevels, id: string, left: number, refusal: string | null): string {
+  const node = treeNode(card, id);
+  if (id === ROOT || !node || sealed(tree, card, node)) return "";
+  const level = nodeLevel(tree.levels, card, id), cap = nodeCap(tree.opened, card, node), state = nodeState(tree, card, node), { rarity, upgraded } = lookOf(tree.opened, card, node);
   const now = level ? statText(node, level) : ["Nothing yet"];
-  const next = level < node.levels ? statText(node, level + 1) : null;
+  const next = level < cap ? statText(node, level + 1) : null;
   const parent = node.after ? treeNode(card, node.after) : undefined;
-  const foot = state === "owned"
-    ? `<b class="ug-owned">Full: every level filled</b>`
-    : refusal
-      ? `<span class="ug-locked">${refusal}</span><button type="button" class="ug-buy" data-ct-raise disabled>Spend a point</button>`
-      : `<button type="button" class="ug-buy" data-ct-raise>Spend a point <small>${left} left</small></button><small class="ug-again">or choose it again</small>`;
-  return `<div class="ug-card-head"><span class="ct-detail-icon">${STAT_ICONS[statsOf(node)[0][0]]()}</span><div><b>${nodeName(card, node)}</b><small class="ct-state ${state}">${capital(STATE_WORDS[state])} · Level ${level} / ${node.levels}</small></div></div>`
-    + levelPips(level, node.levels)
+  const action = state === "owned"
+    ? `<b class="ug-owned">Full</b>`
+    : `<button type="button" class="ug-buy" data-ct-raise${refusal ? " disabled" : ""} aria-label="Buy a level with a card point" title="${refusal ? "" : "Or choose the upgrade again"}">Buy${refusal ? "" : ` <small>${left} left</small>`}</button>`;
+  const room = `Holds ${cap} of up to ${node.max} levels${cap < node.max ? `: ${article(rarity)} ${CARD_RARITY_NAMES[rarity].toLowerCase()} card buy opens one more` : ""}.`;
+  return `<div class="ug-card-head"><span class="ct-detail-icon r-${rarity}">${nodeIcon(node)}</span>`
+    + `<div><b>${nodeName(card, node)}</b><small class="ct-meta"><span class="ct-rarity r-${rarity}">${rarityStarsHtml(rarity, upgraded)}${CARD_RARITY_NAMES[rarity]}</span> · <span class="ct-state ${state}">${capital(STATE_WORDS[state])} · Level ${level} / ${cap}</span></small></div>`
+    + `<span class="ug-card-action">${action}</span></div>`
+    + (refusal && state !== "owned" ? `<p class="ug-locked">${refusal}</p>` : "")
+    + (parent && state === "locked" ? `<p class="ug-locked">Opens once ${nodeName(card, parent)} holds ${opensAt(parent)} level${opensAt(parent) === 1 ? "" : "s"}.</p>` : "")
+    + levelPips(level, cap)
     + `<p class="ct-each">Each level: ${statText(node, 1).join("; ")}.</p>`
     + `<dl class="ct-compare"><dt>Now</dt><dd>${now.join("<br>")}</dd>${next ? `<dt>Next level</dt><dd class="ct-next">${next.join("<br>")}</dd>` : ""}</dl>`
-    + (parent && state === "locked" ? `<p class="ug-locked">Opens once ${nodeName(card, parent)} is full.</p>` : "")
-    + `<div class="ug-card-foot">${foot}</div>`;
+    + `<p class="ct-room">${room}</p>`;
 }
 
 const capital = (w: string) => w[0].toUpperCase() + w.slice(1);
 
 /** The tree as a list, for reading at a glance: each upgrade a row in tree
- * order (one after another indented under it) with its icon, name, state,
- * levels, what it gives now and next, and its Spend button; `why` says why
- * an upgrade can't take a point (null when it can). */
-export function cardTreeListHtml(card: CardId, levels: CardTreeLevels, picked: string, why: (id: string) => string | null): string {
+ * order (one after another indented under it) with its icon, name,
+ * rarity, state, levels, what it gives now and next, and its Buy button
+ * (a sealed one only says it is sealed); `why` says why an upgrade can't
+ * take a point (null when it can). */
+export function cardTreeListHtml(card: CardId, tree: TreeLevels, picked: string, why: (id: string) => string | null): string {
   const nodes = CARD_TREES[card] ?? [];
   const depth = (node: CardTreeNode): number => (node.after ? 1 + depth(treeNode(card, node.after)!) : 0);
   const rows = nodes.map((node) => {
-    const level = nodeLevel(levels, card, node.id), state = nodeState(levels, card, node), refusal = why(node.id);
-    const next = level < node.levels ? statText(node, level + 1).join("; ") : "";
+    const at = `style="--depth:${depth(node)}"`;
+    if (sealed(tree, card, node))
+      return `<li class="ct-row locked sealed${node.id === picked ? " picked" : ""}" ${at}><button type="button" class="ct-row-main" data-ct-pick="${node.id}" aria-label="${nodeLabel(card, tree, node)}">`
+        + `<span class="ct-detail-icon">${SEALED_FACE}</span><span class="ct-row-text"><b>Sealed upgrade</b><small>A card buy opens it</small></span></button></li>`;
+    const level = nodeLevel(tree.levels, card, node.id), cap = nodeCap(tree.opened, card, node), state = nodeState(tree, card, node), refusal = why(node.id);
+    const { rarity, upgraded } = lookOf(tree.opened, card, node);
+    const next = level < cap ? statText(node, level + 1).join("; ") : "";
     const action = state === "owned"
       ? `<span class="ug-owned">Full</span>`
-      : `<button type="button" class="ug-buy" data-ct-raise="${node.id}"${refusal ? " disabled" : ""} aria-label="Spend a point on ${nodeName(card, node)}">Spend</button>`;
-    return `<li class="ct-row ${state}${node.id === picked ? " picked" : ""}" style="--depth:${depth(node)}">`
-      + `<button type="button" class="ct-row-main" data-ct-pick="${node.id}" aria-label="${nodeLabel(card, levels, node, refusal)}">`
-      + `<span class="ct-detail-icon">${STAT_ICONS[statsOf(node)[0][0]]()}</span>`
-      + `<span class="ct-row-text"><b>${nodeName(card, node)}</b><small class="ct-state ${state}">${capital(STATE_WORDS[state])} · ${level}/${node.levels}</small>${levelPips(level, node.levels)}`
+      : `<button type="button" class="ug-buy" data-ct-raise="${node.id}"${refusal ? " disabled" : ""} aria-label="Buy a level of ${nodeName(card, node)} with a card point">Buy</button>`;
+    return `<li class="ct-row ${state} r-${rarity}${node.id === picked ? " picked" : ""}" ${at}>`
+      + `<button type="button" class="ct-row-main" data-ct-pick="${node.id}" aria-label="${nodeLabel(card, tree, node, refusal)}">`
+      + `<span class="ct-detail-icon r-${rarity}">${nodeIcon(node)}</span>`
+      + `<span class="ct-row-text"><b>${nodeName(card, node)}</b><small class="ct-state ${state}">${rarityStarsHtml(rarity, upgraded)}${CARD_RARITY_NAMES[rarity]} · ${capital(STATE_WORDS[state])} · ${level}/${cap}</small>${levelPips(level, cap)}`
       + `<small>${level ? statText(node, level).join("; ") : "Nothing yet"}${next ? ` <span class="ct-next">→ ${next}</span>` : ""}</small>`
       + (refusal && state !== "owned" ? `<small class="ug-locked">${refusal}</small>` : "")
       + `</span></button>${action}</li>`;

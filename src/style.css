@@ -1322,31 +1322,73 @@ nav:not(.in-run) .hand {
   box-shadow: 0 1px 3px #000c;
 }
 .card-reveal-card .card-level { top: 6px; left: 6px; min-width: 22px; height: 22px; border-radius: 6px; font-size: 13px; }
-/* The sheen of a high-level card's background: silver from level 15, gold
-   at the cap, a band of light sweeping across it now and then. */
-.card-sheen {
+/* A card's frame for its rarity (ui/card-level-marks.ts), over its art in
+   the hand, on the Deck page, in its details and at its tree's root: green
+   for a common card that card buys raised, silver with a shine now and then
+   for uncommon, gold with one for rare, rainbow hues running round the edge
+   for epic, and white over a shifting foil for legendary. */
+.rarity-frame {
   position: absolute;
   inset: 0;
+  z-index: 1;
   overflow: hidden;
   border-radius: inherit;
-  mix-blend-mode: screen;
   pointer-events: none;
 }
-.card-sheen::after {
+.rarity-frame.up { box-shadow: inset 0 0 0 2px #5fd068, inset 0 0 6px #5fd06866; }
+.rarity-frame.r-uncommon { --shine: #f4f8ffc0; box-shadow: inset 0 0 0 2px #d8e0ec, inset 0 0 8px #d8e0ec66; }
+.rarity-frame.r-rare { --shine: #fff3c4d0; box-shadow: inset 0 0 0 2px #f2c95a, inset 0 0 8px #ffc94a77; }
+.rarity-frame.r-uncommon::after, .rarity-frame.r-rare::after {
   content: "";
   position: absolute;
-  inset: 0 -60%;
-  background: linear-gradient(110deg, transparent 42%, var(--sheen-band) 50%, transparent 58%);
-  animation: card-sheen 4s ease-in-out infinite;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 40%, var(--shine) 50%, transparent 60%) 0 0 / 300% 100% no-repeat;
+  mix-blend-mode: screen;
+  animation: rarity-shine 4.5s ease-in-out infinite;
 }
-.card-sheen.silver { --sheen-band: #f4f8ffb0; background: linear-gradient(160deg, #e6edf842, #8f9bb026 55%, #ffffff36); box-shadow: inset 0 0 0 1px #d8e0ecb0; }
-.card-sheen.gold { --sheen-band: #fff3c4d0; background: linear-gradient(160deg, #ffd96a4a, #c8902630 55%, #fff3c052); box-shadow: inset 0 0 0 1px #ffd76ad0, inset 0 0 8px #ffc94a66; }
-@keyframes card-sheen {
-  0% { transform: translateX(-45%); }
-  55%, 100% { transform: translateX(45%); }
+.rarity-frame.r-rare::after { animation-delay: -1.5s; }
+.rarity-frame.r-epic::before, .ug-node.r-epic::after, .cb-stage.r-epic .cb-glow::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 2px;
+  border-radius: inherit;
+  background: linear-gradient(115deg, #ff4d6d, #ffb84d, #fff35c, #5dff8a, #4dd8ff, #6d7bff, #d24dff, #ff4d6d) 0 0 / 300% 100%;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: rarity-rainbow 3s linear infinite;
+  pointer-events: none;
 }
-html.reduce-motion .card-sheen::after { animation: none; opacity: 0; }
-@media (prefers-reduced-motion: reduce) { .card-sheen::after { animation: none; opacity: 0; } }
+.rarity-frame.r-epic { box-shadow: 0 0 6px #d24dff66; }
+.rarity-frame.r-legendary {
+  box-shadow: inset 0 0 0 2px #fff, inset 0 0 10px #ffffffaa;
+  background: linear-gradient(125deg, #ff6bd622, #6bd6ff33 30%, #fff9 45%, #b46bff33 60%, #6bffb822) 0 0 / 300% 300%;
+  mix-blend-mode: screen;
+  animation: rarity-foil 6s ease-in-out infinite alternate;
+}
+@keyframes rarity-shine {
+  0% { background-position: 100% 0; }
+  45%, 100% { background-position: 0 0; }
+}
+@keyframes rarity-rainbow { to { background-position: 300% 0; } }
+@keyframes rarity-foil { to { background-position: 100% 100%; } }
+html.reduce-motion .rarity-frame, html.reduce-motion .rarity-frame::before, html.reduce-motion .rarity-frame::after { animation: none; }
+html.reduce-motion .rarity-frame.r-uncommon::after, html.reduce-motion .rarity-frame.r-rare::after { opacity: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .rarity-frame, .rarity-frame::before, .rarity-frame::after { animation: none; }
+  .rarity-frame.r-uncommon::after, .rarity-frame.r-rare::after { opacity: 0; }
+}
+/* The stars a rarity wears: a hollow green one for a raised common, gold
+   ones from uncommon to epic, a purple one for legendary. */
+.rarity-stars { display: inline-block; margin-right: 4px; color: #ffd34a; letter-spacing: -1px; text-shadow: 0 0 4px #000, 0 0 2px #000; }
+.rarity-stars.r-common { color: #6fdc6f; }
+.rarity-stars.r-legendary { color: #c77dff; text-shadow: 0 0 5px #9b4dff, 0 0 2px #000; }
+.card-reveal-text .card-rarity-line { margin: -2px 0 2px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #b9c9bd; }
+.card-rarity-line.r-uncommon { color: #dfe6ef; }
+.card-rarity-line.r-rare { color: #ffd76a; }
+.card-rarity-line.r-epic { color: #ff9ee6; }
+.card-rarity-line.r-legendary { color: #e5c4ff; }
 .card-reveal-text .card-level-line { margin: -2px 0 2px; font-size: 12px; color: #ffe39a; }
 .card-reveal-text .card-level-line b { display: inline; margin: 0; font-size: 12px; font-weight: 700; color: #ffe39a; }
 .card-reveal-text .card-points-line { margin-bottom: 6px; font-size: 11px; color: #8fa596; }
@@ -3503,6 +3545,7 @@ dialog.dismiss-anywhere { cursor: pointer; }
 .card-reveal-action:hover { background: #21482d; }
 .card-reveal-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 10px; }
 .card-reveal-action b { display: inline; margin: 0; font-size: inherit; color: #ffe39a; }
+.card-reveal-action small { display: block; margin-top: 2px; font-size: 10px; letter-spacing: 0; color: #b9d8bf; }
 
 /* ── A card's upgrade tree (ui/card-tree-panel.ts, ui/upgrade-graph.ts) ───
    In place of the Deck page: a header with the card, its level and points;
@@ -3523,34 +3566,33 @@ dialog.dismiss-anywhere { cursor: pointer; }
 .card-tree :focus-visible { outline: 3px solid #ffe08a; outline-offset: 2px; }
 
 .ct-head {
-  display: grid; grid-template-columns: auto auto 1fr auto; align-items: center; gap: 10px;
-  padding: 8px 10px; border: 2px solid #000; border-radius: 4px;
+  display: grid; grid-template-columns: auto auto 1fr auto; align-items: center; gap: 8px;
+  padding: 5px 8px; border: 2px solid #000; border-radius: 4px;
   background: linear-gradient(#ffffff08, #00000040), #0d1b20; box-shadow: inset 0 0 0 1px #57d6e055, 0 2px 0 #000;
 }
 .ct-back {
-  align-self: stretch; min-width: 64px; padding: 6px 10px; font-size: 14px; cursor: pointer;
+  align-self: stretch; min-width: 0; min-height: 0; padding: 4px 8px; font-size: 13px; cursor: pointer;
   color: #f6e3b4; border: 2px solid #000; border-radius: 3px; background: #2a1d10; box-shadow: inset 0 0 0 1px #c9954a88;
 }
 .ct-back:hover { background: #3a2916; }
-.ct-card { width: 46px; height: 64px; border: 2px solid #000; border-radius: 3px; overflow: hidden; background: #0c1214; box-shadow: 0 0 0 1px #f2c95a88; }
+.ct-card { width: 32px; height: 44px; border: 2px solid #000; border-radius: 3px; overflow: hidden; background: #0c1214; box-shadow: 0 0 0 1px #f2c95a88; }
 .ct-card .card-art, .ct-detail-card .card-art { width: 100%; height: 100%; object-fit: cover; display: block; }
 .ct-card .sprite-card-label, .ct-detail-card .sprite-card-label { display: none; }
 .ct-id { min-width: 0; }
-.ct-id small { display: block; font-size: 10px; letter-spacing: 2px; color: #8fe3ea; }
-.ct-id h2 { margin: 0; font-size: 20px; line-height: 1.2; color: #ffe39a; }
-.ct-xp { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12px; color: #c7d9dc; }
+.ct-id h2 { margin: 0; font-size: 17px; line-height: 1.15; color: #ffe39a; }
+.ct-xp { display: flex; align-items: center; gap: 6px; font-size: 12px; white-space: nowrap; color: #c7d9dc; }
 .ct-xp b { color: #ffe39a; }
 .ct-xp-bar { flex: 1; min-width: 70px; max-width: 220px; height: 8px; border: 1px solid #000; border-radius: 4px; background: #05090b; overflow: hidden; box-shadow: inset 0 0 0 1px #57d6e033; }
 .ct-xp-bar i { display: block; height: 100%; background: linear-gradient(#ffe9a8, #e0a526); }
-.ct-points { display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
-.ct-left { display: flex; align-items: center; gap: 7px; padding: 4px 8px; border-radius: 3px; background: #05090bcc; border: 1px solid #2c4a4e; }
-.ct-left b { font-size: 24px; line-height: 1; color: #9aa9ab; }
-.ct-left small { font-size: 11px; line-height: 1.25; color: #b6c6c8; }
+.ct-points { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 6px; }
+.ct-left { display: flex; align-items: center; gap: 5px; padding: 2px 7px; border-radius: 3px; background: #05090bcc; border: 1px solid #2c4a4e; white-space: nowrap; }
+.ct-left b { font-size: 18px; line-height: 1.1; color: #9aa9ab; }
+.ct-left small { font-size: 11px; line-height: 1.2; color: #b6c6c8; }
 .ct-left.some { border-color: #f2c95a; box-shadow: 0 0 10px #f2c95a55; }
 .ct-left.some b { color: #ffe39a; }
 .ug-respec {
   display: inline-flex; align-items: center; justify-content: center; gap: 3px;
-  font-size: 12px; padding: 5px 8px; color: #f6e3b4; border: 1px solid #000; border-radius: 2px; cursor: pointer;
+  font-size: 12px; min-height: 0; padding: 3px 8px; color: #f6e3b4; border: 1px solid #000; border-radius: 2px; cursor: pointer;
   background: linear-gradient(#ffffff10, #00000050), #5a3a1c; box-shadow: inset 0 0 0 1px #c9954a66;
 }
 .ug-respec .gem-icon, .ug-respec .sprite-icon { width: 14px; height: 14px; }
@@ -3558,10 +3600,13 @@ dialog.dismiss-anywhere { cursor: pointer; }
 .ug-respec:disabled { opacity: 0.5; cursor: default; }
 
 .ct-bar-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
-.ct-views { display: inline-flex; border: 2px solid #000; border-radius: 4px; overflow: hidden; }
-.ct-views button { padding: 5px 14px; font-size: 13px; cursor: pointer; color: #c7d9dc; background: #0d1b20; border: 0; }
-.ct-views button + button { border-left: 2px solid #000; }
-.ct-views button[aria-pressed="true"] { color: #08181b; background: linear-gradient(#e9fbff, #57d6e0); }
+/* Tree or List: one switch, its knob on the side of the view shown. */
+.ct-switch { display: inline-flex; align-items: center; gap: 6px; min-height: 0; padding: 2px 8px; font-size: 12px; line-height: 1.2; cursor: pointer; }
+.ct-switch > span { color: #8fa6aa; }
+.ct-switch[aria-checked="false"] > span:first-child, .ct-switch[aria-checked="true"] > span:last-child { color: #ffe39a; }
+.ct-switch-track { position: relative; display: block; width: 30px; height: 16px; border: 2px solid #000; border-radius: 9px; background: #05090b; box-shadow: inset 0 0 0 1px #57d6e055; }
+.ct-switch-track > i { position: absolute; left: 1px; top: 1px; width: 10px; height: 10px; border-radius: 50%; background: linear-gradient(#e9fbff, #57d6e0); transition: left 0.15s; }
+.ct-switch[aria-checked="true"] .ct-switch-track > i { left: 15px; }
 .ct-legend { display: flex; gap: 12px; margin: 0; padding: 0; list-style: none; font-size: 12px; color: #c7d9dc; }
 .ct-legend li { display: flex; align-items: center; gap: 5px; }
 .ct-legend li::before { content: ""; width: 12px; height: 12px; border: 2px solid #000; border-radius: 2px; }
@@ -3570,9 +3615,9 @@ dialog.dismiss-anywhere { cursor: pointer; }
 .ct-legend .locked::before { background: #2c3a3e; border-style: dashed; border-color: #6c7c80; }
 
 .ct-body { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
-.ct-body > .ug-card { flex: 0 1 auto; max-height: 40%; overflow-y: auto; }
+.ct-body > .ug-card { flex: 0 1 auto; max-height: 80%; overflow-y: auto; }
 .ct-main {
-  position: relative; flex: 1; min-height: 240px; overflow: hidden;
+  position: relative; flex: 1; min-height: 150px; overflow: hidden;
   border: 2px solid #000; border-radius: 4px; box-shadow: inset 0 0 0 1px #57d6e044;
   background: radial-gradient(circle at 50% 110%, #2a6f7a40, transparent 60%), radial-gradient(#ffffff12 1px, transparent 1.5px) 0 0 / 22px 22px, #0b1418;
 }
@@ -3637,15 +3682,87 @@ dialog.dismiss-anywhere { cursor: pointer; }
 @keyframes ug-bought { 40% { scale: 1.12; } }
 :root.reduce-motion .ug-node, :root.reduce-motion .card-tree, :root.reduce-motion .ct-row { animation: none !important; }
 @media (prefers-reduced-motion: reduce) { .ug-node, .card-tree, .ct-row { animation: none !important; } }
+/* Each node's frame for its rarity: grey for a plain common one, green
+   with a hollow star once card buys raised it, silver with a shine now and
+   then and a gold star for uncommon, gold with a shine and two for rare,
+   rainbow hues running round the edge and three for epic, and for
+   legendary a white frame on black, a purple star, and its icon three
+   times over in shifted hues, drifting on cycles of their own and
+   flashing when they line up. A sealed node (no card buy has opened it)
+   keeps its rarity's frame, dimmed. */
+#deck .ug-node.r-common, #deck .ug-node.locked.r-common { border-color: #6c7c80; }
+#deck .ug-node.r-common.up, #deck .ug-node.locked.r-common.up { border-color: #5fd068; }
+#deck .ug-node.r-uncommon, #deck .ug-node.locked.r-uncommon { border-color: #d8e0ec; --shine: #f4f8ffa0; }
+#deck .ug-node.r-rare, #deck .ug-node.locked.r-rare { border-color: #f2c95a; --shine: #fff3c4b0; }
+#deck .ug-node.r-epic, #deck .ug-node.locked.r-epic { border-color: transparent; }
+#deck .ug-node.r-legendary, #deck .ug-node.locked.r-legendary { border-color: #fff; background: #000; }
+#deck .ug-node.sealed { opacity: 0.72; }
+#deck .ug-node.root.r-common { border-color: #6c7c80; }
+#deck .ug-node.r-uncommon::before, #deck .ug-node.r-rare::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 3px;
+  background: linear-gradient(115deg, transparent 40%, var(--shine) 50%, transparent 60%) 0 0 / 300% 100% no-repeat;
+  mix-blend-mode: screen;
+  pointer-events: none;
+  animation: rarity-shine 4.5s ease-in-out infinite;
+}
+#deck .ug-node.r-rare::before { animation-delay: -1.5s; }
+#deck .ug-node.r-epic::after { inset: -2px; }
+#deck .ug-node .rarity-stars { position: absolute; left: 3px; top: 1px; font-size: 9px; line-height: 1; pointer-events: none; }
+#deck .ug-node.root .rarity-stars { left: 50%; top: auto; bottom: -13px; transform: translateX(-50%); font-size: 11px; }
+#deck .ug-node.root .rarity-frame { border-radius: 3px; }
+.ct-holo { position: relative; }
+/* In the details and the list the icon has no box of its own: the layers need one to stack in. */
+.ct-detail-icon > .ct-holo { display: block; width: 26px; height: 26px; }
+.ct-holo > span { position: absolute; inset: 0; display: grid; place-items: center; }
+.ct-holo-1 { filter: hue-rotate(0deg) drop-shadow(0 0 3px #ff6bd6); mix-blend-mode: screen; animation: holo-a 3s ease-in-out infinite; }
+.ct-holo-2 { filter: hue-rotate(120deg) drop-shadow(0 0 3px #6bd6ff); mix-blend-mode: screen; animation: holo-b 4s ease-in-out infinite; }
+.ct-holo-3 { filter: hue-rotate(240deg) drop-shadow(0 0 3px #b46bff); mix-blend-mode: screen; animation: holo-c 6s ease-in-out infinite; }
+/* The three line up where they started once every 12 s, the least time
+   all three cycles share: the flash behind them comes then. */
+.ct-holo-flash { border-radius: 50%; background: radial-gradient(circle, #fff 0 20%, #c77dff88 45%, transparent 70%); opacity: 0; animation: holo-flash 12s ease-out infinite; }
+@keyframes holo-a { 25% { transform: translate(3px, -2px); } 50% { transform: translate(0, 3px); } 75% { transform: translate(-3px, -1px); } }
+@keyframes holo-b { 25% { transform: translate(-3px, 2px); } 50% { transform: translate(2px, -3px); } 75% { transform: translate(3px, 2px); } }
+@keyframes holo-c { 33% { transform: translate(2px, 3px); } 66% { transform: translate(-3px, -2px); } }
+@keyframes holo-flash { 0% { opacity: 1; transform: scale(1.4); } 6% { opacity: 0; transform: scale(0.6); } 100% { opacity: 0; } }
+:root.reduce-motion .ct-holo > span, :root.reduce-motion #deck .ug-node::before, :root.reduce-motion #deck .ug-node::after { animation: none !important; }
+:root.reduce-motion .ct-holo-flash, :root.reduce-motion #deck .ug-node.r-uncommon::before, :root.reduce-motion #deck .ug-node.r-rare::before { opacity: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .ct-holo > span, #deck .ug-node::before, #deck .ug-node::after { animation: none !important; }
+  .ct-holo-flash, #deck .ug-node.r-uncommon::before, #deck .ug-node.r-rare::before { opacity: 0; }
+}
+.ct-detail-icon.r-legendary { background: #000; border-radius: 4px; }
+.ug-card-head small.ct-rarity { color: #c7d9dc; letter-spacing: 1px; }
+.ct-rarity.r-uncommon { color: #dfe6ef; }
+.ct-rarity.r-rare { color: #ffd76a; }
+.ct-rarity.r-epic { color: #ff9ee6; }
+.ct-rarity.r-legendary { color: #e5c4ff; }
+.ct-room { margin: 6px 0 0; font-size: 12px; color: #a9b9bb; }
+/* A sealed node shows only a ?: what it is stays hidden until a card buy opens it. */
+.ct-sealed-mark { font-size: 22px; font-weight: 700; line-height: 1; color: #8fa0a3; pointer-events: none; }
+#deck .ug-node.sealed { border-style: dashed; border-color: #6c7c80; background: #0b1214; }
+/* The ? button: how the tree works, in place of a box under it. */
+.ct-help {
+  min-height: 0; width: 28px; height: 28px; padding: 0; margin-left: auto;
+  font-size: 15px; font-weight: 700; line-height: 1; cursor: pointer;
+  color: #08181b; border: 2px solid #000; border-radius: 50%; background: linear-gradient(#e9fbff, #57d6e0);
+}
+#deck .ug-card[hidden] { display: none; }
 
 .ug-card {
-  padding: 10px 12px; min-height: 64px;
+  padding: 8px 10px; min-height: 64px;
   border: 2px solid #000; border-radius: 4px; background: #08100f;
   box-shadow: inset 0 0 0 1px #57d6e066, 0 2px 0 #000; font-size: 13px; line-height: 1.45; color: #e4eef0;
 }
 .ug-card p { margin: 6px 0 0; }
 .ug-card-head { display: flex; gap: 10px; align-items: center; border-bottom: 1px solid #57d6e040; padding-bottom: 6px; }
-.ug-card-head > div { min-width: 0; }
+.ug-card-head > div { flex: 1; min-width: 0; }
+/* Buy (or Full) at the head's right, never scrolled out of reach. */
+.ug-card-action { flex: none; margin-left: auto; }
+.ug-card-head small.ct-meta { display: block; }
+.ct-meta > span { display: inline; }
 .ug-card-head b { display: block; color: #ffe39a; font-size: 16px; line-height: 1.2; }
 .ug-card-head small { display: block; color: #a9dfe4; font-size: 12px; }
 .ct-detail-icon { flex: none; display: grid; place-items: center; width: 34px; height: 34px; border: 2px solid #000; border-radius: 4px; background: #0c1214; }
@@ -3696,11 +3813,14 @@ dialog.dismiss-anywhere { cursor: pointer; }
 .ct-status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 @media (max-width: 520px) {
-  .ct-head { grid-template-columns: auto 1fr auto; gap: 8px; }
+  /* A phone's header: Back and the card's name and XP, the points and Respec on a row under them. */
+  .ct-head { grid-template-columns: auto 1fr; gap: 4px 8px; }
   .ct-card { display: none; }
-  .ct-id h2 { font-size: 17px; }
-  .ct-left b { font-size: 20px; }
-  .ct-main { min-height: 260px; }
+  .ct-points { grid-column: 1 / -1; justify-content: space-between; }
+  .ct-bar-row { flex-wrap: nowrap; gap: 6px; }
+  .ct-legend { gap: 7px; font-size: 11px; }
+  .ct-legend li::before { width: 9px; height: 9px; }
+  .ct-main { min-height: 170px; }
 }
 @keyframes card-pop {
   from { transform: scale(0.6); opacity: 0; }
@@ -4272,8 +4392,8 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
   flex: 1;
   min-height: 300px;
 }
-.deck-columns > .deck-reserve { min-height: 0; padding: 8px; }
-.deck-columns > .deck-reserve.open { overflow-y: auto; }
+.deck-columns .deck-reserve { min-height: 0; padding: 8px; }
+.deck-columns .deck-reserve.open { overflow-y: auto; }
 .deck-columns .deck-grid { grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); gap: 9px; }
 .deck-columns .deck-reserve-slots { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .deck-badges { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
@@ -5001,3 +5121,60 @@ html.cinematic-dimmed #board-frame {
   padding: 2px 6px;
   opacity: 0.85;
 }
+
+/* --- Cards bought (ui/card-buy-reveal.ts) --- */
+/* The Deck section and the card buy buttons over it, in one column. */
+.deck-stack { display: flex; flex-direction: column; gap: 8px; flex: 1; min-height: 0; }
+.card-buys { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.card-buy-reveal.dark { background: #000000fc; }
+.cb-stage { position: relative; display: grid; place-items: center; }
+.cb-stage.big { width: 220px; height: 220px; }
+.cb-stage.small { width: 52px; height: 70px; }
+.cb-card { position: relative; z-index: 2; display: block; width: 120px; aspect-ratio: 3 / 4; border-radius: 6px; }
+.cb-stage.small .cb-card { width: 48px; border-radius: 3px; }
+.cb-card .card-art { border-radius: inherit; }
+.cb-show .cb-card { animation: card-pop 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.2) backwards; }
+/* The glow round the card's edge in its rarity's colour. */
+.cb-glow { position: absolute; z-index: 1; width: 120px; aspect-ratio: 3 / 4; border-radius: 6px; --glow: #5fd068; box-shadow: 0 0 14px 4px var(--glow), 0 0 32px 8px color-mix(in srgb, var(--glow) 45%, transparent); }
+.cb-stage.small .cb-glow { width: 48px; border-radius: 3px; box-shadow: 0 0 6px 2px var(--glow); }
+.cb-stage.r-uncommon .cb-glow { --glow: #dfe6ef; }
+.cb-stage.r-rare .cb-glow { --glow: #f2c95a; }
+.cb-stage.r-legendary .cb-glow { --glow: #f4e9ff; }
+/* Epic: rainbow hues turning round the edge. */
+.cb-stage.r-epic .cb-glow { --glow: #d24dff; animation: cb-hue 2.4s linear infinite; }
+.cb-stage.r-epic .cb-glow::before { inset: -4px; padding: 4px; border-radius: 9px; }
+@keyframes cb-hue { to { filter: hue-rotate(360deg); } }
+/* Rare and epic: rays shooting out from behind the card. */
+.cb-rays {
+  position: absolute; left: 50%; top: 50%; width: 520px; height: 520px; border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, var(--ray) 0deg 4deg, transparent 4deg 14deg);
+  -webkit-mask-image: radial-gradient(circle, #000 12%, transparent 66%);
+  mask-image: radial-gradient(circle, #000 12%, transparent 66%);
+  --ray: #f2c95acc;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  animation: card-rays-in 0.6s 0.3s ease-out backwards, card-rays-turn 14s linear infinite;
+}
+.cb-stage.r-epic .cb-rays { background: repeating-conic-gradient(from 0deg, #ff4d6dcc 0deg 4deg, transparent 4deg 10deg, #fff35ccc 10deg 14deg, transparent 14deg 20deg, #4dd8ffcc 20deg 24deg, transparent 24deg 30deg, #d24dffcc 30deg 34deg, transparent 34deg 40deg); }
+/* Legendary: stars shooting out from behind the card into the dark. */
+.cb-stars { position: absolute; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; }
+.cb-stars i {
+  position: absolute; left: -8px; top: -10px; font-style: normal; font-size: 18px; color: #f4e9ff;
+  text-shadow: 0 0 6px #c77dff, 0 0 12px #9b4dff; opacity: 0;
+  animation: cb-star 1.6s var(--d) ease-out infinite;
+}
+@keyframes cb-star {
+  0% { opacity: 0; transform: rotate(var(--a)) translateY(-30px) scale(0.4); }
+  15% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(var(--a)) translateY(-170px) scale(1.1); }
+}
+.cb-rarity { letter-spacing: 3px; }
+.cb-rarity.r-common { color: #6fdc6f; }
+.cb-rarity.r-uncommon { color: #dfe6ef; }
+.cb-rarity.r-rare { color: #ffd76a; }
+.cb-rarity.r-epic { color: #ff9ee6; }
+.cb-rarity.r-legendary { color: #e5c4ff; }
+.badge-reveal-text .cb-level b { display: inline; margin: 0; font-size: inherit; color: #ffe39a; }
+.cb-sum { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.card-buy-reveal.still .cb-card, .card-buy-reveal.still .cb-glow, .card-buy-reveal.still .cb-rays { animation: none; }
+.card-buy-reveal.still .cb-stars i { animation: none; opacity: 0.8; transform: rotate(var(--a)) translateY(-110px); }

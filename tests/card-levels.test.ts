@@ -2,44 +2,54 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { decode, defaults } from "../src/save.ts";
-import { addCardXp, CARD_LEVEL_XP, cardLevel, cardPoints, cardSheen, decodeCardXp, MAX_CARD_LEVEL, MAX_CARD_XP } from "../src/card-levels.ts";
+import { addCardXp, BASE_MAX_LEVEL, CARD_LEVEL_XP, cardLevel, cardPoints, decodeCardXp, MAX_CARD_LEVEL, MAX_CARD_XP } from "../src/card-levels.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import type { CardId } from "../src/cards.ts";
 import type { Save } from "../src/save-shape.ts";
 
-test("the schedule: 25 levels in steps of five, double the first draft's", () => {
-  assert.equal(MAX_CARD_LEVEL, 25);
-  assert.deepEqual(CARD_LEVEL_XP.slice(0, 5), [200, 400, 600, 800, 1000]);
-  assert.deepEqual(CARD_LEVEL_XP.slice(20), [12500, 14500, 17000, 20000, 23500]);
-  assert.equal(MAX_CARD_XP, 170_500);
+/** The XP that reaches level `n`. */
+const xpTo = (n: number) => CARD_LEVEL_XP.slice(0, n).reduce((a, b) => a + b, 0);
+
+test("the schedule: 60 levels, half the first 25's XP, each later level's step 250 more", () => {
+  assert.equal(MAX_CARD_LEVEL, 60);
+  assert.equal(BASE_MAX_LEVEL, 10);
+  assert.deepEqual(CARD_LEVEL_XP.slice(0, 5), [100, 200, 300, 400, 500]);
+  assert.deepEqual(CARD_LEVEL_XP.slice(20, 25), [6250, 7250, 8500, 10000, 11750]);
+  assert.deepEqual(CARD_LEVEL_XP.slice(25, 28), [13750, 16000, 18500]);
+  for (let i = 25; i < 60; i++) assert.equal(CARD_LEVEL_XP[i] - CARD_LEVEL_XP[i - 1], CARD_LEVEL_XP[i - 1] - CARD_LEVEL_XP[i - 2] + 250, `level ${i + 1}`);
+  assert.equal(CARD_LEVEL_XP[59], 230_500);
+  assert.equal(MAX_CARD_XP, 3_541_500);
 });
 
-test("a card's level, its XP into the next and what that costs", () => {
-  assert.deepEqual(cardLevel(0), { level: 0, into: 0, needed: 200 });
-  assert.deepEqual(cardLevel(199), { level: 0, into: 199, needed: 200 });
-  assert.deepEqual(cardLevel(200), { level: 1, into: 0, needed: 400 });
-  assert.deepEqual(cardLevel(700), { level: 2, into: 100, needed: 600 });
-  assert.deepEqual(cardLevel(MAX_CARD_XP - 1), { level: 24, into: 23499, needed: 23500 });
-  assert.deepEqual(cardLevel(MAX_CARD_XP), { level: 25, into: 0, needed: 0 });
-  assert.deepEqual(cardLevel(MAX_CARD_XP * 2), { level: 25, into: 0, needed: 0 });
-  assert.equal(cardPoints(700), 2, "a point a level");
+test("a card's level, its XP into the next and what that costs, under its max level", () => {
+  assert.deepEqual(cardLevel(0), { level: 0, into: 0, needed: 100, capped: false });
+  assert.deepEqual(cardLevel(99), { level: 0, into: 99, needed: 100, capped: false });
+  assert.deepEqual(cardLevel(100), { level: 1, into: 0, needed: 200, capped: false });
+  assert.deepEqual(cardLevel(350), { level: 2, into: 50, needed: 300, capped: false });
+  assert.deepEqual(cardLevel(MAX_CARD_XP - 1), { level: 59, into: 230_499, needed: 230_500, capped: false });
+  assert.deepEqual(cardLevel(MAX_CARD_XP), { level: 60, into: 0, needed: 0, capped: true });
+  assert.deepEqual(cardLevel(MAX_CARD_XP * 2), { level: 60, into: 0, needed: 0, capped: true });
+  assert.deepEqual(cardLevel(xpTo(12) + 5, 10), { level: 10, into: xpTo(12) + 5 - xpTo(10), needed: 1800, capped: true }, "the XP past the cap keeps counting");
+  assert.deepEqual(cardLevel(xpTo(12) + 5, 11).level, 11, "and turns into levels as the cap rises");
+  assert.equal(cardPoints(350), 2, "a point a level");
+  assert.equal(cardPoints(xpTo(30), 10), 10, "no more than the cap's");
 });
 
-test("the sheen: silver from level 15, gold at the cap", () => {
-  assert.deepEqual([cardSheen(14), cardSheen(15), cardSheen(24), cardSheen(25)], ["", "silver", "silver", "gold"]);
-});
-
-test("XP added reports each level crossed and stops at the cap", () => {
+test("XP added reports each level crossed under the cap, and keeps counting past it to level 60's", () => {
   const xp: Partial<Record<CardId, number>> = {};
-  assert.deepEqual(addCardXp(xp, "door", 199), []);
-  assert.deepEqual(addCardXp(xp, "door", 1), [1]);
-  assert.deepEqual(addCardXp(xp, "door", 1000), [2, 3]);
-  assert.deepEqual(addCardXp(xp, "door", MAX_CARD_XP), [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]);
+  assert.deepEqual(addCardXp(xp, "door", 99, 10), []);
+  assert.deepEqual(addCardXp(xp, "door", 1, 10), [1]);
+  assert.deepEqual(addCardXp(xp, "door", 500, 10), [2, 3]);
+  assert.deepEqual(addCardXp(xp, "door", xpTo(20), 10), [4, 5, 6, 7, 8, 9, 10], "the cap stops the levels");
+  assert.equal(xp.door, 600 + xpTo(20), "not the XP");
+  const from = cardLevel(xp.door!).level;
+  assert.equal(from, 20, "the same XP under no cap");
+  assert.deepEqual(addCardXp(xp, "door", MAX_CARD_XP), Array.from({ length: 40 }, (_, i) => i + 21), "with no cap, every level on to 60");
   assert.equal(xp.door, MAX_CARD_XP);
-  assert.deepEqual(addCardXp(xp, "door", 1), [], "nothing past the cap");
+  assert.deepEqual(addCardXp(xp, "door", 1), [], "nothing past level 60's");
 });
 
-test("the decoder keeps known cards' whole XP, the cap at most, and drops the rest", () => {
+test("the decoder keeps known cards' whole XP, level 60's at most, and drops the rest", () => {
   assert.deepEqual(decodeCardXp({ door: 12.7, key: 0, nope: 5, stairs: -3, monster: MAX_CARD_XP + 9, heal: "7" }), { door: 12, monster: MAX_CARD_XP });
   assert.deepEqual(decodeCardXp(null), {});
   const save = defaults();
@@ -90,12 +100,12 @@ test("undo takes an activation's XP back", () => {
 });
 
 test("a level reached is queued for the hand's animation, and undo empties the queue", () => {
-  const g = corridor(["keySiphon", "stairs"], (s) => (s.cardXp = { keySiphon: 199 }));
+  const g = corridor(["keySiphon", "stairs"], (s) => (s.cardXp = { keySiphon: 99 }));
   g.autoTurn();
   assert.deepEqual(g.cardLevelUps, [{ card: "keySiphon", level: 1 }]);
   assert.ok(g.undo());
   assert.deepEqual(g.cardLevelUps, []);
-  assert.equal(g.save.cardXp.keySiphon, 199);
+  assert.equal(g.save.cardXp.keySiphon, 99);
 });
 
 test("ARCHER, which never activates, gains an XP a new floor: two for a floor Skip climbs past", () => {

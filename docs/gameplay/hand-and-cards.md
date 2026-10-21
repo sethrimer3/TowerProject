@@ -72,15 +72,16 @@ With Buildout, the next lesson shows the X on ENEMY with a hand pointing at it, 
 
 ## Card levels
 
-Each card has a level of its own, from 0 up to 25, raised by the XP it gains in runs.
+Each card has a level of its own, from 0 up to its **max level**, raised by the XP it gains in runs.
+Every card's max level starts at 10; buying cards (see Card buys below) raises it, up to 25 for most cards and 60 for **Stairs**, whose tree reaches every rarity.
 A card gains 1 XP each time it activates: its path reaching its target (once any fight there is over), or a card that moves nowhere acting (the siphons and trades); **Flying Enemy** gains it each time it brings a Flying enemy within reach.
 **Archer**, which never activates, gains 1 XP for each floor completed for the first time in the run while it is in the run's hand, a floor the Skip badge climbs past included (in the Delve, each equivalent floor passed).
-Only the cards in the run's hand gain XP, and undo takes back what the move gained.
-The levels cost, in XP: 200, 400, 600, 800 and 1,000 for the first five; 1,400, 1,800, 2,200, 2,600 and 3,000 for the next five; then 3,600, 4,200, 4,800, 5,400 and 6,000; then 7,000, 8,000, 9,000, 10,000 and 11,000; and 12,500, 14,500, 17,000, 20,000 and 23,500 for the last five (170,500 in all).
-A card at level 25 gains no more XP.
+
+The levels cost, in XP: 100, 200, 300, 400 and 500 for the first five; 700, 900, 1,100, 1,300 and 1,500 for the next five; then 1,800, 2,100, 2,400, 2,700 and 3,000; then 3,500, 4,000, 4,500, 5,000 and 5,500; then 6,250, 7,250, 8,500, 10,000 and 11,750; and from level 26 each level costs 250 XP more than the step before it (13,750, 16,000, 18,500 and so on, up to 230,500 for level 60; 3,541,500 in all).
+A card at its max level keeps gaining XP toward the levels above it, so when a card buy raises its max level, the XP it gathered turns into levels at once; a card gains no XP past level 60's.
 Each level gives the card 1 card point, to be spent on the card's own tree (see Card trees below).
-A card shows its level in small type at its top left, in the hand and on the Deck page, from level 1; from level 15 its face wears a silver sheen, and at level 25 a golden one.
-A card's details show its level on the card, and under its name the level, its XP toward the next (*340/1,800 XP*) and its card points with those left to spend on its tree; the hand card's tooltip names its level too.
+A card shows its level in small type at its top left, in the hand and on the Deck page, from level 1.
+A card's details show its level on the card, and under its name its rarity with its stars, then its level of its max level and its XP toward the next (*Level 4 / 10 · 340/1,800 XP*, or at the max, *… · buy cards to raise the max*); its card points equal its level, so they aren't repeated; the hand card's tooltip says the same line.
 A card can level up during a run: if the card is in view in the hand, a golden glow covers it with the training point icon at its centre for a second, which then rises and fades over the next second, and the glow fades over a third.
 A card out of view (in a hand scrolled sideways) shows as a ghost at 75% transparency over the board's top left, a golden glow behind it, with the same icon, the ghost fading once the icon is gone.
 Several level-ups play one after another, and wait while a page covers the board.
@@ -98,31 +99,54 @@ A player who had already spent a card point never sees the lesson.
 
 ## Card trees
 
-Nine cards have a tree of upgrades their card points buy, one level of a node a point; each tree takes exactly the 25 points a card earns.
-Each tree's tracks start from the card itself, so a track's first node takes points at once; a node after another takes points only once that one is full.
+Nine cards have a tree of upgrades their card points buy, one level of an upgrade a point.
+Each upgrade has a rarity: **common**, **uncommon**, **rare**, **epic** or **legendary**, the rarest the strongest.
+A common upgrade holds some levels from the start (10 in all on each tree, a card's starting max level), and common card buys open more on it; a rarer one is sealed until a card buy of its rarity opens it at 1 level, and further buys of that rarity open more, up to 5.
+Each tree's tracks start from the card itself, so a track's first upgrade takes points at once; one after another takes points once the one before holds all the levels it started with (a common one's) or 1 level (one a card buy opened).
 A tree's bonuses count while the run's hand holds the card, whichever card leads the hero; each adds into one factor with every other card's bonus to the same thing (two cards' +10% Gold Bonus make ×1.2), and that factor multiplies the other kinds of bonus.
-A run keeps the trees its hand had as it went inside, so points are spent in the forest only; for 20 Gems a card's points all come back, to spend again.
+A run keeps the trees its hand had as it went inside, so points are spent in the forest only; for 20 Gems a card's points all come back, to spend again (the levels card buys opened stay).
 
-On the Deck page, a card with a tree offers **Upgrade tree** in its details (with the points it has left), which opens the tree in place of the Deck page; **‹ Deck** (or Escape, or another tab) goes back.
-Its top shows the card, its level and XP toward the next, the points left to spend (and how many of its points are spent), and **Respec** for 20 Gems.
-The upgrades show as a **Tree** or a **List** (a phone starts on the list); the choice lasts while the game is open.
+On the Deck page, a card with a tree offers **Upgrade tree** in its details, its points left to spend on a second line (*6 points available*), which opens the tree in place of the Deck page; **‹ Deck** (or Escape, or another tab) goes back.
+Its top is one compact row (two on a phone): the card, its name, its level of its max level and XP toward the next, the points left to spend (and how many of its points are spent), and **Respec** for 20 Gems.
+The upgrades show as a **Tree** or a **List**, chosen by one small switch labelled with both, the Tree first; the choice lasts while the game is open.
+A **?** button beside the key says how the tree works and how card buys open it.
 In the tree the card stands at the bottom and each track grows up from it: a full upgrade glows gold, one that can take points has a bright rim and pulses, and one waiting on the upgrade below it is dim with a dashed frame and branch, as the key above the tree shows.
-Each upgrade wears its icon, a bar and count of its levels (*2/5*) and its name under it; the tree can be dragged, panned and zoomed, and its upgrades pulled about, springing back when let go.
-Choosing an upgrade shows what each level gives and what it gives now and with one more level; **Spend a point** (or choosing it again) fills a level, and the upgrades after it sprout open once it is full.
-The list shows the same in rows, each with its own **Spend**, an upgrade indented under the one it follows.
+A sealed upgrade shows nothing of what it is: an empty dashed frame with a **?**, no name, rarity or count (in the list, *Sealed upgrade*), and choosing it shows no details; an upgrade a card buy opened shows in full even past a sealed one below it.
+Each upgrade's frame shows its rarity: grey for a common one, green with a hollow star once card buys opened more of it, silver with a shine now and then and a gold star for uncommon, gold with a shine and two gold stars for rare, rainbow hues running round its edge and three gold stars for epic, and for legendary a white frame on black with a purple star, its icon three times over in shifted hues drifting on cycles of their own, flashing when they line up.
+Each upgrade wears its icon, a bar and count of its levels against those opened (*2/5*) and its name under it; the tree can be dragged, panned and zoomed, and its upgrades pulled about, springing back when let go.
+Choosing an upgrade shows its details under the tree: its name with one line of its rarity, state and level (*★ Rare · Available · Level 2 / 5*) and **Buy** (or *Full*) at the top right, then what each level gives, what it gives now and with one more level, and how many levels card buys can still open on it; **Buy** (or choosing it again) fills a level with a point, and the upgrades after it sprout open once it holds enough.
+Nothing shows under the tree until an upgrade is chosen, and a press on the tree away from every upgrade lets go of it again.
 With a keyboard, the arrow keys move through the tree (up the track, down toward the card, and across), Enter chooses an upgrade and again spends a point, and each point spent is announced to screen readers.
 Points are spent in the forest; inside a run the tree only shows.
 
-- **Stairs**: +10% Gold and Silver a floor (Spare Change and Wishing Well, 5 levels), then +10% Gold Bonus (1) and +10% Silver Bonus (1); +5% to each Free Up chance (Offense, Defense and Utility, 2 levels each); a heal of 10% of max HP on each floor new to the run, up to the Overheal ceiling (5 levels, then 5 more), with +10% Overheal ceiling after the first five (1) and +15% after the second (1).
-- **Heal**: +10% chance of a percent potion (5 levels, up to every potion), +10% HP from every potion (5), +10% Gold Bonus (5), +0.01% max HP for the run each time it reaches a potion (5), and +5% Overheal ceiling (5).
-- **Door**: −1% cost of every door, its keys and any HP it takes (10 levels), +1% Gold from doors (10) and +2% Silver Bonus (5).
-- **Key**: +1% more each key of every colour (10 levels), +1% Gold from each key (10) and +2% Silver Bonus (5).
-- **Enemy**: +1% ATK (5 levels), +1% DEF (5) and +1% Gold (5) against every enemy, and 1% more enemies of every strength on each floor (10).
-- **ATK Up** and **DEF Up**: +1% from each of their shards (10 levels), +0.1 Gold from each (10) and +1% Silver Bonus (5).
-- **Torch**, against a Greater Boss: +1% ATK (5 levels), +1% DEF (5), +1% Gold (5), +2% shroud (5) and 1 Cell more (5).
-- **Chest**: +2% Gold from treasure chests (5 levels), +0.2% Supply Chest chance (10, up to 3.5%) and +0.1% Equipment Chest chance (10, up to 1.5%).
+- **Stairs** has two tracks, each rising one rarity an upgrade.
+  Gold: +2% Spare Change Gold a floor (common, 5 levels, up to 10), then a heal of 3% of max HP on each floor new to the run, up to the Overheal ceiling (uncommon), +2% Gold Bonus (rare), +1% Free Offense chance (epic), and +5% Overheal Max (legendary), each up to 5 levels.
+  Silver: +2% Wishing Well Silver a floor (common, 5 levels, up to 10), then the same 3% heal (uncommon), +2% Silver Bonus (rare), +1% Free Defense chance (epic), and +1% Stair Skip (legendary), each up to 5 levels.
+  Overheal Max multiplies the Overheal ceiling whether or not Overheal is owned, so on its own it lets potions and heals rise 5% a level above max HP.
+  Stair Skip is a chance that the Tower's stairs, reached by Stairs, climb two floors, as the Skip badge on Stairs does (added to that badge's chance when both are held).
+- The other trees are common only for now, each upgrade holding its first levels from the start and opened to the rest by common card buys:
+- **Heal**: +10% chance of a percent potion (2 levels, up to 5, up to every potion), +10% HP from every potion (2, up to 5), +10% Gold Bonus (2, up to 5), +0.01% max HP for the run each time it reaches a potion (2, up to 5), and +5% Overheal ceiling (2, up to 5).
+- **Door**: −1% cost of every door, its keys and any HP it takes (4 levels, up to 10), +1% Gold from doors (4, up to 10) and +2% Silver Bonus (2, up to 5).
+- **Key**: +1% more each key of every colour (4 levels, up to 10), +1% Gold from each key (4, up to 10) and +2% Silver Bonus (2, up to 5).
+- **Enemy**: +1% ATK (2 levels, up to 5), +1% DEF (2, up to 5) and +1% Gold (2, up to 5) against every enemy, and 1% more enemies of every strength on each floor (4, up to 10).
+- **ATK Up** and **DEF Up**: +1% from each of their shards (4 levels, up to 10), +0.1 Gold from each (4, up to 10) and +1% Silver Bonus (2, up to 5).
+- **Torch**, against a Greater Boss: +1% ATK (2 levels, up to 5), +1% DEF, +1% Gold, +2% shroud and 1 Cell more (each 2, up to 5).
+- **Chest**: +2% Gold from treasure chests (2 levels, up to 5), +0.2% Supply Chest chance (4, up to 10, up to 3.5%) and +0.1% Equipment Chest chance (4, up to 10, up to 1.5%).
 
-The Overheal ceiling bonuses count only once Overheal is owned.
+The Overheal ceiling bonuses of Heal count only once Overheal is owned.
+
+## Card buys
+
+Above the Deck on the Deck page, **Buy ×1** (20 Gems) and **Buy ×10** (200 Gems) buy cards.
+Each card bought draws a rarity (common 69.95%, uncommon 25.5%, rare 4%, epic 0.5%, legendary 0.05%) and goes to a card of your deck chosen at random among those with an upgrade level left to open (a card fully opened leaves the draw).
+It opens one level of that rarity on the card's tree, raising the card's max level by 1: a sealed upgrade of that rarity first, at 1 level, and once all of them are open, one more level on one of them at random.
+When the card's upgrades of the rarity drawn are all fully opened, the buy goes to the next rarer rarity the card has room in (so once a Stairs card's common and uncommon upgrades are full, its buys are rare or better); with none rarer, to the rarest commoner one.
+The buttons buy only while the deck's cards have that many levels left to open; with none left, buying waits until a new card joins the deck, which then takes every buy.
+Each buy continues one random sequence the profile is given when it is made, so reloading never buys again differently.
+Short of Gems, the price shows red and a press offers the Shop.
+Each card bought is shown on its own, glowing for its rarity: green round its edge for common, silver for uncommon, gold with golden rays shooting out behind it for rare, rainbow hues turning round its edge with rainbow rays for epic, and for legendary the screen darkening behind it as stars shoot out; under it the upgrade it unlocked or raised and its max level before and after.
+Ten bought at once show which of the ten is up, with **Skip**, and end on all ten together, those that unlocked an upgrade marked **NEW**; the last screen offers the same purchase again.
+Once a card holds an upgrade rarer than common, it wears that rarity's frame in the hand (in runs too), on the Deck page and in its details, whose rarity line shows its stars.
 
 ## Card Groups
 
@@ -159,7 +183,7 @@ The three regain projects each take 90 levels (100 floors down to 10), level n t
 ## Badges
 
 **Badges** (2 Courage, after Focus) opens a **Badges** box on the Deck page, beside the deck: the two share the space below the hand in two columns, each scrolling on its own when its cards or tokens don't fit.
-Above the box, **Draw ×1** (20 Gems) and **Draw ×10** (200 Gems) draw card badges: rounded tokens drawn by rarity (common 70%, rare 27%, epic 3%, among the rarities that still have one to draw), each continuing the same saved random sequence, so reloading never draws again.
+Above the box, **Buy ×1** (20 Gems) and **Buy ×10** (200 Gems) draw card badges: rounded tokens drawn by rarity (common 70%, rare 27%, epic 3%, among the rarities that still have one to draw), each continuing the same saved random sequence, so reloading never draws again.
 The first copy of a badge rises onto the screen with rays behind it; a repeat drops a coin onto its token, its copies bouncing up to their new count before the slash and the copies its next level takes appear, and a level reached sparkles onto the star in its corner.
 Ten drawn at once show one at a time, counting 1 / 10 to 10 / 10 (Skip jumps ahead), then all ten together, marking each one new or levelled up.
 The first copy opens level 1 and counts toward level 2; 3, 5, 8, 12, 20 and 32 copies reach levels 2 to 7 (80 in all), each token showing its copies toward the next under it, and a badge at level 7 is no longer drawn.

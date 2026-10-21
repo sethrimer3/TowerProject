@@ -2,6 +2,8 @@ import { TRAINING } from "./config.ts";
 import { fraction, isRecord, time } from "./decode.ts";
 import type { Save } from "./save-shape.ts";
 import { snap } from "./exact.ts";
+import { seedCardBuys } from "./card-buys.ts";
+import { stream } from "./random.ts";
 
 /** The currencies whose lifetime earnings the player profile tallies. */
 export const LIFETIME_CURRENCIES = ["gold", "silver", "gems", "ascensionShards", "cells", "medals", "inspiration", "courage", "tickets"] as const;
@@ -56,9 +58,12 @@ export function tally(o: Holder, k: ProfileCount, amount: number) {
   if (o.profile && amount) o.profile[k] = Math.max(0, snap(o.profile[k] + amount));
 }
 
-/** Stamps the profile's creation at `now`, unless it has one. */
+/** Stamps the profile's creation at `now`, unless it has one, and seeds
+ * its card buys' stream, unless it is seeded. */
 export function stampProfile(save: Save, now: number) {
   if (!save.profile.createdAt) save.profile.createdAt = now;
+  // The profile's own card buys stream, seeded once and never again.
+  seedCardBuys(save.cardBuys, stream("cardBuys"));
 }
 
 export function decodeProfile(raw: unknown): Profile {

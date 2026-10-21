@@ -542,8 +542,24 @@ Sending the hero inside a run to a tile the player taps, ahead of the hand, unti
 _Avoid_: waypoint, goto
 
 **Card level**:
-How far a card has grown, from 0 to 25, by the card XP it gathers over every run; each level costs more than the one before and gives a card point. Shown on the card's top left from level 1; from level 15 the card shines silver, and gold at 25.
+How far a card has grown, from 0 up to its max level, by the card XP it gathers over every run; each level costs more than the one before and gives a card point. Shown on the card's top left from level 1. XP gathered at the max level waits for the levels a card buy opens.
 _Avoid_: card rank, card tier
+
+**Max level**:
+The highest level a card can reach now: every level its card tree holds, 10 at first, raised by one with each card buy that goes to it (up to 25, or 60 for STAIRS).
+_Avoid_: level cap (in player-facing text), card limit
+
+**Card buy**:
+A card bought with Gems on the Deck page, one or ten at a time: each draws a card rarity and goes to a random card of the deck with room, opening one level of that rarity on its card tree and raising its max level by one. Its draws continue one random sequence the profile is given when it is made.
+_Avoid_: card draw (badges are drawn), card pack, booster
+
+**Card rarity**:
+How rare an upgrade on a card tree is, and the card buy that opens it: common, uncommon, rare, epic or legendary. A card wears the rarest rarity opened on its tree, in its frame and stars. Not a card badge's rarity.
+_Avoid_: card tier, card grade
+
+**Sealed upgrade**:
+An upgrade of a card tree no card buy of its rarity has opened yet; it takes no points until one does.
+_Avoid_: locked upgrade (locked means waiting on the upgrade before it)
 
 **Card XP**:
 What raises a card's level: one each time the card activates in a run, or, for a card that never activates (Archer), one for each floor completed for the first time in the run while the hand holds it. Undo takes it back with the move.
@@ -557,7 +573,7 @@ A card in the deck the player hasn't met on the Deck page yet (pressed for its d
 _Avoid_: unseen card (a card the Deck page hasn't shown is what the Deck tab's dot counts, and it clears on opening the page)
 
 **Card tree**:
-A card's tree of nodes its card points buy, a level a point: tracks from the card itself, each node open once the node before it is full, its bonuses counting while the run's hand holds the card. A **respec** gives all of a card's points back for Gems.
+A card's tree of nodes its card points buy, a level a point: tracks from the card itself, each node open once the node before it holds enough levels, its bonuses counting while the run's hand holds the card. Each node has a card rarity; card buys open its levels. A **respec** gives all of a card's points back for Gems.
 _Avoid_: card skill tree, talent tree, reward tree
 
 **Card badge**:

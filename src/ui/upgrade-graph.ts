@@ -111,6 +111,8 @@ export class UpgradeGraph {
     private readonly opts: {
       reduceMotion: () => boolean;
       onPick: (id: string) => void;
+      /** A tap on the view away from every node (not a pan). */
+      onClear?: () => void;
       paint?: (el: HTMLElement) => void;
       /** Pixels between neighbouring leaves and between generations (`GAP_X`, `GAP_Y` by default). */
       gap?: { x: number; y: number };
@@ -483,7 +485,10 @@ export class UpgradeGraph {
     this.drag = null;
     const b = this.bodies.get(g.id);
     b?.el.classList.remove("dragged");
-    if (e.type === "pointerup" && !g.moved && g.id) this.opts.onPick(g.id);
+    if (e.type === "pointerup" && !g.moved) {
+      if (g.id) this.opts.onPick(g.id);
+      else this.opts.onClear?.();
+    }
     if (this.opts.reduceMotion()) this.snap();
   };
 

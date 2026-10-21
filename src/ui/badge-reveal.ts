@@ -60,7 +60,7 @@ export function revealDraws(draws: readonly BadgeDraw[], reduceMotion: boolean, 
     const holder = document.createElement("div");
     if (!again) return holder;
     holder.className = "badge-reveal-again";
-    holder.innerHTML = `<button type="button" class="badge-reveal-more${again.affordable() ? "" : " short"}" aria-label="Draw x${again.count} more for ${again.gems} Gems">x${again.count} more · ${gemIcon()} <b>${again.gems}</b></button>`;
+    holder.innerHTML = `<button type="button" class="badge-reveal-more${again.affordable() ? "" : " short"}" aria-label="Buy x${again.count} more for ${again.gems} Gems">x${again.count} more · ${gemIcon()} <b>${again.gems}</b></button>`;
     return holder;
   };
   const focusContinue = () => layer.querySelector<HTMLButtonElement>(".badge-reveal-go")?.focus({ preventScroll: true });

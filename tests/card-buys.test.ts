@@ -1,0 +1,130 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { Game } from "../src/state.ts";
+import { decode, defaults } from "../src/save.ts";
+import { CARD_RARITY_WEIGHTS } from "../src/card-rarity.ts";
+import { buyCards, buyOne, buysLeft, CARD_BUY_GEMS, decodeCardBuys, defaultCardBuys, rarityOn, type CardBuysSave } from "../src/card-buys.ts";
+import { CARD_LEVEL_XP } from "../src/card-levels.ts";
+import { CARD_TREES, cardMaxLevel, levelIn, type CardOpened } from "../src/card-trees.ts";
+import { stampProfile } from "../src/profile.ts";
+import { random } from "../src/random.ts";
+import type { CardId } from "../src/cards.ts";
+
+/** A stream that returns `numbers` in turn. */
+const numbers = (...n: number[]) => () => n.shift() ?? 0;
+/** Every level card buys can open on `card`'s nodes of the rarities given, opened. */
+function opened(card: CardId, rarities: string[]): Record<string, number> {
+  return Object.fromEntries(CARD_TREES[card]!.filter((n) => rarities.includes(n.rarity)).map((n) => [n.id, n.max - n.levels]));
+}
+const xpTo = (n: number) => CARD_LEVEL_XP.slice(0, n).reduce((a, b) => a + b, 0);
+
+test("the rarities' chances: 69.95%, 25.5%, 4%, 0.5% and 0.05%", () => {
+  assert.deepEqual(CARD_RARITY_WEIGHTS, { common: 6995, uncommon: 2550, rare: 400, epic: 50, legendary: 5 });
+  assert.deepEqual(CARD_BUY_GEMS, { 1: 20, 10: 200 });
+});
+
+test("the buys left are every level the deck's trees can still open", () => {
+  assert.equal(buysLeft({}, ["stairs", "door", "key", "monster"]), 50 + 15 + 15 + 15);
+  assert.equal(buysLeft({}, ["archer"]), 0, "a card without a tree takes none");
+  assert.equal(buysLeft({ stairs: { floorGold: 5, overhealMax: 2 } }, ["stairs"]), 43);
+});
+
+test("a buy opens a sealed node of its rarity first, at one level, then raises one with room", () => {
+  const m = defaultCardBuys();
+  const legendary = buyOne(m, ["stairs"], numbers(0.9999, 0, 0))!;
+  assert.deepEqual(legendary, { card: "stairs", rarity: "legendary", node: "overhealMax", cap: 1, fresh: true, maxLevel: { before: 10, after: 11 }, look: { before: "common", after: "legendary" } });
+  const next = buyOne(m, ["stairs"], numbers(0.9999, 0, 0))!;
+  assert.equal(next.node, "stairSkip", "the other sealed one");
+  assert.equal(next.fresh, true);
+  const raise = buyOne(m, ["stairs"], numbers(0.9999, 0, 0.99))!;
+  assert.deepEqual([raise.node, raise.cap, raise.fresh], ["stairSkip", 2, false], "both open: one raised");
+  const common = buyOne(m, ["stairs"], numbers(0, 0, 0))!;
+  assert.deepEqual([common.rarity, common.node, common.cap, common.fresh], ["common", "floorGold", 6, false]);
+  assert.deepEqual(m.opened, { stairs: { overhealMax: 1, stairSkip: 2, floorGold: 1 } });
+});
+
+test("a card whose nodes of the rarity drawn are full takes the next rarer it has room in, else the rarest commoner", () => {
+  assert.equal(rarityOn({}, "door", "uncommon"), "common", "DOOR has only common nodes");
+  const full: CardOpened = { stairs: opened("stairs", ["common", "uncommon"]) };
+  assert.equal(rarityOn(full, "stairs", "common"), "rare");
+  assert.equal(rarityOn(full, "stairs", "uncommon"), "rare");
+  assert.equal(rarityOn(full, "stairs", "epic"), "epic");
+  const top: CardOpened = { stairs: opened("stairs", ["uncommon", "rare", "epic", "legendary"]) };
+  assert.equal(rarityOn(top, "stairs", "legendary"), "common");
+  assert.equal(rarityOn({ stairs: opened("stairs", ["common", "uncommon", "rare", "epic", "legendary"]) }, "stairs", "rare"), null);
+});
+
+test("a buy picks among the deck's cards with room, leaving full ones out, until none has any", () => {
+  const m: CardBuysSave = { rng: null, opened: { door: opened("door", ["common"]) } };
+  assert.equal(buyOne(m, ["door", "key"], numbers(0, 0, 0))!.card, "key", "DOOR is full");
+  const all: CardBuysSave = { rng: null, opened: { door: opened("door", ["common"]) } };
+  assert.equal(buyOne(all, ["door"], numbers(0, 0, 0)), null);
+  const bought: CardBuysSave = { rng: 5, opened: {} };
+  assert.equal(buyCards(bought, ["door"], 20, () => 0).length, 15, "no more than the tree holds");
+  assert.equal(cardMaxLevel(bought.opened, "door"), 25);
+  assert.equal(buysLeft(bought.opened, ["door"]), 0);
+});
+
+test("buys carry on the profile's stream: seeded once, never rewound, the same buys bought one at a time or together", () => {
+  const cards: CardId[] = ["stairs", "door", "key", "monster"];
+  const together: CardBuysSave = { rng: 123, opened: {} }, apart: CardBuysSave = { rng: 123, opened: {} };
+  const ten = buyCards(together, cards, 10, () => 0.5);
+  const ones = Array.from({ length: 10 }, () => buyCards(apart, cards, 1, () => 0.9)[0]);
+  assert.deepEqual(ones, ten);
+  assert.deepEqual(apart, together);
+  assert.notEqual(together.rng, 123);
+  const fresh = defaultCardBuys();
+  buyCards(fresh, cards, 1, () => 0.25);
+  assert.equal(typeof fresh.rng, "number", "seeded at the first buy when the profile wasn't");
+  const save = defaults();
+  assert.equal(save.cardBuys.rng, null);
+  stampProfile(save, 1000);
+  const seeded = save.cardBuys.rng;
+  assert.equal(typeof seeded, "number", "seeded as the profile is made");
+  stampProfile(save, 2000);
+  assert.equal(save.cardBuys.rng, seeded, "and never again");
+});
+
+test("ten thousand buys land near the rarities' chances", () => {
+  const counts: Record<string, number> = {};
+  const rng = random(42);
+  for (let i = 0; i < 10_000; i++) {
+    const r = buyOne({ rng: null, opened: {} }, ["stairs"], rng)!.rarity;
+    counts[r] = (counts[r] ?? 0) + 1;
+  }
+  assert.ok(counts.common > 6700 && counts.common < 7300, `common ${counts.common}`);
+  assert.ok(counts.uncommon > 2300 && counts.uncommon < 2800, `uncommon ${counts.uncommon}`);
+  assert.ok(counts.rare > 300 && counts.rare < 500, `rare ${counts.rare}`);
+});
+
+test("the Game's desk buys for Gems, asks for them when short, refuses past what the deck can take, and banked XP turns into levels", () => {
+  const save = defaults();
+  save.cardXp = { stairs: xpTo(12) };
+  const g = new Game(save);
+  g.newRun({ outside: true, seed: 1 });
+  assert.equal(levelIn(g.save, "stairs").level, 10, "held at max level 10");
+  assert.equal(g.cardBuys.refusal(1), "short");
+  assert.equal(g.cardBuys.buy(1), "short");
+  g.save.gems = 25;
+  const buys = g.cardBuys.buy(1);
+  assert.ok(Array.isArray(buys) && buys.length === 1);
+  assert.equal(g.save.gems, 5);
+  const left = g.cardBuys.left;
+  g.save.gems = 1e6;
+  g.save.cardBuys.opened = { stairs: opened("stairs", ["common", "uncommon", "rare", "epic", "legendary"]), door: opened("door", ["common"]), key: opened("key", ["common"]) };
+  assert.ok(left > 0);
+  assert.equal(g.cardBuys.left, 15, "ENEMY's alone");
+  assert.equal(levelIn(g.save, "stairs").level, 12, "the XP gathered past the cap");
+  g.save.cardBuys.opened.monster = { attack: 3, defense: 3, gold: 3 };
+  assert.equal(g.cardBuys.left, 6);
+  assert.equal(g.cardBuys.refusal(10), "full");
+  assert.equal(g.cardBuys.refusal(1), null);
+});
+
+test("the save keeps the stream and the levels opened, within each node's room", () => {
+  const save = defaults();
+  save.cardBuys = { rng: 77, opened: { stairs: { floorGold: 3, overhealMax: 2 } } };
+  assert.deepEqual(decode(JSON.stringify(save)).cardBuys, save.cardBuys);
+  assert.deepEqual(decodeCardBuys({ rng: -1, opened: { stairs: { floorGold: 6, nope: 1, goldBonus: 1.5, stairSkip: 5 }, archer: { a: 1 }, bogus: {} } }), { rng: null, opened: { stairs: { stairSkip: 5 } } });
+  assert.deepEqual(decodeCardBuys("x"), defaultCardBuys());
+});

@@ -429,7 +429,7 @@ function badgeTitle(badge: RunBadge) {
  * for each badge it holds, top slot first, and a siphon's uses so far this
  * run. */
 function handCardTitle(game: Game, id: CardId) {
-  let title = `${CARDS[id].name} (${cardLevelTitle(game.save.cardXp[id] ?? 0)}): ${cardText(id, game.save.upgrades)}`;
+  let title = `${CARDS[id].name} (${cardLevelTitle(game.save, id)}): ${cardText(id, game.save.upgrades)}`;
   const bonus = cardBonusText(id);
   if (bonus) title += `
 ${bonus}`;
@@ -454,7 +454,7 @@ function handBadgeHtml(game: Game, id: CardId) {
  * latest step glowing (paused too); End Run lights up while no card can act. */
 function renderHand(game: Game) {
   const row = el("hand"), hand = game.hand;
-  const levels = hand.map((id) => cardLevelHtml(game.save.cardXp[id] ?? 0));
+  const levels = hand.map((id) => cardLevelHtml(game.save, id));
   const key = `${hand.join()}|${game.run.outside ? "" : JSON.stringify(game.run.badges ?? {})}|${levels.join()}`;
   if (key !== shownHand) {
     shownHand = key;

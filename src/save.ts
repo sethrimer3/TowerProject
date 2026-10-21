@@ -27,8 +27,9 @@ import { decodeBadges, defaultBadges, validRunBadges } from "./badges.ts";
 import { backfillProfile, decodeProfile, defaultProfile } from "./profile.ts";
 import { decodeFinds, defaultFinds, validNotes } from "./run-notes.ts";
 import { isFoeKey } from "./foe-cards.ts";
-import { cardLevelTotal, decodeCardXp } from "./card-levels.ts";
-import { treeNode, decodeCardTrees, pointsSpent } from "./card-trees.ts";
+import { decodeCardXp } from "./card-levels.ts";
+import { decodeCardBuys, defaultCardBuys } from "./card-buys.ts";
+import { totalCardLevels, treeNode, decodeCardTrees, pointsSpent } from "./card-trees.ts";
 export function defaults(): Save {
   return {
     version: 3,
@@ -65,6 +66,7 @@ export function defaults(): Save {
     cardLinks: [],
     cardXp: {},
     cardTrees: {},
+    cardBuys: defaultCardBuys(),
     handSlots: 0,
     badges: defaultBadges(),
     tutorials: { deck: false, removeCard: false, addCard: false, upgrades: false, gear: false, onTheJob: false, speed: false, climb: false, enter: false, delve: false, chamber: false, cardPoints: false },
@@ -180,7 +182,7 @@ const RUN_FIELD_CHECKS = {
   badges: (v: unknown, r: any) => validRunBadges(v) && Object.keys(v as object).every((card) => r.hand?.includes(card)),
   // The hand is checked first: every card with a tree copied must be in it.
   cardTrees: (v: unknown, r: any) => isRecord(v) && Object.entries(v).every(([card, nodes]) => !!r.hand?.includes(card) && isRecord(nodes) &&
-    Object.entries(nodes).every(([id, n]) => { const node = treeNode(card as CardId, id); return !!node && wholeIn(n, 1, node.levels); })),
+    Object.entries(nodes).every(([id, n]) => { const node = treeNode(card as CardId, id); return !!node && wholeIn(n, 1, node.max); })),
   // The hand is checked first: each link joins cards side by side in it.
   links: (v: unknown, r: any) => Array.isArray(v) && v.length > 0 && keptLinks(r.hand ?? [], links(v)).length === v.length,
   badgeFloors: (v: unknown) => isRecord(v) && Object.entries(v).every(([k, n]) => (k === "stairward" || k === "skipOpen") && wholeIn(n, 0, 1e6)),
@@ -498,7 +500,7 @@ function decodeHand(raw: any, owned: CardId[], slots: number): CardId[] {
  * it holds and its cards' levels. */
 function decodeSeen(s: any, d: Save): Save["seen"] {
   const held = deckCards(d.upgrades, d.goals), known = (raw: unknown) => Array.isArray(raw) ? CARD_IDS.filter((id) => raw.includes(id)) : held;
-  const cardLevels = s?.cardLevels === undefined ? cardLevelTotal(d.cardXp) : count(s.cardLevels, 0);
+  const cardLevels = s?.cardLevels === undefined ? totalCardLevels(d) : count(s.cardLevels, 0);
   return { level: count(s?.level, 0), training: count(s?.training, 0), archives: count(s?.archives, 0), cards: known(s?.cards), cardLevels, met: known(s?.met) };
 }
 export function decode(raw: string | null): Save {
@@ -538,7 +540,8 @@ export function decode(raw: string | null): Save {
     d.hand = decodeHand(s.hand, deckCards(d.upgrades, d.goals), handSlots(d));
     d.cardLinks = keptLinks(d.hand, links(s.cardLinks));
     d.cardXp = decodeCardXp(s.cardXp);
-    d.cardTrees = decodeCardTrees(s.cardTrees, d.cardXp);
+    d.cardBuys = decodeCardBuys(s.cardBuys);
+    d.cardTrees = decodeCardTrees(s.cardTrees, d.cardXp, d.cardBuys.opened);
     d.badges = decodeBadges(s.badges, d.upgrades, researched(d.archives, "badgeSlots"), d.goals);
     for (const k of ["deck", "removeCard", "addCard", "upgrades", "gear", "onTheJob", "speed", "climb", "enter", "delve", "chamber", "cardPoints"] as const) d.tutorials[k] = s.tutorials?.[k] === true;
     // A player who has already spent a card point needs no lesson on it.

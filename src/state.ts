@@ -3,7 +3,7 @@ import { buyTheme, canWear, grantAllThemes, type GameLook, type ThemeId, type Th
 import { chooseStep } from "./automation.ts";
 import { CARDS, cardText, deckCards, explainStuck, handBonus, keptLinks, planHand, planTarget, shootsWith, stillOpen, type CardId, type CardPlan, type HandBonus, type StuckReport } from "./cards.ts";
 import { addCardXp, PASSIVE_CARDS } from "./card-levels.ts";
-import { freeUpFactors, hasPointsToSpend, pointsLeft, runCardTrees, treeBonus, treeFactor, treeOverheal, type TreeBonus } from "./card-trees.ts";
+import { cardMaxLevel, freeUpFactors, hasPointsToSpend, pointsLeft, runCardTrees, treeBonus, treeFactor, treeOverheal, type TreeBonus } from "./card-trees.ts";
 import { aggroTurn } from "./flying.ts";
 import { foeOn } from "./ranged.ts";
 import { BADGE_IDS, MAX_COPIES, badgeOn, badgeValue, runBadges } from "./badges.ts";
@@ -89,6 +89,7 @@ import { GearDesk } from "./game/gear-desk.ts";
 import { GemFinder } from "./game/gem-finder.ts";
 import { BadgeDesk } from "./game/badge-desk.ts";
 import { CardTreeDesk } from "./game/card-tree-desk.ts";
+import { CardBuyDesk } from "./game/card-buy-desk.ts";
 import { HandRules } from "./hand-rules.ts";
 import { RunPurse, type EquipmentLoot } from "./game/run-purse.ts";
 import { EquipmentDesk } from "./game/equipment-desk.ts";
@@ -281,6 +282,8 @@ export class Game {
    * them to cards. */
   readonly badges = new BadgeDesk(this);
   readonly cardTrees = new CardTreeDesk(this);
+  /** The Deck page's card buys: Gems for levels opened on the deck's trees. */
+  readonly cardBuys = new CardBuyDesk(this);
   /** What the hand's cards may do now: their badges' rules and marks,
    * Ignore's tiles and the cards that act in place; where the hand plans
    * from. */
@@ -1466,7 +1469,7 @@ export class Game {
   /** Card `id` gains `xp` toward its levels, each level it reaches queued
    * for the hand's animation. Undo takes it back with the move. */
   gainCardXp(id: CardId, xp: number) {
-    for (const level of addCardXp(this.save.cardXp, id, xp)) this.cardLevelUps.push({ card: id, level });
+    for (const level of addCardXp(this.save.cardXp, id, xp, cardMaxLevel(this.save.cardBuys.opened, id))) this.cardLevelUps.push({ card: id, level });
   }
   /** `floors` new floors completed: each card of the hand that never
    * activates (`PASSIVE_CARDS`) gains one XP a floor. */

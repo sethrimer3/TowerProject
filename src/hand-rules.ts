@@ -8,6 +8,7 @@ import type { Save } from "./save-shape.ts";
 import { snap } from "./exact.ts";
 import { MODES, type ModeProfile } from "./modes.ts";
 import { drawAt } from "./random.ts";
+import { treeBonus } from "./card-trees.ts";
 import { boughtInRun } from "./run-training.ts";
 
 /** Mixed into the run seed to start Skip's stream of rolls. */
@@ -133,22 +134,31 @@ export class HandRules implements HandAt {
     return (100 + (badge.id === "effective" ? v : -v)) / 100;
   }
 
-  /** Whether Skip on card `card` rolls for its target at (x, y): never for
-   * a boss, the Delve's STAIRS card's climb (no stairs), a torch (no tile
-   * to vanish), or FLYING ENEMY (its path ends short of its target). */
+  /** STAIRS' tree's Stair Skip chance, in percent: its stairs climb two
+   * floors as Skip on STAIRS does. */
+  private get stairSkip() {
+    return treeBonus(this.run.cardTrees).stairSkip;
+  }
+  /** Whether Skip on card `card` (or, on STAIRS, its tree's Stair Skip)
+   * rolls for its target at (x, y): never for a boss, the Delve's STAIRS
+   * card's climb (no stairs), a torch (no tile to vanish), or FLYING ENEMY
+   * (its path ends short of its target). */
   rollsSkip(card: CardId, x: number, y: number) {
-    if (!badgeOn(this.run.badges, card, "skip") || this.run.outside || card === "torch" || card === "flyingEnemy") return false;
+    if (this.run.outside || card === "torch" || card === "flyingEnemy") return false;
+    if (!badgeOn(this.run.badges, card, "skip") && !(card === "stairs" && this.stairSkip > 0)) return false;
     const t = this.world.tile(x, y);
     if (t.kind === "enemy" && (t.enemy!.strength === "boss" || t.enemy!.strength === "greaterBoss")) return false;
     return card !== "stairs" || t.kind === "stairs";
   }
-  /** Whether Skip's next roll falls under card `card`'s chance: the next
-   * number of its own stream, started from the run seed (the floors' seed),
-   * so a run of the same seed played the same way skips the same targets.
-   * The roll isn't spent until `skipRolled`. */
+  /** Whether Skip's next roll falls under card `card`'s chance (its Skip
+   * badge's and, on STAIRS, Stair Skip's, added): the next number of its
+   * own stream, started from the run seed (the floors' seed), so a run of
+   * the same seed played the same way skips the same targets. The roll
+   * isn't spent until `skipRolled`. */
   skipHits(card: CardId) {
-    const badge = badgeOn(this.run.badges, card, "skip")!;
-    return drawAt(this.run.seed ^ SKIP_SALT, this.run.skipRolls ?? 0) < badgeValue(badge.id, badge.level, badge.pick) / 100;
+    const badge = badgeOn(this.run.badges, card, "skip");
+    const chance = (badge ? badgeValue(badge.id, badge.level, badge.pick) : 0) + (card === "stairs" ? this.stairSkip : 0);
+    return drawAt(this.run.seed ^ SKIP_SALT, this.run.skipRolls ?? 0) < chance / 100;
   }
   /** Skip's roll is spent: the stream moves on (`run.skipRolls` counts
    * those drawn). */

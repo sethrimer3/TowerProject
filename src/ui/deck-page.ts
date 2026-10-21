@@ -7,6 +7,8 @@ import { DRAW_GEMS, type DrawCount } from "../game/badge-desk.ts";
 import { cardWith, fitsCard, BADGE_IDS, BADGES, badgeLevel, badgeValue, type BadgeId } from "../badges.ts";
 import { RARITIES } from "../shop/rarity.ts";
 import { revealDraws } from "./badge-reveal.ts";
+import { revealBuys } from "./card-buy-reveal.ts";
+import { CARD_BUY_GEMS, type CardBuyCount } from "../card-buys.ts";
 import { showCard, type CardAction, type CardDetails } from "./card-reveal.ts";
 import { CardTreePanel } from "./card-tree-panel.ts";
 import { CARD_TREES, hasPointsToSpend } from "../card-trees.ts";
@@ -207,8 +209,24 @@ export class DeckPage {
    * in its own column. */
   private columnsHtml() {
     const save = this.ctx.game.save, lesson = this.lesson;
-    const deck = save.upgrades.buildout && lesson !== "remove" ? this.deckHtml(lesson === "add") : this.lockedDeckHtml(!!save.upgrades.buildout);
+    const deck = `<div class="deck-stack">${this.cardBuysHtml()}${save.upgrades.buildout && lesson !== "remove" ? this.deckHtml(lesson === "add") : this.lockedDeckHtml(!!save.upgrades.buildout)}</div>`;
     return this.showsBadges ? `<div class="deck-columns">${deck}${this.badgesHtml()}</div>` : deck;
+  }
+
+  /** The card buy buttons over the Deck section (none while a lesson
+   * waits on the player). */
+  private cardBuysHtml() {
+    if (this.waitsOnPlayer) return "";
+    return `<div class="card-buys" role="group" aria-label="Buy cards">${this.cardBuyButton(1)}${this.cardBuyButton(10)}</div>`;
+  }
+
+  /** The button that buys `count` cards: red-priced when short of Gems,
+   * and unavailable only once the deck's trees have too few levels left
+   * to open. */
+  private cardBuyButton(count: CardBuyCount) {
+    const { game } = this.ctx, price = CARD_BUY_GEMS[count], refusal = game.cardBuys.refusal(count);
+    const title = refusal === "full" ? (game.cardBuys.left ? `Only ${game.cardBuys.left} upgrade${game.cardBuys.left === 1 ? "" : "s"} left on your deck's cards` : "Every card in your deck is fully upgraded") : `Buy ${count === 1 ? "a card" : "10 cards"} for ${price} Gems: each raises a deck card's max level and opens an upgrade on its tree`;
+    return `<button type="button" class="badge-draw card-buy${refusal === "short" ? " short" : ""}" data-buy-cards="${count}" ${refusal === "full" ? "disabled" : ""} title="${title}" aria-label="Buy ${count === 1 ? "a card" : "10 cards"} for ${price} Gems">Buy ×${count}<span>${gemIcon()}<b>${price}</b></span></button>`;
   }
 
   /** The draw buttons over the Badges box, which lists each badge
@@ -227,7 +245,7 @@ export class DeckPage {
         <div class="badge-draws">${this.drawButton(1)}${this.drawButton(10)}</div>
         <div class="badge-box">
           <h3 id="badges-label" class="deck-label">Badges</h3>
-          ${owned.length ? `<div class="badge-grid" role="list" aria-label="Your badges">${entries}</div>` : `<p class="badge-empty">Draw badges with Gems, then drag one onto a card to change what it does.</p>`}
+          ${owned.length ? `<div class="badge-grid" role="list" aria-label="Your badges">${entries}</div>` : `<p class="badge-empty">Buy badges with Gems, then drag one onto a card to change what it does.</p>`}
         </div>
       </section>`;
   }
@@ -237,7 +255,7 @@ export class DeckPage {
   private drawButton(count: DrawCount) {
     const { game } = this.ctx, price = DRAW_GEMS[count], short = !game.free && game.save.gems < price;
     const can = game.badges.canDraw(count);
-    return `<button type="button" class="badge-draw${short ? " short" : ""}" data-draw="${count}" ${can ? "" : "disabled"} title="${can ? `Draw ${count === 1 ? "a badge" : "10 badges"} for ${price} Gems` : "Every badge is at its top level"}">Draw ×${count}<span>${gemIcon()}<b>${price}</b></span></button>`;
+    return `<button type="button" class="badge-draw${short ? " short" : ""}" data-draw="${count}" ${can ? "" : "disabled"} title="${can ? `Buy ${count === 1 ? "a badge" : "10 badges"} for ${price} Gems` : "Every badge is at its top level"}">Buy ×${count}<span>${gemIcon()}<b>${price}</b></span></button>`;
   }
 
   /** The deck's cards on a grid: those in the hand greyed with a check that
@@ -321,12 +339,12 @@ export class DeckPage {
     return `<div class="deck-slot${held ? " held" : ""}" role="listitem"${this.badgeTarget(id)}<button type="button" class="deck-card" data-slot="${i}" ${fixed ? "disabled" : ""} aria-label="${card.name}, slot ${i + 1} of ${count}. Drag, or press the left and right arrow keys, to move it." title="${card.name}: ${cardText(id, upgrades)}${cardBonusText(id) ? ` · ${cardBonusText(id)}` : ""}">${cardArt(id, card.name)}${this.marksHtml(id)}</button>${x}${lessonPointer}${links}</div>`;
   }
 
-  /** What card `id` wears over its art: its level and sheen, a rising
+  /** What card `id` wears over its art: its rarity's frame and level, a rising
    * arrow at its top left while it has card points to spend on its tree,
    * and NEW in gold at its top right until the player meets it here. */
   private marksHtml(id: CardId) {
     const { save, notices } = this.ctx.game, still = save.settings.reduceMotion ? " still" : "";
-    return cardLevelHtml(save.cardXp[id] ?? 0)
+    return cardLevelHtml(save, id)
       + (hasPointsToSpend(save, id) ? `<span class="card-points-mark${still}" aria-hidden="true">${POINTS_ARROW_SVG}</span>` : "")
       + (notices.isNew(id) ? `<span class="card-new" aria-hidden="true">NEW</span>` : "");
   }
@@ -422,6 +440,7 @@ export class DeckPage {
   }
 
   private bindDeck() {
+    document.querySelectorAll<HTMLButtonElement>("[data-buy-cards]").forEach((b) => (b.onclick = () => this.buyCards(Number(b.dataset.buyCards) as CardBuyCount)));
     // From the keyboard (a pointer's press shows it on release).
     document.querySelectorAll<HTMLButtonElement>("[data-add]").forEach((b) => (b.onclick = (e) => {
       if (e.detail === 0) this.showDeckCard(b.dataset.add as CardId);
@@ -631,6 +650,20 @@ export class DeckPage {
     if (card) document.querySelectorAll(`[data-badge-card="${card}"]`).forEach((t) => t.classList.add("badge-target"));
   }
 
+  /** Buys cards for their Gems (asking for Gems when short), then shows
+   * what each bought. */
+  private buyCards(count: CardBuyCount) {
+    const { game } = this.ctx, buys = game.cardBuys.buy(count);
+    if (buys === "short") return askForGems(this.ctx);
+    if (buys === "full") return;
+    this.ctx.save();
+    this.ctx.update();
+    this.render();
+    // The same purchase once more, from the last screen (which asks for Gems when short).
+    const again = game.cardBuys.left >= count ? { count, gems: CARD_BUY_GEMS[count], affordable: () => game.free || game.save.gems >= CARD_BUY_GEMS[count], buy: () => this.buyCards(count) } : undefined;
+    revealBuys(buys, game.save.settings.reduceMotion, again);
+  }
+
   /** Draws badges for their Gems (asking for Gems when short), then
    * shows what was drawn. */
   private draw(count: DrawCount) {
@@ -693,14 +726,14 @@ export class DeckPage {
     showCard(id, save.upgrades, save.settings.reduceMotion, "IN YOUR HAND", { ...this.treeDetails(id, actions), note: id === "stairs" ? "STAIRS always stays in your hand." : undefined });
   }
 
-  /** A card's XP, its points left for its tree, and the offer to open the
+  /** A card's level and rarity, and the offer to open the
    * tree (first) beside `actions`, for its details. */
   private treeDetails(id: CardId, actions: CardAction[]): CardDetails {
-    const { save, cardTrees } = this.ctx.game, xp = save.cardXp[id] ?? 0;
-    if (!CARD_TREES[id]) return { xp, actions, left: null };
+    const { save, cardTrees } = this.ctx.game, levels = save;
+    if (!CARD_TREES[id]) return { levels, actions };
     const left = cardTrees.pointsLeft(id);
-    const tree = { label: `Upgrade tree${left ? ` · <b>${left}</b> point${left === 1 ? "" : "s"}` : ""}`, run: () => this.openTree(id) };
-    return { xp, left, actions: [tree, ...actions] };
+    const tree = { label: `Upgrade tree<small><b>${left}</b> point${left === 1 ? "" : "s"} available</small>`, run: () => this.openTree(id) };
+    return { levels, actions: [tree, ...actions] };
   }
 
   /** A deck card's details, with the offer to add it to the hand while

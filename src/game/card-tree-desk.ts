@@ -38,7 +38,7 @@ export class CardTreeDesk {
   /** Whether node `id` of `card` takes levels yet: its parent is full. */
   open(card: CardId, id: string) {
     const node = treeNode(card, id);
-    return !!node && nodeOpen(this.save.cardTrees, card, node);
+    return !!node && nodeOpen(this.save.cardTrees, this.save.cardBuys.opened, card, node);
   }
 
   /** The card points `card` has left to spend, and has spent. */
