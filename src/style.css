@@ -181,10 +181,16 @@ h1 span {
 .player-stats {
   display: grid;
   grid-template-columns: 72px minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  align-content: start;
   min-width: 0;
 }
 .portrait-top {
-  margin: 9px 0 9px 9px;
+  grid-column: 1;
+  grid-row: 2;
+  align-self: start;
+  min-width: 0;
+  margin: 6px 0 9px 9px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -227,6 +233,9 @@ h1 span {
 .portrait-top small {
   font-size: 6px;
   letter-spacing: 1px;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  text-align: center;
   color: #a3adba;
 }
 /* The level, large, at the front of the bar filling with this level's XP. */
@@ -258,13 +267,17 @@ h1 span {
   background: linear-gradient(90deg, #b8862e, #f3d27a);
 }
 .vitals {
-  padding: 10px 14px 7px 10px;
+  grid-column: 1 / -1;
+  padding: 10px 10px 0;
   font-size: 11px;
   letter-spacing: 1px;
   min-width: 0;
 }
 .hp-readout b {
-  float: right;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  text-align: right;
   letter-spacing: 0;
   font-size: 12px;
   color: #e1e4e9;
@@ -274,6 +287,9 @@ h1 span {
   margin-right: 6px;
 }
 .hp-readout {
+  display: flex;
+  align-items: center;
+  gap: 3px;
   min-height: 18px;
   padding: 2px 5px;
   border: 2px solid #303a49;
@@ -288,6 +304,7 @@ h1 span {
   box-shadow: inset 0 0 0 1px #0b1018;
   image-rendering: pixelated;
 }
+.hp-readout .heart { flex-shrink: 0; }
 .health-track {
   position: relative;
   display: flex;
@@ -389,13 +406,21 @@ h1 span {
   margin: 6px auto 5px;
   background: linear-gradient(90deg, transparent, #46505e 12%, #46505e 88%, transparent);
 }
+.run-inventory {
+  grid-column: 2;
+  grid-row: 2;
+  min-width: 0;
+  padding: 10px 10px 10px 8px;
+}
 .run-consumables {
   display: flex;
   align-items: center;
   gap: 7px;
+  flex-wrap: wrap;
   min-height: 25px;
 }
 .run-consumables button {
+  flex-shrink: 0;
   position: relative;
   width: 25px;
   height: 25px;
@@ -608,8 +633,8 @@ h1 span {
 .gem-ad .gem-icon { width: 16px; height: 16px; }
 .gem-ad small { font-size: 7px; line-height: 1; letter-spacing: .45px; }
 .gem-ad.waiting { visibility: hidden; }
-/* Inside a run the Gold ad stands beside the Gems'. */
-.ad-row { display: flex; gap: 3px; }
+/* Ad controls stack below the purse, with room for their whole labels. */
+.ad-row { display: flex; flex-direction: column; gap: 3px; }
 .ad-row > .gem-ad { flex: 1; min-width: 0; }
 .gold-ad { color: #ffd86b; }
 .gold-ad .ui-sprite { width: 14px; height: 14px; }
@@ -1836,12 +1861,13 @@ dialog p {
     font-size: 7px;
   }
   .stats {
-    grid-template-columns: 80px minmax(128px, 1fr) 52px 38px;
+    grid-template-columns: 72px minmax(0, 1fr) 64px 54px;
     min-height: 82px;
   }
   .hud-controls {
     padding: 6px 5px;
   }
+  .hud-controls .gem-ad small { white-space: nowrap; letter-spacing: 0; }
   .purse {
     font-size: 15px;
   }
@@ -1859,13 +1885,16 @@ dialog p {
     height: 15px;
   }
   .vitals {
-    padding: 8px 7px 6px;
+    padding: 8px 7px 0;
   }
   .player-stats {
     grid-template-columns: 56px minmax(0, 1fr);
   }
   .portrait-top {
-    margin: 7px 0 7px 6px;
+    margin: 6px 0 7px 6px;
+  }
+  .run-inventory {
+    padding: 10px 7px 8px;
   }
   .portrait-top canvas {
     width: 36px;
@@ -1905,6 +1934,8 @@ dialog p {
     height: 32px;
     padding: 1px;
   }
+  .actions .mini-action small { white-space: nowrap; letter-spacing: 0; }
+  .keys { flex-wrap: wrap; }
   .mini-action .mini-icon {
     font-size: 11px;
   }
@@ -1942,6 +1973,15 @@ dialog p {
   .currencies {
     gap: 6px;
   }
+}
+/* Keep two inventory controls abreast on the smallest phones. */
+@media (max-width: 360px) {
+  .stats { grid-template-columns: 64px minmax(0, 1fr) 60px 50px; }
+  .purse { font-size: 12px; }
+  .player-stats { grid-template-columns: 52px minmax(0, 1fr); }
+  .portrait-top { margin-left: 4px; }
+  .run-inventory { padding-inline: 2px 4px; }
+  .run-consumables { gap: 7px 4px; }
 }
 @media (prefers-reduced-motion: reduce) {
   * {

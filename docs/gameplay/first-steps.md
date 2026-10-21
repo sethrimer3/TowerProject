@@ -34,6 +34,13 @@ Occasional chipped joints, rock fractures and embedded roots or earth layers spa
 Tower masonry also has repaired mortar joints, shallow spalled flakes and worn chisel marks that fit broad edges, thin strips and sheltered faces.
 These interior tiles remain with environmental decoration off; torchlight follows the selected floor's seams, and movement, doors and map layouts stay the same.
 
+## The HUD
+
+Health, combat stats and keys fill the upper part of the player panel.
+The portrait sits below them beside the limited-use inventory, with your level and XP bar underneath the hero.
+Once Shrines are researched, the separate Shrine progress bar appears below XP and still opens your boon choices or collected boons.
+On narrow phones, inventory controls wrap and the Menu, Shop and play/pause buttons keep room for their labels.
+
 ## The first runs
 
 A new game starts inside its first Tower run, with a note over the board, *Climb the Tower to gain Inspiration, XP and resources*, and the hand paused (play and the speed arrows closed) until the note is tapped; it then plays at 2 steps a second.

@@ -150,7 +150,6 @@ html.ui-sprites :is(.gold-bonus, .base-enemy):not(#_) {
 }
 html.ui-sprites .gold-bonus:not(#_) { flex-wrap: wrap; }
 html.ui-sprites .base-enemy > span { gap: 2px; }
-html.ui-sprites .ad-row { flex-direction: column; }
 html.ui-sprites .hud-controls .gem-ad:not(#_) {
   width: 100%;
   min-height: 36px;
@@ -205,18 +204,14 @@ html.ui-sprites .portrait-top canvas { max-width: 100%; height: auto; }
 html.ui-sprites .xp-row { min-width: 0; margin-inline: 0; }
 html.ui-sprites .xp-row #level { flex-shrink: 0; }
 html.ui-sprites .stats .hp-readout:not(#_) {
-  display: flex;
-  align-items: center;
-  gap: 3px;
   border: 4px solid transparent;
   border-image-width: 4px;
   padding: 1px 3px;
 }
 html.ui-sprites .hp-readout .heart { flex-shrink: 0; margin-right: 0; }
-html.ui-sprites .hp-readout b { float: none; flex: 1; min-width: 0; white-space: nowrap; text-align: right; }
 html.ui-sprites .keys { flex-wrap: wrap; }
 @media (max-width: 480px) {
-  html.ui-sprites .stats { grid-template-columns: 72px minmax(0, 1fr) 64px 38px; }
+  html.ui-sprites .portrait-top small { font-size: 6px; }
   /* Long current/next values get their own line above the purchase controls. */
   html.ui-sprites .training-row:not(.maxed) {
     grid-template-columns: minmax(0, 1fr) 12px minmax(0, 1fr) 28px;
@@ -232,16 +227,7 @@ html.ui-sprites .keys { flex-wrap: wrap; }
   html.ui-sprites .training-row:not(.maxed) > :is(.training-reset, .training-finish) { grid-column: 4; grid-row: 3; }
 }
 @media (max-width: 360px) {
-  html.ui-sprites .player-stats { grid-template-columns: minmax(0, 1fr); align-content: start; }
-  html.ui-sprites .stats .portrait-top:not(#_) {
-    display: grid;
-    grid-template-columns: 28px minmax(0, 1fr);
-    gap: 2px;
-    margin: 6px 4px 0;
-  }
-  html.ui-sprites .portrait-top canvas { grid-row: 1 / span 2; width: 28px; }
-  html.ui-sprites .portrait-top .shrine-bar { grid-column: 1 / -1; }
-  html.ui-sprites .portrait-top small { font-size: 6px; }
+  html.ui-sprites .hud-controls .gem-ad small:not(#_) { font-size: 8px; white-space: nowrap; }
   html.ui-sprites .vitals { padding-inline: 4px; }
 }
 html.ui-sprites :is(.deck-slot, .node-icon):not(#_) {

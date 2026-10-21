@@ -501,7 +501,7 @@ function fitCombatStats() {
   if (!row) return;
   const hp = el("hp"), pixel = document.documentElement.classList.contains("ui-sprites");
   // Pixel digits are tabular: equal-length HP changes need no new measurement.
-  const hpShape = pixel ? hp.textContent?.replace(/\d/g, "0") : "";
+  const hpShape = pixel ? hp.textContent?.replace(/\d/g, "0") : hp.textContent;
   const key = `${row.textContent}|${el("shroud-stat").hidden}|${row.clientWidth}|${document.documentElement.className}|${spriteFontRevision()}|${hpShape}`;
   if (key === combatFitted) return;
   row.style.fontSize = "";
@@ -512,7 +512,7 @@ function fitCombatStats() {
   const gaps = 6, over = (row.scrollWidth - gaps) / (row.clientWidth - gaps);
   if (over > 1) row.style.fontSize = `${Math.max(7, Math.floor((parseFloat(getComputedStyle(row).fontSize) / over) * 10) / 10)}px`;
   hp.style.removeProperty("font-size");
-  if (pixel && hp.clientWidth && hp.scrollWidth > hp.clientWidth + 1)
+  if (hp.clientWidth && hp.scrollWidth > hp.clientWidth + 1)
     hp.style.fontSize = `${Math.max(7, Math.floor(parseFloat(getComputedStyle(hp).fontSize) * hp.clientWidth / hp.scrollWidth))}px`;
 }
 
