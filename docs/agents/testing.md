@@ -50,6 +50,7 @@ It checks the real Sprites toggle, local font loading, reload and independent th
 `tests/sprite-font.test.ts` checks the bundled WOFF2, legacy font strings and font-ready invalidation; `tests/board-marks.test.ts` checks native placement and unloaded/off fallbacks. The render suite explicitly waits for Tower Pixel before capturing kit text.
 
 `tests/card-tree-browser.mjs` starts its own Vite server and opens STAIRS' upgrade tree from the Deck page at phone and desktop widths: that it replaces the page, spending points from the list (phone) and from the tree by mouse, by choosing again and by keyboard (desktop), the arrow keys, the next nodes opening, the branches painted, a respec for Gems and one short of them, back to the Deck, and the tree saved across a reload.
+It first taps a hand card and a deck card on a touch phone: their details open on the tap's release and must stay open through the tap's own click, then close on the next tap.
 
 `tests/card-points-lesson-browser.mjs` starts its own Vite server and plays the card points lesson at phone and desktop widths: the Deck tab's numbered dot and pointing hand in the forest with everything else held, the Deck page's arrows and NEW marks, the lesson's card the only one to press, its tree held open until a point is spent, the closing note, NEW gone once a card is met, and the lesson gone after a reload.
 

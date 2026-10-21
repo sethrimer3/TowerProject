@@ -12,6 +12,36 @@ const executablePath = process.env.PLAYWRIGHT_EXECUTABLE_PATH || ["/usr/bin/chro
 const browser = await chromium.launch({ headless: true, executablePath });
 mkdirSync("test-results/card-tree", { recursive: true });
 try {
+  // A tap opens a card's details on its release; the tap's own click, landing
+  // on the new layer, must not close them. A later tap does.
+  {
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+    const page = await context.newPage();
+    await page.addInitScript(() => {
+      const fixture = sessionStorage.getItem("__tapFixture");
+      if (fixture) { localStorage.setItem("towerdelve.v1", fixture); sessionStorage.removeItem("__tapFixture"); }
+    });
+    await page.goto(server.resolvedUrls.local[0]); await page.locator("#hp").waitFor();
+    await page.evaluate(async () => {
+      const { defaults } = await import("/src/save.ts"); const { Game } = await import("/src/state.ts");
+      const s = defaults(); Object.keys(s.tutorials).forEach((k) => s.tutorials[k] = true);
+      Object.assign(s.upgrades, { combatStance: 1, buildout: 1, cardHeal: 1, cardYellowKey: 1 });
+      Object.assign(s.settings, { reduceMotion: true, transition: "instant", weatherSound: false });
+      const g = new Game(s); g.newRun({ seed: 7, outside: true });
+      sessionStorage.setItem("__tapFixture", JSON.stringify(g.save));
+    });
+    await page.reload(); await page.locator("#hp").waitFor();
+    await page.locator('[data-tab="deck"]').tap();
+    for (const card of ['#deck-hand [data-slot="0"]', ".deck-add"]) {
+      const box = await page.locator(card).first().boundingBox();
+      await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+      await page.waitForTimeout(300);
+      assert.equal(await page.locator(".card-reveal.details").count(), 1, `${card}: details stay open after the tap`);
+      await page.touchscreen.tap(20, 20);
+      await page.locator(".card-reveal").waitFor({ state: "detached" });
+    }
+    await context.close();
+  }
   for (const [name, viewport] of [["phone", { width: 390, height: 844 }], ["desktop", { width: 1280, height: 800 }]]) {
     const page = await browser.newPage({ viewport });
     const errors = []; page.on("pageerror", (e) => errors.push(e.message));

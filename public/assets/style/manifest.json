@@ -2519,6 +2519,11 @@
       "width": 144,
       "height": 24,
       "tile": true
+    },
+    "ui-menu-close": {
+      "file": "ui-menu-close.png",
+      "width": 24,
+      "height": 24
     }
   },
   "terrain": {

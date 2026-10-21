@@ -30,6 +30,13 @@ function cardLayer(id: CardId, upgrades: Record<UpgradeId, number>, classes: str
   layer.setAttribute("aria-label", words.label);
   layer.innerHTML = `<div class="card-reveal-stage">${rays}<button type="button" class="card-reveal-card" id="card-reveal-card" aria-label="${card.name}: ${words.hint.toLowerCase()}">${cardArt(id, card.name)}${levels ? cardLevelHtml(levels, id) : ""}</button></div><div class="card-reveal-text"><small>${words.kicker}</small><b>${card.name}</b>${levels ? cardLevelLines(levels, id) : ""}<p>${cardText(id, upgrades)}</p>${bonusHtml(id)}${extra}<span>${words.hint}</span></div>`;
   (document.querySelector("#app") ?? document.body).append(layer);
+  // A tap that opened the layer on its release still clicks after it, onto
+  // the layer: only a press begun on the layer (or a key) closes it.
+  let pressedHere = false;
+  layer.addEventListener("pointerdown", () => (pressedHere = true), true);
+  layer.addEventListener("click", (e) => {
+    if (!pressedHere && e.detail !== 0) e.stopImmediatePropagation();
+  }, true);
   const button = layer.querySelector<HTMLButtonElement>("#card-reveal-card")!;
   button.onclick = () => layer.remove();
   button.focus({ preventScroll: true });

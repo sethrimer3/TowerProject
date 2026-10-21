@@ -28,7 +28,7 @@ The [badge atlas](../../assets/game-sprites/badges.png) adds one 24-pixel symbol
 Badge tokens use reusable 24 × 24 PNG frames for common, rare and epic rarity; the same symbols appear in the Deck, card marks, hand, details, drag ghosts and draw reveals.
 Levels and gate signs stay live text over the sprites, and a missing symbol keeps its original glyph.
 The [Goal and utility atlas](../../assets/game-sprites/ui-details.png) adds 24 symbols for unlocks, combat forecasts, archery, notes, Skeleton Key and Shroud.
-The [ornament atlas](../../assets/game-sprites/ui-ornaments.png) adds Menu, a wax seal, mastery medallion, Revival, a blank signboard, linked diamonds, a duplicate badge coin and a crown.
+The [ornament atlas](../../assets/game-sprites/ui-ornaments.png) adds Menu (its open-state X, `ui-menu-close`, is drawn separately in the same palette by `tools/prepare-menu-close.mjs`), a wax seal, mastery medallion, Revival, a blank signboard, linked diamonds, a duplicate badge coin and a crown.
 These share the 24-pixel grid, palette and transparency contract; range and charged-shot rings use different palette ramps so their faces remain distinct.
 Goal status marks, small HUD controls, Deck remove/check buttons and Event locks use the same PNG pairs as the larger controls.
 Silver uses its own palette-correct PNG instead of a recolored Gold image, and skill nodes use specific symbols where those previously fell back to generic upgrade art.

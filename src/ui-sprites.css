@@ -87,7 +87,8 @@ html.ui-sprites :is(.hint, .item-meta, .item-identity, .level-cost):not(#_) { co
 
 /* Keep picture buttons (cards, map markers and skill nodes) intact. */
 html.ui-sprites button:not(:where(.hand-card, .skill-node, .badge-token, .eq-tile, .deck-add, .deck-card, .deck-entry-art,
-  .forest-sign, .forest-building, .mission-bar, #shrine-bar, #forest-sign, .ug-node, .ct-row-main)):not(#_) {
+  .card-reveal-card, .forest-sign, .forest-building, .mission-bar, #shrine-bar, #forest-sign, .ug-node, .ct-row-main,
+  #currencies-open, #auto-speed .speed-arrow)):not(#_) {
   border-color: transparent;
   border-image: var(--ui-face) 6 fill / 12px / 0 stretch;
   border-radius: 0;
@@ -99,8 +100,8 @@ html.ui-sprites button:not(:where(.hand-card, .skill-node, .badge-token, .eq-til
   transition: none;
 }
 html.ui-sprites button:not(:where(.hand-card, .skill-node, .badge-token, .eq-tile, .deck-add, .deck-card, .deck-entry-art,
-  .forest-sign, .forest-building, .mission-bar, .badge-pick, .deck-link-toggle,
-  #shrine-bar, #forest-sign, #defend *, .ug-node, .ct-row-main)):not(#_) {
+  .card-reveal-card, .forest-sign, .forest-building, .mission-bar, .badge-pick, .deck-link-toggle,
+  #shrine-bar, #forest-sign, #defend *, .ug-node, .ct-row-main, #currencies-open, #auto-speed .speed-arrow)):not(#_) {
   border-width: 6px;
   border-style: solid;
   border-image-width: 6px;
@@ -124,7 +125,7 @@ html.ui-sprites button:disabled:not(#_) {
   filter: none;
   opacity: 0.65;
 }
-html.ui-sprites :is(.mini-action, .speed-arrow, .training-reset):not(#_) {
+html.ui-sprites :is(.mini-action, .training-reset):not(#_) {
   border-width: 3px;
   border-image-width: 3px;
   padding: 1px;
@@ -158,11 +159,15 @@ html.ui-sprites .hud-controls .gem-ad:not(#_) {
 }
 html.ui-sprites .gem-ad-amount:not(#_) { font-size: 12px; gap: 3px; }
 html.ui-sprites .gem-ad small:not(#_) { font-size: 10px; letter-spacing: 0; }
-html.ui-sprites :is(.run-consumables button, .speed-arrow, .training-reset):not(#_) { padding: 0; }
+html.ui-sprites :is(.run-consumables button, .training-reset):not(#_) { padding: 0; }
 html.ui-sprites :is(.deck-remove, .badge-detach, .deck-check, .tree-help, .research-about):not(#_) { padding: 0; }
 html.ui-sprites .mini-action { height: auto; min-height: 36px; }
 html.ui-sprites .mini-action small { font-size: 7px; letter-spacing: 0; }
 html.ui-sprites .run-menu-items { grid-auto-columns: max(48px, var(--cell)); }
+/* The open menu's hamburger shows the kit's X (other looks morph the bars). */
+.mini-icon > .menu-close-icon { display: none; }
+html.ui-sprites [aria-expanded="true"] > .mini-icon > .menu-close-icon.sprite-ready:not(#_) { display: inline-block; }
+html.ui-sprites [aria-expanded="true"] > .mini-icon:has(> .menu-close-icon.sprite-ready) > .menu-icon:not(.menu-close-icon) { display: none; }
 html.ui-sprites :is(button, .gem-ad-amount) > .sprite-icon { flex-shrink: 0; }
 /* A Gem shortage is actionable: preserve the bright face and red price. */
 html.ui-sprites button.short:not(#_) { opacity: 1; filter: none; }
@@ -191,7 +196,20 @@ html.ui-sprites :is(select, input[type="text"], input[type="search"], input[type
   max-width: 100%;
 }
 html.ui-sprites .hp-readout:not(#_) { border-image-width: 4px; }
-html.ui-sprites .stats:not(#_) { border-image-width: 6px; }
+/* The HUD's frame is 6px; its columns sit inside it, so neither the rail's
+   own background nor the actions column covers an edge. */
+html.ui-sprites #stats.stats:not(#_) { border-image-width: 6px; padding: 5px; }
+/* The actions column's framed labels need more room than the bare look's;
+   the rail and the height column give it up. */
+html.ui-sprites #stats.stats:not(#_) { grid-template-columns: 90px minmax(150px, 1fr) 84px 72px; }
+@media (max-width: 480px) {
+  html.ui-sprites #stats.stats:not(#_) { grid-template-columns: 66px minmax(0, 1fr) 60px 64px; }
+}
+@media (max-width: 360px) {
+  /* The columns may overlap the frame's inner shading, to keep two items abreast. */
+  html.ui-sprites #stats.stats:not(#_) { grid-template-columns: 60px minmax(0, 1fr) 53px 55px; padding-inline: 3px; }
+  html.ui-sprites .gold-ad .gem-ad-amount { white-space: nowrap; }
+}
 html.ui-sprites .stats .portrait-top:not(#_) {
   border-width: 3px;
   border-style: solid;
@@ -655,3 +673,19 @@ html.ui-sprites input[type="range"]::-moz-range-thumb {
 }
 html.ui-sprites input[type="range"]:active::-webkit-slider-thumb { background-image: var(--ui-slider-thumb-active); }
 html.ui-sprites input[type="range"]:active::-moz-range-thumb { background-image: var(--ui-slider-thumb-active); }
+
+/* Bare glyph controls: the purse's chevron and the speed arrows have no frame,
+   and the card in its details is framed by its own face. */
+html.ui-sprites #currencies-open:not(#_),
+html.ui-sprites #auto-speed .speed-arrow:not(#_) {
+  border: 0;
+  border-image: none;
+  background: none;
+  box-shadow: none;
+  padding: 0;
+}
+html.ui-sprites #auto-speed .speed-arrow:not(#_) { color: #c9b48a; }
+html.ui-sprites #auto-speed .speed-arrow:hover:not(:disabled):not(#_) { color: #f1d69b; }
+html.ui-sprites #currencies-open:not(#_) { color: #e1bb78; }
+html.ui-sprites .card-reveal-card:not(#_),
+html.ui-sprites .card-reveal-card:hover:not(#_) { border-radius: 0; box-shadow: none; }

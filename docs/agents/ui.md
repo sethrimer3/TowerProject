@@ -23,6 +23,9 @@ Shell icon replacement updates an existing pair rather than inserting duplicate 
 Range inputs retain their original event handlers, values and keyboard behavior, with PNG track/thumb states applied only by the effective UI sprite class.
 The Gold-bonus and enemy-odds layers reuse the dialog PNG, and heal/loss preview segments use palette-matched PNG fills, including Overheal.
 `applyUiTheme` mirrors effective art in `ui-sprites` and `game-sprites` classes without changing the saved preference.
+Under the kit the HUD's panel frame is 6px and its columns sit inside it (padded, with the columns re-proportioned so the actions column's framed labels fit), so the left rail's background no longer hides the frame's left edge.
+The pages' currencies chevron and the run's speed arrows are bare glyphs, and a card's details show its face without a button frame round it.
+The open menu's hamburger shows the kit's X (`ui-menu-close`, drawn pixel by pixel in `tools/prepare-menu-close.mjs`); other looks morph the SVG bars into an X.
 The active UI kit uses the original local Tower Pixel face (`sprite-font.ts`, `assets/fonts/TowerPixel/`); text remains live, and Defend and badge glyphs keep their original typography.
 PNG button edges reserve real border space: six pixels on ordinary controls and three on compact controls, with matching `border-image-width`; picture buttons keep their own component frames.
 Deck card faces fill their controls without the generic button frame or an occupied hand-slot frame; empty and purchasable slots retain their inset frames, and lesson dimming, level marks and badge targeting remain separate.
