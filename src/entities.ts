@@ -127,8 +127,8 @@ export type Player = {
   /** The percent every enemy strike's damage is cut by, parried (Parry %);
    * none when absent. */
   parry?: number;
-  /** The percent HEAL's card tree parries of what Parry % leaves of every
-   * enemy strike (the two cuts multiply); absent without it. */
+  /** The percent of every enemy strike HEAL's card tree parries, added to
+   * Parry %; absent without it. */
   cardParry?: number;
   /** The percent more ATK the hero strikes bosses with (equipment; none
    * when absent). */

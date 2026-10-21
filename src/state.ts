@@ -1126,8 +1126,8 @@ export class Game {
   }
   /** How far potions, YK to HP and badge heals may heal above max HP now,
    * as a multiple of max HP in thousandths (Overheal training, the run's
-   * Silver ranks counting, 1,000 until Overheal is owned), raised by the
-   * card trees' Overheal Max, skill or not. */
+   * Silver ranks counting, 1,000 until Overheal is owned), with the card
+   * trees' Overheal Max added, skill or not. */
   get overheal() {
     return treeOverheal(trainedAmount(this.trainingNow, "overheal"), this.treeBonus);
   }

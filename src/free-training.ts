@@ -3,7 +3,6 @@ import type { RunCore } from "./runs.ts";
 import type { Save } from "./save-shape.ts";
 import { FREE_TRAINING_ROWS, runTrainingOpen } from "./loadout.ts";
 import { drawAt } from "./random.ts";
-import { eitherChance } from "./exact.ts";
 import { ranksInRun, runTrainingMax } from "./run-training.ts";
 
 /** Free Training: each floor passed in a run (a floor new to the run,
@@ -46,14 +45,14 @@ function candidates(save: Pick<Save, "training" | "upgrades" | "goals">, run: Pi
  * caller's (`Game`). The chances are read before any level is applied, so
  * Free Utility raising a Free Upgrade row counts from the next floor.
  * `factors` (STAIRS' card tree) multiply each group's chance, and
- * `chances` (HEAL's, in hundredths of a percent) roll with it as two
- * chances, so a group may give a level with no ranks of its own. */
+ * `chances` (HEAL's, in hundredths of a percent) add to it, so a group may
+ * give a level with no ranks of its own. */
 export function rollFreeTraining(save: Pick<Save, "training" | "upgrades" | "goals">, run: Pick<RunCore, "seed" | "freeRolls" | "training" | "hand">, boonChance = 0, factors?: Record<FreeGroup, number>, chances?: Partial<Record<FreeGroup, number>>): TrainingId[] {
   const now = { upgrades: save.upgrades, training: ranksInRun(save, run) };
   const picked: TrainingId[] = [];
   for (const group of FREE_GROUPS) {
     // A run's Free Up Chance boons add to every group's chance, in hundredths of a percent.
-    const chance = eitherChance((trainedAmount(now, FREE_TRAINING_ROWS[group]) + boonChance) * (factors?.[group] ?? 1), chances?.[group] ?? 0, 10_000);
+    const chance = (trainedAmount(now, FREE_TRAINING_ROWS[group]) + boonChance) * (factors?.[group] ?? 1) + (chances?.[group] ?? 0);
     if (!chance || draw(run, group) * 10_000 >= chance) continue;
     const rows = candidates(save, run, group);
     if (!rows.length) continue;

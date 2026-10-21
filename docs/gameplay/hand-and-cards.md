@@ -123,12 +123,12 @@ Points are spent in the forest; inside a run the tree only shows.
 - **Stairs** has two tracks, each rising one rarity an upgrade.
   Gold: +2% Spare Change Gold a floor (common, 5 levels, up to 10), then a heal of 3% of max HP on each floor new to the run, up to the Overheal ceiling (uncommon), +2% Gold Bonus (rare), +1% Free Offense chance (epic), and +5% Overheal Max (legendary), each up to 5 levels.
   Silver: +2% Wishing Well Silver a floor (common, 5 levels, up to 10), then the same 3% heal (uncommon), +2% Silver Bonus (rare), +1% Free Defense chance (epic), and +1% Stair Skip (legendary), each up to 5 levels.
-  Overheal Max multiplies the Overheal ceiling whether or not Overheal is owned, so on its own it lets potions and heals rise 5% a level above max HP.
+  Overheal Max adds 5% of max HP a level to the Overheal ceiling whether or not Overheal is owned, so on its own it lets potions and heals rise above max HP.
   Stair Skip is a chance that the Tower's stairs, reached by Stairs, climb two floors, as the Skip badge on Stairs does (added to that badge's chance when both are held).
 - **Heal** has two tracks, each rising one rarity an upgrade.
   Potions found: +2% chance of a percent potion (common, 5 levels, up to 10, up to every potion), then +0.1 Silver from each potion taken, before Silver Bonus (uncommon), +2% Gold Bonus (rare), +0.5% chance of a free Defense level each floor (epic), and +1% Parry (legendary), each up to 5 levels.
   Healing: +2% HP from every potion (common, 5 levels, up to 10), then +2% Regen (uncommon), +2% shroud against every enemy (rare), +0.01% max HP for the run each time it reaches a potion (epic), and +5% Overheal Max (legendary, as Stairs' own), each up to 5 levels.
-  The free Defense chance and Parry work without Free Defense trained or Parry owned; with them, each counts on its own beside theirs: the free Defense level comes when either chance hits, and Heal's Parry cuts what Parry % leaves of a strike (20% Parry and Heal's 5% parry 24%).
+  The free Defense chance and Parry add to Free Defense's chance and Parry %, and count from zero without Free Defense trained or Parry owned (20% Parry and Heal's 5% parry 25%).
 - The other trees are common only for now, each upgrade holding its first levels from the start and opened to the rest by common card buys:
 - **Door**: −1% cost of every door, its keys and any HP it takes (4 levels, up to 10), +1% Gold from doors (4, up to 10) and +2% Silver Bonus (2, up to 5).
 - **Key**: +1% more each key of every colour (4 levels, up to 10), +1% Gold from each key (4, up to 10) and +2% Silver Bonus (2, up to 5).

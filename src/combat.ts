@@ -1,5 +1,5 @@
 import type { Enemy, Player } from "./entities.ts";
-import { eitherChance, snap } from "./exact.ts";
+import { snap } from "./exact.ts";
 import { foeAttack } from "./foe-cards.ts";
 
 /** `hp` after a heal of `n` that stops at `ceiling` (max HP, or the
@@ -65,9 +65,9 @@ export function thornDamage(player: Player, enemy: Enemy) {
  * or researches Parry %. */
 export const PARRY_CAP = 98;
 /** Parry: the percent every enemy strike's damage is cut by (Parry %, and
- * HEAL's tree's cutting what that leaves), at most `PARRY_CAP`. A hero
+ * HEAL's tree's added to it), at most `PARRY_CAP`. A hero
  * with any Parry % parries every strike, so every prediction counts it. */
-export const parryCut = (player: Player) => Math.min(eitherChance(player.parry ?? 0, player.cardParry ?? 0), PARRY_CAP);
+export const parryCut = (player: Player) => Math.min(snap((player.parry ?? 0) + (player.cardParry ?? 0)), PARRY_CAP);
 /** What an enemy strike of `attack` ATK does to the hero before the shroud
  * and Lifesteal: its ATK less DEF, cut by `cut` percent when parried. */
 export function struckDamage(attack: number, defense: number, cut: number) {

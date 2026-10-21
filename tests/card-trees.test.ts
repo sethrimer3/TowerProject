@@ -10,7 +10,7 @@ import { doorDiscount } from "../src/doors.ts";
 import { extraEnemies } from "../src/more-enemies.ts";
 import { rollFreeTraining } from "../src/free-training.ts";
 import { BASE_RULES, potionRestores } from "../src/step-effects.ts";
-import { eitherChance, snap } from "../src/exact.ts";
+import { snap } from "../src/exact.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import type { CardId } from "../src/cards.ts";
 import type { Enemy, Player, Tile } from "../src/entities.ts";
@@ -213,21 +213,21 @@ test("STAIRS' Free Up nodes multiply each group's chance a floor", () => {
   assert.ok(raised > plain * 1.5, `${raised} vs ${plain}`);
 });
 
-test("HEAL's tree raises each potion's HP, and HEAL's and STAIRS' Overheal Max add into one factor on the Overheal ceiling, skill or not", () => {
+test("HEAL's tree raises each potion's HP, and HEAL's and STAIRS' Overheal Max add percents of max HP to the Overheal ceiling, skill or not", () => {
   const potion = { kind: "potion" } as never;
   assert.equal(potionRestores(potion, 100, { ...BASE_RULES, potionCard: 50 }), snap(35 * 1.5));
   const max = treeBonus({ heal: { overhealMax: 1 }, stairs: { overhealMax: 2 } });
   assert.equal(treeOverheal(1000, max), 1150, "+15% above max HP without the skill");
-  assert.equal(treeOverheal(2000, max), 2300);
+  assert.equal(treeOverheal(2000, max), 2150, "added, not multiplied");
   assert.equal(treeOverheal(2000, treeBonus({})), 2000);
 });
 
-test("HEAL's Parry and Free Defense open their stats without them, and cut or roll beside them when owned", () => {
+test("HEAL's Parry and Free Defense open their stats without them, and add to them when owned", () => {
   assert.equal(parryCut(hero), 0);
   assert.equal(parryCut({ ...hero, cardParry: 5 }), 5, "Parry without Parry %");
-  assert.equal(parryCut({ ...hero, parry: 20, cardParry: 5 }), 24, "5% of the 80% Parry % leaves");
-  assert.equal(parryCut({ ...hero, parry: 97, cardParry: 50 }), 98, "under the cap");
-  assert.equal(eitherChance(1000, 50, 10_000), 1045);
+  assert.equal(parryCut({ ...hero, parry: 20, cardParry: 5 }), 25, "added to Parry %");
+  assert.equal(parryCut({ ...hero, parry: 50, cardParry: 5 }), 55);
+  assert.equal(parryCut({ ...hero, parry: 97, cardParry: 5 }), 98, "under the cap");
   const s = defaults();
   s.upgrades.freeTraining = 1;
   const draws = (chances?: { defense: number }) => {
