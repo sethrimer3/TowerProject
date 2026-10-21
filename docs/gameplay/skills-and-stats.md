@@ -40,7 +40,7 @@ Max HP changing in a run (training, a Shrine boon, the Max HP badge, a siphon) k
 
 ## Buy Quantity
 
-**Buy Quantity** (5 Inspiration, below YK Siphon) adds a quantity dropdown to Training, at the right of the trainers' row on the Training tab and of the group buttons under the hand inside a run: one press of a training-points button, or of a run card's Silver price, buys that many ranks at once (fewer only at a row's most), showing their total price, and the Training tab shows the value they reach.
+**Buy Quantity** (5 Inspiration, below YK Siphon) adds a quantity dropdown to Training (drawn by the game, a short list that opens beside it, on phones too), at the right of the trainers' row on the Training tab and of the group buttons under the hand inside a run: one press of a training-points button, or of a run card's Silver price, buys that many ranks at once (fewer only at a row's most), showing their total price, and the Training tab shows the value they reach.
 It offers x1 at first; the Archives' **Buy Quantity** research opens x5, x10, x100 and Max, a level each (1,000, 5,000, 25,000 and 100,000 Gold; 4, 12, 24 and 48 hours).
 Max buys as many as the points or Silver held pay for, its count ("x12") shown on the button beside their price.
 Trainers still train one rank at a time.

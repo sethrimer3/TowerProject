@@ -3077,10 +3077,10 @@ button.training-gold:disabled > span { color: #f0d79c; }
 .training-bank .clock-icon { width: 16px; height: 16px; }
 /* The points held, large in a rounded box, named under it. */
 div.training-points { display: flex; align-items: center; gap: 10px; }
-div.training-points select.buy-quantity { float: none; margin-left: auto; }
+div.training-points .buy-quantity-pick { float: none; margin-left: auto; }
 .training-trainers { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 2px; }
 .training-end { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; }
-.training-end select.buy-quantity, .training-end .training-bank { margin: 0; }
+.training-end .buy-quantity-pick, .training-end .training-bank { margin: 0; }
 .training-held { display: inline-flex; flex-direction: column; align-items: center; gap: 3px; padding: 5px 14px 6px; border: 1px solid #8d794e; border-radius: 10px; background: linear-gradient(180deg, #2a2618, #17150f); box-shadow: inset 0 0 8px #0008; }
 .points-held { display: inline-flex; align-items: center; gap: 5px; line-height: 1; }
 .training-held .points-icon { width: 20px; height: 20px; }
@@ -4197,14 +4197,18 @@ nav.in-run.drilling .run-drills {
 @media (prefers-reduced-motion: reduce) {
   .job-pointer { animation: none; }
 }
-.training-bar button {
-  flex: 1 1 0;
+/* A closed group's button is its icon alone; the open one adds its name,
+   on one line, so the bar fits a phone beside Buy Quantity. */
+.training-bar button[data-run-group] {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
+  min-width: 48px;
   min-height: 36px;
-  padding: 4px;
+  padding: 4px 8px;
+  white-space: nowrap;
   font-family: Cinzel, Georgia, serif;
   font-size: 11px;
   letter-spacing: 1px;
@@ -4212,13 +4216,27 @@ nav.in-run.drilling .run-drills {
   border-color: #333c49;
 }
 .training-bar .group-sprite { width: 22px; height: 22px; }
+.training-bar button[data-run-group]:not(.selected) .group-name { display: none; }
 .training-bar button.selected { border-color: #d6ae68; color: #efd496; box-shadow: inset 0 -2px #d9ac5a; }
 .training-bar button:disabled { opacity: 0.4; }
 /* Buy Quantity: how many ranks a Training press buys, at the bar's right. */
-.run-buy-quantity { display: flex; flex-shrink: 0; }
+.run-buy-quantity { display: flex; flex-shrink: 0; margin-left: auto; }
 .run-buy-quantity[hidden] { display: none; }
-select.buy-quantity { min-height: 30px; padding: 2px 6px; font-family: Cinzel, Georgia, serif; font-size: 11px; letter-spacing: 1px; color: #efd496; background: #10161f; border: 1px solid #6b5a3a; border-radius: 6px; }
-.training-points select.buy-quantity { float: right; min-height: 24px; }
+.run-buy-quantity .buy-quantity { min-height: 36px; }
+/* The game's own dropdown (`buy-quantity-select.ts`): a button showing the
+   quantity, and its list laid over the page just below it, or above it in
+   the screen's lower half. */
+.buy-quantity-pick { position: relative; display: inline-flex; }
+button.buy-quantity { display: inline-flex; align-items: center; gap: 4px; min-height: 30px; padding: 2px 6px 2px 8px; font-family: Cinzel, Georgia, serif; font-size: 11px; letter-spacing: 1px; color: #efd496; background: #10161f; border: 1px solid #6b5a3a; border-radius: 6px; }
+.buy-quantity-caret { font-size: 9px; opacity: 0.8; }
+.buy-quantity-menu { position: absolute; top: calc(100% + 4px); right: 0; z-index: 40; display: flex; flex-direction: column; gap: 2px; min-width: 100%; box-sizing: border-box; padding: 3px; background: linear-gradient(#1b222d, #10161f); border: 1px solid #6b5a3a; border-radius: 6px; box-shadow: 0 8px 20px #000b; }
+.buy-quantity-menu.up { top: auto; bottom: calc(100% + 4px); }
+.buy-quantity-menu[hidden] { display: none; }
+.buy-quantity-menu button { min-height: 30px; padding: 2px 10px; font-family: Cinzel, Georgia, serif; font-size: 11px; letter-spacing: 1px; color: #c3cedd; background: transparent; border: 1px solid transparent; border-radius: 4px; white-space: nowrap; }
+.buy-quantity-menu button:hover { border-color: #6b5a3a; }
+.buy-quantity-menu button[aria-selected="true"] { color: #efd496; border-color: #d6ae68; background: #2a2618; }
+.training-points .buy-quantity-pick { float: right; }
+.training-points button.buy-quantity { min-height: 24px; }
 /* "x12": the ranks a Max press buys, before its price. */
 .buy-count { margin-right: 3px; font-size: 9px; color: #f3ead8; opacity: 0.85; }
 .drill-tip {

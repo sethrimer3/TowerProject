@@ -6,7 +6,7 @@ import { TRAINING, TRAINING_GROUPS, TRAINING_PER_LEVEL, trainingCap, type Traini
 import { trainingBulk, trainingPoints, trainingRowsFull, trainingStep, trainingText, trainingOpen } from "../loadout.ts";
 import { whole } from "../whole.ts";
 import type { BuyQuantity } from "../buy-quantity.ts";
-import { buyQuantityHtml, maxCount, readQuantity } from "./buy-quantity-select.ts";
+import { bindBuyQuantity, buyQuantityHtml, maxCount } from "./buy-quantity-select.ts";
 import { TrainingParticles } from "../training-particles.ts";
 import { BOOST_CLAIM_MARGIN_MS, BOOST_MAX_MS, BOOST_RATE, boostLeft, claimBoost, nextTrainerGems, ranksInTraining, trainingJob, trainingSlots, workLeft, type TrainingJob } from "../training-jobs.ts";
 import type { AppContext } from "./app.ts";
@@ -108,12 +108,11 @@ export class ResearchPage {
       this.withRefund(() => (spent = training.train(id, this.ctx.game.buyQuantity)));
       if (spent) glow(document.querySelector<HTMLElement>(`[data-train="${id}"]`));
     });
-    const quantity = el("research").querySelector<HTMLSelectElement>("[data-buy-quantity]");
-    if (quantity) quantity.onchange = () => {
-      this.ctx.game.setBuyQuantity(readQuantity(quantity.value));
+    bindBuyQuantity(el("research"), (q) => {
+      this.ctx.game.setBuyQuantity(q);
       this.ctx.save();
       this.render();
-    };
+    });
     this.onEach("data-train-gold", (id) => {
       if (training.trainWithGold(id, this.ctx.game.buyQuantity)) {
         this.ctx.update();

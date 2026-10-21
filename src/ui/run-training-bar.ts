@@ -1,7 +1,7 @@
 import type { Game } from "../state.ts";
 import { TRAINING, TRAINING_GROUPS, type TrainingId } from "../config.ts";
 import { runTrainingBulk, runTrainingOffer, runTrainingValue } from "../run-training.ts";
-import { buyQuantityHtml, readQuantity, runCount } from "./buy-quantity-select.ts";
+import { bindBuyQuantity, buyQuantityHtml, runCount } from "./buy-quantity-select.ts";
 import { trainingText, runTrainingOpen } from "../loadout.ts";
 import { el, itemSprite, POINTER_SVG, uiSprite } from "./dom.ts";
 import { priceAmount, sparkRed } from "./hud.ts";
@@ -15,8 +15,9 @@ const GROUP_ICONS: Record<Group, string> = {
 };
 const silverIcon = () => uiSprite("gold", "ui-sprite silver-sprite");
 
-/** The run's training bar under the hand: a wide button for each Training
- * group. Pressing one shows that group's rows in the hand's place, a card
+/** The run's training bar under the hand: a button for each Training
+ * group, only its icon while closed, so the bar fits a phone beside Buy
+ * Quantity, and its icon and name while open. Pressing one shows that group's rows in the hand's place, a card
  * each, scrolled sideways, to buy a rank for this run with Silver; pressing
  * it again brings the hand back. Pressing or hovering a card's face shows
  * what it trains and its level; pressing it again hides that. The bar shows once On the Job is owned;
@@ -43,15 +44,8 @@ export class RunTrainingBar {
   constructor(private game: Game, private changed: () => void) {
     const bar = el("training-bar");
     bar.innerHTML = (Object.entries(TRAINING_GROUPS) as [Group, string][])
-      .map(([group, name]) => `<button type="button" data-run-group="${group}" aria-pressed="false">${GROUP_ICONS[group]}<span>${name}</span></button>`)
+      .map(([group, name]) => `<button type="button" data-run-group="${group}" aria-pressed="false" aria-label="${name}">${GROUP_ICONS[group]}<span class="group-name">${name}</span></button>`)
       .join("") + `<span class="run-buy-quantity"></span>`;
-    // Buy Quantity, at the right of the group buttons once the skill is owned.
-    bar.onchange = (e) => {
-      const select = (e.target as HTMLElement).closest<HTMLSelectElement>("[data-buy-quantity]");
-      if (!select) return;
-      this.game.setBuyQuantity(readQuantity(select.value), "run");
-      this.changed();
-    };
     bar.onclick = (e) => {
       const button = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-run-group]");
       if (button && !button.disabled) this.toggleGroup(button.dataset.runGroup as Group);
@@ -140,6 +134,11 @@ export class RunTrainingBar {
     if (slot.dataset.html !== html) {
       slot.dataset.html = html;
       slot.innerHTML = html;
+      // Buy Quantity, at the right of the group buttons once the skill is owned.
+      bindBuyQuantity(slot, (q) => {
+        this.game.setBuyQuantity(q, "run");
+        this.changed();
+      });
     }
     slot.hidden = !html;
   }
@@ -187,8 +186,8 @@ export class RunTrainingBar {
     note.style.bottom = `${document.querySelector("nav")!.offsetHeight + 8}px`;
     const buttons = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-run-group]"));
     const at = buttons.find((b) => b.dataset.runGroup === this.open) ?? buttons.find((b) => !b.disabled) ?? buttons[0];
-    // The buttons share the bar's width, so a share of it stays right as the window resizes.
-    pointer.style.left = `${((buttons.indexOf(at) + 0.5) / buttons.length) * 100}%`;
+    // The open button is wider than the rest: point at its middle.
+    pointer.style.left = `${at.offsetLeft + at.offsetWidth / 2}px`;
   }
 
   /** The lesson's note and pointing hand, laid over the bar when it

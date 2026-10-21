@@ -9,7 +9,8 @@ Undo takes back the Silver of the kills it undoes, and a new run starts with non
 
 ## Training for the run
 
-Once **On the Job** is owned (1 Inspiration, after Buildout, right of it), a bar under the hand holds a wide button for each Training group: Offense, Defense and Utility (greyed until something in it is unlocked).
+Once **On the Job** is owned (1 Inspiration, after Buildout, right of it), a bar under the hand holds a button for each Training group: Offense, Defense and Utility (greyed until something in it is unlocked).
+A closed group's button shows only its icon; the open one widens to add its name.
 Pressing one shows that group's Training rows in the hand's place (the Archer's rows only while the run's hand holds the Archer card), a card each, scrolled sideways: its name, where it stands now (the hero's stat, the percentage, or the Gold a new floor pays), and a button with the Silver price of the next level.
 What a value counts, on the Training tab and the run's cards alike: everything lasting that changes the row directly (Archives research, provisions, and the equipment the mode's hero wears), and inside a run what the run has changed too (the hero's own stats as they stand, with what it found and its Max HP badge's multiplier, its ranks bought with Silver, and its shrine boons).
 Silver / Floor counts Silver Bonus (with the equipment's Silver found), since that multiplies it; a global Gold multiplier (the tower's, the Shop's packs, the ad's boost, themes, Gold found, the Gold boons) counts in no row, only in the HUD's Gold bonus total, and shows in the Gold each kill or item actually pays.

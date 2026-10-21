@@ -7,7 +7,7 @@ import type { AppContext } from "./app.ts";
 import { helpButton } from "./dialogs.ts";
 import { el, itemSprite, uiSprite } from "./dom.ts";
 import { priceAmount } from "./hud.ts";
-import { buyQuantityHtml, readQuantity } from "./buy-quantity-select.ts";
+import { bindBuyQuantity, buyQuantityHtml } from "./buy-quantity-select.ts";
 import { EquipmentPanel } from "./equipment-panel.ts";
 
 /** Each provision's picture. */
@@ -89,11 +89,10 @@ export class GearPage {
       gold: (v) => { if (game.gear.buyProvision(v as GoldItemId, game.buyQuantityFor("provisions"))) this.bought = v as GoldItemId; this.changed(); },
     };
     // Buy Quantity, kept for this page alone.
-    const quantity = document.querySelector<HTMLSelectElement>("#gear [data-buy-quantity]");
-    if (quantity) quantity.onchange = () => {
-      game.setBuyQuantity(readQuantity(quantity.value), "provisions");
+    bindBuyQuantity(el("gear"), (q) => {
+      game.setBuyQuantity(q, "provisions");
       this.changed();
-    };
+    });
     for (const [key, handle] of Object.entries(handlers)) {
       const attr = key.replace(/[A-Z]/g, c => `-${c.toLowerCase()}`);
       document.querySelectorAll<HTMLButtonElement>(`#gear [data-${attr}]`).forEach(b => b.onclick = () => handle(b.dataset[key]!));
