@@ -73,7 +73,7 @@ With Buildout, the next lesson shows the X on ENEMY with a hand pointing at it, 
 ## Card levels
 
 Each card has a level of its own, from 0 up to its **max level**, raised by the XP it gains in runs.
-Every card's max level starts at 10; buying cards (see Card buys below) raises it, up to 25 for most cards and 60 for **Stairs**, whose tree reaches every rarity.
+Every card's max level starts at 10; buying cards (see Card buys below) raises it, up to 25 for most cards and 60 for **Stairs** and **Heal**, whose trees reach every rarity.
 A card gains 1 XP each time it activates: its path reaching its target (once any fight there is over), or a card that moves nowhere acting (the siphons and trades); **Flying Enemy** gains it each time it brings a Flying enemy within reach.
 **Archer**, which never activates, gains 1 XP for each floor completed for the first time in the run while it is in the run's hand, a floor the Skip badge climbs past included (in the Delve, each equivalent floor passed).
 
@@ -81,6 +81,7 @@ The levels cost, in XP: 100, 200, 300, 400 and 500 for the first five; 700, 900,
 A card at its max level keeps gaining XP toward the levels above it, so when a card buy raises its max level, the XP it gathered turns into levels at once; a card gains no XP past level 60's.
 Each level gives the card 1 card point, to be spent on the card's own tree (see Card trees below).
 A card shows its level in small type at its top left, in the hand and on the Deck page, from level 1.
+On the Deck page the grey rule between a card's picture and its name is its XP bar, filling in white toward its next level (full at level 60; at its max level, with the XP it keeps gathering).
 A card's details show its level on the card, and under its name its rarity with its stars, then its level of its max level and its XP toward the next (*Level 4 / 10 · 340/1,800 XP*, or at the max, *… · buy cards to raise the max*); its card points equal its level, so they aren't repeated; the hand card's tooltip says the same line.
 A card can level up during a run: if the card is in view in the hand, a golden glow covers it with the training point icon at its centre for a second, which then rises and fades over the next second, and the glow fades over a third.
 A card out of view (in a hand scrolled sideways) shows as a ghost at 75% transparency over the board's top left, a golden glow behind it, with the same icon, the ghost fading once the icon is gone.
@@ -124,16 +125,17 @@ Points are spent in the forest; inside a run the tree only shows.
   Silver: +2% Wishing Well Silver a floor (common, 5 levels, up to 10), then the same 3% heal (uncommon), +2% Silver Bonus (rare), +1% Free Defense chance (epic), and +1% Stair Skip (legendary), each up to 5 levels.
   Overheal Max multiplies the Overheal ceiling whether or not Overheal is owned, so on its own it lets potions and heals rise 5% a level above max HP.
   Stair Skip is a chance that the Tower's stairs, reached by Stairs, climb two floors, as the Skip badge on Stairs does (added to that badge's chance when both are held).
+- **Heal** has two tracks, each rising one rarity an upgrade.
+  Potions found: +2% chance of a percent potion (common, 5 levels, up to 10, up to every potion), then +0.1 Silver from each potion taken, before Silver Bonus (uncommon), +2% Gold Bonus (rare), +0.5% chance of a free Defense level each floor (epic), and +1% Parry (legendary), each up to 5 levels.
+  Healing: +2% HP from every potion (common, 5 levels, up to 10), then +2% Regen (uncommon), +2% shroud against every enemy (rare), +0.01% max HP for the run each time it reaches a potion (epic), and +5% Overheal Max (legendary, as Stairs' own), each up to 5 levels.
+  The free Defense chance and Parry work without Free Defense trained or Parry owned; with them, each counts on its own beside theirs: the free Defense level comes when either chance hits, and Heal's Parry cuts what Parry % leaves of a strike (20% Parry and Heal's 5% parry 24%).
 - The other trees are common only for now, each upgrade holding its first levels from the start and opened to the rest by common card buys:
-- **Heal**: +10% chance of a percent potion (2 levels, up to 5, up to every potion), +10% HP from every potion (2, up to 5), +10% Gold Bonus (2, up to 5), +0.01% max HP for the run each time it reaches a potion (2, up to 5), and +5% Overheal ceiling (2, up to 5).
 - **Door**: −1% cost of every door, its keys and any HP it takes (4 levels, up to 10), +1% Gold from doors (4, up to 10) and +2% Silver Bonus (2, up to 5).
 - **Key**: +1% more each key of every colour (4 levels, up to 10), +1% Gold from each key (4, up to 10) and +2% Silver Bonus (2, up to 5).
 - **Enemy**: +1% ATK (2 levels, up to 5), +1% DEF (2, up to 5) and +1% Gold (2, up to 5) against every enemy, and 1% more enemies of every strength on each floor (4, up to 10).
 - **ATK Up** and **DEF Up**: +1% from each of their shards (4 levels, up to 10), +0.1 Gold from each (4, up to 10) and +1% Silver Bonus (2, up to 5).
 - **Torch**, against a Greater Boss: +1% ATK (2 levels, up to 5), +1% DEF, +1% Gold, +2% shroud and 1 Cell more (each 2, up to 5).
 - **Chest**: +2% Gold from treasure chests (2 levels, up to 5), +0.2% Supply Chest chance (4, up to 10, up to 3.5%) and +0.1% Equipment Chest chance (4, up to 10, up to 1.5%).
-
-The Overheal ceiling bonuses of Heal count only once Overheal is owned.
 
 ## Card buys
 

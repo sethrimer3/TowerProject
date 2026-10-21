@@ -3,7 +3,7 @@ import { buyTheme, canWear, grantAllThemes, type GameLook, type ThemeId, type Th
 import { chooseStep } from "./automation.ts";
 import { CARDS, cardText, deckCards, explainStuck, handBonus, keptLinks, planHand, planTarget, shootsWith, stillOpen, type CardId, type CardPlan, type HandBonus, type StuckReport } from "./cards.ts";
 import { addCardXp, PASSIVE_CARDS } from "./card-levels.ts";
-import { cardMaxLevel, freeUpFactors, hasPointsToSpend, pointsLeft, runCardTrees, treeBonus, treeFactor, treeOverheal, type TreeBonus } from "./card-trees.ts";
+import { cardMaxLevel, freeUpChances, freeUpFactors, hasPointsToSpend, pointsLeft, runCardTrees, treeBonus, treeFactor, treeOverheal, type TreeBonus } from "./card-trees.ts";
 import { aggroTurn } from "./flying.ts";
 import { foeOn } from "./ranged.ts";
 import { BADGE_IDS, MAX_COPIES, badgeOn, badgeValue, runBadges } from "./badges.ts";
@@ -1023,16 +1023,20 @@ export class Game {
     if (odds) this.run.chestOdds = odds;
     else delete this.run.chestOdds;
     // The hero strikes the enemies each enemy card covers harder, and with
-    // ENEMY's and TORCH's trees holds more DEF and shroud against theirs
+    // ENEMY's and TORCH's trees holds more DEF and shroud against theirs,
+    // HEAL's more shroud against every enemy and a parry of its own
     // (combat.ts reads them).
     const p = this.run.player, foes: NonNullable<Player["foeAttack"]> = Object.fromEntries(Object.entries(handBonus(this.run.hand).foe).map(([id, b]) => [id, b.attack]));
     if (tree.foeAttack) foes.monster = tree.foeAttack;
     if (tree.bossAttack) foes.torch = tree.bossAttack;
     const defense = { ...(tree.foeDefense ? { monster: tree.foeDefense } : {}), ...(tree.bossDefense ? { torch: tree.bossDefense } : {}) };
-    for (const [k, v] of [["foeAttack", foes], ["foeDefense", defense], ["foeShroud", tree.bossShroud ? { torch: tree.bossShroud } : {}]] as const) {
+    const shroud = { ...(tree.shroud ? { monster: tree.shroud } : {}), ...(tree.bossShroud ? { torch: tree.bossShroud } : {}) };
+    for (const [k, v] of [["foeAttack", foes], ["foeDefense", defense], ["foeShroud", shroud]] as const) {
       if (Object.keys(v).length) (p as Record<string, unknown>)[k] = v;
       else delete p[k];
     }
+    if (tree.parry) p.cardParry = tree.parry;
+    else delete p.cardParry;
     this.run.focusUsed = 0;
     for (const k of ["ignoreUsed", "targetUsed", "regain", "ignored", "targeted"] as const) delete this.run[k];
   }
@@ -1103,11 +1107,12 @@ export class Game {
   /** What research changes about stepping now: the step rules every move,
    * preview, inspect box and planner resolves with. */
   get stepRules(): StepRules {
-    // Regen research raises the HP each step regains by its percent.
+    // Regen research raises the HP each step regains by its percent, and HEAL's tree by its own.
+    const tree = this.treeBonus;
     const regen = this.run.outside || !this.run.player.regen ? 0
-      : snap((this.run.player.regen * researched(this.save.archives, "regenPercent")) / 100);
+      : snap((this.run.player.regen * researched(this.save.archives, "regenPercent") * treeFactor(tree, "regen")) / 100);
     const worn = this.worn, potionHeal = raised(researched(this.save.archives, "potionHeal"), worn.potionHeal);
-    const crit = this.crit, keys = this.handBonus.keys, tree = this.treeBonus;
+    const crit = this.crit, keys = this.handBonus.keys;
     // KEY's tree adds to every colour's percent, the key cards' adding to their own.
     const found = KEY_ORDER.flatMap((color) => { const n = (keys[color]?.percent ?? 0) + tree.keyFind; return n ? [[color, n] as const] : []; });
     const keyFind = found.length ? { keyFind: Object.fromEntries(found) } : {};
@@ -1121,10 +1126,10 @@ export class Game {
   }
   /** How far potions, YK to HP and badge heals may heal above max HP now,
    * as a multiple of max HP in thousandths (Overheal training, the run's
-   * Silver ranks counting, raised by the card trees' Overheal once the
-   * skill is owned): 1,000 until Overheal is owned. */
+   * Silver ranks counting, 1,000 until Overheal is owned), raised by the
+   * card trees' Overheal Max, skill or not. */
   get overheal() {
-    return treeOverheal(trainedAmount(this.trainingNow, "overheal"), this.save, this.treeBonus);
+    return treeOverheal(trainedAmount(this.trainingNow, "overheal"), this.treeBonus);
   }
   /** The most HP the hero may hold now: max HP, raised by Overheal. */
   get hpCeiling() {
@@ -1906,7 +1911,7 @@ export class Game {
   private freeTrain(floors: number) {
     const given: TrainingId[] = [];
     for (let f = 0; f < floors; f++)
-      for (const id of rollFreeTraining(this.save, this.run, this.boons?.freeUp ?? 0, freeUpFactors(this.treeBonus))) {
+      for (const id of rollFreeTraining(this.save, this.run, this.boons?.freeUp ?? 0, freeUpFactors(this.treeBonus), freeUpChances(this.treeBonus))) {
         const offer = runTrainingOffer(this.save, this.run, id);
         this.run.training = { ...this.run.training, [id]: offer.bought + 1 };
         this.applyRunTraining(offer);

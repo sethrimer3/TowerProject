@@ -55,7 +55,7 @@ export function changeLoadout(save: Save, change: () => boolean | void) {
     if (!run || run.outside) return;
     const after = loadout(save, mode), shift = loadoutShift(before[i], after);
     for (const copy of new RunTimeline(save, mode).runs()) {
-      shiftHero(copy, shift, treeOverheal(trainedAmount({ upgrades: save.upgrades, training: ranksInRun(save, copy) }, "overheal"), save, treeBonus(copy.cardTrees)));
+      shiftHero(copy, shift, treeOverheal(trainedAmount({ upgrades: save.upgrades, training: ranksInRun(save, copy) }, "overheal"), treeBonus(copy.cardTrees)));
       // Keys a provision adds come into the hand at once.
       const keys = copy.player.keys;
       for (const color of KEY_COLORS) keys[color] = Math.max(0, keys[color] + after.keys[color] - before[i].keys[color]);

@@ -127,6 +127,9 @@ export type Player = {
   /** The percent every enemy strike's damage is cut by, parried (Parry %);
    * none when absent. */
   parry?: number;
+  /** The percent HEAL's card tree parries of what Parry % leaves of every
+   * enemy strike (the two cuts multiply); absent without it. */
+  cardParry?: number;
   /** The percent more ATK the hero strikes bosses with (equipment; none
    * when absent). */
   bossAttack?: number;
@@ -136,9 +139,10 @@ export type Player = {
   foeAttack?: Partial<Record<"weakEnemy" | "baseEnemy" | "strongEnemy" | "eliteEnemy" | "bossEnemy" | "nonBossEnemy" | "fastEnemy" | "flyingEnemy" | "monster" | "torch", number>>;
   /** The percent more DEF and shroud the hero holds against the enemies a
    * card tree covers (ENEMY's every enemy, TORCH's the Greater Boss), by
-   * card; absent without one. */
+   * card; absent without one. HEAL's tree's shroud, against every enemy,
+   * goes under ENEMY's key. */
   foeDefense?: Partial<Record<"monster" | "torch", number>>;
-  foeShroud?: Partial<Record<"torch", number>>;
+  foeShroud?: Partial<Record<"monster" | "torch", number>>;
   /** The percent of an enemy's DEF the hero's strikes ignore (equipment's
    * Piercing; none when absent). */
   pierce?: number;

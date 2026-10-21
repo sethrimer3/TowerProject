@@ -23,10 +23,12 @@ export type TreeStat =
   | "goldBonus" | "silverBonus"
   /** Each Free Upgrade group's chance a floor. */
   | "freeOffense" | "freeDefense" | "freeUtility"
+  /** Flat: a percent chance of a free Defense level each floor, rolled with
+   * Free Defense's own as two chances (either hitting gives the level), so
+   * it gives one without Free Defense trained. */
+  | "freeDefenseChance"
   /** Flat: the percent of max HP healed on each floor new to the run, up to the Overheal ceiling. */
   | "floorHeal"
-  /** The Overheal ceiling, once the Overheal skill is owned. */
-  | "overheal"
   /** The Overheal ceiling, multiplying it whether or not the skill is owned (so it opens one above max HP). */
   | "overhealMax"
   /** Flat: the percent chance the Tower's stairs, reached by STAIRS, climb two floors (as Skip on STAIRS does). */
@@ -35,6 +37,15 @@ export type TreeStat =
   | "percentPotions" | "potionHeal"
   /** Flat: the percent of max HP each potion HEAL reaches boosts it by, for the run (as the Max HP badge does). */
   | "potionMaxHp"
+  /** Flat: Silver found with each potion taken, before Silver Bonus. */
+  | "potionSilver"
+  /** Regen: the HP regained each step. */
+  | "regen"
+  /** The shroud in fights with every enemy. */
+  | "shroud"
+  /** Flat: a percent of every enemy strike parried, cutting what the hero's
+   * Parry % leaves (the two cuts multiply), so it parries without Parry. */
+  | "parry"
   /** Less each door of every kind costs, and more each door's Pickup Gold. */
   | "doorCost" | "doorGold"
   /** More each key of every colour is worth, and more each key's Pickup Gold. */
@@ -57,7 +68,7 @@ export type TreeStat =
   | "supplyChance" | "equipmentChance";
 
 /** The stats added as they are, not as percents of a factor. */
-export const FLAT_STATS: ReadonlySet<TreeStat> = new Set<TreeStat>(["floorHeal", "stairSkip", "potionMaxHp", "attackShardGold", "defenseShardGold", "bossCells", "supplyChance", "equipmentChance"]);
+export const FLAT_STATS: ReadonlySet<TreeStat> = new Set<TreeStat>(["floorHeal", "stairSkip", "potionMaxHp", "potionSilver", "freeDefenseChance", "parry", "attackShardGold", "defenseShardGold", "bossCells", "supplyChance", "equipmentChance"]);
 
 /** One node of a card's tree: the stats each of its levels raises, its
  * rarity, how many levels it holds from the start (`levels`: 0 for a node
@@ -72,8 +83,8 @@ const common = (id: string, stats: CardTreeNode["stats"], levels: number, max: n
 
 /** Each card's tree, its nodes parents first. Every tree holds
  * `BASE_MAX_LEVEL` (10) levels from the start; card buys open the rest:
- * STAIRS' up to 60, through every rarity, and the other cards' (common
- * only, until their trees are redone) up to 25. */
+ * STAIRS' and HEAL's up to 60, through every rarity, and the other cards'
+ * (common only, until their trees are redone) up to 25. */
 export const CARD_TREES: Partial<Record<CardId, readonly CardTreeNode[]>> = {
   stairs: [
     common("floorGold", { floorGold: 2 }, 5, 10),
@@ -88,11 +99,16 @@ export const CARD_TREES: Partial<Record<CardId, readonly CardTreeNode[]>> = {
     { id: "stairSkip", stats: { stairSkip: 1 }, rarity: "legendary", levels: 0, max: 5, after: "freeDefense" },
   ],
   heal: [
-    common("percentPotions", { percentPotions: 10 }, 2, 5),
-    common("potionHeal", { potionHeal: 10 }, 2, 5),
-    common("goldBonus", { goldBonus: 10 }, 2, 5),
-    common("potionMaxHp", { potionMaxHp: 0.01 }, 2, 5),
-    common("overheal", { overheal: 5 }, 2, 5),
+    common("percentPotions", { percentPotions: 2 }, 5, 10),
+    { id: "potionSilver", stats: { potionSilver: 0.1 }, rarity: "uncommon", levels: 0, max: 5, after: "percentPotions" },
+    { id: "goldBonus", stats: { goldBonus: 2 }, rarity: "rare", levels: 0, max: 5, after: "potionSilver" },
+    { id: "freeDefense", stats: { freeDefenseChance: 0.5 }, rarity: "epic", levels: 0, max: 5, after: "goldBonus" },
+    { id: "parry", stats: { parry: 1 }, rarity: "legendary", levels: 0, max: 5, after: "freeDefense" },
+    common("potionHeal", { potionHeal: 2 }, 5, 10),
+    { id: "regen", stats: { regen: 2 }, rarity: "uncommon", levels: 0, max: 5, after: "potionHeal" },
+    { id: "shroud", stats: { shroud: 2 }, rarity: "rare", levels: 0, max: 5, after: "regen" },
+    { id: "potionMaxHp", stats: { potionMaxHp: 0.01 }, rarity: "epic", levels: 0, max: 5, after: "shroud" },
+    { id: "overhealMax", stats: { overhealMax: 5 }, rarity: "legendary", levels: 0, max: 5, after: "potionMaxHp" },
   ],
   door: [
     common("doorCost", { doorCost: 1 }, 4, 10),
@@ -259,7 +275,7 @@ export function runCardTrees(levels: CardTreeLevels, hand: readonly CardId[]): C
  * (0 for a stat none raises). */
 export type TreeBonus = Record<TreeStat, number>;
 const NO_BONUS = Object.freeze(Object.fromEntries(
-  ["floorGold", "floorSilver", "goldBonus", "silverBonus", "freeOffense", "freeDefense", "freeUtility", "floorHeal", "overheal", "overhealMax", "stairSkip", "percentPotions", "potionHeal", "potionMaxHp",
+  ["floorGold", "floorSilver", "goldBonus", "silverBonus", "freeOffense", "freeDefense", "freeUtility", "freeDefenseChance", "floorHeal", "overhealMax", "stairSkip", "percentPotions", "potionHeal", "potionMaxHp", "potionSilver", "regen", "shroud", "parry",
     "doorCost", "doorGold", "keyFind", "keyGold", "foeAttack", "foeDefense", "foeGold", "moreEnemies", "attackShard", "defenseShard", "attackShardGold", "defenseShardGold",
     "bossAttack", "bossDefense", "bossShroud", "bossGold", "bossCells", "chestGold", "supplyChance", "equipmentChance"].map((s) => [s, 0]),
 )) as TreeBonus;
@@ -283,12 +299,11 @@ export const runExtras = (run: Pick<RunCore, "badges" | "cardTrees">) => extraEn
  * tree), as `rollFreeTraining` takes it. */
 export const freeUpFactors = (bonus: TreeBonus) =>
   ({ offense: treeFactor(bonus, "freeOffense"), defense: treeFactor(bonus, "freeDefense"), utility: treeFactor(bonus, "freeUtility") });
+/** The chances each Free Upgrade group also rolls a floor, in hundredths of
+ * a percent (HEAL's tree's Free Defense), as `rollFreeTraining` takes them. */
+export const freeUpChances = (bonus: TreeBonus) => (bonus.freeDefenseChance ? { defense: snap(bonus.freeDefenseChance * 100) } : undefined);
 /** The Overheal ceiling `overheal` (in thousandths of max HP, Overheal
- * training's) raised by the trees' Overheal percents, only once the Overheal
- * skill is owned (they raise the ceiling, never open it), then multiplied
- * by their Overheal Max percents, skill or not (STAIRS' legendary node,
- * which opens a ceiling above max HP by itself). */
-export function treeOverheal(overheal: number, save: { upgrades: { overheal: number } }, bonus: TreeBonus) {
-  const raised = save.upgrades.overheal && bonus.overheal ? snap((overheal * (100 + bonus.overheal)) / 100) : overheal;
-  return bonus.overhealMax ? snap((raised * (100 + bonus.overhealMax)) / 100) : raised;
-}
+ * training's) multiplied by the trees' Overheal Max percents, skill or not
+ * (STAIRS' and HEAL's legendary nodes, which open a ceiling above max HP by
+ * themselves). */
+export const treeOverheal = (overheal: number, bonus: TreeBonus) => (bonus.overhealMax ? snap((overheal * (100 + bonus.overhealMax)) / 100) : overheal);

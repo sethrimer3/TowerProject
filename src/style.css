@@ -1337,6 +1337,19 @@ nav:not(.in-run) .hand {
   box-shadow: 0 1px 3px #000c;
 }
 .card-reveal-card .card-level { top: 6px; left: 6px; min-width: 22px; height: 22px; border-radius: 6px; font-size: 13px; }
+/* On the Deck page, a card's XP toward its next level over the grey rule
+   between its art and its name (pixels 4 to 43 of row 44 of the 48 × 64
+   face), filled in white. */
+.card-xp {
+  position: absolute;
+  left: calc(100% * 4 / 48);
+  top: calc(100% * 44 / 64);
+  width: calc(100% * 40 / 48);
+  height: max(1px, calc(100% / 64));
+  background: #5d6677;
+  pointer-events: none;
+}
+.card-xp > span { display: block; height: 100%; background: #fff; }
 /* A card's frame for its rarity (ui/card-level-marks.ts), over its art in
    the hand, on the Deck page, in its details and at its tree's root: green
    for a common card that card buys raised, silver with a shine now and then

@@ -550,7 +550,7 @@ How far a card has grown, from 0 up to its max level, by the card XP it gathers 
 _Avoid_: card rank, card tier
 
 **Max level**:
-The highest level a card can reach now: every level its card tree holds, 10 at first, raised by one with each card buy that goes to it (up to 25, or 60 for STAIRS).
+The highest level a card can reach now: every level its card tree holds, 10 at first, raised by one with each card buy that goes to it (up to 25, or 60 for STAIRS and HEAL).
 _Avoid_: level cap (in player-facing text), card limit
 
 **Card buy**:

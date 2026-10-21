@@ -3,14 +3,14 @@ import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { decode, defaults } from "../src/save.ts";
 import { BASE_MAX_LEVEL, CARD_LEVEL_XP, MAX_CARD_LEVEL, MAX_CARD_XP } from "../src/card-levels.ts";
-import { CARD_TREES, RESPEC_GEMS, cardLook, cardMaxLevel, decodeCardTrees, pointsLeft, raiseRefusal, runExtras, treeBonus, treeFactor, treeOverheal, type CardOpened, type CardTreeLevels } from "../src/card-trees.ts";
+import { CARD_TREES, RESPEC_GEMS, cardLook, cardMaxLevel, decodeCardTrees, pointsLeft, raiseRefusal, runExtras, freeUpChances, treeBonus, treeFactor, treeOverheal, type CardOpened, type CardTreeLevels } from "../src/card-trees.ts";
 import { RunPurse } from "../src/game/run-purse.ts";
-import { facing, predict } from "../src/combat.ts";
+import { facing, parryCut, predict } from "../src/combat.ts";
 import { doorDiscount } from "../src/doors.ts";
 import { extraEnemies } from "../src/more-enemies.ts";
 import { rollFreeTraining } from "../src/free-training.ts";
 import { BASE_RULES, potionRestores } from "../src/step-effects.ts";
-import { snap } from "../src/exact.ts";
+import { eitherChance, snap } from "../src/exact.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import type { CardId } from "../src/cards.ts";
 import type { Enemy, Player, Tile } from "../src/entities.ts";
@@ -39,16 +39,16 @@ function allOpened(card: CardId): CardOpened {
   return { [card]: Object.fromEntries(CARD_TREES[card]!.map((n) => [n.id, n.max - n.levels])) };
 }
 
-test("every card tree holds 10 levels from the start and opens to 60 (STAIRS) or 25 with card buys, each node after one of its own tree", () => {
+test("every card tree holds 10 levels from the start and opens to 60 (STAIRS, HEAL) or 25 with card buys, each node after one of its own tree", () => {
   assert.deepEqual(Object.keys(CARD_TREES), ["stairs", "heal", "door", "key", "monster", "atkUp", "defUp", "torch", "chest"]);
   for (const [card, nodes] of Object.entries(CARD_TREES)) {
     assert.equal(nodes!.reduce((a, n) => a + n.levels, 0), BASE_MAX_LEVEL, `${card} starts at 10`);
-    assert.equal(nodes!.reduce((a, n) => a + n.max, 0), card === "stairs" ? MAX_CARD_LEVEL : 25, `${card}'s whole tree`);
+    assert.equal(nodes!.reduce((a, n) => a + n.max, 0), card === "stairs" || card === "heal" ? MAX_CARD_LEVEL : 25, `${card}'s whole tree`);
     const ids = nodes!.map((n) => n.id);
     assert.equal(new Set(ids).size, ids.length, `${card}'s node ids are its own`);
     nodes!.forEach((n, i) => n.after === undefined || assert.ok(ids.slice(0, i).includes(n.after), `${card}.${n.id} comes after its parent`));
     for (const n of nodes!) assert.equal(n.levels > 0, n.rarity === "common", `${card}.${n.id}: only common nodes hold levels from the start`);
-    if (card !== "stairs") assert.ok(nodes!.every((n) => n.rarity === "common"), `${card} is common for now`);
+    if (card !== "stairs" && card !== "heal") assert.ok(nodes!.every((n) => n.rarity === "common"), `${card} is common for now`);
   }
   const stairs = CARD_TREES.stairs!;
   assert.deepEqual(stairs.map((n) => [n.id, n.rarity, n.after ?? null]), [
@@ -59,6 +59,13 @@ test("every card tree holds 10 levels from the start and opens to 60 (STAIRS) or
     ["floorGold", 2], ["floorHeal", 3], ["goldBonus", 2], ["freeOffense", 1], ["overhealMax", 5],
     ["floorSilver", 2], ["floorHeal", 3], ["silverBonus", 2], ["freeDefense", 1], ["stairSkip", 1],
   ]);
+  const heal = CARD_TREES.heal!;
+  assert.deepEqual(heal.map((n) => [n.id, n.rarity, n.after ?? null, Object.entries(n.stats)[0]]), [
+    ["percentPotions", "common", null, ["percentPotions", 2]], ["potionSilver", "uncommon", "percentPotions", ["potionSilver", 0.1]], ["goldBonus", "rare", "potionSilver", ["goldBonus", 2]],
+    ["freeDefense", "epic", "goldBonus", ["freeDefenseChance", 0.5]], ["parry", "legendary", "freeDefense", ["parry", 1]],
+    ["potionHeal", "common", null, ["potionHeal", 2]], ["regen", "uncommon", "potionHeal", ["regen", 2]], ["shroud", "rare", "regen", ["shroud", 2]],
+    ["potionMaxHp", "epic", "shroud", ["potionMaxHp", 0.01]], ["overhealMax", "legendary", "potionMaxHp", ["overhealMax", 5]],
+  ]);
 });
 
 test("a card's max level is every level its tree holds, and its look the rarest rarity opened on it", () => {
@@ -66,7 +73,8 @@ test("a card's max level is every level its tree holds, and its look the rarest 
   assert.equal(cardMaxLevel({}, "archer"), 10, "a card without a tree");
   assert.equal(cardMaxLevel({ stairs: { floorGold: 2, goldBonus: 1 } }, "stairs"), 13);
   assert.equal(cardMaxLevel(allOpened("stairs"), "stairs"), 60);
-  assert.equal(cardMaxLevel(allOpened("heal"), "heal"), 25);
+  assert.equal(cardMaxLevel(allOpened("heal"), "heal"), 60);
+  assert.equal(cardMaxLevel(allOpened("door"), "door"), 25);
   assert.deepEqual(cardLook({}, "stairs"), { rarity: "common", upgraded: false });
   assert.deepEqual(cardLook({ stairs: { floorGold: 1 } }, "stairs"), { rarity: "common", upgraded: true });
   assert.deepEqual(cardLook({ stairs: { floorHealSilver: 1, goldBonus: 1 } }, "stairs"), { rarity: "rare", upgraded: true });
@@ -143,12 +151,13 @@ test("the trees' stats add up over the hand's cards: Silver Bonus from DOOR, KEY
   assert.equal(b.floorGold, 10);
   assert.equal(treeFactor(b, "silverBonus"), 1.3);
   assert.equal(treeFactor(b, "goldBonus"), 1, "none raised");
-  const full = treeBonus({ chest: filled("chest", 25), atkUp: filled("atkUp", 25), torch: filled("torch", 25), heal: filled("heal", 25) });
+  const full = treeBonus({ chest: filled("chest", 25), atkUp: filled("atkUp", 25), torch: filled("torch", 25), heal: filled("heal", 60) });
   assert.equal(full.supplyChance, 2, "1.5% with the card's base: 3.5%");
   assert.equal(full.equipmentChance, 1, "0.5% with the card's base: 1.5%");
   assert.equal(full.attackShardGold, 1, "a Gold a shard at the top");
   assert.equal(full.bossCells, 5);
-  assert.equal(full.potionMaxHp, 0.05);
+  assert.deepEqual([full.percentPotions, full.potionSilver, full.goldBonus, full.freeDefenseChance, full.parry, full.potionHeal, full.regen, full.shroud, full.potionMaxHp, full.overhealMax],
+    [20, 0.5, 10, 2.5, 5, 20, 10, 10, 0.05, 25]);
   const stairs = treeBonus({ stairs: filled("stairs", 60) });
   assert.deepEqual([stairs.floorGold, stairs.floorSilver, stairs.floorHeal, stairs.goldBonus, stairs.silverBonus, stairs.freeOffense, stairs.freeDefense, stairs.overhealMax, stairs.stairSkip], [20, 20, 30, 10, 10, 5, 5, 25, 5]);
 });
@@ -204,15 +213,64 @@ test("STAIRS' Free Up nodes multiply each group's chance a floor", () => {
   assert.ok(raised > plain * 1.5, `${raised} vs ${plain}`);
 });
 
-test("HEAL's tree raises each potion's HP and, with the skill, the Overheal ceiling; STAIRS' Overheal Max multiplies it, skill or not", () => {
+test("HEAL's tree raises each potion's HP, and HEAL's and STAIRS' Overheal Max add into one factor on the Overheal ceiling, skill or not", () => {
   const potion = { kind: "potion" } as never;
   assert.equal(potionRestores(potion, 100, { ...BASE_RULES, potionCard: 50 }), snap(35 * 1.5));
-  const b = treeBonus({ heal: { overheal: 4 } });
-  assert.equal(treeOverheal(2000, { upgrades: { overheal: 0 } }, b), 2000, "HEAL's Overheal never opens it");
-  assert.equal(treeOverheal(2000, { upgrades: { overheal: 1 } }, b), 2400, "+20%");
-  const max = treeBonus({ heal: { overheal: 4 }, stairs: { overhealMax: 2 } });
-  assert.equal(treeOverheal(1000, { upgrades: { overheal: 0 } }, max), 1100, "+10% above max HP without the skill");
-  assert.equal(treeOverheal(2000, { upgrades: { overheal: 1 } }, max), 2640, "×1.2 ×1.1");
+  const max = treeBonus({ heal: { overhealMax: 1 }, stairs: { overhealMax: 2 } });
+  assert.equal(treeOverheal(1000, max), 1150, "+15% above max HP without the skill");
+  assert.equal(treeOverheal(2000, max), 2300);
+  assert.equal(treeOverheal(2000, treeBonus({})), 2000);
+});
+
+test("HEAL's Parry and Free Defense open their stats without them, and cut or roll beside them when owned", () => {
+  assert.equal(parryCut(hero), 0);
+  assert.equal(parryCut({ ...hero, cardParry: 5 }), 5, "Parry without Parry %");
+  assert.equal(parryCut({ ...hero, parry: 20, cardParry: 5 }), 24, "5% of the 80% Parry % leaves");
+  assert.equal(parryCut({ ...hero, parry: 97, cardParry: 50 }), 98, "under the cap");
+  assert.equal(eitherChance(1000, 50, 10_000), 1045);
+  const s = defaults();
+  s.upgrades.freeTraining = 1;
+  const draws = (chances?: { defense: number }) => {
+    const run = { seed: 9, hand: ["stairs"] as CardId[] };
+    let hits = 0;
+    for (let f = 0; f < 2000; f++) hits += rollFreeTraining(s, run, 0, undefined, chances).length;
+    return hits;
+  };
+  assert.equal(draws(), 0, "no Free Upgrade trained");
+  const hits = draws(freeUpChances(treeBonus({ heal: { freeDefense: 5 } })));
+  assert.ok(hits > 15 && hits < 90, `about 2.5% of 2,000: ${hits}`);
+});
+
+test("HEAL's shroud holds against every enemy, its Parry and Regen reach the run, and a potion finds Silver", () => {
+  const s = defaults();
+  s.hand = ["stairs", "heal"];
+  s.cardXp.heal = MAX_CARD_XP;
+  s.cardBuys.opened = allOpened("heal");
+  s.cardTrees = { heal: filled("heal", 60) };
+  const g = new Game(s);
+  g.newRun({ seed: 3 });
+  assert.deepEqual(g.run.player.foeShroud, { monster: 10 });
+  assert.equal(g.run.player.cardParry, 5);
+  assert.equal(decode(JSON.stringify(g.save)).tower.run!.player.cardParry, 5, "it saves");
+  assert.deepEqual([facing(g.run.player.foeShroud ? { ...hero, foeShroud: g.run.player.foeShroud } : hero, foe("normal")).shroud], [22]);
+  g.run.player.regen = 10;
+  const regen = g.stepRules.regen;
+  delete g.run.cardTrees;
+  assert.equal(regen, snap(g.stepRules.regen * 1.1), "+10% Regen");
+  const silverFrom = (potionSilver: number) => {
+    const h = new Game(defaults());
+    h.newRun({ seed: 7 });
+    if (potionSilver) h.run.cardTrees = { heal: { potionSilver } };
+    const w = h.world as RoomWorld;
+    w.cells = new Map([["0,0", { kind: "floor" }], ["1,0", { kind: "potion" }]]);
+    Object.assign(h.run.player, { x: 0, y: 0 });
+    const before = h.run.silver ?? 0;
+    assert.ok(h.move(1, 0));
+    return snap((h.run.silver ?? 0) - before);
+  };
+  assert.equal(silverFrom(0), 0);
+  assert.ok(silverFrom(5) > 0);
+  assert.equal(silverFrom(5), snap(new RunPurse(defaults(), "tower", { silver: 0 } as never, () => 0.5).silver(0.5)));
 });
 
 test("STAIRS' Stair Skip climbs two floors at its chance, on the Tower's stairs only", () => {
@@ -242,7 +300,7 @@ test("the trees' Gold and Silver: Gold Bonus, Silver Bonus, a chest's Gold, ENEM
     if (trees) g.run.cardTrees = trees;
     return new RunPurse(g.save, g.mode, g.run, () => 0.5);
   };
-  const plain = purse(), raised = purse({ heal: { goldBonus: 5 }, chest: { gold: 5 }, monster: { gold: 5 }, torch: { cells: 3 }, key: { silverBonus: 5 } });
+  const plain = purse(), raised = purse({ heal: { goldBonus: 5 }, stairs: { goldBonus: 20 }, chest: { gold: 5 }, monster: { gold: 5 }, torch: { cells: 3 }, key: { silverBonus: 5 } });
   assert.equal(raised.treasureGoldPreview(3, 3), snap(snap(plain.treasureGoldPreview(3, 3) * 1.5) * 1.1));
   assert.equal(raised.killGoldOf(foe("normal")), snap(snap(plain.killGoldOf(foe("normal")) * 1.5) * 1.05));
   assert.equal(raised.silver(10), snap(plain.silver(10) * 1.1));

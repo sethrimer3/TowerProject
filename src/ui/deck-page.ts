@@ -12,7 +12,7 @@ import { CARD_BUY_GEMS, type CardBuyCount } from "../card-buys.ts";
 import { showCard, type CardAction, type CardDetails } from "./card-reveal.ts";
 import { CardTreePanel } from "./card-tree-panel.ts";
 import { CARD_TREES, hasPointsToSpend } from "../card-trees.ts";
-import { cardLevelHtml } from "./card-level-marks.ts";
+import { cardLevelHtml, cardXpBarHtml } from "./card-level-marks.ts";
 import { badgeLevelsHtml, cardBadgeHtml, badgeText, progressText, tokenHtml } from "./badge-token.ts";
 
 /** Where a hand card dropped on the deck goes: back to the deck. */
@@ -339,12 +339,13 @@ export class DeckPage {
     return `<div class="deck-slot${held ? " held" : ""}" role="listitem"${this.badgeTarget(id)}<button type="button" class="deck-card" data-slot="${i}" ${fixed ? "disabled" : ""} aria-label="${card.name}, slot ${i + 1} of ${count}. Drag, or press the left and right arrow keys, to move it." title="${card.name}: ${cardText(id, upgrades)}${cardBonusText(id) ? ` · ${cardBonusText(id)}` : ""}">${cardArt(id, card.name)}${this.marksHtml(id)}</button>${x}${lessonPointer}${links}</div>`;
   }
 
-  /** What card `id` wears over its art: its rarity's frame and level, a rising
-   * arrow at its top left while it has card points to spend on its tree,
-   * and NEW in gold at its top right until the player meets it here. */
+  /** What card `id` wears over its art: its XP toward its next level on the
+   * rule above its name, its rarity's frame and level, a rising arrow at its
+   * top left while it has card points to spend on its tree, and NEW in gold
+   * at its top right until the player meets it here. */
   private marksHtml(id: CardId) {
     const { save, notices } = this.ctx.game, still = save.settings.reduceMotion ? " still" : "";
-    return cardLevelHtml(save, id)
+    return cardXpBarHtml(save, id) + cardLevelHtml(save, id)
       + (hasPointsToSpend(save, id) ? `<span class="card-points-mark${still}" aria-hidden="true">${POINTS_ARROW_SVG}</span>` : "")
       + (notices.isNew(id) ? `<span class="card-new" aria-hidden="true">NEW</span>` : "");
   }

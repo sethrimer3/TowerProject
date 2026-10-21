@@ -39,3 +39,7 @@ export function root(x: number, n: number) {
  * or difference of them is snapped back onto the grid, so 0.1 + 0.2 is 0.3
  * and a fight's forecast and the fight played out agree to the last strike. */
 export const snap = (n: number) => Math.round(n * 1e6) / 1e6;
+
+/** Two chances (or cuts) of `of` (100 a percent, 10,000 a hundredth of
+ * one) as one: either hitting, so each cuts what the other leaves. */
+export const eitherChance = (a: number, b: number, of = 100) => (b ? snap(of - ((of - a) * (of - b)) / of) : a);

@@ -136,6 +136,7 @@ const validPlayer = (p: any, width: number) =>
   (p.lifesteal === undefined || (finite(p.lifesteal) && p.lifesteal >= 0)) &&
   (p.thorns === undefined || (finite(p.thorns) && p.thorns >= 0)) &&
   (p.parry === undefined || (finite(p.parry) && p.parry >= 0 && p.parry <= 100)) &&
+  (p.cardParry === undefined || (finite(p.cardParry) && p.cardParry >= 0 && p.cardParry <= 100)) &&
   (p.bossAttack === undefined || (finite(p.bossAttack) && p.bossAttack >= 0)) &&
   (p.pierce === undefined || (finite(p.pierce) && p.pierce >= 0 && p.pierce <= 100)) &&
   [p.foeAttack, p.foeDefense, p.foeShroud].every((m) => m === undefined || (isRecord(m) && Object.entries(m).every(([id, v]) => isFoeKey(id) && finite(v) && (v as number) >= 0))) &&

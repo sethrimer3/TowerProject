@@ -87,6 +87,11 @@ export class Finds {
       if (t.kind === "key") this.pickupGold(t, { x, y }, this.host.handBonus.keys[t.color!]?.gold, tree.keyGold);
       else this.pickupGold(t, { x, y }, t.kind === "attack" ? tree.attackShardGold : t.kind === "defense" ? tree.defenseShardGold : 0);
       if (t.kind === "potion") this.host.recordHeal(outcome.healed);
+      // HEAL's tree finds Silver with each potion.
+      if (t.kind === "potion" && tree.potionSilver) {
+        const silver = this.host.purse.silver(tree.potionSilver);
+        if (silver) this.host.gain(x, y, `+${wholeChange(silver)} Silver`, { coin: "silver" }, { row: 2, with: true });
+      }
       if (t.kind === "potion") missions.record("potions", 1, this.missionKey({ x, y }));
       if (t.kind === "potion") events.record("potions", 1, this.missionKey({ x, y }));
       if (t.kind === "key" && t.color !== "yellow") missions.record(t.color === "blue" ? "blueKeys" : "redKeys", 1, this.missionKey({ x, y }));

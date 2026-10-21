@@ -44,6 +44,15 @@ function levelText(save: Levels, id: CardId) {
   return { head, xp: capped ? `${xp} · buy cards to raise the max` : xp };
 }
 
+/** A card's XP toward its next level, laid over the grey rule between its
+ * art and its name: the rule itself, filled in white from the left (full
+ * at level 60; at a lower cap, the XP it keeps gathering, up to full). */
+export function cardXpBarHtml(save: Levels, id: CardId) {
+  const { level, into, needed } = levelIn(save, id);
+  const share = level >= MAX_CARD_LEVEL ? 1 : Math.min(1, into / needed);
+  return `<span class="card-xp" aria-hidden="true"><span style="width:${+(share * 100).toFixed(2)}%"></span></span>`;
+}
+
 /** A card's rarity (with its stars), and its level of its max level with
  * its XP toward the next, as its details say them. */
 export function cardLevelLines(save: Levels, id: CardId) {
