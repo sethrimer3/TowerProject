@@ -21,6 +21,12 @@ On side branches, a fork may offer more than one blue or red door, a chance for 
 In Tower I a blue or red door never stands alone on the way to the stairs: it guards an optional room, or stands in a fork beside a lane that needs neither colour (a yellow door, a monster), so a hero without the key can still climb; later towers may put them on the way up.
 In Delve I, blue keys and doors first appear on equivalent floor 21 (depth 200) and red ones on 51, and Delve II and the rest have them from their first floors.
 
+## Corridor guards
+
+Most Delve corridors are guarded by a monster, and most guards keep a potion or an ATK or DEF shard in a **nook**: a single tile cut into the wall beside the guard, reached only from the guard's own tile.
+The way on passes the nook by, so the hero takes its reward only once the guard is beaten and a card that wants it (Heal, ATK Up, DEF Up) or Target steps aside for it.
+Where the wall has no room for a nook, the reward lies on the corridor just past the guard instead.
+
 ## What the floor pays
 
 Every item a run takes off the floor pays Gold: 1 for a potion, an ATK or DEF shard, a torch put out, a treasure chest opened, or a Heart, Wooden or Steel Door opened (an area reward chest, a one-time reward, pays none).

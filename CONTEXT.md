@@ -122,6 +122,10 @@ _Avoid_: split path, branch (a branch is an optional side room)
 What stands on the one tile in front of a floor's stairs: an enemy, a yellow door, or nothing (a section's last floor puts its boss there).
 _Avoid_: stairs gate (the gate is the stairs room's way in)
 
+**Nook**:
+A single tile cut into the wall beside a Delve corridor guard, reached only from the guard's tile, holding the guard's reward, so the way on passes it by and only a card that wants the reward fetches it.
+_Avoid_: alcove, niche, side pocket (a pocket is a dead-end chamber)
+
 **Lane**:
 One way through a fork: one to three tiles of gates walked in order, sometimes with an item between them (a treasure, or a key that pays for the door after it).
 _Avoid_: corridor, path

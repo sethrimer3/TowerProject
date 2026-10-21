@@ -235,6 +235,18 @@ test("the Stairs card mentions the Delve only once Into the depths is owned", ()
   assert.match(cardText("stairs", s.upgrades), /Delve/);
 });
 
+test("a reward in a nook beside a corridor guard is taken only by a card that wants it", () => {
+  // Before the fight the nook is reached only through the guard's tile, so
+  // HEAL can't plan for it and the hand's next card fights the guard.
+  assert.equal(play(board(["##P###", "@.M..S"]), ["heal", "monster", "stairs"], "delve")?.card, "monster");
+  // Once it's beaten, HEAL steps aside for the potion; without HEAL the hero
+  // walks on past it.
+  assert.deepEqual(play(board(["#####.", "##P##.", "..@..."]), ["heal", "stairs"], "delve"), { card: "heal", to: [2, 1], steps: 1 });
+  const on = planHand(board(["#####.", "##P##.", "..@..."]), ["stairs"], "delve")!;
+  assert.deepEqual([on.path.at(-1)!.x, on.path.at(-1)!.y], [5, 2]);
+  assert.ok(!on.path.some((s) => s.x === 2 && s.y === 1), "past the nook, not into it");
+});
+
 test("the hand's paths go round items and lit torches when an equally short way does", () => {
   const rows = [
     "..S",

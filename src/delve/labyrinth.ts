@@ -544,7 +544,7 @@ const GUARD_REWARDS = Object.entries(DELVE_TUNING.guardRewards) as ['potion' | '
 /** Guards the labyrinth's corridors: each corridor that doesn't lead into a
  * pocket may get one enemy on its middle corridor tile, outside any chamber,
  * asked as normal (the enemy stage deals its strength) with a random
- * profile, and often a potion or shard on the corridor tile beside it. */
+ * profile, and often a potion or shard in a nook beside it. */
 function placeGuards(lab: Lab, board: Board) {
   const { nodes, rng } = lab, pockets = new Set(nodes.filter(n => n.pattern).map(n => n.id));
   const intoPocket = (e: Lab['edges'][number]) => pockets.has(e.a) || pockets.has(e.b);
@@ -564,17 +564,39 @@ function rollGuard(rng: () => number): GuardRoll {
 }
 
 /** The guard on the middle of the corridor's `open` tiles, and its reward
- * on the tile after it. A guard's potion may be a percent potion, as the
- * run decides (`withPotions`). */
+ * in a nook beside it (`nookBeside`), or on the corridor tile after it when
+ * no nook fits. A guard's potion may be a percent potion, as the run
+ * decides (`withPotions`). */
 function placeGuard(lab: Lab, board: Board, open: Point[], { profile, reward }: GuardRoll, from: Node, edge: Edge) {
   const middle = Math.floor(open.length / 2), at = open[middle], depth = board.metadata.get(point(at.x, at.y))!.depth;
   const gate: Gate = { kind: 'enemy', strength: 'normal', profile };
   board.put(at, gateTile(lab, gate, { ...from, depth }), depth);
   lab.slots.push({ at, run: [], path: open, gate, n: from, depth, main: onMain(lab, edge), edge });
-  const beside = open[middle + 1];
-  if (!reward || !beside) return;
+  if (!reward) return;
   const tile: Tile = reward === 'potion' ? { kind: 'potion', color: 'blue' } : { kind: reward };
-  board.put(beside, tile, board.metadata.get(point(beside.x, beside.y))!.depth);
+  const nook = nookBeside(lab, board, at);
+  if (nook) { board.put(nook, tile, depth); return; }
+  const beside = open[middle + 1];
+  if (beside) board.put(beside, tile, board.metadata.get(point(beside.x, beside.y))!.depth);
+}
+
+const SIDES: Point[] = [{ x: 0, y: 1 }, { x: 1, y: 0 }, { x: 0, y: -1 }, { x: -1, y: 0 }];
+/** A rock tile beside the guard at `at` that can be cut into a nook: its
+ * only open neighbour would be the guard's tile, so the nook is a dead end
+ * that joins nothing and leaves no way round the guard, and it stays in
+ * this area's cells. The reward there is off the corridor, so only a card
+ * that wants it (or Target) steps aside for it, once the guard is beaten.
+ * Which side is tried first is a fixed number per tile, not the region's
+ * stream. Null when neither side fits. */
+function nookBeside({ seed, area }: Lab, board: Board, at: Point): Point | null {
+  const rock = (p: Point) => !board.cells.has(point(p.x, p.y));
+  const first = Math.floor(tileRandom(at.x, at.y, seed ^ 0x6e6f6f6b) * SIDES.length);
+  for (let i = 0; i < SIDES.length; i++) {
+    const side = SIDES[(first + i) % SIDES.length], nook = shift(at, side);
+    const walls = SIDES.filter(d => d.x !== -side.x || d.y !== -side.y).map(d => shift(nook, d));
+    if (rock(nook) && walls.every(rock) && ownerAt(seed, nook.x, nook.y) === area) return nook;
+  }
+  return null;
 }
 
 /** One gate standing on a single tile: where, what, the cell it was placed
