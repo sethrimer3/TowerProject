@@ -86,7 +86,7 @@ html.ui-sprites dialog :is(h2, h3):not(#_) { color: #e1bb78; text-shadow: none; 
 html.ui-sprites :is(.hint, .item-meta, .item-identity, .level-cost):not(#_) { color: #8b9a9d; }
 
 /* Keep picture buttons (cards, map markers and skill nodes) intact. */
-html.ui-sprites button:not(:where(.hand-card, .skill-node, .badge-token, .eq-tile, .deck-add,
+html.ui-sprites button:not(:where(.hand-card, .skill-node, .badge-token, .eq-tile, .deck-add, .deck-card, .deck-entry-art,
   .forest-sign, .forest-building, .mission-bar, #shrine-bar, #forest-sign, .ug-node, .ct-row-main)):not(#_) {
   border-color: transparent;
   border-image: var(--ui-face) 6 fill / 12px / 0 stretch;
@@ -98,7 +98,7 @@ html.ui-sprites button:not(:where(.hand-card, .skill-node, .badge-token, .eq-til
   image-rendering: pixelated;
   transition: none;
 }
-html.ui-sprites button:not(:where(.hand-card, .skill-node, .badge-token, .eq-tile, .deck-add,
+html.ui-sprites button:not(:where(.hand-card, .skill-node, .badge-token, .eq-tile, .deck-add, .deck-card, .deck-entry-art,
   .forest-sign, .forest-building, .mission-bar, .badge-pick, .deck-link-toggle,
   #shrine-bar, #forest-sign, #defend *, .ug-node, .ct-row-main)):not(#_) {
   border-width: 6px;
@@ -236,6 +236,21 @@ html.ui-sprites :is(.deck-slot, .node-icon):not(#_) {
   border-radius: 0;
   background: transparent;
   image-rendering: pixelated;
+}
+/* Card faces include their own frame. Only empty/purchasable slots need
+   the inset slot frame; occupied controls let the art fill the whole card. */
+html.ui-sprites :is(.deck-card, .deck-entry-art, .deck-add):not(#_) {
+  border: 0;
+  border-image: none;
+  border-radius: 0;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+}
+html.ui-sprites .deck-slot:has(> .deck-card):not(#_) {
+  border: 0;
+  border-image: none;
+  background: none;
 }
 html.ui-sprites input[type="checkbox"]:not(#_) {
   appearance: none;

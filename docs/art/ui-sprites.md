@@ -22,6 +22,7 @@ There are six button states, panel and dialog frames, an inset field, a progress
 The shared extension lives in `public/assets/style/`, with its native dimensions in `manifest.json`.
 It includes currencies, pickups, controls, four hero directions, every named enemy, forest and Defend structures, Equipment, materials and card faces.
 Card names remain live text over the PNG backgrounds.
+The card face supplies the only frame on occupied Deck cards, filling its button without an extra button skin or hand-slot frame; empty and purchasable slots keep the inset slot PNG.
 All 29 card faces have distinct compositions: door requirements, enemy groups and source-to-destination trades remain recognizable without baked lettering.
 The [badge atlas](../../assets/game-sprites/badges.png) adds one 24-pixel symbol for each of the 22 badges, a level star and an exchange mark used on trade cards.
 Badge tokens use reusable 24 × 24 PNG frames for common, rare and epic rarity; the same symbols appear in the Deck, card marks, hand, details, drag ghosts and draw reveals.

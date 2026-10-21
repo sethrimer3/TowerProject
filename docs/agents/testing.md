@@ -31,6 +31,9 @@ It covers independent theme overrides, original-image fallback, live control cou
 `tests/shrine-sprites-browser.mjs` starts its own Vite server for the Shrine PNG subjects, count/choice components and real offer/pick/management actions at phone and desktop widths, including save/reload, PNG grip dragging, independent theme overrides and failed-image fallback.
 The UI golden's Shrine fixtures are appended after earlier fixtures so their seeded runs keep the same seeds.
 
+`tests/badge-card-sprites-browser.mjs` checks card faces fill their Deck controls at 320, 390 and 1024 pixels without duplicate button or occupied-slot frames, retaining empty-slot frames, keyboard ordering, lesson dimming and upgrade-tree access.
+It also exercises live badge levels, gate symbols, reveals, missing-image fallbacks and independent theme overrides.
+
 `tests/equipment-sprites-browser.mjs` starts its own Vite server for Equipment's PNG frames and status marks, exercising leveling, both loadouts, selection, assembly, save/reload, actionable Gem shortages, missing-image fallback and independent theme overrides at phone/desktop widths.
 
 `tests/ui-controls-sprites-browser.mjs` starts its own Vite server for real navigation and popup-close clicks on PNG images, native range inputs with keyboard/pointer and save/reload, focus, Overheal fills, reward art, fallbacks and independent theme overrides at phone/desktop widths.
