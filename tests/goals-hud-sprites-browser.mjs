@@ -26,6 +26,7 @@ try {
     const { defaults } = await import("/src/save.ts");
     const { Game } = await import("/src/state.ts");
     const { UPGRADES } = await import("/src/config.ts");
+    const { latestTournament } = await import("/src/tournament/schedule.ts");
     const s = defaults();
     for (const id of Object.keys(s.tutorials)) s.tutorials[id] = true;
     for (const u of UPGRADES) s.upgrades[u.id] = 1;
@@ -34,6 +35,9 @@ try {
     s.tower.tiersOpen = 9;
     s.tower.best = s.tower.reached = 30;
     s.goals.claimed = { 1: [60, 70], 2: [40] };
+    // Claiming floor 60 opens the Tournament: its live one's free Ticket is
+    // already given, so its reveal doesn't cover the HUD.
+    s.tournament.granted = latestTournament(Date.now()).id;
     s.goals.mastered = { 1: [10, 20] }; s.goals.cleared = { 1: [10] };
     const g = new Game(s); g.newRun({ outside: true, seed: 7 });
     sessionStorage.setItem("__goalsSpriteFixture", JSON.stringify(g.save));
