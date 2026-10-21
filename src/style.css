@@ -4849,12 +4849,23 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
 .event-banner-icon { width: 120px; height: 120px; }
 .event-banner .page-title { position: relative; margin: 0; text-align: center; }
 .event-banner .page-title h2 { font-size: 20px; }
-.event-ends { position: relative; margin: 4px 0 0; font-size: 11px; color: #c7b6d6; font-variant-numeric: tabular-nums; }
+.event-banner-foot { position: relative; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 12px; margin-top: 4px; }
+.event-held { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border: 1px solid #6b4a8a; border-radius: 10px; background: #1a1424cc; font-size: 12px; color: #fff3cf; font-variant-numeric: tabular-nums; }
+.event-held .medal-icon { width: 15px; height: 15px; }
+.event-held b { font-weight: 500; }
+.event-ends { position: relative; margin: 0; font-size: 11px; color: #c7b6d6; font-variant-numeric: tabular-nums; }
 .event-ends b { color: #ffe9a8; font-weight: 500; }
 .event-track .medal-icon { width: 14px; height: 14px; }
-/* Each row's name on the left; the relics stand over (and under) the bar, each at its Medals' place along it. */
-.event-track-body { display: grid; grid-template-columns: 90px 1fr; align-items: center; column-gap: 2px; }
-.event-row-name { font-size: 12px; font-weight: 500; line-height: 1.2; color: #e5d5b8; }
+/* The bar and the relics' rows span the track's whole width, with the same
+   margin at each end, so the bar's every point lines up with the relics'; each
+   row's name sits at its left, under the first relic's place. */
+.event-track-body { display: grid; grid-template-columns: 88px 1fr; align-items: center; }
+.event-track-body > .event-relics, .event-track-body > .event-bar { grid-column: 1 / -1; }
+.event-track-body > .event-row-name { grid-column: 1; grid-row: 1; }
+.event-track-body > .event-relics.standard { grid-row: 1; }
+.event-track-body > .event-bar { grid-row: 2; }
+.event-track-body > .event-row-name.premium, .event-track-body > .event-relics.premium { grid-row: 3; }
+.event-row-name { position: relative; z-index: 1; padding-left: 4px; font-size: 12px; font-weight: 500; line-height: 1.2; color: #e5d5b8; pointer-events: none; }
 .event-row-name.premium { color: #d6b8ff; }
 .event-relics { position: relative; height: 46px; margin: 0 18px; }
 .event-relic { position: absolute; left: var(--at); transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 1px; width: 36px; }
