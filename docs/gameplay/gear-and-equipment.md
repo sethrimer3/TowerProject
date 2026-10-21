@@ -3,14 +3,14 @@
 ## Provisions
 
 **Gear** (1 Inspiration, after Buildout, left of it) adds the **Gear** tab, which opens on **Provisions**: Gold buys a Traveler's elixir (+20 max HP), an Aegis charm (+1 DEF) or a Whetstone (+1 ATK), each kept for good and added to every run from then on, a run already inside included.
-The tab shows your Gold in its own column, and beside it the starting stats the provisions on sale raise (max HP, ATK, DEF, keys …), as the next run starts with them, the one just raised glowing as you buy; a **?** beside its heading explains provisions; each provision says how many you own and, when one gives more than 1 of a stat (the elixir), the total they add; and a provision's icon glows when you buy one.
+The tab shows the starting stats the provisions on sale raise (max HP, ATK, DEF, keys …), as the next run starts with them, the one just raised glowing as you buy, with a **?** left of them that explains provisions (your Gold shows in the currencies bar above); each provision says how many you own and, when one gives more than 1 of a stat (the elixir), the total they add; and a provision's icon glows when you buy one.
 Each one bought costs more than the last, on the same kind of schedule as Training bought with Silver inside a run (the elixir from 5 Gold, the charm from 10, the whetstone from 15), and that price compounds 5% more for each one already bought (the elixir: 5, 8, 12, 17, 24 … 111 for the 10th, 746 for the 20th, about 21,000 for the 50th).
 Once **Extra Key** (1 Courage, after Movement Speed in the Courage tree) is owned, Provisions also sell a **Yellow Key**, a yellow key carried into every run: the first costs 100 Gold and each after four times the last (400, 1,600, 6,400, 25,600 …).
 
 ## Equipment
 
 **Equipment** opens by claiming Tower II's floor 60 checkpoint on the Goals screen, whose dialog offers to visit the Blacksmith.
-A **Blacksmith** then stands in the forest, up and left of the path; tapping it (or the Gear tab, which opens with Equipment even without the Gear skill) opens the Equipment screen: the hero's nine slots in a 3×3 grid shaped like the hero (the Tower/Delve switch at its top left) over a grid of every piece owned, with List, Assemble and Acquire along the bottom, and how it all works behind the ? beside the heading.
+A **Blacksmith** then stands in the forest, up and left of the path; tapping it (or the Gear tab, which opens with Equipment even without the Gear skill) opens the Equipment screen: the hero's nine slots in a 3×3 grid shaped like the hero (the Tower/Delve switch at its top left) over a grid of every piece owned, with List, Assemble and Acquire along the bottom, and how it all works behind the ? beside the loadout's heading.
 The hero wears one piece in each of nine categories (Weapon, Chestplate, Helmet, Gloves, Boots, Cape, Belt, Ring, Amulet); the inventory (up to 500 pieces) is shared, and the Tower's and the Delve's heroes each wear their own loadout.
 Each Unique piece (and the Silver Band) has its own pixel icon, so pieces of one category tell apart at a glance.
 Pieces come in Common, Uncommon and Rare, shown by word, letter and colour.

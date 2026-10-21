@@ -18,7 +18,7 @@ import {
   choicesLeft, effectCap, improveCost, nextMilestone, refineCost, slotEffects, slotPlan, slotPool, type SlotRefusal,
 } from "../equipment/slots.ts";
 import type { AppContext } from "./app.ts";
-import { askForGems, showHelp } from "./dialogs.ts";
+import { askForGems, helpButton, showHelp } from "./dialogs.ts";
 import { el, gemIcon, riseFrom, uiSprite } from "./dom.ts";
 import { currencyAmount, devAmount, priceAmount } from "./hud.ts";
 import { ACTION_ICONS, categoryIcon, itemIcon, materialIcon } from "./equipment-icons.ts";
@@ -125,7 +125,8 @@ export class EquipmentPanel {
     return this.loadoutHtml() + this.inventoryHtml();
   }
 
-  /** The mode's loadout: its switch at the top left, the nine slots in a
+  /** The mode's loadout: its switch at the top left, Equipment's ? by its
+   * heading, the nine slots in a
    * 3×3 grid shaped like the hero, and what they add up to. A worn piece
    * opens its details; an empty slot shows only that category below. */
   private loadoutHtml() {
@@ -141,7 +142,7 @@ export class EquipmentPanel {
     const totals = equipmentEffects(this.e, this.mode), lines = (Object.entries(totals) as [keyof typeof totals, number][]).filter(([, v]) => v);
     const summary = lines.length ? `<ul class="eq-totals">${lines.map(([k, v]) => `<li>${effectText(k, v)}</li>`).join("")}</ul>` : `<p class="eq-totals-empty">Nothing worn yet.</p>`;
     const copy = delve ? `<button class="link-button eq-copy" data-eq-copy="${other}">Copy the ${MODE_NAMES[other]}'s</button>` : "";
-    return `<div class="eq-loadout" aria-label="${MODE_NAMES[this.mode]} loadout"><div class="eq-loadout-head">${switcher}<h3>Loadout</h3>${copy}</div>
+    return `<div class="eq-loadout" aria-label="${MODE_NAMES[this.mode]} loadout"><div class="eq-loadout-head">${switcher}<h3>Loadout${helpButton("How Equipment works", "equip-help")}</h3>${copy}</div>
       <div class="eq-slots">${slots}</div>${summary}</div>`;
   }
 

@@ -146,9 +146,11 @@ h1 span {
   align-items: center;
   gap: 14px;
   justify-content: center;
-  margin: 0 0 6px;
-  padding: 2px 6px;
+  margin: 0 0 4px;
+  padding: 0 6px;
 }
+/* While the bar shows (on the pages), the shell keeps only a sliver above it. */
+.shell:has(> #currencies:not([hidden])) { padding-top: 4px; }
 .currency {
   display: inline-flex;
   align-items: center;
@@ -2541,10 +2543,8 @@ dialog.eq-result #eq-ok { flex: 0 1 220px; padding: 14px; font-size: 20px; }
 .link-button { display: inline; padding: 0; border: none; background: none; color: var(--gold); text-decoration: underline; font-size: inherit; min-height: 0; }
 /* Provisions: the Gold to spend in its own column, left of the explanation. */
 .provision-head { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; }
+.provision-head > .tree-help { flex-shrink: 0; margin-left: 0; }
 .provision-head .hint { margin: 0; }
-.purse-big { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; min-width: 84px; padding: 10px 12px; border: 1px solid #6b5a35; border-radius: 5px; background: #1a2431; }
-.purse-big img { width: 34px; height: 34px; image-rendering: pixelated; }
-.purse-big b { font-size: 22px; font-weight: 500; color: var(--gold); line-height: 1; }
 /* Beside the Gold: the starting stats the provisions on sale raise. */
 .starting-stats { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; border: 1px solid #3a4658; border-radius: 5px; background: #141c27; }
 .starting-stats > small { font-size: 8px; letter-spacing: 2px; color: #8f9bac; }
@@ -2650,10 +2650,12 @@ nav button > span :is(img, svg) { display: block; width: 42px; height: 42px; max
   image-rendering: pixelated;
 }
 .tree-tabs span img { width: 34px; height: 34px; margin-inline: auto; }
-/* Training's and the Archives' tabs carry their icon left of the name, not above it. */
-.research-tabs button { display: grid; grid-template-columns: auto auto; justify-content: center; align-items: center; column-gap: 6px; min-height: 0; text-align: left; }
-.research-tabs span { grid-row: span 2; margin-bottom: 0; }
-.research-tabs small { margin-top: 1px; }
+/* The pages' tab rows (Research, Upgrades, Gear) carry each tab's icon left
+   of its name, not above it, and stand one height whether a tab has an icon or not. */
+.page-tabs { margin-top: 0; }
+.page-tabs button { display: grid; grid-template-columns: auto auto; justify-content: center; align-items: center; column-gap: 6px; min-height: 40px; text-align: left; }
+.page-tabs span { grid-row: span 2; margin-bottom: 0; }
+.page-tabs small { margin-top: 1px; }
 .node-icon img { width: 38px; height: 38px; }
 .skill-node.locked .node-icon img { filter: grayscale(1); opacity: .48; }
 .slot-filter button img { width: 28px; height: 28px; }

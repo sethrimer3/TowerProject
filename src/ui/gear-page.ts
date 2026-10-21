@@ -6,7 +6,7 @@ import { tierNumeral } from "../tiers.ts";
 import type { AppContext } from "./app.ts";
 import { helpButton } from "./dialogs.ts";
 import { el, itemSprite, uiSprite } from "./dom.ts";
-import { devAmount, priceAmount } from "./hud.ts";
+import { priceAmount } from "./hud.ts";
 import { buyQuantityHtml, readQuantity } from "./buy-quantity-select.ts";
 import { EquipmentPanel } from "./equipment-panel.ts";
 
@@ -56,22 +56,20 @@ export class GearPage {
     const body = this.tab === "equipment" ? this.equipment.html() : this.provisionsHtml();
     const tabs = (["provisions", "equipment"] as const).filter((t) => t === "equipment" || save.upgrades.gear);
     const lockHint = (t: GearTab) => t === "equipment" ? `Claim Tower ${tierNumeral(unlockAt("equipment").tower)}'s floor ${unlockAt("equipment").floor} Goal to open Equipment` : "Locked";
-    const intro = this.tab === "equipment"
-      ? `<h2>Equipment${helpButton("How Equipment works", "equip-help")}</h2>`
-      : `<h2>Traveler’s gear<button class="tree-help" id="gear-help" aria-label="About provisions" title="About provisions">?</button></h2>`;
-    el("gear").innerHTML = `<div class="page-title"><small>YOUR COMPANIONS IN THE DARK</small>${intro}</div>
-    <div class="tree-tabs gear-tabs" role="group" aria-label="Gear tabs">
+    el("gear").innerHTML = `<div class="tree-tabs page-tabs gear-tabs" role="group" aria-label="Gear tabs">
       ${tabs.map((t) => `<button data-geartab="${t}" aria-pressed="${this.tab === t}" ${this.open(t) ? "" : `disabled title="${lockHint(t)}"`}>${TAB_NAMES[t]}</button>`).join("")}
     </div>
     ${body}`;
     this.bind();
     if (this.tab === "equipment") {
       this.equipment.bind();
-      el("equip-help").onclick = () => this.equipment.showHelp();
+      // Only the list's loadout carries Equipment's ? button.
+      const help = document.getElementById("equip-help");
+      if (help) help.onclick = () => this.equipment.showHelp();
     } else el("gear-help").onclick = () => this.showHelp();
   }
 
-  /** The Provisions screen's help, behind its heading's ? button. */
+  /** The Provisions screen's help, behind the ? button left of its starting stats. */
   private showHelp() {
     const modal = this.ctx.modal;
     modal.innerHTML = `<small>GEAR</small><h2>Provisions</h2><p>Provisions are bought with Gold and kept for good: each one you own goes with you into every run.</p><p class="hint">Each one bought makes the next of its kind cost more.</p><div class="dialog-actions"><button id="gear-help-ok">Got it</button></div>`;
@@ -137,7 +135,7 @@ export class GearPage {
     // What all the copies owned add, for provisions giving more than one.
     const total = (item: (typeof GOLD_SHOP)[number], owned: number) =>
       (Object.entries(item.grants) as [Stat, number][]).filter(([, n]) => n > 1).map(([stat, n]) => ` · +${n * owned} ${TOTAL_WORDS[stat]}`).join("");
-    return `<div class="provision-head"><div class="purse-big" title="Gold">${uiSprite("gold")}<b>${devAmount(game, game.save.gold)}</b></div>${this.startingStatsHtml(open, bought)}${buyQuantityHtml(game.buyQuantities, q)}</div>${open.map((item) => {
+    return `<div class="provision-head">${helpButton("About provisions", "gear-help")}${this.startingStatsHtml(open, bought)}${buyQuantityHtml(game.buyQuantities, q)}</div>${open.map((item) => {
       const owned = game.save.provisions[item.id], bulk = provisionBulk(game.save, item.id, q, game.free ? Infinity : game.save.gold), price = whole(bulk.cost);
       return `<article class="card"><div class="item-icon${item.id === bought ? " bought" : ""}">${provisionSprite(item.id)}</div><div><small>${owned ? `OWNED × ${owned}${total(item, owned)}` : "NOT YET OWNED"}</small><h3>${item.name}</h3><p>${provisionText(item.id)}</p></div><button data-gold="${item.id}" ${!bulk.affordable && !game.free ? "disabled" : ""}>Buy · ${uiSprite("gold", "stat-sprite")} ${priceAmount(price)}${q !== 1 ? `<small class="buy-count">x${bulk.count}</small>` : ""}</button></article>`;
     }).join("")}`;
