@@ -21,6 +21,7 @@ import { drawDungeonGround, dungeonDiagonals, dungeonMaterial, towerTileset } fr
 import { dungeonWallProfile } from "./wall-depth.ts";
 import { dungeonDetail } from "./dungeon-details.ts";
 import { drawAnimatedTorch, drawSquareDoor } from "./sprite-options.ts";
+import { drawPickupAnimation, drawSpriteFrame } from "./sprite-animations.ts";
 
 // Everything here paints in 24x24 tile space: the caller translates and
 // scales the context to the tile first.
@@ -65,7 +66,7 @@ type TileWorld = { tile(x: number, y: number): Tile | undefined };
  * per-tile variation), the time (for sparkles), and which art to use.
  * `lifted` items are off the ground (a reward rising from its tile), so they
  * cast no ground shadow. */
-export type TileArt = { x: number; y: number; time: number; spritesOff: boolean; reduceMotion: boolean; area1: boolean; lifted?: boolean; styledSprites?: boolean; squareDoors?: boolean };
+export type TileArt = { x: number; y: number; time: number; spritesOff: boolean; reduceMotion: boolean; area1: boolean; lifted?: boolean; styledSprites?: boolean; squareDoors?: boolean; spriteAnimations?: boolean; seed?: number };
 
 /** The first Tower section has its own hand-drawn doors, chests, and floor. */
 export const isArea1 = (mode: Mode, height: number) => mode === "tower" && height >= 0 && height < 10;
@@ -77,7 +78,7 @@ export function paintTile(c: CanvasRenderingContext2D, world: TileWorld, t: Tile
   if (look.outside) return layer !== 0 || drawForestTile(c, t, { x, y, seed: look.seed, center: look.entranceX, roads: look.roads }, !look.spritesOff, look.styledSprites);
   if (layer === 0) return paintGround(c, world, t, x, y, look);
   if (t.kind === "wall" || t.kind === "floor") return true;
-  paintContents(c, t, { x, y, time, spritesOff: look.spritesOff, reduceMotion: look.reduceMotion, area1: look.area1, styledSprites: look.styledSprites, squareDoors: look.squareDoors });
+  paintContents(c, t, { x, y, time, spritesOff: look.spritesOff, reduceMotion: look.reduceMotion, area1: look.area1, styledSprites: look.styledSprites, squareDoors: look.squareDoors, spriteAnimations: look.spriteAnimations, seed: look.seed });
   return true;
 }
 
@@ -149,7 +150,10 @@ const PAINTERS: Partial<Record<Tile["kind"], Painter>> = {
 export function paintContents(c: CanvasRenderingContext2D, t: Tile, art: TileArt) {
   if (art.styledSprites && !art.spritesOff) {
     if (art.squareDoors && t.kind === "door" && drawSquareDoor(c, t)) return;
-    if (paintKitContents(c, t)) return;
+    if (paintKitContents(c, t)) {
+      if (art.spriteAnimations && !art.reduceMotion && !art.lifted) drawPickupAnimation(c, t, art.x, art.y, art.time, art.seed);
+      return;
+    }
   }
   PAINTERS[t.kind]?.(c, t, art);
 }
@@ -556,8 +560,9 @@ function square(size: number) {
 }
 
 /** The hero with its grounding shadow and outline. */
-export function paintHero(c: CanvasRenderingContext2D, spritesOff: boolean, styled = false, facing = { dx: 0, dy: -1 }) {
+export function paintHero(c: CanvasRenderingContext2D, spritesOff: boolean, styled = false, facing = { dx: 0, dy: -1 }, idleFrame = 0) {
   const direction = facing.dx > 0 ? "right" : facing.dx < 0 ? "left" : facing.dy > 0 ? "up" : "down";
+  if (!spritesOff && styled && idleFrame && drawSpriteFrame(c, `ambient-hero-${direction}`, idleFrame)) return;
   if (!spritesOff && styled && drawKit(c, `hero-${direction}`)) return;
   groundShadow(c, 12, 22, 8, 2.6, 0.4);
   withOutline(c, DARK_BLUE, (c) => {

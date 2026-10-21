@@ -6,6 +6,15 @@
 Square doors retain live key and HP requirement marks, including mixed locks; missing PNGs fall back to the existing door or torch.
 Torch frames share the original stationary hardware, advance at 130 milliseconds with spatial phase, and freeze when Reduce motion is on.
 The water reflection style key includes both options so warmed snapshots refresh immediately on a toggle.
+`sprite-animations.ts` adds native PNG potion bubbles, rare key glints, four-direction hero idle frames and the skull-and-crossbones death strip.
+Ambient motion requires the effective Classic Game kit, Animations on and Reduce motion off; potion/key bodies stay static and lifted reward icons omit their ambient overlays.
+Coordinate-phased potion windows last 900 milliseconds every 4.2 seconds; key glints last 600 milliseconds every 22–36 seconds, with no gameplay RNG draws or saved animation state.
+`HeroIdleAnimation`, owned by the Renderer, waits 700 milliseconds after the living hero stops and then selects slow torso/inner-cape frames, resetting on movement, queued routes, combat, facing, board identity or settings changes.
+The original helmet, equipment, feet and alpha silhouette remain exact in every exported idle frame, so cached shadows and directional light masks still match; dash echoes keep their static pose.
+`FrameContext.heroIdleFrame` keeps the visible hero and its water image on the same frame, while pickup and hero frame keys refresh only the affected reflection bakes and snapshots.
+`drawStruckDown` uses a palette-matched six-frame PNG strip in the active kit, or its first frame with Animations off or Reduce motion on, preserving the existing death timing and opacity envelope.
+The death PNG stays at native scale without the old procedural bob, pulsing glow or resizing; Sprites off, other Game themes and missing images retain the original renderer.
+`tools/prepare-ambient-sprites.mjs` exports the original effect, hero-idle and skull source sheets, registers torso changes against the existing hero and restores its original alpha before packing.
 The normalized terrain atlas (`sprite-terrain.ts`, generated `sprite-terrain-index.ts`) remains a loading fallback for the dedicated native dungeon materials and the forest kit.
 `spriteRevision()` participates in ground cache keys so asynchronous image arrivals repaint fallbacks.
 `src/sprite-combat.ts` names native projectile, rank/trait, chest-star and shield pieces, exported by `tools/prepare-combat-sprites.mjs` from the combat atlases.

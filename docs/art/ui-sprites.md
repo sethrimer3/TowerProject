@@ -149,7 +149,7 @@ Run `node --experimental-transform-types tools/prepare-forest-sprites.mjs` for t
 Run `node --experimental-transform-types tools/prepare-dungeon-sprites.mjs` for the interior material atlases, all six connected-wall variants, full top/shade textures, ragged material masks, dark core, and the cardinal/diagonal corner and contact pieces.
 Run `node --experimental-transform-types tools/prepare-dungeon-details.mjs` for the sparse paired wall motifs in matching biome ramps; the two dungeon exporters share `tools/dungeon-palette.mjs`.
 Regenerate the original font with `python tools/prepare-pixel-font.py` using FontTools with WOFF2 support (`fonttools[woff]`); no font-building dependency is needed at runtime.
-The full game exporter preserves dungeon, forest, environment, combat, badge, Shrine, Equipment UI and UI-detail assets; rerun their own exporter when a source atlas changes.
+The full game exporter preserves ambient-animation, dungeon, forest, environment, combat, badge, Shrine, Equipment UI and UI-detail assets; rerun their own exporter when a source atlas changes.
 That exporter also packs the terrain atlas and produces `src/sprite-terrain-index.ts`.
 PNG load failures keep the original icon or procedural renderer visible; loaded images invalidate cached terrain and city layers through a shared revision.
 
@@ -181,6 +181,11 @@ With the dev server running, `PLAYWRIGHT_EXECUTABLE_PATH=/usr/bin/chromium node 
 
 The [square-door source](../../assets/game-sprites/square-doors.png) supplies six 24 × 24 opaque doors: yellow, blue, red, steel, wood and heart.
 The [torch animation source](../../assets/game-sprites/torch-animation.png) supplies four flame frames packed into a 96 × 24 strip, with the original torch hardware restored identically below row 11.
+The [ambient effect source](../../assets/game-sprites/ambient-effects.png) supplies four tiny bubble clusters and four restrained glints, packed with an empty resting frame into two 120 × 24 overlays.
+Bubble texels stay inside both original bottle silhouettes; key shines use only a one- to five-pixel mark near the bow, with long coordinate-phased rests.
+The [hero idle source](../../assets/game-sprites/hero-idle.png) supplies four frames per facing; registered differences apply only inside the original torso or inner cape, preserving original frame zero, head, gear, feet and alpha exactly.
+The [death source](../../assets/game-sprites/death-skull.png) supplies six skull-and-crossbones frames packed into a 144 × 24 strip with transparent padding, binary alpha and no baked halo.
+Run `node tools/prepare-ambient-sprites.mjs` to reproduce all seven strips at native density in the shared palette.
 Run `node --experimental-transform-types tools/prepare-sprite-options.mjs` to reproduce these palette-matched, binary-alpha PNGs.
 The [Tower floor source](../../assets/game-sprites/tower-floor.png) supplies one connected paving field combining large and small rectangular bricks, exported into ten 96 × 96 biome panels by `node tools/prepare-tower-floors.mjs`.
 The sixteen native frames retain their spatial relationship across tile boundaries, including under doors and pickups; the shared material palette and upper-left lighting stay fixed.

@@ -19,6 +19,9 @@ The dungeon suite's literal floor/relief checks read the connected Tower paving 
 `tests/tower-tier-sprites.test.ts` checks the four new Tower II/III atlas dimensions, fixed selection across biome boundaries, floor under contents, all sixteen wall joins, and exclusion from Delve and legacy rendering.
 `tests/tower-tier-sprites-browser.mjs` starts its own server for literal connected floor reconstruction, correct relief texels, corner footprints, flat black cores, atomic late loading, failed-image fallback, real phone/desktop boards, saved tiers, theme gates and exact restoration on a reused renderer.
 Its native material and board review images go to `test-results/tower-tiers/`; the appended `spriteTowerTwo` and `spriteTowerThree` scenes add ten board and drawing-call golden frames without moving earlier scene seeds.
+`tests/sprite-animations.test.ts` checks native strip sizes, deterministic rare/staggered schedules, idle delay/reset behavior, painter gates and death-frame freezing.
+`tests/sprite-animations-browser.mjs` checks literal hero alpha and fixed gear, original rest frames, bubble clipping, native motion, reflection-frame invalidation, route/settings/theme gates, reduced-motion restoration, missing-image fallbacks and the skull emitted by a real lethal fight.
+It captures native/enlarged art and phone/desktop board/death review images in `test-results/sprite-animations/`; the appended `spriteAmbient` scene adds five golden frames while `spriteOptions` now includes ambient motion.
 
 `tests/city-sprites-browser.mjs` starts its own Vite server and checks Defend PNGs at normal and zoomed scales, damage/rebuilding and exact pixel restoration after toggling off.
 

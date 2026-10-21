@@ -104,11 +104,11 @@
  "spriteDungeonCave.after": "3726ac2176bf58d6",
  "spriteDungeonCave.ripples": "4a1637ad1f1827d3",
  "spriteDungeonCave.later": "169c923b3ad36cdd",
- "spriteOptions.settled": "524140c20b4dd52f",
- "spriteOptions.moving": "1a284bf4c994694c",
- "spriteOptions.after": "bd143cce1731a4af",
- "spriteOptions.ripples": "ab5c21f1b60c16fc",
- "spriteOptions.later": "6a2ad327f24cccaa",
+ "spriteOptions.settled": "0a8bb7e563faa651",
+ "spriteOptions.moving": "a1ecdd226b93b866",
+ "spriteOptions.after": "706491b2c3749b6a",
+ "spriteOptions.ripples": "23f892bb66418e2d",
+ "spriteOptions.later": "8ada5910d081b139",
  "spriteTowerTwo.settled": "c30b728bd82ecc3a",
  "spriteTowerTwo.moving": "5ec18f101c5c530e",
  "spriteTowerTwo.after": "b056978e94be6c1a",
@@ -118,5 +118,10 @@
  "spriteTowerThree.moving": "3f534799f7498336",
  "spriteTowerThree.after": "739a482860c4959d",
  "spriteTowerThree.ripples": "c751203951274bde",
- "spriteTowerThree.later": "f6da043c390d7950"
+ "spriteTowerThree.later": "f6da043c390d7950",
+ "spriteAmbient.settled": "2e01235a0394a827",
+ "spriteAmbient.moving": "2b3374422d109412",
+ "spriteAmbient.after": "27b930fc628bc79d",
+ "spriteAmbient.ripples": "f2ab083934fbd7bf",
+ "spriteAmbient.later": "747bc8cc9f7b3234"
 }
